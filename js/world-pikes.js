@@ -1779,7 +1779,7 @@
       one([[32, 2.9], [33, 3.6], [31, 4.2], [35, 3]], 1.2, (F, x, z) => { const g = scen.get(x, z), y = gy(x, z), hd = [x, y + 1.42, z], leg = [0.78, 0.62, 0.3], [fx, fz] = F.dir(-PI / 2 - 0.5);   // the level on its tripod, sighting across the road
         for (let q = 0; q < 3; q++) { const a = q / 3 * TAU + 0.4; rod(g, [x + Math.cos(a) * 0.55, y - 0.05, z + Math.sin(a) * 0.55], hd, 0.05, leg); }
         box(g, x, y + 1.42, z, 0.36, 0.2, 0.2, Math.atan2(fz, fx), [0.93, 0.74, 0.12]); box(g, x + fx * 0.22, y + 1.47, z + fz * 0.22, 0.16, 0.1, 0.1, Math.atan2(fz, fx), [0.12, 0.12, 0.13]);
-        crowdPut(CR, x - fx * 0.75, gy(x - fx * 0.75, z - fz * 0.75), z - fz * 0.75, fx, fz, { col: [1, 0.55, 0.1], flag: 0 }, 1); ex(x, z, 1.9); });   // the surveyor, in hi-vis orange
+        crowdPut(CR, x - fx * 0.75, gy(x - fx * 0.75, z - fz * 0.75), z - fz * 0.75, fx, fz, { col: [1, 0.55, 0.1], flag: 0, staff: true }, 1); ex(x, z, 1.9); });   // the surveyor, in hi-vis orange
       { const [x, z] = fr(s0 + 27, up).at(0, 3.4); ex(x, z, 6.5); }   // a clearing round them (no tree crown over them)
       const [pi, po] = culverts(sc, up, false);
       if (pi) bed(course(pi, 16, -1), false); if (po) bed(course(po, 18, 1), false);
@@ -2914,7 +2914,7 @@
       rail3(S, t, hw, [0.88], [red, white], 0.075, 0.45); };
     const marshalCar = (x, z, rot) => { K.carPk(x, z, rot, [0.93, 0.93, 0.92]); const y = gy(x, z), c = Math.cos(rot), s = Math.sin(rot), g = scen.get(x, z);   // white, an orange stripe, a light bar
       box(g, x, y + 0.6, z, 4.34, 0.14, 1.89, rot, orange, null, true); box(g, x - c * 0.35, y + 1.67, z - s * 0.35, 0.32, 0.13, 1.3, rot, [1, 0.62, 0.1], [1, 0.7, 0.2], true); };
-    const person = (p, fx, fz, col) => { if (free(p) && !K.excluded(p[0], p[2])) K.putPerson(p[0], p[2], Math.atan2(-fx, fz), col); };   // facing (fx, fz)
+    const person = (p, fx, fz, col, staff) => { if (free(p) && !K.excluded(p[0], p[2])) K.putPerson(p[0], p[2], Math.atan2(-fx, fz), col, staff); };   // facing (fx, fz)
     const post2 = (x, z, fx, fz, Wd, H, h0, rc, tilt, col, two) => {   // a board on two posts beside the road (two: a guide board, both faces: face2's side)
       const y = gy(x, z), ux = fz, uz = -fx, g = scen.get(x, z), an = Math.atan2(fz, fx);
       for (const e of [-Wd * 0.38, Wd * 0.38]) box(g, x + ux * e - fx * 0.07, y - 0.3, z + uz * e - fz * 0.07, 0.1, h0 + H * 0.9 + 0.3, 0.1, an, col || postB, null, true);
@@ -2955,8 +2955,8 @@
       else if (J.close === 'gate') gate(S, tC, hc + 0.2);
       else tape(S, tC, hc + 0.15);
       if (J.marshal && tC + 8 < r.t) { const c = at(S, tC + 6.5, hm * 0.45); marshalCar(c[0], c[2], Math.atan2(-q.hz, -q.hx)); st.marshals++; }
-      if (J.marshal || J.vol) person(at(S, tC + 0.6, hc + 0.9), -q.hx, -q.hz, J.marshal ? vest : vest2);
-      if (J.marshal && J.vol !== 0) person(at(S, tC + 1.2, -hc - 0.8), -q.hx * 0.7 + q.mx * 0.7, -q.hz * 0.7 + q.mz * 0.7, vest2);
+      if (J.marshal || J.vol) person(at(S, tC + 0.6, hc + 0.9), -q.hx, -q.hz, J.marshal ? vest : vest2, true);
+      if (J.marshal && J.vol !== 0) person(at(S, tC + 1.2, -hc - 0.8), -q.hx * 0.7 + q.mx * 0.7, -q.hz * 0.7 + q.mz * 0.7, vest2, true);
       if (J.name && !J.cross) st.signs += guide(J, guideCell(J.name, J.sub, J.col));
       if (J.cars) { let n = 0; for (let t = r.t - 10; t <= r.t - 1.5 && n < J.cars; t += 2.7) for (const sg of [1, -1]) { if (n >= J.cars || R() < 0.2) continue;   // parked across the car park, both rows
         const qq = sec(S, t), u = sg * (qq.hw - 2.6), p = at(S, t, u); if (near(p[0], p[2]).dd < 2.6 || exOld(p[0], p[2]) || pkSlope(p[0], p[2]) > 0.35) continue;
@@ -3345,7 +3345,7 @@
     const photog = (x, z, fx, fz, col) => {
       for (let q = 0; q < 121; q++) { const qx = x + ((q % 11) - 5) * 0.03, qz = z + (Math.floor(q / 11) - 5) * 0.03, h = (k) => crH(qx, qz, k);
         if (h(2) < 0.25 || h(2) >= 0.35 || h(3) < 0.04 || pkNear(qx, qz).dd < 1.5) continue;
-        if (!K.putPerson(qx, qz, Math.atan2(-fx, fz), col)) continue;
+        if (!K.putPerson(qx, qz, Math.atan2(-fx, fz), col, true)) continue;
         const a = Math.atan2(fx, fz) + (h(8) - 0.5) * 0.5, sx = Math.sin(a), sz = Math.cos(a), sy = 0.9 + 0.2 * h(5), y = gy(qx, qz), g = scen.get(qx, qz), r = Math.atan2(sz, sx), px = qx + sx * 0.36, pz = qz + sz * 0.36, cy = y + 1.47 * sy;
         box(g, px, cy - 0.07, pz, 0.14, 0.13, 0.16, r, [0.08, 0.08, 0.09]); box(g, px + sx * 0.22, cy - 0.05, pz + sz * 0.22, 0.3, 0.1, 0.1, r, [0.88, 0.88, 0.85], [0.94, 0.94, 0.92]); beam(g, [px + sx * 0.1, cy - 0.08, pz + sz * 0.1], [px + sx * 0.14, y, pz + sz * 0.14], 0.016, DARK);
         CR.avoid(qx, qz, 0.8); info.ph.push([Math.round(pkNear(qx, qz).i * T.ds), +pkNear(qx, qz).dd.toFixed(1)]); return true; }
@@ -4357,7 +4357,7 @@
     /* ---- the real course's landmarks and race-day details (each in its own function above, on its own random stream: R is not drawn from) ---- */
     const K = { root, out, tex, dens, N, w, P, scen, noShadow, matV, txt, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH, mk,
       mats: { tMat, aMat, sMat, matV },
-      putPerson: (x, z, ro, col) => crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col }, 1) };   // a spectator facing ro (no draws from R)
+      putPerson: (x, z, ro, col, staff) => crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col, staff }, 1) };   // (staff: a marshal or a photographer, kept on the real tracks: World's fansOn)   // a spectator facing ro (no draws from R)
     pkLandmarks(K);
     pkCog(K);
     pkRaceOps(K);
