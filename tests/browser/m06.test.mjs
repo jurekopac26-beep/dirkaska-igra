@@ -1,4 +1,4 @@
-// Special mission 06 · Srce v hladilni torbi (js/missions/m06.js) in the browser, upright (360 x 640): ?misija=06 on Mulholland at night,
+// Special mission 06 · Srce v hladilni torbi (js/missions/m06.js) in the browser, upright (360 x 640): ?misija=06 in the Santa Monica Mountains at night,
 // the player in the JELEN GT behind the escort (a patrol car in the police's look, its lamps flashing while it leads), the traffic only
 // cars, vans and trucks (nobody on foot, no bicycles), pulling over for the escort; the panel (ORGAN, SPREMSTVO, BOLNIŠNICA), no timing
 // tower; the hospital at the finish (a white building, a blue H, an ambulance); on the autopilot to the top: done. Again, standing still on the
@@ -18,7 +18,7 @@ try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=06', {}, { width: 360, height: 640 }, { touch: true });
   await ready(page); await page.waitForTimeout(300);
   let s = await st(page);
-  T.check('?misija=06: Mulholland, the JELEN GT, the escort (VORTEX, police) ahead of the player', s.track === 'mulholland' && s.car === 'jelen' && s.esc && s.esc.m === 'vortex' && s.esc.police && s.esc.ahead > 0 && s.cars === 2, JSON.stringify({ track: s.track, car: s.car, esc: s.esc, cars: s.cars }));
+  T.check('?misija=06: the Santa Monica Mountains, the JELEN GT, the escort (VORTEX, police) ahead of the player', s.track === 'mulholland' && s.car === 'jelen' && s.esc && s.esc.m === 'vortex' && s.esc.police && s.esc.ahead > 0 && s.cars === 2, JSON.stringify({ track: s.track, car: s.car, esc: s.esc, cars: s.cars }));
   T.check('at night', s.night === 'night', String(s.night));
   const H = await page.evaluate(() => { const r = Missions.run, g = r.hosp, T = window.__game.race.track; if (!g) return null; const i = T.idx(T.finishS), b = new THREE.Box3().setFromObject(g), c = b.getCenter(new THREE.Vector3());
     return { inScene: !!g.parent, parts: g.children.length, dist: Math.hypot(c.x - T.px[i], c.z - T.pz[i]), id: g.id }; });

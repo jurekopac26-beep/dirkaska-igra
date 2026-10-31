@@ -6,7 +6,7 @@
 #    height profile's ticks); a town, a lake or a peak moved onto the built-up area, the water or the top the far land shows there;
 #  - the helicopter's camera every frame and the point it looks at along the run (raw/maps/heli-<track>.json from heli.mjs), compact;
 #  - the country (its flag, its music) and the name of the race's summit (the label in the corner).
-# Usage: python3 intro_data.py [site]
+# Usage: python3 intro_data.py [site] [vrsic,spa]
 import json, math, os, sys
 import numpy as np
 from PIL import Image
@@ -14,12 +14,13 @@ from scipy import ndimage
 from geo_lib import RAW, HERE, Geo, track
 
 SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..')
+ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None   # (python3 intro_data.py <site> vrsic,spa: only these again, the others kept from <site>/intro-data.js)
 MAPS = os.path.join(HERE, 'raw', 'maps')
 P = json.load(open(os.path.join(RAW, 'places.json')))['tracks']
 LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
-SUMMIT = {'vrsic': 'Vršič'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
-NO_FLIGHT = set()   # (tracks without a helicopter flight: the intro goes straight to the start lights)
-MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany'}
+SUMMIT = {'vrsic': 'Vršič', 'sani': 'Sani Pass', 'katu': 'Katu-Yaryk', 'rastro': 'Rio do Rastro'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
+NO_FLIGHT = set(['baldy', 'bangsaen', 'beartooth', 'bigsur', 'caracoles', 'chapman', 'detroit', 'greatalpine', 'harju', 'hotham', 'iroha', 'katu', 'longford', 'marrakesh', 'maunakea', 'medvode', 'moki', 'monterey', 'montreal', 'mulholland', 'newcastle', 'palomar', 'rastro', 'riverside', 'sani', 'tianmen', 'toronto', 'townsville', 'troisrivieres', 'uncompahgre'])   # (tracks without a helicopter flight: the intro goes straight to the start lights; these: their flights and flyovers later, the user's decision 30. 10. 2026)
+MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany', 'Australia': 'australia', 'South Africa': 'southafrica', 'Morocco': 'morocco', 'Canada': 'canada', 'Chile': 'chile', 'Brazil': 'brazil', 'Russia': 'russia', 'China': 'china', 'Thailand': 'thailand'}
 
 def at_s(T, pts, s):   # the road at s metres from the track's own start: x, z, y
     n = len(pts); L = T['len']; st = T['step']
@@ -35,8 +36,16 @@ def fit_similarity(src, dst):   # dst ~ k R src + t (a proper turn: no mirror); 
     res = dst - (np.stack([A * src[:, 0] - B * src[:, 1], B * src[:, 0] + A * src[:, 1]], 1) + t)
     return float(A), float(B), float(t[0]), float(t[1]), float(np.sqrt((res ** 2).sum(1)).max())
 
+def old_intro():
+    p = os.path.join(SITE, 'intro-data.js')
+    if not os.path.exists(p): return {}
+    s = open(p, encoding='utf-8').read(); return json.loads(s[s.index('{'):s.rstrip().rindex(';')])
+OLD = old_intro() if ONLY else {}
 out = {}
 for tid, pl in P.items():
+    if ONLY and tid not in ONLY:
+        if tid in OLD: out[tid] = OLD[tid]
+        continue
     T = track(tid); pts = np.array(T['pts'], dtype=np.float64); G = Geo(pl['lat0'], pl['lon0'], pl['rot']); off = pl['offset']
     rd = lambda d: at_s(T, pts, T['startS'] + d)
     run = T['raceLen'] if T['open'] else T['len']
@@ -138,6 +147,8 @@ for tid, pl in P.items():
         json.dump(o, open(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid), 'w'), separators=(',', ':'), ensure_ascii=False)
         print(tid, 'heli path', len(C), 'frames,', os.path.getsize(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid)) // 1024, 'KB')
 
+for tid in OLD:   # (a track not in places.json here: kept as it was)
+    if tid not in out: out[tid] = OLD[tid]
 with open(os.path.join(SITE, 'intro-data.js'), 'w') as f:
     f.write('/* The intro before a race: each track\'s map placed on the Earth, its country (flag, music), its summit\'s name and the places marked over\n   the helicopter\'s flight (made by intro_data.py from landmarks.json, do not edit). */\n')
     f.write('window.INTRO = ' + json.dumps(out, separators=(',', ':'), ensure_ascii=False) + ';\n')

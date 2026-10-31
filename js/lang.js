@@ -333,7 +333,7 @@
     'Igra na tej napravi teče počasi: od naslednjega premora ali dirke bo brez senc (vklopiš jih v Nastavitvah).': 'The game runs slowly on this device: from the next pause or race it goes without shadows (switch them on in the Settings).',
     'Nova kariera: {0}.': 'New career: {0}.', 'Res začnem znova?': 'Really start again?', 'Tapni še enkrat, če res želiš začeti novo kariero (denar, avti in nadgradnje se izgubijo).': 'Tap again if you really want a new career (the money, cars and upgrades are lost).',
     'Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.': 'This car is not yours yet: choose a car from your garage or buy it.', 'Prvenstvo je opuščeno.': 'The championship is given up.',
-    'Nalagam novo mapo …': 'Loading the new map …', 'Začneš pri HOME. Zapelji v garažo in odpre se njen meni.': 'You start at HOME. Drive into a garage and its menu opens.', 'V izdelavi': 'Under construction', 'Garaža v izdelavi': 'Garage under construction', 'Nove mape ni bilo mogoče naložiti.': 'The new map could not be loaded.',
+    'Nalagam novo mapo …': 'Loading the new map …', 'Začneš pri HOME. Zapelji v garažo in odpre se njen meni.': 'You start at HOME. Drive into a garage and its menu opens.', 'V izdelavi': 'Under construction', 'Garaža v izdelavi': 'Garage under construction', 'DVIGNI SE': 'TAKE OFF', 'PRISTANI': 'LAND', 'HELIKOPTER': 'THE HELICOPTER', 'VIŠINA': 'ALTITUDE', 'HITROST': 'SPEED', 'Na vodi ne moreš pristati.': 'You cannot land on the water.', 'Tu ne moreš pristati.': 'You cannot land here.', 'Nove mape ni bilo mogoče naložiti.': 'The new map could not be loaded.',
     'Res opustim?': 'Really give up?', 'Tapni še enkrat, če res želiš opustiti prvenstvo.': 'Tap again if you really want to give the championship up.', 'Ta avto še ni tvoj: kupi ga v izbiri avta.': 'This car is not yours yet: buy it in the car choice.',
     'Sredina nagiba je nastavljena.': 'The tilt centre is set.', 'Izhod iz celotnega zaslona': 'Exit full screen',
     'Na iPhonu: Deli → Dodaj na začetni zaslon. Igra se nato z ikone odpre čez cel zaslon.': 'On the iPhone: Share → Add to Home Screen. The game then opens full screen from the icon.',
@@ -348,24 +348,25 @@
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
-    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
-    'Razgledišče Renes': 'Renes Lookout', 'Razgledišče Danny\'s': 'Danny\'s Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
+    'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
-    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
+    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
-    'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */ ' · policijski radio: {0} ({1})': ' · police radio: {0} ({1})',
     ' · policijski radio: ni glasu za slovenščino, govori angleško': ' · police radio: no Slovenian voice, it speaks English',
@@ -468,6 +469,100 @@
     'Preizkus sistema misij: pripelji avto na vrh ceste, preden se izteče čas.': 'A test of the missions: drive the car to the top of the road before the time runs out.',
     'Pripelji avto na vrh v treh minutah, ne da ga preveč poškoduješ.': 'Drive the car to the top in three minutes without damaging it too badly.',
     'Vozi hitro, a pazi na avto: pri polovični škodi je misija izgubljena.': 'Drive fast, but mind the car: at half damage the mission is lost.',
+    /* (the fire missions: js/missions/kit.js, m01.js) */
+    'GASI': 'SPRAY', 'Zmanjkalo je vode.': 'Out of water.', 'Voda je pošla.': 'The water has run out.',
+    'Povleci s prstom, da usmeriš curek na ogenj, in drži GASI.': 'Drag your finger to aim the water at the fire, and hold SPRAY.',
+    'Požar na vrhu': 'Fire at the top', 'V hiši na vrhu prelaza gori. Gasilci morajo po serpentinah gor, preden ogenj požre hišo.': 'A house at the top of the pass is on fire. The firefighters must get up the hairpins before the fire eats the house.',
+    'Pridi do hiše, preden zgori, in pogasi ogenj.': 'Get to the house before it burns down and put out the fire.', 'Pelji po serpentinah do hiše na vrhu prelaza.': 'Drive up the hairpins to the house at the top of the pass.',
+    'HIŠA': 'HOUSE', 'OGENJ': 'FIRE', 'VODA': 'WATER', 'Hiša je zgorela.': 'The house burnt down.', 'Zapeljal si mimo hiše.': 'You drove past the house.',
+    'Zataknjeno kolo': 'The stuck wheel', 'Ob dirkališču je obstalo panoramsko kolo. V kabinah visoko nad tlemi čakajo ljudje.': 'A Ferris wheel beside the circuit has stopped. People wait in its cabins high above the ground.',
+    'Z avtolestvijo reši ljudi iz kabin obstalega kolesa.': 'Rescue the people from the cabins of the stuck wheel with the aerial ladder.', 'Pelji po dirkališču do panoramskega kolesa ob zadnji ravnini.': 'Drive round the circuit to the Ferris wheel by the last straight.',
+    'DOLŽINA': 'LENGTH', 'KOT': 'ANGLE', 'NIHANJE KOŠA': 'BASKET SWAY', 'REŠENI': 'RESCUED', 'V KOŠU': 'IN THE BASKET', 'DVIGNI': 'RAISE', 'IZTEGNI': 'EXTEND',
+    'mirno': 'calm', 'vetrovno': 'windy', 'močno': 'strong', 'KABINA {0}': 'CABIN {0}', '{0} oseba': '{0} person', '{0} osebi': '{0} people',
+    'Ustavi ob kolesu.': 'Stop by the wheel.', 'Kolo si zgrešil: vrni se nazaj do njega.': 'You missed the wheel: go back to it.', 'Do kolesa: {0} km': 'To the wheel: {0} km', 'Zapeljal si mimo kolesa.': 'You drove past the wheel.',
+    'Koš je poln: spusti lestev in jo potegni nazaj, da ljudje izstopijo.': 'The basket is full: lower the ladder and pull it in so the people can step out.', 'Počakaj, da se koš umiri ob kabini.': 'Wait for the basket to settle by the cabin.',
+    'Lestev dvigni in iztegni počasi: v vetru se koš ziblje.': 'Raise and extend the ladder slowly: the basket sways in the wind.',
+    'Gozdni požar': 'Bushfire', 'Veter žene ogenj po pobočju navzdol proti kmetiji. Cesta je zadnja ovira pred hišo.': 'The wind drives the fire down the slope toward a farm. The road is the last thing between it and the house.',
+    'Ustavi ogenj pred kmetijo; vodo natoči v jezercu.': 'Stop the fire before the farm; refill the water at the pond.', 'Gasi rob ognja ob cesti; ko zmanjka vode, jo natoči v jezercu.': 'Put out the edge of the fire along the road; when the water runs out, refill it at the pond.',
+    'OGENJ DO HIŠE': 'FIRE TO THE HOUSE', 'VETER': 'WIND', 'POGAŠENO': 'PUT OUT', 'Ogenj je preskočil cesto.': 'The fire jumped the road.', 'Zapeljal si mimo ognja.': 'You drove past the fire.',
+    'Polnjenje vode.': 'Filling up with water.', 'Vode ni več: vrni se do jezerca na kmetiji.': 'No water left: go back to the pond on the farm.', 'Vode ni več: pelji do jezerca na kmetiji.': 'No water left: drive to the pond on the farm.',
+    'Prehitro za gašenje: upočasni pod 30 km/h.': 'Too fast to spray: slow down under 30 km/h.', 'Predaleč: curek ne seže do tja.': 'Too far: the water does not reach that far.', 'Do ognja: {0} km': 'To the fire: {0} km',
+    'Požar v predoru': 'Fire in the tunnel', 'V predoru na gorski cesti gori tovornjak. Dim je tako gost, da se vidijo le utripalke ujetih avtov.': 'A lorry is burning in a tunnel on the mountain road. The smoke is so thick that only the hazard lights of the trapped cars show.',
+    'Reši ujete iz zadimljenega predora in pogasi ogenj.': 'Rescue the people trapped in the smoky tunnel and put out the fire.', 'V dimu sledi utripalkam ujetih avtov, ljudi naloži, nato pogasi ogenj.': 'In the smoke follow the hazard lights of the trapped cars, take the people on board, then put out the fire.',
+    'VIDLJIVOST V DIMU': 'VISIBILITY IN THE SMOKE', 'ZRAK V JEKLENKAH': 'AIR IN THE TANKS', 'DO OGNJA': 'TO THE FIRE', 'še {0} min': '{0} min left', 'pogašen': 'out',
+    'Zmanjkalo je zraka v jeklenkah.': 'The breathing air ran out.', 'Zapeljal si v ogenj.': 'You drove into the fire.', 'V predoru so ostali ljudje.': 'People were left in the tunnel.', 'Zapeljal si predaleč.': 'You drove too far.',
+    'Nalaganje ljudi.': 'Taking the people on board.', 'Do predora: {0} km': 'To the tunnel: {0} km', 'Ustavi pred gorečim tovornjakom in ga pogasi.': 'Stop in front of the burning lorry and put it out.', 'Ogenj je pogašen: pelji ven iz predora.': 'The fire is out: drive out of the tunnel.',
+    'Ustavi pri hiši.': 'Stop at the house.', 'Hišo si zgrešil: vrni se nazaj do nje.': 'You missed the house: go back to it.', 'Do hiše na vrhu: {0} km': 'To the house at the top: {0} km',
+    /* (the water missions: js/missions/kit.js, m19.js, m35.js, m37.js, m48.js) */
+    'Poplava': 'Flood', 'Monsunski dež je poplavil mesto. Voda še narašča, ljudje čakajo na strehah.': 'The monsoon rain has flooded the town. The water is still rising and people are waiting on the roofs.',
+    'Z dvoživko poberi ljudi s streh in jih odpelji na suho, preden voda naraste še za pol metra.': 'Pick up the people from the roofs with the amphibian and take them to dry ground before the water rises another half metre.',
+    'Pelji ob hišo, ustavi in vrzi obroč; tok te nosi proti morju.': 'Drive up to a house, stop and throw the ring; the current carries you toward the sea.',
+    'GLOBINA VODE': 'WATER DEPTH', 'VODA NARAŠČA': 'WATER RISING', 'VRZI OBROČ': 'THROW THE RING', 'POMOČ!': 'HELP!', '{0} oseba na strehi': '{0} person on the roof', '{0} osebi na strehi': '{0} people on the roof',
+    'Zapeljal si mimo, ljudje so ostali na strehah.': 'You drove past; people were left on the roofs.', 'Tok te je odnesel: vrni se k hiši in vrzi znova.': 'The current carried you off: go back to the house and throw again.',
+    'Obroč leti …': 'The ring is flying …', 'Oseba se spušča po vrvi …': 'A person is sliding down the line …', 'Ljudje so na suhem.': 'The people are on dry ground.', 'Vrzi obroč!': 'Throw the ring!',
+    'Ustavi ob hiši in vrzi obroč.': 'Stop by the house and throw the ring.', 'Ustavi: ljudje izstopijo na suho.': 'Stop: the people get out onto dry ground.',
+    'Odpelji ljudi na suho: do ovinka pod hribom.': 'Take the people to dry ground: to the hairpin at the foot of the hill.', 'Nekaj ljudi še čaka na strehah: vrni se po njih.': 'Some people are still waiting on the roofs: go back for them.',
+    'Reševalci na plaži': 'Beach lifeguards',
+    'Poletje na plaži. Tok je plavalca odnesel za valove in zmanjkuje mu moči.': 'Summer at the beach. A rip current has carried a swimmer out beyond the waves, and he is running out of strength.',
+    'S štirikolesnikom in skuterjem reši plavalca.': 'Rescue the swimmer with the quad and the jet ski.',
+    'Nad plažo presedi na skuter in pelji do plavalca.': 'Above the beach, switch to the jet ski and ride out to the swimmer.', 'PLAVALEC': 'SWIMMER', 'MOČ PLAVALCA': 'SWIMMER\'S STRENGTH',
+    'VALOVI': 'WAVES', 'na saneh': 'on the sled', 'PRESEDI NA SKUTER': 'TAKE THE JET SKI', 'Do plaže: {0} m': 'To the beach: {0} m', 'Ustavi nad plažo.': 'Stop above the beach.',
+    'Presedi na skuter!': 'Switch to the jet ski!', 'Plažo si zgrešil: vrni se nazaj.': 'You missed the beach: go back.', 'Plavalca vlečeš na sani …': 'Pulling the swimmer onto the sled …',
+    'Ustavi ob plavalcu.': 'Stop beside the swimmer.', 'Plavalec je na valu: pelji tja!': 'The swimmer is on a wave: go there!',
+    'Pelji do rdečega kroga; plavalec se pokaže na vrhu vala.': 'Ride to the red ring; the swimmer shows on top of a wave.',
+    'Plavalec je na saneh: pelji nazaj na obalo.': 'The swimmer is on the sled: ride back to the beach.', 'Plavalcu je zmanjkalo moči.': 'The swimmer ran out of strength.',
+    'Zapeljal si mimo plaže.': 'You drove past the beach.', 'USTAVI TU': 'STOP HERE', 'ZADNJIČ VIDEN': 'LAST SEEN', 'krog iskanja {0} m': 'search ring {0} m', 'OBALA': 'BEACH',
+    'Pred plimo': 'Before the Tide',
+    'Na otočku v rokavu potoka čaka bolan ribič. Plima narašča: kmalu bo morje prekrilo nizko cesto ob prvem ovinku.': 'A sick fisherman is waiting on a small island in the arm of the creek. The tide is rising: soon the sea will cover the low road by the first corner.',
+    'Pripelji zdravnika do brvi na otok in ga odpelji na suho, preden morje zalije cesto.': 'Drive the doctor to the footbridge to the island and take him to dry ground before the sea floods the road.',
+    'Ustavi v rumenem okvirju pred brvjo: zdravnik gre sam na otok.': 'Stop in the yellow box before the footbridge: the doctor walks over to the island.', 'MORJE': 'SEA', 'OTOK': 'ISLAND',
+    'ZDRAVNIK': 'DOCTOR', 'Morje je zalilo avto.': 'The sea flooded the car.', 'ribič čaka': 'fisherman waiting', 'SUHO': 'DRY', 'USTAVI': 'STOP',
+    'Zapeljal si mimo otoka.': 'You drove past the island.', '{0} pod cesto': '{0} below the road', '{0} na cesti': '{0} on the road', 'oskrbljen': 'treated', 'tukaj': 'here', 'v avtu': 'in the car',
+    'nazaj v avtu': 'back in the car', 'oskrba {0} %': 'treatment {0} %', 'na brvi': 'on the footbridge', 'Ustavi v rumenem okvirju.': 'Stop in the yellow box.',
+    'Brv je za tabo: zapelji vzvratno do rumenega okvirja.': 'The footbridge is behind you: back up to the yellow box.',
+    'Ko voda doseže kolesa, avto začne drseti.': 'When the water reaches the wheels, the car starts to slide.',
+    'Zdravnik je v avtu: odpelji ga na suho, naprej ali nazaj.': 'The doctor is in the car: take him to dry ground, forward or back.',
+    'Zdravnik oskrbuje ribiča …': 'The doctor is treating the fisherman …', 'Zdravnik gre po brvi na otok.': 'The doctor is crossing the footbridge to the island.',
+    'Zdravnik se vrača v avto.': 'The doctor is walking back to the car.',
+    'Narasla reka': 'River in Flood',
+    'Po dolgem deževju reka hitro narašča. Na kmetiji pred lesenim mostom čaka devet ljudi.': 'After days of rain the river is rising fast. Nine people are waiting at the farm before the wooden bridge.',
+    'Prepelji vse s kmetije čez lesen most v mesto, preden ga voda zalije.': 'Take everyone from the farm over the wooden bridge to the town before the water covers it.',
+    'Čez most pelji počasi in po sredini; plavje udarja ob opornice.': 'Cross the bridge slowly and in the middle; driftwood is hitting the piles.', 'VODA DO MOSTU': 'WATER TO DECK',
+    'EVAKUIRANI': 'EVACUATED', 'MOST ZDRŽI': 'BRIDGE HOLDS', 'PLAVJE': 'DRIFTWOOD', 'ODPELJI': 'GO',
+    'Voda je zalila most, ljudje so ostali na drugi strani.': 'The water covered the bridge; people were left on the other side.',
+    'Zapeljal si mimo, ljudje so ostali na kmetiji.': 'You drove on; people were left at the farm.', 'ŠE {0} LJUDI': '{0} PEOPLE LEFT', 'čakajo na kmetiji': 'waiting at the farm',
+    'ZBIRNO MESTO': 'MEETING POINT', 'v mestu': 'in the town', 'še {0}': '{0} left', 'pod mostom': 'under the bridge', 'udarja ob most': 'hitting the bridge', 'ob opornicah': 'at the piles',
+    'Posadka obrača tovornjak.': 'The crew is turning the truck round.', 'Ljudje se vkrcavajo.': 'People are climbing on.',
+    'Ljudje se vkrcavajo: ODPELJI, ko jih je dovolj.': 'People are climbing on: tap GO when there are enough.', 'Ljudje izstopajo na zbirnem mestu.': 'People are getting off at the meeting point.',
+    'Ustavi na zbirnem mestu.': 'Stop at the meeting point.', 'Ustavi pri kmetiji.': 'Stop at the farm.', 'Obrni: mesto je za teboj.': 'Turn round: the town is behind you.',
+    'Obrni: kmetija je za teboj.': 'Turn round: the farm is behind you.', 'Odpelji ljudi čez most v mesto.': 'Take the people over the bridge to the town.',
+    'Pelji na kmetijo po ljudi.': 'Drive to the farm for the people.',
+    /* (the snow missions: js/missions/kit.js, m30.js, m33.js, m53.js) */
+    'Ratrak': 'Snowcat', 'Ponoči je zapadlo pol metra snega, ob sedmih zjutraj pa pridejo prvi smučarji.': 'Half a metre of snow fell in the night, and the first skiers come at seven in the morning.',
+    'Z ratrakom uredi cesto do vrha, preden pridejo smučarji.': 'Groom the road to the top with the snowcat before the skiers come.',
+    'Za ratrakom ostane urejen sneg: ne izpusti nobenega dela ceste.': 'The snowcat leaves groomed snow behind it: do not miss any part of the road.',
+    'UREJENO': 'GROOMED', 'VITEL': 'WINCH', 'NAKLON': 'GRADE', 'SMUČARJI OB': 'SKIERS AT', 'prost': 'free',
+    'Na strmini drži vitel napet, sicer ratrak zdrsne.': 'On the steep part keep the winch tight, or the snowcat slides.',
+    'Vitel je ohlapen: počasneje, sicer ratrak zdrsne.': 'The winch is slack: slower, or the snowcat slides.',
+    'Vitel je prenapet: ne ustavljaj se na strmini.': 'The winch is too tight: do not stop on the steep part.',
+    'Jeklenica vitla se je strgala.': 'The winch cable snapped.', 'Cesta ni dovolj urejena: {0} %.': 'Not enough of the road is groomed: {0} %.',
+    'Odvoz snega': 'Snow removal', 'Po snežnem metežu mesto ponoči odvaža sneg. Freza ga meče v tovornjake ob sebi.': 'After the blizzard the city takes the snow away at night. The snowblower throws it into the trucks beside it.',
+    'S kiperjem vozi ob frezi, da curek snega pada v tvoj kiper.': 'Drive the dump truck beside the snowblower so its stream of snow falls into your truck.',
+    'Vozi enako hitro kot freza, da sneg pada v kiper.': 'Drive as fast as the snowblower so the snow falls into the truck.',
+    'CUREK': 'STREAM', 'KIPER': 'TRUCK', 'POLNI KIPERJI': 'FULL TRUCKS', 'ZADENEŠ': 'ON TARGET', 'zamenjava': 'swap', 'skoraj': 'almost', 'mimo': 'off',
+    'Kiper je poln: naslednji se postavlja pod curek.': 'The truck is full: the next one moves under the stream.', 'Dohiti frezo: čaka te.': 'Catch up with the snowblower: it is waiting for you.',
+    'Prehitel si frezo: počakaj jo.': 'You passed the snowblower: wait for it.', 'Zapelji na levi pas ob frezi.': 'Move into the left lane beside the snowblower.',
+    'Bolj desno, bliže frezi.': 'More to the right, closer to the snowblower.', 'Bolj levo, stran od freze.': 'More to the left, away from the snowblower.',
+    'Malo naprej.': 'A little forward.', 'Malo nazaj.': 'A little back.', 'Zadel si frezo.': 'You hit the snowblower.',
+    'Snežne verige': 'Snow chains', 'Sneži in prelaz bodo kmalu zaprli. Avtobus s 46 potniki mora čez.': 'It is snowing and the pass will close soon. A coach with 46 passengers must get over.',
+    'Namesti verige in pripelji avtobus čez serpentine, preden prelaz zaprejo.': 'Fit the chains and drive the coach up the hairpins before the pass closes.',
+    'Na snegu vozi enakomerno: sunek plina zavrti kolesa tudi z verigami.': 'Drive steadily on the snow: a burst of throttle spins the wheels even with chains.',
+    'VERIGE': 'CHAINS', 'OPRIJEM': 'GRIP', 'ZAPORA': 'CLOSURE', 'POTNIKI': 'PASSENGERS', 'čez {0} min': 'in {0} min', 'čez {0} s': 'in {0} s',
+    'NAMESTI VERIGO': 'FIT A CHAIN', 'Drži NAMESTI VERIGO, da namestiš verigo na kolo.': 'Hold FIT A CHAIN to put a chain on a wheel.',
+    'ZDRSNIL': 'SLID OFF', 'brez verig': 'no chains', 'galerija': 'gallery',
+    'Kolesa se vrtijo v prazno: popusti plin.': 'The wheels are spinning: ease off the throttle.', 'Avtobus drsi: počasneje skozi ovinek.': 'The coach is sliding: slower through the bend.',
+    'Tovornjak brez verig je obstal počez: zapelji mimo po levi.': 'A truck without chains is stuck across the road: pass it on the left.',
+    'Prelaz so zaprli, preden si prišel čez.': 'The pass closed before you got over.', 'Avtobus je močno trčil: potniki so poškodovani.': 'The coach crashed hard: the passengers are hurt.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
