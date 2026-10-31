@@ -597,6 +597,13 @@
     'Preglasno: počakaj med hupanji.': 'Too loud: wait between the honks.', 'Medvedi se umikajo.': 'The bears are moving away.',
     'Predaleč: medvedi te ne slišijo.': 'Too far: the bears cannot hear you.', 'Preblizu medvedke: zapelji nazaj.': 'Too close to the mother bear: back off.',
     'HUPA od daleč (25–60 m), počasi in s premori.': 'HORN from afar (25–60 m), slowly and with pauses.',
+    'Pobegla čreda': 'The Runaway Herd', 'S kmetije je pobegnilo devet krav. Razkropile so se po poti skozi park.': 'Nine cows have run away from the farm. They have scattered along the path through the park.',
+    'S poltovornjakom zaženi pobegle krave nazaj v ogrado.': 'Drive the runaway cows back into their pen with the pickup.',
+    'Prehitro jih razpršiš, prepočasi pobegnejo v gozd.': 'Too fast and you scatter them, too slow and they escape into the forest.',
+    'V OGRADI': 'IN THE PEN', 'V GOZDU': 'IN THE FOREST', 'DO OGRADE': 'TO THE PEN', 'OGRADA': 'PEN', 'BEŽI!': 'ESCAPING!', '{0} / {1}': '{0} / {1}',
+    'Preveč krav je pobegnilo v gozd.': 'Too many cows escaped into the forest.', 'Prehitro! Krave so se razbežale.': 'Too fast! The cows scattered.',
+    'Krave se razhajajo proti gozdu: zapelji bliže.': 'The cows are wandering off toward the forest: drive closer.',
+    'Zapelji za čredo in jo počasi potiskaj naprej.': 'Get behind the herd and push it slowly forward.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
