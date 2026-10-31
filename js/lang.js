@@ -333,7 +333,7 @@
     'Igra na tej napravi teče počasi: od naslednjega premora ali dirke bo brez senc (vklopiš jih v Nastavitvah).': 'The game runs slowly on this device: from the next pause or race it goes without shadows (switch them on in the Settings).',
     'Nova kariera: {0}.': 'New career: {0}.', 'Res začnem znova?': 'Really start again?', 'Tapni še enkrat, če res želiš začeti novo kariero (denar, avti in nadgradnje se izgubijo).': 'Tap again if you really want a new career (the money, cars and upgrades are lost).',
     'Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.': 'This car is not yours yet: choose a car from your garage or buy it.', 'Prvenstvo je opuščeno.': 'The championship is given up.',
-    'Nalagam novo mapo …': 'Loading the new map …', 'Začneš pri HOME. Zapelji v garažo in odpre se njen meni.': 'You start at HOME. Drive into a garage and its menu opens.', 'V izdelavi': 'Under construction', 'Garaža v izdelavi': 'Garage under construction', 'Nove mape ni bilo mogoče naložiti.': 'The new map could not be loaded.',
+    'Nalagam novo mapo …': 'Loading the new map …', 'Začneš pri HOME. Zapelji v garažo in odpre se njen meni.': 'You start at HOME. Drive into a garage and its menu opens.', 'V izdelavi': 'Under construction', 'Garaža v izdelavi': 'Garage under construction', 'DVIGNI SE': 'TAKE OFF', 'PRISTANI': 'LAND', 'HELIKOPTER': 'THE HELICOPTER', 'VIŠINA': 'ALTITUDE', 'HITROST': 'SPEED', 'Na vodi ne moreš pristati.': 'You cannot land on the water.', 'Tu ne moreš pristati.': 'You cannot land here.', 'Nove mape ni bilo mogoče naložiti.': 'The new map could not be loaded.',
     'Res opustim?': 'Really give up?', 'Tapni še enkrat, če res želiš opustiti prvenstvo.': 'Tap again if you really want to give the championship up.', 'Ta avto še ni tvoj: kupi ga v izbiri avta.': 'This car is not yours yet: buy it in the car choice.',
     'Sredina nagiba je nastavljena.': 'The tilt centre is set.', 'Izhod iz celotnega zaslona': 'Exit full screen',
     'Na iPhonu: Deli → Dodaj na začetni zaslon. Igra se nato z ikone odpre čez cel zaslon.': 'On the iPhone: Share → Add to Home Screen. The game then opens full screen from the icon.',
@@ -348,24 +348,25 @@
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
-    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Plaz Mother Cline': 'Mother Cline Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
-    'Razgledišče Renes': 'Renes Lookout', 'Razgledišče Danny\'s': 'Danny\'s Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
+    'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
-    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of Mulholland Highway)
+    'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
-    'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Mulholland Highway)
+    'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */ ' · policijski radio: {0} ({1})': ' · police radio: {0} ({1})',
     ' · policijski radio: ni glasu za slovenščino, govori angleško': ' · police radio: no Slovenian voice, it speaks English',
