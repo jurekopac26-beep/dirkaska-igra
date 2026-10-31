@@ -8,7 +8,8 @@
 //    mass, the grip, the drag, the brakes; a car without parts exactly as before (no deli field); on the flat test plane: the wing's
 //    km/h off the top speed (within 2 km/h), its grip in a steady corner, lighter rims a quicker 0-100, stronger brakes a shorter stop
 //  - the render kit in a sandbox (as kit.test.js): KOLIBRI stock; on every vehicle with mounts (KOLIBRI, the trial's PANTER, JASTREB and
-//    TITAN) each of the 16 options of krilo, platisca, zarometi it has a mount for built ok (no fallback to the stock body), within the phone's room for one car with parts (outer shell <= stock + 300 triangles, the cabin
+//    TITAN) each of the 16 options of every element it has a mount for (krilo, platisca, zarometi; KOLIBRI's ogledala, vrata, zavore,
+//    matice: js/deli/bok.js) built ok (no fallback to the stock body), within the phone's room for one car with parts (outer shell <= stock + 300 triangles, the cabin
 //    unchanged), Visoki within its budget, the rims within the parts' wheel budget (only the player's car has parts: its wheels <= 600
 //    triangles, Visoki <= 850; a stock car's 400 / 700, tests/browser/fleet.test.mjs), the parts in their
 //    stock part ids (the wing's range in 'spoiler', the lamps' in 'headL' / 'headR'); Render.deliMesh: the part alone where it sits, a
@@ -53,7 +54,8 @@ check('by hand: krilo 16 grip +19 % and -7 km/h, platisca 15 -14 kg, zavore 16 b
 // ---- the Core: KOLIBRI's mounts, applyDeli ----
 const C = loadCore(), KO = C.MODELS.find(m => m.id === 'kolibri'), MO = KO.def.mounts || {};
 check('the defs: none skipped (mounts a known key)', !C.DEFS_SKIPPED.length, C.DEFS_SKIPPED.map(s => s.id + ': ' + s.why).join('; ') || 'none');
-check('KOLIBRI\'s mounts: krilo (on the spoiler), zarometi (the lamps\' parts), platisca', MO.krilo && MO.krilo.part === 'spoiler' && MO.zarometi && MO.zarometi.hosts.join() === 'headL,headR' && !!MO.platisca);
+check('KOLIBRI\'s mounts: krilo (on the spoiler), zarometi (the lamps\' parts), platisca; ogledala, vrata, zavore, matice (js/deli/bok.js)', MO.krilo && MO.krilo.part === 'spoiler' && MO.zarometi && MO.zarometi.hosts.join() === 'headL,headR' && !!MO.platisca &&
+  ['ogledala', 'vrata', 'zavore', 'matice'].every(id => MO[id] && D.has(id)));
 const cleanK = D.clean({ krilo: 3, platisca: '7', zarometi: 17, nic: 2, aero: 4 }, KO);
 check('DELI.clean on KOLIBRI: the options it can show (unknown, out of range and unmounted ones out); the key sorted', JSON.stringify(cleanK) === '{"krilo":3,"platisca":7}' && D.key({ platisca: 7, krilo: 3 }, KO) === 'krilo3.platisca7' && D.key({ aero: 4 }, KO) === '' && D.key(null, KO) === '',
   JSON.stringify(cleanK));
@@ -103,22 +105,26 @@ check('stock KOLIBRI: built ok, within its budgets (outer 1400; its cabin\'s inn
 // every vehicle with mounts (KOLIBRI; the trial's PANTER, JASTREB, TITAN): each element it has a mount for, all 16 options
 const MOUNTED = C.MODELS.filter(m => m.kit && m.def.mounts), rows = [], fails = [], over = [], wheelsBad = [], rangeBad = [];
 for (const M of MOUNTED) { const S0 = R.kitInfo(M.id), mo = M.def.mounts;
-  for (const id of Object.keys(mo).filter(id => X.DELI.has(id))) for (let k = 1; k <= 16; k++) {
+  for (const id of Object.keys(mo).filter(id => D.has(id))) for (let k = 1; k <= 16; k++) {
     const I = R.kitInfo(M.id, { [id]: k }), tag = M.id + ' ' + id + k;
     if (I.status !== 'ok' || I.deli !== id + k || (I.hi && I.hi.status !== 'ok')) { fails.push(tag + ' ' + I.status + ' ' + I.deli); continue; }
     rows.push([tag, I.tris.outer - S0.tris.outer]);
     if (I.tris.outer > S0.tris.outer + 300 || I.tris.inner !== S0.tris.inner || (I.hi && (I.hi.tris.outer > I.hi.budget.outer || I.hi.tris.inner > I.hi.budget.inner))) over.push(`${tag} ${I.tris.outer}/${I.tris.inner}` + (I.hi ? ` Visoki ${I.hi.tris.outer}/${I.hi.tris.inner}` : ''));
-    if (I.wheels.hi.some(t => t > 600) || (I.hi && I.hi.wheels.some(t => t > 850))) wheelsBad.push(`${tag} ${I.wheels.hi.join('/')}` + (I.hi ? ' ' + I.hi.wheels.join('/') : ''));
+    if (I.wheels.hi.some((t, j) => t + I.wheels.still[j] > 600) || (I.hi && I.hi.wheels.some(t => t > 850))) wheelsBad.push(`${tag} ${I.wheels.hi.join('/')}` + (I.hi ? ' ' + I.hi.wheels.join('/') : ''));
     const rg = I.ranges, len = (q) => q.o[1] - q.o[0] + q.i[1] - q.i[0];
     if (id === 'krilo' && !(len(rg[mo.krilo.part]) > 0)) rangeBad.push(tag + ' ' + mo.krilo.part);
+    if (id === 'ogledala' && !(len(rg.mirrorL) > 0 && rg.mirrorL.subs.some(s => s.name === 'mglassL') && rg.mirrorR.subs.some(s => s.name === 'mglassR'))) rangeBad.push(tag + ' mirrors');
+    if (id === 'vrata' && !(len(rg.doorL) >= len(S0.ranges.doorL) && len(rg.doorR) >= len(S0.ranges.doorR))) rangeBad.push(tag + ' doors');
+    if (id === 'zavore' && !(I.wheels.still[0] > 0 && I.wheels.still[1] > 0 && I.wheels.hi[0] > S0.wheels.hi[0])) rangeBad.push(tag + ' brakes');
+    if (id === 'matice' && !(I.wheels.hi[0] > S0.wheels.hi[0] && !I.wheels.still[0])) rangeBad.push(tag + ' nuts');
     if (id === 'zarometi') { const [hl, hr] = mo.zarometi.hosts; if (!(len(rg[hl]) > 0 && len(rg[hr]) > 0 && rg[hl].subs.some(s => s.name === 'lampFL') && rg[hr].subs.some(s => s.name === 'lampFR'))) rangeBad.push(tag + ' lamps'); }
   } }
-check('every option builds on every vehicle with its mount (its own body: no fallback to the stock one), Normalni and Visoki', !fails.length && rows.length === MOUNTED.reduce((a, M) => a + Object.keys(M.def.mounts).filter(id => X.DELI.has(id)).length * 16, 0),
+check('every option builds on every vehicle with its mount (its own body: no fallback to the stock one), Normalni and Visoki', !fails.length && rows.length === MOUNTED.reduce((a, M) => a + Object.keys(M.def.mounts).filter(id => D.has(id)).length * 16, 0),
   fails.slice(0, 4).join(', ') || rows.length + ' options on ' + MOUNTED.map(m => m.id).join(' '));
 check('each within the room for one car with parts (outer <= stock + 300 triangles, the cabin unchanged; Visoki within its budget)', !over.length,
   over.slice(0, 4).join(', ') || 'most: ' + rows.slice().sort((a, b) => b[1] - a[1]).slice(0, 3).map(r => r[0] + ' +' + r[1]).join(', '));
 check('the rims within the parts\' wheel budget (the player\'s <= 600 triangles, Visoki <= 850)', !wheelsBad.length, wheelsBad.slice(0, 4).join(', ') || 'all');
-check('the parts in the mounts\' part ids (the wing: mounts.krilo.part, KOLIBRI\'s spoiler; the lamps: the hosts with their lenses lampFL / lampFR)', !rangeBad.length, rangeBad.slice(0, 4).join(', ') || 'all');
+check('the parts in the mounts\' part ids (the wing: mounts.krilo.part, KOLIBRI\'s spoiler; the lamps: the hosts with their lenses lampFL / lampFR; the mirrors in mirrorL / mirrorR with their glass mglassL / mglassR; the doors\' in doorL / doorR; the brakes on the wheels, their calipers still; the nuts on the wheels)', !rangeBad.length, rangeBad.slice(0, 4).join(', ') || 'all');
 check('none of them warned (no part fell back)', !warns.length, warns.slice(0, 2).join(' | ') || 'none');
 const box = (g) => { const b = new X.THREE.Box3().setFromObject(g); return [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z]; };
 const mW = R.deliMesh(KO, 'krilo', 10), mL = R.deliMesh('kolibri', 'zarometi', 4), mR = R.deliMesh(KO, 'platisca', 7);
@@ -126,6 +132,19 @@ const bW = mW && box(mW), bL = mL && box(mL);
 check('Render.deliMesh: the wing alone on the roof\'s rear edge, the lamps on the nose (both sides), the rims four wheels',
   !!mW && mW.children.length === 1 && bW[0] > -1.95 && bW[3] < -1.1 && bW[1] > 1.3 && !!mL && bL[0] > 1.55 && bL[2] < -0.3 && bL[5] > 0.3 && !!mR && mR.children.length === 4,
   mW && mL ? `wing x ${bW[0].toFixed(2)}..${bW[3].toFixed(2)} y ${bW[1].toFixed(2)}..${bW[4].toFixed(2)}, lamps x ${bL[0].toFixed(2)}..${bL[3].toFixed(2)}` : 'null');
+// the brakes' calipers (zavore, h.still): a mesh on each wheel that keeps only its steering (the spin about z undone); behind a steel
+// wheel (platisca 2, a hub cap over it) no brakes drawn
+{ const g = R.deliMesh(KO, 'zavore', 9), w = g && g.children[0], cal = w && w.children.find(c => c.name === 'still');
+  let ok = !!cal && g.children.length === 4 && g.children.every(c => c.children.some(k => k.name === 'still')), d = 'no calipers';
+  if (cal) { w.rotation.set(0, -0.3, 0); g.updateMatrixWorld(true); const want = w.matrixWorld.elements.slice();   // (the wheel steered, not spun: where the caliper belongs)
+    w.rotation.set(0, -0.3, -1.7); g.updateMatrixWorld(true); const err = Math.max(...cal.matrixWorld.elements.map((v, i) => Math.abs(v - want[i])));
+    ok = ok && err < 1e-9; d = `the caliper off by ${err.toExponential(1)} (the left front wheel steered -0.3, spun -1.7)`; }
+  const st = R.kitInfo('kolibri', { zavore: 9, platisca: 2 }).wheels.still;
+  check('the brakes\' calipers keep only the wheel\'s steering (not its spin); behind a hub cap no brakes', ok && st[0] === 0 && st[1] === 0, d + ', with platisca 2: ' + st.join('/')); }
+// all three wheel parts at once (every rim with the heaviest brakes and nuts: zavore 15, matice 16): a wheel <= 800 triangles (Visoki 1150)
+{ let w = [0, 0, '']; for (let p = 1; p <= 16; p++) { const I = R.kitInfo('kolibri', { platisca: p, zavore: 15, matice: 16 }), t = I.wheels.hi[0] + I.wheels.still[0];
+    if (t > w[0]) w = [t, w[1], 'platisca ' + p]; w[1] = Math.max(w[1], I.hi.wheels[0]); }
+  check('the rims, the brakes and the nuts together: a wheel <= 800 triangles (Visoki 1150)', w[0] <= 800 && w[1] <= 1150, `most ${w[0]} (${w[2]}), Visoki ${w[1]}`); }
 const other = C.MODELS.find(m => m.kit && m.id !== 'kolibri' && !m.def.mounts);
 check('a vehicle without the mount: no part drawn (deliMesh null, its body the stock one)', !!other && R.deliMesh(other, 'krilo', 3) === null && R.kitInfo(other.id, { krilo: 3 }).deli === '', other ? other.id : 'none');
 // a car's own lamp (mounts.zarometi.shape): every option within its outline (PANTER's triangles on the wings' noses, JASTREB's lamps

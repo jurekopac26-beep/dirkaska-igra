@@ -819,6 +819,9 @@ const Render = (function () {
        The garage's rims (car.deli.platisca, DELI.wheel(n)) are a look's wheels laid over the vehicle's: face(h) draws the rim's face (h: g,
                       p, spokeQ, capF, rr, r1, zd, zo, top, full, out), dish 'rim' / dishC (the dish's colour), lip, deep (a deep dish);
                       the tyre and its style stay the vehicle's. Only the player's car has them: <= 600 triangles (Visoki 850)
+       The garage's wheel parts (KIT_WHEEL_DELI: car.deli.zavore, matice; js/deli/bok.js) are drawn on the player's wheels after the
+                      face by DELI.build with the face's helper for K (and still: a GB of what does not turn with the wheel, the brakes'
+                      calipers: a mesh of its own on the wheel that keeps only its steering, kitWheelMesh; r, rear, vis, fitted)
      look.hi (optional): true when build(K) draws small details for Nastavitve · Detajli avtov: Visoki (a computer's default; a phone's is
        Normalni): the player's and the showroom's car are then built a second time with K.hi true (a cache of its own; the rivals and every
        phone keep the Normalni build). The Visoki build draws the same parts, regions and lamps, and adds its details only inside if (K.hi)
@@ -1620,8 +1623,8 @@ const Render = (function () {
 
   // ---- the wheels (3.5): fixtures for every style, at the origin, the axle along z, the outer face towards +z (a left wheel's mesh is mirrored:
   // scale.z = -1). hi: the player's and the showroom's (<= 400 triangles), else a rival's (<= 160) ----
-  function kitWheelGeo(W, r, wd, hi, dual) {
-    const g = new GB(), st = W.style, TY = W.tyre || [0.065, 0.065, 0.07], TY2 = [Math.min(1, TY[0] * 1.9 + 0.03), Math.min(1, TY[1] * 1.9 + 0.03), Math.min(1, TY[2] * 1.9 + 0.03)];
+  function kitWheelGeo(W, r, wd, hi, dual, rear) {
+    const g = new GB(), still = W.deliW && hi ? new GB() : null, st = W.style, TY = W.tyre || [0.065, 0.065, 0.07], TY2 = [Math.min(1, TY[0] * 1.9 + 0.03), Math.min(1, TY[1] * 1.9 + 0.03), Math.min(1, TY[2] * 1.9 + 0.03)];
     const RIM = W.rim || ({ std: [0.62, 0.63, 0.66], deep: [0.74, 0.75, 0.78], wire: [0.8, 0.81, 0.84], retro: [0.84, 0.85, 0.88], knob: [0.56, 0.57, 0.6], truck: [0.86, 0.86, 0.84], monster: [0.7, 0.71, 0.74], slick: [0.22, 0.22, 0.24], kart: [0.78, 0.66, 0.3] })[st];
     const DK = [RIM[0] * 0.3 + 0.02, RIM[1] * 0.3 + 0.02, RIM[2] * 0.3 + 0.025], CAP = W.cap || [Math.min(1, RIM[0] * 1.15), Math.min(1, RIM[1] * 1.15), Math.min(1, RIM[2] * 1.15)];
     const S = hi ? (dual ? 12 : 16) : (dual ? 8 : 10), WALL = [0.9, 0.9, 0.88], N = hi && W.seg ? W.seg : S, kq = N / S, TAU = Math.PI * 2;   // (N: the round tyre's segments, look.wheels.seg)
@@ -1679,7 +1682,8 @@ const Render = (function () {
         g.quadO([c * r0 + ox, s * r0 + oy, z0], [c * r1 + ox, s * r1 + oy, z1], [c * r1 - ox, s * r1 - oy, z1], [c * r0 - ox, s * r0 - oy, z0], col, [0, 0, zc - 5]); };
       const capF = (rc, n, col, z, dome) => { z = L(rc, z); for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2; g.triO([0, 0, z + (dome || 0)], p(a0, z, rc), p(a1, z, rc), col, [0, 0, zc - 5]); } };
       const r1 = full ? rr * 0.92 : rr * 0.95, z0 = zd + 0.01;   // (the spokes rise from the recessed hub to the rim)
-      if (W.face) W.face({ g, spokeQ, capF, rr, r1, z0, zd, zo, top, hi, full, p, out: [0, 0, zc - 5] });   // (a part's rims, DELI.wheel: their own face)
+      const fh = { g, spokeQ, capF, rr, r1, z0, zd, zo, top, hi, full, p, out: [0, 0, zc - 5] };
+      if (W.face) W.face(fh);   // (a part's rims, DELI.wheel: their own face)
       else if (st === 'std') {
         const n = W.spokes == null ? 5 : W.spokes, sw = n <= 4 ? (hi ? 0.2 : 0.22) : (hi ? 0.11 : 0.13);   // (four spokes or fewer: broad arms)
         if (n > 0) for (let k = 0; k < n; k++) spokeQ(k / n * Math.PI * 2 + 0.3, rr * sw, rr * 0.2, r1, RIM, z0, top);
@@ -1707,10 +1711,16 @@ const Render = (function () {
         for (let k = 0; k < 3; k++) spokeQ(k / 3 * Math.PI * 2, rr * 0.16, rr * 0.18, r1, RIM, z0, top);
         capF(rr * 0.22, 6, DK, zd + 0.012, 0.012);
       }
+      // the garage's wheel parts (W.deliW, kitBuild: zavore, matice; js/deli/bok.js): drawn by DELI.build with the face's helper for K, after
+      // the face, the player's wheels only (full); still: what does not turn with the wheel (the brakes' calipers: a mesh of its own on the
+      // wheel, kitWheelMesh), r the tyre's radius, rear, vis (Visoki), fitted (the car's parts: the rims fitted)
+      if (still && full) for (const [id, n, m, MM, vis, fitted] of W.deliW) DELI.build(Object.assign(fh, { still, r, wd, rear: !!rear, vis, fitted }), id, n, m, MM);
     };
     one(0, true);
     if (dual) one(-(wd + 0.03), false);   // (the twin rear tyre, inboard)
-    const geo = g.geometry(); geo.userData.tris = geo.attributes.position.count / 3; return geo;
+    const geo = g.geometry(); geo.userData.tris = geo.attributes.position.count / 3;
+    if (still && still.P.length) { const sg = still.geometry(); sg.userData.tris = sg.attributes.position.count / 3; geo.userData.still = sg; }
+    return geo;
   }
 
   // ---- K: the toolkit the look's build(K) draws with (the KIT API v1 above) ----
@@ -2015,11 +2025,14 @@ const Render = (function () {
   }
 
   // ---- the cache: one colour-neutral geometry (and tail, wheels) per kit model, built on first use; Render.kitStatus(id) ----
-  const kitCache = new Map(), kitCacheHi = new Map(), kitDeliCache = new Map(), kitWheelCache = new Map(), kitShowLRU = [];   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
+  const kitCache = new Map(), kitCacheHi = new Map(), kitDeliCache = new Map(), kitWheelCache = new Map(), kitShowLRU = [];
+  const KIT_WHEEL_DELI = ['zavore', 'matice'];   // (the garage's parts drawn on the wheels, not in build(K): the brakes, the wheel nuts; the rims are the wheels' look)   // (kitCacheHi: the Visoki bodies, Nastavitve · Detajli avtov)
   function kitBuild(M, look, fb, hi, deli) {
     const body = kitBodyOf(M, look), kx = kitCtx(M, look, body, fb);
     if (deli) { kx.deli = deli; if (deli.platisca && typeof DELI !== 'undefined') Object.assign(kx.wheels, DELI.wheel(deli.platisca)); }   // (the parts fitted: K.deli draws them; the rims: the wheels' look)
     if (hi && kx.wheels.segHi) kx.wheels.seg = kx.wheels.segHi;   // (Visoki: the round tyre's own segments)
+    const wd = deli && typeof DELI !== 'undefined' ? KIT_WHEEL_DELI.filter(id => deli[id] && DELI.has(id) && M.def.mounts && M.def.mounts[id]) : [];
+    if (wd.length) kx.wheels.deliW = wd.map(id => [id, deli[id], M.def.mounts[id], M, !!hi, deli]);   // (the wheel parts: drawn on the player's wheels, kitWheelGeo)
     kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
@@ -2109,8 +2122,16 @@ const Render = (function () {
   function kitWheels(E, hi) {
     const key = E.key + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
     const W = E.W, r = E.M.rw;
-    w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual) };
+    w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual, true) };
     kitWheelCache.set(key, w); return w;
+  }
+  // a kit wheel's mesh: its geometry's still part (the garage's brakes' calipers, geo.userData.still) a mesh on it that keeps only the
+  // wheel's steering (its spin about z undone every frame: the wheels' rotation is (0, steer, -spin), Euler XYZ)
+  function kitWheelMesh(geo, mat) {
+    const w = new THREE.Mesh(geo, mat), sg = geo.userData.still;
+    if (sg) { const c = new THREE.Mesh(sg, mat); c.name = 'still';
+      c.updateMatrix = function () { this.rotation.z = this.parent ? -this.parent.rotation.z : 0; THREE.Object3D.prototype.updateMatrix.call(this); }; w.add(c); }
+    return w;
   }
   // a car's own copy of its model's body in its colours (the paint and the stripe vertices; drawRange: the outer block, as an intact car)
   // (num: the car's start number, lit on its K.number panels: two digits, or one in the middle; 0 / none: blank panels)
@@ -2256,9 +2277,9 @@ const Render = (function () {
     if (!M || !M.kit || typeof DELI === 'undefined') return null;
     const E = kitEntry(M, true, { [id]: n }); if (!E.deli) return null;
     const grp = new THREE.Group(); grp.name = 'deli:' + id + n;
-    if (id === 'platisca') {
+    if (id === 'platisca' || KIT_WHEEL_DELI.includes(id)) {   // (the wheels' parts: the four wheels with them)
       const W = kitWheels(E, true), mat = matWheel || new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x8c8c8c, shininess: 60 });
-      for (const sd of [-1, 1]) { const f = new THREE.Mesh(W.f, mat), r = new THREE.Mesh(W.r, mat);
+      for (const sd of [-1, 1]) { const f = kitWheelMesh(W.f, mat), r = kitWheelMesh(W.r, mat);
         f.position.set(M.a, M.rw, sd * E.body.hw); r.position.set(-M.b, M.rw, sd * E.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1; grp.add(f, r); }
       return grp;
     }
@@ -2289,7 +2310,7 @@ const Render = (function () {
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, deli: E.deli || '', tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
-      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
+      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], still: [wh.f, wh.r].map(g => g.userData.still ? g.userData.still.userData.tris : 0), lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
       hi: M.def && M.def.look && M.def.look.hi ? (() => { const H = kitEntry(M, true, deli), hw = kitWheels(H, true); return { status: H.hi ? 'ok' : 'normal', tris: Object.assign({}, H.geo.userData.tris), budget: Object.assign({}, H.geo.userData.budget), wheels: [hw.f.userData.tris, hw.r.userData.tris] }; })() : null,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
@@ -2715,7 +2736,7 @@ const Render = (function () {
     } else if (KE) {
       const hi = !!car.isPlayer || !!(opts && opts.show), W = kitWheels(KE, hi);   // (the kit: four wheels on their hubs, exactly where the physics has them; the left ones mirrored, their face out)
       for (const sd of [-1, 1]) {
-        const f = new THREE.Mesh(W.f, matWheel), r = new THREE.Mesh(W.r, matWheel);
+        const f = kitWheelMesh(W.f, matWheel), r = kitWheelMesh(W.r, matWheel);   // (the garage's brakes: their calipers on them, not turning)
         f.position.set(M.a, M.rw, sd * KE.body.hw); r.position.set(-M.b, M.rw, sd * KE.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1;
         f.castShadow = r.castShadow = !!car.isPlayer; grp.add(f, r); wf.push(f); wr.push(r);
       }
