@@ -30,7 +30,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Po vsaki spremembi v `js/` ali `css/` zaženi `node tools/stamp.js`, za nove reference `npm run golden:update`.
 - Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
 - Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni testi, ki se nanašajo na spremembo (Node in brskalniški; `npm run test:related` jih izbere iz `git diff` proti `main`, hiter vstop v igro `index.html?proga=<id>` je opisan v `tests/README.md`); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu. Celoten Node nabor lokalno traja okoli 1 h (`races.test.js` presega privzetih 15 min: `TEST_TIMEOUT_MIN=40`). Na `main` gre sprememba šele, ko so ti zeleni in jo uporabnik potrdi (sklope iz `docs/orodje-za-napake.md` je uporabnik potrdil vnaprej: na `main`, ko so testi zeleni).
-- Pull request odpri samo, če uporabnik to izrecno prosi, ali za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop oziroma na združen korak; sklop 17 jih ima lahko več).
+- Pull request odpri samo, če uporabnik to izrecno prosi, ali za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop oziroma na združen korak; sklop 17 jih ima lahko več), ali za progo iz `docs/gorske-proge.md` (en pull request na progo).
 
 ## Kje je kaj (manj iskanja)
 - Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
@@ -50,3 +50,8 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 ## Posebne misije (`docs/misije.md`)
 - Načrt, odločitve, skupine in stanje so v `docs/misije.md`. Vsaka skupina je svoja seja (»Naredi skupino N po docs/misije.md«), vsaka skupina svoja veja (`misije/skupina-<N>`) in en pull request, ki ga seja odpre sama, ko so testi zeleni, in ga združi sama, ko so zeleni vsi testi na GitHubu.
 - Koda misij je v `js/missions.js` in `js/missions/`; v `js/newmap.js`, `js/nvmenu.js` in `js/game.js` samo kratki priklopi. Vprašanja uporabniku v slikah z oštevilčenimi možnostmi.
+
+## Gorske proge (`docs/gorske-proge.md`)
+- Načrt, odločitve, podatki OSM in stanje desetih kratkih gorskih prog s smučišči so v `docs/gorske-proge.md`. Vsaka proga je svoja seja (»Naredi progo N po docs/gorske-proge.md«), svoja veja (`gorske-proge/<NN>-<id>`) in en pull request.
+- Odločitev uporabnika (31. 10. 2026): vse proge so en sklop; seja pull request sama združi na `main` **brez vprašanja**, ko so na GitHubu zeleni vsi testi, in brez vprašanja zažene sejo za naslednjo progo. Uporabnik verigo ustavi z »stop«.
+- Skupni gradniki (žičnice, sneg, živali) so v `js/world-gore.js`, uvoz OSM in višin v `tools/proga-uvoz.mjs` (naredi ju prva seja). OSM prek glavnega API-ja (`api.openstreetmap.org/api/0.6/map?bbox=…`), ker `overpass-api.de` iz okolja ne deluje.
