@@ -51,6 +51,17 @@ Na KOLIBRIJU (mesta pod vrstico »js/deli/bok.js« v `mounts`, ovoja `K.deli('og
 - `zavore`: disk na skledi platišča (vrti se s kolesom; zareze, luknje, plavajoči z aluminijastim zvonom in zakovicami, keramični, karbon-karbon z režami), čeljust v `h.still` na zadnjem zgornjem robu diska (serijska temna, kompleti rdeča, rumena, črna, oranžna; keramične rumena, titanova, modra, črna), ploščice v barvi možnosti pod čeljustjo. Barvo čeljusti bo spreminjal element `celjusti` (sklop 3): v `caliper` (`js/deli/bok.js`) je barva `O.cal`.
 - `matice`: šestrobe matice na pestu nad maticami platišča (jeklene, kromirane z žirom, s ključavnico, ozke z utorom (Visoki), barvne aluminijaste s podložko, kovane s posnetim vrhom, odprte s koncem vijaka, titanove, mavrične z barvnim prelivom).
 - Mere: ogledala +112 do +136 trikotnikov telesa, vrata do +86; kolo z zavorami do +72 (Visoki +116) in čeljust 36–46, z maticami do +96 (Visoki +168); najtežja platišča, zavore in matice skupaj 786 (Visoki 1116).
+## Sklop 2 · spredaj (KOLIBRI)
+
+Elementi v `js/deli/spredaj.js` (`DELI.add`), mesta v `js/cars/kolibri.js` (polja so opisana na vrhu datoteke):
+- `aero`: kit ob vznožju avta namesto serijskih črnih robov pod odbijačema (`lipF`, `lipR`; možnost brez svojega kosa spredaj ali zadaj ju obdrži): sprednji spojler, pragovi (`body`, ne odpadejo), difuzor in zadnja robova (`bumperR`, mimo auspuha: `exh`), ravno krilce s ploščama in krilca na vogalih (`bumperF`), razširitve blatnikov (`K.flare`, `body`). Lakirani paketi so v barvi avta, karbonski v karbonu.
+- `hauba`: namesto serijske zajemalke, v delu `hood` (odpre se in odleti s haubo): koža po vrhu haube (`K.topY`) iz aluminija ali karbona (karbon v dveh odtenkih trikotnikov, na Visokih gostejši), reže, izboklina, zajemalka, hitre zaponke, črna proga.
+- `maska`: namesto serijske ozke maske med lučmi (na nagnjeni ploskvi kot luči): mreža, satje, letve, reže, okvir, svetleč rob.
+- `zmigavci`: namesto serijskih oranžnih stekel na odbijaču in na blatnikih; možnosti 7 in 16 imajo ponavljalnik na ogledalih (del `mirrorL` / `mirrorR`, mesto `mirror`: sprednja ploskev ohišja serijskega ogledala), 11, 13–16 tudi zadaj na odbijaču. Tekoči so stopnjevani od temnejše notranje do svetle zunanje lučke.
+- `relijske_luci` (serijsko jih ni): dve na odbijaču, štiri na cevi pred masko, letev na strehi (`body`), LED-letev v spodnji odprtini odbijača, pokrov z lučmi čez nos (`bumperF`). Luči ponoči ne svetijo (samo barva).
+- Trikotniki (Normalni / Visoki nad serijskim): največ `aero` 16 +272 / +352, `relijske_luci` 5–8 +220 / +360, `maska` 16 +170 / +294; vse v meji +300 (Normalni) in v proračunu Visokih.
+- Za druge seje: `zmigavci` 7 in 16 rišeta na ohišje serijskega ogledala (seja »bok«: če `ogledala` spremeni ohišje, mesto `zmigavci.mirror` velja za serijsko). Difuzor `aero` je v sredini pod zadnjim odbijačem (seja »zadaj«: auspuh na sredini bi šel skozenj). Letev `relijske_luci` 9, 11, 12 je na sprednjem robu strehe (x 0,1; seja »streha«: strešna zajemalka naj bo za njo).
+- `tests/deli.test.js` zdaj preveri vse elemente z mestom v `mounts`, ki jih `DELI` zna narisati (ne več samo `krilo`, `platisca`, `zarometi`).
 
 ## Poskus na treh drugih avtih (sklop 1)
 
@@ -68,7 +79,7 @@ Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato
 | Sklop | Kaj | Stanje |
 |---|---|---|
 | 1 | dogovor; `krilo`, `platisca`, `zarometi` na KOLIBRIJU; poskus na PANTERJU, JASTREBU, TITANU | narejeno, pull request #192 (luč JASTREBA v enem kosu po izbiri uporabnika) |
-| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«) |
+| 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«); spredaj potrjeno 30. 10. 2026 (razdelek »Sklop 2 · spredaj«) |
 | 3 | barve in nalepke (`barva`, `crte`, `stevilke`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | barve in skriti deli vzporedno v 1 seji; razbijanje po sklopu 2 |
 | 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
 

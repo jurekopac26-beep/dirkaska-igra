@@ -56,8 +56,8 @@ const C = loadCore(), KO = C.MODELS.find(m => m.id === 'kolibri'), MO = KO.def.m
 check('the defs: none skipped (mounts a known key)', !C.DEFS_SKIPPED.length, C.DEFS_SKIPPED.map(s => s.id + ': ' + s.why).join('; ') || 'none');
 check('KOLIBRI\'s mounts: krilo (on the spoiler), zarometi (the lamps\' parts), platisca; ogledala, vrata, zavore, matice (js/deli/bok.js)', MO.krilo && MO.krilo.part === 'spoiler' && MO.zarometi && MO.zarometi.hosts.join() === 'headL,headR' && !!MO.platisca &&
   ['ogledala', 'vrata', 'zavore', 'matice'].every(id => MO[id] && D.has(id)));
-const cleanK = D.clean({ krilo: 3, platisca: '7', zarometi: 17, nic: 2, aero: 4 }, KO);
-check('DELI.clean on KOLIBRI: the options it can show (unknown, out of range and unmounted ones out); the key sorted', JSON.stringify(cleanK) === '{"krilo":3,"platisca":7}' && D.key({ platisca: 7, krilo: 3 }, KO) === 'krilo3.platisca7' && D.key({ aero: 4 }, KO) === '' && D.key(null, KO) === '',
+const cleanK = D.clean({ krilo: 3, platisca: '7', zarometi: 17, nic: 2, hupa: 4 }, KO);
+check('DELI.clean on KOLIBRI: the options it can show (unknown, out of range and unmounted ones out); the key sorted', JSON.stringify(cleanK) === '{"krilo":3,"platisca":7}' && D.key({ platisca: 7, krilo: 3 }, KO) === 'krilo3.platisca7' && D.key({ hupa: 4 }, KO) === '' && D.key(null, KO) === '',
   JSON.stringify(cleanK));
 const ARC0 = JSON.stringify(C.ARC ? C.ARC.kolibri : null), M0 = JSON.stringify([KO.mass, KO.kw, KO.cDrag, KO.Tmax]);
 const stock = new C.Car(KO, { id: 1 }), withP = new C.Car(KO, { id: 2, deli: { krilo: 16, platisca: 15, zavore: 16 } }), junk = new C.Car(KO, { id: 3, deli: { nic: 3, krilo: 40 } });
