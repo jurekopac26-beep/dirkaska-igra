@@ -57,7 +57,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
-| `docs/nove-proge.md` | načrt 7 novih prog (Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas, Pau): pravila in odločitve uporabnika, odprti viri, seje A in B, zagon naslednje seje, seznam pravil, Recept, stanje |
+| `docs/nove-proge.md` | načrt 8 novih prog (Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas, Pau, Ngorongoro): pravila in odločitve uporabnika, odprti viri, seje A in B, zagon naslednje seje, seznam pravil, Recept, stanje |
 
 ## Teme v `js/game.js`
 

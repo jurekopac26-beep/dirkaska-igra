@@ -1,8 +1,8 @@
 # Nove proge · načrt
 
-Načrt za 7 novih prog iz predstavitve »60 kratkih prog«. Odločitve so iz pogovora z uporabnikom (31. 10. 2026). Ostalih prog iz predstavitve ne delamo. Nova seja dobi vse, kar potrebuje, iz tega dokumenta; velikih datotek ne bere v celoti (`docs/kazalo.md`, grep).
+Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama in Ngorongoro, ki ga je uporabnik dodal 31. 10. zvečer. Odločitve so iz pogovora z uporabnikom (31. 10. 2026). Ostalih prog iz predstavitve ne delamo, razen če jih doda uporabnik. Nova seja dobi vse, kar potrebuje, iz tega dokumenta; velikih datotek ne bere v celoti (`docs/kazalo.md`, grep).
 
-**Kako se dela:** ena seja naenkrat, po vrsti iz tabele Stanje, z navodilom »Naredi sejo <N><A|B> po docs/nove-proge.md«. Vsaka proga ima dve seji na isti veji `nove-proge/<id>` in en pull request. Seja A naredi progo iz podatkov in odpre pull request. Seja B dodela grafiko in pull request združi sama, ko so zeleni vsi testi na GitHubu (odločitev uporabnika 31. 10.: brez čakanja na preizkus na telefonu). Ob koncu seja posodobi Stanje in Recept ter sama zažene naslednjo sejo (razdelek Zagon naslednje seje).
+**Kako se dela:** ena seja naenkrat, po vrsti iz tabele Stanje, z navodilom »Naredi sejo <N><A|B> po docs/nove-proge.md«. Vsaka proga ima dve seji na isti veji `nove-proge/<id>` in en pull request. Seja A naredi progo iz podatkov in odpre pull request. Seja B dodela grafiko in pull request združi sama, ko so zeleni vsi testi na GitHubu (odločitev uporabnika 31. 10.: brez čakanja na preizkus na telefonu). Ob koncu seja posodobi Stanje in Recept ter zažene naslednjo sejo (razdelek Zagon naslednje seje).
 
 ## Pravila (uporabnik, 31. 10.)
 - **Cilj:** proga čim bolj podobna pravi cesti in grafično čim boljša, za kamero za avtom (cesta in njeni robovi, teren, obzorje, nebo, svetloba, vreme).
@@ -50,6 +50,14 @@ Načrt za 7 novih prog iz predstavitve »60 kratkih prog«. Odločitve so iz pog
 - **Višine:** IGN RGE ALTI (Licence Ouverte 2.0), če ni dosegljiv, Copernicus.
 - **Pravno:** ovinka, poimenovana po osebah (Foch, Pont Oscar), dobita opisni imeni (po vzoru seznama v `maketa-menija/README.md`).
 
+### 8 · Ngorongoro, Tanzanija (`ngorongoro`, »Ngorongoro, Tanzania«; dodal uporabnik 31. 10.)
+- **Odsek:** najstrmejši ~4 km makadamskega spusta z roba kraterja na dno (po predstavitvi 4,1 km, ~397 m višinske razlike, 11 zavojev). Točen odsek izbere seja A iz OpenStreetMap in ga utemelji v `docs/proge/ngorongoro.md`. Odprta, makadam, vožnja na čas.
+- **Kot v resnici:** strma travnata pobočja kraterja, skoraj brez dreves in stavb; dno kraterja z jezerom v kadru ves spust; nasprotni rob kraterja na obzorju; barva makadama in trave po satelitskih posnetkih in fotografijah.
+- **Veliko živali (želja uporabnika):** čim več, kot v resnici: črede gnujev, zeber, bivolov in gazel na dnu in spodnjih pobočjih, sloni, levi ob cesti, hijene, noji, bradavičarji, plamenci kot rožnat pas ob jezeru, povodni konji in kronasti žerjavi, kjer so v resnici blizu. Vrste, velikost čred in razporeditev po virih in fotografijah. Živali se pasejo, hodijo, včasih prečkajo cesto in se avtu vedno umaknejo; avto jih ne more povoziti ali poškodovati. Daljne črede na dnu kraterja so vidne že med spustom.
+- **Kako:** en `InstancedMesh` na vrsto, poza v senčilniku oglišč, kot živali na Pikes Peaku (`js/world-pikes.js`); beg pred avtom kot kenguruji na Bathurstu (`js/world-rbring.js`, `out.dyn.roos`); daljne črede poenostavljene. Vse v meji obremenitve telefona.
+- **Promet:** levostranski (kot Chapman's Peak), če po odseku vozijo v obe smeri; safari terenci, če jih dodaš, brez znamk in napisov.
+- **Pravno:** zaščiteno območje; brez imen safari podjetij in drugih napisov.
+
 ## Viri (samo odprti)
 - **Cesta, stavbe, raba tal, voda, zidovi, ograje, mostovi:** OpenStreetMap prek Overture Maps (ceste že bere `maketa-menija/orodja/geo_roads.py`).
 - **Višine:** Copernicus DEM GLO-30 (drugod), swisstopo (Furka), IGN (Pau). Krošnje dreves iz višin odstrani kot pri Medvodah (`docs/proge/medvode.md`). Višine iz Terrain Tiles že bere `maketa-menija/orodja/geo_lib.py`.
@@ -60,21 +68,21 @@ Načrt za 7 novih prog iz predstavitve »60 kratkih prog«. Odločitve so iz pog
 
 ## Varčevanje s tokeni (odločitev uporabnika 31. 10.: »Uporabi vse predloge«)
 1. **Orodje za podatke proge in Recept:** seja 1A naredi orodje (`tools/proga/`), ki iz OpenStreetMap, višin, Sentinel-2 in karte krošenj pripravi podatke proge, in zapiše Recept (spodaj). Seje 2A–7A orodje samo poženejo in po potrebi dopolnijo, ne pišejo svojih skript.
-2. **Meni za vseh 7 naenkrat:** zemljevid od zgoraj, globus, prelet in glasbo naredi seja 8 za vse proge hkrati (kot PR #201). Sliki za meni (`assets/tracks/<id>.webp`, `<id>-rain.webp`) naredi vsaka seja A sama, ker brez njiju meni pokaže prazen oder.
+2. **Meni za vseh 8 naenkrat:** zemljevid od zgoraj, globus, prelet in glasbo naredi seja 9 za vse proge hkrati (kot PR #201). Sliki za meni (`assets/tracks/<id>.webp`, `<id>-rain.webp`) naredi vsaka seja A sama, ker brez njiju meni pokaže prazen oder.
 3. **Pripombe uporabnika:** v enem sporočilu na progo, za napake na cesti z besedilom `RRA-NAPAKE …` (proga, krog, metri od štarta).
 4. **Popravki prog, ki so že na `main`:** nova kratka seja (»Popravi … na progi <id> po docs/nove-proge.md«), ne stara dolga seja.
 
 ## Organizacija sej (odločitev uporabnika 31. 10.)
 1. **Ena za drugo:** nobenih vzporednih sej v tej verigi; vsaka seja začne na najnovejšem orodju in Receptu.
 2. **Recept raste:** ob koncu seje 3–5 vrstic v Recept (kaj se je obneslo, česa ne, pripombe uporabnika). Recept ostane kratek (do ~1 stran), ni dnevnik.
-3. **Stanje v tem dokumentu, brez glavne seje:** vsaka seja ob koncu posodobi Stanje in zažene naslednjo z enim stavkom.
+3. **Stanje v tem dokumentu:** vsaka seja ob koncu posodobi Stanje in zažene naslednjo z enim stavkom (razdelek Zagon naslednje seje). Koordinacijska seja dela ne spremlja; samo zažene naslednjo sejo, ko jo obvestiš.
 4. **Preizkus brez čakanja:** GitHub naredi predogled (`beta/<številka PR>/`, `tools/predogled.mjs`) in posnetke pred/po (`posnetki.yml`). Seja na uporabnika ne čaka; če pošlje pripombe, gredo v Recept in v popravek.
 5. **Pregled pred združitvijo (seja B):** Seznam pravil (spodaj); primerjava igre s fotografijami z istih 4–6 mest ob cesti (spodnja meja kakovosti: Bathurst po PR #210); en kratek neodvisen pregled s podagentom, ki dobi samo spremembe te proge in pravila, ne celega repozitorija.
 6. **Brez praznega čakanja:** dolgi testi tečejo v ozadju, pull request seja spremlja z obvestili GitHuba (`subscribe_pr_activity`), brez zank s `sleep`. Za iskanje po kodi kazalo in grep, ne podagenti.
 
 ## Seja A (izdelava)
 1. Veja `nove-proge/<id>` (iz svežega `main`; seja 1A iz veje s tem načrtom, glej Stanje).
-2. Proga iz podatkov (Viri): sredinska črta, širina, višine, usek in nasip, podporni zidovi, mostovi; okolica v svoji datoteki `js/world-<id>.js` (teren, raba tal, barve tal, drevesa, stavbe, voda, obzorje). Za prelaze (1–6) uporabi skupno okolico za prelaze, ki jo naredi seja 1A.
+2. Proga iz podatkov (Viri): sredinska črta, širina, višine, usek in nasip, podporni zidovi, mostovi; okolica v svoji datoteki `js/world-<id>.js` (teren, raba tal, barve tal, drevesa, stavbe, voda, obzorje). Za prelaze in spust v krater (1–6, 8) uporabi skupno okolico prelazov, ki jo naredi seja 1A (Recept).
 3. Obcestna oprema in oznake po pravilih države; boksi samo pri Pauju.
 4. Datoteke po `README.md` »Nova proga« (koraki 0–7): `js/tracks/<id>.js`, `index.html`, `js/lang.js`, `docs/proge/<id>.md`, `README.md` (»Proge«, »Zasluge«), slike za meni, test `tests/<id>.test.js` (v `tests/run.js` in `tests/README.md`), `docs/kazalo.md` (Proge in graditelji sveta).
 5. `node tools/stamp.js`, `npm run golden:update`, `npm run test:related` zelen, nato pull request (naslov »Nova proga: Kraj, Država«; povezava do predogleda).
@@ -85,16 +93,18 @@ Načrt za 7 novih prog iz predstavitve »60 kratkih prog«. Odločitve so iz pog
 2. Obremenitev (`node tests/browser/perf.test.mjs`) v mejah, druge proge brez sprememb.
 3. Seznam pravil in neodvisen pregled; spoji svež `main`; `npm run test:related` zelen.
 4. Stanje (»končano (PR #…)«) in Recept v pull request; ko so zeleni vsi testi na GitHubu, ga združi.
-5. Zagon naslednje seje A (ali seje 8).
+5. Zagon naslednje seje A (ali seje 9).
 
-## Seja 8 (meni za vseh 7)
-Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, kot PR #201) za vseh 7 prog, en pull request, združi ga sama, ko so zeleni vsi testi na GitHubu. Konec verige: uporabniku kratek seznam za preizkus na telefonu (vseh 7 prog in kaj pogledati).
+## Seja 9 (meni za vseh 8)
+Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, kot PR #201) za vseh 8 prog, en pull request, združi ga sama, ko so zeleni vsi testi na GitHubu. Konec verige: uporabniku kratek seznam za preizkus na telefonu (vseh 8 prog in kaj pogledati).
 
 ## Zagon naslednje seje
-`create_session` (claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5`, `prompt` en stavek:
+Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5`, `tags` `["nove-proge"]`, `prompt` en stavek:
 - **A → B iste proge:** `source_revision` in `outcome_branch` `nove-proge/<id>`; »Naredi sejo <N>B po docs/nove-proge.md (veja nove-proge/<id>, PR #<št>).«
 - **B → A naslednje proge** (po združitvi): `source_revision` `main`, `outcome_branch` `nove-proge/<naslednji id>`; »Naredi sejo <N+1>A po docs/nove-proge.md.«
-- **7B → 8:** `source_revision` `main`, `outcome_branch` `nove-proge/meni`; »Naredi sejo 8 po docs/nove-proge.md.«
+- **8B → 9:** `source_revision` `main`, `outcome_branch` `nove-proge/meni`; »Naredi sejo 9 po docs/nove-proge.md.«
+
+Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvesti koordinacijsko sejo `session_01WbgGzr69qFMo5TYXBpmzzr` (»NOVE PROGEE«, iz nje je veriga začela) z enkratnim opravilom `create_trigger`: `persistent_session_id` te seje, `run_once_at` čez ~2 min (UTC), `initiation` `own_followup`, `name` »Nove proge: zaženi <naslednja seja>«, `prompt` »Seja <N><X> je končana (veja nove-proge/<id>, PR #<št>). Po docs/nove-proge.md zaženi sejo <naslednja>.« Koordinacijska seja zažene naslednjo sejo z zgornjimi nastavitvami in drugega ne dela.
 
 ## Seznam pravil (pred združitvijo)
 - Ime »Kraj, Država« v `js/tracks/<id>.js`, angleško ime in opis v `js/lang.js`, `README.md`, `docs/proge/<id>.md`.
@@ -126,4 +136,5 @@ Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, k
 | 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka |
 | 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | čaka |
 | 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | čaka |
-| 8 | vseh 7 | meni: zemljevid od zgoraj, globus, prelet, glasba | 4–6 | čaka |
+| 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | čaka |
+| 9 | vseh 8 | meni: zemljevid od zgoraj, globus, prelet, glasba | 4–6 | čaka |
