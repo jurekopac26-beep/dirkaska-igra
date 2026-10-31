@@ -585,6 +585,18 @@
     'Prevozil si črto: vrata niso ob njej.': 'You drove past the line: the doors are not at it.', 'Zgrešil si postajo: +{0} s.': 'You missed the stop: +{0} s.',
     'Trk! Potniki so padli po avtobusu.': 'A knock! The passengers fell over in the bus.', 'Zaviraj mehko: potniki stojijo.': 'Brake gently: the passengers are standing.',
     'Prehitro v ovinek: potniki se držijo.': 'Too fast into the bend: the passengers are holding on.', 'Nisi ustavil na vseh postajah.': 'You did not stop at every stop.', 'Zgrešil si preveč postaj.': 'You missed too many stops.',
+    'Medvedi na cesti': 'Bears on the Road', 'Medvedka z mladičema je obstala sredi ceste. Turisti so ustavili in nekateri izstopili.': 'A mother bear with her two cubs has stopped in the middle of the road. The tourists have stopped and some have got out.',
+    'Z megafonom pošlji turiste nazaj v avte, nato medvede s hupo počasi odženi s ceste in razženi zastoj.': 'Send the tourists back to their cars with the megaphone, then slowly drive the bears off the road with the horn and clear the jam.',
+    'Z megafonom pošlji turiste v avte, nato medvede s hupo počasi odženi.': 'Send the tourists to their cars with the megaphone, then slowly drive the bears away with the horn.',
+    'MEDVEDI': 'BEARS', 'RAZDALJA': 'DISTANCE', 'TURISTI ZUNAJ': 'TOURISTS OUT', 'ZASTOJ': 'JAM', 'MEGAFON': 'MEGAPHONE', 'HUPA': 'HORN',
+    'mirni': 'calm', 'vznemirjeni': 'restless', 'jezni': 'angry', 'razžen': 'cleared', '{0} vozil': '{0} vehicles',
+    'MEDVEDKA Z MLADIČEMA': 'MOTHER BEAR WITH CUBS', 'ne bližje kot {0} m': 'no closer than {0} m',
+    'Zadel si medveda.': 'You hit a bear.', 'Medvedka je postala nevarna.': 'The mother bear became dangerous.',
+    'Turisti se vračajo v avte.': 'The tourists are going back to their cars.', 'MEGAFON: pošlji turiste v avte.': 'MEGAPHONE: send the tourists to their cars.',
+    'Zapelji bliže turistom.': 'Drive closer to the tourists.', 'Preblizu! Medvedka se je obrnila proti tebi.': 'Too close! The mother bear turned toward you.',
+    'Preglasno: počakaj med hupanji.': 'Too loud: wait between the honks.', 'Medvedi se umikajo.': 'The bears are moving away.',
+    'Predaleč: medvedi te ne slišijo.': 'Too far: the bears cannot hear you.', 'Preblizu medvedke: zapelji nazaj.': 'Too close to the mother bear: back off.',
+    'HUPA od daleč (25–60 m), počasi in s premori.': 'HORN from afar (25–60 m), slowly and with pauses.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
