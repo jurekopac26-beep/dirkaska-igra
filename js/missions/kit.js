@@ -597,4 +597,153 @@ Object.assign(MisKit, (function () {
   }
   return { snowTex, band, cover, piles, block };
 })());
+/* ---------------- the calm ride, the animals, the trailer (group 6: missions 10, 39, 55, 02, 34, 50) ----------------
+     MisKit.ride(o): the ride as the load feels it (horses, bees, passengers, a patient): step(P, dt) each step; lon (m/s2, smoothed: + speeding
+       up, - braking), lat (m/s2 across: the speed times the turn), ex (how far over the limits this step: o.brk braking, o.acc speeding up,
+       o.lat across; 0: smooth), calm (1..0: down o.drop x ex a second, a jolt o.kick at once, a knock over o.hit m/s o.knock; back up o.rec a
+       second after o.wait s smooth), n (the jolts counted: ex over o.edge, once each time), jolt(size) one of the mission's own (a pothole).
+       The phone's pedals are only on and off, so a mission with it gives its vehicle soft brakes (truckModel's brakeK 0.2: full brake
+       ~3.6 m/s2, under o.brk) and a pull-away under o.acc: what jolts is the speed carried into a bend (braked too late), a knock, a hole.
+     MisKit.herd(run, kind, max): animals of simple bodies, one draw for all (InstancedMesh): kind 'cow' (white, black patches) or 'bear'
+       (brown); put(k, x, y, z, ry, size, step) (step: the walk's phase, the body bobs), hide(k).
+     MisKit.rails(B, x0, z0, x1, z1, y, o): a wooden fence from a point to a point into a parts list (posts every o.every m, o.rails rails).
+     MisKit.trailer(run, P, build, o): a trailer behind the player's car (build(B) its body, x forward from the hitch at 0 back to the axle
+       at -o.L), drawn where the car's view is (its hitch o.hitch m behind the car's centre), swinging behind it on the hitch; ang: its angle.
+     MisKit.hospital(run, T, s, o): a hospital beside the road at s (on its roomier side): a white building with lit windows, a blue H on a
+       post, the car park, an ambulance at the door (its lamps: blink(t)); ~10 draws. */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined' && typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+  function ride(o) {
+    o = Object.assign({ brk: 4.2, acc: 12, lat: 4.0, tau: 0.25, drop: 0.25, kick: 0.04, edge: 0.2, hit: 2, knock: 0.2, rec: 0.02, wait: 2 }, o);
+    const R = { o, calm: 1, n: 0, lon: 0, lat: 0, ex: 0, vf: null, over: false, quiet: 0, hitT: 0, last: 0 };
+    R.jolt = (size) => { R.calm = clamp(R.calm - size, 0, 1); R.n++; R.quiet = 0; R.last = size; };
+    R.step = (P, dt) => {
+      const ch = Math.cos(P.h || 0), sh = Math.sin(P.h || 0), vf = (P.vx || 0) * ch + (P.vz || 0) * sh;
+      if (R.vf == null || P.locked) R.vf = vf;
+      const a = (vf - R.vf) / Math.max(dt, 1e-3), k = Math.min(1, dt / o.tau); R.vf = vf;
+      R.lon += (clamp(a, -30, 30) - R.lon) * k;
+      R.lat += (Math.abs(vf * (P.w || 0)) - R.lat) * k;
+      R.ex = Math.max(0, -R.lon - o.brk) / o.brk + Math.max(0, R.lon - o.acc) / o.acc + Math.max(0, R.lat - o.lat) / o.lat;
+      R.calm = clamp(R.calm - o.drop * R.ex * dt, 0, 1);
+      const on = R.ex > o.edge; if (on && !R.over) R.jolt(o.kick); R.over = R.ex > o.edge * 0.5 && (on || R.over);
+      const imp = Math.max(P.hitWall || 0, P.hitCar || 0);
+      if (imp > o.hit && !(R.hitT > 0)) R.jolt(o.knock * Math.min(1.5, imp / (o.hit * 2)));
+      if (imp > o.hit) R.hitT = 0.6; else if (R.hitT > 0) R.hitT -= dt;
+      if (R.ex > 0 || imp > o.hit) R.quiet = 0; else R.quiet += dt;
+      if (R.quiet > o.wait) R.calm = Math.min(1, R.calm + o.rec * dt);
+      return R;
+    };
+    return R;
+  }
+
+  // the animals: the body of one as one geometry (vertex colours), all of them one InstancedMesh
+  function animal(kind) {
+    const B = MisKit.parts();
+    if (kind === 'bear') {
+      const BR = 0x4e3420, DK = 0x2e1f13, SN = 0x8a6a48;
+      B.box(0, 0.85, 0, 1.75, 0.95, 0.95, BR); B.box(-0.35, 1.0, 0, 0.9, 0.95, 1.0, BR); B.box(0.45, 1.2, 0, 0.5, 0.4, 0.85, BR);   // (the hump over the shoulders)
+      B.box(1.05, 1.0, 0, 0.55, 0.5, 0.55, BR); B.box(1.38, 0.92, 0, 0.25, 0.24, 0.3, SN); B.box(1.5, 0.95, 0, 0.04, 0.08, 0.1, DK);
+      for (const z of [-0.2, 0.2]) B.box(0.95, 1.3, z, 0.12, 0.14, 0.12, BR);
+      for (const x of [0.55, -0.6]) for (const z of [-0.3, 0.3]) B.box(x, 0.3, z, 0.28, 0.6, 0.28, DK);
+    } else {
+      const WH = 0xf2f1ec, BK = 0x1e1e1e, PK = 0xe0a0a0;
+      B.box(0, 1.05, 0, 2.0, 0.95, 0.85, WH); B.box(1.2, 1.3, 0, 0.55, 0.45, 0.42, WH); B.box(1.5, 1.22, 0, 0.12, 0.26, 0.36, PK);
+      B.box(0.25, 1.15, 0, 0.7, 0.7, 0.87, BK); B.box(-0.6, 1.3, 0.1, 0.5, 0.42, 0.87, BK); B.box(1.2, 1.45, 0, 0.3, 0.16, 0.44, BK);
+      for (const z of [-0.26, 0.26]) B.box(1.1, 1.58, z, 0.08, 0.1, 0.18, 0xd8d0b8);
+      B.box(-0.35, 0.52, 0, 0.35, 0.18, 0.4, PK); B.box(-1.02, 0.9, 0, 0.06, 0.7, 0.06, WH);
+      for (const x of [0.75, -0.75]) for (const z of [-0.28, 0.28]) B.box(x, 0.32, z, 0.18, 0.64, 0.18, WH);
+    }
+    return MisKit.merged(B.L);
+  }
+  function herd(run, kind, max) {
+    const H = { n: max, put() {}, hide() {}, g: null };
+    if (!has3()) return H;
+    const mesh = new THREE.InstancedMesh(animal(kind), new THREE.MeshLambertMaterial({ vertexColors: true }), max);
+    mesh.castShadow = true; mesh.frustumCulled = false;
+    const M = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0, 0, 0), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
+    for (let k = 0; k < max; k++) mesh.setMatrixAt(k, Z);
+    H.put = (k, x, y, z, ry, size, step) => {
+      const s = size || 1, b = step ? Math.abs(Math.sin(step)) * 0.06 * s : 0;
+      e.set(0, ry || 0, step ? Math.sin(step * 2) * 0.03 : 0); q.setFromEuler(e); p.set(x, y + b, z); sc.set(s, s, s);
+      M.compose(p, q, sc); mesh.setMatrixAt(k, M); mesh.instanceMatrix.needsUpdate = true;
+    };
+    H.hide = (k) => { mesh.setMatrixAt(k, Z); mesh.instanceMatrix.needsUpdate = true; };
+    run.add(mesh); H.g = mesh;
+    return H;
+  }
+
+  // a wooden fence along a line: posts and rails into a parts list B (x, z in its own frame)
+  function rails(B, x0, z0, x1, z1, y, o) {
+    o = Object.assign({ every: 2.5, rails: 2, h: 1.25, col: 0x7a5636, post: 0x5a3e26 }, o);
+    const L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.1) return;
+    const ry = Math.atan2(-(z1 - z0), x1 - x0), n = Math.max(1, Math.round(L / o.every));
+    for (let k = 0; k <= n; k++) B.box(x0 + (x1 - x0) * k / n, y + o.h / 2, z0 + (z1 - z0) * k / n, 0.16, o.h, 0.16, o.post);
+    for (let k = 1; k <= o.rails; k++) B.box((x0 + x1) / 2, y + o.h * k / (o.rails + 0.4), (z0 + z1) / 2, L, 0.1, 0.06, o.col, ry);
+  }
+
+  // a trailer on the car's hitch: its body (one draw) where the car's view is, swinging behind it (the axle follows the hitch)
+  function trailer(run, P, build, o) {
+    o = Object.assign({ hitch: -2.6, L: 4.6, y: 0 }, o);
+    const T = { ang: 0, mesh: null };
+    const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
+    if (!has3() || !v) return T;
+    const B = MisKit.parts(); build(B);
+    const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); mesh.castShadow = true; mesh.matrixAutoUpdate = false; mesh.frustumCulled = false;
+    const h = new THREE.Vector3(), ax = new THREE.Vector3(), q = new THREE.Quaternion(), e = new THREE.Euler(), one = new THREE.Vector3(1, 1, 1);
+    let init = false;
+    mesh.onBeforeRender = () => {
+      const M = v.grp.matrixWorld; h.set(o.hitch, o.y, 0).applyMatrix4(M);
+      const fx = M.elements[0], fz = M.elements[2];   // (the car's forward in the world)
+      if (!init) { const f = Math.hypot(fx, fz) || 1; ax.set(h.x - fx / f * o.L, h.y, h.z - fz / f * o.L); init = true; }
+      let dx = h.x - ax.x, dz = h.z - ax.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+      ax.set(h.x - dx * o.L, h.y, h.z - dz * o.L);
+      const yaw = Math.atan2(-dz, dx); e.set(0, yaw, 0); q.setFromEuler(e);
+      mesh.matrixWorld.compose(h, q, one);
+      T.ang = Math.atan2(Math.sin(yaw - Math.atan2(-fz, fx)), Math.cos(yaw - Math.atan2(-fz, fx)));
+    };
+    run.add(mesh); T.mesh = mesh;
+    return T;
+  }
+
+  // the hospital beside the road at s: the car park, a white building of two floors (its lit windows toward the road), the door's canopy,
+  // the blue H on a post, the ambulance at the door (its lamps flashing: blink(t))
+  function hospital(run, T, s, o) {
+    o = Object.assign({ side: 0 }, o);
+    const Hs = { g: null, blink() {} };
+    if (!has3()) return Hs;
+    const i = T.idx(s), side = o.side || (T.br[i] >= T.bl[i] ? 1 : -1), w = T.wS(s);
+    const W = (typeof Render !== 'undefined' && Render.world) || {}, gy = (x, z) => (W.groundH ? W.groundH(x, z) : T.hy[i]) || T.hy[i];
+    const at = (along, off) => { const j = T.idx(s + along); return [T.px[j] + T.nx[j] * off * side, T.pz[j] + T.nz[j] * off * side]; };
+    const g = new THREE.Group(), rot = Math.atan2(-T.tz[i], T.tx[i]), face = Math.atan2(-side * T.nx[i], -side * T.nz[i]);
+    const lam = (c) => new THREE.MeshLambertMaterial({ color: c }), bas = (c, map) => new THREE.MeshBasicMaterial({ color: c, map: map || null });
+    const tex = (w2, h2, fn) => { const c = document.createElement('canvas'); c.width = w2; c.height = h2; fn(c.getContext('2d'), w2, h2); const t = new THREE.CanvasTexture(c); t.anisotropy = 2; return t; };
+    const box = (x, z, y, L, H, D, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(L, H, D), m); b.position.set(x, y + H / 2, z); b.rotation.y = rot; g.add(b); return b; };
+    { const [x, z] = at(0, w + 8); const y = Math.max(gy(x, z), T.hy[i]) + 0.04; box(x, z, y - 0.3, 34, 0.3, 12, lam(0x6d737a)); }
+    const [bx, bz] = at(0, w + 20), by = Math.max(gy(bx, bz), T.hy[i]) - 0.2;
+    box(bx, bz, by, 30, 7.2, 12, lam(0xe4e7ea));
+    box(bx, bz, by + 7.2, 30.6, 0.5, 12.6, lam(0x9aa3ad));
+    const winT = tex(256, 64, (c, W2, H2) => { c.fillStyle = '#3b4552'; c.fillRect(0, 0, W2, H2); c.fillStyle = '#ffe2a0'; for (let k = 0; k < 16; k++) { c.fillRect(4 + k * 16, 6, 10, 20); if (k !== 7 && k !== 8) c.fillRect(4 + k * 16, 38, 10, 20); } });
+    const [fx, fz] = at(0, w + 13.95); const front = new THREE.Mesh(new THREE.PlaneGeometry(29, 6), bas(0xffffff, winT)); front.position.set(fx, by + 3.5, fz); front.rotation.y = face; g.add(front);
+    const [dx, dz] = at(0, w + 13.4); box(dx, dz, by + 3.2, 6, 0.3, 2.2, lam(0xc9ced4));
+    const hT = tex(64, 64, (c) => { c.fillStyle = '#1d5fd1'; c.fillRect(0, 0, 64, 64); c.fillStyle = '#fff'; c.font = 'bold 50px Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('H', 32, 35); });
+    const [hx, hz] = at(-13, w + 2.5), hy = Math.max(gy(hx, hz), T.hy[i]); box(hx, hz, hy, 0.25, 4, 0.25, lam(0x8a929c));
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 0.3), [bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0xffffff, hT), bas(0xffffff, hT)]);
+    sign.position.set(hx, hy + 5, hz); sign.rotation.y = face; g.add(sign);
+    const [ax, az] = at(3, w + 9), ay = Math.max(gy(ax, az), T.hy[i]);
+    box(ax, az, ay + 0.35, 5.6, 2.3, 2.1, lam(0xf4f5f7));
+    box(ax, az, ay + 1.0, 5.64, 0.3, 2.14, lam(0xd8282a));
+    const l0 = bas(0x5aa0ff), l1 = bas(0x10204a);
+    const [qx, qz] = at(3 + 1.6, w + 9.5), [px2, pz2] = at(3 + 1.6, w + 8.5);
+    box(qx, qz, ay + 2.65, 0.4, 0.25, 0.9, l0); box(px2, pz2, ay + 2.65, 0.4, 0.25, 0.9, l1);
+    Hs.blink = (t) => { const on = (t * 1.6) % 1 < 0.5; l0.color.setHex(on ? 0x5aa0ff : 0x10204a); l1.color.setHex(on ? 0x10204a : 0x5aa0ff); };
+    Hs.door = at(0, w + 9); Hs.side = side;
+    run.add(g); Hs.g = g;
+    return Hs;
+  }
+
+  return { ride, herd, rails, trailer, hospital };
+})());
 if (typeof module !== 'undefined') module.exports = MisKit;

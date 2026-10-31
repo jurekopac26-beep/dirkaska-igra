@@ -563,6 +563,19 @@
     'Kolesa se vrtijo v prazno: popusti plin.': 'The wheels are spinning: ease off the throttle.', 'Avtobus drsi: počasneje skozi ovinek.': 'The coach is sliding: slower through the bend.',
     'Tovornjak brez verig je obstal počez: zapelji mimo po levi.': 'A truck without chains is stuck across the road: pass it on the left.',
     'Prelaz so zaprli, preden si prišel čez.': 'The pass closed before you got over.', 'Avtobus je močno trčil: potniki so poškodovani.': 'The coach crashed hard: the passengers are hurt.',
+    'Konji v prikolici': 'Horses in the Trailer', 'Dva konja morata do novega hleva. Cesta vijuga čez zlate griče.': 'Two horses must get to their new stable. The road winds over the golden hills.',
+    'Pripelji konja do hleva mirna: zaviraj zgodaj in skozi ovinke pelji počasi.': 'Bring the horses to the stable calm: brake early and take the bends slowly.',
+    'Konji čutijo vsak sunek: zaviraj zgodaj in skozi ovinke pelji počasi.': 'The horses feel every jolt: brake early and take the bends slowly.',
+    'MIR KONJ': 'HORSES CALM', 'SUNKI': 'JOLTS', 'DO HLEVA': 'TO THE STABLE', 'HLEV': 'STABLE', 'Konja sta se preplašila.': 'The horses panicked.',
+    'Trk! Konja sta se ustrašila.': 'A knock! The horses got scared.', 'Prehitro v ovinek: konja izgubljata ravnotežje.': 'Too fast into the bend: the horses are losing their balance.',
+    'Konja sta nemirna: nekaj časa pelji čisto mirno.': 'The horses are restless: drive very smoothly for a while.',
+    'Panji na pašo': 'Beehives to the Pasture', 'Lipa cveti. Čebelar mora zvečer, ko so vse čebele doma, prepeljati čebelnjak na pašo.': 'The lime trees are in bloom. In the evening, when all the bees are home, the beekeeper must take the bee house to the pasture.',
+    'Pripelji čebelnjak do lipe brez sunkov in lukenj, da čebele ostanejo mirne, preden se stemni.': 'Bring the bee house to the lime tree without jolts and potholes, so the bees stay calm, before it gets dark.',
+    'Pelji mehko: vsak sunek razburi čebele, zato luknje obvozi.': 'Drive gently: every jolt upsets the bees, so steer round the potholes.',
+    'ČEBELE': 'BEES', 'DO PAŠE': 'TO THE PASTURE', 'SONCE ZAIDE': 'SUNSET', 'LIPA': 'LIME TREE', 'mirne': 'calm', 'nemirne': 'restless', 'jezne': 'angry',
+    'Sonce je zašlo, preden si prišel do lipe.': 'The sun set before you reached the lime tree.', 'Čebele so se razjezile.': 'The bees got angry.',
+    'Luknja! Čebele brenčijo: luknje obvozi.': 'A pothole! The bees are buzzing: steer round the holes.', 'Trk! Čebele so se vznemirile.': 'A knock! The bees got upset.',
+    'Prehitro v ovinek: čebelnjak se ziba.': 'Too fast into the bend: the bee house is rocking.', 'Čebele so nemirne: pelji čisto mirno.': 'The bees are restless: drive very smoothly.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
