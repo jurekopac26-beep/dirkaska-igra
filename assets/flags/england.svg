@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="500" height="300">
+  <title>England</title>
+  <!-- Flag of England (St George's Cross). Ratio 3:5. Centred red cross on white,
+       arm width 1/5 of the flag height (60 of 300). Red: Pantone 186 C. -->
+  <rect width="500" height="300" fill="#FFFFFF"/>
+  <rect x="220" y="0" width="60" height="300" fill="#C8102E"/>
+  <rect x="0" y="120" width="500" height="60" fill="#C8102E"/>
+</svg>
