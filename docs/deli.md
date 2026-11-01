@@ -143,6 +143,17 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Tovornjaki (`kamen`, veja `deli/avti-tovornjaki`)
+
+TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez razbijanja).
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| KAMEN | `headL` / `headR` (pravokotni luči s črnim okvirjem v čelih blatnikov, `on: 'hood'`: gresta z nagibnim prednjim delom), `tailL` / `tailR` (grozd zadaj: luč, smernik in črna plošča), `wiperFront` (oba brisalca) | na zadnjem robu strehe kabine nad režo do servisnega zaboja, v `body` (serijsko ga ni), `s` 1,5 | v obliki pravokotne luči (`shape`), v črnem okvirju |
+
+- Serijski avto je trikotnik za trikotnikom enak (1810 od 2400 trikotnikov).
+- Možnosti: krilo do +220, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
