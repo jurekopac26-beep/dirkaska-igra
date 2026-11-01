@@ -42,7 +42,8 @@ try {
   const S = await page.evaluate(() => { const r = Missions.run, v = Render.viewOf(r.P), bands = r.props.filter(o => o.isMesh && o.material && o.material.map).length; return { skin: !!r.skin && !!r.skin.parent, body: v.body.visible, bands }; });
   T.check('the truck\'s own body (the car\'s hidden), the escape lanes\' sand', S.skin && !S.body && S.bands >= 3, JSON.stringify(S));
   await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 2000 && Missions.run.t < 0.3; k++) g.sim(0.05, false, 0, 0, 0); });
-  await key(page, 'up'); s = await st(page); const up = s.run.gear;
+  // (a press is taken at the mission's next step: simulated here, not left to the real frames between two evaluates, which a busy machine may not run)
+  await key(page, 'up'); await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 4; k++) g.sim(0.05, false, 0, 0, 0); }); s = await st(page); const up = s.run.gear;
   await key(page, 'dn'); await key(page, 'dn'); await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 4; k++) g.sim(0.05, false, 0, 0, 0); }); s = await st(page);
   T.check('VIŠJE: 4th; NIŽJE twice (standing): 2nd', up === 4 && s.run.gear === 2 && s.rows[1] === 'PRESTAVA 2', `${up} ${s.run.gear}`);
   let d = await drive(page, 415, 20, 4);
