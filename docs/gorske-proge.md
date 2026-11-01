@@ -11,7 +11,7 @@ Načrt sklopa šestnajstih kratkih prog zunaj Evrope, vsaka iz druge države: 4 
 - **1. 11.**: izogibaj se vsemu, kar je lahko pravno sporno (razdelek Pravna varnost).
 - **1. 11.**: zamenjane so vse proge, katerih glavnega elementa iz kamere ni videti, in preravne proge; proga mora biti zavita. Na seznamu je iz vsake države le ena proga. Milford Sound je s celim predorom.
 - **1. 11.**: z delom v kodi se začne, ko uporabnik napiše »začni«.
-- **1. 11.**: vsaka proga ima svoj pull request in gre na `main` takoj, ko so zeleni vsi testi; proge gredo **ena za drugo** (naslednja se začne, ko je prejšnja na `main`).
+- **1. 11.**: proga 1 ima svoj pull request; proge 2–16 gredo v **4 skupinah** (A: 2–4, B: 5–7, C: 8–13, D: 14–16), vsaka skupina je ena seja, ena veja `gorske-proge/skupina-<X>` in en pull request, ki gre na `main`, ko so zeleni vsi testi. Skupine gredo ena za drugo (naslednja se začne, ko je prejšnja na `main`). Seja skupine prebere repozitorij in načrt enkrat, gradnik družine naredi in takoj uporabi pri vseh progah skupine.
 - **1. 11.**: napor: proga 1 (z gradniki) **max**, proge 2–16 **xhigh**. Izvedba: koordinacijska seja pred zagonom seje proge naredi vejo `gorske-proge/<NN>-<id>` iz `origin/main` z enim začasnim commitom, ki v `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` na `xhigh`, in sejo zažene s te veje. Seja proge ta commit vrne (`git revert`), preden pull request označi kot pripravljen; koordinacijska seja pred združitvijo preveri, da pull request `.claude/settings.json` ne spreminja.
 - **1. 11.**: verigo vodi koordinacijska seja (tista, ki je napisala ta načrt) z naporom medium: čaka na teste (`subscribe_pr_activity`), združi pull request, posodobi Stanje in zažene naslednjo progo. Seja proge pull request odpre kot osnutek, ga označi kot pripravljenega, ko so lokalno zeleni povezani testi, in koordinacijski seji pošlje eno vrstico (`send_message` na `@parent`). Če test na GitHubu pade, ji koordinacijska seja pošlje napako in seja proge jo popravi.
 - Zemljevid od zgoraj, prelet in helikopterski posnetek se ne delajo (po `CLAUDE.md` so po želji pozneje). Slika za meni je obvezna.
@@ -136,23 +136,12 @@ Odločitev uporabnika (1. 11. 2026): čim manj tokenov, kakovost ostane. Največ
 
 ## Stanje
 
-Veriga čaka, da uporabnik napiše »začni« (1. 11. 2026). Proga 1 nadaljuje seja, ki je 31. 10. začela Mount Norquay in je bila ustavljena, preden je karkoli spremenila; zato ima veja proge 1 staro ime.
+Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi skupino X po docs/gorske-proge.md«. Proga 1 nadaljuje seja, ki je 31. 10. začela Mount Norquay in je bila ustavljena, preden je karkoli spremenila; zato ima veja proge 1 staro ime.
 
-| # | Proga | Veja | Stanje |
+| Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller, Avstralija (+ gradniki, uvoznik) | `gorske-proge/01-norquay` | čaka na »začni« |
-| 2 | Nozawa Onsen, Japonska | `gorske-proge/02-nozawa` | čaka |
-| 3 | Medeu, Kazahstan | `gorske-proge/03-medeu` | čaka |
-| 4 | Auli, Indija | `gorske-proge/04-auli` | čaka |
-| 5 | Guoliang, Kitajska | `gorske-proge/05-guoliang` | čaka |
-| 6 | Milford Sound, Nova Zelandija | `gorske-proge/06-milford` | čaka |
-| 7 | Corvo Branco, Brazilija | `gorske-proge/07-corvobranco` | čaka |
-| 8 | Yungas, Bolivija | `gorske-proge/08-yungas` | čaka |
-| 9 | Hana, ZDA | `gorske-proge/09-hana` | čaka |
-| 10 | Ella, Šrilanka | `gorske-proge/10-ella` | čaka |
-| 11 | Santo Antão, Zelenortski otoki | `gorske-proge/11-santoantao` | čaka |
-| 12 | Dadès, Maroko | `gorske-proge/12-dades` | čaka |
-| 13 | Espinazo del Diablo, Mehika | `gorske-proge/13-espinazo` | čaka |
-| 14 | Punta del Este, Urugvaj | `gorske-proge/14-puntadeleste` | čaka |
-| 15 | Green Point, Južna Afrika | `gorske-proge/15-greenpoint` | čaka |
-| 16 | Puerto Madero, Argentina | `gorske-proge/16-puertomadero` | čaka |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | v delu |
+| A | 2 Nozawa Onsen, 3 Medeu, 4 Auli | `gorske-proge/skupina-A` | čaka |
+| B | 5 Guoliang, 6 Milford Sound, 7 Corvo Branco | `gorske-proge/skupina-B` | čaka |
+| C | 8 Yungas, 9 Hana, 10 Ella, 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C` | čaka |
+| D | 14 Punta del Este, 15 Green Point, 16 Puerto Madero | `gorske-proge/skupina-D` | čaka |
