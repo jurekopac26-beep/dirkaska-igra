@@ -127,6 +127,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `js/sfx.js`, `js/input.js`, `js/comm.js` | zvok, upravljanje, komentator |
 | `js/net.js`, `js/vendor/peerjs.min.js` | povezava do štirih telefonov za dirko s prijatelji (soba s kodo, usklajena ura); knjižnica PeerJS (MIT) |
 | `js/game.js` | meniji, nastavitve, HUD, rekordi, prvenstvo, dirka s prijateljem, glavna zanka |
+| `js/shramba.js` | shranjena igra na varnem: ob polni shrambi brskalnika naredi prostor z brisanjem duhov (napredka nikoli), prosi za trajno shrambo, dnevne kopije napredka (IndexedDB) z obnovo v Nastavitvah, ponudba za izvoz profila na rezultatih (opis v `docs/igra.md`, »Shranjevanje napredka«) |
 | `js/menu.js`, `css/menu.css`, `js/menu-data.js` | nov meni: naslovnica, načini, proge, vreme in možnosti, predstavitev pred dirko; besedila in podatki menija (načini, dolžine prog za seznam, imena zemljevidov, zasluge) |
 | `js/routes.js`, `js/geo.js`, `js/journey.js`, `js/intro-data.js` | poti prog nad zemljevidom in prelet (ustvari jih `maketa-menija/orodja/routes.py` in `intro_data.py`), podatki o Zemlji, globus iz three.js, podatki predstavitve (glasba, znamenitosti) |
 | `assets/` | slike in posnetki menija: `tracks/` makete prog, `maps/` zemljevidi od zgoraj, preleti in helikopterski posnetki, `geo/` Zemlja, `music/` glasba, `menu/` slike načinov, `cars/img/` avti |

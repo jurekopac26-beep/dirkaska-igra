@@ -36,6 +36,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Duh najboljše vožnje](#duh-najboljše-vožnje)
 - [Sledi zadnjih voženj (kronometer)](#sledi-zadnjih-voženj-kronometer)
 - [Deljenje duha in profila](#deljenje-duha-in-profila)
+- [Shranjevanje napredka](#shranjevanje-napredka)
 - [Izziv s povezavo](#izziv-s-povezavo)
 - [Igralni plošček](#igralni-plošček)
 - [Kontrole po meri in volan s pedali](#kontrole-po-meri-in-volan-s-pedali)
@@ -398,7 +399,16 @@ Na kronometru se ob cilju shranijo sledi gum tvoje vožnje: črna guma na asfalt
 
 Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh; z **Izbriši prijateljevega** ga odstraniš.
 
-V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke, duhove in rekorde posebnih misij), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+
+## Shranjevanje napredka
+
+Igra hrani vse v brskalniku telefona (`localStorage`, za igro okoli 5,2 milijona znakov). Največ prostora vzamejo duhovi (vožnja ali krog do 600.000 znakov, vsaka proga ima svojega za vsako fiziko, vreme in način). Kar varuje napredek, je v `js/shramba.js`:
+
+- **Polna shramba:** ko shranjevanje kariere, rekordov, statistike, prvenstva, šole vožnje, nastavitev, kontrol ali novega duha ne gre več v shrambo, igra naredi prostor z brisanjem duhov, enega za drugim, dokler shranjevanje ne uspe: najprej legende Pikes Peaka (igra jih sama naredi znova), nato duhove prijateljev, nato tvoje duhove druge fizike, nato ostale, v vsaki skupini največjega najprej. Napredka samega ne briše nikoli. Ob prvem takem brisanju na obisk pove, koliko duhov je izbrisala (npr. »Shramba je bila polna: da se napredek shrani, je bil izbrisan 1 duh.«). Prej se je v polni shrambi vse tiho nehalo shranjevati.
+- **Trajna shramba:** ob rezultatih dirke igra enkrat na obisk prosi brskalnik, naj njene shrambe ne izprazni, ko telefonu zmanjka prostora (Chrome odgovori sam, Firefox vpraša). V **Nastavitvah** pod vrstico Profil piše, ali je shramba trajna, kdaj je bil profil nazadnje izvožen v datoteko in koliko prostora je zasedenega.
+- **Ponudba za izvoz profila:** od pete dirke ali kronometra naprej rezultati ponudijo **Shrani profil** (datoteka profila; na telefonu meni za deljenje, od koder jo shraniš v oblak ali pošlješ na računalnik) in **Ne zdaj**. Ne zdaj jo skrije za teden; po izvozu (tudi iz Nastavitev) se spet pokaže čez 30 dni. Ni je v dirki s prijateljem.
+- **Samodejne kopije napredka** (Nastavitve, pod Profil): igra sama shrani kopijo napredka (vse razen duhov, z rekordi misij) ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije; hrani zadnjih pet (IndexedDB `rra-shramba`). Vsaka kopija ima čas, razlog (ob zagonu, pred uvozom profila, pred obnovo), število dirk in denar kariere ter gumb **Obnovi**: igra vpraša, shrani kopijo trenutnega stanja, vrne napredek iz kopije (duhovi ostanejo, kot so) in se znova zažene. Kopije so v istem brskalniku kot igra: pomagajo, če se napredek pokvari (napačen uvoz, napaka v novi različici, preizkus vej na isti strani), ne pa, če telefon izbriše podatke brskalnika; za to je datoteka profila.
 
 ## Izziv s povezavo
 

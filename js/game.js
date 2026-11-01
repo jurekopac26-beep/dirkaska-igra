@@ -6,6 +6,12 @@
   const { clamp } = Core;
   const $ = (id) => document.getElementById(id);
   const tr = Lang.tr;   // (the words in the chosen language, js/lang.js: tr('Proga: {0}', name))
+  // the saved game kept safe (js/shramba.js): every save of the progress goes through Shramba.keep, which makes room when the storage is
+  // full by dropping ghosts (never the progress itself); the player is told once a visit
+  let shrTold = false;
+  Shramba.set({ phys: () => physOf(), onFreed: (n) => { if (shrTold) return; shrTold = true; const f = n % 100;
+    toast(tr(f === 1 ? 'Shramba je bila polna: da se napredek shrani, je bil izbrisan {0} duh.' : f === 2 ? 'Shramba je bila polna: da se napredek shrani, sta bila izbrisana {0} duhova.'
+      : f === 3 || f === 4 ? 'Shramba je bila polna: da se napredek shrani, so bili izbrisani {0} duhovi.' : 'Shramba je bila polna: da se napredek shrani, je bilo izbrisanih {0} duhov.', n), 5200); } });
   const STEP = 1 / 120;
   const LAPS = 3, NUM_AI = 21, CH_AI = 19, PLAYER_GRID = 999;   // (NUM_AI: a Circuit race's rivals, 22 cars, the career's too; CH_AI: a championship round's, 20 cars; PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it), the last slot of any field, the Nordschleife's 100 too)
   const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
@@ -128,7 +134,7 @@
     const rv = career.rival; career.rival = isObj(rv) && Number.isInteger(rv.k) && rv.k >= 0 && rv.k < Core.DRIVER_NAMES.length ? { k: rv.k, me: num(rv.me), him: num(rv.him) } : null;   // (the standing rival: a roster index (a new one is picked from every field's, under CH_AI; an older save's kept), the head-to-head)
   }
   const careerNew = () => ({ v: 1, on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 });
-  function careerSave() { try { localStorage.setItem('tdgp-career', JSON.stringify(career)); } catch (_) { } }
+  function careerSave() { Shramba.keep('tdgp-career', JSON.stringify(career)); }
   const inCareer = () => !!(career && career.on);
   const owned = (id) => !inCareer() || career.cars.includes(id);
   const eur = (x) => Lang.eur(x);   // 12.300 € (English: €12,300)
@@ -190,7 +196,7 @@
   const LEGACY_N = 11, RALLY = Core.MODELS.findIndex(m => m.id === 'rally'), legacy = (k) => k >= 0 && k < LEGACY_N ? k : RALLY;
   function save() {
     const M = Core.MODELS[S.car] || Core.MODELS[RALLY], o = Object.assign({}, S, { carId: M.id, car: legacy(S.car), carV: 3 });
-    try { localStorage.setItem('tdgp-settings', JSON.stringify(o)); } catch (_) { }
+    Shramba.keep('tdgp-settings', JSON.stringify(o));
   }
   {
     const k = typeof S.carId === 'string' ? Core.MODELS.findIndex(m => m.id === S.carId) : -2, ok = Number.isInteger(S.car) && S.car >= 0 && S.car < LEGACY_N;
@@ -202,7 +208,7 @@
     delete S.carId; S.carV = 3; if (mig) save();
   }
   const carNum = () => Core.MODELS[S.car].num || 1;
-  function saveRecords() { try { localStorage.setItem('tdgp-records', JSON.stringify(records)); } catch (_) { } }
+  function saveRecords() { Shramba.keep('tdgp-records', JSON.stringify(records)); }
 
   /* ---------------- state ---------------- */
   let track, demo = null, race = null;
@@ -258,7 +264,7 @@
   const champCar = () => champ && champ.car ? Core.MODELS.find(m => m.id === champ.car) || null : null;
   const champField = () => { const M = champCar(); return M && M.oneMake && !(M.field && M.field.length) ? { id: M.id, name: M.name, field: [M.id] } : M; };
   const fieldFor = (pm, fm) => pm.oneMake ? null : fm || pm;   // (the vehicle whose field a race's rivals drive: Core.Race's rule)
-  function champSave() { try { if (champ) localStorage.setItem('tdgp-champ', JSON.stringify(champ)); else localStorage.removeItem('tdgp-champ'); } catch (_) { } }
+  function champSave() { if (champ) Shramba.keep('tdgp-champ', JSON.stringify(champ)); else try { localStorage.removeItem('tdgp-champ'); } catch (_) { } }
 
   /* ---------------- statistics and achievements (Dosežki): the player's own numbers over all races, and the achievements ----------------
      st (kept in the browser, tdgp-stats): the km and the time driven, races, wins, podiums, poles, fastest laps, time trials run, medals, titles,
@@ -275,7 +281,7 @@
     }
   } catch (_) { st = stNew(); }
   let stHold = false;   // (a profile brought in: the game starts again with its stats, not these saved over them as the page goes)
-  function stSave() { if (stHold) return; try { localStorage.setItem('tdgp-stats', JSON.stringify(st)); } catch (_) { } }
+  function stSave() { if (stHold) return; Shramba.keep('tdgp-stats', JSON.stringify(st)); }
   // [id, name, how to get it, progress: () => [now, goal]]
   // the tracks as the menu lists them: a road variant (Pikes Peak on its historic gravel) counts with its track, either road driven
   const trackCards = () => Core.TRACKS.filter(d => !d.variantOf), droveCard = (d) => Core.TRACKS.some(x => (x === d || x.variantOf === d.id) && st.tracks[x.id]);
@@ -413,7 +419,8 @@
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
     if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
-    if (name === 'results') resMe();
+    if (name === 'results') { resSave(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
+    if (name === 'settings') profNote();
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
@@ -1547,7 +1554,7 @@
     const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[S.color], stripe: race.player.stripe !== false, lap: lap ? 1 : undefined, q0: e.q0, d: e.d,
       cond: { rain: race.rain ? 1 : 0, tod: race.endu ? 'day' : S.tod, season: S.season, upg: Object.assign({}, upgOf(M.id)), setup: Object.assign({}, setupOf(id)) } });   // (how the run was driven: a challenge takes it along)
     if (j.length > GH_BYTES) return;
-    try { localStorage.setItem(ghKey(id), j); } catch (_) { }
+    Shramba.keep(ghKey(id), j);   // (a full storage: older ghosts make room for the new best)
   }
   function ghSave(id, time) {   // a new personal best: store the recorded run (the old ghost goes with its record)
     const G = ghRec; ghRec = null;
@@ -1675,20 +1682,72 @@
   async function unpackStr(p) { const b = atob(p.replace(/-/g, '+').replace(/_/g, '/')), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }
   const profKeys = () => { const a = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^tdgp-/.test(k) && k !== 'tdgp-noadapt') a.push(k); } return a; };
   // (app: 'apex-racing' in the profile, ghost and challenge files and links is the game's first name: kept, so the ones saved or sent before still load)
+  // (extra: the progress kept outside the tdgp- keys, the missions' records (Shramba.extras); an older game reads only data)
   function profExport() {
     const data = {}; for (const k of profKeys()) data[k] = localStorage.getItem(k);
     const d = new Date(), p2 = (x) => String(x).padStart(2, '0'), name = 'real-roads-atlas-profil-' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.json';
-    return saveFile(name, JSON.stringify({ app: 'apex-racing', kind: 'profile', v: 1, date: Date.now(), name: S.name, data }), 'Real Roads Atlas').then((how) => { if (how !== 'abort') toast(how === 'share' ? tr('Profil je pripravljen za deljenje.') : tr('Profil je shranjen v datoteko {0}.', name), 3400); return how; });
+    return saveFile(name, JSON.stringify({ app: 'apex-racing', kind: 'profile', v: 1, date: Date.now(), name: S.name, data, extra: Shramba.extras() }), 'Real Roads Atlas').then((how) => {
+      if (how !== 'abort') { Shramba.exported(); toast(how === 'share' ? tr('Profil je pripravljen za deljenje.') : tr('Profil je shranjen v datoteko {0}.', name), 3400); }   // (the reminder on the results waits a month now)
+      return how; });
   }
-  function profImport(text) {   // a profile file: checked, asked, the saved game replaced by it, the game started again
+  function profImport(text) {   // a profile file: checked, asked, a copy of the saved game made (Samodejne kopije napredka), the saved game replaced by it, the game started again
     let o = null; try { o = JSON.parse(text); } catch (_) { }
     if (!isObj(o) || o.app !== 'apex-racing' || o.kind !== 'profile' || o.v !== 1 || !isObj(o.data) || !Object.keys(o.data).every(k => /^tdgp-[\w@.-]{1,80}$/.test(k) && typeof o.data[k] === 'string')) { toast(tr('To ni profil igre Real Roads Atlas.'), 3200); return false; }
     if (!confirm(tr('Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.', cleanName(o.name) || '?', new Date(posNum(o.date) ? o.date : Date.now()).toLocaleDateString(Lang.locale)))) return false;
-    const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
-    try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
-    catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return false; }   // (the old one back)
-    try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
-    stHold = true; location.reload(); return true;
+    const go = () => {
+      const old = {}; for (const k of profKeys()) old[k] = localStorage.getItem(k);
+      try { for (const k in old) localStorage.removeItem(k); for (const k in o.data) localStorage.setItem(k, o.data[k]); }
+      catch (_) { try { for (const k of profKeys()) localStorage.removeItem(k); for (const k in old) localStorage.setItem(k, old[k]); } catch (e) { } toast(tr('Profila ni bilo mogoče shraniti (premalo prostora).'), 3600); return; }   // (the old one back)
+      if (isObj(o.extra)) for (const k of Shramba.EXTRA) if (typeof o.extra[k] === 'string') Shramba.keep(k, o.extra[k]);   // (the missions' records, when the file has them)
+      try { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); } catch (_) { }
+      stHold = true; location.reload();
+    };
+    Promise.race([Shramba.snap('uvoz').catch(() => null), new Promise((r) => setTimeout(r, 3000))]).then(go);   // (the copy first, at most 3 s)
+    return true;
+  }
+  // the saved game kept safe (js/shramba.js) on screen. The results: from the fifth race (or time trial) on, an offer to save the profile
+  // as a file (#res-save; again a month after the last file, a week after Ne zdaj; not in a race with a friend)
+  function resSave() {
+    const el = $('res-save'); if (!el) return;
+    const on = !(mp && mp.race) && Shramba.due(st.races + st.tt);
+    el.classList.toggle('off', !on); if (!on) return;
+    const d = Shramba.days();
+    $('res-save-t').textContent = d == null ? tr('Napredek je shranjen samo v tem telefonu. Shrani profil v datoteko, da ga ne izgubiš.') : tr('Zadnja kopija profila v datoteki je stara {0} dni. Shrani novo?', d);
+  }
+  // Nastavitve, under Profil: is the storage kept, the last file, how full; the copies (Samodejne kopije napredka) listed when opened
+  function profNote() {
+    const el = $('prof-note'); if (!el) return;
+    const p = Shramba.state.persisted, o = Shramba.info(), u = Shramba.usage();
+    el.textContent = [p === true ? tr('Shramba je trajna: brskalnik je ne bo izpraznil, ko bo telefonu zmanjkalo prostora.') : p === false ? tr('Brskalnik lahko shrambo izprazni, ko telefonu zmanjka prostora: profil občasno izvozi v datoteko.') : '',
+      posNum(o.izvoz) ? tr('Zadnji izvoz v datoteko: {0}.', new Date(o.izvoz).toLocaleDateString(Lang.locale)) : tr('Profil še ni izvožen v datoteko.'),
+      tr('Zasedeno je {0} % prostora za shranjeno igro.', Math.max(u.used ? 1 : 0, Math.round(u.share * 100)))].filter(Boolean).join(' ');
+    if (p == null && !profNote.asked) { profNote.asked = true; Shramba.persisted().then((v) => { if (v != null && screen === 'settings') profNote(); }); }   // (the browser's answer, nothing asked)
+    const box = $('set-kopije'); if (box && !box.dataset.on) { box.dataset.on = '1'; box.addEventListener('toggle', () => { if (box.open) kopList(); }); }
+    if (box && box.open) kopList();
+  }
+  function kopName(r) {   // (when, why, the races and the career's money then)
+    const s = r.sum || {}, t = new Date(r.t);
+    return t.toLocaleDateString(Lang.locale) + ' ' + t.toLocaleTimeString(Lang.locale, { hour: '2-digit', minute: '2-digit' }) + ' · ' +
+      tr(r.why === 'dan' ? 'ob zagonu' : r.why === 'uvoz' ? 'pred uvozom profila' : r.why === 'obnova' ? 'pred obnovo' : 'ročna') +
+      ' · ' + tr('dirke: {0}', s.races || 0) + (s.money != null ? ' · ' + eur(s.money) : '');
+  }
+  function kopList() {
+    const box = $('kopije-list'); if (!box) return;
+    Shramba.list().then((a) => {
+      box.innerHTML = a.length ? a.map(r => '<div class="row kop-row"><span class="rlbl">' + esc(kopName(r)) + '</span><button class="btn mini" data-act="kop-back" data-kop="' + r.id + '">' + esc(tr('Obnovi')) + '</button></div>').join('')
+        : '<div class="set-note">' + esc(tr('Kopij še ni: prva nastane ob naslednjem zagonu igre.')) + '</div>';
+    }, () => { box.innerHTML = '<div class="set-note">' + esc(tr('Kopije v tem brskalniku niso na voljo.')) + '</div>'; });
+  }
+  // a copy put back (asked first; a copy of the saved game as it is made before, so this can be undone too), the game started again
+  function kopBack(id) {
+    Shramba.get(id).then((r) => {
+      if (!r) { kopList(); return; }
+      if (!confirm(tr('Obnovim kopijo napredka: {0}? Trenutni napredek (nastavitve, rekordi, kariera, prvenstvo, dosežki) se zamenja, duhovi ostanejo.', kopName(r)))) return;
+      Promise.race([Shramba.snap('obnova').catch(() => null), new Promise((res) => setTimeout(res, 3000))]).then(() => {
+        if (!Shramba.apply(r)) { toast(tr('Kopije ni bilo mogoče obnoviti (premalo prostora).'), 3600); return; }
+        stHold = true; location.reload();
+      });
+    }, () => toast(tr('Kopije v tem brskalniku niso na voljo.'), 3000));
   }
   function ghOwn(id) {   // the player's ghost of this track (the current physics, weather and way to drive) as it is shared
     let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { }
@@ -1714,7 +1773,7 @@
     const d = isObj(o) && o.app === 'apex-racing' && o.kind === 'ghost' && o.v === 1 ? Core.TRACKS.find(x => x.id === o.track) : null, g = d ? ghParse(o.ghost) : null;
     if (!g) { toast(tr('To ni duh igre Real Roads Atlas.'), 3200); return false; }
     const name = cleanName(o.name) || tr('Prijatelj');
-    try { localStorage.setItem('tdgp-fghost-' + d.id, JSON.stringify({ name, time: g.t, ghost: o.ghost })); } catch (_) { toast(tr('Duha ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
+    if (!Shramba.keep('tdgp-fghost-' + d.id, JSON.stringify({ name, time: g.t, ghost: o.ghost }))) { toast(tr('Duha ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
     S.track = d.id; if (d.modes) S.mode = g.lap ? 'race' : 'tt'; save(); refreshSegs();
     toast(tr(g.lap ? 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.' : 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu v kronometru.', name, Lang.of(d, 'name'), fmt(g.t)), 5200);
     if (screen === 'board') { boardId = d.id; buildBoardScreen(); }
@@ -1748,8 +1807,7 @@
   function chalBtn() { if (menuOn) Menu.refresh(); const b = $('btn-chal'); b.classList.toggle('off', !chal); if (chal) b.textContent = tr('Izziv: {0} · {1}', chal.name, fmt(chal.time, true)); }
   function chalImport(o) {   // a challenge from its link: the friend's ghost kept for its track (as a shared ghost), the challenge waiting, shown
     const c = chalOf(o); if (!c) return false;
-    try { if (c.ghost) localStorage.setItem('tdgp-fghost-' + c.track, JSON.stringify({ name: c.name, time: c.time, ghost: o.ghost })); localStorage.setItem(CHAL_KEY, JSON.stringify(o)); }
-    catch (_) { toast(tr('Izziva ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
+    if ((c.ghost && !Shramba.keep('tdgp-fghost-' + c.track, JSON.stringify({ name: c.name, time: c.time, ghost: o.ghost }))) || !Shramba.keep(CHAL_KEY, JSON.stringify(o))) { toast(tr('Izziva ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
     chal = c; const d = Core.TRACKS.find(x => x.id === c.track); S.track = d.id; if (d.modes) S.mode = c.lap ? 'race' : 'tt'; save(); refreshSegs(); chalBtn();
     if (bg !== 'race' || screen !== 'none') chalShow();
     return true;
@@ -2275,7 +2333,7 @@
     const s = school, L = s.L; s.done = true;
     phase = 'done'; Sfx.setRunning(false); Input.setOptions({ autoGas: !!S.autoGas });
     const m = schoolMedal(L, v), R = schoolRec(L), lo = schoolLower(L), better = Number.isFinite(v) && (!Number.isFinite(R.best) || (lo ? v < R.best : v > R.best));
-    if (better || (m >= 0 && (R.medal < 0 || m < R.medal))) { schoolData[schoolKey(L)] = { best: better ? v : R.best, medal: R.medal < 0 ? m : m < 0 ? R.medal : Math.min(R.medal, m) }; try { localStorage.setItem('tdgp-school', JSON.stringify(schoolData)); } catch (_) { } }
+    if (better || (m >= 0 && (R.medal < 0 || m < R.medal))) { schoolData[schoolKey(L)] = { best: better ? v : R.best, medal: R.medal < 0 ? m : m < 0 ? R.medal : Math.min(R.medal, m) }; Shramba.keep('tdgp-school', JSON.stringify(schoolData)); }
     if (m === 0) { achGet('school'); if (SCHOOL.every(x => schoolRec(x).medal === 0)) achGet('schoolAll'); }
     showMsg(m === 0 ? tr('ZLATO!') : m === 1 ? tr('SREBRO!') : m === 2 ? tr('BRON!') : v == null ? tr('NEUSPEŠNO') : tr('BREZ MEDALJE'), m >= 0 ? 'gold' : 'slow', 2);
     Sfx.beep(m >= 0 ? 990 : 330, 0.2, 0.14);
@@ -5049,7 +5107,7 @@
         ctl = { keys: Object.keys(K).length ? K : null, lbl: L, pads: P, dev: typeof o.dev === 'string' ? o.dev : '' }; } } catch (_) { }
     Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev);
   }
-  function ctlSave() { try { localStorage.setItem(CTL_KEY, JSON.stringify(ctl)); } catch (_) { } Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev); }
+  function ctlSave() { Shramba.keep(CTL_KEY, JSON.stringify(ctl)); Input.setKeys(ctl.keys); Input.setPads(ctl.pads, ctl.dev); }
   function keyName(code) {
     if (!code) return '\u2014';
     if (ctl.lbl[code]) return ctl.lbl[code];
@@ -5334,7 +5392,10 @@
       case 'chal-drop': chal = null; try { localStorage.removeItem(CHAL_KEY); } catch (_) { } chalBtn(); showScreen('title'); break;
       case 'gh-import': pickFile(ghImport); break;
       case 'gh-del': try { localStorage.removeItem('tdgp-fghost-' + boardId); } catch (_) { } buildBoardScreen(); break;
-      case 'prof-export': profExport(); break;
+      case 'prof-export': profExport().then(() => { if (screen === 'settings') profNote(); }); break;
+      case 'save-export': profExport().then(() => resSave()); break;   // (the results' offer: Shrani profil)
+      case 'save-later': Shramba.later(); resSave(); break;   // (Ne zdaj: again in a week)
+      case 'kop-back': if (el && el.dataset.kop) kopBack(+el.dataset.kop); break;   // (Samodejne kopije napredka: Obnovi)
       case 'prof-import': pickFile(profImport); break;
       case 'to-champ': openChamp(); break;
       case 'to-career': buildCareerScreen(); showScreen('career'); break;
@@ -5679,6 +5740,7 @@
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
       quickGo();   // (opened with a quick entry's address: straight on a race)
       garageBack();   // (back from the garage: its car screen)
+      setTimeout(() => { Shramba.daily().catch(() => { }); }, 5000);   // (the day's copy of the progress, once the title stands: js/shramba.js)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
       window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
