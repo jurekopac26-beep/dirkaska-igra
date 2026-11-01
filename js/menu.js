@@ -287,7 +287,7 @@
       // the route is centred, with room at the top for the switch and the finish's name; the blurred backdrop fills whatever falls outside
       // the map tile, so nothing is cropped or left empty
       const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0);
-      const padX = 10, padTop = 44, padBot = 10, availW = Math.max(60, W - 2 * padX), availH = Math.max(60, H - padTop - padBot);
+      const padX = 10, padTop = 44, padBot = $('.hgraph', box.parentNode) ? GRAPH_H + 8 : 10, availW = Math.max(60, W - 2 * padX), availH = Math.max(60, H - padTop - padBot);
       const s = Math.min(availW / rw, availH / rh), k = 0.5 / s;
       const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       const vx = cx - vw / 2, vy = cy - (padTop + availH / 2) / s;
@@ -315,7 +315,7 @@
     cancelAnimationFrame(flyRaf); flyRaf = 0;
     const box = $('#track-stage .dio.fly', app); if (!box) return;
     const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
-    const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud);
+    const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud), foot = $('.hgraph', box.parentNode) ? GRAPH_H + 26 : 60;   // (no name under the height graph)
     // the flyover starts at its first frame (the point at the start), not wherever autoplay's clock reached while the video loaded: it is
     // played only once its first frame is ready (the poster, with the point at the start, shows until then), so the glowing point is at the
     // start the moment the flyover shows
@@ -339,7 +339,7 @@
       const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
       v.style.opacity = hud.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
       const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
-      const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - 60; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
+      const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - foot; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
       const d = f[0], name = placeAt(H0, d);
       put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
       pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
@@ -349,6 +349,73 @@
     };
     flyRaf = requestAnimationFrame(step);
   }
+
+  /* ---------------- the height graph (the flyover's camera): the heights along the whole run, across the foot of the stage ----------------
+     The part already flown over (up to the glowing point) coloured by the climb, as the flyover's trail is (GRADE: 1 % green, 3 % light
+     green, 5 % yellow, 7 % orange, 9 % red, from 12 % a deep red; downhill green), the rest of the run a thin white line; the lowest height
+     at the left, the highest at the right, the kilometres under it. Every track: the heights of routes.js (R.prof; the real ones by
+     routeMaps), else of the menu's table (MENU.profs, tools/menu-lens.js). The climb is the game's own heights over its own distances (a
+     shortened road, Pikes Peak, keeps its real gradients so). The point goes with the flyover's video, with the map's running point, or
+     (the model of the land) along the run at the map's pace */
+  const GRAPH_H = 72, GRADE = [[0.01, [47, 191, 74]], [0.03, [154, 209, 58]], [0.05, [255, 210, 58]], [0.07, [255, 138, 42]], [0.09, [232, 52, 42]], [0.12, [158, 20, 32]]];
+  function gradeRgb(v) {
+    if (v <= GRADE[0][0]) return GRADE[0][1];
+    for (let i = 1; i < GRADE.length; i++) if (v <= GRADE[i][0]) { const a = GRADE[i - 1], b = GRADE[i], k = (v - a[0]) / (b[0] - a[0]); return a[1].map((c, j) => Math.round(c + (b[1][j] - c) * k)); }
+    return GRADE[GRADE.length - 1][1];
+  }
+  // a track's heights along its run: L (m), G the game's heights (its climb), H the heights shown (above the sea where known: real)
+  function heightsOf(t) {
+    const R = RT[t.id], M = D.routeMaps[t.id] || {};
+    if (R) { const H = R.prof.map(h => altOf(R, M, h)); return { L: R.len, G: R.prof, H: H[0] != null ? H : R.prof.slice(), real: H[0] != null }; }
+    const P = (D.profs || {})[t.id]; if (!P) return null;
+    return { L: P.len, G: P.prof, H: P.prof.map(h => (P.base || 0) + h), real: P.base != null };
+  }
+  const withGraph = (t) => mapV === 1 && !!heightsOf(t);   // (the flyover's camera: 1 until the three cameras come)
+  // the graph W px wide: its svg, and where on it a fraction f of the run is
+  function graphOf(t, W) {
+    const P = heightsOf(t); if (!P || W < 160) return null;
+    const H = P.H, G = P.G, n = H.length, lo = Math.min(...H), hi = Math.max(...H), step = P.L / (n - 1);
+    const lab = (h) => P.real ? num(Math.round(h)) + ' m' : '', ll = lab(lo), lr = lab(hi), cw = (s) => s ? s.length * 6.6 + 12 : 12;
+    const x0 = cw(ll), x1 = W - cw(lr), yT = 12, yB = GRAPH_H - 21, span = Math.max(hi - lo, t.def.open ? 40 : 20), a = (lo + hi) / 2 - span / 2;
+    const x = (f) => x0 + f * (x1 - x0), y = (h) => yB - (h - a) / span * (yB - yT);
+    const hAt = (f) => { const q = Math.min(n - 1, Math.max(0, f * (n - 1))), i = Math.min(n - 2, Math.floor(q)); return H[i] + (H[i + 1] - H[i]) * (q - i); };
+    const pts = H.map((h, i) => [x(i / (n - 1)), y(h)]), line = 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L');
+    // the climb at each height (over about two of its steps, evened out a little) as its colour, a stop of the line's gradient
+    const g = G.map((_, i) => { const a0 = Math.max(0, i - 1), b0 = Math.min(n - 1, i + 1); return (G[b0] - G[a0]) / ((b0 - a0) * step); });
+    const stops = g.map((_, i) => { const v = (g[Math.max(0, i - 1)] + 2 * g[i] + g[Math.min(n - 1, i + 1)]) / 4; return '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>'; }).join('');
+    const km = P.L / 1000, stp = [0.5, 1, 2, 2.5, 5, 10, 20, 50].find(v => km / v <= Math.max(2, (x1 - x0) / 64)) || 50, ticks = [];
+    for (let d = 0; d <= km + 1e-6; d += stp) ticks.push(d);
+    const axis = ticks.map((d, i) => '<text class="km" x="' + x(d / km).toFixed(1) + '" y="' + (GRAPH_H - 5) + '" text-anchor="' + (i ? 'middle' : 'start') + '">' + (Math.round(d * 10) / 10) + (i === ticks.length - 1 ? ' km' : '') + '</text>').join('');
+    const svg = '<svg viewBox="0 0 ' + W + ' ' + GRAPH_H + '" width="' + W + '" height="' + GRAPH_H + '" aria-hidden="true"><defs><linearGradient id="hgc" gradientUnits="userSpaceOnUse" x1="' + x0.toFixed(1) + '" y1="0" x2="' + x1.toFixed(1) + '" y2="0">' + stops + '</linearGradient>' +
+      '<clipPath id="hgk"><rect x="0" y="0" width="' + x0.toFixed(1) + '" height="' + GRAPH_H + '"/></clipPath></defs>' +
+      '<path class="ah" d="' + line + '"/><g clip-path="url(#hgk)"><path class="ar" fill="url(#hgc)" d="' + line + 'L' + x1.toFixed(1) + ' ' + yB + 'L' + x0.toFixed(1) + ' ' + yB + 'z"/><path class="ln" stroke="url(#hgc)" d="' + line + '"/></g>' +
+      (ll ? '<text class="lo" x="6" y="' + (y(lo) + 4).toFixed(1) + '">' + ll + '</text><text class="hi" x="' + (W - 6) + '" y="' + (y(hi) + 4).toFixed(1) + '" text-anchor="end">' + lr + '</text>' : '') + axis +
+      '<g class="pt" transform="translate(' + x0.toFixed(1) + ' ' + y(H[0]).toFixed(1) + ')"><circle class="halo" r="9"/><circle r="4.2"/></g></svg>';
+    return { svg, at: (f) => [x(f), y(hAt(f))] };
+  }
+  let graphRaf = 0;
+  function graphOn() {
+    cancelAnimationFrame(graphRaf); graphRaf = 0;
+    const box = app && $('#track-stage .hgraph', app); if (!box) return;
+    const t = trackById(box.dataset.graph), W = box.clientWidth; if (!t || !W) return;
+    if (!box.__g || box.__g.W !== W) { const o = graphOf(t, W); if (!o) return; box.innerHTML = o.svg; box.__g = { W, at: o.at, t0: performance.now() }; }
+    const svg = $('svg', box), clip = $('#hgk rect', svg), pt = $('.pt', svg), R = RT[t.id], stage = box.parentNode, rally = t.group === 'rally';
+    let last = -1;
+    const frame = () => {
+      if (!box.isConnected) { graphRaf = 0; return; }
+      // how far along the run: the flyover's frame, the map's running point (its clock: 1.6 s before it shows, then once round in 15 s;
+      // a rally stage 11 s), the model the same from when the graph came
+      const v = $('.dio.fly video', stage), map = $('.dio.topmap svg.mapsvg', stage), dur = rally ? 11 : 15;
+      let f = 0;
+      if (v && R && R.fly) { const F = R.fly, fr = F.frames[Math.min(F.frames.length - 1, Math.floor((v.currentTime || 0) * F.fps))]; f = fr ? fr[0] / R.len : 0; }
+      else { const s = map && map.getCurrentTime ? map.getCurrentTime() : (performance.now() - box.__g.t0) / 1000; f = s < 1.6 ? 0 : ((s - 1.6) % dur) / dur; }
+      f = Math.min(1, Math.max(0, f));
+      if (Math.abs(f - last) > 0.0005) { last = f; const p = box.__g.at(f); clip.setAttribute('width', p[0].toFixed(1)); pt.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); }
+      graphRaf = requestAnimationFrame(frame);
+    };
+    frame();
+  }
+  window.addEventListener('resize', () => { if (screen === 'track') graphOn(); });
 
 
 
@@ -388,13 +455,80 @@
     return '';
   }
   // the height in the head: the one chosen for the track (MENU.heads: Vršič 1,388 m, the player's choice), else the top of the run (an
-  // open road's summit, a circuit's highest point) where the game knows the real heights
+  // open road's summit, a circuit's highest point) where the game knows the real heights (heightsOf: routes.js, MENU.profs)
   function heightOf(t) {
     if ((D.heads || {})[t.id]) return D.heads[t.id];
     const a = t.def.alt; if (a) return Math.max(a[0], a[1]);
-    const R = RT[t.id], M = D.routeMaps[t.id] || {}; if (!R || (!M.alt && M.base == null)) return null;
-    return Math.max(...R.prof.map(h => altOf(R, M, h)));
+    const P = heightsOf(t); return P && P.real ? Math.max(...P.H) : null;
   }
+  /* the globe in the head: the Earth turned to the track's place (an orthographic globe of the Blue Marble, assets/geo/earth-s.webp), its
+     country gold (its outline from GEO.outlines and MENU.globe.outlines: tools/menu-globe.mjs), a white ring round the place (GEO.tracks,
+     else MENU.globe.places; a track without one: its country's middle, no ring). Drawn once per track on a canvas of its own, which every
+     new picture of the screen gets back (globe.on); until the Earth has loaded, the globe icon. The look (LOOKS): 1 the whole Earth, 2 closer,
+     3 closer with the country glowing (the player's choice: 1 until then) */
+  const LOOKS = [null, { zoom: 1 }, { zoom: 2.3 }, { zoom: 1.5, glow: true }], GLOBE_LOOK = 1;
+  const globe = (function () {
+    const R = Math.PI / 180, made = {}, GB = D.globe || { places: {}, outlines: {} };
+    let px = null, TW = 0, TH = 0, wait = null;
+    function earth() {   // the Earth's pixels (once)
+      return wait || (wait = new Promise((res) => {
+        const im = new Image();
+        im.onload = () => { try { const c = document.createElement('canvas'); TW = c.width = im.naturalWidth; TH = c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0); px = x.getImageData(0, 0, TW, TH).data; } catch (_) { px = null; } res(px); };
+        im.onerror = () => { wait = null; res(null); };   // (not kept: the next screen asks again)
+        im.src = 'assets/geo/earth-s.webp';
+      }));
+    }
+    // where a track is and what is gold: its place [lat, lon] (or null) and its country's outline (rings of lon, lat, ...)
+    function whereOf(t, c) {
+      const g = window.GEO, gt = g && g.tracks[t.id], all = [].concat((g && g.outlines[c]) || [], GB.outlines[c] || []), rings = all.length ? all : null;   // (the menu's: a country geo.js has not, or its part it left out: Hawaii)
+      const place = GB.places[t.id] || (gt && (!c || gt.names.country === c) ? [gt.lat0, gt.lon0] : null);
+      const mid = !place && g && c ? g.countries.find(k => k[0] === c) : null;   // (Natural Earth's place for the country's name)
+      return place || mid ? { lat: place ? place[0] : mid[2], lon: place ? place[1] : mid[1], ring: !!place, rings } : null;
+    }
+    function draw(w, S, o) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = S;
+      const g = cv.getContext('2d'), im = g.createImageData(S, S), d = im.data, r = S / 2 * o.zoom, c0 = S / 2;
+      const sp = Math.sin(w.lat * R), cp = Math.cos(w.lat * R), l0 = w.lon * R, Lx = -0.47, Ly = 0.57, Lz = 0.67;   // (the light from the upper left)
+      for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+        const x = (i + 0.5 - c0) / r, y = (c0 - j - 0.5) / r, q = x * x + y * y, k = (j * S + i) * 4;
+        if (q >= 1) continue;
+        const z = Math.sqrt(1 - q), la = Math.asin(Math.max(-1, Math.min(1, z * sp + y * cp))), lo = l0 + Math.atan2(x, z * cp - y * sp);
+        const u = ((lo / R + 180) / 360 % 1 + 1) % 1 * TW - 0.5, v = Math.max(0, Math.min(TH - 1.001, (90 - la / R) / 180 * TH - 0.5));
+        const u0 = Math.floor(u), v0 = Math.floor(v), fu = u - u0, fv = v - v0, a = (u0 + TW) % TW, b = (a + 1) % TW;
+        const i00 = (v0 * TW + a) * 4, i10 = (v0 * TW + b) * 4, i01 = i00 + TW * 4, i11 = i10 + TW * 4, sh = (0.62 + 0.5 * Math.max(0, x * Lx + y * Ly + z * Lz)) * (0.75 + 0.25 * z);
+        for (let ch = 0; ch < 3; ch++) d[k + ch] = ((px[i00 + ch] * (1 - fu) + px[i10 + ch] * fu) * (1 - fv) + (px[i01 + ch] * (1 - fu) + px[i11 + ch] * fu) * fv) * sh;
+        d[k + 3] = 255;
+      }
+      g.putImageData(im, 0, 0);
+      // a point of the Earth on the globe (one behind it: onto its edge)
+      const at = (la, lo) => { const f = la * R, dl = lo * R - l0, cf = Math.cos(f); let x = cf * Math.sin(dl), y = cp * Math.sin(f) - sp * cf * Math.cos(dl);
+        if (sp * Math.sin(f) + cp * cf * Math.cos(dl) < 0) { const n = Math.hypot(x, y) || 1; x /= n; y /= n; } return [c0 + x * r, c0 - y * r]; };
+      if (w.rings) {
+        g.beginPath();
+        for (const ring of w.rings) for (let n = 0; n < ring.length; n += 2) { const p = at(ring[n + 1], ring[n]); if (n) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }
+        g.fillStyle = o.glow ? 'rgba(255, 210, 58, .9)' : 'rgba(255, 198, 41, .62)';
+        if (o.glow) { g.save(); g.shadowColor = '#ffd23a'; g.shadowBlur = S * 0.08; g.fill('evenodd'); g.restore(); }
+        g.fill('evenodd'); g.lineWidth = Math.max(1, S / 90); g.lineJoin = 'round'; g.strokeStyle = '#ffd23a'; g.stroke();
+      }
+      if (w.ring) { const p = at(w.lat, w.lon); g.beginPath(); g.arc(p[0], p[1], S * 0.075, 0, 2 * Math.PI); g.lineWidth = S / 40; g.strokeStyle = 'rgba(0, 0, 0, .55)'; g.stroke(); g.lineWidth = S / 70; g.strokeStyle = '#fff'; g.stroke(); }
+      const air = g.createRadialGradient(c0, c0, S * 0.38, c0, c0, S * 0.5); air.addColorStop(0, 'rgba(120, 180, 255, 0)'); air.addColorStop(1, 'rgba(150, 200, 255, .45)');   // (the air at the edge)
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = air; g.fillRect(0, 0, S, S);
+      return cv;
+    }
+    // the head's globe of the track shown: its canvas, made now if the Earth is there (else once it is)
+    function on() {
+      const el = app && $('.globe[data-globe]', app); if (!el) return;
+      const id = el.dataset.globe, t = trackById(id); if (!t) return;
+      if (!(id in made)) {
+        if (!px) { earth().then(p => { if (p) on(); }); return; }
+        const w = whereOf(t, countryOf(t)), S = Math.round(44 * Math.min(3, Math.max(2, window.devicePixelRatio || 1)));
+        made[id] = w ? draw(w, S, LOOKS[GLOBE_LOOK]) : null;
+        if (made[id]) { made[id].dataset.country = countryOf(t); made[id].dataset.ring = w.ring ? 1 : 0; }
+      }
+      if (made[id] && made[id].parentNode !== el) el.replaceChildren(made[id]);
+    }
+    return { on, whereOf };
+  })();
   // the player's car in the yard: its picture (assets/cars/img), else the game's own showroom drawn once per car and colour
   const carPics = {};
   function carPicOf(car) {
@@ -409,12 +543,12 @@
     if (!list.length) return h + '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button></div><div class="stage"><p class="empty">No tracks for this mode.</p></div>' + foot('') + '</section>';
     trackIdx = Math.min(trackIdx, list.length - 1);
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), hi = heightOf(t), fl = flagUrl(ctry);
-    // the head: the house (the main menu), the country and the place and its height on one line, the globe (its country: sklop 2)
+    // the head: the house (the main menu), the country and the place and its height on one line, the globe (its country gold: globe.on)
     h += '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button><h2 class="where"><span class="w1">' + (ctry ? esc(ctry) + ', ' : '') + '<span class="w2">' + esc(t.name) + '</span></span>' +
-      (hi != null ? ' <em>' + num(Math.round(hi)) + ' m</em>' : '') + '</h2><div class="globe" aria-hidden="true">' + I.globe + '</div></div>';
+      (hi != null ? ' <em>' + num(Math.round(hi)) + ' m</em>' : '') + '</h2><div class="globe" aria-hidden="true" data-globe="' + t.id + '">' + I.globe + '</div></div>';
     // the stage: the picture, the weather down its right side (the chosen one bigger, in its colours, named), the more options under it
     const W = G.S.weather;
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX4.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the row of numbers
@@ -488,7 +622,7 @@
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
-    flyLabels(); fitMaps();
+    flyLabels(); fitMaps(); globe.on(); graphOn();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -579,19 +713,9 @@
       (R.open ? flag(Q[0], false) + flag(Q[Q.length - 1], true) : flag(Q[0], true)) + '<g class="pt" transform="translate(' + Q[0][0].toFixed(1) + ' ' + Q[0][1].toFixed(1) + ')"><circle r="8" class="halo"/><circle r="4"/></g></svg>';
     return { svg, at };
   }
-  // the national flags (drawn here: the country of the track); a made-up track stands in the country the globe takes it to
-  const FLAGS = {
-    Slovenia: '<rect width="30" height="7" fill="#fff"/><rect y="7" width="30" height="6" fill="#0b4ea2"/><rect y="13" width="30" height="7" fill="#ed1c24"/><path d="M5.6 3.6h6.4v5.8c0 2.9-1.6 4.4-3.2 5.1-1.6-.7-3.2-2.2-3.2-5.1z" fill="#0b4ea2" stroke="#ed1c24" stroke-width=".7"/><path d="M6.1 10.4l1.3-2.2.9 1.3.5-.8 1.6 2.6c-.6 1.4-1.4 2.1-1.6 2.3-.4-.2-2.1-1.3-2.7-3.2z" fill="#fff"/><path d="M6.2 11.3q.65-.45 1.3 0t1.3 0 1.3 0 1.3 0M6.5 12.2q.6-.4 1.2 0t1.2 0 1.2 0 1.1 0" fill="none" stroke="#0b4ea2" stroke-width=".35"/><g fill="#ffd200"><circle cx="7" cy="5.2" r=".45"/><circle cx="8.8" cy="4.7" r=".45"/><circle cx="10.6" cy="5.2" r=".45"/></g>',
-    USA: '<rect width="30" height="20" fill="#fff"/><g fill="#b22234">' + Array.from({ length: 7 }, (_, i) => '<rect y="' + (i * 2 * 20 / 13).toFixed(2) + '" width="30" height="' + (20 / 13).toFixed(2) + '"/>').join('') + '</g><rect width="12" height="' + (7 * 20 / 13).toFixed(2) + '" fill="#3c3b6e"/><g fill="#fff">' + Array.from({ length: 20 }, (_, i) => '<circle cx="' + (1.2 + (i % 5) * 2.4 + ((i / 5 | 0) % 2) * 1.2).toFixed(1) + '" cy="' + (1.3 + (i / 5 | 0) * 2.6).toFixed(1) + '" r=".42"/>').join('') + '</g>',
-    Finland: '<rect width="30" height="20" fill="#fff"/><path d="M8 0h5.5v20H8zM0 7.25h30v5.5H0z" fill="#002f6c"/>',
-    Japan: '<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>',
-    Monaco: '<rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/>',
-    Austria: '<rect width="30" height="20" fill="#c8102e"/><rect y="6.67" width="30" height="6.67" fill="#fff"/>',
-    Belgium: '<rect width="10" height="20" fill="#000"/><rect x="10" width="10" height="20" fill="#fdda24"/><rect x="20" width="10" height="20" fill="#ef3340"/>',
-    Germany: '<rect width="30" height="6.67" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#dd0000"/><rect y="13.33" width="30" height="6.67" fill="#ffce00"/>',
-  };
   const countryOf = (t) => t.country || (window.GEO && GEO.tracks[t.id] ? GEO.tracks[t.id].names.country : '');
-  const flagSvgOf = (c) => FLAGS[c] ? '<svg class="ix-flag" viewBox="0 0 30 20" width="30" height="20" role="img" aria-label="Flag of ' + esc(c) + '">' + FLAGS[c] + '</svg>' : '';
+  // the country's flag over the intro and the weekend (assets/flags, in its own proportions); a track in another country has none
+  const flagSvgOf = (c) => { const f = flagUrl(c); return f ? '<img class="ix-flag" src="' + f + '" alt="Flag of ' + esc(c) + '">' : ''; };
   const SPK = (on) => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9h4l5-4v14l-5-4h-4z" fill="#fff"/>' + (on ? '<path d="M15.5 8.5a5 5 0 0 1 0 7M18.2 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>') + '</svg>';
   // the last race's map, as the menu's map shows it on a stage of this size (the globe's first picture): its route, its flags
   function introMap(id) {
@@ -720,7 +844,7 @@
   }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
-    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf);
+    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf);
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach();
@@ -1040,7 +1164,7 @@
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
     if (!app) return;
-    wx.detach(); cancelAnimationFrame(flyRaf); clearTimeout(preT);
+    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT);
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
   }
