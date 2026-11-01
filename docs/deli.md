@@ -179,6 +179,17 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - KOZOROGOVA luč za dež je na desni polovici mreže zadnjih luči: ugasne z desno zadnjo lučjo (prej s pokrovom prtljažnika).
 - Možnosti: krilo do +220 (STRELICA), žarometi do +172 trikotnikov nad serijskim (meja 300).
 
+### Tovornjaki (`kamen`, veja `deli/avti-tovornjaki`)
+
+TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez razbijanja).
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| KAMEN | `headL` / `headR` (pravokotni luči s črnim okvirjem v čelih blatnikov, `on: 'hood'`: gresta z nagibnim prednjim delom), `tailL` / `tailR` (grozd zadaj: luč, smernik in črna plošča), `wiperFront` (oba brisalca) | na zadnjem robu strehe kabine nad režo do servisnega zaboja, v `body` (serijsko ga ni), `s` 1,5 | v obliki pravokotne luči (`shape`), v črnem okvirju |
+
+- Serijski avto je trikotnik za trikotnikom enak (1810 od 2400 trikotnikov).
+- Možnosti: krilo do +220, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
