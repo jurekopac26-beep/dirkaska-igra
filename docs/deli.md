@@ -143,6 +143,17 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Posebni (`goljat`, `predsednik`, `superkombi`, veja `deli/avti-posebni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GOLJAT | `headL` / `headR` (pravokotni luči s kromiranim okvirjem), `tailL` / `tailR` (s črno obrobo, na zadnjih vratih kesona, `on: 'tailgate'`) | na zadnjem robu strehe kabine nad kesonom, v `body` (serijsko ga ni), `s` 1,4 | v obliki pravokotne luči (`shape`), v kromiranem okvirju |
+| PREDSEDNIK | `headL` / `headR` (vsak par okroglih luči), `tailL` / `tailR` (s kromirano obrobo in rebrom), `plate` (zadnja), `wiperFront` | na zadnjem robu pokrova prtljažnika, v delu `trunk` (odpre se in odpade z njim; serijsko ga ni) | namesto para okroglih luči (`shape`: stadion okrog obeh; ravna leča, izbočena bi presegla mejo za telefon) |
+| SUPERKOMBI | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (na vogalnih stebrih, s črno obrobo), `wiperFront` | namesto krila na nosilcih, v delu `wing` | v obliki pravokotne luči (`shape`), v črnem pasu |
+
+- Serijski avti so videti enako (enako število trikotnikov); črni obrobi zadnjih luči (GOLJAT, SUPERKOMBI) in PREDSEDNIKOVA tablica so zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
+- Možnosti: krilo do +220, žarometi do +216 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
