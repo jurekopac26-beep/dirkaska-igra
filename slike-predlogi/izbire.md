@@ -528,3 +528,13 @@ Popravki po pregledu slik (20. 10. ponoči):
 - D · priključek motokrosa pri B: 3 (široko). H · boks motokrosa: 1 (prevozni boks tik ob cesti, __BOXOPT(1)).
 - Proga za čolne: široka s plažami, plaža F (družinska, __BEACHV = 5). Gasilski avto: C (avtolestev).
 - Popravki s 15 slik cele mape: v sklopu 8 popravi vse sam. Stvari za pozneje (sklop 10): vse, po sklopu 8.
+
+## 30. 10. zvečer – helikopter brez gumba, drift krog v parku (iz orodja za napake, v kodi)
+- »helikopter deluje, spremeni da ni vec gumba pristani/dvigni se ampak ko bremzas se poleg brazmanja se spuscas gas pa se dvigas poleg tega da dajes gas«
+  → PR #212: plin pospešuje in dviguje, zavora zavira in spušča, z zavoro do tal pristane; po pristanku spet meni (plin le zapelje avto ven).
+- Park ob lunaparku, krožišče z vodnjakom (plaza F, x 38, z −28; NEW VERSION s ≈ 1018 m): »vse to naj bo cesta tako da bo sirsa primerna za
+  driftanje. vodnjak naj bo najvisja toka v parkcu. naredi da je vodnjak in cesta da sta na vrhu manjsega hribcka. cesta okoli vodnjaka za driftanje
+  pa je siroka ker ni vec zelenega parka oznacenega v rdeco in je nagnjena … postrani tako da lahko driftas ce pa zapeljes iz proge pa zapeljes po
+  hrobi navzdol zato ker je ta krozni zgoraj na vrhu hriba okoli vodnjaka« → `js/nvpark.js` HILL.F: zelenica je širok asfaltni krog (r 5,2–19,5 m)
+  na vrhu hribčka (zunanji rob 4,2 m, pobočje 20 m), nagnjen navznoter (0,15), vodnjak na podstavku je najvišja točka parka, poti parka se
+  priključijo navzgor, ljudje stojijo ob zunanjem robu.
