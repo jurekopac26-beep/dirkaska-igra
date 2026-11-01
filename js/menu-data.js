@@ -28,24 +28,9 @@ window.MENU = {
    "img": "assets/menu/mode-trial.webp"
   }
  ],
- "groups": [
-  {
-   "id": "circuit",
-   "name": "Circuits"
-  },
-  {
-   "id": "road",
-   "name": "Open roads"
-  },
-  {
-   "id": "rally",
-   "name": "Rally"
-  },
-  {
-   "id": "test",
-   "name": "Test"
-  }
- ],
+ "heads": {
+  "vrsic": 1388
+ },
  "mapVersions": [
   {
    "n": 1,
@@ -524,3 +509,5 @@ window.MENU = {
  ],
  "creditLine": "NASA · © ESA WorldCover 2021, Copernicus · EU-DEM, USGS · Natural Earth"
 };
+// the lengths of the tracks in metres (tools/menu-lens.js): the order of the list
+window.MENU.lens = {"jezero":1768,"riviera":1256,"gora":1635,"monaco":3336,"gozd":1524,"toskana":1450,"grom":1046,"pikes":6118,"ouninpohja":9687,"vrsic":12299,"nring":20690,"spa":6999,"rbring":4315,"suzuka":5804,"caracoles":10774,"katu":4660,"harju":2468,"bathurst":6194,"chapman":4984,"bigsur":3990,"tianmen":4830,"uncompahgre":4945,"sani":4986,"iroha":4970,"mulholland":4172,"beartooth":4940,"rastro":4990,"moki":4951,"maunakea":5719,"baldy":7235,"cpalace":3217,"riverside":5264,"monterey":3588,"longford":7029,"newcastle":2635,"rio":4898,"toronto":2926,"medvode":6286,"montreal":4357,"greatalpine":7998,"detroit":2647,"palomar":7995,"bangsaen":3580,"hotham":7938,"townsville":2843,"marrakesh":2956,"troisrivieres":2449};
