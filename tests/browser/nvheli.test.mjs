@@ -72,15 +72,16 @@ try {
   T.check('over the sea: down to 4 m over the water and no further (Na vodi ne moreš pristati.)', s8.mode === 'air' && Math.abs(s8.alt - 4) < 0.7 && /vodi/.test(u8.note), JSON.stringify({ sea, mode: s8.mode, alt: s8.alt, note: u8.note }));
   await page.evaluate(() => NVHeli.tp(-62, 70)); await sim(8, 0, 0, 1);
   const s9 = await st(), roof = await page.evaluate(() => NVHeli.topAt(-62, 70) - __H3.ground(-62, 70));
-  T.check('over the station REŠEVANJE: it stays 3 m over the roof, not landed', s9.mode === 'air' && roof > 5 && s9.blk != null && s9.y > s9.blk + 2.3, JSON.stringify({ roof, y: s9.y, blk: s9.blk, mode: s9.mode }));
+  T.check('over the station REŠEVANJE: it stays 3 m over the roof, not landed', s9.mode === 'air' && roof > 5 && s9.y - s9.home.y > roof + 2.3, JSON.stringify({ roof, y: s9.y, blk: s9.blk, mode: s9.mode }));
 
   // (a wood: some 20 m square with something over 3 m high at most of its points, away from the base's buildings)
   const tree = await page.evaluate(() => { const H = __H3, hi = (x, z) => NVHeli.topAt(x, z) - H.ground(x, z) > 3;
     for (let r = 80; r < 320; r += 9) for (let a = 0; a < 6.28; a += 0.11) { const x = -95 + r * Math.cos(a), z = 95 + r * Math.sin(a); if (Math.abs(x) > 330 || z < -380 || z > 300 || H.water.region(x, z) || !hi(x, z)) continue;
       let n = 0; for (let dx = -10; dx <= 10; dx += 5) for (let dz = -10; dz <= 10; dz += 5) if (hi(x + dx, z + dz)) n++; if (n >= 8) return [x, z]; } return null; });
   await page.evaluate((p) => NVHeli.tp(p[0], p[1]), tree); await sim(8, 0, 0, 1);
+  const treeTop = await page.evaluate((p) => NVHeli.topAt(p[0], p[1]), tree);   // (the tree's top: after the brake the game's own frames may hold it there, the block forgotten)
   const s9b = await st();
-  T.check('over a wood: no landing among the trees either', s9b.mode === 'air' && s9b.blk != null && s9b.y > s9b.blk + 2.3, JSON.stringify({ tree, y: s9b.y, blk: s9b.blk, mode: s9b.mode }));
+  T.check('over a wood: no landing among the trees either', s9b.mode === 'air' && s9b.y > treeTop + 2.3, JSON.stringify({ tree, treeTop, y: s9b.y, mode: s9b.mode }));
 
   // 8. the gas on the way down: up again; the brake over open ground: it lands, the rotor stops, the ramps open, the menu again; the gas then drives
   // the car out (no lift)
