@@ -20,6 +20,8 @@ const ev = (page, body) => page.evaluate(new Function(SH + body));
 const ready = (page) => page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
 const state = (page) => ev(page, 'const s = root.querySelector(".sheet.dtip"); return { sheet: !!s, link: !!root.querySelector("[data-act=\\"dark-tip\\"]"), text: s ? s.textContent : "", chrome: !!root.querySelector(".sheet.dtip [data-act=\\"chrome\\"]") };');
 const open = (browser, scheme, vp, ua, rest) => openGame(browser, PAGE + (rest || ''), { intro: 2 }, vp || { width: 412, height: 915 }, { menu: true, context: Object.assign({ colorScheme: scheme }, ua ? { userAgent: ua } : {}) });
+// (the notice slides up when it opens: measured once its animation is over, which on a busy machine starts late)
+const settled = (page) => page.waitForFunction(() => { const s = document.getElementById('menu-host').shadowRoot.querySelector('.sheet.dtip'); return !!s && s.getAnimations().length === 0; }, null, { timeout: 20000 });
 const reload = async (page) => { await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 180000 }); await ready(page); await page.waitForTimeout(300); };
 try {
   // 1. no notice where the browser leaves the game's colours alone
@@ -39,9 +41,9 @@ try {
     const s = await state(page);
     T.check('forced (Samsung Internet, Android): the title opens "Colours too dark?" with Samsung Internet\'s settings and Open in Chrome',
       s.sheet && s.link && /Force Dark mode for web content/.test(s.text) && /Use website dark theme/.test(s.text) && s.chrome, JSON.stringify(s));
-    await page.waitForTimeout(600);   // (the sheet slides up first)
-    const fit = await ev(page, 'const r = root.querySelector(".sheet.dtip").getBoundingClientRect(), b = root.querySelector(".sheet.dtip .go").getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight + 1 && b.bottom <= innerHeight + 1;');
-    T.check('the notice fits the phone upright (412 × 915), its OK on the screen', fit);
+    await settled(page);
+    const fit = await ev(page, 'const r = root.querySelector(".sheet.dtip").getBoundingClientRect(), b = root.querySelector(".sheet.dtip .go").getBoundingClientRect(); return { top: r.top, bottom: r.bottom, ok: b.bottom, h: innerHeight };');
+    T.check('the notice fits the phone upright (412 × 915), its OK on the screen', fit.top >= 0 && fit.bottom <= fit.h + 1 && fit.ok <= fit.h + 1, JSON.stringify(fit));
     const intent = await page.evaluate(() => Menu.debug().chrome), u = srv.base + '/index.html?x=1#y=2';
     T.check('Open in Chrome: an intent for Chrome with the address the game was opened with and its scheme; without Chrome the same address',
       intent === 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=' + new URL(u).protocol.slice(0, -1) + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end', intent);
@@ -72,6 +74,7 @@ try {
     const { ctx, page, errors } = await open(forced, 'light', vp);
     await ready(page); await page.waitForTimeout(300);
     const s = await state(page);
+    if (s.sheet) await settled(page);
     const fit = await ev(page, 'const sh = root.querySelector(".sheet.dtip"); if (!sh) return false; const b = sh.querySelector(".go").getBoundingClientRect(); return b.top >= 0 && b.bottom <= innerHeight + 1 || sh.scrollHeight > sh.clientHeight;');
     T.check(`forced, not Samsung Internet (${vp.width} × ${vp.height}): the browser's settings, no Samsung steps, no Open in Chrome; its OK reachable`,
       s.sheet && /browser's settings/.test(s.text) && !/Samsung/.test(s.text) && !s.chrome && fit && !errors.length, JSON.stringify({ s, fit, errors }));
