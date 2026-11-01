@@ -398,8 +398,19 @@ svg { display: block; }
 .where em { flex: 0 0 auto; font: 800 italic clamp(13px, 4vw, 16px)/1 var(--f-ui); color: var(--gold); text-transform: none; font-variant-numeric: tabular-nums; }
 .globe { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 34%, #2d6fb0, #0d2a4a 70%); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .35), 0 4px 10px rgba(0, 0, 0, .45); }
 .globe svg { width: 26px; height: 26px; }
+.globe canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }   /* (the Earth turned to the track: js/menu.js globe) */
 #s-track .stage { flex: 0 1 48%; min-height: 150px; overflow: hidden; }
 #track-stage .hud { display: none; }   /* (the flyover's place and height: not on this screen) */
+/* the height graph across the stage's foot (js/menu.js graphOf): the part flown over coloured by the climb, the rest a thin white line */
+.hgraph { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; z-index: 3; pointer-events: none; background: linear-gradient(rgba(5, 9, 16, 0), rgba(5, 9, 16, .5) 45%, rgba(5, 9, 16, .72)); }
+.hgraph svg { display: block; overflow: visible; }
+.hgraph .ah { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 1.4; stroke-linejoin: round; }
+.hgraph .ar { fill-opacity: .32; }   /* (its colours, the climb's: the gradient #hgc named in the svg) */
+.hgraph .ln { fill: none; stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; }
+.hgraph text { font: 800 italic 11px var(--f-ui); fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .55); stroke-width: 2.4px; }
+.hgraph text.km { font-size: 10px; fill: rgba(255, 255, 255, .82); font-variant-numeric: tabular-nums; }
+.hgraph .pt circle { fill: #fff; stroke: #ffd23a; stroke-width: 1.6; }
+.hgraph .pt .halo { fill: rgba(255, 236, 170, .32); stroke: none; }
 /* the weather: down the stage's right side, the chosen one bigger and in its colours with its name, the others small and grey */
 .wxv { position: absolute; right: 8px; top: 8px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 3px; border-radius: 16px; background: rgba(7, 12, 20, .55); }
 .wxv button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 2px; min-width: 40px; }
@@ -628,7 +639,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (the menu's own night: the track screen's card and stage stay where they were) */
 .ix-head2 { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 12px 10px 16px; box-sizing: border-box; animation: fade .35s ease-out both; }
 .ix-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ix-flag { flex: 0 0 auto; width: 30px; height: 20px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35), 0 2px 6px rgba(0, 0, 0, .5); }
+.ix-flag { flex: 0 0 auto; width: auto; height: 20px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35), 0 2px 6px rgba(0, 0, 0, .5); }
 .ix-name h2 { margin: 0; min-width: 0; font: 900 italic clamp(21px, 6.4vw, 28px)/1 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ix-name h2 small { display: block; margin-top: 5px; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .18em; color: var(--lbl); text-shadow: none; }
 .ix-ctl { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
