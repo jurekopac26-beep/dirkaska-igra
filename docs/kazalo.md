@@ -19,7 +19,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov, v krogu), zbirna slika in pošiljanje, Zgodovina napak, zastavica med dirko, dnevnik napak, prikaz za razvijalca, samodejne zastavice, nastavitve orodja; opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem, `flag` na F za zastavico, `dev` na O za prikaz za razvijalca: `Input.onDev`), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
-| `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
+| `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod); zaslon proge `vTrack` (glava: višina `heightOf`, globus `globe` z videzom `GLOBE_LOOK`; graf višine `graphOf`, `graphOn`, barve strmine `GRADE`, višine `heightsOf`; zastave `FLAG_FILES`, `flagUrl`, `flagFill`, v uvodu `flagSvgOf`); tabele `MENU.lens`, `MENU.profs`, `MENU.globe` na koncu `js/menu-data.js` |
 | `garaza.html`, `js/garage.js`, `js/garage3d.js`, `css/garage.css` | garaža (opis v `README.md`): odpre jo tap na avto na izbiri avta (`game.js` `carTapLay`, `garageOpen`; nazaj `garageBack`, `?zaslon=avto&avto=<id>`); v `garage3d.js` pot širokih vozil `laneWay` (`LN`, `laneObsG`, `carLane`, `crab`, stojala vstran `FREE[k].away`), hitri žarki proti avtu `castAxis` / `rayGrid` (v `probeOf`), načrti servisa `svcPlan` |
 | `js/sfx.js` | zvok (sintetiziran) |
 | `js/comm.js` | angleški komentator |
@@ -40,7 +40,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
-| `tools/menu-lens.js` | dolžine prog za seznam v meniju (`MENU.lens` v `js/menu-data.js`; po novi progi; test `tests/menu-lens.test.js`) |
+| `tools/menu-lens.js` | dolžine prog za seznam v meniju (`MENU.lens` v `js/menu-data.js`) in višine za graf višine prog brez poti v `js/routes.js` (`MENU.profs`, višina starta nad morjem iz tabele `BASE`); po novi progi; test `tests/menu-lens.test.js` |
+| `tools/menu-globe.mjs` | globus v glavi menija: kar manjka v `js/geo.js` (`MENU.globe`: kraji pravih prog `PLACES`, obrisi držav iz Natural Earth, tudi del države ob progi, npr. Havaji); `--earth` naredi majhno Zemljo `assets/geo/earth-s.webp`; po progi v novi državi; test `tests/menu-globe.test.js` |
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tools/deli-plosca.mjs` | plošča delov iz garaže za uporabnika (16 možnosti elementa na avtu; pogled iz dveh kamer, npr. luči ugasnjene in ob zaviranju `brake`; skriti deli na prosojnem avtu, `carShot` `ghost`; `--compact`: cel sklop na eni plošči z vprašanji `--ask`; `docs/deli.md`) |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
@@ -189,7 +190,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
-- **Meni:** `menu.test.mjs`, `tests/menu-lens.test.js` (dolžine prog za seznam); jezik `lang.test.mjs`, `tests/lang.test.js`
+- **Meni:** `menu.test.mjs` (tudi globus in graf višine na zaslonu proge, zastava v uvodu), `tests/menu-lens.test.js` (dolžine prog za seznam, višine za graf), `tests/menu-globe.test.js` (zastave, obrisi držav in kraji prog za globus); jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
