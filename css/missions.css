@@ -105,3 +105,7 @@ body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vess
 #mis-keys button { min-width: 72px; padding: 12px 12px; border: 0; border-radius: 22px; background: #2f5fd0; color: #fff; font: 900 14px var(--f-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; }
 #mis-keys button.on { transform: scale(.95); filter: brightness(1.2); }
 #mis-keys button.sel { background: #ffb020; color: #111; }
+body.mis-back #h-note { visibility: hidden; }   /* (MisKit.backRoad: a road driven the other way, its pace notes made for the way up) */
+#mis .mis-thermo { margin: 0 0 6px; }   /* (mission 08: the thermal camera's window at the top of the panel) */
+#mis .mis-thermo span { display: block; font: 700 10px var(--f-ui); letter-spacing: .06em; color: #c9b8ff; margin-bottom: 2px; }
+#mis .mis-thermo canvas { display: block; width: 100%; aspect-ratio: 5 / 3; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .5); }
