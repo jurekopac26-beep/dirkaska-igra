@@ -16,12 +16,33 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 20000, pk: 'ta1', field: ['levs'],
     snd: { kind: 'i4', hz: 1.15, turbo: 0, loud: 1 },
     expect: { t100: [3.02, 3.55], vmax: [228, 243], latG: [2.3, 2.4], d100: [22.7, 25.1] },
-    // the standard car's parts (the small roof spoiler is the tailgate's: it opens and comes off with it): where the look has them, a lost
-    // one flies off from there
+    partNames: { spoiler: 'roof spoiler', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
+      wiperFront: 'windscreen wiper', wiperRear: 'rear wiper' },
+    // the standard car's parts and its own: the head lamps (each almond with its projectors) and the tail lamps parts of their own; the small
+    // roof spoiler and the rear wiper mounted on the tailgate (on: they open with it, go with it), the wipers on the cowl. Where the look
+    // has them, a lost one flies off from there
     parts: { set: 'car', ht: 1.47, y0: 0.21,
+      extra: {
+        spoiler: { z: 1, th: 0.6, m: 2, r: 0.4, h: 0.05, lx: -0.71, lz: 0, y: 1.33, on: 'trunk' },
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.2, h: 0.08, lx: 0.88, lz: -0.66, y: 0.69 },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.2, h: 0.08, lx: 0.88, lz: 0.66, y: 0.69 },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.87, lz: -0.84, y: 0.86 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.87, lz: 0.84, y: 0.86 },
+        wiperRear: { z: 1, th: 0.45, m: 0.5, r: 0.2, h: 0.03, lx: -0.83, lz: 0.15, y: 1.15, on: 'trunk' },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.5, lz: -0.09, y: 0.985 },
+      },
       over: { bumperF: { lx: 0.925, y: 0.38 }, bumperR: { lx: -0.935, y: 0.44 }, hood: { lx: 0.738, y: 0.85 }, trunk: { lx: -0.868, y: 1.03 },
         fenderL: { lx: 0.53, lz: -0.92, y: 0.7 }, fenderR: { lx: 0.53, lz: 0.92, y: 0.7 }, quarterL: { lx: -0.655, lz: -0.85, y: 0.86 }, quarterR: { lx: -0.655, lz: 0.85, y: 0.86 },
         doorL: { lx: -0.01, lz: -0.87, y: 0.78 }, doorR: { lx: -0.01, lz: 0.87, y: 0.78 }, mirrorL: { lx: 0.255, lz: -0.98, y: 0.96 }, mirrorR: { lx: 0.255, lz: 0.98, y: 0.96 } } },
+    // where the garage's parts go (js/deli.js, look units): the wing over the roof's rear edge in the spoiler's part; the head lamps where the
+    // almonds face forward (their front projector's place; the almond curves round the corner, so the lamp's plane leans back 0.55 m a metre
+    // and stands on the almond's inner edge, its ring reaching 6 cm back to the shell), the almond round it in the lamp's colours (LAMP_AROUND
+    // in build: DELI.lampLook), in the lamps' parts; the rims on its wheels
+    mounts: {
+      krilo: { x: -1.29, w: 0.55, part: 'spoiler' },
+      zarometi: { x: 1.828, y0: 0.64, lean: 0.55, zc: 0.475, yc: 0.64, s: 0.38, hosts: ['headL', 'headR'], depth: 0.06, socket: 'host' },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres: the centre of mass at x 0, the axles at 1.15 / -1.32). Its lines (at every row: the windscreen raked 26 degrees
     // from its base at 0.97 to the header at 0.18, the roof's top 1.466, the belt rising from 0.87 at the A-pillar to 1.06 at the
     // C-pillar, the rear glass at 48 degrees, the tailgate upright down to the bumper; the arches 0.871 / 0.856 half wide, the doors
@@ -167,13 +188,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         strip(0.49, [1.53, 1.7, 1.81], [1.862, 0.4], 1.876, 'bumperF');
         // ---- the nose: the almond head lamps on the corners (swept back along the wings' shoulders; two projectors in dark rings, the
         //      indicator's red tip by the grille), the slim grille between them, the wide mouth with its two chrome slats, the round fog lamps ----
-        const LO = { host: 'body' };
-        for (const sd of [-1, 1]) {
-          onBand([[1.866, 0.15], [1.866, 0.85], [1.82, 1.1], [1.76, 1.2], [1.65, 1.18], [1.57, 1.0], [1.52, 0.8], [1.55, 0.4], [1.63, 0.12], [1.73, 0.0], [1.82, 0.02]], CH, sd, [0.4, 0.5, sd * 0.8], D, LO);
-          for (const [x, s, r] of [[1.7, 0.75, 0.04], [1.79, 0.62, 0.033]]) { const p = on(x, s, sd, 0), dx = r * 1.25 * Math.abs((pr(x + 0.03, 'w') - pr(x - 0.03, 'w')) / 0.06);
-            K.headLamp(x + dx + 0.004, p[1], p[2] - sd * r * 0.2, r, { n: 10, ring: D, host: 'body' }); }
-          const q = on(1.845, 0.55, sd, 0); K.discX(1.869, q[1], q[2] * 0.97, 0.016, 6, DRED, 1, LO);
-        }
+        //      (each lamp a part of its own; the garage's lamps in the projectors' place: K.deli, mounts.zarometi, the almond round them in the
+        //      lamp's colours, DELI.lampLook)
+        const HL = (sd) => ({ host: sd < 0 ? 'headL' : 'headR' });
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) for (const [x, s, r] of [[1.7, 0.75, 0.04], [1.79, 0.62, 0.033]]) {
+          const p = on(x, s, sd, 0), dx = r * 1.25 * Math.abs((pr(x + 0.03, 'w') - pr(x - 0.03, 'w')) / 0.06);
+          K.headLamp(x + dx + 0.004, p[1], p[2] - sd * r * 0.2, r, { n: 10, ring: D, host: HL(sd).host }); } }, (zn) => {
+          const LK = zn && typeof DELI !== 'undefined' ? DELI.lampLook(zn) : null;
+          for (const sd of [-1, 1]) {
+            onBand([[1.866, 0.15], [1.866, 0.85], [1.82, 1.1], [1.76, 1.2], [1.65, 1.18], [1.57, 1.0], [1.52, 0.8], [1.55, 0.4], [1.63, 0.12], [1.73, 0.0], [1.82, 0.02]],
+              LK ? K.mix(CH, LK.col, 0.6) : CH, sd, [0.4, 0.5, sd * 0.8], LK ? LK.ring : D, HL(sd));
+            const q = on(1.845, 0.55, sd, 0); K.discX(1.869, q[1], q[2] * 0.97, 0.016, 6, DRED, 1, HL(sd)); } });
         K.part('bumperF', () => {
           K.rect(1.873, 0.6, 0, 0.52, 0.032, B);                                               // the slim grille
           K.grille(1.871, 0.305, 0, 0.8, 0.2, { slats: 2, col: [0.04, 0.04, 0.045], slatCol: CH, slatH: 0.022 });   // the wide mouth
@@ -197,19 +222,21 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the tail: the lamps round the corners (big almonds, tall at the tailgate, their tips on the C-pillars' feet: a chrome
         //      surround, the red lenses with a light bar along them; the lit part at their inner ends), the black garnish across the tailgate,
         //      the badge; the strip over the bumper, its red fog lamp, the exhaust ----
-        for (const sd of [-1, 1]) {
+        for (const sd of [-1, 1]) { const TO = { host: sd < 0 ? 'tailL' : 'tailR' };   // (each a part of its own: the lens, its surround, the light bar)
           const TL = [[-1.85, 0.42], [-1.85, 0.9], [-1.79, 0.84], [-1.66, 0.64], [-1.48, 0.31], [-1.5, 0.2], [-1.58, 0.17], [-1.7, 0.24], [-1.8, 0.34]];
-          onBand(TL, RED, sd, [-0.6, 0.3, sd * 0.75], CH, LO);
-          onBand([[-1.845, 0.63], [-1.845, 0.69], [-1.7, 0.5], [-1.6, 0.38], [-1.53, 0.3], [-1.55, 0.29], [-1.6, 0.33], [-1.7, 0.44]], CH, sd, [-0.6, 0.3, sd * 0.75], null, LO);
-          K.tailLamp(-1.84, 0.84, sd * 0.49, 0.04, 0.05, { host: 'body' });   // (the lit part: the inner end, where the corner faces back)
+          onBand(TL, RED, sd, [-0.6, 0.3, sd * 0.75], CH, TO);
+          onBand([[-1.845, 0.63], [-1.845, 0.69], [-1.7, 0.5], [-1.6, 0.38], [-1.53, 0.3], [-1.55, 0.29], [-1.6, 0.33], [-1.7, 0.44]], CH, sd, [-0.6, 0.3, sd * 0.75], null, TO);
+          K.tailLamp(-1.84, 0.84, sd * 0.49, 0.04, 0.05, TO);   // (the lit part: the inner end, where the corner faces back)
         }
         K.part('trunk', () => {
           K.rect(-1.884, 0.86, 0, 0.62, 0.04, B, { dir: '-x' });                               // the garnish
           K.rect(-1.886, 0.925, 0, 0.05, 0.05, CH, { dir: '-x' });                              // the badge
-          K.bar([-1.66, 1.1, -0.04], [-1.55, 1.2, 0.3], 0.008, B, { n: 3 });                   // the wiper
-          // the small roof spoiler, dark as the roof: a lip along the roof's rear edge over the rear glass, its ends down on the C-pillars
-          K.sweep([[0, -0.012], [0.17, -0.024], [0.17, -0.008], [0, 0.012]], [[-1, 1], [-1, 2], [1, 2], [1, 1]].map(([sd, s0]) => on(-1.29, s0, sd, 0.01)), ROOF, { capA: ROOF, capB: ROOF });
         }, { hinge: [[-1.25, 1.41, -0.5], [-1.25, 1.41, 0.5]] });
+        K.bar([-1.66, 1.1, -0.04], [-1.55, 1.2, 0.3], 0.008, B, { n: 3, part: 'wiperRear' });   // the wiper (a part of its own, on the tailgate)
+        // the small roof spoiler, dark as the roof: a lip along the roof's rear edge over the rear glass, its ends down on the C-pillars (a part
+        // of its own, on the tailgate; the garage's wing in its place: K.deli, mounts.krilo)
+        K.part('spoiler', () => K.deli('krilo', () => K.sweep([[0, -0.012], [0.17, -0.024], [0.17, -0.008], [0, 0.012]], [[-1, 1], [-1, 2], [1, 2], [1, 1]].map(([sd, s0]) => on(-1.29, s0, sd, 0.01)), ROOF, { capA: ROOF, capB: ROOF })),
+          { noCrush: true, noDent: true, hinge: [[-1.28, 1.33, -0.5], [-1.28, 1.33, 0.5]] });
         K.part('bumperR', () => {
           strip(0.64, [-1.68, -1.8, -1.87], [-1.9, 0.46], -1.92, null, true);
           K.rect(-1.934, 0.36, 0, 0.1, 0.035, RED, { dir: '-x' });                              // the fog lamp
@@ -217,7 +244,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[-1.9, 0.33, -0.6], [-1.9, 0.33, 0.6]] });
         // ---- the mirrors, the wipers ----
         for (const sd of [-1, 1]) K.mirror(0.48, 0.965, sd * 0.87, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.79 });
-        for (const z of [-0.36, 0.2]) K.bar([0.99, 0.97, z - 0.26], [0.93, 1.0, z + 0.26], 0.01, B, { n: 3, part: 'body' });
+        for (const z of [-0.36, 0.2]) K.bar([0.99, 0.97, z - 0.26], [0.93, 1.0, z + 0.26], 0.01, B, { n: 3, part: 'wiperFront' });   // (a part: both blades come off together)
         // ---- hinges: the doors at their front edges ----
         K.hinge('doorL', [0.71, 0.4, -0.82], [0.71, 0.85, -0.82]); K.hinge('doorR', [0.71, 0.4, 0.82], [0.71, 0.85, 0.82]);
         // ---- inside: the seats (the rear bench seen through the tailgate's opening), the dashboard, the transverse four in the bay ----
