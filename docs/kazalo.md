@@ -56,7 +56,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
-| `docs/gorske-proge.md` | načrt desetih kratkih gorskih prog s smučišči (odločitve uporabnika, obsegi in podatki OSM, skupni gradniki `js/world-gore.js` in uvoznik `tools/proga-uvoz.mjs`, postopek, varčevanje s tokeni, stanje) |
+| `docs/gorske-proge.md` | načrt 16 kratkih prog: smučišča, zanimivosti ob cesti, dirkališča (odločitve uporabnika, kaj vidi kamera, pravna varnost, obsegi in odseki iz OSM, skupni gradniki `js/world-gore.js` in uvoznik `tools/proga-uvoz.mjs`, postopek, varčevanje s tokeni, stanje) |
 
 ## Teme v `js/game.js`
 

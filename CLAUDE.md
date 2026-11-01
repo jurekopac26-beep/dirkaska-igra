@@ -52,6 +52,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Koda misij je v `js/missions.js` in `js/missions/`; v `js/newmap.js`, `js/nvmenu.js` in `js/game.js` samo kratki priklopi. Vprašanja uporabniku v slikah z oštevilčenimi možnostmi.
 
 ## Gorske proge (`docs/gorske-proge.md`)
-- Načrt, odločitve, podatki OSM in stanje desetih kratkih gorskih prog s smučišči so v `docs/gorske-proge.md`. Vsaka proga je svoja seja (»Naredi progo N po docs/gorske-proge.md«), svoja veja (`gorske-proge/<NN>-<id>`) in en pull request.
-- Odločitev uporabnika (31. 10. 2026): vse proge so en sklop; seja pull request sama združi na `main` **brez vprašanja**, ko so na GitHubu zeleni vsi testi, in brez vprašanja zažene sejo za naslednjo progo. Uporabnik verigo ustavi z »stop«.
+- Načrt, odločitve, podatki OSM in stanje šestnajstih kratkih prog (7 skozi smučišča, 6 z zanimivostmi ob cesti, 3 dirkališča) so v `docs/gorske-proge.md`. Vsaka proga je svoja seja (»Naredi progo N po docs/gorske-proge.md«), svoja veja (`gorske-proge/<NN>-<id>`) in en pull request.
+- Odločitve uporabnika (31. 10. in 1. 11. 2026): vse proge so en sklop; pull request gre na `main` **brez vprašanja**, ko so na GitHubu zeleni vsi testi (združi ga koordinacijska seja), nato se brez vprašanja zažene naslednja proga. Proga 1 z naporom max, proge 2–16 xhigh (izvedba v načrtu). Uporabnik verigo ustavi z »stop«.
+- Kamera vidi le ~60 m ob cesti: zanimivosti in detajli samo v tem pasu (merilo v načrtu).
 - Skupni gradniki (žičnice, sneg, živali) so v `js/world-gore.js`, uvoz OSM in višin v `tools/proga-uvoz.mjs` (naredi ju prva seja). OSM prek glavnega API-ja (`api.openstreetmap.org/api/0.6/map?bbox=…`), ker `overpass-api.de` iz okolja ne deluje.
