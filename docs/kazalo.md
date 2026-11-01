@@ -19,7 +19,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `js/napake.js`, `css/napake.css` | orodje za napake (samo slovensko, svoj DOM, brez `tr()`): Označi v posnetku (risanje, paleta, oblački, zbirka trenutkov, v krogu), zbirna slika in pošiljanje, Zgodovina napak, zastavica med dirko, dnevnik napak, prikaz za razvijalca, samodejne zastavice, nastavitve orodja; opis spodaj |
 | `js/input.js` | dotik, volan na zaslonu, nagib, tipkovnica (`KEY_DEF`: tudi `replay` na I za Posnetek do sem, `flag` na F za zastavico, `dev` na O za prikaz za razvijalca: `Input.onDev`), plošček |
 | `js/lang.js` | angleščina za `tr()` (preverja `tests/lang.test.js`) |
-| `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod) |
+| `js/menu.js`, `js/menu-data.js`, `css/menu.css` | novi meni (naslovnica, izbira načina in proge, uvod); obvestilo za brskalnik, ki stran temni na silo (Samsung Internet: `forcedDark`, `darkSheet`) |
+| `temni-nacin.html` | preizkus barv v brskalniku, ki stran temni na silo: zaznava menija in štiri polja menija, narisana na deset načinov (opis v `README.md`, Nov meni) |
 | `garaza.html`, `js/garage.js`, `js/garage3d.js`, `css/garage.css` | garaža (opis v `README.md`): odpre jo tap na avto na izbiri avta (`game.js` `carTapLay`, `garageOpen`; nazaj `garageBack`, `?zaslon=avto&avto=<id>`); v `garage3d.js` pot širokih vozil `laneWay` (`LN`, `laneObsG`, `carLane`, `crab`, stojala vstran `FREE[k].away`), hitri žarki proti avtu `castAxis` / `rayGrid` (v `probeOf`), načrti servisa `svcPlan` |
 | `js/sfx.js` | zvok (sintetiziran) |
 | `js/comm.js` | angleški komentator |
@@ -187,7 +188,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
-- **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
+- **Meni:** `menu.test.mjs`; brskalnik, ki stran temni na silo, in `temni-nacin.html`: `darktip.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
 - **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
