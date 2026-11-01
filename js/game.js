@@ -5330,6 +5330,7 @@
       case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
       case 'car-garage': garageOpen(); break;   // (the car on the car screen tapped: the garage with it)
+      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back the car screen, whose Nazaj leads to that step: Menu.fromTrack)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
@@ -5461,8 +5462,25 @@
       const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
       return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
     },
-    car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color }; },
+    car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color, hex: PLAYER_COLORS[S.color], num: carNum() }; },   // (hex, num: the menu's car in 3D, js/menu-car.js)
     carHere: () => owned(Core.MODELS[S.car].id),
+    rivals: (d) => rivN(d),   // (the opponents of a race on the track: the menu's row)
+    // the player's car as the showroom draws it, over nothing (a data: URL; the background keyed out), for the menu's yard
+    carPic(w, h) {
+      const cv = Render.carShot({ id: Core.MODELS[S.car].id, color: PLAYER_COLORS[S.color], view: '34f', w, h, floor: false, bg: '#ff00ff', blob: false }); if (!cv) return '';
+      const o = document.createElement('canvas'); o.width = w; o.height = h; const c = o.getContext('2d'); c.drawImage(cv, 0, 0);
+      const im = c.getImageData(0, 0, w, h), p = im.data;
+      for (let i = 0; i < p.length; i += 4) {   // (how far from the key colour: the alpha; the key's share taken out of an edge's colour)
+        const r = p[i], g = p[i + 1], b = p[i + 2], a = Math.max(0, Math.min(1, (Math.hypot(255 - r, g, 255 - b) - 24) / 96)); if (a >= 1) continue;
+        p[i + 3] = Math.round(a * 255); if (a > 0) { p[i] = Math.min(255, Math.max(0, (r - (1 - a) * 255) / a)); p[i + 1] = Math.min(255, g / a); p[i + 2] = Math.min(255, Math.max(0, (b - (1 - a) * 255) / a)); }
+      }
+      c.putImageData(im, 0, 0);
+      let x0 = w, x1 = -1, y0 = h, y1 = -1;   // (cut to the car: the showroom frames it with room round it)
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (p[(y * w + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return '';
+      const cw = x1 - x0 + 5, ch = y1 - y0 + 5, f = document.createElement('canvas'); f.width = cw; f.height = ch; f.getContext('2d').drawImage(o, x0 - 2, y0 - 2, cw, ch, 0, 0, cw, ch);
+      return f.toDataURL('image/png');
+    },
     career: () => inCareer() ? { money: career.money, cars: career.cars.length } : null,
     champ: () => { const d = champDef(); return d && !champDone() ? { chip: 'ROUND ' + (champ.rounds.length + 1) + ' OF ' + d.tracks.length } : d ? { chip: 'SERIES DONE' } : null; },
     schoolChip: () => SCHOOL.filter(L => schoolRec(L).medal >= 0).length + ' OF ' + SCHOOL.length + ' MEDALS',

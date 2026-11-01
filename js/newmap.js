@@ -3109,11 +3109,21 @@ body.mk-clean #h-msg { display: none !important; }
     const yAt = (k, o) => yC(Math.round(k / N * NS) % NS, o);
     // its height over the ground (for the cars): a 0.5 m grid over it, the highest where two places fall in one cell
     let bx0 = 1e9, bx1 = -1e9, bz0 = 1e9, bz1 = -1e9; for (const c of C) { bx0 = Math.min(bx0, c.x); bx1 = Math.max(bx1, c.x); bz0 = Math.min(bz0, c.z); bz1 = Math.max(bz1, c.z); } bx0 -= 18; bz0 -= 18; bx1 += 18; bz1 += 18;
-    const GC = 0.5, gx = Math.ceil((bx1 - bx0) / GC) + 1, gz = Math.ceil((bz1 - bz0) / GC) + 1, LG = new Float32Array(gx * gz);
-    for (let k = 0; k < NS; k++) { const c = C[k]; for (let o = -16; o <= 16; o += 0.35) { const x = c.x + c.nx * o, z = c.z + c.nz * o; if (Math.abs(o) > W + 0.7 && dOther(x, z, k) < W + 1.6) continue; const h = yC(k, o) - HG(x, z) - 0.03; if (h <= 0.005) continue; const i = Math.round((x - bx0) / GC), j = Math.round((z - bz0) / GC), q = j * gx + i; if (h > LG[q]) LG[q] = h; } }
-    // (for the cars no face steeper than about 33 degrees: the double's sharp edges would throw them up like a wall; only ever lowered)
-    { const SL = 0.65 * GC, SD = SL * Math.SQRT2; for (let it = 0; it < 2; it++) { for (let j = 1; j < gz; j++) for (let i = 1; i < gx - 1; i++) { const q = j * gx + i; LG[q] = Math.min(LG[q], LG[q - 1] + SL, LG[q - gx] + SL, LG[q - gx - 1] + SD, LG[q - gx + 1] + SD); }
-        for (let j = gz - 2; j >= 0; j--) for (let i = gx - 2; i >= 1; i--) { const q = j * gx + i; LG[q] = Math.min(LG[q], LG[q + 1] + SL, LG[q + gx] + SL, LG[q + gx + 1] + SD, LG[q + gx - 1] + SD); } } }
+    const GC = 0.5, gx = Math.ceil((bx1 - bx0) / GC) + 1, gz = Math.ceil((bz1 - bz0) / GC) + 1, LG = new Float32Array(gx * gz), BM = new Uint8Array(gx * gz);   // (BM: a berm's banked half of the bed, below)
+    // (between the line's points as many steps as keep them under 0.3 m apart on the grid: outside a turn they spread, and a cell left out stays 0, which
+    // the slope limit below would carry up the berm as a ditch the car sinks into)
+    for (let k = 0; k < NS; k++) { const c = C[k], k1 = (k + 1) % NS, c1 = C[k1]; for (let o = -16; o <= 16; o += 0.35) { const x0 = c.x + c.nx * o, z0 = c.z + c.nz * o; if (Math.abs(o) > W + 0.7 && dOther(x0, z0, k) < W + 1.6) continue;
+      const x1 = c1.x + c1.nx * o, z1 = c1.z + c1.nz * o, y0 = yC(k, o), y1 = yC(k1, o), n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 0.3)), bk = Math.abs(o) <= W && o * side[k] > 0 && bermS[k] > 0.2;
+      for (let t = 0; t < n; t++) { const u = t / n, x = x0 + (x1 - x0) * u, z = z0 + (z1 - z0) * u, h = y0 + (y1 - y0) * u - HG(x, z) - 0.03; if (h <= 0.005) continue; const i = Math.round((x - bx0) / GC), j = Math.round((z - bz0) / GC), q = j * gx + i; if (h > LG[q]) { LG[q] = h; BM[q] = bk ? 1 : 0; } } } }
+    // (a cell no point fell in, between them, a row clipping only its corner: its neighbours' mean when six of its eight have a height; at the edge of the
+    // lift, or by another leg where the lip is left out, five at most)
+    { const F = []; for (let j = 1; j < gz - 1; j++) for (let i = 1; i < gx - 1; i++) { const q = j * gx + i; if (LG[q] > 0) continue; let n = 0, sm = 0, nb = 0; for (const d of [-gx - 1, -gx, -gx + 1, -1, 1, gx - 1, gx, gx + 1]) if (LG[q + d] > 0) { n++; sm += LG[q + d]; nb += BM[q + d]; } if (n >= 6) F.push(q, sm / n, nb >= 4 ? 1 : 0); }
+      for (let t = 0; t < F.length; t += 3) { LG[F[t]] = F[t + 1]; BM[F[t]] = F[t + 2]; } }
+    // (for the cars no face steeper than about 33 degrees: the double's sharp edges would throw them up like a wall; only ever lowered. Not a berm's banked
+    // half of the bed (BM, no jump in it): the car rides on it as it looks up to its outer edge, where the next leg runs close outside it (turns 4 and 5)
+    // the drop as steep as it is drawn)
+    { const SL = 0.65 * GC, SD = SL * Math.SQRT2; for (let it = 0; it < 2; it++) { for (let j = 1; j < gz; j++) for (let i = 1; i < gx - 1; i++) { const q = j * gx + i; if (!BM[q]) LG[q] = Math.min(LG[q], LG[q - 1] + SL, LG[q - gx] + SL, LG[q - gx - 1] + SD, LG[q - gx + 1] + SD); }
+        for (let j = gz - 2; j >= 0; j--) for (let i = gx - 2; i >= 1; i--) { const q = j * gx + i; if (!BM[q]) LG[q] = Math.min(LG[q], LG[q + 1] + SL, LG[q + gx] + SL, LG[q + gx + 1] + SD, LG[q + gx - 1] + SD); } } }
     const lift = (x, z) => { if (x <= bx0 || x >= bx1 || z <= bz0 || z >= bz1) return 0; const fx = (x - bx0) / GC, fz = (z - bz0) / GC, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, q = j * gx + i; return (LG[q] * (1 - u) + LG[q + 1] * u) * (1 - v) + (LG[q + gx] * (1 - u) + LG[q + gx + 1] * u) * v; };
     // stakes both sides (not where it opens to the road), bales outside the berms
     const atC = (k, o) => { const c = C[k % NS]; return [c.x + c.nx * o, yC(k % NS, o), c.z + c.nz * o]; };
@@ -3126,7 +3136,7 @@ body.mk-clean #h-msg { display: none !important; }
     // a checkered line before the start
     { const c = C[12], hd = Math.atan2(c.tz, c.tx), gx0 = c.x - 15.85, gz0 = c.z + 2.15, g3 = frameW(gx0, gz0, -hd + 50.1 * Math.PI / 180, HG(gx0, gz0) + 0.03); for (let k = -3; k <= 3; k++) M3(g3, BG(0.12, 0.5, 1.0), lam(0xb8bcc2), 0, 0.25, k * 1.25); M3(g3, BG(0.18, 0.08, 8.6), lam(0x8a8e94), 0, 0.5, 0); for (const sd of [-1, 1]) M3(g3, CG(0.1, 3.6, 8), lam(0x3a3e42), 0, 1.8, sd * (W + 0.4)); M3(g3, BG(0.08, 0.7, 2 * W + 0.8), lam(0xff6a1a), 0, 3.3, 0); }
     { const k0 = Math.round(541 / DS) % NS, c = C[k0], [x, y, z] = atC(k0, 0), t = canvasTex(128, 16, (cx) => { for (let i = 0; i < 16; i++) for (let j = 0; j < 2; j++) { cx.fillStyle = (i + j) % 2 ? '#111' : '#f4f4f4'; cx.fillRect(i * 8, j * 8, 8, 8); } }), m = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, 1.0), new THREE.MeshLambertMaterial({ map: t, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); m.rotation.x = -Math.PI / 2; m.rotation.z = -c.a - Math.PI / 2; m.position.set(x, y + 0.04, z); m.receiveShadow = true; add(m); }
-    netAdd('mx', pts.concat([pts[0]]), 5.2, 'dirt'); return { cv, L, Q, yAt, prof, lift, Fk, C }; }
+    netAdd('mx', pts.concat([pts[0]]), 5.2, 'dirt'); return { cv, L, Q, yAt, prof, lift, Fk, C, turns: TURN }; }
   // where the motocross meets the ring road at its start (B; the user's choice 3 "široko"): the grass gone over 30-40 m, one makadam apron from the
   // hairpin round the start to the road's edge (rounded corners, soft into the meadow, the track's own colours); the road's edge line dashed there
   // (nordRoad o.dash)
@@ -4269,7 +4279,7 @@ body.mk-clean #h-msg { display: none !important; }
     { const lineUp = (P, xm, zm, sg) => { const n = P.length; let acc = 0; const out = P.map(p => p.slice()); for (let k = n - 1; k >= 0; k--) { if (k < n - 1) acc += Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); const f = 1 - sst(9, 24, acc); out[k][0] += f * (xm - out[k][0]); }
         out[n - 1] = [xm, zm]; const keep = out.filter((p, k) => k === n - 1 || Math.abs(p[1] - zm) > 6.5); keep.splice(keep.length - 1, 0, [xm, zm + sg * 6]); return keep; };
       if (H3.forestPts && H3.Ppts[10]) { const fe = H3.forestPts[H3.forestPts.length - 1], pe = H3.Ppts[10][H3.Ppts[10].length - 1]; if (Math.hypot(fe[0] + 5, fe[1] - 158.4) < 3 && Math.hypot(pe[0] + 13, pe[1] - 145.3) < 6) { H3.forestPts = lineUp(H3.forestPts, -9, 158.6, 1); H3.Ppts[10] = lineUp(H3.Ppts[10], -9, 145.4, -1); } } }
-    if (H3.PARKM) { NVPark.J.LANES.forEach((p, k) => netAdd('park' + k, p, 3.25, 'asph')); for (const k of ['F', 'C', 'A']) { const [x, z, R] = NVPark.J.PL[k], ring = []; for (let q = 0; q <= 48; q++) ring.push([x + R * Math.cos(q / 48 * 6.283), z + R * Math.sin(q / 48 * 6.283)]); netAdd('plaza' + k, ring, 3.25, 'asph'); } }
+    if (H3.PARKM) { NVPark.J.LANES.forEach((p, k) => netAdd('park' + k, p, 3.25, 'asph')); for (const k of ['F', 'C', 'A']) { const [x, z, R0] = NVPark.J.PL[k], hl = NVPark.HILL && NVPark.HILL[k], R = hl ? (hl.r0 + hl.r1) / 2 : R0, ring = []; for (let q = 0; q <= 48; q++) ring.push([x + R * Math.cos(q / 48 * 6.283), z + R * Math.sin(q / 48 * 6.283)]); netAdd('plaza' + k, ring, hl ? (hl.r1 - hl.r0) / 2 : 3.25, 'asph'); } }   // (F: the wide drift ring on its hill, js/nvpark.js HILL)
     if (H3.BASEM) NVBase.plan(window.MK);
     H3.Ppts.forEach((p, k) => p && netAdd('p' + k, p, YARD && H3.YW.has(k) ? 3.5 : YARD && k >= 16 ? 3 : k === 4 ? 3.1 : 2.6, 'dirt')); netAdd('home', H3.forestPts, 3.2, 'dirt'); if (YARD) H3.boatPts = [[-11.6, -298.3], [4, -308], [20, -312.6], [39, -317.3], [48.7, -325.3], [50, -336], [47, -356], [48, -368], [52, -372]]; netAdd('boat', H3.boatPts, 2.3, 'dirt');
     if (YARD) { H3.farmRoad = [[51, -371], [38, -377], [10, -378], [-30, -377], [-70, -373], [-110, -369], [-145, -367], [-179, -367]];    // (the north-east farm's gravel road: farmNE; a way of the net after the ring road, its sand not filled up to it)
@@ -4281,7 +4291,7 @@ body.mk-clean #h-msg { display: none !important; }
       const j = near(RP.jump, 0, 0.4, (q) => Math.abs(q.x + 30)); H3.crestJ = H3.PARKM ? null : crestOn(RP.jump, j.u, 1.6, { up: 12, down: 4, hw: 8.2, fw: 5 });   // (the pictures: no jump on the inner road)
       const f = near(RP.forest, 0, 1, (q) => Math.hypot(q.x + 207, q.z + 90)); H3.crestS = crestOn(RP.forest, f.u + 14 / f.L, 1.8, { up: 11, down: 4, hw: GW(9) / 2 + 0.5, fw: 3.5 });
       H3.crestP1 = YARD ? null : crestOn(H3.Ppts[0], 0.85, 1.4, { up: 10, down: 3.5, hw: 4.6, fw: 3.5 }); H3.crestN = YARD ? null : crestOn(H3.Ppts[5], 0.25, 1.4, { up: 10, down: 3.5, hw: 4.6, fw: 3.5 });
-      H3.crests.push(...[H3.crestJ, H3.crestS, H3.crestP1, H3.crestN].filter(Boolean)); if (YARD) H3.crests.push({ bb: [H3.PIT[0] - 11, H3.PIT[1] + 11, H3.PIT[2] - 11, H3.PIT[3] + 11], f: () => 0 }); H3.kick = H3.crestJ; H3.kick2 = H3.crestS; }
+      H3.crests.push(...[H3.crestJ, H3.crestS, H3.crestP1, H3.crestN].filter(Boolean)); if (H3.PARKM && NVPark.hillCrest) H3.crests.push(NVPark.hillCrest()); if (YARD) H3.crests.push({ bb: [H3.PIT[0] - 11, H3.PIT[1] + 11, H3.PIT[2] - 11, H3.PIT[3] + 11], f: () => 0 }); H3.kick = H3.crestJ; H3.kick2 = H3.crestS; }
     yield 'y4';
     // the whole infield gravel, open to the road: everything standing on it goes (trees, fences, rails, signs), down to the kerb
     const clr = infieldSpans(w + 0.6), grav = infieldSpans(w + 2.3); H3.inside = grav.inside;

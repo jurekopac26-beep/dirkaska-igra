@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="500" height="300">
+  <title>Germany</title>
+  <!-- Ratio 3:5. Three equal horizontal bands black, red, gold (Bundesregierung colour spec). -->
+  <rect width="500" height="100" y="0" fill="#000000"/>
+  <rect width="500" height="100" y="100" fill="#DD0000"/>
+  <rect width="500" height="100" y="200" fill="#FFCE00"/>
+</svg>
