@@ -86,14 +86,17 @@
   const carImg = (m, ci) => 'assets/cars/img/' + m.id + '-' + ci + '.webp';
   const HAS_CAR_IMG = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula'];
   const trackImg = (t, wet) => 'assets/tracks/' + t.id + (wet ? '-rain' : '') + '.webp';
-  const dio = (t) => '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div><div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
+  const dio = (t) => '<div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
     '<img src="' + trackImg(t) + '" alt="3D model of the ' + esc(t.name) + ' track"><img class="wet" src="' + trackImg(t, true) + '" alt=""></div></div>';
   const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' || w === 'change' ? 2 : 0; };
   const modeOf = (id) => MODES.find(m => m.id === id) || MODES[0];
   const money = () => G.career() ? G.career().money : null;
 
   /* ---------------- view state ---------------- */
-  let screen = 'title', shown = '', titleSub = null, panelH = 0, mode = 'race', trackIdx = 0, mapV = 1, sheet = null, sheetOn = false;
+  let screen = 'title', shown = '', titleSub = null, panelH = 0, mode = 'race', trackIdx = 0, cam = 1, sheet = null, sheetOn = false;
+  // the camera the track step opens with (the player's choice, stran Odločitve m5: 1 until then): 1 the map, 2 the flyover, 3 the corner;
+  // 0 the one chosen last (the setting menuCam). Back from a race or the garage it shows the one it had
+  const CAM_OPEN = 1;
   const inMode = (t) => t.modes.includes(GAME_MODE[mode]);
   const TRACKS = () => TR.filter(inMode);   // (the list goes round: after the last track the first again)
   const curTrack = () => TRACKS()[trackIdx] || null;
@@ -187,20 +190,18 @@
     return h;
   }
 
-  /* ---------------- the maps of the tracks (routes.js), in two versions to choose from ----------------
-     1 a flyover video: the route drawn in the game's world behind the point running along it (green on the flat, red where it climbs
-       steeply), the names over it, in the corner the place the point has reached and its height; 2 a map from above to the stage's edges,
-       nothing over the route but its flags. A track with neither (a new one) shows its model: the picture of its land. (The helicopter's
-       flight over the track is the intro before the race: beforeRace) */
+  /* ---------------- the stage's three cameras (the buttons at its top left) ----------------
+     1 the map from above (routes.js) to the stage's edges, nothing over the route but its flags; 2 the flyover video: the route drawn in
+       the game's world behind the point running along it (green on the flat, red where it climbs steeply), only its start and finish
+       named, the height graph across the stage's foot; 3 the corner camera: a still camera at the track's most interesting corner, the
+       game's cars racing through it, a short video in a loop (tools/menu-corner.mjs: MENU.corners). A track without the camera's picture
+       shows its model, the picture of its land (stran Odločitve, question 5). (The helicopter's flight over the track is the intro before
+       the race: beforeRace) */
   const isRoute = (t) => !!t && !!RT[t.id];
   const pathD = (pts) => 'M' + pts.map(p => p[0] + ' ' + p[1]).join('L');
   // a height of the world as a real one: scaled between the real start and finish where they are known (routeMaps alt), else the height
   // at the start (routeMaps base) and the world's rise and fall from there
   const altOf = (R, M, h) => M.alt ? M.alt[0] + (h - R.prof[0]) * (M.alt[1] - M.alt[0]) / ((R.prof[R.prof.length - 1] - R.prof[0]) || 1) : M.base != null ? M.base + h - R.prof[0] : null;
-  function altAt(R, M, d) { const P = R.prof, n = P.length, x = Math.min(n - 1, Math.max(0, d / R.len * (n - 1))), i = Math.min(n - 2, Math.floor(x)); return altOf(R, M, P[i] + (P[i + 1] - P[i]) * (x - i)); }
-  // the places along the run ([metres, name]) and the one reached at d metres
-  const hudOf = (R, M) => M.hud || R.hud || [[0, 'Start']];
-  function placeAt(H, d) { let p = H[0][1]; for (const q of H) if (q[0] <= d) p = q[1]; return p; }
   const flagSvg = (fin) => fin ? '<g class="fl fin"><path d="M0 0V-26" /><rect x="0" y="-26" width="16" height="11"/><path class="ck" d="M0-26h4v3.7h-4zM8-26h4v3.7h-4zM4-22.3h4v3.6h-4zM12-22.3h4v3.6h-4zM0-18.7h4v3.7h-4zM8-18.7h4v3.7h-4z"/></g>'
     : '<g class="fl"><path d="M0 0V-26"/><path class="fg" d="M0-26h16l-4 5.5 4 5.5H0z"/></g>';
   function mark(x, y, name, sub, fin, cls) {   // a flag on the map and its name (with a dark edge round the letters: readable on any land)
@@ -220,9 +221,19 @@
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
     return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
   }
-  const hudBox = () => '<div class="hud" aria-hidden="true"><b></b><small></small></div>';
   function flyView(t, lockd) {
-    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div>' + hudBox() + '</div>';
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div></div>';
+  }
+  const hasCorner = (t) => !!t && (D.corners || []).includes(t.id);
+  function cornerView(t, lockd) {
+    return '<div class="dio corner' + (lockd ? ' lock' : '') + '" data-corner="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/corner-' + t.id + '.webp" src="assets/maps/corner-' + t.id + '.webm" aria-label="' + esc(D.cams[2].name) + ': ' + esc(t.name) + '"></video></div>';
+  }
+  // camera 3: its video plays from the start (the poster, its first frame, shows until it can)
+  function cornerOn() {
+    const v = app && $('#track-stage .dio.corner video', app); if (!v || v.__on) return;
+    v.__on = 1;
+    const go = () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+    if (v.readyState >= 2) go(); else v.addEventListener('loadeddata', go, { once: true });
   }
   // An open road is drawn running up the screen, its start at the bottom and its finish at the top. The routes are laid out lengthwise
   // (start left, finish right), so the map is turned by the quarter turn that puts the finish above the start (-90 for those).
@@ -251,17 +262,18 @@
     return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
       L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
   }
-  function routeView(t, lockd) {
+  // the cameras' icons: 1 a frame with a road in it, 2 an arrow along a curve, 3 a video camera
+  const CAM_ICON = [null,
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20.5c0-4 8-5 8-9s-3-4-3-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 19C7 19 7.5 7 13 7h4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M15.5 3l5 4-5 4z" fill="currentColor"/></svg>',
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="13.5" height="10.5" rx="2.2" fill="currentColor"/><path d="M17 11.2l4.5-2.7v7.5L17 13.3z" fill="currentColor"/></svg>'];
+  const camButtons = () => '<div class="cams" role="group" aria-label="Camera">' + D.cams.map(x => '<button aria-pressed="' + (cam === x.n) + '" data-act="cam:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + CAM_ICON[x.n] + '</button>').join('') + '</div>';
+  // the stage: the sky, the chosen camera's picture (or the model), the cameras
+  function stageView(t, lockd) {
     const R = RT[t.id], M = D.routeMaps[t.id] || {};
-    // the version chosen; where a track has no flyover (yet), its map
-    const v = mapV === 1 && R.fly ? 1 : 2;
-    let h = '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>';
-    h += v === 1 ? flyView(t, lockd) : topView(t, R, M, lockd);
-    // the two views to switch between: just the numbers 1 (flyover) and 2 (map), no words
-    h += '<div class="mapv" role="group" aria-label="Map version">' + D.mapVersions.map(x => '<button aria-pressed="' + (mapV === x.n) + '" data-act="mapv:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + x.n + '</button>').join('') + '</div>';
-    return h;
+    const pic = cam === 1 && R ? topView(t, R, M, lockd) : cam === 2 && R && R.fly ? flyView(t, lockd) : cam === 3 && hasCorner(t) ? cornerView(t, lockd) : dio(t);
+    return '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>' + pic + camButtons();
   }
-  const stageView = (t, lockd) => isRoute(t) ? routeView(t, lockd) : dio(t, lockd);
   // the box (x0, y0, x1, y1) of a route in the map's pixels, with the map turned by a degrees about its middle (0: as drawn)
   function routeBox(T, a) {
     const key = a ? 'bb' + a : 'bb';
@@ -308,14 +320,13 @@
     }
   }
   window.addEventListener('resize', fitMaps);
-  // the flyover: the names over it (each of its frames says where the start, the finish and the places are), the place reached and its height
-  // in the corner, a short dip at the loop
+  // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop
   let flyRaf = 0;
   function flyLabels() {
     cancelAnimationFrame(flyRaf); flyRaf = 0;
     const box = $('#track-stage .dio.fly', app); if (!box) return;
-    const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
-    const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud), foot = $('.hgraph', box.parentNode) ? GRAPH_H + 26 : 60;   // (no name under the height graph)
+    const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len;
+    const foot = $('.hgraph', box.parentNode) ? GRAPH_H + 26 : 60;   // (no name under the height graph)
     // the flyover starts at its first frame (the point at the start), not wherever autoplay's clock reached while the video loaded: it is
     // played only once its first frame is ready (the poster, with the point at the start, shows until then), so the glowing point is at the
     // start the moment the flyover shows
@@ -327,24 +338,19 @@
     const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
     const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
     const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
-    lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
-      F.places.map(n => tag('q', n, '')).join('');
-    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n) || R.places.find(x => x[0].indexOf(n) >= 0);   // (the same name first: Zbilje, not Zbilje Grove)
-      return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
-    let last = 0, looped = false, pl = null, al = null;
+    lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>');
+    const els = [...lab.children];
+    let last = 0, looped = false;
     const step = () => {
       if (!v.isConnected) return;
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
       const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
-      v.style.opacity = hud.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
+      v.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
       const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
       const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y < H - foot; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
-      const d = f[0], name = placeAt(H0, d);
+      const d = f[0];
       put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
-      pd.forEach((q, i) => put(els[2 + i], f[4][i], Math.abs(d - q) < L * 0.07));
-      if (name !== pl) { hb.textContent = name; pl = name; hud.classList.remove('in'); void hud.offsetWidth; hud.classList.add('in'); }
-      const a = altAt(R, M, d); if (a != null && Math.round(a) !== al) { al = Math.round(a); hs.textContent = num(al) + ' m'; }
       flyRaf = requestAnimationFrame(step);
     };
     flyRaf = requestAnimationFrame(step);
@@ -370,7 +376,7 @@
     const P = (D.profs || {})[t.id]; if (!P) return null;
     return { L: P.len, G: P.prof, H: P.prof.map(h => (P.base || 0) + h), real: P.base != null };
   }
-  const withGraph = (t) => mapV === 1 && !!heightsOf(t);   // (the flyover's camera: 1 until the three cameras come)
+  const withGraph = (t) => cam === 2 && !!heightsOf(t);   // (the flyover's camera, also where its model stands in for the flyover)
   // the graph W px wide: its svg, and where on it a fraction f of the run is
   function graphOf(t, W) {
     const P = heightsOf(t); if (!P || W < 160) return null;
@@ -555,7 +561,7 @@
       (hi != null ? ' <em>' + num(Math.round(hi)) + ' m</em>' : '') + '</h2><div class="globe" aria-hidden="true" data-globe="' + t.id + '">' + I.globe + '</div></div>';
     // the stage: the picture, the weather down its right side (the chosen one bigger, in its colours, named), the more options under it
     const W = G.S.weather;
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + ' cam' + cam + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="wxv" role="group" aria-label="Weather">' + WX4.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the row of numbers
@@ -630,7 +636,7 @@
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
-    flyLabels(); fitMaps(); globe.on(); graphOn(); carOn();
+    flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -1081,9 +1087,9 @@
       case 'single': titleSub = 'single'; render(true); break;   // (the modes open in the main menu's own frame)
       case 'career': titleSub = 'career'; render(true); break;
       case 'tsub': titleSub = v || null; render(true); break;
-      case 'mode': mode = v; enterTrack(); screen = 'track'; render(); break;   // (a tap on a mode goes straight to its tracks)
+      case 'mode': mode = v; enterTrack(); screen = 'track'; cam = CAM_OPEN || G.S.menuCam; render(); break;   // (a tap on a mode goes straight to its tracks)
       case 'home': sheet = null; screen = 'title'; titleSub = null; render(); break;
-      case 'mapv': mapV = +v; G.setOption('mapV', mapV); render(true); break;
+      case 'cam': cam = +v; G.setOption('menuCam', cam); render(true); break;
       case 'track': { const n = TRACKS().length; if (n) { trackIdx = (trackIdx + +v + n) % n; select(); render(); } break; }
       case 'weather': G.setOption('weather', v); render(true); break;
       case 'more-options': sheet = optionsSheet; render(true); break;
@@ -1167,7 +1173,7 @@
       screen = 'track'; sheet = null;
       if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
     }
-    mapV = G.S.mapV === 2 ? 2 : 1;   // (1 the flyover by default, 2 the map)
+    cam = G.S.menuCam || 1;   // (back on the track step: the camera it had)
     render();
   }
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
@@ -1200,5 +1206,5 @@
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id) }) };
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id) }) };
 })();
