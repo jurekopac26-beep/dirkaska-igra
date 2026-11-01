@@ -46,12 +46,12 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 3 | `medeu` | Medeu, Kazahstan | Medeu, Kazakhstan | desna | 77.03,43.11,77.10,43.17 |
 | 4 | `auli` | Auli, Indija | Auli, India | leva | 79.54,30.51,79.60,30.57 |
 | 5 | `guoliang` | Guoliang, Kitajska | Guoliang, China | desna | 113.57,35.71,113.63,35.76 |
-| 6 | `yungas` | Yungas, Bolivija | Yungas, Bolivia | leva (lokalno pravilo te ceste; preveri v virih) | -67.86,-16.30,-67.73,-16.20 |
-| 7 | `ella` | Ella, Šrilanka | Ella, Sri Lanka | leva | 81.02,6.82,81.08,6.89 |
-| 8 | `milford` | Milford Sound, Nova Zelandija | Milford Sound, New Zealand | leva | 167.93,-44.79,168.03,-44.73 |
-| 9 | `santoantao` | Santo Antão, Zelenortski otoki | Santo Antão, Cape Verde | desna | -25.10,17.06,-25.02,17.13 |
-| 10 | `hana` | Hana, ZDA | Hana, USA | desna | -156.13,20.79,-156.05,20.84 |
-| 11 | `corvobranco` | Corvo Branco, Brazilija | Corvo Branco, Brazil | desna | -49.41,-28.08,-49.34,-28.03 |
+| 6 | `milford` | Milford Sound, Nova Zelandija | Milford Sound, New Zealand | leva | 167.93,-44.79,168.03,-44.73 |
+| 7 | `corvobranco` | Corvo Branco, Brazilija | Corvo Branco, Brazil | desna | -49.41,-28.08,-49.34,-28.03 |
+| 8 | `yungas` | Yungas, Bolivija | Yungas, Bolivia | leva (lokalno pravilo te ceste; preveri v virih) | -67.86,-16.30,-67.73,-16.20 |
+| 9 | `hana` | Hana, ZDA | Hana, USA | desna | -156.13,20.79,-156.05,20.84 |
+| 10 | `ella` | Ella, Šrilanka | Ella, Sri Lanka | leva | 81.02,6.82,81.08,6.89 |
+| 11 | `santoantao` | Santo Antão, Zelenortski otoki | Santo Antão, Cape Verde | desna | -25.10,17.06,-25.02,17.13 |
 | 12 | `dades` | Dadès, Maroko | Dadès, Morocco | desna | -5.94,31.53,-5.88,31.58 |
 | 13 | `espinazo` | Espinazo del Diablo, Mehika | Espinazo del Diablo, Mexico | desna | -105.90,23.53,-105.78,23.62 |
 | 14 | `puntadeleste` | Punta del Este, Urugvaj | Punta del Este, Uruguay | desna | -54.965,-34.97,-54.935,-34.95 |
@@ -67,13 +67,15 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 
 ### Zanimivosti (5–13)
 
+Po družinah posebnosti: predori in useki (5–7), slapovi in tropski gozd (8–10), polja in terase (11), suhe stene (12–13); vsaka družina svoj gradnik naredi enkrat.
+
 5. **Guoliang**: cesta, vklesana v steno, odsek od 35.72361,113.60811 do 35.72955,113.59930: 6 serpentin, 520 m predora z odprtinami na prepad (streha izgine, ko je avto v njem, kot galerije na Los Caracoles). Brez imen turističnega območja.
-6. **Yungas**: North Yungas Road, odsek od -16.29115,-67.80525 do -16.27864,-67.79506: 972° na km, 2 serpentini, potoki in slapovi čez cesto (lega slapov je približek), rob prepada brez ograje, megla. Brez vzdevka »cesta smrti« in spominskih križev.
-7. **Ella**: cesta A23, odsek od 6.85817,81.05850 do 6.87104,81.04755: 885° na km, 4 serpentine, čajni nasadi v kadru 45 %, vas, opice. Brez imen posestev.
-8. **Milford Sound**: cesta SH 94 **s celim enopasovnim predorom** (1.226 m, portala -44.76486,167.98872 in -44.76343,167.97335) in serpentinami pod zahodnim portalom, odsek od -44.76484,167.99273 do -44.75994,167.96589 in naprej do serpentin (~4 km): predor v kadru 46 %, mostovi, slapovi, gozd, papige kea. Predor brez imena (oseba).
-9. **Santo Antão**: tlakovana cesta po grebenu otoka (Porto Novo–Ribeira Grande), odsek od 17.11675,-25.08303 do 17.12885,-25.08627: 628° na km, 4 serpentine, polja na terasah v kadru 75 %, hiše.
-10. **Hana**: Hana Highway, odsek od 20.81801,-156.12894 do 20.80989,-156.10642: 970° na km, enopasovni mostovi v kadru 17 %, slapovi (približek), deževni gozd. Brez imen zasebnih vrtov in svetih krajev.
-11. **Corvo Branco**: cesta čez prelaz (poimenovana po osebi: brez imena), odsek od -28.05879,-49.36121 do -28.05483,-49.37583: 1056° na km, 8 serpentin; na vrhu globok usek v skali (preveri, da je na odseku; višinski model ga ne vsebuje, zgradi ga posebej), araukarije.
+6. **Milford Sound**: cesta SH 94 **s celim enopasovnim predorom** (1.226 m, portala -44.76486,167.98872 in -44.76343,167.97335) in serpentinami pod zahodnim portalom, odsek od -44.76484,167.99273 do -44.75994,167.96589 in naprej do serpentin (~4 km): predor v kadru 46 %, mostovi, slapovi, gozd, papige kea. Predor brez imena (oseba).
+7. **Corvo Branco**: cesta čez prelaz (poimenovana po osebi: brez imena), odsek od -28.05879,-49.36121 do -28.05483,-49.37583: 1056° na km, 8 serpentin; na vrhu globok usek v skali (preveri, da je na odseku; višinski model ga ne vsebuje, zgradi ga posebej), araukarije.
+8. **Yungas**: North Yungas Road, odsek od -16.29115,-67.80525 do -16.27864,-67.79506: 972° na km, 2 serpentini, potoki in slapovi čez cesto (lega slapov je približek), rob prepada brez ograje, megla. Brez vzdevka »cesta smrti« in spominskih križev.
+9. **Hana**: Hana Highway, odsek od 20.81801,-156.12894 do 20.80989,-156.10642: 970° na km, enopasovni mostovi v kadru 17 %, slapovi (približek), deževni gozd. Brez imen zasebnih vrtov in svetih krajev.
+10. **Ella**: cesta A23, odsek od 6.85817,81.05850 do 6.87104,81.04755: 885° na km, 4 serpentine, čajni nasadi v kadru 45 %, vas, opice. Brez imen posestev.
+11. **Santo Antão**: tlakovana cesta po grebenu otoka (Porto Novo–Ribeira Grande), odsek od 17.11675,-25.08303 do 17.12885,-25.08627: 628° na km, 4 serpentine, polja na terasah v kadru 75 %, hiše.
 12. **Dadès**: cesta RR704 v soteski, odsek od 31.54150,-5.91631 do 31.52505,-5.92663: 1089° na km, 4 serpentine, rdeče stene in hiše ob cesti (generične).
 13. **Espinazo del Diablo**: stara cesta Durango–Mazatlán po grebenu, odsek od 23.55181,-105.84463 do 23.56898,-105.84843: 705° na km, 1 serpentina, skalne stene v kadru 18 %, borov gozd.
 
@@ -112,12 +114,25 @@ Graditelji obstoječih gorskih prog imajo po 50–80 KB in vsak svoje živali in
 
 ## Varčevanje s tokeni (brez izgube kakovosti)
 
-- Gradniki in uvoznik se napišejo enkrat, proge jih samo uporabljajo.
-- Vsaka proga je nova seja s svežim kontekstom; predloga je ena datoteka (prejšnja proga sklopa).
-- Detajli samo tam, kjer jih kamera vidi (pas ~60 m): nič dela za predmete v megli.
-- Slike: stalna mesta na progi (`tools/shot.mjs --m`), več pogledov združenih v eno sliko z manjšo ločljivostjo, največ trije krogi popravkov.
-- Lokalno samo povezani testi; celotni nabori na GitHubu. Na teste se čaka z dogodki GitHuba.
-- Brez raziskovanja: podatki in odločitve so v tem načrtu. Vprašanja uporabniku samo, če gre res za njegovo odločitev (stran Odločitve).
+Odločitev uporabnika (1. 11. 2026): čim manj tokenov, kakovost ostane. Največ porabijo dolg kontekst (vsak korak seje znova prebere vse, kar je v njem), slike (ostanejo v kontekstu do konca seje), pisanje velikih datotek in popravljanje v krogih.
+
+**Faza 0 (koordinacijska seja ob »začni«)**: orodja, s katerimi so bili odseki izbrani in preverjeni (izvoz iz OSM, izbira odseka, slika iz kamere pokonci), shrani v `tools/predogled/` s podatki vseh 16 prog v `tools/predogled/proge.json` (obseg, cesta, odsek, mesto avta, slog). Prva seja jih predela v uvoznik, namesto da ga piše od začetka.
+
+**Proga 1 (napor max) naredi temelje, da so proge 2–16 večinoma podatkovno delo:**
+- `js/world-gore.js` je podatkovno voden graditelj: teren iz višin, cesta in robovi, ograje, sneg, drevesa po rabi tal, stavbe in voda iz OSM, žičnice, živali. Proga mu da podatke in slog; svet proge (`js/world-<id>.js`) vsebuje le njene posebnosti (nekaj KB, ne 50–80 KB kot obstoječi graditelji).
+- `tools/proga-uvoz.mjs <id>` iz `proge.json`, OSM in višin naredi podatke proge.
+- `tools/nova-proga.mjs <id>` naredi vse ponavljajoče se: `js/tracks/<id>.js`, vrstico v `index.html`, angleščino v `js/lang.js`, osnutek `docs/proge/<id>.md`, vrstici v `README.md`, test in vrstico v kazalu. Seje prog 2–16 zato ne berejo predlog in ne pišejo istega besedila znova.
+
+**Seja proge (napor xhigh) dela po receptu:**
+1. Prebere `CLAUDE.md` in svoj del tega načrta; kazalo in kodo le z grepom, velikih datotek nikoli v celoti.
+2. `node tools/proga-uvoz.mjs <id>` in `node tools/nova-proga.mjs <id>`.
+3. Posebnost proge naredi kot gradnik v `js/world-gore.js`, če jo rabi še kakšna proga (predor, usek, slap, terase, doki), sicer v `js/world-<id>.js`. Proge so razvrščene po družinah, da vsaka družina svoj gradnik naredi enkrat.
+4. Preverjanje: ena zbirna slika (pokonci in ležeče, 3–4 stalna mesta, manjša ločljivost), največ 3 krogi popravkov; obremenitev s `perf.test.mjs`; povezani testi z `--quiet`, izhodi ukazov skrajšani (`tail`).
+5. Pull request kot osnutek → pripravljen → ena vrstica koordinacijski seji; nato se seja konča in ne čaka na teste.
+
+**Koordinacijska seja (napor medium)** čaka na teste z dogodki GitHuba, ob napaki seji proge pošlje le izsek napake, ob zelenih testih združi, posodobi Stanje in naslednjo sejo zažene z enim stavkom.
+
+**Kjer ne varčujemo**: pregled grafike s kamere pokonci in ležeče, meje obremenitve telefona, povezani testi lokalno in vsi na GitHubu, pravna pravila.
 
 ## Stanje
 
@@ -130,12 +145,12 @@ Veriga čaka, da uporabnik napiše »začni« (1. 11. 2026). Proga 1 nadaljuje s
 | 3 | Medeu, Kazahstan | `gorske-proge/03-medeu` | čaka |
 | 4 | Auli, Indija | `gorske-proge/04-auli` | čaka |
 | 5 | Guoliang, Kitajska | `gorske-proge/05-guoliang` | čaka |
-| 6 | Yungas, Bolivija | `gorske-proge/06-yungas` | čaka |
-| 7 | Ella, Šrilanka | `gorske-proge/07-ella` | čaka |
-| 8 | Milford Sound, Nova Zelandija | `gorske-proge/08-milford` | čaka |
-| 9 | Santo Antão, Zelenortski otoki | `gorske-proge/09-santoantao` | čaka |
-| 10 | Hana, ZDA | `gorske-proge/10-hana` | čaka |
-| 11 | Corvo Branco, Brazilija | `gorske-proge/11-corvobranco` | čaka |
+| 6 | Milford Sound, Nova Zelandija | `gorske-proge/06-milford` | čaka |
+| 7 | Corvo Branco, Brazilija | `gorske-proge/07-corvobranco` | čaka |
+| 8 | Yungas, Bolivija | `gorske-proge/08-yungas` | čaka |
+| 9 | Hana, ZDA | `gorske-proge/09-hana` | čaka |
+| 10 | Ella, Šrilanka | `gorske-proge/10-ella` | čaka |
+| 11 | Santo Antão, Zelenortski otoki | `gorske-proge/11-santoantao` | čaka |
 | 12 | Dadès, Maroko | `gorske-proge/12-dades` | čaka |
 | 13 | Espinazo del Diablo, Mehika | `gorske-proge/13-espinazo` | čaka |
 | 14 | Punta del Este, Urugvaj | `gorske-proge/14-puntadeleste` | čaka |
