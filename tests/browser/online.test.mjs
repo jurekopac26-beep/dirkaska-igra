@@ -68,7 +68,12 @@ try {
   T.check('race: the two side by side on the front row (the same distance to the line)', Math.abs(row.d[0] - row.d[1]) < 0.05 && row.d[0] < 0 && row.side !== 0, JSON.stringify(row));
   const started = (p) => until(p, () => { const n = window.__game.net; return n && n.race && n.race.startT != null ? n.race.startT : null; }, null, 60000);   // (the moment the lights went out there)
   const [sA, sB] = await Promise.all([started(A.page), started(B.page)]);
-  T.check('race: both start on time (in the first frame after the planned moment)', sA - goA < 400 && sB - goB < 400 && sA >= goA && sB >= goB, `host +${(sA - goA).toFixed(0)} ms, friend +${(sB - goB).toFixed(0)} ms`);
+  // (the first frame after the planned moment: within 400 ms, or within one and a half of that page's frames where a frame takes longer:
+  // two pages drawing in software on a busy machine, ~0.3-0.45 s a frame)
+  const frame = (p) => p.evaluate(() => new Promise((res) => { let n = 0; const t0 = performance.now(), f = () => { if (++n < 10) requestAnimationFrame(f); else res((performance.now() - t0) / 9); }; requestAnimationFrame(f); }));
+  const [frA, frB] = await Promise.all([frame(A.page), frame(B.page)]);
+  T.check('race: both start on time (in the first frame after the planned moment)', sA - goA < Math.max(400, 1.5 * frA) && sB - goB < Math.max(400, 1.5 * frB) && sA >= goA && sB >= goB,
+    `host +${(sA - goA).toFixed(0)} ms, friend +${(sB - goB).toFixed(0)} ms (a frame: host ${frA.toFixed(0)} ms, friend ${frB.toFixed(0)} ms)`);
   const cars = (p) => p.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, me: r.player.num, it: r.remote.num, model: r.remote.m.id, grid: [r.player.grid, r.remote.grid] }; });
   const cA = await cars(A.page), cB = await cars(B.page);
   T.check("race: the two of them on the grid, each with the other's car; the same start number is changed for the friend", cA.n === 2 && cB.n === 2 && cA.model === 'pico' && cB.model === 'kaze' && cA.me === 1 && cA.it === 2 && cB.me === 2 && cB.it === 1 && cA.grid.join() === '1,2' && cB.grid.join() === '2,1',
