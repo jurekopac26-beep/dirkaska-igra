@@ -65,7 +65,8 @@ vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluj
 (do tedaj ostane objava z veje `main`, potek pa to samo javi). Predogled ima svoj service worker, shranjene nastavitve in napredek pa deli z glavno igro.
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo vsi testi
-(`.github/workflows/tests.yml`). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
+(`.github/workflows/tests.yml`). Osnutek (draft) pull requesta jih ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem
+nadaljnjem potisku (odločitev uporabnika 31. 10. 2026). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
 (drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
 Dolg test ima lahko tudi `TEST_SLOW`-kratni čas, ki ga porabi na GitHubu (`SECS` v `tests/run.js`), če je to več: privzeto 4-kratni, ker
 stroj oblačne seje potrebuje 2- do 2,5-krat toliko časa kot GitHub (`world`, `gfx` ~25–30 min, `perf` ~70 min); na GitHubu 2-kratni. Doma
