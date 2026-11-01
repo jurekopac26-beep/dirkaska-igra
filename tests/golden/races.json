@@ -2398,5 +2398,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "d84dcb3f2b845ce46e96c9ce"
+ },
+ "mountbuller/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 81.15,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f1b9f06565219d4127dbe51f"
+ },
+ "mountbuller/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 88.5,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1ea0e916115107d391b2f894"
+ },
+ "mountbuller/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 77.72,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1bf06c8cb6322f3ff9507c2d"
+ },
+ "mountbuller/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 78.54,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ac9b1e80603ebe477a08f82a"
+ },
+ "mountbuller/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 81.65,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b73a0d721e54ef6be8415337"
  }
 }

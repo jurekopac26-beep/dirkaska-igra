@@ -102,6 +102,14 @@ Graditelji obstoječih gorskih prog imajo po 50–80 KB in vsak svoje živali in
 - `tools/proga-uvoz.mjs`: iz izvlečka OSM, višinskega modela in rabe tal naredi sredinsko črto (zglajeno, odprte serpentine kot na Irohazaki), višine, pas terena in seznam objektov v pasu ~60 m ob cesti v obliki, ki jo bere datoteka proge.
 - Gradnike preizkusi na progi 1; poznejše proge jih samo uporabljajo in dopolnjujejo (brez spreminjanja videza že narejenih prog).
 
+### Kako jih uporabiš (narejeni s progo 1, 1. 11. 2026)
+
+1. V `tools/predogled/proge.json` dodaj progi `sec` (začetek in konec odseka, smer vožnje) in `uvoz` (`pred`: start toliko m pred začetkom odseka, cesta se po potrebi podaljša s cesto, ki se nadaljuje; `grid` 260 m ceste pred startom za 22 avtov; `izt` 160 m izteka za ciljem; `hw` polovična širina asfalta, `hwG` na makadamu; `polmer` serpentin 12 m). `node tools/proga-uvoz.mjs <id> --pregled` izpiše cesto, dolžino dirke in ovinke brez zapisa.
+2. `node tools/nova-proga.mjs <id>` naredi in vpiše vse (glej glavo orodja), požene uvoznik in izračuna medalje. Nato ročno: opisa (`desc`, `en.desc`, brez imen podjetij), imena na zaslonu (`names`; »Serpentina N« se prevede samo, druga v `js/lang.js`), komentator, `look` (svetloba, meglica: `js/render.js` ga vzame, ker nima teme proge), `docs/proge/<id>.md`.
+3. Slog sveta je v `js/world-<id>.js` (`World.gore.build(…, S)`, privzeto `DEF` v `js/world-gore.js`): `snow` ('all' smučišče v sezoni, vedno enako v vseh letnih časih; 'none'; ali višina snežne meje), `road` (`line` 'white' | 'yellow' | 'none', `double`), `trees.kinds` ('gum', 'fir', 'pine', 'broad'), `skiers`, `nets`, `snowbanks`, `poles` (snežni količki), `signs` ('diamond' | 'triangle'), `animals` ([{ kind, n }]; ptice letijo), `boards` (napisi, generični), `extra(ctx)` za posebnost proge.
+4. Stranske ceste: uvoznik vzame le ulice, poti in daljše servisne ceste (brez dovozov), v dirki od 55 m pred startom do 200 m za ciljem, dve na isti strani najmanj 40 m narazen; `tests/junctions.test.js` zahteva tudi ~400 m ceste dlje kot 260 m od vseh priključkov.
+5. Test proge je `tests/lib/gore.js` (ime po tabeli, štirje načini, 2,5–3 km, podatki, ovinki, kraki, cela dirka, dvoboj v prometu, medalje); posebnosti proge dopiši v `tests/<id>.test.js`.
+
 ## Postopek za vsako progo
 
 1. Preberi ta načrt, `CLAUDE.md`, vrstice proge v `docs/kazalo.md` in eno predlogo: prejšnjo progo iz tega sklopa (za progo 1 `js/tracks/iroha.js` in `js/world-iroha.js`; za dirkališča še `newcastle` ali `detroit`). Velikih datotek ne beri, samo grep.

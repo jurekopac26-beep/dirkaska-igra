@@ -351,7 +351,7 @@
     'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
-    'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
+    'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)

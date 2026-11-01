@@ -4702,5 +4702,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "mountbuller/race/cs": {
+  "digest": "c8ee655449b265c9e1c68836",
+  "lead": 1693.9,
+  "car0": [
+   -1164.23,
+   -97.78
+  ],
+  "cover": {
+   "dmg": 0.14,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/demo/cs": {
+  "digest": "967f45710534ec75dc3f77bd",
+  "lead": 1806.5,
+  "car0": [
+   -1281.83,
+   -185.04
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/upg/cs": {
+  "digest": "f4d57599a14c223c3aaf2f4d",
+  "lead": 1788.6,
+  "car0": [
+   -1213.77,
+   -159.46
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/crash/cs": {
+  "digest": "17627d872481e1eafc01f898",
+  "lead": 1666,
+  "car0": [
+   -1063.28,
+   -134.46
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/formula/cs": {
+  "digest": "840ea7d7c6b2267cb1eee782",
+  "lead": 1776.2,
+  "car0": [
+   -1127.86,
+   -92.45
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/lm/cs": {
+  "digest": "3d781e4a0e63d76094ee780b",
+  "lead": 1766.2,
+  "car0": [
+   -1181.19,
+   -103.42
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "mountbuller/car/cs": {
+  "digest": "952b78a069592f8fa4764821",
+  "lead": 1664.3,
+  "car0": [
+   -1041.72,
+   -127.44
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

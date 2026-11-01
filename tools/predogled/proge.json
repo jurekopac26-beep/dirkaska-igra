@@ -1,6 +1,23 @@
 {
  "mountbuller": {
   "key": "Summit Road",
+  "sec": [
+   [
+    -37.14588,
+    146.44948
+   ],
+   [
+    -37.146,
+    146.43037
+   ]
+  ],
+  "uvoz": {
+   "pred": 400,
+   "grid": 260,
+   "izt": 160,
+   "hw": 5.0,
+   "hwG": 4.5
+  },
   "focus": "lift",
   "cfg": {
    "ground": "snow",
