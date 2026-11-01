@@ -279,15 +279,17 @@
         <div class="row"><span class="rlbl">Glasba v uvodu</span><div class="seg" data-set="music"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
-        <div class="set-note" id="prof-note"></div>
-        <details class="set-cat" id="set-kopije">
-          <summary>Samodejne kopije napredka</summary>
-          <div class="set-body">
-            <div class="set-note">Igra sama shrani kopijo napredka ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije (brez duhov, zadnjih pet). Kopije so v tem brskalniku: če telefon izbriše podatke brskalnika, izginejo skupaj z igro. Za to je izvoz v datoteko.</div>
-            <div id="kopije-list"></div>
-          </div>
-        </details>
+        <div class="prof-box">
+          <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
+          <div class="set-note" id="prof-note"></div>
+          <details class="set-cat" id="set-kopije">
+            <summary>Samodejne kopije napredka</summary>
+            <div class="set-body">
+              <div class="set-note">Igra sama shrani kopijo napredka ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije (brez duhov, zadnjih pet). Kopije so v tem brskalniku: če telefon izbriše podatke brskalnika, izginejo skupaj z igro. Za to je izvoz v datoteko.</div>
+              <div id="kopije-list"></div>
+            </div>
+          </details>
+        </div>
         <details class="set-cat" id="set-test">
           <summary>Preizkus: tekmeci in trki</summary>
           <div class="set-body">
@@ -658,6 +660,6 @@
 <script src="js/missions/m33.js?v=d83dbfbd"></script>
 <script src="js/missions/m53.js?v=e0ed08e7"></script>
 <script src="js/shramba.js?v=e4852853"></script>
-<script src="js/game.js?v=80fea954"></script>
+<script src="js/game.js?v=39f45dea"></script>
 </body>
 </html>

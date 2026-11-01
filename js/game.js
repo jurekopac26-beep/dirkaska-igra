@@ -582,6 +582,7 @@
     updateFsButtons(); refreshSegs();
     if (race) { $('pause-restart').textContent = restartTxt(); $('h-rlbl').textContent = tr(race.pol ? 'POLICIJA' : 'MESTO'); fltKey = null; tyreKey = '-'; }   // (the failures' pills, the tyres' word: written again)
     chalBtn(); if (screen === 'chal') chalShow();   // (a challenge waiting: its button and card)
+    if (screen === 'settings') profNote();   // (the note under Profil and the copies: written in the new language)
     const B = { car: buildCarScreen, upg: buildUpgScreen, track: buildTrackScreen, board: buildBoardScreen, champ: buildChampScreen, career: buildCareerScreen };
     if (B[settingsReturn]) B[settingsReturn]();
     if (mp) buildRoom();
