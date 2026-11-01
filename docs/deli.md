@@ -152,6 +152,18 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 
 - LEV R je videti enako kot prej, 1394 od 1400 trikotnikov (tablica je nagnjena za 3 mm, da ima odpadel kos prostornino, kot pri LEV KABRIU); ZMAJ +8 (tablica je tanka ploščica kot pri KOLIBRIJU).
 
+### Terenski (`gozdar`, `hrosc`, `medved`, `pescenjak`, veja `deli/avti-teren`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GOZDAR | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (na vogalih kesona, vsaka s črnim okvirjem) | na zadnjem robu strehe kabine, v delu `wing`, namesto krila v kesonu (odprt keson nima pokrova, na katerega bi stopila krila iz garaže), `s` 1,3 | v obliki pravokotne luči (`shape`) |
+| SKAKAČ (`hrosc`) | `headL` / `headR` (okrogli luči na nosilcih blatnikov, `on: 'fenderL'` / `'fenderR'`), `tailL` / `tailR` (z nosilcem, `on: 'quarterL'` / `'quarterR'`) | na skrajšanem pokrovu motorja (`cover`, `top`: njegovo teme), odpade z njim | v obliki okrogle luči z obročem (`shape`), vtičnica gre z lučjo |
+| MEDVED | `headL` / `headR` (okrogli luči s kromiranim obročem v nosilcih blatnikov, na blatnikih), `tailL` / `tailR` (s črnim okvirjem, na zadnjih blatnikih), `plate` (zadnja, na zadnjem odbijaču), `wiperFront`, `wiperRear` (na vratih prtljažnika) | ni (strešni prtljažnik pokriva streho do zadnjega roba) | v obliki okrogle luči z obročem (`shape`), vtičnica gre z lučjo |
+| PEŠČENJAK | `headL` / `headR` (črni nosilec z dvema lučema, `on: 'nose'`), `tailL` / `tailR` (s črnim okvirjem), `plate` | na koncu hrbta pokrova motorja (`cover`, `top`: njegov greben) | v črnem nosilcu namesto obeh luči (`shape`: pravokotnik, nosilec okrog njega) |
+
+- Serijski avti so videti enako kot prej: GOZDAR in SKAKAČ trikotnik za trikotnikom; MEDVED +8 (tablica je tanka ploščica), PEŠČENJAK 1390 od 1400 (tablica nagnjena za 4 mm, zadnji brisalec MEDVEDA za 3 mm, da imata odpadla kosa prostornino). SKAKAČEVA sprednja blatnika brez luči ležita na cesti 5 mm višje: `h` 0,135.
+- `tests/kit.test.js`: umetni pickup na GOZDARJEVEM seznamu delov nariše tudi njegove nove dele (kot roadster na LISIČINEM).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
