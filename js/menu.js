@@ -18,6 +18,34 @@
   const laps = (n) => n + (n === 1 ? ' lap' : ' laps');
   const clock = (s) => Math.floor(s / 60) + ':' + (s % 60).toFixed(2).padStart(5, '0');
 
+  /* ---------------- a browser that darkens the page by force ----------------
+     Samsung Internet's dark mode (by default) repaints every page as it is drawn and tells it the player prefers light, so the
+     page's own color-scheme: dark (index.html, the CSS) cannot stop it: white turns black, gold brown, the kerb's white stripes dark
+     (the 3D world, a WebGL canvas, is spared). No page can switch it off, so the title says where the player can (darkSheet). Found
+     with Chrome's own probe: the system colour Canvas in a light element is white unless the browser forces dark. A browser that
+     also reports prefers dark (Chrome's auto-dark) respects the game's color-scheme and leaves it as it is: nothing to say. The page
+     temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. */
+  const isSamsung = () => /SamsungBrowser/i.test(navigator.userAgent);
+  function forcedDark() {
+    try {
+      if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
+      const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:light';
+      document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove();
+      const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(c);   // (a browser without the keyword: transparent, not dark)
+      return !!m && (m[4] == null || +m[4] > 0.5) && (299 * m[1] + 587 * m[2] + 114 * m[3]) / 1000 < 128;
+    } catch (_) { return false; }
+  }
+  const darkTipOff = () => { try { return localStorage.getItem('tdgp-darktip') === 'off'; } catch (_) { return false; } };
+  // shown once a visit: the tab's session (the garage and the game's own reloads are the same visit; without storage: this page)
+  let darkMem = false;
+  const darkTold = () => { try { return darkMem || sessionStorage.getItem('tdgp-darktold') === '1'; } catch (_) { return darkMem; } };
+  const setDarkTold = (v) => { darkMem = v; try { if (v) sessionStorage.setItem('tdgp-darktold', '1'); else sessionStorage.removeItem('tdgp-darktold'); } catch (_) { /* memory only */ } };
+  // the game in Chrome on Android (an intent: Samsung Internet hands it to the system; without Chrome the same address again), with the
+  // address it was opened with: game.js takes a friend's challenge or ghost from the hash and clears it as it starts (the garage's way
+  // back, zaslon and avto, stays behind)
+  const ARRIVED = (() => { try { const P = new URLSearchParams(location.search); P.delete('zaslon'); P.delete('avto'); const q = P.toString(); return (q ? '?' + q : '') + location.hash; } catch (_) { return ''; } })();
+  const chromeUrl = () => { const u = location.origin + location.pathname + ARRIVED; return 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=' + location.protocol.slice(0, -1) + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end'; };
+
   /* ---------------- icons ---------------- */
   const I = {
     wheel: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#ffc629" stroke-width="2.6"/><circle cx="12" cy="12" r="2.4" fill="#ffc629"/><path d="M3.5 11h6M14.5 11h6M12 14.5v6" stroke="#ffc629" stroke-width="2.6"/></svg>',
@@ -181,7 +209,7 @@
       if (G.chal()) h += '<button class="mbtn gold buy" data-act="game:to-chal"><span>Challenge from a friend</span><small>Beat their time on the same track</small></button>';
       const ex = []; if (G.fsAvailable()) ex.push('<button class="tsmall" data-act="game:fullscreen">' + I.expand + '<span>Full screen</span></button>'); if (G.installAvailable()) ex.push('<button class="tsmall" data-act="game:install">' + I.plus + '<span>Install the game</span></button>');
       if (ex.length) h += '<div class="t-row">' + ex.join('') + '</div>';
-      h += '<button class="tlink" data-act="credits">Credits</button>';
+      h += forcedDark() ? '<div class="t-links"><button class="tlink" data-act="credits">Credits</button><button class="tlink" data-act="dark-tip">Colours too dark?</button></div>' : '<button class="tlink" data-act="credits">Credits</button>';
     }
     h += '</div></section>';
     return h;
@@ -579,6 +607,16 @@
   function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+  }
+  function darkSheet() {   // the browser darkens the page by force (forcedDark): where to switch that off (dark itself, so it reads right darkened too)
+    const steps = isSamsung()
+      ? '<ol><li>Samsung Internet: <b>Menu ≡ → Settings → Webpage view and scrolling → Dark mode</b>, turn off <b>Force Dark mode for web content</b>.</li><li>Older versions: <b>Settings → Labs</b>, turn on <b>Use website dark theme</b>.</li></ol>'
+      : '<ol><li>In the browser\'s settings, turn off its dark mode for websites.</li></ol>';
+    return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet dtip" role="dialog" aria-label="Colours too dark?"><h2>Colours too dark?</h2>' +
+      '<p>Your browser\'s dark mode repaints the game: white turns black, gold turns brown. The game is dark already, so switch it off for websites:</p>' + steps +
+      '<p class="fine">Or play in Chrome. Each browser keeps its own progress.</p><div class="row">' +
+      (/Android/i.test(navigator.userAgent) ? '<button class="back wide" data-act="chrome">Open in Chrome</button>' : '') + '<button class="go" data-act="close-sheet">OK</button></div>' +
+      '<button class="tlink" data-act="dark-never">Don\'t show this again</button></div></div>';
   }
   // the race's other choices (the weather column's ··· button), in a sheet of their own
   function optionsRows() {
@@ -1084,6 +1122,9 @@
       }
       case 'pick-car': carFrom = true; G.act('to-car'); break;   // (the garage of the game itself; Back and Next both come back to the track step)
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'dark-tip': sheet = darkSheet; render(true); break;
+      case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
+      case 'chrome': location.href = chromeUrl(); break;
       case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
       case 'close-sheet': sheet = null; render(true); break;
       case 'game': G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's)
@@ -1152,7 +1193,10 @@
     if (!ready) { want = name; return; }
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
-    if (name === 'title') { screen = 'title'; titleSub = null; sheet = null; }
+    if (name === 'title') {
+      screen = 'title'; titleSub = null; sheet = null;
+      if (!darkTold() && forcedDark() && !darkTipOff()) { setDarkTold(true); sheet = darkSheet; }   // (once a visit, the first time the title is up)
+    }
     else {
       const cur = gameTrack();
       screen = 'track'; sheet = null;
@@ -1165,6 +1209,7 @@
     want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT);
+    if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
   }
@@ -1191,5 +1236,5 @@
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id) }) };
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl() }) };
 })();
