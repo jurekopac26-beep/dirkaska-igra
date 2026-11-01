@@ -224,6 +224,16 @@ Kategorije po vrsti v eni seji (varčni način, odločitev uporabnika 1. 11. 202
 - Serijski avti so videti enako kot prej (prstni odtis geometrije): MODRAS trikotnik za trikotnikom enak, PERUN +8 trikotnikov (tablica je tanka ploščica kot pri KOLIBRIJU), ŠKORPIJON +2 (črni trak pod svetlobnim pasom je razdeljen na polovici, vsaka gre s svojo lučjo).
 - `tests/fleet.test.js` (zaporedje razbitine z MODRASOM): korak šteje glavni del; deli, pritrjeni nanj (`on`, MODRASOVA žarometa na odbijaču), gredo z njim.
 
+### Klasika (`blisk`, `gad`, veja `deli/avti-klasika`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GAD | `headL` / `headR` (okrogli luči v koncih grbin, `on: 'fenderL'` / `'fenderR'`; oranžna smernika pod njima ostaneta na blatnikih), `tailL` / `tailR` (po dve okrogli luči), `plate`, `wiperFront` (oba brisalca) | na zadnjem robu pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | v obliki okrogle luči z obročem (`shape`: krog s polmerom 0,095 m, rahlo izbočen), temna vtičnica gre z lučjo (`socket: 'host'`) |
+| BLISK | brez (dirkalnik iz 30-ih nima luči, tablice ne brisalcev) | na čolnastem repu za voznikom, v `tail` (odpade z njim) | ni (nima žarometov) |
+
+- GAD je videti enako kot prej, 1392 od 1400 trikotnikov (+4): za vsako lečo zadnje luči je skrit temen trikotnik (zadnja luč je v serijskem avtu samo v repni mreži, del pa potrebuje svoje trikotnike), tablica je zaradi prostornine odpadlega kosa nagnjena za 3 mm (kot pri LEV KABRIU). BLISK je trikotnik za trikotnikom enak.
+- JASTREB (Klasika) ima mesta za dele od sklopa 1, zato ga ta obisk izpusti; luči kot ločenih delov (razbijanje) nima, prav tako ne PANTER in TITAN.
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
