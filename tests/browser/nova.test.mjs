@@ -115,7 +115,7 @@ try {
     await startTrack(page, 'spa');
     const b = await spread();
     T.check('Preizkus: a race with the spread 0.3 and the realistic knocks: narrow paces (a third or less of the usual), nothing NaN, Core.TX kept through the race; back on Privzeto in the next race the usual spread, nothing set',
-      a.phys === 'cs' && a.n > 10 && a.w < 0.05 && !nanA && txA.aiSpr === 0.3 && txA.cBox === 1 && txA.cScrub === 1 && b.w > 0.08 && Object.values(tz).every(v => v === null), JSON.stringify({ a, b, txA, tz, nanA }));
+      a.phys === 'cs' && a.n > 10 && a.w < 0.05 && !nanA && txA.aiSpr === 0.3 && txA.cBox === 1 && txA.cScrub === 1 && b.w > 0.07 && Object.values(tz).every(v => v === null), JSON.stringify({ a, b, txA, tz, nanA }));   // (the usual spread on Spa 0.079-0.098 with the dealing's noise: 0.08 failed one race in 40)
     T.check('Preizkus: the spread row says in a race it applies from the next race', /naslednje dirke/.test(toast), toast);
     // Trki med avti brez odboja: one switch in the list (before Poškodbe avtov), Izklop on a fresh profile; on: Core.TX.nb and its own knock settings
     // over the rows (a row set to something else changes nothing), the rows it stands for dimmed, a note under it; Razbijanje stays as chosen
