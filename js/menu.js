@@ -329,7 +329,8 @@
     const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
     lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
       F.places.map(n => tag('q', n, '')).join('');
-    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
+    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n) || R.places.find(x => x[0].indexOf(n) >= 0);   // (the same name first: Zbilje, not Zbilje Grove)
+      return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
     let last = 0, looped = false, pl = null, al = null;
     const step = () => {
       if (!v.isConnected) return;

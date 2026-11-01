@@ -50,7 +50,37 @@ window.MENU = {
   "rbring": 240,
   "suzuka": 240,
   "spa": 240,
-  "nring": 240
+  "nring": 240,
+  "medvode": 300,
+  "baldy": 300,
+  "beartooth": 300,
+  "bigsur": 300,
+  "detroit": 240,
+  "maunakea": 300,
+  "moki": 300,
+  "newcastle": 240,
+  "townsville": 240,
+  "marrakesh": 240,
+  "longford": 240,
+  "chapman": 300,
+  "sani": 300,
+  "montreal": 240,
+  "toronto": 240,
+  "troisrivieres": 240,
+  "greatalpine": 300,
+  "hotham": 300,
+  "monterey": 240,
+  "mulholland": 300,
+  "palomar": 300,
+  "riverside": 240,
+  "uncompahgre": 300,
+  "iroha": 300,
+  "harju": 300,
+  "caracoles": 300,
+  "rastro": 300,
+  "katu": 300,
+  "tianmen": 300,
+  "bangsaen": 240
  },
  "routeMaps": {
   "vrsic": {
@@ -227,6 +257,191 @@ window.MENU = {
   },
   "nring": {
    "base": 616
+  },
+  "medvode": {
+   "start": "Medvode",
+   "finish": "Smlednik",
+   "alt": [
+    317,
+    500
+   ]
+  },
+  "baldy": {
+   "start": "Mount Baldy",
+   "finish": "Manker Flat",
+   "alt": [
+    1282,
+    1917
+   ]
+  },
+  "beartooth": {
+   "start": "Rock Creek",
+   "finish": "Beartooth Plateau",
+   "alt": [
+    2631,
+    2849
+   ]
+  },
+  "bigsur": {
+   "start": "Rocky Creek",
+   "finish": "Hurricane Point",
+   "alt": [
+    71,
+    171
+   ]
+  },
+  "detroit": {
+   "base": 177
+  },
+  "maunakea": {
+   "start": "Mauna Kea",
+   "finish": "Summit Ridge",
+   "alt": [
+    3599,
+    4198
+   ]
+  },
+  "moki": {
+   "start": "Valley of the Gods",
+   "finish": "Cedar Mesa",
+   "alt": [
+    1624,
+    1961
+   ]
+  },
+  "newcastle": {
+   "base": 3
+  },
+  "townsville": {
+   "base": 6
+  },
+  "marrakesh": {
+   "base": 502
+  },
+  "longford": {
+   "base": 163
+  },
+  "chapman": {
+   "start": "Hout Bay",
+   "finish": "Chapman's Peak",
+   "alt": [
+    19,
+    153
+   ]
+  },
+  "sani": {
+   "start": "Mkhomazana",
+   "finish": "Sani Pass",
+   "alt": [
+    2229,
+    2872
+   ]
+  },
+  "montreal": {
+   "base": 10
+  },
+  "toronto": {
+   "base": 81
+  },
+  "troisrivieres": {
+   "base": 32
+  },
+  "greatalpine": {
+   "start": "Tambo River",
+   "finish": "Ash Range",
+   "alt": [
+    123,
+    337
+   ]
+  },
+  "hotham": {
+   "start": "Mount Little Blowhard",
+   "finish": "Hotham Heights",
+   "alt": [
+    1495,
+    1753
+   ]
+  },
+  "monterey": {
+   "base": 234
+  },
+  "mulholland": {
+   "start": "Cornell",
+   "finish": "La Sierra Canyon",
+   "alt": [
+    256,
+    544
+   ]
+  },
+  "palomar": {
+   "start": "Pauma Valley",
+   "finish": "Palomar Mountain",
+   "alt": [
+    859,
+    1435
+   ]
+  },
+  "riverside": {
+   "base": 473
+  },
+  "uncompahgre": {
+   "start": "Ouray",
+   "finish": "Uncompahgre Gorge",
+   "alt": [
+    2543,
+    2860
+   ]
+  },
+  "iroha": {
+   "start": "Umagaeshi",
+   "finish": "Akechidaira",
+   "alt": [
+    918,
+    1240
+   ]
+  },
+  "harju": {
+   "start": "Jyväskylä",
+   "finish": "Flying finish",
+   "alt": [
+    110,
+    115
+   ]
+  },
+  "caracoles": {
+   "start": "Juncalillo",
+   "finish": "Portillo",
+   "alt": [
+    2200,
+    2866
+   ]
+  },
+  "rastro": {
+   "start": "Rio do Rastro",
+   "finish": "Serra Geral",
+   "alt": [
+    1010,
+    1421
+   ]
+  },
+  "katu": {
+   "start": "Katu-Yaryk Pass",
+   "finish": "Chulyshman",
+   "alt": [
+    1242,
+    683
+   ]
+  },
+  "tianmen": {
+   "start": "Tianmen Mountain",
+   "finish": "Tianmen Cave",
+   "alt": [
+    729,
+    1218
+   ]
+  },
+  "bangsaen": {
+   "base": 3
   }
  },
  "intro": {
