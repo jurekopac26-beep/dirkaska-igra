@@ -529,7 +529,14 @@
     }
     return { on, whereOf };
   })();
-  // the player's car in the yard: its picture (assets/cars/img), else the game's own showroom drawn once per car and colour
+  // the player's car in the yard: in 3D with the wind round it (js/menu-car.js), else (no WebGL for it) its picture (assets/cars/img), else
+  // the game's own showroom drawn once per car and colour
+  const car3d = (car) => window.MenuCar && MenuCar.supported() && car.hex != null ? { id: car.id, color: car.hex, num: car.num } : null;
+  function carOn() {
+    const y = screen === 'track' && $('#s-track .yard', app), c = y && car3d(G.car());
+    if (!c) { if (window.MenuCar) MenuCar.detach(); return; }
+    MenuCar.attach(y, c, () => { if (screen === 'track' && app.isConnected && !$('.intro', app)) render(true); });   // (no WebGL for it after all: the picture)
+  }
   const carPics = {};
   function carPicOf(car) {
     if (HAS_CAR_IMG.includes(car.id)) return carImg(car, car.color);
@@ -561,10 +568,11 @@
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
-    // the yard: the car before the road sign with the country (a test track: its name and TEST)
-    const car = G.car(), pic = carPicOf(car), here = G.carHere();
-    h += '<div class="yard"><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
-      '<button class="car" data-act="pick-car" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Choose another car">' + (pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button></div>';
+    // the yard: the car before the road sign with the country (a test track: its name and TEST); the car in 3D with the wind round it
+    // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; a tap on it: the garage
+    const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
+    h += '<div class="yard' + (c3 && MenuCar.live(c3) ? ' c3d-on' : '') + '"><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+      '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)
     const nb = (k) => {
       const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';
@@ -622,7 +630,7 @@
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
-    flyLabels(); fitMaps(); globe.on(); graphOn();
+    flyLabels(); fitMaps(); globe.on(); graphOn(); carOn();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -845,6 +853,7 @@
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
     const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf);
+    if (window.MenuCar) MenuCar.rest();   // (the car's canvas: its buffers freed for the race)
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach();
@@ -1082,7 +1091,7 @@
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
         render(true); break;
       }
-      case 'pick-car': carFrom = true; G.act('to-car'); break;   // (the garage of the game itself; Back and Next both come back to the track step)
+      case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back: the game's car screen, whose Back and Next come back to the track step)
       case 'credits': sheet = creditsSheet; render(true); break;
       case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
       case 'close-sheet': sheet = null; render(true); break;
@@ -1164,7 +1173,7 @@
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
     if (!app) return;
-    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT);
+    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
   }
