@@ -35,6 +35,10 @@
   const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, mapV: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crNB: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
+  // Prvič na cesti (the first start): a browser that has never kept the game's settings (read before anything below writes them), nor
+  // the garage's profile (apex-garage, garaza.html), nor seen it (tdgp-prvi); or one where it was shown and left unfinished (tdgp-prvi
+  // '0': the game closed on it); '1': skipped or the first race driven. The races and the address: at the boot (prviCan)
+  const prviFresh = (() => { try { const v = localStorage.getItem('tdgp-prvi'); return v === '0' || (v == null && !localStorage.getItem('tdgp-settings') && !localStorage.getItem('apex-garage')); } catch (_) { return false; } })();
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
   if (S.pkFly == null) S.pkFly = 1;
   if (S.track === 'pikesg') S.pkRoad = 'pikesg'; else if (S.pkRoad !== 'pikesg') S.pkRoad = 'pikes';   // (Pikes Peak: the road chosen on its card, asphalt or the historic gravel)   // (Pikes Peak: the course flyover before a fresh start, on unless switched off in Nastavitve)
@@ -419,7 +423,7 @@
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
     if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
-    if (name === 'results') { resSave(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
+    if (name === 'results') { resSave(); resPrvi(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
     if (name === 'settings') profNote();
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
@@ -1968,7 +1972,7 @@
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       tyreRule: TYRE_RULE, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
-    }, MS.opts()));   // (a special mission: its own race, js/missions.js)
+    }, MS.opts(), prviOpts()));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race)
     if (race.player) race.player.pitCmp = S.pitCmp;
     MS.made(race);   // (a special mission: its own cars, before they are drawn)
     if (track.def.mist) race.opts.mist = !race.rain && !W.wx && !quali && (S.tod === 'dawn' || ((S.weather === 'random' || S.weather === 'change') && grand() < track.def.mist));   // Big Sur: the marine layer (Render: dyn.bsMist), every morning and on some dry runs
@@ -2111,7 +2115,7 @@
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
-    school = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school'); MS.stop();
+    school = null; prvi = null; Render.setLine(false); Render.setMarks(null); Input.setOptions({ autoGas: !!S.autoGas }); $('hud').classList.remove('school'); MS.stop();
     Sfx.setRunning(false); Sfx.silence();
     demoShow(); Render.resetCam(); Render.setStorm(S.weather === 'storm'); Render.setAtmos({ season: S.season, tod: S.tod }, true);   // (after an endurance race: the time of day of the setting again)
     setLights(0, false);
@@ -2250,7 +2254,7 @@
   const schoolKey = (L) => L.id + '@' + physOf();
   const schoolRec = (L) => schoolData[schoolKey(L)] || { best: NaN, medal: -1 };
   const schoolLower = (L) => L.id === 'start' || L.id === 'brake';
-  const lineWant = () => school ? school.L.id === 'line' : !!S.line;
+  const lineWant = () => school ? school.L.id === 'line' || school.L.id === 'prvi' : !!S.line || !!(prvi && prvi.race);   // (Prvič na cesti: the test drive and the first race with the line)
   const wrapD = (d, L) => (d > L / 2 ? d - L : d < -L / 2 ? d + L : d);
   function driftTick(D, P, dt) {   // the drift's points (the lesson and its reference): a chain grows while the car slides, banked when it ends, lost at a knock
     if (P.hitWall > 3 || P.hitCar > 3) { if (D.chain > 0) D.lost++; D.chain = 0; D.calm = 0; return; }
@@ -2258,7 +2262,7 @@
     if (b > 0.2 && v > 8 && !P.air) { D.chain += v * b * dt * 10; D.calm = 0; }
     else if (D.chain > 0 && (D.calm += dt) > 0.6) { D.pts += D.chain; D.best = Math.max(D.best, D.chain); D.chain = 0; D.calm = 0; }
   }
-  const schoolOpts = (L) => ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
+  const schoolOpts = (L) => L.id === 'prvi' ? prviOpts1() : ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
     seed: 1, difficulty: 1, assist: S.assist, damage: 0, phys: physOf(), rain: 0, launch: L.id === 'start' });   // (the start's reaction and its wheelspin: in the start lesson only)
   function placeAt(c, T, s) {   // (the braking lesson: the car standing at s on the ideal line)
     const i = T.idx(s), off = T.rl[i];
@@ -2317,6 +2321,10 @@
         if (t > lim) schoolEnd(null, tr('Prepočasi: krog v {0}, v omejenem času {1} (na idealni liniji {2} %).', fmt(t, true), fmt(lim, true), Math.round(pct)));
         else schoolEnd(pct, tr('Na idealni liniji {0} % kroga, krog v {1} (omejitev {2}).', Math.round(pct), fmt(t, true), fmt(lim, true)));
       }
+    } else if (L.id === 'prvi') {   // (Prvič na cesti: the test drive, PRVI_T s of driving; how far, how fast)
+      if (!s.told) { s.told = true; showMsg(tr('RDEČE NA CESTI: ZAVIRAJ'), 'gold', 3); }   // (the racing line's colours: the one to know first)
+      s.km = (s.km || 0) + P.speed * dt / 1000; s.vmax = Math.max(s.vmax || 0, P.speed * 3.6); s.live = PRVI_T - race.time;
+      if (race.time >= PRVI_T) prviTestEnd();
     } else if (L.id === 'drift') {
       const had = s.D.chain; driftTick(s.D, P, dt); if (had > 30 && s.D.chain === 0 && s.D.calm === 0 && (P.hitWall > 3 || P.hitCar > 3)) showMsg(tr('UDAREC: VERIGA IZGUBLJENA'), 'slow', 1.2);
       s.live = s.D.pts + s.D.chain;
@@ -2327,6 +2335,7 @@
     const s = school, L = s && s.L; if (!L) return;
     const v = s.live, txt = L.id === 'start' ? (phase === 'racing' ? tr('ŠTART · {0} s · {1} m', Lang.dec(race.time.toFixed(2)), Math.max(0, Math.round(v || 0))) : tr('ŠTART · plin šele, ko ugasnejo luči')) :
       L.id === 'brake' ? tr('ZAVIRANJE · do črte STOP {0} m', v == null ? BRAKE_RUN : Math.max(0, Math.round(v))) : L.id === 'line' ? tr('LINIJA · na liniji {0} %', Math.round(v == null ? 100 : v)) :
+      L.id === 'prvi' ? tr('POSKUSNA VOŽNJA · še {0} s', Math.max(0, Math.ceil(v == null ? PRVI_T : v))) :
       tr('DRIFT · {0} točk · {1} s', numDot(Math.round(v || 0)), Math.max(0, Math.ceil(SCHOOL_DRIFT_T - (phase === 'racing' ? race.time : 0))));
     setText('h-school', txt);
   }
@@ -2349,6 +2358,56 @@
     $('res-restart').dataset.act = 'restart'; $('res-restart').textContent = tr('Ponovi vajo'); $('res-replay').classList.add('off'); $('res-school').classList.remove('off');
     showScreen('results');
   }
+
+  /* ---------------- Prvič na cesti (the first start): a new player picks the controls (#s-prvi, #prvi-a), tries them on a short drive
+     alone (the lesson 'prvi' of the driving school's frame: PRVI_T s on Štajerska, Avstrija, a wide circuit with run-off, in the
+     player's own car, the racing line on), sees how it went (#prvi-b: again, other controls, the first race), then drives a first easy
+     race (PRVI_LAPS laps, PRVI_AI rivals on Lahka, from PRVI_GRID-th on the grid, dry, the line on: prviOpts in newRace); its results
+     show what comes next (#res-prvi: the career, the tracks, the driving school). On its own once: a plain start (no address after the
+     page) of a browser that never kept the game's settings (prviFresh), nothing driven; again at the next start while unfinished
+     (tdgp-prvi '0'); Preskoči or the first race note it seen ('1').
+     Nastavitve → Prvič na cesti shows it again. ---------------- */
+  const PRVI_TRACK = 'rbring', PRVI_T = 45, PRVI_LAPS = 2, PRVI_AI = 5, PRVI_GRID = 4;
+  const PRVI_L = { id: 'prvi', track: PRVI_TRACK, name: 'Poskusna vožnja' };
+  let prvi = null;   // the first race under way: { race: true } (newRace's options, the line, the results' next steps)
+  const prviCan = () => prviFresh && !location.search && !location.hash && st.races + st.tt === 0 && !career && !Object.keys(schoolData).length;
+  const prviDone = () => { Shramba.keep('tdgp-prvi', '1'); };
+  function prviOpts1() {   // the test drive: alone, in the player's own car, no damage, dry
+    const M = Core.MODELS[S.car];
+    return { numAI: 0, playerGrid: 1, laps: 99, playerModel: M, playerUpg: Object.assign({}, upgOf(M.id)), playerSetup: Object.assign({}, setupOf(PRVI_TRACK)), playerColor: PLAYER_COLORS[S.color], playerNum: carNum(),
+      seed: 1, difficulty: 0, assist: S.assist, damage: 0, phys: physOf(), rain: 0, launch: false };
+  }
+  const prviOpts = () => prvi && prvi.race ? { numAI: PRVI_AI, playerGrid: PRVI_GRID, laps: PRVI_LAPS, difficulty: 0, rain: 0, weather: null, fuel: false, faults: false, rival: undefined } : {};
+  function prviShow() {   // the controls: the three ways to drive, the chosen one marked; a pad: it can drive too
+    $('prvi-a').classList.remove('off'); $('prvi-b').classList.add('off');
+    for (const b of document.querySelectorAll('#prvi-a [data-act="prvi-ctl"]')) b.classList.toggle('sel', b.dataset.v === S.control);
+    $('prvi-pad').classList.toggle('off', !(Input.pad && Input.pad.on));
+    showScreen('prvi');
+  }
+  function prviCtl(v) { if (!CTRL_NAME[v]) return; setOption('control', v); for (const b of document.querySelectorAll('#prvi-a [data-act="prvi-ctl"]')) b.classList.toggle('sel', b.dataset.v === S.control); }
+  function prviTest() {   // the test drive (the driving school's frame: schoolStep, schoolHUD; prviTestEnd at PRVI_T s)
+    if (S.control === 'tilt') enableTilt(true);
+    Comm.unlock(); champRun = false; qual = null; prvi = null;
+    ensureTrack(PRVI_TRACK, () => { school = { L: PRVI_L }; newRace(); });
+  }
+  function prviTestEnd() {   // the drive over: how it went, over the car standing on the track
+    const s = school; s.done = true;
+    phase = 'done'; Sfx.setRunning(false); Input.setOptions({ autoGas: !!S.autoGas });
+    $('prvi-b-t').textContent = tr('Prevoženo {0} km, najvišja hitrost {1} km/h, upravljanje: {2}.', Lang.dec((s.km || 0).toFixed(1)), Math.round(s.vmax || 0), tr(CTRL_NAME[S.control] || 'Tipke'));
+    $('prvi-a').classList.add('off'); $('prvi-b').classList.remove('off');
+    showScreen('prvi');
+  }
+  function prviRace() {   // the first race (from here on the first start is seen)
+    prviDone();
+    if (S.control === 'tilt') enableTilt(true);
+    Comm.unlock(); champRun = false; school = null; qual = null;
+    S.track = PRVI_TRACK; save(); refreshSegs();
+    prvi = { race: true };
+    ensureTrack(PRVI_TRACK, () => newRace());
+  }
+  function prviSkip() { prviDone(); if (race) toTitle(); else showScreen('title'); }
+  // the results of the first race: what comes next
+  function resPrvi() { const el = $('res-prvi'); if (el) el.classList.toggle('off', !(prvi && prvi.race && race && race.player && race.player.finished)); }
 
   function buildStatsScreen() {
     const hm = (t) => { const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60); return h ? tr('{0} h {1} min', h, m) : tr('{0} min', m); };
@@ -5396,6 +5455,15 @@
       case 'prof-export': profExport().then(() => { if (screen === 'settings') profNote(); }); break;
       case 'save-export': profExport().then(() => resSave()); break;   // (the results' offer: Shrani profil)
       case 'save-later': Shramba.later(); resSave(); break;   // (Ne zdaj: again in a week)
+      case 'prvi-ctl': prviCtl(el && el.dataset.v); break;   // (Prvič na cesti: the controls, the test drive, the first race, the next steps)
+      case 'prvi-test': prviTest(); break;
+      case 'prvi-again': prviShow(); break;
+      case 'prvi-race': prviRace(); break;
+      case 'prvi-skip': prviSkip(); break;
+      case 'prvi-show': prviShow(); break;   // (Nastavitve: Prvič na cesti, again)
+      case 'prvi-career': toTitle(); buildCareerScreen(); showScreen('career'); break;
+      case 'prvi-tracks': toTitle(); break;
+      case 'prvi-school': toTitle(); buildSchoolScreen(); showScreen('school'); break;
       case 'kop-back': if (el && el.dataset.kop) kopBack(+el.dataset.kop); break;   // (Samodejne kopije napredka: Obnovi)
       case 'prof-import': pickFile(profImport); break;
       case 'to-champ': openChamp(); break;
@@ -5742,6 +5810,7 @@
       quickGo();   // (opened with a quick entry's address: straight on a race)
       garageBack();   // (back from the garage: its car screen)
       setTimeout(() => { Shramba.daily().catch(() => { }); }, 5000);   // (the day's copy of the progress, once the title stands: js/shramba.js)
+      if (prviCan()) { Shramba.keep('tdgp-prvi', '0'); prviShow(); }   // (Prvič na cesti: a new player's first start; shown again at the next start until skipped or the first race is driven)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
       window.__game = { comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
@@ -5762,6 +5831,7 @@
         drive(sec, f) { pkFlySkip(); const inp = { steer: 0, thr: 0, brk: 0, digital: true }; for (let t = 0; t < sec && race && phase !== 'done'; t += STEP) { Core.aiControl(race.player, race, STEP); const o = f(race.player, school && school.live, phase) || {}; inp.steer = race.player.inSteer; inp.thr = o.thr || 0; inp.brk = o.brk || 0; updatePhase(STEP, inp); stepRace(STEP, inp); } },   // (tests: the autopilot's steering, the throttle and the brake given)
         noteAt(s, v) { noteForce = s == null ? null : { s, v: v || 0 }; if (race && race.player) updateNote(race.player); const g = noteForce && track.signAt(noteForce.s, noteForce.v);   // (tests: the corner sign as at s m along the road at v m/s; null: the car's own again)
           return { key: lastNote, cls: $('h-note').className, d: $('h-note-path').getAttribute('d'), kind: g ? g.kind : null }; },
+        get prvi() { return { fresh: prviFresh, can: prviCan(), race: !!(prvi && prvi.race), seen: localStorage.getItem('tdgp-prvi') === '1', state: localStorage.getItem('tdgp-prvi') }; },   // (Prvič na cesti)
         get school() { return school && { id: school.L.id, live: school.live, done: !!school.done }; }, schoolMedals: (id) => { const L = SCHOOL.find(x => x.id === id); return L && { m: schoolMedals(L), ref: schoolRef(L), rec: schoolRec(L) }; } };
     } catch (e) {
       console.error(e);

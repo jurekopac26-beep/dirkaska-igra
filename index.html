@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=a0803dec">
-<link rel="stylesheet" href="css/style.css?v=4b02e101">
+<link rel="stylesheet" href="css/style.css?v=5e71da69">
 <link rel="stylesheet" href="css/napake.css?v=6adcac51">
 <link rel="stylesheet" href="css/missions.css?v=255b1f0a">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=022e665f" media="not all">
@@ -236,6 +236,7 @@
         <div class="row"><span class="rlbl">Jezik · Language</span><div class="seg" data-set="lang"><button data-v="sl">Slovenščina</button><button data-v="en">English</button></div></div>
         <div class="row"><span class="rlbl">Ime voznika</span><input type="text" id="set-name" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Ime voznika za lestvico"></div>
         <div class="row"><span class="rlbl">Upravljanje</span><div class="seg" data-set="control"><button data-v="buttons">Tipke</button><button data-v="wheel">Volan</button><button data-v="tilt">Nagib</button></div></div>
+        <div class="row"><span class="rlbl">Prvič na cesti</span><button class="btn mini" data-act="prvi-show">Pokaži znova</button></div>
         <div class="row tiltrow"><span class="rlbl">Občutljivost nagiba</span><input type="range" id="tilt-sens" min="10" max="40" step="1"><span id="tilt-sens-v" class="val"></span></div>
         <div class="row tiltrow"><span class="rlbl">Nagib</span><div class="tilt-live"><div id="tilt-live-bar"></div></div><button class="btn mini" data-act="calibrate">Nastavi sredino</button><button class="btn mini" data-act="tilt-invert" id="tilt-inv-btn">Obrni smer</button></div>
         <div class="row"><span class="rlbl">Kontrole</span><button class="btn mini" data-act="to-ctrl">Tipke, plošček in volan</button></div>
@@ -414,6 +415,7 @@
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
       <div id="res-vid" class="res-vid off" data-act="vid-big"><video id="res-vid-v" muted loop playsinline aria-label="Najboljši trenutek"></video><div class="rv-txt"><b>Najboljši trenutek</b><span id="res-vid-cap"></span></div><button class="btn primary rv-share" data-act="vid-share" id="res-vid-share">Deli</button></div>
       <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
+      <div id="res-prvi" class="res-save res-prvi off"><span>Prva dirka je za tabo. Kaj zdaj?</span><div class="rs-b"><button class="btn mini" data-act="prvi-school">Šola vožnje</button><button class="btn mini" data-act="prvi-tracks">Proge</button><button class="btn mini primary" data-act="prvi-career">Kariera</button></div></div>
       <div id="res-save" class="res-save off"><span id="res-save-t"></span><div class="rs-b"><button class="btn mini" data-act="save-later">Ne zdaj</button><button class="btn mini primary" data-act="save-export">Shrani profil</button></div></div>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
@@ -424,6 +426,28 @@
         <button class="btn off" data-act="chal-reply" id="res-reply">Pošlji odgovor</button>
         <button class="btn" data-act="car-view" id="res-view">Ogled vozila</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-prvi" class="screen">
+    <div class="panel small-panel prvi-panel">
+      <div id="prvi-a">
+        <h2>Prvič na cesti</h2>
+        <p class="desc">Izberi upravljanje in ga preizkusi na kratki vožnji po progi Štajerska, Avstrija. Pozneje ga lahko spremeniš v Nastavitvah.</p>
+        <div class="prvi-ctl">
+          <button class="prvi-c" data-act="prvi-ctl" data-v="buttons"><b>Tipke</b><span>Levi palec: levo in desno. Desni: plin in zavora.</span></button>
+          <button class="prvi-c" data-act="prvi-ctl" data-v="wheel"><b>Volan</b><span>Volan na zaslonu spodaj levo, plin in zavora desno.</span></button>
+          <button class="prvi-c" data-act="prvi-ctl" data-v="tilt"><b>Nagib</b><span>Telefon nagibaj kot volan. Levo zavora, desno plin.</span></button>
+        </div>
+        <p class="desc off" id="prvi-pad">Igralni plošček je povezan: voziš lahko tudi z njim.</p>
+        <div class="btns horiz"><button class="btn ghost" data-act="prvi-skip">Preskoči</button><button class="btn primary" data-act="prvi-test">Poskusna vožnja</button></div>
+      </div>
+      <div id="prvi-b" class="off">
+        <h2>Kako je šlo?</h2>
+        <p class="desc" id="prvi-b-t"></p>
+        <p class="desc">Zdaj prva dirka: dva kroga s petimi tekmeci. Idealna linija na cesti kaže, kje zavirati.</p>
+        <div class="btns horiz"><button class="btn ghost" data-act="prvi-again">Drugo upravljanje</button><button class="btn" data-act="prvi-test">Še enkrat</button><button class="btn primary" data-act="prvi-race">Prva dirka</button></div>
       </div>
     </div>
   </section>
@@ -538,7 +562,7 @@
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
 <script src="js/tracks/hotham.js?v=dd0ed41e"></script>
 <script src="js/tracks/townsville.js?v=08aacb6a"></script>
-<script src="js/lang.js?v=5b6a4b83"></script>
+<script src="js/lang.js?v=68b72e50"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=1ff731df"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=47375106">
@@ -660,6 +684,6 @@
 <script src="js/missions/m33.js?v=d83dbfbd"></script>
 <script src="js/missions/m53.js?v=e0ed08e7"></script>
 <script src="js/shramba.js?v=e4852853"></script>
-<script src="js/game.js?v=39f45dea"></script>
+<script src="js/game.js?v=3f96558d"></script>
 </body>
 </html>

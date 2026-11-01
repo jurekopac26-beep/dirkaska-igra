@@ -77,6 +77,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **boksi** `pit stops`, radio ekipe `the team radio`
 - **sovoznik** `the co-driver`, **komentator** `commentator`
 - **kvalifikacije**, **kariera**, **prvenstvo**, **šola vožnje**, **Pikes Peak** (razredi, opozorila, medalje), **skoki** `jumps`
+- **Prvič na cesti** (prvi zagon) `Prvič na cesti (the first start)`: zaslon `#s-prvi` (`#prvi-a` upravljanje, `#prvi-b` Kako je šlo?), `prviFresh` (na vrhu: brez `tdgp-settings`, `apex-garage`, `tdgp-prvi`), `prviCan`, `prviShow`, `prviCtl`, poskusna vožnja kot vaja šole `PRVI_L` (`prviOpts1`, veja `prvi` v `schoolStep` / `schoolHUD`, `prviTestEnd`), prva dirka `prviRace` (`prviOpts` v `newRace`: `PRVI_LAPS`, `PRVI_AI`, `PRVI_GRID`), rezultati `resPrvi` (`#res-prvi`), dejanja `prvi-*`, zapis `tdgp-prvi`; za teste `window.__game.prvi`
 - **internet** `a race with a friend over the internet`, `a championship over the internet`
 - **plošček v menijih**, **Kontrole** `Kontrole (from Nastavitve)`
 - **števec sličic** `the frame counter` (`PH`: naslov `?fps` ali prikaz za razvijalca `PH.dev`, okvirček `#ph-fps` zgoraj levo; `PH.tick`, `PH.s` koraki, `PH.r` risanje; vrstice prikaza za razvijalca `phMore`: klici risanja in oglišča iz `renderer.info` (med prikazom `autoReset` izklopljen: vsi prehodi sličice), `s` in krog, tema in podrobnosti `TIER_IME[detailTier()]`, `race._lod`); v glavni zanki ob `PH.tick` še `Napake.okvir` (zatikanja)
@@ -187,6 +188,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice; Zgodovina napak: stanje, ohranjanje po deljenju, meja 100/20), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
 - **Datoteka s posnetkom:** `tests/browser/napake-posnetek.test.mjs` (Shrani v nastavitvah orodja, branje do zadnjega bita, ne-posnetek, Odpri … na naslovnici, poročilo iz datoteke, `pojdi`, Končaj, `tools/posnetek.mjs`)
 - **Foto in deljenje:** `share.test.mjs`
+- **Prvič na cesti** (prvi zagon): `browser/prvi.test.mjs`
 - **Shranjena igra na varnem** (polna shramba, trajna shramba, opomnik za izvoz, kopije napredka): `tests/shramba.test.js` (Node), `browser/shramba.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`

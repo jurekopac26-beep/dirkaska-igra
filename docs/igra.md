@@ -17,6 +17,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Radio ekipe in strategija](#radio-ekipe-in-strategija)
 - [Prvenstvo](#prvenstvo)
 - [Kariera](#kariera)
+- [Prvič na cesti (prvi zagon)](#prvič-na-cesti-prvi-zagon)
 - [Šola vožnje](#šola-vožnje)
 - [Idealna linija za začetnike](#idealna-linija-za-začetnike)
 - [Tekmeci z značajem](#tekmeci-z-značajem)
@@ -236,6 +237,16 @@ Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z
 - **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
 - **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
+
+## Prvič na cesti (prvi zagon)
+
+Nov igralec ob prvem zagonu igre (brskalnik, ki od igre še nima shranjenega ničesar, tudi profila garaže ne; navaden naslov brez dodatkov, kot je hitri vstop ali povezava z izzivom) najprej vidi zaslon **Prvič na cesti**:
+
+- **Upravljanje:** tri velike izbire, **Tipke** (izbrane), **Volan** in **Nagib**, vsaka s kratkim opisom; če je povezan igralni plošček, piše, da se vozi tudi z njim. Izbira je nastavitev Upravljanje (pozneje v Nastavitvah). **Preskoči** gre na naslovnico.
+- **Poskusna vožnja:** 45 sekund sam na progi Štajerska, Avstrija (široka proga z izletnimi conami) v svojem avtu, brez poškodb, na suhem, z idealno linijo; zgoraj piše POSKUSNA VOŽNJA · še N s, ob štartu sporočilo RDEČE NA CESTI: ZAVIRAJ. Nato **Kako je šlo?** (prevoženi km, najvišja hitrost, upravljanje) z gumbi **Drugo upravljanje**, **Še enkrat** in **Prva dirka**.
+- **Prva dirka:** Štajerska, dva kroga, pet tekmecev na težavnosti Lahka, ti s 4. mesta, na suhem, z idealno linijo, brez goriva in okvar. Od tu naprej se prvi zagon ne pokaže več sam (`tdgp-prvi` `1`; enako po Preskoči). Če igro zapreš na zaslonu Prvič na cesti ali med poskusno vožnjo, se ob naslednjem zagonu pokaže znova (`tdgp-prvi` `0`). Rezultati prve dirke imajo vrstico **Prva dirka je za tabo. Kaj zdaj?** z gumbi **Šola vožnje**, **Proge** (naslovnica) in **Kariera**.
+
+V **Nastavitvah** je pod Upravljanjem vrstica **Prvič na cesti** z gumbom **Pokaži znova**.
 
 ## Šola vožnje
 
