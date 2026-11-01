@@ -190,6 +190,15 @@ TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez r
 - Serijski avto je trikotnik za trikotnikom enak (1810 od 2400 trikotnikov).
 - Možnosti: krilo do +220, žarometi do +172 trikotnikov nad serijskim (meja 300).
 
+### Električni (`jezek`, veja `deli/avti-elektricni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| JEŽEK | `headL` / `headR` (polovici LED pasu čez nos, `on: 'bumperF'`), `tailL` / `tailR` (polovici črnega pasu z rdečo lučjo, `on: 'trunk'`), `spoiler` (`on: 'trunk'`), `plate` (`on: 'bumperR'`), `wiperFront`, `wiperRear` (`on: 'trunk'`), `aerial` (plavut na strehi) | na zadnjem robu strehe v delu `spoiler`, namesto serijske ustnice (odpre se in odpade z vrati prtljažnika) | v obliki polovice LED pasu (`shape`; polovici se stikata na sredini) |
+
+- Serijski avto je videti enako: +2 trikotnika (črni pas zadaj razdeljen na polovici); polovici pasu in tablica sta zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
+- Možnosti: krilo do +188, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
