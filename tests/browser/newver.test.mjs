@@ -228,6 +228,24 @@ try {
         out.drive.push({ turn: a, out: k > e, sink: +sink.toFixed(2) }); }
       P.vx = P.vz = 0; return out; });
     T.check('the motocross\'s five berms: the cars\' ground as drawn across the bed (within 0.25 m); a car on the banked outer line rides on the sand through each (never 0.35 m under it) and comes out at its end', q5.fit.length === 5 && q5.fit.every(w => w < 0.25) && q5.drive.every(d => d.out && d.sink < 0.35), JSON.stringify(q5));
+    // the course for jet skis and boats where the go-kart track was (sklop 9: js/nvboat.js): no go-kart track, practice lot or big lot; its ground, water
+    // and things built; HOME's wooden bridge 1.7 m over the water and the ring road's humped bridge over the canal are ground: a car driven along HOME's
+    // way goes up over the bridge and down off it (never under its deck)
+    const q6 = await page.evaluate(() => { const g = __game, P = g.race.player, H = __H3, C = H.boatC, B = H.waterCourse, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+      const out = { c: C, kart: !!H.kart || (H.net || []).some(e => e.id === 'kart'), lots: !!H.lot || !!H.bigLot, wet: B ? [B.dW(-108, 226), B.dW(140, 214), B.dW(-60, 160)].map(v => +Math.min(99, v).toFixed(1)) : null };
+      if (B && B.ring) { let b = null; B.ring.L2.P.forEach((p, i) => { const d = Math.abs(B.ring.L2.A[i] - B.ring.sc); if (!b || d < b.d) b = { d, p }; }); out.ring = +H.ground(b.p[0], b.p[1]).toFixed(2); }
+      if (B && B.home) { const S = B.home.S, at = (s) => S.P[Math.max(0, Math.min(S.P.length - 1, Math.round(s / S.L * (S.P.length - 1))))], m = at((B.home.sa + B.home.sb) / 2), e0 = at(B.home.sa - 2);
+        out.home = [+H.ground(m[0], m[1]).toFixed(2), +H.ground(e0[0], e0[1]).toFixed(2)];
+        const s0 = B.home.sa - 8, p0 = at(s0), p1 = at(s0 + 2); P.place(p0[0], p0[1], Math.atan2(p1[1] - p0[1], p1[0] - p0[0])); P.vx = P.vz = 0; let s = s0, top = -9, under = 0;
+        for (let t = 0; t < 16 && s < B.home.sb + 4; t += 1 / 30) { const pt = at(s + 6), d = wrap(Math.atan2(pt[1] - P.z, pt[0] - P.x) - P.h); g.sim(1 / 30, false, Math.max(-1, Math.min(1, d * 2.5)), Math.hypot(P.vx, P.vz) < 9 ? 0.7 : 0);
+          s = B.home.near(P.x, P.z).s; top = Math.max(top, P.y); under = Math.max(under, H.ground(P.x, P.z) - P.y); }
+        out.drive = { across: s >= B.home.sb + 2, top: +top.toFixed(2), under: +under.toFixed(2) }; P.vx = P.vz = 0; }
+      return out; });
+    { const c = q6.c || {}, d = c.dress || {};
+      T.check('the course for jet skis where the go-kart track was: no go-kart track, practice lot or big lot; its ground and water to the sea, the start, jet skis, buoys, three lines of floats, umbrellas, nets, cabins, rings; HOME\'s wooden bridge 1.7 m up with its pier (a car drives over it), the ring road 2.4 m up over the canal',
+        !q6.kart && !q6.lots && c.floor && c.floor.verts > 10000 && c.water.verts > 1000 && d.floats > 500 && d.umbrellas >= 10 && d.nets >= 2 && d.cabins >= 2 && d.rings >= 10 && d.buoys >= 5 && c.home && c.home.pier &&
+        q6.home && q6.home[0] > 1.6 && q6.home[0] < 1.8 && q6.home[1] < 0.4 && q6.drive.across && q6.drive.top > 1.5 && q6.drive.under < 0.35 && q6.ring > 2.2 && q6.ring < 2.9 && q6.wet[0] < -5 && q6.wet[1] < -2 && q6.wet[2] > 0,
+        JSON.stringify({ kart: q6.kart, lots: q6.lots, floor: c.floor, water: c.water, dress: d, home: c.home, h: q6.home, drive: q6.drive, ring: q6.ring, wet: q6.wet })); }
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });
