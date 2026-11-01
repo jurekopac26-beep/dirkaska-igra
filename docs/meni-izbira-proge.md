@@ -31,7 +31,7 @@ Od zgoraj navzdol:
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen (veja `meni-izbira-proge/sklop-1`), lokalni testi zeleni; čaka potrditev uporabnika |
+| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen, lokalni testi zeleni; uporabnik potrdil 1. 11. 2026, pull request #239 (na `main`, ko so testi na GitHubu zeleni) |
 | 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | |
 | 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | |
