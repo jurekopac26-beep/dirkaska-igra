@@ -232,7 +232,7 @@ try {
     // and things built; HOME's wooden bridge 1.7 m over the water and the ring road's humped bridge over the canal are ground: a car driven along HOME's
     // way goes up over the bridge and down off it (never under its deck)
     const q6 = await page.evaluate(() => { const g = __game, P = g.race.player, H = __H3, C = H.boatC, B = H.waterCourse, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
-      const out = { c: C, kart: !!H.kart || (H.net || []).some(e => e.id === 'kart'), lots: !!H.lot || !!H.bigLot, wet: B ? [B.dW(-108, 226), B.dW(140, 214), B.dW(-60, 160)].map(v => +Math.min(99, v).toFixed(1)) : null };
+      const out = { c: C, kart: !!H.kart || (H.net || []).some(e => e.id === 'kart'), lots: (H.lot && H.lot.x0 === 62 && H.lot.z0 === 170) || !!H.bigLot, wet: B ? [B.dW(-108, 226), B.dW(140, 214), B.dW(-60, 160)].map(v => +Math.min(99, v).toFixed(1)) : null };
       if (B && B.ring) { let b = null; B.ring.L2.P.forEach((p, i) => { const d = Math.abs(B.ring.L2.A[i] - B.ring.sc); if (!b || d < b.d) b = { d, p }; }); out.ring = +H.ground(b.p[0], b.p[1]).toFixed(2); }
       if (B && B.home) { const S = B.home.S, at = (s) => S.P[Math.max(0, Math.min(S.P.length - 1, Math.round(s / S.L * (S.P.length - 1))))], m = at((B.home.sa + B.home.sb) / 2), e0 = at(B.home.sa - 2);
         out.home = [+H.ground(m[0], m[1]).toFixed(2), +H.ground(e0[0], e0[1]).toFixed(2)];
