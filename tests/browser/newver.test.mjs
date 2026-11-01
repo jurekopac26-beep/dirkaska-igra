@@ -2,7 +2,9 @@
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
 // (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
-// back to the title the page loads again.
+// the small circuit's infield (the park with its solid volcano, the rescue base, the edges, road 2's fork) and the park's loose things the car knocks over
+// (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
+// car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
 //   node tests/browser/newver.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -68,8 +70,25 @@ try {
       const T = window.__game.race.track, Q = H.roQ || [], nrm = R.nrm, at = (i, f, l) => { const A = P2[i], B = P2[i + 1], na = nrm[i], nb = nrm[i + 1]; return [A.x + (B.x - A.x) * f + (na[0] + (nb[0] - na[0]) * f) * l, A.z + (B.z - A.z) * f + (na[1] + (nb[1] - na[1]) * f) * l]; };
       let rg = 0, rn = 0, eg = 0, en = 0; const w0 = Math.min(...Q.map(q => q[3])); for (const [j, sg, i, e] of Q) { for (let f = 0.1; f < 1; f += 0.2) { for (let l = e + 0.5; l < e + 3; l += 0.5) { const [x, z] = at(i, f, sg * l); rn++; if (T.surf2(x, z, H.ground(x, z)) === 3) rg++; } if (Math.abs(e - w0) < 0.01) {   // (no kerb there)
            const [x, z] = at(i, f, sg * (e - 0.3)); en++; if (T.surf2(x, z, H.ground(x, z)) === 0) eg++; } } }
-      return { slow, minR: Math.round(Math.min(...rad)), hi: +Math.max(...ys).toFixed(1), lo: +Math.min(...ys).toFixed(1), kart: +Math.max(...[[-100, 222], [0, 200], [60, 185], [-120, 180]].map(([x, z]) => Math.abs(H.ground(x, z)))).toFixed(2), kerb: cnt[1], trap: +(rg / Math.max(1, rn)).toFixed(3), edge: en ? +(eg / en).toFixed(3) : null, quads: Q.length, tracks: H.roTracks || 0, boards: H.ringBoards || 0 }; });
-    T.check('the ring road: tight bends (a hairpin, chicanes: 4 and more under 25 m), up and down in the south (5 m up, under the old ground in the spoon), the kart track and the lots left flat; the run-offs gravel all over (as the gravel roads look, tyre tracks in them), the asphalt\'s edge beside them asphalt; kerbs, braking boards', rs.slow >= 4 && rs.minR > 10 && rs.hi > 5 && rs.lo < -0.4 && rs.kart < 0.01 && rs.quads > 500 && rs.trap > 0.97 && (rs.edge == null || rs.edge > 0.97) && rs.tracks >= 10 && rs.kerb > 200 && rs.boards >= 3, JSON.stringify(rs));
+      return { slow, minR: Math.round(Math.min(...rad)), hi: +Math.max(...ys).toFixed(1), lo: +Math.min(...ys).toFixed(1), kart: +Math.max(...[[-100, 222], [0, 200], [60, 185], [-120, 180]].map(([x, z]) => Math.abs(H.ground(x, z)))).toFixed(2), kerb: cnt[1], trap: +(rg / Math.max(1, rn)).toFixed(3), edge: en ? +(eg / en).toFixed(3) : null, quads: Q.length, wedges: H.kerbWedges || 0, boards: H.ringBoards || 0 }; });
+    T.check('the ring road: tight bends (a hairpin, chicanes: 4 and more under 25 m), up and down in the south (5 m up, under the old ground in the spoon), the kart track and the lots left flat; the run-offs gravel all over (as the gravel roads look, tyre tracks in them), the asphalt\'s edge beside them asphalt; kerbs (red and white wedges at their ends beside a run-off), braking boards', rs.slow >= 4 && rs.minR > 10 && rs.hi > 5 && rs.lo < -0.4 && rs.kart < 0.01 && rs.quads > 500 && rs.trap > 0.97 && (rs.edge == null || rs.edge > 0.97) && rs.wedges > 0 && rs.kerb > 200 && rs.boards >= 3, JSON.stringify(rs));
+    // no grass between a run-off and the ring road's next stretch or a gravel way when they are near (the user): from each run-off's edge outward, the ground up to
+    // the other stretch's kerb (or the gravel way) is sand for the car (or already the gravel way's own makadam: its soft edge reaches out past netGap's line)
+    const gf = await page.evaluate(() => { const H = window.__H3, T = window.__game.race.track, R = H.roads.nord, P2 = R.P2, nrm = R.nrm, n = P2.length - 1, ds = R.Lc / n, w = 5.5, Q = H.roQ || [], NG = window.MK && window.MK.netGap;
+      const other = (x, z, i) => { for (let k = 0; k <= n; k += 2) { if (Math.abs(k - i) * ds < 20) continue; const p = P2[k]; if ((p.x - x) ** 2 + (p.z - z) ** 2 < (w + 1.4) ** 2) return true; } return false; };
+      let rays = 0, pts = 0, sand = 0, bad = []; for (let q = 0; q < Q.length; q += 3) { const [j, sg, i, e] = Q[q], p = P2[i], [nx, nz] = nrm[i]; let L = 0;
+        for (let l = e + 2; l <= e + 42; l += 1) { const x = p.x + nx * sg * l, z = p.z + nz * sg * l; if (Math.abs(T.query(x, z).d) < T.w + 3 || H.ground(x, z) < -0.05 || x < -349 || x > 330 || z < -399 || z > 312) break;   // (the circuit, the water, the map's edge: not a gap to fill)
+          if (other(x, z, i)) { L = l; break; } const g = NG ? NG(x, z, 'nord', 1) : null; if (g && g.who && g.who !== 'track' && (g.who.kind === 'dirt' || g.who.kind === 'forest') && g.d < 0.5) { L = l; break; } }
+        if (!L) continue; rays++; for (let l = e + 1; l < L - 1.5; l += 1.5) { const x = p.x + nx * sg * l, z = p.z + nz * sg * l; pts++; const v = T.surf2(x, z, H.ground(x, z)); if (v === 3 || v === 5) sand++; else if (bad.length < 4) bad.push([+x.toFixed(1), +z.toFixed(1)]); } }
+      return { rays, pts, sand: pts ? +(sand / pts).toFixed(3) : null, bad }; });
+    T.check('the run-offs reach the ring road\'s next stretch or a gravel way when it is near: sand all the way, no grass between', gf.rays > 20 && gf.sand > 0.95, JSON.stringify(gf));
+    // the player's tracks in the run-off sand (only the player's; no drawn ones): laid whenever the car rolls through it, faded away after 10 minutes
+    const rt2 = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, H = window.__H3, R = H.roads.nord, P2 = R.P2, nrm = R.nrm, Q = (H.roQ || []).filter(q => q[3] < 6); const best = Q[Math.floor(Q.length / 2)];
+      if (!best) return null; const [j, sg, i, e] = best, p = P2[i], a = P2[Math.max(0, i - 1)], b = P2[Math.min(P2.length - 1, i + 1)], x = p.x + nrm[i][0] * sg * (e + 3), z = p.z + nrm[i][1] * sg * (e + 3), h = Math.atan2(b.z - a.z, b.x - a.x);
+      P.place(x, z, h); P.vx = Math.cos(h) * 6; P.vz = Math.sin(h) * 6; P.y = P.py = P.roadY = T.ground2(x, z); const before = (Render.rutsInfo() || { used: 0 }).used; const ws = [];
+      for (let k = 0; k < 60; k++) { g.sim(1 / 30, false, 0, 0.35); Render.frame(1 / 30, 1, P, 'iso', {}); ws.push(P.ws.join('')); }
+      const r1 = Render.rutsInfo(), r2 = Render.rutsInfo(605); return { before, used: r1 && r1.used, fade: r1 && r1.fade, alive10min: r2 && r2.alive, sand: ws.filter(w => /3/.test(w)).length, drawn: H.roTracks || 0 }; });
+    T.check('the player\'s own tracks in the run-off sand (no drawn tracks): laid as the car rolls through it, faded away after 10 minutes', !!rt2 && rt2.sand > 20 && rt2.used - rt2.before > 10 && rt2.fade === 600 && rt2.alive10min === 0 && rt2.drawn === 0, JSON.stringify(rt2));
     const rt = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, H = window.__H3, TN = H.tun, out = {}; if (!TN) return null;
       const q = TN.S[Math.round((TN.t0 + TN.t1) / 2)], h = Math.atan2(q.tz, q.tx), at = (y) => { P.place(q.x, q.z, h); P.vx = P.vz = 0; P.y = P.py = P.roadY = y; g.sim(1, false, 0, 0); return { y: +P.y.toFixed(2), ws: P.ws.join(''), fade: !!Render.world.dyn.tunnel.test(P) }; };
       out.len = Math.round(TN.s1 - TN.s0); out.over = +H.ground(q.x, q.z).toFixed(1); out.two = +T.ground2(q.x, q.z).toFixed(1); out.low = at(0); out.high = at(H.ground(q.x, q.z));
@@ -85,10 +104,10 @@ try {
       let trap = null; if (tr) { P.place(tr[0], tr[1], 0); P.vx = P.vz = 0; P.y = P.py = P.roadY = T.ground2(tr[0], tr[1]); g.sim(0.3, false, 0, 0); trap = P.ws.join(''); }
       return { sl: +(sl || 0).toFixed(2), drop: +(gOut - gIn).toFixed(2), apron: T.surf2(x + nx * (B.w + 3), z + nz * (B.w + 3), 0), trap }; });
     T.check('the bend by the water banked as the Karussell (0.28 across, the inside 2 m lower over 8 m, its concrete bowl paved); a car in a gravel trap: on gravel', !!rb && rb.sl > 0.2 && rb.drop > 1.8 && rb.apron === 0 && /3/.test(rb.trap || ''), JSON.stringify(rb));
-    // the gravel ways as wide as the Mountain Rally's road (10-14 m; the mock-up's width only on the snowy hill top)
-    const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
+    // the gravel ways as wide as the Mountain Rally's road (10-14 m; the mock-up's width only on the snowy hill top; the school's ways in the infield gone: the park)
+    const gw = await page.evaluate(() => { const H = window.__H3, ws = H.net.filter(e => (e.kind === 'dirt' || e.kind === 'forest') && e.id !== 'mx').map(e => 2 * e.hw), pw = H.paths.filter(Boolean).map(p => p.wd).concat([H.roads.forest.wd, H.roads.over.wd, H.forest.wd]);
       return { n: ws.length, min: Math.min(...ws, ...pw), max: Math.max(...ws, ...pw), forest: H.roads.forest.wd }; });
-    T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 30 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
+    T.check('the gravel ways 10-14 m wide, as the Mountain Rally\'s road (the forest roads 13 m and more)', gw.n > 20 && gw.min >= 10 && gw.max <= 14 && gw.forest >= 13, JSON.stringify(gw));
     // the west's gravel as the user redrew it: the forest loop, the way to the track's south-west corner and the way down the hill's south-west side gone; a new way
     // from the ring road past its south-west hairpin up to the track's south-west corner, driven as gravel
     const nw = await page.evaluate(() => { const g = window.__game, P = g.race.player, T = g.race.track, H = window.__H3, ids = H.net.filter(e => e.P[0][0] > -5000).map(e => e.id), e = H.net.find(q => q.id === 'loopB'), N = H.net.find(q => q.id === 'nord');
@@ -125,6 +144,90 @@ try {
       return out;
     });
     T.check('a car into a plastic barrier at 12 m/s: the barrier slides away (metres) and turns; into a wooden fence at 8 m/s: it falls over', cr.plastic.moved > 2 && cr.plastic.tilt === 0 && cr.wood.tilt === 90 && cr.wood.moved > 0.5, JSON.stringify(cr));
+    // the small circuit's infield as the user chose it in the pictures (js/nvpark.js, js/nvbase.js, js/nvedge.js): the park's three lanes, its
+    // volcano (solid: a car driven at it stops at its foot) with the lava moving; the rescue base with its helicopter; the circuit's and the inner
+    // roads' edges (kerbs, lines, the dashed mouths of the lanes)
+    const pk = await page.evaluate(() => { const H = window.__H3, B = NVPark.built, g = __game, P = g.race.player, V = NVPark.VC, a = 0.7, sx = V.x + Math.cos(a) * 45, sz = V.z + Math.sin(a) * 45, h = a + Math.PI;
+      P.place(sx, sz, h); P.vx = Math.cos(h) * 15; P.vz = Math.sin(h) * 15; P.y = P.py = P.roadY = H.ground(sx, sz); g.sim(4, false, 0, 1);
+      return { lanes: B && B.LP.length, volc: !!(B && B.volc), heli: !!(NVBase.built && NVBase.built.heli), solids: NVWalls.state().solids, edge: H.edgeD, stop: { d: +Math.hypot(P.x - V.x, P.z - V.z).toFixed(1), v: +Math.hypot(P.vx, P.vz).toFixed(1), y: +P.y.toFixed(2) } }; });
+    T.check('the infield: the park (three lanes, the volcano solid: a car driven at it at 15 m/s stops at its foot), the rescue base with its helicopter, the edges (kerbs, lines, dashed mouths)', pk.lanes === 3 && pk.volc && pk.heli && pk.solids > 20 && pk.stop.d > 17 && pk.stop.v < 1 && pk.stop.y < 1 && pk.edge && pk.edge.kerb > 100 && pk.edge.line > 100 && pk.edge.mouth > 100, JSON.stringify(pk));
+    // the park's loose things (js/nvwalls.js looseBuild): the barrels, the cones and the stalls (a counter, its roof, two posts) one mesh of their own; the car
+    // into a barrel at 12 m/s: it flies off and lies tipped over, the car keeps 95 % of its speed and more; into a stall at 10 m/s: it falls apart, its roof
+    // and posts down on the floor
+    const ls = await page.evaluate(() => { const st = NVWalls.state(), m = Render.scene.getObjectByName('loose'); return { n: st.loose, kinds: st.looseKinds, moving: st.looseMoving, mesh: !!(m && m.parent), dyn: !!(m && m.userData.dyn) }; });
+    T.check('the park\'s barrels, cones and stalls: loose, one mesh of their own (not merged with the still ones)', ls.n > 80 && ls.kinds.barrel > 10 && ls.kinds.cone > 10 && ls.kinds.counter > 5 && ls.kinds.roof === ls.kinds.counter && ls.kinds.post === 2 * ls.kinds.counter && !ls.moving && ls.mesh && ls.dyn, JSON.stringify(ls));
+    const lk = await page.evaluate(() => { const g = __game, P = g.race.player, out = {};
+      for (const [kind, v] of [['barrel', 12], ['counter', 10]]) {
+        const ps = NVWalls.loose().filter(b => b.kind === kind && !b.knocked), b = ps[Math.floor(ps.length / 2)], x0 = b.x, z0 = b.z, gy0 = __H3.ground(b.x, b.z), h0 = b.grp ? b.grp.parts.map(p => p.y - p.fy) : null; let best = null;
+        for (let k = 0; k < 16; k++) { const an = k / 16 * Math.PI * 2, sx = b.x - Math.cos(an) * 8, sz = b.z - Math.sin(an) * 8, d = Math.abs(__H3.ground(sx, sz) - gy0); if (!best || d < best.d) best = { an, sx, sz, d }; }
+        P.place(best.sx, best.sz, best.an); P.vx = Math.cos(best.an) * v; P.vz = Math.sin(best.an) * v; P.y = P.py = P.roadY = __H3.ground(best.sx, best.sz);
+        let vPre = v, vPost = v, hit = false; for (let k = 0; k < 240; k++) { const vb = Math.hypot(P.vx, P.vz); g.sim(1 / 60, false, 0, 0); if (!hit && Math.hypot(b.x - x0, b.z - z0) > 0.05) { hit = true; vPre = vb; vPost = Math.hypot(P.vx, P.vz); } }
+        out[kind] = { moved: +Math.hypot(b.x - x0, b.z - z0).toFixed(1), up: +(1 - 2 * (b.qx * b.qx + b.qz * b.qz)).toFixed(2), keep: +(vPost / vPre).toFixed(3), parts: b.grp ? b.grp.parts.map(p => +(p.y - p.fy).toFixed(2)) : null, fell: h0 ? b.grp.parts.map((p, i) => +(h0[i] - (p.y - p.fy)).toFixed(2)) : null };
+      }
+      return out; });
+    T.check('the car into a barrel at 12 m/s: it flies off (metres) and lies tipped over, the car keeps 95 % of its speed and more; into a stall at 10 m/s: it falls apart (its posts down on the floor, its roof off them: down on the floor or on what lies there)', lk.barrel.moved > 3 && Math.abs(lk.barrel.up) < 0.5 && lk.barrel.keep > 0.95 && lk.counter.moved > 2 && lk.counter.keep > 0.92 && !!lk.counter.parts && lk.counter.parts.slice(2).every(y => y < 0.5) && lk.counter.fell[1] > 0.8, JSON.stringify(lk));
+    // the rest of the park's things loose too (the user's choice 2-3): crates, bins, benches, the low barriers' blocks, the balloon stands (a knocked one's
+    // balloons float away), the lamps; the bouncy castles solid, the car bounces off; the people (choice 3-1) run off the car's way onto the grass, never
+    // hit, and walk back once it has gone; no tree over a way; road 2's fork: the circuit's kerb runs round its corner into the road's own (4a-1)
+    const q2 = await page.evaluate(() => { const g = __game, P = g.race.player, H = __H3, out = { kinds: NVWalls.state().looseKinds };
+      const place = (x, z, h, v) => { P.place(x, z, h); P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; P.y = P.py = P.roadY = H.ground(x, z); };
+      { const W = H.loose.walkers, LP = NVPark.built.LP[1], p0 = LP[4], p1 = LP[5], h = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]); place(p0[0], p0[1], h, 11); let dmin = 1e9; const fled = new Set();
+        for (let k = 0; k < 180; k++) { g.sim(1 / 60, false, 0, 0.6); const c = Math.cos(P.h), s = Math.sin(P.h); for (const b of W) { if (b.st) fled.add(b); for (const o of [1.3, 0, -1.3]) dmin = Math.min(dmin, Math.hypot(b.x - P.x - c * o, b.z - P.z - s * o)); } }
+        const hm = H.home; place(hm.x, hm.z, hm.h, 0); for (let k = 0; k < 25 * 30; k++) g.sim(1 / 30, false, 0, 0);
+        out.people = { n: W.length, fled: fled.size, dmin: +dmin.toFixed(2), back: [...fled].filter(b => b.st === 0 && Math.hypot(b.x - b.home.x, b.z - b.home.z) < 0.1).length }; }
+      { const q = H.solids.filter(q => q.snd === 'bale')[1], an = 0.4; place(q.ax - Math.cos(an) * 14, q.az - Math.sin(an) * 14, an, 12); let dmin = 1e9;
+        for (let k = 0; k < 90; k++) { g.sim(1 / 60, false, 0, 0); dmin = Math.min(dmin, Math.hypot(P.x - q.ax, P.z - q.az)); }
+        const tx = q.ax - P.x, tz = q.az - P.z; out.castle = { dmin: +dmin.toFixed(2), away: +(-(P.vx * tx + P.vz * tz) / (Math.hypot(tx, tz) || 1)).toFixed(2) }; }
+      { const bs = NVWalls.loose().filter(b => b.kind === 'bstand' && !b.knocked)[2], bl = NVWalls.loose().filter(b => b.kind === 'balloon' && b.grp && b.grp === bs.grp), y0 = Math.max(...bl.map(b => b.y)), gy0 = H.ground(bs.x, bs.z); let best = null;
+        for (let a = 0; a < 16; a++) { const an = a / 16 * Math.PI * 2, sx = bs.x - Math.cos(an) * 10, sz = bs.z - Math.sin(an) * 10, d = Math.abs(H.ground(sx, sz) - gy0); if (!best || d < best.d) best = { an, sx, sz, d }; }
+        place(best.sx, best.sz, best.an, 10); for (let k = 0; k < 300; k++) g.sim(1 / 60, false, 0, 0);
+        out.balloons = { n: bl.length, knocked: !!bs.knocked, up: +(Math.max(...bl.map(b => b.y)) - y0).toFixed(1) }; }
+      const B = NVPark.built; out.trees = { n: B.trees.length, onWay: B.trees.filter(([x, z, s]) => B.wayGap(x, z, true) < s + 0.3).length }; out.fork = { joints: H.edgeD.joints, corner: H.edgeD.forkCorner };
+      return out; });
+    const qk = q2.kinds;
+    T.check('the park\'s crates, bins, benches, barrier blocks, balloon stands (their balloons), lamps and people: loose too', ['crate', 'bin', 'bench', 'block', 'bstand', 'lamp'].every(k => qk[k] > 4) && qk.balloon > 5 * qk.bstand && qk.person > 100, JSON.stringify(qk));
+    T.check('the car down a lane at 11 m/s: the people in its way run off (2.0 m and more from the car all the way), all of them back home once it has gone', q2.people.fled > 3 && q2.people.dmin > 2 && q2.people.back === q2.people.fled, JSON.stringify(q2.people));
+    T.check('the car at a bouncy castle at 12 m/s: it bounces off (never into it, away at 6 m/s and more)', q2.castle.dmin > 3.5 && q2.castle.away > 6, JSON.stringify(q2.castle));
+    T.check('a balloon stand knocked over: its balloons float up (metres in 5 s)', q2.balloons.n > 3 && q2.balloons.knocked && q2.balloons.up > 4, JSON.stringify(q2.balloons));
+    T.check('no tree of the park over a way (its crown clear of every way\'s edge); road 2\'s fork: the circuit\'s kerb round its corner into the road\'s', q2.trees.n > 40 && !q2.trees.onWay && q2.fork.joints >= 1 && q2.fork.corner >= 1, JSON.stringify([q2.trees, q2.fork]));
+    // the ground by the sea (sklop 2): the beach's warm sand, darker towards the water (beach 4); one meadow (the grass shader's own lighter, darker and
+    // yellower patches off on all the World's grass); the new shores in the south-east and the north-east: the bed shallow by them, deeper out (no step
+    // to the deep by the shore), the World's grass not under their water; the meadow on beyond the map's edges (no sky under the land's end)
+    const q3 = await page.evaluate(() => { const H = __H3, W = H.water, out = {}, rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0);
+      const mats = new Set(); Render.world.root.traverse(o => { const m = o.isMesh && !Array.isArray(o.material) ? o.material : null; if (m && m.userData.grassLook) mats.add(m); });
+      out.patches = { n: mats.size, off: [...mats].filter(m => m.userData.uPat && m.userData.uPat.value === 0).length };
+      out.sand = { dry: W.cS.toArray().map(v => +v.toFixed(3)), wet: W.cS2.toArray().map(v => +v.toFixed(3)) };
+      const d = (x, z) => +(W.WL - W.bedAt(x, z).y).toFixed(2); out.bed = { se2: d(300, 243.7), se30: d(300, 215.7), ne2: d(62, -350), ne40: d(100, -350) };
+      const worldAbove = (x, z) => { rc.set(new THREE.Vector3(x, 20, z), down); return rc.intersectObject(Render.world.root, true).filter(q => q.object.visible && q.object.isMesh && !q.object.isInstancedMesh && q.point.y > W.WL - 0.3).length; };
+      out.grassUnder = worldAbove(300, 242.5) + worldAbove(304, 247) + worldAbove(63.5, -350) + worldAbove(63.5, -300);
+      out.edges = [[0, -470], [-420, 0], [-100, 380], [420, 330]].map(([x, z]) => { rc.set(new THREE.Vector3(x, 30, z), down); return rc.intersectObject(Render.scene, true).filter(q => q.object.isMesh).length > 0; });   // (drawn or not: past the fog its cells are not drawn)
+      out.landNE = H.landNE ? H.landNE.n : 0; return out; });
+    T.check('the beach\'s sand: warm when dry (red over green over blue), darker by the water', q3.sand.dry[0] > q3.sand.dry[1] && q3.sand.dry[1] > q3.sand.dry[2] && q3.sand.dry[0] - q3.sand.dry[2] > 0.2 && q3.sand.wet.every((v, i) => v < q3.sand.dry[i]), JSON.stringify(q3.sand));
+    T.check('one meadow: the grass shader\'s own patches off on all the World\'s grass', q3.patches.n > 0 && q3.patches.off === q3.patches.n, JSON.stringify(q3.patches));
+    T.check('the new shores (south-east, north-east): 2 m out the water under a metre deep, 30-40 m out deeper; no grass of the World under their water', q3.bed.se2 > 0.1 && q3.bed.se2 < 1 && q3.bed.ne2 > 0.1 && q3.bed.ne2 < 1 && q3.bed.se30 > 1.2 && q3.bed.ne40 > 1.2 && !q3.grassUnder && q3.landNE > 0, JSON.stringify([q3.bed, q3.grassUnder, q3.landNE]));
+    T.check('beyond the map\'s edges (north, west, south, south-east) the meadow on: ground under every one of them', q3.edges.every(Boolean), JSON.stringify(q3.edges));
+    // the construction site in the south-west corner, the motocross and HOME's way's mouth (sklop 5+6: js/nvsite.js, mxTrack, mxJoinB, mxBoxWays, homeMouth):
+    // the platform as high as the road and its ramp ground the cars drive on, the palisade solid along the road; the motocross's jumps ground too (flat at
+    // its start by the road), its garage on the road's edge; gravel carried onto the road at HOME's way
+    const q4 = await page.evaluate(() => { const H = __H3, out = {}; out.plat = +H.ground(-294, 305).toFixed(2); out.ramp = +H.ground(-264, 302.5).toFixed(2); out.palisade = (H.solids || []).filter(q => q.r === 0.12 && q.az > 228 && q.ax < -120).length;
+      out.mx = { table: +H.mxLift(H.mx.Q[118].x, H.mx.Q[118].z).toFixed(2), start: +H.mxLift(H.mx.Q[2].x, H.mx.Q[2].z).toFixed(2) };
+      const st = H.st.mx; let d = 1e9; for (const p of H.roads.nord.P2) d = Math.min(d, Math.hypot(p.x - st.ring.x, p.z - st.ring.z)); out.box = +(d - H.roads.nord.wd / 2).toFixed(2);
+      out.site = !!H.siteSW && NVSite.inside(-256, 290) > 0 && NVSite.inside(-256, 225) < 0; out.mouth = !!H.homeMouth; return out; });
+    T.check('the construction site: its platform as high as the road (5.4 m) and the ramp up to it ground for the cars, the palisade along the road solid; the motocross\'s jumps ground too, flat at its start; its garage on the road\'s edge; HOME\'s way\'s mouth', q4.plat > 5 && q4.plat < 5.8 && q4.ramp > 1 && q4.ramp < 4.5 && q4.palisade > 50 && q4.mx.table > 2 && q4.mx.start < 0.15 && q4.box > 2 && q4.box < 4.5 && q4.site && q4.mouth, JSON.stringify(q4));
+    // the motocross's berms are ground as they are drawn (the user, 31. 10.: the car sank into a berm's bank and stuck): over each of the five turns the
+    // cars' ground within 0.25 m of the sand across the bed (4 m each side of the line); a car driven through each on its banked outer line rides on the
+    // sand (never 0.35 m under it) and comes out at the turn's end
+    const q5 = await page.evaluate(() => { const g = __game, P = g.race.player, H = __H3, M = H.mx, N = M.Q.length, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a)), out = { fit: [], drive: [] };
+      const near = (k0) => { let b = k0, bd = 1e9; for (let k = k0 - 15; k <= k0 + 15; k++) { const q = M.Q[(k + N) % N], d = Math.hypot(P.x - q.x, P.z - q.z); if (d < bd) { bd = d; b = (k + N) % N; } } const q = M.Q[b]; return [b, (P.x - q.x) * q.nx + (P.z - q.z) * q.nz]; };
+      for (const [a, e] of M.turns) { let w = 0; for (let k = Math.ceil(a); k <= e; k++) { const q = M.Q[k]; for (let o = -4; o <= 4; o += 0.25) w = Math.max(w, M.yAt(k, o) - H.ground(q.x + q.nx * o, q.z + q.nz * o)); } out.fit.push(+w.toFixed(2)); }
+      for (const [a, e] of M.turns) { const sd = -Math.sign(M.Q[Math.round((a + e) / 2)].kc), k0 = a - 10, q0 = M.Q[k0], q1 = M.Q[k0 + 1], o0 = 3 * sd;
+        P.place(q0.x + q0.nx * o0, q0.z + q0.nz * o0, Math.atan2(q1.z - q0.z, q1.x - q0.x)); P.vx = Math.cos(P.h) * 11; P.vz = Math.sin(P.h) * 11;
+        let k = k0, sink = 0;
+        for (let t = 0; t < 10 && !(k > e && k < e + 100); t += 1 / 30) { const qt = M.Q[(k + 6) % N], d = wrap(Math.atan2(qt.z + qt.nz * o0 - P.z, qt.x + qt.nx * o0 - P.x) - P.h);
+          g.sim(1 / 30, false, Math.max(-1, Math.min(1, d * 2.5)), Math.hypot(P.vx, P.vz) < 11 ? 0.7 : 0); const [kk, o] = near(k); k = kk; if (k >= a && k <= e && Math.abs(o) < 4.3) sink = Math.max(sink, M.yAt(k, o) - P.y); }
+        out.drive.push({ turn: a, out: k > e, sink: +sink.toFixed(2) }); }
+      P.vx = P.vz = 0; return out; });
+    T.check('the motocross\'s five berms: the cars\' ground as drawn across the bed (within 0.25 m); a car on the banked outer line rides on the sand through each (never 0.35 m under it) and comes out at its end', q5.fit.length === 5 && q5.fit.every(w => w < 0.25) && q5.drive.every(d => d.out && d.sink < 0.35), JSON.stringify(q5));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });

@@ -346,7 +346,8 @@
     const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
     lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>') +
       F.places.map(n => tag('q', n, '')).join('');
-    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n || x[0].indexOf(n) >= 0); return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
+    const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n) || R.places.find(x => x[0].indexOf(n) >= 0);   // (the same name first: Zbilje, not Zbilje Grove)
+      return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
     let last = 0, looped = false, pl = null, al = null;
     const step = () => {
       if (!v.isConnected) return;
@@ -1002,7 +1003,8 @@
     mapV = G.S.mapV === 2 ? 2 : 1;   // (1 the flyover by default, 2 the map)
     render();
   }
-  function hide() {   // another screen of the game is up: the menu's moving things rest
+  function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
+    want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); clearTimeout(preT);
     for (const v of app.querySelectorAll('video')) v.pause();
@@ -1029,5 +1031,7 @@
     } catch (e) { fail(e); }
   }
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
+  // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
+  // that screen from the garage (game.js garageBack)
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
 })();
