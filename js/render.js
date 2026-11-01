@@ -1014,7 +1014,8 @@ const Render = (function () {
                                null: none; default chrome), col (K.lampHead), host, dir (1), n (10) }; its lens is the sub-range lampFL / lampFR.
                                A lens of its own outline: o.pts (a convex outline [[u, v] ...] round (x, y, z), u out from the car's middle,
                                v up; convex, or star-shaped round its middle) or o.polys (several pieces), o.d (its depth), its ring the outline grown by o.ringW, o.ringD deep; o.bulge: the
-                               lens' front a dome that high in its middle (a lamp bulging out of its face)
+                               lens' front a dome that high in its middle (a lamp bulging out of its face); o.lean: the lens and its ring leaning back
+                               that much per metre up (a lamp lying on a sloping nose)
        K.tailLamp(x, y, z, w, h, o)    a tail lamp (lights up when braking): the tail mesh's left / right range; o { round (a disc of
                                diameter w), pts (a convex outline [[dz, dy] ...] round (z, y): a prism), d (depth), dir (-1), host (the part it sits on: its side goes and turns with it; default
                                the part of the shell's surface nearest it) }. Its surround: draw it in the body (K.rect, K.box)
@@ -1811,7 +1812,7 @@ const Render = (function () {
           const cr = (i) => { const a = pts[i], b = pts[(i + 1) % n], c = pts[(i + 2) % n]; return (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]); };
           let neg = 0, pos = 0; for (let i = 0; i < n; i++) { if (cr(i) < 0) neg++; else pos++; } const star = neg && pos;   // (an outline with a notch: star-shaped round its middle, a fan from there)
           const Q = pts.map(([u, v]) => { const du = u - cu, dv = v - cv, l = Math.hypot(du, dv) || 1; return [u + du / l * grow, v + dv / l * grow]; });
-          const P = (q, xx) => [xx, y + q[1], z + sd * q[0]], inn = [(xa + xb) / 2, y + cv, z + sd * cu], F = Q.map(q => P(q, xb)), B = Q.map(q => P(q, xa));
+          const ln = o.lean || 0, P = (q, xx) => [xx - ln * q[1], y + q[1], z + sd * q[0]], inn = [(xa + xb) / 2 - ln * cv, y + cv, z + sd * cu], F = Q.map(q => P(q, xb)), B = Q.map(q => P(q, xa));   // (o.lean: the lens lying on a face leaning back that much per metre up)
           if (bulge) {   // (o.bulge: its front a dome, bulge high in the middle (1 - t^2 of it, t the share of the way out), smooth-shaded)
             const r0 = Q.reduce((a, q) => a + Math.hypot(q[0] - cu, q[1] - cv), 0) / n, Rc = (r0 * r0 + bulge * bulge) / (2 * bulge), T = r0 < 0.09 ? [0.55] : [0.62, 0.3], c0 = xb + dir * (bulge - Rc);   // (a small lens: one ring)
             const at = (q, t) => P([cu + (q[0] - cu) * t, cv + (q[1] - cv) * t], xb + dir * bulge * (1 - t * t)), nm = (p) => { const v = [p[0] - c0, p[1] - (y + cv), p[2] - (z + sd * cu)], l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };

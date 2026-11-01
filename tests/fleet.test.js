@@ -262,8 +262,10 @@ const MEAS = {};
     r.start(); for (let k = 0; k < 600; k++) { Math.random = seeded(4000 + k); C.aiControl(r.player, r, DT); r.step(DT); }
     const c = r.cars.find(o => !o.isPlayer), hw = c.m.wid / 2;
     C.applyDamage(c, 0.97, 0, -hw);
-    const seq = c.wreck.seq.slice(), side = ['doorL', 'mirrorL', 'fenderL', 'quarterL'].every(k => c.lost[k]), at = [];
-    for (let k = 0; k < 360 && c.wreck.seq.length + at.length < seq.length + 10; k++) { Math.random = seeded(5000 + k); const n0 = Object.keys(c.lost).length; C.aiControl(r.player, r, DT); r.step(DT); if (Object.keys(c.lost).length > n0) at.push([k, Object.keys(c.lost).pop()]); }
+    const seq = c.wreck.seq.slice(), side = ['doorL', 'mirrorL', 'fenderL', 'quarterL'].every(k => c.lost[k]), at = [], PTc = C.partsOf(c.m);
+    // (each step's part shed: the parts mounted on it (their entry's on: MODRAS's head lamps on the front bumper) go with it, not counted)
+    for (let k = 0; k < 360 && c.wreck.seq.length + at.length < seq.length + 10; k++) { Math.random = seeded(5000 + k); const n0 = Object.keys(c.lost); C.aiControl(r.player, r, DT); r.step(DT);
+      const nw = Object.keys(c.lost).filter(q => !n0.includes(q) && !(PTc[q] && PTc[q].on)); if (nw.length) at.push([k, nw.pop()]); }
     const gaps = at.slice(1).map((e, i) => (e[0] - at[i][0]) * DT);
     check('the wreck sequence: from 96 % the side\'s panels at once, then bonnet, boot, bumpers and wing one by one, 0.4 s apart; the car does not retire (no wheel off)',
       seq.join() === 'hood,trunk,bumperF,bumperR,wing' && side && at.map(e => e[1]).join() === seq.join() && gaps.every(g => Math.abs(g - 0.4) < 0.02) && !c.wreck.dnf,
