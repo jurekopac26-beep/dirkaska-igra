@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico,
+    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico,
     inPoly, lerp, nrChamfer, polyDist, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, valueNoise2, vary
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -808,8 +808,7 @@
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, vrGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = vrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const flagSI = (g, x, y, z, rot, h) => {   // a flag pole with the Slovenian flag: white, blue, red (no coat of arms at this size), both faces
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
       const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 0.9, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)], [fx, fz] = at(fw / 2), y0 = y + h - fh - 0.15;

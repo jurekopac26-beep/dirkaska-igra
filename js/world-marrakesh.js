@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NR_A64, RB, TAU, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl, hjCutMat, ico, lerp,
+    Chunks, GB, IChunks, NR_A64, RB, TAU, atSf, box, parkedCar, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl, hjCutMat, ico, lerp,
     nrDist, nrGround, nrLC, nrLCf, nrNear, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, ouCutMat, propFloorTable, rbCrowdTex, rng, rsFar,
     sstep, valueNoise2, wrapS
   } = API;
@@ -689,7 +689,7 @@
     mark('trees');
     /* ---- parked cars in the car parks and along the bigger streets (outside the circuit): a few of them the town's beige small taxis ---- */
     let nCars = 0;
-    { const cg = new GB(); box(cg, 0, 0.1, 0, 4.2, 0.88, 1.75, 0, W1, W1, true); box(cg, -0.2, 0.98, 0, 2.2, 0.52, 1.6, 0, [0.62, 0.7, 0.76], W1, true);   // (a body and a cabin)
+    { const cg = new GB(); parkedCar(cg, 0, 0, 0, 0, W1, 1, true);   // (the car of js/world.js, a small hatchback; its body white: each instance's colour)
       const cars = new MrIChunks(cg.geometry(), matV, 256), CC = [[0.93, 0.93, 0.92], [0.12, 0.12, 0.13], [0.6, 0.62, 0.66], [0.75, 0.66, 0.46], [0.5, 0.1, 0.1], [0.2, 0.3, 0.5], [0.84, 0.74, 0.5]];
       const put = (x, z, rot, k) => { if (!okTree(x, z, 2.5)) return; cars.add(x, nrGround(x, z), z, rot, 1, 1, CC[k % CC.length]); exclPush(x, z, 2.6); nCars++; };
       for (const p of M.park) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of p) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }

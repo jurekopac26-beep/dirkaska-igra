@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, hjCutMat, ico, inPoly, lerp, ouCutMat,
+    Chunks, GB, IChunks, TAU, atSf, box, parkedCar, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, hjCutMat, ico, inPoly, lerp, ouCutMat,
     ouFlag, ouGTex, ouRod, ouVegMat, pkSky, polyDist, propFloorTable, rng, sstep, starCone, valueNoise2, vary
   } = API;
   let T;   // (World's, for the build under way)
@@ -824,7 +824,7 @@
     let nCars = 0;
     { // the car parks full of the spectators' cars (one instanced car, its colour per instance): perpendicular bays along each car park's long side, two rows to an aisle
       const g = new GB(), BODY = [1, 1, 1], GLASS = [0.2, 0.23, 0.26], DARK = [0.16, 0.16, 0.17];
-      box(g, 0, 0.18, 0, 4.3, 0.72, 1.76, 0, BODY, BODY, true); box(g, -0.25, 0.9, 0, 2.3, 0.58, 1.5, 0, GLASS, BODY, true); box(g, 0, 0.12, 0, 4.36, 0.16, 1.8, 0, DARK, DARK, true);
+      parkedCar(g, 0, 0, 0, 0, BODY, 0, true);   // (the car of js/world.js; its body white: each instance's colour)
       const cg = g.geometry(); cg.computeBoundingSphere(); const CARS = new IChunks(cg, new THREE.MeshLambertMaterial({ vertexColors: true }), 160);
       const PAL = [[0.92, 0.92, 0.9], [0.92, 0.92, 0.9], [0.12, 0.12, 0.13], [0.12, 0.12, 0.13], [0.62, 0.63, 0.65], [0.62, 0.63, 0.65], [0.36, 0.37, 0.4], [0.14, 0.2, 0.42], [0.55, 0.1, 0.09], [0.16, 0.3, 0.22], [0.75, 0.68, 0.55]];
       for (const A of P.areas) { if (A.t !== 5) continue; const poly = A.poly, n = poly.length; let bl = 0, dx = 1, dz = 0, cx = 0, cz = 0;

@@ -213,6 +213,41 @@ const World = (function () {
     if (!noBottom) g.quadO(v[0], v[1], v[5], v[4], col, inn);
     g.quadO(v[4], v[5], v[6], v[7], col, inn); g.quadO(v[1], v[0], v[3], v[2], col, inn);
   }
+  // A parked car (the car parks, the fans' camps, the lay-bys; the user's wish of 1. 11. 2026: the cars by the road brought up to date): the body
+  // on its wheels with grey rims, a glasshouse with a sloped windscreen and rear window (dark glass, the roof in the body's colour), bumpers,
+  // head- and tail-lights. Its shape by kind (0 saloon, 1 hatchback, 2 estate, 3 SUV, 4 van, 5 pick-up with its open bed), else by the place's
+  // hash (no draws from a world's random stream). Front +x along rot, as box(); on the ground at (x, y, z), about the old two-box car's size.
+  const PC_GLASS = [0.16, 0.2, 0.26], PC_TYRE = [0.08, 0.08, 0.09], PC_RIM = [0.6, 0.61, 0.64], PC_DARK = [0.17, 0.18, 0.2], PC_LAMP = [0.95, 0.92, 0.8], PC_TAIL = [0.72, 0.08, 0.06];
+  // lite: the car parks' instanced car (hundreds in view): the wheels as one box per axle, no rims, lights or bumpers (~120 vertices, not ~290)
+  function parkedCar(g, x, y, z, rot, col, kind, lite) {
+    const c = Math.cos(rot), s = Math.sin(rot), P = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c];
+    const k = kind != null ? kind : Math.floor(crH(x, z, 77) * 6) % 6;
+    const L = k === 1 ? 3.9 : k === 4 ? 4.6 : k === 5 ? 4.9 : 4.4, W = k >= 3 ? 1.9 : 1.8, hx = L / 2, yb = k >= 3 ? 0.36 : 0.3, yt = k >= 3 ? 0.98 : 0.8;
+    const B = (lx, ly, lz, sx, sy, sz, cc) => { const p = P(lx, 0, lz); box(g, p[0], y + ly, p[2], sx, sy, sz, rot, cc, cc, true); };
+    B(0, yb, 0, L, yt - yb, W, col);
+    const wx = hx - 0.8, wr = k >= 3 ? 0.37 : 0.33;
+    if (lite) for (const a of [wx, -wx]) B(a, 0, 0, wr * 2, wr * 2, W + 0.02, PC_TYRE);
+    else for (const a of [wx, -wx]) for (const sd of [1, -1]) {   // the wheels, a grey rim on the outer face
+      B(a, 0, sd * (W / 2 - 0.13), wr * 2, wr * 2, 0.27, PC_TYRE); const q = sd * (W / 2 + 0.006);
+      g.quadO(P(a - wr * 0.55, wr * 0.45, q), P(a + wr * 0.55, wr * 0.45, q), P(a + wr * 0.55, wr * 1.55, q), P(a - wr * 0.55, wr * 1.55, q), PC_RIM, P(a, wr, 0));
+    }
+    if (!lite) for (const sd of [1, -1]) {   // the bumpers and the lights
+      B(sd * (hx + 0.04), yb - 0.06, 0, 0.12, 0.22, W + 0.04, PC_DARK);
+      const lc = sd > 0 ? PC_LAMP : PC_TAIL, fx = sd * (hx + 0.012);
+      for (const lz of [-(W / 2 - 0.3), W / 2 - 0.3]) g.quadO(P(fx, yt - 0.2, lz - 0.2), P(fx, yt - 0.2, lz + 0.2), P(fx, yt - 0.06, lz + 0.2), P(fx, yt - 0.06, lz - 0.2), lc, P(0, yt - 0.13, lz));
+    }
+    let gb, gt, h = 0.52;   // the glasshouse's feet and roof along x (rear, front)
+    if (k === 0) { gb = [-1.3, 0.95]; gt = [-0.85, 0.3]; }
+    else if (k === 1) { gb = [-hx + 0.12, 0.75]; gt = [-hx + 0.32, 0.15]; }
+    else if (k === 2) { gb = [-hx + 0.1, 0.95]; gt = [-hx + 0.16, 0.3]; }
+    else if (k === 3) { gb = [-hx + 0.14, 1.0]; gt = [-hx + 0.26, 0.45]; h = 0.6; }
+    else if (k === 4) { gb = [-hx + 0.05, hx - 0.5]; gt = [-hx + 0.05, hx - 0.85]; h = 0.85; }
+    else { gb = [-0.35, 1.25]; gt = [-0.3, 0.78]; h = 0.6; for (const sd of [1, -1]) B(-hx + 1.4, yt, sd * (W / 2 - 0.05), 2.6, 0.3, 0.1, col); B(-hx + 0.06, yt, 0, 0.1, 0.3, W - 0.2, col); }   // (the pick-up's bed: its walls)
+    const wb = W / 2 - 0.07, wt = W / 2 - 0.22, y1 = yt + h, ins = P((gb[0] + gb[1]) / 2, yt + h * 0.4, 0);
+    const Bq = [P(gb[0], yt, -wb), P(gb[1], yt, -wb), P(gb[1], yt, wb), P(gb[0], yt, wb)], Tq = [P(gt[0], y1, -wt), P(gt[1], y1, -wt), P(gt[1], y1, wt), P(gt[0], y1, wt)];
+    for (let e = 0; e < 4; e++) { const f = (e + 1) % 4; g.quadO(Bq[e], Bq[f], Tq[f], Tq[e], PC_GLASS, ins); }
+    g.quadO(Tq[0], Tq[1], Tq[2], Tq[3], col, P(0, 0, 0));
+  }
   function cone(g, cx, cy, cz, r, h, sides, col, colTip, rot) {
     const apex = [cx, cy + h, cz], inn = [cx, cy + h * 0.3, cz], L = Math.hypot(r, h) || 1, ny = r / L, nh = h / L;
     for (let i = 0; i < sides; i++) {
@@ -4020,7 +4055,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
+  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4782,7 +4817,7 @@ const World = (function () {
   const SYNC = [];
   const API = {
     Chunks, GB, GRASS_GLSL, HC, ICO1, ICO_F, ICO_V, IChunks, NRC, NRN, NRT, NR_A64, RB, TAU, WSKY, addShore, atS, atSf, box, brookMat, clamp,
-    clearance, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
+    clearance, cone, crAt, crH, crowdAt, parkedCar, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,

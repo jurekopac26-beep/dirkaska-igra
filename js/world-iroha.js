@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, clamp, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico, lerp,
+    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, parkedCar, clamp, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico, lerp,
     ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, vary, vrCol, vrDist, vrFar, vrGCol, vrGritTex, vrGround, vrLC, vrNear, vrPrep, vrSlope,
     vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrsicProps
   } = API;
@@ -248,8 +248,7 @@
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, vrGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = vrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
     const cpAlt = T.cpS.map(s => fmtAlt(T.altAt(T.hy[T.idx(s)]))), lkAlt = fmtAlt(T.altAt(padL ? T.hy[padL.i] : T.hy[T.finishIdx]));
 
