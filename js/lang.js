@@ -567,6 +567,24 @@
     'Kolesa se vrtijo v prazno: popusti plin.': 'The wheels are spinning: ease off the throttle.', 'Avtobus drsi: počasneje skozi ovinek.': 'The coach is sliding: slower through the bend.',
     'Tovornjak brez verig je obstal počez: zapelji mimo po levi.': 'A truck without chains is stuck across the road: pass it on the left.',
     'Prelaz so zaprli, preden si prišel čez.': 'The pass closed before you got over.', 'Avtobus je močno trčil: potniki so poškodovani.': 'The coach crashed hard: the passengers are hurt.',
+    /* ---- Zabava (js/zabava.js, js/zabava/): the team goals, the elimination race, the rivals who remember, the coach, the challenges by the road, the pursuit, the living road ---- */
+    'Pridobi vsaj {0} mest': 'Gain at least {0} places',
+    'Pridobi vsaj {0} mesta': 'Gain at least {0} places',
+    'Brez dotika ograje': 'No touching the barrier',
+    'Brez dotika ograje in avtov': 'No touching the barrier or other cars',
+    'Na stopničke': 'Finish on the podium',
+    'Zmagaj': 'Win',
+    'Zmaga z zadnjega mesta': 'Win from last place',
+    'Najhitrejši krog dirke': 'The fastest lap of the race',
+    'Zmaga z več kot 10 s prednosti': 'Win by more than 10 s',
+    'CILJ EKIPE': 'TEAM GOAL',
+    'Izberi cilj za to dirko. Če ga dosežeš, dobiš del nagrade za mesto več.': 'Choose a goal for this race. Reach it and you get a share of the prize for your place on top.',
+    '{0} nagrade': '{0} prize',
+    'Brez cilja': 'No goal',
+    'Cilj ekipe: {0} ({1} nagrade).': 'Team goal: {0} ({1} prize).',
+    'CILJ EKIPE NI USPEL': 'TEAM GOAL MISSED',
+    ' Cilj ekipe ni uspel ({0}).': ' Team goal missed ({0}).',
+    'Cilj ekipe': 'Team goal',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

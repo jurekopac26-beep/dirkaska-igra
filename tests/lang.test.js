@@ -41,7 +41,8 @@ const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l =
 
 // 1. every tr(...) in the game's scripts: each string of its first argument is in the dictionary
 const missing = [], keysUsed = new Set();
-for (const f of ['js/game.js', 'js/nvmenu.js', 'js/nvheli.js', 'js/missions.js', 'js/garage.js', 'js/garage3d.js']) {
+const ZB_FILES = ['js/zabava.js'].concat(fs.existsSync(path.join(ROOT, 'js', 'zabava')) ? fs.readdirSync(path.join(ROOT, 'js', 'zabava')).filter(f => f.endsWith('.js')).sort().map(f => 'js/zabava/' + f) : []);   // (Zabava: the novelties, docs/zabava.md)
+for (const f of ['js/game.js', 'js/nvmenu.js', 'js/nvheli.js', 'js/missions.js', 'js/garage.js', 'js/garage3d.js'].concat(ZB_FILES)) {
   const src = noComments(read(f));
   for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; keysUsed.add(s); if (!has(s)) missing.push(s); }
 }
