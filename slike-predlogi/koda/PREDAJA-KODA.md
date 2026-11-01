@@ -43,10 +43,10 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 2 | Tla ob morju: plaža 4, ena trava, obali JV in SV, dno morja, travnik za robom mape | ~5 h (ocena 12–18 h) | na `main` ([PR #198](https://github.com/jurekopac26-beep/dirkaska-igra/pull/198)) |
 | 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | na `main` ([PR #203](https://github.com/jurekopac26-beep/dirkaska-igra/pull/203)) |
 | 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | ~3 h (ocena 12–18 h) | na `main` ([PR #206](https://github.com/jurekopac26-beep/dirkaska-igra/pull/206)) |
-| 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | ~4 h (ocena 10–17 h) | [PR #208](https://github.com/jurekopac26-beep/dirkaska-igra/pull/208), lokalni testi zeleni, čaka teste na GitHubu (seja session_01Ck3D3TQHSMDmWuPT2Q2sY9) |
+| 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | ~4 h (ocena 10–17 h) | na `main` ([PR #208](https://github.com/jurekopac26-beep/dirkaska-igra/pull/208)) |
 | 7 | Avtošola s 27 nalogami | 16–24 h | v delu (nova seja od 30. 10., hkrati s 4) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | |
-| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | |
+| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | v delu (nova seja od 1. 11.) |
 | 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | 28–44 h | |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
@@ -89,7 +89,7 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
   strehi ali med drevesi (`topAt`: žarek navzdol po mrežah, ki mečejo senco). Meni: `NVHeli.ITEMS`; WATER RESCUE in FIREFIGHTING sta
   zaklenjena (`data-a="lock"`): drug račun ju odklene in priklopi tu. Test `tests/browser/nvheli.test.mjs`.
 
-## Sklop 5+6: gradbišče, motokros, začetek (PR #208)
+## Sklop 5+6: gradbišče, motokros, začetek (na `main`, PR #208)
 - Gradbišče v `js/nvsite.js` (`NVSite`): palisada po rdeči črti uporabnika (`FENCE`), zemlja 3, ograja 1, ploščad B (5,4 m) s stavbo in žerjavom, klančina,
   izkop (narisan), kup; ploščad, klančina in kup so tla za avto (`lift` prištet k `H3.ground` v y21). Pesek krožne ceste se ustavi pri ograji (`roStop`).
 - Motokros: `mxTrack` po mx-page5 (verzija 1, makadam), skoki tudi za avto (`H3.mxLift`, strmina omejena), priključek B široko `mxJoinB`
