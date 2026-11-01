@@ -83,7 +83,7 @@
     'Zlata medalja': 'Gold medal', 'Osvoji zlato medaljo v kronometru.': 'Win a gold medal in a time trial.', 'Zlata zbirka': 'Gold collection', 'Osvoji zlato na vseh kronometrih.': 'Win gold in every time trial.',
     'Neulovljiv': 'Untouchable', 'Pobegni policiji čez prelaz.': 'Escape the police over the pass.', 'Mojster dežja': 'Rain master', 'Zmagaj v dežju.': 'Win in the rain.', 'Nočna ptica': 'Night owl', 'Zmagaj ponoči.': 'Win at night.',
     'Kralj drsenja': 'Drift king', 'Drsi tri sekunde brez prekinitve.': 'Drift for three seconds in one go.', 'Letalec': 'Flyer', 'Skoči 40 m daleč.': 'Jump 40 m.', 'Pelji 300 km/h.': 'Reach 300 km/h.',
-    'Bogataš': 'Tycoon', 'V karieri zasluži 100.000 €.': 'Earn €100,000 in the career.', 'S prijateljem': 'With a friend', 'Pripelji do cilja dirke s prijateljem.': 'Finish a race against a friend.',
+    'Bogataš': 'Tycoon', 'V karieri zasluži 100.000 kovančkov.': 'Earn 100,000 coins in the career.', 'S prijateljem': 'With a friend', 'Pripelji do cilja dirke s prijateljem.': 'Finish a race against a friend.',
     'Profil': 'Profile', 'Izvozi v datoteko': 'Export to a file', 'Uvozi iz datoteke': 'Import from a file', 'Datoteka je prevelika.': 'The file is too big.', 'Datoteke ni bilo mogoče prebrati.': 'The file could not be read.',
     'Profil je pripravljen za deljenje.': 'The profile is ready to share.', 'Profil je shranjen v datoteko {0}.': 'The profile is saved to the file {0}.', 'To ni profil igre Real Roads Atlas.': 'This is not a Real Roads Atlas profile.',
     'Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.': 'Import the profile of {0} from {1}? Your current profile (settings, records, career, achievements and ghosts) will be replaced.',
@@ -471,13 +471,13 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
     /* ---- the garage (garaza.html, js/garage.js) ---- */
     'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izbran ✓': 'Selected ✓',
-    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
+    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
     'Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.': 'Drag the picture left or right to turn the camera round the car. Tap during an animation to speed it up.',
     '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
     '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
-    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
-    'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes',
-    'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
+    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2}.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2}.',
+    'Barvanje {0}': 'Paint job {0}', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0}': 'A second colour on the bonnet and the sides · {0}', 'Da': 'Yes',
+    'Premalo kovančkov: potrebuješ {0}, imaš {1}.': 'Not enough coins: you need {0}, you have {1}.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
     'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
@@ -602,10 +602,12 @@
   }
   // a definition's own English (a track, a championship, a famous jump: o.en = { name, desc, ... }), else its Slovenian
   const of = (o, k) => (o ? (cur === 'en' && o.en && o.en[k] != null ? o.en[k] : o[k]) : '');
-  // numbers: thousands (3.048 / 3,048), a decimal point (1,9 / 1.9), money (12.300 € / €12,300), places (3. / 3rd)
+  // numbers: thousands (3.048 / 3,048), a decimal point (1,9 / 1.9), money (the game's only money is coins, kovančki: 12.300 🪙 /
+  // 12,300 🪙; no €), places (3. / 3rd)
   const thou = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, cur === 'en' ? ',' : '.');
   const dec = (s) => (cur === 'en' ? String(s) : String(s).replace('.', ','));
-  const eur = (x) => (cur === 'en' ? '€' + thou(x) : thou(x) + '\u00a0€');
+  const COIN = '\u{1FA99}';   // (🪙: the coin, after the number in both languages)
+  const eur = (x) => thou(x) + '\u00a0' + COIN;   // (the name kept: the game and the garage call Lang.eur)
   const ord = (n) => { if (cur !== 'en') return n + '.'; const a = n % 100, b = n % 10; return n + (a >= 11 && a <= 13 ? 'th' : b === 1 ? 'st' : b === 2 ? 'nd' : b === 3 ? 'rd' : 'th'); };
   // a place name on the HUD: the numbered turns and hairpins, the heights on them (Serpentina 4 · 1.060 m -> Hairpin 4 · 1,060 m), a few known names
   function place(n) {
@@ -648,7 +650,7 @@
     cur = lang === 'en' ? 'en' : 'sl';
     if (typeof document !== 'undefined') document.documentElement.lang = cur;
   }
-  const api = { tr, of, thou, dec, eur, ord, place, apply, set, EN, SAME, get cur() { return cur; }, get locale() { return cur === 'en' ? 'en-GB' : 'sl-SI'; } };
+  const api = { tr, of, thou, dec, eur, COIN, ord, place, apply, set, EN, SAME, get cur() { return cur; }, get locale() { return cur === 'en' ? 'en-GB' : 'sl-SI'; } };
   if (typeof window !== 'undefined') window.Lang = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();

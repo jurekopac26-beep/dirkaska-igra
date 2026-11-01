@@ -25,7 +25,7 @@
     chev: '<svg class="chev" viewBox="0 0 18 18"><path d="m7 3 6 6-6 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bigcup: '<svg class="bigcup" viewBox="0 0 32 32" aria-hidden="true"><path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="#ffc629" stroke-width="2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="#e0a40a"/><path d="M10.5 23.5h11v3.8h-11z" fill="#ffc629" stroke="#8a6200" stroke-width=".8"/><path d="M12 6.5h2.2v6.2a2 2 0 0 1-2.2-2z" fill="rgba(255,255,255,.55)"/></svg>',
     lock: (c) => '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2" fill="' + c + '"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="' + c + '" stroke-width="2.4"/></svg>',
-    coin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><circle cx="12" cy="12" r="7" fill="none" stroke="#b07d00" stroke-width="1.6"/><text x="12" y="15.4" text-anchor="middle" font-family="ApexMenu, Roboto, Arial" font-weight="900" font-size="8.4" fill="#7a5600">CR</text></svg>',
+    coin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><circle cx="12" cy="12" r="7" fill="none" stroke="#b07d00" stroke-width="1.6"/><path d="M12 7.6l1.3 2.7 2.9.4-2.1 2 .5 2.9L12 14.3l-2.6 1.3.5-2.9-2.1-2 2.9-.4z" fill="#b07d00"/></svg>',   // (a gold coin with a star: the money)
     check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc629"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#1b1b1b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     bolt: '<svg width="20" height="24" viewBox="0 0 22 24"><path d="M13 1.5 3.5 14h6.5l-1.5 8.5L19 10h-6.8z" fill="#fff"/></svg>',
     weight: '<svg width="22" height="24" viewBox="0 0 22 24"><path d="M7.5 7a3.5 3.5 0 1 1 7 0" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M4.5 9h13l2.5 12.5H2z" fill="#fff"/><text x="11" y="19" text-anchor="middle" font-family="ApexMenu, Roboto, Arial" font-weight="900" font-size="7" fill="#0e1a2c">KG</text></svg>',
@@ -148,8 +148,8 @@
   })();
 
   /* ---------------- rendering helpers ---------------- */
-  const eur = (x) => '€' + num(x);
-  const moneyPill = () => money() == null ? '' : '<div class="money">' + I.coin + '<span>' + eur(money()) + '</span></div>';
+  const coins = (x) => num(x) + ' coins';   // (the money is coins: the coin in the pill, the word in a text; no €)
+  const moneyPill = () => money() == null ? '' : '<div class="money">' + I.coin + '<span>' + num(money()) + '</span></div>';
   const foot = (goHtml) => '<div class="foot"><button class="back" data-act="back" aria-label="Back">' + I.back + '</button>' + (goHtml || '') + '</div>';
 
   /* ---------------- main menu ---------------- */
@@ -166,7 +166,7 @@
     } else if (titleSub === 'career') {
       const c = G.career(), ch = G.champ();
       const four = [
-        ['garage', 'career', c ? 'Career garage' : 'Career', c ? 'Prize money buys cars and upgrades. ' + eur(c.money) + ' to spend.' : 'Win prize money, buy cars and upgrades.', c ? c.cars + ' CARS' : 'NOT STARTED', I.bigcup],
+        ['garage', 'career', c ? 'Career garage' : 'Career', c ? 'Prize money buys cars and upgrades. ' + coins(c.money) + ' to spend.' : 'Win prize money, buy cars and upgrades.', c ? c.cars + ' CARS' : 'NOT STARTED', I.bigcup],
         ['champ', 'champ', 'Championships', 'A series of races with points.', ch ? ch.chip : 'PICK A SERIES', I.medalBig],
         ['school', 'school', 'Driving school', 'Four lessons with medals.', G.schoolChip(), I.wheelBig],
         ['stats', 'stats', 'Achievements', 'Your numbers and what you have unlocked.', G.statsChip(), I.starBig],
@@ -176,7 +176,7 @@
       h += '<button class="tile t-single" data-act="single"><span class="tx"><b>SINGLE RACE</b><small>' + esc(t.name + ' · ' + md.name) + '</small>' + (best ? '<em class="chip">BEST ' + esc(best) + '</em>' : '<em class="chip gold">NEW TRACKS INSIDE</em>') + '</span>' +
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
       h += '<button class="tile t-multi" data-act="game:to-online"><span class="tx"><b>MULTIPLAYER</b><small>Race friends online</small></span><span class="im"><img src="assets/menu/multiplayer.webp" alt=""></span></button>';
-      h += '<button class="tile t-career" data-act="career"><span class="tx"><b>CAREER</b><small>' + (G.career() ? eur(G.career().money) + ' · ' : '') + 'Garage, championships, school</small></span><span class="im">' + I.bigcup + '<img src="assets/menu/career.webp" alt=""></span></button>';
+      h += '<button class="tile t-career" data-act="career"><span class="tx"><b>CAREER</b><small>' + (G.career() ? coins(G.career().money) + ' · ' : '') + 'Garage, championships, school</small></span><span class="im">' + I.bigcup + '<img src="assets/menu/career.webp" alt=""></span></button>';
       h += '<div class="t-row"><button class="tsmall" data-act="game:to-settings">' + I.cog + '<span>Settings</span></button><button class="tsmall" data-act="game:to-board">' + I.podium + '<span>Leaderboard</span></button></div>';
       if (G.chal()) h += '<button class="mbtn gold buy" data-act="game:to-chal"><span>Challenge from a friend</span><small>Beat their time on the same track</small></button>';
       const ex = []; if (G.fsAvailable()) ex.push('<button class="tsmall" data-act="game:fullscreen">' + I.expand + '<span>Full screen</span></button>'); if (G.installAvailable()) ex.push('<button class="tsmall" data-act="game:install">' + I.plus + '<span>Install the game</span></button>');

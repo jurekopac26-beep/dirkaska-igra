@@ -120,7 +120,7 @@ const fill = (S, k, len) => S.m.set(k, 'x'.repeat(Math.max(0, len - k.length)));
   S.m.set('rra-misije', '{"06":{}}'); S.m.set('apex-garage', '{}');
   const c = Shramba.collect(), sum = Shramba.summary(c.data);
   check('a copy: the progress keys only (no ghosts, not tdgp-noadapt, not the module\'s note, not other pages\' keys), the missions\' records beside', J(Object.keys(c.data).sort()) === J(['tdgp-career', 'tdgp-records', 'tdgp-settings', 'tdgp-stats']) && J(c.extra) === J({ 'rra-misije': '{"06":{}}' }), J(c));
-  check('its numbers: 12 races, 3 time trials, 102 km, 23 400 € (the career on)', J(sum) === J({ races: 12, tt: 3, km: 102, money: 23400 }), J(sum));
+  check('its numbers: 12 races, 3 time trials, 102 km, 23 400 coins (the career on)', J(sum) === J({ races: 12, tt: 3, km: 102, money: 23400 }), J(sum));
   check('the career off or missing: no money', Shramba.summary({ 'tdgp-career': J({ on: false, money: 5 }) }).money === null && Shramba.summary({}).money === null && Shramba.summary({ 'tdgp-stats': 'broken' }).races === 0);
   check('the profile file\'s extra: the missions\' records', J(Shramba.extras()) === J({ 'rra-misije': '{"06":{}}' }));
 }

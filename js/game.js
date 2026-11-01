@@ -141,7 +141,7 @@
   function careerSave() { Shramba.keep('tdgp-career', JSON.stringify(career)); }
   const inCareer = () => !!(career && career.on);
   const owned = (id) => !inCareer() || career.cars.includes(id);
-  const eur = (x) => Lang.eur(x);   // 12.300 € (English: €12,300)
+  const eur = (x) => Lang.eur(x);   // 12.300 🪙 (English: 12,300 🪙): the money is coins (kovančki), no €
   const upgOf = (id) => inCareer() ? career.upg[id] || (owned(id) ? (career.upg[id] = upgNorm(null)) : upgNorm(null)) : S.upg[id] || (S.upg[id] = upgNorm(null));   // (the career: a car not bought is stock)
   // the car's set-up per track (the track screen: wing and gears, 0 / 1 / 2; 1 the standard one), kept in the settings
   const setupOf = (id) => { if (!isObj(S.setup)) S.setup = {}; const o = S.setup[id]; const v = (x) => x === 0 || x === 1 || x === 2 ? x : 1;
@@ -315,7 +315,7 @@
     ['drift', 'Kralj drsenja', 'Drsi tri sekunde brez prekinitve.'],
     ['jump', 'Letalec', 'Skoči 40 m daleč.'],
     ['speed', '300 km/h', 'Pelji 300 km/h.'],
-    ['rich', 'Bogataš', 'V karieri zasluži 100.000 €.'],
+    ['rich', 'Bogataš', 'V karieri zasluži 100.000 kovančkov.'],
     ['online', 'S prijateljem', 'Pripelji do cilja dirke s prijateljem.'],
     ['chal', 'Izziv sprejet', 'Premagaj prijateljev čas v izzivu.'],
     ['school', 'Učenec', 'Osvoji zlato medaljo v šoli vožnje.'],
@@ -656,7 +656,7 @@
     const cats = $('car-cats'), strip = $('car-strip');
     if (!cats.children.length || cats.dataset.lang !== Lang.cur) { cats.innerHTML = catList().map(c => '<button class="cat-chip" data-cat="' + c.id + '">' + esc(tr(c.name)) + '</button>').join(''); cats.dataset.lang = Lang.cur; }   // (built anew in the other language)
     let cSel = null; for (const b of cats.children) { const on = b.dataset.cat === M.cat; b.classList.toggle('sel', on); if (on) cSel = b; }
-    const L = catCars(M.cat), key = M.cat + '|' + Lang.cur + '|' + (inCareer() ? career.cars.join() + '|' + career.money : '-');   // (the prices: 12.300 € / €12,300)
+    const L = catCars(M.cat), key = M.cat + '|' + Lang.cur + '|' + (inCareer() ? career.cars.join() + '|' + career.money : '-');   // (the prices: 12.300 🪙 / 12,300 🪙)
     if (key !== stripKey) {   // (another category, or the career's garage changed: the strip anew; else only the chosen chip moves)
       const padOn = padSel && padSel.parentElement === strip;
       strip.innerHTML = L.map(i => carChip(i, i === S.car)).join(''); stripKey = key;

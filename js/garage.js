@@ -9,6 +9,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const num = (n) => Lang.thou(n);
+  const coins = (n) => Lang.eur(n);   // (the money: coins, as the game's and the career's: 12.300 🪙)
   const MODELS = Core.MODELS, PRICE = Core.CAREER.car, UPG = Core.UPG;
   // the game's colours (game.js PLAYER_COLORS), their names
   const COLORS = [[0xd81f2a, 'Rdeča'], [0xf5f5f0, 'Bela'], [0x1c5fd6, 'Modra'], [0xf2c230, 'Rumena'], [0x1a1a1f, 'Črna'], [0x2fa84f, 'Zelena'], [0xff7a1a, 'Oranžna'], [0x8e3bd6, 'Vijolična']];
@@ -26,7 +27,7 @@
   // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
   const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
-  // service prices (CR): a wash, the body (scratches, dents), the engine and its oil; a full service 15 % off
+  // service prices (coins): a wash, the body (scratches, dents), the engine and its oil; a full service 15 % off
   const SRV = [
     { id: 'clean', name: 'Pranje', desc: 'Pena, voda, vosek', base: 150, k: 450 },
     { id: 'body', name: 'Karoserija', desc: 'Praske in udrtine', base: 300, k: 2200 },
@@ -110,7 +111,7 @@
     const go = $('g-go'); go.className = 'g-btn g-btn-go';
     if (own) { go.textContent = tr('Izberi'); go.dataset.act = 'go'; }
     else if (locked(S.car)) { go.textContent = tr('V polni igri'); go.className += ' lock'; go.dataset.act = 'locked'; }
-    else { go.textContent = tr('Kupi · {0} CR', num(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
+    else { go.textContent = tr('Kupi · {0}', coins(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
   }
   const stat = (ic, l, v, cls) => '<div class="g-stat">' + ic + '<div><small>' + esc(l) + '</small><b class="' + (cls || '') + '">' + esc(v) + '</b></div></div>';
   const ph = (t, sub) => '<div class="g-ph"><button data-act="home" aria-label="' + esc(tr('Nazaj')) + '">' + I.back + '</button><h3>' + esc(t) + '</h3>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>';
@@ -135,7 +136,7 @@
         '<div class="g-cats" id="g-cats" aria-label="' + esc(tr('Kategorije vozil')) + '">' + CATS.map(q => '<button class="g-cat' + (q.id === cat ? ' sel' : '') + (q.id === catOf(S.car) ? ' here' : '') + '" data-cat="' + q.id + '">' + esc(tr(q.name)) + '</button>').join('') + '</div>' +
         '<div class="g-cars" id="g-cars" aria-label="' + esc(tr('Vozila v kategoriji')) + '">' + ids.map(id => {
         const k = S.cars[id], m = model(id), t = thumbs[id] && thumbs[id][k.color + (k.stripe ? 's' : '')];
-        const s2 = k.own ? '<small class="own">' + esc(tr('V GARAŽI')) + '</small>' : locked(id) ? '<small class="lock">🔒 ' + esc(tr('POLNA IGRA')) + '</small>' : '<small class="pr">' + num(PRICE[id] || 0) + ' CR</small>';
+        const s2 = k.own ? '<small class="own">' + esc(tr('V GARAŽI')) + '</small>' : locked(id) ? '<small class="lock">🔒 ' + esc(tr('POLNA IGRA')) + '</small>' : '<small class="pr">' + coins(PRICE[id] || 0) + '</small>';
         return '<button class="g-car' + (id === S.car ? ' sel' : '') + (locked(id) ? ' locked' : '') + '" data-car="' + id + '"><div class="th">' + (t ? '<img alt="" src="' + t + '">' : '<i></i>') + '</div><b>' + esc(m.name) + '</b>' + s2 + '</button>';
       }).join('') + '</div>' + '<div class="g-meter">' + METER.map(([l, k]) =>
         '<small>' + esc(tr(l)) + '</small><span><i class="up" style="width:' + st[k] * 10 + '%"></i><i style="width:' + b0[k] * 10 + '%"></i></span><b>' + (Math.round(st[k] * 10) / 10).toFixed(1).replace('.', Lang.cur === 'en' ? '.' : ',') + '</b>').join('') + '</div>' +
@@ -149,17 +150,17 @@
         const next = cur < 3 ? (cur + 1 <= mx ? 0 : Core.careerUpgPrice(mx, cur + 1)) : -1;
         return '<div class="g-row"><span class="ic">' + I[k] + '</span><span class="tx"><b>' + esc(tr(u.name)) + '</b><small>' + esc(tr(u.lv[cur])) + (UPG_FX[k][cur] ? ' · ' + esc(tr(UPG_FX[k][cur])) : '') + '</small></span>' +
           '<span class="g-lv">' + [0, 1, 2, 3].map(l => '<button data-upg="' + k + '" data-lv="' + l + '" class="' + (l === cur ? 'fit' : l <= mx ? 'got' : 'buy') + '" aria-label="' + esc(tr(u.lv[l])) + '">' + (l === 0 ? 'S' : l) + '</button>').join('') + '</span></div>';
-      }).join('') + '<p class="g-hint">' + esc(tr('S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.', num(Core.CAREER.upg[1]), num(Core.CAREER.upg[2]), num(Core.CAREER.upg[3]))) + '</p>';
+      }).join('') + '<p class="g-hint">' + esc(tr('S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2}.', coins(Core.CAREER.upg[1]), coins(Core.CAREER.upg[2]), coins(Core.CAREER.upg[3]))) + '</p>';
     } else if (panel === 'srv') {
       let all = 0;
       const rows = SRV.map(s => { const p = srvPrice(s, c), q = c.cond[s.id]; all += p;
         return '<div class="g-row"><span class="ic">' + I[s.id] + '</span><span class="tx"><b>' + esc(tr(s.name)) + ' <span style="font-style:normal;font-weight:700;color:' + condCol(q) + '">' + Math.round(q * 100) + ' %</span></b><small>' + esc(tr(s.desc)) + '</small><div class="g-bar"><i style="width:' + Math.round(q * 100) + '%;background:' + condCol(q) + '"></i></div></span>' +
-          (p ? '<button class="g-fix' + (S.money < p ? ' poor' : '') + '" data-srv="' + s.id + '">' + num(p) + ' CR</button>' : '<button class="g-fix" disabled>✓</button>') + '</div>'; }).join('');
+          (p ? '<button class="g-fix' + (S.money < p ? ' poor' : '') + '" data-srv="' + s.id + '">' + coins(p) + '</button>' : '<button class="g-fix" disabled>✓</button>') + '</div>'; }).join('');
       const full = Math.round(all * 0.85 / 50) * 50;
-      b.innerHTML = ph(tr('Servis'), tr('Stanje {0} %', Math.round(condAvg(c) * 100))) + rows + '<button class="g-wide" data-srv="all"' + (all ? '' : ' disabled') + '>' + esc(tr('Popoln servis')) + (all ? '<small>' + num(full) + ' CR · −15 %</small>' : '') + '</button>';
+      b.innerHTML = ph(tr('Servis'), tr('Stanje {0} %', Math.round(condAvg(c) * 100))) + rows + '<button class="g-wide" data-srv="all"' + (all ? '' : ' disabled') + '>' + esc(tr('Popoln servis')) + (all ? '<small>' + coins(full) + ' · −15 %</small>' : '') + '</button>';
     } else if (panel === 'paint') {
-      b.innerHTML = ph(tr('Barva'), tr('Barvanje {0} CR', num(PAINT))) + '<div class="g-swatches">' + COLORS.map((col, i) => '<button class="g-sw' + (i === c.color ? ' sel' : '') + '" data-col="' + i + '"><i style="background:' + CSS(col[0]) + '"></i><small>' + esc(tr(col[1])) + '</small></button>').join('') + '</div>' +
-        '<div class="g-row"><span class="ic">' + I.paint + '</span><span class="tx"><b>' + esc(tr('Dirkalne črte')) + '</b><small>' + esc(tr('Druga barva na pokrovu in bokih · {0} CR', num(STRIPE))) + '</small></span><span class="g-seg"><button data-stripe="1" class="' + (c.stripe ? 'sel' : '') + '">' + esc(tr('Da')) + '</button><button data-stripe="0" class="' + (c.stripe ? '' : 'sel') + '">' + esc(tr('Ne')) + '</button></span></div>';
+      b.innerHTML = ph(tr('Barva'), tr('Barvanje {0}', coins(PAINT))) + '<div class="g-swatches">' + COLORS.map((col, i) => '<button class="g-sw' + (i === c.color ? ' sel' : '') + '" data-col="' + i + '"><i style="background:' + CSS(col[0]) + '"></i><small>' + esc(tr(col[1])) + '</small></button>').join('') + '</div>' +
+        '<div class="g-row"><span class="ic">' + I.paint + '</span><span class="tx"><b>' + esc(tr('Dirkalne črte')) + '</b><small>' + esc(tr('Druga barva na pokrovu in bokih · {0}', coins(STRIPE))) + '</small></span><span class="g-seg"><button data-stripe="1" class="' + (c.stripe ? 'sel' : '') + '">' + esc(tr('Da')) + '</button><button data-stripe="0" class="' + (c.stripe ? '' : 'sel') + '">' + esc(tr('Ne')) + '</button></span></div>';
     }
   }
   // a row's chip in the middle of the row (only the row scrolls, not the page)
@@ -188,7 +189,7 @@
   function toast(t, bad) { const el = $('g-toast'); el.textContent = t; el.className = 'g-toast on' + (bad ? ' bad' : ''); clearTimeout(toastT); toastT = setTimeout(() => { el.className = 'g-toast'; }, 2600); }
   function chip(small, big) { const el = $('g-chip'); el.innerHTML = '<small>' + esc(small) + '</small><b>' + big + '</b>'; el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
   function pay(p) {
-    if (S.money < p) { const el = $('g-cr'); el.classList.remove('poor'); void el.offsetWidth; el.classList.add('poor'); setTimeout(() => el.classList.remove('poor'), 500); toast(tr('Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.', num(p), num(S.money)), true); return false; }
+    if (S.money < p) { const el = $('g-cr'); el.classList.remove('poor'); void el.offsetWidth; el.classList.add('poor'); setTimeout(() => el.classList.remove('poor'), 500); toast(tr('Premalo kovančkov: potrebuješ {0}, imaš {1}.', coins(p), coins(S.money)), true); return false; }
     if (p > 0) { const from = S.money; S.money -= p; countMoney(from, S.money); const el = $('g-cr'); el.classList.remove('pay'); void el.offsetWidth; el.classList.add('pay'); G.sfx('coin'); }
     return true;
   }

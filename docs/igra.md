@@ -231,11 +231,11 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Kariera
 
-Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
+Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 kovančkov in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 🪙«). Denar v igri so **kovančki** (🪙), evrov ni.
 
-- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 € … in od 13. mesta naprej 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
-- **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
+- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 kovančkov, zadnji 300 kovančkov; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 kovančkov … in od 13. mesta naprej 300 kovančkov). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 kovančkov, za prvo štartno mesto v kvalifikacijah 1.000 kovančkov. Naslov prvaka prinese 20.000 kovančkov, 2. mesto v prvenstvu 10.000 kovančkov in 3. mesto 6.000 kovančkov (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 kovančkov, 3.000 kovančkov ali 1.500 kovančkov za zlato, srebrno ali bronasto medaljo, 2.000 kovančkov za osebni rekord, sicer 500 kovančkov. Nagrada piše na zaslonu z rezultati.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 kovančkov za kart MRAVLJA do 150.000 kovančkov za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 kovančkov, RAKETA 16V 14.000 kovančkov, LEV S 20.000 kovančkov, KAZE RS 30.000 kovančkov, VIHAR V8 40.000 kovančkov, TITAN 60.000 kovančkov, FORMULA ORKAN 90.000 kovančkov, TAIFUN LM 110.000 kovančkov; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Nadgradnje:** za vozila do 50.000 kovančkov stane vsaka stopnja 4.000 kovančkov, 7.000 kovančkov ali 12.000 kovančkov, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 kovančkov naprej; zaokroženo na 100 kovančkov). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 
 ## Prvič na cesti (prvi zagon)
@@ -536,93 +536,93 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
 | **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
-| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
-| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
-| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
-| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
-| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 kovančkov | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
+| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 kovančkov | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
+| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
+| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
 
 ### Športni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 € | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
-| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 € | Rad obrne rep, rojen za drift. |
-| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 € | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
-| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 € | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
-| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 € | Veliko oprijema, stabilen tudi na robu. |
-| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 € | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 kovančkov | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
+| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 kovančkov | Rad obrne rep, rojen za drift. |
+| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 kovančkov | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
+| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
+| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
+| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
 
 ### Superšportni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 € | Oster in živahen, hitro zavrti. |
-| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 € | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
-| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 € | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
-| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 € | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
+| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 kovančkov | Oster in živahen, hitro zavrti. |
+| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 kovančkov | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
+| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 kovančkov | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
+| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 kovančkov | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
 
 ### Klasika
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 € | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
-| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 € | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
-| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 € | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
-| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 € | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
+| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 kovančkov | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
+| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 kovančkov | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
+| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 kovančkov | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
+| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 kovančkov | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
 
 ### Reli
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 € | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
-| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 € | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
-| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 € | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 kovančkov | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
+| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 kovančkov | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
+| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 kovančkov | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
 
 ### Terenski
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 € | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
-| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 € | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
-| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 € | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
-| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 € | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
-| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 € | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 kovančkov | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
+| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 kovančkov | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
+| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
+| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
+| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
 
 ### Dirkalni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 € | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
-| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 € | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
-| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 € | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
-| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 € | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
-| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 € | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
-| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 € | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
-| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 € | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
-| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 € | Prototip za vzdržljivostne dirke (glej spodaj). |
+| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 kovančkov | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
+| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 kovančkov | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
+| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 kovančkov | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
+| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 kovančkov | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
+| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 kovančkov | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
+| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 kovančkov | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
+| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 kovančkov | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
+| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 kovančkov | Prototip za vzdržljivostne dirke (glej spodaj). |
 
 ### Tovornjaki
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 € | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
-| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 € | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 kovančkov | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
+| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
 
 ### Električni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 € | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
-| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 € | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
+| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
 
 ### Posebni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 € | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
-| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 € | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
-| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 € | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 kovančkov | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
+| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 kovančkov | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
+| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 kovančkov | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
 
 ### Dirkalni tovornjak TITAN
 
@@ -637,9 +637,9 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 Trije izmišljeni avti z isto karoserijo kompaktnega trivratnega hatchbacka z velikimi mandljastimi žarometi:
 
-- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 € v karieri.
-- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 €.
-- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 €.
+- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 kovančkov v karieri.
+- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 kovančkov.
+- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 kovančkov.
 
 ## Razpadanje vozil
 
@@ -726,7 +726,7 @@ Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.co
 
 ## Jezik (angleščina)
 
-V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, 12,300 🪙, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
 
 ## Dosežki in statistika
 

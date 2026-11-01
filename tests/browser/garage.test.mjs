@@ -41,10 +41,10 @@ try {
   const ui = () => page.evaluate(() => ({ money: document.getElementById('g-money').textContent, name: document.getElementById('g-name').textContent, go: document.getElementById('g-go').textContent.trim(),
     title: document.querySelector('.g-title h1').textContent, info: Garage3D.info, S: JSON.parse(JSON.stringify(__garage.S)) }));
 
-  // 1. the page: a fresh profile (the full game: 11.500 CR, the PICO TURBO), the car on the table, the room drawn in a sensible number of draws
+  // 1. the page: a fresh profile (the full game: 11.500 coins, the PICO TURBO), the car on the table, the room drawn in a sensible number of draws
   {
     const u = await ui(), calls = await page.evaluate(() => { __garage.advance(0.1); return Garage3D.renderer.info.render.calls; });
-    T.check('opens: 11.500 CR, PICO TURBO on the turntable, the go button "Izberi"', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.title === 'GARAŽA', JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
+    T.check('opens: 11.500 coins, PICO TURBO on the turntable, the go button "Izberi"', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.title === 'GARAŽA', JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     T.check('the worn car shows its wear: dirt and scratches on the paint', u.info.dirt > 0.2 && u.info.scr > 0.2, JSON.stringify(u.info));
     T.check('draw calls of the garage stay modest (< 260)', calls > 20 && calls < 260, calls + ' calls');
     const kept = await page.evaluate(() => Garage3D._dbg.pieces.filter(p => p.g || p.sm).length);
@@ -398,23 +398,23 @@ try {
       while (old.root.position.x <= 0.01 && t < 40) { __garage.advance(0.1); t += 0.1; await new Promise(r => setTimeout(r, 0)); } const f = D.fx; return { t: +t.toFixed(1), parked: f.parked, lane: f.lane, tool: f.robots[0].tool, nest: f.stand.nests.wrench, dryer: D.dryer.k, drawn: D.dryer.drawn, chamber: D.chamber.k }; });
     await run();
     const u = await ui(), fx = await page.evaluate(() => Garage3D._dbg.fx);
-    T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && /Kupi · 30\.000 CR/.test(u.go), JSON.stringify({ car: u.info.car, go: u.go }));
+    T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && /Kupi · 30\.000\u00a0🪙/.test(u.go), JSON.stringify({ car: u.info.car, go: u.go }));
     T.check('a car asked for while a robot works at the wheel with the wrench and the drying column stands up hot in the lane: the column goes down and the robot puts the wrench back and parks first (when the old car starts off: everything parked, nothing in the lane), then the swap',
       first.parked && first.tool === 'none' && first.nest === 'in' && first.lane >= 1.3 && first.dryer === 0 && !first.drawn && first.chamber === 0 && fx.parked && fx.lane >= 1.3, JSON.stringify({ first, parked: fx.parked, lane: fx.lane }));
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
-    T.check('too few credits for it: refused, the credits unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo kreditov/.test(toast), toast);
+    T.check('too few coins for it: refused, the coins unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo kovančkov/.test(toast), toast);
   }
 
   // 3. the veteran's profile: many credits, cars; buying one
   {
     await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
     const u = await ui();
-    T.check('the veteran: 248.500 CR, the KAZE RS (owned) on the table', u.money === '248.500' && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own, JSON.stringify({ money: u.money, car: u.info.car }));
+    T.check('the veteran: 248.500 coins, the KAZE RS (owned) on the table', u.money === '248.500' && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own, JSON.stringify({ money: u.money, car: u.info.car }));
     await page.evaluate(() => __garage.pickCar('formula')); await run();
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
-    T.check('bought: the FORMULA ORKAN for 90.000 CR (248.500 -> 158.500), the go button now chooses it', u2.S.cars.formula.own && u2.S.money === 158500 && u2.go === 'Izberi' && u2.info.car === 'formula', JSON.stringify({ money: u2.S.money, go: u2.go }));
+    T.check('bought: the FORMULA ORKAN for 90.000 coins (248.500 -> 158.500), the go button now chooses it', u2.S.cars.formula.own && u2.S.money === 158500 && u2.go === 'Izberi' && u2.info.car === 'formula', JSON.stringify({ money: u2.S.money, go: u2.go }));
   }
 
   // 4. the upgrades on the muscle car: each fitted with its show, the parts on the car, the price taken (a level bought once is free again)
@@ -426,7 +426,7 @@ try {
     T.check('the upgrades: the turntable never rises nor turns (the camera goes round the car)', r.table === 0 && r.ang === 0, JSON.stringify(r));
     const paid = m0 - u.S.money, want = 23000 + 23000 + 7000;   // (aero 0 -> 3, brakes 0 -> 3, tyres 1 -> 2; the engine down to stock: free)
     T.check('upgrades: wing kit, brakes, tyres fitted, the engine back to stock; their parts on the car', u.info.upg.aero === 3 && u.info.upg.zavore === 3 && u.info.upg.gume === 2 && u.info.upg.motor === 0 && p.aero >= 8 && p.zavore === 8 && p.gume === 4 && p.motor === 0, JSON.stringify(u.info));
-    T.check('upgrades: paid ' + want + ' CR', paid === want, 'paid ' + paid);
+    T.check('upgrades: paid ' + want + ' coins', paid === want, 'paid ' + paid);
     // (the home view's pieces before: swung round to 0.95 and back, and after the engine's show (its views at the front): each as it was)
     const ks = () => page.evaluate(() => Garage3D._dbg.pieces.map(p => +p.k.toFixed(2)));
     const k0 = await ks(); await page.evaluate(() => { const u = Garage3D._dbg.user; u.yaw = 0.4; __garage.advance(1.5); u.yaw = 0; __garage.advance(1.5); }); const k1 = await ks();
@@ -455,7 +455,7 @@ try {
     T.check('the service: the lift raises the car for the engine (>= 1 m) and lowers it, its arms stowed; the table never rises nor turns', r.lift >= 1.0 && r.table === 0 && r.ang === 0 && u.info.lift === 0 && L.arms === 0 && !L.on, JSON.stringify({ r, arms: L.arms }));
     await page.evaluate(() => __garage.doPaint(5, false)); await run();
     const u2 = await ui();
-    T.check('a new colour (green, no stripes): the car painted, 2.000 CR taken', u2.info.color === 0x2fa84f && u2.info.stripe === false && u.S.money - u2.S.money === 2000 && u2.info.car === 'rally', JSON.stringify(u2.info));
+    T.check('a new colour (green, no stripes): the car painted, 2.000 coins taken', u2.info.color === 0x2fa84f && u2.info.stripe === false && u.S.money - u2.S.money === 2000 && u2.info.car === 'rally', JSON.stringify(u2.info));
     const sh = await page.evaluate(() => (__garage.advance(0.1), Garage3D._dbg.shelf)), gr = [0x2f / 255, 0xa8 / 255, 0x4f / 255];
     T.check('the parts shelf\'s parts in the car\'s colour follow the car on the table (green now)', sh.col === 0x2fa84f && sh.c.every((q, j) => Math.abs(q - gr[j]) < 0.01), JSON.stringify(sh));
   }
