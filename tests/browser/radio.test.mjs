@@ -1,4 +1,5 @@
-// The team radio and the strategy in the game (Nastavitve · Radio ekipe, on by default; Toskana, the player on autopilot): at the line the
+// The team radio and the strategy in the game (Nastavitve · Radio ekipe, on by default; Toskana, the player on autopilot): every car's own
+// tyres (Car.kt) do not last three laps there, the engineer calls the stop; on the car's set (as in a race with a friend) at the line the
 // engineer's message in the box at the top of the HUD with the radio's click: the gaps to the cars ahead and behind, on the last lap
 // "Zadnji krog!"; in a race with fuel (6 laps) the window for the stop, on the lap it must be made BOKSI V TEM KROGU with the place the stop
 // gives, after the stop the place; the pause menu's strategy (fuel, what a stop costs, the place after it); the tyres for the next stop
@@ -26,9 +27,20 @@ try {
   const shown = () => page.waitForFunction(() => document.getElementById('h-teamradio').classList.contains('on'), null, { timeout: 10000, polling: 'raf' }).catch(() => {});
   const lang = (l) => page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, l);
 
-  // 1. three laps: at the second lap's line the gaps (the box at the top, its click)
+  // 1. three laps. Every car with its own tyres (Car.kt, worn as the KOLIBRI's since 1. 11. 2026): on Toskana they do not last three laps,
+  // at the second lap's line the engineer calls the stop. Then the race again on the car's set (Car.kt off, as in a race with a friend: the
+  // usual wear, no stop): at the second lap's line the gaps (the box at the top, its click)
   await startTrack(page, 'toskana');
   await setUp();
+  const kt0 = await page.evaluate(() => !!window.__game.race.player.kt);
+  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
+  const r0 = await radio();
+  T.check('every car with its own tyres (Car.kt): on Toskana they do not last three laps, at the second lap\'s line "Gume ne bodo zdržale do cilja. Boksi v tem krogu!" with the place the stop gives',
+    kt0 && /^Gume ne bodo zdržale do cilja\. Boksi v tem krogu! Po postanku boš (\d+\., .+ bo \d+,\d s pred tabo|še vedno prvi)\. Dobiš (mehke|srednje|trde) gume\.$/.test(r0.log[0]), JSON.stringify({ kt0, r0 }));
+  await page.evaluate(() => window.__game.onAction('to-title'));
+  await startTrack(page, 'toskana');
+  await setUp();
+  await page.evaluate(() => { window.__game.race.player.kt = null; });   // (the set: the usual wear)
   await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
   await shown();
   const r1 = await radio(), gapRe = /^(.+ je \d+,\d s pred tabo(, .+ \d+,\d s za tabo)?\.|Vodiš(, .+ je \d+,\d s za tabo)?\.)$/;
