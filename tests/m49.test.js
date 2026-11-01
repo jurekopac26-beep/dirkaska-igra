@@ -26,6 +26,14 @@ let F = mk(), r = new Missions.Run(D, F); D.begin.call(D, r);
 const full = r.W.cab.filter(c => c.n > 0);
 check('the wheel: 16 cabins, people in 8 (2 each), every one 7 m or more over the ground', r.W.cab.length === 16 && full.length === 8 && r.total === 16 && full.every(c => c.ly >= 7), full.map(c => c.ly.toFixed(1)).join(' '));
 check('the wheel beside the road (its cabins within the ladder\'s reach of the stopping place)', (() => { const i = T.idx(sW - K.AHEAD); return full.every(c => Math.hypot(c.x - T.px[i], c.y - T.hy[i], c.z - T.pz[i]) < 34); })());
+// (anywhere in the stopping zone, its ends and the middle, across the road: the basket within 0,5 m of every full cabin's door, the kit's
+// own solve with the turntable pointed at it; the player is held once stopped there, so every cabin must be within reach)
+{ const out = (() => { const P = r.P, tk = r.truck, w = T.wS(sW - K.AHEAD), out = [];
+  for (const d of [K.ZONE[0], (K.ZONE[0] + K.ZONE[1]) / 2, K.ZONE[1]]) for (const lat of [-(w - 1.3), 0, w - 1.3]) { const i = T.idx(sW - K.AHEAD + d);
+    P.x = T.px[i] + T.nx[i] * lat; P.z = T.pz[i] + T.nz[i] * lat; P.h = Math.atan2(T.tz[i], T.tx[i]); P.y = T.hy[i];
+    for (const c of full) { const s = tk.solve(c), Y0 = tk.yaw, L0 = tk.lift, E0 = tk.ext; tk.yaw = s.yaw; tk.lift = s.lift; tk.ext = s.ext; const t = tk.tipAt(); const dd = Math.hypot(t.x - c.x, t.y - c.y, t.z - c.z); tk.yaw = Y0; tk.lift = L0; tk.ext = E0; if (dd >= 0.5) out.push(`${d}/${lat.toFixed(1)}: ${c.k} ${dd.toFixed(2)} m`); } }
+  Object.assign(P, { x: 0, z: 0, h: 0, y: undefined }); return out; })();
+  check('the stopping zone: from anywhere in it the ladder reaches every cabin with people', out.length === 0, out.length ? out.slice(0, 6).join('; ') : 'every one within 0,5 m'); }
 check('begin: the panel (length 7,2 m, 0°, 0 / 16, 0 / 4)', r.vals.len.text === '7,2 m' && r.vals.kot.text === '0°' && r.vals.res.text === '0 / 16' && r.vals.kos.text === '0 / 4', JSON.stringify(r.vals));
 r.step(1 / 60);
 check('on the way: the hint says how far', /km/.test(r.hint), r.hint);

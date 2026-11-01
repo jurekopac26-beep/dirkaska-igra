@@ -14,9 +14,11 @@ const st = (page) => page.evaluate(() => { const g = window.__game, R = g.race, 
   return { track: R.track.def.id, car: P.m.id, stage: r && r.stage, run: r && { end: r.end, why: r.why, saved: r.saved, inB: r.inB }, lift: r && r.truck.lift, ext: r && r.truck.ext,
     rows: m ? [...m.querySelectorAll('.mis-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) : [], tower: vis('#tw-strip') || vis('#h-tower'), lad: vis('#mis-aim'), touch: vis('#touch'), tags: document.querySelectorAll('#mis-tags.on i').length,
     res: document.getElementById('mis-res') && document.getElementById('mis-res').innerText.replace(/\s+/g, ' ') }; });
-const solve = (page) => page.evaluate(() => { const r = Missions.run, tk = r.truck, c = Missions.cur.target(r); if (!c) return null; let best = [1e9, 0, 0]; const L0 = tk.lift, E0 = tk.ext;
+// (the basket's closest to the cabin with the turntable pointed at it, as the mission turns it for r.auto: not where it has got to in the
+// real frames so far, which a busy machine draws fewer of)
+const solve = (page) => page.evaluate(() => { const r = Missions.run, tk = r.truck, c = Missions.cur.target(r); if (!c) return null; let best = [1e9, 0, 0]; const L0 = tk.lift, E0 = tk.ext, Y0 = tk.yaw; tk.yaw = tk.yawTo(c.x, c.z);
   for (let a = 0; a <= 1.0001; a += 0.02) for (let e = 0; e <= 1.0001; e += 0.02) { tk.lift = a * r.def.K.LIFT; tk.ext = e; const t = tk.tipAt(); const d = Math.hypot(t.x - c.x, t.y - c.y, t.z - c.z); if (d < best[0]) best = [d, a, e]; }
-  tk.lift = L0; tk.ext = E0; tk.step(0, true); r.auto = { lift: best[1], ext: best[2] }; return best[0]; });
+  tk.yaw = Y0; tk.lift = L0; tk.ext = E0; tk.step(0, true); r.auto = { lift: best[1], ext: best[2] }; return best[0]; });
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=49', {}, { width: 360, height: 640 }, { touch: true });
   await ready(page); await page.waitForTimeout(300);

@@ -1,6 +1,8 @@
 /* Special mission 49 · Zataknjeno kolo · Suzuka, Japonska (js/missions.js; the kit: js/missions/kit.js). A Ferris wheel beside the West
    straight has stopped, people wait in its cabins high over the ground. The aerial ladder (MisKit.fireTruck) drives there from the start
-   line and stops by the wheel (K.ZONE metres of road round K.STOP); the crew sets it up and the ladder is the player's:
+   line and stops by the wheel (K.ZONE metres of road from K.AHEAD m before it: only where the ladder, out in full, reaches every cabin with
+   people, from anywhere across the road; stopped earlier, cabins 3-5 ahead were out of its reach and the truck is held); the crew sets it
+   up and the ladder is the player's:
    the basket follows the finger over the wheel (the user's choice, 30. 10.: the ladder turned, raised and extended for it, at its own pace). The
    wind sways the basket (the longer the ladder and the quicker it moves, the more); held within K.REACH m of a cabin's door for K.HOLD s,
    its people step into the basket (K.CAP at most); the basket down by the ground (K.DOWN m over the road): they are on the ground. All of
@@ -11,7 +13,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [-14, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4, LOOK: 0.55,
+  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [0, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4, LOOK: 0.55,
     LIFT: 1.4, VLIFT: 0.28, VEXT: 0.16, REACH: 1.5, HOLD: 1.2, SWAY: 0.9, DOWN: 5 };
 
   // the wheel: in its own frame (x along the road, y up, z across), its cabins' doors in the world
