@@ -11,6 +11,8 @@
 //   other row sets its number; kept in the
 //   settings (localStorage); in English; a race with the rivals' spread narrower deals out narrower paces, back on Privzeto the old ones and
 //   nothing set; the spread's toast says from the next race
+// - Trki med avti brez odboja (one row before Poškodbe avtov, Izklop on a fresh profile): Vklop sets Core.TX.nb and its own knock settings over
+//   the rows, dims the 9 rows it stands for and writes a note; Razbijanje stays as chosen; in English; Izklop: nothing set
 //   node tests/browser/nova.test.mjs
 import { serve, launch, openGame, startTrack, simulate, checker } from './lib.mjs';
 
@@ -115,6 +117,27 @@ try {
     T.check('Preizkus: a race with the spread 0.3 and the realistic knocks: narrow paces (a third or less of the usual), nothing NaN, Core.TX kept through the race; back on Privzeto in the next race the usual spread, nothing set',
       a.phys === 'cs' && a.n > 10 && a.w < 0.05 && !nanA && txA.aiSpr === 0.3 && txA.cBox === 1 && txA.cScrub === 1 && b.w > 0.08 && Object.values(tz).every(v => v === null), JSON.stringify({ a, b, txA, tz, nanA }));
     T.check('Preizkus: the spread row says in a race it applies from the next race', /naslednje dirke/.test(toast), toast);
+    // Trki med avti brez odboja: one switch in the list (before Poškodbe avtov), Izklop on a fresh profile; on: Core.TX.nb and its own knock settings
+    // over the rows (a row set to something else changes nothing), the rows it stands for dimmed, a note under it; Razbijanje stays as chosen
+    // (Core leaves it out of the knocks between cars); in English; off again: nothing set
+    const nbs = () => page.evaluate(() => { const g = document.querySelector('#s-settings [data-set="crNB"]'), r = g && g.closest('.row');
+      return g ? { label: r.querySelector('.rlbl').textContent, btns: [...g.querySelectorAll('button')].map(b => b.textContent).join(), sel: [...g.querySelectorAll('button')].filter(b => b.classList.contains('sel')).map(b => b.dataset.v).join(), before: !!r.nextElementSibling.nextElementSibling.querySelector('[data-set="damage"]'),
+        dim: [...document.querySelectorAll('#s-settings .row.nbx [data-set]')].map(e => e.dataset.set).sort().join(), note: document.getElementById('nb-note').classList.contains('off') ? '' : document.getElementById('nb-note').textContent, cr: document.getElementById('cr-note').textContent } : null; });
+    await page.evaluate(() => { window.__game.onAction('to-settings'); document.getElementById('set-test').open = true; }); await page.waitForTimeout(300);
+    const n0 = await nbs(), x0 = await tx();
+    await pick('tCrE', 5); await pick('xBump', 1); await pick('crNB', 1);
+    const n1 = await nbs(), x1 = await tx(), xr1 = await page.evaluate(() => Core.XR.bump);
+    T.check('Trki med avti brez odboja: one row before Poškodbe avtov (Izklop, Vklop), Izklop on a fresh profile and nothing set; Vklop: Core.TX.nb 1 with no bounce, no turn, 8x, flat bumpers, the tyres\' hold, sparks on, over the row Odboj med avti set to Zelo velik; the 9 rows it stands for dimmed, a note under it and in Preizkus; Razbijanje: odboji in vrtenje kept as chosen',
+      n0 && n0.label === 'Trki med avti brez odboja' && n0.btns === 'Izklop,Vklop' && n0.sel === '0' && n0.before && !n0.dim && !n0.note && x0.nb === null
+      && n1.sel === '1' && x1.nb === 1 && x1.cE === 0 && x1.cYaw === 0 && x1.cMass === 8 && x1.cBox === 1 && x1.cScrub === 1 && x1.cFx === 1 && n1.dim === 'tCrBox,tCrE,tCrFx,tCrMass,tCrMu,tCrScrub,tCrStyle,tCrYaw,xBump' && /ne veljajo/.test(n1.note) && /vklopljen/.test(n1.cr) && xr1 === 1
+      && await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}').crNB === 1), JSON.stringify({ n0, n1, x1 }));
+    await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
+    const ne = await nbs();
+    await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
+    await pick('crNB', 0); await pick('tCrE', 0); await pick('xBump', 0);
+    const n2 = await nbs(), x2 = await tx();
+    T.check('Trki med avti brez odboja in English (Car knocks without bounce: Off / On, the note), off again: nothing set, no row dimmed',
+      ne.label === 'Car knocks without bounce' && ne.btns === 'Off,On' && /do not apply/.test(ne.note) && n2.sel === '0' && !n2.dim && !n2.note && Object.values(x2).every(v => v === null), JSON.stringify({ ne, n2, x2 }));
     T.check('Preizkus: no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1000" width="1500" height="1000">
+  <title>Chile</title>
+  <!-- Ratio 2:3. Two horizontal halves; blue square 500 x 500 at the upper hoist; white five-pointed
+       star centred in the square, point up, circumscribed diameter 250 (1/2 of the square's side).
+       Colours (law names azul turqui, blanco, rojo): blue #0039A6, red #D52B1E. -->
+  <rect width="1500" height="1000" fill="#FFFFFF"/>
+  <rect y="500" width="1500" height="500" fill="#D52B1E"/>
+  <rect width="500" height="500" fill="#0039A6"/>
+  <path fill="#FFFFFF" d="M250 125L278.064 211.373L368.882 211.373L295.409 264.754L323.473 351.127L250 297.746L176.527 351.127L204.591 264.754L131.118 211.373L221.936 211.373Z"/>
+</svg>
