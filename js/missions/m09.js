@@ -1,6 +1,6 @@
 /* Special mission 09 · Krilo vetrnice · Katu-Jaryk, Rusija (js/missions.js; the kit: js/missions/kit.js). A 48 m wind-turbine blade on an
    extendable trailer behind a tractor (the racing truck's physics for the tractor, MisKit.skin; the trailer on its own kinematics,
-   MisKit.trailer, drawn with MisKit.tow) down the hairpins from K.S0 m past the start line to K.END. The trailer's rear axle steers (the
+   MisKit.towTrailer, drawn with MisKit.tow) down the hairpins from K.S0 m past the start line to K.END. The trailer's rear axle steers (the
    second control: ZADNJA OS, the keys L and D move it and it stays where it was left, MisKit.keys; L and D: the trailer's rear swings that
    way); the blade (from K.B0 m ahead of the hitch to K.TIP m behind it) sweeps far over the edges in the hairpins and must miss the crags
    (K.ROCKS: [s, d, the side to steer the axle], one in each hairpin, K.PINS; each K.R m round, from the ground up past the blade). PROSTOR DO SKALE: the blade's room
@@ -65,13 +65,13 @@
     },
     begin(r) {
       const T = r.race.track, P = r.P;
-      r.tr = KIT.trailer(P, { hitch: K.HITCH, len: K.LEN }); r.axle = 0; r.hp = 1; r.hits = 0; r.near = null; r.sEnd = T.startS + K.END;
+      r.tr = KIT.towTrailer(P, { hitch: K.HITCH, len: K.LEN }); r.axle = 0; r.hp = 1; r.hits = 0; r.near = null; r.sEnd = T.startS + K.END;
       r.rocks = K.ROCKS.map(([s0, d, side]) => { const s = T.startS + s0, i = T.idx(s); return { s, d, side, x: T.px[i] + T.nx[i] * d, z: T.pz[i] + T.nz[i] * d, y: T.hy[i], hit: false }; });
       if (typeof THREE !== 'undefined' && typeof document !== 'undefined') {
         r.skin = KIT.skin(r, P, tractor);
         r.towG = KIT.tow(r, P, r.tr, load);
         r.add(crags(r, T));
-        r.front = KIT.pilot(r, T);
+        r.front = KIT.escort(r, T);
         r.tags = KIT.tags(r);
         r.keys = KIT.keys(r, [{ k: 'l', label: 'OS L' }, { k: 'd', label: 'OS D' }]); r.keys.show(true);
       }

@@ -1,8 +1,8 @@
 /* Special mission 52 · Hiša na tovornjaku · Big Sur, ZDA (js/missions.js; the kit: js/missions/kit.js). A prefabricated house on a low
-   trailer behind a tractor (the racing truck's physics for the tractor, MisKit.skin; the trailer on its own kinematics, MisKit.trailer, drawn
+   trailer behind a tractor (the racing truck's physics for the tractor, MisKit.skin; the trailer on its own kinematics, MisKit.towTrailer, drawn
    with MisKit.tow) along the narrow coast road to the finish line. The house is K.W m wide (ŠIRINA TOVORA), almost the road: it may stand
    K.OVER m out over the road's edge (over the barriers and the verge), on the narrow bridges (the track's def.narrow) not at all. PROSTOR: the room left and right of the house (its corners at K.CORN m behind the
-   hitch). A corner out past it: a scrape (each new one costs the house a third: HIŠA; the third: failed). Two escort cars (MisKit.pilot)
+   hitch). A corner out past it: a scrape (each new one costs the house a third: HIŠA; the third: failed). Two escort cars (MisKit.escort)
    go with it: one ahead stops the oncoming cars, who wait by the left edge (K.WAIT; PROMET ČAKA: how many ahead), one behind. */
 (function () {
   'use strict';
@@ -53,14 +53,14 @@
     opts: () => ({ tt: true, laps: 1, playerModel: KIT.truckModel('titan', { vLim: K.VMAX, kw: 380, len: 6.8, wid: 2.5, mass: 24000 }), playerColor: CAB, damage: 0 }),
     begin(r) {
       const T = r.race.track, P = r.P;
-      r.tr = KIT.trailer(P, { hitch: K.HITCH, len: K.LEN }); r.hp = 1; r.scr = 0; r.touch = false; r.room = [9, 9];
+      r.tr = KIT.towTrailer(P, { hitch: K.HITCH, len: K.LEN }); r.hp = 1; r.scr = 0; r.touch = false; r.room = [9, 9];
       r.cars = K.WAIT.map((s0) => { const s = T.startS + s0, i = T.idx(s), off = -(T.wS(s) - 1.0); return { s, x: T.px[i] + T.nx[i] * off, z: T.pz[i] + T.nz[i] * off, y: T.hy[i], h: Math.atan2(T.tz[i], T.tx[i]) + Math.PI, L: 4.4, W: 1.8 }; });
       if (typeof THREE !== 'undefined' && typeof document !== 'undefined') {
         r.skin = KIT.skin(r, P, tractor);
         if (r.skin) { const v = Render.viewOf(P); if (v && v.lights && v.lights.length >= 4) { v.lights[0].set(3.28, 1.0, -0.85); v.lights[1].set(3.28, 1.0, 0.85); v.lights[2].set(-14.6 - K.HITCH, 1.0, -1.0); v.lights[3].set(-14.6 - K.HITCH, 1.0, 1.0); } }
         r.towG = KIT.tow(r, P, r.tr, load);
         r.add(waiting(T, r.cars));
-        r.front = KIT.pilot(r, T); r.back = KIT.pilot(r, T, { col: 0xf2c12e });
+        r.front = KIT.escort(r, T); r.back = KIT.escort(r, T, { col: 0xf2c12e });
         r.tags = KIT.tags(r);
       }
       r.room = this.room(r);
