@@ -15,7 +15,10 @@ DETAIL = {0: (38, 74, 116), 10: (44, 70, 34), 20: (92, 100, 56), 30: (108, 132, 
 
 # the season of a track's land as the game shows it (the same on the globe, in the drone's far land): Vršič in October, the larches and
 # beeches turning, the first snow from about 1350 m (drones.json's snow line for its far land, there in the game's heights: + 800.8 m)
-SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
+SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True},
+          'monterey': {'dry': 1.0}, 'mulholland': {'dry': 1.0}, 'palomar': {'dry': 0.8}, 'riverside': {'dry': 1.0},
+          'baldy': {'dry': 0.6}, 'bigsur': {'dry': 0.6},
+          'marrakesh': {'dry': 1.0}, 'longford': {'dry': 0.7}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
 
 def box_km(lat, lon, km):
     M, N = radii(lat); d = km * 500
@@ -85,6 +88,11 @@ def paint(box, W, pal, dem_z, zfac=1.2, detail=0.0, mpp=None, lc_res=None, seed=
         rgb += layer * m[..., None]; wsum += m
     rgb /= np.maximum(wsum, 1e-6)[..., None]
     water = ndimage.gaussian_filter(((lc == 80) | (lc == 0)).astype(np.float32), 1.0)
+    if season and season.get('dry'):   # a dry summer (California): the grass straw-gold, the chaparral and the fields browner, as the game's own worlds
+        a = season['dry']
+        for k, f in ((30, (1.5, 1.1, 1.3)), (20, (1.22, 1.0, 1.1)), (40, (1.08, 1.0, 0.95))):
+            g = ndimage.gaussian_filter((lc == k).astype(np.float32), sig)[..., None] * a
+            rgb = rgb * (1 + (np.array(f, np.float32) - 1) * g)
     if season and season.get('autumn'):   # the woods turning: patches of orange and yellow crowns (beech, larch) among the dark spruces, fewer up high
         a = season['autumn']; m = ndimage.gaussian_filter((lc == 10).astype(np.float32), sig)
         n3 = fbm((W, W), max(2.0, 120 / mpp), seed + 21, 3); n4 = vnoise((W, W), max(1.2, 24 / mpp), seed + 22); cn = fbm((W, W), max(1.5, 14 / mpp), seed + 1)

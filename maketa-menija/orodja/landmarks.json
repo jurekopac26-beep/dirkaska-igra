@@ -331,5 +331,832 @@
    "d": 17912,
    "sub": "the long straight"
   }
+ ],
+ "medvode": [
+  {
+   "n": "Medvode",
+   "d": 200
+  },
+  {
+   "n": "Šmarna gora",
+   "ll": [
+    46.1278,
+    14.4636
+   ],
+   "snap": "peak",
+   "r": 600
+  },
+  {
+   "n": "Zbilje",
+   "d": 2234
+  },
+  {
+   "n": "Lake Zbilje",
+   "d": 2805
+  },
+  {
+   "n": "Smlednik",
+   "d": 4809
+  },
+  {
+   "n": "Old Castle",
+   "d": 6277,
+   "sub": "500 m"
+  }
+ ],
+ "baldy": [
+  {
+   "n": "Mount Baldy",
+   "d": 30,
+   "sub": "1,282 m"
+  },
+  {
+   "n": "Icehouse Canyon",
+   "d": 2734
+  },
+  {
+   "n": "Manker Flat",
+   "d": 6530
+  },
+  {
+   "n": "San Antonio Falls",
+   "d": 6935
+  },
+  {
+   "n": "Mount San Antonio",
+   "ll": [
+    34.2892,
+    -117.6462
+   ],
+   "snap": "peak",
+   "r": 800
+  }
+ ],
+ "beartooth": [
+  {
+   "n": "Rock Creek",
+   "d": 900,
+   "sub": "valley"
+  },
+  {
+   "n": "Rock Creek Vista",
+   "d": 3740
+  },
+  {
+   "n": "Beartooth Plateau",
+   "d": 4933,
+   "sub": "2,849 m"
+  }
+ ],
+ "bigsur": [
+  {
+   "n": "Rocky Creek Bridge",
+   "d": 989
+  },
+  {
+   "n": "Castle Rock",
+   "d": 1539
+  },
+  {
+   "n": "Bixby Creek Bridge",
+   "d": 2021
+  },
+  {
+   "n": "Hurricane Point",
+   "d": 3929,
+   "sub": "171 m"
+  }
+ ],
+ "detroit": [
+  {
+   "n": "Detroit",
+   "ll": [
+    42.3314,
+    -83.0458
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Detroit River",
+   "ll": [
+    42.3255,
+    -83.03
+   ],
+   "snap": "water",
+   "r": 500
+  },
+  {
+   "n": "Windsor",
+   "ll": [
+    42.3149,
+    -83.0364
+   ],
+   "snap": "town",
+   "r": 1200
+  }
+ ],
+ "maunakea": [
+  {
+   "n": "Mauna Kea",
+   "d": 10,
+   "sub": "3,599 m"
+  },
+  {
+   "n": "Lake Waiau",
+   "ll": [
+    19.8095,
+    -155.4769
+   ],
+   "snap": "water",
+   "r": 400
+  },
+  {
+   "n": "Puʻu Haukea",
+   "d": 3389
+  },
+  {
+   "n": "Puʻu Wēkiu",
+   "d": 5250,
+   "sub": "summit"
+  }
+ ],
+ "moki": [
+  {
+   "n": "Valley of the Gods",
+   "ll": [
+    37.248,
+    -109.905
+   ]
+  },
+  {
+   "n": "Moki Dugway",
+   "d": 2545,
+   "sub": "switchbacks"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 3714
+  },
+  {
+   "n": "Cedar Mesa",
+   "d": 4950,
+   "sub": "1,961 m"
+  }
+ ],
+ "longford": [
+  {
+   "n": "Longford",
+   "ll": [
+    -41.596,
+    147.121
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "South Esk",
+   "d": 1316
+  },
+  {
+   "n": "Tannery Corner",
+   "d": 3600
+  },
+  {
+   "n": "Newry",
+   "d": 4294
+  }
+ ],
+ "newcastle": [
+  {
+   "n": "Newcastle",
+   "ll": [
+    -32.9275,
+    151.776
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Newcastle Beach",
+   "d": 994
+  },
+  {
+   "n": "Nobbys Head",
+   "ll": [
+    -32.919,
+    151.7985
+   ],
+   "snap": "peak",
+   "r": 300
+  },
+  {
+   "n": "Hunter River",
+   "ll": [
+    -32.922,
+    151.779
+   ],
+   "snap": "water",
+   "r": 600
+  }
+ ],
+ "townsville": [
+  {
+   "n": "Townsville",
+   "ll": [
+    -19.259,
+    146.8169
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Ross Creek",
+   "d": 1158
+  },
+  {
+   "n": "Castle Hill",
+   "ll": [
+    -19.2571,
+    146.8055
+   ],
+   "snap": "peak",
+   "r": 500
+  }
+ ],
+ "chapman": [
+  {
+   "n": "Hout Bay",
+   "d": 40
+  },
+  {
+   "n": "East Fort",
+   "d": 847
+  },
+  {
+   "n": "The Sentinel",
+   "ll": [
+    -34.058,
+    18.337
+   ],
+   "snap": "peak",
+   "r": 500
+  },
+  {
+   "n": "Atlantic Ocean",
+   "ll": [
+    -34.07,
+    18.33
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Chapman's Peak",
+   "d": 4975,
+   "sub": "153 m"
+  }
+ ],
+ "sani": [
+  {
+   "n": "Mkhomazana",
+   "d": 40,
+   "sub": "2,229 m"
+  },
+  {
+   "n": "Twelve Apostles",
+   "d": 4376
+  },
+  {
+   "n": "Sani Pass",
+   "d": 4984,
+   "sub": "2,872 m"
+  },
+  {
+   "n": "Lesotho",
+   "ll": [
+    -29.575,
+    29.255
+   ]
+  }
+ ],
+ "marrakesh": [
+  {
+   "n": "Marrakesh",
+   "ll": [
+    31.6295,
+    -7.9811
+   ],
+   "snap": "town",
+   "r": 1000
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Agdal Gardens",
+   "d": 1500
+  },
+  {
+   "n": "Menara Gardens",
+   "ll": [
+    31.614,
+    -8.023
+   ],
+   "snap": "water",
+   "r": 400
+  }
+ ],
+ "montreal": [
+  {
+   "n": "Montréal",
+   "ll": [
+    45.5048,
+    -73.5617
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "St. Lawrence River",
+   "ll": [
+    45.51,
+    -73.515
+   ],
+   "snap": "water",
+   "r": 600
+  },
+  {
+   "n": "Rowing Basin",
+   "ll": [
+    45.4985,
+    -73.5265
+   ],
+   "snap": "water",
+   "r": 300
+  },
+  {
+   "n": "Île Sainte-Hélène",
+   "ll": [
+    45.517,
+    -73.532
+   ]
+  }
+ ],
+ "toronto": [
+  {
+   "n": "Toronto",
+   "ll": [
+    43.651,
+    -79.383
+   ],
+   "snap": "town",
+   "r": 1200
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Lake Ontario",
+   "ll": [
+    43.623,
+    -79.415
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Toronto Islands",
+   "ll": [
+    43.6215,
+    -79.378
+   ]
+  }
+ ],
+ "troisrivieres": [
+  {
+   "n": "Trois-Rivières",
+   "ll": [
+    46.343,
+    -72.543
+   ],
+   "snap": "town",
+   "r": 1000
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "St. Lawrence River",
+   "ll": [
+    46.335,
+    -72.535
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Saint-Maurice River",
+   "ll": [
+    46.36,
+    -72.53
+   ],
+   "snap": "water",
+   "r": 800
+  }
+ ],
+ "greatalpine": [
+  {
+   "n": "Tambo River",
+   "d": 20,
+   "sub": "valley"
+  },
+  {
+   "n": "Saint Patricks Creek",
+   "d": 776
+  },
+  {
+   "n": "Wild Dog Creek",
+   "d": 2825
+  },
+  {
+   "n": "Mullocky Creek",
+   "d": 4940
+  },
+  {
+   "n": "Ash Range",
+   "d": 7980,
+   "sub": "337 m"
+  }
+ ],
+ "hotham": [
+  {
+   "n": "Mount Little Blowhard",
+   "d": 1517
+  },
+  {
+   "n": "Mount Blowhard",
+   "d": 2230
+  },
+  {
+   "n": "Mount Feathertop",
+   "ll": [
+    -36.8947,
+    147.1308
+   ],
+   "snap": "peak",
+   "r": 800
+  },
+  {
+   "n": "Razorback",
+   "d": 5161
+  },
+  {
+   "n": "Mount Hotham",
+   "d": 6425,
+   "sub": "1,831 m"
+  },
+  {
+   "n": "Hotham Heights",
+   "d": 7900
+  }
+ ],
+ "monterey": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Turn 2",
+   "d": 506,
+   "sub": "hairpin"
+  },
+  {
+   "n": "Turn 8",
+   "d": 2466,
+   "sub": "the spiral"
+  },
+  {
+   "n": "Monterey Bay",
+   "ll": [
+    36.66,
+    -121.83
+   ],
+   "snap": "water",
+   "r": 2500
+  }
+ ],
+ "mulholland": [
+  {
+   "n": "Cornell",
+   "d": 30,
+   "sub": "256 m"
+  },
+  {
+   "n": "Malibu Lake",
+   "ll": [
+    34.1095,
+    -118.754
+   ],
+   "snap": "water",
+   "r": 600
+  },
+  {
+   "n": "Elephant Rock",
+   "d": 748
+  },
+  {
+   "n": "La Sierra Canyon",
+   "d": 2200
+  },
+  {
+   "n": "Viewpoint",
+   "d": 3915,
+   "sub": "522 m"
+  }
+ ],
+ "palomar": [
+  {
+   "n": "Pauma Valley",
+   "ll": [
+    33.3031,
+    -116.9797
+   ],
+   "snap": "town",
+   "r": 2000
+  },
+  {
+   "n": "Hairpins",
+   "d": 2852,
+   "sub": "13 on the way up"
+  },
+  {
+   "n": "Turnout",
+   "d": 3874,
+   "sub": "1,129 m"
+  },
+  {
+   "n": "Palomar Mountain",
+   "d": 7990,
+   "sub": "1,435 m"
+  }
+ ],
+ "riverside": [
+  {
+   "n": "Moreno Valley",
+   "ll": [
+    33.9425,
+    -117.2297
+   ],
+   "snap": "town",
+   "r": 2000
+  },
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Turn 6",
+   "d": 1502,
+   "sub": "hairpin"
+  },
+  {
+   "n": "Back Straight",
+   "d": 3424
+  },
+  {
+   "n": "Box Springs Mountains",
+   "ll": [
+    33.975,
+    -117.3
+   ],
+   "snap": "peak",
+   "r": 1500
+  }
+ ],
+ "uncompahgre": [
+  {
+   "n": "Ouray",
+   "ll": [
+    38.0228,
+    -107.6714
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Uncompahgre Gorge",
+   "d": 140
+  },
+  {
+   "n": "Bear Creek Falls",
+   "d": 986
+  },
+  {
+   "n": "Snow Shed",
+   "d": 4858,
+   "sub": "2,860 m"
+  }
+ ],
+ "iroha": [
+  {
+   "n": "Irohazaka",
+   "d": 25,
+   "sub": "20 curves"
+  },
+  {
+   "n": "Lake Chūzenji",
+   "ll": [
+    36.735,
+    139.46
+   ],
+   "snap": "water",
+   "r": 1500
+  },
+  {
+   "n": "Mount Nantai",
+   "ll": [
+    36.7651,
+    139.491
+   ],
+   "snap": "peak",
+   "r": 800
+  },
+  {
+   "n": "Kurokamidaira",
+   "d": 3862
+  },
+  {
+   "n": "Akechidaira",
+   "d": 4967,
+   "sub": "1,240 m"
+  }
+ ],
+ "harju": [
+  {
+   "n": "Jyväskylä",
+   "ll": [
+    62.2426,
+    25.7473
+   ],
+   "snap": "town",
+   "r": 800
+  },
+  {
+   "n": "Harju",
+   "d": 523,
+   "sub": "ridge"
+  },
+  {
+   "n": "Vesilinna",
+   "d": 775,
+   "sub": "water tower"
+  },
+  {
+   "n": "Harjun stadion",
+   "d": 1034
+  },
+  {
+   "n": "Jyväsjärvi",
+   "ll": [
+    62.232,
+    25.745
+   ],
+   "snap": "water",
+   "r": 1500
+  }
+ ],
+ "caracoles": [
+  {
+   "n": "Río Juncalillo",
+   "d": 318
+  },
+  {
+   "n": "Los Caracoles",
+   "d": 2850,
+   "sub": "29 curves"
+  },
+  {
+   "n": "Mirador",
+   "d": 4742
+  },
+  {
+   "n": "Llano La Calavera",
+   "d": 9680
+  },
+  {
+   "n": "Portillo",
+   "d": 10773,
+   "sub": "2,866 m"
+  }
+ ],
+ "rastro": [
+  {
+   "n": "Rio do Rastro",
+   "d": 60
+  },
+  {
+   "n": "Serra do Rio do Rastro",
+   "d": 1450,
+   "sub": "hairpins"
+  },
+  {
+   "n": "Rio do Rastro Falls",
+   "d": 2953
+  },
+  {
+   "n": "Serra Geral",
+   "d": 3880,
+   "sub": "1,389 m"
+  },
+  {
+   "n": "Viewpoint",
+   "d": 4990,
+   "sub": "1,421 m"
+  }
+ ],
+ "katu": [
+  {
+   "n": "Ulagan Plateau",
+   "d": 60
+  },
+  {
+   "n": "Katu-Yaryk Pass",
+   "d": 500,
+   "sub": "1,206 m"
+  },
+  {
+   "n": "Hairpins",
+   "d": 2100
+  },
+  {
+   "n": "Chulyshman",
+   "d": 4480,
+   "sub": "684 m"
+  }
+ ],
+ "tianmen": [
+  {
+   "n": "Tianmen Mountain",
+   "d": 60
+  },
+  {
+   "n": "99 Bends",
+   "d": 1600
+  },
+  {
+   "n": "The Loop",
+   "d": 3931
+  },
+  {
+   "n": "Tianmen Cave",
+   "d": 4825,
+   "sub": "1,218 m"
+  }
+ ],
+ "bangsaen": [
+  {
+   "n": "Bang Saen",
+   "d": 0
+  },
+  {
+   "n": "Khao Lam",
+   "d": 638
+  },
+  {
+   "n": "Khao Sam Muk",
+   "d": 2202
+  },
+  {
+   "n": "Laem Thaen",
+   "d": 2548
+  },
+  {
+   "n": "Hat Bang Saen",
+   "d": 3148
+  }
  ]
 }
