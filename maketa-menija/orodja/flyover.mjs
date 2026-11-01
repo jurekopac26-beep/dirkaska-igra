@@ -24,9 +24,11 @@ const num = (k) => String(k).padStart(5, '0');
 // the camera of every flyover: as high over the point (up), as far behind it (back) and aiming as far ahead of it (ahead), on every track, so
 // every flyover shows its land at the same scale. The average of the cameras of the first flyovers of the real tracks (Vršič 330 m, Pikes
 // Peak 230, Ouninpohja 270, Štajerska 165, Suzuka 190, Spa 205, Nürburg 450: 263 m). The haze as the game draws it for a camera fogD m from
-// what it looks at (from 1.35 fogD to 5.5 fogD: about 0.9 to 3.9 km), the planted land drawn to plantR m round the camera. A row of
-// flyovers.json can still set its own. The point's speed stays the track's own (`speed`, about its length / 28 m/s).
-const CAMERA = { up: 263, back: 411, ahead: 206, fogD: 700, plantR: 3400, cull: 3400 };
+// what it looks at (from 1.35 fogD to 5.5 fogD: about 0.9 to 3.9 km), the planted land drawn to plantR m round the camera. The point's
+// speed the same on every track too (speed, m/s: the average of those first flyovers' speeds, 400, 280, 380, 200, 230, 250 and 540 m/s),
+// so every flyover moves at the same pace: a longer track's runs longer (the menu's map runs its point at this pace as well, js/menu.js
+// RUN). A row of flyovers.json can still set its own (the test tracks keep theirs).
+const CAMERA = { up: 263, back: 411, ahead: 206, fogD: 700, plantR: 3400, cull: 3400, speed: 326 };
 
 if (process.env.FLY_PART || process.env.PREVIEW) {
   // a worker: draws the frames k with k % P == w of the one track it is given (PREVIEW: only the frames AT)

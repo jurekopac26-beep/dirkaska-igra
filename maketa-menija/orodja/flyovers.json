@@ -3,7 +3,6 @@
   "vrsic",
   {
    "kbps": 900,
-   "speed": 400,
    "places": [
     {
      "n": "Lake Jasna",
@@ -36,7 +35,6 @@
  [
   "pikes",
   {
-   "speed": 280,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -65,7 +63,6 @@
   "ouninpohja",
   {
    "kbps": 900,
-   "speed": 380,
    "places": [
     {
      "n": "Lake Naarajärvi",
@@ -167,7 +164,6 @@
   "rbring",
   {
    "kbps": 850,
-   "speed": 200,
    "places": []
   }
  ],
@@ -175,7 +171,6 @@
   "suzuka",
   {
    "kbps": 850,
-   "speed": 230,
    "places": []
   }
  ],
@@ -183,7 +178,6 @@
   "spa",
   {
    "kbps": 900,
-   "speed": 250,
    "places": [
     {
      "n": "Steep Climb",
@@ -204,7 +198,6 @@
   "nring",
   {
    "kbps": 900,
-   "speed": 540,
    "places": [
     {
      "n": "Flugplatz",
@@ -229,7 +222,6 @@
   "medvode",
   {
    "kbps": 450,
-   "speed": 225,
    "places": [
     {
      "n": "Zbilje",
@@ -258,7 +250,6 @@
   "baldy",
   {
    "kbps": 450,
-   "speed": 260,
    "places": [
     {
      "n": "San Antonio Creek",
@@ -287,7 +278,6 @@
   "beartooth",
   {
    "kbps": 450,
-   "speed": 175,
    "places": [
     {
      "n": "Rock Creek Valley",
@@ -308,7 +298,6 @@
   "bigsur",
   {
    "kbps": 450,
-   "speed": 140,
    "places": [
     {
      "n": "Rocky Creek Bridge",
@@ -333,7 +322,6 @@
   "detroit",
   {
    "kbps": 450,
-   "speed": 130,
    "places": []
   }
  ],
@@ -341,7 +329,6 @@
   "maunakea",
   {
    "kbps": 450,
-   "speed": 205,
    "places": [
     {
      "n": "Lake Waiau",
@@ -366,7 +353,6 @@
   "moki",
   {
    "kbps": 450,
-   "speed": 175,
    "places": [
     {
      "n": "Pavement Ends",
@@ -391,7 +377,6 @@
   "longford",
   {
    "kbps": 450,
-   "speed": 251,
    "places": [
     {
      "n": "Viaduct",
@@ -416,7 +401,6 @@
   "newcastle",
   {
    "kbps": 450,
-   "speed": 130,
    "places": [
     {
      "n": "Turn 2",
@@ -437,7 +421,6 @@
   "townsville",
   {
    "kbps": 450,
-   "speed": 130,
    "places": [
     {
      "n": "Turn 2",
@@ -458,7 +441,6 @@
   "chapman",
   {
    "kbps": 450,
-   "speed": 178,
    "places": [
     {
      "n": "East Fort",
@@ -483,7 +465,6 @@
   "sani",
   {
    "kbps": 450,
-   "speed": 178,
    "places": [
     {
      "n": "Hairpin 1",
@@ -508,7 +489,6 @@
   "marrakesh",
   {
    "kbps": 450,
-   "speed": 130,
    "places": [
     {
      "n": "Turn 1",
@@ -529,7 +509,6 @@
   "montreal",
   {
    "kbps": 450,
-   "speed": 156,
    "places": [
     {
      "n": "Turn 1",
@@ -553,7 +532,6 @@
   "toronto",
   {
    "kbps": 450,
-   "speed": 104,
    "places": [
     {
      "n": "Turn 1",
@@ -575,7 +553,6 @@
   "troisrivieres",
   {
    "kbps": 450,
-   "speed": 87,
    "places": [
     {
      "n": "Turn 3",
@@ -596,7 +573,6 @@
   "greatalpine",
   {
    "kbps": 450,
-   "speed": 286,
    "places": [
     {
      "n": "Saint Patricks Creek",
@@ -625,7 +601,6 @@
   "hotham",
   {
    "kbps": 450,
-   "speed": 283,
    "places": [
     {
      "n": "Mount Blowhard",
@@ -654,7 +629,6 @@
   "monterey",
   {
    "kbps": 450,
-   "speed": 128,
    "places": [
     {
      "n": "Turn 2",
@@ -675,7 +649,6 @@
   "mulholland",
   {
    "kbps": 450,
-   "speed": 149,
    "places": [
     {
      "n": "Elephant Rock",
@@ -704,7 +677,6 @@
   "palomar",
   {
    "kbps": 450,
-   "speed": 286,
    "places": [
     {
      "n": "Hairpin 1",
@@ -733,7 +705,6 @@
   "riverside",
   {
    "kbps": 450,
-   "speed": 188,
    "places": [
     {
      "n": "Turn 1",
@@ -758,7 +729,6 @@
   "uncompahgre",
   {
    "kbps": 450,
-   "speed": 177,
    "places": [
     {
      "n": "Tunnel",
@@ -787,7 +757,6 @@
   "iroha",
   {
    "kbps": 450,
-   "speed": 178,
    "places": [
     {
      "n": "Curve ほ (5)",
@@ -816,7 +785,6 @@
   "harju",
   {
    "kbps": 450,
-   "speed": 88,
    "places": [
     {
      "n": "Harjun nousu",
@@ -845,7 +813,6 @@
   "caracoles",
   {
    "kbps": 450,
-   "speed": 385,
    "places": [
     {
      "n": "Curva 1 · 2,271 m",
@@ -874,7 +841,6 @@
   "rastro",
   {
    "kbps": 450,
-   "speed": 178,
    "places": [
     {
      "n": "Hairpin 8 · 1,209 m",
@@ -899,7 +865,6 @@
   "katu",
   {
    "kbps": 450,
-   "speed": 166,
    "places": [
     {
      "n": "Katu-Yaryk Pass · 1,206 m",
@@ -924,7 +889,6 @@
   "tianmen",
   {
    "kbps": 450,
-   "speed": 172,
    "places": [
     {
      "n": "Bend 66 · 839 m",
@@ -949,7 +913,6 @@
   "bangsaen",
   {
    "kbps": 450,
-   "speed": 128,
    "places": [
     {
      "n": "Turn 3 · Khao Lam",

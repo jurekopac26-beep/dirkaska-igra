@@ -312,17 +312,23 @@
      the same place, not from the start; another track, or the track screen entered anew, starts a new run. On a track with a flyover the run
      is the flyover's own (its video is the clock while it plays; R.fly.frames[k][0] is the point's place in frame k, metres along the run), so
      on the map the point runs as in the flyover: it speeds up from the start, waits at the finish while the flyover's camera rises over it,
-     then goes round again. A track with only its map: an even pace, 15 s a run (a rally stage 11 s). */
+     then goes round again. A track with only its map: the same run at the flyovers' own pace (RUN), so the point is as fast on every track. */
   const run = { id: '', t: 0, at: 0, on: false };   // the run's time t (s) at the moment at (performance.now()); on: going on from there, else held at t
   const runNow = () => run.t + (run.on ? (performance.now() - run.at) / 1000 : 0);
   function runSet(t, on) { run.t = t; run.at = performance.now(); run.on = on; }
-  const runDur = (id) => { const F = RT[id].fly, t = trackById(id); return F ? F.frames.length / F.fps : t && t.group === 'rally' ? 11 : 15; };
+  // the flyovers' pace (maketa-menija/orodja/flyover.mjs CAMERA.speed): 326 m/s, speeding up over the first 12 % of the run's time and
+  // slowing down over the last 12 %, then 2.4 s at the finish
+  const RUN = { v: 326, ease: 0.12, end: 2.4 };
+  const runGo = (id) => RT[id].len / (RUN.v * (1 - RUN.ease));   // (a run's seconds from the start to the finish, at that pace)
+  const runDur = (id) => { const F = RT[id].fly; return F ? F.frames.length / F.fps : runGo(id) + RUN.end; };
+  // how far along the run at x (0..1 of its time): an even speed, reached smoothly over the first `e` and lost over the last `e` (as flyover.mjs)
+  function glide(x, e) { const G = (y) => e * (Math.pow(y / e, 3) - Math.pow(y / e, 4) / 2); x = Math.min(1, Math.max(0, x)); return (x < e ? G(x) : x > 1 - e ? 1 - e - G(1 - x) : e / 2 + x - e) / (1 - e); }
   // a new run: on the flyover held at its start until the video plays; on the map the route draws itself first (1.6 s), then the point sets off
   function runFresh(id, view) { run.id = id; if (view === 1) runSet(0, false); else runSet(-1.6, true); }
   // where the point is at the run's time s, as a part of the run (0 the start, 1 the finish)
   function runAt(id, s) {
     const R = RT[id], Dr = runDur(id); s = ((s % Dr) + Dr) % Dr;
-    if (!R.fly) return s / Dr;
+    if (!R.fly) return glide(s / runGo(id), RUN.ease);
     const F = R.fly.frames, x = Math.min(F.length - 1, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2, Math.floor(x)));
     return (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len;
   }
