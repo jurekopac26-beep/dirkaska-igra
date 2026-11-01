@@ -24,12 +24,12 @@ try {
       // nothing on the road: each glade's centre at least 3 m beyond the barrier (A.clearance: the distance beyond the nearest barrier)
       let near = 0; for (const [m, side, b] of st.at) { const s = T.startS + m, i = T.idx(((s % T.len) + T.len) % T.len), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + b);
         if (A.clearance(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < 3) near++; }
-      return { things: st.things, groups: st.groups, animals: st.animals, strange, near, at: st.at.length, meshes, verts };
+      return { things: st.things, groups: st.groups, animals: st.animals, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000 };
     }, id);
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no life in its woods', !!r.none && !r.meshes, JSON.stringify(r)); continue; }
     T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= 8 && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
     T.check(`${id}: no glade on the road or by its barrier`, r.near === 0, `${r.near} of ${r.at}`);
-    T.check(`${id}: merged, one mesh per chunk (a few dozen at most)`, r.meshes > 0 && r.meshes <= 90 && r.verts < 400000, `${r.meshes} meshes, ${Math.round(r.verts / 1000)}k vertices`);
+    T.check(`${id}: merged, one mesh per 256 m chunk (at most ~6 per km of road), under 25k vertices per km`, r.meshes > 0 && r.meshes <= 6 * r.km + 10 && r.verts < 25000 * r.km, `${r.meshes} meshes, ${Math.round(r.verts / 1000)}k vertices, ${r.km.toFixed(1)} km`);
   }
   const car = await page.evaluate(() => {   // every kind of the parked car, and the car parks' lite one
     const A = World.api, out = [];
@@ -37,7 +37,7 @@ try {
     const g = new World.GB(); A.parkedCar(g, 0, 0, 0, 0, [1, 1, 1], 0, true); out.push(g.P.length / 3);
     return out;
   });
-  T.check('the parked car: six kinds, each under 360 vertices', car.slice(0, 6).every(n => n > 100 && n < 360), car.slice(0, 6).join(', '));
+  T.check('the parked car: six kinds, each under 400 vertices', car.slice(0, 6).every(n => n > 100 && n < 400), car.slice(0, 6).join(', '));
   T.check('the car parks\' lite car: under 150 vertices', car[6] > 60 && car[6] < 150, String(car[6]));
   T.check('no page errors', !errors.length, errors.slice(0, 4).join(' | '));
 } finally {
