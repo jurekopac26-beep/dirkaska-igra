@@ -1,6 +1,6 @@
 # Kratke proge: smučišča, zanimivosti, dirkališča
 
-Načrt sklopa šestnajstih kratkih prog zunaj Evrope: 7 gorskih cest skozi smučišča, 6 cest z zanimivostmi na cesti ali tik ob njej (predor v steni, most nad morjem, slapovi, čajni nasadi, jezero) in 3 dirkališča. Načrt je za seje, ki proge gradijo: vse odločitve in podatki so tu, zato jih seje ne raziskujejo in ne sprašujejo znova. (Ime datoteke je ostalo od prve različice načrta.)
+Načrt sklopa šestnajstih kratkih prog zunaj Evrope, vsaka iz druge države: 4 gorske ceste skozi smučišča, 9 zavitih cest z zanimivostmi na cesti ali tik ob njej in 3 dirkališča. Pri vseh je glavni element izmerjen v kadru kamere pokonci (razdelek Kaj vidi kamera), ceste so zavite. Načrt je za seje, ki proge gradijo: vse odločitve in podatki so tu, zato jih seje ne raziskujejo in ne sprašujejo znova. (Ime datoteke je ostalo od prve različice načrta.)
 
 ## Odločitve uporabnika
 
@@ -9,6 +9,7 @@ Načrt sklopa šestnajstih kratkih prog zunaj Evrope: 7 gorskih cest skozi smuč
 - **1. 11.**: krajši odseki: ceste **2,5–3 km** (krajši odsek resnične ceste je prava proga, ne testna); dirkališča imajo svoj krog.
 - **1. 11.**: v igri so vidni samo predmeti blizu proge, zato je izbranih teh 16 prog (»16 močnih«): pri vseh so zanimivosti izmerjene v pasu 60 m ob cesti (razdelek Kaj vidi kamera). Proge, pri katerih so bile zanimivosti dlje (Mount Norquay, Loveland Pass, Bšari, Daegwallyeong, Hai Van), so izločene.
 - **1. 11.**: izogibaj se vsemu, kar je lahko pravno sporno (razdelek Pravna varnost).
+- **1. 11.**: zamenjane so vse proge, katerih glavnega elementa iz kamere ni videti, in preravne proge; proga mora biti zavita. Na seznamu je iz vsake države le ena proga. Milford Sound je s celim predorom.
 - **1. 11.**: z delom v kodi se začne, ko uporabnik napiše »začni«.
 - **1. 11.**: vsaka proga ima svoj pull request in gre na `main` takoj, ko so zeleni vsi testi; proge gredo **ena za drugo** (naslednja se začne, ko je prejšnja na `main`).
 - **1. 11.**: napor: proga 1 (z gradniki) **max**, proge 2–16 **xhigh**. Izvedba: koordinacijska seja pred zagonom seje proge naredi vejo `gorske-proge/<NN>-<id>` iz `origin/main` z enim začasnim commitom, ki v `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` na `xhigh`, in sejo zažene s te veje. Seja proge ta commit vrne (`git revert`), preden pull request označi kot pripravljen; koordinacijska seja pred združitvijo preveri, da pull request `.claude/settings.json` ne spreminja.
@@ -29,61 +30,60 @@ Iz `js/render.js` (kamera za avtom, `userTilt` 0,3):
 Velja poleg pravil v `CLAUDE.md`:
 - Imena smučišč, žičnic, koč, hotelov, igralnic, posestev in zasebnih parkov so imena podjetij: v igri jih ni, ne na tablah ne v opisih ne v `js/lang.js`. Table so generične, ime proge je zemljepisno (tabela spodaj).
 - Ceste, predori, ulice in spomeniki, poimenovani po osebah, ostanejo brez imena. Ovinki dobijo opisna imena.
-- Brez olimpijskih krogov in besede »olimpijski«, brez imen dirkaških serij in prireditev (npr. dirke električnih avtov v Punta del Este, srečanja starodobnikov na Put-in-Bayu).
+- Brez olimpijskih krogov in besede »olimpijski«, brez imen dirkaških serij in prireditev (npr. cestne dirke električnih avtov v Punta del Este, Green Pointu in Puerto Maderu).
 - Brez kipov in sodobnih umetnin ob progi (npr. kip roke na plaži v Punta del Este): avtorska dela.
 - Verska svetišča, vojaški objekti in zastave niso posebni objekti ob progi; kvečjemu generične stavbe.
-- Na sveti gori (Ruapehu pri Whakapapi) samo zemljepisna imena, brez imen svetih krajev.
 - Za cesto Yungas brez vzdevka »cesta smrti« in brez spominskih križev ob cesti.
 
 ## Proge
 
-Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvoznik. Obseg (`bbox`: zahod, jug, vzhod, sever) in odseki so preverjeni v OpenStreetMap 1. 11. 2026. Številke »v pasu 60 m« so deleži odseka, ob katerih je ta predmet v OSM. Serpentina je zasuk nad 140° na 80 m (Mount Norquay ima na 2,5 km 4 serpentine).
+Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvoznik. Obseg (`bbox`: zahod, jug, vzhod, sever) in odseki so preverjeni v OpenStreetMap 1. 11. 2026. »V kadru« je delež odseka, pri katerem je glavni element v vidnem polju kamere pokonci (do ~110 m pred avtom, ~12 m levo in desno ob avtu do ~50 m na vrhu slike). Serpentina je zasuk nad 140° na 80 m.
 
 | # | `id` | Ime (`name`) | Angleško | Vožnja | Obseg OSM |
 |---|---|---|---|---|---|
-| 1 | `bigwhite` | Big White, Kanada | Big White, Canada | desna | -118.97,49.70,-118.90,49.74 |
-| 2 | `farellones` | Farellones, Čile | Farellones, Chile | desna | -70.40,-33.38,-70.27,-33.33 |
+| 1 | `mountbuller` | Mount Buller, Avstralija | Mount Buller, Australia | leva | 146.41,-37.17,146.46,-37.13 |
+| 2 | `nozawa` | Nozawa Onsen, Japonska | Nozawa Onsen, Japan | leva | 138.43,36.91,138.48,36.94 |
 | 3 | `medeu` | Medeu, Kazahstan | Medeu, Kazakhstan | desna | 77.03,43.11,77.10,43.17 |
-| 4 | `oukaimeden` | Oukaïmeden, Maroko | Oukaïmeden, Morocco | desna | -7.90,31.17,-7.80,31.27 |
-| 5 | `shiga` | Shiga Kogen, Japonska | Shiga Kogen, Japan | leva | 138.47,36.68,138.54,36.75 |
-| 6 | `auli` | Auli, Indija | Auli, India | leva | 79.54,30.51,79.60,30.57 |
-| 7 | `whakapapa` | Whakapapa, Nova Zelandija | Whakapapa, New Zealand | leva | 175.52,-39.25,175.58,-39.19 |
-| 8 | `guoliang` | Guoliang, Kitajska | Guoliang, China | desna | 113.57,35.71,113.63,35.76 |
-| 9 | `yungas` | Yungas, Bolivija | Yungas, Bolivia | leva (lokalno pravilo te ceste; preveri v virih) | -67.86,-16.30,-67.73,-16.20 |
-| 10 | `arenal` | Arenal, Kostarika | Arenal, Costa Rica | desna | -84.82,10.43,-84.68,10.53 |
-| 11 | `ella` | Ella, Šrilanka | Ella, Sri Lanka | leva | 81.02,6.82,81.08,6.89 |
-| 12 | `milford` | Milford Sound, Nova Zelandija | Milford Sound, New Zealand | leva | 167.93,-44.79,168.03,-44.73 |
-| 13 | `clifton` | Clifton, Avstralija | Clifton, Australia | leva | 150.95,-34.28,151.00,-34.23 |
+| 4 | `auli` | Auli, Indija | Auli, India | leva | 79.54,30.51,79.60,30.57 |
+| 5 | `guoliang` | Guoliang, Kitajska | Guoliang, China | desna | 113.57,35.71,113.63,35.76 |
+| 6 | `yungas` | Yungas, Bolivija | Yungas, Bolivia | leva (lokalno pravilo te ceste; preveri v virih) | -67.86,-16.30,-67.73,-16.20 |
+| 7 | `ella` | Ella, Šrilanka | Ella, Sri Lanka | leva | 81.02,6.82,81.08,6.89 |
+| 8 | `milford` | Milford Sound, Nova Zelandija | Milford Sound, New Zealand | leva | 167.93,-44.79,168.03,-44.73 |
+| 9 | `santoantao` | Santo Antão, Zelenortski otoki | Santo Antão, Cape Verde | desna | -25.10,17.06,-25.02,17.13 |
+| 10 | `hana` | Hana, ZDA | Hana, USA | desna | -156.13,20.79,-156.05,20.84 |
+| 11 | `corvobranco` | Corvo Branco, Brazilija | Corvo Branco, Brazil | desna | -49.41,-28.08,-49.34,-28.03 |
+| 12 | `dades` | Dadès, Maroko | Dadès, Morocco | desna | -5.94,31.53,-5.88,31.58 |
+| 13 | `espinazo` | Espinazo del Diablo, Mehika | Espinazo del Diablo, Mexico | desna | -105.90,23.53,-105.78,23.62 |
 | 14 | `puntadeleste` | Punta del Este, Urugvaj | Punta del Este, Uruguay | desna | -54.965,-34.97,-54.935,-34.95 |
-| 15 | `putinbay` | Put-in-Bay, ZDA | Put-in-Bay, USA | desna | -82.86,41.63,-82.79,41.67 |
-| 16 | `potrero` | Potrero de los Funes, Argentina | Potrero de los Funes, Argentina | desna | -66.26,-33.25,-66.20,-33.20 |
+| 15 | `greenpoint` | Green Point, Južna Afrika | Green Point, South Africa | leva | 18.395,-33.91,18.42,-33.895 |
+| 16 | `puertomadero` | Puerto Madero, Argentina | Puerto Madero, Argentina | desna | -58.372,-34.622,-58.355,-34.600 |
 
-### Smučišča (1–7)
+### Smučišča (1–4)
 
-1. **Big White**: Big White Road (14,5 km), odsek od 49.71598,-118.93851 do 49.72285,-118.92830 (2,9 km) skozi smučarsko vas. V pasu 60 m: smučišča ob 72 % odseka, 4 žičnice in 5 postaj, 91 stavb, potok, gozd. Ovinkov je malo (1 serpentina); nižje so serpentine brez žičnic: dodaj jih le, če ostane ob vsaj polovici odseka smučišče.
-2. **Farellones**: Camino a Farellones (G-21) z oštevilčenimi ovinki (table s številkami tik ob cesti, kot na Los Caracoles in Irohazaki). 10 serpentin je nižje (od -33.34532,-70.36263 do -33.34818,-70.35549), žičnic tam ni. Cesta skozi vas pride do žičnice na 23 m (-33.35081,-70.30864), ulica proti El Coloradu na 19 m (-33.33364,-70.28949; poimenovana po osebi: brez imena). Izberi 3 km, ki se končajo v vasi med žičnicami, z čim več oštevilčenimi ovinki pred njo.
-3. **Medeu**: cesta od Medeuja proti Šimbulaku (ulica, poimenovana po osebah: brez imena), odsek od 43.12376,77.08014 do 43.14162,77.06701. V pasu 60 m: žičnice ob 54 % odseka (gondola in še 3: stebri, postaje, sence), gozd ob 80 %, potok ob 23 %, 64 stavb, most 85 m, 2 serpentini.
-4. **Oukaïmeden**: zadnji 3 km ceste RP2030 do smučišča; cesta pride do žičnice na 44 m pri 31.19983,-7.85880. Ob cesti hiše in polja, vlečnice na koncu; mule in koze.
-5. **Shiga Kogen**: državna cesta 292, odsek od 36.67701,138.50975 do 36.69119,138.49260. V pasu 60 m: žičnice ob 21 % odseka (2 žičnici, 2 postaji), smučišča ob 13 %, potok, gozd ob 51 %, 2 serpentini. Snežne opice (njihova dolina je nižje: približek).
-6. **Auli**: cesta Joshimath–Auli, odsek od 30.53048,79.56323 do 30.54272,79.55471: 5 serpentin, smučišče ob 22 % odseka, žičnice ob 10 % (kabinska žičnica in sedežnica: stebri, postaje), 14 stavb. Opice langurji, krave. Brez templja kot posebnega objekta.
-7. **Whakapapa**: Bruce Road, odsek od -39.22255,175.53981 do -39.23667,175.55620, konec pri smučišču: lavne stene in skale ob 98 % odseka, 2 žičnici na vrhu, 15 stavb, 1 serpentina. Živali skoraj ni (kea tu ne živi).
+1. **Mount Buller**: Summit Road (cesta okoli vrha skozi smučarsko vas), odsek od -37.14588,146.44948 do -37.14600,146.43037 (2,75 km, krog): 596° na km, 1 serpentina, smučišča v kadru 76 %, žičnice 39 %. Smučišča upravlja javni zavod, žičnice podjetje: brez imen.
+2. **Nozawa Onsen**: prefekturna cesta 502 (奥志賀公園栄線) nad vasjo, odsek od 36.90870,138.48019 do 36.92205,138.47297: 1033° na km, 8 serpentin, smučišča v kadru 55 %.
+3. **Medeu**: cesta od Medeuja proti Šimbulaku (ulica, poimenovana po osebah: brez imena), odsek pri jezu od 43.15069,77.06514 do 43.16198,77.05306: 448° na km, 3 serpentine, žičnice v kadru 36 % (gondola: stebri, kabine, sence; vrv nad kamero), smrekov gozd, most.
+4. **Auli**: cesta Joshimath–Auli, odsek od 30.53048,79.56323 do 30.54272,79.55471: 1096° na km, 5 serpentin, smučišče v kadru 22 %. Kabinska žičnica je višje od kamere (ne vidi se). Krave in opice ob cesti, brez templja kot posebnega objekta.
 
-### Zanimivosti (8–13)
+### Zanimivosti (5–13)
 
-8. **Guoliang**: cesta, vklesana v steno, odsek od 35.72361,113.60811 do 35.72955,113.59930: 6 serpentin, 520 m predora z odprtinami na prepad (streha predora izgine, ko je avto v njem, kot galerije na Los Caracoles; odprtine v zunanji steni so vidne od zgoraj), stene, potoki. Brez imen turističnega območja.
-9. **Yungas**: North Yungas Road, odsek od -16.29115,-67.80525 do -16.27864,-67.79506: 2 serpentini, potoki čez cesto ob 26 % odseka (slapovi na cesto; v OSM niso vrisani, lega je približek), rob prepada brez ograje, megla.
-10. **Arenal**: Vía 142, odsek od 10.47795,-84.76621 do 10.47069,-84.77000 ob jezu: obala jezera ob 15 % odseka, potok, deževni gozd ob vsem odseku, 1 serpentina; nosati medvedki ob cesti. Vulkan je predaleč, da bi se videl: ga ne modeliraj. Brez imen hotelov.
-11. **Ella**: cesta A23, odsek od 6.86278,81.05403 do 6.87096,81.04956: 3 serpentine, čajni nasadi ob 56 % odseka, potoki ob 26 %, 63 stavb; opice. Brez imen posestev.
-12. **Milford Sound**: cesta SH 94, odsek od -44.76360,167.97427 do -44.75198,167.95879 (3 km) od zahodnega portala predora po serpentinah navzdol: mostovi 145 m, potoki in slapovi ob 25 % odseka, gozd ob 46 %, 2 serpentini. S celim enopasovnim predorom (1.226 m, semafor) je odsek ~4 km: izberi. Papige kea. Predor brez imena (poimenovan po osebi).
-13. **Clifton**: obalna cesta (poimenovana po osebi: brez imena), odsek od -34.24197,150.97837 do -34.26260,150.96661: most ob pečini nad morjem (595 m na odseku), morje ob 38 % odseka, pečine ob 35 %, gozd ob 95 %, 16 stavb. Ovinkov je malo (dolgi loki, brez serpentin).
+5. **Guoliang**: cesta, vklesana v steno, odsek od 35.72361,113.60811 do 35.72955,113.59930: 6 serpentin, 520 m predora z odprtinami na prepad (streha izgine, ko je avto v njem, kot galerije na Los Caracoles). Brez imen turističnega območja.
+6. **Yungas**: North Yungas Road, odsek od -16.29115,-67.80525 do -16.27864,-67.79506: 972° na km, 2 serpentini, potoki in slapovi čez cesto (lega slapov je približek), rob prepada brez ograje, megla. Brez vzdevka »cesta smrti« in spominskih križev.
+7. **Ella**: cesta A23, odsek od 6.85817,81.05850 do 6.87104,81.04755: 885° na km, 4 serpentine, čajni nasadi v kadru 45 %, vas, opice. Brez imen posestev.
+8. **Milford Sound**: cesta SH 94 **s celim enopasovnim predorom** (1.226 m, portala -44.76486,167.98872 in -44.76343,167.97335) in serpentinami pod zahodnim portalom, odsek od -44.76484,167.99273 do -44.75994,167.96589 in naprej do serpentin (~4 km): predor v kadru 46 %, mostovi, slapovi, gozd, papige kea. Predor brez imena (oseba).
+9. **Santo Antão**: tlakovana cesta po grebenu otoka (Porto Novo–Ribeira Grande), odsek od 17.11675,-25.08303 do 17.12885,-25.08627: 628° na km, 4 serpentine, polja na terasah v kadru 75 %, hiše.
+10. **Hana**: Hana Highway, odsek od 20.81801,-156.12894 do 20.80989,-156.10642: 970° na km, enopasovni mostovi v kadru 17 %, slapovi (približek), deževni gozd. Brez imen zasebnih vrtov in svetih krajev.
+11. **Corvo Branco**: cesta čez prelaz (poimenovana po osebi: brez imena), odsek od -28.05879,-49.36121 do -28.05483,-49.37583: 1056° na km, 8 serpentin; na vrhu globok usek v skali (preveri, da je na odseku; višinski model ga ne vsebuje, zgradi ga posebej), araukarije.
+12. **Dadès**: cesta RR704 v soteski, odsek od 31.54150,-5.91631 do 31.52505,-5.92663: 1089° na km, 4 serpentine, rdeče stene in hiše ob cesti (generične).
+13. **Espinazo del Diablo**: stara cesta Durango–Mazatlán po grebenu, odsek od 23.55181,-105.84463 do 23.56898,-105.84843: 705° na km, 1 serpentina, skalne stene v kadru 18 %, borov gozd.
 
 ### Dirkališča (14–16)
 
-Krog z boksi po vzoru obstoječih cestnih dirkališč (npr. `newcastle`, `detroit`). Postavitev proge iz OSM in javnih opisov (Wikipedija, zemljevidi z Wikimedia Commons z navedbo licence), nikoli Google.
+Krog z boksi po vzoru obstoječih cestnih dirkališč (npr. `newcastle`, `detroit`). Postavitev proge iz OSM in javnih opisov (Wikipedija, zemljevidi z Wikimedia Commons z navedbo licence), nikoli Google. Pred gradnjo preveri, da ima krog dovolj ovinkov (uporabnik: ravne proge niso dobre). Imena serij in prireditev se ne uporabljajo.
 
-14. **Punta del Este**: ~2,8 km po ulicah polotoka ob pristanišču, postavitev cestnih dirk električnih avtov 2014–2018 (imena serije ne uporabljaj). Ob obalni cesti (5,4 km, poimenovana po osebi) je v pasu 60 m morje na 3,3 km, plaža na 1,7 km in pristanišče z jahtami na 1,1 km. Brez kipa roke na plaži, brez imen hotelov in igralnice.
-15. **Put-in-Bay**: zgodovinska dirka 1952–1959 po cestah otoka v jezeru Erie (~5 km; postavitev in dolžino preveri v virih). V pasu 60 m: na Bayview Avenue jezero na 2,3 km in pristanišče na 1,2 km, na West Shore Boulevard jezero na 1,0 km, na Airline Road plaža na 0,6 km. Otoška vas, pristanišče, čolni; spomenik (steber) brez imena.
-16. **Potrero de los Funes**: krog po aveniji okoli akumulacijskega jezera (Avenida Circuito del Lago, 6,2 km; v lasti pokrajine), jez, hribi. Jezero je v pasu 60 m le na 0,4 km, jez na 0,1 km: ob progi poudari skale, hribe in obalo, kjer je blizu.
+14. **Punta del Este**: ~2,8 km po ulicah polotoka ob pristanišču (postavitev cestnih dirk električnih avtov 2014–2018). Ob obalni cesti (poimenovana po osebi) je v pasu 60 m morje na 3,3 km, plaža na 1,7 km in pristanišče z jahtami na 1,1 km. Brez kipa roke na plaži, brez imen hotelov in igralnice.
+15. **Green Point**: ~2,9 km, ulični krog ob stadionu in obali (postavitev cestne dirke električnih avtov 2023). Ob obalni cesti (Beach Road) je v pasu 60 m morje na 0,9 km in plaža na 1,2 km; cesta pride do vode na 12 m (-33.90655,18.39793). Stadion generičen. Vožnja po levi.
+16. **Puerto Madero**: ~2,5 km, ulični krog ob dokih (postavitev cestnih dirk električnih avtov 2015–2017). Voda dokov je ob ulicah na 0,6–1,4 km (ulice so poimenovane po osebah: brez imen). Oblikovanega mostu čez dok ne modeliraj po resničnem.
 
 ## Podatki
 
@@ -125,19 +125,19 @@ Veriga čaka, da uporabnik napiše »začni« (1. 11. 2026). Proga 1 nadaljuje s
 
 | # | Proga | Veja | Stanje |
 |---|---|---|---|
-| 1 | Big White, Kanada (+ gradniki, uvoznik) | `gorske-proge/01-norquay` | čaka na »začni« |
-| 2 | Farellones, Čile | `gorske-proge/02-farellones` | čaka |
+| 1 | Mount Buller, Avstralija (+ gradniki, uvoznik) | `gorske-proge/01-norquay` | čaka na »začni« |
+| 2 | Nozawa Onsen, Japonska | `gorske-proge/02-nozawa` | čaka |
 | 3 | Medeu, Kazahstan | `gorske-proge/03-medeu` | čaka |
-| 4 | Oukaïmeden, Maroko | `gorske-proge/04-oukaimeden` | čaka |
-| 5 | Shiga Kogen, Japonska | `gorske-proge/05-shiga` | čaka |
-| 6 | Auli, Indija | `gorske-proge/06-auli` | čaka |
-| 7 | Whakapapa, Nova Zelandija | `gorske-proge/07-whakapapa` | čaka |
-| 8 | Guoliang, Kitajska | `gorske-proge/08-guoliang` | čaka |
-| 9 | Yungas, Bolivija | `gorske-proge/09-yungas` | čaka |
-| 10 | Arenal, Kostarika | `gorske-proge/10-arenal` | čaka |
-| 11 | Ella, Šrilanka | `gorske-proge/11-ella` | čaka |
-| 12 | Milford Sound, Nova Zelandija | `gorske-proge/12-milford` | čaka |
-| 13 | Clifton, Avstralija | `gorske-proge/13-clifton` | čaka |
+| 4 | Auli, Indija | `gorske-proge/04-auli` | čaka |
+| 5 | Guoliang, Kitajska | `gorske-proge/05-guoliang` | čaka |
+| 6 | Yungas, Bolivija | `gorske-proge/06-yungas` | čaka |
+| 7 | Ella, Šrilanka | `gorske-proge/07-ella` | čaka |
+| 8 | Milford Sound, Nova Zelandija | `gorske-proge/08-milford` | čaka |
+| 9 | Santo Antão, Zelenortski otoki | `gorske-proge/09-santoantao` | čaka |
+| 10 | Hana, ZDA | `gorske-proge/10-hana` | čaka |
+| 11 | Corvo Branco, Brazilija | `gorske-proge/11-corvobranco` | čaka |
+| 12 | Dadès, Maroko | `gorske-proge/12-dades` | čaka |
+| 13 | Espinazo del Diablo, Mehika | `gorske-proge/13-espinazo` | čaka |
 | 14 | Punta del Este, Urugvaj | `gorske-proge/14-puntadeleste` | čaka |
-| 15 | Put-in-Bay, ZDA | `gorske-proge/15-putinbay` | čaka |
-| 16 | Potrero de los Funes, Argentina | `gorske-proge/16-potrero` | čaka |
+| 15 | Green Point, Južna Afrika | `gorske-proge/15-greenpoint` | čaka |
+| 16 | Puerto Madero, Argentina | `gorske-proge/16-puertomadero` | čaka |
