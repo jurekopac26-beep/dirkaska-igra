@@ -1,8 +1,9 @@
-// The wheel rule in the game (core.js wheelRule; game.js WHEEL_RULE: the player's SOKOL, offline, a test with one car first): a hit at
-// 79 % takes a wheel off (no words, no Namesti kolo; no fire yet: in the last 20 % of the 3 s a small one where the wheel was, with the
+// The wheel rule in the game (core.js wheelRule; game.js WHEEL_RULE: every vehicle since 1. 11. 2026, each with its own tyres, Car.kt: the
+// KOLIBRI's rule, tests/browser/kolibri-hud.test.mjs; here on the player's SOKOL, offline, without its own tyres: the rule it had before,
+// its screens the same): a hit at 79 % takes a wheel off (no words, no Namesti kolo; no fire yet: in the last 20 % of the 3 s a small one where the wheel was, with the
 // second wheel the whole car), the second follows 3 s on, the car stops and the game is over: KONEC IGRE with a
 // big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the same race again, the car whole; Rezultati: the
-// results, the player retired. Another car (KAZE RS): no rule. On its side the left column (the place, the speed, the tyres) stays above
+// results, the player retired. One of the ten cars without parts that come off (KAZE RS): its own tyres, no wheel rule. On its side the left column (the place, the speed, the tyres) stays above
 // the steering arrows and clear of ZAMENJAJ KOLO. Upright (360 x 640) and on its side (640 x 360), in English too.
 //   node tests/browser/wheels.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -20,6 +21,7 @@ try {
     const a = await page.evaluate(async () => {
       const g = window.__game, P = g.race.player, W = P.wreck, wait = (ms) => new Promise(r => setTimeout(r, ms)), frames = async (n) => { for (let i = 0; i < n; i++) await new Promise(r => requestAnimationFrame(r)); };
       g.sim(9, true); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0];
+      const own = !!P.kt && !!(W.rule && W.rule.kt); P.kt = null; W.rule.kt = false;   // (its own tyres and the KOLIBRI's rule with them; taken off: the rule without them)
       const rule = !!W.rule, others = g.race.cars.filter(c => !c.isPlayer).every(c => !(c.wreck && c.wreck.rule));
       const fire0 = Render.burning(P);   // (79 %, no wheel off yet: no fire)
       P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const n1 = W.nL;
@@ -37,6 +39,7 @@ try {
       document.getElementById('over-again').click();
       for (let k = 0; k < 50 && !(g.race && g.race.player !== P); k++) await wait(100);
       const P2 = g.race.player, again = { fresh: P2 !== P, rule: !!(P2.wreck && P2.wreck.rule), nL: P2.wreck.nL, dmg: P2.dmg, gone: !sc.classList.contains('show'), phase: g.phase, track: g.race.track.def.id };
+      const own2 = !!P2.kt && !!(P2.wreck.rule && P2.wreck.rule.kt); P2.kt = null; P2.wreck.rule.kt = false;   // (the new race's car the same)
       // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: a big button, its bar at its foot running out, clear of the
       // steering and the pedals, no fire yet, then (the bar under 20 %, white) the hub where the wheel was on fire; a tap beside the button:
       // nothing; a tap on it: the spare on at once (four wheels, drawn), the car driving on, the button gone, no spare left; the fire put out
@@ -97,11 +100,12 @@ try {
       g.sim(4, true); await frames(4); Object.assign(big, { n: P2.wreck.nL, shown: sc.classList.contains('show') });
       document.getElementById('over-res').click(); await frames(3);
       const res = { shown: document.getElementById('s-results').classList.contains('show'), gone: !sc.classList.contains('show') };
-      return { rule, others, n1, msg, fix, fire, fire0, hub, over, again, sw0, sw1, sw2, big, res };
+      return { own, own2, rule, others, n1, msg, fix, fire, fire0, hub, over, again, sw0, sw1, sw2, big, res };
     });
     console.log(tag, JSON.stringify(a));
     const O = a.over;
     T.check(`${tag}: the rule on the player's SOKOL only (not the AI)`, a.rule && a.others);
+    T.check(`${tag}: the player's SOKOL with its own tyres and the KOLIBRI's wheel rule with them (Car.kt, rule.kt; every vehicle since 1. 11. 2026), in the new race too; the checks below without them (the rule SOKOL had before)`, a.own && a.own2, JSON.stringify({ own: a.own, own2: a.own2 }));
     T.check(`${tag}: a hit at 79 %: a wheel off, no words (KOLO JE ODPADLO no more), no Namesti kolo, no fire (none before either)`, a.n1 === 1 && !/KOLO JE ODPADLO|WHEEL OFF/.test(a.msg) && !a.fix && !a.fire && !a.fire0, `${a.n1} off, "${a.msg}", fix ${a.fix}, fire ${a.fire0} -> ${a.fire}`);
     T.check(`${tag}: the last 20 % of the 3 s: a small fire where the wheel was (the hub's); the second wheel: the whole car`, a.hub.on && a.hub.lvl === 1 && a.hub.k === a.hub.wk && a.hub.n === 1 && a.hub.whole === 2, JSON.stringify(a.hub));
     T.check(`${tag}: the second one off, the car stopped, out: KONEC IGRE (no results first), the HUD and the controls off`, O.shown && O.screen === 'over' && O.n >= 2 && O.out && O.v < 0.6 && O.phase === 'done' && !O.res && O.hud && O.touch, JSON.stringify(O));
@@ -128,13 +132,13 @@ try {
     T.check(`${tag}: no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
-  // another car: no rule
+  // one of the ten cars without parts that come off: its own tyres, no wheel rule (its wheels never come off)
   {
     const { ctx, page } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, damage: 2 }, undefined, { seed: 77 });
     await page.evaluate(() => { window.__game.S.car = 0; });
     await startTrack(page, 'spa');
-    const r = await page.evaluate(() => { const P = window.__game.race.player; return { id: P.m.id, rule: !!(P.wreck && P.wreck.rule) }; });
-    T.check('another car (KAZE RS): no rule', r.id === 'kaze' && !r.rule, JSON.stringify(r));
+    const r = await page.evaluate(() => { const P = window.__game.race.player; return { id: P.m.id, rule: !!(P.wreck && P.wreck.rule), kt: !!P.kt }; });
+    T.check('one of the ten cars without parts that come off (KAZE RS): its own tyres (Car.kt), no wheel rule', r.id === 'kaze' && !r.rule && r.kt, JSON.stringify(r));
     await ctx.close();
   }
 } finally {

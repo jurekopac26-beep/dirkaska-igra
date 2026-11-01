@@ -69,7 +69,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **duh** `ghost of the best run`, sledi gum zadnjih voženj `the tyre marks of the last time trial runs`
 - **deljenje** profila in izziv `sharing`, `a challenge (Izziv)`
 - **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`
-- **HUD** `HUD`, `time trial HUD`, `the timing tower` (`S.tower`: 0 Izklop, 1 Zgoraj `#tw-strip`, 2 Ob zemljevidu `#h-tower`; `twCls`), uničen avto, `the wheel rule` (`WHEEL_RULE`, `TYRE_RULE`; ZAMENJAJ KOLO `swapHUD`, okrogel za KOLIBRI), gume KOLIBRIJA na zaslonu `ktHUD` (`KT_HUE`), prazno pod uro `setBest`
+- **HUD** `HUD`, `time trial HUD`, `the timing tower` (`S.tower`: 0 Izklop, 1 Zgoraj `#tw-strip`, 2 Ob zemljevidu `#h-tower`; `twCls`), uničen avto, `the wheel rule` (`WHEEL_RULE`, `TYRE_RULE`: vsa vozila; ZAMENJAJ KOLO `swapHUD`, okrogel z lastnimi gumami), gume vsaka zase na zaslonu `ktHUD` (`KT_HUE`), prazno pod uro `setBest`
 - **odprta cesta** (Vršič: promet, policija) `the open road`, `the police radio`
 - **boksi** `pit stops`, radio ekipe `the team radio`
 - **sovoznik** `the co-driver`, **komentator** `commentator`
@@ -186,7 +186,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`
-- **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
+- **Gume vsaka zase (vsa vozila od 1. 11. 2026, prej KOLIBRI):** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče), `browser/wheels.test.mjs` (SOKOL in KAZE RS s svojimi gumami), `browser/hud.test.mjs` in `browser/weather.test.mjs` (pike s komplet gum: dirka s prijateljem; razred `kt`)
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`

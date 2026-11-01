@@ -3791,12 +3791,14 @@
   }
   function retired() { Comm.stop(); Comm.say('retired', null, 5); Sfx.beep(330, 0.3, 0.12); finishRace(); }   // (the player is out: the results now)
   /* ---------------- the wheel rule: KONEC IGRE, PONOVI IGRO ---------------- */
-  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on; a test with one car
-  // first): at 80 % damage a wheel comes off, then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO
-  // (the race again), the results (the player retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge
-  // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
-  const WHEEL_RULE = ['sokol', 'kolibri'];   // (the KOLIBRI's by its tyres, Core ktHit: a burning tyre's wheel at a real knock, already with damage Samo videz)
-  const TYRE_RULE = ['kolibri'];   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on): a wheel comes off,
+  // then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO (the race again), the results (the player
+  // retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge and the run from the police the rule is off
+  // (an ended run there would count as a time, a lap or an escape). Every vehicle, each tyre its own as the KOLIBRI's (the user's choice
+  // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
+  // the next real knock (Core ktHit), already with damage Samo videz
+  const WHEEL_RULE = Core.MODELS.map(m => m.id);
+  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
