@@ -143,6 +143,15 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Reli (`lev`, `zmaj`, veja `deli/avti-reli`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| LEV R | `headL` / `headR` (mandelj: okvir, leči in oba projektorja), `tailL` / `tailR` (na vogalih, `on: 'quarterL'` / `'quarterR'`: gresta z zadnjim blatnikom), `plate` (`on: 'trunk'`; na Visokih z okvirjem in znaki), `wiperFront` (oba brisalca); antena je samo na Visokih, zato ni del | v delu `wing` namesto velikega relijskega krila | na mestu obeh projektorjev (`shape`: stadion okrog obeh, kot pri JELENU), pokonci kot projektorja, obroč sega 5 cm nazaj (`depth`); mandelj okrog nje v barvah luči (`around`, `DELI.lampLook`, kot pri LEV S) |
+| ZMAJ | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (vsaka s črnim okvirjem), `plate` (`on: 'bumperR'`) | v delu `wing` namesto velikega krila | v obliki pravokotne luči (`shape` 0,36 × 0,12 m) |
+
+- LEV R je videti enako kot prej, 1394 od 1400 trikotnikov (tablica je nagnjena za 3 mm, da ima odpadel kos prostornino, kot pri LEV KABRIU); ZMAJ +8 (tablica je tanka ploščica kot pri KOLIBRIJU).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
