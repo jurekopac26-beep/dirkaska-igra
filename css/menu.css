@@ -488,6 +488,11 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (fitMaps: the same width on the screen at any zoom) */
 .topmap .rt-c { stroke-width: calc(1.6px * var(--k, 1)); stroke-dasharray: calc(10px * var(--k, 1)) calc(9px * var(--k, 1)); }
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
+/* (a map that comes in during a run, or whose route has been drawn: the route whole, not drawn again) */
+.topmap.drawn path.rt { animation: none; stroke-dashoffset: 0; }
+/* the switch 1 / 2: the other view of the same run waits for its picture over the one shown (pend), then fades in; the one under it then goes */
+.stage .dio.fly, .stage .dio.topmap { transition: opacity .3s ease; }
+.stage .dio.pend { opacity: 0; pointer-events: none; }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
 .mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }

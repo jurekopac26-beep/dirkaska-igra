@@ -870,5 +870,117 @@ window.DR = (function () {
     if (shadow) { const p = shadow.g.attributes.position.array, c = new THREE.Vector3(p[(shadow.N * (shadow.N + 1) / 2 + shadow.N / 2) * 3], p[(shadow.N * (shadow.N + 1) / 2 + shadow.N / 2) * 3 + 1], p[(shadow.N * (shadow.N + 1) / 2 + shadow.N / 2) * 3 + 2]); out.sh = c.toArray().map(Math.round); c.project(cam); out.shScr = [+c.x.toFixed(2), +c.y.toFixed(2), +c.z.toFixed(3)]; out.shVis = shadow.mesh.visible; out.shOp = shadow.mesh.material.opacity; out.inScene = !!shadow.mesh.parent; out.layers = shadow.mesh.layers.mask; out.camLayers = cam.layers.mask; }
     return out;
   }
-  return { coverWho, rayAll, maskDbg, rayDbg, exportKinds, coverDbg, dbg, setup, pose, run, waitCar, frame, cars, road, jerk, path, heliPath, heliInfo, heliTiles, plantLand, ground };
+  // ---- the flyover: the menu's track picture 1 (flyover.mjs) ------------------------------------------------------------------------------
+  // As a stage of a bike race is shown on TV: the camera follows the run from behind and above through the haze, the route drawn up to a
+  // glowing point that runs at an even speed (it only speeds up at the start and slows down at the finish; the route coloured by its climb);
+  // at the end the camera rises over the finish. The flight routemap_page.js planned before (the same camera, route and point), now drawn by
+  // the game over its own world with the real land round its strip, planted as for the helicopter (setup's farLand, plantLand), so no bare
+  // land shows past the strip. Nothing in the world moves (the race is not run, its cars are put away): any frame can be drawn in any order,
+  // by several browsers at once. flyInit plans every frame; flyFrame(k) draws frame k and tells where the start, the finish, the point and the
+  // chosen places are on it (the menu writes their names over the video).
+  let FL = null;
+  const flyLerp = (a, u) => { const i = Math.min(a.length - 2, Math.max(0, Math.floor(u))), f = Math.min(1, Math.max(0, u - i)); return a[i] * (1 - f) + a[i + 1] * f; };
+  const flyEase = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  function flyAvg(arr, r) {   // a moving average; near the ends a narrower one, so the ends stay where they are
+    const n = arr.length, out = new Array(n); for (let i = 0; i < n; i++) { const q = Math.min(r, i, n - 1 - i); let a = 0; for (let k = -q; k <= q; k++) a += arr[i + k]; out[i] = a / (2 * q + 1); } return out;
+  }
+  // how far along the run at x (0..1 of its time): an even speed, reached smoothly over the first `e` and lost over the last `e`
+  function flyGlide(x, e) { const G = (y) => e * (Math.pow(y / e, 3) - Math.pow(y / e, 4) / 2); x = Math.min(1, Math.max(0, x)); return (x < e ? G(x) : x > 1 - e ? 1 - e - G(1 - x) : e / 2 + x - e) / (1 - e); }
+  // the climb along the run (rise over run, over about 80 m; with the real heights known, as steep as the real road) and its colour: green on
+  // the flat (and downhill), through yellow and orange to red on the steep bits, a deep red from 12 %
+  const GRADE = [[0.01, 0x2fbf4a], [0.03, 0x9ad13a], [0.05, 0xffd23a], [0.07, 0xff8a2a], [0.09, 0xe8342a], [0.12, 0x9e1420]];
+  function flyGrades(pts, alt) {
+    const n = pts.length, k = 7, sc = alt ? (alt[1] - alt[0]) / ((pts[n - 1].h - pts[0].h) || 1) : 1, g = new Array(n);
+    for (let i = 0; i < n; i++) { const a = pts[Math.max(0, i - k)], b = pts[Math.min(n - 1, i + k)]; g[i] = (b.h - a.h) / Math.max(1, b.d - a.d) * sc; }
+    return flyAvg(g, 5);
+  }
+  function gradeColor(v, out) {
+    if (v <= GRADE[0][0]) return out.setHex(GRADE[0][1]);
+    for (let i = 1; i < GRADE.length; i++) if (v <= GRADE[i][0]) return out.setHex(GRADE[i - 1][1]).lerp(new THREE.Color(GRADE[i][1]), (v - GRADE[i - 1][0]) / (GRADE[i][0] - GRADE[i - 1][0]));
+    return out.setHex(GRADE[GRADE.length - 1][1]);
+  }
+  // o: speed (m/s, the point's even speed), end (s: the rise over the finish), turn (s: how slowly the camera turns), aim (s: how gently it
+  // follows the point), back, up, ahead (m: the camera behind the point, over it, and where it looks ahead of it), fogD (m: the haze, as for
+  // a camera this far from what it looks at: Render.setShot), cull (m: the world's own things left out past this), plantR (m: the planted
+  // land drawn this far round the camera), clear (m: the camera at least this high over the land under it), alt (the real heights at the
+  // start and the finish), places ([{ n, d }]: the places named over the video)
+  function flyInit(o) {
+    o = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, fov: 37, back: 411, up: 263, ahead: 206, fogD: 560, cull: 3400, plantR: 3400, clear: 70, places: [], alt: null }, o || {});
+    const open = T.finishS > T.startS, a0 = T.startS, b0 = open ? T.finishS : T.startS + T.len, pts = [];
+    for (let s = a0; s <= b0 + 0.01; s += 6) { const i = T.idx(s); pts.push({ x: T.px[i], y: T.hy[i] + 2, z: T.pz[i], d: s - a0, h: T.hy[i] }); }
+    const n = pts.length, sc = Render.scene;
+    // the route: a flat ribbon 1.5 m over the road, 14 m wide, drawn up to the point, coloured by the climb; not in the haze
+    const pos = new Float32Array(n * 6), col = new Float32Array(n * 6), idx = [], gc = new THREE.Color(), G = flyGrades(pts, o.alt);
+    for (let i = 0; i < n; i++) {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * 7, nz = dx / l * 7, p = pts[i];
+      pos.set([p.x + nx, p.y - 0.5, p.z + nz, p.x - nx, p.y - 0.5, p.z - nz], i * 6);
+      gradeColor(G[i], gc); col.set([gc.r, gc.g, gc.b, gc.r, gc.g, gc.b], i * 6);
+      if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+    const ribbon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+    ribbon.frustumCulled = false; ribbon.renderOrder = 5; sc.add(ribbon);
+    // the glowing point
+    const cvs = document.createElement('canvas'); cvs.width = cvs.height = 128; const x2 = cvs.getContext('2d'), gr = x2.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.15, 'rgba(255,246,190,.95)'); gr.addColorStop(0.4, 'rgba(255,214,60,.35)'); gr.addColorStop(1, 'rgba(255,214,60,0)'); x2.fillStyle = gr; x2.fillRect(0, 0, 128, 128);
+    const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cvs), depthTest: false, transparent: true, fog: false })); dot.renderOrder = 10; dot.frustumCulled = false; sc.add(dot);
+    // the camera's path: the road smoothed (the further back the camera, the more), and how far round it looks for the road's heading
+    const rs = Math.max(8, Math.round(o.back * 0.7 / 6)), rh = Math.max(6, Math.round(o.back * 0.3 / 6));
+    const sx = flyAvg(pts.map(p => p.x), rs), sz = flyAvg(pts.map(p => p.z), rs), sy = flyAvg(pts.map(p => p.y), Math.round(rs * 2 / 3));
+    const places = o.places.map(q => { const k = Math.min(n - 1, Math.max(0, Math.round(q.d / 6))); return { n: q.n, d: q.d, p: pts[k] }; });
+    // the plan of every frame: the point's place (a fraction of the road's points), the camera's heading, where it looks (a little ahead of
+    // the point, so the point always shows, low in the middle; at the end on the finish itself), and where it is (never under its clearance
+    // over the land: the real land round the strip rises higher than the made-up one did)
+    const px = pts.map(p => p.x), pz = pts.map(p => p.z);
+    const runF = Math.max(2, Math.round(pts[n - 1].d / (o.speed * (1 - o.ease)) * o.fps)), endF = Math.max(1, Math.round(o.end * o.fps)), N = runF + endF;
+    const U = [], E = [], TH = [];
+    for (let k = 0; k < N; k++) {
+      const u = flyGlide(k / (runF - 1), o.ease) * (n - 1), a = Math.max(0, u - rh), b = Math.min(n - 1, u + rh);
+      U.push(u); E.push(flyEase(Math.min(1, Math.max(0, (k - runF + 1) / endF)))); TH.push(Math.atan2(flyLerp(sz, b) - flyLerp(sz, a), flyLerp(sx, b) - flyLerp(sx, a)));
+    }
+    for (let k = 1; k < N; k++) { while (TH[k] - TH[k - 1] > Math.PI) TH[k] -= 2 * Math.PI; while (TH[k] - TH[k - 1] < -Math.PI) TH[k] += 2 * Math.PI; }
+    const TS = gauss(TH, Math.max(1, o.turn * o.fps)), A = [[], [], []], C = [[], [], []];
+    for (let k = 0; k < N; k++) {
+      const u = U[k], f = o.ahead * (1 - E[k]), ua = Math.min(n - 1, u + f / 6), lift = 1 + 0.6 * E[k], c = Math.cos(TS[k]), s = Math.sin(TS[k]);
+      A[0].push(flyLerp(px, u) + c * f); A[1].push(flyLerp(sy, ua)); A[2].push(flyLerp(pz, u) + s * f);
+      C[0].push(flyLerp(sx, u) - c * o.back * lift); C[1].push(flyLerp(sy, u) + o.up * lift); C[2].push(flyLerp(sz, u) - s * o.back * lift);
+    }
+    const sg = Math.max(1, o.aim * o.fps), AX = gauss(A[0], sg), AY = gauss(A[1], sg), AZ = gauss(A[2], sg);
+    const fl = C[1].map((_, k) => ground(C[0][k], C[2][k], -1e9) + o.clear), FS = gauss(runMax(fl, Math.round(o.fps * 0.6)), o.fps / 3);
+    let raised = 0; for (let k = 0; k < N; k++) if (FS[k] > C[1][k]) { C[1][k] = FS[k]; raised++; }
+    // the race's cars put away (nothing races in the flyover); the camera upright (no bank); the trees not faded towards a followed car
+    for (const c of R.cars) { c.x = c.px = c.y = c.py = c.z = c.pz = -1e5; }
+    if (Render.camera) Render.camera.up.set(0, 1, 0);
+    FL = { o, pts, n, ribbon, dot, places, runF, endF, N, U, AX, AY, AZ, CX: C[0], CY: C[1], CZ: C[2] };
+    return { frames: N, n, fps: o.fps, W: o.W, H: o.H, raceLen: Math.round(open ? T.raceLen : T.len), raised, cw: cv.width, ch: cv.height };
+  }
+  // the tiles of land to plant: those within rad m of the camera over the flight, inside its view and a margin
+  function flyTiles(rad) {
+    const F = FL, set = new Set(), hf = Math.atan(Math.tan(F.o.fov * Math.PI / 360) * F.o.W / F.o.H) + 0.25;
+    for (let k = 0; k < F.N; k += 6) {
+      const px = F.CX[k], pz = F.CZ[k], th = Math.atan2(F.AZ[k] - pz, F.AX[k] - px), i0 = Math.floor((px - rad) / TILE), i1 = Math.floor((px + rad) / TILE), j0 = Math.floor((pz - rad) / TILE), j1 = Math.floor((pz + rad) / TILE);
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+        const cx = (i + 0.5) * TILE - px, cz = (j + 0.5) * TILE - pz, d = Math.hypot(cx, cz); if (d > rad) continue;
+        let da = Math.atan2(cz, cx) - th; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+        if (d < TILE * 2 || Math.abs(da) < hf + Math.atan(TILE / Math.max(1, d))) set.add(i + ',' + j);
+      }
+    }
+    return [...set].map(s => s.split(',').map(Number));
+  }
+  function flyFrame(k) {
+    const F = FL, o = F.o, u = F.U[k], i = Math.min(F.n - 2, Math.floor(u)), f = u - i, a = F.pts[i], b = F.pts[i + 1];
+    const p = { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, z: a.z + (b.z - a.z) * f, d: a.d + (b.d - a.d) * f };
+    F.ribbon.geometry.setDrawRange(0, i * 6);
+    F.dot.position.set(p.x, p.y + 6, p.z); F.dot.scale.set(90, 90, 1);
+    const px = F.CX[k], py = F.CY[k], pz = F.CZ[k], tx = F.AX[k], ty = F.AY[k], tz = F.AZ[k], W = Render.world, cam = Render.camera, far = o.fogD * 5.5 + 300;
+    if (W) W.farClip = false;
+    if (cam && Math.abs(cam.far - far) > 1) { cam.far = far; cam.updateProjectionMatrix(); }
+    cullFar(o.cull, px, py, pz); plantCull(px, pz, o.plantR);
+    const near = Math.max(2, Math.min(0.45 * (py - ground(px, pz, py - 100)), 0.3 * Math.hypot(px - tx, py - ty, pz - tz)));
+    Render.setShot({ px, py, pz, tx, ty, tz, fov: o.fov, near, fogD: o.fogD, sky: true, blur: 0 });
+    Render.frame(0, 1, target, 'iso', {});   // (no time passes: the same world in every frame)
+    const v3 = new THREE.Vector3(), pr = (P) => { v3.set(P.x, P.y + 4, P.z).project(cam); return [Math.round((v3.x + 1) / 2 * o.W), Math.round((1 - v3.y) / 2 * o.H), v3.z < 1 && Math.abs(v3.x) < 1.4 && Math.abs(v3.y) < 1.4 ? 1 : 0]; };
+    return { jpg: cv.toDataURL('image/jpeg', 0.9), i, d: Math.round(p.d), s: pr(F.pts[0]), f: pr(F.pts[F.n - 1]), p: pr(p), q: F.places.map(q => pr(q.p)) };
+  }
+  return { coverWho, rayAll, maskDbg, rayDbg, exportKinds, coverDbg, dbg, setup, pose, run, waitCar, frame, cars, road, jerk, path, heliPath, heliInfo, heliTiles, plantLand, ground, flyInit, flyTiles, flyFrame };
 })();
