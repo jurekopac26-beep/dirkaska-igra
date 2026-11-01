@@ -428,6 +428,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .set-cat > summary:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 10px; }
 .set-cat .set-body { padding: 0 12px 6px; }
 .set-note { margin: 2px 0 6px; font: 500 12px/1.35 var(--f-ui); color: var(--muted); }
+.set-list .row.nbx { opacity: .45; }   /* (a row Trki med avti brez odboja stands for while it is on) */
 .set-sub { margin: 12px 0 2px; font: 700 12px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
