@@ -10,6 +10,7 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 - Dotik ikone vremena spremeni cel zaslon (dež, strela, mavrica, sneg na gumbih, tabli in avtu, moker pod z odsevom).
 - Gumbi kamer in zastavi sosednjih prog odprejo drugo sliko ali progo; Race! in puščica nazaj le pokažeta obvestilo.
 - `?static` naloži samo zaslon (za orodja v `orodja/`).
+- `T.signMode: 'flagname'`: spodnja tabla v barvah zastave brez napisa (zastava v delu, ki ga avto ne zakrije), nad njo desno manjša tabla z imenom države v njenem slogu (primer `orodja/proge/suzuka-tovornjak.json`).
 - `table.html` nariše tablo izbrane države brez zastave in na 6 načinov z zastavo (glej `orodja/table.mjs`).
 
 ## Datoteke

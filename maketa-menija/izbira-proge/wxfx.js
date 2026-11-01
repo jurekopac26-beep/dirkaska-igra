@@ -262,16 +262,19 @@ window.WXFX = (() => {
     el.style.boxShadow = sh.join(', ');
     if (S.arrow) { el.style.clipPath = 'polygon(0 0, calc(100% - ' + h * 0.42 + 'px) 0, 100% 50%, calc(100% - ' + h * 0.42 + 'px) 100%, 0 100%)'; el.style.boxShadow = 'none'; }
     // the name: one line, or the country's script and a second line; always in the middle of the sign, smaller if the flag needs room
-    if (fk === 'bg' && img) { const fc = document.createElement('canvas'); fc.width = Math.round(w * 2); fc.height = Math.round(h * 2); fc.getContext('2d').drawImage(img, 0, 0, fc.width, fc.height); el.style.background = 'url(' + fc.toDataURL() + ') center / 100% 100%'; el.style.color = '#fff'; el.style.textShadow = '0 0 3px #000, 0 0 3px #000, 0 2px 2px rgba(0,0,0,.6)'; }
+    // (o.flagCx: the flag's middle on the sign, where the car leaves it free; the edge colours carried out to both ends)
+    if (fk === 'bg' && img) { const fc = document.createElement('canvas'); fc.width = Math.round(w * 2); fc.height = Math.round(h * 2); const fg = fc.getContext('2d'), dw = fc.height * vb, dx = Math.max(0, Math.min(fc.width - dw, (o.flagCx != null ? o.flagCx * 2 : fc.width / 2) - dw / 2)); fg.drawImage(img, dx, 0, dw, fc.height); if (dx > 0) { fg.drawImage(fc, dx + 1, 0, 1, fc.height, 0, 0, dx + 1, fc.height); fg.drawImage(fc, dx + dw - 2, 0, 1, fc.height, dx + dw - 1, 0, fc.width - dx - dw + 1, fc.height); } el.style.background = 'url(' + fc.toDataURL() + ') center / 100% 100%'; el.style.color = '#fff'; el.style.textShadow = '0 0 3px #000, 0 0 3px #000, 0 2px 2px rgba(0,0,0,.6)'; }
     const fh = h * 0.62, fw = fh * vb, side = fk === 'end' || fk === 'both' ? fw + 10 : fk === 'eu' || fk === 'emblem' ? h * 0.9 : 0, avail = w - 2 * (side + 12);
 
-    const two = S.two && (S.two[0] || S.two[1]), l1 = two ? (S.two[0] || name) : name, l2 = two ? (S.two[1] || name) : null;
+    let box0 = null; const two = S.two && (S.two[0] || S.two[1]), l1 = two ? (S.two[0] || name) : name, l2 = two ? (S.two[1] || name) : null;
     for (const n of [...el.childNodes]) if (n.nodeType === 3 || n.classList?.contains('nm')) n.remove();
-    const box = document.createElement('span'); box.className = 'nm'; box.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1;white-space:nowrap';
+    if (o.noText) { box0 = null; } else {
+    const box = box0 = document.createElement('span'); box.className = 'nm'; box.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1;white-space:nowrap';
     const a = document.createElement('span'); a.textContent = l1; box.appendChild(a);
     if (l2) { const b = document.createElement('span'); b.textContent = l2; b.style.fontSize = '0.52em'; b.style.fontWeight = 600; box.appendChild(b); a.style.fontSize = '0.74em'; }
     el.insertBefore(box, el.firstChild); if (fk === 'stripe') box.style.transform = 'translateY(' + (-h * 0.1) + 'px)';
-    let fs = parseFloat(getComputedStyle(el).fontSize); while ((box.offsetWidth > avail || (fk === 'stripe' && box.offsetHeight > h * 0.66)) && fs > 14) { fs -= 1; el.style.fontSize = fs + 'px'; }
+    let fs = parseFloat(getComputedStyle(el).fontSize); while ((box.offsetWidth > avail || box.offsetHeight > h * (fk === 'stripe' ? 0.66 : 0.9)) && fs > 12) { fs -= 1; el.style.fontSize = fs + 'px'; }
+    }
     // the wear, the flag, the arrow's border: drawn once
     const dp = Math.min(2, window.devicePixelRatio || 2), c = document.createElement('canvas'); c.width = Math.round(w * dp); c.height = Math.round(h * dp);
     const g = c.getContext('2d'), W = S.wear || {}, r = rng(key.length * 97 + key.charCodeAt(0) * 31 + key.charCodeAt(1)); g.scale(dp, dp);
@@ -318,7 +321,10 @@ window.WXFX = (() => {
     if (o.append) { c.style.cssText = 'position:absolute;left:0;top:0;width:' + w + 'px;height:' + h + 'px;pointer-events:none;border-radius:inherit'; el.appendChild(c); }
     return c;
   }
-  async function styleSign(key, flag) { E.signWear = await signLook(E.sign, key, { flag }); }
+  async function styleSign(key, flag, mode) {
+    if (mode === 'flagname') { const free = Math.max(0, (R.carRightAtSign || R.sign.x) - R.sign.x); E.signWear = await signLook(E.sign, key, { flag: 'bg', noText: true, flagCx: (free + R.sign.w) / 2 }); if (E.plate) await signLook(E.plate, key, { append: true }); return; }
+    E.signWear = await signLook(E.sign, key, { flag });
+  }
 
   async function init(T) {
     dpr = Math.min(2, window.devicePixelRatio || 2); opt = {};
@@ -326,7 +332,15 @@ window.WXFX = (() => {
     E = { map: $('#map'), img: $('#mapimg'), room: $('#room'), car: $('#car'), sign: $('#boards .bd.b'), row: $('.row'), nb: [...document.querySelectorAll('.nb')],
       back: $('.back'), go: $('.go'), home: $('#homeBtn'), globe: $('#hflag'), views: $('.views'), mg: $('.mgbox'), flow: $('#flow') };
     E.map.style.overflow = 'hidden';
-    for (const k of ['map', 'room', 'car', 'sign', 'row', 'back', 'go', 'home', 'globe', 'views', 'mg']) if (E[k] && E[k].offsetWidth) R[k] = rect(E[k]);
+    if (T.signMode === 'flagname') {
+      const sg = E.sign, top0 = sg.offsetTop, h0 = sg.offsetHeight, nh = 50, ny = top0 + 40, posts = [...document.querySelectorAll('#boards .post')];
+      for (const p of posts) { const fl = p.offsetTop + p.offsetHeight; p.style.top = (ny + nh - 4) + 'px'; p.style.height = (fl - ny - nh + 4) + 'px'; }
+      Object.assign(sg.style, { top: ny + 'px', height: nh + 'px' });
+      const pw = 150, ph = 42, py = ny - ph - 6, px = sg.offsetLeft + sg.offsetWidth - pw - 10, bd = document.getElementById('boards');
+      bd.insertAdjacentHTML('beforeend', '<i class="post" style="left:' + (px + pw * 0.22) + 'px;top:' + (py + ph - 2) + 'px;height:10px"></i><i class="post" style="left:' + (px + pw * 0.78 - 6) + 'px;top:' + (py + ph - 2) + 'px;height:10px"></i><div class="bd" id="namePlate" style="left:' + px + 'px;top:' + py + 'px;width:' + pw + 'px;height:' + ph + 'px;font-size:28px;overflow:hidden">' + (T.country || '') + '</div>');
+      E.plate = document.getElementById('namePlate');
+    }
+    for (const k of ['map', 'room', 'car', 'sign', 'row', 'back', 'go', 'home', 'globe', 'views', 'mg', 'plate']) if (E[k] && E[k].offsetWidth) R[k] = rect(E[k]);
     R.nb = E.nb.map(rect);
     const W = document.body.clientWidth || 412, H = document.body.clientHeight || 892; R.W = W; R.H = H;
     // the picture's layers (under the camera buttons, the graph and the weather icons)
@@ -352,7 +366,7 @@ window.WXFX = (() => {
     R.carRightAtSign = R.car.x + Math.max(0, ...carCont.filter(p => p && R.car.y + p.y / dpr < R.sign.b).map(p => p.x / dpr));
     E.snowStage = null; setTimeout(snowReady, 700);   // (the snow's pictures take a moment: made after the screen shows, or at the first snow)
     E.stageFrost = frostCorners(R.map.w, R.map.h, [[0, R.map.h, -Math.PI / 2], [R.map.w, R.map.h, Math.PI]], 77, 46);
-    E.feet = carFeet(); if (T.signStyle !== false) await styleSign(SIGNS[T.signStyle] ? T.signStyle : T.countryKey, !!T.signFlag); E.gSign.canvas.style.left = '0px'; E.gSign.canvas.style.top = '0px'; E.gSign.canvas.style.borderRadius = 'inherit';
+    E.feet = carFeet(); if (T.signStyle !== false) await styleSign(SIGNS[T.signStyle] ? T.signStyle : T.countryKey, T.signFlag || false, T.signMode); E.gSign.canvas.style.left = '0px'; E.gSign.canvas.style.top = '0px'; E.gSign.canvas.style.borderRadius = 'inherit';
     // a long place name fits between the back button and the globe
     { const h = document.querySelector('.htitle'), b = document.querySelector('#homeBtn').getBoundingClientRect(), gl = document.querySelector('#hflag').getBoundingClientRect();
       if (h) { const avail = (document.body.clientWidth || 412) - 14 - gl.width - b.right - 22; h.style.minWidth = '0'; const rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width; }; let fs = parseFloat(getComputedStyle(h).fontSize); while (tw() > avail && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; } } }
@@ -603,7 +617,7 @@ window.WXFX = (() => {
     const sn = ws.snow;
     if (sn > 0.01) {
       g.save();
-      const caps = [[R.sign, 10], [R.row, 8], ...R.nb.map(b => [b, 7.5]), [R.back, 6.5], [R.go, 7.5], [R.home, 6.5], [R.views, 5.5], [R.mg, 5.5]];
+      const caps = [[R.sign, 10], ...(R.plate ? [[R.plate, 7]] : []), [R.row, 8], ...R.nb.map(b => [b, 7.5]), [R.back, 6.5], [R.go, 7.5], [R.home, 6.5], [R.views, 5.5], [R.mg, 5.5]];
       caps.forEach(([b, h], i) => { if (b) cap(g, b.x + 2, b.r - 2, b.y + 1, h, i * 7.3 + 1, sn, t); });
       if (R.globe) { const b = R.globe, cx = b.x + b.w / 2, gr = g.createLinearGradient(0, b.y - 4, 0, b.y + 6); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#cbd8ea'); g.fillStyle = gr; g.beginPath(); g.ellipse(cx, b.y + 5, b.w * 0.32, 6.5 * sn, 0, Math.PI, 0); g.closePath(); g.fill(); }
       // icicles: under the sign (right of the car), the panel, the neighbour buttons and Race!
