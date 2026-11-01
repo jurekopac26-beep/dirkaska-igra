@@ -143,6 +143,15 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Električni (`jezek`, veja `deli/avti-elektricni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| JEŽEK | `headL` / `headR` (polovici LED pasu čez nos, `on: 'bumperF'`), `tailL` / `tailR` (polovici črnega pasu z rdečo lučjo, `on: 'trunk'`), `spoiler` (`on: 'trunk'`), `plate` (`on: 'bumperR'`), `wiperFront`, `wiperRear` (`on: 'trunk'`), `aerial` (plavut na strehi) | na zadnjem robu strehe v delu `spoiler`, namesto serijske ustnice (odpre se in odpade z vrati prtljažnika) | v obliki polovice LED pasu (`shape`; polovici se stikata na sredini) |
+
+- Serijski avto je videti enako: +2 trikotnika (črni pas zadaj razdeljen na polovici); polovici pasu in tablica sta zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
+- Možnosti: krilo do +188, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
