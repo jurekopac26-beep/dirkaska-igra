@@ -1831,7 +1831,7 @@
   // make the grid: the fastest on pole, the rivals in the order of their times (Race opts playerGrid, aiOrder). "Preskoči kvalifikacije"
   // (pause menu) goes straight to the race: the usual grid, the player at the back of it (PLAYER_GRID).
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
-  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race);   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
+  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race) && !/^(elim|lov)$/.test(modeSet(d));   // (Zabava: no lap to fly before the elimination race either)   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   // a very big field (more than Q_BIG rivals, Nürburg's hundred): the rivals' laps worked out at Q_DT (a quarter of the work), in shorter turns
   // between the frames (the time looked at more often: a phone's frame keeps its budget); a lap at 30 Hz is Q_K slower than at the full rate,
@@ -2615,7 +2615,7 @@
     tb.innerHTML = res.map((r, i) => {
       const c = r.car; const b = c.lapTimes.length ? Math.min(...c.lapTimes) : NaN, kmh = up && !r.est && r.time > 0 ? Math.round(track.raceLen / r.time * 3.6) + ' km/h' : '\u2013';
       const name = c.isPlayer ? tr('Ti') : c.name, p = r.dnf ? 0 : Core.champPoints(i + 1);   // (retired: Odstop, no place, no points)
-      return '<tr class="' + (c.isPlayer ? 'me' : '') + (r.dnf ? ' dnf' : '') + '"><td>' + (r.dnf ? '\u2013' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(name) + '</td><td>' + esc(c.m.name) + '</td><td>' + (r.dnf ? tr(r.zb || 'Odstop') : r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen && !r.dnf ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + '</td><td>' + (up ? kmh : fmt(b, true)) + '</td>' +
+      return '<tr class="' + (c.isPlayer ? 'me' : '') + (r.dnf ? ' dnf' : '') + '"><td>' + (r.dnf ? '\u2013' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(name) + '</td><td>' + esc(c.m.name) + '</td><td>' + (r.zb ? tr(r.zb) : r.dnf ? tr('Odstop') : r.est ? '+' + fmt(r.time - res[0].time, true) : fmt(r.time, true)) + (r.pen && !r.dnf ? ' <small class="pen">(+' + r.pen + ' s)</small>' : '') + '</td><td>' + (up ? kmh : fmt(b, true)) + '</td>' +
         (ch ? '<td class="pts">' + (p ? '+' + p : '') + '</td>' : '') + '</tr>';
     }).join('');
     ZB.resEnd('race', { pos, out });   // (Zabava: the novelties' block under the head)
@@ -4261,6 +4261,7 @@
       return !c.finished && race.isOut(c) ? (ZB.outWord(c) || tr('ODSTOP')) : !i ? tr('VODI') : c.inPit && !c.finished ? tr('BOKSI') : down ? '+' + lapWord(down) : g == null ? '' : '+' + (g >= 60 ? fmt(g).slice(0, -2) : g.toFixed(1)); };
     if (S.tower === 1) {   // at the top: six, left to right: the first three, the one ahead, the player, the one behind (in order, ⋯ between those not one after the other)
       const R = new Set([0, 1, 2, pi - 1, pi, pi + 1].filter(i => i >= 0 && i < O.length));
+      for (const i of ZB.rows(O)) if (R.size < 6 && i >= 0 && i < O.length) R.add(i);   // (Zabava: the elimination race's first car in danger, the red row)
       for (let d = 2; R.size < Math.min(6, O.length) && d < O.length; d++) for (const i of [pi + d, pi - d]) if (i >= 0 && i < O.length && R.size < 6) R.add(i);   // (the player among the first: the next ones after them)
       let h = '', prev = -1;
       for (const i of [...R].sort((a, b) => a - b)) {
@@ -4274,6 +4275,7 @@
     }
     const nb = window.innerHeight > window.innerWidth ? 2 : 1; let rows = new Set();
     if (O.length <= 3 + 2 * nb + 1) O.forEach((c, i) => rows.add(i)); else { for (let i = 0; i < 3; i++) rows.add(i); for (let i = pi - nb; i <= pi + nb; i++) if (i >= 0 && i < O.length) rows.add(i); }
+    for (const i of ZB.rows(O)) if (i >= 0 && i < O.length) rows.add(i);   // (Zabava: the elimination race's first car in danger, the red row)
     if (rows.size > tw.max) rows = new Set([pi, pi - 1, pi + 1, 0, 1, 2, pi - 2, pi + 2].filter(i => rows.has(i)).slice(0, Math.max(0, tw.max)));   // (little room: the player and the cars beside first)
     let h = '', prev = -1;
     for (const i of [...rows].sort((a, b) => a - b)) {
@@ -4651,6 +4653,7 @@
       case 'sts':   // (a friend, a big grid) the others' states, passed on by the host in one message
         if (!host && R && m.no === R.no && Array.isArray(m.a)) for (const a of m.a) { if (!Array.isArray(a)) continue; const x = stOpen(a); if (typeof x.id === 'string' && x.id !== mp.me) netState(x.id, x, null); }
         break;
+      case 'zb': ZB.net(m, host ? id : String(m.id || 'h'), host); break;   // (Zabava: the elimination race online, the host's switch and cuts)
       case 'out': {   // a player has left the race for the room: its car leaves the track (it would stand there in the way)
         const who = host ? id : String(m.id || 'h');
         if (R && m.no === R.no) { if (host) for (const o of R.grid) if (o !== 'h' && o !== id) Net.sendTo(o, { t: 'out', no: m.no, id: who }); carGone(who); }
@@ -4723,7 +4726,7 @@
     $('on-note').textContent = host ? tr(many ? 'Poškodbe in vreme: tvoje nastavitve veljajo za vse.' : 'Poškodbe in vreme: tvoje nastavitve veljajo za oba.') : tr('Poškodbe in vreme: po nastavitvah gostitelja.');
     $('on-go').classList.toggle('off', !host);
     $('on-go').disabled = !open || !inRoom || busy || !!(mp.ch && mp.ch.on && (mp.ch.done || !mp.ch.tracks.length));
-    chRoom(host, busy);
+    chRoom(host, busy); ZB.room(host, busy);   // (Zabava: the elimination race's switch)
   }
   function netCar(d, cat) {   // my car in the room (the display order; cat: the next category's): the others see it at once
     if (!mp || mp.setup) return;
@@ -4748,6 +4751,7 @@
     if (ins.length < 2) return;
     if (mp.quick) Net.lock();   // (a quick match: nobody new comes into a room whose race starts; its place is free for the next room)
     const no = ++mp.no, k = (no - 1) % ins.length, grid = ins.slice(k).concat(ins.slice(0, k));
+    ZB.netSetup();   // (Zabava: the elimination race's switch to every phone, before the setup)
     const s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, faults: S.faults ? 1 : 0, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), grid, roster: mp.players.filter(p => grid.includes(p.id)).map(p => ({ id: p.id, name: p.name, car: p.car, color: p.color, num: p.num })), ready: new Set() };
     s.rain = S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for everyone)
     for (const id of grid) if (id !== 'h') Net.sendTo(id, { t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, hold: s.hold, grid, roster: s.roster });
@@ -4884,6 +4888,7 @@
     race.netFinish(P, R.mine);
   }
   const PLACE_W = ['Zmaga!', 'Drugi', 'Tretji', 'Četrti'];
+  const ZB_OUT = 50000;   // (Zabava: the elimination race online: a player out has 100000 s less the time it went out as its finish, so the results order them; shown as Izpadel)
   function netResults() {
     const R = mp.race, P = race.player, M = Core.MODELS[S.car]; $('res-laps').classList.add('off');
     phase = 'done'; Sfx.setRunning(false);
@@ -4896,10 +4901,10 @@
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = resHead();
     $('res-pos').textContent = waiting && rows.slice(0, myPos - 1).every(r => r.t != null) && myPos === 1 ? '…' : Lang.ord(myPos);
     $('res-title').textContent = tr(waiting && myPos === 1 ? 'Cilj!' : PLACE_W[myPos - 1] || 'Cilj!');
-    $('res-sub').textContent = tr('Čas dirke {0}', fmt(R.mine, true)) + '.' + (waiting ? tr(two ? ' Čakam, da prijatelj pripelje v cilj …' : ' Čakam, da prijatelji pripeljejo v cilj …') : two ? (other.left ? tr(' Prijatelj je dirko zapustil.') : tr(' Razlika {0}.', fmt(Math.abs(other.t - R.mine), true)))
+    $('res-sub').textContent = (R.mine >= ZB_OUT ? tr('Izpadel si po {0}.', fmt(2 * ZB_OUT - R.mine, true)) : tr('Čas dirke {0}', fmt(R.mine, true)) + '.') + (waiting ? tr(two ? ' Čakam, da prijatelj pripelje v cilj …' : ' Čakam, da prijatelji pripeljejo v cilj …') : two ? (other.left ? tr(' Prijatelj je dirko zapustil.') : tr(' Razlika {0}.', fmt(Math.abs(other.t - R.mine), true)))
       : myPos > 1 && rows[0].t != null ? tr(' Zaostanek za zmagovalcem {0}.', fmt(R.mine - rows[0].t, true)) : '');
     $('res-table').querySelector('tbody').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (r.t == null ? '–' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(r.me ? PLAYER_COLORS[r.col] : r.color) + '"></span>' + esc(r.name) + (r.me ? tr(' (ti)') : '') + '</td><td>' + esc(r.car) + '</td><td>' +
-      (r.t != null ? fmt(r.t, true) : tr(r.left ? 'odšel' : 'vozi …')) + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
+      (r.t != null ? (r.t >= ZB_OUT ? tr('Izpadel') : fmt(r.t, true)) : tr(r.left ? 'odšel' : 'vozi …')) + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
     const back = $('res-restart'); back.textContent = tr(!mp.err && !mp.gone && (mp.role === 'host' || Net.open) ? 'Nazaj v sobo' : 'Dirka s prijateljem'); back.dataset.act = 'net-room';
     if (mp.role === 'host' && !waiting && R.mine != null) chAward();   // (a championship: the points once everyone is in)
     chResults();
@@ -5465,7 +5470,7 @@
     // the player's best on a track in the way it is driven now: [what it is, the time or '—']
     record(d0) {
       const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
-      return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
+      return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : md === 'elim' ? ['Best place', r.bestPos > 0 ? 'P' + r.bestPos : '—'] : md === 'lov' ? ['Best catch', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
     },
     car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color }; },
     carHere: () => owned(Core.MODELS[S.car].id),
@@ -5536,7 +5541,7 @@
 
   // the special missions (js/missions.js): a mission's race on its track (no menu, no qualifying), the game's actions for its buttons
   const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
-  const ZB = typeof Zabava !== 'undefined' ? Zabava : { init() {}, modes: () => [], opts: () => null, made() {}, begin() {}, hold: () => false, step() {}, over: () => null, cls: () => '', outWord: () => '', noPodium: () => false, finish: () => false, resBase() {}, resPay: () => '', resEnd() {}, stop() {} };   // (Zabava: the novelties, js/zabava.js)
+  const ZB = typeof Zabava !== 'undefined' ? Zabava : { init() {}, modes: () => [], opts: () => null, made() {}, begin() {}, hold: () => false, step() {}, over: () => null, cls: () => '', rows: () => [], outWord: () => '', noPodium: () => false, finish: () => false, net() {}, room() {}, netSetup() {}, resBase() {}, resPay: () => '', resEnd() {}, stop() {} };   // (Zabava: the novelties, js/zabava.js)
   const MisBridge = {
     start(id) { nv = null; if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null; ensureTrack(id, () => newRace()); },
     act: (a) => onAction(a), fmt: (t) => fmt(t, true), msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), click: () => { Sfx.resume(); Sfx.click(); },
@@ -5546,6 +5551,8 @@
     get S() { return S; }, repro: () => !!repro, race: () => race, track: () => track, phase: () => phase, stRun: () => stRun, mp: () => mp, paused: () => paused,
     inCareer: () => inCareer(), careerPay: (sum, what) => careerPay(sum, what), showMsg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms),
     say: (k, v, p) => Comm.say(k, v, p), radio: (t, p) => teamRadioSay(t, p), fmt: (t, ms) => fmt(t, ms), setText: (id, t) => setText(id, t), save: () => save(),
+    champ: () => champ,   // (the championship under way: its id, its rounds)
+    finishOf: (id, t) => finishOf(id, t), netClock: () => (Net.now() - acc * 1000 - mp.race.goAt) / 1000,   // (online: a friend's finish, my time on the shared clock)
   };
 
   function bindUI() {

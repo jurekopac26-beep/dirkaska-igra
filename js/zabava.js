@@ -9,6 +9,8 @@ const Zabava = (function () {
   let G = null;   // the game's bridge (init: ZbBridge in js/game.js)
   let R = null, C = null;   // the race now and its context (newRace: md, on, tt, quali, chal, cr, school, nv, mis, career)
   const tr = (s, ...a) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s, ...a) : String(s).replace(/\{(\d+)\}/g, (m, i) => (a[i] != null ? a[i] : m)));   // (no Lang: Node's tests, the Slovenian with its slots filled)
+  const el = (id) => (typeof document !== 'undefined' ? document.getElementById(id) : null);   // (an element of the page; none in Node's tests)
+  const ord = (n) => (typeof Lang !== 'undefined' && Lang.ord ? Lang.ord(n) : n + '.');   // (a place: 3. / 3rd)
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
   // a test may switch the novelties on: window.__zabava = true (all) or { izzivi: 1, ... } (those), or zabava=1 in the address
@@ -114,6 +116,7 @@ const Zabava = (function () {
     over() { if (!R) return null; for (const f of F) { const o = f.over && f.over(R); if (o) return o; } return null; },
     // the timing tower: extra classes of a car's row; the word in place of a retired car's gap
     cls(c) { let s = ''; for (const f of F) if (f.cls) s += f.cls(c, R) || ''; return s; },
+    rows(O) { const out = []; for (const f of F) if (f.rows) for (const i of f.rows(O, R) || []) out.push(i); return out; },
     outWord(c) { for (const f of F) { const w = f.outWord && f.outWord(c, R); if (w) return w; } return ''; },
     noPodium() { return F.some(f => f.noPodium && f.noPodium(R)); },
     // the results: a novelty that draws them itself (true), the head's words, the career's extra pay (text), the block under the head
@@ -121,9 +124,13 @@ const Zabava = (function () {
     resBase(info) { if (R) each(f => f.resBase && f.resBase(R, info)); },
     resPay(info) { let s = ''; if (R) each(f => { if (f.resPay) s += f.resPay(R, info) || ''; }); return s; },
     resEnd(kind, info) { if (R) each(f => { if (f.resEnd) resAdd(f.resEnd(R, kind, info || {})); }); },
+    // online: a message of the novelties ({ t: 'zb', k }), the room (host: the switches), the host's setup about to go to every phone
+    net(m, from, host) { each(f => f.net && f.net(m, from, host, R)); },
+    room(host, busy) { each(f => f.room && f.room(host, busy)); },
+    netSetup() { each(f => f.netSetup && f.netSetup()); },
     stop() { cardClose(); each(f => f.stop && f.stop(R)); R = null; },
     // for the novelties
-    on, forced, auto, tr, esc, part, save, cardOpen, cardClose, resAdd,
+    on, forced, auto, tr, ord, esc, el, part, save, cardOpen, cardClose, resAdd,
     get G() { return G; }, get race() { return R; }, get ctx() { return C; }, get card() { return card; }, get list() { return F; },
   };
   return api;

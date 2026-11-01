@@ -33,8 +33,8 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 |---|---|---|
 | 0 | Skupni most, nastavitve, ta dokument | narejeno |
 | 1 | Cilji ekipe | narejeno (`tests/zabava.test.js`, `tests/browser/zabava.test.mjs`) |
-| 2 | Eliminacija (tudi s prijatelji) | |
-| 3 | Tekmeci si zapomnijo | |
+| 2 | Eliminacija (tudi s prijatelji) | narejeno (sam: urnik, rdeče vrstice, rezultati; na spletu: stikalo v sobi, izločitve določi gostitelj, `{ t: 'zb', k: 'cut' }`) |
+| 3 | Tekmeci si zapomnijo | narejeno (jedro: `grudgeHit`, `aiWaits`, `aiDefend`, prostor ob avtu; igra: `js/zabava/spomin.js`) |
 | 4 | Trener in zlati duh | |
 | 5 | Izzivi ob cesti | |
 | 6 | Ti loviš | |
@@ -42,4 +42,5 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 | 8 | Spoj `main`, testi, osnutek PR | |
 
 ## Predaja
-- Po koraku 1: most (`js/zabava.js`) in priklopi v `js/game.js` so narejeni, Cilji ekipe delujejo (kartica pred lučmi, izplačilo prek `careerPay`). Za brskalniške teste lokalno: `node_modules/playwright` kot povezava na globalni Playwright (`ln -s /opt/node-tools/node_modules/playwright node_modules/playwright`).
+- Po koraku 1: most (`js/zabava.js`) in priklopi v `js/game.js` so narejeni, Cilji ekipe delujejo (kartica pred lučmi, izplačilo prek `careerPay`). Za brskalniške teste lokalno: `npm install --no-save --no-package-lock --ignore-scripts peer@1.0.2` (namesti tudi Playwright iz `package.json`).
+- Po koraku 3: eliminacija na spletu: izločen igralec dobi kot čas cilja 100000 s manj čas izpada (rezultati ga razvrstijo, prikaz »Izpadel«, `ZB_OUT` v `js/game.js`). Zamera: krivda po legi stika (igralčev nos v rep ali bok tekmeca), v testih in Node dirkah izklopljena (`chr.zbG` nastavi samo igra).

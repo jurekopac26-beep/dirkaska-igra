@@ -585,6 +585,22 @@
     'CILJ EKIPE NI USPEL': 'TEAM GOAL MISSED',
     ' Cilj ekipe ni uspel ({0}).': ' Team goal missed ({0}).',
     'Cilj ekipe': 'Team goal',
+    'NEVARNO! IZPADEŠ ČEZ {0} s': 'DANGER! OUT IN {0} s',
+    'IZLOČITEV ČEZ {0} s': 'NEXT CUT IN {0} s',
+    'IZPADEL SI! {0} MESTO': 'YOU ARE OUT! {0} PLACE',
+    'ZMAGA! ZADNJI NA PROGI': 'WIN! THE LAST ONE LEFT',
+    'IZPADLI: {0}': 'OUT: {0}',
+    'IZPADEL': 'OUT',
+    'Izpadel': 'Out',
+    'Zmagovalec': 'Winner',
+    'V dirki': 'Still racing',
+    'Izpadel si po {0} na {1} mestu.': 'You were out after {0}, in {1} place.',
+    ' Štartal si z {0} mesta.': ' You started {0}.',
+    'Preživel si vse izločitve ({0} avtov).': 'You survived every cut ({0} cars).',
+    'Eliminacija': 'Elimination',
+    'Izpadel si po {0}.': 'You were out after {0}.',
+    'Tekmeci si zapomnijo': 'Rivals remember',
+    'Tekmec, ki ga zadeneš, se ti brani ostreje in te ne čaka; kdor vozi čisto, mu tekmeci puščajo prostor': 'A rival you knock defends harder against you and will not wait behind you; drive clean and the rivals give you room',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
