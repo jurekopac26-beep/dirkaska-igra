@@ -1,0 +1,426 @@
+{
+ "mountbuller": {
+  "key": "Summit Road",
+  "focus": "lift",
+  "cfg": {
+   "ground": "snow",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "all",
+   "center": "white",
+   "fog": 13227746,
+   "bld": 8018496,
+   "roof": 3882822,
+   "snowbanks": 1,
+   "ski": 1
+  },
+  "n": 1,
+  "bbox": "146.41,-37.17,146.46,-37.13"
+ },
+ "nozawa": {
+  "key": "奥志賀公園栄線",
+  "sec": [
+   [
+    36.9087,
+    138.48019
+   ],
+   [
+    36.92205,
+    138.47297
+   ]
+  ],
+  "focus": "piste",
+  "cfg": {
+   "ground": "snow",
+   "cover": "forest",
+   "tree": "mixed",
+   "snow": "all",
+   "center": "white",
+   "fog": 13424352,
+   "bld": 9076850,
+   "roof": 4212302,
+   "snowbanks": 1,
+   "ski": 1
+  },
+  "n": 2,
+  "bbox": "138.43,36.91,138.48,36.94"
+ },
+ "medeu": {
+  "key": "Kerey",
+  "sec": [
+   [
+    43.15069,
+    77.06514
+   ],
+   [
+    43.16198,
+    77.05306
+   ]
+  ],
+  "focus": "lift",
+  "cfg": {
+   "ground": "snow",
+   "cover": "forest",
+   "tree": "spruce",
+   "snow": "all",
+   "center": "white",
+   "fog": 13161696,
+   "bld": 9206634,
+   "roof": 7024426,
+   "snowbanks": 1,
+   "ski": 1
+  },
+  "n": 3,
+  "bbox": "77.03,43.11,77.10,43.17"
+ },
+ "auli": {
+  "key": "Auli",
+  "sec": [
+   [
+    30.53048,
+    79.56323
+   ],
+   [
+    30.54272,
+    79.55471
+   ]
+  ],
+  "focus": "piste",
+  "cfg": {
+   "ground": "alpine",
+   "cover": "sparse",
+   "tree": "deodar",
+   "snow": "above:2650",
+   "center": "white",
+   "fog": 13687010,
+   "bld": 12101776,
+   "roof": 8010282,
+   "snowbanks": 0,
+   "ski": 1,
+   "animals": "cow"
+  },
+  "n": 4,
+  "bbox": "79.54,30.51,79.60,30.57"
+ },
+ "guoliang": {
+  "key": "郭亮挂壁公路",
+  "sec": [
+   [
+    35.72361,
+    113.60811
+   ],
+   [
+    35.72955,
+    113.5993
+   ]
+  ],
+  "must": "tu",
+  "cfg": {
+   "ground": "karst",
+   "cover": "patchy",
+   "tree": "broad",
+   "snow": "none",
+   "center": "none",
+   "fog": 14080212,
+   "bld": 10126448,
+   "roof": 5918792,
+   "windows": 1,
+   "rock": 10250826
+  },
+  "n": 5,
+  "bbox": "113.57,35.71,113.63,35.76"
+ },
+ "milford": {
+  "key": "SH 94",
+  "car": [
+   -44.765,
+   167.99,
+   -1
+  ],
+  "sec": [
+   [
+    -44.76484,
+    167.99273
+   ],
+   [
+    -44.75994,
+    167.96589
+   ]
+  ],
+  "want": "bridge",
+  "cfg": {
+   "ground": "rainforest",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "none",
+   "center": "white",
+   "fog": 13686490,
+   "bld": 7368816,
+   "roof": 4210752,
+   "falls": 1,
+   "rock": 7171954
+  },
+  "n": 6,
+  "bbox": "167.93,-44.79,168.03,-44.73"
+ },
+ "corvobranco": {
+  "key": "Pedro Fridolin",
+  "sec": [
+   [
+    -28.05879,
+    -49.36121
+   ],
+   [
+    -28.05483,
+    -49.37583
+   ]
+  ],
+  "cfg": {
+   "ground": "grass",
+   "cover": "patchy",
+   "tree": "pine",
+   "snow": "none",
+   "center": "yellow",
+   "fog": 14213092,
+   "bld": 14208184,
+   "roof": 9067066,
+   "rock": 9077624
+  },
+  "n": 7,
+  "bbox": "-49.41,-28.08,-49.34,-28.03"
+ },
+ "yungas": {
+  "key": "North Yungas Road",
+  "sec": [
+   [
+    -16.29115,
+    -67.80525
+   ],
+   [
+    -16.27864,
+    -67.79506
+   ]
+  ],
+  "focus": "stream",
+  "cfg": {
+   "ground": "jungle",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 14672866,
+   "bld": 10126448,
+   "roof": 5918792,
+   "falls": 1
+  },
+  "n": 8,
+  "bbox": "-67.86,-16.30,-67.73,-16.20"
+ },
+ "hana": {
+  "key": "Hana Highway",
+  "sec": [
+   [
+    20.81801,
+    -156.12894
+   ],
+   [
+    20.80989,
+    -156.10642
+   ]
+  ],
+  "want": "bridge",
+  "focus": "stream",
+  "cfg": {
+   "ground": "jungle",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "none",
+   "center": "yellow",
+   "fog": 14213340,
+   "bld": 14208952,
+   "roof": 9058858,
+   "falls": 1
+  },
+  "n": 9,
+  "bbox": "-156.13,20.79,-156.05,20.84"
+ },
+ "ella": {
+  "key": "A23",
+  "sec": [
+   [
+    6.85817,
+    81.0585
+   ],
+   [
+    6.87104,
+    81.04755
+   ]
+  ],
+  "focus": "farm",
+  "cfg": {
+   "ground": "tropic",
+   "cover": "sparse",
+   "tree": "broad",
+   "snow": "none",
+   "center": "white",
+   "fog": 14081494,
+   "bld": 14735040,
+   "roof": 10111538,
+   "tea": 1,
+   "animals": "monkey"
+  },
+  "n": 10,
+  "bbox": "81.02,6.82,81.08,6.89"
+ },
+ "santoantao": {
+  "key": "Porto Novo-R.Grande",
+  "sec": [
+   [
+    17.11675,
+    -25.08303
+   ],
+   [
+    17.12885,
+    -25.08627
+   ]
+  ],
+  "focus": "farm",
+  "cfg": {
+   "ground": "tropic",
+   "cover": "sparse",
+   "tree": "pine",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "road": 7236196,
+   "fog": 14212832,
+   "bld": 15261904,
+   "roof": 10111538
+  },
+  "n": 11,
+  "bbox": "-25.10,17.06,-25.02,17.13"
+ },
+ "dades": {
+  "key": "RR704",
+  "sec": [
+   [
+    31.5415,
+    -5.91631
+   ],
+   [
+    31.52505,
+    -5.92663
+   ]
+  ],
+  "cfg": {
+   "ground": "desert",
+   "cover": "none",
+   "tree": "shrub",
+   "snow": "none",
+   "center": "white",
+   "fog": 14866636,
+   "bld": 11565656,
+   "roof": 10119754,
+   "rock": 10115648
+  },
+  "n": 12,
+  "bbox": "-5.94,31.53,-5.88,31.58"
+ },
+ "espinazo": {
+  "key": "Durango",
+  "sec": [
+   [
+    23.55181,
+    -105.84463
+   ],
+   [
+    23.56898,
+    -105.84843
+   ]
+  ],
+  "focus": "cliff",
+  "cfg": {
+   "ground": "sierra",
+   "cover": "forest",
+   "tree": "pine",
+   "snow": "none",
+   "center": "yellow",
+   "fog": 14212836,
+   "bld": 14208184,
+   "roof": 9067066,
+   "rock": 9077368
+  },
+  "n": 13,
+  "bbox": "-105.90,23.53,-105.78,23.62"
+ },
+ "puntadeleste": {
+  "key": "Rambla General Artigas",
+  "want": "water",
+  "focus": "marina",
+  "cfg": {
+   "ground": "urban",
+   "cover": "sparse",
+   "tree": "pine",
+   "snow": "none",
+   "center": "none",
+   "fog": 14476522,
+   "bld": 15657698,
+   "roof": 12103844,
+   "sea": 1,
+   "circuit": "walls",
+   "boats": 1
+  },
+  "n": 14,
+  "bbox": "-54.965,-34.97,-54.935,-34.95"
+ },
+ "greenpoint": {
+  "key": "Beach Road",
+  "car": [
+   -33.90655,
+   18.39793,
+   -1
+  ],
+  "want": "water",
+  "focus": "water",
+  "cfg": {
+   "ground": "urban",
+   "cover": "sparse",
+   "tree": "pine",
+   "snow": "none",
+   "center": "none",
+   "fog": 14476522,
+   "bld": 15657698,
+   "roof": 12103844,
+   "sea": 1,
+   "circuit": "walls"
+  },
+  "n": 15,
+  "bbox": "18.395,-33.91,18.42,-33.895"
+ },
+ "puertomadero": {
+  "key": "Alicia Moreau",
+  "car": [
+   -34.60915,
+   -58.36648,
+   1
+  ],
+  "want": "water",
+  "focus": "water",
+  "cfg": {
+   "ground": "urban",
+   "cover": "sparse",
+   "tree": "decid",
+   "snow": "none",
+   "center": "none",
+   "fog": 14541800,
+   "bld": 12104360,
+   "roof": 6973024,
+   "circuit": "walls",
+   "boats": 1,
+   "lake": 1
+  },
+  "n": 16,
+  "bbox": "-58.372,-34.622,-58.355,-34.600"
+ }
+}

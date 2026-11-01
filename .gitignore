@@ -2,3 +2,6 @@ node_modules
 test-results/
 # lokalne nastavitve seje (npr. napor koordinacijske seje), ne gredo v git
 .claude/settings.local.json
+
+# predogled prog: prenesen OSM, višine, scene in slike
+tools/predogled/podatki/

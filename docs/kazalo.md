@@ -43,6 +43,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/carshots.mjs`, `tools/icons.mjs` | slike avtov, ikone |
 | `tools/deli-plosca.mjs` | plošča delov iz garaže za uporabnika (16 možnosti elementa na avtu; `docs/deli.md`) |
 | `tools/shot.mjs` | posnetki proge z mesta (`--m` metri od štarta, pokonci in ležeče, brez HUD-a), `--pred <ref|mapa>`: primerjava pred/po z deležem spremenjenih pikslov, `--nabor`: nabor za pull requeste (`NABOR`); `test-results/shots/` |
+| `tools/predogled/` | predogled prog iz kamere igralca pokonci iz OSM in višin (načrt `docs/gorske-proge.md`): podatki 16 prog `proge.json`, prenos in scena `pripravi.py` / `prep.py`, slika `shoot.mjs`, zavitost in delež glavnega elementa v kadru `scan.py`; preneseni podatki v `podatki/` (ni v repozitoriju) |
 | `tools/misija-slika.mjs` | slike posebne misije (`?misija=<id>`, avtopilot do `--t` s ali `--pred` m pred ciljem ali `--konec`, pokonci in ležeče, s prikazom misije; `test-results/misije/`) |
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
