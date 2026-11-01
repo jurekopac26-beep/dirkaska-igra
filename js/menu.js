@@ -56,8 +56,9 @@
 
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
-    { id: 'elim', name: 'Elimination', sub: 'Every 30 seconds the last cars are out. Be the last one left.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' }]);   // (Zabava: docs/zabava.md)
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim' };
+    { id: 'elim', name: 'Elimination', sub: 'Every 30 seconds the last cars are out. Be the last one left.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
+    { id: 'pursuit', name: 'Pursuit', sub: 'You drive the patrol car. Stop the fugitive before it gets away.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' }]);   // (Zabava: docs/zabava.md)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit' };
   const W_SET = ['dry', 'rain', 'random'];   // (the rain over the picture: none, falling, coming and going)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
@@ -558,7 +559,7 @@
     let first;
     if (mode === 'chase') first = cell('Police', 'On you', 'opp');
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
-    else first = cell('Opponents', String(mode === 'duel' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
+    else first = cell('Opponents', String(mode === 'duel' || mode === 'pursuit' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
@@ -594,6 +595,7 @@
       ['cmp', 'Tyres', [['auto', 'Auto'], ['S', 'Soft'], ['M', 'Medium'], ['H', 'Hard']], S.cmp, circuit && !!d.pit],
       ['pkRoad', 'Road', [['pikes', 'Asphalt'], ['pikesg', 'Gravel']], S.pkRoad, pk],
       ['pkGhost', 'Ghost', [['best', 'My best'], ['legend', 'Legend'], ['off', 'None']], S.pkGhost, pk && mode === 'trial'],
+      ['zbGold', 'Gold ghost', [['0', 'Off'], ['1', 'On']], String(S.zbGold ? 1 : 0), !pk && mode === 'trial' && !!(G.medals && G.medals(d))],   // (Zabava: the gold ghost, js/zabava/trener.js)
       ['wing', 'Wing', [['0', 'Small'], ['1', 'Medium'], ['2', 'Large']], String(su.wing), true],
       ['gear', 'Gears', [['0', 'Short'], ['1', 'Medium'], ['2', 'Long']], String(su.gear), true],
     ];

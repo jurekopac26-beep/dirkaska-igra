@@ -10,6 +10,9 @@ global.Zabava = Z;
 const cilji = require(path.join(ROOT, 'js', 'zabava', 'cilji.js'));
 const elim = require(path.join(ROOT, 'js', 'zabava', 'elim.js'));
 const spomin = require(path.join(ROOT, 'js', 'zabava', 'spomin.js'));
+const trener = require(path.join(ROOT, 'js', 'zabava', 'trener.js'));
+const izzivi = require(path.join(ROOT, 'js', 'zabava', 'izzivi.js'));
+const lov = require(path.join(ROOT, 'js', 'zabava', 'lov.js'));
 const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
 const C = loadCore();
@@ -196,6 +199,114 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   spomin.begin(r3, { on: false });
   check('a championship started again (round 1): no grudge from the last one', !(o3.chr.zbMad > 0));
   spomin.stop(); delete window.__zabava;
+}
+
+// 6. the coach: an autopilot's lap of the Red Bull Ring as the best run, the same lap 0.5 s slower in one corner as this run; the gold ghost
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'rbring')), CH = 7, DT = 0.1;
+  const orig = Math.random; Math.random = seeded(11);
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', seed: 3, playerModel: C.MODELS[4], assist: 2, tt: true }), P = r.player;
+  r.start(); const f = new Float32Array(12000 * CH); let nS = 0, t = 0;
+  while (!P.finished && t < 400) { C.aiControl(P, r, DT / 12); r.step(DT / 12); t += DT / 12; while (nS * DT <= t + 1e-9) { const o = nS * CH; f[o] = P.x; f[o + 1] = P.y; f[o + 2] = P.z; f[o + 3] = P.h; nS++; } }
+  Math.random = orig;
+  const B = { n: nS, f, M: P.m };
+  const prof = trener.profile(T, B), cs = trener.corners(T, prof);
+  check('the best run: a whole lap (over 4 km along the track), corners found on it', P.finished && prof.s[prof.n - 1] - prof.s[0] > 4000 && cs.length >= 5, 'lap ' + (prof.s[prof.n - 1] - prof.s[0]).toFixed(0) + ' m, corners ' + cs.length);
+  check('no difference: the coach finds no corner where time was lost', trener.analyze(T, B, B).length === 0);
+  // this run: 0.5 s more spent in the 3rd corner (its samples there slower), the rest the same
+  const c3 = cs[2], warp = (s) => s <= c3.b ? 0 : s >= c3.end ? 0.5 : 0.5 * (s - c3.b) / (c3.end - c3.b);
+  const tw = new Float64Array(prof.n); for (let k = 0; k < prof.n; k++) tw[k] = prof.t[k] + warp(prof.s[k]);
+  const nA = Math.floor(tw[prof.n - 1] / DT) + 1, fa = new Float32Array(nA * CH); let j = 0;
+  for (let k = 0; k < nA; k++) { const tt = k * DT; while (j < prof.n - 2 && tw[j + 1] < tt) j++; const u = Math.min(1, Math.max(0, (tt - tw[j]) / Math.max(1e-6, tw[j + 1] - tw[j]))); for (let c = 0; c < CH; c++) fa[k * CH + c] = f[j * CH + c] + (f[(j + 1) * CH + c] - f[j * CH + c]) * u; }
+  const L = trener.analyze(T, { n: nA, f: fa }, B);
+  check('0.5 s lost in the 3rd corner: the coach names it first, about 0.5 s, with a reason', L.length >= 1 && L[0].name === c3.name && L[0].d > 0.35 && L[0].d < 0.65 && !!L[0].why, JSON.stringify(L.map(x => [x.name, +x.d.toFixed(2), x.why])) + ' expected ' + c3.name);
+  const S2 = trener.stretch(B, 100);
+  check('the gold ghost: the autopilot\'s run stretched to the gold time (100 s: 1001 samples, the same start and end)', S2.n === 1001 && Math.abs(S2.f[0] - f[0]) < 1e-3 && Math.abs(S2.f[(S2.n - 1) * CH] - f[(nS - 1) * CH]) < 1e-3, S2.n);
+  // the gold ghost made in the background: a time trial's run with the setting on, the autopilot a few ms at a time
+  global.Core = C; let shown = null;
+  Z.init({ S: { zbGold: 1 }, repro: () => false, phase: () => 'racing', ghost: () => ({ play: null, rec: null, lap: null, fr: null }), setGhostF: (o) => { shown = o; }, gold: () => 95 });
+  window.__zabava = { trener: 1 };
+  const rr = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', seed: 3, playerModel: C.MODELS[4], assist: 2, tt: true }); rr.timeTrial = true;
+  trener.begin(rr, { on: false });
+  let k = 0; while (trener.sim && !trener.sim.done && k++ < 4000) trener.step(rr);
+  check('the gold ghost: made in steps of a few ms, shown as the second ghost (ZLATO, 95 s), the coach\'s reference when there is no best run', !!shown && shown.name === 'ZLATO' && shown.t === 95 && shown.g.n === 951 && trener.ref && trener.ref.what === 'gold', shown ? shown.name + ' ' + shown.t + ' ' + shown.g.n + ' steps ' + k : 'none after ' + k);
+  trener.stop(); delete window.__zabava; delete global.Core;
+}
+
+// 7. the challenges by the road: placed by the shape (Vršič: radar, section, drift zone, golden posts; Bathurst: radar, section; Ouninpohja
+// its famous jump), measured as the car passes, stars and records
+{
+  const mk = (id) => { const T = new C.Track(C.TRACKS.find(d => d.id === id)); return new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', seed: 1, playerModel: C.MODELS[4], tt: true }); };
+  const ks = (r) => izzivi.plan(r).map(c => c.k).join(',');
+  check('Vršič: radar, timed section, drift zone (its hairpins), three golden posts in side roads', ks(mk('vrsic')) === 'radar,odsek,drift,smernik,smernik,smernik', ks(mk('vrsic')));
+  check('Bathurst (a circuit): radar and section only; Ouninpohja: its famous jump (57 m)', ks(mk('bathurst')) === 'radar,odsek' && izzivi.plan(mk('ouninpohja')).some(c => c.k === 'skok' && c.want === 57), ks(mk('bathurst')) + ' / ' + ks(mk('ouninpohja')));
+  const rb = mk('bathurst'), R = izzivi.plan(rb).find(c => c.k === 'radar');
+  check('Bathurst\'s radar on the Conrod straight (about 4.9 km), the car\'s possible speed there 200-300 km/h', R.d > 4500 && R.d < 5600 && R.want * 3.6 > 200 && R.want * 3.6 < 300, Math.round(R.d) + ' m ' + Math.round(R.want * 3.6) + ' km/h');
+  check('the stars: radar 0.95 of the possible: 2, 0.99: 3; section 1.05 of the ideal: 2, 1.3: none', izzivi.starsOf('radar', 0.95) === 2 && izzivi.starsOf('radar', 0.99) === 3 && izzivi.starsOf('odsek', 1.05) === 2 && izzivi.starsOf('odsek', 1.3) === 0);
+  // a run on Vršič driven by hand: the radar passed at 95 %, the section in 1.05 of its ideal, half the drift zone sliding, a golden post
+  const msgs = []; let ph = 'racing';
+  Z.init({ S: {}, repro: () => false, phase: () => ph, showMsg: (t) => msgs.push(t), fmt: (t) => t.toFixed(1) });
+  window.__zabava = { izzivi: 1 };
+  const r = mk('vrsic'), P = r.player; r.time = 1;
+  izzivi.begin(r, { on: false });
+  const L = izzivi.L, rad = L.find(c => c.k === 'radar'), sec = L.find(c => c.k === 'odsek'), dz = L.find(c => c.k === 'drift'), post = L.find(c => c.k === 'smernik');
+  const go = (d, o) => { P.dist = d; if (o && o.speed != null) { P.vx = o.speed; P.vz = 0; } izzivi.step(r, 0.1); };
+  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.95 });
+  go(sec.d - 2); r.time = 100; go(sec.d + 2); r.time = 100 + sec.want * 1.05; go(sec.d1 - 2); go(sec.d1 + 2);
+  P.beta = 0.5; P.vx = 15; P.vz = 0; P.air = false; const stepM = 1.5; for (let d = dz.d - 4; d < dz.d + (dz.d1 - dz.d) * 0.5; d += stepM) go(d); P.beta = 0; for (let d = dz.d + (dz.d1 - dz.d) * 0.5; d < dz.d1 + 4; d += stepM) go(d);
+  P.x = post.x; P.z = post.z; izzivi.step(r, 0.1);
+  const run = izzivi.run;
+  check('the radar passed at 95 %: two stars, said under the map', run.radar && run.radar.st === 2 && msgs.some(t => /^RADAR \d+ km\/h ★★☆/.test(t)), JSON.stringify(run.radar) + ' ' + msgs[0]);
+  check('the section in 1.05 of its ideal: two stars', run.odsek && run.odsek.st === 2, JSON.stringify(run.odsek));
+  check('half the drift zone sliding (15 m/s): about 50 %, three stars', run.drift && run.drift.v > 0.45 && run.drift.st === 3, JSON.stringify(run.drift));
+  check('a golden post: found (1/3), kept, said', izzivi.found.size === 1 && msgs.some(t => /ZLATI SMERNIK 1\/3/.test(t)) && Z.part('izzivi').vrsic.smer.length === 1);
+  const html = izzivi.resEnd(r, 'race');
+  check('the results\' block: IZZIVI OB CESTI with the radar, the section, the drift zone (stars) and the posts 1/3', /IZZIVI OB CESTI/.test(html) && /Radar: \d+ km\/h/.test(html) && /Odsek na čas/.test(html) && /Drift cona: \d+ %/.test(html) && /Zlati smerniki: 1\/3/.test(html), html.slice(0, 300));
+  // the record: the next run slower at the radar keeps it, faster beats it
+  izzivi.begin(r, { on: false }); msgs.length = 0;
+  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.9 }); const r1 = Z.part('izzivi').vrsic.radar.v;
+  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.99 }); const r2 = Z.part('izzivi').vrsic.radar.v;
+  check('records: a slower pass keeps the record, a faster one beats it (REKORD said)', Math.abs(r1 - rad.want * 0.95) < 0.01 && Math.abs(r2 - rad.want * 0.99) < 0.01 && msgs.some(t => /REKORD/.test(t)), r1.toFixed(2) + ' ' + r2.toFixed(2));
+  check('a golden post found once stays found (not counted again)', izzivi.found.size === 1);
+  izzivi.stop(); delete window.__zabava;
+  check('off: not online, not a mission, not the driving school, not a test track', !izzivi.fits(r, { on: true }) && !izzivi.fits(r, { mis: true }) && !izzivi.fits(r, { school: true }));
+}
+
+// 8. the pursuit: Vršič with its traffic, the player's car a patrol car, the fugitive 150 m up the road; caught, escaped by distance and by time
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+  const placeAt = (c, s) => { const i = T.idx(s), off = T.rl[i]; c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i]; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.vx = c.vz = 0; };
+  const ctx = { md: 'lov', on: false, cr: -1, mis: false, school: false, chal: false, nv: false, track: T };
+  check('the mode: wherever the duel in the traffic is; its options: one rival, the player behind it, traffic, no flying start', lov.modes({}, ['race', 'tt', 'traffic']).join() === 'lov' && lov.modes({}, ['race']).length === 0 && lov.opts(ctx).numAI === 1 && lov.opts(ctx).traffic === true && lov.opts(ctx).flying === 0 && !lov.opts(Object.assign({}, ctx, { on: true })));
+  const mkR = () => { const r = new C.Race(T, Object.assign({ playerGrid: 2, laps: 1, phys: 'cs', seed: 4, playerModel: C.MODELS[4], assist: 2, difficulty: 1, chars: true }, lov.opts(ctx))); lov.made(r, ctx); return r; };
+  const msgs = []; let ph = 'racing';
+  Z.init({ S: { difficulty: 1 }, repro: () => false, phase: () => ph, setText() {}, showMsg: (t) => msgs.push(t), say() {}, fmt: (t) => t.toFixed(1), placeAt });
+  let r = mkR(), P = r.player; lov.begin(r); let o = lov.st.o;
+  check('the race: the player\'s car a patrol car (the traffic\'s siren rule), traffic on the road, the fugitive 150 m up the road', P.police && r.tf && Math.abs(o.dist - P.dist - 150) < 1 && r.zbLov && msgs.includes('ULOVI BEGUNCA!'), JSON.stringify({ police: P.police, tf: !!r.tf, gap: +(o.dist - P.dist).toFixed(1) }));
+  // a real start: 20 s of driving, the autopilot after the fugitive
+  const orig = Math.random; Math.random = seeded(4);
+  for (let t = 0; t < 1; t += DT) r.step(DT);
+  r.start(); let nan = false;
+  for (let k = 0; k < 20 * 120; k++) { C.aiControl(P, r, DT); r.step(DT); lov.step(r, DT); if (!Number.isFinite(P.x + o.x + P.speed + o.speed)) nan = true; }
+  Math.random = orig;
+  check('20 s of the chase on the real road: both driving, no NaN, the traffic makes way for the patrol car (its siren rule on)', !nan && r.tf._siren(P) && P.speed > 5 && (o.speed > 5 || lov.st.end) && r.time > 19, JSON.stringify({ v: [P.speed.toFixed(1), o.speed.toFixed(1)], gap: (o.dist - P.dist).toFixed(0), m: lov.st.m.toFixed(2) }));
+  // caught: close behind it for 5 s
+  r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10;
+  const near = () => { P.x = o.x - 8; P.z = o.z; };
+  for (let k = 0; k < 52; k++) { near(); r.time += 0.1; lov.step(r, 0.1); }
+  const e1 = lov.over(r);
+  check('5 s within 15 m: caught (ULOVLJEN), the fugitive pulls over (retired)', e1 && e1.ok && /ULOVLJEN/.test(e1.msg) && r.isOut(o), e1 && e1.msg);
+  // escaped: more than 400 m ahead for 10 s
+  r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; o.dist = P.dist + 450;
+  for (let k = 0; k < 102; k++) { r.time += 0.1; lov.step(r, 0.1); }
+  const e2 = lov.over(r);
+  check('10 s more than 400 m ahead: got away (POBEGNIL JE, too far)', e2 && !e2.ok && e2.why === 'far', JSON.stringify(e2));
+  // escaped: the 3:00 up
+  r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 179.95; lov.step(r, 0.1); r.time = 180.05; lov.step(r, 0.1);
+  const e3 = lov.over(r);
+  check('the 3:00 up: got away (the time)', e3 && !e3.ok && e3.why === 'time', JSON.stringify(e3));
+  check('the meter drains when it is far again (half full: 20 s to empty)', (() => { r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; lov.st.m = 0.5; o.dist = P.dist + 100; P.x = o.x + 100; lov.step(r, 1); return Math.abs(lov.st.m - 0.45) < 1e-6; })());
+  lov.stop();
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

@@ -1969,6 +1969,7 @@
     else {
       if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
       else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
+      else if (race.tf && race.zbLov) { }   // (Zabava: the pursuit says its own, js/zabava/lov.js)
       else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
@@ -4167,7 +4168,7 @@
       $('h-hidebar').style.width = (pol.hide * 100).toFixed(0) + '%'; setText('h-hidel', P.finished || !ch ? '' : tr(pol.lost ? 'IZGUBILI SO SLED' : hid ? 'SKRIVANJE' : pol.heli && pol.heli.st === 'track' ? 'HELIKOPTER NAD TABO' : ''));
       chkHUD(P, pol); tailHUD(P, pol);
       if (pol.hold && phase === 'racing') $('touch').classList.add('off');   // (parked at the checkpoint: the brakes held, the arrest on the screen)
-    } else if (race.tf) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now)
+    } else if (race.tf && !race.zbLov) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now; Zabava's pursuit: its own line)
       const o = race.cars.find(c => c !== P);
       if (o) { const g = (o.finished ? L : o.dist) - (P.finished ? L : P.dist), t = Math.abs(g) / Math.max(12, P.speed, o.speed), f = Lang.dec(t.toFixed(1));
         setText('h-gap', o.finished && P.finished ? '' : !o.finished && race.isOut(o) ? tr('TEKMEC JE ODSTOPIL') : tr(g >= 0 ? 'TEKMEC {0} s PRED TABO' : 'TEKMEC {0} s ZA TABO', f)); $('h-gap').classList.toggle('behind', g < 0); }   // (a rival out of the race: so)
@@ -5552,6 +5553,8 @@
     inCareer: () => inCareer(), careerPay: (sum, what) => careerPay(sum, what), showMsg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms),
     say: (k, v, p) => Comm.say(k, v, p), radio: (t, p) => teamRadioSay(t, p), fmt: (t, ms) => fmt(t, ms), setText: (id, t) => setText(id, t), save: () => save(),
     champ: () => champ,   // (the championship under way: its id, its rounds)
+    placeAt: (c, s) => placeAt(c, track, s), rec: (id) => rec(id), saveRecords: () => saveRecords(), showScreen: (n) => showScreen(n),   // (the pursuit: the fugitive up the road, its record, its results)
+    ghost: () => ({ play: ghPlay, rec: ghRec, lap: ghLap, fr: ghFr }), setGhostF: (o) => { ghFr = o; }, gold: () => { const M = medalSet(track.def); return M ? M[0] : 0; },   // (the ghosts: the best run, this run, a circuit's lap, the second ghost; the gold time)
     finishOf: (id, t) => finishOf(id, t), netClock: () => (Net.now() - acc * 1000 - mp.race.goAt) / 1000,   // (online: a friend's finish, my time on the shared clock)
   };
 

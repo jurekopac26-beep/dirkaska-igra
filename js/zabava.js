@@ -10,6 +10,7 @@ const Zabava = (function () {
   let R = null, C = null;   // the race now and its context (newRace: md, on, tt, quali, chal, cr, school, nv, mis, career)
   const tr = (s, ...a) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s, ...a) : String(s).replace(/\{(\d+)\}/g, (m, i) => (a[i] != null ? a[i] : m)));   // (no Lang: Node's tests, the Slovenian with its slots filled)
   const el = (id) => (typeof document !== 'undefined' ? document.getElementById(id) : null);   // (an element of the page; none in Node's tests)
+  const dec = (v) => (typeof Lang !== 'undefined' && Lang.dec ? Lang.dec(v) : String(v));   // (a decimal number: 0,42 / 0.42)
   const ord = (n) => (typeof Lang !== 'undefined' && Lang.ord ? Lang.ord(n) : n + '.');   // (a place: 3. / 3rd)
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -130,7 +131,7 @@ const Zabava = (function () {
     netSetup() { each(f => f.netSetup && f.netSetup()); },
     stop() { cardClose(); each(f => f.stop && f.stop(R)); R = null; },
     // for the novelties
-    on, forced, auto, tr, ord, esc, el, part, save, cardOpen, cardClose, resAdd,
+    on, forced, auto, tr, ord, dec, esc, el, part, save, cardOpen, cardClose, resAdd,
     get G() { return G; }, get race() { return R; }, get ctx() { return C; }, get card() { return card; }, get list() { return F; },
   };
   return api;
