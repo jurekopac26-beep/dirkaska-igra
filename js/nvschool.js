@@ -417,14 +417,15 @@ const NVSchool = (function () {
       if (gap < -0.2) return R.fail('through the red board');
       if (R.hold(kmh(P) < 1, 0.6, dt)) { D.gap = gap; R.win(); } },
     grade: (R) => { const g = R.data.gap; return g <= 6 ? 1 : g <= 12 ? 2 : g <= 20 ? 3 : 4; } };
-  // ROAD 10 · the roundabout: the park's first plaza, once round the fountain anticlockwise, out to the next plaza
+  // ROAD 10 · the roundabout: the park's middle plaza (C; the first, F, is the drift ring on its hill), down lane 1 into it, once round the
+  // fountain anticlockwise (it on your left), out down lane 2 to the next plaza
   const RB = () => (typeof NVPark !== 'undefined' && NVPark.J) || null;
   T.round = { hint: 'Into the roundabout, once round the fountain (on your left), out to the next plaza.', lim: [14, 18, 25],
-    at: () => [72, 3, Math.atan2(-10, -10)],
-    step(R, P, dt) { const J = RB(); if (!J) return R.fail('no roundabout'); const [cx, cz, r] = J.PL.F, d = Math.hypot(P.x - cx, P.z - cz), w = d < r + 8 ? wind(R, P, [cx, cz], 'w') : R.data.w || 0;
+    at: () => { const J = RB(), a = J ? J.LANES[1][4] : [64, -101], b = J ? J.LANES[1][5] : [66, -115]; return [a[0], a[1], Math.atan2(b[1] - a[1], b[0] - a[0])]; },
+    step(R, P, dt) { const J = RB(); if (!J) return R.fail('no roundabout'); const [cx, cz, r] = J.PL.C, d = Math.hypot(P.x - cx, P.z - cz), w = d < r + 8 ? wind(R, P, [cx, cz], 'w') : R.data.w || 0;
       if (w > 0.6) return R.fail('the wrong way round: keep the fountain on your left');
       const n = Math.min(1, -w / (2 * Math.PI)); R.hint(n > 0.85 ? 'Out to the next plaza.' : `Round the fountain: ${Math.round(n * 100)} %`);
-      const [ex, ez] = J.LANES[1][3]; if (Math.hypot(P.x - ex, P.z - ez) < 6) { if (-w < 2 * Math.PI * 0.8) return R.fail('out too soon: once round the fountain'); R.win(); } } };
+      const [ex, ez] = J.LANES[2][3]; if (Math.hypot(P.x - ex, P.z - ez) < 6) { if (-w < 2 * Math.PI * 0.8) return R.fail('out too soon: once round the fountain'); R.win(); } } };
 
   // the licences' tasks in the menu's order (null: not built yet, START says V IZDELAVI)
   const TASKS = { c: [T.lap, T.startStop, T.brakeLine, T.slalom, T.eight, T.reversePark, T.parallel, T.cross, T.estop, T.round, T.laneChange, T.examRoad], m: M, k: K };

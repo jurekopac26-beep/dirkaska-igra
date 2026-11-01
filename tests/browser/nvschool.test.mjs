@@ -147,11 +147,13 @@ try {
   T.check('gravel eight: twice round each pole, one each way: done', ok(ge), JSON.stringify(ge));
   const hb = await drive('m', 9, [[AR.x - 14, AR.z + 5, 10], [AR.x + 6, AR.z + 5, 10]].concat(ring(AR.x + 6, AR.z, Math.PI / 2, -0.5, 5, 6)).concat([[AR.x - 18, AR.z - 5, 10]]));
   T.check('handbrake turn: round the post and back over the line: done', ok(hb), JSON.stringify(hb));
-  // ROAD 10 · the roundabout: down lane 0, once round the fountain anticlockwise, out down lane 1
-  const J = await page.evaluate(() => NVPark.J), [fx, fz, fr] = J.PL.F;
-  const rbt = [[62, -7, 9], [fx + fr * 0.8, fz + 2, 9]].concat(ring(fx, fz, Math.atan2(2, fr * 0.8), -1.15, fr, 9)).concat([J.LANES[1][1].concat(9), J.LANES[1][2].concat(9), J.LANES[1][3].concat(9)]);
-  const ro = await drive('c', 9, rbt);
-  T.check('the roundabout: once round the fountain, out to the next plaza: done', ok(ro), JSON.stringify(ro));
+  // ROAD 10 · the roundabout (the park's middle plaza C): down lane 1, once round the fountain anticlockwise, out down lane 2; then out at once
+  const J = await page.evaluate(() => NVPark.J), [fx, fz, fr] = J.PL.C, e = J.LANES[1][6], a0 = Math.atan2(e[1] - fz, e[0] - fx);   // (lane 1's last point is the plaza's middle: in at the one before)
+  const out2 = [J.LANES[2][1].concat(9), J.LANES[2][2].concat(9), J.LANES[2][3].concat(9)];
+  const ro = await drive('c', 9, [J.LANES[1][5].concat(9), J.LANES[1][6].concat(9)].concat(ring(fx, fz, a0, -1.44, fr, 9)).concat(out2));
+  T.check('the roundabout: once round the fountain (on the left), out to the next plaza: done', ok(ro), JSON.stringify(ro));
+  const ro2 = await drive('c', 9, [J.LANES[1][5].concat(9), J.LANES[1][6].concat(9)].concat(ring(fx, fz, a0, -0.44, fr, 9)).concat(out2));
+  T.check('the roundabout: out at the first exit (not once round): failed', ro2.place === 4 && /too soon/.test(ro2.why), JSON.stringify(ro2));
 
   // 3. the result card: PONOVI starts it again; NAZAJ: the school's floor, its menu at ROAD LICENCE; the places kept
   await page.evaluate(() => { __game.resume && __game.resume(); });
