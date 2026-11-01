@@ -36,8 +36,15 @@
     } catch (_) { return false; }
   }
   const darkTipOff = () => { try { return localStorage.getItem('tdgp-darktip') === 'off'; } catch (_) { return false; } };
-  // the game in Chrome on Android (an intent: Samsung Internet hands it to the system; without Chrome the same address again)
-  const chromeUrl = () => { const u = location.origin + location.pathname; return 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end'; };
+  // shown once a visit: the tab's session (the garage and the game's own reloads are the same visit; without storage: this page)
+  let darkMem = false;
+  const darkTold = () => { try { return darkMem || sessionStorage.getItem('tdgp-darktold') === '1'; } catch (_) { return darkMem; } };
+  const setDarkTold = (v) => { darkMem = v; try { if (v) sessionStorage.setItem('tdgp-darktold', '1'); else sessionStorage.removeItem('tdgp-darktold'); } catch (_) { /* memory only */ } };
+  // the game in Chrome on Android (an intent: Samsung Internet hands it to the system; without Chrome the same address again), with the
+  // address it was opened with: game.js takes a friend's challenge or ghost from the hash and clears it as it starts (the garage's way
+  // back, zaslon and avto, stays behind)
+  const ARRIVED = (() => { try { const P = new URLSearchParams(location.search); P.delete('zaslon'); P.delete('avto'); const q = P.toString(); return (q ? '?' + q : '') + location.hash; } catch (_) { return ''; } })();
+  const chromeUrl = () => { const u = location.origin + location.pathname + ARRIVED; return 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=' + location.protocol.slice(0, -1) + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end'; };
 
   /* ---------------- icons ---------------- */
   const cupPath = (f, s) => '<path d="M9.5 4.5h13v7.5a6.5 6.5 0 0 1-13 0z" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/><path d="M9.6 7H5.8a4.2 4.2 0 0 0 4.6 5.8M22.4 7h3.8a4.2 4.2 0 0 1-4.6 5.8" fill="none" stroke="' + s + '" stroke-width="2.2" stroke-linecap="round"/><path d="M14.3 18h3.4v5h-3.4z" fill="' + s + '"/><path d="M10.5 23.5h11v3.8h-11z" fill="' + f + '" stroke="' + s + '" stroke-width="1.2"/>';
@@ -1021,7 +1028,7 @@
   }
 
   /* ---------------- the game's side ---------------- */
-  let ready = false, want = null, carFrom = false, darkTold = false;
+  let ready = false, want = null, carFrom = false;
   const flush = () => { if (!ready || !want) return; const n = want; want = null; show(n); };
   function show(name) { try { showNow(name); } catch (e) { fail(e); } }
   function showNow(name) {
@@ -1030,7 +1037,7 @@
     carFrom = false;
     if (name === 'title') {
       screen = 'title'; titleSub = null; sheet = null;
-      if (!darkTold && forcedDark() && !darkTipOff()) { darkTold = true; sheet = darkSheet; }   // (once a visit, the first time the title is up)
+      if (!darkTold() && forcedDark() && !darkTipOff()) { setDarkTold(true); sheet = darkSheet; }   // (once a visit, the first time the title is up)
     }
     else {
       const cur = gameTrack();
@@ -1044,6 +1051,7 @@
     want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); clearTimeout(preT);
+    if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
   }
@@ -1070,5 +1078,5 @@
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id), chrome: chromeUrl() }) };
 })();

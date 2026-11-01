@@ -2,9 +2,10 @@
 // such a browser does to each way of painting (temni-nacin.html). Chromium's own force dark with prefers-color-scheme light is that mode:
 // every element darkened whatever its color-scheme says, the probe (the system colour Canvas in a light element) dark.
 // - a plain browser, and force dark that respects the game's color-scheme (prefers dark, Chrome's auto-dark): no notice, no link
-// - forced: the title opens "Colours too dark?" once a visit (Samsung Internet: its settings; on Android: Open in Chrome; elsewhere: the
-//   browser's settings), OK closes it, the link under the title opens it again, "Don't show this again" is kept over a reload (the link
-//   stays); the notice fits upright and on its side
+// - forced: the title opens "Colours too dark?" once a visit (Samsung Internet: its settings; on Android: Open in Chrome, with the address
+//   the game was opened with; elsewhere: the browser's settings), OK closes it, a reload in the same tab does not bring it back, a notice
+//   the game hid at once comes back with the title, the link under the title opens it again, "Don't show this again" is kept over a
+//   reload (the link stays); the notice fits upright and on its side
 // - temni-nacin.html: its verdict and its ten rows of fields, in a plain and in a forced browser
 //   node tests/browser/darktip.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -18,7 +19,8 @@ const SH = 'const root = document.getElementById("menu-host").shadowRoot;';
 const ev = (page, body) => page.evaluate(new Function(SH + body));
 const ready = (page) => page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
 const state = (page) => ev(page, 'const s = root.querySelector(".sheet.dtip"); return { sheet: !!s, link: !!root.querySelector("[data-act=\\"dark-tip\\"]"), text: s ? s.textContent : "", chrome: !!root.querySelector(".sheet.dtip [data-act=\\"chrome\\"]") };');
-const open = (browser, scheme, vp, ua) => openGame(browser, PAGE, { intro: 2 }, vp || { width: 412, height: 915 }, { menu: true, context: Object.assign({ colorScheme: scheme }, ua ? { userAgent: ua } : {}) });
+const open = (browser, scheme, vp, ua, rest) => openGame(browser, PAGE + (rest || ''), { intro: 2 }, vp || { width: 412, height: 915 }, { menu: true, context: Object.assign({ colorScheme: scheme }, ua ? { userAgent: ua } : {}) });
+const reload = async (page) => { await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 180000 }); await ready(page); await page.waitForTimeout(300); };
 try {
   // 1. no notice where the browser leaves the game's colours alone
   for (const [name, browser, scheme] of [['a plain browser', plain, 'light'], ['a plain browser, dark', plain, 'dark'], ['force dark with prefers dark (respects color-scheme: dark)', forced, 'dark']]) {
@@ -29,9 +31,10 @@ try {
     await ctx.close();
   }
 
-  // 2. forced, as Samsung Internet on a phone: the notice once a visit, OK, the link, Don't show this again over a reload
+  // 2. forced, as Samsung Internet on a phone: the notice once a visit, Open in Chrome, OK, a reload, hidden at once, the link, Don't show
+  // this again over a reload
   {
-    const { ctx, page, errors } = await open(forced, 'light', null, SAMSUNG);
+    const { ctx, page, errors } = await open(forced, 'light', null, SAMSUNG, '?x=1#y=2');
     await ready(page); await page.waitForTimeout(300);
     const s = await state(page);
     T.check('forced (Samsung Internet, Android): the title opens "Colours too dark?" with Samsung Internet\'s settings and Open in Chrome',
@@ -39,18 +42,28 @@ try {
     await page.waitForTimeout(600);   // (the sheet slides up first)
     const fit = await ev(page, 'const r = root.querySelector(".sheet.dtip").getBoundingClientRect(), b = root.querySelector(".sheet.dtip .go").getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight + 1 && b.bottom <= innerHeight + 1;');
     T.check('the notice fits the phone upright (412 × 915), its OK on the screen', fit);
+    const intent = await page.evaluate(() => Menu.debug().chrome), u = srv.base + '/index.html?x=1#y=2';
+    T.check('Open in Chrome: an intent for Chrome with the address the game was opened with and its scheme; without Chrome the same address',
+      intent === 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=' + new URL(u).protocol.slice(0, -1) + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end', intent);
     await page.click('.sheet.dtip .go[data-act="close-sheet"]'); await page.waitForTimeout(250);
     await page.evaluate(() => { Menu.show('title'); }); await page.waitForTimeout(250);
     const s2 = await state(page);
     T.check('OK closes it; the title again in the same visit: no notice, the link still there', !s2.sheet && s2.link, JSON.stringify(s2));
+    await reload(page);
+    const s4 = await state(page);
+    T.check('a reload in the same tab (the garage\'s way back, the game\'s update) is the same visit: no notice by itself, the link there', !s4.sheet && s4.link, JSON.stringify(s4));
+    await page.click('[data-act="dark-tip"]'); await page.waitForTimeout(250);
+    await page.evaluate(() => { Menu.hide(); Menu.show('title'); }); await page.waitForTimeout(250);
+    T.check('a notice the game hid at once (a friend\'s challenge over the title): the title opens it again', (await state(page)).sheet);
+    await page.click('.sheet.dtip .go[data-act="close-sheet"]'); await page.waitForTimeout(250);
     await page.click('[data-act="dark-tip"]'); await page.waitForTimeout(250);
     T.check('the link "Colours too dark?" opens it again', (await state(page)).sheet);
     await page.click('[data-act="dark-never"]'); await page.waitForTimeout(250);
     const off = await page.evaluate(() => localStorage.getItem('tdgp-darktip'));
     T.check('"Don\'t show this again" closes it and is kept', off === 'off' && !(await state(page)).sheet, String(off));
-    await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 180000 }); await ready(page); await page.waitForTimeout(300);
+    await page.evaluate(() => sessionStorage.clear()); await reload(page);
     const s3 = await state(page);
-    T.check('after a reload: no notice by itself, the link still there; no errors', !s3.sheet && s3.link && !errors.length, JSON.stringify({ s3, errors }));
+    T.check('after a reload, even in a new visit: no notice by itself, the link still there; no errors', !s3.sheet && s3.link && !errors.length, JSON.stringify({ s3, errors }));
     await ctx.close();
   }
 
