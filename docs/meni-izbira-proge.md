@@ -31,8 +31,8 @@ Od zgoraj navzdol:
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen, lokalni testi zeleni; uporabnik potrdil 1. 11. 2026, pull request #239 (na `main`, ko so testi na GitHubu zeleni) |
-| 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | |
+| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | na main (PR #239, 1. 11. 2026) |
+| 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | narejen, lokalni testi zeleni; pull request #244 (na `main`, ko so testi na GitHubu zeleni) |
 | 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | |
 | 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | |
@@ -43,6 +43,14 @@ Od zgoraj navzdol:
 - `vTrack()` v `js/menu.js`: glava (`.thead`: hiška `data-act="home"` na naslovnico, `.where` država, kraj in višina `heightOf` (`MENU.heads`, sicer vrh proge), globus je zaenkrat ikona), oder z vremenom ob desnem robu (`.wxv`, `weather:dry|rain|change|storm`, spodaj *···* odpre *Race options*), vrstica `.trow` (*Opponents* iz `G.rivals(d)`, v kronometru *Gold time*, v policijskem lovu *Police*), prostor `.yard` (tabla `.sign` z državo, testna proga z oznako *TEST*; avto `.car` = `pick-car`: slika iz `assets/cars/img` ali `G.carPic()` iz salona z izrezanim ozadjem), soseda `.nb` (`track:-1` / `track:1`, zastava ob drogu, zadnji stolpec raztegnjen: `flagFill`), noga.
 - Skupin ni več (`group`, `D.groups`, `.groups`, `.card`, `.arrow`, `.pcount` odstranjeni); seznam `TRACKS()` = vse proge načina, razvrščene po `MENU.lens` (`tools/menu-lens.js`, test `tests/menu-lens.test.js`). Novi igralec začne na prvi pravi progi seznama (Trois-Rivières).
 - Kamera ostaja stikalo 1/2 (sklop 4), okvirček `.hud` preleta je na tem zaslonu skrit. Uvod pred dirko bere vrstico (`cardRect` → `#s-track .trow`).
+
+### Sklop 2: kaj je narejeno
+
+- **Zastave:** uvod pred dirko in vikend (`.ix-flag`, `flagSvgOf`) imata zastavo iz `assets/flags` (vseh 20 držav, v svojem razmerju, višina 20 px); slovar `FLAGS` (8 narisanih) je odstranjen. Drugje v igri držav ni (zastave ob Nürburgu so okras sveta).
+- **Globus v glavi** (`globe` v `js/menu.js`): Zemlja (majhna Blue Marble `assets/geo/earth-s.webp`, 1024 × 512, 75 KB; iz `earth.webp`), obrnjena h kraju proge, država zlata, bel obroček okoli kraja; enkrat na progo na platno (44 px, 2–3-kratna gostota), ob novem izrisu zaslona se vrne isto platno; dokler se Zemlja ne naloži, ikona. Obrisi: `GEO.outlines` (17 držav) in `MENU.globe.outlines` (Anglija, Francija, Italija; Havaji k ZDA za Mauna Keo): Natural Earth 1:50m, orodje `tools/menu-globe.mjs`. Kraji: `GEO.tracks` (40 prog) in `MENU.globe.places` (Bathurst, Crystal Palace, Rio: start iz datoteke proge). Testna proga brez kraja: sredina države, brez obročka; brez države (Bakreni gozd, Gromski rt): ikona. Videz `GLOBE_LOOK` (1 cela Zemlja, 2 bliže, 3 bliže in država sveti): vprašanje C.
+- **Graf višine** (`graphOf`, `graphOn`): čez spodnji rob odra, 72 px, samo pri kameri 1 (prelet; do sklopa 4 tudi pri progi brez preletnega posnetka, ko je izbrana 1: na zemljevidu in na maketi); prevoženi del do pike obarvan po strmini (`GRADE`: 1 % zelena … 12 % temno rdeča, navzdol zelena), naprej tanka bela črta, levo najnižja, desno najvišja višina, spodaj km. Strmina je iz višin igre na njenih razdaljah (Pikes Peak je skrajšan: resnične višine na razdaljah igre bi dale 3-krat večjo strmino). Pika gre s preletom (`R.fly.frames`), s točko na zemljevidu (ura SVG: 1,6 s, nato krog v 15 s, reli 11 s) ali enako hitro po maketi. Višine: `R.prof` (resnične z `routeMaps`), za 6 prog brez poti `MENU.profs` (`tools/menu-lens.js`; Bathurst 708 m, Crystal Palace 66 m, Rio 5 m nad morjem na startu, iz datotek prog). Glava zato pokaže vrh tudi tem progam (Bathurst 873 m). Imena preleta se ne pokažejo pod grafom; zemljevid pusti prostor zanj.
+- **Testi:** nov `tests/menu-globe.test.js` (zastave, obrisi, kraji v svoji državi, `earth-s.webp`), `tests/menu-lens.test.js` (višine `MENU.profs`), `tests/browser/menu.test.mjs` (globus na Nürburgu: Nemčija zlata; graf: višine, km, 121 barv, raste s preletom, samo pri 1; vsaka proga vsakega načina ima graf in globus; zastava ZDA v uvodu; graf v vseh štirih postavitvah).
+- **Stran Odločitve:** naslov v `CLAUDE.md` (`1jxNEJ27WiYpCAw3YbRXEV`) se ne odpre; prava stran je https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR (tam m1–m7).
 
 ## Opombe iz pregleda kode (main @ c186d26)
 
@@ -65,11 +73,12 @@ Od zgoraj navzdol:
 | # | Vprašanje | Privzeto |
 |---|---|---|
 | A | Slog vremena zgoraj desno (1–6 v predstavitvi) | 1 |
-| 1 | Pull request za vsak sklop? | vprašaj pred odprtjem |
-| 2 | Kamera 3 v živo ali posnet video? | posnet video |
+| 1 | Pull request za vsak sklop? | uporabnik (1. 11.): seja sama odpre PR in ga združi, ko so testi zeleni; sklopi 2–6 zaporedno |
+| 2 | Kamera 3 v živo ali posnet video? | uporabnik (1. 11.): posnet video |
 | 3 | Katera kamera ob odprtju? | 1 zemljevid |
 | 4 | Ime avta? | samo v garaži |
 | 5 | Proga brez preleta ali videa zavoja | maketa proge |
 | 6 | Testne proge: oznaka TEST na tabli? | da |
 | 7 | Kam gredo dodatne možnosti (letni čas, čas dneva, dolžina) iz sedanjega lista vremena in *Gold time* kronometra? | uporabnik (30. 10.): *···* pod vremenom ostane; *Gold time* na mestu *Opponents* |
 | B | Višina v glavi: 1,611 m (vrh iz podatkov igre), 1,388 m ali brez? | uporabnik (30. 10.): 1,388 m (`MENU.heads` v `js/menu-data.js`); druge proge vrh proge, dokler uporabnik ne reče drugače |
+| C | Videz globusa v glavi: 1 cela Zemlja, 2 bliže, 3 bliže in država sveti (stran Odločitve, m7) | 1 |
