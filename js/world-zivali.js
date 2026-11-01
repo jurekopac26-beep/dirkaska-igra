@@ -274,14 +274,21 @@
   /* ---------------- the woods (the instanced trees of the world, from o.cull) ---------------- */
   const HCELL = 12;
   function woods(o) {
-    const trees = new Map(), m4 = new THREE.Matrix4(), hOf = new Map(); let n = 0;
-    for (const e of o.cull || []) {
-      const im = e.m; if (!im || !im.isInstancedMesh || im.name === 'crowd') continue;
+    const trees = new Map(), m4 = new THREE.Matrix4(), hOf = new Map(), w4 = new THREE.Matrix4(); let n = 0;
+    // the instanced plants: those on the vegetation list (o.cull: IChunks), and any other instanced mesh whose shape is mostly green (a world's
+    // own forest: Ouninpohja's spruces, Nikko's broadleaves), not the crowds' figures nor the car parks' cars
+    const reg = new Set((o.cull || []).map(e => e.m)), list = [];
+    o.root.updateMatrixWorld(true);
+    o.root.traverse(m => { if (!m.isInstancedMesh || m.name === 'crowd' || m.name === 'life' || !m.geometry.attributes.position) return;
+      if (reg.has(m)) { list.push(m); return; }
+      const ca = m.geometry.attributes.color; if (!ca) return; let r = 0, g = 0, b = 0; for (let k = 0; k < ca.count; k++) { r += ca.getX(k); g += ca.getY(k); b += ca.getZ(k); }
+      if (g > r * 1.08 && g > b * 1.08) list.push(m); });
+    for (const im of list) {
       let h0 = hOf.get(im.geometry.attributes.position); if (h0 == null) { const pa = im.geometry.attributes.position.array; let lo = 1e9, hi = -1e9; for (let k = 1; k < pa.length; k += 3) { lo = Math.min(lo, pa[k]); hi = Math.max(hi, pa[k]); } hOf.set(im.geometry.attributes.position, h0 = hi - lo); }
-      const el = m4.elements;
+      const el = w4.elements;
       for (let k = 0; k < im.count; k++) {
-        im.getMatrixAt(k, m4); const sy = Math.hypot(el[4], el[5], el[6]); if (h0 * sy < 3.2) continue;   // (trees: not bushes, tufts or stones)
-        const x = el[12] + im.position.x, z = el[14] + im.position.z, key = Math.floor(x / HCELL) + ',' + Math.floor(z / HCELL);
+        im.getMatrixAt(k, m4); w4.multiplyMatrices(im.matrixWorld, m4); const sy = Math.hypot(el[4], el[5], el[6]); if (h0 * sy < 3.2) continue;   // (trees: not bushes, tufts or stones)
+        const x = el[12], z = el[14], key = Math.floor(x / HCELL) + ',' + Math.floor(z / HCELL);
         let L = trees.get(key); if (!L) trees.set(key, L = []); L.push(x, z, k, im); n++;
       }
     }
@@ -325,8 +332,11 @@
       if (!forest && !(open && Z.open && !wantThing && A.clearance(x, z) > 14)) continue;   // (in the woods; out in the open only where the track's country has open land)
       const yaw = Math.atan2(-side * T.nx[i], -side * T.nz[i]) + (R() - 0.5) * 0.9;   // (facing the road, more or less)
       if (forest) {   // the glade, and a window in the trees towards the road (the camera above the road sees into it)
-        cut(W, x, z, rr + 2.4);
-        if (!deep) for (const f of [0.38, 0.7]) { const ob = side * (bar + b * (1 - f)); if (b * f > 3) cut(W, T.px[i] + T.nx[i] * ob, T.pz[i] + T.nz[i] * ob, rr * 0.8 + 1); }
+        cut(W, x, z, rr + 3.8);   // (wide enough that the crowns round it, 3-5 m across on tall trees, leave it open to the sky)
+        if (!deep) for (const f of [0.25, 0.5, 0.75, 1]) {   // (the window slants back along the road: the chase camera looks at the glade from behind and above)
+          const sb = i * T.ds - 24 * f, j = T.idx(((sb % T.len) + T.len) % T.len), bj = side > 0 ? T.br[j] : T.bl[j], ob = side * (bj + Math.max(1.5, b * (1 - f)));
+          cut(W, T.px[j] + T.nx[j] * ob, T.pz[j] + T.nz[j] * ob, rr * 0.9 + 2.4);
+        }
       }
       const g = chunks.get(x, z);
       if (wantThing) { put(g, tpl(kind), x, h - 0.05, z, yaw, 1); stats.things++; }
