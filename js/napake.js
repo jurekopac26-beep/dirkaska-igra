@@ -910,9 +910,9 @@ const Napake = (function () {
     const st = PZ.get(rec);
     if (st ? rec.frames.length !== st.nQ : e.fin && N.on) pzShrani(rec, e.fin);
   }
-  // js/game.js: the player leaves a race (Glavni meni, Ponovi dirko, PONOVI IGRO … tapped; the pad; a special mission's buttons). A race over
-  // the finish is left at once (pusti keeps it); one before its end asks first (Ne by default). true: the question is up, naprej() after the
-  // answer (prej(): before it shows, the race paused)
+  // js/game.js: the player leaves a race (Glavni meni, Ponovi dirko, PONOVI IGRO … tapped; the pad). A race over the finish (a special
+  // mission over) is left at once (pusti keeps it); one before its end asks first (Ne by default). true: the question is up, naprej() after
+  // the answer (prej(): before it shows, the race paused)
   function izhod(naprej, prej) {
     if ($('nk-vpr')) return true;   // (asked already: that answer first)
     const e = G && G.dirka && G.dirka(), rec = G && G.rec();

@@ -1054,9 +1054,10 @@
     rrp: rrpOf, open: rrpOpen,
     view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); },   // (tools/posnetek.mjs: the car followed, the camera)
     // Zadnji posnetki: the race whose recording may be kept (not with a friend, not the new map's free driving, not the driving school's
-    // lesson, which has no replay, not a file opened) and whether its player reached the finish (caught by the police: no); busy: a race
-    // driven or a replay playing (the packing waits)
-    dirka: () => (race && recd && bg === 'race' && !recd.file && recd.trk === track && !(mp && mp.race) && !race.nv && !school && race.player ? { fin: !!race.player.finished && !race.player.busted } : null),
+    // lesson, which has no replay, not a file opened) and whether it is done: its player over the finish (caught by the police: no), or a
+    // special mission over with its result (done or failed: its result's buttons leave it as ever); busy: a race driven or a replay playing
+    // (the packing waits)
+    dirka: () => (race && recd && bg === 'race' && !recd.file && recd.trk === track && !(mp && mp.race) && !race.nv && !school && race.player ? { fin: (!!race.player.finished && !race.player.busted) || !!(MS.run && MS.run.res) } : null),
     zaseden: () => !!(race && bg === 'race' && ((screen === 'none' && !paused && phase !== 'done' && !replay) || (replay && replay.play)))
   };
   const NK_LEAVE = new Set(['to-title', 'restart', 'over-again', 'to-school', 'to-champ']);   // (the actions that leave a race: a race before its finish asks first, Napake.izhod)
@@ -4444,7 +4445,7 @@
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {
-      if (MS.over()) { phase = 'done'; Sfx.setRunning(false); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); Napake.cilj(); return; }   // (a special mission done or failed: its own result, js/missions.js; over the finish line: kept among Zadnji posnetki)
+      if (MS.over()) { phase = 'done'; Sfx.setRunning(false); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); Napake.cilj(); return; }   // (a special mission done or failed: its own result, js/missions.js; kept among Zadnji posnetki)
       if (!race.player.finished && race.isOut(race.player)) { const Q = race.player.wreck && race.player.wreck.rule; if (Q && Q.over) gameOver(); else retired(); return; }   // (the player retired: the results; two wheels off under the wheel rule: KONEC IGRE)
       if (!race.player.finished && !school) commTick(dt);
       if (race.player.finished) {
@@ -5507,7 +5508,7 @@
   const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
   const MisBridge = {
     start(id) { nv = null; if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null; ensureTrack(id, () => newRace()); },
-    act: (a) => leaveAct(a), fmt: (t) => fmt(t, true), msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), click: () => { Sfx.resume(); Sfx.click(); },   // (a mission's buttons: leaving its race asks first, as the game's own)
+    act: (a) => onAction(a), fmt: (t) => fmt(t, true), msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), click: () => { Sfx.resume(); Sfx.click(); },
     get phase() { return phase; },
   };
 
