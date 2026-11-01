@@ -661,7 +661,7 @@
     /* (group 7: js/missions/m04.js, m08.js, m17.js, m26.js) */
     'Vlečna služba': 'Tow service', 'Na vrhu je obstal pokvarjen avto. Vlečno vozilo ga mora spraviti v dolino po strmi cesti.': 'A car has broken down at the summit. The tow truck has to bring it down to the valley on the steep road.',
     'Pokvarjen avto zvleci v dolino brez nove škode.': 'Tow the broken car down to the valley without new damage.', 'Zaviraj nežno, da se vrv ne strga.': 'Brake gently so the strap does not snap.',
-    'NAPETOST VRVI': 'STRAP TENSION', 'ŠKODA NA AVTU': 'DAMAGE TO THE CAR', 'DO DOLINE': 'TO THE VALLEY',
+    'NAPETOST VRVI': 'STRAP TENSION', 'ŠKODA NA AVTU': 'DAMAGE TO THE CAR',
     'Posadka pripenja pokvarjeni avto na vlečno roko …': 'The crew is hooking the broken car onto the tow arm …', 'Vrv je prenapeta: spusti zavoro!': 'The strap is too tight: let go of the brake!',
     'Prehitro skozi ovinek: avto zadaj zanaša.': 'Too fast through the bend: the car behind is swinging out.', 'Prehitro: pred ovinkom boš moral močno zavirati.': 'Too fast: you will have to brake hard before the bend.',
     'Vrv se je strgala: avto je zdrsnil po bregu.': 'The strap snapped: the car slid down the slope.', 'Pokvarjeni avto je preveč poškodovan.': 'The broken car is too badly damaged.',
