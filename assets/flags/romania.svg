@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Romania</title>
+  <!-- Ratio 2:3. Three equal vertical bands blue, yellow, red (Constitution, art. 12; Law 75/1994).
+       Colours: Pantone 280 C #002B7F, 116 C #FCD116, 186 C #CE1126. -->
+  <rect x="0" y="0" width="300" height="600" fill="#002B7F"/>
+  <rect x="300" y="0" width="300" height="600" fill="#FCD116"/>
+  <rect x="600" y="0" width="300" height="600" fill="#CE1126"/>
+</svg>
