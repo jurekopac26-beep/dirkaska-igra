@@ -148,7 +148,7 @@
       attach(stage, m, entering) {
         if (entering) { wet = m === 'rain'; a = wet && !calm ? 1 : 0; }
         stage.classList.toggle('rainy', wet);   // (before anything measures the new stage, so the weather already shown does not fade in again)
-        (stage.querySelector('.dio') || stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map, the intro's video)
+        const ds = stage.querySelectorAll('.dio'); (ds.length ? ds[ds.length - 1] : stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map (the one on top, while one fades in over another), the intro's video)
         if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random') timer = setInterval(() => show(!wet), 2600); }
         void stage.offsetWidth;
         show(m === 'rain' ? true : m === 'dry' ? false : wet);
@@ -227,12 +227,11 @@
     const a = pts[0], b = pts[pts.length - 1], A = M.alt;
     return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
   }
-  function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it at an even pace (its glow a gradient: cheap to move)
+  function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
-      '<path class="rt-o" d="' + d + '"/><path class="rt" id="rt-' + id + '" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
-      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g><set attributeName="opacity" to="1" begin="1.6s"/>' +
-      '<animateMotion dur="' + (rally ? 11 : 15) + 's" begin="1.6s" repeatCount="indefinite"><mpath href="#rt-' + id + '"/></animateMotion></g>';
+      '<path class="rt-o" d="' + d + '"/><path class="rt" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
+      '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g></g>';
   }
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
     return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
@@ -325,6 +324,86 @@
     }
   }
   window.addEventListener('resize', fitMaps);
+  /* The point running along the route is one run, whichever of the two views shows it (1 the flyover, 2 the map), as one shot seen from two
+     cameras: a switch between them, or the stage drawn again (a sheet, the weather), goes on from the same moment of the run with the point at
+     the same place, not from the start; another track, or the track screen entered anew, starts a new run. On a track with a flyover the run
+     is the flyover's own (its video is the clock while it plays; R.fly.frames[k][0] is the point's place in frame k, metres along the run), so
+     on the map the point runs as in the flyover: it speeds up from the start, waits at the finish while the flyover's camera rises over it,
+     then goes round again. A track with only its map: an even pace, 15 s a run (a rally stage 11 s). */
+  const run = { id: '', t: 0, at: 0, on: false };   // the run's time t (s) at the moment at (performance.now()); on: going on from there, else held at t
+  const runNow = () => run.t + (run.on ? (performance.now() - run.at) / 1000 : 0);
+  function runSet(t, on) { run.t = t; run.at = performance.now(); run.on = on; }
+  const runDur = (id) => { const F = RT[id].fly, t = trackById(id); return F ? F.frames.length / F.fps : t && t.group === 'rally' ? 11 : 15; };
+  // a new run: on the flyover held at its start until the video plays; on the map the route draws itself first (1.6 s), then the point sets off
+  function runFresh(id, view) { run.id = id; if (view === 1) runSet(0, false); else runSet(-1.6, true); }
+  // where the point is at the run's time s, as a part of the run (0 the start, 1 the finish)
+  function runAt(id, s) {
+    const R = RT[id], Dr = runDur(id); s = ((s % Dr) + Dr) % Dr;
+    if (!R.fly) return s / Dr;
+    const F = R.fly.frames, x = Math.min(F.length - 1, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2, Math.floor(x)));
+    return (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len;
+  }
+  // that place on the map (its route's points lie evenly along the run, routes.py)
+  function routePt(T, f) {
+    const P = T.route, x = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i;
+    return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u];
+  }
+  // a view of the stage that waited for its picture (pend: the video playing at the run's moment, the map's pictures loaded) fades in over the
+  // view shown before it, which then goes
+  function reveal(box) {
+    if (!box.classList.contains('pend')) return;
+    box.classList.remove('pend');
+    setTimeout(() => { const st = box.parentNode; if (st) for (const o of st.querySelectorAll('.dio.away')) o.remove(); }, 350);
+  }
+  // the map's pictures loaded (or failed), or 1.5 s at most
+  function mapLoaded(box, done) {
+    const ims = [...box.querySelectorAll('image')]; let n = ims.length, fin = false;
+    const end = () => { if (!fin) { fin = true; done(); } }, one = () => { if (--n <= 0) end(); };
+    for (const im of ims) { im.addEventListener('load', one, { once: true }); im.addEventListener('error', one, { once: true }); }
+    if (!n) end(); else setTimeout(end, 1500);
+  }
+  // the stage after a render (prev: the views it had before, the last one on top). The same view of the same track as before (a sheet opened,
+  // the weather changed) is kept as it is: the flyover plays on, the map's point runs on. The other view of the same track (the switch 1 / 2)
+  // waits for its picture over the one shown, then fades in; the run goes on in it. Another track, or the screen entered anew: a new run.
+  function stageViews(prev, entering) {
+    const st = $('#track-stage', app), box = st && $('.dio', st), t = curTrack();
+    const kind = (b) => b.classList.contains('fly') ? 1 : b.classList.contains('topmap') ? 2 : 0, key = (b) => kind(b) + ':' + (b.dataset.route || b.dataset.map);
+    if (!box || !t || !kind(box)) { run.id = ''; runSet(0, false); return; }   // (a model of the land: nothing runs on it)
+    prev = prev.filter(b => kind(b) && (b.dataset.route || b.dataset.map) === t.id);   // (this track's views)
+    if (entering || run.id !== t.id || !prev.length) { runFresh(t.id, kind(box)); return; }
+    const pend = prev.find(b => b.classList.contains('pend')), cur = prev.filter(b => b !== pend).pop();
+    if (pend && key(pend) === key(box)) { box.replaceWith(pend); if (cur) { cur.classList.add('away'); pend.before(cur); } return; }   // (asked for again while still on its way)
+    if (cur && key(cur) === key(box)) {   // the same view: kept as it is (the route still drawing itself: on from where it was)
+      box.replaceWith(cur); cur.classList.remove('away');
+      const p = !cur.__drawn && $('path.rt', cur); if (p) p.style.animationDelay = (-Math.max(0, 1.6 + runNow())).toFixed(2) + 's';
+      return;
+    }
+    if (kind(box) === 2) { box.classList.add('drawn'); box.__drawn = 1; }   // (the map comes in with its route drawn, its point where the run is)
+    if (!cur) return;
+    box.classList.add('pend'); cur.classList.add('away'); box.before(cur);
+    if (kind(box) === 2) mapLoaded(box, () => reveal(box));   // (a flyover: flyLabels plays it from the run's moment, then reveals it)
+  }
+  // the map's point, each frame at the run's place (and a flyover still on the stage, going or coming: the run is its video's)
+  let mapRaf = 0;
+  function mapDots() {
+    cancelAnimationFrame(mapRaf); mapRaf = 0;
+    const step = () => {
+      mapRaf = 0;
+      const boxes = app.querySelectorAll('#track-stage .dio.topmap[data-map]'); if (!boxes.length) return;
+      if (!run.on && !$('#track-stage .dio.fly', app)) runSet(run.t, true);   // (the map alone: the run goes on from where the flyover held it)
+      const s = runNow();
+      for (const box of boxes) {
+        const id = box.dataset.map, dot = box.__dot || (box.__dot = $('.rt-dot', box));
+        if (id !== run.id || !dot) continue;
+        if (s < 0) { dot.setAttribute('opacity', '0'); continue; }   // (the route still drawing itself)
+        const p = routePt(RT[id].top, runAt(id, s));
+        dot.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); dot.setAttribute('opacity', '1');
+        if (!box.__drawn) { box.__drawn = 1; box.classList.add('drawn'); }
+      }
+      mapRaf = requestAnimationFrame(step);
+    };
+    if (app) step();
+  }
   // the flyover: the names over it (each of its frames says where the start, the finish and the places are), the place reached and its height
   // in the corner, a short dip at the loop
   let flyRaf = 0;
@@ -333,14 +412,28 @@
     const box = $('#track-stage .dio.fly', app); if (!box) return;
     const id = box.dataset.route, R = RT[id], F = R.fly, M = D.routeMaps[id] || {}, v = $('video', box), lab = $('.flab', box), L = R.len, H0 = hudOf(R, M);
     const hud = $('.hud', box), hb = $('b', hud), hs = $('small', hud);
-    // the flyover starts at its first frame (the point at the start), not wherever autoplay's clock reached while the video loaded: it is
-    // played only once its first frame is ready (the poster, with the point at the start, shows until then), so the glowing point is at the
-    // start the moment the flyover shows
+    // the flyover plays from the run's moment: on a new run from its first frame (the point at the start), not wherever autoplay's clock
+    // reached while the video loaded (it is played only once that frame is ready; the poster, with the point at the start, shows until then);
+    // after the map from the map's moment (the video is held there until it plays, the map staying over it until then). From then on its time
+    // is the run's
     if (v && !v.__fly) {
       v.__fly = 1;
-      const go = () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
-      if (v.readyState >= 2) go(); else v.addEventListener('loadeddata', go, { once: true });
+      const play = () => { if (!v.isConnected) return; const p = v.play(); if (p && p.catch) p.catch(() => {}); };   // (a video the stage has dropped meanwhile stays paused)
+      const start = () => {
+        if (!v.isConnected) return;
+        const s = Math.max(0, runNow()) % runDur(id);
+        runSet(s, false);
+        if (s > 0.05) { v.addEventListener('seeked', play, { once: true }); try { v.currentTime = s; } catch (_) { play(); } }
+        else if (v.readyState >= 2) { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } play(); }
+        else v.addEventListener('loadeddata', () => { try { v.currentTime = 0; } catch (_) { /* not seekable yet */ } play(); }, { once: true });
+      };
+      v.addEventListener('playing', () => { if (!v.isConnected) { v.pause(); return; } v.__live = 1; reveal(box); });
+      const fail = () => { if (!v.__live && box.classList.contains('pend')) reveal(box); };   // (no video, or none yet: its poster after all)
+      v.addEventListener('error', fail, { once: true }); setTimeout(fail, 5000);
+      if (v.readyState >= 1) start(); else v.addEventListener('loadedmetadata', start, { once: true });
     }
+    // (the place's name slides in once: not again when the stage is drawn again round the same flyover)
+    if (!hud.__in) { hud.__in = 1; hud.addEventListener('animationend', () => hud.classList.remove('in')); }
     const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
     const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
     const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
@@ -348,11 +441,12 @@
       F.places.map(n => tag('q', n, '')).join('');
     const els = [...lab.children], pd = F.places.map(n => { const q = R.places.find(x => x[0] === n) || R.places.find(x => x[0].indexOf(n) >= 0);   // (the same name first: Zbilje, not Zbilje Grove)
       return q ? q[1] : (n === 'Split 1' ? L / 3 : n === 'Split 2' ? 2 * L / 3 : -1e9); });
-    let last = 0, looped = false, pl = null, al = null;
+    let last = 0, looped = false, pl = hb.textContent || null, al = null;
     const step = () => {
       if (!v.isConnected) return;
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
+      if (v.__live && run.id === id) runSet(t, !v.paused);   // (the video playing is the run's clock)
       const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
       v.style.opacity = hud.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
       const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
@@ -439,10 +533,11 @@
   let preT = 0;   // (the track shown: its land on the globe loaded after a moment)
   function render(keepScroll) {
     if (!app) return;
-    const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
+    const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0, prev = [...app.querySelectorAll('#track-stage .dio')];   // (the stage's views: kept or faded over, stageViews)
     for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro')) n.remove();   // (the intro, if there is one, stays over everything)
     app.classList.toggle('on-title', screen === 'title');
     app.insertAdjacentHTML('afterbegin', VIEWS[screen]());
+    if (screen === 'track') stageViews(prev, shown !== 'track');
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
     if (keepScroll) { const n = $('.scroll', app); if (n) n.scrollTop = top; }
     if (screen === 'title') { const pn = $('.title-panel', app); if (!titleSub) panelH = pn.offsetHeight; else if (panelH) pn.style.minHeight = panelH + 'px'; }   // (Single race and Career open in the same frame, as tall)
@@ -452,7 +547,7 @@
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
-    flyLabels(); fitMaps();
+    flyLabels(); mapDots(); fitMaps();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -684,7 +779,7 @@
   }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
-    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf);
+    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf);
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
     wx.detach();
@@ -1006,7 +1101,7 @@
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
     if (!app) return;
-    wx.detach(); cancelAnimationFrame(flyRaf); clearTimeout(preT);
+    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); clearTimeout(preT);
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
   }
@@ -1033,5 +1128,5 @@
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id) }) };
+  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, group, trackIdx, tracks: TR.map(t => t.id), run: { id: run.id, t: runNow(), on: run.on } }) };
 })();

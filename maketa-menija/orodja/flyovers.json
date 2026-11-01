@@ -4,11 +4,6 @@
   {
    "kbps": 900,
    "speed": 400,
-   "back": 520,
-   "up": 330,
-   "ahead": 260,
-   "fogNear": 900,
-   "fogFar": 3400,
    "places": [
     {
      "n": "Lake Jasna",
@@ -34,18 +29,14 @@
    "alt": [
     810,
     1611
-   ]
+   ],
+   "season": "autumn"
   }
  ],
  [
   "pikes",
   {
    "speed": 280,
-   "back": 360,
-   "up": 230,
-   "ahead": 180,
-   "fogNear": 650,
-   "fogFar": 2600,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -75,11 +66,6 @@
   {
    "kbps": 900,
    "speed": 380,
-   "back": 420,
-   "up": 270,
-   "ahead": 210,
-   "fogNear": 760,
-   "fogFar": 2900,
    "places": [
     {
      "n": "Lake Naarajärvi",
@@ -182,11 +168,6 @@
   {
    "kbps": 850,
    "speed": 200,
-   "back": 260,
-   "up": 165,
-   "ahead": 130,
-   "fogNear": 560,
-   "fogFar": 2200,
    "places": []
   }
  ],
@@ -195,11 +176,6 @@
   {
    "kbps": 850,
    "speed": 230,
-   "back": 300,
-   "up": 190,
-   "ahead": 150,
-   "fogNear": 640,
-   "fogFar": 2500,
    "places": []
   }
  ],
@@ -208,11 +184,6 @@
   {
    "kbps": 900,
    "speed": 250,
-   "back": 320,
-   "up": 205,
-   "ahead": 160,
-   "fogNear": 700,
-   "fogFar": 2700,
    "places": [
     {
      "n": "Steep Climb",
@@ -234,11 +205,6 @@
   {
    "kbps": 900,
    "speed": 540,
-   "back": 700,
-   "up": 450,
-   "ahead": 350,
-   "fogNear": 1200,
-   "fogFar": 4600,
    "places": [
     {
      "n": "Flugplatz",
@@ -264,11 +230,6 @@
   {
    "kbps": 450,
    "speed": 225,
-   "back": 292,
-   "up": 184,
-   "ahead": 146,
-   "fogNear": 630,
-   "fogFar": 2430,
    "places": [
     {
      "n": "Zbilje",
@@ -298,11 +259,6 @@
   {
    "kbps": 450,
    "speed": 260,
-   "back": 338,
-   "up": 213,
-   "ahead": 169,
-   "fogNear": 728,
-   "fogFar": 2808,
    "places": [
     {
      "n": "San Antonio Creek",
@@ -332,11 +288,6 @@
   {
    "kbps": 450,
    "speed": 175,
-   "back": 228,
-   "up": 144,
-   "ahead": 114,
-   "fogNear": 490,
-   "fogFar": 1890,
    "places": [
     {
      "n": "Rock Creek Valley",
@@ -358,11 +309,6 @@
   {
    "kbps": 450,
    "speed": 140,
-   "back": 182,
-   "up": 115,
-   "ahead": 91,
-   "fogNear": 392,
-   "fogFar": 1512,
    "places": [
     {
      "n": "Rocky Creek Bridge",
@@ -388,11 +334,6 @@
   {
    "kbps": 450,
    "speed": 130,
-   "back": 169,
-   "up": 107,
-   "ahead": 84,
-   "fogNear": 364,
-   "fogFar": 1404,
    "places": []
   }
  ],
@@ -401,11 +342,6 @@
   {
    "kbps": 450,
    "speed": 205,
-   "back": 266,
-   "up": 168,
-   "ahead": 133,
-   "fogNear": 574,
-   "fogFar": 2214,
    "places": [
     {
      "n": "Lake Waiau",
@@ -431,11 +367,6 @@
   {
    "kbps": 450,
    "speed": 175,
-   "back": 228,
-   "up": 144,
-   "ahead": 114,
-   "fogNear": 490,
-   "fogFar": 1890,
    "places": [
     {
      "n": "Pavement Ends",
@@ -461,11 +392,6 @@
   {
    "kbps": 450,
    "speed": 251,
-   "back": 326,
-   "up": 206,
-   "ahead": 163,
-   "fogNear": 703,
-   "fogFar": 2711,
    "places": [
     {
      "n": "Viaduct",
@@ -491,11 +417,6 @@
   {
    "kbps": 450,
    "speed": 130,
-   "back": 169,
-   "up": 107,
-   "ahead": 84,
-   "fogNear": 364,
-   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 2",
@@ -517,11 +438,6 @@
   {
    "kbps": 450,
    "speed": 130,
-   "back": 169,
-   "up": 107,
-   "ahead": 84,
-   "fogNear": 364,
-   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 2",
@@ -543,11 +459,6 @@
   {
    "kbps": 450,
    "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "East Fort",
@@ -573,11 +484,6 @@
   {
    "kbps": 450,
    "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 1",
@@ -603,11 +509,6 @@
   {
    "kbps": 450,
    "speed": 130,
-   "back": 169,
-   "up": 107,
-   "ahead": 84,
-   "fogNear": 364,
-   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 1",
@@ -629,11 +530,6 @@
   {
    "kbps": 450,
    "speed": 156,
-   "back": 203,
-   "up": 128,
-   "ahead": 101,
-   "fogNear": 437,
-   "fogFar": 1685,
    "places": [
     {
      "n": "Turn 1",
@@ -658,11 +554,6 @@
   {
    "kbps": 450,
    "speed": 104,
-   "back": 135,
-   "up": 85,
-   "ahead": 68,
-   "fogNear": 291,
-   "fogFar": 1123,
    "places": [
     {
      "n": "Turn 1",
@@ -685,11 +576,6 @@
   {
    "kbps": 450,
    "speed": 87,
-   "back": 113,
-   "up": 71,
-   "ahead": 57,
-   "fogNear": 244,
-   "fogFar": 940,
    "places": [
     {
      "n": "Turn 3",
@@ -711,11 +597,6 @@
   {
    "kbps": 450,
    "speed": 286,
-   "back": 372,
-   "up": 235,
-   "ahead": 186,
-   "fogNear": 801,
-   "fogFar": 3089,
    "places": [
     {
      "n": "Saint Patricks Creek",
@@ -745,11 +626,6 @@
   {
    "kbps": 450,
    "speed": 283,
-   "back": 368,
-   "up": 232,
-   "ahead": 184,
-   "fogNear": 792,
-   "fogFar": 3056,
    "places": [
     {
      "n": "Mount Blowhard",
@@ -779,11 +655,6 @@
   {
    "kbps": 450,
    "speed": 128,
-   "back": 166,
-   "up": 105,
-   "ahead": 83,
-   "fogNear": 358,
-   "fogFar": 1382,
    "places": [
     {
      "n": "Turn 2",
@@ -805,11 +676,6 @@
   {
    "kbps": 450,
    "speed": 149,
-   "back": 194,
-   "up": 122,
-   "ahead": 97,
-   "fogNear": 417,
-   "fogFar": 1609,
    "places": [
     {
      "n": "Elephant Rock",
@@ -839,11 +705,6 @@
   {
    "kbps": 450,
    "speed": 286,
-   "back": 372,
-   "up": 234,
-   "ahead": 186,
-   "fogNear": 801,
-   "fogFar": 3089,
    "places": [
     {
      "n": "Hairpin 1",
@@ -873,11 +734,6 @@
   {
    "kbps": 450,
    "speed": 188,
-   "back": 244,
-   "up": 154,
-   "ahead": 122,
-   "fogNear": 526,
-   "fogFar": 2030,
    "places": [
     {
      "n": "Turn 1",
@@ -903,11 +759,6 @@
   {
    "kbps": 450,
    "speed": 177,
-   "back": 230,
-   "up": 145,
-   "ahead": 115,
-   "fogNear": 496,
-   "fogFar": 1912,
    "places": [
     {
      "n": "Tunnel",
@@ -937,11 +788,6 @@
   {
    "kbps": 450,
    "speed": 178,
-   "back": 231,
-   "up": 145,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Curve ほ (5)",
@@ -971,11 +817,6 @@
   {
    "kbps": 450,
    "speed": 88,
-   "back": 114,
-   "up": 72,
-   "ahead": 57,
-   "fogNear": 246,
-   "fogFar": 950,
    "places": [
     {
      "n": "Harjun nousu",
@@ -1005,11 +846,6 @@
   {
    "kbps": 450,
    "speed": 385,
-   "back": 500,
-   "up": 316,
-   "ahead": 250,
-   "fogNear": 1078,
-   "fogFar": 4158,
    "places": [
     {
      "n": "Curva 1 · 2,271 m",
@@ -1039,11 +875,6 @@
   {
    "kbps": 450,
    "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 8 · 1,209 m",
@@ -1069,11 +900,6 @@
   {
    "kbps": 450,
    "speed": 166,
-   "back": 216,
-   "up": 136,
-   "ahead": 108,
-   "fogNear": 465,
-   "fogFar": 1793,
    "places": [
     {
      "n": "Katu-Yaryk Pass · 1,206 m",
@@ -1099,11 +925,6 @@
   {
    "kbps": 450,
    "speed": 172,
-   "back": 224,
-   "up": 141,
-   "ahead": 112,
-   "fogNear": 482,
-   "fogFar": 1858,
    "places": [
     {
      "n": "Bend 66 · 839 m",
@@ -1129,11 +950,6 @@
   {
    "kbps": 450,
    "speed": 128,
-   "back": 166,
-   "up": 105,
-   "ahead": 83,
-   "fogNear": 358,
-   "fogFar": 1382,
    "places": [
     {
      "n": "Turn 3 · Khao Lam",
