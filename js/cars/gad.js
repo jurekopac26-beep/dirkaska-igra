@@ -112,7 +112,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         //      piece on the road not flat); the bumperettes ----
         for (const sd of [-1, 1]) for (const z of [0.48, 0.35]) { const tp = sd < 0 ? 'tailL' : 'tailR', q = [[-1.984, 0.59, sd * z], [-1.984, 0.545, sd * (z - 0.026)], [-1.95, 0.545, sd * (z + 0.026)]];
           K.face(sd > 0 ? q : q.reverse(), [0.3, 0.04, 0.04], { host: tp }); K.tailLamp(-1.98, 0.56, sd * z, 0.084, 0.084, { round: true, host: tp }); }
-        K.face([[-1.985, 0.445, 0.21], [-1.985, 0.445, -0.21], [-1.982, 0.555, -0.21], [-1.982, 0.555, 0.21]], [0.93, 0.93, 0.9], { part: 'plate' });
+        K.face([[-1.985, 0.445, -0.21], [-1.985, 0.445, 0.21], [-1.982, 0.555, 0.21], [-1.982, 0.555, -0.21]], [0.93, 0.93, 0.9], { part: 'plate' });   // (facing back)
         K.part('trunk', () => K.deli('krilo', () => {}));   // (the garage's wing on the boot lid: mounts.krilo; none stock)
         K.part('bumperR', () => { for (const sd of [-1, 1]) K.cyl([-1.975, 0.4, sd * 0.28], [-1.975, 0.4, sd * 0.56], 0.022, CH, { n: 5 }); },
           { hinge: [[-1.9, 0.3, -0.4], [-1.9, 0.3, 0.4]] });
