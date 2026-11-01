@@ -28,6 +28,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
 | 18 | Zgodovina napak | končano |
+| 19 | Zadnji posnetki | končano |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -345,6 +346,18 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - **Velikost:** mala slika in besedilo sta okoli 20–30 KB, 80 starejših zapisov okoli 2 MB; polne slike (20) kot doslej.
   - **Testi:** `tests/browser/napake.test.mjs` (Zgodovina v vrstici označevanja in v izbiri, zapis po Deli brez slik, ročno stanje, ponovno Deli, Kopiraj besedilo, pokonci in ležeče, meja 100/20), `napake-slika.test.mjs` (seznam v Nastavitvah: dotik, Izbriši).
   - **Opomba (moje odločitve):** Kopiraj besedilo stanja ne spremeni (kot doslej; poslano je, ko gre slika); ponovno deljenje iz zgodovine slik ne odstrani ne glede na kljukico. Gumb Zgodovina ni v vrstici gumbov posnetka (tam ni prostora), ampak v vrstici označevanja, ki se odpre z Označi.
+
+### Sklop 19 · Zadnji posnetki — 1,5–2 h · 1. 11. 2026
+
+- **Naročilo uporabnika** (1. 11. 2026): »sedaj ko želim javiti napake kliknem posnetek do sem in označi, vendar če zaprem jaz tega posnetka kasneje ne morem več urejati, naredi da si igra shrani zadnjih 10 posnetkov iger, ki so prišle do cilja, tako bom lahko urejal igre za nazaj več naenkrat«; nato: »po vsaki nedokončani igri, preden greš ven iz igre, naj te vpraša: želiš shraniti to igro za kasnejšo analizo? Da / Ne, privzeto je označen Ne«, »če uporabnik izbere Da, se tudi ta nedokončana igra shrani med zadnjih 10« in »če igro dokončaš, se že samodejno shrani med zadnjih 10«. Veja `claude/awesome-archimedes-0u5x7e`.
+- **Prej:** posnetek dirke je bil samo v pomnilniku in ga po izhodu iz dirke ni bilo več (razen ročno shranjene datoteke `.rrp`); trenutki zbirke so ostali samo kot slika v Zgodovini napak.
+- **Narejeno:**
+  - **Shranjevanje** (`js/napake.js`, IndexedDB `rra-posnetki` / `posnetki`, zadnjih **10**, `PZ_MAX`): dirka, v kateri je igralčev avto prišel do cilja (`race.player.finished`, ne ulovljen od policije), se shrani sama ob rezultatih (`Napake.cilj` iz `finishRace` in ob koncu posebne misije) in znova ob izhodu, če je medtem tekla naprej (`Napake.pusti` iz `toTitle` in `newRace`). Zapis ima datoteko `.rrp` (enako kot Shrani v nastavitvah orodja) in zbirko tega posnetka: trenutke z oznakami, zapisi in slikami (JPEG) ter potrjene in zavržene samodejne zastavice. Glava in vzorci se vzamejo takoj, pakiranje teče po kosih po ~8 ms in nikoli med vožnjo ali predvajanjem posnetka (`zaseden`); ko gre igra v ozadje, se dokonča takoj.
+  - **Vprašanje ob izhodu** (`Napake.izhod`, `vprasaj`): Glavni meni, Ponovi dirko (tudi Ponovi krog in gumb za ponovitev vožnje na zaslonu v kronometru; ta najprej odpre pavzo), PONOVI IGRO, Šola vožnje, Lestvica prvenstva in gumbi rezultata posebne misije iz igre, ki ni prišla do cilja (tudi po odstopu in KONEC IGRE): »Želiš shraniti to igro za kasnejšo analizo?« **Da** / **Ne**; označen in izbran je **Ne** (Enter ali A na ploščku vzame označenega, puščice ga premaknejo, Esc in B sta Ne; tipke igre, npr. P, med vprašanjem ne delujejo). Da: igra gre med zadnjih 10 kot Nedokončana. Brez vprašanja: igra pod 2 s posnetka (`RRP.min`), dirka s prijateljem, nova mapa, šola vožnje (nima posnetka), orodje izklopljeno, neposredni klici `onAction` (testi): vprašanje je samo na poti igralca (dotik gumba, plošček, gumbi misije: `leaveAct` v `js/game.js`).
+  - **Seznam Zadnji posnetki** (`zadnji`, `#nk-pz`; Nastavitve orodja → Zadnji posnetki (n/10) → Odpri, gumb Zadnji posnetki v Zgodovini napak): najnovejši prvi; slika (prvi trenutek zbirke ali slika proge iz menija), proga, datum, način, krogi, dolžina, mesto, število trenutkov, velikost, **Do cilja** (zeleno) ali **Nedokončana** (oranžno). **.rrp** prenese datoteko (za Clauda: `tools/posnetek.mjs`), **✕** izbriše (drugi dotik v 3 s).
+  - **Odpiranje:** dotik odpre posnetek kot datoteko (`rrpOpen`) z njegovo zbirko: trenutki so spet na časovnici, Dodaj k zbirki nadaljuje številčenje, zapis v seznamu in v Zgodovini napak (isti `id`) se posodobi; stanje v Zgodovini ostane, dokler se zbirka ne spremeni. Končaj vrne seznam (izbira zbirke čez njim, če se je zbirka spremenila), da se odpre naslednji posnetek.
+  - **Testi:** nov `tests/browser/napake-zadnji.test.mjs` (18 preverjanj).
+  - **Opomba (moje odločitve):** »do cilja« pomeni, da je igralčev avto prečkal ciljno črto (dirka, kronometer, kvalifikacijski krog, izziv, pobeg policiji, misija čez ciljno črto); odstop, KONEC IGRE, ulovljen od policije in neuspela misija ob izhodu vprašajo. Kvalifikacijski krog je svoja igra s svojim posnetkom. Preskoči kvalifikacije ne vpraša (igra gre naprej z dirko). Posnetki iz datotek `.rrp` se v seznam ne dodajo.
 
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
