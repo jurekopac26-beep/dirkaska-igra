@@ -56,8 +56,8 @@
 
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
-    { id: 'elim', name: 'Elimination', sub: 'Every 30 seconds the last cars are out. Be the last one left.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
-    { id: 'pursuit', name: 'Pursuit', sub: 'You drive the patrol car. Stop the fugitive before it gets away.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' }]);   // (Zabava: docs/zabava.md)
+    { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
+    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' }]);   // (Zabava: docs/zabava.md)
   const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit' };
   const W_SET = ['dry', 'rain', 'random'];   // (the rain over the picture: none, falling, coming and going)
   // the first sentences of the game's description of a track (the card has room for about two lines)
@@ -164,7 +164,7 @@
     const subHead = (title, sub) => '<div class="t-subhead"><button class="sq" data-act="tsub:" aria-label="Back to the main menu">' + I.back + '</button><div><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div></div>';
     const card = (cls, act, cur, name, sub, chip, im) => '<button class="mode ' + cls + '" aria-current="' + cur + '" data-act="' + act + '"><span class="tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small>' + (chip ? '<em class="chip">' + esc(chip) + '</em>' : '') + '</span><span class="im">' + im + '</span><i class="tick" aria-hidden="true">' + I.check + '</i></button>';
     if (titleSub === 'single') {
-      h += subHead('Single race', 'Choose a mode') + '<div class="t-sub">' + MODES.map(m => card('m-' + m.id, 'mode:' + m.id, mode === m.id, m.name, m.sub, m.chip, '<img src="' + m.img + '" alt="">')).join('') + '</div>';
+      h += subHead('Single race', 'Choose a mode') + '<div class="t-sub' + (MODES.length > 4 ? ' many' : '') + '">' + MODES.map(m => card('m-' + m.id, 'mode:' + m.id, mode === m.id, m.name, m.sub, m.chip, '<img src="' + m.img + '" alt="">')).join('') + '</div>';
     } else if (titleSub === 'career') {
       const c = G.career(), ch = G.champ();
       const four = [

@@ -1,5 +1,5 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
-// Leaderboard, Credits), the four modes, the tracks of every mode in one list that goes round (the real ones from the shortest to the
+// Leaderboard, Credits), the six modes (Elimination and Pursuit: Zabava), the tracks of every mode in one list that goes round (the real ones from the shortest to the
 // longest, then the test tracks; each with its picture: the map from above, or the model of the land), the track step's head, row of
 // numbers, road sign and neighbours (docs/meni-izbira-proge.md), the weather and the race options, the car (the game's own screen and back; the car tapped there: the garage and
 // back to it, its Back the track step), a race from the menu (the intro
@@ -38,7 +38,7 @@ try {
     // 2. the modes
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
-    T.check('Single race: the four modes', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel"]', JSON.stringify(m));
+    T.check('Single race: the six modes (Elimination and Pursuit: Zabava, docs/zabava.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit"]', JSON.stringify(m));
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest, then the test tracks; equal
     //    lengths by id), every track with its picture, the list going round (after the last track the first again)
@@ -340,7 +340,7 @@ try {
     T.check(`${w}x${h}: the main menu fits the screen, every button inside its panel`, title.top >= -0.5 && title.bottom <= title.h + 0.5 && title.over === 0, JSON.stringify(title));
     await click(page, 'single');
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
-    T.check(`${w}x${h}: the four modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 4, JSON.stringify(modes));
+    T.check(`${w}x${h}: the six modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 6, JSON.stringify(modes));
     await click(page, 'mode:race'); await click(page, 'track:-1');
     await page.waitForTimeout(500);
     // the track step: upright the head, the stage (about half the screen), the row, the yard, the neighbours and the foot one under the

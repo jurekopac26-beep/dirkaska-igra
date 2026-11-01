@@ -522,6 +522,14 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 @keyframes sub-in { from { opacity: 0; transform: translateX(16px); } }
 .t-sub .mode { flex: 1 1 0; min-height: 104px; max-height: 150px; }
 .t-sub.four .mode { min-height: 92px; }
+.t-sub.many { gap: 8px; }   /* (Zabava: six modes, Elimination and Pursuit: lower cards upright, two columns without the pictures on its side) */
+.t-sub.many .mode { min-height: 58px; max-height: 112px; }
+.t-sub.many .mode .tx { padding: 6px 0; gap: 3px; }
+.t-sub.many .mode .tx b { font-size: 18px; }
+.t-sub.many .mode .tx small { font-size: 11.5px; }
+@media (orientation: landscape) { .t-sub.many { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); } .t-sub.many .mode { min-height: 0; max-height: none; grid-template-columns: minmax(0, 1fr); padding-left: 16px; } .t-sub.many .mode .im { display: none; } .t-sub.many .mode .tx small { display: none; } }
+.m-elim::before { background: linear-gradient(180deg, #ffd34d 0 50%, #d63030 50% 100%); }
+.m-pursuit::before { background: linear-gradient(180deg, #2f6bff 0 50%, #ff3b3b 50% 100%); }
 .t-sub .mode .tx { padding: 10px 0; gap: 5px; }
 .t-sub .mode .tx b { font-size: 21px; }
 .t-sub .chip { white-space: normal; line-height: 1.25; text-align: left; }
