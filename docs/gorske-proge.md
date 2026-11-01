@@ -11,7 +11,7 @@ Načrt sklopa šestnajstih kratkih prog zunaj Evrope, vsaka iz druge države: 4 
 - **1. 11.**: izogibaj se vsemu, kar je lahko pravno sporno (razdelek Pravna varnost).
 - **1. 11.**: zamenjane so vse proge, katerih glavnega elementa iz kamere ni videti, in preravne proge; proga mora biti zavita. Na seznamu je iz vsake države le ena proga. Milford Sound je s celim predorom.
 - **1. 11.**: z delom v kodi se začne, ko uporabnik napiše »začni«.
-- **1. 11.**: proga 1 ima svoj pull request; proge 2–16 gredo v **4 skupinah** (A: 2–4, B: 5–7, C: 8–13, D: 14–16), vsaka skupina je ena seja, ena veja `gorske-proge/skupina-<X>` in en pull request, ki gre na `main`, ko so zeleni vsi testi. Skupine gredo ena za drugo (naslednja se začne, ko je prejšnja na `main`). Seja skupine prebere repozitorij in načrt enkrat, gradnik družine naredi in takoj uporabi pri vseh progah skupine.
+- **1. 11.**: proga 1 ima svoj pull request; proge 2–16 gredo v **5 skupinah** (A: 2–4, B: 5–7, C1: 8–10, C2: 11–13, D: 14–16), vsaka skupina je ena seja, ena veja `gorske-proge/skupina-<X>` in en pull request, ki gre na `main`, ko so zeleni vsi testi. Skupine gredo ena za drugo (naslednja se začne, ko je prejšnja na `main`). Seja skupine prebere repozitorij in načrt enkrat, gradnik družine naredi in takoj uporabi pri vseh progah skupine.
 - **1. 11.**: napor: proga 1 (z gradniki) **max**, proge 2–16 **xhigh**. Izvedba: koordinacijska seja pred zagonom seje proge naredi vejo `gorske-proge/<NN>-<id>` iz `origin/main` z enim začasnim commitom, ki v `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` na `xhigh`, in sejo zažene s te veje. Seja proge ta commit vrne (`git revert`), preden pull request označi kot pripravljen; koordinacijska seja pred združitvijo preveri, da pull request `.claude/settings.json` ne spreminja.
 - **1. 11.**: verigo vodi koordinacijska seja (tista, ki je napisala ta načrt) z naporom medium: čaka na teste (`subscribe_pr_activity`), združi pull request, posodobi Stanje in zažene naslednjo progo. Seja proge pull request odpre kot osnutek, ga označi kot pripravljenega, ko so lokalno zeleni povezani testi, in koordinacijski seji pošlje eno vrstico (`send_message` na `@parent`). Če test na GitHubu pade, ji koordinacijska seja pošlje napako in seja proge jo popravi.
 - Zemljevid od zgoraj, prelet in helikopterski posnetek se ne delajo (po `CLAUDE.md` so po želji pozneje). Slika za meni je obvezna.
@@ -134,6 +134,15 @@ Odločitev uporabnika (1. 11. 2026): čim manj tokenov, kakovost ostane. Največ
 
 **Kjer ne varčujemo**: pregled grafike s kamere pokonci in ležeče, meje obremenitve telefona, povezani testi lokalno in vsi na GitHubu, pravna pravila.
 
+## Koordinacija (odločitev uporabnika 1. 11. 2026)
+
+Verigo vodi majhna koordinacijska seja z naporom medium (`.claude/settings.local.json`), ki ne nosi dolge zgodovine dogovora. Uporabnik pošilja čim manj vmesnih sporočil. Koraki koordinacijske seje:
+1. Ko seja proge ali skupine sporoči, da je pull request pripravljen: `subscribe_pr_activity` in čakanje na dogodke (brez preverjanja v zanki).
+2. Če test pade: seji skupine pošlje samo izsek napake (`send_message`), ta popravi.
+3. Ko so zeleni vsi testi in pull request ne spreminja `.claude/settings.json`: združi na `main`, v tabeli Stanje (commit na `main`) označi korak »na main« in naslednjega »v delu«.
+4. Naslednji korak: veja `gorske-proge/skupina-<X>` iz `origin/main` z enim začasnim commitom (`.claude/settings.json`: `env.CLAUDE_CODE_EFFORT_LEVEL` = `xhigh`), nato `create_session` s te veje (model `claude-opus-5-5`, `outcome_branch` ta veja), navodilo »Naredi skupino X po docs/gorske-proge.md«. Seja skupine začasni commit vrne, preden pull request označi kot pripravljen, in koordinacijski seji pošlje eno vrstico.
+5. Uporabniku ob vsakem koraku na `main` ena kratka vrstica; ob »stop« ustavi.
+
 ## Stanje
 
 Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi skupino X po docs/gorske-proge.md«. Proga 1 nadaljuje seja, ki je 31. 10. začela Mount Norquay in je bila ustavljena, preden je karkoli spremenila; zato ima veja proge 1 staro ime.
@@ -143,5 +152,6 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 | 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | v delu |
 | A | 2 Nozawa Onsen, 3 Medeu, 4 Auli | `gorske-proge/skupina-A` | čaka |
 | B | 5 Guoliang, 6 Milford Sound, 7 Corvo Branco | `gorske-proge/skupina-B` | čaka |
-| C | 8 Yungas, 9 Hana, 10 Ella, 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C` | čaka |
+| C1 | 8 Yungas, 9 Hana, 10 Ella | `gorske-proge/skupina-C1` | čaka |
+| C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | čaka |
 | D | 14 Punta del Este, 15 Green Point, 16 Puerto Madero | `gorske-proge/skupina-D` | čaka |
