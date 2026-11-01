@@ -24,6 +24,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         bumperR: { m: 3, f: 0.12 },
       },
     },
+    // where the garage's parts go (js/deli.js): the rims only (a kart has no wing to swap and no lamps)
+    mounts: { platisca: {} },
     // the look: no loft (a kart is tubes and plastic): every piece drawn in an explicit part (KIT API v1, render.js): the frame, the floor
     // tray, the seat, the steering, the engine with its exhaust and the driver in 'body'; the front fairing with its front panel ('nose'), the
     // side pods ('podL' / 'podR'), the plastic rear bumper on its tubes ('bumperR'). Look units = metres (body.len / wid: the vehicle's)
