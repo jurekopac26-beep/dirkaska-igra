@@ -38,7 +38,7 @@
     },
     begin(race, ctx) {
       this.goal = null; this.wait = false; this.told = false; this.x = null;
-      if (!this.fits(race, ctx)) return;
+      if (!Z.on('cilji') || !this.fits(race, ctx)) return;   // (off in the tests, unless a test switches it on: a card would hold their career races on the grid)
       const x = this.x = this.about(race), L = this.pick(x);
       if (!L.length) return;
       this.wait = true;
