@@ -4,6 +4,9 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the garage's head lamp in the place of the slim stock lamp in the bonnet's leading edge: its outline (u out from the car's middle, v up;
+  // metres round z 0.62, y 0.53): every option takes it
+  const SLIT = [[-0.14, -0.025], [0.14, -0.025], [0.14, 0.025], [-0.14, 0.025]];
   VEHICLE_DEFS.push({
     id: 'skorpijon', name: 'ŠKORPIJON H', cat: 'super', ord: 2, drive: 'AWD',
     desc: 'Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti.',
@@ -15,7 +18,25 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 150000, pk: 'unl', field: ['skorpijon'],
     snd: { kind: 'hybrid', hz: 1, loud: 1.1 },
     expect: { t100: [2.07, 2.43], vmax: [302, 321], latG: [2.48, 2.58], d100: [20.2, 22.3] },
-    parts: { set: 'race', ht: 1.12, y0: 0.14, over: { hood: { lx: 0.72 }, trunk: { y: 0.9 }, quarterL: { h: 0.14 }, quarterR: { h: 0.14 }, doorL: { h: 0.15 }, doorR: { h: 0.15 } } },   // (where the look has them: the front lid from the cowl to the nose's step, the engine cover on top; the quarters with the haunches' shoulders and the doors with the canopy's side glass lie as thick as they are)
+    partNames: { headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail light', tailR: 'right tail light' },
+    parts: { set: 'race', ht: 1.12, y0: 0.14,
+      // (as KOLIBRI's: the slim lamps in the bonnet's leading edge parts of their own, mounted on the front lid (they go with it); a hit on
+      // their corner knocks one out. Each half of the light bar across the tail likewise, with its half of the black strip)
+      extra: {
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.15, h: 0.07, lx: 0.94, lz: -0.63, f: 0.4, on: 'hood' },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.15, h: 0.07, lx: 0.94, lz: 0.63, f: 0.4, on: 'hood' },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.4, h: 0.05, lx: -1.0, lz: -0.39, f: 0.69 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.4, h: 0.05, lx: -1.0, lz: 0.39, f: 0.69 },
+      },
+      over: { hood: { lx: 0.72 }, trunk: { y: 0.9 }, quarterL: { h: 0.14 }, quarterR: { h: 0.14 }, doorL: { h: 0.15 }, doorR: { h: 0.15 } } },   // (where the look has them: the front lid from the cowl to the nose's step, the engine cover on top; the quarters with the haunches' shoulders and the doors with the canopy's side glass lie as thick as they are)
+    // where the garage's parts go (js/deli.js, look units): the wing on the tail's deck, in the wing's part (in place of the active wing on
+    // its struts); the head lamps in the place of the slim stock lamps in the bonnet's leading edge (every option in their outline, SLIT),
+    // in the lamps' parts; the rims
+    mounts: {
+      krilo: { x: -2.2, w: 0.78, part: 'wing' },
+      zarometi: { x: 2.199, y0: 0.53, lean: 0.18, zc: 0.62, yc: 0.53, s: 0.3, hosts: ['headL', 'headR'], shape: SLIT, bulge: 0, ringW: 0.008 },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): one loft, the body and the canopy in one: the fenders' crests over the front
     // wheels with the bonnet's valley between them, the canopy (windscreen, side glass, the carbon roof, the rear glass) narrowing back to
     // the engine cover's spine between the haunches, the body pinched behind the doors (the side intakes' black mouths face forward); the
@@ -85,7 +106,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) fc([[2.353, 0.37, sd * 0.31], [2.353, 0.385, sd * 0.72], [2.353, 0.235, sd * 0.68], [2.353, 0.22, sd * 0.31]], B, [1, 0, 0]);
           fc([[2.353, 0.33, -0.22], [2.353, 0.33, 0.22], [2.353, 0.215, 0.2], [2.353, 0.215, -0.2]], B, [1, 0, 0]);
         }, { hinge: [[2.2, 0.2, -0.8], [2.2, 0.2, 0.8]] });
-        for (const sd of [-1, 1]) K.headLamp(2.205, 0.53, sd * 0.62, 0.03, { shape: 'rect', w: 0.28, h: 0.05, ring: B, host: 'hood' });   // (in the bonnet's leading edge)
+        // (in the bonnet's leading edge: parts of their own on the front lid, headL, headR; the garage's in their place: K.deli, mounts.zarometi,
+        // in the stock lamp's black frame: around)
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(2.205, 0.53, sd * 0.62, 0.03, { shape: 'rect', w: 0.28, h: 0.05, ring: B, host: sd < 0 ? 'headL' : 'headR' }); },
+          (n) => { if (n) for (const sd of [-1, 1]) K.box(2.193, 0.493, sd * 0.62, 0.02, 0.074, 0.304, 0, B, null, false, { host: sd < 0 ? 'headL' : 'headR' }); });
         for (const sd of [-1, 1]) D.top([[1.86, sd * 0.2], [2.1, sd * 0.24], [2.1, sd * 0.42], [1.86, sd * 0.46]], B, 0.006);
         // ---- the engine cover's louvres (on the spine, behind the exhausts) ----
         D.top([[-1.22, -0.17], [-1.22, 0.17], [-1.82, 0.17], [-1.82, -0.17]], B, 0.006);
@@ -97,16 +121,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.cyl([-0.985, 0.966, sd * 0.2], [-1.012, 1.018, sd * 0.2], 0.12, CF, { n: 8, capA: null, capB: CF });
         });
         // ---- the active wing raised on its struts over the tail (never crushed, never dented) ----
-        K.part('wing', () => {
+        K.part('wing', () => K.deli('krilo', () => {   // (the garage's wing in its place: K.deli, mounts.krilo)
           K.wingPlank(-2.06, 1.03, -2.36, 1.07, 0.028, -0.8, 0.8, CF);
           for (const sd of [-1, 1]) {
             K.box(-2.2, 0.93, sd * 0.36, 0.16, 0.115, 0.035, 0, B);
             K.endplate([[-2.05, 1.02], [-2.37, 1.055], [-2.38, 1.1], [-2.08, 1.07]], sd * 0.815, 0.012, CF);
           }
-        }, { noCrush: true, noDent: true });
-        // ---- the tail: the light bar right across (the lit lenses are the tail mesh), the mesh in the bumper, the diffuser with its strakes ----
-        K.rect(-2.352, 0.82, 0, 1.56, 0.1, B, { dir: '-x', part: 'body' });
-        for (const sd of [-1, 1]) K.tailLamp(-2.354, 0.82, sd * 0.4, 0.76, 0.05);
+        }), { noCrush: true, noDent: true });
+        // ---- the tail: the light bar right across (the lit lenses are the tail mesh; each half with its half of the black strip a part of
+        //      its own: tailL, tailR), the mesh in the bumper, the diffuser with its strakes ----
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';
+          K.rect(-2.352, 0.82, sd * 0.39, 0.78, 0.1, B, { dir: '-x', host: tp }); K.tailLamp(-2.354, 0.82, sd * 0.4, 0.76, 0.05, { host: tp }); }
         K.grille(-2.352, 0.52, 0, 1.36, 0.18, { dir: -1, slats: 4, col: B, slatCol: CF, slatH: 0.018, part: 'bumperR' });
         K.part('bumperR', () => {   // (the diffuser a ramp under the tail, rising with it to its face; the strakes fins under the ramp)
           K.plate([[-1.9, 0.15, -0.75], [-1.9, 0.15, 0.75], [-2.34, 0.36, 0.75], [-2.34, 0.36, -0.75]], 0.02, B);

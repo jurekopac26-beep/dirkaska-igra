@@ -224,7 +224,7 @@ var DELI = (function () {
   // how far the lamp's ring reaches back (default 0.014, flush in a flat face; a housing standing out of a curved wing: more), socket: the
   // part of the dark socket behind each lamp ('body', seen once a lamp that is a part of its own is knocked out; 'host': its lamp's part),
   // shape: the car's own lamp outline (metres round zc, yc; every option takes it, s then sizes its details), bulge: that lens' dome,
-  // ringW: its ring's width }.
+  // ringW: its ring's width, tilt: the lens and its details lie on the leaning face (a steep nose: MODRAS; else they stand upright) }.
   // Each lamp: its lens (the sub-range that lights up at night) of its own outline, a ring round it, the details in front of the lens
   function zarometi(K, n, m) {
     const s = m.s || 1, hosts = m.hosts || [undefined, undefined];
@@ -244,7 +244,8 @@ var DELI = (function () {
     const at0 = (cz, cy) => { if (!SH) C = [m.zc + cz * s, m.yc + cy * s]; };
     // a point of the lamp's plane (u out, v up, in the reference size): off >= 0 in front of the lens' (upright) front by off (on its dome),
     // off < 0 on the body's face round the lamp (a panel, a frame)
-    const at = (u, v, off) => [off >= 0 ? xAt(C[1]) + 0.01 + off + dome(u * s, v * s) : xAt(C[1] + v * s) - off * 0.5, C[1] + v * s, sd * (C[0] + u * s)];
+    const TL = m.tilt ? 1 : 0;   // (m.tilt: the lens and its details lie on the leaning face too, a lamp on a steep nose; else upright)
+    const at = (u, v, off) => [off >= 0 ? xAt(C[1] + TL * v * s) + 0.01 + off + dome(u * s, v * s) : xAt(C[1] + v * s) - off * 0.5, C[1] + v * s, sd * (C[0] + u * s)];
     const fwd = (P) => { const a = P[0], b = P[1], c = P[2], nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]); K.face(nx < 0 ? P.slice().reverse() : P, col0, o); };
     let col0 = null;
     const face = (pts, col, off) => {
@@ -270,7 +271,7 @@ var DELI = (function () {
         const tri = (Q) => { const a = Q[0], b = Q[1], c = Q[2]; K.face(((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])) < 0 ? Q.slice().reverse() : Q, [0.05, 0.05, 0.055], so); };
         if (SH) { const M = P.reduce((a, q) => [a[0] + q[0] / P.length, a[1] + q[1] / P.length, a[2] + q[2] / P.length], [0, 0, 0]); for (let i = 0; i < P.length; i++) tri([M, P[i], P[(i + 1) % P.length]]); }
         else tri(P); }   // (the socket; the car's own outline: a fan from its middle, it may have a notch)
-      K.headLamp(xAt(C[1]) + 0.006, C[1], sd * C[0], 0.08 * s, { polys: PS, col, ring, ringW: SH ? m.ringW || 0.008 : (ringW || 0.012) * s, ringD: m.depth, bulge: BG, host, d: 0.024 }); };
+      K.headLamp(xAt(C[1]) + 0.006, C[1], sd * C[0], 0.08 * s, { polys: PS, col, ring, ringW: SH ? m.ringW || 0.008 : (ringW || 0.012) * s, ringD: m.depth, bulge: BG, host, d: 0.024, lean: TL * m.lean }); };
     const L = 0.0015;   // (the details: just in front of the lens)
     switch (n) {
       case 1: {   // halogenski: a rounded rectangle, fluted glass, a chrome ring

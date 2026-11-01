@@ -20,7 +20,7 @@ Igralec v garaži (veja z garažo: `garaza.html`, `js/garage3d.js`) kupi in name
 1. **Kaj je nameščeno:** `car.deli = { <id elementa>: <možnost 1..16>, … }` na avtu, ki ga riše `makeCarMesh(car)` in ki vozi (`new Core.Car(model, { deli })`, v dirki `new Core.Race(proga, { playerDeli })`). Element, ki ga ni v `car.deli`, je serijski: avto je narisan in vozi točno kot brez delov (brez polja `deli`). Neznani elementi in možnosti zunaj 1..16 se preskočijo.
 2. **Kam gre del:** `mounts: { <id elementa>: { … } }` v `js/cars/<id>.js` (merilo avta, kot ostale mere v datoteki). Avto brez mesta za element tega elementa ne nariše in garaža ga ne ponudi (`DELI.has(id)` in `M.def.mounts[id]`). Polja:
    - `krilo: { x, w, part, s, top }`: `x` zadnji rob strehe (pokrova motorja, zadnjega dela), `w` polovična širina tam, `part` del, v katerem je narisano (KOLIBRI: `spoiler`), `s` velikost (1: KOLIBRIJEVA; tetiva, višine, debeline; tovornjak 2), `top` [[x, y] …] vrh, na katerem stoji, vzdolž avta in raven počez (strešni deflektor tovornjaka; privzeto streha: `K.topY`).
-   - `zarometi: { x, y0, lean, zc, yc, s, hosts, depth, socket, shape, bulge, ringW }`: ploskev luči (`x` pri višini `y0`, nagnjena nazaj za `lean` na meter), sredina luči (`zc` od sredine avta, `yc`), velikost `s` (1: KOLIBRIJEVA luč, 0,36 × 0,24 m), `hosts` dela leve in desne luči (KOLIBRI: `headL`, `headR`), `depth` kako globoko sega obroč luči nazaj (privzeto 0,014 za ravno ploskev), `socket` del temne odprtine za lučjo (`body` privzeto, `host`: del luči). `shape`: avtova lastna oblika luči (konveksen obris v metrih okrog `zc`, `yc`; PANTER trikotnik v nosu krila, JASTREB prerez steklene kupole spredaj): vsaka možnost dobi to obliko, od možnosti ostanejo barva, obroč in podrobnosti (velikost podrobnosti `s`), `bulge` kako izbočena je leča (kupola), `ringW` širina obroča.
+   - `zarometi: { x, y0, lean, zc, yc, s, hosts, depth, socket, shape, bulge, ringW }`: ploskev luči (`x` pri višini `y0`, nagnjena nazaj za `lean` na meter), sredina luči (`zc` od sredine avta, `yc`), velikost `s` (1: KOLIBRIJEVA luč, 0,36 × 0,24 m), `hosts` dela leve in desne luči (KOLIBRI: `headL`, `headR`), `depth` kako globoko sega obroč luči nazaj (privzeto 0,014 za ravno ploskev), `socket` del temne odprtine za lučjo (`body` privzeto, `host`: del luči). `shape`: avtova lastna oblika luči (konveksen obris v metrih okrog `zc`, `yc`; PANTER trikotnik v nosu krila, JASTREB prerez steklene kupole spredaj): vsaka možnost dobi to obliko, od možnosti ostanejo barva, obroč in podrobnosti (velikost podrobnosti `s`), `bulge` kako izbočena je leča (kupola), `ringW` širina obroča, `tilt` leča in podrobnosti ležijo na nagnjeni ploskvi (strm nos, MODRAS; brez nje stojijo pokonci).
    - `platisca: {}`: platišča na kolesih avta (guma ostane avtova: navadna, terenska, tovornjaška, z belim robom).
    - `ogledala: { x, y, z, w, h, d, z0 }`: sredina serijskega ogledala (desnega; `z` od sredine avta), velikost ohišja (vzdolž, navzgor, navzven), `z0` kje roka sede v karoserijo (privzeto `z − d/2 − 0,05`). Možnost nariše steklo s `K.mirror` (poči, ogledalo se zloži) in ohišje okrog njega v delih `mirrorL`, `mirrorR`.
    - `vrata: { x: [zadaj, spredaj], y: [prag, pas], handle: [x, y, z, w, h], win: [[x, t] …] }`: koža vrat znotraj fug, kljuka, steklo vrat v pasu okna (`t` 0 pas, 1 rob strehe; konveksno, v nasprotni smeri urinega kazalca). Plošča vrat je nalepka na boku karoserije (`K.decal`, gre z vrati), črta in fuge ostanejo nad njo.
@@ -143,6 +143,97 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Superšportni (`perun`, `modras`, `skorpijon`, veja `deli/avti-super`)
+
+Kategorije po vrsti v eni seji (varčni način, odločitev uporabnika 1. 11. 2026): Superšportni, Klasika, Reli, Terenski, Dirkalni, Tovornjaki, Električni, Posebni; vsaka svoja veja `deli/avti-<kategorija>`. Uporabnik je vseh osem potrdil 1. 11. 2026 (stran Odločitve), BLISK s krilom iz garaže. Šest kategorij od Relija naprej gre na `main` v eni zbirni veji (`deli/avti-zbirna`, en pull request in en krog testov, izbira uporabnika 1. 11. 2026); ker morajo po združitvi misij (#233) vsi pull requesti še enkrat skozi teste, sta v njej tudi Superšportni (#234) in Klasika (#235).
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| PERUN | `headL` / `headR` (ozki luči v črnem čelu nosu, `on: 'bumperF'`), `tailL` / `tailR` (rdeča luč z oranžno in belo ob njej), `plate` (`on: 'bumperR'`), `wiperFront` | v delu `wing` namesto velikega krila na stebrih, na zadnjem robu pokrova motorja | v obliki serijske ozke luči (`shape`, reža 0,3 × 0,065 m) |
+| MODRAS | `headL` / `headR` (črno ohišje na poševnini nosu z lečo in dnevno lučjo, `on: 'bumperF'`), `tailL` / `tailR` (šesterokotni grozd z dvema lučema), `wiperFront` | v delu `wing` namesto krila na nosilcih, nad zadnjimi lučmi | v notranjem delu črnega ohišja (`shape`, puščica), leži na poševnini nosu (`lean` 0,97, `tilt`); ohišje ostane črn okvir |
+| ŠKORPIJON | `headL` / `headR` (v sprednjem robu pokrova, `on: 'hood'`), `tailL` / `tailR` (vsaka polovica svetlobnega pasu s svojo polovico črnega traku) | v delu `wing` namesto aktivnega krila, na repu | v obliki serijske ozke luči (`shape`), v serijskem črnem okvirju (`around`) |
+
+- Tablice, brisalca in antene, ki jih avto nima (MODRAS, ŠKORPIJON brez tablice, ŠKORPIJON brez brisalca), ni. Krilo je standardni del `wing` (`set: 'race'`).
+- Serijski avti so videti enako kot prej (prstni odtis geometrije): MODRAS trikotnik za trikotnikom enak, PERUN +8 trikotnikov (tablica je tanka ploščica kot pri KOLIBRIJU), ŠKORPIJON +2 (črni trak pod svetlobnim pasom je razdeljen na polovici, vsaka gre s svojo lučjo).
+- `tests/fleet.test.js` (zaporedje razbitine z MODRASOM): korak šteje glavni del; deli, pritrjeni nanj (`on`, MODRASOVA žarometa na odbijaču), gredo z njim.
+
+### Klasika (`blisk`, `gad`, veja `deli/avti-klasika`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GAD | `headL` / `headR` (okrogli luči v koncih grbin, `on: 'fenderL'` / `'fenderR'`; oranžna smernika pod njima ostaneta na blatnikih), `tailL` / `tailR` (po dve okrogli luči), `plate`, `wiperFront` (oba brisalca) | na zadnjem robu pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | v obliki okrogle luči z obročem (`shape`: krog s polmerom 0,095 m, rahlo izbočen), temna vtičnica gre z lučjo (`socket: 'host'`) |
+| BLISK | brez (dirkalnik iz 30-ih nima luči, tablice ne brisalcev) | na čolnastem repu za voznikom, v `tail` (odpade z njim) | ni (nima žarometov) |
+
+- GAD je videti enako kot prej, 1392 od 1400 trikotnikov (+4): za vsako lečo zadnje luči je skrit temen trikotnik (zadnja luč je v serijskem avtu samo v repni mreži, del pa potrebuje svoje trikotnike), tablica je zaradi prostornine odpadlega kosa nagnjena za 3 mm (kot pri LEV KABRIU). BLISK je trikotnik za trikotnikom enak.
+- JASTREB (Klasika) ima mesta za dele od sklopa 1, zato ga ta obisk izpusti; luči kot ločenih delov (razbijanje) nima, prav tako ne PANTER in TITAN.
+
+### Reli (`lev`, `zmaj`, veja `deli/avti-reli`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| LEV R | `headL` / `headR` (mandelj: okvir, leči in oba projektorja), `tailL` / `tailR` (na vogalih, `on: 'quarterL'` / `'quarterR'`: gresta z zadnjim blatnikom), `plate` (`on: 'trunk'`; na Visokih z okvirjem in znaki), `wiperFront` (oba brisalca); antena je samo na Visokih, zato ni del | v delu `wing` namesto velikega relijskega krila | na mestu obeh projektorjev (`shape`: stadion okrog obeh, kot pri JELENU), pokonci kot projektorja, obroč sega 5 cm nazaj (`depth`); mandelj okrog nje v barvah luči (`around`, `DELI.lampLook`, kot pri LEV S) |
+| ZMAJ | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (vsaka s črnim okvirjem), `plate` (`on: 'bumperR'`) | v delu `wing` namesto velikega krila | v obliki pravokotne luči (`shape` 0,36 × 0,12 m) |
+
+- LEV R je videti enako kot prej, 1394 od 1400 trikotnikov (tablica je nagnjena za 3 mm, da ima odpadel kos prostornino, kot pri LEV KABRIU); ZMAJ +8 (tablica je tanka ploščica kot pri KOLIBRIJU).
+
+### Terenski (`gozdar`, `hrosc`, `medved`, `pescenjak`, veja `deli/avti-teren`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GOZDAR | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (na vogalih kesona, vsaka s črnim okvirjem) | na zadnjem robu strehe kabine, v delu `wing`, namesto krila v kesonu (odprt keson nima pokrova, na katerega bi stopila krila iz garaže), `s` 1,3 | v obliki pravokotne luči (`shape`) |
+| SKAKAČ (`hrosc`) | `headL` / `headR` (okrogli luči na nosilcih blatnikov, `on: 'fenderL'` / `'fenderR'`), `tailL` / `tailR` (z nosilcem, `on: 'quarterL'` / `'quarterR'`) | na skrajšanem pokrovu motorja (`cover`, `top`: njegovo teme), odpade z njim | v obliki okrogle luči z obročem (`shape`), vtičnica gre z lučjo |
+| MEDVED | `headL` / `headR` (okrogli luči s kromiranim obročem v nosilcih blatnikov, na blatnikih), `tailL` / `tailR` (s črnim okvirjem, na zadnjih blatnikih), `plate` (zadnja, na zadnjem odbijaču), `wiperFront`, `wiperRear` (na vratih prtljažnika) | ni (strešni prtljažnik pokriva streho do zadnjega roba) | v obliki okrogle luči z obročem (`shape`), vtičnica gre z lučjo |
+| PEŠČENJAK | `headL` / `headR` (črni nosilec z dvema lučema, `on: 'nose'`), `tailL` / `tailR` (s črnim okvirjem), `plate` | na koncu hrbta pokrova motorja (`cover`, `top`: njegov greben) | v črnem nosilcu namesto obeh luči (`shape`: pravokotnik, nosilec okrog njega) |
+
+- Serijski avti so videti enako kot prej: GOZDAR in SKAKAČ trikotnik za trikotnikom; MEDVED +8 (tablica je tanka ploščica), PEŠČENJAK 1390 od 1400 (tablica nagnjena za 4 mm, zadnji brisalec MEDVEDA za 3 mm, da imata odpadla kosa prostornino). SKAKAČEVA sprednja blatnika brez luči ležita na cesti 5 mm višje: `h` 0,135.
+- `tests/kit.test.js`: umetni pickup na GOZDARJEVEM seznamu delov nariše tudi njegove nove dele (kot roadster na LISIČINEM).
+
+### Dirkalni (`bizon`, `kozorog`, `mravlja`, `strelica`, `tiger`, `tornado`, veja `deli/avti-dirkalni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| BIZON | `tailL` / `tailR` (po dve okrogli luči na repu pokrova motorja, `on: 'cover'`) | namesto visokega krila na nosilcih, v delu `wing` | ni (avto nima žarometov) |
+| KOZOROG | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (z okvirjem in rebri stekla), `wiperFront` | namesto krila, v delu `wing` | v črnem pasu namesto luči (`shape`: obris pasu) |
+| MRAVLJA | ni (kart nima luči) | ni (kart) | ni |
+| STRELICA | ni (avto iz leta 1961 nima luči) | na pokrovu motorja za izpušnimi cevmi, v delu `cover` (odpade z njim); serijsko ga ni | ni |
+| TIGER | `headL` / `headR` (ozki luči v kotih odbijača, `on: 'bumperF'`, z lečo, potegnjeno nazaj čez nos), `tailL` / `tailR` (polovici svetlobnega pasu), `wiperFront` | namesto krila na labodjih vratovih, v delu `wing` | v obliki ozke luči (`shape`), v njenem črnem okvirju; leča čez nos v barvi luči iz garaže |
+| TORNADO | `headL` / `headR` (nalepki luči s črno obrobo, `on: 'bumperF'`; smernika ostaneta na nosu), `tailL` / `tailR` (polovici črne plošče z lučjo) | namesto rezila spojlerja, v delu `wing` | v obliki nalepke (`shape`), v črni obrobi |
+
+- Serijski avti so videti enako kot prej: KOZOROG, MRAVLJA in STRELICA trikotnik za trikotnikom; BIZON +4 (skriti temni trikotniki za lečami zadnjih luči segajo v karoserijo, da imata odpadla kosa prostornino), TIGER in TORNADO +2 (črni pas zadaj razdeljen na polovici, zgornji rob vsake polovice 4 mm bolj zadaj, da ima odpadel kos prostornino). TIGER ima 1388 od 1400 trikotnikov.
+- KOZOROGOVA luč za dež je na desni polovici mreže zadnjih luči: ugasne z desno zadnjo lučjo (prej s pokrovom prtljažnika).
+- Možnosti: krilo do +220 (STRELICA), žarometi do +172 trikotnikov nad serijskim (meja 300).
+
+### Tovornjaki (`kamen`, veja `deli/avti-tovornjaki`)
+
+TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez razbijanja).
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| KAMEN | `headL` / `headR` (pravokotni luči s črnim okvirjem v čelih blatnikov, `on: 'hood'`: gresta z nagibnim prednjim delom), `tailL` / `tailR` (grozd zadaj: luč, smernik in črna plošča), `wiperFront` (oba brisalca) | na zadnjem robu strehe kabine nad režo do servisnega zaboja, v `body` (serijsko ga ni), `s` 1,5 | v obliki pravokotne luči (`shape`), v črnem okvirju |
+
+- Serijski avto je trikotnik za trikotnikom enak (1810 od 2400 trikotnikov).
+- Možnosti: krilo do +220, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
+### Električni (`jezek`, veja `deli/avti-elektricni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| JEŽEK | `headL` / `headR` (polovici LED pasu čez nos, `on: 'bumperF'`), `tailL` / `tailR` (polovici črnega pasu z rdečo lučjo, `on: 'trunk'`), `spoiler` (`on: 'trunk'`), `plate` (`on: 'bumperR'`), `wiperFront`, `wiperRear` (`on: 'trunk'`), `aerial` (plavut na strehi) | na zadnjem robu strehe v delu `spoiler`, namesto serijske ustnice (odpre se in odpade z vrati prtljažnika) | v obliki polovice LED pasu (`shape`; polovici se stikata na sredini) |
+
+- Serijski avto je videti enako: +2 trikotnika (črni pas zadaj razdeljen na polovici); polovici pasu in tablica sta zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
+- Možnosti: krilo do +188, žarometi do +172 trikotnikov nad serijskim (meja 300).
+
+### Posebni (`goljat`, `predsednik`, `superkombi`, veja `deli/avti-posebni`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GOLJAT | `headL` / `headR` (pravokotni luči s kromiranim okvirjem), `tailL` / `tailR` (s črno obrobo, na zadnjih vratih kesona, `on: 'tailgate'`) | na zadnjem robu strehe kabine nad kesonom, v `body` (serijsko ga ni), `s` 1,4 | v obliki pravokotne luči (`shape`), v kromiranem okvirju |
+| PREDSEDNIK | `headL` / `headR` (vsak par okroglih luči), `tailL` / `tailR` (s kromirano obrobo in rebrom), `plate` (zadnja), `wiperFront` | na zadnjem robu pokrova prtljažnika, v delu `trunk` (odpre se in odpade z njim; serijsko ga ni) | namesto para okroglih luči (`shape`: stadion okrog obeh; ravna leča, izbočena bi presegla mejo za telefon) |
+| SUPERKOMBI | `headL` / `headR` (pravokotni luči v črnem pasu), `tailL` / `tailR` (na vogalnih stebrih, s črno obrobo), `wiperFront` | namesto krila na nosilcih, v delu `wing` | v obliki pravokotne luči (`shape`), v črnem pasu |
+
+- Serijski avti so videti enako (enako število trikotnikov); črni obrobi zadnjih luči (GOLJAT, SUPERKOMBI) in PREDSEDNIKOVA tablica so zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
+- Možnosti: krilo do +220, žarometi do +216 trikotnikov nad serijskim (meja 300).
+
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
 ## Vzporedne seje (29. 10. 2026)
@@ -195,3 +286,4 @@ Pravila, da se seje ne motijo:
 - 30. 10. 2026 (sklop 2 · zadaj, želja uporabnika): `zadnje_luci` dobi `shape` (obris prostora za luč); `K.tailLamp` zna obris (`o.pts`, prizma). V `js/data/deli.js` je možnost 4 pokrova prtljažnika »Lesen« / »Wooden« namesto »Iz steklenih vlaken« (seznam garaže, `nacrti/cene/cene.json` na veji garaže, naj to prevzame).
 - 29. 10. 2026 (sklop 3): `car.stripeCol` (barva črt, hex, kot `car.color`; brez nje bela ali modra glede na lak); `K.mainDecal()` (plasti na glavni lupini v elementih iz `js/deli/`); `DELI.dress(o)` (videz avta z deli v `makeCarMesh`: `{ low, step, smoke }`), `DELI.tyreLook(n)`, `DELI.look`, `DELI.dim(n)`; `Render.carShot` dobi `ghost: [id, n]`; učinki `lower`, `tint`, `tyre` v `Core.applyDeli` (`car.dLower`, `car.dTint`, `car.dTy`).
 - 30. 10. 2026 (sklop 3, odločitve uporabnika): element `stevilke` (številke in krogi) je odstranjen (KOLIBRI ga v `mounts` nima, garaža ga ne ponudi; v `js/data/deli.js` ostane, dokler garaža ne odloči); serijska štartna številka na strehi ostane. Hupe igra nima: element `hupa` je v `js/data/deli.js` zamenjan z `zamasek` (zamašek rezervoarja, 16 možnosti), narisan na boku (`mounts.zamasek`); seznam garaže (`nacrti/cene/cene.json`) je treba popraviti enako.
+- 1. 11. 2026 (Superšportni): `zarometi.tilt` (luč na strmem nosu, MODRAS: leča in podrobnosti ležijo na ploskvi, nagnjeni za `lean`; brez `tilt` stojijo pokonci kot prej) in `K.headLamp` z obrisom zna `o.lean` (leča in obroč nagnjena nazaj za toliko na meter navzgor). Drugi avti ostanejo enaki.
