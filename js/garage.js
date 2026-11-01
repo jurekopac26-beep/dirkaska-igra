@@ -46,6 +46,8 @@
     'AIR FILTER': ['filter_zraka', 'Air filter'], 'ECU CHIP': ['cip', 'Chip'], TURBO: ['turbo', 'Turbo'], 'LIGHT BATTERY': ['akumulator', 'Light battery'], SPRINGS: ['vzmeti', 'Springs'],
     DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], HORN: ['hupa', 'Two-tone'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
     DUCKTAIL: ['krilo', 'Ducktail'], 'SHORT WING': ['krilo', 'Short wing'], 'LOW WING': ['krilo', 'Low wing'], 'GT WING': ['krilo', 'GT wing'], 'DOUBLE WING': ['krilo', 'Double wing'] };
+  // (a regal's part the shop sells: the horn no more, the game has none (in the list of parts it is the fuel cap, zamasek: docs/deli.md))
+  const sold = (n) => !!(REGAL[n] && EL[REGAL[n][0]]);
   const findOpt = (el, en) => { const E = EL[el]; for (let t = 0; t < 4; t++) { const j = E.c[t][1].findIndex(o => o[0][1] === en); if (j >= 0) return [t, j]; } return null; };
   // (the stock part among the options (the tyres': Touring, docs/deli.md); what is on a car: its own part, else that one)
   const STOCK = { gume: findOpt('gume', 'Touring') }, has = (c, el) => c.parts[el] || STOCK[el] || null, isStock = (el, v) => !!v && !!STOCK[el] && STOCK[el][0] === v[0] && STOCK[el][1] === v[1];
@@ -214,7 +216,7 @@
   let menu = null;   // { el, tab, sel: [t, j], key: the tapped thing, color (the paint's) }
   const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return Lang.cur === 'en' ? eur(Math.min(...o)) + '–' + eur(Math.max(...o)) : num(Math.min(...o)) + '–' + num(Math.max(...o)) + '\u00a0€'; };
   // (the things on the screen of an element's menu: the regal's parts with its options, the maquettes for the aero kit, the circles)
-  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && REGAL[it.name] && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
+  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
   function keyOfOpt(el, t, j) {
     for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; } return null; }
   function openMenu(m) {
@@ -280,7 +282,13 @@
   const G = Garage3D;
   let toastT = 0, chipT = 0;
   function toast(t, bad) { const el = $('g-toast'); el.textContent = t; el.className = 'g-toast on' + (bad ? ' bad' : ''); clearTimeout(toastT); toastT = setTimeout(() => { el.className = 'g-toast'; }, 2600); }
-  function chip(small, big) { const el = $('g-chip'); el.innerHTML = '<small>' + esc(small) + '</small><b>' + big + '</b>'; el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
+  // (the chip over the car: a word with its picture (as the game's stats: the power's bolt, the state's wrench), what changed: before → after)
+  const CHIP_I = {
+    power: '<svg viewBox="0 0 32 32"><path d="M18 3L7 18h8l-2 11 12-16h-8z" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/></svg>',
+    cond: '<svg viewBox="0 0 32 32"><path d="M20.5 4.5a6.5 6.5 0 0 0-6 9L5 23v4h4l9.5-9.5a6.5 6.5 0 0 0 9-6l-4 1.5-3-3 1.5-4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>' };
+  let lastChip = null;
+  function chip(small, big, icon) { const el = $('g-chip'); lastChip = { small, big: big.replace(/<[^>]+>/g, ''), icon: icon || '' };
+    el.innerHTML = '<small>' + (icon ? '<i>' + CHIP_I[icon] + '</i>' : '') + esc(small) + '</small><b>' + big + '</b>'; el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
   function pay(p) {
     if (S.money < p) { const el = $('g-cr'); el.classList.remove('poor'); void el.offsetWidth; el.classList.add('poor'); setTimeout(() => el.classList.remove('poor'), 500); toast(tr('Premalo denarja: potrebuješ {0}, imaš {1}.', eur(p), eur(S.money)), true); return false; }
     if (p > 0) { const from = S.money; S.money -= p; countMoney(from, S.money); const el = $('g-cr'); el.classList.remove('pay'); void el.offsetWidth; el.classList.add('pay'); G.sfx('coin'); }
@@ -299,12 +307,15 @@
   function step(d) { const i = ORDER.indexOf(S.car); pickCar(ORDER[(i + d + ORDER.length) % ORDER.length]); }
   // (what a service costs: the items it does (not those as new), their price (more than one: the full service's 15 % off))
   function svcCost(c, ids) { const list = SRV.filter(s => ids.includes(s.id) && srvPrice(s, c, S.car) > 0); return { list, p: fullPrice(list.map(s => srvPrice(s, c, S.car))) }; }
+  const condPc = (c) => Math.round((c.cond.clean + c.cond.body + c.cond.engine) / 3 * 100);   // (the state: as the service's menu says it)
+  let svcChip = null;
   function doService(ids) {
     const c = C(); if (!c.own) return;
     const { list, p } = svcCost(c, ids);
     if (!list.length) return;
     if (!pay(p)) return;
-    for (const s of list) c.cond[s.id] = 1;
+    const a = condPc(c); for (const s of list) c.cond[s.id] = 1;
+    svcChip = { a, b: condPc(c), left: list.length };   // (its end on the chip: the state before → after, as the power after an upgrade)
     save(); render();
     G.service(list.map(s => s.id), { clean: 1, body: 1, engine: 1 });
   }
@@ -335,7 +346,7 @@
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
     else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
-    else if (h.name && REGAL[h.name]) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
+    else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
     G.markOff(); G.ghostOff(); menu = null; openMenu(m);
@@ -404,8 +415,10 @@
     G.onHud = (k, d) => {
       if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); return; }
       if (k === 'power') { const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
-        chip(tr('MOČ'), Math.round(a) + ' → <em>' + Math.round(b) + ' kW</em>'); }
+        chip(tr('MOČ'), Math.round(a) + ' kW → <em>' + Math.round(b) + ' kW</em>', 'power'); }
       else if (k === 'done') { if (d.kind === 'motor') { lastFit = null; return; }
+        if (svcChip && SRV.some(s => s.id === d.kind) && --svcChip.left <= 0) { const q = svcChip; svcChip = null;   // (the service's last item done: the state before → after)
+          chip(tr('STANJE'), q.a + ' % → <em>' + q.b + ' %</em>', 'cond'); lastFit = null; return; }
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
         chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓')); lastFit = null; }
     };
@@ -452,7 +465,7 @@
     G.show(spec(S.car));
     setLang();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

@@ -4,8 +4,9 @@
 // button), the colour circles, the lift's plate; ring 9 over the car with its two hanging arms (no robot nor stand on the floor), the
 // chamber's glass; the camera (left and right only); a tap on a part: its menu (four tabs with their prices, four tiles, the chosen one
 // blue and the others orange in the picture too, the new part seen through on the car, at the bottom when at the top it would cover
-// the part), buying (euros, the tyres on offer, the stock part back), the four upgrades from the parts; the service by the arms (its
-// price by the wear and the car's worth; the PICO, the FORMULA, the KAMEN lorry), the paint in the glass chamber; the English page;
+// the part), buying (euros, the tyres on offer, the stock part back), the four upgrades from the parts (the chip over the car: MOČ
+// with its bolt, x kW → y kW); the service by the arms (its price by the wear and the car's worth; the PICO, the FORMULA, the KAMEN
+// lorry; at its end the chip: STANJE with its wrench, x % → 100 %), the paint in the glass chamber; the English page;
 // every car of the game's fleet with all its parts (the lift's pads); the wide vehicles' way in and out; the garage opened from the
 // game's car screen and its back and Izberi progo buttons. The animations run on a clock the test steps itself (software WebGL is
 // slow). Zero page errors allowed.
@@ -211,6 +212,9 @@ try {
     const u = await ui(), mk2 = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, menu: !!__garage.menu, dim: Garage3D._dbg.dim }));
     T.check('bought and fitted: 12.000 € paid, the menu closed (no marks, nothing seen through), the engine\'s level 3 (twin turbo +25 %, the dual exhaust +1,5 %), its show played (its parts on the car), the table still',
       m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 6 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
+    const ch = await page.evaluate(() => ({ c: __garage.chip, kw: Core.MODELS.find(m => m.id === 'muscle').kw, html: document.getElementById('g-chip').innerHTML }));
+    T.check('its chip over the car: MOČ with the bolt before it, both numbers with their unit (stock kW → kW with the twin turbo, +25 %)', ch.c && ch.c.small === 'MOČ' && ch.c.icon === 'power' && /<small><i><svg/.test(ch.html)
+      && ch.c.big === Math.round(ch.kw) + ' kW → ' + Math.round(ch.kw * 1.25) + ' kW', JSON.stringify(ch));
     await tap('rgl:TURBO'); await page.evaluate(() => { document.querySelector('#g-menu [data-tab="3"]').click(); document.querySelector('#g-menu [data-tile="3,3"]').click(); }); const d3 = await menuDom();
     T.check('the turbo again (the regal\'s turbo chosen; on the twin turbo\'s tab): the fitted option ticked, chosen: FITTED, nothing to buy; ↺ SERIJSKO offered', d3.tiles[3].fit && d3.tiles[3].sel && !d3.can && /NAMEŠČENO/.test(d3.buy) && d3.stock, JSON.stringify(d3));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="stock"]').click()); await run();
@@ -256,10 +260,12 @@ try {
       const p = [r((20 + 280 * (1 - c.clean)) * f(0.3)), r((150 + 15000 * Math.pow(1 - c.body, 1.6)) * f(0.8)), r((180 + 9000 * Math.pow(1 - c.engine, 1.8)) * f(0.8))]; return p.concat([r((p[0] + p[1] + p[2]) * 0.85)]); });
     const shown = d.tiles.map(t => +t.p.replace(/[^0-9]/g, ''));
     T.check('the SERVICE button: its four (wash, body, engine and oil, full service) priced by the wear and the car\'s worth, the full service 15 % off and chosen', m && m.el === 'servis' && d.tiles.length === 4 && !d.tabs.length && shown.join() === want.join() && d.tiles[3].sel, JSON.stringify({ d, want }));
-    const m0 = (await ui()).S.money;
+    const m0 = (await ui()).S.money, a0 = await page.evaluate(() => { const c = __garage.S.cars.rally.cond; return Math.round((c.clean + c.body + c.engine) / 3 * 100); });
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r = await run();
     const u = await ui(), sv = await page.evaluate(() => Garage3D._dbg.svc.done.map(q => q.kind).join());
     T.check('the full service paid (' + want[3] + ' €) and done by the arms: clean, no scratches, condition 100 %', m0 - u.S.money === want[3] && sv === 'clean,body,engine' && u.info.dirt === 0 && u.info.scr === 0 && Object.values(u.S.cars.rally.cond).every(v => v === 1) && r.lift >= 1.3, JSON.stringify({ paid: m0 - u.S.money, sv }));
+    const sc = await page.evaluate(() => ({ c: __garage.chip, html: document.getElementById('g-chip').innerHTML }));
+    T.check('the service done: its chip over the car, STANJE with the wrench before it, the state before → after (' + a0 + ' % → 100 %)', a0 < 100 && sc.c && sc.c.small === 'STANJE' && sc.c.icon === 'cond' && /<small><i><svg/.test(sc.html) && sc.c.big === a0 + ' % → 100 %', JSON.stringify({ a0, sc }));
     const mp = await tap('col5'), dp = await menuDom();
     T.check('a colour circle (green) tapped: the paint\'s menu (VARČNO, FOLIJA, LAKIRANJE, VRHUNSKO) with the colour named', mp && mp.el === 'barva' && mp.color === 5 && dp.tabs.map(t => t[0]).join() === 'VARČNO,FOLIJA,LAKIRANJE,VRHUNSKO' && dp.tiles.length === 4, JSON.stringify({ mp, dp }));
     // (too little money for the paint chosen: the menu stays (its note says so), a toast, nothing taken)
