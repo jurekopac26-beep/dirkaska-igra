@@ -1882,7 +1882,7 @@
     const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && (!!track.def.open || (!!track.def.flyStart && cr < 0));   // a race up an open road, the Nordschleife's Circuit race (def.flyStart; a championship round there, and its race after qualifying (Q, below): the lights, from the grid): the flying start (the column, the autopilot up to the start line, FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     if (cr < 0) champRun = false;
     const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
-    const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? champN() : track.def.raceRivals || track.def.rivals || NUM_AI;   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
+    const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? champN() : quickRivals(track.def.raceRivals || track.def.rivals || NUM_AI);   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
     if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: repro ? repro.seed : (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: !!W.storm, nAI: Core.fieldSize(fieldFor(M, FM), nAI), pm: M, fm: FM, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }   // (as many rivals as the race will have: a big vehicle's field is smaller)
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
     if (!quali && !Q) qual = null;
@@ -5584,7 +5584,7 @@
     $('on-code').addEventListener('keyup', (e) => e.stopPropagation());
   }
 
-  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> (Core.quickArgs) opens the game
+  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id>&tekmeci=<n>&lod=0|1 (Core.quickArgs) opens the game
      straight on a race on that track, without the menus, the flyover or qualifying (for the tests and tools/shot.mjs; a player's link works
      the same). The way, the weather and the car are set as the menus set them; t: the race driven on the autopilot to t s after the start
      (the loading screen meanwhile; the replay has it too), then paused there. Not with a friend's challenge or ghost link ---------------- */
@@ -5599,6 +5599,7 @@
     if (q.mode && d.modes) S.mode = q.mode;
     if (q.weather) S.weather = q.weather;
     if (q.car) { if (owned(q.car)) S.car = Core.MODELS.findIndex(m => m.id === q.car); else toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); }
+    if (q.lod != null) Core.LOD.off = q.lod === 0;   // (lod=0: a big field's cars all at the full rate for the visit)
     save(); refreshSegs();
     if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
     if (S.control === 'tilt') enableTilt(true);
@@ -5606,6 +5607,9 @@
     repro = { seed: q.seed || 1, R: null };   // (the test mode for the visit: repeatable races)
     ensureTrack(S.track, () => { newRace(); pkFlySkip(); if (q.t > 0) quickRun(q.t); else quick.done = true; });
   }
+  // the quick entry's tekmeci=<n>: a race on its track with n rivals, at most its own field (the Nordschleife's 100 cars against 22 or 1 on the
+  // same road); any other race its own (n0)
+  function quickRivals(n0) { const q = quick && quick.q; return q && q.rivals != null && q.track === track.def.id && !(mp && mp.race) ? Math.min(q.rivals, n0) : n0; }
   // the race on the autopilot up to t s after the start (or to the player's finish), a slice of it per frame under the loading screen
   function quickRun(t) {
     $('ld-msg').textContent = tr('Previjam dirko na {0} …', fmt(t)); $('loading').classList.remove('off');
