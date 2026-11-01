@@ -2,16 +2,16 @@
  "pikes": {
   "calls": 115,
   "maxCalls": 127,
-  "kverts": 266,
-  "maxKverts": 331,
-  "jsMs": 1.83
+  "kverts": 275,
+  "maxKverts": 336,
+  "jsMs": 1.8
  },
  "pikesg": {
   "calls": 113,
   "maxCalls": 141,
-  "kverts": 280,
-  "maxKverts": 324,
-  "jsMs": 1.58
+  "kverts": 290,
+  "maxKverts": 344,
+  "jsMs": 1.4
  },
  "ouninpohja": {
   "calls": 163,
