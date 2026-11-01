@@ -31,7 +31,7 @@ Od zgoraj navzdol:
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | narejen, lokalni testi zeleni; uporabnik potrdil 1. 11. 2026, pull request #239 (na `main`, ko so testi na GitHubu zeleni) |
+| 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | na main (PR #239, 1. 11. 2026) |
 | 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | |
 | 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | |
@@ -65,8 +65,8 @@ Od zgoraj navzdol:
 | # | Vprašanje | Privzeto |
 |---|---|---|
 | A | Slog vremena zgoraj desno (1–6 v predstavitvi) | 1 |
-| 1 | Pull request za vsak sklop? | vprašaj pred odprtjem |
-| 2 | Kamera 3 v živo ali posnet video? | posnet video |
+| 1 | Pull request za vsak sklop? | uporabnik (1. 11.): seja sama odpre PR in ga združi, ko so testi zeleni; sklopi 2–6 zaporedno |
+| 2 | Kamera 3 v živo ali posnet video? | uporabnik (1. 11.): posnet video |
 | 3 | Katera kamera ob odprtju? | 1 zemljevid |
 | 4 | Ime avta? | samo v garaži |
 | 5 | Proga brez preleta ali videa zavoja | maketa proge |
