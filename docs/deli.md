@@ -143,6 +143,30 @@ Vsi štirje: serijski avto je trikotnik za trikotnikom enak kot prej (Normalni, 
 - Žaromet LEV S in LEV KABRIO (potrdil uporabnik 30. 10.): mandelj se ovija okrog vogala (ploskev je nagnjena nazaj in navzven), luč iz garaže pa je ravna in gleda naprej (dogovor pozna le nagib `lean`). Luč stoji na mestu sprednjega projektorja, nagnjena za `lean` 0,55, na notranjem robu mandlja; njen obroč sega 6 cm nazaj do pločevine (`depth`), zato na zunanji strani štrli kot ohišje. Mandelj okrog nje je v barvah luči (`around`, `DELI.lampLook`; pri KABRIU brez temnega roba, da ostane v meji 300 trikotnikov). Natančnejše prileganje bi potrebovalo zasuk luči okrog navpične osi (`yaw`) v dogovoru.
 - Gume vsaka zase (`Car.kt`) in udiranje strehe od prvega odstotka (`roof0`) ostanejo samo pri KOLIBRIJU (izbira uporabnika 30. 10.: Mali avti ne).
 
+### Superšportni (`perun`, `modras`, `skorpijon`, veja `deli/avti-super`)
+
+Kategorije po vrsti v eni seji (varčni način, odločitev uporabnika 1. 11. 2026): Superšportni, Klasika, Reli, Terenski, Dirkalni, Tovornjaki, Električni, Posebni; vsaka svoja veja `deli/avti-<kategorija>`. Uporabnik je vseh osem potrdil 1. 11. 2026 (stran Odločitve), BLISK s krilom iz garaže. Šest kategorij od Relija naprej gre na `main` v eni zbirni veji (`deli/avti-zbirna`, en pull request in en krog testov, izbira uporabnika 1. 11. 2026); ker morajo po združitvi misij (#233) vsi pull requesti še enkrat skozi teste, sta v njej tudi Superšportni (#234) in Klasika (#235).
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| PERUN | `headL` / `headR` (ozki luči v črnem čelu nosu, `on: 'bumperF'`), `tailL` / `tailR` (rdeča luč z oranžno in belo ob njej), `plate` (`on: 'bumperR'`), `wiperFront` | v delu `wing` namesto velikega krila na stebrih, na zadnjem robu pokrova motorja | v obliki serijske ozke luči (`shape`, reža 0,3 × 0,065 m) |
+| MODRAS | `headL` / `headR` (črno ohišje na poševnini nosu z lečo in dnevno lučjo, `on: 'bumperF'`), `tailL` / `tailR` (šesterokotni grozd z dvema lučema), `wiperFront` | v delu `wing` namesto krila na nosilcih, nad zadnjimi lučmi | v notranjem delu črnega ohišja (`shape`, puščica), leži na poševnini nosu (`lean` 0,97, `tilt`); ohišje ostane črn okvir |
+| ŠKORPIJON | `headL` / `headR` (v sprednjem robu pokrova, `on: 'hood'`), `tailL` / `tailR` (vsaka polovica svetlobnega pasu s svojo polovico črnega traku) | v delu `wing` namesto aktivnega krila, na repu | v obliki serijske ozke luči (`shape`), v serijskem črnem okvirju (`around`) |
+
+- Tablice, brisalca in antene, ki jih avto nima (MODRAS, ŠKORPIJON brez tablice, ŠKORPIJON brez brisalca), ni. Krilo je standardni del `wing` (`set: 'race'`).
+- Serijski avti so videti enako kot prej (prstni odtis geometrije): MODRAS trikotnik za trikotnikom enak, PERUN +8 trikotnikov (tablica je tanka ploščica kot pri KOLIBRIJU), ŠKORPIJON +2 (črni trak pod svetlobnim pasom je razdeljen na polovici, vsaka gre s svojo lučjo).
+- `tests/fleet.test.js` (zaporedje razbitine z MODRASOM): korak šteje glavni del; deli, pritrjeni nanj (`on`, MODRASOVA žarometa na odbijaču), gredo z njim.
+
+### Klasika (`blisk`, `gad`, veja `deli/avti-klasika`)
+
+| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
+|---|---|---|---|
+| GAD | `headL` / `headR` (okrogli luči v koncih grbin, `on: 'fenderL'` / `'fenderR'`; oranžna smernika pod njima ostaneta na blatnikih), `tailL` / `tailR` (po dve okrogli luči), `plate`, `wiperFront` (oba brisalca) | na zadnjem robu pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | v obliki okrogle luči z obročem (`shape`: krog s polmerom 0,095 m, rahlo izbočen), temna vtičnica gre z lučjo (`socket: 'host'`) |
+| BLISK | brez (dirkalnik iz 30-ih nima luči, tablice ne brisalcev) | na čolnastem repu za voznikom, v `tail` (odpade z njim) | ni (nima žarometov) |
+
+- GAD je videti enako kot prej, 1392 od 1400 trikotnikov (+4): za vsako lečo zadnje luči je skrit temen trikotnik (zadnja luč je v serijskem avtu samo v repni mreži, del pa potrebuje svoje trikotnike), tablica je zaradi prostornine odpadlega kosa nagnjena za 3 mm (kot pri LEV KABRIU). BLISK je trikotnik za trikotnikom enak.
+- JASTREB (Klasika) ima mesta za dele od sklopa 1, zato ga ta obisk izpusti; luči kot ločenih delov (razbijanje) nima, prav tako ne PANTER in TITAN.
+
 ### Reli (`lev`, `zmaj`, veja `deli/avti-reli`)
 
 | Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
@@ -209,30 +233,6 @@ TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez r
 
 - Serijski avti so videti enako (enako število trikotnikov); črni obrobi zadnjih luči (GOLJAT, SUPERKOMBI) in PREDSEDNIKOVA tablica so zgoraj 4 mm bolj zadaj (odpadel kos ima prostornino).
 - Možnosti: krilo do +220, žarometi do +216 trikotnikov nad serijskim (meja 300).
-
-### Superšportni (`perun`, `modras`, `skorpijon`, veja `deli/avti-super`)
-
-Kategorije po vrsti v eni seji (varčni način, odločitev uporabnika 1. 11. 2026): Superšportni, Klasika, Reli, Terenski, Dirkalni, Tovornjaki, Električni, Posebni; vsaka svoja veja `deli/avti-<kategorija>` in svoj pull request.
-
-| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
-|---|---|---|---|
-| PERUN | `headL` / `headR` (ozki luči v črnem čelu nosu, `on: 'bumperF'`), `tailL` / `tailR` (rdeča luč z oranžno in belo ob njej), `plate` (`on: 'bumperR'`), `wiperFront` | v delu `wing` namesto velikega krila na stebrih, na zadnjem robu pokrova motorja | v obliki serijske ozke luči (`shape`, reža 0,3 × 0,065 m) |
-| MODRAS | `headL` / `headR` (črno ohišje na poševnini nosu z lečo in dnevno lučjo, `on: 'bumperF'`), `tailL` / `tailR` (šesterokotni grozd z dvema lučema), `wiperFront` | v delu `wing` namesto krila na nosilcih, nad zadnjimi lučmi | v notranjem delu črnega ohišja (`shape`, puščica), leži na poševnini nosu (`lean` 0,97, `tilt`); ohišje ostane črn okvir |
-| ŠKORPIJON | `headL` / `headR` (v sprednjem robu pokrova, `on: 'hood'`), `tailL` / `tailR` (vsaka polovica svetlobnega pasu s svojo polovico črnega traku) | v delu `wing` namesto aktivnega krila, na repu | v obliki serijske ozke luči (`shape`), v serijskem črnem okvirju (`around`) |
-
-- Tablice, brisalca in antene, ki jih avto nima (MODRAS, ŠKORPIJON brez tablice, ŠKORPIJON brez brisalca), ni. Krilo je standardni del `wing` (`set: 'race'`).
-- Serijski avti so videti enako kot prej (prstni odtis geometrije): MODRAS trikotnik za trikotnikom enak, PERUN +8 trikotnikov (tablica je tanka ploščica kot pri KOLIBRIJU), ŠKORPIJON +2 (črni trak pod svetlobnim pasom je razdeljen na polovici, vsaka gre s svojo lučjo).
-- `tests/fleet.test.js` (zaporedje razbitine z MODRASOM): korak šteje glavni del; deli, pritrjeni nanj (`on`, MODRASOVA žarometa na odbijaču), gredo z njim.
-
-### Klasika (`blisk`, `gad`, veja `deli/avti-klasika`)
-
-| Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
-|---|---|---|---|
-| GAD | `headL` / `headR` (okrogli luči v koncih grbin, `on: 'fenderL'` / `'fenderR'`; oranžna smernika pod njima ostaneta na blatnikih), `tailL` / `tailR` (po dve okrogli luči), `plate`, `wiperFront` (oba brisalca) | na zadnjem robu pokrova prtljažnika, v `trunk` (odpre se in odpade z njim) | v obliki okrogle luči z obročem (`shape`: krog s polmerom 0,095 m, rahlo izbočen), temna vtičnica gre z lučjo (`socket: 'host'`) |
-| BLISK | brez (dirkalnik iz 30-ih nima luči, tablice ne brisalcev) | na čolnastem repu za voznikom, v `tail` (odpade z njim) | ni (nima žarometov) |
-
-- GAD je videti enako kot prej, 1392 od 1400 trikotnikov (+4): za vsako lečo zadnje luči je skrit temen trikotnik (zadnja luč je v serijskem avtu samo v repni mreži, del pa potrebuje svoje trikotnike), tablica je zaradi prostornine odpadlega kosa nagnjena za 3 mm (kot pri LEV KABRIU). BLISK je trikotnik za trikotnikom enak.
-- JASTREB (Klasika) ima mesta za dele od sklopa 1, zato ga ta obisk izpusti; luči kot ločenih delov (razbijanje) nima, prav tako ne PANTER in TITAN.
 
 Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in ne urejajo `js/deli.js`, ki ga ureja seja sklopa 2 (spori). Če je dogovor treba spremeniti, to zapiši v »Spremembe dogovora« in povej uporabniku. Mesta za dele sklopov 2 in 3 dobijo avti v drugem, krajšem obisku, ko so ti deli narejeni.
 
