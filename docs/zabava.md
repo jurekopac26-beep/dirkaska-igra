@@ -38,10 +38,11 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 | 4 | Trener in zlati duh | narejeno (`js/zabava/trener.js`: profil vožnje iz duha, ovinki `Track.corners`, zlati duh v ozadju) |
 | 5 | Izzivi ob cesti | narejeno (`js/zabava/izzivi.js`: postavitev iz oblike proge, zvezdice iz hitrosti avta po profilu) |
 | 6 | Ti loviš | narejeno (`js/zabava/lov.js`: policijska podoba `P.police`, begunec 150 m spredaj, merilnik aretacije) |
-| 7 | Živa cesta | |
+| 7 | Živa cesta | narejeno (`js/zabava/cesta.js`: osebne nevarnosti pred igralcem, ne pred tekmecem, en klic risanja na dogodek) |
 | 8 | Spoj `main`, testi, osnutek PR | |
 
 ## Predaja
 - Po koraku 1: most (`js/zabava.js`) in priklopi v `js/game.js` so narejeni, Cilji ekipe delujejo (kartica pred lučmi, izplačilo prek `careerPay`). Za brskalniške teste lokalno: `npm install --no-save --no-package-lock --ignore-scripts peer@1.0.2` (namesti tudi Playwright iz `package.json`).
 - Po koraku 3: eliminacija na spletu: izločen igralec dobi kot čas cilja 100000 s manj čas izpada (rezultati ga razvrstijo, prikaz »Izpadel«, `ZB_OUT` v `js/game.js`). Zamera: krivda po legi stika (igralčev nos v rep ali bok tekmeca), v testih in Node dirkah izklopljena (`chr.zbG` nastavi samo igra).
 - Po koraku 6: igra ob cilju kronometra vzame posnetek vožnje (`ghRec = null`), zato si ga trener zapomni med vožnjo (`runRec`). Bathurst ima pred štartom 7,4 s preleta letal: v brskalniških testih čas poženi s `g.sim`. Izzivi: skok samo na cesti s `def.jumpRec`, smerniki 6 m pred ograjo stranske ceste (do 3).
+- Po koraku 7: Živa cesta ne spreminja AI: dogodek se postavi samo tam, kjer med igralcem in njim ni tekmeca, in izgine 70 m za igralcem (traktor 120 m za njim). Predmeti so povečani, da se vidijo s kamere za avtom (preverjeno na slikah Vršiča). Opis za igralce: `docs/igra.md`, razdelek »Zabava«.

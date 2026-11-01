@@ -70,16 +70,16 @@
       const T = race.track, s0 = T.startS || 0, objs = this.objs = [];
       const R = this.L.find(c => c.k === 'radar');
       if (R) {
-        const i = T.idx(s0 + R.d), nx = T.nx ? T.nx[i] : 0, nz = T.nz ? T.nz[i] : 1, off = T.w + 2.2, y = T.hasElev ? T.hy[i] : 0;
-        const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x2a2f38 }), b = new THREE.MeshLambertMaterial({ color: 0xffd34d, emissive: 0x332600 });
-        const pole = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.6, 0.18), m); pole.position.y = 1.3;
-        const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.55, 0.7), b); box.position.y = 2.75;
-        g.add(pole, box); g.position.set(T.px[i] + nx * off, y, T.pz[i] + nz * off); g.userData.zb = 1; Render.scene.add(g); objs.push(g);
+        const i = T.idx(s0 + R.d - 30), nx = T.nx ? T.nx[i] : 0, nz = T.nz ? T.nz[i] : 1, off = T.w + 0.9, y = T.hasElev ? T.hy[i] : 0;   // (30 m before the trap: seen coming)
+        const g = new THREE.Group(), m = new THREE.MeshLambertMaterial({ color: 0x2a2f38 }), b = new THREE.MeshLambertMaterial({ color: 0xffd34d, emissive: 0x6b5000 });
+        const pole = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.4, 0.22), m); pole.position.y = 1.7;
+        const box = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.1, 1.8), b); box.position.y = 3.6;
+        g.add(pole, box); g.position.set(T.px[i] + nx * off, y, T.pz[i] + nz * off); g.rotation.y = -T.hd[i]; g.userData.zb = 1; Render.scene.add(g); objs.push(g);
       }
       const posts = this.L.filter(c => c.k === 'smernik' && !this.found.has(c.id));
       if (posts.length) {
-        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.22, 1.1, 0.22), new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4a00 }), posts.length), o = new THREE.Object3D();
-        posts.forEach((c, k) => { o.position.set(c.x, c.y + 0.55, c.z); o.updateMatrix(); im.setMatrixAt(k, o.matrix); });
+        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 1.5, 0.32), new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4a00 }), posts.length), o = new THREE.Object3D();
+        posts.forEach((c, k) => { o.position.set(c.x, c.y + 0.75, c.z); o.updateMatrix(); im.setMatrixAt(k, o.matrix); });
         im.userData.zb = 1; im.userData.posts = posts.map(c => c.id); Render.scene.add(im); objs.push(im); this.postMesh = im;
       }
     },

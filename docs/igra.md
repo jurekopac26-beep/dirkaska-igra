@@ -55,6 +55,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Dirka s prijateljem](#dirka-s-prijateljem)
 - [Jezik (angleščina)](#jezik-angleščina)
 - [Dosežki in statistika](#dosežki-in-statistika)
+- [Zabava: novosti za bolj zanimivo igro](#zabava-novosti-za-bolj-zanimivo-igro)
 - [Varčevanje z baterijo in hitrejše nalaganje](#varčevanje-z-baterijo-in-hitrejše-nalaganje)
 - [Igra kot aplikacija](#igra-kot-aplikacija)
 
@@ -710,6 +711,18 @@ V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali *
 ## Dosežki in statistika
 
 Gumb **Dosežki** na naslovnem zaslonu odpre statistiko voznika: prevoženi kilometri, čas vožnje, dirke, zmage, stopničke, prva štartna mesta, najhitrejši krogi, kronometri, medalje, naslovi prvaka, pobegi policiji, dirke s prijatelji, najvišja hitrost, najdaljši skok, najdaljše drsenje in proge, na katerih si pripeljal do cilja. Dirka šteje, ko jo pripelješ do cilja ali iz nje odstopiš (odstop ni cilj: brez zmage, stopničk, proge do cilja in dosežkov za cilj); prevoženi kilometri in čas vožnje štejejo vedno, tudi pri dirki, ki jo zapustiš v pavzi. Spodaj je 30 dosežkov, npr. **Z zadnjega na prvo** (zmaga z zadnjega štartnega mesta), **Čist krog** (krog brez dotika ograje), **Brez praske** (dirka brez dotika ograje in drugih avtov), **Hat-trick** (prvo štartno mesto, zmaga in najhitrejši krog), **Kralj Eifla** (Nürburg), **Letalec** (skok 40 m), **Kralj drsenja**, **Nočna ptica**, **Mojster dežja** in **Neulovljiv**. Doseženi so zlati z datumom, pri tistih, ki se štejejo (100 in 1000 km, deset zmag, vse proge …), piše, koliko še manjka. Nov dosežek se pokaže takoj med vožnjo in še v rezultatih.
+
+## Zabava: novosti za bolj zanimivo igro
+
+Sedem novosti (načrt, odločitve in priklopi v [`docs/zabava.md`](zabava.md); koda v `js/zabava.js` in `js/zabava/`). V Nastavitvah se izklopijo Izzivi ob cesti, Živa cesta in Tekmeci si zapomnijo; zlati duh je v možnostih kronometra (*Gold ghost*).
+
+- **Cilji ekipe** (samo kariera): pred lučmi kartica CILJ EKIPE s tremi cilji (npr. *Pridobi vsaj 9 mest* +50 %, *Brez dotika ograje* +30 %, *Zmaga z zadnjega mesta* +100 %) in *Brez cilja*; dirka čaka na izbiro. Dosežen cilj doda svoj delež nagrade za mesto, zgrešen nič. Ko cilj med dirko ne more več uspeti, pod zemljevidom piše CILJ EKIPE NI USPEL.
+- **Eliminacija** (*Elimination*, povsod, kjer je dirka): prvič po 45 s in nato vsakih 30 s izpade zadnja dvanajstina polja (22 avtov: 2, v Nürburgu 9), dokler ne ostane en avto (okoli 6 minut). Igralec štarta na sredini polja, brez kvalifikacij. Pod uro piše IZLOČITEV ČEZ … s (rdeče NEVARNO! IZPADEŠ ČEZ … s), prvi avto v nevarnosti ima v časovni tabeli rdečo vrstico, izločeni zapeljejo s ceste (IZPADEL). Rezultati so po vrstnem redu izpadanja. V dirki s prijatelji gostitelj vklopi **Eliminacija** v sobi: izločitve določi njegov telefon in jih pošlje vsem.
+- **Tekmeci si zapomnijo:** tekmec, v katerega igralec zapelje z nosom (v rep ali bok), je do konca dirke (v prvenstvu do konca prvenstva) jezen: brani notranjo linijo, igralca ne čaka in ga prehiteva tesneje, a nikoli namenoma ne zapelje vanj. Kdor 20 s čisto vozi tik ob tekmecu, dobi njegovo spoštovanje: več prostora ob avtu, brez obrambe. Komentator to pove, jezen tekmec ima v časovni tabeli oranžno oznako.
+- **Trener:** po kronometru, kvalifikacijah in izzivu blok TRENER s tremi ovinki, kjer je vožnja izgubila največ proti najboljši (ime ovinka, izguba v sekundah, razlog: prezgodnje ali prepozno zaviranje, počasneje skozi ovinek, slabši izhod). **Zlati duh:** avtopilot v ozadju odpelje kronometer s tvojim avtom, raztegne se na zlati čas in vozi kot drugi duh (ZLATO); trener ga vzame za primerjavo, dokler ni najboljše vožnje.
+- **Izzivi ob cesti** (vse prave proge, ne na spletu in v misijah): radar na najhitrejši točki (rumena tabla ob cesti), odsek na čas med dvema krajema, na cestah še drift cona na najgostejših serpentinah, skok na cesti s slavnim skokom in do trije skriti zlati smerniki v stranskih cestah. Zvezdice glede na to, kar zmore tvoj avto (hitrostni profil proge s pospeševanjem avta), rekordi po progah, v rezultatih blok IZZIVI OB CESTI.
+- **Ti loviš** (*Pursuit*, odprte ceste s prometom): voziš policijski avto (luči, sirena, promet se umika), begunec štarta 150 m pred tabo. Ujet je, ko si skupaj 5 s manj kot 15 m za njim (ob dotiku hitreje), nato zapelje s ceste; pobegne, če je 10 s več kot 400 m pred tabo, pride do konca ceste ali potečejo 3 minute. Rekord je najhitrejši ulov.
+- **Živa cesta** (odprte ceste): enkrat ali dvakrat na vožnjo 250–400 m pred tabo kamenje na cesti, žival čez cesto (po državi: gams, kenguru, los, gvanako …), dela na cesti s semaforjem (rdeča: 3 s kazni) ali počasen traktor. Dogodek se postavi samo tam, kjer pred tabo ni tekmeca, in izgine, ko si mimo; v kronometru ima vsaka proga vedno ista mesta.
 
 ## Varčevanje z baterijo in hitrejše nalaganje
 

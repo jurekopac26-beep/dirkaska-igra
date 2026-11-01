@@ -645,6 +645,17 @@
     'Lov': 'Pursuit',
     'Begunec': 'Fugitive',
     'Ponovi lov': 'Chase again',
+    'Živa cesta': 'Living road',
+    'Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor': 'Something unexpected happens on the open road: rocks, an animal crossing, road works with lights, a slow tractor',
+    'POZOR: KAMENJE NA CESTI': 'CAUTION: ROCKS ON THE ROAD',
+    'POZOR: ŽIVAL NA CESTI': 'CAUTION: ANIMAL ON THE ROAD',
+    'POZOR: DELA NA CESTI': 'CAUTION: ROAD WORKS',
+    'POZOR: POČASEN TRAKTOR': 'CAUTION: SLOW TRACTOR',
+    'ŽIVAL! UPOČASNI': 'ANIMAL! SLOW DOWN',
+    'TRAKTOR! PREHITEVAJ PREVIDNO': 'TRACTOR! PASS WITH CARE',
+    'KAMEN!': 'ROCK!',
+    'RDEČA LUČ! +3 s KAZNI': 'RED LIGHT! +3 s PENALTY',
+    'STOŽCI!': 'CONES!',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

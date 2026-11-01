@@ -4,6 +4,7 @@
 //   2. the elimination race (?nacin=elim): the countdown, the first cut, the end and its results
 //   3. the coach and the gold ghost (a time trial on Harju)
 //   4. the pursuit (?nacin=lov on Vršič)
+//   5. the challenges by the road and the living road (Vršič, a time trial): the marks, one draw call per event
 //   node tests/browser/zabava.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -96,11 +97,26 @@ try {
     await page.evaluate(async () => { const g = window.__game; for (let i = 0; i < 8; i++) { g.sim(1, true); await new Promise(r => requestAnimationFrame(r)); } });
     const s0 = await page.evaluate(() => { const r = window.__game.race, f = Zabava.list.find(x => x.id === 'lov'); return { mode: r.zbMode, n: r.cars.length, police: !!r.player.police, tf: !!r.tf, gap: document.getElementById('h-gap').textContent, st: !!f.st }; });
     T.check('?nacin=lov on Vršič: the pursuit, the player\'s car a patrol car, the fugitive and the traffic, the line under the time (BEGUNEC … m or ARETACIJA)', s0.mode === 'lov' && s0.n === 2 && s0.police && s0.tf && s0.st && /^(BEGUNEC \d+ m|ARETACIJA \d+ %) · \d/.test(s0.gap), JSON.stringify(s0));
-    await page.evaluate(() => { const f = Zabava.list.find(x => x.id === 'lov'); f.st.m = 1; });
+    await page.evaluate(() => { const f = Zabava.list.find(x => x.id === 'lov'); f.st.m = 2; });   // (over full: it drains a little each step while the fugitive is far)
     await page.evaluate(async () => { const g = window.__game; for (let i = 0; i < 8 && g.screen !== 'results'; i++) { g.sim(1, true); await new Promise(r => requestAnimationFrame(r)); } });
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
     const s1 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, sub: document.getElementById('res-sub').textContent, rows: document.querySelectorAll('#res-table tbody tr').length, btn: document.getElementById('res-restart').textContent }));
     T.check('caught: the results Ulovljen! (the fugitive stopped after its time), three rows, Ponovi lov', s1.title === 'Ulovljen!' && /Begunca .* si ustavil po/.test(s1.sub) && s1.rows === 3 && s1.btn === 'Ponovi lov', JSON.stringify(s1));
+    T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  // 6. the living road and the challenges by the road on Vršič (a time trial): the marks drawn, each event one draw call (the works three)
+  {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=vrsic&nacin=tt', {}, { width: 412, height: 732 }, { menu: true, init: on() });
+    await there(page);
+    await page.evaluate(async () => { const g = window.__game; for (let i = 0; i < 12 && g.phase !== 'racing'; i++) { g.sim(1, true); await new Promise(r => requestAnimationFrame(r)); } g.sim(2, true); });
+    const s = await page.evaluate(async () => {
+      const r = window.__game.race, iz = Zabava.list.find(f => f.id === 'izzivi'), ce = Zabava.list.find(f => f.id === 'cesta'), out = { iz: iz.L.map(c => c.k).join(','), marks: (iz.objs || []).length, ev: {} };
+      for (const kind of ce.KINDS) { ce.clear(); const ev = ce.spawn(r, { d: r.player.dist + 300, kind, done: true }); out.ev[kind] = ev.objs.map(o => (o.isMesh ? 1 : 0) + (Array.isArray(o.material) ? 9 : 0)).join(''); await new Promise(rr => requestAnimationFrame(rr)); }
+      ce.clear(); return out;
+    });
+    T.check('Vršič, a time trial: the challenges placed (radar, section, drift zone, golden posts), their marks drawn (the radar\'s sign, the posts)', s.iz === 'radar,odsek,drift,smernik,smernik,smernik' && s.marks === 2, JSON.stringify(s));
+    T.check('the living road: rocks, an animal, a tractor one mesh each, the road works three (cones, pole, light)', s.ev.rocks === '1' && s.ev.animal === '1' && s.ev.tractor === '1' && s.ev.works === '111', JSON.stringify(s.ev));
     T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }

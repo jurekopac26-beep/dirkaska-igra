@@ -13,6 +13,7 @@ const spomin = require(path.join(ROOT, 'js', 'zabava', 'spomin.js'));
 const trener = require(path.join(ROOT, 'js', 'zabava', 'trener.js'));
 const izzivi = require(path.join(ROOT, 'js', 'zabava', 'izzivi.js'));
 const lov = require(path.join(ROOT, 'js', 'zabava', 'lov.js'));
+const cesta = require(path.join(ROOT, 'js', 'zabava', 'cesta.js'));
 const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
 const C = loadCore();
@@ -307,6 +308,40 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   check('the 3:00 up: got away (the time)', e3 && !e3.ok && e3.why === 'time', JSON.stringify(e3));
   check('the meter drains when it is far again (half full: 20 s to empty)', (() => { r = mkR(); P = r.player; lov.begin(r); o = lov.st.o; r.time = 10; lov.st.m = 0.5; o.dist = P.dist + 100; P.x = o.x + 100; lov.step(r, 1); return Math.abs(lov.st.m - 0.45) < 1e-6; })());
   lov.stop();
+}
+
+// 9. the living road: where and what (a time trial: the same every run), never where a rival is ahead, each event's knock, the red light
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+  const p1 = cesta.plan(T, T.def, 123), p2 = cesta.plan(T, T.def, 123), p3 = cesta.plan(T, T.def, 7);
+  check('the plan: two events on Vršič (35-45 % and 65-80 % of the road), the same for the same seed (a time trial), others for another', p1.length === 2 && p1[0].d > T.raceLen * 0.35 - 1 && p1[0].d < T.raceLen * 0.45 + 1 && p1[1].d > T.raceLen * 0.65 - 1 && JSON.stringify(p1) === JSON.stringify(p2) && JSON.stringify(p1) !== JSON.stringify(p3), JSON.stringify(p1.map(e => [Math.round(e.d), e.kind])));
+  check('the animal by the country (Vršič: gams, Bathurst: kenguru, Ouninpohja: los)', cesta.animalOf(T.def) === 'gams' && cesta.animalOf({ name: 'Bathurst, Avstralija' }) === 'kenguru' && cesta.animalOf({ name: 'Ouninpohja, Finska' }) === 'los');
+  const msgs = []; Z.init({ S: {}, repro: () => false, phase: () => 'racing', showMsg: (t) => msgs.push(t), say() {} });
+  window.__zabava = { cesta: 1 };
+  const mk = (n) => { const r = new C.Race(T, { numAI: n, playerGrid: n + 1, laps: 1, phys: 'cs', seed: 2, playerModel: C.MODELS[4], assist: 2 }); r.time = 5; return r; };
+  let r = mk(3), P = r.player;
+  cesta.begin(r, { on: false });
+  check('on for an open road (not online, not a mission, not a circuit)', cesta.on && !cesta.fits(r, { on: true }) && !cesta.fits(new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'spa')), { numAI: 0, playerGrid: 1, laps: 1 }), {}));
+  P.dist = 1000; r.cars.forEach((c, k) => { if (c !== P) c.dist = 1000 + 100 + k; });
+  check('never where a rival is ahead between the player and it (a rival 100 m ahead: no place 300 m on; all behind: yes)', !cesta.free(r, 1300) && (r.cars.forEach(c => { if (c !== P) c.dist = 900; }), cesta.free(r, 1300)));
+  // each kind: put it 300 m ahead, drive the player into it
+  const run = (kind, into) => {
+    r = mk(0); P = r.player; cesta.begin(r, { on: false }); msgs.length = 0;
+    const E = { d: 2000, kind, done: true }; P.dist = 1700; P.vx = 30; P.vz = 0; P.q = { d: 0 };
+    const ev = cesta.spawn(r, E); into(ev);
+    return { ev, v: P.speed };
+  };
+  let o = run('rocks', (ev) => { const k = ev.rocks[0]; P.dist = k.s - (T.startS || 0); P.q = { d: k.lat }; cesta.step(r, 0.1); });
+  check('rocks: driving over one slows the car (82 %), KAMEN! said', o.v < 30 * 0.83 && o.v > 30 * 0.8 && msgs.includes('KAMEN!'), o.v.toFixed(2) + ' ' + msgs.join('|'));
+  o = run('animal', (ev) => { P.dist = 2000; P.q = { d: 0 }; ev.lat = 0; cesta.step(r, 0.1); });
+  check('the animal on the road: hit, the car slows hard (55 %)', o.ev.hit && o.v < 30 * 0.56, o.v.toFixed(2));
+  o = run('tractor', (ev) => { ev.ds = 0; P.dist = 2000; P.q = { d: ev.lat }; cesta.step(r, 0.1); });
+  check('the tractor: run into its back, the car slows (50 %)', o.ev.hit && o.v < 30 * 0.51, o.v.toFixed(2));
+  o = run('works', (ev) => { ev.cyc = 3; r.time = 5; P.dist = 1999; P.q = { d: ev.side * 1 }; cesta.step(r, 0.1); P.dist = 2001; cesta.step(r, 0.1); });
+  check('the road works: past the light on red, 3 s penalty (RDEČA LUČ)', P.tfPen === 3 && msgs.some(t => /RDEČA LUČ/.test(t)), 'pen ' + P.tfPen + ' ' + msgs.join('|'));
+  o = run('rocks', (ev) => { P.dist = 2000 + 80; P.q = { d: 0 }; cesta.step(r, 0.1); });
+  check('past it (70 m): gone, the next one can come', cesta.ev === null);
+  cesta.stop(); delete window.__zabava;
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
