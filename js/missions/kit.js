@@ -8,9 +8,13 @@
      MisKit.fire(run, max, { per, spread }): flames (one Points draw: the spots set with spot(i, x, y, z, size); size 0 is out; per flames a
        spot, spread over spread x its size), smoke over them (one more).
      MisKit.jet(run): the water's stream from a point to a point (one Points draw) and its splash; set(from, to, on).
-     MisKit.aim(run, o): the finger's aim on the screen (drag anywhere over the game) and the GASI button held; a ring where the water goes;
-       o.plane 'v' (a wall facing the camera through o.focus) or 'g' (the ground at o.focus's height). on(true) shows it, the driving
+     MisKit.aim(run, o): the finger on the screen (drag anywhere over the game) and the GASI button held (o.button); o.tap: taps only
+       (the mission picks its target with pick(points, px), the ring on ringAt); a ring where the water goes;
+       o.plane 'v' (a wall facing the camera through o.focus), 'g' (the ground at o.focus's height) or 'n' (through o.focus, normal o.normal).
+       on(true) shows it, the driving
        controls hidden (o.drive: kept, the pad over the upper part of the screen only, GASI over the pedals: aimed while driving); point: the world point aimed at; spray: GASI held.
+     MisKit.look(run, point, k, dt): the camera behind the car turned toward point by k (eased; Render.cam.look), off at the run's end.
+     MisKit.flowAt(v): the share of the water at the truck's speed v (m/s): all up to 25 km/h, none from 50 km/h.
      MisKit.hold(car, on): the parked car held still (locked, no reverse) every step while the crew works; hold(car, false) lets it go.
    All of it is the run's own (run.add): out of the scene and freed when the run ends. Loadable without a browser (the tests: no THREE,
    the logic only). */
@@ -66,6 +70,23 @@ const MisKit = (function () {
       const y1 = y * Math.cos(rr) - z * Math.sin(rr), z1 = y * Math.sin(rr) + z * Math.cos(rr), x2 = x * Math.cos(pp) - y1 * Math.sin(pp), y2 = x * Math.sin(pp) + y1 * Math.cos(pp);   // (the view's order YZX: the roll, the pitch, then the heading)
       const ch = Math.cos(P.h), sh = Math.sin(P.h);
       return { x: P.x + x2 * ch - z1 * sh, y: y0 + y2, z: P.z + x2 * sh + z1 * ch };
+    };
+    // the ladder's angle and length for its basket at a world point (the finger's: mission 49): { yaw, lift (rad), ext (0..1) }, from the
+    // physics (tipAt), a first guess along the line to the point corrected three times
+    T.solve = (p) => {
+      const save = [T.yaw, T.lift, T.ext], ch = Math.cos(P.h), sh = Math.sin(P.h);
+      T.yaw = T.yawTo(p.x, p.z);
+      const bx = P.x + LAD.piv[0] * ch, bz = P.z + LAD.piv[0] * sh, dh = Math.hypot(p.x - bx, p.z - bz), base = T.tipAt;
+      T.lift = 0; T.ext = 0; const t0 = base(), dy = p.y - (t0.y - 0.6 - 0.15);
+      let a = Math.atan2(dy, Math.max(0.1, dh - 0.7)), L = Math.hypot(dy, dh - 0.7);
+      for (let k = 0; k < 3; k++) {
+        T.lift = clamp(a, 0, 1.4); T.ext = clamp((L - LAD.L0) / (LAD.step * (LAD.sec - 1)), 0, 1);
+        const t = base(), eh = Math.hypot(p.x - bx, p.z - bz) - Math.hypot(t.x - bx, t.z - bz), ev = p.y - t.y;
+        L += eh * Math.cos(a) + ev * Math.sin(a); a += (ev * Math.cos(a) - eh * Math.sin(a)) / Math.max(4, L);
+      }
+      const out = { yaw: T.yaw, lift: clamp(a, 0, 1.4), ext: clamp((L - LAD.L0) / (LAD.step * (LAD.sec - 1)), 0, 1) };
+      [T.yaw, T.lift, T.ext] = save;
+      return out;
     };
     // the turntable's angle that points the ladder at a world point (x, z): from the turntable itself (behind the truck's middle), from the physics
     T.yawTo = (x, z) => { const ch = Math.cos(P.h), sh = Math.sin(P.h), dx = x - (P.x + LAD.piv[0] * ch), dz = z - (P.z + LAD.piv[0] * sh); return Math.atan2(-(-dx * sh + dz * ch), dx * ch + dz * sh); };
@@ -202,21 +223,23 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
 
   /* ---------------- the finger's aim and the GASI button ---------------- */
   function aim(run, o) {
-    const A = { point: null, spray: false, shown: false, sx: 0.5, sy: 0.42, o: Object.assign({ plane: 'v', focus: null, label: 'GASI' }, o), on() {}, step() {} };
+    const A = { point: null, spray: false, shown: false, sx: 0.5, sy: 0.42, taps: 0, tapAt: null, ringAt: null, o: Object.assign({ plane: 'v', focus: null, normal: null, label: 'GASI', button: true, tap: false }, o), on() {}, step() {}, pick: () => -1 };
     if (typeof document === 'undefined' || !has3()) return A;
     const hud = document.getElementById('hud'); if (!hud) return A;
-    const pad = document.createElement('div'); pad.id = 'mis-aim'; pad.innerHTML = '<i class="ring"></i><button class="gasi" type="button">' + (typeof Lang !== 'undefined' ? Lang.tr(A.o.label) : A.o.label) + '</button>';
+    const pad = document.createElement('div'); pad.id = 'mis-aim'; pad.innerHTML = '<i class="ring"></i>' + (A.o.button ? '<button class="gasi" type="button">' + (typeof Lang !== 'undefined' ? Lang.tr(A.o.label) : A.o.label) + '</button>' : '');
     document.body.appendChild(pad);
     const ring = pad.querySelector('.ring'), btn = pad.querySelector('.gasi');
     let drag = null;
     const at = (e) => { A.sx = clamp(e.clientX / innerWidth, 0, 1); A.sy = clamp(e.clientY / innerHeight, 0, 1); };
-    pad.addEventListener('pointerdown', (e) => { if (e.target === btn) return; drag = e.pointerId; A.touched = true; at(e); e.preventDefault(); });
+    pad.addEventListener('pointerdown', (e) => { if (btn && e.target === btn) return; drag = e.pointerId; A.touched = true; at(e); if (A.o.tap) { A.taps++; A.tapAt = { sx: A.sx, sy: A.sy }; } e.preventDefault(); });
     pad.addEventListener('pointermove', (e) => { if (drag === e.pointerId) { at(e); e.preventDefault(); } });
     const up = (e) => { if (drag === e.pointerId) drag = null; };
     pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
-    btn.addEventListener('pointerdown', (e) => { A.spray = true; btn.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
-    const off = () => { A.spray = false; btn.classList.remove('on'); };
-    btn.addEventListener('pointerup', off); btn.addEventListener('pointercancel', off); btn.addEventListener('pointerleave', off);
+    const off = () => { A.spray = false; if (btn) btn.classList.remove('on'); };
+    if (btn) {
+      btn.addEventListener('pointerdown', (e) => { A.spray = true; btn.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener('pointerup', off); btn.addEventListener('pointercancel', off); btn.addEventListener('pointerleave', off);
+    }
     const touch = document.getElementById('touch');
     A.on = (show) => {
       show = !!show; if (show === A.shown) return; A.shown = show; pad.classList.toggle('on', show); pad.classList.toggle('drive', !!A.o.drive);
@@ -224,23 +247,36 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
       if (!show) off(); else A.touched = false;
       if (show && !A.o.drive && typeof Input !== 'undefined' && Input.reset) Input.reset();
     };
-    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3();
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), pl = new THREE.Plane(), hit = new THREE.Vector3(), n = new THREE.Vector3(), q = new THREE.Vector3();
+    const ringTo = (p) => { if (!p) { ring.classList.remove('on'); return; } q.set(p.x, p.y, p.z).project(Render.camera); ring.style.left = ((q.x + 1) / 2 * 100).toFixed(2) + '%'; ring.style.top = ((1 - q.y) / 2 * 100).toFixed(2) + '%'; ring.classList.toggle('on', q.z < 1); };
     A.step = () => {
       if (!A.shown) return;
-      const C = Render.camera, f = A.o.focus; if (!C || !f) return;
-      if (!A.touched && !A.o.drive && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
+      const C = Render.camera, f = A.o.focus; if (!C) return;
+      if (A.o.tap) { ringTo(A.ringAt); return; }   // (tapped: the ring on the fire the water goes to, the mission's ringAt)
+      if (!f) return;
+      if (!A.touched && A.o.plane === 'v' && A.toFocus) A.toFocus();   // (until the finger first moves it: on the fire, as the camera settles)
       ndc.set(A.sx * 2 - 1, -(A.sy * 2 - 1)); ray.setFromCamera(ndc, C);
-      if (A.o.plane === 'g') n.set(0, 1, 0); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
+      if (A.o.plane === 'g') n.set(0, 1, 0); else if (A.o.plane === 'n' && A.o.normal) n.copy(A.o.normal); else { C.getWorldDirection(n); n.y = 0; n.normalize().negate(); }
       pl.setFromNormalAndCoplanarPoint(n, f);
       if (ray.ray.intersectPlane(pl, hit)) { A.point = hit.clone(); }
-      // the ring where the water goes
-      if (A.point) { const p = A.point.clone().project(C); ring.style.left = ((p.x + 1) / 2 * 100).toFixed(2) + '%'; ring.style.top = ((1 - p.y) / 2 * 100).toFixed(2) + '%'; ring.classList.toggle('on', p.z < 1); }
+      ringTo(A.point);   // (where the water or the basket goes)
+    };
+    // the tap's target: of the points (each [x, y, z] or { x, y, z }), the index of the one nearest the last tap on the screen, within px (else -1)
+    A.pick = (pts, px) => {
+      const C = Render.camera; if (!C || !A.tapAt) return -1;
+      let best = -1, bd = (px || 70) / innerHeight;
+      pts.forEach((p, k) => { if (!p) return; q.set(p.x != null ? p.x : p[0], p.y != null ? p.y : p[1], p.z != null ? p.z : p[2]).project(C); if (q.z > 1) return;
+        const d = Math.hypot(((q.x + 1) / 2 - A.tapAt.sx) * innerWidth / innerHeight, (1 - q.y) / 2 - A.tapAt.sy); if (d < bd) { bd = d; best = k; } });
+      return best;
     };
     // (the aim's start: on the focus, before the finger moves)
     A.toFocus = () => { const C = Render.camera, f = A.o.focus; if (!C || !f) return; const p = f.clone().project(C); A.sx = clamp((p.x + 1) / 2, 0, 1); A.sy = clamp((1 - p.y) / 2, 0, 1); };
     run.add(new THREE.Group()); run.props[run.props.length - 1].userData.misUndo = () => { pad.remove(); if (touch) touch.classList.remove('mis-hide'); document.body.classList.remove('mis-aiming'); };
     return A;
   }
+
+  // the water by the truck's speed (the user's choice, 30. 10.): all of it up to 25 km/h, less and less above, none from 50 km/h
+  const flowAt = (v) => clamp((50 / 3.6 - v) / (25 / 3.6), 0, 1);
 
   /* ---------------- places along the road, a house ---------------- */
   // a point off the road's centre line at s (off > 0 on the side of the normal), the ground's height there, the road's heading
@@ -284,10 +320,20 @@ void main() { float ph = fract(uT * uRate + aSeed); vec3 p = position; p.y += ph
     return H;
   }
 
+  // the camera behind the car turned toward a target (the user's choice for the crews' work: the view swings toward the fire or the wheel,
+  // a little further back): look(run, { x, z } or null, k 0..1) eased each step; off at the end of the run
+  function look(run, p, k, dt) {
+    if (typeof Render === 'undefined' || !Render.cam) return;
+    const C = Render.cam, L = C.look || (C.look = { x: 0, z: 0, k: 0 });
+    if (!run.lookOn) { run.lookOn = true; run.add(has3() ? new THREE.Group() : { userData: {}, traverse() {} }); run.props[run.props.length - 1].userData.misUndo = () => { C.look = null; }; }
+    if (p) { L.x = p.x; L.z = p.z; }
+    L.k += ((p ? k : 0) - L.k) * Math.min(1, (dt || 0.016) * 1.2);
+  }
+
   // the parked truck held still while the crew works (the run's step, after the race's)
   function hold(c, on) { if (on === false) { c.locked = false; return; } c.locked = true; c.vx = 0; c.vz = 0; c.w = 0; c.inThr = 0; c.inBrk = 0; }
 
-  return { truckModel, fireTruck, fire, jet, aim, hold, at, house, prism, merged, parts, LAD };
+  return { truckModel, fireTruck, fire, jet, aim, flowAt, hold, look, at, house, prism, merged, parts, LAD };
 })();
 /* ---------------- the water (group 3: missions 19, 35, 37, 48) ----------------
      MisKit.water(run, o): a plane of water (one draw: a flood, the tide, a river up its banks) round o.x, o.z, o.size m square, at o.y;
@@ -470,6 +516,10 @@ Object.assign(MisKit, (function () {
     if (kind === 'ribs') {
       g.fillStyle = '#c3d0de'; g.fillRect(0, 0, n, n);
       for (let x = 0; x < n; x += 8) { g.fillStyle = '#8196ad'; g.fillRect(x, 0, 3, n); g.fillStyle = '#f4f8fc'; g.fillRect(x + 4, 0, 2, n); }
+    } else if (kind === 'ice') {   // (group 7: the river's ice, swept: blue-grey, the snow's streaks blown along it, white cracks)
+      g.fillStyle = '#5f8a9e'; g.fillRect(0, 0, n, n);
+      for (let k = 0; k < 40; k++) { const x = (k * 29) % n, y = (k * 41 + (k * k) % 13) % n; g.fillStyle = k % 2 ? 'rgba(220,234,244,.35)' : 'rgba(60,88,112,.25)'; g.fillRect(x, y, 2 + (k % 4), 10 + (k % 7) * 3); }
+      g.strokeStyle = 'rgba(235,245,252,.55)'; g.lineWidth = 1; g.beginPath(); g.moveTo(5, 60); g.lineTo(22, 38); g.lineTo(20, 20); g.lineTo(40, 4); g.moveTo(22, 38); g.lineTo(52, 44); g.stroke();
     } else {
       g.fillStyle = '#f1f5f9'; g.fillRect(0, 0, n, n);
       for (let k = 0; k < 90; k++) { const x = (k * 37) % n, y = (k * 53 + (k * k) % 17) % n, r = 2 + (k % 5); g.fillStyle = k % 3 ? 'rgba(170,186,204,.22)' : 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); }
@@ -550,5 +600,308 @@ Object.assign(MisKit, (function () {
     return 0.01;
   }
   return { snowTex, band, cover, piles, block };
+})());
+/* ---------------- the cargo (group 5: missions 07, 09, 43, 51, 52, 54) ----------------
+     MisKit.keys(run, list, o): a row of buttons over the driving controls (o.side 'left': over the steering, else over the pedals; above
+       the #mis-btn when o.high): list [{ k, label }]; held(k) while a finger is on it, take(k) true once for each press (two presses: two takes), show(on),
+       label(k, text). Taps from the tests: press(k, on).
+     MisKit.towTrailer(P, o): a trailer behind the vehicle on its own kinematics (no physics: it follows the hitch, o.hitch m behind the
+       vehicle's centre; o.len m from the hitch to its axle): step(steer) each step (steer: its rear axle turned, rad; > 0 its rear goes to
+       the right), at(u): the point u m behind the hitch along it, rel: its angle to the vehicle, h: its heading; reset() straight behind.
+     MisKit.tow(run, P, tr, build): the trailer's look (build(B) as for parts(), x forward from the hitch, y up) placed every frame after
+       the car's drawn view (so it does not lag it); tr.pitch its slope (set by the mission from the ground under its axle).
+     MisKit.brakes(o): the brakes' heat: step(P, dt, cool) every step: heat 0..1.3 (1: hot, over it they fade: of the braking the share
+       fade given back to the speed; o.heat, o.cool, o.out: the heat in from the braking, the cooling, the extra cooling given by cool 0..1).
+     MisKit.escort(run, T, o): an escort car with its amber beacons (two draws) on the road: put(s, d, dir, t) (dir -1: facing back along the
+       road), hidden with hide(). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined', hasDoc = () => typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const tr = (s) => (typeof Lang !== 'undefined' && Lang.tr ? Lang.tr(s) : s);
+  function undo(run, fn) { if (!has3()) return; const g = new THREE.Group(); g.userData.misUndo = fn; run.add(g); }
+
+  function keys(run, list, o) {
+    o = o || {};
+    const st = {}; for (const it of list) st[it.k] = { held: false, n: 0 };
+    const K = { el: null, shown: false, held: (k) => !!(st[k] && st[k].held), take: (k) => { const x = st[k]; if (x && x.n > 0) { x.n--; return true; } return false; },
+      press: (k, on) => { const x = st[k]; if (!x) return; if (on && !x.held) x.n++; x.held = !!on; }, show() {}, label() {} };
+    if (!hasDoc() || !has3()) return K;
+    const box = document.createElement('div'); box.id = 'mis-keys'; box.className = (o.side === 'left' ? 'left' : 'right') + (o.high ? ' high' : '');
+    const btn = {};
+    for (const it of list) {
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.k = it.k; b.textContent = tr(it.label); box.appendChild(b); btn[it.k] = b;
+      const up = () => { K.press(it.k, false); b.classList.remove('on'); };
+      b.addEventListener('pointerdown', (e) => { K.press(it.k, true); b.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+      b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+    }
+    document.body.appendChild(box);
+    K.el = box;
+    K.show = (on) => { on = !!on; if (on === K.shown) return; K.shown = on; box.classList.toggle('on-show', on); if (!on) for (const k in st) { st[k].held = false; st[k].n = 0; } };
+    K.label = (k, s) => { const b = btn[k], t = tr(s); if (b && b.textContent !== t) b.textContent = t; };
+    undo(run, () => box.remove());
+    return K;
+  }
+
+  function towTrailer(P, o) {
+    o = Object.assign({ hitch: 1.5, len: 12 }, o);
+    const R = { hitch: o.hitch, len: o.len, h: P.h || 0, rel: 0, pitch: 0, hx: 0, hz: 0 };
+    const hit = () => [P.x - Math.cos(P.h) * R.hitch, P.z - Math.sin(P.h) * R.hitch];
+    R.reset = () => { R.h = P.h || 0; R.rel = 0; [R.hx, R.hz] = hit(); };
+    // the hitch moved by dx, dz: the axle (turned by steer) rolls along its own wheels' way, the trailer turns about the hitch
+    R.step = (steer) => {
+      const [x, z] = hit(), dx = x - R.hx, dz = z - R.hz; R.hx = x; R.hz = z;
+      const d = clamp(steer || 0, -1.2, 1.2), a = R.h + d;
+      if (Math.abs(dx) + Math.abs(dz) < 5) R.h += (-dx * Math.sin(a) + dz * Math.cos(a)) / (R.len * Math.cos(d));
+      R.rel = Math.atan2(Math.sin(R.h - P.h), Math.cos(R.h - P.h));
+      if (Math.abs(R.rel) > 1.45) { R.rel = Math.sign(R.rel) * 1.45; R.h = P.h + R.rel; }   // (jack-knifed no further than its stop)
+    };
+    R.at = (u) => [R.hx - Math.cos(R.h) * u, R.hz - Math.sin(R.h) * u];
+    R.reset();
+    return R;
+  }
+
+  function tow(run, P, R, build) {
+    if (!has3() || typeof Render === 'undefined') return null;
+    const v = Render.viewOf ? Render.viewOf(P) : null, B = MisKit.parts(); build(B);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), mesh = B.mesh(mat);
+    mesh.castShadow = true; mesh.frustumCulled = false; mesh.matrixAutoUpdate = false;
+    // (every frame, from where the car is drawn: its hitch, the trailer's angle to it)
+    mesh.onBeforeRender = () => {
+      const g = v && v.grp, x = g ? g.position.x : P.x, y = g ? g.position.y : P.y, z = g ? g.position.z : P.z, h = g ? -g.rotation.y : P.h;
+      mesh.position.set(x - Math.cos(h) * R.hitch, y, z - Math.sin(h) * R.hitch); mesh.rotation.set(0, -(h + R.rel), R.pitch || 0, 'YZX');
+      mesh.updateMatrix(); mesh.matrixWorld.copy(mesh.matrix);
+    };
+    mesh.onBeforeRender();
+    run.add(mesh);
+    return mesh;
+  }
+
+  function brakes(o) {
+    o = Object.assign({ heat: 0.006, cool: 0.03, out: 0.35, dec: 13 }, o);
+    const H = { heat: 0, fade: 0,
+      step(P, dt, cool) {
+        const v = Math.hypot(P.vx || 0, P.vz || 0), b = P.locked ? 0 : clamp(P.inBrk || 0, 0, 1);
+        H.heat += b * v * o.heat * dt - (o.cool * (0.25 + H.heat) + o.out * clamp(cool || 0, 0, 1)) * dt;
+        H.heat = clamp(H.heat, 0, 1.3);
+        H.fade = clamp((H.heat - 1) / 0.25, 0, 1) * 0.85;
+        // (fading: of the braking just done the share fade given back, never past the speed it had)
+        if (H.fade > 0 && b > 0 && v > 0.5) { const back = Math.min(H.fade * o.dec * b * dt, v * 0.5); P.vx += P.vx / v * back; P.vz += P.vz / v * back; }
+        return H.heat;
+      } };
+    return H;
+  }
+
+  function escort(run, T, o) {
+    o = Object.assign({ col: 0xf2f2ee }, o);
+    const Pl = { put() {}, hide() {}, g: null };
+    if (!has3()) return Pl;
+    const B = MisKit.parts();
+    B.box(0, 0.75, 0, 4.9, 0.7, 1.9, o.col); B.box(0.6, 1.4, 0, 2.2, 0.62, 1.8, o.col); B.box(0.62, 1.42, 0, 2.0, 0.46, 1.82, 0x1d2733);
+    B.box(-1.5, 1.15, 0, 1.8, 0.1, 1.8, 0x3a3e44);
+    for (const x of [1.55, -1.55]) for (const sd of [-1, 1]) B.cyl(x, 0.38, sd * 0.8, 0.38, 0.28, 0x1b1d21);
+    B.box(-2.46, 0.85, 0.7, 0.04, 0.16, 0.3, 0xff3a2a); B.box(-2.46, 0.85, -0.7, 0.04, 0.16, 0.3, 0xff3a2a);
+    const g = new THREE.Group(), m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); m.castShadow = true; g.add(m);
+    const L = MisKit.parts(); L.box(0.6, 1.78, 0.45, 0.4, 0.16, 0.5, 0); L.box(0.6, 1.78, -0.45, 0.4, 0.16, 0.5, 0); L.box(0.6, 1.73, 0, 0.3, 0.06, 1.4, 0);
+    const on = new THREE.MeshBasicMaterial({ color: 0xffa21a }), off = new THREE.MeshLambertMaterial({ color: 0x6a4a10 }), lamps = new THREE.Mesh(MisKit.merged(L.L), on);
+    g.add(lamps); g.visible = false; run.add(g); Pl.g = g;
+    Pl.put = (s, d, dir, t) => {
+      const i = T.idx(s), a = Math.atan2(T.tz[i], T.tx[i]) + (dir < 0 ? Math.PI : 0);
+      g.position.set(T.px[i] + T.nx[i] * (d || 0), T.hy[i], T.pz[i] + T.nz[i] * (d || 0)); g.rotation.y = -a; g.visible = true;
+      lamps.material = ((t || 0) * 2.2) % 1 < 0.5 ? on : off;
+    };
+    Pl.hide = () => { g.visible = false; };
+    undo(run, () => { on.dispose(); off.dispose(); });
+    return Pl;
+  }
+
+  return { keys, towTrailer, tow, brakes, escort };
+})());
+/* ---------------- the calm ride, the animals, the trailer (group 6: missions 10, 39, 55, 02, 34, 50) ----------------
+     MisKit.ride(o): the ride as the load feels it (horses, bees, passengers, a patient): step(P, dt) each step; lon (m/s2, smoothed: + speeding
+       up, - braking), lat (m/s2 across: the speed times the turn), ex (how far over the limits this step: o.brk braking, o.acc speeding up,
+       o.lat across; 0: smooth), calm (1..0: down o.drop x ex a second, a jolt o.kick at once, a knock over o.hit m/s o.knock; back up o.rec a
+       second after o.wait s smooth), n (the jolts counted: ex over o.edge, once each time), jolt(size) one of the mission's own (a pothole).
+       The phone's pedals are only on and off, so a mission with it gives its vehicle soft brakes (truckModel's brakeK 0.2: full brake
+       ~3.6 m/s2, under o.brk) and a pull-away under o.acc: what jolts is the speed carried into a bend (braked too late), a knock, a hole.
+     MisKit.herd(run, kind, max): animals of simple bodies, one draw for all (InstancedMesh): kind 'cow' (white, black patches) or 'bear'
+       (brown); put(k, x, y, z, ry, size, step) (step: the walk's phase, the body bobs), hide(k).
+     MisKit.rails(B, x0, z0, x1, z1, y, o): a wooden fence from a point to a point into a parts list (posts every o.every m, o.rails rails).
+     MisKit.trailer(run, P, build, o): a trailer behind the player's car (build(B) its body, x forward from the hitch at 0 back to the axle
+       at -o.L), drawn where the car's view is (its hitch o.hitch m behind the car's centre), swinging behind it on the hitch; ang: its angle.
+     MisKit.hospital(run, T, s, o): a hospital beside the road at s (on its roomier side): a white building with lit windows, a blue H on a
+       post, the car park, an ambulance at the door (its lamps: blink(t)); ~10 draws. */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const has3 = () => typeof THREE !== 'undefined' && typeof document !== 'undefined';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+  function ride(o) {
+    o = Object.assign({ brk: 4.2, acc: 12, lat: 4.0, tau: 0.25, drop: 0.25, kick: 0.04, edge: 0.2, hit: 2, knock: 0.2, rec: 0.02, wait: 2 }, o);
+    const R = { o, calm: 1, n: 0, lon: 0, lat: 0, ex: 0, vf: null, over: false, quiet: 0, hitT: 0, last: 0 };
+    R.jolt = (size) => { R.calm = clamp(R.calm - size, 0, 1); R.n++; R.quiet = 0; R.last = size; };
+    R.step = (P, dt) => {
+      const ch = Math.cos(P.h || 0), sh = Math.sin(P.h || 0), vf = (P.vx || 0) * ch + (P.vz || 0) * sh;
+      if (R.vf == null || P.locked) R.vf = vf;
+      const a = (vf - R.vf) / Math.max(dt, 1e-3), k = Math.min(1, dt / o.tau); R.vf = vf;
+      R.lon += (clamp(a, -30, 30) - R.lon) * k;
+      R.lat += (Math.abs(vf * (P.w || 0)) - R.lat) * k;
+      R.ex = Math.max(0, -R.lon - o.brk) / o.brk + Math.max(0, R.lon - o.acc) / o.acc + Math.max(0, R.lat - o.lat) / o.lat;
+      R.calm = clamp(R.calm - o.drop * R.ex * dt, 0, 1);
+      const on = R.ex > o.edge; if (on && !R.over) R.jolt(o.kick); R.over = R.ex > o.edge * 0.5 && (on || R.over);
+      const imp = Math.max(P.hitWall || 0, P.hitCar || 0);
+      if (imp > o.hit && !(R.hitT > 0)) R.jolt(o.knock * Math.min(1.5, imp / (o.hit * 2)));
+      if (imp > o.hit) R.hitT = 0.6; else if (R.hitT > 0) R.hitT -= dt;
+      if (R.ex > 0 || imp > o.hit) R.quiet = 0; else R.quiet += dt;
+      if (R.quiet > o.wait) R.calm = Math.min(1, R.calm + o.rec * dt);
+      return R;
+    };
+    return R;
+  }
+
+  // the animals: the body of one as one geometry (vertex colours), all of them one InstancedMesh
+  function animal(kind) {
+    const B = MisKit.parts();
+    if (kind === 'bear') {
+      const BR = 0x4e3420, DK = 0x2e1f13, SN = 0x8a6a48;
+      B.box(0, 0.85, 0, 1.75, 0.95, 0.95, BR); B.box(-0.35, 1.0, 0, 0.9, 0.95, 1.0, BR); B.box(0.45, 1.2, 0, 0.5, 0.4, 0.85, BR);   // (the hump over the shoulders)
+      B.box(1.05, 1.0, 0, 0.55, 0.5, 0.55, BR); B.box(1.38, 0.92, 0, 0.25, 0.24, 0.3, SN); B.box(1.5, 0.95, 0, 0.04, 0.08, 0.1, DK);
+      for (const z of [-0.2, 0.2]) B.box(0.95, 1.3, z, 0.12, 0.14, 0.12, BR);
+      for (const x of [0.55, -0.6]) for (const z of [-0.3, 0.3]) B.box(x, 0.3, z, 0.28, 0.6, 0.28, DK);
+    } else {
+      const WH = 0xf2f1ec, BK = 0x1e1e1e, PK = 0xe0a0a0;
+      B.box(0, 1.05, 0, 2.0, 0.95, 0.85, WH); B.box(1.2, 1.3, 0, 0.55, 0.45, 0.42, WH); B.box(1.5, 1.22, 0, 0.12, 0.26, 0.36, PK);
+      B.box(0.25, 1.15, 0, 0.7, 0.7, 0.87, BK); B.box(-0.6, 1.3, 0.1, 0.5, 0.42, 0.87, BK); B.box(1.2, 1.45, 0, 0.3, 0.16, 0.44, BK);
+      for (const z of [-0.26, 0.26]) B.box(1.1, 1.58, z, 0.08, 0.1, 0.18, 0xd8d0b8);
+      B.box(-0.35, 0.52, 0, 0.35, 0.18, 0.4, PK); B.box(-1.02, 0.9, 0, 0.06, 0.7, 0.06, WH);
+      for (const x of [0.75, -0.75]) for (const z of [-0.28, 0.28]) B.box(x, 0.32, z, 0.18, 0.64, 0.18, WH);
+    }
+    return MisKit.merged(B.L);
+  }
+  function herd(run, kind, max) {
+    const H = { n: max, put() {}, hide() {}, g: null };
+    if (!has3()) return H;
+    const mesh = new THREE.InstancedMesh(animal(kind), new THREE.MeshLambertMaterial({ vertexColors: true }), max);
+    mesh.castShadow = true; mesh.frustumCulled = false;
+    const M = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0, 0, 0), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
+    for (let k = 0; k < max; k++) mesh.setMatrixAt(k, Z);
+    H.put = (k, x, y, z, ry, size, step) => {
+      const s = size || 1, b = step ? Math.abs(Math.sin(step)) * 0.06 * s : 0;
+      e.set(0, ry || 0, step ? Math.sin(step * 2) * 0.03 : 0); q.setFromEuler(e); p.set(x, y + b, z); sc.set(s, s, s);
+      M.compose(p, q, sc); mesh.setMatrixAt(k, M); mesh.instanceMatrix.needsUpdate = true;
+    };
+    H.hide = (k) => { mesh.setMatrixAt(k, Z); mesh.instanceMatrix.needsUpdate = true; };
+    run.add(mesh); H.g = mesh;
+    return H;
+  }
+
+  // a wooden fence along a line: posts and rails into a parts list B (x, z in its own frame)
+  function rails(B, x0, z0, x1, z1, y, o) {
+    o = Object.assign({ every: 2.5, rails: 2, h: 1.25, col: 0x7a5636, post: 0x5a3e26 }, o);
+    const L = Math.hypot(x1 - x0, z1 - z0); if (L < 0.1) return;
+    const ry = Math.atan2(-(z1 - z0), x1 - x0), n = Math.max(1, Math.round(L / o.every));
+    for (let k = 0; k <= n; k++) B.box(x0 + (x1 - x0) * k / n, y + o.h / 2, z0 + (z1 - z0) * k / n, 0.16, o.h, 0.16, o.post);
+    for (let k = 1; k <= o.rails; k++) B.box((x0 + x1) / 2, y + o.h * k / (o.rails + 0.4), (z0 + z1) / 2, L, 0.1, 0.06, o.col, ry);
+  }
+
+  // a trailer on the car's hitch: its body (one draw) where the car's view is, swinging behind it (the axle follows the hitch)
+  function trailer(run, P, build, o) {
+    o = Object.assign({ hitch: -2.6, L: 4.6, y: 0 }, o);
+    const T = { ang: 0, mesh: null };
+    const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null;
+    if (!has3() || !v) return T;
+    const B = MisKit.parts(); build(B);
+    const mesh = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); mesh.castShadow = true; mesh.matrixAutoUpdate = false; mesh.frustumCulled = false;
+    const h = new THREE.Vector3(), ax = new THREE.Vector3(), q = new THREE.Quaternion(), e = new THREE.Euler(), one = new THREE.Vector3(1, 1, 1);
+    let init = false;
+    mesh.onBeforeRender = () => {
+      const M = v.grp.matrixWorld; h.set(o.hitch, o.y, 0).applyMatrix4(M);
+      const fx = M.elements[0], fz = M.elements[2];   // (the car's forward in the world)
+      if (!init) { const f = Math.hypot(fx, fz) || 1; ax.set(h.x - fx / f * o.L, h.y, h.z - fz / f * o.L); init = true; }
+      let dx = h.x - ax.x, dz = h.z - ax.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+      ax.set(h.x - dx * o.L, h.y, h.z - dz * o.L);
+      const yaw = Math.atan2(-dz, dx); e.set(0, yaw, 0); q.setFromEuler(e);
+      mesh.matrixWorld.compose(h, q, one);
+      T.ang = Math.atan2(Math.sin(yaw - Math.atan2(-fz, fx)), Math.cos(yaw - Math.atan2(-fz, fx)));
+    };
+    run.add(mesh); T.mesh = mesh;
+    return T;
+  }
+
+  // the hospital beside the road at s: the car park, a white building of two floors (its lit windows toward the road), the door's canopy,
+  // the blue H on a post, the ambulance at the door (its lamps flashing: blink(t))
+  function hospital(run, T, s, o) {
+    o = Object.assign({ side: 0 }, o);
+    const Hs = { g: null, blink() {} };
+    if (!has3()) return Hs;
+    const i = T.idx(s), side = o.side || (T.br[i] >= T.bl[i] ? 1 : -1), w = T.wS(s);
+    const W = (typeof Render !== 'undefined' && Render.world) || {}, gy = (x, z) => (W.groundH ? W.groundH(x, z) : T.hy[i]) || T.hy[i];
+    const at = (along, off) => { const j = T.idx(s + along); return [T.px[j] + T.nx[j] * off * side, T.pz[j] + T.nz[j] * off * side]; };
+    const g = new THREE.Group(), rot = Math.atan2(-T.tz[i], T.tx[i]), face = Math.atan2(-side * T.nx[i], -side * T.nz[i]);
+    const lam = (c) => new THREE.MeshLambertMaterial({ color: c }), bas = (c, map) => new THREE.MeshBasicMaterial({ color: c, map: map || null });
+    const tex = (w2, h2, fn) => { const c = document.createElement('canvas'); c.width = w2; c.height = h2; fn(c.getContext('2d'), w2, h2); const t = new THREE.CanvasTexture(c); t.anisotropy = 2; return t; };
+    const box = (x, z, y, L, H, D, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(L, H, D), m); b.position.set(x, y + H / 2, z); b.rotation.y = rot; g.add(b); return b; };
+    { const [x, z] = at(0, w + 8); const y = Math.max(gy(x, z), T.hy[i]) + 0.04; box(x, z, y - 0.3, 34, 0.3, 12, lam(0x6d737a)); }
+    const [bx, bz] = at(0, w + 20), by = Math.max(gy(bx, bz), T.hy[i]) - 0.2;
+    box(bx, bz, by, 30, 7.2, 12, lam(0xe4e7ea));
+    box(bx, bz, by + 7.2, 30.6, 0.5, 12.6, lam(0x9aa3ad));
+    const winT = tex(256, 64, (c, W2, H2) => { c.fillStyle = '#3b4552'; c.fillRect(0, 0, W2, H2); c.fillStyle = '#ffe2a0'; for (let k = 0; k < 16; k++) { c.fillRect(4 + k * 16, 6, 10, 20); if (k !== 7 && k !== 8) c.fillRect(4 + k * 16, 38, 10, 20); } });
+    const [fx, fz] = at(0, w + 13.95); const front = new THREE.Mesh(new THREE.PlaneGeometry(29, 6), bas(0xffffff, winT)); front.position.set(fx, by + 3.5, fz); front.rotation.y = face; g.add(front);
+    const [dx, dz] = at(0, w + 13.4); box(dx, dz, by + 3.2, 6, 0.3, 2.2, lam(0xc9ced4));
+    const hT = tex(64, 64, (c) => { c.fillStyle = '#1d5fd1'; c.fillRect(0, 0, 64, 64); c.fillStyle = '#fff'; c.font = 'bold 50px Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('H', 32, 35); });
+    const [hx, hz] = at(-13, w + 2.5), hy = Math.max(gy(hx, hz), T.hy[i]); box(hx, hz, hy, 0.25, 4, 0.25, lam(0x8a929c));
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 0.3), [bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0xffffff, hT), bas(0xffffff, hT)]);
+    sign.position.set(hx, hy + 5, hz); sign.rotation.y = face; g.add(sign);
+    const [ax, az] = at(3, w + 9), ay = Math.max(gy(ax, az), T.hy[i]);
+    box(ax, az, ay + 0.35, 5.6, 2.3, 2.1, lam(0xf4f5f7));
+    box(ax, az, ay + 1.0, 5.64, 0.3, 2.14, lam(0xd8282a));
+    const l0 = bas(0x5aa0ff), l1 = bas(0x10204a);
+    const [qx, qz] = at(3 + 1.6, w + 9.5), [px2, pz2] = at(3 + 1.6, w + 8.5);
+    box(qx, qz, ay + 2.65, 0.4, 0.25, 0.9, l0); box(px2, pz2, ay + 2.65, 0.4, 0.25, 0.9, l1);
+    Hs.blink = (t) => { const on = (t * 1.6) % 1 < 0.5; l0.color.setHex(on ? 0x5aa0ff : 0x10204a); l1.color.setHex(on ? 0x10204a : 0x5aa0ff); };
+    Hs.door = at(0, w + 9); Hs.side = side;
+    run.add(g); Hs.g = g;
+    return Hs;
+  }
+
+  return { ride, herd, rails, trailer, hospital };
+})());
+/* ---------------- the road both ways (group 7: missions 04, 08, 17, 26) ----------------
+     MisKit.place(c, T, s, back): the player's car put at s on the centre line (made(race), before it is drawn), facing up the road or with
+       back down it (the missions that go down a road made to be driven up: 04 Pikes Peak, 26 Tianmen); its checkpoints passed as if driven there.
+     MisKit.pilot(P, T, o): an autopilot for the tests and the pictures (tools/misija-slika.mjs: a mission's def.pilot) along the road up
+       (o.dir 1) or down it (o.dir -1) at o.v m/s, slower before the bends (o.lat m/s2 across) and o.off m off the centre line; returns
+       [steer, throttle, brake] for the game's sim.
+     MisKit.backRoad(run): the road driven the other way (begin): the pace notes' arrow hidden while the run lasts (body.mis-back). */
+Object.assign(MisKit, (function () {
+  'use strict';
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  function place(c, T, s, back) {
+    const i = T.idx(s);
+    c.place(T.px[i], T.pz[i], T.hd[i] + (back ? Math.PI : 0)); if (T.hasElev) { c.y = c.py = T.hy[i]; c.roadY = c.y; }
+    c.dist = s - T.startS; c.q = T.query(T.px[i], T.pz[i], i, {}); c.sPrev = c.q.s;
+    while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }
+  }
+  function pilot(P, T, o) {
+    o = Object.assign({ dir: 1, v: 12, lat: 3, off: 0, look: 7 }, o);
+    const q = P.q; if (!q) return [0, 0, 1];
+    const v = Math.hypot(P.vx || 0, P.vz || 0), s = q.s, d = o.dir < 0 ? -1 : 1;
+    // the point ahead on the road (its centre line, o.off to the side), the steer to it by the heading's error
+    const sa = s + d * (o.look + v * 0.6), j = T.idx(sa), ax = T.px[j] + T.nx[j] * o.off, az = T.pz[j] + T.nz[j] * o.off;
+    let e = Math.atan2(az - P.z, ax - P.x) - (P.h || 0); while (e > Math.PI) e -= 2 * Math.PI; while (e < -Math.PI) e += 2 * Math.PI;
+    const steer = clamp(e * 1.6 - (P.w || 0) * 0.2, -1, 1);
+    // the speed: o.v, less before a bend (the sharpest of the next 60 m: v = sqrt(lat / curvature))
+    let vt = o.v;
+    for (let k = 0; k <= 60; k += 3) { const c = Math.abs(T.k[T.idx(s + d * (k + v * 0.5))]) || 0; if (c > 1e-4) vt = Math.min(vt, Math.sqrt(o.lat / c) + k * 0.12); }
+    vt = Math.max(3, vt);
+    return v < vt - 0.5 ? [steer, 0.8, 0] : v > vt + 0.8 ? [steer, 0, clamp((v - vt) / 4, 0.25, 1)] : [steer, 0, 0];
+  }
+  // driven the other way: the pace notes' arrow (made for the way up) hidden while the run lasts (body.mis-back, css/missions.css)
+  function backRoad(run) {
+    if (typeof document === 'undefined' || typeof THREE === 'undefined') return;
+    document.body.classList.add('mis-back');
+    const g = new THREE.Group(); g.userData.misUndo = () => document.body.classList.remove('mis-back'); run.add(g);
+  }
+  return { place, pilot, backRoad };
 })());
 if (typeof module !== 'undefined') module.exports = MisKit;
