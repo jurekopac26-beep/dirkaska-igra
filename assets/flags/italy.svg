@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Italy</title>
+  <!-- Ratio 2:3. Three equal vertical bands green, white, red (Constitution, art. 12).
+       Colours per the Presidency of the Council of Ministers (2006): Pantone TCX
+       17-6153 Fern Green, 11-0601 Bright White, 18-1662 Flame Scarlet. -->
+  <rect x="0" y="0" width="300" height="600" fill="#008C45"/>
+  <rect x="300" y="0" width="300" height="600" fill="#F4F5F0"/>
+  <rect x="600" y="0" width="300" height="600" fill="#CD212A"/>
+</svg>
