@@ -107,6 +107,19 @@
 .nk-box .nk-delb.warn, .nk-box .nk-delb:active { background: rgba(230,59,46,.85); }
 .nk-zg .nk-sub b { color: #fff; }
 html[lang="en"] .nk-setrow { display: none; }   /* (the tool is Slovenian only) */
+/* Zadnji posnetki: a row for each recording kept (a tap opens it; .rrp and ✕ beside it), Do cilja green, Nedokončana orange */
+.nk-pzi { display: flex; align-items: stretch; gap: 6px; }
+.nk-pzi .nk-item { flex: 1 1 auto; min-width: 0; }
+.nk-box .nk-pzb { flex: none; min-width: 44px; min-height: 0; padding: 0 8px; font-size: 12px; }
+.st-cilj { color: #4cd964; } .st-nedok { color: #FF9500; }
+/* the question at leaving a race before its finish: Da / Ne side by side, Ne marked (Enter takes the marked one) */
+.nk-dlg.nk-vpr { z-index: 26; }
+.nk-vpr .nk-box { width: min(440px, 100%); }
+.nk-vpr h3 { font-size: 19px; color: #fff; }
+.nk-yn { display: flex; gap: 10px; margin-top: 12px; }
+.nk-box .nk-yn button { flex: 1 1 0; min-height: 50px; font-size: 18px; }
+.nk-box .nk-yn button.sel { background: #e8edf3; border-color: #fff; color: #14181f; }
+.nk-box .nk-yn button:focus-visible { outline: 3px solid #FFE14D; outline-offset: 2px; }
 
 /* the tool's own flags (samodejne zastavice): grey with ! on the timeline, confirmed white; a tap shows what it is over the replay (Potrdi / Zavrzi) */
 .nk-auto { position: absolute; bottom: 50%; width: 2px; height: 16px; margin-left: -1px; background: #8f98a3; box-shadow: 0 0 2px #000; pointer-events: auto; cursor: pointer; }
