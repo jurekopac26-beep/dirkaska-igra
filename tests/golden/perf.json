@@ -43,10 +43,10 @@
  },
  "rbring": {
   "calls": 215,
-  "maxCalls": 252,
-  "kverts": 436,
-  "maxKverts": 602,
-  "jsMs": 3.6
+  "maxCalls": 251,
+  "kverts": 439,
+  "maxKverts": 629,
+  "jsMs": 3.39
  },
  "suzuka": {
   "calls": 193,
@@ -70,18 +70,18 @@
   "jsMs": 1.4
  },
  "harju": {
-  "calls": 178,
-  "maxCalls": 211,
-  "kverts": 500,
-  "maxKverts": 751,
-  "jsMs": 0.75
+  "calls": 177,
+  "maxCalls": 210,
+  "kverts": 501,
+  "maxKverts": 749,
+  "jsMs": 1.26
  },
  "bathurst": {
-  "calls": 164,
-  "maxCalls": 252,
-  "kverts": 374,
-  "maxKverts": 418,
-  "jsMs": 4.93
+  "calls": 166,
+  "maxCalls": 254,
+  "kverts": 397,
+  "maxKverts": 467,
+  "jsMs": 4.87
  },
  "chapman": {
   "calls": 137,
@@ -204,10 +204,10 @@
  },
  "rio": {
   "calls": 204,
-  "maxCalls": 268,
-  "kverts": 534,
-  "maxKverts": 725,
-  "jsMs": 2.49
+  "maxCalls": 267,
+  "kverts": 533,
+  "maxKverts": 721,
+  "jsMs": 2.33
  },
  "toronto": {
   "calls": 193,
@@ -273,11 +273,11 @@
   "jsMs": 2.91
  },
  "marrakesh": {
-  "calls": 177,
+  "calls": 176,
   "maxCalls": 228,
-  "kverts": 645,
-  "maxKverts": 741,
-  "jsMs": 1.79
+  "kverts": 662,
+  "maxKverts": 766,
+  "jsMs": 2.18
  },
  "troisrivieres": {
   "calls": 213,
