@@ -544,6 +544,7 @@ try {
       g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, s = [], seen = new Map();
       R.lch = null; for (const c of R.cars) c.lch = null;   // (the start's reaction off: the field where perf.test.mjs measures its budget)
+      P.kt = null;   // (the player's own tyres off too, as perf.test.mjs: their wear changes the grip and so the car's way round the lap, its spots)
       Render.frame(0, 1, P, g.S.camera, {});
       for (const c of R.cars) if (!c.isPlayer && !seen.has(c.m.id)) seen.set(c.m.id, FL.costOf(Render.viewOf(c), P));   // (one default rival's whole cost, the four averaged)
       const unit = [0, 0]; for (const q of seen.values()) { unit[0] += q.calls / seen.size; unit[1] += q.verts / seen.size; }
