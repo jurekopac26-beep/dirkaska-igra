@@ -13,7 +13,7 @@
   const SHOWN = { gume: [['Gume', 'Tyres'], 'gume'], platisca: [['Platišča', 'Rims'], ''], auspuh: [['Auspuh', 'Exhaust'], 'motor'], krilo: [['Zadnje krilo', 'Rear wing'], 'aero'],
     aero: [['Aero paket', 'Aero kit'], 'aero'], filter_zraka: [['Filter zraka', 'Air filter'], 'motor'], cip: [['Čip', 'ECU chip'], 'motor'], turbo: [['Turbo', 'Turbo'], 'motor'],
     akumulator: [['Lahek akumulator', 'Light battery'], ''], vzmeti: [['Vzmeti', 'Springs'], ''], amortizerji: [['Amortizerji', 'Dampers'], ''], stabilizatorji: [['Stabilizatorji', 'Anti-roll bars'], ''],
-    zavore: [['Zavore', 'Brakes'], 'zavore'], hupa: [['Hupa', 'Horn'], ''], dim_gum: [['Dim gum', 'Tyre smoke'], ''], barva: [['Barva', 'Paint'], ''] };
+    zavore: [['Zavore', 'Brakes'], 'zavore'], zamasek: [['Zamašek', 'Fuel cap'], ''], dim_gum: [['Dim gum', 'Tyre smoke'], ''], barva: [['Barva', 'Paint'], ''] };
   // (an option's number: the first per cent of power, grip or braking in what it gives)
   const pct = (s) => { const m = /(?:moč|oprijem(?: v ovinku)?)\s*\+([0-9]+(?:,[0-9]+)?)\s*%|\+([0-9]+(?:,[0-9]+)?)\s*% zavorne/.exec(s || ''); return m ? +(m[1] || m[2]).replace(',', '.') : 0; };
   const EL = {}, DATA = typeof DELI_DATA !== 'undefined' ? DELI_DATA : { elementi: [] };

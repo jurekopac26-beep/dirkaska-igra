@@ -3257,12 +3257,12 @@ const Garage3D = (function () {
   const RGL_RIM = { 3: [['CHROME 3-SPOKE', 3, 0xe6eaee], ['GOLD 5-SPOKE', 5, 0xd4a017]], 4: [['ORANGE 10-SPOKE', 10, 0xff7a1a], ['BLACK MESH', 0, 0x1d1e22]] };
   const RGL_PT = [['AIR FILTER', 'filter', -0.549, -0.211, 0.479, -0.169, 0.169], ['ECU CHIP', 'chip', -0.002, 0.509, 0.414, -0.123, 0.154], ['TURBO', 'turbo', -0.589, 0.083, 0.521, -0.267, 0.29],
     ['LIGHT BATTERY', 'batt', 0.158, 0.592, 0.406, -0.027, 0.237], ['SPRINGS', 'springs', -0.619, -0.151, 0.402, -0.036, 0.176], ['DAMPERS', 'dampers', -0.021, 0.371, 0.474, 0.029, 0.181],
-    ['ANTI-ROLL BARS', 'arb', -0.547, 0.057, 0.424, 0.015, 0.189], ['SPORT PADS', 'pads', 0.129, 0.571, 0.276, -0.072, 0.185], ['HORN', 'horn', -0.49, -0.12, 0.296, -0.213, 0.168],
+    ['ANTI-ROLL BARS', 'arb', -0.547, 0.057, 0.424, 0.015, 0.189], ['SPORT PADS', 'pads', 0.129, 0.571, 0.276, -0.072, 0.185], ['FUEL CAP', 'cap', -0.49, -0.12, 0.296, -0.213, 0.168],
     ['TYRE SMOKE', 'smoke', 0.07, 0.59, 0.454, -0.074, 0.074]];
   const RGL_WG = [['DUCKTAIL', 0, 0.9, 0.16], ['SHORT WING', 2, 1.0, 0.22], ['LOW WING', 1, 1.1, 0.28], ['GT WING', 3, 1.2, 0.34], ['DOUBLE WING', 4, 1.3, 0.4]];
   const RGL_NP = { SNOW: 0.108, 'TRACK SLICK': 0.1011, MOUNTAIN: 0.0901, SPORT: 0.12, RACE: 0.12, TITANIUM: 0.12, CARBON: 0.12, TWIN: 0.12, STRAIGHT: 0.12, 'CHROME 3-SPOKE': 0.12,
     'ORANGE 10-SPOKE': 0.12, 'GOLD 5-SPOKE': 0.12, 'BLACK MESH': 0.12, 'AIR FILTER': 0.0529, 'ECU CHIP': 0.0536, TURBO: 0.0653, 'LIGHT BATTERY': 0.0282, SPRINGS: 0.0528, DAMPERS: 0.04,
-    'ANTI-ROLL BARS': 0.0521, 'SPORT PADS': 0.0242, HORN: 0.0606, 'TYRE SMOKE': 0.0604, DUCKTAIL: 0.054, 'SHORT WING': 0.0491, 'LOW WING': 0.048, 'GT WING': 0.048, 'DOUBLE WING': 0.054 };
+    'ANTI-ROLL BARS': 0.0521, 'SPORT PADS': 0.0242, 'FUEL CAP': 0.0606, 'TYRE SMOKE': 0.0604, DUCKTAIL: 0.054, 'SHORT WING': 0.0491, 'LOW WING': 0.048, 'GT WING': 0.048, 'DOUBLE WING': 0.054 };
   const _rv = new V3();
   // (the concept's frame: u across the first view, w from the car toward the camera, about a point 0.2 m before the table's middle)
   const CFR = (u, w) => [w * Math.sin(0.3) + u * Math.cos(0.3), 0.2 + w * Math.cos(0.3) - u * Math.sin(0.3)];
@@ -3434,8 +3434,10 @@ const Garage3D = (function () {
         gl(MATTE); for (const s of [-1, 1]) box(s * 0.06 - 0.02, s * 0.06 + 0.02, 0.012, 0.065, -0.045, 0.045, [0.07, 0.07, 0.08]); gl(METAL); for (const s of [-1, 1]) cylA(g, [s * 0.13, 0.215, 0], 'z', 0.014, 0.08, 8, CHR); },
       pads: () => { const m = M4(0, 0.012, 0, -0.5, 0, 0); gl(SATIN); cbox(m, 0, 0.065, 0, 0.21, 0.13, 0.016, [0.12, 0.125, 0.14]);
         gl(PAINT); for (const [cx, cy] of [[-0.05, 0.035], [0.05, 0.035], [-0.05, 0.095], [0.05, 0.095]]) { cbox(m, cx, cy, 0.011, 0.085, 0.05, 0.006, [0.78, 0.1, 0.09]); cbox(m, cx, cy, 0.017, 0.07, 0.038, 0.006, [0.16, 0.15, 0.15]); } },
-      horn: () => { plinth(0.22, 0.14); gl(PAINT); box(-0.035, 0.035, 0.012, 0.075, -0.03, 0.03, [0.06, 0.06, 0.07]); gl(METAL);
-        for (const [y, s] of [[0.11, 1], [0.17, 0.85]]) cone2(g, [-0.03, y, -0.02], [0.12, y, 0.06], 0.012, 0.05 * s, 12, CHR, true); gl(MATTE); for (const [y, s] of [[0.11, 1], [0.17, 0.85]]) cylA(g, [-0.04, y, -0.025], 'x', 0.016, 0.03, 8, [0.06, 0.06, 0.07]); },
+      cap: () => { plinth(0.2, 0.14); gl(PAINT); box(-0.022, 0.022, 0.012, 0.075, -0.022, 0.022, [0.06, 0.06, 0.07]);   // (the fuel cap, its face to the camera: the anodised red one on a stand;
+        gl(METAL); cylA(g, [0, 0.15, 0], 'z', 0.085, 0.02, 20, CHR);                                                      //  the game has no horn: docs/deli.md)
+        gl(PAINT); cylA(g, [0, 0.15, 0.022], 'z', 0.07, 0.026, 20, [0.82, 0.1, 0.09]); for (let i = 0; i < 8; i++) cbox(M4(0, 0.15, 0.024, 0, 0, i / 8 * TAU), 0.071, 0, 0, 0.014, 0.022, 0.024, [0.62, 0.07, 0.06]);
+        gl(METAL); discZ(g, 0, 0.15, 0.036, 0, 0.032, 14, CHR, 1); cbox(M4(0, 0.15, 0.04, 0, 0, 0.6), 0, 0, 0, 0.1, 0.016, 0.01, [0.9, 0.91, 0.93]); },
       smoke: () => { gl(PAINT); box(-0.15, 0.15, 0, 0.05, -0.05, 0.05, [0.06, 0.06, 0.07]); [[0.92, 0.92, 0.9], [0.11, 0.37, 0.84], [0.8, 0.12, 0.1], [0.93, 0.75, 0.1], [0.55, 0.3, 0.85]].forEach((c, i) => { const x = -0.12 + i * 0.06;
           gl(PAINT); cylA(g, [x, 0.15, 0], 'y', 0.024, 0.2, 10, c); gl(MATTE); cylA(g, [x, 0.26, 0], 'y', 0.017, 0.025, 8, [0.06, 0.06, 0.07]); box(x - 0.024, x + 0.024, 0.11, 0.125, -0.025, 0.025, [0.06, 0.06, 0.07]); }); } };
     // ---- the five bays ----

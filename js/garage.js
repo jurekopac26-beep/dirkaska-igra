@@ -44,9 +44,10 @@
     SPORT: ['auspuh', 'Sport'], CARBON: ['auspuh', 'Carbon'], RACE: ['auspuh', 'Racing'], TWIN: ['auspuh', 'Dual'], TITANIUM: ['auspuh', 'Titanium'], STRAIGHT: ['auspuh', 'Straight'],
     'CHROME 3-SPOKE': ['platisca', 'Chrome, 3 spokes'], 'GOLD 5-SPOKE': ['platisca', 'Gold, 5 spokes'], 'ORANGE 10-SPOKE': ['platisca', 'Orange, 10 spokes'], 'BLACK MESH': ['platisca', 'Black mesh'],
     'AIR FILTER': ['filter_zraka', 'Air filter'], 'ECU CHIP': ['cip', 'Chip'], TURBO: ['turbo', 'Turbo'], 'LIGHT BATTERY': ['akumulator', 'Light battery'], SPRINGS: ['vzmeti', 'Springs'],
-    DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], HORN: ['hupa', 'Two-tone'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
+    DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], 'FUEL CAP': ['zamasek', 'Anodised red'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
     DUCKTAIL: ['krilo', 'Ducktail'], 'SHORT WING': ['krilo', 'Short wing'], 'LOW WING': ['krilo', 'Low wing'], 'GT WING': ['krilo', 'GT wing'], 'DOUBLE WING': ['krilo', 'Double wing'] };
-  // (a regal's part the shop sells: the horn no more, the game has none (in the list of parts it is the fuel cap, zamasek: docs/deli.md))
+  // (a regal's part the shop sells: every plate's element in the game's list of parts (in the horn's place the fuel cap: the game has no
+  // horn, docs/deli.md, the user's choice 2. 11. 2026))
   const sold = (n) => !!(REGAL[n] && EL[REGAL[n][0]]);
   const findOpt = (el, en) => { const E = EL[el]; for (let t = 0; t < 4; t++) { const j = E.c[t][1].findIndex(o => o[0][1] === en); if (j >= 0) return [t, j]; } return null; };
   // (the stock part among the options (the tyres': Touring, docs/deli.md); what is on a car: its own part, else that one)
@@ -118,7 +119,7 @@
     amortizerji: (t) => '<svg viewBox="0 0 44 44"><rect x="18" y="4" width="8" height="18" rx="2" fill="#c8ced8"/><rect x="16" y="20" width="12" height="16" rx="2" fill="' + TONE[t] + '"/><circle cx="22" cy="6" r="3" fill="#4a5160"/><circle cx="22" cy="38" r="3" fill="#4a5160"/></svg>',
     stabilizatorji: (t) => '<svg viewBox="0 0 44 44"><path d="M6 12v10q0 8 8 8h16q8 0 8-8V12" fill="none" stroke="' + TONE[t] + '" stroke-width="4" stroke-linecap="round"/></svg>',
     zavore: (t) => '<svg viewBox="0 0 44 44"><circle cx="20" cy="24" r="15" fill="' + ['#9aa2ae', '#b0b6c0', '#7b8594', '#3a3f48'][t] + '"/><circle cx="20" cy="24" r="5" fill="#4a5160"/><path d="M28 6a18 18 0 0 1 10 12l-8 3a10 10 0 0 0-5-7z" fill="' + TONE[t] + '"/></svg>',
-    hupa: (t) => '<svg viewBox="0 0 44 44"><path d="M6 18h6l14-9v26l-14-9H6z" fill="' + TONE[t] + '"/><path d="M31 15a10 10 0 0 1 0 14M35 11a16 16 0 0 1 0 22" fill="none" stroke="#4a5160" stroke-width="2.4"/></svg>',
+    zamasek: (t) => '<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="#9aa2ae"/><circle cx="22" cy="22" r="13" fill="' + TONE[t] + '"/><circle cx="22" cy="22" r="6" fill="#c8ced8"/><rect x="11" y="19.5" width="22" height="5" rx="2.5" fill="#e8ebf0" transform="rotate(-34 22 22)"/></svg>',
     dim_gum: (t, j) => { const c = [['#e8ebf0', '#e8ebf0', '#e8ebf0', '#e8ebf0'], ['#47a3ff', '#ff4a3a', '#ffd23f', '#a35bff'], ['#1d6fb8', '#2fbf5a', '#ff8a1a', '#ff7ac0'], ['#47a3ff', '#ff4a3a', '#2fbf5a', '#e8ebf0']][t][j];
       return '<svg viewBox="0 0 44 44"><circle cx="15" cy="26" r="9" fill="' + c + '"/><circle cx="25" cy="20" r="11" fill="' + c + '"/><circle cx="31" cy="28" r="8" fill="' + c + '" opacity=".85"/><circle cx="10" cy="36" r="5" fill="#1d1f24"/></svg>'; },
     barva: (t, j, hex) => '<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="' + CSS(hex) + '" stroke="#d6dde8" stroke-width="2.5"/>' + (t === 1 ? '<path d="M12 30l20-16" stroke="rgba(255,255,255,.35)" stroke-width="5"/>' : '<ellipse cx="16" cy="15" rx="6" ry="3.5" fill="rgba(255,255,255,' + (0.25 + 0.12 * t) + ')"/>') + '</svg>',

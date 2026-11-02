@@ -84,7 +84,7 @@ try {
       return { bays: R.bays.length, onStage, gone: R.P.k, visible: R.P.root.visible, names: R.names.map(n => n.nm), items: R.items.length, meshes: ms.length, verts: ms.reduce((q, m) => q + m.geometry.attributes.position.count, 0),
         wall: R.wall.visible && R.wall.geometry.attributes.position.count, col: R.col === Garage3D.cur.spec.color, main: D.stats.main, tris: D.stats.tris }; });
     const NAMES = ['SNOW', 'TRACK SLICK', 'MOUNTAIN', 'SPORT', 'RACE', 'TITANIUM', 'CARBON', 'TWIN', 'STRAIGHT', 'CHROME 3-SPOKE', 'GOLD 5-SPOKE', 'ORANGE 10-SPOKE', 'BLACK MESH', 'AIR FILTER', 'ECU CHIP', 'TURBO',
-      'LIGHT BATTERY', 'SPRINGS', 'DAMPERS', 'ANTI-ROLL BARS', 'SPORT PADS', 'HORN', 'TYRE SMOKE', 'DUCKTAIL', 'SHORT WING', 'LOW WING', 'GT WING', 'DOUBLE WING'];
+      'LIGHT BATTERY', 'SPRINGS', 'DAMPERS', 'ANTI-ROLL BARS', 'SPORT PADS', 'FUEL CAP', 'TYRE SMOKE', 'DUCKTAIL', 'SHORT WING', 'LOW WING', 'GT WING', 'DOUBLE WING'];
     T.check('the regal behind the car: five bays, at least four of them on the stage in the home view, not stepped aside, the wings in the car\'s colour', RG.bays === 5 && RG.onStage.filter(Boolean).length >= 4 && RG.gone === 0 && RG.visible && RG.col, JSON.stringify(RG));
     T.check('the regal\'s labels: a prism before each of its 28 elements (each a thing to tap), the names in British English (TRACK SLICK, TYRE SMOKE, no Slovenian letters), each once',
       RG.names.length === NAMES.length && RG.items === NAMES.length && NAMES.every(n => RG.names.includes(n)) && RG.names.every(n => /^[A-Z0-9 -]+$/.test(n)), JSON.stringify(RG.names));
@@ -200,6 +200,9 @@ try {
         __garage.closeMenu(); if (g0) c.parts.gume = g0; return out; });
       T.check('the stock tyres (Touring): the tyres\' menu opens on them, fitted (✓), not to be bought again, no ↺ SERIJSKO', st.sel.join() === '0,2' && st.fit.join() === 'false,false,true,false' && st.buy === 'NAMEŠČENO ✓' && !st.can && !st.stock, JSON.stringify(st));
     }
+    const mz = await tap('rgl:FUEL CAP'), dz = await menuDom(); await page.evaluate(() => __garage.closeMenu());
+    T.check('the fuel cap on the regal (in the horn\'s place: the game has no horn): its menu, the game\'s 16 (4 tabs, 4 tiles; the anodised red one chosen)', mz && mz.el === 'zamasek' && dz.tabs.length === 4
+      && dz.tiles.length === 4 && dz.tiles.filter(t => t.sel).length === 1 && dz.tiles[2].sel && dz.tiles[2].n === 'Eloksiran rdeč' && dz.tabs[1][2], JSON.stringify({ mz, dz }));
     const m = await tap('rgl:TURBO'), d = await menuDom(), mk = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, dim: Garage3D._dbg.dim }));
     T.check('the turbo tapped: its menu (4 tabs: name and prices, its own tab chosen; 4 tiles, Turbo · 2.500 € blue), at the bottom; the turbo marked blue in the picture, the rest of the garage darkened, the engine\'s new parts seen through on the car',
       m && m.el === 'turbo' && d.on && d.bot && d.tabs.length === 4 && d.tabs[1][2] && d.tabs[0][1] === '500–1.600 €' && d.tiles.length === 4 && d.tiles.filter(t => t.sel).length === 1 && d.tiles[1].sel && d.tiles[1].n === 'Turbo' && d.tiles[1].p === '2.500 €'
