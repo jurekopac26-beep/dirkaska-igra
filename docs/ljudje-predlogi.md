@@ -14,6 +14,52 @@ Seja je naredila 12 predlogov, vsak v eni sliki (pokončna slika za telefon, izr
 - **Orodja**: `tools/ljudje/igra.mjs <proga> [prizor,…]` (avto pelje mimo prizorov, slike iz kamere za avtom na izbranih razdaljah in povečava ljudi), `tools/ljudje/mesta.mjs <proga> --plan …` (kandidati za mesta: ravna pot pred mestom, ograja blizu, ravna tla, ista cesta, brez stavb in drugih stvari; razporedi vrste prizorov in izpiše vrstico za `SITES`).
 - **Test**: `tests/browser/ljudje.test.mjs`.
 
+### Prizori po progah
+
+Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor; Detroit ima samo mehanike pri zidu boksov.
+
+| Proga | Prizorov | Prizori (metri od štarta) |
+|---|---|---|
+| Mount Baldy, ZDA | 3 | piknik 2080, fotografi na bregu 4704, kolesarji 6248 |
+| Bang Saen, Tajska | 4 | tribuna z valom 528, maršali 1472, gasilci in reševalci 3376, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Bathurst, Avstralija | 8 | mehaniki pri zidu boksov 70, žar pred avtodomom 640, gasilci in reševalci 1104, vhod 1976, maršali 2784, fotografi in TV kamera 4456, oder iz gradbenih odrov 4984, tribuna z valom 5790 |
+| Beartooth, ZDA | 1 | piknik 1696 |
+| Big Sur, ZDA | 3 | piknik 56, fotografi na bregu 1984, kolesarji 3664 |
+| Los Caracoles, Čile | 3 | kamp s prikolico 40, piknik 6152, fotografi na bregu 10488 |
+| Chapman's Peak, Južna Afrika | 1 | piknik 352 |
+| Crystal Palace, Anglija | 5 | maršali 96, fotografi na bregu 1064, piknik 1424, vhod 2912, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Detroit, ZDA | 1 | mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Great Alpine Road, Avstralija | 3 | fotografi na bregu 2096, piknik 4992, kamp s prikolico 6728 |
+| Harju, Finska | 3 | redarji ob traku 392, oder iz gradbenih odrov 1464, fotografi na bregu 2144 |
+| Mount Hotham, Avstralija | 3 | fotografi na bregu 832, kamp s prikolico 2840, piknik 7608 |
+| Katu-Jaryk, Rusija | 2 | ogenj na travi 720, kamp s prikolico 4544 |
+| Longford, Avstralija | 6 | piknik 288, maršali 1784, družina pri hiši 2384, žar pred avtodomom 5336, fotografi na bregu 6488, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Marrakesh, Maroko | 3 | gasilci in reševalci 80, tribuna z valom 1112, maršali 1560 |
+| Mauna Kea, ZDA | 2 | fotografi na bregu 136, kamp s prikolico 3472 |
+| Medvode, Slovenija | 4 | fotografi na bregu 96, piknik 1664, družina pri hiši 2896, kolesarji 4336 |
+| Moki Dugway, ZDA | 2 | kamp s prikolico 264, fotografi na bregu 4880 |
+| Monterey, ZDA | 6 | fotografi in TV kamera 944, maršali 1440, gasilci in reševalci 1904, oder iz gradbenih odrov 2288, tribuna z valom 3160, žar pred avtodomom 3560 |
+| Montréal, Kanada | 5 | gasilci in reševalci 136, fotografi in TV kamera 1736, maršali 2520, tribuna z valom 4064, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Santa Monica Mountains, ZDA | 2 | piknik 136, fotografi na bregu 2264 |
+| Newcastle, Avstralija | 4 | tribuna z valom 144, maršali 720, gasilci in reševalci 1976, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Nürburg, Nemčija | 14 | oder iz gradbenih odrov 1950, žar pred avtodomom 3300, TV pod šotorom 4720, ogenj na travi 5640, fotografi na bregu 7672, gasilci in reševalci 8424, ogenj na travi 9832, oder iz gradbenih odrov 11088, piknik 12392, žar pred avtodomom 14624, TV pod šotorom 16350, kamp s prikolico 17168, telovadba ob prikolici 18450, maršali 19976 |
+| Ouninpohja, Finska | 8 | družina pri hiši 1064, hiša ob cesti 2240, ogenj na travi 3336, fotografi na bregu 4808, redarji ob traku 6096, oder iz gradbenih odrov 7320, redarji ob traku 8648, kamp s prikolico 9568 |
+| Palomar Mountain, ZDA | 3 | fotografi na bregu 152, kolesarji 1480, piknik 4720 |
+| Pikes Peak, ZDA | 1 | fotografi na bregu 4672 |
+| Pikes Peak (makadam), ZDA | 1 | fotografi na bregu 3824 |
+| Rio do Rastro, Brazilija | 1 | piknik 4432 |
+| Štajerska, Avstrija | 7 | vhod 216, gasilci in reševalci 896, maršali 1704, žar pred avtodomom 2488, oder iz gradbenih odrov 3112, fotografi in TV kamera 3560, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Rio de Janeiro, Brazilija | 4 | gasilci in reševalci 2224, tribuna z valom 2664, maršali 4040, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Riverside, ZDA | 4 | žar pred avtodomom 464, maršali 4112, tribuna z valom 4568, fotografi na bregu 5144 |
+| Sani Pass, Južna Afrika | 2 | fotografi na bregu 1328, kamp s prikolico 4920 |
+| Spa, Belgija | 8 | vhod 170, fotografi in TV kamera 870, maršali 1360, ogenj na travi 1864, tribuna z valom 4280, gasilci in reševalci 5560, žar pred avtodomom 6288, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Suzuka, Japonska | 5 | tribuna z valom 118, vhod 806, fotografi in TV kamera 2022, gasilci in reševalci 4070, maršali 5078 |
+| Toronto, Kanada | 4 | gasilci in reševalci 112, tribuna z valom 752, maršali 1128, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Townsville, Avstralija | 5 | maršali 88, gasilci in reševalci 504, vhod 888, tribuna z valom 2176, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Trois-Rivières, Kanada | 4 | maršali 144, tribuna z valom 1432, vhod 1960, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Uncompahgre, ZDA | 2 | kamp s prikolico 600, ogenj na travi 2720 |
+| Vršič, Slovenija | 5 | kolesarji 648, kamp s prikolico 1576, piknik 2560, kolesarji 7800, fotografi na bregu 12248 |
+
 ## Orodje (`tools/ljudje/`)
 
 - `ljudje3d.js`: nov model človeka (`person`, poze `pose`, predmeti v roki `hold`, oblačila po vlogah) in vsi elementi s slik (avtodom, prikolica, šotori, ogenj, žar, TV, hiša, oder, tribuna, maršalska postaja, gasilsko vozilo, vhod, boksi …), živali in gozdni elementi; THREE r128, samo za slike (živali in gozdni elementi so v igri v `js/world-zivali.js`).

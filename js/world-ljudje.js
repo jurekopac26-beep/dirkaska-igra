@@ -1101,12 +1101,15 @@
   function roomSide(T, s) { let l = 0, r = 0; for (let d = -30; d <= 30; d += 6) { const i = T.idx((((s + d) % T.len) + T.len) % T.len); l += T.bl[i]; r += T.br[i]; } return r > l ? 1 : -1; }
   /* ---------------- every frame (World.update): the followed car's way to each scene, the scenes near the camera posed ---------------- */
   const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _cv = new THREE.Vector3();
+  const SUMMER = new Set(['piknik', 'kolesarji']);   // (the scenes of a summer's day: out of the world under snow)
   function step(W, t, car, cam) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built
       for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
-      smokeStep(W, 0, true); W.cs = null; W.lt = 0; return;
+      W.root.visible = true; smokeStep(W, 0, true); W.cs = null; W.lt = 0; return;
     }
-    const T = W.T, dt = t - W.lt; W.lt = t;
+    // a special mission (js/missions.js, Missions.run): not a race day (a flood, a fire, a rescue), so none of these out; back when it is over
+    const mis = typeof Missions !== 'undefined' && !!Missions.run; W.root.visible = !mis; if (mis) { W.cs = null; return; }
+    const T = W.T, dt = t - W.lt, winter = W.o.seasonKey === 'winter'; W.lt = t;   // (winter: the world under snow, js/render.js seasonWorld)
     if (dt < -0.5) for (const Sc of W.scenes) reset(Sc);   // (time went back: a new race)
     // the followed car along the road: where (s) and how fast (from its way since the last frame: also in a replay)
     const q = T.query(car.x, car.z, W.hint, W.q); W.hint = q.i; const cs = q.s;
@@ -1116,6 +1119,7 @@
     if (cam) { _pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm); }
     const cp = cam ? cam.position : null;
     for (const Sc of W.scenes) {
+      if (winter && SUMMER.has(Sc.name)) { Sc.grp.visible = false; Sc.on = false; continue; }   // (no picnic blanket or resting cyclists in the snow)
       let da = Sc.s0 - cs; if (!T.open) da -= T.len * Math.round(da / T.len);
       Sc.da = da; const eta = W.v > 2 ? da / W.v : 1e9;
       if (Sc.arm) { if (da > -4 && da < 700 && eta < WARN) alert(Sc, t); }
@@ -1137,18 +1141,18 @@
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
     baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['marsali', 152, 1], ['tribuna', 528, 1], ['gasilci', 3376, 1]],
+    bangsaen: [['tribuna', 528, 1], ['marsali', 1472, 1], ['gasilci', 3376, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     beartooth: [['piknik', 1696, -1]],
     bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
     chapman: [['piknik', 352, 1]],
-    cpalace: [['marsali', 48, 1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
+    cpalace: [['marsali', 96, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
     greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
     hotham: [['foto2', 832, 1], ['kamp', 2840, 1], ['piknik', 7608, -1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
-    longford: [['piknik', 200, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['foto2', 6488, -1]],
+    longford: [['piknik', 288, -1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['foto2', 6488, -1]],
     marrakesh: [['gasilci', 80, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1]],
     maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
     medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
@@ -1156,21 +1160,21 @@
     monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['tribuna', 4064, 1]],
     mulholland: [['piknik', 136, 1], ['foto2', 2264, -1]],
-    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['gasilci', 1976, -1], ['vhod', 2376, 1]],
+    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
     palomar: [['foto2', 152, 1], ['kolesarji', 1480, 1], ['piknik', 4720, -1]],
     pikes: [['foto2', 4672, 1]],
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
-    rbring: [['vhod', 216, 1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1], ['tribuna', 4128, 1]],
-    rio: [['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 4696, 1]],
+    rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
+    rio: [['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 4040, -1]],
     riverside: [['zar', 464, -1], ['marsali', 4112, 1], ['tribuna', 4568, -1], ['foto2', 5144, 1]],
     sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
     toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1]],
-    townsville: [['gasilci', 504, 1], ['vhod', 888, -1], ['tribuna', 2176, 1], ['marsali', 2800, 1]],
+    townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['tribuna', 2176, 1]],
     troisrivieres: [['marsali', 144, -1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
     uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
     vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 7800, -1], ['foto2', 12248, -1]],
@@ -1190,7 +1194,7 @@
     katu: { flag: [0xf2f2f2, 0x1c3f94, 0xd8262a], house: 'rus' }, marrakesh: { flag: [0xc1272d, 0x006233, 0xc1272d], house: 'sud' },
     bangsaen: { flag: [0xa51931, 0xf4f5f8, 0x2d2a4a, 0xf4f5f8, 0xa51931], house: 'sud' },
   };
-  const geoOf = (D) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(D.P, 3)); if (D.N) g.setAttribute('normal', new THREE.Float32BufferAttribute(D.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(D.C, 3)); g.computeBoundingSphere(); return g; };
+  const geoOf = (D) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(D.P, 3)); if (D.N) g.setAttribute('normal', new THREE.Float32BufferAttribute(D.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(D.C, 3)); g.attributes.color.noSeason = true; g.computeBoundingSphere(); return g; };   // (noSeason: the season's paint (js/render.js seasonWorld) leaves their colours: no snow-white faces, no autumn leaves on a green shirt)
 
   World.people = function (o) {
     const A = World.api, T = A.T, def = T && T.def;
@@ -1202,7 +1206,7 @@
     const W = { T, scenes: [], frame: 0, wx: 0.8, wz: 0.6, smoke: null, q: {}, hint: -1, cs: null, v: 0, lt: 0,
       rShow: LOD.tier >= 2 ? 650 : LOD.tier === 1 ? 420 : 280, rPpl: LOD.tier >= 2 ? 240 : LOD.tier === 1 ? 170 : 120, rPose: LOD.tier >= 2 ? 200 : LOD.tier === 1 ? 150 : 110 };
     const matL = new THREE.MeshLambertMaterial({ vertexColors: true }), matU = new THREE.MeshBasicMaterial({ vertexColors: true });
-    const root = new THREE.Group(); root.name = 'people'; root.userData.lj = true; o.root.add(root);
+    const root = new THREE.Group(); root.name = 'people'; root.userData.lj = true; o.root.add(root); W.root = root; W.o = o;
     const circles = [], stats = { scenes: [], people: 0, verts: 0, propVerts: 0 };
     let nPuff = 0;
     list.forEach(([name, at, side, opt], si) => {
@@ -1225,7 +1229,7 @@
       for (const P of all) for (const pt of P.parts) col.set(pt.C, pt.o);
       const [cx, cz] = F.w(0, 6), cy = F.y(0, 6) + 2, r = d.r || 24;
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.attributes.color.noSeason = true;
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, cy, cz), r);
       const ppl = new THREE.Mesh(g, matL); ppl.castShadow = true; ppl.receiveShadow = true; ppl.matrixAutoUpdate = false; ppl.name = 'people';
       const grp = new THREE.Group(); grp.name = 'scene'; grp.userData.scene = name; root.add(grp);
@@ -1244,7 +1248,7 @@
     if (!W.scenes.length) return null;
     if (nPuff) {   // the smoke of every scene of this world: one instanced mesh (ROAD DECAL ORDER: blended over the road's decals, as Longford's)
       const M = W.smoke = new THREE.InstancedMesh(puffGeo(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), nPuff);
-      const c = new THREE.Color(); for (const Sc of W.scenes) for (const e of Sc.smoke) { c.setHex(e.col); for (let k = 0; k < e.n; k++) M.setColorAt(e.i + k, c); }
+      const c = new THREE.Color(); for (const Sc of W.scenes) for (const e of Sc.smoke) { c.setHex(e.col); for (let k = 0; k < e.n; k++) M.setColorAt(e.i + k, c); } M.instanceColor.noSeason = true;
       M.frustumCulled = false; M.renderOrder = 4; M.name = 'sceneSmoke'; root.add(M);
     }
     const t1 = performance.now(); stats.cleared = clearAll(o, circles, A); stats.ms = Math.round(performance.now() - t0); stats.msClear = Math.round(performance.now() - t1);

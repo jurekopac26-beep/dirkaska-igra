@@ -49,6 +49,7 @@ try {
       let kmax = 0; for (let d = -110; d <= 15; d += 5) { const j = T.idx((((s + d) % L) + L) % L); kmax = Math.max(kmax, Math.abs(T.k ? T.k[j] : 0)); }
       for (const side of [-1, 1]) {
         const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16) continue;
+        const PL = T.def.pit, inPit = (x) => x >= PL[1] - 40 && x <= PL[2] + 40; if (PL && side === Math.sign(PL[0]) && (inPit(m) || (!T.open && (inPit(m - L) || inPit(m + L))))) continue;   // (not in the pit lane: its scene is the pit wall's, def.pit; the lane over the start line: its metres before it negative)
         let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0;
         for (let a = -12; a <= 12; a += 3) for (let b = 1; b <= 13; b += 3) {
           const x = T.px[i] + T.tx[i] * a + T.nx[i] * side * (bar + b), z = T.pz[i] + T.tz[i] * a + T.nz[i] * side * (bar + b), h = gH(x, z);
