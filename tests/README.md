@@ -45,12 +45,19 @@ prepustijo naključju, čakanje luči pred štartom), so iz njega: isti naslov d
 Vizualni učinki (dim, iskre, komentar) ostanejo naključni. `window.__game.repro` pove seme, `window.__game.recSum()` povzetek posnetka.
 **Posnetki pred/po** (`tools/shot.mjs`, prek hitrega vstopa): `node tools/shot.mjs bathurst --m 1284` postavi avto na idealno linijo 1284 m po
 štartu (`s` iz poročila o napaki), skrije druge avte in shrani pogled kamere za avtom brez HUD-a, pokonci (360 × 640) in ležeče (640 × 360);
-`--pokonci` ali `--lezece` samo enega, `--m 400,1284` več mest, `--t <s>` mesto, kamor pride avtopilot (s tekmeci), `--vreme dez`.
+`--pokonci` ali `--lezece` samo enega, `--m 400,1284` več mest, `--t <s>` mesto, kamor pride avtopilot (s tekmeci), `--vreme dez`,
+`--nizka` grafika NIZKA (kot jo meri `perf.test.mjs`; brez nje visoka kakovost).
 `--pred main` (ali drug ref ali mapa s kopijo igre) posname ista mesta še v drugi različici in naredi `…-primerjava.png` (pred | po | razlika,
 spremenjeni piksli vijolični) ter `povzetek.md` z deležem spremenjenih pikslov; ista koda da pod 0,5 % (gledalci, zastave). Slike so v
 `test-results/shots/`. Za primerjavo vzemi pravo progo (`CLAUDE.md`). `--nabor` je nabor za pull requeste (`NABOR` v orodju in prave proge,
 katerih datoteke sprememba spreminja): na GitHubu ga ob pull requestu, ki spremeni igro, požene `.github/workflows/posnetki.yml`
 (»Posnetki pred/po«, ~5 min): slike so v artefaktu `posnetki-<št>`, povzetek v povzetku posla. Ne šteje kot test: rdeč je le, ko igra na veji javi napako.
+
+**Obremenitev po predmetih** (`tools/obremenitev.mjs`): `node tools/obremenitev.mjs mulholland` izmeri istih šest vzorcev kot `perf.test.mjs`
+(NIZKA, 844 × 390, seme) in vsak klic risanja (tudi senčni prehod, `SH`) pripiše mreži: vrstica graditelja, ki jo je dodala v sceno
+(`[mulholland:553<world:4349]`), material in geometrija, `W` svet ali `O` drugo (avti, nebo, učinki); pri instanciranih mrežah še, koliko
+oglišč je dlje kot 60/100/150 m od kamere. Izpiše vzorce, nato najtežjega po ogliščih in po klicih (`--vzorec 5 --po klici --svet --n 40`,
+`--posamezno` vsako mrežo s položajem); vse v `test-results/obremenitev/<id>.json`.
 
 **Datoteka s posnetkom** (`tools/posnetek.mjs`, sklop 12 orodja za napake): uporabnik v Nastavitvah orodja (Posnetek dirke → Shrani) ali ob
 zbirki (Shrani posnetek (.rrp)) shrani posnetek dirke `posnetek_<proga>_<LLLLMMDD-UUMM>.rrp` in ga pošlje. `node tools/posnetek.mjs <datoteka>`
@@ -60,7 +67,7 @@ dirke, samodejne zastavice (kje je bil tisti avto), dnevnik in besedilo poročil
 (`povzetek.txt`, `povzetek.json`, slike). Datoteke in slik ne shranjuj v repozitorij.
 
 **Predogled pred mainom** (`.github/workflows/stran.yml`, `tools/predogled.mjs`): stran na GitHub Pages ima `main` v korenu, vsak odprt pull
-request iz tega repozitorija (največ 3 najnovejši) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
+request iz tega repozitorija (največ 3 najnovejši; tisti z oznako »predogled« vedno med njimi) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
 vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluje, ko je v Settings → Pages → Source izbrano »GitHub Actions«
 (do tedaj ostane objava z veje `main`, potek pa to samo javi). Predogled ima svoj service worker, shranjene nastavitve in napredek pa deli z glavno igro.
 
