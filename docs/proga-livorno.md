@@ -21,7 +21,7 @@ Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gr
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
 | 1 | **Podatki:** potek proge (OSM), višine (Copernicus GLO-30), raba tal (OSM + ESA WorldCover), stavbe in drevesa do 60 m ob cesti; ta načrt | 2–3 h | narejen (2. 11. 2026): `tools/proga-podatki.py` + `tools/livorno/` (`config.json`, `livorno.json`, mreže PNG), ta načrt |
-| 2 | **Proga v igri:** `js/tracks/livorno.js` (črta, višine, širina, imena ovinkov, `hudSigns`, štart, 100 avtov), angleški prevod v `js/lang.js`, test `tests/livorno.test.js`; AI odpelje cel krog s 100 avti | 2–3 h | |
+| 2 | **Proga v igri:** `js/tracks/livorno.js` (črta, višine, širina, imena ovinkov, `hudSigns`, štart, 100 avtov), angleški prevod v `js/lang.js`, test `tests/livorno.test.js`; AI odpelje cel krog s 100 avti | 2–3 h | narejen (2. 11. 2026): proga iz `tools/livorno/build.py track`, 100/100 avtov v cilju brez reševanja |
 | 3 | **Okolica do 60 m:** `js/world-livorno.js` (teren, morje in obala, pečine, vile in hiše, stolpi, gozd, zidovi, gledalci, štartni prostor) | 3–4 h | |
 | 4 | **Obremenitev telefona:** poenostavitve do mej (`tests/golden/perf.json`), reference (`npm run golden:update`), druge proge enako obremenjene | 1–2 h | |
 | 5 | **Meni in opisi:** `assets/tracks/livorno.webp` in `livorno-rain.webp` (`maketa-menija/orodja`), `docs/proge/livorno.md`, README (Proge, Zasluge: OSM ODbL, Copernicus DEM, ESA WorldCover, krošnje Meta/WRI), `docs/kazalo.md`; pull request | 1–2 h | |
@@ -135,6 +135,14 @@ Raba tal do 150 m od ceste (WorldCover): drevesa 55 %, pozidano 22 %, voda 9 %, 
 - Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca CC BY 4.0.
 - Meta and World Resources Institute, High Resolution Canopy Height Maps, licenca CC BY 4.0 (višina krošenj za tla pod drevesi).
+
+## Sklop 2: kaj je narejeno
+
+- `js/tracks/livorno.js` nastane z `python3 -I tools/livorno/build.py track` iz `tools/livorno/livorno.json` (imena, širine in opis uredi v `build.py`, ne v datoteki proge): 3.818 točk (vsakih 5 m), višine vsakih 10 m (`LV_H`, decimetri nad morjem), `widths` (pol širine: obala 6,0, Via del Littorale 5,4, Via di Montenero 5,0, SP9, ulice Ardenze in Via dei Bagni 4,6 m), `brO` (mostovi čez zalive in potoke) in `brU` (železniški most v Ardenzi), 19 imen s komentarjem, `raceRivals: 99`, `flyStart: true`, `rivals: 20`, `realKm: 19.09`; krožišče na Via di Montenero zravnano (Gauss 40 m med `s` 1800 in 1990).
+- Ovinki: najožji polmeri ~9–11 m (lasnice na Porcigliani, vogal v Antignanu, zavoj pri Terasi ob morju) po glajenju v orodju; dodatno zaobljanje ni bilo potrebno. Pred črto: ravnina ob morju od Antignana, 350 m pred črto ovinek okoli zaliva pri Terasi (28 m) in most čez Rio Ardenza.
+- Angleščina za opisna imena v `js/lang.js` (Seafront Terrace, Under the Railway, Savolano Hairpins, Castellaccio Tower, East Hairpin, Romito Hairpins, Antignano Castle); kraji ostanejo, kot so.
+- `index.html` (za `troisrivieres.js`), `tools/menu-lens.js` (`BASE`: start 3,8 m), `tools/menu-globe.mjs` (`PLACES`: start), `js/menu-data.js` iz obeh orodij, `tests/run.js`.
+- `tests/livorno.test.js`: dolžina, brez samopresečišč, višine, kraji v vrstnem redu, imena z angleščino, širine, ravnina pred črto, dirka 100 avtov z letečim štartom cel krog (100/100 v cilju, zmagovalec ~482 s, 0 reševanj, ~30 s izvajanja).
 
 ## Sklop 1: kaj je narejeno
 
