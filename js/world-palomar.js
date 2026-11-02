@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caGCol, caGround, caSlope, caTileGeo, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut,
+    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, parkedCar, caGCol, caGround, caSlope, caTileGeo, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut,
     crowdRun, cyl, gable, ico, lerp, ouCutMat, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, stubExcl, stubGeo,
     stubProps, stubVerge, tuftWindMat, valueNoise2, vary, vrDist, vrFar, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubAt, vrStubs
   } = API;
@@ -312,8 +312,7 @@
     };
     const car = (g, x, y, z, rot, col) => {   // a parked car
       const c = Math.cos(rot), s = Math.sin(rot);
-      box(g, x, y + 0.25, z, 4.5, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.4, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.4, 0.8], [1.4, -0.8], [-1.4, 0.8], [-1.4, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true);
+      parkedCar(g, x, y, z, rot, col);   // (the car: parkedCar in js/world.js)
     };
     const moto = (g, x, y, z, rot, col) => {   // a parked motorbike on its side stand
       const c = Math.cos(rot), s = Math.sin(rot);

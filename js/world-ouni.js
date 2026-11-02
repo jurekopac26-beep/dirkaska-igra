@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, addShore, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, inPoly, lerp,
+    Chunks, GB, IChunks, TAU, addShore, atSf, box, parkedCar, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, inPoly, lerp,
     mergeBands, pkSky, polyDist, propFloorTable, rng, roadsideProps, rock, shoreBand, sstep, starCone, valueNoise2, vary, waterMat, waterline
   } = API;
   let T;   // (World's, for the build under way)
@@ -547,8 +547,7 @@
     const person = (x, z, ro, col) => crowdPut(CR, x, ouGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const flagAt = (x, z, rot, h) => { const g = scen.get(x, z); ouFlag(g, x, ouGround(x, z), z, rot, h || 7); };
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const van = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // camper van
       box(g, x, y + 0.3, z, 6.2, 2.5, 2.2, rot, [0.94, 0.94, 0.92], null, true); box(g, x + c * 2.2, y + 1.2, z + s * 2.2, 1.4, 0.8, 2.24, rot, [0.16, 0.2, 0.26], null, true);
       box(g, x, y + 1.0, z, 6.25, 0.3, 2.25, rot, col, null, true);

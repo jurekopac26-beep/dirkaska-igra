@@ -213,6 +213,153 @@ const World = (function () {
     if (!noBottom) g.quadO(v[0], v[1], v[5], v[4], col, inn);
     g.quadO(v[4], v[5], v[6], v[7], col, inn); g.quadO(v[1], v[0], v[3], v[2], col, inn);
   }
+  // A parked car (the car parks, the fans' camps, the lay-bys; the user's wishes of 1. 11. 2026: the cars by the road brought up to date, then
+  // »izboljšaj še dodatno grafiko parkiranim avtomobilom ob dirkališču«): the body cut round at its corners (seen from above, where the chase
+  // camera sees it, a car's outline, not a brick), its top falling to the front (the bonnet) and a little to the rear (the boot), the paint's
+  // top lighter than its sides (the sky in it); on its wheels with grey rims, a glasshouse with a sloped windscreen and rear window (the
+  // windscreen and the rear window lighter, the sky in them; the side windows dark), bumpers, head- and tail-lights, and its shadow on the
+  // ground; some with a black roof, roof rails, a sunroof. Its shape by kind (0 saloon, 1 hatchback, 2 estate, 3 SUV, 4 van, 5 pick-up with its
+  // open bed), else by the place's hash (no draws from a world's random stream). Front +x along rot, as box(); on the ground at (x, y, z).
+  const PC_GLASS = [0.13, 0.16, 0.21], PC_SCREEN = [0.38, 0.46, 0.55], PC_REAR = [0.27, 0.33, 0.41], PC_TYRE = [0.08, 0.08, 0.09], PC_RIM = [0.6, 0.61, 0.64], PC_DARK = [0.17, 0.18, 0.2],
+    PC_LAMP = [0.95, 0.92, 0.8], PC_TAIL = [0.72, 0.08, 0.06], PC_SHADOW = [0.11, 0.11, 0.115], PC_BLACK = [0.1, 0.1, 0.11], PC_PLATE = [0.86, 0.87, 0.84];
+  // lite: the car parks' instanced car (hundreds in view, one shape, a colour each): the same body and glasshouse, the wheels' outer faces, no
+  // rims, bumpers, lights or shadow (~170 vertices, not ~330); what is not paint has its colour given negative (-c - 0.002), which the car
+  // parks' material (carParkMat) keeps, not tinted by the instance's colour
+  function parkedCar(g, x, y, z, rot, col, kind, lite) {
+    const c = Math.cos(rot), s = Math.sin(rot), P = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c];
+    const k = kind != null ? kind : Math.floor(crH(x, z, 77) * 6) % 6, hv = crH(x, z, 78), own = (cc) => lite ? [-cc[0] - 0.002, -cc[1] - 0.002, -cc[2] - 0.002] : cc;
+    const L = k === 1 ? 3.9 : k === 4 ? 4.6 : k === 5 ? 4.9 : 4.4, W = k >= 3 ? 1.9 : 1.8, hx = L / 2, hw = W / 2, yb = k >= 3 ? 0.36 : 0.3, yt = k >= 3 ? 0.98 : 0.8;
+    const top = [Math.min(1, col[0] * 1.1 + 0.03), Math.min(1, col[1] * 1.1 + 0.03), Math.min(1, col[2] * 1.1 + 0.035)], side = [col[0] * 0.9, col[1] * 0.9, col[2] * 0.9];   // (the paint: lighter on top)
+    let gb, gt, h = 0.52;   // the glasshouse's feet and roof along x (rear, front)
+    if (k === 0) { gb = [-1.3, 0.95]; gt = [-0.85, 0.3]; }
+    else if (k === 1) { gb = [-hx + 0.12, 0.75]; gt = [-hx + 0.32, 0.15]; }
+    else if (k === 2) { gb = [-hx + 0.1, 0.95]; gt = [-hx + 0.16, 0.3]; }
+    else if (k === 3) { gb = [-hx + 0.14, 1.0]; gt = [-hx + 0.26, 0.45]; h = 0.6; }
+    else if (k === 4) { gb = [-hx + 0.05, hx - 0.5]; gt = [-hx + 0.05, hx - 0.85]; h = 0.85; }
+    else { gb = [-0.35, 1.25]; gt = [-0.3, 0.78]; h = 0.6; }
+    // the body: its outline round the corners (seen from above, counter-clockwise), the glasshouse's feet on the long sides; its top's height along x
+    const cf = 0.26, cr = 0.17, g0 = Math.max(gb[0], -hx + cr + 0.02), g1 = gb[1], dF = k === 4 ? 0.07 : k === 5 ? 0.1 : 0.15, dR = k === 0 ? 0.08 : k === 5 ? 0 : 0.03;
+    const yT = (lx) => lx > g1 ? yt - dF * (lx - g1) / (hx - g1) : lx < g0 ? yt - dR * (g0 - lx) / (g0 + hx) : yt;
+    const O = [[hx, -(hw - cf)], [hx, hw - cf], [hx - cf, hw], [g1, hw], [g0, hw], [-hx + cr, hw], [-hx, hw - cr], [-hx, -(hw - cr)], [-hx + cr, -hw], [g0, -hw], [g1, -hw], [hx - cf, -hw]]
+      .filter((p, i, a) => { const q = a[(i + a.length - 1) % a.length]; return Math.hypot(p[0] - q[0], p[1] - q[1]) > 0.01; });
+    const mid = P(0, (yb + yt) / 2, 0), low = [side[0] * 0.7, side[1] * 0.7, side[2] * 0.7], sc = [low, low, side, side];   // (the sides darker below: rounded)
+    for (let i = 0; i < O.length; i++) { const a = O[i], b2 = O[(i + 1) % O.length];   // (the sides)
+      g.quadO(P(a[0], yb, a[1]), P(b2[0], yb, b2[1]), P(b2[0], yT(b2[0]), b2[1]), P(a[0], yT(a[0]), a[1]), side, mid, null, sc); }
+    const fan = (pts, c0) => { const cp = P(c0, yT(c0) - 0.001, 0), below = P(c0, yb, 0); for (let i = 0; i + 1 < pts.length; i++) g.triO(P(pts[i][0], yT(pts[i][0]), pts[i][1]), P(pts[i + 1][0], yT(pts[i + 1][0]), pts[i + 1][1]), cp, top, below); };
+    fan(O.filter(p => p[0] >= g1 - 1e-6).sort((p, q) => Math.atan2(p[1], p[0] - g1) - Math.atan2(q[1], q[0] - g1)), g1);   // (the bonnet)
+    fan(O.filter(p => p[0] <= g0 + 1e-6).sort((p, q) => Math.atan2(p[1], -(p[0] - g0)) - Math.atan2(q[1], -(q[0] - g0))), g0);   // (the boot)
+    g.quadO(P(g0, yt, -hw), P(g1, yt, -hw), P(g1, yt, hw), P(g0, yt, hw), top, mid);   // (under the glasshouse: its sills)
+    // the wheels: their outer faces and their fronts and backs (lite: an axle's pair as one, across the car), a grey rim on each
+    const wx = hx - 0.8, wr = k >= 3 ? 0.37 : 0.33, tyre = own(PC_TYRE);
+    for (const a of [wx, -wx]) {
+      for (const sd of [1, -1]) { const zo = sd * (hw + 0.01); g.quadO(P(a - wr, 0, zo), P(a + wr, 0, zo), P(a + wr, wr * 2, zo), P(a - wr, wr * 2, zo), tyre, P(a, wr, 0));
+        if (!lite) { const zi = sd * (hw - 0.26), ins = P(a, wr, sd * (hw - 0.13)); g.quadO(P(a - wr, 0, zi), P(a - wr, 0, zo), P(a - wr, wr * 2, zo), P(a - wr, wr * 2, zi), tyre, ins); g.quadO(P(a + wr, 0, zo), P(a + wr, 0, zi), P(a + wr, wr * 2, zi), P(a + wr, wr * 2, zo), tyre, ins);
+          const q = sd * (hw + 0.016); g.quadO(P(a - wr * 0.55, wr * 0.45, q), P(a + wr * 0.55, wr * 0.45, q), P(a + wr * 0.55, wr * 1.55, q), P(a - wr * 0.55, wr * 1.55, q), PC_RIM, P(a, wr, 0)); } }
+      if (lite) for (const e of [-1, 1]) { const ex = a + e * wr; g.quadO(P(ex, 0, -hw - 0.01), P(ex, 0, hw + 0.01), P(ex, wr * 2, hw + 0.01), P(ex, wr * 2, -hw - 0.01), tyre, P(a, wr, 0)); }
+    }
+    if (!lite) {
+      for (const sd of [1, -1]) {   // the bumpers (their face and top) and the lights
+        const bx = sd * (hx + 0.06), ins = P(sd * (hx - 0.3), yb, 0);
+        g.quadO(P(bx, yb - 0.18, -hw + 0.06), P(bx, yb - 0.18, hw - 0.06), P(bx, yb + 0.06, hw - 0.06), P(bx, yb + 0.06, -hw + 0.06), PC_DARK, ins);
+        g.quadO(P(bx, yb + 0.06, -hw + 0.06), P(bx, yb + 0.06, hw - 0.06), P(sd * hx, yb + 0.06, hw - 0.06), P(sd * hx, yb + 0.06, -hw + 0.06), PC_DARK, P(sd * hx, yb - 0.3, 0));
+        const lc = sd > 0 ? PC_LAMP : PC_TAIL, fx = sd * (hx + 0.012), ly = yT(sd * hx);
+        for (const lz of [-(hw - 0.34), hw - 0.34]) g.quadO(P(fx, ly - 0.2, lz - 0.2), P(fx, ly - 0.2, lz + 0.2), P(fx, ly - 0.06, lz + 0.2), P(fx, ly - 0.06, lz - 0.2), lc, P(0, ly - 0.13, lz));
+      }
+      g.quadO(P(-hx - 0.04, 0.015, -hw - 0.04), P(hx + 0.04, 0.015, -hw - 0.04), P(hx + 0.04, 0.015, hw + 0.04), P(-hx - 0.04, 0.015, hw + 0.04), PC_SHADOW, P(0, -1, 0));   // (its shadow on the ground, under it)
+      for (const sd of [1, -1]) { const px = sd * (hx + 0.066); g.quadO(P(px, yb - 0.12, -0.26), P(px, yb - 0.12, 0.26), P(px, yb - 0.01, 0.26), P(px, yb - 0.01, -0.26), PC_PLATE, P(0, yb - 0.06, 0)); }   // (the number plates: blank)
+    }
+    if (k === 5) { for (const sd of [1, -1]) box(g, ...P(-hx + 1.4, 0, sd * (hw - 0.05)).map((v, i) => i === 1 ? y + yt : v), 2.6, 0.3, 0.1, rot, side, top, true); box(g, ...P(-hx + 0.06, 0, 0).map((v, i) => i === 1 ? y + yt : v), 0.1, 0.3, W - 0.2, rot, side, top, true); }   // (the pick-up's bed: its walls)
+    // the glasshouse: the windscreen and the rear window lighter than the side windows; the roof in the paint, or black
+    const wb = hw - 0.07, wt = hw - 0.22, y1 = yt + h, ins = P((gb[0] + gb[1]) / 2, yt + h * 0.4, 0), roof = !lite && hv < 0.22 ? PC_BLACK : top;
+    const Bq = [P(gb[0], yt, -wb), P(gb[1], yt, -wb), P(gb[1], yt, wb), P(gb[0], yt, wb)], Tq = [P(gt[0], y1, -wt), P(gt[1], y1, -wt), P(gt[1], y1, wt), P(gt[0], y1, wt)];
+    const gl = [PC_GLASS, PC_SCREEN, PC_GLASS, PC_REAR], dim = (cc, k) => own([cc[0] * k, cc[1] * k, cc[2] * k]);   // (the side, the windscreen, the side, the rear window: lighter towards the top)
+    for (let e = 0; e < 4; e++) { const f = (e + 1) % 4, lo2 = dim(gl[e], e % 2 ? 0.7 : 0.85), hi2 = dim(gl[e], e % 2 ? 1.15 : 1.05); g.quadO(Bq[e], Bq[f], Tq[f], Tq[e], lo2, ins, null, [lo2, lo2, hi2, hi2]); }
+    g.quadO(Tq[0], Tq[1], Tq[2], Tq[3], roof, P(0, 0, 0));
+    if (!lite && (k === 2 || k === 3 || k === 4)) for (const sd of [1, -1]) { const zr = sd * (wt - 0.08); g.quadO(P(gt[0] + 0.1, y1 + 0.05, zr - 0.035), P(gt[1] - 0.05, y1 + 0.05, zr - 0.035), P(gt[1] - 0.05, y1 + 0.05, zr + 0.035), P(gt[0] + 0.1, y1 + 0.05, zr + 0.035), PC_DARK, P(0, 0, 0)); }   // (roof rails)
+    else if (!lite && (k === 0 || k === 1) && hv > 0.62) { const sx0 = gt[0] + (gt[1] - gt[0]) * 0.45, sx1 = gt[1] - 0.06; g.quadO(P(sx0, y1 + 0.006, -wt + 0.18), P(sx1, y1 + 0.006, -wt + 0.18), P(sx1, y1 + 0.006, wt - 0.18), P(sx0, y1 + 0.006, wt - 0.18), PC_GLASS, P(0, 0, 0)); }   // (a sunroof)
+  }
+  // the car parks' material (the instanced lite car): the instance's colour paints the body only; a vertex colour given negative (the glass,
+  // the tyres) keeps its own
+  function carParkMat() {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', [
+      '#if defined( USE_COLOR ) || defined( USE_INSTANCING_COLOR )', 'vColor = vec3( 1.0 );', '#endif',
+      '#ifdef USE_COLOR', 'vColor.xyz *= abs( color.xyz );', '#endif',
+      '#ifdef USE_INSTANCING_COLOR', 'vColor.xyz *= mix( instanceColor.xyz, vec3( 1.0 ), step( color.r, -0.0001 ) );', '#endif'].join('\n')); };
+    m.customProgramCacheKey = () => 'carPark';
+    return m;
+  }
+  /* ---- where the circuits' car parks were: the fans' camp, the motorhomes and caravans, the fans' area (the user's choice of 2. 11. 2026,
+     »Združi kamp navijačev in avtodom in prikolice in prostor za navijače«, after »avti še vedno niso dobri, zato jih bomo zamenjali«: each
+     is there at a circuit on a race weekend). campLot fills one 16 m cell of a car park with one of them, its things lean (a dome tent 72
+     vertices, a motorhome ~130: a cell ~450-600, less than the 7-10 cars it replaces), merged into the world's scenery (no draw call of its own);
+     gH: the ground's height. kind: 'kamp' | 'avtodomi' | 'navijaci'; h: the cell's hash (its pick of colours and places) ---- */
+  const CL_TENT = [[0.94, 0.48, 0.12], [0.18, 0.6, 0.28], [0.18, 0.39, 0.79], [0.85, 0.15, 0.16], [0.94, 0.76, 0.18], [0.54, 0.23, 0.55], [0.13, 0.52, 0.56], [0.9, 0.9, 0.86]];
+  const CL_WHITE = [0.93, 0.93, 0.9], CL_CREAM = [0.9, 0.87, 0.78], CL_DARK = [0.16, 0.17, 0.19], CL_GLASS = [0.22, 0.28, 0.36], CL_TYRE = [0.09, 0.09, 0.1], CL_POLE = [0.62, 0.64, 0.68], CL_WOOD = [0.5, 0.36, 0.22];
+  const clDim = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+  function clFrame(x, y, z, rot) { const c = Math.cos(rot), s = Math.sin(rot); return (a, h, b) => [x + a * c - b * s, y + h, z + a * s + b * c]; }
+  function clQuadBoth(g, a, b, c, d, col) { const n = [0, 0, 0]; g.quadO(a, b, c, d, col, [(a[0] + c[0]) / 2 + 0.01, (a[1] + c[1]) / 2, (a[2] + c[2]) / 2 + 0.01]); g.quadO(a, d, c, b, col, [(a[0] + c[0]) / 2 - 0.01, (a[1] + c[1]) / 2, (a[2] + c[2]) / 2 - 0.01]); }
+  function clPost(g, P, a, b, h, col) { const t = 0.05; g.quadO(P(a - t, 0, b), P(a + t, 0, b), P(a + t, h, b), P(a - t, h, b), col, P(a, h / 2, b - 1)); g.quadO(P(a, 0, b - t), P(a, 0, b + t), P(a, h, b + t), P(a, h, b - t), col, P(a - 1, h / 2, b)); }   // (a thin post: two crossed faces)
+  function campTent(g, x, y, z, rot, col, ridge) {   // a dome tent (an octagon at its foot, a smaller one higher up, a top; the door dark) or a ridge tent
+    const P = clFrame(x, y, z, rot), dk = clDim(col, 0.45), lt = [Math.min(1, col[0] * 1.12 + 0.04), Math.min(1, col[1] * 1.12 + 0.04), Math.min(1, col[2] * 1.12 + 0.04)];
+    if (ridge) { const L = 1.25, W = 0.85, H = 1.05, ins = P(0, 0.35, 0);
+      g.quadO(P(-L, 0, -W), P(L, 0, -W), P(L, H, 0), P(-L, H, 0), lt, ins); g.quadO(P(-L, 0, W), P(L, 0, W), P(L, H, 0), P(-L, H, 0), col, ins);
+      g.triO(P(L, 0, -W), P(L, 0, W), P(L, H, 0), dk, ins); g.triO(P(-L, 0, -W), P(-L, 0, W), P(-L, H, 0), col, ins); return; }
+    const n = 8, r0 = 1.15, r1 = 0.82, h1 = 0.82, top = P(0, 1.22, 0), ins = P(0, 0.4, 0), R0 = [], R1 = [];
+    for (let k = 0; k < n; k++) { const a = (k + 0.5) / n * TAU; R0.push(P(Math.cos(a) * r0, 0, Math.sin(a) * r0)); R1.push(P(Math.cos(a) * r1, h1, Math.sin(a) * r1)); }
+    for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(R0[k], R0[j], R1[j], R1[k], k === 0 ? dk : col, ins); g.triO(R1[k], R1[j], top, lt, ins); }
+  }
+  function campGazebo(g, x, y, z, rot, col, w) {   // a gazebo: four thin posts, a pyramid roof with its valance
+    const P = clFrame(x, y, z, rot), hw = (w || 3) / 2, H = 2.1, ins = P(0, H, 0);
+    for (const [a, b] of [[-hw, -hw], [hw, -hw], [hw, hw], [-hw, hw]]) clPost(g, P, a * 0.96, b * 0.96, H, CL_POLE);
+    const C = [P(-hw, H, -hw), P(hw, H, -hw), P(hw, H, hw), P(-hw, H, hw)], C2 = [P(-hw, H - 0.25, -hw), P(hw, H - 0.25, -hw), P(hw, H - 0.25, hw), P(-hw, H - 0.25, hw)], apex = P(0, H + 0.75, 0), dk = clDim(col, 0.8);
+    for (let k = 0; k < 4; k++) { const j = (k + 1) % 4; g.triO(C[k], C[j], apex, col, P(0, H - 1, 0)); g.quadO(C2[k], C2[j], C[j], C[k], dk, P(0, H - 0.12, 0)); }
+  }
+  function campVan(g, x, y, z, rot, col, kind) {   // kind 0: a motorhome (a cab in front, its awning out on the door side), 1: a caravan (its drawbar), 2: a food truck (its hatch open, the flap up)
+    const P = clFrame(x, y, z, rot), L = kind === 1 ? 2.6 : kind === 2 ? 2.8 : 3.3, W = kind === 1 ? 1.1 : 1.15, H = kind === 1 ? 2.5 : kind === 2 ? 2.8 : 3.0, y0 = 0.35;
+    const b0 = kind === 1 ? -L : -L, b1 = kind === 0 ? L - 1.25 : kind === 2 ? L - 1.4 : L;   // (the box: behind the cab of a motorhome or a food truck, the whole caravan)
+    box(g, ...P((b0 + b1) / 2, y0, 0), b1 - b0, H - y0, W * 2, rot, col, clDim(col, 1.04), true);
+    if (kind !== 1) { const cx = L - 0.7; box(g, ...P(cx, y0, 0), 1.4, (kind === 2 ? 1.9 : 1.75) - y0, W * 2 - 0.08, rot, col, col, true); g.quadO(P(L + 0.001, 1.15, -W + 0.15), P(L + 0.001, 1.15, W - 0.15), P(L - 0.25, 1.7, W - 0.15), P(L - 0.25, 1.7, -W + 0.15), CL_GLASS, P(0, 1.2, 0)); }
+    for (const sd of [1, -1]) { const zw = sd * (W + 0.005); g.quadO(P(-L * 0.55, H * 0.55, zw), P(L * (kind === 1 ? 0.6 : 0.25), H * 0.55, zw), P(L * (kind === 1 ? 0.6 : 0.25), H * 0.78, zw), P(-L * 0.55, H * 0.78, zw), CL_GLASS, P(0, H * 0.6, 0)); }   // (the side windows)
+    for (const a of kind === 1 ? [0] : [L * 0.55, -L * 0.55]) for (const sd of [1, -1]) { const zw = sd * (W + 0.01); g.quadO(P(a - 0.38, 0, zw), P(a + 0.38, 0, zw), P(a + 0.38, 0.72, zw), P(a - 0.38, 0.72, zw), CL_TYRE, P(a, 0.35, 0)); }
+    if (kind === 1) g.triO(P(L, 0.32, -0.5), P(L, 0.32, 0.5), P(L + 1.1, 0.4, 0), CL_DARK, P(L, 0, 0));   // (the drawbar)
+    if (kind === 0) { const zo = W + 2.2; g.quadO(P(-L + 0.4, H - 0.15, W), P(L - 1.6, H - 0.15, W), P(L - 1.6, H - 0.55, zo), P(-L + 0.4, H - 0.55, zo), CL_TENT[(Math.floor(x * 7 + z * 3) & 7)], P(0, H + 2, W + 1)); clPost(g, P, -L + 0.5, zo, H - 0.55, CL_POLE); clPost(g, P, L - 1.7, zo, H - 0.55, CL_POLE); }   // (its awning)
+    if (kind === 2) { const zo = W; g.quadO(P(-1.6, 1.1, zo + 0.005), P(1.4, 1.1, zo + 0.005), P(1.4, 2.2, zo + 0.005), P(-1.6, 2.2, zo + 0.005), CL_DARK, P(0, 1.6, 0)); g.quadO(P(-1.7, 2.25, zo), P(1.5, 2.25, zo), P(1.5, 2.55, zo + 0.9), P(-1.7, 2.55, zo + 0.9), clDim(col, 0.85), P(0, 3.5, zo)); g.quadO(P(-1.6, 1.05, zo), P(1.4, 1.05, zo), P(1.4, 1.05, zo + 0.35), P(-1.6, 1.05, zo + 0.35), CL_WHITE, P(0, 0, zo)); }   // (the hatch, its flap up, the counter)
+  }
+  function campThing(g, x, y, z, rot, what, col) {   // the small things: a camp table with two chairs, a high table, a portaloo, a parasol, a flag, a grill
+    const P = clFrame(x, y, z, rot);
+    if (what === 'table') { box(g, x, y + 0.7, z, 1.2, 0.05, 0.7, rot, CL_WHITE, CL_WHITE, true); clPost(g, P, 0, 0, 0.7, CL_POLE);
+      for (const sd of [1, -1]) { g.quadO(P(-0.25, 0.45, sd * 0.85), P(0.25, 0.45, sd * 0.85), P(0.25, 0.45, sd * 0.4), P(-0.25, 0.45, sd * 0.4), col, P(0, 0, sd * 0.6)); g.quadO(P(-0.25, 0.45, sd * 0.9), P(0.25, 0.45, sd * 0.9), P(0.25, 0.95, sd * 0.95), P(-0.25, 0.95, sd * 0.95), col, P(0, 0.6, sd * 0.4)); } }
+    else if (what === 'high') { box(g, x, y + 1.05, z, 0.7, 0.04, 0.7, rot, col, col, true); clPost(g, P, 0, 0, 1.05, CL_POLE); }
+    else if (what === 'loo') { box(g, x, y, z, 1.15, 2.25, 1.15, rot, col, CL_WHITE, true); g.quadO(P(0.581, 0.1, -0.4), P(0.581, 0.1, 0.4), P(0.581, 2.0, 0.4), P(0.581, 2.0, -0.4), CL_WHITE, P(0, 1, 0)); }
+    else if (what === 'parasol') { clPost(g, P, 0, 0, 2.2, CL_POLE); cone(g, x, y + 1.85, z, 1.4, 0.55, 8, col, CL_WHITE, rot); }
+    else if (what === 'flag') { clPost(g, P, 0, 0, 5.5, CL_POLE); clQuadBoth(g, P(0.05, 4.4, 0), P(1.5, 4.4, 0), P(1.5, 5.4, 0), P(0.05, 5.4, 0), col); }
+    else if (what === 'grill') { box(g, x, y + 0.55, z, 0.6, 0.3, 0.45, rot, CL_DARK, CL_DARK, true); clPost(g, P, 0, 0, 0.55, CL_DARK); }
+  }
+  function campLot(g, gH, x, z, rot, kind, h) {
+    const R = (k) => crH(x, z, 300 + k + (h || 0) * 17), c = Math.cos(rot), s = Math.sin(rot), at = (a, b) => [x + a * c - b * s, z + a * s + b * c];
+    const put = (a, b, fn) => { const [px, pz] = at(a, b), py = gH(px, pz); if (Number.isFinite(py)) fn(px, py - 0.03, pz); };
+    if (kind === 'kamp') {   // tents on a loose grid, a gazebo with a table under it, a flag, a grill
+      const gz = Math.floor(R(1) * 6); let k = 0;
+      for (const a of [-5, 0, 5]) for (const b of [-4, 4]) { const ja = a + (R(10 + k) - 0.5) * 1.6, jb = b + (R(20 + k) - 0.5) * 1.6, col = CL_TENT[Math.floor(R(30 + k) * CL_TENT.length)], yw = rot + (R(40 + k) - 0.5) * 1.4;
+        if (k === gz) put(ja, jb, (px, py, pz) => { campGazebo(g, px, py, pz, rot, col, 3); campThing(g, px, py, pz, rot, 'table', CL_TENT[(k + 3) & 7]); });
+        else put(ja, jb, (px, py, pz) => campTent(g, px, py, pz, yw, col, R(50 + k) < 0.3));
+        k++; }
+      put(-7, 7, (px, py, pz) => campThing(g, px, py, pz, rot, 'flag', CL_TENT[Math.floor(R(60) * 8)]));
+      if (R(61) < 0.6) put(2.5, 0, (px, py, pz) => campThing(g, px, py, pz, rot, 'grill'));
+    } else if (kind === 'avtodomi') {   // two rows of two, motorhomes and caravans, their doors to the aisle between the rows; a table with chairs
+      for (const b of [-4.2, 4.2]) for (const a of [-4.1, 4.1]) { const k2 = R(70 + a + b), kd = k2 < 0.55 ? 0 : 1, col = k2 < 0.2 ? [0.86, 0.84, 0.78] : CL_WHITE;
+        put(a, b, (px, py, pz) => campVan(g, px, py, pz, rot + (b > 0 ? Math.PI : 0), col, kd)); }
+      for (const b of [-1.2, 1.2]) if (R(80 + b) < 0.7) put((R(81 + b) - 0.5) * 8, b, (px, py, pz) => campThing(g, px, py, pz, rot + Math.PI / 2, 'table', CL_TENT[Math.floor(R(82 + b) * 8)]));
+    } else {   // the fans' area: a food truck, a gazebo with a table, high tables, a parasol, two portaloos
+      put(-4, -4.6, (px, py, pz) => campVan(g, px, py, pz, rot, CL_TENT[Math.floor(R(90) * 8)], 2));
+      put(3.5, -4.2, (px, py, pz) => { const col = CL_TENT[Math.floor(R(91) * 8)]; campGazebo(g, px, py, pz, rot, col, 3.2); campThing(g, px, py, pz, rot, 'table', CL_WHITE); });
+      for (const a of [-4.5, -1.5, 1.5]) put(a + (R(92 + a) - 0.5), 2.2 + (R(93 + a) - 0.5) * 1.5, (px, py, pz) => campThing(g, px, py, pz, rot, 'high', CL_TENT[Math.floor(R(94 + a) * 8)]));
+      put(5, 2.2, (px, py, pz) => campThing(g, px, py, pz, rot, 'parasol', CL_TENT[Math.floor(R(95) * 8)]));
+      for (const b of [5.6, 6.9]) put(6.2, b, (px, py, pz) => campThing(g, px, py, pz, rot + Math.PI / 2, 'loo', [0.18, 0.39, 0.79]));
+      put(-7.2, 7.2, (px, py, pz) => campThing(g, px, py, pz, rot, 'flag', CL_TENT[Math.floor(R(96) * 8)]));
+    }
+  }
   function cone(g, cx, cy, cz, r, h, sides, col, colTip, rot) {
     const apex = [cx, cy + h, cz], inn = [cx, cy + h * 0.3, cz], L = Math.hypot(r, h) || 1, ny = r / L, nh = h / L;
     for (let i = 0; i < sides; i++) {
@@ -4020,7 +4167,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); return clouds(o.root, o, tex); }
+  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4782,7 +4929,7 @@ const World = (function () {
   const SYNC = [];
   const API = {
     Chunks, GB, GRASS_GLSL, HC, ICO1, ICO_F, ICO_V, IChunks, NRC, NRN, NRT, NR_A64, RB, TAU, WSKY, addShore, atS, atSf, box, brookMat, clamp,
-    clearance, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
+    campLot, carParkMat, clearance, cone, crAt, crH, crowdAt, parkedCar, crowdCtx, crowdFinish, crowdLayer, crowdMat, crowdPut, crowdRun, crowdSub, crowdUV, cyl, gable,
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, pikesProps, pitLaneScenery, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
@@ -4842,6 +4989,7 @@ const World = (function () {
     if (d.ext) d.ext(t, car, cam);   // a world of its own file (World.ext): its moving things
     if (d.rrMist) API.rrMist(d.rrMist, t);   // Serra do Rio do Rastro: the mist rises out of the valley
     if (d.pkLife) API.pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
+    if (d.life && World.lifeStep) World.lifeStep(d.life, t, car, cam);   // life in the woods (js/world-zivali.js): the animals alone walk or graze
     if (d.pkAmb) API.pkAmbientUpdate(d.pkAmb, t, car);   // Pikes Peak: flags, dust, grill smoke
     if (d.boats) {
       const L = d.lake;

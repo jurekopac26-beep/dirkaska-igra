@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, hjCutMat, ico, inPoly, lerp, ouCutMat,
+    Chunks, GB, IChunks, TAU, atSf, box, campLot, parkedCar, clamp, cone, crH, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, hjCutMat, ico, inPoly, lerp, ouCutMat,
     ouFlag, ouGTex, ouRod, ouVegMat, pkSky, polyDist, propFloorTable, rng, sstep, starCone, valueNoise2, vary
   } = API;
   let T;   // (World's, for the build under way)
@@ -822,20 +822,19 @@
     for (const [bx, bz, ii, sd] of closedAt) { const mx = bx + T.tx[ii] * 1.9, mz = bz + T.tz[ii] * 1.9; crowdPut(CR, mx, hjGround(mx, mz), mz, -T.nx[ii] * sd, -T.nz[ii] * sd, { col: [1, 0.5, 0.06], flag: 0 }, 1); }   // (the marshals, hi-vis orange)
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // (the trees keep clear of the crowds)
     let nCars = 0;
-    { // the car parks full of the spectators' cars (one instanced car, its colour per instance): perpendicular bays along each car park's long side, two rows to an aisle
-      const g = new GB(), BODY = [1, 1, 1], GLASS = [0.2, 0.23, 0.26], DARK = [0.16, 0.16, 0.17];
-      box(g, 0, 0.18, 0, 4.3, 0.72, 1.76, 0, BODY, BODY, true); box(g, -0.25, 0.9, 0, 2.3, 0.58, 1.5, 0, GLASS, BODY, true); box(g, 0, 0.12, 0, 4.36, 0.16, 1.8, 0, DARK, DARK, true);
-      const cg = g.geometry(); cg.computeBoundingSphere(); const CARS = new IChunks(cg, new THREE.MeshLambertMaterial({ vertexColors: true }), 160);
-      const PAL = [[0.92, 0.92, 0.9], [0.92, 0.92, 0.9], [0.12, 0.12, 0.13], [0.12, 0.12, 0.13], [0.62, 0.63, 0.65], [0.62, 0.63, 0.65], [0.36, 0.37, 0.4], [0.14, 0.2, 0.42], [0.55, 0.1, 0.09], [0.16, 0.3, 0.22], [0.75, 0.68, 0.55]];
+    { // where the spectators' car parks were: their camp, their motorhomes and caravans, a stall or two (campLot in js/world.js, the user's choice:
+      // »Združi kamp navijačev in avtodom in prikolice in prostor za navijače«; a rally's spectators camp by the stage), a 16 m lot on a grid along
+      // each car park's long side, a kind to each 48 m block; merged into the scenery
       for (const A of P.areas) { if (A.t !== 5) continue; const poly = A.poly, n = poly.length; let bl = 0, dx = 1, dz = 0, cx = 0, cz = 0;
         for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); cx += ax / n; cz += az / n; if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
         let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a2 = (x - cx) * dx + (z - cz) * dz, b2 = -(x - cx) * dz + (z - cz) * dx; u0 = Math.min(u0, a2); u1 = Math.max(u1, a2); v0 = Math.min(v0, b2); v1 = Math.max(v1, b2); }
-        for (let v = v0 + 2.8, row = 0; v < v1 - 2.4; v += row % 2 ? 11.2 : 5.2, row++) for (let u = u0 + 1.6; u < u1 - 1.2; u += 2.6) {   // (a bay 2.6 m wide, 5.2 m deep; a 6 m aisle after every second row)
-          const x = cx + dx * u - dz * v, z = cz + dz * u + dx * v; if (crH(x, z, 71) > 0.68 || !inPoly(poly, x, z) || polyDist(poly, x, z) < 2.3 || onBld(x, z) || excluded(x, z)) continue;
-          const nn = hjNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
-          CARS.add(x, hjGround(x, z), z, -Math.atan2(dx, -dz) + (crH(x, z, 72) - 0.5) * 0.08 + (crH(x, z, 73) < 0.5 ? Math.PI : 0), 1, 1, PAL[Math.floor(crH(x, z, 74) * PAL.length)]); nCars++; }
+        for (let v = v0 + 8; v < v1 - 6; v += 16) for (let u = u0 + 8; u < u1 - 6; u += 16) {
+          const x = cx + dx * u - dz * v, z = cz + dz * u + dx * v; if (!inPoly(poly, x, z) || polyDist(poly, x, z) < 6 || onBld(x, z) || excluded(x, z)) continue;
+          const nn = hjNear(x, z); if (nn.i >= 0 && nn.dd < 9) continue;
+          const hb = crH(Math.floor(x / 48), Math.floor(z / 48), 84);
+          const town = [0, 1, 2, 3, 4, 5, 6, 7].some(k => onBld(x + Math.cos(k * 0.785) * 18, z + Math.sin(k * 0.785) * 18));   // (among the houses: no camp in a town's car park, its stalls only)
+          const kind = town ? 'navijaci' : hb < 0.45 ? 'kamp' : hb < 0.9 ? 'avtodomi' : 'navijaci'; campLot(scen.get(x, z), hjGround, x, z, Math.atan2(dz, dx), kind, Math.round(u + v)); (out.lots || (out.lots = [])).push([x, z, Math.atan2(dz, dx), kind]); nCars++; }   // (nCars: the lots; out.lots: where)
       }
-      CARS.addTo(root, true);
     }
     // YLEISÖALUE boards where the big crowds begin
     for (const [a, b, rows] of C1) if (rows >= 4) for (const sd of [-1, 1]) { const [px, pz, ii] = onSide(sAt(a) - 3, sd, 0.6); if (hard(px, pz) || nearDD(px, pz) < 0.2) continue; const py = hjGround(px, pz), g = scen.get(px, pz);

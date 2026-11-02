@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, ICO_F, ICO_V, TAU, atSf, box, clamp, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdMat, crowdPut, crowdRun, cyl, gable,
+    Chunks, GB, ICO_F, ICO_V, TAU, atSf, box, parkedCar, clamp, cone, crAt, crH, crowdAt, crowdCtx, crowdFinish, crowdMat, crowdPut, crowdRun, cyl, gable,
     hex, ico, lerp, pikesProps, rng, rock, sstep, valueNoise2, vary, waterMat
   } = API;
   let T;   // (World's, for the build under way)
@@ -4211,8 +4211,7 @@
       const [x, z] = onSide((sa + sb) / 2, side, 5), e = { x, z, r: (sb - sa) / 2 + 6 }; excl.push(e); crSoft.add(e);
     };
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = pkGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const tent = (x, z, rot, col) => { const g = scen.get(x, z), y = pkGround(x, z); box(g, x, y, z, 3.2, 2.0, 3.2, rot, [0.94, 0.94, 0.92], null, true); gable(g, x, y + 2.0, z, 3.5, 3.5, 1.0, rot, col, col); };
     const bannerQ = (cx, cy, cz, tx, tz, W, H, slot, tilt) => {   // double-sided text board (bottom centre cx, cy, cz), readable from both +t and -t; tilt (rad) leans its top towards +t (a lectern read from -t)
       const v1 = 1 - slot / 8, v0 = v1 - 1 / 8, ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa;

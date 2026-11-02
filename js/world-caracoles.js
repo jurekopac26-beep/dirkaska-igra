@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, propFloorTable, rng,
+    Chunks, GB, IChunks, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, propFloorTable, rng,
     roadsideProps, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -210,8 +210,7 @@
   // the parked cars of the car parks (as Vršič's)
   function caCar(g, x, y, z, rot, col) {
     const c = Math.cos(rot), s = Math.sin(rot);
-    box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-    for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true);
+    parkedCar(g, x, y, z, rot, col);   // (the car: parkedCar in js/world.js)
   }
   // the knockable roadside posts: white with a black top, the tall orange snow poles from Portillo's height on (col 1)
   function caProps(out, spots, prof) {
