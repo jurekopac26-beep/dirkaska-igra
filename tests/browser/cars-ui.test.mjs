@@ -14,8 +14,9 @@
 // - a championship started with the TITAN: its rivals TITANs in the race, in the standings, in the qualifying and the race of the next
 //   round after "Izberi avto" took the player to the PICO TURBO and back; one started in the FORMULA ORKAN (a one-make class): formulas
 //   still when the player drives the PICO TURBO
-// - a destroyed car: VOZILO UNIČENO with Odstopi (two taps), not seen through the pause (its buttons there are the pause's); the results
-//   with Odstop (no record), Ogled vozila (close, from over the road, upright too); in the
+// - a destroyed car (the KAZE RS: no parts that come off, so no wheel rule): VOZILO UNIČENO with Odstopi (two taps), not seen through
+//   the pause (its buttons there are the pause's); the results with Odstop (no record), Ogled vozila (close, from over the road, upright
+//   too); in the
 //   statistics a race (Dirke), never a finish (no win, podium, track raced to the line, achievement of the finish), the km as driven
 // - the commentator's destruction lines: the player's lost part (its own name), wheel, three wheels, the wreck, fire; a rival's wheel,
 //   fire and retirement nearby; the counts afresh after a repair
@@ -322,8 +323,8 @@ try {
     await ctx.close();
   }
 
-  // 9. a destroyed car: VOZILO UNIČENO with Odstopi (the second tap retires), the results with Odstop,
-  //    no record; Ogled vozila there; the commentator's destruction lines (the game's calls recorded)
+  // 9. the commentator's destruction lines (the game's calls recorded; the KOZOROG: its parts by their names); a destroyed car (the
+  //    KAZE RS): VOZILO UNIČENO with Odstopi (the second tap retires), the results with Odstop, no record; Ogled vozila there
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'kozorog', damage: 2, track: 'jezero' }, { width: 844, height: 390 });
     await page.evaluate(() => { window.__said = []; const o = Comm.say; Comm.say = (k, v, p, q) => { window.__said.push({ k, v: v ? JSON.parse(JSON.stringify(v)) : null, t: window.__game.race ? +window.__game.race.time.toFixed(2) : 0 }); return o(k, v, p, q); }; });
@@ -348,17 +349,20 @@ try {
     // a repair (or the marshals' refit) starts the counts afresh: the same part again is said again
     const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true); Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
-    // destroyed: VOZILO UNIČENO (wheels lost), the wreck and the fire said; Odstopi asks, then retires
-    const st0 = await page.evaluate(() => window.__game.stats);
+    // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
+    // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
+    // wheels and the game is over, KONEC IGRE, wheels.test.mjs)
+    await page.evaluate(() => { window.__game.S.car = 0; }); await startTrack(page, 'jezero');
+    const st0 = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(9, true); return g.stats; });
     const w = await page.evaluate(async () => {
       const g = window.__game, r = g.race, P = r.player; window.__said.length = 0;
       Core.wreckCar(P); g.sim(1, true); g.resume(); for (let i = 0; i < 6; i++) await new Promise(q => requestAnimationFrame(q));
       const el = document.getElementById('h-wreck'), b = document.getElementById('btn-retire');
-      return { show: el.classList.contains('show') && getComputedStyle(el).display !== 'none', title: document.getElementById('h-wreck-t').textContent, btn: !b.classList.contains('off') && b.textContent,
-        nL: P.wreck.nL, said: window.__said.map(s => s.k) };
+      return { car: P.m.id, show: el.classList.contains('show') && getComputedStyle(el).display !== 'none', title: document.getElementById('h-wreck-t').textContent, btn: !b.classList.contains('off') && b.textContent,
+        rule: !!(P.wreck && P.wreck.rule), said: window.__said.map(s => s.k) };
     });
-    T.check('destroyed: "VOZILO UNIČENO" under the minimap with "Odstopi", wheels lost; the wreck and the fire said',
-      w.show && w.title === 'VOZILO UNIČENO' && w.btn === 'Odstopi' && w.nL > 0 && w.said.includes('wreck') && w.said.includes('fireMe'), JSON.stringify(w));
+    T.check('destroyed (the KAZE RS, no wheel rule): "VOZILO UNIČENO" under the minimap with "Odstopi"; the wreck and the fire said',
+      w.car === 'kaze' && !w.rule && w.show && w.title === 'VOZILO UNIČENO' && w.btn === 'Odstopi' && w.said.includes('wreck') && w.said.includes('fireMe'), JSON.stringify(w));
     const p0 = await page.evaluate(() => { window.__game.pause(); const b = document.getElementById('pause-retire'); const v = !b.classList.contains('off'); window.__game.resume(); return v; });
     // the pause over it (a phone 667×375 on its side: the banner's Odstopi sat right under the pause's "Ponovi dirko", which took the tap):
     // no banner seen through the pause; back in the race it is there again
