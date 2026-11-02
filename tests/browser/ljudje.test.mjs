@@ -1,13 +1,13 @@
 // People by the track (js/world-ljudje.js, World.people): on real tracks the scenes stand beyond the barrier, each a group of 2-10 (the friends
 // in the grandstand more), their things merged into one lit and one unlit mesh, their people into one mesh; as the followed car comes, the
 // runners leave what they do and are at the fence when it passes, the staff stay where they work, and all are back at what they did some seconds
-// after it; with no car (the world test) every scene in one fixed pose; a test track has none. The roadside crowd in small groups, far fewer than
-// before (Nürburg hardly any); a test track's crowd as it was.
+// after it; with no car (the world test) every scene in one fixed pose; a test track has none. The roadside crowd in rare groups (fewFans), far fewer than
+// before (Nürburg hardly any: CR_KEEPT); a test track's crowd as it was.
 //   node tests/browser/ljudje.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
 const TRACKS = ['nring', 'spa', 'bathurst', 'ouninpohja', 'vrsic', 'rbring'];
-const CROWD_MAX = { nring: 600, spa: 1500, bathurst: 1500, ouninpohja: 1500, vrsic: 1500, rbring: 2500 };   // (before: 11.706, 5.617, 4.198, 6.902, …)
+const CROWD_MAX = { nring: 600, spa: 1500, bathurst: 1500, ouninpohja: 1500, vrsic: 1500, rbring: 2500 };   // (before #225: 11.706, 5.617, 4.198, 6.902, …; Nürburg hardly any: CR_KEEPT)
 const T = checker('people by the track');
 const srv = await serve();
 const browser = await launch();
@@ -40,7 +40,7 @@ try {
     T.check(`${id}: a scene's people under 7.5k vertices (the grandstand under 30k), its things under 16k`, r.scenes.every(s => s.verts < (s.stand ? 30000 : 7500)) && r.stats.propVerts < 16000 * r.stats.scenes,
       r.scenes.map(s => `${s.name} ${Math.round(s.verts / 100) / 10}k`).join(', ') + ` · things ${Math.round(r.stats.propVerts / 1000)}k`);
     T.check(`${id}: the world test's pose is fixed (no car: the same twice)`, r.fixed === true, String(r.fixed));
-    T.check(`${id}: the roadside crowd in small groups, far fewer than before`, r.crowd > 0 && r.crowd <= CROWD_MAX[id] || (id === 'nring' && r.crowd <= CROWD_MAX[id]), `${r.crowd} spectators (at most ${CROWD_MAX[id]})`);
+    T.check(`${id}: the roadside crowd in rare groups, far fewer than before`, r.crowd > 0 && r.crowd <= CROWD_MAX[id] || (id === 'nring' && r.crowd <= CROWD_MAX[id]), `${r.crowd} spectators (at most ${CROWD_MAX[id]})`);
     if (id !== 'nring' && id !== 'bathurst') continue;
     // the car comes: a scene with runners (Nürburg: the barbecue; Bathurst: the grandstand's wave and the pit wall)
     const run = await page.evaluate(async (name) => {

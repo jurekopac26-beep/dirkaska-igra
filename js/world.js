@@ -41,7 +41,7 @@ const World = (function () {
   // the people beside the road on the real tracks (the user's decision, 31. 10. 2026): as few as can be, rare groups (CR_KEEP of the 30 m cells
   // along it keep theirs), calm (no jumping, no waving); the marshals, the cameramen and the crews stay, and the grandstands' people; the
   // tracks kept for testing (def.test) as they were
-  const fewFans = () => !!(T && T.def && !T.def.test), CR_KEEP = 0.18;
+  const fewFans = () => !!(T && T.def && !T.def.test), CR_KEEP = 0.18, CR_KEEPT = { nring: 0.025 }, crKeep = () => (T && T.def && CR_KEEPT[T.def.id]) || CR_KEEP;   // (CR_KEEPT: a track that wants hardly any, the user's wish 1. 11. 2026, docs/ljudje-predlogi.md: »Nürburg je lahko skoraj brez gledalcev«)
   function parkOn(fn, gH, L, g, x, y, z, rot, ...rest) {
     const c = Math.cos(rot), s = Math.sin(rot), y0 = gH(x, z);
     for (const [a, b] of [[L / 2, 1], [L / 2, -1], [-L / 2, 1], [-L / 2, -1]]) if (Math.abs(gH(x + c * a - s * b, z + s * a + c * b) - y0) > 0.35) return false;
@@ -4803,7 +4803,7 @@ const World = (function () {
       // the meshes made first as they were (three.js names each with Math.random, which a seeded race shares: it runs as it did) and let go,
       // the few groups' own made under ownRnd
       const c0 = CULLM.length, tmp = ownRnd(() => new THREE.Group()); C.ppl.addTo(tmp); C.strip.addTo(tmp, sm, false, false); CULLM.length = c0;
-      const F = C.ppl.fans, gone = (x, z) => !!F && F.has(x + ',' + z) && crH(Math.floor(x / 30), Math.floor(z / 30), 77) >= CR_KEEP;
+      const F = C.ppl.fans, gone = (x, z) => !!F && F.has(x + ',' + z) && crH(Math.floor(x / 30), Math.floor(z / 30), 77) >= crKeep();
       if (F) { C.ppl.cull(gone); for (const [k, L] of [...C.sp]) { const L2 = []; for (let q = 0; q < L.length; q += 2) if (!gone(L[q], L[q + 1])) L2.push(L[q], L[q + 1]); if (L2.length) C.sp.set(k, L2); else C.sp.delete(k); } }
       return ownRnd(() => C.ppl.addTo(grp));
     }
