@@ -1215,7 +1215,7 @@
      seats between; their seats read off the stands' tiers (the crowd picture's layout: 32 seats across a tier's 12 m, a tier a row of the
      picture); each stretch of a stand a scene of its own (posed near the camera; the wave as on Bathurst's stand). STANDS: the share of the
      seats taken, the most people on a track (by the tier), on a stretch, a stretch's length ---------------- */
-  const STANDS = { share: 0.05, most: [100, 240, 400], per: 24, len: 40 };
+  const STANDS = { share: 0.05, most: [60, 240, 400], per: 24, len: 40 };   // (NIZKA: 60 at most, the phone's budget)
   const isStand = (m) => m.isMesh && !m.isInstancedMesh && m.visible && m.material && !Array.isArray(m.material) && m.material.userData && m.material.userData.stand && m.geometry && m.geometry.attributes.uv;
   const hasStands = (o) => { let n = 0; o.root.traverse(m => { if (isStand(m)) n++; }); return n > 0; };
   const STAND_EMPTY_FS = ['#ifdef USE_MAP',   // (the stand's picture per tier as crowdStands lays it, the seats empty: nobody jumps, no flags)
@@ -1230,7 +1230,7 @@
   const SEAT_W = 0.55, BENCH = { back: 0.06, depth: 0.42, h: 0.44, rest: 0.36 };
   const SEAT_COLS = [[0.18, 0.37, 0.69], [0.72, 0.2, 0.17], [0.16, 0.54, 0.3], [0.88, 0.69, 0.13], [0.85, 0.84, 0.8]];   // (the benches one of the first four, now and then a block of another)
   function standBuild(o, A, hsh) {
-    const seats = [], flat = new Map(), chunks = new A.Chunks(256), TREAD = [0.64, 0.65, 0.68], RISER = [0.47, 0.48, 0.51];
+    const seats = [], flat = new Map(), chunks = new A.Chunks(128), TREAD = [0.64, 0.65, 0.68], RISER = [0.47, 0.48, 0.51];   // (128 m pieces: only those in view drawn)
     o.root.updateMatrixWorld(true);
     let sid = 0, nMesh = 0;
     o.root.traverse(m => {
@@ -1280,9 +1280,8 @@
           const nx = fx / dep, nz = fz / dep, at = (B, d, h) => [B[0] + nx * d, B[1] + h, B[2] + nz * d], col = (j % 9 < 2 && t % 3 === 0) ? sc2 : sc;
           const b0L = at(BL, BENCH.back, BENCH.h), b0R = at(BR, BENCH.back, BENCH.h), b1L = at(BL, BENCH.back + BENCH.depth, BENCH.h), b1R = at(BR, BENCH.back + BENCH.depth, BENCH.h);
           gb.quadUp(b0L, b0R, b1R, b1L, [col, col, col, col]);   // (the seat)
-          gb.quadO(at(BL, BENCH.back + BENCH.depth, 0.02), at(BR, BENCH.back + BENCH.depth, 0.02), b1R, b1L, col.map(c => c * 0.7), behind);   // (its front)
           const r0L = at(BL, BENCH.back, BENCH.h), r0R = at(BR, BENCH.back, BENCH.h), r1L = at(BL, BENCH.back - 0.04, BENCH.h + BENCH.rest), r1R = at(BR, BENCH.back - 0.04, BENCH.h + BENCH.rest);
-          gb.quadO(r0L, r0R, r1R, r1L, rest, behind);   // (its back)
+          if (A.LOD.tier > 0) gb.quadO(r0L, r0R, r1R, r1L, rest, behind);   // (its back; none at NIZKA: the phone's budget)
           // the seats along it: the feet on the tread, under the middle of the seat
           const L = Math.hypot(BR[0] - BL[0], BR[2] - BL[2]), nS = Math.floor(L / SEAT_W);
           for (let q = 0; q < nS; q++) { const w = (q + 0.5) / nS, Bx = BL[0] + (BR[0] - BL[0]) * w, By = BL[1] + (BR[1] - BL[1]) * w, Bz = BL[2] + (BR[2] - BL[2]) * w;

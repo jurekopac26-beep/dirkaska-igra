@@ -2,12 +2,14 @@
 // in the grandstand more), their things merged into one lit and one unlit mesh, their people into one mesh; as the followed car comes, the
 // runners leave what they do and are at the fence when it passes, the staff stay where they work, and all are back at what they did some seconds
 // after it; with no car (the world test) every scene in one fixed pose; a test track has none. The roadside crowd in rare groups (fewFans), far fewer than
-// before (Nürburg hardly any: CR_KEEPT); a test track's crowd as it was.
+// before (Nürburg hardly any: CR_KEEPT); a test track's crowd as it was. The grandstands (the user, 2. 11. 2026: »tribune bolj prazne in le nekaj
+// gledalcev«, »bolj 3d«, »ljudje sedijo in stojijo v zraku«): no painted crowd, steps and benches of their own, a few people sitting on the benches.
 //   node tests/browser/ljudje.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
 const TRACKS = ['nring', 'spa', 'bathurst', 'ouninpohja', 'vrsic', 'rbring'];
 const CROWD_MAX = { nring: 600, spa: 1500, bathurst: 1500, ouninpohja: 1500, vrsic: 1500, rbring: 2500 };   // (before #225: 11.706, 5.617, 4.198, 6.902, …; Nürburg hardly any: CR_KEEPT)
+const STANDS = ['spa', 'rbring'];   // (tracks with the world's own grandstands)
 const T = checker('people by the track');
 const srv = await serve();
 const browser = await launch();
@@ -29,11 +31,21 @@ try {
       // the fixed pose: twice the same
       const hash = () => { let h = 2166136261; for (const Sc of PW.scenes) { const u = new Uint32Array(Sc.pos.buffer); for (let i = 0; i < u.length; i += 7) { h ^= u[i]; h = Math.imul(h, 16777619) >>> 0; } } return h; };
       const h1 = hash(); World.update(W, 0, null); out.fixed = h1 === hash();
+      // the grandstands: their painted crowd hidden (or its seats painted empty), the steps and benches in pieces, a few people on the benches
+      // (a ray down from above each one's head meets the bench 0.3-0.6 m over their feet: sitting on it, not in the air)
+      const steps = [], tribs = PW.scenes.filter(Sc => Sc.name === 'tribune'); let painted = 0; W.root.updateMatrixWorld(true);
+      W.root.traverse(m => { if (m.name === 'standSteps') steps.push(m); const M = m.isMesh && m.material; if (M && !Array.isArray(M) && M.userData && M.userData.stand && m.visible && !M.userData.seats) painted++; });
+      let sat = 0, off = 0, ppl = 0; const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0);
+      for (const Sc of tribs) for (const p of Sc.people) { ppl++; const v = p.P.root.position; rc.set(new THREE.Vector3(v.x, v.y + 3, v.z), dn);
+        const h = rc.intersectObjects(steps, false)[0], d = h ? h.point.y - v.y : -1; if (d > 0.3 && d < 0.6) sat++; else off++; }
+      out.stands = { steps: steps.length, painted, scenes: tribs.length, people: ppl, sat, off, seats: st.standSeats || 0 };
       return out;
     });
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no people\'s scenes', !r.stats && !r.meshes, JSON.stringify(r)); continue; }
     T.check(`${id}: scenes with people`, !!r.stats && r.stats.scenes >= 1 && r.stats.people >= 4, JSON.stringify(r.stats));
     if (!r.stats) continue;
+    if (STANDS.includes(id)) T.check(`${id}: the grandstands in 3D (no painted crowd, steps and benches), a few people (at most 400) sitting on the benches, none in the air`,
+      r.stands.painted === 0 && r.stands.steps > 0 && r.stands.people > 10 && r.stands.people <= 400 && r.stands.off === 0, JSON.stringify(r.stands));
     const groups = r.scenes.filter(s => !s.stand), bad = groups.filter(s => s.people < 2 || s.people > 10);
     T.check(`${id}: each scene a group of 2-10 (the grandstand more), at most three meshes, nobody on the road`, !bad.length && r.scenes.every(s => s.meshes <= 3 && s.near === 0),
       r.scenes.map(s => `${s.name} ${s.people}p ${s.meshes}m near ${s.near}`).join(', '));
