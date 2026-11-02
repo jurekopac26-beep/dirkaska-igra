@@ -25,6 +25,14 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
   uporabnik dovoljenje dal neposredno. Ko so vsi testi na GitHubu zeleni na zadnjem commitu in PR nima sporov z `main`, ji pošlji številko
   PR-ja in SHA ter ne pushaj več; ko sporoči, da je združen, nadaljuj (Stanje, naslednji prost sklop). Če uporabnik »za vse« ali »združi«
   napiše neposredno tebi, lahko združiš sama in nadrejeni seji samo sporočiš.
+- **Sprememba 2. 11. (pravilo v `CLAUDE.md` na `main`, uporabnik: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«):**
+  seja svoj PR združi sama, ko so lokalni testi in vsi nabori na GitHubu zeleni in PR nima sporov z `main`; nadrejeni seji pošlje samo SHA
+  združitve. Odstavek »Kdo združi« zgoraj ne velja več.
+- **Main se pogosto premika.** 2. 11. je zbirni #238 petkrat izgubil tekmo: med 2–2,5 h CI so druge seje združile svoje PR-je in vsak je
+  prinesel spor v žigih (`index.html`, `garaza.html`) ali seznamih (`tests/run.js`, `docs/kazalo.md`). Za #238 je uporabnik izbral
+  »1 · hitro združi po spoju«: ko je CI zelen in main medtem prinese samo take spore, spoji main, lokalno poženi hiter izbor (stamp, quick,
+  newver, nvschool, garage, menu in test PR-ja, ki je prišel na main) in takoj združi, brez še enega celotnega CI. Ali to velja tudi za
+  sklopa 8 in 10, nadrejena seja vpraša uporabnika in zapiše tukaj.
 - **Sprememba 30. 10. (uporabnik: »Spremeni 2 hkrati«): hkrati tečeta dve seji** (okoli 5–10 % več žetonov, konec približno tretjino prej).
   Vrsta: **4 in 7** (od 30. 10.), nato **5+6 in 9**, nato **8** (šele ko so 3–7 in 9 na `main`), na koncu **10** (po 8).
   - Ko seja svoj PR združi: na `slike-predlogi` `git pull --rebase`, v Stanje zapiše »na `main`«, vzame prvi prost sklop iz vrste
@@ -44,9 +52,9 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 3 | Kmetija (in slike razlik za vprašanje 1) + nagnjena ovinka po sliki | 12–17 h | na `main` ([PR #203](https://github.com/jurekopac26-beep/dirkaska-igra/pull/203)) |
 | 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | ~3 h (ocena 12–18 h) | na `main` ([PR #206](https://github.com/jurekopac26-beep/dirkaska-igra/pull/206)) |
 | 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | ~4 h (ocena 10–17 h) | na `main` ([PR #208](https://github.com/jurekopac26-beep/dirkaska-igra/pull/208)) |
-| 7 | Avtošola s 27 nalogami | 16–24 h | v delu (nova seja od 30. 10., hkrati s 4) |
-| 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | |
-| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | v delu (nova seja od 1. 11.) |
+| 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
+| 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | v delu (seja session_01Ck3D3SQc21DFpdmeN7W8cr od 2. 11.) |
+| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C je narejen v misijah, ali tudi na novo mapo, je vprašanje za uporabnika |
 | 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | 28–44 h | |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
