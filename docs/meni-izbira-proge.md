@@ -78,10 +78,28 @@ Od zgoraj navzdol:
 - **Dirka brez tekmecev (0, *Trial*)**: vožnja proti uri po krogih dirke; komentator `introAlone` / `finishAlone`, v cilju *CILJ!* (ne *ZMAGA!*), rezultat *Cilj* s kljukico; šteje kot dirka (statistika, *Prvi cilj*, *Vse proge*), ne kot zmaga, stopničke, najhitrejši krog dirke, najboljše mesto ali dosežki zmage; čas dirke in krog sta rekorda kot doslej.
 - **Meritev telefona** (844 × 390, NIZKA, sence, kamera za avtom, kot `perf.test.mjs`; klici risanja / tisoč oglišč na sličico, povprečje in največ v osmih vzorcih: 2 na štartu, 6 po krogu; JS = fizika + priprava risanja na sličico na računalniku, telefon ~4–5-krat počasneje):
 
-MERITEV_TABELA
+  | Proga | Tekmeci | Klici povprečje | Klici največ | Tisoč oglišč največ | JS ms (fizika + risanje) |
+  |---|---|---|---|---|---|
+  | Spa | 21 | 182 | 223 | 676 | 0,9 + 1,2 |
+  | Spa | 50 | 247 → **236** | 382 → **297** | 607 | 1,5 + 1,4 |
+  | Spa | 100 | 209 → **199** | 312 → **249** | 548 | 1,7 + 2,0 |
+  | Trois-Rivières | 21 | 202 | 276 | 798 | 1,5 + 1,2 |
+  | Trois-Rivières | 50 | 212 → **198** | 327 → **262** | 772 | 1,1 + 0,9 |
+  | Trois-Rivières | 100 | 215 → **210** | 268 → **258** | 766 | 1,8 + 1,2 |
+  | Bathurst | 21 | 160 | 197 | 624 | 0,7 + 0,7 |
+  | Bathurst | 50 | 202 → **194** | 289 → **274** | 602 | 0,8 + 1,0 |
+  | Bathurst | 100 | 233 → **216** | 315 → **281** | 553 | 1,7 + 1,4 |
+  | Monterey | 21 | 194 | 279 | 587 | 0,6 + 0,4 |
+  | Monterey | 50 | 223 → **213** | 287 → **249** | 658 | 1,3 + 0,9 |
+  | Monterey | 100 | 228 → **220** | 265 → **255** | 580 | 1,2 + 1,0 |
+  | Vršič | 21 | 170 | 197 | 344 | 0,6 + 1,3 |
+  | Vršič | 50 | 185 | 245 | 359 | 0,7 + 1,5 |
+  | Vršič | 100 | 199 → **197** | 244 → **231** | 391 | 1,5 + 2,2 |
 
-  Med krogom 100 tekmecev ni dražjih od 50: avti se razpotegnejo, daljni so skriti (za meglo) ali poenostavljeni. Najdražji je **štart**, ko je vse polje pred kamero (Bathurst je v klancu: že 21 tekmecev 365 klicev, več kot meja 300). Zato je novo pravilo **gneča** (`crowdCut` v `js/render.js`): v polju z več kot 22 avti je v polni podrobnosti le 10 najbližjih tekmecev, drugi v dosegu so poenostavljeni (en klic risanja; NIZKA, kjer imajo avti poenostavljen model); dirke do 22 avtov ostanejo kot prej (reference `perf.json` se ne spremenijo). Omejitev na 50 tekmecev ni potrebna (50 je na štartu celo dražjih kot 100, ker je vrsta krajša).
-- **Meni prekrije zaslon** (`Menu.covers` v `js/menu.js`, `frame()` v `js/game.js`): na telefonu (pokonci in ležeče) igra pod izbiro proge ne poganja in ne riše demo dirke, le en okvir na sekundo (slike proge ostanejo na grafični kartici za dirko). MENI_MERITEV Naslovnica je prosojna (za njo je živa scena igre), zato se tam demo riše kot prej, prav tako na tablici pokonci (meni je stolpec 432 px, demo je viden ob straneh).
+  Puščica: brez pravila za gnečo → z njim (pri 21 tekmecih se nič ne spremeni). Tianmen in Nürburg s 100 tekmeci: največ 252 oziroma 171 klicev. Uvodni posnetek letal nad štartno vrsto (Bathurst, Red Bull Ring; kamera s tal, poenostavljeni modeli so v posnetkih sicer izklopljeni): 21 tekmecev 365 klicev (kot doslej), 100 tekmecev 781 → **417**. Fizika s 100 tekmeci je 1,2–1,8 ms na sličico (na računalniku; pri 21 0,6–1,5 ms), kot pri Nürburgu, ki ima 100 avtov že zdaj (nivo podrobnosti fizike `LOD`).
+
+  100 tekmecev ni dražjih od 50: avti se razpotegnejo, daljni so skriti (za meglo) ali poenostavljeni; štartna vrsta pred kamero za avtom ni najdražja (200–270 klicev), ker so avti v njej drug za drugim. Najdražja je **gneča** pred kamero (paket v ovinku): zato je novo pravilo (`crowdCut` v `js/render.js`): v polju z več kot 22 avti je v polni podrobnosti le 10 najbližjih tekmecev (nikoli ne avto bližje od 30 m), drugi v dosegu so poenostavljeni (en klic risanja; NIZKA, kjer imajo avti poenostavljen model; tudi v posnetku letal, `shot.crowd`); dirke do 22 avtov ostanejo kot prej (reference `perf.json` se ne spremenijo). Z njim je vseh 15 meritev pod mejo 300 klicev in 900 tisoč oglišč. **Omejitev na 50 tekmecev ni potrebna.**
+- **Meni prekrije zaslon** (`Menu.covers` v `js/menu.js`, `frame()` v `js/game.js`): na telefonu (pokonci in ležeče) igra pod izbiro proge ne poganja in ne riše demo dirke, le en okvir na sekundo (slike proge ostanejo na grafični kartici za dirko). Meritev (412 × 892, NIZKA, programski WebGL): pod izbiro proge prej 1.213 klicev risanja in 2,0 milijona oglišč na sekundo (demo ~140 klicev na sličico), zdaj 416 klicev in 0,76 milijona (avto v 3D in en okvir dema na sekundo); na telefonu, ki riše 60 sličic na sekundo, je to ~8.000 klicev na sekundo manj. Naslovnica je prosojna (za njo je živa scena igre), zato se tam demo riše kot prej, prav tako na tablici pokonci (meni je stolpec 432 px, demo je viden ob straneh).
 - **Testi:** nov `tests/rivals-n.test.js` (vse prave proge z največ tekmeci in polji vseh vozil: štart, leteči start, parkiranje za ciljem; `numSet`, 100 imen in 101 številka; 20 s s 100 tekmeci na Trois-Rivières in Tianmenu; dirka brez tekmecev do cilja), `tests/browser/menu.test.mjs` razdelek 4b (list *Opponents*, Pikes Peak 30, izbira na drugi progi, dirka iz menija z 12 tekmeci ima 13 avtov tudi na Nürburgu, kariera brez izbire; demo pod naslovnico in izbiro proge na telefonu in tablici).
 
 ## Opombe iz pregleda kode (main @ c186d26)
