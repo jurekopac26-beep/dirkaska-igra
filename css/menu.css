@@ -493,7 +493,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
 #track-stage .mk text { display: none; }   /* (the track step's map: its names are boxes over it, .mlab) */
 .mlab { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-.mlab .fl-s { position: absolute; translate: 0 -100%; }
+.mlab .fl-s { position: absolute; translate: 0 -100%; transform-origin: 0 100%; }   /* (left, top: its bottom left corner; made smaller about it: mapLabels) */
 .mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }
 /* (2,862 m: a metre, not M) */
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; }

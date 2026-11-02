@@ -323,15 +323,21 @@
     // the cameras' buttons and the weather lie over the picture: a name keeps out from under them
     const keep = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv')].map(e => { const r = e.getBoundingClientRect(); return [r.left - fb.left - 4, r.right - fb.left + 4, r.top - fb.top - 4, r.bottom - fb.top + 4]; });
     mks.forEach((g, i) => {
-      const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(), x = f.left - fb.left, w = el.offsetWidth, h = el.offsetHeight;
-      const y = Math.max(h + 2, f.top - fb.top - 3);   // (its bottom over the flag, never above the frame)
-      const at = (right) => right ? x + f.width + 3 - w : x - 3, inside = (l) => Math.max(4, Math.min(W - 4 - w, l));
-      const clear = (l) => l >= 4 && l + w <= W - 4 && !keep.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2]);
-      // from its pole (a start's to the right, a finish's to the left), else the other way; else slid along to the nearest clear place
-      const right = g.classList.contains('f'), want = at(right);
-      let l = [want, at(!right)].find(clear);
-      if (l == null) l = [inside(want)].concat(...keep.map(k => [k[1], k[0] - w])).filter(clear).sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0];
-      el.style.left = (l == null ? inside(want) : l).toFixed(1) + 'px'; el.style.top = y.toFixed(1) + 'px';
+      const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(), x = f.left - fb.left, w0 = el.offsetWidth, h0 = el.offsetHeight, right = g.classList.contains('f');
+      // from its pole (a start's to the right, a finish's to the left), else the other way, else slid along to the nearest clear place;
+      // where a long name has no clear place (a narrow picture: between the cameras' buttons and the weather) a little smaller
+      let at1 = null;
+      for (const s of [1, 0.86, 0.74]) {
+        const w = w0 * s, h = h0 * s, y = Math.max(h + 2, f.top - fb.top - 3);   // (its bottom over the flag, never above the frame)
+        const at = (r) => r ? x + f.width + 3 - w : x - 3, want = at(right), inside = Math.max(4, Math.min(W - 4 - w, want));
+        const clear = (l) => l >= 4 && l + w <= W - 4 && !keep.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2]);
+        let l = [want, at(!right)].find(clear);
+        if (l == null) l = [inside].concat(...keep.map(k => [k[1], k[0] - w])).filter(clear).sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0];
+        at1 = [s, l == null ? inside : l, y];   // (clear nowhere: the smallest, inside the frame)
+        if (l != null) break;
+      }
+      el.style.scale = at1[0] < 1 ? at1[0] : '';   // (about its bottom left corner: .mlab .fl-s)
+      el.style.left = at1[1].toFixed(1) + 'px'; el.style.top = at1[2].toFixed(1) + 'px';
     });
   }
   window.addEventListener('resize', fitMaps);
