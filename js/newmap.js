@@ -1893,8 +1893,11 @@ body.mk-clean #h-msg { display: none !important; }
     const inside = (x, z) => { const rz = Math.round((z - z0) / dz); if (rz < 0 || rz >= Hn) return false; for (const [a, b] of rows[rz]) if (x >= a && x <= b) return true; return false; };
     return { rows, z0, dz, inside }; }
   function gravelMesh(sp, y = 0.035, look = null) { const pos = [], uv = [], idx = [], gy = H3.gy || (() => 0), BB = (H3.crests || []).map(c => [...c.bb, 0.6]), st0 = 1.5;
+    // (the infield's grass a little under the base's lot where the lot lies over it (js/nvbase.js lotIn): its finer rows rose through the lot's 3 m cells
+    // where the ground curves, by the banked bend, the 15 pictures of the whole map, sheet 10)
+    const LR = look === 'grass' && H3.BASEM && typeof NVBase !== 'undefined' && NVBase.R, low = LR ? (x, z) => (LR.lotIn(x, z) ? 0.12 : 0) : () => 0;
     sp.rows.forEach((row, rz) => { const za = sp.z0 + rz * sp.dz - sp.dz / 2, zb = za + sp.dz; for (const [a0, b0] of row) { const a = a0 - 0.25, b = b0 + 0.25, xs = [a, b]; for (let x = Math.ceil(a / st0) * st0; x < b; x += st0) xs.push(x); for (const [x0, x1, z0, z1, st] of BB) if (zb > z0 && za < z1 && b > x0 && a < x1) for (let x = Math.max(a, x0); x < Math.min(b, x1); x += st) xs.push(x); xs.sort((p, q) => p - q);
-      const X = []; let last = -1e9; for (const x of xs) { if (x - last < 0.05) continue; last = x; X.push([x, gy(x, za), gy(x, zb)]); }
+      const X = []; let last = -1e9; for (const x of xs) { if (x - last < 0.05) continue; last = x; X.push([x, gy(x, za) - low(x, za), gy(x, zb) - low(x, zb)]); }
       // (where the ground is flat the points between are left out: the same surface, far fewer vertices; kept where it bends, over a
       // crest, a bump, the banked corner, and at least every 24 m)
       const K = [X[0]]; for (let k = 1; k < X.length; k++) { const p0 = K[K.length - 1], p1 = X[k + 1]; if (!p1) { K.push(X[k]); break; } let ok = p1[0] - p0[0] <= 24; for (let q = X.indexOf(p0) + 1; ok && q <= k; q++) { const u = (X[q][0] - p0[0]) / (p1[0] - p0[0]); if (Math.abs(X[q][1] - (p0[1] + (p1[1] - p0[1]) * u)) > 0.008 || Math.abs(X[q][2] - (p0[2] + (p1[2] - p0[2]) * u)) > 0.008) ok = false; } if (!ok) K.push(X[k]); }
@@ -4245,6 +4248,13 @@ body.mk-clean #h-msg { display: none !important; }
       if (r) { const NU = U.length, b0 = (r - 1) * NU; for (let c = 0; c < NU - 1; c++) { const a2 = b0 + c; idx.push(a2, a2 + NU, a2 + 1, a2 + 1, a2 + NU, a2 + NU + 1); } } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); if (H3.PARKM && g.attributes.normal.getY(0) < 0) { const I = g.index; for (let i = 0; i < I.count; i += 3) { const t2 = I.getX(i + 1); I.setX(i + 1, I.getX(i + 2)); I.setX(i + 2, t2); } g.computeVertexNormals(); }
     const m = H3.PARKM ? new THREE.Mesh(meadowGeo(g), meadowSolid()) : new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); m.receiveShadow = true; add(m);   // (PARKM: in the one meadow)
+    // (PARKM: on the inside too the one meadow, from under the kerb into the bowl's grass (the user, 19. 10.: "Tukaj naj bo vse trava"; the World's
+    // ground taken away there above), a little under the infield's own grass where they meet)
+    if (H3.PARKM) { const UI = [w + 0.2, w + 1.4, w + 2.8, w + 4.4, w + 6.2, w + 8.5], P = [], I = []; let r3 = 0;
+      for (let d = B.a - 24; d <= B.b + 24.01; d += 1, r3++) { for (const u of UI) { const q = at(d, u * B.side); P.push(q.x, H3.top - 0.012 + B.fn(q.x, q.z), q.z); }
+        if (r3) { const NU = UI.length, b0 = (r3 - 1) * NU; for (let c = 0; c < NU - 1; c++) { const a2 = b0 + c; I.push(a2, a2 + NU, a2 + 1, a2 + 1, a2 + NU, a2 + NU + 1); } } }
+      const g3 = new THREE.BufferGeometry(); g3.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g3.setIndex(I); g3.computeVertexNormals(); if (g3.attributes.normal.getY(0) < 0) { const J = g3.index; for (let i = 0; i < J.count; i += 3) { const t2 = J.getX(i + 1); J.setX(i + 1, J.getX(i + 2)); J.setX(i + 2, t2); } g3.computeVertexNormals(); }
+      const m3 = new THREE.Mesh(meadowGeo(g3), meadowSolid()); m3.receiveShadow = true; add(m3); }
     // the gravel of the run-off over it by the road (the makadam itself, as at Medvode), its outer edge ragged, thinning into the grass
     { const U2 = [-w + 0.1, -w - 0.8, -w - 2, -w - 3.4, -w - 4.8, -w - 6.2, -w - 7.6], P = [], UV = [], C = [], I = []; let r2 = 0;
       for (let d = B.a - 24; d <= B.b + 24.01; d += 1, r2++) { const jit = 1.4 * Math.sin(d * 0.27 + 1.1) + 0.8 * Math.sin(d * 0.71), fz = B.fn(at(d, 0).x, at(d, 0).z) !== 0 || (d > B.a - 22 && d < B.b + 22) ? 1 : 0;

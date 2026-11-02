@@ -42,7 +42,7 @@ const NVBase = (function () {
       && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z)) && !inBowl(x, z);   // (the HOME lot's lane: its own)
     let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -200; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
     let ab = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of AP) ab = [Math.min(ab[0], x), Math.max(ab[1], x), Math.min(ab[2], z), Math.max(ab[3], z)];
-    R = { RP, laneX, westEdge, apron, AP, inApron, lotIn, inPad, lotBB: lb, apBB: ab };
+    R = { RP, laneX, westEdge, apron, AP, inApron, inBowl, lotIn, inPad, lotBB: lb, apBB: ab };
     // the cars' asphalt: the way as a paved way of the net, the apron and the lot as paved areas
     MK.netAdd('route0', ROUTE, RW, 'asph'); (H3.paveFns = H3.paveFns || []).push({ bb: ab, inside: inApron }, { bb: lb, inside: lotIn });
     return R;
@@ -94,6 +94,8 @@ const NVBase = (function () {
     const AP = R.apron, y0 = (() => { const v = R.AP.map(([x, z]) => gy(x, z)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
     { const sh = new THREE.Shape(R.AP.map(([x, z]) => new THREE.Vector2(x, z))), g = new THREE.ShapeGeometry(sh, 4), pa = g.attributes.position, uvA = new Float32Array(pa.count * 2);
       for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), z = pa.getY(i); pa.setXYZ(i, x, y0 + 0.08, z); uvA[2 * i] = x / 7; uvA[2 * i + 1] = z / 7; } g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2)); g.computeVertexNormals();
+      // (none of it over the banked bend's bowl: it lay flat at the apron's level over the lowered lawn there, sheet 10)
+      { const I = g.index, keep = []; for (let i = 0; i < I.count; i += 3) { const a = I.getX(i), b = I.getX(i + 1), c = I.getX(i + 2), cx = (pa.getX(a) + pa.getX(b) + pa.getX(c)) / 3, cz = (pa.getZ(a) + pa.getZ(b) + pa.getZ(c)) / 3; if (!R.inBowl(cx, cz)) keep.push(a, b, c); } g.setIndex(keep); }
       if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let i = 0; i < I.count; i += 3) { const t = I.getX(i + 1); I.setX(i + 1, I.getX(i + 2)); I.setX(i + 2, t); } g.computeVertexNormals(); } flat(g, ASPH, 2); }
     // the H painted in the asphalt (a white ring, a big H, a yellow dashed ring), old drift marks round it, a yellow dashed line to it from the way
     const HY = y0 + 0.08;
