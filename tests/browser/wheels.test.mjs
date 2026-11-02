@@ -1,7 +1,7 @@
 // The wheel rule in the game (core.js wheelRule; game.js WHEEL_RULE: the player's SOKOL, offline, a test with one car first): a hit at
 // 79 % takes a wheel off (no words, no Namesti kolo; no fire yet: in the last 20 % of the 3 s a small one where the wheel was, with the
 // second wheel the whole car), the second follows 3 s on, the car stops and the game is over: KONEC IGRE with a
-// big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the same race again, the car whole; Rezultati: the
+// big PONOVI IGRO (no results first; the HUD and the controls off). PONOVI IGRO: the question of Zadnji posnetki (Ne), the same race again, the car whole; Rezultati: the
 // results, the player retired. Another car (KAZE RS): no rule. On its side the left column (the place, the speed, the tyres) stays above
 // the steering arrows and clear of ZAMENJAJ KOLO. Upright (360 x 640) and on its side (640 x 360), in English too.
 //   node tests/browser/wheels.test.mjs
@@ -35,8 +35,9 @@ try {
         bh: Math.round(b.height), bw: Math.round(b.width), pw: Math.round(p.width), oneLine: document.getElementById('over-again').scrollWidth <= document.getElementById('over-again').clientWidth + 1, inView: p.top >= 0 && p.left >= 0 && p.bottom <= innerHeight + 0.5 && p.right <= innerWidth + 0.5, hud: document.getElementById('hud').classList.contains('off'), touch: document.getElementById('touch').classList.contains('off'),
         res: document.getElementById('s-results').classList.contains('show') };
       document.getElementById('over-again').click();
+      const ask = document.querySelector('#nk-vpr h3'), askTxt = ask && ask.textContent, no = document.querySelector('#nk-vpr [data-v="ne"]'); if (no) no.click();   // (Orodje za napake · Zadnji posnetki: a game left before its finish asks first whether to keep it: Ne)
       for (let k = 0; k < 50 && !(g.race && g.race.player !== P); k++) await wait(100);
-      const P2 = g.race.player, again = { fresh: P2 !== P, rule: !!(P2.wreck && P2.wreck.rule), nL: P2.wreck.nL, dmg: P2.dmg, gone: !sc.classList.contains('show'), phase: g.phase, track: g.race.track.def.id };
+      const P2 = g.race.player, again = { fresh: P2 !== P, rule: !!(P2.wreck && P2.wreck.rule), nL: P2.wreck.nL, dmg: P2.dmg, gone: !sc.classList.contains('show'), phase: g.phase, track: g.race.track.def.id, ask: askTxt };
       // ZAMENJAJ KOLO (the spare on the roof): a hit at 79 % in the new race: a big button, its bar at its foot running out, clear of the
       // steering and the pedals, no fire yet, then (the bar under 20 %, white) the hub where the wheel was on fire; a tap beside the button:
       // nothing; a tap on it: the spare on at once (four wheels, drawn), the car driving on, the button gone, no spare left; the fire put out
@@ -107,7 +108,7 @@ try {
     T.check(`${tag}: the second one off, the car stopped, out: KONEC IGRE (no results first), the HUD and the controls off`, O.shown && O.screen === 'over' && O.n >= 2 && O.out && O.v < 0.6 && O.phase === 'done' && !O.res && O.hud && O.touch, JSON.stringify(O));
     T.check(`${tag}: ${en ? 'GAME OVER, PLAY AGAIN' : 'KONEC IGRE, PONOVI IGRO'}: big (>= 64 px high, most of the panel's width, one line), the panel all on screen`,
       O.title === (en ? 'GAME OVER' : 'KONEC IGRE') && O.btn === (en ? 'PLAY AGAIN' : 'PONOVI IGRO') && O.bh >= 64 && O.bw >= 0.8 * O.pw && O.inView && O.oneLine, `"${O.title}", "${O.btn}" ${O.bw} x ${O.bh}`);
-    T.check(`${tag}: PONOVI IGRO: the same race again, the car whole, under the rule`, a.again.fresh && a.again.gone && a.again.rule && a.again.nL === 0 && a.again.dmg === 0 && a.again.track === 'spa' && a.again.phase !== 'done', JSON.stringify(a.again));
+    T.check(`${tag}: PONOVI IGRO: first the question whether to keep the game (Orodje za napake, Ne), then the same race again, the car whole, under the rule`, a.again.ask === 'Želiš shraniti to igro za kasnejšo analizo?' && a.again.fresh && a.again.gone && a.again.rule && a.again.nL === 0 && a.again.dmg === 0 && a.again.track === 'spa' && a.again.phase !== 'done', JSON.stringify(a.again));
     T.check(`${tag}: ZAMENJAJ KOLO: a wheel off with the spare on the roof: a big button ("${en ? 'CHANGE TYRE' : 'ZAMENJAJ KOLO'}" heavy and on one line inside it, under it "Press here to change tyre"), all on screen, clear of the steering and the pedals, its bar at its very foot running out, no fire yet; at 20 % of the bar (white) the hub where the wheel was on fire; a tap beside it: nothing`,
       a.sw0.on && a.sw0.big && a.sw0.inView && a.sw0.barIn && a.sw0.clear && a.sw0.txt === (en ? 'CHANGE TYRE' : 'ZAMENJAJ KOLO') && a.sw0.fit && a.sw0.heavy && a.sw0.sub === (en ? 'Press here to change tyre' : 'Pritisni tukaj za menjavo kolesa') && a.sw0.nL === 1 && !a.sw0.fire && a.sw0.bar <= 1 && a.sw0.bar2 < a.sw0.bar && a.sw0.hub === 1 && a.sw0.hot
         && a.sw0.beside.nL === 1 && a.sw0.beside.ask === 1 && a.sw0.beside.on, JSON.stringify(a.sw0));
