@@ -36,9 +36,11 @@
 //   car hardly moves when hit or leant on, a car driving along hit from the side keeps its direction; a race with them (Spa, Bathurst): nothing
 //   NaN, every car moving, knocks <= 1.5x the default's + 20, slides past 40 deg <= 6
 // - Trki med avti brez odboja (Nastavitve; setTest nb 1, over the rows of the knocks): a rival turning into the player's side or into its rear
-//   corner does not push the player away or turn it (Realističen, težak does), the player's own bump or knock into a standing car: no bounce,
-//   no turn, no pop, the car hit hardly moves; the same with the new physics; Razbijanje: odboji in vrtenje and prevračanje do nothing in a knock
-//   between cars, the sparks stay; the walls as they were; a race with it (Spa, Bathurst) as above
+//   corner does not push the player away or turn it (Realističen, težak does; the new physics: under 2 m/s, turned under 8 deg), the player's own
+//   bump or knock into a standing car: no bounce, no turn, no pop, the car hit hardly moves; Razbijanje: odboji in vrtenje and prevračanje do
+//   nothing in a knock between cars (the same car rolls over without it), the sparks stay; in the tightest corners a rival drifting into the
+//   player hardly moves it whichever order the cars come in; a rival at 130 km/h into the player's rear quarter, the player reversing into a
+//   standing rival; a knock into a traffic car moves the player 4 cm at once at most; the walls as they were; a race with it (Spa, Bathurst)
 //   node tests/nova.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -236,15 +238,52 @@ for (const id of ['rally', 'kaze']) {
     bnb.hit && bnb.hP < 0.5 && bnb.sep < 0.1 && bnb.pop < 0.01 && Math.abs(bnb.pv - 27.8) < 1.5 && sz2.hit && sz2.h < 1 && sz2.pv < 1 && sz2.om < 0.6 && sz2.sep < 0.1 && sz1.h >= 5,
     `bump: ${f(bnb.hP, 2)} deg, apart ${f(bnb.sep * 3.6, 2)} km/h, pop ${f(bnb.pop * 100, 1)} cm, ${f(bnb.pv * 3.6, 0)} km/h; standing car: ${f(sz1.h, 1)} -> ${f(sz2.h, 1)} deg, ${f(sz2.pv * 3.6, 1)} km/h, the other ${f(sz2.om, 2)} m`);
   const nsw = push(HN, NB, swiped, 1.2), npi = push(HN, NB, pit, 1.2), nsz = push(HN, NB, standZ, 2);
-  ok('Trki med avti brez odboja (new physics): the rival into the player\'s side or rear corner pushes it under 2 m/s sideways, turned under 8 deg; into a standing car: stopped, not turned, no bounce',
-    nsw.vz < 2 && nsw.h < 8 && npi.vz < 2 && npi.h < 8 && nsz.h < 1 && nsz.pv < 1 && nsz.sep < 0.1, `side ${f(nsw.vz * 3.6, 1)} km/h ${f(nsw.h, 1)} deg, rear corner ${f(npi.vz * 3.6, 1)} km/h ${f(npi.h, 1)} deg, standing ${f(nsz.h, 1)} deg ${f(nsz.pv * 3.6, 1)} km/h`);
-  // a hard knock on the side with Razbijanje: odboji in vrtenje and prevračanje on: no grip lost, no rolling over; the sparks as ever
-  const side = (tx) => test(tx, () => { C.setCrash({ bump: 1, roll: 1 }); try { const P = car(HC, 100, true), O = car(HC, 0, false); O.place(0, 0, Math.PI / 2); P.place(-P.m.len / 2 - O.m.wid / 2 - 0.02, 0, 0); P.vx = 27.8; P.fxQ = O.fxQ = 0; P.fxCar = O.fxCar = 0;
+  ok('Trki med avti brez odboja (new physics): the rival into the player\'s side or rear corner (both touching) pushes it under 2 m/s sideways, turned under 8 deg; into a standing car: stopped, not turned, no bounce',
+    nsw.hit && npi.hit && nsz.hit && nsw.vz < 2 && nsw.h < 8 && npi.vz < 2 && npi.h < 8 && nsz.h < 1 && nsz.pv < 1 && nsz.sep < 0.1, `side ${f(nsw.vz * 3.6, 1)} km/h ${f(nsw.h, 1)} deg, rear corner ${f(npi.vz * 3.6, 1)} km/h ${f(npi.h, 1)} deg, standing ${f(nsz.h, 1)} deg ${f(nsz.pv * 3.6, 1)} km/h`);
+  // a hard knock on the side with Razbijanje: odboji in vrtenje and prevračanje on: no grip lost, no rolling over; the sparks as ever. One knock in ten
+  // rolls a car over (XROLL.p, a hash of the car's id): the car hit gets the first id that rolls over without the switch
+  const side = (tx, id) => test(tx, () => { C.setCrash({ bump: 1, roll: 1 }); try { const P = car(HC, 100, true), O = car(HC, 0, false); O.id = id; P.id = id + 100; O.place(0, 0, Math.PI / 2); P.place(-P.m.len / 2 - O.m.wid / 2 - 0.02, 0, 0); P.vx = 27.8; P.fxQ = O.fxQ = 0; P.fxCar = O.fxCar = 0;
     let rl = false, gl = 0; for (let k = 0; k < 4; k++) { C.carCollide(P, O); rl = rl || !!P.rl || !!O.rl; gl = Math.max(gl, P.xgl || 0, O.xgl || 0); P.x += P.vx * DT; }
     return { rl, gl, fx: P.fxQ || O.fxQ ? 0 : Math.max(P.fxCar, O.fxCar) }; } finally { C.setCrash(null); } });
-  const sd0 = side(null), sd1 = side(NB);
-  ok('Trki med avti brez odboja: a hard knock with Razbijanje: odboji in vrtenje and prevračanje on loses no grip and rolls no car over (without it it does), the sparks stay',
-    sd1.gl === 0 && !sd1.rl && sd1.fx > 3 && (sd0.gl > 0 || sd0.rl), JSON.stringify({ off: sd0, on: sd1 }));
+  let rid = 0; for (let id = 1; id <= 100 && !rid; id++) if (side(null, id).rl) rid = id;
+  const sd0 = side(null, rid), sd1 = side(NB, rid);
+  ok('Trki med avti brez odboja: a hard knock with Razbijanje: odboji in vrtenje and prevračanje on loses no grip and rolls no car over (without it the same car loses grip and rolls over), the sparks stay',
+    rid > 0 && sd0.rl && sd0.gl > 0 && !sd1.rl && sd1.gl === 0 && sd1.fx > 3, JSON.stringify({ id: rid, off: sd0, on: sd1 }));
+  // in a corner who hits whom is seen on each car's own road: the player and a rival side by side in the tightest corners of Spa, Bathurst and the
+  // Red Bull Ring (12 and 20 m/s, the rival 2 m ahead or behind, on either side), the rival drifting into the player at 1 m/s; one knock, both
+  // orders of the cars (the race calls carCollide either way): the player's share of the two cars' change of speed
+  const wrapA = (x) => Math.atan2(Math.sin(x), Math.cos(x));
+  const corner = (T, i0, v, di, dO, pFirst) => test(NB, () => { const N = T.N, mk = (pl) => { const c = new C.Car(C.MODELS.find(m => m.id === 'rally'), { isPlayer: pl, phys: 'cs', assist: 2 }); c.locked = false; return c; }, P = mk(true), O = mk(false);
+    const put = (c, i, d, drift) => { const k = ((i % N) + N) % N, h = T.hd[k]; c.place(T.px[k] + T.nx[k] * d, T.pz[k] + T.nz[k] * d, h); c.q = T.query(c.x, c.z, k, c.q); c.vx = Math.cos(h) * v - Math.sin(h) * drift; c.vz = Math.sin(h) * v + Math.cos(h) * drift; c.w = v * wrapA(T.hd[(k + 1) % N] - h) / T.ds; };
+    const sg = Math.sign(dO); put(P, i0, 0, 0); const p0 = [P.x, P.z, P.vx, P.vz, P.h, P.w]; let r = 0;
+    for (let d = dO; Math.abs(d) > 0.5 && !(r > 0); d -= sg * 0.002) { Object.assign(P, { x: p0[0], z: p0[1], vx: p0[2], vz: p0[3], h: p0[4], w: p0[5], csKc: 0, cSx: 0, cSz: 0 }); put(O, i0 + di, d, -sg); r = pFirst ? C.carCollide(P, O) : C.carCollide(O, P); }
+    const dp = Math.hypot(P.vx - p0[2], P.vz - p0[3]), dr = Math.hypot(O.vx - Math.cos(O.h) * v + Math.sin(O.h) * -sg, O.vz - Math.sin(O.h) * v - Math.cos(O.h) * -sg);
+    return r > 0.3 ? dp / (dp + dr) : null; });
+  let cn = 0, cbad = 0, cmax = 0;
+  for (const tid of ['spa', 'bathurst', 'rbring']) { const T = new C.Track(C.TRACKS.find(d => d.id === tid)), ks = []; for (let i = 0; i < T.N; i++) ks.push([Math.abs(T.k[i]), i]); ks.sort((x, y) => y[0] - x[0]);
+    for (const [, i0] of ks.slice(0, 2)) for (const v of [12, 20]) for (const di of [-1, 1]) for (const dO of [2.4, -2.4]) for (const pf of [false, true]) { const sh = corner(T, i0, v, di, dO, pf); if (sh == null) continue; cn++; cmax = Math.max(cmax, sh); if (sh > 0.25) cbad++; } }
+  ok('Trki med avti brez odboja: in a corner a rival drifting into the player hardly moves it, whichever order the cars come in (the player\'s share of the knock under 25 % every time)',
+    cn >= 40 && cbad === 0, `${cn} knocks in corners, the player over 25 % in ${cbad}, the most ${f(cmax * 100, 0)} %`);
+  // a rival at 130 km/h at 46 deg into the player's rear quarter (the cars part along the road: only across tells); the player reversing into a rival
+  // standing behind it with its brakes on (the player hits it)
+  const tbone = (H) => test(NB, () => { const P = car(H, 100, true), O = car(H, 130, false), a = 0.8; P.place(0, 0, 0); P.vx = 27.8; O.place(-P.m.len * 0.35 - Math.cos(a) * 2.6, -Math.sin(a) * 2.6 - 0.9, a); O.vx = 36.1 * Math.cos(a); O.vz = 36.1 * Math.sin(a);
+    let vz = 0, h = 0, hit = false; for (let i = 1; i <= 1.2 / DT; i++) { H.step(P, { st: 0, thr: 'hold' }); H.step(O, { st: 0, thr: 'hold' }); if (C.carCollide(P, O) > 0) hit = true; if (hit) { vz = Math.max(vz, Math.abs(P.vz)); h = Math.max(h, Math.abs(P.h) * D); } } return { hit, vz, h }; });
+  const backUp = (H) => test(NB, () => { const P = car(H, 0, true), O = car(H, 0, false); P.noReverse = false; P.place(0, 0, 0); O.place(-P.m.len - 0.3, 0, 0); P.vx = -3; P.gear = -1; const x0 = O.x; let hit = false;
+    for (let i = 1; i <= 1 / DT; i++) { H.step(P, { st: 0, thr: 0, brk: 1 }); H.step(O, { st: 0, thr: 0, brk: 1 }); if (C.carCollide(P, O) > 0) hit = true; } return { hit, om: Math.abs(O.x - x0) }; });
+  const tb1 = tbone(HC), tb2 = tbone(HN), rv1 = backUp(HC), rv2 = backUp(HN);
+  ok('Trki med avti brez odboja: a rival at 130 km/h into the player\'s rear quarter pushes it under 2.5 m/s sideways (classic and new physics); the player reversing into a standing rival hardly moves it (under 0.3 m)',
+    tb1.hit && tb2.hit && tb1.vz < 2.5 && tb2.vz < 2.5 && rv1.hit && rv2.hit && rv1.om < 0.3 && rv2.om < 0.3,
+    `rear quarter: classic ${f(tb1.vz * 3.6, 1)} km/h ${f(tb1.h, 1)} deg, new ${f(tb2.vz * 3.6, 1)} km/h ${f(tb2.h, 1)} deg; reversing: the rival moved ${f(rv1.om, 2)} / ${f(rv2.om, 2)} m`);
+  // the traffic (the duel up Vršič): the player 25 cm into the rear of a traffic car and 8 m/s faster: one knock moves it NB.cap at most (no pop),
+  // without the switch the whole overlap at once
+  const tfKnock = (tx) => test(tx, () => { Math.random = seeded(3); const T = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+    const r = new C.Race(T, { numAI: 1, playerGrid: 2, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2, traffic: true }); r.start();
+    const P = r.player, v = r.tf.veh.find(x => x.kind === 0 && x.dir > 0 && x.s - T.startS > 2500 && x.s - T.startS < 6000), ch = Math.cos(v.h), sh = Math.sin(v.h), back = v.len / 2 + P.m.len / 2 - 0.25;
+    P.place(v.x - ch * back, v.z - sh * back, v.h); P.q = T.query(P.x, P.z, -1, P.q); P.vx = ch * (v.v + 8); P.vz = sh * (v.v + 8); const x0 = P.x, z0 = P.z, imp = r.tf._hitVeh(P, v);
+    return { imp, pop: Math.hypot(P.x - x0, P.z - z0) }; });
+  const tk0 = tfKnock(null), tk1 = tfKnock(NB);
+  ok('Trki med avti brez odboja: a knock into a traffic car moves the player at most 4 cm at once (without it the whole overlap)',
+    tk0.imp > 3 && tk1.imp > 3 && tk1.pop <= 0.0401 && tk0.pop > 0.06, `pop ${f(tk0.pop * 100, 1)} -> ${f(tk1.pop * 100, 1)} cm (closing ${f(tk1.imp * 3.6, 0)} km/h)`);
   // the field: the paces' spread and the fastest one the same
   const sp = (phys, tx) => test(tx, () => { Math.random = seeded(5); const T = new C.Track(C.TRACKS.find(d => d.id === 'spa')), r = new C.Race(T, { numAI: 12, playerGrid: 13, laps: 1, phys, seed: 4, difficulty: 1 }), k = r.cars.filter(c => !c.isPlayer).map(c => c.skill); return [Math.min(...k), Math.max(...k)]; });
   const s0 = sp('cs'), s1 = sp('cs', { aiSpr: 0.3 }), s2 = sp('nova', { aiSpr: 1 }), s3 = sp('nova');

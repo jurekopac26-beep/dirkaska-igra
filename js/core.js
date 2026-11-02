@@ -1770,12 +1770,13 @@ const Core = (function () {
   // stay), cBox 1: the cars as boxes with round corners (rbCollide: a flat bumper pushes square on, pushed apart softly, no pop), cScrub 1: the classic
   // car's tyres scrub a knock's push sideways (stepCS: the push is not turned into the car's direction, it slides it a little and dies away).
   // nb 1: Trki brez odboja (Nastavitve: one switch over all the other settings of the knocks between cars, off by default): a knock of a car with
-  // a car (a rival, the traffic, the police) only stops the closing speed: no bounce, no kick of its turn (the classic's attitude kick, the new
-  // one's spin), the overlap taken away softly (NB.cap a step at most: no pop), no rolling over and no grip lost to it (Razbijanje: prevračanje,
+  // a rival or a traffic vehicle only stops the closing speed: no bounce, no kick of its turn (the classic's attitude kick, the new one's spin),
+  // the overlap taken away softly (NB.cap a step at most: no pop), no rolling over and no grip lost to a rival's knock (Razbijanje: prevračanje,
   // odboji in vrtenje: only off a wall then); the cars as with Realističen, težak (flat bumpers, the classic tyres' hold, the rub NB.mu), the
   // sparks as ever, but between the player and a rival the car that is hit counts NB.mass times heavier: the player's knock into a rival hardly
-  // moves it, a rival's knock into the player hardly moves the player (nbHeavy). The walls as they were. The rows of the knocks between cars
-  // change nothing while it is on
+  // moves it, a rival's knock into the player hardly moves the player (nbHeavy). In the run from the police only the bounce goes (the patrol
+  // car's push, its PIT, still turns a car and costs it grip). The walls as they were. The rows of the knocks between cars change nothing
+  // while it is on
   const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cE: null, cMu: null, cYaw: null, cMass: null, cFx: null, cBox: null, cScrub: null, nb: null };
   const NB = { mu: 0.5, mass: 8, cap: 0.04 };
   function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; }
@@ -3072,19 +3073,25 @@ const Core = (function () {
   // hardly moves and the player's speed goes into it
   const heavyK = (c, o) => TX.cMass > 1 && o.isPlayer && !c.isPlayer ? TX.cMass : 1;
   // Trki brez odboja (TX.nb): of the player and a rival, the car that is hit counts NB.mass times heavier, the one that hits it the lighter. Who
-  // hits whom is seen on the road (t: its way at a; n: the contact's way from b to a), by the contact's share along it and across it: along the
-  // road the car behind, while it is the faster (pushing too); across it the one moving over at the other (by half a m/s more, all of it; the
-  // cars' speeds along the road do not count across it: a slanted contact of two cars side by side); neither, both the same. Into _nbH: [a's
-  // weight, b's, a's own speed at b, b's at a] (the speeds for the classic tyres' hold, cSlide); two rivals, a friend online: weights 1
+  // hits whom is seen on the road, each car on its own (its speed along a bend is not a move over), by the contact's share along the road and
+  // across it (n: the contact's way from b to a; the road between them: the two cars' ways averaged): along it, while they close along it, the
+  // one moving at the other (the car behind and the faster, also pushing; a car reversing into the one behind it); across it the one moving over
+  // at the other (half a m/s more is all of it). Only a share that tells counts; none, both the same. Into _nbH: [a's weight, b's, a's own speed
+  // at b, b's at a] (the speeds for the classic tyres' hold, cSlide); two rivals, a friend online: weights 1
   const _nbH = [1, 1, 0, 0];
   function nbHeavy(a, b, nx, nz) {
-    const q0 = a.q, tx = q0 && Number.isFinite(q0.tx) ? q0.tx : Math.cos(a.h), tz = q0 && Number.isFinite(q0.tz) ? q0.tz : Math.sin(a.h);
-    const nl = nx * tx + nz * tz, nt = nz * tx - nx * tz, dl = (a.vx - b.vx) * tx + (a.vz - b.vz) * tz, sg = Math.sign(nt);   // (dl: a faster along the road by)
-    const sl = nl < 0 && dl > 0 ? 1 : nl > 0 && dl < 0 ? -1 : 0;   // (along the road: a behind and the faster, or b)
-    const ta = Math.max(0, -(a.vz * tx - a.vx * tz) * sg), tb = Math.max(0, (b.vz * tx - b.vx * tz) * sg);   // (across it: each one's speed over at the other)
-    _nbH[2] = (sl > 0 ? dl : 0) * -nl + ta * nt * sg; _nbH[3] = (sl < 0 ? -dl : 0) * nl + tb * nt * sg; _nbH[0] = _nbH[1] = 1;
+    const qa = a.q, qb = b.q, ax = qa && Number.isFinite(qa.tx) ? qa.tx : Math.cos(a.h), az = qa && Number.isFinite(qa.tz) ? qa.tz : Math.sin(a.h);
+    const bx = qb && Number.isFinite(qb.tx) ? qb.tx : Math.cos(b.h), bz = qb && Number.isFinite(qb.tz) ? qb.tz : Math.sin(b.h);
+    let tx = ax + bx, tz = az + bz; const tl = Math.hypot(tx, tz); if (tl > 1e-6) { tx /= tl; tz /= tl; } else { tx = ax; tz = az; }
+    const nl = nx * tx + nz * tz, nt = nz * tx - nx * tz, sn = nl < 0 ? 1 : -1;   // (sn 1: a behind b)
+    const la = a.vx * ax + a.vz * az, lb = b.vx * bx + b.vz * bz, cl = (la - lb) * sn, ul = Math.max(0, la * sn), vl = Math.max(0, -lb * sn);   // (cl: closing along the road; ul, vl: a's and b's own speed along it at the other)
+    const sl = cl > 0 && nl !== 0 ? Math.sign(ul - vl) : 0;   // (along the road: 1 a hits b, -1 b hits a)
+    const pa = nz * ax - nx * az, pb = nz * bx - nx * bz;   // (the contact across each one's own road)
+    const ta = Math.max(0, -(a.vz * ax - a.vx * az) * Math.sign(pa)), tb = Math.max(0, (b.vz * bx - b.vx * bz) * Math.sign(pb));   // (each one's speed over at the other)
+    _nbH[2] = (sl > 0 ? cl : 0) * Math.abs(nl) + ta * Math.abs(pa); _nbH[3] = (sl < 0 ? cl : 0) * Math.abs(nl) + tb * Math.abs(pb); _nbH[0] = _nbH[1] = 1;
     if (!a.isPlayer === !b.isPlayer) return _nbH;
-    const q = 0.5 + 0.5 * (sl * nl * nl + clamp((ta - tb) * 2, -1, 1) * nt * nt);   // (q 1: a hits b)
+    const A = clamp((ta - tb) * 2, -1, 1), wl = sl ? nl * nl : 0, wt = nt * nt, den = wl + Math.abs(A) * wt;
+    const q = den > 1e-9 ? 0.5 + 0.5 * (sl * wl + A * wt) / den : 0.5;   // (q 1: a hits b)
     _nbH[0] = 1 + (NB.mass - 1) * (1 - q); _nbH[1] = 1 + (NB.mass - 1) * q; return _nbH;
   }
   function carCollide(a, b) {
@@ -3960,10 +3967,10 @@ const Core = (function () {
           if (d2 < r * r) { const d = Math.sqrt(d2) || 1e-3, pen = r - d; if (pen > best) { best = pen; bnx = dx / d; bnz = dz / d; bpx = (ax + bx) / 2; bpz = (az + bz) / 2; } } } }
       if (best <= 0 || v.nc > 0) return 0;
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
-      c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
-      if (v.st !== 0) { v.x -= bnx * best * ib / tot; v.z -= bnz * best * ib / tot; }
-      else { const f = best * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
+      const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, sep = TX.nb === 1 ? Math.min(best, NB.cap) : best;   // (Trki brez odboja: NB.cap a step at most, no pop)
+      c.x += bnx * sep * ia / tot; c.z += bnz * sep * ia / tot;
+      if (v.st !== 0) { v.x -= bnx * sep * ib / tot; v.z -= bnz * sep * ib / tot; }
+      else { const f = sep * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
       const rax = bpx - c.x, raz = bpz - c.z, rbx = bpx - v.x, rbz = bpz - v.z;
       const vax = c.vx - c.w * raz, vaz = c.vz + c.w * rax, vbx = v.vx - v.w * rbz, vbz = v.vz + v.w * rbx;
       const vrel = (vax - vbx) * bnx + (vaz - vbz) * bnz; if (vrel >= 0) return 0;
