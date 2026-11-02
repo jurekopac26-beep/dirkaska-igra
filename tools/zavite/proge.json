@@ -1,0 +1,5608 @@
+[
+ {
+  "id": "ouropreto",
+  "step": 1,
+  "name": "Ouro Preto, Brazilija",
+  "en": "Ouro Preto, Brazil",
+  "drive": "desna",
+  "open": false,
+  "bbox": [
+   -43.516,
+   -20.394,
+   -43.494,
+   -20.377
+  ],
+  "waypoints": [
+   [
+    -20.384869,
+    -43.503525
+   ],
+   [
+    -20.385613,
+    -43.503487
+   ],
+   [
+    -20.385496,
+    -43.503698
+   ],
+   [
+    -20.385244,
+    -43.505625
+   ],
+   [
+    -20.38455,
+    -43.506001
+   ],
+   [
+    -20.384885,
+    -43.508671
+   ],
+   [
+    -20.38614,
+    -43.507992
+   ],
+   [
+    -20.386971,
+    -43.507141
+   ],
+   [
+    -20.386139,
+    -43.506239
+   ],
+   [
+    -20.386096,
+    -43.506117
+   ],
+   [
+    -20.386872,
+    -43.504098
+   ],
+   [
+    -20.386196,
+    -43.502829
+   ],
+   [
+    -20.386061,
+    -43.502132
+   ],
+   [
+    -20.385757,
+    -43.502076
+   ],
+   [
+    -20.3857,
+    -43.501767
+   ],
+   [
+    -20.38469,
+    -43.502262
+   ],
+   [
+    -20.3838,
+    -43.502732
+   ],
+   [
+    -20.38384,
+    -43.503267
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2426,
+  "corners": [
+   19,
+   2
+  ],
+  "twist_deg_km": 1009,
+  "straight_pct": 35,
+  "longest_straight_m": 170,
+  "elev_m": 73,
+  "route": "Krog s startom in ciljem na severnem robu glavnega trga (Rua Antônio Pereira/Rua Barão de Camargos): Rua Antônio Pereira ob trgu, Rua Conde de Bobadela navzdol, Praça Reinaldo Alves de Brito, Rua São José, Rua Getúlio Vargas, Rua Paracatu (62 m peš), Rua Antônio Albuquerque, Rua do Pilar, Rua Paraná, Rua Vereador José Leandro, Rua Coronel Alves, Rua Costa Sena, Largo do Coimbra/Rua Amália Bernhaus, Rua São Francisco, Rua Bernardo de Vasconcelos, Rua dos Paulistas, Rua Camilo de Brito in Rua Barão de Camargos nazaj na trg.",
+  "race": "–",
+  "legal": 2,
+  "legal_note": "Brazilija dovoljuje upodobitev stavb na javnih mestih (zakon 9.610/98, čl. 48); za generične modele mesta Unesco ni omejitev. Trg in ulice nosijo imena oseb (Tiradentes ipd.), zato v igri samo opisna imena; cerkve samo generične.",
+  "notes": [
+   "Peš odsek: Rua Paracatu 62 m (povezava Rua São José–Rua Antônio Albuquerque), drugih peš ali bivalnih odsekov ni.",
+   "Ozke, strme, tlakovane ulice; 19 ovinkov, 2 lasnici, najdaljša ravnina 170 m (Rua Conde de Bobadela).",
+   "Glavna cerkev četrti Antônio Dias je 72 m od proge, Santa Efigênia še dlje vzhodno (zunaj 60 m)."
+  ],
+  "sights": [
+   {
+    "label": "Mestna hiša",
+    "osm_name": "Câmara Municipal de Ouro Preto",
+    "kind": "building",
+    "dist_m": 12.5,
+    "at_m": 45
+   },
+   {
+    "label": "Glavni trg na vrhu griča",
+    "osm_name": "Praça Tiradentes",
+    "kind": "landuse",
+    "dist_m": 0.0,
+    "at_m": 51
+   },
+   {
+    "label": "Kolonialna zakladnica",
+    "osm_name": "Casa dos Contos",
+    "kind": "building",
+    "dist_m": 3.5,
+    "at_m": 415
+   },
+   {
+    "label": "Cerkev",
+    "osm_name": "Igreja de São José",
+    "kind": "building",
+    "dist_m": 53.3,
+    "at_m": 800
+   },
+   {
+    "label": "Kamnit vodnjak",
+    "osm_name": "Chafariz da Glória",
+    "kind": "infra",
+    "dist_m": 8.2,
+    "at_m": 956
+   },
+   {
+    "label": "Kamnit vodnjak",
+    "osm_name": "Chafariz do Pilar",
+    "kind": "infra",
+    "dist_m": 6.1,
+    "at_m": 1080
+   },
+   {
+    "label": "Baročna župnijska cerkev",
+    "osm_name": "Igreja Matriz Nossa Senhora da Pilar",
+    "kind": "building",
+    "dist_m": 0.9,
+    "at_m": 1103
+   },
+   {
+    "label": "Staro kolonialno gledališče",
+    "osm_name": "Casa da Ópera",
+    "kind": "building",
+    "dist_m": 5.2,
+    "at_m": 1449
+   },
+   {
+    "label": "Cerkev z dvema zvonikoma",
+    "osm_name": "Igreja de Nossa Senhora do Carmo",
+    "kind": "building",
+    "dist_m": 35.1,
+    "at_m": 1520
+   },
+   {
+    "label": "Stara mestna hiša z ječo (muzej)",
+    "osm_name": "Museu da Inconfidência",
+    "kind": "building",
+    "dist_m": 24.4,
+    "at_m": 1662
+   },
+   {
+    "label": "Baročna cerkev pod trgom",
+    "osm_name": "Igreja São Francisco de Assis",
+    "kind": "building",
+    "dist_m": 15.3,
+    "at_m": 1745
+   },
+   {
+    "label": "Stara zvezdarna",
+    "osm_name": "Observatório Astronômico da Escola de Minas",
+    "kind": "building",
+    "dist_m": 56.5,
+    "at_m": 2299
+   },
+   {
+    "label": "Nekdanja guvernerjeva palača",
+    "osm_name": "Escola de Minas - Centro Histórico - Edifício Principal",
+    "kind": "building",
+    "dist_m": 22.5,
+    "at_m": 2350
+   }
+  ],
+  "line": [
+   [
+    -20.384869,
+    -43.503525
+   ],
+   [
+    -20.385336,
+    -43.503473
+   ],
+   [
+    -20.385613,
+    -43.503487
+   ],
+   [
+    -20.385496,
+    -43.503698
+   ],
+   [
+    -20.38542,
+    -43.504242
+   ],
+   [
+    -20.385299,
+    -43.504938
+   ],
+   [
+    -20.385244,
+    -43.505625
+   ],
+   [
+    -20.38455,
+    -43.506001
+   ],
+   [
+    -20.384392,
+    -43.506222
+   ],
+   [
+    -20.384283,
+    -43.506434
+   ],
+   [
+    -20.384279,
+    -43.506602
+   ],
+   [
+    -20.384333,
+    -43.506797
+   ],
+   [
+    -20.384432,
+    -43.50701
+   ],
+   [
+    -20.384481,
+    -43.507066
+   ],
+   [
+    -20.384987,
+    -43.507284
+   ],
+   [
+    -20.385236,
+    -43.507408
+   ],
+   [
+    -20.385418,
+    -43.507543
+   ],
+   [
+    -20.385512,
+    -43.507736
+   ],
+   [
+    -20.385366,
+    -43.507932
+   ],
+   [
+    -20.38498,
+    -43.508616
+   ],
+   [
+    -20.384885,
+    -43.508671
+   ],
+   [
+    -20.384735,
+    -43.508654
+   ],
+   [
+    -20.384762,
+    -43.508716
+   ],
+   [
+    -20.384982,
+    -43.508819
+   ],
+   [
+    -20.385201,
+    -43.508952
+   ],
+   [
+    -20.385572,
+    -43.508396
+   ],
+   [
+    -20.385742,
+    -43.508229
+   ],
+   [
+    -20.38614,
+    -43.507992
+   ],
+   [
+    -20.386315,
+    -43.507758
+   ],
+   [
+    -20.386406,
+    -43.507582
+   ],
+   [
+    -20.386631,
+    -43.507365
+   ],
+   [
+    -20.386971,
+    -43.507141
+   ],
+   [
+    -20.386824,
+    -43.506736
+   ],
+   [
+    -20.386579,
+    -43.506405
+   ],
+   [
+    -20.386505,
+    -43.506271
+   ],
+   [
+    -20.386428,
+    -43.506257
+   ],
+   [
+    -20.386376,
+    -43.506281
+   ],
+   [
+    -20.386302,
+    -43.506413
+   ],
+   [
+    -20.386251,
+    -43.506427
+   ],
+   [
+    -20.386203,
+    -43.506371
+   ],
+   [
+    -20.386096,
+    -43.506117
+   ],
+   [
+    -20.385759,
+    -43.505504
+   ],
+   [
+    -20.385869,
+    -43.505201
+   ],
+   [
+    -20.385909,
+    -43.504934
+   ],
+   [
+    -20.386051,
+    -43.504977
+   ],
+   [
+    -20.386725,
+    -43.504561
+   ],
+   [
+    -20.386798,
+    -43.504451
+   ],
+   [
+    -20.386872,
+    -43.504098
+   ],
+   [
+    -20.386787,
+    -43.504073
+   ],
+   [
+    -20.386728,
+    -43.504027
+   ],
+   [
+    -20.386641,
+    -43.503865
+   ],
+   [
+    -20.3866,
+    -43.503719
+   ],
+   [
+    -20.386593,
+    -43.503472
+   ],
+   [
+    -20.386649,
+    -43.503178
+   ],
+   [
+    -20.386661,
+    -43.503033
+   ],
+   [
+    -20.386642,
+    -43.502933
+   ],
+   [
+    -20.38659,
+    -43.502903
+   ],
+   [
+    -20.386317,
+    -43.502841
+   ],
+   [
+    -20.386196,
+    -43.502829
+   ],
+   [
+    -20.386293,
+    -43.502723
+   ],
+   [
+    -20.38645,
+    -43.502459
+   ],
+   [
+    -20.386061,
+    -43.502132
+   ],
+   [
+    -20.385757,
+    -43.502076
+   ],
+   [
+    -20.385692,
+    -43.501914
+   ],
+   [
+    -20.3857,
+    -43.501767
+   ],
+   [
+    -20.385555,
+    -43.501854
+   ],
+   [
+    -20.385304,
+    -43.501912
+   ],
+   [
+    -20.385086,
+    -43.501987
+   ],
+   [
+    -20.384781,
+    -43.502193
+   ],
+   [
+    -20.384142,
+    -43.502691
+   ],
+   [
+    -20.383882,
+    -43.502708
+   ],
+   [
+    -20.3838,
+    -43.502732
+   ],
+   [
+    -20.383744,
+    -43.502872
+   ],
+   [
+    -20.383614,
+    -43.50307
+   ],
+   [
+    -20.383536,
+    -43.503159
+   ],
+   [
+    -20.383533,
+    -43.503191
+   ],
+   [
+    -20.383553,
+    -43.503214
+   ],
+   [
+    -20.383728,
+    -43.503223
+   ],
+   [
+    -20.383802,
+    -43.50324
+   ],
+   [
+    -20.38384,
+    -43.503267
+   ],
+   [
+    -20.384252,
+    -43.503217
+   ],
+   [
+    -20.384547,
+    -43.503227
+   ],
+   [
+    -20.384704,
+    -43.50331
+   ],
+   [
+    -20.384869,
+    -43.503525
+   ]
+  ]
+ },
+ {
+  "id": "valparaiso",
+  "step": 2,
+  "name": "Valparaíso, Čile",
+  "en": "Valparaíso, Chile",
+  "drive": "desna",
+  "open": true,
+  "bbox": [
+   -71.64,
+   -33.05,
+   -71.615,
+   -33.035
+  ],
+  "waypoints": [
+   [
+    -33.038862,
+    -71.628803
+   ],
+   [
+    -33.039069,
+    -71.62915
+   ],
+   [
+    -33.04022,
+    -71.627518
+   ],
+   [
+    -33.041794,
+    -71.628765
+   ],
+   [
+    -33.042665,
+    -71.628335
+   ],
+   [
+    -33.042259,
+    -71.627648
+   ],
+   [
+    -33.041913,
+    -71.627085
+   ],
+   [
+    -33.041669,
+    -71.626687
+   ],
+   [
+    -33.042148,
+    -71.626293
+   ],
+   [
+    -33.04277,
+    -71.62575
+   ],
+   [
+    -33.042999,
+    -71.626448
+   ],
+   [
+    -33.043492,
+    -71.627145
+   ],
+   [
+    -33.04346,
+    -71.628043
+   ],
+   [
+    -33.044089,
+    -71.630064
+   ],
+   [
+    -33.044302,
+    -71.631312
+   ],
+   [
+    -33.046077,
+    -71.631824
+   ],
+   [
+    -33.047542,
+    -71.631286
+   ],
+   [
+    -33.04702,
+    -71.630474
+   ],
+   [
+    -33.046641,
+    -71.629395
+   ],
+   [
+    -33.045122,
+    -71.628106
+   ],
+   [
+    -33.04459,
+    -71.626471
+   ],
+   [
+    -33.043306,
+    -71.625
+   ],
+   [
+    -33.04314,
+    -71.624705
+   ]
+  ],
+  "avoid": [],
+  "length_m": 3296,
+  "corners": [
+   18,
+   2
+  ],
+  "twist_deg_km": 744,
+  "straight_pct": 43,
+  "longest_straight_m": 175,
+  "elev_m": 115,
+  "route": "Od točke do točke: start na pristaniškem trgu (Plaza Sotomayor), Prat, Urriola v hrib, Templeman čez grič Concepción, Papudo, Beethoven, Almirante Montt navzgor čez grič Alegre, Avenida Alemania po vrhu gričev, Atahualpa navzdol čez grič Cárcel, Ricardo Cumming in Almirante Montt, cilj na trgu z vodnjakom (Plaza Aníbal Pinto).",
+  "race": "– (avtomobilske dirke ni; po stopnicah in uličicah teh gričev poteka znan mestni kolesarski spust)",
+  "legal": 2,
+  "legal_note": "Čile ima svobodo panorame (zakon 17.336, čl. 71 F). Trgi in ulice nosijo imena oseb (Sotomayor, Aníbal Pinto, Prat), zato v igri samo opisna imena; palača poveljstva mornarice in cerkve samo generične; brez blagovnih znamk.",
+  "notes": [
+   "Brez peš in bivalnih odsekov; Templeman, Papudo, Beethoven in Atahualpa so ozke, deloma tlakovane ulice.",
+   "Muzejska palača ob Paseo Yugoslavo je 67 m od proge (tik zunaj 60 m); vzpenjači Concepción in Reina Victoria sta dlje.",
+   "Vzpon 115 m; lasnici na prehodu Beethoven–Almirante Montt in v velikem ovinku Avenide Alemania."
+  ],
+  "sights": [
+   {
+    "label": "Pristaniški trg",
+    "osm_name": "Plaza Sotomayor",
+    "kind": "landuse",
+    "dist_m": 4.5,
+    "at_m": 17
+   },
+   {
+    "label": "Palača ob trgu (nekdanja intendanca)",
+    "osm_name": "Comandancia en Jefe Primera Zona Naval Armada de Chile",
+    "kind": "building",
+    "dist_m": 9.2,
+    "at_m": 40
+   },
+   {
+    "label": "Vzpenjača",
+    "osm_name": "Ascensor El Peral",
+    "kind": "infra",
+    "dist_m": 53.7,
+    "at_m": 68
+   },
+   {
+    "label": "Sodna palača",
+    "osm_name": "Juzgados Civiles de Valparaíso",
+    "kind": "place",
+    "dist_m": 22.5,
+    "at_m": 242
+   },
+   {
+    "label": "Razgledna promenada",
+    "osm_name": "Paseo Gervasoni",
+    "kind": "infra",
+    "dist_m": 54.8,
+    "at_m": 770
+   },
+   {
+    "label": "Razgledna promenada",
+    "osm_name": "Paseo Atkinson",
+    "kind": "infra",
+    "dist_m": 55.8,
+    "at_m": 920
+   },
+   {
+    "label": "Cerkev na griču",
+    "osm_name": "Iglesia Luterana de La Santa Cruz en Valparaíso",
+    "kind": "place",
+    "dist_m": 6.2,
+    "at_m": 959
+   },
+   {
+    "label": "Razgledna promenada",
+    "osm_name": "Paseo Dimalow",
+    "kind": "infra",
+    "dist_m": 47.3,
+    "at_m": 1063
+   },
+   {
+    "label": "Kamnita cerkev na griču",
+    "osm_name": "Catedral Anglicana de San Pablo",
+    "kind": "building",
+    "dist_m": 12.3,
+    "at_m": 1194
+   },
+   {
+    "label": "Razgledišče",
+    "osm_name": "14 Asientos",
+    "kind": "infra",
+    "dist_m": 15.9,
+    "at_m": 1194
+   },
+   {
+    "label": "Nekdanji zapor (kulturni park)",
+    "osm_name": "Parque Cultural de Valparaíso",
+    "kind": "landuse",
+    "dist_m": 32.7,
+    "at_m": 2758
+   },
+   {
+    "label": "Staro pokopališče na griču",
+    "osm_name": "Cementerio N° 1 de Valparaíso",
+    "kind": "landuse",
+    "dist_m": 57.9,
+    "at_m": 3137
+   },
+   {
+    "label": "Trg z vodnjakom (cilj)",
+    "osm_name": "Plaza Aníbal Pinto",
+    "kind": "landuse",
+    "dist_m": 0.0,
+    "at_m": 3296
+   }
+  ],
+  "line": [
+   [
+    -33.038862,
+    -71.628803
+   ],
+   [
+    -33.039069,
+    -71.62915
+   ],
+   [
+    -33.039236,
+    -71.629071
+   ],
+   [
+    -33.039294,
+    -71.629012
+   ],
+   [
+    -33.039653,
+    -71.628392
+   ],
+   [
+    -33.04022,
+    -71.627518
+   ],
+   [
+    -33.040688,
+    -71.627703
+   ],
+   [
+    -33.040843,
+    -71.627806
+   ],
+   [
+    -33.040919,
+    -71.627893
+   ],
+   [
+    -33.040992,
+    -71.628084
+   ],
+   [
+    -33.041049,
+    -71.628306
+   ],
+   [
+    -33.041152,
+    -71.628541
+   ],
+   [
+    -33.041257,
+    -71.628652
+   ],
+   [
+    -33.041406,
+    -71.62875
+   ],
+   [
+    -33.04149,
+    -71.628776
+   ],
+   [
+    -33.042162,
+    -71.628748
+   ],
+   [
+    -33.042323,
+    -71.628659
+   ],
+   [
+    -33.042665,
+    -71.628335
+   ],
+   [
+    -33.042411,
+    -71.627887
+   ],
+   [
+    -33.041669,
+    -71.626687
+   ],
+   [
+    -33.042148,
+    -71.626293
+   ],
+   [
+    -33.042677,
+    -71.625815
+   ],
+   [
+    -33.04277,
+    -71.62575
+   ],
+   [
+    -33.042795,
+    -71.62599
+   ],
+   [
+    -33.042857,
+    -71.626233
+   ],
+   [
+    -33.042919,
+    -71.626347
+   ],
+   [
+    -33.042999,
+    -71.626448
+   ],
+   [
+    -33.043403,
+    -71.626898
+   ],
+   [
+    -33.043492,
+    -71.627145
+   ],
+   [
+    -33.043455,
+    -71.627215
+   ],
+   [
+    -33.043394,
+    -71.627272
+   ],
+   [
+    -33.043209,
+    -71.627341
+   ],
+   [
+    -33.042798,
+    -71.627324
+   ],
+   [
+    -33.04269,
+    -71.627348
+   ],
+   [
+    -33.042583,
+    -71.627417
+   ],
+   [
+    -33.042503,
+    -71.627588
+   ],
+   [
+    -33.0432,
+    -71.6279
+   ],
+   [
+    -33.04346,
+    -71.628043
+   ],
+   [
+    -33.043626,
+    -71.628206
+   ],
+   [
+    -33.043788,
+    -71.628467
+   ],
+   [
+    -33.043888,
+    -71.628718
+   ],
+   [
+    -33.044209,
+    -71.630858
+   ],
+   [
+    -33.044206,
+    -71.631079
+   ],
+   [
+    -33.044302,
+    -71.631312
+   ],
+   [
+    -33.044476,
+    -71.631465
+   ],
+   [
+    -33.044581,
+    -71.631523
+   ],
+   [
+    -33.044612,
+    -71.631516
+   ],
+   [
+    -33.044748,
+    -71.631408
+   ],
+   [
+    -33.044914,
+    -71.631305
+   ],
+   [
+    -33.045094,
+    -71.631262
+   ],
+   [
+    -33.04518,
+    -71.631279
+   ],
+   [
+    -33.045273,
+    -71.631331
+   ],
+   [
+    -33.045345,
+    -71.631399
+   ],
+   [
+    -33.04559,
+    -71.631734
+   ],
+   [
+    -33.045799,
+    -71.631923
+   ],
+   [
+    -33.045878,
+    -71.631974
+   ],
+   [
+    -33.045943,
+    -71.631974
+   ],
+   [
+    -33.045986,
+    -71.631948
+   ],
+   [
+    -33.046127,
+    -71.631753
+   ],
+   [
+    -33.046256,
+    -71.631625
+   ],
+   [
+    -33.046327,
+    -71.631613
+   ],
+   [
+    -33.046405,
+    -71.631637
+   ],
+   [
+    -33.046473,
+    -71.631689
+   ],
+   [
+    -33.046521,
+    -71.631748
+   ],
+   [
+    -33.046665,
+    -71.631962
+   ],
+   [
+    -33.047284,
+    -71.632787
+   ],
+   [
+    -33.047345,
+    -71.632835
+   ],
+   [
+    -33.047666,
+    -71.632908
+   ],
+   [
+    -33.047985,
+    -71.633114
+   ],
+   [
+    -33.048063,
+    -71.633138
+   ],
+   [
+    -33.048178,
+    -71.633128
+   ],
+   [
+    -33.048259,
+    -71.63306
+   ],
+   [
+    -33.048293,
+    -71.633008
+   ],
+   [
+    -33.048356,
+    -71.632835
+   ],
+   [
+    -33.048346,
+    -71.632683
+   ],
+   [
+    -33.048283,
+    -71.632537
+   ],
+   [
+    -33.047862,
+    -71.631853
+   ],
+   [
+    -33.047542,
+    -71.631286
+   ],
+   [
+    -33.047408,
+    -71.631101
+   ],
+   [
+    -33.04702,
+    -71.630474
+   ],
+   [
+    -33.046991,
+    -71.630322
+   ],
+   [
+    -33.046999,
+    -71.630222
+   ],
+   [
+    -33.047048,
+    -71.630061
+   ],
+   [
+    -33.047079,
+    -71.630011
+   ],
+   [
+    -33.04712,
+    -71.629985
+   ],
+   [
+    -33.047344,
+    -71.629934
+   ],
+   [
+    -33.047342,
+    -71.629857
+   ],
+   [
+    -33.047102,
+    -71.629583
+   ],
+   [
+    -33.046968,
+    -71.629502
+   ],
+   [
+    -33.046744,
+    -71.629415
+   ],
+   [
+    -33.046479,
+    -71.629368
+   ],
+   [
+    -33.046412,
+    -71.629322
+   ],
+   [
+    -33.046338,
+    -71.629232
+   ],
+   [
+    -33.046282,
+    -71.629126
+   ],
+   [
+    -33.046184,
+    -71.628887
+   ],
+   [
+    -33.046058,
+    -71.628738
+   ],
+   [
+    -33.045957,
+    -71.628687
+   ],
+   [
+    -33.045755,
+    -71.628636
+   ],
+   [
+    -33.045711,
+    -71.6286
+   ],
+   [
+    -33.045684,
+    -71.628546
+   ],
+   [
+    -33.045667,
+    -71.628379
+   ],
+   [
+    -33.045644,
+    -71.628322
+   ],
+   [
+    -33.045414,
+    -71.628353
+   ],
+   [
+    -33.045232,
+    -71.62824
+   ],
+   [
+    -33.045099,
+    -71.628079
+   ],
+   [
+    -33.044879,
+    -71.627766
+   ],
+   [
+    -33.044797,
+    -71.627541
+   ],
+   [
+    -33.044739,
+    -71.627269
+   ],
+   [
+    -33.0447,
+    -71.626836
+   ],
+   [
+    -33.04459,
+    -71.626471
+   ],
+   [
+    -33.044059,
+    -71.625954
+   ],
+   [
+    -33.043486,
+    -71.625452
+   ],
+   [
+    -33.043387,
+    -71.625242
+   ],
+   [
+    -33.043265,
+    -71.624905
+   ],
+   [
+    -33.04314,
+    -71.624705
+   ]
+  ]
+ },
+ {
+  "id": "quito",
+  "step": 2,
+  "name": "Quito, Ekvador",
+  "en": "Quito, Ecuador",
+  "drive": "desna",
+  "open": true,
+  "bbox": [
+   -78.53,
+   -0.235,
+   -78.505,
+   -0.21
+  ],
+  "waypoints": [
+   [
+    -0.222608,
+    -78.514894
+   ],
+   [
+    -0.223978,
+    -78.516088
+   ],
+   [
+    -0.223403,
+    -78.516678
+   ],
+   [
+    -0.224502,
+    -78.518603
+   ],
+   [
+    -0.225203,
+    -78.517622
+   ],
+   [
+    -0.226183,
+    -78.517354
+   ],
+   [
+    -0.228289,
+    -78.515673
+   ],
+   [
+    -0.228386,
+    -78.516306
+   ],
+   [
+    -0.226619,
+    -78.517376
+   ],
+   [
+    -0.225818,
+    -78.519312
+   ],
+   [
+    -0.22588,
+    -78.519371
+   ],
+   [
+    -0.226912,
+    -78.517848
+   ],
+   [
+    -0.227171,
+    -78.51777
+   ],
+   [
+    -0.229042,
+    -78.518943
+   ],
+   [
+    -0.228906,
+    -78.517895
+   ],
+   [
+    -0.228622,
+    -78.518096
+   ],
+   [
+    -0.228215,
+    -78.518702
+   ]
+  ],
+  "avoid": [
+   [
+    -0.228621,
+    -78.51921
+   ]
+  ],
+  "length_m": 3778,
+  "corners": [
+   19,
+   4
+  ],
+  "twist_deg_km": 656,
+  "straight_pct": 44,
+  "longest_straight_m": 210,
+  "elev_m": 195,
+  "route": "Od točke do točke: start pri kolonialnem oboku (Arco de la Reina) na García Moreno, García Moreno, Rafael Barahona, Bahía de Caráquez, Villavicenico, Rafael Pascuales in Agoyan (serpentine pod hribom), nato Melchor de Aymerich z ovinki na vrh Panecilla in krog okoli vrha, cilj na razgledišču pri kipu.",
+  "race": "–",
+  "legal": 3,
+  "legal_note": "Ekvador dovoljuje upodobitev del na javnih mestih; velik sodoben verski kip na vrhu Panecilla izpustimo ali nadomestimo z generičnim stebrom, cerkve in samostan samo generični. Ulice nosijo imena oseb (García Moreno ipd.), v igri samo opisna imena.",
+  "notes": [
+   "Brez peš odsekov; García Moreno prečka peš ulico La Ronda.",
+   "Glavni trg s katedralo in vladno palačo je okoli 400 m severneje: ravne kolonialne ulice bi dvignile delež ravnin nad 45 %, zato niso v progi.",
+   "V loops_C.json ima vnos 'avoid' za eno vozlišče na vrhu, da krog okoli vrha teče po daljši (364 m) strani; 4 lasnice (Agoyan–Melchor de Aymerich, ena na klancu, dve na vrhu), vzpon 195 m."
+  ],
+  "sights": [
+   {
+    "label": "Kolonialni obok čez ulico",
+    "osm_name": "Arco de la Reina",
+    "kind": "building",
+    "dist_m": 0.0,
+    "at_m": 9
+   },
+   {
+    "label": "Cerkev",
+    "osm_name": "Iglesia El Carmen Alto",
+    "kind": "building",
+    "dist_m": 22.8,
+    "at_m": 18
+   },
+   {
+    "label": "Samostan",
+    "osm_name": "Monasterio del Carmen Alto",
+    "kind": "building",
+    "dist_m": 2.7,
+    "at_m": 46
+   },
+   {
+    "label": "Mestni muzej (nekdanja bolnišnica)",
+    "osm_name": "Museo de la Ciudad",
+    "kind": "building",
+    "dist_m": 5.0,
+    "at_m": 47
+   },
+   {
+    "label": "Nekdanja ubožnica",
+    "osm_name": "Antiguo San Lázaro",
+    "kind": "building",
+    "dist_m": 3.3,
+    "at_m": 389
+   },
+   {
+    "label": "Vrh hriba",
+    "osm_name": "Panecillo",
+    "kind": "land",
+    "dist_m": 15.6,
+    "at_m": 3426
+   },
+   {
+    "label": "Velik kip na vrhu (izpustiti ali generičen steber)",
+    "osm_name": "La Virgen de El Panecillo",
+    "kind": "infra",
+    "dist_m": 16.4,
+    "at_m": 3448
+   },
+   {
+    "label": "Razgledišče na vrhu",
+    "osm_name": "Mirador Panecillo",
+    "kind": "infra",
+    "dist_m": 22.9,
+    "at_m": 3472
+   }
+  ],
+  "line": [
+   [
+    -0.222608,
+    -78.514894
+   ],
+   [
+    -0.223451,
+    -78.515668
+   ],
+   [
+    -0.223842,
+    -78.515965
+   ],
+   [
+    -0.223978,
+    -78.516088
+   ],
+   [
+    -0.223403,
+    -78.516678
+   ],
+   [
+    -0.223516,
+    -78.516831
+   ],
+   [
+    -0.223849,
+    -78.517411
+   ],
+   [
+    -0.224502,
+    -78.518603
+   ],
+   [
+    -0.225375,
+    -78.517392
+   ],
+   [
+    -0.225675,
+    -78.51761
+   ],
+   [
+    -0.225782,
+    -78.517631
+   ],
+   [
+    -0.22587,
+    -78.517607
+   ],
+   [
+    -0.226183,
+    -78.517353
+   ],
+   [
+    -0.226308,
+    -78.517038
+   ],
+   [
+    -0.226566,
+    -78.516726
+   ],
+   [
+    -0.226909,
+    -78.516437
+   ],
+   [
+    -0.22711,
+    -78.516194
+   ],
+   [
+    -0.227594,
+    -78.515777
+   ],
+   [
+    -0.227735,
+    -78.515694
+   ],
+   [
+    -0.227916,
+    -78.515649
+   ],
+   [
+    -0.228077,
+    -78.515635
+   ],
+   [
+    -0.228289,
+    -78.515673
+   ],
+   [
+    -0.228324,
+    -78.515699
+   ],
+   [
+    -0.228372,
+    -78.515835
+   ],
+   [
+    -0.228381,
+    -78.516389
+   ],
+   [
+    -0.228213,
+    -78.516361
+   ],
+   [
+    -0.228046,
+    -78.51637
+   ],
+   [
+    -0.227826,
+    -78.516424
+   ],
+   [
+    -0.227143,
+    -78.516806
+   ],
+   [
+    -0.226999,
+    -78.516908
+   ],
+   [
+    -0.226948,
+    -78.516959
+   ],
+   [
+    -0.226541,
+    -78.51746
+   ],
+   [
+    -0.226177,
+    -78.517697
+   ],
+   [
+    -0.226008,
+    -78.51786
+   ],
+   [
+    -0.225935,
+    -78.517963
+   ],
+   [
+    -0.225777,
+    -78.518209
+   ],
+   [
+    -0.225663,
+    -78.518435
+   ],
+   [
+    -0.225578,
+    -78.518783
+   ],
+   [
+    -0.225579,
+    -78.518828
+   ],
+   [
+    -0.225659,
+    -78.519059
+   ],
+   [
+    -0.225713,
+    -78.519166
+   ],
+   [
+    -0.225818,
+    -78.519312
+   ],
+   [
+    -0.22588,
+    -78.519371
+   ],
+   [
+    -0.225791,
+    -78.519118
+   ],
+   [
+    -0.225739,
+    -78.51891
+   ],
+   [
+    -0.225791,
+    -78.518739
+   ],
+   [
+    -0.225875,
+    -78.51857
+   ],
+   [
+    -0.226376,
+    -78.518059
+   ],
+   [
+    -0.226502,
+    -78.517961
+   ],
+   [
+    -0.226632,
+    -78.517899
+   ],
+   [
+    -0.227107,
+    -78.517813
+   ],
+   [
+    -0.227171,
+    -78.51777
+   ],
+   [
+    -0.227213,
+    -78.517708
+   ],
+   [
+    -0.227326,
+    -78.517312
+   ],
+   [
+    -0.227372,
+    -78.51721
+   ],
+   [
+    -0.227442,
+    -78.517139
+   ],
+   [
+    -0.227794,
+    -78.516874
+   ],
+   [
+    -0.2279,
+    -78.516805
+   ],
+   [
+    -0.228014,
+    -78.516787
+   ],
+   [
+    -0.228371,
+    -78.516872
+   ],
+   [
+    -0.229072,
+    -78.516895
+   ],
+   [
+    -0.22919,
+    -78.516922
+   ],
+   [
+    -0.229329,
+    -78.516974
+   ],
+   [
+    -0.229657,
+    -78.517138
+   ],
+   [
+    -0.230134,
+    -78.51731
+   ],
+   [
+    -0.230394,
+    -78.517431
+   ],
+   [
+    -0.230504,
+    -78.517504
+   ],
+   [
+    -0.230845,
+    -78.517802
+   ],
+   [
+    -0.231061,
+    -78.518019
+   ],
+   [
+    -0.231631,
+    -78.518537
+   ],
+   [
+    -0.231664,
+    -78.518599
+   ],
+   [
+    -0.231705,
+    -78.518841
+   ],
+   [
+    -0.231658,
+    -78.518992
+   ],
+   [
+    -0.231612,
+    -78.519407
+   ],
+   [
+    -0.231646,
+    -78.519563
+   ],
+   [
+    -0.231943,
+    -78.520154
+   ],
+   [
+    -0.231951,
+    -78.520212
+   ],
+   [
+    -0.231937,
+    -78.52032
+   ],
+   [
+    -0.231914,
+    -78.520371
+   ],
+   [
+    -0.23184,
+    -78.520454
+   ],
+   [
+    -0.231761,
+    -78.520519
+   ],
+   [
+    -0.231642,
+    -78.520567
+   ],
+   [
+    -0.231494,
+    -78.520576
+   ],
+   [
+    -0.231398,
+    -78.520561
+   ],
+   [
+    -0.23125,
+    -78.520475
+   ],
+   [
+    -0.231189,
+    -78.520386
+   ],
+   [
+    -0.231156,
+    -78.520284
+   ],
+   [
+    -0.231135,
+    -78.520057
+   ],
+   [
+    -0.231095,
+    -78.519959
+   ],
+   [
+    -0.231014,
+    -78.519847
+   ],
+   [
+    -0.230708,
+    -78.519512
+   ],
+   [
+    -0.23059,
+    -78.519278
+   ],
+   [
+    -0.230495,
+    -78.519139
+   ],
+   [
+    -0.230369,
+    -78.519011
+   ],
+   [
+    -0.229789,
+    -78.518546
+   ],
+   [
+    -0.22974,
+    -78.518524
+   ],
+   [
+    -0.229659,
+    -78.518509
+   ],
+   [
+    -0.229544,
+    -78.518518
+   ],
+   [
+    -0.229462,
+    -78.518533
+   ],
+   [
+    -0.229388,
+    -78.518566
+   ],
+   [
+    -0.229042,
+    -78.518943
+   ],
+   [
+    -0.228781,
+    -78.519108
+   ],
+   [
+    -0.228725,
+    -78.51911
+   ],
+   [
+    -0.228517,
+    -78.519074
+   ],
+   [
+    -0.228447,
+    -78.519041
+   ],
+   [
+    -0.22842,
+    -78.519012
+   ],
+   [
+    -0.228418,
+    -78.51893
+   ],
+   [
+    -0.228439,
+    -78.518888
+   ],
+   [
+    -0.228489,
+    -78.518846
+   ],
+   [
+    -0.228836,
+    -78.518793
+   ],
+   [
+    -0.228939,
+    -78.518762
+   ],
+   [
+    -0.229341,
+    -78.518376
+   ],
+   [
+    -0.229493,
+    -78.518303
+   ],
+   [
+    -0.229688,
+    -78.518281
+   ],
+   [
+    -0.229725,
+    -78.518249
+   ],
+   [
+    -0.229747,
+    -78.518204
+   ],
+   [
+    -0.229717,
+    -78.518141
+   ],
+   [
+    -0.228927,
+    -78.517892
+   ],
+   [
+    -0.228812,
+    -78.517906
+   ],
+   [
+    -0.228709,
+    -78.517971
+   ],
+   [
+    -0.228615,
+    -78.518106
+   ],
+   [
+    -0.228485,
+    -78.518382
+   ],
+   [
+    -0.228215,
+    -78.518702
+   ]
+  ]
+ },
+ {
+  "id": "quebec",
+  "step": 2,
+  "name": "Québec, Kanada",
+  "en": "Quebec City, Canada",
+  "drive": "desna",
+  "open": false,
+  "bbox": [
+   -71.225,
+   46.8,
+   -71.2,
+   46.818
+  ],
+  "waypoints": [
+   [
+    46.813928,
+    -71.203006
+   ],
+   [
+    46.813733,
+    -71.204935
+   ],
+   [
+    46.815552,
+    -71.204056
+   ],
+   [
+    46.816139,
+    -71.206566
+   ],
+   [
+    46.816327,
+    -71.207423
+   ],
+   [
+    46.81645,
+    -71.206368
+   ],
+   [
+    46.816244,
+    -71.20518
+   ],
+   [
+    46.815841,
+    -71.203793
+   ],
+   [
+    46.815521,
+    -71.203458
+   ],
+   [
+    46.814418,
+    -71.203179
+   ]
+  ],
+  "avoid": [],
+  "length_m": 1323,
+  "corners": [
+   8,
+   2
+  ],
+  "twist_deg_km": 763,
+  "straight_pct": 45,
+  "longest_straight_m": 135,
+  "elev_m": 33,
+  "route": "Krog s startom in ciljem ob vznožju Côte de la Montagne (križišče z Rue du Sault-au-Matelot): Côte de la Montagne navzgor skozi mestna vrata, Rue des Remparts po obzidju, Côte de la Canoterie navzdol, Côte du Colonel-Dambourgès, Rue Sous-le-Cap pod skalo in Rue du Sault-au-Matelot nazaj na start.",
+  "race": "Po Côte de la Montagne vsako leto septembra vozi mestna kolesarska dirka svetovne serije; avtomobilske dirke ni.",
+  "legal": 3,
+  "legal_note": "Kanada ima svobodo panorame za stavbe. Grad-hotel nad teraso je blagovna znamka: ne poimenovati in ne kopirati natančno (je zunaj 60 m, a viden). Prescott, Dufferin, Montmorency in Champlain so imena oseb, zato v igri samo opisna imena; cerkve samo generične.",
+  "notes": [
+   "Rue Sous-le-Cap (274 m, service) je zelo ozka uličica pod skalo; Côte du Colonel-Dambourgès (84 m) in Rue du Sault-au-Matelot (181 m) sta bivalni ulici.",
+   "Delež ravnin je točno 45,0 %; proga je kratka (1,3 km) in nizka (33 m). Daljša različica čez Place d'Armes, Rue des Jardins in Côte du Palais (2,4 km) ima 52 % ravnin.",
+   "Mestna vrata Saint-Louis in Saint-Jean sta izven proge."
+  ],
+  "sights": [
+   {
+    "label": "Muzej v spodnjem mestu",
+    "osm_name": "Musée de la place Royale",
+    "kind": "building",
+    "dist_m": 6.0,
+    "at_m": 87
+   },
+   {
+    "label": "Kamnita cerkev na spodnjem trgu",
+    "osm_name": "Église Notre-Dame-des-Victoires",
+    "kind": "building",
+    "dist_m": 47.9,
+    "at_m": 118
+   },
+   {
+    "label": "Kamnita meščanska hiša (muzej)",
+    "osm_name": "Maison Chevalier, Centre d'interprétation de la vie urbaine",
+    "kind": "place",
+    "dist_m": 56.8,
+    "at_m": 126
+   },
+   {
+    "label": "Razgledna terasa nad reko",
+    "osm_name": "Terrasse Dufferin",
+    "kind": "landuse",
+    "dist_m": 41.0,
+    "at_m": 162
+   },
+   {
+    "label": "Vzpenjača",
+    "osm_name": "Funiculaire",
+    "kind": "building",
+    "dist_m": 45.7,
+    "at_m": 164
+   },
+   {
+    "label": "Mestna vrata nad klancem",
+    "osm_name": "Porte Prescott",
+    "kind": "infra",
+    "dist_m": 0.0,
+    "at_m": 197
+   },
+   {
+    "label": "Park na robu terase",
+    "osm_name": "Parc Montmorency",
+    "kind": "landuse",
+    "dist_m": 5.7,
+    "at_m": 236
+   },
+   {
+    "label": "Mestno obzidje",
+    "osm_name": "Fortifications de Québec",
+    "kind": "infra",
+    "dist_m": 0.0,
+    "at_m": 272
+   },
+   {
+    "label": "Katedrala",
+    "osm_name": "Basilique cathédrale Notre-Dame-de-Québec",
+    "kind": "building",
+    "dist_m": 33.6,
+    "at_m": 273
+   },
+   {
+    "label": "Staro semenišče",
+    "osm_name": "Petit Séminaire de Québec",
+    "kind": "landuse",
+    "dist_m": 0.0,
+    "at_m": 320
+   },
+   {
+    "label": "Bastijon s topovi",
+    "osm_name": "Bastion (V) de Saint Charles",
+    "kind": "infra",
+    "dist_m": 4.0,
+    "at_m": 541
+   }
+  ],
+  "line": [
+   [
+    46.813928,
+    -71.203006
+   ],
+   [
+    46.813883,
+    -71.203256
+   ],
+   [
+    46.813844,
+    -71.203329
+   ],
+   [
+    46.813785,
+    -71.20338
+   ],
+   [
+    46.813691,
+    -71.203407
+   ],
+   [
+    46.813079,
+    -71.203431
+   ],
+   [
+    46.813011,
+    -71.20348
+   ],
+   [
+    46.812976,
+    -71.203579
+   ],
+   [
+    46.812976,
+    -71.203748
+   ],
+   [
+    46.812993,
+    -71.203909
+   ],
+   [
+    46.813036,
+    -71.204037
+   ],
+   [
+    46.813234,
+    -71.204317
+   ],
+   [
+    46.813634,
+    -71.204716
+   ],
+   [
+    46.813707,
+    -71.20483
+   ],
+   [
+    46.813733,
+    -71.204935
+   ],
+   [
+    46.813844,
+    -71.204909
+   ],
+   [
+    46.814415,
+    -71.204182
+   ],
+   [
+    46.814519,
+    -71.204109
+   ],
+   [
+    46.814937,
+    -71.204011
+   ],
+   [
+    46.815377,
+    -71.204011
+   ],
+   [
+    46.815552,
+    -71.204056
+   ],
+   [
+    46.815782,
+    -71.204229
+   ],
+   [
+    46.815818,
+    -71.204282
+   ],
+   [
+    46.815862,
+    -71.204398
+   ],
+   [
+    46.816082,
+    -71.20535
+   ],
+   [
+    46.816156,
+    -71.206295
+   ],
+   [
+    46.816157,
+    -71.206488
+   ],
+   [
+    46.816139,
+    -71.206566
+   ],
+   [
+    46.816196,
+    -71.20661
+   ],
+   [
+    46.816251,
+    -71.207087
+   ],
+   [
+    46.816327,
+    -71.207423
+   ],
+   [
+    46.816358,
+    -71.207295
+   ],
+   [
+    46.816327,
+    -71.206799
+   ],
+   [
+    46.816369,
+    -71.206583
+   ],
+   [
+    46.81645,
+    -71.206368
+   ],
+   [
+    46.816391,
+    -71.206285
+   ],
+   [
+    46.816245,
+    -71.20518
+   ],
+   [
+    46.816128,
+    -71.204146
+   ],
+   [
+    46.8161,
+    -71.204048
+   ],
+   [
+    46.815985,
+    -71.203866
+   ],
+   [
+    46.815786,
+    -71.20376
+   ],
+   [
+    46.815495,
+    -71.203645
+   ],
+   [
+    46.815521,
+    -71.203458
+   ],
+   [
+    46.814796,
+    -71.203329
+   ],
+   [
+    46.813928,
+    -71.203006
+   ]
+  ]
+ },
+ {
+  "id": "hongkong",
+  "step": 3,
+  "name": "Hongkong, Kitajska",
+  "en": "Hong Kong, China",
+  "drive": "leva",
+  "open": true,
+  "bbox": [
+   114.14,
+   22.256,
+   114.172,
+   22.285
+  ],
+  "waypoints": [
+   [
+    22.269277,
+    114.165483
+   ],
+   [
+    22.273271,
+    114.158158
+   ],
+   [
+    22.275359,
+    114.155163
+   ],
+   [
+    22.277228,
+    114.157318
+   ],
+   [
+    22.277927,
+    114.159311
+   ],
+   [
+    22.279874,
+    114.160887
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2712,
+  "corners": [
+   18,
+   3
+  ],
+  "twist_deg_km": 731,
+  "straight_pct": 37,
+  "longest_straight_m": 150,
+  "elev_m": 282,
+  "route": "Start na prelazu Magazine Gap (križišče s Peak Road), spust po Magazine Gap Road s serpentinami mimo botaničnega vrta do križišča z Robinson Road, nato po Garden Road navzdol mimo spodnje postaje vzpenjače, katedrale in nebotičnikov do cilja pri Queensway v Centralu.",
+  "race": "–",
+  "legal": 3,
+  "legal_note": "Nebotičnik Bank of China, vzpenjača (Peak Tram) in stavbi z imeni oseb (Helena May, Chater) samo generično brez imen in logotipov; katedrala in cerkev generično; Hongkong ima svobodo panorame za stavbe na javnih mestih.",
+  "notes": [
+   "Garden Road je enosmerna navzdol, zato je proga spust (282 m višinske razlike); na Magazine Gap Road velja omejitev 3 t.",
+   "Vrh Victoria Peak s stolpom ni na poti: s Peak Road do vrha bi bila proga 5,7 km.",
+   "Tik čez 60 m: stavba guvernerjeve rezidence (86 m; njen vrt je 29 m), stavba sodišča (89 m) in cerkev (75 m); tirnica vzpenjače teče ob Garden Road."
+  ],
+  "sights": [
+   {
+    "label": "gozdni park na pobočju",
+    "osm_name": "香港仔郊野公園 Aberdeen Country Park",
+    "kind": "landuse",
+    "dist_m": 19.8,
+    "at_m": 0
+   },
+   {
+    "label": "park ob cesti",
+    "osm_name": "馬己仙峽道花園 Magazine Gap Road Garden",
+    "kind": "landuse",
+    "dist_m": 5.3,
+    "at_m": 811
+   },
+   {
+    "label": "botanični in živalski vrt",
+    "osm_name": "香港動植物公園 Hong Kong Zoological & Botanical Garden",
+    "kind": "landuse",
+    "dist_m": 2.5,
+    "at_m": 2135
+   },
+   {
+    "label": "stara guvernerjeva rezidenca",
+    "osm_name": "香港禮賓府 Government House",
+    "kind": "landuse",
+    "dist_m": 29.2,
+    "at_m": 2258
+   },
+   {
+    "label": "cerkev",
+    "osm_name": "聖若瑟堂 St. Joseph's Church",
+    "kind": "building",
+    "dist_m": 7.8,
+    "at_m": 2260
+   },
+   {
+    "label": "kolonialna stavba (klub)",
+    "osm_name": "梅夫人婦女會 The Helena May",
+    "kind": "building",
+    "dist_m": 8.0,
+    "at_m": 2318
+   },
+   {
+    "label": "tirnica vzpenjače na vrh",
+    "osm_name": "花園道 Garden Road",
+    "kind": "landuse",
+    "dist_m": 6.0,
+    "at_m": 2346
+   },
+   {
+    "label": "spodnja postaja vzpenjače",
+    "osm_name": "花園道 Garden Road",
+    "kind": "infra",
+    "dist_m": 17.2,
+    "at_m": 2369
+   },
+   {
+    "label": "stara kolonialna vladna palača",
+    "osm_name": "律政中心 Justice Place",
+    "kind": "landuse",
+    "dist_m": 3.0,
+    "at_m": 2469
+   },
+   {
+    "label": "mestni park",
+    "osm_name": "香港公園 Hong Kong Park",
+    "kind": "landuse",
+    "dist_m": 48.5,
+    "at_m": 2501
+   },
+   {
+    "label": "katedrala",
+    "osm_name": "聖約翰座堂 St. John's Cathedral",
+    "kind": "building",
+    "dist_m": 28.8,
+    "at_m": 2510
+   },
+   {
+    "label": "nebotičnik (brez imena banke)",
+    "osm_name": "中銀大廈 Bank of China Tower",
+    "kind": "building",
+    "dist_m": 34.9,
+    "at_m": 2661
+   },
+   {
+    "label": "mestni vrt",
+    "osm_name": "遮打花園 Chater Garden",
+    "kind": "landuse",
+    "dist_m": 28.9,
+    "at_m": 2712
+   }
+  ],
+  "line": [
+   [
+    22.269277,
+    114.165483
+   ],
+   [
+    22.269373,
+    114.165402
+   ],
+   [
+    22.269649,
+    114.164913
+   ],
+   [
+    22.269663,
+    114.164793
+   ],
+   [
+    22.269605,
+    114.164597
+   ],
+   [
+    22.269604,
+    114.164462
+   ],
+   [
+    22.269694,
+    114.163928
+   ],
+   [
+    22.269738,
+    114.163819
+   ],
+   [
+    22.269799,
+    114.163741
+   ],
+   [
+    22.269848,
+    114.163706
+   ],
+   [
+    22.269955,
+    114.163684
+   ],
+   [
+    22.270133,
+    114.163726
+   ],
+   [
+    22.270273,
+    114.163714
+   ],
+   [
+    22.270677,
+    114.163484
+   ],
+   [
+    22.27091,
+    114.163294
+   ],
+   [
+    22.271222,
+    114.162937
+   ],
+   [
+    22.271325,
+    114.162843
+   ],
+   [
+    22.271456,
+    114.162769
+   ],
+   [
+    22.271676,
+    114.162728
+   ],
+   [
+    22.271764,
+    114.162695
+   ],
+   [
+    22.272367,
+    114.162306
+   ],
+   [
+    22.272538,
+    114.162166
+   ],
+   [
+    22.272849,
+    114.161826
+   ],
+   [
+    22.272883,
+    114.161756
+   ],
+   [
+    22.272899,
+    114.161657
+   ],
+   [
+    22.272816,
+    114.161312
+   ],
+   [
+    22.272802,
+    114.161159
+   ],
+   [
+    22.272812,
+    114.161018
+   ],
+   [
+    22.272854,
+    114.160876
+   ],
+   [
+    22.272909,
+    114.160769
+   ],
+   [
+    22.272974,
+    114.160696
+   ],
+   [
+    22.27313,
+    114.160579
+   ],
+   [
+    22.273183,
+    114.160518
+   ],
+   [
+    22.273216,
+    114.160447
+   ],
+   [
+    22.273235,
+    114.160288
+   ],
+   [
+    22.273149,
+    114.159977
+   ],
+   [
+    22.273168,
+    114.159797
+   ],
+   [
+    22.273245,
+    114.159639
+   ],
+   [
+    22.273589,
+    114.159303
+   ],
+   [
+    22.273643,
+    114.159167
+   ],
+   [
+    22.273644,
+    114.159083
+   ],
+   [
+    22.273621,
+    114.159009
+   ],
+   [
+    22.273584,
+    114.158947
+   ],
+   [
+    22.273475,
+    114.158835
+   ],
+   [
+    22.273427,
+    114.158764
+   ],
+   [
+    22.273181,
+    114.158312
+   ],
+   [
+    22.273163,
+    114.158262
+   ],
+   [
+    22.27317,
+    114.158215
+   ],
+   [
+    22.273216,
+    114.158163
+   ],
+   [
+    22.273271,
+    114.158158
+   ],
+   [
+    22.273297,
+    114.158172
+   ],
+   [
+    22.273329,
+    114.158224
+   ],
+   [
+    22.273378,
+    114.158448
+   ],
+   [
+    22.273481,
+    114.15862
+   ],
+   [
+    22.273599,
+    114.158727
+   ],
+   [
+    22.273935,
+    114.158944
+   ],
+   [
+    22.27398,
+    114.158997
+   ],
+   [
+    22.274005,
+    114.159084
+   ],
+   [
+    22.273984,
+    114.159256
+   ],
+   [
+    22.273818,
+    114.159523
+   ],
+   [
+    22.273821,
+    114.159576
+   ],
+   [
+    22.273853,
+    114.159617
+   ],
+   [
+    22.273902,
+    114.159635
+   ],
+   [
+    22.273947,
+    114.159621
+   ],
+   [
+    22.274006,
+    114.159546
+   ],
+   [
+    22.274216,
+    114.159133
+   ],
+   [
+    22.274242,
+    114.159025
+   ],
+   [
+    22.27423,
+    114.158952
+   ],
+   [
+    22.274196,
+    114.158877
+   ],
+   [
+    22.273872,
+    114.15846
+   ],
+   [
+    22.273852,
+    114.158412
+   ],
+   [
+    22.27386,
+    114.15832
+   ],
+   [
+    22.273895,
+    114.158248
+   ],
+   [
+    22.273979,
+    114.158156
+   ],
+   [
+    22.274451,
+    114.157847
+   ],
+   [
+    22.27455,
+    114.15769
+   ],
+   [
+    22.274598,
+    114.157546
+   ],
+   [
+    22.274624,
+    114.157404
+   ],
+   [
+    22.274611,
+    114.157058
+   ],
+   [
+    22.274629,
+    114.156884
+   ],
+   [
+    22.274676,
+    114.156683
+   ],
+   [
+    22.274745,
+    114.156507
+   ],
+   [
+    22.274815,
+    114.156392
+   ],
+   [
+    22.274941,
+    114.156228
+   ],
+   [
+    22.275003,
+    114.156117
+   ],
+   [
+    22.275033,
+    114.156033
+   ],
+   [
+    22.275073,
+    114.1558
+   ],
+   [
+    22.27512,
+    114.15566
+   ],
+   [
+    22.275359,
+    114.155163
+   ],
+   [
+    22.275463,
+    114.15491
+   ],
+   [
+    22.275534,
+    114.154787
+   ],
+   [
+    22.275607,
+    114.154713
+   ],
+   [
+    22.275677,
+    114.154706
+   ],
+   [
+    22.27573,
+    114.154738
+   ],
+   [
+    22.275762,
+    114.154794
+   ],
+   [
+    22.275806,
+    114.154954
+   ],
+   [
+    22.275858,
+    114.155021
+   ],
+   [
+    22.275918,
+    114.155064
+   ],
+   [
+    22.276179,
+    114.155179
+   ],
+   [
+    22.276337,
+    114.155296
+   ],
+   [
+    22.276438,
+    114.155428
+   ],
+   [
+    22.276512,
+    114.155633
+   ],
+   [
+    22.27672,
+    114.156448
+   ],
+   [
+    22.277371,
+    114.157573
+   ],
+   [
+    22.277487,
+    114.157849
+   ],
+   [
+    22.277565,
+    114.158104
+   ],
+   [
+    22.27775,
+    114.158923
+   ],
+   [
+    22.277986,
+    114.159437
+   ],
+   [
+    22.278078,
+    114.159594
+   ],
+   [
+    22.278353,
+    114.159924
+   ],
+   [
+    22.279196,
+    114.160802
+   ],
+   [
+    22.279474,
+    114.161005
+   ],
+   [
+    22.27961,
+    114.161053
+   ],
+   [
+    22.279672,
+    114.161043
+   ],
+   [
+    22.279874,
+    114.160887
+   ]
+  ]
+ },
+ {
+  "id": "macau",
+  "step": 3,
+  "name": "Macao, Kitajska",
+  "en": "Macau, China",
+  "drive": "leva",
+  "open": true,
+  "bbox": [
+   113.538,
+   22.186,
+   113.566,
+   22.206
+  ],
+  "waypoints": [
+   [
+    22.198293,
+    113.554392
+   ],
+   [
+    22.200186,
+    113.554637
+   ],
+   [
+    22.201365,
+    113.554267
+   ],
+   [
+    22.201134,
+    113.554127
+   ],
+   [
+    22.195609,
+    113.549213
+   ],
+   [
+    22.195597,
+    113.548669
+   ],
+   [
+    22.195875,
+    113.548387
+   ],
+   [
+    22.195885,
+    113.548032
+   ],
+   [
+    22.192727,
+    113.545141
+   ],
+   [
+    22.192147,
+    113.545634
+   ],
+   [
+    22.190994,
+    113.544864
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2284,
+  "corners": [
+   14,
+   1
+  ],
+  "twist_deg_km": 568,
+  "straight_pct": 40,
+  "longest_straight_m": 115,
+  "elev_m": 45,
+  "route": "Start na Estrada do Reservatório ob zbiralniku (pri Avenida do Dr. Rodrigo Rodrigues), proti severu do Estrada de Cacilhas, po njej okoli vzhodnega in južnega pobočja hriba Guia, nato čez Calçada da Vitória in Calçada do Gaio navzdol po Estrada do Visconde de S. Januário mimo bolnišnice ter po Estrada Nova in Estrada de São Francisco do cilja nad križiščem pri Lisboi.",
+  "race": "Ulično dirkališče Guia (velika nagrada Macaa) teče po cestah okoli istega hriba; ali se ta proga z njim prekriva, ni preverjeno.",
+  "legal": 3,
+  "legal_note": "Ime prireditve in imena ovinkov dirkališča (npr. Melco) so znamke, igralnice ob cilju samo brez imen; stavbe zgodovinskega središča (UNESCO) generično; paviljon 焯公亭 nosi ime osebe, zato brez imena.",
+  "notes": [
+   "Estrada do Visconde de S. Januário in Estrada Nova sta enosmerni navzdol, Estrada do Reservatório (pas proti severu) enosmerna: proga gre v dovoljeni smeri od zbiralnika proti Lisboi.",
+   "Trdnjava, kapela in svetilnik Guia na vrhu hriba so 96–135 m od ceste (vidni nad cesto); tik čez 60 m še paviljon na hribu (64 m).",
+   "Ob cilju igralnica (45 m) – brez imena; različica v smeri dirke (navzgor po São Francisco) je bila preveč ravna (446 °/km, 49 %)."
+  ],
+  "sights": [
+   {
+    "label": "park ob zbiralniku",
+    "osm_name": "水塘公園 Parque do Reservatório",
+    "kind": "landuse",
+    "dist_m": 10.3,
+    "at_m": 222
+   },
+   {
+    "label": "zbiralnik vode (jezero)",
+    "osm_name": "水塘 Reservatório",
+    "kind": "water",
+    "dist_m": 21.9,
+    "at_m": 245
+   },
+   {
+    "label": "park na hribu Guia",
+    "osm_name": "松山市政公園 Parque Municipal da Colina da Guia",
+    "kind": "landuse",
+    "dist_m": 5.6,
+    "at_m": 869
+   },
+   {
+    "label": "gozdnati hrib Guia",
+    "osm_name": "東望洋山 (松山) Colina da Guia",
+    "kind": "land",
+    "dist_m": 2.6,
+    "at_m": 870
+   },
+   {
+    "label": "razgledišče nad pristaniščem",
+    "osm_name": "海之聖母眺望台 Miradouro de Nossa Senhora do Mar",
+    "kind": "infra",
+    "dist_m": 10.9,
+    "at_m": 1209
+   },
+   {
+    "label": "paviljon na pobočju",
+    "osm_name": "焯公亭",
+    "kind": "building",
+    "dist_m": 4.7,
+    "at_m": 1483
+   },
+   {
+    "label": "staro pokopališče",
+    "osm_name": "白頭墳場 Cemitério dos Parses",
+    "kind": "landuse",
+    "dist_m": 30.4,
+    "at_m": 1483
+   },
+   {
+    "label": "cerkev",
+    "osm_name": "教堂",
+    "kind": "building",
+    "dist_m": 43.4,
+    "at_m": 1998
+   },
+   {
+    "label": "vrt São Francisco",
+    "osm_name": "加思欄花園 Jardim S. Francisco",
+    "kind": "landuse",
+    "dist_m": 4.1,
+    "at_m": 2052
+   },
+   {
+    "label": "muzej v stari vojašnici",
+    "osm_name": "澳門保安部隊博物館 Museu das Forças de Segurança de Macau",
+    "kind": "building",
+    "dist_m": 3.7,
+    "at_m": 2181
+   }
+  ],
+  "line": [
+   [
+    22.198293,
+    113.554392
+   ],
+   [
+    22.198405,
+    113.554531
+   ],
+   [
+    22.198572,
+    113.554657
+   ],
+   [
+    22.198768,
+    113.554714
+   ],
+   [
+    22.199038,
+    113.554715
+   ],
+   [
+    22.199161,
+    113.554707
+   ],
+   [
+    22.199597,
+    113.55463
+   ],
+   [
+    22.199804,
+    113.55462
+   ],
+   [
+    22.200186,
+    113.554637
+   ],
+   [
+    22.201244,
+    113.554397
+   ],
+   [
+    22.201323,
+    113.554347
+   ],
+   [
+    22.201365,
+    113.554267
+   ],
+   [
+    22.201341,
+    113.5542
+   ],
+   [
+    22.201302,
+    113.554153
+   ],
+   [
+    22.20125,
+    113.554123
+   ],
+   [
+    22.201192,
+    113.554114
+   ],
+   [
+    22.200904,
+    113.554226
+   ],
+   [
+    22.200241,
+    113.554318
+   ],
+   [
+    22.200047,
+    113.554311
+   ],
+   [
+    22.199537,
+    113.554175
+   ],
+   [
+    22.199402,
+    113.554176
+   ],
+   [
+    22.199275,
+    113.554224
+   ],
+   [
+    22.199063,
+    113.554388
+   ],
+   [
+    22.198938,
+    113.554428
+   ],
+   [
+    22.198852,
+    113.554416
+   ],
+   [
+    22.198622,
+    113.554296
+   ],
+   [
+    22.198562,
+    113.554241
+   ],
+   [
+    22.198007,
+    113.553531
+   ],
+   [
+    22.197712,
+    113.552992
+   ],
+   [
+    22.197611,
+    113.552908
+   ],
+   [
+    22.197243,
+    113.552722
+   ],
+   [
+    22.197082,
+    113.552565
+   ],
+   [
+    22.196973,
+    113.552358
+   ],
+   [
+    22.196766,
+    113.551643
+   ],
+   [
+    22.196717,
+    113.551546
+   ],
+   [
+    22.196655,
+    113.551472
+   ],
+   [
+    22.196578,
+    113.551416
+   ],
+   [
+    22.196491,
+    113.551383
+   ],
+   [
+    22.195552,
+    113.551199
+   ],
+   [
+    22.195451,
+    113.551167
+   ],
+   [
+    22.195302,
+    113.551065
+   ],
+   [
+    22.195218,
+    113.550941
+   ],
+   [
+    22.195177,
+    113.550795
+   ],
+   [
+    22.195183,
+    113.550642
+   ],
+   [
+    22.195348,
+    113.550152
+   ],
+   [
+    22.1956,
+    113.549286
+   ],
+   [
+    22.195663,
+    113.54878
+   ],
+   [
+    22.195644,
+    113.548709
+   ],
+   [
+    22.195597,
+    113.548669
+   ],
+   [
+    22.195875,
+    113.548387
+   ],
+   [
+    22.195885,
+    113.548032
+   ],
+   [
+    22.195792,
+    113.547795
+   ],
+   [
+    22.195746,
+    113.547727
+   ],
+   [
+    22.195682,
+    113.547679
+   ],
+   [
+    22.195498,
+    113.547604
+   ],
+   [
+    22.195412,
+    113.547521
+   ],
+   [
+    22.195313,
+    113.547249
+   ],
+   [
+    22.195137,
+    113.546923
+   ],
+   [
+    22.19479,
+    113.546607
+   ],
+   [
+    22.194339,
+    113.546386
+   ],
+   [
+    22.194039,
+    113.546183
+   ],
+   [
+    22.193744,
+    113.545913
+   ],
+   [
+    22.193461,
+    113.545722
+   ],
+   [
+    22.193418,
+    113.545648
+   ],
+   [
+    22.193399,
+    113.545499
+   ],
+   [
+    22.193336,
+    113.545356
+   ],
+   [
+    22.193235,
+    113.545243
+   ],
+   [
+    22.193142,
+    113.545172
+   ],
+   [
+    22.193039,
+    113.545124
+   ],
+   [
+    22.192966,
+    113.545118
+   ],
+   [
+    22.192727,
+    113.545141
+   ],
+   [
+    22.192147,
+    113.545634
+   ],
+   [
+    22.19205,
+    113.54555
+   ],
+   [
+    22.191147,
+    113.544938
+   ],
+   [
+    22.190994,
+    113.544864
+   ]
+  ]
+ },
+ {
+  "id": "seoul",
+  "step": 3,
+  "name": "Seul, Južna Koreja",
+  "en": "Seoul, South Korea",
+  "drive": "desna",
+  "open": true,
+  "bbox": [
+   126.978,
+   37.543,
+   127.002,
+   37.562
+  ],
+  "waypoints": [
+   [
+    37.545135,
+    126.995993
+   ],
+   [
+    37.549075,
+    126.993173
+   ],
+   [
+    37.551056,
+    126.990946
+   ],
+   [
+    37.551234,
+    126.990222
+   ],
+   [
+    37.552274,
+    126.982129
+   ],
+   [
+    37.55221,
+    126.981996
+   ],
+   [
+    37.553342,
+    126.979361
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2486,
+  "corners": [
+   10,
+   0
+  ],
+  "twist_deg_km": 512,
+  "straight_pct": 43,
+  "longest_straight_m": 110,
+  "elev_m": 145,
+  "route": "Start na južni krožni cesti Namsana (남산남측순환로) nad Itaewonom, vzpon mimo razgledišč in mestnega obzidja do TV stolpa na vrhu, nato spust po 남산공원길 do knjižnice in po 소월로 (Sowol-ro) do cilja nad Huam-dongom.",
+  "race": "–",
+  "legal": 3,
+  "legal_note": "»N Seoul Tower« je blagovna znamka – stolp samo generično brez imena; obzidje Hanyangdoseong generično; vojaških objektov ob cesti ne modeliraj; kip osebe (다산정약용선생) in park z imenom osebe ob cilju brez imen.",
+  "notes": [
+   "Ceste na Namsan so enosmerne in odprte samo za avtobuse (zasebni avtomobili ne smejo); proga gre v smeri enosmernosti.",
+   "Brez serpentin; 512 °/km in 43 % ravnin sta tik ob meji.",
+   "Bugak Skyway (Changuimun → Palgakjeong) je bolj zavita, a loop.py tam izpiše le 2 znamenitosti; tik čez 60 m tu ni ničesar pomembnega."
+  ],
+  "sights": [
+   {
+    "label": "razgledišče nad mestom",
+    "osm_name": "이태원동 조망점",
+    "kind": "infra",
+    "dist_m": 8.0,
+    "at_m": 290
+   },
+   {
+    "label": "razgledni paviljon",
+    "osm_name": "이태원동 조망쉼터",
+    "kind": "building",
+    "dist_m": 3.8,
+    "at_m": 291
+   },
+   {
+    "label": "staro mestno obzidje",
+    "osm_name": "서울 한양도성",
+    "kind": "infra",
+    "dist_m": 3.3,
+    "at_m": 429
+   },
+   {
+    "label": "gozd parka Namsan",
+    "osm_name": "남산공원",
+    "kind": "land",
+    "dist_m": 0.0,
+    "at_m": 729
+   },
+   {
+    "label": "razgledišče",
+    "osm_name": "남산팔영 조망점",
+    "kind": "infra",
+    "dist_m": 20.5,
+    "at_m": 868
+   },
+   {
+    "label": "razgledni paviljon",
+    "osm_name": "남산팔영 조망터",
+    "kind": "building",
+    "dist_m": 7.0,
+    "at_m": 890
+   },
+   {
+    "label": "TV stolp na vrhu (brez imena)",
+    "osm_name": "남산서울타워",
+    "kind": "infra",
+    "dist_m": 41.0,
+    "at_m": 1121
+   },
+   {
+    "label": "mestna knjižnica",
+    "osm_name": "서울특별시교육청 용산도서관",
+    "kind": "building",
+    "dist_m": 20.3,
+    "at_m": 2341
+   }
+  ],
+  "line": [
+   [
+    37.545135,
+    126.995993
+   ],
+   [
+    37.545188,
+    126.995933
+   ],
+   [
+    37.545537,
+    126.994897
+   ],
+   [
+    37.545664,
+    126.994582
+   ],
+   [
+    37.545707,
+    126.994452
+   ],
+   [
+    37.545747,
+    126.994182
+   ],
+   [
+    37.545777,
+    126.994094
+   ],
+   [
+    37.54584,
+    126.994017
+   ],
+   [
+    37.546098,
+    126.993866
+   ],
+   [
+    37.546138,
+    126.993808
+   ],
+   [
+    37.546194,
+    126.993694
+   ],
+   [
+    37.54628,
+    126.993343
+   ],
+   [
+    37.546324,
+    126.993252
+   ],
+   [
+    37.546356,
+    126.99322
+   ],
+   [
+    37.546437,
+    126.993204
+   ],
+   [
+    37.546823,
+    126.993236
+   ],
+   [
+    37.547347,
+    126.993595
+   ],
+   [
+    37.547518,
+    126.993653
+   ],
+   [
+    37.54804,
+    126.993462
+   ],
+   [
+    37.548768,
+    126.993143
+   ],
+   [
+    37.549195,
+    126.993188
+   ],
+   [
+    37.549271,
+    126.993178
+   ],
+   [
+    37.549344,
+    126.993131
+   ],
+   [
+    37.549719,
+    126.992785
+   ],
+   [
+    37.55009,
+    126.992406
+   ],
+   [
+    37.550168,
+    126.99225
+   ],
+   [
+    37.550377,
+    126.991716
+   ],
+   [
+    37.550505,
+    126.991566
+   ],
+   [
+    37.550867,
+    126.991219
+   ],
+   [
+    37.551056,
+    126.990946
+   ],
+   [
+    37.551068,
+    126.990729
+   ],
+   [
+    37.551226,
+    126.990275
+   ],
+   [
+    37.55124,
+    126.990028
+   ],
+   [
+    37.551226,
+    126.989855
+   ],
+   [
+    37.551166,
+    126.989646
+   ],
+   [
+    37.551044,
+    126.989369
+   ],
+   [
+    37.550812,
+    126.988929
+   ],
+   [
+    37.550683,
+    126.988721
+   ],
+   [
+    37.550429,
+    126.98842
+   ],
+   [
+    37.549947,
+    126.987732
+   ],
+   [
+    37.549796,
+    126.98759
+   ],
+   [
+    37.549677,
+    126.987514
+   ],
+   [
+    37.549495,
+    126.987468
+   ],
+   [
+    37.549252,
+    126.98745
+   ],
+   [
+    37.548592,
+    126.987588
+   ],
+   [
+    37.548469,
+    126.987565
+   ],
+   [
+    37.548434,
+    126.987544
+   ],
+   [
+    37.548335,
+    126.987438
+   ],
+   [
+    37.54827,
+    126.987287
+   ],
+   [
+    37.548219,
+    126.987025
+   ],
+   [
+    37.548232,
+    126.986897
+   ],
+   [
+    37.54825,
+    126.986856
+   ],
+   [
+    37.548329,
+    126.986772
+   ],
+   [
+    37.548854,
+    126.986461
+   ],
+   [
+    37.549493,
+    126.9855
+   ],
+   [
+    37.549709,
+    126.985079
+   ],
+   [
+    37.549788,
+    126.984959
+   ],
+   [
+    37.549851,
+    126.98491
+   ],
+   [
+    37.549941,
+    126.984885
+   ],
+   [
+    37.550446,
+    126.985069
+   ],
+   [
+    37.550542,
+    126.985094
+   ],
+   [
+    37.550618,
+    126.985065
+   ],
+   [
+    37.550951,
+    126.984532
+   ],
+   [
+    37.551097,
+    126.984392
+   ],
+   [
+    37.551241,
+    126.984297
+   ],
+   [
+    37.551392,
+    126.984164
+   ],
+   [
+    37.551436,
+    126.984081
+   ],
+   [
+    37.55158,
+    126.983628
+   ],
+   [
+    37.551632,
+    126.983507
+   ],
+   [
+    37.552182,
+    126.982644
+   ],
+   [
+    37.552256,
+    126.982469
+   ],
+   [
+    37.552284,
+    126.982349
+   ],
+   [
+    37.552295,
+    126.982231
+   ],
+   [
+    37.552274,
+    126.982129
+   ],
+   [
+    37.55221,
+    126.981996
+   ],
+   [
+    37.552246,
+    126.981883
+   ],
+   [
+    37.552261,
+    126.981763
+   ],
+   [
+    37.55218,
+    126.980704
+   ],
+   [
+    37.552211,
+    126.980483
+   ],
+   [
+    37.552262,
+    126.980363
+   ],
+   [
+    37.552453,
+    126.980031
+   ],
+   [
+    37.552683,
+    126.979681
+   ],
+   [
+    37.552884,
+    126.979504
+   ],
+   [
+    37.553053,
+    126.979417
+   ],
+   [
+    37.553342,
+    126.979361
+   ]
+  ]
+ },
+ {
+  "id": "shimla",
+  "step": 4,
+  "name": "Shimla, Indija",
+  "en": "Shimla, India",
+  "drive": "leva",
+  "open": true,
+  "bbox": [
+   77.15,
+   31.095,
+   77.185,
+   31.112
+  ],
+  "waypoints": [
+   [
+    31.10288,
+    77.16044
+   ],
+   [
+    31.10482,
+    77.16382
+   ],
+   [
+    31.10617,
+    77.16488
+   ],
+   [
+    31.10628,
+    77.1655
+   ],
+   [
+    31.10943,
+    77.16546
+   ],
+   [
+    31.10962,
+    77.16564
+   ],
+   [
+    31.10868,
+    77.1669
+   ],
+   [
+    31.10607,
+    77.17625
+   ],
+   [
+    31.10636,
+    77.17831
+   ],
+   [
+    31.10512,
+    77.1763
+   ],
+   [
+    31.10498,
+    77.17611
+   ],
+   [
+    31.10454,
+    77.17558
+   ],
+   [
+    31.10416,
+    77.17581
+   ],
+   [
+    31.10372,
+    77.17706
+   ],
+   [
+    31.103,
+    77.17853
+   ]
+  ],
+  "avoid": [],
+  "length_m": 3580,
+  "corners": [
+   22,
+   5
+  ],
+  "twist_deg_km": 774,
+  "straight_pct": 35,
+  "longest_straight_m": 120,
+  "elev_m": 132,
+  "route": "Od točke do točke: start pri železniški postaji na Cart Road, Cart Road do predora Victory, Circular Road skozi predor in vijugasto po severnem pobočju, Lakkar Bazaar Road, Jakhoo Temple Road mimo cerkve in knjižnice na grebenu, off the Ridge navzdol, cilj pod grebenom ob vzhodnem delu Mall Road.",
+  "race": "–",
+  "legal": 2,
+  "legal_note": "Indija dovoljuje upodobitev arhitekture (Copyright Act, čl. 52(1)(s)); cerkev samo generična; brez imen hotelov ob Mall Road (blagovne znamke); ime šole je ime osebe, zato opisno.",
+  "notes": [
+   "Bivalne ulice (living_street): Lakkar Bazaar Road 238 m, neimenovani 137 m in 24 m, off the Ridge 348 m (skupaj okoli 750 m; off the Ridge ima v OSM dovoljen promet z avtom); v resnici je to bazar s pešci.",
+   "Jakhoo Temple Road (131 m ob cerkvi) je v resnici del peš območja grebena; Mall Road in trg The Ridge sta zaprta za avtomobile, zato nista v progi (gledališče 167 m, mestna hiša 152 m od proge).",
+   "Skozi zgodovinski predor Victory na Circular Road; levi promet."
+  ],
+  "sights": [
+   {
+    "label": "Zgodovinska stavba skupščine",
+    "osm_name": "Vidhan Sabha",
+    "kind": "building",
+    "dist_m": 15.8,
+    "at_m": 0
+   },
+   {
+    "label": "Postaja gorske ozkotirne železnice",
+    "osm_name": "Shimla Station",
+    "kind": "building",
+    "dist_m": 27.2,
+    "at_m": 0
+   },
+   {
+    "label": "Železniška kurilnica",
+    "osm_name": "Diesel Trip Shed Shimla (SML)",
+    "kind": "building",
+    "dist_m": 27.4,
+    "at_m": 80
+   },
+   {
+    "label": "Kolonialna šola",
+    "osm_name": "Auckland House School (Boys)",
+    "kind": "building",
+    "dist_m": 42.7,
+    "at_m": 2680
+   },
+   {
+    "label": "Neogotska cerkev na grebenu",
+    "osm_name": "Christ Church",
+    "kind": "building",
+    "dist_m": 4.5,
+    "at_m": 3196
+   },
+   {
+    "label": "Knjižnica na grebenu",
+    "osm_name": "Himachal Pradesh State Library",
+    "kind": "building",
+    "dist_m": 3.1,
+    "at_m": 3227
+   }
+  ],
+  "line": [
+   [
+    31.102885,
+    77.160444
+   ],
+   [
+    31.10291,
+    77.160637
+   ],
+   [
+    31.102936,
+    77.160717
+   ],
+   [
+    31.103009,
+    77.160811
+   ],
+   [
+    31.103111,
+    77.160875
+   ],
+   [
+    31.103515,
+    77.161032
+   ],
+   [
+    31.103621,
+    77.161127
+   ],
+   [
+    31.103667,
+    77.161191
+   ],
+   [
+    31.103951,
+    77.1618
+   ],
+   [
+    31.104029,
+    77.162041
+   ],
+   [
+    31.104128,
+    77.162686
+   ],
+   [
+    31.104238,
+    77.163031
+   ],
+   [
+    31.104283,
+    77.163083
+   ],
+   [
+    31.104451,
+    77.163138
+   ],
+   [
+    31.104497,
+    77.163186
+   ],
+   [
+    31.104766,
+    77.163778
+   ],
+   [
+    31.104816,
+    77.163822
+   ],
+   [
+    31.104889,
+    77.163832
+   ],
+   [
+    31.104974,
+    77.163807
+   ],
+   [
+    31.105466,
+    77.163893
+   ],
+   [
+    31.105555,
+    77.163939
+   ],
+   [
+    31.10562,
+    77.164001
+   ],
+   [
+    31.105887,
+    77.164431
+   ],
+   [
+    31.106067,
+    77.164667
+   ],
+   [
+    31.106172,
+    77.164882
+   ],
+   [
+    31.106278,
+    77.165504
+   ],
+   [
+    31.106327,
+    77.165599
+   ],
+   [
+    31.106376,
+    77.165626
+   ],
+   [
+    31.106465,
+    77.165622
+   ],
+   [
+    31.107269,
+    77.165302
+   ],
+   [
+    31.107937,
+    77.165311
+   ],
+   [
+    31.108004,
+    77.165297
+   ],
+   [
+    31.108077,
+    77.165264
+   ],
+   [
+    31.108355,
+    77.165043
+   ],
+   [
+    31.10844,
+    77.164998
+   ],
+   [
+    31.108597,
+    77.164955
+   ],
+   [
+    31.108982,
+    77.164891
+   ],
+   [
+    31.109198,
+    77.164875
+   ],
+   [
+    31.109252,
+    77.164902
+   ],
+   [
+    31.109293,
+    77.165025
+   ],
+   [
+    31.109251,
+    77.165248
+   ],
+   [
+    31.109255,
+    77.165327
+   ],
+   [
+    31.109304,
+    77.165396
+   ],
+   [
+    31.109554,
+    77.165517
+   ],
+   [
+    31.109595,
+    77.165567
+   ],
+   [
+    31.109641,
+    77.165724
+   ],
+   [
+    31.109622,
+    77.165844
+   ],
+   [
+    31.109575,
+    77.165965
+   ],
+   [
+    31.109547,
+    77.165987
+   ],
+   [
+    31.109215,
+    77.16608
+   ],
+   [
+    31.109133,
+    77.166145
+   ],
+   [
+    31.109102,
+    77.1662
+   ],
+   [
+    31.109088,
+    77.166263
+   ],
+   [
+    31.10909,
+    77.166414
+   ],
+   [
+    31.109067,
+    77.166534
+   ],
+   [
+    31.109001,
+    77.166667
+   ],
+   [
+    31.108915,
+    77.166759
+   ],
+   [
+    31.108554,
+    77.166983
+   ],
+   [
+    31.108494,
+    77.167101
+   ],
+   [
+    31.108495,
+    77.167153
+   ],
+   [
+    31.108519,
+    77.16722
+   ],
+   [
+    31.108568,
+    77.167297
+   ],
+   [
+    31.108795,
+    77.167507
+   ],
+   [
+    31.108832,
+    77.167592
+   ],
+   [
+    31.108864,
+    77.168016
+   ],
+   [
+    31.108861,
+    77.168163
+   ],
+   [
+    31.108828,
+    77.168271
+   ],
+   [
+    31.1088,
+    77.168308
+   ],
+   [
+    31.108759,
+    77.168322
+   ],
+   [
+    31.108515,
+    77.168284
+   ],
+   [
+    31.108373,
+    77.168289
+   ],
+   [
+    31.108253,
+    77.168366
+   ],
+   [
+    31.108112,
+    77.168515
+   ],
+   [
+    31.108004,
+    77.168714
+   ],
+   [
+    31.107859,
+    77.168875
+   ],
+   [
+    31.107526,
+    77.16907
+   ],
+   [
+    31.107434,
+    77.169144
+   ],
+   [
+    31.107386,
+    77.169211
+   ],
+   [
+    31.107329,
+    77.169433
+   ],
+   [
+    31.107338,
+    77.169774
+   ],
+   [
+    31.1072,
+    77.170289
+   ],
+   [
+    31.10712,
+    77.170662
+   ],
+   [
+    31.10709,
+    77.170933
+   ],
+   [
+    31.107165,
+    77.17137
+   ],
+   [
+    31.107166,
+    77.171448
+   ],
+   [
+    31.107143,
+    77.171533
+   ],
+   [
+    31.107048,
+    77.171657
+   ],
+   [
+    31.106536,
+    77.17211
+   ],
+   [
+    31.106442,
+    77.172243
+   ],
+   [
+    31.106342,
+    77.172477
+   ],
+   [
+    31.106297,
+    77.172735
+   ],
+   [
+    31.106289,
+    77.172987
+   ],
+   [
+    31.106335,
+    77.173174
+   ],
+   [
+    31.106364,
+    77.173406
+   ],
+   [
+    31.106362,
+    77.173501
+   ],
+   [
+    31.105865,
+    77.175001
+   ],
+   [
+    31.105832,
+    77.175193
+   ],
+   [
+    31.105815,
+    77.175474
+   ],
+   [
+    31.105835,
+    77.175602
+   ],
+   [
+    31.106067,
+    77.176254
+   ],
+   [
+    31.106283,
+    77.176603
+   ],
+   [
+    31.10659,
+    77.177453
+   ],
+   [
+    31.10665,
+    77.177582
+   ],
+   [
+    31.10694,
+    77.178008
+   ],
+   [
+    31.107308,
+    77.178376
+   ],
+   [
+    31.107587,
+    77.178722
+   ],
+   [
+    31.10746,
+    77.178893
+   ],
+   [
+    31.107247,
+    77.178872
+   ],
+   [
+    31.107119,
+    77.178802
+   ],
+   [
+    31.106916,
+    77.178623
+   ],
+   [
+    31.106753,
+    77.178506
+   ],
+   [
+    31.106459,
+    77.178345
+   ],
+   [
+    31.106355,
+    77.178306
+   ],
+   [
+    31.105659,
+    77.177447
+   ],
+   [
+    31.105415,
+    77.177067
+   ],
+   [
+    31.105225,
+    77.17664
+   ],
+   [
+    31.105121,
+    77.1763
+   ],
+   [
+    31.104978,
+    77.176112
+   ],
+   [
+    31.104827,
+    77.175828
+   ],
+   [
+    31.104818,
+    77.175798
+   ],
+   [
+    31.104831,
+    77.175761
+   ],
+   [
+    31.104813,
+    77.175723
+   ],
+   [
+    31.104733,
+    77.175683
+   ],
+   [
+    31.104694,
+    77.175771
+   ],
+   [
+    31.10457,
+    77.175935
+   ],
+   [
+    31.10453,
+    77.175965
+   ],
+   [
+    31.104498,
+    77.175967
+   ],
+   [
+    31.104475,
+    77.175938
+   ],
+   [
+    31.104471,
+    77.17582
+   ],
+   [
+    31.104538,
+    77.175578
+   ],
+   [
+    31.104351,
+    77.175694
+   ],
+   [
+    31.10422,
+    77.175736
+   ],
+   [
+    31.104164,
+    77.175806
+   ],
+   [
+    31.104101,
+    77.176071
+   ],
+   [
+    31.104037,
+    77.176173
+   ],
+   [
+    31.10403,
+    77.17636
+   ],
+   [
+    31.104009,
+    77.176408
+   ],
+   [
+    31.103888,
+    77.176469
+   ],
+   [
+    31.103863,
+    77.176502
+   ],
+   [
+    31.103811,
+    77.176649
+   ],
+   [
+    31.103634,
+    77.177415
+   ],
+   [
+    31.103601,
+    77.177488
+   ],
+   [
+    31.103492,
+    77.177639
+   ],
+   [
+    31.103219,
+    77.178097
+   ],
+   [
+    31.103183,
+    77.178249
+   ],
+   [
+    31.103121,
+    77.178361
+   ],
+   [
+    31.102996,
+    77.178534
+   ]
+  ]
+ },
+ {
+  "id": "wellington",
+  "step": 4,
+  "name": "Wellington, Nova Zelandija",
+  "en": "Wellington, New Zealand",
+  "drive": "leva",
+  "open": true,
+  "bbox": [
+   174.775,
+   -41.308,
+   174.8,
+   -41.284
+  ],
+  "waypoints": [
+   [
+    -41.295064,
+    174.787322
+   ],
+   [
+    -41.292619,
+    174.791252
+   ],
+   [
+    -41.293125,
+    174.791303
+   ],
+   [
+    -41.293251,
+    174.798073
+   ],
+   [
+    -41.293065,
+    174.798982
+   ],
+   [
+    -41.295772,
+    174.7991
+   ],
+   [
+    -41.296219,
+    174.79472
+   ],
+   [
+    -41.297867,
+    174.793254
+   ],
+   [
+    -41.300196,
+    174.790976
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2998,
+  "corners": [
+   22,
+   1
+  ],
+  "twist_deg_km": 730,
+  "straight_pct": 38,
+  "longest_straight_m": 250,
+  "elev_m": 166,
+  "route": "Start na Hawker Street pri Majoribanks Street, mimo samostana nad zalivom po Moeller Street na vijugasto Palliser Road, nato Roseneath Terrace in Thane Road do Lookout Road, ki se s serpentino povzpne na vrh Mount Victoria, cilj po spustu na Alexandra Road pri parku Alexandra Park.",
+  "race": "–",
+  "legal": 2,
+  "legal_note": "Samostan generično (brez imena svetnika); kipa oseb na vrhu (Wakefield, vojvoda Wellington) se ne modelirata; oddajnik generično; Nova Zelandija ima svobodo panorame za stavbe.",
+  "notes": [
+   "Rezerva namesto padlih kandidatov; ozke stanovanjske ulice in Lookout Road na vrh, dvosmerne.",
+   "Najdaljša ravnina 250 m (Hawker Street) je točno na meji; vseh 5 znamenitosti je na zadnjih 1,5 km in pri samostanu.",
+   "Zaliv Oriental Bay s paviljonom (Band Rotunda) je pod pobočjem: z obalno cesto bi proga dobila preveč ravnin (47 %, 4 km)."
+  ],
+  "sights": [
+   {
+    "label": "samostan s cerkvijo nad zalivom",
+    "osm_name": "Saint Gerard's Monastery",
+    "kind": "building",
+    "dist_m": 11.2,
+    "at_m": 454
+   },
+   {
+    "label": "razgledišče",
+    "osm_name": "Centennial Lookout",
+    "kind": "infra",
+    "dist_m": 15.5,
+    "at_m": 1995
+   },
+   {
+    "label": "radijski oddajnik",
+    "osm_name": "Mt. Victoria Radio Transmitting Station",
+    "kind": "building",
+    "dist_m": 10.2,
+    "at_m": 2122
+   },
+   {
+    "label": "vrh hriba",
+    "osm_name": "Mount Victoria",
+    "kind": "land",
+    "dist_m": 27.4,
+    "at_m": 2362
+   },
+   {
+    "label": "razgledišče na vrhu",
+    "osm_name": "Mount Victoria Lookout",
+    "kind": "infra",
+    "dist_m": 23.9,
+    "at_m": 2368
+   }
+  ],
+  "line": [
+   [
+    -41.295064,
+    174.787322
+   ],
+   [
+    -41.29378,
+    174.78805
+   ],
+   [
+    -41.293713,
+    174.788113
+   ],
+   [
+    -41.293308,
+    174.788739
+   ],
+   [
+    -41.293185,
+    174.788968
+   ],
+   [
+    -41.29272,
+    174.789729
+   ],
+   [
+    -41.292194,
+    174.790533
+   ],
+   [
+    -41.2921,
+    174.790688
+   ],
+   [
+    -41.292073,
+    174.790793
+   ],
+   [
+    -41.292096,
+    174.79088
+   ],
+   [
+    -41.292136,
+    174.790926
+   ],
+   [
+    -41.292447,
+    174.791196
+   ],
+   [
+    -41.292619,
+    174.791252
+   ],
+   [
+    -41.29308,
+    174.791285
+   ],
+   [
+    -41.293198,
+    174.791357
+   ],
+   [
+    -41.293357,
+    174.791546
+   ],
+   [
+    -41.293529,
+    174.791839
+   ],
+   [
+    -41.293667,
+    174.792359
+   ],
+   [
+    -41.293721,
+    174.792453
+   ],
+   [
+    -41.293803,
+    174.79252
+   ],
+   [
+    -41.29408,
+    174.792662
+   ],
+   [
+    -41.294184,
+    174.792749
+   ],
+   [
+    -41.294221,
+    174.792805
+   ],
+   [
+    -41.294422,
+    174.793212
+   ],
+   [
+    -41.294454,
+    174.793309
+   ],
+   [
+    -41.294469,
+    174.793447
+   ],
+   [
+    -41.294463,
+    174.79355
+   ],
+   [
+    -41.294446,
+    174.793621
+   ],
+   [
+    -41.294367,
+    174.793767
+   ],
+   [
+    -41.293937,
+    174.794194
+   ],
+   [
+    -41.293915,
+    174.79427
+   ],
+   [
+    -41.293918,
+    174.794329
+   ],
+   [
+    -41.293938,
+    174.794363
+   ],
+   [
+    -41.294001,
+    174.794398
+   ],
+   [
+    -41.294284,
+    174.794529
+   ],
+   [
+    -41.294369,
+    174.794586
+   ],
+   [
+    -41.294451,
+    174.79467
+   ],
+   [
+    -41.294519,
+    174.794776
+   ],
+   [
+    -41.294556,
+    174.794866
+   ],
+   [
+    -41.294654,
+    174.795193
+   ],
+   [
+    -41.294828,
+    174.79543
+   ],
+   [
+    -41.294864,
+    174.795523
+   ],
+   [
+    -41.294864,
+    174.795631
+   ],
+   [
+    -41.29484,
+    174.795676
+   ],
+   [
+    -41.294739,
+    174.795756
+   ],
+   [
+    -41.294515,
+    174.795882
+   ],
+   [
+    -41.294465,
+    174.795961
+   ],
+   [
+    -41.294458,
+    174.796052
+   ],
+   [
+    -41.294525,
+    174.796624
+   ],
+   [
+    -41.29452,
+    174.79673
+   ],
+   [
+    -41.294459,
+    174.796855
+   ],
+   [
+    -41.294202,
+    174.796957
+   ],
+   [
+    -41.29414,
+    174.797012
+   ],
+   [
+    -41.293974,
+    174.797354
+   ],
+   [
+    -41.293897,
+    174.797428
+   ],
+   [
+    -41.293832,
+    174.79746
+   ],
+   [
+    -41.293455,
+    174.797547
+   ],
+   [
+    -41.293335,
+    174.797609
+   ],
+   [
+    -41.293271,
+    174.797685
+   ],
+   [
+    -41.29324,
+    174.797924
+   ],
+   [
+    -41.293263,
+    174.798203
+   ],
+   [
+    -41.293254,
+    174.798278
+   ],
+   [
+    -41.293203,
+    174.798451
+   ],
+   [
+    -41.293088,
+    174.798711
+   ],
+   [
+    -41.293061,
+    174.798844
+   ],
+   [
+    -41.293065,
+    174.798982
+   ],
+   [
+    -41.293098,
+    174.7991
+   ],
+   [
+    -41.293128,
+    174.799162
+   ],
+   [
+    -41.293187,
+    174.79922
+   ],
+   [
+    -41.293246,
+    174.799249
+   ],
+   [
+    -41.29332,
+    174.799256
+   ],
+   [
+    -41.29404,
+    174.799223
+   ],
+   [
+    -41.294093,
+    174.799211
+   ],
+   [
+    -41.294358,
+    174.799014
+   ],
+   [
+    -41.294511,
+    174.798993
+   ],
+   [
+    -41.29476,
+    174.799007
+   ],
+   [
+    -41.295113,
+    174.799176
+   ],
+   [
+    -41.295316,
+    174.799207
+   ],
+   [
+    -41.295627,
+    174.799219
+   ],
+   [
+    -41.295731,
+    174.799154
+   ],
+   [
+    -41.295772,
+    174.7991
+   ],
+   [
+    -41.295731,
+    174.799038
+   ],
+   [
+    -41.295621,
+    174.798593
+   ],
+   [
+    -41.295562,
+    174.798495
+   ],
+   [
+    -41.295442,
+    174.798456
+   ],
+   [
+    -41.294998,
+    174.798424
+   ],
+   [
+    -41.294858,
+    174.798391
+   ],
+   [
+    -41.294782,
+    174.798304
+   ],
+   [
+    -41.294773,
+    174.798186
+   ],
+   [
+    -41.294792,
+    174.798132
+   ],
+   [
+    -41.295188,
+    174.797703
+   ],
+   [
+    -41.295361,
+    174.797298
+   ],
+   [
+    -41.295749,
+    174.796674
+   ],
+   [
+    -41.296293,
+    174.795524
+   ],
+   [
+    -41.296365,
+    174.795315
+   ],
+   [
+    -41.296385,
+    174.795097
+   ],
+   [
+    -41.296333,
+    174.794904
+   ],
+   [
+    -41.296277,
+    174.794803
+   ],
+   [
+    -41.296219,
+    174.79472
+   ],
+   [
+    -41.296177,
+    174.794692
+   ],
+   [
+    -41.295964,
+    174.794595
+   ],
+   [
+    -41.295869,
+    174.794532
+   ],
+   [
+    -41.295793,
+    174.794456
+   ],
+   [
+    -41.295772,
+    174.794397
+   ],
+   [
+    -41.295792,
+    174.794211
+   ],
+   [
+    -41.295915,
+    174.7939
+   ],
+   [
+    -41.295955,
+    174.793831
+   ],
+   [
+    -41.296077,
+    174.793714
+   ],
+   [
+    -41.296187,
+    174.793674
+   ],
+   [
+    -41.296469,
+    174.793614
+   ],
+   [
+    -41.296648,
+    174.793549
+   ],
+   [
+    -41.296985,
+    174.793326
+   ],
+   [
+    -41.297675,
+    174.793139
+   ],
+   [
+    -41.297735,
+    174.79314
+   ],
+   [
+    -41.29778,
+    174.793167
+   ],
+   [
+    -41.297867,
+    174.793254
+   ],
+   [
+    -41.298536,
+    174.792825
+   ],
+   [
+    -41.298589,
+    174.792776
+   ],
+   [
+    -41.298779,
+    174.792509
+   ],
+   [
+    -41.299117,
+    174.792227
+   ],
+   [
+    -41.299325,
+    174.791899
+   ],
+   [
+    -41.299506,
+    174.791578
+   ],
+   [
+    -41.299697,
+    174.791392
+   ],
+   [
+    -41.300196,
+    174.790976
+   ]
+  ]
+ },
+ {
+  "id": "darjeeling",
+  "step": 4,
+  "name": "Darjeeling, Indija",
+  "en": "Darjeeling, India",
+  "drive": "leva",
+  "open": true,
+  "bbox": [
+   88.252,
+   27.022,
+   88.278,
+   27.048
+  ],
+  "waypoints": [
+   [
+    27.025401,
+    88.254585
+   ],
+   [
+    27.030699,
+    88.257187
+   ],
+   [
+    27.034182,
+    88.260366
+   ],
+   [
+    27.038225,
+    88.263346
+   ],
+   [
+    27.041168,
+    88.264726
+   ],
+   [
+    27.044456,
+    88.265531
+   ]
+  ],
+  "avoid": [],
+  "length_m": 2800,
+  "corners": [
+   16,
+   1
+  ],
+  "twist_deg_km": 637,
+  "straight_pct": 36,
+  "longest_straight_m": 130,
+  "elev_m": 46,
+  "route": "Start na Hill Cart Road pri Daliju (Dalli Fatak) na južnem robu mesta, vožnja ob tirih in po tirih ozkotirne železnice skozi mesto mimo hindujskega templja, glavne postaje in dveh cerkva do cilja pri avtobusni postaji (Motor Stand) ob stari tržnici.",
+  "race": "–",
+  "legal": 3,
+  "legal_note": "»Darjeeling« je zaščitena geografska označba za čaj – uporabi samo kot ime kraja; vlak in postaja ozkotirne železnice (UNESCO) generično; tempelj in cerkve generično (Turnbull je ime osebe).",
+  "notes": [
+   "Ozkotirna železnica teče po cesti in tik ob njej skozi vse mesto; ozka cesta z gostim prometom, višinska razlika le 46 m.",
+   "loop.py se pri risanju zruši (MemoryError zaradi poligona Himalaje); res_darjeeling.pkl je iz kopije loopD.py, ki najprej shrani rezultat.",
+   "Tik čez 60 m: Circuit House (62 m); Chowrasta in Mall sta peš cona."
+  ],
+  "sights": [
+   {
+    "label": "stara kolonialna šola",
+    "osm_name": "Maharani Girls' High School",
+    "kind": "building",
+    "dist_m": 16.8,
+    "at_m": 1743
+   },
+   {
+    "label": "hindujski tempelj v obliki pagode",
+    "osm_name": "Dhirdham Temple",
+    "kind": "building",
+    "dist_m": 42.7,
+    "at_m": 1808
+   },
+   {
+    "label": "cerkev",
+    "osm_name": "St. Columba's Church",
+    "kind": "building",
+    "dist_m": 15.0,
+    "at_m": 1911
+   },
+   {
+    "label": "postaja ozkotirne železnice",
+    "osm_name": "Darjeeling Railway Station",
+    "kind": "building",
+    "dist_m": 0.7,
+    "at_m": 1978
+   },
+   {
+    "label": "peron ozkotirne železnice ob cesti",
+    "osm_name": "Darjeeling",
+    "kind": "infra",
+    "dist_m": 20.9,
+    "at_m": 1984
+   },
+   {
+    "label": "cerkev",
+    "osm_name": "Turnbull Church",
+    "kind": "building",
+    "dist_m": 29.3,
+    "at_m": 2044
+   }
+  ],
+  "line": [
+   [
+    27.025401,
+    88.254585
+   ],
+   [
+    27.02557,
+    88.25469
+   ],
+   [
+    27.025685,
+    88.254728
+   ],
+   [
+    27.026057,
+    88.254784
+   ],
+   [
+    27.026491,
+    88.254923
+   ],
+   [
+    27.026567,
+    88.254996
+   ],
+   [
+    27.026596,
+    88.255111
+   ],
+   [
+    27.026562,
+    88.255319
+   ],
+   [
+    27.026561,
+    88.255422
+   ],
+   [
+    27.026619,
+    88.255502
+   ],
+   [
+    27.026795,
+    88.25561
+   ],
+   [
+    27.027492,
+    88.255932
+   ],
+   [
+    27.027638,
+    88.256044
+   ],
+   [
+    27.028572,
+    88.257004
+   ],
+   [
+    27.028653,
+    88.257043
+   ],
+   [
+    27.028902,
+    88.257035
+   ],
+   [
+    27.029054,
+    88.257067
+   ],
+   [
+    27.029113,
+    88.257114
+   ],
+   [
+    27.029149,
+    88.257181
+   ],
+   [
+    27.029227,
+    88.257417
+   ],
+   [
+    27.029336,
+    88.257573
+   ],
+   [
+    27.029443,
+    88.257644
+   ],
+   [
+    27.029549,
+    88.257688
+   ],
+   [
+    27.029664,
+    88.257676
+   ],
+   [
+    27.029924,
+    88.257379
+   ],
+   [
+    27.03,
+    88.257332
+   ],
+   [
+    27.030112,
+    88.257324
+   ],
+   [
+    27.030351,
+    88.257339
+   ],
+   [
+    27.030429,
+    88.257321
+   ],
+   [
+    27.030764,
+    88.257155
+   ],
+   [
+    27.030979,
+    88.256976
+   ],
+   [
+    27.031117,
+    88.256909
+   ],
+   [
+    27.031278,
+    88.256871
+   ],
+   [
+    27.031446,
+    88.256898
+   ],
+   [
+    27.032047,
+    88.257136
+   ],
+   [
+    27.032259,
+    88.257268
+   ],
+   [
+    27.032547,
+    88.257609
+   ],
+   [
+    27.032852,
+    88.257741
+   ],
+   [
+    27.032932,
+    88.257797
+   ],
+   [
+    27.033174,
+    88.258051
+   ],
+   [
+    27.033415,
+    88.258373
+   ],
+   [
+    27.033457,
+    88.258582
+   ],
+   [
+    27.033444,
+    88.25869
+   ],
+   [
+    27.033402,
+    88.258829
+   ],
+   [
+    27.033259,
+    88.259014
+   ],
+   [
+    27.033027,
+    88.259234
+   ],
+   [
+    27.032972,
+    88.259326
+   ],
+   [
+    27.032947,
+    88.259404
+   ],
+   [
+    27.03296,
+    88.25951
+   ],
+   [
+    27.033014,
+    88.259581
+   ],
+   [
+    27.033117,
+    88.259627
+   ],
+   [
+    27.033453,
+    88.259663
+   ],
+   [
+    27.033562,
+    88.259701
+   ],
+   [
+    27.033647,
+    88.259756
+   ],
+   [
+    27.033754,
+    88.259851
+   ],
+   [
+    27.034068,
+    88.260194
+   ],
+   [
+    27.034182,
+    88.260366
+   ],
+   [
+    27.034283,
+    88.260559
+   ],
+   [
+    27.034443,
+    88.260681
+   ],
+   [
+    27.034527,
+    88.26069
+   ],
+   [
+    27.034621,
+    88.260665
+   ],
+   [
+    27.034809,
+    88.260529
+   ],
+   [
+    27.034899,
+    88.260497
+   ],
+   [
+    27.03499,
+    88.260486
+   ],
+   [
+    27.035469,
+    88.26058
+   ],
+   [
+    27.035932,
+    88.261027
+   ],
+   [
+    27.036082,
+    88.261248
+   ],
+   [
+    27.036211,
+    88.261331
+   ],
+   [
+    27.036493,
+    88.261424
+   ],
+   [
+    27.036666,
+    88.261497
+   ],
+   [
+    27.03674,
+    88.26155
+   ],
+   [
+    27.036797,
+    88.26163
+   ],
+   [
+    27.036883,
+    88.261867
+   ],
+   [
+    27.036921,
+    88.262054
+   ],
+   [
+    27.036947,
+    88.262318
+   ],
+   [
+    27.036999,
+    88.262499
+   ],
+   [
+    27.037202,
+    88.262784
+   ],
+   [
+    27.037348,
+    88.262938
+   ],
+   [
+    27.038088,
+    88.263276
+   ],
+   [
+    27.038704,
+    88.263598
+   ],
+   [
+    27.039006,
+    88.263696
+   ],
+   [
+    27.039061,
+    88.263747
+   ],
+   [
+    27.039165,
+    88.263904
+   ],
+   [
+    27.039217,
+    88.263917
+   ],
+   [
+    27.039331,
+    88.263912
+   ],
+   [
+    27.039526,
+    88.263767
+   ],
+   [
+    27.039672,
+    88.26368
+   ],
+   [
+    27.039814,
+    88.263634
+   ],
+   [
+    27.039931,
+    88.263619
+   ],
+   [
+    27.040443,
+    88.263734
+   ],
+   [
+    27.040543,
+    88.26381
+   ],
+   [
+    27.040705,
+    88.263982
+   ],
+   [
+    27.041123,
+    88.264377
+   ],
+   [
+    27.041172,
+    88.264476
+   ],
+   [
+    27.041189,
+    88.264573
+   ],
+   [
+    27.041152,
+    88.264794
+   ],
+   [
+    27.041282,
+    88.264847
+   ],
+   [
+    27.041744,
+    88.264967
+   ],
+   [
+    27.041797,
+    88.265033
+   ],
+   [
+    27.041848,
+    88.265132
+   ],
+   [
+    27.042493,
+    88.265258
+   ],
+   [
+    27.043202,
+    88.265425
+   ],
+   [
+    27.043704,
+    88.265438
+   ],
+   [
+    27.044164,
+    88.265478
+   ],
+   [
+    27.044456,
+    88.265531
+   ]
+  ]
+ }
+]
