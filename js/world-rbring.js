@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, carParkMat, parkedCar, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
+    Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, campLot, parkedCar, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
     crowdRun, crowdUV, cyl, gable, ico, inPoly, lerp, mergeBands, nrDecalTex, nrDem, nrDist, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf,
     nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
     shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS
@@ -2261,12 +2261,12 @@
         out.dyn.roos = { mesh, L: L2, gH: nrGround, ok, t: null }; auRoos(out.dyn.roos, 0, null); }
     }
 
-    // car parks: the fans' cars in rows on the built-up land of the land cover (the paved car parks round the circuit) 45-420 m from the
-    // track, level ground only; instanced (one shape, a colour each), lots aligned with the main straight
-    { const cg = new GB(); parkedCar(cg, 0, 0, 0, 0, [1, 1, 1], 0, true);   // (the car of js/world.js, its body white: each instance's colour)
-      const cars = new IChunks(cg.geometry(), carParkMat(), 256), LC = P.L, a0 = T.hd[T.idx(sStart)];   // (carParkMat: the instance's colour paints the body, not the glass and the tyres)
-      const ccols = [[0.93, 0.93, 0.92], [0.72, 0.74, 0.77], [0.12, 0.12, 0.13], [0.42, 0.44, 0.47], [0.16, 0.22, 0.42], [0.62, 0.1, 0.1], [0.86, 0.85, 0.8], [0.25, 0.3, 0.26]];
-      for (let j = 0; !PER && j < LC.nz && nCars < 1400; j++) for (let i = 0; i < LC.nx && nCars < 1400; i++) {
+    // where the car parks were (the built-up land of the land cover round the circuit, 45-420 m from the track, level ground): the fans' camp,
+    // the motorhomes and caravans, the fans' area (campLot in js/world.js: the user's choice, »Združi kamp navijačev in avtodom in prikolice in
+    // prostor za navijače«), a kind to each 48 m block, as each circuit has them on a race weekend (Styria and Bathurst all three, Rio its fans'
+    // area: a city); merged into the scenery, lots aligned with the main straight
+    { const LC = P.L, a0 = T.hd[T.idx(sStart)], ID = T.def.id, MIX = ID === 'rio' ? [0, 0, 1] : ID === 'bathurst' ? [0.45, 0.35, 0.2] : [0.4, 0.35, 0.25];
+      for (let j = 0; !PER && j < LC.nz && nCars < 220; j++) for (let i = 0; i < LC.nx && nCars < 220; i++) {
         if (P.lc[j * LC.nx + i] !== 3) continue;
         const x = LC.x0 + (i + 0.5) * LC.cell, z = LC.z0 + (j + 0.5) * LC.cell, rd = nrDist(x, z);
         if (LK.town && rd > LK.town) {   // Bathurst: the town past the car parks: houses on their blocks along the street grid
@@ -2274,16 +2274,10 @@
           continue;
         }
         if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
-        const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), c = Math.cos(rot), sn = Math.sin(rot);
-        for (const r of [-1, 1]) for (let q = -2; q <= 2; q++) {   // two rows of five facing an aisle (the user: »avti so sedaj parkirani preveč blizu in zgleda kot da so zaleteni«: 3 m bays, a 5.4 m aisle, 1.8 m behind them to the next lot's row, all in a row turned the same way)
-          if (R() < 0.3) continue;
-          const a = r * 4.9 + (R() - 0.5) * 0.12, b = q * 3.0 + (R() - 0.5) * 0.16, px = x + c * a - sn * b, pz = z + sn * a + c * b;
-          if (excluded(px, pz)) continue;
-          cars.add(px, nrGround(px, pz) - 0.05, pz, -(rot + (r > 0 ? Math.PI : 0) + (R() - 0.5) * 0.04), 0.95 + 0.08 * crH(px, pz, 81), 0.92 + 0.2 * crH(px, pz, 82), ccols[Math.floor(R() * ccols.length)]); nCars++;   // (lengthwise across the row, side by side in it: before, the old rows had them nose to tail 2.8 m apart, into each other; a little longer or shorter, lower or taller)
-        }
+        const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), hb = crH(Math.floor(x / 48), Math.floor(z / 48), 83);
+        const kind = hb < MIX[0] ? 'kamp' : hb < MIX[0] + MIX[1] ? 'avtodomi' : 'navijaci'; campLot(scen.get(x, z), nrGround, x, z, rot, kind, i * 7 + j); (out.lots || (out.lots = [])).push([x, z, rot, kind]); nCars++;   // (nCars: the lots; out.lots: where, for the tests and the people)
         exclPush(x, z, 11);
       }
-      cars.addTo(root, true);
     }
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
