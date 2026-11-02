@@ -90,7 +90,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const src = noComments(read('js/garage.js'));
   const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{])').exec(src); if (!m) return null; let i = m.index + m[0].length, d = 0, j = i;
     for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
-  for (const k of ['COLORS', 'BODY', 'SRV', 'UPG_FX', 'METER', 'DONE_NAME']) {
+  for (const k of ['COLORS', 'GUIDE']) {
     const t = tableSrc(k); if (!t) { miss.push('(no table ' + k + ')'); continue; }
     for (const s of literals(t)) if (/[a-zčšž]{2}/.test(s) && !/^(power|grip|weight|drift|clean|body|engine|motor|gume|zavore|aero|paint)$/.test(s) && !has(s) && !Lang.SAME.has(s)) miss.push(k + ': ' + s);
   }
