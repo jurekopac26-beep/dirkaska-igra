@@ -1088,12 +1088,20 @@
         for (let k = 0; k < m.count; k++) { m.getMatrixAt(k, m4); const e = id ? m4.elements : w4.multiplyMatrices(m.matrixWorld, m4).elements, x = e[12], z = e[14];
           if (e[0] === 0 && e[5] === 0) continue; if (!inside(x, z) || A.clearance(x, z) < 0.5) continue; m.setMatrixAt(k, ZERO); ch = true; n++; }
         if (ch) m.instanceMatrix.needsUpdate = true;
-      } else if (m.isMesh && (m.name === 'life' || (m.parent && m.parent.name === 'crowds' && m.material && m.material.blending === THREE.MultiplyBlending))) {   // the glades' merged things and animals, the crowd's shade on the grass
+      } else if (m.isMesh && ((m.name === 'life' && m.matrixWorld.equals(IDENT)) || (m.parent && m.parent.name === 'crowds' && m.material && m.material.blending === THREE.MultiplyBlending))) {   // the glades' merged things and animals (in world space: not a live animal's own mesh, its shape shared by its kind), the crowd's shade on the grass
         const g = m.geometry, P = g.attributes.position; if (!P || g.index) return; let ch = false;
         for (let t = 0; t + 2 < P.count; t += 3) { const x = P.getX(t), z = P.getZ(t); if (!inside(x, z) || !inside(P.getX(t + 1), P.getZ(t + 1)) || !inside(P.getX(t + 2), P.getZ(t + 2)) || A.clearance(x, z) < 0.5) continue;
           P.setXYZ(t + 1, x, P.getY(t), z); P.setXYZ(t + 2, x, P.getY(t), z); ch = true; n++; }
         if (ch) P.needsUpdate = true;
       }
+    });
+    // the live animals (js/world-zivali.js, World.lifeStep places them every frame): one whose way touches a scene's ground out of the world (its
+    // own mesh off and out of the list the step places)
+    const L = o.dyn && o.dyn.life;
+    if (L && Array.isArray(L.live)) L.live = L.live.filter(a => {
+      const walk = a.mode === 'walk', ex = walk ? a.x0 + Math.sin(a.yaw0) * a.L : a.x0, ez = walk ? a.z0 + Math.cos(a.yaw0) * a.L : a.z0;
+      if (!inside(a.cx, a.cz) && !inside(a.x0, a.z0) && !inside(ex, ez)) return true;
+      if (a.m && a.m.parent) a.m.parent.remove(a.m); n++; const st = o.lifeStats; if (st) { st.live--; st.animals--; } return false;   // (the life's count as it stands: its live ones are the meshes left)
     });
     return n;
   }

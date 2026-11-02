@@ -595,14 +595,15 @@
     // 1) the track's scene (twelve tracks), first: the glades keep away from it
     const Sc = SCENE[def.id];
     if (Sc) {
-      const cand = [], r = 7;
+      const cand = [], r = 7, PS = (World.peopleSites && World.peopleSites[def.id]) || [];   // (the people's scenes, js/world-ljudje.js: their places are fixed, this one keeps 45 m away from them on their side)
+      const nearPpl = (s, side) => PS.some(e => e[2] === side && Math.abs((((s - (T.startS || 0) - e[1]) % T.len) + T.len * 1.5) % T.len - T.len / 2) < 45);
       for (let s = L0 + 250; s < L1 - 250; s += 12) for (const side of [-1, 1]) for (const b of [9, 12, 15]) {   // (the nearest first: farther only where nearer is taken)
         const i = T.idx(((s % T.len) + T.len) % T.len), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
         if (cl(x, z) < b - 1.5) continue;
         const h = gH(x, z); if (!Number.isFinite(h)) continue; const sl = slope(x, z, r * 0.7); if (sl > (Sc.pond ? 0.1 : 0.3)) continue;
         const ry = T.hy ? T.hy[i] : h; if (Math.abs(h - ry) > 3.5) continue;
         const j = T.idx((((s - 60) % T.len) + T.len) % T.len); let dh = Math.abs(T.hd[i] - T.hd[j]) % TAU; dh = Math.min(dh, TAU - dh);
-        cand.push([-sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4, i, side, x, z, b]);
+        const sc0 = -sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4; if (!nearPpl(s, side)) cand.push([sc0, i, side, x, z, b]);   // (the random draw for every spot as before: the rest of the life as built without the people)
       }
       cand.sort((p, q) => q[0] - p[0]);
       const c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], r) === 0);
