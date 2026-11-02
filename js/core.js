@@ -1894,6 +1894,9 @@ const Core = (function () {
       this.noReverse = false;                          // true: holding the brake at a standstill does not engage reverse (set when a car finishes an open road)
       this.wrongT = 0; this.stuckT = 0;
       this.hitWall = 0; this.hitCar = 0; this.impact = 0;
+      // (what a knock writes on a car, there from the start: the push across (cSx, cSz, cSr), the grip lost (xgl, xglT), the effects' contact (fx*, contact*, wall*); set later
+      // on some cars only, or deleted again, the cars of a race took different shapes and the code that steps them all ran at half its speed)
+      this.cSx = 0; this.cSz = 0; this.cSr = null; this.xgl = 0; this.xglT = 0; this.fxCar = 0; this.fxWall = 0; this.fxQ = 0; this.contactX = 0; this.contactZ = 0; this.wallX = 0; this.wallZ = 0;
       this.locked = true;
       // AI
       this.skill = opts.skill || 1; this.aiOff = 0; this.aiOffT = opts.laneBias || 0; this.laneBias = opts.laneBias || 0;
@@ -1926,7 +1929,7 @@ const Core = (function () {
     place(x, z, h) {
       this.x = this.px = x; this.z = this.pz = z; this.h = this.ph = h; if (this.nvA) this.nvA = 0;
       this.y = this.py = 0; this.vy = 0; this.air = 0; this.airT = 0; this.landT = 0;
-      this.vx = this.vz = this.w = 0; this.gear = 1; this.rpm = this.m.idle; this.q.i = -1; if (this.cSx !== undefined) { this.cSx = this.cSz = 0; this.cSr = null; } if (this.xgl) { delete this.xgl; delete this.xglT; }   // (a knock's slide and lost grip gone: kTake; the fields only on a car a version's knock has pushed, so that Stara's cars are the old ones to the last field)
+      this.vx = this.vz = this.w = 0; this.gear = 1; this.rpm = this.m.idle; this.q.i = -1; this.cSx = this.cSz = 0; this.cSr = null; this.xgl = 0; this.xglT = 0;   // (a knock's slide and lost grip gone: kTake)
       this.wPath = 0; this.vAngP = null; this.csS = 0; this.csWd = 0; this.csB = 0; this.csBx = 0; this.csCo = 0; this.csLt = 0; this.csLp = 0; this.csThrP = 0; this.csK = 0; this.csKc = 0; this.csKs = null; this.csAn = 0; this.csAT = 0; this.csWcap = 1;
       for (const q of this.wq) q.i = -1;
     }
@@ -2175,7 +2178,7 @@ const Core = (function () {
       const rt = this.rpmTarget + (this.spin > 0.05 ? Math.min(2500, this.spin * 5000) : 0) + (this.drift > 0.3 && thr > 0.5 ? 500 * this.drift : 0);
       this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
       if (this.flt) this._heat(dt, fb, spd, thr, m);   // (failures: the brakes and the engine warm up, a cut tyre goes down)
-      if (gl > 0) { if (this.ck) this.ck.gl = Math.max(0, gl - dt / this.ck.glT); else { this.xgl = Math.max(0, gl - dt / (this.xglT || 0.9)); if (!this.xgl) { delete this.xgl; delete this.xglT; } } }   // (xglT: the versions' knock, KV glT)
+      if (gl > 0) { if (this.ck) this.ck.gl = Math.max(0, gl - dt / this.ck.glT); else { this.xgl = Math.max(0, gl - dt / (this.xglT || 0.9)); } }   // (xglT: the versions' knock, KV glT)
       if (slx || slz) { this.vx += slx; this.vz += slz; this.cSx = slx; this.cSz = slz; this.cSr = (this.vx * slx + this.vz * slz) / Math.hypot(slx, slz); }   // (Trki med avti: the push across that is left, kTake; cSr above)
     }
 
@@ -2407,7 +2410,7 @@ const Core = (function () {
       const rt = this.rpmTarget + (this.spin > 0.05 ? Math.min(2500, this.spin * 5000) : 0) + (this.drift > 0.3 && thr > 0.5 ? 500 * this.drift : 0);
       this.rpm += (Math.min(M.redline * 1.02, rt) - this.rpm) * Math.min(1, dt * 14);
       if (this.flt) this._heat(dt, fb, spd, thr, m);
-      if (gl > 0) { if (this.ck) this.ck.gl = Math.max(0, gl - dt / this.ck.glT); else { this.xgl = Math.max(0, gl - dt / (this.xglT || 0.9)); if (!this.xgl) { delete this.xgl; delete this.xglT; } } }   // (xglT: the versions' knock, KV glT)
+      if (gl > 0) { if (this.ck) this.ck.gl = Math.max(0, gl - dt / this.ck.glT); else { this.xgl = Math.max(0, gl - dt / (this.xglT || 0.9)); } }   // (xglT: the versions' knock, KV glT)
     }
 
     // failures (Car.flt, Race opts.faults): the brakes warm up with the work they do (their force by the speed: 0.094 °C a joule a kilogram)
@@ -3184,6 +3187,7 @@ const Core = (function () {
     if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
     const fa = a.isPlayer && !b.isPlayer ? K.pm : 1, fb = b.isPlayer && !a.isPlayer ? K.pm : 1;
     const ma = (a.m.mass + (a.fuelKg || 0)) * fa, mb = (b.m.mass + (b.fuelKg || 0)) * fb, Ia = a.I * ma / a.m.mass, Ib = b.I * mb / b.m.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
+    if (!obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid)) return 0;   // (the whole boxes apart: so are the round ones, which lie inside them; a rival in a train 0.4 m behind is right at the reach above, the corners' search below each step for nothing)
     const o = rboxHit(a, b);
     if (!o) {   // (the round corners apart, the cars' bodies, as drawn, still into each other at a corner: only pushed apart, softly; no knock)
       const q = obbHit(a.x, a.z, a.h, a.m.len, a.m.wid, b.x, b.z, b.h, b.m.len, b.m.wid), c = q ? (q.pen - RB_SLOP) * RB_PUSH : 0; if (c <= 0) return 0;
