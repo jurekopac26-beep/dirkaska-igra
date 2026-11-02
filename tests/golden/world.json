@@ -1070,5 +1070,25 @@
    "tyremarks:MeshBasicMaterial": "20e8e311",
    "roadwear:MeshLambertMaterial": "d6537f70"
   }
+ },
+ "hakone": {
+  "meshes": 4796,
+  "verts": 2784019,
+  "instances": 42511,
+  "props": 15,
+  "crowd": 424,
+  "world": "2a3bcb34",
+  "propsHash": "360ab95",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "eb21ef50",
+   "-:MeshPhongMaterial": "d85bd231",
+   "crowd:MeshLambertMaterial": "a4d5a48b",
+   "-:MeshBasicMaterial": "baaaaa1",
+   "ao:MeshBasicMaterial": "158cf89b",
+   "tyremarks:MeshBasicMaterial": "68a9fb1e",
+   "roadwear:MeshLambertMaterial": "601baa56",
+   "brakeBoards:MeshLambertMaterial": "53b1d0e"
+  }
  }
 }
