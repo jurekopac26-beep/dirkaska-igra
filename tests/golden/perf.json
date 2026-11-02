@@ -341,5 +341,12 @@
   "kverts": 1249,
   "maxKverts": 1550,
   "jsMs": 0
+ },
+ "livorno": {
+  "calls": 166,
+  "maxCalls": 213,
+  "kverts": 406,
+  "maxKverts": 631,
+  "jsMs": 2.86
  }
 }

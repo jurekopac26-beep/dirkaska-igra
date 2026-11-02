@@ -3,6 +3,7 @@
   "about": "Livorno, Italija (id livorno): the old road course of 1922-1930 by Livorno on today's roads, one lap clockwise from the start line at Ardenza Mare (docs/proga-livorno.md)",
   "box": [43.44, 10.295, 43.53, 10.41],
   "closed": true,
+  "dist": {"grid": 500},
   "route": [
     [43.51189, 10.31907, "Viale di Antignano", "start: the seafront road on the bridge over the Rio Ardenza by the Rotonda, northbound"],
     [43.51292, 10.31831, "Viale Italia", "the Rotonda (on the left, by the sea)"],

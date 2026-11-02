@@ -22,7 +22,7 @@ Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gr
 |---|---|---|---|
 | 1 | **Podatki:** potek proge (OSM), višine (Copernicus GLO-30), raba tal (OSM + ESA WorldCover), stavbe in drevesa do 60 m ob cesti; ta načrt | 2–3 h | narejen (2. 11. 2026): `tools/proga-podatki.py` + `tools/livorno/` (`config.json`, `livorno.json`, mreže PNG), ta načrt |
 | 2 | **Proga v igri:** `js/tracks/livorno.js` (črta, višine, širina, imena ovinkov, `hudSigns`, štart, 100 avtov), angleški prevod v `js/lang.js`, test `tests/livorno.test.js`; AI odpelje cel krog s 100 avti | 2–3 h | narejen (2. 11. 2026): proga iz `tools/livorno/build.py track`, 100/100 avtov v cilju brez reševanja |
-| 3 | **Okolica do 60 m:** `js/world-livorno.js` (teren, morje in obala, pečine, vile in hiše, stolpi, gozd, zidovi, gledalci, štartni prostor) | 3–4 h | |
+| 3 | **Okolica do 60 m:** `js/world-livorno.js` (teren, morje in obala, pečine, vile in hiše, stolpi, gozd, zidovi, gledalci, štartni prostor) | 3–4 h | narejen (2. 11. 2026): `js/world-livorno.js` + `js/data/livorno.js` (`build.py world`); obremenitev 166 / 213 klicev, 406 / 631 tisoč oglišč |
 | 4 | **Obremenitev telefona:** poenostavitve do mej (`tests/golden/perf.json`), reference (`npm run golden:update`), druge proge enako obremenjene | 1–2 h | |
 | 5 | **Meni in opisi:** `assets/tracks/livorno.webp` in `livorno-rain.webp` (`maketa-menija/orodja`), `docs/proge/livorno.md`, README (Proge, Zasluge: OSM ODbL, Copernicus DEM, ESA WorldCover, krošnje Meta/WRI), `docs/kazalo.md`; pull request | 1–2 h | |
 
@@ -135,6 +135,14 @@ Raba tal do 150 m od ceste (WorldCover): drevesa 55 %, pozidano 22 %, voda 9 %, 
 - Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca CC BY 4.0.
 - Meta and World Resources Institute, High Resolution Canopy Height Maps, licenca CC BY 4.0 (višina krošenj za tla pod drevesi).
+
+## Sklop 3: kaj je narejeno
+
+- `js/world-livorno.js` (`World.ext.livorno`) na skupnih pomočnikih koridorja (`nrPrep`, `nrGround`, ploščice terena, kot Nürburg in Bang Saen); podatki `js/data/livorno.js` iz `python3 -I tools/livorno/build.py world` (teren 32 m, raba tal 16 m v obliki `nrPrep`, oddaljeno kopno 200 m, stavbe, zidovi, obala, pečine, železnica, znamenitosti, drevesa OSM, razponi mostov). Za rabo tal do 500 m od ceste ima `tools/livorno/config.json` `dist.grid` 500.
+- **Do 60 m od ceste:** stavbe iz OSM (hiše in vile v okrasti, krem, lososni in beli barvi s strešniki, bloki z ravno streho in vrstami oken, cerkve z zvonikom; gradova Antignano in Boccale ter stolp Calafuria iz kamna z nazobčanim vrhom, iz obrisov znamenitosti), drevesa (pinije, primorski bori, črnike, ciprese, grmičje makije, pinije v parku Terase ob morju, drevesa OSM), nizki kamniti zidovi ob cesti (ovire Core), betonski parapeti na mostovih, bel zid z lovilno ograjo ob startu, zidovi in žive meje OSM, skale iz peščenjaka ob obali, železnica ob obali (gramoz, tirnici, drogovi) in železniški most v Ardenzi, mostovi čez zalive (krov in stebri; tla pod mostom so krov: `groundH`), štart (transparent brez napisov, zastave) in gledalci (start, lasnice, Antignano, Ardenza Terra).
+- **Dlje:** teren iz višin (gozd kot temna krošnja, makija, prah naselij, peščenjak na strminah in ob morju, pesek plaž), morje do obzorja s pasom pene ob obali blizu ceste (morsko dno pod obalo: `P.pad`), oddaljeni griči in mesto (200 m celice), svetišče na Montenero kot ena preprosta stavba na hribu.
+- Razdalja do obale: predznak iz črte OSM samo do 25 m od nje, dlje iz višin (konci odrezanih kosov obale so dajali napačno stran: morje sredi Antignana).
+- Obremenitev (`perf.test.mjs`, NIZKA): povprečno 166 klicev in 406 tisoč oglišč, največ 213 in 631 tisoč (meja 300 in 900 tisoč); reference `tests/golden/perf.json` in `world.json` za Livorno.
 
 ## Sklop 2: kaj je narejeno
 

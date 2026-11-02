@@ -1070,5 +1070,26 @@
    "tyremarks:MeshBasicMaterial": "20e8e311",
    "roadwear:MeshLambertMaterial": "d6537f70"
   }
+ },
+ "livorno": {
+  "meshes": 1710,
+  "verts": 1047751,
+  "instances": 41754,
+  "props": 9,
+  "crowd": 3928,
+  "world": "d89f9090",
+  "propsHash": "bd604ff5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "e09fd13",
+   "-:MeshPhongMaterial": "9b8e0e96",
+   "crowd:MeshLambertMaterial": "221d7a3c",
+   "-:MeshBasicMaterial": "adbf26fd",
+   "ao:MeshBasicMaterial": "e24c3b9c",
+   "tyremarks:MeshBasicMaterial": "cc70dfbf",
+   "roadwear:MeshLambertMaterial": "12d606d0",
+   "worn:MeshLambertMaterial": "bdf298c8",
+   "brakeBoards:MeshLambertMaterial": "43625280"
+  }
  }
 }
