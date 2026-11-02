@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Morocco</title>
+<defs>
+<clipPath id="ma-x0"><circle cx="478.49" cy="260.78" r="19.97"/></clipPath>
+<clipPath id="ma-x1"><circle cx="496.11" cy="314.98" r="19.97"/></clipPath>
+<clipPath id="ma-x2"><circle cx="450" cy="348.48" r="19.97"/></clipPath>
+<clipPath id="ma-x3"><circle cx="403.89" cy="314.98" r="19.97"/></clipPath>
+<clipPath id="ma-x4"><circle cx="421.51" cy="260.78" r="19.97"/></clipPath>
+<clipPath id="ma-y0"><circle cx="478.49" cy="260.78" r="30"/></clipPath>
+<clipPath id="ma-y1"><circle cx="496.11" cy="314.98" r="30"/></clipPath>
+<clipPath id="ma-y2"><circle cx="450" cy="348.48" r="30"/></clipPath>
+<clipPath id="ma-y3"><circle cx="403.89" cy="314.98" r="30"/></clipPath>
+<clipPath id="ma-y4"><circle cx="421.51" cy="260.78" r="30"/></clipPath>
+</defs>
+<path fill="#C1272D" d="M0,0H900V600H0Z"/>
+<path d="M450,173.08L524.6,402.68L329.29,260.78L570.71,260.78L375.4,402.68Z" fill="none" stroke="#006233" stroke-width="14.27" stroke-linejoin="miter" stroke-miterlimit="10"/>
+<path d="M450,173.08L524.6,402.68" stroke="#C1272D" stroke-width="19.97" clip-path="url(#ma-x0)"/><path d="M450,173.08L524.6,402.68" stroke="#006233" stroke-width="14.27" clip-path="url(#ma-y0)"/>
+<path d="M570.71,260.78L375.4,402.68" stroke="#C1272D" stroke-width="19.97" clip-path="url(#ma-x1)"/><path d="M570.71,260.78L375.4,402.68" stroke="#006233" stroke-width="14.27" clip-path="url(#ma-y1)"/>
+<path d="M524.6,402.68L329.29,260.78" stroke="#C1272D" stroke-width="19.97" clip-path="url(#ma-x2)"/><path d="M524.6,402.68L329.29,260.78" stroke="#006233" stroke-width="14.27" clip-path="url(#ma-y2)"/>
+<path d="M375.4,402.68L450,173.08" stroke="#C1272D" stroke-width="19.97" clip-path="url(#ma-x3)"/><path d="M375.4,402.68L450,173.08" stroke="#006233" stroke-width="14.27" clip-path="url(#ma-y3)"/>
+<path d="M329.29,260.78L570.71,260.78" stroke="#C1272D" stroke-width="19.97" clip-path="url(#ma-x4)"/><path d="M329.29,260.78L570.71,260.78" stroke="#006233" stroke-width="14.27" clip-path="url(#ma-y4)"/>
+</svg>

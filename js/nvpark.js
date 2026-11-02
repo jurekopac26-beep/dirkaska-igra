@@ -15,6 +15,14 @@ const NVPark = (function () {
     LAKE: [[30.5, -78.5], [36, -81.5], [41.5, -78.5], [43, -71], [40.5, -63.5], [35, -56], [28, -54.5], [24, -60], [27, -70.5]],
     LANES: [[[77, 27], [76.5, 14], [72, 3], [62, -7], [50, -17], [38, -28]], [[38, -28], [45, -44], [55.5, -63], [62, -83], [64, -101], [66, -115], [63.5, -128], [58, -140]],
       [[58, -140], [56.5, -156], [51.5, -167], [49.5, -178], [47.5, -189], [40, -198.5], [31, -205], [22, -210]]] };
+  // the big plaza (F) as the user wanted it (30. 10.): its lawn a wide ring of asphalt to drift round, banked inwards (the outer edge 0.15 higher
+  // a metre), on top of a small hill, the fountain in the middle the park's highest point; off the ring the hill's slope down (r0, r1: the
+  // ring's inner and outer edge, H its outer edge's height, foot: the slope's width). The ground (js/newmap.js H3.gy, a crest) and the ring's tilt
+  // for the cars (H3.bankR.tilt) are from here
+  const HILL = { F: { r0: 5.2, r1: 19.5, H: 4.2, sl: 0.15, foot: 20 } };
+  const hillY = (k, x, z) => { const h = HILL[k], [cx, cz] = J.PL[k], r = Math.hypot(x - cx, z - cz); if (r >= h.r1 + h.foot) return 0;
+    if (r >= h.r1) return h.H * 0.5 * (1 + Math.cos(Math.PI * (r - h.r1) / h.foot)); return h.H - h.sl * (h.r1 - Math.max(r, h.r0)); };
+  const hillCrest = () => { const [cx, cz] = J.PL.F, R = HILL.F.r1 + HILL.F.foot; return { bb: [cx - R, cx + R, cz - R, cz + R], f: (x, z) => hillY('F', x, z) }; };
   const inPoly = (P, x, z) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, zi] = P[i], [xj, zj] = P[j]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; };
   const inPark = (x, z) => inPoly(PARK, x, z);
   // the toy shop by road 2 and the glass footbridge over it (their feet, the path between): nothing of the park's stands there
@@ -49,14 +57,31 @@ const NVPark = (function () {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
       const gt = tx.grass; gt.wrapS = gt.wrapT = THREE.RepeatWrapping; flat(g, L(0xbfe0a0, { map: gt, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); }
     // the lanes and the plazas' rings: asphalt 6.5 m wide, 0.1 m over the ground
-    const lane = (pts, w = 6.5) => { const cv = new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z))), n = Math.max(4, Math.round(cv.getLength() / 1.5)), P = cv.getSpacedPoints(n), pos = [], uv = [], idx = [];
+    const lane = (pts, w = 6.5, draw = true) => { const cv = new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z))), n = Math.max(4, Math.round(cv.getLength() / 1.5)), P = cv.getSpacedPoints(n), pos = [], uv = [], idx = [];
       P.forEach((p, i) => { const a = P[Math.max(0, i - 1)], b = P[Math.min(n, i + 1)], tx2 = b.x - a.x, tz2 = b.z - a.z, l = Math.hypot(tx2, tz2) || 1, nx = -tz2 / l, nz = tx2 / l;
         for (const s of [-1, 1]) { const x = p.x + nx * s * w / 2, z = p.z + nz * s * w / 2; pos.push(x, gy(x, z) + 0.1, z); uv.push(x / 7, z / 7); } if (i) { const q = (i - 1) * 2; idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); } });
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+      if (!draw) return P; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
       flat(g, L(0x8c8a92, { map: tx.asphalt, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); return P; };
-    const LP = J.LANES.map(p => lane(p));
+    // (the lanes drawn up to the drift ring's outer edge, none over it; LP: the whole lanes, for what stands along them)
+    const LP = J.LANES.map(p => { const [cx, cz] = J.PL.F, R = HILL.F.r1 - 1, out = (q) => Math.hypot(q[0] - cx, q[1] - cz) > R, q = [];
+      for (let i = 0; i < p.length; i++) { if (out(p[i])) { q.push(p[i]); continue; } for (const j of [i - 1, i + 1]) { if (!p[j] || !out(p[j])) continue; let lo = 0, hi = 1; for (let k = 0; k < 24; k++) { const m = (lo + hi) / 2; if (out([p[j][0] + (p[i][0] - p[j][0]) * m, p[j][1] + (p[i][1] - p[j][1]) * m])) lo = m; else hi = m; } q.push([p[j][0] + (p[i][0] - p[j][0]) * lo, p[j][1] + (p[i][1] - p[j][1]) * lo]); } }   // (cut where it meets the ring)
+      if (q.length === p.length) return lane(p); lane(q.length >= 2 ? q : p); return lane(p, 6.5, false); });
     // the plazas: a ring of lane round a lawn with a fountain and trees
-    for (const k of ['F', 'C', 'A']) { const [x, z, R] = J.PL[k], ring = []; for (let q = 0; q <= 48; q++) { const a = q / 48 * 6.283; ring.push([x + R * Math.cos(a), z + R * Math.sin(a)]); } lane(ring);
+    // (F: the drift ring on its hill, an annulus of asphalt with a white line at each edge, banked inwards; the fountain on a plinth, the highest point)
+    { const [x, z] = J.PL.F, h = HILL.F, N = 72, pos = [], uv = [], idx = [], lin = [], li = [];
+      for (let q = 0; q <= N; q++) { const a = q / N * 6.2832, c = Math.cos(a), s2 = Math.sin(a); for (let k = 0; k <= 4; k++) { const r = h.r0 + (h.r1 - h.r0) * k / 4, px = x + r * c, pz = z + r * s2; pos.push(px, gy(px, pz) + 0.1, pz); uv.push(px / 7, pz / 7); }
+        if (q) { const b = (q - 1) * 5; for (let k = 0; k < 4; k++) idx.push(b + k, b + k + 5, b + k + 1, b + k + 1, b + k + 5, b + k + 6); }
+        for (const [r, e] of [[h.r0 + 0.35, 0.12], [h.r1 - 0.35, 0.12]]) { const v = lin.length / 3; for (const d of [-e, e]) { const px = x + (r + d) * c, pz = z + (r + d) * s2; lin.push(px, gy(px, pz) + 0.13, pz); } if (q) li.push(v - 2, v, v - 1, v - 1, v, v + 1); } }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+      flat(g, L(0x8c8a92, { map: tx.asphalt, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
+      const gl = new THREE.BufferGeometry(); gl.setAttribute('position', new THREE.Float32BufferAttribute(lin, 3)); gl.setIndex(li); gl.computeVertexNormals(); flat(gl, L(0xf4f4f0, { side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+      const y0 = gy(x, z), top = h.H + 0.4 - y0;
+      at(new THREE.Mesh(new THREE.CylinderGeometry(h.r0 - 0.4, h.r0 - 0.1, top, 28), L(0xd8d4c8)), x, z, top / 2); at(new THREE.Mesh(new THREE.CylinderGeometry(h.r0 - 0.8, h.r0 - 0.8, 0.12, 28), L(0x4aa0d8)), x, z, top + 0.02);
+      at(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.7, 1.8, 10), L(0xd8d4c8)), x, z, top + 0.9); at(new THREE.Mesh(new THREE.CylinderGeometry(1.4, 0.4, 0.4, 14), L(0xd8d4c8)), x, z, top + 1.9);
+      const S = H3.solids || (H3.solids = []); let p0 = [x + h.r0 - 0.1, z]; for (let q = 1; q <= 24; q++) { const a = q / 24 * 6.2832, p1 = [x + (h.r0 - 0.1) * Math.cos(a), z + (h.r0 - 0.1) * Math.sin(a)]; S.push({ ax: p0[0], az: p0[1], bx: p1[0], bz: p1[1], r: 0.2 }); p0 = p1; }
+      // the ring's tilt for the cars: up outwards (js/core.js track.bank2)
+      const B0 = H3.bankR; H3.bankR = Object.assign({}, B0 || {}, { tilt: (px, pz, out) => { const dx = px - x, dz = pz - z, r = Math.hypot(dx, dz) || 1; if (r > h.r0 - 0.3 && r < h.r1 + 0.3) { out.sl = h.sl; out.nx = dx / r; out.nz = dz / r; return out; } if (B0) return B0.tilt(px, pz, out); out.sl = 0; out.nx = out.nz = 0; return out; } }); }
+    for (const k of ['C', 'A']) { const [x, z, R] = J.PL[k], ring = []; for (let q = 0; q <= 48; q++) { const a = q / 48 * 6.283; ring.push([x + R * Math.cos(a), z + R * Math.sin(a)]); } lane(ring);
       at(new THREE.Mesh(new THREE.CylinderGeometry(R - 5, R - 4.6, 0.5, 24), L(0x7aa84a)), x, z, 0.25); at(new THREE.Mesh(new THREE.CylinderGeometry(3, 3.2, 0.7, 20), L(0xd8d4c8)), x, z, 0.5); at(new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 0.1, 20), L(0x4aa0d8)), x, z, 0.85);
       for (let t = 0; t < 8; t++) { const a = t / 8 * 6.283, px = x + Math.cos(a) * (R - 6), pz = z + Math.sin(a) * (R - 6); at(new THREE.Mesh(new THREE.IcosahedronGeometry(1.4, 0), L(0x4f8a34)), px, pz, 2.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 2, 6), L(0x6a4a2a)), px, pz, 1); } }
     const SC = new Map(), STR = (c1, c2, n = 12) => SC.get(c1 + c2 + n) || SC.set(c1 + c2 + n, STR0(c1, c2, n)).get(c1 + c2 + n);
@@ -128,7 +153,7 @@ const NVPark = (function () {
       g.userData.ride = 'tower'; at(g, J.PAD_T[0], J.PAD_T[1]); }
     // the dark ride's house
     { const [x, z, w, d, a] = J.HISA; at(new THREE.Mesh(new THREE.BoxGeometry(w, 6, d), L(0x3a2a3a)), x, z, 3, -a); at(new THREE.Mesh(new THREE.ConeGeometry(w * 0.6, 4, 4), L(0x1a1a22)), x, z, 8, -a + Math.PI / 4); }
-    // along every lane, both sides, 2-4 m off its edge: stalls, crates, barrels, balloons, bins, benches, cones, lamps, barriers; four bouncy castles
+    // along every lane, both sides, 2-4 m off its edge: stalls, crates, barrels, balloons, bins, benches, cones, lamps, barriers (none on the drift ring's hill); four bouncy castles
     const items = [], folk = [], trees = []; let seed = 7, spotFn = null; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const PM = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; }, PC = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a];
     const mk = { stall: (g) => { g.add(PM(new THREE.BoxGeometry(2.6, 1.1, 1.8), L(0xf0ece2), 0, 0.55, 0)); const sc = ['#e8452c', '#2a7ad8', '#3fbf6a'][Math.floor(rnd() * 3)], a = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.12, 2.2), L(0xffffff)); a.userData.c = sc; a.position.y = 2.2; a.rotation.x = 0.15; g.add(a); for (const s of [-1.3, 1.3]) g.add(PM(new THREE.BoxGeometry(0.08, 2.2, 0.08), L(0xf4f4f0), s, 1.1, -0.9)); },
@@ -144,7 +169,7 @@ const NVPark = (function () {
     const ORDER = ['stall', 'crate', 'barrel', 'balloons', 'bin', 'bench', 'cones', 'stall', 'lamp', 'barrier', 'crate', 'bench', 'barrel', 'bin'];
     const LOOSE = { stall: 1, barrel: 1, cones: 1, crate: 1, bin: 1, bench: 1, barrier: 1, balloons: 1, lamp: 1 };   // (knocked over by the car: js/nvwalls.js; the bouncy castles stay, the car bounces off them)
     let ko = 0; for (const P of LP) for (let i = 2; i < P.length - 2; i += 3) for (const s of [-1, 1]) { const a = P[i - 1], b = P[i + 1], dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l, nz = dx / l, off = 3.25 + 1.4 + rnd() * 1.5, x = P[i].x + nx * s * off, z = P[i].z + nz * s * off; if (!inP(x, z)) continue;
-      const k = ORDER[ko++ % ORDER.length], g = new THREE.Group(); mk[k](g); if (rd(x, z) < 1.5 || plot(x, z)) continue; g.position.set(x, gy(x, z) + 0.1, z); g.rotation.y = Math.atan2(-dz, dx) + (s > 0 ? Math.PI : 0);
+      const k = ORDER[ko++ % ORDER.length], g = new THREE.Group(); mk[k](g); if (rd(x, z) < 1.5 || plot(x, z) || hillY('F', x, z) > 0.2) continue; g.position.set(x, gy(x, z) + 0.1, z); g.rotation.y = Math.atan2(-dz, dx) + (s > 0 ? Math.PI : 0);
       if (wayGap(x, z, false) < 1.6) continue;   // (not on another way: road 2, the bend road)
       if (LOOSE[k]) { items.push({ g, k, x, z, loose: true }); continue; } put(g); items.push({ g, k, x, z }); }   // (the barrels, the cones and the stalls: loose, below)
     for (const [x, z] of [[20, -110], [88, -150], [14, -160], [92, -40]]) { if (wayGap(x, z, false) < 3.6) continue; const g = new THREE.Group(); mk.inflat(g); g.position.set(x, gy(x, z), z); put(g); items.push({ g, k: 'inflat', x, z }); (H3.solids || (H3.solids = [])).push({ ax: x, az: z, bx: x, bz: z, r: 2.7, e: 0.9, snd: 'bale' }); }   // (the car bounces off it)
@@ -325,7 +350,7 @@ const NVPark = (function () {
         BU.forEach(([x, y, z, r], i) => { const q = ((t / 2.4 + pb[i]) % 1 + 1) % 1, sw = q < 0.85 ? Math.sin(q / 0.85 * Math.PI * 0.5) : 0, on = q < 0.85 ? 1 : 0; imB.setMatrixAt(i, _m.compose(_p.set(x - CX, y - G0, z - CZ), _q, _s.set(r * (0.4 + 0.8 * sw) * on, r * (0.2 + 1.1 * sw) * on, r * (0.4 + 0.8 * sw) * on))); });
         imS.instanceMatrix.needsUpdate = imB.instanceMatrix.needsUpdate = true; glow.material.opacity = g0 * (0.9 + 0.08 * Math.sin(t * 2.7) + 0.05 * Math.sin(t * 6.1 + 1)); } };
       volc.anim(0); }
-    // trees and people (on the plazas and the lanes), clear of the lanes, the rides and the volcano's ash
+    // trees and people (on the plazas and the lanes; at the big plaza round the drift ring, just past its outer edge), clear of the lanes, the rides and the volcano's ash
     { let sd = 21; const r3 = () => (sd = (sd * 16807) % 2147483647) / 2147483647, nearLane = (x, z) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 36));
       const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
       const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 70; t++) {   // (as many as in the pictures' park)
@@ -333,8 +358,8 @@ const NVPark = (function () {
        
         trees.push([+x.toFixed(2), +z.toFixed(2), +s.toFixed(2)]); at(new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), L(TC[nt % 4], { flatShading: true })), x, z, h + 1.6); at(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, h + 0.6, 4, 1, true), L(0x6a4a2a)), x, z, (h + 0.6) / 2); nt++; }
       const PC2 = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a, 0xf4f4f0, 0x2a2622]; for (let k = 0; k < 160; k++) { let x, z;
-        if (k < 90) { const [px, pz, R] = J.PL[['F', 'C', 'A'][k % 3]], a = r3() * 6.28, rr = R - 3.5 + (r3() - 0.5) * 2.5; x = px + Math.cos(a) * rr; z = pz + Math.sin(a) * rr; } else { const P = LP[k % LP.length], p = P[Math.floor(r3() * P.length)]; x = p.x + (r3() - 0.5) * 7.5; z = p.z + (r3() - 0.5) * 7.5; }
-        const c = PC2[Math.floor(r3() * 8)]; if (rd(x, z) < 1.5 || plot(x, z) || wayGap(x, z, false) < 0.8) continue; folk.push({ x, z, c }); }   // (they run out of the car's way: js/nvwalls.js walkStep)
+        if (k < 90) { const pk = ['F', 'C', 'A'][k % 3], [px, pz, R] = J.PL[pk], a = r3() * 6.28, rr = HILL[pk] ? HILL[pk].r1 + 1.6 + r3() * 2 : R - 3.5 + (r3() - 0.5) * 2.5; x = px + Math.cos(a) * rr; z = pz + Math.sin(a) * rr; } else { const P = LP[k % LP.length], p = P[Math.floor(r3() * P.length)]; x = p.x + (r3() - 0.5) * 7.5; z = p.z + (r3() - 0.5) * 7.5; }
+        const c = PC2[Math.floor(r3() * 8)]; if (rd(x, z) < 1.5 || plot(x, z) || wayGap(x, z, false) < 0.8 || (k >= 90 && hillY('F', x, z) > 0.2)) continue; folk.push({ x, z, c }); }   // (they run out of the car's way: js/nvwalls.js walkStep)
       // where one may stand out of the way: the park's grass (no way, ride, the pond, the volcano, a fountain), off the circuit
       spotFn = (x, z) => inP(x, z) && wayGap(x, z, true) > 0.5 && rd(x, z) > 2 && !plot(x, z) && !inPoly(J.LAKE, x, z) && !RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) && ((x - VC.x) / (VC.rx * 1.6)) ** 2 + ((z - VC.z) / (VC.rz * 1.6)) ** 2 >= 1 && !Object.values(J.PL).some(([px, pz]) => (px - x) ** 2 + (pz - z) ** 2 < 16); }
     // the loose ones as they stand, one mesh moved by js/nvwalls.js: the barrels, the cones, the crates, the bins, the low barriers' blocks, the stalls (their
@@ -354,5 +379,5 @@ const NVPark = (function () {
   const VC = { x: 83, z: -188.5, rx: 15, rz: 17, hv: 22 };
   // each step of the race (js/game.js): the lava moves (its instances only near the car)
   function tick(dt, car) { if (!volc) return; vt += dt; if (car && (car.x - volc.x) ** 2 + (car.z - volc.z) ** 2 > 350 * 350) return; volc.anim(vt); }
-  return { build, tick, inPark, PARK, J, VC, get built() { return built; } };
+  return { build, tick, inPark, PARK, J, VC, HILL, hillY, hillCrest, get built() { return built; } };
 })();

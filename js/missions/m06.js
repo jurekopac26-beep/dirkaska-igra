@@ -4,50 +4,17 @@
    warms up as the time goes by, faster after a hard knock and while the escort is far ahead; at 8 °C it is lost. The escort waits for
    the player (its pace, skCap, by the gap: ESC); left more than 300 m behind for 8 s, the mission is lost. Over the finish at the top:
    the hospital, done: a low white building beside the road just past the line (lit windows, a blue H, no red cross), its car park and
-   an ambulance waiting at its door with its lights flashing (hospital(): a few simple bodies, ~10 draw calls). */
+   an ambulance waiting at its door with its lights flashing (MisKit.hospital: a few simple bodies, ~10 draw calls). */
 (function () {
   'use strict';
   if (typeof Missions === 'undefined') return;
+  const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
   // the organ: from T0 °C, up RISE °C a second (at 8 °C after 250 s: the escort's own pace takes ~140 s), HIT °C a hard knock (an impact over 3), FAR °C a second more with the escort over 150 m
   // ahead; lost at TMAX. The escort: its pace by the gap to the player (m ahead of the player): GAP0..GAP1 its own, beyond GAP1 slower
   // down to SLOW, under GAP0 (or the player ahead of it) quicker
   const K = { T0: 4.0, TMAX: 8.0, RISE: 0.016, HIT: 0.25, FAR: 0.02, FARGAP: 150, GAP0: 25, GAP1: 70, SLOW: 0.45, LOST: 300, LOSTT: 8 };
   const ESC_PACE = 1.0;
-  // a canvas painted by fn as a texture
-  function tex(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 2; return t; }
-  // the hospital at the finish: beside the road on its roomier side, 10 m past the line, facing the road
-  function hospital(r) {
-    const T = r.race.track, s = T.finishS + 12, i = T.idx(s), side = T.br[i] >= T.bl[i] ? 1 : -1, w = T.wS(s);
-    const W = (typeof Render !== 'undefined' && Render.world) || {}, gy = (x, z) => (W.groundH ? W.groundH(x, z) : T.hy[i]) || T.hy[i];
-    const at = (along, off) => { const j = T.idx(s + along); return [T.px[j] + T.nx[j] * off * side, T.pz[j] + T.nz[j] * off * side]; };
-    const g = new THREE.Group(), rot = Math.atan2(-T.tz[i], T.tx[i]), face = Math.atan2(-side * T.nx[i], -side * T.nz[i]);   // (rot: a box's length along the road; face: a plane's front toward the road)
-    const lam = (c) => new THREE.MeshLambertMaterial({ color: c }), bas = (c, map) => new THREE.MeshBasicMaterial({ color: c, map: map || null });
-    const box = (x, z, y, L, H, D, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(L, H, D), m); o.position.set(x, y + H / 2, z); o.rotation.y = rot; g.add(o); return o; };
-    // the car park: a grey slab between the road and the building
-    { const [x, z] = at(0, w + 8); const y = Math.max(gy(x, z), T.hy[i]) + 0.04; box(x, z, y - 0.3, 34, 0.3, 12, lam(0x6d737a)); }
-    // the building: two floors, 30 m along the road, 12 m deep; the windows lit all round its front, a flat roof
-    const [bx, bz] = at(0, w + 20), by = Math.max(gy(bx, bz), T.hy[i]) - 0.2;
-    box(bx, bz, by, 30, 7.2, 12, lam(0xe4e7ea));
-    box(bx, bz, by + 7.2, 30.6, 0.5, 12.6, lam(0x9aa3ad));
-    const winT = tex(256, 64, (c, W2, H2) => { c.fillStyle = '#3b4552'; c.fillRect(0, 0, W2, H2); c.fillStyle = '#ffe2a0'; for (let k = 0; k < 16; k++) { c.fillRect(4 + k * 16, 6, 10, 20); if (k !== 7 && k !== 8) c.fillRect(4 + k * 16, 38, 10, 20); } });
-    const [fx, fz] = at(0, w + 13.95); const front = new THREE.Mesh(new THREE.PlaneGeometry(29, 6), bas(0xffffff, winT)); front.position.set(fx, by + 3.5, fz); front.rotation.y = face; g.add(front);
-    // the door and its canopy, the sign: a white H on blue on a post, lit
-    const [dx, dz] = at(0, w + 13.4); box(dx, dz, by + 3.2, 6, 0.3, 2.2, lam(0xc9ced4));
-    const hT = tex(64, 64, (c) => { c.fillStyle = '#1d5fd1'; c.fillRect(0, 0, 64, 64); c.fillStyle = '#fff'; c.font = 'bold 50px Arial, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('H', 32, 35); });
-    const [hx, hz] = at(-13, w + 2.5), hy = Math.max(gy(hx, hz), T.hy[i]); box(hx, hz, hy, 0.25, 4, 0.25, lam(0x8a929c));
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 0.3), [bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0x1d5fd1), bas(0xffffff, hT), bas(0xffffff, hT)]);
-    sign.position.set(hx, hy + 5, hz); sign.rotation.y = face; g.add(sign);
-    // the ambulance at the door: white, a red band, its light bar flashing (step)
-    const [ax, az] = at(3, w + 9), ay = Math.max(gy(ax, az), T.hy[i]);
-    box(ax, az, ay + 0.35, 5.6, 2.3, 2.1, lam(0xf4f5f7));
-    box(ax, az, ay + 1.0, 5.64, 0.3, 2.14, lam(0xd8282a));
-    const l0 = bas(0x5aa0ff), l1 = bas(0x10204a); r.amb = [l0, l1];
-    const [qx, qz] = at(3 + 1.6, w + 9.5), [px2, pz2] = at(3 + 1.6, w + 8.5);
-    box(qx, qz, ay + 2.65, 0.4, 0.25, 0.9, l0); box(px2, pz2, ay + 2.65, 0.4, 0.25, 0.9, l1);
-    r.add(g); r.hosp = g;
-  }
-
   Missions.add({
     id: '06', title: 'Srce v hladilni torbi', track: 'mulholland', car: 'jelen', stars: [165, 205], K,
     story: 'Ponoči moraš čez hribe pripeljati srce za presaditev. Pred tabo vozi policija.',
@@ -68,7 +35,7 @@
     begin(r) {
       r.temp = K.T0; r.lostT = 0; r.esc = r.race.escort || null;
       if (typeof Render !== 'undefined' && Render.setAtmos) Render.setAtmos({ season: 'summer', tod: 'night' }, true);
-      if (typeof THREE !== 'undefined') hospital(r);
+      if (typeof THREE !== 'undefined') { r.hs = KIT.hospital(r, r.race.track, r.race.track.finishS + 12); r.hosp = r.hs.g; }
       this.show(r);
     },
     step(r, dt) {
@@ -84,7 +51,7 @@
       // left behind
       if (gap > K.LOST) { r.lostT += dt; if (r.lostT > K.LOSTT) r.fail(tr('Izgubil si spremstvo.')); } else r.lostT = 0;
       r.say(gap > K.GAP1 * 1.6 ? 'Policija je daleč: dohiti jo, da ti odpira pot.' : gap < -10 ? 'Ne prehitevaj policije: promet se umika samo njej.' : this.hint);
-      if (r.amb) { const on = (r.t * 1.6) % 1 < 0.5; r.amb[0].color.setHex(on ? 0x5aa0ff : 0x10204a); r.amb[1].color.setHex(on ? 0x10204a : 0x5aa0ff); }   // (the ambulance's lamps, one side then the other)
+      if (r.hs) r.hs.blink(r.t);   // (the ambulance's lamps, one side then the other)
       r.gap = gap; r.toGo = Math.max(0, (T.raceLen || T.len) - Math.max(0, P.dist));
       this.show(r);
     },
