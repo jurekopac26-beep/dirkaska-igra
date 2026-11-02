@@ -805,7 +805,8 @@
        tower, down past the stadium, the gravel kink at its corner, the hairpins by the Lyseo school, Pitkäkatu's chicanes, the old pine, the park, the corner at
        the school and Norssi corner (def.crowds); people on the hillside steps and on the tower's terrace ---- */
     // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the islands the hairpins turn round (def.hairpin [[x, z, r], ...])
-    const HP = def.hairpin ? (Array.isArray(def.hairpin[0]) ? def.hairpin : [def.hairpin]) : [], crowdOut = (x, z) => { if (hard(x, z)) return true; for (const h of HP) if (Math.hypot(x - h[0], z - h[1]) < h[2] + 1.5) return true;
+    const nearBld = (x, z) => { for (let a = -7; a <= 7; a += 2.5) for (let b = -7; b <= 7; b += 2.5) if (onBld(x + a, z + b)) return true; return false; };   // (no crowd on the pavements by the blocks: the user's decision, 31. 10. 2026)
+    const HP = def.hairpin ? (Array.isArray(def.hairpin[0]) ? def.hairpin : [def.hairpin]) : [], crowdOut = (x, z) => { if (hard(x, z) || nearBld(x, z)) return true; for (const h of HP) if (Math.hypot(x - h[0], z - h[1]) < h[2] + 1.5) return true;
       const n = hjNear(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
     // a Finnish summer evening's crowd: blue and white, black rally merchandise, light summer clothes, a few in orange and red
     const SHIRTS = [[0.94, 0.94, 0.92], [0.9, 0.91, 0.92], [0.16, 0.36, 0.78], [0.2, 0.42, 0.86], [0.1, 0.11, 0.13], [0.14, 0.15, 0.17], [0.55, 0.6, 0.66], [0.4, 0.62, 0.85], [0.82, 0.16, 0.13], [0.95, 0.8, 0.2], [0.2, 0.5, 0.3], [0.96, 0.52, 0.12], [0.35, 0.36, 0.38], [0.74, 0.72, 0.62]];
@@ -819,7 +820,7 @@
         for (const o of [-0.7, 0.7]) { const a = r.d[Math.max(0, q - 1)], b = r.d[Math.min(r.d.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, px = x - dz / l * o, pz = z + dx / l * o;
           if (crH(px, pz, 31) > 0.55) continue; crowdPut(CR, px, hjGround(px, pz), pz, T.px[n.i] - px, T.pz[n.i] - pz, { flag: 0.1 }, 1); } } }
     if (out.vesilinna) { const V = out.vesilinna; for (let k = 0; k < 40; k++) { const a = k / 40 * TAU, px = V.x + Math.cos(a) * 7.6, pz = V.z + Math.sin(a) * 6.1; if (crH(px, pz, 33) < 0.35) continue; crowdPut(CR, px, V.top, pz, Math.cos(a), Math.sin(a), { flag: 0.08 }, 1); } }
-    for (const [bx, bz, ii, sd] of closedAt) { const mx = bx + T.tx[ii] * 1.9, mz = bz + T.tz[ii] * 1.9; crowdPut(CR, mx, hjGround(mx, mz), mz, -T.nx[ii] * sd, -T.nz[ii] * sd, { col: [1, 0.5, 0.06], flag: 0 }, 1); }   // (the marshals, hi-vis orange)
+    for (const [bx, bz, ii, sd] of closedAt) { const mx = bx + T.tx[ii] * 1.9, mz = bz + T.tz[ii] * 1.9; crowdPut(CR, mx, hjGround(mx, mz), mz, -T.nx[ii] * sd, -T.nz[ii] * sd, { col: [1, 0.5, 0.06], flag: 0, staff: true }, 1); }   // (the marshals, hi-vis orange)
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // (the trees keep clear of the crowds)
     let nCars = 0;
     { // the car parks full of the spectators' cars (one instanced car, its colour per instance): perpendicular bays along each car park's long side, two rows to an aisle
@@ -882,7 +883,7 @@
     const tvCam = (x, y, z, fx, fz) => { const g = scen.get(x, z); box(g, x, y, z, 0.1, 1.2, 0.1, 0, [0.15, 0.15, 0.16]); box(g, x, y + 1.2, z, 0.72, 0.4, 0.3, Math.atan2(fz, fx), [0.16, 0.16, 0.18], [0.3, 0.3, 0.32]);
       ouRod(g, [x + fx * 0.3, y + 1.4, z + fz * 0.3], [x + fx * 0.72, y + 1.4, z + fz * 0.72], 0.1, [0.07, 0.07, 0.08], 6); };
     for (const [d, sd, off] of def.tv || []) { const s = sAt(d), i = T.idx(s), o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + off), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
-      if (hard(x, z) || nearDD(x, z) < 4) continue; const yd = tower(x, z, T.hd[i], 4.6), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; tvCam(x + fx * 0.5, yd, z + fz * 0.5, fx, fz); crowdPut(CR, x - T.tx[i] * 0.5, yd, z - T.tz[i] * 0.5, fx, fz, {}, 1); }
+      if (hard(x, z) || nearDD(x, z) < 4) continue; const yd = tower(x, z, T.hd[i], 4.6), fx = -T.nx[i] * sd, fz = -T.nz[i] * sd; tvCam(x + fx * 0.5, yd, z + fz * 0.5, fx, fz); crowdPut(CR, x - T.tx[i] * 0.5, yd, z - T.tz[i] * 0.5, fx, fz, { staff: true }, 1); }
 
     /* ---- the town's things (def.scen.pts): street lamps (tall on the streets, lanterns in the park), benches, bus stops, traffic lights, bollards, litter bins,
        the fountain, statues, notice boards, post boxes ---- */
