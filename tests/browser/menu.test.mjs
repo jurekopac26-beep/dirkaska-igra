@@ -259,7 +259,7 @@ try {
     const tile = 'return root.querySelector(".t-single .im img").getAttribute("src");';
     const gImg = await ev(page, tile);
     await click(page, 'single'); await click(page, 'mode:trial');
-    await click(page, 'pick-weather'); await click(page, 'more-options'); await click(page, 'opt:pkRoad:pikes'); await done(page); await page.waitForTimeout(300);
+    await click(page, 'more-options'); await click(page, 'opt:pkRoad:pikes'); await done(page); await page.waitForTimeout(300);
     await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
     const aImg = await ev(page, tile);
     T.check('Pikes Peak: on Gravel the Single race tile shows its own model (pikesg.webp), on Asphalt the road\'s own (pikes.webp)',
