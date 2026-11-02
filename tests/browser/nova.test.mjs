@@ -10,7 +10,8 @@
 //   the row; Stara (the old knock) dims the knock rows of Preizkus (they keep their choice, its note says they do not apply), the other
 //   versions dim Razbijanje: odboji in vrtenje ob trku (only the old knock has it; with Stara it applies: Core.XR.bump); with Nova fizika the rows
 //   Zdrs po trku and Ujem gum dimmed too (the classic physics' only), the note says so; kept in the settings;
-//   in English (Car knocks: Simulation / Arcade / Soft / Stunt / Old)
+//   in English (Car knocks: Simulation / Arcade / Soft / Stunt / Old); back in Slovenian on a narrow phone (320×640) the rows of choices fitted
+//   again for the longer words, none cut off (Trki med avti on two lines)
 // - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 7 rows Trki med avti over
 //   the chosen version's numbers; Core.setTest): the category folded and the 12 rows inside it, all on Privzeto on a fresh profile; every level
 //   of every knock row sets its number in Core.TX (cPm, cE, cMu, cYaw, cGl, cSl, cFx), Privzeto none (the version's own); the rivals' rows
@@ -141,7 +142,15 @@ try {
       && enc.cat === 'Test: rivals and knocks' && enc.subs.join() === 'Rivals,Car knocks' && en[0].label === 'Pace spread'
       && en.slice(5).map(r => r.label).join() === 'Your car’s weight,Bounce,Rub on contact,Turn in a knock,Slide after a knock,Tyre catch,Sparks in a knock'
       && en[5].btns === 'Default,Equal,1.5×,2×' && en[5].sel === '3:2×' && en[6].btns === 'Default,None,Half,More' && en[10].btns === 'Default,Quick,Real,Slow' && en[11].sel === '2:Off', JSON.stringify({ ev, enc, en: en.map(r => r.label + ': ' + r.btns + ' ' + r.sel) }));
+    // back in Slovenian on a narrow phone (the rows fitted for the English words, then Simulacija … Stara, wider than Simulation … Old: the
+    // language's switch fits them again, before it the last choices were cut off until the settings were opened again)
+    await page.setViewportSize({ width: 320, height: 640 }); await page.waitForTimeout(300);
     await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
+    const nar = await page.evaluate(() => { const sg = [...document.querySelectorAll('#s-settings .seg')].filter(g => g.offsetParent), v = document.querySelector('#s-settings [data-set="crV"]');
+      return { n: sg.length, cut: sg.filter(g => g.scrollWidth > g.clientWidth + 1).map(g => (g.dataset.set || '?') + ':' + g.className + ' ' + g.scrollWidth + '/' + g.clientWidth), crV: v.className, btns: [...v.children].map(b => b.textContent).join() }; });
+    await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300);
+    T.check('back in Slovenian on a narrow phone (320×640, the settings fitted for the English words): every row of choices in the settings fitted again, none cut off; Trki med avti on two lines',
+      nar.n > 30 && nar.cut.length === 0 && /\bwrap\b/.test(nar.crV) && nar.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska,Stara', JSON.stringify(nar));
     // a race with the rivals' spread narrow, the classic physics, Kaskaderska with the rows over it: the paces dealt out narrower, the knocks kept
     // through the race; then back on Privzeto
     const spread = () => page.evaluate(() => { const k = window.__game.race.cars.filter(c => !c.isPlayer && !c.sc).map(c => c.skill); return { w: Math.max(...k) - Math.min(...k), phys: window.__game.race.opts.phys, n: k.length }; });

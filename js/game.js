@@ -588,6 +588,7 @@
     if (B[settingsReturn]) B[settingsReturn]();
     if (mp) buildRoom();
     for (const k in hudCache) delete hudCache[k]; lapTxt = null;   // (the HUD writes its texts again, the lap too)
+    fitSegs();   // (the rows of choices fitted again for the new words: Simulacija … Stara is wider than Simulation … Old; on a narrow phone it was cut off)
   }
   // the pause menu's restart: the climb or the stage again, the qualifying lap, the run from the police, the race
   const restartTxt = () => !race ? tr('Ponovi dirko') : race.chal ? tr('Poskusi znova') : race.timeTrial ? ttAgain(track.def) : race.quali ? tr('Ponovi krog') : race.pol ? tr('Ponovi beg') : tr('Ponovi dirko');
