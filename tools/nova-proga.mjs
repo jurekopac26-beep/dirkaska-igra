@@ -11,6 +11,7 @@
 //     docs/proge/<id>.md      osnutek opisa
 //     docs/kazalo.md          vrstica v tabeli prog
 //     tests/<id>.test.js      test proge (skupni preizkusi tests/lib/gore.js), vpis v tests/run.js in tests/README.md; stranske ceste: tests/junctions.test.js
+//     js/menu-data.js         tabele novega menija: dolžina in višine za graf (tools/menu-lens.js), kraj na globusu (tools/menu-globe.mjs: iz oznake uvoza)
 //   node tools/nova-proga.mjs <id> --medalje    samo znova izračuna medalje
 // Nato: preberi in dopolni opisa (desc, en.desc) in docs/proge/<id>.md, posebnosti v js/world-<id>.js, node tools/stamp.js, slika za meni
 // (maketa-menija/README.md), testi (docs/gorske-proge.md, Postopek).
@@ -158,4 +159,6 @@ G.done();
   if (out !== src) wr(trackF, out);
   console.log(`  medalje: avtopilot ${d.toFixed(1)} s (dež ${w.toFixed(1)} s) -> ${M}`);
 }
+/* ---- the new menu's tables (js/menu-data.js): the length and the heights for the graph, the place on the globe (from the import marker) ---- */
+if (!onlyMedals) for (const t of ['menu-lens.js', 'menu-globe.mjs']) { console.log('  (meni: node tools/' + t + ')'); execFileSync(process.execPath, [path.join(REPO, 'tools', t)], { stdio: 'inherit', cwd: REPO }); }
 console.log('naprej: opisa (desc, en.desc) in docs/proge/' + id + '.md, posebnosti v ' + worldF + ', node tools/stamp.js, slika za meni, testi');

@@ -8,8 +8,8 @@
   World.ext.mountbuller = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
     seed: 101, snow: 'all',
     road: { line: 'white' },
-    trees: { kinds: ['gum'], forest: 0.34 },
-    skiers: 50, nets: true, snowbanks: true,
+    trees: { kinds: ['gum'], forest: 0.34, h: [4.5, 9.5], stags: 0.07, young: 0.05 },
+    skiers: 80, nets: true, snowbanks: true,
     animals: [],
   });
 })();

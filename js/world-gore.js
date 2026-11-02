@@ -27,7 +27,7 @@
     ground: { grass: [0.42, 0.52, 0.26], forest: [0.3, 0.32, 0.2], shrub: [0.36, 0.4, 0.22], built: [0.5, 0.5, 0.46], rock: [0.56, 0.55, 0.52], dry: [0.62, 0.56, 0.38] },
     road: { line: 'white', centre: 'dash', double: true, edge: true, shoulder: [0.66, 0.66, 0.65], gravel: [0.62, 0.56, 0.46], paveC: [0.8, 0.8, 0.82] },
     tileR: 190, tileR2: 290, snowbanks: true, rails: true, poles: { col: [0.95, 0.4, 0.08], band: [0.09, 0.09, 0.1], every: 15, h: 3.4 }, posts: true,
-    trees: { kinds: ['gum'], forest: 0.34, open: 0.03, near: 2.4, h: [6, 12] }, rocks: true, nets: true, skiers: 50, lifts: true,
+    trees: { kinds: ['gum'], forest: 0.34, open: 0.03, near: 2.4, h: [6, 12], stags: 0, young: 0 }, rocks: true, nets: true, skiers: 50, lifts: true,
     bld: { walls: [[0.52, 0.36, 0.22], [0.66, 0.5, 0.32], [0.86, 0.84, 0.78], [0.42, 0.46, 0.4], [0.62, 0.32, 0.22], [0.72, 0.7, 0.64], [0.3, 0.38, 0.34]],
       roofs: [[0.22, 0.32, 0.26], [0.5, 0.18, 0.14], [0.3, 0.32, 0.34], [0.62, 0.64, 0.66], [0.16, 0.2, 0.26]] },
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
@@ -57,12 +57,14 @@
     if (sn > 0) {   // the snow: a cool blue in the hollows and under the trees, groomed and brighter on the runs, trodden grey in the village
       const hol = sstep(0.58, 0.3, P.n7(x * 0.8, z * 0.8)) * 0.5 + fo * 0.35, k = 0.97 + (m - 0.5) * 0.04;
       let sr = SNOW[0] * k - 0.05 * hol, sg = SNOW[1] * k - 0.03 * hol, sb = SNOW[2] * k;
+      const du = x * 0.8 + z * 0.6, dv = z * 0.8 - x * 0.6, drf = P.n7(du * 0.45, dv * 1.3) - 0.5 + (P.n4(du * 0.3, dv * 0.9) - 0.5) * 0.6; sr += drf * 0.08; sg += drf * 0.065; sb += drf * 0.03;   // (the wind's drifts: long low ridges, lighter and darker)
       sr = lerp(sr, PISTE[0], pi); sg = lerp(sg, PISTE[1], pi); sb = lerp(sb, PISTE[2], pi);
       sr = lerp(sr, 0.8, bu * 0.45); sg = lerp(sg, 0.8, bu * 0.45); sb = lerp(sb, 0.81, bu * 0.45);
       sn *= 1 - 0.75 * Math.max(0, rk - pi) * sstep(0.45, 0.75, P.n6(x, z));   // (rock showing through on the scree)
       r = lerp(r, sr, sn); g = lerp(g, sg, sn); b = lerp(b, sb, sn);
     }
     r = lerp(r, sn > 0.5 ? 0.76 : 0.24, wa * 0.9); g = lerp(g, sn > 0.5 ? 0.82 : 0.32, wa * 0.9); b = lerp(b, sn > 0.5 ? 0.88 : 0.36, wa * 0.9);   // (a lake: ice and snow, or dark water under the surface mesh)
+    if (sn > 0.5 && dd < 24) { const t = sstep(24, 5, dd) * 0.07; r = lerp(r, 0.7, t); g = lerp(g, 0.7, t); b = lerp(b, 0.72, t); }   // (the snow a little greyer within ~20 m of the road: the spray of the traffic and the ploughs)
     if (dd < 4) { const t = sstep(4, 0.6, dd) * 0.45; r = lerp(r, sn > 0.5 ? SLUSH[0] : 0.5, t); g = lerp(g, sn > 0.5 ? SLUSH[1] : 0.48, t); b = lerp(b, sn > 0.5 ? SLUSH[2] : 0.4, t); }   // (the trodden, ploughed verge)
     GCOL[0] = r; GCOL[1] = g; GCOL[2] = b; return GCOL;
   }
@@ -72,6 +74,21 @@
       const nx = (vrGH(ii + 1, jj) - vrGH(ii - 1, jj)) / (2 * VRC), nz = (vrGH(ii, jj + 1) - vrGH(ii, jj - 1)) / (2 * VRC), c = gCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / Math.hypot(nx, 1, nz), G.dd[jj * G.nx + ii]);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
+  }
+
+  /* ---------------- the snow's texture (the snow walls by the road): tileable, 256 px a tile (10 m): soft blotches, faint wind ripples, a fine
+     grain; ~0.88-1.0, times the vertex colours ---------------- */
+  let snTex = null;
+  function snowTex() {
+    if (snTex) return snTex;
+    const n = 256, c = document.createElement('canvas'); c.width = c.height = n; const x = c.getContext('2d'), img = x.createImageData(n, n), d = img.data, R = rng(4711);
+    const oct = (m) => { const g = []; for (let k = 0; k < m * m; k++) g.push(R()); const G = (p, q) => g[(((q % m) + m) % m) * m + (((p % m) + m) % m)], s = (t) => t * t * (3 - 2 * t);
+      return (u, v) => { const fu = u * m, fv = v * m, i = Math.floor(fu), j = Math.floor(fv), a = s(fu - i), b = s(fv - j); return lerp(lerp(G(i, j), G(i + 1, j), a), lerp(G(i, j + 1), G(i + 1, j + 1), a), b); }; };
+    const o1 = oct(4), o2 = oct(9), o3 = oct(23), o4 = oct(64);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const u = i / n, v = j / n, rip = Math.sin((v * 7 + o2(u, v) * 1.6) * TAU) * 0.5 + 0.5;
+      const val = 0.95 + (o1(u, v) - 0.5) * 0.06 + (o3(u, v) - 0.5) * 0.035 + (o4(u, v) - 0.5) * 0.04 - rip * 0.025, k = (j * n + i) * 4, c8 = Math.round(clamp(val, 0, 1) * 255);
+      d[k] = c8; d[k + 1] = c8; d[k + 2] = Math.min(255, c8 + 3); d[k + 3] = 255; }
+    x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (snTex = t);
   }
 
   /* ---------------- terrain tiles: 100 m, full within S.tileR of the road (or in a zone: the lifts' stations and lower towers), coarse to S.tileR2;
@@ -102,16 +119,49 @@
   }
 
   /* ---------------- the trees (unit height, the instances scale and tint them); snow on their crowns in a snowy world ---------------- */
+  const IV = (() => { const t = (1 + Math.sqrt(5)) / 2; return [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]].map(v => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }); })();
+  const IF = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
+  // a soft clump of leaves (an icosphere, 60 vertices: smooth normals tipped up, dark below and lit on top); snow (0-1) whitens its upper vertices
+  // (the snow lies on the clump's top: no cap of its own)
+  function clump(g, cx, cy, cz, r, sy, col, R, jit, snow) {
+    const V = IV.map(v => { const k = 1 + (R() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
+    const C = IV.map(v => { const t = v[1] * 0.5 + 0.5, k = 0.6 + 0.5 * t * t; let c = [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.16 * t)];
+      if (snow > 0) { const wgt = sstep(0.42, 0.82, v[1] + (R() - 0.5) * 0.5) * snow * (0.55 + 0.45 * R()), sc = 0.86 + 0.14 * t; c = [lerp(c[0], 0.94 * sc, wgt), lerp(c[1], 0.96 * sc, wgt), lerp(c[2], sc, wgt)]; }
+      return c; });
+    const Nn = IV.map(v => { const x = v[0], y = v[1] / sy + 0.25, z = v[2], l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; });
+    for (const [a, b, c] of IF) g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]);
+  }
+  // a unit geometry (non-indexed, as treeGeo's) copied into a merged chunk, placed as an instance would be (rot about y, sxz across, sy up, col its tint):
+  // the sparse kinds go into the scenery's chunks (no draw calls of their own)
+  function putGeo(g, geo, x, y, z, rot, sxz, sy, col) {
+    const P = geo.attributes.position.array, Nn = geo.attributes.normal.array, C = geo.attributes.color.array, c = Math.cos(rot), s = Math.sin(rot);
+    for (let k = 0; k < P.length; k += 3) { const u = P[k] * sxz, v = P[k + 2] * sxz; g.P.push(x + u * c - v * s, y + P[k + 1] * sy, z + u * s + v * c);
+      const nu = Nn[k] / sxz, nv = Nn[k + 2] / sxz, ny = Nn[k + 1] / sy, l = Math.hypot(nu, ny, nv) || 1; g.N.push((nu * c - nv * s) / l, ny / l, (nu * s + nv * c) / l);
+      g.C.push(C[k] * col[0], C[k + 1] * col[1], C[k + 2] * col[2]); if (g.U) g.U.push(0, 0); }
+  }
   function treeGeo(kind, snowy) {
     const g = new GB(), R = rng(9100 + kind.length * 7 + (snowy ? 1 : 0)), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true;
     const cap = (x, y, z, r, sy) => { if (snowy) ico(g, x + r * 0.12, y + r * sy * 0.62, z - r * 0.08, r * 0.62, sy * 0.4, vary([0.95, 0.97, 1.0], R, 0.05), R, 0.3); };
-    if (kind === 'gum') {   // a snow gum: three crooked, leaning stems, the bark pale and streaked; a broken grey-green crown in clumps
-      const bark = [[0.86, 0.82, 0.74], [0.78, 0.74, 0.7], [0.82, 0.72, 0.66]];
-      for (let s = 0; s < 3; s++) { const a = s / 3 * TAU + R() * 0.6, lx = Math.cos(a) * 0.12, lz = Math.sin(a) * 0.12;
-        ouRod(g, [0, 0, 0], [lx, 0.32, lz], 0.03, bark[s], 5); ouRod(g, [lx, 0.32, lz], [lx * 1.9, 0.58, lz * 1.9], 0.022, bark[(s + 1) % 3], 4); }
-      const leaf = [0.36, 0.44, 0.32];
-      for (const [x, y, z, r, sy] of [[0, 0.74, 0, 0.3, 0.42], [0.22, 0.62, 0.1, 0.22, 0.48], [-0.2, 0.64, -0.12, 0.23, 0.46], [0.06, 0.6, -0.26, 0.2, 0.5], [-0.1, 0.62, 0.24, 0.2, 0.5]]) {
-        ico(g, x, y, z, r, sy, vary(leaf, R, 0.16), R, 0.38); cap(x, y, z, r, sy); }
+    const sn = snowy ? 1 : 0, bark = [0.76, 0.72, 0.64], streak = [0.62, 0.55, 0.42], red = [0.68, 0.45, 0.36], leaf = [0.3, 0.4, 0.27];
+    if (kind === 'gum') {   // a snow gum: three crooked stems leaning out from one foot (the bark pale, streaked olive and red), each forking; an open
+      // crown of grey-green clumps at the stems' and the branches' ends and one over the middle, snow lying in patches on their tops
+      for (let s = 0; s < 3; s++) {
+        const a = s / 3 * TAU + R() * 0.7, lean = 0.13 + R() * 0.12, h1 = 0.34 + R() * 0.1, h2 = 0.6 + R() * 0.1;
+        const p1 = [Math.cos(a) * lean * 0.6 + (R() - 0.5) * 0.08, h1, Math.sin(a) * lean * 0.6 + (R() - 0.5) * 0.08], p2 = [Math.cos(a + 0.5) * lean * 1.6, h2, Math.sin(a + 0.5) * lean * 1.6];
+        const p3 = [p1[0] + Math.cos(a - 0.9) * 0.26, h1 + 0.18, p1[2] + Math.sin(a - 0.9) * 0.26];
+        ouRod(g, [Math.cos(a) * 0.04, -0.02, Math.sin(a) * 0.04], p1, 0.034, s === 1 ? streak : bark, 3); ouRod(g, p1, p2, 0.023, s === 2 ? red : bark, 3); ouRod(g, p1, p3, 0.015, bark, 3);
+        clump(g, p2[0], p2[1] + 0.07, p2[2], 0.21 + R() * 0.06, 0.72, vary(leaf, R, 0.14), R, 0.45, sn);
+        clump(g, p3[0], p3[1] + 0.06, p3[2], 0.16 + R() * 0.04, 0.75, vary(leaf, R, 0.14), R, 0.45, sn);
+      }
+      clump(g, (R() - 0.5) * 0.1, 0.8 + R() * 0.06, (R() - 0.5) * 0.1, 0.2, 0.7, vary(leaf, R, 0.12), R, 0.45, sn);
+    } else if (kind === 'stag') {   // the silver stag of a snow gum the fires killed: bare forked stems, grey-white; its green regrowth round the foot (under snow)
+      const s0 = [0.8, 0.8, 0.78];
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.7, p1 = [Math.cos(a) * 0.09, 0.5, Math.sin(a) * 0.09];
+        ouRod(g, [0, -0.02, 0], p1, 0.03, s0, 3); ouRod(g, p1, [Math.cos(a + 0.4) * 0.22, 0.96, Math.sin(a + 0.4) * 0.22], 0.018, s0, 3); ouRod(g, p1, [Math.cos(a - 0.8) * 0.26, 0.72, Math.sin(a - 0.8) * 0.26], 0.013, s0, 3); }
+      for (let k = 0; k < 2; k++) { const a = k * Math.PI + R(); clump(g, Math.cos(a) * 0.1, 0.08, Math.sin(a) * 0.1, 0.15, 0.7, vary([0.3, 0.42, 0.26], R, 0.2), R, 0.35, sn); }
+    } else if (kind === 'young') {   // a young snow gum (or a heath shrub) poking out of the snow: two clumps on short leaning stems
+      for (let k = 0; k < 2; k++) { const a = k * Math.PI + R() * 1.2, p = [Math.cos(a) * 0.16, 0.5 + R() * 0.2, Math.sin(a) * 0.16];
+        ouRod(g, [0, -0.05, 0], p, 0.03, k ? red : bark, 3); clump(g, p[0], p[1] + 0.12, p[2], 0.3, 0.62, vary(leaf, R, 0.16), R, 0.4, sn * 0.5); }
     } else if (kind === 'fir') {   // a spruce or fir: tiers of drooping branches up a dark trunk, snow along the tiers
       cyl(g, 0, -0.02, 0, 0.035, 0.3, 5, [0.3, 0.24, 0.2], null, 0.03);
       for (let t = 0; t < 5; t++) { const y = 0.16 + t * 0.16, r = 0.36 * (1 - t / 5.6), c = vary([0.16, 0.27, 0.17], R, 0.12);
@@ -295,32 +345,49 @@
     const grv = new Uint8Array(N); if (T.sf) for (let i = 0; i < N; i++) grv[i] = T.sf[i] === 5 ? 1 : 0;
     const gravC = SN ? [0.84, 0.85, 0.88] : RD.gravel, snowRd = [0.83, 0.84, 0.88];
     const SB = stubGeo({ gCol: gColAt, edge: 'dash', line: RD.line === 'none' ? 'none' : 'dash', paveC: RD.paveC, gravC, shC: SN ? [0.8, 0.8, 0.81] : RD.gravel });
-    const bankH = (i, side) => (S.snowbanks && SN ? 0.55 + 0.35 * rpHash(i >> 3, side + 5) : 0);
+    // the verge out from the shoulder (7 points [offset, height over the road]): in a snowy world the snow wall the ploughs leave just past the
+    // barrier line (S.snowbanks; 0.6-1.7 m, rising and falling along the road): a slushy ramp from the shoulder, the wall's cut face, its top, its
+    // back down to the ground; trodden low where people stand (the start, the finish, the checkpoints, the hairpins' crowds) and by the car
+    // parks; else the ditch. The side roads' mouths: their own (stubVerge)
+    const NP = 7, pad = (Q) => { while (Q.length < NP) { let m = 0, L = -1; for (let k = 0; k < Q.length - 1; k++) { const l = Q[k + 1][0] - Q[k][0]; if (l > L) { L = l; m = k; } } Q.splice(m + 1, 0, [(Q[m][0] + Q[m + 1][0]) / 2, (Q[m][1] + Q[m + 1][1]) / 2]); } return Q; };
+    const trod = [new Uint8Array(N), new Uint8Array(N)];
+    if (S.snowbanks && SN) {
+      const mark = (sa, sb, sd) => { for (let s = Math.max(0, sa); s <= Math.min(T.len, sb); s += T.ds * 0.5) { const i = T.idx(s); for (const q of sd ? [sd] : [-1, 1]) trod[q > 0 ? 1 : 0][i] = 1; } };
+      mark(sStart - 70, sStart + 70); mark(sFin - 80, sFin + 20); for (const s0 of T.cpS) mark(s0 - 30, s0 + 26);
+      for (const [d, , dir, deg] of def.bends || []) if (deg > 100) mark(sStart + d - 28, sStart + d + 28, -dir);
+      for (const p of pulls) for (let i = 0; i < N; i++) if (Math.hypot(T.px[i] - p.x, T.pz[i] - p.z) < p.r + 8) trod[0][i] = trod[1][i] = 1;
+    }
+    const bankH = (i, side) => { if (!(S.snowbanks && SN)) return 0; const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+      return trod[side > 0 ? 1 : 0][i] ? 0.25 : 0.72 + 0.85 * P.n2(x, z) + 0.3 * (P.n4(x, z) - 0.5); };
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = T.wAt ? T.wAt(i) : w;
-      const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;
+      const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return pad(ms);
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
-      const bk = bankH(i, side); if (bk > 0) return [[e + sw, -0.02], [e + sw + 0.7, bk], [Math.max(e + sw + 1.6, bar - 0.3), bk * 0.8], lift(bar + 1.15, -0.1), [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (the snowbank, ploughed off the road)
-      return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
+      const bk = bankH(i, side), f = bar + 0.3;
+      if (bk > 0) return [[e + sw, -0.02], lift(Math.min(e + sw + 0.5, f - 0.3), 0.03), lift(f, Math.min(0.2, bk * 0.5)), lift(f + 0.45, bk), lift(f + 1.3, bk * 0.94), lift(f + 2.3, bk * 0.45), [f + 3.3, gAt(f + 3.3) + 0.03]];
+      return pad([[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]); };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    const vergeY = (i, side, o) => { const Q = vp[side > 0 ? 1 : 0][i]; let k = 0; while (k < NP - 2 && Q[k + 1][0] < o) k++; const a = Q[k], b = Q[k + 1]; return T.hy[i] + a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); };   // (the verge's height at offset o)
     const bendAt = new Uint8Array(N);
     if (RD.double) for (const c of T.corners) if (c.sev >= 2) for (let k = Math.max(0, c.i0 - 25); k <= Math.min(N - 1, c.i1 + 25); k++) bendAt[k] = 1;
     {
       const tileL = 8, gc = SN ? [0.66, 0.67, 0.69] : RD.shoulder;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
-      const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], bk = bankH(i, side) > 0 && !SB.mouthV[si][i];
+      const BANK = [[0.6, 0.6, 0.62], [0.74, 0.74, 0.76], [0.8, 0.83, 0.9], [0.93, 0.95, 0.99], [0.97, 0.98, 1.0], [0.95, 0.96, 0.99]];   // (the wall: grey slush at the shoulder, its dirty foot, the plough's cut face bluish, white on top)
+      const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], bk = bankH(i, side) > 0 && !SB.mouthV[si][i], dirt = 0.94 + 0.08 * rpHash(i >> 1, side + 9);
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
-          if (bk && k <= 2) return k === 0 ? [0.66, 0.66, 0.67] : k === 1 ? [0.9, 0.91, 0.94] : [0.95, 0.96, 0.99];   // (the bank: grey slush at its foot, white on top)
-          if (k === 4) return gColAt(x, z);
-          const sl = k === 2 ? vrSlope(x, z) : 0; return gCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
+          if (bk && k < NP - 1) { const c = BANK[k]; return k < 3 ? [c[0] * dirt, c[1] * dirt, c[2] * dirt] : c; }
+          if (k === NP - 1) return gColAt(x, z);
+          const sl = k >= 2 ? vrSlope(x, z) : 0; return gCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
+      const bMat = SN ? new THREE.MeshLambertMaterial({ map: snowTex(), vertexColors: true }) : gMat;   // (the snow walls: the snow's own smooth texture)
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
+        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true), gb = SN ? new GB(true) : gv;
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, wi = T.wAt ? T.wAt(i) : w, wj = T.wAt ? T.wAt(j) : w, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6, gv2 = grv[i] || grv[j];
           const nq = gv2 && SN ? 8 : 4;
           for (let c = 0; c < nq; c++) { const f0 = c / nq * 2 - 1, f1 = (c + 1) / nq * 2 - 1, a0 = f0 * wi, a1 = f1 * wi, b0 = f0 * wj, b1 = f1 * wj;
-            if (gv2 && SN) { const tc = (f, q) => { const k = (0.97 + 0.04 * rpHash(q, Math.round(f * 8) + 20)) * (1 - 0.13 * Math.exp(-(((Math.abs(f) - 0.5) / 0.16) ** 2))); return [snowRd[0] * k, snowRd[1] * k, snowRd[2] * k]; };   // (packed snow, the wheels' tracks darker)
-              gv.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [tc(f0, i), tc(f1, i), tc(f1, j), tc(f0, j)], [wuv(Pt(i, a0, 0)), wuv(Pt(i, a1, 0)), wuv(Pt(j, b1, 0)), wuv(Pt(j, b0, 0))]); }
+            if (gv2 && SN) { const rut = c === 1 || c === 2 || c === nq - 2 || c === nq - 3, tc = (f, q) => { const k = (0.97 + 0.04 * rpHash(q, Math.round(f * 8) + 20)) * (1 - 0.13 * Math.exp(-(((Math.abs(f) - 0.5) / 0.16) ** 2))); return rut ? [snowRd[0] * k * 0.98, snowRd[1] * k * 0.96, snowRd[2] * k * 0.93] : [snowRd[0] * k, snowRd[1] * k, snowRd[2] * k]; };   // (packed snow, the wheels' ruts darker, gritty and a little brown; between and outside them smooth)
+              (rut ? gv : gb).quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [tc(f0, i), tc(f1, i), tc(f1, j), tc(f0, j)], [wuv(Pt(i, a0, 0)), wuv(Pt(i, a1, 0)), wuv(Pt(j, b1, 0)), wuv(Pt(j, b0, 0))]); }
             else if (gv2) { const k0 = 0.92 + 0.08 * rpHash(i, c), cc = [gravC[0] * k0, gravC[1] * k0, gravC[2] * k0]; gs.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [cc, cc, cc, cc], [[a0 / 4, s0], [a1 / 4, s0], [b1 / 4, s1], [b0 / 4, s1]]); }
             else gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + wi) / tileL, v0], [(a1 + wi) / tileL, v0], [(b1 + wj) / tileL, v1], [(b0 + wj) / tileL, v1]]); }
           if (!gv2 && RD.line !== 'none') {
@@ -328,16 +395,23 @@
             if (bendAt[i] || bendAt[j]) ln.push([-0.26, -0.14], [0.14, 0.26]); else if (i % 6 < 2) ln.push([-0.06, 0.06]);   // (the double unbroken line; the broken one: 4 m dashes, 8 m gaps)
             for (const [o0, o1] of ln) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1 * wj / wi, 0.036), Pt(j, o0 * wj / wi, 0.036), [lineC, lineC, lineC, lineC]);
           }
+          if (!gv2 && SN) for (const side of [-1, 1]) {   // the snow and slush the ploughs leave on the asphalt along its edges (a ragged strip, wider here and there, none in the mouths)
+            const si = side > 0 ? 1 : 0; if (SB.mouthV[si][i] || SB.mouthV[si][j]) continue;
+            const wd = (q, wq) => { const o = side * wq, x = T.px[q] + T.nx[q] * o, z = T.pz[q] + T.nz[q] * o; return Math.max(0, 0.95 * (P.n4(x, z) - 0.3) + 0.25 * (P.n6(x, z) - 0.5)) + 0.04 * rpHash(q, side + 30); };
+            const di = wd(i, wi), dj = wd(j, wj); if (di < 0.05 && dj < 0.05) continue;
+            const inC = [0.7, 0.71, 0.74], outC = [0.9, 0.91, 0.95];
+            gl.quadUp(Pt(i, side * (wi - di), 0.031), Pt(i, side * wi, 0.031), Pt(j, side * wj, 0.031), Pt(j, side * (wj - dj), 0.031), [inC, outC, outC, inC]);
+          }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j];
             (SN ? gv : gs).quadUp(Pt(i, side * wi, 0.012), Pt(i, side * (wi + sw), -0.02), Pt(j, side * (wj + sw), -0.02), Pt(j, side * wj, 0.012), [gc, gc, gc, gc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
-            for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
-              if (k === 0 && qi[1][1] > 0.2) gv.quadO(a, b, c, d, null, Pt(i, side * (qi[0][0] + 3), -2), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the bank's face to the road)
-              else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
+            for (let k = 0; k < NP - 1; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
+              if (k === 2 && qi[3][1] - qi[2][1] > 0.25) gb.quadO(a, b, c, d, null, Pt(i, side * (qi[3][0] + 2), qi[2][1] - 1), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the wall's face to the road)
+              else gb.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
         SB.emit(c0, c0 + 60, gr, SN ? gv : gs, gl);   // (in a snowy world the side roads' gravel and shoulders packed snow on the grit)
-        addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat); if (gb !== gv) addM(gb, bMat);
       }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
@@ -383,7 +457,7 @@
         else if (b.kind === 3) { const wd = vary([0.5, 0.36, 0.22], RB, 0.12); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 0.3 + 2.5, b.W, b.ang, wd, null, true); gable(g, b.x, hi + 2.2, b.z, b.L + 0.6, b.W + 0.6, Math.min(b.L, b.W) * 0.45, b.ang, roofOf(), wd); }
         else {
           const fl = b.kind === 1 ? clamp(Math.round((b.hgt || 12) / 2.9), 3, 5) : b.hgt ? clamp(Math.round(b.hgt / 2.9), 1, 5) : b.L * b.W > 220 ? 3 + (RB() < 0.4 ? 1 : 0) : 2 + (RB() < 0.5 ? 1 : 0), wall = vary(S.bld.walls[Math.floor(RB() * S.bld.walls.length)], RB, 0.1);
-          lodge(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall, wall2: vary(wall, RB, 0.1), roof: roofOf(), trim: [0.3, 0.24, 0.18], flat: b.kind === 1 && b.L * b.W > 500 });
+          lodge(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall, wall2: vary(wall, RB, 0.1), roof: roofOf(), trim: [0.3, 0.24, 0.18], flat: b.kind === 1 && b.L * b.W > 500, snow: SN > 0 });
         }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
@@ -420,17 +494,22 @@
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
     }
 
-    /* ---- the car parks: cars (snow on their roofs in a snowy world) ---- */
+    /* ---- the car parks: cars (snow on their roofs in a snowy world), the snow ploughed off them in heaps at their far side ---- */
     for (const p of pulls) {
+      if (SN) { const RH = rng(S.seed * 7 + 13 + p.i), ax = p.x - T.px[p.i], az = p.z - T.pz[p.i], a0 = Math.atan2(az, ax);
+        for (let k = 0; k < 3; k++) { const a = a0 + (k - 1) * 0.75 + (RH() - 0.5) * 0.3, d = p.r + 1.2 + RH() * 1.5, x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d;
+          if (vrNear(x, z).dd < 4 || vrStubAt(x, z, 2)) continue; const rx = 1.4 + RH() * 1.2, ry = 0.9 + RH() * 0.7, y = Math.max(vrGround(x, z), p.h);
+          const rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true; rock(scen.get(x, z), x, y + ry * 0.25, z, rx, ry, rx * (0.7 + RH() * 0.4), RH() * TAU, [0.9, 0.91, 0.95], RH, 0.3); API.ROCK_SMOOTH = rs; exclPush(x, z, rx + 1); } }
       const RC = rng(S.seed * 7 + 3 + p.i), hh = T.hd[p.i], c = Math.cos(hh), sn = Math.sin(hh), n = Math.min(10, Math.floor(p.r / 2.4));
       for (let k = 0; k < n; k++) { if (RC() < 0.35) continue; const a = (k % 5 - 2) * 5, b = (k < 5 ? -1 : 1) * 3.2, px = p.x - sn * b + c * a, pz = p.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || excluded(px, pz) && Math.hypot(px - p.x, pz - p.z) > p.r) continue; parked(scen.get(px, pz), px, vrGround(px, pz), pz, hh + PI / 2 + (RC() < 0.5 ? 0 : PI), RC); }
     }
 
+    const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), eu = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), tmp = [0, 0, 0, 0];
     /* ---- the lifts ---- */
-    const lines = [], chairs = [];
+    const lines = [], chairs = [], queue = [], SNOWC = [0.93, 0.95, 0.99];   // (queue: the skiers in the lifts' mazes, [x, z, yaw])
     let nLift = 0, nTower = 0;
     if (S.lifts) {
-      const steel = [0.56, 0.58, 0.6], dark = [0.2, 0.21, 0.22], cab = new GB();
+      const steel = [0.56, 0.58, 0.6], dark = [0.2, 0.21, 0.22];
       for (const L of def.lifts || []) {
         const LN = liftLine(L, vrGround), K = LN.K, near = (x, z) => vrDist(x, z) < 230;
         if (!LN.towers.some(t => near(t.x, t.z))) continue; nLift++;
@@ -442,37 +521,53 @@
         for (let k = 0; k < LN.towers.length; k++) {
           const t = LN.towers[k], nx2 = LN.towers[Math.min(LN.towers.length - 1, k + 1)], pv = LN.towers[Math.max(0, k - 1)], rot = Math.atan2(nx2.z - pv.z, nx2.x - pv.x);
           if (!near(t.x, t.z)) continue; const g = scen.get(t.x, t.z);
-          if (t.end) {   // a station: the shed, the bull wheel under its frame, snow on the roof
-            const bk = k === 0 ? -1 : 1, sx = t.x + Math.cos(rot) * 3.2 * bk, sz = t.z + Math.sin(rot) * 3.2 * bk;
-            box(g, sx, t.y - 0.4, sz, 7, 3.6, 5.2, rot, [0.62, 0.56, 0.44], null, true); gable(g, sx, t.y + 3.2, sz, 7.6, 5.8, 1.4, rot, SN ? [0.93, 0.95, 0.99] : [0.36, 0.4, 0.36], [0.62, 0.56, 0.44]);
+          if (t.end) {   // a station: the drive house, the bull wheel on its column; by the bottom one of a chairlift near the road the queue's maze, skiers in it
+            const bk = k === 0 ? -1 : 1, c = Math.cos(rot), s = Math.sin(rot), sx = t.x + c * 3.2 * bk, sz = t.z + s * 3.2 * bk, wall = [0.62, 0.56, 0.44];
+            box(g, sx, t.y - 0.4, sz, 7, 3.6, 5.2, rot, wall, null, true); gable(g, sx, t.y + 3.2, sz, 7.6, 5.8, 1.4, rot, SN ? SNOWC : [0.36, 0.4, 0.36], wall);
             box(g, t.x, t.y, t.z, 0.8, t.top - t.y - 0.2, 0.8, rot, steel); cyl(g, t.x, t.top - 0.2, t.z, K.gw, 0.3, 12, dark, dark); exclPush(sx, sz, 7);
-          } else {   // a tower: the column, its cross arm, the sheave trains at both ends of the arm
-            box(g, t.x, t.y - 0.3, t.z, 0.55, t.top - t.y + 0.3, 0.55, rot, steel); box(g, t.x, t.top, t.z, 0.35, 0.3, K.gw * 2 + 0.6, rot, steel);
-            for (const sd of [-1, 1]) box(g, t.x - Math.sin(rot) * K.gw * sd, t.top - 0.25, t.z + Math.cos(rot) * K.gw * sd, 1.6, 0.22, 0.2, rot, dark);
+            if (k === 0 && L[0] === 'chair' && vrDist(t.x, t.z) < 90) {
+              const P2 = (u, v) => [t.x + c * u - s * v, t.z + s * u + c * v];
+              for (let f = 0; f < 4; f++) { const v = K.gw + 3.2 + f * 1.4, [fx, fz] = P2(-4, v);
+                box(g, fx, vrGround(fx, fz) + 0.66, fz, 6, 0.16, 0.05, rot, f % 2 ? [0.95, 0.45, 0.1] : [0.15, 0.34, 0.68]);   // (the maze's bands, blue and orange)
+                for (const u of [-7, -1]) { const [px, pz] = P2(u, v); box(g, px, vrGround(px, pz) - 0.1, pz, 0.06, 0.92, 0.06, rot, [0.2, 0.2, 0.22], null, true); } }
+              for (let q = 0; q < 7; q++) { const [qx, qz] = P2(-1.6 - (q * 1.9) % 5.2, K.gw + 3.9 + (q % 3) * 1.4); queue.push([qx, qz, -rot + (rpHash(q, k + 3) - 0.5) * 0.6]); }
+              const [mx, mz] = P2(-4, K.gw + 5.3); exclPush(mx, mz, 6.5);
+            }
+          } else {   // a tower: its footing, the tapered steel tube, the cross arm (snow on it), the sheave trains at both ends of the arm
+            box(g, t.x, t.y - 0.5, t.z, 1.1, 0.75, 1.1, rot, [0.62, 0.62, 0.6], SN ? SNOWC : null, true);
+            cyl(g, t.x, t.y, t.z, 0.34, t.top - t.y - 0.1, 7, steel, null, 0.22);
+            box(g, t.x, t.top - 0.06, t.z, 0.42, 0.34, K.gw * 2 + 0.8, rot, steel, SN ? SNOWC : null, true);
+            for (const sd of [-1, 1]) { const ax = t.x - Math.sin(rot) * K.gw * sd, az = t.z + Math.cos(rot) * K.gw * sd; box(g, ax, t.top - 0.32, az, 2.1, 0.26, 0.22, rot, dark, null, true); box(g, ax, t.top - 0.08, az, 0.22, 0.3, 0.16, rot, dark, null, true); }
             nTower++; exclPush(t.x, t.z, 2.5);
           }
         }
         if (!K.gap) continue;
-        const pt = [0, 0, 0, 0], pq = [0, 0, 0, 0];   // the cables: both lines, in 6 m pieces, only where they are near the road
-        for (const side of [-1, 1]) for (let s = 0; s < LN.len - 0.1; s += 6) { const s2 = Math.min(LN.len, s + 6); liftAt(LN, s, side, pt); liftAt(LN, s2, side, pq); if (!near(pt[0], pt[2]) && !near(pq[0], pq[2])) continue; ouRod(cab, [pt[0], pt[1], pt[2]], [pq[0], pq[1], pq[2]], 0.05, dark, 3); }
+        const pt = [0, 0, 0, 0], pq = [0, 0, 0, 0];   // the cables: both lines, in 6 m pieces (12 m out past 80 m from the road), only where they are near it; in the scenery's chunks
+        for (const side of [-1, 1]) for (let s = 0; s < LN.len - 0.1;) { liftAt(LN, s, side, pt); const s2 = Math.min(LN.len, s + (vrDist(pt[0], pt[2]) > 80 ? 12 : 6)); liftAt(LN, s2, side, pq); s = s2;
+          if (!near(pt[0], pt[2]) && !near(pq[0], pq[2])) continue; ouRod(scen.get((pt[0] + pq[0]) / 2, (pt[2] + pq[2]) / 2), [pt[0], pt[1], pt[2]], [pq[0], pq[1], pq[2]], 0.05, dark, 3); }
         lines.push(LN);
         // the chairs only on the stretch of the line near the road (the camera sees no farther), going round within it: out of sight at its ends
         let sA = 1e9, sB = -1e9; for (let s = 0; s <= LN.len; s += 5) { liftAt(LN, s, 1, pt); if (near(pt[0], pt[2])) { sA = Math.min(sA, s); sB = Math.max(sB, s); } }
         if (sB - sA < K.gap) continue; LN.sA = sA; LN.sB = sB;
+        { const bb = new THREE.Box3(); for (const side of [-1, 1]) for (let s = sA; s <= sB + 4.9; s += 5) { liftAt(LN, Math.min(s, sB), side, pt); bb.expandByPoint(v3.set(pt[0], pt[1] + 0.5, pt[2])); bb.expandByPoint(v3.set(pt[0], pt[1] - 5, pt[2])); }
+          LN.sph = bb.getBoundingSphere(new THREE.Sphere()); LN.sph.radius += 3; }   // (the stretch's sphere, the chairs hanging under the cable: World culls its meshes by it)
         const n = Math.floor((sB - sA) / K.gap);
         for (const side of [-1, 1]) for (let k = 0; k < n; k++) chairs.push({ LN, side, s0: (k + (side > 0 ? 0 : 0.5)) * K.gap });
       }
-      addM(cab, lMat, true);
     }
-    // the chairs (gondola cabins, T-bars) moving: one instanced mesh per kind of carrier, World.update moves them (out.dyn.ext)
+    // the chairs (gondola cabins, T-bars) moving: one instanced mesh per line and kind of carrier, culled by the line's stretch (its sphere: out of the
+    // view, or more than ~210 m from the camera, not drawn and not moved); World.update moves them (out.dyn.ext)
     const movers = [];
     {
-      const groups = new Map(); for (const c of chairs) { const rd = c.LN.kind === 'chair' && c.side > 0 && rpHash(Math.round(c.s0), c.LN.towers.length) < 0.7 ? 1 + (Math.round(c.s0 / c.LN.K.gap) % 2) : 0;   // (most chairs going up carry skiers)
-        const k = c.LN.kind + '/' + (c.LN.kind === 'chair' ? c.LN.seats : '') + '/' + rd; let L = groups.get(k); if (!L) groups.set(k, L = []); c.rd = rd; L.push(c); }
-      for (const [, list] of groups) { const LN = list[0].LN, g = chairGeo(LN.kind, LN.seats, list[0].rd);
-        const im = new THREE.InstancedMesh(g, matV, list.length); im.castShadow = true; im.receiveShadow = false; im.frustumCulled = false; root.add(im);
+      const groups = new Map(), geoC = new Map();
+      for (const c of chairs) { const rd = c.LN.kind === 'chair' && c.side > 0 && rpHash(Math.round(c.s0), c.LN.towers.length) < 0.7 ? 1 + (Math.round(c.s0 / c.LN.K.gap) % 2) : 0;   // (most chairs going up carry skiers)
+        const k = lines.indexOf(c.LN) + '/' + rd; let L = groups.get(k); if (!L) groups.set(k, L = []); c.rd = rd; L.push(c); }
+      for (const [, list] of groups) { const LN = list[0].LN, key = LN.kind + '/' + (LN.kind === 'chair' ? LN.seats : '') + '/' + list[0].rd;
+        let base = geoC.get(key); if (!base) geoC.set(key, base = chairGeo(LN.kind, LN.seats, list[0].rd));
+        const g = new THREE.BufferGeometry(); for (const a in base.attributes) g.setAttribute(a, base.attributes[a]); g.boundingSphere = LN.sph;   // (world space: the instances are placed in it)
+        const im = new THREE.InstancedMesh(g, matV, list.length); im.castShadow = true; im.receiveShadow = false; im.frustumCulled = true; root.add(im);
         const cc = new THREE.Color(); for (let k = 0; k < list.length; k++) { cc.setRGB(1, 1, 1); im.setColorAt(k, cc); }
-        movers.push({ im, list }); }
+        movers.push({ im, list, sph: LN.sph }); }
     }
     // the ski area's kit by the road (a ski world, S.skiers): snow groomers parked by the lifts' bottom stations, snow guns (fan guns on their
     // stands, tall lances) along the runs beside the road
@@ -493,16 +588,20 @@
         else { const h = 6 + RK() * 2, tx = x + c * h * 0.45, tz = z + s * h * 0.45; ouRod(g, [x, y - 0.2, z], [tx, y + h, tz], 0.07, grey, 5); box(g, tx, y + h - 0.1, tz, 0.3, 0.3, 0.3, rot, dark); }   // a lance
         exclPush(x, z, 2); nGun++; }
     }
-    const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), eu = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), tmp = [0, 0, 0, 0];
-    const moveChairs = (t) => { for (const M of movers) { const L = M.list; for (let k = 0; k < L.length; k++) { const c = L[k], LN = c.LN, len = LN.sB - LN.sA, s = LN.sA + ((c.s0 + t * LN.K.v * c.side) % len + len) % len;
-      liftAt(LN, s, c.side, tmp); eu.set(0, -tmp[3] + (c.side > 0 ? 0 : PI), 0); qt.setFromEuler(eu); v3.set(tmp[0], tmp[1], tmp[2]); m4.compose(v3, qt, one); M.im.setMatrixAt(k, m4); }
-      M.im.instanceMatrix.needsUpdate = true; } };
+    const moveChairs = (t, cam) => {   // (with the camera: only the chairs within ~175 m of it drawn, packed to the front of their mesh: its count)
+      const cx = cam ? cam.position.x : 0, cy = cam ? cam.position.y : 0, cz = cam ? cam.position.z : 0;
+      for (const M of movers) { if (cam) { M.im.visible = M.sph.center.distanceTo(cam.position) - M.sph.radius < 175; if (!M.im.visible) continue; }
+        const L = M.list; let n = 0;
+        for (let k = 0; k < L.length; k++) { const c = L[k], LN = c.LN, len = LN.sB - LN.sA, s = LN.sA + ((c.s0 + t * LN.K.v * c.side) % len + len) % len;
+          liftAt(LN, s, c.side, tmp); if (cam && (tmp[0] - cx) ** 2 + (tmp[1] - cy) ** 2 + (tmp[2] - cz) ** 2 > 175 * 175) continue;
+          eu.set(0, -tmp[3] + (c.side > 0 ? 0 : PI), 0); qt.setFromEuler(eu); v3.set(tmp[0], tmp[1], tmp[2]); m4.compose(v3, qt, one); M.im.setMatrixAt(n++, m4); }
+        M.im.count = n; M.im.visible = n > 0; M.im.instanceMatrix.needsUpdate = true; } };
 
     /* ---- guardrails where the ground falls away and round the outside of the sharper bends (not in the village), snow poles (S.poles) just past the
        barrier line, white guide posts on the verge (knockable) ---- */
     let nRail = 0, nPole = 0;
     {
-      const need = [new Uint8Array(N), new Uint8Array(N)], poleSpots = [], postSpots = [];
+      const need = [new Uint8Array(N), new Uint8Array(N)], poleSpots = [], postSpots = [], lampSpots = [];
       if (S.rails) { for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
         for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
           for (const d of [4, 8, 13, 19, 26]) { const o = side * (bar + d); if (vrGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } } }
@@ -518,15 +617,23 @@
         for (let i = 0; i < N - 1; i++) {
           const g = scen.get(T.px[i], T.pz[i]), mv = SB.mouthV[side > 0 ? 1 : 0][i];
           if (nd[i] && nd[i + 1]) { const a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
-            g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino); if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.13, 0.13, T.hd[i], postC, null, true); } }
+            g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino); if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.13, 0.13, T.hd[i], postC, null, true); }
+            if (SN && rpHash(i >> 1, side + 40) < 0.8) { const sc = [0.94, 0.95, 0.99]; g.quadUp(Q(i, 0.835, -0.07), Q(i + 1, 0.835, -0.07), Q(i + 1, 0.835, 0.09), Q(i, 0.835, 0.09), [sc, sc, sc, sc]); } }   // (snow lying along the rail's top)
           if (S.poles && i % S.poles.every === (side > 0 ? 0 : 7) && i > 4 && i < iE - 4 && !nearPad(i) && !mv && vrLCf(T.px[i], T.pz[i], 3) < 0.5) poleSpots.push([i, side]);
           if (S.posts && i % 25 === (side > 0 ? 3 : 15) && i > 4 && i < iE - 4 && !nearPad(i) && !mv) postSpots.push([i, side]);
+          if (SN && i % 16 === (side > 0 ? 0 : 8) && i > 4 && i < iE - 4 && !nearPad(i) && !mv && vrLCf(T.px[i], T.pz[i], 3) > 0.5) lampSpots.push([i, side]);   // (the village's street lamps)
         }
       }
       out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => vp[side > 0 ? 1 : 0][i]);
       const sA = sStart + 30, sB = sFin - 30;
       out.propStats = roadsideProps(out.props, { spots: postSpots, postEdge: [1.0, 1.4], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
         floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sA || s > sB; } });
+      for (const [i, side] of lampSpots) {   // a street lamp: a dark pole just past the barrier line, its arm over the road's edge, the lamp; snow on the arm
+        const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (excluded(x, z) || vrStubAt(x, z, 1.2)) continue;
+        const y0 = Math.min(T.hy[i], vrGround(x, z)) - 0.2, g = scen.get(x, z), dk = [0.24, 0.25, 0.27], ax = x - T.nx[i] * side * 1.0, az = z - T.nz[i] * side * 1.0;
+        box(g, x, y0, z, 0.16, 6.6, 0.16, T.hd[i], dk, null, true); box(g, ax, y0 + 6.45, az, 0.12, 0.12, 2.1, T.hd[i], dk, SN ? SNOWC : null, true);
+        const lx = x - T.nx[i] * side * 1.9, lz = z - T.nz[i] * side * 1.9; box(g, lx, y0 + 6.2, lz, 0.5, 0.28, 0.3, T.hd[i], dk, SN ? SNOWC : null); box(g, lx, y0 + 6.17, lz, 0.4, 0.04, 0.22, T.hd[i], [0.95, 0.92, 0.78], null, true);
+        exclPush(x, z, 1.2); }
       if (S.poles) { const PO = S.poles; for (const [i, side] of poleSpots) {   // the snow poles: tall, coloured with dark bands
         const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y0 = Math.min(T.hy[i], vrGround(x, z)) - 0.15, g = scen.get(x, z), H = PO.h;
         for (let b = 0; b < 6; b++) box(g, x, y0 + H * b / 6, z, 0.09, H / 6, 0.09, T.hd[i], b === 5 || b === 3 ? PO.band : PO.col, null, true); nPole++; } }
@@ -537,7 +644,7 @@
     let nSign = 0;
     if (S.signs) for (const [d, , dir, deg] of def.bends || []) {
       if (deg < 70 || d < 40) continue; const sd = T.def.leftHand ? -1 : 1, [px, pz, ii] = onSide(sStart + d - 90, sd, 0.9); if (excluded(px, pz) || vrStubAt(px, pz, 1.5)) continue;
-      const py = vrGround(px, pz), g = scen.get(px, pz), u0 = S.signs === 'triangle' ? (dir > 0 ? 2 : 3) / 8 : (dir > 0 ? 0 : 1) / 8;
+      const py = Math.max(vrGround(px, pz), vergeY(ii, sd, (sd > 0 ? T.br[ii] : T.bl[ii]) + 0.9) - 0.35), g = scen.get(px, pz), u0 = S.signs === 'triangle' ? (dir > 0 ? 2 : 3) / 8 : (dir > 0 ? 0 : 1) / 8;
       box(g, px, py - 0.2, pz, 0.08, 2.5, 0.08, T.hd[ii], [0.6, 0.61, 0.63]); bannerQ(px, py + 1.55, pz, -T.tx[ii], -T.tz[ii], 0.95, 0.95, 1 / 8, 2 / 8, u0, u0 + 1 / 8); exclPush(px, pz, 1.5); nSign++;
     }
 
@@ -559,7 +666,7 @@
       const net = [0.96, 0.42, 0.08];
       for (const side of [-1, 1]) { let run = 0;
         for (let i = 0; i < N - 1; i++) { const [x, z] = onSide(i * T.ds, side, 1.8 + 6); const on = isRun(x, z) && !SB.mouthV[side > 0 ? 1 : 0][i] && i > 3 && i < iE - 3; run = on ? run + 1 : 0;
-          if (!on || run < 2) continue; const [ax, az, ia] = onSide(i * T.ds, side, 1.9), [bx, bz, ib] = onSide((i + 1) * T.ds, side, 1.9), ay = vrGround(ax, az), by = vrGround(bx, bz), g = scen.get(ax, az);
+          if (!on || run < 2) continue; const [ax, az, ia] = onSide(i * T.ds, side, 1.9), [bx, bz, ib] = onSide((i + 1) * T.ds, side, 1.9), ay = Math.max(vrGround(ax, az), vergeY(ia, side, (side > 0 ? T.br[ia] : T.bl[ia]) + 1.9) - 0.12), by = Math.max(vrGround(bx, bz), vergeY(ib, side, (side > 0 ? T.br[ib] : T.bl[ib]) + 1.9) - 0.12), g = scen.get(ax, az);   // (on the snow wall's top)
           const A = [ax, ay + 0.05, az], B = [bx, by + 0.05, bz], C = [bx, by + 1.3, bz], D = [ax, ay + 1.3, az]; g.quadO(A, B, C, D, net, [T.px[ia], ay, T.pz[ia]]); g.quadO(A, B, C, D, [0.8, 0.34, 0.06], [ax + (ax - T.px[ia]), ay, az + (az - T.pz[ia])]);
           if (i % 2 === 0) ouRod(g, [ax, ay - 0.2, az], [ax, ay + 1.45, az], 0.035, [0.3, 0.3, 0.32], 4); nNet++; } }
     }
@@ -575,7 +682,26 @@
         else skier.add(x, y, z, -fall + (RS() - 0.5) * 1.2, 1, 1, col);
         nSki++;
       }
+      queue.forEach(([qx, qz, yaw], q) => { skier.add(qx, vrGround(qx, qz), qz, yaw, 1, 1, jk[(q * 5 + 2) % jk.length]); nSki++; });   // (the lifts' queues)
+      let nw = 0; for (const b of blds) { if (nw >= 14) break; const n = vrNear(b.x, b.z); if (n.i < 0 || n.dd > 34 || n.dd < 10 || RS() > 0.3) continue;   // (a few skiers by the lodges near the road, clear of it)
+        const tx = T.px[n.i] - b.x, tz = T.pz[n.i] - b.z, tl = Math.hypot(tx, tz) || 1, d = Math.max(b.L, b.W) / 2 + 2.5 + RS() * 2, x = b.x + tx / tl * d, z = b.z + tz / tl * d;
+        if (vrNear(x, z).dd < 4.5 || vrSlope(x, z) > 0.4 || vrStubAt(x, z, 1)) continue; const k2 = 1 + Math.floor(RS() * 2);
+        for (let q = 0; q < k2; q++) { const qx = x + (RS() - 0.5) * 2.4, qz = z + (RS() - 0.5) * 2.4; skier.add(qx, vrGround(qx, qz), qz, RS() * TAU, 1, 1, jk[Math.floor(RS() * jk.length)]); nSki++; nw++; } }
       skier.addTo(root, true);
+      // ski tracks down the runs beside the road: a groove (a shade bluer) curving about the fall line, in the scenery's chunks
+      const RK2 = rng(S.seed * 7 + 12), trk = [0.7, 0.75, 0.88]; let nt = 0, tt = 0;
+      while (nt < 110 && tt++ < 6000) {
+        const s0 = RK2() * T.len, side = RK2() < 0.5 ? -1 : 1, [x0, z0] = onSide(s0, side, 8 + RK2() * 40); if (!isRun(x0, z0) || excluded(x0, z0) || vrSlope(x0, z0) < 0.08) continue;
+        const gx = vrGround(x0 + 2, z0) - vrGround(x0 - 2, z0), gz = vrGround(x0, z0 + 2) - vrGround(x0, z0 - 2), gl = Math.hypot(gx, gz) || 1, fx = -gx / gl, fz = -gz / gl;   // (downhill)
+        const amp = 1.5 + RK2() * 3.5, wl = 9 + RK2() * 10, ph = RK2() * TAU, Lt = 24 + RK2() * 36, g = scen.get(x0, z0), pts = [];
+        for (let u = 0; u <= Lt; u += 1.5) { const o = amp * Math.sin(u / wl * TAU + ph), x = x0 + fx * u - fz * o, z = z0 + fz * u + fx * o;
+          if (!isRun(x, z) || vrNear(x, z).dd < 5 || excluded(x, z)) break; pts.push([x, vrGround(x, z) + 0.08, z]); }
+        if (pts.length < 6) continue;
+        for (let q = 0; q + 1 < pts.length; q++) { const a = pts[q], b = pts[q + 1], dx = b[0] - a[0], dz = b[2] - a[2], l = Math.hypot(dx, dz) || 1, ox = -dz / l * 0.2, oz = dx / l * 0.2;
+          g.quadO([a[0] - ox, a[1], a[2] - oz], [a[0] + ox, a[1], a[2] + oz], [b[0] + ox, b[1], b[2] + oz], [b[0] - ox, b[1], b[2] - oz], trk, [a[0], a[1] - 1, a[2]]); }
+        nt++;
+      }
+      out.skiTracks = nt;
     }
     let skiIm = null;
     if (skiMov.length) { skiIm = new THREE.InstancedMesh(skierGeo(), matV, skiMov.length); skiIm.castShadow = true; skiIm.frustumCulled = false; const cc = new THREE.Color(); skiMov.forEach((m, k) => { cc.setRGB(m.col[0], m.col[1], m.col[2]); skiIm.setColorAt(k, cc); }); root.add(skiIm); }
@@ -585,9 +711,12 @@
     /* ---- the trees by the land cover (instanced per 96 m chunk): none on the runs, the water, the plots, the road ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), TK = S.trees.kinds;
     const tk = TK.map(k => new IChunks(treeGeo(k, snowy && SN > 0), tMatT, 96));
-    let nTrees = 0;
+    let nTrees = 0, nStag = 0, nYoung = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(60000 * dens), RT = rng(S.seed * 7 + 6), SP = 5 / Math.sqrt(dens), TR = S.trees;
+      // (S.trees.stags: the share of the trees within 120 m of the road that are the fires' silver stags; S.trees.young: young trees and shrubs out of
+      // the snow within 50 m of it, on the open ground and at the woods' edges; both merged into the scenery's chunks)
+      const stagG = TR.stags ? treeGeo('stag', snowy && SN > 0) : null, youngG = TR.young ? treeGeo('young', snowy && SN > 0) : null;
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -596,11 +725,15 @@
           const hd = vrDist(x, z); if (hd > S.tileR) continue;
           if (hd > 90 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
           const c = vrLC(x, z), p = c === 1 ? TR.forest : c === 2 ? TR.forest * 0.25 : c === 0 ? TR.open : c === 3 ? TR.open * 1.2 : 0;
-          if (r1 > p) continue;
+          const young = youngG && r1 > p && hd < 50 && c !== 6 && c !== 5 && r1 < p + TR.young * (c === 1 || c === 2 ? 2 : 1);
+          if (r1 > p && !young) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < TR.near) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
           if (excluded(x, z) || vrWater(x, z).e > -4 || vrSlope(x, z) > 1.2) continue;
+          const tint = [0.92 + r2 * 0.16, 0.94 + r4 * 0.12, 0.92 + r3 * 0.14];
+          if (young) { const h = 1.1 + r4 * 2.0; putGeo(scen.get(x, z), youngG, x, vrGround(x, z) - 0.1, z, r3 * 70, h * (1 + r2 * 0.4), h, tint); nYoung++; continue; }
           const sp = Math.floor(r3 * TK.length), far = hd > 90 ? 1.12 : 1, hgt = TR.h[0] + r4 * (TR.h[1] - TR.h[0]), wid = hgt * (TK[sp] === 'fir' ? 0.42 + r2 * 0.1 : TK[sp] === 'gum' ? 0.9 + r2 * 0.3 : 0.75 + r2 * 0.25);
-          tk[sp].add(x, vrGround(x, z) - 0.15, z, r1 * 70, wid * far, hgt * far, [0.92 + r2 * 0.16, 0.94 + r4 * 0.12, 0.92 + r3 * 0.14]);
+          if (stagG && hd < 120 && rpHash(Math.round(x), Math.round(z)) < TR.stags) { putGeo(scen.get(x, z), stagG, x, vrGround(x, z) - 0.15, z, r1 * 70, hgt * 0.7, hgt * 0.95, [1, 1, 1]); nStag++; continue; }
+          tk[sp].add(x, vrGround(x, z) - 0.15, z, r1 * 70, wid * far, hgt * far, tint);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -647,8 +780,8 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas(S.boards, cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     crowdFinish(CR, root, out);
     moveChairs(0); moveSkiers(0); moveBirds(0);
-    out.dyn.ext = (t) => { moveChairs(t); moveSkiers(t); moveBirds(t); };
-    out.stats = { trees: nTrees, tiles: nTile, farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPole + out.propStats.posts, lifts: nLift, towers: nTower, chairs: chairs.length,
+    out.dyn.ext = (t, car, cam) => { moveChairs(t, cam); moveSkiers(t); moveBirds(t); };
+    out.stats = { trees: nTrees, stags: nStag, young: nYoung, tiles: nTile, farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPole + out.propStats.posts, lifts: nLift, towers: nTower, chairs: chairs.length,
       skiers: nSki, nets: nNet, signs: nSign, animals: nAnimal, groomers: nGroom, guns: nGun, pulls: pulls.length, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
@@ -664,6 +797,7 @@
     if (fl >= 2 && L > 9) for (let f = 1; f < fl; f++) box(g, x + (-s) * (D / 2 + 0.7), yb + f * 2.9 - 0.15, z + c * (D / 2 + 0.7), L * 0.86, 0.15, 1.4, rot, o.trim, null, true);
     const rh = Math.min(D, L) * (o.flat ? 0.12 : 0.42);
     gable(g, x, yb + H, z, L + 1.2, D + 1.4, rh, rot, o.roof, o.wall2 || o.wall);
+    if (o.snow) for (const sd of [-1, 1]) { const [cx, , cz] = P(0, sd * (D / 2 + 0.62), 0); box(g, cx, yb + H - 0.24, cz, L + 1.3, 0.36, 0.52, rot, [0.95, 0.96, 0.99], null, true); }   // (the snow's thick edge along the eaves)
     box(g, x, yb + H - 0.3, z, L + 0.1, 0.3, D + 0.1, rot, o.trim, null, true);
     if (!o.flat) { const [cx, , cz] = P(L * 0.28, D * 0.12, 0); box(g, cx, yb + H, cz, 0.7, rh + 0.9, 0.7, rot, [0.5, 0.48, 0.46], null, true); }
   }
