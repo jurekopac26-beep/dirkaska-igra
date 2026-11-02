@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdRun, cyl, gable, ico, inPoly, lerp, ouCutMat, pkGroundMat,
+    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdRun, cyl, gable, ico, lerp, ouCutMat, pkGroundMat,
     rng, rpHash, sstep, starCone, vary, vrDist, vrGH, vrGritTex, vrGround, vrLCf, vrNear, vrPrep, vrSlope, vrWater
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -145,21 +145,21 @@
       API.ROCK_SMOOTH = true;
       cyl(g, 0, -0.02, 0, 0.026, 0.32, 4, [0.3, 0.24, 0.2], null, 0.02);
       const c = su ? [0.26, 0.44, 0.14] : [0.86, 0.17, 0.08];
-      [[0, 0.62, 0, 0.36, 0.42], [0.2, 0.52, 0.12, 0.25, 0.48], [-0.2, 0.5, -0.1, 0.26, 0.48], [0.04, 0.8, 0.02, 0.22, 0.5]].forEach(([x, y, z, r, sy]) => ico(g, x, y, z, r, sy, vary(c, R, 0.16), R, 0.35));
+      [[0, 0.66, 0, 0.38, 0.46], [0.2, 0.52, 0.12, 0.26, 0.48], [-0.2, 0.5, -0.1, 0.27, 0.48]].forEach(([x, y, z, r, sy]) => ico(g, x, y, z, r, sy, vary(c, R, 0.16), R, 0.35));
     } else if (kind === 3) {
       API.ROCK_SMOOTH = false;
       const culm = su ? [0.5, 0.62, 0.26] : [0.56, 0.6, 0.3], leaf = su ? [0.42, 0.6, 0.2] : [0.5, 0.56, 0.22];
-      for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + R() * 0.6, d = k ? 0.05 + R() * 0.05 : 0, lean = 0.06 + R() * 0.08, x0 = Math.cos(a) * d, z0 = Math.sin(a) * d, x1 = x0 + Math.cos(a) * lean, z1 = z0 + Math.sin(a) * lean, h = 0.82 + R() * 0.18;
-        const w = 0.012, P0 = [x0 - w, 0, z0], P1 = [x0 + w, 0, z0], P2 = [x1 + w * 0.6, h, z1], P3 = [x1 - w * 0.6, h, z1], Q0 = [x0, 0, z0 - w], Q1 = [x0, 0, z0 + w], Q2 = [x1, h, z1 + w * 0.6], Q3 = [x1, h, z1 - w * 0.6];
-        g.quadO(P0, P1, P2, P3, culm, [x0, 0.4, z0 + 1]); g.quadO(P0, P1, P2, P3, culm, [x0, 0.4, z0 - 1]); g.quadO(Q0, Q1, Q2, Q3, culm, [x0 + 1, 0.4, z0]); g.quadO(Q0, Q1, Q2, Q3, culm, [x0 - 1, 0.4, z0]);
-        for (let t = 0; t < 2; t++) { const f = 0.62 + t * 0.2; ico(g, x0 + (x1 - x0) * f, h * f + 0.04, z0 + (z1 - z0) * f, 0.13 - t * 0.03, 0.5, vary(leaf, R, 0.2), R, 0.4); } }
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, d = k ? 0.05 + R() * 0.05 : 0, lean = 0.06 + R() * 0.08, x0 = Math.cos(a) * d, z0 = Math.sin(a) * d, x1 = x0 + Math.cos(a) * lean, z1 = z0 + Math.sin(a) * lean, h = 0.82 + R() * 0.18;
+        const w = 0.014, P0 = [x0 - w, 0, z0], P1 = [x0 + w, 0, z0], P2 = [x1 + w * 0.6, h, z1], P3 = [x1 - w * 0.6, h, z1], Q0 = [x0, 0, z0 - w], Q1 = [x0, 0, z0 + w], Q2 = [x1, h, z1 + w * 0.6], Q3 = [x1, h, z1 - w * 0.6];
+        g.quadO(P0, P1, P2, P3, culm, [x0, 0.4, z0 + 1]); g.quadO(Q0, Q1, Q2, Q3, culm, [x0 + 1, 0.4, z0]);   // (two crossed strips: a culm from every side)
+        ico(g, x0 + (x1 - x0) * 0.72, h * 0.72 + 0.06, z0 + (z1 - z0) * 0.72, 0.15, 0.62, vary(leaf, R, 0.2), R, 0.4); }
     } else if (kind === 5) {   // sasa: two low, flattened clumps of bright leaves (green the year round)
       API.ROCK_SMOOTH = true;
       ico(g, -0.12, 0.42, 0.04, 0.42, 0.62, [0.22, 0.38, 0.12], R, 0.4); ico(g, 0.18, 0.36, -0.08, 0.34, 0.6, [0.26, 0.42, 0.14], R, 0.4);
     } else {
       API.ROCK_SMOOTH = true;
       ico(g, 0, 0.34, 0, 0.56, 0.64, [0.15, 0.29, 0.11], R, 0.3);
-      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + R() * 0.6, d = 0.26 + R() * 0.16; ico(g, Math.cos(a) * d, 0.58 + R() * 0.08, Math.sin(a) * d, 0.1 + R() * 0.04, 0.8, su ? [0.9, 0.92, 0.98] : [0.42, 0.4, 0.26], R, 0.3); }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + R() * 0.6, d = 0.24 + R() * 0.12; ico(g, Math.cos(a) * d, 0.58 + R() * 0.08, Math.sin(a) * d, 0.13 + R() * 0.04, 0.8, su ? [0.9, 0.92, 0.98] : [0.42, 0.4, 0.26], R, 0.3); }
     }
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
@@ -175,7 +175,7 @@
      else its massif in a mesh of its own drawn after the far land without the depth test (hidden only by the near world, drawn after it) ---- */
   function hkFar(base, fujiOver) {
     const H = hkData(); if (!H) return null;
-    const D = H.D, su = HKS, P0 = [], C = [], AZ = [], I = [], IF = [], RIM = [];
+    const D = H.D, su = HKS, P0 = [], C = [], AZ = [], IF = [], RIM = [], BLK = new Map(), blk = (k) => { let L = BLK.get(k); if (!L) BLK.set(k, L = []); return L; };   // (the triangles in blocks: each its own mesh, culled out of the view)
     const road = []; for (let i = 0; i < T.N; i += 10) road.push(T.px[i], T.pz[i]);
     const dRoad = (x, z) => { let m = 1e18; for (let k = 0; k < road.length; k += 2) { const dx = x - road[k], dz = z - road[k + 1], d = dx * dx + dz * dz; if (d < m) m = d; } return Math.sqrt(m); };
     const FT = D.fujiTop || [-34338, -14105, 3776], HOLE = 300;
@@ -209,7 +209,7 @@
       for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) {
         const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1;
         if (near && Math.min(dr[a], dr[b2], dr[c], dr[d]) < HOLE) continue;   // (none near the road: a cell round the camera, drawn on its far sphere, would cut through the near world)
-        const L = fujiOver && !near && isFuji(F.x0 + i * F.cell, F.z0 + j * F.cell, h[a]) && isFuji(F.x0 + (i + 1) * F.cell, F.z0 + (j + 1) * F.cell, h[d]) ? IF : I;
+        const L = fujiOver && !near && isFuji(F.x0 + i * F.cell, F.z0 + j * F.cell, h[a]) && isFuji(F.x0 + (i + 1) * F.cell, F.z0 + (j + 1) * F.cell, h[d]) ? IF : blk((near ? 'f' : 'j') + Math.floor(i / (near ? 28 : 40)) + ',' + Math.floor(j / (near ? 28 : 45)));
         L.push(v0 + a, v0 + c, v0 + b2, v0 + b2, v0 + c, v0 + d);
       }
       return { v0, nx, nz, wet };
@@ -221,7 +221,7 @@
     {   // the strip between the two grids: Fuji's grid's east column and the far grid's west column, a zipper of triangles over the z they share
       const Fj = D.fuji, Ff = D.far, iA = gJ.nx - 1, za = (j) => Fj.z0 + j * Fj.cell, zb = (k) => Ff.z0 + k * Ff.cell;
       let j = Math.max(0, Math.floor((Ff.z0 - Fj.z0) / Fj.cell)), k = 0; const j1 = gJ.nz - 1, k1 = Math.min(gF.nz - 1, Math.floor((za(j1) - Ff.z0) / Ff.cell) + 1);
-      const A = (jj) => gJ.v0 + jj * gJ.nx + iA, B = (kk) => gF.v0 + kk * gF.nx;
+      const A = (jj) => gJ.v0 + jj * gJ.nx + iA, B = (kk) => gF.v0 + kk * gF.nx, I = blk('seam');
       while (j < j1 || k < k1) {
         if (k >= k1 || (j < j1 && za(j + 1) <= zb(k + 1))) { I.push(A(j), A(j + 1), B(k)); j++; }
         else { I.push(B(k), A(j), B(k + 1)); k++; }
@@ -230,7 +230,7 @@
     // a few flat-shaded boxes of its own on the far mesh (its own vertices: the lake's red gate, the boats)
     const boxF = (cx, cy, cz, sx, sy, sz, rot, col) => { const c = Math.cos(rot), s = Math.sin(rot), Pp = (lx, ly, lz) => [cx + lx * c - lz * s, cy + ly, cz + lx * s + lz * c], hx = sx / 2, hz = sz / 2;
       const F6 = [[[-hx, 0, hz], [hx, 0, hz], [hx, sy, hz], [-hx, sy, hz]], [[hx, 0, -hz], [-hx, 0, -hz], [-hx, sy, -hz], [hx, sy, -hz]], [[hx, 0, hz], [hx, 0, -hz], [hx, sy, -hz], [hx, sy, hz]], [[-hx, 0, -hz], [-hx, 0, hz], [-hx, sy, hz], [-hx, sy, -hz]], [[-hx, sy, hz], [hx, sy, hz], [hx, sy, -hz], [-hx, sy, -hz]]];
-      const v0 = P0.length / 3; for (const f of F6) { const w = P0.length / 3; for (const p of f) { const q = Pp(p[0], p[1], p[2]); P0.push(q[0], q[1], q[2]); C.push(col[0], col[1], col[2]); AZ.push(1); RIM.push(0); } I.push(w, w + 1, w + 2, w, w + 2, w + 3); }
+      const v0 = P0.length / 3, I = blk('lake'); for (const f of F6) { const w = P0.length / 3; for (const p of f) { const q = Pp(p[0], p[1], p[2]); P0.push(q[0], q[1], q[2]); C.push(col[0], col[1], col[2]); AZ.push(1); RIM.push(0); } I.push(w, w + 1, w + 2, w, w + 2, w + 3); }
       return v0; };
     const lakeY = D.far.lakeH - base;
     for (const g of D.gates) if (g[4]) {   // the red gate in the lake (8 m wide, 9 m up; its two pillars, the black-topped beam, the tie beam), on the far grid's
@@ -254,7 +254,8 @@
     }
     const nv = P0.length / 3, g = new THREE.BufferGeometry(), pos = new THREE.BufferAttribute(new Float32Array(P0), 3), hz = new THREE.BufferAttribute(new Float32Array(nv).fill(0.5), 1);
     for (const b of boats) hkBoatAt(b, 0, pos.array);
-    g.setAttribute('position', pos); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3)); g.setAttribute('aHz', hz); g.setIndex(I.concat(IF)); g.computeVertexNormals();
+    const all = []; for (const L of BLK.values()) for (const v of L) all.push(v); for (const v of IF) all.push(v);
+    g.setAttribute('position', pos); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3)); g.setAttribute('aHz', hz); g.setIndex(all); g.computeVertexNormals();
     const U = { uHz: { value: new THREE.Color(0xc8d5dc) } };
     const mk = (over) => { const m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false });
       if (over) { m.depthTest = false; }
@@ -262,29 +263,38 @@
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
       m.customProgramCacheKey = () => 'hkFar' + (over ? 'O' : ''); return m; };
-    const g1 = new THREE.BufferGeometry(); for (const k in g.attributes) g1.setAttribute(k, g.attributes[k]); g1.setIndex(I);
-    const mesh = new THREE.Mesh(g1, mk(false)); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'hkFar';
-    mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); };   // (the haze: the fog's colour, by the time of day and the weather)
-    let mesh2 = null;
-    if (IF.length) { const g2 = new THREE.BufferGeometry(); for (const k in g.attributes) g2.setAttribute(k, g.attributes[k]); g2.setIndex(IF);
-      mesh2 = new THREE.Mesh(g2, mk(true)); mesh2.frustumCulled = false; mesh2.renderOrder = -49; mesh2.matrixAutoUpdate = false; mesh2.name = 'hkFuji'; mesh2.onBeforeRender = mesh.onBeforeRender; }
-    return { mesh, mesh2, P0: Float32Array.from(pos.array), rim: Float32Array.from(RIM), az: Float32Array.from(AZ), boats, cx: 1e9, cy: 0, cz: 0, cf: 0, t: -1 };
+    const onBR = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); }, mat = mk(false), meshes = [];   // (the haze: the fog's colour, by the time of day and the weather)
+    const part = (I, m, name, ro) => {   // a mesh of the triangles I: the attributes shared, its own index, its vertices (for its bounding sphere as drawn)
+      const gq = new THREE.BufferGeometry(); for (const k in g.attributes) gq.setAttribute(k, g.attributes[k]); gq.setIndex(I);
+      const vs = Uint32Array.from(new Set(I)); gq.boundingSphere = new THREE.Sphere();
+      const o = new THREE.Mesh(gq, m); o.frustumCulled = true; o.renderOrder = ro; o.matrixAutoUpdate = false; o.name = name; o.onBeforeRender = onBR; o.userData.vs = vs; meshes.push(o); return o; };
+    for (const L of BLK.values()) part(L, mat, 'hkFar', -50);
+    const mesh2 = IF.length ? part(IF, mk(true), 'hkFuji', -49) : null;
+    const F = { meshes, mesh: meshes[0], mesh2, g, P0: Float32Array.from(pos.array), rim: Float32Array.from(RIM), az: Float32Array.from(AZ), boats, cx: 1e9, cy: 0, cz: 0, cf: 0, t: -1, th: 4 };
+    hkFarBounds(F); return F;
   }
   function hkBoatAt(b, t, out) {   // a boat t s into the race: to and fro along its route (it turns at the ends), its vertices into out (P0's layout)
     const L = b.len, u = ((t * b.sp / L + b.ph) % 2 + 2) % 2, f = u < 1 ? u : 2 - u, fs = f * f * (3 - 2 * f), dir = u < 1 ? 0 : Math.PI;
     const x = lerp(b.a[0], b.b[0], fs), z = lerp(b.a[1], b.b[1], fs), c = Math.cos(dir), s = Math.sin(dir);
     for (let k = 0, v = b.v0 * 3; k < b.loc.length; k += 3, v += 3) { const lx = b.loc[k], lz = b.loc[k + 2]; out[v] = x + lx * c - lz * s; out[v + 1] = b.loc[k + 1]; out[v + 2] = z + lx * s + lz * c; }
   }
+  function hkFarBounds(F) {   // each block's bounding sphere round its vertices where they are drawn now (three.js culls the blocks out of the view)
+    const p = F.g.attributes.position.array;
+    for (const o of F.meshes) { const vs = o.userData.vs; let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
+      for (let k = 0; k < vs.length; k++) { const q = vs[k] * 3, x = p[q], y = p[q + 1], z = p[q + 2]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+      o.geometry.boundingSphere.center.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); o.geometry.boundingSphere.radius = Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 + 1; }
+  }
   function hkFarUpdate(F, cam, t) {   // (no camera: back to the nodes' own places and the boats to their start, the world test's pose)
     if (F.boats.length && t != null && Math.abs(t - F.t) > 0.25) { F.t = t; for (const b of F.boats) hkBoatAt(b, t, F.P0); F.cx = 1e9; }
-    const g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
-    if (!cam) { if (F.cx !== 1e9 || F.t !== 0) { if (F.t !== 0) { F.t = 0; for (const b of F.boats) hkBoatAt(b, 0, F.P0); } p.set(P0); hz.fill(0.5); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
-    const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 0.5 && cam.far === F.cf) return;
+    const g = F.g, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
+    if (!cam) { if (F.cx !== 1e9 || F.t !== 0) { if (F.t !== 0) { F.t = 0; for (const b of F.boats) hkBoatAt(b, 0, F.P0); } p.set(P0); hz.fill(0.5); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; hkFarBounds(F); } return; }
+    const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < F.th && cam.far === F.cf) return;   // (every 4 m: drawn 64-6 m inside the far plane, the far land stays inside it)
     F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
     const R0 = cam.far - 70, R1 = cam.far - 6, rim = F.rim, az = F.az;
     for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 400) / 3000)), f = r / D;
       p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(rim[v], (0.22 + 0.58 * (1 - Math.exp(-Math.max(0, D - 400) / 6000))) * az[v]); }
     g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
+    hkFarBounds(F);
   }
 
   /* ---- a hipped roof (yosemune) over the box L x D turned by rot: the ridge along L (L - D long; a pyramid on a square), its eaves at y ---- */
@@ -712,11 +722,11 @@
       exclPush(x, z, hw + 2); out.marks.torii = [x, z];
     }
 
-    /* ---- spectators: the start, the villages, the hairpins, the summit and the Seven Bends ---- */
+    /* ---- spectators: the start, a few groups at the Ōhiradai hairpin, the summit, the Seven Bends and Sanmaibashi (CLAUDE.md: few on the real tracks) ---- */
     {
       const M = { first: 2.6, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: (x, z) => excluded(x, z) || inRect(x, z), sit: 0.25, flag: 0.1, keepBar: 1.6 };
       for (const sd of [-1, 1]) crowdRun(CR, sStart - 70, sStart + 70, sd, Object.assign({}, M, { rows: 3, dens: 0.6, label: 'HK start' }));
-      const spots = [['Ōhiradai', 0, 70, 0.55], ['Miyanoshita', 60, 80, 0.4], ['Kowakidani', 60, 60, 0.45], ['Vrh · 874 m', 0, 70, 0.55], ['Moto-Hakone', 0, 60, 0.4], ['Sarusuberi', 30, 50, 0.4], ['Sedem ovinkov', 0, 200, 0.35], ['Hatajuku', 60, 70, 0.4], ['Sanmaibashi', 0, 50, 0.45]];
+      const spots = [['Ōhiradai', 0, 50, 0.4], ['Vrh · 874 m', 0, 50, 0.4], ['Sedem ovinkov', 60, 80, 0.3], ['Sanmaibashi', 0, 40, 0.35]];   // (a few groups only: CLAUDE.md, the real tracks' roadside spectators)
       for (const [nm, off, len, dn] of spots) { const q = T.names.find(o => o.n === nm); if (!q) continue; const s0 = at(q.d + off);
         for (const sd of [-1, 1]) crowdRun(CR, s0 - len / 2, s0 + len / 2, sd, Object.assign({}, M, { rows: 2, dens: dn, label: 'HK ' + nm })); }
     }
@@ -786,7 +796,7 @@
 
     /* ---- the view: the caldera, Lake Ashi, the sea and Mount Fuji beyond the corridor (hkFar; World.update moves it with the camera: dyn.ext) ---- */
     const FAR = hkFar(base, def.fuji !== 'real');
-    if (FAR) { root.add(FAR.mesh); if (FAR.mesh2) root.add(FAR.mesh2); out.dyn.ext = (t, car, cam) => hkFarUpdate(FAR, car ? cam : null, car ? t : 0); }
+    if (FAR) { for (const o of FAR.meshes) root.add(o); out.dyn.ext = (t, car, cam) => hkFarUpdate(FAR, car ? cam : null, car ? t : 0); }
 
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
