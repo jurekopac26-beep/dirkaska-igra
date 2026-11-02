@@ -5,7 +5,7 @@
 //   (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's car online (net) never
 // - agresivni vozniki: a 90 s race at Bathurst (13 cars; a real track: on the test track Jezero, all off the line at once, the start's knocks
 //   alone were as many as the aggressive drivers add): on, more hard knocks between the cars and more damage than off, every rival still
-//   on its laps, nothing NaN
+//   driving (the slowest rival at least 0.8 of the way the slowest one makes without them), nothing NaN
 // - poškodbe vplivajo na vožnjo: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at
 //   80 km/h, the wheel held straight); off, it runs straight
 //   node tests/knock.test.js
@@ -51,16 +51,19 @@ function race(ai, seed) {
     let t = 0, hard = 0, nan = false;
     while (t < 90) { C.aiControl(r.player, r, DT); r.step(DT); t += DT;
       for (const c of r.cars) { if (c.hitCar > 8) hard++; if (![c.x, c.z, c.vx, c.vz].every(Number.isFinite)) nan = true; c.hitCar = 0; c.hitWall = 0; } }
-    return { hard, nan, dmg: r.cars.reduce((s, c) => s + c.dmg, 0) / r.cars.length, laps: Math.min(...r.cars.filter(c => !c.isPlayer).map(c => c.lap || 0)) };   // (the rivals: the marshals put a stuck one back; the player's autopilot has no reverse gear, a player spun round into a barrier backs out of it)
+    const riv = r.cars.filter(c => !c.isPlayer);
+    return { hard, nan, dmg: r.cars.reduce((s, c) => s + c.dmg, 0) / r.cars.length, laps: Math.min(...riv.map(c => c.lap || 0)), dist: Math.min(...riv.map(c => c.dist || 0)) };   // (the rivals: the marshals put a stuck one back; the player's autopilot has no reverse gear, a player spun round into a barrier backs out of it)
   } finally { Math.random = orig; C.setCrash({}); }
 }
 {
   // (six races of each, the knocks and the damage added up: one 90 s race alone is a draw of the dice)
-  const sum = (ai) => { const t = { hard: 0, dmg: 0, laps: 99, nan: false }; for (const sd of [11, 12, 13, 14, 15, 16]) { const r = race(ai, sd); t.hard += r.hard; t.dmg += r.dmg / 6; t.laps = Math.min(t.laps, r.laps); t.nan = t.nan || r.nan; } return t; };
+  const sum = (ai) => { const t = { hard: 0, dmg: 0, laps: 99, dist: Infinity, nan: false }; for (const sd of [11, 12, 13, 14, 15, 16]) { const r = race(ai, sd); t.hard += r.hard; t.dmg += r.dmg / 6; t.laps = Math.min(t.laps, r.laps); t.dist = Math.min(t.dist, r.dist); t.nan = t.nan || r.nan; } return t; };
   const off = sum(0), on = sum(1);
   ok('agresivni vozniki on: more hard knocks between the cars', on.hard >= off.hard * 1.5 && on.hard > 30, 'hard knocks ' + off.hard + ' -> ' + on.hard);
   ok('agresivni vozniki on: more damage in the field', on.dmg > off.dmg * 1.5, 'mean damage ' + off.dmg.toFixed(2) + ' -> ' + on.dmg.toFixed(2));
-  ok('agresivni vozniki on: every rival still on its laps, nothing NaN', on.laps >= off.laps && !on.nan, 'laps (the slowest) ' + off.laps + ' / ' + on.laps);
+  // (by the distance: a lap at Bathurst is longer than 90 s of driving, every rival ends on its first lap whether one stops or not; the slowest
+  // rival without them some 3480 m on, with them 3240 m, a rival stopped or put out of the race at 30 s about 1300 m)
+  ok('agresivni vozniki on: every rival still driving (the slowest as far as 0.8 of the slowest without them), nothing NaN', on.dist > 0.8 * off.dist && on.laps >= off.laps && !on.nan, 'the slowest rival ' + off.dist.toFixed(0) + ' m / ' + on.dist.toFixed(0) + ' m, laps ' + off.laps + ' / ' + on.laps);
 }
 
 // a crushed front corner (cd: FL, FR, RL, RR), 80 km/h, the wheel held straight for 2 s

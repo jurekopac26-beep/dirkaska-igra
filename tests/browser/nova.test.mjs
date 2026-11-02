@@ -61,9 +61,12 @@ try {
     await page.click('#s-settings [data-set="phys"] [data-v="cs"]'); await page.waitForTimeout(200);
     const tt = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, phys: window.__game.race.opts.phys, cars: [...new Set(window.__game.race.cars.map(c => c.phys))] }));
     T.check('Klasična during the race: the race keeps the new physics, a toast says it applies from the next race', tt.phys === 'nova' && tt.cars.join() === 'nova' && /naslednje dirke/.test(tt.toast), JSON.stringify(tt));
+    const dimmed = () => page.evaluate(() => [...document.querySelectorAll('#s-settings .row.nbx [data-set]')].map(e => e.dataset.set).filter(k => k === 'crGl' || k === 'crSl').sort().join());
+    const dimNova = await dimmed();   // (Zdrs po trku, Ujem gum: by the physics of the race that runs, the new one, though the setting says Klasična)
     await startTrack(page, 'spa');
     const nx = await page.evaluate(() => ({ phys: window.__game.race.opts.phys, cars: [...new Set(window.__game.race.cars.map(c => c.phys))] }));
-    T.check('the next race (Spa): the classic physics', nx.phys === 'cs' && nx.cars.join() === 'cs' && await saved(page) === 'cs', JSON.stringify(nx));
+    await settings(page); const dimCs = await dimmed();
+    T.check('the next race (Spa): the classic physics; Zdrs po trku and Ujem gum dimmed by the physics of the race that runs (the Nova race after the switch: dimmed; the classic one: not)', nx.phys === 'cs' && nx.cars.join() === 'cs' && await saved(page) === 'cs' && dimNova === 'crGl,crSl' && dimCs === '', JSON.stringify({ nx, dimNova, dimCs }));
     // the sliding style: Drseč with Klasična, no car has it; with Nova the player's car only
     await settings(page);
     await page.click('#s-settings [data-set="slide"] [data-v="1"]'); await page.waitForTimeout(200);
