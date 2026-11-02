@@ -121,6 +121,16 @@ Meritev po vsem krogu (NIZKA, 844 × 390 in 390 × 844, igralčev avto na vsakih
 - **Testi na GitHubu:** posel »Fizika, AI in dirke« ima omejitev 60 min namesto 40 (`.github/workflows/tests.yml`). Nabor Node traja na hitrem stroju ~20 min, na počasnem ~40 min; v prvem krogu pull requesta #261 so bili vsi testi zeleni, posel pa je bil pri 40 min prekinjen.
 - **Livorno** (#258) še ni na `main`. Ko bo, je treba v to vejo še enkrat spojiti svež `main`. Spori bodo v žigih `index.html` in `garaza.html` (`node tools/stamp.js`), v `tests/run.js`, `README.md`, `docs/kazalo.md`, referencah `world` in `perf` (obe progi) in v `proge_igra.json`. V meniju je Livorno (19,09 km) pred Nürburgom, Hakone (26,68 km) za njim.
 
+## Po preizkusu uporabnika (2. 11. 2026)
+
+Uporabnik je po preizkusu predogleda napisal: »železnica na progi ni dokončana, dokončaj železnico in izboljšaj grafiko, poglej proge naj bo manj dreves in smrek da ne kradejo toliko grafike«.
+
+- **Železnica:** risala se je samo do 64 m od ceste, podatki pa segajo do ~170 m, zato so se tiri sredi travnika odrezali. Zdaj je narisana vsa, 5,8 km namesto 4,2 km. Prosti konci tirov (tisti, ki niso ob drugem tiru in niso v predoru) imajo ob cesti odbojnik (5), dlje od ~95 m pa portal predora v griču (10). Grič dvigne `hkHill` za portalom, kot da proga gre naprej v hrib. Na gredi in pod mostovi ni dreves ne sase (`hkRailD`).
+- **Gozd, zredčen za telefon:** drevesa modela krošenj ostanejo z verjetnostjo ~70 % do 12 m od ceste, ~55 % do 25 m in ~45 % dlje (na nižjih stopnjah podrobnosti dlje še manj). Cedrov drevored ostane cel. Dopolnitev je redkejša (v gozdu 0,6 namesto 0,9), sestoji kriptomerij so manjši (šum nad 0,66 namesto 0,52), sase je manj (0,2 / 0,3 namesto 0,3 / 0,45). Na VISOKI je 14.941 + 5.043 dreves (5.716 kriptomerij) in 4.076 sase namesto 25.838 + 14.566 in 6.260, primerkov v svetu 25.572 namesto 48.176.
+- **Travniki** imajo lise bolj suhe in bolj sočne trave (`hkCol`), da niso ene same zelene.
+- **Obremenitev** (`perf.test.mjs`, NIZKA): povprečno 192 klicev risanja in 329 tisoč oglišč, največ 214 klicev in 408 tisoč oglišč. Prej je bilo 195 (213) klicev in 392 (471) tisoč oglišč. Drevesa so prej vzela 55–184 tisoč oglišč na sličico, zdaj 28–151 tisoč.
+- **Odprto:** ali naj bo manj dreves tudi na drugih progah (vprašanje uporabniku v poročilu seje).
+
 ## Sklopi
 
 1. **Podatki** (to je narejeno): potek proge, višine, teren koridorja in daljni pogled s Fujijem, raba tal, stavbe, drevesa in železnica do 60 m, ta načrt.

@@ -47,14 +47,16 @@
     return lc;
   }
 
-  /* ---- the ground's colours (times the grey grit map): early summer's fresh grass, in autumn straw and pampas gold; under the forest by the road
+  /* ---- the ground's colours (times the grey grit map): early summer's fresh grass (in patches drier or lusher), in autumn straw and pampas gold; under the forest by the road
      its dark floor of ferns and sasa, farther out the canopy seen from above (mottled deep greens; autumn's reds and golds); sasa on the scrub,
      grey yards between the villages' gardens, grey-brown andesite and soil on the steep faces and the bare rock, the lakes' beds, a mown verge ---- */
   function hkCol(x, z, h, ny, dd) {
     const P = API.VR, m = P.n3(x, z), q = P.n4(x, z), su = HKS;
     const fo = vrLCf(x, z, 1), sc = vrLCf(x, z, 2), se = vrLCf(x, z, 3), rk = vrLCf(x, z, 4), wa = vrLCf(x, z, 5);
     let r, g, b;
-    if (su) { r = 0.3 + (m - 0.5) * 0.1 + (q - 0.5) * 0.07; g = 0.42 + (m - 0.5) * 0.09 + (q - 0.5) * 0.05; b = 0.16 + (m - 0.5) * 0.04; }
+    if (su) { r = 0.3 + (m - 0.5) * 0.1 + (q - 0.5) * 0.07; g = 0.42 + (m - 0.5) * 0.09 + (q - 0.5) * 0.05; b = 0.16 + (m - 0.5) * 0.04;
+      const dry = sstep(0.56, 0.82, P.n5(x * 0.55, z * 0.55)), lush = sstep(0.55, 0.8, P.n7(x * 0.7, z * 0.7));   // (patches of drier, yellower grass and of lusher, darker: the meadows not one green)
+      r += dry * 0.07 - lush * 0.05; g += dry * 0.035 - lush * 0.045; b -= lush * 0.025; }
     else { r = 0.62 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08; g = 0.52 + (m - 0.5) * 0.1; b = 0.27 + (m - 0.5) * 0.05; }
     if (fo > 0) {
       const cn = Math.max(sstep(2.5, 15, dd), sstep(13, 34, vrDist(x, z))), t = P.n6(x, z);   // (the canopy from a little past the barrier line: under it the trees stand close)
@@ -111,10 +113,28 @@
 
   /* ---- the railway's bed in the ground (VR.hfix, js/world-vrsic.js vrH): along every stretch on the ground the land levelled to the bed (a bench
      2.6 m either side of the track, back to the land 8 m farther out: the embankments and cuttings), never inside the road's own levelling ---- */
-  let HKR = null;   // { cells: Map of 16 m cells -> [segment], segs: [[x0, z0, y0, x1, z1, y1]], lakeY: Lake Ashi's level above the start line }
+  let HKR = null;   // { cells: Map of 16 m cells -> [segment] (on the ground), all: the same of every stretch out of the tunnels, segs: [[x0, z0, y0, x1, z1, y1]], hills: the far ends' hills, lakeY: Lake Ashi's level above the start line }
   function hkFix(x, z, h, dd) {
     if (dd > 60 && API.vrLC(x, z) === 5 && Math.abs(API.vrDem(x, z) - HKR.lakeY) < 8) return HKR.lakeY - 0.15;   // (Lake Ashi in the corridor: its surface flat, the land's made-up relief off it)
     if (dd < 1.2) return h;
+    const r = hkBench(x, z, h, dd);
+    return dd > 30 && HKR.hills.length ? hkHill(x, z, r) : r;
+  }
+  // a line's far end (where the data of the line stops, ~95-170 m from the road): the hill it runs into, a tunnel's portal at its foot; the land
+  // raised behind the portal (not in front of it) to 8 m over the rails, back to the land 20 m to either side and 26-42 m on
+  function hkHill(x, z, h) {
+    for (const e of HKR.hills) { const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz > 2500) continue;
+      const u = dx * e.tx + dz * e.tz, v = Math.abs(dz * e.tx - dx * e.tz), f = sstep(-1.5, 5, u) * (1 - sstep(7, 20, v)) * (1 - sstep(26, 42, u));
+      if (f > 0) h = Math.max(h, lerp(h, e.y + 8, f)); }
+    return h;
+  }
+  // the distance to the railway's nearest stretch out of the tunnels (on the ground or on a bridge), for the plants (none on the bed)
+  function hkRailD(x, z) {
+    const L = HKR && HKR.all.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16)); let b = 1e9; if (!L) return b;
+    for (const s of L) { const ex = s[3] - s[0], ez = s[4] - s[1], t = clamp(((x - s[0]) * ex + (z - s[1]) * ez) / (ex * ex + ez * ez || 1), 0, 1); b = Math.min(b, Math.hypot(s[0] + ex * t - x, s[1] + ez * t - z)); }
+    return b;
+  }
+  function hkBench(x, z, h, dd) {
     const L = HKR.cells.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16)); if (!L) return h;
     let best = 1e9, y = 0;
     for (let k = 0; k < L.length; k++) { const s = L[k], ex = s[3] - s[0], ez = s[4] - s[1], l2 = ex * ex + ez * ez, t = clamp(((x - s[0]) * ex + (z - s[1]) * ez) / (l2 || 1), 0, 1), px = s[0] + ex * t - x, pz = s[1] + ez * t - z, d = px * px + pz * pz;
@@ -352,7 +372,25 @@
       for (const q of rail) for (let k = 0; k + 1 < q.length; k++) { const a = q[k], b = q[k + 1]; if (a.g !== 0) continue;
         const s = [a.x, a.z, a.y, b.x, b.z, b.y]; segs.push(s);
         for (let i = Math.floor((Math.min(a.x, b.x) - 11) / 16); i <= Math.floor((Math.max(a.x, b.x) + 11) / 16); i++) for (let j = Math.floor((Math.min(a.z, b.z) - 11) / 16); j <= Math.floor((Math.max(a.z, b.z) + 11) / 16); j++) { const key = i * 65536 + j; let Lq = cells.get(key); if (!Lq) cells.set(key, Lq = []); Lq.push(s); } }
-      HKR = { cells, segs, lakeY: D.far.lakeH - base }; P.hfix = hkFix;
+      const all = new Map();
+      for (const q of rail) for (let k = 0; k + 1 < q.length; k++) { const a = q[k], b = q[k + 1]; if (a.g === 2) continue;
+        const s = [a.x, a.z, a.y, b.x, b.z, b.y];
+        for (let i = Math.floor((Math.min(a.x, b.x) - 6) / 16); i <= Math.floor((Math.max(a.x, b.x) + 6) / 16); i++) for (let j = Math.floor((Math.min(a.z, b.z) - 6) / 16); j <= Math.floor((Math.max(a.z, b.z) + 6) / 16); j++) { const key = i * 65536 + j; let Lq = all.get(key); if (!Lq) all.set(key, Lq = []); Lq.push(s); } }
+      // the lines' free ends (not at another line, not in a tunnel): by the road (within ~95 m) a buffer stop; farther out, where the data of the
+      // line stops, a tunnel's portal at the foot of a hill (hkHill), as the line goes on into the hills
+      const ends = [], hills = [];
+      for (const [li, q] of rail.entries()) for (const k of [0, q.length - 1]) {
+        const p = q[k], o = q[k ? k - 1 : 1]; if (!o || p.g === 2 || (k && q[k - 1].g === 2)) continue;
+        let joined = false;
+        for (const [lj, q2] of rail.entries()) { if (lj === li) continue;   // (within 4 m of another line: a junction, a siding's end at the main line)
+          for (let j = 0; j + 1 < q2.length && !joined; j++) { const a2 = q2[j], b2 = q2[j + 1], ex = b2.x - a2.x, ez = b2.z - a2.z, t = clamp(((p.x - a2.x) * ex + (p.z - a2.z) * ez) / (ex * ex + ez * ez || 1), 0, 1);
+            if (Math.hypot(a2.x + ex * t - p.x, a2.z + ez * t - p.z) < 4) joined = true; }
+          if (joined) break; }
+        if (joined) continue;
+        const dx = p.x - o.x, dz = p.z - o.z, l = Math.hypot(dx, dz) || 1, e = { x: p.x, y: p.y, z: p.z, tx: dx / l, tz: dz / l, far: vrDist(p.x, p.z) > 95 };
+        ends.push(e); if (e.far) hills.push(e);
+      }
+      HKR = { cells, all, segs, ends, hills, lakeY: D.far.lakeH - base }; P.hfix = hkFix;
     }
 
     /* ---- terrain tiles ---- */
@@ -601,12 +639,11 @@
        truss on the longer spans) and concrete piers; the overhead line's steel masts every ~40 m with their arms over the track, the wires;
        the tunnels' portals; the level crossing (the rails across the road, its gates and signals each side); the stations' platforms with a
        shelter; hydrangeas along the line, in flower in early summer ---- */
-    let nHyd = 0, nCross = 0, nRailM = 0;
+    let nHyd = 0, nCross = 0, nRailM = 0, nStop = 0, nPortal = 0;
     const hyd = new IChunks(hkPlantGeo(4), ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut), 96);
     if (rail.length) {
       const bal = [0.42, 0.4, 0.38], balD = [0.34, 0.32, 0.3], top = [0.6, 0.6, 0.62], rust = [0.4, 0.3, 0.24], red = [0.66, 0.2, 0.13], conc = [0.68, 0.67, 0.64], mast = [0.5, 0.55, 0.52];
       const HYD = su ? [[0.62, 0.7, 1], [0.76, 0.64, 0.96], [1, 0.74, 0.84], [0.68, 0.76, 1], [1, 1, 1]] : [[1, 1, 1]];
-      const near = (x, z) => vrDist(x, z) < 64;
       const railNear = (x, z) => { const Lq = HKR.cells.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16)); let b = 1e9; if (Lq) for (const s of Lq) { const ex = s[3] - s[0], ez = s[4] - s[1], t = clamp(((x - s[0]) * ex + (z - s[1]) * ez) / (ex * ex + ez * ez || 1), 0, 1); b = Math.min(b, Math.hypot(s[0] + ex * t - x, s[1] + ez * t - z)); } return b; };
       // the platforms: a concrete slab at the height of the rails beside it, a shelter over its middle
       for (const pl of D.plat) {
@@ -627,7 +664,7 @@
       for (const q of rail) {
         let lastMast = -99;
         for (let k = 0; k + 1 < q.length; k++) {
-          const a = q[k], b = q[k + 1]; if (a.g === 2 || !(near(a.x, a.z) || near(b.x, b.z))) continue;
+          const a = q[k], b = q[k + 1]; if (a.g === 2) continue;
           if (a.g === 0 && Math.min(a.dd, b.dd) < 0.3) continue;   // (across the road and its verge: the level crossing's own rails)
           const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, tx = dx / l, tz = dz / l, nx = -tz, nz = tx, g = scen.get(a.x, a.z), inn = [(a.x + b.x) / 2, Math.min(a.y, b.y) - 3, (a.z + b.z) / 2];
           const Pq = (p, o, y) => [p.x + nx * o, p.y + y, p.z + nz * o];
@@ -671,6 +708,19 @@
           if (k > 0 && q[k - 1].g === 2 && a.g !== 2) { const p = Pq(a, 0, 0), ang = Math.atan2(tz, tx) + Math.PI / 2; box(g, p[0] + tx * 0.6, p[1] - 0.4, p[2] + tz * 0.6, 6.4, 7.2, 1.2, ang, conc); box(g, p[0] + tx * 1.25, p[1], p[2] + tz * 1.25, 3.6, 4.9, 0.1, ang, [0.08, 0.08, 0.09]); }
         }
       }
+      // the free ends: a buffer stop (two posts, a red beam with a white plate across the end of the rails, a concrete block behind) or, where
+      // the line runs on into the hills, a tunnel's portal
+      for (const e of HKR.ends) {
+        const g = scen.get(e.x, e.z), nx = -e.tz, nz = e.tx, ang = Math.atan2(e.tz, e.tx);
+        if (e.far) { box(g, e.x - e.tx * 0.6, e.y - 0.4, e.z - e.tz * 0.6, 6.4, 7.2, 1.2, ang + Math.PI / 2, conc); box(g, e.x - e.tx * 1.25, e.y, e.z - e.tz * 1.25, 3.6, 4.9, 0.1, ang + Math.PI / 2, [0.08, 0.08, 0.09]); nPortal++; continue; }
+        const bx = e.x + e.tx * 0.4, bz = e.z + e.tz * 0.4;
+        for (const sd of [-1, 1]) box(g, bx + nx * sd * 0.72, e.y - 0.1, bz + nz * sd * 0.72, 0.22, 1.05, 0.22, ang, [0.3, 0.3, 0.32]);
+        box(g, bx, e.y + 0.5, bz, 0.3, 0.38, 2.5, ang, [0.78, 0.13, 0.1]);
+        box(g, bx - e.tx * 0.17, e.y + 0.52, bz - e.tz * 0.17, 0.04, 0.34, 0.7, ang, [0.92, 0.92, 0.9]);
+        box(g, bx + e.tx * 1.0, e.y - 0.3, bz + e.tz * 1.0, 1.4, 1.1, 3.2, ang, conc);
+        nStop++;
+      }
+      out.marks.railEnds = HKR.ends.map(e => [Math.round(e.x), Math.round(e.z), e.far ? 'portal' : 'stop']);
       // the level crossing(s): the rails across the road (a dark rubber panel between them), the gates (striped booms raised) and the signals
       const yb = [[0.95, 0.8, 0.1], [0.1, 0.1, 0.1]];
       for (const c of cross) {
@@ -739,31 +789,35 @@
     /* ---- the forest (instanced per 96 m chunk): the canopy model's trees within 60 m of the road (HK_DATA.trees: it finds only the tallest tops,
        the stands are closer) and as many more where the land cover has woods and no tree of the model stands near; cedars in their stands (the
        plantations, a smooth noise) and all along the cedar avenue of the old road, broadleaves, maples by the road, bamboo by the villages lower
-       down; taller than the model makes them (it reads the canopy low: the old cedars stand 25-40 m); on the lower tiers fewer beyond 25 m.
-       Sasa (dwarf bamboo, green the year round) in clumps on the verges ---- */
+       down; taller than the model makes them (it reads the canopy low: the old cedars stand 25-40 m). Thinned for the phone (the user's wish,
+       2. 11. 2026: fewer trees and cedars): of the model's trees ~70 % within 12 m of the road, ~55 % to 25 m, ~45 % beyond it (fewer still on
+       the lower tiers), the fill sparser, the cedars' stands smaller; none on the railway's bed or under its bridges. Sasa (dwarf bamboo, green
+       the year round) in clumps on the verges ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const tk = [0, 1, 2, 3, 5].map(k => new IChunks(hkPlantGeo(k), tMatT, 96)); out.treeMat = tMatT;
-    let nTrees = 0, nFill = 0, nSasa = 0;
+    let nTrees = 0, nFill = 0, nSasa = 0, nCedar = 0;
     if (H) {
       const av = D.avenue || [0, 0], avA = at(av[0]), avB = at(av[1]), inAv = (i) => { const s = i * ds; return avA < avB ? s > avA && s < avB : s > avA || s < avB; };
       const MAPLE = su ? [[1, 1, 1], [0.92, 1.05, 0.9], [1.1, 1.02, 1.05]] : [[1, 1, 1], [0.8, 0.55, 0.9], [1.08, 2.7, 1.3], [1.1, 4.0, 1.6], [1.02, 1.6, 1.0]];
-      const thin = (LOD.tier === 0 ? 0.5 : LOD.tier === 1 ? 0.75 : 1) * dens;
+      const thin = (LOD.tier === 0 ? 0.7 : LOD.tier === 1 ? 0.85 : 1) * dens;
       const TH = new Map(), TC = 6, tkey = (x, z) => Math.floor(x / TC) * 65536 + Math.floor(z / TC);
       for (let k = 0; k < H.n; k++) { const kk = tkey(H.tx[k], H.tz[k]); let Lq = TH.get(kk); if (!Lq) TH.set(kk, Lq = []); Lq.push(k); }
       const treeNear = (x, z, r) => { const i0 = Math.floor(x / TC), j0 = Math.floor(z / TC);
         for (let i = i0 - 1; i <= i0 + 1; i++) for (let j = j0 - 1; j <= j0 + 1; j++) { const Lq = TH.get(i * 65536 + j); if (!Lq) continue; for (const k of Lq) { const dx = H.tx[k] - x, dz = H.tz[k] - z; if (dx * dx + dz * dz < r * r) return true; } }
         return false; };
       const plant = (x, z, h0) => {   // (h0: the model's height, null for a tree of the fill)
-        const r1 = rpHash(x * 1.7, z * 1.3), r2 = rpHash(z * 0.9, x * 2.1), r3 = rpHash(x + z, x - z);
+        const r1 = rpHash(x * 1.7, z * 1.3), r2 = rpHash(z * 0.9, x * 2.1), r3 = rpHash(x + z, x - z), r4 = rpHash(x * 0.37 + 11, z * 0.53 - 7);
         const nn = vrNear(x, z); if (nn.i < 0) return false; const dd = nn.dd;
         if (dd < (h0 == null ? 1.8 : 1.1) || (dd < 3 && r2 < 0.3)) return false;
-        if (dd > 25 && r3 > thin) return false;
+        const avenue = dd < 16 && inAv(nn.i);   // (the cedar avenue of the old road: all its trees)
+        if (!avenue && r4 > (dd < 12 ? 0.7 : dd < 25 ? 0.55 : 0.45 * thin)) return false;
+        if (hkRailD(x, z) < 4) return false;
         if (excluded(x, z) || inRect(x, z) || vrWater(x, z).e > -1.5 || vrSlope(x, z) > 1.5) return false;
-        const y = vrGround(x, z), A = y + base, avenue = dd < 16 && inAv(nn.i);
+        const y = vrGround(x, z), A = y + base;
         let sp;
         if (avenue) sp = 0;
         else if (A < 560 && vrLCf(x, z, 3) > 0.15 && dd < 30 && P.n5(x * 1.6, z * 1.6) > 0.5) sp = 3;
-        else if (P.n1(x * 1.1, z * 1.1) > 0.52) sp = 0;
+        else if (P.n1(x * 1.1, z * 1.1) > 0.66) sp = 0;
         else if (dd < 14 && r1 < 0.3) sp = 2;
         else sp = 1;
         const hm = h0 == null ? (sp === 0 ? 13 + r3 * 7 : sp === 1 ? 9 + r3 * 6 : 7 + r3 * 4) : h0;
@@ -772,7 +826,7 @@
         else if (sp === 1) { hg = clamp(hm * 1.3, 7, 24); wd = hg * (0.82 + r2 * 0.3); col = su ? (r1 < 0.3 ? [0.86, 1.02, 0.9] : r1 < 0.7 ? [1, 1, 1] : [1.1, 1.08, 1.0]) : (r1 < 0.35 ? [1.2, 1.25, 1.1] : r1 < 0.7 ? [1, 1, 1] : [0.8, 0.7, 0.8]); }
         else if (sp === 2) { hg = clamp(hm * 0.9, 5, 11); wd = hg * (1.0 + r2 * 0.25); col = MAPLE[Math.floor(r3 * 997) % MAPLE.length]; }
         else { hg = 8 + r2 * 7; wd = hg * (0.42 + r1 * 0.12); col = [0.95 + r1 * 0.1, 1, 0.95]; }
-        tk[sp === 3 ? 3 : sp].add(x, y - 0.15, z, r1 * 70, wd, hg, col); return true;
+        tk[sp === 3 ? 3 : sp].add(x, y - 0.15, z, r1 * 70, wd, hg, col); if (sp === 0) nCedar++; return true;
       };
       for (let k = 0; k < H.n; k++) if (plant(H.tx[k], H.tz[k], H.th[k])) nTrees++;
       const G = P.G, Lt = VRC * VRT, SP = 6.4, RT = rng(4447);
@@ -782,17 +836,17 @@
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r = RT();
           if (vrDist(x, z) > 60) continue;
-          const c = API.vrLC(x, z), p = c === 1 ? 0.9 : c === 2 ? 0.5 : c === 0 ? 0.07 : c === 3 ? 0.04 : 0;
+          const c = API.vrLC(x, z), p = c === 1 ? 0.6 : c === 2 ? 0.35 : c === 0 ? 0.05 : c === 3 ? 0.03 : 0;
           if (r > p || treeNear(x, z, 4.6)) continue;
           if (plant(x, z, null)) nFill++;
         }
       }
       // sasa on the verges: clumps 1-7 m past the barrier line in the woods and on the open ground (not in the villages)
-      const RS = rng(4451), sasaP = LOD.tier === 0 ? 0.3 : 0.45;
+      const RS = rng(4451), sasaP = LOD.tier === 0 ? 0.2 : 0.3;
       for (let s = 2; s < L - 2; s += 2.6) for (const side of [-1, 1]) {
         if (RS() > sasaP) continue;
         const [x, z] = onSide(s, side, 1.0 + RS() * 6), c = API.vrLC(x, z); if (c === 3 || c === 5) continue;
-        const nn = vrNear(x, z); if (nn.i < 0 || nn.dd < 0.7 || excluded(x, z) || inRect(x, z) || vrSlope(x, z) > 1.1 || vrWater(x, z).e > -1) continue;
+        const nn = vrNear(x, z); if (nn.i < 0 || nn.dd < 0.7 || excluded(x, z) || inRect(x, z) || vrSlope(x, z) > 1.1 || vrWater(x, z).e > -1 || hkRailD(x, z) < 3.2) continue;
         const sz = 0.9 + RS() * 0.8; tk[4].add(x, vrGround(x, z) - 0.08, z, RS() * TAU, sz * 1.3, sz * 0.75, [0.9 + RS() * 0.2, 0.95 + RS() * 0.15, 0.9]); nSasa++;
       }
     }
@@ -808,7 +862,7 @@
     if (wires.length) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(wires, 3)); g.computeBoundingSphere();
       const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x1c1d1f })); m.matrixAutoUpdate = false; m.name = 'hkWires'; root.add(m); }
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, fill: nFill, sasa: nSasa, tiles: nTiles, farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), base, buildings: nBld, poles: nPoles, hydrangeas: nHyd, crossings: nCross, railM: Math.round(nRailM), paving: nPave, far: FAR ? FAR.P0.length / 3 : 0, boats: FAR ? FAR.boats.length : 0, fujiOver: !!(FAR && FAR.mesh2) };   // (read by the tests)
+    out.stats = { trees: nTrees, fill: nFill, sasa: nSasa, tiles: nTiles, farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3), base, buildings: nBld, poles: nPoles, hydrangeas: nHyd, crossings: nCross, railM: Math.round(nRailM), stops: nStop, portals: nPortal, cedars: nCedar, paving: nPave, far: FAR ? FAR.P0.length / 3 : 0, boats: FAR ? FAR.boats.length : 0, fujiOver: !!(FAR && FAR.mesh2) };   // (read by the tests)
     return out;
   }
 
