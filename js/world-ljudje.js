@@ -1209,12 +1209,101 @@
   };
   const geoOf = (D) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(D.P, 3)); if (D.N) g.setAttribute('normal', new THREE.Float32BufferAttribute(D.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(D.C, 3)); g.attributes.color.noSeason = true; g.computeBoundingSphere(); return g; };   // (noSeason: the season's paint (js/render.js seasonWorld) leaves their colours: no snow-white faces, no autumn leaves on a green shirt)
 
+  /* ---------------- the grandstands' people (the user, 2. 11. 2026: »naj bodo na vseh tribunah v igri taki gledalci, ampak ker veliko
+     gledalcev porabi veliko grafike naredi da so tribune bolj prazne in le nekaj gledalcev«): the world's own stands (their painted crowd,
+     World's crowdStands) get empty seats (Tex.crowdSeats) and a few people of these figures on them, friends in groups of 2-6 with empty
+     seats between; their seats read off the stands' tiers (the crowd picture's layout: 32 seats across a tier's 12 m, a tier a row of the
+     picture); each stretch of a stand a scene of its own (posed near the camera; the wave as on Bathurst's stand). STANDS: the share of the
+     seats taken, the most people on a track (by the tier), on a stretch, a stretch's length ---------------- */
+  const STANDS = { share: 0.05, most: [100, 240, 400], per: 24, len: 40, dy: 0.16 };
+  const isStand = (m) => m.isMesh && !m.isInstancedMesh && m.visible && m.material && !Array.isArray(m.material) && m.material.userData && m.material.userData.stand && m.geometry && m.geometry.attributes.uv;
+  const hasStands = (o) => { let n = 0; o.root.traverse(m => { if (isStand(m)) n++; }); return n > 0; };
+  const STAND_EMPTY_FS = ['#ifdef USE_MAP',   // (the stand's picture per tier as crowdStands lays it, the seats empty: nobody jumps, no flags)
+    'float crT = floor(vUv.y / uCV.y + 1e-4), crL = clamp((vUv.y - crT * uCV.y) / uCV.z, 0.0, 1.0);',
+    'vec4 texelColor = texture2D( map, vec2(vUv.x * uCV.x, mod(crT, 8.0) / 8.0 + crL / 8.0) );',
+    'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
+  function standSeats(o) {
+    const seats = [], mats = new Map(); o.root.updateMatrixWorld(true);
+    o.root.traverse(m => {
+      if (!isStand(m)) return;
+      const M = m.material, g = m.geometry, uv = g.attributes.uv, P = g.attributes.position, cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], su = 32 * cv[0];
+      const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : P.count, seen = new Set();
+      const wp = (k) => { const x = P.getX(k), y = P.getY(k), z = P.getZ(k); return [e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]]; };
+      if (!mats.has(M)) mats.set(M, cv);
+      for (let t = 0; t + 2 < n; t += 3) {
+        const ia = I ? I[t] : t, ib = I ? I[t + 1] : t + 1, ic = I ? I[t + 2] : t + 2;
+        const ua = uv.getX(ia), va = uv.getY(ia), ub = uv.getX(ib), vb = uv.getY(ib), uc = uv.getX(ic), vc = uv.getY(ic);
+        const den = (vb - vc) * (ua - uc) + (uc - ub) * (va - vc); if (Math.abs(den) < 1e-12) continue;
+        const A = wp(ia), B = wp(ib), Cc = wp(ic);
+        // the front: where the tiers go down (the picture's v falls), the gradient of v over the triangle in the world, level
+        const e1 = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], e2 = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]], d1 = vb - va, d2 = vc - va;
+        const g11 = e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2], g12 = e1[0] * e2[0] + e1[1] * e2[1] + e1[2] * e2[2], g22 = e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2], gd = g11 * g22 - g12 * g12;
+        if (Math.abs(gd) < 1e-9) continue;
+        const al = (d1 * g22 - d2 * g12) / gd, be = (d2 * g11 - d1 * g12) / gd, gx = al * e1[0] + be * e2[0], gz = al * e1[2] + be * e2[2], gl = Math.hypot(gx, gz); if (gl < 1e-9) continue;
+        const fx = -gx / gl, fz = -gz / gl, u0 = Math.min(ua, ub, uc), u1 = Math.max(ua, ub, uc), v0 = Math.min(va, vb, vc), v1 = Math.max(va, vb, vc);
+        for (let ti = Math.floor(v0 / cv[1]); ti <= Math.floor(v1 / cv[1]); ti++) {
+          const vv = ti * cv[1] + cv[2] * 0.5; if (vv < v0 || vv > v1) continue;
+          for (let k = Math.ceil(u0 * su - 0.5); k <= Math.floor(u1 * su - 0.5); k++) {
+            const uu = (k + 0.5) / su, w1 = ((vb - vc) * (uu - uc) + (uc - ub) * (vv - vc)) / den, w2 = ((vc - va) * (uu - uc) + (ua - uc) * (vv - vc)) / den, w3 = 1 - w1 - w2;
+            if (w1 < -1e-6 || w2 < -1e-6 || w3 < -1e-6) continue;
+            const x = A[0] * w1 + B[0] * w2 + Cc[0] * w3, y = A[1] * w1 + B[1] * w2 + Cc[1] * w3, z = A[2] * w1 + B[2] * w2 + Cc[2] * w3;
+            const key = Math.round(x * 3) + ',' + Math.round(z * 3) + ',' + Math.round(y * 3); if (seen.has(key)) continue; seen.add(key);
+            seats.push({ x, y, z, fx, fz, row: ti, k, m: m.id });
+          }
+        }
+      }
+    });
+    return { seats, mats };
+  }
+  function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats) {
+    const A = World.api, { seats, mats } = standSeats(o); if (!seats.length) return 0;
+    // the stands' pictures: their seats empty (the people are the figures)
+    let ms = 0; for (const [M, cv] of mats) {
+      A.ownRnd(() => { M.map = Tex.crowdSeats(hsh % 997 + ms++ * 31); });
+      const uCV = { value: new THREE.Vector3(cv[0], cv[1], cv[2]) };
+      M.onBeforeCompile = (sh) => { sh.uniforms.uCV = uCV; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCV;').replace('#include <map_fragment>', STAND_EMPTY_FS); };
+      M.customProgramCacheKey = () => 'standSeats'; M.needsUpdate = true; M.userData.seats = true;
+    }
+    // who sits: along each tier now and then a group of friends (2-6), empty seats between; the most for the tier
+    seed(4441 + hsh); const R = rnd, rows = new Map();
+    for (const st of seats) { const key = st.m + '|' + st.row; let L = rows.get(key); if (!L) rows.set(key, L = []); L.push(st); }
+    const most = STANDS.most[Math.min(2, LOD.tier)], share = Math.min(STANDS.share, most / seats.length), gap = 2.2 / share, groups = [];
+    for (const L of rows.values()) { L.sort((a, b) => a.k - b.k);
+      for (let i = Math.floor(R() * gap); i < L.length; i += Math.max(2, Math.round(gap * (0.4 + R() * 1.2)))) {
+        const g = 2 + Math.floor(Math.pow(R(), 1.5) * 5), G = []; for (let q = 0; q < g && i < L.length; q++, i++) { if (q && L[i].k !== L[i - 1].k + 1) break; G.push(L[i]); } if (G.length) groups.push(G); } }
+    let nt = 0; for (const G of groups) nt += G.length;
+    while (nt > most && groups.length) { const G = groups.splice(Math.floor(R() * groups.length), 1)[0]; nt -= G.length; }   // (no more than the most: whole groups left out)
+    const taken = [].concat(...groups);
+    // the stretches: by the place along the road, each its own scene
+    const q = {}; for (const st of taken) { T.query(st.x, st.z, -1, q); st.s = q.s; st.d = q.d; }
+    taken.sort((a, b) => a.s - b.s);
+    let j = 0, n = 0;
+    for (let i = 0; i < taken.length;) {
+      let k = i + 1; while (k < taken.length && k - i < STANDS.per && taken[k].s - taken[i].s < STANDS.len) k++;
+      const seg = taken.slice(i, k); i = k;
+      let sx = 0, sz = 0, sy = 0, fx = 0, fz = 0, ss = 0, dd = 0; for (const st of seg) { sx += st.x; sy += st.y; sz += st.z; fx += st.fx; fz += st.fz; ss += st.s; dd += st.d; }
+      const N = seg.length, s0 = ss / N, sd = dd >= 0 ? 1 : -1, F = frame(T, gH, s0, sd), C = ctxOf(F);
+      const X = new THREE.Vector3(F.tx, 0, F.tz).normalize(), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(-X.z, 0, X.x); if (Z.x * fx + Z.z * fz < 0) Z.negate();
+      const O = new THREE.Vector3(F.px, 0, F.pz), yaw = Math.atan2(fx, fz), m4 = new THREE.Matrix4().makeBasis(X, Y, Z).setPosition(O);
+      C.groups.st = { m: m4, yaw }; C.len = Math.max(8, seg[N - 1].s - seg[0].s); C.seats = [];
+      seed(5113 + hsh + j * 97);
+      let r = 0; const cx = sx / N, cy = sy / N, cz = sz / N; for (const st of seg) r = Math.max(r, Math.hypot(st.x - cx, st.y - cy, st.z - cz));
+      for (const st of seg) {
+        const team = SHIRT[Math.floor(rnd() * SHIRT.length)], P = C.man({ lite: true, shirt: rnd() < 0.5 ? team : SHIRT[Math.floor(rnd() * SHIRT.length)], hat: rnd() < 0.3 ? 'cap' : null, scale: 0.93 + rnd() * 0.08 }, null);
+        const dx = st.x - O.x, dz = st.z - O.z;
+        P.seat = { x: dx * X.x + dz * X.z, r: st.row, y: st.y + STANDS.dy, z: dx * Z.x + dz * Z.z, k: rnd() }; C.seats.push(P);
+      }
+      addScene('tribune', F, s0, sd, { stand: true }, C, si0 + j, Math.round(s0 - (T.startS || 0)), [cx, cy + 1, cz, r + 3]); j++; n += N;
+    }
+    stats.standSeats = seats.length; stats.standPeople = n; stats.standScenes = j;
+    return n;
+  }
   World.people = function (o) {
     const A = World.api, T = A.T, def = T && T.def;
     if (!def || def.test || !o || !o.root || typeof o.groundH !== 'function') return null;
     const list = (SITES[def.id] || []).slice();
     if (def.pit && !list.some(e => e[0] === 'boksi')) list.push(['boksi', def.pit[3], Math.sign(def.pit[0]) || 1]);   // (a circuit's pit wall: the player's team opposite its box, the board over the wall)
-    if (!list.length) return null;
+    if (!list.length && !(STANDS && hasStands(o))) return null;
     const t0 = performance.now(), LOD = A.LOD, gH = o.groundH, K0 = FLAGS[def.id] || {}, hsh = Math.abs([...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7));
     const W = { T, scenes: [], frame: 0, wx: 0.8, wz: 0.6, smoke: null, q: {}, hint: -1, cs: null, v: 0, lt: 0,
       rShow: LOD.tier >= 2 ? 650 : LOD.tier === 1 ? 420 : 280, rPpl: LOD.tier >= 2 ? 240 : LOD.tier === 1 ? 170 : 120, rPose: LOD.tier >= 2 ? 200 : LOD.tier === 1 ? 150 : 110 };
@@ -1222,12 +1311,8 @@
     const root = new THREE.Group(); root.name = 'people'; root.userData.lj = true; o.root.add(root); W.root = root; W.o = o;
     const circles = [], stats = { scenes: [], people: 0, verts: 0, propVerts: 0 };
     let nPuff = 0;
-    list.forEach(([name, at, side, opt], si) => {
-      const d = S[name]; if (!d) return;
-      const s = T.startS + at; if (T.open && (s < 0 || s > T.len)) return;
-      const sd = side === 'room' ? roomSide(T, s) : side, F = frame(T, gH, s, sd), K = Object.assign({ flag: DE }, K0, opt || {});
-      seed(1000 + (d.seed || 5) * 7919 + hsh + si * 31);
-      const C = ctxOf(F); d.build(C, F, K);
+    // one scene into the world: its things baked, its people (one mesh, posed when near), its frame; d: its kind (S), C: its build
+    const addScene = (name, F, s, sd, d, C, si, at, box) => {
       const Sc = { name, F, s0: s, side: sd, groups: C.groups, people: [], pets: [], movers: [], smoke: [], stand: !!d.stand, k: si, on: false };
       const rec = (P, st) => { const kid = !!(st && st.kid), f = st && st.run && st.run.f || 0.55;
         return { P, st, d0: kid ? 0.08 + rnd() * 0.2 : 0.2 + rnd() * 0.85, v: (3.4 + 4 * f) * (kid ? 0.92 : 1), bd: rnd() * 1.4, ph: rnd(), segs: null }; };
@@ -1240,7 +1325,7 @@
       let nv = 0; for (const P of all) for (const pt of P.parts) { pt.o = nv * 3; nv += pt.P.length / 3; }
       const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), col = new Float32Array(nv * 3);
       for (const P of all) for (const pt of P.parts) col.set(pt.C, pt.o);
-      const [cx, cz] = F.w(0, 6), cy = F.y(0, 6) + 2, r = d.r || 24;
+      const [cx, cz] = box ? [box[0], box[2]] : F.w(0, 6), cy = box ? box[1] : F.y(0, 6) + 2, r = box ? box[3] : d.r || 24;
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.attributes.color.noSeason = true;
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, cy, cz), r);
@@ -1251,13 +1336,22 @@
       if (C.U.P.length) { const m = new THREE.Mesh(geoOf(C.U), matU); m.matrixAutoUpdate = false; m.name = 'sceneLamps'; grp.add(m); pv += C.U.P.length / 3; }
       grp.add(ppl);
       Object.assign(Sc, { grp, ppl, pos, nor, cx, cy, cz, r });
-      if (Sc.stand) { const G = C.groups.st; Sc.sgn = Math.sign(G.m.elements[0] * F.tx + G.m.elements[2] * F.tz) || 1; Sc.len = 20; }
+      if (Sc.stand) { const G = C.groups.st; Sc.sgn = Math.sign(G.m.elements[0] * F.tx + G.m.elements[2] * F.tz) || 1; Sc.len = C.len || 20; }
       for (const e of C.smoke) { e.i = nPuff; e.ph = rnd(); nPuff += e.n; Sc.smoke.push(e); }
       for (const [a, b, rr] of d.clear || []) { const [x, z] = F.w(a, b); circles.push([x, z, rr]); }
       W.scenes.push(Sc);
       stats.scenes.push({ name, at, side: sd, s: Math.round(s), people: Sc.people.length, pets: Sc.pets.length, verts: nv, propVerts: pv });
       stats.people += Sc.people.length; stats.verts += nv; stats.propVerts += pv;
+    };
+    list.forEach(([name, at, side, opt], si) => {
+      const d = S[name]; if (!d) return;
+      const s = T.startS + at; if (T.open && (s < 0 || s > T.len)) return;
+      const sd = side === 'room' ? roomSide(T, s) : side, F = frame(T, gH, s, sd), K = Object.assign({ flag: DE }, K0, opt || {});
+      seed(1000 + (d.seed || 5) * 7919 + hsh + si * 31);
+      const C = ctxOf(F); d.build(C, F, K);
+      addScene(name, F, s, sd, d, C, si, at);
     });
+    if (STANDS) standsOf(o, T, gH, LOD, hsh, list.length, addScene, stats);
     if (!W.scenes.length) return null;
     if (nPuff) {   // the smoke of every scene of this world: one instanced mesh (ROAD DECAL ORDER: blended over the road's decals, as Longford's)
       const M = W.smoke = new THREE.InstancedMesh(puffGeo(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), nPuff);

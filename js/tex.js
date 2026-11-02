@@ -208,6 +208,25 @@ const Tex = (function () {
     }
     const t = mk(c, true); t.crowdPic = true; t.crowdHi = true; crowdHiC.set(key, t); return t;
   }
+  // the grandstand's empty seats (the user, 2. 11. 2026: »tribune bolj prazne in le nekaj gledalcev«: the few people on them are figures of
+  // their own, js/world-ljudje.js): crowdHi's layout (8 rows of 32 seats, a row for a tier) with every seat empty, the backs and the seats in
+  // the stand's colours (a colour of its own, now and then a block in a second one), lit from above
+  const seatsC = new Map();
+  function crowdSeats(seed) {
+    if (seatsC.has(seed)) return seatsC.get(seed);
+    const W = 1024, H = 512, c = cv(W, H), x = c.getContext('2d'), r = Core.rng(seed + 13), f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    const SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4c', '#e0b020', '#3a3e47'], a = SEAT[Math.floor(r() * 4)], b = SEAT[Math.floor(r() * SEAT.length)];
+    f('#3a3e47', 0, 0, W, H);
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 64; f('#23262d', 0, y0, W, 6); f('#4a4f59', 0, y0 + 54, W, 10); f('#5a606b', 0, y0 + 54, W, 2);   // the step behind, the seat's front edge
+      for (let k = 0; k < 32; k++) {
+        const X = k * 32, sc = (k % 16 < 3 && row % 4 < 2) ? b : a;   // (now and then a block in the second colour)
+        f(sc, X + 5, y0 + 18, 22, 26); f('rgba(255,255,255,0.18)', X + 5, y0 + 18, 22, 3); f('rgba(0,0,0,0.22)', X + 5, y0 + 40, 22, 4);   // the back, lit at its top
+        f(sc, X + 4, y0 + 44, 24, 10); f('rgba(0,0,0,0.3)', X + 4, y0 + 52, 24, 2);   // the seat
+      }
+    }
+    const t = mk(c, true); t.crowdSeats = true; seatsC.set(seed, t); return t;
+  }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
@@ -591,6 +610,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, crowdHi, SPONSORS };
+  return { all, number, crowdPic, crowdHi, crowdSeats, SPONSORS };
 })();
 
