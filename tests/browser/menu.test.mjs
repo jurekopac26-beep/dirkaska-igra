@@ -253,6 +253,20 @@ try {
     T.check('no page errors in the intro', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
+  {   // (Pikes Peak on gravel: the title's Single race tile shows its own model; on Asphalt (the Road option) the road's own again)
+    const { ctx, page, errors } = await open({ track: 'pikesg', pkRoad: 'pikesg', mode: 'tt', lastTrack: 'pikes' });
+    await ready(page);
+    const tile = 'return root.querySelector(".t-single .im img").getAttribute("src");';
+    const gImg = await ev(page, tile);
+    await click(page, 'single'); await click(page, 'mode:trial');
+    await click(page, 'more-options'); await click(page, 'opt:pkRoad:pikes'); await done(page); await page.waitForTimeout(300);
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
+    const aImg = await ev(page, tile);
+    T.check('Pikes Peak: on Gravel the Single race tile shows its own model (pikesg.webp), on Asphalt the road\'s own (pikes.webp)',
+      /\/pikesg\.webp$/.test(gImg) && /\/pikes\.webp$/.test(aImg), JSON.stringify({ gImg, aImg }));
+    T.check('no page errors on Pikes Peak\'s Road option', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
 
   // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
