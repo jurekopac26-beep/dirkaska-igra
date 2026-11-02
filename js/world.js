@@ -4055,7 +4055,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
+  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); if (World.people) World.people(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; World.people: the scenes with people by the track, js/world-ljudje.js)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4459,19 +4459,19 @@ const World = (function () {
     'float crMir = dot(cameraPosition - crW, crFw) < 0.0 ? 1.0 : 0.0;',   // seen from behind: mirror the flag so its one-sided quads face the camera
     'float crSit = abs(crPose - 6.0) < 0.5 ? 1.0 : 0.0;',
     'float crDc = length(crW.xz - uCar.xz), crHy = uHype * (1.0 - smoothstep(50.0, 170.0, crDc));',   // (uHype: an overtake, the finish)
-    'float crEx = max(1.0 - smoothstep(14.0, 52.0, crDc), crHy) * step(0.28, fract(crPh * 2.713 + crV * 0.0171));',
+    'float crEx = max(1.0 - smoothstep(10.0, 34.0, crDc), crHy) * step(0.55, fract(crPh * 2.713 + crV * 0.0171));',   // (calmer than before: fewer of them, only near the car; the user's wish, 1. 11. 2026: »naj se manj premikajo«)
     'float crFlag = (abs(crPose - 5.0) < 0.5 || crHy * 0.45 > fract(crPh * 5.13 + crV * 0.0093)) ? 1.0 : 0.0;',   // (a flag: the flag pose, and then many more)
     'float crT = uTime * (0.85 + 0.3 * fract(crPh * 3.7)) + crPh;',
     'float rL = 0.07, rR = 0.07, fL = 0.05, fR = 0.05;',   // r: raised sideways (0 down, pi up), f: raised forwards
     'if (crPose < 0.5) { rL = 0.07 + 0.05 * sin(crT * 0.9); rR = 0.07 + 0.05 * sin(crT * 0.8 + 1.3); }',
-    'else if (crPose < 1.5) { rL = 2.5 + 0.3 * sin(crT * 7.0); rR = 2.5 + 0.3 * sin(crT * 7.0 + 0.7); fL = -0.3; fR = -0.3; }',
-    'else if (crPose < 2.5) { rR = 2.3 + 0.45 * sin(crT * 6.0); fR = -0.2; }',
+    'else if (crPose < 1.5) { rL = 2.5 + 0.15 * sin(crT * 3.0); rR = 2.5 + 0.15 * sin(crT * 3.0 + 0.7); fL = -0.3; fR = -0.3; }',
+    'else if (crPose < 2.5) { rR = 2.3 + 0.3 * sin(crT * 3.5); fR = -0.2; }',
     'else if (crPose < 3.5) { rL = -0.32; rR = -0.32; fL = 1.35; fR = 1.35; }',
-    'else if (crPose < 4.5) { rL = -0.2 + 0.18 * sin(crT * 10.0); rR = rL; fL = 0.95; fR = 0.95; }',
+    'else if (crPose < 4.5) { rL = -0.2 + 0.14 * sin(crT * 6.0); rR = rL; fL = 0.95; fR = 0.95; }',
     'else if (crPose < 5.5) { rR = 2.8 + 0.14 * sin(crT * 2.4); fR = -0.12; rL = 0.1; }',
     'else { rL = 0.15; rR = 0.15; fL = 0.6; fR = 0.6; }',
-    'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.35 * sin(uTime * 9.0 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
-    'if (crFlag > 0.5 && abs(crPose - 5.0) > 0.5) { rR = 2.7 + 0.35 * sin(crT * 6.5); fR = -0.12; }',   // (waving the flag)
+    'if (crPose < 4.5 || crSit > 0.5) { float up = 2.55 + 0.2 * sin(uTime * 4.5 + crPh); rL = mix(rL, up, crEx); rR = mix(rR, up + 0.1, crEx); fL = mix(fL, -0.25, crEx); fR = mix(fR, -0.25, crEx); }',
+    'if (crFlag > 0.5 && abs(crPose - 5.0) > 0.5) { rR = 2.7 + 0.25 * sin(crT * 4.0); fR = -0.12; }',   // (waving the flag)
     'mat3 crM = mat3(1.0); vec3 crPv = vec3(0.0);',
     'if (crBone > 0.5 && crBone < 1.5) { crM = crRx(-fL) * crRz(-rL); crPv = vec3(-0.27, 1.37, 0.0); }',
     'else if ((crBone > 1.5 && crBone < 2.5) || crBone > 3.5) { crM = crRx(-fR) * crRz(rR); crPv = vec3(0.27, 1.37, 0.0); }',
@@ -4492,7 +4492,7 @@ const World = (function () {
     '}',
     'if (crBone > 3.5 && crFlag < 0.5) transformed = crPv;',   // no flag: fold it into the hand (degenerate, draws nothing)
     'if (crSit > 0.5) transformed += vec3(0.0, -0.71, -0.55);',   // sitting: down on the grass, moved back so the feet stay behind the fence
-    'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;'].join('\n');
+    'else transformed.y += crEx * max(0.0, sin(uTime * 5.0 + crPh)) * 0.05;'].join('\n');   // (a small hop, not a jump)
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.onBeforeCompile = (sh) => {
@@ -4527,7 +4527,7 @@ const World = (function () {
   // tree-exclusion circles (exclTest).
   function crowdCtx(o) {
     const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
-    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
+    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [], grp: new Map(), gapK: (T && T.def && CR_GAPK[T.def.id]) || 1 }, o);
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
       const gx = clamp((x - G.x0) / G.cell, 0, G.nx - 1.001), gz = clamp((z - G.z0) / G.cell, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, A = G.arr, Y = (a, b) => A[((j + b) * G.nx + i + a) * 3 + 1];
@@ -4559,11 +4559,27 @@ const World = (function () {
   // one spectator of an existing crowd loop at track distance s, 'extra' beyond the barrier on 'side': interpolated between the samples (the old
   // loops snap to the 2 m samples, so neighbours would stand inside each other); falls back to the loop's own spot (x0, z0) when ok(x, z) fails there
   function crowdAt(C, s, side, extra, x0, z0, o, row, ok) {
+    const g = crGroup(C, s, side, 3, 0.65); if (!g) return false;   // (the roadside crowd in small groups: crGroup)
     const q = crAt(s); if (!q) return false;
     const off = (side > 0 ? q.br : q.bl) + extra, nx = q.nx, nz = q.nz, tx = q.tx, tz = q.tz; let x = q.px + nx * side * off, z = q.pz + nz * side * off;
     if (ok && !ok(x, z)) { x = x0; z = z0; }
     const lk = 0.3 * (0.2 + crH(x, z, 12));
-    return crowdPut(C, x, C.gH(x, z), z, -side * nx - tx * lk, -side * nz - tz * lk, o, row);
+    if (!crowdPut(C, x, C.gH(x, z), z, -side * nx - tx * lk, -side * nz - tz * lk, o, row)) return false;
+    g.c++; return true;
+  }
+  // The roadside crowd in small groups (the user's wish, 1. 11. 2026: »veliko manj« people by the road, »skupine po 2–10«; the grandstands and
+  // the staff stay as they were): along each side the road is cut into stretches of CR_GAP m (CR_GAPK times longer on a world that wants hardly
+  // any: Nürburg); a stretch holds one group (its size 2-10, more often small) or none; crowdRun and crowdAt keep a spectator only in its group's
+  // few metres and only as many as the group's size (the caller counts it: g.c). The figures that worlds place one by one (crowdPut: fans at
+  // their camps, marshals, officials, photographers) are not thinned
+  const CR_GAP = 30, CR_GAPK = { nring: 7 };
+  function crGroup(C, s, side, rows, dens) {
+    if (!C.grp) return { c: 0, n: 1e9 };
+    const G = CR_GAP * (C.gapK || 1), w = Math.floor(s / G), key = w * 2 + (side > 0 ? 1 : 0);
+    let g = C.grp.get(key);
+    if (!g) { const n = 2 + Math.floor(Math.pow(crH(w, side, 502), 1.8) * 9), len = Math.max(1.5, n / Math.max(1, Math.min(rows, 3)) / Math.max(0.3, Math.min(1, dens)));
+      g = { on: crH(w, side, 501) < 0.8, n, a: w * G + crH(w, side, 503) * Math.max(0, G - len), len, c: 0 }; C.grp.set(key, g); }
+    return g.on && s >= g.a && s <= g.a + g.len && g.c < g.n ? g : null;
   }
   const CRQ = { px: 0, pz: 0, nx: 0, nz: 0, tx: 0, tz: 0, bl: 0, br: 0, hy: 0, i: 0, i0: 0, i1: 0 };
   function crAt(s) {   // track frame at s, interpolated between the samples (the samples are 2 m apart); null past the ends of an open road
@@ -4606,6 +4622,7 @@ const World = (function () {
     for (let s = sa; s < sb; s += step) for (let row = 0; row < rows; row++) {
       const keep = dens * (1 - clump + 2 * clump * crNoise(s / 7 + seed + side * 5.3)) - row * (o.rowFall == null ? 0.06 : o.rowFall);
       if (crH(s, row * 7 + side, seed) >= keep) continue;
+      const grp = crGroup(C, s, side, rows, dens); if (!grp) continue;   // (in small groups: crGroup)
       const sj = s + (crH(s, row, seed + 1) - 0.5) * step * 0.7, q = crAt(sj); if (!q) continue;
       const f0 = crFirstQ(first, q, side), off = (side > 0 ? q.br : q.bl) + f0 + row * gap + (crH(sj, row, seed + 2) - 0.5) * 0.36;
       const x = q.px + q.nx * side * off, z = q.pz + q.nz * side * off, ry = q.hy, tx = q.tx, tz = q.tz, nx = q.nx, nz = q.nz;
@@ -4616,6 +4633,7 @@ const World = (function () {
       if (maxS < 9) { const sl = Math.hypot(gH(x + 1, z) - gH(x - 1, z), gH(x, z + 1) - gH(x, z - 1)) / 2; if (sl > maxS) continue; }
       const lk = look * (0.2 + crH(x, z, 12));
       if (!crowdPut(C, x, y, z, -side * nx - tx * lk, -side * nz - tz * lk, o, row)) continue;
+      grp.c++;
       n++; const k = Math.floor(sj / 2); segs.set(k, Math.max(segs.get(k) || 0, row + 1));
     }
     C.busy = false;
@@ -4846,6 +4864,7 @@ const World = (function () {
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
     if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.people) d.people(t, car, cam);   // the scenes with people (js/world-ljudje.js): what they do, their run to the fence as the followed car comes
     if (d.air) API.rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.cpMast && (cam || !car)) API.cpMastStep(d.cpMast, car ? cam : null, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar (no car: on its own place, the world test's pose)
