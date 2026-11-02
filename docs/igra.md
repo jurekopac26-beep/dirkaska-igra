@@ -116,37 +116,37 @@ Nova fizika je narejena po treh posnetkih arkadne dirkaške igre, ki jih je izbr
 
 Vrstica **Trki med avti** je v Nastavitvah (glavni seznam, pred »Poškodbe avtov«) in v **pavzi** med dirko, da različice primerjaš na istem mestu (velja takoj; na dirki s prijatelji vedno Simulacija). Odločitev uporabnika 2. 11. 2026: trki naj bodo čim bolj podobni drugim dirkalnim igram, z več različicami za hitro primerjavo; ograja (zid) ostane, kot je. Različice razen Stare so isti model trka (`kCollide`, `kTake`, `KV` v `js/core.js`), vsaka s svojimi številkami:
 
-- avta sta **pravokotnika z zaobljenimi vogali** (ravni odbijači in boki, `rboxHit`); prekrivanje se odpravi mehko, brez poskoka (`RB_SLOP`, `RB_PUSH`, `RB_DEEP`);
+- avta sta **pravokotnika z zaobljenimi vogali** (ravni odbijači in boki, `rboxHit`); smer potiska je pravokotna na ploskev, ki se dotika (ali od vogala do vogala), zato raven udarec od zadaj z zamikom ne potiska vstran in boka, ki se dotikata, se ne vlečeta naprej ali nazaj; prekrivanje se odpravi mehko, brez poskoka (`RB_SLOP`, `RB_PUSH`, `RB_DEEP`);
 - sunek na pravem mestu stika s **pravima masama** obeh avtov (z gorivom) in njuno vztrajnostjo: zadeti avto se premakne, kolikor ga sunek potisne, ti izgubiš toliko, kolikor on pridobi (pri 100 km/h v stoječ avto, oba brez zavor: ti okoli 43 km/h, on 55 km/h);
 - **odboj po hitrosti približevanja**: pri rahlem dotiku več (odbijači se vrnejo, 0,2–0,3), pri močnem trku manj (pločevina se zmečka, 0,1–0,15), pri naslonu (pod 0,5 m/s) nič, zato se avta ob naslonu ne tresejo;
 - **drgnjenje ob stiku** (Coulomb, največ `mu` sunka): pri trku se hitrosti vzdolž stika delijo, pri naslonu le del (`muL`), da se avta ne zlepita;
 - **zasuk po mestu udarca**: udarec v sredino avto odrine, udarec v vogal ga zasuka (`yaw`);
 - **gume ujamejo potisk**: pri klasični fiziki gre bočni del potiska mimo drsnega zakona (avto zato ne zavije v smer potiska in ne odpelje vstran), gume ga odrgnejo v 0,006 × hitrost s (0,17 s pri 100 km/h; `slT`), največ z oprijemom, ki ga ovinek pusti; zasuk nosu je sunek, ki ga avto sam ujame (toliko, kolikor ga ujamejo gume pravega avta: sprememba vrtenja × 0,0055 s na m/s hitrosti, `RB_TAPT`). Nova fizika oboje naredi s svojimi gumami;
-- **zdrs po trku**: ko trk zadek potisne vstran bolj kot nos in več kot `aH` hitrosti (udarec v zadnji vogal, PIT), zadnje gume izgubijo oprijem (`Car.xgl`): avto se vrti naprej z vrtenjem, ki mu ga je dal udarec, in drsi; oprijem se vrne v `glT` s (Simulacija 0,9 s). Udarec v nos ali v sredino tega ne naredi (nos ali ves avto zdrsne in se sam poravna). Pod okoli 15 km/h oprijema ne vzame, polno od 36 km/h (`KG_V0`, `KG_V1`; v gneči v lasnici gume zdrs ujamejo), avta, ki že drsi, pa dotiki njegovih vogalov ne vrtijo še bolj (le močnejši nov udarec), zato v lasnici na štartu ni verižnih naletov;
+- **zdrs po trku**: ko trk zadek potisne vstran bolj kot nos in več kot `aH` hitrosti (udarec v zadnji vogal, PIT), zadnje gume izgubijo oprijem (`Car.xgl`): avto se vrti naprej z vrtenjem, ki mu ga je dal udarec, in drsi; oprijem se vrne v `glT` s (Simulacija 0,6 s, kot pri močnih trkih na referenčnem posnetku: avto je spet raven v 0,5–0,7 s). Pri dotiku dveh tekmecev izgubita le del tega oprijema (`glR`: Simulacija, Arkadna in Mehka polovico, Kaskaderska ves), kot voznik, ki zdrs po dotiku ujame: brez tega so se tekmeci na ozkih progah po dotikih večkrat na dirko zavrteli in zadeli ograjo; tvoj avto in tekmec, ki ga zadeneš ti, ga izgubita ves. Varnostni avto ga ne izgubi nikoli (če vseeno obstane na progi, se po 3 s umakne in dirka gre naprej). Udarec v nos ali v sredino tega ne naredi (nos ali ves avto zdrsne in se sam poravna). Pod okoli 15 km/h oprijema ne vzame, polno od 36 km/h (`KG_V0`, `KG_V1`; v gneči v lasnici gume zdrs ujamejo), avta, ki že drsi, pa dotiki njegovih vogalov ne vrtijo še bolj (le močnejši nov udarec), zato v lasnici na štartu ni verižnih naletov;
 - **iskre** ob trku (in ko se boka drgneta s pritiskom), močan blisk le pri močnem trku (nad 7 m/s); poškodbe, praske, predrta guma in zvok kot prej (po hitrosti približevanja);
-- tekmeci za avtom pred sabo puščajo vsaj 0,4 m med odbijačema (`RB_FOL`; pred zaviranjem z zavetrjem še 0,12 s svoje hitrosti, v zavetrju 0,1 m, `RB_FOLW`, da ga izkoristijo za prehitevanje), prostor ob boku merijo z vogali avta, zasukanega proti cesti (`aiReach`);
+- pri klasični fiziki tekmeci za avtom pred sabo puščajo vsaj 0,4 m med odbijačema (nova fizika ima svojih 1,5 m; `RB_FOL`; pred zaviranjem z zavetrjem še 0,12 s svoje hitrosti; tudi v zavetrju, ker so z 0,1 m tam prehitevali manj in pri zaviranju zadeli avto pred sabo), prostor ob boku merijo z vogali avta, zasukanega proti cesti (`aiReach`);
 - ograja, beg pred policijo (`crashCollide`) in promet ostanejo, kot so bili; v boksni stezi trki ostanejo kot pri Stari (delo mehanikov in uvoz).
 
 | Različica | Kot v | Kaj |
 |---|---|---|
-| **Simulacija** (privzeto) | simulacijah | enaka teža, odboj 0,3 → 0,12, drgnjenje 0,35, poln zasuk; udarec v zadnji vogal te zanese (pri 8 m/s vstran okoli 30°, kot pri močnih trkih na referenčnem posnetku) |
+| **Simulacija** (privzeto) | simulacijah | vsak avto s svojo pravo težo, odboj 0,3 → 0,12, drgnjenje 0,35, poln zasuk; udarec v zadnji vogal te zanese (pri klasični fiziki pri 8 m/s vstran okoli 35°, kot pri močnih trkih na referenčnem posnetku, 30–40°) |
 | **Arkadna** | arkadnih igrah | tvoj avto šteje 1,7-krat težji, odboj 0,4 → 0,2, gladki boki (drgnjenje 0,15, pri naslonu nič); tebe trk zasuka pol manj in skoraj nikoli ne zavrti, tekmece lažje |
 | **Mehka** | mehkem stiku | malo odboja (0,15 → 0,06), 60 % zasuka, težko te zavrti |
-| **Kaskaderska** | igrah z razbijanjem | več odboja in zasuka (1,5), drgnjenje 0,5, avti se hitro zavrtijo (udarec v zadnji vogal okoli 75°), oprijem se vrne po 1,3 s |
+| **Kaskaderska** | igrah z razbijanjem | več odboja in zasuka (1,5), drgnjenje 0,5, avti se hitro zavrtijo (udarec v zadnji vogal pri klasični fiziki okoli 80°), oprijem se vrne po 1,3 s |
 | **Stara** | — | trki kot pred 2. 11. 2026, za primerjavo: okrogla konca (trije krogi), odboj 0,1, vsak dotik zasuka nos do 23° |
 
 Nastavitve trkov podrobneje (Preizkus: tekmeci in trki → Trki med avti) spremenijo izbrano različico (razen Stare). Meritve so v `docs/nova-fizika-meritve.md`, razdelek 10; test `tests/trki.test.js`.
 
 ## Preizkus: tekmeci in trki
 
-V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) z 12 vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« (5) in »Trki med avti« (7): kako se vozijo tekmeci in kako se avti obnašajo ob trkih. Delujejo pri **obeh** fizikah. **Privzeto** pri vrsticah tekmecev pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), pri vrsticah trkov pa tako, kot ima izbrana različica trkov. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
+V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci in trki«** (zapre se; odpreš jo s tapom na naslov) z 12 vrsticami za preizkušanje, razdeljenimi v podskupini »Tekmeci« (5) in »Trki med avti« (7): kako se vozijo tekmeci in kako se avti obnašajo ob trkih. Delujejo pri **obeh** fizikah, razen vrstic Zdrs po trku in Ujem gum: ti veljata le pri klasični (nova fizika zdrs in ujem bočnega potiska naredi s svojimi gumami), zato sta pri novi zatemnjeni, opomba pod naslovom podskupine pa to pove. **Privzeto** pri vrsticah tekmecev pomeni, da je vse natanko tako, kot je pri izbrani fiziki (klasična: kot doslej, nova: njene vrednosti), pri vrsticah trkov pa tako, kot ima izbrana različica trkov. Vsaka vrstica ima svoje stopnje; izbrana stopnja velja, ne glede na fiziko. Vse velja takoj, razen razpona hitrosti tekmecev: ta se razdeli ob začetku dirke, zato velja od naslednje dirke (obvestilo to pove). Na spletni dirki (prijatelji) se ne uporabi nič.
 
 **Tekmeci** (`aiControl`, `Race`):
 
 | Vrstica | Stopnje | Kaj pomeni |
 |---|---|---|
 | Razpon hitrosti | Širok (1), Ožji (0,6), Zelo ožji (0,3) | koliko razlike je med najhitrejšim in najpočasnejšim po težavnosti; najhitrejši je vedno enak, klasična ima privzeto širok, nova 0,6 |
-| Razmik za avtom | Kot doslej, 0,5 m, 1,5 m, 3 m | prostor med odbijačema, ki ga tekmec pusti avtu pred sabo; »kot doslej« je stari način (3 m med sredinama, okrogla konca se prekrivata); privzeto je pri različicah trkov 0,4 m (`RB_FOL`; Stara: kot doslej), pri novi fiziki 1,5 m |
+| Razmik za avtom | Kot doslej, 0,5 m, 1,5 m, 3 m | prostor med odbijačema, ki ga tekmec pusti avtu pred sabo; »kot doslej« je pri Stari stari način (3 m med sredinama, okrogla konca se prekrivata), pri drugih različicah 0,4 m med odbijačema (`RB_FOL`), kar je pri klasični fiziki enako kot Privzeto; privzeto je pri klasični fiziki 0,4 m (Stara: stari način), pri novi fiziki 1,5 m |
 | Pritisk na avto pred sabo | Izklop, Majhen (2 %), Velik (4 %) | tik za drugim avtom vozi tekmec malo hitreje; klasična privzeto izklop, nova 2 % |
 | Prostor ob boku | 0,6 m, 0,35 m, 0,15 m | koliko prostora pusti avtu ob sebi; klasična privzeto 0,6 m, nova 0,35 m |
 | Vožnja čez robnike | Ne, do 1,2 m, do 2,2 m | na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m); klasična privzeto ne, nova do 1,2 m |
@@ -158,9 +158,9 @@ V Nastavitvah je pod vrstico Profil zložljiva kategorija **»Preizkus: tekmeci 
 | Teža tvojega avta | Enaka, 1,5×, 2× | kolikokrat svojo težo šteje tvoj avto ob trku z drugim (arkadne igre: tekmeci se umaknejo, tebe trk komaj premakne); Simulacija enaka, Arkadna 1,7× |
 | Odboj | Brez, Pol, Večji (1,6×) | delež odboja različice |
 | Drgnjenje ob stiku | Brez, Malo (0,15), Srednje (0,35), Močno (0,6) | koliko se boka vlečeta ob stiku (Coulombov koeficient) |
-| Vrtenje ob trku | Malo (0,4), Srednje (0,7), Polno (1), Več (1,4) | delež zasuka, ki ga da udarec |
-| Zdrs po trku | Brez, Manj (0,5), Več (1,6) | kako lahko udarec v zadnji vogal vzame oprijem in avto zavrti |
-| Ujem gum | Hiter (0,6), Realen (1), Počasen (1,6) | kako hitro gume odrgnejo bočni potisk |
+| Vrtenje ob trku | Malo (0,4), Srednje (0,7), Polno (1), Več (2) | delež zasuka, ki ga da udarec (Polno: kot v resnici; Mehka ima 0,6, Kaskaderska 1,5) |
+| Zdrs po trku | Brez, Manj (0,5), Več (1,6) | kako lahko udarec v zadnji vogal vzame oprijem in avto zavrti (samo klasična fizika) |
+| Ujem gum | Hiter (0,6), Realen (1), Počasen (1,6) | kako hitro gume odrgnejo bočni potisk (samo klasična fizika) |
 | Iskre ob trku | Vklop, Izklop | izklop: trk med avtoma ne sproži isker, bliska in prahu (praske ostanejo); ob ograji ostanejo |
 
 Nastavitev »Razbijanje: odboji in vrtenje ob trku« velja le še pri različici Stara (druge različice zasuk in zdrs po trku naredijo same). Prejšnje vrstice trkov (Slog trkov »Realističen, težak«, Občutek teže, Oblika ob stiku, Potisk vstran) in gumb »Trki med avti brez odboja« so odstranjeni 2. 11. 2026: uporabnik je ocenil, da je bil zadeti avto pretežak (8-krat), tvoj avto pa je ob trku čudno zaviral in se premikal (meritve v `docs/nova-fizika-meritve.md`, razdelka 8 in 10).

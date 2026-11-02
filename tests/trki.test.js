@@ -59,7 +59,7 @@ function duel(H, tx, S, secs) {
         if ((c.xgl || 0) > X.gl) X.gl = c.xgl; if (X.gl > 0 && !c.xgl && X.glBack == null) X.glBack = t - t1;
         if (t - t1 > 0.1 && X.calm == null && Math.abs(c.beta || 0) < 0.035 && !(Math.hypot(c.cSx || 0, c.cSz || 0) > 0.1)) X.calm = t - t1; }
     }
-    const out = (X) => ({ lat: X.lat, turn: X.turn, v: X.c.speed, gl: X.gl, glBack: X.glBack, calm: X.calm, moved: Math.hypot(X.c.x - X.x0, X.c.z - X.z0), side: Math.abs(-(X.c.x - X.x0) * Math.sin(X.h0) + (X.c.z - X.z0) * Math.cos(X.h0)) });
+    const out = (X) => ({ lat: X.lat, turn: X.turn, v: X.c.speed, gl: X.gl, glBack: X.glBack, calm: X.calm, moved: Math.hypot(X.c.x - X.x0, X.c.z - X.z0), side: Math.abs(-(X.c.x - X.x0) * Math.sin(X.h0) + (X.c.z - X.z0) * Math.cos(X.h0)), wEnd: X.c.w });   // (wEnd: the yaw rate at the end)
     return { hit: t1 != null, pop, sep, touch: n ? tch / n : 0, nan, P: out(A), O: out(B) };
   });
 }
@@ -151,7 +151,7 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
 {
   const dr = run(HN, SIM, 'drift3'), pi = run(HN, SIM, 'pit', 2.5), bu = run(HN, SIM, 'bump');
   ok('Nova with Simulacija: a rival drifting into the flank nudges the car (under 2 m/s, under 8 deg), a PIT turns it (over 8 deg) and it straightens (under 0.5 rad/s at the end), a bump parts the cars, nothing NaN',
-    dr.hit && dr.P.lat < 2 && dr.P.turn < 8 && pi.hit && pi.P.turn > 8 && !dr.nan && !pi.nan && !bu.nan && bu.sep > 0.2, `${f(dr.P.lat)} m/s ${f(dr.P.turn, 1)} deg; PIT ${f(pi.P.turn, 1)} deg; bump apart ${f(bu.sep)} m/s`);
+    dr.hit && dr.P.lat < 2 && dr.P.turn < 8 && pi.hit && pi.P.turn > 8 && Math.abs(pi.P.wEnd) < 0.5 && !dr.nan && !pi.nan && !bu.nan && bu.sep > 0.2, `${f(dr.P.lat)} m/s ${f(dr.P.turn, 1)} deg; PIT ${f(pi.P.turn, 1)} deg, at the end ${f(pi.P.wEnd)} rad/s; bump apart ${f(bu.sep)} m/s`);
 }
 
 // ---- a friend's car online ----

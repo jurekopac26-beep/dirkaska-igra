@@ -1781,19 +1781,22 @@ const Core = (function () {
        aH, aS, glP, glA, glT  the grip a knock costs (Car.xgl: the travel no longer follows the nose, the car spins freely and slides): its
                       tail pushed across (the knock's push and its turn at the rear axle) more than its nose and past aH of its speed (the slip
                       angle, rad), all of it aS further: a tap on a rear quarter spins a car; a knock on its nose or its middle does not (the nose
-                      or the whole car slides, it straightens itself). The player's share glP, the others' glA; back in glT s
+                      or the whole car slides, it straightens itself). The player's share glP, the others' glA, and of that glR when the
+                      knock is between two rivals (they catch a slide a touch gives them as a driver who knows it is coming: without it a field
+                      of rivals rubbing in a narrow track spun and hit the barriers several times a race); back in glT s (the reference video's
+                      hard knocks: the car straight again in 0.5-0.7 s)
        slT            the time the tyres take to scrub a push sideways (x SL_T: 0.17 s at 100 km/h)
        wI             how much of the knock's yaw rate the car keeps when its grip goes (wI x the grip lost, all of it from 1 / wI on)
-     Simulacija: as the simulators (equal weights, a little bounce, a firm rub, the full turn, a hard tap on a rear quarter slides a car round some
-     30 deg, as the reference video's hard knocks). Arkadna:
+     Simulacija: as the simulators (every car its real weight, a little bounce, a firm rub, the full turn, a hard tap on a rear quarter slides a car round
+     some 35 deg, as the reference video's hard knocks (30-40 deg); two rivals rubbing lose half as much grip). Arkadna:
      as the arcade games (the player's car 1.7x, bouncy, slippery flanks, the player turned half as much and hardly ever spun, the rivals
      spun more easily). Mehka: soft contact (little bounce, little turn, hard to spin: rubbing is racing). Kaskaderska: the crash games
-     (bouncy, a hard rub, half as much turn again, spins easily, the grip back late) */
+     (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late) */
   const KV = {
-    sim: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glT: 0.9, slT: 1, wI: 3 },
-    arc: { pm: 1.7, e0: 0.4, e1: 0.2, eV: 5, eT: 0.5, mu: 0.15, muL: 0, muV: 0.6, yaw: 1, yawP: 0.5, aH: 0.1, aS: 0.06, glP: 0.25, glA: 1.3, glT: 0.8, slT: 0.7, wI: 3 },
-    soft: { pm: 1, e0: 0.15, e1: 0.06, eV: 4, eT: 0.8, mu: 0.2, muL: 0.2, muV: 0.6, yaw: 0.6, yawP: 1, aH: 0.15, aS: 0.12, glP: 1, glA: 1, glT: 0.7, slT: 0.8, wI: 2 },
-    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glT: 1.3, slT: 1.2, wI: 4 }
+    sim: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3 },
+    arc: { pm: 1.7, e0: 0.4, e1: 0.2, eV: 5, eT: 0.5, mu: 0.15, muL: 0, muV: 0.6, yaw: 1, yawP: 0.5, aH: 0.1, aS: 0.06, glP: 0.25, glA: 1.3, glR: 0.5, glT: 0.8, slT: 0.7, wI: 3 },
+    soft: { pm: 1, e0: 0.15, e1: 0.06, eV: 4, eT: 0.8, mu: 0.2, muL: 0.2, muV: 0.6, yaw: 0.6, yawP: 1, aH: 0.15, aS: 0.12, glP: 1, glA: 1, glR: 0.5, glT: 0.7, slT: 0.8, wI: 2 },
+    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 }
   };
   const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old'], KV_DEF = 'sim';
   let KC = null;   // (the knock in use: the version's numbers with the settings over them; null: the old knock)
@@ -1923,7 +1926,7 @@ const Core = (function () {
     place(x, z, h) {
       this.x = this.px = x; this.z = this.pz = z; this.h = this.ph = h; if (this.nvA) this.nvA = 0;
       this.y = this.py = 0; this.vy = 0; this.air = 0; this.airT = 0; this.landT = 0;
-      this.vx = this.vz = this.w = 0; this.gear = 1; this.rpm = this.m.idle; this.q.i = -1; this.cSx = this.cSz = 0; this.cSr = null; if (this.xgl) { delete this.xgl; delete this.xglT; }   // (a knock's slide and lost grip gone: kTake)
+      this.vx = this.vz = this.w = 0; this.gear = 1; this.rpm = this.m.idle; this.q.i = -1; if (this.cSx !== undefined) { this.cSx = this.cSz = 0; this.cSr = null; } if (this.xgl) { delete this.xgl; delete this.xglT; }   // (a knock's slide and lost grip gone: kTake; the fields only on a car a version's knock has pushed, so that Stara's cars are the old ones to the last field)
       this.wPath = 0; this.vAngP = null; this.csS = 0; this.csWd = 0; this.csB = 0; this.csBx = 0; this.csCo = 0; this.csLt = 0; this.csLp = 0; this.csThrP = 0; this.csK = 0; this.csKc = 0; this.csKs = null; this.csAn = 0; this.csAT = 0; this.csWcap = 1;
       for (const q of this.wq) q.i = -1;
     }
@@ -3165,10 +3168,11 @@ const Core = (function () {
   // SL_T: a push sideways dies away in the car's mass x speed / its tyres' cornering grip (0.17 s at 100 km/h), the grip at most (stepCS; x KC.slT)
   const SL_T = 0.006;
   // RB_FOL: with the boxes (the versions' knock, KC) a rival keeps at least that much between its bumper and the car's ahead (the old 3 m from middle
-  // to middle let the round ends nest; before a braking zone the slipstream's rule adds 0.12 s of its speed); in the wake of the car ahead
-  // (c.tow over 0.3) RB_FOLW, close up for the tow and the pass out of it (the old knock's field passed about as often with the slipstream). Not in
-  // the run from the police (its knocks are crashCollide's) nor in the pit lane (the old knock there): the old rules, as before
-  const RB_FOL = 0.4, RB_FOLW = 0.1;
+  // to middle let the round ends nest; before a braking zone the slipstream's rule adds 0.12 s of its speed), in the wake of the car ahead too
+  // (closer there, 0.1 m, the field passed less with the slipstream, not more: Red Bull Ring, seeds 1-8, 91 passes against 96, and the car
+  // behind ran into the one ahead under braking). Not in the run from the police (its knocks are crashCollide's) nor in the pit lane (the old
+  // knock there): the old rules, as before
+  const RB_FOL = 0.4;
   /* Trki med avti (KC: a version of KV): a knock between two cars as racing games have it. The two cars as boxes with round corners (rboxHit): a
      flat bumper or flank pushes square on, through the middle of the faces that touch; the overlap taken away softly (RB_*: no pop). The push J at
      the contact with the cars' real weights (their fuel too; the player's x pm) and turning masses: the bounce by the closing speed (none for a car
@@ -3197,8 +3201,8 @@ const Core = (function () {
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = (1 + e) * vn / (tot + rna * rna / Ia + rnb * rnb / Ib);
     const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn));
     const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;
-    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K);
-    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K);
+    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b);
+    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a);
     const imp = carKnockFx(a, b, vn, J, rna, rnb, Ia, Ib, false, px, pz), fx = Math.max(vn, Math.abs(vt) * 0.5 * sstep(20, 200, J));   // (two flanks grinding past each other throw sparks too, pressed hard enough)
     a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);
     return imp;
@@ -3210,8 +3214,8 @@ const Core = (function () {
   // yaw rate change for as long as a real car's tyres take to stop it, RB_TAPT x speed; a push that goes on, step after step, holds the nose that
   // much off and does not wind it further). Past what its rear tyres hold (its tail pushed across past aH of its speed, more than its nose) its
   // grip goes for a moment (xgl, back in glT s: the travel no longer follows the nose, it spins on with the yaw rate the knock gave it and slides):
-  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA
-  function kTake(c, Px, Pz, rx, rz, m, I, K) {
+  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA (o the other car: a rival's, glR of it)
+  function kTake(c, Px, Pz, rx, rz, m, I, K, o) {
     const pl = !!c.isPlayer, dvx = Px / m, dvz = Pz / m, dw = (rx * Pz - rz * Px) / I * K.yaw * (pl ? K.yawP : 1);
     if (c.phys === 'nova') { c.vx += dvx; c.vz += dvz; c.w += dw; return; }
     if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; return; }   // (no tyres on the road)
@@ -3221,11 +3225,14 @@ const Core = (function () {
     const V = Math.hypot(c.vx, c.vz), sw = dw * clamp(RB_TAPT * V, RB_TAP0, RB_TAP1), tm = CSK.tapMax;
     c.csKc = clamp(sw * c.csKc > 0 ? (Math.abs(sw) > Math.abs(c.csKc) ? sw : c.csKc) : c.csKc + sw, -tm, tm);
     const Vs = Math.max(V, 12), ar = Math.abs(lt - c.m.b * dw) / Vs, af = Math.abs(lt + c.m.a * dw) / Vs;   // (the slip each axle takes from the knock; slower than 12 m/s as at 12: a bump in a hairpin, the tyres catch it at once)
-    const g = Math.min(1, clamp((ar - Math.max(K.aH, af)) / K.aS, 0, 1) * (pl ? K.glP : K.glA) * sstep(KG_V0, KG_V1, V));   // (the tail pushed across more than the nose, past aH: it breaks away; slow, the tyres catch it)
+    const g = c.sc ? 0 : Math.min(1, clamp((ar - Math.max(K.aH, af)) / K.aS, 0, 1) * (pl ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1)) * sstep(KG_V0, KG_V1, V));   // (the tail pushed across more than the nose, past aH: it breaks away; slow, the tyres catch it; the safety car never: no marshals, no reverse for it, the race would wait behind it)
     if (g > 0.02) { const g0 = c.xgl || 0; c.xgl = Math.max(g0, g); c.xglT = K.glT; if (g > g0 + 0.1) c.w += dw * Math.min(1, (g - g0) * K.wI); }   // (the yaw rate the knock gave it, as much as its tyres let go; a car already sliding is not spun on by every touch of its corners)
   }
   // two cars as boxes with round corners (radius RB_R, at most 0.45 of the half width): null apart, else _rb = the overlap (pen), the normal from b
-  // to a (nx, nz) and the contact (px, pz): the middle of the stretch of their faces that touch (the closest pairs within RB_EPS, weighted)
+  // to a (nx, nz) and the contact (px, pz): the middle of the stretch of their faces that touch (the closest pairs within RB_EPS, weighted). The
+  // normal from the closest pairs only (a face's own, or corner to corner past the end of a face: it turns smoothly from one to the other): the
+  // pairs a little further off would tilt it (a corner counted against both its sides and from both cars), a square knock from behind with the
+  // cars a car's width apart pushing them sideways
   const RB_R = 0.3, RB_EPS = 0.05, _rb = { pen: 0, nx: 0, nz: 0, px: 0, pz: 0 }, _rbA = new Float64Array(8), _rbB = new Float64Array(8);
   function rbCore(c, P) {   // the box less its corners' radius all round: its four corners in turn (front left, front right, rear right, rear left)
     const r = Math.min(RB_R, c.m.wid * 0.45), ch = Math.cos(c.h), sh = Math.sin(c.h), e = c.m.len * 0.5 - r, w = c.m.wid * 0.5 - r;
@@ -3250,7 +3257,7 @@ const Core = (function () {
         const t = clamp(((P[i] - x0) * ex + (P[i + 1] - z0) * ez) / L2, 0, 1), qx = x0 + ex * t, qz = z0 + ez * t, dx = P[i] - qx, dz = P[i + 1] - qz, di = Math.sqrt(dx * dx + dz * dz);
         if (di >= d + RB_EPS) continue;
         const w = 1 - (di - d) / RB_EPS, L = di > 1e-6 ? di : Math.sqrt(L2), ux = di > 1e-6 ? dx : -ez, uz = di > 1e-6 ? dz : ex;   // (touching: the side's own way out)
-        sx += w * (P[i] + qx) * 0.5; sz += w * (P[i + 1] + qz) * 0.5; snx += w * sg * ux / L; snz += w * sg * uz / L; W += w; } }
+        sx += w * (P[i] + qx) * 0.5; sz += w * (P[i + 1] + qz) * 0.5; W += w; if (di - d < 1e-4) { snx += w * sg * ux / L; snz += w * sg * uz / L; } } }
     const nl = Math.hypot(snx, snz) || 1;
     _rb.pen = R - d; _rb.nx = snx / nl; _rb.nz = snz / nl; _rb.px = sx / W; _rb.pz = sz / W;
     return _rb;
@@ -3544,7 +3551,7 @@ const Core = (function () {
     if (c.pitWant && T.def.pit) { const pz = T.pitAt(q.s + v * 0.8 + 6), pn = T.pitAt(q.s); if (pz || c.inPit) vT = Math.min(vT, (pz && pz.t < 0.98) || (pn && pn.t < 0.98) ? 15 : PIT_V * 0.97);   // (easy through the S of the way in and out)
       const bd = c.inPit ? race._boxD(c) : null; if (bd != null) { const x = T.boxX(q.s, bd); if (!c.pitDone && x > -BAY.inL - 60 && x < 6) vT = Math.min(vT, Math.sqrt(BAY.v * BAY.v + 13 * Math.max(0, -x - BAY.inL))); else if (c.pitDone && x > -3 && x < BAY.outL) vT = Math.min(vT, BAY.v + 0.6 * Math.max(0, x)); } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiThreat.vl < 1 && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5);   // (a ghost on the pit road already level with a car standing at its box: on through it, not stopped in it)
-    { const o = c.aiThreat, bx = !!KC && !race.pol && !c.inPit, f0 = txv('aiFol', -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? (c.tow > 0.3 ? RB_FOLW : RB_FOL) : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
+    { const o = c.aiThreat, bx = !!KC && !race.pol && !c.inPit, f0 = txv('aiFol', -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs(o.q.d - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
       const a = c.flyA; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - (a.flyP ? (a.m.len + M.len) / 2 + 7 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);
@@ -5916,6 +5923,7 @@ const Core = (function () {
       if (S && S.car) {
         const X = S.car, q = T.query(X.x, X.z, X.q.i, X.q); let ds = q.s - X.sPrev; if (ds > L / 2) ds -= L; else if (ds < -L / 2) ds += L;
         X.sPrev = q.s; X.dist += clamp(ds, -3, 3); S.t += dt;
+        S.stuck = X.speed < 1.2 && !X.inPit ? (S.stuck || 0) + dt : 0;   // (stopped on the road for 3 s (knocked off it, turned round): it has no reverse and no marshals; it goes, the race goes on)
         X.wet = 1 - (1 - WET) * (this.wst ? this.wst.water : this.rain);
         const gl = lead ? X.dist - lead.dist : 1e9;
         if (S.state === 'out' && S.t > 25 && gl < 45) {   // in this lap: once the field has closed up behind it (or after 80 s)
@@ -5926,7 +5934,8 @@ const Core = (function () {
             S.state = 'in'; S.pit = !!T.def.pit && dp < L / 2; F.ev++; F.evK = 'scIn'; if (S.pit) X.pitWant = true;
           }
         }
-        if (S.state === 'in') {   // into the pit lane (through the gap in the pit wall), or away up the road; then gone
+        if (S.stuck > 3 && S.state !== 'gone') { S.state = 'gone'; S.car = null; F.ev++; F.evK = 'scGone'; }
+        else if (S.state === 'in') {   // into the pit lane (through the gap in the pit wall), or away up the road; then gone
           const pz = T.def.pit ? T.pitAt(q.s) : null;
           if ((pz && pz.gap && q.d * pz.sd > pz.wall + 2) || (!S.pit && gl > 260) || gl > 900) { S.state = 'gone'; S.car = null; F.ev++; F.evK = 'scGone'; }
         }

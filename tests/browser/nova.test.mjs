@@ -8,15 +8,16 @@
 // - Trki med avti (one row before Poškodbe avtov: Simulacija, Arkadna, Mehka, Kaskaderska, Stara; js/game.js S.crV, Core.setTest cv 1-5):
 //   Simulacija marked on a fresh profile, Core.TX.cv 1 and the other keys null; each version sets its cv at once and writes its sentence under
 //   the row; Stara (the old knock) dims the knock rows of Preizkus (they keep their choice, its note says they do not apply), the other
-//   versions dim Razbijanje: odboji in vrtenje ob trku (only the old knock has it; with Stara it applies: Core.XR.bump); kept in the settings;
+//   versions dim Razbijanje: odboji in vrtenje ob trku (only the old knock has it; with Stara it applies: Core.XR.bump); with Nova fizika the rows
+//   Zdrs po trku and Ujem gum dimmed too (the classic physics' only), the note says so; kept in the settings;
 //   in English (Car knocks: Simulation / Arcade / Soft / Stunt / Old)
 // - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 7 rows Trki med avti over
 //   the chosen version's numbers; Core.setTest): the category folded and the 12 rows inside it, all on Privzeto on a fresh profile; every level
 //   of every knock row sets its number in Core.TX (cPm, cE, cMu, cYaw, cGl, cSl, cFx), Privzeto none (the version's own); the rivals' rows
 //   theirs; kept in the settings (localStorage); in English; a race with the rivals' spread narrower deals out narrower paces, back on
 //   Privzeto the old ones and nothing set; the spread's toast says from the next race
-// - the pause in that race: the row Trki med avti under the buttons, in sight and within the panel on a phone on its side (640×360) and
-//   upright (360×640), smaller letters if need be; the pause scrolls to its last row (the tyres'); Arkadna picked there: Core.TX.cv 2 at once,
+// - the pause in that race: the row Trki med avti under the buttons, in sight and within the panel (the tyres' row too) on a phone on its side
+//   (640×360), upright (360×640) and on a computer (1280×720: the narrow panel, the choices under their label), smaller letters if need be; the pause scrolls to its last row (the tyres'); Arkadna picked there: Core.TX.cv 2 at once,
 //   marked in the pause and in the settings, kept; the next pause starts from the top; the race runs on without NaN
 // - stored values out of range or from the rows before the versions (crNB, tCrStyle, tCrE ...): Simulacija and Privzeto, nothing set; saved
 //   again without the old keys
@@ -82,7 +83,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', {}, { width: 640, height: 360 });
     const AI = ['tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb'], CR = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], KEYS = AI.concat(CR), CRD = CR.slice().sort().join();
     // each knock row of Preizkus: its key in Core.TX and the numbers of its levels 1, 2 ... (0 Privzeto: null, the version's own)
-    const LV = { crPm: ['cPm', [1, 1.5, 2]], crE: ['cE', [0, 0.5, 1.6]], crMu: ['cMu', [0, 0.15, 0.35, 0.6]], crYaw: ['cYaw', [0.4, 0.7, 1, 1.4]], crGl: ['cGl', [0, 0.5, 1.6]], crSl: ['cSl', [0.6, 1, 1.6]], crFx: ['cFx', [1, 0]] };
+    const LV = { crPm: ['cPm', [1, 1.5, 2]], crE: ['cE', [0, 0.5, 1.6]], crMu: ['cMu', [0, 0.15, 0.35, 0.6]], crYaw: ['cYaw', [0.4, 0.7, 1, 2]], crGl: ['cGl', [0, 0.5, 1.6]], crSl: ['cSl', [0.6, 1, 1.6]], crFx: ['cFx', [1, 0]] };
     const rows = () => page.evaluate((K) => K.map(k => { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row');
       return g ? { k, label: r.querySelector('.rlbl').textContent, btns: [...g.querySelectorAll('button')].map(b => b.textContent).join(), sel: [...g.querySelectorAll('button')].filter(b => b.classList.contains('sel')).map(b => b.dataset.v + ':' + b.textContent).join() } : { k, missing: true }; }), KEYS);
     const tx = () => page.evaluate(() => Object.assign({}, Core.TX));
@@ -111,7 +112,7 @@ try {
     for (const k of CR) { const [key, lv] = LV[k];
       for (let i = 0; i < lv.length; i++) { await pick(k, i + 1); const t = await tx(); if (t[key] !== lv[i]) bad.push(`${k} ${i + 1}: ${key} ${t[key]}, not ${lv[i]}`); }
       await pick(k, 0); const t = await tx(); if (t[key] !== null) bad.push(`${k} Privzeto: ${key} ${t[key]}`); }
-    T.check('Preizkus: every level of the 7 knock rows sets its number at once (weight 1, 1.5, 2; bounce 0, 0.5, 1.6; rub 0, 0.15, 0.35, 0.6; turn 0.4, 0.7, 1, 1.4; slide 0, 0.5, 1.6; tyre catch 0.6, 1, 1.6; sparks 1, 0), Privzeto none', !bad.length, bad.join(' | '));
+    T.check('Preizkus: every level of the 7 knock rows sets its number at once (weight 1, 1.5, 2; bounce 0, 0.5, 1.6; rub 0, 0.15, 0.35, 0.6; turn 0.4, 0.7, 1, 2; slide 0, 0.5, 1.6; tyre catch 0.6, 1, 1.6; sparks 1, 0), Privzeto none', !bad.length, bad.join(' | '));
     // the five versions: Core.TX.cv 1-5 and the sentence under the row; Simulacija to Kaskaderska: Razbijanje dimmed, the note of Preizkus names
     // the version; Stara: the 7 knock rows of Preizkus dimmed, their note says they do not apply
     const vs = [], NOTE = [/^Kot v simulacijah/, /^Kot v arkadnih igrah/, /^Mehak stik/, /^Močni trki/, /^Trki kot prej/];
@@ -119,11 +120,15 @@ try {
     T.check('Trki med avti: each version sets Core.TX.cv 1-5 at once, its sentence under the row, kept in the settings; Simulacija to Kaskaderska dim Razbijanje: odboji in vrtenje ob trku and the note in Preizkus names them; Stara dims the 7 knock rows of Preizkus instead (they do not apply)',
       vs.every((x, v) => x.cv === v + 1 && x.sel === String(v) && x.st === v && NOTE[v].test(x.note)) && vs.slice(0, 4).every((x, v) => x.dim === 'xBump' && x.cr.includes('(' + ['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v] + ')'))
       && vs[4].dim === CRD && /ne veljajo/.test(vs[4].cr), JSON.stringify(vs.map(x => ({ sel: x.sel, cv: x.cv, st: x.st, dim: x.dim, note: x.note.slice(0, 24), cr: x.cr.slice(0, 50) }))));
+    // Nova fizika: Zdrs po trku and Ujem gum (the classic physics' grip lost to a knock and its tyres catching the push) dimmed too, the note says so; back on Klasična not
+    await pick('crV', 0); await pick('phys', 'nova'); const vn = await ver(); await pick('phys', 'cs'); const vc = await ver();
+    T.check('Trki med avti with Nova fizika: Zdrs po trku and Ujem gum dimmed too (the classic physics\' only), the note of Preizkus says so; with Klasična not',
+      vn.dim === 'crGl,crSl,xBump' && /klasični fiziki/.test(vn.cr) && vc.dim === 'xBump' && !/klasični fiziki/.test(vc.cr), JSON.stringify({ vn: { dim: vn.dim, cr: vn.cr }, vc: { dim: vc.dim, cr: vc.cr } }));
     await pick('crV', 3); await pick('tAiSpr', 3); await pick('tAiFol', 2); await pick('tAiKerb', 3); await pick('tAiPush', 1); await pick('tAiSide', 3);
     await pick('crPm', 3); await pick('crE', 2); await pick('crMu', 2); await pick('crYaw', 4); await pick('crGl', 1); await pick('crSl', 3); await pick('crFx', 2);
     const t3 = await tx(), s3 = await stored();
-    T.check('Trki med avti and Preizkus together: Kaskaderska (cv 4) with the weight 2x, half the bounce, the rub 0.15, the turn 1.4, no grip lost, the tyres slow, no sparks; the rivals (spread 0.3, gap 0.5 m, kerbs 2.2 m, push none, room 0.15 m); kept in the settings',
-      t3.cv === 4 && t3.cPm === 2 && t3.cE === 0.5 && t3.cMu === 0.15 && t3.cYaw === 1.4 && t3.cGl === 0 && t3.cSl === 1.6 && t3.cFx === 0 && t3.aiSpr === 0.3 && t3.aiFol === 0.5 && t3.aiKerb === 2.2 && t3.aiPush === 0 && t3.aiSide === 0.15
+    T.check('Trki med avti and Preizkus together: Kaskaderska (cv 4) with the weight 2x, half the bounce, the rub 0.15, the turn 2 (above its own 1.5), no grip lost, the tyres slow, no sparks; the rivals (spread 0.3, gap 0.5 m, kerbs 2.2 m, push none, room 0.15 m); kept in the settings',
+      t3.cv === 4 && t3.cPm === 2 && t3.cE === 0.5 && t3.cMu === 0.15 && t3.cYaw === 2 && t3.cGl === 0 && t3.cSl === 1.6 && t3.cFx === 0 && t3.aiSpr === 0.3 && t3.aiFol === 0.5 && t3.aiKerb === 2.2 && t3.aiPush === 0 && t3.aiSide === 0.15
       && s3.crV === 3 && s3.crPm === 3 && s3.crE === 2 && s3.crMu === 2 && s3.crYaw === 4 && s3.crGl === 1 && s3.crSl === 3 && s3.crFx === 2 && s3.tAiSpr === 3 && s3.tAiKerb === 3, JSON.stringify({ t3, s3: ['crV'].concat(KEYS).map(k => k + ':' + s3[k]).join(' ') }));
     await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
     const en = await rows(), enc = await cat(), ev = await ver();
@@ -143,15 +148,19 @@ try {
     const prow = () => page.evaluate(async () => { const raf = () => new Promise(q => requestAnimationFrame(q)); await raf(); await raf();
       const row = document.getElementById('crv-prow'), body = document.getElementById('pause-body'), seg = row.querySelector('.seg'), b = body.getBoundingClientRect(), r = row.getBoundingClientRect();
       const inside = (q) => q.left >= b.left - 1 && q.right <= b.right + 1 && q.top >= b.top - 1 && q.bottom <= b.bottom + 1;
+      const ps = document.querySelector('#pit-row .seg'), pr = ps.getBoundingClientRect(), pin = (q) => q.left >= pr.left - 1 && q.right <= pr.right + 1 && q.left >= b.left - 1 && q.right <= b.right + 1;   // (the tyres' row: its four choices within it, the panel's width)
       return { screen: window.__game.screen, shown: getComputedStyle(row).display !== 'none' && r.height > 0, label: row.querySelector('.rlbl').textContent, btns: [...seg.querySelectorAll('button')].map(x => x.textContent + (x.classList.contains('sel') ? '*' : '')).join(),
-        fit: seg.scrollWidth <= seg.clientWidth + 1 && [...seg.querySelectorAll('button')].every(x => inside(x.getBoundingClientRect())), inView: inside(r), top: body.scrollTop, pit: !document.getElementById('pit-row').classList.contains('off') }; });
+        fit: seg.scrollWidth <= seg.clientWidth + 1 && [...seg.querySelectorAll('button')].every(x => inside(x.getBoundingClientRect())), inView: inside(r), top: body.scrollTop, pit: !document.getElementById('pit-row').classList.contains('off'),
+        pitFit: ps.scrollWidth <= ps.clientWidth + 1 && [...ps.querySelectorAll('button')].every(x => pin(x.getBoundingClientRect())) }; });
     await page.evaluate(() => window.__game.pause());
     const p1 = await prow();
     await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300);
     const p2 = await prow();
+    await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(300);   // (a computer's window on its side, taller than a phone: the narrow panel, the choices wrap under their label)
+    const p3 = await prow();
     await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300);
-    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its five choices within the panel on a phone on its side (640×360) and upright (360×640)',
-      [p1, p2].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0), JSON.stringify({ p1, p2 }));
+    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its five choices within the panel, the tyres\' four too, on a phone on its side (640×360), upright (360×640) and on a computer (1280×720)',
+      [p1, p2, p3].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0 && p.pitFit), JSON.stringify({ p1, p2, p3 }));
     await page.click('#s-pause [data-set="crV"] [data-v="1"]'); await page.waitForTimeout(150);
     const pa = await page.evaluate(() => ({ cv: Core.TX.cv, cPm: Core.TX.cPm, aiSpr: Core.TX.aiSpr, pause: [...document.querySelectorAll('#s-pause [data-set="crV"] .sel')].map(b => b.textContent).join(), list: [...document.querySelectorAll('#s-settings [data-set="crV"] .sel')].map(b => b.textContent).join(),
       screen: window.__game.screen, stored: JSON.parse(localStorage.getItem('tdgp-settings')).crV }));

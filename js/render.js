@@ -8784,7 +8784,7 @@ const Render = (function () {
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
-    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb, c.fxCar > 7); }   // (c.fxQ: Trki med avti: Iskre izklop, a knock between cars without sparks or dust; the bright flash only in a hard knock, over 7 m/s: the user's, a touch does not light up)
+    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb, c.fxCar > 7 || Core.TX.cv === 5); }   // (c.fxQ: Trki med avti: Iskre izklop, a knock between cars without sparks or dust; the bright flash only in a hard knock, over 7 m/s: the user's, a touch does not light up; Stara, the old knock: as before, at every knock)
     if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }

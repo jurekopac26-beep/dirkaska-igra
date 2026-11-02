@@ -188,7 +188,7 @@ Uporabnik je pri slogu »Težak, brez odboja« še vedno videl odboj od avta, dr
 - **Razmikanje v enem koraku**: avto poskoči nazaj za 16–30 cm.
 - **Iskre** imajo na točki stika kratek svetel blisk (`sparks` v `js/render.js`).
 
-Slog se zdaj imenuje **Realističen, težak** (`TX`: cE 0, cMu 0,5, cYaw 1, cMass 8, cFx 0, cBox 1, cScrub 1). Kaj naredi, je opisano v `docs/igra.md` (razdelek »Preizkus: tekmeci in trki«): ravni odbijači z zaobljenimi vogali (`rbCollide`, `rboxHit`), mehko razmikanje, vrtenje s pravim časom umiritve (`RB_TAPT`), gume, ki zadržijo potisk vstran (`cSlide`, `stepCS`), in brez isker (`fxQ`).
+Slog se zdaj imenuje **Realističen, težak** (`TX`: cE 0, cMu 0,5, cYaw 1, cMass 8, cFx 0, cBox 1, cScrub 1). Kaj je naredil (slog in njegov opis v `docs/igra.md` sta odstranjena 2. 11. 2026, glej razdelek 10): ravni odbijači z zaobljenimi vogali (`rbCollide`, `rboxHit`), mehko razmikanje, vrtenje s pravim časom umiritve (`RB_TAPT`), gume, ki zadržijo potisk vstran (`cSlide`, `stepCS`), in brez isker (`fxQ`).
 
 Kontrolirani trki na ravnini (klasična, reli avto BURJA R7; skript s scenariji v seji, ne v repozitoriju; »narazen«: največja hitrost, s katero se avta razmikata v 1,5 s po stiku; »skok«: največji premik igralca v enem koraku zaradi razmikanja):
 
@@ -223,7 +223,7 @@ Uporabnik je pri slogu »Realističen, težak« še vedno videl odbijanje in je 
 - **gume ob potisku** (`cSlide`) pri poševnem stiku niso prijele: približevanje se je merilo iz absolutnih hitrosti, zato je hitrost vzdolž ceste pri poševni normali štela kot približevanje;
 - **Razbijanje: odboji in vrtenje** (če je vklopljeno): avto odbije do 48 km/h in zavrti do 166°.
 
-Gumb (`TX.nb`, `NB`, `nbHeavy`; opis v `docs/igra.md`) da odboj 0, brez sunka smeri in vrtenja, mehko razmikanje (največ `NB.cap` 4 cm na korak), težji je zadeti avto (`NB.mass` 8, kdo udari, se presodi glede na cesto), gume zadržijo potisk vstran tudi pri poševnem stiku, iskre ostanejo; Razbijanje: odboji in vrtenje ter prevračanje pri trkih med avti ne delujeta. Ograja se ne spremeni.
+Gumb (`TX.nb`, `NB`, `nbHeavy`; gumb, koda in opis so odstranjeni 2. 11. 2026, glej razdelek 10) je dal odboj 0, brez sunka smeri in vrtenja, mehko razmikanje (največ `NB.cap` 4 cm na korak), težji je zadeti avto (`NB.mass` 8, kdo udari, se presodi glede na cesto), gume zadržijo potisk vstran tudi pri poševnem stiku, iskre ostanejo; Razbijanje: odboji in vrtenje ter prevračanje pri trkih med avti ne delujeta. Ograja se ne spremeni.
 
 Kontrolirani trki na ravnini (BURJA R7, igralec drži volan naravnost; »vstran«: največja bočna hitrost igralca po stiku):
 
@@ -255,27 +255,35 @@ Kontrolirani trki na ravnini (klasična, BURJA R7; »zasuk« največji zasuk sme
 | Moj trk od zadaj 120 → 100 km/h, zamik 0,6 m (zasuk jaz / drugi) | 6,3° / 6,6°, vstran 2,3 m/s | 2,0° / 2,1°, 0,5 m/s | 0,9° / 2,9° | 1,2° / 1,2° | 3,2° / 3,3° |
 | Tekmec zdrsne vame pod 3° (1,5 m/s vstran) in se vrne na svoj pas | krogi: odriv brez sunka | 0,9 m/s, 1,7°, smer 1,2° | 0,64 m/s, 0,7° | 0,88 m/s, 1,0° | 0,85 m/s, 2,4° |
 | Tekmec zdrsne vame pod 6° (2,9 m/s vstran) in se vrne | krogi: odriv brez sunka | 1,8 m/s, 3,1° | 1,3 m/s, 1,4° | 1,8 m/s, 1,9° | 1,8 m/s, 4,1° |
-| Tekmec v moj zadnji vogal pod 17° (PIT, 8 m/s vstran) | 7,0°, brez izgube oprijema | 32° (zdrs, oprijem nazaj v 1,5 s) | 4,3° / (moj PIT nanj: 51°) | 5,4° | 75° |
+| Tekmec v moj zadnji vogal pod 17° (PIT, 8 m/s vstran) | 7,0°, brez izgube oprijema | 34° (zdrs, oprijem nazaj v 0,6 s) | 3,8° / (moj PIT nanj: 54°) | 5,7° | 81° |
 | Tekmec mi zavije v sprednji vogal pod 15° | — | 7,4°, brez izgube oprijema | 4,6° | 6,2° | 7,4° |
-| Vštric 110 in 90 km/h, naslon 1 s | 110 / 90 km/h | 111 / 90 km/h (ne zlepita se) | 110 / 90 | 111 / 90 | 111 / 103 |
-| 60 km/h v bok avta, ki prečka s 30 km/h (zasuk prečkajočega) | 6° | 164° | 180° | 67° | 180° |
+| Vštric 110 in 90 km/h, naslon 1 s | 110 / 90 km/h | 111 / 90 km/h (ne zlepita se) | 110 / 90 | 110 / 90 | 111 / 102 |
+| 60 km/h v bok avta, ki prečka s 30 km/h (zasuk prečkajočega) | 6° | 152° | 180° | 64° | 179° |
 
-Odboj pri Simulaciji: pri 2 m/s približevanja 0,24, pri 8 m/s 0,15, pri naslonu 0. Poskok položaja pod 3 cm (pri 100 km/h naravnost v stoječ avto 3,2 cm). Vogal, ki ga zaobljena vogala izpustita (telesi, kot sta narisani, se prekrivata bolj), se samo razmakne, mehko; v 0,05 s ostane največ 3,5 cm (`tests/corner.test.js`). Nova fizika s Simulacijo: zdrs vame pod 3° 0,81 m/s in 4,3°, PIT 14°, gume avto poravnajo.
+Odboj pri Simulaciji: pri 2 m/s približevanja 0,24, pri 8 m/s 0,15, pri naslonu 0. Poskok položaja pod 3 cm (pri 100 km/h naravnost v stoječ avto 3,2 cm). Vogal, ki ga zaobljena vogala izpustita (telesi, kot sta narisani, se prekrivata bolj), se samo razmakne, mehko; v 0,05 s ostane največ 3,5 cm (`tests/corner.test.js`). Nova fizika s Simulacijo: zdrs vame pod 3° 0,82 m/s in 4,3°, PIT 16°, gume avto poravnajo (po 2,5 s se ne vrti več).
 
 Pregled kode (neodvisen) je našel, da je klasična fizika bočni potisk proti notranji strani ovinka izgubila že v naslednjem koraku (ostanek potiska se je omejil z lastnim zdrsom avta v ovinku) in ga dala drsnemu zakonu: avto je zavil v smer potiska (pri 2 m/s 1,4 m s poti, navzven 0,16 m). Zdaj se ostanek zmanjša le za toliko, kolikor ga vmes vzame kaj drugega (ograja; `Car.cSr`). Izguba oprijema je od 15 km/h naprej (polno od 36 km/h, `KG_V0`, `KG_V1`), avta, ki že drsi, dotiki vogalov ne vrtijo še bolj: v lasnici na štartu (La Source, 22 avtov) je bilo prej 5 avtov zavrtenih in ustavljenih, zdaj nobeden.
+
+**Drugi pregled kode in dirke na ozkih progah** (2. 11. 2026):
+- Smer potiska (`rboxHit`) se je povprečila čez vse pare točk do 5 cm od najbližjega, zato je vogal štel večkrat: raven udarec od zadaj z zamikom 1,0–1,15 m je avta potisnil vstran (do 0,29 m/s pri 10 m/s približevanja), boka, ki se dotikata z zamikom, pa sta se vlekla naprej ali nazaj (0,04–0,1 m/s). Zdaj smer da le najbližji par (ploskev ali vogal do vogala), točka stika ostane povprečje.
+- Na ozkih progah (Trois-Rivières, Medvode, Tianmen, Sani, Vršič, Rastro, Longford; referenčne dirke `races.test.js`, 12 semen, 120 dirk) je imel novi trk 231 udarcev v ograjo in 50 vrtenj, stari 96 in 0. Razliko so naredili večinoma dotiki dveh tekmecev, po katerih je tekmec izgubil oprijem (pri 16 od 33 udarcev v ograjo v 1,5 s pred njim) in v ovinku zdrsnil naravnost. Zdaj tekmeca, ki se dotakneta, izgubita pol toliko oprijema (`glR` 0,5; ti in tekmec, ki ga zadeneš ti, ves), oprijem se vrne v 0,6 s (`glT`, posnetek: 0,5–0,7 s): 146 udarcev v ograjo in 16 vrtenj (hrup med semeni je velik: samo `glR` 146 in 4, brez izgube oprijema med tekmecema 151 in 7). PIT na tebe ostane 34° (posnetek 30–40°).
+- Tekmeci se z novim trkom dotikajo pogosteje (6900 proti 2900 dotikom nad 2 m/s na istih 120 dirkah): ravni odbijači avta pri trku od zadaj ne odrinejo vstran (stara okrogla konca sta ju), zato tekmec za drugim pri močnem zaviranju zadene še enkrat. Trdih trkov (nad 8 m/s) na pravih progah ni več kot pri starem (Bathurst, Spa, 6 dirk po 90 s: 0–2, stari 0–6); več jih je le na testni progi Jezero, kjer vsi speljejo hkrati.
+- Varnostni avto ob trku ne izgubi oprijema: udarec v zadnji vogal ga je lahko zavrtel z ceste in dirka je ostala pod varnostnim avtom do konca. Če vseeno obstane na progi (3 s), se umakne.
 
 V dirkah (8 prog × 150 s: Bathurst, Spa, Suzuka, Red Bull Ring, Detroit, Montreal, Townsville, Sani; 12 tekmecev, igralec na avtopilotu v skupini, kot v igri: zavetrje, liki, zastave, okvare; dogodek = dotik nad 1,5 m/s, merjeno 0,3 s oziroma 0,5 s po njem):
 
 | | Stara | Simulacija | Arkadna | Posnetek (razdelek 3) |
 |---|---|---|---|---|
-| Dotiki (tekmeci + igralec) | 116 + 24 | 197 + 22 | 215 + 40 | — |
-| Vrtenja (zdrs nad 40°) | 1 | 0 | 0 | — |
-| Igralec: skok vrtenja p50 / p90 | 63 / 74 °/s | 30 / 67 °/s | 23 / 55 °/s | 30 / 50 °/s |
-| Igralec: sprememba smeri v 0,5 s p50 / p90 | 3,4 / 7,5° | 3,3 / 7,7° | 2,7 / 10,2° | 2,4 / 7,8° |
-| Igralec: vstran p50 / p90 | 0,75 / 1,85 m/s | 0,87 / 2,69 m/s | 1,29 / 2,93 m/s | 1–1,5, največ 3,5 m/s |
-| Igralec: poravnava p50 | 1,10 s | 0,97 s | 1,00 s | 1,0 s |
+| Dotiki (tekmeci + igralec) | 116 + 24 | 195 + 23 | 167 + 14 | — |
+| Vrtenja (zdrs nad 40°) | 1 | 1 | 0 | — |
+| Igralec: skok vrtenja p50 / p90 | 63 / 74 °/s | 34 / 97 °/s | 24 / 87 °/s | 30 / 50 °/s |
+| Igralec: sprememba smeri v 0,5 s p50 / p90 | 3,4 / 7,5° | 3,0 / 9,4° | 3,8 / 7,5° | 2,4 / 7,8° |
+| Igralec: vstran p50 / p90 | 0,75 / 1,85 m/s | 1,79 / 3,14 m/s | 1,29 / 3,53 m/s | 1–1,5, največ 3,5 m/s |
+| Igralec: poravnava p50 | 1,10 s | 0,89 s | 0,87 s | 1,0 s |
 | Zlepljena avta (vštric v stiku 2 s) | 0 | 0 | 0 | — |
 
-Štart z 22 avti (40 s, 5 prog: Spa, Suzuka, Bathurst, Red Bull Ring, Montreal; koraki, v katerih ima avto sunek smeri nad 10°): Stara 1698 / 747 / 495 / 3323 / 653, Simulacija 170 / 217 / 44 / 77 / 4; vrtenj Stara 3, Simulacija 0; največji zdrs v polju Stara 25–46°, Simulacija 24–36°. Novi trki pokažejo več pravih dotikov v prvih lasnicah (La Source, 1. in 3. ovinek na Red Bull Ringu: tam se pri starem vogali prekrivajo brez sunka); trdih dotikov (nad 3,5 m/s, koraki obeh avtov) Stara 10 / 12 / 4 / 28 / 2, Simulacija 39 / 24 / 6 / 112 / 6, brez vrtenj in ustavljenih avtov. Preizkušen je bil razmik tekmecev po hitrosti (0,1 s za avtom pred sabo): trdih dotikov na štartih ni bilo zanesljivo manj (meritve hrupne), v zavetrju pa so tekmeci prehitevali manj (Red Bull Ring, 8 tekmecev, 3 krogi: 16 namesto 28), zato je opuščen; ostane 0,4 m med odbijačema (`RB_FOL`), v zavetrju 0,1 m (`RB_FOLW`). Prehitevanja (isti preizkus, semena 1–8, brez zavetrja / z njim): Stara 60 / 115, Simulacija 86 / 121 (z 0,4 m tudi v zavetrju 86 / 98). Čas fizike: 100 avtov na Nürburgu 0,56 ms na korak (Stara 0,73), 22 avtov 0,25 ms (0,26).
+Igralčevih dotikov je v teh dirkah malo (14–24), zato p90 in celo p50 skačeta od meritve do meritve, ko se potek dirke le malo spremeni: pri isti fiziki pred zadnjo spremembo vodenja tekmecev je bila igralčeva poravnava p50 1,76 s, skok vrtenja p90 79 °/s, prej (pred drugim pregledom) 0,97 s in 67 °/s. Za primerjavo z različicami so zanesljivejši kontrolirani trki zgoraj.
+
+Štart z 22 avti (40 s, 5 prog: Spa, Suzuka, Bathurst, Red Bull Ring, Montreal; koraki, v katerih ima avto sunek smeri nad 10°): Stara 1698 / 747 / 495 / 3323 / 653, Simulacija 73 / 100 / 92 / 72 / 2; vrtenj Stara 3, Simulacija 0; največji zdrs v polju Stara 25–46°, Simulacija 22–34°. Novi trki pokažejo več pravih dotikov v prvih lasnicah (La Source, 1. in 3. ovinek na Red Bull Ringu: tam se pri starem vogali prekrivajo brez sunka); trdih dotikov (nad 3,5 m/s, koraki obeh avtov) Stara 10 / 12 / 4 / 28 / 2, Simulacija 48 / 18 / 14 / 80 / 6, brez vrtenj in ustavljenih avtov ter brez avtov ob cesti (Stara 4). Preizkušen je bil razmik tekmecev po hitrosti (0,1 s za avtom pred sabo): trdih dotikov na štartih ni bilo zanesljivo manj (meritve hrupne), v zavetrju pa so tekmeci prehitevali manj (Red Bull Ring, 8 tekmecev, 3 krogi: 16 namesto 28), zato je opuščen; ostane 0,4 m med odbijačema (`RB_FOL`), tudi v zavetrju. Prehitevanja (isti preizkus, semena 1–8, brez zavetrja / z njim): Stara 60 / 115, Simulacija 67 / 96; z 0,1 m v zavetrju (`RB_FOLW`, do drugega pregleda) 67 / 91, torej manj prehitevanj in več trkov od zadaj pri zaviranju, zato je odstranjen (številki 86 / 121 v prejšnjem besedilu nista bili izmerjeni na shranjeni kodi). Čas fizike: 100 avtov na Nürburgu 0,56 ms na korak (Stara 0,73), 22 avtov 0,25 ms (0,26).
 
 Odprto: tekmeci se v lasnicah na štartu še dotikajo (vštric v dveh vrstah, oba hočeta na notranjo stran); to je vožnja tekmecev (`aiControl`: prostor ob boku, umik), ne trk.

@@ -31,7 +31,7 @@ function run(seed, repro, mseed) {
   } finally { Math.random = orig; }
 }
 
-const a = run(5, true, 11), b = run(5, true, 977), c = run(6, true, 11);
+const a = run(6, true, 11), b = run(6, true, 977), c = run(5, true, 11);   // (seed 6: with the knocks of the versions (Trki med avti) seed 5's crash, as hard, throws no panel off)
 check('opts.repro: the race never calls Math.random (its steps and the autopilot)', a.calls === 0 && b.calls === 0 && c.calls === 0, JSON.stringify([a.calls, b.calls, c.calls]));
 check('the crash really happens (damage, loose panels on the road: the random events are drawn)', a.dmg > 0.1 && a.loose > 0, JSON.stringify(a));
 check('the same seed twice, Math.random otherwise: the same race, to the last bit (every 5 s, every car, the debris)', a.digest === b.digest, JSON.stringify([a, b]));

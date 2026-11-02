@@ -58,8 +58,8 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
 }
 
 // 4. the AI: with the slipstream the rivals pass each other more often (8 of them, 3 laps of the Red Bull Ring, four races: at least 1.3 times as
-// often), all to the line, the winner no slower. (With the knocks of the versions, Trki med avti, the rivals pass each other more often without
-// the slipstream too than with the old round ends: seeds 1-8, 86 passes without and 121 with it; the old knock 60 and 115)
+// often), all to the line, the winner no slower. (With the knocks of the versions, Trki med avti, seeds 1-8: 67 passes without the slipstream and
+// 96 with it; the old knock 60 and 115)
 {
   const T = track('rbring'), stat = (slip) => {
     let passes = 0, fin = 0, all = 0; const win = [];

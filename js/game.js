@@ -52,7 +52,7 @@
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
   // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (the rivals: as the driving physics has it; the knocks: as the chosen
   // version of Trki med avti has it: nothing changes); the numbers go to Core.setTest (the knocks' rows as cPm, cE, cMu, cYaw, cGl, cSl, cFx)
-  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], crPm: [null, 1, 1.5, 2], crE: [null, 0, 0.5, 1.6], crMu: [null, 0, 0.15, 0.35, 0.6], crYaw: [null, 0.4, 0.7, 1, 1.4], crGl: [null, 0, 0.5, 1.6], crSl: [null, 0.6, 1, 1.6], crFx: [null, 1, 0] };
+  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], crPm: [null, 1, 1.5, 2], crE: [null, 0, 0.5, 1.6], crMu: [null, 0, 0.15, 0.35, 0.6], crYaw: [null, 0.4, 0.7, 1, 2], crGl: [null, 0, 0.5, 1.6], crSl: [null, 0.6, 1, 1.6], crFx: [null, 1, 0] };
   const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them)
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
   S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_OLD ? +S.crV : 0;   // (Trki med avti, the version of the knocks between cars: 0 Simulacija (the default), 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara; Core TX.cv = crV + 1)
@@ -431,12 +431,13 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
-    { const v = +S.crV, old = v === CR_OLD;   // (Trki med avti: the chosen version in a sentence under its row; Stara, the old knock: Preizkus' rows over the versions' numbers dimmed (they keep
-      // their choice for the other versions) and its note says so; Razbijanje: odboji in vrtenje ob trku the other way round: only the old knock has it)
-      for (const k of CR_ROWS.concat('xBump')) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', k === 'xBump' ? !old : old); }
-      $('crv-note').textContent = tr(['Kot v simulacijah: avta enako težka, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto težji, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
+    { const v = +S.crV, old = v === CR_OLD, nv = S.phys === 'nova';   // (Trki med avti: the chosen version in a sentence under its row; Stara, the old knock: Preizkus' rows over the versions' numbers dimmed (they keep
+      // their choice for the other versions) and its note says so; Razbijanje: odboji in vrtenje ob trku the other way round: only the old knock has it; Nova fizika:
+      // Zdrs po trku and Ujem gum dimmed too, the classic physics' (the new physics' own tyres lose their grip to a knock and catch its push)
+      for (const k of CR_ROWS.concat('xBump')) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', k === 'xBump' ? !old : old || (nv && (k === 'crGl' || k === 'crSl'))); }
+      $('crv-note').textContent = tr(['Kot v simulacijah: vsak avto s svojo pravo težo, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto šteje 1,7-krat svojo težo, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
         'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.'][v]);
-      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v])); }
+      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -2023,7 +2024,7 @@
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
-    $('crv-prow').classList.toggle('off', !!(mp && mp.race));   // (Trki med avti, switched at once in the pause (setOption); online both phones drive the default: not offered)
+    $('crv-prow').classList.toggle('off', !!(mp && mp.race) || !!race.pol || race.cars.length < 2);   // (Trki med avti, switched at once in the pause (setOption); online both phones drive the default; the run from the police (its knocks are crashCollide's) and a car alone on the road: nothing it changes, not offered)
     $('pause-rp').classList.toggle('off', !rpHereOk());   // (Posnetek do sem: not online, nor before 2 s of the race are recorded)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo();

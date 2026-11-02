@@ -3,7 +3,8 @@
 // - odboji (with the old knock, Trki med avti: Stara; the other versions turn and spin a car themselves, trki.test.js): a car knocked on
 //   its rear quarter at speed: off, it hardly turns (the old damped tap) and no new field on the car; on, it turns as hard as the knock says
 //   (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's car online (net) never
-// - agresivni vozniki: a 90 s race on Jezero (13 cars): on, more hard knocks between the cars and more damage than off, every rival still
+// - agresivni vozniki: a 90 s race at Bathurst (13 cars; a real track: on the test track Jezero, all off the line at once, the start's knocks
+//   alone were as many as the aggressive drivers add): on, more hard knocks between the cars and more damage than off, every rival still
 //   on its laps, nothing NaN
 // - poškodbe vplivajo na vožnjo: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at
 //   80 km/h, the wheel held straight); off, it runs straight
@@ -39,13 +40,13 @@ function tap(bump, vb, net) {
   const net = tap(1, 38, true); ok('odboji on: a friend\'s car in an online race (net) is never turned nor loses grip', net.imp > 10 && !('xgl' in net) && net.gl === 0 && net.wSame, JSON.stringify({ imp: +net.imp.toFixed(1), gl: net.gl, w: net.wSame }));
 }
 
-// a 90 s race on Jezero, the player on autopilot (every car off the line at once, as before the start's reaction, Core LAUNCH: the
+// a 90 s race at Bathurst, the player on autopilot (every car off the line at once, as before the start's reaction, Core LAUNCH: the
 // reactions spread the pack over the first metres and the knocks of one race with them; this measures the aggressive drivers alone)
 function race(ai, seed) {
   C.setCrash({ ai });
   const orig = Math.random; Math.random = seeded(seed);
   try {
-    const r = new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'jezero')), { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', launch: false });
+    const r = new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'bathurst')), { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', launch: false });
     r.start();
     let t = 0, hard = 0, nan = false;
     while (t < 90) { C.aiControl(r.player, r, DT); r.step(DT); t += DT;
