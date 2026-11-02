@@ -419,7 +419,7 @@ try {
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
       const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(".nb")].map(c), scr: [innerWidth, innerHeight] };
-      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; }
+      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv")].map(c); }
       return out;`;
     await click(page, 'cam:1'); await page.waitForTimeout(500);
     const v1 = await ev(page, MEASURE);
@@ -439,18 +439,20 @@ try {
     const covers = (l, p) => !!l && l.l <= p.l + 1 && l.r >= p.r - 1 && l.t <= p.t + 1 && l.b >= p.b - 1;
     T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture (the wide map reaches every edge of the frame)`, covers(v1.land, v1.pic), JSON.stringify({ land: v1.land, pic: v1.pic }));
     // every other real track with a map: the route and its names inside the picture, the painted land over all of it
-    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = []; let maps = 0;
+    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = []; let maps = 0;
+    const over = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
     for (let k = 0; k < ids.length; k++) {
       const id = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       if (await page.evaluate((id) => !!(window.ROUTES || {})[id] && !Core.TRACKS.find(d => d.id === id).test, id)) {   // (the test tracks aside)
         await page.waitForTimeout(300);
         const m = await ev(page, MEASURE);
-        if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); }
+        if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); }
       }
       await click(page, 'track:1');
     }
     T.check(`${w}x${h}: on every real track's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
     T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
+    T.check(`${w}x${h}: on every map the names of the flags are not under the cameras' buttons or the weather`, maps >= 5 && !under.length, JSON.stringify(under));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
