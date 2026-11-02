@@ -53,6 +53,18 @@ try {
     tiles: [...m.querySelectorAll('.g-tl')].map(b => ({ n: b.querySelector('b').textContent, p: b.querySelector('i').textContent.replace(/\u00a0/g, ' '), sel: b.classList.contains('sel'), fit: b.classList.contains('fit'), old: !!b.querySelector('s') })),
     buy: m.querySelector('.buy') && m.querySelector('.buy').textContent.replace(/\u00a0/g, ' '), can: m.querySelector('.buy') && !m.querySelector('.buy').disabled, stock: !!m.querySelector('[data-mact="stock"]'), rect: m.getBoundingClientRect().toJSON() }; });
 
+  // 0. a fresh garage: the real profile (the career's, odlocitve denarnica-mockup 1): Kariera marked in the MOCKUP row, the career's
+  // 10.000 coins and its PICO TURBO, no reset; then the mockup's Polna igra for the rest (its own test money: 11.500, a worn PICO)
+  // (the career shared with the game: tests/browser/denarnica.test.mjs)
+  {
+    const r = await page.evaluate(() => { const S = __garage.S; return { mode: S.mode, money: S.money, car: S.car, own: Object.keys(S.cars).filter(id => S.cars[id].own), coins: document.getElementById('g-money').textContent,
+      sel: [...document.querySelectorAll('#g-modes button.sel')].map(b => b.dataset.mode), reset: getComputedStyle(document.querySelector('#g-demo [data-act="reset"]')).display }; });
+    T.check('a fresh garage opens on the real profile (the career\'s): Kariera marked in MOCKUP, 10.000 coins, the PICO TURBO its only car, no reset', r.mode === 'game' && r.money === 10000 && r.coins === '10.000' && r.car === 'pico' && r.own.join() === 'pico' && r.sel.join() === 'game' && r.reset === 'none', JSON.stringify(r));
+    await page.evaluate(() => document.querySelector('#g-modes [data-mode="full"]').click()); await run();
+    const f = await page.evaluate(() => ({ mode: __garage.S.mode, sel: [...document.querySelectorAll('#g-modes button.sel')].map(b => b.dataset.mode), reset: getComputedStyle(document.querySelector('#g-demo [data-act="reset"]')).display, career: localStorage.getItem('tdgp-career') && JSON.parse(localStorage.getItem('tdgp-career')).money }));
+    T.check('Polna igra: the mockup\'s profile marked, its reset there, the career untouched (10.000)', f.mode === 'full' && f.sel.join() === 'full' && f.reset !== 'none' && (f.career == null || f.career === 10000), JSON.stringify(f));
+  }
+
   // 1. the page: a fresh profile (the full game: 11.500, the PICO TURBO), the car on the table, the page's buttons over the workshop
   // (the whole screen), the room drawn in a sensible number of draws
   {
