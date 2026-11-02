@@ -35,7 +35,7 @@ svg { display: block; }
 .scr { position: absolute; inset: 0; display: flex; flex-direction: column; animation: scr-in .28s ease-out; }
 @keyframes scr-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .scr.still { animation: none; }
-@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img, .hud b { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img { animation: none !important; } }
 /* top bar of the inner screens */
 .topbar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 14px 16px 6px; z-index: 3; }
 .topbar h2 { flex: 1; min-width: 0; margin: 0; font: 900 italic clamp(20px, 6.4vw, 26px)/1 var(--f-ui); letter-spacing: -.3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -373,10 +373,11 @@ svg { display: block; }
 .res-head.busted .pos { background: linear-gradient(90deg, #d42a33 0 50%, #2a5fd4 50% 100%); color: #fff; border-color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
 .places button.busted { background: linear-gradient(90deg, #c8262f, #2856c8); border-color: rgba(255, 255, 255, .6); }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
-.mapv { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
-.mapv button { width: 22px; height: 22px; border-radius: 50%; font: 900 12px/22px var(--f-ui); color: var(--lbl); }
-.mapv button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
-@media (max-width: 380px) { .mapv em { display: none; } }
+/* the stage's three cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner; the chosen one gold */
+.cams { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
+.cams button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--lbl); }
+.cams button svg { width: 15px; height: 15px; }
+.cams button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
    From the top: the head (house, country and place and height, globe), the stage (camera top left, weather down the right side), the row of
    numbers, the yard (the car before the road sign), the two neighbouring tracks, Back and Race!. On its side: the stage the whole height at
@@ -392,7 +393,6 @@ svg { display: block; }
 .globe svg { width: 26px; height: 26px; }
 .globe canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }   /* (the Earth turned to the track: js/menu.js globe) */
 #s-track .stage { flex: 0 1 48%; min-height: 150px; overflow: hidden; }
-#track-stage .hud { display: none; }   /* (the flyover's place and height: not on this screen) */
 /* the height graph across the stage's foot (js/menu.js graphOf): the part flown over coloured by the climb, the rest a thin white line */
 .hgraph { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; z-index: 3; pointer-events: none; background: linear-gradient(rgba(5, 9, 16, 0), rgba(5, 9, 16, .5) 45%, rgba(5, 9, 16, .72)); }
 .hgraph svg { display: block; overflow: visible; }
@@ -463,19 +463,16 @@ svg { display: block; }
 }
 @media (max-width: 380px), (orientation: landscape) and (max-width: 760px) { .trow small { font-size: 10.5px; } .trow b { font-size: 13.5px; } .trow > div { padding: 0 3px; } }
 /* version 1: the flyover video and the names over it */
-.dio.fly { background: #0b1626; }
-.dio.fly video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }
-.stage.rainy .dio.fly video { filter: saturate(.72) brightness(.8) contrast(1.05); }
+.dio.fly, .dio.corner { background: #0b1626; }
+.dio.fly video, .dio.corner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }
+.stage.rainy .dio.fly video, .stage.rainy .dio.corner video { filter: saturate(.72) brightness(.8) contrast(1.05); }
 .flab { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .flab > div { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .35s ease; will-change: transform; }
 .fl-s { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; translate: -3px -100%; }
 .fl-s b { order: 1; background: #fff; color: #10151d; font: 900 italic 15px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
-.fl-s small { order: 2; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-left: 12px; white-space: nowrap; }
+.fl-s small { order: 2; align-self: flex-end; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-right: 6px; white-space: nowrap; }   /* (the height under the name, at its right) */
 .fl-s svg { order: 3; margin-top: 1px; }
 .fl-s.finish b { background: #101820; color: #fff; }
-.fl-q { translate: -50% -100%; display: flex; flex-direction: column; align-items: center; }
-.fl-q b { background: rgba(10, 16, 26, .84); color: #fff; font: 800 italic 12px/1 var(--f-ui); padding: 5px 8px 4px; border-left: 3px solid var(--gold); white-space: nowrap; box-shadow: 0 3px 8px rgba(0, 0, 0, .35); }
-.fl-q::after { content: ''; width: 2px; height: 16px; background: rgba(255, 255, 255, .85); }
 .fly .fl svg, .fl-s svg path { stroke: #fff; }
 .fl path { stroke: #fff; stroke-width: 2.4; stroke-linecap: round; fill: none; }
 .fl .fg { fill: #3fd0ff; stroke: none; }
@@ -494,6 +491,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
+#track-stage .mk text { display: none; }   /* (the track step's map: its names are boxes over it, .mlab) */
+.mlab { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.mlab .fl-s { position: absolute; translate: 0 -100%; transform-origin: 0 100%; }   /* (left, top: its bottom left corner; made smaller about it: mapLabels) */
 .mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }
 /* (2,862 m: a metre, not M) */
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; }
@@ -506,14 +506,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (the switch and the notes read on any land) */
 .topmap image.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio image.wet { opacity: 1; }
-.dio.topmap.lock .mapsvg image, .dio.fly.lock video { filter: saturate(.55) brightness(.8); }
-/* the flyover and the intro: the place the video has reached and its height, high in the right corner */
-.hud { position: absolute; right: 10px; top: 10px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; max-width: calc(100% - 20px); }
-.hud b { background: #fff; color: #10151d; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .02em; padding: 6px 10px 5px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.hud small { background: var(--gold); color: var(--gold-ink); font: 900 italic 12px/1 var(--f-ui); padding: 4px 9px 3px; transform: skewX(-10deg); margin-right: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.hud b:empty, .hud small:empty { display: none; }
-.hud.in b { animation: hud-in .5s cubic-bezier(.2, .8, .3, 1) both; }
-@keyframes hud-in { from { opacity: 0; transform: translateX(18px) skewX(-10deg); } }
+.dio.topmap.lock .mapsvg image, .dio.fly.lock video, .dio.corner.lock video { filter: saturate(.55) brightness(.8); }
 /* ---------------- main menu: Single race and Career open in the same frame (the race goes on behind it) ---------------- */
 .title-panel.sub { gap: 10px; }
 .t-subhead { display: flex; align-items: center; gap: 12px; min-width: 0; }
