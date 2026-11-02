@@ -9,7 +9,7 @@
   const API = World.api;
   const {
     Chunks, GB, IChunks, TAU, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, propFloorTable, rng,
-    roadsideProps, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary
+    roadsideProps, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -470,7 +470,7 @@
         bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2931);   // the trucks in the lay-by, side by side
       for (let k = 0; k < 3; k++) { const b = (k - 1) * 4.2, px = padS.x - sn * b, pz = padS.z + c * b; if (API.vrNear(px, pz).dd < 1.5) continue;
-        caTruck(scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
+        parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
       for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 16, pz = padS.z + (R() - 0.5) * 16; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
     }
 
@@ -495,14 +495,14 @@
         exclPush(bx, bz, 2.5); }
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2941);
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (API.vrNear(px, pz).dd < 1.5) continue;
-        if (k === 4 || k === 9) caTruck(scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]);
-        else if (k < 4 || k > 5) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(fans[(k * 3) % fans.length], R, 0.2)); }
+        if (k === 4 || k === 9) parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]);
+        else if (k < 4 || k > 5) parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(fans[(k * 3) % fans.length], R, 0.2)); }
       for (let k = 0; k < 20; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road towards the border: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       { const RT2 = rng(2951);   // and the queue of trucks waiting behind the blocks on the shoulder, nose to tail
         for (let k = 0; k < 4; k++) { const s = T.len - 24 - k * 19, i = T.idx(s), o = (T.br[i] + 3.2), px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o; if (API.vrNear(px, pz).dd < 1.2 || excluded(px, pz)) continue;
-          caTruck(scen.get(px, pz), px, caGround(px, pz), pz, T.hd[i] + PI, truckCols[Math.floor(RT2() * truckCols.length)], trailerCols[Math.floor(RT2() * trailerCols.length)]); exclPush(px, pz, 9); } }
+          parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, T.hd[i] + PI, truckCols[Math.floor(RT2() * truckCols.length)], trailerCols[Math.floor(RT2() * trailerCols.length)]); exclPush(px, pz, 9); } }
     }
 
     /* ---- the two avalanche galleries over the road: a concrete wall against the mountain, the roof on a row of pillars on the valley side with a low

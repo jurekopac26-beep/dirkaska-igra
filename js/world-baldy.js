@@ -11,7 +11,7 @@
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caGCol, caGround, caSlope, caTileGeo, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut,
     crowdRun, cyl, gable, ico, inPoly, lerp, ouCutMat, ouRod, pkGroundMat, polyDist, propFloorTable, rng, roadsideProps, rock, rpHash, sstep,
     starCone, stubExcl, stubGeo, stubProps, stubRails, stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf,
-    vrNear, vrPrep, vrStubAt, vrStubs
+    vrNear, vrPrep, vrStubAt, vrStubs, parkOn
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -418,7 +418,7 @@
         for (let v = -60; v <= 60; v += 6.5) for (let u = -90; u <= 90; u += 2.8) { const x = L.cx + ux * u - uz * v, z = L.cz + uz * u + ux * v;
           if (!inPoly(L.poly, x, z) || polyDist(L.poly, x, z) < 2.6 || vrNear(x, z).dd < 2 || RL() > occ) continue;
           const g = scen.get(x, z), y = caGround(x, z);
-          if (RL() < 0.18) moto(g, x, y, z, rot + 0.2, vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.2)); else car(g, x, y, z, rot + (RL() < 0.5 ? 0 : PI), vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.15));
+          if (RL() < 0.18) moto(g, x, y, z, rot + 0.2, vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.2)); else parkOn(car, caGround, 4.4, g, x, y, z, rot + (RL() < 0.5 ? 0 : PI), vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.15));
           nLotCars++; }
         exclPush(L.cx, L.cz, Math.min(L.r, 30));
       }
@@ -431,7 +431,7 @@
           gable(g, x, y, z, 2.6, 2.2, 1.5, r, tc[k % tc.length], tc[k % tc.length]);   // a tent
           box(g, x + c * 4, y + 0.7, z + s * 4, 2.2, 0.08, 0.9, r, [0.5, 0.36, 0.22]); for (const o of [-0.55, 0.55]) box(g, x + c * 4 - s * o, y, z + s * 4 + c * o, 2.0, 0.42, 0.08, r, [0.46, 0.33, 0.2]);   // a picnic table and its benches
           cyl(g, x - s * 3, y - 0.1, z + c * 3, 0.5, 0.35, 7, [0.3, 0.28, 0.26]);   // the fire ring
-          if (RL() < 0.6) car(g, x + c * 2 + s * 4.5, y, z + s * 2 - c * 4.5, r, vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.15));
+          if (RL() < 0.6) parkOn(car, caGround, 4.4, g, x + c * 2 + s * 4.5, y, z + s * 2 - c * 4.5, r, vary(carCols[Math.floor(RL() * carCols.length)], RL, 0.15));
           exclPush(x, z, 6); }
         out.marks.camp = [cx, cz]; }
     }
