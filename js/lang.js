@@ -111,6 +111,8 @@
     'Poskusna vožnja': 'Test drive', 'Kako je šlo?': 'How did it go?', 'Zdaj prva dirka: dva kroga s petimi tekmeci. Idealna linija na cesti kaže, kje zavirati.': 'Now your first race: two laps with five rivals. The racing line on the road shows where to brake.',
     'Drugo upravljanje': 'Other controls', 'Še enkrat': 'Once more', 'Prva dirka': 'First race', 'Prva dirka je za tabo. Kaj zdaj?': 'Your first race is done. What next?', 'Pokaži znova': 'Show again',
     'POSKUSNA VOŽNJA · še {0} s': 'TEST DRIVE · {0} s left', 'RDEČE NA CESTI: ZAVIRAJ': 'RED ON THE ROAD: BRAKE', 'Prevoženo {0} km, najvišja hitrost {1} km/h, upravljanje: {2}.': 'Driven {0} km, top speed {1} km/h, controls: {2}.',
+    // the tyre marks of a friend's runs (a challenge's card)
+    'Sledi gum': 'Tyre marks', 'zadnjih voženj: {0}': 'last runs: {0}', 'niso priložene': 'not included',
     'Povezave ni bilo mogoče kopirati: duh je shranjen v datoteko.': 'The link could not be copied: the ghost is saved to a file.',
     'Duh je za povezavo predolg: shranjen je v datoteko.': 'The ghost is too long for a link: it is saved to a file.', 'Duh je shranjen v datoteko {0}.': 'The ghost is saved to the file {0}.', 'To ni duh igre Real Roads Atlas.': 'This is not a Real Roads Atlas ghost.',
     'Duha ni bilo mogoče shraniti (premalo prostora).': 'The ghost could not be saved (not enough space).', 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.': 'The ghost of {0} on {1} ({2}): race it on a flying lap.',
