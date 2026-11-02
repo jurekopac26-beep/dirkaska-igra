@@ -462,7 +462,7 @@
     'Avti na omarici': 'Cars on the cabinet', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.': 'On the cabinet: your car, a car to rent and a car for sale. Tap a model and that car drives onto the turntable.',
     'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.': 'The red SERVICE button: wash, bodywork, engine and oil.', 'Tapni barvni krog: avto prebarvamo v stekleni komori.': 'Tap a colour circle: the car is painted in the glass chamber.',
     'Drugi avti': 'Other cars', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.': 'The two buttons below bring in the car before or after this one.',
-    'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'STANJE': 'CONDITION', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
+    'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
