@@ -28,7 +28,8 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
 | 18 | Zgodovina napak | končano |
-| 19 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
+| 19 | Zadnji posnetki | končano |
+| 20 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -79,7 +80,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 
 - **Označi** ustavi posnetek. Ležeče je paleta navpično ob levem robu, pokonci vrstica nad časovnico. V paleti so svinčnik, 6 barv, razveljavi in radirka.
 - Ko je krog sklenjen, se tik ob njem odpre **oblaček** v isti barvi in vanj se piše. Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblaček se da premakniti.
-- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 19).
+- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 20).
 - **Dodaj k zbirki** shrani trenutek (sličico, oznake, zapise) in na časovnici postavi zastavico.
 
 ### Slika in pošiljanje
@@ -118,7 +119,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 #2 00:41.327 K2 s=1284m rdeča »Sledi gum sredi ravnine« v_krogu=[sledi_gum, cesta:412-431]
 ```
 
-`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 19) je vrstica pred barvami, brez `v_krogu`: `#1 00:18.2 K1 s=412m beležka »Ves zaslon utripa / Predlog: manj megle«` (vrstice zapisa so združene z » / «).
+`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 20) je vrstica pred barvami, brez `v_krogu`: `#1 00:18.2 K1 s=412m beležka »Ves zaslon utripa / Predlog: manj megle«` (vrstice zapisa so združene z » / «).
 
 ### Zastavica med dirko
 
@@ -348,6 +349,18 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - **Testi:** `tests/browser/napake.test.mjs` (Zgodovina v vrstici označevanja in v izbiri, zapis po Deli brez slik, ročno stanje, ponovno Deli, Kopiraj besedilo, pokonci in ležeče, meja 100/20), `napake-slika.test.mjs` (seznam v Nastavitvah: dotik, Izbriši).
   - **Opomba (moje odločitve):** Kopiraj besedilo stanja ne spremeni (kot doslej; poslano je, ko gre slika); ponovno deljenje iz zgodovine slik ne odstrani ne glede na kljukico. Gumb Zgodovina ni v vrstici gumbov posnetka (tam ni prostora), ampak v vrstici označevanja, ki se odpre z Označi.
 
+### Sklop 19 · Zadnji posnetki — 1,5–2 h · 1. 11. 2026
+
+- **Naročilo uporabnika** (1. 11. 2026): »sedaj ko želim javiti napake kliknem posnetek do sem in označi, vendar če zaprem jaz tega posnetka kasneje ne morem več urejati, naredi da si igra shrani zadnjih 10 posnetkov iger, ki so prišle do cilja, tako bom lahko urejal igre za nazaj več naenkrat«; nato: »po vsaki nedokončani igri, preden greš ven iz igre, naj te vpraša: želiš shraniti to igro za kasnejšo analizo? Da / Ne, privzeto je označen Ne«, »če uporabnik izbere Da, se tudi ta nedokončana igra shrani med zadnjih 10« in »če igro dokončaš, se že samodejno shrani med zadnjih 10«. Veja `claude/awesome-archimedes-0u5x7e`.
+- **Prej:** posnetek dirke je bil samo v pomnilniku in ga po izhodu iz dirke ni bilo več (razen ročno shranjene datoteke `.rrp`); trenutki zbirke so ostali samo kot slika v Zgodovini napak.
+- **Narejeno:**
+  - **Shranjevanje** (`js/napake.js`, IndexedDB `rra-posnetki` / `posnetki`, zadnjih **10**, `PZ_MAX`): dirka, v kateri je igralčev avto prišel do cilja (`race.player.finished`, ne ulovljen od policije), se shrani sama ob rezultatih (`Napake.cilj` iz `finishRace`); prav tako posebna misija, ki se je končala z rezultatom (opravljena ali neuspela), in znova ob izhodu, če je medtem tekla naprej (`Napake.pusti` iz `toTitle` in `newRace`). Zapis ima datoteko `.rrp` (enako kot Shrani v nastavitvah orodja) in zbirko tega posnetka: trenutke z oznakami, zapisi in slikami (JPEG) ter potrjene in zavržene samodejne zastavice. Glava in vzorci se vzamejo takoj, pakiranje teče po kosih po ~8 ms in nikoli med vožnjo ali predvajanjem posnetka (`zaseden`); ko gre igra v ozadje, se dokonča takoj.
+  - **Vprašanje ob izhodu** (`Napake.izhod`, `vprasaj`): Glavni meni, Ponovi dirko (tudi Ponovi krog in gumb za ponovitev vožnje na zaslonu v kronometru; ta najprej odpre pavzo), PONOVI IGRO, Šola vožnje in Lestvica prvenstva iz igre, ki ni prišla do cilja (tudi po odstopu in KONEC IGRE; misija sredi poteka): »Želiš shraniti to igro za kasnejšo analizo?« **Da** / **Ne**; označen in izbran je **Ne** (Enter ali A na ploščku vzame označenega, puščice ga premaknejo, Esc in B sta Ne; tipke igre, npr. P, med vprašanjem ne delujejo). Da: igra gre med zadnjih 10 kot Nedokončana. Brez vprašanja: igra pod 2 s posnetka (`RRP.min`), dirka s prijateljem, nova mapa, šola vožnje (nima posnetka), orodje izklopljeno, neposredni klici `onAction` (testi): vprašanje je samo na poti igralca (dotik gumba, plošček: `leaveAct` v `js/game.js`).
+  - **Seznam Zadnji posnetki** (`zadnji`, `#nk-pz`; Nastavitve orodja → Zadnji posnetki (n/10) → Odpri, gumb Zadnji posnetki v Zgodovini napak): najnovejši prvi; slika (prvi trenutek zbirke ali slika proge iz menija), proga, datum, način, krogi, dolžina, mesto, število trenutkov, velikost, **Do cilja** (zeleno) ali **Nedokončana** (oranžno). **.rrp** prenese datoteko (za Clauda: `tools/posnetek.mjs`), **✕** izbriše (drugi dotik v 3 s).
+  - **Odpiranje:** dotik odpre posnetek kot datoteko (`rrpOpen`) z njegovo zbirko: trenutki so spet na časovnici, Dodaj k zbirki nadaljuje številčenje, zapis v seznamu in v Zgodovini napak (isti `id`) se posodobi; stanje v Zgodovini ostane, dokler se zbirka ne spremeni. Končaj vrne seznam (izbira zbirke čez njim, če se je zbirka spremenila), da se odpre naslednji posnetek.
+  - **Testi:** nov `tests/browser/napake-zadnji.test.mjs` (18 preverjanj); `wheels.test.mjs` na zaslonu KONEC IGRE po tapu na PONOVI IGRO preveri vprašanje in odgovori Ne.
+  - **Opomba (moje odločitve):** »do cilja« pomeni, da je igralčev avto prečkal ciljno črto (dirka, kronometer, kvalifikacijski krog, izziv, pobeg policiji); odstop, KONEC IGRE in ulovljen od policije ob izhodu vprašajo. Posebna misija, ki se je končala z rezultatom, tudi neuspela, se shrani sama: njeni gumbi rezultata (Ponovi, Misije, Glavni meni) ne vprašajo, da testi misij drugih sej ostanejo, kot so. Kvalifikacijski krog je svoja igra s svojim posnetkom. Preskoči kvalifikacije ne vpraša (igra gre naprej z dirko). Posnetki iz datotek `.rrp` se v seznam ne dodajo.
+
 ### Sklop 17 · Razdeljen world.js — 3–5 h · 4.–5. 11.
 
 - **Kaj:** graditelje prog (`buildSpa`, `buildRbring`, …) iz `js/world.js` (3,9 MB, 34.603 vrstic) premakni v `js/world-<tema>.js`.
@@ -356,7 +369,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Po korakih:** nekaj prog na pull request. Svet mora ostati enak (`tests/browser/world.test.mjs`, `perf`, `golden` brez novih referenc).
 - **Kazalo:** posodobi tabelo prog v `docs/kazalo.md`.
 
-### Sklop 19 · Beležka v Označi, ročno Poslano — ~1,5 h · 1.–2. 11. 2026
+### Sklop 20 · Beležka v Označi, ročno Poslano — ~1,5 h · 1.–2. 11. 2026
 
 - **Naročilo uporabnika** (1. 11. 2026, računalnik: Windows, Edge, 1920 × 1008): »spremeni v urejevalniku da je spodaj desno kjer sem oznacil vedno odprta belezka kjer pisem notri napake, predloge in vprasanja. naprimer ko uporabnik klikne uredi in se odpre to okno kjer oznacim napako nato se odpre okno, je okno ze spodaj odprto in mi ni treba z misko kliknit na belezko da po njej lahko pisem, ampak vse kar pisem na tipkovnico se tam vpisuje. da shranim sliko mi ni potrebno oznaciti nic na sliki, saj kasne stvari zajemajo cel ekran«. Veja `orodje-za-napake/belezka`.
 - **Narejeno:**
