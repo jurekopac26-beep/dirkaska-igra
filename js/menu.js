@@ -1204,6 +1204,9 @@
     // the opponents' slider: the number follows it, the setting when it is let go (and on Done: rivSheet)
     app.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('rslide')) rivPaint(+e.target.value); });
     app.addEventListener('change', (e) => { if (e.target.classList && e.target.classList.contains('rslide')) rivSet(+e.target.value); });
+    // its own keys (the arrows, Home, End, Page Up and Down) stay with it: the game takes the arrows on the window for driving (js/input.js),
+    // where an element of this shadow root is not an input
+    app.addEventListener('keydown', (e) => { if (e.target.classList && e.target.classList.contains('rslide') && /^(Arrow|Home$|End$|Page)/.test(e.key)) e.stopPropagation(); });
     // swipe the track model to change the track
     let sw = null;
     app.addEventListener('pointerdown', (e) => { if (screen === 'track' && e.target.closest('.dio')) sw = { x: e.clientX, y: e.clientY }; });

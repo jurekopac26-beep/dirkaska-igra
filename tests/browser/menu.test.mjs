@@ -307,18 +307,19 @@ try {
     T.check('no page errors with the opponents\' sheet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
-  {   // 0 opponents (Trial): the race alone, to the finish on the autopilot: Cilj (a tick, no place), no win in the statistics, no page error
-    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 0 });
+  {   // 0 opponents (Trial): the race alone (a short one: 3 laps), to the finish on the autopilot: Cilj (a tick, no place), no win in the
+    //   statistics, no page error
+    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 0, length: 'short' });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
     await click(page, 'race-single');
     await raceOn(page, 'troisrivieres').catch(() => null);
-    const st0 = await page.evaluate(() => ({ cars: __game.race && __game.race.cars.length, wins: __game.stats.wins || 0, races: __game.stats.races || 0 }));
-    const fin = await page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 40 && g.phase !== 'done'; k++) { g.sim(10, true); await new Promise(r => setTimeout(r, 0)); }
+    const st0 = await page.evaluate(() => ({ cars: __game.race && __game.race.cars.length, laps: __game.race && __game.race.laps, wins: __game.stats.wins || 0, races: __game.stats.races || 0 }));
+    const fin = await page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 90 && g.phase !== 'done'; k++) { g.sim(10, true); await new Promise(r => setTimeout(r, 0)); }
       return { phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), wins: g.stats.wins || 0, races: g.stats.races || 0 }; });
-    T.check('0 opponents: the row 0, the race alone (1 car), home on the autopilot: Cilj with a tick (no place), a race counted, no win',
-      row === 'Opponents0' && st0.cars === 1 && fin.phase === 'done' && fin.title === 'Cilj' && fin.pos === '\u2713' && fin.shown === 's-results' && fin.races === st0.races + 1 && fin.wins === st0.wins, JSON.stringify({ row, st0, fin }));
+    T.check('0 opponents: the row 0, the race alone (1 car, 3 laps), home on the autopilot: Cilj with a tick (no place), a race counted, no win',
+      row === 'Opponents0' && st0.cars === 1 && st0.laps === 3 && fin.phase === 'done' && fin.title === 'Cilj' && fin.pos === '\u2713' && fin.shown === 's-results' && fin.races === st0.races + 1 && fin.wins === st0.wins, JSON.stringify({ row, st0, fin }));
     T.check('no page errors in a race alone', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
