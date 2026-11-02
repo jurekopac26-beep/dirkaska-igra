@@ -27,7 +27,10 @@ const NVBase = (function () {
       for (let i = 0; i < SPo.length; i++) { const a = SPo[i], b = SPo[(i + 1) % SPo.length], sa = sd(a), sb = sd(b); if (sa < 0) apron.push([a[0], a[1], 0]);
         if ((sa < 0) !== (sb < 0)) { let lo = 0, hi = 1; for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2, p = [a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m]; if ((sd(p) < 0) === (sa < 0)) lo = m; else hi = m; } const q = [a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo, 1];
           if (sa < 0) { apron.push(q); exitZ = q[1]; } else { if (exitZ !== null) { const n = Math.ceil(Math.abs(q[1] - exitZ)); for (let k = 1; k < n; k++) { const z = exitZ + (q[1] - exitZ) * k / n; apron.push([westEdge(z), z, 1]); } } apron.push(q); exitZ = null; } } } }
-    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z);
+    // (not in the banked bend's bowl, the ground there lowered: the lot and the apron end at its rim, the lawn in it; they lay over it at the
+    // ground's height, their edge a cliff over the bowl, the 15 pictures of the whole map, sheet 10)
+    const inBowl = (x, z) => !!H3.bank0 && !!H3.bankDy && H3.bankDy(x, z) < -0.04;
+    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z) && !inBowl(x, z);
     // the lot: either side of the way but not on the base's apron (everything there paved, the pictures), south of road 2 (under its kerb and strip,
     // which hide the lot's edge, js/nvedge.js), inside the circuit short of its edge, up to the garages along the start straight, not on the driving
     // school's practice area nor the HOME lot (they are drawn by their own)
@@ -36,7 +39,7 @@ const NVBase = (function () {
     const PAD = H3.PAD, inPad = (x, z, m = 0.4) => x > PAD[0] - m && x < PAD[1] + m && z > PAD[2] - m && z < PAD[3] + m;
     const southJ = (x, z) => { for (let i = 1; i < JP.length; i++) { const [ax, az] = JP[i - 1], [bx, bz] = JP[i]; if ((ax - x) * (bx - x) <= 0 && ax !== bx) return z > az + (bz - az) * (x - ax) / (bx - ax); } return true; };   // (south of road 2: north of it the park)
     const lotIn = (x, z) => z > 40 && z < 143 && southJ(x, z) && Math.abs(x - laneX(z)) > RW - 0.05 && !inApron(x, z) && TL.inLoop(x, z) && TL.dist(x, z, 30) > w + 3.2 && segD(JP, x, z) > JHW + 1.0 && !GAR.some(gx => Math.abs(x - gx) < 11.5 && z > 131.5)
-      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z));   // (the HOME lot's lane: its own)
+      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z)) && !inBowl(x, z);   // (the HOME lot's lane: its own)
     let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -200; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
     let ab = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of AP) ab = [Math.min(ab[0], x), Math.max(ab[1], x), Math.min(ab[2], z), Math.max(ab[3], z)];
     R = { RP, laneX, westEdge, apron, AP, inApron, lotIn, inPad, lotBB: lb, apBB: ab };
