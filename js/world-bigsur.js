@@ -11,7 +11,7 @@
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, addShore, atSf, box, caCar, caCondorGeo, caCondors, caNear, caPlantGeo, caProps, clamp, crowdCtx,
     crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, rng, rock, rpHash, shoreBand, sstep, stubExcl, stubGeo,
     stubProps, stubRails, stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubAt,
-    vrStubH, waterMat, waterline
+    vrStubH, waterMat, waterline, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -601,7 +601,7 @@
       if (O) { const p = O[2], n = p.length / 2;
         for (let k = 6; k < Math.min(n, 16); k++) { const k0 = k - 1, k1 = Math.min(n - 1, k + 1), dx = p[2 * k1] - p[2 * k0], dz = p[2 * k1 + 1] - p[2 * k0 + 1], l = Math.hypot(dx, dz) || 1, o = RW + 1.9;
           const x = p[2 * k] - dz / l * o, z = p[2 * k + 1] + dx / l * o; if (vrNear(x, z).dd < 6 || bsSlope(x, z) > 0.3 || vrDist(x, z) > 400) continue;
-          caCar(scen.get(x, z), x, bsGround(x, z), z, Math.atan2(dz, dx), [0.62, 0.6, 0.55]); exclPush(x, z, 3); break; }
+          parkOn(caCar, bsGround, 4.4, scen.get(x, z), x, bsGround(x, z), z, Math.atan2(dz, dx), [0.62, 0.6, 0.55]); exclPush(x, z, 3); break; }
       }
     }
 
@@ -797,7 +797,7 @@
       // a car or a pickup by each house, on its plot
       const RV = rng(3993), VC = [[0.85, 0.85, 0.83], [0.2, 0.22, 0.25], [0.55, 0.12, 0.1], [0.2, 0.32, 0.5], [0.62, 0.6, 0.55], [0.3, 0.36, 0.28]];
       for (const b of blds) { if (b.kind === 3 || RV() < 0.25) continue; const c = Math.cos(b.ang), sn = Math.sin(b.ang), o = b.W / 2 + 3.2, x = b.x - sn * o, z = b.z + c * o;
-        if (vrNear(x, z).dd < 3 || bsSlope(x, z) > 0.4) continue; caCar(scen.get(x, z), x, bsGround(x, z), z, b.ang + (RV() - 0.5) * 0.4, VC[Math.floor(RV() * VC.length)]); }
+        if (vrNear(x, z).dd < 3 || bsSlope(x, z) > 0.4) continue; parkOn(caCar, bsGround, 4.4, scen.get(x, z), x, bsGround(x, z), z, b.ang + (RV() - 0.5) * 0.4, VC[Math.floor(RV() * VC.length)]); }
       // the windbreaks: a row of Monterey cypresses behind a house (on its far side from the car), dark, dense, wind-shaped
       for (const b of blds) { if (b.kind === 3 || RV() < 0.45) continue; const c = Math.cos(b.ang), sn = Math.sin(b.ang), o = -(b.W / 2 + 7), n = 4 + Math.floor(RV() * 5), L0 = (n - 1) * 3.6 / 2;
         for (let q = 0; q < n; q++) { const t = q * 3.6 - L0, x = b.x - sn * o + c * t, z = b.z + c * o + sn * t; if (vrNear(x, z).dd < 9 || excluded(x, z) || bsSlope(x, z) > 0.6) continue;

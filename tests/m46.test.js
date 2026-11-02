@@ -1,6 +1,6 @@
 // Special mission 46 · Požar v predoru (js/missions/m46.js, the kit js/missions/kit.js), no browser: its race (Uncompahgre, alone, the fire
 // engine), the tunnel (the trapped cars in it, the burning lorry deep in it), the air used only in the smoke, stopped beside a car: its
-// people aboard, the lorry stopped before: the crew puts it out, out of the tunnel with everyone: done; the air gone, into the fire, out
+// people aboard, before the lorry the crew sprays while driving (out in K.OUTT s), out of the tunnel with everyone: done; the air gone, into the fire, out
 // with people left behind: failed; the visibility with the fire out; the gauges.
 //   node tests/m46.test.js
 'use strict';
@@ -38,19 +38,19 @@ check('stopped beside it: its people aboard', r.aboard === n0 && n0 > 0 && c0.n 
 F.player.q.s = r.s1 + 10; for (const c of r.cars) c.n = 0; r.aboard = 3; r.f = 0; r.step(0.1);
 check('out of the tunnel with people left behind: failed', r.end === 'fail' && /ostali/.test(r.why), r.why);
 // into the fire
-F = mk(s0 + 100); r = new Missions.Run(D, F); D.begin.call(D, r); F.player.q.s = r.sL - 5; F.player.vx = 6; r.step(0.1);
+F = mk(s0 + 100); r = new Missions.Run(D, F); D.begin.call(D, r); F.player.q.s = r.sL - 2; F.player.vx = 6; r.step(0.1);
 check('driven into the burning lorry: failed', r.end === 'fail' && /ogenj/.test(r.why), r.why);
 // the air gone
 F = mk(s0 + 100); r = new Missions.Run(D, F); D.begin.call(D, r); r.air = 0.05; r.step(0.1);
 check('the air gone in the smoke: failed', r.end === 'fail' && /zraka/.test(r.why), r.why);
-// the whole run: everyone aboard, stopped before the lorry, its fire out, out of the tunnel: done
+// the whole run: everyone aboard, the lorry's fire out while driving up to it, out of the tunnel: done
 F = mk(s0 + 100); r = new Missions.Run(D, F); D.begin.call(D, r);
 for (const c of r.cars) { F.player.q.s = c.s; for (let i = 0; i < 60 * (K.LOAD + 0.2); i++) r.step(1 / 60); }
 check('every car: everyone aboard', r.aboard === r.total);
-F.player.q.s = r.sL - 15; F.player.vx = 1; r.step(1 / 60); r.step(1 / 60);
-check('stopped before the lorry: the crew works, the truck held', r.stage === 'fight' && F.player.locked === true, r.stage);
-for (let k = 0; k < K.SPOTS; k++) { const p = r.flP[k]; r.autoSpray = { x: p[0], y: p[1], z: p[2] }; for (let i = 0; i < 60 * 5 && r.fl[k] > 0; i++) r.step(1 / 60); }
-check('the lorry\'s fire out: the truck let go, the smoke thinner', r.f === 0 && r.stage === 'drive' && F.player.locked === false && r.vals.vis.text === K.VIS1 + ' m' && r.vals.ogenj.text === 'pogašen', JSON.stringify(r.vals.vis));
+F.player.q.s = r.sL - 15; F.player.x = r.lorry.x - 12; F.player.z = r.lorry.z; F.player.vx = 4; r.step(1 / 60);
+check('before the lorry, driving: the crew sprays (the hint), the truck not held', /curek/.test(r.hint) && !F.player.locked && F.player.vx === 4, r.hint);
+r.autoSpray = { x: r.lorry.x, y: r.lorry.y + 2, z: r.lorry.z }; let tOut = 0; for (let i = 0; i < 60 * 8 && r.f > 0; i++) { r.step(1 / 60); tOut += 1 / 60; }
+check('the water on the lorry: its whole fire out in K.OUTT s, the smoke thinner', r.f === 0 && Math.abs(tOut - K.OUTT) < 0.3 && r.vals.vis.text === K.VIS1 + ' m' && r.vals.ogenj.text === 'pogašen', `${tOut.toFixed(2)} ${r.vals.vis.text}`);
 r.autoSpray = null; F.player.q.s = r.s1 + 10; F.player.vx = 10; r.step(0.1);
 check('out of the far portal with everyone: done', r.end === 'win');
 

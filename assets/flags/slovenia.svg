@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Slovenia</title>
+  <!-- Ratio 1:2. Horizontal thirds white, blue, red. Coat of arms (shield height H/3) centred on the white/blue boundary, centre at L/4 from the hoist.
+       Shield drawn in its construction frame: width 240, origin at the foot of Triglav. -->
+  <rect width="1200" height="200" y="0" fill="#FFFFFF"/>
+  <rect width="1200" height="200" y="200" fill="#005DA4"/>
+  <rect width="1200" height="200" y="400" fill="#ED1C24"/>
+  <g transform="translate(300 223.044) scale(0.64684)">
+    <!-- blue field: top arc r 280.22 (centre 0,90), sides converging, ogival foot of two arcs r 155.61 (centres -+45,-30) -->
+    <path fill="#005DA4" d="M110.26 -19.478 L120 -163.228 A280.22 280.22 0 0 0 -120 -163.228 L-110.26 -19.478 A155.61 155.61 0 0 0 0 118.972 A155.61 155.61 0 0 0 110.26 -19.478 Z"/>
+    <!-- Triglav: three peaks (0,-90), (+-45,-60), saddles (+-27,-36), foot +-90 on y=0; white base arcs r 138.29 concentric with the shield foot -->
+    <path fill="#FFFFFF" d="M-90 0 A138.29 138.29 0 0 0 0 100.77 A138.29 138.29 0 0 0 90 0 L45 -60 L27 -36 L0 -90 L-27 -36 L-45 -60 Z"/>
+    <!-- two wavy blue lines (sea and rivers): arcs r 30, band 8.66, second one 17.32 lower -->
+    <path fill="#005DA4" d="M-85.981 15 A30 30 0 0 0 -45 25.981 A30 30 0 0 1 -15 25.981 A30 30 0 0 0 15 25.981 A30 30 0 0 1 45 25.981 A30 30 0 0 0 85.981 15 L85.981 23.66 A30 30 0 0 1 45 34.641 A30 30 0 0 0 15 34.641 A30 30 0 0 1 -15 34.641 A30 30 0 0 0 -45 34.641 A30 30 0 0 1 -85.981 23.66 Z"/>
+    <path fill="#005DA4" d="M-85.981 32.321 A30 30 0 0 0 -45 43.302 A30 30 0 0 1 -15 43.302 A30 30 0 0 0 15 43.302 A30 30 0 0 1 45 43.302 A30 30 0 0 0 85.981 32.321 L85.981 40.981 A30 30 0 0 1 45 51.962 A30 30 0 0 0 15 51.962 A30 30 0 0 1 -15 51.962 A30 30 0 0 0 -45 51.962 A30 30 0 0 1 -85.981 40.981 Z"/>
+    <!-- three gold six-pointed stars in an inverted triangle (outer r 11.25, inner r 4.5) -->
+    <path fill="#FFDD00" d="M-33.75 -176.25 L-31.5 -168.897 L-24.007 -170.625 L-29.25 -165 L-24.007 -159.375 L-31.5 -161.103 L-33.75 -153.75 L-36 -161.103 L-43.493 -159.375 L-38.25 -165 L-43.493 -170.625 L-36 -168.897 Z"/>
+    <path fill="#FFDD00" d="M33.75 -176.25 L36 -168.897 L43.493 -170.625 L38.25 -165 L43.493 -159.375 L36 -161.103 L33.75 -153.75 L31.5 -161.103 L24.007 -159.375 L29.25 -165 L24.007 -170.625 L31.5 -168.897 Z"/>
+    <path fill="#FFDD00" d="M0 -131.25 L2.25 -123.897 L9.743 -125.625 L4.5 -120 L9.743 -114.375 L2.25 -116.103 L0 -108.75 L-2.25 -116.103 L-9.743 -114.375 L-4.5 -120 L-9.743 -125.625 L-2.25 -123.897 Z"/>
+    <!-- red border 8.66 wide on the sides and the foot (none along the top edge) -->
+    <path fill="#ED1C24" d="M-111.58 -167.05 L-101.62 -20.06 A146.95 146.95 0 0 0 0 109.89 A146.95 146.95 0 0 0 101.62 -20.06 L111.58 -167.05 A280.22 280.22 0 0 1 120 -163.228 L110.26 -19.478 A155.61 155.61 0 0 1 0 118.972 A155.61 155.61 0 0 1 -110.26 -19.478 L-120 -163.228 A280.22 280.22 0 0 1 -111.58 -167.05 Z"/>
+  </g>
+</svg>

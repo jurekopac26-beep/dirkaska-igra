@@ -37,7 +37,9 @@ try {
   // 2. the start: a jump start, then a proper one
   await go('start');
   await page.waitForFunction(() => window.__game.phase === 'lights', null, { timeout: 30000 });
-  await page.keyboard.down('ArrowUp'); await page.waitForTimeout(700); await page.keyboard.up('ArrowUp');
+  // (the gas held until the game has seen it: on a busy machine the next frame may come only after 0.7 s, and a key let go before it is never seen)
+  await page.keyboard.down('ArrowUp'); await page.waitForTimeout(700);
+  await page.waitForFunction(() => window.__game.screen === 'results' || window.__game.phase !== 'lights', null, { timeout: 30000 }); await page.keyboard.up('ArrowUp');
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
   const j = await res();
   T.check('the start: the throttle before the lights go out is a jump start (Neuspešno), the school\'s own buttons', j.title === 'Neuspešno' && /Prehiter štart/.test(j.sub) && j.school && !j.replay && j.again === 'Ponovi vajo', JSON.stringify(j));

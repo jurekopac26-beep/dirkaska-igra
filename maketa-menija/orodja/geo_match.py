@@ -14,6 +14,24 @@ GUESS = {
     'suzuka': (34.8431, 136.5406, 1500),
     'spa': (50.4372, 5.9714, 1500),
     'nring': (50.3397, 6.9496, 2000),       # T13
+    'medvode': (46.1405, 14.4140, 1500),    # the football ground on Medvoška cesta
+    'baldy': (34.2370, -117.6585, 1500),    # Mount Baldy village, by Glendora Ridge Road
+    'beartooth': (45.0050, -109.4050, 2500),    # below the Rock Creek Vista
+    'bigsur': (36.3880, -121.9050, 1500),   # north of the Rocky Creek Bridge
+    'maunakea': (19.7950, -155.4620, 2000), # the end of the gravel above the visitor station
+    'moki': (37.2700, -109.9300, 2000),     # by the Valley of the Gods Road
+    'monterey': (36.58646, -121.75664, 400),   # the start / finish (OpenStreetMap)
+    'mulholland': (34.1080, -118.7830, 2000),  # Cornell, by Cornell School Road
+    'palomar': (33.2947, -116.8934, 1000),     # South Grade Road, 0.70 km above State Route 76 (OpenStreetMap)
+    'riverside': (33.9367, -117.2726, 1500),   # the old circuit east of the town
+    'uncompahgre': (38.0160, -107.6720, 1500), # above Ouray
+    'iroha': (36.7345, 139.5310, 1500),        # the second Irohazaka, its lower curves (OpenStreetMap: national road 120 up from Umagaeshi)
+    'greatalpine': (-37.5517, 147.8764, 400),  # where the road leaves the Tambo (its shape on the roads of OpenStreetMap)
+    'hotham': (-37.0029, 147.0940, 400),       # below Mount Little Blowhard (its shape on the roads of OpenStreetMap)
+    'caracoles': (-32.8630, -70.1580, 2500),   # by the Juncalillo river below the curves (from Portillo back along the road)
+    'rastro': (-28.3930, -49.5390, 2500),      # below the hairpins (from the viewpoint at the top back along the road)
+    'katu': (50.9100, 88.2200, 3000),          # the edge of the Ulagan plateau above the Chulyshman
+    'tianmen': (29.0570, 110.4800, 2500),      # bend 54 (from the square below the cave back along the road)
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

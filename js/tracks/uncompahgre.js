@@ -3,7 +3,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // The Uncompahgre Gorge (Colorado, USA): U.S. Route 550 south of Ouray, the stretch of the road through the San Juan Mountains known as the
   // Million Dollar Highway. From above the town (~2540 m) up the gorge on a shelf cut into its cliffs, with no guard rails above the drop to the
-  // river, through the little rock tunnel, over the bridge at Bear Creek Falls, past the Alpine Loop junction and the Mother Cline slide, through
+  // river, through the little rock tunnel, over the bridge at Bear Creek Falls, past the Alpine Loop junction and the big avalanche slide, through
   // the Riverside snow shed to the finish (~2860 m): 4.9 km of the real road, the real length. One card, four ways to drive it (def.modes), as
   // Vršič and Los Caracoles: a race against the rivals up the closed road, a time trial, a duel with one rival on the open road (tourists' cars,
   // vans and motorbikes both ways: def.traffic) and a run from the police up the open road (def.police: their patrol cars).
@@ -49,7 +49,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n":"Predor","d":522.8,"say":["Through the little rock tunnel!","Into the tunnel, straight through the cliff!"]},
       {"n":"Slap Bear Creek","d":985.6,"say":["Over Bear Creek Falls! The water drops right under the road!","Across the bridge over Bear Creek Falls!","Bear Creek Falls, eighty metres straight down on the right!"]},
       {"n":"Alpine Loop","d":2642.7,"say":["Past the Alpine Loop turn-off, the jeep road to Engineer Pass!","The Alpine Loop junction, halfway up the gorge!"]},
-      {"n":"Plaz Mother Cline","d":3382.9,"say":["The Mother Cline slide! Avalanche country, a sheer drop on the right!","Under the Mother Cline slide path, keep it on the road!"]},
+      {"n":"Velik plaz","d":3382.9,"say":["The avalanche slide! Avalanche country, a sheer drop on the right!","Under the avalanche path, keep it on the road!"]},
       {"n":"Galerija Riverside","d":4858.3,"say":["Into the Riverside snow shed!","Under the avalanche shed, flat out!","Through the Riverside shed, the last stretch!"]},
       {"n":"Cilj · 2.860 m","d":4942.7,"say":["At the top of the gorge! What a drive along the cliffs!","Made it through the gorge, two thousand eight hundred and sixty metres!","That is the Un-come-pah-gree Gorge done, the Million Dollar Highway beaten!"]},
     ],

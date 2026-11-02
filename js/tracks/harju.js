@@ -5,11 +5,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Thursday evening as the rally's opening stage (and again on the Friday) since the first Jyväskylän Suurajot in 1951. A POINT-TO-POINT time trial
   // on tarmac, gravel and paving stones, at its real scale and on its real streets, in its 2025/2026 layout (2.58 km by the organisers; the line of
   // the rally-maps.com stage map that this follows is ~2.5 km from flag to flag): the start on Yliopistonkatu's south-east carriageway, the sprint
-  // down to the first hairpin LEFT round the end of the median at the Kilpisenkatu junction, back up the other carriageway past the foot of the Nero
-  // steps to the legendary right turn onto the gravel at Cygnaeuksenkatu, up the ridge (a chicane) to the Vesilinna water tower (Olavi Kivimaa, 1953)
+  // down to the first hairpin LEFT round the end of the median at the junction, back up the other carriageway past the foot of the hillside
+  // steps to the legendary right turn onto the gravel, up the ridge (a chicane) to the Vesilinna water tower (1953)
   // on the summit, a tight left and the plunge down Ihantolantie beside the Harju stadium, a tight right onto the gravel at the stadium's corner,
   // left-right, then the new technical part by the Lyseo school: round the island of a turning loop, up the service road to a hairpin round the parking
-  // island at the Keski-Suomen talo and back down, across to the cycleway, Pitkäkatu past Lasse Lampi's pine (his Mitsubishi Starion hit it in 1987;
+  // island at the Keski-Suomen talo and back down, across to the cycleway, Pitkäkatu past the old pine (
   // two bale chicanes), the gravel cycleways through the park, Löylykatu, the tight left onto Oikokatu at the Normaalikoulu school and the paving
   // stones along its yard to the flying finish at Norssin kulma. (The barriers and the chicanes' bales are ours.)
   // Centre line: the streets and paths of OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0; read through Overture Maps), the junctions
@@ -23,8 +23,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // crowds ([d0, d1, rows, share]), tv ([d, side, off]: camera towers), marks ([d0, d1]: a dashed lane line), scen (the town: see js/world.js, buildHarju).
   TRACK_DEFS.push({
     id: 'harju', name: 'Harju, Finska', theme: 'harju', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 4,
-    desc: 'Mestna hitrostna preizkušnja sredi Jyväskyläja, na grebenu Harju, v postavitvi 2025/2026: asfalt, makadam in tlakovci. Start na Yliopistonkatu, pospešek do prve lasnice v levo, vzpon po aveniji mimo Nerovih stopnic do znamenitega zavoja na makadam, strm vzpon na greben do vodnega stolpa Vesilinna, oster levi in spust ob stadionu Harju, desno na makadam, nov tehnični del pri gimnaziji Lyseo z dvema lasnicama, Pitkäkatu s šikanama iz bal mimo bora Lasseja Lampija, makadam skozi park, levo na tlakovce pri šoli Normaalikoulu in leteči cilj na vogalu Norssin kulma. Poletni večer ob 19:05, pobočja polna gledalcev.',
-    en: { name: 'Harju, Finland', desc: 'The city special stage in the middle of Jyväskylä, on the Harju ridge, in its 2025/2026 layout: tarmac, gravel and cobbles. The start on Yliopistonkatu, the sprint to the first hairpin left, up the avenue past the Nero steps to the famous turn onto the gravel, the steep climb to the Vesilinna water tower, a tight left and down past the Harju stadium, right onto the gravel, the new technical part by the Lyseo school with two hairpins, Pitkäkatu with two bale chicanes past Lasse Lampi’s pine, gravel through the park, left onto the cobbles at the Normaalikoulu school and the flying finish at Norssi corner. A summer evening at 19:05, the slopes full of fans.' },   // (the English of the track card: js/lang.js)
+    desc: 'Mestna hitrostna preizkušnja sredi Jyväskyläja, na grebenu Harju, v postavitvi 2025/2026: asfalt, makadam in tlakovci. Start na Yliopistonkatu, pospešek do prve lasnice v levo, vzpon po aveniji mimo stopnic na pobočju do znamenitega zavoja na makadam, strm vzpon na greben do vodnega stolpa Vesilinna, oster levi in spust ob stadionu Harju, desno na makadam, nov tehnični del pri gimnaziji Lyseo z dvema lasnicama, Pitkäkatu s šikanama iz bal mimo starega bora, makadam skozi park, levo na tlakovce pri šoli Normaalikoulu in leteči cilj na vogalu Norssin kulma. Poletni večer ob 19:05, pobočja polna gledalcev.',
+    en: { name: 'Harju, Finland', desc: 'The city special stage in the middle of Jyväskylä, on the Harju ridge, in its 2025/2026 layout: tarmac, gravel and cobbles. The start on Yliopistonkatu, the sprint to the first hairpin left, up the avenue past the hillside steps to the famous turn onto the gravel, the steep climb to the Vesilinna water tower, a tight left and down past the Harju stadium, right onto the gravel, the new technical part by the Lyseo school with two hairpins, Pitkäkatu with two bale chicanes past the old pine, gravel through the park, left onto the cobbles at the Normaalikoulu school and the flying finish at Norssi corner. A summer evening at 19:05, the slopes full of fans.' },   // (the English of the track card: js/lang.js)
     cityStage: true,
     start: [-205.9,158.1], finish: [-404.6,330.6], cps: [[-318.1,39.9],[-353.2,-242.1]],
     roadSurface: 'asphalt', offSurface: 'paving', noCurbs: true, noGravel: true, gradeForce: true, runoff: 0.4, side: 2.5, inner: 2.5, elevSmooth: 6,
@@ -45,9 +45,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     marks: [[-60,130],[186,489],[2500,2680]],
     names: [
       {"n":"Yliopistonkatu","d":12,"say":["Down Yliopistonkatu, the university street, flat out!","Away down the boulevard, Yliopistonkatu!"]},
-      {"n":"Kilpisenkatu","d":112,"say":["Hard on the brakes, the hairpin round the end of the boulevard!","The famous first hairpin, left and back up the other side!"]},
-      {"n":"Neron portaat","d":324,"say":["Past the Nero steps, the whole hillside is full of fans!","The Nero steps, thousands of fans on the stairs!"]},
-      {"n":"Cygnaeuksenkatu","d":445,"say":["Up Yliopistonkatu to the legendary turn onto the gravel!","Here it comes, the famous right turn onto the sand!"]},
+      {"n":"Prva lasnica","d":112,"say":["Hard on the brakes, the hairpin round the end of the boulevard!","The famous first hairpin, left and back up the other side!"]},
+      {"n":"Stopnice na pobočju","d":324,"say":["Past the steps up the hillside, the whole hillside is full of fans!","The hillside steps, thousands of fans on the stairs!"]},
+      {"n":"Zavoj na makadam","d":445,"say":["Up Yliopistonkatu to the legendary turn onto the gravel!","Here it comes, the famous right turn onto the sand!"]},
       {"n":"Harjun nousu","d":523,"say":["Right onto the gravel and up the Harju ridge!","The legendary climb up the ridge, gravel under the pines!"]},
       {"n":"Vesilinna","d":775,"say":["Over the top to the Vesilinna water tower, tight left!","Sharp left at the water tower on the summit of the Harju!"]},
       {"n":"Ihantolantie","d":839,"say":["And down Ihantolantie past the tower, steep and fast!","Plunging down the side of the ridge towards the stadium!"]},
@@ -55,7 +55,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n":"Lyseon lukio","d":1232,"say":["The new section by the Lyseo school, tight and technical!","Round the island at the Lyseo school, a proper hairpin!"]},
       {"n":"Keski-Suomen talo","d":1412,"say":["Up to the hairpin by the Keski-Suomen talo and back down!","The turnaround at the top, the crowd is right on the kerbs!"]},
       {"n":"Pitkäkatu","d":1636,"say":["Onto Pitkakatu, the bales and the chicanes!","Along Pitkakatu, the long street, no room for mistakes!"]},
-      {"n":"Lasse Lammen puu","d":1742,"say":["Past Lasse Lampi's pine, still standing!","The corner where Lasse Lampi met the pine tree in eighty-seven!"]},
+      {"n":"Stari bor","d":1742,"say":["Past the old pine, still standing!","The corner by the old pine tree!"]},
       {"n":"Harjun puisto","d":2008,"say":["Off the street and onto the gravel through the park!","Through the park on the sand, dust everywhere!"]},
       {"n":"Löylykatu","d":2214,"say":["Down Loylykatu towards the school!","Back on the tarmac, Loylykatu!"]},
       {"n":"Normaalikoulu","d":2276,"say":["Left at the Normaalikoulu school, onto the paving stones!","Tight left onto Oikokatu by the old school!"]},

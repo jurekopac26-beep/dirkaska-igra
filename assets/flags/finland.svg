@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1100" width="1800" height="1100">
+  <title>Finland</title>
+  <!-- Ratio 11:18 (Act on the Flag of Finland 380/1978). Blue Nordic cross on white.
+       Horizontal units 5 + 3 + 10 = 18, vertical units 4 + 3 + 4 = 11 (1 unit = 100).
+       Blue: PMS 294 C. -->
+  <rect width="1800" height="1100" fill="#FFFFFF"/>
+  <rect x="500" y="0" width="300" height="1100" fill="#002F6C"/>
+  <rect x="0" y="400" width="1800" height="300" fill="#002F6C"/>
+</svg>

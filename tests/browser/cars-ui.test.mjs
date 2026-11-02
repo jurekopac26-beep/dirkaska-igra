@@ -260,8 +260,8 @@ try {
     await ctx.close();
   }
 
-  // 8. a championship started with the TITAN: its rivals TITANs; after "Izberi avto" to the PICO TURBO, still TITANs in the next round's
-  //    qualifying and race; the standings show them
+  // 8. a championship started with the TITAN: its rivals the TITAN's field (fieldN TITANs, the rest its fill's cars); after "Izberi avto" to
+  //    the PICO TURBO, still that field in the next round's qualifying and race; the standings show them
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', name: 'Ana', carV: 3, carId: 'titan', quali: 0, damage: 1 }, { width: 480, height: 270 });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
@@ -276,8 +276,10 @@ try {
     await page.evaluate(() => document.getElementById('res-restart').click()); await wait(300);
     const st = () => page.evaluate(() => ({ rows: [...document.querySelectorAll('#ch-body tbody tr')].map(r => r.children[2].textContent), mycar: document.getElementById('ch-mycar').textContent, diff: document.getElementById('ch-diff').textContent, saved: JSON.parse(localStorage.getItem('tdgp-champ') || 'null') }));
     const s1 = await st();
-    T.check('a championship with the TITAN: round 1 against nine TITANs; the standings: 10 drivers, every rival in a TITAN; the car kept with the championship',
-      /tekmeci: 9× TITAN/.test(pick0) && r1.champ && r1.n === 10 && r1.cars === 'titan' && s1.rows.length === 10 && s1.rows.filter(c => c === 'TITAN').length === 10 && s1.saved.car === 'titan' && s1.saved.rounds[0].order.length + (s1.saved.rounds[0].dnf || []).length === 10,
+    const fm = await page.evaluate(() => { const M = Core.MODELS.find(m => m.id === 'titan'); return { own: M.fieldN, fill: M.fill.map(id => Core.MODELS.find(m => m.id === id).name), ids: [M.id].concat(M.fill).sort().join() }; });
+    const ofField = (L) => L.every(c => c === 'TITAN' || fm.fill.includes(c));
+    T.check(`a championship with the TITAN: round 1 against its full field (${fm.own} TITANs, the rest ${fm.fill.join(' and ')}); the standings: 20 drivers in those cars; the car kept with the championship`,
+      /tekmeci: različni avti/.test(pick0) && r1.champ && r1.n === 20 && r1.cars.split(',').sort().join() === fm.ids && s1.rows.length === 20 && s1.rows.filter(c => c === 'TITAN').length === fm.own + 1 && ofField(s1.rows) && s1.saved.car === 'titan' && s1.saved.rounds[0].order.length + (s1.saved.rounds[0].dnf || []).length === 20,
       JSON.stringify({ pick0, r1, s1 }));
     // Izberi avto: the car screen (its button "Izberi", Nazaj back to the championship), the PICO TURBO picked, back
     await act('champ-car'); await wait(200);
@@ -285,8 +287,8 @@ try {
     await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); }); await wait(100);
     await page.evaluate(() => document.getElementById('car-next').click()); await wait(300);
     const s2 = await st();
-    T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the PICO TURBO; its rivals still TITANs (the standings, "tekmeci: 9× TITAN")',
-      cs.screen === 'car' && cs.next === 'car-champ:Izberi' && cs.back === 'car-champ' && s2.mycar === 'PICO TURBO' && s2.rows.filter(c => c === 'TITAN').length === 9 && s2.rows.includes('PICO TURBO') && /tekmeci: 9× TITAN/.test(s2.diff) && await page.evaluate(() => window.__game.screen) === 'champ',
+    T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the PICO TURBO; its rivals still the TITAN\'s field (the standings: its TITANs and fill cars, "tekmeci: različni avti")',
+      cs.screen === 'car' && cs.next === 'car-champ:Izberi' && cs.back === 'car-champ' && s2.mycar === 'PICO TURBO' && s2.rows.filter(c => c === 'TITAN').length === fm.own && s2.rows.includes('PICO TURBO') && ofField(s2.rows.filter(c => c !== 'PICO TURBO')) && /tekmeci: različni avti/.test(s2.diff) && await page.evaluate(() => window.__game.screen) === 'champ',
       JSON.stringify({ cs, s2: { rows: s2.rows, mycar: s2.mycar, diff: s2.diff } }));
     // round 2 with qualifying: sized and driven by the championship's TITAN field, the race too
     await page.evaluate(() => { window.__game.S.quali = 1; });
@@ -304,8 +306,8 @@ try {
     const qr = await page.evaluate(() => [...document.querySelectorAll('#res-table tbody tr')].map(r => r.children[2].textContent));
     await act('quali-go'); await wait(300);
     const r2 = await rivals();
-    T.check('round 2 in the PICO TURBO: qualifying with the nine TITANs (sized and driven by the championship\'s car), the race after it the same nine',
-      q0 === 9 && qr.length === 10 && qr.filter(c => c === 'TITAN').length === 9 && qr.includes('PICO TURBO') && r2.n === 10 && r2.cars === 'titan' && r2.me === 'pico', JSON.stringify({ q0, qr, r2 }));
+    T.check('round 2 in the PICO TURBO: qualifying with the TITAN\'s full field (sized and driven by the championship\'s car), the race after it the same field',
+      q0 === 19 && qr.length === 20 && qr.filter(c => c === 'TITAN').length === fm.own && qr.includes('PICO TURBO') && ofField(qr.filter(c => c !== 'PICO TURBO')) && r2.n === 20 && r2.cars.split(',').sort().join() === fm.ids && r2.me === 'pico', JSON.stringify({ q0, qr, r2 }));
     // a championship started in the FORMULA ORKAN (a one-make class, no field of its own; kept after round 1) and the next round in the
     // PICO TURBO: still its nineteen formulas (the standings, "tekmeci: 19× FORMULA ORKAN", the race)
     await page.evaluate(() => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'domaci', diff: 1, car: 'formula', n: 19, rounds: [{ track: 'jezero', order: Core.champKeys(19), rain: 0 }] })));

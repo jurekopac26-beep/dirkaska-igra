@@ -11,7 +11,7 @@
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, brookMat, caCar, caCondors, caNear, clamp, cone, crowdCtx, crowdFinish, crowdPut,
     crowdRun, cyl, gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, puff, rng, roadsideProps, rock, rpHash, sstep, starCone,
     stubExcl, stubGeo, stubProps, stubVerge, tuftGeo, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear,
-    vrPrep, vrStubH, vrWater
+    vrPrep, vrStubH, vrWater, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -158,7 +158,7 @@
     x.fillStyle = 'rgba(22,24,28,0.82)'; x.fillRect(230, 916, 780, 92); txt('SAN JUAN HILL CLIMB', 620, 944, 50, '#fff', 760); txt('US 550 · OURAY · COLORADO', 620, 990, 36, '#ffd23a', 760);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (unATex = t);
   }
-  const UN_BOARDS = [['BEAR CREEK FALLS', '#6b4a22'], ['UNCOMPAHGRE GORGE', '#6b4a22'], ['ALPINE LOOP', '#6b4a22'], ['AVALANCHE AREA', '#e2b21a'], ['FALLING ROCK', '#e2b21a'], ['MOTHER CLINE SLIDE', '#f2f2ee'], ['RIVERSIDE SLIDE', '#f2f2ee'], ['US 550 SOUTH', '#f2f2ee']];
+  const UN_BOARDS = [['BEAR CREEK FALLS', '#6b4a22'], ['UNCOMPAHGRE GORGE', '#6b4a22'], ['ALPINE LOOP', '#6b4a22'], ['AVALANCHE AREA', '#e2b21a'], ['FALLING ROCK', '#e2b21a'], ['SLIDE PATH', '#f2f2ee'], ['RIVERSIDE SLIDE', '#f2f2ee'], ['US 550 SOUTH', '#f2f2ee']];
   function unAtlas2() {   // the small signs: row 0, the yellow warning diamonds (a curve to the right, to the left; the narrow road) and the chevrons (right, left);
     // rows 4-7, the place boards (two a row, 512 x 128: brown for the sights, yellow warnings, white for the slide paths and the road)
     if (unA2Tex) return unA2Tex;
@@ -502,7 +502,7 @@
       }
     }
     /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road;
-       rows of timber snow fences high in the Mother Cline and Riverside slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+       rows of timber snow fences high in the big slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
     let nNet = 0, nFence = 0;
     {
       const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;
@@ -577,7 +577,7 @@
         bannerQ(bx, by + 1.5, bz, -T.nx[bi] * bs, -T.nz[bi] * bs, 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(5531);   // the queue in the lay-by
       for (let k = 0; k < 4; k++) { const a = (k - 1.5) * 5.6, px = padS.x + c * a, pz = padS.z + sn * a; if (vrNear(px, pz).dd < 1.5) continue;
-        if (k === 1) camper(scen.get(px, pz), px, unGround(px, pz), pz, hh, carCols[Math.floor(RT() * carCols.length)]); else caCar(scen.get(px, pz), px, unGround(px, pz), pz, hh, carCols[Math.floor(RT() * carCols.length)]); }
+        if (k === 1) parkOn(camper, unGround, 7, scen.get(px, pz), px, unGround(px, pz), pz, hh, carCols[Math.floor(RT() * carCols.length)]); else parkOn(caCar, unGround, 4.4, scen.get(px, pz), px, unGround(px, pz), pz, hh, carCols[Math.floor(RT() * carCols.length)]); }
       for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 14, pz = padS.z + (R() - 0.5) * 14; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
     }
     T.cpS.forEach((s, k) => arch(s, 2 + k, [0.86, 0.86, 0.88], [0.42, 0.2, 0.12]));
@@ -585,7 +585,7 @@
       for (const p of pulls) { const hh = T.hd[p.i], c = Math.cos(hh), sn = Math.sin(hh), n = 3 + Math.floor(RP() * 3);
         for (let k = 0; k < n; k++) { const a = (k - (n - 1) / 2) * 3.1 + (RP() - 0.5) * 0.6, b = p.sd * (1.5 + RP() * 1.2), px = p.x + c * a - sn * b, pz = p.z + sn * a + c * b; if (vrNear(px, pz).dd < 1.2) continue;
           const g = scen.get(px, pz), col = vary(carCols[Math.floor(RP() * carCols.length)], RP, 0.15), rot = hh + PI / 2 * p.sd + (RP() - 0.5) * 0.2;
-          if (RP() < 0.25) camper(g, px, unGround(px, pz), pz, rot, col); else caCar(g, px, unGround(px, pz), pz, rot, col); }
+          if (RP() < 0.25) parkOn(camper, unGround, 7, g, px, unGround(px, pz), pz, rot, col); else parkOn(caCar, unGround, 4.4, g, px, unGround(px, pz), pz, rot, col); }
         for (let k = 0; k < 5; k++) { const a = (RP() - 0.5) * 14, b = -p.sd * (p.r - 2.5), px = p.x + c * a - sn * b, pz = p.z + sn * a + c * b; if (vrNear(px, pz).dd < 0.8) continue; person(px, pz, hh - PI / 2 * p.sd + (RP() - 0.5)); }
         out.marks['turnout' + Math.round(p.i * T.ds - sStart)] = [p.x, p.z]; } }
     { const RP = rng(5641), tc = [[0.92, 0.92, 0.9], [0.72, 0.16, 0.14], [0.16, 0.3, 0.56], [0.24, 0.42, 0.26], [0.94, 0.72, 0.18]];   // the teams' canopies by the start's lay-by and the finish's car park: plain colours, no names
@@ -608,8 +608,8 @@
       exclPush(sx, sz, 5);
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(5541);
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -4.5 : 4.5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5) continue;
-        if (k === 2 || k === 7) camper(scen.get(px, pz), px, unGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RT() * carCols.length)]);
-        else if (k !== 4) caCar(scen.get(px, pz), px, unGround(px, pz), pz, hh + PI / 2, vary(carCols[(k * 3) % carCols.length], R, 0.2)); }
+        if (k === 2 || k === 7) parkOn(camper, unGround, 7, scen.get(px, pz), px, unGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RT() * carCols.length)]);
+        else if (k !== 4) parkOn(caCar, unGround, 4.4, scen.get(px, pz), px, unGround(px, pz), pz, hh + PI / 2, vary(carCols[(k * 3) % carCols.length], R, 0.2)); }
       for (let k = 0; k < 18; k++) { const px = padF.x + (R() - 0.5) * 24, pz = padF.z + (R() - 0.5) * 24; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
@@ -718,7 +718,7 @@
           bannerQ(cx, cy + 0.75, cz, tx / tl, tz / tl, 0.7, 0.7, 7 / 8, 1, u0, u0 + 1 / 8, ban2); CR.avoid(cx, cz, 0.6); }
       }
       const nm = (n) => T.names.find(q => q.n.startsWith(n));   // the place boards
-      for (const [n, k, o] of [['Soteska', 1, 20], ['Slap Bear', 0, -40], ['Alpine', 2, -50], ['Plaz Mother', 5, -40]]) { const q = nm(n); if (q) sign(sStart + q.d + o, 1, k, null, null, 3.2, 0.8, 2.7); }
+      for (const [n, k, o] of [['Soteska', 1, 20], ['Slap Bear', 0, -40], ['Alpine', 2, -50], ['Velik plaz', 5, -40]]) { const q = nm(n); if (q) sign(sStart + q.d + o, 1, k, null, null, 3.2, 0.8, 2.7); }
       sign(sStart + 60, 1, 7, null, null, 3.0, 0.75, 2.6); sign(sStart + 1500, 1, 4, null, null, 3.0, 0.75, 2.6); sign(sStart + 3800, 1, 4, null, null, 3.0, 0.75, 2.6);   // US 550 SOUTH, FALLING ROCK
     }
 

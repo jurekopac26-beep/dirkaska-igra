@@ -3,9 +3,10 @@
 // helicopter goes see-through, its nose doors swing aside and the front ramp goes down, and a menu of three opens at the top (the garages'
 // style, js/nvmenu.js): WATER RESCUE and FIREFIGHTING locked for now (made with the missions), FREE FLIGHT. No choice: drive on, out over the
 // front ramp. FREE FLIGHT: in 1 s the doors and the ramps shut, the helicopter solid again (the car no longer seen), the rotor starts and it
-// rises at once to its height; the gas flies it on, the brake slows it and backs it, the steering turns it. Over the pedals PRISTANI
-// HELIKOPTER (as soon as it rises: down at once, anywhere but on the water) and DVIGNI SE (on the way down or landed: up again); top left
-// the height over the ground and the speed. Landed, the rotor stops and the ramps open: the car drives out, and the helicopter flies home to
+// rises at once to its height; the gas flies it on and up, the brake slows it and takes it down (the user, 30. 10.: no button), the
+// steering turns it; down to the ground with the brake it lands (anywhere but on the water, a roof or in the trees); top left the height
+// over the ground and the speed. Landed, the rotor stops and the ramps open: the menu again (FREE FLIGHT: up again), or the gas drives the
+// car out (the gas lifts it only once FREE FLIGHT is chosen again), and the helicopter flies home to
 // its H by itself once the car is away (it always stands on the H when nobody flies it). The car rides in it (the bay's floor and ramps are
 // its ground, js/core.js track.ground2; the shell its walls, track.wall2); its parts merged for the phones (a handful of draw calls).
 // Loaded with the new map (js/game.js nvStart).
@@ -16,9 +17,9 @@ const NVHeli = (function () {
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), sst = (t) => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
   const wrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
   const lerp = (a, b, t) => a + (b - a) * t;
-  // the flight: the height over the ground it rises to (and over the H's level), the top speed forwards and back (m/s), its turn (rad/s),
+  // the flight: the height over the ground it rises to (and over the H's level), the most over the ground, the top speed (m/s), its turn (rad/s),
   // the rotor's speed (rad/s) and how fast it spins up and down, the climb and the descent (m/s)
-  const F = { agl: 24, home: 32, vMax: 42, vBack: 7, acc: 7, brk: 9, drag: 0.5, yaw: 1.05, rot: 32, spinUp: 26, spinDn: 9, up: 6, down: 6, board: 1 };
+  const F = { agl: 24, home: 32, top: 70, vMax: 42, acc: 7, brk: 9, drag: 0.5, yaw: 1.05, rot: 32, spinUp: 26, spinDn: 9, up: 6, down: 6, board: 1 };
   let H3 = null, trk = null, hc = null, G = null, S = null, ui = null, mats = null, dust = null;
   let g0 = null, w0 = null;   // (the map's own ground and walls, under the helicopter's)
 
@@ -96,7 +97,7 @@ const NVHeli = (function () {
   function fresh() {
     const h = hc.home;
     return { mode: 'park', x: h.x, z: h.z, y: h.y, psi: h.psi, pitch: 0, roll: 0, alt: 0, vf: 0, vy: 0, yawR: 0, w: 0, ang: 0, tAng: 0,
-      fR: 1, fF: 0, dr: 0, xr: 0, carry: false, cin: false, onF: false, wasF: false, t: 0, want: 'up', pick: null, btn: false, wet: false, wetN: 0, away: 0, auto: null, from: null,
+      fR: 1, fF: 0, dr: 0, xr: 0, carry: false, cin: false, onF: false, wasF: false, t: 0, want: 'up', pick: null, wet: false, wetN: 0, away: 0, auto: null, from: null,
       prev: null, accF: 0, gAt: h.y, menu: false, cr: 0, crT: 0, blk: null, blkT: 0, wetU: false };
   }
   const groundAt = (x, z) => { const g = H3.ground(x, z); return Number.isFinite(g) ? g : 0; };
@@ -139,7 +140,7 @@ const NVHeli = (function () {
     S.cin = up && Math.abs(cv) < w.bayW / 2 + 0.2 && cu > w.x0 - r && cu < w.x1 + r;   // (on the ramps or in the bay)
     S.onF = (P.y || 0) > S.y + 0.9 && Math.abs(cv) < w.bayW / 2 && cu > w.x0 + 0.4 && cu < w.x1 - 0.4;   // (on the bay's floor)
     S.prev = { x: S.x, z: S.z, y: S.y, psi: S.psi, pitch: S.pitch, roll: S.roll, cx: P.x, cz: P.z, ch: P.h };
-    const btn = S.btn; S.btn = false; const pick = S.pick; S.pick = null;
+    const pick = S.pick; S.pick = null;
     const towards = (k, to, rate) => { S[k] += clamp(to - S[k], -rate * dt, rate * dt); };
     let spinTo = 0, ramps = null, xr = null, fly = false;
     if (S.mode === 'park') {
@@ -154,18 +155,15 @@ const NVHeli = (function () {
     } else if (S.mode === 'board') {   // in 1 s: the doors and the ramps shut, solid again, the rotor starts; then up
       S.t += dt; const k = clamp(S.t / F.board, 0, 1); S.carry = true; seat(P, sst(k));
       ramps = [0, 0, 0]; ramps.rate = 1.6; xr = 0; spinTo = k >= 0.5 ? F.rot : 0;
-      if (btn) S.want = 'down';
       if (k >= 1) { S.mode = 'air'; S.xr = 0; S.fR = S.fF = S.dr = 0; }
     } else if (S.mode === 'air') {
       S.carry = true; fly = true; spinTo = F.rot; ramps = [0, 0, 0]; xr = 0;
-      if (btn) S.want = S.want === 'up' ? 'down' : 'up';
-    } else if (S.mode === 'land') {   // down: the rotor stops, then the ramps open and the car may drive out; DVIGNI SE: up again
+    } else if (S.mode === 'land') {   // down: the rotor stops, then the ramps open: the menu again (FREE FLIGHT: up again), or the car drives out
       spinTo = 0; S.vf = 0; S.yawR = 0;
       const open = S.w < F.rot * 0.35; ramps = open ? [1, 1, 1] : [0, 0, 0]; xr = open ? 1 : 0;
       S.carry = !(S.fR > 0.98 && S.fF > 0.98);
       if (S.carry) seat(P, 1);
-      if (btn && S.onF) { S.mode = 'board'; S.t = 0; S.from = { x: P.x, z: P.z, h: P.h }; S.want = 'up'; }
-      else if (!S.carry && !S.cin && !S.onF) { S.mode = 'park'; S.wasF = false; }
+      if (!S.carry) { S.mode = S.onF ? 'open' : 'park'; S.menu = S.onF; }
     } else if (S.mode === 'auto') {   // nobody in it, away from the H: home by itself
       fly = true; ramps = [0, 0, 0]; xr = 0; spinTo = F.rot;
     }
@@ -189,26 +187,26 @@ const NVHeli = (function () {
         if (d < 6 && Math.abs(S.vf) < 1.5) S.auto = 'turn'; S.x += clamp(dx, -2 * dt, 2 * dt) * (d < 6 ? 1 : 0); S.z += clamp(dz, -2 * dt, 2 * dt) * (d < 6 ? 1 : 0); }
       if (S.auto === 'turn') { want = 'hold'; const a = wrap(h.psi - S.psi); steer = clamp(a * 2, -1, 1); brk = 1; S.x += clamp(dx, -2 * dt, 2 * dt); S.z += clamp(dz, -2 * dt, 2 * dt); if (Math.abs(a) < 0.01) { S.psi = h.psi; S.auto = 'down'; } }
       if (S.auto === 'down') { want = 'down'; brk = 1; S.x += clamp(dx, -2 * dt, 2 * dt); S.z += clamp(dz, -2 * dt, 2 * dt); } }
-    else if (inp) { thr = clamp(inp.thr || 0, 0, 1); brk = clamp(inp.brk || 0, 0, 1); steer = clamp(inp.steer || 0, -1, 1); }
+    else if (inp) { thr = clamp(inp.thr || 0, 0, 1); brk = clamp(inp.brk || 0, 0, 1); steer = clamp(inp.steer || 0, -1, 1);
+      want = S.want === 'up' && S.y < cruise() - 1 && !brk ? 'up' : brk > 0.05 ? 'down' : thr > 0.05 ? 'rise' : 'hold'; if (want !== 'up') S.want = want; }   // (after FREE FLIGHT up to its height by itself; then the gas up, the brake down)
     S.crT -= dt; S.blkT -= dt;
     const U = under(want === 'down' && S.y - S.gAt < 40 && S.blkT <= 0); if (U.top > -1e8) { S.blk = U.block ? U.top : null; S.blkT = 0.2; } S.gAt = U.g; S.alt = Math.max(0, S.y - U.g); const low = S.alt < 1.5;
     // turning and the speed along its nose (low over the ground only slowly)
     S.yawR += clamp(steer * F.yaw * sp - S.yawR, -3 * dt, 3 * dt); S.psi = wrap(S.psi + S.yawR * dt);
-    const v0 = S.vf; let a = thr * F.acc - (S.vf > 0 ? brk * F.brk : -brk * F.acc * 0.6) - S.vf * F.drag * (thr || brk ? 0.15 : 1) * (low ? 3 : 1);
-    if (!(sp > 0.6)) a = -S.vf * 2; S.vf = clamp(S.vf + a * dt, -F.vBack, F.vMax); if (low && Math.abs(S.vf) > 3) S.vf -= Math.sign(S.vf) * Math.min(Math.abs(S.vf) - 3, 10 * dt);
-    if (brk && !thr && v0 > 0 && S.vf < 0 && S.vf > -0.4 && !auto) S.vf = 0;
-    if (auto && S.vf < 0) S.vf = Math.max(S.vf, -0.5);
+    const v0 = S.vf; let a = thr * F.acc - (S.vf > 0 ? brk * F.brk : 0) - S.vf * F.drag * (thr || brk ? 0.15 : 1) * (low ? 3 : 1);
+    if (!(sp > 0.6)) a = -S.vf * 2; S.vf = clamp(S.vf + a * dt, 0, F.vMax); if (low && Math.abs(S.vf) > 3) S.vf -= Math.sign(S.vf) * Math.min(Math.abs(S.vf) - 3, 10 * dt);
     S.accF += ((S.vf - v0) / dt - S.accF) * Math.min(1, dt * 4);
     S.x += Math.cos(S.psi) * S.vf * dt; S.z += Math.sin(S.psi) * S.vf * dt;
     if (trk && trk.free) { const B = trk.free; S.x = clamp(S.x, B[0] + 6, B[1] - 6); S.z = clamp(S.z, B[2] + 6, B[3] - 6); }
     // up and down: up to its height (the rotor at speed first), down onto the ground below (on the sea it stays over the water)
     let vt = 0;
     if (want === 'up') vt = clamp((cruise() - S.y) * 0.8, -F.down, F.up) * clamp((sp - 0.5) * 2, 0, 1);
-    else if (want === 'down') { const no = U.wet || S.blk != null, fl = U.wet ? U.g + 4 : S.blk != null ? S.blk + 3 : U.g; vt = -clamp((S.y - fl) * 0.8, 0.7, F.down);
-      if (no && S.y - fl < 0.6) { vt = clamp((fl - S.y) * 2, -F.down, F.up); if (!S.wet) { S.wet = U.wet ? 'wet' : 'top'; S.wetN++; } } else if (!no) S.wet = false; }
+    else if (want === 'rise') vt = thr * F.up * clamp((F.top - S.alt) / 5, 0, 1) * clamp((sp - 0.5) * 2, 0, 1);
+    else if (want === 'down') { const no = U.wet || S.blk != null, fl = U.wet ? U.g + 4 : S.blk != null ? S.blk + 3 : U.g; vt = -clamp((S.y - fl) * 0.8, 0.7, F.down) * (auto ? 1 : Math.max(0.3, brk));
+      if (no && S.y - fl < 0.6) { vt = clamp((fl - S.y) * 2, -F.down, F.up); if (!S.wet) { S.wet = S.wetK = U.wet ? 'wet' : 'top'; S.wetN++; } } else if (!no) S.wet = false; }
     else vt = clamp((Math.max(U.g + 2, S.y) - S.y) * 2, 0, F.up) * clamp((sp - 0.5) * 2, 0, 1);
     if (want !== 'down') { S.wet = false; S.blk = null; S.wetU = false; }
-    S.vy += clamp(vt - S.vy, -6 * dt, 6 * dt); S.y += S.vy * dt;
+    const va = auto ? 6 : 10; S.vy += clamp(vt - S.vy, -va * dt, va * dt); S.y += S.vy * dt;   // (the player's gas and brake answered quicker)
     if (S.y < U.g) { S.y = U.g; S.vy = Math.max(0, S.vy); }
     S.alt = Math.max(0, S.y - U.g);
     if (want === 'down' && !U.wet && S.blk == null && S.y - U.g < 0.03) {   // touch down
@@ -254,23 +252,18 @@ const NVHeli = (function () {
 
   // ---- the screen: the menu, the button over the pedals, the height and the speed ----
   const LOCK = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align:-2px"><path d="M7 10V7.5a5 5 0 0 1 10 0V10h1.2c.7 0 1.3.6 1.3 1.3v8.4c0 .7-.6 1.3-1.3 1.3H5.8c-.7 0-1.3-.6-1.3-1.3v-8.4c0-.7.6-1.3 1.3-1.3zm2.4 0h5.2V7.5a2.6 2.6 0 0 0-5.2 0z"/></svg>';
-  const HELI = '<path d="M10 7.2h17v1.6H10z"/><path d="M17.6 8h1.8v2.6h-1.8z"/><path d="M12.6 15.2c0-2.9 2.3-4.6 5.6-4.6h1.6c3.8 0 6 2 6 4.9v.9c0 1.6-1.2 2.6-3 2.6h-7.4c-1.7 0-2.8-1.2-2.8-3.8z"/><path d="M25 12.6h8.6v1.6H25z"/><path d="M31.6 10h1.7v5h-1.7z"/><path d="M13.6 21.2h12.2v1.3H13.6z"/><path d="M15.6 19.4h1.3v2h-1.3zM22.4 19.4h1.3v2h-1.3z"/><path d="M20.6 12.2c1.6.1 3 .9 3.4 2.4h-3.4z" fill-opacity=".35"/>';
   const ITEMS = [['WATER RESCUE', 'swimmers and boats in trouble at sea', 'lock'], ['FIREFIGHTING', 'sea water onto the forest fire', 'lock'], ['FREE FLIGHT', 'fly anywhere, land anywhere', 'free']];
   function css() {
     if (document.getElementById('nvh-css')) return;
     const src = document.getElementById('nvm-css'), s = document.createElement('style'); s.id = 'nvh-css';
     s.textContent = (src ? src.textContent.split('#nvm').join('#nvh') : '') + `
 #nvh .row.lk { opacity: .55; }
-#nvh-btn { position: fixed; z-index: 6; display: none; align-items: center; justify-content: center; gap: 9px; box-sizing: border-box; border-radius: 16px; border: 2px solid var(--b); background: var(--g); color: var(--k); font: 700 italic 19px/1.08 var(--f-ui, Roboto, sans-serif); letter-spacing: .06em; white-space: nowrap; text-align: center; padding: 0 10px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
-#nvh-btn svg { flex: none; width: 44px; height: 35px; fill: currentColor; }
-#nvh-btn.up { --g: rgba(35,95,200,.46); --b: rgba(140,195,255,.7); --k: rgba(255,255,255,.92); }
-#nvh-btn.dn { --g: rgba(170,110,10,.45); --b: rgba(255,214,110,.7); --k: rgba(255,255,255,.92); }
 #nvh-info { position: fixed; z-index: 6; left: calc(10px + var(--sl, 0px)); top: calc(8px + var(--st, 0px)); display: none; gap: 6px; font: 700 italic 13px/1 var(--f-ui, Roboto, sans-serif); color: #fff; letter-spacing: .04em; pointer-events: none; }
 #nvh-info > div { display: flex; align-items: center; gap: 7px; padding: 6px 11px 6px 8px; border-radius: 12px; border: 2px solid rgba(255,255,255,.5); background: rgba(14,18,25,.55); }
 #nvh-info small { display: block; font-size: .78em; opacity: .75; letter-spacing: .1em; }
 #nvh-info b { display: block; font-size: 1.55em; margin-top: 2px; font-variant-numeric: tabular-nums; font-weight: 700; }
 #nvh-info b i { font-size: .6em; margin-left: 3px; opacity: .85; font-style: italic; }
-@media (orientation: portrait) { #nvh-btn { font-size: 17px; } #nvh-btn svg { width: 40px; height: 32px; } #nvh-info { font-size: 12px; } }
+@media (orientation: portrait) { #nvh-info { font-size: 12px; } }
 @media (orientation: landscape) { #hud.nv ~ #btn-pause { right: calc(10px + var(--sr)); } #hud.nv #h-map, #hud.nv #h-ttsp, #hud.nv #h-pit, #hud.nv #h-msg, #hud.nv #h-teamradio, #hud.nv #h-prof, #hud.nv #h-react, #hud.nv #h-wreck, #hud.nv ~ #toast.col { right: calc(var(--map-r) + 52px); } }`;
     document.head.appendChild(s);
   }
@@ -284,13 +277,11 @@ const NVHeli = (function () {
       `<div class="ft">no choice: drive on, out over the front ramp</div><div class="wip">${esc(tr('V izdelavi'))}</div>`;
     let wipT = 0; menu.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-a]'); e.stopPropagation(); if (!b) return;
       if (b.dataset.a === 'free') { if (S) S.pick = 'free'; } else { const w = menu.querySelector('.wip'); w.classList.add('on'); clearTimeout(wipT); wipT = setTimeout(() => w.classList.remove('on'), 1400); } });
-    const btn = document.createElement('div'); btn.id = 'nvh-btn'; btn.setAttribute('role', 'button');
-    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (S) S.btn = true; });
     const info = document.createElement('div'); info.id = 'nvh-info';
     info.innerHTML = `<div><svg viewBox="0 0 20 20" width="18" height="18" fill="#8cc4ff"><path d="M10 1.5l5 6h-3.4V18H8.4V7.5H5z"/></svg><div><small>${esc(tr('VIŠINA'))}</small><b class="a">0<i>m</i></b></div></div>` +
       `<div><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="#ffd34d" stroke-width="2.2" stroke-linecap="round"><path d="M3.2 14.5a7 7 0 1 1 13.6 0"/><path d="M10 13l3.6-4.6"/></svg><div><small>${esc(tr('HITROST'))}</small><b class="v">0<i>km/h</i></b></div></div>`;
-    host.appendChild(menu); host.appendChild(btn); host.appendChild(info);
-    return { menu, btn, info, kind: '', a: -1, v: -1, rect: '', wetN: 0 };
+    host.appendChild(menu); host.appendChild(info);
+    return { menu, info, a: -1, v: -1, wetN: 0 };
   }
   const rgb = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const hex = (a) => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
@@ -301,24 +292,11 @@ const NVHeli = (function () {
     const show = (el, on, d = 'block') => { const s = on ? d : 'none'; if (el.style.display !== s) el.style.display = s; };
     show(ui.menu, live && S.menu);
     if (live && S.menu) { const sub = ui.menu.querySelector('.sub'), t = (carName() || 'your car') + ' · choose a mission'; if (sub.textContent !== t) sub.textContent = t; }
-    // the button: PRISTANI while it rises or flies, DVIGNI SE on the way down or landed (with the car on the floor)
-    const kind = S.mode === 'air' ? (S.want === 'up' ? 'dn' : 'up') : S.mode === 'land' && S.onF ? 'up' : S.mode === 'board' && S.t > 0.9 ? 'dn' : '';
-    show(ui.btn, live && !!kind, 'flex'); if (!kind) ui.rect = '';
-    if (kind && kind !== ui.kind) { ui.kind = kind; ui.btn.className = kind;
-      ui.btn.innerHTML = kind === 'dn' ? `<svg viewBox="0 0 34 27">${HELI}<path d="M5 22.5l4.2-4.8H6.6v-6.2H3.4v6.2H.8z"/><path d="M11.5 24.3h16.5v1.2H11.5z" fill-opacity=".7"/></svg><span>${esc(tr('PRISTANI'))}<br>${esc(tr('HELIKOPTER'))}</span>`
-        : `<svg viewBox="0 0 34 27">${HELI}<path d="M5 6.5l4.2 4.8H6.6v6.2H3.4v-6.2H.8z"/></svg><span>${esc(tr('DVIGNI SE'))}</span>`; }
-    if (kind && ui.rect !== innerWidth + 'x' + innerHeight) {   // over the pedals: from the brake's left edge to the gas's right edge (no pedals on the screen: low in the middle); again when the screen turns
-      const b = document.getElementById('c-brake'), g = document.getElementById('c-gas'), rb = b && b.offsetParent ? b.getBoundingClientRect() : null, rg = g && g.offsetParent ? g.getBoundingClientRect() : null;
-      const port = innerHeight > innerWidth, h = port ? 58 : 64;
-      { ui.rect = innerWidth + 'x' + innerHeight; const st = ui.btn.style;
-        if (rb && rg && rg.right - rb.left > 120) { const gap = Math.max(8, rg.left - rb.right); st.left = rb.left + 'px'; st.width = (rg.right - rb.left) + 'px'; st.top = (Math.min(rb.top, rg.top) - gap - h) + 'px'; st.bottom = ''; st.transform = ''; }
-        else { st.left = '50%'; st.width = '260px'; st.top = ''; st.bottom = 'calc(24px + var(--sb, 0px))'; st.transform = 'translateX(-50%)'; }
-        st.height = h + 'px'; } }
     const inf = S.carry && (S.mode === 'air' || S.mode === 'land' || (S.mode === 'board' && S.t > 0.9));
     show(ui.info, live && inf, 'flex');
     if (inf) { const a = Math.round(S.alt), v = Math.round(Math.abs(S.vf) * 3.6);
       if (a !== ui.a) { ui.a = a; ui.info.querySelector('.a').firstChild.nodeValue = String(a); } if (v !== ui.v) { ui.v = v; ui.info.querySelector('.v').firstChild.nodeValue = String(v); } }
-    if (S.wetN !== ui.wetN) { ui.wetN = S.wetN; if (S.wet) note(S.wet === 'wet' ? tr('Na vodi ne moreš pristati.') : tr('Tu ne moreš pristati.')); }   // (once each time it stops over the water or a roof)
+    if (S.wetN !== ui.wetN) { ui.wetN = S.wetN; note(S.wetK === 'wet' ? tr('Na vodi ne moreš pristati.') : tr('Tu ne moreš pristati.')); }   // (once each time it stops over the water or a roof)
   }
   let noteEl = null, noteT = 0;
   function note(t) { if (!noteEl) { noteEl = document.createElement('div'); noteEl.id = 'nvh-note'; noteEl.style.cssText = 'position:fixed;z-index:7;left:50%;top:40%;transform:translateX(-50%);padding:9px 18px;border-radius:20px;background:rgba(9,13,20,.9);color:#fff;font:700 15px var(--f-ui, Roboto, sans-serif);pointer-events:none'; document.body.appendChild(noteEl); }
@@ -339,13 +317,12 @@ const NVHeli = (function () {
     return true;
   }
   // a restart (the car back at HOME): the helicopter parked on its H again
-  function reset() { if (!hc) return; S = fresh(); seeAt = -1; stand = null; topC.clear(); if (ui) { ui.menu.style.display = ui.btn.style.display = ui.info.style.display = 'none'; ui.kind = ''; ui.wetN = 0; } }
+  function reset() { if (!hc) return; S = fresh(); seeAt = -1; stand = null; topC.clear(); if (ui) { ui.menu.style.display = ui.info.style.display = 'none'; ui.wetN = 0; } }
   // (js/game.js: no Na progo while the car is in it; the tests)
   const on = () => !!S && (S.carry || S.cin || S.onF || S.mode === 'open' || S.mode === 'board');
   const state = () => S && { mode: S.mode, auto: S.auto, x: S.x, z: S.z, y: S.y, psi: S.psi, alt: S.alt, vf: S.vf, w: S.w, fR: S.fR, fF: S.fF, dr: S.dr, xr: S.xr, carry: S.carry, cin: S.cin, onF: S.onF, want: S.want, menu: S.menu, wet: S.wet, blk: S.blk, home: hc && Object.assign({}, hc.home) };
   const choose = (k) => { if (S) S.pick = k; };
-  const press = () => { if (S) S.btn = true; };
   const tp = (x, z) => { if (S) { S.x = x; S.z = z; S.crT = S.blkT = 0; } };   // (the tests: the helicopter flown straight over a place)
   const parts = () => hc && hc.parts;
-  return { init, reset, step, post, frame, on, state, choose, press, tp, parts, deck, wall, topAt, ITEMS };
+  return { init, reset, step, post, frame, on, state, choose, tp, parts, deck, wall, topAt, ITEMS };
 })();

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400">
+  <title>Monaco</title>
+  <!-- Ratio 4:5 (Sovereign Ordinance of 4 April 1881). Two equal horizontal bands,
+       red over white. -->
+  <rect x="0" y="0" width="500" height="200" fill="#CE1126"/>
+  <rect x="0" y="200" width="500" height="200" fill="#FFFFFF"/>
+</svg>

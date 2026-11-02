@@ -129,7 +129,7 @@
       ico(g, 0, 0.46, 0, 0.5, 0.9, col, R, 0.32); ico(g, 0.34, 0.3, 0.12, 0.3, 0.95, vary(col, R, 0.25), R, 0.35);
     } else if (kind === 4) {   // a granite stone
       API.ROCK_SMOOTH = false; rock(g, 0, 0.04, 0, 0.17, 0.12, 0.15, R() * TAU, [0.68, 0.66, 0.6], R, 0.3);
-    } else if (kind === 5) {   // a coast live oak, light (Mulholland Highway's in fewer clumps): a short trunk splitting low, a broad, low, dark dome
+    } else if (kind === 5) {   // a coast live oak, light (the Santa Monica Mountains road's in fewer clumps): a short trunk splitting low, a broad, low, dark dome
       cyl(g, 0, -0.02, 0, 0.06, 0.32, 4, [0.25, 0.22, 0.19], null, 0.045);
       API.ROCK_SMOOTH = true; const col = [0.17, 0.25, 0.1];
       ico(g, 0, 0.62, 0, 0.46, 0.62, col, R, 0.25);
@@ -143,7 +143,7 @@
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
-  // the knockable roadside posts: white with a black top (as Mulholland Highway's)
+  // the knockable roadside posts: white with a black top (as the Santa Monica Mountains road's)
   function plProps(out, spots, prof) {
     out.propR = 150;
     out.propFloor = propFloorTable(null, prof);
@@ -252,7 +252,7 @@
         SB.emit(c0, c0 + 60, roadCh.get(T.px[c0], T.pz[c0]), shCh.get(T.px[c0], T.pz[c0]), lineCh.get(T.px[c0], T.pz[c0]));   // (the side roads whose junctions are in this chunk)
         addM(gv, gMat);
       }
-      // the tar snakes: cracks in the old asphalt sealed with black tar, wandering along the lanes and across them (as Mulholland Highway's)
+      // the tar snakes: cracks in the old asphalt sealed with black tar, wandering along the lanes and across them (as the Santa Monica Mountains road's)
       { const RS = rng(3791), ts = tarCh, tc = [0.075, 0.075, 0.085], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
           return [lerp(T.px[i] + T.nx[i] * o, T.px[j] + T.nx[j] * o, u), lerp(T.hy[i], T.hy[j], u) + 0.031, lerp(T.pz[i] + T.nz[i] * o, T.pz[j] + T.nz[j] * o, u)]; };
         for (let s = sStart - 40; s < sFin + 40; s += 11) { if (RS() > 0.55) continue;
@@ -304,7 +304,7 @@
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, caGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
-    const flagUS = (g, x, y, z, rot, h) => {   // a pole with the stars and stripes (as Mulholland Highway's)
+    const flagUS = (g, x, y, z, rot, h) => {   // a pole with the stars and stripes (as the Santa Monica Mountains road's)
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.92, 0.92, 0.9], [0.85, 0.75, 0.3]);
       const c = Math.cos(rot), s = Math.sin(rot), fw = 1.9, fh = 1.0, y0 = y + h - fh - 0.15, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)];
       for (let k = 0; k < 7; k++) { const [fx, fz] = at(fw / 2); box(g, fx, y0 + k * fh / 7, fz, fw, fh / 7, 0.04, rot, k % 2 ? [0.95, 0.95, 0.93] : [0.75, 0.12, 0.16]); }
@@ -486,12 +486,12 @@
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    // 0 grass, 1 chaparral, 2 live oak, 3 sycamore, 4 boulder, 5 stones, 6 yucca (Mulholland Highway's plants), 7 black oak, 8 pine, 9 incense cedar
+    // 0 grass, 1 chaparral, 2 live oak, 3 sycamore, 4 boulder, 5 stones, 6 yucca (the Santa Monica Mountains road's plants), 7 black oak, 8 pine, 9 incense cedar
     const pk = [0, 1, 2, 3, 4, 5, 6].map(k => new IChunks(k === 1 ? plTreeGeo(3) : k === 5 ? plTreeGeo(4) : k === 2 ? plTreeGeo(5) : API.mhPlantGeo(k), k === 0 ? wMat : pMat, k === 1 ? 96 : k === 0 || k === 2 || k === 5 ? 128 : 192)).concat([0, 1, 2].map(k => new IChunks(plTreeGeo(k), pMat, 192)));
     let nPlants = 0, nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(110000 * dens), RT = rng(3771), SP = 3.0 / Math.sqrt(dens);
-      const granite = (k, r) => [0.84 * k, (0.92 + r * 0.04) * k, (1.08 + r * 0.06) * k];   // (the instance tint: Mulholland's tan boulder to grey-tan granite)
+      const granite = (k, r) => [0.84 * k, (0.92 + r * 0.04) * k, (1.08 + r * 0.06) * k];   // (the instance tint: the Santa Monica Mountains road's tan boulder to grey-tan granite)
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti2 = 0; ti2 < G.ntx; ti2++) {
         if (!G.on[tj * G.ntx + ti2]) continue;
         const xa = G.x0 + ti2 * Lt, za = G.z0 + tj * Lt;
