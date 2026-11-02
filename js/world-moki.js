@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caGCol, caGround, caPlantGeo, caProps, caSlope, caTileGeo, caTileOn, clamp, crowdCtx,
     crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary,
-    vrDist, vrGritTex, vrNear, vrPrep
+    vrDist, vrGritTex, vrNear, vrPrep, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -273,7 +273,7 @@
       { const bx = padV.x + ox * 7 - T.tx[i] * 4, bz = padV.z + oz * 7 - T.tz[i] * 4, [v0, v1, u0, u1] = board(1);   // the board, facing the plot
         for (const o of [-1.1, 1.1]) box(g, bx + T.tx[i] * o, hy - 0.2, bz + T.tz[i] * o, 0.12, 1.6, 0.12, T.hd[i], [0.36, 0.24, 0.14]);
         bannerQ(bx, hy + 0.9, bz, -ox, -oz, 2.6, 0.65, v0, v1, u0, u1, ban2, -0.3); }
-      for (const [a, o, c] of [[-4, 2.5, [0.72, 0.12, 0.1]], [2, 3, [0.85, 0.85, 0.83]]]) caCar(g, padV.x + T.tx[i] * a + ox * o, hy, padV.z + T.tz[i] * a + oz * o, T.hd[i] + PI / 2, c);
+      for (const [a, o, c] of [[-4, 2.5, [0.72, 0.12, 0.1]], [2, 3, [0.85, 0.85, 0.83]]]) parkOn(caCar, caGround, 4.4, g, padV.x + T.tx[i] * a + ox * o, hy, padV.z + T.tz[i] * a + oz * o, T.hd[i] + PI / 2, c);
       for (let k = 0; k < 7; k++) { const a = (R() - 0.5) * 12, o = 6.5 + R() * 1.6, px = padV.x + T.tx[i] * a + ox * o, pz = padV.z + T.tz[i] * a + oz * o; person(px, pz, Math.atan2(oz, ox) - PI / 2 + (R() - 0.5) * 0.8); }
     }
 
