@@ -254,6 +254,65 @@ try {
     await ctx.close();
   }
 
+  // 4b. the row's Opponents (docs/meni-izbira-proge.md, sklop 5): a tap on the number opens the sheet (the number big, the quick picks 0 Trial
+  //     .. 100, the slider up to what the track takes, Done); a pick is the game's setting at once and the row's number behind the sheet, the
+  //     slider moves it as it goes (the keys too); Pikes Peak takes 30 (its summit's parking: def.maxRivals), its picks past that off; the
+  //     choice is the same on the next track (its own most there); a race from the menu with it (the Nordschleife: 12 rivals, 13 cars, its
+  //     own 20 not added); the career keeps its own field (no choice); under the menu on a phone the game's demo is not drawn (one frame a
+  //     second: Menu.covers), on a tablet held upright (the menu a column) it is
+  {
+    const { ctx, page, errors } = await open({ track: 'pikes', lastTrack: 'pikes', mode: 'race' });
+    await ready(page);
+    const demoN = (ms) => page.evaluate(async (ms) => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, ms)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; }, ms);
+    const dm = await demoN(2600);
+    T.check('a phone: under the menu the game\'s demo race is not drawn, one frame a second at most (Menu.covers)', dm.covers && dm.n <= Math.ceil(dm.s) + 1, JSON.stringify(dm));
+    await click(page, 'single'); await click(page, 'mode:race');
+    const row0 = await ev(page, 'const d = Menu.debug(), o = root.querySelector(".trow .opp"); return { id: d.list[d.trackIdx], txt: o.textContent, btn: !!o.querySelector("button[data-act=\\"riv\\"]"), set: __game.S.rivals };');
+    T.check('Pikes Peak in Circuit race: the row\'s Opponents a button (21, the track\'s own: no choice yet)', row0.id === 'pikes' && row0.txt === 'Opponents21' && row0.btn && row0.set === -1, JSON.stringify(row0));
+    await click(page, 'riv'); await page.waitForTimeout(300);
+    const sh = (extra) => ev(page, 'const s = root.querySelector(".sheet.riv"); if (!s) return null; const r = s.querySelector(".rslide"); return { num: s.querySelector(".rnum b").textContent, sub: s.querySelector(".rnum span").textContent, picks: [...s.querySelectorAll(".rquick button")].map(b => b.textContent + (b.disabled ? "-" : "") + (b.getAttribute("aria-pressed") === "true" ? "*" : "")), max: +r.max, val: +r.value, ends: s.querySelector(".rends").textContent, row: root.querySelector(".trow .opp").textContent, set: __game.S.rivals, done: !!s.querySelector(".go[data-act=\\"close-sheet\\"]") };');
+    let o = await sh();
+    T.check('the sheet: 21 big, the quick picks 0 Trial, 1, 5, 12, 25 (50 and 100 off: Pikes Peak takes 30), the slider 0..30 at 21, Done',
+      o && o.num === '21' && /^21 rivals · 22 cars$/.test(o.sub) && o.picks.join() === '0Trial,1,5,12,25,50-,100-' && o.max === 30 && o.val === 21 && /^030 at most on this road$/.test(o.ends) && o.done, JSON.stringify(o));
+    await click(page, 'riv-n:5'); o = await sh();
+    T.check('a quick pick (5): the game\'s setting at once, the number, the pick lit, the slider, the row behind the sheet', o.set === 5 && o.num === '5' && o.picks[2] === '5*' && o.val === 5 && o.row === 'Opponents5', JSON.stringify(o));
+    await click(page, 'riv-n:0'); o = await sh();
+    T.check('0: Trial, alone against the clock', o.set === 0 && o.num === '0' && /^Trial/.test(o.sub) && o.picks[0] === '0Trial*', JSON.stringify(o));
+    await page.focus('.sheet .rslide'); await page.keyboard.press('End'); o = await sh();
+    T.check('the slider (End): to the most the track takes, 30, the setting with it', o.val === 30 && o.num === '30' && o.set === 30 && o.row === 'Opponents30' && !o.picks.some(p => p.endsWith('*')), JSON.stringify(o));
+    await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft'); o = await sh();
+    T.check('the slider (two steps back): 28', o.val === 28 && o.num === '28' && o.set === 28 && o.row === 'Opponents28', JSON.stringify(o));
+    await click(page, 'riv-n:12'); await done(page);
+    const row1 = await ev(page, 'return { sheet: !!root.querySelector(".sheet"), txt: root.querySelector(".trow .opp").textContent, set: __game.S.rivals };');
+    T.check('Done: the sheet gone, the row 12', !row1.sheet && row1.txt === 'Opponents12' && row1.set === 12, JSON.stringify(row1));
+    // the next tracks: the same choice (12; the Nordschleife too, whose own field is 99)
+    let n = 0, at = '';
+    for (; n < 60; n++) { at = await ev(page, 'const d = Menu.debug(); return d.list[d.trackIdx];'); if (at === 'nring') break; await click(page, 'track:1'); }
+    const row2 = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    T.check('the choice on another track too: the Nordschleife (its own 99) with 12', at === 'nring' && row2 === 'Opponents12', JSON.stringify({ at, row2, n }));
+    await click(page, 'race-single');
+    await raceOn(page, 'nring').catch(() => null);
+    const rc = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, cars: __game.race && __game.race.cars.length }));
+    T.check('a race from the menu with 12 rivals: 13 cars (the Nordschleife\'s own 20 not added)', rc.id === 'nring' && rc.cars === 13, JSON.stringify(rc));
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(500);
+    // the career: its races keep their own field, the row no choice
+    await page.evaluate(() => __game.onAction('career-toggle'));
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const car = await ev(page, 'const o = root.querySelector(".trow .opp"); return { txt: o.textContent, btn: !!o.querySelector("button"), riv: __game.S.rivals };');
+    T.check('the career: the row\'s Opponents the track\'s own field, no choice (no button)', /^Opponents\d+$/.test(car.txt) && car.txt !== 'Opponents12' && !car.btn && car.riv === 12, JSON.stringify(car));
+    T.check('no page errors with the opponents\' sheet', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // a tablet held upright: the menu a column, the game's demo seen at its sides and drawn
+    const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
+    await ready(page);
+    const dm = await page.evaluate(async () => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
+    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.n >= 2 * Math.ceil(dm.s) + 2, JSON.stringify(dm));
+    T.check('no page errors on the tablet', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
   // 5. a time trial on a new track (Harju: the model of its land, no map or flight yet), and the short intro with its video and Skip
   {
     const { ctx, page, errors } = await open();

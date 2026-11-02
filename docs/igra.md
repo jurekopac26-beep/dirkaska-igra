@@ -8,6 +8,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Fizika vožnje](#fizika-vožnje)
 - [Preizkus: tekmeci in trki](#preizkus-tekmeci-in-trki)
 - [Zelo veliko polje (avti daleč od tebe)](#zelo-veliko-polje-avti-daleč-od-tebe)
+- [Število tekmecev (meni: Opponents)](#število-tekmecev-meni-opponents)
 - [Reakcija na štartu](#reakcija-na-štartu)
 - [Leteči start (odprte ceste in Nürburg)](#leteči-start-odprte-ceste-in-nürburg)
 - [Zavetrje](#zavetrje)
@@ -154,6 +155,17 @@ Meritve na ravnini (klasična, igralec drži volan naravnost): tekmec, ki pri 10
 ## Zelo veliko polje (avti daleč od tebe)
 
 V dirki z več kot 30 avti (Nürburg s 100 avti) igra avte daleč od tebe računa redkeje, da telefon zmore celo polje: do 60 m pred tabo, 30 m za tabo ali 60 m od tebe vsak korak (120-krat na sekundo), do 300 m od tebe 30-krat na sekundo, dlje 15-krat na sekundo (odločitve voznika, vožnja, ograje, zavetrje, deli na cesti, napredek po progi). Avti, ki se dotaknejo, se srečajo tam, kjer sta oba v tistem trenutku; vsak je narisan in v posnetku dirke gladko, ne v sunkih. Časi krogov, sektorjev in cilja so vzeti tam, kjer je avto prečkal črto (na 1/120 s, kot pri vseh drugih), vrstni red v cilju je po času. Sam na progi je krog s 30 Hz 0,2–0,3 % počasnejši, s 15 Hz približno 0,7 %. V boksih, v zraku in na štartni vrsti so avti računani vsak korak. Ko je varnostni avto na progi, so vsak korak računani tudi vsi do 60 m od njega; kolona za njim dlje od tebe je računana kot drugi oddaljeni avti (enako dotikov kot pri polni hitrosti, v manj kot pol časa). Kvalifikacijske kroge tekmecev v takem polju igra izračuna s 30 Hz (četrtina dela, v krajših kosih med slikami) in jim čas skrajša za to razliko (0,26 %). Za rezultati se dirka ne računa več, ko so vsi avti v cilju ali odstopili (in še 3 s); posnetek dirke se ustavi takrat, v zelo velikem polju ima 10 posnetkov na sekundo in največ 32 MB. Dirke z 22 avti ali manj so take kot prej.
+
+## Število tekmecev (meni: Opponents)
+
+V meniju (izbira proge, način *Circuit race*) je prva številka vrstice podatkov število tekmecev; dotik odpre izbiro od 0 do 100 (hitre izbire 0 *Trial*, 1, 5, 12, 25, 50, 100 in drsnik). Izbira je nastavitev igre `S.rivals` in velja za vse dirke, dokler je ne spremeniš; do prve izbire (`-1`) ima vsaka proga svoje polje (21 tekmecev, Nürburg 99). `rivN` / `rivSet` v `js/game.js`, `numSet` v `Core.Race` (izbrano število ostane, tudi manj kot proga sama zahteva z `def.rivals`, npr. Nürburg 20).
+
+- **Največ na progi:** `def.maxRivals` v datoteki proge, kjer štart ali parkiranje za ciljem ne sprejme 100 avtov (Pikes Peak 30: vrh ima ~85 m ceste za ciljem; Medvode 45, Uncompahgre 55, Rio do Rastro 60, Sani Pass 75: druga vrsta parkiranih avtov bi stala ob ograji). Druge proge vzamejo 100: krožne proge s štartno vrsto do ~760 m za črto, odprte ceste z letečim štartom. Velika vozila imajo svoje manjše polje (`Core.fieldSize`). Test `tests/rivals-n.test.js` preveri vse prave proge z največ tekmeci in polji vseh vozil.
+- **Kje velja:** dirka, ki jo začneš sam (meni ali star meni). Ne v karieri (nagrada je po mestu, polje proge ostane), prvenstvu, dvoboju v prometu, izzivu, misijah in dirki s prijatelji.
+- **Brez tekmecev (0):** vožnja proti uri po krogih dirke; komentator in napis v cilju to povesta (*CILJ!*, ne *ZMAGA!*), rezultat je *Cilj* s kljukico; šteje kot dirka in vožnja proge (dosežka *Prvi cilj*, *Vse proge*), ne kot zmaga, stopničke, najhitrejši krog dirke ali najboljše mesto; čas dirke in krogi se zapišejo kot rekordi.
+- **100 tekmecev:** 101 avto, vsak s svojim imenom (100 izmišljenih voznikov) in številko 1–101.
+- **Obremenitev telefona** (meritev 2. 11. 2026, 844 × 390, NIZKA): med krogom 100 tekmecev ni dražjih od 50 (avti se razpotegnejo, daljni so skriti ali poenostavljeni); najdražji je štart, ko je vse polje pred kamero. V polju z več kot 22 avti (izbira menija, Nürburg) je zato v polni podrobnosti le 10 najbližjih tekmecev, drugi v dosegu so poenostavljeni (`crowdCut` v `js/render.js`, en klic risanja na avto); polja do 22 avtov so kot prej. Fizika daljnih avtov je redkejša kot pri Nürburgu (zgoraj).
+- **Meni prekrije zaslon:** na telefonu (pokonci in ležeče) igra za menijem ne poganja in ne riše demo dirke (le en okvir na sekundo, da ostanejo slike proge na grafični kartici; `Menu.covers`); na tablici pokonci, kjer je meni stolpec, se demo ob straneh riše kot prej.
 
 ## Reakcija na štartu
 

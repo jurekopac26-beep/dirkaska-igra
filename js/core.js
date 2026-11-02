@@ -5156,7 +5156,8 @@ const Core = (function () {
     'L. Girard', 'P. Rinaldi', 'K. Virtanen', 'D. Ueda', 'F. Kos', 'E. Rousseau', 'G. Nagy', 'H. Lehmann', 'J. Pirc', 'M. Esposito', 'T. Holm', 'V. Marin', 'B. Castro', 'C. Greco',
     'I. Sokolov', 'N. Hall', 'O. Dahl', 'K. Mlakar', 'R. Barros', 'S. Weiss', 'A. Zorman', 'L. Okafor', 'P. Jankowski', 'D. Quintero', 'M. Hoffmann', 'E. Vasquez', 'Y. Tamura', 'G. Pellegrini',
     'T. Becker', 'F. Almeida', 'H. Eriksen', 'J. Kuhar', 'R. Dumont', 'K. Hirano', 'N. Romano', 'B. Schmid', 'S. Turk', 'A. Jovanović', 'L. Hughes', 'V. Galli', 'O. Lund', 'M. Szabo',
-    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvelos', 'R. Moser'];
+    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvelos', 'R. Moser',
+    'U. Ferlan'];   // (the 100th: the menu's Opponents goes up to 100)
   // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
   const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
     [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55],
@@ -5174,7 +5175,7 @@ const Core = (function () {
     0xef8439, 0x4db394, 0x6c136c, 0xc2de7c, 0x39ef56, 0x7b4db3, 0x6c5613, 0x7cdbde, 0x477e25, 0x3949ef, 0xb3614d, 0xca7cde, 0xbbc91d, 0x255d7e, 0xef3976, 0x51b34d, 0x29136c, 0xdeb17c, 0x1dc9ac, 0xa3ef39,
     0x4d6ab3, 0x811dc9, 0x7e7325, 0x39d1ef, 0x807cde, 0xc9561d, 0xe039ef, 0x13406c, 0x1dc92b, 0x4db3ae, 0xa9de7c, 0x1d39c9, 0x7e3025, 0x39ef85, 0x954db3, 0x6c6c13, 0x5839ef, 0xb37b4d, 0x8fc91d, 0x25467e,
     0xef3948, 0xdeca7c, 0x7e255d, 0x75ef39, 0x4d50b3, 0x6c2a13, 0x7cdeb2, 0xad1dc9, 0x39a2ef, 0xb34d6a, 0x136c14, 0xc9821d, 0x257e74, 0xef39d0, 0x83b34d, 0x13296c, 0xde817c, 0x1dc957, 0xefe139];   // (one for each driver: no two alike, none like the one before it on the grid)
-  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 100; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..100 in order, every car of a 100-car field its own
+  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 101; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..101 in order, every car of a 101-car field its own (the menu's Opponents: up to 100 and the player)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
@@ -5214,7 +5215,7 @@ const Core = (function () {
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs' && opts.phys !== 'nova') opts = Object.assign({}, opts, { phys: 'cs' });   // two driving physics, 'cs' and 'nova' (the old 'rally' and 'arcade' map to cs, as in Car)
-      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: Math.max(opts.numAI, track.def.rivals) });   // a track's own field size (def.rivals: at least that many) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round). A bigger field asked for stays (the game's Nordschleife: def.raceRivals)
+      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ && !opts.numSet) opts = Object.assign({}, opts, { numAI: Math.max(opts.numAI, track.def.rivals) });   // a track's own field size (def.rivals: at least that many) in a normal race; not the title-screen demo, a time trial, an online race, a championship round (its own drivers in every round) or a field the player chose (opts.numSet: the menu's Opponents, 0..100). A bigger field asked for stays (the game's Nordschleife: def.raceRivals)
       this.track = track;
       this.opts = opts;
       this.laps = opts.laps || 3;
