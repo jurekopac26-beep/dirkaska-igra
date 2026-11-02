@@ -213,3 +213,26 @@ Nova fizika z realističnim slogom: 50 km/h v težak stoječ avto: skok 2 cm, dr
 | Bathurst | 6 | 41 | 14 / 14 |
 
 Močnih stikov (nad 14 km/h) je približno toliko kot privzeto (0–3 na dirko), zasukov čez 40° ni, vrednosti NaN ni. Pri 8× je v Monaku več dotikov, ker avtopilot igralca v lasnicah potiska težke avte. `tests/nova.test.js` preverja trke na ravnini in dirki na Spa in Bathurstu z realističnim slogom.
+
+### Trki med avti brez odboja (31. 10. 2026)
+
+Uporabnik je pri slogu »Realističen, težak« še vedno videl odbijanje in je želel en gumb, ki povozi vse druge nastavitve trkov med avti (ograja in iskre ostanejo, kot so). Vzroki, ki so ostali pri realističnem slogu (meritve na ravnini in v dirkah, merjeno v sami funkciji trka):
+
+- **sunek smeri** klasične fizike (`csKc`, tudi z `RB_TAPT`): trk zavrti nos, avto nato sam odpelje v smer nosu (kot odboj);
+- **težji drugi avto tudi, ko ta udari igralca**: tekmec, ki zavije vame, me odrine s skoraj vso svojo bočno hitrostjo (27 km/h), v dirkah med daljšim stikom skupaj do 71 km/h vstran (6 prog × 200 s);
+- **gume ob potisku** (`cSlide`) pri poševnem stiku niso prijele: približevanje se je merilo iz absolutnih hitrosti, zato je hitrost vzdolž ceste pri poševni normali štela kot približevanje;
+- **Razbijanje: odboji in vrtenje** (če je vklopljeno): avto odbije do 48 km/h in zavrti do 166°.
+
+Gumb (`TX.nb`, `NB`, `nbHeavy`; opis v `docs/igra.md`) da odboj 0, brez sunka smeri in vrtenja, mehko razmikanje (največ `NB.cap` 4 cm na korak), težji je zadeti avto (`NB.mass` 8, kdo udari, se presodi glede na cesto), gume zadržijo potisk vstran tudi pri poševnem stiku, iskre ostanejo; Razbijanje: odboji in vrtenje ter prevračanje pri trkih med avti ne delujeta. Ograja se ne spremeni.
+
+Kontrolirani trki na ravnini (BURJA R7, igralec drži volan naravnost; »vstran«: največja bočna hitrost igralca po stiku):
+
+| Trk | Realističen, težak | Brez odboja (klasična) | Brez odboja (nova) |
+|---|---|---|---|
+| Tekmec pri 100 km/h zavije vame pod 15° | vstran 27 km/h, zasuk 16,5° | 4 km/h, 0,9° | 5 km/h, 4,9° |
+| Tekmec pod 17° v moj zadnji vogal | 24 km/h, 7,4° | 3 km/h, 0,1° | 3 km/h, 3,9° |
+| 100 km/h v stoječ avto, zamik 0,9 m | ustavljen, zasuk 10,5° | ustavljen, 0° | ustavljen, 0° |
+| Zadaj 120 → 100 km/h, zamik 0,6 m | zasuk 2,0° | 0°, narazen 0 | 0°, narazen 0 |
+
+V dirkah (6 prog × 200 s, 12 tekmecev, igralec na avtopilotu, merjeno v funkciji trka): sunek smeri igralca 0° (privzeto do 126°, realistični do 23°), skok položaja največ 0,4 cm (privzeto 12 cm), največji skupni potisk vstran med daljšim stikom 22 km/h (realistični 71 km/h). Nič NaN, vsi avti vozijo, nihče se ne prevrne; dotikov med avti približno toliko kot pri realističnem slogu.
+

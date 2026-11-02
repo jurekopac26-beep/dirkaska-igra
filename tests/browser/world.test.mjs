@@ -56,16 +56,21 @@ try {
       });
       const props = (W.props || []).map(q => [q.kind, q.x, q.z, q.yaw || 0, q.col || 0, q.i == null ? -1 : q.i].join(','));
       const ph = fnv(2166136261, str(props.join(';')));
-      const F = race.propFloor; let fh = 2166136261, fn = 0;
-      if (F) { const q = { i: 0, d: 0, s: 0 }; for (let i = 0; i < Tr.N; i += 7) for (const sd of [-1, 1]) for (let e = 0.1; e < 12; e += 0.9) { q.i = i; q.s = i * Tr.ds; q.d = sd * (Tr.w + e); fh = fnv(fh, u32([F(q)])); fn++; } }
+      // (the point as the game's query gives it, x and z too: Toronto's floor is the ground's height there. A NaN is hashed as one fixed word:
+      // its bits vary with V8's compiler tier, so the hash would change from run to run)
+      const F = race.propFloor; let fh = 2166136261, fn = 0, fnan = 0;
+      if (F) { const q = { i: 0, d: 0, s: 0, x: 0, z: 0 }; for (let i = 0; i < Tr.N; i += 7) for (const sd of [-1, 1]) for (let e = 0.1; e < 12; e += 0.9) {
+        q.i = i; q.s = i * Tr.ds; q.d = sd * (Tr.w + e); q.x = Tr.px[i] + Tr.nx[i] * q.d; q.z = Tr.pz[i] + Tr.nz[i] * q.d;
+        const v = F(q); if (v === v) fh = fnv(fh, u32([v])); else { fh = fnv(fh, Uint32Array.of(0x7ff80000)); fnan++; } fn++; } }
       // the braking boards (Track.brakeBoards, World's brakeBoards): on a circuit all in one mesh without a shadow; each plate above the road and
       // the ground under it, each leg's foot in the ground (not floating)
       const want = Tr.brakeBoards().reduce((a, z) => a + z.boards.length, 0), got = W.brakeBoards || [];
       const off = got.filter(b => b.feet.some((y, q) => y > Math.min(b.ground[q], b.road) - 0.1) || b.y0 < Math.max(b.road, ...b.ground) + 0.4);
       const bb = { circuit: !Tr.open && !Tr.def.test && !Tr.def.rally && !Tr.def.descent, meshes: bbM, cast: bbCast, want, got: got.length, off: off.map(b => `${b.d} at ${b.x}, ${b.z}`) };
-      return { bb, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
+      return { bb, fnan, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
     });
-    const bb = fp.bb; delete fp.bb;
+    const bb = fp.bb, fnan = fp.fnan; delete fp.bb; delete fp.fnan;
+    if (fp.floor) T.check(`${id}: prop floor a number beside the road (0.1–12 m past its edge)`, !fnan, `NaN at ${fnan} of ${fp.floor.split('/')[1]} points`);
     T.check(`${id}: braking boards ${bb.circuit ? 'before its braking zones, in one mesh without a shadow, standing on the ground' : 'none (not a circuit)'}`,
       bb.circuit ? bb.want >= 3 && bb.got === bb.want && bb.meshes === 1 && !bb.cast && !bb.off.length : bb.want === 0 && bb.got === 0 && bb.meshes === 0,
       `${bb.got} boards (Track.brakeBoards ${bb.want}), ${bb.meshes} mesh${bb.cast ? ', casts a shadow' : ''}${bb.off.length ? '; off the ground: ' + bb.off.slice(0, 4).join('; ') : ''}`);

@@ -80,7 +80,7 @@ try {
     await ctx.close();
   }
 
-  // (b) in a race, both cameras: the sign as at a place (window.__game.noteAt), read after its .18 s pop-in (scale .8 to 1)
+  // (b) in a race, both cameras: the sign as at a place (window.__game.noteAt), its box without the .18 s pop-in's scale (.8 to 1)
   for (const [vp, cam] of [[{ width: 640, height: 360 }, 'chase'], [{ width: 360, height: 640 }, 'chase']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { camera: cam, notes: 1 }, vp);
     const land = vp.width > vp.height, tag = `${cam} ${vp.width}×${vp.height}`;
@@ -90,10 +90,10 @@ try {
     const at = (d, v, abs) => page.evaluate(async ([d, v, abs]) => {
       const g = window.__game, T = g.race.track, s = abs ? d : T.open ? T.startS + d : (((T.startS + d) % T.len) + T.len) % T.len;
       g.noteAt(s, v); await new Promise(r => setTimeout(r, 250));
-      const el = document.getElementById('h-note'), t0 = performance.now();   // (software WebGL: a slow frame holds the pop-in's last step back)
-      while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
-      const o = g.noteAt(s, v), b = el.getBoundingClientRect();
-      return Object.assign(o, { top: Math.round(b.top), pol: document.getElementById('hud').classList.contains('pol') });
+      // (its box without the show's scale, as placeNote takes it: read during the pop-in, .18 s from .8, it is lower; on a slow machine a
+      // late frame starts the pop-in only when it is read)
+      const el = document.getElementById('h-note'), o = g.noteAt(s, v), O = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { top: 0 };
+      return Object.assign(o, { top: Math.round(O.top + el.offsetTop), pol: document.getElementById('hud').classList.contains('pol') });
     }, [d, v, !!abs]);
     const top = (o) => o.top <= (land ? 10 : o.pol ? 200 : 100);
     const txt = (o) => `${o.kind} '${o.cls}' ${o.key} top ${o.top}`;

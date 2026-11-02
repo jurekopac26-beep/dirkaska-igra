@@ -5,13 +5,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // mountain from Pauma Valley. Its lower and middle part in the real scale: from 0.70 km above the junction with State Route 76 (~859 m) up the
   // ladder of thirteen hairpins (the whole road has fifteen: 13 of them on this stretch) to 8.70 km (~1435 m), 2.2 km below its top at the
   // junction with East Grade Road: 7.990 km, ~576 m of climb. The observatory on the summit is 5.6-7.4 km away behind the ridge and is
-  // seen from nowhere on this stretch, so it is not drawn. One card, four ways to drive it (def.modes), as Vršič and Mulholland Highway.
+  // seen from nowhere on this stretch, so it is not drawn. One card, four ways to drive it (def.modes), as Vršič and the Santa Monica Mountains road.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; smoothed (gaussian, 3 m: the line moved 0.05 m on
   // average, 1.2 m at most); metres, origin = the start line, x east, z south. The legs of the ladder lie 30 m and more apart and the
   // hairpins have a ~23 m radius and more, so nothing is pushed apart or opened. The asphalt is drawn 10 m wide (the real road ~6.5-7 m).
   // Heights (PALOMAR_H): USGS 3DEP (via the Terrain Tiles on AWS) along the line, cleaned (a running median, never down) and fitted with grades
   // of at most 11 %, every 1/1051 of the road from points[0], decimetres above the start line (~859 m).
-  // Scenery data for the world builder (the forms Vršič's and Mulholland Highway's builders read): terrain (dem: the same model, 16 m cells; a
+  // Scenery data for the world builder (the forms Vršič's and the Santa Monica Mountains road's builders read): terrain (dem: the same model, 16 m cells; a
   // 256 m trend in 0.1 m steps and 1 m residuals in each row's span of cells within 880 m of the road), land cover (lc, ESA WorldCover 2021
   // v200, 16 m cells, run-length coded: 0 grass, 1 chaparral, 2 woodland (oaks and tall chaparral low down, oaks and conifers higher up),
   // 3 built-up, 4 bare rock, 5 water), buildings (OpenStreetMap footprints, no names: [x, z, length, width, angle, height (0 = unknown), kind

@@ -1,9 +1,11 @@
 /* Special mission 49 · Zataknjeno kolo · Suzuka, Japonska (js/missions.js; the kit: js/missions/kit.js). A Ferris wheel beside the West
    straight has stopped, people wait in its cabins high over the ground. The aerial ladder (MisKit.fireTruck) drives there from the start
-   line and stops by the wheel (K.ZONE metres of road round K.STOP); the crew sets it up and the ladder is the player's: two sliders,
-   DVIGNI (its angle, 0..80 deg) and IZTEGNI (its length, 7.2..33.6 m), the turntable turning by itself to the cabin it goes for. The
+   line and stops by the wheel (K.ZONE metres of road from K.AHEAD m before it: only where the ladder, out in full, reaches every cabin with
+   people, from anywhere across the road; stopped earlier, cabins 3-5 ahead were out of its reach and the truck is held); the crew sets it
+   up and the ladder is the player's:
+   the basket follows the finger over the wheel (the user's choice, 30. 10.: the ladder turned, raised and extended for it, at its own pace). The
    wind sways the basket (the longer the ladder and the quicker it moves, the more); held within K.REACH m of a cabin's door for K.HOLD s,
-   its people step into the basket (K.CAP at most); the basket down on the truck again (the ladder in): they are on the ground. All of
+   its people step into the basket (K.CAP at most); the basket down by the ground (K.DOWN m over the road): they are on the ground. All of
    them down: done; the time up: failed. The wheel: its own (a stuck one does not turn): two A-frames, the rim and its spokes, K.N
    cabins hanging under it, one mesh; the cabins with people marked on the screen (KABINA n, the people in it). */
 (function () {
@@ -11,8 +13,8 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [-14, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4,
-    LIFT: 1.4, VLIFT: 0.28, VEXT: 0.16, REACH: 1.5, HOLD: 1.2, SWAY: 0.9, DOWN: [0.12, 0.06] };
+  const K = { AT: 4450, OFF: 4.5, AHEAD: 15, ZONE: [0, 10], VSTOP: 2.5, VHELP: 7, R: 10, HUB: 13, N: 16, FULL: [3, 4, 5, 7, 8, 9, 11, 12], PER: 2, CAP: 4, LOOK: 0.55,
+    LIFT: 1.4, VLIFT: 0.28, VEXT: 0.16, REACH: 1.5, HOLD: 1.2, SWAY: 0.9, DOWN: 5 };
 
   // the wheel: in its own frame (x along the road, y up, z across), its cabins' doors in the world
   function wheel(r, p) {
@@ -38,17 +40,13 @@
     return W;
   }
 
-  // the controls: two sliders (DVIGNI, IZTEGNI) and the cabins' tags; their look in css/missions.css
-  function controls(r) {
-    const C = { lift: 0, ext: 0, on() {}, tags() {} };
+  // the controls: the finger on the wheel's plane (the basket follows it: the user's choice, 30. 10.; MisKit.aim) and the cabins' tags;
+  // their look in css/missions.css
+  function controls(r, aim) {
+    const C = { on() {}, tags() {} };
     if (typeof document === 'undefined') return C;
-    const el = document.createElement('div'); el.id = 'mis-lad';
-    el.innerHTML = '<label><span>' + tr('DVIGNI') + '</span><input type="range" min="0" max="1000" value="0" data-k="lift"></label><label><span>' + tr('IZTEGNI') + '</span><input type="range" min="0" max="1000" value="0" data-k="ext"></label>';
-    document.body.appendChild(el);
-    el.addEventListener('input', (e) => { const i = e.target.closest('input'); if (i) C[i.dataset.k] = +i.value / 1000; });
     const tg = document.createElement('div'); tg.id = 'mis-tags'; document.body.appendChild(tg);
-    const touch = document.getElementById('touch');
-    C.on = (show) => { el.classList.toggle('on', !!show); tg.classList.toggle('on', !!show); if (touch) touch.classList.toggle('mis-hide', !!show); document.body.classList.toggle('mis-aiming', !!show); document.body.classList.toggle('mis-ladder', !!show); if (show && typeof Input !== 'undefined' && Input.reset) Input.reset(); };
+    C.on = (show) => { aim.on(show); tg.classList.toggle('on', !!show); };
     // the tags over the cabins with people (the one the ladder goes for first, gold)
     const v = typeof THREE !== 'undefined' ? new THREE.Vector3() : null;
     C.tags = (cabs, goal) => {
@@ -58,7 +56,7 @@
       if (tg.innerHTML !== html) tg.innerHTML = html;
     };
     r.add(typeof THREE !== 'undefined' ? new THREE.Group() : { userData: {}, traverse() {} });
-    r.props[r.props.length - 1].userData.misUndo = () => { el.remove(); tg.remove(); if (touch) touch.classList.remove('mis-hide'); document.body.classList.remove('mis-aiming', 'mis-ladder'); };
+    r.props[r.props.length - 1].userData.misUndo = () => { tg.remove(); };
     return C;
   }
 
@@ -75,9 +73,13 @@
       r.sW = sW; r.stage = 'drive'; r.saved = 0; r.inB = 0; r.hold = 0; r.sway = 0; r.ph = 0; r.wind = 1;
       const p = KIT.at(T, sW, side * (T.wS(sW) + K.OFF));
       r.W = wheel(r, { x: p.x, y: Math.max(p.y, p.ty) - 0.2, z: p.z, ry: p.ry });
+      r.wc = { x: p.x, z: p.z };
       for (const k of K.FULL) r.W.cab[k].n = K.PER;
       r.total = K.FULL.length * K.PER;
-      r.truck = KIT.fireTruck(r); r.ui = controls(r);
+      r.truck = KIT.fireTruck(r);
+      const n = typeof THREE !== 'undefined' ? new THREE.Vector3(Math.sin(p.ry), 0, Math.cos(p.ry)) : null;   // (the wheel's plane: along the road, up; its normal across)
+      r.aim = KIT.aim(r, { plane: 'n', normal: n, focus: n ? new THREE.Vector3(p.x, Math.max(p.y, p.ty) + K.HUB, p.z) : null, button: false });
+      r.ui = controls(r, r.aim);
       this.show(r);
     },
     // the cabin the ladder goes for (target): the nearest one with people (to the basket)
@@ -93,12 +95,17 @@
         r.say(inZ ? 'Ustavi ob kolesu.' : d > K.ZONE[1] && d < 400 ? 'Kolo si zgrešil: vrni se nazaj do njega.' : tr('Do kolesa: {0} km', dec((((d < 0 ? -d : T.len - d)) / 1000).toFixed(1))));
       } else {
         KIT.hold(P);
-        // the ladder toward the sliders, at its own pace; the turntable to the cabin it goes for (the basket's cabin: down to the truck)
-        const want = r.auto || r.ui, L0 = tk.lift, E0 = tk.ext;
+        // the ladder toward the finger (its point on the wheel's plane: the basket there, MisKit solve) at its own pace; a test's r.auto
+        // (fractions) and the turntable to the cabin it goes for instead
+        r.aim.step();
+        const fs = !r.auto && r.aim.touched && r.aim.point ? tk.solve(r.aim.point) : null;
+        const want = r.auto || (fs ? { lift: fs.lift / K.LIFT, ext: fs.ext } : r.want || { lift: tk.lift / K.LIFT, ext: tk.ext }), L0 = tk.lift, E0 = tk.ext;
+        r.want = want;
         tk.lift += Math.max(-K.VLIFT * dt, Math.min(K.VLIFT * dt, want.lift * K.LIFT - tk.lift));
         tk.ext += Math.max(-K.VEXT * dt, Math.min(K.VEXT * dt, want.ext - tk.ext));
         const goal = r.inB >= K.CAP || !this.target(r) ? null : this.target(r);
-        if (goal) { let a = tk.yawTo(goal.x, goal.z) - tk.yaw; a = Math.atan2(Math.sin(a), Math.cos(a)); tk.yaw += Math.max(-0.5 * dt, Math.min(0.5 * dt, a)); }
+        const yt = fs ? fs.yaw : goal ? tk.yawTo(goal.x, goal.z) : null;
+        if (yt != null) { let a = yt - tk.yaw; a = Math.atan2(Math.sin(a), Math.cos(a)); tk.yaw += Math.max(-0.5 * dt, Math.min(0.5 * dt, a)); }
         // the wind sways the basket: more with the ladder out, more again while it moves
         const mv = Math.abs(tk.lift - L0) / dt / K.VLIFT + Math.abs(tk.ext - E0) / dt / K.VEXT;
         r.wind = 0.75 + 0.25 * Math.sin(r.t * 0.21) + 0.2 * Math.sin(r.t * 0.73);
@@ -112,11 +119,12 @@
           if (dd < K.REACH) { r.hold += dt; if (r.hold >= K.HOLD) { const n = Math.min(goal.n, K.CAP - r.inB); goal.n -= n; r.inB += n; r.hold = 0; } } else r.hold = 0;
         } else r.dGoal = null;
         // the basket down on the truck: its people on the ground
-        if (r.inB > 0 && tk.lift <= K.DOWN[0] && tk.ext <= K.DOWN[1]) { r.saved += r.inB; r.inB = 0; }
+        if (r.inB > 0 && (r.tip ? r.tip.y : tk.tipAt().y) - (P.y || 0) <= K.DOWN) { r.saved += r.inB; r.inB = 0; }   // (the basket down by the ground: K.DOWN m over the road at most)
         if (r.saved >= r.total) { r.stage = 'done'; r.ui.on(false); KIT.hold(P, false); r.win(); }
-        r.say(r.inB >= K.CAP || (r.inB > 0 && !this.target(r)) ? 'Koš je poln: spusti lestev in jo potegni nazaj, da ljudje izstopijo.' : r.dGoal != null && r.dGoal < K.REACH * 2.5 ? 'Počakaj, da se koš umiri ob kabini.' : 'Lestev dvigni in iztegni počasi: v vetru se koš ziblje.');
+        r.say(r.inB >= K.CAP || (r.inB > 0 && !this.target(r)) ? 'Koš je poln: spusti koš do tal, da ljudje izstopijo.' : r.dGoal != null && r.dGoal < K.REACH * 2.5 ? 'Počakaj, da se koš umiri ob kabini.' : 'Povleci s prstom do kabine: koš sledi prstu, v vetru se ziblje.');
         r.ui.tags(r.W.cab, goal);
       }
+      KIT.look(r, r.stage === 'ladder' ? r.wc : null, K.LOOK, dt);   // (the camera behind the truck turned toward the wheel while the ladder works: the user's choice, 30. 10.)
       if (r.stage !== 'ladder') tk.step(dt, r.stage !== 'done'); else tk.step(dt, true);
       this.show(r);
     },

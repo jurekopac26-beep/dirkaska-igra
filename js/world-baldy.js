@@ -182,7 +182,7 @@
     const rim = new Float32Array(nv); for (let k = 0; k < nv; k++) rim[k] = sstep(1400, 800, dru[k]);
     return { mesh, P0: Float32Array.from(Pu), rim, cx: 1e9, cy: 0, cz: 0, cf: 0, th: 4 };   // (th: moved again once the camera is 4 m on: the lines of sight to the peaks hardly change)
   }
-  // the knockable roadside posts: white with a black top (as Mulholland's)
+  // the knockable roadside posts: white with a black top (as the Santa Monica Mountains road's)
   function bdProps(out, spots, prof) {
     out.propR = 150;
     out.propFloor = propFloorTable(null, prof);
@@ -300,7 +300,7 @@
         SB.emit(c0, c0 + 60, gr, gs, gl);   // (the side roads whose junctions are in this chunk)
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
-      // the sealed cracks in the old asphalt: black tar wandering along the lanes and across them (as Mulholland's)
+      // the sealed cracks in the old asphalt: black tar wandering along the lanes and across them (as the Santa Monica Mountains road's)
       { const RS = rng(4191), ts = new Chunks(110), tc = [0.075, 0.075, 0.085], P2 = (s, o) => { const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, j = i + 1;
           return [lerp(T.px[i] + T.nx[i] * o, T.px[j] + T.nx[j] * o, u), lerp(T.hy[i], T.hy[j], u) + 0.031, lerp(T.pz[i] + T.nz[i] * o, T.pz[j] + T.nz[j] * o, u)]; };
         for (let s = sStart - 40; s < sFin + 40; s += 13) { if (RS() > 0.35) continue;

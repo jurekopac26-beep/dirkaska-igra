@@ -68,7 +68,12 @@ try {
   T.check('race: the two side by side on the front row (the same distance to the line)', Math.abs(row.d[0] - row.d[1]) < 0.05 && row.d[0] < 0 && row.side !== 0, JSON.stringify(row));
   const started = (p) => until(p, () => { const n = window.__game.net; return n && n.race && n.race.startT != null ? n.race.startT : null; }, null, 60000);   // (the moment the lights went out there)
   const [sA, sB] = await Promise.all([started(A.page), started(B.page)]);
-  T.check('race: both start on time (in the first frame after the planned moment)', sA - goA < 400 && sB - goB < 400 && sA >= goA && sB >= goB, `host +${(sA - goA).toFixed(0)} ms, friend +${(sB - goB).toFixed(0)} ms`);
+  // (the first frame after the planned moment: within 400 ms, or within one and a half of that page's frames where a frame takes longer:
+  // two pages drawing in software on a busy machine, ~0.3-0.45 s a frame)
+  const frame = (p) => p.evaluate(() => new Promise((res) => { let n = 0; const t0 = performance.now(), f = () => { if (++n < 10) requestAnimationFrame(f); else res((performance.now() - t0) / 9); }; requestAnimationFrame(f); }));
+  const [frA, frB] = await Promise.all([frame(A.page), frame(B.page)]);
+  T.check('race: both start on time (in the first frame after the planned moment)', sA - goA < Math.max(400, 1.5 * frA) && sB - goB < Math.max(400, 1.5 * frB) && sA >= goA && sB >= goB,
+    `host +${(sA - goA).toFixed(0)} ms, friend +${(sB - goB).toFixed(0)} ms (a frame: host ${frA.toFixed(0)} ms, friend ${frB.toFixed(0)} ms)`);
   const cars = (p) => p.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, me: r.player.num, it: r.remote.num, model: r.remote.m.id, grid: [r.player.grid, r.remote.grid] }; });
   const cA = await cars(A.page), cB = await cars(B.page);
   T.check("race: the two of them on the grid, each with the other's car; the same start number is changed for the friend", cA.n === 2 && cB.n === 2 && cA.model === 'pico' && cB.model === 'kaze' && cA.me === 1 && cA.it === 2 && cB.me === 2 && cB.it === 1 && cA.grid.join() === '1,2' && cB.grid.join() === '2,1',
@@ -153,13 +158,20 @@ try {
     `host ${JSON.stringify(lockC)}, Fani alone ${fAlone} (${fRole})`);
   await Promise.all([C, D, E].map(x => until(x.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing' && g.net && g.net.race); }, null, 90000)));
   await wait(7000);
-  const views = await Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, v: +r.player.speed.toFixed(1), t: Date.now(), cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
-  const own = Object.fromEntries(views.map(v => [v.me, v]));
+  const look = () => Promise.all([C, D, E].map(x => x.page.evaluate(() => { const g = window.__game, r = g.race; return { me: g.net.me, big: g.net.race.big, own: r.player.dist, v: +r.player.speed.toFixed(1), t: Date.now(), cars: r.cars.length, seen: Object.fromEntries(r.remotes.map(c => [c.netOf.id, c.dist])) }; })));
   // (the pages are read one after another: where each car is when the other page is read, from its own speed; then off by at most 40 m and
-  // the network's delay at that speed, 0.4 s: 10 states a second passed on by the host in batches, and drawn a little behind)
-  const near = (vw, id, d) => { const o = own[id], at = o.own + o.v * (vw.t - o.t) / 1000; return Math.abs(d - at) < 40 + 0.4 * o.v; };
+  // the network's delay at that speed, 0.4 s: 10 states a second passed on by the host in batches, and drawn a little behind. A page the
+  // test machine keeps busy is read late and may draw the others a second or two behind for that moment: then the three are read again,
+  // a second apart, at most five times)
+  const fine = (views) => {
+    const own = Object.fromEntries(views.map(v => [v.me, v]));
+    const near = (vw, id, d) => { const o = own[id]; if (!o) return false; const at = o.own + o.v * (vw.t - o.t) / 1000; return Math.abs(d - at) < 40 + 0.4 * o.v; };
+    return views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && near(v, id, d)));   // (off the grid)
+  };
+  let views = await look();
+  for (let k = 0; k < 5 && !fine(views); k++) { await wait(1000); views = await look(); }
   T.check('quick match, the race of three (a big grid: 10 states a second, the host passes them on in batches): three cars on every page, each sees the other two move where they are',
-    views.every(v => v.big && v.cars === 3 && Object.keys(v.seen).length === 2 && Object.entries(v.seen).every(([id, d]) => d > 5 && near(v, id, d))), JSON.stringify(views));   // (off the grid)
+    fine(views), JSON.stringify(views));
   await leave(E); await leave(F); await leave(C); await leave(D); await wait(1500);
   await Promise.all([tap(C), tap(D)]);
   const [sC, sD] = [await paired(C, 'Dana'), await paired(D, 'Cene')];

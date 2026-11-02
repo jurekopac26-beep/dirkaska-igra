@@ -1,4 +1,4 @@
-// Special mission 06 · Srce v hladilni torbi (js/missions/m06.js), no browser: its race (Mulholland, the escort ahead in the traffic of cars,
+// Special mission 06 · Srce v hladilni torbi (js/missions/m06.js), no browser: its race (the Santa Monica Mountains, the escort ahead in the traffic of cars,
 // vans and trucks only), the organ warming up (the time, a hard knock once, faster with the escort far ahead; lost at 8 °C), the escort's
 // pace by the gap (slower when the player is far behind, quicker when close or ahead), left behind over 300 m for 8 s: lost; the gauges.
 //   node tests/m06.test.js
@@ -13,7 +13,7 @@ require(path.join(ROOT, 'js', 'missions', 'm06.js'));
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('06'), K = D.K;
-check('06: on Mulholland, in the JELEN GT', D.track === 'mulholland' && D.car === 'jelen' && !!Core.TRACKS.find(t => t.id === 'mulholland') && !!Core.MODELS.find(m => m.id === D.car));
+check('06: in the Santa Monica Mountains, in the JELEN GT', D.track === 'mulholland' && D.car === 'jelen' && !!Core.TRACKS.find(t => t.id === 'mulholland') && !!Core.MODELS.find(m => m.id === D.car));
 const o = D.opts(D);
 check('its race: the traffic, one car ahead of the player (the escort), only cars, vans and trucks', o.traffic && o.numAI === 1 && o.playerGrid === 2 && !o.tt && o.tfCars[3] === 0 && o.tfCars.length === 5 && Math.abs(o.tfCars.reduce((a, b) => a + b, 0) - 1) < 1e-9, JSON.stringify(o));
 

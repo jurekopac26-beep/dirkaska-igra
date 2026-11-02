@@ -258,5 +258,900 @@
     }
    ]
   }
+ ],
+ [
+  "medvode",
+  {
+   "kbps": 450,
+   "speed": 225,
+   "back": 292,
+   "up": 184,
+   "ahead": 146,
+   "fogNear": 630,
+   "fogFar": 2430,
+   "places": [
+    {
+     "n": "Zbilje",
+     "d": 2234
+    },
+    {
+     "n": "Lake Zbilje",
+     "d": 2805
+    },
+    {
+     "n": "Sava Bridge",
+     "d": 3720
+    },
+    {
+     "n": "Smlednik",
+     "d": 4809
+    }
+   ],
+   "alt": [
+    317,
+    500
+   ]
+  }
+ ],
+ [
+  "baldy",
+  {
+   "kbps": 450,
+   "speed": 260,
+   "back": 338,
+   "up": 213,
+   "ahead": 169,
+   "fogNear": 728,
+   "fogFar": 2808,
+   "places": [
+    {
+     "n": "San Antonio Creek",
+     "d": 595
+    },
+    {
+     "n": "Icehouse Canyon",
+     "d": 2734
+    },
+    {
+     "n": "Manker Flat",
+     "d": 6530
+    },
+    {
+     "n": "San Antonio Falls",
+     "d": 6935
+    }
+   ],
+   "alt": [
+    1282,
+    1917
+   ]
+  }
+ ],
+ [
+  "beartooth",
+  {
+   "kbps": 450,
+   "speed": 175,
+   "back": 228,
+   "up": 144,
+   "ahead": 114,
+   "fogNear": 490,
+   "fogFar": 1890,
+   "places": [
+    {
+     "n": "Rock Creek Valley",
+     "d": 900
+    },
+    {
+     "n": "Rock Creek Vista",
+     "d": 3740
+    }
+   ],
+   "alt": [
+    2631,
+    2849
+   ]
+  }
+ ],
+ [
+  "bigsur",
+  {
+   "kbps": 450,
+   "speed": 140,
+   "back": 182,
+   "up": 115,
+   "ahead": 91,
+   "fogNear": 392,
+   "fogFar": 1512,
+   "places": [
+    {
+     "n": "Rocky Creek Bridge",
+     "d": 989
+    },
+    {
+     "n": "Castle Rock Viewpoint",
+     "d": 1539
+    },
+    {
+     "n": "Bixby Creek Bridge",
+     "d": 2021
+    }
+   ],
+   "alt": [
+    71,
+    171
+   ]
+  }
+ ],
+ [
+  "detroit",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": []
+  }
+ ],
+ [
+  "maunakea",
+  {
+   "kbps": 450,
+   "speed": 205,
+   "back": 266,
+   "up": 168,
+   "ahead": 133,
+   "fogNear": 574,
+   "fogFar": 2214,
+   "places": [
+    {
+     "n": "Lake Waiau",
+     "d": 2573
+    },
+    {
+     "n": "Puʻu Haukea",
+     "d": 3389
+    },
+    {
+     "n": "Puʻu Wēkiu",
+     "d": 5250
+    }
+   ],
+   "alt": [
+    3599,
+    4198
+   ]
+  }
+ ],
+ [
+  "moki",
+  {
+   "kbps": 450,
+   "speed": 175,
+   "back": 228,
+   "up": 144,
+   "ahead": 114,
+   "fogNear": 490,
+   "fogFar": 1890,
+   "places": [
+    {
+     "n": "Pavement Ends",
+     "d": 1340
+    },
+    {
+     "n": "Viewpoint",
+     "d": 3714
+    },
+    {
+     "n": "Back on Asphalt",
+     "d": 4705
+    }
+   ],
+   "alt": [
+    1624,
+    1961
+   ]
+  }
+ ],
+ [
+  "longford",
+  {
+   "kbps": 450,
+   "speed": 251,
+   "back": 326,
+   "up": 206,
+   "ahead": 163,
+   "fogNear": 703,
+   "fogFar": 2711,
+   "places": [
+    {
+     "n": "Viaduct",
+     "d": 1122
+    },
+    {
+     "n": "Tannery Corner",
+     "d": 3600
+    },
+    {
+     "n": "Newry",
+     "d": 4294
+    },
+    {
+     "n": "Mountford",
+     "d": 6639
+    }
+   ]
+  }
+ ],
+ [
+  "newcastle",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 756
+    },
+    {
+     "n": "Newcastle Beach",
+     "d": 994
+    },
+    {
+     "n": "Turn 11",
+     "d": 2115
+    }
+   ]
+  }
+ ],
+ [
+  "townsville",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 638
+    },
+    {
+     "n": "Ross Creek",
+     "d": 1158
+    },
+    {
+     "n": "Turn 11",
+     "d": 2231
+    }
+   ]
+  }
+ ],
+ [
+  "chapman",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 146,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "East Fort",
+     "d": 847
+    },
+    {
+     "n": "Toll Plaza",
+     "d": 2225
+    },
+    {
+     "n": "The Sentinel",
+     "d": 3214
+    }
+   ],
+   "alt": [
+    19,
+    153
+   ]
+  }
+ ],
+ [
+  "sani",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 146,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 3471
+    },
+    {
+     "n": "Twelve Apostles",
+     "d": 4376
+    },
+    {
+     "n": "Hairpin 13",
+     "d": 4692
+    }
+   ],
+   "alt": [
+    2229,
+    2872
+   ]
+  }
+ ],
+ [
+  "marrakesh",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 236
+    },
+    {
+     "n": "Route de l'Ourika",
+     "d": 1392
+    },
+    {
+     "n": "Hairpin",
+     "d": 2086
+    }
+   ]
+  }
+ ],
+ [
+  "montreal",
+  {
+   "kbps": 450,
+   "speed": 156,
+   "back": 203,
+   "up": 128,
+   "ahead": 101,
+   "fogNear": 437,
+   "fogFar": 1685,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 450
+    },
+    {
+     "n": "Turn 10",
+     "d": 2902
+    },
+    {
+     "n": "Turn 13",
+     "d": 4101
+    }
+   ],
+   "keepWide": [
+    "mtWater"
+   ]
+  }
+ ],
+ [
+  "toronto",
+  {
+   "kbps": 450,
+   "speed": 104,
+   "back": 135,
+   "up": 85,
+   "ahead": 68,
+   "fogNear": 291,
+   "fogFar": 1123,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 196
+    },
+    {
+     "n": "Turn 3",
+     "d": 1262
+    },
+    {
+     "n": "Turn 8",
+     "d": 2362
+    }
+   ],
+   "keepWide": true
+  }
+ ],
+ [
+  "troisrivieres",
+  {
+   "kbps": 450,
+   "speed": 87,
+   "back": 113,
+   "up": 71,
+   "ahead": 57,
+   "fogNear": 244,
+   "fogFar": 940,
+   "places": [
+    {
+     "n": "Turn 3",
+     "d": 622
+    },
+    {
+     "n": "Turn 6",
+     "d": 1302
+    },
+    {
+     "n": "Turn 9",
+     "d": 2051
+    }
+   ]
+  }
+ ],
+ [
+  "greatalpine",
+  {
+   "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 235,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
+   "places": [
+    {
+     "n": "Saint Patricks Creek",
+     "d": 776
+    },
+    {
+     "n": "Wild Dog Creek",
+     "d": 2825
+    },
+    {
+     "n": "Mullocky Creek",
+     "d": 4940
+    },
+    {
+     "n": "Top of the Climb · 337 m",
+     "d": 7980
+    }
+   ],
+   "alt": [
+    123,
+    337
+   ]
+  }
+ ],
+ [
+  "hotham",
+  {
+   "kbps": 450,
+   "speed": 283,
+   "back": 368,
+   "up": 232,
+   "ahead": 184,
+   "fogNear": 792,
+   "fogFar": 3056,
+   "places": [
+    {
+     "n": "Mount Blowhard",
+     "d": 2230
+    },
+    {
+     "n": "Ridge Lookout",
+     "d": 3541
+    },
+    {
+     "n": "Razorback",
+     "d": 5161
+    },
+    {
+     "n": "Mount Hotham · 1,831 m",
+     "d": 6425
+    }
+   ],
+   "alt": [
+    1495,
+    1753
+   ]
+  }
+ ],
+ [
+  "monterey",
+  {
+   "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 506
+    },
+    {
+     "n": "Turn 8",
+     "d": 2466
+    },
+    {
+     "n": "Turn 11",
+     "d": 3290
+    }
+   ]
+  }
+ ],
+ [
+  "mulholland",
+  {
+   "kbps": 450,
+   "speed": 149,
+   "back": 194,
+   "up": 122,
+   "ahead": 97,
+   "fogNear": 417,
+   "fogFar": 1609,
+   "places": [
+    {
+     "n": "Elephant Rock",
+     "d": 748
+    },
+    {
+     "n": "La Sierra Canyon",
+     "d": 2200
+    },
+    {
+     "n": "Viewpoint",
+     "d": 3915
+    },
+    {
+     "n": "Top of the Climb",
+     "d": 4160
+    }
+   ],
+   "alt": [
+    256,
+    544
+   ]
+  }
+ ],
+ [
+  "palomar",
+  {
+   "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 234,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 394
+    },
+    {
+     "n": "Hairpin 6",
+     "d": 2852
+    },
+    {
+     "n": "Turnout",
+     "d": 3874
+    },
+    {
+     "n": "Hairpin 13",
+     "d": 7801
+    }
+   ],
+   "alt": [
+    859,
+    1435
+   ]
+  }
+ ],
+ [
+  "riverside",
+  {
+   "kbps": 450,
+   "speed": 188,
+   "back": 244,
+   "up": 154,
+   "ahead": 122,
+   "fogNear": 526,
+   "fogFar": 2030,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 624
+    },
+    {
+     "n": "Turn 6",
+     "d": 1502
+    },
+    {
+     "n": "Back Straight",
+     "d": 3424
+    },
+    {
+     "n": "Turn 9",
+     "d": 4808
+    }
+   ]
+  }
+ ],
+ [
+  "uncompahgre",
+  {
+   "kbps": 450,
+   "speed": 177,
+   "back": 230,
+   "up": 145,
+   "ahead": 115,
+   "fogNear": 496,
+   "fogFar": 1912,
+   "places": [
+    {
+     "n": "Tunnel",
+     "d": 523
+    },
+    {
+     "n": "Bear Creek Falls",
+     "d": 986
+    },
+    {
+     "n": "Alpine Loop",
+     "d": 2643
+    },
+    {
+     "n": "Riverside Snow Shed",
+     "d": 4858
+    }
+   ],
+   "alt": [
+    2543,
+    2860
+   ]
+  }
+ ],
+ [
+  "iroha",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 145,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "Curve ほ (5)",
+     "d": 956
+    },
+    {
+     "n": "Curve ち (8)",
+     "d": 2279
+    },
+    {
+     "n": "Kurokamidaira lookout",
+     "d": 3862
+    },
+    {
+     "n": "Curve ね (20)",
+     "d": 4967
+    }
+   ],
+   "alt": [
+    918,
+    1240
+   ]
+  }
+ ],
+ [
+  "harju",
+  {
+   "kbps": 450,
+   "speed": 88,
+   "back": 114,
+   "up": 72,
+   "ahead": 57,
+   "fogNear": 246,
+   "fogFar": 950,
+   "places": [
+    {
+     "n": "Harjun nousu",
+     "d": 523
+    },
+    {
+     "n": "Vesilinna",
+     "d": 775
+    },
+    {
+     "n": "Harjun stadion",
+     "d": 1034
+    },
+    {
+     "n": "Pitkäkatu",
+     "d": 1636
+    }
+   ],
+   "alt": [
+    110,
+    115
+   ]
+  }
+ ],
+ [
+  "caracoles",
+  {
+   "kbps": 450,
+   "speed": 385,
+   "back": 500,
+   "up": 316,
+   "ahead": 250,
+   "fogNear": 1078,
+   "fogFar": 4158,
+   "places": [
+    {
+     "n": "Curva 1 · 2,271 m",
+     "d": 1092
+    },
+    {
+     "n": "Curva 17 · Mirador",
+     "d": 4742
+    },
+    {
+     "n": "Galería",
+     "d": 6906
+    },
+    {
+     "n": "Curva 29 · Llano La Calavera",
+     "d": 9680
+    }
+   ],
+   "alt": [
+    2200,
+    2866
+   ]
+  }
+ ],
+ [
+  "rastro",
+  {
+   "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 146,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
+   "places": [
+    {
+     "n": "Hairpin 8 · 1,209 m",
+     "d": 1998
+    },
+    {
+     "n": "Rio do Rastro Falls",
+     "d": 2953
+    },
+    {
+     "n": "Top of the Serra · 1,389 m",
+     "d": 3880
+    }
+   ],
+   "alt": [
+    1010,
+    1421
+   ]
+  }
+ ],
+ [
+  "katu",
+  {
+   "kbps": 450,
+   "speed": 166,
+   "back": 216,
+   "up": 136,
+   "ahead": 108,
+   "fogNear": 465,
+   "fogFar": 1793,
+   "places": [
+    {
+     "n": "Katu-Yaryk Pass · 1,206 m",
+     "d": 500
+    },
+    {
+     "n": "Hairpin 4 · 1,052 m",
+     "d": 2100
+    },
+    {
+     "n": "Traverse above the Chulyshman",
+     "d": 3260
+    }
+   ],
+   "alt": [
+    1242,
+    683
+   ]
+  }
+ ],
+ [
+  "tianmen",
+  {
+   "kbps": 450,
+   "speed": 172,
+   "back": 224,
+   "up": 141,
+   "ahead": 112,
+   "fogNear": 482,
+   "fogFar": 1858,
+   "places": [
+    {
+     "n": "Bend 66 · 839 m",
+     "d": 1098
+    },
+    {
+     "n": "Bend 77 · 961 m",
+     "d": 2290
+    },
+    {
+     "n": "The Loop",
+     "d": 3931
+    }
+   ],
+   "alt": [
+    729,
+    1218
+   ]
+  }
+ ],
+ [
+  "bangsaen",
+  {
+   "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
+   "places": [
+    {
+     "n": "Turn 3 · Khao Lam",
+     "d": 638
+    },
+    {
+     "n": "Bang Saen Sai 2",
+     "d": 1398
+    },
+    {
+     "n": "Hairpin · Khao Sam Muk",
+     "d": 2202
+    },
+    {
+     "n": "Laem Thaen",
+     "d": 2548
+    }
+   ]
+  }
  ]
 ]

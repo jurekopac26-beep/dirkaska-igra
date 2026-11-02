@@ -283,8 +283,13 @@ try {
     const until = (p, fn, ms = 60000) => p.waitForFunction(fn, null, { timeout: ms, polling: 200 }).then(h => h.jsonValue());
     await A.page.evaluate(() => { window.__game.onAction('to-online'); window.__game.onAction('net-host'); });
     const code = await until(A.page, () => { const n = window.__game.net; return n && n.code && n.code.length === 4 ? n.code : null; });
-    await B.page.evaluate((code) => { window.__game.onAction('to-online'); document.getElementById('on-code').value = code; window.__game.onAction('net-join'); }, code);
-    await until(B.page, () => { const n = window.__game.net; return !!(n && n.open && n.peer && n.synced); });
+    // (the friend joins with the code. A line that has not opened in 20 s ends in the game's 'timeout' (js/net.js join), so waiting longer
+    // does not help: the friend taps Join again, as a player would; a busy test machine can lose the first try. At most three tries)
+    for (let k = 1; ; k++) {
+      await B.page.evaluate((code) => { window.__game.onAction('to-online'); document.getElementById('on-code').value = code; window.__game.onAction('net-join'); }, code);
+      if (await until(B.page, () => { const n = window.__game.net; return !!(n && n.open && n.peer && n.synced); }, 30000).catch(() => false)) break;
+      if (k === 3) throw new Error('the friend did not get into the room in 3 tries of 30 s');
+    }
     await A.page.evaluate(() => { const t = document.getElementById('on-track'); t.value = 'jezero'; t.dispatchEvent(new Event('change')); });
     await until(B.page, () => window.__game.net.track === 'jezero');
     await A.page.evaluate(() => window.__game.onAction('net-go'));

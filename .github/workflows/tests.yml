@@ -1,7 +1,10 @@
 # Samodejni testi ob vsakem pull requestu in ob vsaki spremembi veje main (glej tests/README.md).
+# Osnutek (draft) pull requesta težkih poslov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem
+# potisku (odločitev uporabnika 31. 10. 2026: manj čakanja v vrsti, GitHub hkrati izvaja le ~20 poslov).
 name: Testi
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   node:
     name: Fizika, AI in dirke
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40   # (nabor traja na CI ~20 min: omejitev mora imeti rezervo)
     steps:
@@ -32,6 +36,7 @@ jobs:
   # tests/run.js, časi iz teka 29. 10. 2026: ~64 min na del). Celoten nabor na enem stroju bi trajal ~4 h in se z vsako novo progo podaljša.
   browser:
     name: Igra v brskalniku (${{ matrix.shard }}/4)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 120   # (en del ~64 min; več kot omejitev testa memory (3 × 30 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom)
     strategy:
@@ -55,7 +60,7 @@ jobs:
   browser-all:
     name: Igra v brskalniku
     needs: browser
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -65,6 +70,7 @@ jobs:
 
   fleet:
     name: Vozila
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:

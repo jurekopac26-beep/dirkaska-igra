@@ -2,7 +2,7 @@
 // Uncompahgre, the fire engine; the tunnel (walls, roof, portals), the trapped cars and the lorry in the scene; the panel (VIDLJIVOST V
 // DIMU, ZRAK V JEKLENKAH, REŠENI, DO OGNJA), no timing tower; outside: no smoke, the roof drawn; inside: the smoke over the scene (under
 // the HUD), the hazard lamps and the exit signs shining through it, the roof not drawn; a driver to each car (stopped: its people aboard),
-// before the lorry: the crew puts it out (GASI, the water on each flame), out of the far portal: done. Back to the title: the tunnel and the
+// before the lorry: the crew sprays with the driving controls kept, the water on the lorry: out in ~5 s, out of the far portal: done. Back to the title: the tunnel and the
 // smoke gone. No errors on the page.
 //   node tests/browser/m46.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -14,7 +14,7 @@ const ready = (page) => page.waitForFunction(() => window.__game.race && typeof 
 const st = (page) => page.evaluate(() => { const g = window.__game, R = g.race, r = Missions.run, P = R.player, m = document.getElementById('mis'), sm = document.getElementById('mis-smoke'), vis = (s) => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden' && e.getBoundingClientRect().width > 0; };
   return { track: R.track.def.id, car: P.m.id, stage: r && r.stage, run: r && { end: r.end, why: r.why, aboard: r.aboard, f: r.f }, rows: m ? [...m.querySelectorAll('.mis-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) : [], tower: vis('#tw-strip') || vis('#h-tower'),
     smoke: sm ? +getComputedStyle(sm).opacity : -1, underHud: !!sm && sm.parentNode === document.getElementById('hud').parentNode && sm.compareDocumentPosition(document.getElementById('hud')) & Node.DOCUMENT_POSITION_FOLLOWING, roof: r && r.tun ? r.tun.roof.visible : null,
-    haz: document.querySelectorAll('#mis-dots i.haz').length, exit: document.querySelectorAll('#mis-dots i.exit').length, res: document.getElementById('mis-res') && document.getElementById('mis-res').innerText.replace(/\s+/g, ' ') }; });
+    pad: vis('#mis-aim'), drive: !!document.querySelector('#mis-aim.drive'), touch: vis('#touch'), haz: document.querySelectorAll('#mis-dots i.haz').length, exit: document.querySelectorAll('#mis-dots i.exit').length, res: document.getElementById('mis-res') && document.getElementById('mis-res').innerText.replace(/\s+/g, ' ') }; });
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=46', {}, { width: 360, height: 640 }, { touch: true });
   await ready(page); await page.waitForTimeout(300);
@@ -31,17 +31,18 @@ try {
   T.check('inside: the smoke over the scene (under the HUD), the hazard lamps and exit signs through it, the roof not drawn', s.smoke > 0.5 && s.underHud && s.haz > 0 && s.exit > 0 && s.roof === false, JSON.stringify({ smoke: s.smoke, under: s.underHud, haz: s.haz, exit: s.exit, roof: s.roof }));
   // a driver: to each car (stopped beside it), then before the lorry
   await page.evaluate(() => { const g = window.__game, r = Missions.run;
-    for (let k = 0; k < 5000 && !r.end && r.stage === 'drive' && r.f > 0; k++) {
+    for (let k = 0; k < 5000 && !r.end && !(r.aboard === r.total && Math.abs(r.P.q.s - (r.sL - 18)) < 3 && Math.hypot(r.P.vx, r.P.vz) < 0.5); k++) {
       const P = r.P, s = P.q.s, v = Math.hypot(P.vx, P.vz), c = r.cars.find(c => c.n > 0), want = c ? c.s : r.sL - 18;
       Core.aiControl(P, g.race, 0.05); const ds = want - s, vt = Math.min(12, Math.abs(ds) * 0.4);
       let thr = 0, brk = 0; if (ds > 2) { if (v < vt) thr = 0.6; else brk = 0.6; } else brk = 1;
       g.sim(0.1, false, P.inSteer, thr, brk);
     } });
   s = await st(page);
-  T.check('every car: everyone aboard; before the lorry: the crew works', s.run.aboard === 5 && s.stage === 'fight', JSON.stringify({ run: s.run, stage: s.stage }));
-  await page.evaluate(() => { const g = window.__game, r = Missions.run; for (let k = 0; k < r.flP.length && !r.end; k++) { const p = r.flP[k]; r.autoSpray = new THREE.Vector3(p[0], p[1], p[2]); for (let i = 0; i < 40 && r.fl[k] > 0; i++) g.sim(0.25, false, 0, 0, 0); } r.autoSpray = null; });
+  T.check('every car: everyone aboard; before the lorry: the crew sprays (the pad over the road, the driving controls kept)', s.run.aboard === 5 && s.pad && s.drive && s.touch, JSON.stringify({ run: s.run, pad: s.pad, drive: s.drive, touch: s.touch }));
+  const tOut = await page.evaluate(() => { const g = window.__game, r = Missions.run, L = r.lorry, t0 = r.t; r.autoSpray = new THREE.Vector3(L.x, L.y + 2, L.z); for (let i = 0; i < 60 && r.f > 0 && !r.end; i++) g.sim(0.25, false, 0, 0, 0); r.autoSpray = null; return r.t - t0; });
+  T.check('the water on the lorry: out in about 5 s', tOut > 3 && tOut < 7, tOut.toFixed(2));
   s = await st(page);
-  T.check('the lorry\'s fire out: driving again, the smoke thinner', s.run.f === 0 && s.stage === 'drive' && s.rows[0] === 'VIDLJIVOST V DIMU 30 m', JSON.stringify({ run: s.run, rows: s.rows }));
+  T.check('the lorry\'s fire out: the pad gone, the smoke thinner', s.run.f === 0 && !s.pad && s.rows[0] === 'VIDLJIVOST V DIMU 30 m', JSON.stringify({ run: s.run, rows: s.rows }));
   await page.evaluate(() => { const g = window.__game, r = Missions.run; for (let k = 0; k < 600 && !r.end; k++) g.sim(0.1, true); });
   await page.waitForFunction(() => document.getElementById('mis-res'), null, { timeout: 20000 });
   s = await st(page);

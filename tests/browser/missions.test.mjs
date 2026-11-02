@@ -22,7 +22,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=vaja', {}, { width: 360, height: 640 }, { touch: true });
     await ready(page); await page.waitForTimeout(400);
     let s = await st(page);
-    T.check('?misija=vaja: the mission\'s race on Mulholland, alone, one run', s.track === 'mulholland' && s.cars === 1 && s.tt && s.cur === 'vaja' && s.screen === 'none', JSON.stringify({ track: s.track, cars: s.cars, cur: s.cur, screen: s.screen }));
+    T.check('?misija=vaja: the mission\'s race in the Santa Monica Mountains, alone, one run', s.track === 'mulholland' && s.cars === 1 && s.tt && s.cur === 'vaja' && s.screen === 'none', JSON.stringify({ track: s.track, cars: s.cars, cur: s.cur, screen: s.screen }));
     T.check('the panel: the card, the clock at 03:00, the gauges, the hint; the intro card over the start', s.hudMis && s.card === 'Vaja: na vrh' && s.clock === '03:00' && s.rows.length === 2 && /^DO CILJA/.test(s.rows[0]) && /Vozi hitro/.test(s.hint) && s.intro, JSON.stringify(s));
     await page.evaluate(() => window.__game.sim(20, true));
     s = await st(page);

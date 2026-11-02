@@ -1,7 +1,7 @@
 // NEW VERSION · TEST 1: the rescue helicopter flies (js/nvheli.js; the user's choice in the pictures, heli8: version 2, red with a white cross).
 // Parked on the rescue base's H, its back ramp down; the car drives up into the bay: see-through, the nose open, the menu of three (WATER RESCUE and
 // FIREFIGHTING locked, FREE FLIGHT); no choice: out over the front ramp. FREE FLIGHT: solid in 1 s (the car not seen), the rotor on, up to its height;
-// the gas, the brake and the steering fly it; PRISTANI HELIKOPTER over the pedals (DVIGNI SE on the way down), the height and the speed top left; not on
+// the gas flies it on and up, the brake slows it and takes it down (no button), the steering turns it, the height and the speed top left; not on
 // the water nor on a roof; landed, the ramps open and the car drives out; the helicopter flies home to its H by itself. On its side the pause at the edge.
 //   node tests/browser/nvheli.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -50,49 +50,52 @@ try {
     P.place(s.x + lx * 12, s.z + lz * 12, Math.atan2(-lz, -lx)); P.vx = P.vz = 0; g.sim(3, false, 0, 0.6); return { side: (P.x - s.x) * lx + (P.z - s.z) * lz, y: P.y - s.y }; });
   T.check('driven at its side: the car stops against the shell (outside it, on the ground)', wl.side > 2.4 && wl.y < 0.3, JSON.stringify(wl));
 
-  // 4. in again, FREE FLIGHT: in 1 s solid (the car not seen), the ramps and the doors shut, the rotor on; PRISTANI over the pedals, the height and the speed
+  // 4. in again, FREE FLIGHT: in 1 s solid (the car not seen), the ramps and the doors shut, the rotor on; no button, the height and the speed
   await driveIn(); await frames(4); await tap('#nvh .row[data-a="free"]'); await sim(1.05); await frames(8);
   const s3 = await st(), u3 = await ui();
   T.check('FREE FLIGHT: in 1 s solid round the car (not seen), the ramps and the doors shut, the rotor turning, lifting off', s3.mode === 'air' && s3.carry && s3.xr === 0 && s3.fR === 0 && s3.fF === 0 && s3.dr === 0 && s3.w > 20 && !s3.car.seen && !u3.menu, JSON.stringify(s3));
-  T.check('PRISTANI HELIKOPTER over the pedals (from the brake\'s left edge to the gas\'s right edge), VIŠINA and HITROST top left', u3.btn && /PRISTANI/.test(u3.btnT) && /HELIKOPTER/.test(u3.btnT) && u3.btnR && u3.brake && u3.gas && Math.abs(u3.btnR.l - u3.brake.l) < 2 && Math.abs(u3.btnR.r - u3.gas.r) < 2 && u3.btnR.b <= Math.min(u3.brake.t, u3.gas.t) && u3.info && /VIŠINA/.test(u3.infoT) && /HITROST/.test(u3.infoT), JSON.stringify(u3));
+  T.check('no PRISTANI / DVIGNI SE button (the gas and the brake fly it up and down); VIŠINA and HITROST top left', !u3.btn && u3.info && /VIŠINA/.test(u3.infoT) && /HITROST/.test(u3.infoT), JSON.stringify(u3));
 
   // 5. up to its height, the car riding in the bay
   await sim(7);
   const s4 = await st();
   T.check('up at once to its height (over 20 m), the car in the bay with it', s4.alt > 20 && Math.abs(s4.car.y - (s4.y + 1.25)) < 0.2 && Math.hypot(s4.car.x - s4.x, s4.car.z - s4.z) < 1.5, JSON.stringify({ alt: s4.alt, y: s4.y, car: s4.car }));
 
-  // 6. the gas flies it on, the steering turns it (right: clockwise seen from above, the heading up), the brake slows it
+  // 6. the gas flies it on and up, the steering turns it (right: clockwise seen from above, the heading up), the brake slows it and takes it down
   await sim(5, 0, 1); const s5 = await st(); await sim(2, 1, 1); const s6 = await st(); await frames(4); const u6 = await ui(); await sim(3, 0, 0, 1); const s7 = await st();
-  T.check('the gas: over 90 km/h in 5 s; steering right turns it right; the brake slows it', s5.vf * 3.6 > 90 && Math.sin(s6.psi - s5.psi) > 0.5 && s7.vf < s6.vf * 0.5 && +((u6.infoT.match(/HITROST\D*(\d+)/) || [])[1] || 0) > 50, JSON.stringify({ v5: s5.vf * 3.6, turn: s6.psi - s5.psi, v7: s7.vf * 3.6, info: u6.infoT }));
+  T.check('the gas: over 90 km/h in 5 s and up; steering right turns it right; the brake slows it and takes it down', s5.vf * 3.6 > 90 && s5.alt > s4.alt + 5 && Math.sin(s6.psi - s5.psi) > 0.5 && s7.vf < s6.vf * 0.5 && s7.y < s6.y - 3 && +((u6.infoT.match(/HITROST\D*(\d+)/) || [])[1] || 0) > 50, JSON.stringify({ v5: s5.vf * 3.6, a4: s4.alt, a5: s5.alt, turn: s6.psi - s5.psi, v7: s7.vf * 3.6, y6: s6.y, y7: s7.y, info: u6.infoT }));
 
-  // 7. not on the water: over the sea PRISTANI stops it 4 m over the water and says so; not on a roof either (the station REŠEVANJE)
+  // 7. not on the water: over the sea the brake stops it 4 m over the water and says so; not on a roof either (the station REŠEVANJE)
   const sea = await page.evaluate(() => { let b = null; for (let x = 380; x > 60 && !b; x -= 10) for (let z = -350; z < 280 && !b; z += 10) { if ([[0, 0], [12, 12], [-12, 12], [12, -12], [-12, -12]].every(([dx, dz]) => __H3.water.region(x + dx, z + dz) && __H3.water.bedAt(x + dx, z + dz).y < __H3.water.WL - 0.5)) b = [x, z]; } return b; });
-  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), sea); await tap('#nvh-btn'); await sim(14); await frames(4);
+  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), sea); await sim(16, 0, 0, 1); await frames(4);
   const s8 = await st(), u8 = await ui();
-  T.check('over the sea: down to 4 m over the water and no further (Na vodi ne moreš pristati.)', s8.mode === 'air' && s8.want === 'down' && s8.wet === 'wet' && Math.abs(s8.alt - 4) < 0.7 && /vodi/.test(u8.note), JSON.stringify({ sea, mode: s8.mode, alt: s8.alt, note: u8.note }));
-  await page.evaluate(() => NVHeli.tp(-62, 70)); await sim(8);
+  T.check('over the sea: down to 4 m over the water and no further (Na vodi ne moreš pristati.)', s8.mode === 'air' && Math.abs(s8.alt - 4) < 0.7 && /vodi/.test(u8.note), JSON.stringify({ sea, mode: s8.mode, alt: s8.alt, note: u8.note }));
+  await page.evaluate(() => NVHeli.tp(-62, 70)); await sim(8, 0, 0, 1);
   const s9 = await st(), roof = await page.evaluate(() => NVHeli.topAt(-62, 70) - __H3.ground(-62, 70));
-  T.check('over the station REŠEVANJE: it stays 3 m over the roof, not landed', s9.mode === 'air' && roof > 5 && s9.blk != null && s9.y > s9.blk + 2.3, JSON.stringify({ roof, y: s9.y, blk: s9.blk, mode: s9.mode }));
+  T.check('over the station REŠEVANJE: it stays 3 m over the roof, not landed', s9.mode === 'air' && roof > 5 && s9.y - s9.home.y > roof + 2.3, JSON.stringify({ roof, y: s9.y, blk: s9.blk, mode: s9.mode }));
 
   // (a wood: some 20 m square with something over 3 m high at most of its points, away from the base's buildings)
   const tree = await page.evaluate(() => { const H = __H3, hi = (x, z) => NVHeli.topAt(x, z) - H.ground(x, z) > 3;
     for (let r = 80; r < 320; r += 9) for (let a = 0; a < 6.28; a += 0.11) { const x = -95 + r * Math.cos(a), z = 95 + r * Math.sin(a); if (Math.abs(x) > 330 || z < -380 || z > 300 || H.water.region(x, z) || !hi(x, z)) continue;
       let n = 0; for (let dx = -10; dx <= 10; dx += 5) for (let dz = -10; dz <= 10; dz += 5) if (hi(x + dx, z + dz)) n++; if (n >= 8) return [x, z]; } return null; });
-  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), tree); await sim(8);
+  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), tree); await sim(8, 0, 0, 1);
+  const treeTop = await page.evaluate((p) => NVHeli.topAt(p[0], p[1]), tree);   // (the tree's top: after the brake the game's own frames may hold it there, the block forgotten)
   const s9b = await st();
-  T.check('over a wood: no landing among the trees either', s9b.mode === 'air' && s9b.blk != null && s9b.y > s9b.blk + 2.3, JSON.stringify({ tree, y: s9b.y, blk: s9b.blk, mode: s9b.mode }));
+  T.check('over a wood: no landing among the trees either', s9b.mode === 'air' && s9b.y > treeTop + 2.3, JSON.stringify({ tree, treeTop, y: s9b.y, mode: s9b.mode }));
 
-  // 8. DVIGNI SE on the way down: up again; PRISTANI over open ground: it lands, the rotor stops, the ramps open, the car seen and driven out
+  // 8. the gas on the way down: up again; the brake over open ground: it lands, the rotor stops, the ramps open, the menu again; the gas then drives
+  // the car out (no lift)
   const open = await page.evaluate(() => { const H = __H3; for (let r = 30; r < 200; r += 10) for (let a = 0; a < 6.28; a += 0.2) { const x = -95 + r * Math.cos(a), z = 95 + r * Math.sin(a);
     let ok = H.ground(x, z) > 0.2; for (let dx = -10; dx <= 10 && ok; dx += 5) for (let dz = -10; dz <= 10 && ok; dz += 5) ok = NVHeli.topAt(x + dx, z + dz) - H.ground(x + dx, z + dz) < 0.3; if (ok) return [x, z]; } return null; });
-  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), open); await sim(1); await frames(4); const u10 = await ui(); const y0 = (await st()).y;
-  await tap('#nvh-btn'); await sim(3); const s10 = await st();
-  T.check('on the way down the button says DVIGNI SE; a tap: up again', /DVIGNI SE/.test(u10.btnT) && s10.y > y0 + 1 && s10.want === 'up', JSON.stringify({ open, btn: u10.btnT, y0, y: s10.y }));
-  await tap('#nvh-btn'); for (let k = 0; k < 30 && (await st()).mode !== 'land'; k++) await sim(1);
+  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), open); await sim(1, 0, 0, 1); const y0 = (await st()).y;
+  await sim(3, 0, 1); const s10 = await st();
+  T.check('on the way down the gas takes it up again', s10.y > y0 + 1 && s10.mode === 'air', JSON.stringify({ open, y0, y: s10.y }));
+  await page.evaluate((p) => NVHeli.tp(p[0], p[1]), open);   // (back over the open ground: the gas took it forward)
+  for (let k = 0; k < 40 && (await st()).mode !== 'land'; k++) await sim(1, 0, 0, 1);
   const s11 = await st(); await sim(6); await frames(6); const s12 = await st(), u12 = await ui();
-  T.check('PRISTANI over open ground: it lands (on the ground), the rotor stops, the ramps open, the car seen again; DVIGNI SE shown', s11.mode === 'land' && s11.alt === 0 && s12.w === 0 && s12.fR === 1 && s12.fF === 1 && !s12.carry && s12.car.seen && /DVIGNI SE/.test(u12.btnT), JSON.stringify({ s11: [s11.mode, s11.alt], w: s12.w, fR: s12.fR, fF: s12.fF, carry: s12.carry, seen: s12.car.seen, btn: u12.btnT }));
+  T.check('the brake over open ground: it lands (on the ground), the rotor stops, the ramps open, the car seen again, the menu again', s11.mode === 'land' && s11.alt === 0 && s12.w === 0 && s12.fR === 1 && s12.fF === 1 && !s12.carry && s12.car.seen && s12.mode === 'open' && u12.menu, JSON.stringify({ s11: [s11.mode, s11.alt], w: s12.w, fR: s12.fR, fF: s12.fF, carry: s12.carry, seen: s12.car.seen, mode: s12.mode, menu: u12.menu }));
   await sim(4, 0, 0.6); await frames(4); const s13 = await st(), u13 = await ui();
-  T.check('the car drives out over the front ramp; the button and the height gone', s13.mode === 'park' && !s13.cin && s13.car.y < s13.y + 0.3 && !u13.btn && !u13.info, JSON.stringify({ mode: s13.mode, car: s13.car, btn: u13.btn, info: u13.info }));
+  T.check('the gas: the car drives out over the front ramp, the helicopter stays on the ground; the height gone', s13.mode === 'park' && s13.alt === 0 && s13.y === s11.y && !s13.cin && s13.car.y < s13.y + 0.3 && !u13.info && !u13.menu, JSON.stringify({ mode: s13.mode, alt: s13.alt, car: s13.car, info: u13.info }));
 
   // 9. nobody in it, the car away: it flies home to its H by itself and parks as before
   await page.evaluate(() => { const P = __game.race.player; P.place(60, -150, 0); P.vx = P.vz = 0; });
