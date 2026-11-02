@@ -1089,8 +1089,13 @@
           if (e[0] === 0 && e[5] === 0) continue; if (!inside(x, z) || A.clearance(x, z) < 0.5) continue; m.setMatrixAt(k, ZERO); ch = true; n++; }
         if (ch) m.instanceMatrix.needsUpdate = true;
       } else if (m.isMesh && ((m.name === 'life' && m.matrixWorld.equals(IDENT)) || (m.parent && m.parent.name === 'crowds' && m.material && m.material.blending === THREE.MultiplyBlending))) {   // the glades' merged things and animals (in world space: not a live animal's own mesh, its shape shared by its kind), the crowd's shade on the grass
-        const g = m.geometry, P = g.attributes.position; if (!P || g.index) return; let ch = false;
-        for (let t = 0; t + 2 < P.count; t += 3) { const x = P.getX(t), z = P.getZ(t); if (!inside(x, z) || !inside(P.getX(t + 1), P.getZ(t + 1)) || !inside(P.getX(t + 2), P.getZ(t + 2)) || A.clearance(x, z) < 0.5) continue;
+        const g = m.geometry, P = g.attributes.position, AL = g.attributes.aL, AM = g.attributes.aM; if (!P || g.index) return; let ch = false;
+        for (let t = 0; t + 2 < P.count; t += 3) {
+          if (AM && AM.getX(t) >= 50) {   // (an animal of the herds, js/world-zivali.js: its vertices in its own frame, its place aL: all of it out where it stands inside)
+            const x = AL.getX(t), z = AL.getZ(t); if (!inside(x, z) || A.clearance(x, z) < 0.5) continue;
+            P.setXYZ(t + 1, P.getX(t), P.getY(t), P.getZ(t)); P.setXYZ(t + 2, P.getX(t), P.getY(t), P.getZ(t)); ch = true; n++; continue;
+          }
+          const x = P.getX(t), z = P.getZ(t); if (!inside(x, z) || !inside(P.getX(t + 1), P.getZ(t + 1)) || !inside(P.getX(t + 2), P.getZ(t + 2)) || A.clearance(x, z) < 0.5) continue;
           P.setXYZ(t + 1, x, P.getY(t), z); P.setXYZ(t + 2, x, P.getY(t), z); ch = true; n++; }
         if (ch) P.needsUpdate = true;
       }
