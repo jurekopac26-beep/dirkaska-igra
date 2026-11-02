@@ -28,6 +28,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
 | 18 | Zgodovina napak | končano |
+| 19 | Beležka v Označi | končano (veja `orodje-za-napake/belezka`) |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -78,6 +79,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 
 - **Označi** ustavi posnetek. Ležeče je paleta navpično ob levem robu, pokonci vrstica nad časovnico. V paleti so svinčnik, 6 barv, razveljavi in radirka.
 - Ko je krog sklenjen, se tik ob njem odpre **oblaček** v isti barvi in vanj se piše. Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblaček se da premakniti.
+- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 19).
 - **Dodaj k zbirki** shrani trenutek (sličico, oznake, zapise) in na časovnici postavi zastavico.
 
 ### Slika in pošiljanje
@@ -116,7 +118,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 #2 00:41.327 K2 s=1284m rdeča »Sledi gum sredi ravnine« v_krogu=[sledi_gum, cesta:412-431]
 ```
 
-`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10.
+`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 19) je vrstica pred barvami, brez `v_krogu`: `#1 00:18.2 K1 s=412m beležka »Ves zaslon utripa / Predlog: manj megle«` (vrstice zapisa so združene z » / «).
 
 ### Zastavica med dirko
 
@@ -353,6 +355,17 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Ob vsaki datoteki** posodobi oznake skript v `index.html`, `sw.js` in `tools/stamp.js`.
 - **Po korakih:** nekaj prog na pull request. Svet mora ostati enak (`tests/browser/world.test.mjs`, `perf`, `golden` brez novih referenc).
 - **Kazalo:** posodobi tabelo prog v `docs/kazalo.md`.
+
+### Sklop 19 · Beležka v Označi — ~1 h · 1. 11. 2026
+
+- **Naročilo uporabnika** (1. 11. 2026, računalnik: Windows, Edge, 1920 × 1008): »spremeni v urejevalniku da je spodaj desno kjer sem oznacil vedno odprta belezka kjer pisem notri napake, predloge in vprasanja. naprimer ko uporabnik klikne uredi in se odpre to okno kjer oznacim napako nato se odpre okno, je okno ze spodaj odprto in mi ni treba z misko kliknit na belezko da po njej lahko pisem, ampak vse kar pisem na tipkovnico se tam vpisuje. da shranim sliko mi ni potrebno oznaciti nic na sliki, saj kasne stvari zajemajo cel ekran«. Veja `orodje-za-napake/belezka`.
+- **Narejeno:**
+  - **Beležka** (`#nk-note`): v Označi je spodaj desno nad sliko ves čas odprta (nad časovnico in ZDAJ, desno od palete), večja od oblačka (na 1920 × 1008 okoli 540 × 220 px, pisava 19 px; na telefonu 240 px široka, pisava 14 px). Oblački ostanejo nad njo; nov oblaček se postavi nad beležko, kjer je prostor.
+  - **Tipkovnica:** na računalniku je kazalec v beležki takoj ob odprtju; po risanju in tapu na orodje se vrne vanjo (razen ko nov oblaček dobi svoj kazalec, kot doslej); črka, natipkana kjer koli med označevanjem, gre v beležko. Tipke igre (O, I, F …) med pisanjem ne delujejo, Escape umakne kazalec kot v oblačku. Na telefonu (dotik) se tipkovnica sama ne odpre: beležka je vidna, piše se po dotiku.
+  - **Brez oznake:** trenutek se doda k zbirki in deli tudi samo s sliko in zapisom beležke. Zapri vpraša tudi, če je v beležki zapis (»Zavrzi zapis?«).
+  - **Besedilo in slika:** zapis beležke je vrstica `#n čas Kkrog s=…m beležka »…«` pred vrsticami barv (brez `v_krogu`; vrstice zapisa z » / «, tudi v oblačkih, da je vsak zapis ena vrstica). Na sliki trenutka je beležka narisana ob desnem in spodnjem robu kot na zaslonu, visoka po zapisu (do 9 vrstic), s pisavo, berljivo tudi pri sliki z računalnika.
+  - **Testi:** `tests/browser/napake.test.mjs` (beležka odprta in v fokusu, tipkanje brez klika, O in I sta črki, kazalec nazaj po barvi in črti, Escape in ponovno tipkanje, zapis v trenutku in besedilu), `napake-slika.test.mjs` (četrti trenutek brez oznake, samo z beležko: besedilo in temna beležka na sliki; moder krog nad beležko).
+  - **Opomba (moje odločitve):** beležka se ne premika in ne skrije (uporabnik jo je postavil spodaj desno), zato se krog ne more začeti na njej, lahko pa gre čez njo. Zapis je za en trenutek: ob naslednjem Označi je beležka prazna.
 
 ### Odloženo
 

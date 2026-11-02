@@ -6,6 +6,8 @@
 // picture, the notes) and puts a flag on the timeline; the flag's tap: the replay there; the collection kept through Nazaj v dirko.
 // Zgodovina napak (sklop 18): from the marking's bar and the choice; kept after Deli (the small picture and the text without Obdrži tudi
 // slike v igri); its state Neposlano → Poslano → Popravljeno → Zaprto (by hand), shared again; on its side and upright; the last 100, 20 with pictures.
+// Beležka (the notebook): always open bottom right over the picture, the keyboard in it with no click (a computer), back in it after
+// drawing and a tool, a letter typed anywhere goes in it, Escape takes the cursor out; its note with the moment, first in the text.
 //   node tests/browser/napake.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -40,6 +42,13 @@ try {
   T.check('"Označi": the replay stands (its time the same over 6 frames), the marking on with the pencil in red', s0.on && !a0.play && a1.t === a0.t && s0.tool === 'pen' && s0.col === 0, JSON.stringify({ a0, a1, on: s0.on, tool: s0.tool }));
   T.check('on its side (640 × 360): the palette (pencil, 6 colours, undo, eraser) down the left edge inside the screen, the timeline beside it; Dodaj k zbirki and Zapri for the replay\'s buttons; the drawing over the whole picture',
     L.n === 9 && L.col && L.inside && L.lineRight && L.bar && !L.rpBar && !L.top && L.cv && L.cvFull, JSON.stringify(L));
+  // the notebook: open bottom right, bigger than a bubble, the keyboard in it at once (its O and I letters: not Prikaz za razvijalca, not Nazaj v dirko)
+  const B0 = (await nk()).belezka, bt0 = await Q.evaluate(() => Math.min(...[...document.querySelectorAll('#replay-ui .rp-bot, #replay-ui .rp-zdaj')].map(e => e.getBoundingClientRect()).filter(r => r.height).map(r => r.top)));
+  T.check('the notebook (Beležka) open bottom right over the picture (clear of the timeline and ZDAJ, inside the screen), bigger than a bubble, the cursor in it',
+    B0.vis && B0.focus && B0.text === '' && B0.x > L.W / 2 && B0.x + B0.w <= L.W && B0.y >= 0 && B0.y + B0.h <= bt0 && B0.w > 220 && B0.h > 84 && B0.fs >= 14, JSON.stringify({ B0, bt0 }));
+  await Q.keyboard.type('Nebo utripa. Ovinek I'); await qf(1);
+  const B1 = await nk(), rB = await rp(), dv = await Q.evaluate(() => Napake.nast.dev);
+  T.check('typed with no click: in the notebook (its O and I letters: no Prikaz za razvijalca, the replay stays)', B1.on && B1.belezka.text === 'Nebo utripa. Ovinek I' && dv === 0 && !!rB && rB.here, JSON.stringify({ text: B1.belezka.text, dv, rp: rB }));
 
   // a red loop: its bubble beside it, the keyboard writing in it (I is a letter here)
   await loop(250, 150, 50); await qf(1);
@@ -56,12 +65,18 @@ try {
   await tap('#nk-pal [data-c="1"]'); await line(380, 70, 470, 110);
   const s3 = await nk();
   T.check('an orange line (open): drawn, no bubble for it', s3.col === 1 && s3.strokes.length === 2 && !s3.strokes[1].loop && s3.strokes[1].c === 1 && s3.bubbles.length === 1, JSON.stringify(s3.strokes));
+  T.check('a colour tapped and a line drawn: the keyboard back in the notebook', s3.belezka.focus, JSON.stringify(s3.belezka));
   await tap('#nk-pal [data-c="3"]'); await loop(140, 225, 30); await Q.keyboard.type('Tekmeci v koloni');
   await tap('#nk-pal [data-c="0"]'); await loop(560, 60, 25); await qf(1);
   const s4 = await nk();
   T.check('a blue loop: a blue bubble with its note; a second red loop: no second red bubble (one colour, one note)',
     s4.strokes.length === 4 && s4.strokes.every((s, k) => s.loop === (k !== 1)) && s4.bubbles.length === 2 && s4.bubbles.filter(b => b.c === 0).length === 1 && s4.notes[3] === 'Tekmeci v koloni' && s4.notes[0] === s2.notes[0],
     JSON.stringify({ strokes: s4.strokes, bubbles: s4.bubbles.map(b => [b.c, b.text]) }));
+  // Escape: the cursor out of the notebook (the marking stays); a letter typed then goes into it again
+  await Q.keyboard.press('Escape'); const B2 = await nk();
+  await Q.keyboard.type(' Predlog: manj megle?'); const B3 = await nk();
+  T.check('Escape: the cursor out of the notebook, the marking stays; typing again: in the notebook (no click)',
+    B2.on && !B2.belezka.focus && B3.on && B3.belezka.focus && B3.belezka.text === 'Nebo utripa. Ovinek I Predlog: manj megle?', JSON.stringify({ B2: B2.belezka, B3: B3.belezka }));
 
   // undo: the second red loop, then the blue one (its bubble gone, its note kept for an undo of the eraser ...)
   await tap('#nk-pal [data-nk="undo"]'); const u1 = await nk();
@@ -92,6 +107,9 @@ try {
   T.check('"Dodaj k zbirki": the marking off, the replay\'s buttons back; the moment kept (its time, lap 1, metres from the start, the picture 1280 px, the marks, the notes by colour)',
     !k1.on && (await vis('#replay-ui .rp-bar')) && !(await vis('#nk-bar')) && k1.zbirka.length === 1 && Math.abs(it.t - a0.t) < 1e-6 && it.lap === 1 && it.s > 0 && it.s < 6300 && !!it.img && Math.max(...it.img) === 1280 &&
     it.strokes === 2 && it.zapisi.length === 1 && it.zapisi[0] === 'rdeča: ' + s2.notes[0], JSON.stringify(it));
+  const rl = (await Q.evaluate(() => Napake.porocilo())).split('\n').filter(l => /^#1 /.test(l));
+  T.check('the notebook\'s note with the moment, first in the text (#1 time K1 s=…m beležka »…«), then the bubble\'s (rdeča »…« v_krogu=[…])',
+    it.bel === B3.belezka.text && rl.length === 2 && /^#1 \d\d:\d\d\.\d{3} K1 s=\d+m beležka »Nebo utripa\. Ovinek I Predlog: manj megle\?«$/.test(rl[0]) && rl[1].includes(' rdeča »' + s2.notes[0] + '« v_krogu=['), JSON.stringify({ bel: it.bel, rl }));
   T.check('a flag "1" on the timeline where the moment is', fl.length === 1 && fl[0].n === '1' && Math.abs(fl[0].left - want) < 0.2, JSON.stringify({ fl, want }));
 
   // upright (360 × 640): the palette a row above the timeline, the bar below it

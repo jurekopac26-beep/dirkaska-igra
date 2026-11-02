@@ -39,7 +39,10 @@ const Napake = (function () {
   function init(hooks) {
     G = hooks; const R = $('replay-ui'); if (!R || cv) return;
     cv = mk('canvas'); cv.id = 'nk-cv'; R.insertBefore(cv, R.firstChild); cx = cv.getContext('2d');
-    const bubs = mk('div'); bubs.id = 'nk-bubs'; cv.after(bubs);
+    // the notebook (Beležka): always open in Označi, bottom right over the picture; the bubbles over it
+    const note = mk('div', 'nk-note', '<div class="nk-note-h"><b>Beležka</b><span>napake · predlogi · vprašanja</span></div><textarea placeholder="Kaj je narobe? Predlog, vprašanje …" aria-label="Beležka"></textarea>');
+    note.id = 'nk-note'; cv.after(note); pisi(note.querySelector('textarea'), (v) => { M.bel = v; });
+    const bubs = mk('div'); bubs.id = 'nk-bubs'; note.after(bubs);
     // Označi in the replay's bar (before Foto); on a narrow screen the pencil alone, as ★
     const on = mk('button', 'nk-on', '&#9998;<span class="rp-wd"> Označi</span>'); on.id = 'nk-on'; on.setAttribute('aria-label', 'Označi');
     $('rp-photo').before(on); on.addEventListener('click', (e) => { e.preventDefault(); open(); });
@@ -53,7 +56,11 @@ const Napake = (function () {
     for (const box of [pal, bar]) box.addEventListener('click', (e) => { const b = e.target.closest('[data-nk]'); if (!b) return; e.preventDefault(); act(b.dataset.nk, b); });
     cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     cv.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('resize', () => { if (M) { fit(); draw(); bubbles(); } });
+    window.addEventListener('resize', () => { if (M) { fit(); draw(); bubbles(); belPos(); } });
+    window.addEventListener('keydown', (e) => {   // (a computer, Označi: a letter typed anywhere goes into the notebook, not to the game)
+      const t = e.target; if (!M || coarse() || e.ctrlKey || e.metaKey || e.altKey || String(e.key || '').length !== 1 || (t && (/^(TEXTAREA|INPUT|SELECT)$/.test(t.tagName) || t.isContentEditable)) || document.querySelector('#nk-zg, #nk-dlg, #nk-set')) return;
+      e.stopPropagation(); belFocus();
+    }, true);
     // Deli (the collection, at any time) beside Zastavice's Prejšnja / Naslednja
     const deli = mk('button', 'nk-deli off', '&#8679; Deli'); deli.id = 'nk-deli'; deli.setAttribute('aria-label', 'Deli zbirko napak');
     const row2 = R.querySelector('.rp-row2'); if (row2) row2.appendChild(deli);
@@ -69,9 +76,10 @@ const Napake = (function () {
   function open() {
     const P = G && G.replay(); if (!P || M || !N.on || (P.hl && P.hl.auto)) return;
     G.stop();   // (the replay stands: the marks belong to this picture)
-    M = { strokes: [], hist: [], notes: {}, pos: {}, tool: 'pen', col: 0, cur: null, t: P.t };
+    M = { strokes: [], hist: [], notes: {}, pos: {}, bel: '', tool: 'pen', col: 0, cur: null, t: P.t };
     ask = 0; $('replay-ui').classList.add('mark'); fit(); tools(); draw(); bubbles();
-    G.toast('Obkroži, kar je narobe. Sklenjen krog odpre oblaček za zapis.', 3200);
+    belTa().value = ''; belPos(); belFocus();   // (a phone: its keyboard only at a tap on the notebook)
+    G.toast((coarse() ? 'Zapis v beležko spodaj desno.' : 'Kar tipkaj: zapis gre v beležko.') + ' Obkroži, kar je narobe: sklenjen krog odpre oblaček.', 3200);
   }
   function close() {
     if (!M) return; M = null; ask = 0;
@@ -88,12 +96,12 @@ const Napake = (function () {
     else if (a === 'add') { add(); return; }
     else if (a === 'zg') { zgodovina(); return; }
     else if (a === 'close') {   // (marks on the picture: a second tap within 3 s throws them away)
-      if (M.strokes.length && performance.now() - ask > 3000) { ask = performance.now(); closeBtn(); setTimeout(closeBtn, 3100); return; }
+      if ((M.strokes.length || M.bel.trim()) && performance.now() - ask > 3000) { ask = performance.now(); closeBtn(); setTimeout(closeBtn, 3100); return; }
       close(); return;
     }
-    tools();
+    tools(); belFocus();
   }
-  function closeBtn() { const b = document.querySelector('#nk-bar .nk-close'); if (!b) return; const warn = !!M && performance.now() - ask < 3000; b.textContent = warn ? 'Zavrzi oznake?' : 'Zapri'; b.classList.toggle('warn', warn); }
+  function closeBtn() { const b = document.querySelector('#nk-bar .nk-close'); if (!b) return; const warn = !!M && performance.now() - ask < 3000; b.textContent = warn ? (M.strokes.length ? 'Zavrzi oznake?' : 'Zavrzi zapis?') : 'Zapri'; b.classList.toggle('warn', warn); }
   function tools() {
     const pal = $('nk-pal'); if (!pal || !M) return;
     for (const b of pal.querySelectorAll('[data-nk]')) {
@@ -135,7 +143,7 @@ const Napake = (function () {
       const s = C.s; s.loop = isLoop(s.p); M.strokes.push(s); M.hist.push({ add: s });
       if (s.loop) { const had = M.strokes.some(o => o !== s && o.loop && o.c === s.c); if (!had) place(s); bubbles(had ? -1 : s.c, had ? s.c : -1); }   // (a new bubble to write in; or the colour's bubble shown again)
     }
-    tools(); draw();
+    tools(); draw(); belFocus();
   }
   // a closed loop: its end back by its start (or past it), and big enough to circle something
   function isLoop(pts) {
@@ -189,7 +197,8 @@ const Napake = (function () {
   function place(s) {   // beside the loop: on its right, or its left where the right has no room; level with its top
     const b = box(s), [bw, bh] = bsize(), R = room();
     let x = b.x1 + 12; if (x + bw > R.r) x = b.x0 - 12 - bw; if (x < R.l) x = clamp(b.x1 + 12, R.l, R.r - bw);
-    const y = clamp(b.y0, R.t, Math.max(R.t, R.b - bh));
+    let y = clamp(b.y0, R.t, Math.max(R.t, R.b - bh));
+    const q = $('nk-note').getBoundingClientRect(); if (q.width && x + bw > q.left && y + bh > q.top - 8 && q.top - 8 - bh >= R.t) y = q.top - 8 - bh;   // (clear of the notebook: above it)
     M.pos[s.c] = [x / W, y / H];
   }
   function bubbles(focus = -1, pulse = -1) {
@@ -201,16 +210,29 @@ const Napake = (function () {
       if (!el) {
         el = mk('div', 'nk-bub', '<div class="nk-grip"><span>' + BARVE[c][0] + '</span><b>&#8942;&#8942;</b></div><textarea rows="2" placeholder="Kaj je narobe?"></textarea>');
         el.dataset.c = c; el.style.setProperty('--c', BARVE[c][1]); host.appendChild(el);
-        const ta = el.querySelector('textarea'); ta.value = M.notes[c] || '';
-        ta.addEventListener('input', () => { if (M) M.notes[c] = ta.value; });
-        ta.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') { e.preventDefault(); ta.blur(); } });   // (typing is not the game's keys)
-        ta.addEventListener('keyup', (e) => e.stopPropagation());
+        const ta = el.querySelector('textarea'); ta.value = M.notes[c] || ''; pisi(ta, (v) => { M.notes[c] = v; });
         grip(el, c);
       } else if (c === pulse) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
       const p = M.pos[c] || [0.5, 0.3], [bw, bh] = bsize(), R = room();
       el.style.width = bw + 'px'; el.style.left = clamp(p[0] * W, R.l, Math.max(R.l, R.r - bw)) + 'px'; el.style.top = clamp(p[1] * H, R.t, Math.max(R.t, R.b - bh)) + 'px';
     }
     if (focus >= 0) { const ta = host.querySelector('.nk-bub[data-c="' + focus + '"] textarea'); if (ta && !ta.value) try { ta.focus({ preventScroll: true }); } catch (_) { } }
+  }
+  function pisi(ta, set) {   // a note written: typing is not the game's keys (Escape: the cursor out)
+    ta.addEventListener('input', () => { if (M) set(ta.value); });
+    ta.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') { e.preventDefault(); ta.blur(); } });
+    ta.addEventListener('keyup', (e) => e.stopPropagation());
+  }
+  /* the notebook (Beležka): the moment's note (errors, suggestions, questions), with marks or without; a computer's keyboard writes in it at
+     once (and after drawing, a tool, a letter typed anywhere), a phone's only after a tap on it (its keyboard would cover the picture) */
+  const belTa = () => document.querySelector('#nk-note textarea');
+  function belPos() {   // its bottom clear of the timeline, its bar and ZDAJ over its end (its right edge, size: css)
+    let top = H; for (const e of document.querySelectorAll('#replay-ui .rp-bot, #replay-ui .rp-zdaj')) { const r = e.getBoundingClientRect(); if (r.height) top = Math.min(top, r.top); }
+    $('nk-note').style.bottom = Math.round(H - top + 8) + 'px';
+  }
+  function belFocus() {   // (not while a bubble is written in)
+    const ta = belTa(), a = document.activeElement; if (!M || coarse() || (a && a !== ta && /^(TEXTAREA|INPUT)$/.test(a.tagName))) return;
+    try { ta.focus({ preventScroll: true }); } catch (_) { }
   }
   function grip(el, c) {   // the bubble moved by its top
     const g = el.querySelector('.nk-grip'); let d = null;
@@ -232,8 +254,9 @@ const Napake = (function () {
     const vk = {}; for (const c of cols) { try { vk[c] = G.inLoops(M.strokes.filter(s => s.loop && s.c === c).map(s => s.p)); } catch (_) { vk[c] = []; } }   // (what each colour's loops circle: before the pictures, the camera as on the screen)
     let img = null; try { img = G.shot(SHOT); } catch (_) { }
     const gib = GIB.map(d => d ? small(G.shotAt(P.t + d, GIB_PX), GIB_PX) : null);   // (the motion: 0.6 s and 0.3 s before, 0.3 s after; the moment's own is its picture)
+    const bt = M.bel.trim(), nr = $('nk-note').getBoundingClientRect(), belezka = bt ? { text: bt, r: [nr.left / W, nr.top / H, nr.width / W, nr.height / H], fs: parseFloat(getComputedStyle(belTa()).fontSize) || 15 } : null;
     if (!Z.items.length) { Z.d0 = new Date(); Z.id = 'nk-' + Z.d0.getTime(); Z.meta = G.meta(); Z.map = G.map(); }
-    Z.items.push(Object.assign({ n, t: P.t, w: W, h: H, img, gib,
+    Z.items.push(Object.assign({ n, t: P.t, w: W, h: H, img, gib, belezka,
       strokes: M.strokes.map(s => ({ c: s.c, barva: BARVE[s.c][0], loop: s.loop, p: s.p.map(q => q.slice()) })),
       zapisi: cols.map(c => ({ c, barva: BARVE[c][0], text: (M.notes[c] || '').trim(), pos: (M.pos[c] || [0, 0]).slice(), v: vk[c] || [] })) }, info, { t: P.t }));
     close(); G.ui();
@@ -473,6 +496,7 @@ const Napake = (function () {
   const datum = (d) => d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
   const trenutkov = (n) => n + ' ' + (n % 100 === 1 ? 'trenutek' : n % 100 === 2 ? 'trenutka' : n % 100 === 3 || n % 100 === 4 ? 'trenutki' : 'trenutkov');
   // everything the report says: the moments, the race's flags not marked (where the player was), the race, the device, the text's lines
+  const ena = (t) => String(t).replace(/\s*\n\s*/g, ' / ');   // (a note in one line of the text: its lines joined by " / ")
   function porocilo() {
     if (!Z.meta && G) { Z.meta = G.meta(); Z.map = G.map(); }
     const items = Z.items, meta = Z.meta || {}, d0 = Z.d0 || new Date();
@@ -481,7 +505,8 @@ const Napake = (function () {
     const glava = 'RRA-NAPAKE v=' + (meta.ver || '?') + ' proga=' + (meta.track || '?') + ' način=' + (meta.mode || '?') + '/' + (meta.wx || '?') + ' naprava=' + (meta.dev || devKoda()) + ' ' + w + 'x' + h + (meta.file ? ' posnetek=' + meta.file.replace(/\s+/g, '_') : '');   // (an opened file: the device it was driven on)
     const vrstice = items.map(it => {
       const pre = '#' + it.n + ' ' + clock(it.t, 3) + ' K' + it.lap + ' s=' + it.s + 'm', car = it.car && it.car !== 'ti' ? ' avto=' + it.car : '';
-      return it.zapisi.length ? it.zapisi.map(z => pre + ' ' + z.barva + ' »' + z.text + '«' + car + ' v_krogu=[' + (z.v || []).join(', ') + ']') : [pre + ' (brez zapisa)' + car];
+      const l = (it.belezka ? [pre + ' beležka »' + ena(it.belezka.text) + '«' + car] : []).concat(it.zapisi.map(z => pre + ' ' + z.barva + ' »' + ena(z.text) + '«' + car + ' v_krogu=[' + (z.v || []).join(', ') + ']'));
+      return l.length ? l : [pre + ' (brez zapisa)' + car];   // (the notebook's note first, then the bubbles' by colour)
     });
     const zv = zast.map(f => '⚑' + f.n + ' ' + clock(f.t, 3) + ' K' + (f.lap || '?') + ' s=' + (f.s != null ? f.s : '?') + 'm (zastavica med dirko, ni označena)');
     // the tool's own flags confirmed (Potrdi): where the car of it was; the log: this race's notes and the visit's errors
@@ -585,6 +610,13 @@ const Napake = (function () {
       x.textBaseline = 'middle'; x.fillStyle = '#14181f'; x.font = '700 ' + 12 * k + 'px ' + FONT; x.fillText(z.barva, ax + padx, ay + hh / 2);
       x.fillStyle = '#fff'; x.font = '600 ' + fs + 'px ' + FONT; x.textBaseline = 'top'; ls.forEach((l, i) => x.fillText(l, ax + padx, ay + hh + 6 * k + i * fs * 1.3));
     }
+    const nb = it.belezka; if (!nb) return;   // the notebook: by its right and bottom edges as on the screen, as tall as its note (its letters readable on the sheet)
+    const fs = Math.max(nb.fs * k, bw / 64), hh = 1.3 * fs, pd = 0.6 * fs, ww = Math.min(0.5 * bw, Math.max(nb.r[2] * bw, 20 * fs));
+    x.font = '600 ' + fs + 'px ' + FONT; const ls = [].concat(...nb.text.split('\n').map(l => wrap(x, l || ' ', ww - 2 * pd))).slice(0, 9), h2 = hh + ls.length * 1.3 * fs + 1.2 * pd;
+    const ax = clamp(bx + (nb.r[0] + nb.r[2]) * bw - ww, bx, bx + bw - ww), ay = clamp(by + (nb.r[1] + nb.r[3]) * bh - h2, by, Math.max(by, by + bh - h2));
+    rr(x, ax, ay, ww, h2, 0.6 * fs); x.fillStyle = 'rgba(12,16,24,.9)'; x.fill(); x.lineWidth = Math.max(1.5, 2 * k); x.strokeStyle = 'rgba(255,255,255,.75)'; x.stroke();
+    x.textBaseline = 'middle'; x.fillStyle = 'rgba(255,255,255,.65)'; x.font = '700 ' + 0.8 * fs + 'px ' + FONT; x.fillText('beležka', ax + pd, ay + hh / 2 + 0.2 * pd);
+    x.fillStyle = '#fff'; x.font = '600 ' + fs + 'px ' + FONT; x.textBaseline = 'top'; ls.forEach((l, i) => x.fillText(l, ax + pd, ay + hh + i * 1.3 * fs));
   }
   // the field of the data (B): the track, the way it was raced and the weather, the version, the device, the screen, the date; the map
   // with the moments numbered (this sheet's bright) and the race's flags not marked (orange)
@@ -974,8 +1006,9 @@ const Napake = (function () {
     get stanje() {   // (the tests)
       const host = $('nk-bubs');
       return { on: !!M, tool: M ? M.tool : null, col: M ? M.col : -1, strokes: M ? M.strokes.map(s => ({ c: s.c, loop: s.loop, n: s.p.length })) : [], hist: M ? M.hist.length : 0, notes: M ? Object.assign({}, M.notes) : {},
+        belezka: (() => { const n = $('nk-note'), ta = belTa(); if (!n) return null; const r = n.getBoundingClientRect(); return { text: ta.value, focus: document.activeElement === ta, vis: getComputedStyle(n).display !== 'none', x: r.left, y: r.top, w: r.width, h: r.height, fs: parseFloat(getComputedStyle(ta).fontSize) }; })(),
         bubbles: host ? [...host.children].map(el => { const r = el.getBoundingClientRect(); return { c: +el.dataset.c, x: r.left, y: r.top, w: r.width, h: r.height, text: el.querySelector('textarea').value }; }) : [],
-        zbirka: Z.items.map(it => ({ n: it.n, t: it.t, lap: it.lap, s: it.s, img: it.img ? [it.img.width, it.img.height] : null, gib: (it.gib || []).map(g => g ? [g.width, g.height] : null), strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), v: it.zapisi.map(z => z.v) })),
+        zbirka: Z.items.map(it => ({ n: it.n, t: it.t, lap: it.lap, s: it.s, img: it.img ? [it.img.width, it.img.height] : null, gib: (it.gib || []).map(g => g ? [g.width, g.height] : null), strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), v: it.zapisi.map(z => z.v), bel: it.belezka ? it.belezka.text : '' })),
         tocke: tocke(), auto: $('nk-auto') ? $('nk-auto').innerText : null, slika: Z.out ? { files: Z.out.rec.files.map(f => ({ name: f.name, w: f.w, h: f.h, bytes: f.blob.size })), text: Z.out.rec.text, status: Z.out.rec.status } : null,
         dlg: (() => { const d = $('nk-dlg'); return d ? [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent) : null; })(),
         zg: (() => { const d = $('nk-zg'); return d ? { id: zgId, items: [...d.querySelectorAll('.nk-item')].map(e => e.innerText.replace(/\s+/g, ' ').trim()), st: (d.querySelector('.nk-sts .sel') || {}).textContent || null,

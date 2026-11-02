@@ -4,7 +4,8 @@
 // drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp> proga način naprava size, a line
 // for each note, the flag not marked with its lap and metres). Deli in the replay: the choice (a computer: Kopiraj sliko first, Samo
 // shrani sliko, Kopiraj besedilo, Obdrži tudi slike v igri); Kopiraj besedilo copies the text; Samo shrani sliko downloads the picture; kept in
-// the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments: two pictures (_1, _2); 2400 px in the settings. The
+// the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments (the fourth with no mark, only Beležka's note: in the
+// text and on its picture): two pictures (_1, _2); 2400 px in the settings. The
 // end of the replay with Ob koncu Shrani: the picture to the downloads at once. Nastavitve: the tool's row (not in English), its panel with
 // Zgodovina napak (a tap, Izbriši). A phone (a touch screen): Deli zdaj first, the share sheet gets the picture and the text, then poslano.
 //   node tests/browser/napake-slika.test.mjs
@@ -35,7 +36,7 @@ try {
   await Q.evaluate(() => window.__game.onAction('rp-b5'));
   await moment(Q, 0, 250, 150, 40, 'Sledi gum sredi ravnine');
   await Q.evaluate(() => window.__game.onAction('rp-f5'));
-  await moment(Q, 3, 420, 200, 30, 'Tekmeci v koloni');
+  await moment(Q, 3, 420, 110, 30, 'Tekmeci v koloni');   // (above Beležka, the notebook bottom right)
   const st = await Q.evaluate(() => Napake.stanje);
   T.check('two moments kept, each with its 3 pictures of the motion (400 px); Deli (2) in the replay (none before)', deli0 && st.zbirka.length === 2 && st.zbirka.every(z => z.gib.length === 4 && z.gib[2] === null && [0, 1, 3].every(i => z.gib[i] && Math.max(...z.gib[i]) === 400)) &&
     (await Q.evaluate(() => { const d = document.getElementById('nk-deli'); return !d.classList.contains('off') && d.textContent; })) === '⇧ Deli (2)', JSON.stringify(st.zbirka.map(z => z.gib)));
@@ -74,8 +75,16 @@ try {
 
   // four moments: two pictures; 2400 px
   await Q.evaluate(() => window.__game.onAction('rp-b5')); await moment(Q, 1, 300, 120, 30, 'Tri');
-  await Q.evaluate(() => window.__game.onAction('rp-b5')); await moment(Q, 4, 330, 220, 30, 'Štiri');
+  // (the fourth with no mark: only its picture and the notebook's note, typed with no click)
+  await Q.evaluate(() => window.__game.onAction('rp-b5')); await Q.click('#nk-on'); await Q.keyboard.type('Štiri: ves zaslon utripa'); await Q.click('#nk-bar .nk-add');
   const R4 = await Q.evaluate(async () => { const r = await Napake.pripravi(); return r.files.map(f => [f.name, f.w, f.h]); });
+  const z4 = await Q.evaluate(() => { const it = Napake.zbirka[3]; return { n: Napake.zbirka.length, strokes: it.strokes.length, zapisi: it.zapisi.length, bel: it.belezka, w: it.w, h: it.h, L: Napake.porocilo().split('\n').filter(l => /^#4 /.test(l)) }; });
+  // its notebook drawn on its picture (the second sheet's one moment, 776 px wide from 16, 16): dark by its bottom right corner as on the screen
+  const k4 = 776 / z4.w, ks = R4[1] ? R4[1][1] / 1600 : 1, nr = z4.bel ? [16 + (z4.bel.r[0] + z4.bel.r[2]) * z4.w * k4, 16 + (z4.bel.r[1] + z4.bel.r[3]) * z4.h * k4] : [0, 0];   // (ks: a sheet made smaller, a long log under it)
+  const [p4] = await pix(Q, 1, [[(nr[0] - 10) * ks, (nr[1] - 5) * ks]]);
+  T.check('a moment with no mark: kept with the notebook\'s note (#4 time K1 s=…m beležka »…«, not "(brez zapisa)"), drawn on its picture bottom right',
+    z4.n === 4 && z4.strokes === 0 && z4.zapisi === 0 && !!z4.bel && z4.bel.text === 'Štiri: ves zaslon utripa' && z4.L.length === 1 && /^#4 \d\d:\d\d\.\d{3} K1 s=\d+m beležka »Štiri: ves zaslon utripa«$/.test(z4.L[0]) && p4.every(v => v < 45),
+    JSON.stringify({ z4, p4 }));
   await Q.evaluate(() => { localStorage.setItem('tdgp-napake', JSON.stringify(Object.assign(Napake.nast, { size: 2400 }))); });
   await Q.evaluate(() => { window.__game.onAction('rp-race'); });
   await Q.waitForFunction(() => !window.__game.paused && window.__game.rpCount === 0, null, { timeout: 90000, polling: 100 });
