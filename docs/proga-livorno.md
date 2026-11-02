@@ -23,7 +23,7 @@ Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gr
 | 1 | **Podatki:** potek proge (OSM), višine (Copernicus GLO-30), raba tal (OSM + ESA WorldCover), stavbe in drevesa do 60 m ob cesti; ta načrt | 2–3 h | narejen (2. 11. 2026): `tools/proga-podatki.py` + `tools/livorno/` (`config.json`, `livorno.json`, mreže PNG), ta načrt |
 | 2 | **Proga v igri:** `js/tracks/livorno.js` (črta, višine, širina, imena ovinkov, `hudSigns`, štart, 100 avtov), angleški prevod v `js/lang.js`, test `tests/livorno.test.js`; AI odpelje cel krog s 100 avti | 2–3 h | narejen (2. 11. 2026): proga iz `tools/livorno/build.py track`, 100/100 avtov v cilju brez reševanja |
 | 3 | **Okolica do 60 m:** `js/world-livorno.js` (teren, morje in obala, pečine, vile in hiše, stolpi, gozd, zidovi, gledalci, štartni prostor) | 3–4 h | narejen (2. 11. 2026): `js/world-livorno.js` + `js/data/livorno.js` (`build.py world`); obremenitev 166 / 213 klicev, 406 / 631 tisoč oglišč |
-| 4 | **Obremenitev telefona:** poenostavitve do mej (`tests/golden/perf.json`), reference (`npm run golden:update`), druge proge enako obremenjene | 1–2 h | |
+| 4 | **Obremenitev telefona:** poenostavitve do mej (`tests/golden/perf.json`), reference (`npm run golden:update`), druge proge enako obremenjene | 1–2 h | narejen (2. 11. 2026): reference za Livorno (perf, world, sim, races), druge proge nespremenjene |
 | 5 | **Meni in opisi:** `assets/tracks/livorno.webp` in `livorno-rain.webp` (`maketa-menija/orodja`), `docs/proge/livorno.md`, README (Proge, Zasluge: OSM ODbL, Copernicus DEM, ESA WorldCover, krošnje Meta/WRI), `docs/kazalo.md`; pull request | 1–2 h | |
 
 ## Potek proge (preverjen v sklopu 1)
@@ -135,6 +135,11 @@ Raba tal do 150 m od ceste (WorldCover): drevesa 55 %, pozidano 22 %, voda 9 %, 
 - Copernicus DEM GLO-30: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca CC BY 4.0.
 - Meta and World Resources Institute, High Resolution Canopy Height Maps, licenca CC BY 4.0 (višina krošenj za tla pod drevesi).
+
+## Sklop 4: kaj je narejeno
+
+- Obremenitev v mejah že po sklopu 3 (poenostavljena drevesa: pinija in okrogla krošnja brez vej, manj gledalcev na startu): povprečno 166 klicev / 406 tisoč oglišč, največ 213 / 631 tisoč. Skupna koda (`js/world.js`, `js/render.js`, `js/core.js`) ni spremenjena, zato so druge proge enako obremenjene; njihove reference ostanejo.
+- Reference samo za Livorno (`--only=livorno`, `PERF_ONLY`, `WORLD_ONLY`: druge ostanejo): `tests/golden/sim.json` (7 scenarijev), `races.json` (5 dirk: suho, dež, formula, prototip, cestni avto; 21/21 v cilju, brez reševanja), `perf.json`, `world.json`. V `tests/races.test.js` ima Livorno en krog kot Nürburg (dolg krog).
 
 ## Sklop 3: kaj je narejeno
 
