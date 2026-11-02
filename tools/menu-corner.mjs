@@ -1,15 +1,20 @@
 // The menu's corner camera (camera 3 of the track step, docs/meni-izbira-proge.md, sklop 4): a short video of a still camera at the track's
 // most interesting corner, the game's AI cars racing through it, played in a loop on the stage. Drawn by the game itself in the browser
-// without a screen (virtual time: tools/menu-corner-page.js), then a seamless loop (the last half second laid over the first, at a moment
-// with no car in sight) encoded as VP9 (assets/maps/corner-<id>.webm, 6-8 s, about 0.6-1.2 MB) and its first frame as the poster
-// (corner-<id>.webp). The corners: tools/menu-corners.json ({ <id>: { s: metres along the track (its own s, T.idx), cam: [px, py, pz,
-// tx, ty, tz, fov] } }); a track without cam gets one found by the camera search (rays into the world round the corner), written back.
-// MENU.corners in js/menu-data.js lists the tracks that have a video (the menu shows their model without one).
-//   node tools/menu-corner.mjs vrsic,spa            the videos of these tracks (every real track: no ids)
-//   node tools/menu-corner.mjs vrsic --preview      only stills: the three best cameras of the search (test-results/corners/<id>-<k>.jpg)
+// without a screen (virtual time: tools/menu-corner-page.js): the race looked at first without drawing (where the cars the camera sees
+// are, each counted by its size in the frame), then the same race again (it repeats exactly, drawing does not change it) drawn through
+// the loop of 6-8 s with the most cars and the smoothest seam (its last half second laid over its first where the cars of both ends stand
+// where each other's are), after a warm-up that lays the tyres' marks. Encoded as VP9 (assets/maps/corner-<id>.webm, 720 x 720, at
+// most about 1.1 MB) with its first frame as the poster (corner-<id>.webp). The corners: tools/menu-corners.json ({ <id>: { s: metres
+// along the track (its own s, T.idx), o: what the corner is, cam: [px, py, pz, tx, ty, tz, fov] } }); a track without cam gets one found
+// by the camera search (rays into the world round the corner), written back, and its three best cameras as stills
+// (test-results/corners/<id>-<k>.jpg). MENU.corners in js/menu-data.js lists the tracks that have a video (the menu shows their model
+// without one). About 3-5 min a track.
+//   node tools/menu-corner.mjs vrsic,spa            the videos of these tracks (every track in menu-corners.json: no ids)
+//   node tools/menu-corner.mjs vrsic --preview      only stills: the three best cameras of the search
 //   node tools/menu-corner.mjs vrsic --search       find the camera again (the one in menu-corners.json is replaced)
-//   env: KBPS (the bitrate's cap; 1600), CRF (30). In menu-corners.json a track may have pick (the search's k-th camera), sec ([6, 8]: the
-//   loop's shortest and longest), watch (s of the race looked at for the loop: 80), seed (11), numAI (21)
+//   env: KBPS (the bitrate's cap; 1100), CRF (30). In menu-corners.json a track may also have pick (the search's k-th camera: the review
+//   page's choice; remove cam to find it again), sec ([6, 8]: the loop's shortest and longest), watch (s of the race looked at for the
+//   loop: 80), seed (11), numAI (21)
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -22,7 +27,7 @@ const args = process.argv.slice(2), has = (k) => { const i = args.indexOf(k); if
 const PREVIEW = has('--preview'), SEARCH = has('--search'), KEEP = has('--keep');
 const CFG = JSON.parse(fs.readFileSync(CFG_F, 'utf8'));
 const ids = args[0] ? args[0].split(',') : Object.keys(CFG);
-const SIZE = 720, FPS = 30, SEC = +(process.env.SEC || 7), XF = 0.5, KBPS = +(process.env.KBPS || 1600), CRF = process.env.CRF || '30';
+const SIZE = 720, FPS = 30, SEC = +(process.env.SEC || 7), XF = 0.5, KBPS = +(process.env.KBPS || 1100), CRF = process.env.CRF || '30';
 fs.mkdirSync(OUT, { recursive: true });
 const t00 = Date.now(), log = (...a) => console.log(((Date.now() - t00) / 1000).toFixed(0).padStart(5) + ' s', ...a);
 const jpg = (data) => Buffer.from(data.split(',')[1], 'base64');
@@ -73,7 +78,7 @@ async function one(id, C) {
     // the world as it is seen from round the corner (its far trees drawn there), then the search
     await page.evaluate((s0) => { const r = MC.race.track, i = r.idx(s0), y = r.hy ? r.hy[i] : 0; MC.still({ px: r.px[i] + 1, py: y + 60, pz: r.pz[i] + 1, tx: r.px[i], ty: y, tz: r.pz[i], fov: 60 }); }, C.s);
     const S = await page.evaluate(([s0, o]) => MC.search(s0, o), [C.s, C.search || {}]);
-    log(id, 'search', JSON.stringify({ span: S.span, tested: S.tested, rays: S.rays, n: S.n }), JSON.stringify(S.best.slice(0, 3)));
+    log(id, 'search', JSON.stringify({ span: S.span, tested: S.tested, rays: S.rays, n: S.n, why: S.why, w: S.w }), JSON.stringify(S.best.slice(0, 3)));
     if (!S.best.length) { await ctx.close(); throw new Error('no camera found'); }
     // the three best cameras as stills, the cars at the corner (test-results/corners/<id>-<k>.jpg): to look at, and to pick another (pick: k)
     await page.evaluate((s0) => MC.until(s0, 40, 900), C.s);
@@ -85,16 +90,16 @@ async function one(id, C) {
   }
   // 1: the race to the corner, and where the cars the camera sees are in its frame at every frame for a while (nothing drawn)
   const ta = await page.evaluate((s0) => MC.until(s0, 260, 1200), C.s);
-  const TL = await page.evaluate(([c, s0, sec]) => MC.timeline(c, s0, sec), [cam, C.s, C.watch || 80]), P = TL.frames, cnt = P.map(f => f.length);
+  const TL = await page.evaluate(([c, s0, sec]) => MC.timeline(c, s0, sec), [cam, C.s, C.watch || 80]), P = TL.frames, cnt = P.map(f => f.reduce((a, x) => a + x[2], 0));   // (a car counts by its size in the frame)
   // the loop: 6 to 8 s with the most cars in sight and a seam (its last half second laid over its first) where the cars of the two ends
   // stand where each other's are (else a car shows twice, faintly, for a moment): each car without one of the other end near it is a ghost
   const X = Math.round(XF * FPS), sum = [0]; for (const n of cnt) sum.push(sum[sum.length - 1] + n);
-  const ghost = (A, B) => { let g = 0; for (const a of A) { let m = 9; for (const b of B) m = Math.min(m, Math.hypot(a[0] - b[0], a[1] - b[1])); g += Math.min(1, m / 0.15); } return g; };
+  const ghost = (A, B) => { let g = 0; for (const a of A) { if (a[2] < 0.3) continue; let m = 9; for (const b of B) m = Math.min(m, Math.hypot(a[0] - b[0], a[1] - b[1])); g += Math.min(1, m / 0.15) * a[2]; } return g; };   // (a far, small car hardly shows twice)
   const seamOf = (k, L) => { let g = 0; for (const e of [0, X >> 1, X - 1]) g += (ghost(P[k + e], P[k + L + e]) + ghost(P[k + L + e], P[k + e])) / 2; return g / 3; };
   let best = -1e9, k1 = 0, L = SEC * FPS, gh = 0;
   for (let LL = (C.sec || [6, 8])[0] * FPS; LL <= (C.sec || [6, 8])[1] * FPS; LL += 6) for (let k = 0; k + LL + X <= P.length; k++) {
     const avg = (sum[k + LL] - sum[k]) / LL; if (avg < 0.5) continue;
-    const g = seamOf(k, LL), v = Math.min(avg, 8) - 0.6 * g;   // (the cars first: a busy loop with a car or two at its seam beats an empty one)
+    const g = seamOf(k, LL), v = Math.min(avg, 6) - 0.6 * g;   // (the cars first: a busy loop with a car or two at its seam beats an empty one)
     if (v > best) { best = v; k1 = k; L = LL; gh = g; }
   }
   log(id, 'race to the corner', ta.toFixed(1) + ' s; the camera sees', TL.seen, 'm of road; loop from', (k1 / FPS).toFixed(2), 's,', (L / FPS).toFixed(1), 's, cars in sight', ((sum[k1 + L] - sum[k1]) / L).toFixed(1), 'a frame, ghosts at its seam', gh.toFixed(2));

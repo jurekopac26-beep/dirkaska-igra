@@ -260,7 +260,7 @@
     // a soft, blurred copy of the map fills the stage behind the fitted map (beyond even the wide map), so nothing is ever left empty;
     // everything on the map is in g.rot, which fitMaps turns (an open road) about the middle of the map
     return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
-      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div>';
+      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg><div class="mlab" aria-hidden="true"></div></div>';
   }
   // the cameras' icons: 1 a frame with a road in it, 2 an arrow along a curve, 3 a video camera
   const CAM_ICON = [null,
@@ -296,10 +296,10 @@
       const turn = +box.dataset.turn || 0, a = turn && W / H < 1.3 ? turn : 0, rg = $('g.rot', svg), bg = $('.mapbg', box);
       if (rg) { if (a) rg.setAttribute('transform', 'rotate(' + a + ' ' + T.W / 2 + ' ' + T.H / 2 + ')'); else rg.removeAttribute('transform'); }
       if (bg) bg.style.transform = a ? 'rotate(' + a + 'deg) scale(' + (Math.max(W / H, H / W) * 1.06).toFixed(3) + ')' : '';   // (the blurred backdrop turns with the map)
-      // the route is centred, with room at the top for the switch and the finish's name; the blurred backdrop fills whatever falls outside
+      // the route is centred, with room at the top for the cameras and the finish's name; the blurred backdrop fills whatever falls outside
       // the map tile, so nothing is cropped or left empty
       const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0);
-      const padX = 10, padTop = 44, padBot = $('.hgraph', box.parentNode) ? GRAPH_H + 8 : 10, availW = Math.max(60, W - 2 * padX), availH = Math.max(60, H - padTop - padBot);
+      const padX = 10, padTop = 62, padBot = $('.hgraph', box.parentNode) ? GRAPH_H + 8 : 10, availW = Math.max(60, W - 2 * padX), availH = Math.max(60, H - padTop - padBot);
       const s = Math.min(availW / rw, availH / rh), k = 0.5 / s;
       const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       const vx = cx - vw / 2, vy = cy - (padTop + availH / 2) / s;
@@ -308,16 +308,24 @@
       const up = a ? ' rotate(' + (-a) + ')' : '';   // (the names stay upright on a turned map)
       for (const g of svg.querySelectorAll('.mk, .sp')) { if (!g.dataset.at) g.dataset.at = g.getAttribute('transform'); g.setAttribute('transform', g.dataset.at + up + ' scale(' + k.toFixed(3) + ')'); }
       for (const g of svg.querySelectorAll('.dz')) g.setAttribute('transform', 'scale(' + k.toFixed(3) + ')');
-      // a name that would run out of the frame at the side goes to the other side of its flag (as drawn: a finish's name to the left of
-      // its flag, a start's to the right); where neither side fits it stays as drawn
-      const fb = box.getBoundingClientRect(), out = (r) => r.right > fb.right - 4 || r.left < fb.left + 4;
-      for (const g of svg.querySelectorAll('.mk')) {
-        const tx = $('text', g), fin = g.classList.contains('f');
-        const side = (flip) => { const x = fin !== flip ? -6 : 6; tx.setAttribute('text-anchor', x < 0 ? 'end' : 'start'); tx.setAttribute('x', x); for (const s of tx.querySelectorAll('tspan')) s.setAttribute('x', x); };
-        side(false);
-        if (out(tx.getBoundingClientRect())) { side(true); if (out(tx.getBoundingClientRect())) side(false); }
-      }
+      mapLabels(box, svg);
     }
+  }
+  // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
+  // right (the player's choice, 2. 11.); over the flag, a start's from its pole to the right and a finish's to the left, the other way
+  // where it would run out of the frame. Made from the flags' own names (mark), placed where the flags stand on the screen
+  function mapLabels(box, svg) {
+    const lab = $('.mlab', box); if (!lab) return;
+    const mks = [...svg.querySelectorAll('.mk')];
+    if (lab.children.length !== mks.length) lab.innerHTML = mks.map(g => { const t = $('text', g), sub = $('tspan', t), name = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild.textContent : t.textContent;
+      return '<div class="fl-s ' + (g.classList.contains('f') ? 'finish' : 'start') + '"><b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub.textContent) + '</small>' : '') + '</div>'; }).join('');
+    const fb = box.getBoundingClientRect();
+    mks.forEach((g, i) => {
+      const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(), x = f.left - fb.left, w = el.offsetWidth;
+      const at = (right) => right ? x + f.width + 3 - w : x - 3, fits = (l) => l >= 4 && l + w <= fb.width - 4;
+      let right = g.classList.contains('f'); if (!fits(at(right)) && fits(at(!right))) right = !right;
+      el.style.left = at(right).toFixed(1) + 'px'; el.style.top = Math.max(0, f.top - fb.top - 3).toFixed(1) + 'px';
+    });
   }
   window.addEventListener('resize', fitMaps);
   // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop

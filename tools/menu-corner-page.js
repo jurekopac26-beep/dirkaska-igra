@@ -10,7 +10,7 @@ window.MC = (function () {
   function setup(o) {
     opt = o || {}; fps = opt.fps || 30;
     T = window.__game.demo.track; W = Render.world;
-    R = new Core.Race(T, { numAI: opt.numAI || 21, noPlayer: true, difficulty: 2, laps: 99, seed: opt.seed || 11, phys: 'cs', repro: true });
+    R = new Core.Race(T, { numAI: opt.numAI || 21, noPlayer: true, difficulty: 2, laps: 99, seed: opt.seed || 11, phys: 'cs', repro: true, damage: 0 });   // (no damage: no wreck left burning in the corner)
     R.start(); Render.attachRace(R);
     cv = document.getElementById('gl');
     return { id: T.def.id, len: T.len, startS: T.startS, finishS: T.finishS, open: !!T.open, w: T.w, ds: T.ds, N: T.N, cars: R.cars.length };
@@ -118,32 +118,34 @@ window.MC = (function () {
     const road = []; for (let s = s0 - 300; s <= s0 + 300; s += 4) { const p = at(s); road.push([p.x, p.z]); }
     near = nearMeshes(cx, cz, 200);
     const out = [], R0 = o.dists || [25, 35, 50, 70, 95], H0 = o.heights || [3, 6, 10, 16, 25, 40];
-    let tested = 0, rays = 0;
+    let tested = 0, rays = 0; const why = { road: 0, behind: 0, fov: 0, down: 0, hidden: 0 };   // (why candidates were left out)
     for (const r of R0) for (let th = 0; th < 360; th += 15) for (const h of H0) {
       const x = cx + r * Math.cos(th * Math.PI / 180), z = cz + r * Math.sin(th * Math.PI / 180);
       let g = ground(x, z); if (!Number.isFinite(g)) g = cy - 0.9;
       const y = Math.max(g + h, cy + 1);
-      let dmin = 1e9; for (const q of road) dmin = Math.min(dmin, Math.hypot(q[0] - x, q[1] - z)); if (dmin < T.w + 4) continue;
+      let dmin = 1e9; for (const q of road) dmin = Math.min(dmin, Math.hypot(q[0] - x, q[1] - z)); if (dmin < T.w + 4) { why.road++; continue; }
       // aimed at the stretch's weighted middle; the zoom that fits it all (square frame), with a margin
       const f = V3(cx - x, cy - y, cz - z).normalize(), rt = V3().crossVectors(f, V3(0, 1, 0)).normalize(), up = V3().crossVectors(rt, f);
       let tmax = 0, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, behind = false;
       for (const p of pts) { const v = V3(p[0] - x, p[1] - y, p[2] - z), zz = v.dot(f); if (zz < 3) { behind = true; break; } const u = v.dot(rt) / zz, w = v.dot(up) / zz; tmax = Math.max(tmax, Math.abs(u), Math.abs(w)); x0 = Math.min(x0, u); x1 = Math.max(x1, u); y0 = Math.min(y0, w); y1 = Math.max(y1, w); }
-      if (behind) continue;
-      const fov = Math.max(o.fovMin || 34, 2 * Math.atan(tmax * 1.18) * 180 / Math.PI); if (fov > (o.fovMax || 62)) continue;
+      if (behind) { why.behind++; continue; }
+      const fov = Math.max(o.fovMin || 34, 2 * Math.atan(tmax * 1.18) * 180 / Math.PI); if (fov > (o.fovMax || 62)) { why.fov++; continue; }
       const tf = Math.tan(fov * Math.PI / 360), fill = ((x1 - x0) / (2 * tf)) * ((y1 - y0) / (2 * tf));
-      const down = Math.asin(Math.max(-1, Math.min(1, -f.y))) * 180 / Math.PI; if (down < (o.downMin || 4) || down > (o.downMax || 50)) continue;
+      const down = Math.asin(Math.max(-1, Math.min(1, -f.y))) * 180 / Math.PI; if (down < (o.downMin || 4) || down > (o.downMax || 50)) { why.down++; continue; }
       // seen: rays to the stretch (stop once more than a sixth is hidden)
       tested++; let hid = 0; const lim = Math.ceil(pts.length / 6);
       for (const p of pts) { rays++; if (blocked([x, y, z], p) && ++hid > lim) break; }
-      if (hid > lim) continue;
+      if (hid > lim) { why.hidden++; continue; }
       const cl = clutter([x, y, z], f, rt, up, Math.tan(fov * Math.PI / 360), Math.hypot(cx - x, cy - y, cz - z)); rays += 25;
       const seen = 1 - hid / pts.length, outside = (x - ap.x) * outN[0] + (z - ap.z) * outN[1] > 0 ? 1 : 0.85;
-      const slope = down < 10 ? 0.75 + down / 40 : down > 35 ? Math.max(0.6, 1 - (down - 35) / 40) : 1, dist = Math.hypot(cx - x, cy - y, cz - z), dk = dist < 30 ? 0.85 : dist > 90 ? 0.8 : 1;
-      const score = Math.pow(seen, 4) * Math.sqrt(Math.max(0.01, fill)) * slope * dk * outside * Math.pow(1 - cl, 3);
+      // a TV camera's view: looking down 14-28 degrees (the land behind the corner and the sky over it in the frame), not a map's from above
+      const slope = down < 8 ? 0.6 : down < 14 ? 0.75 + 0.25 * (down - 8) / 6 : down <= 28 ? 1 : down <= 40 ? 1 - 0.3 * (down - 28) / 12 : 0.6;
+      const dist = Math.hypot(cx - x, cy - y, cz - z), dk = dist < 30 ? 0.85 : dist > 90 ? 0.8 : 1;
+      const score = Math.pow(seen, 4) * Math.sqrt(Math.max(0.01, Math.min(fill, 0.35))) * slope * dk * outside * Math.pow(1 - cl, 3);
       out.push({ px: x, py: y, pz: z, tx: cx, ty: cy, tz: cz, fov: +fov.toFixed(1), score: +score.toFixed(4), seen: +seen.toFixed(2), fill: +fill.toFixed(2), clutter: cl, down: Math.round(down), dist: Math.round(dist), r, th, h });
     }
     out.sort((p, q) => q.score - p.score);
-    return { span: [Math.round(a), Math.round(b)], tested, rays, n: out.length, best: out.slice(0, o.keep || 8) };
+    return { span: [Math.round(a), Math.round(b)], tested, rays, n: out.length, why, w: T.w, best: out.slice(0, o.keep || 8) };
   }
   // the haze as the game's own camera has it for this distance (THEMES' fogK is the renderer's), the shot set
   function shot(c) {
@@ -164,15 +166,17 @@ window.MC = (function () {
     }
     return { from, on, pv, xy };
   }
-  // the cars the camera sees at each frame of the next sec seconds (their places in the frame, -1 to 1), the race going on (nothing drawn)
+  // the cars the camera sees at each frame of the next sec seconds (their places in the frame, -1 to 1, and how big they are there: 1 at the
+  // corner's distance, a quarter twice as far), the race going on (nothing drawn)
   function timeline(c, s0, sec) {
-    const S = seenRoad(c, s0), v = V3(0, 0, 0), out = [];
+    const S = seenRoad(c, s0), v = V3(0, 0, 0), out = [], d0 = Math.hypot(c.tx - c.px, c.ty - c.py, c.tz - c.pz);
     for (let k = 0; k < sec * fps; k++) {
       run(1 / fps); const f = [];
       for (const car of R.cars) {
         if (!car.q) continue; let d = car.q.s - S.from; if (!T.open) d = ((d % T.len) + T.len) % T.len;
         const i = Math.round(d / 2); if (i < 0 || i >= S.on.length || !S.on[i]) continue;
-        v.set(car.x, (car.y || 0) + 0.7, car.z).applyMatrix4(S.pv); f.push([Math.round(v.x * 100) / 100, Math.round(v.y * 100) / 100]);
+        const w = Math.min(1, Math.pow(d0 / Math.max(1, Math.hypot(car.x - c.px, (car.y || 0) - c.py, car.z - c.pz)), 2)); if (w < 0.12) continue;
+        v.set(car.x, (car.y || 0) + 0.7, car.z).applyMatrix4(S.pv); f.push([Math.round(v.x * 100) / 100, Math.round(v.y * 100) / 100, Math.round(w * 100) / 100]);
       }
       out.push(f);
     }

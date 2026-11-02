@@ -470,7 +470,7 @@ svg { display: block; }
 .flab > div { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .35s ease; will-change: transform; }
 .fl-s { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; translate: -3px -100%; }
 .fl-s b { order: 1; background: #fff; color: #10151d; font: 900 italic 15px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
-.fl-s small { order: 2; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-left: 12px; white-space: nowrap; }
+.fl-s small { order: 2; align-self: flex-end; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-right: 6px; white-space: nowrap; }   /* (the height under the name, at its right) */
 .fl-s svg { order: 3; margin-top: 1px; }
 .fl-s.finish b { background: #101820; color: #fff; }
 .fly .fl svg, .fl-s svg path { stroke: #fff; }
@@ -491,6 +491,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
+#track-stage .mk text { display: none; }   /* (the track step's map: its names are boxes over it, .mlab) */
+.mlab { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.mlab .fl-s { position: absolute; translate: 0 -100%; }
 .mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }
 /* (2,862 m: a metre, not M) */
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; }

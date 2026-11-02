@@ -86,8 +86,8 @@ function related(files, all) {
   const want = new Set(), parts = (f) => stem(f).split(/[-_.]/).filter(Boolean);
   for (const f of files) {
     if (all.includes(f.replace(/^tests\//, ''))) want.add(f.replace(/^tests\//, ''));   // (a changed test)
-    const fp = parts(f);
-    for (const t of all) { const ts = stem(t); if (ts === stem(f) || fp.includes(ts) || fp.includes(ts.split('-')[0])) want.add(t); }
+    const fp = parts(f), asset = /^assets\//.test(f);   // (a picture or a video is no track's code: only RELATED names its tests, e.g. assets/maps/corner-spa.webm)
+    if (!asset) for (const t of all) { const ts = stem(t); if (ts === stem(f) || fp.includes(ts) || fp.includes(ts.split('-')[0])) want.add(t); }
     for (const [re, ts] of RELATED) if (re.test(f)) for (const t of ts) want.add(t);
   }
   return all.filter(t => want.has(t));
