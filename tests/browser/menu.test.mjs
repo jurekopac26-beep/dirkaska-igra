@@ -478,13 +478,14 @@ try {
     for (const way of ['back', 'next']) {
       await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
       const was = await ev(page, 'return root.querySelector(".where .w2").textContent;');
+      const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
       gar = null;
       await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), click(page, 'garage')]);
       await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
       await page.waitForTimeout(300);
       const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
-      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>), its back: the game's car screen on that car (the address plain again) [${way}]`,
-        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
+      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its back: the game's car screen on that car (the address plain again) [${way}]`,
+        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, dz, g }));
       await page.click(way === 'back' ? '#car-back' : '#car-next'); await page.waitForTimeout(400);
       const back = await ev(page, 'return { scr: Menu.debug().screen, h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent };');
       T.check(`back from the garage, the car screen's ${way === 'back' ? 'Back' : 'Next'}: the track step, the same track`, back.scr === 'track' && back.h1 === was && (await shown(page)).join() === 's-menu', JSON.stringify({ was, back }));
