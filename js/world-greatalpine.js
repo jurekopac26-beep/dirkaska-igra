@@ -10,7 +10,7 @@
   const {
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, brookMat, caNear, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl,
     lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, puff, rng, roadsideProps, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails,
-    stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrLC, vrNear, vrPrep, vrStubH, vrStubs
+    stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrLC, vrNear, vrPrep, vrStubH, vrStubs, parkOn
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -503,7 +503,7 @@
     (def.pulls || []).forEach(([d, side, grav], k) => {
       if (!grav || (k % 2 && k !== 3)) return;
       const s = sStart + d, i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) - 3.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = gaGround(x, z), g = scen.get(x, z);
-      if (k === 3) logTruck(g, x, y, z, T.hd[i]); else car(g, x, y, z, T.hd[i] + 0.15, vary([0.88, 0.88, 0.86], R, 0.2), true);
+      if (k === 3) parkOn(logTruck, gaGround, 14, g, x, y, z, T.hd[i]); else parkOn(car, gaGround, 4.4, g, x, y, z, T.hd[i] + 0.15, vary([0.88, 0.88, 0.86], R, 0.2), true);
       exclPush(x, z, k === 3 ? 10 : 4); CR.block(x, z, k === 3 ? 15 : 5, 2.6, T.hd[i]);
     });
     (def.pulls || []).forEach(([d, side, grav], k) => {   // the stockpile sites: heaps of crushed rock and road base at the back of the gravel
