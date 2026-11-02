@@ -40,7 +40,9 @@
 //   bump or knock into a standing car: no bounce, no turn, no pop, the car hit hardly moves; Razbijanje: odboji in vrtenje and prevračanje do
 //   nothing in a knock between cars (the same car rolls over without it), the sparks stay; in the tightest corners a rival drifting into the
 //   player hardly moves it whichever order the cars come in; a rival at 130 km/h into the player's rear quarter, the player reversing into a
-//   standing rival; a knock into a traffic car moves the player 4 cm at once at most; the walls as they were; a race with it (Spa, Bathurst)
+//   standing rival; a knock into a traffic car moves the player 4 cm at once at most, a standing traffic car or a lying bicycle hit at 45 m/s slides
+//   away (the car does not sink in or drive through); who hits whom goes over gradually (no flip for 0.01 m/s), along the road only while the cars
+//   close along it; the walls as they were; a race with it (Spa, Bathurst)
 //   node tests/nova.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -261,9 +263,22 @@ for (const id of ['rally', 'kaze']) {
     return r > 0.3 ? dp / (dp + dr) : null; });
   let cn = 0, cbad = 0, cmax = 0;
   for (const tid of ['spa', 'bathurst', 'rbring']) { const T = new C.Track(C.TRACKS.find(d => d.id === tid)), ks = []; for (let i = 0; i < T.N; i++) ks.push([Math.abs(T.k[i]), i]); ks.sort((x, y) => y[0] - x[0]);
-    for (const [, i0] of ks.slice(0, 2)) for (const v of [12, 20]) for (const di of [-1, 1]) for (const dO of [2.4, -2.4]) for (const pf of [false, true]) { const sh = corner(T, i0, v, di, dO, pf); if (sh == null) continue; cn++; cmax = Math.max(cmax, sh); if (sh > 0.25) cbad++; } }
+    for (const [, i0] of ks.slice(0, 2)) for (const v of [12, 20]) for (const di of [-1, 1]) for (const dO of [2.4, -2.4]) for (const pf of [false, true]) { const sh = corner(T, i0, v, di, dO, pf); if (sh == null) continue; cn++; cmax = Math.max(cmax, sh); if (!(sh <= 0.25)) cbad++; } }
   ok('Trki med avti brez odboja: in a corner a rival drifting into the player hardly moves it, whichever order the cars come in (the player\'s share of the knock under 25 % every time)',
     cn >= 40 && cbad === 0, `${cn} knocks in corners, the player over 25 % in ${cbad}, the most ${f(cmax * 100, 0)} %`);
+  // the verdict goes over gradually: flank to flank, both moving over at each other at 3.00 and 3.01 m/s, the split about even (the player not 8 times
+  // heavier for 0.01 m/s), the rival alone moving over: the player heavy; corner to corner at 45 deg, the rival moving over into the player's front
+  // corner at 2 m/s: the cars part along the road (the player 0.5 m/s slower behind it), so only across tells: the player hardly moves; a hair
+  // faster or slower along the road (0.01 m/s) changes the split only a little
+  const flank2 = (up, uo, pf) => test(NB, () => { const P = car(HC, 90, true), O = car(HC, 90, false); P.place(0, 0, 0); O.place(0, P.m.wid - 0.01, 0); P.vx = O.vx = 25; P.vz = up; O.vz = -uo;
+    const r = pf ? C.carCollide(P, O) : C.carCollide(O, P), dp = Math.hypot(P.vx - 25, P.vz - up), dr = Math.hypot(O.vx - 25, O.vz + uo); return r > 0 ? dp / (dp + dr) : NaN; });
+  const c45 = (dv, pf) => test(NB, () => { const P = car(HC, 90, true), O = car(HC, 90, false), L = P.m.len, W = P.m.wid, r = Math.min(0.3, W * 0.45), g = 2 * r - 0.012;
+    P.place(0, 0, 0); P.vx = 25 + dv; O.place(L - 2 * r + g * Math.SQRT1_2, W - 2 * r + g * Math.SQRT1_2, 0); O.vx = 25; O.vz = -2;
+    const k = pf ? C.carCollide(P, O) : C.carCollide(O, P), dp = Math.hypot(P.vx - 25 - dv, P.vz), dr = Math.hypot(O.vx - 25, O.vz + 2); return k > 0 ? dp / (dp + dr) : NaN; });
+  const fe = [flank2(3, 3.01, true), flank2(3.01, 3, false), flank2(0, 3, true), flank2(0, 3, false)], ce = [c45(-0.5, true), c45(-0.5, false), c45(-0.01, true), c45(0.01, false)];
+  ok('Trki med avti brez odboja: who hits whom goes over gradually: both moving over at each other (3.00 / 3.01 m/s) split about even (40-60 %), the rival alone: the player under 20 %; corner to corner, the rival moving over while the cars part along the road: the player under 20 %, a hair along the road changes it under 5 points',
+    fe.slice(0, 2).every(x => x >= 0.4 && x <= 0.6) && fe.slice(2).every(x => x < 0.2) && ce.every(x => x < 0.2) && Math.abs(ce[2] - ce[3]) < 0.05,
+    `flank ${fe.map(x => f(x * 100, 0) + ' %').join(' / ')}; corner ${ce.map(x => f(x * 100, 0) + ' %').join(' / ')}`);
   // a rival at 130 km/h at 46 deg into the player's rear quarter (the cars part along the road: only across tells); the player reversing into a rival
   // standing behind it with its brakes on (the player hits it)
   const tbone = (H) => test(NB, () => { const P = car(H, 100, true), O = car(H, 130, false), a = 0.8; P.place(0, 0, 0); P.vx = 27.8; O.place(-P.m.len * 0.35 - Math.cos(a) * 2.6, -Math.sin(a) * 2.6 - 0.9, a); O.vx = 36.1 * Math.cos(a); O.vz = 36.1 * Math.sin(a);
@@ -281,6 +296,22 @@ for (const id of ['rally', 'kaze']) {
     const P = r.player, v = r.tf.veh.find(x => x.kind === 0 && x.dir > 0 && x.s - T.startS > 2500 && x.s - T.startS < 6000), ch = Math.cos(v.h), sh = Math.sin(v.h), back = v.len / 2 + P.m.len / 2 - 0.25;
     P.place(v.x - ch * back, v.z - sh * back, v.h); P.q = T.query(P.x, P.z, -1, P.q); P.vx = ch * (v.v + 8); P.vz = sh * (v.v + 8); const x0 = P.x, z0 = P.z, imp = r.tf._hitVeh(P, v);
     return { imp, pop: Math.hypot(P.x - x0, P.z - z0) }; });
+  // a standing traffic vehicle (knocked loose earlier, at rest) hit from behind at 45 m/s, the whole race step: with the switch it slides away with its
+  // share, the car does not sink into it or drive through it
+  const tfStand = (kind) => test(NB, () => { Math.random = seeded(3); const T = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+    const r = new C.Race(T, { numAI: 1, playerGrid: 2, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2, traffic: true }); r.start();
+    for (const c of r.cars) if (!c.isPlayer) { const i = T.idx(T.finishS - 150); c.place(T.px[i] + T.nx[i] * 2, T.pz[i] + T.nz[i] * 2, T.hd[i]); c.q = T.query(c.x, c.z, i, c.q); c.locked = true; }
+    const P = r.player, v = r.tf.veh.find(x => x.kind === 0 && x.dir > 0 && x.s - T.startS > 2500 && x.s - T.startS < 6000);
+    for (const o of r.tf.veh) if (o !== v && Math.abs(o.s - v.s) < 400) o.off = true; for (const pd of r.tf.ped) if (Math.abs(pd.s - v.s) < 400) pd.off = true;
+    const K = { 0: [4.3, 1.8, 1300], 4: [1.8, 0.6, 90] }[kind]; v.kind = kind; v.len = K[0]; v.wid = K[1]; v.mass = K[2]; v.st = 2; v.t = 0; v.nc = 0; v.vx = v.vz = v.w = 0; v.v = 0; if (v.grp) { v.grp.m.splice(v.grp.m.indexOf(v), 1); v.grp = null; }
+    const ch = Math.cos(v.h), sh = Math.sin(v.h), back = v.len / 2 + P.m.len / 2 + 0.2; P.place(v.x - ch * back, v.z - sh * back, v.h); P.y = P.py = P.roadY = T.hy[T.idx(v.s)]; P.q = T.query(P.x, P.z, -1, P.q); P.sPrev = P.q.s; P.vx = ch * 45; P.vz = sh * 45; P.locked = false;
+    let pen = 0, through = false; for (let i = 0; i < 2 / DT; i++) { P.inThr = 0.5; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; r.step(DT);
+      const cv = Math.cos(v.h), sv = Math.sin(v.h), nbs = Math.max(2, Math.round(v.len / v.wid)); for (const ci of P.circles) { const ax = P.x + Math.cos(P.h) * ci, az = P.z + Math.sin(P.h) * ci; for (let j = 0; j < nbs; j++) { const o = -(v.len - v.wid) / 2 + j * (v.len - v.wid) / (nbs - 1); pen = Math.max(pen, P.rad + v.wid / 2 - Math.hypot(ax - v.x - cv * o, az - v.z - sv * o)); } }
+      if ((P.x - v.x) * cv + (P.z - v.z) * sv > 0.3) through = true; }
+    return { pen, through, vv: Math.hypot(v.vx, v.vz) }; });
+  const ts0 = tfStand(0), ts4 = tfStand(4);
+  ok('Trki med avti brez odboja: a standing traffic car or a lying bicycle hit at 45 m/s slides away with its share; the car does not sink in (under 0.35 m, one step at that speed) or drive through',
+    !ts0.through && !ts4.through && ts0.pen < 0.35 && ts4.pen < 0.35 && ts0.vv > 5 && ts4.vv > 5, `car: ${f(ts0.pen, 2)} m deep, slides at ${f(ts0.vv * 3.6, 0)} km/h; bicycle: ${f(ts4.pen, 2)} m, ${f(ts4.vv * 3.6, 0)} km/h`);
   const tk0 = tfKnock(null), tk1 = tfKnock(NB);
   ok('Trki med avti brez odboja: a knock into a traffic car moves the player at most 4 cm at once (without it the whole overlap)',
     tk0.imp > 3 && tk1.imp > 3 && tk1.pop <= 0.0401 && tk0.pop > 0.06, `pop ${f(tk0.pop * 100, 1)} -> ${f(tk1.pop * 100, 1)} cm (closing ${f(tk1.imp * 3.6, 0)} km/h)`);
