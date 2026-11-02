@@ -1956,7 +1956,7 @@
     bg = 'race'; phase = 'intro'; phaseT = 0; lightsOn = 0; lastBeepLight = 0; paused = false; acc = 0;
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
-      if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; Render.setShot(air.shot); $('hud').classList.add('shot'); } }
+      if (air && !on && !tt && !quali && !school) { air.go = true; introLen += JET_SHOT; air.shot.crowd = true; Render.setShot(air.shot); $('hud').classList.add('shot'); } }   // (crowd: a big field's rivals past the nearest ten as their far mesh in this shot too, render.js crowdCut)
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
@@ -5220,9 +5220,9 @@
     if (bg === 'show') { Render.renderShowroom(dt); if (screen === 'settings') updateTiltLive(); return; }
     if (bg === 'demo') {
       if (demoOn() !== demoAt) demoShow();   // (a new demo on the menus, e.g. an online race's track loaded)
-      // the new menu over the whole screen (a phone, either way up: Menu.covers): the demo behind it unseen, so neither stepped nor drawn
-      // but one frame a second (the loaded track's pictures stay on the GPU for the race to come); a tablet held upright, the menu a
-      // column in the middle: the demo at its sides as ever
+      // the new menu's track step over the whole screen (a phone, either way up: Menu.covers; the title is see-through, the demo its
+      // background): the demo behind it unseen, so neither stepped nor drawn but one frame a second (the loaded track's pictures stay on
+      // the GPU for the race to come); a tablet held upright, the menu a column in the middle: the demo at its sides as ever
       if (menuOn && (screen === 'title' || screen === 'track') && Menu.covers()) { demoRest += dt; if (demoRest < 1) return; demoRest = 0; } else demoRest = 0;
       acc += dt; let n = 0;
       while (acc >= STEP && n < 8) { demo.step(STEP); for (const c of demo.cars) { c.hitWall = 0; c.hitCar = 0; } acc -= STEP; n++; }

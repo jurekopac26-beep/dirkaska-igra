@@ -4591,23 +4591,26 @@ const Render = (function () {
   }
   // A big field (more cars than a race's own 22: the menu's Opponents up to 100, the Nordschleife's hundred): of the rivals in the view within
   // the far mesh's reach only the CROWD_K nearest the camera are drawn in full, the others as their far mesh (a start grid in view, a pack:
-  // a bounded cost however big the field; on NIZKA, whose cars have one). crowd2: the squared distance of the CROWD_K-th this frame,
-  // Infinity when fewer are near or the field is smaller (every race of 22 or fewer as ever); a car swaps only 10 % past it (no flicker)
-  const CROWD_N = 22, CROWD_K = 10, _crowd = [];
+  // a bounded cost however big the field; on NIZKA, whose cars have one), never one within CROWD_R m. crowd2: the squared distance of the
+  // CROWD_K-th this frame, Infinity when fewer are near or the field is smaller (every race of 22 or fewer as ever); a car swaps only 10 %
+  // past it (no flicker). A shot (no far meshes in it: a TV lens brings a far car close) only when it asks for the rule (shot.crowd: the
+  // jets' shot over the grid before the start, game.js), then every rival in front of the camera counts
+  const CROWD_N = 22, CROWD_K = 10, CROWD_R = 30, _crowd = [], _crD = new THREE.Vector3();
   let crowd2 = Infinity;
   function crowdCut() {
-    crowd2 = Infinity; if (!curRace || !curRace.cars || curRace.cars.length <= CROWD_N || lastMode === 'tv' || cam.shot) return;   // (the race's own cars: the safety car's view does not count)
-    const cp = camera.position, R = (cam.vd || 40) + 35, R2 = R * R; _crowd.length = 0;
-    for (const v of views) { const c = v.car; if (c.isPlayer || !v.far || !v.far.ok || v.cull) continue; const d = (c.x - cp.x) ** 2 + ((c.y || 0) - cp.y) ** 2 + (c.z - cp.z) ** 2; if (d <= R2) _crowd.push(d); }
-    if (_crowd.length <= CROWD_K) return;
-    _crowd.sort((a, b) => a - b); crowd2 = _crowd[CROWD_K - 1];
+    crowd2 = Infinity; if (!curRace || !curRace.cars || curRace.cars.length <= CROWD_N || lastMode === 'tv' || (cam.shot && !cam.shot.crowd)) return;   // (the race's own cars: the safety car's view does not count)
+    const cp = camera.position, R = (cam.vd || 40) + 35, R2 = cam.shot ? Infinity : R * R; _crowd.length = 0; camera.getWorldDirection(_crD);
+    for (const v of views) { const c = v.car; if (c.isPlayer || !v.far || !v.far.ok || v.cull) continue; const dx = c.x - cp.x, dy = (c.y || 0) - cp.y, dz = c.z - cp.z, d = dx * dx + dy * dy + dz * dz; if (d <= R2 && dx * _crD.x + dy * _crD.y + dz * _crD.z > 0) _crowd.push(d); }
+    const K = dbg.crowdK != null ? dbg.crowdK : CROWD_K;   // (dbg.crowdK: the tests, the rule measured off and on)
+    if (_crowd.length <= K) return;
+    _crowd.sort((a, b) => a - b); crowd2 = Math.max(_crowd[K - 1], CROWD_R * CROWD_R / 0.81);
   }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
     if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver - v.kit.dk !== F.pv) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;   // (a kit car: its pieces changed, not only knocked: pv)
     if (F.ok && !F.dirty && ((c.dents && c.dents.length) || farSig(v) !== F.sig || (v.kit && v.kit.ver !== F.ver))) F.dirty = true;   // (c.dents: taken into the body later this frame; a kit car's dent or roof: kit.dk)
     const cp = camera.position, R = (cam.vd || 40) + 35, d2 = (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2;
-    let far = F.ok && lastMode !== 'tv' && !cam.shot && (d2 > R * R || d2 > crowd2 * (F.on ? 0.81 : 1.21));   // (a big field: past the CROWD_K nearest, crowdCut)
+    let far = F.ok && lastMode !== 'tv' && (!cam.shot || cam.shot.crowd) && ((!cam.shot && d2 > R * R) || d2 > crowd2 * (F.on ? 0.81 : 1.21));   // (a big field: past the CROWD_K nearest, crowdCut; a shot only by that rule)
     if (far && F.dirty && farRb < 1 && !v.cull && !(c.dents && c.dents.length)) { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); }   // (v.cull: out of the view, carCull: built again once back in it; the frame's one rebuild for a car that is seen)
     if (far === F.on) return;
     F.on = far; F.mesh.visible = far; if (F.hs) v.hull.castShadow = !far;   // (hs: the far mesh casts the shadow, not the hull)

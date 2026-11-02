@@ -258,15 +258,18 @@ try {
   //     .. 100, the slider up to what the track takes, Done); a pick is the game's setting at once and the row's number behind the sheet, the
   //     slider moves it as it goes (the keys too); Pikes Peak takes 30 (its summit's parking: def.maxRivals), its picks past that off; the
   //     choice is the same on the next track (its own most there); a race from the menu with it (the Nordschleife: 12 rivals, 13 cars, its
-  //     own 20 not added); the career keeps its own field (no choice); under the menu on a phone the game's demo is not drawn (one frame a
-  //     second: Menu.covers), on a tablet held upright (the menu a column) it is
+  //     own 20 not added); the career keeps its own field (no choice); under the track step on a phone the game's demo is not drawn (one
+  //     frame a second: Menu.covers), under the title (see-through: the game's scene its background) and on a tablet held upright (the
+  //     menu a column) it is
   {
     const { ctx, page, errors } = await open({ track: 'pikes', lastTrack: 'pikes', mode: 'race' });
     await ready(page);
     const demoN = (ms) => page.evaluate(async (ms) => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, ms)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; }, ms);
-    const dm = await demoN(2600);
-    T.check('a phone: under the menu the game\'s demo race is not drawn, one frame a second at most (Menu.covers)', dm.covers && dm.n <= Math.ceil(dm.s) + 1, JSON.stringify(dm));
+    const dt = await demoN(2600);
+    T.check('a phone, the title: the game\'s scene its background, drawn on', !dt.covers && dt.n >= 2 * Math.ceil(dt.s) + 2, JSON.stringify(dt));
     await click(page, 'single'); await click(page, 'mode:race');
+    const dm = await demoN(2600);
+    T.check('a phone, the track step: the game\'s demo race under it not drawn, one frame a second at most (Menu.covers)', dm.covers && dm.n <= Math.ceil(dm.s) + 1, JSON.stringify(dm));
     const row0 = await ev(page, 'const d = Menu.debug(), o = root.querySelector(".trow .opp"); return { id: d.list[d.trackIdx], txt: o.textContent, btn: !!o.querySelector("button[data-act=\\"riv\\"]"), set: __game.S.rivals };');
     T.check('Pikes Peak in Circuit race: the row\'s Opponents a button (21, the track\'s own: no choice yet)', row0.id === 'pikes' && row0.txt === 'Opponents21' && row0.btn && row0.set === -1, JSON.stringify(row0));
     await click(page, 'riv'); await page.waitForTimeout(300);
@@ -304,9 +307,25 @@ try {
     T.check('no page errors with the opponents\' sheet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
-  {   // a tablet held upright: the menu a column, the game's demo seen at its sides and drawn
+  {   // 0 opponents (Trial): the race alone, to the finish on the autopilot: Cilj (a tick, no place), no win in the statistics, no page error
+    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 0 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    await click(page, 'race-single');
+    await raceOn(page, 'troisrivieres').catch(() => null);
+    const st0 = await page.evaluate(() => ({ cars: __game.race && __game.race.cars.length, wins: __game.stats.wins || 0, races: __game.stats.races || 0 }));
+    const fin = await page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 40 && g.phase !== 'done'; k++) { g.sim(10, true); await new Promise(r => setTimeout(r, 0)); }
+      return { phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), wins: g.stats.wins || 0, races: g.stats.races || 0 }; });
+    T.check('0 opponents: the row 0, the race alone (1 car), home on the autopilot: Cilj with a tick (no place), a race counted, no win',
+      row === 'Opponents0' && st0.cars === 1 && fin.phase === 'done' && fin.title === 'Cilj' && fin.pos === '\u2713' && fin.shown === 's-results' && fin.races === st0.races + 1 && fin.wins === st0.wins, JSON.stringify({ row, st0, fin }));
+    T.check('no page errors in a race alone', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // a tablet held upright: the menu a column, the game's demo seen at its sides and drawn, on the track step too
     const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
     await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
     const dm = await page.evaluate(async () => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
     T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.n >= 2 * Math.ceil(dm.s) + 2, JSON.stringify(dm));
     T.check('no page errors on the tablet', !real(errors).length, real(errors).join(' | '));

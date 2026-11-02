@@ -1258,11 +1258,12 @@
       ready = true; flush();
     } catch (e) { fail(e); }
   }
-  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }
-  // the menu shown over the whole screen (game.js frame(): the demo behind it unseen, not drawn): a phone either way up; a tablet held
-  // upright has the menu as a column in the middle (css/menu.css #mn, 432 px), the game's demo seen at its sides
+  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
+  // the menu hides the whole screen (game.js frame(): the demo behind it unseen, not drawn): the track step (its own background; the title
+  // is see-through, the game's scene behind it, css/menu.css #s-title) on a phone either way up; a tablet held upright has the menu as a
+  // column in the middle (#mn, 432 px), the game's demo seen at its sides
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
-  const covers = () => ready && !!app && shown !== '' && !(COLUMN && COLUMN.matches);   // (a challenge arrived, the install offer came: the title shows it)
+  const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
   window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id) }) };
