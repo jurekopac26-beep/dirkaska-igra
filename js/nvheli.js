@@ -102,7 +102,8 @@ const NVHeli = (function () {
   }
   const groundAt = (x, z) => { const g = H3.ground(x, z); return Number.isFinite(g) ? g : 0; };
   const WL = () => (H3.water && H3.water.WL != null ? H3.water.WL : -0.12);
-  const seaAt = (x, z) => { const W = H3.water; return !!(W && W.region && W.bedAt && W.region(x, z) && W.bedAt(x, z).y < WL() - 0.02); };   // (the sea, past its beach: js/newmap.js waterSide)
+  // (the sea, past its beach: js/newmap.js waterSide; the course for jet skis and its canal: js/nvboat.js)
+  const seaAt = (x, z) => { const W = H3.water, C = H3.waterCourse; return !!(W && W.region && W.bedAt && W.region(x, z) && W.bedAt(x, z).y < WL() - 0.02) || !!(C && C.dW && C.dW(x, z) < -0.3); };
   // the top of what stands at (x, z) (a roof, a tree, a wall: what casts a shadow, the map's merged cells, js/nvbake.js, and the trees
   // drawn as instances; not the helicopter nor the car) or the ground: one ray down, kept per cell of the grid (the map does not change)
   const topC = new Map(); let stand = null, ray = null, carRef = null;
