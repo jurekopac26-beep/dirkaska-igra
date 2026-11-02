@@ -229,10 +229,14 @@ Kontrolirani trki na ravnini (BURJA R7, igralec drži volan naravnost; »vstran�
 
 | Trk | Realističen, težak | Brez odboja (klasična) | Brez odboja (nova) |
 |---|---|---|---|
-| Tekmec pri 100 km/h zavije vame pod 15° | vstran 27 km/h, zasuk 16,5° | 4 km/h, 0,9° | 5 km/h, 4,9° |
+| Tekmec pri 100 km/h zavije vame pod 15° | vstran 27 km/h, zasuk 16,5° | 4 km/h, 0,9° | 4 km/h, 4,9° |
 | Tekmec pod 17° v moj zadnji vogal | 24 km/h, 7,4° | 3 km/h, 0,1° | 3 km/h, 3,9° |
 | 100 km/h v stoječ avto, zamik 0,9 m | ustavljen, zasuk 10,5° | ustavljen, 0° | ustavljen, 0° |
 | Zadaj 120 → 100 km/h, zamik 0,6 m | zasuk 2,0° | 0°, narazen 0 | 0°, narazen 0 |
 
 V dirkah (6 prog × 200 s, 12 tekmecev, igralec na avtopilotu, merjeno v funkciji trka): sunek smeri igralca 0° (privzeto do 126°, realistični do 23°), skok položaja največ 0,4 cm (privzeto 12 cm), največji skupni potisk vstran med daljšim stikom 22 km/h (realistični 71 km/h). Nič NaN, vsi avti vozijo, nihče se ne prevrne; dotikov med avti približno toliko kot pri realističnem slogu.
+
+Pregled kode (2. 11. 2026) je našel tri napake prve različice `nbHeavy`, popravljene: (1) bočno hitrost obeh avtov je merila glede na smer ceste pri prvem avtu, zato je v ovinku navadna vožnja drugega avta štela kot premik vstran (v najostrejših ovinkih Spa, Bathursta in Red Bull Ringa je igralec dobil več kot 25 % trka v 46 od 92 postavitev, največ 89 %, odvisno od vrstnega reda avtov; v dirki na Trois-Rivièresu 74 takih trkov); zdaj ima vsak avto svojo cesto (največ 12 %, v obeh vrstnih redih); (2) pri poševnem stiku je delež vzdolž ceste štel kot »enako« tudi, ko ni povedal nič (tekmec pri 130 km/h pod 46° v igralčev zadnji del: 19 km/h vstran, zdaj 7 km/h); (3) vzdolž ceste je štela le razlika hitrosti, zato je avto, ki vzvratno zapelje v stoječega tekmeca, veljal za zadetega (tekmec odrinjen 5,2 m, zdaj 3 cm). Pri prometnem vozilu se prekrivanje zdaj odpravi mehko (poskok 20 cm → 2 cm). V begu pred policijo stikalo odvzame le odboj: manever patrulje (PIT), ki igralca zavrti in mu za trenutek vzame oprijem, ostane del pregona.
+
+Končni pregled pred združitvijo (2. 11. 2026) je našel še dve napaki, popravljeni: (1) ko je odločal le del stika z gibanjem počez, je že razlika 0,01 m/s obrnila razmerje 8 : 1 (bok ob boku, oba se premikata drug proti drugemu s 3,00 in 3,01 m/s: igralec 11 % ali 89 %), pri daljšem stiku je odločitev skakala od koraka do koraka; zdaj šteje vsak del po tem, koliko gibanja ima (pol m/s je vse), in odločitev gre postopoma (49 % / 51 %; tekmec sam: 11 %; poševni stik, ko se avta vzdolž ceste razmikata: 11 %, ±0,01 m/s spremeni manj kot 2 točki); (2) stoječe prometno vozilo (prej odrinjeno ali ležeče kolo) ni prevzelo svojega dela sunka, zato se je avto z mehkim razmikanjem zaril do 1,2 m globoko in skozi kolo zapeljal; zdaj ob trku zdrsne naprej s svojim delom (pri 45 m/s največ 0,26 m prekrivanja, en korak). S prometom ostanejo prave mase (8-krat težji je le zadeti tekmec).
 
