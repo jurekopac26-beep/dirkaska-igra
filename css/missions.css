@@ -73,13 +73,7 @@
 #mis-aim .gasi { position: absolute; right: calc(16px + var(--sr, 0px)); bottom: calc(18px + var(--sb, 0px)); width: 92px; height: 92px; border: 0; border-radius: 50%; background: #c8202a; color: #fff; font: 900 20px var(--f-ui, sans-serif); letter-spacing: .04em; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; user-select: none; -webkit-user-select: none; }
 #mis-aim .gasi.on { background: #ff3b30; transform: scale(.94); }
 body.mis-aiming #mis .mis-hint { left: calc(12px + var(--sl)); transform: none; bottom: calc(26px + var(--sb)); max-width: calc(100% - 150px); text-align: left; }
-body.mis-aiming.mis-ladder #mis .mis-hint { max-width: calc(100% - min(46vw, 230px) - 36px); }
-/* mission 49: the ladder's two sliders (DVIGNI, IZTEGNI) and the tags over the cabins with people */
-#mis-lad { position: fixed; right: calc(10px + var(--sr, 0px)); bottom: calc(16px + var(--sb, 0px)); z-index: 6; display: none; flex-direction: column; gap: 10px; width: min(46vw, 230px); font-family: var(--f-ui, sans-serif); }
-#mis-lad.on { display: flex; }
-#mis-lad label { display: block; padding: 6px 10px 8px; border-radius: 22px; background: #1f56b8; color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, .4); }
-#mis-lad span { display: block; font: 900 14px var(--f-ui, sans-serif); letter-spacing: .06em; text-align: center; }
-#mis-lad input { display: block; width: 100%; height: 30px; margin: 2px 0 0; accent-color: #ffd34d; touch-action: none; }
+/* mission 49: the tags over the cabins with people */
 #mis-tags { position: fixed; inset: 0; z-index: 4; pointer-events: none; display: none; font-family: var(--f-ui, sans-serif); }
 #mis-tags.on { display: block; }
 #mis-tags i { position: absolute; transform: translate(-50%, -100%); padding: 2px 7px 3px; border: 2px solid #c9d1dc; border-radius: 7px; background: rgba(9, 13, 20, .82); color: #fff; font: 500 10px/1.25 var(--f-ui, sans-serif); font-style: normal; text-align: center; white-space: nowrap; }
@@ -102,3 +96,16 @@ body.mis-aiming.mis-ladder #mis .mis-hint { max-width: calc(100% - min(46vw, 230
 #mis-btn.red { background: #e0452c; }
 body.mis-boat #h-spd, body.mis-boat #h-note { visibility: hidden; }   /* (a vessel of the mission driven: the parked car's speed and corner notes off the HUD) */
 #mis-tags i.edge { opacity: .8; }   /* (MisKit.tags: a place off the screen, its tag pinned to the edge) */
+/* MisKit.keys: a row of buttons over the driving controls (right: over the pedals, left: over the steering; high: above the #mis-btn) */
+#mis-keys { position: fixed; bottom: calc(clamp(96px, 35vh, 160px) + 34px + var(--sb, 0px)); z-index: 6; display: none; gap: 6px; touch-action: none; user-select: none; -webkit-user-select: none; }
+#mis-keys.right { right: calc(14px + var(--sr, 0px)); }
+#mis-keys.left { left: calc(14px + var(--sl, 0px)); }
+#mis-keys.high { bottom: calc(clamp(96px, 35vh, 160px) + 96px + var(--sb, 0px)); }
+#mis-keys.on-show { display: flex; }
+#mis-keys button { min-width: 72px; padding: 12px 12px; border: 0; border-radius: 22px; background: #2f5fd0; color: #fff; font: 900 14px var(--f-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 4px 14px rgba(0, 0, 0, .45); touch-action: none; }
+#mis-keys button.on { transform: scale(.95); filter: brightness(1.2); }
+#mis-keys button.sel { background: #ffb020; color: #111; }
+body.mis-back #h-note { visibility: hidden; }   /* (MisKit.backRoad: a road driven the other way, its pace notes made for the way up) */
+#mis .mis-thermo { margin: 0 0 6px; }   /* (mission 08: the thermal camera's window at the top of the panel) */
+#mis .mis-thermo span { display: block; font: 700 10px var(--f-ui); letter-spacing: .06em; color: #c9b8ff; margin-bottom: 2px; }
+#mis .mis-thermo canvas { display: block; width: 100%; aspect-ratio: 5 / 3; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .5); }
