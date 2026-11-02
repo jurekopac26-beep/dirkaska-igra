@@ -24,7 +24,7 @@ const SUITES = {
 // world grow with every track); a test not listed counts as DEF_SECS
 const SECS = {
   'browser/memory.test.mjs': 2656, 'browser/perf.test.mjs': 1860, 'browser/crash.test.mjs': 1100, 'browser/smoke.test.mjs': 996, 'browser/gfx.test.mjs': 736,
-  'browser/world.test.mjs': 674, 'browser/covers.test.mjs': 653, 'browser/marks.test.mjs': 348, 'browser/hudcol.test.mjs': 342, 'browser/menu.test.mjs': 324,
+  'browser/world.test.mjs': 674, 'browser/covers.test.mjs': 653, 'browser/marks.test.mjs': 348, 'browser/hudcol.test.mjs': 342, 'browser/menu.test.mjs': 1450,
   'browser/online4.test.mjs': 320, 'browser/notes.test.mjs': 249, 'browser/kerb.test.mjs': 223, 'browser/kolibri.test.mjs': 209, 'browser/school.test.mjs': 194,
   'browser/share.test.mjs': 190, 'browser/onchamp.test.mjs': 188, 'browser/online.test.mjs': 181, 'browser/quali.test.mjs': 169, 'browser/radio.test.mjs': 168,
   'browser/nova.test.mjs': 160, 'browser/chal.test.mjs': 155, 'browser/replay.test.mjs': 147, 'browser/carlow.test.mjs': 140, 'browser/wheels.test.mjs': 138,
@@ -37,7 +37,7 @@ const SECS = {
   'browser/boards.test.mjs': 44, 'browser/repro.test.mjs': 43, 'browser/hud.test.mjs': 43, 'browser/start.test.mjs': 42, 'browser/saver.test.mjs': 42,
   'browser/career.test.mjs': 41, 'browser/medvode-props.test.mjs': 37, 'browser/medvode-castle.test.mjs': 36, 'browser/tower.test.mjs': 35,
   'browser/townsville.test.mjs': 29, 'browser/napake-zastavice.test.mjs': 28, 'browser/rivals.test.mjs': 27, 'browser/quick.test.mjs': 26,
-  'browser/atmos.test.mjs': 23, 'browser/shramba.test.mjs': 90, 'browser/prvi.test.mjs': 120, 'browser/sledi.test.mjs': 240, 'browser/denarnica.test.mjs': 150,
+  'browser/atmos.test.mjs': 23, 'browser/shramba.test.mjs': 60, 'browser/prvi.test.mjs': 180, 'browser/sledi.test.mjs': 180, 'browser/denarnica.test.mjs': 60,
   'browser/garage.test.mjs': 900,
 };
 const DEF_SECS = 60, secs = (f) => SECS[f] || DEF_SECS;
