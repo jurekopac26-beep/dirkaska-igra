@@ -956,6 +956,10 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
+/* a row too wide even so, in the settings and the pause (fitSegs): its choices wrap, half on each line (--wb), every line filled, the lines
+   parted like the choices (the overlap of 2 px tucks the first line's top and each line's first left edge under the frame) */
+.seg.wrap { flex-wrap: wrap; }
+.seg.wrap button { flex: 1 0 var(--wb, 30%); margin: -2px 0 0 -2px; border-top: 2px solid rgba(255,255,255,.14); border-left: 2px solid rgba(255,255,255,.14); }
 /* the replay's highlights (Najboljši trenutki): the moment's caption above the bar, the button lit while they play */
 #rp-hl-cap { max-width: 100%; padding: 7px 14px; border-radius: 6px; background: rgba(12,16,40,.78); font: 700 italic clamp(13px, 3.4vh, 19px)/1.25 var(--f-ui); color: var(--chalk); text-align: center; pointer-events: none; }
 #rp-hl-cap small { display: block; font-size: .7em; letter-spacing: .1em; color: #ffcf2e; }

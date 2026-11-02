@@ -394,12 +394,17 @@
   const installedApp = () => APP;
 
   /* ---------------- screens ---------------- */
-  // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still
+  // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still; in the
+  // settings and the pause, lists that scroll, a row too wide even so (a narrow phone, a wide font: Trki med avti's five in DejaVu Sans 305 px
+  // on a panel 296 px wide, the last one cut off) wraps its choices onto two lines, in the middle size, half of them on each (five: three and
+  // two; --wb the share of a line each starts from)
   function fitSegs() {
     const sc = document.querySelector('.screen.show'); if (!sc) return;
     for (const g of sc.querySelectorAll('.seg')) {
-      g.classList.remove('tight', 'tighter'); if (!g.offsetParent || g.scrollWidth <= g.clientWidth + 1) continue;
-      g.classList.add('tight'); if (g.scrollWidth > g.clientWidth + 1) { g.classList.remove('tight'); g.classList.add('tighter'); }
+      g.classList.remove('tight', 'tighter', 'wrap'); if (!g.offsetParent || g.scrollWidth <= g.clientWidth + 1) continue;
+      g.classList.add('tight'); if (g.scrollWidth <= g.clientWidth + 1) continue;
+      g.classList.remove('tight'); g.classList.add('tighter'); if (g.scrollWidth <= g.clientWidth + 1 || !g.closest('#s-settings, #s-pause')) continue;
+      g.classList.remove('tighter'); g.classList.add('tight', 'wrap'); g.style.setProperty('--wb', (100 / Math.ceil(g.children.length / 2) - 3) + '%');
     }
   }
   // the results of a big field (22 cars, the Nordschleife's 100), race and qualifying: the table scrolled so the player's own row is in the middle of it

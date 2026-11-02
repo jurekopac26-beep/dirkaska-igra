@@ -17,7 +17,8 @@
 //   theirs; kept in the settings (localStorage); in English; a race with the rivals' spread narrower deals out narrower paces, back on
 //   Privzeto the old ones and nothing set; the spread's toast says from the next race
 // - the pause in that race: the row Trki med avti under the buttons, in sight and within the panel (the tyres' row too) on a phone on its side
-//   (640×360), upright (360×640) and on a computer (1280×720: the narrow panel, the choices under their label), smaller letters if need be; the pause scrolls to its last row (the tyres'); Arkadna picked there: Core.TX.cv 2 at once,
+//   (640×360), upright (360×640), on a computer (1280×720: the narrow panel, the choices under their label) and on a narrow phone (320×640),
+//   smaller letters if need be, too wide even so on two lines (three and two; a wide font: on the others too); the pause scrolls to its last row (the tyres'); Arkadna picked there: Core.TX.cv 2 at once,
 //   marked in the pause and in the settings, kept; the next pause starts from the top; the race runs on without NaN
 // - stored values out of range or from the rows before the versions (crNB, tCrStyle, tCrE ...): Simulacija and Privzeto, nothing set; saved
 //   again without the old keys
@@ -154,16 +155,21 @@ try {
       const ps = document.querySelector('#pit-row .seg'), pr = ps.getBoundingClientRect(), pin = (q) => q.left >= pr.left - 1 && q.right <= pr.right + 1 && q.left >= b.left - 1 && q.right <= b.right + 1;   // (the tyres' row: its four choices within it, the panel's width)
       return { screen: window.__game.screen, shown: getComputedStyle(row).display !== 'none' && r.height > 0, label: row.querySelector('.rlbl').textContent, btns: [...seg.querySelectorAll('button')].map(x => x.textContent + (x.classList.contains('sel') ? '*' : '')).join(),
         fit: seg.scrollWidth <= seg.clientWidth + 1 && [...seg.querySelectorAll('button')].every(x => inside(x.getBoundingClientRect())), inView: inside(r), top: body.scrollTop, pit: !document.getElementById('pit-row').classList.contains('off'),
-        pitFit: ps.scrollWidth <= ps.clientWidth + 1 && [...ps.querySelectorAll('button')].every(x => pin(x.getBoundingClientRect())) }; });
+        pitFit: ps.scrollWidth <= ps.clientWidth + 1 && [...ps.querySelectorAll('button')].every(x => pin(x.getBoundingClientRect())),
+        wrap: seg.classList.contains('wrap'), lines: [...seg.querySelectorAll('button')].map(x => Math.round(x.getBoundingClientRect().top)).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {}) }; });
     await page.evaluate(() => window.__game.pause());
     const p1 = await prow();
     await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300);
     const p2 = await prow();
     await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(300);   // (a computer's window on its side, taller than a phone: the narrow panel, the choices wrap under their label)
     const p3 = await prow();
+    await page.setViewportSize({ width: 320, height: 640 }); await page.waitForTimeout(300);   // (a narrow phone: the five too wide even in the smallest letters, in any font; they wrap, three and two)
+    const p4 = await prow();
     await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300);
-    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its five choices within the panel, the tyres\' four too, on a phone on its side (640×360), upright (360×640) and on a computer (1280×720)',
-      [p1, p2, p3].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0 && p.pitFit), JSON.stringify({ p1, p2, p3 }));
+    const two = (p) => Object.values(p.lines).join() === '3,2';
+    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its five choices within the panel, the tyres\' four too, on a phone on its side (640×360), upright (360×640), on a computer (1280×720) and on a narrow phone (320×640: on two lines, three and two; a wider font may wrap them on the others too)',
+      [p1, p2, p3, p4].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0 && p.pitFit
+      && (p.wrap ? two(p) : Object.keys(p.lines).length === 1)) && p4.wrap, JSON.stringify({ p1, p2, p3, p4 }));
     await page.click('#s-pause [data-set="crV"] [data-v="1"]'); await page.waitForTimeout(150);
     const pa = await page.evaluate(() => ({ cv: Core.TX.cv, cPm: Core.TX.cPm, aiSpr: Core.TX.aiSpr, pause: [...document.querySelectorAll('#s-pause [data-set="crV"] .sel')].map(b => b.textContent).join(), list: [...document.querySelectorAll('#s-settings [data-set="crV"] .sel')].map(b => b.textContent).join(),
       screen: window.__game.screen, stored: JSON.parse(localStorage.getItem('tdgp-settings')).crV }));
