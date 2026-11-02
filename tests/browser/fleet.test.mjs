@@ -442,9 +442,11 @@ try {
       const box = [Math.max(0, Math.floor(x0)), Math.min(A.w - 1, Math.ceil(x1)), Math.max(0, Math.floor(y0)), Math.min(A.h - 1, Math.ceil(y1))];
       const hb = box[3] - box[2], wb = box[1] - box[0], over = [Math.max(0, box[0] - Math.round(wb * 0.25)), Math.min(A.w - 1, box[1] + Math.round(wb * 0.25)), Math.max(0, box[2] - hb), Math.min(A.h - 1, box[3] + Math.round(hb * 0.5))];
       const intact = FL.costOf(v, P), f0 = Render.fxStats();
-      // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before
+      // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before.
+      // A car under the wheel rule (every vehicle with parts since 1. 11. 2026, its own tyres): the whole car's fire grows from its middle
+      // over render.js FIRE_SPREAD (3 s), so it burns 3 s first
       Render.setShot(null); run(2, 'chase', false);
-      Core.wreckCar(P); run(6, 'chase', true);
+      Core.wreckCar(P); run(P.wreck && P.wreck.rule ? 30 : 6, 'chase', true);
       // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
       // shows of them, not what burns inside the body)
       Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase', 'wreck'), f1 = Render.fxStats();
@@ -470,7 +472,9 @@ try {
     R6.push(r);
   }
   // ---- 4e. a field on fire (stage B2's caps): every car of a race wrecked where it stands (the field held still: no contact sparks, no
-  //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second ----
+  //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second; the
+  //          player's car under the wheel rule (every vehicle with parts since 1. 11. 2026) burns as the whole car's fire of its rule, out of
+  //          three spots half as many flames again (render.js: 38 x 1.5 a second): at most 60 of those ----
   const FI = await page.evaluate((id) => {
     const g = window.__game; let seed = 2024; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
     g.S.car = Core.MODELS.findIndex(m => m.id === id); g.onAction('restart'); g.pause();
@@ -480,12 +484,13 @@ try {
     const f0 = Render.fxStats(); step(10); const f1 = Render.fxStats();
     const V = R.cars.map(c => Render.viewOf(c)).filter(Boolean), burning = V.filter(v => v.fire), emit = V.filter(v => v.fireEmit), cp = Render.camera.position, d = (v) => Math.hypot(v.car.x - cp.x, v.car.z - cp.z);
     const far = Math.max(0, ...emit.map(d)), next = Math.min(1e9, ...burning.filter(v => !v.fireEmit).map(d));   // (the farthest that emits no farther than the nearest that does not)
-    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total };
+    const ruleE = emit.filter(v => v.fire && v.fire.rule && v.fire.lvl >= 2).length;   // (the wheel rule's whole car's fires among them)
+    return { cars: R.cars.length, burning: burning.length, emit: emit.length, ruleE, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total };
   }, kits.length ? kits[0].id : 'kaze');
   await page.evaluate(() => Render.setDynScale(1));
   console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
-  T.check('a field on fire (every car wrecked where it stands): at most 6 emit, the nearest to the camera, each at most 40 flames and 12 smoke particles a second',
-    FI.burning === FI.cars && FI.emit === Math.min(6, FI.burning) && FI.nearest && FI.sparks > 0 && FI.sparks <= 40 * FI.emit && FI.smoke > 0 && FI.smoke <= 12 * FI.emit, JSON.stringify(FI));
+  T.check('a field on fire (every car wrecked where it stands): at most 6 emit, the nearest to the camera, each at most 40 flames (the wheel rule\'s whole car: 60) and 12 smoke particles a second',
+    FI.burning === FI.cars && FI.emit === Math.min(6, FI.burning) && FI.nearest && FI.sparks > 0 && FI.sparks <= 40 * FI.emit + 20 * FI.ruleE && FI.smoke > 0 && FI.smoke <= 12 * FI.emit, JSON.stringify(FI));
   const seenOk = (r) => r.diff >= 0.35 && r.fire && r.flames > 0 && r.smoke > 0 && r.fireV >= 12 && r.smokeV >= 12;
   T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
     R6.length === seen.length && R6.every(seenOk),
