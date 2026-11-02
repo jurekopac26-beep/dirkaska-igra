@@ -12,6 +12,7 @@
 //     docs/kazalo.md          vrstica v tabeli prog
 //     tests/<id>.test.js      test proge (skupni preizkusi tests/lib/gore.js), vpis v tests/run.js in tests/README.md; stranske ceste: tests/junctions.test.js
 //     js/menu-data.js         tabele novega menija: dolžina in višine za graf (tools/menu-lens.js), kraj na globusu (tools/menu-globe.mjs: iz oznake uvoza)
+//     tools/menu-corners.json zavoj za kamero 3 menija (prva serpentina, sicer najostrejši ovinek) in njegov video (tools/menu-corner.mjs: ~5 min)
 //   node tools/nova-proga.mjs <id> --medalje    samo znova izračuna medalje
 // Nato: preberi in dopolni opisa (desc, en.desc) in docs/proge/<id>.md, posebnosti v js/world-<id>.js, node tools/stamp.js, slika za meni
 // (maketa-menija/README.md), testi (docs/gorske-proge.md, Postopek).
@@ -161,4 +162,12 @@ G.done();
 }
 /* ---- the new menu's tables (js/menu-data.js): the length and the heights for the graph, the place on the globe (from the import marker) ---- */
 if (!onlyMedals) for (const t of ['menu-lens.js', 'menu-globe.mjs']) { console.log('  (meni: node tools/' + t + ')'); execFileSync(process.execPath, [path.join(REPO, 'tools', t)], { stdio: 'inherit', cwd: REPO }); }
+// the corner camera of the menu (camera 3): the first hairpin (else the sharpest bend), its video found and drawn by tools/menu-corner.mjs
+if (!onlyMedals) {
+  const cf = 'tools/menu-corners.json', CF = JSON.parse(rd(cf)), { loadCore } = require(path.join(REPO, 'tests', 'lib', 'core.js')), C2 = loadCore(), d2 = C2.TRACKS.find(d => d.id === id);
+  if (d2 && !CF[id]) { const T2 = new C2.Track(d2), B = (d2.bends || []).slice(), hp = B.find(b => b[3] > 140) || B.sort((a, b) => b[3] - a[3])[0];
+    if (hp) { const nm = (d2.names || []).find(n => Math.abs(n.d - hp[0]) < 40); CF[id] = { s: Math.round(T2.startS + hp[0]), o: nm ? nm.n : (hp[2] > 0 ? 'Desni' : 'Levi') + ' ovinek' }; wr(cf, JSON.stringify(CF, null, 1) + '\n'); } }
+  if (CF[id] || JSON.parse(rd(cf))[id]) { console.log('  (meni: node tools/menu-corner.mjs ' + id + ')');
+    try { execFileSync(process.execPath, [path.join(REPO, 'tools', 'menu-corner.mjs'), id], { stdio: 'inherit', cwd: REPO }); } catch (e) { console.log('  (video zavoja ni uspel: node tools/menu-corner.mjs ' + id + ')'); } }
+}
 console.log('naprej: opisa (desc, en.desc) in docs/proge/' + id + '.md, posebnosti v ' + worldF + ', node tools/stamp.js, slika za meni, testi');
