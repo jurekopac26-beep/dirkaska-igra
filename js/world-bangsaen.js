@@ -12,8 +12,8 @@
     ico, inPoly, lerp, nrDem, nrDist, nrGH, nrGround, nrLC, nrLCf, nrLump, nrNear, nrPrep, nrTileGeo, nrTileOn, propFloorTable, rng, shoreBand,
     sstep, valueNoise2, vary, waterMat, waterline, wrapS
   } = API;
-  let T;   // (World's, for the build under way)
-  API.sync.push(() => { ({ T } = API); });
+  let LOD, T;   // (World's, for the build under way)
+  API.sync.push(() => { ({ LOD, T } = API); });
 
   /* ================= BANG SAEN (theme 'bangsaen'): the street circuit of the seaside town on the Gulf of Thailand =================
      The Nordschleife's corridor terrain (nrPrep: def.dem, def.lc) under a town of its own: the buildings' real footprints (def.bs.bld) with
@@ -326,7 +326,7 @@
     /* ---- the buildings: the real footprints (concrete, painted in Thai pastels; flat roofs with parapets and water tanks, the houses under
        hipped tile roofs) and rows of shophouses filling the built-up land along the streets where the data has none ---- */
     const facMat = new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), shopT = ownTex(bgsShopTex()), shopMat = new THREE.MeshLambertMaterial({ map: shopT, vertexColors: true });
-    const fac = new Chunks(160, true), shop = new Chunks(256, true), roofs = new Chunks(256);
+    const bk = LOD.tier === 0 ? 2 : 1, fac = new Chunks(160 * bk, true), shop = new Chunks(256, true), roofs = new Chunks(256);   // (NIZKA: the walls in chunks twice as wide, fewer meshes and shadow draws for the same walls)
     const PAL = [[0.97, 0.95, 0.9], [0.98, 0.92, 0.78], [0.95, 0.86, 0.72], [0.92, 0.95, 0.93], [0.86, 0.92, 0.96], [0.98, 0.86, 0.84], [0.88, 0.88, 0.86], [0.96, 0.96, 0.82], [0.8, 0.92, 0.84]];
     const SIGN = [[0.9, 0.2, 0.18], [0.15, 0.4, 0.8], [0.98, 0.78, 0.15], [0.2, 0.62, 0.3], [0.95, 0.5, 0.1], [0.96, 0.96, 0.95], [0.6, 0.15, 0.5]];
     const TILE = [[0.72, 0.3, 0.18], [0.6, 0.24, 0.16], [0.5, 0.36, 0.3], [0.32, 0.36, 0.42]];

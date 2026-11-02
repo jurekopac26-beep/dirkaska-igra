@@ -9,7 +9,7 @@
   const API = World.api;
   const {
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caGH, caGround, caSlope, caTileOn, clamp, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl,
-    gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, stubExcl, stubGeo, stubProps,
+    gable, ico, lerp, ouCutMat, ouRod, ownRnd, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, stubExcl, stubGeo, stubProps,
     stubRails, stubVerge, tuftWindMat, valueNoise2, vary, vrDist, vrFar, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrWater
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -110,10 +110,17 @@
       txt(n, x0 + 256, y0 + 66, n.length > 16 ? 40 : 52, light ? '#16181c' : '#f2f2ee', 470); });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (mhA2Tex = t);
   }
-  function mhPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of dry golden grass, 1 a chaparral shrub (a dense,
+  function mhPlantGeo(kind, lo) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of dry golden grass, 1 a chaparral shrub (a dense,
     // dark grey-olive mound), 2 a coast live oak (a short, leaning trunk, a broad, low, dark crown of rounded clumps), 3 a sycamore (a tall, pale,
     // mottled trunk, an open light-green crown), 4 a sandstone boulder, 5 a few stones, 6 a yucca's rosette, 7 its dried flower stalk
+    // (lo: the shrub far from the road on NIZKA, three lumps for five, the same mound's outline: 180 vertices for 300)
     const g = new GB(), R = rng(760 + kind), rs = API.ROCK_SMOOTH;
+    if (kind === 1 && lo) {
+      API.ROCK_SMOOTH = true; const col = [0.27, 0.3, 0.17];
+      ico(g, 0, 0.46, 0, 0.52, 0.9, col, R, 0.25);
+      for (let k = 0; k < 2; k++) { const a = k * Math.PI + 0.6 + R() * 0.5, d = 0.36 + R() * 0.08; ico(g, Math.cos(a) * d, 0.34 + R() * 0.08, Math.sin(a) * d, 0.32 + R() * 0.06, 0.9, vary(col, R, 0.25), R, 0.35); }
+      API.ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    }
     if (kind === 0) {   // eight thin blades and seed heads, straw-gold
       const base = [0.8, 0.64, 0.3], tip = [1.0, 0.9, 0.58];
       for (let k = 0; k < 8; k++) { const a = k / 8 * TAU + R() * 0.6, lean = 0.18 + R() * 0.22, hh = 0.7 + R() * 0.3, bx = Math.cos(a) * 0.04, bz = Math.sin(a) * 0.04, tx = Math.cos(a) * lean, tz = Math.sin(a) * lean, ox = -Math.sin(a) * 0.05, oz = Math.cos(a) * 0.05;
@@ -499,6 +506,7 @@
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
     const pk = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new IChunks(mhPlantGeo(k), k === 0 ? wMat : pMat, k === 5 ? 64 : 96));
+    const pk1f = LOD.tier === 0 ? ownRnd(() => new IChunks(mhPlantGeo(1, true), pMat, 96)) : null;   // (NIZKA: the chaparral 60 m and more from the road, lighter: mhPlantGeo's lo)
     let nPlants = 0, nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(80000 * dens), RT = rng(3171), SP = 3.0 / Math.sqrt(dens);
@@ -523,7 +531,7 @@
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < (kind === 2 || kind === 3 ? 4 : 1.6)) continue;
           if (excluded(x, z)) continue;
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.7, 0.6 + r4 * 0.5, [0.92 + r2 * 0.16, 0.9 + r3 * 0.14, 0.86 + r4 * 0.16]);
-          else if (kind === 1) pk[1].add(x, y0 - 0.12, z, r2 * TAU, 1.4 + r3 * 1.4, 1.1 + r4 * 1.2, r2 < 0.22 ? [1.5 + r3 * 0.2, 1.5 + r3 * 0.15, 1.95 + r4 * 0.2] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (one in five the grey-green coastal sage among the chaparral)
+          else if (kind === 1) (pk1f && hd > 60 ? pk1f : pk[1]).add(x, y0 - 0.12, z, r2 * TAU, 1.4 + r3 * 1.4, 1.1 + r4 * 1.2, r2 < 0.22 ? [1.5 + r3 * 0.2, 1.5 + r3 * 0.15, 1.95 + r4 * 0.2] : [0.88 + r2 * 0.24, 0.9 + r3 * 0.18, 0.88 + r4 * 0.16]);   // (one in five the grey-green coastal sage among the chaparral)
           else if (kind === 6) { pk[6].add(x, y0 - 0.05, z, r2 * TAU, 0.8 + r3 * 0.6, 0.7 + r4 * 0.5, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.95 + r4 * 0.1]); if (r4 < 0.35) pk[7].add(x, y0, z, r3 * TAU, 1, 3.2 + r2 * 2.2, [0.9 + r3 * 0.2, 0.9 + r3 * 0.2, 0.9 + r3 * 0.2]); }
           else if (kind === 2) { pk[2].add(x, y0 - 0.15, z, r2 * TAU, 9 + r3 * 7, 7 + r4 * 5, [0.9 + r2 * 0.2, 0.92 + r3 * 0.16, 0.9]); nTrees++; }
           else if (kind === 3) { pk[3].add(x, y0 - 0.15, z, r2 * TAU, 11 + r3 * 6, 13 + r4 * 7, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9]); nTrees++; }
@@ -543,6 +551,7 @@
       }
     }
     for (let k = 0; k < pk.length; k++) pk[k].addTo(root, k === 2 || k === 3);
+    if (pk1f) ownRnd(() => pk1f.addTo(root, false));
 
     /* ---- the road cuts and the slopes: sandstone outcrops where the slope rises steep beside the road, boulders at the foot of the cuts ---- */
     {
