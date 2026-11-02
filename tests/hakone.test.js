@@ -1,7 +1,7 @@
 // Hakone (Japan, docs/proga-hakone.md): one lap of the public roads round Hakone, 26.8 km: national road 1 up from Yumoto to its top (874 m)
 // and down to Moto-Hakone, the old Tōkaidō (road 732) through the Seven Bends back to Yumoto. A closed lap, one lap, 100 cars from a flying
 // start as the Nordschleife (def.raceRivals 99, def.flyStart). The road: the OpenStreetMap line smoothed, the hairpins opened to a 10.5 m radius
-// with their legs 21 m apart at least (tools/hakone/proga.py), so no barrier reaches the other leg; the heights from Copernicus GLO-30, grades
+// with their legs 21 m apart at least (tools/hakone/proga.py, in the repository's history), so no barrier reaches the other leg; the heights from Copernicus GLO-30, grades
 // capped (10 % on road 1, 13 % on road 732, +0.5 % where the hairpins were flattened), the hairpins flatter than the legs between them. The
 // 25 hairpins where the real road has them, each turning the way the data says; the places on the HUD in the order of the lap; one blue sign
 // over the Seven Bends. A whole race as the game's Circuit race runs it (99 rivals, the flying start's column, the player at its back on the

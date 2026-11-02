@@ -1,5 +1,5 @@
 /* Hakone (theme 'hakone'): the scenery data for js/world-hakone.js (metres, origin = the start line, x east, z south), made by tools/hakone/svet.py
-   from tools/hakone/podatki (not by hand; format in that tool and in docs/proga-hakone.md). Buildings, the railway, the old road's stone paving,
+   (not by hand; the script and its data are in the repository's history, docs/proga-hakone.md »Podatki«). Buildings, the railway, the old road's stone paving,
    the torii, the lakes and the rivers: OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0). Trees: High Resolution Canopy Height Maps (Meta and
    World Resources Institute 2024, CC BY 4.0). The far view (far, fuji): Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V.
    2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved), its land

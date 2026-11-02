@@ -1,7 +1,7 @@
 /* =========================================================================
    WORLD — Hakone (theme 'hakone'): its own builder (World.ext.hakone). What it uses of World comes from World.api: the helpers bound here
    once, the state that changes as API.<name>, the track being built and its theme (LOD, T) copied in at each build. Its scenery data is
-   js/data/hakone.js (HK_DATA, made by tools/hakone/svet.py).
+   js/data/hakone.js (HK_DATA; the script that made it is in the repository's history, docs/proga-hakone.md).
    ========================================================================= */
 (function () {
   'use strict';

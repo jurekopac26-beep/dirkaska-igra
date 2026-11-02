@@ -8,7 +8,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Otama-ga-ike, the Sarusuberi hairpin, the Seven Bends (Nanamagari: twelve hairpins in a row), the village of Hatajuku and the Sukumo valley
   // back down to Yumoto, left at Sanmaibashi and 390 m on road 1 to the line. One lap, 100 cars from a flying start (as the Nordschleife).
   // Only the places' names (no hotels, firms, the railway's operator or the race run on road 1).
-  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0), roads 1 and 732 (tools/hakone/pot.py), smoothed, the Sanmaibashi
+  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0), roads 1 and 732 (tools/hakone/pot.py; the scripts are in the repository's history, docs/proga-hakone.md), smoothed, the Sanmaibashi
   // junction rounded and the hairpins opened to a 10.5 m radius with their legs 21 m apart at least, as on the Irohazaka (tools/hakone/proga.py:
   // the road moved 0.1 m on average and 5 m at most); metres, origin = the start line, x east, z south.
   // Heights (HK.h): Copernicus DEM GLO-30 along the real line, the canopy and the bridges taken out, grades capped at 10 % on road 1 and 13 % on
@@ -18,7 +18,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // 32 m cells, a 256 m trend and 1 m residuals within 650 m of the road; tools/hakone/teren.py) and land cover (lc: ESA WorldCover 2021, the
   // canopy heights and OpenStreetMap, 16 m cells, run-length coded: 0 open, 1 forest, 2 shrubs, 3 built-up, 4 bare rock, 5 water;
   // tools/hakone/okolica.py). Derived data under the ODbL 1.0.
-  // ---- HK-DATA: made by tools/hakone/proga.py (python3 -I tools/hakone/proga.py), not by hand ----
+  // ---- HK-DATA: made by tools/hakone/proga.py (in the repository's history: docs/proga-hakone.md), not by hand ----
   const HK = {
     start: [-0.01,0.0], d: {"yumoto":139.8,"tonosawa":1157.2,"deyama":1935.9,"ohiradai":4164.8,"sennindai":5070.8,"miyanoshita":5910.1,"sokokura":6667.5,"kowakidani":7561.3,"ninotaira":8505.9,"ashinoyu":12862.9,"summit":13371.7,"shojin":13826.2,"motohakone":15238.1,"otama":16024.7,"sarusuberi":17802.0,"sevenbends":18659.6,"hatajuku":20479.3,"sukumogawa":22179.3,"yumotochaya":23706.3,"okuyumoto":23931.7,"sanmaibashi":26264.5},
     bridges: [[512.1,519.2],[767.0,799.5],[875.4,885.7],[986.8,999.3],[1118.0,1120.5],[2685.1,2702.7],[7076.6,7084.9],[8090.6,8095.3],[19210.6,19266.1],[20898.6,20917.4],[22123.5,22140.1],[22771.8,22777.0],[23195.2,23211.4],[23474.0,23488.8],[24028.8,24034.1],[24104.3,24110.1],[24133.5,24156.8],[24555.5,24560.1],[26238.5,26241.0]],
