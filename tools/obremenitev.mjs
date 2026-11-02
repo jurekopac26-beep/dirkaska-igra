@@ -1,5 +1,5 @@
 // A track's load on the phone, object by object: the same six samples round the lap as tests/browser/perf.test.mjs (844 x 390, normal
-// quality, NIZKA, shadows, the chase camera, Math.random seeded), and every draw call of each sample (the shadow pass's too) put down to
+// quality, NIZKA, shadows, the chase camera and its shake, Math.random seeded), and every draw call of each sample (the shadow pass's too) put down to
 // the mesh that made it: which builder line added it to the scene (`[mulholland:512<world:4344]`: world-mulholland.js line 512 by way of
 // World's IChunks.addTo), its material and geometry (g: vertices, i: indices, inst: instances), W the world (Render.world.root) or O the
 // rest (cars, sky, effects), SH the shadow pass. For an instanced mesh also how much of it lies more than 60 / 100 / 150 m from the
@@ -23,7 +23,7 @@ const out = path.join(REPO, 'test-results', 'obremenitev');
 const srv = await serve(), browser = await launch();
 let r;
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, camShake: 1, camLand: 1, camKerb: 1, camMis: 1 }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };   // (counted as perf.test.mjs counts them)
     const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
