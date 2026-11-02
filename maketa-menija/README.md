@@ -256,7 +256,7 @@ node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gum
 node bgvideo.mjs '[["jezero",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
-node dio2.mjs proge_igra.json                    # makete 20 prog, ki so v igri od vključitve menija (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
+node dio2.mjs proge_igra.json                    # makete prog, ki so v igri od vključitve menija (tudi `pikesg`, makadam) (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
 python3 mkwebp.py ../../assets/tracks bathurst beartooth …   # samo naštete proge, v mapo igre (assets/tracks/ v korenu repozitorija; nova proga: dodaj vrstico v proge_igra.json)
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
