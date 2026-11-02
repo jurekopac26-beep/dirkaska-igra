@@ -6,6 +6,7 @@
 // picture, the notes) and puts a flag on the timeline; the flag's tap: the replay there; the collection kept through Nazaj v dirko.
 // Zgodovina napak (sklop 18): from the marking's bar and the choice; kept after Deli (the small picture and the text without Obdrži tudi
 // slike v igri); its state Neposlano → Poslano → Popravljeno → Zaprto (by hand), shared again; on its side and upright; the last 100, 20 with pictures.
+// Poslano by hand in a record and Označi vse kot poslane (a second tap within 3 s) for collections sent some other way.
 // Beležka (the notebook): always open bottom right over the picture, the keyboard in it with no click (a computer), back in it after
 // drawing and a tool, a letter typed anywhere goes in it, Escape takes the cursor out; its note with the moment, first in the text.
 //   node tests/browser/napake.test.mjs
@@ -173,6 +174,12 @@ try {
   const y1 = (await nk()).zg, txt = await Q.evaluate(async () => (await Napake.shranjene())[0].text);
   T.check('Zgodovina from the choice, over it; a tap opens the record: the small picture, Poslano, its text, Deli / Shrani malo sliko / Kopiraj besedilo / Izbriši',
     over && y1.st === 'Poslano' && y1.text === txt && y1.acts.join() === 'Deli,Shrani malo sliko,Kopiraj besedilo,Izbriši' && (await Q.evaluate(() => { const i = document.querySelector('#nk-zg .nk-prev img'); return !!i && i.complete && i.naturalWidth === 320; })), JSON.stringify(y1));
+  // Poslano by hand too (sent some other way): Neposlano, then Poslano
+  await tap('#nk-zg .nk-sts [data-v="neposlano"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Neposlano', null, { timeout: 10000 });
+  const w0 = await Q.evaluate(async () => (await Napake.shranjene())[0].status);
+  await tap('#nk-zg .nk-sts [data-v="poslano"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Poslano', null, { timeout: 10000 });
+  const w0b = await Q.evaluate(async () => (await Napake.shranjene())[0].status);
+  T.check('the state by hand: Neposlano, then Poslano (sent some other way)', w0 === 'neposlano' && w0b === 'poslano', JSON.stringify({ w0, w0b }));
   await tap('#nk-zg .nk-sts [data-v="popravljeno"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Popravljeno', null, { timeout: 10000 });
   const w1 = await Q.evaluate(async () => (await Napake.shranjene())[0].status);
   await tap('#nk-zg .nk-sts [data-v="zaprto"]'); await Q.waitForFunction(() => Napake.stanje.zg && Napake.stanje.zg.st === 'Zaprto', null, { timeout: 10000 });
@@ -201,6 +208,15 @@ try {
   await Q.evaluate(() => Napake.zgodovina()); await Q.waitForSelector('#nk-zg .nk-item');
   const zn = await Q.evaluate(() => ({ items: document.querySelectorAll('#nk-zg .nk-item').length, head: document.querySelector('#nk-zg .nk-zg-n').textContent }));
   T.check('Zgodovina napak lists all 100', zn.items === 100 && zn.head === 'Shranjene zbirke (100)', JSON.stringify(zn));
+  // Označi vse kot poslane: the first tap asks (nothing changed), the second within 3 s marks every Neposlano as Poslano (Zaprto stays)
+  const cnt = () => Q.evaluate(async () => (await Napake.shranjene()).reduce((o, r) => { o[r.status] = (o[r.status] || 0) + 1; return o; }, {}));
+  await tap('#nk-zg [data-nk-d="vsepos"]'); await Q.waitForTimeout(150);
+  const v1 = await Q.evaluate(() => document.querySelector('#nk-zg [data-nk-d="vsepos"]').textContent), c1 = await cnt();
+  await tap('#nk-zg [data-nk-d="vsepos"]');
+  await Q.waitForFunction(() => document.querySelectorAll('#nk-zg .nk-item .st-neposlano').length === 0 && document.querySelectorAll('#nk-zg .nk-item').length === 100, null, { timeout: 10000 });
+  const c2 = await cnt();
+  T.check('Označi vse kot poslane: the first tap asks ("Res? Neposlanih: 99 → Poslano", nothing changed), the second marks the 99 Poslano, Zaprto stays',
+    v1 === 'Res? Neposlanih: 99 → Poslano' && c1.neposlano === 99 && c1.zaprto === 1 && c2.poslano === 99 && c2.zaprto === 1 && !c2.neposlano, JSON.stringify({ v1, c1, c2 }));
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
   await Q.context().close();
 } catch (e) {

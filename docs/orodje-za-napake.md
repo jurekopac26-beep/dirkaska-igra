@@ -28,7 +28,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 16 | Ponovljive dirke | končano (PR #175) |
 | 17 | Razdeljen world.js | končano (PR #176, #180) |
 | 18 | Zgodovina napak | končano |
-| 19 | Beležka v Označi | končano (veja `orodje-za-napake/belezka`) |
+| 19 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
 
 **Pospešitev (27. 10. 2026, uporabnik: »Oboje«):** sklopi se združijo in delno tečejo hkrati.
 
@@ -356,7 +356,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Po korakih:** nekaj prog na pull request. Svet mora ostati enak (`tests/browser/world.test.mjs`, `perf`, `golden` brez novih referenc).
 - **Kazalo:** posodobi tabelo prog v `docs/kazalo.md`.
 
-### Sklop 19 · Beležka v Označi — ~1 h · 1. 11. 2026
+### Sklop 19 · Beležka v Označi, ročno Poslano — ~1,5 h · 1.–2. 11. 2026
 
 - **Naročilo uporabnika** (1. 11. 2026, računalnik: Windows, Edge, 1920 × 1008): »spremeni v urejevalniku da je spodaj desno kjer sem oznacil vedno odprta belezka kjer pisem notri napake, predloge in vprasanja. naprimer ko uporabnik klikne uredi in se odpre to okno kjer oznacim napako nato se odpre okno, je okno ze spodaj odprto in mi ni treba z misko kliknit na belezko da po njej lahko pisem, ampak vse kar pisem na tipkovnico se tam vpisuje. da shranim sliko mi ni potrebno oznaciti nic na sliki, saj kasne stvari zajemajo cel ekran«. Veja `orodje-za-napake/belezka`.
 - **Narejeno:**
@@ -364,7 +364,8 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
   - **Tipkovnica:** na računalniku je kazalec v beležki takoj ob odprtju; po risanju in tapu na orodje se vrne vanjo (razen ko nov oblaček dobi svoj kazalec, kot doslej); črka, natipkana kjer koli med označevanjem, gre v beležko. Tipke igre (O, I, F …) med pisanjem ne delujejo, Escape umakne kazalec kot v oblačku. Na telefonu (dotik) se tipkovnica sama ne odpre: beležka je vidna, piše se po dotiku.
   - **Brez oznake:** trenutek se doda k zbirki in deli tudi samo s sliko in zapisom beležke. Zapri vpraša tudi, če je v beležki zapis (»Zavrzi zapis?«).
   - **Besedilo in slika:** zapis beležke je vrstica `#n čas Kkrog s=…m beležka »…«` pred vrsticami barv (brez `v_krogu`; vrstice zapisa z » / «, tudi v oblačkih, da je vsak zapis ena vrstica). Na sliki trenutka je beležka narisana ob desnem in spodnjem robu kot na zaslonu, visoka po zapisu (do 9 vrstic), s pisavo, berljivo tudi pri sliki z računalnika.
-  - **Testi:** `tests/browser/napake.test.mjs` (beležka odprta in v fokusu, tipkanje brez klika, O in I sta črki, kazalec nazaj po barvi in črti, Escape in ponovno tipkanje, zapis v trenutku in besedilu), `napake-slika.test.mjs` (četrti trenutek brez oznake, samo z beležko: besedilo in temna beležka na sliki; moder krog nad beležko).
+  - **Zgodovina napak, ročno Poslano** (želja uporabnika 2. 11.: »piše da so slike neposlane, vendar jaz sem jih tebi poslal«; zbirke je poslal s posnetkom zaslona, ne z Deli ali Kopiraj sliko): v zapisu se Poslano izbere ročno kot Popravljeno in Zaprto (4 gumbi stanja, namig v seznamu to zdaj pove); v seznamu je nov gumb **Označi vse kot poslane** (`vsePoslane`): prvi tap vpraša v gumbu (»Res? Neposlanih: N → Poslano«, rdeče), drugi tap v 3 s vse neposlane označi kot poslane (Popravljeno in Zaprto ostaneta); brez `confirm()`.
+  - **Testi:** `tests/browser/napake.test.mjs` (beležka odprta in v fokusu, tipkanje brez klika, O in I sta črki, kazalec nazaj po barvi in črti, Escape in ponovno tipkanje, zapis v trenutku in besedilu; ročno Neposlano → Poslano v zapisu, Označi vse kot poslane: vprašanje, nato 99 Poslano, Zaprto ostane), `napake-slika.test.mjs` (četrti trenutek brez oznake, samo z beležko: besedilo in temna beležka na sliki; moder krog nad beležko).
   - **Opomba (moje odločitve):** beležka se ne premika in ne skrije (uporabnik jo je postavil spodaj desno), zato se krog ne more začeti na njej, lahko pa gre čez njo. Zapis je za en trenutek: ob naslednjem Označi je beležka prazna.
 
 ### Odloženo

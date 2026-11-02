@@ -937,7 +937,15 @@ const Napake = (function () {
     else if (how === 'no') { for (const r of un) shrani(r); G.toast('Deljenje tu ne gre: slike so v Prenosih. ' + KJE, 4200); }
     zgOsvezi();
   }
-  let zgUrls = [], zgId = '', zgDel = 0;
+  const VSEPOS = 'Označi vse kot poslane';
+  async function vsePoslane(b) {   // the unsent marked sent by hand (sent some other way: a screenshot pasted in the chat); asks first: a second tap within 3 s
+    const un = (await dbAll().catch(() => [])).filter(r => stOf(r) === 'neposlano');
+    if (!un.length) { G.toast('Neposlanih napak ni.', 2000); return; }
+    if (performance.now() - zgVse > 3000) { zgVse = performance.now(); b.textContent = 'Res? Neposlanih: ' + un.length + ' → Poslano'; b.classList.add('warn'); setTimeout(() => { if (b.isConnected) { b.textContent = VSEPOS; b.classList.remove('warn'); } }, 3100); return; }
+    zgVse = 0; await dbDo('readwrite', st => { for (const o of un) { o.status = 'poslano'; st.put(o); } }).catch(() => { });
+    G.toast('Označeno kot poslano: ' + un.length + '.', 2200); zgOsvezi();
+  }
+  let zgUrls = [], zgId = '', zgDel = 0, zgVse = 0;
   function zgodovina(id) {   // the panel over everything (the replay, the choice, the settings): the list, or the one record (id)
     zgZapri();
     const el = mk('div', 'nk-dlg nk-zg'); el.id = 'nk-zg'; document.body.appendChild(el);
@@ -951,6 +959,7 @@ const Napake = (function () {
       if (a === 'zg') { zgEna(b.dataset.id); return; }
       if (a === 'nazaj') { zgSeznam(); return; }
       if (a === 'vse') { await vseNeposlane(); return; }
+      if (a === 'vsepos') { await vsePoslane(b); return; }
       const r = (await dbAll().catch(() => [])).find(o => o.id === zgId); if (!r) { zgSeznam(); return; }
       if (a === 'st') { await dbSet(r.id, { status: b.dataset.v }).catch(() => { }); zgOsvezi(); return; }
       if (a === 'del') {   // (a second tap within 3 s)
@@ -964,8 +973,8 @@ const Napake = (function () {
   const zgIn = () => document.querySelector('#nk-zg .nk-zg-in');
   async function zgSeznam() {
     const box = zgIn(); if (!box) return; zgId = '';
-    box.innerHTML = '<div class="nk-row"><span class="nk-zg-n">Shranjene zbirke</span><button data-nk-d="vse">Deli vse neposlane</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
-      '<p class="nk-hint">Stanje: Neposlano → Poslano (samodejno ob Deli ali Kopiraj sliko) → Popravljeno (ko Claude javi popravek) → Zaprto (po preizkusu). Dotik odpre zapis.</p>';
+    box.innerHTML = '<div class="nk-row"><span class="nk-zg-n">Shranjene zbirke</span><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="vsepos" class="nk-delb">' + VSEPOS + '</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
+      '<p class="nk-hint">Stanje: Neposlano → Poslano (samodejno ob Deli ali Kopiraj sliko; če si sliko poslal drugače, ročno v zapisu ali z »' + VSEPOS + '«) → Popravljeno (ko Claude javi popravek) → Zaprto (po preizkusu). Dotik odpre zapis.</p>';
     const l = await seznam(box.querySelector('.nk-list'), zgUrls), n = box.querySelector('.nk-zg-n');
     if (n) n.textContent = 'Shranjene zbirke (' + l.length + ')';
   }
