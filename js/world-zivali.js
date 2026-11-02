@@ -349,7 +349,7 @@
      little from the neck's top); the vertex shader moves them (uA: the gait's phase, the legs' swing, the neck's bow), World.lifeStep places
      it (World.update, every frame). Kangaroos bound; a bear or a wombat walks as one piece. From SREDNJA up (LOD 'animals', as the worlds'
      other animals); the shadow is the standing pose's ---------------- */
-  const SHADE = [0.2, 0.21, 0.17];   // (an animal's shadow on the ground)
+  const SOFT = [0.62, 0.42], SOFTC = [0.03, 0.035, 0.02];   // (its soft shadow: the see-through of its middle and its inner ring, its rim clear; its colour)
   // the upright model with its joints (TPLR: the live ones' meshes and the herds' animals in the chunks): every vertex with its part and its
   // joint (aJ: legs 1-4 swung from their tops, the neck 5 bowed from its foot, the tail 6 swishing about its root, the head 7 tipped back a
   // little from the neck's top; 0 the body), shaded from the ground up as tpl
@@ -382,16 +382,19 @@
     TPLR.set(kind, t); return t;
   }
   const TPLL = new Map();
-  function tplLive(kind) {   // a live one's mesh: the upright model and its shadow (an octagon on the ground under it, longer along the animal: it goes with it)
+  function tplLive(kind) {   // a live one's mesh: the upright model; and its soft shadow (its own see-through mesh under it: it goes with it)
     if (TPLL.has(kind)) return TPLL.get(kind);
     const r = tplRig(kind); if (!r) { TPLL.set(kind, null); return null; }
-    const P = Array.from(r.P), N = Array.from(r.N), C = Array.from(r.C), J = Array.from(r.J), br = r.size * 0.28;
-    for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU; for (const [cx, cz] of [[0, 0], [Math.cos(a1) * br, Math.sin(a1) * br * 1.7], [Math.cos(a0) * br, Math.sin(a0) * br * 1.7]]) { P.push(cx, 0.03, cz); N.push(0, 1, 0); C.push(...SHADE); J.push(0, 0, 0, 0); } }
+    const P = Array.from(r.P), N = Array.from(r.N), C = Array.from(r.C), J = Array.from(r.J), br = r.size * 0.36;
+    const SP = [], SA = [], at = (f, an) => [Math.cos(an) * br * f, 0.03, Math.sin(an) * br * f * 1.5];   // (its soft shadow: as the herds', flat under it)
+    for (let q = 0; q < 8; q++) { const a0 = q / 8 * TAU, a1 = (q + 1) / 8 * TAU, tri = (...v) => { for (const [p, al] of v) { SP.push(p[0], p[1], p[2]); SA.push(SOFTC[0], SOFTC[1], SOFTC[2], al); } };
+      tri([[0, 0.03, 0], SOFT[0]], [at(0.5, a1), SOFT[1]], [at(0.5, a0), SOFT[1]]); tri([at(0.5, a0), SOFT[1]], [at(0.5, a1), SOFT[1]], [at(1, a1), 0]); tri([at(0.5, a0), SOFT[1]], [at(1, a1), 0], [at(1, a0), 0]); }
+    const soft = new THREE.BufferGeometry(); soft.setAttribute('position', new THREE.Float32BufferAttribute(SP, 3)); const sa = new THREE.Float32BufferAttribute(SA, 4); sa.noSeason = true; soft.setAttribute('color', sa); soft.computeBoundingSphere();
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P), 3)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(N), 3));
     geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3)); geo.setAttribute('aJ', new THREE.BufferAttribute(new Float32Array(J), 4));
     geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.25;   // (the legs and the head swing out of the standing pose's sphere)
-    const t = { geo, n0: r.n0, graze: r.graze, len: r.len, rig: r.rig, hop: r.hop };
+    const t = { geo, soft, n0: r.n0, graze: r.graze, len: r.len, rig: r.rig, hop: r.hop };
     TPLL.set(kind, t); return t;
   }
   const LIVE_VS_HEAD = 'attribute vec4 aJ;\nuniform vec3 uA;\nuniform vec3 uN0;\nvec3 zvRx( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x, p.y * c - p.z * s, p.y * s + p.z * c ); }';
@@ -494,28 +497,35 @@
   ].join('\n');
   const HERD_NORMAL = 'zvPose();\nvec3 objectNormal = zvMd > 0.5 ? zvNrm( vec3( normal ) ) : vec3( normal );\n#ifdef USE_TANGENT\nvec3 objectTangent = vec3( tangent.xyz );\n#endif';
   const HERD_POS = 'vec3 transformed = zvMd > 0.5 ? zvPos( vec3( position ) ) : vec3( position );';
-  function herdMats(U) {   // the chunk's material and its shadow pass's (one program each for all the chunks)
+  function herdMats(U) {   // the chunk's material, its shadow map pass's and the animals' soft shadows' (one program each for all the chunks)
     const m = new THREE.MeshLambertMaterial({ vertexColors: true }), d = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
     m.onBeforeCompile = (sh) => { sh.uniforms.uT = U;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + HERD_VS).replace('#include <beginnormal_vertex>', HERD_NORMAL).replace('#include <begin_vertex>', HERD_POS); };
-    d.onBeforeCompile = (sh) => { sh.uniforms.uT = U;
+    d.onBeforeCompile = (sh) => {   // (the shadow map: the animals none, the things theirs; an animal's shadow is its soft spot)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aM;').replace('#include <begin_vertex>', 'vec3 transformed = aM.x >= 50.0 ? vec3( 0.0 ) : vec3( position );'); };
+    const b = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 });
+    b.onBeforeCompile = (sh) => { sh.uniforms.uT = U;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + HERD_VS).replace('#include <begin_vertex>', 'zvPose();\n' + HERD_POS); };
-    m.customProgramCacheKey = () => 'zvHerd'; d.customProgramCacheKey = () => 'zvHerdD'; m.userData.herd = true;
-    return { m, d };
+    m.customProgramCacheKey = () => 'zvHerd'; d.customProgramCacheKey = () => 'zvHerdD'; b.customProgramCacheKey = () => 'zvHerdS'; m.userData.herd = true; b.userData.soft = true;
+    return { m, d, b };
   }
   const BIRDS = new Set(['emu', 'cockatoo', 'galah', 'magpie', 'stork', 'egret', 'goose']);
   const herdMode = (kind, t) => kind === 'caiman' ? 5 : BIRDS.has(kind) ? 4 : t.hop ? 3 : t.rig ? 1 : 2;
   const hash01 = (x, z) => { const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return h - Math.floor(h); };
-  // one animal into a chunk's builder: its model in its own frame (scaled by s), its shadow (part 9: it goes with it, not with its legs or
-  // head; draped on the ground where it stands); returns its record (its way's straight S, may be shortened to its neighbours: herdAt)
+  // one animal into a chunk's builder: its model in its own frame (scaled by s), its soft shadow into the chunk's shadow builder; returns its
+  // record (its way's straight S, may be shortened to its neighbours: herdAt)
   function herdPut(gb, gH, kind, t, x, y, z, yaw, s, tint) {
     const a = gb.P.length / 3, P = t.P, N = t.N, C = t.C, k = tint || 1;
     for (let i = 0; i < P.length; i += 3) { gb.P.push(P[i] * s, P[i + 1] * s, P[i + 2] * s); gb.N.push(N[i], N[i + 1], N[i + 2]); gb.C.push(C[i] * k, C[i + 1] * k, C[i + 2] * k); }
-    const r = t.size * s * 0.28, c = Math.cos(yaw), sn = Math.sin(yaw), at = (lx, lz) => { const h = gH(x + lx * c + lz * sn, z - lx * sn + lz * c); return [lx, (Number.isFinite(h) ? h : y) + 0.035 - y, lz]; };
-    const mid = at(0, 0); for (let q = 0; q < 8; q++) { const a0 = q / 8 * TAU, a1 = (q + 1) / 8 * TAU;
-      for (const p of [mid, at(Math.cos(a1) * r, Math.sin(a1) * r * 1.7), at(Math.cos(a0) * r, Math.sin(a0) * r * 1.7)]) { gb.P.push(p[0], p[1], p[2]); gb.N.push(0, 1, 0); gb.C.push(SHADE[0], SHADE[1], SHADE[2]); } }
+    // its shadow (the user, 2. 11. 2026: »naj imajo povsem mehke sence«): a soft dark spot under it, darkest in the middle and fading to
+    // nothing at its rim (two rings of eight), draped on the ground where it stands, in the chunk's shadow mesh (gb.bl: its own, see-through);
+    // it goes with the animal (part 9: not with its legs or head)
+    const r = t.size * s * 0.36, c = Math.cos(yaw), sn = Math.sin(yaw), at = (lx, lz, al) => { const h = gH(x + lx * c + lz * sn, z - lx * sn + lz * c); return [lx, (Number.isFinite(h) ? h : y) + 0.03 - y, lz, al]; };
+    const B = gb.bl || (gb.bl = { P: [], A: [] }), ba = B.P.length / 3, ring = (f, al) => { const o = []; for (let q = 0; q < 8; q++) { const an = q / 8 * TAU; o.push(at(Math.cos(an) * r * f, Math.sin(an) * r * f * 1.5, al)); } return o; };
+    const c0 = at(0, 0, SOFT[0]), R1 = ring(0.5, SOFT[1]), R2 = ring(1, 0), tri = (...v) => { for (const p of v) { B.P.push(p[0], p[1], p[2]); B.A.push(p[3]); } };
+    for (let q = 0; q < 8; q++) { const n = (q + 1) % 8; tri(c0, R1[n], R1[q]); tri(R1[q], R1[n], R2[n]); tri(R1[q], R2[n], R2[q]); }
     const md = herdMode(kind, t), len = t.len * s, sz = t.size * s, sl = (dx, dz) => { const h0 = gH(x - dx, z - dz), h1 = gH(x + dx, z + dz); return Number.isFinite(h0) && Number.isFinite(h1) ? Math.max(-0.7, Math.min(0.7, (h1 - h0) / 2)) : 0; };
-    const e = { a, b: gb.P.length / 3, J: t.J, s, x, y, z, yaw, md, len, ph: hash01(x, z) * 60,
+    const e = { a, b: gb.P.length / 3, ba, bb: B.P.length / 3, J: t.J, s, x, y, z, yaw, md, len, ph: hash01(x, z) * 60,
       gz: md === 1 ? t.graze : md === 5 ? 0.1 : md === 4 ? (t.top * s > 0.8 ? 0.3 : 0.7) : 0,   // (a beast's bow to the grass; a crocodile hardly lifts its head; a bird's peck, less for a tall one)
       S: md === 3 ? Math.min(2.2, Math.max(0.6, 1.4 * sz)) : md === 4 ? Math.min(0.6, Math.max(0.15, 0.35 * sz + 0.1)) : md === 5 ? 0.4 : md === 2 ? Math.min(1.0, Math.max(0.45, 0.9 * sz)) : Math.min(1.4, Math.max(0.3, 0.55 * sz)),
       stride: Math.max(0.3, len * (md === 3 ? 1.2 : 0.7)), n0: t.n0, gx: sl(1, 0), gzz: sl(0, 1), sz };
@@ -544,6 +554,15 @@
     const ctr = new THREE.Vector3((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
     geo.boundingSphere = new THREE.Sphere(ctr, Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) / 2);
     geo.boundingBox = new THREE.Box3(new THREE.Vector3(lo[0], lo[1], lo[2]), new THREE.Vector3(hi[0], hi[1], hi[2]));
+    // the animals' soft shadows (gb.bl): their own see-through mesh, posed by the same shader (part 9), its colour with its see-through
+    const B = gb.bl, m = B.P.length / 3, bc = new Float32Array(m * 4), bJ = new Float32Array(m * 4), bL = new Float32Array(m * 4), bM = new Float32Array(m * 4), bS = new Float32Array(m * 4);
+    for (const e of gb.zv) for (let v = e.ba; v < e.bb; v++) { const o = v * 4;
+      bc[o] = SOFTC[0]; bc[o + 1] = SOFTC[1]; bc[o + 2] = SOFTC[2]; bc[o + 3] = B.A[v]; bJ[o + 3] = 9;
+      bL[o] = e.x; bL[o + 1] = e.y; bL[o + 2] = e.z; bL[o + 3] = e.yaw; bM[o] = e.ph + 100 * e.md; bM[o + 1] = e.gz; bM[o + 2] = e.S; bM[o + 3] = e.stride;
+      bS[o] = e.n0[1] * e.s; bS[o + 1] = e.n0[2] * e.s; bS[o + 2] = e.gx; bS[o + 3] = e.gzz; }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(B.P, 3)); const ca = new THREE.BufferAttribute(bc, 4); ca.noSeason = true; sg.setAttribute('color', ca);
+    sg.setAttribute('aJ', new THREE.BufferAttribute(bJ, 4)); sg.setAttribute('aL', new THREE.BufferAttribute(bL, 4)); sg.setAttribute('aM', new THREE.BufferAttribute(bM, 4)); sg.setAttribute('aS', new THREE.BufferAttribute(bS, 4));
+    sg.boundingSphere = geo.boundingSphere.clone(); geo.userData.soft = sg;
     return geo;
   }
 
@@ -669,7 +688,7 @@
     const Z = ZIV[def.id]; if (!Z || (Z.nizka === false && World.api.LOD.tier === 0)) return null;
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
-    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals');
+    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
     const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null };
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
@@ -693,7 +712,10 @@
       }
       if (!a) a = { mode: 'graze', x0: x, z0: z, rad: 0.35 + R() * 0.4, ang0: R() * TAU, per: 9 + R() * 7, ph: R() * 60, stride: Math.max(0.45, len * 0.7) };
       a.gz = t.graze; a.rig = t.rig; a.hop = t.hop;
-      const m = new THREE.Mesh(t.geo, liveMat(t)); m.scale.setScalar(k); m.castShadow = true; m.receiveShadow = true; m.name = 'life';
+      const m = new THREE.Mesh(t.geo, liveMat(t)); m.scale.setScalar(k); m.castShadow = false; m.receiveShadow = true; m.name = 'life';   // (no hard shadow: its soft one)
+      const sm = A.ownRnd(() => { if (!softLive) { softLive = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }); softLive.userData.soft = true; }
+        return new THREE.Mesh(t.soft, softLive); });
+      sm.name = 'lifeShadow'; sm.renderOrder = 1; m.add(sm);
       a.m = m; a.U = m.material.userData.U; a.cx = x + (a.mode === 'walk' ? Math.sin(yaw) * a.L / 2 : 0); a.cz = z + (a.mode === 'walk' ? Math.cos(yaw) * a.L / 2 : 0); a.y0 = gH(x, z);
       grp.add(m); live.push(a); stats.live++; count(kk); return true;
     }
@@ -786,7 +808,10 @@
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), U = { value: 0 }, HM = A.ownRnd(() => herdMats(U)); let herds = 0;   // (ownRnd: the herds' materials do not take the race's random draws)
     for (const [key, g] of chunks.map) { if (g.empty) continue; const m = new THREE.Mesh(herdGeo(g), g.zv ? HM.m : mat); if (g.zv) { m.customDepthMaterial = HM.d; herds++; }
       m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'life'; grp.add(m);
-      const bs = m.geometry.boundingSphere; if (o.cull) o.cull.push({ m, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
+      const bs = m.geometry.boundingSphere; if (o.cull) o.cull.push({ m, x: bs.center.x, z: bs.center.z, r: bs.radius });
+      const sg = m.geometry.userData.soft; if (sg) {   // (the animals' soft shadows: drawn after the ground, over it)
+        const sm = A.ownRnd(() => new THREE.Mesh(sg, HM.b)); sm.matrixAutoUpdate = false; sm.updateMatrix(); sm.name = 'life'; sm.renderOrder = 1; grp.add(sm);
+        if (o.cull) o.cull.push({ m: sm, x: bs.center.x, z: bs.center.z, r: bs.radius }); } }
     if (live.length || herds) { o.dyn.life = { live, gH, far2: LOD.radius(LIVE_R) ** 2, tmp: {}, U }; World.lifeStep(o.dyn.life, 0, null, null); }
     o.lifeStats = stats; return stats;
   };

@@ -2,7 +2,8 @@
 // the glades are there, their animals are the ones of the track's country (World.lifeTable) with the company their kind keeps (World.lifeSoc:
 // alone, a male and a female, a herd of 3-10 with its young), none stands on the road or by its barrier, the herds are one merged mesh per
 // 256 m chunk, every animal in them moved by the time in the chunk's shader (the user, 2. 11. 2026: »živali naj se premikajo pomalo«: the
-// picture of the scene's herd changes with time); the ones alone walk or graze (their own mesh, moving with time); each of these tracks has
+// picture of the scene's herd changes with time; their shadows soft spots under them, none in the shadow map: »naj imajo povsem mehke sence«);
+// the ones alone walk or graze (their own mesh, moving with time); each of these tracks has
 // its scene (World.lifeScenes) near the road; a test track has none. The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
 // car parks were, a lot of each kind (the fans' camp, motorhomes and caravans, the fans' area) within its budget.
 //   node tests/browser/zivali.test.mjs
@@ -21,7 +22,9 @@ try {
       const w = Render.world, st = w.lifeStats, Z = World.lifeTable[id], SOC = World.lifeSoc, SC = World.lifeScenes[id], A = World.api, T = window.__game.race.track;
       const grp = w.root.getObjectByName('life'); let meshes = 0, liveMeshes = 0, verts = 0, herdMeshes = 0, herdAnimals = 0;
       let span = 0;   // (how far the scene's herd spreads from its middle)
-      if (grp) grp.traverse(m => { if (!m.isMesh) return; if (m.material.userData && m.material.userData.U) { liveMeshes++; return; } meshes++; verts += m.geometry.attributes.position.count;
+      let soft = 0, hard = 0;   // (the animals' soft shadows: their own see-through meshes; no animal in the shadow map)
+      if (grp) grp.traverse(m => { if (!m.isMesh) return; if (m.material.userData && m.material.userData.soft) { soft++; if (!m.material.transparent || m.material.depthWrite) hard++; return; }
+        if (m.material.userData && m.material.userData.U) { liveMeshes++; if (m.castShadow) hard++; return; } meshes++; verts += m.geometry.attributes.position.count;
         if (!m.material.userData.herd) return; herdMeshes++; const M = m.geometry.attributes.aM, L = m.geometry.attributes.aL; let last = '';   // (the herds' chunks: each animal its vertices in a run, its place aL)
         for (let v = 0; v < M.count; v++) if (M.getX(v) >= 50) { const k = L.getX(v) + ',' + L.getZ(v); if (k !== last) { herdAnimals++; last = k;
           if (st.scene) { const d = Math.hypot(L.getX(v) - st.scene.x, L.getZ(v) - st.scene.z); if (d < 14) span = Math.max(span, d); } } } });
@@ -54,12 +57,13 @@ try {
         const a = pic(0), b = pic(6); let n = 0; for (let k = 0; k < a.length; k += 4) if (Math.abs(a[k] - b[k]) + Math.abs(a[k + 1] - b[k + 1]) + Math.abs(a[k + 2] - b[k + 2]) > 40) n++;
         delete L.U.value; L.U.value = 0; Render.setShot(null); herdPic = +(n / (a.length / 4) * 100).toFixed(2);
       }
-      return { things: st.things, groups: st.groups, animals: st.animals, live: st.live, liveMeshes, herdMeshes, herdAnimals, herdPic, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? SC.kind : null };
+      return { things: st.things, groups: st.groups, animals: st.animals, live: st.live, liveMeshes, herdMeshes, herdAnimals, herdPic, soft, hard, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? SC.kind : null };
     }, id);
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no life in its woods', !!r.none && !r.meshes, JSON.stringify(r)); continue; }
     T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= 8 && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
     T.check(`${id}: animals alone, in pairs and in herds`, r.sizes && r.sizes.one > 0 && r.sizes.herd > 0 && r.sizes.one + r.sizes.pair + r.sizes.herd === r.groups, JSON.stringify(r.sizes));
     T.check(`${id}: the ones alone walk or graze (own meshes, moving with time)`, r.live > 0 && r.liveMeshes === r.live && r.moved && (r.moved.d > 0.05 || Math.abs(r.moved.turn) > 0.05), `${r.live} live, ${JSON.stringify(r.moved)}`);
+    T.check(`${id}: soft shadows (one see-through mesh under each live one and for each herd chunk's animals, none of them in the shadow map)`, r.soft === r.live + r.herdMeshes && !r.hard, `${r.soft} soft for ${r.live} live + ${r.herdMeshes} herd meshes, ${r.hard} hard`);
     T.check(`${id}: every other animal moves too (the herds in the chunks, posed by the time in their shader: the scene's picture changes)`, r.herdMeshes > 0 && r.herdAnimals + r.live === r.animals && r.herdPic > 0.3, `${r.herdAnimals} in ${r.herdMeshes} herd meshes + ${r.live} live of ${r.animals}, ${r.herdPic} % of the scene's picture changed in 6 s`);
     T.check(`${id}: its scene (${r.sceneWant}) near the road, off it`, !r.sceneWant || (r.scene && r.scene.kind === r.sceneWant && r.scene.clear >= 6), JSON.stringify(r.scene));
     T.check(`${id}: no glade on the road or by its barrier`, r.near === 0, `${r.near} of ${r.at}`);
