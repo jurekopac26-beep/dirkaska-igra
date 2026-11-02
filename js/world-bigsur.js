@@ -367,7 +367,7 @@
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.6, grav = [0.66, 0.61, 0.52];
-    const SB = stubGeo({ gCol: bsGCol, paveC: [0.82, 0.82, 0.83], gravC: [0.74, 0.66, 0.54], shC: [0.66, 0.61, 0.52], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
+    const SB = stubGeo({ gCol: bsGCol, paveC: [0.82, 0.82, 0.83], gravC: [0.74, 0.7, 0.62], shC: [0.74, 0.7, 0.62], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       if (onBr[i]) return [[e + sw, -0.02], [e + 0.9, 0.16], [bar - 0.1, 0.16], [bar + 0.3, 0.05], [bar + 0.35, -1.45]];   // (the sidewalk, the parapet's foot, the fascia)
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)

@@ -835,7 +835,7 @@
               if (it === 4) { x += q.nx * S.side * e; z += q.nz * S.side * e; break; }   // (still on the asphalt: straight out to its edge)
               const sl = Math.max(0.25, Math.abs(p.tx * q.nx + p.tz * q.nz)); x += p.tx * e / sl; z += p.tz * e / sl; }
             const edge = j === 0 || j === 6, y = yAt(x, z, S, tt) + (edge ? 0.03 : 0.055), gc = mvGCol(x, z), sh = (0.88 + 0.08 * RS()) * secT[S.i0];
-            return [x, y, z, edge ? gc : paved ? [0.85 * sh, 0.85 * sh, 0.87 * sh] : [0.86 * sh, 0.95 * sh, 1.06 * sh], (u + 4) / 8, tt / 8]; }) });   // (the gravel: the castle road's limestone grey-beige)
+            return [x, y, z, edge ? gc : paved ? [0.85 * sh, 0.85 * sh, 0.87 * sh] : [0.78, 0.77, 0.74], (u + 4) / 8, tt / 8]; }) });   // (the gravel: the shoulder's grey gravel, the user's wish, 2. 11. 2026: »enake barve kot makadam za belo črto«)
           if (tt >= tEnd) break; }
         for (let a = 0; a + 1 < secs.length; a++) { const A = secs[a].pts, B = secs[a + 1].pts, C = paved ? SA : SG;
           for (let j = 0; j < 6; j++) { const p = A[j], q = A[j + 1], r = B[j + 1], s = B[j]; if (Math.hypot(p[0] - q[0], p[2] - q[2]) + Math.hypot(s[0] - r[0], s[2] - r[2]) < 0.05) continue;

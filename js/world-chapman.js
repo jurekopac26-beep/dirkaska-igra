@@ -282,7 +282,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const onBr = new Uint8Array(N), sw = 0.6;
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
-    const SB = stubGeo({ gCol: chGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.72, 0.62, 0.5], shC: [0.7, 0.62, 0.5], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
+    const SB = stubGeo({ gCol: chGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.74, 0.68, 0.58], shC: [0.74, 0.68, 0.58], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     // the verge's profile across the road's side, outwards: [offset from the centre line, height above the road]: the shoulder's edge, three points
     // across the (up to 11 m wide) verge (its colours: the fynbos' mosaic, not one smooth band), the barrier line, the ditch or wall, out onto the ground
     const vMid = (P5) => { const [a, b] = P5; return [a, [lerp(a[0], b[0], 0.25), lerp(a[1], b[1], 0.25)], [lerp(a[0], b[0], 0.5), lerp(a[1], b[1], 0.5)], [lerp(a[0], b[0], 0.75), lerp(a[1], b[1], 0.75)], ...P5.slice(1)]; };

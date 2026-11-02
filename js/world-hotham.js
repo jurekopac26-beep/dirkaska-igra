@@ -298,7 +298,7 @@
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.6;
-    const SB = stubGeo({ gCol: hoGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.7, 0.62, 0.5], shC: [0.66, 0.6, 0.5] });   // the side roads: their mouths, their surfaces (in the road's chunks below)
+    const SB = stubGeo({ gCol: hoGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.66, 0.66, 0.65], shC: [0.66, 0.66, 0.65] });   // the side roads: their mouths, their surfaces (in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];

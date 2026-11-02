@@ -84,7 +84,7 @@
     const root = new THREE.Group(), P = { root, o, sh: [], el: [], hand: [], hp: [], kn: [] }, lite = !!o.lite;
     P.sc = (o.scale || 0.97) * (o.kid ? 0.62 : 1);
     const hips = P.hips = new THREE.Group(); hips.position.y = 0.92; root.add(hips);
-    hips.add(box(0.33, 0.18, 0.2, pants, 0, 0, 0));
+    if (!lite) hips.add(box(0.33, 0.18, 0.2, pants, 0, 0, 0));   // (lite: the grandstand's crowd, fewer parts)
     const torso = P.torso = new THREE.Group(); torso.position.y = 0.06; hips.add(torso);
     torso.add(tbox(0.31, 0.41, 0.5, 0.2, 0.225, shirt, 0, -0.02, 0));
     if (o.vest != null) {   // a high-visibility vest over the shirt, two reflective bands
@@ -482,7 +482,8 @@
     for (let k = 0; k < 8; k++) g.add(new THREE.Mesh(new THREE.ConeGeometry(1.32, 0.38, 1, 1, true, k / 8 * TAU, TAU / 8), lam(k % 2 ? (col2 || 0xf2f2ee) : col)).translateY(2.42));
     return g; }
   function flagPole(cols, h) { h = h || 6; const g = new THREE.Group(); g.add(cyl(0.04, 0.05, h, 4, 0xdedede, 0, h / 2, 0)); cols = cols || [0x15171c, 0xd8262a, 0xf2c21a];
-    cols.forEach((c, k) => g.add(box(1.5, 0.95 / cols.length, 0.02, c, 0.78, h - 0.25 - (k + 0.5) * 0.95 / cols.length, 0))); return g; }
+    if (cols.vert) cols.forEach((c, k) => g.add(box(1.5 / cols.length, 0.95, 0.02, c, 0.03 + (k + 0.5) * 1.5 / cols.length, h - 0.25 - 0.475, 0)));   // (a flag of vertical stripes: Belgium, Canada)
+    else cols.forEach((c, k) => g.add(box(1.5, 0.95 / cols.length, 0.02, c, 0.78, h - 0.25 - (k + 0.5) * 0.95 / cols.length, 0))); return g; }
   function bike(col) { const g = new THREE.Group(); col = col || 0x2f63c9;
     for (const x of [0.55, -0.55]) g.add(cyl(0.34, 0.34, 0.04, 10, 0x15171c, x, 0.34, 0, { rx: Math.PI / 2 }));
     g.add(bar([-0.55, 0.34, 0], [-0.05, 0.36, 0], 0.04, col)); g.add(bar([-0.05, 0.36, 0], [0.45, 0.8, 0], 0.04, col)); g.add(bar([-0.55, 0.34, 0], [-0.15, 0.82, 0], 0.04, col)); g.add(bar([-0.15, 0.82, 0], [0.45, 0.8, 0], 0.04, col)); g.add(bar([-0.05, 0.36, 0], [-0.15, 0.82, 0], 0.04, col));
@@ -528,7 +529,9 @@
   function scooter(col) { const g = new THREE.Group(); col = col || 0x1f63d8; g.add(cyl(0.22, 0.22, 0.1, 9, TYRE, 0.55, 0.22, 0, { rx: Math.PI / 2 })); g.add(cyl(0.22, 0.22, 0.1, 9, TYRE, -0.5, 0.22, 0, { rx: Math.PI / 2 }));
     g.add(box(0.75, 0.12, 0.32, col, 0, 0.32, 0)); g.add(box(0.45, 0.35, 0.34, col, -0.4, 0.55, 0)); g.add(box(0.4, 0.1, 0.3, 0x15171c, -0.35, 0.78, 0)); g.add(bar([0.5, 0.3, 0], [0.42, 1.0, 0], 0.06, col)); g.add(box(0.05, 0.05, 0.6, 0x2a2c31, 0.42, 1.0, 0)); return g; }
   const cone = () => grp(box(0.36, 0.04, 0.36, 0x15171c, 0, 0.02, 0), cyl(0.03, 0.15, 0.6, 7, 0xf07a1c, 0, 0.32, 0), cyl(0.085, 0.11, 0.1, 7, 0xf2f2f2, 0, 0.33, 0));
-  function fanBanner(cols, L) { const g = new THREE.Group(); L = L || 4; cols = cols || [0x15171c, 0xd8262a, 0xf2c21a]; cols.forEach((c, k) => g.add(box(L, 0.9 / cols.length, 0.02, c, 0, 1.9 - (k + 0.5) * 0.9 / cols.length, 0))); return g; }
+  function fanBanner(cols, L) { const g = new THREE.Group(); L = L || 4; cols = cols || [0x15171c, 0xd8262a, 0xf2c21a];
+    if (cols.vert) cols.forEach((c, k) => g.add(box(L / cols.length, 0.9, 0.02, c, -L / 2 + (k + 0.5) * L / cols.length, 1.45, 0)));
+    else cols.forEach((c, k) => g.add(box(L, 0.9 / cols.length, 0.02, c, 0, 1.9 - (k + 0.5) * 0.9 / cols.length, 0))); return g; }
   function wheelbarrow(col) { const g = new THREE.Group(); col = col || 0x2f9a48; g.add(tbox(0.55, 0.75, 0.32, 0.45, 0.6, col, 0, 0.32, 0)); g.add(cyl(0.18, 0.18, 0.06, 8, TYRE, 0.55, 0.18, 0, { rx: Math.PI / 2 }));
     for (const z of [0.22, -0.22]) { g.add(bar([0.55, 0.18, 0], [-0.75, 0.55, z], 0.035, 0x6b4a2e)); g.add(bar([-0.2, 0.0, z * 0.9], [-0.2, 0.34, z * 0.9], 0.03, 0x2a2c31)); } return g; }
   const fridge = () => grp(box(0.6, 1.4, 0.6, 0xf2f2ee, 0, 0.7, 0), box(0.02, 0.5, 0.04, 0x9aa0a8, 0.22, 0.95, 0.31));
@@ -670,15 +673,15 @@
      car stand up as it comes and sit down behind it (the wave goes with it) */
   S.tribuna = { seed: 71, clear: [[0, 5, 15]], stand: true,
     build(C, F, K) {
-      const Ls = 22, n = 6; C.prop(L.stand(Ls, n, { seat: K.seat || 0x1f63d8 }), 0, 3.2, [0, -1], 'st');
-      C.prop(L.bigScreen(), 15.8, 2.4, [-0.5, -1]); C.prop(L.portaloo(0x2f63c9), 14.0, 9.5); C.prop(L.portaloo(0x2f63c9), 15.3, 9.5); C.prop(L.bin(), 12.7, 9.8);
+      const Ls = 20, n = 5; C.prop(L.stand(Ls, n, { seat: K.seat || 0x1f63d8 }), 0, 3.2, [0, -1], 'st');
+      C.prop(L.bigScreen(), 14.8, 2.4, [-0.5, -1]); C.prop(L.portaloo(0x2f63c9), 13.0, 9.5); C.prop(L.portaloo(0x2f63c9), 14.3, 9.5); C.prop(L.bin(), 11.7, 9.8);
       for (const a of [-10, -5, 0, 5, 10]) C.prop(L.flagPole(Math.abs(a) % 10 ? K.flag : [0xf2f2f2, K.flag[0]], 4), a, 3.2 + n * 0.85 + 0.6);
       const R = rnd, cols = SHIRT; C.seats = [];
       for (let r = 0; r < n; r++) { let x = -Ls / 2 + 1.4 + R() * 1.2;
         while (x <= Ls / 2 - 1.4) { const g = 2 + Math.floor(Math.pow(R(), 2.2) * 9), team = cols[Math.floor(R() * cols.length)];
           for (let k = 0; k < g && x <= Ls / 2 - 1.4; k++, x += 0.62) { const P = C.man({ lite: true, shirt: R() < 0.5 ? team : cols[Math.floor(R() * cols.length)], hat: R() < 0.3 ? 'cap' : null, scale: 0.93 + R() * 0.08 }, null);
             P.seat = { x, r, y: 0.6 + r * 0.42 + 0.22 - 0.5 + 0.02, z: -r * 0.85 - 0.1, k: R() }; C.seats.push(P); }
-          x += 0.62 * (2 + Math.floor(R() * 6)); } }
+          x += 0.62 * (2 + Math.floor(R() * 7)); } }
     } };
 
   /* 8 · Fotografi in TV kamera (Spa, before Eau Rouge) */
@@ -758,6 +761,105 @@
       const ENG = { shirt: 0xf2f2f2, pants: 0x1f2c48, long: true, hat: 'cap', hatCol: col };
       for (const [x, k] of [[-1.6, 0], [-0.05, 1], [1.5, 2]]) C.man(Object.assign({}, ENG), { act: { on: 'ps', a: x, b: -0.25, y: 1.25, pose: 'sitLean' }, run: false, fence: { on: 'ps', a: x, b: -0.25, y: 1.25, pose: k === 1 ? 'thumbs' : 'sitLean', look: 'car' } });
     } };
+  /* ---------------- more scenes for the other tracks (the user's wish: »različne elemente na različna mesta«): their colours are drawn per
+     scene (TENT, CARS ...), so the same kind is never twice the same; K: the track's country (flags, the houses' look) ---------------- */
+  const TENT = [0xf07a1c, 0x2f9a48, 0x2f63c9, 0xd8262a, 0xf0c22e, 0x8a3b8c, 0x22848f], CARS = [0xb8bcc4, 0x2f3f63, 0x7c8a99, 0xd8d8d2, 0x8a2a24, 0x2f5a3a, 0x1d1f25, 0xc8b070];
+  const CHAIR = [0xd8262a, 0x2f9a48, 0xf0c22e, 0x2f63c9, 0x15171c, 0xf07a1c], JERSEY = [0xd8262a, 0xf0c22e, 0x22848f, 0xf07a1c, 0x2f63c9, 0x8a3b8c, 0x2f9a48, 0xefefea];
+  const stove = () => grp(box(0.5, 0.12, 0.3, 0x5b6068, 0, 0.06, 0), cyl(0.12, 0.11, 0.14, 7, 0x9aa0a8, -0.12, 0.19, 0), cyl(0.11, 0.1, 0.16, 7, 0x2a2c31, 0.13, 0.2, 0));
+  const blanket = (c1, c2) => { const g = new THREE.Group(); for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) g.add(box(0.6, 0.012, 0.6, (i + j) % 2 ? c1 : c2, -0.9 + i * 0.6, 0.006, -0.6 + j * 0.6)); return g; };
+  const basket = () => grp(box(0.45, 0.26, 0.3, 0xb08a5a, 0, 0.13, 0), bar([-0.18, 0.26, 0], [0, 0.42, 0], 0.025, 0x8a6a45), bar([0.18, 0.26, 0], [0, 0.42, 0], 0.025, 0x8a6a45));
+  const ladder = () => { const g = new THREE.Group(); for (const x of [-0.25, 0.25]) { g.add(bar([x, 0, 0.45], [x, 1.5, 0.05], 0.05, 0x9aa0a8)); g.add(bar([x, 0, -0.4], [x, 1.5, 0.0], 0.05, 0x9aa0a8)); }
+    for (let k = 1; k <= 4; k++) g.add(box(0.55, 0.04, 0.16, 0x9aa0a8, 0, k * 0.34, 0.45 - k * 0.1)); g.add(box(0.6, 0.05, 0.3, 0x5b6068, 0, 1.5, 0.03)); return g; };
+  const tape = (L) => { const g = new THREE.Group(), n = Math.max(2, Math.round(L / 3)); for (let k = 0; k <= n; k++) g.add(cyl(0.025, 0.025, 1.0, 4, 0xdedede, -L / 2 + k * L / n, 0.5, 0));
+    for (let k = 0; k < Math.round(L / 0.5); k++) g.add(box(0.5, 0.06, 0.01, k % 2 ? 0xf2f2f2 : 0xd8262a, -L / 2 + 0.25 + k * 0.5, 0.92, 0)); return g; };
+  const board = (c) => grp(box(0.08, 1.6, 0.08, 0x9aa0a8, 0, 0.8, 0), box(0.62, 0.62, 0.03, c || 0x1f4aa8, 0, 1.75, 0.03), box(0.3, 0.3, 0.035, 0xf2f2f2, 0, 1.75, 0.035));   // a plain sign board (no writing)
+  const swingSet = () => { const g = new THREE.Group(), wd = 0x8a6a45; for (const x of [-1.1, 1.1]) { g.add(bar([x, 0, -0.7], [x, 2.2, 0], 0.09, wd)); g.add(bar([x, 0, 0.7], [x, 2.2, 0], 0.09, wd)); }
+    g.add(box(2.4, 0.1, 0.1, wd, 0, 2.22, 0)); for (const x of [-0.25, 0.25]) g.add(bar([x, 2.2, 0], [x, 0.55, 0], 0.015, 0xdedede)); g.add(box(0.6, 0.05, 0.22, 0xd23a2c, 0, 0.53, 0)); return g; };
+  // the houses' look by the country: wall, trim, roof, door
+  const HOUSES = { alp: { wall: 0xf2efe6, trim: 0x6b4a2e, roof: 0x5a3a2a, door: 0x6b4a2e }, fin: { wall: 0x9b2c22, trim: 0xf2f0ea, roof: 0x2b2d31, door: 0x2f4a3a },
+    usa: { wall: 0xe8e4d8, trim: 0xf6f6f2, roof: 0x4a4c50, door: 0x2f4a6a }, aus: { wall: 0xe6dcc0, trim: 0xf2f2ee, roof: 0x8a2a24, door: 0x2f5a3a },
+    jpn: { wall: 0xcfc6b4, trim: 0x3a3632, roof: 0x3a4048, door: 0x5a4a3a }, sud: { wall: 0xe8c86a, trim: 0xf2f2ee, roof: 0x9a4a2a, door: 0x2f63c9 }, rus: { wall: 0x7a5a3a, trim: 0x2f63c9, roof: 0x4a5a4a, door: 0x5a3a24 } };
+
+  /* 13 · Kamp s prikolico (a caravan, its awning, tents, cooking, cards at the table) */
+  S.kamp = { seed: 131, clear: [[0, 7, 13], [-12, 6, 7]],
+    build(C, F, K) {
+      C.prop(L.caravan(pick(TENT)), -2.2, 9.8, [0, -1]); C.prop(L.gazebo(pick(TENT), 3.0), -2.2, 6.6); C.prop(L.car(pick(CARS)), 5.6, 10.4, [0, -1]);
+      C.prop(L.tentDome(pick(TENT)), 6.6, 5.4, [-0.4, -1]); C.prop(L.tentDome(pick(TENT), 1.15), -8.4, 6.0, [0.4, -1]);
+      C.prop(L.table(1.2, 0.7), -2.6, 6.4, [1, 0]); C.prop(L.chair(pick(CHAIR)), -3.5, 6.4, [1, 0]); C.prop(L.chair(pick(CHAIR)), -1.7, 6.4, [-1, 0]); C.prop(L.chair(pick(CHAIR)), 1.2, 4.6, [0.3, -1]);
+      C.prop(stove(), -0.5, 7.9); C.prop(L.cooler(pick(TENT)), 0.3, 8.3); C.prop(L.gasBottle(), -0.2, 8.6); C.prop(L.stringLights(3.0, 2.15), -2.2, 5.1, [0, -1]);
+      C.prop(L.flagPole(K.flag, 5.5), 2.6, 3.0); C.prop(L.bike(pick(TENT)), 3.6, 8.6, [1, 0]); C.prop(L.trashBag(), -5.6, 9.2);
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hat: 'cap', hatCol: pick(SHIRT) }, { act: { a: -0.5, b: 7.5, pose: 'grill', face: [0, 1], hold: [['tongs', 1]] }, fence: { a: -0.4, b: 0.9, pose: 'wave', t: 0.4, hold: [['tongs', 1]] }, run: { f: 0.5 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS) }, { act: { a: -3.5, b: 6.4, pose: 'sitLean', face: [1, 0] }, fence: { a: -1.6, b: 0.9, pose: 'cheer', t: 0.8 }, run: { f: 0.55 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hair: 'long' }, { act: { a: -1.7, b: 6.4, pose: 'sitLean', face: [-1, 0] }, fence: { a: -2.8, b: 0.95, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.5 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hair: 'bald' }, { act: { a: 1.2, b: 4.6, pose: 'sit', face: [0.3, -1], hold: [['clip', 1]] }, bliza: { look: 'car' }, run: false });   // (reading: he only looks up)
+      C.man({ kid: true, shirt: pick(SHIRT), pants: pick(PANTS), shorts: true }, { act: { a: 3.0, b: 6.2, pose: 'jump', face: [-1, 0] }, fence: { a: 1.0, b: 0.85, pose: 'jump' }, run: { f: 0.85 }, kid: true });
+    } };
+
+  /* 14 · Piknik (a family on a blanket by its car, the children with a ball) */
+  S.piknik = { seed: 141, clear: [[0, 6, 11]],
+    build(C, F, K) {
+      const c1 = pick([0xd8262a, 0x2f63c9, 0x2f9a48]); C.prop(blanket(c1, 0xf2f0ea), -0.8, 5.4, [0, -1]); C.prop(basket(), -1.6, 5.2); C.prop(L.cooler(pick(TENT)), 0.4, 6.1);
+      C.prop(L.grp(L.cyl(0.12, 0.1, 0.02, 8, 0xf4f4f0, 0, 0.02, 0), L.cyl(0.12, 0.1, 0.02, 8, 0xf4f4f0, 0.35, 0.02, 0.2)), -0.6, 5.0); C.prop(L.parasol(pick(TENT), 0xf2f2ee), -2.6, 6.0);
+      C.prop(L.car(pick(CARS)), 1.0, 10.2, [1, 0]); C.prop(L.chair(pick(CHAIR)), 1.6, 6.8, [-0.4, -1]); C.prop(L.grp(L.sph(0.12, 6, 3, pick([0xf2f2f2, 0xd8262a, 0xf0c22e]), 0, 0.12, 0)), 4.4, 4.0);
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS) }, { act: { a: -1.4, b: 5.8, pose: 'sitGround', face: [0.3, -1] }, fence: { a: -1.2, b: 0.9, pose: 'wave', t: 0.2 }, run: { f: 0.45 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hair: 'long' }, { act: { a: -0.2, b: 5.6, pose: 'sitGround', face: [-0.4, -1], hold: [['cup', 1]] }, fence: { a: 0.0, b: 0.9, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.42, pose: 'walk' } });
+      C.man({ shirt: pick([0xb8bcc4, 0x8a3b8c, 0x31406e]), pants: pick(PANTS), hair: 'short', hairCol: 0xc8c8c4, scale: 0.92 }, { act: { a: 1.6, b: 6.8, pose: 'sit', face: [-0.4, -1] }, bliza: { look: 'car' }, mimo: { look: 'car' }, run: false, fence: { a: 1.6, b: 6.8, pose: 'wave2', t: 0.4, face: [-0.4, -1], look: 'car' } });
+      C.man({ kid: true, shirt: pick(SHIRT), pants: pick(PANTS), shorts: true }, { act: { a: 3.6, b: 3.4, pose: 'jump', face: [1, 0.3] }, fence: { a: 2.0, b: 0.85, pose: 'jump' }, run: { f: 0.85 }, kid: true });
+      C.man({ kid: true, shirt: pick(SHIRT), pants: pick(PANTS), shorts: true, hair: 'pony', scale: 1.1 }, { act: { a: 5.4, b: 4.4, pose: 'cheer', t: 0.6, face: [-1, -0.3] }, fence: { a: 3.0, b: 0.85, pose: 'wave', t: 1.1 }, run: { f: 0.75 }, kid: true });
+    } };
+
+  /* 15 · Kolesarji na počitku (cyclists resting on a pass: bikes, bottles, helmets) */
+  S.kolesarji = { seed: 151, clear: [[0, 4.5, 10]],
+    build(C, F, K) {
+      for (const [a, b, d] of [[-3.0, 2.4, [1, 0.2]], [-1.6, 2.6, [1, -0.1]], [2.6, 2.3, [1, 0]], [4.0, 2.5, [1, 0.15]]]) C.prop(L.bike(pick(JERSEY)), a, b, d);
+      C.prop(L.cooler(0xf2f2f2), 0.6, 4.4); C.prop(L.bag(pick([0x15171c, 0x2f63c9])), -0.8, 4.8);
+      const rider = (o) => Object.assign({ shirt: pick(JERSEY), pants: 0x15171c, shorts: true, hat: 'helmet', hatCol: pick(JERSEY) }, o);
+      C.man(rider(), { act: { a: -2.2, b: 3.6, pose: 'drink', face: [0.6, -1], hold: [['bottle', 1, { c: 0x8acbe8 }]] }, fence: { a: -2.0, b: 0.9, pose: 'cheer', t: 0.5 }, run: { f: 0.45, pose: 'walk' } });
+      C.man(rider(), { act: { a: -0.6, b: 3.8, pose: 'talk', face: [-1, -0.2] }, fence: { a: -0.4, b: 0.9, pose: 'wave', t: 0.9 }, run: { f: 0.45, pose: 'walk' } });
+      C.man(rider(), { act: { a: 1.0, b: 3.4, pose: 'stretch', face: [0, -1] }, fence: { a: 1.0, b: 0.9, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.45, pose: 'walk' } });
+      C.man(rider(), { act: { a: 3.2, b: 3.1, pose: 'bend', face: [0, 1] }, fence: { a: 2.4, b: 0.9, pose: 'wave2', t: 0.3 }, run: { f: 0.45, pose: 'walk' } });
+    } };
+
+  /* 16 · Fotografi na bregu (photographers at a corner without a tower: the ladder, the bags) */
+  S.foto2 = { seed: 161, clear: [[0, 5, 10]],
+    build(C, F) {
+      C.prop(ladder(), 1.6, 3.6, [0, -1], 'ld'); C.prop(L.bag(0x23262c), -1.4, 3.4); C.prop(L.bag(0x5b5040), -0.8, 3.8, 0.6); C.prop(L.stool(), -2.6, 4.2); C.prop(L.parasol(0x262a33, 0x262a33), -2.6, 4.6);
+      C.prop(L.scooter(pick([0x15171c, 0xd8262a, 0xb8bcc4])), 4.4, 5.2, [1, -0.3]);
+      const vest = { shirt: 0x2a2c31, pants: 0x3a4a3a, vest: 0xd9c35a, stripes: 0x8a7a3a, long: true };
+      C.man(Object.assign({ hat: 'cap', hatCol: 0x15171c }, vest), { act: { on: 'ld', a: 0, b: 0.05, y: 1.52, pose: 'sit', head: [['camera']] }, run: false, fence: { on: 'ld', a: 0, b: 0.15, y: 1.52, pose: 'cam', head: [['camera']], look: 'car' } });
+      C.man(Object.assign({}, vest, { hair: 'pony' }), { act: { a: -2.6, b: 4.2, pose: 'sit', face: [0.5, -1], hold: [['clip', 1]] }, run: { f: 0.6, pose: 'walk' }, fence: { a: -1.2, b: 0.85, pose: 'kneel', head: [['camera']], look: 'car' } });
+      C.man(Object.assign({}, vest, { hat: 'beanie', hatCol: 0x31406e }), { act: { a: -0.4, b: 5.2, pose: 'drink', face: [-0.5, -1], hold: [['cup', 1]] }, run: { f: 0.55 }, fence: { a: 0.2, b: 0.9, pose: 'crouchCam', head: [['camera']], look: 'car' } });
+    } };
+
+  /* 17 · Redarji ob traku (a rally stage's marshals at the tape, a radio point's plain board, two fans) */
+  S.reli = { seed: 171, clear: [[0, 5, 11]],
+    build(C, F, K) {
+      C.prop(tape(16), 0, 2.4, [0, -1]); C.prop(L.gazebo(0xf07a1c, 2.6), -3.6, 6.0); C.prop(L.table(1.0, 0.6, { things: false }), -3.6, 6.0, [0, -1]); C.prop(L.item('radio'), -3.6, 6.0);
+      C.prop(board(0x1f4aa8), 2.8, 3.0); C.prop(L.car(pick(CARS), { stripe: 0xf07a1c }), 3.2, 8.4, [1, 0]); C.prop(L.chair(0x15171c), -4.4, 6.6, [0, -1]);
+      const MAR = { shirt: 0x262a33, pants: 0x2f3f63, vest: 0xf07a1c, stripes: 0xd9dde2, long: true };
+      C.man(Object.assign({ hat: 'cap', hatCol: 0xf07a1c }, MAR), { act: { a: -3.6, b: 5.4, pose: 'radio', face: [0, -1], hold: [['radio', 1]] }, run: false, fence: { a: -3.6, b: 5.4, pose: 'radio', hold: [['radio', 1]], look: 'car' } });
+      C.man(Object.assign({}, MAR), { act: { a: -0.6, b: 3.1, pose: 'arms', face: [0, -1] }, run: false, fence: { a: -0.6, b: 3.0, pose: 'hips', look: 'car' } });
+      C.man(Object.assign({}, MAR, { hair: 'pony' }), { act: { a: 1.8, b: 3.4, pose: 'stand', face: [0.3, -1], hold: [['clip', 1]] }, run: false, fence: { a: 1.8, b: 3.1, pose: 'stand', hold: [['clip', 1]], look: 'car' } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hat: 'beanie', hatCol: pick(SHIRT) }, { act: { a: -6.4, b: 6.8, pose: 'talk', face: [1, 0] }, fence: { a: -5.0, b: 2.9, pose: 'cheer', t: 0.6 }, run: { f: 0.55 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS) }, { act: { a: -5.6, b: 7.4, pose: 'phone', face: [-1, -0.2], hold: [['phone', 1]] }, fence: { a: -6.2, b: 2.95, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.5 } });
+    } };
+
+  /* 18 · Družina pri svoji hiši (a house of the country's look, the garden fence along the road, wood, washing, the children, the dog) */
+  S.hisa2 = { seed: 181, clear: [[0, 9, 14], [-12, 6, 7], [12, 6, 7]],
+    build(C, F, K) {
+      const H = HOUSES[K.house || 'alp'] || HOUSES.alp, fb = 2.4;
+      C.prop(L.house({ w: 7.2, d: 5.4, h: 2.8, wall: H.wall, trim: H.trim, roof: H.roof, door: H.door }), 0, 12.2, [0, -1]);
+      C.prop(L.picketFence(26, K.fence || 0xf2f0ea), 0, fb, [0, -1]); C.prop(L.mailbox(), -11.2, fb - 0.5);
+      C.prop(L.flowerBed(2.6), 2.8, 9.0, [0, -1]); C.prop(L.bench(0x7c5a3a), -2.6, 8.9, [0, -1]); C.prop(L.clothesline(4.2), 8.4, 7.6, [0, -1]);
+      C.prop(L.woodpile(2.2), -8.6, 9.6, [1, 0]); C.prop(L.chopBlock(), -7.2, 7.2); C.prop(swingSet(), 7.4, 11.6, [0, -1]); C.prop(L.bike(pick(TENT)), 4.6, 8.7, [1, 0]);
+      C.pet(L.dog(pick([0x5c3a22, 0x2a221c, 0xc8a878])), { act: { a: 1.4, b: 7.6, face: [1, -0.3] }, fence: { a: 4.4, b: fb + 0.6, face: [1, -0.2] }, run: { f: 1.1 } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), long: true, hat: 'cap', hatCol: pick(SHIRT) }, { act: { a: -7.2, b: 7.6, pose: 'chopUp', face: [0, -1], hold: [['axe', 1]] }, fence: { a: -3.0, b: fb + 0.5, pose: 'wave', t: 0.6 }, run: { f: 0.45, pose: 'walk', hold: [] } });
+      C.man({ shirt: pick([0xb8bcc4, 0x7c4a2e, 0x31406e]), pants: pick(PANTS), long: true, hairCol: 0xc8c8c4, hair: 'short', scale: 0.92 }, { act: { a: -2.6, b: 8.8, pose: 'sit', face: [0, -1] }, fence: { a: -1.6, b: fb + 0.5, pose: 'wave2', t: 0.2 }, run: { f: 0.4, pose: 'walk' } });
+      C.man({ shirt: pick(SHIRT), pants: pick(PANTS), hair: 'pony' }, { act: { a: 8.4, b: 8.2, pose: 'cheer', t: 0, face: [0, -1] }, fence: { a: 2.6, b: fb + 0.5, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.5, pose: 'walk' } });
+      C.man({ kid: true, shirt: pick(SHIRT), pants: pick(PANTS), shorts: true }, { act: { a: 7.4, b: 11.4, y: 0.1, pose: 'sit', face: [0, -1] }, fence: { a: 3.8, b: fb + 0.45, pose: 'jump' }, run: { f: 0.8 }, kid: true });
+      C.man({ kid: true, shirt: pick(SHIRT), pants: pick(PANTS), shorts: true, hair: 'pony', scale: 1.15 }, { act: { a: 5.0, b: 6.2, pose: 'jump', face: [-0.6, 1] }, fence: { a: 5.2, b: fb + 0.45, pose: 'wave', t: 1.3 }, run: { f: 0.7 }, kid: true });
+    } };
+
   /* ---------------- building a scene ---------------- */
   // the frame beside the track at s on a side (+1 right, -1 left): w(a, b) world x, z; y(a, b) the ground; yaw(da, db) THREE's rotation.y of a facing
   function frame(T, gH, s, side) {
@@ -1031,24 +1133,72 @@
   }
 
   /* ---------------- where: the scenes of each real track [scene, metres after the start line, side (+1 right, -1 left), options] ---------------- */
+  // (the 12 proposals' places from the pictures; the others found by tools/ljudje/mesta.mjs --plan: a straight before, the barrier near, flat ground,
+  // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
-    nring: [['oder', 1950, 1], ['zar', 3300, -1], ['ogenj', 5640, -1], ['tv', 16350, -1], ['telo', 18450, -1]],
-    ouninpohja: [['hisa', 2240, -1]],
-    bathurst: [['boksi', 70, -1], ['tribuna', 5790, 1]],
-    spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['gasilci', 5560, 1]],
+    baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
+    bangsaen: [['marsali', 152, 1], ['tribuna', 528, 1], ['gasilci', 3376, 1]],
+    bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
+    beartooth: [['piknik', 1696, -1]],
+    bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
+    caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
+    chapman: [['piknik', 352, 1]],
+    cpalace: [['marsali', 48, 1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
+    greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
+    harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
+    hotham: [['foto2', 832, 1], ['kamp', 2840, 1], ['piknik', 7608, -1]],
+    katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
+    longford: [['piknik', 200, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['foto2', 6488, -1]],
+    marrakesh: [['gasilci', 80, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1]],
+    maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
+    medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
+    moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
+    monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
+    montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['tribuna', 4064, 1]],
+    mulholland: [['piknik', 136, 1], ['foto2', 2264, -1]],
+    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['gasilci', 1976, -1], ['vhod', 2376, 1]],
+    nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
+    ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
+    palomar: [['foto2', 152, 1], ['kolesarji', 1480, 1], ['piknik', 4720, -1]],
+    pikes: [['foto2', 4672, 1]],
+    pikesg: [['foto2', 3824, 1]],
+    rastro: [['piknik', 4432, -1]],
+    rbring: [['vhod', 216, 1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1], ['tribuna', 4128, 1]],
+    rio: [['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 4696, 1]],
+    riverside: [['zar', 464, -1], ['marsali', 4112, 1], ['tribuna', 4568, -1], ['foto2', 5144, 1]],
+    sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
+    spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
+    suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
+    toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1]],
+    townsville: [['gasilci', 504, 1], ['vhod', 888, -1], ['tribuna', 2176, 1], ['marsali', 2800, 1]],
+    troisrivieres: [['marsali', 144, -1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
+    uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
+    vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 7800, -1], ['foto2', 12248, -1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland
+  const vert = (a) => Object.assign(a, { vert: true });
+  const AU = { flag: [0x0f7a3a, 0xf2c21a, 0x0f7a3a], house: 'aus' }, US = { flag: [0xb22234, 0xf2f2f2, 0x3c3b6e], house: 'usa' }, CA = { flag: vert([0xd8262a, 0xf2f2f2, 0xd8262a]), house: 'usa' };
+  const SI = { flag: [0xf2f2f2, 0x1f4aa8, 0xd8262a], house: 'alp' }, FI = { flag: [0xf2f2f2, 0x1f4aa8, 0xf2f2f2], house: 'fin' }, JP = { flag: [0xf2f2f2, 0xd8262a, 0xf2f2f2], house: 'jpn' };
+  const BR = { flag: [0x009c3b, 0xffdf00, 0x009c3b], house: 'sud' }, ZA = { flag: [0x007a4d, 0xffb612, 0xde3831], house: 'sud' };
   const FLAGS = {
-    nring: { flag: DE, flag2: [0xd8262a, 0xf2f2f2, 0x1f4aa8] }, spa: { flag: [0x15171c, 0xf2c21a, 0xd8262a], team: 0xd8262a },
-    bathurst: { flag: [0x0f7a3a, 0xf2c21a, 0x0f7a3a], seat: 0x1f63d8, team: 0x1f63d8 }, ouninpohja: { flag: [0xf2f2f2, 0x1f4aa8, 0xf2f2f2] },
+    nring: { flag: DE, flag2: [0xd8262a, 0xf2f2f2, 0x1f4aa8], house: 'alp' }, spa: { flag: vert([0x15171c, 0xf2c21a, 0xd8262a]), team: 0xd8262a, house: 'alp' },
+    rbring: { flag: [0xd8262a, 0xf2f2f2, 0xd8262a], house: 'alp' }, cpalace: { flag: [0xf2f2f2, 0xd8262a, 0xf2f2f2], house: 'alp' },
+    bathurst: Object.assign({ seat: 0x1f63d8, team: 0x1f63d8 }, AU), greatalpine: AU, hotham: AU, longford: AU, newcastle: AU, townsville: AU,
+    vrsic: SI, medvode: SI, ouninpohja: FI, harju: FI, iroha: JP, suzuka: Object.assign({ team: 0xd8262a }, JP), tianmen: { flag: [0xde2910, 0xffde00, 0xde2910], house: 'jpn' },
+    baldy: US, beartooth: US, bigsur: US, detroit: US, maunakea: US, moki: US, monterey: US, mulholland: US, palomar: US, pikes: US, pikesg: US, riverside: US, uncompahgre: US,
+    montreal: CA, toronto: CA, troisrivieres: CA, rastro: BR, rio: BR, caracoles: { flag: [0xf2f2f2, 0xf2f2f2, 0xd52b1e], house: 'sud' }, chapman: ZA, sani: ZA,
+    katu: { flag: [0xf2f2f2, 0x1c3f94, 0xd8262a], house: 'rus' }, marrakesh: { flag: [0xc1272d, 0x006233, 0xc1272d], house: 'sud' },
+    bangsaen: { flag: [0xa51931, 0xf4f5f8, 0x2d2a4a, 0xf4f5f8, 0xa51931], house: 'sud' },
   };
   const geoOf = (D) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(D.P, 3)); if (D.N) g.setAttribute('normal', new THREE.Float32BufferAttribute(D.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(D.C, 3)); g.computeBoundingSphere(); return g; };
 
   World.people = function (o) {
     const A = World.api, T = A.T, def = T && T.def;
     if (!def || def.test || !o || !o.root || typeof o.groundH !== 'function') return null;
-    const list = SITES[def.id]; if (!list || !list.length) return null;
-    const LOD = A.LOD, gH = o.groundH, K0 = FLAGS[def.id] || {}, hsh = Math.abs([...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7));
+    const list = (SITES[def.id] || []).slice();
+    if (def.pit && !list.some(e => e[0] === 'boksi')) list.push(['boksi', def.pit[3], Math.sign(def.pit[0]) || 1]);   // (a circuit's pit wall: the player's team opposite its box, the board over the wall)
+    if (!list.length) return null;
+    const t0 = performance.now(), LOD = A.LOD, gH = o.groundH, K0 = FLAGS[def.id] || {}, hsh = Math.abs([...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7));
     const W = { T, scenes: [], frame: 0, wx: 0.8, wz: 0.6, smoke: null, q: {}, hint: -1, cs: null, v: 0, lt: 0,
       rShow: LOD.tier >= 2 ? 650 : LOD.tier === 1 ? 420 : 280, rPpl: LOD.tier >= 2 ? 240 : LOD.tier === 1 ? 170 : 120, rPose: LOD.tier >= 2 ? 200 : LOD.tier === 1 ? 150 : 110 };
     const matL = new THREE.MeshLambertMaterial({ vertexColors: true }), matU = new THREE.MeshBasicMaterial({ vertexColors: true });
@@ -1084,7 +1234,7 @@
       if (C.U.P.length) { const m = new THREE.Mesh(geoOf(C.U), matU); m.matrixAutoUpdate = false; m.name = 'sceneLamps'; grp.add(m); pv += C.U.P.length / 3; }
       grp.add(ppl);
       Object.assign(Sc, { grp, ppl, pos, nor, cx, cy, cz, r });
-      if (Sc.stand) { const G = C.groups.st; Sc.sgn = Math.sign(G.m.elements[0] * F.tx + G.m.elements[2] * F.tz) || 1; Sc.len = 22; }
+      if (Sc.stand) { const G = C.groups.st; Sc.sgn = Math.sign(G.m.elements[0] * F.tx + G.m.elements[2] * F.tz) || 1; Sc.len = 20; }
       for (const e of C.smoke) { e.i = nPuff; e.ph = rnd(); nPuff += e.n; Sc.smoke.push(e); }
       for (const [a, b, rr] of d.clear || []) { const [x, z] = F.w(a, b); circles.push([x, z, rr]); }
       W.scenes.push(Sc);
@@ -1097,7 +1247,7 @@
       const c = new THREE.Color(); for (const Sc of W.scenes) for (const e of Sc.smoke) { c.setHex(e.col); for (let k = 0; k < e.n; k++) M.setColorAt(e.i + k, c); }
       M.frustumCulled = false; M.renderOrder = 4; M.name = 'sceneSmoke'; root.add(M);
     }
-    stats.cleared = clearAll(o, circles, A);
+    const t1 = performance.now(); stats.cleared = clearAll(o, circles, A); stats.ms = Math.round(performance.now() - t0); stats.msClear = Math.round(performance.now() - t1);
     o.dyn.people = (t, car, cam) => step(W, t, car, cam);
     step(W, 0, null, null);
     o.peopleStats = stats; o.peopleW = W;

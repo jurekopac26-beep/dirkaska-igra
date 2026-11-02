@@ -214,7 +214,7 @@
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.6, tarCh = new Chunks(110), roadCh = new Chunks(120, true), lineCh = new Chunks(120), shCh = new Chunks(120, true);   // (the road's ribbons by place, the side roads' in them; tarCh: the tar snakes, drawn with the scenery's chunks: no draw calls of their own)
-    const SB = stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.8], gravC: [0.7, 0.66, 0.58], shC: [0.68, 0.64, 0.56], line: 'solid' });   // the side roads: the street at the foot, the driveways, the tracks (their surfaces in the road's chunks)
+    const SB = stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.8], gravC: [0.64, 0.63, 0.6], shC: [0.64, 0.63, 0.6], line: 'solid' });   // the side roads: the street at the foot, the driveways, the tracks (their surfaces in the road's chunks)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];

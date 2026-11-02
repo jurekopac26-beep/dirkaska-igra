@@ -4527,7 +4527,7 @@ const World = (function () {
   // tree-exclusion circles (exclTest).
   function crowdCtx(o) {
     const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
-    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [], grp: new Map(), gapK: (T && T.def && CR_GAPK[T.def.id]) || 1 }, o);
+    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [], grp: T && T.def && T.def.test ? null : new Map(), gapK: (T && T.def && CR_GAPK[T.def.id]) || 1 }, o);   // (grp: the groups of crGroup; a test track's crowd as it was)
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
       const gx = clamp((x - G.x0) / G.cell, 0, G.nx - 1.001), gz = clamp((z - G.z0) / G.cell, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, A = G.arr, Y = (a, b) => A[((j + b) * G.nx + i + a) * 3 + 1];
