@@ -49,11 +49,11 @@ try {
       const F = Sc.F, bOf = (v) => (v.x - F.px) * F.nx + (v.z - F.pz) * F.nz - F.bar;
       const look = () => Sc.people.map(p => { const v = p.P.root.position; return { b: bOf(v), x: v.x, z: v.z, runs: !!(p.st && p.st.run && p.st.fence && !p.st.fence.on && p.st.run.a == null), stays: !!(p.st && p.st.run === false), up: p.up || 0 }; });
       Sc.arm = true; Sc.al = Sc.pass = Sc.back = -1; for (const p of Sc.people.concat(Sc.pets)) { p.segs = null; p.up = 0; p.sig = null; }
-      let s = Sc.s0 - 260, dt = 1 / 30, v = 28; place(s); Render.resetCam(); for (let k = 0; k < 10; k++) Render.frame(dt, 1, P, 'chase', {});
+      let s = Sc.s0 - 260, dt = 1 / 15, v = 28; place(s); Render.resetCam(); for (let k = 0; k < 10; k++) Render.frame(dt, 1, P, 'chase', {});   // (15 frames a second: the people's poses come from the time itself, and a software-drawn frame is dear)
       const at = {}; let t = 0;
       while (s < Sc.s0 + 160) { s += v * dt; t += dt; place(s); Render.frame(dt, 1, P, 'chase', {}); const da = Sc.s0 - s;
         if (!at.before && da < 130) at.before = look(); if (!at.pass && da < 0) at.pass = look(); }
-      for (let k = 0; k < 330; k++) Render.frame(dt, 1, P, 'chase', {});   // (11 s more: back at what they did)
+      for (let k = 0; k < 110; k++) Render.frame(0.1, 1, P, 'chase', {});   // (11 s more: back at what they did)
       place(Sc.s0 - 40); for (let k = 0; k < 3; k++) Render.frame(dt, 1, P, 'chase', {});   // (the camera back by the scene: its people are posed only while it is seen; the car's jump back is no coming)
       at.after = look(); at.al = Sc.al;
       return at;
