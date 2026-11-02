@@ -392,12 +392,12 @@
       const WO = { len: 2.4, amp: 1.1, refl: 0.42, shal: 0.6, lap: 0.8, surf: 0.7 }, g = new THREE.PlaneGeometry(40000, 40000, 1, 1).rotateX(-Math.PI / 2);
       const sea = new THREE.Mesh(g, waterMat(tex, Object.assign({ color: 0x5b97b8 }, WO))); sea.position.set(P.x0 - 12000, SEA, (P.z0 + P.z1) / 2); sea.receiveShadow = true; sea.matrixAutoUpdate = false; sea.updateMatrix(); root.add(sea);
       out.dyn.water = tex.water; out.sea = sea;
-      for (let z = G.z0; z < G.z0 + (G.nz - 1) * NRC; z += 512) for (let x = G.x0; x < G.x0 + (G.nx - 1) * NRC; x += 512) {   // (in 512 m blocks where the coast comes within 250 m of the road)
+      for (let z = G.z0; z < G.z0 + (G.nz - 1) * NRC; z += 512) for (let x = G.x0; x < G.x0 + (G.nx - 1) * NRC; x += 512) {   // (in 512 m blocks where the coast comes within 250 m of the road: each its own mesh, out of sight not drawn)
         let near = false; for (const [ax, az] of CO) if (ax >= x - 40 && ax < x + 552 && az >= z - 40 && az < z + 552 && nrDist(ax, az) < 250) { near = true; break; }
         if (!near) continue;
         const i0 = Math.max(1, Math.floor((x - G.x0) / NRC)), j0 = Math.max(1, Math.floor((z - G.z0) / NRC)), i1 = Math.min(G.nx - 2, i0 + 64), j1 = Math.min(G.nz - 2, j0 + 64);
         const band = shoreBand(G.x0 + i0 * NRC, G.z0 + j0 * NRC, G.x0 + i1 * NRC, G.z0 + j1 * NRC, SEA + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, SEA), 18, { F: 4 });
-        if (band) addShore(root, band, sea.material, WO);
+        if (band && band.attributes.shore.array.some(v => v <= -1.99)) addShore(root, band, sea.material, WO);   // (only a band with a shore in it: reaching 2 m in under the land; no ring of foam round a speck of rock)
       }
     }
 

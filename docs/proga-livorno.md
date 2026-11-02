@@ -140,6 +140,7 @@ Raba tal do 150 m od ceste (WorldCover): drevesa 55 %, pozidano 22 %, voda 9 %, 
 
 - Sliki za meni `assets/tracks/livorno.webp` in `livorno-rain.webp`: vrstica v `maketa-menija/orodja/proge_igra.json` (enake nastavitve kot druge proge), izris `node dio2.mjs` s kopijo igre iz te veje (`git archive HEAD` v `maketa-menija/game_main/`), nato `python3 mkwebp.py ../../assets/tracks livorno`.
 - `docs/proge/livorno.md` (potek, ceste, okolica, imena, približki, viri), README (seznam Proge za Trois-Rivièresom, Zasluge), `docs/kazalo.md` (tabela prog), `tests/README.md` (`livorno.test.js`), `docs/igra.md` (leteči start tudi v Livornu).
+- Povezani testi so pokazali dvoje: v meniju je Livorno (19,09 km) zdaj tik pred Nürburgom (seznam od najkrajše do najdaljše), zato `tests/browser/menu.test.mjs` pričakuje Livorno pred Nürburgom in se za preverjanje zemljevidov vrne do Vršiča ne glede na to, koliko prog je vmes; `tests/browser/gfx.test.mjs` ima Livorno med progami z vodo (`WATER`). Pas pene ob obali (`shoreBand` po blokih 512 m) izpusti blok brez kopnega (obroč pene okoli drobne skale); vseh pasov v eno mrežo ne združujemo, ker se taka mreža ne obreže iz pogleda (poskus: 511 namesto 406 tisoč oglišč na sliko).
 - Pull request [#258](https://github.com/jurekopac26-beep/dirkaska-igra/pull/258) kot osnutek; »Ready for review«, ko so povezani testi (`npm run test:related`, 16 testov) lokalno zeleni. Na `main` samo s potrditvijo uporabnika (vprašanje na strani Odločitve).
 
 ## Sklop 4: kaj je narejeno

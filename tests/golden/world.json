@@ -1072,17 +1072,17 @@
   }
  },
  "livorno": {
-  "meshes": 1710,
-  "verts": 1047751,
+  "meshes": 1709,
+  "verts": 1047700,
   "instances": 41754,
   "props": 9,
   "crowd": 3928,
-  "world": "d89f9090",
+  "world": "e7c92d2",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "e09fd13",
-   "-:MeshPhongMaterial": "9b8e0e96",
+   "-:MeshPhongMaterial": "b6985ac9",
    "crowd:MeshLambertMaterial": "221d7a3c",
    "-:MeshBasicMaterial": "adbf26fd",
    "ao:MeshBasicMaterial": "e24c3b9c",
