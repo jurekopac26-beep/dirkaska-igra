@@ -8836,7 +8836,7 @@ const Render = (function () {
     // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
     let want = on && bd != null ? 1 : 0;
     if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
-      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd; for (let d = 0; d < 400; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }
+      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd, n = T.def.pit[2] - T.def.pit[1] + 10; for (let d = 0; d < n; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }   // (as far as the lane goes: Monterey's way out is 437 m past the player's box)
       if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
     }
     pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);

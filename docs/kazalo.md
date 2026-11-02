@@ -156,7 +156,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
 | moki | Moki Dugway, ZDA | moki | `js/world-moki.js` (`buildMoki`) |
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
-| monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`) |
+| monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`; boksi levo ob ciljni ravnini po `def.pit`: šotori ekip `CAN0`–`CAN1`, ravna tla pod njimi `pitW` prek `P.pad`, `out.pitBoxes`; pas ob progi in šopi trave v barvi suhe trave: `colMod`, `out.lawn` za `verge` v `js/world.js`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mulholland | Santa Monica Mountains, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
