@@ -3041,6 +3041,41 @@ body.mk-clean #h-msg { display: none !important; }
       for (let j = 0; j < S.length - 1; j++) for (let i = 0; i < NL; i++) { const k = j * (NL + 1) + i; if (Math.max(cf[k], cf[k + 1], cf[k + NL + 1], cf[k + NL + 2]) < 0.02) continue; idx.push(k, k + 1, k + NL + 1, k + 1, k + NL + 2, k + NL + 1); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; add(m); }
     return c; }
+  // the small circuit's wide run-offs round the outside of its corners (Toskana's own, js/world.js 'shoulder': orange-brown out to 9 m) in light sand as in
+  // the pictures, the circuit's red-orange band along the edge kept (1.5 m): the user's answer, 2. 11. ("svetla mivka kot na slikah"). Only where the
+  // World's run-off is the top surface there (not under the lot, the beach, the banked bend's bowl or the gravel pockets); there its own strip goes and
+  // a strip of its material takes its place: red-orange to 1.5 m, then the light sand out to the barrier, soft into the grass
+  function cornerSand() { const t = T(), N = t.N, w = t.w, root = Render.world && Render.world.root, WS = root && root.getObjectByName('shoulder'); if (!WS || !N || !t.k) return 0;
+    const WD = [-1, 1].map(side => { let a = new Float32Array(N); for (let i = 0; i < N; i++) a[i] = (t.k[i] * side < 0 && Math.abs(t.k[i]) > 0.015) ? 9 : 2.2;   // (as js/world.js: wOut, wIn for Toskana)
+      for (let it = 0; it < 3; it++) { const o2 = new Float32Array(N); for (let i = 0; i < N; i++) { let m = 0; for (let d = -4; d <= 4; d++) m += a[(i + d + N) % N]; o2[i] = Math.max(a[i] * (it ? 0 : 1), m / 9); } a = o2; } return a; });
+    const LR = typeof NVBase !== 'undefined' && NVBase.R, W = H3.water, B0 = H3.bank0, rc = new THREE.Raycaster(), DN = new THREE.Vector3(0, -1, 0), V = new THREE.Vector3(); WS.updateMatrixWorld(true);
+    const pt = (i, side, o) => [t.px[i] + t.nx[i] * side * o, t.pz[i] + t.nz[i] * side * o];
+    const covered = (x, z) => (LR && (LR.lotIn(x, z) || LR.inApron(x, z))) || (W && W.region && W.region(x, z)) || (B0 && B0.latOf(x, z)) || (H3.roHit && H3.roHit(x, z)) || netGap(x, z, null, 3).d < 0.5 || (H3.inGrass && H3.inside && H3.inside(x, z));   // (inGrass: the infield's own grass over it)
+    const shoulderAt = (x, z) => { V.set(x, 40, z); rc.set(V, DN); return rc.intersectObject(WS, false).length > 0; };
+    const ON = [0, 1].map(() => new Uint8Array(N));
+    for (const [j, side] of [[0, -1], [1, 1]]) for (let i = 0; i < N; i++) { if (WD[j][i] < 3.2) continue; const [x, z] = pt(i, side, w + 3.6); if (covered(x, z) || !shoulderAt(x, z)) continue; ON[j][i] = 1; }
+    // (runs: gaps of under 6 m closed, runs under 10 m dropped)
+    for (const M of ON) { for (let i = 0; i < N; i++) if (M[i] && !M[(i + 1) % N]) { let g = 1; while (g < 4 && !M[(i + 1 + g) % N]) g++; if (g < 4) for (let k = 1; k < g; k++) M[(i + k) % N] = 1; }
+      for (let i = 0; i < N; i++) if (M[i] && !M[(i - 1 + N) % N]) { let n = 0; while (n < N && M[(i + n) % N]) n++; if (n * t.ds < 10) for (let k = 0; k < n; k++) M[(i + k) % N] = 0; } }
+    let n0 = 0; for (const M of ON) for (let i = 0; i < N; i++) n0 += M[i]; if (!n0) return 0;
+    H3.cornerRuns = []; ON.forEach((M, j) => { for (let i = 0; i < N; i++) if (M[i] && !M[(i - 1 + N) % N]) { let n = 0; while (n < N && M[(i + n) % N]) n++; H3.cornerRuns.push([j ? 1 : -1, i, n]); } });   // (side, first station, stations: for the tests)
+    // the World's run-off away there (all of its strip past the asphalt's edge: the new strip starts at the edge)
+    clearWorld((x, z) => { const q = t.query(x, z, -1, {}), a = ((q.a % N) + N) % N; return Math.abs(q.d) > w - 0.4 && !!ON[q.d < 0 ? 0 : 1][a]; }, -99, ['shoulder']);
+    // the new strip: rows across every station of a run and one more at each end (over the World's own there), the sand's share tapering to nothing at the ends
+    const MA = [0.6, 0.5, 0.39], RED = [0.6, 0.38, 0.25].map((c, k) => c / MA[k]), SAND = [0.74, 0.62, 0.445].map((c, k) => c / MA[k]), pos = [], col = [], uv = [], idx = [];
+    const nz = (x, z) => 0.97 + 0.06 * Math.sin(x * 0.37 + z * 0.23) * Math.sin(x * 0.11 - z * 0.17);
+    for (const [j, side] of [[0, -1], [1, 1]]) { const M = ON[j], bar = side > 0 ? t.br : t.bl;
+      for (let i0 = 0; i0 < N; i0++) { if (!M[i0] || M[(i0 - 1 + N) % N]) continue; let n = 0; while (n < N && M[(i0 + n) % N]) n++;
+        const rows = []; for (let k = -1; k <= n; k++) rows.push((i0 + k + N) % N); const b0 = pos.length / 3, NR = 7;
+        rows.forEach((i, r) => { const tp = sst(0, 1, Math.min(1, r / 3, (rows.length - 1 - r) / 3)), wd = WD[j][i], o2 = Math.max(w + 2.6, Math.min(w + wd + 3, bar[i] - 0.6)), oS = w + 1.7 + (o2 - w - 1.7) * (1 - tp);
+          const jag = 0.5 * Math.sin(i * 0.9 + side) + 0.3 * Math.sin(i * 2.3);
+          const R = [[w - 0.05, RED, 0], [w + 0.05, RED, 1], [w + 1.5, RED, 1], [Math.min(oS, w + 2.1), SAND, 1], [Math.max(oS, o2 - 1.2), SAND, 1], [o2 + jag * 0.3, SAND, 0.85], [o2 + 0.9 + jag * 0.6, SAND, 0]];
+          for (const [o, c, a] of R) { const [x, z] = pt(i, side, o), g = H3.ground ? H3.ground(x, z) : 0, v = nz(x, z), sandK = c === SAND ? tp : 0, cc = c === SAND ? [0, 1, 2].map(k => RED[k] + (SAND[k] - RED[k]) * sandK) : c;
+            pos.push(x, Math.max(0.012, g + 0.012), z); col.push(cc[0] * v, cc[1] * v, cc[2] * v, a); uv.push(x / 4, -z / 4); }
+          if (r) { const a0 = b0 + (r - 1) * NR; for (let c = 0; c < NR - 1; c++) { const q = a0 + c; idx.push(q, q + NR, q + 1, q + 1, q + NR, q + NR + 1); } } }); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    for (let k = 0; k < idx.length; k += 3) { const a = idx[k] * 3, b = idx[k + 1] * 3, c = idx[k + 2] * 3, ny = (pos[b + 2] - pos[a + 2]) * (pos[c] - pos[a]) - (pos[b] - pos[a]) * (pos[c + 2] - pos[a + 2]); if (ny < 0) { const q = idx[k + 1]; idx[k + 1] = idx[k + 2]; idx[k + 2] = q; } } g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, WS.material); m.renderOrder = -1; m.receiveShadow = true; add(m); return n0; }
   // where two gravel ways meet end to end at an angle (their ends cut square to each), a round of the same gravel under both over the joint: no
   // wedge of grass in the bend's outer corner, the 15 pictures of the whole map, sheet 8 (under the ways' own: pushed back, they win where both are)
   const makFb = () => mat('makFb', () => Object.assign(makF().clone(), { polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
@@ -4480,7 +4515,7 @@ body.mk-clean #h-msg { display: none !important; }
     yield 'y10';
     if (H3.tun) H3.tunMesh = tunnelBuild(H3.tun);
     yield 'y11';
-    carvePaved(); H3.ringPatch = ringPatch(); H3.yArms = yArms(); H3.spillZ = []; H3.spills = spillsAll(); H3.caps = wayCaps(); if (H3.PARKM) H3.tracks = wayTracks(); H3.gOver = H3.PARKM ? [] : [gravelOver(H3.YARD ? 668 : 655, 740, 1, 4.2), gravelOver(696, 740, -1, 3.4)]; H3.wearOff = wearOffSpills(); H3.seaOut = H3.water ? seaBeyond(H3.water) : 0; H3.island = islandNE(); if (!H3.BOAT) H3.kart = kartTrack(H3.kartPts); }
+    carvePaved(); H3.ringPatch = ringPatch(); H3.yArms = yArms(); H3.spillZ = []; H3.spills = spillsAll(); H3.caps = wayCaps(); if (H3.PARKM) H3.tracks = wayTracks(); if (H3.PARKM) H3.cornerSand = cornerSand(); H3.gOver = H3.PARKM ? [] : [gravelOver(H3.YARD ? 668 : 655, 740, 1, 4.2), gravelOver(696, 740, -1, 3.4)]; H3.wearOff = wearOffSpills(); H3.seaOut = H3.water ? seaBeyond(H3.water) : 0; H3.island = islandNE(); if (!H3.BOAT) H3.kart = kartTrack(H3.kartPts); }
     yield 'y12';
     H3.cones = []; H3.cones2 = [];
     const onEdge = (d, lat) => { const q = at(d, -lat), r = at(d), lx = -Math.sin(q.hd), lz = Math.cos(q.hd); return { x: q.x, z: q.z, ry: -q.hd, fz: lx * (r.x - q.x) + lz * (r.z - q.z) > 0 ? 1 : -1 }; };
