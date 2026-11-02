@@ -60,7 +60,7 @@ dirke, samodejne zastavice (kje je bil tisti avto), dnevnik in besedilo poročil
 (`povzetek.txt`, `povzetek.json`, slike). Datoteke in slik ne shranjuj v repozitorij.
 
 **Predogled pred mainom** (`.github/workflows/stran.yml`, `tools/predogled.mjs`): stran na GitHub Pages ima `main` v korenu, vsak odprt pull
-request iz tega repozitorija (največ 3 najnovejši) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
+request iz tega repozitorija (največ 3 najnovejši; tisti z oznako »predogled« vedno med njimi) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
 vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluje, ko je v Settings → Pages → Source izbrano »GitHub Actions«
 (do tedaj ostane objava z veje `main`, potek pa to samo javi). Predogled ima svoj service worker, shranjene nastavitve in napredek pa deli z glavno igro.
 
