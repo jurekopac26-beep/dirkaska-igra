@@ -8,7 +8,7 @@ Notranje oznake so ostale od prejšnjega imena (APEX Racing): `app: 'apex-racing
 
 Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, okolica, približki) je v svoji datoteki v [`docs/proge/`](docs/proge/); opis delov igre, ki niso vezani na eno progo (fizika, dirka, boksi, vreme, grafika, vozni park …), je v [`docs/igra.md`](docs/igra.md). Viri in licence so spodaj pod »Zasluge«.
 
-- [Pikes Peak, ZDA (asfalt in makadam: `pikes`, `pikesg`)](docs/proge/pikes.md)
+- [Pikes Peak, ZDA (asfalt: `pikes`)](docs/proge/pikes.md) in [Pikes Peak (makadam), ZDA (`pikesg`)](docs/proge/pikesg.md)
 - [Ouninpohja, Finska](docs/proge/ouninpohja.md)
 - [Vršič, Slovenija](docs/proge/vrsic.md)
 - [Nürburg, Nemčija](docs/proge/nring.md)
