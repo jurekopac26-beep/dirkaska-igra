@@ -1222,23 +1222,105 @@
     'float crT = floor(vUv.y / uCV.y + 1e-4), crL = clamp((vUv.y - crT * uCV.y) / uCV.z, 0.0, 1.0);',
     'vec4 texelColor = texture2D( map, vec2(vUv.x * uCV.x, mod(crT, 8.0) / 8.0 + crL / 8.0) );',
     'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
-  // the stands made three-dimensional (the user, 2. 11. 2026: »popravi tribune da bodo bolj 3d«, »ljudje sedijo in stojijo v zraku«): over
-  // each stand's raked crowd surface (its picture's tiers: v bands of the pitch, u along it) real steps, a tread and a riser per tier, and on
-  // each tread a bench with its back in the stand's colours; the flat painted surface hidden. The seats every SEAT_W along each bench: the
-  // tread's height (the people's feet), the bench under their hips, the front (where the tiers go down). A steep one (a wall of people)
-  // keeps its surface with empty seats painted (Tex.crowdSeats), nobody on it
-  const SEAT_W = 0.55, BENCH = { back: 0.06, depth: 0.42, h: 0.44, rest: 0.36 };
-  const SEAT_COLS = [[0.18, 0.37, 0.69], [0.72, 0.2, 0.17], [0.16, 0.54, 0.3], [0.88, 0.69, 0.13], [0.85, 0.84, 0.8]];   // (the benches one of the first four, now and then a block of another)
-  function standBuild(o, A, hsh) {
-    const seats = [], flat = new Map(), chunks = new A.Chunks(128), TREAD = [0.64, 0.65, 0.68], RISER = [0.47, 0.48, 0.51];   // (128 m pieces: only those in view drawn)
+  // the stands made three-dimensional and as they are (the user, 2. 11. 2026: »popravi tribune da bodo bolj 3d«, »ljudje sedijo in stojijo v
+  // zraku«; then »posodobi povsod še dodatno tribune … naj bodo dobro narejene v dobri grafiki … čim bolj podobno kot v resnici«): over each
+  // stand's crowd surface (its picture's tiers: v bands of the pitch, u along it) a row of the stand per tier: a riser where the surface is
+  // raked, the tread, and on it a row of bucket seats (each its own in the kit's picture, Tex.standKit: the back, the seat), the painted
+  // surface hidden. A stand (a part of the surface with all its tiers, or the parts of a stepped one, a tier each, joined where one's back
+  // meets the next one's front) is cut into blocks of about BLOCK m by aisles: their steps halved (yellow edges), a handrail up the middle; its
+  // seats in its colours (one, or by blocks, bands or a stripe); at its ends a wall a metre over the steps (concrete; a temporary stand on the
+  // street circuits: its scaffolding and a railing). The seats every SEAT_W along a block (the people's: the tread's height, under the seat's
+  // middle). A steep one (a wall of people) keeps its surface with empty seats painted (Tex.crowdSeats), nobody on it
+  const SEAT_W = 0.55, BENCH = { back: 0.06, depth: 0.42, h: 0.44, rest: 0.4 }, BLOCK = 15, AISLE = 1.2, KIT = Tex.STAND_KIT;
+  const STAND_TEMP = new Set(['newcastle', 'toronto', 'townsville', 'montreal', 'detroit', 'bangsaen', 'troisrivieres', 'monterey', 'marrakesh', 'riverside']);   // (put up for the race, or bleachers: on scaffolding)
+  const STAND_BENCH = { longford: 'wood', cpalace: 'wood', riverside: 'wood', monterey: 'alu', troisrivieres: 'alu' };   // (benches, not seats: the period stands' of timber, the bleachers' of aluminium)
+  const BENCH_COL = { wood: [0.6, 0.46, 0.3], alu: [0.8, 0.82, 0.85] }, DECK_COL = { wood: [0.62, 0.52, 0.4], alu: [0.72, 0.74, 0.77] };
+  const SEAT_COLS = [[0.12, 0.28, 0.6], [0.64, 0.12, 0.11], [0.46, 0.48, 0.52], [0.1, 0.42, 0.22], [0.88, 0.4, 0.07], [0.86, 0.66, 0.08], [0.84, 0.84, 0.82], [0.18, 0.52, 0.78]];   // blue, red, grey, green, orange, yellow, white, sky
+  const ST_CONC = [0.6, 0.6, 0.62], ST_DECK = [0.7, 0.72, 0.75], ST_STEEL = [0.64, 0.66, 0.7], ST_RAIL = [0.8, 0.81, 0.83], NOSEAT = [0, 0, 0];
+  const kv = (band, f) => 1 - (band[0] + 0.5 + Math.max(0, Math.min(1, f)) * (band[1] - band[0] - 1)) / KIT.H;   // (a band's v: f 0 its top row, 1 its bottom)
+  const kq = (band, u0, u1, f0, f1) => [[u0, kv(band, f0)], [u1, kv(band, f0)], [u1, kv(band, f1)], [u0, kv(band, f1)]];   // (a quad a b c d: a-b at f0, d-c at f1)
+  class SB {   // a stand's geometry, non-indexed with flat normals: per vertex the concrete's colour (the seasons paint it), the seat's own (aSeat), the kit's uv
+    constructor() { this.P = []; this.N = []; this.C = []; this.S = []; this.U = []; }
+    get empty() { return !this.P.length; }
+    tri(a, b, c, col, seat, ua, ub, uc, n) {
+      this.P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); this.U.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
+      for (let k = 0; k < 3; k++) { this.N.push(n[0], n[1], n[2]); this.C.push(col[0], col[1], col[2]); this.S.push(seat[0], seat[1], seat[2]); }
+    }
+    quad(a, b, c, d, out, col, seat, uv) {   // a b c d around, facing out (a direction)
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz); if (!(l > 1e-9)) return;
+      nx /= l; ny /= l; nz /= l; seat = seat || NOSEAT;
+      if (nx * out[0] + ny * out[1] + nz * out[2] < 0) { const n = [-nx, -ny, -nz]; this.tri(a, c, b, col, seat, uv[0], uv[2], uv[1], n); this.tri(a, d, c, col, seat, uv[0], uv[3], uv[2], n); }
+      else { const n = [nx, ny, nz]; this.tri(a, b, c, col, seat, uv[0], uv[1], uv[2], n); this.tri(a, c, d, col, seat, uv[0], uv[2], uv[3], n); }
+    }
+    bar(p0, p1, w, h, col) {   // a rail from p0 to p1: its two sides and its top (w wide, h deep)
+      const dx = p1[0] - p0[0], dz = p1[2] - p0[2], L = Math.hypot(dx, dz) || 1, sx = -dz / L * w / 2, sz = dx / L * w / 2, U = kq(KIT.rail, 0, 1, 0, 1);
+      const a = [p0[0] - sx, p0[1], p0[2] - sz], b = [p1[0] - sx, p1[1], p1[2] - sz], c = [p1[0] + sx, p1[1], p1[2] + sz], d = [p0[0] + sx, p0[1], p0[2] + sz];
+      this.quad(a, b, c, d, [0, 1, 0], col, null, U);
+      for (const [q0, q1, s] of [[a, b, -1], [d, c, 1]]) this.quad(q0, q1, [q1[0], q1[1] - h, q1[2]], [q0[0], q0[1] - h, q0[2]], [s * sx, 0, s * sz], col, null, U);
+    }
+    post(p, h, w, f, col) {   // an upright, from p up h: its faces to the front and back (f), w wide
+      const sx = -f[1] * w / 2, sz = f[0] * w / 2, U = kq(KIT.rail, 0, 1, 0, 1), a = [p[0] - sx, p[1], p[2] - sz], b = [p[0] + sx, p[1], p[2] + sz];
+      for (const s of [1, -1]) this.quad(a, b, [b[0], b[1] + h, b[2]], [a[0], a[1] + h, a[2]], [s * f[0], 0, s * f[1]], col, null, U);
+    }
+    geometry() {
+      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a, n);
+      g.setAttribute('position', F(this.P, 3)); g.setAttribute('normal', F(this.N, 3)); g.setAttribute('color', F(this.C, 3)); g.setAttribute('aSeat', F(this.S, 3)); g.setAttribute('uv', F(this.U, 2));
+      g.computeBoundingSphere(); return g;
+    }
+  }
+  function standMat() {   // the kit: red its light and shade, green the seat's colour over the concrete's, blue the yellow paint
+    const M = new THREE.MeshLambertMaterial({ vertexColors: true, map: Tex.standKit() });
+    M.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aSeat;\nvarying vec3 vSeat;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSeat = aSeat;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vSeat;').replace('#include <map_fragment>', 'vec4 stK = texture2D( map, vUv );')
+        .replace('#include <color_fragment>', 'diffuseColor.rgb *= mix( mix( vColor, vSeat, stK.g ), vec3( 0.92, 0.72, 0.1 ), stK.b ) * stK.r;');
+    };
+    M.customProgramCacheKey = () => 'standKit'; return M;
+  }
+  // the stands' roofs as they are (profiled metal sheets, a rib every half metre, a joint every two): over the world's own roofs (what faces up
+  // over a stand's footprint, 1.5-14 m over its top tread, in the world's vertex-coloured meshes) a copy 5 cm up in the stands' meshes, in the
+  // kit's picture (their colours kept: the seasons still paint them; the world's own still casts the shadow)
+  const inPoly = (P, x, z) => { let c = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) { const [xa, za] = P[a], [xb, zb] = P[b]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
+  function standRoofs(o, feet, sbAt) {
+    if (!feet.length) return 0;
+    const ms = [], skip = (m) => m.userData && m.userData.lj;
+    const walk = (m) => { if (skip(m)) return; if (m.isMesh && !m.isInstancedMesh && m.visible) {
+        const M = m.material, g = m.geometry, A = g && g.attributes;
+        if (M && !Array.isArray(M) && M.isMeshLambertMaterial && M.vertexColors && !M.map && !M.transparent && !(M.userData && M.userData.stand) && A && A.position && A.normal && A.color && A.color.itemSize === 3 && !g.index && !A.aSway && Object.keys(A).every(k => ['position', 'normal', 'color', 'uv'].includes(k))) {
+          m.updateMatrixWorld(true); if (m.matrixWorld.equals(IDENT)) ms.push(m); } }
+      for (const c of m.children) walk(c); };
+    walk(o.root);
+    let n = 0; const UV = kv(KIT.roof, 0.5);
+    for (const m of ms) {
+      const g = m.geometry, P = g.attributes.position.array, N = g.attributes.normal.array, C = g.attributes.color.array, nt = P.length / 9;
+      if (!g.boundingBox) g.computeBoundingBox(); const bx = g.boundingBox;
+      const fs = feet.filter(f => !(bx.max.x < f.bb[0] || bx.min.x > f.bb[1] || bx.max.z < f.bb[2] || bx.min.z > f.bb[3])); if (!fs.length) continue;
+      let k = 0;
+      for (let t = 0; t < nt; t++) {
+        const o9 = t * 9; if (N[o9 + 1] < 0.6) continue;
+        const cx = (P[o9] + P[o9 + 3] + P[o9 + 6]) / 3, cz = (P[o9 + 2] + P[o9 + 5] + P[o9 + 8]) / 3, ylo = Math.min(P[o9 + 1], P[o9 + 4], P[o9 + 7]);
+        const f = fs.find(f => cx >= f.bb[0] && cx <= f.bb[1] && cz >= f.bb[2] && cz <= f.bb[3] && ylo > f.top + 1.5 && ylo < f.top + 14 && inPoly(f.poly, cx, cz)); if (!f) continue;
+        k++;
+        const up = (q) => [P[q] + N[o9] * 0.05, P[q + 1] + N[o9 + 1] * 0.05, P[q + 2] + N[o9 + 2] * 0.05], a = up(o9), b = up(o9 + 3), c = up(o9 + 6), u = (p) => [(p[0] * f.tx + p[2] * f.tz) / 4, UV];
+        sbAt(cx, cz).tri(a, b, c, [C[o9], C[o9 + 1], C[o9 + 2]], NOSEAT, u(a), u(b), u(c), [N[o9], N[o9 + 1], N[o9 + 2]]);
+      }
+      n += k;
+    }
+    return n;
+  }
+  function standBuild(o, A, hsh, def) {
+    const seats = [], flat = new Map(), cells = new Map(), feet = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
+    const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
+    const bench = STAND_BENCH[def.id] || null, conc = bench ? DECK_COL[bench] : temp ? ST_DECK : ST_CONC, wall = bench === 'wood' ? DECK_COL.wood : ST_CONC, H2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]), tq = {}, trackD = (p) => { A.T.query(p[0], p[2], -1, tq); return Math.abs(tq.d); };
     o.root.updateMatrixWorld(true);
-    let sid = 0, nMesh = 0;
+    let mid = 0;
     o.root.traverse(m => {
       if (!isStand(m)) return;
       const M = m.material, g = m.geometry, uv = g.attributes.uv, Pa = g.attributes.position, cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], pit = cv[1];
-      let keep = false, built = false; const mid = nMesh++;
+      let keep = false, built = false; mid++;
       const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : Pa.count, BU = 0.05;
-      // the stands of the mesh apart (two across the road share their uvs): its triangles joined where they share a corner
+      // the parts of the surface (two stands across the road share their uvs; a stepped stand's tiers are a part each): its triangles joined where they share a corner
       const tris = [], par = new Map(), find = (k) => { let r = k; while (par.get(r) !== r) r = par.get(r); let c = k; while (c !== r) { const nx = par.get(c); par.set(c, r); c = nx; } return r; };
       const key = (q) => Math.round(q.x * 50) + ',' + Math.round(q.y * 50) + ',' + Math.round(q.z * 50);
       for (let t = 0; t + 2 < n; t += 3) {
@@ -1249,54 +1331,185 @@
         tris.push({ T, den, k: ks[0] });
       }
       const isl = new Map(); for (const tr of tris) { const r = find(tr.k); let L = isl.get(r); if (!L) isl.set(r, L = []); L.push(tr); }
-      for (const part of isl.values()) {
-      const buckets = new Map(), us = []; let vmin = 1e9, vmax = -1e9;
-      for (const rec of part) { const T = rec.T, u0 = Math.min(T[0].u, T[1].u, T[2].u), u1 = Math.max(T[0].u, T[1].u, T[2].u);
-        for (let bk = Math.floor(u0 / BU); bk <= Math.floor(u1 / BU); bk++) { let L = buckets.get(bk); if (!L) buckets.set(bk, L = []); L.push(rec); }
-        for (const q of T) { us.push(q.u); vmin = Math.min(vmin, q.v); vmax = Math.max(vmax, q.v); } }
-      // p(u, v) on the surface (tol: how far outside a triangle it may reach)
-      const P = (u, v, tol) => { const L = buckets.get(Math.floor(u / BU)); if (!L) return null;
-        for (const { T, den } of L) { const w1 = ((T[1].v - T[2].v) * (u - T[2].u) + (T[2].u - T[1].u) * (v - T[2].v)) / den, w2 = ((T[2].v - T[0].v) * (u - T[2].u) + (T[0].u - T[2].u) * (v - T[2].v)) / den, w3 = 1 - w1 - w2;
-          if (w1 < -tol || w2 < -tol || w3 < -tol) continue; return [T[0].x * w1 + T[1].x * w2 + T[2].x * w3, T[0].y * w1 + T[1].y * w2 + T[2].y * w3, T[0].z * w1 + T[1].z * w2 + T[2].z * w3]; }
-        return null; };
-      const Q = (u, v) => P(u, v, 1e-5) || P(u, v, 0.06);
-      // steep? (the rise over the run of a tier, along the middle of the surface)
-      us.sort((x, y) => x - y); const U = []; for (const u of us) if (!U.length || u - U[U.length - 1] > 1e-4) U.push(u);
-      let rise = 0, run = 0; const va = vmin + (vmax - vmin) * 0.25, vz = vmin + (vmax - vmin) * 0.75;   // (a part may be one tier alone: stepped already)
-      for (let j = 0; j + 1 < U.length; j++) { const um = (U[j] + U[j + 1]) / 2, a0 = Q(um, va), a1 = Q(um, vz); if (a0 && a1) { rise += Math.abs(a1[1] - a0[1]); run += Math.hypot(a1[0] - a0[0], a1[2] - a0[2]); } }
-      if (!(run > 0) || rise / run > 1.6) { keep = true; continue; }   // (a wall of people: kept, its seats painted empty)
-      built = true; const sc = SEAT_COLS[(hsh + mid) % 4], sc2 = SEAT_COLS[(hsh + mid + 2) % SEAT_COLS.length], rest = sc.map(c => c * 0.82); sid++;   // (a stand's mesh one colour for all its tiers)
-      for (let j = 0; j + 1 < U.length; j++) {
-        const ua = U[j], ub = U[j + 1]; if (!Q((ua + ub) / 2, (vmin + vmax) / 2)) continue;   // (a gap between two stands)
+      // each part: p(u, v) on it, its u stations, its rows (a tier each: from its front vf to its back vb)
+      const parts = [];
+      for (const list of isl.values()) {
+        const buckets = new Map(), us = []; let vmin = 1e9, vmax = -1e9;
+        for (const rec of list) { const T = rec.T, u0 = Math.min(T[0].u, T[1].u, T[2].u), u1 = Math.max(T[0].u, T[1].u, T[2].u);
+          for (let bk = Math.floor(u0 / BU); bk <= Math.floor(u1 / BU); bk++) { let L = buckets.get(bk); if (!L) buckets.set(bk, L = []); L.push(rec); }
+          for (const q of T) { us.push(q.u); vmin = Math.min(vmin, q.v); vmax = Math.max(vmax, q.v); } }
+        const P = (u, v, tol) => { const L = buckets.get(Math.floor(u / BU)); if (!L) return null;
+          for (const { T, den } of L) { const w1 = ((T[1].v - T[2].v) * (u - T[2].u) + (T[2].u - T[1].u) * (v - T[2].v)) / den, w2 = ((T[2].v - T[0].v) * (u - T[2].u) + (T[0].u - T[2].u) * (v - T[2].v)) / den, w3 = 1 - w1 - w2;
+            if (w1 < -tol || w2 < -tol || w3 < -tol) continue; return [T[0].x * w1 + T[1].x * w2 + T[2].x * w3, T[0].y * w1 + T[1].y * w2 + T[2].y * w3, T[0].z * w1 + T[1].z * w2 + T[2].z * w3]; }
+          return null; };
+        const Q = (u, v) => P(u, v, 1e-5) || P(u, v, 0.06);
+        us.sort((x, y) => x - y); const U0 = []; for (const u of us) if (!U0.length || u - U0[U0.length - 1] > 1e-4) U0.push(u);
+        if (U0.length < 2) continue;
+        // its stations where it bends (a straight stretch one piece: the stations between dropped where every point of them is within 4 cm of the line)
+        const vS = [vmin, (vmin + vmax) / 2, vmax], U = [U0[0]];
+        const straight = (i, j) => { for (let k = i; k < j; k++) if (!Q((U0[k] + U0[k + 1]) / 2, vS[1])) return false;
+          for (let k = i + 1; k < j; k++) for (const v of vS) { const a = Q(U0[i], v), b = Q(U0[j], v), p = Q(U0[k], v); if (!a || !b || !p) return false;
+            const t = (U0[k] - U0[i]) / (U0[j] - U0[i]); if (Math.hypot(a[0] + (b[0] - a[0]) * t - p[0], a[1] + (b[1] - a[1]) * t - p[1], a[2] + (b[2] - a[2]) * t - p[2]) > 0.04) return false; }
+          return true; };
+        for (let i = 0; i < U0.length - 1;) { let j = i + 1; while (j + 1 < U0.length && j - i < 40 && straight(i, j + 1)) j++; U.push(U0[j]); i = j; }
+        // steep? (the rise over the run of a tier, along the middle of the surface): a wall of people, kept painted
+        let rise = 0, run = 0; const va = vmin + (vmax - vmin) * 0.25, vz = vmin + (vmax - vmin) * 0.75;   // (a part may be one tier alone: stepped already)
+        for (let j = 0; j + 1 < U0.length; j++) { const um = (U0[j] + U0[j + 1]) / 2, a0 = Q(um, va), a1 = Q(um, vz); if (a0 && a1) { rise += Math.abs(a1[1] - a0[1]); run += H2(a1, a0); } }
+        if (!(run > 0) || rise / run > 1.6) { keep = true; continue; }
+        let um = null; for (let j = 0; j + 1 < U.length && um == null; j++) { const c = (U[j] + U[j + 1]) / 2; if (Q(c, (vmin + vmax) / 2)) um = c; }
+        if (um == null) continue;
+        const part = { Q, U, rows: [], id: parts.length };
         for (let t = Math.floor(vmin / pit + 1e-4); t <= Math.floor(vmax / pit - 1e-4) && t < 400; t++) {
           const vf = Math.max(t * pit, vmin), vb = Math.min((t + 1) * pit, vmax); if (vb - vf < pit * 0.4) continue;   // (a sliver of a tier: none)
-          const FL = Q(ua, vf), FR = Q(ub, vf), BL = Q(ua, vb), BR = Q(ub, vb); if (!FL || !FR || !BL || !BR) continue;
-          const gb = chunks.get((FL[0] + BR[0]) / 2, (FL[2] + BR[2]) / 2), FLu = [FL[0], BL[1], FL[2]], FRu = [FR[0], BR[1], FR[2]];
-          const behind = [(BL[0] + BR[0]) / 2 - (FL[0] - BL[0]), Math.min(BL[1], BR[1]) - 1, (BL[2] + BR[2]) / 2 - (FL[2] - BL[2])];
-          if (Math.abs(BL[1] - FL[1]) > 0.03) gb.quadO(FL, FR, FRu, FLu, RISER, behind);   // (the riser: none where the tier is stepped already)
-          gb.quadUp(FLu, FRu, BR, BL, [TREAD, TREAD, TREAD, TREAD]);   // (the tread)
-          // the bench on its back part, facing the front (f), and its back
-          const fx = (FL[0] + FR[0] - BL[0] - BR[0]) / 2, fz = (FL[2] + FR[2] - BL[2] - BR[2]) / 2, dep = Math.hypot(fx, fz); if (dep < 0.62) continue;
-          const nx = fx / dep, nz = fz / dep, at = (B, d, h) => [B[0] + nx * d, B[1] + h, B[2] + nz * d], col = (j % 9 < 2 && t % 3 === 0) ? sc2 : sc;
-          const b0L = at(BL, BENCH.back, BENCH.h), b0R = at(BR, BENCH.back, BENCH.h), b1L = at(BL, BENCH.back + BENCH.depth, BENCH.h), b1R = at(BR, BENCH.back + BENCH.depth, BENCH.h);
-          gb.quadUp(b0L, b0R, b1R, b1L, [col, col, col, col]);   // (the seat)
-          const r0L = at(BL, BENCH.back, BENCH.h), r0R = at(BR, BENCH.back, BENCH.h), r1L = at(BL, BENCH.back - 0.04, BENCH.h + BENCH.rest), r1R = at(BR, BENCH.back - 0.04, BENCH.h + BENCH.rest);
-          if (A.LOD.tier > 0) gb.quadO(r0L, r0R, r1R, r1L, rest, behind);   // (its back; none at NIZKA: the phone's budget)
-          // the seats along it: the feet on the tread, under the middle of the seat
-          const L = Math.hypot(BR[0] - BL[0], BR[2] - BL[2]), nS = Math.floor(L / SEAT_W);
-          for (let q = 0; q < nS; q++) { const w = (q + 0.5) / nS, Bx = BL[0] + (BR[0] - BL[0]) * w, By = BL[1] + (BR[1] - BL[1]) * w, Bz = BL[2] + (BR[2] - BL[2]) * w;
-            seats.push({ x: Bx + nx * (BENCH.back + BENCH.depth / 2), y: By, z: Bz + nz * (BENCH.back + BENCH.depth / 2), fx: nx, fz: nz, row: t, k: j * 1000 + q, m: m.id + '/' + sid }); }
+          const F = Q(um, vf), B = Q(um, vb); if (!F || !B) continue;
+          const flat = Math.abs(B[1] - F[1]) < 0.03, flip = flat ? trackD(B) < trackD(F) - 0.05 : B[1] < F[1];   // (its front: the lower edge, or a flat tier's nearer the road: a stand's v may run either way)
+          part.rows.push(flip ? { part, t, vf: vb, vb: vf, y: F[1], flat, F: B, B: F, uA: U[0], uB: U[U.length - 1] } : { part, t, vf, vb, y: B[1], flat, F, B, uA: U[0], uB: U[U.length - 1] });
         }
+        if (part.rows.length) parts.push(part);
       }
+      if (!parts.length) { if (keep) flat.set(M, cv); return; }
+      built = true;
+      // the stands: a part's rows together; parts joined where a row's back meets another's front, higher (the tiers of a stepped stand)
+      const sp = parts.map((p, i) => i), sf = (i) => { while (sp[i] !== i) i = sp[i] = sp[sp[i]]; return i; };
+      for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
+        const a = parts[i], b = parts[j], lo = Math.max(a.U[0], b.U[0]), hi = Math.min(a.U[a.U.length - 1], b.U[b.U.length - 1]);
+        if (hi - lo < 0.3 * Math.min(a.U[a.U.length - 1] - a.U[0], b.U[b.U.length - 1] - b.U[0])) continue;
+        const uo = (lo + hi) / 2;
+        const meets = (p, q) => p.rows.some(r => q.rows.some(s => { if (s.y <= r.y) return false; const rb = p.Q(uo, r.vb), sf2 = q.Q(uo, s.vf); return rb && sf2 && H2(rb, sf2) < 1.3 && sf2[1] - rb[1] < 1.6; }));
+        if (meets(a, b) || meets(b, a)) sp[sf(i)] = sf(j);
+      }
+      const stands = new Map(); for (let i = 0; i < parts.length; i++) { const r = sf(i); let L = stands.get(r); if (!L) stands.set(r, L = []); L.push(parts[i]); }
+      let si = 0;
+      for (const sparts of stands.values()) {
+        si++;
+        const rows0 = [].concat(...sparts.map(p => p.rows)).sort((a, b) => a.y - b.y), rows = [];
+        rows0.forEach((r, i) => {   // a deep flat tier (a stepped stand's) cut into rows of about 0.85 m, each a step up towards the next tier's height
+          const dep = H2(r.F, r.B), nx = rows0[i + 1], pv = rows0[i - 1], ok = (d) => d > 0.2 && d < 1.6, rise = nx && ok(nx.y - r.y) ? nx.y - r.y : pv && ok(r.y - pv.y) ? r.y - pv.y : 0.45;
+          const n = r.flat && dep >= 1.35 ? Math.min(4, Math.round(dep / 0.85)) : 1;
+          for (let k = 0; k < n; k++) rows.push(Object.assign({}, r, { vf: r.vf + (r.vb - r.vf) * k / n, vb: r.vf + (r.vb - r.vf) * (k + 1) / n, dy: k * rise / n, dyP: k ? (k - 1) * rise / n : null, t: r.t * 8 + k, yb: r.y + k * rise / n }));
+        });
+        const uA = Math.min(...rows.map(r => r.uA)), uB = Math.max(...rows.map(r => r.uB));
+        const R0 = rows[Math.floor(rows.length / 2)], len = (() => { let L = 0, q = null; for (const u of R0.part.U) { const p = R0.part.Q(u, R0.vb); if (p && q) L += H2(p, q); q = p; } return L; })();
+        if (!(len > 1)) continue;
+        // its aisles (in u: the same for all its rows) and its colours
+        const nB = len < 9 ? 1 : Math.max(1, Math.round(len / BLOCK)), hw = AISLE / 2 * (uB - uA) / len, aisles = [];
+        for (let k = 1; k < nB; k++) { const c = uA + (uB - uA) * k / nB; aisles.push([c - hw, c + hw, c]); }
+        const hs = (hsh * 7 + mid * 131 + si * 17) % 9973, c1 = SEAT_COLS[hs % 6], c2 = SEAT_COLS[(hs % 6 + 1 + (hs >> 3) % 7) % SEAT_COLS.length], scheme = (hs >> 5) % 5;
+        const colOf = (ri, blk) => bench ? BENCH_COL[bench] : scheme === 1 && blk % 2 ? c2 : scheme === 2 && ri >= rows.length * 0.6 ? c2 : scheme === 3 && ri % 6 === 5 ? c2 : c1;   // (one colour; by blocks; the upper rows; a stripe; a bench its timber or aluminium)
+        const nAisle = (u) => aisles.findIndex(a => u > a[0] && u < a[1]);
+        rows.forEach((row, ri) => {
+          const { part, vf, vb } = row, Q = part.Q, U = part.U, prev = ri > 0 ? rows[ri - 1] : null, Qb = (u) => { const p = Q(u, vb); return p && [p[0], p[1] + row.dy, p[2]]; };   // (Qb: the back edge, the row's tread)
+          const yPrev = (u, F) => row.flat ? (row.dyP != null ? F[1] + row.dyP : prev && prev.yb < row.yb - 0.05 ? prev.yb : null) : F[1];   // (the tread in front of its riser)
+          // the back edge's length along u (the seats' places), each block's seats (centred, whole ones)
+          const D = [0]; for (let j = 1; j < U.length; j++) { const a = Q(U[j - 1], vb), b = Q(U[j], vb); D.push(D[j - 1] + (a && b ? H2(a, b) : (U[j] - U[j - 1]) * len / (uB - uA))); }
+          const dAt = (u) => { let j = 0; while (j < U.length - 2 && U[j + 1] < u) j++; return D[j] + (D[j + 1] - D[j]) * (u - U[j]) / ((U[j + 1] - U[j]) || 1); };
+          const uAt = (d) => { let j = 0; while (j < U.length - 2 && D[j + 1] < d) j++; return U[j] + (U[j + 1] - U[j]) * (d - D[j]) / ((D[j + 1] - D[j]) || 1); };
+          const cuts = [row.uA]; for (const a of aisles) if (a[0] > row.uA && a[1] < row.uB) cuts.push(a[0], a[1]); cuts.push(row.uB);
+          const blocks = []; for (let k = 0; k + 1 < cuts.length; k += 2) {
+            const dA = dAt(cuts[k]), dB = dAt(cuts[k + 1]), nS = Math.floor((dB - dA - 0.1) / SEAT_W); if (nS < 1) continue;
+            const d0 = dA + (dB - dA - nS * SEAT_W) / 2; blocks.push({ k: k / 2, d0, d1: d0 + nS * SEAT_W, u0: uAt(d0), u1: uAt(d0 + nS * SEAT_W), nS, col: colOf(ri, k / 2) });
+          }
+          const bad = [];   // (the twisted pieces: no seats there)
+          for (let j = 0; j + 1 < U.length; j++) {
+            const ua = U[j], ub = U[j + 1]; if (!Q((ua + ub) / 2, (vf + vb) / 2)) continue;   // (a gap between two stands)
+            const FL0 = Q(ua, vf), FR0 = Q(ub, vf), BL0 = Q(ua, vb), BR0 = Q(ub, vb); if (!FL0 || !FR0 || !BL0 || !BR0) continue;
+            const fv = [FR0[0] - FL0[0], FR0[2] - FL0[2]], bv = [BR0[0] - BL0[0], BR0[2] - BL0[2]], lf = Math.hypot(...fv), lb = Math.hypot(...bv);
+            if (lf > 0.05 && lb > 0.05 && (fv[0] * bv[0] + fv[1] * bv[1]) < 0.5 * lf * lb) { bad.push([ua, ub]); continue; }   // (a twisted piece where the stand turns a sharp corner: none)
+            // the pieces between the aisles' edges
+            const cs = [ua]; for (const a of aisles) for (const c of [a[0], a[1]]) if (c > ua + 1e-6 && c < ub - 1e-6) cs.push(c); cs.push(ub); cs.sort((x, y) => x - y);
+            for (let k = 0; k + 1 < cs.length; k++) {
+              const a = cs[k], b = cs[k + 1], ai = nAisle((a + b) / 2), FL = Q(a, vf), FR = Q(b, vf), BL = Qb(a), BR = Qb(b); if (!FL || !FR || !BL || !BR) continue;
+              const fx = (FL[0] + FR[0] - BL[0] - BR[0]) / 2, fz = (FL[2] + FR[2] - BL[2] - BR[2]) / 2, dep = Math.hypot(fx, fz); if (dep < 0.2) continue;
+              const nx = fx / dep, nz = fz / dep, FLu = [FL[0], BL[1], FL[2]], FRu = [FR[0], BR[1], FR[2]], gb = sbAt((FL[0] + BR[0]) / 2, (FL[2] + BR[2]) / 2);
+              const ul = dAt(a) / 2, ur = dAt(b) / 2, up = [0, 1, 0], fw = [nx, 0, nz];
+              const FB = row.flat ? (row.dyP != null ? [FL[0], FL[1] + row.dyP, FL[2]] : null) : FL, FBR = FB && [FR[0], FB[1] + (row.flat ? 0 : FR[1] - FL[1]), FR[2]];
+              if (FB && BL[1] - FB[1] > 0.03) gb.quad(FB, FBR, FRu, FLu, fw, conc, null, kq(KIT.riser, ul, ur, 1, 0));   // (the riser: none on a stepped stand's own)
+              gb.quad(FLu, FRu, BR, BL, up, conc, null, kq(ai >= 0 && bench !== 'wood' ? KIT.aisle : bench ? KIT.deck : KIT.tread, ul, ur, 0, 0.98));   // (the tread; an aisle's with its yellow edge; a deck of planks)
+              if (ai >= 0) {   // an aisle: a step between each two (yellow edged), on the tread in front
+                const yp = yPrev(a, FL); if (tier === 0 || yp == null || BL[1] - yp < 0.25) continue;   // (none at NIZKA)
+                const yh = (yp + BL[1]) / 2, d2 = Math.min(0.42, dep * 0.5), at = (p, y) => [p[0] + nx * d2, y, p[2] + nz * d2];
+                gb.quad(at(FLu, yh), at(FRu, yh), [FR[0], yh, FR[2]], [FL[0], yh, FL[2]], up, conc, null, kq(KIT.aisle, ul, ur, 0, 0.98));
+                gb.quad(at(FL, yp), at(FR, yp), at(FR, yh), at(FL, yh), fw, conc, null, kq(KIT.riser, ul, ur, 1, 0));
+                continue;
+              }
+              if (dep < 0.62) continue;
+              // the seats on its back part, facing the front: the seat, its back (none at NIZKA: the phone's budget)
+              for (const B of blocks) {
+                const s0 = Math.max(a, B.u0), s1 = Math.min(b, B.u1); if (s1 - s0 < 1e-6) continue;
+                const L0 = Qb(s0), L1 = Qb(s1); if (!L0 || !L1) continue;
+                const t0 = (dAt(s0) - B.d0) / (4 * SEAT_W), t1 = (dAt(s1) - B.d0) / (4 * SEAT_W), at = (p, d, h) => [p[0] + nx * d, p[1] + h, p[2] + nz * d];
+                if (bench) { gb.quad(at(L0, BENCH.back, BENCH.h), at(L1, BENCH.back, BENCH.h), at(L1, BENCH.back + BENCH.depth, BENCH.h), at(L0, BENCH.back + BENCH.depth, BENCH.h), up, conc, B.col, kq(KIT.bench, dAt(s0) / 2, dAt(s1) / 2, 0, 1)); continue; }   // (a bench: its planks, no back)
+                gb.quad(at(L0, BENCH.back, BENCH.h), at(L1, BENCH.back, BENCH.h), at(L1, BENCH.back + BENCH.depth, BENCH.h), at(L0, BENCH.back + BENCH.depth, BENCH.h), up, conc, B.col, kq(KIT.pan, t0, t1, 0, 1));
+                if (tier > 0) gb.quad(at(L0, BENCH.back, BENCH.h - 0.02), at(L1, BENCH.back, BENCH.h - 0.02), at(L1, BENCH.back - 0.05, BENCH.h + BENCH.rest), at(L0, BENCH.back - 0.05, BENCH.h + BENCH.rest), fw, conc, B.col, kq(KIT.back, t0, t1, 1, 0));
+              }
+            }
+          }
+          // the people's seats (their places worked out only for those who sit, seatAt: the stands have tens of thousands)
+          const ctx = { uAt, Qb, Q, vf, bad }, mk = m.id + '/' + si + '/' + part.id;
+          for (const B of blocks) for (let q = 0; q < B.nS; q++) seats.push({ row: row.t, k: B.k * 1000 + q, m: mk, c: ctx, d: B.d0 + (q + 0.5) * SEAT_W });
+          // its ends: a wall a metre over the tread, down to the ground (a temporary stand's: its scaffolding, a railing over it)
+          for (const [ue, s] of [[row.uA, -1], [row.uB, 1]]) {
+            const F = Q(ue, vf), B = Qb(ue), um2 = ue - s * Math.min(0.5, (uB - uA) * 0.02); if (!F || !B) continue;
+            const Fi = Q(um2, (vf + vb) / 2), Mid = Q(ue, (vf + vb) / 2); if (!Fi || !Mid) continue;
+            const tl = H2(Fi, Mid) || 1, ox = (Mid[0] - Fi[0]) / tl, oz = (Mid[2] - Fi[2]) / tl, y = B[1], top = y + 1.0, gb = sbAt(B[0], B[2]);
+            const off = (p, d, yy) => [p[0] + ox * d, yy, p[2] + oz * d], gr = (p) => { const h = gH(p[0], p[2]); return Number.isFinite(h) ? Math.min(h, y - 0.05) : y - 3; }, gF = gr(F), gBk = gr(B);
+            const fx = F[0] - B[0], fz = F[2] - B[2], fl = Math.hypot(fx, fz) || 1, fw = [fx / fl, 0, fz / fl], dd = fl / 2;
+            const yp = ri > 0 ? rows[ri - 1].yb : null, out = [ox, 0, oz], inn = [-ox, 0, -oz];
+            if (!temp) {
+              gb.quad(off(F, 0.04, gF), off(B, 0.04, gBk), off(B, 0.04, top), off(F, 0.04, top), out, wall, null, kq(KIT.riser, 0, dd, 1, 0));
+              if (tier > 0) { gb.quad(off(F, -0.14, y), off(B, -0.14, y), off(B, -0.14, top), off(F, -0.14, top), inn, wall, null, kq(KIT.riser, 0, dd, 1, 0));   // (its inside, its top: none at NIZKA)
+                gb.quad(off(F, 0.04, top), off(B, 0.04, top), off(B, -0.14, top), off(F, -0.14, top), [0, 1, 0], wall, null, kq(KIT.plain, 0, 1, 0, 1)); }
+              const fb = yp != null && yp + 1.0 < top - 0.02 ? yp + 1.0 : yp == null ? gF : null;   // (its front: the step over the row in front, or the first row's from the ground)
+              if (fb != null) gb.quad(off(F, 0.04, fb), off(F, -0.14, fb), off(F, -0.14, top), off(F, 0.04, top), fw, wall, null, kq(KIT.riser, 0, 0.1, 1, 0));
+            } else {
+              // the scaffolding seen through (lifts of 1.25 m from the tread down), the railing on top: two rails and the posts
+              const lifts = Math.max(1, Math.min(tier > 0 ? 8 : 1, Math.ceil((y - Math.min(gF, gBk)) / 1.25)));
+              for (let k = 0; k < lifts; k++) {
+                const y1 = y - k * 1.25, last = k === lifts - 1, yF0 = last ? gF : Math.max(gF, y1 - 1.25), yB0 = last ? gBk : Math.max(gBk, y1 - 1.25); if (y1 - Math.max(yF0, yB0) < 0.05 && !last) break;
+                gb.quad(off(F, 0.04, yF0), off(B, 0.04, yB0), off(B, 0.04, y1), off(F, 0.04, y1), out, ST_STEEL, null, [[0, kv(KIT.scaf, last ? Math.min(1, (y1 - yF0) / 1.25) : 1)], [fl / 2.5, kv(KIT.scaf, last ? Math.min(1, (y1 - yB0) / 1.25) : 1)], [fl / 2.5, kv(KIT.scaf, 0)], [0, kv(KIT.scaf, 0)]]);
+              }
+              if (tier > 0) { gb.bar(off(F, 0.04, top), off(B, 0.04, top), 0.05, 0.05, ST_RAIL); gb.bar(off(F, 0.04, y + 0.52), off(B, 0.04, y + 0.52), 0.04, 0.04, ST_RAIL); gb.post(off(B, 0.04, y), 1.0, 0.05, [fw[0], fw[2]], ST_RAIL); }
+            }
+          }
+        });
+        // its footprint (the first row's front, the last row's back; a roof may reach 3 m past the front and 1.5 m past the back and the ends) and its top tread
+        { const r0 = rows[0], r1 = rows[rows.length - 1], fr = [], bk = [];
+          for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr.push([F[0] + (F[0] - B[0]) / l * 3, F[2] + (F[2] - B[2]) / l * 3]); } }
+          for (const u of r1.part.U) { const F = r1.part.Q(u, r1.vf), B = r1.part.Q(u, r1.vb); if (F && B) { const l = H2(F, B) || 1; bk.push([B[0] - (F[0] - B[0]) / l * 1.5, B[2] - (F[2] - B[2]) / l * 1.5]); } }
+          if (fr.length > 1 && bk.length > 1) {
+            const ext = (L) => { const a = L[0], b = L[1], c = L[L.length - 2], d = L[L.length - 1], la = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, ld = Math.hypot(d[0] - c[0], d[1] - c[1]) || 1;
+              return [[a[0] + (a[0] - b[0]) / la * 1.5, a[1] + (a[1] - b[1]) / la * 1.5], ...L, [d[0] + (d[0] - c[0]) / ld * 1.5, d[1] + (d[1] - c[1]) / ld * 1.5]]; };
+            const poly = ext(fr).concat(ext(bk).reverse()), xs = poly.map(p => p[0]), zs = poly.map(p => p[1]), t0 = fr[0], t1 = fr[fr.length - 1], tl = Math.hypot(t1[0] - t0[0], t1[1] - t0[1]) || 1;
+            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl });
+          } }
+        // the handrails up the aisles' middles (on the rows' front edges, 0.95 m over them; an upright every other row)
+        if (tier > 0) for (const a of aisles) {
+          let q = null, k = 0;
+          for (const row of rows) {
+            const F = row.part.Q(a[2], row.vf), B0 = row.part.Q(a[2], row.vb), B = B0 && [B0[0], B0[1] + row.dy, B0[2]]; if (!F || !B) { q = null; continue; }
+            const p = [F[0], B[1] + 0.95, F[2]], gb = sbAt(F[0], F[2]), fl = H2(F, B) || 1, f = [(F[0] - B[0]) / fl, (F[2] - B[2]) / fl];
+            if (q && H2(p, q) < 2.5) gb.bar(q, p, 0.05, 0.05, ST_RAIL);
+            if (k++ % 2 === 0) gb.post([F[0], B[1], F[2]], 0.95, 0.05, f, ST_RAIL);
+            q = p;
+          }
+        }
       }
       if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), meshes = [];
-    for (const gb of chunks.map.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
+    standRoofs(o, feet, sbAt);
+    const mat = standMat(), meshes = [];
+    for (const gb of cells.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
     return { seats, flat, meshes };
   }
+  function seatAt(st) {   // a seat's place: the feet on the tread, under the middle of the seat (false: none there)
+    const { uAt, Qb, Q, vf, bad } = st.c, u = uAt(st.d), Bp = Qb(u), Fp = Q(u, vf); st.c = null;
+    if (!Bp || !Fp || bad.some(b => u >= b[0] && u <= b[1])) return false;
+    const fx = Fp[0] - Bp[0], fz = Fp[2] - Bp[2], dep = Math.hypot(fx, fz); if (dep < 0.62) return false;
+    const nx = fx / dep, nz = fz / dep, w = BENCH.back + BENCH.depth / 2;
+    st.x = Bp[0] + nx * w; st.y = Bp[1]; st.z = Bp[2] + nz * w; st.fx = nx; st.fz = nz; return true;
+  }
   function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats) {
-    const A = World.api, { seats, flat, meshes } = A.ownRnd(() => standBuild(o, A, hsh));
+    const A = World.api, ts = performance.now(), { seats, flat, meshes } = A.ownRnd(() => standBuild(o, A, hsh, T.def)); stats.msStands = Math.round(performance.now() - ts);
     for (const mm of meshes) { o.root.add(mm); const bs = mm.geometry.boundingSphere; if (o.cull) o.cull.push({ m: mm, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
     // the steep ones' pictures: their seats empty (nobody on them)
     let ms = 0; for (const [M, cv] of flat) {
@@ -1315,7 +1528,7 @@
         const g = 2 + Math.floor(Math.pow(R(), 1.5) * 5), G = []; for (let q = 0; q < g && i < L.length; q++, i++) { if (q && L[i].k !== L[i - 1].k + 1) break; G.push(L[i]); } if (G.length) groups.push(G); } }
     let nt = 0; for (const G of groups) nt += G.length;
     while (nt > most && groups.length) { const G = groups.splice(Math.floor(R() * groups.length), 1)[0]; nt -= G.length; }   // (no more than the most: whole groups left out)
-    const taken = [].concat(...groups);
+    const taken = [].concat(...groups).filter(seatAt);
     // the stretches: by the place along the road, each its own scene
     const q = {}; for (const st of taken) { T.query(st.x, st.z, -1, q); st.s = q.s; st.d = q.d; }
     taken.sort((a, b) => a.s - b.s);

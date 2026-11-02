@@ -37,7 +37,7 @@ try {
       W.root.traverse(m => { if (m.name === 'standSteps') steps.push(m); const M = m.isMesh && m.material; if (M && !Array.isArray(M) && M.userData && M.userData.stand && m.visible && !M.userData.seats) painted++; });
       let sat = 0, off = 0, ppl = 0; const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0);
       for (const Sc of tribs) for (const p of Sc.people) { ppl++; const v = p.P.root.position; rc.set(new THREE.Vector3(v.x, v.y + 3, v.z), dn);
-        const h = rc.intersectObjects(steps, false)[0], d = h ? h.point.y - v.y : -1; if (d > 0.3 && d < 0.6) sat++; else off++; }
+        const h = rc.intersectObjects(steps, false).find(q => q.point.y - v.y < 1.2), d = h ? h.point.y - v.y : -1; if (d > 0.3 && d < 0.6) sat++; else off++; }   // (under a roof: the first hit below it)
       out.stands = { steps: steps.length, painted, scenes: tribs.length, people: ppl, sat, off, seats: st.standSeats || 0 };
       return out;
     });

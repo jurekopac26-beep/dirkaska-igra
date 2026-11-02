@@ -228,6 +228,57 @@ const Tex = (function () {
     const t = mk(c, true); t.crowdSeats = true; seatsC.set(seed, t); return t;
   }
 
+  // the grandstands' kit (the user, 2. 11. 2026: »naj bodo dobro narejene v dobri grafiki … čim bolj podobno kot v resnici«; js/world-ljudje.js
+  // standBuild): one picture for every part of a stand, in bands from the top; red the light and shade, green where the seat's own colour
+  // shows (1) or the stand's concrete (0), blue the yellow paint of the steps' edges. The seats across repeat (4 to the picture's width):
+  // STAND_KIT the bands' rows (from the top), the shader in standBuild mixes the colours
+  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], H: 1024 };
+  let kitC = null;
+  function standKit() {
+    if (kitC) return kitC;
+    const W = 256, K = STAND_KIT, n1 = makeNoise(16, 517), n2 = makeNoise(64, 518), r = Core.rng(519);
+    const rr = (x0, y0, x1, y1, rad, x, y) => { const cx = Math.min(Math.max(x, x0 + rad), x1 - rad), cy = Math.min(Math.max(y, y0 + rad), y1 - rad); return Math.hypot(x - cx, y - cy) <= rad; };   // (inside a rounded rectangle)
+    const sv = [0.97, 1.0, 0.94, 0.99].map(v => v + (r() - 0.5) * 0.04);   // (the four seats a little faded, each its own)
+    const conc = (i, j, k) => 0.84 + (n1(i / 16, j / 16) - 0.5) * 0.1 + (n2(i / 4, j / 4) - 0.5) * 0.08 + (r() - 0.5) * 0.04 * k;
+    const c = pixels(W, K.H, (i, j) => {
+      const s = Math.floor(i / 64), x = i % 64, f = sv[s], q = (v) => cl(Math.round(v * 255));
+      if (j < K.back[1]) {   // the seat's back, seen from the front: rounded at its top, lit at the top, round across
+        const y = j; if (!rr(7, 3, 57, 64, 11, x, y)) return [q(0.3), 0, 0];
+        const a = (x - 32) / 25, rim = y < 6 ? 0.06 : 0, k = (1 - 0.22 * a * a) * (1.02 - 0.2 * y / 64) + rim;
+        return [q(k * f), 255, 0];
+      }
+      if (j < K.pan[1]) {   // the seat from above: its back edge in the back's shade, the front lip lit, dished in the middle
+        const y = j - K.pan[0]; if (!rr(5, -8, 59, 30, 7, x, y)) return [q(0.42), 0, 0];
+        const a = (x - 32) / 27, k = y < 4 ? 0.62 + y * 0.06 : y > 26 ? 1.04 : 0.93 - 0.08 * (1 - a * a) * Math.sin(Math.PI * y / 30);
+        return [q(k * f), 255, 0];
+      }
+      if (j < K.tread[1] || j < K.aisle[1]) {   // the tread (the aisle's with the yellow edge): concrete, its front edge lit, a dark joint at the riser's foot
+        const a = j < K.tread[1] ? K.tread[0] : K.aisle[0], y = j - a, edge = y < 3 ? 0.14 : y > 61 ? -0.3 : 0;
+        return [q(conc(i, j, 1) + edge), 0, a === K.aisle[0] && y >= 2 && y < 9 ? 255 : 0];
+      }
+      if (j < K.riser[1]) { const y = j - K.riser[0]; return [q(conc(i, j, 1) - (y > 28 ? 0.12 : 0) + (y < 2 ? 0.1 : 0)), 0, 0]; }   // the riser and the walls: concrete, a lit top edge
+      if (j < K.scaf[1]) {   // a temporary stand's scaffolding seen through (two bays of 1.25 m to the width, a lift of 1.25 m to the band): the dark inside, the tubes
+        const x2 = i % 128, y = j - K.scaf[0], bay = Math.floor(i / 128), tube = (d) => d < 2.6 ? 1 - Math.abs(d - 1.3) / 2.6 : -1;
+        let t = Math.max(tube(Math.min(x2, 128 - x2)), tube(Math.min(y, 128 - y)), tube(Math.abs((bay ? x2 : 128 - x2) - y) * 0.7071));
+        if (t >= 0) return [q(0.5 + 0.45 * t), 0, 0];
+        return [q(0.13 + (n1(i / 8, j / 8) - 0.5) * 0.06), 0, 0];
+      }
+      if (j < K.plain[1]) return [255, 0, 0];   // the concrete colour as it is (railings, flat parts)
+      if (j < K.seat[1]) return [255, 255, 0];   // the seat colour as it is
+      if (j < K.skirt[1]) { const y = j - K.skirt[0], w = Math.sin(i / 256 * Math.PI * 8) * 0.06; return [q(0.82 + w - (y > 58 ? 0.2 : 0) + (y < 4 ? 0.1 : 0)), 255, 0]; }   // a skirt of cloth in the seat colour (folds), its hem
+      if (j < K.rail[1]) { const y = j - K.rail[0]; return [q(y < 3 ? 1.0 : y > 12 ? 0.62 : 0.86), 0, 0]; }   // a rail: lit on top, round
+      if (j < K.roof[1]) { const x = i % 32, seam = i % 128 < 2;   // a roof's profiled sheets from above (4 m to the width): a rib every 0.5 m, lit on one side, a joint every 2 m
+        return [q(seam ? 0.66 : x < 3 ? 1.0 : x < 6 ? 0.76 : 0.92 + (n1(i / 16, j / 4) - 0.5) * 0.04), 0, 0]; }
+      if (j < K.bench[1]) { const y = j - K.bench[0], p = y >= 2 && y < 14 ? y - 2 : y >= 17 && y < 30 ? y - 17 : -1;   // a bench of two planks along the row (a bleacher's, timber or aluminium): the grain, a lit edge
+        if (p < 0) return [q(0.34), 0, 0];
+        return [q((p < 2 ? 1.04 : p > 10 ? 0.8 : 0.93) + (n2(i / 2, j * 3) - 0.5) * 0.12 + (n1(i / 32, j) - 0.5) * 0.06), 255, 0]; }
+      if (j < K.deck[1]) { const y = j - K.deck[0], jt = y % 13 < 1;   // a deck of planks along the row (a timber or aluminium bleacher's tread): their joints
+        return [q(jt ? 0.55 : 0.88 + (n2(i / 2, (j - y % 13) * 2) - 0.5) * 0.1 + (y % 13 === 1 ? 0.08 : 0)), 0, 0]; }
+      return [q(0.8), 0, 0];
+    });
+    const t = mk(c, true); t.wrapT = THREE.ClampToEdgeWrapping; t.standKit = STAND_KIT; kitC = t; return t;
+  }
+
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
     ['HITROLET', '#101418', '#ffd23f'], ['KAZE OIL', '#d8342a', '#fff'], ['GRIP+', '#1b4fd6', '#fff'], ['KOLOTEK TYRES', '#f5f5f0', '#111'],
@@ -610,6 +661,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, crowdHi, crowdSeats, SPONSORS };
+  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS };
 })();
 
