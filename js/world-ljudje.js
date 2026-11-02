@@ -1029,7 +1029,7 @@
       const sig = f > 0 ? -1 : (car && carA > -60 && carA < Sc.len + 30 ? 1 : 0);
       if (!fixed && sig === p.sig && sig >= 0) continue; p.sig = sig;   // (still: not posed again)
       const up = poseJ(st.k < 0.55 ? 'cheer' : st.k < 0.75 ? 'jump' : st.k < 0.9 ? 'wave' : 'phoneUp', t * 6.5 + st.k * 9), sit = poseJ(st.k < 0.6 ? 'sit' : st.k < 0.8 ? 'sitDrink' : 'sitLean');
-      const J = mixJ(sit, up, f); _w.set(st.x, st.y + 0.42 * f, st.z + 0.05 * f).applyMatrix4(G.m);
+      const J = mixJ(sit, up, f); _w.set(st.x, st.y + (Sc.lift != null ? Sc.lift : 0.42) * f, st.z + (Sc.fwd != null ? Sc.fwd : 0.05) * f).applyMatrix4(G.m);   // (Bathurst's stand: up on the bench; the others' stands: a step forward, off it)
       P.root.position.set(_w.x, _w.y + (J.dy || 0) * P.sc, _w.z); P.root.rotation.set(0, G.yaw, 0); P.root.scale.setScalar(P.sc); setJ(P, J);
       if (sig === 1 && car) { const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - G.yaw); P.head.rotation.y = clamp(d, -1.1, 1.1); }
       P.root.updateMatrixWorld(true); write(P, null, Sc.pos, Sc.nor);
@@ -1215,55 +1215,98 @@
      seats between; their seats read off the stands' tiers (the crowd picture's layout: 32 seats across a tier's 12 m, a tier a row of the
      picture); each stretch of a stand a scene of its own (posed near the camera; the wave as on Bathurst's stand). STANDS: the share of the
      seats taken, the most people on a track (by the tier), on a stretch, a stretch's length ---------------- */
-  const STANDS = { share: 0.05, most: [100, 240, 400], per: 24, len: 40, dy: 0.16 };
+  const STANDS = { share: 0.05, most: [100, 240, 400], per: 24, len: 40 };
   const isStand = (m) => m.isMesh && !m.isInstancedMesh && m.visible && m.material && !Array.isArray(m.material) && m.material.userData && m.material.userData.stand && m.geometry && m.geometry.attributes.uv;
   const hasStands = (o) => { let n = 0; o.root.traverse(m => { if (isStand(m)) n++; }); return n > 0; };
   const STAND_EMPTY_FS = ['#ifdef USE_MAP',   // (the stand's picture per tier as crowdStands lays it, the seats empty: nobody jumps, no flags)
     'float crT = floor(vUv.y / uCV.y + 1e-4), crL = clamp((vUv.y - crT * uCV.y) / uCV.z, 0.0, 1.0);',
     'vec4 texelColor = texture2D( map, vec2(vUv.x * uCV.x, mod(crT, 8.0) / 8.0 + crL / 8.0) );',
     'texelColor = mapTexelToLinear( texelColor );', 'diffuseColor *= texelColor;', '#endif'].join('\n');
-  function standSeats(o) {
-    const seats = [], mats = new Map(); o.root.updateMatrixWorld(true);
+  // the stands made three-dimensional (the user, 2. 11. 2026: »popravi tribune da bodo bolj 3d«, »ljudje sedijo in stojijo v zraku«): over
+  // each stand's raked crowd surface (its picture's tiers: v bands of the pitch, u along it) real steps, a tread and a riser per tier, and on
+  // each tread a bench with its back in the stand's colours; the flat painted surface hidden. The seats every SEAT_W along each bench: the
+  // tread's height (the people's feet), the bench under their hips, the front (where the tiers go down). A steep one (a wall of people)
+  // keeps its surface with empty seats painted (Tex.crowdSeats), nobody on it
+  const SEAT_W = 0.55, BENCH = { back: 0.06, depth: 0.42, h: 0.44, rest: 0.36 };
+  const SEAT_COLS = [[0.18, 0.37, 0.69], [0.72, 0.2, 0.17], [0.16, 0.54, 0.3], [0.88, 0.69, 0.13], [0.85, 0.84, 0.8]];   // (the benches one of the first four, now and then a block of another)
+  function standBuild(o, A, hsh) {
+    const seats = [], flat = new Map(), chunks = new A.Chunks(256), TREAD = [0.64, 0.65, 0.68], RISER = [0.47, 0.48, 0.51];
+    o.root.updateMatrixWorld(true);
+    let sid = 0, nMesh = 0;
     o.root.traverse(m => {
       if (!isStand(m)) return;
-      const M = m.material, g = m.geometry, uv = g.attributes.uv, P = g.attributes.position, cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], su = 32 * cv[0];
-      const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : P.count, seen = new Set();
-      const wp = (k) => { const x = P.getX(k), y = P.getY(k), z = P.getZ(k); return [e[0] * x + e[4] * y + e[8] * z + e[12], e[1] * x + e[5] * y + e[9] * z + e[13], e[2] * x + e[6] * y + e[10] * z + e[14]]; };
-      if (!mats.has(M)) mats.set(M, cv);
+      const M = m.material, g = m.geometry, uv = g.attributes.uv, Pa = g.attributes.position, cv = M.userData.crowdUV || [1, 1 / 16, 1 / 16], pit = cv[1];
+      let keep = false, built = false; const mid = nMesh++;
+      const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : Pa.count, BU = 0.05;
+      // the stands of the mesh apart (two across the road share their uvs): its triangles joined where they share a corner
+      const tris = [], par = new Map(), find = (k) => { let r = k; while (par.get(r) !== r) r = par.get(r); let c = k; while (c !== r) { const nx = par.get(c); par.set(c, r); c = nx; } return r; };
+      const key = (q) => Math.round(q.x * 50) + ',' + Math.round(q.y * 50) + ',' + Math.round(q.z * 50);
       for (let t = 0; t + 2 < n; t += 3) {
-        const ia = I ? I[t] : t, ib = I ? I[t + 1] : t + 1, ic = I ? I[t + 2] : t + 2;
-        const ua = uv.getX(ia), va = uv.getY(ia), ub = uv.getX(ib), vb = uv.getY(ib), uc = uv.getX(ic), vc = uv.getY(ic);
-        const den = (vb - vc) * (ua - uc) + (uc - ub) * (va - vc); if (Math.abs(den) < 1e-12) continue;
-        const A = wp(ia), B = wp(ib), Cc = wp(ic);
-        // the front: where the tiers go down (the picture's v falls), the gradient of v over the triangle in the world, level
-        const e1 = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], e2 = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]], d1 = vb - va, d2 = vc - va;
-        const g11 = e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2], g12 = e1[0] * e2[0] + e1[1] * e2[1] + e1[2] * e2[2], g22 = e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2], gd = g11 * g22 - g12 * g12;
-        if (Math.abs(gd) < 1e-9) continue;
-        const al = (d1 * g22 - d2 * g12) / gd, be = (d2 * g11 - d1 * g12) / gd, gx = al * e1[0] + be * e2[0], gz = al * e1[2] + be * e2[2], gl = Math.hypot(gx, gz); if (gl < 1e-9) continue;
-        const fx = -gx / gl, fz = -gz / gl, u0 = Math.min(ua, ub, uc), u1 = Math.max(ua, ub, uc), v0 = Math.min(va, vb, vc), v1 = Math.max(va, vb, vc);
-        for (let ti = Math.floor(v0 / cv[1]); ti <= Math.floor(v1 / cv[1]); ti++) {
-          const vv = ti * cv[1] + cv[2] * 0.5; if (vv < v0 || vv > v1) continue;
-          for (let k = Math.ceil(u0 * su - 0.5); k <= Math.floor(u1 * su - 0.5); k++) {
-            const uu = (k + 0.5) / su, w1 = ((vb - vc) * (uu - uc) + (uc - ub) * (vv - vc)) / den, w2 = ((vc - va) * (uu - uc) + (ua - uc) * (vv - vc)) / den, w3 = 1 - w1 - w2;
-            if (w1 < -1e-6 || w2 < -1e-6 || w3 < -1e-6) continue;
-            const x = A[0] * w1 + B[0] * w2 + Cc[0] * w3, y = A[1] * w1 + B[1] * w2 + Cc[1] * w3, z = A[2] * w1 + B[2] * w2 + Cc[2] * w3;
-            const key = Math.round(x * 3) + ',' + Math.round(z * 3) + ',' + Math.round(y * 3); if (seen.has(key)) continue; seen.add(key);
-            seats.push({ x, y, z, fx, fz, row: ti, k, m: m.id });
-          }
+        const T = [0, 1, 2].map(j => { const k = I ? I[t + j] : t + j, x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
+          return { u: uv.getX(k), v: uv.getY(k), x: e[0] * x + e[4] * y + e[8] * z + e[12], y: e[1] * x + e[5] * y + e[9] * z + e[13], z: e[2] * x + e[6] * y + e[10] * z + e[14] }; });
+        const den = (T[1].v - T[2].v) * (T[0].u - T[2].u) + (T[2].u - T[1].u) * (T[0].v - T[2].v); if (Math.abs(den) < 1e-12) continue;
+        const ks = T.map(key); for (const k of ks) if (!par.has(k)) par.set(k, k); const r0 = find(ks[0]); for (const k of ks.slice(1)) { const r = find(k); if (r !== r0) par.set(r, r0); }
+        tris.push({ T, den, k: ks[0] });
+      }
+      const isl = new Map(); for (const tr of tris) { const r = find(tr.k); let L = isl.get(r); if (!L) isl.set(r, L = []); L.push(tr); }
+      for (const part of isl.values()) {
+      const buckets = new Map(), us = []; let vmin = 1e9, vmax = -1e9;
+      for (const rec of part) { const T = rec.T, u0 = Math.min(T[0].u, T[1].u, T[2].u), u1 = Math.max(T[0].u, T[1].u, T[2].u);
+        for (let bk = Math.floor(u0 / BU); bk <= Math.floor(u1 / BU); bk++) { let L = buckets.get(bk); if (!L) buckets.set(bk, L = []); L.push(rec); }
+        for (const q of T) { us.push(q.u); vmin = Math.min(vmin, q.v); vmax = Math.max(vmax, q.v); } }
+      // p(u, v) on the surface (tol: how far outside a triangle it may reach)
+      const P = (u, v, tol) => { const L = buckets.get(Math.floor(u / BU)); if (!L) return null;
+        for (const { T, den } of L) { const w1 = ((T[1].v - T[2].v) * (u - T[2].u) + (T[2].u - T[1].u) * (v - T[2].v)) / den, w2 = ((T[2].v - T[0].v) * (u - T[2].u) + (T[0].u - T[2].u) * (v - T[2].v)) / den, w3 = 1 - w1 - w2;
+          if (w1 < -tol || w2 < -tol || w3 < -tol) continue; return [T[0].x * w1 + T[1].x * w2 + T[2].x * w3, T[0].y * w1 + T[1].y * w2 + T[2].y * w3, T[0].z * w1 + T[1].z * w2 + T[2].z * w3]; }
+        return null; };
+      const Q = (u, v) => P(u, v, 1e-5) || P(u, v, 0.06);
+      // steep? (the rise over the run of a tier, along the middle of the surface)
+      us.sort((x, y) => x - y); const U = []; for (const u of us) if (!U.length || u - U[U.length - 1] > 1e-4) U.push(u);
+      let rise = 0, run = 0; const va = vmin + (vmax - vmin) * 0.25, vz = vmin + (vmax - vmin) * 0.75;   // (a part may be one tier alone: stepped already)
+      for (let j = 0; j + 1 < U.length; j++) { const um = (U[j] + U[j + 1]) / 2, a0 = Q(um, va), a1 = Q(um, vz); if (a0 && a1) { rise += Math.abs(a1[1] - a0[1]); run += Math.hypot(a1[0] - a0[0], a1[2] - a0[2]); } }
+      if (!(run > 0) || rise / run > 1.6) { keep = true; continue; }   // (a wall of people: kept, its seats painted empty)
+      built = true; const sc = SEAT_COLS[(hsh + mid) % 4], sc2 = SEAT_COLS[(hsh + mid + 2) % SEAT_COLS.length], rest = sc.map(c => c * 0.82); sid++;   // (a stand's mesh one colour for all its tiers)
+      for (let j = 0; j + 1 < U.length; j++) {
+        const ua = U[j], ub = U[j + 1]; if (!Q((ua + ub) / 2, (vmin + vmax) / 2)) continue;   // (a gap between two stands)
+        for (let t = Math.floor(vmin / pit + 1e-4); t <= Math.floor(vmax / pit - 1e-4) && t < 400; t++) {
+          const vf = Math.max(t * pit, vmin), vb = Math.min((t + 1) * pit, vmax); if (vb - vf < pit * 0.4) continue;   // (a sliver of a tier: none)
+          const FL = Q(ua, vf), FR = Q(ub, vf), BL = Q(ua, vb), BR = Q(ub, vb); if (!FL || !FR || !BL || !BR) continue;
+          const gb = chunks.get((FL[0] + BR[0]) / 2, (FL[2] + BR[2]) / 2), FLu = [FL[0], BL[1], FL[2]], FRu = [FR[0], BR[1], FR[2]];
+          const behind = [(BL[0] + BR[0]) / 2 - (FL[0] - BL[0]), Math.min(BL[1], BR[1]) - 1, (BL[2] + BR[2]) / 2 - (FL[2] - BL[2])];
+          if (Math.abs(BL[1] - FL[1]) > 0.03) gb.quadO(FL, FR, FRu, FLu, RISER, behind);   // (the riser: none where the tier is stepped already)
+          gb.quadUp(FLu, FRu, BR, BL, [TREAD, TREAD, TREAD, TREAD]);   // (the tread)
+          // the bench on its back part, facing the front (f), and its back
+          const fx = (FL[0] + FR[0] - BL[0] - BR[0]) / 2, fz = (FL[2] + FR[2] - BL[2] - BR[2]) / 2, dep = Math.hypot(fx, fz); if (dep < 0.62) continue;
+          const nx = fx / dep, nz = fz / dep, at = (B, d, h) => [B[0] + nx * d, B[1] + h, B[2] + nz * d], col = (j % 9 < 2 && t % 3 === 0) ? sc2 : sc;
+          const b0L = at(BL, BENCH.back, BENCH.h), b0R = at(BR, BENCH.back, BENCH.h), b1L = at(BL, BENCH.back + BENCH.depth, BENCH.h), b1R = at(BR, BENCH.back + BENCH.depth, BENCH.h);
+          gb.quadUp(b0L, b0R, b1R, b1L, [col, col, col, col]);   // (the seat)
+          gb.quadO(at(BL, BENCH.back + BENCH.depth, 0.02), at(BR, BENCH.back + BENCH.depth, 0.02), b1R, b1L, col.map(c => c * 0.7), behind);   // (its front)
+          const r0L = at(BL, BENCH.back, BENCH.h), r0R = at(BR, BENCH.back, BENCH.h), r1L = at(BL, BENCH.back - 0.04, BENCH.h + BENCH.rest), r1R = at(BR, BENCH.back - 0.04, BENCH.h + BENCH.rest);
+          gb.quadO(r0L, r0R, r1R, r1L, rest, behind);   // (its back)
+          // the seats along it: the feet on the tread, under the middle of the seat
+          const L = Math.hypot(BR[0] - BL[0], BR[2] - BL[2]), nS = Math.floor(L / SEAT_W);
+          for (let q = 0; q < nS; q++) { const w = (q + 0.5) / nS, Bx = BL[0] + (BR[0] - BL[0]) * w, By = BL[1] + (BR[1] - BL[1]) * w, Bz = BL[2] + (BR[2] - BL[2]) * w;
+            seats.push({ x: Bx + nx * (BENCH.back + BENCH.depth / 2), y: By, z: Bz + nz * (BENCH.back + BENCH.depth / 2), fx: nx, fz: nz, row: t, k: j * 1000 + q, m: m.id + '/' + sid }); }
         }
       }
+      }
+      if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
-    return { seats, mats };
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), meshes = [];
+    for (const gb of chunks.map.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
+    return { seats, flat, meshes };
   }
   function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats) {
-    const A = World.api, { seats, mats } = standSeats(o); if (!seats.length) return 0;
-    // the stands' pictures: their seats empty (the people are the figures)
-    let ms = 0; for (const [M, cv] of mats) {
+    const A = World.api, { seats, flat, meshes } = A.ownRnd(() => standBuild(o, A, hsh));
+    for (const mm of meshes) { o.root.add(mm); const bs = mm.geometry.boundingSphere; if (o.cull) o.cull.push({ m: mm, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
+    // the steep ones' pictures: their seats empty (nobody on them)
+    let ms = 0; for (const [M, cv] of flat) {
       A.ownRnd(() => { M.map = Tex.crowdSeats(hsh % 997 + ms++ * 31); });
       const uCV = { value: new THREE.Vector3(cv[0], cv[1], cv[2]) };
       M.onBeforeCompile = (sh) => { sh.uniforms.uCV = uCV; sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCV;').replace('#include <map_fragment>', STAND_EMPTY_FS); };
       M.customProgramCacheKey = () => 'standSeats'; M.needsUpdate = true; M.userData.seats = true;
     }
+    stats.standMeshes = meshes.length; if (!seats.length) return 0;
     // who sits: along each tier now and then a group of friends (2-6), empty seats between; the most for the tier
     seed(4441 + hsh); const R = rnd, rows = new Map();
     for (const st of seats) { const key = st.m + '|' + st.row; let L = rows.get(key); if (!L) rows.set(key, L = []); L.push(st); }
@@ -1291,9 +1334,9 @@
       for (const st of seg) {
         const team = SHIRT[Math.floor(rnd() * SHIRT.length)], P = C.man({ lite: true, shirt: rnd() < 0.5 ? team : SHIRT[Math.floor(rnd() * SHIRT.length)], hat: rnd() < 0.3 ? 'cap' : null, scale: 0.93 + rnd() * 0.08 }, null);
         const dx = st.x - O.x, dz = st.z - O.z;
-        P.seat = { x: dx * X.x + dz * X.z, r: st.row, y: st.y + STANDS.dy, z: dx * Z.x + dz * Z.z, k: rnd() }; C.seats.push(P);
+        P.seat = { x: dx * X.x + dz * X.z, r: st.row, y: st.y, z: dx * Z.x + dz * Z.z, k: rnd() }; C.seats.push(P);
       }
-      addScene('tribune', F, s0, sd, { stand: true }, C, si0 + j, Math.round(s0 - (T.startS || 0)), [cx, cy + 1, cz, r + 3]); j++; n += N;
+      const Sc = addScene('tribune', F, s0, sd, { stand: true }, C, si0 + j, Math.round(s0 - (T.startS || 0)), [cx, cy + 1, cz, r + 3]); Sc.lift = 0; Sc.fwd = 0.45; j++; n += N;
     }
     stats.standSeats = seats.length; stats.standPeople = n; stats.standScenes = j;
     return n;
@@ -1342,6 +1385,7 @@
       W.scenes.push(Sc);
       stats.scenes.push({ name, at, side: sd, s: Math.round(s), people: Sc.people.length, pets: Sc.pets.length, verts: nv, propVerts: pv });
       stats.people += Sc.people.length; stats.verts += nv; stats.propVerts += pv;
+      return Sc;
     };
     list.forEach(([name, at, side, opt], si) => {
       const d = S[name]; if (!d) return;
