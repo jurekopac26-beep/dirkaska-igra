@@ -19,8 +19,9 @@ const browser = await launch();
 const OUT = path.join(REPO, 'test-results', 'napake-zadnji'); fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true });
 const SUM = `(F) => { let h = 2166136261; for (const f of F) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return (h >>> 0).toString(16); }`;
 // a moment kept: Označi, a loop (an ellipse round cx, cy) in colour c with its note, Dodaj k zbirki
-async function moment(Q, c, cx, cy, r, note) {
-  await Q.click('#nk-on'); await Q.click(`#nk-pal [data-c="${c}"]`);
+async function moment(Q, c, cx, cy, r, note, bel) {
+  await Q.click('#nk-on'); if (bel) await Q.keyboard.type(bel);   // (Beležka: the keyboard in it at once)
+  await Q.click(`#nk-pal [data-c="${c}"]`);
   await Q.mouse.move(cx + r, cy); await Q.mouse.down(); for (let a = 0.2; a <= 2 * Math.PI + 0.25; a += 0.2) await Q.mouse.move(cx + r * Math.cos(a), cy + 0.7 * r * Math.sin(a)); await Q.mouse.up();
   if (note) await Q.keyboard.type(note);
   await Q.click('#nk-bar .nk-add');
@@ -37,7 +38,7 @@ try {
   await Q.keyboard.press('KeyF'); await Q.waitForTimeout(1200);
   await Q.evaluate(() => window.__game.pause()); await Q.click('#pause-rp'); await Q.waitForTimeout(300);
   await Q.evaluate(() => window.__game.onAction('rp-b5'));
-  await moment(Q, 0, 250, 150, 40, 'Avto skoči čez robnik');
+  await moment(Q, 0, 250, 150, 40, 'Avto skoči čez robnik', 'Ves zaslon utripa');
   await Q.evaluate(() => window.__game.onAction('rp-race')); await Q.evaluate(() => window.__game.pause());
   const r0 = await Q.evaluate(() => ({ sum: window.__game.recSum(), flags: window.__game.recFlags.length, screen: window.__game.screen, z: Napake.stanje.zbirka.map(z => ({ t: z.t, s: z.s, img: z.img })) }));
 
@@ -81,12 +82,12 @@ try {
 
   // 4. a second moment on it: kept with the record (the same id and file); the report's two lines
   await Q.evaluate(() => window.__game.onAction('rp-restart')); await Q.waitForTimeout(400);
-  await moment(Q, 3, 420, 200, 30, 'Tekmec zavije v travo');
+  await moment(Q, 3, 420, 110, 30, 'Tekmec zavije v travo');   // (above Beležka, the notebook bottom right: a loop begun on it is not drawn)
   const k2 = await kept(Q), o3 = k2[0] || {};
   T.check('a second moment (blue) on the opened recording: number 2, kept with its record (the same id, the same file, 2 moments in order, still not over the finish)',
     k2.length === 1 && o3.id === o1.id && o3.blob === o1.blob && o3.fin === 0 && o3.zb && o3.zb.id === o1.zb.id && o3.zb.items.map(it => it.n).join() === '1,2' && o3.zb.items[1].zapisi[0] === 'modra: Tekmec zavije v travo' && o3.zb.items[1].img === 'image/jpeg', JSON.stringify(k2));
   const rep = await Q.evaluate(() => Napake.porocilo().split('\n'));
-  T.check('the report: the recording\'s name on the first line, the two notes (#1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
+  T.check('the report: the recording\'s name on the first line, the notes (#1 the notebook\'s kept with the record, #1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* beležka »Ves zaslon utripa«$/.test(l)) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
 
   // 5. Končaj: the choice (the collection changed) over the list again; Zgodovina napak: one collection of 2 moments
   await Q.click('[data-act="rp-exit"]'); await Q.waitForTimeout(600);

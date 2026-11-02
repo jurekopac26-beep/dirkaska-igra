@@ -881,7 +881,7 @@ const Napake = (function () {
   // (the phone on another app, which may close it): on at once, nothing on the screen to keep smooth
   const pocakaj = () => new Promise((res) => { const f = () => (document.hidden ? res() : G && G.zaseden && G.zaseden() ? setTimeout(f, 400) : setTimeout(res, 0)); f(); });
   // the collection of a recording as it is now (its moments, the tool's own flags confirmed or thrown away), to keep with it
-  const ZB_KEYS = ['n', 't', 'w', 'h', 'track', 'lap', 'laps', 's', 'k', 'car', 'cam', 'here', 'x', 'z', 'strokes', 'zapisi'];
+  const ZB_KEYS = ['n', 't', 'w', 'h', 'track', 'lap', 'laps', 's', 'k', 'car', 'cam', 'here', 'x', 'z', 'strokes', 'zapisi', 'belezka'];
   function zbSnap(rec) {
     if (Z.rec !== rec) return null;
     return { id: Z.id, d0: Z.d0 ? Z.d0.getTime() : 0, items: Z.items.slice(),
