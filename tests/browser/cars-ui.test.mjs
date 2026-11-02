@@ -241,9 +241,10 @@ try {
     const m5 = await page.evaluate(() => Core.MODELS[window.__game.S.car].id);
     T.check('saving a new car (PREDSEDNIK, index 40): carId "predsednik", car ≤ 10 (the rally car\'s index), carV 3; read back as the PREDSEDNIK',
       sv.car === 'predsednik' && sv.stored.carId === 'predsednik' && sv.stored.car <= 10 && sv.stored.car === sv.rally && sv.stored.carV === 3 && m5 === 'predsednik', JSON.stringify({ sv, m5 }));
-    const demo = await page.evaluate(() => { const g = window.__game, M = Core.MODELS.find(m => m.id === g.demoModel), F = M && M.field ? M.field : null;
+    // (a big vehicle with a fill: its own cars and the fill's, Core.aiModel)
+    const demo = await page.evaluate(() => { const g = window.__game, M = Core.MODELS.find(m => m.id === g.demoModel), F = M && M.field ? M.field.concat(M.fill || []) : null;
       return { id: g.demoModel, cat: M && M.cat, field: F, cars: g.demo.cars.map(c => c.m.id), ok: !!M && g.demo.cars.every(c => (M.oneMake ? [M.id] : F || ['kaze', 'vortex', 'pico', 'strega']).includes(c.m.id)) }; });
-    T.check('the title demo: one category\'s vehicle picked, the AI in its field', demo.ok && !!demo.cat, JSON.stringify(demo));
+    T.check('the title demo: one category\'s vehicle picked, the AI in its field (a big vehicle\'s: its own cars and its fill\'s)', demo.ok && !!demo.cat, JSON.stringify(demo));
     // a record and a lap ghost of the retired model (stored by an older build): the LEV S's (its name on the boards, the ghost drawn as it)
     await page.evaluate(() => {
       localStorage.setItem('tdgp-records', JSON.stringify({ tracks: { 'pikes@cs': { bestTime: 250.5, board: [{ name: 'Ana', car: 'STARO IME', carId: 'p206', time: 250.5, splits: [], date: 1700000000000, upg: {} }] } } }));
@@ -295,10 +296,13 @@ try {
     await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'gora' && g.race.quali); }, null, { timeout: 90000 });
     const q0 = await page.evaluate(() => window.__game.qual.n);
-    // a destroyed car on the qualifying lap: the banner offers the lap again ("Ponovi krog"), which drives it again (the rivals' laps kept)
+    // a destroyed car on the qualifying lap: the banner offers the lap again ("Ponovi krog"), which drives it again (the rivals' laps kept).
+    // (Orodje za napake · Zadnji posnetki: a lap left once its recording has 2 s, js/napake.js RRP.min, asks first whether to keep it: Ne.
+    // The 3 s simulated here end about there, so it asks or not by how long the frames after it took)
     const qb = await page.evaluate(async () => { const g = window.__game, raf = () => new Promise(q => requestAnimationFrame(q)); g.pause(); g.sim(3, true); g.race.player.dmg = 0.99; g.resume(); for (let i = 0; i < 6; i++) await raf();
       const el = document.getElementById('h-wreck'), b = document.getElementById('btn-retire'), o = { show: el.classList.contains('show'), title: document.getElementById('h-wreck-t').textContent, btn: !b.classList.contains('off') && b.textContent };
-      b.click(); await raf(); return Object.assign(o, { quali: g.race.quali, dmg: g.race.player.dmg, back: Math.round(-g.race.player.dist), run: g.race.opts.qualiBack, banner: el.classList.contains('show') }); });
+      b.click(); const no = document.querySelector('#nk-vpr [data-v="ne"]'); if (no) no.click(); await raf();
+      return Object.assign(o, { ask: !!no, quali: g.race.quali, dmg: g.race.player.dmg, back: Math.round(-g.race.player.dist), run: g.race.opts.qualiBack, banner: el.classList.contains('show') }); });
     T.check('qualifying: a destroyed car gets "VOZILO UNIČENO" with "Ponovi krog", which drives the lap again (a new car on the run-up)',
       qb.show && qb.title === 'VOZILO UNIČENO' && qb.btn === 'Ponovi krog' && qb.quali && qb.dmg === 0 && qb.back > 0.8 * qb.run && !qb.banner, JSON.stringify(qb));
     await page.evaluate(() => { const g = window.__game; g.pause(); for (let i = 0; i < 300 && g.phase !== 'done'; i++) g.sim(1, true); g.resume(); });
