@@ -1,6 +1,6 @@
 // The preview before main (predogled, sklop 14 in docs/orodje-za-napake.md): the site for GitHub Pages, built by .github/workflows/stran.yml.
 // main as it is in the site's root (the whole tree, as Pages served it from the branch), and each open pull request from this repository
-// (the newest MAX, by their last change) in beta/<number>/: only what the game needs (index.html, sw.js, js, css, assets …). beta/index.html
+// (the newest MAX, by their last change; those labelled »predogled« first, whatever came after them) in beta/<number>/: only what the game needs (index.html, sw.js, js, css, assets …). beta/index.html
 // lists them. Pull requests from forks are left out (their files would go out under this site's address).
 //   node tools/predogled.mjs <site folder>                (the pull requests from gh pr list: GH_TOKEN, GITHUB_REPOSITORY)
 //   node tools/predogled.mjs <site folder> --prs <file>   (the list as gh pr list --json number,title,headRefName,headRefOid,isCrossRepository,updatedAt gives it)
@@ -27,8 +27,10 @@ function unpack(rev, dir, names) {
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const all = JSON.parse(prsFile ? fs.readFileSync(prsFile, 'utf8')
-  : run('gh', ['pr', 'list', '--repo', process.env.GITHUB_REPOSITORY, '--state', 'open', '--limit', '50', '--json', 'number,title,headRefName,headRefOid,isCrossRepository,updatedAt']));
-const prs = all.filter(p => !p.isCrossRepository).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  : run('gh', ['pr', 'list', '--repo', process.env.GITHUB_REPOSITORY, '--state', 'open', '--limit', '50', '--json', 'number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels']));
+// (labelled »predogled«: kept however many newer ones there are (odločitev uporabnika 2. 11. 2026); then the newest)
+const pin = (p) => (p.labels || []).some(l => (l && l.name || l) === 'predogled');
+const prs = all.filter(p => !p.isCrossRepository).sort((a, b) => (pin(b) - pin(a)) || String(b.updatedAt).localeCompare(String(a.updatedAt)));
 const shown = prs.slice(0, MAX), left = prs.slice(MAX);
 
 fs.rmSync(site, { recursive: true, force: true });
