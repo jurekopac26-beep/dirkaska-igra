@@ -1072,23 +1072,26 @@
   }
  },
  "hakone": {
-  "meshes": 4796,
-  "verts": 2784019,
-  "instances": 42511,
+  "meshes": 4675,
+  "verts": 3100540,
+  "instances": 48708,
   "props": 15,
-  "crowd": 424,
-  "world": "2a3bcb34",
+  "crowd": 671,
+  "world": "d4697a63",
   "propsHash": "360ab95",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "eb21ef50",
-   "-:MeshPhongMaterial": "d85bd231",
-   "crowd:MeshLambertMaterial": "a4d5a48b",
-   "-:MeshBasicMaterial": "baaaaa1",
-   "ao:MeshBasicMaterial": "158cf89b",
+   "-:MeshLambertMaterial": "5a820deb",
+   "-:MeshPhongMaterial": "925b0c4f",
+   "hkFar:MeshLambertMaterial": "11bc159c",
+   "hkFuji:MeshLambertMaterial": "792493c6",
+   "hkWires:LineBasicMaterial": "65326bf1",
+   "crowd:MeshLambertMaterial": "f917940c",
+   "-:MeshBasicMaterial": "70aa1641",
+   "ao:MeshBasicMaterial": "8d2aa4a9",
    "tyremarks:MeshBasicMaterial": "68a9fb1e",
    "roadwear:MeshLambertMaterial": "601baa56",
-   "brakeBoards:MeshLambertMaterial": "53b1d0e"
+   "brakeBoards:MeshLambertMaterial": "59f20c4c"
   }
  }
 }
