@@ -5463,6 +5463,7 @@
       case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
       case 'car-garage': garageOpen(); break;   // (the car on the car screen tapped: the garage with it)
+      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back the car screen, whose Nazaj leads to that step: Menu.fromTrack)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
@@ -5606,7 +5607,7 @@
       const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
       return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
     },
-    car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color }; },
+    car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: S.color, hex: PLAYER_COLORS[S.color], num: carNum() }; },   // (hex, num: the menu's car in 3D, js/menu-car.js)
     carHere: () => owned(Core.MODELS[S.car].id),
     rivals: (d) => rivN(d),   // (the opponents of a race on the track: the menu's row)
     // the player's car as the showroom draws it, over nothing (a data: URL; the background keyed out), for the menu's yard

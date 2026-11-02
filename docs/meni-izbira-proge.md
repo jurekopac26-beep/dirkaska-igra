@@ -32,8 +32,8 @@ Od zgoraj navzdol:
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
 | 1 | Postavitev zaslona (glava s hiško, državo in zastavo; oder; vrstica; prostor s tablo in sliko avta; soseda; nazaj + Race!), seznam vseh prog po dolžini v krog, ležeče, testi | 6–7 h | na main (PR #239, 1. 11. 2026) |
-| 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | narejen, lokalni testi zeleni; pull request #244 (na `main`, ko so testi na GitHubu zeleni) |
-| 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | |
+| 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | na main (PR #244, 1. 11. 2026) |
+| 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | narejen, lokalni testi zeleni; pull request #249 (na `main`, ko so testi na GitHubu zeleni) |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | |
 | 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | |
 | 6 | Uporabnikovi popravki, dokumentacija, celotni testi | 2–3 h | |
@@ -52,6 +52,14 @@ Od zgoraj navzdol:
 - **Testi:** nov `tests/menu-globe.test.js` (zastave, obrisi, kraji v svoji državi, `earth-s.webp`), `tests/menu-lens.test.js` (višine `MENU.profs`), `tests/browser/menu.test.mjs` (globus na Nürburgu: Nemčija zlata; graf: višine, km, 121 barv, raste s preletom, samo pri 1; vsaka proga vsakega načina ima graf in globus; zastava ZDA v uvodu; graf v vseh štirih postavitvah).
 - **Stran Odločitve:** naslov v `CLAUDE.md` (`1jxNEJ27WiYpCAw3YbRXEV`) se ne odpre; prava stran je https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR (tam m1–m7).
 
+### Sklop 3: kaj je narejeno
+
+- **Avto v 3D** (`js/menu-car.js`, `MenuCar`): igralčev avto je model iz igre v njegovi barvi in s svojo številko (`Render.garageCar`), obrnjen kot slika salona (`34f`: nos in desni bok proti kameri), na svojem platnu `canvas.c3d` čez ves prostor `.yard` (svoj majhen WebGL, prozoren: stena, tla in tabla so menijevi; platno je nad tablo, gumb `.car` nad platnom). Avto je prilegan v okvir gumba `.car` (cel, levo spodaj: `frameCar`), zato ga CSS postavi kot prej sliko, pokonci in ležeče. Platno je eno: ob vsakem izrisu zaslona gre v nov `.yard` (`carOn` → `MenuCar.attach`); pogled in veter se naredita znova le, ko se spremeni velikost prostora, gumba ali table (zasukan telefon), ne ob vremenu ali drugi progi. Ime avta je samo v garaži (m6 privzeto) in v opisu gumba za bralnike.
+- **Veter** (»valovi«, mehke barve): 13 črt (`LINES`): 6 čez pokrov motorja, steklo in streho (čez širino, tik nad telesom in višje), 5 ob bližnjem boku, 2 ob daljnem (vidni pred avtom in za njim). Pot vsake sledi obliki avta (`shapeOf`: višina telesa v celicah po 8 cm in širina na vsaki strani, mediana 3 × 3, da antena ne zalomi črte; `lift`: zvon 0,8 m pred telesom in 1,35 m za njim), zglajena; desno pridejo pod spodnjim robom table (napis ostane prost), čez visok avto ostanejo v prostoru; od konca poti gredo vodoravno čez rob prostora (`ext`). Trak širok 3,2 px z mehkimi robovi; barve nebesno modra, ledeno modra, mentol, sivka, akva; valovi dolgi 2,3–3,1 m tečejo z 1,05 m/s od nosu proti repu, črta se z njimi rahlo zaziba (ob telesu manj) in je na grebenu svetlejša, čez vse počasen sunek (senčilnik `wind0`).
+- **Obremenitev**: do ~30 sličic na sekundo (varčevanje baterije 15; naprava, ki riše počasi, 18 ali 10), avto in veter 7–18 klicev risanja in do ~9 tisoč trikotnikov; ko zaslon ni prikazan, ne riše; pred dirko `rest()` (platno 1 × 1, kontekst in senčilniki ostanejo za pot nazaj); »manj gibanja« v napravi: veter miruje. Brez WebGL ali ob izgubljenem kontekstu je avto slika kot prej (`carPicOf`).
+- **Dotik avta → garaža**: `data-act="garage"` → `G.act('menu-garage')` (`js/game.js`: `garageOpen` s `carFrom = 'title'`), `garaza.html?car=<id>&color=<rrggbb>`; puščica nazaj v garaži odpre izbiro avta (`garageBack`), od tam *Nazaj* ali *Naprej* vrne na isto progo (stran Odločitve, m8). Most `G.car()` vrne še `hex` in `num`.
+- **Testi**: `tests/browser/menu.test.mjs` razdelek 4 (avto v 3D v okviru gumba, brez slike; veter desno od avta, mehko moder, čez 1,3 s premaknjen; največ ~30 sličic, malo klicev; nov izris ohrani platno in veter; med dirko platno počiva, nato spet riše), 10 (dotik avta: garaža z avtom v njegovi barvi, nazaj izbira avta, *Nazaj* in *Naprej* na isto progo), 11 (brez WebGL: slika avta, še vedno garaža).
+
 ## Opombe iz pregleda kode (main @ c186d26)
 
 - **Seznam:** `buildTracks()` `js/menu.js:77-92` razvršča le po skupini (`GROUP_ORDER` :75); `TRACKS()` = `groupList(group)` :109; `track:±1` se že vrti (:917). `group` se uporablja še v :95, 249, 265, 492, 517, 562, 834, 893-894, 1000 in `Menu.debug` (:1035). `D.groups` v `js/menu-data.js:31-48`.
@@ -62,6 +70,7 @@ Od zgoraj navzdol:
 - **Rekord:** `G.record(d)` (`game.js:5434`) vrne en par (*Best race*, *Best lap*, *Best time* …). Climb: `def.alt`; brez `def.alt` vsota vzponov; krožne proge: Corners.
 - **Graf za proge brez `ROUTES`:** vzorči `hy` zgrajene proge (`core.js:748`) od `startIdx` do `finishIdx` (~120 točk); absolutne višine le z `def.alt`.
 - **Tekmeci:** ni nastavitve; `rivN(d)` `game.js:451` (`NUM_AI` 21), `newRace` :1879. Nürburg ima `rivals: 20` (spodnja meja). Na odprtih cestah je štartna vrsta stisnjena (`core.js:5378-5396`): pri ~99 se avti na Tianmen in Uncompahgre prekrivajo → omejitev ~21–40 ali delo na štartni vrsti. Proge samo za kronometer (ouninpohja, katu, harju): izbira skrita.
+- **Obremenitev menija (za meritev v sklopu 5):** za menijem igra ves čas riše demo dirko (`bg === 'demo'` v `frame()`, `js/game.js`; 10 avtov na naloženi progi), čeprav jo meni na telefonu prekrije (vidna je le ob straneh na tablici pokonci, kjer je meni stolpec 432 px). Ustavljeno risanje, ko meni prekrije cel zaslon, bi prihranilo več, kot stane avto v 3D (sklop 3: do ~30 sličic, 7–18 klicev risanja).
 - **Kamera na zavoju:** v živo le za naloženo progo (druge zahtevajo `ensureTrack`, sekunde na telefonu) → posnet kratek video zavoja na progo (6–8 s v zanki, ~0,6–1,2 MB, kot `heli.mjs`), plakat `.webp`; obstoječe: `Render.setShot` (mirujoča kamera), `tvCams` `render.js:8934`.
 - **Garaža:** danes `pick-car` → `G.act('to-car')` (`menu.js:925`); garaža je `garaza.html`. Avto v meniju: `Render.carShot(o)` (`render.js:9624`) nariše katerikoli model in barvo.
 - **Globus:** `js/geo.js` ima obrise le za 8 držav (+ Colorado); manjkajo Čile, Rusija, Avstralija, Južna Afrika, Kitajska, Brazilija, Anglija, Kanada, Tajska, Maroko (in Francija, Italija). Koordinate imajo le proge v `GEO.tracks` (11). Tekstura `assets/geo/earth.webp`.
@@ -82,3 +91,4 @@ Od zgoraj navzdol:
 | 7 | Kam gredo dodatne možnosti (letni čas, čas dneva, dolžina) iz sedanjega lista vremena in *Gold time* kronometra? | uporabnik (30. 10.): *···* pod vremenom ostane; *Gold time* na mestu *Opponents* |
 | B | Višina v glavi: 1,611 m (vrh iz podatkov igre), 1,388 m ali brez? | uporabnik (30. 10.): 1,388 m (`MENU.heads` v `js/menu-data.js`); druge proge vrh proge, dokler uporabnik ne reče drugače |
 | C | Videz globusa v glavi: 1 cela Zemlja, 2 bliže, 3 bliže in država sveti (stran Odločitve, m7) | 1 |
+| D | Kam vodi puščica nazaj iz garaže, odprte z dotikom avta: 1 izbira avta (od tam *Nazaj*/*Naprej* na progo), 2 naravnost na izbiro proge, 3 na progo in ob avtu gumb za izbiro avta (stran Odločitve, m8) | 1 |
