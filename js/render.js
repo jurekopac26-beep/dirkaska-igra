@@ -8784,7 +8784,7 @@ const Render = (function () {
     }
     // sparks
     if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
-    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb); }   // (c.fxQ: Trki: iskre izklop, a knock between cars without sparks or dust)
+    if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb, c.fxCar > 7); }   // (c.fxQ: Trki med avti: Iskre izklop, a knock between cars without sparks or dust; the bright flash only in a hard knock, over 7 m/s: the user's, a touch does not light up)
     if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
@@ -8809,7 +8809,7 @@ const Render = (function () {
       for (let k = 0; k < 3; k++) particles.emit(p.x, 0.35 + yb, p.z, -Math.cos(h) * 3 + (Math.random() - 0.5), 0.3, -Math.sin(h) * 3 + (Math.random() - 0.5), 0.14, 0.35, 0.8, 1, 0.55 + Math.random() * 0.3, 0.1, 0.95, 0, 3, yb);
     }
   }
-  function sparks(x, z, imp, y) {
+  function sparks(x, z, imp, y, flash = true) {   // (flash: the bright flash at the contact; off for a light knock between cars)
     if (x == null) return;
     const n = Math.min(40, 12 + imp * 3), y0 = y || 0;
     for (let k = 0; k < n; k++) {
@@ -8817,7 +8817,7 @@ const Render = (function () {
       sparkP.emit(x, 0.45 + Math.random() * 0.4 + y0, z, Math.cos(a) * sp, 2 + Math.random() * 4.5, Math.sin(a) * sp, 0.28 + Math.random() * 0.34, 0.75, 0.18, 1, 0.8 + Math.random() * 0.15, 0.32, 1, 11, 1.2, y0);
     }
     // a short bright flash at the contact point
-    sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
+    if (flash) sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
   }
 
   /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises

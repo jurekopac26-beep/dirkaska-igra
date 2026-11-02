@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=7117ee29">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=804ef2fe">
 <link rel="stylesheet" href="css/fonts.css?v=a0803dec">
-<link rel="stylesheet" href="css/style.css?v=502b2e61">
+<link rel="stylesheet" href="css/style.css?v=8decea28">
 <link rel="stylesheet" href="css/napake.css?v=6adcac51">
 <link rel="stylesheet" href="css/missions.css?v=fc2fe5cb">
 <link rel="stylesheet" id="menu-css" href="css/menu.css?v=966bb6e5" media="not all">
@@ -253,14 +253,14 @@
         <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak, Katu-Jaryk)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
         <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row" title="Avto se ob trku z drugim avtom ne odbije in ga trk ne zavrti. Kdor se zaleti, se ob drugem avtu ustavi, ta se komaj premakne; tekmec, ki se zaleti vate, te ne odrine. Avta se razmakneta mehko, brez poskoka, iskre ostanejo. Velja namesto vseh drugih nastavitev trkov med avti (Preizkus: Trki med avti, Razbijanje: odboji in vrtenje ob trku, prevračanje ob trku z avtom). Trki z ograjo ostanejo, kot so"><span class="rlbl">Trki med avti brez odboja</span><div class="seg" data-set="crNB"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="set-note off" id="nb-note"></div>
+        <div class="row" title="Kako se avta odzoveta, ko se zaletita drug v drugega. Simulacija (privzeto): kot v simulacijah. Arkadna: kot v arkadnih igrah. Mehka: mehak stik. Kaskaderska: močni trki. Stara: trki kot prej, za primerjavo. Velja takoj; izbereš jo lahko tudi v pavzi med dirko. V dirki s prijateljem velja vedno privzeta. Vrstice v Preizkusu (Trki med avti) jo spremenijo"><span class="rlbl">Trki med avti</span><div class="seg nw" data-set="crV"><button data-v="0">Simulacija</button><button data-v="1">Arkadna</button><button data-v="2">Mehka</button><button data-v="3">Kaskaderska</button><button data-v="4">Stara</button></div></div>
+        <div class="set-note" id="crv-note"></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
         <div class="row" title="Vsak trk avto vdre globlje: spredaj do šipe, vogali in ob ogledalih poševno, pločevina zmečkana v gube; pod strgano haubo se vidi motor"><span class="rlbl">Razbijanje: nove poškodbe karoserije</span><div class="seg" data-set="xBody"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Približno vsak deseti močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo"><span class="rlbl">Razbijanje: prevračanje</span><div class="seg" data-set="xRoll"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Razbite šipe na več načinov: zvezda, mreža, luknja, razpoke, izpadla šipa"><span class="rlbl">Razbijanje: šipe</span><div class="seg" data-set="xGlass"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Na pregibih odrgnjena barva, gola pločevina in rja (le z vklopljenimi novimi poškodbami karoserije)"><span class="rlbl">Razbijanje: odrgnjena barva in rja</span><div class="seg" data-set="xPaint"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row" title="Udarec avto zavrti, kolikor je bil močan; za trenutek izgubi oprijem. Udarec v zadnji vogal ga lahko zavrti naokoli"><span class="rlbl">Razbijanje: odboji in vrtenje ob trku</span><div class="seg" data-set="xBump"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Udarec avto zavrti, kolikor je bil močan; za trenutek izgubi oprijem. Udarec v zadnji vogal ga lahko zavrti naokoli. Velja samo s Trki med avti: Stara (druge različice to delajo same)"><span class="rlbl">Razbijanje: odboji in vrtenje ob trku</span><div class="seg" data-set="xBump"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Tretjina tekmecev občasno napade: nekaj sekund ciljajo zadnji vogal avta pred sabo"><span class="rlbl">Razbijanje: agresivni vozniki</span><div class="seg" data-set="xAi"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Odpadli deli (odbijači, vrata, hauba) ostanejo na cesti do konca dirke"><span class="rlbl">Razbijanje: deli ostanejo na progi</span><div class="seg" data-set="xParts"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Odbijač, ki visi, se vleče po cesti in kreše iskre"><span class="rlbl">Razbijanje: vlečenje delov z iskrami</span><div class="seg" data-set="xDrag"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -290,15 +290,14 @@
             <div class="row" title="Koliko prostora tekmec pusti avtu ob sebi, ko vozita vštric. Manj prostora: bolj se drgnejo in je več stikov"><span class="rlbl">Prostor ob boku</span><div class="seg nw" data-set="tAiSide"><button data-v="0">Privzeto</button><button data-v="1">0,6 m</button><button data-v="2">0,35 m</button><button data-v="3">0,15 m</button></div></div>
             <div class="row" title="Ali tekmeci na vrhu in izhodu ovinka zapeljejo čez robnik (nikoli bližje ograji kot pol avta in 0,6 m)"><span class="rlbl">Vožnja čez robnike</span><div class="seg nw" data-set="tAiKerb"><button data-v="0">Privzeto</button><button data-v="1">Ne</button><button data-v="2">Do 1,2 m</button><button data-v="3">Do 2,2 m</button></div></div>
             <div class="set-sub">Trki med avti</div>
-            <div class="row" title="Realističen, težak: avta imata ravne odbijače, se ob trku ne odbijeta in ne poskočita narazen, gume zadržijo potisk vstran (avto ne zavije stran), drgneta se ob stiku, drugi avto je 8-krat težji in trk ne sproži isker. Vrstice pod to vrstico ga spremenijo. Težo ima samo drugi avto ob trku z igralcem, ostalo velja za vse trke med avti"><span class="rlbl">Slog trkov</span><div class="seg nw" data-set="tCrStyle"><button data-v="0">Privzeto</button><button data-v="1">Realističen, težak</button></div></div>
             <div class="set-note" id="cr-note"></div>
-            <div class="row" title="Kolikokrat težji je drugi avto, ko se zaletiš vanj ali on vate: težji se težje premakne, ti pa se ob njem ustaviš. Enak: oba avta sta enako težka"><span class="rlbl">Občutek teže</span><div class="seg nw" data-set="tCrMass"><button data-v="0">Privzeto</button><button data-v="1">Enak</button><button data-v="2">2×</button><button data-v="3">4×</button><button data-v="4">8×</button><button data-v="5">16×</button></div></div>
-            <div class="row" title="Koliko se avta odbijeta po trku (0 = nič, 0,1 = klasična, 0,4 = nova fizika)"><span class="rlbl">Odboj med avti</span><div class="seg nw" data-set="tCrE"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Majhen</button><button data-v="3">Srednji</button><button data-v="4">Velik</button><button data-v="5">Zelo velik</button></div></div>
-            <div class="row" title="Ali se avta ob trku drgneta in vlečeta drug drugega (hitrost se deli ob stiku)"><span class="rlbl">Drgnjenje ob stiku</span><div class="seg nw" data-set="tCrMu"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Srednje</button><button data-v="3">Močno</button></div></div>
-            <div class="row" title="Koliko trk zavrti avto (klasična: sunek, ki ga avto sam ujame; nova: pravo vrtenje)"><span class="rlbl">Vrtenje ob trku</span><div class="seg nw" data-set="tCrYaw"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Majhno</button><button data-v="3">Manjše</button><button data-v="4">Večje</button></div></div>
-            <div class="row" title="Oblika avtov ob stiku. Zaobljena (kot doslej): konca avta sta okrogla, trk z zamikom avta odrine vstran. Ravni odbijači: avta sta pravokotna z zaobljenimi vogali, odbijač potisne naravnost, razmakneta se mehko, brez poskoka"><span class="rlbl">Oblika ob stiku</span><div class="seg nw" data-set="tCrBox"><button data-v="0">Privzeto</button><button data-v="1">Zaobljena</button><button data-v="2">Ravni odbijači</button></div></div>
-            <div class="row" title="Kaj naredi potisk vstran pri klasični fiziki. Avto zavije (kot doslej): avto potisk spremeni v smer vožnje in odpelje vstran. Gume zadržijo: avto malo zdrsne vstran, gume ga ustavijo, smer ostane. Nova fizika to dela sama"><span class="rlbl">Potisk vstran</span><div class="seg nw" data-set="tCrScrub"><button data-v="0">Privzeto</button><button data-v="1">Avto zavije</button><button data-v="2">Gume zadržijo</button></div></div>
-            <div class="row" title="Ali trk med avtoma sproži iskre, blisk in prah (praske na karoseriji ostanejo)"><span class="rlbl">Iskre in blisk</span><div class="seg nw" data-set="tCrFx"><button data-v="0">Privzeto</button><button data-v="1">Vklop</button><button data-v="2">Izklop</button></div></div>
+            <div class="row" title="Kolikokrat svojo težo šteje tvoj avto ob trku z drugim avtom: težji drugega odrine, sam se komaj premakne. Enaka: kot v resnici. Privzeto: kot pri izbrani različici"><span class="rlbl">Teža tvojega avta</span><div class="seg nw" data-set="crPm"><button data-v="0">Privzeto</button><button data-v="1">Enaka</button><button data-v="2">1,5×</button><button data-v="3">2×</button></div></div>
+            <div class="row" title="Koliko se avta odbijeta po trku, v deležu odboja izbrane različice: Brez nič, Pol polovica, Večji 1,6-krat"><span class="rlbl">Odboj</span><div class="seg nw" data-set="crE"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Pol</button><button data-v="3">Večji</button></div></div>
+            <div class="row" title="Koliko se avta ob stiku drgneta in vlečeta drug drugega (trenje med karoserijama: Brez 0, Malo 0,15, Srednje 0,35, Močno 0,6)"><span class="rlbl">Drgnjenje ob stiku</span><div class="seg nw" data-set="crMu"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Malo</button><button data-v="3">Srednje</button><button data-v="4">Močno</button></div></div>
+            <div class="row" title="Koliko trk zasuka avto, v deležu zasuka po mestu udarca (Polno: kot v resnici, Malo 0,4, Srednje 0,7, Več 1,4)"><span class="rlbl">Vrtenje ob trku</span><div class="seg nw" data-set="crYaw"><button data-v="0">Privzeto</button><button data-v="1">Malo</button><button data-v="2">Srednje</button><button data-v="3">Polno</button><button data-v="4">Več</button></div></div>
+            <div class="row" title="Kako zlahka močan trk zavrti in odnese avto: koliko oprijema gum mu vzame, v deležu izbrane različice (Brez: trk nikoli ne vzame oprijema)"><span class="rlbl">Zdrs po trku</span><div class="seg nw" data-set="crGl"><button data-v="0">Privzeto</button><button data-v="1">Brez</button><button data-v="2">Manj</button><button data-v="3">Več</button></div></div>
+            <div class="row" title="Kako hitro gume ujamejo potisk vstran po trku: Hiter v 0,6 realnega časa, Realen v realnem, Počasen v 1,6-kratnem (avto dlje drsi vstran)"><span class="rlbl">Ujem gum</span><div class="seg nw" data-set="crSl"><button data-v="0">Privzeto</button><button data-v="1">Hiter</button><button data-v="2">Realen</button><button data-v="3">Počasen</button></div></div>
+            <div class="row" title="Ali trk med avtoma sproži iskre in prah (praske na karoseriji ostanejo)"><span class="rlbl">Iskre ob trku</span><div class="seg nw" data-set="crFx"><button data-v="0">Privzeto</button><button data-v="1">Vklop</button><button data-v="2">Izklop</button></div></div>
           </div>
         </details>
       </div>
@@ -337,20 +336,23 @@
   <section id="s-pause" class="screen">
     <div class="panel small-panel">
       <h2>Pavza</h2>
-      <div class="btns">
-        <button class="btn primary" data-act="resume">Nadaljuj</button>
-        <button class="btn fsbtn" data-act="fullscreen">Celoten zaslon</button>
-        <button class="btn" data-act="rp-here" id="pause-rp">Posnetek do sem</button>
-        <button class="btn" data-act="restart" id="pause-restart">Ponovi dirko</button>
-        <button class="btn off" data-act="quali-skip" id="pause-skip">Preskoči kvalifikacije</button>
-        <button class="btn" data-act="photo" id="pause-photo">Foto</button>
-        <button class="btn" data-act="car-view" id="pause-view">Ogled vozila</button>
-        <button class="btn off" data-act="retire" id="pause-retire">Odstopi</button>
-        <button class="btn" data-act="to-settings">Nastavitve</button>
-        <button class="btn ghost" data-act="to-title">Glavni meni</button>
+      <div class="pause-body" id="pause-body"><!-- (scrolls on a short screen; the knocks' version right under the buttons, in sight) -->
+        <div class="btns">
+          <button class="btn primary" data-act="resume">Nadaljuj</button>
+          <button class="btn fsbtn" data-act="fullscreen">Celoten zaslon</button>
+          <button class="btn" data-act="rp-here" id="pause-rp">Posnetek do sem</button>
+          <button class="btn" data-act="restart" id="pause-restart">Ponovi dirko</button>
+          <button class="btn off" data-act="quali-skip" id="pause-skip">Preskoči kvalifikacije</button>
+          <button class="btn" data-act="photo" id="pause-photo">Foto</button>
+          <button class="btn" data-act="car-view" id="pause-view">Ogled vozila</button>
+          <button class="btn off" data-act="retire" id="pause-retire">Odstopi</button>
+          <button class="btn" data-act="to-settings">Nastavitve</button>
+          <button class="btn ghost" data-act="to-title">Glavni meni</button>
+        </div>
+        <div class="row crv-row" id="crv-prow" title="Različica trkov med avti; velja takoj. Opis vsake je v Nastavitvah"><span class="rlbl">Trki med avti</span><div class="seg nw" data-set="crV"><button data-v="0">Simulacija</button><button data-v="1">Arkadna</button><button data-v="2">Mehka</button><button data-v="3">Kaskaderska</button><button data-v="4">Stara</button></div></div>
+        <p id="pause-strat" class="pause-strat off"></p>
+        <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
       </div>
-      <p id="pause-strat" class="pause-strat off"></p>
-      <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
     </div>
   </section>
 
@@ -527,7 +529,7 @@
 <script src="js/tracks/bangsaen.js?v=04f14a8a"></script>
 <script src="js/tracks/hotham.js?v=dd0ed41e"></script>
 <script src="js/tracks/townsville.js?v=08aacb6a"></script>
-<script src="js/lang.js?v=31db0bf6"></script>
+<script src="js/lang.js?v=d816610f"></script>
 <script src="js/tracks/marrakesh.js?v=3a59b91b"></script>
 <script src="js/tracks/troisrivieres.js?v=1ff731df"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js?v=47375106">
@@ -580,7 +582,7 @@
 <script src="js/cars/goljat.js?v=4d334b8c"></script>
 <script src="js/cars/levs.js?v=d1f9dd80"></script>
 <script src="js/cars/levk.js?v=b9d10b1e"></script>
-<script src="js/core.js?v=e9f21512"></script>
+<script src="js/core.js?v=dac0b649"></script>
 <script src="js/tex.js?v=fea98b45"></script>
 <script src="js/world.js?v=1c446b4e"></script>
 <script src="js/world-pikes.js?v=07bd9873"></script>
@@ -621,7 +623,7 @@
 <script src="js/world-detroit.js?v=f7acfa28"></script>
 <script src="js/world-marrakesh.js?v=5b1b3225"></script>
 <script src="js/world-troisrivieres.js?v=75218e49"></script>
-<script src="js/render.js?v=d231b18b"></script>
+<script src="js/render.js?v=ad67f7b8"></script>
 <script src="js/sfx.js?v=19ca0616"></script>
 <script src="js/input.js?v=e5fc90b2"></script>
 <script src="js/comm.js?v=75a0091d"></script>
@@ -665,6 +667,6 @@
 <script src="js/missions/m08.js?v=e53557d7"></script>
 <script src="js/missions/m17.js?v=eb9953de"></script>
 <script src="js/missions/m26.js?v=143aa954"></script>
-<script src="js/game.js?v=3a142dab"></script>
+<script src="js/game.js?v=4085e1b3"></script>
 </body>
 </html>

@@ -428,7 +428,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .set-cat > summary:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 10px; }
 .set-cat .set-body { padding: 0 12px 6px; }
 .set-note { margin: 2px 0 6px; font: 500 12px/1.35 var(--f-ui); color: var(--muted); }
-.set-list .row.nbx { opacity: .45; }   /* (a row Trki med avti brez odboja stands for while it is on) */
+.set-list .row.nbx { opacity: .45; }   /* (a row the chosen version of Trki med avti leaves out: Preizkus' knock rows with Stara, Razbijanje: odboji in vrtenje ob trku with the others) */
 .set-sub { margin: 12px 0 2px; font: 700 12px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 input[type=range] { width: 160px; accent-color: var(--curb); }
 .val { font: 700 italic 13px/1 var(--f-ui); color: var(--lcd); min-width: 3em; }
@@ -931,6 +931,13 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 
 /* the slicks for the next pit stop (the pause, a race with tyres); rows of choices too wide for their panel get smaller (game.js fitSegs) */
 .pit-row { margin-top: 12px; }
+/* the pause: under its title the buttons and the rows scroll on a short screen (a race with tyres on a phone 360 px high: the strategy and the
+   tyres' row were cut off); the version of the knocks between cars (Trki med avti) right under the buttons; on its side a row's choices stay
+   beside its label, in smaller letters if need be (fitSegs); the padding keeps the slanted buttons' corners in */
+#s-pause .small-panel { display: flex; flex-direction: column; }
+.pause-body { flex: 0 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; margin: 0 -6px; padding: 0 6px; touch-action: pan-y; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.crv-row { margin-top: 12px; }
+@media (orientation: landscape) { #s-pause .row { flex-wrap: nowrap; } }
 /* a friend's challenge: the time to beat, the track, the way, the car and the conditions; its button on the title */
 .chal-card { margin: 10px 0 14px; padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,.06); border: 1px solid var(--panel-edge); }
 .chal-card .chal-time { font: 400 italic clamp(30px, 8vh, 46px)/1 var(--f-display); color: var(--lcd); text-align: center; margin-bottom: 10px; }

@@ -1,9 +1,9 @@
 // Razbijanje · nov način: odboji, agresivni vozniki, poškodbe vplivajo na vožnjo (Core.setCrash({ bump, ai, handle }), Nastavitve xBump,
 // xAi, xHandle; all off by default, never online)
-// - odboji: a car knocked on its rear quarter at speed: off, it hardly turns (the old damped tap) and no new field on the car; on, it
-//   turns as hard as the knock says (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's
-//   car online (net) never
-// - agresivni vozniki: a 90 s race on Jezero (13 cars): on, more hard knocks between the cars and more damage than off, every car still
+// - odboji (with the old knock, Trki med avti: Stara; the other versions turn and spin a car themselves, trki.test.js): a car knocked on
+//   its rear quarter at speed: off, it hardly turns (the old damped tap) and no new field on the car; on, it turns as hard as the knock says
+//   (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's car online (net) never
+// - agresivni vozniki: a 90 s race on Jezero (13 cars): on, more hard knocks between the cars and more damage than off, every rival still
 //   on its laps, nothing NaN
 // - poškodbe vplivajo na vožnjo: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at
 //   80 km/h, the wheel held straight); off, it runs straight
@@ -20,13 +20,13 @@ const ok = (name, cond, detail) => checks.push({ name, ok: !!cond, detail });
 
 // a knock on the rear quarter: A at 100 km/h along x, B from behind on its left, nose angled into A's left rear quarter at vb
 function tap(bump, vb, net) {
-  C.setCrash({ bump });
+  C.setCrash({ bump }); C.setTest({ cv: 5 });   // (Razbijanje: odboji works with the old knock only)
   const A = H.mkCar('tornado', { v: 100 }), B = H.mkCar('tornado', { v: 0 }), L = A.m.len, W = A.m.wid; if (net) A.net = true;
   B.place(-L * 0.35 - L * 0.5 * Math.cos(0.5) + 0.05, -W * 0.5 - L * 0.5 * Math.sin(0.5) + 0.25, 0.5); B.vx = vb * Math.cos(0.5); B.vz = vb * Math.sin(0.5);
   const w0 = A.w, imp = C.carCollide(A, B), gl = A.xgl || 0, h0 = A.h, w1 = A.w;
   let t = 0, turn = 0, glGone = null, field = 'xgl' in A || 'xgl' in B, nan = false;
   while (t < 2.5) { H.step(A, { thr: 'hold', st: 0 }); t += DT; turn = Math.max(turn, Math.abs(A.h - h0) * D); if (glGone == null && !('xgl' in A)) glGone = t; if (![A.x, A.z, A.vx, A.vz, A.h].every(Number.isFinite)) nan = true; }
-  C.setCrash({});
+  C.setCrash({}); C.setTest(null);
   return { imp, gl, turn, glGone, field, nan, wSame: w1 === w0 };
 }
 {
@@ -50,7 +50,7 @@ function race(ai, seed) {
     let t = 0, hard = 0, nan = false;
     while (t < 90) { C.aiControl(r.player, r, DT); r.step(DT); t += DT;
       for (const c of r.cars) { if (c.hitCar > 8) hard++; if (![c.x, c.z, c.vx, c.vz].every(Number.isFinite)) nan = true; c.hitCar = 0; c.hitWall = 0; } }
-    return { hard, nan, dmg: r.cars.reduce((s, c) => s + c.dmg, 0) / r.cars.length, laps: Math.min(...r.cars.map(c => c.lap || 0)) };
+    return { hard, nan, dmg: r.cars.reduce((s, c) => s + c.dmg, 0) / r.cars.length, laps: Math.min(...r.cars.filter(c => !c.isPlayer).map(c => c.lap || 0)) };   // (the rivals: the marshals put a stuck one back; the player's autopilot has no reverse gear, a player spun round into a barrier backs out of it)
   } finally { Math.random = orig; C.setCrash({}); }
 }
 {
@@ -59,7 +59,7 @@ function race(ai, seed) {
   const off = sum(0), on = sum(1);
   ok('agresivni vozniki on: more hard knocks between the cars', on.hard >= off.hard * 1.5 && on.hard > 30, 'hard knocks ' + off.hard + ' -> ' + on.hard);
   ok('agresivni vozniki on: more damage in the field', on.dmg > off.dmg * 1.5, 'mean damage ' + off.dmg.toFixed(2) + ' -> ' + on.dmg.toFixed(2));
-  ok('agresivni vozniki on: every car still on its laps, nothing NaN', on.laps >= off.laps && !on.nan, 'laps (the slowest) ' + off.laps + ' / ' + on.laps);
+  ok('agresivni vozniki on: every rival still on its laps, nothing NaN', on.laps >= off.laps && !on.nan, 'laps (the slowest) ' + off.laps + ' / ' + on.laps);
 }
 
 // a crushed front corner (cd: FL, FR, RL, RR), 80 km/h, the wheel held straight for 2 s
