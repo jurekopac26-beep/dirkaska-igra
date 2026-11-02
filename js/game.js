@@ -782,7 +782,7 @@
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [] }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js)
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; trk: its track)
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
@@ -1070,8 +1070,16 @@
     span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
     shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max),
     rrp: rrpOf, open: rrpOpen,
-    view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); }   // (tools/posnetek.mjs: the car followed, the camera)
+    view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); },   // (tools/posnetek.mjs: the car followed, the camera)
+    // Zadnji posnetki: the race whose recording may be kept (not with a friend, not the new map's free driving, not the driving school's
+    // lesson, which has no replay, not a file opened) and whether it is done: its player over the finish (caught by the police: no), or a
+    // special mission over with its result (done or failed: its result's buttons leave it as ever); busy: a race driven or a replay playing
+    // (the packing waits)
+    dirka: () => (race && recd && bg === 'race' && !recd.file && recd.trk === track && !(mp && mp.race) && !race.nv && !school && race.player ? { fin: (!!race.player.finished && !race.player.busted) || !!(MS.run && MS.run.res) } : null),
+    zaseden: () => !!(race && bg === 'race' && ((screen === 'none' && !paused && phase !== 'done' && !replay) || (replay && replay.play)))
   };
+  const NK_LEAVE = new Set(['to-title', 'restart', 'over-again', 'to-school', 'to-champ']);   // (the actions that leave a race: a race before its finish asks first, Napake.izhod)
+  const leaveAct = (a, el) => { if (!(NK_LEAVE.has(a) && Napake.izhod(() => onAction(a, el)))) onAction(a, el); };
   function replayAct(a) {
     const P = replay, R = recd; if (!P) return;
     if (a === 'rp-hl') { if (P.hl) { hlOff(); replayUI(); } else replayHL(); return; }   // (Trenutki: the highlights on, or off: the whole race again)
@@ -1963,6 +1971,7 @@
   // qualifying gave on this track (also when it is driven again), or on the usual one
   function newRace(mode) {
     mkFlush();   // (the run before it, left before its finish (Ponovi): its tyre marks kept)
+    Napake.pusti();   // (the race before, if any: kept among Zadnji posnetki when over the finish, js/napake.js)
     if (repro) repro.R = Core.rng((repro.seed * 2731 + 19) >>> 0);   // (the test mode: this race's draws from its seed, from the start)
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
@@ -2139,6 +2148,7 @@
   function toTitle() {
     mkFlush();   // (a time trial left for the menu: its tyre marks kept)
     if (nv) { if (nv.built || nv.err) { location.reload(); return; } nv = null; }   // (NEW VERSION · TEST 1: the new map changed the track's world, the page again)
+    Napake.pusti();   // (Zadnji posnetki: a race over the finish kept, or kept again: js/napake.js)
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
@@ -2687,6 +2697,7 @@
   function finishRace() {
     phase = 'done';
     Sfx.setRunning(false);
+    Napake.cilj();   // (over the finish: the recording kept among Zadnji posnetki, js/napake.js)
     if (mp && mp.race) { netResults(); return; }
     $('res-restart').dataset.act = 'restart'; $('res-laps').classList.add('off');
     $('res-reply').classList.add('off'); $('res-chal').classList.toggle('off', !chalCan());   // (a challenge for a friend: the best run of this track, once there is one)
@@ -4585,7 +4596,7 @@
         setTimeout(() => { if (phase === 'racing') { $('h-lights').classList.remove('show'); setLights(0, false); } }, 1100);
       }
     } else if (phase === 'racing') {
-      if (MS.over()) { phase = 'done'; Sfx.setRunning(false); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); return; }   // (a special mission done or failed: its own result, js/missions.js)
+      if (MS.over()) { phase = 'done'; Sfx.setRunning(false); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); Napake.cilj(); return; }   // (a special mission done or failed: its own result, js/missions.js; kept among Zadnji posnetki)
       if (!race.player.finished && race.isOut(race.player)) { const Q = race.player.wreck && race.player.wreck.rule; if (Q && Q.over) gameOver(); else retired(); return; }   // (the player retired: the results; two wheels off under the wheel rule: KONEC IGRE)
       if (!race.player.finished && !school) commTick(dt);
       if (race.player.finished) {
@@ -5155,6 +5166,7 @@
     if (P.on && (screen !== padScreen || (padSel && !padSel.isConnected))) { padScreen = screen; padFocus(screen === 'none' ? null : padHome()); }   // (a new screen, or its list drawn again: the highlight on the main button or the chosen item)
     const sc0 = screen;
     for (const k of P.pressed) {
+      if (Napake.padKey(k)) continue;   // (the question at leaving a race, js/napake.js: its own while it is up)
       if (k[0] === '@') {   // racing: the buttons bound to the pause, the camera, the rescue (not when the same press works a menu)
         if (sc0 !== 'none' || screen !== 'none') continue;
         if (k === '@pause' && bg === 'race') { pause(); break; }
@@ -5685,7 +5697,7 @@
     rpLineBind(); Napake.init(NK_HOOKS);
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
-      if (b) { e.preventDefault(); onAction(b.dataset.act, b); return; }
+      if (b) { e.preventDefault(); leaveAct(b.dataset.act, b); return; }   // (a race left before its finish: Napake asks first whether to keep it)
       const ub = e.target.closest('[data-upg] [data-lv]');   // upgrade level (before the generic .seg handler)
       if (ub) { Sfx.resume(); Sfx.click(); upgPick(ub.parentElement.dataset.upg, +ub.dataset.lv); return; }
       const bt = e.target.closest('[data-board]');
@@ -5708,7 +5720,7 @@
       row.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { row.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });   // (a mouse wheel scrolls the rows sideways)
       row.addEventListener('scroll', () => rowEdges(row), { passive: true });
     }
-    $('btn-retire').addEventListener('click', (e) => { e.preventDefault(); if (!race || phase !== 'racing') return; if (race.timeTrial || race.quali) onAction('restart'); else { Sfx.resume(); Sfx.click(); retireTap(e.currentTarget); } });   // (a time trial, qualifying: the run again)
+    $('btn-retire').addEventListener('click', (e) => { e.preventDefault(); if (!race || phase !== 'racing') return; if (race.timeTrial || race.quali) { if (!Napake.izhod(() => onAction('restart'), pause)) onAction('restart'); } else { Sfx.resume(); Sfx.click(); retireTap(e.currentTarget); } });   // (a time trial, qualifying: the run again; Napake asks first over the pause whether to keep the run left)
     $('track-list').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('div.track-card')) { e.preventDefault(); e.target.click(); } });   // (a card with a switch is a div)
     $('tilt-sens').addEventListener('input', (e) => { S.tiltSens = +e.target.value; save(); applySettings(); });
     $('ctrl-body').addEventListener('input', (e) => {   // Kontrole: the steering's dead zone, the share of the axis for full lock
