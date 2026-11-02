@@ -2,7 +2,7 @@
 
 Nova prava proga `livorno`: stara cestna proga ob Livornu v postavitvi 1922–1930, po današnjih cestah iz OpenStreetMap, en krog v smeri urinega kazalca. Ime v igri: **Livorno, Italija** (angleško *Livorno, Italy*).
 
-Delo gre po sklopih na veji **`proga/livorno`**; **vsak sklop je nova seja** z navodilom »Naredi sklop N po docs/proga-livorno.md (veja proga/livorno)«. Ob koncu vsakega sklopa: posodobi tabelo Stanje spodaj, commit in push na `proga/livorno`, nato z orodjem `create_session` (strežnik claude-code-remote) zaženi naslednji sklop: model `claude-opus-5-5`, `source_url` https://github.com/jurekopac26-beep/dirkaska-igra, `source_revision` `proga/livorno`, `outcome_branch` `proga/livorno`, prompt »Naredi sklop N po docs/proga-livorno.md (veja proga/livorno)«. Po sklopu 5 ne zaženi nove seje. Uporabniku ob koncu sklopa napiši kratko poročilo (pri sklopu 5 tudi seznam za preizkus na telefonu). Vprašanja uporabniku gredo na stran Odločitve (`CLAUDE.md`, razdelek »Seje«).
+Delo gre po sklopih na veji **`proga/livorno`**. **Vseh pet sklopov naredi ena seja, enega za drugim, brez novih sej** (odločitev uporabnika 2. 11. 2026: »Naredi vse v enem sklopu, da prihranimo žetone«; prvotni načrt »vsak sklop svoja seja« ne velja več). Po vsakem sklopu: posodobi tabelo Stanje spodaj, commit in push na `proga/livorno`. Uporabniku poroča ob koncu (s seznamom za preizkus na telefonu; največ ena slika) ali ob blokadi oziroma odločitvi, ki je res njegova; vprašanja gredo na stran Odločitve (`CLAUDE.md`, razdelek »Seje«). Pravila varčevanja: `CLAUDE.md`, »Varčevanje z žetoni«.
 
 Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gre na `main` prvi**; če je Hakone na `main` pred našim pull requestom, spoji svež `main` (spori bodo predvsem v `index.html`, `js/lang.js`, `README.md`, `docs/kazalo.md`, referencah v `tests/golden/`).
 
@@ -14,12 +14,13 @@ Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gr
 - Imena samo zemljepisna (Ardenza, Montenero, Savolano, Castellaccio, Romito, Calafuria, Antignano). Dirka se je imenovala po osebi: **tega imena ne uporabljaj nikjer**. Terasa ob morju v Ardenzi nosi ime osebe: dobi opisno ime (**Terasa ob morju**, *Seafront terrace*).
 - Okolica v svoji datoteki `js/world-livorno.js` (po vzoru `js/world-montreal.js`), ne v `js/world.js`.
 - Ob koncu (sklop 5) seja sama odpre pull request, ko so povezani testi lokalno zeleni. Na `main` samo s potrditvijo uporabnika.
+- (2. 11. 2026, kasneje) Vse v enem sklopu, ena seja (zgoraj). Orodje za podatke prog je ponovno uporabno (`tools/proga-podatki.py`; Hakone ga ne podvaja), v `CLAUDE.md` razdelek »Varčevanje z žetoni«; oboje gre v pull request za Livorno.
 
 ## Sklopi in stanje
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 1 | **Podatki:** potek proge (OSM), višine (Copernicus GLO-30), raba tal (OSM + ESA WorldCover), stavbe in drevesa do 60 m ob cesti; ta načrt | 2–3 h | narejen (2. 11. 2026): `tools/livorno/` (orodja, `livorno.json`, mreže PNG), ta načrt |
+| 1 | **Podatki:** potek proge (OSM), višine (Copernicus GLO-30), raba tal (OSM + ESA WorldCover), stavbe in drevesa do 60 m ob cesti; ta načrt | 2–3 h | narejen (2. 11. 2026): `tools/proga-podatki.py` + `tools/livorno/` (`config.json`, `livorno.json`, mreže PNG), ta načrt |
 | 2 | **Proga v igri:** `js/tracks/livorno.js` (črta, višine, širina, imena ovinkov, `hudSigns`, štart, 100 avtov), angleški prevod v `js/lang.js`, test `tests/livorno.test.js`; AI odpelje cel krog s 100 avti | 2–3 h | |
 | 3 | **Okolica do 60 m:** `js/world-livorno.js` (teren, morje in obala, pečine, vile in hiše, stolpi, gozd, zidovi, gledalci, štartni prostor) | 3–4 h | |
 | 4 | **Obremenitev telefona:** poenostavitve do mej (`tests/golden/perf.json`), reference (`npm run golden:update`), druge proge enako obremenjene | 1–2 h | |
@@ -60,16 +61,14 @@ Hkrati v drugi seji nastaja Hakone, Japonska (veja `proga/hakone`). **Livorno gr
 3. **Antignano:** Via del Littorale skozi naselje, Via dei Bagni mimo gradu na obalo, nato Viale di Antignano. Novejša obalna cesta južno od Antignana (danes nosi ime osebe) ni na progi.
 4. **Krožišče na Via di Montenero** (`s` ≈ 1880–1920): črta gre po južnem delu današnjega krožišča. Predlog za sklop 2: cesto skozi krožišče zravnaj (tako je bilo leta 1922), krožišče ostane le kot ploščad ob cesti ali odpade.
 5. **Današnje enosmerne ulice** (Via del Pastore, del Via di Montenero ob železnici, Via del Littorale pri Boccalu–Miramaru, Via dei Bagni) dirka vozi v svoji smeri, tudi proti današnji (ceste so bile zaprte). V igri ni prometa, samo dirka.
-6. **Imena:** samo zemljepisna ali opisna (seznam spodaj, »Pravna varnost«). OSM ima po osebah poimenovane: Rotondo, most ob startu, grad na Romitu, lokacijo ob lasnici na vzhodnem koncu Via di Quercianella (po vozniku), železniško postajo v Quercianelli, več ulic. Ta imena niso v nobeni datoteki repozitorija (v `livorno.json` gredo le zemljepisna imena cest in voda; seznam `GEO_ROADS`, `GEO_WATER` v `tools/livorno/data.py`).
+6. **Imena:** samo zemljepisna ali opisna (seznam spodaj, »Pravna varnost«). OSM ima po osebah poimenovane: Rotondo, most ob startu, grad na Romitu, lokacijo ob lasnici na vzhodnem koncu Via di Quercianella (po vozniku), železniško postajo v Quercianelli, več ulic. Ta imena niso v nobeni datoteki repozitorija (v `livorno.json` gredo le zemljepisna imena cest in voda: seznama `geoRoads`, `geoWater` v `tools/livorno/config.json`).
 
 ## Podatki (sklop 1): `tools/livorno/`
 
-Orodja (Python; `pip install --break-system-packages scipy rasterio`), surovi prenosi gredo v mapo zunaj repozitorija (npr. scratchpad seje):
+Splošno orodje `tools/proga-podatki.py` (navodila na vrhu; Python: `pip install --break-system-packages scipy rasterio`) z nastavitvami Livorna v `tools/livorno/config.json` (območje, točke poti, imena cest poti, dovoljena imena, znamenitosti, kraji). Surovi prenosi gredo v mapo zunaj repozitorija (npr. scratchpad seje):
 
 ```
-python3 -I tools/livorno/osm.py RAW     # OSM API v kosih 0,03° × 0,025° -> RAW/osm.json (overpass je blokiran)
-python3 -I tools/livorno/route.py RAW   # pot po točkah (ROUTE) po cestah -> RAW/route.json
-python3 -I tools/livorno/data.py RAW    # -> tools/livorno/livorno.json + dem.png, far.png, lc.png, lu.png, chm.png (~15 s)
+python3 -I tools/proga-podatki.py tools/livorno/config.json RAW   # osm (API v kosih), route, data -> tools/livorno/livorno.json + dem.png, far.png, lc.png, lu.png, chm.png (~30 s)
 ```
 
 **Koordinate:** metri, izhodišče = štartna črta (`lat0` 43.51202, `lon0` 10.3188882: obalna cesta na mostu čez Rio Ardenza), x proti vzhodu, z proti jugu (`Geo` iz `maketa-menija/orodja/geo_lib.py` z `rot` 0). Vsebina `livorno.json` (opis vsakega ključa je v njegovem `about`):
@@ -139,8 +138,9 @@ Raba tal do 150 m od ceste (WorldCover): drevesa 55 %, pozidano 22 %, voda 9 %, 
 
 ## Sklop 1: kaj je narejeno
 
-- **Potek proge** preverjen iz izvlečkov virov v spletnem iskanju (strani same niso dosegljive) in sestavljen iz današnjih cest v OSM (`tools/livorno/route.py`: 34 točk poti, med njimi najkrajša pot po cestah; prednost imajo ceste iz poročil). Odločitve 1–6 zgoraj. Dolžina 19,09 km namesto 22,5 km (razlaga zgoraj).
+- **Potek proge** preverjen iz izvlečkov virov v spletnem iskanju (strani same niso dosegljive) in sestavljen iz današnjih cest v OSM (`tools/livorno/config.json`: 35 točk poti, med njimi najkrajša pot po cestah; prednost imajo ceste iz poročil). Odločitve 1–6 zgoraj. Dolžina 19,09 km namesto 22,5 km (razlaga zgoraj).
 - **Višine:** Copernicus GLO-30 je površinski model (drevesa, strehe); tla pod njim iz višine krošenj (Meta/WRI, 1 m, prek AWS) in obrisov stavb (OSM). Profil ceste je gladek, strmine do 12 %, mostovi ravni.
 - **Okolica** do 60 m (stavbe, drevesa, zidovi), obala, pečine in železnica do 200–400 m, raba tal in krošnje do 150 m, teren 1,2 km in ±12 km; vse v `tools/livorno/livorno.json` (407 KB) in petih PNG (skupaj ~175 KB).
 - Pregled: slike plasti (pot, raba tal, stavbe, obala) so se ujemale; slik ni v repozitoriju.
-- Brez sprememb v `js/` in `css/` (igra je nespremenjena); `docs/kazalo.md` ima vrstici za `tools/livorno/` in ta načrt.
+- Brez sprememb v `js/` in `css/` (igra je nespremenjena); `docs/kazalo.md` ima vrstice za `tools/proga-podatki.py`, `tools/livorno/` in ta načrt.
+- Po odločitvi »vse v enem sklopu« so prvotne tri skripte postale splošno orodje `tools/proga-podatki.py` (krožne in odprte ceste, rastri iz več ploščic, nastavitve v JSON); izhod za Livorno je enak (višine se razlikujejo do 0,7 m, ker je okno terena zdaj enako oknu OSM). Razdelek »Varčevanje z žetoni« v `CLAUDE.md`. Seja za sklop 2, zagnana pred to odločitvijo, je bila ustavljena, preden je kaj spremenila.

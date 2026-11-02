@@ -36,8 +36,17 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 
 ## Seje: čakanje in vprašanja (odločitev uporabnika 31. 10. 2026)
 - Ko seja čaka na teste na GitHubu, se naroči na dogodke pull requesta (`subscribe_pr_activity`) in konča korak; GitHub jo zbudi. Rezervno preverjanje največ na 4 h; brez zank s `sleep` in brez preverjanj na nekaj minut.
-- Hkrati teče največ 5 sej, ki pišejo kodo (seje, ki samo čakajo na teste, se ne štejejo). Nove seje zaganja koordinacijska seja »VSE SEJE« ali veriga po svojem načrtu, ko je prostor.
+- Hkrati tečeta največ 2 seji, ki pišeta kodo (odločitev uporabnika 2. 11. 2026, prej 5; seje, ki samo čakajo na teste, se ne štejejo). Nove seje zaganja koordinacijska seja »VSE SEJE« ali veriga po svojem načrtu, ko je prostor.
 - Vsa vprašanja za uporabnika (tudi koordinacijske seje »VSE SEJE« in potrditve, npr. združitev na `main`) zapiši na stran Odločitve, z oštevilčenimi možnostmi, da uporabnik samo klikne izbiro (odločitev uporabnika 31. 10. 2026: »v prihodnje mi vedno delaj vprašanja tako, da samo kliknem izbiro«). V pogovoru sprašuj samo, če stran ni dosegljiva. Kako: stran Odločitve (https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV): `ArtifactData` `set` v zbirko `vprasanja`; id dokumenta je kratko ime (npr. `cp-215`), polja `seja` (naslov seje), `seja_id` (id te seje), `naslov`, `vprasanje`, `moznosti` (`[{k, opis}]`), `priporoceno` (`k`), po želji `slike` (`[{url, opis}]`; sliko naloži v shrambo strani z orodjem Artifact: `url` strani, `asset: true`) in `povezave` (`[{opis, url}]`), `stanje` »odprto«, `ustvarjeno` (čas ISO). Uporabnik tapne odgovor in stran ga pošlje seji kot sporočilo »Odgovor uporabnika s strani Odločitve …«; če pošiljanje ne uspe, ga posreduje »VSE SEJE« ob urnem pregledu (v dokumentu: `stanje` »odgovorjeno« ali »posredovano«, `odgovor`, `odgovor_opis`, `opomba`).
+
+## Varčevanje z žetoni (odločitev uporabnika 2. 11. 2026)
+- Ena tema na sejo. Seja dela samostojno in uporabniku poroča ob koncu ali ob blokadi oziroma odločitvi, ki je res njegova; vprašanja zbere v eno sporočilo (stran Odločitve).
+- Model po delu: Opus za zasnovo, nove proge in težke napake; Sonnet za opise, spore in manjše popravke (razen kjer je model določen drugje). Napor ostane, kot je določen v razdelku »Orodje za napake«.
+- Lokalno samo `npm run test:related`; uspešnih testov ne ponavljaj.
+- Odločitve zapiši enkrat v docs (načrt teme), drugje se samo skliči nanje.
+- Podatke nove prave proge pripravi z `tools/proga-podatki.py` (nastavitve v `tools/<id>/config.json`, navodila na vrhu orodja).
+- Slike samo, ko so potrebne.
+- Hkrati največ 2 vzporedni seji (razdelek »Seje« zgoraj).
 
 ## Kje je kaj (manj iskanja)
 - Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
