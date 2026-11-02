@@ -56,7 +56,7 @@
     if (o.hump) g.add(sph(W * 0.62, 7, 4, o.humpCol || col, 0, H + bh * 0.95, L * 0.22, { half: true, s: [1, 1, 1.4] }));
     if (o.mane) g.add(box(W * 0.35, bh * 0.5, L * 0.45, o.mane, 0, H + bh + 0.02, L * 0.2));
     if (o.shag) g.add(box(W * 1.08, bh * 0.45, L * 0.95, o.shag, 0, H - 0.2, 0));
-    [[W / 2 - lt / 2, L / 2 - lt], [-(W / 2 - lt / 2), L / 2 - lt], [W / 2 - lt / 2, -L / 2 + lt], [-(W / 2 - lt / 2), -L / 2 + lt]].forEach(([x, z], k) => g.add(part(box(lt, H, lt * 1.1, legs, x, H / 2, z), k + 1, [x, H, z])));   // (the legs: parts 1-4, swung from the top in the walk: LIVE)
+    [[W / 2 - lt / 2, L / 2 - lt], [-(W / 2 - lt / 2), L / 2 - lt], [W / 2 - lt / 2, -L / 2 + lt], [-(W / 2 - lt / 2), -L / 2 + lt]].forEach(([x, z], k) => g.add(part(tbox(lt * 0.6, lt, H, lt * 0.68, lt * 1.1, legs, x, 0, z), k + 1, [x, H, z])));   // (the legs, thinner to the hoof: parts 1-4, swung from the top in the walk: LIVE)
     const nl = o.neck != null ? o.neck : L * 0.45, ang = o.graze ? -0.75 : (o.nk != null ? o.nk : 0.8), hs = o.hs || W * 0.75;
     const n0 = [0, H + bh * 0.62, L / 2 - 0.05], n1 = [0, n0[1] + Math.sin(ang) * nl, n0[2] + Math.cos(ang) * nl];
     if (nl > 0.05) g.add(part(bar(n0, n1, W * 0.42, o.neckCol || col), 5, n0));
@@ -242,10 +242,13 @@
     macaque: { one: 0.1, herd: [4, 10], ys: 0.6, yp: 0.3 }, baboon: { herd: [4, 10], ys: 0.6, yp: 0.3 }, caiman: { one: 0.5, herd: [2, 4], ys: 0.7, yp: 0.3 },
   };
   const SOC_DEF = { one: 0.3, pair: 0.3, herd: [3, 5], ys: 0.6, yp: 0.3 };
+  const HERD_SP = (size) => 1.05 * size + 1.1;   // (a herd's spacing by its kind's size: loose, a body's length and more between them)
   // one company of kind: [[kind, scale], ...] (the first: the lead); force: 'one' | 'pair' | 'herd' (the scenes), n: the herd's size
   function company(kind, R, force, n) {
     const S = SOC[kind] || SOC_DEF, M = S.M || kind, F = S.F || kind, r = R();
-    const how = force || (r < (S.one || 0) ? 'one' : r < (S.one || 0) + (S.pair || 0) ? 'pair' : 'herd');
+    // (the user: »samo nekatere naj bodo skupaj, ostale pa različno po mapi«: a herd 40 % as often as the species alone would keep one; the rest alone or in pairs)
+    const o1 = S.one || 0, p1 = S.pair || 0, h1 = Math.max(0, 1 - o1 - p1) * (S.herd ? 0.4 : 0), sp = 1 - h1, one = o1 + p1 > 0 ? sp * o1 / (o1 + p1) : sp * 0.7;
+    const how = force || (r < one ? 'one' : r < sp ? 'pair' : 'herd');
     if (how === 'one') return [[S.F && R() < 0.45 ? F : M, 1]];
     if (how === 'pair') return [[M, 1], [F, F === M ? 0.93 : 1]];
     const h = S.herd || [3, 5], N = n || h[0] + Math.floor(R() * (h[1] - h[0] + 1)), out = [[S.lead || M, 1]];
@@ -299,10 +302,13 @@
 
   /* ---------------- the templates: a model baked once into arrays (its bottom faces dropped: no camera sees them) ---------------- */
   const TPL = new Map();
-  function tpl(kind) {
-    let t = TPL.get(kind); if (t) return t;
+  // graze: a beast's variant (true: the head down to the grass, false: up; undefined: as its species is); an animal is shaded from the ground
+  // up (its legs and belly darker, its back lighter: from above, where the camera sees it, it has a body)
+  function tpl(kind, graze) {
+    const f0 = SPECIES[kind], key = f0 && f0.o && graze != null ? kind + (graze ? '|g' : '|u') : kind;
+    let t = TPL.get(key); if (t) return t;
     const make = SPECIES[kind] || THINGS[kind]; if (!make) return null;
-    const g = make(); g.updateMatrixWorld(true);
+    const g = f0 && f0.o && graze != null ? f0({ graze }) : make(); g.updateMatrixWorld(true);
     const P = [], N = [], C = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
     g.traverse(m => {
       if (!m.isMesh) return;
@@ -314,16 +320,22 @@
       }
       if (geo !== m.geometry) geo.dispose();
     });
-    let lo = 1e9, hi = -1e9; for (let i = 0; i < P.length; i += 3) { lo = Math.min(lo, P[i], P[i + 2]); hi = Math.max(hi, P[i], P[i + 2]); }
-    t = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), size: hi - lo }; TPL.set(kind, t); return t;   // (size: the footprint's longer side, for the herds' spacing)
+    let lo = 1e9, hi = -1e9, top = 0.01; for (let i = 0; i < P.length; i += 3) { lo = Math.min(lo, P[i], P[i + 2]); hi = Math.max(hi, P[i], P[i + 2]); top = Math.max(top, P[i + 1]); }
+    if (f0) for (let i = 0; i < P.length; i += 3) { const k = 0.68 + 0.4 * Math.min(1, Math.max(0, P[i + 1] / top)); C[i] *= k; C[i + 1] *= k; C[i + 2] *= k; }
+    t = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), size: hi - lo, top }; TPL.set(key, t); return t;   // (size: the footprint's longer side, for the herds' spacing)
   }
   // a template into a chunk's geometry builder at (x, y, z), turned by yaw (THREE's rotation.y), scaled by s
-  function put(gb, t, x, y, z, yaw, s) {
-    const c = Math.cos(yaw), sn = Math.sin(yaw), P = t.P, N = t.N, C = t.C;
+  function put(gb, t, x, y, z, yaw, s, tint) {
+    const c = Math.cos(yaw), sn = Math.sin(yaw), P = t.P, N = t.N, C = t.C, k = tint || 1;
     for (let i = 0; i < P.length; i += 3) {
       const px = P[i] * s, pz = P[i + 2] * s, nx = N[i], nz = N[i + 2];
-      gb.P.push(x + px * c + pz * sn, y + P[i + 1] * s, z - px * sn + pz * c); gb.N.push(nx * c + nz * sn, N[i + 1], -nx * sn + nz * c); gb.C.push(C[i], C[i + 1], C[i + 2]);
+      gb.P.push(x + px * c + pz * sn, y + P[i + 1] * s, z - px * sn + pz * c); gb.N.push(nx * c + nz * sn, N[i + 1], -nx * sn + nz * c); gb.C.push(C[i] * k, C[i + 1] * k, C[i + 2] * k);
     }
+  }
+  function blob(gb, gH, x, z, r, yaw, el) {   // an animal's shadow on the ground under it: an octagon, longer along the animal (el), draped on the ground
+    const c = Math.cos(yaw), sn = Math.sin(yaw), at = (lx, lz) => { const wx = x + lx * c + lz * sn, wz = z - lx * sn + lz * c, h = gH(wx, wz); return [wx, (Number.isFinite(h) ? h : 0) + 0.035, wz]; };
+    const mid = at(0, 0); for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU;
+      gb.triUp(mid, at(Math.cos(a1) * r, Math.sin(a1) * r * el), at(Math.cos(a0) * r, Math.sin(a0) * r * el), [SHADE, SHADE, SHADE]); }
   }
 
   /* ---------------- the live ones (LIVE): an animal alone walks to and fro or grazes (the user: »nekatere živali pa naj bodo same ter se
@@ -332,6 +344,7 @@
      little from the neck's top); the vertex shader moves them (uA: the gait's phase, the legs' swing, the neck's bow), World.lifeStep places
      it (World.update, every frame). Kangaroos bound; a bear or a wombat walks as one piece. From SREDNJA up (LOD 'animals', as the worlds'
      other animals); the shadow is the standing pose's ---------------- */
+  const SHADE = [0.2, 0.21, 0.17];   // (an animal's shadow on the ground)
   const TPLL = new Map();
   function tplLive(kind) {
     if (TPLL.has(kind)) return TPLL.get(kind);
@@ -350,6 +363,10 @@
       }
       if (geo !== m.geometry) geo.dispose();
     });
+    let lo = 1e9, hi = -1e9, top = 0.01; for (let i = 0; i < P.length; i += 3) { lo = Math.min(lo, P[i], P[i + 2]); hi = Math.max(hi, P[i], P[i + 2]); top = Math.max(top, P[i + 1]); }
+    for (let i = 0; i < P.length; i += 3) { const k = 0.68 + 0.4 * Math.min(1, Math.max(0, P[i + 1] / top)); C[i] *= k; C[i + 1] *= k; C[i + 2] *= k; }   // (shaded from the ground up, as tpl)
+    const br = (hi - lo) * 0.28;   // (its shadow on the ground under it: an octagon, longer along the animal; it goes with it)
+    for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU; for (const [cx, cz] of [[0, 0], [Math.cos(a1) * br, Math.sin(a1) * br * 1.7], [Math.cos(a0) * br, Math.sin(a0) * br * 1.7]]) { P.push(cx, 0.03, cz); N.push(0, 1, 0); C.push(...SHADE); J.push(0, 0, 0, 0); } }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P), 3)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(N), 3));
     geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3)); geo.setAttribute('aJ', new THREE.BufferAttribute(new Float32Array(J), 4));
@@ -558,16 +575,20 @@
     }
     // a company round (x, z): the lead in the middle, the others on a sunflower spiral, each turned its own way about yaw; liveN of them
     // (not the lead) walk or graze; returns the herd's radius
-    function herdAt(g, crew, x, z, yaw, liveN) {
-      const sp = 0.55 * ((tpl(crew[0][0]) || { size: 1 }).size) + 0.45; let lv = 0;
+    function herdAt(g, crew, x, z, yaw, liveN, tight) {
+      const sp = HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * (tight || 1); let lv = 0;
       crew.forEach(([kk, sc], k) => {
-        const d = k ? sp * Math.sqrt(k) * 0.95 : 0, an = k * 2.39996 + yaw * 0.37, ax = x + Math.cos(an) * d, az = z + Math.sin(an) * d, ah = gH(ax, az);
+        const d = k ? sp * Math.sqrt(k) * (0.8 + R() * 0.4) : 0, an = k * 2.39996 + yaw * 0.37 + (R() - 0.5) * 0.6, ax = x + Math.cos(an) * d, az = z + Math.sin(an) * d, ah = gH(ax, az);
         if (!Number.isFinite(ah)) return;
         const ay = yaw + (R() - 0.5) * 1.8;
         if (k && lv < (liveN || 0) && goLive(kk, sc, ax, az, ay)) { lv++; return; }
-        const t = tpl(kk); if (!t) return; put(g, t, ax, ah - 0.02, az, ay, sc * 1.15); count(kk);
+        stand(g, kk, sc, ax, ah, az, ay, k ? R() < 0.45 : R() < 0.15);
       });
-      return sp * Math.sqrt(crew.length) * 0.95;
+      return sp * Math.sqrt(crew.length);
+    }
+    function stand(g, kk, sc, x, h, z, yaw, graze) {   // one standing still: its head down to the grass or up, its own shade, its shadow under it
+      const t = tpl(kk, SPECIES[kk] && SPECIES[kk].o ? graze : undefined); if (!t) return; const k = sc * 1.15;
+      blob(g, gH, x, z, t.size * k * 0.28, yaw, 1.7); put(g, t, x, h - 0.02, z, yaw, k, 0.9 + R() * 0.16); count(kk);
     }
     const tally = (crew) => { stats.sizes[crew.length === 1 ? 'one' : crew.length === 2 ? 'pair' : 'herd']++; };
 
@@ -592,22 +613,22 @@
         if (Sc.pond) { const [px, pz] = P(-2.5, 1.5); pond(g, gH, px, pz, 2.6, R); }
         if (Sc.thing) { const t = tpl(Sc.thing), [px, pz] = P(2.5, 3.5), ph = gH(px, pz); if (t && Number.isFinite(ph)) { put(g, t, px, ph - 0.05, pz, toRoad + (R() - 0.5) * 0.4, 1); stats.things++; } }
         const crew = company(Sc.kind, R, 'herd', Sc.n); tally(crew);
-        herdAt(g, crew, x, z, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0); stats.groups++;
-        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(-6.5, 2.5); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0); stats.groups++; }
+        herdAt(g, crew, x, z, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, 0.6); stats.groups++;   // (the scene's herd keeps together)
+        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(-7.5, 3); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, 0.6); stats.groups++; }
         placed.push([x, z, 13]); stats.scene = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z };
         stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, b, Sc.kind]);
       }
     }
 
     // 2) the glades along the road: a thing of the place, or animals as their kind keeps company (alone ones walk or graze)
-    const step = (Z.city ? 110 : 44) / LOD.dens;   // (a try every ~44 m of road: in the woods a glade every ~70-100 m; the lower tiers fewer)
+    const step = (Z.city ? 100 : 36) / LOD.dens;   // (a try every ~36 m of road: a spot every ~50-80 m, most of them one animal or two; the lower tiers fewer)
     let nStep = 0;
     for (let s = L0 + R() * step; s < L1; s += step * (0.7 + R() * 0.6), nStep++) for (let tr = 0; tr < 4; tr++) {   // (up to four tries at each step: either side, near or farther)
-      const deep = nStep % 3 === 2;   // (every third: deep in the woods, 30-70 m in: seen from the TV cameras, the replays and the flyover)
+      const deep = false;   // (the user: »samo na vidnih mestih«: none deep in the woods any more, all near the road where the chase camera sees them)
       const i = T.idx(((s + (tr ? (R() - 0.5) * step * 0.6 : 0)) % T.len + T.len) % T.len), side = R() < 0.5 ? -1 : 1, bar = side > 0 ? T.br[i] : T.bl[i];
-      const b = deep ? 30 + R() * 40 : 3.5 + Math.pow(R(), 1.5) * 24, off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;   // (near the road: the chase camera looks steeply down, a glade deep in the woods hides under the crowns)
+      const b = deep ? 30 + R() * 40 : 3.5 + Math.pow(R(), 1.3) * 16, off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;   // (near the road: the chase camera looks steeply down, a glade deep in the woods hides under the crowns)
       const wantThing = Z.t.length && R() < 0.34, kind = wantThing ? Z.t[Math.floor(R() * Z.t.length)] : Z.a[Math.floor(R() * Z.a.length)];
-      const crew = wantThing ? null : company(kind, R), hr = crew ? (0.55 * ((tpl(crew[0][0]) || { size: 1 }).size) + 0.45) * Math.sqrt(crew.length) * 0.95 : 0;
+      const crew = wantThing ? null : company(kind, R), hr = crew ? HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * Math.sqrt(crew.length) : 0;
       const alone = crew && crew.length === 1, rr = wantThing ? ROOM[kind] || 3 : Math.max(alone ? 5.2 : 4.4, hr + 2.4);
       if (cl(x, z) < rr + 2.5) continue;   // (not on another part of the road, its verges or barriers)
       const h = gH(x, z); if (!Number.isFinite(h) || slope(x, z, rr * 0.7) > (wantThing ? 0.32 : 0.55) || !free(x, z, rr)) continue;
@@ -625,7 +646,7 @@
       else {
         tally(crew);
         const walkYaw = Math.atan2(T.tx[i], T.tz[i]) + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 1.0;   // (one alone walks more or less along the road: the chase camera sees it go)
-        if (!(alone && goLive(crew[0][0], crew[0][1], x, z, walkYaw))) herdAt(g, crew, x, z, yaw, 0);
+        if (!(alone && R() < 0.6 && goLive(crew[0][0], crew[0][1], x, z, walkYaw))) herdAt(g, crew, x, z, yaw, 0);   // (three in five of those alone walk or graze; the others stand)
         stats.groups++;
       }
       placed.push([x, z, rr]); stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, Math.round(b), kind]);   // (where: metres after the start, side, metres beyond the barrier, what)

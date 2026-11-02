@@ -830,10 +830,10 @@
       for (const A of P.areas) { if (A.t !== 5) continue; const poly = A.poly, n = poly.length; let bl = 0, dx = 1, dz = 0, cx = 0, cz = 0;
         for (let k = 0; k < n; k++) { const [ax, az] = poly[k], [bx, bz] = poly[(k + 1) % n], l = Math.hypot(bx - ax, bz - az); cx += ax / n; cz += az / n; if (l > bl) { bl = l; dx = (bx - ax) / l; dz = (bz - az) / l; } }
         let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const [x, z] of poly) { const a2 = (x - cx) * dx + (z - cz) * dz, b2 = -(x - cx) * dz + (z - cz) * dx; u0 = Math.min(u0, a2); u1 = Math.max(u1, a2); v0 = Math.min(v0, b2); v1 = Math.max(v1, b2); }
-        for (let v = v0 + 2.8, row = 0; v < v1 - 2.4; v += row % 2 ? 11.2 : 5.2, row++) for (let u = u0 + 1.6; u < u1 - 1.2; u += 2.6) {   // (a bay 2.6 m wide, 5.2 m deep; a 6 m aisle after every second row)
+        for (let v = v0 + 2.9, row = 0; v < v1 - 2.4; v += row % 2 ? 11.6 : 5.8, row++) for (let u = u0 + 1.7; u < u1 - 1.2; u += 2.9) {   // (a bay 2.9 m wide, 5.8 m deep; a 6 m aisle after every second row: not too close)
           const x = cx + dx * u - dz * v, z = cz + dz * u + dx * v; if (crH(x, z, 71) > 0.68 || !inPoly(poly, x, z) || polyDist(poly, x, z) < 2.3 || onBld(x, z) || excluded(x, z)) continue;
           const nn = hjNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
-          CARS.add(x, hjGround(x, z), z, -Math.atan2(dx, -dz) + (crH(x, z, 72) - 0.5) * 0.08 + (crH(x, z, 73) < 0.5 ? Math.PI : 0), 1, 1, PAL[Math.floor(crH(x, z, 74) * PAL.length)]); nCars++; }
+          CARS.add(x, hjGround(x, z), z, -Math.atan2(dx, -dz) + (crH(x, z, 72) - 0.5) * 0.04 + (row % 2 ? Math.PI : 0), 0.95 + 0.08 * crH(x, z, 81), 0.92 + 0.2 * crH(x, z, 82), PAL[Math.floor(crH(x, z, 74) * PAL.length)]); nCars++; }   // (each row turned the same way, towards its aisle)
       }
       CARS.addTo(root, true);
     }

@@ -221,7 +221,7 @@ const World = (function () {
   // ground; some with a black roof, roof rails, a sunroof. Its shape by kind (0 saloon, 1 hatchback, 2 estate, 3 SUV, 4 van, 5 pick-up with its
   // open bed), else by the place's hash (no draws from a world's random stream). Front +x along rot, as box(); on the ground at (x, y, z).
   const PC_GLASS = [0.13, 0.16, 0.21], PC_SCREEN = [0.38, 0.46, 0.55], PC_REAR = [0.27, 0.33, 0.41], PC_TYRE = [0.08, 0.08, 0.09], PC_RIM = [0.6, 0.61, 0.64], PC_DARK = [0.17, 0.18, 0.2],
-    PC_LAMP = [0.95, 0.92, 0.8], PC_TAIL = [0.72, 0.08, 0.06], PC_SHADOW = [0.11, 0.11, 0.115], PC_BLACK = [0.1, 0.1, 0.11];
+    PC_LAMP = [0.95, 0.92, 0.8], PC_TAIL = [0.72, 0.08, 0.06], PC_SHADOW = [0.11, 0.11, 0.115], PC_BLACK = [0.1, 0.1, 0.11], PC_PLATE = [0.86, 0.87, 0.84];
   // lite: the car parks' instanced car (hundreds in view, one shape, a colour each): the same body and glasshouse, the wheels' outer faces, no
   // rims, bumpers, lights or shadow (~170 vertices, not ~330); what is not paint has its colour given negative (-c - 0.002), which the car
   // parks' material (carParkMat) keeps, not tinted by the instance's colour
@@ -238,13 +238,13 @@ const World = (function () {
     else if (k === 4) { gb = [-hx + 0.05, hx - 0.5]; gt = [-hx + 0.05, hx - 0.85]; h = 0.85; }
     else { gb = [-0.35, 1.25]; gt = [-0.3, 0.78]; h = 0.6; }
     // the body: its outline round the corners (seen from above, counter-clockwise), the glasshouse's feet on the long sides; its top's height along x
-    const cf = 0.26, cr = lite ? 0 : 0.17, g0 = Math.max(gb[0], -hx + cr + 0.02), g1 = gb[1], dF = k === 4 ? 0.07 : k === 5 ? 0.1 : 0.15, dR = k === 0 ? 0.08 : k === 5 ? 0 : 0.03;
+    const cf = 0.26, cr = 0.17, g0 = Math.max(gb[0], -hx + cr + 0.02), g1 = gb[1], dF = k === 4 ? 0.07 : k === 5 ? 0.1 : 0.15, dR = k === 0 ? 0.08 : k === 5 ? 0 : 0.03;
     const yT = (lx) => lx > g1 ? yt - dF * (lx - g1) / (hx - g1) : lx < g0 ? yt - dR * (g0 - lx) / (g0 + hx) : yt;
     const O = [[hx, -(hw - cf)], [hx, hw - cf], [hx - cf, hw], [g1, hw], [g0, hw], [-hx + cr, hw], [-hx, hw - cr], [-hx, -(hw - cr)], [-hx + cr, -hw], [g0, -hw], [g1, -hw], [hx - cf, -hw]]
       .filter((p, i, a) => { const q = a[(i + a.length - 1) % a.length]; return Math.hypot(p[0] - q[0], p[1] - q[1]) > 0.01; });
-    const mid = P(0, (yb + yt) / 2, 0);
+    const mid = P(0, (yb + yt) / 2, 0), low = [side[0] * 0.7, side[1] * 0.7, side[2] * 0.7], sc = [low, low, side, side];   // (the sides darker below: rounded)
     for (let i = 0; i < O.length; i++) { const a = O[i], b2 = O[(i + 1) % O.length];   // (the sides)
-      g.quadO(P(a[0], yb, a[1]), P(b2[0], yb, b2[1]), P(b2[0], yT(b2[0]), b2[1]), P(a[0], yT(a[0]), a[1]), side, mid); }
+      g.quadO(P(a[0], yb, a[1]), P(b2[0], yb, b2[1]), P(b2[0], yT(b2[0]), b2[1]), P(a[0], yT(a[0]), a[1]), side, mid, null, sc); }
     const fan = (pts, c0) => { const cp = P(c0, yT(c0) - 0.001, 0), below = P(c0, yb, 0); for (let i = 0; i + 1 < pts.length; i++) g.triO(P(pts[i][0], yT(pts[i][0]), pts[i][1]), P(pts[i + 1][0], yT(pts[i + 1][0]), pts[i + 1][1]), cp, top, below); };
     fan(O.filter(p => p[0] >= g1 - 1e-6).sort((p, q) => Math.atan2(p[1], p[0] - g1) - Math.atan2(q[1], q[0] - g1)), g1);   // (the bonnet)
     fan(O.filter(p => p[0] <= g0 + 1e-6).sort((p, q) => Math.atan2(p[1], -(p[0] - g0)) - Math.atan2(q[1], -(q[0] - g0))), g0);   // (the boot)
@@ -266,13 +266,14 @@ const World = (function () {
         for (const lz of [-(hw - 0.34), hw - 0.34]) g.quadO(P(fx, ly - 0.2, lz - 0.2), P(fx, ly - 0.2, lz + 0.2), P(fx, ly - 0.06, lz + 0.2), P(fx, ly - 0.06, lz - 0.2), lc, P(0, ly - 0.13, lz));
       }
       g.quadO(P(-hx - 0.04, 0.015, -hw - 0.04), P(hx + 0.04, 0.015, -hw - 0.04), P(hx + 0.04, 0.015, hw + 0.04), P(-hx - 0.04, 0.015, hw + 0.04), PC_SHADOW, P(0, -1, 0));   // (its shadow on the ground, under it)
+      for (const sd of [1, -1]) { const px = sd * (hx + 0.066); g.quadO(P(px, yb - 0.12, -0.26), P(px, yb - 0.12, 0.26), P(px, yb - 0.01, 0.26), P(px, yb - 0.01, -0.26), PC_PLATE, P(0, yb - 0.06, 0)); }   // (the number plates: blank)
     }
     if (k === 5) { for (const sd of [1, -1]) box(g, ...P(-hx + 1.4, 0, sd * (hw - 0.05)).map((v, i) => i === 1 ? y + yt : v), 2.6, 0.3, 0.1, rot, side, top, true); box(g, ...P(-hx + 0.06, 0, 0).map((v, i) => i === 1 ? y + yt : v), 0.1, 0.3, W - 0.2, rot, side, top, true); }   // (the pick-up's bed: its walls)
     // the glasshouse: the windscreen and the rear window lighter than the side windows; the roof in the paint, or black
     const wb = hw - 0.07, wt = hw - 0.22, y1 = yt + h, ins = P((gb[0] + gb[1]) / 2, yt + h * 0.4, 0), roof = !lite && hv < 0.22 ? PC_BLACK : top;
     const Bq = [P(gb[0], yt, -wb), P(gb[1], yt, -wb), P(gb[1], yt, wb), P(gb[0], yt, wb)], Tq = [P(gt[0], y1, -wt), P(gt[1], y1, -wt), P(gt[1], y1, wt), P(gt[0], y1, wt)];
-    const gl = [own(PC_GLASS), own(PC_SCREEN), own(PC_GLASS), own(PC_REAR)];   // (the side, the windscreen, the side, the rear window)
-    for (let e = 0; e < 4; e++) { const f = (e + 1) % 4; g.quadO(Bq[e], Bq[f], Tq[f], Tq[e], gl[e], ins); }
+    const gl = [PC_GLASS, PC_SCREEN, PC_GLASS, PC_REAR], dim = (cc, k) => own([cc[0] * k, cc[1] * k, cc[2] * k]);   // (the side, the windscreen, the side, the rear window: lighter towards the top)
+    for (let e = 0; e < 4; e++) { const f = (e + 1) % 4, lo2 = dim(gl[e], e % 2 ? 0.7 : 0.85), hi2 = dim(gl[e], e % 2 ? 1.15 : 1.05); g.quadO(Bq[e], Bq[f], Tq[f], Tq[e], lo2, ins, null, [lo2, lo2, hi2, hi2]); }
     g.quadO(Tq[0], Tq[1], Tq[2], Tq[3], roof, P(0, 0, 0));
     if (!lite && (k === 2 || k === 3 || k === 4)) for (const sd of [1, -1]) { const zr = sd * (wt - 0.08); g.quadO(P(gt[0] + 0.1, y1 + 0.05, zr - 0.035), P(gt[1] - 0.05, y1 + 0.05, zr - 0.035), P(gt[1] - 0.05, y1 + 0.05, zr + 0.035), P(gt[0] + 0.1, y1 + 0.05, zr + 0.035), PC_DARK, P(0, 0, 0)); }   // (roof rails)
     else if (!lite && (k === 0 || k === 1) && hv > 0.62) { const sx0 = gt[0] + (gt[1] - gt[0]) * 0.45, sx1 = gt[1] - 0.06; g.quadO(P(sx0, y1 + 0.006, -wt + 0.18), P(sx1, y1 + 0.006, -wt + 0.18), P(sx1, y1 + 0.006, wt - 0.18), P(sx0, y1 + 0.006, wt - 0.18), PC_GLASS, P(0, 0, 0)); }   // (a sunroof)

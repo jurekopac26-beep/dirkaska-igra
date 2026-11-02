@@ -50,7 +50,7 @@ try {
     return out;
   });
   T.check('the parked car: six kinds, each under 400 vertices', car.slice(0, 6).every(n => n > 100 && n < 400), car.slice(0, 6).join(', '));
-  T.check('the car parks\' lite car: under 150 vertices', car[6] > 60 && car[6] < 150, String(car[6]));
+  T.check('the car parks\' lite car: under 200 vertices (the full one\'s outline and glasshouse, no rims, bumpers, lights or shadow)', car[6] > 60 && car[6] < 200 && car[6] < Math.min(...car.slice(0, 6)), String(car[6]));
   T.check('no page errors', !errors.length, errors.slice(0, 4).join(' | '));
 } finally {
   await browser.close(); await srv.close();

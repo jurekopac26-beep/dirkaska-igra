@@ -2275,11 +2275,11 @@
         }
         if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
         const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), c = Math.cos(rot), sn = Math.sin(rot);
-        for (let r = -1; r <= 1; r++) for (let q = -2; q <= 2; q++) {   // three rows of five
+        for (const r of [-1, 1]) for (let q = -2; q <= 2; q++) {   // two rows of five facing an aisle (the user: »avti so sedaj parkirani preveč blizu in zgleda kot da so zaleteni«: 3 m bays, a 5.4 m aisle, 1.8 m behind them to the next lot's row, all in a row turned the same way)
           if (R() < 0.3) continue;
-          const a = r * 5.4 + (R() - 0.5) * 0.3, b = q * 2.8 + (R() - 0.5) * 0.3, px = x + c * a - sn * b, pz = z + sn * a + c * b;
+          const a = r * 4.9 + (R() - 0.5) * 0.12, b = q * 3.0 + (R() - 0.5) * 0.16, px = x + c * a - sn * b, pz = z + sn * a + c * b;
           if (excluded(px, pz)) continue;
-          cars.add(px, nrGround(px, pz) - 0.05, pz, -(rot + Math.PI / 2 + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.08), 0.93 + 0.14 * crH(px, pz, 81), 0.92 + 0.2 * crH(px, pz, 82), ccols[Math.floor(R() * ccols.length)]); nCars++;   // (a little longer or shorter, lower or taller: not all the same car)
+          cars.add(px, nrGround(px, pz) - 0.05, pz, -(rot + (r > 0 ? Math.PI : 0) + (R() - 0.5) * 0.04), 0.95 + 0.08 * crH(px, pz, 81), 0.92 + 0.2 * crH(px, pz, 82), ccols[Math.floor(R() * ccols.length)]); nCars++;   // (lengthwise across the row, side by side in it: before, the old rows had them nose to tail 2.8 m apart, into each other; a little longer or shorter, lower or taller)
         }
         exclPush(x, z, 11);
       }
