@@ -197,9 +197,9 @@ try {
     T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order; the retired model not in it (the LEV S once)',
       car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni' && car.kids.filter(k => k === 'mali:LEV S').length === 1,
       JSON.stringify(car.kids.slice(0, 8)));
-    T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 €), a tick on the one in the garage',
-      car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /€|✓/.test(t)), JSON.stringify(car.chips));
-    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 €, all three levels 23.000 €), the MRAVLJA (5.000 €) no cheaper than it (×1), the TITAN ×1.2 (4.800 €), ŠKORPIJON H ×2 (8.000 €; all three levels 46.000 €)',
+    T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 🪙), a tick on the one in the garage',
+      car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /🪙|✓/.test(t)), JSON.stringify(car.chips));
+    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 coins, all three levels 23.000 coins), the MRAVLJA (5.000 coins) no cheaper than it (×1), the TITAN ×1.2 (4.800 coins), ŠKORPIJON H ×2 (8.000 coins; all three levels 46.000 coins)',
       /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /4\.800/.test(car.titan[1]) && /4\.000/.test(car.mravlja[1]) && /23\.000/.test(car.mravlja[3]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
       JSON.stringify({ pico: car.pico, titan: car.titan, mravlja: car.mravlja, skorpijon: car.skorpijon }));
     T.check('no page errors (390×844)', !errors.length, errors.slice(0, 5).join(' | '));

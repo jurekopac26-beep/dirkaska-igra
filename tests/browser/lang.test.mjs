@@ -77,8 +77,8 @@ try {
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
   const sr = await slovene();
-  T.check('career in English, the money as €10,000; the garage under the categories (Small cars … Specials), the prices as €6,000', /^In the career you earn money/.test(r5.info) && /You start with €10,000 and the PICO TURBO\./.test(r5.info) && r5.money === '€10,000' && r5.toggle === 'Start career' &&
-    r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^€\d+,\d{3}$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
+  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the PICO TURBO\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
+    r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^\d+,\d{3}\u00a0🪙$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
   await act('to-title'); await page.waitForTimeout(150); await act('to-online'); await page.waitForTimeout(250);
   const o5 = await page.evaluate(() => document.querySelector('#s-online').innerText);
   const so = await slovene();

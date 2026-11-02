@@ -3077,22 +3077,29 @@ const Render = (function () {
     return i;
   }
   let oldMk = null;   // the stored runs' mesh (setOldMarks)
-  function setOldMarks(runs) {
+  const MK_FR = [1, 0.55, 0.1];   // (a friend's runs: orange, as the friend's ghost)
+  // the stored runs (newest first) and a friend's (fr, a shared ghost's or challenge's: orange; at most half of MK_MAX when the player's own
+  // are there too), in the one mesh, one draw call
+  function setOldMarks(runs, fr) {
     if (oldMk) { scene.remove(oldMk); oldMk.geometry.dispose(); oldMk.material.dispose(); oldMk = null; }
-    if (!runs || !runs.length) return 0;
-    const quads = runs.reduce((a, u) => a + (u instanceof Uint8Array ? Math.floor(u.length / 8) : 0), 0), max = Math.min(MK_MAX, quads);
+    const own = runs || [], frs = fr || [];
+    if (!own.length && !frs.length) return 0;
+    const qOf = (L) => L.reduce((a, u) => a + (u instanceof Uint8Array ? Math.floor(u.length / 8) : 0), 0), qO = qOf(own), qF = qOf(frs);
+    const maxF = Math.min(qF, qO ? MK_MAX >> 1 : MK_MAX), maxO = Math.min(qO, MK_MAX - maxF), max = maxO + maxF;
     if (!max) return 0;
     const pos = new Float32Array(max * 12), col = new Uint8Array(max * 16);
-    const put = (i, x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1, off, k) => {
+    const put = (i, x0, z0, x1, z1, wd, r, g, b, a0, a1, y0, y1, off, k, f) => {
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz) || 1, nx = -dz / l * wd, nz = dx / l * wd, o = i * 12, ya = 0.03 + y0, yc = 0.03 + y1;
       pos[o] = x0 - nx; pos[o + 1] = ya; pos[o + 2] = z0 - nz; pos[o + 3] = x0 + nx; pos[o + 4] = ya; pos[o + 5] = z0 + nz;
       pos[o + 6] = x1 - nx; pos[o + 7] = yc; pos[o + 8] = z1 - nz; pos[o + 9] = x1 + nx; pos[o + 10] = yc; pos[o + 11] = z1 + nz;
       const A = mkAge(k, off), q = i * 16;
-      if (!off && r + g + b < 0.3) { const gr = mkGrey(k); r = lerp(r, MK_GREY[0], gr); g = lerp(g, MK_GREY[1], gr); b = lerp(b, MK_GREY[2], gr); }   // (the rubber, not the ruts of a gravel road)
+      if (f) { r = lerp(r, MK_FR[0], 0.75); g = lerp(g, MK_FR[1], 0.75); b = lerp(b, MK_FR[2], 0.75); }   // (a friend's: orange)
+      else if (!off && r + g + b < 0.3) { const gr = mkGrey(k); r = lerp(r, MK_GREY[0], gr); g = lerp(g, MK_GREY[1], gr); b = lerp(b, MK_GREY[2], gr); }   // (the rubber, not the ruts of a gravel road)
       for (let c = 0; c < 4; c++) { col[q + c * 4] = r * 255; col[q + c * 4 + 1] = g * 255; col[q + c * 4 + 2] = b * 255; col[q + c * 4 + 3] = (c < 2 ? a0 : a1) * A * 255; }
     };
     let n = 0;
-    for (let k = 0; k < runs.length && n < max; k++) n = marksUnpack(runs[k], (i, ...a) => put(i, ...a, k), n, max);
+    for (let k = 0; k < own.length && n < maxO; k++) n = marksUnpack(own[k], (i, ...a) => put(i, ...a, k, false), n, maxO);
+    for (let k = 0; k < frs.length && n < max; k++) n = marksUnpack(frs[k], (i, ...a) => put(i, ...a, k, true), n, max);
     if (!n) return 0;
     const idx = new (n * 4 > 65535 ? Uint32Array : Uint16Array)(n * 6);
     for (let i = 0; i < n; i++) { const b = i * 4, o = i * 6; idx[o] = b; idx[o + 1] = b + 2; idx[o + 2] = b + 1; idx[o + 3] = b + 1; idx[o + 4] = b + 2; idx[o + 5] = b + 3; }

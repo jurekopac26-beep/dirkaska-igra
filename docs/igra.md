@@ -17,6 +17,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Radio ekipe in strategija](#radio-ekipe-in-strategija)
 - [Prvenstvo](#prvenstvo)
 - [Kariera](#kariera)
+- [Prvič na cesti (prvi zagon)](#prvič-na-cesti-prvi-zagon)
 - [Šola vožnje](#šola-vožnje)
 - [Idealna linija za začetnike](#idealna-linija-za-začetnike)
 - [Tekmeci z značajem](#tekmeci-z-značajem)
@@ -36,6 +37,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Duh najboljše vožnje](#duh-najboljše-vožnje)
 - [Sledi zadnjih voženj (kronometer)](#sledi-zadnjih-voženj-kronometer)
 - [Deljenje duha in profila](#deljenje-duha-in-profila)
+- [Shranjevanje napredka](#shranjevanje-napredka)
 - [Izziv s povezavo](#izziv-s-povezavo)
 - [Igralni plošček](#igralni-plošček)
 - [Kontrole po meri in volan s pedali](#kontrole-po-meri-in-volan-s-pedali)
@@ -229,12 +231,22 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Kariera
 
-Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
+Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 kovančkov in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 🪙«). Denar v igri so **kovančki** (🪙), evrov ni.
 
-- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 € … in od 13. mesta naprej 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
-- **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
+- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 kovančkov, zadnji 300 kovančkov; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 kovančkov … in od 13. mesta naprej 300 kovančkov). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 kovančkov, za prvo štartno mesto v kvalifikacijah 1.000 kovančkov. Naslov prvaka prinese 20.000 kovančkov, 2. mesto v prvenstvu 10.000 kovančkov in 3. mesto 6.000 kovančkov (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 kovančkov, 3.000 kovančkov ali 1.500 kovančkov za zlato, srebrno ali bronasto medaljo, 2.000 kovančkov za osebni rekord, sicer 500 kovančkov. Nagrada piše na zaslonu z rezultati.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 kovančkov za kart MRAVLJA do 150.000 kovančkov za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 kovančkov, RAKETA 16V 14.000 kovančkov, LEV S 20.000 kovančkov, KAZE RS 30.000 kovančkov, VIHAR V8 40.000 kovančkov, TITAN 60.000 kovančkov, FORMULA ORKAN 90.000 kovančkov, TAIFUN LM 110.000 kovančkov; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Nadgradnje:** za vozila do 50.000 kovančkov stane vsaka stopnja 4.000 kovančkov, 7.000 kovančkov ali 12.000 kovančkov, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 kovančkov naprej; zaokroženo na 100 kovančkov). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
+
+## Prvič na cesti (prvi zagon)
+
+Nov igralec ob prvem zagonu igre (brskalnik, ki od igre še nima shranjenega ničesar, tudi profila garaže ne; navaden naslov brez dodatkov, kot je hitri vstop ali povezava z izzivom) najprej vidi zaslon **Prvič na cesti**:
+
+- **Upravljanje:** tri velike izbire, **Tipke** (izbrane), **Volan** in **Nagib**, vsaka s kratkim opisom; če je povezan igralni plošček, piše, da se vozi tudi z njim. Izbira je nastavitev Upravljanje (pozneje v Nastavitvah). **Preskoči** gre na naslovnico.
+- **Poskusna vožnja:** 45 sekund sam na progi Štajerska, Avstrija (široka proga z izletnimi conami) v svojem avtu, brez poškodb, na suhem, z idealno linijo; zgoraj piše POSKUSNA VOŽNJA · še N s, ob štartu sporočilo RDEČE NA CESTI: ZAVIRAJ. Nato **Kako je šlo?** (prevoženi km, najvišja hitrost, upravljanje) z gumbi **Drugo upravljanje**, **Še enkrat** in **Prva dirka**.
+- **Prva dirka:** Štajerska, dva kroga, pet tekmecev na težavnosti Lahka, ti s 4. mesta, na suhem, z idealno linijo, brez goriva in okvar. Od tu naprej se prvi zagon ne pokaže več sam (`tdgp-prvi` `1`; enako po Preskoči). Če igro zapreš na zaslonu Prvič na cesti ali med poskusno vožnjo, se ob naslednjem zagonu pokaže znova (`tdgp-prvi` `0`). Rezultati prve dirke imajo vrstico **Prva dirka je za tabo. Kaj zdaj?** z gumbi **Šola vožnje**, **Proge** (naslovnica) in **Kariera**.
+
+V **Nastavitvah** je pod Upravljanjem vrstica **Prvič na cesti** z gumbom **Pokaži znova**.
 
 ## Šola vožnje
 
@@ -394,19 +406,28 @@ Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vož
 
 ## Sledi zadnjih voženj (kronometer)
 
-Na kronometru se ob cilju shranijo sledi gum tvoje vožnje: črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: starejša kot je vožnja, manj se vidi, sledi izpred 10 voženj so komaj še vidne. Izven ceste so sledi zadnje vožnje take, kot so bile, na asfaltu so prosojnejše že od začetka, stara guma pa je vse bolj siva (sveže sledi trenutne vožnje so črne). Kjer se vožnje prekrivajo (zaviranje, vrh ovinka), se guma nabira in cesta temni. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja.
+Na kronometru se ob koncu vsake vožnje shranijo sledi gum tvoje vožnje, ne glede na to, ali si prišel do cilja ali vožnjo prej prekinil (**Ponovi**, nova vožnja ali izhod v meni; vožnja brez ene same sledi se ne šteje): črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo; če 7-krat štartaš, od tega 2-krat prideš do cilja in 5-krat pritisneš Ponovi, se shrani vseh 7), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: starejša kot je vožnja, manj se vidi, sledi izpred 10 voženj so komaj še vidne. Izven ceste so sledi zadnje vožnje take, kot so bile, na asfaltu so prosojnejše že od začetka, stara guma pa je vse bolj siva (sveže sledi trenutne vožnje so črne). Kjer se vožnje prekrivajo (zaviranje, vrh ovinka), se guma nabira in cesta temni. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja. **Prijateljeve sledi** (prišle z duhom ali izzivom, spodaj) so na cesti oranžne kot njegov duh; kadar so na progi tudi tvoje, dobijo največ polovico prostora za stare sledi.
 
 ## Deljenje duha in profila
 
-Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh; z **Izbriši prijateljevega** ga odstraniš.
+Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Duh kronometra s seboj nese tudi **sledi gum tvojih zadnjih 10 voženj** na tej progi: datoteka vse, povezava le toliko, kolikor jih gre vanjo (povezava ima prostora za okoli 16.000 znakov in duh kronometra ga večino zasede, zato v povezavo sledi navadno ne gredo; za vse sledi pošlji datoteko). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**; v kronometru na tej progi potem vidi tvoj čas, tvojega duha in tvoje sledi. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh (nov duh zamenja tudi prijateljeve sledi); z **Izbriši prijateljevega** odstraniš njegovega duha in njegove sledi.
 
-V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke, duhove in rekorde posebnih misij), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+
+## Shranjevanje napredka
+
+Igra hrani vse v brskalniku telefona (`localStorage`, za igro okoli 5,2 milijona znakov). Največ prostora vzamejo duhovi (vožnja ali krog do 600.000 znakov, vsaka proga ima svojega za vsako fiziko, vreme in način). Kar varuje napredek, je v `js/shramba.js`:
+
+- **Polna shramba:** ko shranjevanje kariere, rekordov, statistike, prvenstva, šole vožnje, nastavitev, kontrol ali novega duha ne gre več v shrambo, igra naredi prostor z brisanjem duhov, enega za drugim, dokler shranjevanje ne uspe: najprej legende Pikes Peaka (igra jih sama naredi znova), nato duhove prijateljev, nato tvoje duhove druge fizike, nato ostale, v vsaki skupini največjega najprej. Napredka samega ne briše nikoli. Ob prvem takem brisanju na obisk pove, koliko duhov je izbrisala (npr. »Shramba je bila polna: da se napredek shrani, je bil izbrisan 1 duh.«). Prej se je v polni shrambi vse tiho nehalo shranjevati.
+- **Trajna shramba:** ob rezultatih dirke igra enkrat na obisk prosi brskalnik, naj njene shrambe ne izprazni, ko telefonu zmanjka prostora (Chrome odgovori sam, Firefox vpraša). V **Nastavitvah** pod vrstico Profil piše, ali je shramba trajna, kdaj je bil profil nazadnje izvožen v datoteko in koliko prostora je zasedenega.
+- **Ponudba za izvoz profila:** od pete dirke ali kronometra naprej rezultati ponudijo **Shrani profil** (datoteka profila; na telefonu meni za deljenje, od koder jo shraniš v oblak ali pošlješ na računalnik) in **Ne zdaj**. Ne zdaj jo skrije za teden; po izvozu (tudi iz Nastavitev) se spet pokaže čez 30 dni. Ni je v dirki s prijateljem.
+- **Samodejne kopije napredka** (Nastavitve, pod Profil): igra sama shrani kopijo napredka (vse razen duhov, z rekordi misij) ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije; hrani zadnjih pet (IndexedDB `rra-shramba`). Vsaka kopija ima čas, razlog (ob zagonu, pred uvozom profila, pred obnovo), število dirk in denar kariere ter gumb **Obnovi**: igra vpraša, shrani kopijo trenutnega stanja, vrne napredek iz kopije (duhovi ostanejo, kot so) in se znova zažene. Kopije so v istem brskalniku kot igra: pomagajo, če se napredek pokvari (napačen uvoz, napaka v novi različici, preizkus vej na isti strani), ne pa, če telefon izbriše podatke brskalnika; za to je datoteka profila.
 
 ## Izziv s povezavo
 
 Prijatelja lahko izzoveš, naj premaga tvoj najboljši čas proge. Gumb **Izzovi prijatelja** je na rezultatih kronometra, kvalifikacij in dirke, ko imaš na progi svojega duha. Gumb **Pošlji izziv** je tudi na **Lestvici** v okvirčku **Duh**. Na telefonu se odpre meni za deljenje, na računalniku se povezava kopira.
 
-Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
+Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo, pri kronometru pa še sledi gum tvojih zadnjih voženj, kolikor jih gre vanjo (prijatelj jih vidi oranžne na cesti); tudi **Pošlji odgovor** vrne tvoje sledi. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
 
 Ko prijatelj odpre povezavo, igra pokaže zaslon **Izziv**: kdo ga izziva, čas, ki ga mora premagati, in vse pogoje. Izziv počaka tudi na naslovnem zaslonu (gumb **Izziv: ime · čas**). **Sprejmi izziv** začne isto vožnjo: sam na progi, z avtom in v pogojih izzivalca, njegov duh pa vozi zraven. Pri letečem krogu se čas meri od črte, kot v kvalifikacijah. Na cilju se oba časa pokažeta drug ob drugem (**Izziv premagan!** ali **Izziv ni premagan**). Tvoji rekordi, duh in kariera ostanejo nespremenjeni. **Poskusi znova** požene isto vožnjo, **Pošlji odgovor** pa pošlje tvojo vožnjo z istimi pogoji nazaj izzivalcu. Kdor premaga izziv, dobi dosežek **Izziv sprejet**.
 
@@ -517,93 +538,93 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
 | **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
-| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
-| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
-| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
-| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
-| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 kovančkov | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
+| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 kovančkov | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
+| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
+| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
 
 ### Športni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 € | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
-| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 € | Rad obrne rep, rojen za drift. |
-| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 € | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
-| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 € | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
-| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 € | Veliko oprijema, stabilen tudi na robu. |
-| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 € | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 kovančkov | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
+| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 kovančkov | Rad obrne rep, rojen za drift. |
+| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 kovančkov | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
+| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
+| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
+| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
 
 ### Superšportni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 € | Oster in živahen, hitro zavrti. |
-| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 € | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
-| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 € | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
-| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 € | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
+| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 kovančkov | Oster in živahen, hitro zavrti. |
+| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 kovančkov | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
+| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 kovančkov | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
+| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 kovančkov | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
 
 ### Klasika
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 € | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
-| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 € | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
-| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 € | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
-| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 € | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
+| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 kovančkov | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
+| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 kovančkov | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
+| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 kovančkov | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
+| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 kovančkov | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
 
 ### Reli
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 € | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
-| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 € | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
-| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 € | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 kovančkov | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
+| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 kovančkov | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
+| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 kovančkov | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
 
 ### Terenski
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 € | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
-| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 € | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
-| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 € | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
-| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 € | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
-| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 € | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 kovančkov | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
+| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 kovančkov | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
+| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
+| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
+| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
 
 ### Dirkalni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 € | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
-| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 € | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
-| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 € | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
-| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 € | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
-| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 € | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
-| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 € | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
-| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 € | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
-| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 € | Prototip za vzdržljivostne dirke (glej spodaj). |
+| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 kovančkov | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
+| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 kovančkov | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
+| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 kovančkov | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
+| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 kovančkov | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
+| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 kovančkov | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
+| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 kovančkov | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
+| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 kovančkov | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
+| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 kovančkov | Prototip za vzdržljivostne dirke (glej spodaj). |
 
 ### Tovornjaki
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 € | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
-| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 € | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 kovančkov | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
+| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
 
 ### Električni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 € | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
-| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 € | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
+| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
 
 ### Posebni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 € | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
-| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 € | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
-| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 € | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 kovančkov | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
+| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 kovančkov | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
+| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 kovančkov | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
 
 ### Dirkalni tovornjak TITAN
 
@@ -618,9 +639,9 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 Trije izmišljeni avti z isto karoserijo kompaktnega trivratnega hatchbacka z velikimi mandljastimi žarometi:
 
-- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 € v karieri.
-- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 €.
-- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 €.
+- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 kovančkov v karieri.
+- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 kovančkov.
+- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 kovančkov.
 
 ## Razpadanje vozil
 
@@ -707,7 +728,7 @@ Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.co
 
 ## Jezik (angleščina)
 
-V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, 12,300 🪙, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
 
 ## Dosežki in statistika
 

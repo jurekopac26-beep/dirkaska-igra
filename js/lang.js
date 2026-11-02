@@ -83,11 +83,36 @@
     'Zlata medalja': 'Gold medal', 'Osvoji zlato medaljo v kronometru.': 'Win a gold medal in a time trial.', 'Zlata zbirka': 'Gold collection', 'Osvoji zlato na vseh kronometrih.': 'Win gold in every time trial.',
     'Neulovljiv': 'Untouchable', 'Pobegni policiji čez prelaz.': 'Escape the police over the pass.', 'Mojster dežja': 'Rain master', 'Zmagaj v dežju.': 'Win in the rain.', 'Nočna ptica': 'Night owl', 'Zmagaj ponoči.': 'Win at night.',
     'Kralj drsenja': 'Drift king', 'Drsi tri sekunde brez prekinitve.': 'Drift for three seconds in one go.', 'Letalec': 'Flyer', 'Skoči 40 m daleč.': 'Jump 40 m.', 'Pelji 300 km/h.': 'Reach 300 km/h.',
-    'Bogataš': 'Tycoon', 'V karieri zasluži 100.000 €.': 'Earn €100,000 in the career.', 'S prijateljem': 'With a friend', 'Pripelji do cilja dirke s prijateljem.': 'Finish a race against a friend.',
+    'Bogataš': 'Tycoon', 'V karieri zasluži 100.000 kovančkov.': 'Earn 100,000 coins in the career.', 'S prijateljem': 'With a friend', 'Pripelji do cilja dirke s prijateljem.': 'Finish a race against a friend.',
     'Profil': 'Profile', 'Izvozi v datoteko': 'Export to a file', 'Uvozi iz datoteke': 'Import from a file', 'Datoteka je prevelika.': 'The file is too big.', 'Datoteke ni bilo mogoče prebrati.': 'The file could not be read.',
     'Profil je pripravljen za deljenje.': 'The profile is ready to share.', 'Profil je shranjen v datoteko {0}.': 'The profile is saved to the file {0}.', 'To ni profil igre Real Roads Atlas.': 'This is not a Real Roads Atlas profile.',
     'Uvozim profil {0} z dne {1}? Tvoj trenutni profil (nastavitve, rekordi, kariera, dosežki in duhovi) se zamenja.': 'Import the profile of {0} from {1}? Your current profile (settings, records, career, achievements and ghosts) will be replaced.',
     'Profila ni bilo mogoče shraniti (premalo prostora).': 'The profile could not be saved (not enough space).', 'Duh · {0} · {1}': 'Ghost · {0} · {1}', 'Povezava do duha je kopirana: pošlji jo prijatelju.': 'The ghost\u2019s link is copied: send it to your friend.',
+    // the saved game kept safe (js/shramba.js: a full storage, the storage kept by the browser, the copies, the offer on the results)
+    'Shramba je bila polna: da se napredek shrani, je bil izbrisan {0} duh.': 'The storage was full: {0} ghost was deleted to save your progress.',
+    'Shramba je bila polna: da se napredek shrani, sta bila izbrisana {0} duhova.': 'The storage was full: {0} ghosts were deleted to save your progress.',
+    'Shramba je bila polna: da se napredek shrani, so bili izbrisani {0} duhovi.': 'The storage was full: {0} ghosts were deleted to save your progress.',
+    'Shramba je bila polna: da se napredek shrani, je bilo izbrisanih {0} duhov.': 'The storage was full: {0} ghosts were deleted to save your progress.',
+    'Napredek je shranjen samo v tem telefonu. Shrani profil v datoteko, da ga ne izgubiš.': 'Your progress is saved on this phone only. Save your profile to a file so you don’t lose it.',
+    'Zadnja kopija profila v datoteki je stara {0} dni. Shrani novo?': 'Your last profile file is {0} days old. Save a new one?', 'Ne zdaj': 'Not now', 'Shrani profil': 'Save profile',
+    'Shramba je trajna: brskalnik je ne bo izpraznil, ko bo telefonu zmanjkalo prostora.': 'The storage is kept: the browser will not clear it when the phone runs out of space.',
+    'Brskalnik lahko shrambo izprazni, ko telefonu zmanjka prostora: profil občasno izvozi v datoteko.': 'The browser may clear the storage when the phone runs out of space: export your profile to a file now and then.',
+    'Zadnji izvoz v datoteko: {0}.': 'Last exported to a file: {0}.', 'Profil še ni izvožen v datoteko.': 'The profile has not been exported to a file yet.', 'Zasedeno je {0} % prostora za shranjeno igro.': '{0} % of the space for the saved game is used.',
+    'Samodejne kopije napredka': 'Automatic copies of your progress',
+    'Igra sama shrani kopijo napredka ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije (brez duhov, zadnjih pet). Kopije so v tem brskalniku: če telefon izbriše podatke brskalnika, izginejo skupaj z igro. Za to je izvoz v datoteko.': 'The game saves a copy of your progress by itself on the first start of a day, before a profile is imported and before a copy is restored (without the ghosts, the last five). The copies are in this browser: if the phone deletes the browser’s data, they go with the game. That is what exporting to a file is for.',
+    'ob zagonu': 'on start', 'pred uvozom profila': 'before importing a profile', 'pred obnovo': 'before restoring', 'ročna': 'by hand', 'dirke: {0}': 'races: {0}', 'Obnovi': 'Restore',
+    'Kopij še ni: prva nastane ob naslednjem zagonu igre.': 'No copies yet: the first is made the next time the game starts.', 'Kopije v tem brskalniku niso na voljo.': 'Copies are not available in this browser.',
+    'Obnovim kopijo napredka: {0}? Trenutni napredek (nastavitve, rekordi, kariera, prvenstvo, dosežki) se zamenja, duhovi ostanejo.': 'Restore the copy of your progress: {0}? Your current progress (settings, records, career, championship, achievements) will be replaced; the ghosts stay.',
+    'Kopije ni bilo mogoče obnoviti (premalo prostora).': 'The copy could not be restored (not enough space).',
+    // Prvič na cesti (the first start: the controls, the test drive, the first race, what comes next)
+    'Prvič na cesti': 'First time on the road', 'Izberi upravljanje in ga preizkusi na kratki vožnji po progi Štajerska, Avstrija. Pozneje ga lahko spremeniš v Nastavitvah.': 'Choose your controls and try them on a short drive at Styria, Austria. You can change them later in the Settings.',
+    'Levi palec: levo in desno. Desni: plin in zavora.': 'Left thumb: left and right. Right thumb: throttle and brake.', 'Volan na zaslonu spodaj levo, plin in zavora desno.': 'A wheel on the screen bottom left, throttle and brake on the right.',
+    'Telefon nagibaj kot volan. Levo zavora, desno plin.': 'Tilt the phone like a wheel. Brake on the left, throttle on the right.', 'Igralni plošček je povezan: voziš lahko tudi z njim.': 'A gamepad is connected: you can drive with it too.',
+    'Poskusna vožnja': 'Test drive', 'Kako je šlo?': 'How did it go?', 'Zdaj prva dirka: dva kroga s petimi tekmeci. Idealna linija na cesti kaže, kje zavirati.': 'Now your first race: two laps with five rivals. The racing line on the road shows where to brake.',
+    'Drugo upravljanje': 'Other controls', 'Še enkrat': 'Once more', 'Prva dirka': 'First race', 'Prva dirka je za tabo. Kaj zdaj?': 'Your first race is done. What next?', 'Pokaži znova': 'Show again',
+    'POSKUSNA VOŽNJA · še {0} s': 'TEST DRIVE · {0} s left', 'RDEČE NA CESTI: ZAVIRAJ': 'RED ON THE ROAD: BRAKE', 'Prevoženo {0} km, najvišja hitrost {1} km/h, upravljanje: {2}.': 'Driven {0} km, top speed {1} km/h, controls: {2}.',
+    // the tyre marks of a friend's runs (a challenge's card)
+    'Sledi gum': 'Tyre marks', 'zadnjih voženj: {0}': 'last runs: {0}', 'niso priložene': 'not included',
     'Povezave ni bilo mogoče kopirati: duh je shranjen v datoteko.': 'The link could not be copied: the ghost is saved to a file.',
     'Duh je za povezavo predolg: shranjen je v datoteko.': 'The ghost is too long for a link: it is saved to a file.', 'Duh je shranjen v datoteko {0}.': 'The ghost is saved to the file {0}.', 'To ni duh igre Real Roads Atlas.': 'This is not a Real Roads Atlas ghost.',
     'Duha ni bilo mogoče shraniti (premalo prostora).': 'The ghost could not be saved (not enough space).', 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.': 'The ghost of {0} on {1} ({2}): race it on a flying lap.',
@@ -448,13 +473,13 @@
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
     /* ---- the garage (garaza.html, js/garage.js) ---- */
     'GARAŽA': 'GARAGE', 'V GARAŽI {0}/{1}': 'IN THE GARAGE {0}/{1}', 'POGLED': 'VIEW', 'Odpiram garažo …': 'Opening the garage …', 'Brezplačno': 'Free', 'Polna igra': 'Full game', 'Skrij': 'Hide', 'Okoli avta': 'Round the car', 'Masa': 'Mass', 'Stanje': 'Condition', 'Teža': 'Weight', 'Izbran ✓': 'Selected ✓',
-    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Kupi · {0} CR': 'Buy · {0} CR', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
+    'V polni igri': 'In the full game', 'POLNA IGRA': 'FULL GAME', 'Servis': 'Service', 'Popoln servis': 'Full service', 'Stanje {0} %': 'Condition {0} %',
     'Povleci po sliki levo ali desno, da zavrtiš kamero okoli avta. Tapni med animacijo, da jo pospešiš.': 'Drag the picture left or right to turn the camera round the car. Tap during an animation to speed it up.',
     '{0} je na voljo v polni igri.': '{0} comes with the full game.', '{0} še ni tvoj: kupiš ga z gumbom spodaj.': '{0} is not yours yet: buy it with the button below.',
     '{0} od {1}': '{0} of {1}', 'V GARAŽI': 'IN GARAGE', 'NOV AVTO V GARAŽI': 'NEW CAR IN THE GARAGE', 'Najprej kupi avto.': 'Buy the car first.',
-    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2} CR.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2} CR.',
-    'Barvanje {0} CR': 'Paint job {0} CR', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0} CR': 'A second colour on the bonnet and the sides · {0} CR', 'Da': 'Yes',
-    'Premalo kreditov: potrebuješ {0} CR, imaš {1} CR.': 'Not enough credits: you need {0} CR, you have {1} CR.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
+    'S = serijsko. Rumena pika: še ni kupljeno. Cena stopnje 1, 2, 3: {0}, {1}, {2}.': 'S = stock. Yellow dot: not bought yet. Levels 1, 2, 3 cost {0}, {1}, {2}.',
+    'Barvanje {0}': 'Paint job {0}', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0}': 'A second colour on the bonnet and the sides · {0}', 'Da': 'Yes',
+    'Premalo kovančkov: potrebuješ {0}, imaš {1}.': 'Not enough coins: you need {0}, you have {1}.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
     'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
@@ -694,10 +719,12 @@
   }
   // a definition's own English (a track, a championship, a famous jump: o.en = { name, desc, ... }), else its Slovenian
   const of = (o, k) => (o ? (cur === 'en' && o.en && o.en[k] != null ? o.en[k] : o[k]) : '');
-  // numbers: thousands (3.048 / 3,048), a decimal point (1,9 / 1.9), money (12.300 € / €12,300), places (3. / 3rd)
+  // numbers: thousands (3.048 / 3,048), a decimal point (1,9 / 1.9), money (the game's only money is coins, kovančki: 12.300 🪙 /
+  // 12,300 🪙; no €), places (3. / 3rd)
   const thou = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, cur === 'en' ? ',' : '.');
   const dec = (s) => (cur === 'en' ? String(s) : String(s).replace('.', ','));
-  const eur = (x) => (cur === 'en' ? '€' + thou(x) : thou(x) + '\u00a0€');
+  const COIN = '\u{1FA99}';   // (🪙: the coin, after the number in both languages)
+  const eur = (x) => thou(x) + '\u00a0' + COIN;   // (the name kept: the game and the garage call Lang.eur)
   const ord = (n) => { if (cur !== 'en') return n + '.'; const a = n % 100, b = n % 10; return n + (a >= 11 && a <= 13 ? 'th' : b === 1 ? 'st' : b === 2 ? 'nd' : b === 3 ? 'rd' : 'th'); };
   // a place name on the HUD: the numbered turns and hairpins, the heights on them (Serpentina 4 · 1.060 m -> Hairpin 4 · 1,060 m), a few known names
   function place(n) {
@@ -740,7 +767,7 @@
     cur = lang === 'en' ? 'en' : 'sl';
     if (typeof document !== 'undefined') document.documentElement.lang = cur;
   }
-  const api = { tr, of, thou, dec, eur, ord, place, apply, set, EN, SAME, get cur() { return cur; }, get locale() { return cur === 'en' ? 'en-GB' : 'sl-SI'; } };
+  const api = { tr, of, thou, dec, eur, COIN, ord, place, apply, set, EN, SAME, get cur() { return cur; }, get locale() { return cur === 'en' ? 'en-GB' : 'sl-SI'; } };
   if (typeof window !== 'undefined') window.Lang = api;
   if (typeof module !== 'undefined') module.exports = api;
 })();
