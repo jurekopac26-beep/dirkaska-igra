@@ -28,32 +28,32 @@
   "jsMs": 2.22
  },
  "nring": {
-  "calls": 150,
-  "maxCalls": 173,
-  "kverts": 316,
-  "maxKverts": 354,
-  "jsMs": 4.41
+  "calls": 152,
+  "maxCalls": 175,
+  "kverts": 321,
+  "maxKverts": 360,
+  "jsMs": 4.02
  },
  "spa": {
-  "calls": 178,
-  "maxCalls": 228,
-  "kverts": 477,
-  "maxKverts": 657,
-  "jsMs": 2.41
+  "calls": 180,
+  "maxCalls": 230,
+  "kverts": 483,
+  "maxKverts": 661,
+  "jsMs": 1.68
  },
  "rbring": {
-  "calls": 212,
-  "maxCalls": 246,
-  "kverts": 425,
-  "maxKverts": 586,
-  "jsMs": 1.41
+  "calls": 213,
+  "maxCalls": 249,
+  "kverts": 434,
+  "maxKverts": 613,
+  "jsMs": 1.75
  },
  "suzuka": {
-  "calls": 193,
-  "maxCalls": 241,
-  "kverts": 477,
-  "maxKverts": 604,
-  "jsMs": 1.14
+  "calls": 194,
+  "maxCalls": 243,
+  "kverts": 481,
+  "maxKverts": 607,
+  "jsMs": 1.32
  },
  "caracoles": {
   "calls": 147,
@@ -77,11 +77,11 @@
   "jsMs": 0.44
  },
  "bathurst": {
-  "calls": 162,
+  "calls": 164,
   "maxCalls": 251,
-  "kverts": 371,
-  "maxKverts": 425,
-  "jsMs": 1.29
+  "kverts": 393,
+  "maxKverts": 467,
+  "jsMs": 1.73
  },
  "chapman": {
   "calls": 136,
@@ -186,7 +186,7 @@
   "maxCalls": 229,
   "kverts": 530,
   "maxKverts": 643,
-  "jsMs": 1.09
+  "jsMs": 1.38
  },
  "longford": {
   "calls": 170,
@@ -224,11 +224,11 @@
   "jsMs": 1.47
  },
  "montreal": {
-  "calls": 207,
+  "calls": 206,
   "maxCalls": 252,
-  "kverts": 457,
+  "kverts": 456,
   "maxKverts": 636,
-  "jsMs": 1.16
+  "jsMs": 1.76
  },
  "greatalpine": {
   "calls": 150,
