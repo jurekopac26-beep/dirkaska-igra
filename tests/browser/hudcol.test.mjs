@@ -215,7 +215,9 @@ try {
   await page.evaluate(() => Input.setMode('buttons')); await setLang(page, 'sl');
   await page.evaluate(() => { const g = window.__game, P = g.race.player; g.pause(); P.pitDur = P.pitT + 0.1; for (let k = 0; k < 4000 && (P.inPit || g.pitAuto.st || P.lap < g.race.laps); k++) { P.pitWant = false; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.25, true); } g.resume(); });
   const last = await both(page, 'race-lastlap', 'ZADNJI KROG!', ['h-msg']);
-  await page.evaluate(() => { window.__game.autoDrive = true; });   // (the race goes on in real time meanwhile: the car on the autopilot, not into a wall at full speed with no one at the wheel)
+  await page.evaluate(() => { const g = window.__game; g.autoDrive = true; g.race.player.dmg = 0; });   // (the race goes on in real time meanwhile: the car on the autopilot, not into a wall at full speed with no one at the wheel;
+  // its damage off: the pit stop above was cut short with the half this test gave it still on, and a knock or two more in the pack, as long as a
+  // slow machine takes for the texts to go, put VOZILO UNIČENO in the column, which is not what this measures)
   await turn(page, OR.land);
   await page.waitForFunction(() => !document.getElementById('h-msg').classList.contains('show') && !document.getElementById('h-teamradio').classList.contains('on') && !document.getElementById('toast').classList.contains('show')
     && document.getElementById('h-tower').querySelectorAll('.tw-r').length >= 5, null, { timeout: 60000 }).catch(() => { });   // (the texts gone; the tower drawn again four times a second of the race)
