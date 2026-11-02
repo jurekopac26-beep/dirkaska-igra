@@ -3232,12 +3232,21 @@ const Core = (function () {
   }
   // a knock's consequences (carCollide, rbCollide): imp the closing speed, J the push, rna / rnb its levers on a and b, Ia / Ib their turning masses,
   // nv the new physics, (bpx, bpz) the contact. Returns imp
+  // Zabava · Tekmeci si zapomnijo (js/zabava/spomin.js): a knock the player caused (the player's nose into the AI car's tail or side) makes
+  // that driver angry with the player for the rest of the race (chr.zbMad up to 1; zbR, its respect for clean racing, back to 0); only for
+  // a car the game switched it on for (chr.zbG), never in a race without the game (the tests' races stay as they were)
+  function grudgeHit(a, b, imp, bpx, bpz) {
+    const P = a.isPlayer ? a : b.isPlayer ? b : null, o = P === a ? b : a; if (!P || !o.chr || !o.chr.zbG || !(imp >= 1.5)) return;
+    const lx = (bpx - o.x) * Math.cos(o.h) + (bpz - o.z) * Math.sin(o.h), px = (bpx - P.x) * Math.cos(P.h) + (bpz - P.z) * Math.sin(P.h);   // (the contact along each car)
+    if (!(px > P.m.len * 0.15) || !(lx < o.m.len * 0.35)) return;   // (the player's nose into its tail or its side; side by side, or its nose into the player: not the player's doing)
+    o.chr.zbMad = Math.min(1, (o.chr.zbMad || 0) + clamp(imp / 10, 0.3, 0.7)); o.chr.zbR = 0; o.chr.zbN = (o.chr.zbN || 0) + 1;
+  }
   function carKnockFx(a, b, imp, J, rna, rnb, Ia, Ib, nv, bpx, bpz) {
     if (XR.bump && TX.nb !== 1 && imp > 4) for (const [c, rn, sg] of [[a, rna, 1], [b, rnb, -1]]) { if (c.net || c.rl) continue;   // (Razbijanje · nov način: the knock turns it, its grip goes for a moment; Trki brez odboja: not)
       if (!nv) c.w += sg * rn * J / (c === a ? Ia : Ib) * 0.9;   // (nova: turned in full above)
       const dx = bpx - c.x, dz = bpz - c.z, lx = dx * Math.cos(c.h) + dz * Math.sin(c.h), behind = lx < 0 ? Math.min(1, -lx / (c.m.len * 0.5)) : 0;
       c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
-    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
+    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     if (TX.cFx === 0) a.fxQ = b.fxQ = 1;   // (Trki: iskre izklop: the renderer throws no sparks and no dust for it; the scrape marks stay)
@@ -3316,7 +3325,7 @@ const Core = (function () {
     const P = Math.hypot(Px, Pz), dva = P * ia, dvb = P * ib;
     crashLoss(a, dva, dwa, Px, Pz, ma, bpx, bpz); crashLoss(b, dvb, dwb, -Px, -Pz, mb, bpx, bpz);
     const imp = -vrel;
-    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
+    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
     const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
@@ -3347,6 +3356,7 @@ const Core = (function () {
   // behind it before a braking zone, covers the inside of the corner (once, held through the braking, not again for a few seconds)
   const aiAgg = (c) => { const ch = c.chr; return Math.min(1, ch.agg + (ch.duelOn ? 0.2 : 0) + (ch.rival ? 0.15 : 0)); };
   function aiWaits(c, o, race, v) {
+    if (o.isPlayer && c.chr.zbMad > 0.3) return false;   // (Zabava: angry with the player: never waits behind it)
     const a = aiAgg(c); if (a >= 0.6) return false;
     const T = race.track, vp = c.vprof || race.vprof, room = vp[T.idx(c.q.s + 50)] >= v - 3 && vp[T.idx(c.q.s + 100)] >= v - 3;
     return !room && v - Math.max(0, o.vl) < 4 + 8 * (0.6 - a);
@@ -3354,15 +3364,17 @@ const Core = (function () {
   function aiDefend(c, race, v) {
     const ch = c.chr, T = race.track, dt = 0.15; ch.defCool = Math.max(0, ch.defCool - dt);
     if (ch.defT > 0) { ch.defT -= dt; return ch.defSide; }
-    if (ch.agg + (ch.rival ? 0.15 : 0) < 0.5 || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing' || race.flyOn || (race.fl && race._noPass(c))) return null;   // (a careful one never; nobody under a flag)
+    const mad = ch.zbMad > 0.3, bold = ch.agg + (ch.rival ? 0.15 : 0) >= 0.5;   // (Zabava: angry with the player: covers the inside against it whatever the character)
+    if ((!bold && !mad) || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing' || race.flyOn || (race.fl && race._noPass(c))) return null;   // (a careful one never; nobody under a flag)
     let chaser = null; const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L = BD || race.cars;
     for (let k = BD ? distFrom(BD, c.dist - 14.5) : 0; k < L.length; k++) { const o = L[k]; if (BD && o.dist > c.dist - 1.5) break; if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 2 && g < 14 && o.vl > v - 1 && Math.abs(o.q.d - c.q.d) < 1.6) { chaser = o; break; } }   // (right behind, not yet alongside; only whether there is one counts)
     if (!chaser) return null;
+    if (chaser.isPlayer ? !mad && ch.zbR >= 20 : !bold) return null;   // (Zabava: respect for the player's clean racing: no cover against it; the grudge only against the player)
     const vp = c.vprof || race.vprof; let ai = -1, lo = 1e9;
     for (let d = 30; d <= 110; d += 10) { const i = T.idx(c.q.s + d), w = vp[i]; if (w < lo) { lo = w; ai = i; } }
     if (!(lo < v - 6) || ai < 0) return null;   // (no braking zone ahead)
     const inside = Math.sign(T.rl[ai]) * (T.w - 1.6); if (!inside) return null;
-    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = 6;
+    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = mad && chaser.isPlayer ? 2.5 : 6;
     return ch.defSide;
   }
   // a car in the lane an AI car would pass in (w: m across the road): alongside it, or up to beside the car ahead (thr, g m ahead)
@@ -3433,7 +3445,7 @@ const Core = (function () {
         else {
           // choose side with more room
           const wq = T.wa ? T.wa[q.i] : T.w, roomL = oPos - (-wq + 1.2), roomR = (wq - 1.2) - oPos;   // (a road of several widths: its width here)
-          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
+          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * Math.min(1, aiAgg(c) + (threat.isPlayer && c.chr.zbMad > 0.3 ? 0.3 : 0)) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
           let side = Math.abs(dl) > 0.8 && room(Math.sign(dl)) > pw - 1 && !c.pol ? Math.sign(dl) : roomR > roomL ? 1 : -1;   // (already out on one side of it, with room there: that side, not across behind it)
           if (aiLaneBusy(c, race, threat, oPos + side * pw, tgap)) side = room(-side) > pw - 1 && !aiLaneBusy(c, race, threat, oPos - side * pw, tgap) ? -side : 0;   // (a car in that lane, alongside or beside the car ahead: the other side, or behind it in its wake)
           target = clamp(oPos + side * pw - rlHere, -2 * wq, 2 * wq);
@@ -3462,7 +3474,8 @@ const Core = (function () {
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
       const a = c.alU, b = c.alD, gs = txv('aiSide', 0.6, NVK.aiSide, c), w2 = TX.cBox === 1 ? (o) => aiReach(c) + aiReach(o) : (o) => (M.wid + o.m.wid) * 0.5;   // (Trki: ravni odbijači: the boxes' corners, turned to the road, reach further out)
-      const hi = a ? a.q.d - w2(a) - gs : 1e9, lo = b ? b.q.d + w2(b) + gs : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
+      const gp = (o) => gs + (o.isPlayer && c.chr && c.chr.zbR >= 20 && !(c.chr.zbMad > 0.3) ? 0.5 : 0);   // (Zabava: the player's clean racing respected: more room alongside it)
+      const hi = a ? a.q.d - w2(a) - gp(a) : 1e9, lo = b ? b.q.d + w2(b) + gp(b) : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
       if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
       const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
       c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
@@ -6617,7 +6630,7 @@ const Core = (function () {
   // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
   // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
   // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
-  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police' };
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov' };   // (elim, lov: the novelties' modes, js/zabava/)
   const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
@@ -6626,7 +6639,7 @@ const Core = (function () {
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
-      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']);
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is)
       if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
