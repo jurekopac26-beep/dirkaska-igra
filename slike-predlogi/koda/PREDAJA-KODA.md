@@ -31,8 +31,8 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 - **Main se pogosto premika.** 2. 11. je zbirni #238 petkrat izgubil tekmo: med 2–2,5 h CI so druge seje združile svoje PR-je in vsak je
   prinesel spor v žigih (`index.html`, `garaza.html`) ali seznamih (`tests/run.js`, `docs/kazalo.md`). Za #238 je uporabnik izbral
   »1 · hitro združi po spoju«: ko je CI zelen in main medtem prinese samo take spore, spoji main, lokalno poženi hiter izbor (stamp, quick,
-  newver, nvschool, garage, menu in test PR-ja, ki je prišel na main) in takoj združi, brez še enega celotnega CI. Ali to velja tudi za
-  sklopa 8 in 10, nadrejena seja vpraša uporabnika in zapiše tukaj.
+  newver, nvschool, garage, menu in test PR-ja, ki je prišel na main) in takoj združi, brez še enega celotnega CI. Uporabnik 2. 11. zvečer:
+  »Da, tudi za 8 in 10« (velja za sklopa 8 in 10 nove mape).
 - **Sprememba 30. 10. (uporabnik: »Spremeni 2 hkrati«): hkrati tečeta dve seji** (okoli 5–10 % več žetonov, konec približno tretjino prej).
   Vrsta: **4 in 7** (od 30. 10.), nato **5+6 in 9**, nato **8** (šele ko so 3–7 in 9 na `main`), na koncu **10** (po 8).
   - Ko seja svoj PR združi: na `slike-predlogi` `git pull --rebase`, v Stanje zapiše »na `main`«, vzame prvi prost sklop iz vrste
@@ -54,9 +54,15 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | ~4 h (ocena 10–17 h) | na `main` ([PR #208](https://github.com/jurekopac26-beep/dirkaska-igra/pull/208)) |
 | 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | v [PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264) (seja session_01Ck3D3SQc21DFpdmeN7W8cr, 2. 11.), CI teče |
-| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C je narejen v misijah, ali tudi na novo mapo, je vprašanje za uporabnika |
-| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku | 28–44 h | |
+| 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C: uporabnik 2. 11. »parkiran in vozljiv« → sklop 10 |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
+
+## Odgovori 2. 11. zvečer (v nadrejeni seji)
+- Gasilski avto C (avtolestev, `MisKit.fireTruck` v `js/missions/kit.js`) na novi mapi: **parkiran in vozljiv** pri reševalni bazi → sklop 10.
+- Gondola za avte s slik (`gond-page.js`): **v sklopu 10**.
+- Peščeni izteki na zunanji strani ovinkov male proge: **svetla mivka kot na slikah** (namesto rdeče-oranžne) → sklop 8 (PR #264).
+- Hitra združitev po spoju (glej »Main se pogosto premika«): **velja tudi za sklopa 8 in 10**.
 
 ## Odgovori na predstavitev vprašanj (30. 10.)
 Uporabnik: »vprasanje 1, naredi razlike da vidim v sliki med igro igralca. 2-2, 3. siroko. 4-1, 5f, 6c. 1-7, 8-1« (»1-7« = 7-1).
