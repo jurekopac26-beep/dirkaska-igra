@@ -192,6 +192,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Zadnji posnetki:** `tests/browser/napake-zadnji.test.mjs` (vprašanje ob izhodu: Da, Ne, Esc, Enter, P ne deluje; zapis z zbirko in vzorci do zadnjega bita; seznam, odpiranje z zbirko, drugi trenutek k istemu zapisu, Končaj vrne seznam; kvalifikacijski krog do cilja se shrani sam; .rrp, meja 10, ✕)
 - **Foto in deljenje:** `share.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
+- **Kamera:** položaj avta `carlow.test.mjs`, nagib `camtilt.test.mjs`, tresenje kamere `camshake.test.mjs` (nastavitve `camShake`, `camLand`, `camKerb`, `camMis`; `Render.shake(a, vrsta)`, `Render.cam.shOn`)
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`
 - **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
 - **Meni:** `menu.test.mjs` (tudi globus in graf višine na zaslonu proge, avto v 3D z vetrom in dotik → garaža, slika brez WebGL, zastava v uvodu), `tests/menu-lens.test.js` (dolžine prog za seznam, višine za graf), `tests/menu-globe.test.js` (zastave, obrisi držav in kraji prog za globus); jezik `lang.test.mjs`, `tests/lang.test.js`
