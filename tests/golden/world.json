@@ -1101,19 +1101,19 @@
  },
  "mountbuller": {
   "meshes": 503,
-  "verts": 662359,
+  "verts": 662387,
   "instances": 2384,
   "props": 134,
   "crowd": 88,
-  "world": "93c782d",
+  "world": "a5e36265",
   "propsHash": "f0c50ae2",
   "floor": "4636f503/5852",
   "groups": {
-   "-:MeshLambertMaterial": "54c51292",
+   "-:MeshLambertMaterial": "6d06ac26",
    "-:MeshPhongMaterial": "3e260345",
    "-:MeshBasicMaterial": "a93113b0",
    "crowd:MeshLambertMaterial": "8ba0b3e5",
-   "ao:MeshBasicMaterial": "cf5a5d81",
+   "ao:MeshBasicMaterial": "b1b8d9af",
    "tyremarks:MeshBasicMaterial": "a4ad60c7",
    "roadwear:MeshLambertMaterial": "cab91f8"
   }

@@ -121,15 +121,15 @@
   /* ---------------- the trees (unit height, the instances scale and tint them); snow on their crowns in a snowy world ---------------- */
   const IV = (() => { const t = (1 + Math.sqrt(5)) / 2; return [[-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0], [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t], [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]].map(v => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }); })();
   const IF = [[0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11], [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8], [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9], [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]];
-  // a soft clump of leaves (an icosphere, 60 vertices: smooth normals tipped up, dark below and lit on top); snow (0-1) whitens its upper vertices
-  // (the snow lies on the clump's top: no cap of its own)
+  // a soft clump of leaves (an icosphere, 60 vertices: smooth normals tipped up, dark below and lit on top); snow (0-1): white on its top faces
+  // (both of the topmost, about half of the four below them), crisp as a cap lying on the leaves, without a mesh of its own
   function clump(g, cx, cy, cz, r, sy, col, R, jit, snow) {
     const V = IV.map(v => { const k = 1 + (R() - 0.5) * jit; return [cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k]; }), inn = [cx, cy, cz];
-    const C = IV.map(v => { const t = v[1] * 0.5 + 0.5, k = 0.6 + 0.5 * t * t; let c = [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.16 * t)];
-      if (snow > 0) { const wgt = sstep(0.42, 0.82, v[1] + (R() - 0.5) * 0.5) * snow * (0.55 + 0.45 * R()), sc = 0.86 + 0.14 * t; c = [lerp(c[0], 0.94 * sc, wgt), lerp(c[1], 0.96 * sc, wgt), lerp(c[2], sc, wgt)]; }
-      return c; });
+    const C = IV.map(v => { const t = v[1] * 0.5 + 0.5, k = 0.6 + 0.5 * t * t; return [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.16 * t)]; });
     const Nn = IV.map(v => { const x = v[0], y = v[1] / sy + 0.25, z = v[2], l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; });
-    for (const [a, b, c] of IF) g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]);
+    for (const [a, b, c] of IF) { const yc = (IV[a][1] + IV[b][1] + IV[c][1]) / 3;
+      if (snow > 0 && yc > 0.4 && R() < (yc > 0.6 ? 0.95 : 0.5) * snow) { const k = 0.9 + 0.1 * R(), w = [0.93 * k, 0.95 * k, k]; g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, w, w, w); }
+      else g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]); }
   }
   // a unit geometry (non-indexed, as treeGeo's) copied into a merged chunk, placed as an instance would be (rot about y, sxz across, sy up, col its tint):
   // the sparse kinds go into the scenery's chunks (no draw calls of their own)
