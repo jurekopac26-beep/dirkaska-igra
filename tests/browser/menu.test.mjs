@@ -287,6 +287,20 @@ try {
     T.check('no page errors in the intro', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
+  {   // (Pikes Peak on gravel: the title's Single race tile shows its own model; on Asphalt (the Road option) the road's own again)
+    const { ctx, page, errors } = await open({ track: 'pikesg', pkRoad: 'pikesg', mode: 'tt', lastTrack: 'pikes' });
+    await ready(page);
+    const tile = 'return root.querySelector(".t-single .im img").getAttribute("src");';
+    const gImg = await ev(page, tile);
+    await click(page, 'single'); await click(page, 'mode:trial');
+    await click(page, 'more-options'); await click(page, 'opt:pkRoad:pikes'); await done(page); await page.waitForTimeout(300);
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
+    const aImg = await ev(page, tile);
+    T.check('Pikes Peak: on Gravel the Single race tile shows its own model (pikesg.webp), on Asphalt the road\'s own (pikes.webp)',
+      /\/pikesg\.webp$/.test(gImg) && /\/pikes\.webp$/.test(aImg), JSON.stringify({ gImg, aImg }));
+    T.check('no page errors on Pikes Peak\'s Road option', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
 
   // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
@@ -516,13 +530,14 @@ try {
     for (const way of ['back', 'next']) {
       await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
       const was = await ev(page, 'return root.querySelector(".where .w2").textContent;');
+      const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
       gar = null;
       await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), click(page, 'garage')]);
       await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
       await page.waitForTimeout(300);
       const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
-      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>), its back: the game's car screen on that car (the address plain again) [${way}]`,
-        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, g }));
+      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its back: the game's car screen on that car (the address plain again) [${way}]`,
+        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, dz, g }));
       await page.click(way === 'back' ? '#car-back' : '#car-next'); await page.waitForTimeout(400);
       const back = await ev(page, 'return { scr: Menu.debug().screen, h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent };');
       T.check(`back from the garage, the car screen's ${way === 'back' ? 'Back' : 'Next'}: the track step, the same track`, back.scr === 'track' && back.h1 === was && (await shown(page)).join() === 's-menu', JSON.stringify({ was, back }));
