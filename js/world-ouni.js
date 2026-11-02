@@ -544,7 +544,7 @@
       const [v0, v1] = row(rowK); bannerQ(x, y + 4.2, z, T.tx[i], T.tz[i], 12.5, 1.56, v0, v1);
       const e = exclPush(x, z, w + 7); crSoft.add(e); return [x, y, z, i];
     };
-    const person = (x, z, ro, col) => crowdPut(CR, x, ouGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
+    const person = (x, z, ro, col, staff) => crowdPut(CR, x, ouGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)], staff }, 1);   // (staff: a marshal, kept on the real tracks: World's fansOn)
     const flagAt = (x, z, rot, h) => { const g = scen.get(x, z); ouFlag(g, x, ouGround(x, z), z, rot, h || 7); };
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = ouGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
       box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
@@ -661,7 +661,7 @@
       sign(sFin - 100, 1, 0.5, 0.75, 6, 1.8, 0.9);    // yellow board with a chequered flag: the finish is coming
       sign(sFin + 1, -1, 0.75, 1, 6, 1.8, 0.9);       // red board with a chequered flag: the flying finish
       const sStop = Math.min(T.len - 30, sFin + 215); sign(sStop, 1, 0, 0.5, 6, 3.2, 0.8); sign(sStop, -1, 0, 0.5, 6, 3.2, 0.8);   // STOP both sides
-      for (let k = 0; k < 4; k++) { const [px, pz] = onSide(sStop + 4 + k * 3, k % 2 ? 1 : -1, 1.2 + R()); person(px, pz, T.hd[T.idx(sStop)] + PI, [1, 0.5, 0.1]); }   // marshals in orange
+      for (let k = 0; k < 4; k++) { const [px, pz] = onSide(sStop + 4 + k * 3, k % 2 ? 1 : -1, 1.2 + R()); person(px, pz, T.hd[T.idx(sStop)] + PI, [1, 0.5, 0.1], true); }   // marshals in orange
       const iS = T.idx(sStop), [tx, tz] = onSide(sStop - 8, -1, 2.6); box(scen.get(tx, tz), tx, ouGround(tx, tz), tz, 3, 2.3, 2.2, T.hd[iS], [0.93, 0.92, 0.88], [0.3, 0.3, 0.32], true);   // time control hut
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road: logs across it, the service cars beyond
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.2) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; ouLog(scen.get(bx, bz), bx, T.hy[iE] - 0.2, bz, T.hd[iE] + PI / 2, 0.35, 2.1, [0.46, 0.34, 0.22], [0.78, 0.66, 0.46]); }
@@ -691,7 +691,7 @@
       { const bx = ox + dx * 7.5, bz = oz + dz * 7.5, by = ouGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(1);   // KIELLETTY ALUE on the closed road, read from the corner
         for (const o of [-1.25, 1.25]) box(gb, bx - dz * o, by - 0.2, bz + dx * o, 0.09, 2.3, 0.09, Math.atan2(dz, dx), [0.35, 0.3, 0.24]);
         bannerQ(bx, by + 1.25, bz, dx, dz, 3.2, 0.8, v0, v1, 0, 0.5, ban2); }
-      for (const sd of [-1, 1]) person(ox + dx * 10 - dz * sd * 1.6, oz + dz * 10 + dx * sd * 1.6, Math.atan2(-dz, -dx) - PI / 2, [1, 0.5, 0.1]);   // marshals
+      for (const sd of [-1, 1]) person(ox + dx * 10 - dz * sd * 1.6, oz + dz * 10 + dx * sd * 1.6, Math.atan2(-dz, -dx) - PI / 2, [1, 0.5, 0.1], true);   // marshals
       { const k = juncs.indexOf(c), sj = sm - 45, [px, pz, ii] = onSide(sj, 1, 1.4), py = ouGround(px, pz), gp = scen.get(px, pz);   // two blue direction signs on a post before the corner, facing the arriving cars
         box(gp, px, py - 0.2, pz, 0.1, 3.3, 0.1, T.hd[ii], [0.6, 0.61, 0.63]);
         for (let q = 0; q < 2; q++) { const [v0, v1] = row(2 + (k * 2 + q) % 4); bannerQ(px, py + 2.3 - q * 0.62, pz, T.tx[ii], T.tz[ii], 2.2, 0.55, v0, v1, 0, 0.5, ban2); }
@@ -741,7 +741,7 @@
     for (const [a, b, sd, rows, dens] of def.crowds || []) run(sStart + a, sStart + b, sd, { rows, dens, first: 3.4, label: 'OU street ' + a });   // (the village: people along its street, behind the garden fences)
     // the TV: a scaffold camera tower behind the crowd across from the Yellow House (a cameraman on it), photographers with a MEDIA sign at the Yellow House and the Fast Crest
     const filmer = (x, y, z, fx, fz) => {   // someone filming (a spectator's pose comes from a hash of the spot: it is nudged until the hash says 'filming')
-      for (let t = 0; t < 64; t++) { const jx = x + ((t & 7) - 3.5) * 0.08, jz = z + ((t >> 3) - 3.5) * 0.08, p = crH(jx, jz, 2); if (p >= 0.25 && p < 0.35) return crowdPut(CR, jx, y, jz, fx, fz, { flag: 0.05 }, 1); }
+      for (let t = 0; t < 64; t++) { const jx = x + ((t & 7) - 3.5) * 0.08, jz = z + ((t >> 3) - 3.5) * 0.08, p = crH(jx, jz, 2); if (p >= 0.25 && p < 0.35) return crowdPut(CR, jx, y, jz, fx, fz, { flag: 0.05, staff: true }, 1); }
       return false; };
     const tower = (x, z, rot, h) => {   // four standards, ledgers, two braces, a plank deck with a rail; returns the deck's height (it stands behind the crowd: no footprint
       // for the crowd's cull, which would take the cameraman off its deck too)
