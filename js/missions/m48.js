@@ -145,7 +145,7 @@
       }
       // over the bridge too fast with people on the back: it shakes and gives
       if (onBr && r.aboard > 0 && v > K.VBR) { r.dmg += K.SPDMG * r.aboard * dt * (v / K.VBR); r.shake = Math.max(r.shake, 0.25); }
-      if (r.shake > 0) { if (typeof Render !== 'undefined' && Render.shake) Render.shake(r.shake * 0.5); r.shake = Math.max(0, r.shake - dt); }
+      if (r.shake > 0) { if (typeof Render !== 'undefined' && Render.shake) Render.shake(r.shake * 0.5, 'mis'); r.shake = Math.max(0, r.shake - dt); }
       r.life = gap / K.RISE - r.dmg;
       const atF = Math.abs(s - K.FARM) < K.ZONE, atT = Math.abs(s - K.TOWN) < K.ZONE;
       if (r.stage === 'turn') this.turnStep(r, dt);
