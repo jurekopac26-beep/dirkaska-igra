@@ -67,7 +67,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **Foto** `photo mode` — `photoStart`, `photoSave` (slika, Web Share, prenos), `photoEnd`
 - **duh** `ghost of the best run`, sledi gum zadnjih voženj `the tyre marks of the last time trial runs`
 - **deljenje** profila in izziv `sharing`, `a challenge (Izziv)`
-- **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`
+- **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`; kamera pred štartom `startCamPick` (pred `newRace`: naključni let, `tdgp-startcam`, testi `tdgp-nostartcam`, `window.__game.startCam`, `startCamForce`), `startCamEnd`
 - **HUD** `HUD`, `time trial HUD`, `the timing tower` (`S.tower`: 0 Izklop, 1 Zgoraj `#tw-strip`, 2 Ob zemljevidu `#h-tower`; `twCls`), uničen avto, `the wheel rule` (`WHEEL_RULE`, `TYRE_RULE`; ZAMENJAJ KOLO `swapHUD`, okrogel za KOLIBRI), gume KOLIBRIJA na zaslonu `ktHUD` (`KT_HUE`), prazno pod uro `setBest`
 - **odprta cesta** (Vršič: promet, policija) `the open road`, `the police radio`
 - **boksi** `pit stops`, radio ekipe `the team radio`
@@ -114,7 +114,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 
 ## Teme v `js/render.js`
 
-Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil (deli iz garaže: `K.deli`, telo z deli `kitEntry(M, hi, deli)`, `deliMesh`; razpoka v vsakem oknu `crackPanes`; gladko senčenje `K.skin` z `smooth`), `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (mehaniki pri Nizki po velikosti na zaslonu: `updateCrew`, preprosti komplet `crewGeosLo`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`**, prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
+Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the new cars`, kit vozil (deli iz garaže: `K.deli`, telo z deli `kitEntry(M, hi, deli)`, `deliMesh`; razpoka v vsakem oknu `crackPanes`; gladko senčenje `K.skin` z `smooth`), `materials`, `ghost`, `particles`, `car light glows`, **sledi gum `skid marks`**, sledi zadnjih voženj, dež, mokra cesta, pljuski, ptice, podrti predmeti `knockable trackside props`, svetloba Pikes Peaka, sonce, letni čas in čas dneva `setAtmos`, lesk asfalta, `post-processing`, `race attach`, zastave in varnostni avto, boksi `pit crews` (mehaniki pri Nizki po velikosti na zaslonu: `updateCrew`, preprosti komplet `crewGeosLo`), odprta cesta, `per-frame`, deli in razbitine, razbijanje `Razbijanje · nov način`, motor (dim, ogenj), **kamera `camera`**, kamera pred štartom `the camera before the start` (`startCamGo`, `startCamStop`, poti `scBuild`, meja Blizu `scLim`, v `updateCamera` `startCine`; izvoz `Render.startCam`), prelet proge, nebo `the sky`, idealna linija `setLine`, šola vožnje `setMarks`, salon `showroom`. `Render.snapshot` naredi sliko za Foto.
 
 ## Proge in graditelji sveta
 
@@ -189,7 +189,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Meni:** `menu.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`
-- **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`
+- **Velika polja in štart** (Node): `grid.test.js` (22, 20 in 100 avtov), `field.test.js` (Nürburg 100), `lod.test.js` (nivo podrobnosti fizike), `start.test.js`; brskalniški `flystart.test.mjs`, kamera pred štartom `startcam.test.mjs` (v drugih testih izklopljena: `tdgp-nostartcam` v `tests/browser/lib.mjs`, `openGame(…, { startCam: true })`)
 - **Opisi:** `fleet.test.js` pregleda vse `.md` (tudi `docs/`) za ime znamke
 - **Opis vseh testov:** `tests/README.md` (velik; išči po imenu testa)
 

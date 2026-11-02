@@ -8826,12 +8826,14 @@ const Render = (function () {
      knows which): 1 the drone back from the gantry over the field, 2 the drone jumping round the car at every light, 3 the helicopter circling
      high over the start, 4 the helicopter over the first corner and back, 5 the aeroplane's pass and banked turn behind the field, 6 the drone
      out of the pits (only where the track has them, def.pit: over the player's garage, along the boxes, over the pit wall). Never closer to
-     the player's car than the chase view with Oddaljenost: Blizu, nor lower than it (scLim, on this screen; less only if the player's own chase
-     view is closer, Položaj avta), higher and turning (a plane's bank) it may; 12 m over the ground. sc.t: s from the intro's start (game.js:
+     the player's car than the chase view with Oddaljenost: Blizu, nor lower than it (scLim, on this screen; a nearer chase view of the player's
+     own, Položaj avta, eased in over the last 0.8 s: met, not jumped into), higher and turning (a plane's bank) it may; 12 m over the
+     ground. Measured from the car's own height (c.y: a race set up afresh has no roadY until its first step). sc.t: s from the intro's start (game.js:
      the intro 3 s, the lights at 3.0 + 0.8 s each, SC_LT); blended over the live chase view, which it is by the 5th light (6.4 s; the drone of
-     the lights 6.6 s): from there on the chase view itself, the hand-back has nothing to jump. A flight's fog as for a camera 115 m away at
-     most (the view no deeper than the chase view's own range on the long corridor worlds) ---------------- */
-  const SC_LT = [3.0, 3.8, 4.6, 5.4, 6.2], SC_ZOOM = 1.1, SC_FOG = 115;
+     the lights 6.6 s): from there on the chase view itself, the hand-back has nothing to jump. A flight's fog as for a camera 60 m away at
+     most and nothing drawn past it on any world, and what is drawn in detail as for the chase view (cam.vd its reach: the rivals farther from the
+     camera as their one coarse mesh, the props round the view; the sun's shadow box at most 80 m): the phone's budget ---------------- */
+  const SC_LT = [3.0, 3.8, 4.6, 5.4, 6.2], SC_ZOOM = 1.1, SC_FOG = 60;
   const sc = { v: 0, t: 0, P: null, race: null };
   function startCamGo(v) { sc.v = v | 0; sc.t = 0; sc.P = null; sc.race = curRace; }
   function startCamStop() { sc.v = 0; sc.P = null; sc.race = null; }
@@ -8851,7 +8853,7 @@ const Render = (function () {
   }
   // the flight for the car on its grid slot: at(t, ch) the camera's place, where it looks, its fov and roll (ch: the live chase view, the last key)
   function scBuild(c) {
-    const T = curTrack, L = T.len, F = [Math.cos(c.h), Math.sin(c.h)], S = [-F[1], F[0]], B = [c.x, c.roadY != null ? c.roadY : (c.y || 0), c.z], lim = scLim();
+    const T = curTrack, L = T.len, F = [Math.cos(c.h), Math.sin(c.h)], S = [-F[1], F[0]], B = [c.x, c.y || 0, c.z], lim = scLim();
     const W = (b, f, s, u) => [b[0] + F[0] * f + S[0] * s, b[1] + u, b[2] + F[1] * f + S[1] * s], A = (f, s, u) => W(B, f, s, u), CAR = A(0, 0, 0.6);   // (f ahead, s to the right, u up)
     const ix = (d) => T.idx((((T.startS + d) % L) + L) % L), road = (d) => { const i = ix(d); return [T.px[i], T.hasElev && T.hy ? T.hy[i] : 0, T.pz[i]]; };
     const wrap = (d) => { d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; }, dP = wrap((c.q ? c.q.s : T.startS) - T.startS);
@@ -8868,10 +8870,11 @@ const Render = (function () {
         const pr = st[n - 1](1), u = sstep(T0[n], T0[n] + 0.4, t); return { P: pr.P.map((q, j) => lerp(q, now.P[j], u)), Q: pr.Q.map((q, j) => lerp(q, now.Q[j], u)), fov: lerp(pr.fov, now.fov, u), r: 0 }; };
     } else if (v === 3) {   // round the middle of the field from ahead on the right to behind it, coming down
       const C = A(dG / 2, 0, 0); K = [];
-      for (let t = 0; t <= 4.8001; t += 0.3) { const u = 0.45 * t / 4.8 + 0.55 * sstep(0, 4.8, t), th = (40 + 140 * u) * Math.PI / 180, r = lerp(190, 120, u), q = sstep(0.45, 1, u);
-        K.push(k(t, W(C, Math.cos(th) * r, Math.sin(th) * r, lerp(120, 60, u)), C.map((x, j) => lerp(x, CAR[j], q)), 44, 6 * Math.sin(Math.PI * u))); }
-    } else if (v === 4) {   // the first corner (the first place the road turns 35 degrees from the grid's line), the camera on its outside
-      let d0 = 300; for (let d = 60; d <= 700; d += 10) { const i = ix(d); if (T.tx[i] * F[0] + T.tz[i] * F[1] < Math.cos(0.6)) { d0 = d; break; } }
+      for (let t = 0; t <= 4.8001; t += 0.3) { const u = 0.45 * t / 4.8 + 0.55 * sstep(0, 4.8, t), th = (40 + 140 * u) * Math.PI / 180, r = lerp(150, 115, u), q = sstep(0.45, 1, u);
+        K.push(k(t, W(C, Math.cos(th) * r, Math.sin(th) * r, lerp(95, 58, u)), C.map((x, j) => lerp(x, CAR[j], q)), 44, 6 * Math.sin(Math.PI * u))); }
+    } else if (v === 4) {   // the first corner (the first place the road turns 35 degrees from the grid's line, at most 330 m past the start line: a
+      // helicopter's pace back to the car), the camera on its outside
+      let d0 = 330; for (let d = 60; d <= 330; d += 10) { const i = ix(d); if (T.tx[i] * F[0] + T.tz[i] * F[1] < Math.cos(0.6)) { d0 = d; break; } }
       const i1 = ix(d0 + 60), side = (T.tx[i1] * S[0] + T.tz[i1] * S[1]) < 0 ? 1 : -1, Kc = road(d0 + 20), UP = road(d0 + 290);
       K = [k(0, W(Kc, -70, 60 * side, 55), Kc.map((x, j) => lerp(x, UP[j], 0.45)), 46), k(1.8, W(Kc, -100, 35 * side, 55), Kc, 46, 8 * side), k(3.4, W(G, 20, 16, 38), W(G, -70, 0, 0), 46, 3), k(5.0, A(28, 8, 30), CAR, 46)];
     } else if (v === 5) K = [k(0, A(dG + 162, 8, 50), A(dG - 18, 0, 0), 58), k(1.6, A(dG + 12, 5, 42), A(40, 0, 0), 58), k(3.0, A(40, 0, 36), A(-60, 0, 8), 58),
@@ -8894,8 +8897,8 @@ const Render = (function () {
     if (sc.race !== curRace) { startCamStop(); return null; }   // (another race attached: the menu's, a new one)
     if (!sc.P) sc.P = scBuild(c);
     if (sc.t >= sc.P.end) return null;   // (the chase view itself)
-    const p = sc.P.at(sc.t, { P: [px, py, pz], Q: [tx, ty, tz], fov }), B = sc.P.B, lim = scLim();
-    lim.d = Math.min(lim.d, Math.hypot(px - B[0], py - B[1], pz - B[2])); lim.h = Math.min(lim.h, py - B[1]);   // (the player's own chase view nearer: that, not a jump into it)
+    const p = sc.P.at(sc.t, { P: [px, py, pz], Q: [tx, ty, tz], fov }), B = sc.P.B, lim = scLim(), e = sstep(sc.P.end - 0.8, sc.P.end, sc.t);
+    if (e > 0) { lim.d = Math.min(lim.d, lerp(lim.d, Math.hypot(px - B[0], py - B[1], pz - B[2]), e)); lim.h = Math.min(lim.h, lerp(lim.h, py - B[1], e)); }   // (the chase view settled by then)
     const d = [p.P[0] - B[0], Math.max(lim.h, p.P[1] - B[1]), p.P[2] - B[2]], rh = Math.hypot(d[0], d[2]), need = Math.sqrt(Math.max(0, lim.d * lim.d - d[1] * d[1]));
     if (rh < need) { if (rh < 1e-3) { d[0] = -sc.P.F[0] * need; d[2] = -sc.P.F[1] * need; } else { d[0] *= need / rh; d[2] *= need / rh; } }
     let y = B[1] + d[1]; if (world && world.groundH) { const g = world.groundH(B[0] + d[0], B[2] + d[2]); if (Number.isFinite(g) && y < g + 12) y = g + 12; }
@@ -8966,14 +8969,15 @@ const Render = (function () {
       if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
     }
     if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
-    let roll = 0, fogCap = Infinity;
-    if (!shot && mode !== 'tv' && sc.v) { const o = startCine(c, px, py, pz, tx, ty, tz, camera.fov); if (o) { [px, py, pz] = o.P; [tx, ty, tz] = o.Q; roll = o.r * Math.PI / 180; fogCap = SC_FOG; if (Math.abs(camera.fov - o.fov) > 0.05) { camera.fov = o.fov; camera.updateProjectionMatrix(); updatePointScale(); } } }   // the camera before the start
+    let roll = 0, fogCap = Infinity, vd = 0;
+    if (!shot && mode !== 'tv' && sc.v) { const o = startCine(c, px, py, pz, tx, ty, tz, camera.fov); if (o) { vd = Math.hypot(px - tx, py - ty, pz - tz); [px, py, pz] = o.P; [tx, ty, tz] = o.Q; roll = o.r * Math.PI / 180; fogCap = SC_FOG; if (Math.abs(camera.fov - o.fov) > 0.05) { camera.fov = o.fov; camera.updateProjectionMatrix(); updatePointScale(); } } }   // the camera before the start
     if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
-    camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); if (roll) camera.rotateZ(roll); cam.vcx = tx; cam.vcz = tz; cam.vd = Math.hypot(px - tx, py - ty, pz - tz);
+    camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); if (roll) camera.rotateZ(roll); cam.vcx = tx; cam.vcz = tz; cam.vd = vd || Math.hypot(px - tx, py - ty, pz - tz);   // (the camera before the start: the chase view's own reach, vd, for what is drawn in detail: the props round the view, the rivals near the camera)
     { const dC = shot ? shot.fogD : Math.min(fogCap, Math.hypot(px - tx, py - ty, pz - tz)), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze)
-    if (world && world.farClip) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds: nothing past the fog is drawn
+    if (world && (world.farClip || fogCap < Infinity)) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds (and the camera before the start, on every world): nothing past the fog is drawn
+    else if (world && camera.far !== 700 && !shot) { camera.far = 700; camera.updateProjectionMatrix(); }   // (the flight over: the world's own far plane again)
     // sun/shadow follows view center
     lastMode = mode === 'tv' ? 'tv' : 'chase';
     const sx = tx, sz = lastMode === 'chase' ? tz : tz - 8;
@@ -8983,7 +8987,7 @@ const Render = (function () {
     const thm = THEMES[themeId], sd = thm && thm.sunDist ? thm.sunDist / Math.hypot(sunOff[0], sunOff[1], sunOff[2]) : 1;   // (theme.sunDist: a low sun placed further up its ray, so the long shadows of casters far up-sun reach the view)
     sun.position.set(cx + sunOff[0] * sd, baseY + sunOff[1] * sd, cz + sunOff[2] * sd);
     sun.target.updateMatrixWorld();
-    fitShadow(tierNow === 0 && !shot && lastMode === 'chase', px, py, pz, tx, ty, tz);
+    fitShadow(tierNow === 0 && !shot && lastMode === 'chase', px, py, pz, tx, ty, tz, vd ? 80 : 160);   // (the camera before the start: a smaller box round what it looks at)
   }
   // NIZKA (the phone budget), behind the car: the sun's shadow box only round the ground the camera sees (the view's corners and the middles
   // of its top and bottom edges on the road's plane, at most 80 m past the point it looks at, 12 m more round them for the slopes), in steps
@@ -8991,7 +8995,7 @@ const Render = (function () {
   // centre. A caster whose shadow falls where the camera looks is in it (the box is the sun's view), the ones behind the camera are not
   const SH_NX = [-1, 1, 1, -1, 0, 0], SH_NY = [-1, -1, 1, 1, 1, -1], _shUp = new THREE.Vector3(0, 1, 0);
   const _shX = new THREE.Vector3(), _shY = new THREE.Vector3(), _shZ = new THREE.Vector3(), _shF = new THREE.Vector3(), _shR = new THREE.Vector3(), _shU = new THREE.Vector3();
-  function fitShadow(on, px, py, pz, tx, ty, tz) {
+  function fitShadow(on, px, py, pz, tx, ty, tz, cap) {
     const sc = sun.shadow.camera, T = sun.target.position;
     let l = -80, r = 80, b = -80, t = 80;
     if (on) {
@@ -9004,7 +9008,7 @@ const Render = (function () {
         const hd = Math.hypot(dx, dz) || 1e-6; let s = dy < -1e-4 ? (ty - py) / dy : Infinity; if (s * hd > R) s = R / hd;
         const gx = px + dx * s - T.x, gy = ty - T.y, gz = pz + dz * s - T.z, lx = gx * _shX.x + gy * _shX.y + gz * _shX.z, ly = gx * _shY.x + gy * _shY.y + gz * _shY.z;
         if (lx < x0) x0 = lx; if (lx > x1) x1 = lx; if (ly < y0) y0 = ly; if (ly > y1) y1 = ly; }
-      const ms = sun.shadow.mapSize.x, w = Math.min(160, Math.ceil((x1 - x0 + 24) / 16) * 16), h = Math.min(160, Math.ceil((y1 - y0 + 24) / 16) * 16);
+      const ms = sun.shadow.mapSize.x, w = Math.min(cap, Math.ceil((x1 - x0 + 24) / 16) * 16), h = Math.min(cap, Math.ceil((y1 - y0 + 24) / 16) * 16);
       const aX = T.x * _shX.x + T.y * _shX.y + T.z * _shX.z, aY = T.x * _shY.x + T.y * _shY.y + T.z * _shY.z, qx = w / ms, qy = h / ms;
       l = Math.round(((x0 + x1 - w) / 2 + aX) / qx) * qx - aX; r = l + w; b = Math.round(((y0 + y1 - h) / 2 + aY) / qy) * qy - aY; t = b + h;
     }
