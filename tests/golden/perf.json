@@ -343,10 +343,10 @@
   "jsMs": 0
  },
  "hakone": {
-  "calls": 193,
-  "maxCalls": 211,
-  "kverts": 389,
-  "maxKverts": 461,
-  "jsMs": 3.98
+  "calls": 195,
+  "maxCalls": 213,
+  "kverts": 392,
+  "maxKverts": 471,
+  "jsMs": 4.39
  }
 }

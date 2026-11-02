@@ -19,11 +19,13 @@ try {
     const W = Render.world, A = World.api, Tr = window.__game.race.track, S = W.stats, m4 = new THREE.Matrix4(), v = new THREE.Vector3();
     const at = (d) => ((Tr.startS + d) % Tr.len + Tr.len) % Tr.len, roadPt = (d) => { const i = Tr.idx(at(d)); return [Tr.px[i], Tr.pz[i], Tr.hy[i]]; };
     const name = (n) => Tr.names.find(q => q.n === n);
-    // the plants (the trees of the forest and the sasa): within 64 m of the road's centre line, past the barrier line
-    let plants = 0, far = 0, onRoad = 0; const badF = [], badR = [];
+    // the plants (the trees of the forest and the sasa): within 64 m of the road's centre line, past the barrier line (those taken out for the
+    // life in the woods' glades, World.life: scaled to nothing, counted apart)
+    let plants = 0, far = 0, onRoad = 0, cut = 0; const badF = [], badR = [];
     W.root.traverse(o => {
       if (!o.isInstancedMesh || o.material !== W.treeMat) return;
-      for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); v.setFromMatrixPosition(m4); const x = v.x + o.position.x, z = v.z + o.position.z, n = A.vrNear(x, z); plants++;
+      for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const e = m4.elements; if (e[0] === 0 && e[5] === 0 && e[10] === 0) { cut++; continue; }
+        v.setFromMatrixPosition(m4); const x = v.x + o.position.x, z = v.z + o.position.z, n = A.vrNear(x, z); plants++;
         if (n.i < 0 || n.d > 64) { far++; if (badF.length < 4) badF.push([+x.toFixed(0), +z.toFixed(0)]); }
         else if (n.dd < 0.6) { onRoad++; if (badR.length < 4) badR.push([+x.toFixed(1), +z.toFixed(1), +n.dd.toFixed(2)]); } }
     });
@@ -47,15 +49,15 @@ try {
     if (dy) for (let o = -50; o <= 250 && !bridge; o += 2) { const i = Tr.idx(at(dy.d + o)); ray.set(new THREE.Vector3(Tr.px[i], Tr.hy[i] + 40, Tr.pz[i]), new THREE.Vector3(0, -1, 0));
       const h = ray.intersectObject(W.root, true).find(q => q.object.isMesh && q.point.y > Tr.hy[i] + 1.5 && q.object.name !== 'hkFar' && q.object.name !== 'hkFuji'); if (h) bridge = { d: Math.round(o + dy.d), clear: +(h.point.y - Tr.hy[i]).toFixed(1) }; }
     let fuji = null, farTris = 0, farN = 0; W.root.traverse(o => { if (o.name === 'hkFuji') fuji = o; if (o.name === 'hkFar') { farTris += o.geometry.index.count / 3; farN++; } });
-    return { S, plants, far, onRoad, badF, badR, nBld: W.bldBoxes.length, bOn, bFar, bBad, tiles, tileFar, dK, dH, water, bridge,
+    return { S, plants, cut, far, onRoad, badF, badR, nBld: W.bldBoxes.length, bOn, bFar, bBad, tiles, tileFar, dK, dH, water, bridge,
       fuji: fuji ? { depthTest: fuji.material.depthTest, ro: fuji.renderOrder, tris: fuji.geometry.index.count / 3, culled: fuji.frustumCulled } : null, farTris, farN };
   });
   const S = r.S;
   T.check('the old spa towns: 1200+ of OpenStreetMap\'s buildings within 60 m, none on the road (every box past the barrier line), none beyond 75 m (its nearest corner)', r.nBld > 1200 && r.bOn === 0 && r.bFar === 0,
     `${r.nBld} buildings, ${r.bOn} on the road ${JSON.stringify(r.bBad)}, ${r.bFar} far`);
   T.check('the forest: the canopy model\'s trees (25 000+) and as many more where the woods are, sasa on the verges; every plant within 64 m of the road (the rule of 60 m) and past the barrier line',
-    S.trees > 25000 && S.fill > 8000 && S.sasa > 3000 && r.plants >= S.trees + S.fill + S.sasa && r.far === 0 && r.onRoad === 0,
-    `${S.trees} + ${S.fill} trees, ${S.sasa} sasa, ${r.plants} drawn; ${r.far} beyond 64 m ${JSON.stringify(r.badF)}, ${r.onRoad} on the road ${JSON.stringify(r.badR)}`);
+    S.trees > 25000 && S.fill > 8000 && S.sasa > 3000 && r.plants + r.cut >= S.trees + S.fill + S.sasa && r.cut < 0.15 * (r.plants + r.cut) && r.far === 0 && r.onRoad === 0,
+    `${S.trees} + ${S.fill} trees, ${S.sasa} sasa, ${r.plants} drawn (${r.cut} taken out for the glades); ${r.far} beyond 64 m ${JSON.stringify(r.badF)}, ${r.onRoad} on the road ${JSON.stringify(r.badR)}`);
   T.check('the mountain railway: ~4 km of it within 64 m of the road, the one level crossing, within 300 m of Kowakidani, hydrangeas along it, the stations\' platforms',
     S.railM > 3000 && S.crossings === 1 && r.dK < 300 && S.hydrangeas > 500, `${S.railM} m, ${S.crossings} crossings (${Math.round(r.dK)} m from Kowakidani), ${S.hydrangeas} hydrangeas`);
   T.check('the railway\'s bridge at Deyama over the road, 5.5 m above it at least (a car passes under it)', !!r.bridge && r.bridge.clear >= 5.5 && r.bridge.clear < 20, JSON.stringify(r.bridge));

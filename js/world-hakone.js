@@ -270,7 +270,7 @@
       const o = new THREE.Mesh(gq, m); o.frustumCulled = true; o.renderOrder = ro; o.matrixAutoUpdate = false; o.name = name; o.onBeforeRender = onBR; o.userData.vs = vs; meshes.push(o); return o; };
     for (const L of BLK.values()) part(L, mat, 'hkFar', -50);
     const mesh2 = IF.length ? part(IF, mk(true), 'hkFuji', -49) : null;
-    const F = { meshes, mesh: meshes[0], mesh2, g, P0: Float32Array.from(pos.array), rim: Float32Array.from(RIM), az: Float32Array.from(AZ), boats, cx: 1e9, cy: 0, cz: 0, cf: 0, t: -1, th: 4 };
+    const F = { meshes, mesh: meshes[0], mesh2, g, P0: Float32Array.from(pos.array), rim: Float32Array.from(RIM), az: Float32Array.from(AZ), boats, cx: 1e9, cy: 0, cz: 0, cf: 0, t: -1, th: 4, rest: false };
     hkFarBounds(F); return F;
   }
   function hkBoatAt(b, t, out) {   // a boat t s into the race: to and fro along its route (it turns at the ends), its vertices into out (P0's layout)
@@ -285,11 +285,15 @@
       o.geometry.boundingSphere.center.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); o.geometry.boundingSphere.radius = Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 + 1; }
   }
   function hkFarUpdate(F, cam, t) {   // (no camera: back to the nodes' own places and the boats to their start, the world test's pose)
-    if (F.boats.length && t != null && Math.abs(t - F.t) > 0.25) { F.t = t; for (const b of F.boats) hkBoatAt(b, t, F.P0); F.cx = 1e9; }
     const g = F.g, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
-    if (!cam) { if (F.cx !== 1e9 || F.t !== 0) { if (F.t !== 0) { F.t = 0; for (const b of F.boats) hkBoatAt(b, 0, F.P0); } p.set(P0); hz.fill(0.5); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; hkFarBounds(F); } return; }
+    if (!cam) {   // (F.rest: drawn as P0 with the boats at time 0, however the frames before left it: the world test's fingerprint never depends on them)
+      if (F.rest && F.t === 0) return;
+      if (F.t !== 0) { F.t = 0; for (const b of F.boats) hkBoatAt(b, 0, P0); }
+      p.set(P0); hz.fill(0.5); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; F.rest = true; hkFarBounds(F); return;
+    }
+    if (F.boats.length && t != null && Math.abs(t - F.t) > 0.25) { F.t = t; for (const b of F.boats) hkBoatAt(b, t, P0); F.cx = 1e9; }
     const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < F.th && cam.far === F.cf) return;   // (every 4 m: drawn 64-6 m inside the far plane, the far land stays inside it)
-    F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
+    F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far; F.rest = false;
     const R0 = cam.far - 70, R1 = cam.far - 6, rim = F.rim, az = F.az;
     for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 400) / 3000)), f = r / D;
       p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(rim[v], (0.22 + 0.58 * (1 - Math.exp(-Math.max(0, D - 400) / 6000))) * az[v]); }
