@@ -60,9 +60,10 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
     ['README.md', ['fleet.test.js']],
     ['tools/carshots.mjs', []],
+    ['assets/maps/corner-spa.webm', ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
   ];
   const off = cases.map(([f, want]) => [f, rel(f)]).filter(([f, got], i) => got.join() !== cases[i][1].join());
-  check('--related --files: a file\'s tests by name (a track\'s description, a world of its own), the big shared files by RELATED, a changed test itself (and its theme\'s), the .md files the brand check; none for an unrelated tool',
+  check('--related --files: a file\'s tests by name (a track\'s description, a world of its own), the big shared files by RELATED, a changed test itself (and its theme\'s), the .md files the brand check; none for an unrelated tool; an asset\'s by RELATED only',
     !off.length, off.map(([f, got]) => `${f}: ${got.join(', ') || 'none'}`).join('; '));
   const r = run('--files', 'js/core.js', '--list');
   check('--files without --related: an error (exit 2)', r.status === 2);
