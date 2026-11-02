@@ -25,7 +25,7 @@ const HELP = () => {
     const vis = (o) => { let q = o; while (q) { if (!q.visible) return false; q = q.parent; } return true; };
     const hits = rc.intersectObject(sc, true);
     for (const h of hits) { const o = h.object, m = Array.isArray(o.material) ? o.material[0] : o.material; if (!all && !vis(o)) continue;
-      out.push({ y: +h.point.y.toFixed(3), name: o.name || '-', par: (o.parent && o.parent.name) || '-', type: o.type, mat: m && m.type, col: m && m.color ? m.color.getHexString() : '', vc: !!(m && m.vertexColors), tr: !!(m && m.transparent), op: m && m.opacity, po: m && m.polygonOffset ? [m.polygonOffsetFactor, m.polygonOffsetUnits] : 0, ro: o.renderOrder, vis: vis(o), dw: m && m.depthWrite, ud: Object.keys(o.userData || {}).join(','), mud: Object.keys((m && m.userData) || {}).join(','), face: h.faceIndex }); }
+      out.push({ y: +h.point.y.toFixed(3), name: o.name || '-', par: (o.parent && o.parent.name) || '-', type: o.type, mat: m && m.type, col: m && m.color ? m.color.getHexString() : '', vc: !!(m && m.vertexColors), tr: !!(m && m.transparent), op: m && m.opacity, po: m && m.polygonOffset ? [m.polygonOffsetFactor, m.polygonOffsetUnits] : 0, ro: o.renderOrder, vis: vis(o), dw: m && m.depthWrite, ud: Object.keys(o.userData || {}).join(','), mud: Object.keys((m && m.userData) || {}).join(','), face: h.faceIndex, st: (() => { let q = o; while (q && !q.userData.__st) q = q.parent; return q ? q.userData.__st : ''; })() }); }
     return out; };
 };
 const ready = async () => {
