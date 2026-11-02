@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NR_A64, RB, TAU, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl, hjCutMat, ico, lerp,
+    Chunks, GB, IChunks, NR_A64, RB, TAU, atSf, box, campLot, parkedCar, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl, hjCutMat, ico, lerp,
     nrDist, nrGround, nrLC, nrLCf, nrNear, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, ouCutMat, propFloorTable, rbCrowdTex, rng, rsFar,
     sstep, valueNoise2, wrapS
   } = API;
@@ -687,18 +687,15 @@
     tNear.forEach((t, k) => t.addTo(root, k < 2)); tFarP.addTo(root, false); tFarO.addTo(root, false);   // (the small garden trees cast no shadow)
 
     mark('trees');
-    /* ---- parked cars in the car parks and along the bigger streets (outside the circuit): a few of them the town's beige small taxis ---- */
+    /* ---- where the car parks were: the fans' area of a race weekend in the city (campLot in js/world.js: food trucks, gazebos, high tables,
+       portaloos; the user's choice »Združi kamp navijačev in avtodom in prikolice in prostor za navijače«: in the city its fans' area only, no
+       camp); the streets round the circuit cleared of parked cars, as on a race weekend ---- */
     let nCars = 0;
-    { const cg = new GB(); box(cg, 0, 0.1, 0, 4.2, 0.88, 1.75, 0, W1, W1, true); box(cg, -0.2, 0.98, 0, 2.2, 0.52, 1.6, 0, [0.62, 0.7, 0.76], W1, true);   // (a body and a cabin)
-      const cars = new MrIChunks(cg.geometry(), matV, 256), CC = [[0.93, 0.93, 0.92], [0.12, 0.12, 0.13], [0.6, 0.62, 0.66], [0.75, 0.66, 0.46], [0.5, 0.1, 0.1], [0.2, 0.3, 0.5], [0.84, 0.74, 0.5]];
-      const put = (x, z, rot, k) => { if (!okTree(x, z, 2.5)) return; cars.add(x, nrGround(x, z), z, rot, 1, 1, CC[k % CC.length]); exclPush(x, z, 2.6); nCars++; };
-      for (const p of M.park) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of p) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-        if (nrDist((x0 + x1) / 2, (z0 + z1) / 2) > 400) continue;
-        for (let z = z0 + 3; z < z1 - 2; z += 6) for (let x = x0 + 1.5; x < x1 - 1; x += 2.6) if (mrInPoly(p, x, z) && crH(x, z, 31) < 0.6) put(x, z, Math.PI / 2 + (crH(x, z, 32) - 0.5) * 0.1, Math.floor(crH(x, z, 33) * 9)); }
-      for (const r of M.st) { if (r.cls > 2 || r.cls === 0) continue;
-        for (let k = 0; k + 1 < r.p.length; k++) { const [x0, z0] = r.p[k], [x1, z1] = r.p[k + 1], l = Math.hypot(x1 - x0, z1 - z0) || 1, nx = -(z1 - z0) / l, nz = (x1 - x0) / l, rot = Math.atan2(z1 - z0, x1 - x0);
-          for (let q = 3; q < l - 3; q += 5.4) for (const sd of [-1, 1]) { if (crH(x0 + q, z0 + sd, 34) > 0.35) continue; const x = x0 + (x1 - x0) * q / l + nx * (r.hw - 1.1) * sd, z = z0 + (z1 - z0) * q / l + nz * (r.hw - 1.1) * sd; if (nrDist(x, z) < 300) put(x, z, rot, Math.floor(crH(x, z, 35) * 9)); } } }
-      cars.addTo(root, false); }
+    for (const p of M.park) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of p) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      if (nrDist((x0 + x1) / 2, (z0 + z1) / 2) > 400) continue;
+      for (let z = z0 + 8; z < z1 - 6; z += 16) for (let x = x0 + 8; x < x1 - 6; x += 16) {
+        if (![[0, 0], [-6, -6], [6, -6], [6, 6], [-6, 6]].every(([a, b]) => mrInPoly(p, x + a, z + b)) || !okTree(x, z, 6)) continue;
+        campLot(scen.get(x, z), nrGround, x, z, Math.PI / 2, 'navijaci', Math.round(x + z)); (out.lots || (out.lots = [])).push([x, z, Math.PI / 2, 'navijaci']); exclPush(x, z, 9); nCars++; } }   // (nCars: the lots; out.lots: where)
 
     mark('cars');
     /* ---- street lamps along the streets by the circuit, behind the blocks (scenery; the knockable ones stand in the junctions) ---- */

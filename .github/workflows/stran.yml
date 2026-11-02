@@ -15,10 +15,12 @@ on:
 permissions:
   contents: read
 
-# vedno samo zadnja gradnja (vsaka zgradi vso stran iz trenutnega stanja)
+# ena gradnja naenkrat: začeta se vedno konča, med njo čaka samo zadnja naslednja (vsaka zgradi vso stran iz trenutnega stanja, zato
+# vmesnih ni treba). S cancel-in-progress: true je vsak nov potisk v katerikoli pull request prekinil gradnjo, ki je še čakala na stroj
+# (ob ~20 odprtih pull requestih ~17 min), in stran se od 31. 10. 2026 ob 19:23 ni objavila (odločitev uporabnika 1. 11. 2026)
 concurrency:
   group: stran
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   preveri:

@@ -284,10 +284,12 @@ var DELI = (function () {
       case 3: {   // črn okvir: a wide hexagon in a thick black frame, one big reflector
         at0(0, 0); lamp([[[-0.15, 0], [-0.105, -0.078], [0.105, -0.078], [0.15, 0], [0.105, 0.078], [-0.105, 0.078]]], WARM, K.black, 0.024);
         ann(0.01, 0, 0.035, 0.065, [0.86, 0.87, 0.9], L, 16); disc(0.01, 0, 0.035, [0.7, 0.72, 0.75], L, 12); disc(0.01, 0, 0.014, [1, 0.97, 0.88], L + 0.003, 8); break; }
-      case 4: {   // okrogli, klasični: two round lamps a side in a black panel, chrome rings, ringed glass
-        at0(0, 0); lamp([circ(-0.072, 0, 0.067, 16), circ(0.075, 0, 0.067, 16)], WARM, K.chrome, 0.012);
+      case 4: {   // okrogli, klasični: two round lamps a side in a black panel, chrome rings, ringed glass (Normalni: eight sides, the
+        // four round lamps within the room for one car with parts on a car whose stock lamp is small: MIŠKA's, the user's choice 30. 10.)
+        const q = K.hi ? 16 : 13;
+        at0(0, 0); lamp([circ(-0.072, 0, 0.067, q), circ(0.075, 0, 0.067, q)], WARM, K.chrome, 0.012);
         face(rrect(0, 0, 0.3, 0.16, 0.03, 2), [0.06, 0.06, 0.065], -0.006);
-        for (const u of [-0.072, 0.075]) { ann(u, 0, 0.042, 0.047, [0.82, 0.8, 0.72], L, 16); disc(u, 0, 0.018, [0.86, 0.87, 0.9], L + 0.002, 10); }
+        for (const u of [-0.072, 0.075]) { ann(u, 0, 0.042, 0.047, [0.82, 0.8, 0.72], L, q); disc(u, 0, 0.018, [0.86, 0.87, 0.9], L + 0.002, 10); }
         break; }
       case 5: {   // LED: a slim wedge high on the face, a row of LED cubes, a line of light along its top
         at0(0.005, 0.06); lamp([[[-0.165, -0.022], [0.17, -0.04], [0.172, 0.036], [-0.165, 0.016]]], DARK, K.black, 0.01);

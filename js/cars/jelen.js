@@ -4,6 +4,11 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the garage's head lamp in the place of each side's pair of round lenses (a stadium round both, under the cover; u out from the car's
+  // middle, v up; metres round z 0.475, y 0.46): every option takes this outline
+  const PAIR = [];
+  for (let i = 0; i <= 3; i++) { const a = -Math.PI / 2 + Math.PI * i / 3; PAIR.push([0.062 + 0.038 * Math.cos(a), 0.038 * Math.sin(a)]); }
+  for (let i = 0; i <= 3; i++) { const a = Math.PI / 2 + Math.PI * i / 3; PAIR.push([-0.062 + 0.038 * Math.cos(a), 0.038 * Math.sin(a)]); }
   VEHICLE_DEFS.push({
     id: 'jelen', name: 'JELEN GT', cat: 'sportni', ord: 3, drive: 'FR',
     desc: 'Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah.',
@@ -15,7 +20,27 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 60000, pk: 'ppo', field: ['jelen'],
     snd: { kind: 'v12', hz: 0.95, loud: 1.1 },
     expect: { t100: [3.28, 3.85], vmax: [245, 260], latG: [2.27, 2.37], d100: [21.9, 24.2] },
-    parts: { set: 'car', ht: 1.3, y0: 0.2, over: { doorL: { lx: -0.16, y: 0.78 }, doorR: { lx: -0.16, y: 0.78 }, mirrorL: { lx: 0, y: 0.93 }, mirrorR: { lx: 0, y: 0.93 } } },   // (the doors and their mirrors far back, where the look has them)
+    partNames: { headL: 'left head lamps', headR: 'right head lamps', tailL: 'left tail lamps', tailR: 'right tail lamps', plate: 'number plate', wiperFront: 'windscreen wiper' },
+    parts: { set: 'car', ht: 1.3, y0: 0.2,
+      // (as KOLIBRI's: each side's pair of round head lamps a part of its own in the nose's fixed header, a hit on its corner knocks it
+      // out; the quad tail lamps, two a side, likewise out of the cut-off tail; the number plate on the tail panel, the wipers on the cowl)
+      extra: {
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.13, h: 0.06, lx: 1.0, lz: -0.49, f: 0.24 },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.13, h: 0.06, lx: 1.0, lz: 0.49, f: 0.24 },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -1.0, lz: -0.6, f: 0.53 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -1.0, lz: 0.6, f: 0.53 },
+        plate: { z: 1, th: 0.4, m: 1, r: 0.17, h: 0.02, lx: -1.0, lz: 0, f: 0.35 },
+        wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.04, lz: -0.05, f: 0.66 },
+      },
+      over: { doorL: { lx: -0.16, y: 0.78 }, doorR: { lx: -0.16, y: 0.78 }, mirrorL: { lx: 0, y: 0.93 }, mirrorR: { lx: 0, y: 0.93 } } },   // (the doors and their mirrors far back, where the look has them)
+    // where the garage's parts go (js/deli.js, look units): the wing on the short deck over the cut-off tail, in the tailgate (it opens
+    // and goes with it); the head lamps in the place of each side's pair of lenses (every option in their stadium, PAIR), in the lamps'
+    // parts; the rims
+    mounts: {
+      krilo: { x: -2.2, w: 0.84, part: 'trunk' },
+      zarometi: { x: 2.27, y0: 0.46, lean: 0, zc: 0.475, yc: 0.46, s: 0.32, hosts: ['headL', 'headR'], shape: PAIR, bulge: 0.012, ringW: 0.004 },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): one loft from the cut-off tail to the nose: the fastback's glass and the deck
     // are one tailgate (the trunk, taken out to the roof's rear edge), the bonnet a clamshell between the wings with the power bulge on it
     // (a skin of its own, the scoop at its front); the doors long and far back, the side glass running back into the sails; the details
@@ -102,14 +127,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[2.2, 0.2, -0.7], [2.2, 0.2, 0.7]] });
         for (const sd of [-1, 1]) {   // (the body's: the covers lie on the nose's top, ahead of the bonnet's edge; the lenses in its face)
           D2.top([[2.268, sd * 0.37], [2.268, sd * 0.575], [2.13, sd * 0.745], [2.13, sd * 0.52]], LC, 0.006, { host: 'body' });
-          for (const z of [0.425, 0.525]) K.headLamp(2.276, 0.462, sd * z, 0.035, { ring: D, n: 8, host: 'body' });
         }
+        // (each side's pair a part of its own: headL, headR; the garage's lamp in their place: K.deli, mounts.zarometi)
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) for (const z of [0.425, 0.525]) K.headLamp(2.276, 0.462, sd * z, 0.035, { ring: D, n: 8, host: sd < 0 ? 'headL' : 'headR' }); });
         const onTop = (x, z) => [x, L.topY(x, z) + 0.012, z];
-        for (const z of [-0.33, 0.27]) K.bar(onTop(0.11, z - 0.27), onTop(0.07, z + 0.27), 0.008, B, { n: 4, part: 'body' });   // (the wipers on the glass's foot)
+        for (const z of [-0.33, 0.27]) K.bar(onTop(0.11, z - 0.27), onTop(0.07, z + 0.27), 0.008, B, { n: 4, part: 'wiperFront' });   // (the wipers on the glass's foot)
         // ---- the tail: the quad round lamps in silver rings (the lit lenses are the tail mesh), the plate; the bumper's black valance
         //      low down, four pipes in chrome rings out of it ----
-        for (const sd of [-1, 1]) for (const z of [0.475, 0.68]) { K.discX(-2.283, 0.78, sd * z, 0.088, 10, [0.5, 0.51, 0.54], -1, { part: 'body' }); K.tailLamp(-2.284, 0.78, sd * z, 0.146, 0.146, { round: true }); }
-        K.rect(-2.282, 0.585, 0, 0.46, 0.09, [0.93, 0.93, 0.9], { dir: '-x', part: 'body' });
+        for (const sd of [-1, 1]) for (const z of [0.475, 0.68]) { const tp = sd < 0 ? 'tailL' : 'tailR';   // (each side's pair a part of its own, its rings with it)
+          K.discX(-2.283, 0.78, sd * z, 0.088, 10, [0.5, 0.51, 0.54], -1, { host: tp }); K.tailLamp(-2.284, 0.78, sd * z, 0.146, 0.146, { round: true, host: tp }); }
+        K.box(-2.279, 0.54, 0, 0.006, 0.09, 0.46, 0, [0.93, 0.93, 0.9], null, true, { part: 'plate' });   // (the plate: a thin plate, a part of its own)
+        K.part('trunk', () => K.deli('krilo', () => {}));   // (the garage's wing on the deck: mounts.krilo; none stock)
         K.part('bumperR', () => {
           K.rect(-2.282, 0.33, 0, 1.4, 0.15, B, { dir: '-x' });                // the black valance the pipes come out of
           K.rect(-2.2815, 0.52, 0, 1.62, 0.008, K.shade(P, 0.45), { dir: '-x' });   // (its shut line)

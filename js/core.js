@@ -1582,8 +1582,13 @@ const Core = (function () {
   function applyDeli(car, deli) {
     if (typeof DELI === 'undefined') return null;
     const D = DELI.clean(deli || car.deli, null), ids = Object.keys(D); if (!ids.length) return null;
-    const e = { kg: 0, power: 0, grip: 0, kmh: 0, brake: 0 };
-    for (const id of ids) { const f = DELI.effect(id, D[id]); if (f) for (const k in e) e[k] += f[k] || 0; }
+    const e = { kg: 0, power: 0, grip: 0, kmh: 0, brake: 0, lower: 0, tint: 0, tyre: null };
+    for (const id of ids) { const f = DELI.effect(id, D[id]); if (f) for (const k in e) { if (k === 'tyre') { if (f.tyre) e.tyre = f.tyre; } else if (k === 'tint') e.tint = Math.max(e.tint, f.tint || 0); else e[k] += f[k] || 0; } }
+    // (sklop 3: lower the body's drop on its springs (m; the renderer's, DELI.dress), tint the glass's (the renderer's), tyre the tyres' grip
+    // on each surface: its points (the garage's, 0 the stock road tyre's) DELI_TYRE_K of a per cent each, deliTyre)
+    if (e.lower) car.dLower = e.lower;
+    if (e.tint) car.dTint = e.tint;
+    if (e.tyre) { const g = (v) => clamp(1 + (v || 0) / 100 * DELI_TYRE_K, 0.6, 1.5); car.dTy = { dry: g(e.tyre.dry), wet: g(e.tyre.wet), snow: g(e.tyre.snow), gravel: g(e.tyre.gravel), winter: 0 }; }
     const M = Object.assign({}, car.m, { mass: Math.max(car.m.mass * 0.5, car.m.mass + e.kg), kw: car.m.kw * Math.max(0.5, 1 + e.power) });
     M.Tmax = M.kw * 1000 / (M.redline * TAU / 60 * tqShape(1.0));
     if (e.kmh) {
@@ -1595,6 +1600,15 @@ const Core = (function () {
     if (e.grip) { car.arc = Object.assign({}, car.arc, { amax: car.arc.amax * (1 + e.grip) }); car.upgGrip = (car.upgGrip || 1) * (1 + e.grip); }
     if (e.brake) car.brakeG *= 1 + e.brake;
     return e;
+  }
+  // the garage's tyres (car.dTy, applyDeli): their grip on the surface under a wheel. Snow: a winter race (Race opts.winter) or a stage's
+  // gravel packed with snow (trk.snowK); gravel: the loose ground (grass, gravel, makadam); else the road, dry to wet by the rain's water
+  // (read off the car's wet grip: 1 dry, WET soaked)
+  const DELI_TYRE_K = 0.4;
+  function deliTyre(T, sf, trk, wet) {
+    if (T.winter || (trk.snowK && (sf === 5 || sf === 6))) return T.snow;
+    if (LOOSE[sf]) return T.gravel;
+    const w = clamp((1 - wet) / (1 - WET), 0, 1); return T.dry + (T.wet - T.dry) * w;
   }
   // ---- 'cs' handling (Circuit Superstars, target-driven kinematic drift; see Car.stepCS) ----
   // Every constant is either a measured CS signature (times in s, angles in rad, rates in rad/s: scale-free) or relative to the
@@ -1754,9 +1768,19 @@ const Core = (function () {
   // cMu the rub along the contact (a share of the push; 0 none), cYaw how much a knock turns the car (a share of the physics' own; 0 none), cMass how many
   // times heavier the other car is in a knock with the player (občutek teže; its turning too), cFx 0: a knock throws no sparks or dust (the scrape marks
   // stay), cBox 1: the cars as boxes with round corners (rbCollide: a flat bumper pushes square on, pushed apart softly, no pop), cScrub 1: the classic
-  // car's tyres scrub a knock's push sideways (stepCS: the push is not turned into the car's direction, it slides it a little and dies away)
-  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cE: null, cMu: null, cYaw: null, cMass: null, cFx: null, cBox: null, cScrub: null };
-  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } }
+  // car's tyres scrub a knock's push sideways (stepCS: the push is not turned into the car's direction, it slides it a little and dies away).
+  // nb 1: Trki brez odboja (Nastavitve: one switch over all the other settings of the knocks between cars, off by default): a knock of a car with
+  // a rival or a traffic vehicle only stops the closing speed: no bounce, no kick of its turn (the classic's attitude kick, the new one's spin),
+  // the overlap taken away softly (NB.cap a step at most: no pop), no rolling over and no grip lost to a rival's knock (Razbijanje: prevračanje,
+  // odboji in vrtenje: only off a wall then); the cars as with Realističen, težak (flat bumpers, the classic tyres' hold, the rub NB.mu), the
+  // sparks as ever, but between the player and a rival the car that is hit counts NB.mass times heavier: the player's knock into a rival hardly
+  // moves it, a rival's knock into the player hardly moves the player (nbHeavy). In the run from the police only the bounce goes (the patrol
+  // car's push, its PIT, still turns a car and costs it grip). The walls as they were. The rows of the knocks between cars change nothing
+  // while it is on
+  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cE: null, cMu: null, cYaw: null, cMass: null, cFx: null, cBox: null, cScrub: null, nb: null };
+  const NB = { mu: 0.5, mass: 8, cap: 0.04 };
+  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; }
+    if (TX.nb === 1) Object.assign(TX, { cE: 0, cMu: NB.mu, cYaw: 0, cMass: NB.mass, cFx: 1, cBox: 1, cScrub: 1 }); else TX.nb = null; }
   const txv = (k, cs, nv, c) => TX[k] != null ? TX[k] : c.phys === 'nova' ? nv : cs;   // (a rival's setting: asked for, else by its physics)
   function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
@@ -1782,7 +1806,16 @@ const Core = (function () {
     const turns = imp > 15 ? 2 : 1;
     c.rl = { t: 0, T: 0.78 + 0.4 * turns, turns, dir: dir < 0 ? -1 : 1, H: 0.5 + 0.35 * turns + Math.min(0.6, (imp - 9) * 0.05), k: 0 };
   }
-  const _bk = { dy: 0, sl: 0 }, _bk2 = { sl: 0, nx: 0, nz: 0 };   // (Track.bankAt output; _bk2: the new map's banked bend, track.bank2)
+  const _bk = { dy: 0, sl: 0 }, _bk2 = { sl: 0, nx: 0, nz: 0 };
+  // the new map's ground under a car (track.ground2): its height, slope and bend over a crest at its middle and 1 m each way. On the motocross
+  // (track.rough2) the ground under its wheels instead: the body's height from its axles (it bridges the whoops' troughs, rides over a crest), its
+  // pitch and the crest's bend over the wheelbase, its roll from the ground left and right (a berm: c.mxSl, the way across c.mxBx/mxBz, as a bank)
+  function nvGround(c, trk) {
+    const c2 = Math.cos(c.h), s2 = Math.sin(c.h), yR = c.y, g0 = trk.ground2(c.x, c.z, yR); c.mxSl = 0;
+    if (trk.rough2 && trk.rough2(c.x, c.z)) { const L = Math.max(1, c.m.len * 0.3), W = Math.max(0.7, c.m.wid * 0.42), gF = trk.ground2(c.x + c2 * L, c.z + s2 * L, yR), gB = trk.ground2(c.x - c2 * L, c.z - s2 * L, yR), gl = trk.ground2(c.x + s2 * W, c.z - c2 * W, yR), gr = trk.ground2(c.x - s2 * W, c.z + c2 * W, yR);
+      c.roadY += Math.max(g0, (gF + gB) / 2); c.gradeNow += (gF - gB) / (2 * L); c.curvNow += (gF - 2 * g0 + gB) / (L * L); const sl = (gl - gr) / (2 * W); if (Math.abs(sl) > 0.03) { c.mxSl = sl; c.mxBx = s2; c.mxBz = -c2; } return; }
+    const g1 = trk.ground2(c.x + c2, c.z + s2, yR), g2 = trk.ground2(c.x - c2, c.z - s2, yR); c.roadY += g0; c.gradeNow += (g1 - g2) / 2; c.curvNow += g1 - 2 * g0 + g2;
+  }   // (Track.bankAt output; _bk2: the new map's banked bend, track.bank2)
 
   /* ---------------------------------------------------------------------
      CAR
@@ -1904,8 +1937,8 @@ const Core = (function () {
         if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
-      if (trk.ground2) { const c2 = Math.cos(this.h), s2 = Math.sin(this.h), yR = this.y, g0 = trk.ground2(this.x, this.z, yR), g1 = trk.ground2(this.x + c2, this.z + s2, yR), g2 = trk.ground2(this.x - c2, this.z - s2, yR); this.roadY += g0; this.gradeNow += (g1 - g2) / 2; this.curvNow += g1 - 2 * g0 + g2; }   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest; by the car's height, under the hill in the tunnel or on it)
-      if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); this.bankSl = _bk2.sl; this.bnx = _bk2.nx; this.bnz = _bk2.nz; }   // (the new map's banked bend, js/newmap.js ringBank: its height is in ground2, here its tilt and the way across it)
+      if (trk.ground2) nvGround(this, trk);   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest; by the car's height, under the hill in the tunnel or on it)
+      if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); const ob = !_bk2.sl && this.mxSl; this.bankSl = ob ? this.mxSl : _bk2.sl; this.bnx = ob ? this.mxBx : _bk2.nx; this.bnz = ob ? this.mxBz : _bk2.nz; }   // (the new map's banked bend, js/newmap.js ringBank: its height is in ground2, here its tilt and the way across it)
       if (this.rl) { this.xRollStep(dt); return; }   // (Razbijanje · nov način: rolling over, xRollStart)
       // (Trki: gume ob potisku, TX.cScrub: a knock's push sideways, cSlide, apart from the drift law: out of the speed here, scrubbed by the tyres and put
       // back after the move below; never more than the car still has that way, a wall having taken it, say)
@@ -1928,7 +1961,7 @@ const Core = (function () {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
         const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
-        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1), tr = S.tr * lk, lt = S.lat * lk * (kg ? kg[4] : 1);   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk, lt = S.lat * lk * (kg ? kg[4] : 1);   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
         const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;   // (a flat tyre's drag: the tyre's, not the ground's; a wheel knocked off: the hub's)
@@ -2139,8 +2172,8 @@ const Core = (function () {
         if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (as cs: a side road's own height)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }
-      if (trk.ground2) { const c2 = Math.cos(this.h), s2 = Math.sin(this.h), yR = this.y, g0 = trk.ground2(this.x, this.z, yR), g1 = trk.ground2(this.x + c2, this.z + s2, yR), g2 = trk.ground2(this.x - c2, this.z - s2, yR); this.roadY += g0; this.gradeNow += (g1 - g2) / 2; this.curvNow += g1 - 2 * g0 + g2; }
-      if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); this.bankSl = _bk2.sl; this.bnx = _bk2.nx; this.bnz = _bk2.nz; }
+      if (trk.ground2) nvGround(this, trk);
+      if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); const ob = !_bk2.sl && this.mxSl; this.bankSl = ob ? this.mxSl : _bk2.sl; this.bnx = ob ? this.mxBx : _bk2.nx; this.bnz = ob ? this.mxBz : _bk2.nz; }
       if (this.rl) { this.xRollStep(dt); return; }
       if (this.csKc) { this.w += this.csKc * K.kick; this.csKc = 0; }   // (cs's attitude kick from the traffic, debris or the police: a turn of the yaw here)
       if (this.nvH !== this.h) this.nvA = 0;   // (the heading set from outside, e.g. put back on the road: no slide carried over)
@@ -2163,7 +2196,7 @@ const Core = (function () {
         const wx = this.x + wpos[k][0] * cb - wpos[k][1] * sb, wz = this.z + wpos[k][0] * sb + wpos[k][1] * cb;   // (the wheels where the body has them)
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
         const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
-        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1), tr = S.tr * lk;
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk;
         const lt = S.lat * lk * (kg ? kg[4] : 1) * (M.loose && off ? (1 - (1 - M.loose) * K.slick) / M.loose : 1) * (sf === 1 ? K.kerbLat : 1) * (1 - clamp(Z[4 + k] * K.kerbG, 0, 0.35));   // (slicks on loose ground: K.slick of cs's side grip lost)
         if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) { curb++; kb |= 1 << k; }
         if (sf === 2) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass: a bumpy field, the same bumps in the same place)
@@ -3048,6 +3081,29 @@ const Core = (function () {
   // Trki: občutek teže (TX.cMass): the other car, when the player hits it or it hits the player, counts that many times heavier, in its turning too: it
   // hardly moves and the player's speed goes into it
   const heavyK = (c, o) => TX.cMass > 1 && o.isPlayer && !c.isPlayer ? TX.cMass : 1;
+  // Trki brez odboja (TX.nb): of the player and a rival, the car that is hit counts NB.mass times heavier, the one that hits it the lighter. Who
+  // hits whom is seen on the road, each car on its own (its speed along a bend is not a move over), by the contact's share along the road and
+  // across it (n: the contact's way from b to a; the road between them: the two cars' ways averaged): along it, as much as they close along it,
+  // the one moving at the other (the car behind and the faster, also pushing; a car reversing into the one behind it); across it, as much as
+  // either moves over, the one moving over at the other (half a m/s of each is all of it: a share with no motion in it says nothing, a little
+  // more of one than of the other only a little). Neither, both the same. Into _nbH: [a's weight, b's, a's own speed at b, b's at a] (the speeds
+  // for the classic tyres' hold, cSlide); two rivals, a friend online: weights 1
+  const _nbH = [1, 1, 0, 0];
+  function nbHeavy(a, b, nx, nz) {
+    const qa = a.q, qb = b.q, ax = qa && Number.isFinite(qa.tx) ? qa.tx : Math.cos(a.h), az = qa && Number.isFinite(qa.tz) ? qa.tz : Math.sin(a.h);
+    const bx = qb && Number.isFinite(qb.tx) ? qb.tx : Math.cos(b.h), bz = qb && Number.isFinite(qb.tz) ? qb.tz : Math.sin(b.h);
+    let tx = ax + bx, tz = az + bz; const tl = Math.hypot(tx, tz); if (tl > 1e-6) { tx /= tl; tz /= tl; } else { tx = ax; tz = az; }
+    const nl = nx * tx + nz * tz, nt = nz * tx - nx * tz, sn = nl < 0 ? 1 : -1;   // (sn 1: a behind b)
+    const la = a.vx * ax + a.vz * az, lb = b.vx * bx + b.vz * bz, cl = Math.max(0, (la - lb) * sn), ul = Math.max(0, la * sn), vl = Math.max(0, -lb * sn);   // (cl: closing along the road; ul, vl: a's and b's own speed along it at the other)
+    const pa = nz * ax - nx * az, pb = nz * bx - nx * bz;   // (the contact across each one's own road)
+    const ta = Math.max(0, -(a.vz * ax - a.vx * az) * Math.sign(pa)), tb = Math.max(0, (b.vz * bx - b.vx * bz) * Math.sign(pb));   // (each one's speed over at the other)
+    const L = clamp((ul - vl) * 2, -1, 1), A = clamp((ta - tb) * 2, -1, 1);   // (1: a hits b, -1: b hits a; along and across)
+    const wl = nl * nl * Math.min(1, cl * 2), wt = nt * nt * Math.min(1, Math.max(ta, tb) * 2), den = wl + wt;   // (each share by how much motion it has)
+    _nbH[2] = cl * (0.5 + 0.5 * L) * Math.abs(nl) + ta * Math.abs(pa); _nbH[3] = cl * (0.5 - 0.5 * L) * Math.abs(nl) + tb * Math.abs(pb); _nbH[0] = _nbH[1] = 1;
+    if (!a.isPlayer === !b.isPlayer) return _nbH;
+    const q = den > 1e-9 ? 0.5 + 0.5 * (L * wl + A * wt) / den : 0.5;   // (q 1: a hits b)
+    _nbH[0] = 1 + (NB.mass - 1) * (1 - q); _nbH[1] = 1 + (NB.mass - 1) * q; return _nbH;
+  }
   function carCollide(a, b) {
     if (TX.cBox === 1 && !a.inPit && !b.inPit) return rbCollide(a, b);   // (Trki: ravni odbijači; the pit lane as it was: the crews' work and the way in)
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = a.circles[a.circles.length - 1] + a.rad + b.circles[b.circles.length - 1] + b.rad + 0.1;   // (the two cars' reach)
@@ -3090,7 +3146,7 @@ const Core = (function () {
     const nv = a.phys === 'nova' || b.phys === 'nova';   // (nova: the cars bounce apart, the knock and the rub between the bodies turn them; its tyres catch it)
     const e = TX.cE != null ? TX.cE : nv ? NVK.carE : CSK.carE, ys = TX.cYaw != null ? TX.cYaw : 1, cy = NVK.carYaw * ys;   // (TX: the settings Trki; ys the share of the turn, cy nova's own)
     // angular terms damped to keep contact spins moderate; the push goes to the travel, the turn to the tap below (not the yaw rate)
-    const aK = nv ? cy : XR.bump ? 1 : 0.6, J = -(1 + e) * vrel / (ia + ib + rna * rna / Ia * aK + rnb * rnb / Ib * aK);   // (xBump, nova: the turn undamped)
+    const aK = TX.nb === 1 ? 0 : nv ? cy : XR.bump ? 1 : 0.6, J = -(1 + e) * vrel / (ia + ib + rna * rna / Ia * aK + rnb * rnb / Ib * aK);   // (xBump, nova: the turn undamped; Trki brez odboja: none)
     const ua = -(a.vx * bnx + a.vz * bnz), ub = b.vx * bnx + b.vz * bnz;   // (Trki: gume ob potisku: how fast each was coming at the other, below)
     if (!a.net) { a.vx += J * bnx * ia; a.vz += J * bnz * ia; }
     if (!b.net) { b.vx -= J * bnx * ib; b.vz -= J * bnz * ib; }
@@ -3135,9 +3191,9 @@ const Core = (function () {
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = (Math.hypot(a.m.len, a.m.wid) + Math.hypot(b.m.len, b.m.wid)) * 0.5 + 0.05;   // (the two boxes' reach)
     if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
     const o = rboxHit(a, b); if (!o) return 0;
-    const nx = o.nx, nz = o.nz, px = o.px, pz = o.pz, pen = o.pen;
-    const fa = heavyK(a, b), fb = heavyK(b, a), ia = 1 / (a.m.mass * fa), ib = 1 / (b.m.mass * fb), Ia = a.I * fa, Ib = b.I * fb, tot = ia + ib;
-    const corr = Math.max(0, pen - RB_SLOP) * RB_PUSH + Math.max(0, pen - RB_DEEP);   // (a friend's car online is not moved here, as in carCollide)
+    const nx = o.nx, nz = o.nz, px = o.px, pz = o.pz, pen = o.pen, nb = TX.nb === 1, H = nb ? nbHeavy(a, b, nx, nz) : null;   // (Trki brez odboja: the car hit the heavier)
+    const fa = nb ? H[0] : heavyK(a, b), fb = nb ? H[1] : heavyK(b, a), ia = 1 / (a.m.mass * fa), ib = 1 / (b.m.mass * fb), Ia = a.I * fa, Ib = b.I * fb, tot = ia + ib;
+    const corr = nb ? Math.min(NB.cap, Math.max(0, pen - RB_SLOP) * RB_PUSH) : Math.max(0, pen - RB_SLOP) * RB_PUSH + Math.max(0, pen - RB_DEEP);   // (a friend's car online is not moved here, as in carCollide; Trki brez odboja: never more than NB.cap a step, a deep overlap too)
     if (b.net) { a.x += nx * corr; a.z += nz * corr; } else if (!a.net) { a.x += nx * corr * ia / tot; a.z += nz * corr * ia / tot; }
     if (a.net) { b.x -= nx * corr; b.z -= nz * corr; } else if (!b.net) { b.x -= nx * corr * ib / tot; b.z -= nz * corr * ib / tot; }
     const rax = px - a.x, raz = pz - a.z, rbx = px - b.x, rbz = pz - b.z;
@@ -3147,7 +3203,7 @@ const Core = (function () {
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = -(1 + e) * vrel / (tot + (rna * rna / Ia + rnb * rnb / Ib) * aK);
     const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = TX.cMu != null ? TX.cMu : nv ? NVK.carMu : 0;
     const Jt = clamp(-vt / (tot + (rta * rta / Ia + rtb * rtb / Ib) * aK), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;
-    if (TX.cScrub === 1) { cSlide(a, nx, nz, J * ia, -(a.vx * nx + a.vz * nz)); cSlide(b, -nx, -nz, J * ib, b.vx * nx + b.vz * nz); }   // (before the push: how fast each came at the other)
+    if (TX.cScrub === 1) { cSlide(a, nx, nz, J * ia, nb ? H[2] : -(a.vx * nx + a.vz * nz)); cSlide(b, -nx, -nz, J * ib, nb ? H[3] : b.vx * nx + b.vz * nz); }   // (before the push: how fast each came at the other; Trki brez odboja: as seen on the road)
     if (!a.net) { a.vx += Px * ia; a.vz += Pz * ia; }
     if (!b.net) { b.vx -= Px * ib; b.vz -= Pz * ib; }
     // the turn: the new physics' yaw rate; the classic's attitude kick, the knock's yaw rate for the RB_TAPT s its tyres let through (a push that goes
@@ -3194,7 +3250,7 @@ const Core = (function () {
   // a knock's consequences (carCollide, rbCollide): imp the closing speed, J the push, rna / rnb its levers on a and b, Ia / Ib their turning masses,
   // nv the new physics, (bpx, bpz) the contact. Returns imp
   function carKnockFx(a, b, imp, J, rna, rnb, Ia, Ib, nv, bpx, bpz) {
-    if (XR.bump && imp > 4) for (const [c, rn, sg] of [[a, rna, 1], [b, rnb, -1]]) { if (c.net || c.rl) continue;   // (Razbijanje · nov način: the knock turns it, its grip goes for a moment)
+    if (XR.bump && TX.nb !== 1 && imp > 4) for (const [c, rn, sg] of [[a, rna, 1], [b, rnb, -1]]) { if (c.net || c.rl) continue;   // (Razbijanje · nov način: the knock turns it, its grip goes for a moment; Trki brez odboja: not)
       if (!nv) c.w += sg * rn * J / (c === a ? Ia : Ib) * 0.9;   // (nova: turned in full above)
       const dx = bpx - c.x, dz = bpz - c.z, lx = dx * Math.cos(c.h) + dz * Math.sin(c.h), behind = lx < 0 ? Math.min(1, -lx / (c.m.len * 0.5)) : 0;
       c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
@@ -3203,7 +3259,7 @@ const Core = (function () {
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     if (TX.cFx === 0) a.fxQ = b.fxQ = 1;   // (Trki: iskre izklop: the renderer throws no sparks and no dust for it; the scrape marks stay)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
-    if (XR.roll && imp > 9 && !a.net && !b.net) for (const c of [a, b]) {   // (Razbijanje · nov način: a knock on its side rolls it over, away from the knock)
+    if (XR.roll && TX.nb !== 1 && imp > 9 && !a.net && !b.net) for (const c of [a, b]) {   // (Razbijanje · nov način: a knock on its side rolls it over, away from the knock; Trki brez odboja: not)
       const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch;
       if (Math.abs(lz) > c.m.wid * 0.3 && Math.abs(lx) < c.m.len * 0.4) xRollStart(c, -Math.sign(lz), imp); }
     return imp;
@@ -3268,7 +3324,7 @@ const Core = (function () {
     const rax = bpx - a.x, raz = bpz - a.z, rbx = bpx - b.x, rbz = bpz - b.z;
     const vrx = (a.vx - a.w * raz) - (b.vx - b.w * rbz), vrz = (a.vz + a.w * rax) - (b.vz + b.w * rbx), vrel = vrx * bnx + vrz * bnz;
     if (vrel >= 0) return 0;
-    const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV ? CRASH.e : 0;
+    const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV && TX.nb !== 1 ? CRASH.e : 0;   // (Trki brez odboja: none at all)
     const J = -(1 + e) * vrel / (tot + rna * rna / Ia + rnb * rnb / Ib);
     const tx = -bnz, tz = bnx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx;
     const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -CRASH.mu * J, CRASH.mu * J);   // (the bodies grind: they do not slide past each other)
@@ -3921,19 +3977,20 @@ const Core = (function () {
           if (d2 < r * r) { const d = Math.sqrt(d2) || 1e-3, pen = r - d; if (pen > best) { best = pen; bnx = dx / d; bnz = dz / d; bpx = (ax + bx) / 2; bpz = (az + bz) / 2; } } } }
       if (best <= 0 || v.nc > 0) return 0;
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
-      c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
-      if (v.st !== 0) { v.x -= bnx * best * ib / tot; v.z -= bnz * best * ib / tot; }
-      else { const f = best * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
+      const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, sep = TX.nb === 1 ? Math.min(best, NB.cap) : best;   // (Trki brez odboja: NB.cap a step at most, no pop)
+      c.x += bnx * sep * ia / tot; c.z += bnz * sep * ia / tot;
+      if (v.st !== 0) { v.x -= bnx * sep * ib / tot; v.z -= bnz * sep * ib / tot; }
+      else { const f = sep * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
       const rax = bpx - c.x, raz = bpz - c.z, rbx = bpx - v.x, rbz = bpz - v.z;
       const vax = c.vx - c.w * raz, vaz = c.vz + c.w * rax, vbx = v.vx - v.w * rbz, vbz = v.vz + v.w * rbx;
       const vrel = (vax - vbx) * bnx + (vaz - vbz) * bnz; if (vrel >= 0) return 0;
       const Ib = mb * (v.len * v.len + v.wid * v.wid) / 12, rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx;
-      const J = -1.25 * vrel / (ia + ib + rna * rna / c.I * 0.6 + rnb * rnb / Ib);
+      const nob = TX.nb === 1, J = -(nob ? 1 : 1.25) * vrel / (ia + ib + (nob ? 0 : rna * rna / c.I * 0.6) + rnb * rnb / Ib);   // (Trki brez odboja: no bounce, the car not turned)
       c.vx += J * bnx * ia; c.vz += J * bnz * ia;
-      if (!c.air) c.csKc = clamp(c.csKc + rna * J / c.I * CSK.tapT, -CSK.tapMax, CSK.tapMax);
+      if (!c.air && !nob) c.csKc = clamp(c.csKc + rna * J / c.I * CSK.tapT, -CSK.tapMax, CSK.tapMax);
       const imp = -vrel, dvb = J * ib;
       if (v.st === 0 && (dvb > 1.4 || (v.kind >= 3 && dvb > 0.6))) { this._knock(v); v.w = 0; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
+      if (nob && v.st === 2 && dvb > 0.15) { v.st = 1; v.t = 0; }   // (Trki brez odboja: a standing one shoved slides again and takes its share, as in the run from the police: the car does not sink into it)
       if (v.st === 1) { v.vx -= J * bnx * ib; v.vz -= J * bnz * ib; v.w -= rnb * J / Ib; }
       else { const tx = this.T.tx[v.i], tz = this.T.tz[v.i]; v.v = Math.max(0, v.v - (J * bnx * ib * tx + J * bnz * ib * tz) * v.dir); }
       c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
@@ -3958,7 +4015,7 @@ const Core = (function () {
       const rax = bpx - c.x, raz = bpz - c.z, rbx = bpx - v.x, rbz = bpz - v.z;
       const vrx = (c.vx - c.w * raz) - (v.vx - v.w * rbz), vrz = (c.vz + c.w * rax) - (v.vz + v.w * rbx), vrel = vrx * bnx + vrz * bnz;
       if (vrel >= 0) return 0;
-      const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV ? CRASH.e : 0;
+      const rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx, e = -vrel > CRASH.eV && TX.nb !== 1 ? CRASH.e : 0;   // (Trki brez odboja: none at all)
       const J = -(1 + e) * vrel / (tot + rna * rna / Ia + rnb * rnb / Ib);
       const tx = -bnz, tz = bnx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx;
       const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -CRASH.mu * J, CRASH.mu * J);
@@ -5244,6 +5301,7 @@ const Core = (function () {
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
       // winter (opts.winter): cold tarmac grips a little less (x0.94), a gravel road packed with snow much less (x0.74): on every car's grip and the AI's profile
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? 0.74 : 0.94) : 1, mk: opts.winter && track.sf ? 0.74 / 0.94 : 0 };   // (in an object: the golden references digest only the plain fields; mk: a stage of tarmac and gravel, its gravel's grip on top of the tarmac's)
+      if (opts.winter) for (const c of this.cars) if (c.dTy) c.dTy.winter = 1;   // (the garage's tyres on a winter's road: their snow grip)
       this.rain = 0; this._wet(opts.rain);
       // tyres and a changing weather (opts.tyres; opts.weather = { at, dur, to }: the rain goes from opts.rain to `to` over dur s from race time
       // at). The water on the road follows the rain (wet in about a minute, dry in about four, the racing line twice as fast); a car's grip
