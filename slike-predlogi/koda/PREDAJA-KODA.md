@@ -115,8 +115,9 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
   temnejša brežina ob portalih predora.
 - Odprto za uporabnika (vprašanje poslano nadrejeni seji, stran Odločitve iz seje ni bila dosegljiva): gondola za avte s slik (`delo/gond-page.js`)
   ni v nobenem sklopu; peščeni izteki na zunanji strani ovinkov male proge so v igri rdeče-oranžni (Toskanin `shoulder`), na slikah svetla mivka.
-- Orodje `live.mjs` (seja ga ima v scratchpadu): ena odprta igra, posnetki od zgoraj in s kamero igre po vrsti; `__desc`/sledi sklada (`PRE` z
-  `Object3D.add`) pove, katera funkcija je naredila mrežo pod točko. Isti postopek kot `delo/live2.mjs` in `pick22e.js` v slikah.
+- Orodje `koda/live.mjs <igra> <mapa-nalog>`: ena odprta igra, naloge `q<N>.json` po vrsti (posnetki od zgoraj, s kamero igre, sonde); z
+  `PRE="$(cat koda/pre-stack.js)"` vsaka mreža dobi sled sklada (`userData.__st`) in združevanje je izklopljeno, `__rays(x, z)` pove, katera
+  funkcija je naredila mrežo pod točko (opis v glavi datoteke).
 
 ## Orodja (`koda/`)
 - `node koda/posnetki.mjs <repo> <seznam.json> <predpona>`: posnetki od zgoraj in za avtom (opis v glavi datoteke). Cela mapa: `koda/ploscice.json`
