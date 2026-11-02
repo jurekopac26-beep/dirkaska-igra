@@ -2,7 +2,8 @@
 // the glades are there, their animals are the ones of the track's country (World.lifeTable) with the company their kind keeps (World.lifeSoc:
 // alone, a male and a female, a herd of 3-10 with its young), none stands on the road or by its barrier, the still ones are one merged mesh per
 // 256 m chunk; the ones alone walk or graze (their own mesh, moving with time); each of these tracks has its scene (World.lifeScenes) near the
-// road; a test track has none. The parked car: every kind built, within its vertex budget (the car parks' lite one far cheaper).
+// road; a test track has none. The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
+// car parks were, a lot of each kind (the fans' camp, motorhomes and caravans, the fans' area) within its budget.
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -47,10 +48,12 @@ try {
     const A = World.api, out = [];
     for (let k = 0; k < 6; k++) { const g = new World.GB(); A.parkedCar(g, 0, 0, 0, 0, [0.8, 0.2, 0.2], k); out.push(g.P.length / 3); }
     const g = new World.GB(); A.parkedCar(g, 0, 0, 0, 0, [1, 1, 1], 0, true); out.push(g.P.length / 3);
+    for (const k of ['kamp', 'avtodomi', 'navijaci']) { const gl = new World.GB(); A.campLot(gl, () => 0, 0, 0, 0.3, k, 1); out.push(gl.P.length / 3); }   // (where the circuits' car parks were: one 16 m lot of each kind)
     return out;
   });
   T.check('the parked car: six kinds, each under 400 vertices', car.slice(0, 6).every(n => n > 100 && n < 400), car.slice(0, 6).join(', '));
   T.check('the car parks\' lite car: under 200 vertices (the full one\'s outline and glasshouse, no rims, bumpers, lights or shadow)', car[6] > 60 && car[6] < 200 && car[6] < Math.min(...car.slice(0, 6)), String(car[6]));
+  T.check('where the car parks were: a 16 m lot of the fans\' camp, of motorhomes and caravans, of the fans\' area, each under 800 vertices (fewer than the 7-10 cars it replaces)', car.slice(7).every(n => n > 150 && n < 800), car.slice(7).join(', '));
   T.check('no page errors', !errors.length, errors.slice(0, 4).join(' | '));
 } finally {
   await browser.close(); await srv.close();
