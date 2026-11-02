@@ -85,7 +85,7 @@ const isLine = (geo, t) => { const c = geo.attributes.color.array, o = t * 9; re
 const RS = [[-1.97, 0.78, 0.3, 0.66, 0.74, 0.74, 0.04, 'b', 0.12], [-1.55, 0.82, 0.26, 0.72, 0.78, 0.8, 0.05, 'b', 0.1], [-1.05, 0.83, 0.24, 0.74, 0.79, 0.82, 0.05, 'r', 0.1],
   [0.15, 0.83, 0.24, 0.74, 0.79, 0.82, 0.05, 'gf', 0.1], [0.25, 0.83, 0.24, 0.74, 0.79, 0.8, 0.05, 'b', 0.1], [1.4, 0.82, 0.26, 0.7, 0.78, 0.74, 0.04, 'b', 0.11], [1.97, 0.76, 0.3, 0.62, 0.72, 0.64, 0.02, 'b', 0.12]];
 function roadster(o) {
-  o = o || {};
+  o = o || {}; const XTRA = Object.keys(Core.MODELS.find(m => m.id === 'lisica').def.parts.extra || {});   // (the roadster is built on LISICA's part table)
   const body = Object.assign({ secs: RS, eye: { x: -0.45, y: 1.08, style: 'open' }, crush: { x0: -0.95, x1: 0.2, z: 0.62 }, decalX: 0.9, decalY: 0.79, decalRz: -0.05, decalS: 0.7 });
   for (const k of o.drop || []) delete body[k];
   return { body, wheels: { style: 'std', w: 0.2 },
@@ -95,6 +95,7 @@ function roadster(o) {
       K.face([[0.2, 0.84, 0.7], [0.2, 0.84, -0.7], [0.0, 1.12, -0.62], [0.0, 1.12, 0.62]], K.GLASS, { part: 'body' });   // (the windscreen: one-sided, facing forward)
       for (const sd of [-1, 1]) { K.headLamp(1.95, 0.5, sd * 0.6, 0.07); K.tailLamp(-1.96, 0.6, sd * 0.6, 0.25, 0.1); K.mirror(0.25, 0.9, sd * 0.86, { col: B }); K.seat(-0.45, 0.42, sd * 0.36); }
       K.part('bumperF', () => K.box(1.95, 0.28, 0, 0.06, 0.16, 1.5, 0, B)); K.part('bumperR', () => K.box(-1.95, 0.28, 0, 0.06, 0.16, 1.5, 0, B));
+      for (const n of XTRA) K.part(n, () => K.box(0, 0.5, 0, 0.02, 0.02, 0.02, 0, B));   // (LISICA's own parts, its parts.extra: lamps, plate, wipers; each a small piece)
     } };
 }
 const PU = [[-2.45, 1.05, 0.55, 1.0, 1.04, 1.25, 0.0, 'b', 0.1], [-0.6, 1.05, 0.55, 1.0, 1.04, 1.25, 0.0, 'gr', 0.1], [-0.58, 1.05, 0.55, 1.0, 0.95, 1.72, 0.04, 'r', 0.1],
