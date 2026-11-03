@@ -1,6 +1,6 @@
 {
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "env": {
-    "CLAUDE_CODE_EFFORT_LEVEL": "high"
+    "CLAUDE_CODE_EFFORT_LEVEL": "max"
   }
 }
