@@ -91,6 +91,7 @@ try {
       const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.onAction('restart'); g.pause();
       g.race.lch = null; for (const c of g.race.cars) c.lch = null;   // (the start's reaction off: the samples measure what is drawn, at the same spots on the lap as ever)
+      g.race.player.kt = null;   // (the player's own tyres too, Car.kt, every vehicle's since 1. 11. 2026: their wear changes the grip and so the car's way round the lap)
       const P = g.race.player, s = [];
       let tPhys = 0, tRend = 0;
       for (let k = 0; k < 6; k++) {
