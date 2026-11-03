@@ -3,7 +3,8 @@
 // tlemi), in izpiše najboljše z razmikom (metri od štarta, stran, ocena); --slike posname vsakega iz kamere za avtom 45 m pred njim.
 //   node tools/ljudje/mesta.mjs <proga> [--n 14] [--razmik 350] [--slike] [--od 0] [--do 1e9] [--gozd]
 //   --plan zar,ogenj,marsali,…   razporedi te vrste prizorov po pravilih vrste (tribuna na ravnini, vhod blizu štarta, ogenj v gozdu …) in izpiše
-//   vrstico za SITES; --ze 70:-1,5790:1 mesta, ki so že zasedena (razmik tudi od njih)
+//   vrstico za SITES; --ze 70:-1,5790:1 mesta, ki so že zasedena (razmik tudi od njih); --preveri 3424:1,2408:1 oceni ta mesta (tudi, ali
+//   je na njih stranska cesta proge: T.stubs, »cesta«)
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../tests/browser/lib.mjs';
@@ -13,6 +14,7 @@ if (!id) { console.log('node tools/ljudje/mesta.mjs <proga> [--n 14] [--razmik 3
 const flag = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const N = +flag('--n', 14), gap = +flag('--razmik', 350), shots = args.includes('--slike'), from = +flag('--od', 0), to = +flag('--do', 1e9), forest = args.includes('--gozd');
 const plan = flag('--plan', null), taken = (flag('--ze', '') || '').split(',').filter(Boolean).map(x => { const [m, sd] = x.split(':').map(Number); return { m, side: sd }; });
+const check = (flag('--preveri', '') || '').split(',').filter(Boolean).map(x => { const [m, sd] = x.split(':').map(Number); return { m, side: sd }; });
 const OUT = path.join(REPO, 'test-results', 'ljudje', 'mesta'); fs.mkdirSync(OUT, { recursive: true });
 
 const srv = await serve(REPO);
@@ -22,7 +24,7 @@ try {
   await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
   try { await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 }); }
   catch (e) { console.log('igra se ni naložila:', errors.slice(0, 8)); throw e; }
-  const res = await page.evaluate(([gap, N, from, to, forest, plan, taken]) => {
+  const res = await page.evaluate(([gap, N, from, to, forest, plan, taken, check]) => {
     const g = window.__game; g.pause();
     const W = Render.world, T = g.race.track, gH = W.groundH, A = World.api, C4 = 4;
     // what stands on the ground: every vertex of the world's meshes higher than 0.6 m over it (not the plants, the crowd, the glades, the people's scenes)
@@ -42,23 +44,30 @@ try {
     });
     W.root.traverse(o => { if (o.isInstancedMesh && o.name === 'crowd') for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); const e = m4.elements; if (e[0] === 0 && e[5] === 0) continue; add(crowd, e[12], e[14], 1); } });
     const sum = (M, x, z) => M.get(Math.floor(x / C4) + ',' + Math.floor(z / C4)) || 0;
-    const L = T.len, out = [], s0 = T.open ? Math.max(T.startS || 0, 0) : 0, s1 = T.open ? Math.min(T.finishS || L, L) : L;
-    for (let s = s0 + 40; s < s1 - 20; s += 8) {
-      const m = Math.round(s - (T.startS || 0)); if (m < from || m > to) continue;
+    // the track's side roads (T.stubs: their points and half widths, in 8 m cells): how far a point is from the nearest one's edge
+    const SC = 8, sg = new Map(); for (const St of T.stubs || []) for (let j = 0; j < St.n; j++) { const k = Math.floor(St.x[j] / SC) + ',' + Math.floor(St.z[j] / SC); let L = sg.get(k); if (!L) sg.set(k, L = []); L.push([St.x[j], St.z[j], St.hw]); }
+    const stubD = (x, z) => { let d = 1e9; const cx = Math.floor(x / SC), cz = Math.floor(z / SC); for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) for (const [px, pz, hw] of sg.get((cx + a) + ',' + (cz + b)) || []) d = Math.min(d, Math.hypot(px - x, pz - z) - hw); return d; };
+    const L = T.len, out = [], s0 = T.open ? Math.max(T.startS || 0, 0) : 0, s1 = T.open ? Math.min(T.finishS || L, L) : L, checked = [];
+    const steps = check.length ? check.map(c => (T.startS || 0) + c.m) : null;
+    for (let s = s0 + 40; steps ? steps.length : s < s1 - 20; s += 8) {
+      if (steps) s = steps.shift();
+      const m = Math.round(s - (T.startS || 0)); if (!steps && (m < from || m > to)) continue;
       const i = T.idx(((s % L) + L) % L);
       let kmax = 0; for (let d = -110; d <= 15; d += 5) { const j = T.idx((((s + d) % L) + L) % L); kmax = Math.max(kmax, Math.abs(T.k ? T.k[j] : 0)); }
       for (const side of [-1, 1]) {
-        const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16) continue;
+        if (steps && !check.some(c => c.m === m && c.side === side)) continue;
+        const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16 && !steps) continue;
         const PL = T.def.pit, inPit = (x) => x >= PL[1] - 40 && x <= PL[2] + 40; if (PL && side === Math.sign(PL[0]) && (inPit(m) || (!T.open && (inPit(m - L) || inPit(m + L))))) continue;   // (not in the pit lane: its scene is the pit wall's, def.pit; the lane over the start line: its metres before it negative)
-        let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0;
+        let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0, road = 1e9;
         for (let a = -12; a <= 12; a += 3) for (let b = 1; b <= 13; b += 3) {
           const x = T.px[i] + T.tx[i] * a + T.nx[i] * side * (bar + b), z = T.pz[i] + T.tz[i] * a + T.nz[i] * side * (bar + b), h = gH(x, z);
           if (!Number.isFinite(h)) { bad++; continue; } lo = Math.min(lo, h); hi = Math.max(hi, h);
           const n = A.clearance(x, z); if (n < Math.min(b, 3) - 0.6) bad++;   // (another part of the road, its verge or barrier)
-          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z);
+          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z));
         }
         const dh = hi - lo, hy = T.hy ? T.hy[i] : lo;
-        if (bad || dh > 2.2 || lo < hy - 4 || hi > hy + 6) continue;
+        if (steps) { checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && o < 60 }); continue; }
+        if (bad || dh > 2.2 || lo < hy - 4 || hi > hy + 6 || road < 2) continue;   // (not on a side road)
         const score = (kmax < 1 / 400 ? 3 : kmax < 1 / 250 ? 2 : kmax < 1 / 150 ? 1 : 0) * 2 - dh - o / 40 - (forest ? 0 : tr / 6) - cr / 30 - bar / 8;
         out.push({ m, side, bar: +bar.toFixed(1), minR: Math.round(1 / Math.max(kmax, 1e-4)), dh: +dh.toFixed(1), occ: o, trees: tr, crowd: cr, score: +score.toFixed(2) });
       }
@@ -75,8 +84,9 @@ try {
         if (c) pick.push(Object.assign({ kind }, c)); }
     } else for (const c of out) { if (c.occ > 60) continue; if (far(c.m, pick.concat(taken))) pick.push(c); if (pick.length >= N) break; }
     pick.sort((a, b) => a.m - b.m);
-    return { len: Math.round(L), open: !!T.open, n: out.length, pick, names: T.names.map(q => [q.n, Math.round(q.d)]) };
-  }, [gap, N, from, to, forest, plan, taken]);
+    return { len: Math.round(L), open: !!T.open, n: out.length, pick, checked, names: T.names.map(q => [q.n, Math.round(q.d)]) };
+  }, [gap, N, from, to, forest, plan, taken, check]);
+  if (check.length) { for (const c of res.checked) console.log('preveri', id, `${c.m}:${c.side}`, c.ok ? 'OK' : 'NE', JSON.stringify(c)); process.exitCode = 0; }
   console.log(id, 'dolžina', res.len, res.open ? 'odprta' : 'krožna', 'kandidatov', res.n);
   console.log('vrsta m stran bar minR dh occ drevesa gledalci ocena');
   for (const c of res.pick) console.log([c.kind || '', c.m, c.side, c.bar, c.minR, c.dh, c.occ, c.trees, c.crowd, c.score].join(' '));

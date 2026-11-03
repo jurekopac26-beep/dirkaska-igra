@@ -1196,7 +1196,7 @@
   function roomSide(T, s) { let l = 0, r = 0; for (let d = -30; d <= 30; d += 6) { const i = T.idx((((s + d) % T.len) + T.len) % T.len); l += T.bl[i]; r += T.br[i]; } return r > l ? 1 : -1; }
   /* ---------------- every frame (World.update): the followed car's way to each scene, the scenes near the camera posed ---------------- */
   const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _cv = new THREE.Vector3();
-  const SUMMER = new Set(['piknik', 'kolesarji']);   // (the scenes of a summer's day: out of the world under snow)
+  const SUMMER = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the scenes of a summer's day: out of the world under snow; js/world-ljudje2.js's too)
   function step(W, t, car, cam) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built (dry: no umbrellas)
       WET = false; for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
@@ -1248,7 +1248,7 @@
     detroit: [['marsali', 1944, -1]],
     greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
-    hotham: [['foto2', 832, 1], ['kamp', 2840, 1], ['piknik', 7608, -1]],
+    hotham: [['foto2', 832, 1], ['kamp', 2760, 1], ['piknik', 7608, -1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
     longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['gasilci', 5952, 1], ['foto2', 6488, -1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
@@ -1257,7 +1257,7 @@
     moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
     monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
-    mulholland: [['piknik', 136, 1], ['foto2', 2264, -1]],
+    mulholland: [['piknik', 328, 1], ['foto2', 2264, -1]],
     newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['foto', 1072, 1], ['gasilci', 1608, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
@@ -1474,7 +1474,7 @@
     // what the world has standing (its buildings, walls, fences, water: not the trees, not the people), its boxes in the world: a kiosk, the
     // toilets, the gate only where none of it is over the ground (rays down at the middle and four corners)
     const solids = [], DOWN = new THREE.Vector3(0, -1, 0); o.root.updateMatrixWorld(true);
-    o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); solids.push({ m, b: g.boundingBox.clone().applyMatrix4(m.matrixWorld) }); });
+    o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solids.push({ m, b }); });   // (not the ground's big pieces: under the rays' reach, and many triangles)
     let near2 = [];
     const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (rc.intersectObjects(near2, false).length) return false; } return true; };
     for (const f of feet) {
