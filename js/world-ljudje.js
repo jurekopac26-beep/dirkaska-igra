@@ -918,13 +918,138 @@
   const showOf = (s) => { const k = new Set(); if (s) { for (const h of s.hold || []) k.add(keyOf(h)); for (const h of s.head || []) k.add(keyOf(h, 'H')); } return k; };
 
   /* ---------------- a person's day: what it does, the way to the fence and back (functions of time: posed only when seen) ---------------- */
-  const WARN = 2.8, BACK = 4, WALK = 1.45, FENCE_T = 1.8;
+  const WARN = 2.8, BACK = 4, WALK = 1.45, FENCE_T = 1.8, TURN_T = 0.8;
   const STRIDE = { run: 2.4, walk: 4.5, carryWalk: 4.5 };   // (the stride's radians per metre)
   const clamp = (x, a, b) => x < a ? a : x > b ? b : x, wrapA = (a) => a - TAU * Math.round(a / TAU);
   const at0 = (s) => s.on ? { on: s.on, a: s.a, b: s.b, y: s.y || 0 } : { a: s.a, b: s.b, y: s.y || 0 };
-  function moveSeg(segs, from, to, t, v, pose, hold) {   // a walk or a run from one place to another (on the ground, or on the same thing)
-    const same = (from.on || null) === (to.on || null), d = same ? Math.hypot(to.a - from.a, to.b - from.b) : 0, dur = same ? Math.max(0.25, d / v) : 0.01;
-    segs.push({ t0: t, t1: t + dur, mv: { from, to, d, pose, hold: showOf({ hold: hold || [] }) } }); return t + dur;
+  function moveSeg(segs, from, to, t, v, pose, hold, G) {   // a walk or a run from one place to another (on the ground, or on the same thing); on the ground round the scene's things (G: wayGrid)
+    const same = (from.on || null) === (to.on || null), sh = showOf({ hold: hold || [] }), way = same ? route(G, from, to) : null;
+    if (way) { let d0 = 0; for (let k = 1; k < way.length; k++) { const f = way[k - 1], q = way[k], d = Math.hypot(q.a - f.a, q.b - f.b), dur = Math.max(0.05, d / v); segs.push({ t0: t, t1: t + dur, mv: { from: f, to: q, d, d0, pose, hold: sh } }); t += dur; d0 += d; } return t; }
+    if (!same) return t;   // (from a thing onto the ground or back, the same place: at once, never part of the way in one frame and part in the other)
+    const d = Math.hypot(to.a - from.a, to.b - from.b), dur = Math.max(0.25, d / v);
+    segs.push({ t0: t, t1: t + dur, mv: { from, to, d, pose, hold: sh } }); return t + dur;
+  }
+  // ways round the scene's things: what stands at body height (its baked things cut at 0.45, 0.9 and 1.35 m over the ground; a part all within
+  // 0.25–1.75 m all of it: a table's top, a seat, a chair's back) in 0.2 m cells over the scene's ground, widened by half a body; a way whose
+  // straight line crosses it goes round on the grid (A*, its corners cut where the line is clear). The first and the last 0.6 m of a way are
+  // free (getting up from one's own chair, leaning on the fence by a banner); under a tent's or an awning's roof is free (higher)
+  const WG = { c: 0.2, a0: -24, b0: -2, na: 240, nb: 100, r: 0.25, end: 0.6, esc: 1.6, cuts: [0.45, 0.9, 1.35] };   // (esc: from one's own place among the chairs and the table out the shortest way, then round)
+  function wayGrid(F, Ds) {
+    const { c, a0, b0, na, nb } = WG, raw = new Uint8Array(na * nb);
+    const put = (a, b) => { const i = Math.floor((a - a0) / c), j = Math.floor((b - b0) / c); if (i >= 0 && j >= 0 && i < na && j < nb) raw[j * na + i] = 1; };
+    const line = (a1, b1, a2, b2) => { const n = Math.max(1, Math.ceil(Math.hypot(a2 - a1, b2 - b1) / (c * 0.5))); for (let k = 0; k <= n; k++) put(a1 + (a2 - a1) * k / n, b1 + (b2 - b1) * k / n); };
+    const A = [0, 0, 0], B = [0, 0, 0], Y = [0, 0, 0], q = [];
+    for (let di = 0; di < Ds.length; di++) { const P = Ds[di] && Ds[di].P, unlit = di === 1; if (!P) continue;   // (Ds: the lit things, the unlit ones: a fire's flames, its footprint all of it)
+      for (let t = 0; t + 8 < P.length; t += 9) {
+        let lo = 1e9, hi = -1e9;
+        for (let k = 0; k < 3; k++) { const dx = P[t + 3 * k] - F.px, dz = P[t + 3 * k + 2] - F.pz; A[k] = dx * F.tx + dz * F.tz; B[k] = dx * F.nx + dz * F.nz - F.bar; Y[k] = P[t + 3 * k + 1]; if (Y[k] < lo) lo = Y[k]; if (Y[k] > hi) hi = Y[k]; }
+        const am = (A[0] + A[1] + A[2]) / 3, bm = (B[0] + B[1] + B[2]) / 3; if (am < a0 - 3 || am > a0 + na * c + 3 || bm < b0 - 3 || bm > b0 + nb * c + 3) continue;
+        const g = F.y(am, bm); if (hi < (unlit ? g + 0.1 : g + 0.3) || lo > g + 1.7) continue;
+        if ((lo >= g + 0.25 && hi <= g + 1.75) || unlit) {   // all of it at body height (or a flame): its edges and its inside
+          line(A[0], B[0], A[1], B[1]); line(A[1], B[1], A[2], B[2]); line(A[2], B[2], A[0], B[0]);
+          const ia = Math.min(A[0], A[1], A[2]), xa = Math.max(A[0], A[1], A[2]), ib = Math.min(B[0], B[1], B[2]), xb = Math.max(B[0], B[1], B[2]);
+          for (let a = Math.ceil(ia / c) * c; a < xa; a += c) for (let b = Math.ceil(ib / c) * c; b < xb; b += c) {
+            const s0 = (A[1] - A[0]) * (b - B[0]) - (B[1] - B[0]) * (a - A[0]), s1 = (A[2] - A[1]) * (b - B[1]) - (B[2] - B[1]) * (a - A[1]), s2 = (A[0] - A[2]) * (b - B[2]) - (B[0] - B[2]) * (a - A[2]);
+            if ((s0 >= 0 && s1 >= 0 && s2 >= 0) || (s0 <= 0 && s1 <= 0 && s2 <= 0)) put(a, b); }
+          continue;
+        }
+        for (const h0 of WG.cuts) {   // a taller one (a wall, a van's side, a pole): where it cuts these heights
+          const h = g + h0; q.length = 0;
+          for (let k = 0; k < 3; k++) { const k2 = (k + 1) % 3, d1 = Y[k] - h, d2 = Y[k2] - h; if ((d1 < 0) !== (d2 < 0)) { const f = d1 / (d1 - d2); q.push(A[k] + (A[k2] - A[k]) * f, B[k] + (B[k2] - B[k]) * f); } }
+          if (q.length >= 4) line(q[0], q[1], q[2], q[3]);
+        }
+      } }
+    const R = Math.ceil(WG.r / c), G = new Uint8Array(na * nb); let any = false;   // (2: the thing itself; 1: within half a body of it)
+    for (let j = 0; j < nb; j++) for (let i = 0; i < na; i++) if (raw[j * na + i]) { any = true; G[j * na + i] = 2;
+      for (let dj = -R; dj <= R; dj++) for (let di = -R; di <= R; di++) { const ii = i + di, jj = j + dj, k = jj * na + ii; if (di * di + dj * dj <= R * R && ii >= 0 && jj >= 0 && ii < na && jj < nb && !G[k]) G[k] = 1; } }
+    if (!any) return null;
+    // the open ground in regions (side by side, as a way goes: no corner cutting): a way between two places of one region is always found;
+    // the biggest is the open ground round the scene's things (a garden behind its fence, a pool's water inside its wall: regions of their own)
+    const lab = new Int32Array(na * nb), st = []; let nl = 0, big = 0, bigN = 0;
+    for (let k0 = 0; k0 < na * nb; k0++) if (!G[k0] && !lab[k0]) { lab[k0] = ++nl; st.push(k0); let n = 0;
+      while (st.length) { const k = st.pop(), i = k % na; n++;
+        if (i > 0 && !G[k - 1] && !lab[k - 1]) { lab[k - 1] = nl; st.push(k - 1); } if (i < na - 1 && !G[k + 1] && !lab[k + 1]) { lab[k + 1] = nl; st.push(k + 1); }
+        if (k >= na && !G[k - na] && !lab[k - na]) { lab[k - na] = nl; st.push(k - na); } if (k + na < na * nb && !G[k + na] && !lab[k + na]) { lab[k + na] = nl; st.push(k + na); } }
+      if (n > bigN) { bigN = n; big = nl; } }
+    G.lab = lab; G.big = big; return G;
+  }
+  // the open regions a place reaches (over its own first 0.6 m, and by a thing within 1.6 m: getting up from its chair), and the nearest open
+  // cell of a region (out of one's own thing, straight: the pool, the trampoline, the hatch of its food truck)
+  const TB = { gen: new Uint32Array(WG.na * WG.nb), n: 0, q: [] };
+  function touches(G, e) {
+    const { c, a0, b0, na, nb } = WG, out = [], gen = ++TB.n, q = TB.q, i0 = Math.floor((e.a - a0) / c), j0 = Math.floor((e.b - b0) / c); q.length = 0;
+    if (i0 < 0 || j0 < 0 || i0 >= na || j0 >= nb) return out;
+    q.push(j0 * na + i0); TB.gen[q[0]] = gen;
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % na, j = (k - i) / na, g = G[k];
+      if (!g) { if (!out.includes(G.lab[k])) out.push(G.lab[k]); continue; }
+      const d = Math.hypot(a0 + (i + 0.5) * c - e.a, b0 + (j + 0.5) * c - e.b); if (!(d < WG.end || (g === 1 && d <= WG.esc))) continue;
+      for (const n of [i > 0 ? k - 1 : -1, i < na - 1 ? k + 1 : -1, j > 0 ? k - na : -1, j < nb - 1 ? k + na : -1]) if (n >= 0 && TB.gen[n] !== gen) { TB.gen[n] = gen; q.push(n); } }
+    return out;
+  }
+  function exitTo(G, e, l) {
+    const { c, a0, b0, na, nb } = WG, gen = ++TB.n, q = TB.q, i0 = Math.floor((e.a - a0) / c), j0 = Math.floor((e.b - b0) / c), R = Math.ceil(3 / c); q.length = 0;
+    if (i0 < 0 || j0 < 0 || i0 >= na || j0 >= nb) return null;
+    q.push(j0 * na + i0); TB.gen[q[0]] = gen;
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % na, j = (k - i) / na;
+      if (!G[k] && G.lab[k] === l) return { a: a0 + (i + 0.5) * c, b: b0 + (j + 0.5) * c, y: e.y || 0 };
+      for (const [n, ok] of [[k - 1, i > 0], [k + 1, i < na - 1], [k - na, j > 0], [k + na, j < nb - 1]]) if (ok && TB.gen[n] !== gen && Math.abs(n % na - i0) <= R && Math.abs(Math.floor(n / na) - j0) <= R) { TB.gen[n] = gen; q.push(n); } }
+    return null;
+  }
+  const wayBlocked = (G, a, b, f, t) => { const i = Math.floor((a - WG.a0) / WG.c), j = Math.floor((b - WG.b0) / WG.c); if (i < 0 || j < 0 || i >= WG.na || j >= WG.nb) return 0;
+    const g = G[j * WG.na + i], e2 = WG.end * WG.end; return !g || (a - f.a) * (a - f.a) + (b - f.b) * (b - f.b) < e2 || (a - t.a) * (a - t.a) + (b - t.b) * (b - t.b) < e2 ? 0 : g; };   // (0 free, 1 by a thing, 2 a thing)
+  const cellB = (G, k, f, t) => { const g = G[k]; if (!g) return 0; const i = k % WG.na, x = WG.a0 + (i + 0.5) * WG.c, y = WG.b0 + ((k - i) / WG.na + 0.5) * WG.c, e2 = WG.end * WG.end;   // (the same for a cell)
+    return (x - f.a) * (x - f.a) + (y - f.b) * (y - f.b) < e2 || (x - t.a) * (x - t.a) + (y - t.b) * (y - t.b) < e2 ? 0 : g; };
+  const wayClear = (G, p, q, f, t) => { const n = Math.max(1, Math.ceil(Math.hypot(q.a - p.a, q.b - p.b) / (WG.c * 0.5)));   // (a straight line: by no thing, but in its first and last 0.6 m)
+    for (let k = 0; k <= n; k++) if (wayBlocked(G, p.a + (q.a - p.a) * k / n, p.b + (q.b - p.b) * k / n, f, t)) return false; return true; };
+  const AS = { g: new Float32Array(WG.na * WG.nb), came: new Int32Array(WG.na * WG.nb), gen: new Uint32Array(WG.na * WG.nb), n: 0, hk: [], hf: [] };
+  function route(G, from, to) {   // [from, …corners, to] round the scene's things, or null (no grid, the straight line clear, or no way: straight then)
+    if (!G || from.on || to.on) return null;
+    const M = G.memo || (G.memo = new Map()), key = from.a + ',' + from.b + '>' + to.a + ',' + to.b;   // (kept: a scene's people go the same ways each time; found at the load, addScene)
+    let w = M.get(key); if (w === undefined) { w = route1(G, from, to); if (M.size < 256) M.set(key, w); }
+    return w;
+  }
+  function route1(G, from, to) {
+    if (wayClear(G, from, to, from, to)) return null;
+    const Lf = touches(G, from), Lt = touches(G, to); let a = from, b = to;
+    if (!Lf.some(l => Lt.includes(l))) {   // one of them shut in by its own thing: out of it into the open ground first, straight
+      if (!Lf.includes(G.big)) { a = exitTo(G, from, G.big); if (!a) return null; }
+      if (!Lt.includes(G.big)) { b = exitTo(G, to, G.big); if (!b) return null; }
+    }
+    const w = wayClear(G, a, b, a, b) ? [a, b] : routeOn(G, a, b); if (!w) return null;
+    if (a !== from) w.unshift(from); if (b !== to) w.push(to);
+    return w;
+  }
+  function routeOn(G, from, to) {
+    const { c, a0, b0, na, nb } = WG, ci = (a) => Math.max(0, Math.min(na - 1, Math.floor((a - a0) / c))), cj = (b) => Math.max(0, Math.min(nb - 1, Math.floor((b - b0) / c)));
+    const s = cj(from.b) * na + ci(from.a), e = cj(to.b) * na + ci(to.a), ei = e % na, ej = (e - ei) / na, gen = ++AS.n, hk = AS.hk, hf = AS.hf, e2 = WG.esc * WG.esc; hk.length = hf.length = 0;
+    const cx = (k) => a0 + (k % na + 0.5) * c, cz = (k) => b0 + (Math.floor(k / na) + 0.5) * c;
+    const hgt = (k) => { const di = Math.abs(k % na - ei), dj = Math.abs(Math.floor(k / na) - ej); return Math.max(di, dj) + 0.414 * Math.min(di, dj); };
+    const push = (k, f) => { let i = hk.length; hk.push(k); hf.push(f); while (i > 0) { const pi = (i - 1) >> 1; if (hf[pi] <= f) break; hk[i] = hk[pi]; hf[i] = hf[pi]; i = pi; } hk[i] = k; hf[i] = f; };
+    const pop = () => { const k = hk[0], lk = hk.pop(), lf = hf.pop(); if (hk.length) { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i, mf = lf; if (l < hk.length && hf[l] < mf) { m = l; mf = hf[l]; } if (r < hk.length && hf[r] < mf) m = r; if (m === i) break; hk[i] = hk[m]; hf[i] = hf[m]; i = m; } hk[i] = lk; hf[i] = lf; } return k; };
+    AS.gen[s] = gen; AS.g[s] = 0; AS.came[s] = -1; push(s, hgt(s));
+    let found = false, steps = 0;
+    while (hk.length && steps++ < 5000) {   // (a way round is found in a few hundred; no way: given up, straight)
+      const k = pop(); if (k === e) { found = true; break; }
+      const i = k % na, j = (k - i) / na, gk = AS.g[k];
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= na || jj >= nb) continue;
+        const n = jj * na + ii, cost = di && dj ? 1.414 : 1;
+        const wb = cellB(G, n, from, to);
+        if (wb) { const x = cx(n), y = cz(n); if (wb === 2 || ((x - from.a) * (x - from.a) + (y - from.b) * (y - from.b) > e2 && (x - to.a) * (x - to.a) + (y - to.b) * (y - to.b) > e2)) continue; }   // (by a thing: only near the two ends; through it never)
+        else if (di && dj && (cellB(G, j * na + ii, from, to) || cellB(G, jj * na + i, from, to))) continue;   // (not through a corner)
+        const gn = gk + cost; if (AS.gen[n] === gen && AS.g[n] <= gn) continue;
+        AS.gen[n] = gen; AS.g[n] = gn; AS.came[n] = k; push(n, gn + hgt(n)); } }
+    if (!found) return null;
+    const cells = []; for (let k = e; k !== -1 && k !== s; k = AS.came[k]) cells.push(k); cells.reverse();
+    const pts = cells.map(k => ({ a: cx(k), b: cz(k) })); pts[pts.length - 1] = to;
+    const way = [from]; let cur = from, last = null;   // (its corners cut: on along the cells while they are in a straight line from the last corner)
+    for (let k = 0; k < pts.length; k++) {
+      if (wayClear(G, cur, pts[k], from, to)) { last = pts[k]; continue; }
+      if (last) { way.push(last); cur = last; last = null; k--; continue; }   // (a corner where the line was last clear; the cell again from it)
+      way.push(pts[k]); cur = pts[k];
+    }
+    if (way[way.length - 1] !== to) way.push(to);
+    const L = way.reduce((s2, p, k) => k ? s2 + Math.hypot(p.a - way[k - 1].a, p.b - way[k - 1].b) : 0, 0); let acc = 0;
+    return way.map((p, k) => { if (k) acc += Math.hypot(p.a - way[k - 1].a, p.b - way[k - 1].b); return p === from || p === to ? p : { a: p.a, b: p.b, y: from.y + (to.y - from.y) * acc / (L || 1) }; });
   }
   // pacing back and forth along its facing, ±1.6 m (poseOne): the first quarter of each half a turn on the spot at the end it reached (what it
   // holds goes round with it: the dog on its leash walks round it, not across), then the walk to the other end; its place at a time tt
@@ -938,29 +1063,36 @@
   // at the alert: the way out (each person its reaction time d0 and its speed v); a pacer from where it is then, not its pacing's middle
   function planOut(p, al) {
     const st = p.st, R = st.run, Fe = st.fence, segs = [], t1 = al + p.d0;
-    const A = pacing(st.act) ? ((pc) => Object.assign({}, st.act, { a: pc.a, b: pc.b, face: (pc.turn >= 0.5) !== pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz] }))(pace(st.act, al + p.ph * 17)) : st.act;   // (facing the way it walks then)
-    segs.push({ t0: al, t1, s: Object.assign({}, A, st.zac || st.bliza || {}) });
+    const pc = pacing(st.act) ? pace(st.act, al + p.ph * 17 + (p.po || 0)) : null;   // (a pacer: where it is then, facing the way it walks then)
+    const A = pc ? Object.assign({}, st.act, { a: pc.a, b: pc.b, face: (pc.turn >= 0.5) !== pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz] }) : st.act;
+    const turn = (s) => pc ? Object.assign(s, { ff: pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz], fk: pc.turn * pc.turn * (3 - 2 * pc.turn), tf: al }) : s;   // (and turning from its facing then to the stop's: poseOne)
+    segs.push({ t0: al, t1, s: turn(Object.assign({}, A, st.zac || st.bliza || {})) });
     if (R === false || (!R && !Fe)) {   // it stays (the staff, the lazy one): what changes at its place as the car comes, then the fence state there
-      const B = Object.assign({}, A, st.bliza || {}), tf = al + FENCE_T;
+      const B = turn(Object.assign({}, A, st.bliza || {})), tf = al + FENCE_T;
       segs.push({ t0: t1, t1: tf, s: B });
-      if (Fe) { const f = at0(Fe), a = at0(A); const t2 = (f.on || null) === (a.on || null) && Math.hypot(f.a - a.a, f.b - a.b) > 0.3 ? moveSeg(segs, a, f, tf, WALK, 'walk', Fe.hold) : tf; segs.push({ t0: t2, t1: 1e9, s: Fe, fence: true }); }
+      if (Fe) { const f = at0(Fe), a = at0(A); const t2 = (f.on || null) === (a.on || null) && Math.hypot(f.a - a.a, f.b - a.b) > 0.3 ? moveSeg(segs, a, f, tf, WALK, 'walk', Fe.hold, p.G) : tf; segs.push({ t0: t2, t1: 1e9, s: Fe, fence: true }); }
       else segs.push({ t0: tf, t1: 1e9, s: Object.assign({}, B, st.mimo || {}), fence: true });
       return segs;
     }
     let cur = at0(A), t = t1;
     if (R && R.a != null) {   // a place of its own first (staff to the edge, the scaffold's railing), at a walk unless it says otherwise
-      const r = at0(R); t = moveSeg(segs, cur, r, t, R.pose === 'run' ? p.v : WALK, R.pose === 'run' ? 'run' : 'walk', R.hold || A.hold);
+      const r = at0(R); t = moveSeg(segs, cur, r, t, R.pose === 'run' ? p.v : WALK, R.pose === 'run' ? 'run' : 'walk', R.hold || A.hold, p.G);
       const tf = Math.max(t, al + FENCE_T); segs.push({ t0: t, t1: tf, s: R }); cur = r; t = tf;
     }
     if (Fe) { const f = at0(Fe), pose = R && R.pose === 'walk' ? 'walk' : R && R.a != null ? 'walk' : 'run';
-      t = moveSeg(segs, cur, f, t, pose === 'run' ? p.v : WALK, pose, R && R.hold != null ? R.hold : (Fe.hold || [])); segs.push({ t0: t, t1: 1e9, s: Fe, fence: true }); }
+      t = moveSeg(segs, cur, f, t, pose === 'run' ? p.v : WALK, pose, R && R.hold != null ? R.hold : (Fe.hold || []), p.G); segs.push({ t0: t, t1: 1e9, s: Fe, fence: true }); }
     return segs;
   }
   // ~4 s after the car has passed: back to what it was doing, at a walk (from wherever it is now)
   function planBack(p, Sc, t) {
     const now = segAt(p, Sc, t), A = p.st.act, from = now.mv ? lerpPlace(now.mv, clamp((t - now.t0) / (now.t1 - now.t0), 0, 1)) : at0(now.s), segs = [];
-    const tb = t + p.bd; segs.push({ t0: t, t1: tb, s: now.mv ? Object.assign({}, now.mv.to, { pose: 'stand' }) : now.s, fence: !!now.fence });
-    const t2 = moveSeg(segs, from, at0(A), tb, WALK, A.hold && A.hold.length && A.pose === 'carryWalk' ? 'carryWalk' : 'walk', A.hold);
+    const tb = t + p.bd, mv0 = now.mv, da = mv0 ? mv0.to.a - mv0.from.a : 0, db = mv0 ? mv0.to.b - mv0.from.b : 0;   // (still on its way: it stops where it is, facing the way it went, what it holds in its hands)
+    segs.push(mv0 ? { t0: t, t1: tb, s: Object.assign({}, from, { pose: 'stand', face: Math.abs(da) + Math.abs(db) > 1e-3 ? [da, db] : null }), show: mv0.hold, fence: !!now.fence } : { t0: t, t1: tb, s: now.s, fence: !!now.fence });
+    const t2 = moveSeg(segs, from, at0(A), tb, WALK, A.hold && A.hold.length && A.pose === 'carryWalk' ? 'carryWalk' : 'walk', A.hold, p.G);
+    if (pacing(A)) {   // a pacer: its pacing on from its middle (where it got to), walking on the way it came, not where the pacing's clock had it
+      const fc = A.face && A.face !== 'road' ? A.face : [1, 0], mv = segs[segs.length - 1].mv, fwd = !mv || (mv.to.a - mv.from.a) * fc[0] + (mv.to.b - mv.from.b) * fc[1] >= 0;
+      p.po = ((fwd ? 0 : 0.5) + 0.5 * (PACE.turn + 0.5 * (1 - PACE.turn))) * PACE.per - (t2 + p.ph * 17);
+    }
     segs.push({ t0: t2, t1: 1e9, s: A, act: true });
     p.segs = segs; return t2;
   }
@@ -981,22 +1113,23 @@
   const _w = new THREE.Vector3(), _q = new THREE.Vector3();
   function poseOne(Sc, p, t, car) {
     const P = p.P, sg = segAt(p, Sc, t), F = Sc.F;
-    let pose, pt = 0, J, yaw, look = null, rx = 0, show;
+    let pose, pt = 0, J, yaw, look = null, rx = 0, show, tl = 0;
     if (sg.mv) {   // walking or running
       const f = clamp((t - sg.t0) / Math.max(1e-3, sg.t1 - sg.t0), 0, 1), mv = sg.mv, pl = lerpPlace(mv, f);
       const gy = placeOf(Sc, pl, _w), da = mv.to.a - mv.from.a, db = mv.to.b - mv.from.b;
       yaw = pl.on ? gy + Math.atan2(da, db) : (Math.abs(da) + Math.abs(db) > 1e-3 ? F.yaw(da, db) : F.yaw(0, -1));
-      pose = mv.pose; pt = f * mv.d * (STRIDE[pose] || 4) + p.ph * TAU; J = poseJ(pose, pt); show = mv.hold;
+      pose = mv.pose; pt = ((mv.d0 || 0) + f * mv.d) * (STRIDE[pose] || 4) + p.ph * TAU; J = poseJ(pose, pt); show = mv.hold;
     } else {
       const s = sg.s, gy = placeOf(Sc, s, _w);
       if (s.cam && Sc.movers.length) {   // the cameraman on the tower: behind the camera, turning with it
         const Mv = Sc.movers[0], G = Sc.groups[Mv.on]; _q.set(Mv.x, Mv.y, Mv.z).applyMatrix4(G.m); const cy = Mv.yaw;
         _w.x = _q.x - Math.sin(cy) * 0.85; _w.z = _q.z - Math.cos(cy) * 0.85; yaw = cy;
       } else if (s.on) yaw = gy + (s.yaw || 0);
-      else { const fc = s.face == null || s.face === 'road' ? null : s.face; yaw = fc ? F.yaw(fc[0], fc[1]) : F.yaw(0, -1); }
+      else { const fc = s.face == null || s.face === 'road' ? null : s.face; yaw = fc ? F.yaw(fc[0], fc[1]) : F.yaw(0, -1);
+        if (s.ff && t - s.tf < TURN_T) { const u = clamp((t - s.tf) / TURN_T, 0, 1); tl = wrapA(yaw - F.yaw(s.ff[0], s.ff[1]) - Math.PI * s.fk) * (1 - u * u * (3 - 2 * u)); yaw -= tl; } }   // (a pacer stopping: turning to it from the way it walked, planOut; tl: the turn still to go)
       pose = s.pose || 'stand'; rx = s.rx || 0; show = sg === ACT ? (p.actShow || (p.actShow = showOf(s))) : (sg.show || (sg.show = showOf(s)));
       if (sg.act && !s.still) {   // what it does: its own motion, or a breath
-        const m = MOTION[pose], tt = t + p.ph * 17;
+        const m = MOTION[pose], tt = t + p.ph * 17 + (p.po || 0);   // (p.po: a pacer's clock set back on its return, planBack)
         if (m && m.alt) { let u = 0.5 - 0.5 * Math.cos((tt * m.hz) * TAU); if (m.snap) u = u * u * (3 - 2 * u); J = mixJ(poseJ(pose, s.t || 0), poseJ(m.alt, 0), u); }
         else if (m && (pose === 'walk' || pose === 'carryWalk')) {   // pacing back and forth along its facing (carrying a crate, a tyre, the dog on its leash)
           const pc = pace(s, tt), k = pc.turn * pc.turn * (3 - 2 * pc.turn); placeOf(Sc, { a: pc.a, b: pc.b, y: s.y || 0 }, _w);
@@ -1013,7 +1146,7 @@
     J = umbrella(p, J, show, pose);
     P.root.position.set(_w.x, _w.y + (J.dy || 0) * P.sc, _w.z); P.root.rotation.set(rx, yaw, 0, 'YXZ'); P.root.scale.setScalar(P.sc);
     setJ(P, J);
-    if (look === 'car' && car) { const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw); P.torso.rotation.y += clamp(d * 0.35, -0.5, 0.5); P.head.rotation.y = clamp(d - P.torso.rotation.y, -1.1, 1.1); }
+    if (look === 'car' && car) { const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw - tl) + tl; P.torso.rotation.y += clamp(d * 0.35, -0.5, 0.5); P.head.rotation.y = clamp(d - P.torso.rotation.y, -1.1, 1.1); }
     else if (typeof look === 'number') P.head.rotation.y = look;
     if (sg.s && sg.s.tw) P.torso.rotation.y += sg.s.tw;
     P.root.updateMatrixWorld(true);
@@ -1249,7 +1382,7 @@
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
     baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['tribuna', 528, 1], ['gasilci', 864, 1], ['marsali', 1472, 1], ['foto', 1864, -1], ['gasilci', 2728, 1]],
+    bangsaen: [['tribuna', 528, 1], ['foto', 1864, -1], ['gasilci', 2296, 1], ['marsali', 2440, 1], ['gasilci', 2728, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     beartooth: [['piknik', 1696, -1]],
     bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
@@ -1277,13 +1410,13 @@
     rastro: [['piknik', 4432, -1]],
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
     rio: [['foto', 1200, 1], ['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 3376, -1], ['marsali', 4040, -1]],
-    riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['tribuna', 4568, -1], ['foto2', 5144, 1]],
+    riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['foto2', 4312, 1], ['tribuna', 4568, -1]],
     sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
     toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
-    troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
+    troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1456, -1], ['vhod', 1960, -1]],
     uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
     vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };
@@ -2096,7 +2229,7 @@
     const A = World.api, T = A.T, def = T && T.def;
     if (!def || def.test || !o || !o.root || typeof o.groundH !== 'function') return null;
     const list = (SITES[def.id] || []).slice();
-    if (def.pit && !list.some(e => e[0] === 'boksi')) list.push(['boksi', def.pit[3], Math.sign(def.pit[0]) || 1]);   // (a circuit's pit wall: the player's team opposite its box, the board over the wall)
+    // (no scene at the player's box on a circuit: its world builds the team stands on the pit wall's strip, the renderer seats the engineer and the crews)
     if (!list.length && !(STANDS && hasStands(o))) return null;
     const t0 = performance.now(), LOD = A.LOD, gH = o.groundH, K0 = FLAGS[def.id] || {}, hsh = Math.abs([...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7));
     const W = { T, scenes: [], frame: 0, wx: 0.8, wz: 0.6, smoke: null, q: {}, hint: -1, cs: null, v: 0, lt: 0,
@@ -2115,6 +2248,9 @@
         p.um = h % 1000 < 750 && !p.P.roof && !staff && !STAFF_SCENES.has(name) && !BUSY_HANDS.has(name); p.uk = (h >>> 10) % UMB_COLS.length; });
       for (const pt of C.pets) Sc.pets.push(rec(rigid(pt.model), pt.st));
       for (const mv of C.movers) Sc.movers.push({ P: rigid(mv.model), on: mv.on, x: mv.x, y: mv.y, z: mv.z, yaw: 0 });
+      if (!Sc.stand) { const tg = performance.now(); Sc.G = wayGrid(F, [C.L, C.U]); for (const p of Sc.people.concat(Sc.pets)) p.G = Sc.G;   // (the ways round its things)
+        if (Sc.G) { Sc.al = 0; for (const p of Sc.people) if (p.st && p.st.act && !pacing(p.st.act)) { p.segs = planOut(p, 0); planBack(p, Sc, 30); } }   // (found now, at the load, not as the car comes: route keeps them; a pacer's way out starts where it is then)
+        stats.msWays = (stats.msWays || 0) + performance.now() - tg; }
       reset(Sc);
       // the people's mesh: every figure's parts one after the other (their colours fixed, their places written when posed)
       const all = Sc.people.map(p => p.P).concat(Sc.pets.map(p => p.P), Sc.movers.map(m => m.P));

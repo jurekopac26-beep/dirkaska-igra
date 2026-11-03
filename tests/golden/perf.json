@@ -39,14 +39,14 @@
   "maxCalls": 228,
   "kverts": 468,
   "maxKverts": 623,
-  "jsMs": 1.77
+  "jsMs": 1.6
  },
  "rbring": {
-  "calls": 217,
+  "calls": 216,
   "maxCalls": 251,
-  "kverts": 433,
-  "maxKverts": 629,
-  "jsMs": 1.91
+  "kverts": 431,
+  "maxKverts": 615,
+  "jsMs": 1.36
  },
  "suzuka": {
   "calls": 194,
@@ -168,53 +168,53 @@
   "jsMs": 1.53
  },
  "cpalace": {
-  "calls": 194,
-  "maxCalls": 228,
-  "kverts": 524,
+  "calls": 193,
+  "maxCalls": 223,
+  "kverts": 521,
   "maxKverts": 608,
-  "jsMs": 1.6
+  "jsMs": 1.42
  },
  "riverside": {
-  "calls": 162,
+  "calls": 163,
   "maxCalls": 203,
-  "kverts": 282,
+  "kverts": 283,
   "maxKverts": 345,
-  "jsMs": 1
+  "jsMs": 0.9
  },
  "monterey": {
   "calls": 199,
   "maxCalls": 233,
   "kverts": 534,
   "maxKverts": 611,
-  "jsMs": 1.53
+  "jsMs": 0.92
  },
  "longford": {
   "calls": 171,
   "maxCalls": 205,
   "kverts": 414,
   "maxKverts": 460,
-  "jsMs": 1.62
+  "jsMs": 1.25
  },
  "newcastle": {
   "calls": 230,
   "maxCalls": 263,
-  "kverts": 739,
-  "maxKverts": 867,
-  "jsMs": 1.77
+  "kverts": 738,
+  "maxKverts": 861,
+  "jsMs": 0.96
  },
  "rio": {
   "calls": 205,
   "maxCalls": 273,
   "kverts": 530,
   "maxKverts": 740,
-  "jsMs": 1.44
+  "jsMs": 1.26
  },
  "toronto": {
   "calls": 193,
-  "maxCalls": 231,
-  "kverts": 701,
+  "maxCalls": 229,
+  "kverts": 699,
   "maxKverts": 808,
-  "jsMs": 1.03
+  "jsMs": 1.02
  },
  "medvode": {
   "calls": 129,
@@ -228,7 +228,7 @@
   "maxCalls": 251,
   "kverts": 456,
   "maxKverts": 611,
-  "jsMs": 1.67
+  "jsMs": 1.15
  },
  "greatalpine": {
   "calls": 156,
@@ -238,11 +238,11 @@
   "jsMs": 2.29
  },
  "detroit": {
-  "calls": 221,
+  "calls": 220,
   "maxCalls": 245,
-  "kverts": 672,
+  "kverts": 670,
   "maxKverts": 786,
-  "jsMs": 1.37
+  "jsMs": 1.19
  },
  "palomar": {
   "calls": 148,
@@ -252,11 +252,11 @@
   "jsMs": 1.45
  },
  "bangsaen": {
-  "calls": 217,
+  "calls": 218,
   "maxCalls": 278,
-  "kverts": 620,
+  "kverts": 622,
   "maxKverts": 795,
-  "jsMs": 1.23
+  "jsMs": 1.06
  },
  "hotham": {
   "calls": 149,
@@ -270,7 +270,7 @@
   "maxCalls": 238,
   "kverts": 627,
   "maxKverts": 782,
-  "jsMs": 1.72
+  "jsMs": 1.09
  },
  "marrakesh": {
   "calls": 177,
@@ -280,11 +280,11 @@
   "jsMs": 1.02
  },
  "troisrivieres": {
-  "calls": 213,
-  "maxCalls": 250,
-  "kverts": 692,
-  "maxKverts": 837,
-  "jsMs": 2.01
+  "calls": 212,
+  "maxCalls": 248,
+  "kverts": 691,
+  "maxKverts": 833,
+  "jsMs": 1.03
  },
  "livorno": {
   "calls": 165,

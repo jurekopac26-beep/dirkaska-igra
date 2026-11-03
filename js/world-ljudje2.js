@@ -1132,7 +1132,7 @@
       // the sandbags from the tailgate to the wall by the barrier (to and fro); as the car comes he stops with his bag and watches
       const fC = [-0.315, -0.949], BAG = [['delavci_vreca', 1]];
       C.man(Object.assign({}, CREW, { hat: 'beanie', hatCol: 0x31406e }), { act: { a: 5.63, b: 2.7, pose: 'carryWalk', face: fC, hold: BAG },
-        bliza: { pose: 'carry', look: 'car' }, run: false });   // (where he stopped)
+        bliza: { pose: 'carry', face: fC, look: 'car' }, run: false });   // (where he stopped, turned to the barrier)
     } };
   site('bathurst', [['delavci', 744, -1]]); site('suzuka', [['delavci', 4454, -1]]); site('marrakesh', [['delavci', 1424, -1]]);
 

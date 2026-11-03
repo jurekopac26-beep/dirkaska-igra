@@ -4,7 +4,8 @@
 //   node tools/ljudje/mesta.mjs <proga> [--n 14] [--razmik 350] [--slike] [--od 0] [--do 1e9] [--gozd]
 //   --plan zar,ogenj,marsali,…   razporedi te vrste prizorov po pravilih vrste (tribuna na ravnini, vhod blizu štarta, ogenj v gozdu …) in izpiše
 //   vrstico za SITES; --ze 70:-1,5790:1 mesta, ki so že zasedena (razmik tudi od njih); --preveri 3424:1,2408:1 oceni ta mesta (tudi, ali
-//   je na njih stranska cesta proge: T.stubs, »road«, ali kaj stoji: žarki navzdol, »bld«, in kaj zadenejo, »hits«; vsako mesto enkrat, na svoji
+//   je na njih stranska cesta proge: T.stubs, »road«, ulica ali parkirišče sveta: asfalt pod žarki, »asf« (od 2 m za ograjo naprej, največ 2 od 36 točk: rob), ali kaj stoji: žarki navzdol, »bld«,
+//   in kaj zadenejo, »hits«; vsako mesto enkrat, na svoji
 //   strani; mesto v pasu boksov: NE, »pit«)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -52,6 +53,16 @@ try {
     const rc = new THREE.Raycaster(), DN = new THREE.Vector3(0, -1, 0), solid = [];
     W.root.traverse(o => { if (!o.isMesh || o.isInstancedMesh || !o.visible || !o.geometry || !o.geometry.attributes.position) return; let p = o; while (p) { if (p.name === 'people' || p.name === 'crowds' || p.name === 'life' || p === W.ground) return; p = p.parent; }   // (nor the ground)
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solid.push({ o, b }); });
+    // the town's streets, car parks and junction mouths the world draws (the asphalt's texture on the ground, Render's wet look finds them the
+    // same way): a ray down meeting one within 0.6 m of the ground
+    const ASPH = Tex.all().asphalt, asph = [];
+    W.root.traverse(o => { if (!o.isMesh || !o.visible || !o.geometry || !o.material) return; let p = o; while (p) { if (p.name === 'people') return; p = p.parent; }
+      if (!(Array.isArray(o.material) ? o.material : [o.material]).some(m => m && m.map === ASPH)) return;
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); asph.push({ o, b: o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld) }); });
+    const asphOcc = (pts) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      const near = asph.filter(({ b }) => !(b.max.x < x0 || b.min.x > x1 || b.max.z < z0 || b.min.z > z1)).map(e => e.o); if (!near.length) return 0; let n = 0;
+      for (const [x, z] of pts) { const h = gH(x, z); if (!Number.isFinite(h)) continue; rc.set(new THREE.Vector3(x, h + 3, z), DN); rc.far = 3.6; if (rc.intersectObjects(near, false).some(q => Math.abs(q.point.y - h) < 0.6)) n++; }
+      return n; };
     const what = [];   // (--preveri: what the rays met, for a place that fails: its mesh's name or its parents', its size, how high)
     const rayOcc = (pts, tell) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
       const near = solid.filter(({ b }) => !(b.max.x < x0 || b.min.x > x1 || b.max.z < z0 || b.min.z > z1)).map(e => e.o); let n = 0;
@@ -75,17 +86,17 @@ try {
           const x = T.px[i] + T.tx[i] * a + T.nx[i] * side * (bar + b), z = T.pz[i] + T.tz[i] * a + T.nz[i] * side * (bar + b), h = gH(x, z);
           if (!Number.isFinite(h)) { bad++; continue; } lo = Math.min(lo, h); hi = Math.max(hi, h);
           const n = A.clearance(x, z); if (n < Math.min(b, 3) - 0.6) bad++;   // (another part of the road, its verge or barrier)
-          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z)); if (b > 2) pts.push([x, z]);   // (rays: not the first metres behind the barrier, its own bank or wall)
+          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z)); if (b > 2) pts.push([x, z]);   // (rays: not the first metres behind the barrier, its own bank or wall, a paved strip behind it)
         }
         const dh = hi - lo, hy = T.hy ? T.hy[i] : lo;
-        if (st) { what.length = 0; const bld = rayOcc(pts, true); checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, bld, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && bld <= 2, hits: bld ? what.slice() : undefined }); continue; }
+        if (st) { what.length = 0; const bld = rayOcc(pts, true), asf = asphOcc(pts); checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, bld, asf, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && bld <= 2 && asf <= 2, hits: bld ? what.slice() : undefined }); continue; }
         if (bad || dh > 2.2 || lo < hy - 4 || hi > hy + 6 || road < 2) continue;   // (not on a side road)
         const score = (kmax < 1 / 400 ? 3 : kmax < 1 / 250 ? 2 : kmax < 1 / 150 ? 1 : 0) * 2 - dh - o / 40 - (forest ? 0 : tr / 6) - cr / 30 - bar / 8;
         out.push({ m, side, bar: +bar.toFixed(1), minR: Math.round(1 / Math.max(kmax, 1e-4)), dh: +dh.toFixed(1), occ: o, trees: tr, crowd: cr, score: +score.toFixed(2), pts });
       }
     }
     out.sort((a, b) => b.score - a.score);
-    const free = (c) => { if (c.bld == null) c.bld = rayOcc(c.pts); return c.bld <= 2; };   // (rays only for those it would take: the best first)
+    const free = (c) => { if (c.bld == null) { c.bld = rayOcc(c.pts); c.asf = asphOcc(c.pts); } return c.bld <= 2 && c.asf <= 2; };   // (rays only for those it would take: the best first; no street under it, at most its far edge)
     const far = (m, list) => list.every(p => { let d = Math.abs(p.m - m); if (!T.open) d = Math.min(d, L - d); return d >= gap; });
     const pick = [];
     if (plan) {   // each kind to the best place its rules allow
