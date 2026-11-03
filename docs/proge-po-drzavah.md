@@ -1,36 +1,37 @@
 # Proge po državah: v igri in na čakanju
 
-Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **eno novo progo** (`CLAUDE.md`, razdelek »Ena proga na državo«). Spodnja tabela našteje za vsako državo proge, ki so že v igri, in proge, ki čakajo. Seja pred začetkom nove proge preveri stolpec »Odločitev« in po odgovoru uporabnika vanj vpiše izbiro.
-
-- **Izbira** (`ena-proga-<država>` na strani Odločitve): država že ima progo v igri, zato se nova proga iz nje začne šele, ko jo izbere uporabnik. Če je v skupini ali koraku verige proga, ki čaka na izbiro, seja naredi druge proge skupine, to pa pusti.
-- **Po vrsti**: država še nima proge, zato gredo njene proge v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v delu na veji), druge iz iste države odpadejo. Stare veje, ki niso v nobenem načrtu, ne pridejo na vrsto.
+Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **eno novo progo** (`CLAUDE.md`, razdelek »Ena proga na državo«). Spodnji tabeli naštejeta za vsako državo proge, ki so že v igri, in proge, ki čakajo. Seja pred začetkom nove proge preveri, ali je proga izbrana oziroma ali je njena država še brez proge.
 
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
-## Države s progo v igri
+## Države s progo v igri: izbira uporabnika
 
-| Država | V igri | Na čakanju | Odločitev |
+Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država>` na strani Odločitve): »dodaj samo tiste, ki si jih priporočal, ter Québec«. Iz teh držav se naredi samo izbrana proga; proge v stolpcu »Odpadejo« se ne delajo (seja jih v svoji skupini ali koraku preskoči).
+
+| Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
-| ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach | izbira `ena-proga-zda`: čaka |
-| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241); stara veja: Phillip Island | izbira `ena-proga-avstralija`: čaka |
-| Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) | izbira `ena-proga-kanada`: čaka |
-| Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261), Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio | izbira `ena-proga-japonska`: čaka |
-| Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1), Corvo Branco (kratke, B); stara veja: São Paulo | izbira `ena-proga-brazilija`: čaka |
-| Južna Afrika | Chapman's Peak, Sani Pass | Green Point (kratke, D; narejena tudi na stari veji `claude/proga-capetown`) | izbira `ena-proga-juzna-afrika`: čaka |
+| ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
+| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241) | stara veja: Phillip Island |
+| Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) | – |
+| Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
+| Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1) | Corvo Branco (kratke, B); stara veja: São Paulo |
+| Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
 | Finska | Ouninpohja, Harju | – | – |
 | Slovenija | Vršič, Medvode | – | – |
-| Kitajska | Tianmen | Hongkong in Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču | izbira `ena-proga-kitajska`: čaka |
-| Čile | Los Caracoles | Valparaíso (zavite, 2); stara veja: Santiago | izbira `ena-proga-cile`: čaka |
-| Italija | Livorno | Stelvio (stara veja `ccr-b30cfdb0-ej1gzj`, v verigi Nove proge) | izbira `ena-proga-italija`: čaka |
-| Maroko | Marrakesh | Dadès (kratke, C2) | izbira `ena-proga-maroko`: čaka |
-| Belgija | Spa | stara veja: Kapelmuur (`claude/blissful-knuth-ww01kw`) | izbira `ena-proga-belgija`: čaka |
+| Kitajska | Tianmen | Hongkong (zavite, 3) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
+| Čile | Los Caracoles | Valparaíso (zavite, 2) | stara veja: Santiago |
+| Italija | Livorno | Stelvio (stara veja `ccr-b30cfdb0-ej1gzj`, v verigi Nove proge) | – |
+| Maroko | Marrakesh | Dadès (kratke, C2) | – |
+| Belgija | Spa | Kapelmuur (stara veja `claude/blissful-knuth-ww01kw`; ni v nobeni verigi, posodobi jo nova seja) | – |
 | Nemčija | Nürburg | – | – |
 | Avstrija | Štajerska | – | – |
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace | – | – |
 | Tajska | Bang Saen | – | – |
 
-## Države brez proge v igri
+## Države brez proge v igri: po vrsti
+
+Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v delu na veji), druge iz iste države odpadejo. Stare veje, ki niso v nobenem načrtu, ne pridejo na vrsto.
 
 | Država | Na čakanju | Odločitev |
 |---|---|---|
@@ -55,3 +56,10 @@ Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`),
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | stara veja: Höljes (ni v načrtu) | ne pride na vrsto |
+
+## Kaj to pomeni za verige
+
+- **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Mount Buller, Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero.
+- **Zavite proge** (`docs/zavite-proge.md`): odpade Macao (3). Ostanejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli).
+- **Nove proge** (`docs/nove-proge.md`): ostanejo vse, tudi Stelvio; Yungas po vrsti (zgoraj).
+- **Stare veje**: Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
