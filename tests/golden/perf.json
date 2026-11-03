@@ -217,11 +217,11 @@
   "jsMs": 1.42
  },
  "medvode": {
-  "calls": 127,
-  "maxCalls": 152,
-  "kverts": 372,
-  "maxKverts": 538,
-  "jsMs": 1.47
+  "calls": 132,
+  "maxCalls": 147,
+  "kverts": 523,
+  "maxKverts": 790,
+  "jsMs": 1.74
  },
  "montreal": {
   "calls": 206,
