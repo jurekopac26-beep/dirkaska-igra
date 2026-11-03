@@ -53,9 +53,9 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 4 | Helikopter, ki leti: meni, vzlet, let, pristanek, prosto letenje (nalogi naredi drug račun) | ~3 h (ocena 12–18 h) | na `main` ([PR #206](https://github.com/jurekopac26-beep/dirkaska-igra/pull/206)) |
 | 5+6 | Gradbišče in motokros (priključek pri B široko, prevozni boks tik ob cesti) + začetek igre (en PR) | ~4 h (ocena 10–17 h) | na `main` ([PR #208](https://github.com/jurekopac26-beep/dirkaska-igra/pull/208)) |
 | 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
-| 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | v [PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264) (seja session_01Ck3D3SQc21DFpdmeN7W8cr, 2. 11.), CI teče |
+| 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | na `main` ([PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264), 3. 11., združitev `db438c1`) |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C: uporabnik 2. 11. »parkiran in vozljiv« → sklop 10 |
-| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | v delu (seja se zaganja, 3. 11.) |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
 ## Odgovori 2. 11. zvečer (v nadrejeni seji)
@@ -111,7 +111,7 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
 - Začetek: `homeMouth` (pesek in sledi koles na cesti proti zahodu), pesek izletne cone čez travo ob ustju (sandZones). Laguna in brv: sklop 9 (proga za čolne).
 - Za sklop 10 (premikanje na gradbišču): stroji stojijo (`NVSite.build`, `MAKE` in `vehAt`).
 
-## Sklop 8: popravki s 15 slik cele mape (PR #264)
+## Sklop 8: popravki s 15 slik cele mape (na `main`, PR #264)
 - Primerjava: `posnetki.mjs` s `ploscice.json` na `main` in na veji, cilji `listi/vse38-cela-mapa-15` (iz slik obrezani na 1500 × 900).
   Razlike, ki so po poznejših izbirah (laguna → proga za čolne, gradbišče, motokros pri B, kmetija), so namerne.
 - Popravljeno: zahodni nagnjeni zavoj (zemlja sveta spuščena pod cesto, v skledi trava, parkirišče in ploščad baze do roba sklede: `NVBase.R.inBowl`),
@@ -119,8 +119,13 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
   sledi koles na ustjih (`wayTracks`, `TRACK_MOUTHS` po `delo/tracks_all.py`), ploščad motokrosa pri A (`mxJoinB(MXA)`), morje (dno do globine,
   normale pod vodo navzgor v `landMesh`, zemlja pod globoko vodo spuščena v `seaBeyond`), plaža ob kmetiji (renderOrder 2), pesek ob mostu (`NVBoat` `sandOver`),
   temnejša brežina ob portalih predora.
-- Odprto za uporabnika (vprašanje poslano nadrejeni seji, stran Odločitve iz seje ni bila dosegljiva): gondola za avte s slik (`delo/gond-page.js`)
-  ni v nobenem sklopu; peščeni izteki na zunanji strani ovinkov male proge so v igri rdeče-oranžni (Toskanin `shoulder`), na slikah svetla mivka.
+- Odgovori 2. 11. (glej zgoraj): peščeni izteki na zunanji strani ovinkov male proge so svetla mivka kot na slikah (`cornerSand`,
+  `H3.cornerRuns`: ob robu 1,5 m rdeče-oranžnega pasu, naprej mivka do gum; zamenja se samo, kjer je Toskanin `shoulder` vrhnja ploskev, v igri
+  ovinek ob ustju makadama p6). Gondola za avte (`delo/gond-page.js`) in gasilski avto C sta v sklopu 10.
+- Pred združitvijo sta na `main` prišla #255 (meni, sklop 4) in #258 (Livorno); spor samo v žigu `index.html`. Hitra združitev po spoju:
+  lokalno stamp, quick, livorno, menu-corner, shards, newver, perf newmap (s #255 še menu in online) zeleni.
+- CI: `browser/online.test.mjs` je enkrat padel (start 429 ms po dogovorjenem trenutku, meja 400 ms, ena dolga sličica na polnem
+  strežniku; ni od nove mape), ponovni zagon zelen. Predlog popravka testa (`prevChk < goAt <= startT`) je v komentarju PR #264.
 - Orodje `koda/live.mjs <igra> <mapa-nalog>`: ena odprta igra, naloge `q<N>.json` po vrsti (posnetki od zgoraj, s kamero igre, sonde); z
   `PRE="$(cat koda/pre-stack.js)"` vsaka mreža dobi sled sklada (`userData.__st`) in združevanje je izklopljeno, `__rays(x, z)` pove, katera
   funkcija je naredila mrežo pod točko (opis v glavi datoteke).
