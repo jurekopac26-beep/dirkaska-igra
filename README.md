@@ -48,6 +48,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Townsville, Avstralija](docs/proge/townsville.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
+- [Livorno, Italija](docs/proge/livorno.md)
 - [Hakone, Japonska](docs/proge/hakone.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
@@ -281,6 +282,10 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Proga Trois-Rivières (sredinska črta, boksarska steza, ulice, pločniki, prehodi za pešce, znaki STOP, semaforji, stavbe, raba tal, drevesa): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-09-23.1; tlorisi in višine stavb, ki jih v OSM ni: Microsoft ML Buildings, ODbL 1.0). Iz njih izpeljani podatki v `js/tracks/troisrivieres.js` so na voljo pod ODbL 1.0.
 - Višine in teren Trois-Rivièresa (tudi daljna okolica do 3 km): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Trois-Rivièresa: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Livorno (sredinska črta, ceste, mostovi, železnica, obala, pečine, stavbe, zidovi in žive meje, drevesa, raba tal, kraji): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/livorno.js`, `js/data/livorno.js` in `tools/livorno/` so na voljo pod ODbL 1.0.
+- Višine in teren Livorna (tudi daljna okolica do 12 km): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Livorna: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Višina krošenj Livorna (tla pod drevesi, gozd in makija): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Detroit (sredinske črte ulic, stavbe in deli stavb, ulice, parkirišča, travniki in trgi, drevesa, svetilke, semaforji, hidranti, stebrički, smetnjaki, klopi, postajališča, prehodi za pešce, reka, dvignjena proga mestne železnice, most): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-09-23.0). Iz njih izpeljani podatki v `js/tracks/detroit.js` so na voljo pod ODbL 1.0.
 - Višine in teren Detroita: USGS 3D Elevation Program (3DEP), U.S. Geological Survey (javna domena), prek [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen/Tilezen) na AWS.
 - Raba tal Detroita: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

@@ -358,6 +358,7 @@
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Vrh': 'Summit', 'Jezero Shōjin': 'Lake Shōjin', 'Sedem ovinkov': 'Seven Bends',   // (Hakone: the HUD; the names of the places stay as they are)
+    'Terasa ob morju': 'Seafront Terrace', 'Pod železnico': 'Under the Railway', 'Lasnice Savolano': 'Savolano Hairpins', 'Stolp Castellaccio': 'Castellaccio Tower', 'Vzhodna lasnica': 'East Hairpin', 'Lasnici nad Romitom': 'Romito Hairpins', 'Grad Antignano': 'Antignano Castle',   // (Livorno: the descriptive names on the HUD; the rest are places)
     'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
