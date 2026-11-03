@@ -10,6 +10,12 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Kategorijo test izbrišemo tik pred objavo na Google Play, skupaj s sklopom 8 orodja za napake (odločitev uporabnika 29. 10. 2026; do takrat proge ostanejo). **Prog v kategoriji test ne urejaj** (ne optimiziraj, ne dodajaj grafike, ne popravljaj), razen če uporabnik izrecno prosi za točno to progo.
 - Testne proge **ignoriraj** (odločitev uporabnika): na njih igri ni treba delovati, zato jih ne uporabljaj za slike pred/po, meritve obremenitve ali preverjanje sprememb. Za to vzemi pravo progo (npr. z boksi: Bathurst, Avstralija ali Spa, Belgija). Če test ali referenca zahteva kaj samo zaradi testne proge, sprememba drugih prog pa je pravilna, je dovolj, da referenco ustvariš znova z orodji repozitorija.
 
+## Ena proga na državo (odločitev uporabnika 3. 11. 2026)
+- V prihodnje naredimo iz vsake države samo **eno novo progo**. Proge na čakanju po državah in izbire uporabnika: `docs/proge-po-drzavah.md`; seja jo preveri, preden začne novo progo.
+- Država, ki že ima progo v igri: nova proga iz nje se dela samo, če jo je uporabnik izbral (vprašanja `ena-proga-<država>` na strani Odločitve). Dokler izbire ni, je ne začni; druge proge iste skupine ali koraka naredi.
+- Država brez proge: proge gredo v delo, ko pridejo na vrsto. Prva iz države se naredi, druge iz iste države potem odpadejo.
+- Nov načrt prog predlaga največ eno progo na državo in izpusti države, ki progo že imajo.
+
 ## Kamere in grafika (odločitev uporabnika)
 - V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere **izometrična**, **kino** in **kokpit** so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
 - Grafiko izboljšuj za kamero za avtom: obzorje, nebo, oddaljeni griči, cesta pred avtom in njeni robovi, teren ob njej. Detajli, ki jih s te kamere ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi, strehe od zgoraj), so odveč: poenostavi jih, da je telefon manj obremenjen.
@@ -72,6 +78,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 ## Kje je kaj (manj iskanja)
 - Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
 - Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
+- Vprašanja o progah v igri (dolžina, zavitost, kaj je do 60 m ob cesti): najprej `docs/proge-pregled.md` (odločitev uporabnika 3. 11. 2026), šele nato opis proge. Po novi progi zaženi `node tools/proge-pregled.js` in v datoteko dopiši njeno vrstico »Do 60 m ob cesti«.
 
 ## Orodje za napake (`docs/orodje-za-napake.md`)
 - Načrt, odločitve in sklopi so v `docs/orodje-za-napake.md`. Vsak sklop je svoja seja in svoja veja (`orodje-za-napake/sklop-NN-<ime>`). Ob koncu sklopa posodobi razdelek Stanje v načrtu in uporabniku napiši kratek seznam za preizkus na telefonu.
