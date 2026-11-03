@@ -73,7 +73,8 @@ Seja zbiranja ob vsakem sporočilu opravila v ~15 minutah naredi (velike izpise 
 5. **Slike.** Grafično vprašanje brez slik: seji pošlji »Dodaj slike k vprašanju `<id>` (docs/vprasanja.md, razdelek Slike).« in zapiši `graficno: true` (stran pokaže, da slika nastaja). Ko zbiranje sliko lahko naredi samo (v svojem repozitoriju: `git fetch origin <veja seje>`, `git worktree add`, nato orodja iz razdelka Slike), jo doda samo.
 6. **Zastarela.** Odprto vprašanje, ki ne velja več (seja je odločila drugače ali delo končala, pull request je združen ali zaprt, seja je arhivirana), dobi `stanje` `zastarelo` in `zastarelo_zakaj`. Odgovorjena in zastarela vprašanja, starejša od 30 dni, izbriši.
 7. **Stanje.** V `zbiranje/stanje` zapiši `zadnje` (zdaj), `krog` (»10.30«, »14.30« ali »23.00«), `odprtih` in `novih` (vprašanja, dodana od prejšnjega zbiranja, tudi tista, ki so jih seje zapisale same).
-8. **Konec.** Ne spreminjaj kode, ne commitaj, ne odpiraj pull requestov in ne zaganjaj novih sej. Zadnje sporočilo je en stavek: koliko vprašanj je odprtih in koliko novih; če kaj ne dela, to pove v istem stavku.
+8. **Velikost seje.** Vsak zagon prebere ves kontekst seje zbiranja, zato pregled sej (koraka 3 in 4) naredi podagent (orodje Agent), ki vrne samo kratek seznam sej, ki čakajo na uporabnika (vprašanje in možnosti); seja zbiranja sama ne bere velikih izpisov. Ko `get_session` (brez argumentov) pokaže `context_usage.used_tokens` nad 400000, se seja zamenja: `create_session` (kot v razdelku Nastavitev, točka 2), nato za novo sejo `create_trigger` za oba kroga zbiranja (enaka imena, cron in besedilo, prebere ju `get_trigger`), šele nato `delete_trigger` starih dveh; nove id-je zapiše v `zbiranje/stanje.opomba` in v Stanje tega dokumenta ob naslednji spremembi repozitorija.
+9. **Konec.** Ne spreminjaj kode, ne commitaj, ne odpiraj pull requestov in ne zaganjaj novih sej (razen zamenjave v koraku 8). Zadnje sporočilo je en stavek: koliko vprašanj je odprtih in koliko novih; če kaj ne dela, to pove v istem stavku.
 
 ## Nastavitev na računu (enkrat)
 
@@ -92,7 +93,7 @@ Na računu, kjer zbiranja še ni (`list_triggers` nima »Zbiranje vprašanj …�
 
 Besedila opravil: kot na računu strani 1 (tam jih prebere `get_trigger`), s stranjo tega računa. Opravilo zbiranja napoti sejo na razdelek Zbiranje tega dokumenta z `main`; besedilo obvestila je samostojno (nova seja nima repozitorija): prebere stran, prešteje odprta vprašanja, `novih` in `zadnje` iz `zbiranje/stanje` in konča z enim stavkom za telefon.
 
-Seja zbiranja z leti nabira kontekst. Ko postane velik (počasni ali dragi zagoni), seja na tem računu naredi novo sejo zbiranja in opravili zbiranja prestavi nanjo (`create_trigger` z novim `persistent_session_id`, nato `delete_trigger` starih).
+Seja zbiranja nabira kontekst; zamenja se sama (razdelek Zbiranje, korak 8). Besedilo njenih opravil lahko spremeni samo ona (`update_trigger` iz drugih sej zavrne spremembo besedila), zato je postopek v tem dokumentu, ne v besedilu opravil.
 
 ## Preklic
 
