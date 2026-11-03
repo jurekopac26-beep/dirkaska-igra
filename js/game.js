@@ -1950,7 +1950,7 @@
       numAI: solo ? 0 : nAI, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }, MS.opts()));   // (a special mission: its own race, js/missions.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     MS.made(race);   // (a special mission: its own cars, before they are drawn)
@@ -3848,7 +3848,8 @@
   // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
   // the next real knock (Core ktHit), already with damage Samo videz
   const WHEEL_RULE = Core.MODELS.map(m => m.id);
-  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline; no mission: js/missions.js)
+  const TYRE_COLD = ['kolibri'];   // (the vehicles whose new tyres after a stop grip less while cold, Core ktGrip; the others' cold ones (light blue dots) are only to be seen: the user's choice 3. 11. 2026)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
