@@ -2027,10 +2027,11 @@
             board(q[0], q[1], q[2], wsd * T.nx[i], wsd * T.nz[i], 20, 2.4, k); }
           for (let d = S0 + 10; d < S1 - 5; d += 20) { const q = WQ(d, 42, 0); exclPush(q[0], q[2], 14); CR.exclAdd(q[0], q[2], 12); }
         }
-        // the name on the main plane, as on a racing car's rear wing: two panels, the text read from the high cameras behind the stand
+        // the name on the main plane, as on a racing car's rear wing: two panels, the text read from the track's side (the high cameras behind
+        // the stand are gone: the chase camera's, the replay's and the photos' views)
         const gt = new GB(true), [u0, v0, u1, v1] = AUV(AT.rbr), yo = (o) => { let k = 0; while (k + 2 < up.length && up[k + 1][0] < o) k++; const [a, b] = [up[k], up[k + 1]]; return a[1] + (b[1] - a[1]) * (o - a[0]) / (b[0] - a[0]) + 0.15; };   // (just above the cambered plane)
-        for (const dc of [wd - 22, wd + 22]) { const dl = dc - 14, dh = dc + 14, oL = 28.0, oH = 35.0;   // (the text's right: against the traffic, its top: towards the track)
-          gt.quadO(WQ(dh, oH, yo(oH)), WQ(dl, oH, yo(oH)), WQ(dl, oL, yo(oL)), WQ(dh, oL, yo(oL)), W1, WQ(dc, 31.5, yo(31.5) - 20), [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+        for (const dc of [wd - 22, wd + 22]) { const dl = dc - 14, dh = dc + 14, oL = 28.0, oH = 35.0;   // (the text's right: with the traffic, its top: away from the track)
+          gt.quadO(WQ(dh, oH, yo(oH)), WQ(dl, oH, yo(oH)), WQ(dl, oL, yo(oL)), WQ(dh, oL, yo(oL)), W1, WQ(dc, 31.5, yo(31.5) - 20), [[u1, v1], [u0, v1], [u0, v0], [u1, v0]]); }
         const fl = [];
         for (const [geo, mt] of [[g, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true })], [gt, new THREE.MeshLambertMaterial({ map: atlas, transparent: true })]]) {
           const m = new THREE.Mesh(geo.geometry(), mt); m.castShadow = geo === g; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); fl.push({ mesh: m, mat: mt }); }

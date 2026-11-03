@@ -1471,8 +1471,15 @@
     for (const f of feet) { let cx = 0, cz = 0; for (const e of f.fr3) { cx += e.p[0]; cz += e.p[2]; } f.cx = cx / f.fr3.length; f.cz = cz / f.fr3.length; T.query(f.cx, f.cz, -1, q); f.s = ((q.s - (T.startS || 0)) % T.len + T.len) % T.len; }
     feet.slice().sort((a, b) => a.s - b.s).forEach((f, k) => { f.letter = k % 8; });
     const rc = new THREE.Raycaster();
+    // what the world has standing (its buildings, walls, fences, water: not the trees, not the people), its boxes in the world: a kiosk, the
+    // toilets, the gate only where none of it is over the ground (rays down at the middle and four corners)
+    const solids = [], DOWN = new THREE.Vector3(0, -1, 0); o.root.updateMatrixWorld(true);
+    o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); solids.push({ m, b: g.boundingBox.clone().applyMatrix4(m.matrixWorld) }); });
+    let near2 = [];
+    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (rc.intersectObjects(near2, false).length) return false; } return true; };
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
+      near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)).map(e => e.m);
       let nx = 0, nz = 0; for (const e of f.fr3) { nx += e.f[0]; nz += e.f[1]; } const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;   // (towards the road)
       const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
       const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
@@ -1541,10 +1548,11 @@
         sbAt(p.x, p.z).quad(at(-2, g0), at(2, g0), at(2, g0 + 2.8), at(-2, g0 + 2.8), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0, 1, 1, 0.05));
         if (clad && p.y - 1.4 > g0 + 4.4) glyph(p.x - fx * (w0 + 0.01), g0 + 3.1, p.z - fz * (w0 + 0.01), -fx, -fz, 1.2, 1.2, f.letter);
       }
-      if (big) for (let d0 = Math.min(14, blen / 2), k = 0; d0 < blen - 4; d0 += AR.kiosk, k++) {   // the kiosks: drinks, ice cream, hot dogs, burgers in turn
-        const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron - 1.2, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3), col = AR_COL.kiosk[(f.letter + k) % 4];
+      if (big) for (let d1 = Math.min(14, blen / 2), k = 0; d1 < blen - 4; d1 += AR.kiosk) {   // the kiosks: drinks, ice cream, hot dogs, burgers in turn (where there is room)
+        const o0 = wo + AR.apron - 1.2, d0 = [0, 4, -4, 8, -8].map(e => d1 + e).find(d => d > 2 && d < blen - 2 && (() => { const p = along(d), l = Math.hypot(p.fx, p.fz) || 1; return free(p.x - p.fx / l * o0, p.z - p.fz / l * o0, 1.8); })()); if (d0 == null) continue;
+        const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3), kk = k++, col = AR_COL.kiosk[(f.letter + kk) % 4];
         boxA(x, g0, z, 2.6, 2.2, 2.5, fz, -fx, col, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.5 });
-        signBox(x, g0 + 2.5, z, 2.6, 2.2, 0.55, fz, -fx, col, (f.letter * 3 + k) % 4); boxA(x, g0 + 3.05, z, 3.0, 2.6, 0.14, fz, -fx, AR_COL.dark);
+        signBox(x, g0 + 2.5, z, 2.6, 2.2, 0.55, fz, -fx, col, (f.letter * 3 + kk) % 4); boxA(x, g0 + 3.05, z, 3.0, 2.6, 0.14, fz, -fx, AR_COL.dark);
         const ax = fz * 1.35, az = -fx * 1.35, e0 = [x + fx * 1.1, g0 + 2.5, z + fz * 1.1], e1 = [x + fx * 2.0, g0 + 2.15, z + fz * 2.0];   // (its awning over the window)
         sbAt(x, z).quad([e0[0] - ax, e0[1], e0[2] - az], [e0[0] + ax, e0[1], e0[2] + az], [e1[0] + ax, e1[1], e1[2] + az], [e1[0] - ax, e1[1], e1[2] - az], [fx * 0.4, 1, fz * 0.4], AR_COL.white, col, kq(KIT.awning, 0, 0.66, 0, 1));
         clear(x, z, 3); (f.at || (f.at = {})).kiosk = f.at.kiosk || [x, g0, z, fx, fz];
@@ -1554,11 +1562,12 @@
         const p = along(Math.min(d0, blen)), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 0.3, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3);
         sbAt(x, z).post([x, g0, z], 6.2, 0.14, [fx, fz], AR_COL.lamp); boxA(x + fx * 0.45, g0 + 6.0, z + fz * 0.45, 0.35, 1.1, 0.18, fz, -fx, AR_COL.lamp);
       }
-      if (big) { const p = along(blen - 6), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 1.0;   // the toilets: a row of three, facing the concourse
-        for (let k = -1; k <= 1; k++) bakeAt(L.portaloo(0x2f63c9), p.x - fx * o0 + p.tx * k * 1.35, p.z - fz * o0 + p.tz * k * 1.35, Math.atan2(fx, fz)); clear(p.x - fx * o0, p.z - fz * o0, 3.5); }
+      if (big) { const o0 = wo + AR.apron + 1.0, dT = [6, 10, 14, 18].map(e => blen - e).find(d => d > 2 && (() => { const p = along(d), l = Math.hypot(p.fx, p.fz) || 1; return free(p.x - p.fx / l * o0, p.z - p.fz / l * o0, 2.4); })());   // the toilets: a row of three, facing the concourse
+        const p = along(dT != null ? dT : blen - 6), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l;
+        if (dT != null) { for (let k = -1; k <= 1; k++) bakeAt(L.portaloo(0x2f63c9), p.x - fx * o0 + p.tx * k * 1.35, p.z - fz * o0 + p.tz * k * 1.35, Math.atan2(fx, fz)); clear(p.x - fx * o0, p.z - fz * o0, 3.5); } }
       // the path off the middle of the concourse to its gate, as long as it keeps clear of the road
       if (big) { const p = along(blen / 2), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, s0 = wo + AR.apron, pts = [[p.x - fx * s0, p.z - fz * s0]]; let s = s0;
-        while (s < s0 + AR.gate) { s += 2; const x = p.x - fx * s, z = p.z - fz * s; if (A.clearance(x, z) < 4) break; pts.push([x, z]); }
+        while (s < s0 + AR.gate) { s += 2; const x = p.x - fx * s, z = p.z - fz * s; if (A.clearance(x, z) < 4 || !free(x, z, 2.6)) break; pts.push([x, z]); }
         if (pts.length > 5) {
           way(pts, AR.path, AR_COL.pave);
           const [gx, gz] = pts[pts.length - 1], g0 = gr(gx, gz, p.y - 3), ax = -fz, az = fx;   // (across the path)
@@ -1641,9 +1650,9 @@
           g.bar(A0, B0, 0.06, 0.06, rcol);
           for (let j = k === 1 ? 0 : 1; j <= n; j++) { const w = j / n; g.post([A0[0] + (B0[0] - A0[0]) * w, a.y2 + (b.y2 - a.y2) * w, A0[2] + (B0[2] - A0[2]) * w], 0.98, 0.05, [a.f[0], a.f[1]], rcol); }
         } }
-      // the fans' flags hung over the front (the track's country's stripes, now and then a team's colours; no writing), one in 12-24 m: seen
-      // from the road under the seats
-      { const FLc = FLAGS[def.id] || {}, cols = (FLc.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(FLc.flag && FLc.flag.vert), team = FLc.team != null ? hexC(FLc.team) : null;
+      // the fans' flags hung over the front handrail of a stand whose first row the road sees over its barrier (f.flags 'rail', standBuild;
+      // another's over a higher row's seats), one in 12-24 m
+      if (f.flags === 'rail') { const FLc = FLAGS[def.id] || {}, cols = (FLc.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(FLc.flag && FLc.flag.vert), team = FLc.team != null ? hexC(FLc.team) : null;
         let acc = 0, next = 6 + (f.letter * 5) % 9, kk = 0;
         for (let k = 1; k < Fr.length; k++) {
           const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap) { acc += l; continue; }
@@ -1652,10 +1661,12 @@
             const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, at = (s2, y) => [x + fx * 0.11 - fz * s2 * W2, y, z + fz * 0.11 + fx * s2 * W2], gb = sbAt(x, z), n3 = c3.length;   // (s2 +1: the left as seen from the road)
             for (let i = 0; i < n3; i++) { if (vert) gb.quad(at(1 - 2 * i / n3, top - H), at(1 - 2 * (i + 1) / n3, top - H), at(1 - 2 * (i + 1) / n3, top), at(1 - 2 * i / n3, top), [fx, 0, fz], c3[i], null, PLU);
               else gb.quad(at(-1, top - H * (i + 1) / n3), at(1, top - H * (i + 1) / n3), at(1, top - H * i / n3), at(-1, top - H * i / n3), [fx, 0, fz], c3[i], null, PLU); }
+            if (!kk) (f.at || (f.at = {})).flag = [x, y2, z, fx, fz];   // (the first, for the tools)
             next += 12 + h * 12; kk++;
           }
           acc += l;
-        } }
+        }
+        if (kk) f.at.flag.push(kk); }
       // a TV camera's platform hung under the roof's front edge in its middle (a big stand with a roof, from Srednja): its floor, a railing, its
       // hangers; its cameraman one of the stand's people (standsOf: f.at.tvcam)
       if (tier > 0 && big && f.rv && f.rv.length > 9) {
@@ -1674,7 +1685,7 @@
   function standBuild(o, A, hsh, def, circles) {
     const t0 = performance.now(), seats = [], flat = new Map(), cells = new Map(), feet = [], standWays = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
     const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
-    const bench = STAND_BENCH[def.id] || null, conc = bench ? DECK_COL[bench] : temp ? ST_DECK : ST_CONC, wall = bench === 'wood' ? DECK_COL.wood : ST_CONC, H2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]), tq = {}, trackD = (p) => { A.T.query(p[0], p[2], -1, tq); return Math.abs(tq.d); };
+    const FLU = kq(KIT.plain, 0, 1, 0.5, 0.5), bench = STAND_BENCH[def.id] || null, conc = bench ? DECK_COL[bench] : temp ? ST_DECK : ST_CONC, wall = bench === 'wood' ? DECK_COL.wood : ST_CONC, H2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]), tq = {}, trackD = (p) => { A.T.query(p[0], p[2], -1, tq); return Math.abs(tq.d); };
     o.root.updateMatrixWorld(true);
     let mid = 0;
     o.root.traverse(m => {
@@ -1759,6 +1770,17 @@
         const hs = (hsh * 7 + mid * 131 + si * 17) % 9973, c1 = SEAT_COLS[hs % 6], c2 = SEAT_COLS[(hs % 6 + 1 + (hs >> 3) % 7) % SEAT_COLS.length], scheme = (hs >> 5) % 5;
         const frontC = c1.map(v => v * 0.62), colOf = (ri, blk) => bench ? BENCH_COL[bench] : scheme === 1 && blk % 2 ? c2 : scheme === 2 && ri >= rows.length * 0.6 ? c2 : scheme === 3 && ri % 6 === 5 ? c2 : c1;   // (one colour; by blocks; the upper rows; a stripe; a bench its timber or aluminium)
         const nAisle = (u) => aisles.findIndex(a => u > a[0] && u < a[1]);
+        // the fans' flags (FLAGS: the track's country's stripes, now and then a team's colours; no writing), seen from the road over its barrier:
+        // a stand whose first row is 1.4 m over the ground in front has them over its front handrail (standAround); another over the seats of
+        // its first row 2.1 m up (its third at least, not its last) and every fifth above it, draped over their backs, three to five seats each,
+        // one in 10-22 m (nobody in them)
+        let flagMode = null, flagRow = -1, flagAt = null, nFlags = 0;
+        { const r0 = rows[0], P0 = r0.part; let gf = null;
+          for (const w of [0.5, 0.3, 0.7, 0.15, 0.85]) { const u = r0.uA + (r0.uB - r0.uA) * w, F = P0.Q(u, r0.vf), B = P0.Q(u, r0.vb); if (!F || !B) continue; const l = H2(F, B) || 1, g = gH(F[0] + (F[0] - B[0]) / l * 3, F[2] + (F[2] - B[2]) / l * 3); if (Number.isFinite(g)) { gf = g; break; } }
+          if (gf != null && rows.length >= 3) {
+            if (r0.yb - gf >= 1.4) flagMode = 'rail';
+            else for (let r = 2; r <= rows.length - 2; r++) if (rows[r].yb - gf >= 2.1) { flagMode = 'row'; flagRow = r; break; }
+          } }
         const aisleRec = new Map();   // (the treads drawn in each aisle where its handrail runs, for the walkers' ways: aisleRec)
         rows.forEach((row, ri) => {
           const { part, vf, vb } = row, Q = part.Q, U = part.U, prev = ri > 0 ? rows[ri - 1] : null, Qb = (u) => { const p = Q(u, vb); return p && [p[0], p[1] + row.dy, p[2]]; };   // (Qb: the back edge, the row's tread)
@@ -1810,9 +1832,39 @@
               }
             }
           }
+          // the fans' flags over this row's seats (flagRow): each draped over three seats' backs, down to their seats, over them and down their
+          // fronts (d forward of the row's back edge, h up from its tread); its stripes from the left as seen from the road
+          const taken = flagRow >= 0 && ri >= flagRow && (ri - flagRow) % 5 === 0 && ri <= rows.length - 2 ? new Set() : null;
+          if (taken) { let next = 4 + (si * 5 + mid * 3 + ri * 7) % 11;
+            const PR = [[0.02, 0.89], [0.1, 0.47], [0.5, 0.47], [0.53, 0.12]], cum = [0]; for (let k = 1; k < PR.length; k++) cum.push(cum[k - 1] + Math.hypot(PR[k][0] - PR[k - 1][0], PR[k][1] - PR[k - 1][1]));
+            const LT = cum[cum.length - 1], c0 = FLAGS[def.id] || {}, cols = (c0.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(c0.flag && c0.flag.vert), team = c0.team != null ? hexC(c0.team) : null;
+            for (const B of blocks) {
+              if (next < B.d0 + 0.6) next = B.d0 + 0.6;
+              while (next < B.d1 - 0.6) {
+                const h = (((nFlags * 7919 + si * 131 + mid * 17 + ri * 29 + Math.round(next * 10)) % 97) + 97) % 97 / 97, nW = Math.min(B.nS, h > 0.75 ? 5 : h > 0.4 ? 4 : 3);
+                next += 10 + h * 12; if (nW < 3) break;
+                const q = Math.max(0, Math.min(B.nS - nW, Math.floor((next - 10 - h * 12 - B.d0) / SEAT_W) - (nW >> 1)));
+                const uL = uAt(B.d0 + q * SEAT_W + 0.04), uR = uAt(B.d0 + (q + nW) * SEAT_W - 0.04), um = (uL + uR) / 2;
+                if (bad.some(([a, b]) => uR > a && uL < b)) continue;
+                const L0 = Qb(uL), L1 = Qb(uR), F = Q(um, vf), Bk = Q(um, vb); if (!L0 || !L1 || !F || !Bk) continue;
+                const wl = H2(L0, L1); if (wl < nW * SEAT_W * 0.75 || wl > nW * SEAT_W * 1.3) continue;
+                const l = H2(F, Bk) || 1, nx = (F[0] - Bk[0]) / l, nz = (F[2] - Bk[2]) / l, gb = sbAt((L0[0] + L1[0]) / 2, (L0[2] + L1[2]) / 2);
+                const flip = (L0[0] - L1[0]) * -nz + (L0[2] - L1[2]) * nx < 0;   // (L0 on the right as seen from the road: the stripes from L1)
+                const at = (w, s) => { let k = 1; while (k < PR.length - 1 && cum[k] < s) k++; const t = (s - cum[k - 1]) / ((cum[k] - cum[k - 1]) || 1), d = PR[k - 1][0] + (PR[k][0] - PR[k - 1][0]) * t, hh = PR[k - 1][1] + (PR[k][1] - PR[k - 1][1]) * t;
+                  return [L0[0] + (L1[0] - L0[0]) * w + nx * d, L0[1] + (L1[1] - L0[1]) * w + hh, L0[2] + (L1[2] - L0[2]) * w + nz * d]; };
+                const piece = (w0, w1, s0, s1, col) => { const ss = [s0]; for (const c of cum) if (c > s0 + 1e-6 && c < s1 - 1e-6) ss.push(c); ss.push(s1);
+                  for (let k = 0; k + 1 < ss.length; k++) { const A0 = at(0.5, ss[k]), B0 = at(0.5, ss[k + 1]), dd = (B0[0] - A0[0]) * nx + (B0[2] - A0[2]) * nz, dh = B0[1] - A0[1];
+                    gb.quad(at(w0, ss[k + 1]), at(w1, ss[k + 1]), at(w1, ss[k]), at(w0, ss[k]), [-dh * nx, dd, -dh * nz], col, null, FLU); } };
+                const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, n3 = c3.length;
+                for (let i = 0; i < n3; i++) { if (!vert) piece(0, 1, LT * i / n3, LT * (i + 1) / n3, c3[i]); else if (flip) piece(1 - (i + 1) / n3, 1 - i / n3, 0, LT, c3[i]); else piece(i / n3, (i + 1) / n3, 0, LT, c3[i]); }
+                for (let k = q; k < q + nW; k++) taken.add(B.k * 1000 + k);
+                if (!nFlags) flagAt = [(L0[0] + L1[0]) / 2, row.yb, (L0[2] + L1[2]) / 2, nx, nz];
+                nFlags++;
+              }
+            } }
           // the people's seats (their places worked out only for those who sit, seatAt: the stands have tens of thousands)
           const ctx = { uAt, Qb, Q, vf, bad }, mk = m.id + '/' + si + '/' + part.id;
-          for (const B of blocks) for (let q = 0; q < B.nS; q++) seats.push({ row: row.t, k: B.k * 1000 + q, m: mk, c: ctx, d: B.d0 + (q + 0.5) * SEAT_W });
+          for (const B of blocks) for (let q = 0; q < B.nS; q++) if (!taken || !taken.has(B.k * 1000 + q)) seats.push({ row: row.t, k: B.k * 1000 + q, m: mk, c: ctx, d: B.d0 + (q + 0.5) * SEAT_W });
           // its ends: a wall a metre over the tread, down to the ground (a temporary stand's: its scaffolding, a railing over it)
           for (const [ue, s] of [[row.uA, -1], [row.uB, 1]]) {
             const F = Q(ue, vf), B = Qb(ue), um2 = ue - s * Math.min(0.5, (uB - uA) * 0.02); if (!F || !B) continue;
@@ -1849,7 +1901,7 @@
             const fr3 = [], bk3 = [], gapOf = (r, u, pu) => pu != null && !r.part.Q((u + pu) / 2, (r.vf + r.vb) / 2);   // (gap: the piece before this station is not on the stand)
             { let pu = null; for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr3.push({ p: [F[0], r0.flat ? F[1] + (r0.dyP != null ? r0.dyP : 0) : F[1], F[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l], y2: B[1] + r0.dy, gap: gapOf(r0, u, pu) }); pu = u; } } }   // (y2: the first row's tread)
             { let pu = null; for (const u of r1.part.U) { const F = r1.part.Q(u, r1.vf), B = r1.part.Q(u, r1.vb); if (F && B) { const l = H2(F, B) || 1; bk3.push({ p: [B[0], B[1] + r1.dy, B[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l], gap: gapOf(r1, u, pu) }); pu = u; } } }
-            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb, col: c1, bench });
+            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb, col: c1, bench, flags: flagMode, at: flagAt ? { flag: flagAt.concat(nFlags), flagRow } : undefined });
           } }
         // the aisles' ways up for the walkers (standsOf), 0.3 m beside the handrail, over the treads and half-steps as drawn (aisleRec): from just
         // behind the first row's front (not through the railing in front) up each riser (its half-step where there is one) to the top row's
