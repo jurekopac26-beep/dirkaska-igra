@@ -60,7 +60,7 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | na `main` ([PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264), 3. 11., združitev `db438c1`) |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C: uporabnik 2. 11. »parkiran in vozljiv« → sklop 10 |
-| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | v delu (seja session_01Ck3D3TQSN1zRKYaWmgek8g, 3. 11.) |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | v delu (seja session_01Ck3D3TQSN1zRKYaWmgek8g, 3. 11.): gondola, vlak, gasilski avto C, premiki v [PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272); ravni in rampa čakata odgovor (drug PR) |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
 ## Odgovori 2. 11. zvečer (v nadrejeni seji)
@@ -134,6 +134,25 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
 - Orodje `koda/live.mjs <igra> <mapa-nalog>`: ena odprta igra, naloge `q<N>.json` po vrsti (posnetki od zgoraj, s kamero igre, sonde); z
   `PRE="$(cat koda/pre-stack.js)"` vsaka mreža dobi sled sklada (`userData.__st`) in združevanje je izklopljeno, `__rays(x, z)` pove, katera
   funkcija je naredila mrežo pod točko (opis v glavi datoteke).
+
+## Sklop 10: kar avto vozi in kar se premika ([PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272))
+- `js/nvride.js` (`NVRide`, priklopi v `js/game.js`: init, step pred `race.step`, post, frame, reset na HOME, brez »Na progo« med vožnjo).
+- Gondola (po `delo/gond-page.js`): `NVRide.gondola` v y8 namesto `gondola()` iz `js/newmap.js`. Spodnja postaja A je 16 m nazaj po črti
+  (≈ −114,7; −27,8; ploščad 0,78 m, dve klančini, steklena streha), ker je bila na prvotnem mestu klančina prestrma. Zgornja B (−207, −104) je
+  na vrhu znotraj zanke hill1 brez ploščadi (kabini stojita na tleh, vrata se zložijo do tal `SB.drop`, portal samo na strani žice), ker so
+  okoli vrha poti. Steber je en, na sredini med tiroma, postavljen ob `init` (`gondFinish`), kjer je `MK.netGap` > 1,6 m (ob y8 mreža poti še ni
+  cela). Stanja dock → shut → ride → opening; kabini vozita sami, ko je avto 60–420 m stran (vsakih 14 s).
+- Vlak okoli vulkana: `NVPark.built.vtrain` (peron v višini vagona, klančina na vsakem koncu, rumeni okvir); stanja dock → board → go → unboard;
+  prazen krog, ko je avto 45–320 m stran (vsakih 20 s); `NVRide.train().rides` šteje kroge z avtom.
+- Gasilski avto C (`MisKit.fireTruck`): parkiran na `FE.home` (−42,5; 79,5), rdeče polje `FE.bay` (−49,5; 79,5), kartica `#nvf`
+  (DRIVE THE FIRE ENGINE, FIREFIGHTING zaklenjen, BACK TO YOUR CAR); igralec ga vozi s fiziko tovornjaka `titan` (8,4 m), avto ostane v polju.
+- Premiki: `NVPark` `anim` in `NVSite.tick` samo blizu avta in v pogledu (`NVRide.seen`); majhne naprave dlje od 150 m skrite, brez senc;
+  kar na gradbišču vozi, je zid za avto (`H3.movers`).
+- Obremenitev (`PERF_ONLY=newmap`): klici 263 povprečno, največ 342 (main 341), oglišča 1340k (največ 1513k).
+- Odprto: **nm10-ravni** (ravni za ostale garaže; nadrejena seja: kot avtošola, 4 ravni po 3 naloge, naloge iz `js/nvmenu.js`, manjkajoče
+  predlagati) in **nm10-rampa** (rampa v parku; slike `nm10-rampa/1–4.jpg`, makete `delo/rampa-page.js`, `__RM.show(1..4)`). Drug PR.
+- V posnetkih se kabine, vlak in gasilski avto narišejo šele z `NVRide.frame(...)` (`koda/adv.js`); `koda/live.mjs` z `STILL=1` med nalogami
+  ustavi zanko igre.
 
 ## Orodja (`koda/`)
 - `node koda/posnetki.mjs <repo> <seznam.json> <predpona>`: posnetki od zgoraj in za avtom (opis v glavi datoteke). Cela mapa: `koda/ploscice.json`

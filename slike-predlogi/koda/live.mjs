@@ -1,5 +1,5 @@
 // node live.mjs <game dir> <job dir> (PRE="$(cat pre-stack.js)" before it: each mesh keeps its creation stack in userData.__st, the merging off) : the new map loaded once in <game dir>'s game, then runs the job lists dropped into <job dir>/q<N>.json
-// (an array of steps), writes <job dir>/q<N>.done (log) and the shots <job dir>/<name>.png. Steps:
+// (an array of steps), writes <job dir>/q<N>.done (log) and the shots <job dir>/<name>.png; STILL=1: no frame loop of the game between the jobs (else the idle page burns ~2 cores). Steps:
 //   {vp: [w, h]} window size · {reload: true} load the page and the new map again · {probe: 'js'} prints the value
 //   {name, top: [cx, cz, span]} from above (the far cells on, as koda/posnetki.mjs)
 //   {name, chase: [x, z, hd]} the chase camera placed by hand (as posnetki.mjs: far cells on)
@@ -35,6 +35,8 @@ const ready = async () => {
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 900000, polling: 500 });
   await page.addStyleTag({ content: '#hud, #s-pause, .screen, #nvm, #menu-host { display: none !important; }' });
   await page.evaluate(HELP);
+  // (idle: no frame loop of the game, the shots draw their own frames: the page does not burn the CPU between jobs)
+  if (process.env.STILL) await page.evaluate(() => { const o = window.requestAnimationFrame.bind(window); window.requestAnimationFrame = (f) => window.__rafStop ? 0 : o(f); window.__rafStop = true; });
 };
 let t0 = Date.now(); await ready(); say('READY ' + ((Date.now() - t0) / 1000).toFixed(0) + 's');
 const shot = (s) => page.evaluate((s) => {
