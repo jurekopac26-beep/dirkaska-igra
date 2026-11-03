@@ -9,6 +9,8 @@ import { createRequire } from 'node:module';
 // the game folder under test: the repo itself, or another copy given in GAME_ROOT (e.g. an older version)
 export const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
 export const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : REPO;
+// the game's pages are sent stamped, as the published site has them (the repo keeps them without stamps: tools/stamp.js)
+const { stampHtml, NAMES: PAGES } = createRequire(import.meta.url)('../../tools/stamp.js');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.webp': 'image/webp', '.webm': 'video/webm', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2' };
 
@@ -28,6 +30,12 @@ export function serve(root = ROOT) {
       const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
       const file = path.join(root, p.endsWith('/') ? p + 'index.html' : p);
       if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
+      if (PAGES.includes(path.basename(file))) {   // (index.html, garaza.html: their scripts and styles with ?v=<the file's stamp>)
+        const body = Buffer.from(stampHtml(fs.readFileSync(file, 'utf8'), path.dirname(file)), 'utf8');
+        res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Content-Length': body.length });
+        res.end(req.method === 'HEAD' ? undefined : body);
+        return;
+      }
       // (a video is asked for by ranges: without them the browser cannot seek in it, nor know its length)
       const size = fs.statSync(file).size, type = TYPES[path.extname(file)] || 'application/octet-stream', m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
       if (req.method === 'HEAD') { res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size }); res.end(); return; }   // (a HEAD only needs the headers: a cheap existence check, no body)

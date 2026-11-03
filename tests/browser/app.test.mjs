@@ -120,7 +120,7 @@ try {
     const publish = (n) => {
       fs.appendFileSync(path.join(dir, 'js', 'sfx.js'), `\n// version ${n}\n`);
       fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>Real Roads Atlas ${n}</title>`));
-      const ok = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js')], { env: { ...process.env, GAME_ROOT: dir } }).status === 0;
+      const ok = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js'), '--write', dir]).status === 0;   // (as publishing stamps its copy)
       return ok && fs.readFileSync(path.join(dir, 'index.html'), 'utf8').match(/js\/sfx\.js\?v=[0-9a-f]{8}/)[0];
     };
     try {

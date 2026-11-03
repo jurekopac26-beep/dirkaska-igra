@@ -1,5 +1,5 @@
-// index.html links every local script/stylesheet with the current content stamp (see tools/stamp.js), and every
-// linked file exists. Fails when a js/css file changed but `node tools/stamp.js` was not run.
+// index.html and garaza.html link only files that exist, and without content stamps (?v=…): the repo keeps its pages unstamped,
+// publishing and the tests' web server add the stamps (tools/stamp.js). Fails when a merge brought old stamps back: node tools/stamp.js
 'use strict';
 const { spawnSync } = require('child_process');
 const path = require('path');

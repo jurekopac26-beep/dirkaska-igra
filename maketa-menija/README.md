@@ -340,7 +340,7 @@ Prava proga je dokončana, ko ima vse, kar imajo Vršič, Pikes Peak, Ouninpohja
 8. Prelet: vrstica v `flyovers.json` (hitrost ~dolžina/28 m/s, kamera in megla sorazmerno, kot pri drugih; `places` z angleškimi imeni iz `R.places` v `routes.js`; `kbps`), `GAME=../game_main node flyover.mjs flyovers.json <ids>`, nato znova korak 7 (`routes.py`, prenese tudi `fly-<id>.webm|webp`).
 9. Let s helikopterjem: kraji v `landmarks.json` (samo zemljepisna imena), vrstica v `drones.json` (`{"mode": "demo", "warm": 2, "kbps": …, "shots": []}`), po potrebi `heli.json` (`sea: true` ob morju), `EXPORT=1 node heli.mjs nring` enkrat, nato `GAME=../game_main node heli.mjs <ids>`, `python3 intro_data.py raw/site <ids>` in `python3 intro_assets.py raw/site` (kopiraj `heli-<id>.*` in glasbo v igro).
 10. Glasba nove države: `glasba/<država>.py` po vzoru drugih (`glasba/synth.py`), `MUSIC` v `intro_data.py`.
-11. `node tools/stamp.js`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`).
+11. Testi (`npm run test:related`, `node tests/browser/menu.test.mjs`); žigov `?v=` ni več (doda jih objava).
 
 ## Viri podatkov
 

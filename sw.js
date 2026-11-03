@@ -2,8 +2,8 @@
 // there is internet it is the newest version.
 // - The page (index.html) comes from the network first. The saved copy is used when the network does not answer, answers
 //   with a server error, or is slower than 4 s (one bar of signal); the network's page is then still saved for next time.
-// - The scripts and styles it links carry a content stamp (?v=…, tools/stamp.js), so a saved copy of those is never out
-//   of date: they come from the saved copies first.
+// - On the published site the scripts and styles it links carry a content stamp (?v=…, added when publishing: tools/stamp.js),
+//   so a saved copy of those is never out of date: they come from the saved copies first.
 // - A new index.html is saved only together with everything it links (and the fonts its stylesheets name), so the saved game is
 //   always complete; files it no longer links are then removed. Each copy of the game (its own folder) keeps its own saved files.
 // - The menu's pictures (assets/: the models of the tracks, the maps, the cars; not the videos and the music) are kept as they are looked at, in

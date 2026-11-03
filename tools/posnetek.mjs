@@ -84,7 +84,7 @@ try {
   }
   const G = sum.glava, txt = [
     `${name}: ${G.name} (${G.track}) · ${G.mode} · ${G.wx} · ${G.n} avtov · ${clock(G.t0)}–${clock(G.t1)} (${G.vzorci} vzorcev)`,
-    `naprava ${G.devIme || G.dev} · ${G.date} · različica ${G.ver}` + (G.ver !== here ? ` (tu ${here}: git log -S 'game.js?v=${G.ver}' --oneline -- index.html)` : ' (ista kot tu)'),
+    `naprava ${G.devIme || G.dev} · ${G.date} · različica ${G.ver}` + (G.ver !== here ? ` (tu ${here}: node tools/stamp.js --find ${G.ver})` : ' (ista kot tu)'),
     `zastavice med dirko: ${sum.zastavice.length}`, ...sum.zastavice.map(f => `  ⚑${f.n} ${clock(f.t)} K${f.lap} s=${f.s}m`),
     `samodejne zastavice: ${sum.samodejne.length}`, ...sum.samodejne.map(f => `  ${clock(f.t)} K${f.lap} s=${f.s}m ${f.kind} ${f.avto} »${f.opis}«`),
     `dnevnik: ${sum.dnevnik.length}`, ...sum.dnevnik.map(l => '  ' + l),

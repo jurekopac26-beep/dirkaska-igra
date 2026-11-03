@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const MAX = 3;   // (each preview ~125 MB, mostly assets/maps; with main's ~235 MB the site stays well under Pages' 1 GB)
@@ -24,6 +25,9 @@ function unpack(rev, dir, names) {
   const list = names ? run('git', ['ls-tree', '--name-only', rev]).split('\n').filter(n => names.includes(n)) : [];
   run('bash', ['-c', 'set -o pipefail; git archive "$1" -- "${@:2}" | tar -x -C "$0"', dir, rev, ...list], { stdio: ['ignore', 'inherit', 'inherit'] });
 }
+// the stamps (?v=…) on a copy's pages: the repo keeps its pages without them, the published site has them (tools/stamp.js)
+const { stampDir } = createRequire(import.meta.url)('./stamp.js');
+const stamp = (dir, name) => { const r = stampDir(dir); console.log(`${name}: stamped ${r.links} links` + (r.missing.length ? '; missing: ' + r.missing.join(', ') : '')); };
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const all = JSON.parse(prsFile ? fs.readFileSync(prsFile, 'utf8')
@@ -35,6 +39,7 @@ const shown = prs.slice(0, MAX), left = prs.slice(MAX);
 
 fs.rmSync(site, { recursive: true, force: true });
 unpack('HEAD', site, null);
+stamp(site, 'main');
 console.log('main (' + run('git', ['rev-parse', '--short', 'HEAD']).trim() + ') → ' + path.relative(REPO, site) + '/');
 const built = [];
 for (const p of shown) {
@@ -42,6 +47,7 @@ for (const p of shown) {
     run('git', ['fetch', '--quiet', '--depth=1', 'origin', `pull/${p.number}/head`], { stdio: ['ignore', 'inherit', 'inherit'] });
     const sha = run('git', ['rev-parse', 'FETCH_HEAD']).trim();
     unpack(sha, path.join(site, 'beta', String(p.number)), GAME);
+    stamp(path.join(site, 'beta', String(p.number)), '#' + p.number);
     built.push(Object.assign({ sha }, p));
     console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/`);
   } catch (e) { console.log(`#${p.number}: not built (${String(e.message).split('\n')[0]})`); }
