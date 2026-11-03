@@ -44,15 +44,16 @@ const SETUPS = {
 // (from 6.5 s the prototype misses the way in). Uncompahgre: from 6 s the crash set-up's car only rubs the wall on its nose (no panel off
 // below 70 %: MASK in core.js); half a second later every car of the crash set-ups hits it hard enough to lose panels. Since the AI keeps
 // clear of a car alongside (aiControl) the rivals no longer knock panels off each other (or the player) in the start's crowd, so the
-// player's own crash must lose one: Tianmen, Sani and Monterey (from 6 s the left lock only dents that car against the barrier: earlier, or
-// Sani's prototype later), Riverside from 6.5 s (from 6 s the formula only grazes the barrier)
+// player's own crash must lose one: Tianmen and Sani (from 6 s the left lock only dents that car against the barrier: earlier, or
+// Sani's prototype later), Riverside from 6.5 s (from 6 s the formula only grazes the barrier). Monterey from 6 s again since its pit lane
+// (the pit wall by the front straight: at 5 s the rally car only dented it)
 // (the cars' boxes pushed apart in a contact, carCollide, moved the pack a little at the start: NürburgRing rally 6.5, Chapman ev 5, Tianmen muscle 5, Sani Pass
 // rally 5.5 and truck 5.5, Maunakea truck 6.5, Riverside formula 6, Detroit truck 5: before, from 6 s these only grazed, no panel off)
 // (the knocks of the versions, Trki med avti: Simulacija by default, kCollide in core.js, the pack moves otherwise again; from the old times these only grazed or lost
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
 // costs: Uncompahgre's electric car 4, Newcastle's truck 4)
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'monterey/rally': 5, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

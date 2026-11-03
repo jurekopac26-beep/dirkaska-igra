@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const MAX = 3;   // (each preview ~125 MB, mostly assets/maps; with main's ~235 MB the site stays well under Pages' 1 GB)
-const GAME = ['index.html', 'garaza.html', 'sw.js', 'manifest.webmanifest', 'js', 'css', 'assets', 'fonts', 'icons'];   // (garaza.html: the garage, opened from the game's car screen)
+const GAME = ['index.html', 'garaza.html', 'temni-nacin.html', 'sw.js', 'manifest.webmanifest', 'js', 'css', 'assets', 'fonts', 'icons'];   // (garaza.html: the garage, opened from the game's car screen; temni-nacin.html: the colours in a browser that darkens by force)
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
 const prsFile = flag('--prs'), site = args[0] && path.resolve(args[0]);

@@ -256,15 +256,21 @@ try {
         }
         // (in the chase the patrol cars may lose the player for a while, searching with their lights off: the HUD's count of them after the
         // player and their lights read through the chase, not only at its end)
-        let peds = 0, tail = [], rot = [], caps = [], chased = 0, lamp = false;
+        // (each arrow's turn is checked against where the patrol cars are as the frame drew it: 180 straight behind, less to the right. A car
+        // behind along the road may be beside or even ahead of the player in a hairpin, so how many of them point back depends on where on the
+        // road the chase is, which the race's chance decides)
+        let peds = 0, tail = [], rot = [], aim = [], caps = [], chased = 0, lamp = false;
         for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
           if (md === 'police') { chased = Math.max(chased, +txt('h-pos') || 0); if ((Render.roadInfo() || {}).lampOn) lamp = true;
-            for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+            const Pl = g.race.player, ch = Math.cos(Pl.h), sh = Math.sin(Pl.h);
+            const cars = g.race.pol.cars.filter(c => c.pol.mode === 'chase' || c.pol.mode === 'search').map(c => { const dx = c.x - Pl.x, dz = c.z - Pl.z; return 180 - Math.atan2(-dx * sh + dz * ch, -(dx * ch + dz * sh)) * 180 / Math.PI; });
+            for (const el of document.querySelectorAll('#h-tail i.on')) { const r = parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1]);
+              tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(r); aim.push(cars.some(w => Math.abs(((r - w) % 360 + 540) % 360 - 180) <= 2)); }
             if (g.radio.cap) caps.push(g.radio.cap); } }
         for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, aim, caps: [...new Set(caps)] };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
@@ -307,9 +313,9 @@ try {
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
-    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
-      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
-      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
+    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, each pointing where a patrol car is',
+      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.aim.length === P.rot.length && P.aim.every(Boolean),
+      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}, ${P.aim.filter(Boolean).length} of ${P.aim.length} at a patrol car`);
     T.check('Vršič Policija: the police radio talks in the chase (the speakers\' call signs, the real places)',
       P.caps.some(c => /^(KG-\d+|OKC KRANJ|MOTORIST \d+|CIVILNA \d+|BOBER|PP BOVEC|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
       JSON.stringify(P.caps.slice(0, 4)));
