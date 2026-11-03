@@ -1251,9 +1251,10 @@
 
   /* ---------------- 2 · Varnostniki s psom (Toronto, Townsville, Bang Saen: the street circuits) ----------------
      Two security guards in black with yellow vests (as the gate's) walk slowly up and down along the fence, one with a shepherd dog on a
-     short leash; their quad bike parked behind them, their post (a dark tent) by it. Staff (run: false): as the car comes they stop and watch it, the dog sits by its
-     handler. The dog and its leash are the handler's own (on its root, shown with their hold key: walking, sitting), so they go and turn
-     where it does (the kit's pets, C.pet, run along the fence after the car) */
+     short leash; their quad bike parked behind them, their post (a dark tent) by it. Staff (run: false): as the car comes they stop and
+     watch it, the dog sits by its handler. The dog and its leash are the handler's own (on its root, shown with their hold key: walking,
+     sitting), so they go and turn where it does (the kit's pets, C.pet, run along the fence after the car); the leash leaves the hand where
+     it is at rest (walking: the arm's mid-swing) */
   function varnostDog(sit) {   // a shepherd dog facing +z: tan, a black saddle (the high camera sees its back); sitting: its front up, the hind legs under it
     const tan = 0x9a6a36, blk = 0x1d1a17;
     if (!sit) return grp(box(0.26, 0.26, 0.74, tan, 0, 0.5, 0), box(0.27, 0.09, 0.52, blk, 0, 0.64, -0.04), box(0.22, 0.24, 0.26, tan, 0, 0.72, 0.44), box(0.13, 0.11, 0.17, blk, 0, 0.66, 0.62),
