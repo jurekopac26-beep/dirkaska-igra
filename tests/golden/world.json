@@ -1118,5 +1118,23 @@
    "worn:MeshLambertMaterial": "bdf298c8",
    "brakeBoards:MeshLambertMaterial": "43625280"
   }
+ },
+ "killar": {
+  "meshes": 1479,
+  "verts": 918712,
+  "instances": 44731,
+  "props": 93,
+  "crowd": 161,
+  "world": "546561e9",
+  "propsHash": "1ba5bb22",
+  "floor": "b88dd46b/9520",
+  "groups": {
+   "-:MeshLambertMaterial": "1e087c0b",
+   "-:MeshPhongMaterial": "d86f1c90",
+   "-:MeshBasicMaterial": "80bb9302",
+   "crowd:MeshLambertMaterial": "a1f2d9b3",
+   "ao:MeshBasicMaterial": "d1bcb822",
+   "life:MeshLambertMaterial": "5b2a0a33"
+  }
  }
 }

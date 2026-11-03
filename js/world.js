@@ -1291,7 +1291,7 @@ const World = (function () {
     if (THEME !== 'troisrivieres') API.TRW = null;                     // (and Trois-Rivières')
     if (THEME !== 'ouni') API.OU = null;                               // (and the last Ouninpohja build's)
     if (THEME !== 'harju') API.HJ = null;                              // (and Harju's)
-    if (THEME !== 'vrsic' && THEME !== 'caracoles' && THEME !== 'uncompahgre' && THEME !== 'sani' && THEME !== 'iroha' && THEME !== 'beartooth' && THEME !== 'rastro' && THEME !== 'moki' && THEME !== 'medvode' && THEME !== 'palomar') API.VR = null;     // (and the last Vršič, Los Caracoles or Uncompahgre build's: the same corridor helpers)
+    if (THEME !== 'vrsic' && THEME !== 'caracoles' && THEME !== 'uncompahgre' && THEME !== 'killar' && THEME !== 'sani' && THEME !== 'iroha' && THEME !== 'beartooth' && THEME !== 'rastro' && THEME !== 'moki' && THEME !== 'medvode' && THEME !== 'palomar') API.VR = null;     // (and the last Vršič, Los Caracoles or Uncompahgre build's: the same corridor helpers)
     if (THEME !== 'katu') API.KT = null;                               // (and the last Katu-Jaryk build's)
     if (THEME !== 'detroit') API.DT = null;                            // (and Detroit's)
     if (THEME !== 'marrakesh') API.MR = null;                          // (and Marrakesh's)

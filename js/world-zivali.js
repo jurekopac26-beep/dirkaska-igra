@@ -269,6 +269,7 @@
     pikesg: { a: ['elk', 'bighorn', 'muleDeer'], t: ['cabin', 'logPile', 'signPost', 'picnic'] },
     beartooth: { a: ['bison', 'elk', 'goatW', 'moose', 'blackbear'], t: ['cabin', 'logPile', 'signPost'], open: true },
     uncompahgre: { a: ['elk', 'bighorn', 'muleDeer', 'blackbear'], t: ['cabin', 'logPile', 'fallenTree'] },
+    killar: { a: ['ibex', 'bighorn', 'sheep', 'blackbear'], t: ['logPile', 'fallenTree'] },   // (the Himalayan ibex, the bharal as the bighorn, the village's sheep, the Himalayan black bear)
     baldy: { a: ['bighorn', 'muleDeer', 'coyote', 'blackbear'], t: ['cabin', 'picnic', 'signPost', 'logPile'] },
     bigsur: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost', 'fallenTree'] },
     mulholland: { a: ['coyote', 'muleDeer'], t: ['picnic', 'signPost'] },

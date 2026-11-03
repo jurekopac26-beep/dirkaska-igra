@@ -49,6 +49,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
 - [Livorno, Italija](docs/proge/livorno.md)
+- [Killar, Indija](docs/proge/killar.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -238,6 +239,9 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Serra do Rio do Rastro: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Moki Dugway (sredinska črta, površina asfalt/makadam, razgledišče): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/moki.js` so na voljo pod ODbL 1.0.
 - Višine in teren Moki Dugway: USGS 3D Elevation Program (3DEP), U.S. Geological Survey (javna domena), prek [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen/Tilezen) na AWS.
+- Proga Killar (sredinska črta, most čez Hangrung Nalo, tlorisi stavb, reka Chenab in potoki): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-09-23.1). Iz njih izpeljani podatki v `js/tracks/killar.js` so na voljo pod ODbL 1.0.
+- Višine in teren Killar (tudi lega starta za globus v meniju): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Killar: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Mount Baldy (sredinska črta, stavbe, potoki, parkirišča, kamp, stranske ceste, sedežnica, imena krajev): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/baldy.js` so na voljo pod ODbL 1.0.
 - Višine in teren Mount Baldy (tudi daljni vrhovi): USGS 3D Elevation Program (3DEP), U.S. Geological Survey (javna domena), prek [Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen/Tilezen) na AWS.
 - Raba tal Mount Baldy: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
