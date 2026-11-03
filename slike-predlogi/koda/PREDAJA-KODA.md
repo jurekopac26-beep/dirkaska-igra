@@ -55,7 +55,7 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | na `main` ([PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264), 3. 11., združitev `db438c1`) |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C: uporabnik 2. 11. »parkiran in vozljiv« → sklop 10 |
-| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | v delu (seja se zaganja, 3. 11.) |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | v delu (seja session_01Ck3D3TQSN1zRKYaWmgek8g, 3. 11.) |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
 ## Odgovori 2. 11. zvečer (v nadrejeni seji)
