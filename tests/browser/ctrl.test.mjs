@@ -101,8 +101,12 @@ try {
     JSON.stringify({ note, w0, ws, w1r }));
 
   // 7. the pedals: each pressed down and let go (it read 0 before: where it rests is measured once let go): Plin axis 2, Zavora axis 3
+  // (let go: the game takes where the pedal rests after 0.3 s of its own time, at most 0.1 s a frame, so on a busy machine later than any
+  // fixed wait; the next pedal's box tapped before that ends this one unset: so until the pedal is in the saved settings, at most 20 s)
   const pedal = async (a, ax) => { await click(slot('ctl-pad', a, 0)); await page.evaluate((ax) => { window.__wheel.axes[ax] = -1; }, ax); await frames(page, 4);
-    await page.evaluate((ax) => { window.__wheel.axes[ax] = 1; }, ax); await page.waitForTimeout(700); await frames(page, 3); };
+    await page.evaluate((ax) => { window.__wheel.axes[ax] = 1; }, ax);
+    await page.waitForFunction((a) => { const p = (JSON.parse(localStorage.getItem('tdgp-ctrl') || '{}').pads || {})[window.__wheel.id]; return !!(p && (p[a] || []).some(x => x.t === 'a')); }, a, { timeout: 20000, polling: 100 }).catch(() => null);
+    await frames(page, 3); };
   await pedal('gas', 2); await pedal('brake', 3);
   const w2 = await rows(), sw = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-ctrl')).pads[window.__wheel.id]);
   const half = await page.evaluate(async () => { window.__wheel.axes[2] = 0; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const v = { thr: Input.pad.thr, brk: Input.pad.brk, bar: document.getElementById('ctl-v-gas').style.width }; window.__wheel.axes[2] = 1; return v; });

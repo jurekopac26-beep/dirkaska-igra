@@ -27,7 +27,10 @@ const NVBase = (function () {
       for (let i = 0; i < SPo.length; i++) { const a = SPo[i], b = SPo[(i + 1) % SPo.length], sa = sd(a), sb = sd(b); if (sa < 0) apron.push([a[0], a[1], 0]);
         if ((sa < 0) !== (sb < 0)) { let lo = 0, hi = 1; for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2, p = [a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m]; if ((sd(p) < 0) === (sa < 0)) lo = m; else hi = m; } const q = [a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo, 1];
           if (sa < 0) { apron.push(q); exitZ = q[1]; } else { if (exitZ !== null) { const n = Math.ceil(Math.abs(q[1] - exitZ)); for (let k = 1; k < n; k++) { const z = exitZ + (q[1] - exitZ) * k / n; apron.push([westEdge(z), z, 1]); } } apron.push(q); exitZ = null; } } } }
-    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z);
+    // (not in the banked bend's bowl, the ground there lowered: the lot and the apron end at its rim, the lawn in it; they lay over it at the
+    // ground's height, their edge a cliff over the bowl, the 15 pictures of the whole map, sheet 10)
+    const inBowl = (x, z) => !!H3.bank0 && !!H3.bankDy && H3.bankDy(x, z) < -0.04;
+    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z) && !inBowl(x, z);
     // the lot: either side of the way but not on the base's apron (everything there paved, the pictures), south of road 2 (under its kerb and strip,
     // which hide the lot's edge, js/nvedge.js), inside the circuit short of its edge, up to the garages along the start straight, not on the driving
     // school's practice area nor the HOME lot (they are drawn by their own)
@@ -36,10 +39,10 @@ const NVBase = (function () {
     const PAD = H3.PAD, inPad = (x, z, m = 0.4) => x > PAD[0] - m && x < PAD[1] + m && z > PAD[2] - m && z < PAD[3] + m;
     const southJ = (x, z) => { for (let i = 1; i < JP.length; i++) { const [ax, az] = JP[i - 1], [bx, bz] = JP[i]; if ((ax - x) * (bx - x) <= 0 && ax !== bx) return z > az + (bz - az) * (x - ax) / (bx - ax); } return true; };   // (south of road 2: north of it the park)
     const lotIn = (x, z) => z > 40 && z < 143 && southJ(x, z) && Math.abs(x - laneX(z)) > RW - 0.05 && !inApron(x, z) && TL.inLoop(x, z) && TL.dist(x, z, 30) > w + 3.2 && segD(JP, x, z) > JHW + 1.0 && !GAR.some(gx => Math.abs(x - gx) < 11.5 && z > 131.5)
-      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z));   // (the HOME lot's lane: its own)
+      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z)) && !inBowl(x, z);   // (the HOME lot's lane: its own)
     let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -200; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
     let ab = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of AP) ab = [Math.min(ab[0], x), Math.max(ab[1], x), Math.min(ab[2], z), Math.max(ab[3], z)];
-    R = { RP, laneX, westEdge, apron, AP, inApron, lotIn, inPad, lotBB: lb, apBB: ab };
+    R = { RP, laneX, westEdge, apron, AP, inApron, inBowl, lotIn, inPad, lotBB: lb, apBB: ab };
     // the cars' asphalt: the way as a paved way of the net, the apron and the lot as paved areas
     MK.netAdd('route0', ROUTE, RW, 'asph'); (H3.paveFns = H3.paveFns || []).push({ bb: ab, inside: inApron }, { bb: lb, inside: lotIn });
     return R;
@@ -91,6 +94,8 @@ const NVBase = (function () {
     const AP = R.apron, y0 = (() => { const v = R.AP.map(([x, z]) => gy(x, z)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
     { const sh = new THREE.Shape(R.AP.map(([x, z]) => new THREE.Vector2(x, z))), g = new THREE.ShapeGeometry(sh, 4), pa = g.attributes.position, uvA = new Float32Array(pa.count * 2);
       for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), z = pa.getY(i); pa.setXYZ(i, x, y0 + 0.08, z); uvA[2 * i] = x / 7; uvA[2 * i + 1] = z / 7; } g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2)); g.computeVertexNormals();
+      // (none of it over the banked bend's bowl: it lay flat at the apron's level over the lowered lawn there, sheet 10)
+      { const I = g.index, keep = []; for (let i = 0; i < I.count; i += 3) { const a = I.getX(i), b = I.getX(i + 1), c = I.getX(i + 2), cx = (pa.getX(a) + pa.getX(b) + pa.getX(c)) / 3, cz = (pa.getZ(a) + pa.getZ(b) + pa.getZ(c)) / 3; if (!R.inBowl(cx, cz)) keep.push(a, b, c); } g.setIndex(keep); }
       if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let i = 0; i < I.count; i += 3) { const t = I.getX(i + 1); I.setX(i + 1, I.getX(i + 2)); I.setX(i + 2, t); } g.computeVertexNormals(); } flat(g, ASPH, 2); }
     // the H painted in the asphalt (a white ring, a big H, a yellow dashed ring), old drift marks round it, a yellow dashed line to it from the way
     const HY = y0 + 0.08;

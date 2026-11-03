@@ -2,7 +2,8 @@
 // the top with three choices; it shows while the car stands on the floor, a tap anywhere else closes it (until the car leaves the floor
 // and comes back). Every choice says V IZDELAVI for now, except the driving school's: its three licences, each licence's twelve tasks
 // in four levels of three (a level's three tasks shown, under them the level's progress; at 50 % the next level opens), a task's card
-// with START (START says V IZDELAVI until the tasks are built). HOME's box in the pit lane says Garaža v izdelavi (the new garage is
+// with START (the task driven: js/nvschool.js; START says V IZDELAVI for a task not built yet). The places are kept (localStorage
+// rra-avtosola). HOME's box in the pit lane says Garaža v izdelavi (the new garage is
 // made apart). Loaded with the new map (js/game.js nvStart).
 const NVMenu = (function () {
   'use strict';
@@ -18,24 +19,24 @@ const NVMenu = (function () {
   // licence's exam)
   const LIC = {
     c: { name: 'ROAD LICENCE', sub: 'asphalt · parking', col: '#8fe0ff', tasks: [
-      ['Lap of the track', 'One lap of the asphalt circuit through 4 checkpoints, under 2:10. Start and finish at the gate of the practice lot.'],
+      ['Lap of the track', 'One lap of the circuit through 4 gates, from the line by the practice area, under 2:10.'],
       ['Start and stop', 'Drive off, 30 m, and stop inside the yellow box.'],
       ['Brake to the line', 'Speed up to 50 km/h and stop before the white line.'],
       ['Slalom', '6 cones without touching one, under 25 s.'],
       ['Figure of eight', 'Two laps of a figure of eight round two cones.'],
       ['Reverse parking', 'Back into the free bay between two cars.'],
       ['Parallel parking', 'Along the kerb, between two cars.'],
-      ['Crossroads', 'Left and right at the practice crossroads, in your own lane.'],
-      ['Emergency stop', 'At 80 km/h, stop before the obstacle when the sign lights up.'],
-      ['Roundabout', 'Into the roundabout and out at the third exit, in your own lane.'],
-      ['Lane change', 'At 60 km/h, change lanes between the cones and back, touch none.'],
+      ['Junction', 'Up the way to the boxes, turn right onto the road, in your own lane.'],
+      ['Emergency stop', 'Up to 80 km/h on the track; when the red board lights up, stop before it.'],
+      ['Roundabout', 'Once round the park\'s fountain, out to the next plaza.'],
+      ['Lane change', 'At 50 km/h, change lanes between the cones and back, touch none.'],
       ['Exam: road', 'Slalom, braking and parking in one run, under 1:30.']] },
     m: { name: 'GRAVEL LICENCE', sub: 'dirt roads', col: '#23c8ff', tasks: [
-      ['Gravel lap', 'The whole gravel course in the field under 1:45, never on the asphalt.'],
+      ['Gravel lap', 'The gravel road along the north, end to end, never off it.'],
       ['Braking on gravel', 'Stop inside the box: on gravel the car needs longer to stop.'],
       ['Gravel corner', 'Through 3 gates without leaving the road.'],
       ['Pole slalom', '6 poles without touching one.'],
-      ['Gravel eight', 'Round the figure-of-eight road.'],
+      ['Gravel eight', 'Twice round two poles on the meadow, one each way.'],
       ['Drift', 'Slide round the cone for at least 3 seconds.'],
       ['Small jump', 'Over the ramp, land straight on the road.'],
       ['Wiggles', 'The winding road, under the time.'],
@@ -44,9 +45,9 @@ const NVMenu = (function () {
       ['Forest road', 'The whole forest road under the time, without leaving it.'],
       ['Exam: gravel', 'The whole course under the time, at most 2 poles knocked down.']] },
     k: { name: 'HILL LICENCE', sub: 'up and down', col: '#1580b0', tasks: [
-      ['Hill lap', 'Up the switchbacks, round the top and down the other side, under 2:30.'],
+      ['Hill lap', 'Up the switchbacks, round the top and down the other side, under the time.'],
       ['Hill start', 'Stop in the box on the slope and pull away without rolling back.'],
-      ['Steady climb', 'Up to the first bend at a steady speed.'],
+      ['Steady climb', 'Up to the first bend between 20 and 45 km/h.'],
       ['Switchback up', 'The first switchback without leaving the road.'],
       ['Braking downhill', 'Down to the box, under 40 km/h.'],
       ['Stop at the top', 'Stop in the circle at the top of the hill.'],
@@ -74,10 +75,12 @@ const NVMenu = (function () {
     president: { title: 'Mission: President', sub: 'protect the president', col: '#4a7ae8', items: [['MEDVODE, SLOVENIA', 'escort the convoy · 6.2 km'], ['VRŠIČ, SLOVENIA', 'escort the convoy over the pass'], ['RIVIERA, FRANCE', 'escort the convoy along the coast']] },
   };
 
-  let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0;
+  let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0, want = null;
   // each task's best, by the place it was driven to: 1st 100 %, 2nd 75 %, 3rd 50 %, 4th 0 % (none driven yet); three tasks a level, the
   // next level opens at 50 % of the one before (the three tasks' average); the licence: its exam (the twelfth task) passed, 3rd or better
-  const best = { c: [], m: [], k: [] };
+  const best = { c: [], m: [], k: [] }, KEY = 'rra-avtosola';
+  function load() { try { const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o) for (const l of Object.keys(best)) best[l] = Array.isArray(o[l]) ? o[l].map(v => PLACE.includes(v) ? v : undefined) : []; } catch (e) { } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(best)); } catch (e) { } }
   const LV = 3, OPEN = 50, PLACE = [100, 75, 50, 0], ORD = ['1st', '2nd', '3rd', '4th'];
   const bestOf = (l, i) => best[l][i] || 0, nLv = (l) => Math.ceil(LIC[l].tasks.length / LV);
   const lvP = (l, v) => { let t = 0; for (let i = v * LV; i < (v + 1) * LV; i++) t += bestOf(l, i); return Math.round(t / LV); };
@@ -137,7 +140,9 @@ const NVMenu = (function () {
     for (const [k, s] of Object.entries(H3.st || {})) add(k, s);
     for (const [k, s] of Object.entries(H3.lic || {})) add(k, s);
     for (const b of (H3.pits || [])) if (b.tune) list.push({ key: 'home', x: b.x, z: b.z, c: 1, s: 0, r: 5 });
-    host = (document.getElementById('hud') || document.body).parentElement || document.body;
+    host = (document.getElementById('hud') || document.body).parentElement || document.body; load();
+    if (typeof NVSchool !== 'undefined') NVSchool.init(H3, { name: (l, i) => [LIC[l].name, LIC[l].tasks[i][0]], col: (l) => LIC[l].col, record, floor: () => { const g = list.find(q => q.key === 'school'); return g && { x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }; },
+      closed: (l) => { at = null; shut = null; want = l ? { lvl: 1, lic: l, lv: lvOpen(l) } : null; } });
     if (!init.on) { init.on = true; document.addEventListener('pointerdown', (e) => { if (el && el.style.display !== 'none' && !el.contains(e.target)) { shut = at; close(); } }, true); }
   }
   // the garage whose coloured floor the car stands on (null: none)
@@ -150,10 +155,11 @@ const NVMenu = (function () {
   }
   // every frame of the race: on a floor the menu opens (once per visit: a tap elsewhere closes it until the car leaves the floor)
   function tick(P, on) {
-    live = !!on; if (!list.length || !P) return;
-    const k = floorOf(P.x, P.z);
-    if (k !== at) { at = k; shut = null; close(); if (k) { view = { lvl: 0 }; draw(); } }
-    else if (k && !el && shut !== k) { view = { lvl: 0 }; draw(); }
+    live = !!on; if (typeof NVSchool !== 'undefined') { NVSchool.tick(P, on); if (NVSchool.active()) { if (el) close(); return; } }   // (a task being driven: no menu)
+    if (!list.length || !P) return;
+    const k = floorOf(P.x, P.z), v0 = () => { const v = want && k === 'school' ? want : { lvl: 0 }; want = null; return v; };
+    if (k !== at) { at = k; shut = null; close(); if (k) { view = v0(); draw(); } }
+    else if (k && !el && shut !== k) { view = v0(); draw(); }
     if (el) el.style.display = live ? '' : 'none';
   }
   function close() { if (el) { el.remove(); el = null; } view = null; }
@@ -202,11 +208,14 @@ const NVMenu = (function () {
     if (a === 'lic') { const l = MENUS[at].lic[i]; view = { lvl: 1, lic: l, lv: lvOpen(l) }; draw(); return; }   // (the highest level open)
     if (a === 'lvp' || a === 'lvn') { const v = view.lv + (a === 'lvn' ? 1 : -1); if (v >= 0 && v <= lvOpen(view.lic)) { view.lv = v; draw(); } return; }
     if (a === 'task') { view = { lvl: 2, lic: view.lic, lv: view.lv, task: i }; draw(); return; }
+    if (a === 'start' && typeof NVSchool !== 'undefined' && NVSchool.has(view.lic, view.task)) { const l = view.lic, i = view.task; close(); NVSchool.start(l, i); return; }
     if (a === 'wip' || a === 'start') wip();
   }
   // (the tests: the garages' floors, the menu now)
   const on = () => at;   // (the garage the car stands in: js/game.js hides Na progo there)
-  const setPlace = (l, i, place) => { best[l][i] = PLACE[place - 1]; if (el && view) draw(); };   // (the tests, until the tasks are built: a task driven to 1st-4th)
+  const setPlace = (l, i, place) => { best[l][i] = PLACE[place - 1]; save(); if (el && view) draw(); };   // (the tests: a task driven to 1st-4th)
+  // a task driven (js/nvschool.js): its place kept if better than the best so far
+  function record(l, i, place) { const v = PLACE[place - 1]; if (best[l][i] == null || v > best[l][i]) { best[l][i] = v; save(); } }
   const state = () => ({ at, open: !!el && el.style.display !== 'none', view: view && Object.assign({}, view), n: list.length });
   const floors = () => list.map(g => ({ key: g.key, x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }));
   return { init, tick, close, on, setPlace, state, floors, floorOf, MENUS, LIC };
