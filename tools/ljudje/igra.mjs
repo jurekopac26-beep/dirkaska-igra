@@ -2,6 +2,7 @@
 // na izbranih razdaljah pred prizorom (pred prihodom, ko ga zaslišijo, ko tečejo, ob ograji, mimo); rumena lupa (_zoom) je povečava ljudi iz
 // iste kamere. Slike in povzetek v test-results/ljudje/igra/.
 //   node tools/ljudje/igra.mjs <proga> [prizor,…] [--v 30] [--pri 90,55,32,14,-6] [--pokonci] [--nizka] [--brez-lupe] [--dez]   (--dez: v dežju, z dežniki)
+//   prizor@m: samo prizor te vrste na tem metru (dva iste vrste: slike z @m v imenu)
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../tests/browser/lib.mjs';
@@ -27,9 +28,9 @@ try {
   console.log(id, 'naloženo v', Math.round((Date.now() - t0) / 1000), 's', JSON.stringify(info));
   if (!info) process.exit(0);
   for (const sc of info.scenes) {
-    if (only && !only.includes(sc.name)) continue;
-    const shots = await page.evaluate(async ([name, v, marks, zoom]) => {
-      const g = window.__game, R = g.race, T = R.track, P = R.player, W = Render.world.peopleW, Sc = W.scenes.find(x => x.name === name);
+    if (only && !only.includes(sc.name) && !only.includes(sc.name + '@' + sc.at)) continue;   // (prizor@m: only the one at that metre)
+    const shots = await page.evaluate(async ([name, v, marks, zoom, s0, side]) => {
+      const g = window.__game, R = g.race, T = R.track, P = R.player, W = Render.world.peopleW, Sc = W.scenes.find(x => x.name === name && Math.round(x.s0) === s0 && x.side === side);   // (this one, not the first of its kind)
       const hide = () => { for (const c of R.cars) if (c !== P) { const vw = Render.viewOf(c); if (vw) vw.grp.visible = false; } };
       const place = (s) => { const i = T.idx(((s % T.len) + T.len) % T.len), off = T.rl ? T.rl[i] : 0; P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) P.y = P.py = P.roadY = T.hy[i]; P.vx = P.vz = 0; P.q = T.query(P.x, P.z, i, P.q); };
       let s = Sc.s0 - 230, dt = 1 / 30; place(s); Render.setShot(null); Render.resetCam();
@@ -52,9 +53,10 @@ try {
         out.push(r);
       }
       return out;
-    }, [sc.name, v, marks, zoom]);
-    for (const r of shots) { const f = `${id}-${sc.name}-${r.da}${portrait ? '-p' : ''}`; png(path.join(OUT, f + '.png'), r.src); if (r.zoom) png(path.join(OUT, f + '_zoom.png'), r.zoom); }
-    console.log(sc.name, shots.map(r => `${r.da} m (${r.al ? 'opozorjeni' : 'delajo'})`).join(', '), Math.round((Date.now() - t0) / 1000) + ' s');
+    }, [sc.name, v, marks, zoom, sc.s, sc.side]);
+    const many = info.scenes.filter(x => x.name === sc.name).length > 1;   // (two of a kind: its metre in the name, the pictures not over each other)
+    for (const r of shots) { const f = `${id}-${sc.name}${many ? '@' + sc.at : ''}-${r.da}${portrait ? '-p' : ''}`; png(path.join(OUT, f + '.png'), r.src); if (r.zoom) png(path.join(OUT, f + '_zoom.png'), r.zoom); }
+    console.log(sc.name + (many ? '@' + sc.at : ''), shots.map(r => `${r.da} m (${r.al ? 'opozorjeni' : 'delajo'})`).join(', '), Math.round((Date.now() - t0) / 1000) + ' s');
   }
   if (errors.length) console.log('napake:', errors.slice(0, 8));
 } finally { await browser.close(); await srv.close(); }

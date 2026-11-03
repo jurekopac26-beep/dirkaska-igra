@@ -525,7 +525,7 @@
         C.man({ shirt: sh[2], pants: pick(pal.PANTS), hair: pick(['long', 'pony']) }, { act: { a: -1.95, b: 5.55, pose: 'kotlicek_eat', t: 1.7, face: [1, -0.25], hold: eats(bw[1]) },
           run: { f: 0.5, hold: [] }, fence: { a: 0.1, b: 0.9, pose: 'cheer', t: 0.9 } });
         C.man({ shirt: sh[3], pants: pick(pal.PANTS), hair: pick(['short', 'bald']), scale: 1.0 }, { act: { a: 2.05, b: 5.2, pose: 'kotlicek_eat', t: 3.1, face: [-1, -0.1], hold: eats(bw[2]) },
-          run: { f: 0.42, pose: 'walk', hold: [['kotlicek_spoon', 1]] }, fence: { a: 2.4, b: 2.5, pose: 'kotlicek_eatUp', t: 0.5, hold: eats(bw[2]) } });   // (he only comes halfway, eating)
+          run: { f: 0.42, pose: 'walk', hold: eats(bw[2]) }, fence: { a: 2.4, b: 2.5, pose: 'kotlicek_eatUp', t: 0.5, hold: eats(bw[2]) } });   // (he only comes halfway, eating)
       } };
   }
 
@@ -719,7 +719,7 @@
     // a racket in the right hand (the hand's frame: fingers -y, palm in, +z forwards): the grip and the shaft along the forearm, tipped a
     // little forwards; the oval head (the strings light, the frame in a colour) in the plane of the palm
     ITEMX.badminton_racket = (o) => { const c = o.c || 0xd8262a, g = grp(), R = grp();
-      R.add(cyl(0.017, 0.017, 0.2, 5, 0x22252b, 0, 0.08, 0), cyl(0.007, 0.007, 0.26, 4, 0x9aa0a8, 0, 0.31, 0), cyl(0.1, 0.1, 0.006, 10, 0xe8e8e2, 0, 0.58, 0, { rz: Math.PI / 2, s: [1, 1.28, 1] }));
+      R.add(cyl(0.017, 0.017, 0.2, 5, 0x22252b, 0, 0.08, 0), cyl(0.007, 0.007, 0.26, 4, 0x9aa0a8, 0, 0.31, 0), cyl(0.1, 0.1, 0.006, 10, 0xe8e8e2, 0, 0.58, 0, { rz: Math.PI / 2, s: [1.3, 1, 1] }));
       for (let k = 0; k < 10; k++) { const a0 = k / 10 * TAU, a1 = (k + 1) / 10 * TAU; R.add(bar([0, 0.58 + 0.13 * Math.cos(a0), 0.104 * Math.sin(a0)], [0, 0.58 + 0.13 * Math.cos(a1), 0.104 * Math.sin(a1)], 0.02, c)); }
       R.rotation.x = Math.PI - 0.5; R.position.set(0, 0.03, 0.02); g.add(R); return g; };
     // a frisbee held at its rim (its face in the plane of the palm)
@@ -767,7 +767,7 @@
           fence: { a: 1.2, b: 0.9, pose: 'wave', t: 1.1, hold: [['badminton_racket', 1, { c: rc[1] }]] }, run: { f: 0.62 } });
         const can = [['can', 1, { c: pick([0xd8262a, 0x2f63c9, 0xc8c9cc]) }]];
         C.man(look({ shirt: sh[2], shorts: rnd() < 0.5, shoes: null }), { act: { a: 1.6, b: 9.4, pose: 'sitDrink', face: [0.05, -1], hold: can },
-          fence: { a: -0.4, b: 0.9, pose: 'cheer', t: 1.6, hold: can }, run: { f: 0.62 } });
+          fence: { a: 0.5, b: 0.9, pose: 'cheer', t: 1.6, hold: can }, run: { f: 0.62 } });   // (his place on his side of the net: his run misses it and its pole)
         C.man(look({ shirt: sh[3], hair: 'long', shorts: false, shoes: null }), { act: { a: 2.9, b: 9.55, pose: 'sitDrink', face: [-0.2, -1], hold: [['bottle', 1, { c: 0x8acbe8 }]] },
           fence: { a: 2.8, b: 0.95, pose: 'phoneUp', hold: [['phone', 1]] }, run: { f: 0.58 } });
         C.man(look({ shirt: sh[4], hat: 'cap', hatCol: pick(SPORT) }), { act: { a: -6.0, b: 8.4, pose: 'badminton_throw', face: [-0.62, -0.79], hold: [['badminton_disc', 1, { c: disc[0] }]] },
@@ -889,7 +889,7 @@
   // the circle's middle and their change for 6 cm across and 5 cm forwards, solved on the figure)
   const motoSedi = { hy: 0.62, hp: [0.3, 0.3], kn: [0.4, 0.4], hpz: [0.2, 0.2], lean: 0.4, shz: [0.95, 0.95], shx: [1.3, 1.3], shy: [-0.2, -0.2], el: [0.125, 0.125] };
   POSEX.moto_sedi = () => Object.assign({}, motoSedi);
-  POSEX.moto_sediMaha = (t, s) => Object.assign({}, motoSedi, { lean: 0.25, shz: [0.95, 2.35 + 0.25 * s], shx: [1.3, 0.2], shy: [-0.2, 0], el: [0.125, 0.55] });
+  POSEX.moto_sediMaha = (t, s) => Object.assign({}, motoSedi, { lean: 0.4, shz: [0.95, 2.35 + 0.25 * s], shx: [1.3, 0.2], shy: [-0.2, 0], el: [0.125, 0.55] });
   RATE.moto_sediMaha = 7.5;
   const motoP0 = [0.384, 0.725, -0.744, 1.291], motoPX = [0.219, -0.031, 0.112, 0.044], motoPZ = [-0.125, 0.081, 0.069, -0.172];
   POSEX.moto_polira = (t) => { const c = Math.cos(t), s = Math.sin(t), J = { hy: 0.9, lean: 0.4, hz: -0.04, nod: 0.25 }, k = ['shz', 'shx', 'shy', 'el'];
@@ -901,7 +901,7 @@
       const mz = F.side > 0 ? -1 : 1;   // (mirrored on the right: the bikes lean towards the coming car, the side their riders stand on)
       // the lay-by: one slab of gravel laid on the ground's plane there (its slopes along and across), raised so the ground does not show
       // through it, its top 5 cm over that; onTop: how high the slab's top is over the ground at a place (the bikes and the riders stand on it).
-      // K.lay false: a place that has its own (Vršič's: a sandy parking place by the road)
+      // K.lay false: a place that has its own (a parking place's gravel)
       const lay = { a: -0.6, b: 3.55, L: 12, W: 4.5 }, sa = (F.y(lay.a + 5, lay.b) - F.y(lay.a - 5, lay.b)) / 10, sb = (F.y(lay.a, lay.b + 1.8) - F.y(lay.a, lay.b - 1.8)) / 3.6;
       const plane = (a, b) => F.y(lay.a, lay.b) + sa * (a - lay.a) + sb * (b - lay.b);
       let up = 0; for (let i = -3; i <= 3; i++) for (let j = -2; j <= 2; j++) { const a = lay.a + i * lay.L / 6.4, b = lay.b + j * lay.W / 4.4; up = Math.max(up, F.y(a, b) - plane(a, b)); }
@@ -919,7 +919,7 @@
       // the polisher at the first bike's tank, on its near side (towards the coming car), facing it
       const [pa, pb] = park[0], ux = -f0[1], uz = f0[0], px = pa + 0.2 * f0[0] + 0.52 * ux, pz = pb + 0.2 * f0[1] + 0.52 * uz;
       C.man(Object.assign({ shirt: 0x1d1f25, hair: 'short' }, LEA), { act: { a: px, b: pz, y: onTop(px, pz), pose: 'moto_polira', face: [-ux, -uz], hold: [['moto_krpa', 1]] },
-        run: { f: 0.45, pose: 'walk', hold: [['moto_krpa', 1]] }, fence: { a: -3.4, b: 1.0, pose: 'wave', t: 0.3, hold: [['moto_krpa', 1]] } });
+        run: { f: 0.45, pose: 'walk', hold: [['moto_krpa', 1]] }, fence: { a: -5.4, b: 1.0, pose: 'wave', t: 0.3, hold: [['moto_krpa', 1]] } });   // (past his bike: his walk does not go through it)
       C.man(Object.assign({ shirt: 0x3a2a22, hair: 'bald' }, LEA), { act: { a: -1.4, b: 1.75, y: onTop(-1.4, 1.75), pose: 'talk', face: [1, 0.15], hold: [['can', 1, { c: 0xc8c9cc }], ['moto_kacigaR', 0, { c: hcol[0] }]] },
         run: { f: 0.45, pose: 'walk' }, fence: { a: -1.5, b: 0.9, pose: 'wave', t: 1.1, hold: [['can', 1, { c: 0xc8c9cc }], ['moto_kacigaR', 0, { c: hcol[0] }]] } });
       C.man(Object.assign({ shirt: 0xa8241f, hair: 'short' }, LEA), { act: { a: -0.2, b: 1.85, y: onTop(-0.2, 1.85), pose: 'drink', face: [-1, -0.1], hold: [['can', 1, { c: 0xd8262a }]] },
@@ -928,7 +928,7 @@
         run: { f: 0.45, pose: 'walk' }, fence: { a: 1.2, b: 0.9, pose: 'phoneUp', hold: [['phone', 1]] } });
       const kc = [['moto_kaciga', 0, { c: cols[3] === 0x15171c ? 0xf2f2f2 : cols[3] }]];
       C.man(Object.assign({ shirt: 0x2f3f63, hair: 'bald', gloves: 0x15171c }, LEA), { act: { on: 'bk', a: -0.15, b: 0, y: 0.276, yaw: Math.PI / 2, pose: 'moto_sedi', head: kc },
-        bliza: { look: 'car' }, run: false, fence: { on: 'bk', a: -0.15, b: 0, y: 0.276, yaw: Math.PI / 2, pose: 'moto_sediMaha', look: 'car', head: kc } });
+        bliza: { look: F.side > 0 ? 0.6 : -0.6 }, run: false, fence: { on: 'bk', a: -0.15, b: 0, y: 0.276, yaw: Math.PI / 2, pose: 'moto_sediMaha', look: F.side > 0 ? 0.6 : -0.6, head: kc } });   // (only his head to the car: his hands stay on the grips)
     } };
 
   /* 1 · Reševalna postaja (Spa, Bathurst, Suzuka: behind the barrier where the cars brake for a corner) — the ambulance parked with its
@@ -1037,8 +1037,8 @@
       const chi = Math.sign(F.tz * F.nx - F.tx * F.nz) || 1, bed = { on: 'tr', a: -chi * 0.55, b: -3.5, y: 1.28 };
       C.man(Object.assign({ hat: 'cap', hatCol: 0xf07a1c }, MAR), { act: Object.assign({ pose: 'kneel', yaw: Math.atan2(chi * Math.sin(0.7), Math.cos(0.7)), hold: [['odvoz_kljuc', 1]] }, bed), bliza: { look: 'car' }, run: false,
         fence: Object.assign({ pose: 'stand', yaw: Math.atan2(-chi, 0), hold: [['odvoz_kljuc', 1]], look: 'car' }, bed) });
-      C.man(Object.assign({ hair: 'short' }, MAR), { act: { a: -0.9, b: 2.15, pose: 'sweep', face: [0.15, -1], hold: [['odvoz_metla', 1]] }, bliza: { look: 'car' }, run: false,
-        fence: { a: -0.9, b: 2.15, pose: 'sweep', hold: [['odvoz_metla', 1]], look: 'car' } });   // (he stops sweeping and watches)
+      C.man(Object.assign({ hair: 'short' }, MAR), { act: { a: -0.9, b: 2.15, pose: 'sweep', face: [0.15, -1], hold: [['odvoz_metla', 1]] }, bliza: { t: 3.8, still: true, look: 'car' }, run: false,
+        fence: { a: -0.9, b: 2.15, pose: 'sweep', t: 3.8, still: true, hold: [['odvoz_metla', 1]], look: 'car' } });   // (he stops sweeping and watches: the broom's head on the ground)
       const pE = P(-3.7, 2.45), pE2 = P(-4.6, 3.4), pK = P(-3.5, 0.55);
       C.man(Object.assign({ hat: 'hard', hatCol: 0xf2f2f2 }, MAR), { act: { a: pE[0], b: pE[1], pose: 'talk', face: to(pE, pK), hold: [['ext', 0]] }, bliza: { pose: 'stand', face: to(pE, pK), look: 'car' }, run: false,
         fence: { a: pE2[0], b: pE2[1], pose: 'stand', hold: [['ext', 0]], look: 'car' } });
@@ -1094,9 +1094,9 @@
   ITEMX.delavci_glusniki = () => grp(box(0.05, 0.1, 0.09, 0xd8262a, 0.118, 0, -0.15), box(0.05, 0.1, 0.09, 0xd8262a, -0.118, 0, -0.15),
     bar([0.118, 0.04, -0.15], [0, 0.185, -0.15], 0.025, 0x2a2c31), bar([-0.118, 0.04, -0.15], [0, 0.185, -0.15], 0.025, 0x2a2c31));
   ITEMX.delavci_vreca = () => grp(box(0.48, 0.2, 0.3, delavci_BAG, 0, -0.12, 0.22));
-  // pushing the wheelbarrow (bent over its grips, the arms straight down); blowing (the torso swinging the tube from side to side); the blower
+  // pushing the wheelbarrow (bent over its grips, the arms straight down from the leant torso: forwards of it by its lean); blowing (the torso swinging the tube from side to side); the blower
   // lowered; standing with the broom upright in the right hand
-  POSEX.delavci_push = () => ({ lean: 0.5, hy: 0.85, hp: [0.45, -0.2], kn: [0.6, 0.35], shz: [0.02, 0.02], shx: [-0.48, -0.48], el: [0.08, 0.08] });
+  POSEX.delavci_push = () => ({ lean: 0.56, hy: 0.9, hp: [0.45, -0.2], kn: [0.6, 0.35], shz: [0.02, 0.02], shx: [0.48, 0.48], el: [0.08, 0.08] });   // (the hands on the grips: 0.2 m ahead, 0.7 m up)
   POSEX.delavci_puh = (t, s) => ({ lean: 0.1, tw: 0.28 * s, look: 0.12 * s, shz: [0.25, 0.14], shx: [0.35, 0.42], el: [0.5, 0.12], hpz: [0.07, 0.07] });
   MOTION.delavci_puh = { rate: 1.8 };
   POSEX.delavci_puhStoj = () => ({ shz: [0.1, 0.12], shx: [0.05, 0.15], el: [0.15, 0.35] });
@@ -1132,7 +1132,7 @@
       // the sandbags from the tailgate to the wall by the barrier (to and fro); as the car comes he stops with his bag and watches
       const fC = [-0.315, -0.949], BAG = [['delavci_vreca', 1]];
       C.man(Object.assign({}, CREW, { hat: 'beanie', hatCol: 0x31406e }), { act: { a: 5.63, b: 2.7, pose: 'carryWalk', face: fC, hold: BAG },
-        bliza: { pose: 'carry', look: 'car' }, run: false, fence: { a: 5.63, b: 2.7, pose: 'carry', face: fC, hold: BAG, look: 'car' } });
+        bliza: { pose: 'carry', look: 'car' }, run: false });   // (where he stopped)
     } };
   site('bathurst', [['delavci', 744, -1]]); site('suzuka', [['delavci', 4454, -1]]); site('marrakesh', [['delavci', 1424, -1]]);
 
@@ -1282,29 +1282,29 @@
       // the handler: up and down the fence with the dog at its left; as the car comes it stops facing the road (the dog sits), looks at it coming, then after it
       const P = C.man(Object.assign({ hat: 'cap', hatCol: 0x15171c }, SEC), { act: { a: -2.4, b: 2.5, pose: 'walk', face: [1, 0], hold: [['varnost_dog', 0]] },
         bliza: { pose: 'varnost_hold', face: [0, -1], hold: [['varnost_sit', 0]], look: -0.7 * hx }, run: false,
-        fence: { a: -2.4, b: 2.5, pose: 'varnost_hold', face: [0, -1], hold: [['varnost_sit', 0]], look: 0.6 * hx } });   // (a fixed look: the torso does not turn, the leash stays in the hand)
+        mimo: { look: 0.6 * hx } });   // (where he stopped; a fixed look: the torso does not turn, the leash stays in the hand)
       for (const sit of [false, true]) {   // the dog (walking, sitting) at the handler's left, the leash from its hand to the collar, a little slack
         const h = varnostHand(P, sit ? POSEX.varnost_hold() : { el: [0.35, 0.35], hy: 0.9, lean: 0.05 }), c = sit ? [0.6, 0.66, 0.51] : [0.6, 0.68, 0.58], m = [(h.x + c[0]) / 2, (h.y + c[1]) / 2 - 0.1, (h.z + c[2]) / 2];
         const d = varnostDog(sit); d.position.set(0.6, 0, 0.25);
         const g = grp(d, bar([h.x, h.y, h.z], m, 0.025, 0xb3261e), bar(m, c, 0.025, 0xb3261e)); g.userData.item = 'L:' + (sit ? 'varnost_sit' : 'varnost_dog'); P.root.add(g);
       }
       C.man(Object.assign({ hair: 'bald' }, SEC), { act: { a: 2.2, b: 2.2, pose: 'walk', face: [-1, 0] }, bliza: { pose: 'radio', face: [0, -1], hold: [['radio', 1]], look: 'car' }, run: false,
-        fence: { a: 2.2, b: 2.2, pose: 'arms', look: 'car' } });
+        mimo: { pose: 'arms', hold: [], look: 'car' } });   // (where he stopped)
     } };
   site('toronto', [['varnost', 984, 1]]); site('townsville', [['varnost', 2496, -1]]); site('bangsaen', [['varnost', 2080, 1]]);
 
   // the fans' places: on the open roads only (the user, 3. 11. 2026: »na dirkališčih naj bo čim manj ljudi okoli proge, tam naj bo več
   // zaposlenih«: the circuits have their staff's scenes); two or three each, where the chase camera sees them, the ground level and nothing
-  // else there and no side road (but the bikers' gravel mouth of a forest road on Vršič), at least 260 m from the other scenes
-  // (tools/ljudje/mesta.mjs, --preveri)
+  // else there and no side road (a car may drive into one, the police waits in it), at least 260 m from the other fans' scenes (the staff's
+  // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
   site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
-  site('vrsic', [['kotlicek', 1000, 1], ['motoristi', 1416, -1, { lay: false }]]);   // (the bikes on the mouth of a gravel forest road)
+  site('vrsic', [['kotlicek', 1000, 1], ['motoristi', 5160, 1]]);
   site('harju', [['plaza', 1856, -1]]);
-  site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6864, -1]]);
+  site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6992, -1]]);
   site('hotham', [['karte', 3160, 1], ['selfie', 6448, 1], ['badminton', 7872, -1]]);
   site('maunakea', [['zmaj', 3776, -1], ['glasba', 4488, 1]]);
-  site('rastro', [['motoristi', 4304, -1], ['glasba', 4784, -1]]);
+  site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
   site('bigsur', [['plaza', 392, 1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);

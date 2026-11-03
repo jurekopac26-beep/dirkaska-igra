@@ -4,7 +4,8 @@
 //   node tools/ljudje/mesta.mjs <proga> [--n 14] [--razmik 350] [--slike] [--od 0] [--do 1e9] [--gozd]
 //   --plan zar,ogenj,marsali,…   razporedi te vrste prizorov po pravilih vrste (tribuna na ravnini, vhod blizu štarta, ogenj v gozdu …) in izpiše
 //   vrstico za SITES; --ze 70:-1,5790:1 mesta, ki so že zasedena (razmik tudi od njih); --preveri 3424:1,2408:1 oceni ta mesta (tudi, ali
-//   je na njih stranska cesta proge: T.stubs, »road«, ali kaj stoji: žarki navzdol, »bld«, in kaj zadenejo, »hits«)
+//   je na njih stranska cesta proge: T.stubs, »road«, ali kaj stoji: žarki navzdol, »bld«, in kaj zadenejo, »hits«; vsako mesto enkrat, na svoji
+//   strani; mesto v pasu boksov: NE, »pit«)
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../tests/browser/lib.mjs';
@@ -59,16 +60,16 @@ try {
           what.push((nm || '?') + ' ' + (o.material && o.material.map ? 'tex' : 'col') + ' ' + JSON.stringify(sz) + ' +' + (hit[0].point.y - h).toFixed(1) + 'm'); } } } return n; };
     const stubD = (x, z) => { let d = 1e9; const cx = Math.floor(x / SC), cz = Math.floor(z / SC); for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) for (const [px, pz, hw] of sg.get((cx + a) + ',' + (cz + b)) || []) d = Math.min(d, Math.hypot(px - x, pz - z) - hw); return d; };
     const L = T.len, out = [], s0 = T.open ? Math.max(T.startS || 0, 0) : 0, s1 = T.open ? Math.min(T.finishS || L, L) : L, checked = [];
-    const steps = check.length ? check.map(c => (T.startS || 0) + c.m) : null;
-    for (let s = s0 + 40; steps ? steps.length : s < s1 - 20; s += 8) {
-      if (steps) s = steps.shift();
-      const m = Math.round(s - (T.startS || 0)); if (!steps && (m < from || m > to)) continue;
+    const steps = check.length ? check.map(c => ({ s: (T.startS || 0) + c.m, m: c.m, side: c.side })) : null;   // (--preveri: each place once, its own side)
+    for (let s = s0 + 40, q = 0; steps ? q < steps.length : s < s1 - 20; steps ? q++ : (s += 8)) {
+      const st = steps ? steps[q] : null; if (st) s = st.s;
+      const m = st ? st.m : Math.round(s - (T.startS || 0)); if (!st && (m < from || m > to)) continue;
       const i = T.idx(((s % L) + L) % L);
       let kmax = 0; for (let d = -110; d <= 15; d += 5) { const j = T.idx((((s + d) % L) + L) % L); kmax = Math.max(kmax, Math.abs(T.k ? T.k[j] : 0)); }
-      for (const side of [-1, 1]) {
-        if (steps && !check.some(c => c.m === m && c.side === side)) continue;
-        const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16 && !steps) continue;
-        const PL = T.def.pit, inPit = (x) => x >= PL[1] - 40 && x <= PL[2] + 40; if (PL && side === Math.sign(PL[0]) && (inPit(m) || (!T.open && (inPit(m - L) || inPit(m + L))))) continue;   // (not in the pit lane: its scene is the pit wall's, def.pit; the lane over the start line: its metres before it negative)
+      for (const side of st ? [st.side] : [-1, 1]) {
+        const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16 && !st) continue;
+        const PL = T.def.pit, inPit = (x) => x >= PL[1] - 40 && x <= PL[2] + 40;
+        if (PL && side === Math.sign(PL[0]) && (inPit(m) || (!T.open && (inPit(m - L) || inPit(m + L))))) { if (st) checked.push({ m, side, ok: false, pit: true }); continue; }   // (not in the pit lane: its scene is the pit wall's, def.pit; the lane over the start line: its metres before it negative)
         let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0, road = 1e9; const pts = [];
         for (let a = -12; a <= 12; a += 3) for (let b = 1; b <= 13; b += 3) {
           const x = T.px[i] + T.tx[i] * a + T.nx[i] * side * (bar + b), z = T.pz[i] + T.tz[i] * a + T.nz[i] * side * (bar + b), h = gH(x, z);
@@ -77,7 +78,7 @@ try {
           o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z)); if (b > 2) pts.push([x, z]);   // (rays: not the first metres behind the barrier, its own bank or wall)
         }
         const dh = hi - lo, hy = T.hy ? T.hy[i] : lo;
-        if (steps) { what.length = 0; const bld = rayOcc(pts, true); checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, bld, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && bld <= 2, hits: bld ? what.slice() : undefined }); continue; }
+        if (st) { what.length = 0; const bld = rayOcc(pts, true); checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, bld, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && bld <= 2, hits: bld ? what.slice() : undefined }); continue; }
         if (bad || dh > 2.2 || lo < hy - 4 || hi > hy + 6 || road < 2) continue;   // (not on a side road)
         const score = (kmax < 1 / 400 ? 3 : kmax < 1 / 250 ? 2 : kmax < 1 / 150 ? 1 : 0) * 2 - dh - o / 40 - (forest ? 0 : tr / 6) - cr / 30 - bar / 8;
         out.push({ m, side, bar: +bar.toFixed(1), minR: Math.round(1 / Math.max(kmax, 1e-4)), dh: +dh.toFixed(1), occ: o, trees: tr, crowd: cr, score: +score.toFixed(2), pts });

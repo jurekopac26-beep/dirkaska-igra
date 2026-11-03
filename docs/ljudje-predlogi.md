@@ -16,20 +16,19 @@ Seja je naredila 12 predlogov, vsak v eni sliki (pokončna slika za telefon, izr
 
 ### Prizori po progah
 
-Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor; Detroit ima samo mehanike pri zidu boksov.
+Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor, na Chapman's Peaku (cesta med pečino in morjem) samo na razgledih in dovozih, kamor lahko zapelje avto (prizor ne sme stati na stranski cesti, `tests/ljudje-mesta.test.js`); Detroit ima samo maršale (1944) in mehanike pri zidu boksov.
 
 | Proga | Prizorov | Prizori (metri od štarta) |
 |---|---|---|
 | Mount Baldy, ZDA | 3 | piknik 2080, fotografi na bregu 4704, kolesarji 6248 |
-| Bang Saen, Tajska | 7 | tribuna z valom 528, maršali 1472, fotografi in TV kamera 1864, varnostniki s psom 2080, gasilci in reševalci 2728, gasilci in reševalci 3376, mehaniki pri zidu boksov (ob igralčevem boksu) |
+| Bang Saen, Tajska | 7 | tribuna z valom 528, gasilci in reševalci 864, maršali 1472, fotografi in TV kamera 1864, varnostniki s psom 2080, gasilci in reševalci 2728, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Bathurst, Avstralija | 10 | mehaniki pri zidu boksov 70, žar pred avtodomom 640, delavci na progi 744, gasilci in reševalci 1104, vhod 1976, maršali 2784, fotografi in TV kamera 4456, oder iz gradbenih odrov 4984, reševalna postaja 5296, tribuna z valom 5790 |
 | Beartooth, ZDA | 1 | piknik 1696 |
 | Big Sur, ZDA | 4 | piknik 56, ležalniki in senčniki 392, fotografi na bregu 1984, kolesarji 3664 |
 | Los Caracoles, Čile | 4 | kamp s prikolico 40, piknik 6152, navijaški klub 9936, fotografi na bregu 10488 |
-| Chapman's Peak, Južna Afrika | 1 | piknik 352 |
 | Crystal Palace, Anglija | 7 | maršali 96, sodniki s časomerom 248, gasilci in reševalci 600, fotografi na bregu 1064, piknik 1424, vhod 2912, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Detroit, ZDA | 2 | maršali 1944, mehaniki pri zidu boksov (ob igralčevem boksu) |
-| Great Alpine Road, Avstralija | 7 | fotografi na bregu 2096, igra kart pod senčnikom 2384, piknik 4992, spuščanje zmaja 5528, na lestvah in tovornjaku 6048, kamp s prikolico 6728, motoristi 6864 |
+| Great Alpine Road, Avstralija | 7 | fotografi na bregu 2096, igra kart pod senčnikom 2384, piknik 4992, spuščanje zmaja 5528, na lestvah in tovornjaku 6048, kamp s prikolico 6728, motoristi 6992 |
 | Harju, Finska | 4 | redarji ob traku 392, oder iz gradbenih odrov 1464, ležalniki in senčniki 1856, fotografi na bregu 2144 |
 | Mount Hotham, Avstralija | 6 | fotografi na bregu 832, kamp s prikolico 2760, igra kart pod senčnikom 3160, selfie in snemanje 6448, piknik 7608, badminton in frizbi 7872 |
 | Katu-Jaryk, Rusija | 4 | na lestvah in tovornjaku 64, navijaški klub 392, ogenj na travi 720, kamp s prikolico 4544 |
@@ -44,10 +43,10 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor;
 | Newcastle, Avstralija | 6 | tribuna z valom 144, maršali 720, fotografi in TV kamera 1072, gasilci in reševalci 1608, gasilci in reševalci 1976, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Nürburg, Nemčija | 15 | oder iz gradbenih odrov 1950, žar pred avtodomom 3300, TV pod šotorom 4720, ogenj na travi 5640, fotografi na bregu 7672, gasilci in reševalci 8424, odvozna služba 8832, ogenj na travi 9832, oder iz gradbenih odrov 11088, piknik 12392, žar pred avtodomom 14624, TV pod šotorom 16350, kamp s prikolico 17168, telovadba 18450, maršali 19976 |
 | Ouninpohja, Finska | 12 | družina pri hiši 1064, hiša ob cesti 2240, ogenj na travi 3336, selfie in snemanje 3744, fotografi na bregu 4808, starejši s časomerom 5296, redarji ob traku 6096, golaž v kotlu 6696, nogomet na travi 7024, oder iz gradbenih odrov 7320, redarji ob traku 8648, kamp s prikolico 9568 |
-| Palomar Mountain, ZDA | 3 | fotografi na bregu 152, kolesarji 1480, piknik 4720 |
+| Palomar Mountain, ZDA | 3 | fotografi na bregu 152, kolesarji 1576, piknik 4720 |
 | Pikes Peak, ZDA | 2 | starejši s časomerom 3824, fotografi na bregu 4672 |
 | Pikes Peak (makadam), ZDA | 1 | fotografi na bregu 3824 |
-| Rio do Rastro, Brazilija | 3 | motoristi 4304, piknik 4432, kitara in ples 4784 |
+| Rio do Rastro, Brazilija | 3 | motoristi 4064, piknik 4432, kitara in ples 4784 |
 | Štajerska, Avstrija | 10 | vhod 216, sodniki s časomerom 560, gasilci in reševalci 896, maršali 1704, odvozna služba 1848, TV ekipa 1968, žar pred avtodomom 2488, oder iz gradbenih odrov 3112, fotografi in TV kamera 3560, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Rio de Janeiro, Brazilija | 6 | fotografi in TV kamera 1200, gasilci in reševalci 2224, tribuna z valom 2664, maršali 3376, maršali 4040, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Riverside, ZDA | 6 | žar pred avtodomom 464, fotografi in TV kamera 2416, gasilci in reševalci 3728, maršali 4112, tribuna z valom 4568, fotografi na bregu 5144 |
@@ -58,7 +57,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor;
 | Townsville, Avstralija | 7 | maršali 88, gasilci in reševalci 504, vhod 888, fotografi in TV kamera 1560, tribuna z valom 2176, varnostniki s psom 2496, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Trois-Rivières, Kanada | 6 | maršali 144, fotografi in TV kamera 496, gasilci in reševalci 904, tribuna z valom 1432, vhod 1960, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Uncompahgre, ZDA | 2 | kamp s prikolico 600, ogenj na travi 2720 |
-| Vršič, Slovenija | 7 | kolesarji 648, golaž v kotlu 1000, motoristi 1416, kamp s prikolico 1576, piknik 2560, kolesarji 7800, fotografi na bregu 12248 |
+| Vršič, Slovenija | 7 | kolesarji 648, golaž v kotlu 1000, kamp s prikolico 1576, piknik 2560, motoristi 5160, kolesarji 8152, fotografi na bregu 12248 |
 
 ## Orodje (`tools/ljudje/`)
 

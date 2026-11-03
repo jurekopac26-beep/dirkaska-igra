@@ -926,9 +926,19 @@
     const same = (from.on || null) === (to.on || null), d = same ? Math.hypot(to.a - from.a, to.b - from.b) : 0, dur = same ? Math.max(0.25, d / v) : 0.01;
     segs.push({ t0: t, t1: t + dur, mv: { from, to, d, pose, hold: showOf({ hold: hold || [] }) } }); return t + dur;
   }
-  // at the alert: the way out (each person its reaction time d0 and its speed v)
+  // pacing back and forth along its facing, ±1.6 m (poseOne): the first quarter of each half a turn on the spot at the end it reached (what it
+  // holds goes round with it: the dog on its leash walks round it, not across), then the walk to the other end; its place at a time tt
+  const PACE = { per: 7.2, turn: 0.25, d: 1.6 };
+  function pace(s, tt) {
+    const fc = s.face && s.face !== 'road' ? s.face : [1, 0], L0 = Math.hypot(fc[0], fc[1]) || 1, ux = fc[0] / L0, uz = fc[1] / L0;
+    const u = ((tt / PACE.per) % 1 + 1) % 1, back = u >= 0.5, h = back ? u * 2 - 1 : u * 2, w = Math.max(0, (h - PACE.turn) / (1 - PACE.turn)), d = (back ? 1 - 2 * w : 2 * w - 1) * PACE.d;
+    return { a: s.a + ux * d, b: s.b + uz * d, ux, uz, back, turn: Math.min(1, h / PACE.turn) };
+  }
+  const pacing = (s) => !s.still && (s.pose === 'walk' || s.pose === 'carryWalk') && !!MOTION[s.pose];
+  // at the alert: the way out (each person its reaction time d0 and its speed v); a pacer from where it is then, not its pacing's middle
   function planOut(p, al) {
-    const st = p.st, A = st.act, R = st.run, Fe = st.fence, segs = [], t1 = al + p.d0;
+    const st = p.st, R = st.run, Fe = st.fence, segs = [], t1 = al + p.d0;
+    const A = pacing(st.act) ? ((pc) => Object.assign({}, st.act, { a: pc.a, b: pc.b, face: (pc.turn >= 0.5) !== pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz] }))(pace(st.act, al + p.ph * 17)) : st.act;   // (facing the way it walks then)
     segs.push({ t0: al, t1, s: Object.assign({}, A, st.zac || st.bliza || {}) });
     if (R === false || (!R && !Fe)) {   // it stays (the staff, the lazy one): what changes at its place as the car comes, then the fence state there
       const B = Object.assign({}, A, st.bliza || {}), tf = al + FENCE_T;
@@ -988,9 +998,9 @@
       if (sg.act && !s.still) {   // what it does: its own motion, or a breath
         const m = MOTION[pose], tt = t + p.ph * 17;
         if (m && m.alt) { let u = 0.5 - 0.5 * Math.cos((tt * m.hz) * TAU); if (m.snap) u = u * u * (3 - 2 * u); J = mixJ(poseJ(pose, s.t || 0), poseJ(m.alt, 0), u); }
-        else if (m && (pose === 'walk' || pose === 'carryWalk')) {   // pacing back and forth along its facing (carrying a crate, a tyre)
-          const fc = s.face && s.face !== 'road' ? s.face : [1, 0], L0 = Math.hypot(fc[0], fc[1]) || 1, ux = fc[0] / L0, uz = fc[1] / L0, per = 6.4, u = ((tt / per) % 1 + 1) % 1, tri = u < 0.5 ? u * 4 - 1 : 3 - u * 4, d = tri * 1.6;
-          const pl = { a: s.a + ux * d, b: s.b + uz * d, y: s.y || 0 }; placeOf(Sc, pl, _w); yaw = u < 0.5 ? F.yaw(ux, uz) : F.yaw(-ux, -uz); J = poseJ(pose, tt * 3.2);
+        else if (m && (pose === 'walk' || pose === 'carryWalk')) {   // pacing back and forth along its facing (carrying a crate, a tyre, the dog on its leash)
+          const pc = pace(s, tt), k = pc.turn * pc.turn * (3 - 2 * pc.turn); placeOf(Sc, { a: pc.a, b: pc.b, y: s.y || 0 }, _w);
+          yaw = (pc.back ? F.yaw(pc.ux, pc.uz) : F.yaw(-pc.ux, -pc.uz)) + Math.PI * k; J = poseJ(pose, tt * 4.6);   // (turning round from the way it came)
         }
         else if (m) J = poseJ(pose, (s.t || 0) + tt * m.rate);
         else { J = poseJ(pose, s.t || 0); J.look = (J.look || 0) + 0.35 * Math.sin(tt * 0.37) * Math.sin(tt * 0.11 + 1.3); J.lean = (J.lean || 0) + 0.02 * Math.sin(tt * 0.6); }
@@ -1239,12 +1249,11 @@
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
     baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['tribuna', 528, 1], ['marsali', 1472, 1], ['foto', 1864, -1], ['gasilci', 2728, 1], ['gasilci', 3376, 1]],
+    bangsaen: [['tribuna', 528, 1], ['gasilci', 864, 1], ['marsali', 1472, 1], ['foto', 1864, -1], ['gasilci', 2728, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     beartooth: [['piknik', 1696, -1]],
     bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
-    chapman: [['piknik', 352, 1]],
     cpalace: [['marsali', 96, -1], ['gasilci', 600, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
     detroit: [['marsali', 1944, -1]],
     greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
@@ -1262,7 +1271,7 @@
     newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['foto', 1072, 1], ['gasilci', 1608, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
-    palomar: [['foto2', 152, 1], ['kolesarji', 1480, 1], ['piknik', 4720, -1]],
+    palomar: [['foto2', 152, 1], ['kolesarji', 1576, -1], ['piknik', 4720, -1]],
     pikes: [['foto2', 4672, 1]],
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
@@ -1276,7 +1285,7 @@
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
     troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
     uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
-    vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 7800, -1], ['foto2', 12248, -1]],
+    vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland
   const vert = (a) => Object.assign(a, { vert: true });
@@ -1529,12 +1538,12 @@
       // along the concourse: the doors in the wall, kiosks (facing the wall), bins and lamp posts on its outer edge, toilets at the far end
       const along = (dist) => {   // a point on the back line at a distance from its start (not across a gap), its outward direction, the wall's own direction there (tx, tz: a curved stand's)
         let acc = 0; for (let k = 1; k < B.length; k++) { const a = B[k - 1], b = B[k]; if (b.gap) continue; const l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (acc + l >= dist || k === B.length - 1) { const w = Math.min(1, Math.max(0, (dist - acc) / (l || 1))), lt = l || 1;
-          return { x: a.p[0] + (b.p[0] - a.p[0]) * w, y: a.p[1] + (b.p[1] - a.p[1]) * w, z: a.p[2] + (b.p[2] - a.p[2]) * w, fx: a.f[0] + (b.f[0] - a.f[0]) * w, fz: a.f[1] + (b.f[1] - a.f[1]) * w, tx: l > 0.05 ? (b.p[0] - a.p[0]) / lt : tx, tz: l > 0.05 ? (b.p[2] - a.p[2]) / lt : tz }; } acc += l; }
+          return { x: a.p[0] + (b.p[0] - a.p[0]) * w, y: a.p[1] + (b.p[1] - a.p[1]) * w, z: a.p[2] + (b.p[2] - a.p[2]) * w, fx: a.f[0] + (b.f[0] - a.f[0]) * w, fz: a.f[1] + (b.f[1] - a.f[1]) * w, tx: l > 0.05 ? (b.p[0] - a.p[0]) / lt : tx, tz: l > 0.05 ? (b.p[2] - a.p[2]) / lt : tz, joint: !!b.joint }; } acc += l; }
         const e = B[0]; return { x: e.p[0], y: e.p[1], z: e.p[2], fx: e.f[0], fz: e.f[1], tx, tz }; };
       if (clad && big) {   // the back wall clad in profiled sheets (a light metal; a period stand's in boards) up to under the last row, along its top a band in the stand's colour
         let d = 0;
         for (let k = 1; k < B.length; k++) {
-          const a = B[k - 1], b = B[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap) continue;
+          const a = B[k - 1], b = B[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap || b.joint) continue;
           const W = (e) => { const fl = Math.hypot(e.f[0], e.f[1]) || 1; return [e.p[0] - e.f[0] / fl * (wall + 0.02), e.p[2] - e.f[1] / fl * (wall + 0.02)]; };
           const wa = W(a), wb = W(b), ga = gr(wa[0], wa[1], a.p[1] - 3), gb2 = gr(wb[0], wb[1], b.p[1] - 3), ta = a.p[1] - 0.5, tb = b.p[1] - 0.5;
           if (ta - ga > 2.5 && tb - gb2 > 2.5) {
@@ -1546,7 +1555,8 @@
         }
       }
       if (big && wall != null) for (let d0 = 8; d0 < blen - 6; d0 += AR.door) {   // the entrances: a dark way in, its frame, 2.8 m high, on the wall's face; the stand's letter over it
-        const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, w0 = wall + 0.03, g0 = gr(p.x - fx * w0, p.z - fz * w0, p.y - 3), at = (s, y) => [p.x - fx * w0 + p.tx * s, y, p.z - fz * w0 + p.tz * s];
+        const p = along(d0); if (p.joint) continue;   // (no door in the step between two pieces)
+        const l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, w0 = wall + 0.03, g0 = gr(p.x - fx * w0, p.z - fz * w0, p.y - 3), at = (s, y) => [p.x - fx * w0 + p.tx * s, y, p.z - fz * w0 + p.tz * s];
         sbAt(p.x, p.z).quad(at(-2, g0), at(2, g0), at(2, g0 + 2.8), at(-2, g0 + 2.8), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0, 1, 1, 0.05));
         if (clad && p.y - 1.4 > g0 + 4.4) glyph(p.x - fx * (w0 + 0.01), g0 + 3.1, p.z - fz * (w0 + 0.01), -fx, -fz, 1.2, 1.2, f.letter);
       }
@@ -1614,8 +1624,8 @@
         gb.quad(at(0.9, y0), at(-0.9, y0), at(-0.9, y0 + 1.8), at(0.9, y0 + 1.8), [-tx * s, 0, -tz * s], AR_COL.sign, null, PLU);
         gb.post([cx, e.p[1] + 0.9, cz], 1.55, 0.12, [tx * s, tz * s], AR_COL.lamp); }
       // the roof: its front edge a fascia with floodlights under it; trusses over it every 10 m (from Srednja)
-      if (f.rv && f.rv.length > 9) {
-        const bins = new Map(); for (const v of f.rv) { const t = v[0] * tx + v[2] * tz, nn = v[0] * nx + v[2] * nz, b = Math.round(t / 2); let e = bins.get(b); if (!e) bins.set(b, e = { t, fr: v, fn: nn, bk: v, bn: nn });
+      for (const RV of f.rvs || (f.rv ? [f.rv] : [])) if (RV.length > 9) {   // (a stand in pieces: each piece's roof on its own)
+        const bins = new Map(); for (const v of RV) { const t = v[0] * tx + v[2] * tz, nn = v[0] * nx + v[2] * nz, b = Math.round(t / 2); let e = bins.get(b); if (!e) bins.set(b, e = { t, fr: v, fn: nn, bk: v, bn: nn });
           if (nn > e.fn) { e.fr = v; e.fn = nn; } if (nn < e.bn) { e.bk = v; e.bn = nn; } }
         const L2 = [...bins.entries()].sort((a, b) => a[0] - b[0]).map(e => e[1]);
         let d = 0;
@@ -1630,8 +1640,8 @@
       }
       // under the roof (seen from the road): a beam from its back to its front every 10 m, deep at the back, thin at the front (where the
       // underside cuts the plane across the stand there: any roof's own triangles)
-      if (tier > 0 && f.rb && f.rb.length >= 3) {
-        const R = f.rb; let t0 = 1e9, t1 = -1e9; for (const v of R) { const t = v[0] * tx + v[2] * tz; t0 = Math.min(t0, t); t1 = Math.max(t1, t); }
+      if (tier > 0) for (const R of f.rbs || (f.rb ? [f.rb] : [])) if (R.length >= 3) {
+        let t0 = 1e9, t1 = -1e9; for (const v of R) { const t = v[0] * tx + v[2] * tz; t0 = Math.min(t0, t); t1 = Math.max(t1, t); }
         for (let tk = t0 + 3; tk < t1 - 1.5; tk += 10) {
           let lo = null, hi2 = null;
           for (let i = 0; i + 2 < R.length; i += 3) for (const [a, b] of [[R[i], R[i + 1]], [R[i + 1], R[i + 2]], [R[i + 2], R[i]]]) {
@@ -1647,7 +1657,7 @@
       // the front: a handrail a metre over the first row's tread, on its front edge, an upright every 2.5 m (from Srednja)
       if (tier > 0) { const rcol = f.bench === 'wood' ? DECK_COL.wood : ST_RAIL;
         for (let k = 1; k < Fr.length; k++) {
-          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap) continue;
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap || b.joint) continue;
           const at = (e, y) => [e.p[0] + e.f[0] * 0.06, y, e.p[2] + e.f[1] * 0.06], A0 = at(a, a.y2 + 1.0), B0 = at(b, b.y2 + 1.0), g = sbAt(A0[0], A0[2]), n = Math.max(1, Math.round(l / 2.5));
           g.bar(A0, B0, 0.06, 0.06, rcol);
           for (let j = k === 1 ? 0 : 1; j <= n; j++) { const w = j / n; g.post([A0[0] + (B0[0] - A0[0]) * w, a.y2 + (b.y2 - a.y2) * w, A0[2] + (B0[2] - A0[2]) * w], 0.98, 0.05, [a.f[0], a.f[1]], rcol); }
@@ -1657,7 +1667,7 @@
       if (f.flags === 'rail') { const FLc = FLAGS[def.id] || {}, cols = (FLc.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(FLc.flag && FLc.flag.vert), team = FLc.team != null ? hexC(FLc.team) : null;
         let acc = 0, next = 6 + (f.letter * 5) % 9, kk = 0;
         for (let k = 1; k < Fr.length; k++) {
-          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap || !a.rail || !b.rail) { acc += l; if (next < acc) next = acc + 2; continue; }
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap || b.joint || !a.rail || !b.rail) { acc += l; if (next < acc) next = acc + 2; continue; }
           while (next < acc + l) {
             const w = (next - acc) / l, x = a.p[0] + (b.p[0] - a.p[0]) * w, z = a.p[2] + (b.p[2] - a.p[2]) * w, y2 = a.y2 + (b.y2 - a.y2) * w, fx = a.f[0], fz = a.f[1], h = ((kk * 7919 + f.letter * 131 + Math.round(x)) % 97 + 97) % 97 / 97, W2 = 0.65 + h * 0.25, top = y2 + (tier > 0 ? 0.98 : 0.6), H = 0.8 + h * 0.2;
             const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, at = (s2, y) => [x + fx * 0.11 - fz * s2 * W2, y, z + fz * 0.11 + fx * s2 * W2], gb = sbAt(x, z), n3 = c3.length;   // (s2 +1: the left as seen from the road)
@@ -1684,7 +1694,7 @@
     }
   }
   const hexC = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
-  // a stand in pieces (Spa's grandstands are blocks of ~20 m end to end): the pieces whose fronts meet (the next one's first station within
+  // a stand in pieces (Spa's grandstands are blocks of ~20 m end to end, Štajerska's pieces ~31 m with 3 m between): the pieces whose fronts meet (the next one's first station within
   // 4 m of this one's last, facing the same way, their first rows within 3 m of height) one stand for its surroundings (standAround: its
   // concourse, kiosks, toilets, gate, stairs, doors, its TV platform), its walkers and the tools; each piece's rows, seats and flags as built
   function mergeChains(feet) {
@@ -1708,7 +1718,7 @@
       if (chain.length < 2) continue;
       const C = chain.map(c => c.f), f = C[0];
       for (const g of C) { const a = dir(g.fr3), b = dir(g.bk3); if (a[0] * b[0] + a[1] * b[1] < 0) turn(g.bk3); }   // (each piece's back the same way round as its front)
-      const cat = (key) => { const out = []; for (const g of C) g[key].forEach((e, k) => out.push(k === 0 && out.length ? Object.assign({}, e, { gap: false }) : e)); return out; };
+      const cat = (key) => { const out = []; for (const g of C) g[key].forEach((e, k) => out.push(k === 0 && out.length ? Object.assign({}, e, { gap: false, joint: true }) : e)); return out; };   // (joint: the step from one piece's last station to the next's first: paved over, no wall, rail or door on it)
       const fr = cat('fr3'), bk = cat('bk3'), P = fr.map(e => [e.p[0] + e.f[0] * 3, e.p[2] + e.f[1] * 3]), Bp = bk.map(e => [e.p[0] - e.f[0] * 1.5, e.p[2] - e.f[1] * 1.5]);
       const ext = (L) => { const a = L[0], b = L[1], c = L[L.length - 2], d = L[L.length - 1], la = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, ld = Math.hypot(d[0] - c[0], d[1] - c[1]) || 1;
         return [[a[0] + (a[0] - b[0]) / la * 1.5, a[1] + (a[1] - b[1]) / la * 1.5], ...L, [d[0] + (d[0] - c[0]) / ld * 1.5, d[1] + (d[1] - c[1]) / ld * 1.5]]; };
@@ -1716,7 +1726,8 @@
       Object.assign(f, { fr3: fr, bk3: bk, poly: ext(P).concat(ext(Bp).reverse()), tx: (t1[0] - t0[0]) / tl, tz: (t1[2] - t0[2]) / tl, pieces: C.length,
         bb: [Math.min(...C.map(g => g.bb[0])), Math.max(...C.map(g => g.bb[1])), Math.min(...C.map(g => g.bb[2])), Math.max(...C.map(g => g.bb[3]))],
         top: Math.max(...C.map(g => g.top)), low: Math.min(...C.map(g => g.low)), nrows: Math.max(...C.map(g => g.nrows)), flags: C.some(g => g.flags === 'rail') ? 'rail' : null,
-        at: fl ? { flag: fl.at.flag, flagRow: fl.at.flagRow } : undefined });
+        at: fl ? { flag: fl.at.flag, flagRow: fl.at.flagRow } : undefined,
+        rvs: C.map(g => g.rv).filter(Boolean), rbs: C.map(g => g.rb).filter(Boolean), rv: C.some(g => g.rv) ? [].concat(...C.map(g => g.rv || [])) : undefined, rb: C.some(g => g.rb) ? [].concat(...C.map(g => g.rb || [])) : undefined });   // (the roofs: each piece's own for its fascia, trusses and beams)
       for (const g of C.slice(1)) feet.splice(feet.indexOf(g), 1);
     }
   }
@@ -1874,7 +1885,11 @@
           // fronts (d forward of the row's back edge, h up from its tread); its stripes from the left as seen from the road
           const taken = flagRow >= 0 && ri >= flagRow && (ri - flagRow) % 5 === 0 && ri <= rows.length - 2 ? new Set() : null;
           if (taken) { let next = 4 + (si * 5 + mid * 3 + ri * 7) % 11;
-            const PR = [[0.02, 0.89], [0.1, 0.47], [0.5, 0.47], [0.53, 0.12]], cum = [0]; for (let k = 1; k < PR.length; k++) cum.push(cum[k - 1] + Math.hypot(PR[k][0] - PR[k - 1][0], PR[k][1] - PR[k - 1][1]));
+            // (no seat backs: at Nizka, or a bench: from the seat on; the stripes of a flag with horizontal ones over the parts the road sees, the
+            // seat's flat part in the colour of the stripe it joins: from below it is not seen)
+            const PR = tier === 0 || bench ? [[0.06, 0.47], [0.5, 0.47], [0.53, 0.12]] : [[0.02, 0.89], [0.1, 0.47], [0.5, 0.47], [0.53, 0.12]], cum = [0]; for (let k = 1; k < PR.length; k++) cum.push(cum[k - 1] + Math.hypot(PR[k][0] - PR[k - 1][0], PR[k][1] - PR[k - 1][1]));
+            const segs = []; for (let k = 1; k < PR.length; k++) segs.push([cum[k - 1], cum[k], Math.abs(PR[k][1] - PR[k - 1][1]) < 0.05]);
+            const Lv = segs.reduce((a, g) => a + (g[2] ? 0 : g[1] - g[0]), 0);
             const LT = cum[cum.length - 1], c0 = FLAGS[def.id] || {}, cols = (c0.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(c0.flag && c0.flag.vert), team = c0.team != null ? hexC(c0.team) : null;
             for (const B of blocks) {
               if (next < B.d0 + 0.6) next = B.d0 + 0.6;
@@ -1894,7 +1909,9 @@
                   for (let k = 0; k + 1 < ss.length; k++) { const A0 = at(0.5, ss[k]), B0 = at(0.5, ss[k + 1]), dd = (B0[0] - A0[0]) * nx + (B0[2] - A0[2]) * nz, dh = B0[1] - A0[1];
                     gb.quad(at(w0, ss[k + 1]), at(w1, ss[k + 1]), at(w1, ss[k]), at(w0, ss[k]), [-dh * nx, dd, -dh * nz], col, null, FLU); } };
                 const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, n3 = c3.length;
-                for (let i = 0; i < n3; i++) { if (!vert) piece(0, 1, LT * i / n3, LT * (i + 1) / n3, c3[i]); else if (flip) piece(1 - (i + 1) / n3, 1 - i / n3, 0, LT, c3[i]); else piece(i / n3, (i + 1) / n3, 0, LT, c3[i]); }
+                if (!vert) { let acc = 0; for (const [s0, s1, flat] of segs) { if (flat) { piece(0, 1, s0, s1, c3[Math.min(n3 - 1, Math.floor(acc / Lv * n3 + 1e-6))]); continue; }
+                    const L = s1 - s0; for (let i = 0; i < n3; i++) { const a = Math.max(Lv * i / n3, acc), b = Math.min(Lv * (i + 1) / n3, acc + L); if (b > a + 1e-6) piece(0, 1, s0 + a - acc, s0 + b - acc, c3[i]); } acc += L; } }
+                else for (let i = 0; i < n3; i++) { if (flip) piece(1 - (i + 1) / n3, 1 - i / n3, 0, LT, c3[i]); else piece(i / n3, (i + 1) / n3, 0, LT, c3[i]); }
                 for (let k = q; k < q + nW; k++) taken.add(B.k * 1000 + k);
                 if (!nFlags) flagAt = [(L0[0] + L1[0]) / 2, row.yb, (L0[2] + L1[2]) / 2, nx, nz];
                 nFlags++;
@@ -1978,9 +1995,10 @@
       }
       if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
+    const t1 = performance.now(), ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); const t2 = performance.now();   // (each piece's roof over its own top tread: before the pieces are joined)
     mergeChains(feet);
     for (const ws of standWays) { const f = feet.find(f => ws[0].some(p => inPoly(f.poly, p[0], p[2]))); if (f) f.ways = (f.ways || []).concat(ws); }   // (each stand's aisles' ways)
-    const t1 = performance.now(), ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); const t2 = performance.now(); standAround(o, A, feet, sbAt, tier, def, circles, ms); const t3 = performance.now();
+    standAround(o, A, feet, sbAt, tier, def, circles, ms); const t3 = performance.now();
     const mat = standMat(), meshes = [];
     for (const gb of cells.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
     return { seats, flat, meshes, feet, msT: [Math.round(t1 - t0), Math.round(t2 - t1), Math.round(t3 - t2), Math.round(performance.now() - t3)] };
@@ -2150,5 +2168,5 @@
   World.peopleSites = SITES;   // (for the tests and the docs)
   // the kit for more scene types in files of their own (js/world-ljudje2.js): the scenes, the props, more hand things and poses, the motions, the
   // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
-  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
+  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
 })();
