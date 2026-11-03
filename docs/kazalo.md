@@ -57,6 +57,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `tools/posnetek.mjs` | datoteka s posnetkom dirke (`.rrp`, ki jo pošlje uporabnik) odprta za Clauda: glava (proga, način, različica, naprava, avti), zastavice dirke, samodejne zastavice, dnevnik, besedilo poročila; `--t` / `--zastavice` slike posnetka (`--avto`, `--kamera`, `--pokonci`, `--lezece`); `test-results/posnetki/<ime>/` (`povzetek.txt`, `povzetek.json`) |
 | `tools/predogled.mjs` | stran za GitHub Pages: `main` v korenu, odprti pull requesti v `beta/<št>/`, seznam v `beta/` |
 | `docs/nova-fizika-meritve.md` | meritve treh referenčnih videov nove fizike (po razredih, trki, AI tekmeci), primerjava z igro, odprte točke |
+| `tools/proga-podatki.py` | podatki nove prave proge iz odprtih virov (navodila na vrhu): OSM po kosih (API), pot po točkah in imenih cest, sredinska črta, višine (Copernicus GLO-30 brez krošenj Meta/WRI in stavb), mreže terena, rabe tal (ESA WorldCover, OSM) in krošenj, predmeti do 60 m, obala, železnica, stranske ceste, znamenitosti, kraji; krožne in odprte ceste; nastavitve `tools/<id>/config.json` → `tools/<id>/<id>.json` + PNG |
+| `tools/livorno/` | Livorno, Italija (`docs/proga-livorno.md`): `config.json` (točke poti, imena, znamenitosti, kraji), izhod `livorno.json` (opis ključev v `about`), `dem.png`, `far.png`, `lc.png`, `lu.png`, `chm.png` |
 | `tools/nova/` | merila nove fizike (Car.stepNova): `tune.js` (ravna plošča po razredih: poln zasuk na gumbih, zavora, plin, nizka pomoč; `'{"K":{…},"A":[…]}'` začasno spremeni NVK / NVASSIST), `ts2.js` (časovna vrsta enega manevra), `sweep.js` + `cmp.js` (dirke na vseh pravih progah, cs proti nova: dotiki, zdrsi, robniki, trava, časi), `pack.js` (trki med avti in vlak tekmecev, za primerjavo s posnetkom), `train.js` (vlak tekmecev kot na posnetku: razmik v dolžinah in s, tekmec ob avtu, prehitevanja AI–AI na minuto, razvlečenje polja na krog; igralec na avtopilotu v skupini), `cam.js` (zasuk avta proti kameri za avtom in koliko od tega je zdrs avta; `SL=1` drseči slog), `bench.js` (čas fizike 100 avtov), `races-nova.js` (`races.test.js` z novo fiziko proti referencam klasične; `TR=spa,…`) |
 | `.github/workflows/` | `tests.yml` testi (osnutki pull requestov brez težkih poslov), `posnetki.yml` posnetki pred/po ob pull requestu (artefakt in povzetek), `stran.yml` objava strani s predogledom vej |
 | `tests/run.js` | poganjanje testov (`node`, `browser`, `fleet`, `--shard`); `--related` (`npm run test:related`: testi sprememb proti `main`, po imenih in seznamu `RELATED`), `--files`, `--quiet` (samo napake in povzetek); časi testov na GitHubu `SECS`, meja testa `LIMIT_OF` (`TEST_TIMEOUT_MIN`, `TEST_SLOW`) |
@@ -68,6 +70,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/ljudje-predlogi.md` | 12 predlogov »ljudje ob progi« (številke, ki jih uporabnik izbira), meritev zdajšnjih gledalcev, skupine po 2–10 |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
+| `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
 
@@ -151,6 +154,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | hotham | Mount Hotham, Avstralija | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
+| livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | longford | Longford, Avstralija | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | maunakea | Mauna Kea, ZDA | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
