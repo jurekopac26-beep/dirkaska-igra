@@ -3276,59 +3276,59 @@
   }
  },
  "monterey/crash/cs": {
-  "digest": "e400bf53330bb8f9e16a72b0",
-  "lead": 2259.6,
+  "digest": "0aedd363e8b5a48cec75630d",
+  "lead": 5276,
   "car0": [
-   661.67,
-   481.43
+   -94.6,
+   382.93
   ],
   "cover": {
-   "dmg": 0.4,
-   "loose": 3,
+   "dmg": 0.6,
+   "loose": 1,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/formula/cs": {
-  "digest": "f207999513f304f6da738612",
-  "lead": 2576.2,
+  "digest": "e9c0ae1aefcaa988912dda3d",
+  "lead": 6550.8,
   "car0": [
-   643.29,
-   163.47
+   257.11,
+   343.91
   ],
   "cover": {
-   "dmg": 0.93,
+   "dmg": 0.9,
    "loose": 2,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/lm/cs": {
-  "digest": "e27835e42e93b302eb5be022",
-  "lead": 2550.3,
+  "digest": "60ff8a242c92fb7f53b1f3bc",
+  "lead": 6490.6,
   "car0": [
-   660.96,
-   169.24
+   256.87,
+   340.48
   ],
   "cover": {
-   "dmg": 0.83,
+   "dmg": 0.82,
    "loose": 2,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/car/cs": {
-  "digest": "05bf4c42f61f7e24091f32e1",
-  "lead": 2248.2,
+  "digest": "409a0e9a411ef12ccb6e7a58",
+  "lead": 5666.7,
   "car0": [
-   651.53,
-   570.76
+   -38.13,
+   283.23
   ],
   "cover": {
-   "dmg": 0.43,
+   "dmg": 0.48,
    "loose": 1,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "longford/race/cs": {
