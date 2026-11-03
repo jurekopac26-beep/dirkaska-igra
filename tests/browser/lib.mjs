@@ -78,7 +78,8 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top)
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2 }, settings));
   // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
-  await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
+  // (tdgp-nostartcam: no camera before the start, the race's chase view and its 1.3 s intro as the tests were written for; opts.startCam: on)
+  await page.addInitScript(([raw, adapt, sc]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive, !!opts.startCam]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
