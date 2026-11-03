@@ -9,6 +9,18 @@ Skupna vrsta pull requestov za `main` za seje vseh treh računov (pravilo v `CLA
 - Koordinacija vsakega računa (»VSE SEJE«) vrsto sproti ureja; vrstni red med računi se dogovori tu, ne v pogovoru. Pri sporu v tej datoteki obdrži vrstice obeh strani.
 - Pull requesti, ki jih ni v vrsti, a so označeni »Ready for review«, počakajo, dokler ne pridejo na vrsto.
 
+## Načrtovano (teme pred začetkom dela)
+Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` prek drobnega pull requesta ali v svoj prvi potisk) in pogleda, ali je tema že tu ali v odprtih pull requestih kateregakoli računa. Če je, je ne začne. Ko odpre osnutek pull requesta, vrstico prestavi v vrsto zgoraj ali jo izbriše (osnutek je odslej vpis dela).
+
+| Tema | Račun | Kdaj / pogoj |
+|---|---|---|
+| Deli iz garaže: sklop 4 | 1 | ko se izprazni vrsta; na `main` pred ned. 8. 11. 10:00 |
+| Razdelitev skupnih datotek prog po progah | 1 | po sklopu 4 |
+| Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 1 | po vrsti |
+| Gorske proge, skupina A (brez Aulija) | 1 | ko sta sklop 4 in #257 na `main` |
+| Zavite proge, korak 1: Ouro Preto (+ gradniki) | 1 | ko je #241 na `main` |
+| Furka 2A, Kapelmuur | 1 | po vrsti |
+
 ## Vrsta (stanje 3. 11. 2026)
 
 | # | Pull request | Kaj | Račun | Stanje |

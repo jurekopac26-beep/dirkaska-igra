@@ -85,7 +85,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/ljudje-predlogi.md` | 12 predlogov »ljudje ob progi« (številke, ki jih uporabnik izbira), meritev zdajšnjih gledalcev, skupine po 2–10 |
 | `docs/vprasanja.md` | vprašanja za uporabnika: stran Odločitve (vsak račun svojo, seznam strani), polja vprašanja, slike pri grafičnih vprašanjih, zbiranje ob 10.30, 14.30 in 23.00 (opravila po urniku), nastavitev na drugem računu, preklic |
 | `docs/varcevanje.md` | varčevanje z žetoni: odločitve 3. 11. 2026, okolje »Koordinacija« (napor medium), okno za povzetek, zbirka `cakanje` (čakanje na drug pull request), svež `main` pred združitvijo, meritve porabe sej |
-| `docs/vrsta.md` | skupna vrsta pull requestov za `main` za vse tri račune: pravila (pred združitvijo preveri, vpis na konec, izbris po združitvi), trenutna vrsta, odprti pull requesti drugih računov |
+| `docs/vrsta.md` | skupna vrsta pull requestov za `main` za vse tri račune: pravila (pred združitvijo preveri, vpis na konec, izbris po združitvi), razdelek »Načrtovano« (teme pred začetkom dela), trenutna vrsta, odprti pull requesti drugih računov |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
 | `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
