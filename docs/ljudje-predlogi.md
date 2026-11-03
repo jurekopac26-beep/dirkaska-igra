@@ -11,7 +11,7 @@ Seja je naredila 12 predlogov, vsak v eni sliki (pokončna slika za telefon, izr
 - **12 predlogov** na mestih s slik: Nürburg (oder 1950 m desno, žar 3300 levo, ogenj 5640 levo, TV 16350 levo, telovadba 18450 levo), Ouninpohja (hiša 2240 levo), Bathurst (boksi 70 levo ob zidu, tribuna 5790 desno), Spa (vhod 170 levo, fotografi 870 levo, maršali 1360 desno, gasilci 5560 desno).
 - **Nove vrste** za druge proge (`S.kamp`, `S.piknik`, `S.kolesarji`, `S.foto2`, `S.reli`, `S.hisa2`); barve elementov se izberejo po prizoru, zastave in slog hiš po državi (`FLAGS`, `HOUSES`).
 - **Gledalci ob cesti**: redke skupine in mirni po odločitvi uporabnika 31. 10. 2026, kot jih je naredil #225 (`fewFans`, `CR_KEEP` in `CR_CALM` v `js/world.js`), na Nürburgu še redkeje (`CR_KEEPT`: »Nürburg je lahko skoraj brez gledalcev«); tribune, osebje in skupine, ki jih svetovi postavijo posebej, ostanejo, testne proge so nespremenjene.
-- **Orodja**: `tools/ljudje/igra.mjs <proga> [prizor,…]` (avto pelje mimo prizorov, slike iz kamere za avtom na izbranih razdaljah in povečava ljudi), `tools/ljudje/mesta.mjs <proga> --plan …` (kandidati za mesta: ravna pot pred mestom, ograja blizu, ravna tla, ista cesta, brez stavb in drugih stvari; razporedi vrste prizorov in izpiše vrstico za `SITES`).
+- **Orodja**: `tools/ljudje/igra.mjs <proga> [prizor,…] [--dez]` (`--dez`: v dežju, z dežniki) (avto pelje mimo prizorov, slike iz kamere za avtom na izbranih razdaljah in povečava ljudi), `tools/ljudje/mesta.mjs <proga> --plan …` (kandidati za mesta: ravna pot pred mestom, ograja blizu, ravna tla, ista cesta, brez stavb in drugih stvari; razporedi vrste prizorov in izpiše vrstico za `SITES`).
 - **Test**: `tests/browser/ljudje.test.mjs`.
 
 ### Prizori po progah

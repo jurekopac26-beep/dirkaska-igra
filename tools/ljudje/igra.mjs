@@ -1,16 +1,16 @@
 // Ljudje ob progi v igri (js/world-ljudje.js): avto pelje mimo prizorov s kamero za avtom (telefon ležeče ali pokonci) in posname sličice
 // na izbranih razdaljah pred prizorom (pred prihodom, ko ga zaslišijo, ko tečejo, ob ograji, mimo); rumena lupa (_zoom) je povečava ljudi iz
 // iste kamere. Slike in povzetek v test-results/ljudje/igra/.
-//   node tools/ljudje/igra.mjs <proga> [prizor,…] [--v 30] [--pri 90,55,32,14,-6] [--pokonci] [--nizka] [--brez-lupe]
+//   node tools/ljudje/igra.mjs <proga> [prizor,…] [--v 30] [--pri 90,55,32,14,-6] [--pokonci] [--nizka] [--brez-lupe] [--dez]   (--dez: v dežju, z dežniki)
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../tests/browser/lib.mjs';
 
 const args = process.argv.slice(2), id = args[0];
-if (!id) { console.log('node tools/ljudje/igra.mjs <proga> [prizor,…] [--v 30] [--pri 90,55,32,14,-6] [--pokonci] [--nizka] [--brez-lupe]'); process.exit(2); }
+if (!id) { console.log('node tools/ljudje/igra.mjs <proga> [prizor,…] [--v 30] [--pri 90,55,32,14,-6] [--pokonci] [--nizka] [--brez-lupe] [--dez]'); process.exit(2); }
 const flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const only = args[1] && !args[1].startsWith('--') ? args[1].split(',') : null;
-const v = +(flag('--v') || 30), marks = (flag('--pri') || '90,55,32,14,-6').split(',').map(Number), portrait = args.includes('--pokonci'), low = args.includes('--nizka'), zoom = !args.includes('--brez-lupe');
+const v = +(flag('--v') || 30), marks = (flag('--pri') || '90,55,32,14,-6').split(',').map(Number), portrait = args.includes('--pokonci'), low = args.includes('--nizka'), zoom = !args.includes('--brez-lupe'), rain = args.includes('--dez');
 const OUT = path.join(REPO, 'test-results', 'ljudje', 'igra'); fs.mkdirSync(OUT, { recursive: true });
 const png = (file, src) => fs.writeFileSync(file, Buffer.from(src.split(',')[1], 'base64'));
 const SIZE = portrait ? { width: 390, height: 844 } : { width: 844, height: 390 };
@@ -18,7 +18,7 @@ const SIZE = portrait ? { width: 390, height: 844 } : { width: 844, height: 390 
 const srv = await serve(REPO);
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', detail: low ? 'low' : 'high' }, SIZE, { seed: 11 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', weather: rain ? 'rain' : 'dry', tod: 'day', season: 'summer', detail: low ? 'low' : 'high' }, SIZE, { seed: 11 });
   const t0 = Date.now();
   await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
   try { await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 }); }

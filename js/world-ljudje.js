@@ -1042,6 +1042,7 @@
   // under a roof, not the staff: p.um) hold one up in the left hand while it rains (Render.raining: not in the snow) and the hand is free; one
   // instanced mesh for the world (W.umb), only the posed scenes' people near (step)
   let WET = false;
+  const hash32 = (a) => { let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; };   // (a well-mixed integer hash: who of a scene holds one)
   const UMB_COLS = [0x1b1d22, 0x15306b, 0xb2222a, 0x1f63d8, 0x1d6b3a, 0xe8b417, 0xf2f2ee, 0x6a2f8a, 0xe0602a, 0x2a8a8a, 0x1b1d22, 0x15306b];
   function umbrella(p, J, show) {   // its left arm up holding the umbrella (p.uh: held now)
     p.uh = false;
@@ -1073,7 +1074,7 @@
     const G = Sc.groups.st, dt = clamp(t - (Sc.ts == null ? t : Sc.ts), 0, 0.2); Sc.ts = t;
     const carA = car && Sc.da != null ? -Sc.da : -1e9;
     for (const p of Sc.people) {
-      const P = p.P, st = P.seat; if (!st) { poseWalker(Sc, p, fixed ? 0 : t, car); continue; }
+      const P = p.P, st = P.seat; if (!st) { if (P.fix) poseCam(Sc, p, fixed ? 0 : t, car); else poseWalker(Sc, p, fixed ? 0 : t, car); continue; }
       const ax = st.x * Sc.sgn, dA = ax - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0;
       const f0 = p.up || 0, f = p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6);
       const sig = f > 0 ? -1 : (car && carA > -60 && carA < Sc.len + 30 ? 1 : 0);
@@ -1092,6 +1093,13 @@
     if (u >= w.leg) return { d: back ? 0 : w.L, mv: false, back };
     const k = Math.floor(u / w.cyc), r = u - k * w.cyc, d = Math.min(w.L, k * w.stop + Math.min(r * w.v, w.stop));
     return { d: back ? w.L - d : d, mv: r * w.v < w.stop && d < w.L, back };
+  }
+  // the TV cameraman on his platform under the roof: his camera on his shoulder, panning slowly, following the car when it is near
+  function poseCam(Sc, p, t, car) {
+    const P = p.P, F = P.fix; let yaw = F.yaw + 0.6 * Math.sin(t * 0.21 + p.ph * 6);
+    if (car && Math.hypot(car.x - F.x, car.z - F.z) < 220) yaw = Math.atan2(car.x - F.x, car.z - F.z);
+    P.root.position.set(F.x, F.y, F.z); P.root.rotation.set(0, yaw, 0); P.root.scale.setScalar(P.sc); setJ(P, poseJ('cam'));
+    P.root.updateMatrixWorld(true); write(P, P.show || null, Sc.pos, Sc.nor);
   }
   function poseWalker(Sc, p, t, car) {
     const P = p.P, w = P.walk, { d, mv, back } = walkAt(w, t), c = w.cum, n = c.length;
@@ -1228,26 +1236,27 @@
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
     baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['tribuna', 528, 1], ['marsali', 1472, 1], ['gasilci', 3376, 1]],
+    bangsaen: [['tribuna', 528, 1], ['marsali', 1472, 1], ['foto', 1864, -1], ['gasilci', 2728, 1], ['gasilci', 3376, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     beartooth: [['piknik', 1696, -1]],
     bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
     chapman: [['piknik', 352, 1]],
-    cpalace: [['marsali', 96, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
+    cpalace: [['marsali', 96, -1], ['gasilci', 600, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
+    detroit: [['marsali', 1944, -1]],
     greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
     hotham: [['foto2', 832, 1], ['kamp', 2840, 1], ['piknik', 7608, -1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
-    longford: [['piknik', 288, -1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['foto2', 6488, -1]],
-    marrakesh: [['gasilci', 80, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1]],
+    longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['gasilci', 5952, 1], ['foto2', 6488, -1]],
+    marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
     maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
     medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
     moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
     monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
-    montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['tribuna', 4064, 1]],
+    montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
     mulholland: [['piknik', 136, 1], ['foto2', 2264, -1]],
-    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['gasilci', 1976, -1]],
+    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['foto', 1072, 1], ['gasilci', 1608, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
     palomar: [['foto2', 152, 1], ['kolesarji', 1480, 1], ['piknik', 4720, -1]],
@@ -1255,14 +1264,14 @@
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
-    rio: [['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 4040, -1]],
-    riverside: [['zar', 464, -1], ['marsali', 4112, 1], ['tribuna', 4568, -1], ['foto2', 5144, 1]],
+    rio: [['foto', 1200, 1], ['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 3376, -1], ['marsali', 4040, -1]],
+    riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['tribuna', 4568, -1], ['foto2', 5144, 1]],
     sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
-    toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1]],
-    townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['tribuna', 2176, 1]],
-    troisrivieres: [['marsali', 144, -1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
+    toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
+    townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
+    troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1432, -1], ['vhod', 1960, -1]],
     uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
     vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 7800, -1], ['foto2', 12248, -1]],
   };
@@ -1617,13 +1626,41 @@
       // the front: a handrail a metre over the first row's tread, on its front edge, an upright every 2.5 m (from Srednja)
       if (tier > 0) { const rcol = f.bench === 'wood' ? DECK_COL.wood : ST_RAIL;
         for (let k = 1; k < Fr.length; k++) {
-          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || l > 40) continue;
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05) continue;
           const at = (e, y) => [e.p[0] + e.f[0] * 0.06, y, e.p[2] + e.f[1] * 0.06], A0 = at(a, a.y2 + 1.0), B0 = at(b, b.y2 + 1.0), g = sbAt(A0[0], A0[2]), n = Math.max(1, Math.round(l / 2.5));
           g.bar(A0, B0, 0.06, 0.06, rcol);
           for (let j = k === 1 ? 0 : 1; j <= n; j++) { const w = j / n; g.post([A0[0] + (B0[0] - A0[0]) * w, a.y2 + (b.y2 - a.y2) * w, A0[2] + (B0[2] - A0[2]) * w], 0.98, 0.05, [a.f[0], a.f[1]], rcol); }
         } }
+      // the fans' flags hung over the front (the track's country's stripes, now and then a team's colours; no writing), one in 12-24 m: seen
+      // from the road under the seats
+      { const FLc = FLAGS[def.id] || {}, cols = (FLc.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(FLc.flag && FLc.flag.vert), team = FLc.team != null ? hexC(FLc.team) : null;
+        let acc = 0, next = 6 + (f.letter * 5) % 9, kk = 0;
+        for (let k = 1; k < Fr.length; k++) {
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05) { acc += l; continue; }
+          while (next < acc + l) {
+            const w = (next - acc) / l, x = a.p[0] + (b.p[0] - a.p[0]) * w, z = a.p[2] + (b.p[2] - a.p[2]) * w, y2 = a.y2 + (b.y2 - a.y2) * w, fx = a.f[0], fz = a.f[1], h = ((kk * 7919 + f.letter * 131 + Math.round(x)) % 97 + 97) % 97 / 97, W2 = 0.65 + h * 0.25, top = y2 + (tier > 0 ? 0.98 : 0.6), H = 0.8 + h * 0.2;
+            const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, at = (s2, y) => [x + fx * 0.11 - fz * s2 * W2, y, z + fz * 0.11 + fx * s2 * W2], gb = sbAt(x, z), n3 = c3.length;   // (s2 +1: the left as seen from the road)
+            for (let i = 0; i < n3; i++) { if (vert) gb.quad(at(1 - 2 * i / n3, top - H), at(1 - 2 * (i + 1) / n3, top - H), at(1 - 2 * (i + 1) / n3, top), at(1 - 2 * i / n3, top), [fx, 0, fz], c3[i], null, PLU);
+              else gb.quad(at(-1, top - H * (i + 1) / n3), at(1, top - H * (i + 1) / n3), at(1, top - H * i / n3), at(-1, top - H * i / n3), [fx, 0, fz], c3[i], null, PLU); }
+            next += 12 + h * 12; kk++;
+          }
+          acc += l;
+        } }
+      // a TV camera's platform hung under the roof's front edge in its middle (a big stand with a roof, from Srednja): its floor, a railing, its
+      // hangers; its cameraman one of the stand's people (standsOf: f.at.tvcam)
+      if (tier > 0 && big && f.rv && f.rv.length > 9) {
+        let best = null; for (const v of f.rv) { const t = v[0] * tx + v[2] * tz, c0 = (f.cx * tx + f.cz * tz), nn = v[0] * nx + v[2] * nz; if (Math.abs(t - c0) > 6) continue; if (!best || nn > best.nn) best = { v, nn }; }
+        if (best) { const v = best.v, y0 = v[1] - 2.9, X = v[0] + nx * 0.4, Z = v[2] + nz * 0.4;
+          if (y0 > f.low + 2.6) {
+            boxA(X, y0 - 0.12, Z, 2.2, 1.6, 0.12, tx, tz, ST_STEEL);   // (its floor)
+            const gb = sbAt(X, Z), P2 = (a, b2, y) => [X + tx * a + nx * b2, y, Z + tz * a + nz * b2];
+            gb.bar(P2(-1.1, 0.8, y0 + 1.0), P2(1.1, 0.8, y0 + 1.0), 0.05, 0.05, ST_RAIL); gb.bar(P2(-1.1, -0.8, y0 + 1.0), P2(-1.1, 0.8, y0 + 1.0), 0.05, 0.05, ST_RAIL); gb.bar(P2(1.1, -0.8, y0 + 1.0), P2(1.1, 0.8, y0 + 1.0), 0.05, 0.05, ST_RAIL);
+            for (const [a, b2] of [[-1.1, 0.8], [1.1, 0.8], [-1.1, -0.8], [1.1, -0.8]]) gb.post(P2(a, b2, y0), b2 < 0 ? 2.85 : 1.0, 0.06, [nx, nz], ST_STEEL);   // (the railing's posts at its front; at its back its hangers up into the roof)
+            (f.at || (f.at = {})).tvcam = [X, y0, Z, Math.atan2(nx, nz)];
+          } } }
     }
   }
+  const hexC = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
   function standBuild(o, A, hsh, def, circles) {
     const t0 = performance.now(), seats = [], flat = new Map(), cells = new Map(), feet = [], standWays = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
     const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
@@ -1880,8 +1917,9 @@
       const ways = (f.ways || []).slice(), take = () => ways.length ? ways.splice(Math.floor(R2() * ways.length), 1)[0] : null;
       if (LOD.tier > 0) { const w = take(); if (w) list.push({ pts: w, kind: 'tray', vendor: true, v: 0.42, stop: 3, stopT: 4 }); }
       for (let k = LOD.tier > 0 ? 2 : 1; k > 0; k--) { const w = take(); if (w) list.push({ pts: w, kind: ['cup', 'can', 'phone', 'hotdog', 'popcorn', null][Math.floor(R2() * 6)], v: 0.55 + R2() * 0.2, stop: 1e9, stopT: 0 }); }
+      if (f.at && f.at.tvcam) list.unshift({ pts: [f.at.tvcam.slice(0, 3)], fix: f.at.tvcam, kind: null });   // (the TV cameraman on his platform)
       for (const wk of list) {
-        if (wn >= wMax) break;
+        if (wn >= wMax && !wk.fix) break;
         const m = wk.pts[wk.pts.length >> 1]; let best = null, bd = 70;
         for (const g of segs) { const d = Math.hypot(g.c[0] - m[0], g.c[2] - m[2]); if (d < bd) { bd = d; best = g; } }
         if (best) { best.walk.push(wk); wn++; }
@@ -1905,7 +1943,9 @@
         if (a) { P.seat.pose = a[1]; const it = a[2][Math.floor(rnd() * a[2].length)]; P.items = ['R:' + it + (it === 'mflag' ? ':' + JSON.stringify({ c: pick(SHIRT) }) : it === 'icecream' ? ':' + JSON.stringify({ c: pick([0xf0b8c8, 0xf5e6c8, 0x8a5a3c, 0xb8e0a0]) }) : '')]; P.show = new Set(P.items); P.seat.up = it === 'phone' ? 'phoneUp' : it === 'mflag' ? 'wave' : null; }
         P.roof = roofed(feet, st.x, st.y, st.z);
       }
-      for (const wk of walk) {   // the walkers (full figures: hands and shoes; a vendor in its white shirt and cap)
+      for (const wk of walk) {   // the walkers (full figures: hands and shoes; a vendor in its white shirt and cap); the TV cameraman
+        if (wk.fix) { const P = C.man({ shirt: 0x1b1d22, pants: 0x2a2f3a, vest: 0xf2c21a, stripes: 0xd9dde2 }, null); P.fix = { x: wk.fix[0], y: wk.fix[1], z: wk.fix[2], yaw: wk.fix[3] }; P.items = ['H:camera']; P.show = new Set(P.items); P.roof = true;
+          r = Math.max(r, Math.hypot(wk.fix[0] - cx, wk.fix[1] - cy, wk.fix[2] - cz)); continue; }
         const P = C.man(wk.vendor ? { shirt: 0xf2f2ee, pants: 0x2a2f3a, hat: 'cap', hatCol: wk.kind === 'hotbox' ? 0xd8262a : 0x2f63c9 } : { shirt: pick(SHIRT), hat: rnd() < 0.3 ? 'cap' : null }, null);
         const cum = [0]; for (let k = 1; k < wk.pts.length; k++) { const a = wk.pts[k - 1], b = wk.pts[k]; cum.push(cum[k - 1] + Math.hypot(b[0] - a[0], (b[1] - a[1]) * 1.5, b[2] - a[2])); }
         const L = cum[cum.length - 1], cyc = wk.stop / wk.v + wk.stopT, leg = L / wk.v + Math.floor(L / wk.stop) * wk.stopT, wait = wk.vendor ? 5 : 2 + rnd() * 3;
@@ -1940,8 +1980,8 @@
       const rec = (P, st) => { const kid = !!(st && st.kid), f = st && st.run && st.run.f || 0.55;
         return { P, st, d0: kid ? 0.08 + rnd() * 0.2 : 0.2 + rnd() * 0.85, v: (3.4 + 4 * f) * (kid ? 0.92 : 1), bd: rnd() * 1.4, ph: rnd(), segs: null }; };
       for (const P of C.people) { rig(P, P.st ? itemsOf(P.st) : new Set(P.items || [])); Sc.people.push(rec(P, P.st)); }
-      Sc.people.forEach((p, i) => { const h = ((si + 3) * 7919 + i * 104729) % 997; const st = p.st, staff = st && (st.run === false || (st.run && st.run.a != null));   // (an umbrella in the rain: 3 in 4, not under a roof, not the staff)
-        p.um = h < 750 && !p.P.roof && !staff; p.uk = h % UMB_COLS.length; });
+      Sc.people.forEach((p, i) => { const h = hash32(si * 1009 + i * 31 + 7), st = p.st, staff = st && (st.run === false || (st.run && st.run.a != null));   // (an umbrella in the rain: 3 in 4, not under a roof, not the staff)
+        p.um = h % 1000 < 750 && !p.P.roof && !staff; p.uk = (h >>> 10) % UMB_COLS.length; });
       for (const pt of C.pets) Sc.pets.push(rec(rigid(pt.model), pt.st));
       for (const mv of C.movers) Sc.movers.push({ P: rigid(mv.model), on: mv.on, x: mv.x, y: mv.y, z: mv.z, yaw: 0 });
       reset(Sc);
