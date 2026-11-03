@@ -10,7 +10,7 @@ Skupna vrsta pull requestov za `main` za seje vseh treh računov (pravilo v `CLA
 - Pull requesti, ki jih ni v vrsti, a so označeni »Ready for review«, počakajo, dokler ne pridejo na vrsto.
 
 ## Načrtovano (teme pred začetkom dela)
-Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` prek drobnega pull requesta ali v svoj prvi potisk) in pogleda, ali je tema že tu ali v odprtih pull requestih kateregakoli računa. Če je, je ne začne. Ko odpre osnutek pull requesta, vrstico prestavi v vrsto zgoraj ali jo izbriše (osnutek je odslej vpis dela).
+Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` prek drobnega pull requesta ali v svoj prvi potisk) in pogleda, ali je tema že tu ali v odprtih pull requestih kateregakoli računa. Če je, je ne začne. Ko odpre osnutek pull requesta, vrstico izbriše; ko je pull request pripravljen, se vpiše v vrsto spodaj (osnutek je odslej vpis dela).
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
