@@ -4802,21 +4802,21 @@
   }
  },
  "mountbuller/race/cs": {
-  "digest": "c8ee655449b265c9e1c68836",
-  "lead": 1693.9,
+  "digest": "b3c6061d0e37d212d83decfe",
+  "lead": 1686.2,
   "car0": [
-   -1164.23,
-   -97.78
+   -1135.54,
+   -88.78
   ],
   "cover": {
-   "dmg": 0.14,
+   "dmg": 0.03,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "mountbuller/demo/cs": {
-  "digest": "967f45710534ec75dc3f77bd",
+  "digest": "148908f7a7f574699fba0f0f",
   "lead": 1806.5,
   "car0": [
    -1281.83,
@@ -4830,11 +4830,11 @@
   }
  },
  "mountbuller/upg/cs": {
-  "digest": "f4d57599a14c223c3aaf2f4d",
-  "lead": 1788.6,
+  "digest": "700b0818e8fc8134eac4551e",
+  "lead": 1788,
   "car0": [
-   -1213.77,
-   -159.46
+   -1214.54,
+   -160.05
   ],
   "cover": {
    "dmg": 0,
@@ -4844,58 +4844,58 @@
   }
  },
  "mountbuller/crash/cs": {
-  "digest": "17627d872481e1eafc01f898",
-  "lead": 1666,
+  "digest": "ea0f7431cfa1336c91b24e93",
+  "lead": 1665.2,
   "car0": [
-   -1063.28,
-   -134.46
+   -1021.95,
+   -90.4
   ],
   "cover": {
    "dmg": 1,
-   "loose": 4,
-   "rescues": 0,
+   "loose": 5,
+   "rescues": 1,
    "repairs": 0
   }
  },
  "mountbuller/formula/cs": {
-  "digest": "840ea7d7c6b2267cb1eee782",
-  "lead": 1776.2,
+  "digest": "4f42870e30c5215f05c58434",
+  "lead": 1772.9,
   "car0": [
-   -1127.86,
-   -92.45
+   -1161.54,
+   -92.13
   ],
   "cover": {
    "dmg": 1,
-   "loose": 7,
-   "rescues": 0,
+   "loose": 3,
+   "rescues": 1,
    "repairs": 0
   }
  },
  "mountbuller/lm/cs": {
-  "digest": "3d781e4a0e63d76094ee780b",
-  "lead": 1766.2,
+  "digest": "fc3b4c30a02893fb451bf6eb",
+  "lead": 1737.3,
   "car0": [
-   -1181.19,
-   -103.42
+   -1126.29,
+   -96.99
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "mountbuller/car/cs": {
+  "digest": "88f87b45f1709cc746fc0de7",
+  "lead": 1669.8,
+  "car0": [
+   -1079.13,
+   -118.24
   ],
   "cover": {
    "dmg": 1,
    "loose": 4,
    "rescues": 0,
-   "repairs": 0
-  }
- },
- "mountbuller/car/cs": {
-  "digest": "9422884e60191a91510b10ca",
-  "lead": 1666,
-  "car0": [
-   -1043.16,
-   -124.57
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 4,
-   "rescues": 1,
    "repairs": 0
   }
  }
