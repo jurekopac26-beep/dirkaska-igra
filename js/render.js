@@ -3284,7 +3284,7 @@ const Render = (function () {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', alpha: false, stencil: false });
     renderer.setClearColor(0x263f1f, 1);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;   // (SOFT_SHADOW: the spread of its samples)
     // what is drawn only into the shadow map (a kit car's hull on the lowest tier, the player's wheels' stand-ins: kitShadows): shown while it is drawn
     // (three.js draws it after it has picked what the camera draws, so the camera never draws them), hidden again after
     { const sm = renderer.shadowMap, r0 = sm.render, show = (on) => { for (const v of views) if (v.shadowOnly) for (const m of v.shadowOnly) m.visible = on;
@@ -3298,7 +3298,7 @@ const Render = (function () {
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     const sc = sun.shadow.camera; sc.left = -80; sc.right = 80; sc.top = 80; sc.bottom = -80; sc.near = 10; sc.far = 320;
-    sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
+    sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = SOFT_SHADOW.high;
     scene.add(sun); scene.add(sun.target);
     tex = Tex.all(renderer.capabilities.getMaxAnisotropy());
     matCar = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 });
@@ -3631,6 +3631,10 @@ const Render = (function () {
   }
 
 
+  // softer shadows (the user, 3. 11. 2026: »naredi bolj mehke sence povsod«): PCF on every quality, its 17 samples spread over a few texels
+  // of the map (Visoka's 2048: 3.5 texels, ~27 cm of the 160 m box; the others' 1024: 2.5, ~39 cm); three.js r128's PCFSoft, as before on
+  // Visoka, keeps its own narrow spread whatever the radius (and takes more samples)
+  const SOFT_SHADOW = { high: 3.5, normal: 2.5 };
   function applySettings(s) {
     settings = Object.assign(settings, s);
     { const h = settings.carDetail === 'high'; if (h !== carHi) { carHi = h; if (showCar && showArgs) setShowCar(showArgs[0], showArgs[1], showArgs[2], showArgs[3]); } }   // (the showroom's car again in the other detail; a race's cars: from the next race)
@@ -3638,7 +3642,7 @@ const Render = (function () {
     basePR = settings.quality === 'retro' ? 0.5 : settings.quality === 'normal' ? 1 : Math.min(dpr, 2);
     renderer.domElement.style.imageRendering = settings.quality === 'retro' ? 'pixelated' : 'auto';
     renderer.shadowMap.enabled = !!settings.shadows;
-    renderer.shadowMap.type = settings.quality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap; sun.shadow.radius = settings.quality === 'high' ? SOFT_SHADOW.high : SOFT_SHADOW.normal;   // (softer shadows: SOFT_SHADOW)
     const ms = settings.quality === 'high' ? 2048 : 1024;
     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map

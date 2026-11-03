@@ -232,7 +232,7 @@ const Tex = (function () {
   // standBuild): one picture for every part of a stand, in bands from the top; red the light and shade, green where the seat's own colour
   // shows (1) or the stand's concrete (0), blue the yellow paint of the steps' edges. The seats across repeat (4 to the picture's width):
   // STAND_KIT the bands' rows (from the top), the shader in standBuild mixes the colours
-  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], pave: [608, 672], glyph: [672, 800], fascia: [800, 832], door: [832, 896], awning: [896, 928], shutter: [928, 960], H: 1024 };
+  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], pave: [608, 672], glyph: [672, 800], fascia: [800, 832], door: [832, 896], awning: [896, 928], shutter: [928, 960], clad: [960, 992], picto: [992, 1024], H: 1024 };
   let kitC = null;
   function standKit() {
     if (kitC) return kitC;
@@ -287,8 +287,21 @@ const Tex = (function () {
         if (sc) return [q(0.25), 0, 0]; return [q(0.95 - y * 0.006), st ? 255 : 0, 0]; }
       if (j < K.shutter[1]) { const y = j - K.shutter[0], win = y < 18 && (i % 128) >= 12 && (i % 128) < 116;   // a kiosk's front: the open window (dark, a lit counter under it), the panel below
         return win ? [q(y > 15 ? 1.0 : 0.16), y > 15 ? 255 : 0, 0] : [q(0.88 - (y > 28 ? 0.1 : 0)), 0, 0]; }
+      if (j < K.clad[1]) { const y = j - K.clad[0], x = i % 64, rib = x % 16;   // a stand's back wall clad in profiled sheets (2 m to a sheet, 8 m to the width): a rib every half metre, the sheets' joints, a darker foot
+        return [q((x < 1 ? 0.6 : rib < 2 ? 1.0 : rib < 4 ? 0.8 : 0.9) - (y > 27 ? 0.12 : 0) + (n1(i / 32, j / 8) - 0.5) * 0.05), 0, 0]; }
+      if (j < K.picto[1]) return [q(0.86), 255, 0];   // a kiosk's sign (its picture drawn below): the kiosk's colour
       return [q(0.8), 0, 0];
     });
+    { const x = c.getContext('2d'), y0 = K.picto[0];   // the kiosks' signs: a drink, an ice cream, a hot dog, a burger (white: the concrete colour, lit)
+      x.fillStyle = 'rgb(255,0,0)'; x.strokeStyle = 'rgb(255,0,0)'; x.lineCap = 'round'; x.lineJoin = 'round';
+      x.beginPath(); x.moveTo(22, y0 + 9); x.lineTo(42, y0 + 9); x.lineTo(39, y0 + 29); x.lineTo(25, y0 + 29); x.closePath(); x.fill();   // a cup, its lid and straw
+      x.fillRect(20, y0 + 6, 24, 3); x.lineWidth = 2.5; x.beginPath(); x.moveTo(34, y0 + 7); x.lineTo(38, y0 + 1); x.stroke();
+      x.beginPath(); x.moveTo(84, y0 + 14); x.lineTo(108, y0 + 14); x.lineTo(96, y0 + 31); x.closePath(); x.fill();   // an ice cream cone, two scoops
+      x.beginPath(); x.arc(91, y0 + 11, 6.5, 0, Math.PI * 2); x.arc(101, y0 + 11, 6.5, 0, Math.PI * 2); x.fill(); x.beginPath(); x.arc(96, y0 + 5.5, 5.5, 0, Math.PI * 2); x.fill();
+      const rr2 = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); x.fill(); };
+      rr2(140, y0 + 9, 40, 9, 4.5); rr2(144, y0 + 17, 32, 9, 4.5); x.fillStyle = 'rgb(150,255,0)'; x.fillRect(146, y0 + 15.5, 28, 3);   // a hot dog: the sausage over the bun, a line between
+      x.fillStyle = 'rgb(255,0,0)'; x.beginPath(); x.arc(224, y0 + 15, 13, Math.PI, 0); x.fill(); x.fillRect(210, y0 + 17, 28, 4); rr2(211, y0 + 23, 26, 6, 3);   // a burger: the bun's dome, the patty, the bottom
+    }
     { const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 46px sans-serif'; x.fillStyle = 'rgb(255,255,0)';   // the signs' letters: lit (red) in the seat colour (green)
       'ABCDEFGH'.split('').forEach((ch, k) => x.fillText(ch, (k % 4) * 64 + 32, K.glyph[0] + Math.floor(k / 4) * 64 + 35)); }
     const t = mk(c, true); t.wrapT = THREE.ClampToEdgeWrapping; t.standKit = STAND_KIT; kitC = t; return t;

@@ -41,7 +41,7 @@ const World = (function () {
   // the people beside the road on the real tracks (the user's decision, 31. 10. 2026): as few as can be, rare groups (CR_KEEP of the 30 m cells
   // along it keep theirs), calm (no jumping, no waving); the marshals, the cameramen and the crews stay, and the grandstands' people; the
   // tracks kept for testing (def.test) as they were
-  const fewFans = () => !!(T && T.def && !T.def.test), CR_KEEP = 0.18, CR_KEEPT = { nring: 0.025 }, crKeep = () => (T && T.def && CR_KEEPT[T.def.id]) || CR_KEEP;   // (CR_KEEPT: a track that wants hardly any, the user's wish 1. 11. 2026, docs/ljudje-predlogi.md: »Nürburg je lahko skoraj brez gledalcev«)
+  const fewFans = () => !!(T && T.def && !T.def.test), CR_KEEP = 0.18, CR_KEEPC = 0.07, CR_KEEPT = { nring: 0.025 }, crKeep = () => (T && T.def && CR_KEEPT[T.def.id]) || (T && !T.open ? CR_KEEPC : CR_KEEP);   // (CR_KEEPT: a track that wants hardly any, the user's wish 1. 11. 2026, docs/ljudje-predlogi.md: »Nürburg je lahko skoraj brez gledalcev«; CR_KEEPC: a circuit's, 3. 11. 2026: »na dirkališčih naj bo čim manj ljudi okoli proge, tam naj bo več zaposlenih«)
   function parkOn(fn, gH, L, g, x, y, z, rot, ...rest) {
     const c = Math.cos(rot), s = Math.sin(rot), y0 = gH(x, z);
     for (const [a, b] of [[L / 2, 1], [L / 2, -1], [-L / 2, 1], [-L / 2, -1]]) if (Math.abs(gH(x + c * a - s * b, z + s * a + c * b) - y0) > 0.35) return false;
@@ -1278,7 +1278,7 @@ const World = (function () {
 
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
-    LOD = makeLOD(opts.tier);   // the graphics detail tier for this build (every builder below consults the shared LOD)
+    LOD = makeLOD(opts.tier); THIN.n = 0;   // the graphics detail tier for this build (every builder below consults the shared LOD)
     CULLM = [];                 // fresh list of distance-cullable vegetation for this build
     SHLO = [];                  // (and of the plants' shadow copies, NIZKA)
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
@@ -4185,7 +4185,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); if (World.people) World.people(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
+  function finish(o, tex) { o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); if (World.people) World.people(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4483,9 +4483,19 @@ const World = (function () {
   }
   // instanced meshes per square chunk (three.js culls an InstancedMesh by its geometry's bounding sphere only: each chunk gets its own
   // geometry object sharing the base attributes, placed at the chunk centre with a sphere around all its instances)
+  // fewer trees by the road (the user, 3. 11. 2026: »nasploh naj bo ob progi manj dreves in smrek kot sedaj, da ne obremenjuje toliko
+  // grafike«): on a real track a tree (an instanced plant mostly green, at least 3.2 m tall) within 35 m of the barrier is planted only by its
+  // place's hash, half of them to 12 m, seven in ten beyond (no random draws: the builders' own as ever); a chunk left empty still takes the
+  // names its meshes would have (Math.random: a seeded race as before). THIN.n: how many left out (stats.thinned)
+  const THIN = { n: 0, near: 12, far: 35, keepNear: 0.5, keepFar: 0.72, h: 3.2 };
+  const treeGeo = (g) => { const ca = g.attributes.color, pa = g.attributes.position; if (!ca || !pa) return 0; let r = 0, gg = 0, b = 0, y0 = Infinity, y1 = -Infinity;
+    for (let k = 0; k < ca.count; k++) { r += ca.getX(k); gg += ca.getY(k); b += ca.getZ(k); } for (let k = 0; k < pa.count; k++) { y0 = Math.min(y0, pa.getY(k)); y1 = Math.max(y1, pa.getY(k)); }
+    return gg > r * 1.08 && gg > b * 1.08 ? y1 - y0 : 0; };   // (its height if it is green: a tree's crown, a bush; else 0)
   class IChunks {
-    constructor(base, mat, size) { this.base = base; this.mat = mat; this.size = size || 256; this.map = new Map(); }
-    add(x, y, z, rot, sxz, sy, col) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size); let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); }
+    constructor(base, mat, size) { this.base = base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? treeGeo(base) : 0; this.gone = null; }
+    add(x, y, z, rot, sxz, sy, col) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size);
+      if (this.th && this.th * sy >= THIN.h) { const c = clearance(x, z); if (c < THIN.far && crH(x, z, 7.7) >= (c < THIN.near ? THIN.keepNear : THIN.keepFar)) { THIN.n++; (this.gone || (this.gone = new Set())).add(k); return; } }
+      let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); }
     addTo(group, cast) {
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(), c = new THREE.Color(), bs = this.base.boundingSphere || (this.base.computeBoundingSphere(), this.base.boundingSphere);
       let n = 0;
@@ -4493,6 +4503,7 @@ const World = (function () {
       for (let k = 0; k < pa.length; k += 3) { rh = Math.max(rh, Math.hypot(pa[k], pa[k + 2])); by0 = Math.min(by0, pa[k + 1]); by1 = Math.max(by1, pa[k + 1]); }
       const ext = [rh + 0.16 * Math.max(by0 * by0, by1 * by1), by0, by1];
       const lo = cast && LOD.tier === 0 && !this.mat.alphaTest && !this.mat.transparent ? shadowLo(this.base) : null;
+      if (this.gone) for (const k of this.gone) if (!this.map.has(k)) for (let u = 0; u < (lo ? 4 : 2); u++) THREE.MathUtils.generateUUID();   // (a chunk thinned to nothing: its geometry's and mesh's names, NIZKA's shadow copy's)
       for (const L of this.map.values()) {
         const cnt = L.length / 9; let cx = 0, cz = 0, y0 = 1e9, y1 = -1e9, smax = 0;
         for (let k = 0; k < L.length; k += 9) { cx += L[k]; cz += L[k + 2]; y0 = Math.min(y0, L[k + 1]); y1 = Math.max(y1, L[k + 1]); smax = Math.max(smax, L[k + 4], L[k + 5]); }

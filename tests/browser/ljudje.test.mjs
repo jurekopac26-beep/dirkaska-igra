@@ -3,7 +3,8 @@
 // runners leave what they do and are at the fence when it passes, the staff stay where they work, and all are back at what they did some seconds
 // after it; with no car (the world test) every scene in one fixed pose; a test track has none. The roadside crowd in rare groups (fewFans), far fewer than
 // before (Nürburg hardly any: CR_KEEPT); a test track's crowd as it was. The grandstands (the user, 2. 11. 2026: »tribune bolj prazne in le nekaj
-// gledalcev«, »bolj 3d«, »ljudje sedijo in stojijo v zraku«): no painted crowd, steps and benches of their own, a few people sitting on the benches.
+// gledalcev«, »bolj 3d«, »ljudje sedijo in stojijo v zraku«): no painted crowd, steps and benches of their own, a few people sitting on the benches;
+// (3. 11. 2026: »na tribunah naj se kakšen posameznik tudi sprehaja ali prodaja sladoled, hot dog«) a few walking on the aisles' steps and the walkway.
 //   node tests/browser/ljudje.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -35,17 +36,20 @@ try {
       // (a ray down from above each one's head meets the bench 0.3-0.6 m over their feet: sitting on it, not in the air)
       const steps = [], tribs = PW.scenes.filter(Sc => Sc.name === 'tribune'); let painted = 0; W.root.updateMatrixWorld(true);
       W.root.traverse(m => { if (m.name === 'standSteps') steps.push(m); const M = m.isMesh && m.material; if (M && !Array.isArray(M) && M.userData && M.userData.stand && m.visible && !M.userData.seats) painted++; });
-      let sat = 0, off = 0, ppl = 0; const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0);
-      for (const Sc of tribs) for (const p of Sc.people) { ppl++; const v = p.P.root.position; rc.set(new THREE.Vector3(v.x, v.y + 3, v.z), dn);
-        const h = rc.intersectObjects(steps, false).find(q => q.point.y - v.y < 1.2), d = h ? h.point.y - v.y : -1; if (d > 0.3 && d < 0.6) sat++; else off++; }   // (under a roof: the first hit below it)
-      out.stands = { steps: steps.length, painted, scenes: tribs.length, people: ppl, sat, off, seats: st.standSeats || 0 };
+      let sat = 0, off = 0, ppl = 0, walk = 0, wOn = 0, wOff = 0; const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0);
+      for (const Sc of tribs) for (const p of Sc.people) { const v = p.P.root.position; rc.set(new THREE.Vector3(v.x, v.y + 3, v.z), dn);
+        const h = rc.intersectObjects(steps, false).find(q => q.point.y - v.y < 1.2), d = h ? h.point.y - v.y : -1;   // (under a roof: the first hit below it)
+        if (!p.P.seat) { walk++; const g = W.groundH(v.x, v.z); if ((h && Math.abs(d) < 0.25) || (Number.isFinite(g) && Math.abs(v.y - g) < 0.25)) wOn++; else wOff++; continue; }   // (a walker: on a step or the walkway)
+        ppl++; if (d > 0.3 && d < 0.6) sat++; else off++; }
+      out.stands = { steps: steps.length, painted, scenes: tribs.length, people: ppl, sat, off, seats: st.standSeats || 0, walk, wOn, wOff };
       return out;
     });
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no people\'s scenes', !r.stats && !r.meshes, JSON.stringify(r)); continue; }
     T.check(`${id}: scenes with people`, !!r.stats && r.stats.scenes >= 1 && r.stats.people >= 4, JSON.stringify(r.stats));
     if (!r.stats) continue;
-    if (STANDS.includes(id)) T.check(`${id}: the grandstands in 3D (no painted crowd, steps and benches), a few people (at most 400) sitting on the benches, none in the air`,
+    if (STANDS.includes(id)) { T.check(`${id}: the grandstands in 3D (no painted crowd, steps and benches), a few people (at most 400) sitting on the benches, none in the air`,
       r.stands.painted === 0 && r.stands.steps > 0 && r.stands.people > 10 && r.stands.people <= 400 && r.stands.off === 0, JSON.stringify(r.stands));
+      T.check(`${id}: walkers on the grandstands (vendors on the walkway, people up the aisles), on the steps or the ground, none in the air`, r.stands.walk > 0 && r.stands.wOff === 0, JSON.stringify(r.stands)); }
     const groups = r.scenes.filter(s => !s.stand), bad = groups.filter(s => s.people < 2 || s.people > 10);
     T.check(`${id}: each scene a group of 2-10 (the grandstand more), at most three meshes, nobody on the road`, !bad.length && r.scenes.every(s => s.meshes <= 3 && s.near === 0),
       r.scenes.map(s => `${s.name} ${s.people}p ${s.meshes}m near ${s.near}`).join(', '));

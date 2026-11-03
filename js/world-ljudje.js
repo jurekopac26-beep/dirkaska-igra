@@ -157,6 +157,14 @@
     if (kind === 'bag') return grp(box(0.32, 0.3, 0.14, o.c || 0x2a3d6b, 0, -0.22, 0.02));
     if (kind === 'wrench') return grp(box(0.03, 0.03, 0.3, 0xb9bec6, 0, -0.04, 0.15));
     if (kind === 'gun') return grp(box(0.07, 0.16, 0.1, 0x111111, 0, -0.05, 0.04), cyl(0.04, 0.04, 0.22, 5, 0xd8262a, 0, 0.0, 0.18, { rx: Math.PI / 2 }));
+    // the grandstands' food (the user, 3. 11. 2026: »na tribunah … je hrano, pije pijačo«) and the vendors' boxes and trays
+    if (kind === 'hotdog') return grp(box(0.075, 0.05, 0.2, 0xd9a35a, 0, -0.02, 0.06), box(0.032, 0.032, 0.25, 0xa8432a, 0, 0.012, 0.06));   // (the bun, the sausage)
+    if (kind === 'burger') return grp(cyl(0.065, 0.065, 0.035, 7, 0xc98a45, 0, -0.035, 0.06), cyl(0.068, 0.068, 0.02, 7, 0x5a3220, 0, -0.008, 0.06), cyl(0.065, 0.06, 0.04, 7, 0xd29a50, 0, 0.022, 0.06));
+    if (kind === 'icecream') return grp(cyl(0.032, 0.006, 0.12, 6, 0xd8b075, 0, -0.03, 0.05), sph(0.038, 6, 4, o.c || 0xf0b8c8, 0, 0.045, 0.05));
+    if (kind === 'popcorn') return grp(box(0.1, 0.13, 0.08, 0xd8262a, 0, -0.03, 0.06), box(0.104, 0.04, 0.084, 0xf2f2ee, 0, -0.03, 0.06), box(0.09, 0.04, 0.07, 0xf5e08a, 0, 0.055, 0.06));
+    if (kind === 'tray') { const g = grp(box(0.52, 0.035, 0.34, 0xf2f2ee, 0, -0.1, 0.24)); for (let k = 0; k < 6; k++) g.add(cyl(0.035, 0.03, 0.1, 5, k % 2 ? 0xe8c33a : 0xf4f4f0, -0.17 + (k % 3) * 0.17, -0.035, 0.16 + Math.floor(k / 3) * 0.15)); return g; }
+    if (kind === 'icebox') return grp(box(0.46, 0.3, 0.3, 0xf2f2ee, 0, -0.14, 0.24), box(0.48, 0.05, 0.32, 0x2f63c9, 0, 0.03, 0.24));   // (the ice cream seller's: white, its blue lid)
+    if (kind === 'hotbox') return grp(box(0.46, 0.3, 0.3, 0xb9bec6, 0, -0.14, 0.24), box(0.47, 0.07, 0.31, 0xd8262a, 0, -0.08, 0.24));   // (the hot dog seller's: steel, a red band)
     return grp();
   }
   // the figure baked per joint, at rest (every joint at 0): parts { b: the joint's index in P.J, P, N, C (Float32Array, in the joint's frame), k: a held
@@ -236,6 +244,13 @@
       case 'lie': return { shz: [0.35, 0.2], shx: [-0.2, 2.4], el: [0.3, 1.6], hp: [0.05, 0.25], kn: [0.05, 0.5] };
       case 'bend': return { lean: 0.95, hy: 0.89, shx: [1.1, 1.15], shz: [0.1, 0.1], el: [0.3, 0.35], hz: -0.08 };
       case 'fixHood': return { lean: 0.75, hy: 0.9, shx: [1.3 + 0.1 * s, 1.25 - 0.1 * s], shz: [0.15, 0.15], el: [0.6, 0.7], hz: -0.05 };
+      // sitting on a stand's seat with something to do: eating (the right hand at the mouth), on the phone (at the ear), reading it (both hands at
+      // the chest), a little flag up, filming the road
+      case 'sitEat': return { hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: -0.04, shz: [0.12, 0.16], shx: [0.35, 0.72], el: [0.9, 2.05], shy: [0, -0.3] };
+      case 'sitPhone': return { hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: -0.06, shz: [0.12, 0.2], shx: [0.35, 0.45], el: [0.9, 2.35] };
+      case 'sitText': return { hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: 0.14, shz: [0.25, 0.25], shx: [1.1, 1.1], el: [1.15, 1.15], shy: [-0.35, -0.35], nod: 0.28 };
+      case 'sitFlag': return { hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: -0.05, shz: [0.12, 0.45], shx: [0.35, 1.05], el: [0.9, 0.45] };
+      case 'sitFilm': return { hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: 0.05, shz: [0.3, 0.3], shx: [1.6, 1.6], el: [0.75, 0.75], shy: [-0.3, -0.3] };
       default: return POSEX[name] ? POSEX[name](t, s) : {};
     }
   }
@@ -985,6 +1000,7 @@
         const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw); yaw += clamp(d * 0.3, -0.45, 0.45);
       }
     }
+    J = umbrella(p, J, show);
     P.root.position.set(_w.x, _w.y + (J.dy || 0) * P.sc, _w.z); P.root.rotation.set(rx, yaw, 0, 'YXZ'); P.root.scale.setScalar(P.sc);
     setJ(P, J);
     if (look === 'car' && car) { const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw); P.torso.rotation.y += clamp(d * 0.35, -0.5, 0.5); P.head.rotation.y = clamp(d - P.torso.rotation.y, -1.1, 1.1); }
@@ -1022,23 +1038,76 @@
     if (car && Sc.al >= 0 && Math.hypot(car.x - _q.x, car.z - _q.z) < 160) yaw = Math.atan2(car.x - _q.x, car.z - _q.z);
     Mv.yaw = yaw; const P = Mv.P; P.root.position.copy(_q); P.root.rotation.set(0, yaw, 0); P.root.updateMatrixWorld(true); write(P, null, Sc.pos, Sc.nor);
   }
-  // the grandstand's wave: the people by the car stand up as it comes (the wave goes with it), sit down behind it; heads to the car
+  // the umbrellas in the rain (the user, 3. 11. 2026: »ko pada dež naj ima večina … marele«): most of the fans and the people on the stands (not
+  // under a roof, not the staff: p.um) hold one up in the left hand while it rains (Render.raining: not in the snow) and the hand is free; one
+  // instanced mesh for the world (W.umb), only the posed scenes' people near (step)
+  let WET = false;
+  const UMB_COLS = [0x1b1d22, 0x15306b, 0xb2222a, 0x1f63d8, 0x1d6b3a, 0xe8b417, 0xf2f2ee, 0x6a2f8a, 0xe0602a, 0x2a8a8a, 0x1b1d22, 0x15306b];
+  function umbrella(p, J, show) {   // its left arm up holding the umbrella (p.uh: held now)
+    p.uh = false;
+    if (!WET || !p.um) return J;
+    if (show) for (const k of show) if (k[0] === 'L') return J;   // (something else in that hand)
+    const O = Object.assign({}, J), two = (k, v) => { O[k] = [v, jv(J, k, 1)]; };
+    two('shz', 0.2); two('shx', 0.9); two('el', 1.45); two('shy', 0.15); p.uh = true; return O;
+  }
+  function umbGeo() {   // the canopy (8 panels, 1 m across, its rim 0.86 m over the hand) and the shaft, white and dark (the instance its colour)
+    const P = [], C = [], N = [], add = (a, b, c, k) => { P.push(...a, ...b, ...c); for (let i = 0; i < 3; i++) C.push(k, k, k);
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]; let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; for (let i = 0; i < 3; i++) N.push(nx / l, ny / l, nz / l); };
+    for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU; add([0, 1.02, 0], [Math.sin(a0) * 0.5, 0.86, Math.cos(a0) * 0.5], [Math.sin(a1) * 0.5, 0.86, Math.cos(a1) * 0.5], 1); }
+    for (let k = 0; k < 3; k++) { const a0 = k / 3 * TAU, a1 = (k + 1) / 3 * TAU, r = 0.012, p0 = [Math.sin(a0) * r, -0.06, Math.cos(a0) * r], p1 = [Math.sin(a1) * r, -0.06, Math.cos(a1) * r];
+      add(p0, p1, [p1[0], 1.02, p1[2]], 0.18); add(p0, [p1[0], 1.02, p1[2]], [p0[0], 1.02, p0[2]], 0.18); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.attributes.color.noSeason = true; return g;
+  }
+  const _um = new THREE.Matrix4(), _uq = new THREE.Quaternion(), _ue = new THREE.Euler(), _us = new THREE.Vector3(), _up = new THREE.Vector3(), _uc = new THREE.Color();
+  function umbStep(W) {
+    const M = W.umb; if (!M) return; let n = 0;
+    if (WET) for (const Sc of W.scenes) { if (!Sc.posed || !Sc.ppl.visible || !Sc.grp.visible) continue;
+      for (const p of Sc.people) { if (!p.uh || n >= M.um) continue; const P = p.P, e = P.hand[0].matrixWorld.elements;
+        _up.set(e[12], e[13], e[14]); _ue.set(-0.2, P.root.rotation.y, 0, 'YXZ'); _uq.setFromEuler(_ue); _us.setScalar(P.sc); _um.compose(_up, _uq, _us); M.setMatrixAt(n, _um);
+        M.setColorAt(n, _uc.setHex(UMB_COLS[p.uk])); n++; } }
+    M.count = n; M.visible = n > 0; if (n) { M.instanceMatrix.needsUpdate = true; M.instanceColor.needsUpdate = true; }
+  }
+  // the grandstand's wave: the people by the car stand up as it comes (the wave goes with it), sit down behind it; heads to the car; what they do
+  // sitting (P.seat.pose: eating, drinking, on the phone …, their things in their hands); the walkers on their ways (poseWalker)
   function poseStand(Sc, t, car, fixed) {
     const G = Sc.groups.st, dt = clamp(t - (Sc.ts == null ? t : Sc.ts), 0, 0.2); Sc.ts = t;
     const carA = car && Sc.da != null ? -Sc.da : -1e9;
     for (const p of Sc.people) {
-      const P = p.P, st = P.seat, ax = st.x * Sc.sgn, dA = ax - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0;
+      const P = p.P, st = P.seat; if (!st) { poseWalker(Sc, p, fixed ? 0 : t, car); continue; }
+      const ax = st.x * Sc.sgn, dA = ax - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0;
       const f0 = p.up || 0, f = p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6);
       const sig = f > 0 ? -1 : (car && carA > -60 && carA < Sc.len + 30 ? 1 : 0);
-      if (!fixed && sig === p.sig && sig >= 0) continue; p.sig = sig;   // (still: not posed again)
-      const up = poseJ(st.k < 0.55 ? 'cheer' : st.k < 0.75 ? 'jump' : st.k < 0.9 ? 'wave' : 'phoneUp', t * 6.5 + st.k * 9), sit = poseJ(st.k < 0.6 ? 'sit' : st.k < 0.8 ? 'sitDrink' : 'sitLean');
-      const J = mixJ(sit, up, f); _w.set(st.x, st.y + (Sc.lift != null ? Sc.lift : 0.42) * f, st.z + (Sc.fwd != null ? Sc.fwd : 0.05) * f).applyMatrix4(G.m);   // (Bathurst's stand: up on the bench; the others' stands: a step forward, off it)
+      if (!fixed && sig === p.sig && sig >= 0 && p.wet === WET) continue; p.sig = sig; p.wet = WET;   // (still: not posed again; the rain's start or end: all again)
+      const up = poseJ(st.up || (st.k < 0.55 ? 'cheer' : st.k < 0.75 ? 'jump' : st.k < 0.9 ? 'wave' : 'phoneUp'), t * 6.5 + st.k * 9), sit = poseJ(st.pose || (st.k < 0.65 ? 'sit' : 'sitLean'));
+      const J = umbrella(p, mixJ(sit, up, f)); _w.set(st.x, st.y + (Sc.lift != null ? Sc.lift : 0.42) * f, st.z + (Sc.fwd != null ? Sc.fwd : 0.05) * f).applyMatrix4(G.m);   // (Bathurst's stand: up on the bench; the others' stands: a step forward, off it)
       P.root.position.set(_w.x, _w.y + (J.dy || 0) * P.sc, _w.z); P.root.rotation.set(0, G.yaw, 0); P.root.scale.setScalar(P.sc); setJ(P, J);
       if (sig === 1 && car) { const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - G.yaw); P.head.rotation.y = clamp(d, -1.1, 1.1); }
-      P.root.updateMatrixWorld(true); write(P, null, Sc.pos, Sc.nor);
+      P.root.updateMatrixWorld(true); write(P, P.show || null, Sc.pos, Sc.nor);
     }
   }
+  // a walker on a stand (P.walk): along its way and back, stopping now and then (a vendor to sell, facing the seats), a while at either end
+  function walkAt(w, t) {   // its distance along the way at time t, whether it moves, which way
+    let u = ((t + w.ph * w.per) % w.per + w.per) % w.per, back = false;
+    if (u >= w.leg + w.wait) { u -= w.leg + w.wait; back = true; }
+    if (u >= w.leg) return { d: back ? 0 : w.L, mv: false, back };
+    const k = Math.floor(u / w.cyc), r = u - k * w.cyc, d = Math.min(w.L, k * w.stop + Math.min(r * w.v, w.stop));
+    return { d: back ? w.L - d : d, mv: r * w.v < w.stop && d < w.L, back };
+  }
+  function poseWalker(Sc, p, t, car) {
+    const P = p.P, w = P.walk, { d, mv, back } = walkAt(w, t), c = w.cum, n = c.length;
+    let i = 1; while (i < n - 1 && c[i] < d) i++;
+    const a = w.pts[i - 1], b = w.pts[i], f = clamp((d - c[i - 1]) / ((c[i] - c[i - 1]) || 1), 0, 1);
+    _w.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f);
+    let dx = b[0] - a[0], dz = b[2] - a[2]; if (Math.hypot(dx, dz) < 0.05) { dx = w.dir[0]; dz = w.dir[1]; }
+    if (back) { dx = -dx; dz = -dz; }
+    const yaw = !mv && w.face ? Math.atan2(w.face[0], w.face[1]) : Math.atan2(dx, dz);
+    const J = umbrella(p, mv ? poseJ(w.carry ? 'carryWalk' : 'walk', d * STRIDE.walk + p.ph * TAU) : poseJ(w.carry ? 'carry' : 'stand'));
+    P.root.position.copy(_w); P.root.rotation.set(0, yaw, 0); P.root.scale.setScalar(P.sc); setJ(P, J);
+    if (!mv && car) { const dh = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw); P.head.rotation.y = clamp(dh, -1.0, 1.0); }
+    P.root.updateMatrixWorld(true); write(P, P.show || null, Sc.pos, Sc.nor);
+  }
   function poseScene(Sc, t, car, fixed) {
+    Sc.posed = true;
     for (const Mv of Sc.movers) poseMover(Sc, Mv, t, car);
     if (Sc.stand) poseStand(Sc, t, car, fixed);
     else for (const p of Sc.people) poseOne(Sc, p, t, car);
@@ -1121,11 +1190,13 @@
   function step(W, t, car, cam) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built
       for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
-      W.root.visible = true; smokeStep(W, 0, true); W.cs = null; W.lt = 0; return;
+      WET = false; W.root.visible = true; smokeStep(W, 0, true); if (W.umb) { W.umb.count = 0; W.umb.visible = false; } W.cs = null; W.lt = 0; return;
     }
     // a special mission (js/missions.js, Missions.run): not a race day (a flood, a fire, a rescue), so none of these out; back when it is over
     const mis = typeof Missions !== 'undefined' && !!Missions.run; W.root.visible = !mis; if (mis) { W.cs = null; return; }
     const T = W.T, dt = t - W.lt, winter = W.o.seasonKey === 'winter'; W.lt = t;   // (winter: the world under snow, js/render.js seasonWorld)
+    const wet = typeof Render !== 'undefined' && !!Render.raining && !winter;   // (the rain falling, not snow: umbrellas up)
+    if (wet !== WET) { WET = wet; for (const Sc of W.scenes) for (const p of Sc.people) p.sig = null; }
     if (dt < -0.5) for (const Sc of W.scenes) reset(Sc);   // (time went back: a new race)
     // the followed car along the road: where (s) and how fast (from its way since the last frame: also in a replay)
     const q = T.query(car.x, car.z, W.hint, W.q); W.hint = q.i; const cs = q.s;
@@ -1149,7 +1220,7 @@
       Sc.on = dc < W.rPose && (!cam || _fr.intersectsSphere(_sp.set(_cv.set(Sc.cx, Sc.cy, Sc.cz), Sc.r)));
       if (Sc.on && (dc < 80 || ((W.frame + Sc.k) & 1) === 0)) poseScene(Sc, t, car, false);   // (farther than 80 m: every other frame)
     }
-    smokeStep(W, t, false);
+    smokeStep(W, t, false); umbStep(W);
   }
 
   /* ---------------- where: the scenes of each real track [scene, metres after the start line, side (+1 right, -1 left), options] ---------------- */
@@ -1218,7 +1289,18 @@
      seats between; their seats read off the stands' tiers (the crowd picture's layout: 32 seats across a tier's 12 m, a tier a row of the
      picture); each stretch of a stand a scene of its own (posed near the camera; the wave as on Bathurst's stand). STANDS: the share of the
      seats taken, the most people on a track (by the tier), on a stretch, a stretch's length ---------------- */
-  const STANDS = { share: 0.05, most: [60, 240, 400], per: 24, len: 40 };   // (NIZKA: 60 at most, the phone's budget)
+  const STANDS = { share: 0.05, most: [60, 240, 400], per: 24, len: 40, walk: [6, 14, 24] };   // (NIZKA: 60 at most, the phone's budget; walk: the most walkers on a track's stands)
+  // what the people on the stands do while they wait (the user, 3. 11. 2026: »… pije pijačo, je hrano, snema, telefonira«): the share, the pose
+  // sitting, the things in the hand (one of them); the others sit or lean forwards
+  const SEAT_ACTS = [[0.1, 'sitEat', ['hotdog', 'burger', 'icecream', 'popcorn']], [0.14, 'sitDrink', ['cup', 'can', 'bottle']], [0.06, 'sitPhone', ['phone']],
+    [0.08, 'sitText', ['phone']], [0.05, 'sitFlag', ['mflag']], [0.05, 'sitFilm', ['phone']]];
+  function roofed(feet, x, y, z) {   // under a stand's roof (its copied triangles over it)? (no umbrella there in the rain)
+    for (const f of feet) { if (!f.rv || x < f.bb[0] || x > f.bb[1] || z < f.bb[2] || z > f.bb[3]) continue; const R = f.rv;
+      for (let i = 0; i + 2 < R.length; i += 3) { const a = R[i], b = R[i + 1], c = R[i + 2]; if (Math.min(a[1], b[1], c[1]) < y + 1.2) continue;
+        const d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]); if (Math.abs(d) < 1e-9) continue;
+        const w1 = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d, w2 = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d; if (w1 >= 0 && w2 >= 0 && w1 + w2 <= 1) return true; } }
+    return false;
+  }
   const isStand = (m) => m.isMesh && !m.isInstancedMesh && m.visible && m.material && !Array.isArray(m.material) && m.material.userData && m.material.userData.stand && m.geometry && m.geometry.attributes.uv;
   const hasStands = (o) => { let n = 0; o.root.traverse(m => { if (isStand(m)) n++; }); return n > 0; };
   const STAND_EMPTY_FS = ['#ifdef USE_MAP',   // (the stand's picture per tier as crowdStands lays it, the seats empty: nobody jumps, no flags)
@@ -1262,6 +1344,12 @@
       this.quad(a, b, c, d, [0, 1, 0], col, null, U);
       for (const [q0, q1, s] of [[a, b, -1], [d, c, 1]]) this.quad(q0, q1, [q1[0], q1[1] - h, q1[2]], [q0[0], q0[1] - h, q0[2]], [s * sx, 0, s * sz], col, null, U);
     }
+    beam(p0, p1, w, h0, h1, col) {   // a beam hanging from p0 to p1 (h0 deep at p0, h1 at p1): its two sides and its underside
+      const dx = p1[0] - p0[0], dz = p1[2] - p0[2], L = Math.hypot(dx, dz) || 1, sx = -dz / L * w / 2, sz = dx / L * w / 2, U = kq(KIT.rail, 0, 1, 0, 1), lo = (q, h) => [q[0], q[1] - h, q[2]];
+      const a = [p0[0] - sx, p0[1], p0[2] - sz], b = [p1[0] - sx, p1[1], p1[2] - sz], c = [p1[0] + sx, p1[1], p1[2] + sz], d = [p0[0] + sx, p0[1], p0[2] + sz];
+      this.quad(lo(a, h0), lo(b, h1), lo(c, h1), lo(d, h0), [0, -1, 0], col, null, U);
+      this.quad(a, b, lo(b, h1), lo(a, h0), [-sx, 0, -sz], col, null, U); this.quad(d, c, lo(c, h1), lo(d, h0), [sx, 0, sz], col, null, U);
+    }
     post(p, h, w, f, col) {   // an upright, from p up h: its faces to the front and back (f), w wide
       const sx = -f[1] * w / 2, sz = f[0] * w / 2, U = kq(KIT.rail, 0, 1, 0, 1), a = [p[0] - sx, p[1], p[2] - sz], b = [p[0] + sx, p[1], p[2] + sz];
       for (const s of [1, -1]) this.quad(a, b, [b[0], b[1] + h, b[2]], [a[0], a[1] + h, a[2]], [s * f[0], 0, s * f[1]], col, null, U);
@@ -1303,12 +1391,12 @@
       const fs = feet.filter(f => !(bx.max.x < f.bb[0] || bx.min.x > f.bb[1] || bx.max.z < f.bb[2] || bx.min.z > f.bb[3])); if (!fs.length) continue;
       let k = 0;
       for (let t = 0; t < nt; t++) {
-        const o9 = t * 9; if (N[o9 + 1] < 0.6) continue;
+        const o9 = t * 9, dn = N[o9 + 1] < -0.6; if (N[o9 + 1] < 0.6 && !dn) continue;   // (its top, or its underside: seen from the road under it)
         const cx = (P[o9] + P[o9 + 3] + P[o9 + 6]) / 3, cz = (P[o9 + 2] + P[o9 + 5] + P[o9 + 8]) / 3, ylo = Math.min(P[o9 + 1], P[o9 + 4], P[o9 + 7]);
         const f = fs.find(f => cx >= f.bb[0] && cx <= f.bb[1] && cz >= f.bb[2] && cz <= f.bb[3] && ylo > f.top + 1.5 && ylo < f.top + 14 && inPoly(f.poly, cx, cz)); if (!f) continue;
         k++;
         const up = (q) => [P[q] + N[o9] * 0.05, P[q + 1] + N[o9 + 1] * 0.05, P[q + 2] + N[o9 + 2] * 0.05], a = up(o9), b = up(o9 + 3), c = up(o9 + 6), u = (p) => [(p[0] * f.tx + p[2] * f.tz) / 4, UV];
-        (f.rv || (f.rv = [])).push(a, b, c);   // (the roof's corners: its front edge, its trusses, standAround)
+        if (dn) (f.rb || (f.rb = [])).push(a, b, c); else (f.rv || (f.rv = [])).push(a, b, c);   // (the roof's corners: its front edge, its trusses and the beams under it, standAround)
         sbAt(cx, cz).tri(a, b, c, [C[o9], C[o9 + 1], C[o9 + 2]], NOSEAT, u(a), u(b), u(c), [N[o9], N[o9 + 1], N[o9 + 2]]);
       }
       n += k;
@@ -1324,7 +1412,7 @@
      clearAll). AR: the concourse's width, the path's width and length, the spacing of kiosks, lamp posts, bins and doors ---- */
   const AR = { apron: 6.5, path: 3, gate: 26, kiosk: 34, lamp: 22, bin: 13, door: 20 };
   const AR_COL = { kiosk: [[0.82, 0.18, 0.14], [0.13, 0.34, 0.66], [0.1, 0.48, 0.28], [0.9, 0.6, 0.1]], lamp: [0.3, 0.32, 0.35], steel: [0.66, 0.68, 0.72], dark: [0.16, 0.18, 0.21],
-    sign: [0.1, 0.22, 0.48], white: [0.96, 0.96, 0.94], warm: [1, 0.95, 0.8], pave: [0.8, 0.79, 0.76], booth: [0.86, 0.85, 0.82] };
+    sign: [0.1, 0.22, 0.48], white: [0.96, 0.96, 0.94], warm: [1, 0.95, 0.8], pave: [0.8, 0.79, 0.76], booth: [0.86, 0.85, 0.82], clad: [0.72, 0.75, 0.79], boards: [0.56, 0.43, 0.3] };
   function standAround(o, A, feet, sbAt, tier, def, circles, ms) {
     if (!feet.length) return;
     const gH = o.groundH, T = A.T, q = {}, gr = (x, z, y) => { const h = gH(x, z); return Number.isFinite(h) ? h : y; }, temp = STAND_TEMP.has(def.id), up = [0, 1, 0];
@@ -1337,6 +1425,14 @@
       gb.quad(c(1, -1, y0), c(-1, -1, y0), c(-1, -1, y1), c(1, -1, y1), [tz, 0, -tx], col, null, PLU);
       gb.quad(c(1, 1, y0), c(1, -1, y0), c(1, -1, y1), c(1, 1, y1), [tx, 0, tz], col, null, PLU);
       gb.quad(c(-1, -1, y0), c(-1, 1, y0), c(-1, 1, y1), c(-1, -1, y1), [-tx, 0, -tz], col, null, PLU);
+    };
+    // a kiosk's lit sign round its top (h high): white, front and back its picture in the middle in its colour (the kit's picto: a drink, an
+    // ice cream, a hot dog, a burger)
+    const signBox = (x, y0, z, w, d, h, tx, tz, col, kind) => {
+      const gb = sbAt(x, z), ax = tx / 2, az = tz / 2, bx = -tz * d / 2, bz = tx * d / 2, c = (sa, sb, y) => [x + ax * sa + bx * sb, y, z + az * sa + bz * sb], y1 = y0 + h, pw = h * 2, U = kq(KIT.picto, kind / 4 + 0.004, (kind + 1) / 4 - 0.004, 0.97, 0.03);
+      for (const sb of [1, -1]) { const o = [-tz * sb, 0, tx * sb], L = -w * sb, R = w * sb, m0 = -pw * sb, m1 = pw * sb;   // (from its left to its right, as seen)
+        for (const [p0, p1, uv] of [[L, m0, null], [m0, m1, U], [m1, R, null]]) gb.quad(c(p0, sb, y0), c(p1, sb, y0), c(p1, sb, y1), c(p0, sb, y1), o, uv ? col : AR_COL.white, uv ? AR_COL.white : null, uv || PLU); }
+      gb.quad(c(w, 1, y0), c(w, -1, y0), c(w, -1, y1), c(w, 1, y1), [tx, 0, tz], AR_COL.white, null, PLU); gb.quad(c(-w, -1, y0), c(-w, 1, y0), c(-w, 1, y1), c(-w, -1, y1), [-tx, 0, -tz], AR_COL.white, null, PLU);
     };
     // a prop of the people's (L) baked into the stands' meshes, standing on the ground at (x, z) turned by yaw
     const D = { P: [], N: [], C: [] }, bakeAt = (g, x, z, yaw) => {
@@ -1366,65 +1462,97 @@
       const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
       const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
       // the back wall's outer face (a ray from 6 m behind the back row towards the road, under the top tread): how far behind the back row it is
-      const offs = []; for (let k = 0; k < Math.min(8, B.length); k++) { const e = B[Math.round(k * (B.length - 1) / Math.max(1, Math.min(8, B.length) - 1))], g0 = gr(e.p[0], e.p[2], e.p[1] - 3);
+      const offs = []; let hi = 0; for (let k = 0; k < Math.min(8, B.length); k++) { const e = B[Math.round(k * (B.length - 1) / Math.max(1, Math.min(8, B.length) - 1))], g0 = gr(e.p[0], e.p[2], e.p[1] - 3);
         rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, Math.min(e.p[1] - 0.4, g0 + 1.6), e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); rc.far = 6.6;
-        const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance); }
-      offs.sort((a, b) => a - b); const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05;
+        const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance);
+        if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = rc.intersectObjects(near, false)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
+      offs.sort((a, b) => a - b); (f.at || (f.at = {})).wall = [offs.length, hi, Math.min(8, B.length)]; const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05, clad = wall != null && hi >= 2 && hi >= offs.length * 0.6;
       // the concourse: along the back (the wall's face out to AR.apron), on past the ends; the ends' strips from the front to the back
-      const back = B.map(e => [e.p[0] - e.f[0] * (wo + AR.apron / 2), e.p[2] - e.f[1] * (wo + AR.apron / 2)]), b0 = back[0], b1 = back[back.length - 1];
-      way([[b0[0] - tx * 5, b0[1] - tz * 5], ...back, [b1[0] + tx * 5, b1[1] + tz * 5]], AR.apron, AR_COL.pave);
-      for (const [e0, e1, s] of [[Fr[0], B[0], -1], [Fr[Fr.length - 1], B[B.length - 1], 1]]) way([[e0.p[0] + tx * s * 2.6 + e0.f[0] * 1.5, e0.p[2] + tz * s * 2.6 + e0.f[1] * 1.5], [e1.p[0] + tx * s * 2.6 - e1.f[0] * wo, e1.p[2] + tz * s * 2.6 - e1.f[1] * wo]], 4, AR_COL.pave);
-      // the strip in front: paved from the stand's front to 1.4 m off the barrier
+      // (a small stand, a street circuit's few rows of 20 m: its front, its ends' signs and its roof only, not a concourse of its own)
+      let blen = 0; for (let k = 1; k < B.length; k++) blen += Math.hypot(B[k].p[0] - B[k - 1].p[0], B[k].p[2] - B[k - 1].p[2]);
+      const big = blen >= 24 && f.nrows >= 4, back = B.map(e => [e.p[0] - e.f[0] * (wo + AR.apron / 2), e.p[2] - e.f[1] * (wo + AR.apron / 2)]), b0 = back[0], b1 = back[back.length - 1];
+      if (big) way([[b0[0] - tx * 5, b0[1] - tz * 5], ...back, [b1[0] + tx * 5, b1[1] + tz * 5]], AR.apron, AR_COL.pave);
+      if (big) for (const [e, s] of [[B[0], -1], [B[B.length - 1], 1]]) {   // paths off its ends, out and away from the road (as far as they keep clear of it)
+        const l = Math.hypot(e.f[0], e.f[1]) || 1, fx = e.f[0] / l, fz = e.f[1] / l, ox = (tx * s - fx) * 0.7071, oz = (tz * s - fz) * 0.7071, x0 = e.p[0] - fx * (wo + AR.apron / 2) + tx * s * 5, z0 = e.p[2] - fz * (wo + AR.apron / 2) + tz * s * 5, pts = [[x0, z0]];
+        for (let d = 2; d <= 22; d += 2) { const x = x0 + ox * d, z = z0 + oz * d; if (A.clearance(x, z) < 5) break; pts.push([x, z]); }
+        if (pts.length > 4) way(pts, AR.path, AR_COL.pave);
+      }
+      if (big) for (const [e0, e1, s] of [[Fr[0], B[0], -1], [Fr[Fr.length - 1], B[B.length - 1], 1]]) way([[e0.p[0] + tx * s * 2.6 + e0.f[0] * 1.5, e0.p[2] + tz * s * 2.6 + e0.f[1] * 1.5], [e1.p[0] + tx * s * 2.6 - e1.f[0] * wo, e1.p[2] + tz * s * 2.6 - e1.f[1] * wo]], 4, AR_COL.pave);
+      // the strip in front: paved from the stand's front to a metre off the barrier (the vendors' walkway)
       { let prev = null, d = 0;
         for (let k = 0; k < Fr.length; k++) {
-          const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= 14; s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.4) break; gap = s; }
+          const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= 14; s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.0) break; gap = s; }
           if (k) d += Math.hypot(e.p[0] - Fr[k - 1].p[0], e.p[2] - Fr[k - 1].p[2]);
-          const cur = gap >= 1.2 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
+          const cur = gap >= 1.0 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
           if (cur) { cur.i[1] = gr(cur.i[0], cur.i[2], 0) + 0.07; cur.o[1] = gr(cur.o[0], cur.o[2], 0) + 0.07; clear((cur.i[0] + cur.o[0]) / 2, (cur.i[2] + cur.o[2]) / 2, gap / 2 + 1.5); }
           if (cur && prev) sbAt(e.p[0], e.p[2]).quad(prev.i, cur.i, cur.o, prev.o, up, AR_COL.pave, null, [[prev.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 1)], [prev.d / 4, kv(KIT.pave, 1)]]);
           prev = cur;
         } }
+      // the walkway in front (the vendors', standsOf): 0.9 m off the first row's front, its longest stretch clear of the fence (at most 60 m)
+      { const pts = [];
+        for (let k = 1; k < Fr.length; k++) { const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]), n = Math.max(1, Math.ceil(l / 2));
+          for (let j = k === 1 ? 0 : 1; j <= n; j++) { const w = j / n, fx = a.f[0] + (b.f[0] - a.f[0]) * w, fz = a.f[1] + (b.f[1] - a.f[1]) * w, x = a.p[0] + (b.p[0] - a.p[0]) * w + fx * 0.9, z = a.p[2] + (b.p[2] - a.p[2]) * w + fz * 0.9, g0 = gH(x, z);
+            pts.push(Number.isFinite(g0) && A.clearance(x, z) >= 1.0 && Math.abs(g0 - (a.p[1] + (b.p[1] - a.p[1]) * w)) < 0.8 ? [x, g0 + 0.07, z] : null); } }
+        let best = [], cur = []; for (const p of pts.concat([null])) { if (p) cur.push(p); else { if (cur.length > best.length) best = cur; cur = []; } }
+        if (best.length >= 6) { const m = Math.min(best.length, 31), k0 = (best.length - m) >> 1; f.gang = best.slice(k0, k0 + m); } }
       // along the concourse: the doors in the wall, kiosks (facing the wall), bins and lamp posts on its outer edge, toilets at the far end
       const along = (dist) => {   // a point on the back line at a distance from its start, its outward direction
         let acc = 0; for (let k = 1; k < B.length; k++) { const a = B[k - 1], b = B[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (acc + l >= dist || k === B.length - 1) { const w = Math.min(1, Math.max(0, (dist - acc) / (l || 1)));
           return { x: a.p[0] + (b.p[0] - a.p[0]) * w, y: a.p[1] + (b.p[1] - a.p[1]) * w, z: a.p[2] + (b.p[2] - a.p[2]) * w, fx: a.f[0] + (b.f[0] - a.f[0]) * w, fz: a.f[1] + (b.f[1] - a.f[1]) * w }; } acc += l; }
         const e = B[0]; return { x: e.p[0], y: e.p[1], z: e.p[2], fx: e.f[0], fz: e.f[1] }; };
-      let blen = 0; for (let k = 1; k < B.length; k++) blen += Math.hypot(B[k].p[0] - B[k - 1].p[0], B[k].p[2] - B[k - 1].p[2]);
-      if (wall != null) for (let d0 = 8; d0 < blen - 6; d0 += AR.door) {   // the entrances: a dark way in, its frame, 2.8 m high, on the wall's face
+      if (clad && big) {   // the back wall clad in profiled sheets (a light metal; a period stand's in boards) up to under the last row, along its top a band in the stand's colour
+        let d = 0;
+        for (let k = 1; k < B.length; k++) {
+          const a = B[k - 1], b = B[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05) continue;
+          const W = (e) => { const fl = Math.hypot(e.f[0], e.f[1]) || 1; return [e.p[0] - e.f[0] / fl * (wall + 0.02), e.p[2] - e.f[1] / fl * (wall + 0.02)]; };
+          const wa = W(a), wb = W(b), ga = gr(wa[0], wa[1], a.p[1] - 3), gb2 = gr(wb[0], wb[1], b.p[1] - 3), ta = a.p[1] - 0.5, tb = b.p[1] - 0.5;
+          if (ta - ga > 2.5 && tb - gb2 > 2.5) {
+            const out = [-(a.f[0] + b.f[0]) / 2, 0, -(a.f[1] + b.f[1]) / 2], g = sbAt(wa[0], wa[1]);
+            g.quad([wa[0], ga, wa[1]], [wb[0], gb2, wb[1]], [wb[0], tb - 0.8, wb[1]], [wa[0], ta - 0.8, wa[1]], out, f.bench === 'wood' ? AR_COL.boards : AR_COL.clad, null, [[d / 8, kv(KIT.clad, 1)], [(d + l) / 8, kv(KIT.clad, 1)], [(d + l) / 8, kv(KIT.clad, 0)], [d / 8, kv(KIT.clad, 0)]]);
+            g.quad([wa[0], ta - 0.8, wa[1]], [wb[0], tb - 0.8, wb[1]], [wb[0], tb, wb[1]], [wa[0], ta, wa[1]], out, f.col, null, kq(KIT.riser, d / 4, (d + l) / 4, 1, 0));
+          }
+          d += l;
+        }
+      }
+      if (big && wall != null) for (let d0 = 8; d0 < blen - 6; d0 += AR.door) {   // the entrances: a dark way in, its frame, 2.8 m high, on the wall's face; the stand's letter over it
         const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, w0 = wall + 0.03, g0 = gr(p.x - fx * w0, p.z - fz * w0, p.y - 3), at = (s, y) => [p.x - fx * w0 + tx * s, y, p.z - fz * w0 + tz * s];
         sbAt(p.x, p.z).quad(at(-2, g0), at(2, g0), at(2, g0 + 2.8), at(-2, g0 + 2.8), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0, 1, 1, 0.05));
+        if (clad && p.y - 1.4 > g0 + 4.4) { const k = f.letter, u0 = (k % 4) / 4, f0 = k >= 4 ? 0.5 : 0, at2 = (s, y) => [p.x - fx * (w0 + 0.01) + tx * s, y, p.z - fz * (w0 + 0.01) + tz * s];
+          sbAt(p.x, p.z).quad(at2(0.6, g0 + 3.1), at2(-0.6, g0 + 3.1), at2(-0.6, g0 + 4.3), at2(0.6, g0 + 4.3), [-fx, 0, -fz], AR_COL.sign, AR_COL.white, kq(KIT.glyph, u0 + 0.004, u0 + 0.246, f0 + 0.49, f0 + 0.01)); }
       }
-      for (let d0 = Math.min(14, blen / 2), k = 0; d0 < blen - 4; d0 += AR.kiosk, k++) {   // the kiosks
+      if (big) for (let d0 = Math.min(14, blen / 2), k = 0; d0 < blen - 4; d0 += AR.kiosk, k++) {   // the kiosks: drinks, ice cream, hot dogs, burgers in turn
         const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron - 1.2, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3), col = AR_COL.kiosk[(f.letter + k) % 4];
         boxA(x, g0, z, 2.6, 2.2, 2.5, fz, -fx, col, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.5 });
+        signBox(x, g0 + 2.5, z, 2.6, 2.2, 0.55, fz, -fx, col, (f.letter * 3 + k) % 4); boxA(x, g0 + 3.05, z, 3.0, 2.6, 0.14, fz, -fx, AR_COL.dark);
         const ax = tx * 1.35, az = tz * 1.35, e0 = [x + fx * 1.1, g0 + 2.5, z + fz * 1.1], e1 = [x + fx * 2.0, g0 + 2.15, z + fz * 2.0];   // (its awning over the window)
         sbAt(x, z).quad([e0[0] - ax, e0[1], e0[2] - az], [e0[0] + ax, e0[1], e0[2] + az], [e1[0] + ax, e1[1], e1[2] + az], [e1[0] - ax, e1[1], e1[2] - az], [fx * 0.4, 1, fz * 0.4], AR_COL.white, col, kq(KIT.awning, 0, 0.66, 0, 1));
-        clear(x, z, 3);
+        clear(x, z, 3); (f.at || (f.at = {})).kiosk = f.at.kiosk || [x, g0, z, fx, fz];
       }
-      for (let d0 = AR.bin / 2; d0 < blen; d0 += AR.bin) { const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, o0 = wo + AR.apron - 0.4; bakeAt(L.bin(), p.x - p.fx / l * o0, p.z - p.fz / l * o0, Math.atan2(p.fx, p.fz)); }
-      for (let d0 = 4; d0 < blen + 2; d0 += AR.lamp) {   // the lamp posts: a pole, its head over the concourse
+      if (big) for (let d0 = AR.bin / 2; d0 < blen; d0 += AR.bin) { const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, o0 = wo + AR.apron - 0.4; bakeAt(L.bin(), p.x - p.fx / l * o0, p.z - p.fz / l * o0, Math.atan2(p.fx, p.fz)); }
+      if (big) for (let d0 = 4; d0 < blen + 2; d0 += AR.lamp) {   // the lamp posts: a pole, its head over the concourse
         const p = along(Math.min(d0, blen)), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 0.3, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3);
         sbAt(x, z).post([x, g0, z], 6.2, 0.14, [fx, fz], AR_COL.lamp); boxA(x + fx * 0.45, g0 + 6.0, z + fz * 0.45, 0.35, 1.1, 0.18, fz, -fx, AR_COL.lamp);
       }
-      if (blen > 20) { const p = along(blen - 6), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 1.0;   // the toilets: a row of three, facing the concourse
+      if (big) { const p = along(blen - 6), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 1.0;   // the toilets: a row of three, facing the concourse
         for (let k = -1; k <= 1; k++) bakeAt(L.portaloo(0x2f63c9), p.x - fx * o0 + tx * k * 1.35, p.z - fz * o0 + tz * k * 1.35, Math.atan2(fx, fz)); clear(p.x - fx * o0, p.z - fz * o0, 3.5); }
       // the path off the middle of the concourse to its gate, as long as it keeps clear of the road
-      { const p = along(blen / 2), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, s0 = wo + AR.apron, pts = [[p.x - fx * s0, p.z - fz * s0]]; let s = s0;
+      if (big) { const p = along(blen / 2), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, s0 = wo + AR.apron, pts = [[p.x - fx * s0, p.z - fz * s0]]; let s = s0;
         while (s < s0 + AR.gate) { s += 2; const x = p.x - fx * s, z = p.z - fz * s; if (A.clearance(x, z) < 4) break; pts.push([x, z]); }
         if (pts.length > 5) {
           way(pts, AR.path, AR_COL.pave);
           const [gx, gz] = pts[pts.length - 1], g0 = gr(gx, gz, p.y - 3), ax = -fz, az = fx;   // (across the path)
-          for (const sd of [-1, 1]) boxA(gx + ax * sd * 2.3, g0, gz + az * sd * 2.3, 0.45, 0.45, 3.4, ax, az, AR_COL.sign);   // its pillars, the beam with the letter
-          boxA(gx, g0 + 3.4, gz, 5.1, 0.5, 0.7, ax, az, AR_COL.sign);
+          for (const sd of [-1, 1]) boxA(gx + ax * sd * 2.3, g0, gz + az * sd * 2.3, 0.34, 0.34, 3.4, ax, az, AR_COL.sign);   // its pillars, the beam with the letter
+          boxA(gx, g0 + 3.4, gz, 4.94, 0.36, 0.62, ax, az, AR_COL.sign);
           const k = f.letter, u0 = (k % 4) / 4, f0 = k >= 4 ? 0.5 : 0, at = (a, y) => [gx + ax * a - fx * 0.27, y, gz + az * a - fz * 0.27];
           sbAt(gx, gz).quad(at(0.55, g0 + 3.33), at(-0.55, g0 + 3.33), at(-0.55, g0 + 4.43), at(0.55, g0 + 4.43), [-fx, 0, -fz], AR_COL.sign, AR_COL.white, kq(KIT.glyph, u0 + 0.004, u0 + 0.246, f0 + 0.49, f0 + 0.01));
           for (let k2 = -1; k2 <= 1; k2++) boxA(gx + ax * k2 * 1.2, g0, gz + az * k2 * 1.2, 0.25, 0.9, 1.0, ax, az, AR_COL.steel);   // the turnstiles
-          const bxp = gx + ax * 4.2, bzp = gz + az * 4.2; boxA(bxp, g0, bzp, 1.8, 1.6, 2.4, -fz, fx, AR_COL.booth, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.35 });   // the ticket booth
-          clear(gx, gz, 6);
+          const bxp = gx + ax * 4.2, bzp = gz + az * 4.2; boxA(bxp, g0, bzp, 1.8, 1.6, 2.4, -fz, fx, AR_COL.booth, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.35 });   // the ticket booth, its roof
+          boxA(bxp, g0 + 2.4, bzp, 2.2, 2.0, 0.12, -fz, fx, AR_COL.dark);
+          clear(gx, gz, 6); (f.at || (f.at = {})).gate = [gx, g0, gz, fx, fz];
         } }
       // the stairs up at its back corners, along the wall (where it has one and is tall): from the ground at the corner up along the wall to a
       // landing with a door at the top, the flight's outer side closed, a railing over it
-      if (wall != null) for (const [k0, s] of [[0, 1], [B.length - 1, -1]]) {
+      if (big && wall != null) for (const [k0, s] of [[0, 1], [B.length - 1, -1]]) {
         const e = B[k0], l = Math.hypot(e.f[0], e.f[1]) || 1, fx = e.f[0] / l, fz = e.f[1] / l, c0 = [e.p[0] - fx * (wall + 0.05), e.p[2] - fz * (wall + 0.05)], g0 = gr(c0[0], c0[1], e.p[1] - 3), h = e.p[1] - g0;
         if (h < 2.6) continue;
         const n = Math.ceil(h / 0.18), run = n * 0.29, LD = 1.6; if (run + LD > blen * 0.45) continue;
@@ -1434,12 +1562,16 @@
             gb.quad(P0(a0, 0, y0), P0(a0, w, y0), P0(a0, w, y1), P0(a0, 0, y1), [-dx, 0, -dz], ST_CONC, null, R);
             gb.quad(P0(a0, 0, y1), P0(a0, w, y1), P0(a1, w, y1), P0(a1, 0, y1), up, ST_CONC, null, TA); }
         else gb.quad(P0(0, 0, g0), P0(0, w, g0), P0(run, w, g0 + h), P0(run, 0, g0 + h), [-dx, 1, -dz], ST_CONC, null, TA);
-        gb.quad(P0(0, w, g0), P0(run + LD, w, g0), P0(run + LD, w, g0 + h), P0(0, w, g0 + 0.05), [-fx, 0, -fz], ST_CONC, null, kq(KIT.riser, 0, (run + LD) / 2, 1, 0));   // (its outer side)
+        // its outer side: a stringer under the flight and the landing (0.35 m deep), posts down to the ground every 3 m and under the landing
+        gb.quad(P0(0, w + 0.01, g0 - 0.35), P0(run, w + 0.01, g0 + h - 0.35), P0(run, w + 0.01, g0 + h + 0.02), P0(0, w + 0.01, g0 + 0.02), [-fx, 0, -fz], ST_CONC, null, kq(KIT.riser, 0, run / 2, 1, 0));
+        gb.quad(P0(run, w + 0.01, g0 + h - 0.35), P0(run + LD, w + 0.01, g0 + h - 0.35), P0(run + LD, w + 0.01, g0 + h + 0.02), P0(run, w + 0.01, g0 + h + 0.02), [-fx, 0, -fz], ST_CONC, null, kq(KIT.riser, 0, LD / 2, 1, 0));
+        for (const a of [...Array(Math.max(0, Math.floor((run - 1) / 3))).keys()].map(i => 2.5 + i * 3).concat([run + LD - 0.15])) { const y = g0 + Math.min(1, a / run) * h - 0.35; if (y - g0 < 0.5) continue;
+          const pp = P0(a, w - 0.12, 0); boxA(pp[0], g0, pp[2], 0.2, 0.2, y - g0, dx, dz, ST_CONC); }
         gb.quad(P0(run, 0, g0 + h), P0(run, w, g0 + h), P0(run + LD, w, g0 + h), P0(run + LD, 0, g0 + h), up, ST_CONC, null, kq(KIT.tread, 0, 0.35, 0, 0.98));   // (the landing)
         gb.quad(P0(run + LD, 0, g0), P0(run + LD, w, g0), P0(run + LD, w, g0 + h), P0(run + LD, 0, g0 + h), [dx, 0, dz], ST_CONC, null, R);
         if (tier > 0) { gb.bar(P0(0, w, g0 + 1.0), P0(run, w, g0 + h + 1.0), 0.06, 0.06, ST_RAIL); gb.bar(P0(run, w, g0 + h + 1.0), P0(run + LD, w, g0 + h + 1.0), 0.06, 0.06, ST_RAIL); }
         gb.quad(P0(run + 0.2, -0.03, g0 + h), P0(run + LD - 0.2, -0.03, g0 + h), P0(run + LD - 0.2, -0.03, g0 + h + 2.3), P0(run + 0.2, -0.03, g0 + h + 2.3), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0.33, 0.67, 1, 0.05));   // (its door)
-        clear(c0[0] + dx * run / 2 - fx * 1, c0[1] + dz * run / 2 - fz * 1, run / 2 + 2);
+        clear(c0[0] + dx * run / 2 - fx * 1, c0[1] + dz * run / 2 - fz * 1, run / 2 + 2); (f.at || (f.at = {})).stairs = [c0[0], g0, c0[1], fx, fz, dx, dz];
       }
       // its letter on a sign at either end, over the end wall near the front (seen by the cars coming)
       { const k = f.letter, u0 = (k % 4) / 4, f0 = k >= 4 ? 0.5 : 0;
@@ -1463,10 +1595,34 @@
           for (const w of [0, 1 / 3, 2 / 3]) { const lo = mixP(w, 0.12, 0.12), hi = mixP(w, 1.7, 0.28); gb.bar(lo, hi, 0.1, 0.1, AR_COL.white); }
           for (const [w0, w1] of [[0, 1 / 3], [1 / 3, 2 / 3], [2 / 3, 1]]) gb.bar(mixP(w0, 1.7, 0.28), mixP(w1, 0.12, 0.12), 0.08, 0.08, AR_COL.white); }
       }
+      // under the roof (seen from the road): a beam from its back to its front every 10 m, deep at the back, thin at the front (where the
+      // underside cuts the plane across the stand there: any roof's own triangles)
+      if (tier > 0 && f.rb && f.rb.length >= 3) {
+        const R = f.rb; let t0 = 1e9, t1 = -1e9; for (const v of R) { const t = v[0] * tx + v[2] * tz; t0 = Math.min(t0, t); t1 = Math.max(t1, t); }
+        for (let tk = t0 + 3; tk < t1 - 1.5; tk += 10) {
+          let lo = null, hi2 = null;
+          for (let i = 0; i + 2 < R.length; i += 3) for (const [a, b] of [[R[i], R[i + 1]], [R[i + 1], R[i + 2]], [R[i + 2], R[i]]]) {
+            const da = a[0] * tx + a[2] * tz - tk, db = b[0] * tx + b[2] * tz - tk; if ((da > 0) === (db > 0) || da === db) continue;
+            const w = da / (da - db), p = [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w], n2 = p[0] * nx + p[2] * nz;
+            if (!lo || n2 < lo.n) lo = { p, n: n2 }; if (!hi2 || n2 > hi2.n) hi2 = { p, n: n2 };
+          }
+          if (!lo || hi2.n - lo.n < 3) continue;
+          const pb = [lo.p[0] + nx * 0.2, lo.p[1] - 0.01, lo.p[2] + nz * 0.2], pf = [hi2.p[0] - nx * 0.25, hi2.p[1] - 0.01, hi2.p[2] - nz * 0.25];
+          sbAt(pf[0], pf[2]).beam(pb, pf, 0.24, Math.min(0.9, (hi2.n - lo.n) * 0.07), 0.2, AR_COL.white);
+        }
+      }
+      // the front: a handrail a metre over the first row's tread, on its front edge, an upright every 2.5 m (from Srednja)
+      if (tier > 0) { const rcol = f.bench === 'wood' ? DECK_COL.wood : ST_RAIL;
+        for (let k = 1; k < Fr.length; k++) {
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || l > 40) continue;
+          const at = (e, y) => [e.p[0] + e.f[0] * 0.06, y, e.p[2] + e.f[1] * 0.06], A0 = at(a, a.y2 + 1.0), B0 = at(b, b.y2 + 1.0), g = sbAt(A0[0], A0[2]), n = Math.max(1, Math.round(l / 2.5));
+          g.bar(A0, B0, 0.06, 0.06, rcol);
+          for (let j = k === 1 ? 0 : 1; j <= n; j++) { const w = j / n; g.post([A0[0] + (B0[0] - A0[0]) * w, a.y2 + (b.y2 - a.y2) * w, A0[2] + (B0[2] - A0[2]) * w], 0.98, 0.05, [a.f[0], a.f[1]], rcol); }
+        } }
     }
   }
   function standBuild(o, A, hsh, def, circles) {
-    const seats = [], flat = new Map(), cells = new Map(), feet = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
+    const t0 = performance.now(), seats = [], flat = new Map(), cells = new Map(), feet = [], standWays = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
     const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
     const bench = STAND_BENCH[def.id] || null, conc = bench ? DECK_COL[bench] : temp ? ST_DECK : ST_CONC, wall = bench === 'wood' ? DECK_COL.wood : ST_CONC, H2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]), tq = {}, trackD = (p) => { A.T.query(p[0], p[2], -1, tq); return Math.abs(tq.d); };
     o.root.updateMatrixWorld(true);
@@ -1551,7 +1707,7 @@
         const nB = len < 9 ? 1 : Math.max(1, Math.round(len / BLOCK)), hw = AISLE / 2 * (uB - uA) / len, aisles = [];
         for (let k = 1; k < nB; k++) { const c = uA + (uB - uA) * k / nB; aisles.push([c - hw, c + hw, c]); }
         const hs = (hsh * 7 + mid * 131 + si * 17) % 9973, c1 = SEAT_COLS[hs % 6], c2 = SEAT_COLS[(hs % 6 + 1 + (hs >> 3) % 7) % SEAT_COLS.length], scheme = (hs >> 5) % 5;
-        const colOf = (ri, blk) => bench ? BENCH_COL[bench] : scheme === 1 && blk % 2 ? c2 : scheme === 2 && ri >= rows.length * 0.6 ? c2 : scheme === 3 && ri % 6 === 5 ? c2 : c1;   // (one colour; by blocks; the upper rows; a stripe; a bench its timber or aluminium)
+        const frontC = c1.map(v => v * 0.62), colOf = (ri, blk) => bench ? BENCH_COL[bench] : scheme === 1 && blk % 2 ? c2 : scheme === 2 && ri >= rows.length * 0.6 ? c2 : scheme === 3 && ri % 6 === 5 ? c2 : c1;   // (one colour; by blocks; the upper rows; a stripe; a bench its timber or aluminium)
         const nAisle = (u) => aisles.findIndex(a => u > a[0] && u < a[1]);
         rows.forEach((row, ri) => {
           const { part, vf, vb } = row, Q = part.Q, U = part.U, prev = ri > 0 ? rows[ri - 1] : null, Qb = (u) => { const p = Q(u, vb); return p && [p[0], p[1] + row.dy, p[2]]; };   // (Qb: the back edge, the row's tread)
@@ -1579,7 +1735,7 @@
               const nx = fx / dep, nz = fz / dep, FLu = [FL[0], BL[1], FL[2]], FRu = [FR[0], BR[1], FR[2]], gb = sbAt((FL[0] + BR[0]) / 2, (FL[2] + BR[2]) / 2);
               const ul = dAt(a) / 2, ur = dAt(b) / 2, up = [0, 1, 0], fw = [nx, 0, nz];
               const FB = row.flat ? (row.dyP != null ? [FL[0], FL[1] + row.dyP, FL[2]] : null) : FL, FBR = FB && [FR[0], FB[1] + (row.flat ? 0 : FR[1] - FL[1]), FR[2]];
-              if (FB && BL[1] - FB[1] > 0.03) gb.quad(FB, FBR, FRu, FLu, fw, conc, null, kq(KIT.riser, ul, ur, 1, 0));   // (the riser: none on a stepped stand's own)
+              if (FB && BL[1] - FB[1] > 0.03) gb.quad(FB, FBR, FRu, FLu, fw, ri === 0 && !bench ? frontC : conc, null, kq(KIT.riser, ul, ur, 1, 0));   // (the riser: none on a stepped stand's own; the first row's in the stand's colour, darker: its front seen from the road)
               gb.quad(FLu, FRu, BR, BL, up, conc, null, kq(ai >= 0 && bench !== 'wood' ? KIT.aisle : bench ? KIT.deck : KIT.tread, ul, ur, 0, 0.98));   // (the tread; an aisle's with its yellow edge; a deck of planks)
               if (ai >= 0) {   // an aisle: a step between each two (yellow edged), on the tread in front
                 const yp = yPrev(a, FL); if (tier === 0 || yp == null || BL[1] - yp < 0.25) continue;   // (none at NIZKA)
@@ -1637,10 +1793,26 @@
               return [[a[0] + (a[0] - b[0]) / la * 1.5, a[1] + (a[1] - b[1]) / la * 1.5], ...L, [d[0] + (d[0] - c[0]) / ld * 1.5, d[1] + (d[1] - c[1]) / ld * 1.5]]; };
             const poly = ext(fr).concat(ext(bk).reverse()), xs = poly.map(p => p[0]), zs = poly.map(p => p[1]), t0 = fr[0], t1 = fr[fr.length - 1], tl = Math.hypot(t1[0] - t0[0], t1[1] - t0[1]) || 1;
             const fr3 = [], bk3 = [];
-            for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr3.push({ p: [F[0], r0.flat ? F[1] + (r0.dyP != null ? r0.dyP : 0) : F[1], F[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l] }); } }
+            for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr3.push({ p: [F[0], r0.flat ? F[1] + (r0.dyP != null ? r0.dyP : 0) : F[1], F[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l], y2: B[1] + r0.dy }); } }   // (y2: the first row's tread)
             for (const u of r1.part.U) { const F = r1.part.Q(u, r1.vf), B = r1.part.Q(u, r1.vb); if (F && B) { const l = H2(F, B) || 1; bk3.push({ p: [B[0], B[1] + r1.dy, B[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l] }); } }
-            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb });
+            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb, col: c1, bench });
           } }
+        // the aisles' ways up for the walkers (standsOf), 0.3 m beside the handrail: from the first row's front (from the ground in front where it
+        // is low), over each row's half-step and up onto its tread, to the top row's back
+        { const duW = 0.3 * (uB - uA) / len, ways = [];
+          aisles.forEach((a, ai) => {
+            const ua = a[2] + (ai % 2 ? duW : -duW), pts = []; let yp = null;
+            for (const row of rows) {
+              const F = row.part.Q(ua, row.vf), B0 = row.part.Q(ua, row.vb); if (!F || !B0) { pts.length = 0; break; }
+              const y = B0[1] + row.dy, fl = H2(F, B0) || 1, nx = (F[0] - B0[0]) / fl, nz = (F[2] - B0[2]) / fl, P = (d, yy) => [F[0] + nx * d, yy, F[2] + nz * d];
+              if (yp == null) { const g0 = gH(F[0] + nx * 1.2, F[2] + nz * 1.2); if (Number.isFinite(g0) && y - g0 < 0.6 && y - g0 > -0.1) pts.push(P(1.2, g0), P(0.06, g0)); }
+              else if (tier > 0 && y - yp >= 0.25) { const yh = (yp + y) / 2, d2 = Math.min(0.42, fl * 0.5); pts.push(P(d2 + 0.06, yp), P(d2 - 0.06, yh), P(0.06, yh)); }
+              else pts.push(P(0.06, yp));
+              pts.push(P(-0.06, y), [B0[0] + nx * 0.25, y, B0[2] + nz * 0.25]); yp = y;
+            }
+            if (pts.length > 5) ways.push(pts);
+          });
+          if (ways.length) standWays.push(ways); }
         // the handrails up the aisles' middles (on the rows' front edges, 0.95 m over them; an upright every other row)
         if (tier > 0) for (const a of aisles) {
           let q = null, k = 0;
@@ -1655,10 +1827,11 @@
       }
       if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
-    const ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); standAround(o, A, feet, sbAt, tier, def, circles, ms);
+    for (const ws of standWays) { const f = feet.find(f => ws[0].some(p => inPoly(f.poly, p[0], p[2]))); if (f) f.ways = (f.ways || []).concat(ws); }   // (each stand's aisles' ways)
+    const t1 = performance.now(), ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); const t2 = performance.now(); standAround(o, A, feet, sbAt, tier, def, circles, ms); const t3 = performance.now();
     const mat = standMat(), meshes = [];
     for (const gb of cells.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
-    return { seats, flat, meshes, feet };
+    return { seats, flat, meshes, feet, msT: [Math.round(t1 - t0), Math.round(t2 - t1), Math.round(t3 - t2), Math.round(performance.now() - t3)] };
   }
   function seatAt(st) {   // a seat's place: the feet on the tread, under the middle of the seat (false: none there)
     const { uAt, Qb, Q, vf, bad } = st.c, u = uAt(st.d), Bp = Qb(u), Fp = Q(u, vf); st.c = null;
@@ -1668,8 +1841,8 @@
     st.x = Bp[0] + nx * w; st.y = Bp[1]; st.z = Bp[2] + nz * w; st.fx = nx; st.fz = nz; return true;
   }
   function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats, circles) {
-    const A = World.api, ts = performance.now(), { seats, flat, meshes, feet } = A.ownRnd(() => standBuild(o, A, hsh, T.def, circles)); stats.msStands = Math.round(performance.now() - ts);
-    stats.standFeet = feet.map(f => ({ poly: f.poly, top: f.top, tx: f.tx, tz: f.tz }));   // (for the tools and tests: each stand's footprint)
+    const A = World.api, ts = performance.now(), { seats, flat, meshes, feet, msT } = A.ownRnd(() => standBuild(o, A, hsh, T.def, circles)); stats.msStands = Math.round(performance.now() - ts); stats.msStandParts = msT;
+    stats.standFeet = feet.map(f => ({ poly: f.poly, top: f.top, tx: f.tx, tz: f.tz, at: f.at || null }));   // (for the tools and tests: each stand's footprint, where its kiosk, gate and stairs are)
     for (const mm of meshes) { o.root.add(mm); const bs = mm.geometry.boundingSphere; if (o.cull) o.cull.push({ m: mm, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
     // the steep ones' pictures: their seats empty (nobody on them)
     let ms = 0; for (const [M, cv] of flat) {
@@ -1692,10 +1865,27 @@
     // the stretches: by the place along the road, each its own scene
     const q = {}; for (const st of taken) { T.query(st.x, st.z, -1, q); st.s = q.s; st.d = q.d; }
     taken.sort((a, b) => a.s - b.s);
+    const segs = []; for (let i = 0; i < taken.length;) { let k = i + 1; while (k < taken.length && k - i < STANDS.per && taken[k].s - taken[i].s < STANDS.len) k++; segs.push({ seg: taken.slice(i, k), walk: [] }); i = k; }
+    for (const g of segs) { let x = 0, y = 0, z = 0; for (const st of g.seg) { x += st.x; y += st.y; z += st.z; } const N = g.seg.length; g.c = [x / N, y / N, z / N]; }
+    // the walkers (the user, 3. 11. 2026: »na tribunah naj se kakšen posameznik tudi sprehaja ali prodaja sladoled, hot dog«): on each stand a
+    // vendor up and down its front walkway (ice cream or hot dogs in a box on a strap), from Srednja one with a tray of drinks up and down an
+    // aisle and people going up and down the aisles (with a drink, food, a phone); each with the stretch nearest it (its people's mesh)
+    const R2 = rnd; seed(6007 + hsh); let wn = 0; const wMax = STANDS.walk[Math.min(2, LOD.tier)], dS = (f) => { const L = T.len, d = ((f.s || 0) % L + L) % L; return T.open ? d : Math.min(d, L - d); };
+    feet.map((f, fi) => [f, fi]).sort((a, b) => dS(a[0]) - dS(b[0])).forEach(([f, fi]) => {   // (the stands by the start first: the most of them, by the tier)
+      const list = [];
+      if (f.gang) list.push({ pts: f.gang, kind: fi % 2 ? 'hotbox' : 'icebox', vendor: true, v: 0.55, stop: 7, stopT: 3.5 });
+      const ways = (f.ways || []).slice(), take = () => ways.length ? ways.splice(Math.floor(R2() * ways.length), 1)[0] : null;
+      if (LOD.tier > 0) { const w = take(); if (w) list.push({ pts: w, kind: 'tray', vendor: true, v: 0.42, stop: 3, stopT: 4 }); }
+      for (let k = LOD.tier > 0 ? 2 : 1; k > 0; k--) { const w = take(); if (w) list.push({ pts: w, kind: ['cup', 'can', 'phone', 'hotdog', 'popcorn', null][Math.floor(R2() * 6)], v: 0.55 + R2() * 0.2, stop: 1e9, stopT: 0 }); }
+      for (const wk of list) {
+        if (wn >= wMax) break;
+        const m = wk.pts[wk.pts.length >> 1]; let best = null, bd = 70;
+        for (const g of segs) { const d = Math.hypot(g.c[0] - m[0], g.c[2] - m[2]); if (d < bd) { bd = d; best = g; } }
+        if (best) { best.walk.push(wk); wn++; }
+      }
+    });
     let j = 0, n = 0;
-    for (let i = 0; i < taken.length;) {
-      let k = i + 1; while (k < taken.length && k - i < STANDS.per && taken[k].s - taken[i].s < STANDS.len) k++;
-      const seg = taken.slice(i, k); i = k;
+    for (const { seg, walk } of segs) {
       let sx = 0, sz = 0, sy = 0, fx = 0, fz = 0, ss = 0, dd = 0; for (const st of seg) { sx += st.x; sy += st.y; sz += st.z; fx += st.fx; fz += st.fz; ss += st.s; dd += st.d; }
       const N = seg.length, s0 = ss / N, sd = dd >= 0 ? 1 : -1, F = frame(T, gH, s0, sd), C = ctxOf(F);
       const X = new THREE.Vector3(F.tx, 0, F.tz).normalize(), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(-X.z, 0, X.x); if (Z.x * fx + Z.z * fz < 0) Z.negate();
@@ -1707,9 +1897,24 @@
         const team = SHIRT[Math.floor(rnd() * SHIRT.length)], P = C.man({ lite: true, shirt: rnd() < 0.5 ? team : SHIRT[Math.floor(rnd() * SHIRT.length)], hat: rnd() < 0.3 ? 'cap' : null, scale: 0.93 + rnd() * 0.08 }, null);
         const dx = st.x - O.x, dz = st.z - O.z;
         P.seat = { x: dx * X.x + dz * X.z, r: st.row, y: st.y, z: dx * Z.x + dz * Z.z, k: rnd() }; C.seats.push(P);
+        // what it does while it waits (SEAT_ACTS: the share, the pose, the things in its hand), under a roof or not (an umbrella in the rain)
+        let u = rnd(); const a = SEAT_ACTS.find(e => (u -= e[0]) < 0);
+        if (a) { P.seat.pose = a[1]; const it = a[2][Math.floor(rnd() * a[2].length)]; P.items = ['R:' + it + (it === 'mflag' ? ':' + JSON.stringify({ c: pick(SHIRT) }) : it === 'icecream' ? ':' + JSON.stringify({ c: pick([0xf0b8c8, 0xf5e6c8, 0x8a5a3c, 0xb8e0a0]) }) : '')]; P.show = new Set(P.items); P.seat.up = it === 'phone' ? 'phoneUp' : it === 'mflag' ? 'wave' : null; }
+        P.roof = roofed(feet, st.x, st.y, st.z);
       }
-      const Sc = addScene('tribune', F, s0, sd, { stand: true }, C, si0 + j, Math.round(s0 - (T.startS || 0)), [cx, cy + 1, cz, r + 3]); Sc.lift = 0; Sc.fwd = 0.45; j++; n += N;
+      for (const wk of walk) {   // the walkers (full figures: hands and shoes; a vendor in its white shirt and cap)
+        const P = C.man(wk.vendor ? { shirt: 0xf2f2ee, pants: 0x2a2f3a, hat: 'cap', hatCol: wk.kind === 'hotbox' ? 0xd8262a : 0x2f63c9 } : { shirt: pick(SHIRT), hat: rnd() < 0.3 ? 'cap' : null }, null);
+        const cum = [0]; for (let k = 1; k < wk.pts.length; k++) { const a = wk.pts[k - 1], b = wk.pts[k]; cum.push(cum[k - 1] + Math.hypot(b[0] - a[0], (b[1] - a[1]) * 1.5, b[2] - a[2])); }
+        const L = cum[cum.length - 1], cyc = wk.stop / wk.v + wk.stopT, leg = L / wk.v + Math.floor(L / wk.stop) * wk.stopT, wait = wk.vendor ? 5 : 2 + rnd() * 3;
+        const e0 = wk.pts[0], e1 = wk.pts[wk.pts.length - 1], fl = Math.hypot(e1[0] - e0[0], e1[2] - e0[2]) || 1;
+        P.walk = { pts: wk.pts, cum, L, v: wk.v, stop: wk.stop, cyc, leg, wait, per: 2 * (leg + wait), ph: rnd(), carry: !!wk.vendor, face: wk.vendor && wk.kind !== 'tray' ? [-fx, -fz] : null, dir: [(e1[0] - e0[0]) / fl, (e1[2] - e0[2]) / fl] };
+        if (wk.kind) { P.items = ['R:' + wk.kind]; P.show = new Set(P.items); }
+        for (const p of wk.pts) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cy, p[2] - cz));
+        P.roof = roofed(feet, wk.pts[wk.pts.length >> 1][0], wk.pts[wk.pts.length >> 1][1], wk.pts[wk.pts.length >> 1][2]) || !!wk.vendor;   // (a vendor's hands are full: no umbrella)
+      }
+      const Sc = addScene('tribune', F, s0, sd, { stand: true }, C, si0 + j, Math.round(s0 - (T.startS || 0)), [cx, cy + 1, cz, r + 3]); Sc.lift = 0; Sc.fwd = 0.45; j++; n += N + walk.length;
     }
+    stats.standWalkers = wn;
     stats.standSeats = seats.length; stats.standPeople = n; stats.standScenes = j;
     return n;
   }
@@ -1731,7 +1936,9 @@
       const Sc = { name, F, s0: s, side: sd, groups: C.groups, people: [], pets: [], movers: [], smoke: [], stand: !!d.stand, k: si, on: false };
       const rec = (P, st) => { const kid = !!(st && st.kid), f = st && st.run && st.run.f || 0.55;
         return { P, st, d0: kid ? 0.08 + rnd() * 0.2 : 0.2 + rnd() * 0.85, v: (3.4 + 4 * f) * (kid ? 0.92 : 1), bd: rnd() * 1.4, ph: rnd(), segs: null }; };
-      for (const P of C.people) { rig(P, P.st ? itemsOf(P.st) : new Set()); Sc.people.push(rec(P, P.st)); }
+      for (const P of C.people) { rig(P, P.st ? itemsOf(P.st) : new Set(P.items || [])); Sc.people.push(rec(P, P.st)); }
+      Sc.people.forEach((p, i) => { const h = ((si + 3) * 7919 + i * 104729) % 997; const st = p.st, staff = st && (st.run === false || (st.run && st.run.a != null));   // (an umbrella in the rain: 3 in 4, not under a roof, not the staff)
+        p.um = h < 750 && !p.P.roof && !staff; p.uk = h % UMB_COLS.length; });
       for (const pt of C.pets) Sc.pets.push(rec(rigid(pt.model), pt.st));
       for (const mv of C.movers) Sc.movers.push({ P: rigid(mv.model), on: mv.on, x: mv.x, y: mv.y, z: mv.z, yaw: 0 });
       reset(Sc);
@@ -1774,6 +1981,10 @@
       const c = new THREE.Color(); for (const Sc of W.scenes) for (const e of Sc.smoke) { c.setHex(e.col); for (let k = 0; k < e.n; k++) M.setColorAt(e.i + k, c); } M.instanceColor.noSeason = true;
       M.frustumCulled = false; M.renderOrder = 4; M.name = 'sceneSmoke'; root.add(M);
     }
+    { let nu = 0; for (const Sc of W.scenes) for (const p of Sc.people) if (p.um) nu++;   // the umbrellas: as many as hold one (only the posed scenes' near drawn)
+      if (nu) { const M = W.umb = new THREE.InstancedMesh(umbGeo(), new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), nu); M.um = nu;
+        M.setColorAt(0, new THREE.Color(1, 1, 1)); M.instanceColor.noSeason = true; M.count = 0; M.visible = false; M.frustumCulled = false; M.castShadow = false; M.receiveShadow = true; M.name = 'umbrellas'; root.add(M); }
+      stats.umbrellas = nu; }
     const t1 = performance.now(); stats.cleared = clearAll(o, circles, A); stats.ms = Math.round(performance.now() - t0); stats.msClear = Math.round(performance.now() - t1);
     o.dyn.people = (t, car, cam) => step(W, t, car, cam);
     step(W, 0, null, null);
