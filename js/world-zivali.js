@@ -7,8 +7,9 @@
    odvisno katere živali«, »nekatere živali pa naj bodo same ter se sprehajajo ali pa jejo travo«, »12 prizorov različnih živali na različnih
    progah«: how they keep company is the species' own (SOC: alone, a male and a female, or a herd of 3-10 with their young: a red deer stag with
    his hinds, a sow with her piglets, a mob of kangaroos ...); one alone walks to and fro or grazes (LIVE: its own mesh, legs and head moved in
-   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and twelve tracks have a scene of their
-   own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland ...).
+   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and eighteen tracks have a scene of their
+   own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland, storks at their nest
+   in Medvode, koalas in the gum trees, pigs in their pen ...).
    World.life(o) runs at the end of every build (finish in js/world.js): the woods are read from the instanced trees (o.cull: IChunks), the
    glade's trees are taken out (their instances scaled to nothing), the things and the animals that are not live are merged into one
    vertex-coloured mesh per 256 m chunk (one draw call per chunk in view, far chunks culled like the plants on the lower tiers); the animals in
@@ -123,6 +124,10 @@
   function monkey(col, face) { const g = new THREE.Group(), c = col || 0x8a7a6a; g.add(sph(0.2, 6, 4, c, 0, 0.3, 0, { s: [1, 1.3, 0.9] })); g.add(sph(0.13, 6, 4, c, 0, 0.62, 0.03)); g.add(box(0.14, 0.12, 0.05, face || 0xd86a5a, 0, 0.6, 0.15));
     for (const sd of [1, -1]) { g.add(bar([sd * 0.15, 0.42, 0.05], [sd * 0.12, 0.1, 0.22], 0.06, c)); g.add(box(0.1, 0.1, 0.28, c, sd * 0.12, 0.06, 0.12)); } g.add(bar([0, 0.18, -0.15], [0, 0.05, -0.55], 0.04, c)); return g; }
   function croc() { const g = beast({ L: 1.6, H: 0.12, W: 0.42, bh: 0.2, col: 0x4a5a3a, belly: 0x9aa07a, neck: 0.05, nk: 0, hs: 0.3, snout: 1.6, ears: 0.05, tail: 'croc', lt: 0.1 }); return g; }
+  // a koala sitting up (in a tree's fork: World.life's perches), facing +z: its round grey body, the pale chest, the big fluffy ears, the nose
+  function koala() { const g = new THREE.Group(), c = 0xa2a29c; g.add(sph(0.2, 7, 4, c, 0, 0.24, 0, { s: [1, 1.2, 0.95] })); g.add(box(0.2, 0.2, 0.06, 0xd8d4c8, 0, 0.26, 0.17));
+    g.add(sph(0.15, 7, 4, 0xaeaea8, 0, 0.53, 0.05)); for (const sd of [1, -1]) { g.add(sph(0.085, 6, 3, 0xe6e2da, sd * 0.14, 0.63, 0.02, { s: [1, 1, 0.55] })); g.add(bar([sd * 0.15, 0.36, 0.06], [sd * 0.09, 0.3, 0.24], 0.07, c)); g.add(box(0.09, 0.08, 0.16, c, sd * 0.1, 0.05, 0.1)); }
+    g.add(box(0.07, 0.09, 0.05, 0x2a2622, 0, 0.5, 0.19)); return g; }
   // the species (kind -> model; B: a beast of these options, B(...)(over) the same with some changed, e.g. LIVE's: the head up); the young: smaller copies (SOC)
   const B = (o) => { const f = (over) => beast(over ? Object.assign({}, o, over) : o); f.o = o; return f; };
   const SPECIES = {
@@ -175,7 +180,15 @@
     wombat: () => wombat(), cockatoo: () => bird(0xf2f2ee, { crest: 0xf2d21a }), galah: () => bird(0xe88aa0, { headCol: 0xf2c8d0, wing: 0x9aa0a8 }), magpie: () => bird(0x15171c, { wing: 0xf2f2ee }),
     stork: () => bird(0xf2f2ee, { s: 2.2, legs: 0.6, neck: 0.25, wing: 0x15171c, beak: 0.2, beakCol: 0xd8262a }), egret: () => bird(0xf8f8f2, { s: 1.8, legs: 0.5, neck: 0.35, beak: 0.16, beakCol: 0xe0b020, legCol: 0x15171c }),
     goose: () => bird(0x8a7a64, { s: 1.6, neck: 0.18, headCol: 0x15171c, beak: 0.08, legs: 0.12, legCol: 0x15171c }),
-    bear: () => bear(), blackbear: () => bear(0x1d1a18), macaque: () => monkey(0x8a7a6a, 0xd86a5a), baboon: () => monkey(0x7a6a4a, 0x3a2e24), caiman: croc,
+    bear: () => bear(), blackbear: () => bear(0x1d1a18), blackbearC: () => bear(0x7a4a2a), macaque: () => monkey(0x8a7a6a, 0xd86a5a), baboon: () => monkey(0x7a6a4a, 0x3a2e24), caiman: croc,
+    // the farm's and the park's (the user, 3. 11. 2026: »6 slik različnih živali z različnimi elementi«): pigs and their piglets, hens, ducks and
+    // swans on a pond, koalas in the gum trees
+    pig: B({ L: 1.15, H: 0.36, W: 0.5, bh: 0.5, col: 0xe8b4a4, legs: 0xd89c8c, neck: 0.08, nk: 0.1, hs: 0.34, snout: 0.7, snoutCol: 0xe89e8e, ears: 0.45, earCol: 0xe0a494, tail: 'curly', graze: true }),
+    pigB: B({ L: 1.15, H: 0.36, W: 0.5, bh: 0.5, col: 0x2e2826, legs: 0x2a2422, neck: 0.08, nk: 0.1, hs: 0.34, snout: 0.7, snoutCol: 0xc8908a, ears: 0.45, tail: 'curly' }),
+    pigletP: B({ L: 0.48, H: 0.17, W: 0.21, bh: 0.21, col: 0xf0bcae, neck: 0.04, nk: 0.1, hs: 0.15, snout: 0.7, snoutCol: 0xe8a090, ears: 0.4, tail: 'curly' }),
+    hen: () => bird(0xb8642a, { s: 1.15, crest: 0xd8262a, legs: 0.09, legCol: 0xe0b020, beak: 0.05, beakCol: 0xe0b020, wing: 0x8a4a1e }), henW: () => bird(0xf2f0ea, { s: 1.15, crest: 0xd8262a, legs: 0.09, legCol: 0xe0b020, beak: 0.05, beakCol: 0xe0b020 }),
+    duck: () => bird(0x9a948a, { s: 1.35, neck: 0.03, headCol: 0x2f6a3a, beak: 0.08, beakCol: 0xe0b020, wing: 0x6a5a48 }), duckF: () => bird(0x8a6e4e, { s: 1.3, neck: 0.03, beak: 0.08, beakCol: 0xd88a2a, wing: 0x6a5238 }),
+    swan: () => bird(0xf8f8f4, { s: 2.7, neck: 0.4, beak: 0.1, beakCol: 0xe8742a }), koala,
   };
   // the forest things (each faces +z, its foot at y = 0)
   function huntStand() { const g = new THREE.Group(), wd = 0x7a5a3a, H = 3.4;
@@ -218,9 +231,45 @@
   function shrine() { const g = new THREE.Group(); g.add(box(0.12, 1.3, 0.12, 0xb9bdc4, 0, 0.65, 0)); g.add(box(0.9, 0.7, 0.7, 0xf2e6c8, 0, 1.6, 0)); g.add(cyl(0.0, 0.75, 0.45, 4, 0xd8432a, 0, 2.18, 0, { ry: Math.PI / 4 })); g.add(box(0.3, 0.3, 0.04, 0xd8262a, 0, 1.6, 0.36)); return g; }   // a spirit house on its post
   function palmHut() { const g = new THREE.Group(); for (const [x, z] of [[1.2, 1.2], [-1.2, 1.2], [1.2, -1.2], [-1.2, -1.2]]) g.add(box(0.12, 2.0, 0.12, 0x7a5a3a, x, 1.0, z)); g.add(cyl(0.05, 2.1, 1.0, 6, 0xb89a5a, 0, 2.45, 0)); g.add(picnic()); return g; }
   function trough() { const g = new THREE.Group(), wd = 0x6b5034; g.add(box(2.6, 0.5, 0.7, wd, 0, 0.4, 0)); g.add(box(2.4, 0.04, 0.52, 0x4a6a78, 0, 0.62, 0)); for (const x of [-1.1, 1.1]) g.add(box(0.12, 0.2, 0.8, 0x4a3828, x, 0.1, 0)); return g; }   // (a water trough on a pasture)
-  const THINGS = { huntStand, feedRack, logPile, fallenTree, stumps, cabin: () => cabin(), cabinR: () => cabin(0x9b2c22, 0x2b2d31), beehive, hayrack, waterTank, windpump, vending, torii, lantern, cactus, mushrooms, signPost, picnic, shrine, palmHut, trough };
+  // the six scenes' own things (SCENE: things): a stork's nest on its pole (the nest's rim 6.62 m up), a duck house floating on its raft, a gum
+  // tree (its fork 2.6 m up: a koala sits in it), two bear-proof bins, a pig pen with its shed, a horses' paddock (its rails round 16 x 11 m)
+  // and their stable
+  function storkNest() { const g = new THREE.Group(), tw = 0x7a6248;
+    g.add(cyl(0.12, 0.16, 6.2, 6, 0x6b5a48, 0, 3.1, 0)); g.add(cyl(0.62, 0.62, 0.06, 8, 0x5a4632, 0, 6.18, 0)); g.add(cyl(0.74, 0.56, 0.44, 9, tw, 0, 6.4, 0)); g.add(cyl(0.5, 0.5, 0.05, 8, 0x4a3a28, 0, 6.6, 0));
+    for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + 0.3, r0 = 0.55, r1 = 0.95 + 0.12 * (k % 3); g.add(bar([Math.cos(a) * r0, 6.45 + 0.08 * (k % 2), Math.sin(a) * r0], [Math.cos(a + 0.25) * r1, 6.32 + 0.12 * (k % 3), Math.sin(a + 0.25) * r1], 0.035, k % 2 ? 0x8a7258 : 0x5a4632)); }
+    return g; }
+  function duckHouse() { const g = new THREE.Group(), wd = 0x9a7048; g.add(box(1.3, 0.12, 1.3, 0x6b5034, 0, 0.1, 0)); g.add(box(0.8, 0.5, 0.65, wd, 0, 0.41, 0)); g.add(box(0.2, 0.22, 0.04, 0x2a2018, 0, 0.32, 0.33));
+    for (const sd of [1, -1]) g.add(box(0.95, 0.05, 0.48, 0x8a3a24, 0, 0.78, sd * 0.19, { rx: sd * 0.6 })); g.add(box(0.12, 0.03, 0.55, 0x6b5034, 0, 0.12, 0.85, { rx: 0.25 })); return g; }
+  function eucalyptus() { const g = new THREE.Group(), bk = 0xd6cfc0, bk2 = 0xa89c88, lf = [0x7a8f6a, 0x6a7f5c, 0x86977a];
+    g.add(cyl(0.2, 0.3, 2.6, 7, bk, 0, 1.3, 0)); for (const [y, r] of [[0.6, 0.4], [1.3, 2.1], [2.1, 4.0]]) g.add(box(0.2, 0.42, 0.06, bk2, Math.cos(r) * 0.24, y, Math.sin(r) * 0.24, { ry: -r }));
+    for (const [x, y, z, t] of [[-1.1, 5.7, -0.3, 0.2], [0.95, 6.0, 0.2, 0.19], [0.1, 6.3, -0.9, 0.15]]) g.add(bar([0, 2.5, 0], [x, y, z], t, bk));
+    for (const [x, y, z, r, k] of [[-1.3, 6.2, -0.3, 1.25, 0], [1.1, 6.5, 0.25, 1.15, 1], [0.1, 6.9, -1.0, 1.0, 2], [-0.3, 7.1, 0.5, 0.85, 0], [0.6, 5.6, -0.6, 0.8, 2]]) g.add(sph(r, 7, 4, lf[k], x, y, z, { s: [1, 0.62, 1] }));
+    return g; }
+  function bearBin() { const g = new THREE.Group(); g.add(box(2.2, 0.12, 0.9, 0x9a968e, 0, 0.06, 0));
+    for (const x of [-0.5, 0.5]) { g.add(box(0.85, 1.12, 0.66, 0x8a7a5a, x, 0.68, 0)); g.add(box(0.88, 0.06, 0.7, 0x5e5240, x, 1.27, -0.03, { rx: -0.08 })); g.add(box(0.5, 0.06, 0.06, 0xc8ccd2, x, 1.05, 0.35)); g.add(box(0.86, 0.1, 0.67, 0x5e5240, x, 0.4, 0)); }
+    return g; }
+  function pigsty() { const g = new THREE.Group(), wd = 0x7a5a3a, W = 7.0, D = 5.5;
+    const side = (x0, z0, x1, z1, gap) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 1.75)), ry = Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2;
+      for (let k = 0; k <= n; k++) { const f = k / n; g.add(box(0.12, 0.95, 0.12, 0x5a4026, x0 + (x1 - x0) * f, 0.47, z0 + (z1 - z0) * f)); }
+      for (const y of [0.32, 0.72]) for (const [f0, f1] of gap ? [[0, 0.38], [0.62, 1]] : [[0, 1]]) { const xm = x0 + (x1 - x0) * (f0 + f1) / 2, zm = z0 + (z1 - z0) * (f0 + f1) / 2; g.add(box(L * (f1 - f0), 0.16, 0.05, wd, xm, y, zm, { ry })); } };
+    side(-W / 2, D / 2, W / 2, D / 2, true); side(-W / 2, -D / 2, W / 2, -D / 2); side(-W / 2, -D / 2, -W / 2, D / 2); side(W / 2, -D / 2, W / 2, D / 2);
+    g.add(box(2.6, 1.5, 1.7, 0x8a6a45, -1.6, 0.75, -D / 2 + 0.95)); g.add(box(3.0, 0.08, 2.2, 0x8a3a24, -1.6, 1.62, -D / 2 + 0.95, { rx: 0.16 })); g.add(box(0.75, 0.75, 0.04, 0x2a2018, -1.6, 0.38, -D / 2 + 1.81));
+    g.add(box(1.4, 0.25, 0.42, 0x6b5034, 1.9, 0.13, -D / 2 + 0.6)); return g; }   // (its shed at the back, the trough by the fence)
+  function paddock() { const g = new THREE.Group(), wd = 0xe8e4da, post = 0x8a6a45, W = 16, D = 11;
+    const side = (x0, z0, x1, z1, gap) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 2.75)), ry = Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2;
+      for (let k = 0; k <= n; k++) { const f = k / n; if (gap && f > 0.42 && f < 0.58) continue; g.add(box(0.13, 1.35, 0.13, post, x0 + (x1 - x0) * f, 0.67, z0 + (z1 - z0) * f)); }
+      for (const y of [0.62, 1.15]) for (const [f0, f1] of gap ? [[0, 0.42], [0.58, 1]] : [[0, 1]]) { const xm = x0 + (x1 - x0) * (f0 + f1) / 2, zm = z0 + (z1 - z0) * (f0 + f1) / 2; g.add(box(L * (f1 - f0), 0.12, 0.05, wd, xm, y, zm, { ry })); } };
+    side(-W / 2, D / 2, W / 2, D / 2, true); side(-W / 2, -D / 2, W / 2, -D / 2); side(-W / 2, -D / 2, -W / 2, D / 2); side(W / 2, -D / 2, W / 2, D / 2);
+    return g; }
+  function stable() { const g = new THREE.Group(), col = 0x8a3a24, wh = 0xe8e4da;
+    g.add(box(5.2, 2.5, 3.0, col, 0, 1.25, 0)); g.add(box(5.24, 0.12, 3.04, wh, 0, 2.44, 0));
+    const sh = new THREE.Shape(); sh.moveTo(-1.75, 0); sh.lineTo(1.75, 0); sh.lineTo(0, 1.25); const rf = new THREE.Mesh(flat(new THREE.ExtrudeGeometry(sh, { depth: 5.8, bevelEnabled: false })), lam(0x4a4a4c)); rf.rotation.y = Math.PI / 2; rf.position.set(-2.9, 2.5, 0); g.add(rf);
+    for (const x of [-1.5, 0, 1.5]) { g.add(box(1.1, 1.3, 0.05, 0x6a2a1a, x, 0.9, 1.52)); g.add(box(1.15, 0.06, 0.06, wh, x, 1.57, 1.53)); g.add(bar([x - 0.5, 0.3, 1.54], [x + 0.5, 1.5, 1.54], 0.05, wh)); }
+    g.add(box(0.8, 0.5, 0.05, 0x2a3440, -1.5, 2.0, 1.52)); g.add(box(0.8, 0.5, 0.05, 0x2a3440, 1.5, 2.0, 1.52)); return g; }
+  const THINGS = { huntStand, feedRack, logPile, fallenTree, stumps, cabin: () => cabin(), cabinR: () => cabin(0x9b2c22, 0x2b2d31), beehive, hayrack, waterTank, windpump, vending, torii, lantern, cactus, mushrooms, signPost, picnic, shrine, palmHut, trough,
+    storkNest, duckHouse, eucalyptus, bearBin, pigsty, paddock, stable };
   // the footprint of a thing (the glade's radius: the trees within it go)
-  const ROOM = { huntStand: 3.6, feedRack: 3.2, logPile: 4.0, fallenTree: 4.6, stumps: 2.8, cabin: 5.2, cabinR: 5.2, beehive: 3.4, hayrack: 5.0, waterTank: 2.8, windpump: 3.0, vending: 2.0, torii: 3.2, lantern: 1.6, cactus: 1.8, mushrooms: 1.8, signPost: 1.6, picnic: 2.6, shrine: 1.8, palmHut: 3.0, trough: 2.6 };
+  const ROOM = { huntStand: 3.6, feedRack: 3.2, logPile: 4.0, fallenTree: 4.6, stumps: 2.8, cabin: 5.2, cabinR: 5.2, beehive: 3.4, hayrack: 5.0, waterTank: 2.8, windpump: 3.0, vending: 2.0, torii: 3.2, lantern: 1.6, cactus: 1.8, mushrooms: 1.8, signPost: 1.6, picnic: 2.6, shrine: 1.8, palmHut: 3.0, storkNest: 1.6, duckHouse: 1.2, eucalyptus: 2.4, bearBin: 1.6, pigsty: 4.6, paddock: 9.5, stable: 3.4, trough: 2.6 };
 
   /* ---------------- which life where: the species and the things of each track's country and region ----------------
      a: the animals (each in the company its kind keeps: SOC), t: the things in the woods, open: animals also out on open ground
@@ -248,8 +297,10 @@
     kangaroo: { one: 0.15, pair: 0.15, herd: [3, 10], F: 'kangarooF', y: 'joey', yp: 0.3 },   // (a mob: a big male, the females, their joeys)
     emu: { one: 0.2, pair: 0.5, herd: [3, 6], ys: 0.45, yp: 0.5 },   // (a father with his chicks)
     cockatoo: { one: 0.1, herd: [4, 10] }, galah: { one: 0.1, herd: [4, 10] }, magpie: { one: 0.3, pair: 0.6, herd: [3, 5] }, stork: { one: 0.4, pair: 0.6 }, egret: { one: 0.4, herd: [3, 8] },
-    goose: { pair: 0.3, herd: [3, 10], ys: 0.55, yp: 0.3 }, bear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 },   // (a she-bear with two cubs)
+    goose: { pair: 0.3, herd: [3, 10], ys: 0.55, yp: 0.3 }, bear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbearC: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 },   // (a she-bear with two cubs)
     macaque: { one: 0.1, herd: [4, 10], ys: 0.6, yp: 0.3 }, baboon: { herd: [4, 10], ys: 0.6, yp: 0.3 }, caiman: { one: 0.5, herd: [2, 4], ys: 0.7, yp: 0.3 },
+    pig: { herd: [4, 9], rest: ['pig', 'pig', 'pigB'], y: 'pigletP', yp: 0.5 }, hen: { herd: [4, 8], rest: ['hen', 'henW', 'hen'] }, duck: { pair: 0.4, herd: [4, 9], F: 'duckF', rest: ['duck', 'duckF', 'duckF'] },
+    swan: { pair: 1 }, koala: { one: 1 },
   };
   const SOC_DEF = { one: 0.3, pair: 0.3, herd: [3, 5], ys: 0.6, yp: 0.3 };
   const HERD_SP = (size) => 1.05 * size + 1.1;   // (a herd's spacing by its kind's size: loose, a body's length and more between them)
@@ -509,7 +560,7 @@
     m.customProgramCacheKey = () => 'zvHerd'; d.customProgramCacheKey = () => 'zvHerdD'; b.customProgramCacheKey = () => 'zvHerdS'; m.userData.herd = true; b.userData.soft = true;
     return { m, d, b };
   }
-  const BIRDS = new Set(['emu', 'cockatoo', 'galah', 'magpie', 'stork', 'egret', 'goose']);
+  const BIRDS = new Set(['emu', 'cockatoo', 'galah', 'magpie', 'stork', 'egret', 'goose', 'hen', 'henW', 'duck', 'duckF', 'swan']);
   const herdMode = (kind, t) => kind === 'caiman' ? 5 : BIRDS.has(kind) ? 4 : t.hop ? 3 : t.rig ? 1 : 2;
   const hash01 = (x, z) => { const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return h - Math.floor(h); };
   // one animal into a chunk's builder: its model in its own frame (scaled by s), its soft shadow into the chunk's shadow builder; returns its
@@ -653,7 +704,7 @@
     return n;
   }
 
-  /* ---------------- the twelve scenes (the user: »12 prizorov različnih živali na različnih progah«): on each of these tracks one larger
+  /* ---------------- the eighteen scenes (the user: »12 prizorov različnih živali na različnih progah«, later six more): on each of these tracks one larger
      company of its own near the road, where the chase camera sees it (a flat open spot after a straight, nothing built there): kind and its
      herd's size n; with: a second company [kind, 'one' | 'pair' | 'herd', n]; thing: a thing of the place among them; pond: a pool;
      live: how many of the herd walk or graze ---------------- */
@@ -670,9 +721,19 @@
     sani: { kind: 'eland', n: 8, with: ['baboon', 'herd', 5], live: 1 },   // (elands, a troop of baboons)
     beartooth: { kind: 'bison', n: 10, live: 2 },   // (a herd of bison)
     rio: { kind: 'capybara', n: 8, with: ['caiman', 'herd', 2], pond: true },   // (capybaras and caimans at the water)
+    // six more (the user, 3. 11. 2026: »6 slik različnih živali z različnimi elementi«), each with things of its own: things [{ t: the thing, a, b
+    // (from the spot: along the road, away from it), ry (its turn from facing the road), on: animals perched on it [kind, its x, y, z, scale,
+    // turn] (in a nest, in a tree's fork, on a table: they stay there) }]; pond { a, b, r, mud }; at: the herd's middle; tight: its spacing;
+    // withAt: the second company's place; room: the spot's radius kept clear of anything built (7 m)
+    medvode: { kind: 'stork', n: 3, things: [{ t: 'storkNest', a: 2.6, b: 3.2, on: [['stork', 0.18, 6.62, 0.05, 1, 0.5], ['stork', -0.22, 6.2, -0.12, 0.96, 2.6]] }, { t: 'logPile', a: -4.6, b: 3.6, ry: 1.3 }], tight: 0.9, room: 8 },   // (storks: two in their nest on its pole, three in the meadow; a pile of logs)
+    cpalace: { kind: 'duck', n: 7, pond: { a: 0, b: 0, r: 4.2 }, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on a park's pond, their duck house)
+    greatalpine: { kind: 'koala', n: 1, at: [-1.2, -0.6], things: [{ t: 'eucalyptus', a: 0.5, b: 1.6, on: [['koala', 0, 2.56, 0.07, 1.4, 0]] }, { t: 'eucalyptus', a: 4.6, b: 3.6, ry: 2.2, on: [['koala', 0, 2.56, 0.07, 1.3, 2.4]] }, { t: 'waterTank', a: -7.0, b: 5.0 }], with: ['emu', 'pair'], withAt: [-4.5, 1.5] },   // (koalas: two in the gum trees' forks, one come down to the ground; two emus)
+    uncompahgre: { kind: 'blackbearC', n: 3, at: [0.5, 0.5], things: [{ t: 'bearBin', a: 2.6, b: 3.2, ry: 0.2 }, { t: 'picnic', a: -2.6, b: 2.6, ry: 0.35, on: [['blackbearC', 0.35, 0.78, 0.05, 0.42, 1.2]] }, { t: 'signPost', a: -5.5, b: 0.5 }] },   // (a cinnamon black bear and two of her cubs at the bear-proof bins, the third up on the picnic table)
+    rastro: { kind: 'pig', n: 7, things: [{ t: 'pigsty', a: 0, b: 0 }], pond: { a: 1.4, b: 0.3, r: 1.5, mud: true }, tight: 0.42, with: ['hen', 'herd', 6], withAt: [-7.0, 2.0], room: 8 },   // (pigs in their pen round a mud wallow, its shed; hens outside it)
+    rbring: { kind: 'horse', n: 5, things: [{ t: 'paddock', a: 0, b: 0.8 }, { t: 'stable', a: -3.0, b: 8.4 }, { t: 'trough', a: 4.2, b: -2.6, ry: 0.3 }], tight: 0.5, room: 10 },   // (horses in their paddock, the stable, the trough)
   };
-  function pond(g, gH, x, z, r, R) {   // a pool on the ground (it follows it: the scene's spot is near flat), a muddy rim round it
-    const n = 14, rim = [0.36, 0.3, 0.22], wat = [0.16, 0.27, 0.3], pts = [];
+  function pond(g, gH, x, z, r, R, mud) {   // a pool on the ground (it follows it: the scene's spot is near flat), a muddy rim round it; mud: a wallow
+    const n = 14, rim = mud ? [0.42, 0.35, 0.25] : [0.36, 0.3, 0.22], wat = mud ? [0.3, 0.23, 0.15] : [0.16, 0.27, 0.3], pts = [];
     for (let k = 0; k < n; k++) { const a = k / n * TAU, rr = r * (0.82 + 0.3 * R()); pts.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
     const at = (px, pz, d) => { const h = gH(x + px, z + pz); return [x + px, (Number.isFinite(h) ? h : 0) + d, z + pz]; };
     for (let k = 0; k < n; k++) { const p = pts[k], q = pts[(k + 1) % n], P0 = at(p[0], p[1], 0.05), Q0 = at(q[0], q[1], 0.05);
@@ -742,7 +803,7 @@
     }
     const tally = (crew) => { stats.sizes[crew.length === 1 ? 'one' : crew.length === 2 ? 'pair' : 'herd']++; };
 
-    // 1) the track's scene (twelve tracks), first: the glades keep away from it
+    // 1) the track's scene (eighteen tracks), first: the glades keep away from it
     const Sc = SCENE[def.id];
     if (Sc) {
       const cand = [], r = 7, PS = (World.peopleSites && World.peopleSites[def.id]) || [];   // (the people's scenes, js/world-ljudje.js: their places are fixed, this one keeps 45 m away from them on their side)
@@ -756,18 +817,23 @@
         const sc0 = -sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4; if (!nearPpl(s, side)) cand.push([sc0, i, side, x, z, b]);   // (the random draw for every spot as before: the rest of the life as built without the people)
       }
       cand.sort((p, q) => q[0] - p[0]);
-      const c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], r) === 0);
+      const c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], Sc.room || r) === 0);   // (room: a scene with things farther out, nothing built within it)
       if (c) {
         const [, i, side, x, z, b] = c, toRoad = Math.atan2(-side * T.nx[i], -side * T.nz[i]), along = Math.atan2(T.tx[i], T.tz[i]), g = chunks.get(x, z);
         const nx = T.nx[i] * side, nz = T.nz[i] * side, tx = T.tx[i], tz = T.tz[i], P = (a, bb) => [x + tx * a + nx * bb, z + tz * a + nz * bb];   // (a along the road, bb away from it)
         cut(W, x, z, 13); peek(i, side, b, 9);
-        if (Sc.pond) { const [px, pz] = P(-2.5, 1.5), pg = new A.GB(); pond(pg, gH, px, pz, 2.6, R);   // (its own mesh, drawn over the ground: NIZKA's ground covered it in places)
+        if (Sc.pond) { const po = Sc.pond === true ? { a: -2.5, b: 1.5, r: 2.6 } : Sc.pond, [px, pz] = P(po.a, po.b), pg = new A.GB(); pond(pg, gH, px, pz, po.r, R, po.mud);   // (its own mesh, drawn over the ground: NIZKA's ground covered it in places)
           A.ownRnd(() => { const pm = new THREE.Mesh(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }));
             pm.receiveShadow = true; pm.matrixAutoUpdate = false; pm.updateMatrix(); pm.name = 'life'; grp.add(pm); }); }
         if (Sc.thing) { const t = tpl(Sc.thing), [px, pz] = P(2.5, 3.5), ph = gH(px, pz); if (t && Number.isFinite(ph)) { put(g, t, px, ph - 0.05, pz, toRoad + (R() - 0.5) * 0.4, 1); stats.things++; } }
-        const crew = company(Sc.kind, R, 'herd', Sc.n); tally(crew);
-        herdAt(g, crew, x, z, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, 0.6); stats.groups++;   // (the scene's herd keeps together)
-        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(-7.5, 3); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, 0.6); stats.groups++; }
+        for (const th of Sc.things || []) { const t = tpl(th.t), [px, pz] = P(th.a, th.b), ph = gH(px, pz), yw = toRoad + (th.ry || 0); if (!t || !Number.isFinite(ph)) continue;
+          put(g, t, px, ph - 0.05, pz, yw, 1); stats.things++;
+          const c2 = Math.cos(yw), s2 = Math.sin(yw);
+          for (const [kk, lx, ly, lz, sc, ry] of th.on || []) { const e = stand(g, kk, sc, px + lx * c2 + lz * s2, ph - 0.05 + ly, pz - lx * s2 + lz * c2, yw + ry, false); if (e) e.S = 0; }   // (perched: it stays where it sits)
+        }
+        const crew = company(Sc.kind, R, 'herd', Sc.n), [hx, hz] = Sc.at ? P(Sc.at[0], Sc.at[1]) : [x, z]; tally(crew);
+        herdAt(g, crew, hx, hz, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, Sc.tight || 0.6); stats.groups++;   // (the scene's herd keeps together)
+        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(...(Sc.withAt || [-7.5, 3])); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, Sc.withAt ? Sc.tight || 0.6 : 0.6); stats.groups++; }
         placed.push([x, z, 13]); stats.scene = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z };
         stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, b, Sc.kind]);
       }

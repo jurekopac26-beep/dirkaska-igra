@@ -9,7 +9,7 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja'];
+const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'uncompahgre'];   // (Uncompahgre: a scene with things of its own, one of its animals up on one)
 const T = checker('life in the woods, the parked car');
 const srv = await serve();
 const browser = await launch();

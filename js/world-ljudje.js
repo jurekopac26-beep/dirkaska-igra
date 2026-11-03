@@ -77,6 +77,7 @@
   const HAIR = [0x2a1d14, 0x4a2f1c, 0x7a5532, 0xb08850, 0x8a8a88, 0x15110e];
   const SHIRT = [0xd23a2c, 0x2f63c9, 0xf0c22e, 0xefefea, 0x2f9a48, 0xf07a1c, 0x262a33, 0x8a3b8c, 0x22848f, 0xb8bcc4, 0x7c4a2e, 0x31406e];
   const PANTS = [0x2f3f63, 0x1d1f25, 0x5b5040, 0x47494f, 0x6a6f78, 0x3a4a3a];
+  const HATX = {};   // (more hats, World.peopleKit: name -> (its colour, the look) -> a group on the head, its frame the head's: the top at 0.235)
   function person(o) {
     o = o || {};
     const skin = o.skin != null ? o.skin : pick(SKIN), shirt = o.shirt != null ? o.shirt : pick(SHIRT), pants = o.pants != null ? o.pants : pick(PANTS);
@@ -106,6 +107,7 @@
       if (o.hat !== 'helmet') head.add(cyl(o.hat === 'fire' ? 0.2 : 0.165, o.hat === 'fire' ? 0.2 : 0.165, 0.02, 8, hc, 0, 0.165, o.hat === 'fire' ? -0.02 : 0.02));
       if (o.hat === 'fire') head.add(box(0.2, 0.06, 0.02, 0xd9dde2, 0, 0.21, 0.13)); }
     else if (o.hat === 'police') { head.add(cyl(0.125, 0.115, 0.08, 8, hc, 0, 0.255, 0)); head.add(cyl(0.135, 0.135, 0.02, 8, hc, 0, 0.3, 0)); head.add(box(0.17, 0.02, 0.1, 0x111111, 0, 0.22, 0.14)); }
+    else if (HATX[o.hat]) head.add(HATX[o.hat](hc, o));
     for (const sd of [1, -1]) {   // arms: shoulder, elbow, hand (where things are held)
       const sh = new THREE.Group(); sh.position.set(sd * 0.245, 0.45, 0); torso.add(sh); sh.rotation.order = 'ZXY';
       if (long || lite) sh.add(box(0.105, 0.3, 0.11, long ? shirt : skin, 0, -0.14, 0));
@@ -1206,7 +1208,7 @@
   const hash32 = (a) => { let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; };   // (a well-mixed integer hash: who of a scene holds one)
   const UMB_COLS = [0x1b1d22, 0x15306b, 0xb2222a, 0x1f63d8, 0x1d6b3a, 0xe8b417, 0xf2f2ee, 0x6a2f8a, 0xe0602a, 0x2a8a8a, 0x1b1d22, 0x15306b];
   const TWO_HANDS = new Set(['carry', 'carryWalk', 'push', 'cam', 'phone', 'phoneUp', 'sitText', 'sitFilm', 'crouchCam', 'boardOut', 'chopUp', 'chopDown', 'sweep', 'fixHood', 'hang']);   // (both hands busy: no umbrella then)
-  const BUSY_HANDS = new Set(['glasba', 'radio', 'karte', 'nogomet', 'navijaci', 'zmaj', 'kotlicek', 'selfie', 'plaza', 'badminton', 'lestve', 'motoristi']);   // (js/world-ljudje2.js's groups: their hands at their guitar, cards, drum, ladle, racket …: no umbrella)
+  const BUSY_HANDS = new Set(['glasba', 'radio', 'karte', 'nogomet', 'navijaci', 'zmaj', 'kotlicek', 'selfie', 'plaza', 'badminton', 'lestve', 'motoristi']);   // (js/world-ljudje2.js's groups: their hands at their guitar, cards, drum, ladle, racket …: no umbrella; js/world-ljudje3.js adds its own)
   const STAFF_SCENES = new Set(['marsali', 'gasilci', 'boksi', 'foto', 'foto2', 'tv', 'reli', 'resevalci', 'odvoz', 'delavci', 'tvekipa', 'sodniki', 'varnost']);   // (the staff's scenes: rain gear, no umbrellas)
   function umbrella(p, J, show, pose) {   // its left arm up holding the umbrella (p.uh: held now)
     p.uh = false;
@@ -1358,7 +1360,7 @@
   function roomSide(T, s) { let l = 0, r = 0; for (let d = -30; d <= 30; d += 6) { const i = T.idx((((s + d) % T.len) + T.len) % T.len); l += T.bl[i]; r += T.br[i]; } return r > l ? 1 : -1; }
   /* ---------------- every frame (World.update): the followed car's way to each scene, the scenes near the camera posed ---------------- */
   const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _cv = new THREE.Vector3();
-  const SUMMER = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the scenes of a summer's day: out of the world under snow; js/world-ljudje2.js's too)
+  const SUMMER = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the scenes of a summer's day: out of the world under snow; js/world-ljudje2.js's too, js/world-ljudje3.js adds its own)
   function step(W, t, car, cam) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built (dry: no umbrellas)
       WET = false; for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
@@ -2320,7 +2322,7 @@
     return stats;
   };
   World.peopleSites = SITES;   // (for the tests and the docs)
-  // the kit for more scene types in files of their own (js/world-ljudje2.js): the scenes, the props, more hand things and poses, the motions, the
+  // the kit for more scene types in files of their own (js/world-ljudje2.js, js/world-ljudje3.js): the scenes, the props, more hand things, hats and poses, the motions, the
   // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
-  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
+  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, HATX, SUMMER, BUSY_HANDS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
 })();
