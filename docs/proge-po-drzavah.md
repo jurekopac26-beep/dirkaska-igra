@@ -2,6 +2,8 @@
 
 Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **eno novo progo** (`CLAUDE.md`, razdelek »Ena proga na državo«). Spodnji tabeli naštejeta za vsako državo proge, ki so že v igri, in proge, ki čakajo. Seja pred začetkom nove proge preveri, ali je proga izbrana oziroma ali je njena država še brez proge.
 
+**Vrstni red dela (odločitev uporabnika 3. 11. 2026):** pred izdelavo novih prog gresta na vrsto **Deli iz garaže, sklop 4** (pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi; `docs/deli.md`) in **dokončanje Ljudi ob progi** (PR #257). Že narejene proge (PR #226, #241, #261) se smejo združiti na `main`; nove proge iz verig (Nove proge, kratke proge, zavite proge) in Kapelmuur se začnejo šele, ko sta oba na `main`.
+
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
 ## Države s progo v igri: izbira uporabnika
