@@ -32,28 +32,28 @@
   "maxCalls": 175,
   "kverts": 321,
   "maxKverts": 360,
-  "jsMs": 4.02
+  "jsMs": 3.16
  },
  "spa": {
-  "calls": 180,
+  "calls": 181,
   "maxCalls": 230,
-  "kverts": 483,
+  "kverts": 484,
   "maxKverts": 661,
-  "jsMs": 1.68
+  "jsMs": 1.36
  },
  "rbring": {
   "calls": 213,
   "maxCalls": 249,
   "kverts": 434,
   "maxKverts": 613,
-  "jsMs": 1.75
+  "jsMs": 1.23
  },
  "suzuka": {
   "calls": 194,
   "maxCalls": 243,
   "kverts": 481,
   "maxKverts": 607,
-  "jsMs": 1.32
+  "jsMs": 0.96
  },
  "caracoles": {
   "calls": 147,
@@ -81,7 +81,7 @@
   "maxCalls": 251,
   "kverts": 393,
   "maxKverts": 467,
-  "jsMs": 1.73
+  "jsMs": 1.1
  },
  "chapman": {
   "calls": 136,
@@ -182,11 +182,11 @@
   "jsMs": 1.38
  },
  "monterey": {
-  "calls": 192,
-  "maxCalls": 229,
-  "kverts": 530,
-  "maxKverts": 643,
-  "jsMs": 1.38
+  "calls": 199,
+  "maxCalls": 234,
+  "kverts": 534,
+  "maxKverts": 612,
+  "jsMs": 1
  },
  "longford": {
   "calls": 170,
@@ -228,7 +228,7 @@
   "maxCalls": 252,
   "kverts": 456,
   "maxKverts": 636,
-  "jsMs": 1.76
+  "jsMs": 1.05
  },
  "greatalpine": {
   "calls": 150,

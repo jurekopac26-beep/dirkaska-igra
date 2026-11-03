@@ -558,26 +558,26 @@
   }
  },
  "monterey": {
-  "meshes": 437,
-  "verts": 360988,
-  "instances": 10014,
-  "props": 161,
+  "meshes": 431,
+  "verts": 336320,
+  "instances": 10040,
+  "props": 162,
   "crowd": 562,
-  "world": "c266754d",
-  "propsHash": "97bf012",
-  "floor": "dda13ff3/7196",
+  "world": "f5ee9e86",
+  "propsHash": "b5551806",
+  "floor": "72a7b31b/7196",
   "groups": {
-   "-:MeshLambertMaterial": "ba49b84b",
-   "-:MeshBasicMaterial": "1e3b418c",
+   "-:MeshLambertMaterial": "8242bd70",
+   "-:MeshBasicMaterial": "f087841d",
    "-:MeshPhongMaterial": "620177c4",
-   "crowd:MeshLambertMaterial": "f9336358",
+   "crowd:MeshLambertMaterial": "ae96e64c",
    "flags:MeshLambertMaterial": "b1481173",
    "rsFar:MeshBasicMaterial": "9a56ee42",
-   "ao:MeshBasicMaterial": "b17601da",
-   "roadwear:MeshLambertMaterial": "49e46f84",
-   "worn:MeshLambertMaterial": "ebfa5202",
+   "ao:MeshBasicMaterial": "ca45e897",
+   "roadwear:MeshLambertMaterial": "1a63ff9c",
+   "worn:MeshLambertMaterial": "735e08b2",
    "brakeBoards:MeshLambertMaterial": "f282da9",
-   "life:MeshLambertMaterial": "fdf74052"
+   "life:MeshLambertMaterial": "3c81d7c8"
   }
  },
  "longford": {
