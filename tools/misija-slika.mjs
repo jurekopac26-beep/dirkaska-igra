@@ -1,6 +1,6 @@
 // Pictures of a special mission (docs/misije.md), as the player sees it: the quick entry ?misija=<id> opens it, the player's car is driven
 // on the autopilot to the places asked, and the screen (the chase camera with the mission's panel, as on the phone) is saved, upright
-// (390 x 844) and/or on its side (844 x 390). For a session to check its mission with one picture, without writing a script each time.
+// (390 x 844) and/or on its side (844 x 390); a mission with its own autopilot (def.pilot(run): [steer, throttle, brake], e.g. down the road) is driven by it. For a session to check its mission with one picture, without writing a script each time.
 // In test-results/misije/ (or --out): <id>-<where>-<pokonci|lezece>.png, and a line per picture with the mission's state (time, end, gauges).
 //   node tools/misija-slika.mjs 06                         the start (the intro card), upright
 //   node tools/misija-slika.mjs 06 --t 20,60 --lezece      20 s and 60 s after the start, on its side
@@ -35,7 +35,8 @@ try {
     await page.waitForTimeout(800);
     for (const [name, P] of places) {
       if (P) await page.evaluate((P) => { const g = window.__game, r = Missions.run, T = g.race.track;
-        for (let k = 0; k < 4000 && !r.end; k++) { if (P.t != null && r.t >= P.t) break; if (P.pred != null && (T.raceLen || T.len) - g.race.player.dist <= P.pred) break; g.sim(0.25, true); } }, P);
+        for (let k = 0; k < 4000 && !r.end; k++) { if (P.t != null && r.t >= P.t) break; if (P.pred != null && (T.raceLen || T.len) - g.race.player.dist <= P.pred) break;
+          const a = r.def.pilot && r.def.pilot(r); if (a) g.sim(0.25, false, a[0], a[1], a[2]); else g.sim(0.25, true); } }, P);   // (a mission's own autopilot: down the road, def.pilot)
       if (P && P.end) await page.waitForFunction(() => document.getElementById('mis-res'), null, { timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(500);
       const file = path.join(opt.out, `${opt.id}-${name}-${way}.png`);
