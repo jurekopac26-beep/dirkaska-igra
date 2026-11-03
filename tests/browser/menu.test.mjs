@@ -159,8 +159,8 @@ try {
     const b0 = await page.evaluate(() => MenuCar.info().builds); await click(page, 'weather:rain'); await click(page, 'weather:dry');
     const rd = await ev(page, 'const y = root.querySelector(".yard"); return { on: y.classList.contains("c3d-on"), cv: !!y.querySelector("canvas.c3d"), i: MenuCar.info() };');
     T.check('the screen drawn again (the weather): the car\'s canvas in the new yard at once, the wind kept', rd.on && rd.cv && rd.i.on && rd.i.builds === b0, JSON.stringify({ b0, rd }));
-    T.check('the neighbours: the previous and the next track of the list (Vršič before Nürburg), each its flag with its last column stretched',
-      scr.prev === 'vrsic' && scr.nb[0][0] === 'track:-1' && /^Previous track: Vršič, Slovenia$/.test(scr.nb[0][1]) && scr.nb[0][2] === 'assets/flags/slovenia.svg' && scr.nb[0][3] && scr.nb[1][0] === 'track:1' && /^Next track: /.test(scr.nb[1][1]), JSON.stringify(scr.nb));
+    T.check('the neighbours: the previous and the next track of the list (Livorno before Nürburg: the list from the shortest to the longest), each its flag with its last column stretched',
+      scr.prev === 'livorno' && scr.nb[0][0] === 'track:-1' && /^Previous track: Livorno, Italy$/.test(scr.nb[0][1]) && scr.nb[0][2] === 'assets/flags/italy.svg' && scr.nb[0][3] && scr.nb[1][0] === 'track:1' && /^Next track: /.test(scr.nb[1][1]), JSON.stringify(scr.nb));
     T.check('the weather down the stage: Dry, Rain, Changing, Storm (Dry chosen), and more options under it', JSON.stringify(scr.wx) === '["dry*","rain","change","storm"]' && scr.more, JSON.stringify(scr.wx));
     await page.click('.nb.r'); const nx = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     await page.click('.nb.l'); const pv = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
@@ -477,7 +477,7 @@ try {
 
   // 6. the layouts: upright (360 x 640 and 412 x 915), on its side (915 x 412 and 640 x 360)
   for (const [w, h] of [[360, 640], [412, 915], [915, 412], [640, 360]]) {
-    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, the track before Nürburg in the list, has no model for the title's tile)
+    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, a few tracks before Nürburg in the list, has no model for the title's tile)
     await page.emulateMedia({ reducedMotion: 'reduce' });   // (the slide-in of a screen is off: it would still be on its way, and the screen 8 px low, when measured)
     await ready(page);
     const title = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const b = [...root.querySelectorAll(".title-panel button")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, w: innerWidth, h: innerHeight, over: b.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length };');
@@ -485,7 +485,9 @@ try {
     await click(page, 'single');
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
     T.check(`${w}x${h}: the four modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 4, JSON.stringify(modes));
-    await click(page, 'mode:race'); await click(page, 'track:-1'); await click(page, 'cam:2');   // (the flyover: the height graph at the stage's foot)
+    await click(page, 'mode:race');
+    for (let k = 0; k < 8 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, 'track:-1');   // (back to Vršič: the tracks between it and Nürburg, e.g. Livorno)
+    await click(page, 'cam:2');   // (the flyover: the height graph at the stage's foot)
     await page.waitForTimeout(500);
     // the track step: upright the head, the stage (about half the screen), the row, the yard, the neighbours and the foot one under the
     // other; on its side the stage the whole height at the left (half the width), the rest at the right; nothing cut, nothing over another
