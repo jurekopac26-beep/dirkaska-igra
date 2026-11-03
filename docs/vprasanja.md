@@ -14,7 +14,7 @@ Odločitev uporabnika 3. 11. 2026 (seja »Dnevna vprašanja za seje«): »Pripra
 Uporabnik dela na več računih. Seja vidi samo seje, strani in opravila po urniku svojega računa, zato ima vsak račun svojo stran z enako zbirko. Seja uporabi **prvo stran s seznama, ki jo lahko prebere** (`ArtifactData` `list` zbirke `vprasanja`; na tujem računu vrne »not found«):
 
 1. https://claude.ai/artifact/5XpmrynR392z1RgTtx9ACV — od 3. 11. 2026, račun sej `session_01UuPU9…`; zbiranje je nastavljeno.
-2. https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR — stran, ki jo je uporabljala seja menija (`docs/meni-izbira-proge.md`).
+2. https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR — od 3. 11. 2026, račun sej `session_01Ck3D3…` (nova mapa, meni, orodje za napake); zbiranje je nastavljeno.
 3. https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV — prvotna stran iz `CLAUDE.md` (31. 10. 2026).
 
 Če nobena ni dosegljiva, seja vpraša v pogovoru in v poročilu napiše, da njen račun strani nima (razdelek Nastavitev).
@@ -94,4 +94,5 @@ Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na ra
 ## Stanje
 
 - 3. 11. 2026, račun strani 1 (nastavila seja »Dnevna vprašanja za seje«, `session_01UuPU9ADRb2SYMFDPKJRe2V`): stran 1; seja zbiranja `session_01UuPU9DGHKfcoD7MJuYfsPf`; opravila `trig_01F6cP6xseDuaF9SKX8Z2PJt` (zbiranje 10.30 in 14.30), `trig_01W1Q7pwnTEHXpJaFiqRiPKY` (zbiranje 23.00), `trig_01EXowtvXGXmqji2E2QtKhYd` (obvestilo 10.30 in 14.30), `trig_014yjhh3oDoyL7yFFPU8nwY9` (obvestilo 23.00). Prvo zbiranje je ročno pregledalo stare seje tega računa: odprta so `medvode-153`, `dela-na-cakanju` in `opomnik-84`; vprašanja prog iz oktobra, ki niso v igri (Siete Lagos, Zao …), pokriva `dela-na-cakanju`; ostale stare seje so zastarele.
-- Drugi računi (strani 2 in 3, seja »VSE SEJE«): zbiranje še ni nastavljeno; uporabnik tam napiše »Nastavi zbiranje vprašanj po docs/vprasanja.md«.
+- 3. 11. 2026, račun strani 2 (nastavila seja »Ure dela na računu«, `session_01Ck3D3TFW7AsQDT1b3or5eX`): stran 2; seja zbiranja `session_01Ck3D3SLhNMzHbU5saoCxWG` (Sonnet); opravila `trig_01PVFpiqntbvATKGsj4Xtv2M` (zbiranje 10.30 in 14.30), `trig_015J3bKoJM5YbhC3Fhpa6yHo` (zbiranje 23.00), `trig_01JvhvDxRzq8UxyxxE5LiL7M` (obvestilo 10.30 in 14.30), `trig_01BYG2XN16gzY64hBvN9REy4` (obvestilo 23.00). Stran 2 kaže sliko možnosti iz `moznosti[].slika`; odgovor, ki začne novo delo, zbiranje pošlje koordinacijski seji računa (naslov »Koordinacija …«), ki ga da v vrsto.
+- Račun strani 3 (seja »VSE SEJE«): zbiranje še ni nastavljeno; uporabnik tam napiše »Nastavi zbiranje vprašanj po docs/vprasanja.md«.
