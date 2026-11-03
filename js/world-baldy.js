@@ -260,7 +260,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const onBr = new Uint8Array(N), sw = 0.6;
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
-    const SB = stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.7, 0.62, 0.52], shC: [0.66, 0.6, 0.52], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
+    const SB = stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.64, 0.62, 0.58], shC: [0.64, 0.62, 0.58], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
