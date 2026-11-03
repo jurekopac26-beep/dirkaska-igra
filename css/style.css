@@ -1188,6 +1188,27 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
   #s-pause.pi.wx .pause-strat { margin-top: 6px; font-size: 11.5px; line-height: 1.3; }
   #s-pause.pi.wx .pit-row { margin-top: 6px; margin-bottom: 0; }
 }
+/* the pause with the weather and the box on a short screen (360 × 640 upright, 640 × 360 on its side), Trki med avti with them: all in sight,
+   nothing to swipe. The buttons all two to a row (Nadaljuj and Glavni meni too: a row less), the row Trki med avti under them with its label
+   over its choices in smaller letters, the screen's margin above and below smaller; on its side Gume v boksih (the narrow right column) and
+   Trki med avti likewise label over choices, not beside them squeezed into three lines */
+#s-pause.pi .crv-row { margin-bottom: 0; }
+@media (orientation: portrait) and (max-height: 700px) {
+  #s-pause.pi.wx { padding-top: calc(6px + var(--st)); padding-bottom: calc(6px + var(--sb)); }
+  #s-pause.pi.wx .small-panel { padding-top: 8px; padding-bottom: 8px; }
+  #s-pause.pi.wx .btns .btn.primary, #s-pause.pi.wx .btns .btn.ghost { grid-column: auto; }
+  #s-pause.pi.wx .crv-row { margin-top: 6px; row-gap: 3px; }
+  #s-pause.pi.wx .crv-row .rlbl { font-size: 11px; line-height: 1.15; }
+  #s-pause.pi.wx .crv-row .seg button { min-height: 32px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  #s-pause.pi { padding-top: calc(4px + var(--st)); padding-bottom: calc(4px + var(--sb)); }
+  #s-pause.pi .btns .btn.primary { grid-column: auto; }
+  #s-pause.pi .row { flex-wrap: wrap; row-gap: 3px; }
+  #s-pause.pi .crv-row { margin-top: 6px; }
+  #s-pause.pi .row .rlbl { font-size: 11px; line-height: 1.15; }
+  #s-pause.pi .row .seg button { min-height: 32px; }
+}
 .wx-row .seg button, .pit-row .seg button, .seg.nw button { white-space: nowrap; }
 .seg.tight button { padding-left: 5px; padding-right: 5px; font-size: 12px; }
 .seg.tighter button { padding-left: 4px; padding-right: 4px; font-size: 10.5px; }
