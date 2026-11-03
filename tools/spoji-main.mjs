@@ -92,7 +92,13 @@ function mergeList(o, b, t) {
   const io = items(mo[2]), ib = items(mb[2]), it = items(mt[2]);
   if (!io || !ib || !it) return null;
   const removed = ib.filter(x => !it.includes(x)), added = it.filter(x => !ib.includes(x) && !io.includes(x));
-  return mo[1] + io.filter(x => !removed.includes(x)).concat(added).join(', ') + mo[3];
+  const res = io.filter(x => !removed.includes(x));
+  for (const x of added) {   // where the other side put it: after the nearest item before it that the list has (the order can matter)
+    let at = 0;
+    for (let q = it.indexOf(x) - 1; q >= 0; q--) { const p = res.indexOf(it[q]); if (p >= 0) { at = p + 1; break; } }
+    res.splice(at, 0, x);
+  }
+  return mo[1] + res.join(', ') + mo[3];
 }
 
 function line3(file, o, b, t) {
