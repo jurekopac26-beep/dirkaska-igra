@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>China</title>
+  <!-- Ratio 2:3. Red field; the upper hoist quarter (450 x 300) is a 15 x 10 grid (1 unit = 30 px).
+       Large star: centre (5,5), circumscribed diameter 6 units, one point straight up.
+       Small stars: centres (10,2), (12,4), (12,7), (10,9), circumscribed diameter 2 units,
+       each rotated so that one point aims exactly at the centre of the large star.
+       Colours: red #EE1C25, yellow #FFFF00. -->
+  <rect width="900" height="600" fill="#EE1C25"/>
+  <g fill="#FFFF00">
+    <path d="M150 60L170.206 122.188L235.595 122.188L182.694 160.623L202.901 222.812L150 184.377L97.099 222.812L117.306 160.623L64.405 122.188L129.794 122.188Z"/>
+    <path d="M274.275 75.435L288.585 58.994L277.371 40.304L297.429 48.833L311.739 32.392L309.826 54.104L329.884 62.634L308.643 67.523L306.73 89.235L295.516 70.545Z"/>
+    <path d="M330.302 124.243L349.87 114.643L346.788 93.066L361.964 108.711L381.533 99.111L371.344 118.379L386.52 134.024L365.047 130.288L354.858 149.556L351.775 127.979Z"/>
+    <path d="M331.154 201.758L352.937 200.977L358.924 180.019L366.399 200.494L388.181 199.713L371.018 213.148L378.492 233.623L360.411 221.452L343.248 234.887L349.236 213.929Z"/>
+    <path d="M276.574 251.259L296.969 258.949L310.585 241.929L309.573 263.702L329.968 271.392L308.948 277.158L307.936 298.931L295.957 280.722L274.937 286.488L288.553 269.468Z"/>
+  </g>
+</svg>

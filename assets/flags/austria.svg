@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Austria</title>
+  <!-- Ratio 2:3. Three equal horizontal bands red, white, red (national flag of B-VG Art. 8a; the federal service flag adds the eagle). Red: Pantone 186 C. -->
+  <rect width="900" height="200" y="0" fill="#C8102E"/>
+  <rect width="900" height="200" y="200" fill="#FFFFFF"/>
+  <rect width="900" height="200" y="400" fill="#C8102E"/>
+</svg>

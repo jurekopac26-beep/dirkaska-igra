@@ -3275,7 +3275,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'chase', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
-  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.3 };   // userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; behind the car, scaled into the screen's room: updateCamera)
+  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.3, look: null, shOn: { hit: 0, land: 0, kerb: 0, mis: 0 } };   // shOn: which shakes of the view are on (Nastavitve · Tresenje kamere: ob trku, ob pristanku, na robnikih, v misijah; all off by default; shake); userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; behind the car, scaled into the screen's room: updateCamera)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -6128,8 +6128,8 @@ const Render = (function () {
       if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
-      if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45);
-      if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14);   // (the kerbs' ridges: the view trembles while a wheel runs on them)
+      if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
+      if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14, 'kerb');   // (the kerbs' ridges: the view trembles while a wheel runs on them)
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
@@ -8905,13 +8905,15 @@ const Render = (function () {
       // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
       // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
       // shows; the user's choice; the classic one as before)
-      const nv = c.phys === 'nova', hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
+      const nv = c.phys === 'nova', LK = cam.look;
+      let hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
+      if (LK && LK.k > 0) hv += wrapPi(Math.atan2(LK.z - z, LK.x - x) - hv) * LK.k;   // (a special mission's target, cam.look { x, z, k }: the view behind the car turned toward it by k, js/missions/kit.js look)
       const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
       cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
       cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
       // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
       const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
       const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
       let back = cam.userBack || 0;
       if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
@@ -9149,7 +9151,7 @@ const Render = (function () {
       const t0 = performance.now(), n0 = renderer.info.programs.length; renderer.compile(scene, camera); return [Math.round(performance.now() - t0), n0, renderer.info.programs.length]; }
     return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return (places(T) || PL).map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
   })();
-  function shake(a) { cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }
+  function shake(a, k) { if (k && !cam.shOn[k]) return; cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }   // (k: the kind of shake, switched off in Nastavitve: cam.shOn)
   function resetCam() { cam.init = false; }
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
   // updated by its owner every frame; null: back to the game's camera (from scratch)

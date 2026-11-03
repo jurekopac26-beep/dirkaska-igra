@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caGH, caGround, caSlope, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl,
     gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, tuftWindMat, valueNoise2,
-    vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep
+    vary, vrDist, vrFar, vrGritTex, vrLC, vrLCf, vrNear, vrPrep, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -156,8 +156,9 @@
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
-  function btPlantGeo(kind) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of alpine grass and sedge, 1 a cushion of flowers
+  function btPlantGeo(kind, lo) {   // unit plants (height 1; the instances scale and tint them): 0 a tuft of alpine grass and sedge, 1 a cushion of flowers
     // (white, the instances tint it: pink moss campion, yellow cinquefoil, blue forget-me-not, white phlox), 2 a granite boulder, 3 a few stones
+    // (lo: the cushion on NIZKA, each flower a low four-sided dome for an icosahedron, at the same spots: 168 vertices for 600)
     const g = new GB(), R = rng(960 + kind), rs = API.ROCK_SMOOTH;
     if (kind === 0) {   // nine short blades from a tight base, fresh green with olive tips
       const base = [0.3, 0.42, 0.18], tip = [0.62, 0.68, 0.36];
@@ -165,13 +166,29 @@
         g.triO([bx - ox, 0, bz - oz], [bx + ox, 0, bz + oz], [tx, hh, tz], base, [tx * 0.5, hh * 0.2, tz * 0.5], base, tip); g.triO([bx - ox, 0, bz - oz], [tx, hh, tz], [bx + ox, 0, bz + oz], base, [-tx, hh * 0.4, -tz], tip, base); }
     } else if (kind === 1) {   // a low green mound dotted with flowers (pale: the instance colour is the flowers')
       API.ROCK_SMOOTH = true; ico(g, 0, 0.18, 0, 0.5, 0.45, [0.3, 0.42, 0.2], R, 0.2);
-      for (let k = 0; k < 9; k++) { const a = R() * TAU, d = Math.sqrt(R()) * 0.42, y = 0.2 + (0.45 - d) * 0.5; ico(g, Math.cos(a) * d, y, Math.sin(a) * d, 0.09, 0.6, [0.98, 0.98, 0.98], R, 0.1); }
+      for (let k = 0; k < 9; k++) { const a = R() * TAU, d = Math.sqrt(R()) * 0.42, y = 0.2 + (0.45 - d) * 0.5, x = Math.cos(a) * d, z = Math.sin(a) * d;
+        if (!lo) { ico(g, x, y, z, 0.09, 0.6, [0.98, 0.98, 0.98], R, 0.1); continue; }
+        for (let q = 0; q < 12; q++) R();   // (the icosahedron's jitter: the next flower where it was)
+        const r = 0.09, h = r * 0.6, top = [x, y + h, z], c0 = [0.98 * 0.97, 0.98 * 0.97, 0.98 * 0.97], c1 = [0.98 * 1.12, 0.98 * 1.12, 0.98 * 1.12], inn = [x, y - h, z];
+        const ring = [0, 1, 2, 3].map(q => { const b = a + q * TAU / 4 + 0.4; return [x + Math.cos(b) * r, y - h * 0.15, z + Math.sin(b) * r]; });
+        const nrm = (p) => { const nx = (p[0] - x) / r, ny = (p[1] - y) / (h * 0.6), nz = (p[2] - z) / r, l = Math.hypot(nx, ny, nz) || 1; return [nx / l, ny / l, nz / l]; };
+        for (let q = 0; q < 4; q++) { const p0 = ring[q], p1 = ring[(q + 1) % 4]; g.triON(p0, p1, top, nrm(p0), nrm(p1), [0, 1, 0], inn, c0, c0, c1); } }
     } else if (kind === 2) { API.ROCK_SMOOTH = false; rock(g, 0, 0.3, 0, 0.6, 0.55, 0.5, 0, [0.64, 0.61, 0.59], R, 0.28); }
-    else {   // three stones half sunk in the ground
-      for (let k = 0; k < 3; k++) { API.ROCK_SMOOTH = false; const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17; rock(g, Math.cos(a) * d, r * 0.2, Math.sin(a) * d, r, r * 0.7, r * 0.9, R() * TAU, [0.62, 0.6, 0.58], R, 0.3); }
+    else {   // three stones half sunk in the ground (lo, on NIZKA: each five-sided for seven, at the same spots: 207 vertices for 297)
+      for (let k = 0; k < 3; k++) { API.ROCK_SMOOTH = false; const a = R() * TAU, d = k ? 0.25 + R() * 0.25 : 0, r = k ? 0.1 + R() * 0.08 : 0.17;
+        (lo ? btStoneLo : rock)(g, Math.cos(a) * d, r * 0.2, Math.sin(a) * d, r, r * 0.7, r * 0.9, R() * TAU, [0.62, 0.6, 0.58], R, 0.3); }
     }
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+  }
+  // rock()'s chunky stone (flat shaded) with five sides for seven: 23 faces for 33; draws from r_ as rock() does (the next stone where it was)
+  function btStoneLo(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit) {
+    const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + 0.6 * ry, ym = yb + (yt - yb) * 0.52, n = 5;
+    const ring = (y, f) => { const out = []; for (let k = 0; k < n; k++) { const a = (k + (r_() - 0.5) * 0.5) / n * TAU, kk = f * (1 + (r_() - 0.5) * jit), lx = Math.cos(a) * rx * kk, lz = Math.sin(a) * rz * kk; out.push([cx + lx * c - lz * s, y + (r_() - 0.5) * jit * ry * 0.3, cz + lx * s + lz * c]); } return out; };
+    const B = ring(yb, 0.86), M = ring(ym, 1.0), U = ring(yt, 0.6), inn = [cx, (yb + yt) / 2, cz], sh = (k) => [col[0] * k, col[1] * k, col[2] * k];
+    for (let q = 0; q < 3 * 3 * (7 - n); q++) r_();
+    for (let k = 0; k < n; k++) { const j = (k + 1) % n; g.quadO(B[k], B[j], M[j], M[k], sh(0.84), inn); g.quadO(M[k], M[j], U[j], U[k], sh(0.98), inn); }
+    for (let k = 1; k < n - 1; k++) g.triO(U[0], U[k], U[k + 1], sh(1.1), [cx, yb - 5, cz]);
   }
   // a mountain goat (x forward, ~1.5 m long): the shaggy white coat, the beard and the high shoulders, black horns and hooves; a kid: scaled down
   function btGoat(g, x, y, z, rot, k) {
@@ -372,8 +389,8 @@
         exclPush(bx, bz, 2.5); }
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RC = rng(3941);
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5) continue;
-        if (k === 2 || k === 7) camper(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
-        else if (k !== 4) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], R, 0.15)); }
+        if (k === 2 || k === 7) parkOn(camper, caGround, 7.2, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
+        else if (k !== 4) parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], R, 0.15)); }
       for (let k = 0; k < 18; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road towards the pass: concrete barriers across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
@@ -385,8 +402,8 @@
       const RC = rng(3951), i = vPad.i, hh = T.hd[i], c = Math.cos(hh), sn = Math.sin(hh);
       for (let k = 0; k < 9; k++) { const a = -12 + (k % 5) * 6, b = (k < 5 ? -1 : 1) * 5, px = vPad.x - sn * b + c * a, pz = vPad.z + c * b + sn * a;
         if (vrNear(px, pz).dd < 1.5 || excluded(px, pz) && Math.hypot(px - vPad.x, pz - vPad.z) > vPad.r) continue;
-        if (k % 4 === 1) camper(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
-        else caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.15)); }
+        if (k % 4 === 1) parkOn(camper, caGround, 7.2, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RC() * carCols.length)]);
+        else parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.15)); }
       for (let k = 0; k < 10; k++) { const px = vPad.x + (RC() - 0.5) * vPad.r * 1.6, pz = vPad.z + (RC() - 0.5) * vPad.r * 1.6; if (vrNear(px, pz).dd < 1.2) continue; person(px, pz, RC() * TAU); }
       const v = P.vista, dx = v[0] - vPad.x, dz = v[1] - vPad.z, L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, stone = [0.62, 0.58, 0.55];
       for (let t = vPad.r; t < L; t += 3) { const x = vPad.x + ux * t, z = vPad.z + uz * t; if (vrDist(x, z) > 600) break;   // the walk: a paved strip, kerbs of granite
@@ -473,7 +490,8 @@
     /* ---- the forest (instanced per 96 m chunk): spruce and fir with lodgepole pines low down, fewer and smaller higher up, whitebark pines and their silver
        snags near the treeline, krummholz mats on the tundra; none on the rock, the snow or the cliffs ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, 96));
+    const lo = LOD.tier === 0;   // (NIZKA: the rare snags and the krummholz in bigger chunks, fewer draws)
+    const tk = [0, 1, 2, 3, 4].map(k => new IChunks(btTreeGeo(k), tMatT, lo && k >= 3 ? 192 : 96));
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(90000 * dens), RT = rng(3961), SP = 5.2 / Math.sqrt(dens);
@@ -506,14 +524,14 @@
         }
       }
     }
-    for (const t of tk) t.addTo(root, true);
+    tk.forEach((t, k) => t.addTo(root, !(lo && k >= 3)));   // (NIZKA: no shadow from the thin snags and the low krummholz mats)
 
     /* ---- the tundra's plants (instanced per 96 m chunk): tufts of grass and sedge, cushions of flowers (pink moss campion, yellow cinquefoil, blue
        forget-me-not, white phlox), granite boulders; thicker near the road, none on the snow, under the trees or on the cliffs ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3].map(k => new IChunks(btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : 96));
+    const pk = [0, 1, 2, 3].map(k => new IChunks(lo && (k === 1 || k === 3) ? API.ownRnd(() => btPlantGeo(k, true)) : btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : !lo ? 96 : k === 0 ? 128 : k === 2 ? 192 : 96));   // (NIZKA: the cushions and the stones lighter, the grass and the boulders in bigger chunks)
     const flowerC = [[1.0, 0.55, 0.78], [1.0, 0.88, 0.3], [0.55, 0.7, 1.0], [1, 1, 1], [0.86, 0.5, 0.95]];
     let nPlants = 0;
     {
