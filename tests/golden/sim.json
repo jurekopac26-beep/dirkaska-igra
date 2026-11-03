@@ -4886,16 +4886,16 @@
   }
  },
  "mountbuller/car/cs": {
-  "digest": "952b78a069592f8fa4764821",
-  "lead": 1664.3,
+  "digest": "9422884e60191a91510b10ca",
+  "lead": 1666,
   "car0": [
-   -1041.72,
-   -127.44
+   -1043.16,
+   -124.57
   ],
   "cover": {
    "dmg": 1,
    "loose": 4,
-   "rescues": 0,
+   "rescues": 1,
    "repairs": 0
   }
  }

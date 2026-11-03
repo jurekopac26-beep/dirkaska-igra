@@ -2492,11 +2492,11 @@
  "mountbuller/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 81.65,
+  "winner": 80.41,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b73a0d721e54ef6be8415337"
+  "digest": "7930cf35b8d6b0fb85cd3657"
  }
 }
