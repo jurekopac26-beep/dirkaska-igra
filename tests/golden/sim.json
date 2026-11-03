@@ -4702,5 +4702,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "livorno/race/cs": {
+  "digest": "5b601641952b407dbb9ec42d",
+  "lead": 2185.5,
+  "car0": [
+   1368.81,
+   424.16
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/demo/cs": {
+  "digest": "4ffdbe93a4cd3efbe3c052e9",
+  "lead": 2356.5,
+  "car0": [
+   1438.98,
+   654.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/upg/cs": {
+  "digest": "4810fb73656967be1116d664",
+  "lead": 2341,
+  "car0": [
+   1424.92,
+   629.24
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/crash/cs": {
+  "digest": "c48fcdf35c2e71355cc7872a",
+  "lead": 2172,
+  "car0": [
+   1127.18,
+   257.71
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/formula/cs": {
+  "digest": "ef16276746bf87d5d1deacc0",
+  "lead": 2631.3,
+  "car0": [
+   1384.11,
+   452.86
+  ],
+  "cover": {
+   "dmg": 0.98,
+   "loose": 13,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "livorno/lm/cs": {
+  "digest": "d21f87ba4445312cb47da5b6",
+  "lead": 2583.2,
+  "car0": [
+   1357.07,
+   405.27
+  ],
+  "cover": {
+   "dmg": 0.96,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "livorno/car/cs": {
+  "digest": "ce956cee7f223dd4cc54c870",
+  "lead": 2172.4,
+  "car0": [
+   994.08,
+   186.74
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 12,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
