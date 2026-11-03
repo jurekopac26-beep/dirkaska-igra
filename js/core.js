@@ -3430,8 +3430,8 @@ const Core = (function () {
   // step), so none drives into where another was a few steps ago; the turns spread by the grid slot, so each step has about the same work.
   // Alone, the cs physics and the AI drive a lap 0.2-0.3 % slower at 30 Hz, about 0.7 % at 15 Hz (Nürburg); lap, sector and finish times
   // are taken where the line was crossed inside the longer step. The safety car on the track: the full rate within LOD.r m of it too.
-  // fol: in such a field a rival follows a car that many metres bumper to bumper (as TX.aiFol; the old rule, M.aiGap from middle to middle,
-  // presses a car ahead in the dense column: Nürburg, 100 cars, 40 % fewer hard knocks, 17 % fewer passes). A car within 1 m of another's
+  // fol: in such a field a rival follows a car that many metres bumper to bumper (as TX.aiFol; else RB_FOL with the versions' knock, M.aiGap from
+  // middle to middle with the old one: Nürburg, 100 cars, the default knock, with nr below 0.081 -> 0.048 hard knocks a car-minute, as many passes). A car within 1 m of another's
   // bumper or 0.6 m of its side, more by nrV s of their speed apart, stays at the full rate for nrT steps (Race._pairs, _lodPlan): no touch
   // on an extrapolated place, and two far cars between their steps do not run through each other (Nürburg, 100 cars: hard knocks far ahead
   // 0.4-1.2 a car-minute -> 0.04-0.1, as with LOD off; about a third more time a step). off: LOD off for the visit (the quick entry's lod=0)
