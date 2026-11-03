@@ -66,6 +66,16 @@ Vlak sam izpolni pravilo 31. 10. (več PR na istih datotekah gre na `main` v ene
 - Dolgožive seje (koordinacija, zbiranje vprašanj) se enkrat na teden (ali ob selitvi v okolje Koordinacija) zamenjajo z novimi: stanje zapišejo v predajo, opravila po urniku preusmerijo na novo sejo.
 - Obvestilo in zbiranje vprašanj bereta s strani Odločitve samo, kar potrebujeta (`query` z `where` in `out_dir`, da vsebina ne gre v pogovor; `docs/vprasanja.md`).
 
+## Odločitev zetoni-3 (3. 11. 2026): še šest predlogov
+
+Uporabnik je na strani Odločitve izbral »Uvedi vse (1–6)« (predlogi seje »Programi na čakanju«). Delitev dela:
+1. **Rezervni pregledi PR v eni majhni seji** namesto bujenja dolgih sej: VSE SEJE 2.
+2. **PR samo z dokumenti brez celotnih testov:** `.github/workflows/tests.yml`, posel »Spremembe« ugotovi iz `git diff` (osnova PR … glava), ali so spremenjene samo datoteke `.md`; takrat teče samo posel »Samo dokumenti« (`node tests/fleet.test.js`, ki vse `.md` preveri za imena znamk avtomobilov), težki posli (»Fizika, AI in dirke«, »Igra v brskalniku« 1–4, »Vozila«) se preskočijo, »Igra v brskalniku« (skupni rezultat) pa ostane zelen. Potiski na `main` in ročni zagoni tečejo vedno v celoti. (Ta seja, PR #279.)
+3. **Skupne datoteke prog (reference testov, seznami) razdeljene po progah**, da ni sporov: VSE SEJE 2, v novi seji pred novimi progami.
+4. **Pregled prog v eni majhni datoteki:** PR #280 (`docs/proge-pregled.md`, `tools/proge-pregled.js`).
+5. **Majhni izpisi orodij:** pravilo v CLAUDE.md (»Varčevanje z žetoni«): `fields`, `minimal_output`, `limit`, `kinds`; velik izpis v datoteko (`out_dir`) in iskanje v njej. (Ta seja, PR #279.)
+6. **Arhiv končanih sej in brisanje združenih in opuščenih vej:** čaka na dovoljenje uporabnika (veje izbriše šele, ko so združene ali opuščene po pravilu »ena proga na državo«).
+
 ## Stanje
 
 | točka | stanje |
@@ -77,3 +87,4 @@ Vlak sam izpolni pravilo 31. 10. (več PR na istih datotekah gre na `main` v ene
 | E branje | `.ignore`, `.gitattributes`, vrh kazala |
 | F navodila | CLAUDE.md, `.claude/rules/` |
 | G drobni | pravila v CLAUDE.md; opravili »Obvestilo o vprašanjih« od 3. 11. štejeta samo odprta vprašanja |
+| zetoni-3 | 2 (samo dokumenti na GitHubu) in 5 (majhni izpisi) v PR #279; 1 in 3 VSE SEJE 2; 4 PR #280; 6 čaka na uporabnika |

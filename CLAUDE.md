@@ -14,7 +14,7 @@ Splošna pravila za vsako sejo. Pravila za posamezne dele kode so v `.claude/rul
 
 ## Postopek
 - Po vsaki spremembi v `js/` ali `css/`: `node tools/stamp.js`; nove reference: `npm run golden:update`.
-- Lokalno samo testi, povezani s spremembo: `npm run test:related` (izbere jih iz `git diff` proti `main`); uspešnih ne ponavljaj. Celotni nabori (Node ~1 h, brskalniški, vozila) tečejo na GitHubu. Hiter vstop v igro (`index.html?proga=<id>`) in testi: `tests/README.md`; najpogostejši ukazi so na vrhu `docs/kazalo.md`.
+- Lokalno samo testi, povezani s spremembo: `npm run test:related` (izbere jih iz `git diff` proti `main`); uspešnih ne ponavljaj. Celotni nabori (Node ~1 h, brskalniški, vozila) tečejo na GitHubu; pull request, ki spremeni samo datoteke `.md`, tam požene samo `fleet.test.js` (3. 11. 2026). Hiter vstop v igro (`index.html?proga=<id>`) in testi: `tests/README.md`; najpogostejši ukazi so na vrhu `docs/kazalo.md`.
 - Spoj `main` ali druge veje: `node tools/spoji-main.mjs [veja]` — mehanske spore (žigi, kazalo, seznami testov) reši samo, ostale izpiše.
 - **Na `main` gre vse z vlakom** (odločitev uporabnika 3. 11. 2026; postopek v `docs/varcevanje.md`, A). Seja s kodo, ko je delo končano in so povezani testi zeleni: spoji svež `main`, potisne vejo, odpre pull request kot osnutek (draft) z razdelkom `## Za vlak` (predaja), koordinaciji pošlje »PR #N je pripravljen za vlak« in **konča**: brez naročanja na dogodke PR, brez rezervnih pregledov, brez čakanja. Koordinacija (»VSE SEJE«) enkrat ali dvakrat na dan spoji pripravljene PR v vejo vlaka, požene en krog celotnih testov in vlak združi sama, brez vprašanja (odločitev 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«). Sejo s kodo zbudi le, če pade njen test ali je spor, ki ni mehanski.
 - Na dogodke PR (`subscribe_pr_activity`) se naroči samo koordinacija, za PR vlaka; rezervno preverjanje največ eno, na 4 h; brez zank s `sleep` in brez preverjanj na nekaj minut.
@@ -36,7 +36,7 @@ Kjer načrt teme določa model (npr. veriga sklopov: `claude-opus-5-5`), velja t
 
 ## Varčevanje z žetoni (odločitvi 2. in 3. 11. 2026; `docs/varcevanje.md`)
 - Velikih datotek ne beri v celoti (seznam na vrhu `docs/kazalo.md`): najprej poišči ime v kazalu (z grepom, tudi kazalo je veliko), nato v kodi z grepom, nato preberi samo tisti del.
-- Dolge izpise (testi, spoji, dnevniki) shrani v datoteko in v njej išči; pri CI samo padli posli in zadnjih ~150 vrstic.
+- Izpisi orodij čim manjši (3. 11. 2026, zetoni-3): pri seznamih in branju `fields`, `minimal_output`, `limit`, `kinds`; velik izpis v datoteko (`out_dir`, preusmeritev) in iskanje v njej. Pri CI samo padli posli in zadnjih ~150 vrstic.
 - Pomožni agenti, delovni tokovi z več agenti in pregledi z več pregledovalci samo za res vzporedno delo ali tvegano spremembo (fizika, skupna koda sveta, zelo velike spremembe); sicer en pregled (`/code-review` medium ali high) ali nič, kjer spremembo pokrijejo testi.
 - Slike samo, ko so potrebne; za lastno preverjanje `deviceScaleFactor: 1` in manjše okno (vsaka slika ostane v kontekstu do konca seje).
 - Sredi dolge seje ne menjaj modela; raje nova seja s predajo. Dolgožive seje (koordinacija, zbiranje vprašanj) se enkrat na teden zamenjajo z novimi.
