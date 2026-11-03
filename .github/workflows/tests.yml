@@ -22,7 +22,7 @@ jobs:
     name: Fizika, AI in dirke
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 40   # (nabor traja na CI ~20 min: omejitev mora imeti rezervo)
+    timeout-minutes: 60   # (nabor traja na CI 30–40 min, odvisno od stroja; pri 40 min ga je počasen stroj prekinil tik po koncu, vsi testi zeleni)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
