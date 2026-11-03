@@ -2,7 +2,7 @@
 // asphalt run-off out to it): the side roads are closed by the barrier itself, so the world has no yellow bollards in front of their mouths, no closures (rails,
 // gates, boards) down them and no delineator posts. The scenery builder puts every small thing into the prop list: the tyre stacks (at the rail's ends and in two
 // rows along each ring's wall), the street lamps, the zebra crossings' and the bus stops' signs, the street names' plates, the flag poles, the
-// benches (the villages' lettered boards stand fixed behind the barrier: roadside.test.mjs); Core simulates them (Race.setProps), the renderer draws one instanced mesh per kind. The race's own furniture behind the barrier (the distance boards,
+// benches (the villages' lettered boards, the limits and the chevrons on the run-off: roadside.test.mjs); Core simulates them (Race.setProps), the renderer draws one instanced mesh per kind. The race's own furniture behind the barrier (the distance boards,
 // the marshals' posts, the timing hut, the paddock's tents) is static scenery, no props. Checks: the counts per kind and the old kinds gone, none inside a building,
 // standing on the ground, one instanced mesh per kind with the right number of instances in view, the player's car (in the browser) driven along each ring's road
 // into its wall knocking the world's tyre stacks over and stopped by the wall, steered into a side road and stopped by the barrier across its mouth.

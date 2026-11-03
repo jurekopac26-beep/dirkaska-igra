@@ -2000,7 +2000,7 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      CAR
      --------------------------------------------------------------------- */
-  const _wpos = [[0, 0], [0, 0], [0, 0], [0, 0]], _elv = { y: 0, grade: 0, curv: 0 };   // (Car.stepCS's scratch: the wheels' places, the road's height)
+  const _wpos = [[0, 0], [0, 0], [0, 0], [0, 0]], _elv = { y: 0, grade: 0, curv: 0 }, _elv2 = { y: 0, grade: 0, curv: 0 };   // (Car.stepCS's scratch: the wheels' places, the road's height; _elv2 def.barrier's over the run-off)
   class Car {
     constructor(model, opts) {
       // upgrades: the car drives a CLONE of the model (MODELS / ARC entries are shared by every car and the menus: never mutate them)
@@ -2113,7 +2113,7 @@ const Core = (function () {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = CSK;
       const CA = CSASSIST[ASSISTS.indexOf(A)] || CSASSIST[2], CP = CSP[M.id] || CSP.kaze, ai = this.isPlayer ? 1 : K.aiBx;
       this.px = this.x; this.pz = this.z; this.ph = this.h; this.py = this.y;
-      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q)).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (def.barrier: the height continuous over the run-off, Track.hs)
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q), _elv2).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (def.barrier: the height continuous over the run-off, Track.hs)
         if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
         if (trk.def.ringH) this.roadY = trk.ringY(this.x, this.z, this.roadY); }   // (round a roundabout: its zone's own surface)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
@@ -2349,8 +2349,9 @@ const Core = (function () {
     _nova(dt, trk) {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = NVK, KC = CSK, lv = ASSISTS.indexOf(A);
       const CA = CSASSIST[lv] || CSASSIST[2], NA = NVASSIST[lv] || NVASSIST[2], CP = CSP[M.id] || CSP.kaze, SL = this.nvSl ? K.slide : null, balR = SL ? SL.balR : K.balR;
-      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = e.y; this.gradeNow = e.grade; this.curvNow = e.curv;
-        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (as cs: a side road's own height)
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q), _elv2).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (as cs: def.barrier, the height continuous over the run-off)
+        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; }   // (as cs: a side road's own height)
+        if (trk.def.ringH) this.roadY = trk.ringY(this.x, this.z, this.roadY); }   // (as cs: round a roundabout, its zone's own surface)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }
       if (trk.ground2) nvGround(this, trk);
@@ -2376,12 +2377,12 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * cb - wpos[k][1] * sb, wz = this.z + wpos[k][0] * sb + wpos[k][1] * cb;   // (the wheels where the body has them)
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf === 9 ? 2 : sf;   // (as cs: the tall grass is grass to the rest of the game)
         const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk;
         const lt = S.lat * lk * (kg ? kg[4] : 1) * (M.loose && off ? (1 - (1 - M.loose) * K.slick) / M.loose : 1) * (sf === 1 ? K.kerbLat : 1) * (1 - clamp(Z[4 + k] * K.kerbG, 0, 0.35));   // (slicks on loose ground: K.slick of cs's side grip lost)
         if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) { curb++; kb |= 1 << k; }
-        if (sf === 2) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass: a bumpy field, the same bumps in the same place)
-        const ld = (M.looseDrag && off ? M.looseDrag : 1) * (sf === 2 ? K.grassD : 1);
+        if (sf === 2 || sf === 9) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass, the tall grass too: a bumpy field, the same bumps in the same place)
+        const ld = (M.looseDrag && off ? M.looseDrag : 1) * (sf === 2 || sf === 9 ? K.grassD : 1);   // (the tall grass: cs's own drag for it, as much more than the grass's as in cs)
         const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25;
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
@@ -5682,12 +5683,14 @@ const Core = (function () {
       }
       return this._gw;
     }
+    // a grid column's distance from the middle: on a road in its real width (def.barrier) the car wholly on the asphalt of its slot, 0.3 m in
+    _gridLat(i, c) { const T = this.track, l = Math.min(3.4, T.w - 1.6); return T.def.barrier ? clamp(T.wAt(i) - 0.3 - ((c && c.m.wid) || 1.9) / 2, 0, l) : l; }
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
+      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -6448,7 +6451,7 @@ const Core = (function () {
         if (!this.timeTrial) { const room = T.len - 20 - T.finishS, nP = Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;
           let L = 0, W = 0; if (nP > 12) for (const o of this.cars) { L = Math.max(L, o.m.len || 4.4); W = Math.max(W, o.m.wid || 1.9); }   // (the field's longest and widest car)
           const two = nP > 12 && 2 * st < L + 0.8, k = two ? Math.max(0, nP - c.finishPos + 1) : c.finishPos - 1, sd = k % 2 ? -1 : 1;
-          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2);
+          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - (T.def.barrier ? 0.4 + (c.m.wid || 1.9) / 2 : 1.2));   // (def.barrier: the car's side 0.4 m off the barrier)
           c.parkD = sd * (two ? ((k >> 1) % 2 ? dO : Math.min(T.wAt(pi) - 1.5, dO - W - 0.5)) : this.tf || T.def.barrier ? dO : T.wAt(pi) - 1.5); }   // (the open road, def.barrier's run-off: off the asphalt as far as the barrier lets it, clear of the traffic)
       }
     }
@@ -6457,7 +6460,7 @@ const Core = (function () {
     _serveRespawn() {
       const T = this.track, c = this._rq[0];
       for (let g = 1; g <= 4; g++) {
-        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);
+        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c);
         const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         let free = true;
         for (const o of this.cars) if (o !== c && (o.x - x) * (o.x - x) + (o.z - z) * (o.z - z) < 81) { free = false; break; }
