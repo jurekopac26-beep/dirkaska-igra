@@ -39,8 +39,8 @@ const shown = prs.slice(0, MAX), left = prs.slice(MAX);
 
 fs.rmSync(site, { recursive: true, force: true });
 unpack('HEAD', site, null);
-stamp(site, 'main');
 console.log('main (' + run('git', ['rev-parse', '--short', 'HEAD']).trim() + ') → ' + path.relative(REPO, site) + '/');
+stamp(site, 'main');
 const built = [];
 for (const p of shown) {
   try {
