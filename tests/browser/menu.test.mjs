@@ -336,6 +336,26 @@ try {
     T.check('no page errors in a race alone', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
+  {   // a field bigger than the game's own (40 opponents on Trois-Rivières): the race starts flying (the column, as the Nordschleife's 100:
+    //   a big field's standing start piled up in its first corners with the knocks between cars, game.js newRace flyGo), the player's car
+    //   over the line hands it over, the field rolling on 15 s more: no rival standing 3 s on end; no page error
+    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 40, length: 'short' });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    await click(page, 'race-single');
+    await raceOn(page, 'troisrivieres').catch(() => null);
+    const fl = await page.evaluate(async () => { const g = window.__game, r = g.race, st = new Map(), yld = () => new Promise(q => setTimeout(q, 0)); let worst = 0, t = 0, k = 0;
+      const o = { cars: r.cars.length, flying: r.opts.flying || 0 };
+      for (; t < 40 && (g.phase !== 'racing' || r.flyOn); t += 0.25) { g.sim(0.25, true); if (++k % 8 === 0) await yld(); }
+      o.took = +t.toFixed(2); o.flyOn = !!r.flyOn; o.phase = g.phase;
+      for (let j = 0; j < 60; j++) { g.sim(0.25, true); for (const c of r.cars) if (!c.isPlayer) { const v = Math.hypot(c.vx, c.vz) < 3 ? (st.get(c) || 0) + 0.25 : 0; st.set(c, v); worst = Math.max(worst, v); } if (j % 8 === 0) await yld(); }
+      o.worst = worst; o.dist = Math.round(r.player.dist); return o; });
+    T.check('40 opponents on Trois-Rivières (more than the game\'s own 21): the row 40, 41 cars from a flying start, the player\'s over the line, then 15 s on: no rival standing 3 s on end',
+      row === 'Opponents40' && fl.cars === 41 && fl.flying > 0 && fl.phase === 'racing' && !fl.flyOn && fl.worst < 3 && fl.dist > 0, JSON.stringify({ row, fl }));
+    T.check('no page errors in a big field\'s flying start', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
   {   // a tablet held upright: the menu a column, the game's demo seen at its sides and drawn, on the track step too
     const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
     await ready(page);

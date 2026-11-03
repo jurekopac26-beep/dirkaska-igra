@@ -3,16 +3,18 @@
 // every vehicle's field bigger than the one the game always gave the track (the player's car decides what the rivals drive: the formula's
 // 5.2 m; a big vehicle's, Core.aiModel: its own few spread through the field, the rest its fill's cars: the 3.2 m wide monster truck, the
 // 6.3 m long ones; tests/grid.test.js the fields as ever):
-//   1. the start: a circuit's grid (two staggered columns, 9 + 7.5 m a slot, the last ~760 m behind the line), no two cars on each other,
-//      every car on the asphalt behind the line (a wide vehicle in from the edge: Race._inside); a flying start (an open road, the
-//      Nordschleife: Race._flyColumn) the same once it rolls
+//   1. the start: a circuit's grid (two staggered columns, 9 + 7.5 m a slot, the last ~760 m behind the line: a race after qualifying),
+//      no two cars on each other, every car on the asphalt behind the line (a wide vehicle in from the edge: Race._inside); a flying start
+//      (an open road, the Nordschleife, and a circuit's field bigger than the game's own 22 cars, game.js newRace: Race._flyColumn) the same
+//      once it rolls
 //   2. an open road's finish: a slot past the line for every car, none past the end of the road (one at most), none on another (two
 //      cars' boxes: their own lengths and widths), none by the barrier (Pikes Peak's summit, the second row of a few roads' parking:
 //      their def.maxRivals; a wide vehicle's side in the outer row no farther out than a 1.9 m car's)
 //   3. the field the player chose stays (opts.numSet): fewer than a track's own def.rivals (the Nordschleife's 20), none (0: alone, a run
 //      against the clock); without it the track's own field as before; 100 rivals: 101 cars, every one a name and a number of its own
-//   4. the race: Trois-Rivières (the shortest circuit) with 100 rivals from the back of the grid and Tianmen (a narrow mountain road) with
-//      100 from a flying start, 20 s on the autopilot: no NaN, nobody stuck; a race alone (0 rivals) on Spa to its finish: one car home
+//   4. the race: Trois-Rivières (the shortest circuit) and Tianmen (a narrow mountain road) with 100 rivals from the flying start, 20 s on
+//      the autopilot: no NaN, nobody stuck (no rival standing 3 s on end; from the grid, with the knocks between cars, Simulacija: js/core.js KV, a big field piled up in the
+//      first corners and stood there: game.js flies it); a race alone (0 rivals) on Spa to its finish: one car home
 // Test tracks (def.test) are left out.
 //   node tests/rivals-n.test.js
 'use strict';
@@ -41,10 +43,12 @@ function onEach(a, b) {
   }
   return true;
 }
-// a race as the game's Circuit race makes it with the rivals chosen (newRace: numSet, the player at the back, a flying start up an open road
-// and on the Nordschleife)
+// a race as the game's Circuit race makes it with the rivals chosen (newRace: numSet, the player at the back, a flying start up an open road,
+// on the Nordschleife and with more rivals than the game's own 21: flyGo; o.flying 0: the lights, a race after qualifying)
+const NUM_AI = 21;   // (game.js NUM_AI)
+const flies = (d, N) => !!(d.open || d.flyStart || N > NUM_AI);
 const race = (d, T, N, pm, o) => new C.Race(T, Object.assign({ numAI: N, numSet: true, playerGrid: 999, laps: 1, tt: false, playerModel: pm, playerNum: pm.num || 1, assist: 2, phys: 'cs', seed: 11,
-  difficulty: 1, flying: d.open || d.flyStart ? 3 : 0 }, o));
+  difficulty: 1, flying: flies(d, N) ? 3 : 0 }, o));
 function startOk(T, r) {   // { pairs on each other, cars off the asphalt, cars not behind the line (a grid) }
   let pairs = 0, off = 0; const cs = r.cars;
   for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) if (onEach(cs[i], cs[j])) pairs++;
@@ -65,14 +69,14 @@ function parkOk(T, r) {   // the finish past an open road's line: every car over
 {
   const fs = [], fp = [], caps = [];
   for (const d of tracks) {
-    const T = new C.Track(d), N = maxOf(d), fly = !!(d.open || d.flyStart);
+    const T = new C.Track(d), N = maxOf(d), fly = flies(d, N);
     if (d.maxRivals) caps.push(`${d.id} ${d.maxRivals}`);
     for (const pm of PMS) {
       if (C.fieldSize(pm.oneMake ? null : pm, N) <= C.fieldSize(pm.oneMake ? null : pm, d.raceRivals || d.rivals || 21)) continue;   // (no bigger than the track's own field with that car, as the game always raced it: tests/grid.test.js; the big vehicles' fields, Core.fieldSize)
       const r = race(d, T, N, pm);
       if (r.cars.length !== C.fieldSize(pm.oneMake ? null : pm, N) + 1) { fs.push(`${d.id}/${pm.id}: ${r.cars.length} cars`); continue; }
-      const g = startOk(T, r);
-      if (!fly && (g.pairs || g.off || g.ahead)) fs.push(`${d.id}/${pm.id} ${N}: the grid ${g.pairs} on each other, ${g.off} off the asphalt, ${g.ahead} not behind the line`);
+      const g = startOk(T, d.open ? r : race(d, T, N, pm, { flying: 0 }));   // (a circuit's grid: the race after qualifying, the lights)
+      if (!d.open && (g.pairs || g.off || g.ahead)) fs.push(`${d.id}/${pm.id} ${N}: the grid ${g.pairs} on each other, ${g.off} off the asphalt, ${g.ahead} not behind the line`);
       if (fly) { r.start(); const f = startOk(T, r); if (f.pairs || f.off) fs.push(`${d.id}/${pm.id} ${N}: the flying start ${f.pairs} on each other, ${f.off} off the asphalt`); }
       if (d.open) { const p = parkOk(T, race(d, T, N, pm, { seed: 3 })); if (p.slots !== p.cars || p.past > 1 || p.on || p.barrier) fp.push(`${d.id}/${pm.id} ${N}: ${p.slots} slots of ${p.cars}, ${p.past} at the end of the road, ${p.on} on another, ${p.barrier} by the barrier`); }
     }
@@ -95,13 +99,16 @@ function parkOk(T, r) {   // the finish past an open road's line: every car over
 
 // 4. the race itself
 {
-  const run = (r, sec) => { let k = 0; for (let t = 0; t < sec; t += DT) { Math.random = seeded(5000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); } };
+  // (stuck: a rival standing, under 3 m/s, 3 s on end or more, from 4 s on: the marshals' time, Race.step's rescue at 3.5 s; with the knocks
+  // between cars a rival spun stands a second or so, as the 22 of the game's own grid do; a big field's standing start: 3.9 s and rescued)
+  const run = (r, sec) => { let k = 0, worst = 0; const st = new Map(); for (let t = 0; t < sec; t += DT) { Math.random = seeded(5000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player);
+    if (t >= 4) for (const c of r.cars) if (!c.isPlayer) { const v = Math.hypot(c.vx, c.vz) < 3 ? (st.get(c) || 0) + DT : 0; st.set(c, v); worst = Math.max(worst, v); } } return worst; };
   const fin = (r) => r.cars.every(c => [c.x, c.z, c.y || 0, c.vx, c.vz, c.dist].every(Number.isFinite));
   for (const id of ['troisrivieres', 'tianmen']) {
     const d = C.TRACKS.find(t => t.id === id), T = new C.Track(d), r = race(d, T, 100, model('kaze'), { laps: 3, chars: true, slip: true, flags: true, damage: 1 });
-    r.start(); run(r, 20);
+    r.start(); const worst = run(r, 20);
     const still = r.cars.filter(c => !c.isPlayer && Math.hypot(c.vx, c.vz) < 3).length, far = Math.max(...r.cars.map(c => c.dist)), back = Math.min(...r.cars.map(c => c.dist));
-    check(`${id}: 100 rivals (${d.open ? 'a flying start' : 'from the grid, the player at its back'}), 20 s: no NaN, nobody stuck`, fin(r) && !still && r.cars.length === 101, `${still} standing, the field from ${back.toFixed(0)} m to ${far.toFixed(0)} m`);
+    check(`${id}: 100 rivals (a flying start${d.open ? '' : ': a field bigger than the game\'s own'}), 20 s: no NaN, nobody stuck`, fin(r) && worst < 3 && r.cars.length === 101, `a rival stood ${worst.toFixed(1)} s on end at most, ${still} standing at the end, the field from ${back.toFixed(0)} m to ${far.toFixed(0)} m`);
   }
   const d = C.TRACKS.find(t => t.id === 'spa'), T = new C.Track(d), r = race(d, T, 0, model('kaze'), { laps: 1, flags: true, chars: true, slip: true });
   r.start(); let k = 0, t = 0; for (; t < 400 && !r.player.finished; t += DT) { Math.random = seeded(9000 + (++k)); C.aiControl(r.player, r, DT); r.step(DT); if (r.player.stuckT > 3 || r.player.wrongT > 3) r.rescue(r.player); }
