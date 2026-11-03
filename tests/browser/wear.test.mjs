@@ -3,7 +3,7 @@
 // the engineer's box call once the message has had its time; over the cliff the tyres (the top left: four dots, one a tyre, and the word) blink, the word on a red chip, each dot while its own tyre is past it (Core.tyreWear4); past the set's burst point
 // POČILA GUMA!, the commentator, the toast (into the pits), the pill POČENA GUMA with the failures' (they are off), the tyres at 0 % (never
 // below); both messages with the warning icon; the pills on the screen upright and on its side; in English TYRES WORN, TYRE BURST!, BURST
-// TYRE; a fresh set: no pill.
+// TYRE; a fresh set: no pill. (On a car without its own tyres, Car.kt, as in a race with a friend: offline every car has them since 1. 11. 2026.)
 //   node tests/browser/wear.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -13,6 +13,10 @@ const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring', weather: 'dry', radio: 1, comm: 1, cmp: 'M' }, { width: 390, height: 844 }, { seed: 11 });
   await startTrack(page, 'rbring');
+  // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt: its own wear and HUD, tests/browser/kolibri-hud.test.mjs; the
+  // set's wear checked here on a car without them, as in a race with a friend, as tests/browser/hud.test.mjs does)
+  const ownT = await page.evaluate(() => { const g = window.__game, P = g.race.player, kt = !!P.kt; P.kt = null; g.hud(); return { id: P.m.id, kt }; });
+  T.check('the player\'s car with its own tyres (Car.kt); the set\'s wear below on a car without them, as in a race with a friend', ownT.kt, JSON.stringify(ownT));
   // step the race (paused, on autopilot), then two drawn frames (the HUD follows the race only while it runs)
   const sim = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
     requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
