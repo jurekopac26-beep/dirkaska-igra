@@ -3276,59 +3276,59 @@
   }
  },
  "monterey/crash/cs": {
-  "digest": "e400bf53330bb8f9e16a72b0",
-  "lead": 2259.6,
+  "digest": "0aedd363e8b5a48cec75630d",
+  "lead": 5276,
   "car0": [
-   661.67,
-   481.43
+   -94.6,
+   382.93
   ],
   "cover": {
-   "dmg": 0.4,
-   "loose": 3,
+   "dmg": 0.6,
+   "loose": 1,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/formula/cs": {
-  "digest": "f207999513f304f6da738612",
-  "lead": 2576.2,
+  "digest": "e9c0ae1aefcaa988912dda3d",
+  "lead": 6550.8,
   "car0": [
-   643.29,
-   163.47
+   257.11,
+   343.91
   ],
   "cover": {
-   "dmg": 0.93,
+   "dmg": 0.9,
    "loose": 2,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/lm/cs": {
-  "digest": "e27835e42e93b302eb5be022",
-  "lead": 2550.3,
+  "digest": "60ff8a242c92fb7f53b1f3bc",
+  "lead": 6490.6,
   "car0": [
-   660.96,
-   169.24
+   256.87,
+   340.48
   ],
   "cover": {
-   "dmg": 0.83,
+   "dmg": 0.82,
    "loose": 2,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "monterey/car/cs": {
-  "digest": "05bf4c42f61f7e24091f32e1",
-  "lead": 2248.2,
+  "digest": "409a0e9a411ef12ccb6e7a58",
+  "lead": 5666.7,
   "car0": [
-   651.53,
-   570.76
+   -38.13,
+   283.23
   ],
   "cover": {
-   "dmg": 0.43,
+   "dmg": 0.48,
    "loose": 1,
    "rescues": 0,
-   "repairs": 0
+   "repairs": 1
   }
  },
  "longford/race/cs": {
@@ -4701,6 +4701,104 @@
    "loose": 3,
    "rescues": 0,
    "repairs": 1
+  }
+ },
+ "livorno/race/cs": {
+  "digest": "7ec9fcdfae71d3b20af3b299",
+  "lead": 2177.7,
+  "car0": [
+   1301.86,
+   345.36
+  ],
+  "cover": {
+   "dmg": 0.03,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/demo/cs": {
+  "digest": "f56ec0ef7f139e6f55759950",
+  "lead": 2356.5,
+  "car0": [
+   1438.98,
+   654.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/upg/cs": {
+  "digest": "0eac487b95d0d25311dc09d1",
+  "lead": 2341,
+  "car0": [
+   1427.81,
+   631.65
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/crash/cs": {
+  "digest": "e7893a0ba5dabf11d05a1c6e",
+  "lead": 2172.2,
+  "car0": [
+   1214.41,
+   294.55
+  ],
+  "cover": {
+   "dmg": 0.93,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "livorno/formula/cs": {
+  "digest": "3d478ea1a2ec2a80fff74a7e",
+  "lead": 2591.6,
+  "car0": [
+   1376.82,
+   438.52
+  ],
+  "cover": {
+   "dmg": 0.82,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "livorno/lm/cs": {
+  "digest": "9f24a8ea01c7da3fbb4950b2",
+  "lead": 2572.7,
+  "car0": [
+   1363.21,
+   414.8
+  ],
+  "cover": {
+   "dmg": 0.87,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "livorno/car/cs": {
+  "digest": "3f35992ed21c44f77babb4ec",
+  "lead": 2172.4,
+  "car0": [
+   1048.47,
+   221.13
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
   }
  }
 }

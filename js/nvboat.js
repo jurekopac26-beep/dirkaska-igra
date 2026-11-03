@@ -116,6 +116,12 @@ const NVBoat = (function () {
       if (d < 0) { pal(WL - h); if (SD[q] < 12 && W && W.bedAt) { const b = W.bedAt(x, z, cb), f = 1 - sst(0, 12, SD[q]); h = mix(h, Math.min(h, b.y), f); cc.lerp(cb, f); } MW[q] = 0; }
       else { const hA = h - WL, bw = mix(BEACH, CBEACH, kc); cc.copy(wetS).lerp(dryS, sst(0, 0.1, hA)); MW[q] = sst(bw - 1.2, bw + 1.2, d); if (EM[q] > 0.05 && d > 1.5) MW[q] = 1; }
       HT[q] = h; COL[q * 3] = cc.r; COL[q * 3 + 1] = cc.g; COL[q * 3 + 2] = cc.b; }
+    // (the ring road's run-off sand where the new ground lies over it, by its bridge: no meadow there, the run-off's own textured sand over the new
+    // heights, soft at its edge; the new ground's 1 m cells had laid grass over it in steps, the 15 pictures of the whole map, sheet 15)
+    { const RH = new Float32Array(NV), hit = H3.roHit; if (hit) for (let q = 0; q < NV; q++) { const i = Math.floor(q / N1), j = q - i * N1; if (inFloor(q) && D[q] >= 0.5 && RD[q] < 60) RH[q] = hit(X0 + i, Z0 + j) ? 1 : 0; }
+      for (let it = 0; it < 2; it++) { const T2 = RH.slice(); for (let i = 1; i < NX; i++) for (let j = 1; j < NZ; j++) { const q = i * N1 + j; let a = 0; for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) a += T2[q + di * N1 + dj]; RH[q] = a / 9; } }
+      for (let q = 0; q < NV; q++) if (RH[q] > 0) MW[q] *= 1 - sst(0.2, 0.8, RH[q]);
+      out.sand = sandOver(MK, { X0, Z0, NX, NZ, N1, HT, RH, inFloor }); }
     out.floor = floorPieces(MK, { X0, Z0, NX, NZ, N1, HT, COL, MW, SD, inFloor, piece: 48 });
     // ---- the water: one surface at the sea's level (2 m cells) over the course and the canal to the sea's edge, a little behind the ground
     const WM = W && W.surf ? W.surf.material.clone() : new THREE.MeshPhongMaterial({ color: 0x2f86b8, transparent: true, opacity: 0.58, shininess: 110, depthWrite: false });
@@ -151,6 +157,15 @@ const NVBoat = (function () {
     for (const top of Render.scene.children) { if (!top.userData.mk || top.userData.nvboat || top === world) continue; top.updateMatrixWorld(true); top.traverse(o => { if (o.visible) one(o, true); }); }
     return r; }
 
+  // the run-off's sand over the new ground (js/newmap.js makF: the gravel's own look, the run-off's colour), its alpha the run-off's share RH
+  function sandOver(MK, o) { const { X0, Z0, NX, NZ, N1, HT, RH, inFloor } = o, pos = [], col = [], uv = [], idx = [], vid = new Map();
+    const V = (q) => { let v = vid.get(q); if (v != null) return v; const i = Math.floor(q / N1), j = q - i * N1, x = X0 + i, z = Z0 + j, k = 1.12 * (0.93 + 0.06 * (1 + Math.sin(x * 0.37 + z * 0.23)));
+      v = pos.length / 3; pos.push(x, HT[q] + 0.035, z); uv.push(x / 6, z / 6); col.push(k * 1.02, k, k * 0.95, sst(0.15, 0.75, RH[q])); vid.set(q, v); return v; };
+    for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) { const a = i * N1 + j, b = a + N1, c = b + 1, d = a + 1; if (!(inFloor(a) && inFloor(b) && inFloor(c) && inFloor(d))) continue; if (RH[a] + RH[b] + RH[c] + RH[d] < 0.1) continue;
+      idx.push(V(a), V(c), V(b), V(a), V(d), V(c)); }
+    if (!idx.length || !MK.makF) return 0; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx); g.computeVertexNormals();
+    if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let t = 0; t < I.count; t += 3) { const q = I.getX(t + 1); I.setX(t + 1, I.getX(t + 2)); I.setX(t + 2, q); } g.computeVertexNormals(); }
+    const m = new THREE.Mesh(g, MK.makF()); m.renderOrder = 1; m.receiveShadow = true; MK.add(m); return pos.length / 3; }
   // the new ground in pieces: its cells where any corner is in it, cut at the sea's edge (the sea's own bed and water go on from there)
   function floorPieces(MK, o) { let nv = 0, np = 0; const { X0, Z0, NX, NZ, N1, HT, COL, MW, SD, inFloor } = o;
     for (let pi = 0; pi < NX; pi += o.piece) for (let pj = 0; pj < NZ; pj += o.piece) { const pos = [], col = [], mw = [], tri = [], vid = new Map();
