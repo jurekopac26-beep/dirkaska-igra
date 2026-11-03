@@ -1,90 +1,91 @@
-# Varčevanje z žetoni
+# Varčevanje z žetoni · odločitve in postopki
 
-Odločitev uporabnika 3. 11. 2026 na strani Odločitve (vprašanje `zetoni-1`, odgovor »1 · Vse (A–G)«); dopolnjuje pravila z 2. 11. 2026 (CLAUDE.md, »Varčevanje z žetoni«). Napor max za seje s kodo ostane (odločitvi 31. 10. in 2. 11.): ukrepi odstranijo porabo, ki kakovosti ne prinese.
+Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do `zetoni-4`, povsod možnost 1; seja »Predlogi za prihranek tokenov«) in odločitve iz drugih sej istega dne (spodaj). Kratka pravila so v `CLAUDE.md`, tu je, zakaj in kako.
 
-**Ozadje (3. 11. 2026).** Seje, ki so končale delo, so ure čakale, da njihov PR pride na vrsto za `main`. Same so se zbujale z rezervnimi pregledi na ~4 h (en PR je imel že sedmi pregled, enega sta spremljali dve seji) in ob dogodkih pull requesta. Vsako bujenje znova obdela ves kontekst seje, ta pa zraste do ~900 tisoč žetonov, preden se samodejno povzame. Repozitorij je z `env.CLAUDE_CODE_EFFORT_LEVEL=max` v `.claude/settings.json` vsilil max tudi koordinaciji in zbiranju vprašanj; lokalni `.claude/settings.local.json` z medium ni pomagal (ni v gitu, oblačne seje ga po dokumentaciji Claude Code ne berejo). Spori pri spajanju `main` so bili večinoma mehanski (žigi, kazalo, seznami testov).
+## Kje gre največ (meritve 3. 11. 2026)
 
-## A · Vlak: seje s kodo ne čakajo na `main`
+- **Dolg pogovor:** okno je 1 milijon žetonov, povzetek pa šele pri ~900 tisoč (Opus, prag 901.600) oz. 784 tisoč (Sonnet). Vsak korak seje znova prebere ves pogovor.
+- **Bujenje po več kot 1 h:** predpomnilnik velja 1 h, zato poznejše bujenje plača ves pogovor znova po polni ceni.
+- **Primer, seja zbiranja:** v 11 h 252 tisoč žetonov konteksta, 7,5 milijona prebranih iz predpomnilnika, 79 tisoč izpisanih, 3,03 USD po ceni API.
+- **Spoji main:** v 7 dneh 59 združenih pull requestov in 222 spojev `main` v veje (68 zaradi žigov); vsak spoj na pripravljenem pull requestu sproži celoten krog na GitHubu (~70 min) in nova bujenja.
+- **Poraba seje:** `get_session` → `external_metadata.usage` (`cache_read_tokens`, `cache_write_tokens`, `output_tokens`, `cost_usd`) in `external_metadata.context_usage.used_tokens`.
 
-**Seja s kodo**, ko je delo končano:
-1. povezani testi lokalno zeleni (`npm run test:related`), `node tools/stamp.js`, reference prog, ki jih je spremenila;
-2. spoji svež `main` (`node tools/spoji-main.mjs`) in potisne vejo;
-3. odpre pull request **kot osnutek** (draft: težki testi na GitHubu ne tečejo) in v opis doda razdelek `## Za vlak`: kaj je spremenjeno, kateri testi in reference so povezani, na kaj paziti pri spoju (datoteke, proge, reference) in id seje;
-4. koordinaciji (seja »VSE SEJE«; `list_sessions`) pošlje eno vrstico »PR #N je pripravljen za vlak«;
-5. **konča**: brez `subscribe_pr_activity`, brez rezervnih pregledov, brez čakanja. Uporabniku ob koncu napiše kratek seznam za preizkus na telefonu (velja, ko gre vlak na `main`).
+## Odločitve
 
-Če koordinacija sporoči, da je na vlaku padel test te seje ali je spor, ki ni mehanski, ga seja popravi na svoji veji, potisne in znova sporoči »pripravljen za vlak«.
+| vprašanje | odločitev |
+|---|---|
+| `zetoni-1` | vseh pet predlogov brez izgube kakovosti (a–e spodaj), tudi model Haiku za obvestilo o vprašanjih |
+| `zetoni-2` | napor max ostane za vso kodo; koordinacija, zbiranje in obvestila z naporom medium |
+| `zetoni-3` | okno za povzetek 400 tisoč |
+| `zetoni-4` | svež `main` pred združitvijo brez novega kroga na GitHubu, če spoj nima sporov |
+| »Uporabi vse tvoje predloge 1–8« (druga seja, PR #277) | predaja velike seje pri ~300 tisoč, pull requesti proti sporom in vrsta za `main` najprej, rezervna preverjanja enkrat na 8 h (prej 4 h), več agentov samo za težko delo, osnutek ob začetku dela kot seznam dela vseh računov, kratki izpisi, vprašanja samo na strani |
+| »Dopolnitev« (druga seja) | koda max, rutina in koordinacija medium; kratki pogovori; manj slik; koordinacija na modelu Sonnet; majhne spremembe iste teme v en pull request |
+| »Hitro združevanje« (druga seja) | po svežem `main` s spori samo v žigih, seznamih testov ali kazalu združi brez novega kroga; če `main` pade, ga popravi seja tega pull requesta |
 
-**Koordinacija** (»VSE SEJE«, okolje Koordinacija), enkrat ali dvakrat na dan (okoli 12.00 in 20.00 po ljubljanskem času; takoj, če gre za nujen popravek igre na `main`), samo ko čaka vsaj en PR:
-1. našteje odprte PR z razdelkom `## Za vlak`;
-2. naredi vejo `vlak/<LLLL-MM-DD>-<n>` iz svežega `main` in vanjo po vrsti spoji veje teh PR z `node tools/spoji-main.mjs origin/<veja>`. Kar orodje pusti: generirane podatke in reference ustvari znova z orodji repozitorija (`npm run golden:update` ali ožje); PR s sporom v kodi izloči iz vlaka in njegovi seji sporoči spor;
-3. `node tools/stamp.js`, povezani testi vlaka (`npm run test:related`), potisne vejo, odpre PR vlaka (ni osnutek: tečejo celotni nabori) s seznamom PR v opisu, se naroči na njegove dogodke (`subscribe_pr_activity`) in konča korak; rezervni pregled največ eden, na 4 h;
-4. zeleno: PR vlaka združi z **merge commitom** (ne squash: tako GitHub PR-je vlaka sam označi kot združene; katerega ne, zapre s komentarjem »Na main z vlakom #N«), sejam vlaka pošlje commit in zažene naslednje seje po svojem načrtu;
-5. rdeče: po imenu testa in spremenjenih datotekah najde PR, ki je kriv, ga izloči, njegovi seji pošlje, kaj je padlo, in vlak brez njega pošlje znova; če krivca ne najde, vlak razpolovi.
+V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja pri ~300 tisoč je glavna pot, povzetek pri ~350 tisoč rezerva (Seje); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
 
-Hitro združevanje (odločitev uporabnika 3. 11. 2026, CLAUDE.md »Postopek«) velja tudi za vlak: če je bil PR vlaka že v celoti zelen in ima po spajanju svežega `main` spore samo v žigih, seznamih testov ali kazalu, se po lokalnih povezanih testih združi brez novega kroga na GitHubu. Vlak sam izpolni pravilo 31. 10. (več PR na istih datotekah gre na `main` v enem koraku). Združuje brez vprašanja (pravilo 2. 11.). Kakovost: testi preverijo točno tisto, kar gre na `main`, in vse skupaj samo enkrat.
+## Predlogi a–e (`zetoni-1`)
 
-## B · Napor po vlogi seje
+- **a · Krajši `CLAUDE.md`** (13,5 → 11,2 KB z novimi pravili iz teh odločitev; po združitvi s pravili drugih sej 16,7 → 12,9 KB): ven so šli končana veriga orodja za napake (»vseh 17 sklopov«, sklop 3b, »Oboje«), zgodovina pravil (»prej 5«, »nadomesti prejšnji«, datumi) in polja vprašanj (so v `docs/vprasanja.md`). Veljavna pravila so ostala.
+- **b · Kazalo in arhiv:** `docs/kazalo.md` ima na vrhu razdelek »Na kratko« (prvih 25 vrstic, ~2,6 KB namesto 55 KB), ostalo seja poišče z grepom. Opisi končanih sklopov orodja za napake in pospešitev so v `docs/arhiv/orodje-za-napake-sklopi.md` (načrt 54 → 11 KB).
+- **c · Iskanje po dolgih vrsticah:** `README.md`, `tests/README.md`, `docs/igra.md` in kazalo imajo vrstice do ~4.600 znakov, zato išči z omejeno okolico: `grep -noE '.{0,150}ime.{0,150}' datoteka`.
+- **d · Čakanje brez pogostih bujenj:** zbirka `cakanje` (spodaj) in `CLAUDE.md` (Seje): vmesni dogodek CI dobi eno vrstico, lokalni testi v ozadju sejo zbudijo sami, na pripravljen pull request en potisk na krog popravkov.
+- **e · Opravila za vprašanja:** obvestili tečeta na modelu Haiku in bereta samo odprta vprašanja (`query` z `where`); seja zbiranja bere do 25 sej in jo zamenja nova, ko kontekst preseže ~150 tisoč žetonov ali najpozneje po 2 dneh; pregled sej dela podagent (`docs/vprasanja.md`, Zbiranje, korak 9).
 
-- `.claude/settings.json` ne nastavlja več `CLAUDE_CODE_EFFORT_LEVEL` (ostane `effortLevel` xhigh kot rezerva). Napor nastavi okolje:
-  - okolje **Default** (seje s kodo): spremenljivka okolja `CLAUDE_CODE_EFFORT_LEVEL=max`;
-  - okolje **Koordinacija** (enake nastavitve kot Default, le ta spremenljivka je `medium`): »VSE SEJE«, seja zbiranja vprašanj, seje, ki samo zaganjajo druge seje ali posredujejo sporočila.
-- Uporabnik spremenljivko nastavi v nastavitvah okolja (meni okolja v naslovni vrstici seje → Edit → spremenljivke okolja); velja za nove seje. Okolje Koordinacija naredi kot kopijo okolja Default.
-- Koordinacija zaganja seje s kodo v okolju Default: `create_session` z `environment_id` okolja Default (`list_environments`); brez njega nova seja podeduje okolje koordinacije in dela z medium.
-- Ko okolje Koordinacija obstaja, koordinacija naredi v njem svojo naslednico (`create_session`), ji preda stanje (vrsta, odprte naloge, opravila po urniku) in svoja opravila po urniku preusmeri nanjo; enako za sejo zbiranja vprašanj (`docs/vprasanja.md`).
-- Model po delu: tabela v CLAUDE.md (»Model in napor«), zbrana iz odločitev 31. 10. in 2. 11. brez nove odločitve.
+## Zbirka `cakanje` (stran Odločitve)
 
-## C · Spori pri spajanju: `tools/spoji-main.mjs`
+Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanjem. V zbirko `cakanje` na strani Odločitve svojega računa (seznam strani v `docs/vprasanja.md`) zapiše dokument (`ArtifactData` `set`; id npr. `pr-248-garaza`) in konča korak:
 
-- `node tools/spoji-main.mjs [veja] [--no-fetch]` (privzeto `origin/main`) spoji in sam reši mehanske spore v besedilih in seznamih (`*.md`, `index.html`, `garaza.html`, `tests/run.js`, `js/lang.js`): žige `?v=…` (nato `node tools/stamp.js`), vrstice, ki jih je ena stran dodala ob vrstici, ki jo je druga spremenila, vrstice, ki sta jih obe strani dodali na istem mestu (obe ostaneta), in sezname testov v `tests/run.js`. Spor v kodi, generiranih podatkih in referencah pusti in ga izpiše (datoteka, vrstice, namig, s katerim orodjem jih ustvariti znova). Brez sporov naredi commit spoja; žigi gredo vanj.
-- Preizkus 3. 11. 2026 na odprtih PR: #241 (kazalo, `index.html`, `garaza.html`) spojen v celoti sam; pri #226 je orodje rešilo `README.md`, kazalo, `index.html`, `garaza.html` in `tests/run.js`, ostali so pravi spori (CLAUDE.md, koda, podatki menija) in reference.
-- Test: `tests/spoji-main.test.js`.
+| polje | vsebina |
+|---|---|
+| `pr` | številka pull requesta, na katerega čaka (ali `null`) |
+| `pogoj` | kadar ne čaka na pull request: kratko, na kaj čaka |
+| `seja_id`, `seja` | čakajoča seja (sem gre sporočilo) in njen naslov |
+| `kaj` | kaj bo seja naredila, ko je pogoj izpolnjen (en stavek) |
+| `ustvarjeno` | čas ISO |
 
-## D · Pregledi in pomožni agenti
+- Kdor pull request združi ali zapre: `ArtifactData` `query` zbirke `cakanje` z `where` `[["pr", "==", N]]`, vsaki najdeni seji `send_message` »PR #N je združen na main (ali zaprt): <kaj>« in dokument izbriše.
+- Rezerva je zbiranje ob 10.30, 14.30 in 23.00 (`docs/vprasanja.md`, Zbiranje, korak 7). Na računu brez zbiranja seja doda rezervno preverjanje največ enkrat na 8 h.
+- Seje drugega računa strani ne vidijo: tam čakanje pokrije zbiranje tistega računa.
 
-- Pomožni agenti (Agent), delovni tokovi z več agenti (Workflow) in pregledi z več pregledovalci samo za res vzporedno delo ali tvegano spremembo: fizika, skupna koda sveta in risanja (`js/world.js`, `js/render.js`, `js/core.js`), zelo velike spremembe. Vsak agent znova prebere navodila in velike datoteke.
-- Navaden PR: en pregled (`/code-review` medium ali high) ali nič, kjer spremembo pokrijejo testi; celotni nabori tečejo na GitHubu v vlaku.
-- Za iskanje po kodi najprej kazalo in grep, ne pomožni agent.
+## Napor: okolje »Koordinacija« (`zetoni-2`)
 
-## E · Branje
+- Koda teče z naporom max: `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` `max` (`effortLevel` xhigh je rezerva, ker se max v nastavitvah ne shrani). Spremenljivka iz nastavitev repozitorija ima prednost pred spremenljivko okolja in pred izbiro napora v aplikaciji, zato ostane.
+- Prejšnji način za koordinacijo, `.claude/settings.local.json` z medium, ne deluje: datoteka je v `.gitignore` in je v novem kontejnerju ni.
+- Nastavitev `maxEffortLevel` napor omeji (tudi `CLAUDE_CODE_EFFORT_LEVEL`); med datotekami nastavitev velja najnižja. Okolje »Koordinacija« jo z namestitveno skripto zapiše v `~/.claude/settings.json`, zato seje v tem okolju tečejo z medium, koda v okolju »Default« pa ostane max.
+- **Uporabnik enkrat na vsakem računu**, kjer tečejo koordinacija ali zbiranje: v aplikaciji (meni okolja v naslovni vrstici seje) doda novo okolje z imenom `Koordinacija`, z enakim omrežjem kot »Default«, in v namestitveno skripto (Setup script) vpiše:
 
-- Velikih datotek ne beri v celoti; seznam je na vrhu `docs/kazalo.md`. Kazalo samo ima 55 KB: išči v njem z grepom; na vrhu so najpogostejši ukazi.
-- `.ignore`: ripgrep (orodji Grep in Glob) ne preišče generiranih podatkov z ogromnimi vrsticami (`js/routes.js` je ena vrstica s 0,4 MB, `assets/maps/`, `maketa-menija/assets/` …); po izrecni poti jih še vedno bereš (Read, `grep` v Bash).
-- `.gitattributes` `-diff` za iste podatke: `git diff`, `git show` in `git log -p` jih ne izpisujejo; spajanje ostane besedilno.
-- Dolgi izpisi (testi, `git diff` spoja, dnevniki) v datoteko, nato grep. Pri CI samo padli posli in zadnjih ~150 vrstic (`get_job_logs` s `failed_only` in `tail_lines`).
+  ```sh
+  mkdir -p ~/.claude && node -e 'const fs=require("fs"),f=process.env.HOME+"/.claude/settings.json";let s={};try{s=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){}s.maxEffortLevel="medium";fs.writeFileSync(f,JSON.stringify(s,null,2))'
+  ```
 
-## F · Navodila
+- Potem: seja zbiranja se ob naslednjem krogu sama prestavi v okolje »Koordinacija«, z njo tudi obvestili (`docs/vprasanja.md`, Zbiranje, korak 9). Sejo »VSE SEJE«, seje, ki samo zaganjajo druge seje ali posredujejo sporočila, in seje samo za rutinsko delo (spajanje `main`, čakanje na teste, združevanje) odpre uporabnik oz. seja, ki jih zažene, v tem okolju (`create_session` z `environment_id` iz `list_environments`). Seje, ki pišejo kodo, ostanejo v »Default«.
+- Preverjanje: v seji v okolju »Koordinacija« `cat ~/.claude/settings.json` pokaže `"maxEffortLevel": "medium"`.
 
-- `CLAUDE.md` ima samo splošna pravila (vsaka seja ga prebere celega; 13,5 KB → 8,4 KB). Pravila za dele kode so v `.claude/rules/` in se naložijo sama, ko seja prebere ali uredi ujemajočo datoteko: `grafika.md`, `meni.md`, `napake.md`, `misije.md`. Seja v drugem delovnem drevesu (git worktree) jih ne dobi sama: prebere jih, ko začne delo na tistem delu.
-- Odločitve se zapišejo enkrat v docs (načrt teme), v CLAUDE.md le kratko pravilo in sklic.
-- Model in napor: ena tabela v CLAUDE.md namesto protislovja med pravilom 31. 10. (»vse seje Opus«) in 2. 11. (»Sonnet za opise, spore in manjše popravke«).
+## Okno za povzetek (`zetoni-3`)
 
-## G · Drobni ukrepi
+- `.claude/settings.json`: `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` `400000`. Seja pogovor povzame pri ~350 tisoč žetonih (prag 349.600) namesto pri ~900 tisoč; to je še vedno 2-krat več od prejšnjega standardnega okna 200 tisoč.
+- Po povzetku podrobnosti z začetka seje niso več v pogovoru: kar mora ostati (odločitve, stanje, poti), seja sproti zapiše v datoteke, commite ali docs.
+- Preverjanje v novi seji: `get_session` → `external_metadata.autocompact_state` (`source` `env`, `effective_window` 380.000, `threshold` 349.600; preverjeno 3. 11. 2026).
+- Predaja velike seje pri ~300 tisoč (`CLAUDE.md`, Seje) pride pred povzetkom; povzetek je rezerva, kadar predaje ni.
 
-- Slike za lastno preverjanje pri `deviceScaleFactor: 1` in v manjšem oknu (vsaka slika ostane v kontekstu do konca seje); za stran Odločitve slike, kot jih predpisuje `docs/vprasanja.md`.
-- Sredi dolge seje ne menjaj modela: vsak model ima svoj predpomnilnik, zato prvi klic po menjavi znova prebere ves pogovor. Raje nova seja s predajo.
-- Dolgožive seje (koordinacija, zbiranje vprašanj) se enkrat na teden (ali ob selitvi v okolje Koordinacija) zamenjajo z novimi: stanje zapišejo v predajo, opravila po urniku preusmerijo na novo sejo.
-- Obvestilo in zbiranje vprašanj bereta s strani Odločitve samo, kar potrebujeta (`query` z `where` in `out_dir`, da vsebina ne gre v pogovor; `docs/vprasanja.md`).
+## Svež main pred združitvijo (`zetoni-4`)
 
-## Odločitev zetoni-3 (3. 11. 2026): še šest predlogov
+Pravilo je v `CLAUDE.md` (Postopek): ko je pull request na GitHubu zelen, spoji svež `main` in poženi lokalne povezane teste; brez sporov ali s spori samo v žigih, seznamih testov ali kazalu (hitro združevanje) pull request združi brez novega kroga na GitHubu, varovalka je krog testov na `main` po združitvi; ob drugih sporih potisk in celoten krog. Pred združitvijo seja preveri zadnji krog testov na `main` in rdečega najprej popravi. Spore v žigih je odpravil #271 (žigov v repozitoriju ni, doda jih objava; na `main` 3. 11. 2026). Ostale mehanske spore reši `tools/spoji-main.mjs` (spodaj, C).
 
-Uporabnik je na strani Odločitve izbral »Uvedi vse (1–6)« (predlogi seje »Programi na čakanju«). Delitev dela:
-1. **Rezervni pregledi PR v eni majhni seji** namesto bujenja dolgih sej: VSE SEJE 2.
-2. **PR samo z dokumenti brez celotnih testov:** `.github/workflows/tests.yml`, posel »Spremembe« ugotovi iz `git diff` (osnova PR … glava), ali so spremenjene samo datoteke `.md`; takrat teče samo posel »Samo dokumenti« (`node tests/fleet.test.js`, ki vse `.md` preveri za imena znamk avtomobilov), težki posli (»Fizika, AI in dirke«, »Igra v brskalniku« 1–4, »Vozila«) se preskočijo, »Igra v brskalniku« (skupni rezultat) pa ostane zelen. Potiski na `main` in ročni zagoni tečejo vedno v celoti. (Ta seja, PR #279.)
-3. **Skupne datoteke prog (reference testov, seznami) razdeljene po progah**, da ni sporov: VSE SEJE 2, v novi seji pred novimi progami.
-4. **Pregled prog v eni majhni datoteki:** PR #280 (`docs/proge-pregled.md`, `tools/proge-pregled.js`).
-5. **Majhni izpisi orodij:** pravilo v CLAUDE.md (»Varčevanje z žetoni«): `fields`, `minimal_output`, `limit`, `kinds`; velik izpis v datoteko (`out_dir`) in iskanje v njej. (Ta seja, PR #279.)
-6. **Arhiv končanih sej in brisanje združenih in opuščenih vej:** čaka na dovoljenje uporabnika (veje izbriše šele, ko so združene ali opuščene po pravilu »ena proga na državo«).
+## Račun strani 3: predlogi A–G in `zetoni-3` strani 3 (PR #279)
+
+Na strani 3 (`docs/vprasanja.md`) je uporabnik 3. 11. 2026 izbral »Vse (A–G)« (predlogi seje »Predlogi za prihranek tokenov« tega računa) in »Uvedi vse (1–6)« (predlogi seje »Programi na čakanju«). Po spoju s pravili zgoraj:
+
+- **A · vlak** (koordinacija 1- do 2-krat na dan spoji pripravljene pull requeste v eno vejo, en krog testov): ni uveden, ker ga nadomeščata svež `main` pred združitvijo in hitro združevanje (zgoraj); vprašanje `zetoni-vlak` na strani 3.
+- **B · napor po okolju:** nadomestilo ga je okolje »Koordinacija« (zgoraj); `CLAUDE_CODE_EFFORT_LEVEL` max v `.claude/settings.json` ostane.
+- **C · `tools/spoji-main.mjs`:** spoj `main` ali druge veje sam reši mehanske spore (kazalo, `tests/run.js`, `README.md`, `js/lang.js`, `index.html`), odstrani žige starejših vej (`stamp.js --strip`) in preveri povezave (`--check`); ostale spore izpiše z namigom.
+- **D, F, G** (več agentov samo za težko delo, krajši `CLAUDE.md` in vrh kazala, manj slik in kratki izpisi): pokrito s pravili zgoraj.
+- **E · `.ignore` in `-diff`:** generirani podatki z ogromnimi vrsticami (`js/routes.js`, `assets/maps/`, `maketa-menija/assets/` …) niso med zadetki Grep in Glob in ne v `git diff`.
+- **`zetoni-3` strani 3:** 2 · pull request samo z datotekami `.md` na GitHubu požene samo `fleet.test.js` (`.github/workflows/tests.yml`: posel »Spremembe« ugotovi iz `git diff`, posel »Samo dokumenti«; težki posli se preskočijo, »Igra v brskalniku« ostane zelena; potiski na `main` in ročni zagoni tečejo v celoti); 5 · kratki izpisi orodij (`CLAUDE.md`, Varčevanje); 1 in 3 VSE SEJE 2; 4 · `docs/proge-pregled.md` (#280); 6 (arhiv sej, brisanje vej) čaka na uporabnika.
 
 ## Stanje
 
-| točka | stanje |
-|---|---|
-| A vlak | pravila v CLAUDE.md in tu; koordinacijo (VSE SEJE 2) je seja »Predlogi za prihranek tokenov« obvestila 3. 11. |
-| B napor | `.claude/settings.json` brez spremenljivke; uporabnik nastavi spremenljivko v okolju Default (max) in naredi okolje Koordinacija (medium) |
-| C orodje | `tools/spoji-main.mjs`, `tests/spoji-main.test.js` |
-| D pregledi | pravilo v CLAUDE.md |
-| E branje | `.ignore`, `.gitattributes`, vrh kazala |
-| F navodila | CLAUDE.md, `.claude/rules/` |
-| G drobni | pravila v CLAUDE.md; opravili »Obvestilo o vprašanjih« od 3. 11. štejeta samo odprta vprašanja |
-| zetoni-3 | 2 (samo dokumenti na GitHubu) in 5 (majhni izpisi) v PR #279; 1 in 3 VSE SEJE 2; 4 PR #280; 6 čaka na uporabnika |
+- 3. 11. 2026: uvedeni a–e, okno za povzetek in pravilo za svež `main`; obvestili (`trig_01EXowtvXGXmqji2E2QtKhYd`, `trig_014yjhh3oDoyL7yFFPU8nwY9`) tečeta na modelu Haiku in bereta samo odprta vprašanja. Okolje »Koordinacija« čaka na uporabnika (vsi računi).
+- 3. 11. 2026: pravila združena s pravili drugih sej (PR #277 in drugi na `main`); spoj je imel spore v `CLAUDE.md` in `docs/vprasanja.md`, zato je pull request #281 šel skozi celoten krog.
+- 3. 11. 2026, račun strani 3: C, E ter `zetoni-3` 2 in 5 v PR #279 (spojen z `main` po #281, v obliki teh pravil).

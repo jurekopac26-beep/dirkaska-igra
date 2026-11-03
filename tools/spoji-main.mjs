@@ -6,15 +6,17 @@
 //   node tools/spoji-main.mjs <ref> --no-fetch      without git fetch (tests, no network)
 // Resolved by itself, hunk by hunk (the diff3 conflict style gives the common base of both sides), only in texts and lists
 // (*.md, index.html, garaza.html, tests/run.js, js/lang.js; in other files only what git itself would take):
-//   1. index.html, garaza.html: lines that differ only in their content stamps (?v=…); the stamps are made anew afterwards;
+//   1. index.html, garaza.html: lines that differ only in their content stamps (?v=…, which an older branch still carries);
 //   2. a finer three-way merge than git's: lines one side put next to lines the other side changed are no conflict, and when both
 //      sides put lines at the same place both are kept (ours first, a line both put once; in a .js file not when both put the
 //      same key); the same lines changed differently on both sides stay a conflict;
 //   3. a one-line list of strings (the test lists in tests/run.js): what the other side added or removed is applied to ours.
-// A resolved .js file must pass `node --check`, or it stays a conflict. When nothing is left: node tools/stamp.js (the stamps of the
-// merged files), git add, git commit --no-edit (the merge commit; after a merge without conflicts the stamps go into it too).
-// What is left is listed (file, line of each hunk) and the merge stays open: resolve it, then node tools/stamp.js, git add,
-// git commit --no-edit. Exit code: 0 merged (or already up to date), 1 conflicts left, 2 an error (e.g. uncommitted changes).
+// A resolved .js file must pass `node --check`, or it stays a conflict. The stamps: the repository's pages carry none (the publish step
+// adds them), so node tools/stamp.js --strip takes off those an older branch brought, then --check (a link to a missing file is printed);
+// with a tools/stamp.js without --strip (an older tree whose pages carry stamps) node tools/stamp.js makes them anew instead. When
+// nothing is left: git add, git commit --no-edit (the merge commit; after a merge without conflicts the stamps' change goes into it too).
+// What is left is listed (file, line of each hunk) and the merge stays open: resolve it, then node tools/stamp.js --strip and --check,
+// git add, git commit --no-edit. Exit code: 0 merged (or already up to date), 1 conflicts left, 2 an error (e.g. uncommitted changes).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,15 +52,25 @@ const before = git(['rev-parse', 'HEAD']).out;
 const merge = git(['-c', 'merge.conflictStyle=diff3', 'merge', '--no-edit', ref]);
 const unmerged = git(['diff', '--name-only', '--diff-filter=U']).out.split('\n').filter(Boolean);
 
-// the stamps of the merged files: tools/stamp.js of the repository being merged (or, without one, of this tool's repository)
+// the stamps after the merge: tools/stamp.js of the merged tree (or, without one, of this tool's repository). With --strip (pages without
+// stamps) the stamps an older branch brought are taken off, otherwise (pages with stamps) they are made anew; the changed pages
 const STAMP_JS = [path.join(ROOT, 'tools', 'stamp.js'), path.join(TOOLS, 'stamp.js')].find(f => fs.existsSync(f));
+const STRIP = !!STAMP_JS && /['"]--strip['"]/.test(fs.readFileSync(STAMP_JS, 'utf8'));
+const runStamp = (...a) => spawnSync(process.execPath, [STAMP_JS, ...a], { encoding: 'utf8', env: { ...process.env, GAME_ROOT: ROOT } });
+const STAMPED_FILES = () => [...STAMPED].filter(f => fs.existsSync(path.join(ROOT, f)));
 const stamp = () => {
   if (!STAMP_JS) die('ni tools/stamp.js');
-  const r = spawnSync(process.execPath, [STAMP_JS], { encoding: 'utf8', env: { ...process.env, GAME_ROOT: ROOT } });
-  if (r.status) die('node tools/stamp.js: ' + ((r.stdout || '') + (r.stderr || '')).trim());
+  const r = runStamp(...(STRIP ? ['--strip'] : []));
+  if (r.status) die(`node tools/stamp.js${STRIP ? ' --strip' : ''}: ` + ((r.stdout || '') + (r.stderr || '')).trim());
   return STAMPED_FILES().filter(f => git(['diff', '--quiet', '--', f]).code === 1);
 };
-const STAMPED_FILES = () => [...STAMPED].filter(f => fs.existsSync(path.join(ROOT, f)));
+const stamped = (files) => (!files.length ? '' : (STRIP ? '; žigi odstranjeni iz ' : '; žigi posodobljeni v ') + files.join(', '));
+// the links after the merge (pages without stamps): only a problem is printed, e.g. a link to a file the other side deleted
+const checkLinks = () => {
+  if (!STRIP) return;
+  const r = runStamp('--check');
+  if (r.status) console.log('Pozor, node tools/stamp.js --check:\n' + ((r.stdout || '') + (r.stderr || '')).trim());
+};
 
 if (merge.code !== 0 && unmerged.length === 0) die(`git merge ${ref}: ${merge.err || merge.out}`);
 
@@ -70,16 +82,18 @@ if (unmerged.length === 0) {
     git(['add', '--', ...restamped]);
     // our own merge commit takes the stamps; after a fast-forward (commits that are already on the other branch) a new commit
     const isMerge = git(['rev-parse', '-q', '--verify', 'HEAD^2']).code === 0;
-    const c = isMerge ? git(['commit', '-q', '--amend', '--no-edit']) : git(['commit', '-q', '-m', 'Žigi po spoju ' + ref]);
+    const c = isMerge ? git(['commit', '-q', '--amend', '--no-edit']) : git(['commit', '-q', '-m', (STRIP ? 'Brez žigov po spoju ' : 'Žigi po spoju ') + ref]);
     if (c.code) die('git commit: ' + c.err);
   }
-  console.log(`Spojeno brez sporov (${ref})` + (restamped.length ? '; žigi posodobljeni v ' + restamped.join(', ') : '') + '.');
+  console.log(`Spojeno brez sporov (${ref})` + stamped(restamped) + '.');
+  checkLinks();
   process.exit(0);
 }
 
 // ---------------- resolving a conflicted file, hunk by hunk
 const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
-const unstamp = (s) => s.replace(/([?&])v=[0-9a-f]{8}\b/g, '$1v=');
+// a line without its stamps (?v=<8 hex>, also among other query parameters)
+const unstamp = (s) => s.replace(/([?&])v=[0-9a-f]{8}\b(&?)/g, (all, sep, amp) => (amp ? sep : ''));
 const keyOf = (s) => { const m = /^\s*(?:'([^']+)'|"([^"]+)"|([A-Za-z_$][\w$]*))\s*:/.exec(s); return m ? (m[1] || m[2] || m[3]) : null; };
 
 // a one-line list of strings, e.g.   node: ['a.test.js', 'b.test.js'],
@@ -172,7 +186,7 @@ function resolveHunk(file, o, b, t) {
   if (same(o, b)) return t;
   if (!UNION.test(file)) return null;   // code and data: only what git itself would take
   const norm = STAMPED.has(file) ? unstamp : (s) => s, n = (a) => a.map(norm);
-  if (same(n(o), n(t)) || same(n(t), n(b))) return o;   // (only stamps differ: they are made anew)
+  if (same(n(o), n(t)) || same(n(t), n(b))) return o;   // (only stamps differ: they are taken off or made anew afterwards)
   if (same(n(o), n(b))) return t;
   if (o.length === b.length && t.length === b.length) {
     const r = o.map((x, i) => line3(file, x, b[i], t[i]));
@@ -234,18 +248,22 @@ if (leftovers.length === 0) {
   if (restamped.length) git(['add', '--', ...restamped]);
   const c = git(['commit', '-q', '--no-edit']);
   if (c.code) die('git commit: ' + (c.err || c.out));
-  console.log(`Spojeno (${ref}); samodejno rešeni spori: ${resolved.join(', ')}` + (restamped.length ? '; žigi posodobljeni' : '') + '.');
+  console.log(`Spojeno (${ref}); samodejno rešeni spori: ${resolved.join(', ')}` + stamped(restamped) + '.');
+  checkLinks();
   process.exit(0);
 }
 
-console.log(`Spoj ${ref} je odprt.` + (resolved.length ? ` Samodejno rešeno: ${resolved.join(', ')}.` : ''));
+// the merge stays open: the resolved pages lose their stamps already (taking them off is always right; making them anew waits for the end)
+const stripped = STRIP ? stamp().filter(f => !leftovers.some(l => l.file === f)) : [];
+if (stripped.length) git(['add', '--', ...stripped]);
+console.log(`Spoj ${ref} je odprt.` + (resolved.length ? ` Samodejno rešeno: ${resolved.join(', ')}.` : '') + (stripped.length ? ` Žigi odstranjeni iz ${stripped.join(', ')}.` : ''));
 console.log('Ostalo za ročno rešitev:');
 const plural = (k, one, two, few, many) => (k % 100 === 1 ? one : k % 100 === 2 ? two : k % 100 === 3 || k % 100 === 4 ? few : many);
 const GENERATED = [
   [/^tests\/golden\//, 'referenco ustvari znova z orodji (npm run golden:update ali ožje)'],
   [/^js\/menu-data\.js$/, 'podatke menija ustvari znova z orodji, ki jih izdelajo (imenovana v komentarjih datoteke)'],
   [/^js\/routes\.js$/, 'ustvari znova z routes.py'],
-  [/\.json$/, 'generirani podatki: ustvari jih znova z orodjem (docs/kazalo.md)'],
+  [/^(assets|maketa-menija)\/.*\.json$|^maketa-menija\/outlines\.js$/, 'generirani podatki: ustvari jih znova z orodjem (docs/kazalo.md)'],
 ];
 for (const l of leftovers) {
   const k = l.lines ? l.lines.length : 0;
@@ -253,5 +271,6 @@ for (const l of leftovers) {
   const g = GENERATED.find(([re]) => re.test(l.file));
   console.log(`  ${l.file}${where}${l.why ? ': ' + l.why : ''}${g ? ' — ' + g[1] : ''}`);
 }
-console.log('Nato: node tools/stamp.js, git add <datoteke>, git commit --no-edit (ali git merge --abort).');
+console.log(STRIP ? 'Nato: node tools/stamp.js --strip in --check, git add <datoteke>, git commit --no-edit (ali git merge --abort).'
+  : 'Nato: node tools/stamp.js, git add <datoteke>, git commit --no-edit (ali git merge --abort).');
 process.exit(1);

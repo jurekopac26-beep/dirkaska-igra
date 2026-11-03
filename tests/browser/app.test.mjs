@@ -4,7 +4,8 @@
 //   does not take the full-screen buttons away
 // - the screen is never locked to one way (the one camera, behind the car, suits a phone held either way): not in a browser tab, not
 //   in full screen, not in the installed app; a race on a phone held either way: no notice to turn it, the camera behind the car
-// - offline, on a copy of the game in a folder as on GitHub Pages: once opened, the game starts without internet; a new
+// - offline, on a copy of the game in a folder as on GitHub Pages (stamped as the publish step stamps it, tools/stamp.js: the repository's
+//   pages carry no stamps): once opened, the game starts without internet; a new
 //   version is used at once and saved complete; a save that breaks off leaves the previous version complete (never a mix);
 //   a server error or a network that does not answer brings the saved game (within seconds); a game left open loads a
 //   new version by itself when it is back on the title screen
@@ -116,13 +117,16 @@ try {
     for (const d of ['css', 'js', 'icons', 'fonts']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
     const s2 = await serve(tmp), home = s2.base + '/dirkaska-igra/';
     const isPage = (req) => req.url === '/dirkaska-igra/' || req.url === '/dirkaska-igra/index.html';
+    // the copy's links stamped as the publish step stamps the site (.github/workflows/stran.yml, tools/predogled.mjs)
+    const stamp = () => spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js')], { env: { ...process.env, GAME_ROOT: dir } }).status === 0;
     // publish version n: a changed script and title, stamped like a real change; returns the script's new address
     const publish = (n) => {
       fs.appendFileSync(path.join(dir, 'js', 'sfx.js'), `\n// version ${n}\n`);
       fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace(/<title>[^<]*<\/title>/, `<title>Real Roads Atlas ${n}</title>`));
-      const ok = spawnSync(process.execPath, [path.join(REPO, 'tools', 'stamp.js')], { env: { ...process.env, GAME_ROOT: dir } }).status === 0;
-      return ok && fs.readFileSync(path.join(dir, 'index.html'), 'utf8').match(/js\/sfx\.js\?v=[0-9a-f]{8}/)[0];
+      return stamp() && fs.readFileSync(path.join(dir, 'index.html'), 'utf8').match(/js\/sfx\.js\?v=[0-9a-f]{8}/)[0];
     };
+    const stamped = stamp() && /js\/sfx\.js\?v=[0-9a-f]{8}/.test(fs.readFileSync(path.join(dir, 'index.html'), 'utf8'));
+    T.check('the copy stamped as on GitHub Pages (tools/stamp.js with GAME_ROOT): its links carry content stamps', stamped);
     try {
       const { ctx, page, errors } = await openGame(browser, home);
       // the saved game: the saved page's title, whether every file it links is saved too, and the saved files

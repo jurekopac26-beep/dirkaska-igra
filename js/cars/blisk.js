@@ -23,6 +23,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tail: { z: 1, th: 0.6, m: 7, r: 0.5, h: 0.3, lx: -0.75, lz: 0, f: 0.43 },
       },
     },
+    // where the garage's parts go (js/deli.js, look units): the wing on the boat tail's deck behind the cockpit, in the tail (it goes with
+    // it); the rims on its wheels (the tyres its own). No head lamps (a Grand Prix car: none), so no place for the garage's
+    mounts: {
+      krilo: { x: -1.2, w: 0.26, part: 'tail' },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): one loft from the boat tail's point to the bonnet's front: the tail ('tail'),
     // the open cockpit (its sides cut down at the elbows; lined, floored, a bulkhead at each end), the scuttle with the aero screen, the
     // bonnet ('cover': its sides and top, the louvres, two leather straps); the oval radiator cowl ('nose') a skin from the bonnet's front
@@ -145,8 +151,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.cyl([-1.5, 0.375, 0.4], [-1.68, 0.385, 0.35], 0.046, EXH, { n: 6, r2: 0.072, capA: null, capB: [0.05, 0.04, 0.035] });
           K.bar([-1.25, 0.38, 0.405], [-1.25, 0.41, 0.29], 0.01, DK, { n: 4 });
         });
-        // ---- the tail: the fuel filler cap on its deck ----
+        // ---- the tail: the fuel filler cap on its deck; the garage's wing over it (mounts.krilo; none stock) ----
         K.cyl([-1.28, 0.8, 0], [-1.28, 0.835, 0], 0.05, CH, { n: 6, capA: null, part: 'tail' });
+        K.part('tail', () => K.deli('krilo', () => {}));
         // ---- inside (seen once a part is off): the straight eight with its blower and cam cover, the radiator, the gearbox, the shaft, the
         //      rear axle's differential, the fuel tank across the tail, the frame rails, the firewalls (the scuttle's front, the cockpit's back) ----
         K.part('body', () => {

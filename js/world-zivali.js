@@ -10,8 +10,10 @@
    the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and twelve tracks have a scene of their
    own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland ...).
    World.life(o) runs at the end of every build (finish in js/world.js): the woods are read from the instanced trees (o.cull: IChunks), the
-   glade's trees are taken out (their instances scaled to nothing), what stands still is merged into one vertex-coloured mesh per 256 m chunk
-   (one draw call per chunk in view, far chunks culled like the plants on the lower tiers). No sound. */
+   glade's trees are taken out (their instances scaled to nothing), the things and the animals that are not live are merged into one
+   vertex-coloured mesh per 256 m chunk (one draw call per chunk in view, far chunks culled like the plants on the lower tiers); the animals in
+   it move all the same, slowly, posed by the chunk's vertex shader (the user, 2. 11. 2026: »živali naj se premikajo pomalo«: HERD_VS). No
+   sound. */
 (function () {
   if (typeof World === 'undefined') return;
   const TAU = Math.PI * 2;
@@ -27,6 +29,16 @@
     g = new THREE.BoxGeometry(1, 1, 1); const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) { const top = p.getY(i) > 0; p.setXYZ(i, p.getX(i) * (top ? wt : wb), p.getY(i) * h + h / 2, p.getZ(i) * (top ? dt : db)); }
     g.computeVertexNormals(); GC.set(k, g); return g; };
+  // a beast's body, round over the back (the user, 2. 11. 2026: »izboljšaj grafiko živali«): six sides (the belly, the flanks, the back's two
+  // slopes and its top), narrower to the chest and the rump (four rings along it); its origin under its middle, its belly at y = 0
+  // lo: the lower flanks alone (the belly's colour, seen from the side), else the rest (the belly's own face looks down: no camera sees it)
+  const gBody = (W, bh, L, lo) => { const k = 'B' + [W, bh, L, lo ? 1 : 0]; let g = GC.get(k); if (g) return g;
+    const S = [[0.38, 0], [0.5, 0.45], [0.3, 1], [-0.3, 1], [-0.5, 0.45], [-0.38, 0]], RG = [[-0.5, 0.8], [-0.3, 1], [0.32, 1], [0.5, 0.84]];
+    const ring = RG.map(([z, f]) => S.map(([sx, sy]) => [sx * W * f, bh * (0.5 + (sy - 0.5) * f), z * L])), pos = [];
+    for (let j = 0; j < 3; j++) for (let q = 0; q < 5; q++) { if ((q === 0 || q === 4) !== !!lo) continue;
+      const a = ring[j][q], b = ring[j][q + 1], c = ring[j + 1][q + 1], d = ring[j + 1][q]; pos.push(...a, ...b, ...c, ...a, ...c, ...d); }
+    if (!lo) for (const [j, back] of [[0, true], [3, false]]) for (let q = 1; q < 5; q++) { const t = [ring[j][0], ring[j][q], ring[j][q + 1]]; if (back) t.reverse(); for (const p of t) pos.push(...p); }   // (the chest and the rump: fans)
+    g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals(); GC.set(k, g); return g; };
   function mesh(g, c, x, y, z, o) {
     const e = new THREE.Mesh(g, lam(c)); e.position.set(x || 0, y || 0, z || 0);
     if (o) { if (o.rx) e.rotation.x = o.rx; if (o.ry) e.rotation.y = o.ry; if (o.rz) e.rotation.z = o.rz; if (o.s) e.scale.set(o.s[0], o.s[1], o.s[2]); }
@@ -49,10 +61,9 @@
   // rump (the white patch), graze (head down), hump, mane, dewlap
   function beast(o) {
     const g = new THREE.Group(), L = o.L, H = o.H, W = o.W || L * 0.38, lt = o.lt || W * 0.28, col = o.col, legs = o.legs || col, hc = o.head || col, bh = o.bh || W * 0.95;
-    g.add(tbox(W, W * 0.9, bh, L, L * 0.96, col, 0, H - 0.02, 0));
-    if (o.belly) g.add(box(W * 0.8, 0.04, L * 0.7, o.belly, 0, H - 0.03, 0));
-    if (o.rump) g.add(box(W * 0.85, bh * 0.6, 0.04, o.rump, 0, H + bh * 0.4, -L / 2 - 0.01));
-    if (o.stripe) g.add(box(W * 0.3, 0.03, L * 0.9, o.stripe, 0, H + bh * 0.9 + 0.01, 0));
+    g.add(mesh(gBody(W, bh, L), col, 0, H - 0.02, 0)); g.add(mesh(gBody(W, bh, L, true), o.belly || col, 0, H - 0.02, 0));   // (the lower flanks in the belly's colour)
+    if (o.rump) g.add(box(W * 0.62, bh * 0.5, 0.04, o.rump, 0, H + bh * 0.42, -L / 2 - 0.01));
+    if (o.stripe) g.add(box(W * 0.3, 0.03, L * 0.8, o.stripe, 0, H + bh - 0.01, 0));
     if (o.hump) g.add(sph(W * 0.62, 7, 4, o.humpCol || col, 0, H + bh * 0.95, L * 0.22, { half: true, s: [1, 1, 1.4] }));
     if (o.mane) g.add(box(W * 0.35, bh * 0.5, L * 0.45, o.mane, 0, H + bh + 0.02, L * 0.2));
     if (o.shag) g.add(box(W * 1.08, bh * 0.45, L * 0.95, o.shag, 0, H - 0.2, 0));
@@ -63,7 +74,6 @@
     const head = part(new THREE.Group(), 7, n1); head.position.set(n1[0], n1[1], n1[2]); head.rotation.x = o.graze ? 0.9 : (o.headTilt || 0.25); g.add(head);   // (the neck, part 5, bowed from its foot to graze; the head, part 7, tipped back a little from the neck's top)
     const sn = o.snout || 0.6;
     head.add(box(hs * 0.7, hs * 0.72, hs, hc, 0, 0, hs * 0.25)); head.add(box(hs * 0.5, hs * 0.45, sn * hs, o.snoutCol || hc, 0, -hs * 0.1, hs * 0.65 + sn * hs * 0.3));
-    head.add(box(hs * 0.22, hs * 0.18, 0.03, o.nose || 0x15110e, 0, -hs * 0.05, hs * 0.7 + sn * hs * 0.8));
     const ear = o.ears || 0.35; for (const sd of [1, -1]) head.add(box(hs * 0.14, hs * ear, hs * 0.08, o.earCol || hc, sd * hs * 0.3, hs * 0.38 + hs * ear / 2, hs * 0.05, { rz: -sd * 0.35 }));
     const hn = o.horns, hcol = o.hornCol || 0x6b5a44;
     for (const sd of [1, -1]) {
@@ -77,14 +87,14 @@
       else if (hn === 'cow') head.add(bar([sd * hs * 0.3, hs * 0.38, hs * 0.1], [sd * hs * 0.6, hs * 0.55, hs * 0.2], 0.04, o.hornCol || 0xe9e2cf));
     }
     if (o.dewlap) head.add(box(hs * 0.12, hs * 0.5, hs * 0.2, col, 0, -hs * 0.55, hs * 0.2));
-    const tl = o.tail || 'short', tc = o.tailCol || col, t0 = [0, H + bh * 0.75, -L / 2];
-    if (tl === 'short') g.add(bar(t0, [0, H + bh * 0.5, -L / 2 - 0.12], 0.06, tc));
-    else if (tl === 'long') g.add(bar(t0, [0, H * 0.45, -L / 2 - 0.25], 0.06, tc));
-    else if (tl === 'bushy') { g.add(bar(t0, [0, H * 0.75, -L / 2 - L * 0.6], W * 0.4, tc)); if (o.tip) g.add(box(W * 0.42, W * 0.42, 0.12, o.tip, 0, H * 0.72, -L / 2 - L * 0.62)); }
-    else if (tl === 'ringed') { for (let k = 0; k < 4; k++) g.add(bar([0, H + bh * 0.7 - k * 0.04, -L / 2 - k * L * 0.18], [0, H + bh * 0.66 - (k + 1) * 0.04, -L / 2 - (k + 1) * L * 0.18], W * 0.28, k % 2 ? o.tip || 0x2a221c : tc)); }
-    else if (tl === 'tuft') { g.add(bar(t0, [0, H * 0.6, -L / 2 - 0.05], 0.04, tc)); g.add(box(0.1, 0.18, 0.1, o.tip || 0x15110e, 0, H * 0.55, -L / 2 - 0.06)); }
-    else if (tl === 'curly') g.add(sph(0.06, 5, 3, tc, 0, H + bh * 0.8, -L / 2 - 0.03));
-    else if (tl === 'croc') { g.add(bar([0, H + bh * 0.4, -L / 2], [0, 0.08, -L / 2 - L * 0.9], W * 0.45, tc)); }
+    const tl = o.tail || 'short', tc = o.tailCol || col, t0 = [0, H + bh * 0.75, -L / 2], tg = part(new THREE.Group(), 6, t0); g.add(tg);   // (the tail, part 6: it swishes about its root, the herds' shader)
+    if (tl === 'short') tg.add(bar(t0, [0, H + bh * 0.5, -L / 2 - 0.12], 0.06, tc));
+    else if (tl === 'long') tg.add(bar(t0, [0, H * 0.45, -L / 2 - 0.25], 0.06, tc));
+    else if (tl === 'bushy') { tg.add(bar(t0, [0, H * 0.75, -L / 2 - L * 0.6], W * 0.4, tc)); if (o.tip) tg.add(box(W * 0.42, W * 0.42, 0.12, o.tip, 0, H * 0.72, -L / 2 - L * 0.62)); }
+    else if (tl === 'ringed') { for (let k = 0; k < 4; k++) tg.add(bar([0, H + bh * 0.7 - k * 0.04, -L / 2 - k * L * 0.18], [0, H + bh * 0.66 - (k + 1) * 0.04, -L / 2 - (k + 1) * L * 0.18], W * 0.28, k % 2 ? o.tip || 0x2a221c : tc)); }
+    else if (tl === 'tuft') { tg.add(bar(t0, [0, H * 0.6, -L / 2 - 0.05], 0.04, tc)); tg.add(box(0.1, 0.18, 0.1, o.tip || 0x15110e, 0, H * 0.55, -L / 2 - 0.06)); }
+    else if (tl === 'curly') tg.add(sph(0.06, 5, 3, tc, 0, H + bh * 0.8, -L / 2 - 0.03));
+    else if (tl === 'croc') { tg.add(bar([0, H + bh * 0.4, -L / 2], [0, 0.08, -L / 2 - L * 0.9], W * 0.45, tc)); }
     g.userData.graze = o.graze ? 0 : ang + 1.1; g.userData.n0 = n0; g.userData.len = L;   // (the bow that brings an upright neck's head down to the grass; the neck's foot)
     return g;
   }
@@ -120,7 +130,7 @@
     roeF: B({ L: 0.9, H: 0.6, W: 0.28, col: 0x9a5a32, belly: 0xc8a888, rump: 0xf0ece4, legs: 0x8a5a3a, neck: 0.36, nk: 0.9, hs: 0.19, ears: 0.6, tail: 'none', graze: true }),
     stag: B({ L: 1.6, H: 1.0, W: 0.5, col: 0x7a4a2a, neckCol: 0x5a3a24, legs: 0x5a3a24, rump: 0xd8c09a, neck: 0.6, nk: 1.05, hs: 0.32, snout: 0.7, ears: 0.5, horns: 'stag', tail: 'short' }),
     hind: B({ L: 1.45, H: 0.95, W: 0.45, col: 0x8a5a32, legs: 0x6a4a2a, rump: 0xd8c09a, neck: 0.55, nk: 0.5, hs: 0.3, ears: 0.55, tail: 'short', graze: true }),
-    boar: B({ L: 1.25, H: 0.42, W: 0.42, bh: 0.5, col: 0x3a322c, legs: 0x2a241f, neck: 0.12, nk: 0.1, hs: 0.36, snout: 1.0, snoutCol: 0x2a241f, nose: 0x8a6a5a, ears: 0.3, tail: 'tuft', mane: 0x2a241f }),
+    boar: B({ L: 1.25, H: 0.42, W: 0.42, bh: 0.5, col: 0x3a322c, legs: 0x2a241f, neck: 0.12, nk: 0.1, hs: 0.36, snout: 1.0, snoutCol: 0x2a241f, ears: 0.3, tail: 'tuft', mane: 0x2a241f }),
     piglet: B({ L: 0.5, H: 0.2, W: 0.2, bh: 0.2, col: 0x8a6a4a, stripe: 0xd8c09a, neck: 0.04, nk: 0.1, hs: 0.16, snout: 0.9, ears: 0.3, tail: 'short' }),
     fox: B({ L: 0.7, H: 0.38, W: 0.2, bh: 0.22, col: 0xd86a24, belly: 0xf2ece4, legs: 0x2a221c, neck: 0.18, nk: 0.6, hs: 0.17, snout: 0.9, snoutCol: 0xd86a24, ears: 0.7, earCol: 0x2a221c, tail: 'bushy', tip: 0xf2f0ea }),
     hare: B({ L: 0.48, H: 0.2, W: 0.22, bh: 0.26, col: 0x8a7258, neck: 0.08, nk: 1.0, hs: 0.15, snout: 0.5, ears: 1.3, tail: 'curly', tailCol: 0xf2f0ea }),
@@ -129,7 +139,7 @@
     chamois: B({ L: 1.05, H: 0.62, W: 0.32, col: 0x5a4632, head: 0xe9e2cf, legs: 0x3a2e24, neck: 0.3, nk: 0.9, hs: 0.2, ears: 0.5, horns: 'hook', tail: 'short' }),
     ibex: B({ L: 1.25, H: 0.72, W: 0.4, col: 0x8a7a64, legs: 0x5a4a3a, neck: 0.3, nk: 0.8, hs: 0.24, ears: 0.4, horns: 'ibex', hornCol: 0x7a6a54, tail: 'short' }),
     goatW: B({ L: 1.3, H: 0.75, W: 0.42, col: 0xf0ede4, legs: 0xe0dccf, neck: 0.3, nk: 0.8, hs: 0.24, ears: 0.4, horns: 'hook', tail: 'short', shag: 0xe6e1d3 }),
-    cow: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0xf2efe6, legs: 0xe9e2cf, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, snoutCol: 0xe8b8a8, ears: 0.3, horns: 'cow', tail: 'long', graze: true, belly: 0x5a3a24 }),
+    cow: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0xf2efe6, legs: 0xe9e2cf, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, snoutCol: 0xe8b8a8, ears: 0.3, horns: 'cow', tail: 'long', graze: true }),
     cowB: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0x8a5a3a, legs: 0x7a4a2a, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, ears: 0.3, horns: 'cow', tail: 'long' }),
     cowK: B({ L: 1.9, H: 0.9, W: 0.62, bh: 0.65, col: 0x1d1a18, legs: 0x1d1a18, neck: 0.25, nk: 0.2, hs: 0.36, snout: 0.7, ears: 0.3, tail: 'long', graze: true }),
     sheep: B({ L: 1.0, H: 0.48, W: 0.5, bh: 0.5, col: 0xe9e4d6, legs: 0x2a241f, head: 0x2a241f, neck: 0.15, nk: 0.3, hs: 0.2, ears: 0.3, tail: 'short', graze: true }),
@@ -332,11 +342,6 @@
       gb.P.push(x + px * c + pz * sn, y + P[i + 1] * s, z - px * sn + pz * c); gb.N.push(nx * c + nz * sn, N[i + 1], -nx * sn + nz * c); gb.C.push(C[i] * k, C[i + 1] * k, C[i + 2] * k);
     }
   }
-  function blob(gb, gH, x, z, r, yaw, el) {   // an animal's shadow on the ground under it: an octagon, longer along the animal (el), draped on the ground
-    const c = Math.cos(yaw), sn = Math.sin(yaw), at = (lx, lz) => { const wx = x + lx * c + lz * sn, wz = z - lx * sn + lz * c, h = gH(wx, wz); return [wx, (Number.isFinite(h) ? h : 0) + 0.035, wz]; };
-    const mid = at(0, 0); for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU;
-      gb.triUp(mid, at(Math.cos(a1) * r, Math.sin(a1) * r * el), at(Math.cos(a0) * r, Math.sin(a0) * r * el), [SHADE, SHADE, SHADE]); }
-  }
 
   /* ---------------- the live ones (LIVE): an animal alone walks to and fro or grazes (the user: »nekatere živali pa naj bodo same ter se
      sprehajajo ali pa jejo travo«). Its own mesh (one draw call while in view, hidden farther than LIVE_R), its model upright, baked in its own
@@ -344,34 +349,52 @@
      little from the neck's top); the vertex shader moves them (uA: the gait's phase, the legs' swing, the neck's bow), World.lifeStep places
      it (World.update, every frame). Kangaroos bound; a bear or a wombat walks as one piece. From SREDNJA up (LOD 'animals', as the worlds'
      other animals); the shadow is the standing pose's ---------------- */
-  const SHADE = [0.2, 0.21, 0.17];   // (an animal's shadow on the ground)
-  const TPLL = new Map();
-  function tplLive(kind) {
-    if (TPLL.has(kind)) return TPLL.get(kind);
-    const f = SPECIES[kind]; if (!f) { TPLL.set(kind, null); return null; }
+  const SOFT = [0.62, 0.42], SOFTC = [0.03, 0.035, 0.02];   // (its soft shadow: the see-through of its middle and its inner ring, its rim clear; its colour)
+  // the upright model with its joints (TPLR: the live ones' meshes and the herds' animals in the chunks): every vertex with its part and its
+  // joint (aJ: legs 1-4 swung from their tops, the neck 5 bowed from its foot, the tail 6 swishing about its root, the head 7 tipped back a
+  // little from the neck's top; 0 the body), shaded from the ground up as tpl
+  const TPLR = new Map();
+  function tplRig(kind) {
+    if (TPLR.has(kind)) return TPLR.get(kind);
+    const f = SPECIES[kind]; if (!f) { TPLR.set(kind, null); return null; }
     const g = f.o ? f({ graze: false }) : f(); g.updateMatrixWorld(true);
-    const P = [], N = [], C = [], J = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
+    const P = [], N = [], C = [], J = [], D = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3();
     g.traverse(m => {
       if (!m.isMesh) return;
       let q = m, pt = 0, pv = null; while (q && q !== g) { if (q.userData.part) { pt = q.userData.part; pv = q.userData.pivot; break; } q = q.parent; }
       const geo = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry, pa = geo.attributes.position, na = geo.attributes.normal, c = m.material.color;
       nm.getNormalMatrix(m.matrixWorld);
       for (let i = 0; i + 2 < pa.count; i += 3) {
-        n.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); if (n.y < -0.97 && !pt) continue;   // (a face looking straight down: not the moving parts', which turn)
+        n.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); const down = n.y < -0.97; if (down && !pt) continue;   // (a face looking straight down: not the moving parts', which turn)
         for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pa, i + k).applyMatrix4(m.matrixWorld); n.fromBufferAttribute(na, i + k).applyMatrix3(nm).normalize();
-          P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(c.r, c.g, c.b); J.push(pv ? pv[0] : 0, pv ? pv[1] : 0, pv ? pv[2] : 0, pt); }
+          P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(c.r, c.g, c.b); J.push(pv ? pv[0] : 0, pv ? pv[1] : 0, pv ? pv[2] : 0, pt); D.push(down ? 1 : 0); }
       }
       if (geo !== m.geometry) geo.dispose();
     });
     let lo = 1e9, hi = -1e9, top = 0.01; for (let i = 0; i < P.length; i += 3) { lo = Math.min(lo, P[i], P[i + 2]); hi = Math.max(hi, P[i], P[i + 2]); top = Math.max(top, P[i + 1]); }
     for (let i = 0; i < P.length; i += 3) { const k = 0.68 + 0.4 * Math.min(1, Math.max(0, P[i + 1] / top)); C[i] *= k; C[i + 1] *= k; C[i + 2] *= k; }   // (shaded from the ground up, as tpl)
-    const br = (hi - lo) * 0.28;   // (its shadow on the ground under it: an octagon, longer along the animal; it goes with it)
-    for (let k = 0; k < 8; k++) { const a0 = k / 8 * TAU, a1 = (k + 1) / 8 * TAU; for (const [cx, cz] of [[0, 0], [Math.cos(a1) * br, Math.sin(a1) * br * 1.7], [Math.cos(a0) * br, Math.sin(a0) * br * 1.7]]) { P.push(cx, 0.03, cz); N.push(0, 1, 0); C.push(...SHADE); J.push(0, 0, 0, 0); } }
+    const t = { P: new Float32Array(P), N: new Float32Array(N), C: new Float32Array(C), J: new Float32Array(J), size: hi - lo, top, n0: g.userData.n0 || [0, 0, 0], graze: g.userData.graze || 0,
+      len: g.userData.len || 1, rig: !!f.o, hop: /^(kangaroo|kangarooF|wallaby|joey)$/.test(kind) };
+    // the herds' copy: without the moving parts' faces looking straight down too (the soles, under the head: the herds sway them less, the
+    // camera above never sees them; fewer vertices for the phone)
+    const keep = (a, w) => a.filter((_, i) => !D[Math.floor(i / w)]);
+    t.herd = Object.assign({}, t, { P: new Float32Array(keep(P, 3)), N: new Float32Array(keep(N, 3)), C: new Float32Array(keep(C, 3)), J: new Float32Array(keep(J, 4)) });
+    TPLR.set(kind, t); return t;
+  }
+  const TPLL = new Map();
+  function tplLive(kind) {   // a live one's mesh: the upright model; and its soft shadow (its own see-through mesh under it: it goes with it)
+    if (TPLL.has(kind)) return TPLL.get(kind);
+    const r = tplRig(kind); if (!r) { TPLL.set(kind, null); return null; }
+    const P = Array.from(r.P), N = Array.from(r.N), C = Array.from(r.C), J = Array.from(r.J), br = r.size * 0.36;
+    const SP = [], SA = [], at = (f, an) => [Math.cos(an) * br * f, 0.03, Math.sin(an) * br * f * 1.5];   // (its soft shadow: as the herds', flat under it)
+    for (let q = 0; q < 8; q++) { const a0 = q / 8 * TAU, a1 = (q + 1) / 8 * TAU, tri = (...v) => { for (const [p, al] of v) { SP.push(p[0], p[1], p[2]); SA.push(SOFTC[0], SOFTC[1], SOFTC[2], al); } };
+      tri([[0, 0.03, 0], SOFT[0]], [at(0.5, a1), SOFT[1]], [at(0.5, a0), SOFT[1]]); tri([at(0.5, a0), SOFT[1]], [at(0.5, a1), SOFT[1]], [at(1, a1), 0]); tri([at(0.5, a0), SOFT[1]], [at(1, a1), 0], [at(1, a0), 0]); }
+    const soft = new THREE.BufferGeometry(); soft.setAttribute('position', new THREE.Float32BufferAttribute(SP, 3)); const sa = new THREE.Float32BufferAttribute(SA, 4); sa.noSeason = true; soft.setAttribute('color', sa); soft.computeBoundingSphere();
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P), 3)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(N), 3));
     geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3)); geo.setAttribute('aJ', new THREE.BufferAttribute(new Float32Array(J), 4));
     geo.computeBoundingSphere(); geo.boundingSphere.radius *= 1.25;   // (the legs and the head swing out of the standing pose's sphere)
-    const len = g.userData.len || 1, t = { geo, n0: g.userData.n0 || [0, 0, 0], graze: g.userData.graze || 0, len, rig: !!f.o, hop: /^(kangaroo|kangarooF|wallaby|joey)$/.test(kind) };
+    const t = { geo, soft, n0: r.n0, graze: r.graze, len: r.len, rig: r.rig, hop: r.hop };
     TPLL.set(kind, t); return t;
   }
   const LIVE_VS_HEAD = 'attribute vec4 aJ;\nuniform vec3 uA;\nuniform vec3 uN0;\nvec3 zvRx( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x, p.y * c - p.z * s, p.y * s + p.z * c ); }';
@@ -421,7 +444,127 @@
       a.U.uA.value.set(o.gait % (TAU * 64), o.legs, o.head);
       if (!cp) { a.m.visible = true; a.m.updateMatrixWorld(true); }
     }
+    if (L.U) L.U.value = cp ? t % 3600 : 0;   // (the herds in the chunks: their shader's time; without a car, as built)
   };
+
+  /* ---------------- the herds move (the user, 2. 11. 2026: »izgleda kot da so vse živali pri miru, živali naj se premikajo pomalo«): every
+     animal standing in a glade or a scene is baked into its chunk upright, in its own frame (aL: its place and yaw; aJ: its parts' joints as
+     the live ones'; aM: its time and kind of moving, its neck's bow to the grass, its way's straight, its stride; aS: its neck's foot, the ground's slope), and the
+     chunk's vertex shader moves it slowly by the time (uT, World.lifeStep): it grazes, its head sweeping from side to side, now and then lifts
+     its head and looks round, then takes a few steps along its way (a small loop from where it stands: ahead, round, back, round; no longer than the
+     room to its neighbours in the herd), its tail swishing; a kangaroo hops, a bird pecks, a bear, a wombat or a monkey shifts as one piece, a crocodile hardly
+     at all. On every tier, no draw call more (the chunk is one mesh as before); the shadow map's pass poses them as well (customDepthMaterial).
+     Each its own pace (its time from its place: no random draw, the rest of the life as built) ---------------- */
+  const HERD_VS = [
+    'attribute vec4 aJ;', 'attribute vec4 aL;', 'attribute vec4 aM;', 'attribute vec4 aS;', 'uniform float uT;',
+    'float zvMd, zvJx, zvTy, zvNx, zvNy, zvPx, zvYw; vec3 zvOf;',
+    'vec3 zvRx( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x, p.y * c - p.z * s, p.y * s + p.z * c ); }',
+    'vec3 zvRy( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x * c + p.z * s, p.y, -p.x * s + p.z * c ); }',
+    'float zvSM( float e0, float e1, float x ) { float u = clamp( ( x - e0 ) / ( e1 - e0 ), 0.0, 1.0 ); return u * u * ( 3.0 - 2.0 * u ); }',
+    // (its way: a loop of two straights S and two turns of radius w, from where it stands: ahead, round, back, round; returns x, z, the heading)
+    'vec3 zvLoop( float s, float S, float w ) { float C = 3.1415927 * w; s = mod( s, 2.0 * ( S + C ) );',
+    '  if ( s < S ) return vec3( 0.0, s, 0.0 );',
+    '  if ( s < S + C ) { float a = ( s - S ) / w; return vec3( w - w * cos( a ), S + w * sin( a ), a ); }',
+    '  if ( s < 2.0 * S + C ) return vec3( 2.0 * w, 2.0 * S + C - s, 3.1415927 );',
+    '  float a = ( s - 2.0 * S - C ) / w; return vec3( w + w * cos( a ), -w * sin( a ), 3.1415927 + a ); }',
+    'void zvPose() {',   // (the animal's pose at uT: the same for all its vertices; md 0: a still thing, 1 a beast, 2 one piece, 3 a hopper, 4 a bird, 5 a crocodile)
+    '  zvMd = floor( aM.x * 0.01 + 0.001 ); if ( zvMd < 0.5 ) return;',
+    '  float ph = aM.x - 100.0 * zvMd, one = step( 1.5, zvMd ) * step( zvMd, 2.5 ), hop = step( 2.5, zvMd ) * step( zvMd, 3.5 ), bird = step( 3.5, zvMd ) * step( zvMd, 4.5 ), lazy = step( 4.5, zvMd );',
+    // (a cycle of 7-13 s, four times that for a crocodile: grazing, the head up a while, a few steps at its end)
+    '  float P = ( 7.0 + fract( ph * 0.618034 ) * 6.0 ) * ( 1.0 + 3.0 * lazy ), w = uT + ph, k = floor( w / P ), u = w - k * P, s0 = P - 2.2;',
+    '  float st = zvSM( s0, P, u ), mv = zvSM( s0, s0 + 0.4, u ) * ( 1.0 - zvSM( P - 0.4, P, u ) );',
+    '  float dir = fract( ph * 0.37 ) < 0.5 ? -1.0 : 1.0, S = aM.z, sw = ( k + st ) * max( 0.5 * S, 0.12 );',   // (each cycle's steps half a straight: the way walked)
+    '  vec3 lp = zvLoop( sw, S, clamp( 0.3 * S, 0.08, 0.45 ) ); float lx = dir * lp.x, cy = cos( aL.w ), sy = sin( aL.w );',
+    '  float up = zvSM( P * 0.38, P * 0.38 + 0.6, u ) * ( 1.0 - zvSM( P * 0.38 + 2.2, P * 0.38 + 2.8, u ) ), eat = ( 1.0 - up ) * ( 1.0 - mv );',
+    '  float gait = sw / max( aM.w, 0.2 ) * 6.2831853, pt = aJ.w;',
+    '  float leg = step( 0.5, pt ) * step( pt, 4.5 ), sg = ( step( 0.5, pt ) * step( pt, 1.5 ) + step( 3.5, pt ) * step( pt, 4.5 ) ) * 2.0 - 1.0;',   // (the diagonal pairs swing together)
+    '  float hd = step( 6.5, pt ) * step( pt, 7.5 ), nk = step( 4.5, pt ) * step( pt, 5.5 ) + hd, sh = step( 8.5, pt ), beast = 1.0 - one - hop - bird;',
+    '  float bow = ( aM.y * ( 1.0 - up ) * ( 1.0 - 0.65 * mv ) + 0.05 * sin( w * 4.7 ) * eat * step( 0.01, aM.y ) ) * ( 1.0 - bird );',   // (down to the grass, nibbling)
+    '  zvJx = leg * sg * 0.35 * mv * beast * sin( gait ) - 0.55 * bow * hd;',
+    '  zvTy = step( 5.5, pt ) * step( pt, 6.5 ) * 0.45 * sin( w * 2.9 + ph * 5.0 ) * zvSM( 0.2, 0.7, sin( w * 0.37 + ph ) ) * ( 1.0 - 0.6 * lazy );',   // (the tail swishes now and then)
+    '  zvNx = bow * nk; zvNy = ( 0.28 * sin( w * 0.83 + ph * 2.1 ) * eat + 0.55 * up * sin( k * 2.39 + ph ) ) * nk;',   // (the head sweeps from side to side grazing; up, it looks round)
+    '  float pk = fract( w * 0.9 + ph );',
+    '  zvPx = bird * eat * aM.y * zvSM( 0.0, 0.12, pk ) * ( 1.0 - zvSM( 0.2, 0.32, pk ) ) * ( 1.0 - sh );',   // (a bird pecks: tipped forward about its feet)
+    '  zvYw = aL.w + dir * lp.z;',
+    '  float dy = ( hop * 0.3 * abs( sin( st * 9.424778 ) ) + one * 0.03 * abs( sin( gait ) ) + bird * 0.05 * abs( sin( st * 9.424778 ) ) ) * mv * ( 1.0 - sh );',   // (a kangaroo: three hops)
+    '  vec2 of = vec2( lx * cy + lp.y * sy, -lx * sy + lp.y * cy );',
+    '  zvOf = vec3( of.x, dy + aS.z * of.x + aS.w * of.y, of.y );',   // (on the ground's slope)
+    '}',
+    'vec3 zvPos( vec3 p ) { vec3 n0 = vec3( 0.0, aS.x, aS.y );',
+    '  p = aJ.xyz + zvRx( p - aJ.xyz, zvJx ); p = aJ.xyz + zvRy( p - aJ.xyz, zvTy ); p = n0 + zvRy( zvRx( p - n0, zvNx ), zvNy );',
+    '  return aL.xyz + zvOf + zvRy( zvRx( p, zvPx ), zvYw ); }',
+    'vec3 zvNrm( vec3 n ) { return zvRy( zvRx( zvRy( zvRx( zvRy( zvRx( n, zvJx ), zvTy ), zvNx ), zvNy ), zvPx ), zvYw ); }',
+  ].join('\n');
+  const HERD_NORMAL = 'zvPose();\nvec3 objectNormal = zvMd > 0.5 ? zvNrm( vec3( normal ) ) : vec3( normal );\n#ifdef USE_TANGENT\nvec3 objectTangent = vec3( tangent.xyz );\n#endif';
+  const HERD_POS = 'vec3 transformed = zvMd > 0.5 ? zvPos( vec3( position ) ) : vec3( position );';
+  function herdMats(U) {   // the chunk's material, its shadow map pass's and the animals' soft shadows' (one program each for all the chunks)
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true }), d = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+    m.onBeforeCompile = (sh) => { sh.uniforms.uT = U;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + HERD_VS).replace('#include <beginnormal_vertex>', HERD_NORMAL).replace('#include <begin_vertex>', HERD_POS); };
+    d.onBeforeCompile = (sh) => {   // (the shadow map: the animals none, the things theirs; an animal's shadow is its soft spot)
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 aM;').replace('#include <begin_vertex>', 'vec3 transformed = aM.x >= 50.0 ? vec3( 0.0 ) : vec3( position );'); };
+    const b = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 });
+    b.onBeforeCompile = (sh) => { sh.uniforms.uT = U;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + HERD_VS).replace('#include <begin_vertex>', 'zvPose();\n' + HERD_POS); };
+    m.customProgramCacheKey = () => 'zvHerd'; d.customProgramCacheKey = () => 'zvHerdD'; b.customProgramCacheKey = () => 'zvHerdS'; m.userData.herd = true; b.userData.soft = true;
+    return { m, d, b };
+  }
+  const BIRDS = new Set(['emu', 'cockatoo', 'galah', 'magpie', 'stork', 'egret', 'goose']);
+  const herdMode = (kind, t) => kind === 'caiman' ? 5 : BIRDS.has(kind) ? 4 : t.hop ? 3 : t.rig ? 1 : 2;
+  const hash01 = (x, z) => { const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return h - Math.floor(h); };
+  // one animal into a chunk's builder: its model in its own frame (scaled by s), its soft shadow into the chunk's shadow builder; returns its
+  // record (its way's straight S, may be shortened to its neighbours: herdAt)
+  function herdPut(gb, gH, kind, t, x, y, z, yaw, s, tint) {
+    const a = gb.P.length / 3, P = t.P, N = t.N, C = t.C, k = tint || 1;
+    for (let i = 0; i < P.length; i += 3) { gb.P.push(P[i] * s, P[i + 1] * s, P[i + 2] * s); gb.N.push(N[i], N[i + 1], N[i + 2]); gb.C.push(C[i] * k, C[i + 1] * k, C[i + 2] * k); }
+    // its shadow (the user, 2. 11. 2026: »naj imajo povsem mehke sence«): a soft dark spot under it, darkest in the middle and fading to
+    // nothing at its rim (two rings of eight), draped on the ground where it stands, in the chunk's shadow mesh (gb.bl: its own, see-through);
+    // it goes with the animal (part 9: not with its legs or head)
+    const r = t.size * s * 0.36, c = Math.cos(yaw), sn = Math.sin(yaw), at = (lx, lz, al) => { const h = gH(x + lx * c + lz * sn, z - lx * sn + lz * c); return [lx, (Number.isFinite(h) ? h : y) + 0.03 - y, lz, al]; };
+    const B = gb.bl || (gb.bl = { P: [], A: [] }), ba = B.P.length / 3, ring = (f, al) => { const o = []; for (let q = 0; q < 8; q++) { const an = q / 8 * TAU; o.push(at(Math.cos(an) * r * f, Math.sin(an) * r * f * 1.5, al)); } return o; };
+    const c0 = at(0, 0, SOFT[0]), R1 = ring(0.5, SOFT[1]), R2 = ring(1, 0), tri = (...v) => { for (const p of v) { B.P.push(p[0], p[1], p[2]); B.A.push(p[3]); } };
+    for (let q = 0; q < 8; q++) { const n = (q + 1) % 8; tri(c0, R1[n], R1[q]); tri(R1[q], R1[n], R2[n]); tri(R1[q], R2[n], R2[q]); }
+    const md = herdMode(kind, t), len = t.len * s, sz = t.size * s, sl = (dx, dz) => { const h0 = gH(x - dx, z - dz), h1 = gH(x + dx, z + dz); return Number.isFinite(h0) && Number.isFinite(h1) ? Math.max(-0.7, Math.min(0.7, (h1 - h0) / 2)) : 0; };
+    const e = { a, b: gb.P.length / 3, ba, bb: B.P.length / 3, J: t.J, s, x, y, z, yaw, md, len, ph: hash01(x, z) * 60,
+      gz: md === 1 ? t.graze : md === 5 ? 0.1 : md === 4 ? (t.top * s > 0.8 ? 0.3 : 0.7) : 0,   // (a beast's bow to the grass; a crocodile hardly lifts its head; a bird's peck, less for a tall one)
+      S: md === 3 ? Math.min(2.2, Math.max(0.6, 1.4 * sz)) : md === 4 ? Math.min(0.6, Math.max(0.15, 0.35 * sz + 0.1)) : md === 5 ? 0.4 : md === 2 ? Math.min(1.0, Math.max(0.45, 0.9 * sz)) : Math.min(1.4, Math.max(0.3, 0.55 * sz)),
+      stride: Math.max(0.3, len * (md === 3 ? 1.2 : 0.7)), n0: t.n0, gx: sl(1, 0), gzz: sl(0, 1), sz };
+    (gb.zv || (gb.zv = [])).push(e); return e;
+  }
+  // a chunk's geometry: as GB's, with the herds' attributes (zero for the still things: as built) and its sphere in the world (the animals'
+  // vertices are in their own frames)
+  function herdGeo(gb) {
+    const geo = gb.geometry(); if (!gb.zv) return geo;
+    const n = gb.P.length / 3, J = new Float32Array(n * 4), AL = new Float32Array(n * 4), AM = new Float32Array(n * 4), AS = new Float32Array(n * 4), mark = new Uint8Array(n);
+    const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9], grow = (x, y, z, r) => { lo[0] = Math.min(lo[0], x - r); lo[1] = Math.min(lo[1], y - r); lo[2] = Math.min(lo[2], z - r); hi[0] = Math.max(hi[0], x + r); hi[1] = Math.max(hi[1], y + r); hi[2] = Math.max(hi[2], z + r); };
+    for (const e of gb.zv) {
+      const nt = e.J.length / 4;
+      for (let v = e.a, q = 0; v < e.b; v++, q++) {
+        const o = v * 4; mark[v] = 1;
+        if (q < nt) { J[o] = e.J[q * 4] * e.s; J[o + 1] = e.J[q * 4 + 1] * e.s; J[o + 2] = e.J[q * 4 + 2] * e.s; J[o + 3] = e.J[q * 4 + 3]; } else J[o + 3] = 9;
+        AL[o] = e.x; AL[o + 1] = e.y; AL[o + 2] = e.z; AL[o + 3] = e.yaw;
+        AM[o] = e.ph + 100 * e.md; AM[o + 1] = e.gz; AM[o + 2] = e.S; AM[o + 3] = e.stride;
+        AS[o] = e.n0[1] * e.s; AS[o + 1] = e.n0[2] * e.s; AS[o + 2] = e.gx; AS[o + 3] = e.gzz;
+      }
+      grow(e.x, e.y + e.sz * 0.4, e.z, e.sz * 1.2 + e.S + 1.2);
+    }
+    const P = gb.P; for (let v = 0; v < n; v++) if (!mark[v]) grow(P[v * 3], P[v * 3 + 1], P[v * 3 + 2], 0);
+    geo.setAttribute('aJ', new THREE.BufferAttribute(J, 4)); geo.setAttribute('aL', new THREE.BufferAttribute(AL, 4));
+    geo.setAttribute('aM', new THREE.BufferAttribute(AM, 4)); geo.setAttribute('aS', new THREE.BufferAttribute(AS, 4));
+    const ctr = new THREE.Vector3((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2);
+    geo.boundingSphere = new THREE.Sphere(ctr, Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) / 2);
+    geo.boundingBox = new THREE.Box3(new THREE.Vector3(lo[0], lo[1], lo[2]), new THREE.Vector3(hi[0], hi[1], hi[2]));
+    // the animals' soft shadows (gb.bl): their own see-through mesh, posed by the same shader (part 9), its colour with its see-through
+    const B = gb.bl, m = B.P.length / 3, bc = new Float32Array(m * 4), bJ = new Float32Array(m * 4), bL = new Float32Array(m * 4), bM = new Float32Array(m * 4), bS = new Float32Array(m * 4);
+    for (const e of gb.zv) for (let v = e.ba; v < e.bb; v++) { const o = v * 4;
+      bc[o] = SOFTC[0]; bc[o + 1] = SOFTC[1]; bc[o + 2] = SOFTC[2]; bc[o + 3] = B.A[v]; bJ[o + 3] = 9;
+      bL[o] = e.x; bL[o + 1] = e.y; bL[o + 2] = e.z; bL[o + 3] = e.yaw; bM[o] = e.ph + 100 * e.md; bM[o + 1] = e.gz; bM[o + 2] = e.S; bM[o + 3] = e.stride;
+      bS[o] = e.n0[1] * e.s; bS[o + 1] = e.n0[2] * e.s; bS[o + 2] = e.gx; bS[o + 3] = e.gzz; }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(B.P, 3)); const ca = new THREE.BufferAttribute(bc, 4); ca.noSeason = true; sg.setAttribute('color', ca);
+    sg.setAttribute('aJ', new THREE.BufferAttribute(bJ, 4)); sg.setAttribute('aL', new THREE.BufferAttribute(bL, 4)); sg.setAttribute('aM', new THREE.BufferAttribute(bM, 4)); sg.setAttribute('aS', new THREE.BufferAttribute(bS, 4));
+    sg.boundingSphere = geo.boundingSphere.clone(); geo.userData.soft = sg;
+    return geo;
+  }
 
   /* ---------------- the woods (the instanced trees of the world, from o.cull) ---------------- */
   const HCELL = 12;
@@ -545,7 +688,7 @@
     const Z = ZIV[def.id]; if (!Z || (Z.nizka === false && World.api.LOD.tier === 0)) return null;
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
-    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals');
+    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
     const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null };
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
@@ -569,40 +712,48 @@
       }
       if (!a) a = { mode: 'graze', x0: x, z0: z, rad: 0.35 + R() * 0.4, ang0: R() * TAU, per: 9 + R() * 7, ph: R() * 60, stride: Math.max(0.45, len * 0.7) };
       a.gz = t.graze; a.rig = t.rig; a.hop = t.hop;
-      const m = new THREE.Mesh(t.geo, liveMat(t)); m.scale.setScalar(k); m.castShadow = true; m.receiveShadow = true; m.name = 'life';
+      const m = new THREE.Mesh(t.geo, liveMat(t)); m.scale.setScalar(k); m.castShadow = false; m.receiveShadow = true; m.name = 'life';   // (no hard shadow: its soft one)
+      const sm = A.ownRnd(() => { if (!softLive) { softLive = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }); softLive.userData.soft = true; }
+        return new THREE.Mesh(t.soft, softLive); });
+      sm.name = 'lifeShadow'; sm.renderOrder = 1; m.add(sm);
       a.m = m; a.U = m.material.userData.U; a.cx = x + (a.mode === 'walk' ? Math.sin(yaw) * a.L / 2 : 0); a.cz = z + (a.mode === 'walk' ? Math.cos(yaw) * a.L / 2 : 0); a.y0 = gH(x, z);
       grp.add(m); live.push(a); stats.live++; count(kk); return true;
     }
     // a company round (x, z): the lead in the middle, the others on a sunflower spiral, each turned its own way about yaw; liveN of them
     // (not the lead) walk or graze; returns the herd's radius
     function herdAt(g, crew, x, z, yaw, liveN, tight) {
-      const sp = HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * (tight || 1); let lv = 0;
+      const sp = HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * (tight || 1), at = []; let lv = 0;
       crew.forEach(([kk, sc], k) => {
         const d = k ? sp * Math.sqrt(k) * (0.8 + R() * 0.4) : 0, an = k * 2.39996 + yaw * 0.37 + (R() - 0.5) * 0.6, ax = x + Math.cos(an) * d, az = z + Math.sin(an) * d, ah = gH(ax, az);
         if (!Number.isFinite(ah)) return;
         const ay = yaw + (R() - 0.5) * 1.8;
-        if (k && lv < (liveN || 0) && goLive(kk, sc, ax, az, ay)) { lv++; return; }
-        stand(g, kk, sc, ax, ah, az, ay, k ? R() < 0.45 : R() < 0.15);
+        if (k && lv < (liveN || 0) && goLive(kk, sc, ax, az, ay)) { lv++; at.push([ax, az, null]); return; }
+        at.push([ax, az, stand(g, kk, sc, ax, ah, az, ay, k ? R() < 0.45 : R() < 0.15)]);
       });
+      for (const [ax, az, e] of at) if (e) {   // (each one's way no longer than the room to its nearest neighbour: they do not walk into each other)
+        let dn = 1e9; for (const [bx, bz] of at) if (bx !== ax || bz !== az) dn = Math.min(dn, Math.hypot(bx - ax, bz - az));
+        e.S = Math.max(0, Math.min(e.S, 0.8 * (dn - 0.55 * e.sz)));
+      }
       return sp * Math.sqrt(crew.length);
     }
-    function stand(g, kk, sc, x, h, z, yaw, graze) {   // one standing still: its head down to the grass or up, its own shade, its shadow under it
-      const t = tpl(kk, SPECIES[kk] && SPECIES[kk].o ? graze : undefined); if (!t) return; const k = sc * 1.15;
-      blob(g, gH, x, z, t.size * k * 0.28, yaw, 1.7); put(g, t, x, h - 0.02, z, yaw, k, 0.9 + R() * 0.16); count(kk);
+    function stand(g, kk, sc, x, h, z, yaw, graze) {   // one of a herd or alone: baked into its chunk upright, the chunk's shader moves it (graze: as it was, the random draw kept)
+      const r = tplRig(kk), t = r && r.herd; if (!t) return null; const k = sc * 1.15;
+      const e = herdPut(g, gH, kk, t, x, h - 0.02, z, yaw, k, 0.9 + R() * 0.16); count(kk); return e;
     }
     const tally = (crew) => { stats.sizes[crew.length === 1 ? 'one' : crew.length === 2 ? 'pair' : 'herd']++; };
 
     // 1) the track's scene (twelve tracks), first: the glades keep away from it
     const Sc = SCENE[def.id];
     if (Sc) {
-      const cand = [], r = 7;
+      const cand = [], r = 7, PS = (World.peopleSites && World.peopleSites[def.id]) || [];   // (the people's scenes, js/world-ljudje.js: their places are fixed, this one keeps 45 m away from them on their side)
+      const nearPpl = (s, side) => PS.some(e => e[2] === side && Math.abs((((s - (T.startS || 0) - e[1]) % T.len) + T.len * 1.5) % T.len - T.len / 2) < 45);
       for (let s = L0 + 250; s < L1 - 250; s += 12) for (const side of [-1, 1]) for (const b of [9, 12, 15]) {   // (the nearest first: farther only where nearer is taken)
         const i = T.idx(((s % T.len) + T.len) % T.len), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
         if (cl(x, z) < b - 1.5) continue;
         const h = gH(x, z); if (!Number.isFinite(h)) continue; const sl = slope(x, z, r * 0.7); if (sl > (Sc.pond ? 0.1 : 0.3)) continue;
         const ry = T.hy ? T.hy[i] : h; if (Math.abs(h - ry) > 3.5) continue;
         const j = T.idx((((s - 60) % T.len) + T.len) % T.len); let dh = Math.abs(T.hd[i] - T.hd[j]) % TAU; dh = Math.min(dh, TAU - dh);
-        cand.push([-sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4, i, side, x, z, b]);
+        const sc0 = -sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4; if (!nearPpl(s, side)) cand.push([sc0, i, side, x, z, b]);   // (the random draw for every spot as before: the rest of the life as built without the people)
       }
       cand.sort((p, q) => q[0] - p[0]);
       const c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], r) === 0);
@@ -610,7 +761,9 @@
         const [, i, side, x, z, b] = c, toRoad = Math.atan2(-side * T.nx[i], -side * T.nz[i]), along = Math.atan2(T.tx[i], T.tz[i]), g = chunks.get(x, z);
         const nx = T.nx[i] * side, nz = T.nz[i] * side, tx = T.tx[i], tz = T.tz[i], P = (a, bb) => [x + tx * a + nx * bb, z + tz * a + nz * bb];   // (a along the road, bb away from it)
         cut(W, x, z, 13); peek(i, side, b, 9);
-        if (Sc.pond) { const [px, pz] = P(-2.5, 1.5); pond(g, gH, px, pz, 2.6, R); }
+        if (Sc.pond) { const [px, pz] = P(-2.5, 1.5), pg = new A.GB(); pond(pg, gH, px, pz, 2.6, R);   // (its own mesh, drawn over the ground: NIZKA's ground covered it in places)
+          A.ownRnd(() => { const pm = new THREE.Mesh(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }));
+            pm.receiveShadow = true; pm.matrixAutoUpdate = false; pm.updateMatrix(); pm.name = 'life'; grp.add(pm); }); }
         if (Sc.thing) { const t = tpl(Sc.thing), [px, pz] = P(2.5, 3.5), ph = gH(px, pz); if (t && Number.isFinite(ph)) { put(g, t, px, ph - 0.05, pz, toRoad + (R() - 0.5) * 0.4, 1); stats.things++; } }
         const crew = company(Sc.kind, R, 'herd', Sc.n); tally(crew);
         herdAt(g, crew, x, z, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, 0.6); stats.groups++;   // (the scene's herd keeps together)
@@ -652,10 +805,14 @@
       placed.push([x, z, rr]); stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, Math.round(b), kind]);   // (where: metres after the start, side, metres beyond the barrier, what)
       break;
     }
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    for (const [key, g] of chunks.map) { if (g.empty) continue; const m = new THREE.Mesh(g.geometry(), mat); m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'life'; grp.add(m);
-      const bs = m.geometry.boundingSphere; if (o.cull) o.cull.push({ m, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
-    if (live.length) { o.dyn.life = { live, gH, far2: LOD.radius(LIVE_R) ** 2, tmp: {} }; World.lifeStep(o.dyn.life, 0, null, null); }
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true }), U = { value: 0 }, HM = A.ownRnd(() => herdMats(U)); let herds = 0;   // (ownRnd: the herds' materials do not take the race's random draws)
+    for (const [key, g] of chunks.map) { if (g.empty) continue; const m = new THREE.Mesh(herdGeo(g), g.zv ? HM.m : mat); if (g.zv) { m.customDepthMaterial = HM.d; herds++; }
+      m.castShadow = true; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'life'; grp.add(m);
+      const bs = m.geometry.boundingSphere; if (o.cull) o.cull.push({ m, x: bs.center.x, z: bs.center.z, r: bs.radius });
+      const sg = m.geometry.userData.soft; if (sg) {   // (the animals' soft shadows: drawn after the ground, over it)
+        const sm = A.ownRnd(() => new THREE.Mesh(sg, HM.b)); sm.matrixAutoUpdate = false; sm.updateMatrix(); sm.name = 'life'; sm.renderOrder = 1; grp.add(sm);
+        if (o.cull) o.cull.push({ m: sm, x: bs.center.x, z: bs.center.z, r: bs.radius }); } }
+    if (live.length || herds) { o.dyn.life = { live, gH, far2: LOD.radius(LIVE_R) ** 2, tmp: {}, U }; World.lifeStep(o.dyn.life, 0, null, null); }
     o.lifeStats = stats; return stats;
   };
   World.lifeTable = ZIV;   // (for the tests and the docs)
