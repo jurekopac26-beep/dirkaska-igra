@@ -61,7 +61,7 @@ oglišč je dlje kot 60/100/150 m od kamere. Izpiše vzorce, nato najtežjega po
 
 **Datoteka s posnetkom** (`tools/posnetek.mjs`, sklop 12 orodja za napake): uporabnik v Nastavitvah orodja (Posnetek dirke → Shrani) ali ob
 zbirki (Shrani posnetek (.rrp)) shrani posnetek dirke `posnetek_<proga>_<LLLLMMDD-UUMM>.rrp` in ga pošlje. `node tools/posnetek.mjs <datoteka>`
-ga odpre v igri v brskalniku brez zaslona in izpiše progo, način, različico (in ukaz `git log -S`, če ni ista kot tu), napravo, zastavice
+ga odpre v igri v brskalniku brez zaslona in izpiše progo, način, različico (in ukaz `node tools/stamp.js --find <žig>`, ki najde njen commit, če ni ista kot tu), napravo, zastavice
 dirke, samodejne zastavice (kje je bil tisti avto), dnevnik in besedilo poročila; `--t 41.3,00:52.1` naredi slike posnetka ob teh časih
 (`--avto ti|<k>`, `--kamera chase|tv`, `--pokonci`, `--lezece`), `--zastavice` ob vsaki zastavici. Izhod: `test-results/posnetki/<ime>/`
 (`povzetek.txt`, `povzetek.json`, slike). Datoteke in slik ne shranjuj v repozitorij.
