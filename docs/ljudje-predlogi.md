@@ -11,7 +11,7 @@ Seja je naredila 12 predlogov, vsak v eni sliki (pokončna slika za telefon, izr
 - **12 predlogov** na mestih s slik: Nürburg (oder 1950 m desno, žar 3300 levo, ogenj 5640 levo, TV 16350 levo, telovadba 18450 levo), Ouninpohja (hiša 2240 levo), Bathurst (boksi 70 levo ob zidu, tribuna 5790 desno), Spa (vhod 170 levo, fotografi 870 levo, maršali 1360 desno, gasilci 5560 desno).
 - **Nove vrste** za druge proge (`S.kamp`, `S.piknik`, `S.kolesarji`, `S.foto2`, `S.reli`, `S.hisa2`); barve elementov se izberejo po prizoru, zastave in slog hiš po državi (`FLAGS`, `HOUSES`).
 - **Gledalci ob cesti**: redke skupine in mirni po odločitvi uporabnika 31. 10. 2026, kot jih je naredil #225 (`fewFans`, `CR_KEEP` in `CR_CALM` v `js/world.js`), na Nürburgu še redkeje (`CR_KEEPT`: »Nürburg je lahko skoraj brez gledalcev«); tribune, osebje in skupine, ki jih svetovi postavijo posebej, ostanejo, testne proge so nespremenjene.
-- **Orodja**: `tools/ljudje/igra.mjs <proga> [prizor,…] [--dez]` (`--dez`: v dežju, z dežniki) (avto pelje mimo prizorov, slike iz kamere za avtom na izbranih razdaljah in povečava ljudi), `tools/ljudje/mesta.mjs <proga> --plan …` (kandidati za mesta: ravna pot pred mestom, ograja blizu, ravna tla, ista cesta, brez stavb in drugih stvari in ne na stranski cesti proge; razporedi vrste prizorov in izpiše vrstico za `SITES`; `--preveri 3424:1,…` oceni dana mesta).
+- **Orodja**: `tools/ljudje/igra.mjs <proga> [prizor,…] [--dez]` (`--dez`: v dežju, z dežniki) (avto pelje mimo prizorov, slike iz kamere za avtom na izbranih razdaljah in povečava ljudi), `tools/ljudje/mesta.mjs <proga> --plan …` (kandidati za mesta: ravna pot pred mestom, ograja blizu, ravna tla, ista cesta, brez stavb in drugih stvari in ne na stranski cesti proge, stavbe tudi po žarkih navzdol (velika stavba ima malo oglišč); razporedi vrste prizorov in izpiše vrstico za `SITES`; `--preveri 3424:1,…` oceni dana mesta).
 - **Test**: `tests/browser/ljudje.test.mjs`.
 
 ### Prizori po progah
@@ -30,9 +30,9 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor;
 | Crystal Palace, Anglija | 7 | maršali 96, sodniki s časomerom 248, gasilci in reševalci 600, fotografi na bregu 1064, piknik 1424, vhod 2912, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Detroit, ZDA | 2 | maršali 1944, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Great Alpine Road, Avstralija | 7 | fotografi na bregu 2096, igra kart pod senčnikom 2384, piknik 4992, spuščanje zmaja 5528, na lestvah in tovornjaku 6048, kamp s prikolico 6728, motoristi 6864 |
-| Harju, Finska | 5 | redarji ob traku 392, oder iz gradbenih odrov 1464, ležalniki in senčniki 1856, fotografi na bregu 2144, navijaški klub 2408 |
+| Harju, Finska | 4 | redarji ob traku 392, oder iz gradbenih odrov 1464, ležalniki in senčniki 1856, fotografi na bregu 2144 |
 | Mount Hotham, Avstralija | 6 | fotografi na bregu 832, kamp s prikolico 2760, igra kart pod senčnikom 3160, selfie in snemanje 6448, piknik 7608, badminton in frizbi 7872 |
-| Katu-Jaryk, Rusija | 3 | na lestvah in tovornjaku 64, ogenj na travi 720, kamp s prikolico 4544 |
+| Katu-Jaryk, Rusija | 4 | na lestvah in tovornjaku 64, navijaški klub 392, ogenj na travi 720, kamp s prikolico 4544 |
 | Longford, Avstralija | 9 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, žar pred avtodomom 5336, gasilci in reševalci 5952, fotografi na bregu 6488, mehaniki pri zidu boksov (ob igralčevem boksu) |
 | Marrakesh, Maroko | 6 | gasilci in reševalci 80, maršali 480, tribuna z valom 1112, delavci na progi 1424, maršali 1560, fotografi in TV kamera 2320 |
 | Mauna Kea, ZDA | 4 | fotografi na bregu 136, kamp s prikolico 3472, spuščanje zmaja 3776, kitara in ples 4488 |

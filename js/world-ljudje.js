@@ -1045,6 +1045,7 @@
   const hash32 = (a) => { let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; };   // (a well-mixed integer hash: who of a scene holds one)
   const UMB_COLS = [0x1b1d22, 0x15306b, 0xb2222a, 0x1f63d8, 0x1d6b3a, 0xe8b417, 0xf2f2ee, 0x6a2f8a, 0xe0602a, 0x2a8a8a, 0x1b1d22, 0x15306b];
   const TWO_HANDS = new Set(['carry', 'carryWalk', 'push', 'cam', 'phone', 'phoneUp', 'sitText', 'sitFilm', 'crouchCam', 'boardOut', 'chopUp', 'chopDown', 'sweep', 'fixHood', 'hang']);   // (both hands busy: no umbrella then)
+  const BUSY_HANDS = new Set(['glasba', 'radio', 'karte', 'nogomet', 'navijaci', 'zmaj', 'kotlicek', 'selfie', 'plaza', 'badminton', 'lestve', 'motoristi']);   // (js/world-ljudje2.js's groups: their hands at their guitar, cards, drum, ladle, racket …: no umbrella)
   const STAFF_SCENES = new Set(['marsali', 'gasilci', 'boksi', 'foto', 'foto2', 'tv', 'reli', 'resevalci', 'odvoz', 'delavci', 'tvekipa', 'sodniki', 'varnost']);   // (the staff's scenes: rain gear, no umbrellas)
   function umbrella(p, J, show, pose) {   // its left arm up holding the umbrella (p.uh: held now)
     p.uh = false;
@@ -2092,7 +2093,7 @@
         return { P, st, d0: kid ? 0.08 + rnd() * 0.2 : 0.2 + rnd() * 0.85, v: (3.4 + 4 * f) * (kid ? 0.92 : 1), bd: rnd() * 1.4, ph: rnd(), segs: null }; };
       for (const P of C.people) { rig(P, P.st ? itemsOf(P.st) : new Set(P.items || [])); Sc.people.push(rec(P, P.st)); }
       Sc.people.forEach((p, i) => { const h = hash32(si * 1009 + i * 31 + 7), st = p.st, staff = st && (st.run === false || (st.run && st.run.a != null));   // (an umbrella in the rain: 3 in 4, not under a roof, not the staff)
-        p.um = h % 1000 < 750 && !p.P.roof && !staff && !STAFF_SCENES.has(name); p.uk = (h >>> 10) % UMB_COLS.length; });
+        p.um = h % 1000 < 750 && !p.P.roof && !staff && !STAFF_SCENES.has(name) && !BUSY_HANDS.has(name); p.uk = (h >>> 10) % UMB_COLS.length; });
       for (const pt of C.pets) Sc.pets.push(rec(rigid(pt.model), pt.st));
       for (const mv of C.movers) Sc.movers.push({ P: rigid(mv.model), on: mv.on, x: mv.x, y: mv.y, z: mv.z, yaw: 0 });
       reset(Sc);

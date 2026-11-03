@@ -46,6 +46,14 @@ try {
     const sum = (M, x, z) => M.get(Math.floor(x / C4) + ',' + Math.floor(z / C4)) || 0;
     // the track's side roads (T.stubs: their points and half widths, in 8 m cells): how far a point is from the nearest one's edge
     const SC = 8, sg = new Map(); for (const St of T.stubs || []) for (let j = 0; j < St.n; j++) { const k = Math.floor(St.x[j] / SC) + ',' + Math.floor(St.z[j] / SC); let L = sg.get(k); if (!L) sg.set(k, L = []); L.push([St.x[j], St.z[j], St.hw]); }
+    // what stands there, by rays down (a big building's walls have few vertices: the vertex count above misses its middle): the world's meshes but
+    // the people's, the crowds', the animals' and the plants' (instanced), hits more than 0.6 m over the ground
+    const rc = new THREE.Raycaster(), DN = new THREE.Vector3(0, -1, 0), solid = [];
+    W.root.traverse(o => { if (!o.isMesh || o.isInstancedMesh || !o.visible || !o.geometry || !o.geometry.attributes.position) return; let p = o; while (p) { if (p.name === 'people' || p.name === 'crowds' || p.name === 'life') return; p = p.parent; }
+      if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solid.push({ o, b }); });
+    const rayOcc = (pts) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      const near = solid.filter(({ b }) => !(b.max.x < x0 || b.min.x > x1 || b.max.z < z0 || b.min.z > z1)).map(e => e.o); let n = 0;
+      for (const [x, z] of pts) { const h = gH(x, z); if (!Number.isFinite(h)) continue; rc.set(new THREE.Vector3(x, h + 40, z), DN); rc.far = 39.4; if (rc.intersectObjects(near, false).length) n++; } return n; };
     const stubD = (x, z) => { let d = 1e9; const cx = Math.floor(x / SC), cz = Math.floor(z / SC); for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) for (const [px, pz, hw] of sg.get((cx + a) + ',' + (cz + b)) || []) d = Math.min(d, Math.hypot(px - x, pz - z) - hw); return d; };
     const L = T.len, out = [], s0 = T.open ? Math.max(T.startS || 0, 0) : 0, s1 = T.open ? Math.min(T.finishS || L, L) : L, checked = [];
     const steps = check.length ? check.map(c => (T.startS || 0) + c.m) : null;
@@ -58,21 +66,22 @@ try {
         if (steps && !check.some(c => c.m === m && c.side === side)) continue;
         const bar = side > 0 ? T.br[i] : T.bl[i]; if (bar > 16 && !steps) continue;
         const PL = T.def.pit, inPit = (x) => x >= PL[1] - 40 && x <= PL[2] + 40; if (PL && side === Math.sign(PL[0]) && (inPit(m) || (!T.open && (inPit(m - L) || inPit(m + L))))) continue;   // (not in the pit lane: its scene is the pit wall's, def.pit; the lane over the start line: its metres before it negative)
-        let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0, road = 1e9;
+        let lo = 1e9, hi = -1e9, o = 0, tr = 0, cr = 0, bad = 0, road = 1e9; const pts = [];
         for (let a = -12; a <= 12; a += 3) for (let b = 1; b <= 13; b += 3) {
           const x = T.px[i] + T.tx[i] * a + T.nx[i] * side * (bar + b), z = T.pz[i] + T.tz[i] * a + T.nz[i] * side * (bar + b), h = gH(x, z);
           if (!Number.isFinite(h)) { bad++; continue; } lo = Math.min(lo, h); hi = Math.max(hi, h);
           const n = A.clearance(x, z); if (n < Math.min(b, 3) - 0.6) bad++;   // (another part of the road, its verge or barrier)
-          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z));
+          o += sum(occ, x, z); tr += sum(trees, x, z); cr += sum(crowd, x, z); road = Math.min(road, stubD(x, z)); pts.push([x, z]);
         }
         const dh = hi - lo, hy = T.hy ? T.hy[i] : lo;
-        if (steps) { checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && o < 60 }); continue; }
+        if (steps) { const bld = rayOcc(pts); checked.push({ m, side, bar: +bar.toFixed(1), dh: +dh.toFixed(1), occ: o, bld, trees: tr, road: +Math.min(road, 99).toFixed(1), ok: !bad && dh <= 2.2 && road >= 2 && o < 60 && bld <= 2 }); continue; }
         if (bad || dh > 2.2 || lo < hy - 4 || hi > hy + 6 || road < 2) continue;   // (not on a side road)
         const score = (kmax < 1 / 400 ? 3 : kmax < 1 / 250 ? 2 : kmax < 1 / 150 ? 1 : 0) * 2 - dh - o / 40 - (forest ? 0 : tr / 6) - cr / 30 - bar / 8;
-        out.push({ m, side, bar: +bar.toFixed(1), minR: Math.round(1 / Math.max(kmax, 1e-4)), dh: +dh.toFixed(1), occ: o, trees: tr, crowd: cr, score: +score.toFixed(2) });
+        out.push({ m, side, bar: +bar.toFixed(1), minR: Math.round(1 / Math.max(kmax, 1e-4)), dh: +dh.toFixed(1), occ: o, trees: tr, crowd: cr, score: +score.toFixed(2), pts });
       }
     }
     out.sort((a, b) => b.score - a.score);
+    const free = (c) => { if (c.bld == null) c.bld = rayOcc(c.pts); return c.bld <= 2; };   // (rays only for those it would take: the best first)
     const far = (m, list) => list.every(p => { let d = Math.abs(p.m - m); if (!T.open) d = Math.min(d, L - d); return d >= gap; });
     const pick = [];
     if (plan) {   // each kind to the best place its rules allow
@@ -80,9 +89,10 @@ try {
       const rule = { tribuna: c => c.minR >= 250 && c.dh < 1.3 && c.occ < 12, vhod: c => near0(c) && c.occ < 25, ogenj: c => c.trees >= 3 && c.occ < 25, hisa2: c => c.dh < 1.6 && c.occ < 12,
         gasilci: c => c.dh < 1.6 && c.occ < 20, zar: c => c.dh < 1.8 && c.occ < 20, kamp: c => c.dh < 1.8 && c.occ < 20, oder: c => c.occ < 20 };
       for (const kind of plan.split(',')) { const ok = rule[kind] || (c => c.occ < 30);
-        const c = out.find(c => ok(c) && far(c.m, pick.concat(taken))) || out.find(c => c.occ < 40 && far(c.m, pick.concat(taken)));
+        const c = out.find(c => ok(c) && far(c.m, pick.concat(taken)) && free(c)) || out.find(c => c.occ < 40 && far(c.m, pick.concat(taken)) && free(c));
         if (c) pick.push(Object.assign({ kind }, c)); }
-    } else for (const c of out) { if (c.occ > 60) continue; if (far(c.m, pick.concat(taken))) pick.push(c); if (pick.length >= N) break; }
+    } else for (const c of out) { if (c.occ > 60) continue; if (far(c.m, pick.concat(taken)) && free(c)) pick.push(c); if (pick.length >= N) break; }
+    for (const c of pick) delete c.pts;
     pick.sort((a, b) => a.m - b.m);
     return { len: Math.round(L), open: !!T.open, n: out.length, pick, checked, names: T.names.map(q => [q.n, Math.round(q.d)]) };
   }, [gap, N, from, to, forest, plan, taken, check]);

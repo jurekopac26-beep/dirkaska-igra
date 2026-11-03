@@ -293,7 +293,7 @@
       P3.head.add(radioKapa(0x6b5a45));
     } };
 
-  /* 1 · Navijaški klub (Harju, Los Caracoles): seven fans of one club in its shirts by their tent and their minibus, the club's plain
+  /* 1 · Navijaški klub (Los Caracoles, Katu-Jaryk): seven fans of one club in its shirts by their tent and their minibus, the club's plain
      striped banner on the fence. The drummer on a crate beats the big drum on its strap, the flag-bearer sweeps the big flag over them, the
      other five jump and chant round them (two with air horns). As the car comes the five run to the fence and jump and wave, the horns up; the
      drummer and the flag-bearer stay where they are (the drum, the flag), beat and wave harder and watch it pass. The club's colours: the
@@ -1249,7 +1249,7 @@
     } };
   site('cpalace', [['sodniki', 248, 1, { old: true }]]); site('longford', [['sodniki', 1664, -1, { old: true }]]); site('rbring', [['sodniki', 560, 1]]);
 
-  /* ---------------- 2 · Varnostniki s psom (Toronto, Townsville, Marrakesh: the street circuits) ----------------
+  /* ---------------- 2 · Varnostniki s psom (Toronto, Townsville, Bang Saen: the street circuits) ----------------
      Two security guards in black with yellow vests (as the gate's) walk slowly up and down along the fence, one with a shepherd dog on a
      short leash; their quad bike parked behind them, their post (a dark tent) by it. Staff (run: false): as the car comes they stop and watch it, the dog sits by its
      handler. The dog and its leash are the handler's own (on its root, shown with their hold key: walking, sitting), so they go and turn
@@ -1299,7 +1299,7 @@
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
   site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
   site('vrsic', [['kotlicek', 1000, 1], ['motoristi', 1416, -1, { lay: false }]]);   // (the bikes on the mouth of a gravel forest road)
-  site('harju', [['plaza', 1856, -1], ['navijaci', 2408, 1, { club: [0x1f4aa8, 0xf2f2f2] }]]);
+  site('harju', [['plaza', 1856, -1]]);
   site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6864, -1]]);
   site('hotham', [['karte', 3160, 1], ['selfie', 6448, 1], ['badminton', 7872, -1]]);
   site('maunakea', [['zmaj', 3776, -1], ['glasba', 4488, 1]]);
@@ -1307,5 +1307,5 @@
   site('bigsur', [['plaza', 392, 1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);
-  site('katu', [['lestve', 64, 1]]);
+  site('katu', [['lestve', 64, 1], ['navijaci', 392, -1, { club: [0x1c3f94, 0xf2f2f2] }]]);
 })();
