@@ -4,8 +4,8 @@
 // other open ones conflict in index.html as soon as one of them was merged. The stamps are added where the pages are served:
 // tools/predogled.mjs stamps the site it builds for GitHub Pages (main and the previews, .github/workflows/stran.yml), and the
 // tests' web server (tests/browser/lib.mjs serve) stamps the pages it sends, so the tests see the game as it is published.
-//   node tools/stamp.js                 remove the stamps from the repo's pages (after a merge that brought old ones back: take
-//                                       either side of a conflict in the stamps, then run this)
+//   node tools/stamp.js                 remove the stamps from the repo's pages (a merge that brought old ones back without a
+//                                       conflict; a merge that stopped on one: --merge)
 //   node tools/stamp.js --merge         in a merge that stopped on a conflict in a page: merge the page's two sides and their common
 //                                       base without stamps (the old stamps were the conflict), git add it when nothing else is left
 //   node tools/stamp.js --check         exit 1 if a page carries a stamp or links a file that is missing (tests/stamp.test.js)
@@ -123,15 +123,34 @@ function mergePages() {
     const stage = (n) => { try { return git(['show', `:${n}:${page}`]); } catch (_) { return ''; } };   // (1 the common base, 2 this branch, 3 the branch merged in)
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stamp-merge-'));
     const [mine, base, theirs] = [2, 1, 3].map((n) => { const f = path.join(tmp, n + '.html'); fs.writeFileSync(f, relink(stage(n), top, 'strip').html); return f; });
-    let out, clean = true;
-    try { out = git(['merge-file', '-p', '-L', 'this branch', '-L', 'common base', '-L', 'merged in', mine, base, theirs]); }
-    catch (e) { if (typeof e.stdout !== 'string' || !(e.status > 0)) throw e; out = e.stdout; clean = false; }   // (exit n > 0: n conflicts left, marked in the text)
-    fs.writeFileSync(path.join(top, page), out);
+    let out;
+    try { out = git(['merge-file', '-p', '--diff3', '-L', 'this branch', '-L', 'common base', '-L', 'merged in', mine, base, theirs]); }
+    catch (e) { if (typeof e.stdout !== 'string' || !(e.status > 0)) throw e; out = e.stdout; }   // (exit n > 0: n conflicts left, marked in the text)
+    const m = keepBoth(out);
+    fs.writeFileSync(path.join(top, page), m.text);
     fs.rmSync(tmp, { recursive: true, force: true });
-    if (clean) { git(['add', '--', page]); console.log(page + ': merged without the stamps, no conflict left (added to the merge)'); }
-    else { ok = false; console.log(page + ': merged without the stamps, but both sides changed the same link: resolve the marked place by hand, then git add ' + page); }
+    if (!m.left) { git(['add', '--', page]); console.log(page + ': merged without the stamps' + (m.both ? `, ${m.both} place(s) where both sides added scripts: both kept` : '') + ', no conflict left (added to the merge)'); }
+    else { ok = false; console.log(page + `: merged without the stamps, but ${m.left} place(s) where both sides changed the same lines: resolve them by hand, then git add ` + page); }
   }
   return ok;
+}
+// the conflicts git left (diff3 style) where both sides only added script or style links at the same place (two new tracks, say):
+// both sides kept, this branch's first, a link both added once; any other conflict stays as git marks it (two sides, no base)
+function keepBoth(text) {
+  const L = text.split('\n'), out = [], LINK = /^\s*(<script\b[^>]*><\/script>|<link\b[^>]*>)?\s*$/i;
+  let left = 0, both = 0;
+  for (let i = 0; i < L.length; i++) {
+    if (!L[i].startsWith('<<<<<<< ')) { out.push(L[i]); continue; }
+    const a = [], b = [], c = [];
+    let j = i + 1, part = a;
+    for (; j < L.length && !L[j].startsWith('>>>>>>> '); j++) {
+      if (L[j].startsWith('||||||| ')) part = b; else if (L[j] === '=======') part = c; else part.push(L[j]);
+    }
+    if (!b.some(l => l.trim()) && a.concat(c).every(l => LINK.test(l))) { out.push(...a, ...c.filter(l => !l.trim() || !a.includes(l))); both++; }
+    else { out.push(L[i], ...a, '=======', ...c, L[j]); left++; }
+    i = j;
+  }
+  return { text: out.join('\n'), left, both };
 }
 
 module.exports = { stampOf, stampHtml, stampDir, NAMES };
