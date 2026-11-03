@@ -979,12 +979,13 @@
     const f = F[rpIdx(F, t)], o = 1 + k * REC_W, x = f[o], z = f[o + 2];
     return { lap: rpLap(recd.cars[k], t), s: rpS(track.query(x, z, -1, {})), x, z };
   }
-  // the version (js/game.js's stamp, tools/stamp.js: git log -S 'game.js?v=...' index.html finds it), the track, the way it is raced, the weather
+  // the version (js/game.js's stamp, which the publish step puts on the page: tools/stamp.js; node tools/stamp.js --find <stamp> finds its
+  // commit; a page without stamps, as the repository's on a local server: 'lokalno'), the track, the way it is raced, the weather
   function rpMeta() {
     if (recd && recd.file) { const H = recd.file; return { ver: H.ver, track: H.track, name: H.name, mode: H.mode, wx: H.wx, laps: H.laps, dev: H.dev, file: H.ime || '' }; }   // (an opened file: the race as it was driven, its device)
     const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
     const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
-    return { ver: m ? m[1] : '?', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
   }
   function rpMap() {   // the track's line for the picture's map (at most about 600 points), its start
     const T = track, st = Math.max(1, Math.floor(T.N / 600)), pts = [];
@@ -3855,12 +3856,14 @@
   }
   function retired() { Comm.stop(); Comm.say('retired', null, 5); Sfx.beep(330, 0.3, 0.12); finishRace(); }   // (the player is out: the results now)
   /* ---------------- the wheel rule: KONEC IGRE, PONOVI IGRO ---------------- */
-  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on; a test with one car
-  // first): at 80 % damage a wheel comes off, then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO
-  // (the race again), the results (the player retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge
-  // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
-  const WHEEL_RULE = ['sokol', 'kolibri'];   // (the KOLIBRI's by its tyres, Core ktHit: a burning tyre's wheel at a real knock, already with damage Samo videz)
-  const TYRE_RULE = ['kolibri'];   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on): a wheel comes off,
+  // then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO (the race again), the results (the player
+  // retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge and the run from the police the rule is off
+  // (an ended run there would count as a time, a lap or an escape). Every vehicle, each tyre its own as the KOLIBRI's (the user's choice
+  // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
+  // the next real knock (Core ktHit), already with damage Samo videz
+  const WHEEL_RULE = Core.MODELS.map(m => m.id);
+  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
@@ -4564,7 +4567,7 @@
   // room is full, or earlier when the one who waited first (the host) starts it, with everyone who is there. A big grid (over
   // NET_BIG cars) sends its states 10 times a second and the host passes them on in one message per friend (see netFrame).
   const NET_BIG = window.__netBig > 0 ? window.__netBig | 0 : 6;   // a grid of more cars than this is big (see netFrame; the tests: fewer)
-  const NET_V = 2;   // message format; together with the game's own version (the stamps of all its scripts) both phones must match
+  const NET_V = 2;   // message format; together with the game's own version (the stamps of all its scripts on the published game; without stamps their addresses) both phones must match
   const gameVer = () => { let h = 2166136261; for (const s of document.querySelectorAll('script[src]')) for (const ch of s.getAttribute('src')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return NET_V + '/' + (h >>> 0).toString(36); };
   const netTracks = () => Core.TRACKS.filter(d => !d.timeTrial);   // the tracks that race (the hill climb and the rally stage are runs for one; Vršič: the race up the pass)
   const modelById = (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M) : Core.MODELS[0]; };   // (a stored or sent id: a ghost's, a legend's, the friend's car; a retired model's is its heir)
@@ -5493,7 +5496,8 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; updateAppButtons(); });
   window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast(tr('Igra je nameščena: odpreš jo z ikono Roads Atlas na začetnem zaslonu.'), 4200); });
   // an app (or tab) left open in the background does not start again, so it would keep the old version: when it comes back on
-  // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu)
+  // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu). By the
+  // stamps the publish step puts on the page's links (tools/stamp.js); a page without them (the repository's) never reloads
   let updAsked = -1e9;
   const stampsOf = (text) => (text.match(/\?v=[0-9a-f]{8}\b/g) || []).sort().join();
   function checkUpdate() {

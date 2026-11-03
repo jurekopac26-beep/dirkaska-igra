@@ -149,7 +149,7 @@ check('Render.deliMesh: the wing alone on the roof\'s rear edge, the lamps on th
 { let w = [0, 0, '']; for (let p = 1; p <= 16; p++) { const I = R.kitInfo('kolibri', { platisca: p, zavore: 15, matice: 16 }), t = I.wheels.hi[0] + I.wheels.still[0];
     if (t > w[0]) w = [t, w[1], 'platisca ' + p]; w[1] = Math.max(w[1], I.hi.wheels[0]); }
   check('the rims, the brakes and the nuts together: a wheel <= 800 triangles (Visoki 1150)', w[0] <= 800 && w[1] <= 1150, `most ${w[0]} (${w[2]}), Visoki ${w[1]}`); }
-const other = C.MODELS.find(m => m.kit && m.id !== 'kolibri' && !m.def.mounts);
+const other = C.MODELS.find(m => m.kit && m.id !== 'kolibri' && !(m.def.mounts && m.def.mounts.krilo));   // (every vehicle of the kit has mounts now: one without the wing's, MEDVED's roof rack, a kart)
 check('a vehicle without the mount: no part drawn (deliMesh null, its body the stock one)', !!other && R.deliMesh(other, 'krilo', 3) === null && R.kitInfo(other.id, { krilo: 3 }).deli === '', other ? other.id : 'none');
 // a car's own lamp (mounts.zarometi.shape): every option within its outline (PANTER's triangles on the wings' noses, JASTREB's lamps
 // the noses of their glass domes), its lens bulging out (in front of the face by more than the flat lens' 4 mm)
