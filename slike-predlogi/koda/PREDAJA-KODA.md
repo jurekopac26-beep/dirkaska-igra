@@ -149,8 +149,11 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
 - Premiki: `NVPark` `anim` in `NVSite.tick` samo blizu avta in v pogledu (`NVRide.seen`); majhne naprave dlje od 150 m skrite, brez senc;
   kar na gradbišču vozi, je zid za avto (`H3.movers`).
 - Obremenitev (`PERF_ONLY=newmap`): klici 263 povprečno, največ 342 (main 341), oglišča 1340k (največ 1513k).
-- Odprto: **nm10-ravni** (ravni za ostale garaže; nadrejena seja: kot avtošola, 4 ravni po 3 naloge, naloge iz `js/nvmenu.js`, manjkajoče
-  predlagati) in **nm10-rampa** (rampa v parku; slike `nm10-rampa/1–4.jpg`, makete `delo/rampa-page.js`, `__RM.show(1..4)`). Drug PR.
+- Odgovora uporabnika 3. 11. (stran Odločitve, zbrala seja »Ure dela na računu«): **nm10-rampa: »Zbriši rampo«** (v parku ne bo rampe; v igri ni
+  bilo nič narejenega, makete `delo/rampa-page.js` odstranjene, slike `nm10-rampa/` ostanejo kot zapis vprašanja). **nm10-ravni: 1** · meni z ravnmi
+  za vse garaže (licence, dirke, misije): 12 izzivov v 4 ravneh po 3 kot avtošola, napredek v `localStorage` `rra-garaze`, naslednja raven pri 50 %,
+  izzivi »V izdelavi«; prve tri so dosedanje, imena ravni 2–4 so predlog (ko se izzivi naredijo, se lahko spremenijo); več igralcev ostane s tremi
+  izbirami, HOME »Garaža v izdelavi«. Drug PR (veja `nova-mapa/sklop-10-ravni`).
 - V posnetkih se kabine, vlak in gasilski avto narišejo šele z `NVRide.frame(...)` (`koda/adv.js`); `koda/live.mjs` z `STILL=1` med nalogami
   ustavi zanko igre.
 

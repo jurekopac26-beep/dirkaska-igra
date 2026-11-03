@@ -7,3 +7,5 @@ Ramp v igri še ni: makete so začasne mreže v strani (ne v kodi).
 2. Lesena rampa na krogu z vodnjakom (F): skok čez del kroga (mimo vodnjaka) na leseno pristajalno rampo.
 3. Betonska rampa na travniku vzhodno od ribnika: skok čez ribnik (okoli 19 m), pristajalna rampa na zahodnem bregu, pred parkovno cesto.
 4. Oder na travniku ob poti (iz zapiskov nadrejene seje): klančina gor, lesen oder 10 × 7 m, 1,2 m visok, klančina dol; na odru škatle, gume, stožci, sodi in veliki keglji, ki jih avto podre.
+
+**Odgovor uporabnika 3. 11.: »Zbriši rampo«** · v parku ne bo rampe (nobena od štirih možnosti).
