@@ -28,6 +28,11 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 - **Sprememba 2. 11. (pravilo v `CLAUDE.md` na `main`, uporabnik: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«):**
   seja svoj PR združi sama, ko so lokalni testi in vsi nabori na GitHubu zeleni in PR nima sporov z `main`; nadrejeni seji pošlje samo SHA
   združitve. Odstavek »Kdo združi« zgoraj ne velja več.
+- **Vprašanja uporabniku (3. 11.):** piši jih na stran Odločitve **tega** računa, https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR
+  (`ArtifactData` `set` v zbirko `vprasanja`: qid, seja, seja_id, naslov, vprasanje, moznosti `[{k, naslov, opis, slika}]`, priporoceno,
+  stanje »odprto«, ustvarjeno, vrstni). Stran iz `CLAUDE.md` je na drugem računu in se od tu ne odpre. Pri grafičnih vprašanjih dodaj sliko
+  vsake možnosti (polje `slika` ali `slike`; slike naloži z orodjem Artifact, `url` strani, `asset: true`). Seja »Ure dela na računu«
+  (session_01Ck3D3TFW7AsQDT1b3or5eX) jih uporabniku pripravi vsak dan ob 10.30, 14.30 in 23.00.
 - **Main se pogosto premika.** 2. 11. je zbirni #238 petkrat izgubil tekmo: med 2–2,5 h CI so druge seje združile svoje PR-je in vsak je
   prinesel spor v žigih (`index.html`, `garaza.html`) ali seznamih (`tests/run.js`, `docs/kazalo.md`). Za #238 je uporabnik izbral
   »1 · hitro združi po spoju«: ko je CI zelen in main medtem prinese samo take spore, spoji main, lokalno poženi hiter izbor (stamp, quick,
