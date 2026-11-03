@@ -844,12 +844,14 @@ const Napake = (function () {
       nZapri(); zapri(); zgZapri(); pzZapri(); pzWait = w || null;
       const why = G.open(r.H, r.frames);
       if (why) { pzWait = null; G.toast('Posnetka ni bilo mogoče odpreti: ' + why + '.', 3600); }
-      else if (r.H.ver && r.H.ver !== '?' && r.H.ver !== verIgre()) G.toast('Posnetek je iz druge različice igre (' + r.H.ver + '): svet je lahko malo drugačen.', 3200);
+      else if (r.H.ver && r.H.ver !== '?' && r.H.ver !== 'lokalno' && r.H.ver !== verIgre()) G.toast('Posnetek je iz druge različice igre (' + r.H.ver + '): svet je lahko malo drugačen.', 3200);
       return why;
     };
     return izhod(go) ? '' : go();
   }
-  const verIgre = () => { const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')); return m ? m[1] : '?'; };
+  // the game's version: js/game.js's stamp, which the publish step puts on the page (tools/stamp.js); a page without stamps (the repository's,
+  // e.g. on a local server): 'lokalno' (a recording of such a game is of no known version: no warning when it is opened)
+  const verIgre = () => { const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')); return m ? m[1] : 'lokalno'; };
 
   /* ---------------- Zadnji posnetki: the recordings of the last 10 races kept in the game (IndexedDB rra-posnetki), each with the collection
      marked on it, so that a race is opened and marked again later, one after another. A race whose player reached the finish is kept by
