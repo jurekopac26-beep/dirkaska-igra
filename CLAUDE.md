@@ -30,7 +30,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 ## Postopek
 - Po vsaki spremembi v `js/` ali `css/` zaženi `node tools/stamp.js`, za nove reference `npm run golden:update`.
 - Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
-- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni testi, ki se nanašajo na spremembo (Node in brskalniški; `npm run test:related` jih izbere iz `git diff` proti `main`, hiter vstop v igro `index.html?proga=<id>` je opisan v `tests/README.md`); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu. Celoten Node nabor lokalno traja okoli 1 h (`races.test.js` presega privzetih 15 min: `TEST_TIMEOUT_MIN=40`). Na `main` gre sprememba, ko so ti zeleni: seja jo **združi sama, brez vprašanja** (odločitev uporabnika 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«; velja za vse seje, dokler ga uporabnik ne spremeni).
+- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni testi, ki se nanašajo na spremembo (Node in brskalniški; `npm run test:related` jih izbere iz `git diff` proti `main`, hiter vstop v igro `index.html?proga=<id>` je opisan v `tests/README.md`); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu. Celoten Node nabor lokalno traja okoli 1 h (`races.test.js` presega privzetih 15 min: `TEST_TIMEOUT_MIN=40`). Na `main` gre sprememba, ko so ti zeleni: seja jo **združi sama, brez vprašanja** (odločitev uporabnika 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«; velja za vse seje, dokler ga uporabnik ne spremeni). **Hitro združevanje** (odločitev uporabnika 3. 11. 2026): če je bil pull request na GitHubu že v celoti zelen in ima po spajanju svežega `main` spore samo v žigih ali seznamih testov oziroma kazalu, ga po lokalnih povezanih testih združi brez novega kroga na GitHubu; če `main` po združitvi pade, popravi seja tega pull requesta.
 - Pull request, na katerem še delaš, odpri kot osnutek (draft): celotni nabori na GitHubu tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem potisku (`.github/workflows/tests.yml`). Označi ga, ko je delo končano in so povezani testi lokalno zeleni (odločitev uporabnika 31. 10. 2026).
 - Več pull requestov, ki se dotikajo istih datotek (npr. deli KOLIBRIJA), gre na `main` v enem koraku (zbirna veja, en krog testov) ali drug za drugim po dogovoru, nikoli vsi hkrati: vsaka združitev ostalim sproži nov krog testov (odločitev uporabnika 31. 10. 2026).
 - Pull request odpri samo, če uporabnik to izrecno prosi, za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop oziroma na združen korak; sklop 17 jih ima lahko več) ali ko je delo končano in ga je treba spraviti na `main` (pravilo 2. 11. 2026 zgoraj: združi sam).
@@ -49,6 +49,16 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Podatke nove prave proge pripravi z `tools/proga-podatki.py` (nastavitve v `tools/<id>/config.json`, navodila na vrhu orodja).
 - Slike samo, ko so potrebne.
 - Hkrati največ 2 vzporedni seji (razdelek »Seje« zgoraj).
+- **Dopolnitev 3. 11. 2026 (odločitev uporabnika, brez izgube kakovosti):**
+  - Rutinsko delo (spajanje `main`, čakanje na teste, združevanje, posredovanje sporočil) čim krajše; nova seja samo za tako delo teče z naporom medium. Max ostane za novo kodo, grafiko in proge.
+  - Najprej se izprazni vrsta za `main`, šele potem se začnejo nove verige (gorske skupine, zavite proge); znak da »VSE SEJE«.
+  - Kratki pogovori: vsak večji korak je nova seja s kratkim povzetkom namesto ene dolge seje.
+  - Manj slik: pri preverjanju grafike 1–2 ključna pogleda namesto serij.
+  - Velikih datotek (`js/world.js`, `js/world-pikes.js`, `docs/igra.md`, `tests/README.md`) ne beri v celoti: kazalo in iskanje.
+  - Pomožni agenti samo za res ločeno vzporedno delo.
+  - Majhne spremembe iste teme v en pull request (en krog testov, ena združitev).
+  - Na teste se čaka samo z dogodki GitHuba; brez rednih preverjanj, ko ni nič novega.
+  - Seje, ki samo usklajujejo ali posredujejo sporočila, tečejo na modelu Sonnet; kodiranje ostane Opus max.
 
 ## Kje je kaj (manj iskanja)
 - Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
