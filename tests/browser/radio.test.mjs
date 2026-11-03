@@ -16,9 +16,11 @@ try {
   const setUp = () => page.evaluate(() => { window.__clicks = 0; if (!Sfx.radio.__t) { const o = Sfx.radio; Sfx.radio = function () { window.__clicks++; return o.apply(this, arguments); }; Sfx.radio.__t = 1; }
     window.__msgs = []; if (!window.__mo) { window.__mo = new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__msgs.push(t); } }); window.__mo.observe(document.getElementById('h-msg'), { childList: true, subtree: true }); } });
   // on, two seconds at a time (paused, on autopilot), two drawn frames after each (the radio speaks from the HUD's frames), until fn (it may
-  // also steer the test: the player's way into the pits)
+  // also steer the test: the player's way into the pits). Stuck or the wrong way out on the circuit: back on the road, like a player tapping
+  // Na progo (Trki med avti, Simulacija: a rival's knock in the first laps' crowd can turn the player round into the tyre wall after the
+  // chicane; the autopilot has no reverse and the race rescues only the rivals; never in the pit lane: that would undo the stop)
   const until = (fn, max) => page.evaluate(async ([src, max]) => { const g = window.__game, f = new Function('g', 'return (' + src + ')(g)');
-    for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
+    for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); const P = g.race.player; if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
     return !!f(g); }, [fn.toString(), max || 200]);
   const radio = () => page.evaluate(() => { const g = window.__game, el = document.getElementById('h-teamradio'); return { log: g.teamRadio.log, on: el.classList.contains('on'), text: el.lastElementChild.textContent, clicks: window.__clicks, lap: g.race.player.lap, laps: g.race.laps }; });
   // a message said in a HUD frame shows in the next one: wait for the box (a few drawn frames; on a slow machine the say can fall on the
