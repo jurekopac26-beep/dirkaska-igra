@@ -20,8 +20,12 @@ import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 // the camera's shake on (Nastavitve · Tresenje kamere, off by default since 2. 11. 2026), as when the references were recorded: its jitter
 // draws from Math.random, which the seeded run shares with the race, so with it off the race goes otherwise and the six samples fall
-// elsewhere on the lap (the jitter itself adds no draw call); tools/obremenitev.mjs the same
-const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1 };
+// elsewhere on the lap (the jitter itself adds no draw call); tools/obremenitev.mjs the same. And the knocks between cars as when the
+// references were recorded (Trki med avti: Stara, crV 4; the default since 2. 11. 2026 is Simulacija): the knock moves the cars otherwise,
+// so where the six samples fall and how many rivals are in view there goes with it (the cost of a car is the same in every version; on the
+// Nordschleife the busiest sample took 361k vertices against 354k, the fleet's heaviest one-make fields 430k against 402k: where the cars
+// were, not what they cost). tests/browser/fleet.test.mjs, which measures its fields against these references, the same
+const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4 };
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
 // place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {

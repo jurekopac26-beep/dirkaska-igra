@@ -63,18 +63,33 @@ try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
   T.check('track menu lists every track of the game', [...ids].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, ids.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
+  // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
+  // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
+  // can push it off the road into the barrier, where it stood for the rest of the 20 s). The other autopilot races do the same (radio, fuel,
+  // memory; races.test.js, lib/sim.js)
+  const drive = (sec) => page.evaluate(async (sec) => {
+    const g = window.__game; let nan = false, resc = 0;
+    for (let i = 0; i < sec; i++) {
+      g.sim(1, true);
+      const R = g.race, P = R && R.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) { R.rescue(P); resc++; }
+      await new Promise(r => requestAnimationFrame(r));
+      for (const c of g.race.cars) if (!Number.isFinite(c.x) || !Number.isFinite(c.z) || !Number.isFinite(c.speed)) nan = true;
+    }
+    return { nan, resc };
+  }, sec);
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
-    const nan = await simulate(page, 20);
+    const { nan, resc } = await drive(20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
