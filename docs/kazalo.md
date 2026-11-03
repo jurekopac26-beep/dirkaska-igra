@@ -66,6 +66,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
+| `docs/vprasanja.md` | vprašanja za uporabnika na strani Odločitve: dnevna priprava ob 10.30, 14.30 in 23.00 (odločitev uporabnika 3. 11. 2026, načrtovani opravili, preklic), kako seja zastavi vprašanje (slike pri grafičnih: pred/po ali ponazoritev), postopek priprave |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/ljudje-predlogi.md` | 12 predlogov »ljudje ob progi« (številke, ki jih uporabnik izbira), meritev zdajšnjih gledalcev, skupine po 2–10 |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
