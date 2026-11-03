@@ -62,15 +62,15 @@ try {
     if (dy) for (let o = -50; o <= 250 && !bridge; o += 2) { const i = Tr.idx(at(dy.d + o)); ray.set(new THREE.Vector3(Tr.px[i], Tr.hy[i] + 40, Tr.pz[i]), new THREE.Vector3(0, -1, 0));
       const h = ray.intersectObject(W.root, true).find(q => q.object.isMesh && q.point.y > Tr.hy[i] + 1.5 && q.object.name !== 'hkFar' && q.object.name !== 'hkFuji'); if (h) bridge = { d: Math.round(o + dy.d), clear: +(h.point.y - Tr.hy[i]).toFixed(1) }; }
     let fuji = null, farTris = 0, farN = 0; W.root.traverse(o => { if (o.name === 'hkFuji') fuji = o; if (o.name === 'hkFar') { farTris += o.geometry.index.count / 3; farN++; } });
-    return { S, plants, cut, far, onRoad, badF, badR, onRail, badB, open, ends: ends.length, nBld: W.bldBoxes.length, bOn, bFar, bBad, tiles, tileFar, dK, dH, water, bridge,
+    return { S, plants, cut, thin: W.thinned || 0, far, onRoad, badF, badR, onRail, badB, open, ends: ends.length, nBld: W.bldBoxes.length, bOn, bFar, bBad, tiles, tileFar, dK, dH, water, bridge,
       fuji: fuji ? { depthTest: fuji.material.depthTest, ro: fuji.renderOrder, tris: fuji.geometry.index.count / 3, culled: fuji.frustumCulled } : null, farTris, farN };
   });
   const S = r.S;
   T.check('the old spa towns: 1200+ of OpenStreetMap\'s buildings within 60 m, none on the road (every box past the barrier line), none beyond 75 m (its nearest corner)', r.nBld > 1200 && r.bOn === 0 && r.bFar === 0,
     `${r.nBld} buildings, ${r.bOn} on the road ${JSON.stringify(r.bBad)}, ${r.bFar} far`);
-  T.check('the forest, thinned for the phone: the canopy model\'s trees (12 000-20 000 of its 34 000) and more where the woods are (3 500-8 000), the cedars fewer than the others, sasa on the verges; every plant within 64 m of the road (the rule of 60 m), past the barrier line, no tree on the railway',
-    S.trees > 12000 && S.trees < 20000 && S.fill > 3500 && S.fill < 8000 && S.cedars < 0.4 * (S.trees + S.fill) && S.sasa > 2500 && r.plants + r.cut >= S.trees + S.fill + S.sasa && r.cut < 0.15 * (r.plants + r.cut) && r.far === 0 && r.onRoad === 0 && r.onRail === 0,
-    `${S.trees} + ${S.fill} trees (${S.cedars} cedars), ${S.sasa} sasa, ${r.plants} drawn (${r.cut} taken out for the glades); ${r.far} beyond 64 m ${JSON.stringify(r.badF)}, ${r.onRoad} on the road ${JSON.stringify(r.badR)}, ${r.onRail} on the railway ${JSON.stringify(r.badB)}`);
+  T.check('the forest, thinned for the phone: the canopy model\'s trees (12 000-20 000 of its 34 000) and more where the woods are (3 500-8 000), the cedars fewer than the others, sasa on the verges; every plant within 64 m of the road (the rule of 60 m), past the barrier line, no tree on the railway; every one planted drawn but those the road\'s thinning leaves out (W.thinned)',
+    S.trees > 12000 && S.trees < 20000 && S.fill > 3500 && S.fill < 8000 && S.cedars < 0.4 * (S.trees + S.fill) && S.sasa > 2500 && r.plants + r.cut + r.thin >= S.trees + S.fill + S.sasa && r.cut < 0.15 * (r.plants + r.cut) && r.far === 0 && r.onRoad === 0 && r.onRail === 0,
+    `${S.trees} + ${S.fill} trees (${S.cedars} cedars), ${S.sasa} sasa, ${r.plants} drawn (${r.cut} taken out for the glades, ${r.thin} left out by the road's thinning, W.thinned); ${r.far} beyond 64 m ${JSON.stringify(r.badF)}, ${r.onRoad} on the road ${JSON.stringify(r.badR)}, ${r.onRail} on the railway ${JSON.stringify(r.badB)}`);
   T.check('the mountain railway: ~5.8 km of it (all its data, out to ~170 m from the road), the one level crossing, within 300 m of Kowakidani, hydrangeas along it, the stations\' platforms',
     S.railM > 5000 && S.crossings === 1 && r.dK < 300 && S.hydrangeas > 500, `${S.railM} m, ${S.crossings} crossings (${Math.round(r.dK)} m from Kowakidani), ${S.hydrangeas} hydrangeas`);
   T.check('the railway finished: every free end of a line has a buffer stop (by the road) or a tunnel\'s portal in a hill (farther out), none ends in the open',
