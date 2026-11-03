@@ -208,6 +208,104 @@ const Tex = (function () {
     }
     const t = mk(c, true); t.crowdPic = true; t.crowdHi = true; crowdHiC.set(key, t); return t;
   }
+  // the grandstand's empty seats (the user, 2. 11. 2026: »tribune bolj prazne in le nekaj gledalcev«: the few people on them are figures of
+  // their own, js/world-ljudje.js): crowdHi's layout (8 rows of 32 seats, a row for a tier) with every seat empty, the backs and the seats in
+  // the stand's colours (a colour of its own, now and then a block in a second one), lit from above
+  const seatsC = new Map();
+  function crowdSeats(seed) {
+    if (seatsC.has(seed)) return seatsC.get(seed);
+    const W = 1024, H = 512, c = cv(W, H), x = c.getContext('2d'), r = Core.rng(seed + 13), f = (col, X, Y, w, h) => { x.fillStyle = col; x.fillRect(X, Y, w, h); };
+    const SEAT = ['#2f5fb0', '#b8322c', '#d9d5cb', '#2a8a4c', '#e0b020', '#3a3e47'], a = SEAT[Math.floor(r() * 4)], b = SEAT[Math.floor(r() * SEAT.length)];
+    f('#3a3e47', 0, 0, W, H);
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 64; f('#23262d', 0, y0, W, 6); f('#4a4f59', 0, y0 + 54, W, 10); f('#5a606b', 0, y0 + 54, W, 2);   // the step behind, the seat's front edge
+      for (let k = 0; k < 32; k++) {
+        const X = k * 32, sc = (k % 16 < 3 && row % 4 < 2) ? b : a;   // (now and then a block in the second colour)
+        f(sc, X + 5, y0 + 18, 22, 26); f('rgba(255,255,255,0.18)', X + 5, y0 + 18, 22, 3); f('rgba(0,0,0,0.22)', X + 5, y0 + 40, 22, 4);   // the back, lit at its top
+        f(sc, X + 4, y0 + 44, 24, 10); f('rgba(0,0,0,0.3)', X + 4, y0 + 52, 24, 2);   // the seat
+      }
+    }
+    const t = mk(c, true); t.crowdSeats = true; seatsC.set(seed, t); return t;
+  }
+
+  // the grandstands' kit (the user, 2. 11. 2026: »naj bodo dobro narejene v dobri grafiki … čim bolj podobno kot v resnici«; js/world-ljudje.js
+  // standBuild): one picture for every part of a stand, in bands from the top; red the light and shade, green where the seat's own colour
+  // shows (1) or the stand's concrete (0), blue the yellow paint of the steps' edges. The seats across repeat (4 to the picture's width):
+  // STAND_KIT the bands' rows (from the top), the shader in standBuild mixes the colours
+  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], pave: [608, 672], glyph: [672, 800], fascia: [800, 832], door: [832, 896], awning: [896, 928], shutter: [928, 960], clad: [960, 992], picto: [992, 1024], H: 1024 };
+  let kitC = null;
+  function standKit() {
+    if (kitC) return kitC;
+    const W = 256, K = STAND_KIT, n1 = makeNoise(16, 517), n2 = makeNoise(64, 518), r = Core.rng(519);
+    const rr = (x0, y0, x1, y1, rad, x, y) => { const cx = Math.min(Math.max(x, x0 + rad), x1 - rad), cy = Math.min(Math.max(y, y0 + rad), y1 - rad); return Math.hypot(x - cx, y - cy) <= rad; };   // (inside a rounded rectangle)
+    const sv = [0.97, 1.0, 0.94, 0.99].map(v => v + (r() - 0.5) * 0.04);   // (the four seats a little faded, each its own)
+    const conc = (i, j, k) => 0.84 + (n1(i / 16, j / 16) - 0.5) * 0.1 + (n2(i / 4, j / 4) - 0.5) * 0.08 + (r() - 0.5) * 0.04 * k;
+    const c = pixels(W, K.H, (i, j) => {
+      const s = Math.floor(i / 64), x = i % 64, f = sv[s], q = (v) => cl(Math.round(v * 255));
+      if (j < K.back[1]) {   // the seat's back, seen from the front: rounded at its top, lit at the top, round across
+        const y = j; if (!rr(7, 3, 57, 64, 11, x, y)) return [q(0.3), 0, 0];
+        const a = (x - 32) / 25, rim = y < 6 ? 0.06 : 0, k = (1 - 0.22 * a * a) * (1.02 - 0.2 * y / 64) + rim;
+        return [q(k * f), 255, 0];
+      }
+      if (j < K.pan[1]) {   // the seat from above: its back edge in the back's shade, the front lip lit, dished in the middle
+        const y = j - K.pan[0]; if (!rr(5, -8, 59, 30, 7, x, y)) return [q(0.42), 0, 0];
+        const a = (x - 32) / 27, k = y < 4 ? 0.62 + y * 0.06 : y > 26 ? 1.04 : 0.93 - 0.08 * (1 - a * a) * Math.sin(Math.PI * y / 30);
+        return [q(k * f), 255, 0];
+      }
+      if (j < K.tread[1] || j < K.aisle[1]) {   // the tread (the aisle's with the yellow edge): concrete, its front edge lit, a dark joint at the riser's foot
+        const a = j < K.tread[1] ? K.tread[0] : K.aisle[0], y = j - a, edge = y < 3 ? 0.14 : y > 61 ? -0.3 : 0;
+        return [q(conc(i, j, 1) + edge), 0, a === K.aisle[0] && y >= 2 && y < 9 ? 255 : 0];
+      }
+      if (j < K.riser[1]) { const y = j - K.riser[0]; return [q(conc(i, j, 1) - (y > 28 ? 0.12 : 0) + (y < 2 ? 0.1 : 0)), 0, 0]; }   // the riser and the walls: concrete, a lit top edge
+      if (j < K.scaf[1]) {   // a temporary stand's scaffolding seen through (two bays of 1.25 m to the width, a lift of 1.25 m to the band): the dark inside, the tubes
+        const x2 = i % 128, y = j - K.scaf[0], bay = Math.floor(i / 128), tube = (d) => d < 2.6 ? 1 - Math.abs(d - 1.3) / 2.6 : -1;
+        let t = Math.max(tube(Math.min(x2, 128 - x2)), tube(Math.min(y, 128 - y)), tube(Math.abs((bay ? x2 : 128 - x2) - y) * 0.7071));
+        if (t >= 0) return [q(0.5 + 0.45 * t), 0, 0];
+        return [q(0.13 + (n1(i / 8, j / 8) - 0.5) * 0.06), 0, 0];
+      }
+      if (j < K.plain[1]) return [255, 0, 0];   // the concrete colour as it is (railings, flat parts)
+      if (j < K.seat[1]) return [255, 255, 0];   // the seat colour as it is
+      if (j < K.skirt[1]) { const y = j - K.skirt[0], w = Math.sin(i / 256 * Math.PI * 8) * 0.06; return [q(0.82 + w - (y > 58 ? 0.2 : 0) + (y < 4 ? 0.1 : 0)), 255, 0]; }   // a skirt of cloth in the seat colour (folds), its hem
+      if (j < K.rail[1]) { const y = j - K.rail[0]; return [q(y < 3 ? 1.0 : y > 12 ? 0.62 : 0.86), 0, 0]; }   // a rail: lit on top, round
+      if (j < K.roof[1]) { const x = i % 32, seam = i % 128 < 2;   // a roof's profiled sheets from above (4 m to the width): a rib every 0.5 m, lit on one side, a joint every 2 m
+        return [q(seam ? 0.66 : x < 3 ? 1.0 : x < 6 ? 0.76 : 0.92 + (n1(i / 16, j / 4) - 0.5) * 0.04), 0, 0]; }
+      if (j < K.bench[1]) { const y = j - K.bench[0], p = y >= 2 && y < 14 ? y - 2 : y >= 17 && y < 30 ? y - 17 : -1;   // a bench of two planks along the row (a bleacher's, timber or aluminium): the grain, a lit edge
+        if (p < 0) return [q(0.34), 0, 0];
+        return [q((p < 2 ? 1.04 : p > 10 ? 0.8 : 0.93) + (n2(i / 2, j * 3) - 0.5) * 0.12 + (n1(i / 32, j) - 0.5) * 0.06), 255, 0]; }
+      if (j < K.deck[1]) { const y = j - K.deck[0], jt = y % 13 < 1;   // a deck of planks along the row (a timber or aluminium bleacher's tread): their joints
+        return [q(jt ? 0.55 : 0.88 + (n2(i / 2, (j - y % 13) * 2) - 0.5) * 0.1 + (y % 13 === 1 ? 0.08 : 0)), 0, 0]; }
+      if (j < K.pave[1]) { const y = j - K.pave[0], row = Math.floor(y / 16), x = (i + (row % 2) * 16) % 32, joint = x < 1 || y % 16 < 1;   // a paved way (4 m to the width): slabs in a running bond, the joints
+        const tone = 0.9 + (n1(Math.floor((i + (row % 2) * 16) / 32) * 3.1, row * 2.3) - 0.5) * 0.12;
+        return [q(joint ? 0.66 : tone + (n2(i / 3, j / 3) - 0.5) * 0.06), 0, 0]; }
+      if (j < K.glyph[1]) { const x = i % 64, y = (j - K.glyph[0]) % 64, fr = x < 3 || x > 60 || y < 3 || y > 60;   // a sign's panel (its letter drawn below), a light frame
+        return [q(fr ? 1.0 : 0.82), fr ? 255 : 0, 0]; }
+      if (j < K.fascia[1]) { const y = j - K.fascia[0], x = i % 32, lamp = x >= 11 && x < 21 && y >= 21 && y < 27;   // a roof's front edge: a dark panel, its lit top, a floodlight every 0.5 m under it
+        return lamp ? [255, 255, 0] : [q(y < 3 ? 1.0 : y > 28 ? 0.5 : 0.78), 0, 0]; }
+      if (j < K.door[1]) { const y = j - K.door[0], x = i % 256, inn = x >= 96 && x < 160 && y >= 10, frame = !inn && x >= 90 && x < 166 && y >= 4;   // a stand's entrance at its back (one to the width): the dark way in, its frame, a lit lintel
+        return [q(inn ? 0.1 + (y > 50 ? 0.06 : 0) : frame ? (y < 8 ? 1.0 : 0.9) : conc(i, j, 1)), frame ? 255 : 0, 0]; }
+      if (j < K.awning[1]) { const y = j - K.awning[0], st = Math.floor(i / 16) % 2, sc = y > 24 - 4 * Math.abs(Math.sin(i / 16 * Math.PI));   // a striped awning (the concrete colour and the seat colour in turn), scalloped
+        if (sc) return [q(0.25), 0, 0]; return [q(0.95 - y * 0.006), st ? 255 : 0, 0]; }
+      if (j < K.shutter[1]) { const y = j - K.shutter[0], win = y < 18 && (i % 128) >= 12 && (i % 128) < 116;   // a kiosk's front: the open window (dark, a lit counter under it), the panel below
+        return win ? [q(y > 15 ? 1.0 : 0.16), y > 15 ? 255 : 0, 0] : [q(0.88 - (y > 28 ? 0.1 : 0)), 0, 0]; }
+      if (j < K.clad[1]) { const y = j - K.clad[0], x = i % 64, rib = x % 16;   // a stand's back wall clad in profiled sheets (2 m to a sheet, 8 m to the width): a rib every half metre, the sheets' joints, a darker foot
+        return [q((x < 1 ? 0.6 : rib < 2 ? 1.0 : rib < 4 ? 0.8 : 0.9) - (y > 27 ? 0.12 : 0) + (n1(i / 32, j / 8) - 0.5) * 0.05), 0, 0]; }
+      if (j < K.picto[1]) return [q(0.86), 255, 0];   // a kiosk's sign (its picture drawn below): the kiosk's colour
+      return [q(0.8), 0, 0];
+    });
+    { const x = c.getContext('2d'), y0 = K.picto[0];   // the kiosks' signs: a drink, an ice cream, a hot dog, a burger (white: the concrete colour, lit)
+      x.fillStyle = 'rgb(255,0,0)'; x.strokeStyle = 'rgb(255,0,0)'; x.lineCap = 'round'; x.lineJoin = 'round';
+      x.beginPath(); x.moveTo(22, y0 + 9); x.lineTo(42, y0 + 9); x.lineTo(39, y0 + 29); x.lineTo(25, y0 + 29); x.closePath(); x.fill();   // a cup, its lid and straw
+      x.fillRect(20, y0 + 6, 24, 3); x.lineWidth = 2.5; x.beginPath(); x.moveTo(34, y0 + 7); x.lineTo(38, y0 + 1); x.stroke();
+      x.beginPath(); x.moveTo(84, y0 + 14); x.lineTo(108, y0 + 14); x.lineTo(96, y0 + 31); x.closePath(); x.fill();   // an ice cream cone, two scoops
+      x.beginPath(); x.arc(91, y0 + 11, 6.5, 0, Math.PI * 2); x.arc(101, y0 + 11, 6.5, 0, Math.PI * 2); x.fill(); x.beginPath(); x.arc(96, y0 + 5.5, 5.5, 0, Math.PI * 2); x.fill();
+      const rr2 = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); x.fill(); };
+      rr2(140, y0 + 9, 40, 9, 4.5); rr2(144, y0 + 17, 32, 9, 4.5); x.fillStyle = 'rgb(150,255,0)'; x.fillRect(146, y0 + 15.5, 28, 3);   // a hot dog: the sausage over the bun, a line between
+      x.fillStyle = 'rgb(255,0,0)'; x.beginPath(); x.arc(224, y0 + 15, 13, Math.PI, 0); x.fill(); x.fillRect(210, y0 + 17, 28, 4); rr2(211, y0 + 23, 26, 6, 3);   // a burger: the bun's dome, the patty, the bottom
+    }
+    { const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 46px sans-serif'; x.fillStyle = 'rgb(255,255,0)';   // the signs' letters: lit (red) in the seat colour (green)
+      'ABCDEFGH'.split('').forEach((ch, k) => x.fillText(ch, (k % 4) * 64 + 32, K.glyph[0] + Math.floor(k / 4) * 64 + 35)); }
+    const t = mk(c, true); t.wrapT = THREE.ClampToEdgeWrapping; t.standKit = STAND_KIT; kitC = t; return t;
+  }
 
   // the sponsors on the boards: all invented (no real brand, no name of a real person or place: check a new one before adding it)
   const SPONSORS = [
@@ -605,6 +703,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, crowdHi, SPONSORS, marbles };
+  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS, marbles };
 })();
 

@@ -630,8 +630,8 @@
           const [ix, iz] = atSf(A.s, side * (up ? om : e >= n - 3 ? om - 1 : om + 1)); g.quadO(a0, a1, b1, b0, up ? seat : steel, [ix, up ? ym - 1 : ym, iz]); }
         for (let k = 0; k < rows; k++) { const a0 = A.pts[1 + k * 2], a1 = A.pts[2 + k * 2], b0 = B.pts[1 + k * 2], b1 = B.pts[2 + k * 2], len = Math.hypot(B.pts[1][0] - A.pts[1][0], B.pts[1][2] - A.pts[1][2]), v = (k * 0.11) % 1, u0 = (m * 5) / 12;
           crowdG.quadUp([a0[0], a0[1] + 0.02, a0[2]], [a1[0], a1[1] + 0.02, a1[2]], [b1[0], b1[1] + 0.02, b1[2]], [b0[0], b0[1] + 0.02, b0[2]], [W1, W1, W1, W1], [[u0, v], [u0, v + 0.1], [u0 + len / 12, v + 0.1], [u0 + len / 12, v]]); }
-        // the canopy: a white membrane on masts over the tiers, sloping to the back
-        const yt = A.pts[n - 3][1] + 3.2, fr = A.prof[1][0] - 0.5, bk = A.prof[n - 3][0] + 0.4, C0 = atSf(A.s, side * fr), C1 = atSf(A.s, side * bk), C2 = atSf(B.s, side * bk), C3 = atSf(B.s, side * fr), wc = [0.97, 0.97, 0.95];
+        // the canopy: a white membrane on masts over the back rows, sloping to the back (the cameras above still see the crowd in front)
+        const yt = A.pts[n - 3][1] + 3.2, fr = A.prof[1][0] + (A.prof[n - 3][0] - A.prof[1][0]) * 0.4, bk = A.prof[n - 3][0] + 0.4, C0 = atSf(A.s, side * fr), C1 = atSf(A.s, side * bk), C2 = atSf(B.s, side * bk), C3 = atSf(B.s, side * fr), wc = [0.97, 0.97, 0.95];
         g.quadO([C0[0], yt + 0.8, C0[1]], [C1[0], yt, C1[1]], [C2[0], yt, C2[1]], [C3[0], yt + 0.8, C3[1]], wc, [C0[0], yt - 5, C0[1]]);
         g.quadO([C0[0], yt + 0.8, C0[1]], [C1[0], yt, C1[1]], [C2[0], yt, C2[1]], [C3[0], yt + 0.8, C3[1]], wc, [C0[0], yt + 5, C0[1]]);
         if (m % 2 === 0) { const [bx, bz] = atSf(A.s, side * bk), by = nrGround(bx, bz); box(g, bx, by - 0.3, bz, 0.25, yt - by + 0.3, 0.25, T.hd[T.idx(A.s)], steel); }
