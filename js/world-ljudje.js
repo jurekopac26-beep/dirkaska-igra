@@ -124,9 +124,11 @@
     }
     return P;
   }
-  // things in a hand (the hand's frame: the arm points down -y, the palm faces in, forwards is +z)
+  // things in a hand (the hand's frame: the arm points down -y, the palm faces in, forwards is +z); ITEMX: more of them (World.peopleKit)
+  const ITEMX = {};
   function item(kind, o) {
     o = o || {};
+    if (ITEMX[kind]) return ITEMX[kind](o);
     if (kind === 'phone') return grp(box(0.075, 0.14, 0.012, 0x15171c, 0, -0.05, 0.02));
     if (kind === 'cup') return grp(cyl(0.042, 0.036, 0.11, 6, o.c || 0xf2f2ee, 0, -0.03, 0.04));
     if (kind === 'can') return grp(cyl(0.033, 0.033, 0.12, 6, o.c || 0xc8c9cc, 0, -0.03, 0.04));
@@ -234,9 +236,10 @@
       case 'lie': return { shz: [0.35, 0.2], shx: [-0.2, 2.4], el: [0.3, 1.6], hp: [0.05, 0.25], kn: [0.05, 0.5] };
       case 'bend': return { lean: 0.95, hy: 0.89, shx: [1.1, 1.15], shz: [0.1, 0.1], el: [0.3, 0.35], hz: -0.08 };
       case 'fixHood': return { lean: 0.75, hy: 0.9, shx: [1.3 + 0.1 * s, 1.25 - 0.1 * s], shz: [0.15, 0.15], el: [0.6, 0.7], hz: -0.05 };
-      default: return {};
+      default: return POSEX[name] ? POSEX[name](t, s) : {};
     }
   }
+  const POSEX = {};   // (more poses, World.peopleKit: name -> (t, sin t) -> the joints)
   // how a pose of what they do moves on its own (act): another pose to swing to (alt) and how often (hz), or the pose's own motion at a rate
   // (rate: radians a second); others breathe (fidget: the head and the torso a little)
   const MOTION = {
@@ -1282,15 +1285,17 @@
   // over a stand's footprint, 1.5-14 m over its top tread, in the world's vertex-coloured meshes) a copy 5 cm up in the stands' meshes, in the
   // kit's picture (their colours kept: the seasons still paint them; the world's own still casts the shadow)
   const inPoly = (P, x, z) => { let c = false; for (let a = 0, b = P.length - 1; a < P.length; b = a++) { const [xa, za] = P[a], [xb, zb] = P[b]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
-  function standRoofs(o, feet, sbAt) {
-    if (!feet.length) return 0;
+  function worldStatics(o) {   // the world's own vertex-coloured meshes (its buildings, stands, walls: world space, not indexed), not the people's
     const ms = [], skip = (m) => m.userData && m.userData.lj;
     const walk = (m) => { if (skip(m)) return; if (m.isMesh && !m.isInstancedMesh && m.visible) {
         const M = m.material, g = m.geometry, A = g && g.attributes;
         if (M && !Array.isArray(M) && M.isMeshLambertMaterial && M.vertexColors && !M.map && !M.transparent && !(M.userData && M.userData.stand) && A && A.position && A.normal && A.color && A.color.itemSize === 3 && !g.index && !A.aSway && Object.keys(A).every(k => ['position', 'normal', 'color', 'uv'].includes(k))) {
           m.updateMatrixWorld(true); if (m.matrixWorld.equals(IDENT)) ms.push(m); } }
       for (const c of m.children) walk(c); };
-    walk(o.root);
+    walk(o.root); return ms;
+  }
+  function standRoofs(o, feet, sbAt, ms) {
+    if (!feet.length) return 0;
     let n = 0; const UV = kv(KIT.roof, 0.5);
     for (const m of ms) {
       const g = m.geometry, P = g.attributes.position.array, N = g.attributes.normal.array, C = g.attributes.color.array, nt = P.length / 9;
@@ -1303,13 +1308,164 @@
         const f = fs.find(f => cx >= f.bb[0] && cx <= f.bb[1] && cz >= f.bb[2] && cz <= f.bb[3] && ylo > f.top + 1.5 && ylo < f.top + 14 && inPoly(f.poly, cx, cz)); if (!f) continue;
         k++;
         const up = (q) => [P[q] + N[o9] * 0.05, P[q + 1] + N[o9 + 1] * 0.05, P[q + 2] + N[o9 + 2] * 0.05], a = up(o9), b = up(o9 + 3), c = up(o9 + 6), u = (p) => [(p[0] * f.tx + p[2] * f.tz) / 4, UV];
+        (f.rv || (f.rv = [])).push(a, b, c);   // (the roof's corners: its front edge, its trusses, standAround)
         sbAt(cx, cz).tri(a, b, c, [C[o9], C[o9 + 1], C[o9 + 2]], NOSEAT, u(a), u(b), u(c), [N[o9], N[o9 + 1], N[o9 + 2]]);
       }
       n += k;
     }
     return n;
   }
-  function standBuild(o, A, hsh, def) {
+  /* ---- around a stand (the user, 3. 11. 2026: »izboljšaj tudi vse elemente okoli tribun«, »naredi še okoli tribun poti, ki peljejo do tribun,
+     sedaj je tam trava«, »če ima tribuna streho … še bolj detajlne, predvsem streho in sprednji del tribun, ki je viden«, »zbriši smreke in
+     drevesa pred tribunami«): a paved concourse along its back and round its ends, a path off to an entrance gate (turnstiles under a frame
+     with the stand's letter, a ticket booth), its entrances in the back wall, kiosks with striped awnings, toilets, bins and lamp posts on the
+     concourse, stairs up at its back corners, its letter on a sign at either end, the strip in front of it paved; a roof's front edge (its
+     fascia with floodlights) and trusses over the roof; the trees in front of it, on its concourse and its path cleared (circles for
+     clearAll). AR: the concourse's width, the path's width and length, the spacing of kiosks, lamp posts, bins and doors ---- */
+  const AR = { apron: 6.5, path: 3, gate: 26, kiosk: 34, lamp: 22, bin: 13, door: 20 };
+  const AR_COL = { kiosk: [[0.82, 0.18, 0.14], [0.13, 0.34, 0.66], [0.1, 0.48, 0.28], [0.9, 0.6, 0.1]], lamp: [0.3, 0.32, 0.35], steel: [0.66, 0.68, 0.72], dark: [0.16, 0.18, 0.21],
+    sign: [0.1, 0.22, 0.48], white: [0.96, 0.96, 0.94], warm: [1, 0.95, 0.8], pave: [0.8, 0.79, 0.76], booth: [0.86, 0.85, 0.82] };
+  function standAround(o, A, feet, sbAt, tier, def, circles, ms) {
+    if (!feet.length) return;
+    const gH = o.groundH, T = A.T, q = {}, gr = (x, z, y) => { const h = gH(x, z); return Number.isFinite(h) ? h : y; }, temp = STAND_TEMP.has(def.id), up = [0, 1, 0];
+    const PLU = kq(KIT.plain, 0, 1, 0.5, 0.5), clear = (x, z, r) => circles.push([x, z, r]);
+    // a box (no bottom) at (x, y0, z): w along (tx, tz), d across, h high; plain faces, or a band on its front (+across: (-tz, tx))
+    const boxA = (x, y0, z, w, d, h, tx, tz, col, front) => {
+      const gb = sbAt(x, z), ax = tx * w / 2, az = tz * w / 2, bx = -tz * d / 2, bz = tx * d / 2, c = (sa, sb, y) => [x + ax * sa + bx * sb, y, z + az * sa + bz * sb], y1 = y0 + h;
+      gb.quad(c(-1, -1, y1), c(1, -1, y1), c(1, 1, y1), c(-1, 1, y1), up, col, null, PLU);
+      gb.quad(c(-1, 1, y0), c(1, 1, y0), c(1, 1, y1), c(-1, 1, y1), [-tz, 0, tx], col, front ? front.seat : null, front ? kq(front.band, front.u0 || 0, front.u1 || 1, 1, 0) : PLU);
+      gb.quad(c(1, -1, y0), c(-1, -1, y0), c(-1, -1, y1), c(1, -1, y1), [tz, 0, -tx], col, null, PLU);
+      gb.quad(c(1, 1, y0), c(1, -1, y0), c(1, -1, y1), c(1, 1, y1), [tx, 0, tz], col, null, PLU);
+      gb.quad(c(-1, -1, y0), c(-1, 1, y0), c(-1, 1, y1), c(-1, -1, y1), [-tx, 0, -tz], col, null, PLU);
+    };
+    // a prop of the people's (L) baked into the stands' meshes, standing on the ground at (x, z) turned by yaw
+    const D = { P: [], N: [], C: [] }, bakeAt = (g, x, z, yaw) => {
+      g.position.set(x, gr(x, z, 0), z); g.rotation.y = yaw; D.P.length = D.N.length = D.C.length = 0; bake(g, null, D, null);
+      const gb = sbAt(x, z); for (let t = 0; t < D.P.length; t += 9) gb.tri([D.P[t], D.P[t + 1], D.P[t + 2]], [D.P[t + 3], D.P[t + 4], D.P[t + 5]], [D.P[t + 6], D.P[t + 7], D.P[t + 8]], [D.C[t], D.C[t + 1], D.C[t + 2]], NOSEAT, PLU[0], PLU[1], PLU[2], [D.N[t], D.N[t + 1], D.N[t + 2]]);
+    };
+    // a paved way on the ground along a line (2D points), w wide on it (its slabs along it), the trees on it cleared
+    const way = (L, w, col) => {
+      if (L.length < 2) return; const P = [L[0]];
+      for (let k = 1; k < L.length; k++) { const a = L[k - 1], b = L[k], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2.5)); for (let j = 1; j <= n; j++) P.push([a[0] + (b[0] - a[0]) * j / n, a[1] + (b[1] - a[1]) * j / n]); }
+      let prev = null, d = 0;
+      for (let k = 0; k < P.length; k++) {
+        const a = P[Math.max(0, k - 1)], b = P[Math.min(P.length - 1, k + 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / tl * w / 2, nz = (b[0] - a[0]) / tl * w / 2, p = P[k];
+        const l = [p[0] + nx, 0, p[1] + nz], r = [p[0] - nx, 0, p[1] - nz]; l[1] = gr(l[0], l[2], 0) + 0.07; r[1] = gr(r[0], r[2], 0) + 0.07;
+        if (k) d += Math.hypot(p[0] - P[k - 1][0], p[1] - P[k - 1][1]);
+        if (prev) sbAt(p[0], p[1]).quad(prev.l, prev.r, r, l, up, col, null, [[prev.d / 4, kv(KIT.pave, 0)], [prev.d / 4, kv(KIT.pave, 1)], [d / 4, kv(KIT.pave, 1)], [d / 4, kv(KIT.pave, 0)]]);
+        prev = { l, r, d }; if (k % 2 === 0) clear(p[0], p[1], w / 2 + 1.5);
+      }
+    };
+    // the stands' letters by their order along the track from the start
+    for (const f of feet) { let cx = 0, cz = 0; for (const e of f.fr3) { cx += e.p[0]; cz += e.p[2]; } f.cx = cx / f.fr3.length; f.cz = cz / f.fr3.length; T.query(f.cx, f.cz, -1, q); f.s = ((q.s - (T.startS || 0)) % T.len + T.len) % T.len; }
+    feet.slice().sort((a, b) => a.s - b.s).forEach((f, k) => { f.letter = k % 8; });
+    const rc = new THREE.Raycaster();
+    for (const f of feet) {
+      if (f.fr3.length < 2 || f.bk3.length < 2) continue;
+      let nx = 0, nz = 0; for (const e of f.fr3) { nx += e.f[0]; nz += e.f[1]; } const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;   // (towards the road)
+      const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
+      const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
+      // the back wall's outer face (a ray from 6 m behind the back row towards the road, under the top tread): how far behind the back row it is
+      const offs = []; for (let k = 0; k < Math.min(8, B.length); k++) { const e = B[Math.round(k * (B.length - 1) / Math.max(1, Math.min(8, B.length) - 1))], g0 = gr(e.p[0], e.p[2], e.p[1] - 3);
+        rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, Math.min(e.p[1] - 0.4, g0 + 1.6), e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); rc.far = 6.6;
+        const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance); }
+      offs.sort((a, b) => a - b); const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05;
+      // the concourse: along the back (the wall's face out to AR.apron), on past the ends; the ends' strips from the front to the back
+      const back = B.map(e => [e.p[0] - e.f[0] * (wo + AR.apron / 2), e.p[2] - e.f[1] * (wo + AR.apron / 2)]), b0 = back[0], b1 = back[back.length - 1];
+      way([[b0[0] - tx * 5, b0[1] - tz * 5], ...back, [b1[0] + tx * 5, b1[1] + tz * 5]], AR.apron, AR_COL.pave);
+      for (const [e0, e1, s] of [[Fr[0], B[0], -1], [Fr[Fr.length - 1], B[B.length - 1], 1]]) way([[e0.p[0] + tx * s * 2.6 + e0.f[0] * 1.5, e0.p[2] + tz * s * 2.6 + e0.f[1] * 1.5], [e1.p[0] + tx * s * 2.6 - e1.f[0] * wo, e1.p[2] + tz * s * 2.6 - e1.f[1] * wo]], 4, AR_COL.pave);
+      // the strip in front: paved from the stand's front to 1.4 m off the barrier
+      { let prev = null, d = 0;
+        for (let k = 0; k < Fr.length; k++) {
+          const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= 14; s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.4) break; gap = s; }
+          if (k) d += Math.hypot(e.p[0] - Fr[k - 1].p[0], e.p[2] - Fr[k - 1].p[2]);
+          const cur = gap >= 1.2 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
+          if (cur) { cur.i[1] = gr(cur.i[0], cur.i[2], 0) + 0.07; cur.o[1] = gr(cur.o[0], cur.o[2], 0) + 0.07; clear((cur.i[0] + cur.o[0]) / 2, (cur.i[2] + cur.o[2]) / 2, gap / 2 + 1.5); }
+          if (cur && prev) sbAt(e.p[0], e.p[2]).quad(prev.i, cur.i, cur.o, prev.o, up, AR_COL.pave, null, [[prev.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 1)], [prev.d / 4, kv(KIT.pave, 1)]]);
+          prev = cur;
+        } }
+      // along the concourse: the doors in the wall, kiosks (facing the wall), bins and lamp posts on its outer edge, toilets at the far end
+      const along = (dist) => {   // a point on the back line at a distance from its start, its outward direction
+        let acc = 0; for (let k = 1; k < B.length; k++) { const a = B[k - 1], b = B[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (acc + l >= dist || k === B.length - 1) { const w = Math.min(1, Math.max(0, (dist - acc) / (l || 1)));
+          return { x: a.p[0] + (b.p[0] - a.p[0]) * w, y: a.p[1] + (b.p[1] - a.p[1]) * w, z: a.p[2] + (b.p[2] - a.p[2]) * w, fx: a.f[0] + (b.f[0] - a.f[0]) * w, fz: a.f[1] + (b.f[1] - a.f[1]) * w }; } acc += l; }
+        const e = B[0]; return { x: e.p[0], y: e.p[1], z: e.p[2], fx: e.f[0], fz: e.f[1] }; };
+      let blen = 0; for (let k = 1; k < B.length; k++) blen += Math.hypot(B[k].p[0] - B[k - 1].p[0], B[k].p[2] - B[k - 1].p[2]);
+      if (wall != null) for (let d0 = 8; d0 < blen - 6; d0 += AR.door) {   // the entrances: a dark way in, its frame, 2.8 m high, on the wall's face
+        const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, w0 = wall + 0.03, g0 = gr(p.x - fx * w0, p.z - fz * w0, p.y - 3), at = (s, y) => [p.x - fx * w0 + tx * s, y, p.z - fz * w0 + tz * s];
+        sbAt(p.x, p.z).quad(at(-2, g0), at(2, g0), at(2, g0 + 2.8), at(-2, g0 + 2.8), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0, 1, 1, 0.05));
+      }
+      for (let d0 = Math.min(14, blen / 2), k = 0; d0 < blen - 4; d0 += AR.kiosk, k++) {   // the kiosks
+        const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron - 1.2, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3), col = AR_COL.kiosk[(f.letter + k) % 4];
+        boxA(x, g0, z, 2.6, 2.2, 2.5, fz, -fx, col, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.5 });
+        const ax = tx * 1.35, az = tz * 1.35, e0 = [x + fx * 1.1, g0 + 2.5, z + fz * 1.1], e1 = [x + fx * 2.0, g0 + 2.15, z + fz * 2.0];   // (its awning over the window)
+        sbAt(x, z).quad([e0[0] - ax, e0[1], e0[2] - az], [e0[0] + ax, e0[1], e0[2] + az], [e1[0] + ax, e1[1], e1[2] + az], [e1[0] - ax, e1[1], e1[2] - az], [fx * 0.4, 1, fz * 0.4], AR_COL.white, col, kq(KIT.awning, 0, 0.66, 0, 1));
+        clear(x, z, 3);
+      }
+      for (let d0 = AR.bin / 2; d0 < blen; d0 += AR.bin) { const p = along(d0), l = Math.hypot(p.fx, p.fz) || 1, o0 = wo + AR.apron - 0.4; bakeAt(L.bin(), p.x - p.fx / l * o0, p.z - p.fz / l * o0, Math.atan2(p.fx, p.fz)); }
+      for (let d0 = 4; d0 < blen + 2; d0 += AR.lamp) {   // the lamp posts: a pole, its head over the concourse
+        const p = along(Math.min(d0, blen)), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 0.3, x = p.x - fx * o0, z = p.z - fz * o0, g0 = gr(x, z, p.y - 3);
+        sbAt(x, z).post([x, g0, z], 6.2, 0.14, [fx, fz], AR_COL.lamp); boxA(x + fx * 0.45, g0 + 6.0, z + fz * 0.45, 0.35, 1.1, 0.18, fz, -fx, AR_COL.lamp);
+      }
+      if (blen > 20) { const p = along(blen - 6), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, o0 = wo + AR.apron + 1.0;   // the toilets: a row of three, facing the concourse
+        for (let k = -1; k <= 1; k++) bakeAt(L.portaloo(0x2f63c9), p.x - fx * o0 + tx * k * 1.35, p.z - fz * o0 + tz * k * 1.35, Math.atan2(fx, fz)); clear(p.x - fx * o0, p.z - fz * o0, 3.5); }
+      // the path off the middle of the concourse to its gate, as long as it keeps clear of the road
+      { const p = along(blen / 2), l = Math.hypot(p.fx, p.fz) || 1, fx = p.fx / l, fz = p.fz / l, s0 = wo + AR.apron, pts = [[p.x - fx * s0, p.z - fz * s0]]; let s = s0;
+        while (s < s0 + AR.gate) { s += 2; const x = p.x - fx * s, z = p.z - fz * s; if (A.clearance(x, z) < 4) break; pts.push([x, z]); }
+        if (pts.length > 5) {
+          way(pts, AR.path, AR_COL.pave);
+          const [gx, gz] = pts[pts.length - 1], g0 = gr(gx, gz, p.y - 3), ax = -fz, az = fx;   // (across the path)
+          for (const sd of [-1, 1]) boxA(gx + ax * sd * 2.3, g0, gz + az * sd * 2.3, 0.45, 0.45, 3.4, ax, az, AR_COL.sign);   // its pillars, the beam with the letter
+          boxA(gx, g0 + 3.4, gz, 5.1, 0.5, 0.7, ax, az, AR_COL.sign);
+          const k = f.letter, u0 = (k % 4) / 4, f0 = k >= 4 ? 0.5 : 0, at = (a, y) => [gx + ax * a - fx * 0.27, y, gz + az * a - fz * 0.27];
+          sbAt(gx, gz).quad(at(0.55, g0 + 3.33), at(-0.55, g0 + 3.33), at(-0.55, g0 + 4.43), at(0.55, g0 + 4.43), [-fx, 0, -fz], AR_COL.sign, AR_COL.white, kq(KIT.glyph, u0 + 0.004, u0 + 0.246, f0 + 0.49, f0 + 0.01));
+          for (let k2 = -1; k2 <= 1; k2++) boxA(gx + ax * k2 * 1.2, g0, gz + az * k2 * 1.2, 0.25, 0.9, 1.0, ax, az, AR_COL.steel);   // the turnstiles
+          const bxp = gx + ax * 4.2, bzp = gz + az * 4.2; boxA(bxp, g0, bzp, 1.8, 1.6, 2.4, -fz, fx, AR_COL.booth, { band: KIT.shutter, seat: AR_COL.warm, u0: 0, u1: 0.35 });   // the ticket booth
+          clear(gx, gz, 6);
+        } }
+      // the stairs up at its back corners, along the wall (where it has one and is tall): from the ground at the corner up along the wall to a
+      // landing with a door at the top, the flight's outer side closed, a railing over it
+      if (wall != null) for (const [k0, s] of [[0, 1], [B.length - 1, -1]]) {
+        const e = B[k0], l = Math.hypot(e.f[0], e.f[1]) || 1, fx = e.f[0] / l, fz = e.f[1] / l, c0 = [e.p[0] - fx * (wall + 0.05), e.p[2] - fz * (wall + 0.05)], g0 = gr(c0[0], c0[1], e.p[1] - 3), h = e.p[1] - g0;
+        if (h < 2.6) continue;
+        const n = Math.ceil(h / 0.18), run = n * 0.29, LD = 1.6; if (run + LD > blen * 0.45) continue;
+        const dx = tx * s, dz = tz * s, w = 1.4, P0 = (a, o2, y) => [c0[0] + dx * a - fx * o2, y, c0[1] + dz * a - fz * o2];   // (a: along the wall from the corner inwards; o2: out from the wall)
+        const gb = sbAt(c0[0], c0[1]), R = kq(KIT.riser, 0, 0.35, 1, 0), TA = kq(KIT.aisle, 0, 0.35, 0, 0.98);
+        if (tier > 0) for (let i = 0; i < n; i++) { const a0 = i * 0.29, a1 = a0 + 0.29, y0 = g0 + i * (h / n), y1 = y0 + h / n;
+            gb.quad(P0(a0, 0, y0), P0(a0, w, y0), P0(a0, w, y1), P0(a0, 0, y1), [-dx, 0, -dz], ST_CONC, null, R);
+            gb.quad(P0(a0, 0, y1), P0(a0, w, y1), P0(a1, w, y1), P0(a1, 0, y1), up, ST_CONC, null, TA); }
+        else gb.quad(P0(0, 0, g0), P0(0, w, g0), P0(run, w, g0 + h), P0(run, 0, g0 + h), [-dx, 1, -dz], ST_CONC, null, TA);
+        gb.quad(P0(0, w, g0), P0(run + LD, w, g0), P0(run + LD, w, g0 + h), P0(0, w, g0 + 0.05), [-fx, 0, -fz], ST_CONC, null, kq(KIT.riser, 0, (run + LD) / 2, 1, 0));   // (its outer side)
+        gb.quad(P0(run, 0, g0 + h), P0(run, w, g0 + h), P0(run + LD, w, g0 + h), P0(run + LD, 0, g0 + h), up, ST_CONC, null, kq(KIT.tread, 0, 0.35, 0, 0.98));   // (the landing)
+        gb.quad(P0(run + LD, 0, g0), P0(run + LD, w, g0), P0(run + LD, w, g0 + h), P0(run + LD, 0, g0 + h), [dx, 0, dz], ST_CONC, null, R);
+        if (tier > 0) { gb.bar(P0(0, w, g0 + 1.0), P0(run, w, g0 + h + 1.0), 0.06, 0.06, ST_RAIL); gb.bar(P0(run, w, g0 + h + 1.0), P0(run + LD, w, g0 + h + 1.0), 0.06, 0.06, ST_RAIL); }
+        gb.quad(P0(run + 0.2, -0.03, g0 + h), P0(run + LD - 0.2, -0.03, g0 + h), P0(run + LD - 0.2, -0.03, g0 + h + 2.3), P0(run + 0.2, -0.03, g0 + h + 2.3), [-fx, 0, -fz], AR_COL.white, AR_COL.white, kq(KIT.door, 0.33, 0.67, 1, 0.05));   // (its door)
+        clear(c0[0] + dx * run / 2 - fx * 1, c0[1] + dz * run / 2 - fz * 1, run / 2 + 2);
+      }
+      // its letter on a sign at either end, over the end wall near the front (seen by the cars coming)
+      { const k = f.letter, u0 = (k % 4) / 4, f0 = k >= 4 ? 0.5 : 0;
+        for (const [e, s] of [[Fr[0], -1], [Fr[Fr.length - 1], 1]]) { const l = Math.hypot(e.f[0], e.f[1]) || 1, fx = e.f[0] / l, fz = e.f[1] / l, cx = e.p[0] - fx * 2.2 + tx * s * 0.15, cz = e.p[2] - fz * 2.2 + tz * s * 0.15, y0 = e.p[1] + 2.4;
+          const at = (a, y) => [cx - fx * a, y, cz - fz * a], gb = sbAt(cx, cz);
+          gb.quad(at(-0.9, y0), at(0.9, y0), at(0.9, y0 + 1.8), at(-0.9, y0 + 1.8), [tx * s, 0, tz * s], AR_COL.sign, AR_COL.white, kq(KIT.glyph, u0 + 0.004, u0 + 0.246, f0 + 0.49, f0 + 0.01));
+          gb.quad(at(0.9, y0), at(-0.9, y0), at(-0.9, y0 + 1.8), at(0.9, y0 + 1.8), [-tx * s, 0, -tz * s], AR_COL.sign, null, PLU);
+          gb.post([cx, e.p[1] + 0.9, cz], 1.55, 0.12, [tx * s, tz * s], AR_COL.lamp); } }
+      // the roof: its front edge a fascia with floodlights under it; trusses over it every 10 m (from Srednja)
+      if (f.rv && f.rv.length > 9) {
+        const bins = new Map(); for (const v of f.rv) { const t = v[0] * tx + v[2] * tz, nn = v[0] * nx + v[2] * nz, b = Math.round(t / 2); let e = bins.get(b); if (!e) bins.set(b, e = { t, fr: v, fn: nn, bk: v, bn: nn });
+          if (nn > e.fn) { e.fr = v; e.fn = nn; } if (nn < e.bn) { e.bk = v; e.bn = nn; } }
+        const L2 = [...bins.entries()].sort((a, b) => a[0] - b[0]).map(e => e[1]);
+        let d = 0;
+        for (let k = 1; k < L2.length; k++) { const a = L2[k - 1].fr, b = L2[k].fr, l = Math.hypot(b[0] - a[0], b[2] - a[2]); if (l > 4 || l < 0.05) continue; d += l;
+          const at = (p, y) => [p[0] + nx * 0.09, y, p[2] + nz * 0.09];
+          sbAt(a[0], a[2]).quad(at(a, a[1] - 0.72), at(b, b[1] - 0.72), at(b, b[1] + 0.04), at(a, a[1] + 0.04), [nx, 0, nz], AR_COL.dark, AR_COL.warm, kq(KIT.fascia, (d - l) / 4, d / 4, 1, 0)); }
+        if (tier > 0) for (let k = 2; k < L2.length - 1; k += 5) { const e = L2[k], pf = e.fr, pb = e.bk; if (e.fn - e.bn < 3) continue;
+          const gb = sbAt(pf[0], pf[2]), lift = (p, h) => [p[0], p[1] + h, p[2]], mixP = (w, h0, h1) => [pb[0] + (pf[0] - pb[0]) * w, pb[1] + (pf[1] - pb[1]) * w + h0 + (h1 - h0) * w, pb[2] + (pf[2] - pb[2]) * w];
+          gb.bar(lift(pb, 1.7), lift(pf, 0.28), 0.14, 0.12, AR_COL.white); gb.bar(lift(pb, 0.12), lift(pf, 0.12), 0.12, 0.1, AR_COL.white);
+          for (const w of [0, 1 / 3, 2 / 3]) { const lo = mixP(w, 0.12, 0.12), hi = mixP(w, 1.7, 0.28); gb.bar(lo, hi, 0.1, 0.1, AR_COL.white); }
+          for (const [w0, w1] of [[0, 1 / 3], [1 / 3, 2 / 3], [2 / 3, 1]]) gb.bar(mixP(w0, 1.7, 0.28), mixP(w1, 0.12, 0.12), 0.08, 0.08, AR_COL.white); }
+      }
+    }
+  }
+  function standBuild(o, A, hsh, def, circles) {
     const seats = [], flat = new Map(), cells = new Map(), feet = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
     const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
     const bench = STAND_BENCH[def.id] || null, conc = bench ? DECK_COL[bench] : temp ? ST_DECK : ST_CONC, wall = bench === 'wood' ? DECK_COL.wood : ST_CONC, H2 = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]), tq = {}, trackD = (p) => { A.T.query(p[0], p[2], -1, tq); return Math.abs(tq.d); };
@@ -1480,7 +1636,10 @@
             const ext = (L) => { const a = L[0], b = L[1], c = L[L.length - 2], d = L[L.length - 1], la = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, ld = Math.hypot(d[0] - c[0], d[1] - c[1]) || 1;
               return [[a[0] + (a[0] - b[0]) / la * 1.5, a[1] + (a[1] - b[1]) / la * 1.5], ...L, [d[0] + (d[0] - c[0]) / ld * 1.5, d[1] + (d[1] - c[1]) / ld * 1.5]]; };
             const poly = ext(fr).concat(ext(bk).reverse()), xs = poly.map(p => p[0]), zs = poly.map(p => p[1]), t0 = fr[0], t1 = fr[fr.length - 1], tl = Math.hypot(t1[0] - t0[0], t1[1] - t0[1]) || 1;
-            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl });
+            const fr3 = [], bk3 = [];
+            for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr3.push({ p: [F[0], r0.flat ? F[1] + (r0.dyP != null ? r0.dyP : 0) : F[1], F[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l] }); } }
+            for (const u of r1.part.U) { const F = r1.part.Q(u, r1.vf), B = r1.part.Q(u, r1.vb); if (F && B) { const l = H2(F, B) || 1; bk3.push({ p: [B[0], B[1] + r1.dy, B[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l] }); } }
+            feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb });
           } }
         // the handrails up the aisles' middles (on the rows' front edges, 0.95 m over them; an upright every other row)
         if (tier > 0) for (const a of aisles) {
@@ -1496,10 +1655,10 @@
       }
       if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
-    standRoofs(o, feet, sbAt);
+    const ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); standAround(o, A, feet, sbAt, tier, def, circles, ms);
     const mat = standMat(), meshes = [];
     for (const gb of cells.values()) { if (gb.empty) continue; const mm = new THREE.Mesh(gb.geometry(), mat); mm.castShadow = false; mm.receiveShadow = true; mm.matrixAutoUpdate = false; mm.updateMatrix(); mm.name = 'standSteps'; meshes.push(mm); }
-    return { seats, flat, meshes };
+    return { seats, flat, meshes, feet };
   }
   function seatAt(st) {   // a seat's place: the feet on the tread, under the middle of the seat (false: none there)
     const { uAt, Qb, Q, vf, bad } = st.c, u = uAt(st.d), Bp = Qb(u), Fp = Q(u, vf); st.c = null;
@@ -1508,8 +1667,9 @@
     const nx = fx / dep, nz = fz / dep, w = BENCH.back + BENCH.depth / 2;
     st.x = Bp[0] + nx * w; st.y = Bp[1]; st.z = Bp[2] + nz * w; st.fx = nx; st.fz = nz; return true;
   }
-  function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats) {
-    const A = World.api, ts = performance.now(), { seats, flat, meshes } = A.ownRnd(() => standBuild(o, A, hsh, T.def)); stats.msStands = Math.round(performance.now() - ts);
+  function standsOf(o, T, gH, LOD, hsh, si0, addScene, stats, circles) {
+    const A = World.api, ts = performance.now(), { seats, flat, meshes, feet } = A.ownRnd(() => standBuild(o, A, hsh, T.def, circles)); stats.msStands = Math.round(performance.now() - ts);
+    stats.standFeet = feet.map(f => ({ poly: f.poly, top: f.top, tx: f.tx, tz: f.tz }));   // (for the tools and tests: each stand's footprint)
     for (const mm of meshes) { o.root.add(mm); const bs = mm.geometry.boundingSphere; if (o.cull) o.cull.push({ m: mm, x: bs.center.x, z: bs.center.z, r: bs.radius }); }
     // the steep ones' pictures: their seats empty (nobody on them)
     let ms = 0; for (const [M, cv] of flat) {
@@ -1607,7 +1767,7 @@
       const C = ctxOf(F); d.build(C, F, K);
       addScene(name, F, s, sd, d, C, si, at);
     });
-    if (STANDS) standsOf(o, T, gH, LOD, hsh, list.length, addScene, stats);
+    if (STANDS) standsOf(o, T, gH, LOD, hsh, list.length, addScene, stats, circles);
     if (!W.scenes.length) return null;
     if (nPuff) {   // the smoke of every scene of this world: one instanced mesh (ROAD DECAL ORDER: blended over the road's decals, as Longford's)
       const M = W.smoke = new THREE.InstancedMesh(puffGeo(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), nPuff);
@@ -1621,4 +1781,7 @@
     return stats;
   };
   World.peopleSites = SITES;   // (for the tests and the docs)
+  // the kit for more scene types in files of their own (js/world-ljudje2.js): the scenes, the props, more hand things and poses, the motions, the
+  // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
+  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
 })();

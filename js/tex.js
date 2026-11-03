@@ -232,7 +232,7 @@ const Tex = (function () {
   // standBuild): one picture for every part of a stand, in bands from the top; red the light and shade, green where the seat's own colour
   // shows (1) or the stand's concrete (0), blue the yellow paint of the steps' edges. The seats across repeat (4 to the picture's width):
   // STAND_KIT the bands' rows (from the top), the shader in standBuild mixes the colours
-  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], H: 1024 };
+  const STAND_KIT = { back: [0, 64], pan: [64, 96], tread: [96, 160], aisle: [160, 224], riser: [224, 256], scaf: [256, 384], plain: [384, 392], seat: [392, 400], skirt: [400, 464], rail: [464, 480], roof: [480, 512], bench: [512, 544], deck: [544, 608], pave: [608, 672], glyph: [672, 800], fascia: [800, 832], door: [832, 896], awning: [896, 928], shutter: [928, 960], H: 1024 };
   let kitC = null;
   function standKit() {
     if (kitC) return kitC;
@@ -274,8 +274,23 @@ const Tex = (function () {
         return [q((p < 2 ? 1.04 : p > 10 ? 0.8 : 0.93) + (n2(i / 2, j * 3) - 0.5) * 0.12 + (n1(i / 32, j) - 0.5) * 0.06), 255, 0]; }
       if (j < K.deck[1]) { const y = j - K.deck[0], jt = y % 13 < 1;   // a deck of planks along the row (a timber or aluminium bleacher's tread): their joints
         return [q(jt ? 0.55 : 0.88 + (n2(i / 2, (j - y % 13) * 2) - 0.5) * 0.1 + (y % 13 === 1 ? 0.08 : 0)), 0, 0]; }
+      if (j < K.pave[1]) { const y = j - K.pave[0], row = Math.floor(y / 16), x = (i + (row % 2) * 16) % 32, joint = x < 1 || y % 16 < 1;   // a paved way (4 m to the width): slabs in a running bond, the joints
+        const tone = 0.9 + (n1(Math.floor((i + (row % 2) * 16) / 32) * 3.1, row * 2.3) - 0.5) * 0.12;
+        return [q(joint ? 0.66 : tone + (n2(i / 3, j / 3) - 0.5) * 0.06), 0, 0]; }
+      if (j < K.glyph[1]) { const x = i % 64, y = (j - K.glyph[0]) % 64, fr = x < 3 || x > 60 || y < 3 || y > 60;   // a sign's panel (its letter drawn below), a light frame
+        return [q(fr ? 1.0 : 0.82), fr ? 255 : 0, 0]; }
+      if (j < K.fascia[1]) { const y = j - K.fascia[0], x = i % 32, lamp = x >= 11 && x < 21 && y >= 21 && y < 27;   // a roof's front edge: a dark panel, its lit top, a floodlight every 0.5 m under it
+        return lamp ? [255, 255, 0] : [q(y < 3 ? 1.0 : y > 28 ? 0.5 : 0.78), 0, 0]; }
+      if (j < K.door[1]) { const y = j - K.door[0], x = i % 256, inn = x >= 96 && x < 160 && y >= 10, frame = !inn && x >= 90 && x < 166 && y >= 4;   // a stand's entrance at its back (one to the width): the dark way in, its frame, a lit lintel
+        return [q(inn ? 0.1 + (y > 50 ? 0.06 : 0) : frame ? (y < 8 ? 1.0 : 0.9) : conc(i, j, 1)), frame ? 255 : 0, 0]; }
+      if (j < K.awning[1]) { const y = j - K.awning[0], st = Math.floor(i / 16) % 2, sc = y > 24 - 4 * Math.abs(Math.sin(i / 16 * Math.PI));   // a striped awning (the concrete colour and the seat colour in turn), scalloped
+        if (sc) return [q(0.25), 0, 0]; return [q(0.95 - y * 0.006), st ? 255 : 0, 0]; }
+      if (j < K.shutter[1]) { const y = j - K.shutter[0], win = y < 18 && (i % 128) >= 12 && (i % 128) < 116;   // a kiosk's front: the open window (dark, a lit counter under it), the panel below
+        return win ? [q(y > 15 ? 1.0 : 0.16), y > 15 ? 255 : 0, 0] : [q(0.88 - (y > 28 ? 0.1 : 0)), 0, 0]; }
       return [q(0.8), 0, 0];
     });
+    { const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 46px sans-serif'; x.fillStyle = 'rgb(255,255,0)';   // the signs' letters: lit (red) in the seat colour (green)
+      'ABCDEFGH'.split('').forEach((ch, k) => x.fillText(ch, (k % 4) * 64 + 32, K.glyph[0] + Math.floor(k / 4) * 64 + 35)); }
     const t = mk(c, true); t.wrapT = THREE.ClampToEdgeWrapping; t.standKit = STAND_KIT; kitC = t; return t;
   }
 
