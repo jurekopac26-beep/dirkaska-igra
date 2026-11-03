@@ -30,6 +30,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace | – | – |
 | Tajska | Bang Saen | – | – |
+| Indija | Killar (na `main` 3. 11. 2026 po odločitvi uporabnika; prva proga iz Indije) | – | Auli (kratke, A), Shimla in Darjeeling (zavite, 4) |
 
 ## Države brez proge v igri: po vrsti
 
@@ -37,7 +38,6 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 
 | Država | Na čakanju | Odločitev |
 |---|---|---|
-| Indija | Auli (kratke, A), Shimla in Darjeeling (zavite, 4); stara veja: Killar (ni v načrtu) | po vrsti; pričakovana prva Auli |
 | Argentina | Puerto Madero (kratke, D; narejen tudi na stari veji); stara veja: Siete Lagos (ni v načrtu) | po vrsti; pričakovan prvi Puerto Madero |
 | Francija | Pau (Nove proge); stara veja: Montvernier (ni v načrtu) | po vrsti; pričakovan prvi Pau |
 | Nova Zelandija | Milford Sound (kratke, B), Wellington (zavite, 4) | po vrsti; pričakovan prvi Milford Sound |
@@ -61,7 +61,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 
 ## Kaj to pomeni za verige
 
-- **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Mount Buller, Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero.
-- **Zavite proge** (`docs/zavite-proge.md`): odpade Macao (3). Ostanejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli).
+- **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1), Green Point (D) in Auli (A: Indija ima Killar). Ostanejo Mount Buller, Medeu, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero.
+- **Zavite proge** (`docs/zavite-proge.md`): odpade Macao (3). Ostanejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong in Seul. Shimla in Darjeeling (4) odpadeta (Indija ima Killar); Wellington (4) odpade, če Nova Zelandija pred njim dobi progo (Milford Sound).
 - **Nove proge** (`docs/nove-proge.md`): ostanejo vse, tudi Stelvio; Yungas po vrsti (zgoraj).
 - **Stare veje**: Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
