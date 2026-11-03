@@ -6,6 +6,8 @@
 // tests' web server (tests/browser/lib.mjs serve) stamps the pages it sends, so the tests see the game as it is published.
 //   node tools/stamp.js                 remove the stamps from the repo's pages (after a merge that brought old ones back: take
 //                                       either side of a conflict in the stamps, then run this)
+//   node tools/stamp.js --merge         in a merge that stopped on a conflict in a page: merge the page's two sides and their common
+//                                       base without stamps (the old stamps were the conflict), git add it when nothing else is left
 //   node tools/stamp.js --check         exit 1 if a page carries a stamp or links a file that is missing (tests/stamp.test.js)
 //   node tools/stamp.js --write [dir]   stamp the pages of a copy of the game (dir, else GAME_ROOT, else the repo)
 //   node tools/stamp.js --find <stamp>  the commit whose js/game.js has this stamp: the version in a bug report (RRA-NAPAKE v=…) or
@@ -48,8 +50,8 @@ function relink(html, dir, mode) {
       const [, file, query = '', hash = ''] = /^([^?#]*)(\?[^#]*)?(#.*)?$/.exec(url);
       if (!isLocal(file)) return all;
       const full = path.join(dir, decodeURIComponent(file));
-      if (!fs.existsSync(full) || !fs.statSync(full).isFile()) { r.missing.push(file); return all; }
-      r.links++;
+      if (fs.existsSync(full) && fs.statSync(full).isFile()) r.links++;
+      else { r.missing.push(file); if (mode !== 'strip') return all; }   // (a stamp is taken off even a link to a missing file)
       const params = query ? query.slice(1).split('&').filter(Boolean) : [], k = params.findIndex(p => p.split('=')[0] === 'v');
       if (k >= 0) r.stamped.push(file);
       if (mode === 'write') { const v = 'v=' + stampOf(full); if (params[k] === v) return all; if (k >= 0) params[k] = v; else params.push(v); }
@@ -107,6 +109,31 @@ function find(want) {
   return false;
 }
 
+// a merge stopped on a conflict in index.html or garaza.html (most often only the old stamps of a branch made before 3. 11. 2026):
+// each such page merged again from its common base and its two sides, all three without stamps; what is left is a real conflict
+// (both sides changed the same link), marked as git marks it
+function mergePages() {
+  const { execFileSync } = require('child_process'), os = require('os');
+  const git = (args) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const top = git(['rev-parse', '--show-toplevel']).trim();
+  const unmerged = git(['diff', '--name-only', '--diff-filter=U']).split('\n').filter(f => NAMES.includes(f));
+  if (!unmerged.length) { console.log('no page in a merge conflict (index.html, garaza.html): nothing to do'); return true; }
+  let ok = true;
+  for (const page of unmerged) {
+    const stage = (n) => { try { return git(['show', `:${n}:${page}`]); } catch (_) { return ''; } };   // (1 the common base, 2 this branch, 3 the branch merged in)
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stamp-merge-'));
+    const [mine, base, theirs] = [2, 1, 3].map((n) => { const f = path.join(tmp, n + '.html'); fs.writeFileSync(f, relink(stage(n), top, 'strip').html); return f; });
+    let out, clean = true;
+    try { out = git(['merge-file', '-p', '-L', 'this branch', '-L', 'common base', '-L', 'merged in', mine, base, theirs]); }
+    catch (e) { if (typeof e.stdout !== 'string' || !(e.status > 0)) throw e; out = e.stdout; clean = false; }   // (exit n > 0: n conflicts left, marked in the text)
+    fs.writeFileSync(path.join(top, page), out);
+    fs.rmSync(tmp, { recursive: true, force: true });
+    if (clean) { git(['add', '--', page]); console.log(page + ': merged without the stamps, no conflict left (added to the merge)'); }
+    else { ok = false; console.log(page + ': merged without the stamps, but both sides changed the same link: resolve the marked place by hand, then git add ' + page); }
+  }
+  return ok;
+}
+
 module.exports = { stampOf, stampHtml, stampDir, NAMES };
 
 if (require.main === module) {
@@ -116,6 +143,7 @@ if (require.main === module) {
     if (!/^[0-9a-f]{8}$/.test(want)) { console.log('usage: node tools/stamp.js --find <stamp: 8 hex digits, e.g. from RRA-NAPAKE v=…>'); process.exit(2); }
     process.exit(find(want) ? 0 : 1);
   }
+  if (args.includes('--merge')) process.exit(mergePages() ? 0 : 1);
   const write = after('--write'), check = args.includes('--check');
   const dir = write ? path.resolve(write) : process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : REPO;
   if (!fs.existsSync(path.join(dir, 'index.html'))) { console.log('no index.html in ' + dir); process.exit(2); }
