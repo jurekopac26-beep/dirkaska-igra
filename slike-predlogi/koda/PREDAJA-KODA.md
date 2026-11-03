@@ -28,6 +28,8 @@ po »začni« jih po sklopih prenašamo v kodo. Vsak sklop je ena seja in en pul
 - **Sprememba 2. 11. (pravilo v `CLAUDE.md` na `main`, uporabnik: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«):**
   seja svoj PR združi sama, ko so lokalni testi in vsi nabori na GitHubu zeleni in PR nima sporov z `main`; nadrejeni seji pošlje samo SHA
   združitve. Odstavek »Kdo združi« zgoraj ne velja več.
+- **Koordinacija od 3. 11.:** nadrejena seja je session_01Ck3D3TdgbJaDJhTPBLsW1F (»Koordinacija sej (od 3. 11.)«); prejšnja
+  (session_01GY6hGMr9T539RyQrVQMfCV) se je zaradi velikega konteksta ustavila. Sporočila o PR-jih, SHA in vprašanja pošiljaj novi.
 - **Vprašanja uporabniku (3. 11.):** piši jih na stran Odločitve **tega** računa, https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR
   (`ArtifactData` `set` v zbirko `vprasanja`: qid, seja, seja_id, naslov, vprasanje, moznosti `[{k, naslov, opis, slika}]`, priporoceno,
   stanje »odprto«, ustvarjeno, vrstni). Stran iz `CLAUDE.md` je na drugem računu in se od tu ne odpre. Pri grafičnih vprašanjih dodaj sliko
