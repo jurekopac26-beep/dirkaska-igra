@@ -1,7 +1,7 @@
 // Orodje za napake · Slika in pošiljanje (sklop 6 of docs/orodje-za-napake.md; js/napake.js): Bathurst at 30 s by the quick entry.
 // A flag in the race (F), then Posnetek do sem and two moments kept (a red loop with its note, a blue one with its note). The picture of the
 // collection: napake_bathurst_LLLLMMDD-UUMM.png, 1600 px wide at most 1600 tall, the moments with their marks (the red loop where it was
-// drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp> proga način naprava size, a line
+// drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp; lokalno without one> proga način naprava size, a line
 // for each note, the flag not marked with its lap and metres). Deli in the replay: the choice (a computer: Kopiraj sliko first, Samo
 // shrani sliko, Kopiraj besedilo, Obdrži tudi slike v igri); Kopiraj besedilo copies the text; Samo shrani sliko downloads the picture; kept in
 // the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments (the fourth with no mark, only Beležka's note: in the
@@ -43,11 +43,12 @@ try {
 
   // the picture and the text
   const R = await Q.evaluate(async () => { const r = await Napake.pripravi(); return { name: r.name, files: r.files.map(f => ({ name: f.name, w: f.w, h: f.h, type: f.blob.type, bytes: f.blob.size })), text: r.text, status: r.status, n: r.n, flags: r.flags }; });
-  const ver = await Q.evaluate(() => /[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src'))[1]);
+  // (js/game.js's stamp on the published game; a page without stamps, as the repository's: lokalno)
+  const ver = await Q.evaluate(() => (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [0, 'lokalno'])[1]);
   const f0 = R.files[0], L = R.text.split('\n').filter(l => !/^D /.test(l)), it = st.zbirka;   // (D: the log's lines, Dnevnik napak: a slow machine's hitches; napake-samodejno.test.mjs)
   T.check('the picture: napake_bathurst_LLLLMMDD-UUMM.png, a PNG 1600 px wide, at most 1600 tall', R.files.length === 1 && /^napake_bathurst_\d{8}-\d{4}\.png$/.test(f0.name) && f0.type === 'image/png' && f0.w === 1600 && f0.h <= 1600 && f0.h > 600 && f0.bytes > 50000, JSON.stringify(R.files));
   const clk = (t) => { const u = Math.round(t * 1000), m = Math.floor(u / 60000); return String(m).padStart(2, '0') + ':' + ((u % 60000) / 1000).toFixed(3).padStart(6, '0'); };
-  T.check('the text: the first line (the version is game.js\'s stamp, the track, the mode and the weather, the device, the screen), a line for each note (with v_krogu=[...]), the flag not marked',
+  T.check('the text: the first line (the version is game.js\'s stamp, lokalno on a page without stamps, the track, the mode and the weather, the device, the screen), a line for each note (with v_krogu=[...]), the flag not marked',
     L.length === 4 && L[0].startsWith('RRA-NAPAKE v=' + ver + ' proga=bathurst način=race/suho naprava=') && L[0].endsWith(' 640x360') &&
     L[1].startsWith(`#1 ${clk(it[0].t)} K1 s=${it[0].s}m rdeča »Sledi gum sredi ravnine« v_krogu=[`) && L[2].startsWith(`#2 ${clk(it[1].t)} K1 s=${it[1].s}m modra »Tekmeci v koloni« v_krogu=[`) && L.slice(1, 3).every(l => l.endsWith(']')) &&
     /^⚑1 00:\d\d\.\d{3} K1 s=\d+m \(zastavica med dirko, ni označena\)$/.test(L[3]) && R.flags === 1, R.text);

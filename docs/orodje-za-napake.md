@@ -86,7 +86,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - sličica z oznakami in oblački;
   - vrstica »#n · čas · krog · metri od štarta«;
   - 4 sličice gibanja (−0,6 s, −0,3 s, 0, +0,3 s).
-- **Podatki (B):** proga, način, vreme, različica (žig iz `tools/stamp.js`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
+- **Podatki (B):** proga, način, vreme, različica (žig `js/game.js`, ki ga objava doda s `tools/stamp.js`; lokalno brez žigov `lokalno`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
 - **Ime datoteke:** `napake_<proga>_<LLLLMMDD-UUMM>.png`.
 - **Ob koncu** (ali z gumbom Deli kadar koli) se odpre izbira:
   - **Deli zdaj** – na telefonu meni Deli (Web Share), na računalniku je prva izbira **Kopiraj sliko** za Ctrl + V;

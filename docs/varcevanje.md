@@ -30,7 +30,7 @@ V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta e
 - **b · Kazalo in arhiv:** `docs/kazalo.md` ima na vrhu razdelek »Na kratko« (prvih 25 vrstic, ~2,6 KB namesto 55 KB), ostalo seja poišče z grepom. Opisi končanih sklopov orodja za napake in pospešitev so v `docs/arhiv/orodje-za-napake-sklopi.md` (načrt 54 → 11 KB).
 - **c · Iskanje po dolgih vrsticah:** `README.md`, `tests/README.md`, `docs/igra.md` in kazalo imajo vrstice do ~4.600 znakov, zato išči z omejeno okolico: `grep -noE '.{0,150}ime.{0,150}' datoteka`.
 - **d · Čakanje brez pogostih bujenj:** zbirka `cakanje` (spodaj) in `CLAUDE.md` (Seje): vmesni dogodek CI dobi eno vrstico, lokalni testi v ozadju sejo zbudijo sami, na pripravljen pull request en potisk na krog popravkov.
-- **e · Opravila za vprašanja:** obvestili tečeta na modelu Haiku in bereta samo odprta vprašanja (`query` z `where`); seja zbiranja bere do 25 sej in jo zamenja nova, ko kontekst preseže ~150 tisoč žetonov ali najpozneje po 2 dneh (`docs/vprasanja.md`, Zbiranje, korak 10).
+- **e · Opravila za vprašanja:** obvestili tečeta na modelu Haiku in bereta samo odprta vprašanja (`query` z `where`); seja zbiranja bere do 25 sej in jo zamenja nova, ko kontekst preseže ~150 tisoč žetonov ali najpozneje po 2 dneh; pregled sej dela podagent (`docs/vprasanja.md`, Zbiranje, korak 9).
 
 ## Zbirka `cakanje` (stran Odločitve)
 
@@ -59,7 +59,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
   mkdir -p ~/.claude && node -e 'const fs=require("fs"),f=process.env.HOME+"/.claude/settings.json";let s={};try{s=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){}s.maxEffortLevel="medium";fs.writeFileSync(f,JSON.stringify(s,null,2))'
   ```
 
-- Potem: seja zbiranja se ob naslednjem krogu sama prestavi v okolje »Koordinacija«, z njo tudi obvestili (`docs/vprasanja.md`, Zbiranje, korak 10). Sejo »VSE SEJE«, seje, ki samo zaganjajo druge seje ali posredujejo sporočila, in seje samo za rutinsko delo (spajanje `main`, čakanje na teste, združevanje) odpre uporabnik oz. seja, ki jih zažene, v tem okolju (`create_session` z `environment_id` iz `list_environments`). Seje, ki pišejo kodo, ostanejo v »Default«.
+- Potem: seja zbiranja se ob naslednjem krogu sama prestavi v okolje »Koordinacija«, z njo tudi obvestili (`docs/vprasanja.md`, Zbiranje, korak 9). Sejo »VSE SEJE«, seje, ki samo zaganjajo druge seje ali posredujejo sporočila, in seje samo za rutinsko delo (spajanje `main`, čakanje na teste, združevanje) odpre uporabnik oz. seja, ki jih zažene, v tem okolju (`create_session` z `environment_id` iz `list_environments`). Seje, ki pišejo kodo, ostanejo v »Default«.
 - Preverjanje: v seji v okolju »Koordinacija« `cat ~/.claude/settings.json` pokaže `"maxEffortLevel": "medium"`.
 
 ## Okno za povzetek (`zetoni-3`)
@@ -71,7 +71,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 
 ## Svež main pred združitvijo (`zetoni-4`)
 
-Pravilo je v `CLAUDE.md` (Postopek): ko je pull request na GitHubu zelen, spoji svež `main` in poženi lokalne povezane teste; brez sporov ali s spori samo v žigih, seznamih testov ali kazalu (hitro združevanje) pull request združi brez novega kroga na GitHubu, varovalka je krog testov na `main` po združitvi; ob drugih sporih potisk in celoten krog. Pred združitvijo seja preveri zadnji krog testov na `main` in rdečega najprej popravi. Spore v žigih odpravlja #271 (žigi ob objavi).
+Pravilo je v `CLAUDE.md` (Postopek): ko je pull request na GitHubu zelen, spoji svež `main` in poženi lokalne povezane teste; brez sporov ali s spori samo v žigih, seznamih testov ali kazalu (hitro združevanje) pull request združi brez novega kroga na GitHubu, varovalka je krog testov na `main` po združitvi; ob drugih sporih potisk in celoten krog. Pred združitvijo seja preveri zadnji krog testov na `main` in rdečega najprej popravi. Spore v žigih je odpravil #271 (žigov v repozitoriju ni, doda jih objava; na `main` 3. 11. 2026).
 
 ## Stanje
 
