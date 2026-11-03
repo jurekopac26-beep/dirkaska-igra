@@ -69,6 +69,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the pit lane on the left of the main straight (the inside), from the hairpin's exit to just before the line (approximate: the real one
     // leaves the circuit before the hairpin and cuts inside it)
     pit: [-15, -352, -50, -145, 50],
+    pitLanes: [15, 15],   // the street circuit: no room beside the road for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-210, -90],          // the first and the last of the 13 boxes
     names: [
       ["Zavoj 1", 212.2, 40, ["Turn one, a right off the main straight!", "Hard on the brakes for Turn One!", "Turn one, the first of the walls!"]],

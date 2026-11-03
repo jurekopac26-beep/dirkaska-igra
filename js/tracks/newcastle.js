@@ -52,6 +52,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     turns: [[-223.1,115.4],[-369.1,595.7],[-300.1,604.8],[-226.0,559.5],[-178.4,553.6],[-91.5,463.7],[16.7,451.0],[57.9,340.5],[154.0,365.7],[214.3,246.3],[328.6,-258.8],[300.0,-235.0],[284.0,-100.0],[282.6,-71.1]],   // the apexes of Turns 1-14 (their number boards)
     pit: [17, -245, 190, 10, 60],   // the pits on the harbour side of Wharf Road: [centre offset to the right, from, to, the player's box, the way in] (metres from the start line)
+    pitLanes: [15, 15],   // the street circuit: no room beside the road for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-95, 105],            // the first and the last of the 13 crews' boxes
     stands: [[-170,60,-1,10,0],[700,735,1,8,0],[1215,1290,1,7,0],[2060,2120,-1,8,0]],
     sectors: [760, 1560],

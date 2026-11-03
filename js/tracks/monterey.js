@@ -54,6 +54,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // runs down the inside of Turns 1 and 2 and joins at the exit of Turn 2; the hairpins are too tight for the game's lane (an offset from the
     // centre line), so here the lane leaves at the exit of Turn 11 and joins before Turn 2 (an approximation, as at Montréal)
     pit: [-13.65, -262, 392, -45, 70],
+    pitLanes: [15, 15],   // the way in right after Turn 11, the way out just before Turn 2: no room for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-110, 10],            // the first and the last of the 13 crews' boxes (10 m apart, the player's at -45 among them: Track.crewBoxes), in front of the teams' canopies
     ga: [[330,470,1],[560,720,-1],[1420,1540,1],[1640,1880,-1],[2050,2330,1],[2400,2480,1],[2520,2640,-1],[2660,2820,1],[2880,3060,-1]],   // the crowds on the banks
     sectors: [1250,2400],
