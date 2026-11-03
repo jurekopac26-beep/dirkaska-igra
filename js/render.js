@@ -4372,11 +4372,27 @@ const Render = (function () {
     const mat = new THREE.ShaderMaterial({
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uMB: { value: 0 }, uMF: { value: new THREE.Vector2(0.5, 1) }, uMC: { value: new THREE.Vector2(0.5, 0.3) }, uHeat: { value: 0 }, uHorY: { value: 2 }, uTm: { value: 0 }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
-        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) } },
+        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) }, uCas: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
+        // sharpening (casK: Visoka, the picture drawn below its resolution): AMD FidelityFX CAS's filter without scaling. The pixel C
+        // is pulled away from its four neighbours by a weight (at most uCas) that the soft minimum and maximum of the 3x3 around it shape:
+        // less where the picture nears black or white, where an edge is already hard; on top of it FSR's RCAS's test for noise (a lone
+        // pixel unlike its four neighbours, a sparkle, an aliased dot: half the weight) and a limiter: the result stays within the
+        // cross's own min and max (C included), so no edge gets a halo and no sparkle grows
+        'uniform float uCas;',
+        'vec3 cas(vec3 C, vec3 N, vec3 S, vec3 E, vec3 W, vec2 px){',
+        '  float dNE = texture2D(tD, vUv + px).g, dNW = texture2D(tD, vUv + vec2(-px.x, px.y)).g, dSE = texture2D(tD, vUv + vec2(px.x, -px.y)).g, dSW = texture2D(tD, vUv - px).g;',
+        '  vec3 mn = min(min(min(N, S), min(E, W)), C), mx = max(max(max(N, S), max(E, W)), C);',
+        '  float sMn = mn.g + min(min(min(dNE, dNW), min(dSE, dSW)), mn.g), sMx = mx.g + max(max(max(dNE, dNW), max(dSE, dSW)), mx.g);',   // (CAS: soft, 2x; the green's only)
+        '  float amp = sqrt(clamp(min(sMn, 2.0 - sMx) / max(sMx, 1e-3), 0.0, 1.0));',
+        '  float lC = lum(C), lN = lum(N), lS = lum(S), lE = lum(E), lW = lum(W);',
+        '  float nz = clamp(abs(0.25 * (lN + lS + lE + lW) - lC) / max(max(max(max(lN, lS), max(lE, lW)), lC) - min(min(min(lN, lS), min(lE, lW)), lC), 1e-3), 0.0, 1.0);',
+        '  float w = -uCas * amp * (1.0 - 0.5 * nz);',
+        '  return clamp((C + w * (N + S + E + W)) / (1.0 + 4.0 * w), mn, mx);',
+        '}',
         'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
         'void main(){',
         // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the TV cameras)
@@ -4390,9 +4406,11 @@ const Render = (function () {
         '    s += (texture2D(tD, vUv + vec2(2.6, 0.0) * o).rgb + texture2D(tD, vUv - vec2(2.6, 0.0) * o).rgb + texture2D(tD, vUv + vec2(0.0, 2.6) * o).rgb + texture2D(tD, vUv - vec2(0.0, 2.6) * o).rgb) * 0.045;',
         '    c = mix(c, s, clamp(b * 1.6, 0.0, 1.0));',
         '  } else {',
-        '    float lC = lum(c), lN = lum(texture2D(tD, vUv + vec2(0.0, px.y)).rgb), lS = lum(texture2D(tD, vUv - vec2(0.0, px.y)).rgb), lE = lum(texture2D(tD, vUv + vec2(px.x, 0.0)).rgb), lW = lum(texture2D(tD, vUv - vec2(px.x, 0.0)).rgb);',
+        '    vec3 cN = texture2D(tD, vUv + vec2(0.0, px.y)).rgb, cS = texture2D(tD, vUv - vec2(0.0, px.y)).rgb, cE = texture2D(tD, vUv + vec2(px.x, 0.0)).rgb, cW = texture2D(tD, vUv - vec2(px.x, 0.0)).rgb;',
+        '    float lC = lum(c), lN = lum(cN), lS = lum(cS), lE = lum(cE), lW = lum(cW);',
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
+        '    if (uCas > 0.0) c = cas(c, cN, cS, cE, cW, px);',   // (after the edge smoothing, as CAS goes after an anti-aliasing)
         '  }',
         // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most)
         '  if (uMB > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float m = uMB * smoothstep(0.1, 0.5, length((vUv - uMF) * as) * 0.6) * smoothstep(0.07, 0.24, length((vUv - uMC) * as));',
@@ -4433,6 +4451,18 @@ const Render = (function () {
     const B = post.bl; B.w = Math.max(1, Math.floor(_v2.x / 4)); B.h = Math.max(1, Math.floor(_v2.y / 4)); B.a.setSize(B.w, B.h); B.b.setSize(B.w, B.h); B.bright.uniforms.uPx.value.set(1 / _v2.x, 1 / _v2.y);
   }
   function postOn() { return !!post && settings.quality === 'high' && settings.post !== false; }
+  // sharpening (AMD CAS, in the post pass: the shader's cas; the user, 3. 11. 2026: »rahlo prilagodljivo ostrenje, samo na Visoka in samo,
+  // ko je ločljivost znižana«): while the race's picture is drawn below Visoka's own resolution (the adaptive resolution, game.js adaptive;
+  // the battery saver) the browser stretches it over the screen. CAS on the picture as drawn, before that stretch, is how CAS itself scales
+  // (its four nearest results, interpolated), with no pass of its own: its weight k at full from 0.7 of the resolution down, half of it
+  // just below the full resolution. At the full resolution, on Retro and Normalno (no post pass) and in a still (snapshot): 0, nothing runs
+  const CAS = { k: 0.1, full: 0.7 };
+  let snapping = false, casDrawn = 0;   // (casDrawn: the weight the last frame was drawn with, 0: none)
+  function casK() {
+    if (snapping || settings.quality !== 'high') return 0;
+    const r = dynScale * saverK;
+    return r < 0.99 ? CAS.k * (0.5 + 0.5 * clamp((1 - r) / (1 - CAS.full), 0, 1)) : 0;
+  }
 
   function updatePointScale() {
     const hpx = renderer.domElement.height;
@@ -9640,11 +9670,11 @@ const Render = (function () {
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = 0.8;   // (a soft depth of field only towards the edges)
       if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
-      speedLook(target, alpha, U);
+      speedLook(target, alpha, U); U.uCas.value = casDrawn = casK();   // (the sharpening: casK)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
-    } else { renderer.render(scene, camera); }
+    } else { casDrawn = 0; renderer.render(scene, camera); }
     unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
@@ -9652,7 +9682,7 @@ const Render = (function () {
   function snapshot(target, mode, maxSide) {
     const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight), pr = Math.max(basePR * dynScale, Math.min(2.5, (maxSide || 1920) / Math.max(w, h)));
     renderer.setPixelRatio(pr); renderer.setSize(w, h, false); sizePost(); updatePointScale();
-    frame(0, 1, target, mode, { noFx: true });
+    snapping = true; try { frame(0, 1, target, mode, { noFx: true }); } finally { snapping = false; }   // (no sharpening in a still: casK)
     const src = renderer.domElement, out = document.createElement('canvas'); out.width = src.width; out.height = src.height;
     out.getContext('2d').drawImage(src, 0, 0);
     resize();
@@ -9850,7 +9880,8 @@ const Render = (function () {
       speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
+  function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +(dynScale * saverK).toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
