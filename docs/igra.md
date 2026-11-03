@@ -402,6 +402,19 @@ Kamera za avtom je vedno **30 %** manj nagnjena navzdol (nastavitve za to ni ve�
 
 **Tresenje kamere** (Nastavitve, štiri vrstice, vsaka Izklop ali Vklop; **privzeto so vse izklopljene**, tudi za igralce s shranjenimi nastavitvami): **ob trku** (močan trk v ograjo, drug avto ali drobce; »Razbijanje: močnejše tresenje kamere« ga okrepi), **ob pristanku** (avto po skoku pristane na cesti), **na robnikih** (pogled rahlo trepeta, ko kolo pelje po robniku) in **v misijah** (most v misiji Narasla reka, ko vanj udari hlod ali ko prehitro pelješ čez). Vse vrste gredo skozi `Render.shake(a, vrsta)`, ki tresenje izklopljene vrste spusti (`Render.cam.shOn`: `hit`, `land`, `kerb`, `mis`; nastavitve `camShake`, `camLand`, `camKerb`, `camMis`). Vibracija telefona in zvok trka ostaneta (vibracijo izklopiš posebej).
 
+**Kamera pred štartom.** Dokler polje čaka na štartni mreži, kamera leti; ob 5. lučki je na svojem mestu za avtom, ko lučke ugasnejo, voziš. Vsakič je izbran drug let, naključno (nikoli isti kot pri prejšnji dirki), in vsak ima **svoj slog semaforja**, da veš, kateri je bil:
+
+| Let | Kaj kamera naredi | Semafor |
+|---|---|---|
+| 1 Dron od semaforja | vzleti nad semaforjem, leti nazaj nad polje, nad tabo pogleda navzdol in se obrne naprej | kvadratne lučke na črnem |
+| 2 Dron ob lučkah | ob vsaki lučki hitro skoči na drugo stran tvojega avta | dvojna vrsta (po dve lučki v ohišju) |
+| 3 Helikopter v krogu | visoko (do 95 m) kroži okoli polja in se spusti za avto | oranžne lučke z belim obročem |
+| 4 Helikopter nad prvim ovinkom | pokaže prvi ovinek (največ 330 m za štartno črto), se obrne in prileti nazaj | visoki ozki stolpci |
+| 5 Avion | prileti nad semafor in polje, za poljem ostro nagnjen zavije za avto | romb |
+| 6 Dron iz boksov (samo proge z boksi) | nad tvojo garažo z mehaniki, vzdolž boksov, čez boksarsko steno do avta | rumeno-črne črte okoli |
+
+Na progah s svojim uvodom (letala nad štartno mrežo: Štajerska, Bathurst, Rio) so letala še ena od možnosti. Kamera **nikoli ni bližje avtu in nikoli nižje** kot kamera za avtom pri Oddaljenosti **Blizu** (ležeče 27 m in 19 m, pokonci 41 m in 32 m); višje in zavijati sme. Uvod je takrat dolg 3 s (lučke ob 3,0 s in nato vsakih 0,8 s). Da telefon med letom ni bolj obremenjen (do ~300 klicev risanja in ~900 tisoč oglišč), je pogled leta krajši (megla kot za kamero 60 m stran, dlje se ne riše), oddaljeni tekmeci so poenostavljeni kot med dirko, sence so le v okvirju 80 m okoli tega, kamor kamera gleda. Leta ni pri dirki s prijatelji (oba telefona imata uvod gostitelja), v kronometru, kvalifikacijah, šoli vožnje, pri letečem štartu in pobegu policiji.
+
 **Foto** v pavzi (ali v posnetku dirke) ustavi čas in skrije prikaz dirke, kamera pa gre iz avta ven. Z vlečenjem prsta ali miške jo vrtiš okoli avta in višje ali nižje, z dvema prstoma, koleščkom miške ali gumboma − in + jo približaš ali oddaljiš (na tipkovnici puščice, + in −; na igralnem plošku desna palica in sprožilca). **Objektiv** (24, 35, 50, 85 mm), **Filter** (brez, živo, črno-belo, sepija, film z vinjeto), **Ostrina** (pri visoki kakovosti: oster avto, zamegljena okolica), **Skrij gumbe** (tapni sliko, da se vrnejo). **Shrani sliko** sliko nariše še enkrat, ostreje (1920 pik v širino), s filtrom, in jo shrani kot PNG (npr. `dirka-spa-20260930-141502.png`); na telefonu se odpre meni za deljenje (npr. shranjevanje v galerijo). **Nazaj** te vrne v pavzo ali v posnetek.
 
 ## Duh najboljše vožnje
