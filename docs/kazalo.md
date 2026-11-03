@@ -2,9 +2,20 @@
 
 Kje v kodi je kaj, da ni treba iskati na slepo. Imena funkcij in naslovi razdelkov so takšni, kot so v kodi: poišči jih z `grep -n "function ime"` ali po naslovu razdelka (`/* ---------------- naslov`). Številk vrstic namenoma ni, ker se spreminjajo.
 
-**Velike datoteke ne beri v celoti:** `js/world.js` (0,5 MB, ~4.900 vrstic; proge v `js/world-<tema>.js`, največja `world-pikes.js` 0,55 MB), `js/render.js` (~9.400), `js/core.js` (~5.800), `js/game.js` (~5.200), `docs/igra.md` (115 KB), `tests/README.md` (110 KB). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del.
+**Velike datoteke ne beri v celoti:** `js/world.js` (0,5 MB, ~5.100 vrstic; proge v `js/world-<tema>.js`, največja `world-pikes.js` 0,55 MB), `js/render.js` (~9.900), `js/core.js` (~6.700), `js/game.js` (~5.700), `docs/igra.md` (150 KB), `tests/README.md` (180 KB), `README.md` (90 KB) in to kazalo (55 KB). Preberi samo razdelek »Na kratko« spodaj (prvih 25 vrstic), nato ime poišči z grepom (v dolgih vrsticah z omejeno okolico: `grep -noE '.{0,150}ime.{0,150}' datoteka`) in preberi samo tisti del.
 
 Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
+
+## Na kratko
+
+- **Igra:** `index.html`, `js/game.js` (zasloni, HUD, zanka, posnetek; »Teme v `js/game.js`«), `js/core.js` (proga, fizika, AI, dirka; »Teme v `js/core.js`«), `js/render.js` (izris, kamere; »Teme v `js/render.js`«), `js/input.js`, `js/sfx.js`, `js/comm.js`, `js/net.js`, `js/lang.js` (angleščina).
+- **Svet in proge:** `js/world.js` in `js/world-<tema>.js`, proge `js/tracks/<id>.js`, podatki `js/data/`; graditelji po progah v »Proge in graditelji sveta«; opisi `docs/proge/<id>.md`; nova prava proga `tools/proga-podatki.py`.
+- **Meni, garaža, deli:** `js/menu*.js`, `css/menu.css`, `maketa-menija/`; `garaza.html`, `js/garage*.js`; deli `js/deli*.js` (`docs/deli.md`).
+- **Nova mapa in misije:** `js/newmap.js`, `js/nv*.js`; `js/missions.js`, `js/missions/` (`docs/misije.md`).
+- **Orodje za napake:** `js/napake.js`, `css/napake.css` (»Orodje za napake«, imena v poročilih: »Imena v poročilih o napakah«); posnetek `.rrp`: `tools/posnetek.mjs`.
+- **Testi:** `tests/run.js` (`npm run test:related`), »Testi po temah«, opisi v `tests/README.md`, reference `tests/golden/`.
+- **Orodja:** `tools/stamp.js` (žigi), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`.
+- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
 
 ## Datoteke
 
@@ -67,10 +78,11 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `README.md` | opis igre, seznam prog (»Proge«), »Nov meni«, »Zgradba projekta« (»Novo vozilo«, »Nova proga«), »Zasluge« (licence) |
 | `docs/proge/<id>.md` | opis proge (oblika, višine, okolica, približki); `toskana.md` tudi `grom` |
 | `docs/igra.md` | opis igre po temah (fizika, štart, boksi, vreme, grafika, vozni park, razpadanje …), prej v `README.md` |
-| `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
+| `docs/orodje-za-napake.md` | načrt orodja za napake (stanje, odločitve, zasnova, odložena sklopa 0 in 8); opisi končanih sklopov v `docs/arhiv/orodje-za-napake-sklopi.md` |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/ljudje-predlogi.md` | 12 predlogov »ljudje ob progi« (številke, ki jih uporabnik izbira), meritev zdajšnjih gledalcev, skupine po 2–10 |
 | `docs/vprasanja.md` | vprašanja za uporabnika: stran Odločitve (vsak račun svojo, seznam strani), polja vprašanja, slike pri grafičnih vprašanjih, zbiranje ob 10.30, 14.30 in 23.00 (opravila po urniku), nastavitev na drugem računu, preklic |
+| `docs/varcevanje.md` | varčevanje z žetoni: odločitve 3. 11. 2026, okolje »Koordinacija« (napor medium), okno za povzetek, zbirka `cakanje` (čakanje na drug pull request), svež `main` pred združitvijo, meritve porabe sej |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
 | `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
