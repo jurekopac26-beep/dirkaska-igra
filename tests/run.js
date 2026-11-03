@@ -56,7 +56,7 @@ function shareOf(list, k, n) {
 // spa.test.js; js/world-montreal.js: montreal and world; docs/proge/medvode.md: medvode, medvode-props, browser/medvode-castle ...), a changed
 // test itself, and the tests RELATED gives for it (the big shared files, which no name matches)
 const RELATED = [
-  [/^(js|css)\/|^index\.html$|^sw\.js$|^tools\/stamp\.js$/, ['stamp.test.js']],   // (the stamps after every change in js/ or css/)
+  [/^(js|css)\/|^index\.html$|^garaza\.html$|^sw\.js$|^tools\/stamp\.js$/, ['stamp.test.js']],   // (the pages' links: every file there, no stamps; the publish step's stamping)
   [/^js\/core\.js$/, ['golden.test.js', 'start.test.js', 'quick.test.js', 'repro.test.js', 'nova.test.js', 'browser/repro.test.mjs']],
   [/^js\/game\.js$|^index\.html$/, ['lang.test.js', 'browser/quick.test.mjs', 'browser/repro.test.mjs', 'browser/lang.test.mjs', 'browser/nova.test.mjs']],
   [/^js\/(world[\w-]*|render|tex)\.js$/, ['browser/world.test.mjs', 'browser/gfx.test.mjs']],
