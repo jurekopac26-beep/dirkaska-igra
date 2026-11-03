@@ -58,21 +58,63 @@ const NVMenu = (function () {
       ['Snow descent', 'Down the snowy road, under 40 km/h.'],
       ['Exam: hill', 'Up and down under the time without sliding off the road.']] },
   };
-  // every garage's menu: its three choices [name, the line under it] (the school's: its licences)
+  // every garage's menu: its choices [name, the line under it] (the school's: its licences). The licences, the races and the missions twelve, four
+  // levels of three as the school's tasks (uporabnik 3. 11., ravni za vse garaže: the challenges not built yet, V izdelavi; levels 2-4 a proposal,
+  // their names set when they are made); multiplayer its three
   const MENUS = {
     school: { title: 'Driving school', sub: '{car} · choose an exam', col: '#23c8ff', lic: ['c', 'm', 'k'] },
-    car: { title: 'Car licence', sub: 'exam · reward LEV S', col: '#3fbf6a', items: [['GRAVEL', 'a lap of the gravel course'], ['LAP', 'a lap of the track under the time'], ['PARKING', 'into the bay by the garage']] },
-    truck: { title: 'Truck licence', sub: 'exam · reward TITAN', col: '#ff8a2a', items: [['REVERSING', 'back the truck up to the ramp'], ['TIGHT CORNERS', 'through the cones, touch none'], ['DELIVERY', 'a container to the pier']] },
-    rally: { title: 'Rally licence', sub: 'gravel exam · reward BURJA R7', col: '#d8282a', items: [['GRAVEL STAGE', 'the forest road against the clock'], ['JUMPS', 'over the crests, land straight'], ['HAIRPINS', 'the hairpins up the hill']] },
-    circuit: { title: 'Circuit race', sub: '{car} · choose a race', col: '#e8452c', items: [['TUSCANY, ITALY', '8 laps · 12 cars'], ['BATHURST, AUSTRALIA', '5 laps · 10 cars'], ['STYRIA, AUSTRIA', '10 laps · 16 cars']] },
-    street: { title: 'Street race', sub: '{car} · city streets at night', col: '#c86bff', items: [['MONTE CARLO, MONACO', '6 laps · 10 cars'], ['DETROIT, USA', '5 laps · 12 cars'], ['TORONTO, CANADA', '5 laps · 12 cars']] },
-    cross: { title: 'Cross rally', sub: '{car} · gravel and jumps', col: '#d9a23a', items: [['HARJU, FINLAND', '4 laps · 8 cars'], ['OUNINPOHJA, FINLAND', 'one stage · against the clock'], ['SANI PASS, SOUTH AFRICA', 'one stage · against the clock']] },
-    mx: { title: 'Motocross school', sub: 'learn to ride · jumps & berms', col: '#ff6a1a', items: [['FIRST RIDE', 'a slow lap of the track'], ['JUMPS', 'the small jumps, land straight'], ['BERMS', 'round the banked corners']] },
+    car: { title: 'Car licence', sub: 'exam · reward LEV S', col: '#3fbf6a', items: [
+      ['GRAVEL', 'a lap of the gravel course'], ['LAP', 'a lap of the track under the time'], ['PARKING', 'into the bay by the garage'],
+      ['RING ROAD', 'once round the ring road under the time'], ['TUNNEL', 'through the tunnel under the hill, in your lane'], ['WET LAP', 'a lap of the track in the rain'],
+      ['NIGHT LAP', 'a lap of the track at night, lights on'], ['OVER THE HILL', 'the road over the hill under the time'], ['OVERTAKING', 'pass five cars in one lap'],
+      ['GLASS BRIDGE', 'over the glass bridge without a scratch'], ['THE WHOLE MAP', 'the main road from end to end'], ['EXAM: CAR', 'gravel, a lap and parking in one run']] },
+    truck: { title: 'Truck licence', sub: 'exam · reward TITAN', col: '#ff8a2a', items: [
+      ['REVERSING', 'back the truck up to the ramp'], ['TIGHT CORNERS', 'through the cones, touch none'], ['DELIVERY', 'a container to the pier'],
+      ['HEAVY LOAD', 'a full load up the hill road'], ['SCALES', 'stop on the weighbridge, every wheel on it'], ['FARM RUN', 'hay bales to the farm'],
+      ['SITE RUN', 'gravel to the construction site'], ['DOWNHILL', 'down the switchbacks loaded, under 40 km/h'], ['NIGHT DELIVERY', 'boxes to the toy shop at night'],
+      ['HARBOUR', 'a container from the pier to the yard'], ['FUEL RUN', 'fuel to the rescue base'], ['EXAM: TRUCK', 'reversing, corners and a delivery in one run']] },
+    rally: { title: 'Rally licence', sub: 'gravel exam · reward BURJA R7', col: '#d8282a', items: [
+      ['GRAVEL STAGE', 'the forest road against the clock'], ['JUMPS', 'over the crests, land straight'], ['HAIRPINS', 'the hairpins up the hill'],
+      ['PACE NOTES', 'the stage as the co-driver calls it'], ['HANDBRAKE', 'the tight bends with the handbrake'], ['NIGHT STAGE', 'the forest road in the dark'],
+      ['SNOW STAGE', 'the snowy road up the hill'], ['RAIN STAGE', 'the gravel road in the rain'], ['SUPER SPECIAL', 'side by side on the motocross track'],
+      ['LONG STAGE', 'the north road and the forest road in one run'], ['SERVICE', 'in and out of the service park in time'], ['EXAM: RALLY', 'the whole rally route under the time']] },
+    circuit: { title: 'Circuit race', sub: '{car} · choose a race', col: '#e8452c', items: [
+      ['TUSCANY, ITALY', '8 laps · 12 cars'], ['BATHURST, AUSTRALIA', '5 laps · 10 cars'], ['STYRIA, AUSTRIA', '10 laps · 16 cars'],
+      ['SPA, BELGIUM', '5 laps · 16 cars'], ['SUZUKA, JAPAN', '6 laps · 14 cars'], ['MONTEREY, USA', '8 laps · 12 cars'],
+      ['RIVERSIDE, USA', '6 laps · 12 cars'], ['CRYSTAL PALACE, ENGLAND', '8 laps · 10 cars'], ['LONGFORD, AUSTRALIA', '4 laps · 12 cars'],
+      ['RIO DE JANEIRO, BRAZIL', '6 laps · 16 cars'], ['NÜRBURG, GERMANY', '1 lap · 20 cars'], ['THE SEASON', 'all eleven races · points']] },
+    street: { title: 'Street race', sub: '{car} · city streets at night', col: '#c86bff', items: [
+      ['MONTE CARLO, MONACO', '6 laps · 10 cars'], ['DETROIT, USA', '5 laps · 12 cars'], ['TORONTO, CANADA', '5 laps · 12 cars'],
+      ['MARRAKESH, MOROCCO', '5 laps · 12 cars'], ['NEWCASTLE, AUSTRALIA', '5 laps · 14 cars'], ['TOWNSVILLE, AUSTRALIA', '5 laps · 14 cars'],
+      ['TROIS-RIVIÈRES, CANADA', '6 laps · 12 cars'], ['BANG SAEN, THAILAND', '4 laps · 12 cars'], ['MONTRÉAL, CANADA', '6 laps · 16 cars'],
+      ['MEDVODE, SLOVENIA', 'through the town · against the clock'], ['LIVORNO, ITALY', 'one lap · flying start · 20 cars'], ['NIGHT SERIES', 'all eleven races · points']] },
+    cross: { title: 'Cross rally', sub: '{car} · gravel and jumps', col: '#d9a23a', items: [
+      ['HARJU, FINLAND', '4 laps · 8 cars'], ['OUNINPOHJA, FINLAND', 'one stage · against the clock'], ['SANI PASS, SOUTH AFRICA', 'one stage · against the clock'],
+      ['MOKI DUGWAY, USA', 'one stage · against the clock'], ['KATU-YARYK, RUSSIA', 'one stage · against the clock'], ['UNCOMPAHGRE, USA', 'one stage · against the clock'],
+      ['PIKES PEAK (GRAVEL), USA', 'the old gravel road to the top'], ['HARJU, FINLAND', 'in the snow · 8 cars'], ['OUNINPOHJA, FINLAND', 'at night · against the clock'],
+      ['SANI PASS, SOUTH AFRICA', 'in the rain · against the clock'], ['MOTOCROSS TRACK', 'on this map · 6 cars'], ['CROSS FINAL', 'all the stages · points']] },
+    mx: { title: 'Motocross school', sub: 'learn to ride · jumps & berms', col: '#ff6a1a', items: [
+      ['FIRST RIDE', 'a slow lap of the track'], ['JUMPS', 'the small jumps, land straight'], ['BERMS', 'round the banked corners'],
+      ['START GATE', 'away from the gate first'], ['WHOOPS', 'the row of bumps, stay low'], ['DOUBLE', 'both humps in one jump'],
+      ['TABLETOP', 'land on the flat top'], ['RHYTHM', 'the jumps in a row, no braking'], ['RUTS', 'stay in the ruts round the corners'],
+      ['TIMED LAP', 'a fast lap under the time'], ['RACE', '6 riders, 3 laps'], ['EXAM: MOTOCROSS', 'the whole track clean, under the time']] },
     multi: { title: 'Multiplayer', sub: 'race your friends online', col: '#2ad8b0', items: [['QUICK RACE', 'join the first free room'], ['CREATE A ROOM', 'invite your friends with a code'], ['JOIN A ROOM', 'enter a friend\'s code']] },
-    police: { title: 'Police', sub: '{car} · missions', col: '#2f6bff', items: [['ESCAPE THE POLICE', 'lose the patrols in the streets'], ['CATCH THE CRIMINAL', 'you drive the patrol car'], ['WRONG WAY RACE', 'against the traffic, the police behind you']] },
-    kamikaze: { title: 'Mission: Kamikaze', sub: 'the wrong way round', col: '#ff3d2a', items: [['NÜRBURG, GERMANY', 'a lap against the field'], ['SPA, BELGIUM', 'a lap against the field'], ['SUZUKA, JAPAN', 'a lap against the field']] },
+    police: { title: 'Police', sub: '{car} · missions', col: '#2f6bff', items: [
+      ['ESCAPE THE POLICE', 'lose the patrols in the streets'], ['CATCH THE CRIMINAL', 'you drive the patrol car'], ['WRONG WAY RACE', 'against the traffic, the police behind you'],
+      ['SPEED TRAP', 'past the radar under the limit'], ['ROADBLOCK', 'round the roadblock without a scratch'], ['NIGHT CHASE', 'lose the patrols in the dark'],
+      ['STOLEN CAR', 'catch it before the border'], ['HELICOPTER', 'lose the helicopter in the tunnel'], ['TRAFFIC STOP', 'pull the speeding car over'],
+      ['AMBULANCE', 'clear the way for the ambulance'], ['BIG CHASE', 'five patrols after you'], ['LAST CASE', 'catch three cars before the border']] },
+    kamikaze: { title: 'Mission: Kamikaze', sub: 'the wrong way round', col: '#ff3d2a', items: [
+      ['NÜRBURG, GERMANY', 'a lap against the field'], ['SPA, BELGIUM', 'a lap against the field'], ['SUZUKA, JAPAN', 'a lap against the field'],
+      ['BATHURST, AUSTRALIA', 'a lap against the field'], ['STYRIA, AUSTRIA', 'a lap against the field'], ['MONTEREY, USA', 'a lap against the field'],
+      ['RIVERSIDE, USA', 'a lap against the field'], ['CRYSTAL PALACE, ENGLAND', 'a lap against the field'], ['RIO DE JANEIRO, BRAZIL', 'a lap against the field'],
+      ['DETROIT, USA', 'a lap against the field · at night'], ['TORONTO, CANADA', 'a lap against the field · in the rain'], ['NÜRBURG, GERMANY', 'a lap against 100 cars']] },
     home: { title: 'Home', sub: 'your garage', col: '#ffd34d', note: 'Garaža v izdelavi' },   // (HOME's box in the pit lane: the new garage is made apart; a note for now)
-    president: { title: 'Mission: President', sub: 'protect the president', col: '#4a7ae8', items: [['MEDVODE, SLOVENIA', 'escort the convoy · 6.2 km'], ['VRŠIČ, SLOVENIA', 'escort the convoy over the pass'], ['RIVIERA, FRANCE', 'escort the convoy along the coast']] },
+    president: { title: 'Mission: President', sub: 'protect the president', col: '#4a7ae8', items: [
+      ['MEDVODE, SLOVENIA', 'escort the convoy · 6.2 km'], ['VRŠIČ, SLOVENIA', 'escort the convoy over the pass'], ['RIVIERA, FRANCE', 'escort the convoy along the coast'],
+      ['BIG SUR, USA', 'escort the convoy along the cliffs'], ['GREAT ALPINE ROAD, AUSTRALIA', 'escort the convoy through the mountains'], ['IROHAZAKA, JAPAN', 'escort the convoy down the hairpins'],
+      ['TIANMEN, CHINA', 'escort the convoy up the bends'], ['LOS CARACOLES, CHILE', 'escort the convoy over the pass'], ['MAUNA KEA, USA', 'escort the convoy to the summit'],
+      ['SANTA MONICA MOUNTAINS, USA', 'escort the convoy at night'], ['RIO DO RASTRO, BRAZIL', 'escort the convoy up the serra'], ['STATE VISIT', 'three roads in one day']] },
   };
 
   let host = null, el = null, list = [], carName = () => '', at = null, shut = null, live = true, view = null, wipT = 0, want = null;
@@ -88,6 +130,15 @@ const NVMenu = (function () {
   const allP = (l) => Math.round(LIC[l].tasks.reduce((t, _, i) => t + bestOf(l, i), 0) / LIC[l].tasks.length);
   const nDone = (l) => LIC[l].tasks.filter((_, i) => bestOf(l, i) >= OPEN).length;
   const lic = (l) => bestOf(l, LIC[l].tasks.length - 1) >= OPEN;   // (the licence won: its exam passed)
+  // the other garages' challenges (twelve: the licences, the races, the missions) the same way: each one's best by its place, a level of three,
+  // the next one open at 50 % of the one before (the challenges are not built yet: V izdelavi, nothing records a place but the tests)
+  const gbest = {}, GKEY = 'rra-garaze';
+  function gload() { try { const o = JSON.parse(localStorage.getItem(GKEY) || 'null'); if (o) for (const k of Object.keys(o)) if (MENUS[k] && Array.isArray(o[k])) gbest[k] = o[k].map(v => PLACE.includes(v) ? v : 0); } catch (e) { } }
+  function gsave() { try { localStorage.setItem(GKEY, JSON.stringify(gbest)); } catch (e) { } }
+  const levelled = (k) => !!(MENUS[k] && MENUS[k].items && MENUS[k].items.length > LV);
+  const gOf = (k, i) => (gbest[k] && gbest[k][i]) || 0, gnLv = (k) => Math.ceil(MENUS[k].items.length / LV);
+  const gLvP = (k, v) => { let t = 0; for (let i = v * LV; i < (v + 1) * LV; i++) t += gOf(k, i); return Math.round(t / LV); };
+  const gOpen = (k) => { let v = 0; while (v + 1 < gnLv(k) && gLvP(k, v) >= OPEN) v++; return v; };   // (the highest level open)
 
   function css() {
     if (document.getElementById('nvm-css')) return;
@@ -140,7 +191,7 @@ const NVMenu = (function () {
     for (const [k, s] of Object.entries(H3.st || {})) add(k, s);
     for (const [k, s] of Object.entries(H3.lic || {})) add(k, s);
     for (const b of (H3.pits || [])) if (b.tune) list.push({ key: 'home', x: b.x, z: b.z, c: 1, s: 0, r: 5 });
-    host = (document.getElementById('hud') || document.body).parentElement || document.body; load();
+    host = (document.getElementById('hud') || document.body).parentElement || document.body; load(); gload();
     if (typeof NVSchool !== 'undefined') NVSchool.init(H3, { name: (l, i) => [LIC[l].name, LIC[l].tasks[i][0]], col: (l) => LIC[l].col, record, floor: () => { const g = list.find(q => q.key === 'school'); return g && { x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }; },
       closed: (l) => { at = null; shut = null; want = l ? { lvl: 1, lic: l, lv: lvOpen(l) } : null; } });
     if (!init.on) { init.on = true; document.addEventListener('pointerdown', (e) => { if (el && el.style.display !== 'none' && !el.contains(e.target)) { shut = at; close(); } }, true); }
@@ -172,6 +223,9 @@ const NVMenu = (function () {
       (o.tk ? `<span class="n">${o.i + 1}</span><span class="tx">${esc(o.name)}<small>${esc(o.sub)}</small></span><em>${o.p} %</em>` : `${esc(o.name)}<small>${esc(o.sub)}</small><em>${o.p} %</em>`) +
       `<s><u style="width:${o.p}%"></u></s></button>`;
   }
+  // a level's bar: ‹ LEVEL n p % ›, the 50 % mark, the line under it
+  const lvBar = (v, op, p, nt) => `<div class="lv"><div class="lt"><button class="ar" data-a="lvp" aria-label="Level before"${v > 0 ? '' : ' disabled'}>‹</button><b>LEVEL ${v + 1}</b><span style="color:${p >= OPEN ? '#5fe08a' : '#ffd34d'}">${p} %</span><button class="ar" data-a="lvn" aria-label="Next level"${v < op ? '' : ' disabled'}>›</button></div>` +
+    `<div class="bar"><u style="width:${p}%"></u><i style="left:${OPEN}%"></i></div><div class="nt">${esc(nt)}</div></div>`;
   function draw() {
     const M = MENUS[at]; if (!M || !view) return;
     if (!el) { el = document.createElement('div'); el.id = 'nvm'; el.addEventListener('click', onClick); host.appendChild(el); }
@@ -181,14 +235,19 @@ const NVMenu = (function () {
       const T = shades(M.col);
       if (M.note) h = `<div class="note">${esc(tr(M.note))}</div>`;
       else if (M.lic) h = M.lic.map((l, i) => { const L = LIC[l]; return row({ a: 'lic', i, t: L.col, name: L.name + (lic(l) ? ' ✓' : ''), sub: `${L.sub} · level ${lvOpen(l) + 1} · ${nDone(l)} / ${L.tasks.length} tasks`, p: allP(l) }); }).join('');
+      else if (levelled(at)) {
+        if (view.lv == null) view.lv = gOpen(at);
+        const v = view.lv, n = gnLv(at), op = gOpen(at), p = gLvP(at, v); line = `${line} · level ${v + 1} of ${n}`;
+        for (let i = v * LV; i < Math.min((v + 1) * LV, M.items.length); i++) h += row({ a: 'wip', i, tk: true, t: T[i % LV], name: M.items[i][0], sub: M.items[i][1], p: gOf(at, i) });
+        h += lvBar(v, op, p, v + 1 >= n ? 'the last level' : v + 1 <= op ? `level ${v + 2} is open` : `at ${OPEN} % level ${v + 2} opens`);
+      }
       else h = M.items.map((it, i) => row({ a: 'wip', i, t: T[i], name: it[0], sub: it[1], p: 0 })).join('');
       h += `<div class="ft">${esc(M.note ? 'tap anywhere else to close' : 'tap anywhere else to close · shown while you stand on the coloured spot')}</div>`;
     } else if (view.lvl === 1) {
       const l = view.lic, L = LIC[l], v = view.lv, n = nLv(l), op = lvOpen(l), p = lvP(l, v); col = L.col; title = L.name; line = `${M.title} · level ${v + 1} of ${n}`;
       for (let i = v * LV; i < Math.min((v + 1) * LV, L.tasks.length); i++) h += row({ a: 'task', i, tk: true, t: L.col, name: L.tasks[i][0], sub: L.tasks[i][1], p: bestOf(l, i) });
       const nt = v + 1 >= n ? `the last level · pass the exam: the ${L.name.toLowerCase()}` : v + 1 <= op ? `level ${v + 2} is open` : `at ${OPEN} % level ${v + 2} opens`;
-      h += `<div class="lv"><div class="lt"><button class="ar" data-a="lvp" aria-label="Level before"${v > 0 ? '' : ' disabled'}>‹</button><b>LEVEL ${v + 1}</b><span style="color:${p >= OPEN ? '#5fe08a' : '#ffd34d'}">${p} %</span><button class="ar" data-a="lvn" aria-label="Next level"${v < op ? '' : ' disabled'}>›</button></div>` +
-        `<div class="bar"><u style="width:${p}%"></u><i style="left:${OPEN}%"></i></div><div class="nt">${esc(nt)}</div></div>`;
+      h += lvBar(v, op, p, nt);
     } else {
       const l = view.lic, L = LIC[l], t = L.tasks[view.task], b = bestOf(l, view.task); col = L.col; title = L.name; line = `level ${view.lv + 1} · task ${view.task + 1} / ${L.tasks.length}`;
       h = `<div class="card"><h3>${esc(t[0])}</h3><p>${esc(t[1])}</p><dl><dt>Best</dt><dd>${best[l][view.task] != null ? ORD[PLACE.indexOf(b)] + ' place · ' + b + ' %' : '—'}</dd><dt>Done</dt><dd>${b >= OPEN ? '✓' : 'not yet'}</dd><dt>Licence</dt><dd>${esc(view.task === L.tasks.length - 1 ? 'pass this exam: the ' + L.name.toLowerCase() : 'pass the exam (task ' + L.tasks.length + ')')}</dd></dl></div>` +
@@ -206,7 +265,7 @@ const NVMenu = (function () {
     if (a === 'pause') { const p = document.getElementById('btn-pause'); if (p) p.click(); return; }
     if (a === 'back') { view = view.lvl === 2 ? { lvl: 1, lic: view.lic, lv: view.lv } : { lvl: 0 }; draw(); return; }
     if (a === 'lic') { const l = MENUS[at].lic[i]; view = { lvl: 1, lic: l, lv: lvOpen(l) }; draw(); return; }   // (the highest level open)
-    if (a === 'lvp' || a === 'lvn') { const v = view.lv + (a === 'lvn' ? 1 : -1); if (v >= 0 && v <= lvOpen(view.lic)) { view.lv = v; draw(); } return; }
+    if (a === 'lvp' || a === 'lvn') { const v = view.lv + (a === 'lvn' ? 1 : -1); if (v >= 0 && v <= (view.lic ? lvOpen(view.lic) : gOpen(at))) { view.lv = v; draw(); } return; }
     if (a === 'task') { view = { lvl: 2, lic: view.lic, lv: view.lv, task: i }; draw(); return; }
     if (a === 'start' && typeof NVSchool !== 'undefined' && NVSchool.has(view.lic, view.task)) { const l = view.lic, i = view.task; close(); NVSchool.start(l, i); return; }
     if (a === 'wip' || a === 'start') wip();
@@ -214,9 +273,10 @@ const NVMenu = (function () {
   // (the tests: the garages' floors, the menu now)
   const on = () => at;   // (the garage the car stands in: js/game.js hides Na progo there)
   const setPlace = (l, i, place) => { best[l][i] = PLACE[place - 1]; save(); if (el && view) draw(); };   // (the tests: a task driven to 1st-4th)
+  const setGarage = (k, i, place) => { (gbest[k] || (gbest[k] = []))[i] = PLACE[place - 1]; gsave(); if (el && view) draw(); };   // (the tests: a garage's challenge, 1st-4th)
   // a task driven (js/nvschool.js): its place kept if better than the best so far
   function record(l, i, place) { const v = PLACE[place - 1]; if (best[l][i] == null || v > best[l][i]) { best[l][i] = v; save(); } }
   const state = () => ({ at, open: !!el && el.style.display !== 'none', view: view && Object.assign({}, view), n: list.length });
   const floors = () => list.map(g => ({ key: g.key, x: g.x, z: g.z, h: Math.atan2(g.s, g.c) }));
-  return { init, tick, close, on, setPlace, state, floors, floorOf, MENUS, LIC };
+  return { init, tick, close, on, setPlace, setGarage, state, floors, floorOf, MENUS, LIC };
 })();

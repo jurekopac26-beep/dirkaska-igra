@@ -1,6 +1,7 @@
 // A race's recording as a file (posnetek_<proga>_<LLLLMMDD-UUMM>.rrp, Orodje za napake · sklop 12 in docs/orodje-za-napake.md) opened for
 // Claude: the game in a headless browser opens it (Napake.rrp.odpri, as Nastavitve orodja · Odpri posnetek), the tool's own scan runs on it,
-// and what it holds is written out: the race (the track, the way, the weather, the game's version against the one here, the device, the
+// and what it holds is written out: the race (the track, the way, the weather, the game's version against the one here (js/game.js's stamp,
+// as the publish step would put it on the page: tools/stamp.js; another one's commit: node tools/stamp.js --find <stamp>), the device, the
 // date, the cars), the race's flags (where the player was), the tool's own flags (a car standing, a jump, under the road, the wrong way, the
 // hitches; where that car was), the log of that race and the report's text; pictures of the replay at the times asked. In
 // test-results/posnetki/<file's name>/ (or --out):
@@ -12,7 +13,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
+import { createRequire } from 'node:module';
 import { serve, launch, openGame } from '../tests/browser/lib.mjs';
+const { stampOf } = createRequire(import.meta.url)('./stamp.js');
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } };
@@ -50,7 +53,7 @@ try {
   if (why) throw new Error('the game did not open it: ' + why);
   await page.waitForFunction(() => window.__game.replay && window.__game.race, null, { timeout: 240000, polling: 250 });
   await page.waitForFunction(() => Napake.iskanje.done, null, { timeout: 180000, polling: 250 });
-  const H = head.H, here = await page.evaluate(() => (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [])[1]);
+  const H = head.H, here = stampOf(path.join(REPO, 'js', 'game.js'));   // (the repository's page carries no stamps: its js/game.js's content stamp)
   const ime = (k) => (H.cars[k] && H.cars[k].pl ? 'ti' : 'tekmec#' + k);
   const pk = Math.max(0, H.cars.findIndex(c => c.pl)), k = avto == null || avto === 'ti' ? pk : +avto;
   if (!(k >= 0 && k < H.n)) throw new Error('--avto: 0 to ' + (H.n - 1));
@@ -84,7 +87,7 @@ try {
   }
   const G = sum.glava, txt = [
     `${name}: ${G.name} (${G.track}) · ${G.mode} · ${G.wx} · ${G.n} avtov · ${clock(G.t0)}–${clock(G.t1)} (${G.vzorci} vzorcev)`,
-    `naprava ${G.devIme || G.dev} · ${G.date} · različica ${G.ver}` + (G.ver !== here ? ` (tu ${here}: git log -S 'game.js?v=${G.ver}' --oneline -- index.html)` : ' (ista kot tu)'),
+    `naprava ${G.devIme || G.dev} · ${G.date} · različica ${G.ver}` + (G.ver === here ? ' (ista kot tu)' : /^[0-9a-f]{8}$/.test(G.ver) ? ` (tu ${here}; commit: node tools/stamp.js --find ${G.ver})` : ` (tu ${here}; posnetek iz igre brez žigov, npr. lokalne)`),
     `zastavice med dirko: ${sum.zastavice.length}`, ...sum.zastavice.map(f => `  ⚑${f.n} ${clock(f.t)} K${f.lap} s=${f.s}m`),
     `samodejne zastavice: ${sum.samodejne.length}`, ...sum.samodejne.map(f => `  ${clock(f.t)} K${f.lap} s=${f.s}m ${f.kind} ${f.avto} »${f.opis}«`),
     `dnevnik: ${sum.dnevnik.length}`, ...sum.dnevnik.map(l => '  ' + l),

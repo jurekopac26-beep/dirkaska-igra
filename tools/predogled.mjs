@@ -1,17 +1,19 @@
 // The preview before main (predogled, sklop 14 in docs/orodje-za-napake.md): the site for GitHub Pages, built by .github/workflows/stran.yml.
 // main as it is in the site's root (the whole tree, as Pages served it from the branch), and each open pull request from this repository
 // (the newest MAX, by their last change; those labelled »predogled« first, whatever came after them) in beta/<number>/: only what the game needs (index.html, sw.js, js, css, assets …). beta/index.html
-// lists them. Pull requests from forks are left out (their files would go out under this site's address).
+// lists them. Pull requests from forks are left out (their files would go out under this site's address). Each tree (main, each preview) is
+// stamped from its own files (?v=… on its pages' links, tools/stamp.js: the repository's pages carry none). A preview that cannot be stamped
+// complete (a link to a missing file) is left out; main that cannot be stops the build, and the site stays as it was.
 //   node tools/predogled.mjs <site folder>                (the pull requests from gh pr list: GH_TOKEN, GITHUB_REPOSITORY)
 //   node tools/predogled.mjs <site folder> --prs <file>   (the list as gh pr list --json number,title,headRefName,headRefOid,isCrossRepository,updatedAt gives it)
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const MAX = 3;   // (each preview ~125 MB, mostly assets/maps; with main's ~235 MB the site stays well under Pages' 1 GB)
-const GAME = ['index.html', 'garaza.html', 'sw.js', 'manifest.webmanifest', 'js', 'css', 'assets', 'fonts', 'icons'];   // (garaza.html: the garage, opened from the game's car screen)
+const GAME = ['index.html', 'garaza.html', 'temni-nacin.html', 'sw.js', 'manifest.webmanifest', 'js', 'css', 'assets', 'fonts', 'icons'];   // (garaza.html: the garage, opened from the game's car screen; temni-nacin.html: the colours in a browser that darkens by force)
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
 const prsFile = flag('--prs'), site = args[0] && path.resolve(args[0]);
@@ -24,6 +26,12 @@ function unpack(rev, dir, names) {
   const list = names ? run('git', ['ls-tree', '--name-only', rev]).split('\n').filter(n => names.includes(n)) : [];
   run('bash', ['-c', 'set -o pipefail; git archive "$1" -- "${@:2}" | tar -x -C "$0"', dir, rev, ...list], { stdio: ['ignore', 'inherit', 'inherit'] });
 }
+// a tree's links stamped from its own files (main's tools/stamp.js: a pull request's own code never runs here); throws if a link has no file
+const STAMP = path.join(REPO, 'tools', 'stamp.js');
+function stamp(dir) {
+  const r = spawnSync(process.execPath, [STAMP], { cwd: REPO, env: Object.assign({}, process.env, { GAME_ROOT: dir }), encoding: 'utf8' });
+  if (r.status !== 0) throw new Error('stamps: ' + String(r.stdout || r.stderr || 'exit ' + r.status).trim().split('\n').slice(0, 3).join('; '));
+}
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const all = JSON.parse(prsFile ? fs.readFileSync(prsFile, 'utf8')
@@ -35,16 +43,22 @@ const shown = prs.slice(0, MAX), left = prs.slice(MAX);
 
 fs.rmSync(site, { recursive: true, force: true });
 unpack('HEAD', site, null);
-console.log('main (' + run('git', ['rev-parse', '--short', 'HEAD']).trim() + ') → ' + path.relative(REPO, site) + '/');
-const built = [];
+stamp(site);
+console.log('main (' + run('git', ['rev-parse', '--short', 'HEAD']).trim() + ') → ' + path.relative(REPO, site) + '/ (stamped)');
+const built = [], failed = [];
 for (const p of shown) {
+  const dir = path.join(site, 'beta', String(p.number));
   try {
     run('git', ['fetch', '--quiet', '--depth=1', 'origin', `pull/${p.number}/head`], { stdio: ['ignore', 'inherit', 'inherit'] });
     const sha = run('git', ['rev-parse', 'FETCH_HEAD']).trim();
-    unpack(sha, path.join(site, 'beta', String(p.number)), GAME);
+    unpack(sha, dir, GAME);
+    stamp(dir);
     built.push(Object.assign({ sha }, p));
-    console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/`);
-  } catch (e) { console.log(`#${p.number}: not built (${String(e.message).split('\n')[0]})`); }
+    console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/ (stamped)`);
+  } catch (e) {
+    fs.rmSync(dir, { recursive: true, force: true }); failed.push(p);
+    console.log(`#${p.number}: not built (${String(e.message).split('\n')[0]})`);
+  }
 }
 
 // beta/index.html: the previews, newest first (a plain page, light and dark like the phone's setting)
@@ -66,9 +80,10 @@ li a { display: block; padding: 12px 14px 2px; color: var(--a); text-decoration:
 <p>Odprti pull requesti, kot bodo v igri po združitvi v <code>main</code>. Igra brez predogleda: <a href="../">glavna stran</a>. Predogled si deli shranjene nastavitve in napredek z glavno igro (isti naslov strani).</p>
 ${built.length ? '<ul>\n' + items + '\n</ul>' : '<p>Zdaj ni odprtega pull requesta.</p>'}
 ${left.length ? `<p>Brez predogleda (največ ${MAX} najnovejši): ${left.map(p => '#' + p.number).join(', ')}.</p>` : ''}
+${failed.length ? `<p>Predogled ni zgrajen (napaka pri gradnji, npr. povezava na manjkajočo datoteko): ${failed.map(p => '#' + p.number).join(', ')}.</p>` : ''}
 <p><small>Zgrajeno ${when}.</small></p>
 </main></body></html>
 `;
 fs.mkdirSync(path.join(site, 'beta'), { recursive: true });
 fs.writeFileSync(path.join(site, 'beta', 'index.html'), html);
-console.log('beta/index.html: ' + built.length + ' preview(s)' + (left.length ? ', without one: ' + left.map(p => '#' + p.number).join(', ') : ''));
+console.log('beta/index.html: ' + built.length + ' preview(s)' + (left.length ? ', without one: ' + left.map(p => '#' + p.number).join(', ') : '') + (failed.length ? ', not built: ' + failed.map(p => '#' + p.number).join(', ') : ''));

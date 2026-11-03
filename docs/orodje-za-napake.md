@@ -36,7 +36,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 - **Veriga orodja** (sklop za sklopom, ker vsi urejajo `js/napake.js` in posnetek v `js/game.js`): 5 → **6+7** → **9+10+11** → **12**. Združeni sklopi so ena seja, ena veja (`orodje-za-napake/sklop-06-07-<ime>`, `…/sklop-09-10-11-<ime>`) in en pull request. Ko je korak na `main`, seja zažene sejo za naslednji korak verige z navodilom »Naredi sklope 6 in 7 po docs/orodje-za-napake.md« (oz. »sklope 9, 10 in 11«, »sklop 12«). Po sklopu 12 se veriga konča.
 - **Vzporedno**, vsak v svoji seji in veji, takoj: **14+15** (orodja za posnetke zaslona in delovni tok), **16** (ponovljive dirke), **17** (razdeljen `world.js`, lahko več pull requestov). Te seje po koncu ne zaženejo nove seje.
 - **13** (seznam napak) naredi glavna seja kot zasebno spletno stran; ni v repozitoriju.
-- **Pred združitvijo v `main`** vsaka seja vanjo združi svežo `main` in še enkrat lokalno požene teste, povezane s spremembo. Spori so najverjetnejši v `index.html`, `sw.js`, `tools/stamp.js`, `docs/kazalo.md` in v tej tabeli: obdrži spremembe obeh strani. Če sklop 16 spremeni reference (`golden`, `races`), jih ustvari znova z orodji repozitorija; sklop 17 pa ne sme spremeniti sveta (reference ostanejo enake kot na `main`).
+- **Pred združitvijo v `main`** vsaka seja vanjo združi svežo `main` in še enkrat lokalno požene teste, povezane s spremembo. Spori so najverjetnejši v `index.html`, `sw.js`, `tools/stamp.js`, `docs/kazalo.md` in v tej tabeli: obdrži spremembe obeh strani (v `index.html` brez žigov, glej `CLAUDE.md`, Postopek). Če sklop 16 spremeni reference (`golden`, `races`), jih ustvari znova z orodji repozitorija; sklop 17 pa ne sme spremeniti sveta (reference ostanejo enake kot na `main`).
 - **GitHub** požene največ okoli 20 opravil hkrati, en pull request jih ima 6, zato lahko testi pri več hkratnih pull requestih nekaj časa čakajo v vrsti.
 
 ## Odločitve (veljajo za vse sklope)
@@ -92,7 +92,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - sličica z oznakami in oblački;
   - vrstica »#n · čas · krog · metri od štarta«;
   - 4 sličice gibanja (−0,6 s, −0,3 s, 0, +0,3 s).
-- **Podatki (B):** proga, način, vreme, različica (žig iz `tools/stamp.js`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
+- **Podatki (B):** proga, način, vreme, različica (žig `js/game.js`, ki ga objava doda s `tools/stamp.js`; lokalno brez žigov `lokalno`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
 - **Ime datoteke:** `napake_<proga>_<LLLLMMDD-UUMM>.png`.
 - **Ob koncu** (ali z gumbom Deli kadar koli) se odpre izbira:
   - **Deli zdaj** – na telefonu meni Deli (Web Share), na računalniku je prva izbira **Kopiraj sliko** za Ctrl + V;
@@ -184,7 +184,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - Časovnica s klikom in vlečenjem, časa, 5 s nazaj/naprej, po sličicah (iskanje sličice: `R.frames`, `P.t` / `P.i`).
 - Stikalo Cel posnetek | Zastavice (zaenkrat brez zastavic, pride v sklopu 7).
 - Posnetek do sem (Pavza + tipka I), Nazaj v dirko s 3 · 2 · 1, shranjevanje in vračanje stanja avtov.
-- Prevodi novih gumbov v `js/lang.js`, `node tools/stamp.js`.
+- Prevodi novih gumbov v `js/lang.js`, `node tools/stamp.js --check`.
 - **Testi:** `tests/browser/replay.test.mjs` (razširi), `ctrl`, `pad`, `lang`; GitHub vse.
 - **Najbolj negotov sklop** (vračanje stanja dirke).
 - **Preizkus:** skok s klikom, vlečenje, 5 s nazaj, Posnetek do sem sredi dirke in nadaljevanje na S25 in A25, ležeče in pokonci.
@@ -227,7 +227,7 @@ Dodano 26. 10. 2026 na željo uporabnika (»dodaj stabilne teste«).
 - **Preizkus:** Deli → Claude na obeh telefonih, Samo shrani (najdi v Prenosih), Kopiraj sliko v Edgu.
 - **Narejeno** (skupaj s sklopom 7, ena veja in en pull request):
   - **Slike gibanja:** Dodaj k zbirki posname še tri slike posnetka (−0,6, −0,3 in +0,3 s; 400 px) prek `rpShotAt` (posnetek se postavi na tisti čas, `Render.snapshot`, nato nazaj); 0 s je slika trenutka. Trenutek ima tudi x, z sledenega avta (zemljevid).
-  - **Zbirna slika** (`sestavi`, `list`): do 3 trenutki na sliko; ležeče mreža 2 × 2 (en trenutek: trenutek in polje v vrsti; dva: polje čez celo širino spodaj; trije: polje v četrtem polju), pokonci trenutki drug ob drugem (en trenutek: polje desno), polje spodaj; pri več trenutkih več slik (`_1`, `_2`). Daljša stranica največ 1600 px (nastavitev 2400). Oznake in oblački so narisani v velikosti slike (oblaček zraste z besedilom). Polje B: proga, način/vreme, različica (žig `js/game.js` iz `tools/stamp.js`: `git log -S 'game.js?v=<žig>' index.html` najde spremembo), naprava (model telefona iz `navigator.userAgentData`, npr. SM-A256B → Galaxy A25; brskalnik), zaslon, datum, število trenutkov in zastavic, zemljevid (črta proge, štart rdeč, trenutki oštevilčeni, neoznačene zastavice oranžne).
+  - **Zbirna slika** (`sestavi`, `list`): do 3 trenutki na sliko; ležeče mreža 2 × 2 (en trenutek: trenutek in polje v vrsti; dva: polje čez celo širino spodaj; trije: polje v četrtem polju), pokonci trenutki drug ob drugem (en trenutek: polje desno), polje spodaj; pri več trenutkih več slik (`_1`, `_2`). Daljša stranica največ 1600 px (nastavitev 2400). Oznake in oblački so narisani v velikosti slike (oblaček zraste z besedilom). Polje B: proga, način/vreme, različica (žig `js/game.js`, ki ga objava doda s `tools/stamp.js`: `node tools/stamp.js --find <žig>` najde commit, žige pred 3. 11. 2026 tudi `git log -S 'game.js?v=<žig>' index.html`; lokalno brez žigov `lokalno`), naprava (model telefona iz `navigator.userAgentData`, npr. SM-A256B → Galaxy A25; brskalnik), zaslon, datum, število trenutkov in zastavic, zemljevid (črta proge, štart rdeč, trenutki oštevilčeni, neoznačene zastavice oranžne).
   - **Besedilo** kot v zasnovi; vsak zapis (barva) svoja vrstica `#n čas Kkrog s=…m barva »zapis«` (čas na tisočinko), trenutek brez zapisa `(brez zapisa)`, sledeni tekmec ` avto=<ime>`; neoznačene zastavice dirke `⚑n čas Kkrog s=…m (zastavica med dirko, ni označena)` (krog in metri iz posnetka, `rpWhere`). Naprava v prvi vrstici brez presledkov (`Galaxy-A25/Chrome-141`).
   - **Izbira** (`izbira`, `#nk-dlg`): predogled, na telefonu (dotik) Deli zdaj, Samo shrani sliko, Kopiraj besedilo; na računalniku najprej Kopiraj sliko (za vsako sliko svoj gumb), Deli zdaj le, če brskalnik zna deliti datoteke; kljukica Obdrži tudi v igri. Deli pošlje sliko(e) in besedilo; če deljenje ne gre, se slika shrani. Odpre jo gumb **Deli (n)** zgoraj desno v posnetku (v drugi vrsti, ob ◀ ⚑ ▶) ali konec posnetka po dirki (`replayEnd` → `Napake.konec`, glede na nastavitev Vprašaj / Deli / Shrani; ista zbirka po deljenju ali shranjevanju ne vpraša znova).
   - **Shranjene napake:** slika se naredi takoj po Dodaj k zbirki (`pripravi`, enkrat na različico zbirke) in shrani v IndexedDB (`rra-napake`, zadnjih 20) kot neposlano; Deli zdaj in Kopiraj sliko jo označita poslano; brez Obdrži tudi v igri se po dejanju izbriše.
