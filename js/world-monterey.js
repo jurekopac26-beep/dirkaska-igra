@@ -83,14 +83,24 @@
     // dark with leaf litter, the chaparral grey-green, the car parks dusty
     P.seC = sea === 'winter' ? [1.0, 1.0, 0.86] : [1.18, 1.06, 0.84];
     const GC = sea === 'winter' ? [0.92, 1.05, 0.86] : sea === 'autumn' ? [1.48, 1.04, 1.8] : [1.62, 1.1, 2.15];   // (the olive grass picture: golden straw in summer, a duller tan in autumn, fresh green in winter)
-    P.colMod = (x, z, c) => {
+    P.colMod = (x, z, c, dd) => {
       const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.96 + (n - 0.5) * 0.22 + (m - 0.5) * 0.12, fm = nrLCf(x, z, 0), fs = nrLCf(x, z, 2);
       c[0] *= k * GC[0]; c[1] *= k * GC[1]; c[2] *= k * GC[2];
       const pale = sstep(0.4, 0.75, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.55 * fm, green = sstep(0.55, 0.8, P.n1(x * 1.1 - 210, z * 1.1 + 75)) * fm * (sea === 'winter' ? 0.4 : 0.25);
       c[0] = lerp(c[0], c[0] * 1.1 + 0.05, pale); c[1] = lerp(c[1], c[1] * 1.1 + 0.05, pale); c[2] = lerp(c[2], c[2] * 1.12 + 0.05, pale);
       c[0] = lerp(c[0], c[0] * 0.78, green); c[1] = lerp(c[1], c[1] * 1.0, green); c[2] = lerp(c[2], c[2] * 0.8, green);   // (greener in the hollows)
       c[0] = lerp(c[0], 0.98, fs * 0.8); c[1] = lerp(c[1], 1.02, fs * 0.8); c[2] = lerp(c[2], 1.0, fs * 0.8);
+      // patches of darker, browner thatch in the dry grass (seen from above, behind the car: the hills mottled, not one flat gold)
+      const dry = sstep(0.56, 0.8, P.n2(x * 0.7 - 130, z * 0.7 + 260)) * clamp(1 - nrLCf(x, z, 1) - fs, 0, 1) * sstep(2, 8, dd) * (sea === 'winter' ? 0 : 0.7);   // (not under the oaks or the scrub; most of the ground by the circuit is the land cover's built-up class)
+      c[0] = lerp(c[0], c[0] * 0.86, dry); c[1] = lerp(c[1], c[1] * 0.8, dry); c[2] = lerp(c[2], c[2] * 0.7, dry);
+      // the mown verge inside the barriers and just behind them (nrCol's: a green lawn's, grey-olive under the golden tint): straw like the
+      // hills, a touch paler (dry; green after the winter rains)
+      if (sea !== 'winter' && dd < 5) { const t = sstep(5, 0.5, dd); c[0] *= 1 + VG[0] * t; c[1] *= 1 + VG[1] * t; c[2] *= 1 + VG[2] * t; }
     };
+    const VG = [0.14, 0.03, 0.04];
+    // the verges' clumps of longer grass (World's verge: their colour the lawn's, o.lawn): that mown verge's straw a shade darker and browner
+    // (they show as clumps), tan in autumn, green in winter
+    out.lawn = sea === 'winter' ? [0.84, 1.02, 0.76] : [0.98 * GC[0] * (1 + VG[0]) * 0.86, 1.04 * GC[1] * (1 + VG[1]) * 0.8, 0.96 * GC[2] * (1 + VG[2]) * 0.72];
     // level ground and water: the lake and ponds of the infield (the ground pulled under their water level)
     const lakes = (M.water || []).map(Pp => { const b = mtBox(Pp); let lo = 1e9; for (let k = 0; k < Pp.length; k += 2) lo = Math.min(lo, nrFar(Pp[k], Pp[k + 1])); return { P: Pp, b, y: lo - 0.4 }; });
     const edgeD = (Pp, x, z) => { let m = 1e9; for (let i = 0, j = Pp.length - 2; i < Pp.length; j = i, i += 2) { const ax = Pp[j], az = Pp[j + 1], bx = Pp[i] - ax, bz = Pp[i + 1] - az, l2 = bx * bx + bz * bz || 1, t = clamp(((x - ax) * bx + (z - az) * bz) / l2, 0, 1); m = Math.min(m, Math.hypot(x - ax - bx * t, z - az - bz * t)); } return m; };
@@ -100,15 +110,34 @@
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 64;
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
-    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (Lc) for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return pitW(x, z) > 0; };   // (and the pit, pitW below)
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const W1 = [1, 1, 1], CH = 128, side2 = (side) => (side > 0 ? 1 : 0);
     const inWorld = (x, z) => nrDist(x, z) < 400;   // (the terrain's full tiles reach ~370 m out, its coarse ring a little more)
-    // the pit lane (def.mt.pl: [m after the start line, lateral offset] on the left)
-    const PL = M.pl, PD0 = M.pit[0], PD1 = M.pit[1];
-    const plAt = (d) => { if (d < PL[0][0] || d > PL[PL.length - 1][0]) return null; const k = Math.min(PL.length - 2, Math.floor((d - PL[0][0]) / 8)), t = (d - PL[k][0]) / 8; return lerp(PL[k][1], PL[k + 1][1], clamp(t, 0, 1)); };
-    const inPit = (i) => { const d = dS(i * ds); return d >= PD0 - 4 && d <= PD1 + 4; };
+    // the pit lane on the left (def.pit, its offset negative: Core's Track.pitAt, every offset measured to the left), from the way in to the
+    // way out; the teams' canopies behind its apron from CAN0 to CAN1 (m after the start line: 4 boxes before the crews' boxes, def.pitRow,
+    // and 3 after them), CAD deep behind the apron (APR)
+    const PP = def.pit, PD0 = PP[1], PD1 = PP[2], pitD = (d) => T.pitAt(sAt(d)), APR = 9, CAD = 6.3, CAN0 = def.pitRow[0] - 40, CAN1 = def.pitRow[1] + 30;
+    const inPit = (i) => { const d = dS(i * ds); return d >= PD0 && d <= PD1; };
+    const pitGap = (i) => { const d = dS(i * ds); if (d < PD0 - 16 || d > PD1 + 16) return false; if (d < PD0 || d > PD1) return true; const p = T.pitAt(i * ds); return !!p && p.gap; };   // (with the asphalt's wedges 16 m before and after)
+    // the pit's ground (lateral: from the pit wall to its back, the canopies' or the lane's outer wall): pitW(x, z) the share of it (1 inside,
+    // easing out over 1.5 m towards the track and 8 m away from it, 8 m past its ends), pitY its road height. Level under the lane and the apron
+    // (the land falls away from the road past the start line), no trees, roads, cars or crowds on it
+    let pitY = 0;
+    const PITC = 16, pitCells = new Set(), pitCK = (a, b) => a * 65536 + b;   // (the 16 m cells round the pit, with their neighbours: a quick no elsewhere)
+    for (let d = PD0 - 10; d <= PD1 + 10; d += 4) { const p = T.pitAt(sAt(clamp(d, PD0 + 1, PD1 - 1))), back = p.lout + APR + CAD + 10;
+      for (let o = p.wall - 3; o <= back; o += 4) { const [x, z] = atSf(sAt(d), -o), a = Math.floor(x / PITC), b = Math.floor(z / PITC); for (let u = -1; u <= 1; u++) for (let v = -1; v <= 1; v++) pitCells.add(pitCK(a + u, b + v)); } }
+    const pitW = (x, z) => {
+      if (!pitCells.has(pitCK(Math.floor(x / PITC), Math.floor(z / PITC)))) return 0;
+      const n = nrNear(x, z); if (n.i < 0 || n.lat > 0) return 0;
+      const s = n.i * ds, d = dS(s); if (d < PD0 - 8 || d > PD1 + 8) return 0;
+      const p = T.pitAt(sAt(clamp(d, PD0 + 1, PD1 - 1))); if (!p) return 0;
+      const lat = -n.lat, back = d >= CAN0 - 2 && d <= CAN1 + 2 ? p.lout + APR + CAD + 1.5 : p.lout + 1.5;
+      pitY = hyS(s);
+      return Math.min(sstep(p.wall - 1.5, p.wall, lat), sstep(back + 8, back, lat), sstep(PD0 - 8, PD0, d), sstep(PD1 + 8, PD1, d));
+    };
+    { const lakePad = P.pad; P.pad = (x, z, h) => { h = lakePad(x, z, h); const k = pitW(x, z); return k > 0 ? lerp(h, pitY - 0.06, k) : h; }; }
 
     /* ---- terrain tiles: which ones (built at the end, when the trees have shaded the ground under them) ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(nrGrassTex(tex.grass.anisotropy)), vertexColors: true }), tiles = [];
@@ -149,7 +178,7 @@
     /* ---- the verges: the gravel traps of tan decomposed granite where the barrier stands far out (Core: gravL / gravR), a strip of dry
        grass and dirt elsewhere, down to the terrain ---- */
     const gvTex = ownTex(API.rbGravelTex()), gvMat = new THREE.MeshLambertMaterial({ map: gvTex, vertexColors: true });
-    const GRV = [1.18, 1.0, 0.8], GRV2 = [1.08, 0.92, 0.74], DRY = sea === 'winter' ? [0.62, 0.7, 0.46] : sea === 'autumn' ? [0.92, 0.8, 0.6] : [1.02, 0.88, 0.62];
+    const GRV = [1.15, 1.05, 0.92], GRV2 = [1.05, 0.97, 0.85], DRY = sea === 'winter' ? [0.62, 0.7, 0.46] : sea === 'autumn' ? [0.92, 0.8, 0.6] : [1.02, 0.88, 0.62];
     const verge = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], kb = kerb[side2(side)][i] ? T.curbW : 0.05, lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.04 - y)]; };
       return [[w + kb, 0.02], [w + kb + 0.6, -0.02], lift(Math.max(w + kb + 1.4, bar - 0.4), -0.06), lift(bar + 1.2, -0.12), lift(bar + 3.0, -0.3)]; };
     for (let c0 = 0; c0 < N; c0 += CH) {   // (only the traps and a narrow dirt edge: elsewhere the terrain's grass comes up to the kerb)
@@ -158,6 +187,7 @@
         const i = ii % N;
         for (const side of [-1, 1]) {
           const si = side2(side), gl = (side > 0 ? T.gravR : T.gravL)[i], n3 = crH(i, side, 5) * 0.06, kb = kerb[si][i] ? T.curbW : 0.05;
+          if (side < 0 && pitGap(i)) { pv[si] = -1; continue; }   // (where the pit lane leaves and joins: its asphalt from the road's edge)
           let pr, cols;
           if (gl) { pr = verge(i, side); cols = [GRV, GRV2, GRV, [lerp(GRV[0], DRY[0], 0.5), lerp(GRV[1], DRY[1], 0.5), lerp(GRV[2], DRY[2], 0.5)], DRY]; }
           else { const e = [0.86 - n3, 0.8 - n3, 0.7 - n3]; pr = [[w + kb, 0.02], [w + kb + 0.25, 0.0], [w + kb + 0.5, -0.03], [w + kb + 0.8, -0.06], [w + kb + 1.1, -0.1]]; cols = [e, e, e, DRY, DRY]; }
@@ -212,7 +242,7 @@
     for (const c of T.corners) { if (c.sev < 3) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 10; k <= i1c + 14; k++) { const ii = ((k % N) + N) % N; if ((si ? T.gravR : T.gravL)[ii] && !(si === 0 && inPit(ii))) tyreOn[si][ii] = 1; } }
     const kindAt = (i, side) => {   // 0 armco, 1 concrete wall, 2 tyre wall; -1 none (where the pit lane leaves and joins)
-      if (side < 0 && inPit(i)) { const d = dS(i * ds); return d < PD0 + 40 || d > PD1 - 30 ? -1 : 1; }
+      if (side < 0 && inPit(i)) return pitGap(i) ? -1 : 1;   // (the pit wall: none where the lane leaves and joins)
       if (tyreOn[side2(side)][i]) return 2;
       const d = dS(i * ds); if (d > -300 && d < 120) return 1;
       return wallOn[side2(side)][i] ? 1 : 0;
@@ -224,8 +254,8 @@
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 512);
     const fence = [new Uint8Array(N), new Uint8Array(N)];
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.78, 0.77, 0.73], concD = [0.64, 0.63, 0.6];
-    const railRow = (gr, i, side, k) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
+    const railRow = (gr, i, side, k, barO) => {   // (barO: another line than the circuit's barrier, the pit lane's outer edge)
+      const bar = barO != null ? barO : side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.88, 0.88, 0.86], [0.82, 0.82, 0.8]];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
@@ -297,58 +327,124 @@
 
     /* ---- the start gantry with its lights (the renderer drives them: out.dyn.lights), the banner over the line ---- */
     {
-      const [x, z, h, i] = atS(sStart, 0), gy = T.hy[i], g = scen.get(x, z), span = Math.max(T.bl[i], T.br[i]) + 1.2, nx = T.nx[i], nz = T.nz[i], gray = [0.2, 0.22, 0.26];
-      for (const sd of [-1, 1]) box(g, x + nx * span * sd, gy - 0.3, z + nz * span * sd, 0.8, 7.9, 0.8, h, gray);
-      box(g, x, gy + 6.4, z, 1.1, 1.3, span * 2 + 0.8, h, [0.14, 0.15, 0.18], [0.24, 0.25, 0.3]);
+      // (its left leg on the strip behind the pit wall, clear of the pit lane: the beam from there to the right leg past the barrier)
+      const [x, z, h, i] = atS(sStart, 0), gy = T.hy[i], g = scen.get(x, z), pS = T.pitAt(sStart), sL = pS ? pS.wall + 0.6 : T.bl[i] + 1.2, sR = T.br[i] + 1.2, nx = T.nx[i], nz = T.nz[i], gray = [0.2, 0.22, 0.26];
+      const mo = (sR - sL) / 2, cx = x + nx * mo, cz = z + nz * mo, span = (sL + sR) / 2;
+      for (const sd of [-1, 1]) box(g, cx + nx * span * sd, gy - 0.3, cz + nz * span * sd, 0.8, 7.9, 0.8, h, gray);
+      box(g, cx, gy + 6.4, cz, 1.1, 1.3, span * 2 + 0.8, h, [0.14, 0.15, 0.18], [0.24, 0.25, 0.3]);
       box(g, x, gy + 5.2, z, 0.5, 1.4, 5.2, h, [0.08, 0.08, 0.09]);
-      const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, gy + 7.95, z + nz * o); m.rotation.y = -h; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      board(x - T.tx[i] * 0.6, gy + 6.45, z - T.tz[i] * 0.6, T.tx[i], T.tz[i], span * 2 - 2, 1.2, MT_AT.ban + 1);
-      exclPush(x, z, span + 6);
+      // the five lamps in one mesh (one draw call): each of out.dyn.lights stands for one lamp, its material.color.setHex recolours that lamp's vertices
+      const lg = new GB(); for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0; box(lg, x + nx * o, gy + 7.64, z + nz * o, 0.62, 0.62, 0.62, h, [1, 1, 1]); }
+      const lm = new THREE.Mesh(lg.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true })), col = lm.geometry.attributes.color, per = col.count / 5, cc = new THREE.Color();
+      lm.matrixAutoUpdate = false; root.add(lm);
+      const lamp = (k) => ({ material: { color: { setHex(v) { cc.setHex(v); for (let j = k * per; j < (k + 1) * per; j++) col.setXYZ(j, cc.r, cc.g, cc.b); col.needsUpdate = true; } } } });
+      out.dyn.lights = [0, 1, 2, 3, 4].map(lamp); out.dyn.lights.forEach(l => l.material.color.setHex(0x2a0606));
+      board(cx - T.tx[i] * 0.6, gy + 6.45, cz - T.tz[i] * 0.6, T.tx[i], T.tz[i], span * 2 - 2, 1.2, MT_AT.ban + 1);
+      exclPush(x, z, Math.max(sL, sR) + 6);
     }
 
-    /* ---- the pit lane on the left (def.mt.pl, from OSM; scenery: the cars do not stop here): the lane and its lines, the concrete apron, the
-       teams' canopies with their cars, tool chests and tyres, the pit wall's stands; the speed limit board, the light at the exit ---- */
+    /* ---- the pit lane on the left of the front straight (def.pit, its offset negative: Core's Track.pitAt; the cars stop in their boxes): its
+       asphalt from behind the pit wall (where it leaves and joins the circuit: from the road's edge, the nose hatched white) out to its outer
+       edge, a dashed line by the wall and a solid one along the outer edge, the concrete apron with the boxes' lines in front of a row of the
+       teams' pop-up canopies (one a box, 10 m apart, CAN0 .. CAN1: the 13 crews' boxes, def.pitRow, among them, their kit on the apron and
+       their stands on the strip behind the pit wall), a low concrete wall along the lane's outer edge where there is no apron; the PIT LANE
+       board at the way in, the light at the way out. The crews are the renderer's (out.pitBoxes, the player's out.pitBox: their frame turned
+       to the left, nx / nz pointing away from the track); Core keeps the player's car off the stands (T.pitStands). Seen from above, behind
+       the car: the canopies' roofs, the apron, the lines; nothing under the roofs but what shows at their open front ---- */
     let nBoxes = 0;
+    const pitCones = [];
     {
-      const gl = new GB(true), gp = new GB(), wl = [0.95, 0.95, 0.94], apC = [0.8, 0.8, 0.77], LWh = 3.25;
-      const at = (d, o, y) => { const [x, z] = atSf(sAt(d), o); return [x, hyS(sAt(d)) + y, z]; };
-      for (let d = PD0; d < PD1; d += 2) {
-        const a = plAt(d), b = plAt(d + 2); if (a == null || b == null) continue;
-        const A = at(d, a + LWh, 0.026), B = at(d, a - LWh, 0.026), Cq = at(d + 2, b - LWh, 0.026), D = at(d + 2, b + LWh, 0.026);
-        gl.quadUp(A, B, Cq, D, [W1, W1, W1, W1], [A, B, Cq, D].map(p => [p[0] / 8, -p[2] / 8]));
-        gp.quadUp(at(d, a - LWh + 0.18, 0.034), at(d, a - LWh, 0.034), at(d + 2, b - LWh, 0.034), at(d + 2, b - LWh + 0.18, 0.034), [wl, wl, wl, wl]);
-        if (((d / 2) | 0) % 2 === 0) gp.quadUp(at(d, a + LWh, 0.034), at(d, a + LWh - 0.18, 0.034), at(d + 2, b + LWh - 0.18, 0.034), at(d + 2, b + LWh, 0.034), [wl, wl, wl, wl]);
-        const full = d > PD0 + 120 && d < PD1 - 60;
-        if (full) gp.quadUp(at(d, a - LWh, 0.022), at(d, a - LWh - 9, 0.022), at(d + 2, b - LWh - 9, 0.022), at(d + 2, b - LWh, 0.022), [apC, apC, apC, apC]);
+      const gl = new GB(true), gp = new GB(), wl = [0.95, 0.95, 0.94], apC = [0.8, 0.8, 0.77], lnC = [0.9, 0.9, 0.9], [pq0, pq1] = def.pitRow, P3 = PP[3];
+      const at = (d, o, y) => { const s = sAt(d), [x, z] = atSf(s, -o); return [x, hyS(s) + y, z]; };   // (o: metres to the left of the centre line)
+      const apOn = (d) => d >= CAN0 && d <= CAN1;
+      // (16 m before the way in and after the way out: the lane's asphalt as a wedge off the road's edge, out to where the lane starts)
+      const pitE = (d) => { if (d >= PD0 && d <= PD1) return pitD(d); const e = d < PD0 ? pitD(PD0) : pitD(PD1), f = d < PD0 ? sstep(PD0 - 16, PD0, d) : sstep(PD1 + 16, PD1, d); return e && f > 0 ? Object.assign({}, e, { lout: lerp(w + 0.2, e.lout, f), lin: lerp(w + 0.1, e.lin, f), gap: true }) : null; };
+      for (let d = PD0 - 16; d < PD1 + 16; d += 2) {
+        const p = pitE(d), q = pitE(d + 2); if (!p || !q) continue;
+        const a0 = p.gap ? w - 0.05 : p.wall + 0.3, b0 = q.gap ? w - 0.05 : q.wall + 0.3;
+        const A = at(d, a0, 0.026), B = at(d, p.lout, 0.026), Cq = at(d + 2, q.lout, 0.026), D = at(d + 2, b0, 0.026);
+        gl.quadUp(A, B, Cq, D, [lnC, lnC, lnC, lnC], [A, B, Cq, D].map(v => [v[0] / 8, -v[2] / 8]));
+        gp.quadUp(at(d, p.lout - 0.32, 0.034), at(d, p.lout - 0.14, 0.034), at(d + 2, q.lout - 0.14, 0.034), at(d + 2, q.lout - 0.32, 0.034), [wl, wl, wl, wl]);   // the solid line along the outer edge
+        if (p.gap || q.gap) {   // the blend line along the lane's inner edge, the nose between it and the road hatched
+          gp.quadUp(at(d, p.lin, 0.034), at(d, p.lin + 0.2, 0.034), at(d + 2, q.lin + 0.2, 0.034), at(d + 2, q.lin, 0.034), [wl, wl, wl, wl]);
+          if (((d / 2) | 0) % 2 === 0 && p.lin - w > 0.6) { const sl = (p.lin - w) * 0.9, r = pitD(d + sl), lo = (r ? Math.min(r.lin, p.lin) : p.lin) - 0.05;   // (diagonal stripes)
+            gp.quadUp(at(d, w + 0.1, 0.034), at(d + sl, lo, 0.034), at(d + sl + 0.55, lo, 0.034), at(d + 0.55, w + 0.1, 0.034), [wl, wl, wl, wl]); }
+        } else if (((d / 2) | 0) % 2 === 0) gp.quadUp(at(d, p.lin + 0.14, 0.034), at(d, p.lin + 0.32, 0.034), at(d + 2, q.lin + 0.32, 0.034), at(d + 2, q.lin + 0.14, 0.034), [wl, wl, wl, wl]);   // dashed by the wall
+        if (apOn(d) && apOn(d + 2)) gp.quadUp(at(d, p.lout, 0.022), at(d, p.lout + APR, 0.022), at(d + 2, q.lout + APR, 0.022), at(d + 2, q.lout, 0.022), [apC, apC, apC, apC]);   // the apron
       }
+      // the lane's outer wall where no apron is (Core's limit there: the lane's outer edge)
+      { const gw = new RB(); let pw = -1;
+        for (let d = PD0; d <= PD1; d += 2) { const i = T.idx(sAt(d)), p = T.pitAt(i * ds); if (!p || (apOn(d) && apOn(d - 2))) { pw = -1; continue; } const r = railRow(gw, i, -1, 1, p.lout); if (pw >= 0) gw.link(pw, r, 0, 4); pw = r; }
+        addM(gw, rMat, true); }
+      // the teams' canopies: aluminium legs, a roof in the team's colour pitched to a ridge along the lane, a valance along the front (the crews'
+      // band over it: the renderer's, at 3.7 m), the back hung in the team's colour (a crew's: tyre racks against it)
+      const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1]];
+      const LEG = [0.78, 0.79, 0.82], TYR = [0.08, 0.08, 0.09], TYT = [0.16, 0.16, 0.18], EAVE = 3.95, RIDGE = 0.8;
+      const CAB = [[0.78, 0.14, 0.12], [0.2, 0.21, 0.24], [0.15, 0.3, 0.62], [0.12, 0.12, 0.13]], CMP = [[0.86, 0.14, 0.12], [0.95, 0.8, 0.14], [0.92, 0.92, 0.9]], SCR = [0.16, 0.24, 0.38];
+      const roof = (g, x, y, z, Lr, Dr, hr, rot, col) => {   // two slopes up to a ridge along the lane, the gable ends
+        const c = Math.cos(rot), s = Math.sin(rot), Q = (lx, ly, lz) => [x + lx * c - lz * s, y + ly, z + lx * s + lz * c], inn = [x, y - 1, z], c2 = [col[0] * 0.84, col[1] * 0.84, col[2] * 0.84];
+        g.quadO(Q(-Lr / 2, 0, -Dr / 2), Q(Lr / 2, 0, -Dr / 2), Q(Lr / 2, hr, 0), Q(-Lr / 2, hr, 0), c2, inn);
+        g.quadO(Q(-Lr / 2, 0, Dr / 2), Q(Lr / 2, 0, Dr / 2), Q(Lr / 2, hr, 0), Q(-Lr / 2, hr, 0), col, inn);
+        for (const e of [-1, 1]) g.triO(Q(e * Lr / 2, 0, -Dr / 2), Q(e * Lr / 2, 0, Dr / 2), Q(e * Lr / 2, hr, 0), c2, [x, y, z]); };
+      let k = 0;
+      for (let q = CAN0; q + 10 <= CAN1; q += 10, k++) {
+        const s0 = sAt(q), i = T.idx(s0 + 5), p = T.pitAt(sAt(q + 5)); if (!p || p.t < 0.999) continue;
+        const tx = T.tx[i], tz = T.tz[i], nx = -T.nx[i], nz = -T.nz[i], hd = T.hd[i], base = p.lout, oc = atSf(sAt(q + 5), 0), yb = hyS(sAt(q + 5)), crew = q >= pq0 && q <= pq1, tc = TEAM[(k * 5 + 2) % TEAM.length];
+        const XZ = (a, o) => [oc[0] + tx * (a - 5) + nx * o, oc[1] + tz * (a - 5) + nz * o];   // (a: metres along from the box's start, o: to the left)
+        const B = (a, o, y, sx, sy, sz, col, top, nb) => { const [x, z] = XZ(a, o); box(scen.get(x, z), x, yb + y, z, sx, sy, sz, hd, col, top, nb); };
+        const Cy = (a, o, y, r, h, col, top) => { const [x, z] = XZ(a, o); cyl(scen.get(x, z), x, yb + y, z, r, h, 8, col, top); };
+        { const A = at(q, base, 0.035), Bq = at(q, base + APR, 0.035), A2 = at(q + 0.18, base, 0.035), B2 = at(q + 0.18, base + APR, 0.035); gp.quadUp(A, Bq, B2, A2, [wl, wl, wl, wl]); }   // the box's line
+        const f0 = base + APR, b0 = f0 + CAD, oM = (f0 + b0) / 2, [cxr, czr] = XZ(5, oM), g = scen.get(cxr, czr);
+        for (const a of [0.3, 9.7]) for (const o of [f0 + 0.08, b0 - 0.08]) B(a, o, -0.2, 0.08, EAVE + 0.2, 0.08, LEG, null, true);   // the legs
+        roof(g, cxr, yb + EAVE, czr, 9.6, CAD, RIDGE, hd, tc);
+        B(5, f0 + 0.02, EAVE - 0.42, 9.6, 0.42, 0.05, tc, tc, true);                                                   // the valance
+        B(5, b0 - 0.05, 0.4, 9.6, EAVE - 0.4, 0.06, [tc[0] * 0.72, tc[1] * 0.72, tc[2] * 0.72], null, true);           // the back, hung in the team's colour
+        if (!crew) {   // an empty box: tyres stacked and a tool chest at the canopy's front, on the apron
+          for (const a of [1.1, 1.85]) Cy(a, f0 - 0.55, 0, 0.34, 1.12, TYR, TYT);
+          B(8.5, f0 - 0.5, 0, 1.2, 0.95, 0.6, CAB[k % CAB.length], [0.12, 0.12, 0.13], true);
+          continue; }
+        for (const a of [1.2, 8.8]) for (let l = 0; l < 3; l++) Cy(a, b0 - 0.7, l * 0.3, 0.34, 0.28, TYR, TYT);           // a crew's: tyres in their racks
+        // a crew's box (its men are the renderer's): on the apron a roll cab and a set of tyres in their blankets on a trolley (the player's
+        // apron kept clear: his crew runs across it), a monitor cart, the air line's reel; the team's stand on the strip behind the pit wall
+        const kb = (q - pq0) / 10, mine = Math.abs(q + 5 - P3) < 1, cmp = CMP[kb % 3], wv = p.wall;
+        if (!mine) { B(1.6, base + 7.6, 0, 1.15, 0.95, 0.62, CAB[(kb * 7 + 3) % 4], [0.1, 0.1, 0.11], true);
+          B(7.6, base + 7.5, 0.06, 1.75, 0.12, 0.9, [0.2, 0.2, 0.22], null, true);
+          for (const ta of [7.18, 8.02]) { Cy(ta, base + 7.5, 0.18, 0.36, 1.0, TYR, TYT); Cy(ta, base + 7.5, 0.6, 0.366, 0.16, cmp, cmp); } }
+        const mc = mine ? 9.35 : 3.4;
+        B(mc, base + 8.25, 0, 0.62, 0.95, 0.5, [0.22, 0.23, 0.26], [0.12, 0.12, 0.13], true); B(mc, base + 8.28, 1.33, 1.2, 0.4, 0.05, SCR, [0.07, 0.07, 0.08], true);   // the monitor cart and its screens
+        B(0.75, base + 8.75, 0, 0.3, 1.1, 0.3, [0.3, 0.31, 0.34], null, true); Cy(0.75, base + 8.75, 1.1, 0.3, 0.22, [0.8, 0.15, 0.12], [0.85, 0.2, 0.16]);   // the air line's reel
+        B(5, wv + 0.72, 0.96, 2.5, 0.06, 1.0, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]);   // the stand: a desk with screens towards the stools, under a roof
+        for (const la of [-1.18, 1.18]) for (const lw of [0.28, 1.16]) B(5 + la, wv + lw, 0, 0.07, 0.96, 0.07, [0.22, 0.22, 0.24], null, true);
+        B(5, wv + 0.34, 1.02, 2.1, 0.4, 0.05, SCR, [0.07, 0.07, 0.08], true);
+        for (const pa of [-1.2, 1.2]) B(5 + pa, wv + 0.2, 0, 0.08, 2.5, 0.08, [0.25, 0.26, 0.28], null, true);
+        B(5, wv + 0.8, 2.5, 2.7, 0.07, 1.55, [0.22, 0.23, 0.26], [0.3, 0.31, 0.35]);
+        for (const sa of [-0.62, 0.62]) Cy(5 + sa, wv + 1.5, 0, 0.17, 0.48, [0.14, 0.14, 0.16], [0.2, 0.2, 0.22]);   // the stools (the engineers are the renderer's)
+        if (mine) { const sb = sAt(q + 5), bp = T.bayPose(P3);   // (the car stops in its box on the apron, parked straight in front of its canopy: Core's BAY; turned to the left)
+          out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + APR, stop: atSf(sb, -bp.o), stopO: bp.o, stopA: -bp.a, y: yb }; }
+        (out.pitBoxes = out.pitBoxes || []).push({ k: kb, s: sAt(q + 5), ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        nBoxes++;
+      }
+      { const p = pitD(CAN1); if (p) { const base = p.lout; gp.quadUp(at(CAN1 - 0.18, base, 0.035), at(CAN1 - 0.18, base + APR, 0.035), at(CAN1, base + APR, 0.035), at(CAN1, base, 0.035), [wl, wl, wl, wl]); } }   // (the last box's far line)
+      { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the strip: Core keeps the player's car off them (pitAt().inner: the lane's edge there, eased in and out)
+        if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
+          const kt = [0.86, 0.86, 0.83];   // and a low concrete kerb along that limit
+          for (let d = T.pitStands[0] - 28; d < T.pitStands[1] + 28; d += 2) { const p = pitD(d), q = pitD(d + 2); if (!p || !q || p.gap || q.gap || (p.inner - p.wall < 0.15 && q.inner - q.wall < 0.15)) continue;
+            gp.quadUp(at(d, p.inner - 0.15, 0.1), at(d, p.inner, 0.1), at(d + 2, q.inner, 0.1), at(d + 2, q.inner - 0.15, 0.1), [kt, kt, kt, kt]); } } }
       addM(gl, aMat); addM(gp, lMat);
-      // the teams' boxes: every 12 m on the apron a pop-up canopy in the team's colour, the car (a sports racer: low, a wing), a tool chest, tyres
-      const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.1, 0.62, 0.72]];
-      for (let d = PD0 + 140, k = 0; d < PD1 - 80; d += 12, k++) {
-        const a = plAt(d); if (a == null) continue;
-        const s = sAt(d), i = T.idx(s), o = a - LWh - 4.5, [x, z] = atSf(s, o), y = hyS(s), hd = T.hd[i], g = scen.get(x, z), tc = TEAM[(k * 7 + 3) % TEAM.length], tx = T.tx[i], tz = T.tz[i], nx = -T.nx[i], nz = -T.nz[i];
-        if (excluded(x, z)) continue;
-        for (const [pa, pb] of [[-2.9, -2.6], [2.9, -2.6], [-2.9, 2.6], [2.9, 2.6]]) box(g, x + tx * pa + nx * pb, y, z + tz * pa + nz * pb, 0.07, 2.6, 0.07, hd, [0.8, 0.8, 0.82], null, true);
-        box(g, x, y + 2.6, z, 6.0, 0.08, 5.4, hd, tc, tc); box(g, x, y + 2.68, z, 3.0, 0.5, 5.2, hd, tc, [Math.min(1, tc[0] * 1.15), Math.min(1, tc[1] * 1.15), Math.min(1, tc[2] * 1.15)]);   // (the canopy, its peak)
-        if (crH(k, 1, 51) < 0.7) { const cx = x - nx * 0.4, cz = z - nz * 0.4, cc = TEAM[(k * 3 + 1) % TEAM.length];   // the car, nose to the lane
-          box(g, cx, y + 0.12, cz, 4.4, 0.55, 1.9, hd + Math.PI / 2, cc, cc, true); box(g, cx + nx * 0.3, y + 0.62, cz + nz * 0.3, 1.6, 0.4, 1.2, hd + Math.PI / 2, [0.12, 0.14, 0.18], cc, true);
-          box(g, cx + nx * 2.0, y + 0.9, cz + nz * 2.0, 0.35, 0.06, 1.9, hd + Math.PI / 2, [0.1, 0.1, 0.11], [0.1, 0.1, 0.11], true);
-          for (const [wa, wb] of [[1.4, 0.85], [1.4, -0.85], [-1.45, 0.85], [-1.45, -0.85]]) cyl(g, cx - nx * wa + tx * wb, y, cz - nz * wa + tz * wb, 0.33, 0.3, 8, [0.06, 0.06, 0.07], [0.5, 0.5, 0.52]); }
-        box(g, x + tx * 2.2 + nx * 2.2, y, z + tz * 2.2 + nz * 2.2, 1.2, 1.0, 0.6, hd, [0.7, 0.12, 0.1], [0.12, 0.12, 0.13], true);   // a tool chest
-        for (let q = 0; q < 2; q++) cyl(g, x - tx * 2.3 + nx * (1.8 + q * 0.75), y, z - tz * 2.3 + nz * (1.8 + q * 0.75), 0.33, 1.1, 8, [0.08, 0.08, 0.09], [0.16, 0.16, 0.18]);   // tyres in their stacks
-        exclPush(x, z, 5); CR.exclAdd(x, z, 5); nBoxes++;
-      }
-      // the boards: PIT LANE at the entry, the light at the exit (a red and a green lamp on a grey post, by the blend line)
-      { const d = PD0 + 30, a = plAt(d), s = sAt(d), i = T.idx(s); if (a != null) { const [x, z] = atSf(s, a - LWh - 1.5), y = nrGround(x, z), g = scen.get(x, z);
+      // the PIT LANE boards: at the way in, beyond the lane's outer wall, and where the real lane leaves the circuit before Turn 11 (where
+      // the board stood by OSM's lane: kept there, the user's wish 2. 11. 2026)
+      for (const [d, oF] of [[PD0 + 30, null], [-476, 13.3]]) { const p = pitD(d), s = sAt(d), i = T.idx(s); if (oF == null && !p) continue;
+        const [x, z] = atSf(s, -(oF != null ? oF : p.lout + 1.6)), y = nrGround(x, z), g = scen.get(x, z);
         for (const o of [-1.4, 1.4]) box(g, x + T.tx[i] * o, y - 0.3, z + T.tz[i] * o, 0.12, 2.8, 0.12, T.hd[i], [0.55, 0.56, 0.58]);
-        board(x, y + 1.7, z, T.tx[i], T.tz[i], 3.2, 0.8, MT_AT.ban + 3); exclPush(x, z, 3); } }
-      { const d = PD1 - 40, a = plAt(d), s = sAt(d), i = T.idx(s); if (a != null) { const [x, z] = atSf(s, a + LWh + 0.9), y = hyS(s), g = scen.get(x, z);
-        box(g, x, y - 0.3, z, 0.22, 3.6, 0.22, T.hd[i], [0.45, 0.46, 0.48]); box(g, x, y + 2.6, z, 0.5, 1.2, 0.4, T.hd[i], [0.08, 0.08, 0.09]);
-        const lr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.12), new THREE.MeshBasicMaterial({ color: 0x3a0808 })), lgr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.12), new THREE.MeshBasicMaterial({ color: 0x18ff60 }));
-        for (const [m, yy] of [[lr, 3.45], [lgr, 2.9]]) { m.position.set(x - T.tx[i] * 0.25, y + yy, z - T.tz[i] * 0.25); m.rotation.y = -T.hd[i] + Math.PI / 2; root.add(m); }
-        exclPush(x, z, 2); } }
+        board(x, y + 1.7, z, T.tx[i], T.tz[i], 3.2, 0.8, MT_AT.ban + 3); exclPush(x, z, 3); }
+      // the light at the way out: a red and a green lamp on a grey post at the end of the pit wall, towards the cars in the lane (one mesh)
+      { const d = PD1 - 26, p = pitD(d), s = sAt(d), i = T.idx(s); if (p) { const o = (p.wall + p.lin) / 2 + 0.3, [x, z] = atSf(s, -o), y = hyS(s), g = scen.get(x, z), lg = new GB();
+        box(g, x, y - 0.3, z, 0.22, 3.6, 0.22, T.hd[i], [0.45, 0.46, 0.48]); box(g, x, y + 2.6, z, 0.4, 1.2, 0.5, T.hd[i], [0.08, 0.08, 0.09]);
+        for (const [c, yy] of [[[0.23, 0.03, 0.03], 3.3], [[0.09, 1, 0.38], 2.75]]) box(lg, x - T.tx[i] * 0.22, y + yy, z - T.tz[i] * 0.22, 0.06, 0.3, 0.3, T.hd[i], c);
+        const lm = new THREE.Mesh(lg.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true })); lm.matrixAutoUpdate = false; root.add(lm); exclPush(x, z, 2); } }
+      // where the knockable cones go (with the other props, below): on the noses, before the pit wall begins and after it ends
+      for (const sg of [-1, 1]) { let dW = null; for (let d = sg < 0 ? PD0 : PD1; sg < 0 ? d < PD1 : d > PD0; d -= sg) { const p = pitD(d); if (p && !p.gap) { dW = d; break; } }
+        if (dW == null) continue; for (let k = 1; k <= 3; k++) { const d = dW + sg * (k * 4 + 2), p = pitD(d); if (!p || !p.gap || p.lin - w < 1.2) continue; pitCones.push(atSf(sAt(d), -(w + p.lin) / 2)); } }
     }
 
     /* ---- the buildings of OSM (their outlines and heights): stucco and metal under flat roofs; the grandstands (their outlines): aluminium
@@ -434,7 +530,7 @@
     const dirtMat = new THREE.MeshLambertMaterial({ map: gvTex, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
     const markMat = new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
     const roads = new Chunks(256, true), dirt = new Chunks(256, true), marks = new Chunks(256);
-    const RY = (x, z) => nrGround(x, z) + 0.05, ok = (x, z) => { const n = nrNear(x, z); return !(n.i >= 0 && n.dd < 3) && inWorld(x, z); };
+    const RY = (x, z) => nrGround(x, z) + 0.05, ok = (x, z) => { if (pitW(x, z) > 0) return false; const n = nrNear(x, z); return !(n.i >= 0 && n.dd < 3) && inWorld(x, z); };   // (not over the pit)
     const JR = (M.junc || []).map(([x, z]) => [x, z]);
     const inJ = (x, z, r) => { for (const [jx, jz] of JR) if (Math.abs(x - jx) < r && Math.abs(z - jz) < r && Math.hypot(x - jx, z - jz) < r) return true; return false; };
     const disc = (ch, x, z, r, col) => { if (!ok(x, z)) return; const g = ch.get(x, z), c = [x, RY(x, z), z];   // (the round patch where two pieces of a road meet, and over a junction)
@@ -595,7 +691,7 @@
     out.propR = 150;
     const vf = propFloorTable(null, (i, side) => verge(i, side));
     out.propFloor = (q, near) => (Math.abs(q.d) > w + 11 && q.x !== undefined ? nrGround(q.x, q.z) - (T.hasElev ? T.elevAt(q.s).y : 0) : vf(q, near));
-    for (const [d0, dd] of [[PD0 + 20, 4], [PD1 - 20, -4]]) for (let k = 0; k < 3; k++) { const d = d0 + k * dd, a = plAt(d); if (a == null) continue; const o = (a + 3.25 - (w + 0.8)) / 2; if (a + 3.25 + w + 0.8 > -1.5) continue; const [x, z] = atSf(sAt(d), o); out.props.push({ kind: 'cone', x, z, yaw: R() * TAU, col: 0 }); }
+    for (const [x, z] of pitCones) out.props.push({ kind: 'cone', x, z, yaw: R() * TAU, col: 0 });
     out.propStats = roadsideProps(out.props, { post: null, postEdge: [1.4, 2.0], exits: 4, apexes: 0, wallEdge: [1.6, 2.2], stacks: [4, 6], rows2: 0.2,
       floor: out.propFloor, skip: (i, side) => { const d = dS(i * ds); return (d > -330 && d < 150) || (side < 0 && inPit(i)); } });
     out.propStats.junctions = nJunc;
