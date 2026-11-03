@@ -2492,11 +2492,11 @@
  "hakone/cs/car": {
   "finished": 21,
   "cars": 21,
-  "winner": 822.79,
+  "winner": 774.9,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b55aeb862402aaa845273ccc"
+  "digest": "2d1c92879743d5d5fb913dbe"
  }
 }

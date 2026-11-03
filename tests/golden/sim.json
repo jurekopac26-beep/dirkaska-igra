@@ -4886,15 +4886,15 @@
   }
  },
  "hakone/car/cs": {
-  "digest": "0394173480b9ce6dfb882199",
-  "lead": 1995.9,
+  "digest": "4680caa99ae167bfd895c312",
+  "lead": 2012.3,
   "car0": [
-   -1634.23,
-   47.79
+   -1642.52,
+   -17.43
   ],
   "cover": {
-   "dmg": 0.48,
-   "loose": 1,
+   "dmg": 0.74,
+   "loose": 5,
    "rescues": 0,
    "repairs": 0
   }
