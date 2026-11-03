@@ -27,7 +27,8 @@
 //    (after limping through a corner: no offset left), a repair; as the player sees it (every
 //    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
-//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
+//  - the field's cost: each one-make field (a big vehicle's: its own fieldN and the rest its fill's cars, the dearest of them as a rival;
+//    with no fill, fieldN caps it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
 //    measured with the same fields, so it is regenerated with them), within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
 //    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
@@ -50,7 +51,9 @@ const t0 = Date.now();
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry' }, { width: 844, height: 390 }, { seed: 4242 });
+  // (crV 4, Trki med avti: Stara: the knocks as when tests/golden/perf.json was recorded, as perf.test.mjs has them: the knock moves the cars
+  // otherwise and with it where the field-cost samples below fall and how many rivals are in view there; a car's cost is the same in every version)
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry', crV: 4 }, { width: 844, height: 390 }, { seed: 4242 });
   const warns = []; page.on('console', m => { if (m.type() === 'warning' && !/generic kit hatch: fallback:look null/.test(m.text())) warns.push(m.text()); });
   // the counting wrap (as perf.test.mjs) and the page's helpers
   await page.evaluate(() => {
@@ -442,9 +445,11 @@ try {
       const box = [Math.max(0, Math.floor(x0)), Math.min(A.w - 1, Math.ceil(x1)), Math.max(0, Math.floor(y0)), Math.min(A.h - 1, Math.ceil(y1))];
       const hb = box[3] - box[2], wb = box[1] - box[0], over = [Math.max(0, box[0] - Math.round(wb * 0.25)), Math.min(A.w - 1, box[1] + Math.round(wb * 0.25)), Math.max(0, box[2] - hb), Math.min(A.h - 1, box[3] + Math.round(hb * 0.5))];
       const intact = FL.costOf(v, P), f0 = Render.fxStats();
-      // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before
+      // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before.
+      // A car under the wheel rule (every vehicle with parts since 1. 11. 2026, its own tyres): the whole car's fire grows from its middle
+      // over render.js FIRE_SPREAD (3 s), so it burns 3 s first
       Render.setShot(null); run(2, 'chase', false);
-      Core.wreckCar(P); run(6, 'chase', true);
+      Core.wreckCar(P); run(P.wreck && P.wreck.rule ? 30 : 6, 'chase', true);
       // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
       // shows of them, not what burns inside the body)
       Render.setShot(shot); run(6, 'chase', true); v = Render.viewOf(P); const B = pic('chase', 'wreck'), f1 = Render.fxStats();
@@ -470,7 +475,9 @@ try {
     R6.push(r);
   }
   // ---- 4e. a field on fire (stage B2's caps): every car of a race wrecked where it stands (the field held still: no contact sparks, no
-  //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second ----
+  //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second; the
+  //          player's car under the wheel rule (every vehicle with parts since 1. 11. 2026) burns as the whole car's fire of its rule, out of
+  //          three spots half as many flames again (render.js: 38 x 1.5 a second): at most 60 of those ----
   const FI = await page.evaluate((id) => {
     const g = window.__game; let seed = 2024; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
     g.S.car = Core.MODELS.findIndex(m => m.id === id); g.onAction('restart'); g.pause();
@@ -480,12 +487,13 @@ try {
     const f0 = Render.fxStats(); step(10); const f1 = Render.fxStats();
     const V = R.cars.map(c => Render.viewOf(c)).filter(Boolean), burning = V.filter(v => v.fire), emit = V.filter(v => v.fireEmit), cp = Render.camera.position, d = (v) => Math.hypot(v.car.x - cp.x, v.car.z - cp.z);
     const far = Math.max(0, ...emit.map(d)), next = Math.min(1e9, ...burning.filter(v => !v.fireEmit).map(d));   // (the farthest that emits no farther than the nearest that does not)
-    return { cars: R.cars.length, burning: burning.length, emit: emit.length, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total };
+    const ruleE = emit.filter(v => v.fire && v.fire.rule && v.fire.lvl >= 2).length;   // (the wheel rule's whole car's fires among them)
+    return { cars: R.cars.length, burning: burning.length, emit: emit.length, ruleE, nearest: far <= next + 0.5, far: +far.toFixed(1), next: +Math.min(next, 999).toFixed(1), sparks: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total };
   }, kits.length ? kits[0].id : 'kaze');
   await page.evaluate(() => Render.setDynScale(1));
   console.log(`info the wrecks as seen: ${((Date.now() - t7) / 1000).toFixed(0)} s for ${R6.length} vehicles (${R6.filter(r => !r.kit).length} of the 11); fire / smoke pixels in sight: ` + R6.map(r => `${r.id} ${r.fireV}/${r.smokeV}`).join(', '));
-  T.check('a field on fire (every car wrecked where it stands): at most 6 emit, the nearest to the camera, each at most 40 flames and 12 smoke particles a second',
-    FI.burning === FI.cars && FI.emit === Math.min(6, FI.burning) && FI.nearest && FI.sparks > 0 && FI.sparks <= 40 * FI.emit && FI.smoke > 0 && FI.smoke <= 12 * FI.emit, JSON.stringify(FI));
+  T.check('a field on fire (every car wrecked where it stands): at most 6 emit, the nearest to the camera, each at most 40 flames (the wheel rule\'s whole car: 60) and 12 smoke particles a second',
+    FI.burning === FI.cars && FI.emit === Math.min(6, FI.burning) && FI.nearest && FI.sparks > 0 && FI.sparks <= 40 * FI.emit + 20 * FI.ruleE && FI.smoke > 0 && FI.smoke <= 12 * FI.emit, JSON.stringify(FI));
   const seenOk = (r) => r.diff >= 0.35 && r.fire && r.flames > 0 && r.smoke > 0 && r.fireV >= 12 && r.smokeV >= 12;
   T.check('the wreck as a player sees it (844x390, the chase camera at zoom 1.2): at least 35 % of the car\'s screen box different from the car whole, its fire (flames out of the body) and smoke in sight',
     R6.length === seen.length && R6.every(seenOk),
@@ -539,6 +547,7 @@ try {
       g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, s = [], seen = new Map();
       R.lch = null; for (const c of R.cars) c.lch = null;   // (the start's reaction off: the field where perf.test.mjs measures its budget)
+      P.kt = null;   // (the player's own tyres off too, as perf.test.mjs: their wear changes the grip and so the car's way round the lap, its spots)
       Render.frame(0, 1, P, g.S.camera, {});
       for (const c of R.cars) if (!c.isPlayer && !seen.has(c.m.id)) seen.set(c.m.id, FL.costOf(Render.viewOf(c), P));   // (one default rival's whole cost, the four averaged)
       const unit = [0, 0]; for (const q of seen.values()) { unit[0] += q.calls / seen.size; unit[1] += q.verts / seen.size; }
@@ -585,26 +594,32 @@ try {
         cmp.length === fields.length && cmp.every(okT), cmp.filter(q => !okT(q)).concat(cmp).slice(0, 6).map(q => `${q.id}${q.hull ? '' : ' (no hull)'} rival ${(q.ac4 / 1000).toFixed(1)} -> ${q.ac == null ? '-' : (q.ac / 1000).toFixed(1)}k, piece ${q.pc6 == null ? '-' : (q.pc6 / 1000).toFixed(2)} -> ${q.pc == null ? '-' : (q.pc / 1000).toFixed(2)}k`).join(', '));
     }
     const G = PERF[tid], maxC = G.maxCalls * 1.1 + 5, maxV = (G.maxKverts * 1.1 + 20) * 1000;
-    const est = await page.evaluate(({ rows, n }) => rows.map(r => Object.assign({ n: Core.fieldSize(Core.MODELS.find(m => m.id === r.id), n) }, r)), { rows: C5.filter(q => q.ac), n: B.nAI });
+    // (a big vehicle's bigger race: its own fieldN, the rest its fill's cars, each at the dearest fill rival's cost; its own the ones in view)
+    const est = await page.evaluate(({ rows, n }) => rows.map(r => { const M = Core.MODELS.find(m => m.id === r.id), N = Core.fieldSize(M, n), own = M.fill && M.fieldN ? Math.min(N, M.fieldN) : N;
+      return Object.assign({ n: N, own, fill: own < N ? M.fill.slice() : [] }, r); }), { rows: C5.filter(q => q.ac), n: B.nAI });
+    const AC = new Map(C5.filter(q => q.ac).map(q => [q.id, q.ac]));
     const rows = est.map(r => {
       let calls = 0, verts = 0, allC = 0, allV = 0, wC = 0, wV = 0; const pc = r.np ? [r.pcs.calls / r.np, r.pcs.verts / r.np] : null;
+      const fl = r.fill.map(id => AC.get(id)), fc = [Math.max(0, ...fl.map(a => a ? a.calls : Infinity)), Math.max(0, ...fl.map(a => a ? a.verts : Infinity))];   // (a fill car not measured: no budget)
+      const field = (n, i) => Math.min(n, r.own) * (i ? r.ac.verts : r.ac.calls) + Math.max(0, n - r.own) * fc[i];   // (n of the field in view: its own first)
       for (const q of B.s) {
         const nC = Math.min(r.n, (q.all[0] - q.base[0]) / B.unit[0]), nV = Math.min(r.n, (q.all[1] - q.base[1]) / B.unit[1]), bc = q.base[0] - B.pl.calls + r.pc.calls, bv = q.base[1] - B.pl.verts + r.pc.verts;
-        calls = Math.max(calls, bc + nC * r.ac.calls); verts = Math.max(verts, bv + nV * r.ac.verts); allC = Math.max(allC, bc + r.n * r.ac.calls); allV = Math.max(allV, bv + r.n * r.ac.verts);
-        if (pc) { const np = Math.min(40, cap5 || 40); wC = Math.max(wC, bc + nC * r.ac.calls + np * pc[0]); wV = Math.max(wV, bv + nV * r.ac.verts + np * pc[1]); }
+        calls = Math.max(calls, bc + field(nC, 0)); verts = Math.max(verts, bv + field(nV, 1)); allC = Math.max(allC, bc + field(r.n, 0)); allV = Math.max(allV, bv + field(r.n, 1));
+        if (pc) { const np = Math.min(40, cap5 || 40); wC = Math.max(wC, bc + field(nC, 0) + np * pc[0]); wV = Math.max(wV, bv + field(nV, 1) + np * pc[1]); }
       }
-      return { id: r.id, n: r.n, calls: Math.round(calls), verts: Math.round(verts), allC, allV, pc, wC: Math.round(wC), wV: Math.round(wV) };
+      return { id: r.id, n: r.n, own: r.own, calls: Math.round(calls), verts: Math.round(verts), allC, allV, pc, wC: Math.round(wC), wV: Math.round(wV) };
     });
+    const xN = (r) => r.own < r.n ? `x${r.own}+${r.n - r.own}` : `x${r.n}`;
     const bad = rows.filter(r => r.calls > maxC || r.verts > maxV), worst = rows.slice().sort((a, b) => b.verts / maxV - a.verts / maxV).slice(0, 3);
     const drawn = B.s.map(q => ((q.all[0] - q.base[0]) / B.unit[0]).toFixed(1)).join(' ');
-    T.check(`${tid}: each vehicle's own field (fieldN capped) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k; the default race: ${Math.max(...B.s.map(q => q.all[0]))} calls, rivals drawn per sample ${drawn} of ${B.nAI})`,
-      rows.length === fields.length && !bad.length, (bad.length ? bad : worst).slice(0, 4).map(r => `${r.id} x${r.n}: ${r.calls} calls, ${Math.round(r.verts / 1000)}k`).join(', '));
-    console.log(`info ${tid}: every rival of the field drawn in full (the worst case): ` + rows.map(r => `${r.id} x${r.n} ${r.allC} / ${Math.round(r.allV / 1000)}k`).join(', '));
+    T.check(`${tid}: each vehicle's own field (a big vehicle's with its fill) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k; the default race: ${Math.max(...B.s.map(q => q.all[0]))} calls, rivals drawn per sample ${drawn} of ${B.nAI})`,
+      rows.length === fields.length && !bad.length, (bad.length ? bad : worst).slice(0, 4).map(r => `${r.id} ${xN(r)}: ${r.calls} calls, ${Math.round(r.verts / 1000)}k`).join(', '));
+    console.log(`info ${tid}: every rival of the field drawn in full (the worst case): ` + rows.map(r => `${r.id} ${xN(r)} ${r.allC} / ${Math.round(r.allV / 1000)}k`).join(', '));
     if (tid === 'jezero') {   // the field under a wreck: the cap's 40 pieces on the road (all in view, each at its vehicle's own piece's cost: C5)
       console.log('info the NIZKA tier: per vehicle (player / rival calls, kverts; a piece of its wreck): ' + C5.map(q => `${q.id} ${q.pc.calls}/${q.ac ? q.ac.calls : '-'} ${(q.pc.verts / 1000).toFixed(1)}/${q.ac ? (q.ac.verts / 1000).toFixed(1) : '-'}; ${q.np ? (q.pcs.calls / q.np).toFixed(2) + ' calls ' + (q.pcs.verts / q.np / 1000).toFixed(2) + 'k' : '-'}`).join(', '));
       const wb = rows.filter(r => !r.pc || r.wC > maxC || r.wV > maxV), ww = rows.filter(r => r.pc).sort((a, b) => b.wV / maxV - a.wV / maxV).slice(0, 4);
       T.check(`jezero under a wreck: each vehicle's own field and 40 of its pieces on the road (all in view; the NIZKA tier draws the nearest ${cap5}) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k)`,
-        rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} x${r.n} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
+        rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} ${xN(r)} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
     }
   }
 

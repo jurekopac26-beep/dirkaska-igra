@@ -102,8 +102,8 @@ try {
   const tt = await page.evaluate(() => { const r = window.__game.race; return { tt: r.timeTrial, quali: r.quali, n: r.cars.length }; });
   T.check('qualifying off: Start goes straight to the race; the Pikes Peak time trial has no qualifying', !off.quali && off.cars === 22 && off.grid === 22 && tt.tt && !tt.quali && tt.n === 1, JSON.stringify({ off: { quali: off.quali, cars: off.cars, grid: off.grid }, tt }));
 
-  // 7. a car whose rivals race in its own field (TITAN: nine of them, all TITANs): qualifying sizes itself to the race and drives the race's
-  //    cars; the race after it has the same nine
+  // 7. a big vehicle (TITAN: at most fieldN of its own, the rest its fill's cars, Core.aiModel): qualifying sizes itself to the race (a full
+  //    field) and drives the race's cars; the race after it has the same field
   await act('to-title'); await page.waitForTimeout(200);
   await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'titan'); });
   await startTrack(page, 'rbring');
@@ -111,7 +111,10 @@ try {
   const rf = await qualiLap();
   await act('quali-go'); await page.waitForTimeout(400);
   const rr = await page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.name))] }; });
-  T.check('a car with a field of its own (TITAN): qualifying with its nine rivals, every row a TITAN; the race after it the same nine TITANs', !!f0.q && f0.q.n === 9 && rf.rows.length === 10 && rf.rows.every(r => r[2] === 'TITAN') && rr.n === 10 && rr.cars.join() === 'TITAN',
+  const fm = await page.evaluate(() => { const M = Core.MODELS.find(m => m.id === 'titan'); return { own: M.fieldN, fill: M.fill.map(id => Core.MODELS.find(m => m.id === id).name) }; });
+  const ofField = (L) => L.every(c => c === 'TITAN' || fm.fill.includes(c));
+  T.check(`a big vehicle (TITAN): qualifying with the race's full field, ${fm.own} of its rivals TITANs and the rest its fill (${fm.fill.join(', ')}); the race after it the same field`,
+    !!f0.q && f0.q.n === rr.n - 1 && f0.q.n > fm.own && rf.rows.length === rr.n && rf.rows.filter(r => r[2] === 'TITAN').length === fm.own + 1 && ofField(rf.rows.map(r => r[2])) && rr.cars.slice().sort().join() === ['TITAN'].concat(fm.fill).sort().join(),
     JSON.stringify({ n: f0.q && f0.q.n, rows: rf.rows.map(r => r[1] + ' ' + r[2]), race: rr }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));

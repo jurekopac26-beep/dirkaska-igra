@@ -26,7 +26,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crNB: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, tCrStyle: 0, tCrMass: 0, tCrE: 0, tCrMu: 0, tCrYaw: 0, tCrBox: 0, tCrScrub: 0, tCrFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 1, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   try { const j = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (j) { S = Object.assign(S, j); carIn = Number.isInteger(j.car); } } catch (_) { }
@@ -50,13 +50,13 @@
   const cleanName = (v) => typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16) : '';
   const esc = (v) => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   for (const k in DEF) if (S[k] == null || typeof S[k] === 'object') S[k] = DEF[k];   // hand-edited storage: a setting is always a plain value
-  // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (as the driving physics has it: nothing changes); the numbers go to Core.setTest
-  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], tCrE: [null, 0, 0.1, 0.25, 0.4, 0.6], tCrMu: [null, 0, 0.35, 0.8], tCrYaw: [null, 0, 0.15, 0.4, 1.6], tCrMass: [null, 1, 2, 4, 8, 16], tCrBox: [null, 0, 1], tCrScrub: [null, 0, 1], tCrFx: [null, 1, 0] };
-  const NB_ROWS = ['tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'xBump'];   // (the rows Trki med avti brez odboja stands for while it is on)
-  const TEST_REAL = { cE: 0, cMu: 0.5, cYaw: 1, cMass: 8, cFx: 0, cBox: 1, cScrub: 1 };   // Trki: slog Realističen, težak (flat bumpers pushed apart softly, no bounce, the classic car's tyres hold a push sideways, the bodies rub, the other car counts eight times heavier in a knock with the player, no sparks); every row under it overrides its part
+  // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (the rivals: as the driving physics has it; the knocks: as the chosen
+  // version of Trki med avti has it: nothing changes); the numbers go to Core.setTest (the knocks' rows as cPm, cE, cMu, cYaw, cGl, cSl, cFx)
+  const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], crPm: [null, 1, 1.5, 2], crE: [null, 0, 0.5, 1.6], crMu: [null, 0, 0.15, 0.35, 0.6], crYaw: [null, 0.4, 0.7, 1, 2], crGl: [null, 0, 0.5, 1.6], crSl: [null, 0.6, 1, 1.6], crFx: [null, 1, 0] };
+  const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them)
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
-  S.tCrStyle = +S.tCrStyle === 1 ? 1 : 0;
-  S.crNB = +S.crNB === 1 ? 1 : 0;   // (Trki med avti brez odboja: one switch over every other setting of the knocks between cars, Core TX.nb; off by default)
+  S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_OLD ? +S.crV : 0;   // (Trki med avti, the version of the knocks between cars: 0 Simulacija (the default), 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara; Core TX.cv = crV + 1)
+  for (const k of ['crNB', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx']) delete S[k];   // (the knocks' rows before the versions: gone, not kept in the settings)
   if (S.slide !== 1) S.slide = 0;   // (the new physics' style, Nastavitve → Slog nove fizike: 1 Drseč, the player's car only: Car.nvSl)
   if (S.phys !== 'nova') S.phys = 'cs';   // two driving physics (Nastavitve → Fizika vožnje): 'cs' the classic kinematic drift, 'nova' the new one (Car.stepNova); the old 'rally' and 'arcade' were removed, their saves get cs
   const physOf = () => S.phys === 'nova' ? 'nova' : 'cs';
@@ -394,12 +394,17 @@
   const installedApp = () => APP;
 
   /* ---------------- screens ---------------- */
-  // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still
+  // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still; in the
+  // settings and the pause, lists that scroll, a row too wide even so (a narrow phone, a wide font: Trki med avti's five in DejaVu Sans 305 px
+  // on a panel 296 px wide, the last one cut off) wraps its choices onto two lines, in the middle size, half of them on each (five: three and
+  // two; --wb the share of a line each starts from)
   function fitSegs() {
     const sc = document.querySelector('.screen.show'); if (!sc) return;
     for (const g of sc.querySelectorAll('.seg')) {
-      g.classList.remove('tight', 'tighter'); if (!g.offsetParent || g.scrollWidth <= g.clientWidth + 1) continue;
-      g.classList.add('tight'); if (g.scrollWidth > g.clientWidth + 1) { g.classList.remove('tight'); g.classList.add('tighter'); }
+      g.classList.remove('tight', 'tighter', 'wrap'); if (!g.offsetParent || g.scrollWidth <= g.clientWidth + 1) continue;
+      g.classList.add('tight'); if (g.scrollWidth <= g.clientWidth + 1) continue;
+      g.classList.remove('tight'); g.classList.add('tighter'); if (g.scrollWidth <= g.clientWidth + 1 || !g.closest('#s-settings, #s-pause')) continue;
+      g.classList.remove('tighter'); g.classList.add('tight', 'wrap'); g.style.setProperty('--wb', (100 / Math.ceil(g.children.length / 2) - 3) + '%');
     }
   }
   // the results of a big field (22 cars, the Nordschleife's 100), race and qualifying: the table scrolled so the player's own row is in the middle of it
@@ -431,10 +436,14 @@
       const val = key === 'shadows' ? (shadowsOn() ? 1 : 0) : key === 'wing' || key === 'gear' ? setupOf(S.track)[key] : S[key];   // (shadows: what is on screen, also when adaptive() switched them off; the set-up: the chosen track's)
       for (const b of seg.querySelectorAll('button')) b.classList.toggle('sel', String(val) === b.dataset.v);
     }
-    { const nb = +S.crNB === 1;   // (Trki med avti brez odboja on: the rows it stands for, dimmed (they keep their choice for when it is off), and a note under it)
-      for (const k of NB_ROWS) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', nb); }
-      const el = $('nb-note'); el.classList.toggle('off', !nb); el.textContent = nb ? tr('Vrstice trkov med avti v Preizkusu in »Razbijanje: odboji in vrtenje ob trku« zdaj ne veljajo; ograja in iskre ostanejo, kot so.') : ''; }
-    $('cr-note').textContent = tr(+S.crNB === 1 ? 'Trki med avti brez odboja je vklopljen: vrstice spodaj ne veljajo.' : +S.tCrStyle === 1 ? 'Realističen, težak: ravni odbijači, brez odboja, gume zadržijo potisk vstran, drgnjenje 0,5, drugi avto 8-krat težji, brez isker. Vrstice spodaj ga spremenijo.' : 'Privzeto: odboj, drgnjenje in vrtenje po izbrani fiziki (klasična 0,1 / 0 / 1, nova 0,4 / 0,35 / 1), zaobljena oblika, enaka teža, iskre.');
+    { const v = +S.crV, old = v === CR_OLD, nv = (race && race.player ? race.player.phys : physOf()) === 'nova';   // (Trki med avti: the chosen version in a sentence under its row; Stara, the old knock: Preizkus' rows over the versions' numbers dimmed (they keep
+      // their choice for the other versions) and its note says so; Razbijanje: odboji in vrtenje ob trku the other way round: only the old knock has it; Nova fizika
+      // (the race's own while one runs: it keeps the physics it started with, these rows act at once): Zdrs po trku and Ujem gum dimmed too, the classic physics'
+      // (the new physics' own tyres lose their grip to a knock and catch its push)
+      for (const k of CR_ROWS.concat('xBump')) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', k === 'xBump' ? !old : old || (nv && (k === 'crGl' || k === 'crSl'))); }
+      $('crv-note').textContent = tr(['Kot v simulacijah: vsak avto s svojo pravo težo, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto šteje 1,7-krat svojo težo, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
+        'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.'][v]);
+      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -452,7 +461,7 @@
     { const d = champDef(); $('btn-champ').textContent = tr('Prvenstvo') + (d && !champDone() ? ' · ' + (champ.rounds.length + 1) + '/' + d.tracks.length : ''); }
     $('btn-career').textContent = tr('Kariera') + (inCareer() ? ' · ' + eur(career.money) : '');
   }
-  // how many rivals a race on the track has with the chosen car (its own field size, def.raceRivals / def.rivals; a big vehicle's field: fewer, Core.fieldSize)
+  // how many rivals a race on the track has with the chosen car (its own field size, def.raceRivals / def.rivals; a big vehicle's field with no fill: fewer, Core.fieldSize)
   const rivN = (d) => { const M = Core.MODELS[S.car]; return Core.fieldSize(M.oneMake ? null : M, d.raceRivals || d.rivals || NUM_AI); };
   function shadowsOn() { return !!S.shadows && !autoNoShadows; }
   // adaptive graphics detail (LOD): the tier the world is built at. 0 = NIZKA (the phone budget, up to ~300 draw calls and ~900k vertices),
@@ -493,9 +502,8 @@
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
-  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]], H = +S.tCrStyle === 1 ? TEST_REAL : {}, or = (a, b) => a != null ? a : b != null ? b : null;   // (Preizkus: the rivals and the knocks; never online, where both phones must drive the same)
-    if (+S.crNB === 1) return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), nb: 1 };   // (Trki med avti brez odboja: the knocks between cars as Core's NB has them, the rows of Trki med avti not; the rivals' rows as they are)
-    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cE: or(L('tCrE'), H.cE), cMu: or(L('tCrMu'), H.cMu), cYaw: or(L('tCrYaw'), H.cYaw), cMass: or(L('tCrMass'), H.cMass), cFx: or(L('tCrFx'), H.cFx), cBox: or(L('tCrBox'), H.cBox), cScrub: or(L('tCrScrub'), H.cScrub) }; };
+  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]];   // (Preizkus: the rivals and the knocks; Trki med avti: the version, cv 1-5 as Core's KV_IDS, the rows of Preizkus over its numbers (Core leaves them out with Stara); never online, where both phones must drive the same: the default)
+    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cv: +S.crV + 1, cPm: L('crPm'), cE: L('crE'), cMu: L('crMu'), cYaw: L('crYaw'), cGl: L('crGl'), cSl: L('crSl'), cFx: L('crFx') }; };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
@@ -550,7 +558,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['crNB', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'menuCam', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
+    const num = ['crV', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'hlv', 'intro', 'music', 'menuCam', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -580,6 +588,7 @@
     if (B[settingsReturn]) B[settingsReturn]();
     if (mp) buildRoom();
     for (const k in hudCache) delete hudCache[k]; lapTxt = null;   // (the HUD writes its texts again, the lap too)
+    fitSegs();   // (the rows of choices fitted again for the new words: Simulacija … Stara is wider than Simulation … Old; on a narrow phone it was cut off)
   }
   // the pause menu's restart: the climb or the stage again, the qualifying lap, the run from the police, the race
   const restartTxt = () => !race ? tr('Ponovi dirko') : race.chal ? tr('Poskusi znova') : race.timeTrial ? ttAgain(track.def) : race.quali ? tr('Ponovi krog') : race.pol ? tr('Ponovi beg') : tr('Ponovi dirko');
@@ -960,12 +969,13 @@
     const f = F[rpIdx(F, t)], o = 1 + k * REC_W, x = f[o], z = f[o + 2];
     return { lap: rpLap(recd.cars[k], t), s: rpS(track.query(x, z, -1, {})), x, z };
   }
-  // the version (js/game.js's stamp, tools/stamp.js: git log -S 'game.js?v=...' index.html finds it), the track, the way it is raced, the weather
+  // the version (js/game.js's stamp, which the publish step puts on the page: tools/stamp.js; node tools/stamp.js --find <stamp> finds its
+  // commit; a page without stamps, as the repository's on a local server: 'lokalno'), the track, the way it is raced, the weather
   function rpMeta() {
     if (recd && recd.file) { const H = recd.file; return { ver: H.ver, track: H.track, name: H.name, mode: H.mode, wx: H.wx, laps: H.laps, dev: H.dev, file: H.ime || '' }; }   // (an opened file: the race as it was driven, its device)
     const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
     const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
-    return { ver: m ? m[1] : '?', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
   }
   function rpMap() {   // the track's line for the picture's map (at most about 600 points), its start
     const T = track, st = Math.max(1, Math.floor(T.N / 600)), pts = [];
@@ -2006,7 +2016,7 @@
     if (on && mp.ch && mp.ch.on && !mp.ch.done) showMsg(tr('PRVENSTVO · DIRKA {0}/{1}', mp.ch.round + 1, mp.ch.tracks.length) + wetTxt, 'gold', 2.2);   // (a championship over the internet: which race)
     if (race.chal) { showMsg(tr('IZZIV: {0} · {1}', race.chal.name.toUpperCase(), fmt(race.chal.time, true)) + wetTxt, 'gold', 2.2); Comm.say('chalIntro', { name: race.chal.name, time: spkTime(race.chal.time) }, 3); }
     $('hud').classList.toggle('nv', !!race.nv);   // NEW VERSION · TEST 1: the new map over the track (once), then free driving from HOME (again after a restart)
-    if (race.nv) { if (nv.built && nv.home) { race.player.place(nv.home.x, nv.home.z, nv.home.h); if (typeof NVHeli !== 'undefined') NVHeli.reset(); } else if (!nv.built) nvStart(); }
+    if (race.nv) { if (nv.built && nv.home) { race.player.place(nv.home.x, nv.home.z, nv.home.h); if (typeof NVHeli !== 'undefined') NVHeli.reset(); if (typeof NVRide !== 'undefined') NVRide.reset(race.player); } else if (!nv.built) nvStart(); }
     MS.begin(race);   // (a special mission: its panel and its run)
   }
   // NEW VERSION · TEST 1: js/newmap.js (loaded only now: its stamped address is a <link> of a kind the browser does not fetch), then the
@@ -2028,7 +2038,7 @@
       let g = null, H = null, k = 0; nv.times = window.__nvT = []; let t0 = performance.now();
       const tick = (name) => { const t = performance.now(); nv.times.push([name, Math.round(t - t0)]); t0 = t; };
       const hooks = () => { const H3 = H.H3; track.ground2 = H3.tun ? (x, z, y) => H3.tun.groundL(x, z, y) : (x, z) => H3.ground(x, z); if (H3.tun) track.wall2 = (x, z, y, out) => H3.tun.wall(x, z, y, out); if (H3.bankR) track.bank2 = (x, z, out) => H3.bankR.tilt(x, z, out); if (H3.mxIn) track.rough2 = H3.mxIn; track.free = [-350, 411, -400, 314]; if (window.MK.surfGrid) track.surf2 = window.MK.surfGrid();
-        if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); if (typeof NVHeli !== 'undefined') NVHeli.init(H3, track, { car: () => (race.player.m && race.player.m.name) || '' }); };
+        if (typeof NVMenu !== 'undefined') NVMenu.init(H3, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVWalls !== 'undefined') NVWalls.init(H3); if (typeof NVHeli !== 'undefined') NVHeli.init(H3, track, { car: () => (race.player.m && race.player.m.name) || '' }); if (typeof NVRide !== 'undefined') NVRide.init(H3, track, { player: race.player }); };
       const bake = () => { if (typeof NVBake !== 'undefined') nv.bake = NVBake.bake(Render.scene, { world: Render.world }); nv.built = true; const p = race.player; nv.home = { x: p.x, z: p.z, h: p.h }; Render.resetCam(); };
       const tail = () => { try { hooks(); tick('hooks'); } catch (e) { fail(e); return; } setP(NV_STEPS.hooks); paint(() => { try { bake(); tick('bake'); } catch (e) { fail(e); return; } setP(1); paint(done); }); };
       const step = () => { let r; try { r = g.next(); } catch (e) { fail(e); return; } tick(r.done ? 'end' : r.value); k++;
@@ -2037,11 +2047,11 @@
       if (g) step(); else { setP(NV_STEPS.end); paint(tail); }
     };
     const later = () => { setP(NV_STEPS.load); paint(build); };   // (the wait screen on show before the long build)
-    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVSchool !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined' && typeof NVHeli !== 'undefined') { requestAnimationFrame(later); return; }
+    if (window.MK && window.MK.hub4 && typeof NVMenu !== 'undefined' && typeof NVSchool !== 'undefined' && typeof NVBake !== 'undefined' && typeof NVWalls !== 'undefined' && typeof NVHeli !== 'undefined' && typeof NVRide !== 'undefined') { requestAnimationFrame(later); return; }
     const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
       sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = () => { setP(f + NV_STEPS.load / 4); next(); }; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
       document.head.appendChild(sc); };
-    load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvsite', () => load('nvedge', () => load('nvboat', () => load('nvmenu', () => load('nvschool', () => load('nvbake', () => load('nvwalls', () => load('nvheli', later)))))))))));   // (the map, its park, its rescue base and lot, its course for jet skis, its garages' menus, the driving school's tasks, the merging of its still meshes for the phones, its walls of fence the car pushes, its helicopter that flies)
+    load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvsite', () => load('nvedge', () => load('nvboat', () => load('nvmenu', () => load('nvschool', () => load('nvbake', () => load('nvwalls', () => load('nvheli', () => load('nvride', later))))))))))));   // (the map, its park, its rescue base and lot, its course for jet skis, its garages' menus, the driving school's tasks, the merging of its still meshes for the phones, its walls of fence the car pushes, its helicopter that flies)
   }
   // the wait bar: where it stands after loading the scripts, after each step of the build (hub4G's yields), after the map's hooks; from the build's times (nv.times)
   const NV_STEPS = { load: 0.06, y0: 0.086, y1: 0.087, y2: 0.095, y3: 0.096, y4: 0.104, y5: 0.156, y5a: 0.157, y5b: 0.171, y5c: 0.173, y5d: 0.177, y5e: 0.18, y5f: 0.182, y5g: 0.183, h0: 0.185, h1: 0.188, h2: 0.191, h3: 0.219, y6: 0.219, y7: 0.226, y8: 0.244, y9: 0.489, y10: 0.516, y11: 0.523, y12: 0.68, y13: 0.68, y14: 0.705, y15: 0.735, y16: 0.738, y17: 0.742, y18: 0.746, y19: 0.747, y20: 0.747, y21: 0.825, y22: 0.878, end: 0.88, hooks: 0.899 };
@@ -2056,10 +2066,11 @@
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Comm.stop();
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
+    $('crv-prow').classList.toggle('off', !!(mp && mp.race) || !!race.pol || race.cars.length < 2);   // (Trki med avti, switched at once in the pause (setOption); online both phones drive the default; the run from the police (its knocks are crashCollide's) and a car alone on the road: nothing it changes, not offered)
     $('pause-rp').classList.toggle('off', !rpHereOk());   // (Posnetek do sem: not online, nor before 2 s of the race are recorded)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo();
-    showScreen('pause');
+    showScreen('pause'); $('pause-body').scrollTop = 0;   // (a pause from the top, Nadaljuj in sight: the body keeps where it was scrolled to the last time)
     adaptBreak();
   }
   function resume() {
@@ -2710,10 +2721,10 @@
   // a driver of the standings: the rivals' cars as in the next round (the field of the championship's car; a one-make class the player
   // drives: its own cars)
   const champDriver = (key) => { const M = Core.MODELS[S.car]; if (key === Core.PLAYER_KEY) return { name: S.name, car: M.name, color: PLAYER_COLORS[S.color] };
-    const a = Core.aiDriver(Math.max(0, CH_KEYS.indexOf(key) - 1), fieldFor(M, champField())); return { name: a.name, car: (M.oneMake ? M : a.model).name, color: a.color }; };
-  // how many rivals the next round has (CH_AI, an older championship its 12; a big vehicle's field fewer), and what they drive (one kind: its name and how many)
+    const F = fieldFor(M, champField()), a = Core.aiDriver(Math.max(0, CH_KEYS.indexOf(key) - 1), F, Core.fieldSize(F, champN())); return { name: a.name, car: (M.oneMake ? M : a.model).name, color: a.color }; };
+  // how many rivals the next round has (CH_AI, an older championship its 12; a big vehicle's field with no fill fewer), and what they drive (one kind: its name and how many)
   const champRivals = () => { const M = Core.MODELS[S.car], F = fieldFor(M, champ ? champField() : M), n = Core.fieldSize(F, champN());
-    const names = new Set(); for (let k = 0; k < n; k++) names.add((M.oneMake ? M : Core.aiModel(k, F)).name);
+    const names = new Set(); for (let k = 0; k < n; k++) names.add((M.oneMake ? M : Core.aiModel(k, F, n)).name);
     return { n, txt: names.size === 1 ? n + '\u00d7 ' + [...names][0] : tr('različni avti') }; };
   // the championship round just driven: its finishing order into the standings (once); after the last round the final place into the records
   function champRecord() {
@@ -2787,13 +2798,16 @@
     }
     else { P.inSteer = inp.steer; P.inThr = inp.thr; P.inBrk = inp.brk; P.inHand = 0; P.digitalSteer = inp.digital; }   // (no handbrake for the player: only the autopilot's own, Core.aiControl)
     if (race.nv && typeof NVHeli !== 'undefined') NVHeli.step(dt, P, inp);   // (NEW VERSION · TEST 1: the rescue helicopter flies, the car rides in it, js/nvheli.js)
+    if (race.nv && typeof NVRide !== 'undefined') NVRide.step(dt, P, inp);   // (the gondola for cars, the volcano train, the fire engine: js/nvride.js)
     const ph0 = PH.on ? performance.now() : 0;
     race.step(dt);   // (the run from the police: the race throws the patrol cars' lost panels onto the road itself, with the police's own random numbers)
     if (PH.on) PH.s += performance.now() - ph0;
     if (race.nv && typeof NVHeli !== 'undefined') NVHeli.post(P);
+    if (race.nv && typeof NVRide !== 'undefined') NVRide.post(P);
     if (fly.on && !race.flyOn) flyStep();   // (the flying start: the player's own car the very step it is over the start line)
     if (race.nv && typeof NVWalls !== 'undefined') NVWalls.step(dt, P);   // (NEW VERSION · TEST 1: the walls of fence pushed by the car, js/nvwalls.js)
-    if (race.nv && typeof NVPark !== 'undefined') NVPark.tick(dt, P);   // (the volcano's lava, js/nvpark.js)
+    if (race.nv && typeof NVPark !== 'undefined') NVPark.tick(dt, P);   // (the volcano's lava, the rides, js/nvpark.js)
+    if (race.nv && typeof NVSite !== 'undefined' && NVSite.tick) NVSite.tick(dt, P);   // (the construction site's machines, js/nvsite.js)
     if (P.ty && P.pitDone) tyOut = P.dist;   // (the new set on, still in the lane: where it leaves it, for the cold tyres on the HUD; each step, so a test's sim sees it too)
     twMark(); stDrive(P, dt);
     if (school) schoolStep(P, dt, inp);
@@ -3827,12 +3841,14 @@
   }
   function retired() { Comm.stop(); Comm.say('retired', null, 5); Sfx.beep(330, 0.3, 0.12); finishRace(); }   // (the player is out: the results now)
   /* ---------------- the wheel rule: KONEC IGRE, PONOVI IGRO ---------------- */
-  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on; a test with one car
-  // first): at 80 % damage a wheel comes off, then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO
-  // (the race again), the results (the player retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge
-  // and the run from the police the rule is off (an ended run there would count as a time, a lap or an escape)
-  const WHEEL_RULE = ['sokol', 'kolibri'];   // (the KOLIBRI's by its tyres, Core ktHit: a burning tyre's wheel at a real knock, already with damage Samo videz)
-  const TYRE_RULE = ['kolibri'];   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on): a wheel comes off,
+  // then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO (the race again), the results (the player
+  // retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge and the run from the police the rule is off
+  // (an ended run there would count as a time, a lap or an escape). Every vehicle, each tyre its own as the KOLIBRI's (the user's choice
+  // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
+  // the next real knock (Core ktHit), already with damage Samo videz
+  const WHEEL_RULE = Core.MODELS.map(m => m.id);
+  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
@@ -4070,7 +4086,7 @@
       if (P.wrongT > 1.1 && !race.nv) { if ($('h-msg').textContent !== tr('NAPAČNA SMER!')) showMsg(tr('NAPAČNA SMER!'), 'warn', 0.5); else msgT = 0.4; }
       // stuck or the wrong way: back onto the road (stopped at the police checkpoint on purpose, or in a garage of the new map: no rescue); a lost wheel on a track without
       // pits (not a time trial): the marshals put it back on (6 s)
-      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()) && !(race.nv && typeof NVHeli !== 'undefined' && NVHeli.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0) && !W.rule) && !track.def.pit && !race.timeTrial && !P.finished;
+      const W = P.wreck, stuck = (P.stuckT > 2.5 || (P.wrongT > 4 && !race.nv)) && !(race.pol && (race.pol.hold || race.pol.stage === 'check')) && !(race.nv && typeof NVMenu !== 'undefined' && NVMenu.on()) && !(race.nv && typeof NVHeli !== 'undefined' && NVHeli.on()) && !(race.nv && typeof NVRide !== 'undefined' && NVRide.on()), wheel = !!(W && W.nL && !W.dnf && !(W.hold > 0) && !W.rule) && !track.def.pit && !race.timeTrial && !P.finished;
       const rb = $('btn-rescue'), rt = !stuck && wheel ? tr('\u21ba Namesti kolo') : tr('\u21ba Na progo');
       rb.classList.toggle('off', !(stuck || wheel)); if (rb.textContent !== rt) rb.textContent = rt;
     }
@@ -4535,7 +4551,7 @@
   // room is full, or earlier when the one who waited first (the host) starts it, with everyone who is there. A big grid (over
   // NET_BIG cars) sends its states 10 times a second and the host passes them on in one message per friend (see netFrame).
   const NET_BIG = window.__netBig > 0 ? window.__netBig | 0 : 6;   // a grid of more cars than this is big (see netFrame; the tests: fewer)
-  const NET_V = 2;   // message format; together with the game's own version (the stamps of all its scripts) both phones must match
+  const NET_V = 2;   // message format; together with the game's own version (the stamps of all its scripts on the published game; without stamps their addresses) both phones must match
   const gameVer = () => { let h = 2166136261; for (const s of document.querySelectorAll('script[src]')) for (const ch of s.getAttribute('src')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return NET_V + '/' + (h >>> 0).toString(36); };
   const netTracks = () => Core.TRACKS.filter(d => !d.timeTrial);   // the tracks that race (the hill climb and the rally stage are runs for one; Vršič: the race up the pass)
   const modelById = (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M) : Core.MODELS[0]; };   // (a stored or sent id: a ghost's, a legend's, the friend's car; a retired model's is its heir)
@@ -5258,6 +5274,7 @@
       updateHUD(dt); hudCol(dt); Comm.update(); Sfx.setDuck(Comm.talking());   // (the commentator over the engines: the rest lowered under the voice)
       Sfx.update(race, race.player, null, inp.thr);
       const pr0 = PH.on ? performance.now() : 0;
+      if (race.nv && nv && nv.built && typeof NVRide !== 'undefined') NVRide.frame(dt, acc / STEP, race.player, !paused && screen === 'none' && phase === 'racing');   // (js/nvride.js: the cabins, the train, the fire engine between the steps)
       if (race.nv && nv && nv.built && typeof NVHeli !== 'undefined') NVHeli.frame(dt, acc / STEP, race.player, !paused && screen === 'none' && phase === 'racing');   // (NEW VERSION · TEST 1: the helicopter between the steps, its menu, its button, its height and speed, js/nvheli.js)
       ghShow(acc / STEP); Render.frame(dt, acc / STEP, race.player, S.camera, { marker: phase === 'intro' || phase === 'lights' || (phase === 'racing' && race.time < 2.5) });
       if (PH.on) PH.r += performance.now() - pr0;
@@ -5265,6 +5282,7 @@
     } else {
       if (mp && mp.race) netFrame(true);
       hudCol(0); Sfx.setDuck(Comm.talking());
+      if (race.nv && nv && nv.built && typeof NVRide !== 'undefined') NVRide.frame(0, 1, race.player, false);
       if (race.nv && nv && nv.built && typeof NVHeli !== 'undefined') NVHeli.frame(0, 1, race.player, false);
       ghShow(1); if (!(nv && nv.loading)) Render.frame(0, 1, race.player, S.camera, { noFx: true });   // (not under the new map's wait screen: its build goes on between the frames)
       if (screen === 'settings') updateTiltLive();
@@ -5458,7 +5476,8 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; updateAppButtons(); });
   window.addEventListener('appinstalled', () => { installEvt = null; updateAppButtons(); toast(tr('Igra je nameščena: odpreš jo z ikono Roads Atlas na začetnem zaslonu.'), 4200); });
   // an app (or tab) left open in the background does not start again, so it would keep the old version: when it comes back on
-  // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu)
+  // the title screen, it asks the network for index.html and reloads if a file of the game changed (never mid-race or in a menu). By the
+  // stamps the publish step puts on the page's links (tools/stamp.js); a page without them (the repository's) never reloads
   let updAsked = -1e9;
   const stampsOf = (text) => (text.match(/\?v=[0-9a-f]{8}\b/g) || []).sort().join();
   function checkUpdate() {

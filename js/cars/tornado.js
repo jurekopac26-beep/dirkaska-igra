@@ -4,6 +4,9 @@
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
+  // the garage's head lamp in the place of the lamp sticker in its black surround (u out from the car's middle, v up; metres round z 0.545,
+  // y 0.457): every option takes this outline, swept up at its outer end as the surround is
+  const NOSE = [[-0.17, -0.06], [0.17, -0.051], [0.17, 0.062], [-0.17, 0.047]];
   VEHICLE_DEFS.push({
     id: 'tornado', name: 'TORNADO V8', cat: 'dirkalni', ord: 3, drive: 'FR',
     desc: 'Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih.',
@@ -15,12 +18,29 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 65000, pk: 'unl', field: ['tornado'],
     snd: { kind: 'v8', hz: 0.85, loud: 1.3 },
     expect: { t100: [2.97, 3.49], vmax: [247, 262], latG: [2.35, 2.45], d100: [21.6, 23.9] },
+    partNames: { headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail light', tailR: 'right tail light' },
     parts: { set: 'race', ht: 1.3, y0: 0.12,
       over: {
         wing: { f: 0.62, lx: -0.97, m: 4 },
         trunk: { lx: -0.83, y: 1.02 },   // (the deck lid behind the long rear glass, where the look has it)
         fenderL: { h: 0.14 }, fenderR: { h: 0.14 },   // (the piece's real thickness lying on the road: the front fender with its wheel tub)
       },
+      extra: {
+        // (as KOLIBRI's: the head lamps with their black surrounds parts of their own, mounted on the nose cover (they go with it); a hit on
+        // their corner knocks one out. Each half of the tail's black panel with its lamp likewise)
+        headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.22, h: 0.06, lx: 0.98, lz: -0.57, y: 0.46, on: 'bumperF' },
+        headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.22, h: 0.06, lx: 0.98, lz: 0.57, y: 0.46, on: 'bumperF' },
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.36, h: 0.05, lx: -1.0, lz: -0.45, y: 0.8 },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.36, h: 0.05, lx: -1.0, lz: 0.45, y: 0.8 },
+      },
+    },
+    // where the garage's parts go (js/deli.js, look units): the wing on the deck lid's trailing edge, in the wing's part (in place of the
+    // blade spoiler); the head lamps in the place of the stickers (every option in their outline, NOSE, in their black surrounds), in the
+    // lamps' parts; the rims
+    mounts: {
+      krilo: { x: -2.3, w: 0.8, part: 'wing' },
+      zarometi: { x: 2.4705, y0: 0.457, lean: 0, zc: 0.545, yc: 0.457, s: 0.45, hosts: ['headL', 'headR'], shape: NOSE, bulge: 0, ringW: 0.008 },
+      platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): a long two-door saloon on one loft, low and slab-sided, the wheels flush under
     // tight arches; a short roof between the raked windscreen and a long flat rear glass, a high flat deck with the blade spoiler across its
@@ -114,14 +134,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { K.box(2.44, 0.085, sd * 0.6, 0.06, 0.06, 0.012, 0, CF); K.rect(2.472, 0.32, sd * 0.66, 0.12, 0.05, B); }   // (its stays; the brake ducts)
         });
         for (const sd of [-1, 1]) {   // (the lamps: stickers in black surrounds at the face's upper corners, the indicators past them)
-          face([[2.471, 0.385, sd * 0.36], [2.471, 0.4, sd * 0.81], [2.471, 0.535, sd * 0.81], [2.471, 0.512, sd * 0.36]], B, [1, 0, 0], { host: 'bumperF' });   // (swept up at the corner)
+          face([[2.471, 0.385, sd * 0.36], [2.471, 0.4, sd * 0.81], [2.471, 0.535, sd * 0.81], [2.471, 0.512, sd * 0.36]], B, [1, 0, 0], { host: sd < 0 ? 'headL' : 'headR' });   // (swept up at the corner)
           K.rect(2.473, 0.46, sd * 0.765, 0.06, 0.09, K.rgb(0xff9a1e), { host: 'bumperF' });
-          K.headLamp(2.474, 0.45, sd * 0.54, 0.05, { shape: 'rect', w: 0.31, h: 0.1, ring: null, host: 'bumperF' });
         }
+        // (the lamps parts of their own with their surrounds, on the nose cover: headL, headR; the garage's in the sticker's place, in the
+        // surround: K.deli, mounts.zarometi; the indicators stay on the nose)
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(2.474, 0.45, sd * 0.54, 0.05, { shape: 'rect', w: 0.31, h: 0.1, ring: null, host: sd < 0 ? 'headL' : 'headR' }); });
         // ---- the tail: a black panel across its top with the lamps; the rear bumper's black valance; the exhaust out of the right side
         //      ahead of the rear wheel ----
-        K.rect(-2.532, 0.8, 0, 1.56, 0.13, B, { dir: '-x', part: 'body' }); K.rect(-2.532, 0.705, 0, 1.6, 0.035, S, { dir: '-x', part: 'body' });
-        for (const sd of [-1, 1]) K.tailLamp(-2.534, 0.8, sd * 0.52, 0.46, 0.1);
+        for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR', z0 = sd < 0 ? -0.78 : 0, z1 = z0 + 0.78;   // (each half of the panel with its lamp a part of its own; its top 4 mm further back: the piece on the road has a volume)
+          K.face([[-2.532, 0.735, z0], [-2.532, 0.735, z1], [-2.536, 0.865, z1], [-2.536, 0.865, z0]], B, { host: tp }); K.tailLamp(-2.534, 0.8, sd * 0.52, 0.46, 0.1, { host: tp }); }
+        K.rect(-2.532, 0.705, 0, 1.6, 0.035, S, { dir: '-x', part: 'body' });
         K.part('bumperR', () => {
           K.box(-2.47, 0.12, 0, 0.12, 0.14, 1.6, 0, CF);
           for (const sd of [-1, 1]) K.rect(-2.533, 0.4, sd * 0.7, 0.12, 0.04, [0.6, 0.05, 0.04], { dir: '-x' });   // (the reflectors)
@@ -130,10 +153,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the fuel filler on the left rear quarter (behind the slashes)
         K.face([0, 1, 2, 3, 4, 5, 6, 7].map(i => [-2.28 - Math.cos(i * Math.PI / 4) * 0.055, 0.79 + Math.sin(i * Math.PI / 4) * 0.055, -(L.prop(-2.28, 'w') + 0.006)]), D, { part: 'quarterL' });
         // ---- the blade spoiler across the deck lid's trailing edge, its braces behind it (never crushed with the roof) ----
-        K.part('wing', () => {
+        K.part('wing', () => K.deli('krilo', () => {   // (the garage's wing in its place: K.deli, mounts.krilo)
           K.plate([[-2.448, 1.02, -0.84], [-2.448, 1.02, 0.84], [-2.54, 1.23, 0.84], [-2.54, 1.23, -0.84]], 0.012, CF);
           for (const z of [-0.55, 0, 0.55]) K.box(-2.505, 0.99, z, 0.05, 0.13, 0.012, 0, CF);
-        }, { noCrush: true, noDent: true });
+        }), { noCrush: true, noDent: true });
         // ---- the mirrors (small, black) ----
         for (const sd of [-1, 1]) K.mirror(0.4, 0.97, sd * 0.975, { w: 0.08, h: 0.065, d: 0.11, col: B });
         // ---- inside (seen once a part is off): the containment seat on the left, the dashboard and the wheel, the cage (the door bars

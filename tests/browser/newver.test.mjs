@@ -1,7 +1,7 @@
 // NEW VERSION · TEST 1 (the title's button, js/game.js nvStart, js/newmap.js): the button top right on the title (upright and on its side),
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
-// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START starts it (js/nvschool.js), the others' choices say V IZDELAVI, HOME's box Garaža v izdelavi);
+// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START starts it (js/nvschool.js), the other garages twelve challenges in four levels of three that say V IZDELAVI, HOME's box Garaža v izdelavi);
 // the small circuit's infield (the park with its solid volcano, the rescue base, the edges, road 2's fork) and the park's loose things the car knocks over
 // (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
 // car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
@@ -277,7 +277,12 @@ try {
     await go('school'); await page.click('#nvm [data-a="lic"][data-i="1"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
     T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 2 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
     const s6 = await go('circuit'), m6 = await menu(), w6 = await tapWip('#nvm [data-a="wip"][data-i="2"]');
-    T.check('another garage (circuit race): its three choices; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.rows.length === 3 && w6.wip, JSON.stringify({ rows: m6 && m6.rows, w6 }));
+    T.check('another garage (circuit race): level 1 of its twelve races (1-3), LEVEL 1 at 0 %, level 2 shut until 50 %; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.lv === 1 && m6.rows.length === 3 && /^1 ?TUSCANY, ITALY/.test(m6.rows[0]) && /^3 ?STYRIA/.test(m6.rows[2]) && /LEVEL 1/.test(m6.bar) && /0 %/.test(m6.bar) && /at 50 % level 2 opens/.test(m6.bar) && !m6.next && w6.wip, JSON.stringify({ rows: m6 && m6.rows, bar: m6 && m6.bar, w6 }));
+    // the levels of every other garage as the school's (uporabnik 3. 11.): twelve challenges, four levels of three, the next open at 50 % (places set from here)
+    await page.evaluate(() => { NVMenu.setGarage('circuit', 0, 1); NVMenu.setGarage('circuit', 1, 3); }); const m6a = await menu();
+    await page.click('#nvm [data-a="lvn"]'); const m6b = await menu(), w6b = await tapWip('#nvm [data-a="wip"][data-i="4"]');
+    const g12 = await page.evaluate(() => Object.entries(NVMenu.MENUS).filter(([k, M]) => M.items).map(([k, M]) => [k, M.items.length]));
+    T.check('the garages\' levels: 1st + 3rd + one not driven = 50 %, level 2 opens; › its three races (4-6), a tap: V IZDELAVI; twelve challenges in every garage but multiplayer (three)', m6a && /50 %/.test(m6a.bar) && m6a.next && /100 %/.test(m6a.rows[0]) && m6b && m6b.lv === 2 && m6b.rows.length === 3 && /^4 ?SPA, BELGIUM/.test(m6b.rows[0]) && /LEVEL 2/.test(m6b.bar) && w6b.wip && g12.length === 11 && g12.every(([k, n]) => n === (k === 'multi' ? 3 : 12)), JSON.stringify({ a: m6a && m6a.bar, rows: m6b && m6b.rows, bar: m6b && m6b.bar, g12 }));
     const s7 = await go('home'), m7 = await menu();
     T.check('HOME\'s box: only Garaža v izdelavi (the new garage is made apart)', s7 && m7 && m7.key === 'home' && m7.rows.length === 0 && /Garaža v izdelavi/i.test(m7.note), JSON.stringify(m7));
     const vp = page.viewportSize(); await page.mouse.click(vp.width / 2, vp.height * 0.6); await page.waitForTimeout(300);
