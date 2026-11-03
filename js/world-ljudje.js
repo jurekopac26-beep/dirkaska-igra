@@ -1486,6 +1486,9 @@
           const cur = gap >= 1.0 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
           if (cur) { cur.i[1] = gr(cur.i[0], cur.i[2], 0) + 0.07; cur.o[1] = gr(cur.o[0], cur.o[2], 0) + 0.07; clear((cur.i[0] + cur.o[0]) / 2, (cur.i[2] + cur.o[2]) / 2, gap / 2 + 1.5); }
           if (cur && prev) sbAt(e.p[0], e.p[2]).quad(prev.i, cur.i, cur.o, prev.o, up, AR_COL.pave, null, [[prev.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 1)], [prev.d / 4, kv(KIT.pave, 1)]]);
+          if (k) { const a = Fr[k - 1], l = Math.hypot(e.p[0] - a.p[0], e.p[2] - a.p[2]);   // (the trees in front of it gone: every 4 m along its front, to the barrier)
+            for (let t = 2; t < l; t += 4) { const w = t / l, x = a.p[0] + (e.p[0] - a.p[0]) * w, z = a.p[2] + (e.p[2] - a.p[2]) * w, fx = a.f[0] + (e.f[0] - a.f[0]) * w, fz = a.f[1] + (e.f[1] - a.f[1]) * w;
+              let g2 = 0; for (let q2 = 1; q2 <= 14; q2 += 1) { if (A.clearance(x + fx * q2, z + fz * q2) < 0.5) break; g2 = q2; } if (g2 >= 1) clear(x + fx * g2 / 2, z + fz * g2 / 2, g2 / 2 + 2.5); } }
           prev = cur;
         } }
       // the walkway in front (the vendors', standsOf): 0.9 m off the first row's front, its longest stretch clear of the fence (at most 60 m)
