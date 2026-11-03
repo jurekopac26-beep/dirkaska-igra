@@ -5710,14 +5710,17 @@ const Core = (function () {
       }
       return this._gw;
     }
-    // a grid column's distance from the middle: on a road in its real width (def.barrier) the car wholly on the asphalt of its slot, 0.3 m in
-    _gridLat(i, c) { const T = this.track, l = Math.min(3.4, T.w - 1.6); return T.def.barrier ? clamp(T.wAt(i) - 0.3 - ((c && c.m.wid) || 1.9) / 2, 0, l) : l; }
+    // a grid column's distance from the middle: on a road in its real width (def.barrier) the car wholly on the asphalt of its slot, 0.3 m in;
+    // slot g side by side with another (online: two on a row, the same distance to the line) the two 2.6 m apart at least, as _gridWide's
+    // columns (a narrow street: a little over its edge, on the paved run-off beside it)
+    _gridLat(i, c, g) { const T = this.track, l = Math.min(3.4, T.w - 1.6); if (!T.def.barrier) return l;
+      const m = clamp(T.wAt(i) - 0.3 - ((c && c.m.wid) || 1.9) / 2, 0, l); return this._gridBack(g) === this._gridBack(g % 2 === 1 ? g + 1 : g - 1) ? Math.min(l, Math.max(1.3, m)) : m; }
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
+      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c, g);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -6489,7 +6492,7 @@ const Core = (function () {
     _serveRespawn() {
       const T = this.track, c = this._rq[0];
       for (let g = 1; g <= 4; g++) {
-        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c);
+        const i = T.idx(T.startS - this._gridBack(g)), lat = (g % 2 === 1 ? -1 : 1) * this._gridLat(i, c, g);
         const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         let free = true;
         for (const o of this.cars) if (o !== c && (o.x - x) * (o.x - x) + (o.z - z) * (o.z - z) < 81) { free = false; break; }
