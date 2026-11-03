@@ -3820,7 +3820,7 @@ const World = (function () {
     return (t && t.avgCol) || [0.35, 0.53, 0.23];
   }
   function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
-  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92], bathurst: [1.0, 1.0, 0.86], cpalace: [0.96, 1.0, 0.88], rio: [0.93, 1.0, 0.86], monterey: [1.04, 0.96, 0.78] };   // (the corridor builders' lawns: their vertex colours, roughly)
+  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92], bathurst: [1.0, 1.0, 0.86], cpalace: [0.96, 1.0, 0.88], rio: [0.93, 1.0, 0.86] };   // (the corridor builders' lawns: their vertex colours, roughly; a world may give its own by the season, o.lawn: Monterey)
   function tuftWindMat(W) {   // the clumps' material (the verges' tufts, Los Caracoles' bunch grass): vertex colours, the blades bent by the wind (W: World's dyn.wind)
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (sh) => {
@@ -3840,7 +3840,7 @@ const World = (function () {
     const tu = new IChunks(tuftGeo(false), mat, 160), fl = new IChunks(tuftGeo(true), mat, 160), q = {}, gH = o.groundH;
     // the lawn's colour under a clump: the ground mesh's vertex colour there (the default builder's grid) or the corridor builder's, times the grass picture's
     let gm = null; o.root.traverse(m => { if (!gm && m.isMesh && m.material && !Array.isArray(m.material) && m.material.userData.grassLook) gm = m.material; });
-    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry && o.ground.geometry.attributes.color, TL = LAWN[THEME] || [1, 1, 1];   // (a corridor builder's ground is a group: its lawn TL)
+    const avg = texAvg(gm && gm.map), mc = gm ? gm.color : { r: 1, g: 1, b: 1 }, G = o.gGrid, gc = o.ground && o.ground.geometry && o.ground.geometry.attributes.color, TL = o.lawn || LAWN[THEME] || [1, 1, 1];   // (a corridor builder's ground is a group: its lawn TL)
     const lawn = (x, z) => {
       let r = TL[0], g = TL[1], b = TL[2];
       if (G && gc) { const i = clamp(Math.round((x - G.x0) / G.cell), 0, G.nx), j = clamp(Math.round((z - G.z0) / G.cell), 0, G.nz), k = (j * (G.nx + 1) + i) * 3; r = gc.array[k]; g = gc.array[k + 1]; b = gc.array[k + 2]; }
