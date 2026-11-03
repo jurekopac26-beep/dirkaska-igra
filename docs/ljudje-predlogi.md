@@ -32,7 +32,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Harju, Finska | 4 | redarji ob traku 392, oder iz gradbenih odrov 1464, ležalniki in senčniki 1856, fotografi na bregu 2144 |
 | Mount Hotham, Avstralija | 6 | fotografi na bregu 832, kamp s prikolico 2760, igra kart pod senčnikom 3160, selfie in snemanje 6448, piknik 7608, badminton in frizbi 7872 |
 | Katu-Jaryk, Rusija | 4 | na lestvah in tovornjaku 64, navijaški klub 392, ogenj na travi 720, kamp s prikolico 4544 |
-| Longford, Avstralija | 8 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, žar pred avtodomom 5336, gasilci in reševalci 5952, fotografi na bregu 6488 |
+| Longford, Avstralija | 8 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, žar pred avtodomom 5488, gasilci in reševalci 5952, fotografi na bregu 6552 |
 | Marrakesh, Maroko | 6 | gasilci in reševalci 80, maršali 480, tribuna z valom 1112, delavci na progi 1424, maršali 1560, fotografi in TV kamera 2320 |
 | Mauna Kea, ZDA | 4 | fotografi na bregu 136, kamp s prikolico 3472, spuščanje zmaja 3776, kitara in ples 4488 |
 | Medvode, Slovenija | 7 | fotografi na bregu 96, golaž v kotlu 1384, piknik 1664, badminton in frizbi 2408, družina pri hiši 2896, nogomet na travi 3160, kolesarji 4336 |

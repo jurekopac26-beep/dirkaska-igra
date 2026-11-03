@@ -742,11 +742,11 @@
   "instances": 25554,
   "props": 37,
   "crowd": 491,
-  "world": "7d54e1cd",
+  "world": "a9e807c4",
   "propsHash": "fe4972c5",
   "floor": "53fff8b0/14056",
   "groups": {
-   "-:MeshLambertMaterial": "a6d191cd",
+   "-:MeshLambertMaterial": "4ddf8ff6",
    "roadpatches:MeshLambertMaterial": "f3ebe06e",
    "-:MeshPhongMaterial": "86abe127",
    "crowd:MeshLambertMaterial": "ef827dd0",
@@ -759,10 +759,10 @@
    "life:MeshLambertMaterial": "f987aa1c",
    "lifeShadow:MeshBasicMaterial": "846aaf6a",
    "life:MeshBasicMaterial": "82edbe9f",
-   "sceneThings:MeshLambertMaterial": "c3d5206c",
-   "sceneLamps:MeshBasicMaterial": "cf1dc434",
-   "people:MeshLambertMaterial": "ce12983a",
-   "sceneSmoke:MeshLambertMaterial": "87208764",
+   "sceneThings:MeshLambertMaterial": "ecc79d8a",
+   "sceneLamps:MeshBasicMaterial": "8521155e",
+   "people:MeshLambertMaterial": "97ea3c37",
+   "sceneSmoke:MeshLambertMaterial": "42a1d8c7",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "3e78f93e"
   }

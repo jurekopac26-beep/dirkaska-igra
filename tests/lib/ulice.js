@@ -29,7 +29,7 @@ function streets(def, T) {
   const segs = [], line = (hw, P) => { for (let k = 0; k + 3 < P.length; k += 2) segs.push([P[k], P[k + 1], P[k + 2], P[k + 3], hw]); };
   const flat = (pts) => [].concat(...pts);
   if (Array.isArray(def.roads) || Array.isArray(def.paths)) for (const r of [].concat(Array.isArray(def.roads) ? def.roads : [], Array.isArray(def.paths) ? def.paths : [])) {
-    if (Array.isArray(r[4]) && typeof r[4][0] === 'number') line(r[0] / 2, r[4]); else if (Array.isArray(r[1]) && r[1].length === 2) line(r[0] / 2, flat(r.slice(1))); }
+    if (Array.isArray(r[1])) line(r[0] / 2, flat(r.slice(1))); else if (Array.isArray(r[4])) line(r[0] / 2, r[4]); }   // (Longford's first: its rows of 4+ points have an [x, z] at r[4] too; world-longford.js reads rd.slice(1))
   if (def.roads && !Array.isArray(def.roads)) for (const [k, hw] of [['oval', 4.5], ['t6t8', 4.5], ['t7', 4.5], ['paddock', 3.5], ['euc', 3.2]]) if (def.roads[k]) line(hw, flat(def.roads[k]));
   if (Array.isArray(def.hwy) && !Array.isArray(def.roads)) line(6.2 + 3.7, flat(def.hwy));   // (Riverside: its two carriageways 6.2 m either side, 3.7 m half wide)
   if (def.bs && typeof def.bs.st === 'string' && T) {

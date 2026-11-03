@@ -918,17 +918,27 @@
   const showOf = (s) => { const k = new Set(); if (s) { for (const h of s.hold || []) k.add(keyOf(h)); for (const h of s.head || []) k.add(keyOf(h, 'H')); } return k; };
 
   /* ---------------- a person's day: what it does, the way to the fence and back (functions of time: posed only when seen) ---------------- */
-  const WARN = 2.8, BACK = 4, WALK = 1.45, FENCE_T = 1.8, TURN_T = 0.8;
+  const WARN = 2.8, BACK = 4, WALK = 1.45, FENCE_T = 1.8, TURN_T = 0.8, LEG_T = 0.15, ARR_T = 0.3;
   const STRIDE = { run: 2.4, walk: 4.5, carryWalk: 4.5 };   // (the stride's radians per metre)
   const clamp = (x, a, b) => x < a ? a : x > b ? b : x, wrapA = (a) => a - TAU * Math.round(a / TAU);
   const at0 = (s) => s.on ? { on: s.on, a: s.a, b: s.b, y: s.y || 0 } : { a: s.a, b: s.b, y: s.y || 0 };
-  function moveSeg(segs, from, to, t, v, pose, hold, G) {   // a walk or a run from one place to another (on the ground, or on the same thing); on the ground round the scene's things (G: wayGrid)
-    const same = (from.on || null) === (to.on || null), sh = showOf({ hold: hold || [] }), way = same ? route(G, from, to) : null;
-    if (way) { let d0 = 0; for (let k = 1; k < way.length; k++) { const f = way[k - 1], q = way[k], d = Math.hypot(q.a - f.a, q.b - f.b), dur = Math.max(0.05, d / v); segs.push({ t0: t, t1: t + dur, mv: { from: f, to: q, d, d0, pose, hold: sh } }); t += dur; d0 += d; } return t; }
-    if (!same) return t;   // (from a thing onto the ground or back, the same place: at once, never part of the way in one frame and part in the other)
-    const d = Math.hypot(to.a - from.a, to.b - from.b), dur = Math.max(0.25, d / v);
-    segs.push({ t0: t, t1: t + dur, mv: { from, to, d, pose, hold: sh } }); return t + dur;
+  function moveSeg(segs, from, to, t, v, pose, hold, G, th) {   // a walk or a run from one place to another (on the ground, or on the same thing); on the ground round the scene's things (G: wayGrid)
+    const same = (from.on || null) === (to.on || null); if (!same) return t;   // (from a thing onto the ground or back, the same place: at once, never part of the way in one frame and part in the other)
+    const sh = showOf({ hold: hold || [] }), way = route(G, from, to) || [from, to];
+    let d0 = 0, th0 = th == null ? null : th, thP = null;   // (th: the angle it faced as it set off, the frame's or on a thing its own; each leg's own angle, and the one it starts from: turned in LEG_T, not at once)
+    for (let k = 1; k < way.length; k++) {
+      const f = way[k - 1], q = way[k], d = Math.hypot(q.a - f.a, q.b - f.b), dur = d > 1e-3 ? Math.max(way.length > 2 ? 0.05 : 0.25, d / v) : 0.25;   // (a hop down off its thing, or up onto it: a quarter of a second)
+      const own = d > 1e-3 ? (from.on ? Math.atan2(q.a - f.a, q.b - f.b) : Math.atan2(q.b - f.b, q.a - f.a)) : thP != null ? thP : th0;   // (on a thing its yaw as poseOne has it; a hop on the spot: the way it went)
+      const mv = { from: f, to: q, d, d0, pose, hold: sh, th: own, th0 }; segs.push({ t0: t, t1: t + dur, mv });
+      if (own != null) { const u = th0 == null ? 1 : Math.min(1, dur / LEG_T); th0 = th0 == null ? own : th0 + wrapA(own - th0) * u * u * (3 - 2 * u); }   // (where the turn has got by the leg's end)
+      mv.ae = th0; thP = own; t += dur; d0 += d;
+    }
+    return t;
   }
+  const thOf = (s) => s.cam ? null : s.on ? s.yaw || 0 : s.face && s.face !== 'road' ? Math.atan2(s.face[1], s.face[0]) : -Math.PI / 2;   // (none for the cameraman behind his camera: it turns with it)
+  const after = (segs, sg) => { const L = segs[segs.length - 1]; if (L && L.mv && L.mv.ae != null) sg.aa = L.mv.ae; segs.push(sg); };   // (a state after a walk: turned to its facing from the way it came, ARR_T)   // (a state's facing as a frame angle: none for one on a thing)
+  const legAng = (mv, t, t0) => { if (mv.th0 == null) return mv.th; const u = clamp((t - t0) / LEG_T, 0, 1); return mv.th0 + wrapA(mv.th - mv.th0) * u * u * (3 - 2 * u); };
+  const legYaw = (F, mv, t, t0) => { const th = legAng(mv, t, t0); return F.yaw(Math.cos(th), Math.sin(th)); };
   // ways round the scene's things: what stands at body height (its baked things cut at 0.45, 0.9 and 1.35 m over the ground; a part all within
   // 0.25–1.75 m all of it: a table's top, a seat, a chair's back) in 0.2 m cells over the scene's ground, widened by half a body; a way whose
   // straight line crosses it goes round on the grid (A*, its corners cut where the line is clear). The first and the last 0.6 m of a way are
@@ -986,14 +996,17 @@
       for (const n of [i > 0 ? k - 1 : -1, i < na - 1 ? k + 1 : -1, j > 0 ? k - na : -1, j < nb - 1 ? k + na : -1]) if (n >= 0 && TB.gen[n] !== gen) { TB.gen[n] = gen; q.push(n); } }
     return out;
   }
-  function exitTo(G, e, l) {
-    const { c, a0, b0, na, nb } = WG, gen = ++TB.n, q = TB.q, i0 = Math.floor((e.a - a0) / c), j0 = Math.floor((e.b - b0) / c), R = Math.ceil(3 / c); q.length = 0;
+  function exitTo(G, e, l, o) {   // (o: where the way goes on to: of the open cells just round its thing, the one on the way there)
+    const { c, a0, b0, na, nb } = WG, gen = ++TB.n, q = TB.q, i0 = Math.floor((e.a - a0) / c), j0 = Math.floor((e.b - b0) / c), R = Math.ceil(3 / c), X = []; q.length = 0;
     if (i0 < 0 || j0 < 0 || i0 >= na || j0 >= nb) return null;
     q.push(j0 * na + i0); TB.gen[q[0]] = gen;
-    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % na, j = (k - i) / na;
-      if (!G[k] && G.lab[k] === l) return { a: a0 + (i + 0.5) * c, b: b0 + (j + 0.5) * c, y: e.y || 0 };
-      for (const [n, ok] of [[k - 1, i > 0], [k + 1, i < na - 1], [k - na, j > 0], [k + na, j < nb - 1]]) if (ok && TB.gen[n] !== gen && Math.abs(n % na - i0) <= R && Math.abs(Math.floor(n / na) - j0) <= R) { TB.gen[n] = gen; q.push(n); } }
-    return null;
+    for (let h = 0; h < q.length; h++) { const k = q[h], i = k % na, j = (k - i) / na;   // (over its thing and what is shut in with it; the region's cells round it: the ways out)
+      for (const [n, ok] of [[k - 1, i > 0], [k + 1, i < na - 1], [k - na, j > 0], [k + na, j < nb - 1]]) { if (!ok || TB.gen[n] === gen || Math.abs(n % na - i0) > R || Math.abs(Math.floor(n / na) - j0) > R) continue;
+        TB.gen[n] = gen; if (!G[n] && G.lab[n] === l) X.push(n); else q.push(n); } }
+    if (!X.length) return null;
+    const pt = (k) => ({ a: a0 + (k % na + 0.5) * c, b: b0 + (Math.floor(k / na) + 0.5) * c }), d = X.map(k => { const x = pt(k); return Math.hypot(x.a - e.a, x.b - e.b); }), dm = Math.min(...d);
+    let best = null, bc = 1e9; X.forEach((k, m) => { if (d[m] > dm + 0.45) return; const x = pt(k), cost = d[m] + Math.hypot(o.a - x.a, o.b - x.b); if (cost < bc) { bc = cost; best = x; } });   // (no farther than the nearest by half a metre)
+    return best;
   }
   const wayBlocked = (G, a, b, f, t) => { const i = Math.floor((a - WG.a0) / WG.c), j = Math.floor((b - WG.b0) / WG.c); if (i < 0 || j < 0 || i >= WG.na || j >= WG.nb) return 0;
     const g = G[j * WG.na + i], e2 = WG.end * WG.end; return !g || (a - f.a) * (a - f.a) + (b - f.b) * (b - f.b) < e2 || (a - t.a) * (a - t.a) + (b - t.b) * (b - t.b) < e2 ? 0 : g; };   // (0 free, 1 by a thing, 2 a thing)
@@ -1001,6 +1014,10 @@
     return (x - f.a) * (x - f.a) + (y - f.b) * (y - f.b) < e2 || (x - t.a) * (x - t.a) + (y - t.b) * (y - t.b) < e2 ? 0 : g; };
   const wayClear = (G, p, q, f, t) => { const n = Math.max(1, Math.ceil(Math.hypot(q.a - p.a, q.b - p.b) / (WG.c * 0.5)));   // (a straight line: by no thing, but in its first and last 0.6 m)
     for (let k = 0; k <= n; k++) if (wayBlocked(G, p.a + (q.a - p.a) * k / n, p.b + (q.b - p.b) * k / n, f, t)) return false; return true; };
+  const wayClearS = (G, p, q, f, t) => { const n = Math.max(1, Math.ceil(Math.hypot(q.a - p.a, q.b - p.b) / (WG.c * 0.5))), e2 = WG.esc * WG.esc;   // (as the A* may go: by a thing near the ends too, getting up from its chair)
+    for (let k = 0; k <= n; k++) { const a = p.a + (q.a - p.a) * k / n, b = p.b + (q.b - p.b) * k / n, g = wayBlocked(G, a, b, f, t);
+      if (g === 2 || (g === 1 && (a - f.a) * (a - f.a) + (b - f.b) * (b - f.b) > e2 && (a - t.a) * (a - t.a) + (b - t.b) * (b - t.b) > e2)) return false; }
+    return true; };
   const AS = { g: new Float32Array(WG.na * WG.nb), came: new Int32Array(WG.na * WG.nb), gen: new Uint32Array(WG.na * WG.nb), n: 0, hk: [], hf: [] };
   function route(G, from, to) {   // [from, …corners, to] round the scene's things, or null (no grid, the straight line clear, or no way: straight then)
     if (!G || from.on || to.on) return null;
@@ -1009,15 +1026,14 @@
     return w;
   }
   function route1(G, from, to) {
-    if (wayClear(G, from, to, from, to)) return null;
-    const Lf = touches(G, from), Lt = touches(G, to); let a = from, b = to;
-    if (!Lf.some(l => Lt.includes(l))) {   // one of them shut in by its own thing: out of it into the open ground first, straight
-      if (!Lf.includes(G.big)) { a = exitTo(G, from, G.big); if (!a) return null; }
-      if (!Lt.includes(G.big)) { b = exitTo(G, to, G.big); if (!b) return null; }
+    if (wayClearS(G, from, to, from, to)) return null;
+    const Lf = touches(G, from), Lt = touches(G, to); let a = from, b = to, pre = [], post = [];
+    if (!Lf.some(l => Lt.includes(l))) {   // one of them shut in by its own thing: out of it into the open ground first, straight (on its height till out of it, then a hop down: off the trampoline)
+      if (!Lf.includes(G.big)) { const x = exitTo(G, from, G.big, to); if (!x) return null; a = { a: x.a, b: x.b, y: 0 }; pre = (from.y || 0) > 0.05 ? [from, { a: x.a, b: x.b, y: from.y }] : [from]; }
+      if (!Lt.includes(G.big)) { const x = exitTo(G, to, G.big, a); if (!x) return null; b = { a: x.a, b: x.b, y: 0 }; post = (to.y || 0) > 0.05 ? [{ a: x.a, b: x.b, y: to.y }, to] : [to]; }
     }
-    const w = wayClear(G, a, b, a, b) ? [a, b] : routeOn(G, a, b); if (!w) return null;
-    if (a !== from) w.unshift(from); if (b !== to) w.push(to);
-    return w;
+    const w = wayClearS(G, a, b, a, b) ? [a, b] : routeOn(G, a, b); if (!w) return null;
+    return pre.length || post.length ? pre.concat(w, post) : w;
   }
   function routeOn(G, from, to) {
     const { c, a0, b0, na, nb } = WG, ci = (a) => Math.max(0, Math.min(na - 1, Math.floor((a - a0) / c))), cj = (b) => Math.max(0, Math.min(nb - 1, Math.floor((b - b0) / c)));
@@ -1043,7 +1059,7 @@
     const pts = cells.map(k => ({ a: cx(k), b: cz(k) })); pts[pts.length - 1] = to;
     const way = [from]; let cur = from, last = null;   // (its corners cut: on along the cells while they are in a straight line from the last corner)
     for (let k = 0; k < pts.length; k++) {
-      if (wayClear(G, cur, pts[k], from, to)) { last = pts[k]; continue; }
+      if (wayClearS(G, cur, pts[k], from, to)) { last = pts[k]; continue; }
       if (last) { way.push(last); cur = last; last = null; k--; continue; }   // (a corner where the line was last clear; the cell again from it)
       way.push(pts[k]); cur = pts[k];
     }
@@ -1070,17 +1086,17 @@
     if (R === false || (!R && !Fe)) {   // it stays (the staff, the lazy one): what changes at its place as the car comes, then the fence state there
       const B = turn(Object.assign({}, A, st.bliza || {})), tf = al + FENCE_T;
       segs.push({ t0: t1, t1: tf, s: B });
-      if (Fe) { const f = at0(Fe), a = at0(A); const t2 = (f.on || null) === (a.on || null) && Math.hypot(f.a - a.a, f.b - a.b) > 0.3 ? moveSeg(segs, a, f, tf, WALK, 'walk', Fe.hold, p.G) : tf; segs.push({ t0: t2, t1: 1e9, s: Fe, fence: true }); }
+      if (Fe) { const f = at0(Fe), a = at0(A); const t2 = (f.on || null) === (a.on || null) && Math.hypot(f.a - a.a, f.b - a.b) > 0.3 ? moveSeg(segs, a, f, tf, WALK, 'walk', Fe.hold, p.G, thOf(B)) : tf; after(segs, { t0: t2, t1: 1e9, s: Fe, fence: true }); }
       else segs.push({ t0: tf, t1: 1e9, s: Object.assign({}, B, st.mimo || {}), fence: true });
       return segs;
     }
-    let cur = at0(A), t = t1;
+    let cur = at0(A), t = t1, th = thOf(segs[0].s);
     if (R && R.a != null) {   // a place of its own first (staff to the edge, the scaffold's railing), at a walk unless it says otherwise
-      const r = at0(R); t = moveSeg(segs, cur, r, t, R.pose === 'run' ? p.v : WALK, R.pose === 'run' ? 'run' : 'walk', R.hold || A.hold, p.G);
-      const tf = Math.max(t, al + FENCE_T); segs.push({ t0: t, t1: tf, s: R }); cur = r; t = tf;
+      const r = at0(R); t = moveSeg(segs, cur, r, t, R.pose === 'run' ? p.v : WALK, R.pose === 'run' ? 'run' : 'walk', R.hold || A.hold, p.G, th);
+      const tf = Math.max(t, al + FENCE_T); after(segs, { t0: t, t1: tf, s: R }); cur = r; t = tf; th = thOf(R);
     }
     if (Fe) { const f = at0(Fe), pose = R && R.pose === 'walk' ? 'walk' : R && R.a != null ? 'walk' : 'run';
-      t = moveSeg(segs, cur, f, t, pose === 'run' ? p.v : WALK, pose, R && R.hold != null ? R.hold : (Fe.hold || []), p.G); segs.push({ t0: t, t1: 1e9, s: Fe, fence: true }); }
+      t = moveSeg(segs, cur, f, t, pose === 'run' ? p.v : WALK, pose, R && R.hold != null ? R.hold : (Fe.hold || []), p.G, th); after(segs, { t0: t, t1: 1e9, s: Fe, fence: true }); }
     return segs;
   }
   // ~4 s after the car has passed: back to what it was doing, at a walk (from wherever it is now)
@@ -1088,12 +1104,12 @@
     const now = segAt(p, Sc, t), A = p.st.act, from = now.mv ? lerpPlace(now.mv, clamp((t - now.t0) / (now.t1 - now.t0), 0, 1)) : at0(now.s), segs = [];
     const tb = t + p.bd, mv0 = now.mv, da = mv0 ? mv0.to.a - mv0.from.a : 0, db = mv0 ? mv0.to.b - mv0.from.b : 0;   // (still on its way: it stops where it is, facing the way it went, what it holds in its hands)
     segs.push(mv0 ? { t0: t, t1: tb, s: Object.assign({}, from, { pose: 'stand', face: Math.abs(da) + Math.abs(db) > 1e-3 ? [da, db] : null }), show: mv0.hold, fence: !!now.fence } : { t0: t, t1: tb, s: now.s, fence: !!now.fence });
-    const t2 = moveSeg(segs, from, at0(A), tb, WALK, A.hold && A.hold.length && A.pose === 'carryWalk' ? 'carryWalk' : 'walk', A.hold, p.G);
+    const t2 = moveSeg(segs, from, at0(A), tb, WALK, A.hold && A.hold.length && A.pose === 'carryWalk' ? 'carryWalk' : 'walk', A.hold, p.G, thOf(segs[0].s));
     if (pacing(A)) {   // a pacer: its pacing on from its middle (where it got to), walking on the way it came, not where the pacing's clock had it
       const fc = A.face && A.face !== 'road' ? A.face : [1, 0], mv = segs[segs.length - 1].mv, fwd = !mv || (mv.to.a - mv.from.a) * fc[0] + (mv.to.b - mv.from.b) * fc[1] >= 0;
       p.po = ((fwd ? 0 : 0.5) + 0.5 * (PACE.turn + 0.5 * (1 - PACE.turn))) * PACE.per - (t2 + p.ph * 17);
     }
-    segs.push({ t0: t2, t1: 1e9, s: A, act: true });
+    after(segs, { t0: t2, t1: 1e9, s: A, act: true });
     p.segs = segs; return t2;
   }
   const lerpPlace = (mv, f) => ({ on: mv.to.on, a: mv.from.a + (mv.to.a - mv.from.a) * f, b: mv.from.b + (mv.to.b - mv.from.b) * f, y: mv.from.y + (mv.to.y - mv.from.y) * f });
@@ -1117,16 +1133,17 @@
     if (sg.mv) {   // walking or running
       const f = clamp((t - sg.t0) / Math.max(1e-3, sg.t1 - sg.t0), 0, 1), mv = sg.mv, pl = lerpPlace(mv, f);
       const gy = placeOf(Sc, pl, _w), da = mv.to.a - mv.from.a, db = mv.to.b - mv.from.b;
-      yaw = pl.on ? gy + Math.atan2(da, db) : (Math.abs(da) + Math.abs(db) > 1e-3 ? F.yaw(da, db) : F.yaw(0, -1));
+      yaw = mv.th != null ? (pl.on ? gy + legAng(mv, t, sg.t0) : legYaw(F, mv, t, sg.t0)) : pl.on ? gy + Math.atan2(da, db) : (Math.abs(da) + Math.abs(db) > 1e-3 ? F.yaw(da, db) : F.yaw(0, -1));   // (eased at the way's corners)
       pose = mv.pose; pt = ((mv.d0 || 0) + f * mv.d) * (STRIDE[pose] || 4) + p.ph * TAU; J = poseJ(pose, pt); show = mv.hold;
     } else {
       const s = sg.s, gy = placeOf(Sc, s, _w);
       if (s.cam && Sc.movers.length) {   // the cameraman on the tower: behind the camera, turning with it
         const Mv = Sc.movers[0], G = Sc.groups[Mv.on]; _q.set(Mv.x, Mv.y, Mv.z).applyMatrix4(G.m); const cy = Mv.yaw;
         _w.x = _q.x - Math.sin(cy) * 0.85; _w.z = _q.z - Math.cos(cy) * 0.85; yaw = cy;
-      } else if (s.on) yaw = gy + (s.yaw || 0);
+      } else if (s.on) { yaw = gy + (s.yaw || 0); if (sg.aa != null && t - sg.t0 < ARR_T) { const u = clamp((t - sg.t0) / ARR_T, 0, 1); tl = wrapA(yaw - gy - sg.aa) * (1 - u * u * (3 - 2 * u)); yaw -= tl; } }   // (on its thing: come from a walk on it, turned)
       else { const fc = s.face == null || s.face === 'road' ? null : s.face; yaw = fc ? F.yaw(fc[0], fc[1]) : F.yaw(0, -1);
-        if (s.ff && t - s.tf < TURN_T) { const u = clamp((t - s.tf) / TURN_T, 0, 1); tl = wrapA(yaw - F.yaw(s.ff[0], s.ff[1]) - Math.PI * s.fk) * (1 - u * u * (3 - 2 * u)); yaw -= tl; } }   // (a pacer stopping: turning to it from the way it walked, planOut; tl: the turn still to go)
+        if (s.ff && t - s.tf < TURN_T) { const u = clamp((t - s.tf) / TURN_T, 0, 1); tl = wrapA(yaw - F.yaw(s.ff[0], s.ff[1]) - Math.PI * s.fk) * (1 - u * u * (3 - 2 * u)); yaw -= tl; }   // (a pacer stopping: turning to it from the way it walked, planOut; tl: the turn still to go)
+        else if (sg.aa != null && t - sg.t0 < ARR_T) { const u = clamp((t - sg.t0) / ARR_T, 0, 1); tl = wrapA(yaw - F.yaw(Math.cos(sg.aa), Math.sin(sg.aa))) * (1 - u * u * (3 - 2 * u)); yaw -= tl; } }   // (come from a walk: turned to its facing from the way it came)
       pose = s.pose || 'stand'; rx = s.rx || 0; show = sg === ACT ? (p.actShow || (p.actShow = showOf(s))) : (sg.show || (sg.show = showOf(s)));
       if (sg.act && !s.still) {   // what it does: its own motion, or a breath
         const m = MOTION[pose], tt = t + p.ph * 17 + (p.po || 0);   // (p.po: a pacer's clock set back on its return, planBack)
@@ -1167,11 +1184,12 @@
   // a pet (the dog): out to the fence with the people, along it as the car passes, back; a little bounce while it runs
   function posePet(Sc, p, t, car) {
     const sg = segAt(p, Sc, t), F = Sc.F; let yaw, dy = 0;
-    if (sg.mv) { const f = clamp((t - sg.t0) / Math.max(1e-3, sg.t1 - sg.t0), 0, 1), pl = lerpPlace(sg.mv, f); placeOf(Sc, pl, _w); yaw = F.yaw(sg.mv.to.a - sg.mv.from.a, sg.mv.to.b - sg.mv.from.b) || 0; dy = 0.07 * Math.abs(Math.sin(f * sg.mv.d * 3.2)); }
+    if (sg.mv) { const f = clamp((t - sg.t0) / Math.max(1e-3, sg.t1 - sg.t0), 0, 1), pl = lerpPlace(sg.mv, f); placeOf(Sc, pl, _w); yaw = sg.mv.th != null && !pl.on ? legYaw(F, sg.mv, t, sg.t0) : F.yaw(sg.mv.to.a - sg.mv.from.a, sg.mv.to.b - sg.mv.from.b) || 0; dy = 0.07 * Math.abs(Math.sin(f * sg.mv.d * 3.2)); }
     else { const s = sg.s; let pl = s;
       if (sg.fence && Sc.pass >= 0) { const u = clamp((t - Sc.pass) / 2.2, 0, 1); pl = { a: s.a + u * 3.5, b: s.b }; dy = u < 1 ? 0.07 * Math.abs(Math.sin(u * 14)) : 0; }   // (along the fence after the car)
       else if (sg.fence) dy = 0.05 * Math.abs(Math.sin(t * 9));   // (barking, jumping at the fence)
-      placeOf(Sc, pl, _w); const fc = s.face || [0, -1]; yaw = F.yaw(fc[0], fc[1]); }
+      placeOf(Sc, pl, _w); const fc = s.face || [0, -1]; yaw = F.yaw(fc[0], fc[1]);
+      if (sg.aa != null && !s.on && t - sg.t0 < ARR_T) { const u = clamp((t - sg.t0) / ARR_T, 0, 1), y0 = F.yaw(Math.cos(sg.aa), Math.sin(sg.aa)); yaw = y0 + wrapA(yaw - y0) * u * u * (3 - 2 * u); } }
     const P = p.P; P.root.position.set(_w.x, _w.y + dy, _w.z); P.root.rotation.set(0, yaw, 0); P.root.updateMatrixWorld(true); write(P, null, Sc.pos, Sc.nor);
   }
   // a moving camera's head on its tower: it pans slowly before the car comes, then follows it
@@ -1393,7 +1411,7 @@
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
     hotham: [['foto2', 832, 1], ['kamp', 2760, 1], ['piknik', 7608, -1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
-    longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5336, 1], ['gasilci', 5952, 1], ['foto2', 6488, -1]],
+    longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5488, 1], ['gasilci', 5952, 1], ['foto2', 6552, 1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
     maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
     medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
