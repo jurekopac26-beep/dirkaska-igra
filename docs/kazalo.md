@@ -128,7 +128,7 @@ Modul `Napake` (naložen pred `js/game.js`; `init` dobi kljuke `NK_HOOKS` iz igr
 - **predmeti** razbitine `debris lying on the road`, podrti predmeti ob progi `loose trackside props`
 - **AI** `aiControl`, `aiDefend`, `aiWaits`, `aiModel` (vozila tekmecev: polje `field`, pri velikih vozilih `fieldN` in dopolnitev `fill`; število `fieldSize`); vožnja po stranski cesti
 - **dirka** `Race`: liki `the characters`, boksi `pit lane`, zastave `flags`, strategija in radio
-- **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`
+- **leteči start** `Race._flyColumn` (kolona pred črto, `race.flyOn`, `FLY_GAP` …), široka štartna mreža `_gridWide`, široko vozilo od roba asfalta `_inside`; parkiranje za ciljem odprte ceste `parkS`/`parkD` v `_progressOpen`
 - **nivo podrobnosti fizike** velikih polj `LOD` (nad `LOD.min` 30 avti, npr. Nürburg 100), `Race._lodPlan`, `Race.lodT` (vmesni položaj za izris in posnetek)
 - **hiter vstop** `quickArgs(search)` (naslov → proga, način, `t`, vreme, avto, neveljavni deli)
 - **naključje** `rng(seed)` (mulberry32). Naključni dogodki dirke (kolo odpade, razbitine in predmeti, predrta guma, reakcije in napake AI) so iz `rand()`: številke dirke, ki se stopa (`Race.rnd`; `RAND` nastavita `Race.step` in `aiControl`). Ponovljiva dirka (`opts.repro`) jih vzame iz semena (`opts.seed`), sicer `Math.random` kot doslej. Promet (`Traffic.R`) in policija (`R`, `RD`) imata vedno svoje tokove iz semena; vizualni učinki v `js/game.js` in `js/render.js` ostanejo naključni
