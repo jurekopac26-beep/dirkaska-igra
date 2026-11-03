@@ -159,6 +159,17 @@ const NVEdge = (function () {
           const ex = p.x + nx * s * hw, ez = p.z + nz * s * hw, g = TL.dist(ex, ez, 30) - w; if (g < 4.5 || g > 15) { if (n) Q.push(null); n = 0; continue; }
           Q.push([ex + nx * s * g / 2, ez + nz * s * g / 2, 0, 'plastic']); n++; out.fence = (out.fence || 0) + 1; }
         Q.push(null); } }
+    // the circuit's inner side along the big lot (js/nvbase.js lotIn: from 3.2 m past the edge): the run-off's red-orange from under the kerb's back to
+    // under the lot's edge, as in the pictures (19. 10., the user: "Zbriši zeleno travo za robnikom"); no grass in steps, nor the sea's water seen
+    // through it where the ground lies under its level (the 15 pictures of the whole map, sheet 12). Opaque: it hides what lies under it
+    { const LR = typeof NVBase !== 'undefined' && NVBase.R, lotIn = LR && LR.lotIn; if (lotIn) { const gr = H3.ground || (() => 0), B = MB(), O0 = w + 1.05, O1 = w + 3.9; out.lotBand = 0;
+        for (const [j, s] of [[0, -1], [1, 1]]) { const on = new Uint8Array(N); for (let i = 0; i < N; i++) { const [x, z] = at(i, s, O1); on[i] = lotIn(x, z) ? 1 : 0; }
+          // (gaps of under 6 m closed; a run's first and last 3 m narrowing to nothing, the lot's edge running in there too)
+          const gap = Math.ceil(6 / ds); for (let i = 0; i < N; i++) if (on[i] && !on[(i + 1) % N]) { let g = 1; while (g <= gap && !on[(i + 1 + g) % N]) g++; if (g <= gap) for (let k = 1; k < g; k++) on[(i + k) % N] = 1; }
+          const rn = Math.ceil(3 / ds), wd = (i) => { let a = 0, b = 0; while (a < rn && on[((i - a - 1) % N + N) % N]) a++; while (b < rn && on[(i + b + 1) % N]) b++; return Math.min(1, (Math.min(a, b) + 0.5) / rn); };
+          for (let i = 0; i < N; i++) { const i1 = (i + 1) % N; if (!on[i] || !on[i1]) continue; const row = (k) => { const f = wd(k), o1 = O0 + (O1 - O0) * f; return [0, 0.5, 1].map(t => { const o = O0 + (o1 - O0) * t, [x, z] = at(k, s, o), n = 0.96 + 0.08 * kN[1](x * 0.8, z * 0.8); return B.v(x, gr(x, z) + 0.04, z, [0.62 * n, 0.37 * n, 0.25 * n], 1, 0, 0); }); };
+            const A = row(i), Bq = row(i1); for (let c = 0; c < 2; c++) B.q(A[c], A[c + 1], Bq[c + 1], Bq[c]); out.lotBand++; } }
+        B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), MK); } }
     return out;
   }
   return { build, kerbTex };
