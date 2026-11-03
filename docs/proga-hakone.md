@@ -131,6 +131,7 @@ Uporabnik je po preizkusu predogleda napisal: »železnica na progi ni dokončan
 - **Travniki** imajo lise bolj suhe in bolj sočne trave (`hkCol`), da niso ene same zelene.
 - **Kamera na zavoju v meniju** (#255, sklop 4 menija): Hakone ima svoj zavoj, lasnico pri Ōhiradaiju (`tools/menu-corners.json`, s = 4205 m; video `assets/maps/corner-hakone.webm`, 8 s, 1,08 MB, in slika `corner-hakone.webp`, oboje z `node tools/menu-corner.mjs hakone`).
 - **Obremenitev** (`perf.test.mjs`, NIZKA): povprečno 192 klicev risanja in 329 tisoč oglišč, največ 214 klicev in 408 tisoč oglišč. Prej je bilo 195 (213) klicev in 392 (471) tisoč oglišč. Drevesa so prej vzela 55–184 tisoč oglišč na sličico, zdaj 28–151 tisoč.
+- **Po spoju #257** (ljudje ob progi, živali in tribune, 3. 11. 2026): ob cesti je še manj primerkov (19.550 namesto 25.572) in gledalcev (16 namesto 53). Obremenitev je zdaj povprečno 190 klicev risanja in 297 tisoč oglišč, največ 213 klicev in 346 tisoč oglišč. Reference `world` in `perf` za Hakone so narejene znova, druge so iz `main`.
 - **Druge proge:** uporabnik je 3. 11. 2026 izbral manj dreves na vseh pravih progah (ločen pull request, ena proga za drugo; glej odločitve na vrhu).
 
 ## Sklopi
