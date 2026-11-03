@@ -342,6 +342,13 @@
   "maxKverts": 1550,
   "jsMs": 0
  },
+ "livorno": {
+  "calls": 165,
+  "maxCalls": 211,
+  "kverts": 394,
+  "maxKverts": 587,
+  "jsMs": 3.15
+ },
  "mountbuller": {
   "calls": 137,
   "maxCalls": 164,
