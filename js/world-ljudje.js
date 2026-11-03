@@ -1655,7 +1655,7 @@
       if (f.flags === 'rail') { const FLc = FLAGS[def.id] || {}, cols = (FLc.flag || [0xf2f2f2, 0xd8262a, 0xf2f2f2]).map(hexC), vert = !!(FLc.flag && FLc.flag.vert), team = FLc.team != null ? hexC(FLc.team) : null;
         let acc = 0, next = 6 + (f.letter * 5) % 9, kk = 0;
         for (let k = 1; k < Fr.length; k++) {
-          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap) { acc += l; continue; }
+          const a = Fr[k - 1], b = Fr[k], l = Math.hypot(b.p[0] - a.p[0], b.p[2] - a.p[2]); if (l < 0.05 || b.gap || !a.rail || !b.rail) { acc += l; if (next < acc) next = acc + 2; continue; }
           while (next < acc + l) {
             const w = (next - acc) / l, x = a.p[0] + (b.p[0] - a.p[0]) * w, z = a.p[2] + (b.p[2] - a.p[2]) * w, y2 = a.y2 + (b.y2 - a.y2) * w, fx = a.f[0], fz = a.f[1], h = ((kk * 7919 + f.letter * 131 + Math.round(x)) % 97 + 97) % 97 / 97, W2 = 0.65 + h * 0.25, top = y2 + (tier > 0 ? 0.98 : 0.6), H = 0.8 + h * 0.2;
             const c3 = team && h < 0.3 ? [team, [0.96, 0.96, 0.94], team] : cols, at = (s2, y) => [x + fx * 0.11 - fz * s2 * W2, y, z + fz * 0.11 + fx * s2 * W2], gb = sbAt(x, z), n3 = c3.length;   // (s2 +1: the left as seen from the road)
@@ -1682,6 +1682,42 @@
     }
   }
   const hexC = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+  // a stand in pieces (Spa's grandstands are blocks of ~20 m end to end): the pieces whose fronts meet (the next one's first station within
+  // 4 m of this one's last, facing the same way, their first rows within 3 m of height) one stand for its surroundings (standAround: its
+  // concourse, kiosks, toilets, gate, stairs, doors, its TV platform), its walkers and the tools; each piece's rows, seats and flags as built
+  function mergeChains(feet) {
+    if (feet.length < 2) return;
+    const H = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+    // a list of stations turned round: each one's gap flag (the piece before it not on the stand) moved with its piece
+    const turn = (L) => { const g = L.map(e => !!e.gap), n = L.length; L.reverse(); for (let j = n - 1; j >= 1; j--) L[j].gap = g[n - j]; if (n) L[0].gap = false; };
+    const dir = (L) => [L[L.length - 1].p[0] - L[0].p[0], L[L.length - 1].p[2] - L[0].p[2]];
+    const info = feet.map(f => { let x = 0, z = 0; for (const e of f.fr3) { x += e.f[0]; z += e.f[1]; } const l = Math.hypot(x, z) || 1; return { f, nx: x / l, nz: z / l }; }).filter(I => I.f.fr3.length > 1 && I.f.bk3.length > 1);
+    const flip = (I) => { turn(I.f.fr3); turn(I.f.bk3); I.f.tx = -I.f.tx; I.f.tz = -I.f.tz; };
+    const used = new Set();
+    for (const I0 of info) {
+      if (used.has(I0)) continue; used.add(I0); const chain = [I0];
+      for (const fwd of [true, false]) for (;;) {   // (on from its last station, then back from its first)
+        const end = fwd ? chain[chain.length - 1] : chain[0], e = fwd ? end.f.fr3[end.f.fr3.length - 1] : end.f.fr3[0]; let best = null, bd = 4, bf = false;
+        for (const J of info) { if (used.has(J) || J.nx * end.nx + J.nz * end.nz < 0.8 || Math.abs(J.f.low - end.f.low) > 3) continue;
+          const a = H(fwd ? J.f.fr3[0].p : J.f.fr3[J.f.fr3.length - 1].p, e.p), b = H(fwd ? J.f.fr3[J.f.fr3.length - 1].p : J.f.fr3[0].p, e.p);
+          if (a < bd) { bd = a; best = J; bf = false; } if (b < bd) { bd = b; best = J; bf = true; } }
+        if (!best) break; used.add(best); if (bf) flip(best); fwd ? chain.push(best) : chain.unshift(best);
+      }
+      if (chain.length < 2) continue;
+      const C = chain.map(c => c.f), f = C[0];
+      for (const g of C) { const a = dir(g.fr3), b = dir(g.bk3); if (a[0] * b[0] + a[1] * b[1] < 0) turn(g.bk3); }   // (each piece's back the same way round as its front)
+      const cat = (key) => { const out = []; for (const g of C) g[key].forEach((e, k) => out.push(k === 0 && out.length ? Object.assign({}, e, { gap: false }) : e)); return out; };
+      const fr = cat('fr3'), bk = cat('bk3'), P = fr.map(e => [e.p[0] + e.f[0] * 3, e.p[2] + e.f[1] * 3]), Bp = bk.map(e => [e.p[0] - e.f[0] * 1.5, e.p[2] - e.f[1] * 1.5]);
+      const ext = (L) => { const a = L[0], b = L[1], c = L[L.length - 2], d = L[L.length - 1], la = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, ld = Math.hypot(d[0] - c[0], d[1] - c[1]) || 1;
+        return [[a[0] + (a[0] - b[0]) / la * 1.5, a[1] + (a[1] - b[1]) / la * 1.5], ...L, [d[0] + (d[0] - c[0]) / ld * 1.5, d[1] + (d[1] - c[1]) / ld * 1.5]]; };
+      const t0 = fr[0].p, t1 = fr[fr.length - 1].p, tl = Math.hypot(t1[0] - t0[0], t1[2] - t0[2]) || 1, fl = C.find(g => g.at && g.at.flag);
+      Object.assign(f, { fr3: fr, bk3: bk, poly: ext(P).concat(ext(Bp).reverse()), tx: (t1[0] - t0[0]) / tl, tz: (t1[2] - t0[2]) / tl, pieces: C.length,
+        bb: [Math.min(...C.map(g => g.bb[0])), Math.max(...C.map(g => g.bb[1])), Math.min(...C.map(g => g.bb[2])), Math.max(...C.map(g => g.bb[3]))],
+        top: Math.max(...C.map(g => g.top)), low: Math.min(...C.map(g => g.low)), nrows: Math.max(...C.map(g => g.nrows)), flags: C.some(g => g.flags === 'rail') ? 'rail' : null,
+        at: fl ? { flag: fl.at.flag, flagRow: fl.at.flagRow } : undefined });
+      for (const g of C.slice(1)) feet.splice(feet.indexOf(g), 1);
+    }
+  }
   function standBuild(o, A, hsh, def, circles) {
     const t0 = performance.now(), seats = [], flat = new Map(), cells = new Map(), feet = [], standWays = [], temp = STAND_TEMP.has(def.id), tier = A.LOD.tier, gH = o.groundH;
     const sbAt = (x, z) => { const k = Math.floor(x / 128) + ',' + Math.floor(z / 128); let g = cells.get(k); if (!g) cells.set(k, g = new SB()); return g; };   // (128 m pieces: only those in view drawn)
@@ -1901,6 +1937,7 @@
             const fr3 = [], bk3 = [], gapOf = (r, u, pu) => pu != null && !r.part.Q((u + pu) / 2, (r.vf + r.vb) / 2);   // (gap: the piece before this station is not on the stand)
             { let pu = null; for (const u of r0.part.U) { const F = r0.part.Q(u, r0.vf), B = r0.part.Q(u, r0.vb); if (F && B) { const l = H2(F, B) || 1; fr3.push({ p: [F[0], r0.flat ? F[1] + (r0.dyP != null ? r0.dyP : 0) : F[1], F[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l], y2: B[1] + r0.dy, gap: gapOf(r0, u, pu) }); pu = u; } } }   // (y2: the first row's tread)
             { let pu = null; for (const u of r1.part.U) { const F = r1.part.Q(u, r1.vf), B = r1.part.Q(u, r1.vb); if (F && B) { const l = H2(F, B) || 1; bk3.push({ p: [B[0], B[1] + r1.dy, B[2]], f: [(F[0] - B[0]) / l, (F[2] - B[2]) / l], gap: gapOf(r1, u, pu) }); pu = u; } } }
+            if (flagMode === 'rail') for (const e of fr3) e.rail = true;   // (its flags over the front handrail: standAround, by the station, a stand in pieces each its own)
             feet.push({ poly, bb: [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)], top: Math.max(...rows.map(r => r.yb)), tx: (t1[0] - t0[0]) / tl, tz: (t1[1] - t0[1]) / tl, fr3, bk3, nrows: rows.length, low: rows[0].yb, col: c1, bench, flags: flagMode, at: flagAt ? { flag: flagAt.concat(nFlags), flagRow } : undefined });
           } }
         // the aisles' ways up for the walkers (standsOf), 0.3 m beside the handrail, over the treads and half-steps as drawn (aisleRec): from just
@@ -1939,6 +1976,7 @@
       }
       if (keep && !built) flat.set(M, cv); else if (built) { m.visible = false; if (keep) flat.set(M, cv); }
     });
+    mergeChains(feet);
     for (const ws of standWays) { const f = feet.find(f => ws[0].some(p => inPoly(f.poly, p[0], p[2]))); if (f) f.ways = (f.ways || []).concat(ws); }   // (each stand's aisles' ways)
     const t1 = performance.now(), ms = worldStatics(o); standRoofs(o, feet, sbAt, ms); const t2 = performance.now(); standAround(o, A, feet, sbAt, tier, def, circles, ms); const t3 = performance.now();
     const mat = standMat(), meshes = [];
@@ -1988,7 +2026,8 @@
       if (f.gang) list.push({ pts: f.gang, kind: fi % 2 ? 'hotbox' : 'icebox', vendor: true, v: 0.55, stop: 7, stopT: 3.5 });
       const ways = (f.ways || []).slice(), take = () => ways.length ? ways.splice(Math.floor(R2() * ways.length), 1)[0] : null;
       if (LOD.tier > 0) { const w = take(); if (w) list.push({ pts: w, kind: 'tray', vendor: true, v: 0.42, stop: 3, stopT: 4 }); }
-      for (let k = LOD.tier > 0 ? 2 : 1; k > 0; k--) { const w = take(); if (w) list.push({ pts: w, kind: ['cup', 'can', 'phone', 'hotdog', 'popcorn', null][Math.floor(R2() * 6)], v: 0.55 + R2() * 0.2, stop: 1e9, stopT: 0 }); }
+      let flen = 0; for (let k = 1; k < f.fr3.length; k++) flen += Math.hypot(f.fr3[k].p[0] - f.fr3[k - 1].p[0], f.fr3[k].p[2] - f.fr3[k - 1].p[2]);   // (a long stand (in pieces): more)
+      for (let k = LOD.tier > 0 ? 2 + Math.floor(flen / 70) : 1; k > 0; k--) { const w = take(); if (w) list.push({ pts: w, kind: ['cup', 'can', 'phone', 'hotdog', 'popcorn', null][Math.floor(R2() * 6)], v: 0.55 + R2() * 0.2, stop: 1e9, stopT: 0 }); }
       if (f.at && f.at.tvcam) list.unshift({ pts: [f.at.tvcam.slice(0, 3)], fix: f.at.tvcam, kind: null });   // (the TV cameraman on his platform)
       for (const wk of list) {
         if (wn >= wMax && !wk.fix) break;
