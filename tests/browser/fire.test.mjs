@@ -1,6 +1,8 @@
 // When a car catches fire (js/render.js: fireScan decides, Render.burning tells game.js's commentator and sfx's crackle): only once it is
-// wrecked and barely drives. A kit car (ZMAJ 85) in a race on Jezero, damage on, the race paused and stepped, a frame drawn every 0.1 s of
-// race time (the autopilot drives it; knocks from the rivals made harmless: what burns is what the test sets):
+// wrecked and barely drives. A kit car (ZMAJ 85) on its qualifying lap on Jezero, damage on, the race paused and stepped, a frame drawn
+// every 0.1 s of race time (the autopilot drives it; knocks made harmless: what burns is what the test sets). The qualifying lap: no wheel
+// rule there (game.js WHEEL_RULE, a race only), so the fire every car has but the player's in a race (since 1. 11. 2026 every vehicle with
+// parts that come off is under the rule there: it burns only by it, wheels.test.mjs):
 //   1. dmg 0.95, its bonnet off, all four wheels on, driven 5 s: no fire (the old rule lit it at 0.9, or at 0.75 with the bonnet off)
 //   2. repaired, braked to a standstill, then dmg 0.7 and a wheel off (Core.detachPart), held there 5 s: no fire (the hub drags only
 //      while the car moves)
@@ -15,11 +17,11 @@ const T = checker('when a car catches fire');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'zmaj', damage: 2, track: 'jezero', sound: 1 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', carV: 3, carId: 'zmaj', damage: 2, track: 'jezero', sound: 1, quali: 1 });
   await page.evaluate(() => Sfx.resume());
   await startTrack(page, 'jezero');
   const R = await page.evaluate(() => {
-    const g = window.__game, race = g.race, P = race.player, M = P.m, PT = Core.partsOf(M), out = { id: M.id, kit: !!M.kit };
+    const g = window.__game, race = g.race, P = race.player, M = P.m, PT = Core.partsOf(M), out = { id: M.id, kit: !!M.kit, quali: !!race.quali, rule: !!(P.wreck && P.wreck.rule) };
     g.pause(); window.__said = []; const say = Comm.say; Comm.say = (k, v, p, q) => { window.__said.push(k); return say(k, v, p, q); };
     g.sim(9, true);   // (the start: under way)
     P.dmgK = 1e-6;   // (the rivals' knocks from here on as good as harmless)
@@ -50,7 +52,7 @@ try {
     Core.wreckCar(P); out.s4b = { burning: Render.burning(P), dmg: P.dmg }; Render.frame(0.1, 1, P, 'chase', {}); out.s4c = { burning: Render.burning(P), fire: !!view().fire };
     g.resume(); return out;
   });
-  T.check('the car: a kit vehicle (ZMAJ 85)', R.id === 'zmaj' && R.kit, JSON.stringify({ id: R.id, kit: R.kit }));
+  T.check('the car: a kit vehicle (ZMAJ 85) on its qualifying lap, no wheel rule', R.id === 'zmaj' && R.kit && R.quali && !R.rule, JSON.stringify({ id: R.id, kit: R.kit, quali: R.quali, rule: R.rule }));
   T.check('1. dmg 0.95, the bonnet off, the wheels on, driven 5 s: no fire (Render.burning false, no flames)',
     R.s1.lost && R.s1.wl === 0 && R.s1.dmg >= 0.94 && R.d1.vmax > 10 && !R.s1.burning && !R.s1.fire, JSON.stringify({ d1: R.d1, s1: R.s1 }));
   T.check('2. dmg 0.7, a wheel off, at a standstill 5 s: no fire',
