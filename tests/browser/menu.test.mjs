@@ -28,6 +28,19 @@ try {
   // (a picture still on its way when the next track is stepped to is cancelled by the browser: not an error of the page)
   const real = (errs) => errs.filter(e => !/^request failed: \S+\/assets\//.test(e));
   const raceOn = (page, id) => page.waitForFunction((id) => window.__game.race && window.__game.race.track.def.id === id, id, { timeout: 120000 });
+  // (a wait that ran out: what the page shows, for the log: its address and load state, on show or not and whether it still draws frames
+  // (raf: ms to the next frame), the game's screen, the menu, the loading screen's message (a start that failed shows it there), the
+  // service worker; a page that does not answer in 10 s (busy) is said so)
+  const pageState = (page) => Promise.race([
+    page.evaluate(() => new Promise((res) => {
+      const ld = document.getElementById('loading'), nav = performance.getEntriesByType('navigation')[0];
+      const st = { url: location.pathname + location.search, rs: document.readyState, vis: document.visibilityState, game: !!window.__game, screen: window.__game ? __game.screen : null,
+        menu: !!window.Menu, ready: !!(window.Menu && Menu.ready), loading: ld && !ld.classList.contains('off') ? document.getElementById('ld-msg').textContent : '',
+        shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+        nav: nav ? nav.type + ', answer ' + Math.round(nav.responseStart) + ' ms, load ' + Math.round(nav.loadEventEnd) + ' ms' : '', t: Math.round(performance.now()), raf: null };
+      requestAnimationFrame(() => { st.raf = Math.round(performance.now() - st.t); }); setTimeout(() => res(st), 1000);
+    })),
+    new Promise((res) => setTimeout(() => res({ answer: 'none in 10 s (the page busy)' }), 10000))]).catch((e) => ({ err: String(e).slice(0, 200) }));
 
   // 1. the title: the menu is the screen on show; a new player's track is a real one, not the test track the game starts on
   {
@@ -535,7 +548,11 @@ try {
       const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
       gar = null;
       await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), click(page, 'garage')]);
-      await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
+      const there = await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 }).then(() => true, () => false);
+      if (!there) {   // (seen on GitHub now and then, never locally: the page's state and its errors in the log, not a test stopped without them)
+        T.check(`back from the garage [${way}]: the game's car screen within 120 s`, false, JSON.stringify(await pageState(page)) + ' — ' + errors.slice(-10).join(' | '));
+        break;
+      }
       await page.waitForTimeout(300);
       const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
       T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its back: the game's car screen on that car (the address plain again) [${way}]`,

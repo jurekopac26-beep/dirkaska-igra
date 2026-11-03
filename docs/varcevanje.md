@@ -22,7 +22,7 @@ Odločitev uporabnika 3. 11. 2026 na strani Odločitve (vprašanje `zetoni-1`, o
 4. zeleno: PR vlaka združi z **merge commitom** (ne squash: tako GitHub PR-je vlaka sam označi kot združene; katerega ne, zapre s komentarjem »Na main z vlakom #N«), sejam vlaka pošlje commit in zažene naslednje seje po svojem načrtu;
 5. rdeče: po imenu testa in spremenjenih datotekah najde PR, ki je kriv, ga izloči, njegovi seji pošlje, kaj je padlo, in vlak brez njega pošlje znova; če krivca ne najde, vlak razpolovi.
 
-Vlak sam izpolni pravilo 31. 10. (več PR na istih datotekah gre na `main` v enem koraku). Združuje brez vprašanja (pravilo 2. 11.). Kakovost: testi preverijo točno tisto, kar gre na `main`, in vse skupaj samo enkrat.
+Hitro združevanje (odločitev uporabnika 3. 11. 2026, CLAUDE.md »Postopek«) velja tudi za vlak: če je bil PR vlaka že v celoti zelen in ima po spajanju svežega `main` spore samo v žigih, seznamih testov ali kazalu, se po lokalnih povezanih testih združi brez novega kroga na GitHubu. Vlak sam izpolni pravilo 31. 10. (več PR na istih datotekah gre na `main` v enem koraku). Združuje brez vprašanja (pravilo 2. 11.). Kakovost: testi preverijo točno tisto, kar gre na `main`, in vse skupaj samo enkrat.
 
 ## B · Napor po vlogi seje
 
