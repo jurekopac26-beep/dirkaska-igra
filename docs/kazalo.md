@@ -85,6 +85,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/varcevanje.md` | varčevanje z žetoni: odločitve 3. 11. 2026, okolje »Koordinacija« (napor medium), okno za povzetek, zbirka `cakanje` (čakanje na drug pull request), svež `main` pred združitvijo, meritve porabe sej |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
+| `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
+| `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge |
 | `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
@@ -99,7 +101,7 @@ Naslovi razdelkov (iskanje: `grep -n "/\* ---------------- <začetek naslova>" j
 - **duh** `ghost of the best run`, sledi gum zadnjih voženj `the tyre marks of the last time trial runs`
 - **deljenje** profila in izziv `sharing`, `a challenge (Izziv)`
 - **dirka** `race lifecycle` (`pause`, `resume`, start, konec), `per-step race logic`, `phases`; kamera pred štartom `startCamPick` (pred `newRace`: naključni let, `tdgp-startcam`, testi `tdgp-nostartcam`, `window.__game.startCam`, `startCamForce`), `startCamEnd`
-- **HUD** `HUD`, `time trial HUD`, `the timing tower` (`S.tower`: 0 Izklop, 1 Zgoraj `#tw-strip`, 2 Ob zemljevidu `#h-tower`; `twCls`), uničen avto, `the wheel rule` (`WHEEL_RULE`, `TYRE_RULE`; ZAMENJAJ KOLO `swapHUD`, okrogel za KOLIBRI), gume KOLIBRIJA na zaslonu `ktHUD` (`KT_HUE`), prazno pod uro `setBest`
+- **HUD** `HUD`, `time trial HUD`, `the timing tower` (`S.tower`: 0 Izklop, 1 Zgoraj `#tw-strip`, 2 Ob zemljevidu `#h-tower`; `twCls`), uničen avto, `the wheel rule` (`WHEEL_RULE`, `TYRE_RULE`: vsa vozila; ZAMENJAJ KOLO `swapHUD`, okrogel z lastnimi gumami), gume vsaka zase na zaslonu `ktHUD` (`KT_HUE`), prazno pod uro `setBest`
 - **odprta cesta** (Vršič: promet, policija) `the open road`, `the police radio`
 - **boksi** `pit stops`, radio ekipe `the team radio`
 - **sovoznik** `the co-driver`, **komentator** `commentator`
@@ -221,7 +223,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Kamera:** položaj avta `carlow.test.mjs`, nagib `camtilt.test.mjs`, tresenje kamere `camshake.test.mjs` (nastavitve `camShake`, `camLand`, `camKerb`, `camMis`; `Render.shake(a, vrsta)`, `Render.cam.shOn`)
 - **Deli iz garaže:** `deli.test.js` (seznam, učinki, fizika na ravni plošči, vse možnosti na avtih z `mounts`, `Render.deliMesh`); sklop 3 (barve, skriti deli): `deli-barve.test.js`, `browser/deli-barve.test.mjs`
-- **Gume KOLIBRIJA:** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče)
+- **Gume vsaka zase (vsa vozila od 1. 11. 2026, prej KOLIBRI):** `kolibri-tyres.test.js` (Node), `browser/kolibri-hud.test.mjs` (pike, ZAMENJAJ KOLO, tabela zgoraj, gumbi, nastavitve; pokonci in ležeče), `browser/wheels.test.mjs` (SOKOL in KAZE RS s svojimi gumami), `browser/hud.test.mjs` in `browser/weather.test.mjs` (pike s komplet gum: dirka s prijateljem; razred `kt`)
 - **Meni:** `menu.test.mjs` (tudi tri kamere na zaslonu proge, globus in graf višine, avto v 3D z vetrom in dotik → garaža, slika brez WebGL, zastava v uvodu), `tests/menu-lens.test.js` (dolžine prog za seznam, višine za graf), `tests/menu-globe.test.js` (zastave, obrisi držav in kraji prog za globus), `tests/menu-corner.test.js` (zavoji, videi in plakati kamere 3); brskalnik, ki stran temni na silo, in `temni-nacin.html`: `darktip.test.mjs`; jezik `lang.test.mjs`, `tests/lang.test.js`
 - **Svet in grafika:** `world.test.mjs` (samo nekatere proge: `WORLD_ONLY`; reference veljajo za Chromium Playwrighta iz `package.json`), `gfx.test.mjs`, `perf.test.mjs` (meje iz `tests/golden/perf.json`; razčlenitev po predmetih `tools/obremenitev.mjs`; prave proge do 300 klicev in 900k oglišč v povprečju in na najzahtevnejšem mestu), `memory.test.mjs`, prehod asfalt–makadam `seams.test.mjs`
 - **Dirke in fizika** (Node): `races.test.js`, `golden.test.js`, nova fizika `nova.test.js` (ploskev: `tests/lib/handling.js` z `'nova'`), trki med avti po različicah `trki.test.js`, `roll.test.js`, `corner.test.js`, `knock.test.js`, testi prog `<id>.test.js`

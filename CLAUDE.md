@@ -10,6 +10,12 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Kategorijo test izbrišemo tik pred objavo na Google Play, skupaj s sklopom 8 orodja za napake. **Prog v kategoriji test ne urejaj** (ne optimiziraj, ne dodajaj grafike, ne popravljaj), razen če uporabnik izrecno prosi za točno to progo.
 - Testne proge **ignoriraj**: na njih igri ni treba delovati, zato jih ne uporabljaj za slike pred/po, meritve obremenitve ali preverjanje sprememb. Za to vzemi pravo progo (npr. z boksi: Bathurst, Avstralija ali Spa, Belgija). Če test ali referenca zahteva kaj samo zaradi testne proge, sprememba drugih prog pa je pravilna, je dovolj, da referenco ustvariš znova z orodji repozitorija.
 
+## Ena proga na državo (odločitev uporabnika 3. 11. 2026)
+- V prihodnje naredimo iz vsake države samo **eno novo progo**. Proge na čakanju po državah in izbire uporabnika: `docs/proge-po-drzavah.md`; seja jo preveri, preden začne novo progo.
+- Država, ki že ima progo v igri: nova proga iz nje se dela samo, če jo je uporabnik izbral (vprašanja `ena-proga-<država>` na strani Odločitve). Dokler izbire ni, je ne začni; druge proge iste skupine ali koraka naredi.
+- Država brez proge: proge gredo v delo, ko pridejo na vrsto. Prva iz države se naredi, druge iz iste države potem odpadejo.
+- Nov načrt prog predlaga največ eno progo na državo in izpusti države, ki progo že imajo.
+
 ## Kamere in grafika
 - V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere izometrična, kino in kokpit so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
 - Grafiko izboljšuj za kamero za avtom: obzorje, nebo, oddaljeni griči, cesta pred avtom in njeni robovi, teren ob njej. Detajli, ki jih s te kamere ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi, strehe od zgoraj), so odveč: poenostavi jih, da je telefon manj obremenjen.
@@ -58,6 +64,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - V `docs/kazalo.md` preberi samo razdelek »Na kratko« (prvih 25 vrstic), nato ime poišči z grepom in preberi samo tisti del. Velikih datotek (`js/world.js`, `js/world-pikes.js`, `docs/igra.md`, `tests/README.md`, `README.md`, `docs/kazalo.md`) ne beri v celoti.
 - Dokumenti imajo dolge vrstice (do ~4.600 znakov): išči z omejeno okolico, `grep -noE '.{0,150}ime.{0,150}' datoteka`.
 - Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
+- Vprašanja o progah v igri (dolžina, zavitost, kaj je do 60 m ob cesti): najprej `docs/proge-pregled.md` (odločitev uporabnika 3. 11. 2026), šele nato opis proge. Po novi progi zaženi `node tools/proge-pregled.js` in v datoteko dopiši njeno vrstico »Do 60 m ob cesti«.
 
 ## Orodje za napake (`js/napake.js`, načrt `docs/orodje-za-napake.md`)
 - Vsi sklopi so končani; sklopa 0 in 8 ostaneta odložena, dokler uporabnik ne reče drugače.
