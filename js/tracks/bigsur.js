@@ -58,8 +58,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars on Highway One, over the Bixby Creek Bridge and up to Hurricane Point, and you start {grid}.", "Here we are on the coast road at {track}, the Pacific on the right. Four kilometres to Hurricane Point, and you line up {grid}.", "Welcome to {track}! Cliffs, the ocean, two old bridges and a climb to finish. You start {grid}."],
-      goPass: ["Lights out, and they are away down the coast!", "And they're off! Next stop, the Bixby Creek Bridge!", "Green light! Thirteen cars along the cliffs!", "Go, go, go! Mind the edge, it is a long way down!"],
+      introPass: ["Welcome to {track}! {cars} cars on Highway One, over the Bixby Creek Bridge and up to Hurricane Point, and you start {grid}.", "Here we are on the coast road at {track}, the Pacific on the right. Four kilometres to Hurricane Point, and you line up {grid}.", "Welcome to {track}! Cliffs, the ocean, two old bridges and a climb to finish. You start {grid}."],
+      goPass: ["And they are away down the coast!", "And they're off! Next stop, the Bixby Creek Bridge!", "The race is on! {cars} cars along the cliffs!", "Go, go, go! Mind the edge, it is a long way down!"],
       introPassTT: ["Welcome to {track}! Just you, the clock and the Pacific.", "Here we are on Highway One. {cps} checkpoints between you and Hurricane Point.", "Welcome to {track}! No rivals this time, only the clock and the cliffs."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the coast road!", "And you're away, down to Rocky Creek!"],
       introTraffic: ["Welcome to {track}, and the coast road is open today: tourists, camper vans and motorbikes both ways. Just you and {rival}, first to Hurricane Point wins!", "Here we are on Highway One. A duel with {rival} through the holiday traffic. Mind the cars pulling out of the viewpoints!", "Welcome to {track}! No closed road this time. Beat {rival} over the Bixby Creek Bridge and up to Hurricane Point!"],

@@ -64,8 +64,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, five kilometres and eighteen numbered curves up the mountain above Nikko, and you start {grid}.","Here we are on {track}, the road of the forty-eight curves. A race all the way up the one-way road, and you line up {grid}.","Welcome to {track}! Eighteen of its forty-eight curves today, and you start {grid}."],
-      goPass: ["Lights out, and away they go, straight into the first hairpin!","And they're off! Eighteen curves to the last sign!","Green light! The pack charges up into the maples!","Go, go, go! Two lanes, one way, all the way up!"],
+      introPass: ["Welcome to {track}! {cars} cars, five kilometres and eighteen numbered curves up the mountain above Nikko, and you start {grid}.","Here we are on {track}, the road of the forty-eight curves. A race all the way up the one-way road, and you line up {grid}.","Welcome to {track}! Eighteen of its forty-eight curves today, and you start {grid}."],
+      goPass: ["And away they go, straight into the first hairpin!","And they're off! Eighteen curves to the last sign!","The race is on! The pack charges up into the maples!","Go, go, go! Two lanes, one way, all the way up!"],
       introPassTT: ["Welcome to {track}! Eighteen curves, just you and the clock.","Here we are on {track}. {cps} checkpoints between you and the last curve.","Welcome to {track}! No rivals this time, only the clock and the hairpins."],
       goPassTT: ["Green light! The clock is running!","Go! Attack the Irohazaka!","And you're away! Up the ladder of hairpins!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, buses and motorbikes, all going up with you. Just you and {rival}, first to the top wins!","Here we are on {track}. A duel with {rival} through the traffic on a one-way road. Pass on the right, they drive on the left here!","Welcome to {track}! The tour buses are on their way up too. Beat {rival} to the top!"],

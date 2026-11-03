@@ -1,0 +1,11 @@
+# Suzuka, Japonska
+
+[← Vse proge](../../README.md#proge) · proga `suzuka` (`js/tracks/suzuka.js`)
+
+Prava proga Suzuka na Japonskem v pravem merilu (5,807 km, 2 kroga proti 21 tekmecem), edina proga v obliki osmice: zadnja ravnina pred ovinkom 130R pelje po mostu čez cesto med dvojnim desnim in lasnico. Start in cilj sta na ciljni ravnini pred boksi in glavno tribuno, vožnja v smeri urinega kazalca po vzhodni zanki in v obratni smeri po zahodni. Oblika proge je iz OpenStreetMap, višine pa iz satelitskega višinskega modela Copernicus: ciljna ravnina se spušča do prvega ovinka (~17 m, najnižja točka), S-zavoji se vzpenjajo do dolgega levega in dvojnega desnega (~50 m), cesta se pod mostom spusti v useko, nato vzpon do lasnice, 200R in Spoona (~59 m, najvišja točka), zadnja ravnina se spusti in čez most do 130R, sledita šikana in zadnji ovinek. Med vožnjo se pod uro izpišejo imena ovinkov (Prvi ovinek, S-zavoji, Dolgi levi, Dvojni desni, Pod mostom, Lasnica, 200R, Spoon, Zadnja ravnina, 130R, Šikana, Zadnji ovinek).
+
+- **Most:** avto na mostu in avto pod njim se ne dotakneta (trki in odpadli deli veljajo le na isti višini), na mostu so betonske ograje, spodnja cesta pelje med opornimi zidovi. Ko voziš pod mostom, most postane prosojen, da vidiš avto.
+- **Okolica:** teren iz višinskega modela, gozdovi po rabi tal (ESA WorldCover), prave tribune (V1, V2, A1, B1, B2, C, D, E, G, Q, S) z gledalci in stavba boksov s kontrolnim stolpom po obrisih iz OpenStreetMap, stavbe v okolici, ribniki, zabavišče Motopia z velikim kolesom, ki se vrti, in češnje v cvetu (dirka za veliko nagrado Japonske je aprila). Rdeče-beli robniki, gramozni izleti s stenami iz gum, lovilne ograje in table za zaviranje (300, 200, 100 m) pred prvim ovinkom, lasnico, Spoonom in šikano.
+- Na Suzuki ni boksov za popravilo (stavba boksov je le okolica).
+- **DRS** kot na VN Japonske (od 2. kroga naprej): ena cona po ciljni ravnini. Črta zaznave je 50 m pred šikano, loputa se odpre 126 m za zadnjim ovinkom in ostane odprta do zaviranja pred prvim ovinkom. Čez progo sta beli črti (polna na črti zaznave, črtkana tam, kjer se cona odpre).
+- **Pokošena trava:** trava ob progi in zelenice za ogrado so pokošene v svetle in temnejše pasove vzdolž proge (ne v gozdu, grmovju, na parkiriščih, v ribnikih, ob ciljni ravnini in ob križanju).

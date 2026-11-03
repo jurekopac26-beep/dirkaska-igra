@@ -1,4 +1,4 @@
-// Palomar Mountain: an open road with four ways to drive it on one card, as Vršič and Mulholland Highway (def.modes: the race, the time trial,
+// Palomar Mountain: an open road with four ways to drive it on one card, as Vršič and the Santa Monica Mountains road (def.modes: the race, the time trial,
 // the duel in the traffic and the run from the police). The road: the South Grade Road (S6) in the real scale, from 0.7 km above State Route 76
 // (~859 m) up its ladder of hairpins to ~1435 m (no more than 8 km), grades of at most ~11 %; the thirteen hairpins in order up the road, each
 // turning the way the real one does (the signs' altitudes the road's own), the places for the HUD and the commentator in order; the side roads

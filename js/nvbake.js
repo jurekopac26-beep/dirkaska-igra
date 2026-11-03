@@ -8,7 +8,7 @@
 const NVBake = (function () {
   'use strict';
   const CELL = 64;   // (m: the cells' size)
-  const hooked = (m) => m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile;
+  const hooked = (m) => m.onBeforeCompile !== THREE.Material.prototype.onBeforeCompile;   // (kept as they are, unless m.userData.bake: a shader of its own that only needs the world position, the one meadow's)
   // a merge key: one-colour materials by their kind (the colour goes into the vertices), the rest by the material itself
   function keyOf(o, m, ic) {
     const tag = [m.type, m.side, m.depthWrite, m.depthTest, m.polygonOffset ? m.polygonOffsetFactor + '/' + m.polygonOffsetUnits : 0, m.fog, m.flatShading, m.alphaTest, o.renderOrder].join('|');
@@ -62,7 +62,7 @@ const NVBake = (function () {
       if (!o.isMesh || o.isSkinnedMesh || o.userData.dyn) return;   // (dyn: what moves, the walls' pieces of fence, js/nvwalls.js)
       const m = o.material, g = o.geometry;
       // (a geometry's face groups only count with an array of materials: one material draws the whole of it)
-      let why = Array.isArray(m) ? 'multi' : !g || !g.attributes.position ? 'nogeo' : g.morphAttributes.position ? 'morph' : m.aoMap || m.lightMap ? 'uv2' : hooked(m) ? 'shader' : !shown(o) ? 'hidden' : isFinite(g.drawRange.count) && g.drawRange.count < (g.index ? g.index.count : g.attributes.position.count) ? 'range' : '';
+      let why = Array.isArray(m) ? 'multi' : !g || !g.attributes.position ? 'nogeo' : g.morphAttributes.position ? 'morph' : m.aoMap || m.lightMap ? 'uv2' : hooked(m) && !m.userData.bake ? 'shader' : !shown(o) ? 'hidden' : isFinite(g.drawRange.count) && g.drawRange.count < (g.index ? g.index.count : g.attributes.position.count) ? 'range' : '';
       if (!why && !o.isInstancedMesh) { _b.setFromObject(o); if (![_b.min.x, _b.min.y, _b.min.z, _b.max.x, _b.max.y, _b.max.z].every(Number.isFinite)) why = 'nan'; }
       if (why) { kept++; whys[why] = (whys[why] || 0) + 1; return; }
       if (o.isInstancedMesh) {   // every instance on its own: its matrix, its colour
@@ -116,7 +116,11 @@ const NVBake = (function () {
     const empty = (o) => !o.isMesh && !o.isSprite && !o.isLine && !o.isPoints && !o.isLight && o.children.length === 0;
     for (const top of tops) { const rm = []; top.traverse(o => { if (o !== top && empty(o)) rm.push(o); }); for (const o of rm) if (o.parent) o.parent.remove(o); if (empty(top)) scene.remove(top); }
     scene.add(root);
-    if (opt.world) opt.world.cullFog = cells;   // (js/render.js cullByDistance: every frame, the cells past the fog not drawn, nor in the shadows)
+    // (and what moves but stays in a place of its own, userData.fogSphere [x, z, r, near]: a farm's fences and animals, js/newmap.js; past the fog not drawn
+    // either, nor further than near m from their place: small things, a few pixels there)
+    const roam = []; scene.traverse(o => { const f = o.userData && o.userData.fogSphere; if (!f) return; const s = new THREE.Sphere(new THREE.Vector3(f[0], 0, f[1]), f[2]);
+      roam.push({ geometry: { boundingSphere: s }, get visible() { return o.visible; }, set visible(v) { const c = typeof Render !== 'undefined' && Render.camera && Render.camera.position; o.visible = v && (!f[3] || !c || Math.hypot(c.x - f[0], c.z - f[1]) - f[2] < f[3]); } }); });
+    if (opt.world) opt.world.cullFog = cells.concat(roam);   // (js/render.js cullByDistance: every frame, the cells past the fog not drawn, nor in the shadows)
     let nv = 0; const seen = new Set(); for (const c of cells) { const a = c.geometry.attributes.position; if (!seen.has(a)) { seen.add(a); nv += a.count; } }
     return (last = { merged: n, instances: ni, kept, whys, meshes: cells.length, kverts: Math.round(nv / 1000), mats: mats.size, src: Object.entries(src).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, v]) => Math.round(v / 1000) + 'k ' + k) });   // (src: what the indices come from, the most first)
   }

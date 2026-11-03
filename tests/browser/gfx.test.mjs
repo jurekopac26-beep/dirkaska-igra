@@ -7,7 +7,7 @@
 import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville'];   // (with a shore band; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
+const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno'];   // (with a shore band; Livorno: the Ligurian Sea; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads)
 const srv = await serve();
 const browser = await launch();
@@ -35,7 +35,7 @@ try {
     await frames(3);
     const L = await look(), pk = id === 'pikes' || id === 'pikesg', why = [];
     const bodies = Object.keys(L.cars.body), paints = Object.keys(L.cars.paint);
-    if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg'))) why.push('bodies ' + JSON.stringify(L.cars.body));
+    if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg') && k !== 'dirtyCarCgS')) why.push('bodies ' + JSON.stringify(L.cars.body));   // (dirtyCarCgS: a KOLIBRI's, its side scrapes)
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
     const wet = WATER.includes(id);
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));

@@ -13,7 +13,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.ext) return;
   World.ext.townsville = function (scene, tex, opts, W) {
-    const { T, GB, RB, Chunks, IChunks, box, cyl, cone, puff, vary, rng, clamp, lerp, sstep, TAU, atSf, crAt, inPoly, crowdCtx, crowdRun, crowdFinish, crowdUV,
+    const { T, GB, RB, Chunks, IChunks, box, cyl, cone, puff, vary, rng, clamp, lerp, sstep, TAU, atSf, crAt, inPoly, polyDist, crowdCtx, crowdRun, crowdFinish, crowdUV,
       waterMat, shoreBand, waterline, addShore } = W;
     const R = rng(4810), N = T.N, ds = T.ds, def = T.def, D = def.tsv, L = T.len, sStart = T.startS, w = T.w, WA = T.wa || new Float64Array(N).fill(w);
     const season = opts && opts.season ? opts.season : 'summer', WET = season === 'summer' || season === 'autumn';   // (the wet season greens the town; the dry season browns it)
@@ -431,7 +431,14 @@
     const TG = [palmGeo(0), palmGeo(1), broadGeo(0), broadGeo(1), broadGeo(2), mangroveGeo], TGF = [palmGeo(0, true), palmGeo(1, true), broadGeo(0, true), broadGeo(1, true), broadGeo(2, true), mangroveGeo];
     const TCH = TG.map(gg => new IChunks(gg, tMat, 720)), TCF = TGF.map(gg => new IChunks(gg, tMat, 1000));   // (TCH: within 120 m of the circuit, with shadows; TCF: farther, simpler, none)   // (TCH: within 120 m of the circuit, with shadows; TCF: farther, none)
     let nTrees = 0;
-    const treeOk = (x, z, r) => { if (onBld(x, z) || inWater(x, z) || pitZone(x, z)) return false; const q = near(x, z, 24); if (q.i >= 0 && q.dd < barO(q.i, q.lat > 0 ? 1 : -1) - WA[q.i] + (r || 2.5)) return false; return !onRoad(x, z, -1, 0.8); };
+    // the grandstands' ground (STANDS: the stands themselves are built further down, after the trees): no tree in a stand, no crown over one
+    const STANDS = [[-215, 30, -1, 2.4, 15, 1], [450, 520, -1, 2.4, 12, 0], [1640, 1700, -1, 2.2, 12, 0], [2150, 2260, -1, 2.4 + 12, 13, 1], [2330, 2440, 1, 2.4, 12, 0]];   // [from, to, side, metres past the barrier, depth, roof]
+    const standPolys = STANDS.map(([d0, d1, sd, f0, depth]) => { const a = [], b = [];
+      for (let d = d0; d <= d1; d += 3) { const q = crAt(sAt(d)), o = (sd > 0 ? q.br : q.bl) + f0; a.push([q.px + q.nx * sd * (o - 1), q.pz + q.nz * sd * (o - 1)]); b.push([q.px + q.nx * sd * (o + depth + 1), q.pz + q.nz * sd * (o + depth + 1)]); }
+      const P = a.concat(b.reverse()), xs = P.map(p => p[0]), zs = P.map(p => p[1]); return { P, x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) }; });
+    out.stands = standPolys.map(S => S.P); out.treeMat = tMat;   // (read by the tests)
+    const inStand = (x, z, r) => standPolys.some(S => x > S.x0 - r && x < S.x1 + r && z > S.z0 - r && z < S.z1 + r && (inPoly(S.P, x, z) || polyDist(S.P, x, z) < r));
+    const treeOk = (x, z, r) => { if (onBld(x, z) || inWater(x, z) || pitZone(x, z) || inStand(x, z, r || 2.5)) return false; const q = near(x, z, 24); if (q.i >= 0 && q.dd < barO(q.i, q.lat > 0 ? 1 : -1) - WA[q.i] + (r || 2.5)) return false; return !onRoad(x, z, -1, 0.8); };
     const plant = (x, z, kind, ht) => { const h = ht || (kind < 2 ? 9 + R() * 8 : kind === 2 ? 9 + R() * 7 : kind === 3 ? 7 + R() * 4 : 6 + R() * 3);
       const sx = kind < 2 ? h : kind === 2 ? h * 1.25 : kind === 4 ? h * 1.3 : h * 0.95, crown = kind < 2 ? sx * 0.36 : sx * 0.5;   // (the crown's reach: kept off the track's fence)
       if (!treeOk(x, z, kind < 2 ? Math.max(1.5, crown - 2) : crown + 1)) return false;
@@ -542,8 +549,9 @@
     }
 
     /* ---- the far view: Castle Hill (a granite dome over the town), the ranges to the south and west and Magnetic Island in the bay as a coarse
-       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything and pulled in onto a
-       sphere just inside the camera's far plane (farUpdate), faded into the haze ---- */
+       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything (where they stand, their
+       depth put just inside the far plane by the shader: the far plane does not cut them and whatever is nearer covers them), faded into the
+       haze by the distance from the camera (farUpdate) ---- */
     let FAR = null;
     {
       const P0 = [], C = [], I = [], HZ = [];
@@ -576,22 +584,22 @@
       g.setIndex(I); g.computeVertexNormals();
       const Uh = { uHz: { value: new THREE.Color(0xc9d8e6) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false });
       m.onBeforeCompile = (sh) => { sh.uniforms.uHz = Uh.uHz;
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\ngl_Position.z = gl_Position.w - 60.0 * ( - projectionMatrix[ 2 ][ 2 ] - 1.0 );');   // (its depth 1 - k / distance: behind all that is nearer than 60 m inside the far plane, over what is beyond, in its own order)
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
       m.customProgramCacheKey = () => 'tsvFar';
       const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tsvFar';
       mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) Uh.uHz.value.copy(sc.fog.color); };
-      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0, cf: 0 };
+      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0 };
     }
-    const farUpdate = (cam) => {   // (no camera: the far view in its own places, the world test's pose)
-      const F = FAR, g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
-      if (!cam) { if (F.cx !== 1e9) { p.set(P0); hz.set(F.HZ0); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
-      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9 && cam.far === F.cf) return;
-      F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
-      const R0 = cam.far - 60, R1 = cam.far - 6;
-      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, Dd = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, Dd - 400) / 3000)), f = r / Dd;
-        p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
-      g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
+    const farUpdate = (cam) => {   // the haze by the distance from the camera (no camera: the far view's own haze, the world test's pose). (Its points stay
+      // where they are: pulled in onto a sphere round the camera, a cell the camera stood in became a plane just under it that hid the road.)
+      const F = FAR, g = F.mesh.geometry, hz = g.attributes.aHz.array, P0 = F.P0;
+      if (!cam) { if (F.cx !== 1e9) { hz.set(F.HZ0); g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
+      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9) return;
+      F.cx = c.x; F.cy = c.y; F.cz = c.z;
+      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const Dd = Math.hypot(P0[k] - c.x, P0[k + 1] - c.y, P0[k + 2] - c.z); hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
+      g.attributes.aHz.needsUpdate = true;
     };
     farUpdate(null);
 
@@ -652,7 +660,6 @@
     const CR = crowdCtx({ gH: groundH, near: (x, z) => near(x, z, 40).dd, maxSlope: 0.8 });
     CR.excluded = (x, z) => onBld(x, z) || inWater(x, z);
     CR.water = (x, z) => inWater(x, z);
-    const STANDS = [[-215, 30, -1, 2.4, 15, 1], [450, 520, -1, 2.4, 12, 0], [1640, 1700, -1, 2.2, 12, 0], [2150, 2260, -1, 2.4 + 12, 13, 1], [2330, 2440, 1, 2.4, 12, 0]];   // [from, to, side, metres past the barrier, depth, roof]
     {
       const gs = new GB(), gc = new RB(true), stC = [0.58, 0.6, 0.64], stD = [0.44, 0.46, 0.5], stT = [0.7, 0.72, 0.76], roofC = [0.86, 0.88, 0.9], roofU = [0.66, 0.68, 0.72];
       for (const [d0, d1, sd, f0, depth, roof] of STANDS) {

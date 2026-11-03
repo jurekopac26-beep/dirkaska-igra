@@ -1,0 +1,74 @@
+# Stran na GitHub Pages z predogledom vej (sklop 14 v docs/orodje-za-napake.md): main v korenu strani, vsak odprt pull request iz tega
+# repozitorija (največ 3 najnovejši) v beta/<številka>/, seznam v beta/ (tools/predogled.mjs). Ob vsaki spremembi main in ob vsakem odprtju,
+# spremembi ali zaprtju pull requesta se zgradi in objavi vsa stran znova.
+# Deluje šele, ko je v Settings → Pages → Build and deployment → Source izbrano »GitHub Actions« (do tedaj Pages objavlja main kot prej
+# in ta potek samo javi, da nastavitve še ni). Teče vedno v okolju veje main (pull_request_target): kode iz pull requesta ne poganja, samo
+# kopira njene datoteke; pull requesti iz forkov ne dobijo predogleda.
+name: Stran
+on:
+  push:
+    branches: [main]
+  pull_request_target:
+    types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ena gradnja naenkrat: začeta se vedno konča, med njo čaka samo zadnja naslednja (vsaka zgradi vso stran iz trenutnega stanja, zato
+# vmesnih ni treba). S cancel-in-progress: true je vsak nov potisk v katerikoli pull request prekinil gradnjo, ki je še čakala na stroj
+# (ob ~20 odprtih pull requestih ~17 min), in stran se od 31. 10. 2026 ob 19:23 ni objavila (odločitev uporabnika 1. 11. 2026)
+concurrency:
+  group: stran
+  cancel-in-progress: false
+
+jobs:
+  preveri:
+    name: Nastavitev Pages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: read
+    outputs:
+      ok: ${{ steps.p.outputs.ok }}
+    steps:
+      - id: p
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo none)
+          if [ "$t" = workflow ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; else
+            echo "ok=0" >> "$GITHUB_OUTPUT"
+            echo "Pages ne objavlja z GitHub Actions (build_type: $t): predogleda ni. Nastavitev: Settings → Pages → Source → GitHub Actions." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+  stran:
+    name: Gradnja in objava
+    needs: preveri
+    if: needs.preveri.outputs.ok == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.objava.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node tools/predogled.mjs _site
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: objava
+        uses: actions/deploy-pages@v4
+      - run: echo "Stran ${{ steps.objava.outputs.page_url }} · predogled ${{ steps.objava.outputs.page_url }}beta/" >> "$GITHUB_STEP_SUMMARY"

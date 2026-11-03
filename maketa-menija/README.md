@@ -2,7 +2,7 @@
 
 Samostojna, klikljiva maketa menija igre v angleščini. **Ni povezana z igro**: igra je ne naloži, nič v igri ne spremeni in ni del `main`. Avti, makete prog in posnetki ozadja so zajeti iz prave igre.
 
-> **Posodobitev:** meni je zdaj v igri (`js/menu.js`, `css/menu.css`, opis v korenskem `README.md`, razdelek »Nov meni«). Maketa je ostala taka, kot je bila (zgodovina in primerjava), zato **spremembe menija delaj v igri**, ne tukaj. Orodja v `orodja/` še vedno izrisujejo slike za meni v igri (glej spodaj).
+> **Posodobitev:** meni je zdaj v igri (`js/menu.js`, `css/menu.css`, opis v korenskem `README.md`, razdelek »Nov meni«; opisi prog so v `docs/proge/<id>.md`). Maketa je ostala taka, kot je bila (zgodovina in primerjava), zato **spremembe menija delaj v igri**, ne tukaj. Orodja v `orodja/` še vedno izrisujejo slike za meni v igri (glej spodaj).
 
 Objavljena je kot zasebna stran: <https://claude.ai/artifact/LGhsPikqgs4To6phR2LB5V>
 
@@ -24,7 +24,7 @@ Single race ima dva koraka.
 
 **1. korak: način dirke** (v okvirju glavnega menija). Tapneš enega od treh in odpre se izbira proge čez cel ekran (*Step 2 of 2*). Zadnji izbrani način ima kljukico:
 
-- **Circuit race**: dirka v krogih proti 12 tekmecem.
+- **Circuit race**: dirka v krogih proti 21 tekmecem (v Nürburgu 99, v prvenstvu 19).
 - **Police chase**: policija ti je za petami, pobegniti ji moraš v 3 minutah.
 - **Time trial**: sam proti uri in svojemu duhu (*ghost*), za zlati, srebrni ali bronasti čas.
 
@@ -141,7 +141,7 @@ Kje so proge na Zemlji:
 
 ### Glasba in zvok
 
-- Vsaka država ima svojo **izvirno elektronsko skladbo** (Slovenija, ZDA, Finska, Japonska, Monako, Avstrija, Belgija, Nemčija). Skladbe so narejene za igro: vsak zvok je izračunan v programu (sintetizator v Pythonu), brez posnetih vzorcev in brez tuje glasbe.
+- Vsaka država ima svojo **izvirno elektronsko skladbo** (Slovenija, ZDA, Finska, Japonska, Monako, Avstrija, Belgija, Nemčija, Kanada, Avstralija). Skladbe so narejene za igro: vsak zvok je izračunan v programu (sintetizator v Pythonu), brez posnetih vzorcev in brez tuje glasbe.
 - Vrhunec skladbe pride v trenutku, ko se helikopter zravna nad progo; glasba je ves čas usklajena s posnetkom.
 - Pod letom se sliši **rotor helikopterja** (zvok je prav tako izračunan).
 - Gumb z zvočnikom zgoraj glasbo izklopi ali vklopi, izbira se shrani. *Settings → Sound* izklopi ves zvok.
@@ -256,7 +256,7 @@ node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gum
 node bgvideo.mjs '[["jezero",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
-node dio2.mjs proge_igra.json                    # makete 20 prog, ki so v igri od vključitve menija (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
+node dio2.mjs proge_igra.json                    # makete prog, ki so v igri od vključitve menija (tudi `pikesg`, makadam) (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
 python3 mkwebp.py ../../assets/tracks bathurst beartooth …   # samo naštete proge, v mapo igre (assets/tracks/ v korenu repozitorija; nova proga: dodaj vrstico v proge_igra.json)
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
@@ -325,6 +325,22 @@ python3 intro_assets.py                          # -> ../assets/music/*.mp3
 Vse skladbe imajo enako zgradbo (`glasba/synth.py`): uvod pod globusom, vrhunec pri 20,0 s (ko se helikopter zravna), pristanek pri 48,2 s (konec leta, luči) in 2,5 s odzvena.
 
 Uporabljajo Playwright s Chromiumom (kot testi igre). Mape `game_main/`, `game_vrsic/` in `orodja/raw/` niso v repozitoriju.
+
+## Dokončanje prave proge (zemljevid, prelet, uvod)
+
+Prava proga je dokončana, ko ima vse, kar imajo Vršič, Pikes Peak, Ouninpohja, Štajerska, Suzuka, Spa in Nürburg: pot v `js/routes.js`, podatke uvoda v `js/intro-data.js` in `js/geo.js`, `wideMaps` in `routeMaps` v `js/menu-data.js`, datoteke `assets/maps/{top,wide,isle}-<id>[-rain].webp`, `fly-<id>.webm|webp`, `heli-<id>.webm|webp|json`, pokrajino `assets/geo/l2-<id>*`, `l3-<id>*` (in `l1-<regija>`), glasbo države v `assets/music/` in opis v `docs/proge/<id>.md`. Orodja delajo z igro v `maketa-menija/game_main/` (`git archive HEAD | tar -x -C maketa-menija/game_main`) in z vmesno mapo `orodja/raw/site/` (vanjo se kopirajo `js/routes.js`, `js/intro-data.js`; orodja pišejo vanjo, nato se izhod prenese v igro). Z naštetimi progami (`<ids>`, npr. `medvode,baldy`) orodja na novo naredijo samo te, druge ostanejo, kot so.
+
+1. `GAME=../game_main node geo_tracks.mjs <ids>`: sredinske črte iz igre.
+2. Lega na Zemlji: gorske ceste po višinah (`GUESS` v `geo_match.py`: približni štart in polmer iskanja, nato `python3 geo_match.py <ids>`), ravne proge in mesta po cestah iz OpenStreetMap (Overture, `GUESS` v `geo_roads.py`, `python3 geo_roads.py <ids>`). Preveri z `python3 geo_roads.py <ids> --check` (povprečni odmik od cest; dober je do ~2 m). Del proge, ki ga v Overture ni (npr. steza skozi park), se iz ocene izpusti s `SKIP` v `geo_roads.py`. Vzporedni zagoni pišejo isti `raw/geo/match.json`: zaganjaj zaporedno.
+3. `CFG` (kraj štarta in cilja, država, regija `l1`) in po potrebi nova regija v `L1` v `geo_places.py`, nato `python3 geo_places.py`. Za stare proge je `raw/geo/match.json` mogoče napolniti iz `js/geo.js` (polja `lat0`, `lon0`, `rot`, `offset`).
+4. `python3 geo_build.py raw/site l1,tracks,vectors <ids>` (z listo prog nariše samo regije, ki jih še ni; `raw/geo/geo.json` napolni iz `js/geo.js`), nato kopiraj `raw/site/geo.js` v `js/geo.js` in nove `raw/site/assets/geo/*` v `assets/geo/`.
+5. `python3 geo_far.py <ids>`: pokrajina okoli sveta igre za let s helikopterjem, nato `python3 geo_lc.py <ids>`: pokrovnost tal nad njo (`raw/geo/<id>-far-lc.png`), po kateri `heli.mjs` okolico posadi z drevesi, grmi in hišami igre (brez nje ostane gola tekstura). Suho poletje (trava slamnata, ne zelena): `SEASON` v `geo_paint.py` (`'dry'`).
+6. Vrstice v `maps.json` in `isle.json` (ceste 824 × 620, dirkališča 1100 × 830 s `pad: 1.0`), `GAME=../game_main node routemap.mjs maps.json <ids>` in `... isle.json <ids>` (kulise, ki so veliko širše od proge, npr. oddaljeni hribi ali morje do obzorja, se izpustijo). Mesto ob morju, katerega tla se nadaljujejo pod morjem kot dno (Newcastle): morje ostane (`KEEP_SEA` v `routemap_page.js`), `wide_map.py` ga odstrani (`WATER_OUT`), da se vidi naslikano morje; zemljevid od zgoraj brez izmišljenega kopna (`skirt: false`). Svet igre, ki pokrije cel izsek (Chapman): otok je le pas ob cesti (`STRIP_M` v `wide_map.py`). Jezero ali reka, ki je del zemljevida (Toronto, Montréal), ostane z `keepWide` v vrstici (`true` ali imena ravnin, npr. `["mtWater"]`; enako v `flyovers.json`), v `wide_map.py` pa proga dobi `WATER_OUT` (zunaj otoka naslikana voda) in tanek rob `RING_PX` (ozki otoki med vodo).
+7. `python3 routes.py raw/site <ids>` in `python3 intro_data.py raw/site <ids>`, kopiraj `raw/site/routes.js`, `raw/site/intro-data.js` v `js/` in `raw/site/assets/maps/top-<id>*` v `assets/maps/`; `wideMaps` (300 za 824, 240 za 1100) in `routeMaps` (ceste: `start`, `finish`, `alt` [štart, cilj]; dirkališča: `base`, višina štarta) v `js/menu-data.js`; `python3 wide_map.py <ids> --write`.
+8. Prelet: vrstica v `flyovers.json` (hitrost ~dolžina/28 m/s, kamera in megla sorazmerno, kot pri drugih; `places` z angleškimi imeni iz `R.places` v `routes.js`; `kbps`), `GAME=../game_main node flyover.mjs flyovers.json <ids>`, nato znova korak 7 (`routes.py`, prenese tudi `fly-<id>.webm|webp`).
+9. Let s helikopterjem: kraji v `landmarks.json` (samo zemljepisna imena), vrstica v `drones.json` (`{"mode": "demo", "warm": 2, "kbps": …, "shots": []}`), po potrebi `heli.json` (`sea: true` ob morju), `EXPORT=1 node heli.mjs nring` enkrat, nato `GAME=../game_main node heli.mjs <ids>`, `python3 intro_data.py raw/site <ids>` in `python3 intro_assets.py raw/site` (kopiraj `heli-<id>.*` in glasbo v igro).
+10. Glasba nove države: `glasba/<država>.py` po vzoru drugih (`glasba/synth.py`), `MUSIC` v `intro_data.py`.
+11. `node tools/stamp.js`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`).
 
 ## Viri podatkov
 

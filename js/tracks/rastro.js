@@ -63,8 +63,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, five kilometres and seventeen bends up the wall of the Serra, and you start {grid}.", "Here we are in the rainforest at the foot of {track}. A race all the way up to the viewpoint, and you line up {grid}.", "Welcome to Brazil, and to {track}! Thirteen cars heading for the plateau, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up the Serra!", "And they're off! Seventeen bends to the viewpoint!", "Green light! The pack charges up the cliff!", "Go, go, go! Next stop, the top of the escarpment!"],
+      introPass: ["Welcome to {track}! {cars} cars, five kilometres and seventeen bends up the wall of the Serra, and you start {grid}.", "Here we are in the rainforest at the foot of {track}. A race all the way up to the viewpoint, and you line up {grid}.", "Welcome to Brazil, and to {track}! {cars} cars heading for the plateau, and you start {grid}."],
+      goPass: ["And away they go, up the Serra!", "And they're off! Seventeen bends to the viewpoint!", "The race is on! The pack charges up the cliff!", "Go, go, go! Next stop, the top of the escarpment!"],
       introPassTT: ["Welcome to {track}! Seventeen bends up the cliff, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the viewpoint.", "Welcome to {track}! No rivals this time, only the clock and the mist."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the Serra!", "And you're away! Up the ladder!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, coaches and motorbikes both ways. Just you and {rival}, first to the viewpoint wins!", "Here we are at the foot of the Serra. A duel with {rival} through the traffic on the hairpins. Mind the coaches in the bends!", "Welcome to {track}! No closed road this time: bikers and coaches on all seventeen bends. Beat {rival} to the top!"],

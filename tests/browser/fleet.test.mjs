@@ -2,9 +2,10 @@
 // (844x390, normal quality, shadows on), the game paused and stepped (g.sim), so every number is the same each run.
 //  - the kit: Render.kitStatus 'ok' for every vehicle with a look (a look that throws or breaks a rule falls back: a FAIL here), the
 //    place-holders (look null) drawn as the generic kit hatch; the body's outer shell and inner block within their triangle budgets (a car
-//    1400 / 800, a truck, the limousine, the monster truck 2400 / 1200), every part of the vehicle's table with geometry of its own (a
-//    non-empty range), the wheels' detail (the player's / the showroom's <= 400 triangles, a rival's <= 160); a look with Visoki details
-//    (look.hi, Nastavitve · Detajli avtov) builds them ok within 2400 / 1200, its player's wheels <= 700 (the rest of the test: Normalni, a phone's)
+//    1400 / 800, a truck, the limousine, the monster truck 2400 / 1200; a look's own budget: look.budget, KOLIBRI's cabin), every part of
+//    the vehicle's table with geometry of its own (a non-empty range), the wheels' detail (the player's / the showroom's <= 400 triangles,
+//    a rival's <= 160); a look with Visoki details (look.hi, Nastavitve · Detajli avtov) builds them ok within 2400 / 1200 (or its
+//    look.budgetHi), its player's wheels <= 700 (the rest of the test: Normalni, a phone's)
 //  - the showroom: the vehicle over a whole turn stays on the screen and off the car panel, in landscape (844x390) and portrait (390x844)
 //  - the caches: after the car menu has been through every car, one colour-neutral body per model and at most two showroom copies
 //  - no seeing through the car (each vehicle with a look, on a flat background): each wheel arch from low at its side shows its tub over the
@@ -13,7 +14,7 @@
 //    background; the car's own colours: every vehicle in every player's and rival's colour, stripe on and off, no vertex but the glass
 //    within 0.06 of a glass colour (Render.kitGlassNear)
 //  - in a race (Bakreni gozd: a pit track, the pit crew knows the car), each vehicle as the player and as a rival: the draw calls of its
-//    meshes alone (the rest of the scene hidden, frustum culling off, one frame, every pass counted as perf.test.mjs does): the player
+//    meshes alone (the rest of the scene hidden, frustum culling and carCull off, one frame, every pass counted as perf.test.mjs does): the player
 //    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
 //    drawn with its outer shell only; the materials the graphics test
@@ -26,7 +27,9 @@
 //    (after limping through a corner: no offset left), a repair; as the player sees it (every
 //    vehicle, the 11 too: at least 35 % of its screen box changed, its fire and smoke in sight, its draw calls); a field on fire (at most 6 emit, each within 40 flames and 12 smoke particles a second); a patrol car
 //    wrecked (its pieces drawn and freed, burning, its light bar gone); the field under a wreck (40 pieces on Jezero, section 5)
-//  - the field's cost: each one-make field (fieldN may cap it) on Jezero and the Nordschleife, within tests/golden/perf.json's phone budget
+//  - the field's cost: each one-make field (a big vehicle's: its own fieldN and the rest its fill's cars, the dearest of them as a rival;
+//    with no fill, fieldN caps it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
+//    measured with the same fields, so it is regenerated with them), within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
 //    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
@@ -58,12 +61,14 @@ try {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
     // one frame's draws with only `keep` (some of the scene's children) and the lights shown, frustum culling off on them
     const frameWith = (keep, target, mode) => {
+      Render.setDebug({ allCars: true }); Render.frame(0, 1, target, mode || 'chase', { noFx: true });   // (every car in the scene, one out of the view too: Render's carCull off while it is measured)
       const S = Render.scene, saved = S.children.map(o => [o, o.visible]), culled = [];
       for (const o of S.children) o.visible = !!o.isLight || keep.includes(o);
       for (const k of keep) k.traverse(o => { if (o.frustumCulled) { culled.push(o); o.frustumCulled = false; } });
       const c0 = __gl.calls, v0 = __gl.verts; Render.frame(0, 1, target, mode || 'chase', { noFx: true });
       const r = [__gl.calls - c0, __gl.verts - v0];
       for (const [o, v] of saved) o.visible = v; for (const o of culled) o.frustumCulled = true;
+      Render.setDebug({ allCars: false });
       return r;
     };
     // a view's own cost: its group alone minus the empty scene (what every frame draws anyway: the post pass, ...)
@@ -91,8 +96,8 @@ try {
   const wBad = K1.filter(k => k.hi.some(t => t > 400) || k.lo.some(t => t > 160));
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
   // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)
-  const V = K1.filter(k => k.vis), vBad = V.filter(k => k.vis.status !== 'ok' || k.vis.tris.outer > 2400 || k.vis.tris.inner > 1200 || k.vis.wheels.some(t => t > 700));
-  T.check('Visoki (look.hi): its body built ok within 2400 / 1200, its player\'s wheels <= 700 triangles', !vBad.length, (vBad.length ? vBad : V).slice(0, 6).map(k => `${k.id} ${k.vis.status} ${k.vis.tris.outer}/${k.vis.tris.inner} w${k.vis.wheels.join('/')}`).join(', ') || 'none');
+  const V = K1.filter(k => k.vis), vBad = V.filter(k => k.vis.status !== 'ok' || k.vis.tris.outer > k.vis.budget.outer || k.vis.tris.inner > k.vis.budget.inner || k.vis.wheels.some(t => t > 700));
+  T.check('Visoki (look.hi): its body built ok within 2400 / 1200 (or its look\'s budgetHi), its player\'s wheels <= 700 triangles', !vBad.length, (vBad.length ? vBad : V).slice(0, 6).map(k => `${k.id} ${k.vis.status} ${k.vis.tris.outer}/${k.vis.tris.inner} w${k.vis.wheels.join('/')}`).join(', ') || 'none');
 
   // ---- 2. the showroom: over a whole turn on the screen and off the car panel (landscape and portrait) ----
   for (const [w, h] of [[844, 390], [390, 844]]) {
@@ -190,7 +195,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [];
+  const R4 = [], bodyKey = (id) => id === 'kolibri' ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's body: its side scrapes' own program, render.js XT_SCR)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
@@ -233,17 +238,27 @@ try {
       const lod = { lose, ok: drC === UP.N && drC2 === UP.N && dr() === UP.outerN, got: [drC, drC2, dr()], want: [UP.N, UP.outerN] };
       // a crushed roof (roofDmg 1: four steps): nothing moves outside the roof's footprint (body.crush, fading over 15 cm in x, 10 cm in z);
       // a noCrush range moves whole (if at all); every lining point keeps its offset from the shell's point it is inset from; the rest of the
-      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves
+      // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves. The KOLIBRI's roof its roof field
+      // (render.js xtRoof, variant D): its posts' tops (G.fI) go down and in with the roof, what lies on it (a rider: the spoiler) down whole
+      // as A + B x (a tilt), its lining never deeper than its twin (held at its own limit); a dent never moves a noDent point but by the field
       const pa = gP.attributes.position.array, P0 = Float32Array.from(pa), C = E.body.crush, n = UP.outerN, mv = (i, Q) => Math.hypot(pa[i * 3] - Q[i * 3], pa[i * 3 + 1] - Q[i * 3 + 1], pa[i * 3 + 2] - Q[i * 3 + 2]);
       P.roofDmg = 1; Render.frame(0, 1, P, 'chase', { noFx: true });
-      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length };
+      const xr = Render.viewOf(P).xtR, G = xr && xr.rf ? xr.rf.G : null, fol = new Set(G ? G.fI : []), lin = new Set(G ? G.lI : []), rid = new Set();
+      if (G) for (const Q of G.rid) for (const [s0, s1] of Q.ranges) for (let i = s0; i < s1; i++) rid.add(i);
+      const fld = (i) => !!G && (G.vE[i] >= 0 || fol.has(i) || lin.has(i) || rid.has(i));   // (a point the roof field moves)
+      const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length, field: !!G };
       for (let i = 0; i < n; i++) if (mv(i, P0) > 1e-6) { cr.moved++; const x = P0[i * 3], z = P0[i * 3 + 2]; if (x < C.x0 - 0.1501 || x > C.x1 + 0.1501 || Math.abs(z) > C.z + 0.1001) cr.outside++; }
-      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j]; lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
+      for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let A = 0, B = 0;
+        if (G && j === 1 && rid.has(s0)) { let mx = 0, md = 0, sxx = 0, sxd = 0; const N = s1 - s0; for (let i = s0; i < s1; i++) { mx += P0[i * 3] / N; md += (pa[i * 3 + 1] - P0[i * 3 + 1]) / N; }   // (a rider: its tilt along the car taken out)
+          for (let i = s0; i < s1; i++) { sxx += (P0[i * 3] - mx) ** 2; sxd += (P0[i * 3] - mx) * (pa[i * 3 + 1] - P0[i * 3 + 1] - md); } B = sxx > 1e-9 ? sxd / sxx : 0; A = md - B * mx; }
+        let lo = 9, hi = -9; for (let i = s0; i < s1; i++) { const d = pa[i * 3 + j] - P0[i * 3 + j] - (j === 1 ? A + B * P0[i * 3] : 0); lo = Math.min(lo, d); hi = Math.max(hi, d); } cr.spread = Math.max(cr.spread, hi - lo); }
       for (let i = n; i < UP.N; i++) { const t = UP.twin ? UP.twin[i - n] : -1;
-        if (t < 0) { if (mv(i, P0) > 1e-6) cr.stray++; continue; }
+        if (t < 0) { if (mv(i, P0) > 1e-6 && !fol.has(i)) cr.stray++; continue; }
+        if (G && lin.has(i)) { const d = (k) => pa[i * 3 + k] - P0[i * 3 + k], dt = (k) => pa[t * 3 + k] - P0[t * 3 + k];   // (the field's lining: as deep as its twin at most, drawn in no further, never along)
+          if (d(1) < dt(1) - 1e-4 || d(1) > 1e-6 || Math.abs(d(2)) > Math.abs(dt(2)) + 1e-4 || Math.abs(d(0) - dt(0)) > 1e-4) cr.lining++; continue; }
         if (Math.hypot(pa[i * 3] - pa[t * 3] - (P0[i * 3] - P0[t * 3]), pa[i * 3 + 1] - pa[t * 3 + 1] - (P0[i * 3 + 1] - P0[t * 3 + 1]), pa[i * 3 + 2] - pa[t * 3 + 2] - (P0[i * 3 + 2] - P0[t * 3 + 2])) > 1e-4) cr.lining++; }
       const P1 = Float32Array.from(pa); P.dents.push({ lx: 0.2, lz: -0.9, amt: 1 }, { lx: -0.3, lz: 0, amt: 1 }, { lx: 0.8, lz: 0.9, amt: 1 }); Render.frame(0, 1, P, 'chase', { noFx: true });
-      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6) ndMoved++;
+      let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
       return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
@@ -263,8 +278,8 @@ try {
     R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): off / again / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
-  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\', any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')),
-    R4.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
+  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\' (the KOLIBRI\'s \'dirtyCarCgS\': its side scrapes), any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')),
+    R4.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
   T.check('the start number lit on every K.number panel (as many bars as the car\'s number has)', R4.every(r => r.num !== false), lim(r => r.num === false) || R4.filter(r => r.num).map(r => r.id).join(', '));
 
@@ -391,7 +406,7 @@ try {
     R5.map(r => `${r.id} crew ${r.crew}, shown ${r.shown}, bits ${r.burst} then ${r.after}`).slice(0, 6).join(', '));
   T.check('the marshals\' refit (wreck.fix): the wheels back on, the body up, no bare hubs, nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(r => !r.sag.wl || (r.refit.shown === 4 && r.refit.sagGone && !r.refit.hubs && r.refit.xz < 1e-9)), R5.map(r => r.id + ' ' + JSON.stringify(r.refit)).slice(0, 4).join(', '));
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
-  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === 'body:dirtyCarCg' || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== 'body:dirtyCarCg' && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
+  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', the KOLIBRI\'s \'dirtyCarCgS\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
   // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle (the 11 too: the wreck
   //          look is every vehicle's) as the player on Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire
@@ -571,26 +586,32 @@ try {
         cmp.length === fields.length && cmp.every(okT), cmp.filter(q => !okT(q)).concat(cmp).slice(0, 6).map(q => `${q.id}${q.hull ? '' : ' (no hull)'} rival ${(q.ac4 / 1000).toFixed(1)} -> ${q.ac == null ? '-' : (q.ac / 1000).toFixed(1)}k, piece ${q.pc6 == null ? '-' : (q.pc6 / 1000).toFixed(2)} -> ${q.pc == null ? '-' : (q.pc / 1000).toFixed(2)}k`).join(', '));
     }
     const G = PERF[tid], maxC = G.maxCalls * 1.1 + 5, maxV = (G.maxKverts * 1.1 + 20) * 1000;
-    const est = await page.evaluate(({ rows, n }) => rows.map(r => Object.assign({ n: Core.fieldSize(Core.MODELS.find(m => m.id === r.id), n) }, r)), { rows: C5.filter(q => q.ac), n: B.nAI });
+    // (a big vehicle's bigger race: its own fieldN, the rest its fill's cars, each at the dearest fill rival's cost; its own the ones in view)
+    const est = await page.evaluate(({ rows, n }) => rows.map(r => { const M = Core.MODELS.find(m => m.id === r.id), N = Core.fieldSize(M, n), own = M.fill && M.fieldN ? Math.min(N, M.fieldN) : N;
+      return Object.assign({ n: N, own, fill: own < N ? M.fill.slice() : [] }, r); }), { rows: C5.filter(q => q.ac), n: B.nAI });
+    const AC = new Map(C5.filter(q => q.ac).map(q => [q.id, q.ac]));
     const rows = est.map(r => {
       let calls = 0, verts = 0, allC = 0, allV = 0, wC = 0, wV = 0; const pc = r.np ? [r.pcs.calls / r.np, r.pcs.verts / r.np] : null;
+      const fl = r.fill.map(id => AC.get(id)), fc = [Math.max(0, ...fl.map(a => a ? a.calls : Infinity)), Math.max(0, ...fl.map(a => a ? a.verts : Infinity))];   // (a fill car not measured: no budget)
+      const field = (n, i) => Math.min(n, r.own) * (i ? r.ac.verts : r.ac.calls) + Math.max(0, n - r.own) * fc[i];   // (n of the field in view: its own first)
       for (const q of B.s) {
         const nC = Math.min(r.n, (q.all[0] - q.base[0]) / B.unit[0]), nV = Math.min(r.n, (q.all[1] - q.base[1]) / B.unit[1]), bc = q.base[0] - B.pl.calls + r.pc.calls, bv = q.base[1] - B.pl.verts + r.pc.verts;
-        calls = Math.max(calls, bc + nC * r.ac.calls); verts = Math.max(verts, bv + nV * r.ac.verts); allC = Math.max(allC, bc + r.n * r.ac.calls); allV = Math.max(allV, bv + r.n * r.ac.verts);
-        if (pc) { const np = Math.min(40, cap5 || 40); wC = Math.max(wC, bc + nC * r.ac.calls + np * pc[0]); wV = Math.max(wV, bv + nV * r.ac.verts + np * pc[1]); }
+        calls = Math.max(calls, bc + field(nC, 0)); verts = Math.max(verts, bv + field(nV, 1)); allC = Math.max(allC, bc + field(r.n, 0)); allV = Math.max(allV, bv + field(r.n, 1));
+        if (pc) { const np = Math.min(40, cap5 || 40); wC = Math.max(wC, bc + field(nC, 0) + np * pc[0]); wV = Math.max(wV, bv + field(nV, 1) + np * pc[1]); }
       }
-      return { id: r.id, n: r.n, calls: Math.round(calls), verts: Math.round(verts), allC, allV, pc, wC: Math.round(wC), wV: Math.round(wV) };
+      return { id: r.id, n: r.n, own: r.own, calls: Math.round(calls), verts: Math.round(verts), allC, allV, pc, wC: Math.round(wC), wV: Math.round(wV) };
     });
+    const xN = (r) => r.own < r.n ? `x${r.own}+${r.n - r.own}` : `x${r.n}`;
     const bad = rows.filter(r => r.calls > maxC || r.verts > maxV), worst = rows.slice().sort((a, b) => b.verts / maxV - a.verts / maxV).slice(0, 3);
     const drawn = B.s.map(q => ((q.all[0] - q.base[0]) / B.unit[0]).toFixed(1)).join(' ');
-    T.check(`${tid}: each vehicle's own field (fieldN capped) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k; the default race: ${Math.max(...B.s.map(q => q.all[0]))} calls, rivals drawn per sample ${drawn} of ${B.nAI})`,
-      rows.length === fields.length && !bad.length, (bad.length ? bad : worst).slice(0, 4).map(r => `${r.id} x${r.n}: ${r.calls} calls, ${Math.round(r.verts / 1000)}k`).join(', '));
-    console.log(`info ${tid}: every rival of the field drawn in full (the worst case): ` + rows.map(r => `${r.id} x${r.n} ${r.allC} / ${Math.round(r.allV / 1000)}k`).join(', '));
+    T.check(`${tid}: each vehicle's own field (a big vehicle's with its fill) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k; the default race: ${Math.max(...B.s.map(q => q.all[0]))} calls, rivals drawn per sample ${drawn} of ${B.nAI})`,
+      rows.length === fields.length && !bad.length, (bad.length ? bad : worst).slice(0, 4).map(r => `${r.id} ${xN(r)}: ${r.calls} calls, ${Math.round(r.verts / 1000)}k`).join(', '));
+    console.log(`info ${tid}: every rival of the field drawn in full (the worst case): ` + rows.map(r => `${r.id} ${xN(r)} ${r.allC} / ${Math.round(r.allV / 1000)}k`).join(', '));
     if (tid === 'jezero') {   // the field under a wreck: the cap's 40 pieces on the road (all in view, each at its vehicle's own piece's cost: C5)
       console.log('info the NIZKA tier: per vehicle (player / rival calls, kverts; a piece of its wreck): ' + C5.map(q => `${q.id} ${q.pc.calls}/${q.ac ? q.ac.calls : '-'} ${(q.pc.verts / 1000).toFixed(1)}/${q.ac ? (q.ac.verts / 1000).toFixed(1) : '-'}; ${q.np ? (q.pcs.calls / q.np).toFixed(2) + ' calls ' + (q.pcs.verts / q.np / 1000).toFixed(2) + 'k' : '-'}`).join(', '));
       const wb = rows.filter(r => !r.pc || r.wC > maxC || r.wV > maxV), ww = rows.filter(r => r.pc).sort((a, b) => b.wV / maxV - a.wV / maxV).slice(0, 4);
       T.check(`jezero under a wreck: each vehicle's own field and 40 of its pieces on the road (all in view; the NIZKA tier draws the nearest ${cap5}) within the phone budget (calls <= ${Math.round(maxC)}, vertices <= ${Math.round(maxV / 1000)}k)`,
-        rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} x${r.n} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
+        rows.length === fields.length && !wb.length, (wb.length ? wb : ww).slice(0, 4).map(r => `${r.id} ${xN(r)} + 40 pieces (${r.pc ? r.pc[0].toFixed(2) + ' calls, ' + (r.pc[1] / 1000).toFixed(2) + 'k a piece' : 'not measured'}): ${r.wC} calls, ${Math.round(r.wV / 1000)}k`).join(', '));
     }
   }
 

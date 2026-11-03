@@ -1,7 +1,10 @@
 # Samodejni testi ob vsakem pull requestu in ob vsaki spremembi veje main (glej tests/README.md).
+# Osnutek (draft) pull requesta težkih poslov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem
+# potisku (odločitev uporabnika 31. 10. 2026: manj čakanja v vrsti, GitHub hkrati izvaja le ~20 poslov).
 name: Testi
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -17,6 +20,7 @@ concurrency:
 jobs:
   node:
     name: Fizika, AI in dirke
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40   # (nabor traja na CI ~20 min: omejitev mora imeti rezervo)
     steps:
@@ -29,12 +33,12 @@ jobs:
       - run: npm run test:node
 
   # Brskalniški testi na štirih strojih hkrati: tests/run.js --shard k/4 razdeli teste po tem, koliko časa traja vsak (SECS v
-  # tests/run.js; na hitrem stroju ~26 min na del, na počasnem do dvakrat dlje). Celoten nabor na enem stroju je trajal od ~105 do
-  # več kot 180 min, odvisno od stroja, in se z vsako novo progo podaljša.
+  # tests/run.js, časi iz teka 29. 10. 2026: ~64 min na del). Celoten nabor na enem stroju bi trajal ~4 h in se z vsako novo progo podaljša.
   browser:
     name: Igra v brskalniku (${{ matrix.shard }}/4)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 120   # (en del: ~26 min na hitrem stroju, do ~55 min na počasnem; več kot omejitev testa memory (3 × 30 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom)
+    timeout-minutes: 120   # (en del ~64 min; več kot omejitev testa memory (3 × 30 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom)
     strategy:
       fail-fast: false   # (vsak del do konca: napaka v enem ne ustavi drugih)
       matrix:
@@ -50,12 +54,13 @@ jobs:
       - run: npm run test:browser -- --shard ${{ matrix.shard }}/4
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
+          TEST_SLOW: 2   # (ali dvakratni čas testa iz SECS, če je daljši; privzeto 4 za počasnejši stroj oblačne seje)
 
   # en rezultat za vse štiri dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli)
   browser-all:
     name: Igra v brskalniku
     needs: browser
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -65,8 +70,9 @@ jobs:
 
   fleet:
     name: Vozila
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

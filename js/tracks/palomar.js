@@ -5,13 +5,13 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // mountain from Pauma Valley. Its lower and middle part in the real scale: from 0.70 km above the junction with State Route 76 (~859 m) up the
   // ladder of thirteen hairpins (the whole road has fifteen: 13 of them on this stretch) to 8.70 km (~1435 m), 2.2 km below its top at the
   // junction with East Grade Road: 7.990 km, ~576 m of climb. The observatory on the summit is 5.6-7.4 km away behind the ridge and is
-  // seen from nowhere on this stretch, so it is not drawn. One card, four ways to drive it (def.modes), as Vršič and Mulholland Highway.
+  // seen from nowhere on this stretch, so it is not drawn. One card, four ways to drive it (def.modes), as Vršič and the Santa Monica Mountains road.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; smoothed (gaussian, 3 m: the line moved 0.05 m on
   // average, 1.2 m at most); metres, origin = the start line, x east, z south. The legs of the ladder lie 30 m and more apart and the
   // hairpins have a ~23 m radius and more, so nothing is pushed apart or opened. The asphalt is drawn 10 m wide (the real road ~6.5-7 m).
   // Heights (PALOMAR_H): USGS 3DEP (via the Terrain Tiles on AWS) along the line, cleaned (a running median, never down) and fitted with grades
   // of at most 11 %, every 1/1051 of the road from points[0], decimetres above the start line (~859 m).
-  // Scenery data for the world builder (the forms Vršič's and Mulholland Highway's builders read): terrain (dem: the same model, 16 m cells; a
+  // Scenery data for the world builder (the forms Vršič's and the Santa Monica Mountains road's builders read): terrain (dem: the same model, 16 m cells; a
   // 256 m trend in 0.1 m steps and 1 m residuals in each row's span of cells within 880 m of the road), land cover (lc, ESA WorldCover 2021
   // v200, 16 m cells, run-length coded: 0 grass, 1 chaparral, 2 woodland (oaks and tall chaparral low down, oaks and conifers higher up),
   // 3 built-up, 4 bare rock, 5 water), buildings (OpenStreetMap footprints, no names: [x, z, length, width, angle, height (0 = unknown), kind
@@ -72,8 +72,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, eight kilometres and thirteen hairpins up the South Grade, and you start {grid}.", "Here we are at the foot of {track}. Hairpin after hairpin to the top, and you line up {grid}.", "Welcome to the mountain above Pauma Valley, and to {track}! Thirteen cars, one grade, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up the mountain!", "And they're off! Thirteen hairpins to the top!", "Green light! The pack charges up the grade!", "Go, go, go! Next stop, the top of the grade!"],
+      introPass: ["Welcome to {track}! {cars} cars, eight kilometres and thirteen hairpins up the South Grade, and you start {grid}.", "Here we are at the foot of {track}. Hairpin after hairpin to the top, and you line up {grid}.", "Welcome to the mountain above Pauma Valley, and to {track}! {cars} cars, one grade, and you start {grid}."],
+      goPass: ["And away they go, up the mountain!", "And they're off! Thirteen hairpins to the top!", "The race is on! The pack charges up the grade!", "Go, go, go! Next stop, the top of the grade!"],
       introPassTT: ["Welcome to {track}! Eight kilometres of hairpins, just you and the clock.", "Here we are at the foot of {track}. {cps} checkpoints between you and the top.", "Welcome to {track}! No rivals this time, only the clock and the hairpins."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the hairpins!", "And you're away! Up the South Grade!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, riders and cyclists both ways. Just you and {rival}, first to the top wins!", "Here we are at the foot of {track}. A duel with {rival} through the traffic on the hairpins. Watch out for the cyclists on the climb!", "Welcome to {track}! No closed road this time: riders leaning through every hairpin. Beat {rival} to the top!"],

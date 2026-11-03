@@ -1,4 +1,4 @@
-// Mulholland Highway: an open road with four ways to drive it on one card, as Vršič and Los Caracoles (def.modes: the race, the time trial,
+// the Santa Monica Mountains road: an open road with four ways to drive it on one card, as Vršič and Los Caracoles (def.modes: the race, the time trial,
 // the duel in the traffic and the run from the police). The road: the real line up the bends from Cornell to the top at Brewster Road (~4.2 km,
 // no more than 5 km), the climb from ~256 m to ~544 m with grades of at most ~11 %, the tight bends of its best-known stretch (a dozen and more, the
 // tightest of a ~17 m radius), the places for the HUD and the commentator in order up the road. The open road's traffic is its own mix
@@ -45,7 +45,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   check('places: in order up the road (La Sierra Creek, Seminole Drive, Elephant Rock ... Brewster Road at the finish), each with the commentator\'s lines', ok && N.length === 7 && N[0].n === 'La Sierra Creek' && /^Brewster Road/.test(N[N.length - 1].n) && N[N.length - 1].d > T.raceLen - 30,
     N.map(q => `${q.n}@${Math.round(q.d)}`).join(', '));
   const all = JSON.stringify([def.name, def.en.name, def.escTo, def.en.escTo, N.map(q => [q.n, q.say]), def.comm, def.police]);   // (the description may name the riders' nickname for the bends)
-  check('names: the track is Mulholland Highway, ZDA (USA in English), no nickname as its name, no bar, shop or brand anywhere in the names and lines', def.name === 'Mulholland Highway, ZDA' && def.en.name === 'Mulholland Highway, USA' && !/snake|rock store|harley|ducati|honda|yamaha/i.test(all),
+  check('names: the track is Santa Monica Mountains, ZDA (USA in English), no nickname as its name, no bar, shop or brand anywhere in the names and lines', def.name === 'Santa Monica Mountains, ZDA' && def.en.name === 'Santa Monica Mountains, USA' && !/snake|rock store|harley|ducati|honda|yamaha/i.test(all),
     def.name);
   check('names: the viewpoint in English on the HUD (Viewpoint · 522 m)', /^Viewpoint · \d{3} m$/.test((Lang.set('en'), Lang.place(N.find(q => /^Razgled/.test(q.n)).n))), (Lang.set('en'), Lang.place(N.find(q => /^Razgled/.test(q.n)).n)));
   Lang.set('sl');

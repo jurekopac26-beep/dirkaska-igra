@@ -36,15 +36,19 @@ try {
     r1.laps === 3 && r1.on && r1.log.length === 1 && gapRe.test(r1.log[0]) && r1.text === r1.log[0] && r1.clicks === 1, JSON.stringify(r1));
   // the box under the map, its width (two drawn frames: the column laid out; its 0.2 s fade-in, 3 px from above, over: and the fade-in of
   // what shows above it in the column, the message's, too. On a busy machine 300 ms are not always enough: their animations waited for
-  // until they are finished, then two frames more), upright, then on its side, then upright again
-  const rbox = () => page.evaluate(() => new Promise(res => setTimeout(async () => {
+  // until they are finished, then two frames more), upright, then on its side, then upright again. The race runs on meanwhile: a message
+  // that shows in those two frames slides in from 3 px above (its fade-in just started: the gap read up to 3 px too big), so the box is read
+  // in a frame with nothing in the column moving, else waited for again
+  const rbox = () => page.evaluate(() => new Promise(res => { let tries = 0; const go = () => setTimeout(async () => {
     const col = ['h-teamradio', 'h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(Boolean);
-    for (let k = 0; k < 5; k++) { const a = col.flatMap(x => x.getAnimations()).filter(a => a.playState === 'running'); if (!a.length) break; await Promise.race([Promise.all(a.map(x => x.finished.catch(() => { }))), new Promise(r => setTimeout(r, 2000))]); }
+    const moving = () => col.flatMap(x => x.getAnimations()).filter(a => a.playState === 'running');
+    for (let k = 0; k < 5; k++) { const a = moving(); if (!a.length) break; await Promise.race([Promise.all(a.map(x => x.finished.catch(() => { }))), new Promise(r => setTimeout(r, 2000))]); }
     requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (moving().length && ++tries < 10) { go(); return; }
     const e = document.getElementById('h-teamradio'), cs = getComputedStyle(e), r = e.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect();
     const above = ['h-tower', 'h-pit', 'h-react', 'h-msg', 'h-wreck'].map(id => document.getElementById(id)).filter(x => x && getComputedStyle(x).visibility === 'visible' && getComputedStyle(x).display !== 'none' && x.getClientRects().length)
       .map(x => x.getBoundingClientRect()).filter(q => q.height > 0 && q.left < m.right - 1 && q.right > m.left + 1 && q.bottom <= r.top + 1).map(q => q.bottom);   // (what is over it in the column under the map: upright the tower first, when shown)
-    res({ on: e.classList.contains('on'), vis: cs.visibility, dl: +(r.left - m.left).toFixed(1), dr: +(r.right - m.right).toFixed(1), gap: +(r.top - Math.max(m.bottom, ...above)).toFixed(1), fs: parseFloat(cs.fontSize), lines: Math.round((r.height - 9) / parseFloat(cs.lineHeight)), w: innerWidth, h: innerHeight }); })); }, 300)));
+    res({ on: e.classList.contains('on'), vis: cs.visibility, dl: +(r.left - m.left).toFixed(1), dr: +(r.right - m.right).toFixed(1), gap: +(r.top - Math.max(m.bottom, ...above)).toFixed(1), fs: parseFloat(cs.fontSize), lines: Math.round((r.height - 9) / parseFloat(cs.lineHeight)), w: innerWidth, h: innerHeight, tries }); })); }, 300); go(); }));
   const b1 = await rbox(); await page.setViewportSize({ width: 844, height: 390 }); const b2 = await rbox(); await page.setViewportSize({ width: 390, height: 844 }); await rbox();
   T.check('the radio\'s box right under the map with the map\'s width (±1 px; upright under the tower when it is shown), its text wrapped and readable (at least 9 px), upright and on its side',
     [b1, b2].every(b => b.on && b.vis === 'visible' && Math.abs(b.dl) <= 1 && Math.abs(b.dr) <= 1 && b.gap >= 2 && b.gap <= 6 && b.fs >= 9 && b.lines >= 2) && b1.h > b1.w && b2.w > b2.h, JSON.stringify({ b1, b2 }));

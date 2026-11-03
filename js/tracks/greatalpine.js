@@ -56,8 +56,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, eight kilometres of bends up from the Tambo River, and you start {grid}.", "Here we are by the Tambo River, at the foot of {track}. Bend after bend to the ridge, and you line up {grid}.", "Welcome to the Gippsland bush, and to {track}! Thirteen cars, one twisty road, and you start {grid}."],
-      goPass: ["Lights out, and away they go, up into the bush!", "And they're off! Along the river and into the bends!", "Green light! The pack charges up the valley!", "Go, go, go! Next stop, the top of the climb!"],
+      introPass: ["Welcome to {track}! {cars} cars, eight kilometres of bends up from the Tambo River, and you start {grid}.", "Here we are by the Tambo River, at the foot of {track}. Bend after bend to the ridge, and you line up {grid}.", "Welcome to the Gippsland bush, and to {track}! {cars} cars, one twisty road, and you start {grid}."],
+      goPass: ["And away they go, up into the bush!", "And they're off! Along the river and into the bends!", "The race is on! The pack charges up the valley!", "Go, go, go! Next stop, the top of the climb!"],
       introPassTT: ["Welcome to {track}! Eight kilometres of bends, just you and the clock.", "Here we are by the Tambo River. {cps} checkpoints between you and the top.", "Welcome to {track}! No rivals this time, only the clock and the bends."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the bends!", "And you're away! Up into the forest!"],
       introTraffic: ["Welcome to {track}, and the road is open today: cars, utes, log trucks and plenty of motorbikes. Keep left! Just you and {rival}, first to the top wins!", "Here we are by the Tambo River. A duel with {rival} through the traffic up the bends. Keep left, and watch for the trucks on the bends!", "Welcome to {track}! No closed road this time, riders leaning through every bend. Beat {rival} to the top!"],

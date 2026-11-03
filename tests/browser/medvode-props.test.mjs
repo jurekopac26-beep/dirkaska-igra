@@ -1,8 +1,8 @@
 // Medvode, Slovenija: the knockable roadside things in the built world. The road is a race circuit now (def.barrier: a steel barrier along the whole road, the
 // asphalt run-off out to it): the side roads are closed by the barrier itself, so the world has no yellow bollards in front of their mouths, no closures (rails,
 // gates, boards) down them and no delineator posts. The scenery builder puts every small thing into the prop list: the tyre stacks (at the rail's ends and in two
-// rows along each ring's wall), the street lamps, the zebra crossings' and the bus stops' signs, the street names' plates, the villages' boards, the flag poles, the
-// benches; Core simulates them (Race.setProps), the renderer draws one instanced mesh per kind. The race's own furniture behind the barrier (the distance boards,
+// rows along each ring's wall), the street lamps, the zebra crossings' and the bus stops' signs, the street names' plates, the flag poles, the
+// benches (the villages' lettered boards stand fixed behind the barrier: roadside.test.mjs); Core simulates them (Race.setProps), the renderer draws one instanced mesh per kind. The race's own furniture behind the barrier (the distance boards,
 // the marshals' posts, the timing hut, the paddock's tents) is static scenery, no props. Checks: the counts per kind and the old kinds gone, none inside a building,
 // standing on the ground, one instanced mesh per kind with the right number of instances in view, the player's car (in the browser) driven along each ring's road
 // into its wall knocking the world's tyre stacks over and stopped by the wall, steered into a side road and stopped by the barrier across its mouth.
@@ -36,14 +36,14 @@ try {
       if (Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) - b.K.rh || Tr.rings.some(R => R.zr > 0 && Math.hypot(b.x - R.x, b.z - R.z) < R.zr - b.K.rh)) reach[b.kind] = (reach[b.kind] || 0) + 1; }
     return { by, cap, knock: W.knock, propR: W.propR, nIn, inBld, nBuilt: built.length, off, offBy, offAt, worst, nOn, total: race.props.length, reach, all, race: W.race || null, posts: (W.propStats || {}).posts || 0, bales: (def.bales || []).length, signs: W.islands ? W.islands.signs.length : 0 };
   });
-  const K = r.by, need = { tstack: 100, mlamp: 40, msign: 20, bsign: 8, bench: 8, nsign: 8, vboard: 2, flagp: 2, cflag: 8 }, gone = ['tbollard', 'zaprta', 'post'];
+  const K = r.by, need = { tstack: 100, mlamp: 40, msign: 20, bsign: 8, bench: 8, nsign: 8, flagp: 2, cflag: 8 }, gone = ['tbollard', 'zaprta', 'post', 'dpost'];
   if (r.bales) need.bstack = 10; if (r.signs) need.isign = r.signs;   // (r9: the straw-bale stacks of def.bales; an island sign at the nose of each long def.splitIsl island)
-  // (r9: the villages' boards: two names on one spot (Valburga's and Smlednik's) one board there, World; the start's flag poles: one spot of the three
+  // (r9: the start's flag poles: one spot of the three
   // in a side road's mouth when the road there has no sidewalk)
   const PARTS = { tyre: (K) => 3 * (K.tstack || 0), bale: (K) => 3 * (K.bstack || 0), iblock: (K) => 3 * (K.isign || 0), iboard: (K) => K.isign || 0 };   // (the kinds a stack bursts into)
   console.log(`   props by kind: ${JSON.stringify(K)}, ${r.total} in all (with the stacks' tyres)`);
   console.log(`   within reach of a car (inside the barrier): ${Object.keys(r.all).map(k => `${k} ${r.reach[k] || 0}/${r.all[k]}`).join(', ')}`);
-  T.check('props: the world has every kind: tyre stacks, lamps, signs, plates, boards, flags, benches', Object.keys(need).every(k => (K[k] || 0) >= need[k]), Object.keys(need).map(k => `${k} ${K[k] || 0}/${need[k]}`).join(', '));
+  T.check('props: the world has every kind: tyre stacks, lamps, signs, plates, flags, benches', Object.keys(need).every(k => (K[k] || 0) >= need[k]), Object.keys(need).map(k => `${k} ${K[k] || 0}/${need[k]}`).join(', '));
   T.check('props: no yellow bollards in front of the side roads, no closure boards down them, no delineator posts (the barrier closes the side roads and runs along the whole road)',
     gone.every(k => !K[k] && !r.cap[k]) && !r.posts, gone.map(k => `${k} ${K[k] || 0}`).join(', ') + `, knockable delineator posts ${r.posts}`);
   T.check('props: Core simulates all of them (propCap = the kinds\' counts in the world, a tyre stack\'s three tyres, a bale stack\'s three bales, an island sign\'s three bases and its board ready), the builder\'s count by kind the same',

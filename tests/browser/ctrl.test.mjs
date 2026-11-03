@@ -33,7 +33,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-settings'); });
   await click('[data-act="to-ctrl"]');
   const k0 = await rows();
-  T.check('Kontrole (no pad connected: the keyboard): the default keys, two for each action; no handbrake (no Drift, no Preslednica), no camera (one camera)', k0.join(' | ') === 'Levo ← A | Desno → D | Plin ↑ W | Zavora ↓ S | Pavza Esc P | Gume za postanek T —', k0.join(' | '));
+  T.check('Kontrole (no pad connected: the keyboard): the default keys, two for each action; no handbrake (no Drift, no Preslednica), no camera (one camera); I for Posnetek do sem; F for Zastavica (Orodje za napake); O for Prikaz za razvijalca', k0.join(' | ') === 'Levo ← A | Desno → D | Plin ↑ W | Zavora ↓ S | Pavza Esc P | Gume za postanek T — | Posnetek do sem I — | Zastavica (napaka) F — | Prikaz za razvijalca O —', k0.join(' | '));
 
   // 2. set: Plin's second key I; Levo's second J; Esc keeps a box as it was, Backspace clears it; a key taken from the action it was on
   await click(slot('ctl-key', 'gas', 1)); const w1 = await page.evaluate((s) => document.querySelector(s).textContent, slot('ctl-key', 'gas', 1));
@@ -44,8 +44,8 @@ try {
   await click(slot('ctl-key', 'tyre', 1)); await key('KeyN', 'n');
   await click(slot('ctl-key', 'brake', 1)); await key('KeyD', 'd');   // (D taken from Desno, in place of S)
   const k1 = await rows(), st1 = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-ctrl')).keys);
-  T.check('a box waits for a key ("Pritisni tipko …"); I for Plin, J for Levo; Esc: Pavza kept; Backspace: the tyres\' first none, N their second; D taken from Desno for Zavora\'s second (S no more); kept (no handbrake\'s)',
-    w1 === 'Pritisni tipko …' && k1.join(' | ') === 'Levo ← J | Desno → — | Plin ↑ I | Zavora ↓ D | Pavza Esc P | Gume za postanek — N' && st1.gas[1] === 'KeyI' && st1.brake[1] === 'KeyD' && st1.tyre.join() === ',KeyN' && !('drift' in st1),
+  T.check('a box waits for a key ("Pritisni tipko …"); I for Plin (taken from Posnetek do sem), J for Levo; Esc: Pavza kept; Backspace: the tyres\' first none, N their second; D taken from Desno for Zavora\'s second (S no more); kept (no handbrake\'s)',
+    w1 === 'Pritisni tipko …' && k1.join(' | ') === 'Levo ← J | Desno → — | Plin ↑ I | Zavora ↓ D | Pavza Esc P | Gume za postanek — N | Posnetek do sem — — | Zastavica (napaka) F — | Prikaz za razvijalca O —' && st1.gas[1] === 'KeyI' && st1.brake[1] === 'KeyD' && st1.tyre.join() === ',KeyN' && st1.replay.join() === ',' && !('drift' in st1),
     JSON.stringify({ w1, k1, st1 }));
 
   // 3. the race with them: I the throttle (W no more), J left (Space with it: nothing), D the brake
@@ -101,8 +101,12 @@ try {
     JSON.stringify({ note, w0, ws, w1r }));
 
   // 7. the pedals: each pressed down and let go (it read 0 before: where it rests is measured once let go): Plin axis 2, Zavora axis 3
+  // (let go: the game takes where the pedal rests after 0.3 s of its own time, at most 0.1 s a frame, so on a busy machine later than any
+  // fixed wait; the next pedal's box tapped before that ends this one unset: so until the pedal is in the saved settings, at most 20 s)
   const pedal = async (a, ax) => { await click(slot('ctl-pad', a, 0)); await page.evaluate((ax) => { window.__wheel.axes[ax] = -1; }, ax); await frames(page, 4);
-    await page.evaluate((ax) => { window.__wheel.axes[ax] = 1; }, ax); await page.waitForTimeout(700); await frames(page, 3); };
+    await page.evaluate((ax) => { window.__wheel.axes[ax] = 1; }, ax);
+    await page.waitForFunction((a) => { const p = (JSON.parse(localStorage.getItem('tdgp-ctrl') || '{}').pads || {})[window.__wheel.id]; return !!(p && (p[a] || []).some(x => x.t === 'a')); }, a, { timeout: 20000, polling: 100 }).catch(() => null);
+    await frames(page, 3); };
   await pedal('gas', 2); await pedal('brake', 3);
   const w2 = await rows(), sw = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-ctrl')).pads[window.__wheel.id]);
   const half = await page.evaluate(async () => { window.__wheel.axes[2] = 0; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const v = { thr: Input.pad.thr, brk: Input.pad.brk, bar: document.getElementById('ctl-v-gas').style.width }; window.__wheel.axes[2] = 1; return v; });
@@ -130,7 +134,7 @@ try {
   await click('[data-act="to-ctrl"]'); await act('ctrl-tab', '#ctrl-tabs [data-v="keys"]');
   const en = await page.evaluate(() => ({ h: document.querySelector('#s-ctrl h2').textContent, tabs: [...document.querySelectorAll('#ctrl-tabs button')].map(b => b.textContent), rows: [...document.querySelectorAll('#ctrl-body .ctl-row')].map(r => r.innerText.replace(/\s+/g, ' ').trim()) }));
   T.check('in English: Controls, Keyboard, Gamepad and wheel, the keys\' rows (no Drift, no Space)', en.h === 'Controls' && en.tabs.join() === 'Keyboard,Gamepad and wheel' &&
-    en.rows.join(' | ') === 'Left ← A | Right → D | Throttle ↑ W | Brake ↓ S | Pause Esc P | Tyres for the stop T —', JSON.stringify(en));
+    en.rows.join(' | ') === 'Left ← A | Right → D | Throttle ↑ W | Brake ↓ S | Pause Esc P | Tyres for the stop T — | Replay to here I — | Flag (a bug) F — | Developer view O —', JSON.stringify(en));
 
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {

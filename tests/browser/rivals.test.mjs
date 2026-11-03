@@ -1,7 +1,7 @@
 // The rivals' characters in the game: the career's standing rival (not chosen yet on the career screen; after the first race the driver
 // just ahead of the player, with its character in words, on the results and the career screen); in the next race that driver's car
-// carries its name, and at the line the head-to-head is counted. A duel with the player and a mistake under pressure near the player on
-// the HUD (the rival's duel its own message).
+// carries its name, and at the line the head-to-head is counted. A duel (the commentator only, no words on the screen) and a mistake under pressure near the player on
+// the HUD.
 //   node tests/browser/rivals.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -19,14 +19,15 @@ try {
   const r0 = await page.evaluate(() => document.getElementById('career-rival').textContent);
   T.check('the career screen: the standing rival chosen after the first race', r0 === 'Stalni tekmec: izbran bo po prvi dirki v karieri.', r0);
 
-  // 2. the first race: the driver just ahead becomes the rival
+  // 2. the first race: the driver nearest ahead becomes the rival (one of the 19 every field has: a championship's too)
   await startTrack(page, 'jezero');
   const chars = await page.evaluate(() => window.__game.race.cars.filter(c => c.chr).map(c => c.name + ' ' + c.chr.agg + '/' + c.chr.err));
   await toEnd(); await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const f1 = await page.evaluate(() => { const g = window.__game, rows = [...document.querySelectorAll('#res-table tbody tr')].map(tr => tr.children[1].textContent);
-    return { sub: document.getElementById('res-sub').textContent, rival: g.career.rival, name: g.career.rival && Core.DRIVER_NAMES[g.career.rival.k], rows, me: rows.indexOf('Ti') }; });
-  T.check('in a race every rival has its character; after the first race of the career the driver just ahead is the standing rival (on the results, with its character)', chars.length === 12 &&
-    f1.rival && f1.rival.me === 0 && f1.rival.him === 0 && f1.rows[f1.me > 0 ? f1.me - 1 : 1] === f1.name && new RegExp(f1.name.replace('.', '\\.') + ' \\((agresivna|previdna|uravnotežena) vožnja(, (popušča pod pritiskom|mirna kri))?\\) je zdaj tvoj stalni tekmec\\.').test(f1.sub), JSON.stringify({ f1, chars: chars.slice(0, 3) }));
+    const me = rows.indexOf('Ti'), ok = (n) => { const k = Core.DRIVER_NAMES.indexOf(n); return k >= 0 && k < 19; };
+    return { sub: document.getElementById('res-sub').textContent, rival: g.career.rival, name: g.career.rival && Core.DRIVER_NAMES[g.career.rival.k], rows, me, want: rows.slice(0, me).reverse().find(ok) || rows.slice(me + 1).find(ok) }; });
+  T.check('in a race every rival has its character; after the first race of the career the driver nearest ahead (of the first 19) is the standing rival (on the results, with its character)', chars.length === 21 &&
+    f1.rival && f1.rival.me === 0 && f1.rival.him === 0 && f1.rival.k < 19 && f1.want === f1.name && new RegExp(f1.name.replace('.', '\\.') + ' \\((agresivna|previdna|uravnotežena) vožnja(, (popušča pod pritiskom|mirna kri))?\\) je zdaj tvoj stalni tekmec\\.').test(f1.sub), JSON.stringify({ f1, chars: chars.slice(0, 3) }));
   await act('to-title'); await act('to-career'); await page.waitForTimeout(150);
   const r1 = await page.evaluate(() => document.getElementById('career-rival').textContent);
   T.check('the career screen: the rival, its character, the head-to-head (ti 0, tekmec 0)', r1.startsWith('Stalni tekmec: ' + f1.name + ' (') && r1.endsWith(' · ti 0, tekmec 0.'), r1);
@@ -40,7 +41,7 @@ try {
   const hud = await page.evaluate(async () => { const g = window.__game, R = g.race, P = R.player, rv = R.cars.find(c => c.chr && c.chr.rival), o = R.cars.filter(c => c.chr && !c.chr.rival).sort((a, b) => Math.abs(a.dist - P.dist) - Math.abs(b.dist - P.dist))[0];
     const one = async (k, c) => { window.__msgs.length = 0; R.chr.q.push({ k, c }); g.pause(); g.sim(0.05, true); g.resume(); await new Promise(r => requestAnimationFrame(r)); return window.__msgs.slice(); };
     return { duel: await one('duel', o), rvDuel: await one('duel', rv), mistake: await one('mistake', o), name: o.name }; });
-  T.check('a duel with the player (DVOBOJ: NAME; with the rival its own message), a mistake near the player (NAPAKA: NAME)', hud.duel.includes('DVOBOJ: ' + hud.name.toUpperCase()) && hud.rvDuel.includes('DVOBOJ S STALNIM TEKMECEM') && hud.mistake.includes('NAPAKA: ' + hud.name.toUpperCase()), JSON.stringify(hud));
+  T.check('a duel with the player or the rival: the commentator only, no words on the screen; a mistake near the player (NAPAKA: NAME)', hud.duel.length === 0 && hud.rvDuel.length === 0 && hud.mistake.includes('NAPAKA: ' + hud.name.toUpperCase()), JSON.stringify(hud));
   await toEnd(); await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const f3 = await page.evaluate(() => ({ sub: document.getElementById('res-sub').textContent, rival: window.__game.career.rival }));
   T.check('at the line: the head-to-head counted (the rival\'s place, overall ti / tekmec)', f3.rival.me + f3.rival.him === 1 && new RegExp(' Stalni tekmec ' + f1.name.replace('.', '\\.') + ': \\d+\\. mesto \\(skupaj ti ' + f3.rival.me + ', tekmec ' + f3.rival.him + '\\)\\.').test(f3.sub), JSON.stringify(f3));

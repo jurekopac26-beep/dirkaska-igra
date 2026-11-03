@@ -71,8 +71,9 @@ try {
       let best = [0, 0], i0 = -1;
       for (let j = 0; j < 2 * N; j++) { const i = j % N; if (ok(i)) { if (i0 < 0) i0 = j; if (j - i0 > best[1] - best[0]) best = [i0, j]; } else i0 = -1; }
       const s0 = (best[0] * Tr.ds + 380) % Tr.len, s1 = s0 + 180; let n = 0;
+      // (flat out there: over 175 km/h; held up on the first lap (a knock in the field of 22, a spin) it comes by again a lap later)
       g.autoDrive = true;
-      while (n++ < 4000) { g.sim(0.05, true); const s = P.q.s; if ((g.race.time || 0) > 15 && s > s0 && s < s1) break; }
+      while (n++ < 9000) { g.sim(0.05, true); const s = P.q.s; if ((g.race.time || 0) > 15 && s > s0 && s < s1 && P.speed * 3.6 > 175) break; }
       g.autoDrive = false;
       return { n, s: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6) };
     });

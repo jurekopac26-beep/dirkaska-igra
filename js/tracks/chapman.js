@@ -46,8 +46,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! Thirteen cars, five kilometres of cliffs above the Atlantic, and you start {grid}.", "Here we are at Hout Bay, at the foot of {track}. A race up the cliffs to the view point, and you line up {grid}.", "Welcome to the Cape, and to {track}! The ocean on one side, the rock on the other, and you start {grid}."],
-      goPass: ["Lights out, and away they go along the cliffs!", "And they're off! Next stop, the view point!", "Green light! The pack charges up from Hout Bay!", "Go, go, go! Mind the rock wall!"],
+      introPass: ["Welcome to {track}! {cars} cars, five kilometres of cliffs above the Atlantic, and you start {grid}.", "Here we are at Hout Bay, at the foot of {track}. A race up the cliffs to the view point, and you line up {grid}.", "Welcome to the Cape, and to {track}! The ocean on one side, the rock on the other, and you start {grid}."],
+      goPass: ["And away they go along the cliffs!", "And they're off! Next stop, the view point!", "The race is on! The pack charges up from Hout Bay!", "Go, go, go! Mind the rock wall!"],
       introPassTT: ["Welcome to {track}! Just you, the cliffs and the clock.", "Here we are at Hout Bay. {cps} checkpoints between you and the view point.", "Welcome to {track}! No rivals this time, only the clock and the ocean far below."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the cliffs!", "And you're away! Up to Chapman's Peak!"],
       introTraffic: ["Welcome to {track}, and the road is open today, and remember: they keep left here! Just you and {rival}, first to the view point wins!", "Here we are at Hout Bay. A duel with {rival} through the traffic on the cliffs. Keep left!", "Welcome to {track}! Cars, buses and bikers both ways on the cliffs. Beat {rival} to the top!"],

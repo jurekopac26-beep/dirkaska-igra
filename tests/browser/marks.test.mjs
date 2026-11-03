@@ -58,7 +58,9 @@ try {
   const s11 = await stored(page);
   T.check('after eleven runs the track keeps the newest ten, the newest first', s11.length === 10 && sizes.every(n => n > 0) && Buffer.compare(Buffer.from(s11[9]), Buffer.from(s1[0])) !== 0 && s11.every(a => chains(a).ok),
     JSON.stringify({ kept: s11.length, sizes, bytes: s11.map(a => a.length) }));
-  // a reload: kept in the browser
+  // a reload: kept in the browser (the old page's WebGL context let go first: software WebGL still busy with the big world otherwise holds the
+  // browser, the reload never even reaching the server)
+  await page.evaluate(() => { window.__game.pause(); const c = document.getElementById('gl'), gl = c && (c.getContext('webgl2') || c.getContext('webgl')), x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); });
   await page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   await startTrack(page, 'rastro');
   const q3 = await page.waitForFunction(() => Render.oldMarks > 0 && Render.oldMarks, null, { timeout: 10000 }).then(h => h.jsonValue()).catch(() => 0);

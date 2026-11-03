@@ -1,5 +1,5 @@
 // Browser smoke test: the page loads (over http like GitHub Pages, and from a local file), every track can be
-// raced for 20 s on autopilot (its corner sign high on the screen, lying and upright), settings migrate (one driving physics: Circuit Superstars; four difficulty levels), the
+// raced for 20 s on autopilot (its corner sign high on the screen, lying and upright), settings migrate (two driving physics, Klasična and Nova: an old save's removed physics becomes Klasična; four difficulty levels), the
 // title demo runs, a Pikes Peak run, an Ouninpohja run, a Harju run and a Katu-Jaryk descent finish and their records are
 // saved (Ouninpohja also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the
 // chase, the police radio, the arrows, the mission in the building at the top). Zero page errors allowed.
@@ -12,14 +12,15 @@ const T = checker('smoke');
 const srv = await serve();
 const browser = await launch();
 try {
-  // 1. settings: one driving physics (no row for it) and the migration of old saves (the 'rally' and 'arcade' physics were removed)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs']]) {
+  // 1. settings: the row Fizika vožnje (Klasična, Nova; tests/browser/nova.test.mjs) and the migration of old saves (the 'rally' and 'arcade'
+  // physics were removed: Klasična; Nova kept)
+  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs'], ['{"phys":"nova"}', 'nova']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
     if (seed === null) {
-      const row = await page.evaluate(() => document.querySelectorAll('[data-set="phys"]').length);
-      T.check('settings: no driving-physics row (Circuit Superstars only)', row === 0, row + ' rows');
+      const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="phys"] button')].map(b => b.dataset.v).join(','));
+      T.check('settings: one driving-physics row, Klasična and Nova', row === 'cs,nova', row);
     }
     await ctx.close();
   }
@@ -65,12 +66,15 @@ try {
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
+    const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const nan = await simulate(page, 20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
-    // (more than 100 m in 20 s with the 3 s of the countdown: a car that does not move stays near 0 m; Tianmen's 45 hairpins, with the player on the last row of the grid in the pack, give 127-176 m from run to run)
+    // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
+    // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
+    // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist > 100 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m, phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -189,7 +193,7 @@ try {
       `puddles drawn ${r.drawn}, on the road ${r.onRoad}, time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}", dry again ${r.dry}`);
   }
   // 6d. Vršič: one card, four ways to drive it (the switch Dirka / Kronometer / Promet / Policija on the card). Kronometer: the time trial alone
-  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 12 rivals on the grid, the HUD
+  //     to the pass, its record and board under 'vrsic-tt@cs' (the race's records stay apart), a medal; Dirka: 21 rivals on the grid, the HUD
   //     shows the place, the km climbed and the altitude; Promet: the duel with one rival up the open road, the traffic and the people drawn,
   //     the HUD with the rival's gap; Policija: a calm start (no start lights, nobody after the player, no stars, the commentator silent and
   //     the police radio on the air, the checkpoint ahead on the HUD), the autopilot drives through the checkpoint in Kranjska Gora (the
@@ -237,15 +241,21 @@ try {
         }
         // (in the chase the patrol cars may lose the player for a while, searching with their lights off: the HUD's count of them after the
         // player and their lights read through the chase, not only at its end)
-        let peds = 0, tail = [], rot = [], caps = [], chased = 0, lamp = false;
+        // (each arrow's turn is checked against where the patrol cars are as the frame drew it: 180 straight behind, less to the right. A car
+        // behind along the road may be beside or even ahead of the player in a hairpin, so how many of them point back depends on where on the
+        // road the chase is, which the race's chance decides)
+        let peds = 0, tail = [], rot = [], aim = [], caps = [], chased = 0, lamp = false;
         for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
           if (md === 'police') { chased = Math.max(chased, +txt('h-pos') || 0); if ((Render.roadInfo() || {}).lampOn) lamp = true;
-            for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+            const Pl = g.race.player, ch = Math.cos(Pl.h), sh = Math.sin(Pl.h);
+            const cars = g.race.pol.cars.filter(c => c.pol.mode === 'chase' || c.pol.mode === 'search').map(c => { const dx = c.x - Pl.x, dz = c.z - Pl.z; return 180 - Math.atan2(-dx * sh + dz * ch, -(dx * ch + dz * sh)) * 180 / Math.PI; });
+            for (const el of document.querySelectorAll('#h-tail i.on')) { const r = parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1]);
+              tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(r); aim.push(cars.some(w => Math.abs(((r - w) % 360 + 540) % 360 - 180) <= 2)); }
             if (g.radio.cap) caps.push(g.radio.cap); } }
         for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, aim, caps: [...new Set(caps)] };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
@@ -271,8 +281,8 @@ try {
     T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
       r.tt && r.phase === 'done' && r.rec && r.rec.bestTime > 0 && r.rec.board && r.rec.board.length === 1 && !(r.race && r.race.bestTime) && /medalj/.test(r.sub),
       `time ${r.t && r.t.toFixed(2)} s, record ${r.rec && r.rec.bestTime}, "${r.sub}"`);
-    T.check('Vršič race: 13 cars, the HUD with the place, the km climbed and the altitude',
-      r.back === 'race' && r.cars === 13 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
+    T.check('Vršič race: 22 cars, the HUD with the place, the km climbed and the altitude',
+      r.back === 'race' && r.cars === 22 && r.up && /^\d+,\d\/12,3 KM$/.test(r.lap) && /^\d+(\.\d{3})? m$/.test(r.alt) && +r.pos >= 1 && r.racing === 'racing',
       `${r.cars} cars, HUD "${r.lap}" "${r.alt}", place ${r.pos}, ${r.racing}`);
     const D = r.traffic, P = r.police, Q = r.pre, M = r.mission;
     T.check('Vršič Promet: the duel with one rival in the traffic, vehicles and people drawn, the HUD with the rival\'s gap (the commentator on, no police radio)',
@@ -288,9 +298,9 @@ try {
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
-    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
-      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
-      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
+    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, each pointing where a patrol car is',
+      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.aim.length === P.rot.length && P.aim.every(Boolean),
+      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}, ${P.aim.filter(Boolean).length} of ${P.aim.length} at a patrol car`);
     T.check('Vršič Policija: the police radio talks in the chase (the speakers\' call signs, the real places)',
       P.caps.some(c => /^(KG-\d+|OKC KRANJ|MOTORIST \d+|CIVILNA \d+|BOBER|PP BOVEC|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
       JSON.stringify(P.caps.slice(0, 4)));
@@ -346,6 +356,7 @@ try {
       document.querySelector('[data-track="katu"]').click(); await wait(150); g.onAction('start');
       for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'katu'); k++) await wait(100);
       await frame();
+      for (let k = 0; k < 60 && g.pkFly && !(g.pkFly.k >= 0); k++) await frame();   // (the first caption shows at 0.15 s: until then the flyover's is still hidden)
       const F = Render.pkFly, el = document.getElementById('pk-fly'), fly = { on: !!g.pkFly, show: el.className, cap: [el.children[1].textContent, el.children[2].textContent], names: [] };
       for (let t = 0, k = -1; t <= F.DUR; t += 0.05) { const o = F.at(t); if (o && o.k >= 0 && o.k !== k) { k = o.k; fly.names.push(F.caps[k].n); } }
       fly.y0 = F.at(0).shot.py; fly.y1 = F.at(F.DUR - 0.05).shot.py;   // (the camera: over the start, over the finish)

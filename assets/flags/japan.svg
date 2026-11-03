@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Japan</title>
+  <!-- Ratio 2:3 (Act on National Flag and Anthem, 1999). White field; crimson (beni-iro) disc,
+       diameter 3/5 of the height (360 of 600), centre exactly at the centre of the flag.
+       Colours: white #FFFFFF, crimson #BC002D. -->
+  <rect width="900" height="600" fill="#FFFFFF"/>
+  <circle cx="450" cy="300" r="180" fill="#BC002D"/>
+</svg>

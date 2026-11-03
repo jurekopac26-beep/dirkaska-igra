@@ -1,4 +1,4 @@
-// The timing tower and the lap table: a race at Jezero Ring (13 cars, on autopilot): upright, the tower at the right, right under the map: the
+// The timing tower and the lap table: a race at Jezero Ring (22 cars, on autopilot): upright, the tower at the right, right under the map: the
 // leader (VODI), the first three and the player with the two ahead and behind, the gaps growing down the order, the player's
 // row lit; switched off in the settings: gone. On its side: at the right under the map, the player with one ahead and behind. The results:
 // every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
@@ -9,7 +9,7 @@ const T = checker('tower');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', tower: 1 }, { width: 390, height: 844 }, { seed: 7 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', tower: 2 }, { width: 390, height: 844 }, { seed: 7 });
   await startTrack(page, 'jezero');
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(22, true); g.resume(); });
   // (the tower is drawn four times a second of the race; a slow software renderer takes a few frames to get there, on a busy machine over 20 s: read it once it shows
@@ -30,7 +30,7 @@ try {
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="tower"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
   await page.waitForTimeout(300);
   const off = await page.evaluate(() => getComputedStyle(document.getElementById('h-tower')).display);
-  await page.evaluate(() => { document.querySelector('[data-set="tower"] button[data-v="1"]').click(); window.__game.resume(); });
+  await page.evaluate(() => { document.querySelector('[data-set="tower"] button[data-v="2"]').click(); window.__game.resume(); });
   T.check('switched off in the settings: gone', off === 'none', off);
 
   // on its side: at the right, under the map
@@ -53,7 +53,7 @@ try {
   const lt = await page.evaluate(() => { const E = document.getElementById('res-laps'), rows = [...E.querySelectorAll('tbody tr')];
     return { shown: !E.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
       purple: E.querySelectorAll('td.ob').length, green: E.querySelectorAll('td.pb').length, me: !!E.querySelector('tr.me'), stops: rows.map(tr => tr.lastElementChild.textContent) }; });
-  T.check('the results: every driver\'s laps (K1-K3), the fastest of the race once in purple, each best in green, the pit stops', lt.shown && lt.head.join() === '#,Voznik,K1,K2,K3,Postanki' && lt.rows === 13 && lt.laps.filter(n => n === 3).length >= 1 && lt.purple === 1 && lt.green >= 5 && lt.me && lt.stops.every(s => /^\d+$/.test(s)), JSON.stringify(lt));
+  T.check('the results: every driver\'s laps (K1-K3), the fastest of the race once in purple, each best in green, the pit stops', lt.shown && lt.head.join() === '#,Voznik,K1,K2,K3,Postanki' && lt.rows === 22 && lt.laps.filter(n => n === 3).length >= 1 && lt.purple === 1 && lt.green >= 5 && lt.me && lt.stops.every(s => /^\d+$/.test(s)), JSON.stringify(lt));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

@@ -5,7 +5,7 @@
    (app.js). All times, money and progress are examples.
    ========================================================================= */
 window.MENU = {
-  game: { l1: 'APEX', l2: 'RACING', price: '€3.99', currency: 'CR' },
+  game: { l1: 'REAL ROADS ATLAS', l2: 'RACING GAME', price: '€3.99', currency: 'CR' },
 
   /* ---------- main menu: three big buttons with a picture, two small ones, the purchase ---------- */
   menu: {
@@ -18,7 +18,7 @@ window.MENU = {
 
   /* ---------- single race, step 1: the mode (step 2: the track) ---------- */
   modes: [
-    { id: 'race', name: 'Circuit race', sub: 'Laps against 12 rivals. Finish as high as you can.', chip: '12 RIVALS', img: 'assets/menu/mode-race.webp' },
+    { id: 'race', name: 'Circuit race', sub: 'Laps against 21 rivals. Finish as high as you can.', chip: '21 RIVALS', img: 'assets/menu/mode-race.webp' },
     { id: 'chase', name: 'Police chase', sub: 'The police are on your tail. Shake them off.', chip: 'GET AWAY IN 3:00', img: 'assets/menu/mode-chase.webp' },
     { id: 'trial', name: 'Time trial', sub: 'Alone against the clock and your own ghost.', chip: 'GOLD · SILVER · BRONZE', img: 'assets/menu/mode-trial.webp' },
   ],

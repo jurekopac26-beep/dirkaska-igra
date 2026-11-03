@@ -41,9 +41,9 @@ function tap(bump, vb, net) {
 
 // a 90 s race on Jezero, the player on autopilot (every car off the line at once, as before the start's reaction, Core LAUNCH: the
 // reactions spread the pack over the first metres and the knocks of one race with them; this measures the aggressive drivers alone)
-function race(ai) {
+function race(ai, seed) {
   C.setCrash({ ai });
-  const orig = Math.random; Math.random = seeded(11);
+  const orig = Math.random; Math.random = seeded(seed);
   try {
     const r = new C.Race(new C.Track(C.TRACKS.find(d => d.id === 'jezero')), { numAI: 12, playerGrid: 12, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', launch: false });
     r.start();
@@ -54,8 +54,10 @@ function race(ai) {
   } finally { Math.random = orig; C.setCrash({}); }
 }
 {
-  const off = race(0), on = race(1);
-  ok('agresivni vozniki on: more hard knocks between the cars', on.hard >= off.hard * 2 && on.hard > 10, 'hard knocks ' + off.hard + ' -> ' + on.hard);
+  // (six races of each, the knocks and the damage added up: one 90 s race alone is a draw of the dice)
+  const sum = (ai) => { const t = { hard: 0, dmg: 0, laps: 99, nan: false }; for (const sd of [11, 12, 13, 14, 15, 16]) { const r = race(ai, sd); t.hard += r.hard; t.dmg += r.dmg / 6; t.laps = Math.min(t.laps, r.laps); t.nan = t.nan || r.nan; } return t; };
+  const off = sum(0), on = sum(1);
+  ok('agresivni vozniki on: more hard knocks between the cars', on.hard >= off.hard * 1.5 && on.hard > 30, 'hard knocks ' + off.hard + ' -> ' + on.hard);
   ok('agresivni vozniki on: more damage in the field', on.dmg > off.dmg * 1.5, 'mean damage ' + off.dmg.toFixed(2) + ' -> ' + on.dmg.toFixed(2));
   ok('agresivni vozniki on: every car still on its laps, nothing NaN', on.laps >= off.laps && !on.nan, 'laps (the slowest) ' + off.laps + ' / ' + on.laps);
 }

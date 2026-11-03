@@ -60,6 +60,7 @@ try {
     T.check(`${name}: Race.repairCar builds it afresh, whole (the old view freed)`, r.after.fresh && !r.after.rep && r.after.off === 0 && r.after.cracks === 0 && r.after.lamps === 0 && r.after.wheelsOff === 0 && r.after.ownGone, JSON.stringify(r.after));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await page.close();   // (done with it: a race left running there slows the next page's load past openGame's 3 minutes on a busy machine)
 
   // Razbijanje · nov način (xBody, xGlass on): the player's denser body and the damage table's broken glass (KOLIBRI) repaired the same
   // way: towards its own body as built (never the model's coarser one: no NaN at any step), the table's glass back in the body with the

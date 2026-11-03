@@ -25,8 +25,8 @@ check('track: an open road with four ways to drive it (def.modes: race, time tri
 check('track: from above Ouray (~2540 m) up the gorge (~2860 m), 4.9 km of the real road (at most 5 km), grades of at most 10 %', Math.abs(def.alt[0] - 2543) < 15 && Math.abs(def.alt[1] - 2860) < 15 && T.raceLen > 4800 && T.raceLen <= 5000 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1 && Math.max(...T.grade) < 0.105,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m, steepest ${(Math.max(...T.grade) * 100).toFixed(1)} %`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('uncompahgre'));
-check('track: the HUD knows the places in order (the gorge, the tunnel, Bear Creek Falls, Alpine Loop, the Mother Cline slide, the Riverside shed, the finish)',
-  T.names.map(q => q.n.split(' · ')[0]).join('|') === 'Soteska Uncompahgre|Predor|Slap Bear Creek|Alpine Loop|Plaz Mother Cline|Galerija Riverside|Cilj' && T.names.every(q => q.say),
+check('track: the HUD knows the places in order (the gorge, the tunnel, Bear Creek Falls, Alpine Loop, the big avalanche slide, the Riverside shed, the finish)',
+  T.names.map(q => q.n.split(' · ')[0]).join('|') === 'Soteska Uncompahgre|Predor|Slap Bear Creek|Alpine Loop|Velik plaz|Galerija Riverside|Cilj' && T.names.every(q => q.say),
   T.names.map(q => q.n + ' @' + Math.round(q.d)).join(', '));
 
 // 2. the galleries and the bridge: the barriers close in to the tunnel's and the shed's walls (1.6 m past the road's edges); the tunnel before

@@ -3,9 +3,15 @@
 // circuit without a straight that long 150, 100, 50), on the outside of the approach, beside the road and clear of its barriers (or over
 // them where the verge is too narrow), not in the mouth of the pit lane or a side road, not at the start line; none on the open roads, the
 // rally stages and the test tracks.
+// 3. a board on the verge falls over when a car hits it (physics level: Core only; World puts them in its props, browser/boards.test.mjs):
+// Spa's 200 m board before La Source as World makes it (Core 'bboard', every board on the verge of the circuit set into the race), a car
+// driven into it over the grass from 180 km/h (~160 at the blow): the board wakes, tips over and comes to rest lying in the grass a few metres on, off the asphalt;
+// the car loses a little speed (not most of it) and takes a small dent; every other board stands as it stood; the same run twice gives
+// the same result bit for bit
 //   node tests/boards.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
+const { DT, seeded } = require('./lib/sim.js');
 
 const C = loadCore();
 let bad = 0, n = 0;
@@ -58,5 +64,42 @@ for (const def of C.TRACKS.filter(circuit)) {
   check(`${id}: the plates 2 x 1.5 m, facing the cars coming`, B.every(b => b.pw === 2 && b.ph === 1.5 && Math.abs(b.hd - T.hd[b.i]) < 1e-6));
 }
 console.log('zones / boards: ' + sum.join(', '));
+
+// 3. knocked over: Spa, the 200 m board before La Source (zone 0, on the verge), a car on its line from 30 m before it at 50 m/s (180 km/h)
+{
+  const def = C.TRACKS.find(d => d.id === 'spa'), T = new C.Track(def), B = T.brakeBoards()[0].boards[1], V0 = 50, h0 = 1;
+  const list = T.brakeBoards().flatMap(z => z.boards).filter(b => !b.kind).map(b => ({ kind: 'bboard', x: b.x, z: b.z, yaw: b.hd, col: 0, i: b.i }));   // (as World's brakeBoards: the boards on the verge; without a world they stand on the road's height there, World gives each its drawn foot, it.y)
+  const k = list.findIndex(p => p.x === B.x && p.z === B.z), orig = Math.random;
+  const run = (props) => {
+    Math.random = seeded(5);
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: true, damage: 1 }), P = r.player;
+    r.start(); P.locked = false; r.setProps(props ? list : [], null);
+    const i = T.idx(B.s - 30); P.place(T.px[i] + T.nx[i] * B.lat, T.pz[i] + T.nz[i] * B.lat, T.hd[i]); P.y = P.py = T.hy[i]; P.roadY = P.y; P.q = T.query(P.x, P.z, i, P.q); P.vx = Math.cos(P.h) * V0; P.vz = Math.sin(P.h) * V0;
+    const b = props ? r.props[k] : null, d0 = P.dmg, spd = [];
+    let hit = -1, minUp = 1, slept = -1;
+    for (let s = 0; s < 120 * 8; s++) {
+      Math.random = seeded(900 + s); P.inThr = 0.4; P.inBrk = 0; P.inSteer = 0;
+      r.step(DT); spd.push(P.speed);
+      if (b) { minUp = Math.min(minUp, 1 - 2 * (b.qx * b.qx + b.qz * b.qz)); if (hit < 0 && !b.sleep) hit = s; if (hit >= 0 && slept < 0 && b.sleep) slept = s; }
+      if (hit >= 0 && s === hit + 18) { const j = T.idx(B.s + 60); P.place(T.px[j], T.pz[j], T.hd[j]); P.y = P.py = T.hy[j]; P.roadY = P.y; P.q = T.query(P.x, P.z, j, P.q); P.vx = Math.cos(P.h) * 40; P.vz = Math.sin(P.h) * 40; }   // (then on along the road's middle, clear of the boards)
+      if (hit >= 0 && s === hit + 12) P.dmgHit = P.dmg - d0;
+    }
+    Math.random = orig;
+    return { r, P, b, hit, minUp, spd, slept };
+  };
+  const ctl = run(false), a = run(true), a2 = run(true), b = a.b, P = a.P;
+  const q = T.query(b.x, b.z, b.qi, {}), up = 1 - 2 * (b.qx * b.qx + b.qz * b.qz), lat = Math.abs(q.d), edge = T.wAt(q.i) + (T.curb[q.i] ? T.curbW : 0), above = b.y - T.elevAt(q.s).y;
+  const rest = Math.hypot(b.x - list[k].x, b.z - list[k].z), hs = a.hit + 12, loss = 100 * (1 - a.spd[hs] / ctl.spd[hs]);
+  check('Spa, the 200 m board before La Source hit by a car driven over the grass from 180 km/h: knocked over (awake, tipped well over), at rest again within 6 s',
+    a.hit > 0 && a.minUp < 0.2 && up < 0.6 && a.slept > a.hit && (a.slept - a.hit) * DT < 6, `hit after ${(a.hit * DT).toFixed(2)} s, its up axis ${up.toFixed(2)} (1: standing; the most ${a.minUp.toFixed(2)}), ${a.slept > 0 ? 'at rest ' + ((a.slept - a.hit) * DT).toFixed(1) + ' s after the blow' : 'still moving'}`);
+  check('... and lies in the grass beside the road (off the asphalt and the kerb, low on the ground), a few metres on from where it stood',
+    lat > edge + 0.3 && above < h0 - 0.3 && rest > 1 && rest < 15, `${(lat - edge).toFixed(2)} m past the kerb, its middle ${above.toFixed(2)} m above the road (standing ${h0} m), ${rest.toFixed(1)} m from its place`);
+  check('the car: a little slower (1-5 % against the same run without the boards, 0.1 s after the blow), a small dent (0.5-8 %)',
+    loss > 1 && loss < 5 && P.dmgHit > 0.005 && P.dmgHit < 0.08, `${loss.toFixed(2)} % slower (${(ctl.spd[hs] * 3.6).toFixed(0)} > ${(a.spd[hs] * 3.6).toFixed(0)} km/h), damage +${(100 * P.dmgHit).toFixed(1)} %`);
+  const moved = a.r.props.filter((o, j) => j !== k && (!o.sleep || o.x !== list[j].x || o.z !== list[j].z || o.qw !== Math.cos(-list[j].yaw / 2)));
+  check('every other board stands as it stood (asleep, not moved)', !moved.length, moved.length ? `${moved.length} moved` : `${list.length - 1} boards`);
+  const st = (x) => JSON.stringify(x.r.props.map(o => [o.x, o.y, o.z, o.qx, o.qy, o.qz, o.qw, o.sleep])) + JSON.stringify([x.P.x, x.P.z, x.P.vx, x.P.vz, x.P.dmg]);
+  check('deterministic: the same run twice, the same boards and car bit for bit', st(a) === st(a2));
+}
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;
