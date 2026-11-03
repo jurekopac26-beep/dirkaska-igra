@@ -37,6 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: HK.start, runoff: 0.5, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6, realKm: 26.8,
     rivals: 20,   // a full field (Core: 20 rivals at least, the tests' races)
     raceRivals: 99, flyStart: true,   // the game's Circuit race here: 99 rivals (100 cars, the last ~750 m behind the line: down road 732 through Yumoto and round Sanmaibashi) from a flying start (game.js newRace), as the Nordschleife
+    fuji: 'real',   // Mount Fuji hidden by every ridge in front of it, as it really is (js/world-hakone.js hkFar; the user's choice on the page of decisions, 3. 11. 2026)
     elev: HK.h.map((h, i) => [i / HK.h.length, h / 100]),
     bridges: HK.bridges,   // ([from, to], metres after the start line: OpenStreetMap's, the road straight across)
     hairpins: HK.hairpins,   // (the 25 hairpins: [metres after the start line, metres above the sea, 1 right / -1 left, the tightest radius, the road]; the tests read them)

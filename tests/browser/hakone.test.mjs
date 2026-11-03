@@ -5,9 +5,9 @@
 // from the road), every free end of a line finished (a buffer stop by the road, a tunnel's portal in a hill farther out), with the level
 // crossing at Kowakidani and the bridge at Deyama high over the road (a car passes under it); the
 // torii at Hatajuku; the old road's stones; the utility poles of the villages; the hydrangeas along the line; the terrain's tiles no farther
-// than ~410 m from the road; Lake Shōjin's water by the road; the far view (the caldera, Lake Ashi, Mount Fuji): by default Fuji in a mesh of
-// its own over the far ridges (def.fuji not 'real'), with def.fuji 'real' in the far land's meshes, hidden by every ridge in front of it; the far
-// land in blocks (each its own mesh, culled out of the view).
+// than ~410 m from the road; Lake Shōjin's water by the road; the far view (the caldera, Lake Ashi, Mount Fuji): the track's def.fuji 'real'
+// (the user's choice, 3. 11. 2026) Fuji in the far land's meshes, hidden by every ridge in front of it; without it Fuji in a mesh of its own
+// over the far ridges; the far land in blocks (each its own mesh, culled out of the view).
 //   node tests/browser/hakone.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -80,13 +80,15 @@ try {
     `${S.poles} poles, ${S.paving} pieces of paving, the torii ${Math.round(r.dH)} m from Hatajuku`);
   T.check('the corridor narrowed (the rule of 60 m): 700-1600 tiles, no tile\'s middle farther than 345 m from the road', r.tiles > 700 && r.tiles < 1600 && r.tileFar === 0, `${r.tiles} tiles (${S.tiles} full), ${r.tileFar} farther`);
   T.check('Lake Shōjin by the road: its water there', r.water >= 4, `${r.water} of the points beside it on water`);
-  T.check('the far view (the caldera, Lake Ashi, the sea, Mount Fuji) and, by default, Fuji\'s massif in a mesh of its own over the far ridges (no depth test, drawn before the near world)',
-    S.far > 15000 && r.farTris > 10000 && r.farN >= 8 && !!r.fuji && r.fuji.depthTest === false && r.fuji.ro < 0 && r.fuji.tris > 300 && S.fujiOver === true, `${S.far} nodes, ${r.farTris} triangles in ${r.farN} blocks; Fuji ${JSON.stringify(r.fuji)}`);
-  // def.fuji 'real': Fuji in the one mesh, hidden by every ridge in front of it (the user's choice on the page of decisions)
-  const q = await page.evaluate(() => { const g = window.__game, d = Core.TRACKS.find(t => t.id === 'hakone'), f0 = d.fuji; d.fuji = 'real'; Render.buildWorld(g.race.track, 1, 2);
-    let fuji = null, farTris = 0; Render.world.root.traverse(o => { if (o.name === 'hkFuji') fuji = o; if (o.name === 'hkFar') farTris += o.geometry.index.count / 3; }); const res = { fuji: !!fuji, over: Render.world.stats.fujiOver, farTris };
+  T.check('the far view (the caldera, Lake Ashi, the sea, Mount Fuji): the track\'s def.fuji \'real\', Fuji in the far land\'s meshes, hidden by every ridge in front of it (no mesh of its own)',
+    S.far > 15000 && r.farTris > 10000 && r.farN >= 8 && !r.fuji && S.fujiOver === false, `${S.far} nodes, ${r.farTris} triangles in ${r.farN} blocks; Fuji ${JSON.stringify(r.fuji)}`);
+  // without def.fuji 'real': Fuji's massif in a mesh of its own over the far ridges (the other choice on the page of decisions)
+  const q = await page.evaluate(() => { const g = window.__game, d = Core.TRACKS.find(t => t.id === 'hakone'), f0 = d.fuji; delete d.fuji; Render.buildWorld(g.race.track, 1, 2);
+    let fuji = null, farTris = 0; Render.world.root.traverse(o => { if (o.name === 'hkFuji') fuji = o; if (o.name === 'hkFar') farTris += o.geometry.index.count / 3; });
+    const res = { fuji: fuji ? { depthTest: fuji.material.depthTest, ro: fuji.renderOrder, tris: fuji.geometry.index.count / 3 } : null, over: Render.world.stats.fujiOver, farTris };
     if (f0 === undefined) delete d.fuji; else d.fuji = f0; Render.buildWorld(g.race.track, 1, 2); return res; });
-  T.check('def.fuji \'real\': no mesh of its own, Fuji in the far land\'s meshes (its triangles there too)', !q.fuji && q.over === false && q.farTris > r.farTris, JSON.stringify(q));
+  T.check('without def.fuji \'real\': Fuji\'s massif in a mesh of its own over the far ridges (no depth test, drawn before the near world), its triangles out of the far land\'s',
+    !!q.fuji && q.fuji.depthTest === false && q.fuji.ro < 0 && q.fuji.tris > 300 && q.over === true && q.farTris < r.farTris, JSON.stringify(q));
   T.check('no errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 } finally {
   await browser.close(); await srv.close();

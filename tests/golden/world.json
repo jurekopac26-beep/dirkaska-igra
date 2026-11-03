@@ -1120,19 +1120,18 @@
   }
  },
  "hakone": {
-  "meshes": 4689,
-  "verts": 3641407,
+  "meshes": 4688,
+  "verts": 3621716,
   "instances": 25572,
   "props": 15,
   "crowd": 53,
-  "world": "83e003ce",
+  "world": "16f9120",
   "propsHash": "360ab95",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "d6f402f5",
    "-:MeshPhongMaterial": "925b0c4f",
-   "hkFar:MeshLambertMaterial": "465f244b",
-   "hkFuji:MeshLambertMaterial": "481a9dd4",
+   "hkFar:MeshLambertMaterial": "cb7cb003",
    "hkWires:LineBasicMaterial": "cc4d1042",
    "crowd:MeshLambertMaterial": "8021a5ae",
    "ao:MeshBasicMaterial": "1a8ecf20",
