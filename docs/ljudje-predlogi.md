@@ -117,10 +117,18 @@ Prizori stojijo na mestih, kjer je ograja blizu ceste in je pred njimi ravnina: 
 ## Naprej (predaja 3. 11. 2026)
 
 - **Veja `claude/beautiful-gauss-v7ksgu-nove-skupine`** (osnutek pull requesta »Ljudje in živali: 6 novih skupin in 6 prizorov živali«): skupine ljudi so v `js/world-ljudje3.js`, prizori živali v `SCENE` v `js/world-zivali.js`. Slike prizorov naredita `tools/ljudje/igra.mjs` in `tools/ljudje/zivali.mjs`.
-- **Želja uporabnika 3. 11. 2026 za prizora 11 in 12** (11: prašiči v obori in kokoši, Rio do Rastro; 12: konji v ogradi s hlevom, Štajerska): »11 in 12 naj bosta nekje pred hiso. Ampak ne pred kr eno hiso postavi jih tam kjer so v resnici«.
-  - Kmetijo, kjer te živali v resnici so, poišči ob progi v OSM, nikoli v Googlu. Uporabi API `api.openstreetmap.org/api/0.6/map?bbox=…`, ker je Overpass v oblačnih sejah blokiran. Oznake: `landuse=farmyard`, `building=farm|house|barn|stable|cowshed`, `landuse=animal_keeping`, `leisure=horse_riding`.
-  - Prizor dobi v `SCENE` stalno mesto (`s`, stran, odmik) namesto samodejnega iskanja ravnine; za njim stoji hiša. Rio do Rastro ima stavbe OSM v `bld` datoteke proge, Štajerska jih nima.
-  - Za vsak prizor naredi eno ali dve sliki z `tools/ljudje/zivali.mjs`.
+- **Želje uporabnika 3. 11. 2026 po slikah 1–12.** Slike so: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so.
+  - 1, 2, 4 in 5: »postavi samo tam kjer je tudi v resnici«. Ribiči ob pravi vodi, kjer se lovi; seno na pravem travniku; balinanje na pravem balinišču; šah tam, kjer se v resnici igra. Kjer takega mesta ob progi ni, prizora ni.
+  - 6: »ce je otroski rojstni dan potem je tukaj tudi veliko starsev in se ostali elementi za starse«.
+  - 7: »storklja naj bo samo ena in to na drogu, ko prides z avtom blizu ona odleti stran od avta saj se je preplasila«.
+  - 8: »ce tam ni ribnika v resnici potem ne delaj ribnika, bolje potem da race postavis v ze narejeno vodo kot morje ali jezero«.
+  - 11 in 12: »11 in 12 naj bosta nekje pred hiso. Ampak ne pred kr eno hiso postavi jih tam kjer so v resnici«.
+- **Kako najti prava mesta:**
+  - Mesta poišči ob progi v OSM, nikoli v Googlu. Uporabi API `api.openstreetmap.org/api/0.6/map?bbox=…`, ker je Overpass v oblačnih sejah blokiran.
+  - Oznake za kmetije: `landuse=farmyard`, `building=farm|house|barn|stable|cowshed`, `landuse=animal_keeping`, `leisure=horse_riding`.
+  - Oznake za druge prizore: `leisure=fishing`, `natural=water`, `landuse=meadow`, `sport=boules|bocce`, `sport=chess`.
+  - Prizor dobi v `SCENE` ali `site(…)` stalno mesto na pravi točki namesto samodejnega iskanja ravnine. Rio do Rastro ima stavbe OSM v `bld` datoteke proge, Štajerska jih nima.
+  - Za vsak spremenjeni prizor naredi eno ali dve sliki z `tools/ljudje/igra.mjs` oziroma `tools/ljudje/zivali.mjs`.
 - **Ob spoju svežega `main`**:
   - `index.html` brez žigov (`node tools/stamp.js --strip`), vrstica `js/world-ljudje3.js` za `world-ljudje2.js`.
   - Vrstica v kratkem kazalu.
