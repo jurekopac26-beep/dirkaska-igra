@@ -62,7 +62,7 @@ Ocene so ure dela (30. 10.). Sklop 2 je trajal približno pol ocene, zato je rea
 | 7 | Avtošola s 36 nalogami (`js/nvschool.js`) | 16–24 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238) z motokrosom #251 in beležko #252, 2. 11.) |
 | 8 | Preverjanje celote (15 slik mape proti ciljem, obremenitev, vsi testi) in popravki s 15 slik | 10–18 h | na `main` ([PR #264](https://github.com/jurekopac26-beep/dirkaska-igra/pull/264), 3. 11., združitev `db438c1`) |
 | 9 | Dodatki: proga za čolne s plažo F, gasilski avto C | 12–18 h | na `main` (zbirni [PR #238](https://github.com/jurekopac26-beep/dirkaska-igra/pull/238), 2. 11.); gasilski avto C: uporabnik 2. 11. »parkiran in vozljiv« → sklop 10 |
-| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | gondola, vlak, gasilski avto C, premiki na `main` ([PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272), 3. 11., združitev `be04877b`); rampa: uporabnik »Zbriši rampo«; ravni za vse garaže (izbira 1) v [PR #278](https://github.com/jurekopac26-beep/dirkaska-igra/pull/278) |
+| 10 | Za pozneje (vse, po sklopu 8): ravni za ostale garaže, vožnja z napravami v lunaparku, premikanje na gradbišču, rampa v parku, gondola za avte (`gond-page.js`), gasilski avto C parkiran in vozljiv pri reševalni bazi | 28–44 h + gondola in gasilski avto | na `main`: gondola, vlak, gasilski avto C, premiki ([PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272), 3. 11., združitev `be04877b`) in ravni za vse garaže, izbira 1 ([PR #278](https://github.com/jurekopac26-beep/dirkaska-igra/pull/278), 3. 11., združitev `0a129e22`); rampa: uporabnik »Zbriši rampo« |
 | **Skupaj** | sklopi 3–10 | **100–156 h** | |
 
 ## Odgovori 2. 11. zvečer (v nadrejeni seji)
@@ -137,7 +137,7 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
   `PRE="$(cat koda/pre-stack.js)"` vsaka mreža dobi sled sklada (`userData.__st`) in združevanje je izklopljeno, `__rays(x, z)` pove, katera
   funkcija je naredila mrežo pod točko (opis v glavi datoteke).
 
-## Sklop 10: kar avto vozi in kar se premika ([PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272) na `main`, ravni [PR #278](https://github.com/jurekopac26-beep/dirkaska-igra/pull/278))
+## Sklop 10: kar avto vozi in kar se premika (na `main`: [PR #272](https://github.com/jurekopac26-beep/dirkaska-igra/pull/272), ravni [PR #278](https://github.com/jurekopac26-beep/dirkaska-igra/pull/278))
 - `js/nvride.js` (`NVRide`, priklopi v `js/game.js`: init, step pred `race.step`, post, frame, reset na HOME, brez »Na progo« med vožnjo).
 - Gondola (po `delo/gond-page.js`): `NVRide.gondola` v y8 namesto `gondola()` iz `js/newmap.js`. Spodnja postaja A je 16 m nazaj po črti
   (≈ −114,7; −27,8; ploščad 0,78 m, dve klančini, steklena streha), ker je bila na prvotnem mestu klančina prestrma. Zgornja B (−207, −104) je
@@ -155,7 +155,7 @@ notranji rob rdeče-bel (verzija 6); slika 5: temen trikotnik in temna črta v m
   bilo nič narejenega, makete `delo/rampa-page.js` odstranjene, slike `nm10-rampa/` ostanejo kot zapis vprašanja). **nm10-ravni: 1** · meni z ravnmi
   za vse garaže (licence, dirke, misije): 12 izzivov v 4 ravneh po 3 kot avtošola, napredek v `localStorage` `rra-garaze`, naslednja raven pri 50 %,
   izzivi »V izdelavi«; prve tri so dosedanje, imena ravni 2–4 so predlog (ko se izzivi naredijo, se lahko spremenijo); več igralcev ostane s tremi
-  izbirami, HOME »Garaža v izdelavi«. Drug PR (veja `nova-mapa/sklop-10-ravni`).
+  izbirami, HOME »Garaža v izdelavi«. Na `main` s PR #278 (CI zelen; del 3/4 enkrat ponovljen, `menu.test.mjs` na počasnem stroju čez 120 s).
 - Združitev #272: CI zelen (Vozila enkrat ponovljen: nestabilen `cars-ui` iz main, vprašanje orodja za napake ob »Ponovi krog«; popravek je prišel
   z #178), nato hitra združitev po spoju (#263, #268, #265, #242, #178; spori samo v seznamu testov in žigih).
 - V posnetkih se kabine, vlak in gasilski avto narišejo šele z `NVRide.frame(...)` (`koda/adv.js`); `koda/live.mjs` z `STILL=1` med nalogami
