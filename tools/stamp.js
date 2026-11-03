@@ -59,6 +59,8 @@ function pass(root, mode) {
     const out = eachLink(root, html, ({ file, full, params }) => {
       const k = params.findIndex(isStamp), old = k >= 0 ? params[k].replace(/^v=?/, '') : null;
       if (mode === 'strip') { n++; if (k < 0) return null; changed++; return params.filter(p => !isStamp(p)); }
+      const inTree = path.relative(root, full);   // (a link out of the tree is no file of it: the publish step stamps pull requests' trees too)
+      if (!inTree || inTree.startsWith('..') || path.isAbsolute(inTree)) { problems.push('missing file: ' + page + ': ' + file + ' (outside the tree)'); return null; }
       if (!fs.existsSync(full) || !fs.statSync(full).isFile()) { problems.push('missing file: ' + page + ': ' + file); return null; }
       n++;
       if (mode === 'check') { if (k >= 0) problems.push(`${page}: ${file}: a stamp (v=${old})`); return null; }

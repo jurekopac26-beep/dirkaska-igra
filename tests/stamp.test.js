@@ -110,9 +110,11 @@ try {
     const s = tool(['--strip'], dir), back = read(path.join(dir, 'index.html'));
     check('page: --strip takes the stamps off and keeps the rest (js/b.js?a=1&c=2, icons/i.png?x=1#top, css/a.css with no "?")',
       s.st === 0 && back === page.replace('?a=1&v=deadbeef&c=2', '?a=1&c=2') && tool(['--check'], dir).st === 0, back.split('\n').slice(2, 7).join(' | '));
-    put('index.html', page.replace('<script src="js/c.js"></script>', '<script src="js/c.js"></script><script src="js/gone.js"></script>').replace('&v=deadbeef', ''));
+    put('index.html', page.replace('<script src="js/c.js"></script>', '<script src="js/c.js"></script><script src="js/gone.js"></script><script src="../site/js/sfx.js"></script>').replace('&v=deadbeef', ''));
     const m1 = tool(['--check'], dir), m2 = tool([], dir), m3 = tool(['--check-stamped'], dir);
-    check('page: a link to a missing file fails --check, the stamping and --check-stamped', [m1, m2, m3].every(x => x.st === 1 && /missing file: index\.html: js\/gone\.js/.test(x.out)), [m1, m2, m3].map(x => x.out.trim().split('\n').pop()).join(' | '));
+    check('page: a link to a missing file, or to a file outside the tree (../site/js/sfx.js, never read), fails --check, the stamping and --check-stamped',
+      [m1, m2, m3].every(x => x.st === 1 && /missing file: index\.html: js\/gone\.js/.test(x.out) && /missing file: index\.html: \.\.\/site\/js\/sfx\.js \(outside the tree\)/.test(x.out)) &&
+      read(path.join(dir, 'index.html')).includes('<script src="../site/js/sfx.js"></script>'), [m1, m2, m3].map(x => x.out.trim().split('\n').pop()).join(' | '));
   }
 
   // 4. the tool never stamps the repository itself: not without GAME_ROOT, not with GAME_ROOT on it (a copy of the tool in a folder of its
