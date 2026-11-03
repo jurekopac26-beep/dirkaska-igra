@@ -3632,9 +3632,10 @@ const Render = (function () {
 
 
   // softer shadows (the user, 3. 11. 2026: »naredi bolj mehke sence povsod«): PCF on every quality, its 17 samples spread over a few texels
-  // of the map (Visoka's 2048: 3.5 texels, ~27 cm of the 160 m box; the others' 1024: 2.5, ~39 cm); three.js r128's PCFSoft, as before on
-  // Visoka, keeps its own narrow spread whatever the radius (and takes more samples)
-  const SOFT_SHADOW = { high: 3.5, normal: 2.5 };
+  // of the map (Visoka's 2048: 2 texels, ~16 cm of the 160 m box; the others' 1024: 1.6, ~25 cm), its samples no more than a texel apart
+  // (wider, a thin pole's shadow would fall between them and break into stripes); three.js r128's PCFSoft, as before on Visoka, keeps its
+  // own narrow spread whatever the radius (and takes more samples). Pikes Peak's own (pkLight) back to these when it is left
+  const SOFT_SHADOW = { high: 2, normal: 1.6 };
   function applySettings(s) {
     settings = Object.assign(settings, s);
     { const h = settings.carDetail === 'high'; if (h !== carHi) { carHi = h; if (showCar && showArgs) setShowCar(showArgs[0], showArgs[1], showArgs[2], showArgs[3]); } }   // (the showroom's car again in the other detail; a race's cars: from the next race)
@@ -3916,8 +3917,8 @@ const Render = (function () {
   function pkLight(target) {
     const on = themeId === 'pikes' && !!curTrack && !!world && !!curTrack.hy, S = sun.shadow;
     if (on !== pkL.on) { pkL.on = on; pkL.b = null;
-      if (on) { S.bias = -0.0005; S.normalBias = 0.045; S.radius = 2.5; }
-      else { S.bias = -0.0006; S.normalBias = 0.03; S.radius = 1; if (post) post.mat.uniforms.uCon.value = 1.04; pkRays(0); pkFlare(0); } }
+      if (on) { S.bias = -0.0005; S.normalBias = 0.045; S.radius = settings.quality === 'high' ? 2 : 2.5; }
+      else { S.bias = -0.0006; S.normalBias = 0.03; S.radius = settings.quality === 'high' ? SOFT_SHADOW.high : SOFT_SHADOW.normal; if (post) post.mat.uniforms.uCon.value = 1.04; pkRays(0); pkFlare(0); } }
     const ms = on ? (settings.quality === 'high' ? 1536 : 1024) : settings.quality === 'high' ? 2048 : 1024;   // (high: a softer PCF-soft edge, ~0.12 m texels)
     if (S.mapSize.x !== ms) { S.mapSize.set(ms, ms); if (S.map) { S.map.dispose(); S.map = null; } }
     if (!on) return;

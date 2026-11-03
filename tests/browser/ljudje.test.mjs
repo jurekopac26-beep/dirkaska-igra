@@ -39,7 +39,7 @@ try {
       let sat = 0, off = 0, ppl = 0, walk = 0, wOn = 0, wOff = 0; const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0);
       for (const Sc of tribs) for (const p of Sc.people) { const v = p.P.root.position; rc.set(new THREE.Vector3(v.x, v.y + 3, v.z), dn);
         const h = rc.intersectObjects(steps, false).find(q => q.point.y - v.y < 1.2), d = h ? h.point.y - v.y : -1;   // (under a roof: the first hit below it)
-        if (!p.P.seat) { walk++; const g = W.groundH(v.x, v.z); if ((h && Math.abs(d) < 0.25) || (Number.isFinite(g) && Math.abs(v.y - g) < 0.25)) wOn++; else wOff++; continue; }   // (a walker: on a step or the walkway)
+        if (!p.P.seat) { walk++; const g = W.groundH(v.x, v.z); if ((h && Math.abs(d) < 0.3) || (Number.isFinite(g) && Math.abs(v.y - g) < 0.3)) wOn++; else wOff++; continue; }   // (a walker: on a step or the walkway, within a step's height: up a riser)
         ppl++; if (d > 0.3 && d < 0.6) sat++; else off++; }
       out.stands = { steps: steps.length, painted, scenes: tribs.length, people: ppl, sat, off, seats: st.standSeats || 0, walk, wOn, wOff };
       return out;

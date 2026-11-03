@@ -4185,7 +4185,7 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) World.life(o); if (World.people) World.people(o); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js)
+  function finish(o, tex) { o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4425,6 +4425,7 @@ const World = (function () {
     return o;
   }
   function nrShade(x, z, r, s) {   // a tree's crown over the ground (G.cov at the grid vertices): s in the middle, fading out 3 m past the crown's edge r
+    if (x === THIN.gx && z === THIN.gz) return;   // (the tree just thinned out by the road: no shade of it)
     const G = NR.G, R2 = r + 3, i0 = Math.max(0, Math.ceil((x - R2 - G.x0) / NRC)), i1 = Math.min(G.nx - 1, Math.floor((x + R2 - G.x0) / NRC)), j0 = Math.max(0, Math.ceil((z - R2 - G.z0) / NRC)), j1 = Math.min(G.nz - 1, Math.floor((z + R2 - G.z0) / NRC));
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(G.x0 + i * NRC - x, G.z0 + j * NRC - z); if (d < R2) G.cov[j * G.nx + i] += s * sstep(R2, r * 0.3, d); }
   }
@@ -4487,14 +4488,15 @@ const World = (function () {
   // grafike«): on a real track a tree (an instanced plant mostly green, at least 3.2 m tall) within 35 m of the barrier is planted only by its
   // place's hash, half of them to 12 m, seven in ten beyond (no random draws: the builders' own as ever); a chunk left empty still takes the
   // names its meshes would have (Math.random: a seeded race as before). THIN.n: how many left out (stats.thinned)
-  const THIN = { n: 0, near: 12, far: 35, keepNear: 0.5, keepFar: 0.72, h: 3.2 };
-  const treeGeo = (g) => { const ca = g.attributes.color, pa = g.attributes.position; if (!ca || !pa) return 0; let r = 0, gg = 0, b = 0, y0 = Infinity, y1 = -Infinity;
+  const THIN = { n: 0, near: 12, far: 35, keepNear: 0.5, keepFar: 0.72, h: 3.2, gx: NaN, gz: NaN };
+  const treeGeo = (g) => { if (g.userData.treeH != null) return g.userData.treeH;   // (decided once, on its first build: a shared shape the season (render.js seasonWorld) has painted since is still a tree)
+    const ca = g.attributes.color, pa = g.attributes.position; if (!ca || !pa) return (g.userData.treeH = 0); let r = 0, gg = 0, b = 0, y0 = Infinity, y1 = -Infinity;
     for (let k = 0; k < ca.count; k++) { r += ca.getX(k); gg += ca.getY(k); b += ca.getZ(k); } for (let k = 0; k < pa.count; k++) { y0 = Math.min(y0, pa.getY(k)); y1 = Math.max(y1, pa.getY(k)); }
-    return gg > r * 1.08 && gg > b * 1.08 ? y1 - y0 : 0; };   // (its height if it is green: a tree's crown, a bush; else 0)
+    return (g.userData.treeH = gg > r * 1.08 && gg > b * 1.08 ? y1 - y0 : 0); };   // (its height if it is green: a tree's crown, a bush; else 0)
   class IChunks {
     constructor(base, mat, size) { this.base = base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? treeGeo(base) : 0; this.gone = null; }
     add(x, y, z, rot, sxz, sy, col) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size);
-      if (this.th && this.th * sy >= THIN.h) { const c = clearance(x, z); if (c < THIN.far && crH(x, z, 7.7) >= (c < THIN.near ? THIN.keepNear : THIN.keepFar)) { THIN.n++; (this.gone || (this.gone = new Set())).add(k); return; } }
+      if (this.th && this.th * sy >= THIN.h) { const c = clearance(x, z); if (c < THIN.far && crH(x, z, 7.7) >= (c < THIN.near ? THIN.keepNear : THIN.keepFar)) { THIN.n++; THIN.gx = x; THIN.gz = z; (this.gone || (this.gone = new Set())).add(k); return; } }   // (THIN.gx/gz: nrShade leaves its crown's shade out)
       let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); }
     addTo(group, cast) {
       const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(), c = new THREE.Color(), bs = this.base.boundingSphere || (this.base.computeBoundingSphere(), this.base.boundingSphere);
