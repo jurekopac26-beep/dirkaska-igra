@@ -13,7 +13,7 @@ import url from 'node:url';
 import { serve, launch, openGame } from '../tests/browser/lib.mjs';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-const SIZE = { pokonci: { width: 390, height: 844 }, lezece: { width: 844, height: 390 } };   // (a phone's screen in CSS pixels)
+const SIZE = { pokonci: { width: 360, height: 640 }, lezece: { width: 640, height: 360 } };   // (a phone's screen in CSS pixels, as tools/shot.mjs)
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
 const m = Number(flag('--m') || 1284), dyn = Number(flag('--dyn') || 0.55), dpr = Number(flag('--dpr') || 2), kArg = flag('--k'), crop = (flag('--crop') || '0.3,0.85').split(',').map(Number);
 const out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'ostrenje'));

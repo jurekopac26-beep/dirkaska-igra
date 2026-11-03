@@ -4377,20 +4377,15 @@ const Render = (function () {
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
-        // sharpening (casK: Visoka, the picture drawn below its resolution): AMD FidelityFX CAS's filter without scaling. The pixel C
-        // is pulled away from its four neighbours by a weight (at most uCas) that the soft minimum and maximum of the 3x3 around it shape:
-        // less where the picture nears black or white, where an edge is already hard; on top of it FSR's RCAS's test for noise (a lone
-        // pixel unlike its four neighbours, a sparkle, an aliased dot: half the weight) and a limiter: the result stays within the
-        // cross's own min and max (C included), so no edge gets a halo and no sparkle grows
+        // sharpening (casK: Visoka, the picture drawn below its resolution): AMD FidelityFX CAS's filter without scaling, on the pixel's
+        // cross as FSR's RCAS reads it (only the four neighbours the edge smoothing has read already). The pixel C is pulled away from them
+        // by a weight (at most uCas) that their min and max shape: less where the picture nears black or white or where an edge is already
+        // hard; on top of it RCAS's test for noise nz (a lone pixel unlike its four neighbours, a sparkle, an aliased dot: half the weight)
+        // and a limiter: the result stays within the cross's own min and max (C included), so no edge gets a halo and no sparkle grows
         'uniform float uCas;',
-        'vec3 cas(vec3 C, vec3 N, vec3 S, vec3 E, vec3 W, vec2 px){',
-        '  float dNE = texture2D(tD, vUv + px).g, dNW = texture2D(tD, vUv + vec2(-px.x, px.y)).g, dSE = texture2D(tD, vUv + vec2(px.x, -px.y)).g, dSW = texture2D(tD, vUv - px).g;',
+        'vec3 cas(vec3 C, vec3 N, vec3 S, vec3 E, vec3 W, float nz){',
         '  vec3 mn = min(min(min(N, S), min(E, W)), C), mx = max(max(max(N, S), max(E, W)), C);',
-        '  float sMn = mn.g + min(min(min(dNE, dNW), min(dSE, dSW)), mn.g), sMx = mx.g + max(max(max(dNE, dNW), max(dSE, dSW)), mx.g);',   // (CAS: soft, 2x; the green's only)
-        '  float amp = sqrt(clamp(min(sMn, 2.0 - sMx) / max(sMx, 1e-3), 0.0, 1.0));',
-        '  float lC = lum(C), lN = lum(N), lS = lum(S), lE = lum(E), lW = lum(W);',
-        '  float nz = clamp(abs(0.25 * (lN + lS + lE + lW) - lC) / max(max(max(max(lN, lS), max(lE, lW)), lC) - min(min(min(lN, lS), min(lE, lW)), lC), 1e-3), 0.0, 1.0);',
-        '  float w = -uCas * amp * (1.0 - 0.5 * nz);',
+        '  float w = -uCas * sqrt(clamp(min(mn.g, 1.0 - mx.g) / max(mx.g, 1e-3), 0.0, 1.0)) * (1.0 - 0.5 * clamp(nz, 0.0, 1.0));',   // (CAS: the green's amount for all three)
         '  return clamp((C + w * (N + S + E + W)) / (1.0 + 4.0 * w), mn, mx);',
         '}',
         'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
@@ -4410,7 +4405,7 @@ const Render = (function () {
         '    float lC = lum(c), lN = lum(cN), lS = lum(cS), lE = lum(cE), lW = lum(cW);',
         '    float mx = max(max(max(lN, lS), max(lE, lW)), lC), mn = min(min(min(lN, lS), min(lE, lW)), lC);',
         '    if (mx - mn > 0.08) { vec2 dir = vec2(lS - lN, lE - lW); dir = dir / (length(dir) + 1e-4) * px * 0.9; c = mix(c, 0.5 * (texture2D(tD, vUv + dir).rgb + texture2D(tD, vUv - dir).rgb), 0.55); }',
-        '    if (uCas > 0.0) c = cas(c, cN, cS, cE, cW, px);',   // (after the edge smoothing, as CAS goes after an anti-aliasing)
+        '    if (uCas > 0.0) c = cas(c, cN, cS, cE, cW, abs(0.25 * (lN + lS + lE + lW) - lC) / max(mx - mn, 1e-3));',   // (after the edge smoothing, as CAS goes after an anti-aliasing)
         '  }',
         // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most)
         '  if (uMB > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float m = uMB * smoothstep(0.1, 0.5, length((vUv - uMF) * as) * 0.6) * smoothstep(0.07, 0.24, length((vUv - uMC) * as));',
@@ -4456,7 +4451,7 @@ const Render = (function () {
   // the battery saver) the browser stretches it over the screen. CAS on the picture as drawn, before that stretch, is how CAS itself scales
   // (its four nearest results, interpolated), with no pass of its own: its weight k at full from 0.7 of the resolution down, half of it
   // just below the full resolution. At the full resolution, on Retro and Normalno (no post pass) and in a still (snapshot): 0, nothing runs
-  const CAS = { k: 0.1, full: 0.7 };
+  const CAS = { k: 0.15, full: 0.7 };   // (k: the lobe at most, CAS's own run from 0.125 to 0.2; the user's pick: Odločitve, ostrenje-jakost)
   let snapping = false, casDrawn = 0;   // (casDrawn: the weight the last frame was drawn with, 0: none)
   function casK() {
     if (snapping || settings.quality !== 'high') return 0;
