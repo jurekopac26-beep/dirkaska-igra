@@ -113,3 +113,15 @@ Prizori stojijo na mestih, kjer je ograja blizu ceste in je pred njimi ravnina: 
 
 - **Živali in elementi po gozdovih glede na državo** (`js/world-zivali.js`, opis v `docs/igra.md`, razdelek Grafika).
 - **Avtomobili ob cesti posodobljeni** (`parkedCar` v `js/world.js`).
+
+## Naprej (predaja 3. 11. 2026)
+
+- **Veja `claude/beautiful-gauss-v7ksgu-nove-skupine`** (osnutek pull requesta »Ljudje in živali: 6 novih skupin in 6 prizorov živali«): skupine ljudi so v `js/world-ljudje3.js`, prizori živali v `SCENE` v `js/world-zivali.js`. Slike prizorov naredita `tools/ljudje/igra.mjs` in `tools/ljudje/zivali.mjs`.
+- **Želja uporabnika 3. 11. 2026 za prizora 11 in 12** (11: prašiči v obori in kokoši, Rio do Rastro; 12: konji v ogradi s hlevom, Štajerska): »11 in 12 naj bosta nekje pred hiso. Ampak ne pred kr eno hiso postavi jih tam kjer so v resnici«.
+  - Kmetijo, kjer te živali v resnici so, poišči ob progi v OSM, nikoli v Googlu. Uporabi API `api.openstreetmap.org/api/0.6/map?bbox=…`, ker je Overpass v oblačnih sejah blokiran. Oznake: `landuse=farmyard`, `building=farm|house|barn|stable|cowshed`, `landuse=animal_keeping`, `leisure=horse_riding`.
+  - Prizor dobi v `SCENE` stalno mesto (`s`, stran, odmik) namesto samodejnega iskanja ravnine; za njim stoji hiša. Rio do Rastro ima stavbe OSM v `bld` datoteke proge, Štajerska jih nima.
+  - Za vsak prizor naredi eno ali dve sliki z `tools/ljudje/zivali.mjs`.
+- **Ob spoju svežega `main`**:
+  - `index.html` brez žigov (`node tools/stamp.js --strip`), vrstica `js/world-ljudje3.js` za `world-ljudje2.js`.
+  - Vrstica v kratkem kazalu.
+  - Nove reference `world` in `perf` za 11 prog: Ouninpohja, Medvode, Vršič, Livorno, Longford, Big Sur, Crystal Palace, Great Alpine Road, Uncompahgre, Rio do Rastro in Štajerska.
