@@ -425,6 +425,7 @@
         out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [f0 - 0.005, EAVE - 0.4, EAVE - 0.02, 4.78], wall: [b0 - 0.08, 0.42, EAVE - 0.05, 4.74] };   // (its canopy, for the renderer's team colours: the band on the valance, the back hung behind)
         nBoxes++;
       }
+      out.pitApronD = [CAN0, CAN1];   // (where the apron is, m from the start line: the renderer's rain on it, Render pitPuddles, pitDrop)
       { const p = pitD(CAN1); if (p) { const base = p.lout; gp.quadUp(at(CAN1 - 0.18, base, 0.035), at(CAN1 - 0.18, base + APR, 0.035), at(CAN1, base + APR, 0.035), at(CAN1, base, 0.035), [wl, wl, wl, wl]); } }   // (the last box's far line)
       { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the strip: Core keeps the player's car off them (pitAt().inner: the lane's edge there, eased in and out)
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];

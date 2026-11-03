@@ -3969,6 +3969,9 @@ const Render = (function () {
   // frame (o out to the pits' side, sd); into buildPuddles' arrays (pw: each vertex's opacity, 1 on the film)
   const PIT_FILM = 0.4;   // (the film's opacity)
   const pitLook = (T) => { const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]); if (T.def.pitApron) L.ap = T.def.pitApron; return L; };
+  // (the apron at s: along the whole lane where it runs full width, or only where the world has it, world.pitApronD [from, to] m from the
+  // start line: Monterey's in front of its canopies, past them the lane's own outer wall)
+  const apronAt = (T, s) => { const A = world && world.pitApronD; if (!A) return true; const L = T.len; let d = s - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; return d >= A[0] && d <= A[1]; };
   function pitPuddles(T, pos, uv, pw, idx, rl) {   // (rl: buildPuddles' dry line's offsets, 99 for these: not near the racing line; pitWet's test calls it without)
     const P0 = T.def.pit, L = pitLook(T), sd = P0[0] < 0 ? -1 : 1, G = L.lift && world.groundH;
     const pt = (s, o, a, film) => {   // (between the track's samples, as Track.pitAt; at the road's height there, as the builders' lanes and aprons, 0.022 to 0.044 over it with their lines: over them)
@@ -3981,7 +3984,7 @@ const Render = (function () {
     if (!L.asph) {   // the film: three rows across the apron (w past the lane's edge, the opacity), a strip along the lane
       const rows = [[0.03, 1], [L.ap - 2.6, 1], [L.ap - 0.3, 0.3]]; let prev = -1;
       for (let q = P0[1]; q <= P0[2]; q += 2) {
-        const s = T.startS + q, p = T.pitAt(s); if (!p || p.t < 0.999) { prev = -1; continue; }
+        const s = T.startS + q, p = T.pitAt(s); if (!p || p.t < 0.999 || !apronAt(T, s) || !apronAt(T, s + 2)) { prev = -1; continue; }
         const b = pos.length / 3; for (const [w, a] of rows) { pt(s, p.lout + w, PIT_FILM * a, 1); uv.push(0.25, 0.25); }   // (the middle of a puddle's shape: all water)
         if (prev >= 0) for (let r = 0; r < 2; r++) quad(prev + r, prev + r + 1, b + r + 1, b + r);
         prev = b;
@@ -3990,7 +3993,7 @@ const Render = (function () {
     for (let q = P0[1] + 3; q < P0[2]; q += 6) {   // the puddles: along the lane's edges, now and then on the apron (short of the garages)
       const s = T.startS + q, p = T.pitAt(s), h = hash3(q * 0.173 + 11), Lq = 1.6 + 3 * hash3(q * 0.83 + 1), full = (d) => { const r = T.pitAt(s + d); return !!r && r.t >= 0.999; };
       if (!p || h < 0.35 || !full(-Lq / 2) || !full(0) || !full(Lq / 2)) continue;   // (all of it where the lane and the apron run full width)
-      const apr = L.ap > 4.5 && hash3(q * 0.61 + 2) < 0.4, e = hash3(q * 0.37 + 5) < 0.5 ? -1 : 1, W = 0.7 + 1.1 * hash3(q * 0.29 + 6);
+      const apr = L.ap > 4.5 && hash3(q * 0.61 + 2) < 0.4 && apronAt(T, s - Lq / 2) && apronAt(T, s + Lq / 2), e = hash3(q * 0.37 + 5) < 0.5 ? -1 : 1, W = 0.7 + 1.1 * hash3(q * 0.29 + 6);
       const o = apr ? p.lout + 0.8 + W / 2 + (L.ap - 3.8 - W) * hash3(q * 0.47 + 3) : p.o + e * (3.2 - W / 2 - 0.5 * hash3(q * 0.53 + 8)), b = pos.length / 3, k = Math.floor(hash3(q * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
       pt(s - Lq / 2, o - W / 2, 1, 0); pt(s - Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o - W / 2, 1, 0);
       uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5); quad(b, b + 1, b + 2, b + 3);
@@ -4001,7 +4004,7 @@ const Render = (function () {
   function pitDrop(T, q) {
     const p = T.def.pit && world && world.pitBoxes && world.pitBoxes.length ? T.pitAt(q.s) : null; if (!p) return false;
     if (!pitAp || pitAp.T !== T) pitAp = { T, ap: pitLook(T).ap };
-    const w = q.d * p.sd; return Math.abs(w - p.o) < 3.4 || (p.t > 0.999 && w > p.lout && w < p.lout + pitAp.ap - 1.2);
+    const w = q.d * p.sd; return Math.abs(w - p.o) < 3.4 || (p.t > 0.999 && w > p.lout && w < p.lout + pitAp.ap - 1.2 && apronAt(T, q.s));
   }
   function puddles(R) {
     const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
