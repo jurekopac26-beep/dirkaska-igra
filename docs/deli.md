@@ -107,7 +107,7 @@ Kako se doda element (vzorec sta `krilo` in `zarometi` v `js/deli.js`):
 2. V `DELI.build` (`js/deli.js`) nariši 16 možnosti pod istimi imeni delov kot serijski. Možnosti naj bodo preproste: malo trikotnikov, podrobnosti samo z `K.hi`, okrogle oblike na Normalnem z manj odseki (`sq`).
 3. `tests/deli.test.js` vzame nov element sam, ko ima mesto v `mounts`: vseh 16 možnosti se zgradi, del posebej in meje iz točke 6.
 4. Ploščo narediš z `node tools/deli-plosca.mjs <element,…>`. Bližnji pogled novega elementa dodaj v `VIEWS` v orodju.
-5. Na koncu `node tools/stamp.js`, `npm run test:related` in posodobi kazalo.
+5. Na koncu `node tools/stamp.js --check`, `npm run test:related` in posodobi kazalo.
 
 Dokler sklop 1 ni na `main`, spoji vejo `claude/sleepy-newton-dlus7o` v svojo vejo.
 
@@ -253,7 +253,7 @@ Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in n
 Pravila, da se seje ne motijo:
 - `js/deli.js` in dogovor ostaneta, kot sta. Sprememba dogovora gre v »Spremembe dogovora« in jo povej uporabniku.
 - V `js/cars/kolibri.js` vsaka seja sklopa 2 doda svoja mesta pod svojo vrstico v `mounts` (»sklop 2, … js/deli/<skupina>.js«) in ovoje `K.deli` okrog svojih serijskih delov.
-- V skupnih datotekah (`docs/deli.md`, `docs/kazalo.md`, `tests/README.md`, `index.html`) vsaka seja ureja samo svoj del. Spore ob spajanju razreši, žige pa z `node tools/stamp.js`.
+- V skupnih datotekah (`docs/deli.md`, `docs/kazalo.md`, `tests/README.md`, `index.html`) vsaka seja ureja samo svoj del. Spore ob spajanju razreši; `index.html` ostane brez žigov (žige iz starejše veje odstrani `node tools/stamp.js --strip`, preveri z `--check`).
 - Uporabniku pošlji eno ploščo za svojo skupino (`tools/deli-plosca.mjs`) in počakaj na potrditev. Vprašanja mu postavljaš v slikah, v slovenščini, kratko.
 - Pred pull requestom spoji `main` (ko je #192 tam). Na `main` gre, ko so testi zeleni in uporabnik potrdi.
 - Razbijanje novih delov (sklop 3) pride po sklopu 2; sklop 4 (pregled vseh 624 možnosti, stran za ogled) pride na koncu.
