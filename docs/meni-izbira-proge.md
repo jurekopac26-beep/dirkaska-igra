@@ -86,7 +86,7 @@ Od zgoraj navzdol:
 - **Garaža:** danes `pick-car` → `G.act('to-car')` (`menu.js:925`); garaža je `garaza.html`. Avto v meniju: `Render.carShot(o)` (`render.js:9624`) nariše katerikoli model in barvo.
 - **Globus:** `js/geo.js` ima obrise le za 8 držav (+ Colorado); manjkajo Čile, Rusija, Avstralija, Južna Afrika, Kitajska, Brazilija, Anglija, Kanada, Tajska, Maroko (in Francija, Italija). Koordinate imajo le proge v `GEO.tracks` (11). Tekstura `assets/geo/earth.webp`.
 - **Vršič nima makete** `assets/tracks/vrsic.webp` (nikoli dodana).
-- **Testi:** ta zaslon preizkuša le `tests/browser/menu.test.mjs`; zlomijo se razdelki 3 (skupine), 4 (vreme, `.arrow`), 5 (Harju prek `group:rally`), 5a/5b, 6 (postavitve, `.card`, `.groups`, `.pcount`), 8 (`mapv:2`), 10. Ime proge se bere iz `.card h1` → nov stabilen izbirnik (npr. tabla `.sign b`). Ukazi: `node tools/stamp.js`, `node tests/browser/menu.test.mjs`, `npm run test:related`; zlatih referenc menu ne potrebuje. Dokumentacija: `README.md` »Nov meni«, `tests/README.md:205`, `docs/kazalo.md`.
+- **Testi:** ta zaslon preizkuša le `tests/browser/menu.test.mjs`; zlomijo se razdelki 3 (skupine), 4 (vreme, `.arrow`), 5 (Harju prek `group:rally`), 5a/5b, 6 (postavitve, `.card`, `.groups`, `.pcount`), 8 (`mapv:2`), 10. Ime proge se bere iz `.card h1` → nov stabilen izbirnik (npr. tabla `.sign b`). Ukazi: `node tools/stamp.js --check`, `node tests/browser/menu.test.mjs`, `npm run test:related`; zlatih referenc menu ne potrebuje. Dokumentacija: `README.md` »Nov meni«, `tests/README.md:205`, `docs/kazalo.md`.
 
 ## Odprta vprašanja (privzeta izbira, dokler uporabnik ne odgovori)
 

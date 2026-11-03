@@ -24,6 +24,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         mirrorR: { lx: 0.19, lz: 0.47, f: 0.52 },
       },
     },
+    // where the garage's parts go (js/deli.js, look units): the wing on the engine cover behind the exhaust stacks, in the cover (it goes
+    // with it); the rims (no head lamps)
+    mounts: {
+      krilo: { x: -1.48, w: 0.2, part: 'cover' },
+      platisca: {},
+    },
     // the look (KIT API v1, render.js; look units = metres): a section loft for the cigar, open over the cockpit (lined, floored, its
     // bulkheads), its upper panels behind the cockpit the engine cover ('cover'); the nose cone a skin of its own over the front bulkhead
     // (the radiator) with the oval intake recessed into it ('nose'); the driver reclined under the wrap-around screen, the roll hoop behind
@@ -119,6 +125,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         // ---- louvres in the engine cover's flanks, behind the cockpit (decals on its band: they go with it); the number roundels ----
         for (let i = 0; i < 5; i++) { const x = -0.6 + 0.045 * i; L.decal.band([[x, 0.28], [x + 0.022, 0.28], [x + 0.022, 0.78], [x, 0.78]], [0.1, 0.1, 0.11], null, 0.004); }
+        K.part('cover', () => K.deli('krilo', () => {}));   // (the garage's wing on the cover: mounts.krilo; none stock)
         for (const sd of [-1, 1]) {
           const x = -0.6, y = 0.31, z = sd * (L.prop(x, 'w') + 0.004), oct = []; for (let i = 0; i < 8; i++) oct.push([x + Math.cos(i * Math.PI / 4) * 0.1, y + Math.sin(i * Math.PI / 4) * 0.1, z]);
           K.part('body', () => face(oct, WH, [x, y, sd * 2]));
