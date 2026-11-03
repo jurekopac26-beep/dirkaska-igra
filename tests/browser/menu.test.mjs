@@ -256,7 +256,7 @@ try {
 
   // 4b. the row's Opponents (docs/meni-izbira-proge.md, sklop 5): a tap on the number opens the sheet (the number big, the quick picks 0 Trial
   //     .. 100, the slider up to what the track takes, Done); a pick is the game's setting at once and the row's number behind the sheet, the
-  //     slider moves it as it goes (the keys too); Pikes Peak takes 30 (its summit's parking: def.maxRivals), its picks past that off; the
+  //     slider moves it as it goes (the keys too); Pikes Peak takes 28 (its summit's parking: def.maxRivals), its picks past that off; the
   //     choice is the same on the next track (its own most there); a race from the menu with it (the Nordschleife: 12 rivals, 13 cars, its
   //     own 20 not added); the career keeps its own field (no choice); under the track step on a phone the game's demo is not drawn (one
   //     frame a second: Menu.covers), under the title (see-through: the game's scene its background) and on a tablet held upright (the
@@ -275,16 +275,16 @@ try {
     await click(page, 'riv'); await page.waitForTimeout(300);
     const sh = (extra) => ev(page, 'const s = root.querySelector(".sheet.riv"); if (!s) return null; const r = s.querySelector(".rslide"); return { num: s.querySelector(".rnum b").textContent, sub: s.querySelector(".rnum span").textContent, picks: [...s.querySelectorAll(".rquick button")].map(b => b.textContent + (b.disabled ? "-" : "") + (b.getAttribute("aria-pressed") === "true" ? "*" : "")), max: +r.max, val: +r.value, ends: s.querySelector(".rends").textContent, row: root.querySelector(".trow .opp").textContent, set: __game.S.rivals, done: !!s.querySelector(".go[data-act=\\"close-sheet\\"]") };');
     let o = await sh();
-    T.check('the sheet: 21 big, the quick picks 0 Trial, 1, 5, 12, 25 (50 and 100 off: Pikes Peak takes 30), the slider 0..30 at 21, Done',
-      o && o.num === '21' && /^21 rivals · 22 cars$/.test(o.sub) && o.picks.join() === '0Trial,1,5,12,25,50-,100-' && o.max === 30 && o.val === 21 && /^030 at most on this road$/.test(o.ends) && o.done, JSON.stringify(o));
+    T.check('the sheet: 21 big, the quick picks 0 Trial, 1, 5, 12, 25 (50 and 100 off: Pikes Peak takes 28), the slider 0..28 at 21, Done',
+      o && o.num === '21' && /^21 rivals · 22 cars$/.test(o.sub) && o.picks.join() === '0Trial,1,5,12,25,50-,100-' && o.max === 28 && o.val === 21 && /^028 at most on this road$/.test(o.ends) && o.done, JSON.stringify(o));
     await click(page, 'riv-n:5'); o = await sh();
     T.check('a quick pick (5): the game\'s setting at once, the number, the pick lit, the slider, the row behind the sheet', o.set === 5 && o.num === '5' && o.picks[2] === '5*' && o.val === 5 && o.row === 'Opponents5', JSON.stringify(o));
     await click(page, 'riv-n:0'); o = await sh();
     T.check('0: Trial, alone against the clock', o.set === 0 && o.num === '0' && /^Trial/.test(o.sub) && o.picks[0] === '0Trial*', JSON.stringify(o));
     await page.focus('.sheet .rslide'); await page.keyboard.press('End'); o = await sh();
-    T.check('the slider (End): to the most the track takes, 30, the setting with it', o.val === 30 && o.num === '30' && o.set === 30 && o.row === 'Opponents30' && !o.picks.some(p => p.endsWith('*')), JSON.stringify(o));
+    T.check('the slider (End): to the most the track takes, 28, the setting with it', o.val === 28 && o.num === '28' && o.set === 28 && o.row === 'Opponents28' && !o.picks.some(p => p.endsWith('*')), JSON.stringify(o));
     await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft'); o = await sh();
-    T.check('the slider (two steps back): 28', o.val === 28 && o.num === '28' && o.set === 28 && o.row === 'Opponents28', JSON.stringify(o));
+    T.check('the slider (two steps back): 26', o.val === 26 && o.num === '26' && o.set === 26 && o.row === 'Opponents26', JSON.stringify(o));
     await click(page, 'riv-n:12'); await done(page);
     const row1 = await ev(page, 'return { sheet: !!root.querySelector(".sheet"), txt: root.querySelector(".trow .opp").textContent, set: __game.S.rivals };');
     T.check('Done: the sheet gone, the row 12', !row1.sheet && row1.txt === 'Opponents12' && row1.set === 12, JSON.stringify(row1));

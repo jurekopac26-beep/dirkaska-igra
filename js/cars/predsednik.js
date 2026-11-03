@@ -12,7 +12,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.5, kv: 1.8, rmin: 7.5 },
     csp: { bx: 0.14, coast: -0.044, thr: 0, liftP: 0.06, pwr: 0.05, out: 1.25, turn: 0.75, w: 0.92, tv: 1.18 },   // (the FR layer: lift-off and power rotation; its own liftP, pwr, out, turn, w, tv)
     stats: { power: 7, grip: 3, weight: 1, drift: 9 },
-    price: 40000, pk: 'open', field: ['predsednik'], fieldN: 9,
+    price: 40000, pk: 'open', field: ['predsednik'], fieldN: 9, fill: ['blisk', 'hrosc', 'kolibri'],   // (a bigger race: 9 of its own through the field, the rest these three, its pace together)
     snd: { kind: 'v8', hz: 0.7, loud: 0.8 },
     expect: { t100: [4.95, 5.81], vmax: [167, 177], latG: [1.91, 2.01], d100: [29.3, 32.3] },
     partNames: { door2L: 'rear left door', door2R: 'rear right door', flagL: 'left flag', flagR: 'right flag' },

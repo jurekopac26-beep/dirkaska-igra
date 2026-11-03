@@ -1,11 +1,14 @@
 // The menu's Opponents (0..100 rivals in a race of the player's own, js/menu.js rivSheet, game.js rivSet: S.rivals, at most the track's
 // def.maxRivals) on every real track with a race (no browser): with as many rivals as the track takes (its def.maxRivals, else 100) and
-// every vehicle's field bigger than the one the game always gave the track (the player's car decides what the rivals drive: the longest,
-// the formula's 5.2 m; a big vehicle's field fewer, Core.fieldSize, its own as ever: tests/grid.test.js):
+// every vehicle's field bigger than the one the game always gave the track (the player's car decides what the rivals drive: the formula's
+// 5.2 m; a big vehicle's, Core.aiModel: its own few spread through the field, the rest its fill's cars: the 3.2 m wide monster truck, the
+// 6.3 m long ones; tests/grid.test.js the fields as ever):
 //   1. the start: a circuit's grid (two staggered columns, 9 + 7.5 m a slot, the last ~760 m behind the line), no two cars on each other,
-//      every car on the asphalt behind the line; a flying start (an open road, the Nordschleife: Race._flyColumn) the same once it rolls
-//   2. an open road's finish: a slot past the line for every car, none past the end of the road (one at most), none on another, none by
-//      the barrier (Pikes Peak's summit, the second row of a few roads' parking: their def.maxRivals)
+//      every car on the asphalt behind the line (a wide vehicle in from the edge: Race._inside); a flying start (an open road, the
+//      Nordschleife: Race._flyColumn) the same once it rolls
+//   2. an open road's finish: a slot past the line for every car, none past the end of the road (one at most), none on another (two
+//      cars' boxes: their own lengths and widths), none by the barrier (Pikes Peak's summit, the second row of a few roads' parking:
+//      their def.maxRivals; a wide vehicle's side in the outer row no farther out than a 1.9 m car's)
 //   3. the field the player chose stays (opts.numSet): fewer than a track's own def.rivals (the Nordschleife's 20), none (0: alone, a run
 //      against the clock); without it the track's own field as before; 100 rivals: 101 cars, every one a name and a number of its own
 //   4. the race: Trois-Rivières (the shortest circuit) with 100 rivals from the back of the grid and Tianmen (a narrow mountain road) with
@@ -51,8 +54,8 @@ function startOk(T, r) {   // { pairs on each other, cars off the asphalt, cars 
 function parkOk(T, r) {   // the finish past an open road's line: every car over it in turn (Race's own finish, its place's slot)
   r.start(); r.time = 300;
   for (const c of r.cars) { c.cp = T.cpS.length; c.dist = T.raceLen + 1; r._progressOpen(c, { s: T.finishS + 1 }, 1, 1 / 120); }
-  const F = r.finishOrder, L = Math.max(...r.cars.map(c => c.m.len)), W = Math.max(...r.cars.map(c => c.m.wid));
-  let on = 0; for (let i = 0; i < F.length; i++) for (let j = i + 1; j < F.length; j++) if (Math.abs(F[i].parkS - F[j].parkS) < L + 0.3 && Math.abs(F[i].parkD - F[j].parkD) < W + 0.3) on++;
+  const F = r.finishOrder;   // (two slots on each other: closer along the road than half the two cars' lengths and across than half their widths, 0.3 m apart at least)
+  let on = 0; for (let i = 0; i < F.length; i++) for (let j = i + 1; j < F.length; j++) { const a = F[i], b = F[j]; if (Math.abs(a.parkS - b.parkS) < (a.m.len + b.m.len) / 2 + 0.3 && Math.abs(a.parkD - b.parkD) < (a.m.wid + b.m.wid) / 2 + 0.3) on++; }
   const past = F.filter(c => c.parkS > T.len - 20 - 0.5).length;
   const barrier = F.filter(c => { const i = T.idx(c.parkS); return Math.abs(c.parkD) + c.m.wid / 2 > Math.min(c.parkD > 0 ? T.br[i] : T.bl[i], T.wAt(i) + 3) - 0.3; }).length;
   return { slots: F.length, cars: r.cars.length, on, past, barrier };
