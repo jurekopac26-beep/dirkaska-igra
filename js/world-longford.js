@@ -545,20 +545,21 @@
     const crowdMat = ownTex(Tex.crowdPic(['#ece9e0', '#cfc7b2', '#8c8472', '#5f6268', '#2f3649', '#bda97c', '#7e2b25', '#4b5f7a', '#dcd5c2', '#3f4b3b'], 79)), crowdG = new GB(true);   // (the 1960s crowd: white shirts, khaki, grey, navy, hats)
     let nStands = 0;
     { const sa = -70, sb = 50, side = -1, rows = 8, dep = 0.9, rise = 0.5, prof = (s) => { const i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 3; return { i, f0 }; };
+      const gyAt = (s) => Math.min(hyS(s - 2.5), hyS(s), hyS(s + 2.5)) + 0.1;   // (the ground under the stand at a station, smoothed: the tiers run on from piece to piece, one stand)
       for (let d = sa; d < sb; d += 5) {
-        const s0 = sAt(d), s1 = sAt(d + 5), A = prof(s0), B = prof(s1), g = scen.get(...atSf(s0, side * A.f0).slice(0, 2)), gy = Math.min(hyS(s0), hyS(s1)) + 0.1;
-        const Q = (s, o, y) => { const [x, z] = atSf(s, side * o); return [x, y, z]; };
-        for (let k = 0; k < rows; k++) { const o0 = A.f0 + k * dep, o1 = o0 + dep, y = gy + 0.5 + k * rise, ins = Q(s0, o0 + dep / 2, y - 3);
-          g.quadO(Q(s0, o0, y), Q(s1, o0, y), Q(s1, o1, y), Q(s0, o1, y), [0.64, 0.58, 0.48], ins);
-          g.quadO(Q(s0, o0, y - rise), Q(s1, o0, y - rise), Q(s1, o0, y), Q(s0, o0, y), [0.5, 0.45, 0.38], Q(s0, o0 + 1, y - 0.2));
+        const s0 = sAt(d), s1 = sAt(d + 5), A = prof(s0), B = prof(s1), g = scen.get(...atSf(s0, side * A.f0).slice(0, 2)), ga = gyAt(s0), gb = gyAt(s1), gy = Math.min(ga, gb);
+        const Q = (s, o, y) => { const [x, z] = atSf(s, side * o); return [x, y, z]; }, QA = (o, y) => Q(s0, A.f0 + o, ga + y), QB = (o, y) => Q(s1, B.f0 + o, gb + y);   // (o: from the station's front, y: over its ground)
+        for (let k = 0; k < rows; k++) { const o0 = k * dep, o1 = o0 + dep, y = 0.5 + k * rise, ins = QA(o0 + dep / 2, y - 3);
+          g.quadO(QA(o0, y), QB(o0, y), QB(o1, y), QA(o1, y), [0.64, 0.58, 0.48], ins);
+          g.quadO(QA(o0, y - rise), QB(o0, y - rise), QB(o0, y), QA(o0, y), [0.5, 0.45, 0.38], QA(o0 + 1, y - 0.2));
           const len = 5, u0 = (d / 5) * 5 / 12, v = (k * 0.11) % 1;
-          crowdG.quadUp(Q(s0, o0 + 0.05, y + 0.02), Q(s1, o0 + 0.05, y + 0.02), Q(s1, o1 - 0.05, y + 0.02), Q(s0, o1 - 0.05, y + 0.02), [W1, W1, W1, W1], [[u0, v], [u0 + len / 12, v], [u0 + len / 12, v + 0.1], [u0, v + 0.1]]); }
-        const ob = A.f0 + rows * dep, yt = gy + 0.5 + rows * rise;
-        g.quadO(Q(s0, ob, gy - 0.6), Q(s1, ob, gy - 0.6), Q(s1, ob, yt + 1), Q(s0, ob, yt + 1), [0.5, 0.45, 0.38], Q(s0, ob - 2, yt / 2));
-        const oR = A.f0 + rows * dep * 0.45;   // (the roof over the back rows only: the cameras above still see the crowd in front)
-        g.quadO(Q(s0, oR, yt + 3.4), Q(s1, oR, yt + 3.4), Q(s1, ob + 0.4, yt + 2.6), Q(s0, ob + 0.4, yt + 2.6), [0.46, 0.42, 0.38], Q(s0, (oR + ob) / 2, yt - 3));
-        g.quadO(Q(s0, oR, yt + 3.3), Q(s1, oR, yt + 3.3), Q(s1, ob + 0.4, yt + 2.5), Q(s0, ob + 0.4, yt + 2.5), [0.36, 0.34, 0.3], Q(s0, (oR + ob) / 2, yt + 8));
-        for (const o of [oR + 0.2, ob + 0.2]) { const [x, z] = atSf(s0, side * o); box(g, x, gy - 0.5, z, 0.2, yt + 3.2 - gy + 0.5, 0.2, T.hd[A.i], TIMd, null, true); }
+          crowdG.quadUp(QA(o0 + 0.05, y + 0.02), QB(o0 + 0.05, y + 0.02), QB(o1 - 0.05, y + 0.02), QA(o1 - 0.05, y + 0.02), [W1, W1, W1, W1], [[u0, v], [u0 + len / 12, v], [u0 + len / 12, v + 0.1], [u0, v + 0.1]]); }
+        const ob = rows * dep, yt = 0.5 + rows * rise;
+        g.quadO(QA(ob, gy - ga - 0.6), QB(ob, gy - gb - 0.6), QB(ob, yt + 1), QA(ob, yt + 1), [0.5, 0.45, 0.38], QA(ob - 2, yt / 2));
+        const oR = rows * dep * 0.45;   // (the roof over the back rows only: the cameras above still see the crowd in front)
+        g.quadO(QA(oR, yt + 3.4), QB(oR, yt + 3.4), QB(ob + 0.4, yt + 2.6), QA(ob + 0.4, yt + 2.6), [0.46, 0.42, 0.38], QA((oR + ob) / 2, yt - 3));
+        g.quadO(QA(oR, yt + 3.3), QB(oR, yt + 3.3), QB(ob + 0.4, yt + 2.5), QA(ob + 0.4, yt + 2.5), [0.36, 0.34, 0.3], QA((oR + ob) / 2, yt + 8));
+        for (const o of [oR + 0.2, ob + 0.2]) { const [x, z] = atSf(s0, side * (A.f0 + o)); box(g, x, gy - 0.5, z, 0.2, ga + yt + 3.2 - gy + 0.5, 0.2, T.hd[A.i], TIMd, null, true); }
         const [cx, cz] = atSf(s0, side * (A.f0 + rows * dep / 2)); exclPush(cx, cz, rows * dep / 2 + 6); CR.exclAdd(cx, cz, rows * dep / 2 + 3); crowdPts.push(cx, cz, 1);
       }
       nStands = 1; }
