@@ -12,7 +12,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.45, kv: 1.8, rmin: 7 },
     csp: { bx: 0.12, coast: -0.08, thr: -0.015, liftP: 0, pwr: 0.06, out: 1.2, turn: 0.75, w: 0.9, tv: 1.3 },   // (the AWD layer: steady, straightens quickly; its own pwr, out, turn, w, tv)
     stats: { power: 10, grip: 2, weight: 1, drift: 10 },
-    price: 55000, pk: 'open', field: ['goljat'], fieldN: 7,
+    price: 55000, pk: 'open', field: ['goljat'], fieldN: 7, fill: ['blisk', 'kolibri'],   // (a bigger race: 7 of its own through the field, the rest these two, its pace together)
     snd: { kind: 'v8s', hz: 0.8, loud: 1.4 },
     expect: { t100: [4.22, 4.95], vmax: [158, 167], latG: [1.89, 1.99], d100: [28.7, 31.8] },
     partNames: { bed: 'pickup bed', tailgate: 'tailgate' },
