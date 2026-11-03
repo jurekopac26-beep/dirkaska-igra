@@ -2,7 +2,15 @@
 
 Kje v kodi je kaj, da ni treba iskati na slepo. Imena funkcij in naslovi razdelkov so takšni, kot so v kodi: poišči jih z `grep -n "function ime"` ali po naslovu razdelka (`/* ---------------- naslov`). Številk vrstic namenoma ni, ker se spreminjajo.
 
-**Velike datoteke ne beri v celoti:** `js/world.js` (0,5 MB, ~4.900 vrstic; proge v `js/world-<tema>.js`, največja `world-pikes.js` 0,55 MB), `js/render.js` (~9.400), `js/core.js` (~5.800), `js/game.js` (~5.200), `docs/igra.md` (115 KB), `tests/README.md` (110 KB). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del.
+**Najpogostejši ukazi**
+- `npm run test:related`: testi, povezani s spremembo (iz `git diff` proti `main`); en test: `node tests/<ime>.test.js` ali `node tests/browser/<ime>.test.mjs`.
+- `node tools/stamp.js`: žigi po spremembi v `js/` ali `css/`; `npm run golden:update`: nove reference.
+- `node tools/spoji-main.mjs [veja]`: spoj `main` (ali druge veje), mehanske spore reši samo (`docs/varcevanje.md`, C).
+- Hiter vstop v igro: `index.html?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>` (`tests/README.md`, »Hiter vstop«).
+- Slika s kamere za avtom: `node tools/shot.mjs <id> --m <s> [--pred main]`; posnetek dirke: `node tools/posnetek.mjs <datoteka> [--t <čas>] [--zastavice]`.
+- Podatki nove prave proge: `python3 -I tools/proga-podatki.py tools/<id>/config.json …` (navodila na vrhu orodja).
+
+**Velike datoteke ne beri v celoti** (nad ~100 KB): `js/render.js` (1,1 MB), `js/newmap.js` (0,9 MB), `js/garage3d.js` (0,7 MB), `js/core.js` in `js/game.js` (0,6 MB), `js/world-pikes.js` in `js/world.js` (0,5 MB; proge v `js/world-<tema>.js`), `js/routes.js` (0,4 MB v eni vrstici, generiran), `tests/README.md` (180 KB), `docs/igra.md` (150 KB), `README.md` (90 KB) in to kazalo (55 KB: išči v njem z grepom). Najprej poišči ime tu, nato z grepom, nato preberi samo tisti del. Generiranih podatkov z ogromnimi vrsticami (`js/routes.js`, `assets/maps/`, `maketa-menija/assets/` …) Grep in Glob ne vidita (`.ignore`); beri jih po poti.
 
 Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 
@@ -46,6 +54,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` za `js/` in `css/` (po vsaki spremembi) |
+| `tools/spoji-main.mjs` | spoj `main` ali druge veje z mehanskimi spori rešenimi samimi (žigi, vrstice, dodane ob spremenjenih ali na istem mestu, seznami testov v `tests/run.js`); ostale izpiše z namigom (`docs/varcevanje.md`, C; test `spoji-main.test.js`) |
 | `tools/menu-lens.js` | dolžine prog za seznam v meniju (`MENU.lens` v `js/menu-data.js`) in višine za graf višine prog brez poti v `js/routes.js` (`MENU.profs`, višina starta nad morjem iz tabele `BASE`); po novi progi; test `tests/menu-lens.test.js` |
 | `tools/menu-corner.mjs`, `tools/menu-corner-page.js`, `tools/menu-corners.json` | video zavoja za kamero 3 v meniju: igra v brskalniku brez zaslona (navidezni čas), dirka 21 avtov AI, mirujoča kamera na zavoju (`MC.search`: žarki, zapolnitev kadra), zanka 6–8 s z gladkim šivom (`MC.timeline`), VP9 `assets/maps/corner-<id>.webm` in plakat `.webp`, `MENU.corners`; `--preview` samo slike treh najboljših kamer; zavoji in kamere v `menu-corners.json` (`s`, `cam`, `pick`); test `tests/menu-corner.test.js` |
 | `tools/menu-globe.mjs` | globus v glavi menija: kar manjka v `js/geo.js` (`MENU.globe`: kraji pravih prog `PLACES`, obrisi držav iz Natural Earth, tudi del države ob progi, npr. Havaji); `--earth` naredi majhno Zemljo `assets/geo/earth-s.webp`; po progi v novi državi; test `tests/menu-globe.test.js` |
@@ -70,6 +79,8 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/orodje-za-napake.md` | načrt orodja za napake (sklopi, stanje) |
 | `docs/deli.md` | dogovor z garažo o delih avtov (`car.deli`, `mounts`, `K.deli`, `DELI.mesh`, `DELI.effect`), serijski KOLIBRI, poskus na treh avtih, stanje sklopov in odločitve uporabnika (predaja naslednji seji), navodila sejam drugih avtov po kategorijah, vzporedne seje (katera seja ima katere elemente in datoteke), spremembe dogovora |
 | `docs/ljudje-predlogi.md` | 12 predlogov »ljudje ob progi« (številke, ki jih uporabnik izbira), meritev zdajšnjih gledalcev, skupine po 2–10 |
+| `docs/varcevanje.md` | varčevanje z žetoni (odločitev 3. 11. 2026, A–G): vlak na `main`, napor po okolju (Default max, Koordinacija medium), orodje za spore, pregledi, branje, stanje |
+| `.claude/rules/` | pravila za dele kode, ki se naložijo sama ob ujemajoči datoteki: `grafika.md` (kamera, grafika, gledalci, obremenitev), `meni.md`, `napake.md`, `misije.md` |
 | `docs/vprasanja.md` | vprašanja za uporabnika: stran Odločitve (vsak račun svojo, seznam strani), polja vprašanja, slike pri grafičnih vprašanjih, zbiranje ob 10.30, 14.30 in 23.00 (opravila po urniku), nastavitev na drugem računu, preklic |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
@@ -200,6 +211,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Ponovljive dirke** (seme, testni način): `tests/repro.test.js` (jedro), `tests/browser/repro.test.mjs` (igra s hitrim vstopom)
 - **Posnetki pred/po:** `tools/shot.mjs` (možnosti: `tests/shot.test.js`), na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
+- **Spoj z mehanskimi spori:** `tools/spoji-main.mjs`, test `spoji-main.test.js` (začasni repozitorij brez mreže)
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
 - **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in oblački, razveljavi, radirka, premik oblačka, zbirka in zastavice; Zgodovina napak: stanje, ohranjanje po deljenju, meja 100/20), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)

@@ -1,70 +1,49 @@
-# Pravila za nove proge
+# Navodila za seje
 
-Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek »Nova proga« v `README.md`). Opis vsake proge je v `docs/proge/<id>.md`, seznam prog s povezavami v `README.md` (razdelek »Proge«).
+Splošna pravila za vsako sejo. Pravila za posamezne dele kode so v `.claude/rules/` in se naložijo sama, ko seja prebere ali uredi ujemajočo datoteko: `grafika.md` (kamera, grafika, gledalci, obremenitev telefona; `js/render.js`, `js/world*.js`, `js/tracks/` …), `meni.md`, `napake.md` (orodje za napake), `misije.md`. Seja, ki dela v drugem delovnem drevesu (git worktree), jih ne dobi sama: prebere jih, ko začne delo na tistem delu.
 
-## Ime proge: »kraj, država«
-- Vsaka proga se imenuje po kraju in državi, v obliki **»Kraj, Država«** (države v slovenščini): npr. `Vršič, Slovenija`, `Bathurst, Avstralija`, `Štajerska, Avstrija`.
-- To velja za polje `name` v `js/tracks/<id>.js`, za angleško ime in opis v `js/lang.js` (angleščina: `Vršič, Slovenia`) in za vse besedilo v `README.md`, `docs/proge/` in `docs/igra.md`.
-- Za kraj izberi zemljepisno ime (kraj, prelaz, dolina, regija), ne imena dirkališča, prireditve ali podjetja. `id` ostane kratek in brez presledkov.
-- Izmišljene proge, ki niso narejene po resničnih poteh, imajo v datoteki proge `test: true`: v menuju so na koncu pod naslovom »Za izbris · samo za testiranje« in ostanejo samo za testiranje. Zdaj so to Jezero Ring, Riviera, Gorski reli, Monte Carlo, Bakreni gozd, Toskana in Gromski rt. Monte Carlo je resnična pot, a jo je uporabnik 29. 10. 2026 premaknil med testne (pravno sporna imena ovinkov in stavb) in se ne posodablja več. Krajša različica resnične poti (npr. Pikes Peak, Ouninpohja) je prava proga, ne testna.
-- Kategorijo test izbrišemo tik pred objavo na Google Play, skupaj s sklopom 8 orodja za napake (odločitev uporabnika 29. 10. 2026; do takrat proge ostanejo). **Prog v kategoriji test ne urejaj** (ne optimiziraj, ne dodajaj grafike, ne popravljaj), razen če uporabnik izrecno prosi za točno to progo.
-- Testne proge **ignoriraj** (odločitev uporabnika): na njih igri ni treba delovati, zato jih ne uporabljaj za slike pred/po, meritve obremenitve ali preverjanje sprememb. Za to vzemi pravo progo (npr. z boksi: Bathurst, Avstralija ali Spa, Belgija). Če test ali referenca zahteva kaj samo zaradi testne proge, sprememba drugih prog pa je pravilna, je dovolj, da referenco ustvariš znova z orodji repozitorija.
-
-## Kamere in grafika (odločitev uporabnika)
-- V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere **izometrična**, **kino** in **kokpit** so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
-- Grafiko izboljšuj za kamero za avtom: obzorje, nebo, oddaljeni griči, cesta pred avtom in njeni robovi, teren ob njej. Detajli, ki jih s te kamere ni videti (drobni predmeti na višini oči, notranjosti, majhni napisi, strehe od zgoraj), so odveč: poenostavi jih, da je telefon manj obremenjen.
-- **Gledalcev ob cesti na pravih progah je čim manj** (odločitev uporabnika 31. 10. 2026): `fewFans` v `js/world.js` pusti le redke skupine, mirne (brez skakanja); redarji, snemalci (`crowdPut(…, { staff: true })`), mehaniki in tribune ostanejo. Nove proge gledalcev ob cesti ne dodajajo več, kot jih je treba.
-- Obremenitev telefona: proga naj ima do ~300 klicev risanja in ~900 tisoč oglišč, v povprečju in v najbolj obremenjenem trenutku (`tests/golden/perf.json`: `maxCalls`, `maxKverts`; preverja `perf.test.mjs`), nova proga ali izboljšava pa ne sme povečati obremenitve drugih prog.
+## Proge
+- Ime proge je **»Kraj, Država«** (države v slovenščini, npr. `Vršič, Slovenija`, `Bathurst, Avstralija`, `Štajerska, Avstrija`; angleško v `js/lang.js`: `Vršič, Slovenia`): v polju `name` v `js/tracks/<id>.js`, v `js/lang.js`, `README.md`, `docs/proge/` in `docs/igra.md`. Kraj je zemljepisno ime (kraj, prelaz, dolina, regija), ne ime dirkališča, prireditve ali podjetja. `id` ostane kratek in brez presledkov.
+- Opis proge je v `docs/proge/<id>.md`, seznam prog s povezavami v `README.md` (»Proge«), kontrolni seznam za novo ali izboljšano progo v `README.md` (»Nova proga«: angleški prevodi v `js/lang.js`, test po vzoru obstoječih, slika za meni). Podatke nove prave proge pripravi `tools/proga-podatki.py` (nastavitve v `tools/<id>/config.json`, navodila na vrhu orodja).
+- **Testne proge** (`test: true`): Jezero Ring, Riviera, Gorski reli, Monte Carlo, Bakreni gozd, Toskana, Gromski rt. So izmišljene ali umaknjene (Monte Carlo je resnična pot, uporabnik jo je 29. 10. 2026 premaknil med testne zaradi pravno spornih imen) in so v meniju na koncu pod »Za izbris · samo za testiranje«. Izbrišemo jih tik pred objavo na Google Play, skupaj s sklopom 8 orodja za napake (29. 10. 2026). **Ne urejaj jih** (ne optimiziraj, ne dodajaj grafike, ne popravljaj), razen če uporabnik izrecno prosi za točno to progo, in jih **ignoriraj**: ne za slike pred/po, ne za meritve obremenitve, ne za preverjanje sprememb (vzemi pravo progo, z boksi npr. Bathurst, Avstralija ali Spa, Belgija). Če test ali referenca kaj zahteva samo zaradi testne proge, sprememba drugih prog pa je pravilna, referenco ustvari znova z orodji repozitorija. Krajša različica resnične poti (Pikes Peak, Ouninpohja) je prava proga.
 
 ## Pravna varnost (igra gre na Google Play)
-- V igri so samo zemljepisna imena. Brez logotipov, imen podjetij, lokalov, sponzorjev, prireditev in znamk avtomobilov. Table in napisi so generični ali izmišljeni.
-- **Nikoli imen resničnih oseb** (vozniki, kolesarji, športniki, ustanovitelji …): ne v napisih navijačev na cesti, ne na tablah, ne v imenih ovinkov, ne v komentarju. Vedno izmišljena imena. Ovinek, ki je v resnici poimenovan po osebi, podjetju ali lokalu, dobi opisno ime, enako kot v meniju (npr. »Dvojni desni«, »Dolgi desni«, »Ovinek ob pristanišču«; seznam v `maketa-menija/README.md`).
-- Podatki so iz OpenStreetMap in javnih višinskih modelov (SRTM, Copernicus DEM, USGS 3DEP …). **Nikoli Google Maps, Google Earth ali Street View**, ne njihovih podatkov ne slik.
-- Vsak vir z licenco gre v `README.md` pod »Zasluge« (OSM: ODbL 1.0, izpeljani podatki v datoteki proge so prav tako pod ODbL 1.0).
-
-## Meni (`js/menu.js`, `css/menu.css`)
-- Naslovnica, izbira načina in izbira proge so nov meni v angleščini (opis v `README.md`, razdelek »Nov meni«). Meni bere progo iz igre (ime »Kraj, Država« razdeli v ime in državo, opis in angleško ime vzame iz `js/lang.js`), zato nova proga v meniju nastopi sama.
-- Nova proga potrebuje **sliko za meni**: `assets/tracks/<id>.webp` in `<id>-rain.webp` (maketa terena; izris v `maketa-menija/orodja/`, glej `maketa-menija/README.md`). Zemljevid od zgoraj, prelet in helikopterski posnetek (`js/routes.js`, `assets/maps/`) sta po želji pozneje.
-- Meni mora delovati pokonci in ležeče (od 360 × 640 oz. 640 × 360 naprej); po spremembi zaženi `node tests/browser/menu.test.mjs`.
+- V igri so samo zemljepisna imena. Brez logotipov, imen podjetij, lokalov, sponzorjev, prireditev in znamk avtomobilov; table in napisi so generični ali izmišljeni.
+- **Nikoli imen resničnih oseb** (vozniki, kolesarji, športniki, ustanovitelji …): ne v napisih navijačev na cesti, ne na tablah, ne v imenih ovinkov, ne v komentarju; vedno izmišljena imena. Ovinek, ki je v resnici poimenovan po osebi, podjetju ali lokalu, dobi opisno ime, enako kot v meniju (»Dvojni desni«, »Dolgi desni«, »Ovinek ob pristanišču«; seznam v `maketa-menija/README.md`).
+- Podatki so iz OpenStreetMap in javnih višinskih modelov (SRTM, Copernicus DEM, USGS 3DEP …), **nikoli iz Google Maps, Google Earth ali Street View** (ne podatki ne slike). Vsak vir z licenco gre v `README.md` pod »Zasluge« (OSM: ODbL 1.0; izpeljani podatki v datoteki proge so prav tako pod ODbL 1.0).
 
 ## Postopek
-- Po vsaki spremembi v `js/` ali `css/` zaženi `node tools/stamp.js`, za nove reference `npm run golden:update`.
-- Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
-- Testi (odločitev uporabnika, kombinacija): pred pushem morajo biti lokalno zeleni testi, ki se nanašajo na spremembo (Node in brskalniški; `npm run test:related` jih izbere iz `git diff` proti `main`, hiter vstop v igro `index.html?proga=<id>` je opisan v `tests/README.md`); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu. Celoten Node nabor lokalno traja okoli 1 h (`races.test.js` presega privzetih 15 min: `TEST_TIMEOUT_MIN=40`). Na `main` gre sprememba, ko so ti zeleni: seja jo **združi sama, brez vprašanja** (odločitev uporabnika 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«; velja za vse seje, dokler ga uporabnik ne spremeni).
-- Pull request, na katerem še delaš, odpri kot osnutek (draft): celotni nabori na GitHubu tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem potisku (`.github/workflows/tests.yml`). Označi ga, ko je delo končano in so povezani testi lokalno zeleni (odločitev uporabnika 31. 10. 2026).
-- Več pull requestov, ki se dotikajo istih datotek (npr. deli KOLIBRIJA), gre na `main` v enem koraku (zbirna veja, en krog testov) ali drug za drugim po dogovoru, nikoli vsi hkrati: vsaka združitev ostalim sproži nov krog testov (odločitev uporabnika 31. 10. 2026).
-- Pull request odpri samo, če uporabnik to izrecno prosi, za sklop iz `docs/orodje-za-napake.md` (tam je dovoljen en pull request na sklop oziroma na združen korak; sklop 17 jih ima lahko več) ali ko je delo končano in ga je treba spraviti na `main` (pravilo 2. 11. 2026 zgoraj: združi sam).
+- Po vsaki spremembi v `js/` ali `css/`: `node tools/stamp.js`; nove reference: `npm run golden:update`.
+- Lokalno samo testi, povezani s spremembo: `npm run test:related` (izbere jih iz `git diff` proti `main`); uspešnih ne ponavljaj. Celotni nabori (Node ~1 h, brskalniški, vozila) tečejo na GitHubu. Hiter vstop v igro (`index.html?proga=<id>`) in testi: `tests/README.md`; najpogostejši ukazi so na vrhu `docs/kazalo.md`.
+- Spoj `main` ali druge veje: `node tools/spoji-main.mjs [veja]` — mehanske spore (žigi, kazalo, seznami testov) reši samo, ostale izpiše.
+- **Na `main` gre vse z vlakom** (odločitev uporabnika 3. 11. 2026; postopek v `docs/varcevanje.md`, A). Seja s kodo, ko je delo končano in so povezani testi zeleni: spoji svež `main`, potisne vejo, odpre pull request kot osnutek (draft) z razdelkom `## Za vlak` (predaja), koordinaciji pošlje »PR #N je pripravljen za vlak« in **konča**: brez naročanja na dogodke PR, brez rezervnih pregledov, brez čakanja. Koordinacija (»VSE SEJE«) enkrat ali dvakrat na dan spoji pripravljene PR v vejo vlaka, požene en krog celotnih testov in vlak združi sama, brez vprašanja (odločitev 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«). Sejo s kodo zbudi le, če pade njen test ali je spor, ki ni mehanski.
+- Na dogodke PR (`subscribe_pr_activity`) se naroči samo koordinacija, za PR vlaka; rezervno preverjanje največ eno, na 4 h; brez zank s `sleep` in brez preverjanj na nekaj minut.
+- Pull request odpri samo za delo, ki gre na `main`, za sklop iz `docs/orodje-za-napake.md` ali če uporabnik izrecno prosi.
 
-## Seje: čakanje in vprašanja (odločitev uporabnika 31. 10. 2026)
-- Ko seja čaka na teste na GitHubu, se naroči na dogodke pull requesta (`subscribe_pr_activity`) in konča korak; GitHub jo zbudi. Rezervno preverjanje največ na 4 h; brez zank s `sleep` in brez preverjanj na nekaj minut.
-- Hkrati tečeta največ 2 seji, ki pišeta kodo (odločitev uporabnika 2. 11. 2026, prej 5; seje, ki samo čakajo na teste, se ne štejejo). Nove seje zaganja koordinacijska seja »VSE SEJE« ali veriga po svojem načrtu, ko je prostor.
-- Vsa vprašanja za uporabnika (tudi koordinacijske seje »VSE SEJE«; združitve na `main` seje ne sprašujejo več, glej Postopek) zapiši na stran Odločitve, z oštevilčenimi možnostmi, da uporabnik samo klikne izbiro (odločitev uporabnika 31. 10. 2026: »v prihodnje mi vedno delaj vprašanja tako, da samo kliknem izbiro«). V pogovoru sprašuj samo, če stran ni dosegljiva. Kako: stran Odločitve svojega računa (vsak račun ima svojo; uporabi prvo dosegljivo s seznama v `docs/vprasanja.md`): `ArtifactData` `set` v zbirko `vprasanja`; id dokumenta je kratko ime (npr. `cp-215`), polja `seja` (naslov seje), `seja_id` (id te seje), `naslov`, `vprasanje`, `moznosti` (`[{k, opis}]`), `priporoceno` (`k`), `slike` (`[{url, opis}]`; sliko naloži v shrambo strani z orodjem Artifact: `url` strani, `asset: true`), `graficno`, po želji `povezave` (`[{opis, url}]`), `stanje` »odprto«, `ustvarjeno` (čas ISO). Uporabnik tapne odgovor in stran ga pošlje seji kot sporočilo »Odgovor uporabnika s strani Odločitve …«; če pošiljanje ne uspe, ga posreduje zbiranje (v dokumentu: `stanje` »odgovorjeno« ali »posredovano«, `odgovor`, `odgovor_opis`, `opomba`).
-- **Zbiranje vprašanj ob 10.30, 14.30 in 23.00** (odločitev uporabnika 3. 11. 2026, do preklica: »Pripravi mi vsa vprašanja … vsak dan vsa za vse seje ob 10.30h, 14.30h in 23.00h, da samo kliknem na izbiro. Pri grafičnih vprašanjih dodaj sliko.«): opravilo po urniku vsak dan zbere vprašanja vseh sej in jih pripravi na strani Odločitve; uporabnik dobi eno obvestilo. Seja vprašanje zapiše na stran takoj in dela naprej (ali konča korak); uporabnika ne sprašuje v pogovoru in ga ne obvešča sproti. **Grafično vprašanje ima vedno slike** (vsaka možnost svojo; kamera za avtom, prava proga). Polja, slike, postopek zbiranja, nastavitev na drugem računu in preklic: `docs/vprasanja.md`.
+## Seje
+- Ena tema na sejo. Seja dela samostojno in poroča ob koncu ali ob odločitvi, ki je res uporabnikova.
+- Hkrati največ 2 seji, ki pišeta kodo (odločitev 2. 11. 2026; seje, ki samo čakajo, se ne štejejo). Nove seje zaganja koordinacija »VSE SEJE« ali veriga po svojem načrtu, ko je prostor.
+- **Vprašanja za uporabnika** (tudi koordinacije) samo na strani Odločitve, z oštevilčenimi možnostmi, da uporabnik samo klikne (31. 10. 2026); grafično vprašanje ima vedno slike (vsaka možnost svojo; kamera za avtom, prava proga). Seja vprašanje zapiše takoj in dela naprej (ali konča korak); uporabnika ne sprašuje v pogovoru in ga ne obvešča sproti. Vprašanja vseh sej se zberejo ob 10.30, 14.30 in 23.00 (3. 11. 2026), uporabnik dobi eno obvestilo. Strani računov, polja, slike, zbiranje in preklic: `docs/vprasanja.md`. V pogovoru sprašuj samo, če stran ni dosegljiva. Odgovor pride kot sporočilo »Odgovor uporabnika s strani Odločitve …«.
 
-## Varčevanje z žetoni (odločitev uporabnika 2. 11. 2026)
-- Ena tema na sejo. Seja dela samostojno in uporabniku poroča ob koncu ali ob blokadi oziroma odločitvi, ki je res njegova; vprašanja zbere v eno sporočilo (stran Odločitve).
-- Model po delu: Opus za zasnovo, nove proge in težke napake; Sonnet za opise, spore in manjše popravke (razen kjer je model določen drugje). Napor ostane, kot je določen v razdelku »Orodje za napake«.
-- Lokalno samo `npm run test:related`; uspešnih testov ne ponavljaj.
+## Model in napor (odločitve 31. 10., 2. 11. in 3. 11. 2026)
+| delo | model | napor |
+|---|---|---|
+| zasnova, nove proge, težke napake, sklopi orodja za napake, misije | Opus | max |
+| opisi, besedila, spori v kodi, manjši popravki | Sonnet | max |
+| koordinacija (»VSE SEJE«, vlak), zbiranje vprašanj, seje, ki samo zaganjajo druge seje ali posredujejo sporočila | Sonnet | medium |
+
+Kjer načrt teme določa model (npr. veriga sklopov: `claude-opus-5-5`), velja ta. Napor nastavi okolje, ne repozitorij (`docs/varcevanje.md`, B): okolje Default (seje s kodo) ima spremenljivko `CLAUDE_CODE_EFFORT_LEVEL=max`, okolje Koordinacija `medium`; koordinacija zaganja seje s kodo v okolju Default.
+
+## Varčevanje z žetoni (odločitvi 2. in 3. 11. 2026; `docs/varcevanje.md`)
+- Velikih datotek ne beri v celoti (seznam na vrhu `docs/kazalo.md`): najprej poišči ime v kazalu (z grepom, tudi kazalo je veliko), nato v kodi z grepom, nato preberi samo tisti del.
+- Dolge izpise (testi, spoji, dnevniki) shrani v datoteko in v njej išči; pri CI samo padli posli in zadnjih ~150 vrstic.
+- Pomožni agenti, delovni tokovi z več agenti in pregledi z več pregledovalci samo za res vzporedno delo ali tvegano spremembo (fizika, skupna koda sveta, zelo velike spremembe); sicer en pregled (`/code-review` medium ali high) ali nič, kjer spremembo pokrijejo testi.
+- Slike samo, ko so potrebne; za lastno preverjanje `deviceScaleFactor: 1` in manjše okno (vsaka slika ostane v kontekstu do konca seje).
+- Sredi dolge seje ne menjaj modela; raje nova seja s predajo. Dolgožive seje (koordinacija, zbiranje vprašanj) se enkrat na teden zamenjajo z novimi.
 - Odločitve zapiši enkrat v docs (načrt teme), drugje se samo skliči nanje.
-- Podatke nove prave proge pripravi z `tools/proga-podatki.py` (nastavitve v `tools/<id>/config.json`, navodila na vrhu orodja).
-- Slike samo, ko so potrebne.
-- Hkrati največ 2 vzporedni seji (razdelek »Seje« zgoraj).
 
-## Kje je kaj (manj iskanja)
-- Najprej poglej `docs/kazalo.md`: datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Velikih datotek (`js/world.js` in `js/world-pikes.js` po ~0,5 MB, `docs/igra.md` 115 KB, `tests/README.md`) ne beri v celoti; poišči ime v kazalu, nato z grepom.
-- Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
-
-## Orodje za napake (`docs/orodje-za-napake.md`)
-- Načrt, odločitve in sklopi so v `docs/orodje-za-napake.md`. Vsak sklop je svoja seja in svoja veja (`orodje-za-napake/sklop-NN-<ime>`). Ob koncu sklopa posodobi razdelek Stanje v načrtu in uporabniku napiši kratek seznam za preizkus na telefonu.
-- Orodje je samo v slovenščini: je v `js/napake.js`, gradi svoj DOM in ne uporablja `tr()`, da ga `tests/lang.test.js` ne zahteva v angleščini.
-- Repozitorij je javen: slik napak, zapiskov uporabnika in seznama napak ne shranjuj v repozitorij.
-- Poročila o napakah: besedilo `RRA-NAPAKE …` (oblika v načrtu) pove žig različice, progo (`id`), čas, krog in `s` (metri od štarta); `v_krogu=[…]` so imena iz kode (razlaga v kazalu). Napaka iz starejšega žiga je morda že popravljena: preveri `git log`.
-- Če uporabnik pošlje posnetek dirke (`posnetek_<proga>_….rrp`), ga odpri z `node tools/posnetek.mjs <datoteka> [--t <čas>] [--zastavice]` (opis v `tests/README.md`); datoteke ne shranjuj v repozitorij.
-- Odločitev uporabnika (26. 10. 2026, v seji, ki je naredila sklop 1): »Vseh 17 sklopov začni sam in ne sprašuj, če lahko začneš naslednjega.« Ko je sklop na `main`, seja brez vprašanja zažene novo sejo za naslednji sklop iz tabele Stanje (model `claude-opus-5-5`) z navodilom »Naredi sklop N po docs/orodje-za-napake.md«. Sklopa 0 in 8 ostaneta odložena, dokler uporabnik ne reče drugače. Uporabnika sprašuj le o odločitvah, ki so res njegove (npr. sprememba zasnove); ustavi verigo, če reče »stop«.
-- Odločitev uporabnika (31. 10. 2026, nadomesti prejšnji): vse seje delajo z modelom Opus in naporom **max** (`.claude/settings.json`: `env.CLAUDE_CODE_EFFORT_LEVEL`; `effortLevel` xhigh ostane kot rezerva, ker se max v nastavitvah ne shrani). Samo koordinacijske seje (»VSE SEJE« in seje, ki samo zaganjajo druge seje ali posredujejo sporočila) delajo z naporom **medium**: taka seja si naredi lokalno `.claude/settings.local.json` z `{"env": {"CLAUDE_CODE_EFFORT_LEVEL": "medium"}}` (je v `.gitignore`, velja od naslednjega zagona seje). Spremenljivka ima prednost pred izbiro napora v aplikaciji.
-- Odločitev uporabnika (26. 10. 2026): po sklopu 3 in pred sklopom 4 se naredi sklop 3b »Stabilni testi« (opis v načrtu).
-- Odločitev uporabnika (27. 10. 2026, »Oboje«): sklopi se združijo in delno tečejo hkrati. Veriga orodja: 5 → 6+7 → 9+10+11 → 12 (združeni sklopi so ena seja in en pull request; po koraku seja zažene naslednji korak verige). Vzporedno v svojih sejah: 14+15, 16, 17 (te po koncu ne zaženejo nove seje). Sklop 13 naredi glavna seja. Podrobnosti v načrtu pod »Pospešitev«.
-
-## Posebne misije (`docs/misije.md`)
-- Načrt, odločitve, skupine in stanje so v `docs/misije.md`. Vsaka skupina je svoja seja (»Naredi skupino N po docs/misije.md«), vsaka skupina svoja veja (`misije/skupina-<N>`) in en pull request, ki ga seja odpre sama, ko so testi zeleni, in ga združi sama, ko so zeleni vsi testi na GitHubu.
-- Koda misij je v `js/missions.js` in `js/missions/`; v `js/newmap.js`, `js/nvmenu.js` in `js/game.js` samo kratki priklopi. Vprašanja uporabniku v slikah z oštevilčenimi možnostmi.
+## Kje je kaj
+- Najprej `docs/kazalo.md`: na vrhu najpogostejši ukazi in velike datoteke, nato datoteke, teme po razdelkih, proge in njihovi graditelji sveta, testi po temah. Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
+- Orodje za napake: `docs/orodje-za-napake.md`. Poročilo `RRA-NAPAKE …` (oblika v načrtu) pove žig različice, progo (`id`), čas, krog in `s` (metri od štarta); `v_krogu=[…]` so imena iz kode (razlaga v kazalu). Napaka iz starejšega žiga je morda že popravljena: preveri `git log`. Posnetek dirke (`posnetek_<proga>_….rrp`) odpri z `node tools/posnetek.mjs <datoteka> [--t <čas>] [--zastavice]` (`tests/README.md`).
+- Repozitorij je javen: slik napak, zapiskov uporabnika, seznama napak in posnetkov dirk ne shranjuj vanj.
+- Posebne misije: `docs/misije.md`. Meni: `README.md` (»Nov meni«), `maketa-menija/README.md`. Varčevanje in vlak: `docs/varcevanje.md`.
