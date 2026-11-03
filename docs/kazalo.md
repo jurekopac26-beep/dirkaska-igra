@@ -73,7 +73,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/vprasanja.md` | vprašanja za uporabnika: stran Odločitve (vsak račun svojo, seznam strani), polja vprašanja, slike pri grafičnih vprašanjih, zbiranje ob 10.30, 14.30 in 23.00 (opravila po urniku), nastavitev na drugem računu, preklic |
 | `docs/misije.md` | načrt posebnih misij (pravila, odločitve uporabnika, sistem misij, skupine in stanje, predaja med sejami) |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
-| `docs/proge-po-drzavah.md` | proge na čakanju po državah po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge |
+| `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge |
 | `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
