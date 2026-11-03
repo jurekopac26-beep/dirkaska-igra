@@ -17,7 +17,7 @@
     hint: 'Pred ovinkom zaviraj zgodaj in zavore ohladi z vodo.',
     rows: [{ k: 'omej', label: 'OMEJEVALNIK' }, { k: 'pol', label: 'POLOŽAJ' }, { k: 'zavore', label: 'ZAVORE', bar: true }, { k: 'voda', label: 'VODA', bar: true, col: '#3fa8e0' }],
     // a race of TITANs (the truck's own field) from a standing start, one run to the line, dry, the easy rivals
-    opts: () => ({ tt: false, numAI: K.N, laps: 1, flying: 0, playerGrid: K.GRID, difficulty: K.DIFF, playerModel: KIT.truckModel('titan', {}), damage: 0 }),
+    opts: () => ({ tt: false, numAI: K.N, laps: 1, flying: 0, playerGrid: K.GRID, difficulty: K.DIFF, playerModel: KIT.truckModel('titan', { fill: null }), damage: 0 }),   // (fill: null: the trucks' own field only, K.N TITANs, never the cars that fill a bigger race)
     // the grid moved to K.S0: two by two
     made(race) {
       const T = race.track;
