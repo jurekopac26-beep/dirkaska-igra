@@ -2513,26 +2513,29 @@ const Core = (function () {
   // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car): each its own wear (w) and damage (d),
   // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
   // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
-  // (that wheel only: a gravel road is its road); the slicks' compound as theirs (K.wr). Worn: KT.loss of the wheel's grip (the slicks'
-  // compound: its own loss). The damage only from knocks with damage on (applyDamage: ktHit), only to be seen (the dots' red, the user's:
+  // (that wheel only: a gravel road is its road); the slicks' compound as theirs (K.wr); rain tyres on a drying road (the racing line dry,
+  // Race.wst.line under 0.25) KT.wet times, as the usual tyres'. Worn: KT.loss of the wheel's grip (the slicks' compound: its own loss).
+  // The damage only from knocks with damage on (applyDamage: ktHit), only to be seen (the dots' red, the user's:
   // the car is not hurt by it): the tyre at the knock's corner the most, the nearer one beside it a little, the far corner none; an average
   // knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to none, up to KT.dMax. A tyre burns (kt.hot, never more than
   // one: ktFire) only where the car caught fire before, the wheel rule's first wheel (the car's damage at 80 %, a hard hit from 70 %): the
   // most knocked one; less side grip for the whole car (KT.burn), the speed, the drive and the brakes as ever. The wear never sets one on
-  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop): KT.cold less grip meanwhile. A burning tyre's wheel comes off
-  // at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt)
-  const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
+  // fire. New ones from a stop are cold on every car (kt.cold 1, 0 a lap after the stop: the dots light blue), but only the cars of
+  // opts.tyreCold (the Kolibri: kt.cg) grip KT.cold less meanwhile; the others' cold tyres are only to be seen. A burning tyre's wheel comes
+  // off at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt). No mission has them (js/missions.js: no tyreRule)
+  const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, wet: 2.5, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
   const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
-  const ktMk = (c) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1] }; };
+  const ktMk = (c, cg) => { c.kt = { w: [0, 0, 0, 0], d: [0, 0, 0, 0], hot: -1, cold: 0, d0: 0, g: [1, 1, 1, 1, 1], cg: !!cg }; };   // (cg: its cold tyres grip less, opts.tyreCold)
   function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
-    const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = 1 - KT.cold * K.cold;
+    const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = K.cg ? 1 - KT.cold * K.cold : 1;
     for (let k = 0; k < 4; k++) g[k] = (1 - loss * K.w[k]) * cd;
     g[4] = K.hot >= 0 ? KT.burn : 1; return g;
   }
   // the tyres' wear over ds metres (Race step), the set's on c.ty (the radio, the pits) the four's mean
   function ktWear(c, race, ds) {
     const K = c.kt, T = race.track, Ty = c.ty && tyreK(c.ty), sl = Math.min(1, Math.abs(c.beta || 0) / 0.35);
-    const base = (T.open ? KT.run / Math.max(500, T.raceLen) / 1.52 * (1 + KT.slide * sl) : KT.lap * (Ty ? Ty.wr : 1) * (1 + 5 * sl)) * ds;   // (a circuit: 4 times the usual tyres' wear, a slide as theirs)
+    const dry = c.ty && c.ty.k === 'wet' && race.wst && race.wst.line < 0.25 ? KT.wet : 1;   // (rain tyres on a drying road: as the usual tyres')
+    const base = (T.open ? KT.run / Math.max(500, T.raceLen) / 1.52 * (1 + KT.slide * sl) : KT.lap * dry * (Ty ? Ty.wr : 1) * (1 + 5 * sl)) * ds;   // (a circuit: 4 times the usual tyres' wear, a slide as theirs)
     let s = 0; for (let k = 0; k < 4; k++) { const off = c.ws && (c.ws[k] === 2 || c.ws[k] === 3); K.w[k] = Math.min(1, K.w[k] + base * (off ? KT.off : 1)); s += K.w[k]; }
     if (c.ty) c.ty.wear = s / 4;
     if (c.inPit) K.d0 = c.dist;   // (cold from the stop until a lap after the way out)
@@ -5335,8 +5338,9 @@ const Core = (function () {
       // its fires (wheelRule: ruleFire; burn 1 the hub's, 2 the whole car); spare, ask, xn, chg: the spare on the roof (Race.changeWheel); due0:
       // the time the second wheel was given (ZAMENJAJ KOLO's bar)
       // The Kolibri's tyres (opts.tyreRule: its vehicles; KT, ktHit): on the player's car (Car.kt), its wheel rule (rule.kt) already with damage
-      // Samo videz: a burning tyre's wheel off at a real knock, the second 1-4 s later (sooner sliding and knocking, at once at a real knock)
-      { const P = this.player, TR = opts.tyreRule; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P); }
+      // Samo videz: a burning tyre's wheel off at a real knock, the second 1-4 s later (sooner sliding and knocking, at once at a real knock).
+      // opts.tyreCold: the vehicles whose cold tyres after a stop grip less (kt.cg; the Kolibri's), the others' only to be seen
+      { const P = this.player, TR = opts.tyreRule, TC = opts.tyreCold; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P, Array.isArray(TC) && TC.indexOf(P.m.id) >= 0); }
       { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { due: -1, over: false, fn: 0, burn: 0, spare: 1, ask: 0, xn: 0, chg: 0, kt: !!P.kt }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;

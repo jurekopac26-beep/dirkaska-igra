@@ -62,6 +62,9 @@ check('practice: at half damage, failed', r.end === 'fail');
 let o = M.recOf('t9'); check('no record yet', o.stars === 0 && o.best === 0 && o.runs === 0);
 // the race's options
 check('no mission: no options', M.opts() === null && !M.on());
+// a mission has no tyres of its own to wear (the user's choice 3. 11. 2026): its options turn the game's tyreRule and wheelRule off
+M.init({ start() { } }); M.start('vaja'); const mo = M.opts(); M.stop();
+check('a mission: its options turn the four tyres (tyreRule) and the wheel rule off, over the game\'s own', !!mo && 'tyreRule' in mo && mo.tyreRule === undefined && 'wheelRule' in mo && mo.wheelRule === undefined && mo.tt === true && M.opts() === null, JSON.stringify(mo));
 
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);
