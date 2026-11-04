@@ -23,7 +23,7 @@ const out = path.join(REPO, 'test-results', 'obremenitev');
 const srv = await serve(), browser = await launch();
 let r;
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, camShake: 1, camLand: 1, camKerb: 1, camMis: 1 }, { width: 844, height: 390 }, { seed: 12345 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4 }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };   // (counted as perf.test.mjs counts them)
     const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');

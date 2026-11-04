@@ -17,7 +17,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { loadCore, ROOT } = require('../tests/lib/core.js');
 
-// the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top)
+// the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
+// from their import marker, fromFile below)
 const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], rio: [-22.97503, -43.39523], livorno: [43.51202, 10.31889] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
 const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'] };
@@ -30,7 +31,9 @@ const GEO = global.GEO, C = loadCore();
 const countryOf = (d) => { const full = (d.en && d.en.name) || d.name, k = full.lastIndexOf(', '); return k > 0 ? full.slice(k + 2) : GEO.tracks[d.id] ? GEO.tracks[d.id].names.country : ''; };
 const defs = C.TRACKS.filter(d => !d.variantOf), want = [...new Set(defs.map(countryOf).filter(Boolean))].filter(c => !GEO.outlines[c]);
 const places = {};
-for (const d of defs) if (!d.test && !GEO.tracks[d.id]) { if (!PLACES[d.id]) throw new Error(d.id + ': no place (add its start line to PLACES)'); places[d.id] = PLACES[d.id]; }
+// (the short roads of docs/gorske-proge.md: their start line in their file's import marker, as tools/proga-uvoz.mjs writes it: "izhodišče lat, lon")
+const fromFile = (id) => { try { const m = fs.readFileSync(path.join(ROOT, 'js', 'tracks', id + '.js'), 'utf8').match(/izhodišče (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)/); return m ? [+m[1], +m[2]] : null; } catch (e) { return null; } };
+for (const d of defs) if (!d.test && !GEO.tracks[d.id]) { const p = PLACES[d.id] || fromFile(d.id); if (!p) throw new Error(d.id + ': no place (add its start line to PLACES)'); places[d.id] = p; }
 // a point in rings of [lon, lat, ...] (even-odd), and how far from them it is (km)
 function inside(R, lon, lat) { let k = false; for (const r of R) for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) { const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1]; if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) k = !k; } return k; }
 function nearKm(R, lon, lat) {
