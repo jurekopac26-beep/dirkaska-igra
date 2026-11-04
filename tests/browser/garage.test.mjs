@@ -50,7 +50,7 @@ try {
   // (the menu shown on the next frame: waited for)
   const tap = (key) => page.evaluate(async (key) => { const b = Garage3D.box(key); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return __garage.menu && JSON.parse(JSON.stringify(__garage.menu)); }, key);
   const menuDom = () => page.evaluate(() => { const m = document.getElementById('g-menu'); return { on: m.classList.contains('on'), bot: m.classList.contains('bot'), tabs: [...m.querySelectorAll('.g-mt button')].map(b => [b.querySelector('b').textContent, b.querySelector('small').textContent.replace(/\u00a0/g, ' '), b.classList.contains('sel')]),
-    tiles: [...m.querySelectorAll('.g-tl')].map(b => ({ n: b.querySelector('b').textContent, p: b.querySelector('i').textContent.replace(/\u00a0/g, ' '), sel: b.classList.contains('sel'), fit: b.classList.contains('fit'), old: !!b.querySelector('s') })),
+    tiles: [...m.querySelectorAll('.g-tl')].map(b => ({ n: b.querySelector('b') ? b.querySelector('b').textContent : b.getAttribute('aria-label'), p: b.querySelector('i') ? b.querySelector('i').textContent.replace(/\u00a0/g, ' ') : '', sel: b.classList.contains('sel'), fit: b.classList.contains('fit'), old: !!b.querySelector('s') })),
     buy: m.querySelector('.buy') && m.querySelector('.buy').textContent.replace(/\u00a0/g, ' '), can: m.querySelector('.buy') && !m.querySelector('.buy').disabled, stock: !!m.querySelector('[data-mact="stock"]'), rect: m.getBoundingClientRect().toJSON() }; });
 
   // 0. a fresh garage: the real profile (the career's, odlocitve denarnica-mockup 1): Kariera marked in the MOCKUP row, the career's
@@ -258,17 +258,17 @@ try {
     // locked, its price on its tag; the rent on RENT A CAR's), their names under them, all three drawn; a tap on FOR SALE's maquette:
     // that car drives onto the table (the lamps over FOR SALE); on YOUR CAR's: the muscle car back
     const cab = await page.evaluate(() => { const S = __garage.S, O = __garage.ORDER, i0 = O.indexOf('muscle'), free = []; for (let k = 1; k < O.length && free.length < 2; k++) { const id = O[(i0 + k) % O.length]; if (!S.cars[id].own) free.push(id); }
-      __garage.advance(0.5); return { free, names: [S.car, ...free].map(id => Core.MODELS.find(m => m.id === id).name), fr: Garage3D._dbg.front }; });
-    T.check('the cabinet: YOUR CAR the muscle car (the lamps over it), RENT A CAR and FOR SALE the next two not owned (their names under them, FOR SALE locked with its price, the rent 450 🪙), all three drawn',
-      cab.free.length === 2 && cab.fr.names.join() === [cab.names[0], cab.names[2], cab.names[1]].join() && cab.fr.lit === 0 && cab.fr.lock[2] && /450/.test(cab.fr.price[0]) && /🪙/.test(cab.fr.price[1]) && cab.fr.shown.every(Boolean), JSON.stringify(cab));
+      __garage.advance(0.5); return { free, rent: __garage.rentOf(free[1]), names: [S.car, ...free].map(id => Core.MODELS.find(m => m.id === id).name), fr: Garage3D._dbg.front }; });
+    T.check('the cabinet: YOUR CAR the muscle car (the lamps over it), RENT A CAR and FOR SALE the next two not owned (their names under them, FOR SALE locked with its price, the rent 5 % of the car\'s price, at least 1.000 🪙), all three drawn',
+      cab.free.length === 2 && cab.fr.names.join() === [cab.names[0], cab.names[2], cab.names[1]].join() && cab.fr.lit === 0 && cab.fr.lock[2] && cab.rent >= 1000 && cab.fr.price[0].replace(/[^0-9]/g, '') === String(cab.rent) && /🪙/.test(cab.fr.price[1]) && cab.fr.shown.every(Boolean), JSON.stringify(cab));
     await tap('mq2'); await run(); const c2 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
     await tap('mq0'); await run(); const c3 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
     T.check('FOR SALE\'s maquette tapped: that car drives onto the table (the lamps over FOR SALE, YOUR CAR still the muscle car); YOUR CAR\'s: the muscle car back', c2.car === cab.free[0] && c2.shown === cab.free[0] && c2.fr.lit === 2 && c2.fr.names[0] === cab.names[0] && c3.car === 'muscle' && c3.shown === 'muscle' && c3.fr.lit === 0, JSON.stringify({ c2, c3 }));
   }
 
   // 5. the service by the SERVICE button (the rally car: dirty, scratched, its engine worn): its prices by the wear and the car's worth,
-  // the full service 15 % off; done by the arms; the paint: a colour circle tapped, its four kinds of work, a wrap bought: in the glass
-  // chamber (down while it paints), the car green
+  // the full service 15 % off; done by the arms; the paint: a colour circle tapped, the eight colours at one price by the car's size (no
+  // kinds of work, the user's choice of 2. 11. 2026), bought: in the glass chamber (down while it paints), the car green
   {
     await page.evaluate(() => __garage.pickCar('rally')); await run();
     const m = await tap('service'), d = await menuDom(), want = await page.evaluate(() => { const c = __garage.S.cars.rally.cond, f = (e) => Math.pow(Math.max(20000, Core.CAREER.car.rally || 48000) / 68000, e), r = (v) => v < 1000 ? Math.round(v / 10) * 10 : Math.round(v / 50) * 50;
@@ -282,15 +282,16 @@ try {
     const sc = await page.evaluate(() => ({ c: __garage.chip, html: document.getElementById('g-chip').innerHTML }));
     T.check('the service done: its chip over the car, STANJE with the wrench before it, the state before → after (' + a0 + ' % → 100 %)', a0 < 100 && sc.c && sc.c.small === 'STANJE' && sc.c.icon === 'cond' && /<small><i><svg/.test(sc.html) && sc.c.big === a0 + ' % → 100 %', JSON.stringify({ a0, sc }));
     const mp = await tap('col5'), dp = await menuDom();
-    T.check('a colour circle (green) tapped: the paint\'s menu (VARČNO, FOLIJA, LAKIRANJE, VRHUNSKO) with the colour named', mp && mp.el === 'barva' && mp.color === 5 && dp.tabs.map(t => t[0]).join() === 'VARČNO,FOLIJA,LAKIRANJE,VRHUNSKO' && dp.tiles.length === 4, JSON.stringify({ mp, dp }));
+    const pp = await page.evaluate(() => __garage.paintPrice('rally'));
+    T.check('a colour circle (green) tapped: the paint\'s menu, the eight colours (green chosen), no tabs, one price by the car\'s size (KUPI IN NAMESTI · 3.500 🪙)', mp && mp.el === 'barva' && mp.color === 5 && !dp.tabs.length && dp.tiles.length === 8 && dp.tiles[5].sel && pp === 3500 && /KUPI IN NAMESTI · 3\.500 🪙/.test(dp.buy), JSON.stringify({ mp, dp, pp }));
     // (too little money for the paint chosen: the menu stays (its note says so), a toast, nothing taken)
-    const lo = await page.evaluate(() => { const S = __garage.S, m0 = S.money; S.money = 100; __garage.tile(1, 0); __garage.buyMenu();
+    const lo = await page.evaluate(() => { const S = __garage.S, m0 = S.money; S.money = 100; document.querySelector('#g-menu [data-col="5"]').click(); __garage.buyMenu();
       const out = { menu: !!__garage.menu, toast: document.getElementById('g-toast').className, note: !!document.querySelector('#g-menu .buy small'), money: S.money }; S.money = m0; __garage.render(); return out; });
     T.check('too little money for the paint chosen: the menu stays open, its note and a toast say so, nothing taken', lo.menu && /bad/.test(lo.toast) && lo.note && lo.money === 100, JSON.stringify(lo));
-    await page.evaluate(() => { document.querySelector('#g-menu [data-tab="1"]').click(); document.querySelector('#g-menu [data-tile="1,0"]').click(); document.querySelector('#g-menu [data-mact="buy"]').click(); });
+    await page.evaluate(() => { document.querySelector('#g-menu [data-col="5"]').click(); document.querySelector('#g-menu [data-mact="buy"]').click(); });
     const pr = await page.evaluate(async () => { let t = 0, ch = 0, tools = 0; do { __garage.advance(0.25); t += 0.25; const D = Garage3D._dbg; ch = Math.max(ch, D.chamber.k); tools = Math.max(tools, D.fx.tools); await new Promise(r => setTimeout(r, 0)); } while (Garage3D.busy && t < 60); return { t, ch, tools, after: Garage3D._dbg.chamber.k, parked: Garage3D._dbg.fx.parked }; });
     const u2 = await ui();
-    T.check('painted green in the glass chamber (down while it paints, both arms with their nozzles; up after, the arms parked): the matt wrap, 2.400 🪙', u2.info.color === 0x2fa84f && u.S.money - u2.S.money === 2400 && JSON.stringify(u2.S.cars.rally.parts.barva) === '[1,0]' && pr.ch === 1 && pr.tools === 2 && pr.after === 0 && pr.parked, JSON.stringify({ pr, info: u2.info }));
+    T.check('painted green in the glass chamber (down while it paints, both arms with their nozzles; up after, the arms parked): 3.500 🪙, no finish part', u2.info.color === 0x2fa84f && u.S.money - u2.S.money === 3500 && !u2.S.cars.rally.parts.barva && pr.ch === 1 && pr.tools === 2 && pr.after === 0 && pr.parked, JSON.stringify({ pr, info: u2.info }));
     const sh = await page.evaluate(() => (__garage.advance(0.1), Garage3D._dbg.RGL.col));
     T.check('the regal\'s wings follow the car\'s colour (green now)', sh === 0x2fa84f, sh);
   }
