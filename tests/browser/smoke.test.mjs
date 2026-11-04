@@ -100,15 +100,20 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
-      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
+      // (the clock's block as game.js placeNote sees it: its bottom moves with the fonts, a line under the clock (a place's name, a corner's
+      // number) a pixel more or less tall from one browser's font to another's)
+      const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); }
+      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), clk: +clk.toFixed(1), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
     const n1 = await sign(null);
     {
+      // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
+      // phone; never over the block. Pikes Peak's checkpoint tiles and the police's block lower: under those)
       await page.setViewportSize({ width: 270, height: 480 });
-      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : 95;
+      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : Math.max(83, Math.ceil(n2.clk) + 7);
       await page.setViewportSize({ width: 480, height: 270 });
-      T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright under the clock (top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2,
-        `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px`);
+      T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright right under the clock (not over its block, top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2 && n2.top >= n2.clk - 0.5,
+        `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px (the clock's block to ${n2.clk} px)`);
     }
     await page.evaluate(() => window.__game.noteAt(null));
   }

@@ -260,7 +260,7 @@
         const tiers = 9, dep = W / tiers;
         for (let t = 0; t < tiers; t++) { const b = fa * (W / 2 - (t + 0.5) * dep), cx = bx - sa * b, cz = bz + ca * b, hgt = 0.9 + t * 0.85;
           box(g, cx, y0, cz, L, hgt, dep, ang, [0.62, 0.63, 0.66], [0.52, 0.53, 0.57]);
-          const b0 = b - fa * dep * 0.45, b1 = b + fa * dep * 0.1, yy = y0 + hgt + 0.02, A = [bx - ca * L / 2 - sa * b0, yy, bz - sa * L / 2 + ca * b0], B = [bx + ca * L / 2 - sa * b0, yy, bz + sa * L / 2 + ca * b0], C = [bx + ca * L / 2 - sa * b1, yy, bz + sa * L / 2 + ca * b1], D = [bx - ca * L / 2 - sa * b1, yy, bz - sa * L / 2 + ca * b1];
+          const b0 = b - fa * dep * 0.5, b1 = b + fa * dep * 0.5, yy = y0 + hgt + 0.02, A = [bx - ca * L / 2 - sa * b0, yy, bz - sa * L / 2 + ca * b0], B = [bx + ca * L / 2 - sa * b0, yy, bz + sa * L / 2 + ca * b0], C = [bx + ca * L / 2 - sa * b1, yy, bz + sa * L / 2 + ca * b1], D = [bx - ca * L / 2 - sa * b1, yy, bz - sa * L / 2 + ca * b1];
           crowdG.quadUp(A, B, C, D, [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]], [[0, t * 0.11], [L / 12, t * 0.11], [L / 12, t * 0.11 + 0.1], [0, t * 0.11 + 0.1]]); }
         const bb = -fa * (W / 2 + 0.3); box(g, bx - sa * bb, y0, bz + ca * bb, L, 9.6, 0.6, ang, [0.55, 0.56, 0.6]);
         for (let a = -L / 2; a <= L / 2 + 0.1; a += L / 8) { const px = bx + ca * a - sa * bb * 0.96, pz = bz + sa * a + ca * bb * 0.96; box(g, px, y0, pz, 0.45, 12.2, 0.45, ang, [0.86, 0.87, 0.9]); }
