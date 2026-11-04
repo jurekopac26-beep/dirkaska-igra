@@ -329,7 +329,7 @@
   function achPump() { if (!achQ.length) return; if ($('toast').classList.contains('show') || (paused && screen === 'pause')) { setTimeout(achPump, 600); return; } toast(achQ[0], 3000); setTimeout(() => { achQ.shift(); achPump(); }, 3200); }   // (not over the pause either: P1A, toastHold)
   const achLine = () => { const L = achNew.map(id => tr(ACH.find(a => a[0] === id)[1])); achNew = []; return L.length ? tr(' Novi dosežki: {0}.', L.join(', ')) : ''; };
   // per race: the drift under way, wall or car contact (this lap, this race), the laps counted, pole position for this race
-  let stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: false, done: false };
+  let stRun = { drift: 0, lapWall: false, lapAP: false, wall: false, car: false, laps: 0, pole: false, done: false };
   function stDrive(P, dt) {   // after each physics step of a race
     if (phase !== 'racing' || P.finished) return;
     st.km += Math.abs(P.speed) * dt / 1000; st.time += dt;
@@ -337,8 +337,9 @@
     if (Math.abs(P.beta || 0) > 0.35 && P.speed > 12 && !P.air) { stRun.drift += dt; if (stRun.drift >= 3) achGet('drift'); }
     else { if (stRun.drift > st.drift) st.drift = stRun.drift; stRun.drift = 0; }
     if (P.hitWall > 0.5) { stRun.lapWall = true; stRun.wall = true; }
+    if (rap.on) stRun.lapAP = true;   // (the red flag's autopilot drove some of this lap: no clean lap of the player's)
     if (P.hitCar > 0.5) stRun.car = true;
-    if (P.lapTimes.length > stRun.laps) { stRun.laps = P.lapTimes.length; if (!stRun.lapWall && !race.timeTrial) achGet('cleanLap'); stRun.lapWall = false; }   // (a lap done without the wall)
+    if (P.lapTimes.length > stRun.laps) { stRun.laps = P.lapTimes.length; if (!stRun.lapWall && !stRun.lapAP && !race.timeTrial) achGet('cleanLap'); stRun.lapWall = stRun.lapAP = false; }   // (a lap done without the wall)
     if (st.km >= 100) achGet('km100'); if (st.km >= 1000) achGet('km1000');
   }
   // a race to the line (not online): the counts and the achievements of the finish (pos of n, the fastest lap of the race)
@@ -802,7 +803,7 @@
   /* ---------------- replay: the race recorded (every car 20 times a second, from the start to the results), watched after the finish
      with the camera the player drove with (then the TV cameras beside the track, behind a car, from above); any car followed, played
      faster or slower ---------------- */
-  const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on; 20 min at most)
+  const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on, 8 the red flag out (the race stopped, the queue; with or without the safety car), 16 the red flag's restart behind it; 20 min at most)
   // a very big field (more than REC_BIG cars, Nürburg's hundred): a sample every 2 x REC_DT (the replay goes between them as ever); any field at most
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
@@ -820,7 +821,8 @@
       else { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; }
       f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
     for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
-    const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0));
+    const S = race.fl && race.fl.sc, Rd = race.fl && race.fl.red, rb = Rd && Rd.st !== 'go' ? 8 : 0;
+    if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0) + rb + (S.red ? 16 : 0)); else if (rb) f[1 + n * REC_W + 6] = rb;
     R.frames.push(f); recPit(R); R.prev = race.time;
     if (!race.timeTrial && !(mp && mp.race)) recPasses(R);
   }
@@ -828,9 +830,9 @@
   // has changed (in the lane, pitState, the stop done, the autopilot driving; the repair's start and length, the stops done), a few a stop
   function recPit(R) {
     const c = race.player; if (!c) return;
-    const L = R.pit, e = L[L.length - 1], inPit = !!c.inPit, st = c.pitState || null, done = !!c.pitDone, ap = !!c.pitAP, cf = c.pitCfT != null;
-    if (e && e.inPit === inPit && e.st === st && e.done === done && e.ap === ap && e.cf === cf) return;
-    L.push({ t: race.time, inPit, st, done, ap, cf, t0: race.time - (c.pitT || 0), dur: c.pitDur || 0, n: c.repairN || 0, apT: c.pitApT, cfT: c.pitCfT, bxT: c.pitBoxT, keep: Core.keepTyres(c, c.pitPlan), tn: c.ty ? c.ty.n || 0 : 0 });   // (keep: the stop without new tyres as the race had it then: the replay's crew, Render crewLogic keepTy; no entry more for it. tn: the sets of new tyres fitted so far, Core's ty.n: the stack of used ones by the garage, P8)
+    const L = R.pit, e = L[L.length - 1], inPit = !!c.inPit, st = c.pitState || null, done = !!c.pitDone, ap = !!c.pitAP, cf = c.pitCfT != null, nb = !!(c.fl && c.fl.rq) && !race._inStop(c);   // (nb: the red flag's queue, no box: its crew stays in, Render crewLogic)
+    if (e && e.inPit === inPit && e.st === st && e.done === done && e.ap === ap && e.cf === cf && !!e.nb === nb) return;
+    L.push({ t: race.time, inPit, st, done, ap, cf, nb, t0: race.time - (c.pitT || 0), dur: c.pitDur || 0, n: c.repairN || 0, apT: c.pitApT, cfT: c.pitCfT, bxT: c.pitBoxT, keep: Core.keepTyres(c, c.pitPlan), tn: c.ty ? c.ty.n || 0 : 0 });   // (keep: the stop without new tyres as the race had it then: the replay's crew, Render crewLogic keepTy; no entry more for it. tn: the sets of new tyres fitted so far, Core's ty.n: the stack of used ones by the garage, P8)
   }
   /* the highlights (Najboljši trenutki): the best moments noted as they happen - the overtakes (a car behind another at the last sample is
      ahead of it now, both racing close together: not in the pits, not under the safety car) and the heavy crashes - then played as a
@@ -839,7 +841,7 @@
      followed, a caption, the commentator */
   function recPasses(R) {
     const t = race.time, T = race.track, cars = R.cars, n = R.n, pos = cars.map(c => c.pos);
-    if (R.pos && !(race.fl && race.fl.sc)) for (let ja = 0; ja < n; ja++) {
+    if (R.pos && !(race.fl && (race.fl.sc || race.fl.red))) for (let ja = 0; ja < n; ja++) {
       const a = cars[ja], p0 = R.pos[ja]; if (!(a.pos < p0) || a.inPit || a.finished || a.pitWant || a.speed < 8) continue;
       for (let jb = 0; jb < n; jb++) {
         const b = cars[jb]; if (jb === ja || !(R.pos[jb] < p0 && b.pos > a.pos) || b.inPit || b.finished || b.pitWant || Math.abs(a.dist - b.dist) > 25) continue;
@@ -915,7 +917,7 @@
     if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; }   // (a roll the replay posed, its pit stop: over with it)
     Render.crewSnap();   // (the player's crew as the race has it again)
     hlvStop();   // (the best moment's video: done)
-    if (race && race.fl) race.fl.sc = null;
+    if (race && race.fl) race.fl.sc = race.fl.red = null;
     showScreen('results');
     Napake.konec();   // (Orodje za napake: the moments kept, to share or save)
   }
@@ -933,15 +935,16 @@
   }
   function rpKeep() {
     const cars = recd.cars.map(c => ({ o: Object.assign({}, c), q: c.q && Object.assign({}, c.q), ws: c.ws && Array.from(c.ws) }));
-    return { cars, sc: race.fl ? race.fl.sc : null };
+    return { cars, sc: race.fl ? race.fl.sc : null, red: race.fl ? race.fl.red : null };
   }
   function rpBack(K) {
     recd.cars.forEach((c, j) => {
       const { o, q, ws } = K.cars[j];
       if (!('rl' in o)) delete c.rl;   // (a roll the replay posed)
+      if (!('rpPit' in o)) delete c.rpPit;   // (the pit state the replay posed, rpPit: the race's own again for the crew and the pit camera)
       Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i];
     });
-    if (race.fl) race.fl.sc = K.sc;
+    if (race.fl) { race.fl.sc = K.sc; race.fl.red = K.red; }
   }
   function rpRace() {   // Nazaj v dirko: the cars back, the HUD and the controls back, then the count
     const P = replay; if (!P || !P.here) return;
@@ -1168,7 +1171,7 @@
     const L = recd.pit, c = race.player; if (!c || !L || !L.length) return;
     let i = L.length - 1; while (i > 0 && L[i].t > t) i--;
     const e = L[i], o = c.rpPit || (c.rpPit = {});
-    o.inPit = e.inPit; o.pitState = e.st; o.pitDone = e.done; o.pitAP = e.ap; o.pitT = Core.clamp(t - e.t0, 0, e.dur); o.pitDur = e.dur; o.n = e.n; o.keepTy = !!e.keep; o.tyN = e.tn != null ? e.tn : null;   // (tyN: the new sets by then, Render crewStack: the stack as it was at that moment; a recording without it: the race's)
+    o.inPit = e.inPit; o.pitState = e.st; o.pitDone = e.done; o.pitAP = e.ap; o.nb = !!e.nb; o.pitT = Core.clamp(t - e.t0, 0, e.dur); o.pitDur = e.dur; o.n = e.n; o.keepTy = !!e.keep; o.tyN = e.tn != null ? e.tn : null;   // (tyN: the new sets by then, Render crewStack: the stack as it was at that moment; a recording without it: the race's)
     // (the pit stop's camera, Render pitCine: the takeover, POTRDI and the box as the race had them, on the replay's clock)
     let j = i; while (j > 0 && L[j - 1].ap && L[j - 1].inPit) j--;
     o.tNow = t; o.pitApT = e.ap ? (L[j].apT != null ? L[j].apT : L[j].t) : null; o.pitCfT = e.ap && e.cf ? e.cfT : null; o.pitBoxT = null;
@@ -1181,10 +1184,11 @@
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
     for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * REC_W, u);
     rpPit(t);   // (the player's pit stop where the recording has it, for the crew and the film camera)
-    const o = 1 + R.n * REC_W, scOn = A[o + 6] >= 2;   // (the safety car, where it was out: its own car, posed like the others)
+    const o = 1 + R.n * REC_W, scOn = (A[o + 6] & 2) !== 0;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
-      if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] >= 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in' }; }
+      if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] & 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in', red: !!(A[o + 6] & 16) }; }
       else race.fl.sc = null;
+      race.fl.red = A[o + 6] & 8 ? P.red || (P.red = { st: 'in' }) : null;   // (the red flag: the race stopped, for the pit exit's light, render.js crewExitStep; the replay's own, the race's kept: rpKeep)
     }
     return i;
   }
@@ -2027,7 +2031,7 @@
       startCamPick(ok && !race.timeTrial && !race.opts.flying && !race.pol && !race.nv, !!air);   // (or the camera before the start)
       if (air && ok && !scV) { air.go = true; introLen += JET_SHOT; air.shot.crowd = true; Render.setShot(air.shot); $('hud').classList.add('shot'); } }   // (crowd: a big field's rivals past the nearest ten as their far mesh in this shot too, render.js crowdCut)
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
-    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); Input.buzzOff(); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; fcKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {};
+    lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); Input.buzzOff(); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; fcKey = '-'; tyOut = null; flSeen = flPSeen = 0; flKey = '-'; flTold = {}; rap.on = false; rap.st = ''; rap.k = 0;
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
     $('h-msg').className = ''; $('h-split').className = ''; $('h-split').textContent = ''; $('h-note').className = ''; lastNote = ''; noteForce = null; track.hudSigns(); $('h-react').className = ''; reactT = 0; reactOn = 0;   // (the corner signs: built during the intro)
     $('h-lights').className = ''; setLights(0, false);
@@ -2042,7 +2046,7 @@
     if (mm.img && mm.open && mm.pol !== !!race.pol) mm.img = null;   // (the open road's map: the building at the top in the run from the police, else the finish)
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
-    stRun = { drift: 0, lapWall: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
+    stRun = { drift: 0, lapWall: false, lapAP: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
     cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); mkStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     pkStart();   // (Pikes Peak: the class, its splits)
@@ -2838,10 +2842,15 @@
     recStep(); Input.buzzStep(dt);   // (the vibration's clock: the race's)
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
-    const pit = pitCtl(P, hold);   // the pit autopilot: 'lane', 'merge' or null (the player's own car)
+    const red = redCtl(P, hold), pit = red ? null : pitCtl(P, hold);   // the red flag's autopilot (redCtl); the pit autopilot: 'lane', 'merge' or null (the player's own car)
     if (((phase === 'finish' || phase === 'done') && (race.timeTrial || P.busted)) || hold) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.inHand = 0; P.digitalSteer = false; }   // time trial: brake to a stop past the finish (the road ends); busted by the police: stays where they stopped it
-    else if (phase === 'finish' || phase === 'done' || autoDrive) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; if (phase === 'intro' || phase === 'lights') P.inThr = 0; }   // (autoDrive: automated tests of online races drive in real time; on the grid off the gas: it sets off as the lights go out)
+    else if (phase === 'finish' || phase === 'done' || autoDrive) { if (!(P.fl && P.fl.rq)) P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; if (phase === 'intro' || phase === 'lights') P.inThr = 0; }   // (autoDrive: automated tests of online races drive in real time; on the grid off the gas: it sets off as the lights go out; the red flag's queue: Core's way into the pit lane)
     else if (fly.on) { P.pitWant = !!P.inPit; Core.aiControl(P, race, dt); P.digitalSteer = false; flyStep(); }   // a flying start: the autopilot drives until the player's car is over the start line
+    else if (red) {   // the red flag: to the queue, in it and off again (the gas, the steering and the handbrake standing in it the autopilot's); the brake slows it
+      Core.aiControl(P, race, dt);
+      if (inp.brk > 0.05 && P.gear !== -1) { P.inThr = 0; P.inBrk = Math.max(P.inBrk, inp.brk); }
+      P.digitalSteer = false; P.noReverse = true;
+    }
     else if (pit) {   // the pit lane and, after a stop, PIT_OUT s back onto the racing line: the autopilot drives, the gas too (Core.aiControl,
       // Race.pitStep); the player's gas and steering are not used; the brake slows it (the autopilot's throttle off), never into reverse
       P.pitAP = true; P.pitWant = pit === 'lane'; Core.aiControl(P, race, dt);
@@ -3343,8 +3352,17 @@
   function flagEvent(k, P) {
     if (phase !== 'racing' || P.finished) return;
     const F = race.fl;
-    if (k === 'yellow') {   // (a car stopped ahead: the zone before it)
-      const y = F.yel[F.yel.length - 1]; if (!y || y.car === P) return;
+    if ((k === 'scIn' || k === 'scGone') && F.red && F.red.st !== 'go') return;   // (a safety car out a moment before the red flag, going in: the race stopped, nothing to tell)
+    if (k === 'red') {   // (the red flag: the race stopped, the field to the queue on the autopilot, redCtl)
+      showMsg(tr('RDEČA ZASTAVA'), 'warn', 2.8); Sfx.beep(440, 0.3, 0.14); setTimeout(() => Sfx.beep(440, 0.3, 0.14), 380); vibrate(80);
+      if (!flTold.red) { flTold.red = true; toast(tr(F.red.pit ? 'Rdeča zastava: dirka je prekinjena. Avtopilot te počasi pripelje v bokse, kjer se avti postavijo v vrsto. Prehitevanje ni dovoljeno.' : 'Rdeča zastava: dirka je prekinjena. Avtopilot te počasi pripelje na štartno ravnino, kjer se avti postavijo v vrsto. Prehitevanje ni dovoljeno.'), 5600); }
+      Comm.say('red', null, 4); if (trd && !race._inStop(P)) trd.pit = false;   // (through the lane in the queue: no stop to tell of after it)
+      if (trd && race.mk && S.radio) teamRadioSay(tr(F.red.pit ? 'Rdeča zastava! Počasi v bokse, za avtom pred tabo.' : 'Rdeča zastava! Počasi na štartno ravnino, za avtom pred tabo.'), 3, F.red.pit ? 'radioRedPit' : 'radioRedGrid');
+    }
+    else if (k === 'redHold') showMsg(tr('PONOVNI ŠTART ČEZ {0} s', Core.RED.hold), 'gold', 2.2);   // (all in the queue, the track cleared)
+    else if (k === 'redGo') { showMsg(tr('PONOVNI ŠTART'), 'gold', 2); Sfx.beep(660, 0.14, 0.12); Comm.say('redGo', null, 3); if (trd && race.mk && S.radio) teamRadioSay(tr('Ponovni štart za varnostnim avtom. Ogrej gume.'), 3, 'radioRedGo'); }
+    else if (k === 'yellow') {   // (a car stopped ahead: the zone before it)
+      const y = F.yel[F.yel.length - 1]; if (!y || y.car === P || F.red) return;   // (under the red flag: the race stopped, no zone to tell)
       let d = y.s - P.q.s; d = ((d % track.len) + track.len) % track.len;
       if (d < 700) { showMsg(tr('RUMENA ZASTAVA'), 'gold', 1.8); if (!flTold.y) { flTold.y = true; toast(tr('Rumena zastava: pred tabo je ustavljen avto. Upočasni in ne prehitevaj, dokler je ne prevoziš.'), 4200); } Comm.say('yellow', null, 2); }
     } else if (k === 'sc') { showMsg(tr('VARNOSTNI AVTO'), 'gold', 2.6); Sfx.beep(520, 0.2, 0.12); if (!flTold.sc) { flTold.sc = true; toast(tr('Varnostni avto: ne prehitevaj in se drži avta pred sabo. Ko gre s proge, se dirka nadaljuje na ciljni črti.'), 5200); } Comm.say('sc', null, 3); }
@@ -3357,12 +3375,13 @@
     else if (k === 'passOk') showMsg(tr('MESTO VRNJENO'), 'gold', 1.4);
     else if (k === 'pen') { showMsg(tr('KAZEN +5 s'), 'slow', 2.6); vibrate(80); Comm.say('penalty', null, 3); }
   }
-  // the flag on the HUD: yellow (in or before a yellow zone), the safety car board, the countdown to give a place back
+  // the flag on the HUD: red (the race stopped), yellow (in or before a yellow zone), the safety car board, the countdown to give a place back
   function flagHUD(P) {
     const F = race.fl; let key = '', txt = '';
     if (F && !P.finished) {
       const owe = P.fl && P.fl.owe, S = F.sc;
-      if (owe) { key = 'owe'; txt = tr('VRNI MESTO · {0}', Math.ceil(owe.t)); }
+      if (F.red && F.red.st !== 'go') { key = 'red'; txt = tr('RDEČA ZASTAVA'); }   // (the race stopped: the queue; at the restart the safety car's board)
+      else if (owe) { key = 'owe'; txt = tr('VRNI MESTO · {0}', Math.ceil(owe.t)); }
       else if (S && S.state !== 'gone') { key = S.state === 'in' ? 'scin' : 'sc'; txt = tr(S.state === 'in' ? 'SC GRE S PROGE' : 'VARNOSTNI AVTO'); }
       else if (S) { key = 'restart'; txt = tr('NE PREHITEVAJ'); }
       else if (F.yel.length && race._yelAt(P.q.s)) { key = 'yel'; txt = tr('RUMENA ZASTAVA'); }
@@ -3571,21 +3590,21 @@
       teamRadioSay(tr(wet ? 'Na radarju je dež: začel bo čez približno minuto.' : 'Na radarju se dež umika: kmalu bo ponehal.'), 2, wet ? 'radioRain' : 'radioRainStop');
     }
     // the safety car out with a stop due anyway: a cheap one now
-    const SC = race.fl && race.fl.sc;
-    if (pl && SC && SC.state === 'out' && !trd.sc && pl.from != null && pl.from <= pl.cur + 1 && !P.inPit) { trd.sc = true; teamRadioSay(tr('Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.', Math.round(pl.loss)), 3, 'radioSC'); }
+    const SC = race.fl && race.fl.sc, red = !!(race.fl && race.fl.red);   // (the red flag: no calls to the pits, the queue drives through them)
+    if (pl && SC && SC.state === 'out' && !SC.red && !red && !trd.sc && pl.from != null && pl.from <= pl.cur + 1 && !P.inPit) { trd.sc = true; teamRadioSay(tr('Varnostni avto! Pridi zdaj v bokse, postanek stane le okoli {0} s.', Math.round(pl.loss)), 3, 'radioSC'); }
     // an urgent stop (the wrong tyres, a cut or burst one, worn out, heavy damage): at once, not at the line (a tyre's once the message about
     // it, PREDRTA GUMA! / POČILA GUMA! / GUME IZRABLJENE, has had its time)
-    if (pl && pl.box && !P.inPit && trd.box !== P.lap) { const now = pl.need.find(k => k !== 'fuel' && k !== 'tyres');   // (each told twice at most: once, and once more a lap on)
+    if (pl && pl.box && !P.inPit && !red && trd.box !== P.lap) { const now = pl.need.find(k => k !== 'fuel' && k !== 'tyres');   // (each told twice at most: once, and once more a lap on)
       if (now && (trd.urg[now] || 0) < 2 && !((now === 'tyre' || now === 'worn') && msgT > 0)) { trd.urg[now] = (trd.urg[now] || 0) + 1; trd.box = P.lap; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); teamRadioSay(boxText(pl, now), 3, BOX_V[now]); } }
     // out of the pit lane: the place now
-    if (P.inPit) trd.pit = true;
+    if (P.inPit) { if (!(P.fl && P.fl.rq) || P.pitDone) trd.pit = true; }   // (through the lane in the red flag's queue: no stop)
     else if (trd.pit) { trd.pit = false; const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null, ga = A ? race.gap(A, P) : null;
       teamRadioSay(tr('Dober postanek.') + ' ' + (A ? (ga != null ? tr('Si {0}., {1} je {2} s pred tabo.', P.pos, A.name, fmtS(ga)) : tr('Si {0}.', P.pos)) : tr('Vodiš.')), 2, 'radioGood', { pos: P.pos }); }
     // at the line: once a lap (from the second)
     if (P.lap !== trd.lap) { const first = !trd.lap; trd.lap = P.lap; if (!first && P.lap >= 2 && P.lap <= race.laps) teamRadioLap(P, pl); }
   }
   function teamRadioLap(P, pl) {
-    if (P.inPit) return;   // (over the line in the pit lane: on the way out)
+    if (P.inPit || (race.fl && race.fl.red)) return;   // (over the line in the pit lane: on the way out; the red flag: the race stopped)
     if (pl && pl.box && trd.box !== P.lap && !P.inPit && (pl.need[0] === 'fuel' || pl.need[0] === 'tyres' || (trd.urg[pl.need[0]] || 0) < 2)) { trd.box = P.lap; trd.urg[pl.need[0]] = (trd.urg[pl.need[0]] || 0) + 1; showMsg(tr('BOKSI V TEM KROGU'), 'gold', 2); teamRadioSay(boxText(pl, pl.need[0]), 3, BOX_V[pl.need[0]]); return; }
     if (pl && pl.from != null) { const key = pl.need.join() + ':' + pl.from + '-' + pl.to; if (key !== trd.win) { trd.win = key;
       teamRadioSay(needTxt(pl.need[0], P) + ' ' + (pl.from === pl.to ? tr('Postanek bo v {0}. krogu.', pl.from) : tr('Okno za postanek: od {0}. do {1}. kroga.', pl.from, pl.to)), 2, 'radioWindow', { from: pl.from, to: pl.to }); return; } }
@@ -3741,7 +3760,7 @@
   const AIP_GAP = 5, AIP_WAIT = 2;
   let aip = { was: new Set(), q: null, last: -Infinity, log: [] };
   function aiPitHUD(P) {
-    const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), pi = O.indexOf(P), on = phase === 'racing' && !P.finished;
+    const O = race.order && race.order.length === race.cars.length ? race.order : race.cars.slice().sort((a, b) => b.dist - a.dist), pi = O.indexOf(P), on = phase === 'racing' && !P.finished && !(race.fl && race.fl.red);   // (the red flag's queue into the lane: no news)
     for (const c of race.cars) {
       if (c === P || c.net) continue;
       if (!c.inPit) { aip.was.delete(c); continue; }
@@ -3919,7 +3938,7 @@
   function pitEvent(e) {
     if (phase !== 'racing') return;
     if (e === 'enter') {
-      if (pa.st === 'merge') return;   // (back over the line during the countdown: nothing new)
+      if (pa.st === 'merge' || rap.on) return;   // (back over the line during the countdown: nothing new; the red flag's queue into the lane: no stop)
       const P = race.player, b = race._boxD(P), stop = b != null && race.track.boxX(P.q.s, b) < 0;   // (its box ahead: a stop; running wide over the line at the way out: only the lane's limiter until back over it)
       if (stop) { showMsg(tr('BOKSI · AVTOPILOT'), 'gold', 2.4); if (!tipOpen(P)) pitInToast(); }   // (the first stops: a hint first, pitTipStep)
       else showMsg(tr('BOKSI'), 'gold', 1.4);
@@ -3952,6 +3971,20 @@
   function pitNear(P) {
     const T = race.track, s1 = P.q.s + Math.max(12, P.speed * 1.3), p1 = T.pitAt(s1);
     return !p1 || (p1.gap && p1.o <= p1.wall + 1);
+  }
+  // the red flag (Race opts flags, Core Race._redOut): while the queue has the player's car in its charge (P.fl.rq), the autopilot drives
+  // it there at the queue's pace behind the car ahead (into the pit lane or onto the grid: Core's pitWant), stands in it and sets off again
+  // at the restart; the brake slows it as through the pits, never into reverse. A stop of its own under way: the pit autopilot (pitCtl)
+  // until the work is done. Let go by the queue (out of the lane, or off the grid at speed: Race._redStep), VOZIŠ TI! behind the safety
+  // car. Stuck on the way (a wreck against a wall): back on the road, as an AI car. rap.on: driving; st, k: the bar's part and fill (pitBar)
+  const rap = { on: false, st: '', k: 0, u0: 0 };
+  function redCtl(P, hold) {
+    const ok = phase === 'racing' && !hold && !autoDrive && !P.finished, on = ok && !!(race.fl && race.fl.red && P.fl && P.fl.rq) && !(P.inPit && (P.pitState === 'stop' || P.pitState === 'repair'));
+    if (on && !rap.on) { rap.on = true; rap.st = ''; rap.k = 0; if (pa.st || P.pitAP) pitFree(P, false); hap('pitAP'); }
+    else if (!on && rap.on) { rap.on = false; P.noReverse = false;
+      if (ok && !(P.fl && P.fl.rq)) { showMsg(tr('VOZIŠ TI!'), 'fast', 1.4); Sfx.beep(1040, 0.42, 0.16); hap('handBack'); teamRadioGo(); } }   // (let go by the queue; a stop of its own: the pit autopilot's hand-back at its end)
+    if (rap.on && (P.stuckT > 3.5 || P.wrongT > 3) && !(P.wreck && (P.wreck.dnf || P.wreck.hold > 0))) race.rescue(P);
+    return rap.on;
   }
   // the flying start of a race up an open road (Race opts.flying = FLY_T): the race already under way, the cars in a line ~10 s long (Race._flyColumn),
   // the player's car FLY_T s below the start line on the autopilot; in the middle three amber lights, one going out at each whole second of race time,
@@ -3995,8 +4028,18 @@
     return Math.max(o, pa.bi);
   }
   function pitBar(P) {
-    const el = $('h-pit'); let k = -1, lbl = '';
-    if (pa.st === 'lane' && pa.go && pa.b != null) {
+    const el = $('h-pit'), Rd = rap.on && race.fl && race.fl.red; let k = -1, lbl = '', ttl = tr('AVTOPILOT · spusti plin');
+    if (Rd) {   // (the red flag: the way to the queue, then the queue filling up, the hold's seconds to the restart, the restart; its bar from 0 in each part)
+      const f = P.fl, L = race.track.len, inQ = Rd.st === 'in' && (rap.st === 'q' || (f.rh && P.speed < 0.6)), part = Rd.st === 'in' ? (inQ ? 'q' : 'in') : Rd.st;   // (once standing in it: the queue's count from then on)
+      if (part !== rap.st) { rap.st = part; rap.k = 0; rap.u0 = 0; }
+      ttl = tr('AVTOPILOT · RDEČA ZASTAVA');
+      if (part === 'in') { const u = Math.max(0, f.rT != null ? f.rT - P.dist : (((Rd.H - P.q.s) % L) + L) % L); rap.u0 = Math.max(rap.u0, u, 1); k = 1 - u / rap.u0; lbl = tr(Rd.pit ? 'Do boksov: {0} km' : 'Do štarta: {0} km', kmTxt(u, 1)); }   // (the m to its place in the queue: to the head until it is set)
+      else if (part === 'q') { const n = Rd.left, m = Math.max(0, n - Rd.wait); k = n > 0 ? m / n : 0; lbl = tr('V vrsti: {0}/{1}', m, n); }
+      else if (Rd.st === 'hold') { k = clamp(Rd.t / Core.RED.hold, 0, 1); lbl = tr('Ponovni štart čez {0} s', Math.max(1, Math.ceil(Core.RED.hold - Rd.t - 1e-6))); }
+      else { k = 1; lbl = tr('Za varnostnim avtom'); }
+      k = rap.k = Math.max(rap.k, k);
+    }
+    else if (pa.st === 'lane' && pa.go && pa.b != null) {
       if (P.pitBoxT == null && !P.pitDone && P.pitState && race.track.boxX(P.q.s, pa.b) > -PB_BOX) P.pitBoxT = race.time;   // (the car brakes into its box: the pit stop's camera to its side unless POTRDI did it, Render pitCine)
       if (cst.on) stopStep(P);
       if (cst.ok) {
@@ -4008,9 +4051,10 @@
     } else if (pa.st === 'merge') { k = PB_M + (1 - PB_M) * clamp(1 - pa.t / PIT_OUT, 0, 1); lbl = tr('Prevzameš čez {0}', pa.n || 1); }
     const tch = $('touch'), ap = k >= 0 || cst.on; if (tch.classList.contains('ap') !== ap) tch.classList.toggle('ap', ap);   // (#touch.ap: no tilt meter while the autopilot steers, css)
     { const v = pitBtnVis(P); if (v !== pa.bv) { pa.bv = v; if (v >= 1) tch.style.removeProperty('--apv'); else tch.style.setProperty('--apv', v.toFixed(3)); } }   // (the driving buttons: css #touch .tb, #c-wheel)
-    if (k < 0) { if (el.classList.contains('on')) el.classList.remove('on'); return; }
-    pa.k = Math.max(pa.k, k);
-    const w = (pa.k * 100).toFixed(1) + '%', bar = el.lastElementChild.firstElementChild, ttl = tr('AVTOPILOT · spusti plin');
+    if (k < 0) { if (el.classList.contains('on')) el.classList.remove('on'); if (el.classList.contains('red')) el.classList.remove('red'); return; }
+    if (!Rd) pa.k = Math.max(pa.k, k);
+    const w = ((Rd ? k : pa.k) * 100).toFixed(1) + '%', bar = el.lastElementChild.firstElementChild;
+    if (el.classList.contains('red') !== !!Rd) el.classList.toggle('red', !!Rd);   // (css: the red edge, no wrench)
     if (el.firstElementChild.textContent !== ttl) el.firstElementChild.textContent = ttl;
     if (el.children[1].textContent !== lbl) el.children[1].textContent = lbl;
     if (bar.style.width !== w) bar.style.width = w;
@@ -4257,7 +4301,8 @@
       g.fillStyle = hexCss(c.color); g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 1 * d;
       g.beginPath(); g.arc(x, y, 2.6 * d, 0, 6.2832); g.fill(); g.stroke();
     }
-    if (race.fl) {   // flags: a yellow zone (the stopped car: a yellow ring), the safety car (an orange square)
+    if (race.fl) {   // flags: a yellow zone (the stopped car: a yellow ring), the safety car (an orange square), the red flag's pile-up (a red ring, until the restart)
+      const Rd = race.fl.red; if (Rd && Rd.st !== 'go' && Rd.x != null) { const x = Rd.x * mm.sc + mm.ox, y = Rd.z * mm.sc + mm.oz; g.strokeStyle = '#ff3b2e'; g.lineWidth = 2.5 * d; g.beginPath(); g.arc(x, y, 8 * d, 0, 6.2832); g.stroke(); }
       for (const yl of race.fl.yel) { const c = yl.car, x = c.x * mm.sc + mm.ox, y = c.z * mm.sc + mm.oz; g.strokeStyle = '#ffd21f'; g.lineWidth = 2 * d; g.beginPath(); g.arc(x, y, 5.5 * d, 0, 6.2832); g.stroke(); }
       const X = race.fl.sc && race.fl.sc.car; if (X) { const x = X.x * mm.sc + mm.ox, y = X.z * mm.sc + mm.oz; g.fillStyle = '#ffa21a'; g.strokeStyle = '#111'; g.lineWidth = 1 * d; g.fillRect(x - 3 * d, y - 3 * d, 6 * d, 6 * d); g.strokeRect(x - 3 * d, y - 3 * d, 6 * d, 6 * d); }
     }
@@ -4526,6 +4571,7 @@
     const prev = st.said[k], heard = !!(prev && prev.item && prev.item.spoken && !prev.item.cut);
     let r = '';
     if (heard && (race.laps < 3 || lap - prev.lap < 2 || Math.random() > 0.35)) r = 'heard';
+    else if (race.fl && race.fl.red && race.fl.red.st !== 'go') r = 'red';   // (the race stopped: no racing lines on the slow way to the queue)
     else if (race.time - st.lastT < (race.laps > 1 ? PLACE_GAP : PLACE_GAP_ONE)) r = 'gap';
     else if (race.timeTrial && track.cpDist.some(c => c > P.dist && c - P.dist < 150)) r = 'cp';   // a checkpoint split is about to be called
     else if ((track.open ? track.raceLen : race.laps * track.len) - P.dist < 200) r = 'finish';   // the finish call would cut it off
@@ -4647,7 +4693,7 @@
   // the weather)
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
-    ['warn', /PREDRT|PREBIT|PUNCTURE|IZRABLJEN|TYRES WORN|POČIL|POČEN|BURST|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
+    ['warn', /PREDRT|PREBIT|PUNCTURE|IZRABLJEN|TYRES WORN|POČIL|POČEN|BURST|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|RDEČA ZASTAVA|RED FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
     ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POPOLN IZHOD|PERFECT EXIT|POLNI PLIN|FLAT OUT/],
     ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED|DOLITO|TOPPED UP|NAPOLNJENO|CHARGED|POSTANEK OPRAVLJEN|STOP DONE/],
     ['pit', /BOKS|PIT|BOX|^[+\u2212]\d+ (MEST|PLACE)|^BREZ SPREMEMBE$|^NO CHANGE$/]];   // (a stop's places: +2 MESTI, −1 MESTO; not the finish's CILJ! 3. MESTO)
@@ -4676,7 +4722,7 @@
     if (M.classList.contains('show') && hcol.fit !== M.textContent + '@' + m.width) { hcol.fit = M.textContent + '@' + m.width; hcol.f = fitMsg(M, M.dataset.ic === 'pit' ? 15 : 22, MSG_MIN); }   // (the pits: smaller, heavier letters)
     if (P.classList.contains('on')) {   // (the progress bar's label: one size for all of them, the longest on one line; the title on one line down to 8 px, else in two)
       const S2 = P.children[1], c = hcol.cx || (hcol.cx = document.createElement('canvas').getContext('2d')); c.font = '700 12px ' + getComputedStyle(S2).fontFamily;
-      const lw = Math.max(...[tr('Prevzameš čez {0}', 3), tr('Prevzem čez {0} s', Lang.dec('28.8'))].map(t => c.measureText(t).width));
+      const lw = Math.max(...(P.classList.contains('red') ? [tr('Do boksov: {0} km', kmTxt(9999, 1)), tr('Do štarta: {0} km', kmTxt(9999, 1)), tr('V vrsti: {0}/{1}', 30, 30), tr('Ponovni štart čez {0} s', Core.RED.hold), tr('Za varnostnim avtom')] : [tr('Prevzameš čez {0}', 3), tr('Prevzem čez {0} s', Lang.dec('28.8'))]).map(t => c.measureText(t).width));   // (the red flag's labels, pitBar)
       S2.style.fontSize = clamp(12 * (S2.clientWidth - 2) / lw, 9, 12).toFixed(1) + 'px';
       const B = P.firstElementChild; B.classList.remove('wrap'); B.style.fontSize = '';
       if (B.scrollWidth > B.clientWidth) { const f = Math.floor(parseFloat(getComputedStyle(B).fontSize) * (B.clientWidth - 1) / B.scrollWidth * 10) / 10; if (f >= 8) B.style.fontSize = f + 'px'; else B.classList.add('wrap'); } }
@@ -4901,7 +4947,7 @@
     if (!cs || !race) return;
     const P = race.player, pos = P.pos || cs.lastPos, n = race.laps, ord = race.order || [], tt = race.timeTrial;
     // position changes (must hold for 1 s, so side-by-side battles don't flicker); a time trial has no positions, laps or gaps (its checkpoints are called in updateHUDTT)
-    if (mp && mp.race && mp.race.off) cs.lastPos = pos;   // (a friend who left is no place lost or won)
+    if ((mp && mp.race && mp.race.off) || (race.fl && race.fl.red)) cs.lastPos = pos;   // (a friend who left is no place lost or won; nor a car passed standing in the red flag's queue)
     if (!tt && pos !== cs.lastPos) {
       cs.posHold += dt;
       if (cs.posHold > 1.0) {
@@ -4943,12 +4989,12 @@
     if (P.wrongT > 1.1 && !race.nv && cool('wrong', 10)) Comm.say('wrong', null, 3);   // (NEW VERSION · TEST 1: free driving, no wrong way)
     // a car glued to the rear bumper
     const behind = ord[pos], gapB = behind ? P.dist - behind.dist : 99;
-    if (gapB > 0 && gapB < 12) cs.pressT += dt; else cs.pressT = 0;
+    if (gapB > 0 && gapB < 12 && !(race.fl && race.fl.red)) cs.pressT += dt; else cs.pressT = 0;   // (the red flag's queue: nose to tail, no pressure)
     if (cs.pressT > 3 && cool('pressure', 35)) { Comm.say('pressure', null, 1); cs.pressT = 0; }
     if (tt) return;
     // now and then: the gap to the leader / to second place
     cs.chatT -= dt;
-    if (cs.chatT <= 0 && !(mp && mp.race && mp.race.off)) {   // (not to a friend who has left)
+    if (cs.chatT <= 0 && !(mp && mp.race && mp.race.off) && !(race.fl && race.fl.red)) {   // (not to a friend who has left; nor while the race is stopped)
       cs.chatT = 32 + Math.random() * 14;
       const v = Math.max(P.speed, 15);
       if (pos === 1 && ord[1]) { const g = (P.dist - ord[1].dist) / v; if (g > 0.6) Comm.say('gapLead', { gap: g.toFixed(1) }, 1); }
