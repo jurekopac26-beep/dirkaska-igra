@@ -78,8 +78,8 @@ try {
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
   const sr = await slovene();
-  T.check('career in English, the money as €10,000; the garage under the categories (Small cars … Specials), the prices as €6,000', /^In the career you earn money/.test(r5.info) && /You start with €10,000 and the PICO TURBO\./.test(r5.info) && r5.money === '€10,000' && r5.toggle === 'Start career' &&
-    r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^€\d+,\d{3}$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
+  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the PICO TURBO\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
+    r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^\d+,\d{3}\u00a0🪙$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
   await act('to-title'); await page.waitForTimeout(150); await act('to-online'); await page.waitForTimeout(250);
   const o5 = await page.evaluate(() => document.querySelector('#s-online').innerText);
   const so = await slovene();
@@ -99,7 +99,12 @@ try {
   const p6 = await page.evaluate(() => ({ restart: document.getElementById('pause-restart').textContent }));
   const sp = await slovene();
   T.check('pause in English: Restart race', p6.restart === 'Restart race' && !sp.length, JSON.stringify({ p6, sp }));
-  await page.evaluate(() => { const g = window.__game; for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
+  // (the race to the end on autopilot; stuck or the wrong way round it is put back on the road after each 2 s, like a player tapping
+  // Na progo: the autopilot has no reverse gear and the race rescues only the rivals. Trki med avti, Simulacija: a knock can leave the
+  // player's car against the barrier, and in CI the results once did not come in 600 s and the 180 s after)
+  await page.evaluate(() => { const g = window.__game;
+    for (let k = 0; k < 300 && g.phase !== 'done'; k++) { g.sim(2, true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); }
+    if (g.phase !== 'done') g.resume(); });
   await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   const r6 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, sub: document.getElementById('res-sub').textContent, head: document.querySelector('#res-table thead').innerText }));
   const sR = await slovene();
