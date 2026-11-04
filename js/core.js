@@ -3036,6 +3036,10 @@ const Core = (function () {
   // with the box, parallel to the lane, from fl m before it: the car stands straight), out over outL m, at v m/s; room: the wall there, m past
   // the lane's edge; k: what the S in and out costs over a stop in the lane (s, Race.pitLoss)
   const BAY = { o: 4, inL: 22, fl: 5, outL: 22, v: 9, room: 8.4, k: 1 };
+  // the red flag (Race opts.flags, Race._redOut): a pile-up (n cars stopped together within near m, or two of them past dmg damage) with the
+  // leader more than togo laps from the finish; the field to the queue at v m/s at most (vz in a yellow zone), gap m apart in it, hold s
+  // there once all are in it; at most tIn s and a lap at v for the field to line up, go s for the queue to be on its way again
+  const RED = { n: 3, near: 100, dmg: 0.6, togo: 3, v: 36, vz: 14, gap: 2.5, hold: 7, tIn: 40, go: 90 };
   const FLY_GAP = 10 / 12, FLY_SPAN = 30, FLY_KEEP = 0.8, FLY_PL = 0.9, FLY_NEAR = 0.3;   // the flying start's column (Race._flyColumn): ~10 s from the 13th car to the 1st, 30 s at most; the share of its gap each one keeps until the player is over the line; the player's autopilot's share of its pace (a margin: no slide into a wall mid-corner); the car right ahead of the player: this many s of its pace ahead, at its pace (it does not get away)
   const LANE_K = 4.5, SC_K = 0.45, TYRE_WORN = 0.75, ETA_A = 5;   // a stop's cost (Race.pitLoss): the braking into the lane and the speeding up out of it (s); behind the safety car; worn slicks (Race.plan; any set: the HUD's warning); the speeding up in the lane (m/s², Race.pitETA)
   // an AI car in for repairs (Race.step, damage on): about the damage it comes in at (each driver a little either side of it), the run-up to
@@ -3804,18 +3808,32 @@ const Core = (function () {
       const P = race.player; if (c.flyP && P && P.vl > 3 && !dnf(P)) vT = Math.min(vT, Math.max(0, P.vl) + 1.5 + (c.flyG0 - (c.dist - P.dist)) * 0.45);   // (the car right ahead of the player: not much further ahead of it than it started; a little room on the throttle, the two do not hold each other back)
       if (c === race.player) { const rem = race.opts.flying - race.time; if (c.dist < 0 && rem > 0.5) vT = Math.min(vT, Math.max(8, -c.dist / rem)); }   // (no braking in the last half second: handed over at its speed)
     }
-    if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart
-      const F = race.fl, S = F.sc;
-      if (c.sc) { if (!(S && S.state === 'in' && !S.pit)) vT = Math.min(vT * 0.75, 36); }   // (speeding off: at full pace)
+    if (race.fl) {   // flags: the safety car's steady pace; slower through a yellow; the queue behind the safety car, 15 m apart; the red flag's queue
+      const F = race.fl, S = F.sc, R = F.red, f = c.fl;
+      if (c.sc) {
+        if (!(S && S.state === 'in' && !S.pit)) vT = Math.min(vT * 0.75, 36);   // (speeding off: at full pace)
+        if (S && S.red && S.state === 'out' && R && R.lead) { const h = R.lead; let g = q.s - h.q.s; g = ((g % T.len) + T.len) % T.len; vT = Math.min(vT, Math.max(6, Math.max(0, h.vl) + (55 - g) * 0.4)); }   // (the restart after a red flag: 55 m ahead of the leader on its way out of the lane or off the grid)
+      }
       else if (!c.finished) {
         if (F.yel.length && race._yelAt(q.s)) vT *= 0.8;
-        if (S && S.car && !c.inPit && !c.pitWant) {
+        if (R && f && f.rq) {   // (the red flag: to the queue at RED.v, RED.vz past an incident; stopping at its head, else behind the car ahead on the road or in the lane, whatever lap it is on)
+          vT = Math.min(vT, F.yel.length && race._yelAt(q.s) ? RED.vz : RED.v);
+          let vq = Infinity;   // (what the queue allows: the stop at its head, the car ahead)
+          if (f.rT != null && R.st !== 'go') { const e = f.rT - c.dist; vq = e > 0.3 ? Math.sqrt(7 * (e - 0.3)) : 0; }
+          const a = f.ra; if (a) { const av = Math.max(0, a.vl), e = f.rg - ((a.m.len + M.len) / 2 + RED.gap + 0.4 * v); vq = Math.min(vq, e > 0 ? Math.sqrt(av * av + 7 * e) : Math.max(0, av + e * 0.8)); }
+          vT = Math.min(vT, vq);
+          f.rw = vq < Math.max(3, v + 1.5); f.rh = vq < 0.5 || (f.rh && vq < 2.5 && v < 1.5);   // (held back by the queue: no incident, not stuck; standing in it: on the brake, below, until the car ahead has moved off ~1 m)
+        }
+        else if (S && S.car && !c.inPit && !c.pitWant) {
           let gap = 1e9, a = null;
-          const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null;   // (a big field: up the list sorted by dist from the car on, the same one as the loop over all of them)
-          if (BD) { for (let k = distFrom(BD, c.dist); k < BD.length; k++) { const o = BD[k], g = o.dist - c.dist; if (g > gap) break; if (o === c || o.finished || o.inPit || o.pitWant || dnf(o) || !(g > 0)) continue; if (g < gap || race.cars.indexOf(o) < race.cars.indexOf(a)) { gap = g; a = o; } } }   // (level: the first of race.cars)
-          else for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant || dnf(o)) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }   // (not behind a retired car)
           const off = S.state === 'in' && !S.pit;   // (speeding off up the road: the field lets it go, at a steady pace)
-          const gS = S.car.dist - c.dist; if (gS > 0 && gS < gap && !off && !(S.car.pitWant && T.pitAt(S.car.q.s))) { gap = gS; a = S.car; }   // (the safety car turning into the pit lane: not any more)
+          if (R) { if (f && f.ra && !(off && f.ra === S.car)) { a = f.ra; gap = f.rg; } }   // (the restart after a red flag: the car ahead on the road, whatever lap it is on)
+          else {
+            const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null;   // (a big field: up the list sorted by dist from the car on, the same one as the loop over all of them)
+            if (BD) { for (let k = distFrom(BD, c.dist); k < BD.length; k++) { const o = BD[k], g = o.dist - c.dist; if (g > gap) break; if (o === c || o.finished || o.inPit || o.pitWant || dnf(o) || !(g > 0)) continue; if (g < gap || race.cars.indexOf(o) < race.cars.indexOf(a)) { gap = g; a = o; } } }   // (level: the first of race.cars)
+            else for (const o of race.cars) { if (o === c || o.finished || o.inPit || o.pitWant || dnf(o)) continue; const g = o.dist - c.dist; if (g > 0 && g < gap) { gap = g; a = o; } }   // (not behind a retired car)
+            const gS = S.car.dist - c.dist; if (gS > 0 && gS < gap && !off && !(S.car.pitWant && T.pitAt(S.car.q.s))) { gap = gS; a = S.car; }   // (the safety car turning into the pit lane: not any more)
+          }
           if (off) vT = Math.min(vT, 0.7 * vpA);
           if (a && gap < 400) vT = Math.min(vT, Math.max(0, a.vl) + (gap - 15) * 0.45);
           vT = Math.min(vT, 46);
@@ -3828,6 +3846,8 @@ const Core = (function () {
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;
     else { thr = 0; brk = clamp((v - vT) / 4.5, 0.15, 1); }
+    let hand = 0;
+    if (c.fl && c.fl.rh && v < 1.5) { thr = 0; brk = v > 0.6 ? 1 : 0.1; hand = 1; }   // (standing in the red flag's queue: on the brake, no creeping on part throttle; stopped, the handbrake as parkBrake: a held brake pedal at a standstill would engage reverse)
     if (c.chr && !c.isPlayer) {   // a braking zone begins (once: until back on the throttle): a car under pressure (someone right behind for 4 s) may get it wrong, the more nervous the likelier
       const ch = c.chr;
       if (brk > 0.3 && !ch.brk) {
@@ -3850,7 +3870,7 @@ const Core = (function () {
       if (c.parked) { thr = 0; brk = 1; }
     }
     if (T.open && T.len - q.s < 6 + v * v / 40) { thr = 0; brk = 1; }   // open road: stop (and stay stopped) well short of the wall at the top end
-    c.inThr = thr; c.inBrk = brk; c.inHand = 0;
+    c.inThr = thr; c.inBrk = brk; c.inHand = hand;
   }
 
   /* ---------------------------------------------------------------------
@@ -5768,7 +5788,8 @@ const Core = (function () {
       return B.length ? B[(j >= 0 ? j : (c.grid - 1)) % B.length] : P[3];
     }
     // a car's box: the player's def.pit[3], an AI car's its crew's (_aiBox); none for the safety car or a friend's car online
-    _boxD(c) { const P = this.track.def.pit; return !P || c.sc || c.net ? null : c.isPlayer ? (P[3] != null ? P[3] : null) : this._aiBox(c); }
+    _boxD(c) { const P = this.track.def.pit; return !P || c.sc || c.net || (c.fl && c.fl.rq && !this._inStop(c)) ? null : c.isPlayer ? (P[3] != null ? P[3] : null) : this._aiBox(c); }   // (the red flag's queue: no box, a stop under way finished first)
+    _inStop(c) { return !!c.inPit && (c.pitState === 'stop' || c.pitState === 'repair' || !!c.pitDone); }   // (a stop under way: braking into the box, at work, done and not out of the lane yet)
 
     // speed profile for the AI (on the racing line); an upgraded player's autopilot brakes later with better brakes (its own profile).
     // Rain: the corners as much slower as the grip is lower, the braking as the brakes (see Car). A formula race: the formula's profile (its
@@ -6018,7 +6039,7 @@ const Core = (function () {
         if (c.net || (ST && !ST[ci])) continue;   // (the friend's car: placed from the network, see game.js; a far car between its steps)
         const cdt = SD ? SD[ci] : dt;
         if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
-          if (this.state === 'racing' && !c.finished && !c.inPit) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * cdt);
+          if (this.state === 'racing' && !c.finished && !c.inPit && !(c.fl && c.fl.rh)) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * cdt);
           c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
           const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = ((c.fuelF != null ? c.fuelF : 1) - c.fuel) / used;   // (fuelF: what a stop filled it up to, when not to the brim: the player's choice)
         }
@@ -6153,7 +6174,7 @@ const Core = (function () {
         if (c.inPit && !c.net && c.pitState !== 'repair' && c.speed < 1.2 && fwd < 0.85 && (this.state === 'racing' || this.state === 'done')) c.wedgeT = (c.wedgeT || 0) + cdt; else if (c.wedgeT) c.wedgeT = 0;   // (the timer only on a car that got knocked across)
         if (c.wedgeT > 2) { const y = c.y, i = q.i; c.place(c.x, c.z, Math.atan2(q.tz, q.tx)); c.y = c.py = y; c.q.i = i; c.wedgeT = 0; }   // (where it stands: its height and its road sample kept, the autopilot steers from it before the next step)
         // stuck detection (AI auto-rescue)
-        if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished)) c.stuckT += cdt; else c.stuckT = Math.max(0, c.stuckT - cdt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
+        if (!c.locked && (!c.pitState || (c.ty && !c.isPlayer && c.pitState === 'done')) && c.speed < 1.2 && (this.state === 'racing' || this.state === 'done') && !(T.open && c.finished) && !(c.fl && c.fl.rw)) c.stuckT += cdt; else c.stuckT = Math.max(0, c.stuckT - cdt);   // (an AI car that came in for tyres: also when stuck on its way out; pulled up past the finish of an open road: not stuck)
         if (!c.isPlayer && (c.stuckT > (c.inPit && c.fuel != null ? 30 : c.ty && c.inPit ? 12 : 3.5) || c.wrongT > 3) && !(T.open && c.finished) && !(c.wreck && (c.wreck.dnf || c.wreck.hold > 0))) this.rescue(c);   // (in for tyres: waiting in the pit lane behind a car at its box is no reason, behind one filling up longer still; not a car pulled up past the finish of an open road, nor a retired one or one the marshals are fixing)
       }
       if (this._bp) this._bp.bd = null;   // (the cars sorted by dist: built again when asked for, _byDist)
@@ -6269,6 +6290,8 @@ const Core = (function () {
       // (a safe release: an AI car standing at its box after the stop is held there while a car comes down the lane beside it or less than
       // ~2.5 s behind it, else it would pull out into that one, two ghosts in each other; the busier lane of the rivals in for repairs)
       else if (c.pitDone && !c.isPlayer && bd != null && sp < 2 && Math.abs(T.boxX(q.s, bd)) < 5) {
+        const R = this.fl && this.fl.red;   // (the red flag's queue in the lane, standing or not: until it has gone by, from 30 m ahead of the box to 8 m behind it)
+        if (R && R.st !== 'go') for (const o of this.cars) { if (o === c || !o.inPit || !o.fl || !o.fl.rq || this._inStop(o)) continue; let g = c.dist - o.dist; g = ((g % T.len) + T.len) % T.len; if (g > T.len / 2) g -= T.len; if (g > -30 && g < 8) { c.vx = c.vz = 0; c.w = 0; c.stuckT = 0; return; } }
         for (const o of this.cars) { if (o === c || !o.inPit || !(o.speed > 2)) continue; let g = c.dist - o.dist; g = ((g % T.len) + T.len) % T.len; if (g > T.len / 2) g -= T.len;   // (on the same lap: two in the pits, whatever lap each is on, as the pit road's gaps above)
           if (g > -(o.m.len + c.m.len) * 0.5 && g < 8 + o.speed * 2.5) { c.vx = c.vz = 0; c.w = 0; c.stuckT = 0; return; } }
       }
@@ -6281,13 +6304,15 @@ const Core = (function () {
     // when the leader has more than a lap and a quarter to go. It comes out 90-350 m ahead of the leader, the field queues up behind it
     // (15 m apart, no overtaking); after 25 s, with the queue formed (or after 40 s), it goes in (into the pit lane when that is less than
     // half a lap ahead, else it speeds off up the road), and nobody overtakes until the leader is back at the line. The player: overtaking under a flag (not a stopped car,
-    // not one in the pit lane, not a retired one) has to be given back within 10 s, else +5 s on the race time (c.fl.pen)
+    // not one in the pit lane, not a retired one) has to be given back within 10 s, else +5 s on the race time (c.fl.pen). The red flag
+    // (RED): once a race, after a pile-up with the leader more than RED.togo laps from the finish; the field in a queue in the pit lane (or
+    // on the grid), no overtaking, then a restart behind the safety car (Race._redOut, _redStep)
     _yelAt(s) {
       const L = this.track.len;
       for (const y of this.fl.yel) { let d = y.s - s; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d > -30 && d < 250) return y; }
       return null;
     }
-    _noPass(c) { const F = this.fl; return !!(F && (F.sc || (F.yel.length && this._yelAt(c.q.s)))); }
+    _noPass(c) { const F = this.fl; return !!(F && (F.sc || F.red || (F.yel.length && this._yelAt(c.q.s)))); }
     _flags(dt) {
       const F = this.fl, T = this.track, L = T.len, cars = this.cars;
       if (this.state !== 'racing') return;
@@ -6300,7 +6325,7 @@ const Core = (function () {
         const cdt = LD ? LD.dt[ci] : dt;
         if (c.net || c.finished || (dnf(c) && this.time - c.wreck.dnfT > 30 && retiredOff(T, c, -0.2))) { f.stopT = 0; continue; }   // (a retired car: an incident for 30 s and until it stands where it may: off the asphalt, or at the barrier)
         f.v += (c.speed - f.v) * Math.min(1, cdt * 2);   // (the speed over about half a second: a knock from another car does not end a stop)
-        const onTrack = !c.inPit && !c.pitWant && !c.pitState, stopped = onTrack && c.lap >= 1 && f.v < 3;
+        const onTrack = !c.inPit && !c.pitState && (f.rq ? !c.pitG : !c.pitWant), stopped = onTrack && c.lap >= 1 && f.v < 3 && !(f.rq && (f.rw || (F.red && F.red.st === 'go')));   // (the red flag: a car on its way to the pit lane may be stopped too; one held by the queue, or getting under way with it, is none)
         f.stopT = stopped ? f.stopT + cdt : 0;
         if (f.stopT > 1) {
           if (!f.yel) { f.yel = { s: c.q.s, t: 5, car: c }; F.yel.push(f.yel); F.ev++; F.evK = 'yellow'; }
@@ -6310,8 +6335,16 @@ const Core = (function () {
       }
       for (const y of F.yel) if (!(y.car.fl.stopT > 0)) y.t -= dt;
       if (F.yel.some(y => y.t <= 0)) { for (const y of F.yel) if (y.t <= 0) y.car.fl.yel = null; F.yel = F.yel.filter(y => y.t > 0); }
+      // the red flag: out after a pile-up (a car badly damaged among them), with the leader more than RED.togo laps from the finish; once a
+      // race, not online nor in the title screen's race
+      if (!F.redUsed && stop.length > 1 && lead && lead.lap >= 1 && this.laps * L - lead.dist > L * RED.togo && !this.opts.noPlayer && !cars.some(c => c.net)) {
+        let big = false;
+        for (const c of stop) { let n = 0, hv = 0; for (const o of stop) { let d = o.q.s - c.q.s; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (Math.abs(d) < RED.near) { n++; if (o.dmg > RED.dmg) hv++; } } if ((n >= RED.n && hv) || hv > 1) { big = true; break; } }
+        if (big) this._redOut(stop);
+      }
+      if (F.red) this._redStep(dt);
       // the safety car: out
-      if (!F.scUsed && lead && lead.lap >= 1 && this.laps * L - lead.dist > L * 1.25) {
+      if (!F.scUsed && !F.red && !F.sc && lead && lead.lap >= 1 && this.laps * L - lead.dist > L * 1.25) {   // (not while the restart after a red flag is under way)
         const heavy = stop.some(c => c.dmg > 0.5 || c.fl.stopT > 6 || stop.some(o => o !== c && Math.abs(o.dist - c.dist) < 60));
         if (heavy) this._scOut(lead);
       }
@@ -6322,7 +6355,7 @@ const Core = (function () {
         S.stuck = X.speed < 1.2 && !X.inPit ? (S.stuck || 0) + dt : 0;   // (stopped on the road for 3 s (knocked off it, turned round): it has no reverse and no marshals; it goes, the race goes on)
         X.wet = 1 - (1 - WET) * (this.wst ? this.wst.water : this.rain);
         const gl = lead ? X.dist - lead.dist : 1e9;
-        if (S.state === 'out' && S.t > 25 && gl < 45) {   // in this lap: once the field has closed up behind it (or after 80 s)
+        if (S.state === 'out' && S.t > 25 && gl < 45 && !(S.red && F.red && F.red.left)) {   // in this lap: once the field has closed up behind it (or after 80 s; after a red flag: the queue on its way, every car out of the pit lane or off the grid)
           let formed = true, prev = lead.dist;
           for (const c of this.order) { if (c === lead || c.finished || c.inPit || c.pitWant || (c.fl && c.fl.stopT > 0) || dnf(c) || lead.dist - c.dist > L / 2) continue; if (prev - c.dist > 40) { formed = false; break; } prev = c.dist; }
           if (formed || S.t > 40) {   // (into the pit lane when its way in is less than half a lap ahead; else it speeds off up the road)
@@ -6337,7 +6370,7 @@ const Core = (function () {
         }
       }
       if (S) {
-        if (S.state === 'gone' && lead && lead.lap > S.lap0) { F.sc = null; F.ev++; F.evK = 'green'; }   // (the leader at the line: racing again)
+        if (S.state === 'gone' && lead && lead.lap > S.lap0 && !(F.red && F.red.st !== 'go')) { F.sc = null; F.ev++; F.evK = 'green'; }   // (the leader at the line: racing again; not while the red flag holds the race)
         if (F.sc && (!lead || lead.finished)) F.sc = null;
         if (S.state !== 'gone' && lead) S.lap0 = lead.lap;
       }
@@ -6358,18 +6391,97 @@ const Core = (function () {
         }
       }
     }
-    // the safety car out: ahead of the leader, on the racing line where the road is clear (90-350 m on)
-    _scOut(lead) {
-      const F = this.fl, T = this.track;
+    // the safety car out: ahead of the leader, on the racing line where the road is clear (90-350 m on). red: the restart after a red flag,
+    // past the way out of the pit lane (the queue in it) or 25 m ahead of the queue's head on the grid, rolling off; not the race's one
+    // safety car (scUsed: a crash later on may still bring it out)
+    _scOut(lead, red) {
+      const F = this.fl, T = this.track, R = red ? F.red : null;
       let s0 = lead.q.s + 90;
-      for (let k = 0; k < 13; k++, s0 += 20) { const i = T.idx(s0); let clear = true; for (const c of this.cars) { const dx = c.x - T.px[i], dz = c.z - T.pz[i]; if (dx * dx + dz * dz < 30 * 30) { clear = false; break; } } if (clear) break; }
+      const at = R && (R.pit ? !!(lead.inPit || lead.pitG) : (((R.H - lead.q.s) % T.len) + T.len) % T.len < 60);   // (the leader at the queue's head: else, the queue not formed in time, ahead of it as any time)
+      if (at) s0 = R.pit ? T.startS + T.pitJ().b + 15 : R.H + 25;
+      else for (let k = 0; k < 13; k++, s0 += 20) { const i = T.idx(s0); let clear = true; for (const c of this.cars) { const dx = c.x - T.px[i], dz = c.z - T.pz[i]; if (dx * dx + dz * dz < 30 * 30) { clear = false; break; } } if (clear) break; }
       const i = T.idx(s0), off = T.rl[i], X = new Car(MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, skill: 1, assist: CSK.aiAssist, phys: this.opts.phys, laneBias: 0 });
       X.sc = true; X.num = 0; X.grid = 0; X.rubber = 1; X.dmgMode = 0; X.locked = false;
       X.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) X.y = X.py = T.hy[i];
       X.q = T.query(X.x, X.z, i, X.q); X.sPrev = X.q.s;
       let d = X.q.s - lead.q.s; d = ((d % T.len) + T.len) % T.len; X.dist = lead.dist + d;
-      const v = Math.min(30, Math.max(12, lead.speed)); X.vx = Math.cos(X.h) * v; X.vz = Math.sin(X.h) * v;
-      F.sc = { car: X, state: 'out', t: 0, lap0: lead.lap }; F.scUsed = true; F.ev++; F.evK = 'sc';
+      const v = at ? (R.pit ? 8 : 3) : Math.min(30, Math.max(12, lead.speed)); X.vx = Math.cos(X.h) * v; X.vz = Math.sin(X.h) * v;
+      F.sc = { car: X, state: 'out', t: 0, lap0: lead.lap }; if (R) F.sc.red = true; else { F.scUsed = true; F.ev++; F.evK = 'sc'; }
+    }
+    // the red flag out (RED, Race._flags): every car still running in the queue's charge (c.fl.rq), the queue in the pit lane when the lane
+    // between the pit wall's ends holds the field, else on the grid; a safety car out goes in (one gone already: no green for it)
+    _redOut(stop) {
+      const F = this.fl, T = this.track, L = T.len, J = T.def.pit && !T.free ? T.pitJ() : null, run = this.cars.filter(c => c.fl && !c.finished && !dnf(c) && !c.net);
+      let need = 0; for (const c of run) need += c.m.len + RED.gap;
+      const pit = !!J && J.gb - 8 - J.ga > Math.max(60, need), c0 = stop[0];   // (the head's nose short of the exit's light, J.gb - 4: render.js crewExit)
+      F.red = { st: 'in', t: 0, pit, H: T.startS + (pit ? J.gb - 8 : -1), s: c0.q.s, x: c0.x, z: c0.z, left: run.length, wait: run.length, gate: null, lead: null, bk: [[], []] };
+      F.redUsed = true; F.ev++; F.evK = 'red';
+      const S = F.sc;
+      if (S && S.car && S.state === 'out') { let dp = T.def.pit ? T.startS + T.def.pit[1] - S.car.q.s : 0; dp = ((dp % L) + L) % L; S.state = 'in'; S.pit = !!T.def.pit && dp < L / 2; if (S.pit) S.car.pitWant = true; if (S.t < 10) F.scUsed = false; }   // (out for the same pile-up a moment before: the race's safety car still to come)
+      else if (S && !S.car) F.sc = null;
+      for (const c of run) { const f = c.fl; f.rq = true; f.rw = f.rh = false; f.rT = null; f.ra = null; f.rg = 0; }
+    }
+    _redFree(c) { const f = c.fl; f.rq = f.rw = f.rh = false; f.rT = null; }   // (out of the queue's charge: racing behind the safety car)
+    // the red flag every step: who joins the queue at this pass (the gate: the leader, the first car still in the queue's charge and not
+    // stopped; a car that would reach the queue's head before it goes round once more), where each one stops (c.fl.rT: the dist at the
+    // head; the cars behind stop behind the car ahead, aiDrive), the way into the pit lane, the order on the road and in the lane (R.bk:
+    // c.fl.ra the car ahead whatever lap it is on, c.fl.rg the m to it; the cars at their boxes and the stopped ones aside, the others pass
+    // them), then on: all in (or after RED.tIn s and a lap at RED.v) -> hold (the track cleared) -> go (the safety car out ahead of the
+    // queue, each car on its way out of the lane or off the grid back in the race) -> over once all are on their way and the safety car in
+    _redStep(dt) {
+      const F = this.fl, R = F.red, T = this.track, L = T.len, P = T.def.pit, J = R.pit ? T.pitJ() : null, cars = this.cars;
+      R.t += dt;
+      const wrap = (d) => ((d % L) + L) % L, lane = (c) => !!(c.inPit || c.pitG), inL = R.pit ? R.H - T.startS - P[1] : 0;   // (inL: from the way in to the head, m)
+      const uW = (c) => {   // (the m to go to the head: from beside the lane, past the way in, a lap more)
+        const u = wrap(R.H - c.q.s); if (!R.pit || lane(c) || u >= inL) return u;
+        const pz = T.pitAt(c.q.s); return pz && pz.gap && pz.d < J.ga && c.pitWant ? u : u + L;
+      }, uH = (c) => c.fl.rT != null ? c.fl.rT - c.dist : uW(c);   // (a car with its stop set: to that, past it below 0)
+      let g = null, ld = null;
+      for (const c of this.order) { if (c.finished || dnf(c) || c.net || !c.fl || c.fl.stopT > 0) continue; if (!ld) ld = c; if (c.fl.rq) { g = c; break; } }
+      R.gate = g; R.lead = ld;
+      const ug = g ? uH(g) : 0;
+      let left = 0, wait = 0;
+      for (const c of cars) {
+        const f = c.fl; if (!f || !f.rq) continue;
+        if (c.finished || dnf(c) || c.net) { this._redFree(c); continue; }
+        if (R.st === 'go') {   // (on its way: out of the lane, or off the grid at speed; 15 s on, or stopped: anyway)
+          if (R.pit ? !lane(c) : c.speed > 10 || R.t > 15 || f.stopT > 0) { this._redFree(c); if (!lane(c)) c.pitWant = false; } else left++;
+          continue;
+        }
+        left++;
+        if (f.rT != null && (f.rT < c.dist - 60 || (R.pit && !lane(c)))) f.rT = null;   // (run past it, or out of the lane: a lap more)
+        const u = uH(c), ok = f.rT != null || c === g || u >= ug;   // (its stop set: at this pass, whoever the gate is now)
+        if (f.rT == null && ok && !(R.pit && !lane(c)) && (R.pit ? u < inL + 30 : u < 400)) f.rT = c.dist + u;
+        if (R.pit) { const pz = T.pitAt(c.q.s); c.pitWant = lane(c) || (ok && (!pz || (pz.gap && pz.d < J.ga))); }
+        else if (!lane(c)) c.pitWant = false;
+        if (!(f.stopT > 0) && !(f.rh && c.speed < 0.6 && f.rT != null) && !(this._inStop(c) && c.speed < 0.6)) wait++;   // (not in yet: not stopped on the road, nor standing in the queue or at its box)
+      }
+      R.left = left; R.wait = wait;
+      if (R.st === 'in' && (!wait || R.t > RED.tIn + 1.3 * (L + 400) / RED.v)) { R.st = 'hold'; R.t = 0; F.ev++; F.evK = 'redHold'; this._redClear(); }
+      else if (R.st === 'hold' && R.t > RED.hold) { R.st = 'go'; R.t = 0; F.ev++; F.evK = 'redGo'; for (const c of cars) if (c.fl) c.fl.rT = null; if (ld) this._scOut(ld, true); }
+      else if (R.st === 'go' && ((!left && !(F.sc && F.sc.car)) || R.t > RED.go)) { for (const c of cars) if (c.fl) { this._redFree(c); c.fl.ra = null; } F.red = null; return; }
+      // the order on the road (the safety car too, not on its way into the pit lane) and in the lane
+      const B = R.bk, S = F.sc, X = S && S.car && !(S.car.pitWant && T.pitAt(S.car.q.s)) ? S.car : null;
+      B[0].length = 0; B[1].length = 0;
+      for (const c of cars) {
+        const f = c.fl; if (!f) continue; f.ra = null;
+        if (c.finished || dnf(c) || c.net || f.stopT > 0) continue;
+        if (c.inPit && (c.pitState === 'stop' || c.pitState === 'repair' || c.pitDone)) { const bd = this._boxD(c); if (c.pitState !== 'done' || (bd != null && Math.abs(T.boxX(c.q.s, bd)) < BAY.outL)) continue; }
+        B[lane(c) ? 1 : 0].push(c);
+      }
+      if (X) B[0].push(X);
+      for (const G of B) {
+        if (G.length < 2) continue;
+        const K = new Map(); for (const c of G) K.set(c, wrap(c.q.s - R.H));
+        G.sort((a, b) => K.get(a) - K.get(b));
+        for (let i = 0; i < G.length; i++) { const c = G[i]; if (!c.fl) continue; const a = G[(i + 1) % G.length], d = wrap(a.q.s - c.q.s); if (d < 200) { c.fl.ra = a; c.fl.rg = d; } }
+      }
+    }
+    // the red flag's hold: the track cleared (the debris and the glass off it, the retired cars to where they may stand)
+    _redClear() {
+      const T = this.track;
+      for (const d of this.debris) d.dead = true; this.debris.length = 0; if (this.glass) this.glass.length = 0;
+      for (const c of this.cars) if (dnf(c) && !c.net && !c.finished && !(c.wreck.stop && (c.wreck.fin || retiredOff(T, c, -0.2)))) this._parkRetired(c);
     }
 
     // sector times on a circuit without TV sectors (Track.sectors): the lap in thirds by distance from the line; c.sec = { lap, n (sectors done this lap), t0 (when the
@@ -6638,7 +6750,7 @@ const Core = (function () {
     _drs(c, ds, dt) {
       const Z = this.track.drs, L = this.track.len, d1 = c.dist, d0 = d1 - ds, racing = this.state === 'racing' || this.state === 'done';
       if (c.drsA == null) { c.drsA = 0; c.drs = 0; }
-      const flag = this.fl && (this.fl.sc || (this.fl.yel.length && this._yelAt(c.q.s)));   // (flags: no DRS under a yellow or the safety car)
+      const flag = this.fl && (this.fl.sc || this.fl.red || (this.fl.yel.length && this._yelAt(c.q.s)));   // (flags: no DRS under a yellow, the safety car or the red flag)
       if (c.drs && (c.inBrk > 0.2 || c.inPit || c.finished || !racing || flag)) c.drs = 0;
       if (!(ds > 0) || !racing) return;
       for (let k = 0; k < Z.length; k++) {
