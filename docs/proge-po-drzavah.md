@@ -38,7 +38,7 @@ Uporabnik 4. 11. 2026: »prosim shrani si ocene, da izberem samo 1 progo na drž
 | Država | Proge v igri: ocena | Izbrana |
 |---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam) **5** (4. 11. 2026), Big Sur –, Uncompahgre –, Beartooth –, Moki Dugway **4** (4. 11. 2026; med testne istega dne), Mauna Kea **4** (4. 11. 2026; med testne istega dne), Mount Baldy –, Riverside **3** (4. 11. 2026; med testne istega dne), Monterey –, Palomar Mountain – | – |
-| Avstralija | Bathurst **4,5** (4. 11. 2026), Longford –, Newcastle –, Great Alpine Road –, Mount Hotham –, Townsville – | – |
+| Avstralija | Bathurst **4,5** (4. 11. 2026), Longford **3** (4. 11. 2026), Newcastle –, Great Alpine Road –, Mount Hotham –, Townsville – | – |
 | Kanada | Toronto –, Montréal –, Trois-Rivières – | – |
 | Japonska | Suzuka –, Irohazaka **5** (4. 11. 2026) | – |
 | Brazilija | Rio do Rastro **5** (4. 11. 2026), Rio de Janeiro – | – |

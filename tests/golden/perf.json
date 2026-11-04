@@ -154,11 +154,11 @@
   "jsMs": 1.62
  },
  "maunakea": {
-  "calls": 114,
-  "maxCalls": 131,
-  "kverts": 201,
-  "maxKverts": 273,
-  "jsMs": 1.55
+  "calls": 112,
+  "maxCalls": 130,
+  "kverts": 196,
+  "maxKverts": 269,
+  "jsMs": 2.01
  },
  "baldy": {
   "calls": 154,
@@ -175,11 +175,11 @@
   "jsMs": 1.42
  },
  "riverside": {
-  "calls": 163,
-  "maxCalls": 203,
-  "kverts": 283,
-  "maxKverts": 345,
-  "jsMs": 0.9
+  "calls": 159,
+  "maxCalls": 204,
+  "kverts": 292,
+  "maxKverts": 414,
+  "jsMs": 1.59
  },
  "monterey": {
   "calls": 199,
