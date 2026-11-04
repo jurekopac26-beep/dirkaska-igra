@@ -3,8 +3,8 @@
 // longest, then the test tracks; each with its pictures in the stage's three cameras: 1 the map from above, 2 the flyover with the height
 // graph, 3 the corner's video, else the model of the land), the track step's head, row of numbers, road sign and neighbours
 // (docs/meni-izbira-proge.md), the weather and the race options, the car in 3D with the wind round it
-// (js/menu-car.js: in the player's colour, the wind drawn and moving, its picture without WebGL; tapped: the garage, whose back is the game's
-// car screen, its Back and Next the track step), a race from the menu (the intro
+// (js/menu-car.js: in the player's colour, the wind drawn and moving, its picture without WebGL; its name over it; tapped: the garage, whose
+// back and Izberi progo lead straight to the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -542,12 +542,26 @@ try {
       g.gr && Math.abs(g.gr.l - g.st.l) < 0.5 && Math.abs(g.gr.r - g.st.r) < 0.5 && Math.abs(g.gr.b - g.st.b) < 0.5 && Math.abs(g.gr.h - 72) < 0.5 && Math.abs(g.grw - g.st.w) < 1 && g.wx.b <= g.gr.t + 1, JSON.stringify({ gr: g.gr, st: g.st, grw: g.grw, wx: g.wx }));
 
     // an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it lies; the
-    // whole route and the names of its flags inside the picture; the neighbours at the same place on the next track
+    // whole route and the names of its flags inside the picture; the neighbours at the same place on the next track. The map is tilted
+    // back (stran Odločitve m11: 70°): where a point of it is seen is read from a tiny circle put there for a moment (the box of a whole
+    // element on the tilted plane is the box of its corners, not of its drawing): the route at 81 points along it, the painted land's corners
     const MEASURE = `
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
       const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(".nb")].map(c), scr: [innerWidth, innerHeight] };
-      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv")].map(c); }
+      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv")].map(c);
+        const g = svg.querySelector("g.rot"), seen = (x, y) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "circle"); e.setAttribute("cx", x); e.setAttribute("cy", y); e.setAttribute("r", "0.01"); g.appendChild(e); const r = e.getBoundingClientRect(); e.remove(); return [(r.left + r.right) / 2, (r.top + r.bottom) / 2]; };
+        const rt = svg.querySelector("path.rt-o"), L = rt.getTotalLength(), P = []; for (let i = 0; i <= 80; i++) { const q = rt.getPointAtLength(L * i / 80); P.push(seen(q.x, q.y)); }
+        out.line = { l: Math.min(...P.map(p => p[0])), r: Math.max(...P.map(p => p[0])), t: Math.min(...P.map(p => p[1])), b: Math.max(...P.map(p => p[1])) };
+        // (the land as far as it is on the plane: its box, turned with the map, cut to the plane's box (the svg's viewBox), its corners seen
+        // from a circle at the svg's top level; a corner of the whole land can lie in front of the eye, where it is seen nowhere)
+        const ld = svg.querySelector("image.land") || svg.querySelector("image"), bb = ld.getBBox(), vb = svg.viewBox.baseVal, tm = g.transform.baseVal.consolidate(), M = tm ? tm.matrix : new DOMMatrix();
+        const cs = [[bb.x, bb.y], [bb.x + bb.width, bb.y], [bb.x + bb.width, bb.y + bb.height], [bb.x, bb.y + bb.height]].map(p => [M.a * p[0] + M.c * p[1] + M.e, M.b * p[0] + M.d * p[1] + M.f]);
+        const X0 = Math.max(vb.x, Math.min(...cs.map(p => p[0]))), X1 = Math.min(vb.x + vb.width, Math.max(...cs.map(p => p[0]))), Y0 = Math.max(vb.y, Math.min(...cs.map(p => p[1]))), Y1 = Math.min(vb.y + vb.height, Math.max(...cs.map(p => p[1])));
+        const top = (x, y) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "circle"); e.setAttribute("cx", x); e.setAttribute("cy", y); e.setAttribute("r", "0.01"); svg.appendChild(e); const r = e.getBoundingClientRect(); e.remove(); return [(r.left + r.right) / 2, (r.top + r.bottom) / 2]; };
+        out.land = X1 > X0 && Y1 > Y0 ? [[X0, Y0], [X1, Y0], [X1, Y1], [X0, Y1]].map(p => top(p[0], p[1])) : null; out.wide = !!svg.querySelector("image.land");
+        const pl = st.querySelector(".topmap .plane"), m = new DOMMatrix(getComputedStyle(pl).transform);
+        out.tilt = { deg: Math.round(Math.acos(Math.max(-1, Math.min(1, m.m22))) * 180 / Math.PI), pd: getComputedStyle(pic).perspective, far: parseFloat(getComputedStyle(pic).getPropertyValue("--far")) || 0 }; }
       return out;`;
     await click(page, 'cam:1'); await page.waitForTimeout(500);
     const v1 = await ev(page, MEASURE);
@@ -560,12 +574,17 @@ try {
     const upright = tall ? v1.f && v1.s.y > v1.f.y + v1.pic.h * 0.4 && Math.abs(v1.s.x - v1.f.x) < v1.pic.w * 0.35 : v1.f && v1.f.x > v1.s.x + v1.pic.w * 0.4;
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame: Kranjska Gora (the start) below, Vršič (the finish) above' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, turned === tall && !!upright, JSON.stringify({ rot: v1.rot, pic: v1.pic, s: v1.s, f: v1.f }));
     const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
-    T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
+    T.check(`${w}x${h}: the map is tilted back 70° (as from an aeroplane): the plane laid back in perspective, its far edge in the top part of the picture (the sky over it)`,
+      v1.tilt && v1.tilt.deg === 70 && /px$/.test(v1.tilt.pd) && v1.tilt.far >= 30 && v1.tilt.far < v1.pic.h * 0.5 && v1.line.t >= v1.pic.t + v1.tilt.far, JSON.stringify({ tilt: v1.tilt, pic: v1.pic, line: v1.line }));
+    T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 0) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
     T.check(`${w}x${h}: the flags' names in boxes as the flyover's (the start's white, the finish's dark), the height in a small box under the name at its right`,
       v1.boxes.length === 2 && v1.boxes[0][0] === 'fl-s start' && v1.boxes[1][0] === 'fl-s finish' && v1.boxes[0][1] === 'rgb(255, 255, 255)' && v1.boxes[1][1] !== v1.boxes[0][1] && v1.boxes.every(b => b[2] === 1), JSON.stringify(v1.boxes));
-    // the real land painted round the map (wide-<id>.webp, wide_map.py) covers the whole picture: no blurred or empty edge, in the frame turned or not
-    const covers = (l, p) => !!l && l.l <= p.l + 1 && l.r >= p.r - 1 && l.t <= p.t + 1 && l.b >= p.b - 1;
-    T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture (the wide map reaches every edge of the frame)`, covers(v1.land, v1.pic), JSON.stringify({ land: v1.land, pic: v1.pic }));
+    // the real land painted round the map (wide-<id>.webp, wide_map.py) covers the whole picture below the haze along the plane's far edge
+    // (the sky over it; a long road's land may leave the far corners in the haze to the blurred backdrop): no blurred or empty edge, in the
+    // frame turned or not (the frame's sides at the haze's foot and its bottom corners inside the land's corners as seen)
+    const inQuad = (P, Q) => { let sg = 0; for (let i = 0; i < Q.length; i++) { const A = Q[i], B = Q[(i + 1) % Q.length], x = (B[0] - A[0]) * (P[1] - A[1]) - (B[1] - A[1]) * (P[0] - A[0]); if (x) { if (sg && Math.sign(x) !== sg) return false; sg = Math.sign(x); } } return true; };
+    const covers = (m) => !!m.land && [[m.pic.l + 1, m.pic.t + m.tilt.far + 44], [m.pic.r - 1, m.pic.t + m.tilt.far + 44], [m.pic.l + 1, m.pic.b - 1], [m.pic.r - 1, m.pic.b - 1]].every(p => inQuad(p, m.land));
+    T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture below the haze (the wide map reaches every edge of the frame there)`, v1.wide && covers(v1), JSON.stringify({ land: v1.land, pic: v1.pic, tilt: v1.tilt }));
     // every other real track with a map: the route and its names inside the picture, the painted land over all of it
     const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = []; let maps = 0;
     const over = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
@@ -574,12 +593,12 @@ try {
       if (await page.evaluate((id) => !!(window.ROUTES || {})[id] && !Core.TRACKS.find(d => d.id === id).test, id)) {   // (the test tracks aside)
         await page.waitForTimeout(300);
         const m = await ev(page, MEASURE);
-        if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); }
+        if (m.names) { maps++; if (!inPic(m.line, m.pic, 0) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.wide && !covers(m)) bare.push(m.name); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); }
       }
       await click(page, 'track:1');
     }
     T.check(`${w}x${h}: on every real track's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
-    T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
+    T.check(`${w}x${h}: on every map the painted land covers the whole picture below the haze`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: on every map the names of the flags are not under the cameras' buttons or the weather`, maps >= 5 && !under.length, JSON.stringify(under));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
@@ -632,33 +651,37 @@ try {
     await ctx.close();
   }
 
-  // 10. the car in the yard tapped: the garage with it, in its colour (here a stand-in page that goes back as the garage's back button does:
-  // index.html?zaslon=avto&avto=<id>), then the game's car screen on that car, its hint there; its Back: the track step, the same track;
-  // again, and its Next: the track step too
+  // 10. the car in the yard tapped (or its name over it): the garage with it, in its colour (here a stand-in page that goes back as the
+  // garage's buttons do: its back index.html?zaslon=avto&avto=<id>, its Izberi progo with &naprej=proga), then straight the track step
+  // again, the same track (stran Odločitve m8, 2: not the game's car screen), on the garage's car (here another one for Izberi progo)
   {
     const { ctx, page, errors } = await open();
     await ready(page);
-    let gar = null;
-    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + new URLSearchParams(location.search).get("car"))</script>' }); });
+    let gar = null, way = 'back', other = '';
+    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + ' +
+      (way === 'back' ? 'new URLSearchParams(location.search).get("car")' : JSON.stringify(other) + ' + "&naprej=proga"') + ')</script>' }); });
     const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
-    for (const way of ['back', 'next']) {
+    other = await page.evaluate((id) => Core.MODELS.find(m => !m.retired && m.id !== id).id, car0.id);   // (the garage's other car: Izberi progo on it)
+    for (const w of ['back', 'next']) {
+      way = w;
       await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
       const was = await ev(page, 'return root.querySelector(".where .w2").textContent;');
       const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
+      const car1 = await page.evaluate(() => Core.MODELS[__game.S.car].id);
       gar = null;
-      await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), click(page, 'garage')]);
-      const there = await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 }).then(() => true, () => false);
+      await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), page.evaluate((sel) => document.getElementById('menu-host').shadowRoot.querySelector(sel).click(), w === 'back' ? '.yard .car' : '.yard .cname')]);
+      const there = await page.waitForFunction(() => window.__game && __game.screen === 'track' && window.Menu && Menu.ready && Menu.debug().screen === 'track' && document.getElementById('menu-host').shadowRoot.querySelector('#s-track .where'), null, { timeout: 120000 }).then(() => true, () => false);
       if (!there) {   // (seen on GitHub now and then, never locally: the page's state and its errors in the log, not a test stopped without them)
-        T.check(`back from the garage [${way}]: the game's car screen within 120 s`, false, JSON.stringify(await pageState(page)) + ' — ' + errors.slice(-10).join(' | '));
+        T.check(`back from the garage [${w}]: the track step within 120 s`, false, JSON.stringify(await pageState(page)) + ' — ' + errors.slice(-10).join(' | '));
         break;
       }
-      await page.waitForTimeout(300);
-      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
-      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its back: the game's car screen on that car (the address plain again) [${way}]`,
-        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, dz, g }));
-      await page.click(way === 'back' ? '#car-back' : '#car-next'); await page.waitForTimeout(400);
-      const back = await ev(page, 'return { scr: Menu.debug().screen, h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent };');
-      T.check(`back from the garage, the car screen's ${way === 'back' ? 'Back' : 'Next'}: the track step, the same track`, back.scr === 'track' && back.h1 === was && (await shown(page)).join() === 's-menu', JSON.stringify({ was, back }));
+      await page.waitForTimeout(400);
+      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
+      const back = await ev(page, 'return { h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent, name: root.querySelector(".yard .cname") && root.querySelector(".yard .cname").textContent };');
+      const want = w === 'back' ? car0.id : other, wname = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, want);
+      T.check(`the yard's ${w === 'back' ? 'car' : 'car\'s name'} tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its ${w === 'back' ? 'back' : 'Izberi progo'}: the track step again, the same track, on the garage's car, its name over it (the address plain again)`,
+        gar && gar.endsWith('/garaza.html?car=' + car1 + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === want && g.url === '' && g.shown === 's-menu' && back.h1 === was && back.name === wname,
+        JSON.stringify({ gar, car0, car1, dz, g, was, back, want, wname }));
       await click(page, 'home');
     }
     T.check('the garage and back: no page errors', !real(errors).length, real(errors).join(' | '));
