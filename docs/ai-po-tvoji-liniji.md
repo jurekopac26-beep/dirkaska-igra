@@ -71,4 +71,4 @@
 ## Stanje
 
 - 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
-- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek pull requesta z oznako »predogled«); čaka odziv uporabnika.
+- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek #305 z oznako »predogled«, predogled `beta/305/?voznja=1`); čaka odziv uporabnika.
