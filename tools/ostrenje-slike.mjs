@@ -1,4 +1,4 @@
-// Pictures of the sharpening (AMD CAS on Visoka while the resolution is lowered: js/render.js casK, docs/igra.md »Ostrenje slike«), as a
+// Pictures of the sharpening (AMD CAS on Visoka while the picture is drawn below the screen's pixels: js/render.js casK, docs/igra.md »Ostrenje slike«), as a
 // phone shows them: the race's picture drawn at --dyn of the resolution (as the adaptive resolution lowers it), then stretched over the
 // screen as the browser does (bilinear, at the phone's pixels, --dpr), with no HUD. Through the quick entry (index.html?proga=<id>) the
 // player's car is put on the ideal line at --m metres after the start, the other cars hidden, the camera behind the car. For each weight
@@ -20,7 +20,7 @@ const out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'ostre
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
 const ks = kArg ? kArg.split(',').map(Number) : [0, null];   // (null: the game's own weight, CAS.k)
-if (!ids.length || bad.length || !(dyn > 0.5 && dyn <= 1) || ks.some(k => k != null && !(k >= 0 && k <= 0.25)) || !(crop[0] >= 0 && crop[1] <= 1 && crop[0] < crop[1])) {
+if (!ids.length || bad.length || !(dyn > 0.5 && dyn <= 1) || ks.some(k => k != null && !(k >= 0 && k <= 0.2)) || !(crop[0] >= 0 && crop[1] <= 1 && crop[0] < crop[1])) {
   console.log('usage: node tools/ostrenje-slike.mjs <id …> [--m 1284] [--dyn 0.55] [--k 0,0.1] [--dpr 2] [--pokonci] [--lezece] [--crop 0.3,0.85] [--out <folder>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
   process.exit(2);
 }

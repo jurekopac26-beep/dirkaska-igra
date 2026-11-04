@@ -4377,16 +4377,17 @@ const Render = (function () {
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
         'float lum(vec3 c){ return dot(c, vec3(0.299, 0.587, 0.114)); }',
-        // sharpening (casK: Visoka, the picture drawn below its resolution): AMD FidelityFX CAS's filter without scaling, on the pixel's
-        // cross as FSR's RCAS reads it (only the four neighbours the edge smoothing has read already). The pixel C is pulled away from them
-        // by a weight (at most uCas) that their min and max shape: less where the picture nears black or white or where an edge is already
-        // hard; on top of it RCAS's test for noise nz (a lone pixel unlike its four neighbours, a sparkle, an aliased dot: half the weight)
-        // and a limiter: the result stays within the cross's own min and max (C included), so no edge gets a halo and no sparkle grows
+        // sharpening (casK: Visoka, the picture drawn below the screen's pixels): AMD FidelityFX CAS's filter without scaling, on the
+        // pixel's cross as FSR's RCAS reads it (only the four neighbours the edge smoothing has read already). The pixel C is pulled away
+        // from them by the weight uCas, halved by RCAS's test for noise nz (a lone pixel unlike its four neighbours, a sparkle, an aliased
+        // dot), and a limiter keeps the result within the cross's own min and max (C included): no edge gets a halo, no sparkle grows.
+        // CAS's own shaping of the weight by the cross's contrast (less where an edge is already hard) is left out: the limiter already
+        // keeps every edge from overshooting, and against the picture at the full resolution (PSNR, SSIM and the change as the car moves,
+        // Bathurst, Spa, Vršič at 0.55 and a 3x screen at Visoka's 2x) the even weight came the closest on every view
         'uniform float uCas;',
         'vec3 cas(vec3 C, vec3 N, vec3 S, vec3 E, vec3 W, float nz){',
-        '  vec3 mn = min(min(min(N, S), min(E, W)), C), mx = max(max(max(N, S), max(E, W)), C);',
-        '  float w = -uCas * sqrt(clamp(min(mn.g, 1.0 - mx.g) / max(mx.g, 1e-3), 0.0, 1.0)) * (1.0 - 0.5 * clamp(nz, 0.0, 1.0));',   // (CAS: the green's amount for all three)
-        '  return clamp((C + w * (N + S + E + W)) / (1.0 + 4.0 * w), mn, mx);',
+        '  float w = -uCas * (1.0 - 0.5 * clamp(nz, 0.0, 1.0));',
+        '  return clamp((C + w * (N + S + E + W)) / (1.0 + 4.0 * w), min(min(min(N, S), min(E, W)), C), max(max(max(N, S), max(E, W)), C));',
         '}',
         'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
         'void main(){',
@@ -4447,15 +4448,18 @@ const Render = (function () {
   }
   function postOn() { return !!post && settings.quality === 'high' && settings.post !== false; }
   // sharpening (AMD CAS, in the post pass: the shader's cas; the user, 3. 11. 2026: »rahlo prilagodljivo ostrenje, samo na Visoka in samo,
-  // ko je ločljivost znižana«): while the race's picture is drawn below Visoka's own resolution (the adaptive resolution, game.js adaptive;
-  // the battery saver) the browser stretches it over the screen. CAS on the picture as drawn, before that stretch, is how CAS itself scales
-  // (its four nearest results, interpolated), with no pass of its own: its weight k at full from 0.7 of the resolution down, half of it
-  // just below the full resolution. At the full resolution, on Retro and Normalno (no post pass) and in a still (snapshot): 0, nothing runs
-  const CAS = { k: 0.15, full: 0.7 };   // (k: the lobe at most, CAS's own run from 0.125 to 0.2; the user's pick: Odločitve, ostrenje-jakost)
+  // ko je ločljivost znižana«, then »ali lahko ostrenje še izboljšaš«): while the race's picture is drawn below the screen's own pixels the
+  // browser stretches it over the screen: the adaptive resolution (game.js adaptive), the battery saver, and on a screen denser than 2x
+  // (most phones: 2.6x to 3.5x) Visoka's own cap at 2x (basePR). CAS on the picture as drawn, before that stretch, is how CAS itself scales
+  // (its four nearest results, interpolated), with no pass of its own. r: the drawn pixels against the screen's; its weight half of k just
+  // below 1, growing to all of k at 0.55 (the adaptive resolution's lowest; the stretch blurs the more, the lower r). At the screen's own
+  // pixels, on Retro and Normalno (no post pass) and in a still (snapshot): 0, nothing runs
+  const CAS = { k: 0.15, full: 0.55 };   // (k: the lobe at most; the user's pick: Odločitve, ostrenje-jakost)
   let snapping = false, casDrawn = 0;   // (casDrawn: the weight the last frame was drawn with, 0: none)
+  function casR() { return basePR * dynScale * saverK / (window.devicePixelRatio || 1); }
   function casK() {
     if (snapping || settings.quality !== 'high') return 0;
-    const r = dynScale * saverK;
+    const r = casR();
     return r < 0.99 ? CAS.k * (0.5 + 0.5 * clamp((1 - r) / (1 - CAS.full), 0, 1)) : 0;
   }
 
@@ -9875,7 +9879,7 @@ const Render = (function () {
       speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
-  function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +(dynScale * saverK).toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
+  function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
   return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
