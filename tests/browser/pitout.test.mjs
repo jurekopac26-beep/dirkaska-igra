@@ -12,13 +12,16 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('a rival out of the pits just ahead (bathurst)');
 const srv = await serve();
 const browser = await launch();
-// in the page: a rival (the k-th car behind the player in the order) in the lane dR m before its end, done with its stop, at vR m/s; the
-// player on the circuit dP m before the lane's end at vP m/s; then the race on (the computer driving both) for sec s, the HUD drawn each
-// 0.05 s: the pill's state each time, the log
+// in the page: a rival (the k-th car behind the player in the order) in the lane dR m before its end, done with its stop, at vR m/s, no
+// other car in the lane; the player on the circuit dP m before the lane's end at vP m/s; then the race on (the computer driving both) for
+// sec s, the HUD drawn each 0.05 s: the pill's state each time, the log
 const RUN = ([dR, vR, dP, vP, sec]) => {
   const g = window.__game, r = g.race, P = r.player, Tk = r.track, D = Tk.def.pit, sE = Tk.startS + D[2], L = Tk.len, el = document.getElementById('h-fight');
   const put = (c, s, off, v) => { s = ((s % L) + L) % L; const i = Tk.idx(s), h = Tk.hd[i]; c.place(Tk.px[i] + Tk.nx[i] * off, Tk.pz[i] + Tk.nz[i] * off, h); c.q = Tk.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; if (Tk.hasElev) c.y = c.py = Tk.hy[i]; c.roadY = c.y; c.vx = Math.cos(h) * v; c.vz = Math.sin(h) * v; c.w = 0; };
   const R = r.cars.find(c => !c.isPlayer && !c.inPit && !c.finished);
+  // (the lane cleared: a car done with its stop in the run before may still wait at the way out for the traffic on the circuit: back on
+  // the circuit past the way out, as Race.putBack leaves one)
+  let n = 0; for (const o of r.cars) if (o !== P && o !== R && (o.inPit || o.pitG)) { put(o, sE + 500 + 15 * n++, 0, 40); o.inPit = false; o.pitState = null; o.pitDone = false; o.pitG = false; o.pitGT = 0; o.pitWant = false; }
   { const s = sE - dR, p = Tk.pitAt(s); put(R, s, p.sd * p.o, vR); R.inPit = true; R.pitG = true; R.pitDone = true; R.pitState = 'done'; R.pitWant = false; }
   put(P, sE - dP, 0, vP); P.inPit = false; P.pitG = false; P.pitWant = false;
   const out = [], t0 = r.time, pre = el.classList.contains('on');
