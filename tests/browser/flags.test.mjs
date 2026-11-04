@@ -58,7 +58,12 @@ try {
     for (const id of ['h-msg', 'toast']) window.__mo.observe(document.getElementById(id), { childList: true, subtree: true }); } });
   const hasStop = await page.evaluate(() => !!window.__stop);
   if (hasStop) {
-    for (let k = 0; k < 20; k++) await page.evaluate(() => { const c = window.__stop, g = window.__game; c.vx = c.vz = 0; c.locked = true; g.pause(); g.sim(0.2, true); });
+    // (the car put down stands from the start: its speed over the last half second, from the pace it raced at, is let go, or its 1 s of standing
+    // would wait for that to die away first. At the road edge among the field another car may knock it (kTake, up to 30 m/s) and the standing
+    // starts over: the 4 s are held up to 8 s, until the stop has raised the flag. The flag has its own part below)
+    await page.evaluate(() => { const f = window.__stop.fl; if (f) f.v = 0; });
+    const flagUp = () => page.evaluate(() => { const f = window.__stop.fl; return !!(f && f.yel); });
+    for (let k = 0; k < 40 && (k < 20 || !(await flagUp())); k++) await page.evaluate(() => { const c = window.__stop, g = window.__game; c.vx = c.vz = 0; c.locked = true; g.pause(); g.sim(0.2, true); });
     await sim(0.1);
     const y1 = Object.assign(await hud(), await page.evaluate(() => { const c = window.__stop, P = window.__game.race.player, L = window.__game.race.track.len; return { stopped: c.name, fl: c.fl && { stopT: +c.fl.stopT.toFixed(2), v: +c.fl.v.toFixed(1) }, ahead: Math.round((((c.q.s - P.q.s) % L) + L) % L), said: window.__said2.splice(0) }; }));
     T.check('a car stopped ahead: "RUMENA ZASTAVA" (or another message at the same moment, the rule told), a marshal waving the flag beside the track', y1.yel >= 1 && y1.marshals >= 1 && [y1.msg, y1.toast, ...y1.said].some(t => /RUMENA ZASTAVA/.test(t) || /^Rumena zastava: pred tabo je ustavljen avto/.test(t)), JSON.stringify(y1));
