@@ -4,7 +4,7 @@
 
 Mount Buller v Viktorijskih Alpah (Victoria, Avstralija) sredi smučarske sezone, proga 1 sklopa kratkih prog (`docs/gorske-proge.md`). Proga se začne v smučarski vasi na 1.611 m (cesta, ki pride v vas, ~400 m pred začetkom ceste okoli vrha), gre skozi vas med kočami in apartmajskimi hišami, čez smučišča in pod štirimi sedežnicami, nato zadnjih ~1,4 km po makadamskem delu ceste, ki je v sezoni steptan sneg, do cilja na 1.731 m pod vrhom (−37,146°, 146,453° na startu). 2,5 km med startom in ciljem, ena serpentina in osem ostrejših ovinkov. **Vozi se po levi** (`def.leftHand`).
 
-- **Dirka**: 21 tekmecev, štartna mreža za startom v vasi, ena vožnja do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti (iztek ~160 m do konca ceste pod vrhom).
+- **Dirka**: 21 tekmecev (v meniju *Opponents* od 0 do največ 70: za ciljem je le ~158 m ceste do konca pod vrhom; `maxRivals`), štartna mreža za startom v vasi, ena vožnja do cilja; po cilju vsak avto zapelje na svoje mesto ob cesti (iztek ~160 m do konca ceste pod vrhom).
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, medalje (zlata 1:18, srebrna 1:22, bronasta 1:28, v dežju 1:26 / 1:31 / 1:37; zlato je čas relijskega avta na avtopilotu × 1,01, izračuna ga `tools/nova-proga.mjs --medalje`).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti v smučarski sezoni: avtomobili in terenci, kombiji, avtobusi do vasi, nekaj tovornjakov za oskrbo, brez motoristov.
 - **Policija**: beg pred policijo do vrha ceste; brez helikopterja (`def.noHeli`). Patrulje imajo generičen napis POLICE.
