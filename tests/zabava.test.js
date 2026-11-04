@@ -85,6 +85,8 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   const ctxE = { md: 'elim', on: false, cr: -1, mis: false, school: false, chal: false, nv: false, tt: false, nAI: 21 };
   check('its options: the player in the middle of the grid, no fuel, no radio; not online, not a championship round, not a mission', elim.opts(Object.assign({ track: { open: false, len: 6213 } }, ctxE)).playerGrid === 11 && elim.opts(Object.assign({ track: { open: false, len: 6213 } }, ctxE)).fuel === false &&
     elim.opts(Object.assign({ track: { open: true } }, ctxE)).laps === undefined && !elim.opts(Object.assign({ track: {} }, ctxE, { on: true })) && !elim.opts(Object.assign({ track: {} }, ctxE, { cr: 0 })) && !elim.opts(Object.assign({ track: {} }, ctxE, { mis: true })));
+  const few = elim.opts(Object.assign({ track: { open: true } }, ctxE, { nAI: 0 })), five = elim.opts(Object.assign({ track: { open: true } }, ctxE, { nAI: 5 }));
+  check('the fewest rivals: 5 whatever the menu\'s Opponents (0: 5 rivals, the player 3rd of 6); 5 or more as chosen', few.numAI === 5 && few.playerGrid === 3 && five.numAI === undefined && elim.opts(Object.assign({ track: { open: true } }, ctxE)).numAI === undefined, JSON.stringify(few));
   const orig = Math.random; Math.random = seeded(7);
   const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst')), o = elim.opts(Object.assign({ track: T.def.open ? { open: true } : { open: false, len: T.len } }, ctxE));
   const r = new C.Race(T, Object.assign({ numAI: 21, laps: 3, phys: 'cs', seed: 5, playerModel: C.MODELS[4], assist: 2, difficulty: 1, damage: 2, chars: true }, o)), P = r.player;

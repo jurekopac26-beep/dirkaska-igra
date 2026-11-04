@@ -26,7 +26,7 @@ const NVSite = (function () {
   const platY = (x, z, g) => { const P = PLAT, dx = Math.max(P.x0 - x, 0, x - P.x1), dz = Math.max(P.z0 - z, 0, z - P.z1); let y = dz > 0 && z > P.z1 ? -1e9 : P.y - Math.hypot(dx, dz) * P.y / P.run;
     if (x >= P.x1 && x <= RAMP.x1 + 2 && z > RAMP.z0 - 1 && z < RAMP.z1 + 1) { const f = Math.min(1, (x - P.x1) / (RAMP.x1 - P.x1)), side = Math.min(1, Math.max(0, Math.min(z - (RAMP.z0 - 1), RAMP.z1 + 1 - z))); y = Math.max(y, (P.y + (g - P.y) * f) * side + (g - 1) * (1 - side)); } return y; };
   const moundH = (x, z) => { const [cx, cz, r, h, ax, az] = MOUND, rr = Math.hypot((x - cx) / (r * ax), (z - cz) / (r * az)); return rr < 1 ? h * (0.5 + 0.5 * Math.cos(Math.PI * rr)) : 0; };
-  let G0 = null;
+  let G0 = null, anims = [], st = 0, fogIn = null;
   const lift = (x, z) => { if (x < -320 || x > -205 || z < 270 || z > 316) return 0; const g = G0(x, z); return Math.max(0, platY(x, z, g) - g) + moundH(x, z); };
 
   function build(MK) {
@@ -41,6 +41,16 @@ const NVSite = (function () {
     const geo = (pos, idx, uv, col, n = 3) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); if (uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); if (col) g.setAttribute('color', new THREE.Float32BufferAttribute(col, n)); g.setIndex(idx); g.computeVertexNormals();
       let up = 0; const N = g.attributes.normal; for (let i = 0; i < N.count; i++) up += N.getY(i); if (up < 0) { for (let t = 0; t < idx.length; t += 3) { const q = idx[t + 1]; idx[t + 1] = idx[t + 2]; idx[t + 2] = q; } g.setIndex(idx); g.computeVertexNormals(); } return g; };
     const flat = (g, m, ro) => { const me = new THREE.Mesh(g, m); me.receiveShadow = true; if (ro) me.renderOrder = ro; MK.add(me); own.push(me); return me; };
+    // (what moves: a group's own meshes merged into one, vertex colours, not merged with the still ones (js/nvbake.js: dyn); its sub-groups stay;
+    // keyframes [[t, v...], ...] eased between them; anim(x, z, y over the ground, radius, objects, its look at t (only in view), its place at t (always))
+    const VCM = new THREE.MeshLambertMaterial({ vertexColors: true }); anims = []; H3.movers = [];
+    const dynM = (grp, cast) => { grp.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(grp.matrixWorld).invert(), P = [], N = [], Cc = [], ms = grp.children.filter(o => o.isMesh && !o.isInstancedMesh);
+      for (const o of ms) { const m = Array.isArray(o.material) ? o.material[0] : o.material, ge = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); ge.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)); if (!ge.attributes.normal) ge.computeVertexNormals();
+        const c = m.color || new THREE.Color(1, 1, 1), A = ge.attributes.position.array, Nn = ge.attributes.normal.array; for (let i = 0; i < A.length; i++) { P.push(A[i]); N.push(Nn[i]); } for (let i = 0; i < A.length / 3; i++) Cc.push(c.r, c.g, c.b); ge.dispose(); grp.remove(o); }
+      if (!P.length) return null; const G = new THREE.BufferGeometry(); G.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); G.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); G.setAttribute('color', new THREE.Float32BufferAttribute(Cc, 3)); G.computeBoundingSphere();
+      const me = new THREE.Mesh(G, VCM); me.castShadow = !!cast; me.receiveShadow = true; me.userData.dyn = true; grp.add(me); return me; };
+    const kf = (K, t, per) => { t = ((t % per) + per) % per; for (let i = 0; i < K.length - 1; i++) if (t <= K[i + 1][0]) { let f = (t - K[i][0]) / ((K[i + 1][0] - K[i][0]) || 1); f = f * f * (3 - 2 * f); const a = K[i].slice(1), b = K[i + 1].slice(1), A = a.length === 1 && Array.isArray(a[0]) ? a[0] : a, Bv = b.length === 1 && Array.isArray(b[0]) ? b[0] : b; return A.map((v, j) => v + (Bv[j] - v) * f); } const e = K[K.length - 1].slice(1); return e.length === 1 && Array.isArray(e[0]) ? e[0] : e; };
+    const anim = (x, z, y, r, objs, look, place) => { const a = { x, z, y: surf(x, z) + y, r, objs, look, place, near: true }; a.fp = { geometry: { boundingSphere: { center: new THREE.Vector3(a.x, a.y, z), radius: r } }, on: true, get visible() { return this.on; }, set visible(v) { this.on = v; const sh = v && a.near; for (const o of objs) o.visible = sh; } }; anims.push(a); if (look) look(0); if (place) place(0); return a; };
     // the meadow's own surface (its coarse triangles, not the smooth ground): the earth lies over it
     const terY = (() => { const W = Render.world && Render.world.ground; if (!W) return () => null; const g = W.geometry, P = g.attributes.position, I = g.index, n = I ? I.count : P.count, bins = new Map(), key = (i, j) => i * 100000 + j; W.updateMatrixWorld(true); const e = W.matrixWorld.elements;
       for (let t = 0; t < n; t += 3) { const v = []; for (let q = 0; q < 3; q++) { const i = I ? I.getX(t + q) : t + q, px = P.getX(i), py = P.getY(i), pz = P.getZ(i); v.push(px * e[0] + py * e[4] + pz * e[8] + e[12], px * e[1] + py * e[5] + pz * e[9] + e[13], px * e[2] + py * e[6] + pz * e[10] + e[14]); }
@@ -89,10 +99,18 @@ const NVSite = (function () {
     { const g = Grp(-297, PLAT.y, 305); for (let f = 0; f < 3; f++) { const y = f * 3.4; for (const xx of [-7, -2.33, 2.33, 7]) for (const zz of [-5, 0, 5]) C(g, 0.24, 0.24, 3.2, CON, xx, y + 1.6, zz, 8); if (f < 2) B(g, 15, 0.28, 11, CON, 0, y + 3.3, 0); }
       for (const xx of [-7, -2.33, 2.33, 7]) for (const zz of [-5, 0, 5]) C(g, 0.03, 0.03, 1.2, RUST, xx, 10.4, zz, 4);
       for (const s of [-1, 1]) B(g, 15.2, 9.6, 0.4, lat(12, 8), 0, 4.8, s * 6.0); B(g, 0.4, 9.6, 11.4, lat(9, 8), -7.9, 4.8, 0); }
+    // (the crane turns between the yard by the mixer and the building's top floor, its trolley out and in, the hook with a concrete bucket down and up:
+    // its turning part, the trolley, the cable and the hook each one mesh; js/nvsite.js tick)
     { const Hh = 26, g = Grp(-285, PLAT.y, 305); B(g, 3.2, 1.0, 3.2, CON, 0, 0.5, 0); B(g, 1.6, Hh, 1.6, lat(1, Hh / 1.6), 0, 1 + Hh / 2, 0); const sl = new THREE.Group(); sl.position.set(0, 1 + Hh, 0); sl.rotation.y = 2.4; g.add(sl);
       B(sl, 2.4, 0.7, 2.4, Y, 0, 0.35, 0); B(sl, 1.7, 1.6, 1.4, Y, 1.4, 1.5, 1.6); B(sl, 1.72, 0.8, 1.42, L(0x1d2630), 1.45, 1.8, 1.6); B(sl, 0.5, 6.4, 0.5, Y, 0, 3.9, 0);
       B(sl, 30, 1.3, 1.3, lat(24, 1), 15.8, 1.35, 0); B(sl, 11, 1.1, 1.8, lat(9, 1), -5.9, 1.25, 0); for (const k of [0, 1, 2]) B(sl, 0.75, 2.4, 2.0, CON, -8.8 - k * 0.8, 0.1, 0);
-      B(sl, 1.3, 0.4, 1.5, L(0x3a3a3a), 14, 0.55, 0); C(sl, 0.04, 0.04, 12, DK, 14, -5.45, 0, 4); B(sl, 0.8, 0.7, 0.55, L(0xd8282a), 14, -11.5, 0); B(sl, 3.2, 0.5, 0.5, RUST, 14, -12.7, 0); B(sl, 3.2, 0.5, 0.5, RUST, 14, -13.25, 0.3); }
+      const tro = new THREE.Group(); tro.position.x = 14; sl.add(tro); B(tro, 1.3, 0.4, 1.5, L(0x3a3a3a), 0, 0.55, 0); const cab = new THREE.Group(); tro.add(cab); C(cab, 0.04, 0.04, 1, DK, 0, -0.5, 0, 4);
+      const hk = new THREE.Group(); hk.position.y = -11.5; tro.add(hk); B(hk, 0.8, 0.7, 0.55, L(0xd8282a), 0, 0, 0); C(hk, 0.8, 0.45, 1.3, L(0x8a8e94), 0, -1.6, 0, 14); C(hk, 0.84, 0.84, 0.14, DK, 0, -0.95, 0, 14);
+      const y0 = PLAT.y + 1 + Hh, tgt = (x, z, y) => ({ th: Math.atan2(-(z - 305), x + 285), r: Math.hypot(x + 285, z - 305), y: y - y0 + 2.6 });
+      const P1 = tgt(-258, 289, surf(-258, 289) + 0.2), P2 = tgt(-296, 302.5, PLAT.y + 6.8 + 0.3), hi = -9;
+      dynM(sl, true); dynM(tro, false); dynM(cab, false); dynM(hk, true);
+      const T = [[0, P1.th, P1.r, P1.y], [2.5, P1.th, P1.r, P1.y], [5, P1.th, P1.r, hi], [11, P2.th, P2.r, hi], [14, P2.th, P2.r, P2.y], [16.5, P2.th, P2.r, P2.y], [18.5, P2.th, P2.r, hi], [23, P1.th, P1.r, hi], [24, P1.th, P1.r, P1.y]];
+      anim(-285, 305, y0 - 10, 34, [sl], (t) => { const [th, r, y] = kf(T, t, 24); sl.rotation.y = th; tro.position.x = r; hk.position.y = y; cab.scale.y = Math.max(0.05, -y - 0.35); cab.position.y = 0; }); }
     // ---- the mound you drive over (in the earth's own mesh), the site's offices (containers two high), toilets, a fuel tank; floodlights
     const box = (x, z, w, h, d, m, y = 0, ry = 0) => { const g = Grp(x, surf(x, z) + y, z, ry); B(g, w, h, d, m, 0, h / 2, 0); return g; };
     { const ox = -214, oz = 304; for (const [dx, dy] of [[-3.15, 0], [3.15, 0], [-3.15, 2.6], [3.15, 2.6]]) { const c = box(ox + dx, oz, 6.1, 2.55, 2.45, L(dy ? 0x2a5ab8 : 0xf4f4f0), dy); B(c, 6.12, 0.5, 0.06, L(0x1d2630), 0, 1.5, -1.24); }
@@ -111,14 +129,18 @@ const NVSite = (function () {
     const ORG = L(0xff8a1f), YEL = L(0xf2b418), TY = L(0x161616), GL = L(0x1d2630), WH = L(0xf4f4f0);
     const wheel = (g, r, w, x, y, z) => { const o = C(g, r, r, w, TY, x, y, z, 12); o.rotation.x = Math.PI / 2; };
     const mach = (x, z, hd) => Grp(x, surf(x, z) + 0.04, z, -hd);
+    // (the machines move, sklop 10: what moves of each its own mesh; those that drive about are the car's walls, H3.movers, js/nvride.js)
+    const mover = (g, hl, hw) => { const m = { x: g.position.x, z: g.position.z, y: g.position.y, h: -g.rotation.y, hl, hw }; (H3.movers || (H3.movers = [])).push(m); return m; };
+    const drive = (g, m, x, z, hd) => { const y = surf(x, z) + 0.04; g.position.set(x, y, z); g.rotation.y = -hd; m.x = x; m.z = z; m.y = y; m.h = hd; };
     const MAKE = {
-      loader: (g) => { B(g, 3.2, 1.2, 2.2, YEL, -0.3, 1.2, 0); B(g, 1.4, 1.5, 1.6, YEL, -0.6, 2.5, 0); B(g, 1.42, 0.8, 1.62, GL, -0.6, 2.75, 0); for (const xx of [-1.3, 1.2]) for (const z of [-1.05, 1.05]) wheel(g, 0.75, 0.55, xx, 0.75, z); for (const z of [-0.7, 0.7]) B(g, 2.0, 0.25, 0.25, YEL, 1.9, 1.4, z); B(g, 0.9, 1.0, 2.6, DK, 3.0, 0.75, 0); },
+      loader: (g) => { B(g, 3.2, 1.2, 2.2, YEL, -0.3, 1.2, 0); B(g, 1.4, 1.5, 1.6, YEL, -0.6, 2.5, 0); B(g, 1.42, 0.8, 1.62, GL, -0.6, 2.75, 0); for (const xx of [-1.3, 1.2]) for (const z of [-1.05, 1.05]) wheel(g, 0.75, 0.55, xx, 0.75, z);
+        const la = new THREE.Group(); la.position.set(0.9, 1.4, 0); g.add(la); for (const z of [-0.7, 0.7]) B(la, 2.0, 0.25, 0.25, YEL, 1.0, 0, z); const bk = new THREE.Group(); bk.position.set(2.1, 0, 0); la.add(bk); B(bk, 0.9, 1.0, 2.6, DK, 0.0, -0.65, 0); g.userData.parts = { la, bk }; },
       dozer: (g) => { for (const z of [-1.05, 1.05]) B(g, 3.6, 0.8, 0.6, DK, 0, 0.4, z); B(g, 3.0, 1.0, 1.6, YEL, -0.2, 1.3, 0); B(g, 1.3, 1.4, 1.4, YEL, -0.8, 2.5, 0); B(g, 1.32, 0.7, 1.42, GL, -0.8, 2.7, 0); B(g, 0.35, 1.2, 3.0, YEL, 2.3, 0.75, 0); },
       roller: (g) => { const d = C(g, 0.75, 0.75, 2.0, YEL, 1.5, 0.75, 0, 16); d.rotation.x = Math.PI / 2; B(g, 2.6, 1.0, 1.8, YEL, -0.6, 1.1, 0); B(g, 1.2, 1.3, 1.4, YEL, -0.9, 2.2, 0); for (const z of [-0.85, 0.85]) wheel(g, 0.7, 0.5, -1.4, 0.7, z); },
       mixer: (g) => { B(g, 7.0, 0.35, 2.0, DK, 0, 0.95, 0); B(g, 1.7, 1.9, 2.3, WH, 2.7, 2.0, 0); B(g, 0.06, 0.8, 2.0, GL, 3.56, 2.5, 0); for (const xx of [2.75, -1.0, -2.3]) for (const z of [-1.05, 1.05]) wheel(g, 0.55, 0.45, xx, 0.55, z); const dg = C(g, 1.1, 1.1, 3.6, L(0xe8452c), -0.9, 2.55, 0, 16); dg.rotation.z = Math.PI / 2 + 0.14; },
       forklift: (g) => { B(g, 2.2, 1.0, 1.3, ORG, 0, 0.75, 0); B(g, 0.9, 0.7, 1.3, L(0x3a3a3a), -1.0, 0.75, 0); for (const [xx, z] of [[0.7, 0.6], [0.7, -0.6], [-0.8, 0.6], [-0.8, -0.6]]) wheel(g, 0.32, 0.25, xx, 0.32, z); B(g, 1.1, 0.08, 1.2, DK, 0.1, 2.85, 0); for (const z of [-0.4, 0.4]) B(g, 0.12, 2.6, 0.12, L(0x3a3a3a), 1.25, 1.4, z); for (const z of [-0.3, 0.3]) B(g, 1.1, 0.06, 0.14, L(0x9aa0a8), 1.85, 0.12, z); } };
-    for (const [k, x, z, hd] of [['loader', -190, 305, 0], ['dozer', -276, 262, 0.3], ['roller', PIT[0] - 6, PIT[1] + 17, 0], ['mixer', -262, 290, 0.2], ['forklift', -119, 312, 0]]) MAKE[k](mach(x, z, hd));
-    for (const [kind, x, z, hd] of [['excavator', PIT[0] + 10, PIT[1] - 8, 2.6], ['dumper', PIT[0] + 24, PIT[1] + 2, 1.57]]) add(MK.vehAt(kind, { x, y: surf(x, z) + 0.04, z, hd }));
+    const M5 = {}; for (const [k, x, z, hd] of [['loader', -190, 305, 0], ['dozer', -276, 262, 0.3], ['roller', PIT[0] - 6, PIT[1] + 17, 0], ['mixer', -262, 290, 0.2], ['forklift', -119, 312, 0]]) { const g = mach(x, z, hd); MAKE[k](g); M5[k] = { g, x, z, hd }; }
+    machines(M5);
     // ---- the palisade along the road (one ribbon of the dark green bars with three points, 2.5 m; posts every 3.5 m), its foot on the ground there
     // (as high as the road's edge: the bank goes down behind it); solid
     { const palT = tex(512, 366, (c, w, h) => { c.clearRect(0, 0, w, h); for (let i = 3; i < w - 6; i += 17) { const gr = c.createLinearGradient(i, 0, i + 13, 0); gr.addColorStop(0, '#163222'); gr.addColorStop(0.2, '#3f6e50'); gr.addColorStop(0.5, '#24472f'); gr.addColorStop(0.8, '#3f6e50'); gr.addColorStop(1, '#10241a'); c.fillStyle = gr; c.fillRect(i, 16, 13, h - 16);
@@ -130,9 +152,71 @@ const NVSite = (function () {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); const me = new THREE.Mesh(g, PAL); me.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: palT, alphaTest: 0.45 }); add(me);
       for (let k = 1; k < pts.length; k++) { const [ax, az, ay] = pts[k - 1], [bx, bz, by] = pts[k], L2 = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L2 / 3.5)); for (let i = 0; i < n; i++) { const f = i / n; at.push([ax + (bx - ax) * f, ay + (by - ay) * f, az + (bz - az) * f]); } (H3.solids || (H3.solids = [])).push({ ax, az, bx, bz, r: 0.12 }); }
       const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.16, HG + 0.2, 0.14), L(0x24472f), at.length), m4 = new THREE.Matrix4(); at.forEach(([x, y, z], i) => { m4.makeTranslation(x, y + HG / 2, z); im.setMatrixAt(i, m4); }); add(im); }
+    // ---- how the machines move (sklop 10, the user in the pictures: "na gradbišču naj bo čim več elementov, ki se premikajo: žerjav, bager,
+    // kamion, dvigalo"; anim-page): the loader into the sand heap and back, the dozer pushing, the roller rolling the haul loop, the mixer's drum,
+    // the forklift's forks, the excavator digging and loading the dump truck, which goes round the haul loop to tip at the soil heap; a hoist
+    // on the building
+    function machines(M5) {
+      // the loader (it drives: a wall), its arms and bucket
+      { const o = M5.loader, P = o.g.userData.parts, m = mover(o.g, 2.9, 1.3); dynM(o.g, true); dynM(P.la, true); dynM(P.bk, true);
+        const K = [[0, -3, -0.35, 0], [2.2, 3.2, -0.35, 0], [3.0, 3.2, -0.1, 0.8], [4.2, 0, 0.55, 0.8], [5.2, 0, 0.55, -0.9], [6.2, -3, -0.35, 0], [8, -3, -0.35, 0]];
+        anim(o.x, o.z, 2, 5, [o.g], (t) => { const [d, a, b] = kf(K, t, 8); P.la.rotation.z = a; P.bk.rotation.z = b; }, (t) => { const [d] = kf(K, t, 8); drive(o.g, m, o.x + d, o.z, o.hd); }); }
+      // the dozer pushes forward and back, the roller rolls along the loop's north side
+      { const o = M5.dozer, m = mover(o.g, 2.4, 1.6); dynM(o.g, true); const K = [[0, 0], [4, 5], [5, 5], [8, 0], [9, 0]];
+        anim(o.x, o.z, 2, 4, [o.g], null, (t) => { const d = kf(K, t, 9)[0]; drive(o.g, m, o.x + Math.cos(o.hd) * d, o.z + Math.sin(o.hd) * d, o.hd); }); }
+      { const o = M5.roller, m = mover(o.g, 2.4, 1.1); dynM(o.g, true); const K = [[0, -6], [5, 6], [5.6, 6], [10.6, -6], [11.2, -6]];
+        anim(o.x, o.z, 2, 4, [o.g], null, (t) => { const d = kf(K, t, 11.2)[0]; drive(o.g, m, o.x + d, o.z, o.hd); }); }
+      // the mixer's drum turning (stripes on it to show it), the forklift's forks up and down
+      { const o = M5.mixer; let drum = null; o.g.traverse(q => { if (q.isMesh && q.geometry.parameters && q.geometry.parameters.height === 3.6) drum = q; });
+        if (drum) { o.g.remove(drum); const ge = drum.geometry.toNonIndexed(), A = ge.attributes.position, col = []; for (let i = 0; i < A.count; i += 3) { let a = 0; for (let q = 0; q < 3; q++) a += Math.atan2(A.getZ(i + q), A.getX(i + q)) / 3; const c = Math.floor((a + Math.PI) / (Math.PI / 4)) % 2 ? [0.91, 0.27, 0.17] : [0.96, 0.96, 0.94]; for (let q = 0; q < 3; q++) col.push(...c); }
+          ge.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const dm = new THREE.Mesh(ge, VCM); dm.castShadow = true; dm.userData.dyn = true; const piv = new THREE.Group(); piv.position.copy(drum.position); piv.rotation.copy(drum.rotation); piv.add(dm); o.g.add(piv);
+          anim(o.x, o.z, 2.5, 5, [piv], (t) => { dm.rotation.y = t * 1.6; }); } }
+      { const o = M5.forklift, fk = new THREE.Group(); for (const q of o.g.children.filter(q => q.isMesh && q.position.x > 1.6)) fk.add(q); o.g.add(fk); dynM(fk, false);
+        anim(o.x, o.z, 1.5, 3, [fk], (t) => { fk.position.y = 1.2 * (0.5 - 0.5 * Math.cos(t * 0.9)); }); }
+      // the excavator at the pit's edge (tracks, the upper part turning, the boom, the arm, the bucket) digs and loads the dump truck
+      const EX = { x: PIT[0] + 10, z: PIT[1] - 8, S: 1.35 }, TK = { a0: -0.84, a1: 1.07 };
+      { const g = Grp(EX.x, surf(EX.x, EX.z) + 0.04, EX.z); g.scale.setScalar(EX.S); EX.g = g; const D2 = L(0x3a3a3a), SO = L(0x6e4a2c);
+        for (const z of [-1.15, 1.15]) { B(g, 4.4, 0.85, 0.8, DK, 0, 0.42, z); for (let k = 0; k < 9; k++) B(g, 0.12, 0.88, 0.84, D2, -2.0 + k * 0.5, 0.42, z); } B(g, 2.0, 0.3, 2.0, DK, 0, 0.95, 0);
+        const up = new THREE.Group(); up.position.y = 1.1; g.add(up); B(up, 3.0, 1.1, 2.5, YEL, -0.2, 0.55, 0); B(up, 0.9, 1.1, 2.5, D2, -1.95, 0.6, 0); B(up, 1.1, 1.5, 1.1, YEL, 0.75, 1.85, 0.62); B(up, 1.12, 0.85, 1.12, GL, 0.78, 2.05, 0.62);
+        const bm = new THREE.Group(); bm.position.set(1.15, 1.05, -0.3); up.add(bm); B(bm, 3.6, 0.55, 0.5, YEL, 1.8, 0, 0); const arm = new THREE.Group(); arm.position.x = 3.6; bm.add(arm); B(arm, 3.26, 0.42, 0.42, YEL, 1.63, 0, 0);
+        const bk = new THREE.Group(); bk.position.x = 3.26; arm.add(bk); B(bk, 0.9, 0.75, 0.8, D2, 0.35, -0.3, 0); const so = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), SO); so.scale.set(1.1, 0.6, 0.95); so.position.set(0.35, 0.08, 0); bk.add(so);
+        bk.remove(so); dynM(bk, true); bk.add(so); so.userData.dyn = true; so.castShadow = true; arm.remove(bk); dynM(arm, true); arm.add(bk); bm.remove(arm); dynM(bm, true); bm.add(arm); up.remove(bm); dynM(up, true); up.add(bm);
+        const ik = (u, v) => { const L1 = 3.6, L2 = 3.26, dx = u - 1.15, dy = v - 2.15, d = Math.min(L1 + L2 - 0.02, Math.hypot(dx, dy)), ca = (d * d - L1 * L1 - L2 * L2) / (2 * L1 * L2), al = -Math.acos(Math.max(-1, Math.min(1, ca))), be = Math.atan2(dy, dx) - Math.atan2(L2 * Math.sin(al), L1 + L2 * Math.cos(al)); return [be, al]; };
+        // (where the truck stands to be loaded, in the excavator's own frame; the pit; the turn to each: to the pit +z, to the truck towards it)
+        const ld = [PIT[0] + 24 * Math.cos(TK.a0), PIT[1] + 17 * Math.sin(TK.a0)], toT = Math.atan2(-(ld[1] - EX.z), ld[0] - EX.x), toP = Math.atan2(-(PIT[1] - EX.z), PIT[0] - EX.x), uT = Math.hypot(ld[0] - EX.x, ld[1] - EX.z) / EX.S;
+        const K = [[0, [4.4, 3.4, toP, 1.9]], [1.4, [5.6, 0.7, toP, -0.6]], [2.6, [4.3, 0.6, toP, 0.6]], [3.6, [4.9, 2.2, toP, 1.4]], [5.4, [uT, 3.6, toT, 1.9]], [6.4, [uT, 3.6, toT, -1.3]], [8, [4.4, 3.4, toP, 1.9]]];
+        anim(EX.x, EX.z, 3, 9, [up], (t) => { const [u, v, ps, w] = kf(K, t, 8), [be, al] = ik(u, v); up.rotation.y = ps; bm.rotation.z = be; arm.rotation.z = al; bk.rotation.z = w - be - al; const tt = ((t % 8) + 8) % 8; so.visible = tt >= 2.4 && tt < 6.2; }); }
+      // the dump truck round the haul loop: loaded by the excavator, to the soil heap in the north, tips its bed, round again (a wall for the car)
+      { const g = Grp(0, 0, 0), ORG2 = L(0xff8a1f), BED = L(0xe8b018), SO = L(0x7a5232); B(g, 7.0, 0.35, 1.9, DK, 0, 0.95, 0); B(g, 1.9, 2.0, 2.4, ORG2, 2.55, 2.1, 0); B(g, 0.06, 0.85, 2.2, GL, 3.51, 2.55, 0); for (const z of [-1.21, 1.21]) B(g, 1.0, 0.7, 0.06, GL, 2.7, 2.5, z);
+        for (const x of [2.55, -0.5, -1.85]) for (const z of [-1.05, 1.05]) wheel(g, 0.55, 0.45, x, 0.55, z);
+        const bp = new THREE.Group(); bp.position.set(-3.2, 1.15, 0); g.add(bp); B(bp, 4.6, 0.15, 2.3, BED, 2.3, 0.08, 0); for (const z of [-1.1, 1.1]) B(bp, 4.6, 1.1, 0.12, BED, 2.3, 0.7, z); B(bp, 0.15, 1.5, 2.3, BED, 4.65, 0.85, 0); B(bp, 0.15, 1.0, 2.3, BED, 0.05, 0.6, 0);
+        const ldM = new THREE.Mesh(new THREE.SphereGeometry(1.0, 12, 8), SO); ldM.scale.set(2.0, 0.55, 0.95); ldM.position.set(2.3, 0.95, 0);
+        dynM(g, true); dynM(bp, true); bp.add(ldM); ldM.userData.dyn = true; ldM.castShadow = true;
+        const N = 360, TA = [], at = (a) => [PIT[0] + 24 * Math.cos(a), PIT[1] + 17 * Math.sin(a)]; let acc = 0; for (let i = 0; i <= N; i++) { const a = TK.a0 + i / N * Math.PI * 2; if (i) { const p = at(a), q = at(a - Math.PI * 2 / N); acc += Math.hypot(p[0] - q[0], p[1] - q[1]); } TA.push([a, acc]); }
+        const per = acc, aOf = (s) => { s = ((s % per) + per) % per; let lo = 0, hi = N; while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (TA[mid][1] <= s) lo = mid; else hi = mid; } const f = (s - TA[lo][1]) / ((TA[hi][1] - TA[lo][1]) || 1); return TA[lo][0] + (TA[hi][0] - TA[lo][0]) * f; };
+        let sT = 0; for (const [a, s2] of TA) if (a <= TK.a0 + ((TK.a1 - TK.a0 + Math.PI * 2) % (Math.PI * 2))) sT = s2;
+        const v = 5.5, t1 = 10, t2 = t1 + sT / v, t3 = t2 + 5, t4 = t3 + (per - sT) / v, m = mover(g, 3.6, 1.3);
+        const sAt = (t) => { t = ((t % t4) + t4) % t4; if (t < t1) return 0; if (t < t2) return (t - t1) * v; if (t < t3) return sT; return sT + (t - t3) * v; };
+        anim(PIT[0], PIT[1], 2, 28, [g], (t) => { const tt = ((t % t4) + t4) % t4, tip = tt >= t2 && tt < t3 ? Math.sin(Math.PI * (tt - t2) / 5) : 0; bp.rotation.z = 0.9 * tip; ldM.visible = tt >= 3 && tt < t2 + 2.2; ldM.scale.set(2.0, 0.55 * Math.min(1, Math.max(0.1, (tt - 3) / 5)), 0.95); },
+          (t) => { const a = aOf(sAt(t)), [x, z] = at(a), hd = Math.atan2(17 * Math.cos(a), -24 * Math.sin(a)); drive(g, m, x, z, hd); }); }
+      // a hoist on the building's south side: a mast up its three floors, a cage up and down
+      { const g = Grp(-293, PLAT.y, 299.1); B(g, 1.7, 0.4, 1.7, CON, 0, 0.2, 0); B(g, 0.8, 13, 0.8, lat(1, 13 / 0.8), 0, 6.9, 0); B(g, 1.1, 0.5, 1.1, Y, 0, 13.6, 0);
+        const cg = new THREE.Group(); cg.position.set(0, 0.4, -1.25); g.add(cg); B(cg, 1.5, 2.2, 1.5, L(0xd8d8d0), 0, 1.1, 0); B(cg, 1.52, 0.6, 1.52, GL, 0, 1.55, 0); B(cg, 1.6, 0.12, 1.6, ORG, 0, 2.26, 0); dynM(cg, true);
+        anim(-293, 299, PLAT.y + 6, 8, [cg], (t) => { cg.position.y = kf([[0, 0.4], [1.5, 0.4], [4, 7.2], [5.5, 7.2], [8, 0.4]], t, 8)[0]; }); }
+    }
     // solid: the building's platform wall, the building and the crane's foot on it, the offices, the container
     for (const [ax, az, bx, bz, r] of [[PLAT.x0 - PLAT.run, PLAT.z1 + 0.25, PLAT.x1 + PLAT.run, PLAT.z1 + 0.25, 0.3], [-304.3, 299.7, -289.7, 299.7, 0.3], [-304.3, 299.7, -304.3, 310.3, 0.3], [-289.7, 299.7, -289.7, 310.3, 0.3], [-285.8, 305, -284.2, 305, 1.6], [-217.2, 304, -210.8, 304, 1.25], [-115, 311, -109, 311, 1.25]]) H3.solids.push({ ax, az, bx, bz, r });
     return { own, inside, lift };
   }
-  return { FENCE, POLY, inside, roStop, lift, build };
+  // every step (js/game.js stepRace): the machines' clock runs while the car is within 300 m of the site; what drives about moves always (it is
+  // the car's wall), the rest only in view (js/nvride.js seen); past the fog none of it is drawn
+  function tick(dt, car) {
+    if (!anims.length) return; if (car && Math.hypot(car.x + 225, car.z - 280) > 300) return; st += dt;
+    const W = typeof Render !== 'undefined' && Render.world; if (W && W.cullFog && fogIn !== W.cullFog) { fogIn = W.cullFog; for (const a of anims) W.cullFog.push(a.fp); }
+    const seen = typeof NVRide !== 'undefined' && NVRide.seen;
+    for (const a of anims) { const nr = !car || (car.x - a.x) ** 2 + (car.z - a.z) ** 2 < 200 * 200; if (nr !== a.near) { a.near = nr; a.fp.visible = a.fp.on; }   // (not drawn further than 200 m from the car)
+      if (a.place) a.place(st); if (a.look && a.fp.on && a.near && (!seen || seen(a.x, a.y, a.z, a.r))) a.look(st); }
+  }
+  const state = () => ({ t: st, n: anims.length, movers: (G0 && window.__H3 && window.__H3.movers || []).map(m => [+m.x.toFixed(2), +m.z.toFixed(2)]) });
+  return { FENCE, POLY, inside, roStop, lift, build, tick, state };
 })();

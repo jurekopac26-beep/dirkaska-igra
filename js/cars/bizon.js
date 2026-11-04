@@ -15,7 +15,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 90000, pk: 'unl', field: ['bizon'],
     snd: { kind: 'v8fp', hz: 0.85, loud: 1.3 },
     expect: { t100: [2.47, 2.9], vmax: [303, 322], latG: [2.62, 2.72], d100: [19.9, 22] },
-    partNames: { nose: 'nose section', cover: 'engine cover' },
+    partNames: { nose: 'nose section', cover: 'engine cover', tailL: 'left tail lamps', tailR: 'right tail lamps' },
     parts: { set: 'none', ht: 1, y0: 0.12,
       extra: {
         // (h: each piece's real thickness lying on the road: the nose with its deck and the radiator's mouth, the clamshell with the rear
@@ -25,7 +25,17 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         wing: { y: 1.08, lx: -0.85, h: 0.22 },
         fenderL: { lx: 0.53, lz: -0.88, f: 0.56, h: 0.16 },
         fenderR: { lx: 0.53, lz: 0.88, f: 0.56, h: 0.16 },
+        // (as KOLIBRI's: each side's two round tail lamps a part of its own, mounted on the engine cover (they go with it); a hit on their
+        // corner knocks them out)
+        tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.12, h: 0.05, lx: -1.0, lz: -0.57, y: 0.53, on: 'cover' },
+        tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.12, h: 0.05, lx: -1.0, lz: 0.57, y: 0.53, on: 'cover' },
       },
+    },
+    // where the garage's parts go (js/deli.js, look units): the wing on the rear deck, in the wing's part (in place of the high wing on its
+    // tall struts); the rims. No head lamps (an open sports-racer: none), so no place for the garage's
+    mounts: {
+      krilo: { x: -1.9, w: 0.8, part: 'wing' },
+      platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres): low and wide, two lofts: the main one from the cockpit's rear bulkhead to the
     // nose (the cockpit open between its bulkheads, lined and floored, the scuttle under the screen, the wide flat nose ending in a wedge)
@@ -147,13 +157,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('body', () => { for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) { const x = -0.66 - 0.12 * i;
           K.cyl([x, 0.56, sd * 0.12], [x, 0.94, sd * 0.12], 0.034, K.chrome, { n: 5, r2: 0.054, capA: null, capB: B }); } });
         // ---- the high wing on its two tall struts: its plank in the stripe colour, the endplates in the paint ----
-        K.part('wing', () => {
+        K.part('wing', () => K.deli('krilo', () => {   // (the garage's wing in its place: K.deli, mounts.krilo)
           K.wingPlank(-1.57, 1.19, -2.03, 1.26, 0.035, -0.82, 0.82, S);
           for (const sd of [-1, 1]) {
             K.endplate([[-1.52, 1.14], [-1.52, 1.25], [-2.07, 1.31], [-2.07, 1.17]], sd * 0.832, 0.012, P);
             K.bar([-1.42, 0.45, sd * 0.42], [-1.76, 1.2, sd * 0.42], 0.024, D, { n: 4 });
           }
-        }, { noCrush: true, noDent: true });
+        }), { noCrush: true, noDent: true });
         // ---- under the tail: the gearbox, the megaphones; a dark wall behind the rear axle (no seeing into the shell) ----
         K.part('body', () => {
           K.box(-1.86, 0.15, 0, 0.36, 0.18, 0.26, 0, GBX, null, true);
@@ -162,8 +172,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           }
           face([[-1.6, 0.12, -0.58], [-1.6, 0.12, 0.58], [-1.6, 0.36, 0.58], [-1.6, 0.36, -0.58]], D, [-3, 0.24, 0]);
         });
-        // ---- the tail lamps (round, two a side, in the tail panel: they go with the cover) ----
-        for (const sd of [-1, 1]) for (const z of [0.64, 0.52]) K.tailLamp(-2.1, 0.53, sd * z, 0.075, 0.075, { round: true });
+        // ---- the tail lamps (round, two a side, in the tail panel: each side's a part of its own, on the cover: they go with it; a dark sliver
+        //      behind each lens, from it into the tail, is that part's own: hidden, the lens before it and the tail round it) ----
+        for (const sd of [-1, 1]) for (const z of [0.64, 0.52]) { const tp = sd < 0 ? 'tailL' : 'tailR', q = [[-2.104, 0.555, sd * z], [-2.104, 0.5175, sd * (z - 0.022)], [-2.07, 0.5175, sd * (z + 0.022)]];
+          K.face(sd > 0 ? q : q.reverse(), [0.3, 0.04, 0.04], { host: tp }); K.tailLamp(-2.1, 0.53, sd * z, 0.075, 0.075, { round: true, host: tp }); }
         K.grille(-2.104, 0.46, 0, 0.7, 0.13, { dir: -1, slats: 3, slatCol: [0.3, 0.3, 0.32], part: 'cover' });   // (the oil cooler's mesh between them)
         // ---- inside (seen once a part is off): the big-block V8 under the stacks (the crankcase, the banks, the cam covers, the plenum the
         //      stacks stand on), its headers into the megaphones, the rear beam, the drive shafts; the radiator in the nose; the front wishbones

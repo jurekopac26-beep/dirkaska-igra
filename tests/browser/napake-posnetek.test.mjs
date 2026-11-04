@@ -24,7 +24,7 @@ try {
   await Q.evaluate(() => window.__game.resume()); await Q.waitForTimeout(400);
   await Q.keyboard.press('KeyF'); await Q.waitForTimeout(500);
   await Q.evaluate(() => window.__game.pause());
-  const r0 = await Q.evaluate(() => ({ sum: window.__game.recSum(), flags: window.__game.recFlags, ver: (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [])[1],
+  const r0 = await Q.evaluate(() => ({ sum: window.__game.recSum(), flags: window.__game.recFlags, ver: (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [0, 'lokalno'])[1],
     cars: window.__game.race.cars.map(c => c.name), pl: window.__game.race.cars.indexOf(window.__game.race.player) }));
 
   // 1. Shrani in the tool's settings: the download, its name, gzip, packed well

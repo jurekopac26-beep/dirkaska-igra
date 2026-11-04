@@ -54,7 +54,7 @@
   const feat = {
     id: 'izzivi', STARS, starsOf, carSpeeds, plan,
     on: false, L: null, run: null, objs: null, prev: 0, air: null,
-    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !!race.player && !race.track.def.test,
+    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !ctx.prvi && !!race.player && !race.track.def.test,
     begin(race, ctx) {
       this.clear();
       this.on = Z.on('izzivi', 'zbIzz') && this.fits(race, ctx);

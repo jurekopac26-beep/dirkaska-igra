@@ -6,7 +6,7 @@
   'use strict';
   const Z = typeof Zabava !== 'undefined' ? Zabava : require('../zabava.js');
   const tr = Z.tr;
-  const E = { first: 45, every: 30, share: 12 };
+  const E = { first: 45, every: 30, share: 12, min: 5 };   // (min: the fewest rivals, whatever the menu's Opponents say: alone or with two there is nothing to cut)
   // how many go at a cut: a twelfth of the field it started with, never the last one left
   const cutN = (n0, alive) => Math.max(0, Math.min(Math.ceil(n0 / E.share), alive - 1));
   // the cuts a field of n0 needs, and when the last one is (s after the start)
@@ -24,7 +24,8 @@
     mine: (ctx) => ctx.md === 'elim' && !ctx.on && !(ctx.cr >= 0) && !ctx.mis && !ctx.school && !ctx.chal && !ctx.nv && !ctx.tt,
     opts(ctx) {
       if (!this.mine(ctx)) return null;
-      const n = 1 + (ctx.nAI || 0), o = { playerGrid: Math.max(1, Math.ceil(n / 2)), fuel: false, radio: false };
+      const a = Math.max(E.min, ctx.nAI || 0), n = 1 + a, o = { playerGrid: Math.max(1, Math.ceil(n / 2)), fuel: false, radio: false };
+      if (a !== ctx.nAI) o.numAI = a;
       if (!ctx.track.open) o.laps = lapsFor(ctx.track.len, n);
       return o;
     },

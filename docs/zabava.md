@@ -15,7 +15,7 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 
 ## Sistem (`js/zabava.js`)
 - `Zabava.add(f)`: novost z izbirnimi metodami `init(G)`, `opts(ctx)`, `made(race, ctx)`, `begin(race, ctx)`, `hold()`, `step(race, dt)`, `over(race)`, `cls(c)`, `finish(race)`, `resBase(race, info)`, `resPay(race, info)`, `resEnd(race, kind)`, `stop(race)`.
-- `ctx` (iz `newRace`): `md` (način igre), `on` (spletna dirka), `tt`, `quali`, `chal`, `cr` (krog prvenstva ali −1), `school`, `nv`, `mis` (posebna misija), `career`.
+- `ctx` (iz `newRace`): `md` (način igre), `on` (spletna dirka), `tt`, `quali`, `chal`, `cr` (krog prvenstva ali −1), `school`, `nv`, `mis` (posebna misija), `career`, `prvi` (prva dirka novega igralca, »Prvič na cesti«: brez izzivov ob cesti in žive ceste).
 - **Testi in reference:** v testnem načinu (hitri vstop, `repro`) in v brskalniku, ki ga vodi orodje (`navigator.webdriver`, Playwright), so novosti izklopljene, razen če jih test vklopi (`window.__zabava = true` ali `{ izzivi: 1, … }`, v naslovu `zabava=1`). Tako ostanejo obstoječe reference (golden, slike svetov, obremenitev) take, kot so. Nova načina (`elim`, `lov`) delujeta vedno, ko ju izbereš.
 - Nastavitve (`S`): `zbIzz` Izzivi ob cesti, `zbCesta` Živa cesta, `zbSpomin` Tekmeci si zapomnijo (vse 1), `zbGold` Zlati duh (0).
 - Shranjeno: `localStorage` `rra-zabava` (rekordi izzivov, zamere v prvenstvu).

@@ -1,6 +1,8 @@
 # Stran na GitHub Pages z predogledom vej (sklop 14 v docs/orodje-za-napake.md): main v korenu strani, vsak odprt pull request iz tega
 # repozitorija (največ 3 najnovejši) v beta/<številka>/, seznam v beta/ (tools/predogled.mjs). Ob vsaki spremembi main in ob vsakem odprtju,
-# spremembi ali zaprtju pull requesta se zgradi in objavi vsa stran znova.
+# spremembi ali zaprtju pull requesta se zgradi in objavi vsa stran znova. Žigi (?v=… na povezavah v index.html in garaza.html, da brskalnik
+# in predpomnilnik ne pomešata starih in novih datotek) so samo na objavljeni strani: v repozitoriju jih ni, predogled.mjs pa vsako drevo
+# (main v korenu, vsak predogled v beta/<številka>/) označi iz njegovih datotek s tools/stamp.js iz main in vsa drevesa nato še preverimo.
 # Deluje šele, ko je v Settings → Pages → Build and deployment → Source izbrano »GitHub Actions« (do tedaj Pages objavlja main kot prej
 # in ta potek samo javi, da nastavitve še ni). Teče vedno v okolju veje main (pull_request_target): kode iz pull requesta ne poganja, samo
 # kopira njene datoteke; pull requesti iz forkov ne dobijo predogleda.
@@ -66,6 +68,13 @@ jobs:
       - run: node tools/predogled.mjs _site
         env:
           GH_TOKEN: ${{ github.token }}
+      # vsako drevo strani: vsaka povezava kaže na obstoječo datoteko in ima njen trenutni žig, sicer se stran ne objavi (ostane prejšnja)
+      - name: Preverba žigov
+        run: |
+          for d in _site _site/beta/*/; do
+            [ -f "$d/index.html" ] || continue
+            GAME_ROOT="$d" node tools/stamp.js --check-stamped || exit 1
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

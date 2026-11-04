@@ -1,6 +1,7 @@
 /* =========================================================================
    GARAGE — the garage page (garaza.html): the cars, their parts, service and paint, the money. The pictures and the animations are
-   Garage3D's; this file keeps the garage's own state (a demo profile for now: joined with the menu and the career later), the page's
+   Garage3D's; this file keeps the garage's state (the real profile: the career's coins, cars and upgrades, shared with the game; or a mockup's test
+   profile with its own money), the page's
    buttons over the picture and the menu of a tapped part (GarageShop's prices: four tabs, four tiles).
    ========================================================================= */
 (function () {
@@ -9,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const num = (n) => Lang.thou(n);
-  const eur = (n) => Lang.eur(n);   // (as the game's: 2.500 € (the € not on its own line), €2,500)
+  const eur = (n) => Lang.eur(n);   // (as the game's: the coins, 2.500 🪙 / 2,500 🪙, the coin not on its own line)
   const L2 = (p) => p[Lang.cur === 'en' ? 1 : 0];   // (a [Slovenian, English] pair in the page's language)
   const MODELS = Core.MODELS, PRICE = Core.CAREER.car, EL = GarageShop.EL;
   // the game's colours (game.js PLAYER_COLORS), their names
@@ -24,8 +25,8 @@
   // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
   const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
-  // service: w = 1 - the row's state; f = (the car's worth / 68.000 €)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
-  // 15.000 w^1.6) f, the engine and its oil (180 + 9.000 w^1.8) f; under 1.000 € to 10 €, over it to 50 €; a full service 15 % off;
+  // service: w = 1 - the row's state; f = (the car's worth / 68.000)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
+  // 15.000 w^1.6) f, the engine and its oil (180 + 9.000 w^1.8) f; under 1.000 to 10, over it to 50 (coins); a full service 15 % off;
   // under 2 % wear it is free (nacrti/cene/ekonomija.json)
   const SRV = [
     { id: 'clean', a: 20, b: 280, p: 1, e: 0.3 },
@@ -56,8 +57,17 @@
   const price = (el, t, j) => { const o = opt(el, t, j); return el === 'gume' && o[4] ? round(o[1] * PROMO) : o[1]; };
 
   /* ---------------- the state: money, the cars (bought or not), each car's parts, wear and colour ---------------- */
-  const KEY = 'apex-garage';
+  // Two kinds of profile. The real one (mode 'game', the default: odlocitve denarnica-mockup 1) is the career's (tdgp-career, js/game.js):
+  // its coins, the cars bought and their four upgrade levels are the game's, bought here or there (what is bought in the garage the career
+  // has and the other way round); what only the garage knows of each car (its parts, colour, wear) is kept in the career too (career.garage).
+  // The mockup's three (a new player, the full game, a veteran) keep their own test money and cars in apex-garage, apart from the game.
+  const KEY = 'apex-garage', CKEY = 'tdgp-career', CAR0 = Core.CAREER.car0;
   const carNew = (id, own) => ({ own: !!own, parts: {}, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
+  // (a car's parts, colour and wear as saved: { deli, color, stripe, cond })
+  const carFrom = (o, c) => { o.parts = fromDeli(c.deli); o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
+    for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
+  // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
+  const keepItem = (k, v) => { try { if (typeof Shramba !== 'undefined') Shramba.keep(k, v); else localStorage.setItem(k, v); } catch (_) { } };
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
     const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
@@ -76,20 +86,64 @@
   // (a car's parts as the game's contract has them (docs/deli.md): { element: its option 1 .. 16 }; here [tab, place] each)
   const toDeli = (parts) => { const o = {}; for (const el in parts) o[el] = parts[el][0] * 4 + parts[el][1] + 1; return o; };
   const fromDeli = (deli) => { const o = {}; for (const el in deli || {}) { const n = deli[el]; if (EL[el] && Number.isInteger(n) && n >= 1 && n <= 16) o[el] = [Math.floor((n - 1) / 4), (n - 1) % 4]; } return o; };
+  // the page's own (the language, the sound, the guide seen, the track's flag, the mockup's row shown) from what was saved
+  const pageOwn = (d, s) => { d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false; d.guide = s.guide ? 1 : 0; d.flag = typeof s.flag === 'string' ? s.flag : ''; return d; };
   function load() {
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
-    if (!s || s.v !== 2 || !s.cars || !s.mode) { const d = profile(s && s.mode || 'full'); if (s && s.lang === 'en') d.lang = 'en'; return d; }   // (an older profile (credits, levels): a new one)
+    // the real profile: a new player's, an older garage's (the mockup's only before: g unset), or chosen
+    if (!s || s.v !== 2 || !s.g || s.mode === 'game') { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
+    if (!s.cars || !s.mode) { const d = profile(s.mode || 'full'); if (s.lang === 'en') d.lang = 'en'; return d; }
     const d = profile(s.mode);
-    for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own;
-      o.parts = fromDeli(c.deli);
-      o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
-      for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; }
-    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; d.lang = s.lang === 'en' ? 'en' : 'sl'; d.sound = s.sound !== false; d.demo = s.demo !== false; d.guide = s.guide ? 1 : 0; d.flag = typeof s.flag === 'string' ? s.flag : '';
+    for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
+    d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
     if (!d.cars.pico.own) d.cars.pico.own = true;
     return d;
   }
-  // (saved with each car's parts as the game's contract has them: deli)
-  function save() { try { const cars = {}; for (const id in S.cars) { const c = Object.assign({}, S.cars[id], { deli: toDeli(S.cars[id].parts) }); delete c.parts; cars[id] = c; } localStorage.setItem(KEY, JSON.stringify(Object.assign({}, S, { cars }))); } catch (_) { } }
+  // (saved with each car's parts as the game's contract has them: deli; the real profile's in the career, apex-garage only the page's own)
+  function save() { try {
+    if (S.mode === 'game') { toCareer(); keepItem(KEY, JSON.stringify({ v: 2, g: 1, mode: 'game', car: S.car, lang: S.lang, sound: S.sound, demo: S.demo, guide: S.guide, flag: S.flag })); return; }
+    const cars = {}; for (const id in S.cars) { const c = Object.assign({}, S.cars[id], { deli: toDeli(S.cars[id].parts) }); delete c.parts; cars[id] = c; } keepItem(KEY, JSON.stringify(Object.assign({}, S, { g: 1, cars }))); } catch (_) { } }
+
+  /* ---------------- the real profile: the career's (its coins, cars, upgrade levels) ---------------- */
+  // (the career as saved; none yet: a new one, not started (on: false; the game starts it from here, js/game.js careerNew))
+  function careerRead() {
+    let c = null; try { c = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (_) { c = null; }
+    return c && typeof c === 'object' && c.v === 1 ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
+  }
+  // (a car's four levels in the career: its own (a retired model's: its heir's; both: the better of each), 0 .. 3)
+  function careerUpg(c, id) { const L = { motor: 0, gume: 0, zavore: 0, aero: 0 }, U = c.upg && typeof c.upg === 'object' ? c.upg : {};
+    for (const k in U) if (heirId(k) === id && U[k] && typeof U[k] === 'object') for (const u in L) { const v = U[k][u]; if (Number.isInteger(v) && v > L[u] && v <= 3) L[u] = v; }
+    return L; }
+  // the parts of a level the game set (bought in its upgrade screen): that upgrade's parts (the power: the filter, the chip, the turbo, the
+  // exhaust; the grip: the kit and the wing; the braking: the brakes; the tyres) replaced by a set that gives the level, the rest kept
+  const LEVEL_SET = { motor: [{}, { cip: 'Chip' }, { cip: 'Chip', turbo: 'Sport turbo' }, { cip: 'Chip', turbo: 'Turbo kit' }],   // (8, 16, 25 % of power)
+    aero: [{}, { aero: 'Street' }, { aero: 'Sport' }, { aero: 'Race' }], zavore: [{}, { zavore: 'Sport pads' }, { zavore: 'Racing discs' }, { zavore: 'Ceramic' }],
+    gume: [{}, { gume: 'Premium Summer' }, { gume: 'Street Semi-slick' }, { gume: 'Track Slick' }] };
+  function levelParts(parts, k, n) { const o = {}; for (const el in parts) if (!EL[el] || EL[el].k !== k) o[el] = parts[el];
+    const set = LEVEL_SET[k][n] || {}; for (const el in set) { const v = findOpt(el, set[el]); if (v) o[el] = v; } return o; }
+  // the real profile from the career: its coins, the cars it has (a retired model's: its heir), each car's parts, colour and wear (the
+  // garage's, kept in the career) with the game's levels: a level the game set (its upgrade screen) the parts of it
+  function fromCareer() {
+    const c = careerRead(), g = c.garage && typeof c.garage === 'object' ? c.garage : {}, gc = g.cars && typeof g.cars === 'object' ? g.cars : {};
+    const d = { v: 2, mode: 'game', money: Number.isFinite(c.money) ? Math.max(0, Math.floor(c.money)) : 0, car: CAR0, cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
+    const has = new Set((Array.isArray(c.cars) ? c.cars : []).map(heirId)); has.add(CAR0);
+    for (const id of ORDER) { const k = d.cars[id] = carNew(id, has.has(id)); if (gc[id] && typeof gc[id] === 'object') carFrom(k, gc[id]);
+      if (!k.own) continue; const want = careerUpg(c, id);
+      for (const u of ['motor', 'gume', 'zavore', 'aero']) if (levels(k.parts)[u] !== want[u]) k.parts = levelParts(k.parts, u, want[u]); }
+    if (ORDER.includes(heirId(g.car))) d.car = heirId(g.car);
+    return d;
+  }
+  // and back into it: the coins, the cars (the career's order, a new one after them), their levels from their parts, the garage's own of
+  // each car (bought, or not as new: its parts, colour); the rest of the career (its races, wins, rival, on or not) as it was
+  function toCareer() {
+    const c = careerRead(), cars = (Array.isArray(c.cars) ? c.cars : []).map(heirId).filter((id, i, a) => S.cars[id] && S.cars[id].own && a.indexOf(id) === i);
+    for (const id of ORDER) if (S.cars[id].own && !cars.includes(id)) cars.push(id);
+    c.money = Math.max(0, Math.round(S.money)); c.cars = cars; c.upg = {}; for (const id of cars) c.upg[id] = levels(S.cars[id].parts);
+    const gc = {}; for (const id of ORDER) { const k = S.cars[id], d = toDeli(k.parts);
+      if (k.own || Object.keys(d).length || k.color !== color0(id) || !k.stripe) gc[id] = { deli: d, color: k.color, stripe: k.stripe, cond: Object.assign({}, k.cond) }; }
+    c.garage = { car: S.car, cars: gc };
+    keepItem(CKEY, JSON.stringify(c));
+  }
   const C = () => S.cars[S.car], M = () => model(S.car);
   const locked = (id) => S.mode === 'free' && !FREE.includes(id) && !S.cars[id].own;
   // the game's four upgrade levels from a car's parts (parts: those, or another set to try)
@@ -215,7 +269,7 @@
      one blue, the others orange), back and buy; ↺ SERIJSKO when the car has something else than its own; the service's and the paint's
      the same (the service: its four as the tiles, no tabs; the paint: the colour of the circle tapped, its four kinds of work) ---------------- */
   let menu = null;   // { el, tab, sel: [t, j], key: the tapped thing, color (the paint's) }
-  const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return Lang.cur === 'en' ? eur(Math.min(...o)) + '–' + eur(Math.max(...o)) : num(Math.min(...o)) + '–' + num(Math.max(...o)) + '\u00a0€'; };
+  const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return num(Math.min(...o)) + '–' + eur(Math.max(...o)); };   // (850–1.400 🪙 / 850–1,400 🪙)
   // (the things on the screen of an element's menu: the regal's parts with its options, the maquettes for the aero kit, the circles)
   function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
   function keyOfOpt(el, t, j) {
@@ -365,7 +419,7 @@
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
-      case 'reset': { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
+      case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
       case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); break;
     }
   }
@@ -407,7 +461,7 @@
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); return; }
-      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
+      if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
     window.addEventListener('resize', resize);
@@ -424,7 +478,7 @@
         chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓')); lastFit = null; }
     };
   }
-  function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); }
+  function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
   // the picture over the whole page, raised a little (its foot under the buttons)
   // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
   // the cabinet between them)
@@ -436,7 +490,7 @@
     if (!wide) G.fitShift(a.bottom - r.top, b.top - r.top); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
-  // retired model's: its heir); the money and the cars stay the profile's (the mockup's for now). Without them: the profile's car
+  // retired model's: its heir); the money and the cars stay the profile's (the real one: the career's). Without them: the profile's car
   let GAME_CAR = null;
   function fromGame() {
     let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }

@@ -20,11 +20,11 @@ try {
       for (let k = 0; k < o.count; k++) { o.getMatrixAt(k, m4); v.setFromMatrixPosition(m4); const x = v.x + o.position.x, z = v.z + o.position.z; trees++;
         if (S.some(P => inP(P, x, z) || dist(P, x, z) < 1.4)) bad.push([+x.toFixed(1), +z.toFixed(1)]); }
     });
-    return { stands: S.length, trees, stat: W.stats.trees, bad: bad.slice(0, 6), nBad: bad.length };
+    return { stands: S.length, trees, stat: W.stats.trees, thin: W.thinned || 0, bad: bad.slice(0, 6), nBad: bad.length };
   });
   T.check('the five grandstands\' outlines', r.stands === 5, `${r.stands}`);
   T.check('no tree in a grandstand, none within 1.4 m of one', r.nBad === 0, `${r.nBad} of ${r.trees} trees ${JSON.stringify(r.bad)}`);
-  T.check('the park and the town keep their trees (every one planted drawn, the mangroves besides)', r.trees > 2000 && r.trees >= r.stat, `${r.trees} drawn, ${r.stat} planted`);
+  T.check('the park and the town keep their trees (every one planted drawn but the road\'s thinned ones, the mangroves besides)', r.trees > 2000 && r.trees >= r.stat - r.thin, `${r.trees} drawn, ${r.stat} planted, ${r.thin} thinned by the road`);
   T.check('no errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 } finally {
   await browser.close(); await srv.close();

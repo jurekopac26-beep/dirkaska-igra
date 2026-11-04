@@ -50,7 +50,10 @@ try {
   // the key F, then the pad's Select (a second apart)
   await Q.waitForFunction((t) => window.__game.race.time > t + 1, a1.t, { timeout: 30000, polling: 100 });
   await Q.keyboard.press('KeyF'); await Q.waitForTimeout(100);
-  await Q.waitForFunction((t) => window.__game.race.time > t + 2, a1.t, { timeout: 30000, polling: 100 });
+  // (Select a second after the F flag's own time: the key takes effect when it comes, the pad's button at the start of the next frame's
+  // steps, on a slow machine up to ~0.18 s apart; both waited from the first flag, the second gap fell to 0.9 s and the check below failed)
+  const fF = await Q.waitForFunction(() => window.__game.recFlags.length >= 2 && window.__game.recFlags[1].t, null, { timeout: 15000, polling: 50 }).then(h => h.jsonValue());
+  await Q.waitForFunction((t) => window.__game.race.time > t + 1, fF, { timeout: 30000, polling: 100 });
   const pressed = await Q.evaluate(() => window.__press(8, 'back'));
   const a2 = await Q.evaluate(() => ({ f: window.__game.recFlags, toast: document.getElementById('toast').textContent, paused: window.__game.paused }));
   T.check('the key F and the pad\'s Select: flags 2 and 3 (a second apart), the race not paused', pressed && a2.f.length === 3 && a2.f[1].t > a2.f[0].t + 0.9 && a2.f[2].t > a2.f[1].t + 0.9 && /^⚑ Zastavica 3 · /.test(a2.toast) && !a2.paused, JSON.stringify(a2));

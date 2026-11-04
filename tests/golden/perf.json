@@ -1,290 +1,297 @@
 {
  "pikes": {
   "calls": 115,
-  "maxCalls": 127,
-  "kverts": 275,
+  "maxCalls": 128,
+  "kverts": 277,
   "maxKverts": 336,
-  "jsMs": 1.8
+  "jsMs": 3.28
  },
  "pikesg": {
   "calls": 113,
   "maxCalls": 141,
-  "kverts": 290,
+  "kverts": 291,
   "maxKverts": 344,
-  "jsMs": 1.4
+  "jsMs": 1.37
  },
  "ouninpohja": {
-  "calls": 163,
-  "maxCalls": 176,
-  "kverts": 418,
-  "maxKverts": 493,
-  "jsMs": 1.33
+  "calls": 169,
+  "maxCalls": 185,
+  "kverts": 400,
+  "maxKverts": 467,
+  "jsMs": 1.24
  },
  "vrsic": {
   "calls": 163,
-  "maxCalls": 191,
-  "kverts": 295,
-  "maxKverts": 355,
-  "jsMs": 2.22
+  "maxCalls": 193,
+  "kverts": 263,
+  "maxKverts": 325,
+  "jsMs": 2.39
  },
  "nring": {
-  "calls": 150,
-  "maxCalls": 173,
-  "kverts": 316,
-  "maxKverts": 354,
-  "jsMs": 3.61
+  "calls": 153,
+  "maxCalls": 175,
+  "kverts": 300,
+  "maxKverts": 339,
+  "jsMs": 4.14
  },
  "spa": {
-  "calls": 177,
+  "calls": 180,
   "maxCalls": 228,
-  "kverts": 474,
-  "maxKverts": 657,
-  "jsMs": 1.8
+  "kverts": 468,
+  "maxKverts": 623,
+  "jsMs": 1.6
  },
  "rbring": {
-  "calls": 212,
-  "maxCalls": 246,
-  "kverts": 425,
-  "maxKverts": 586,
-  "jsMs": 1.84
+  "calls": 216,
+  "maxCalls": 251,
+  "kverts": 431,
+  "maxKverts": 615,
+  "jsMs": 1.36
  },
  "suzuka": {
-  "calls": 190,
-  "maxCalls": 238,
-  "kverts": 476,
-  "maxKverts": 602,
-  "jsMs": 1.47
+  "calls": 194,
+  "maxCalls": 241,
+  "kverts": 480,
+  "maxKverts": 605,
+  "jsMs": 1.52
  },
  "caracoles": {
-  "calls": 147,
+  "calls": 149,
   "maxCalls": 177,
-  "kverts": 251,
+  "kverts": 253,
   "maxKverts": 382,
-  "jsMs": 1.63
+  "jsMs": 1.21
  },
  "katu": {
-  "calls": 149,
-  "maxCalls": 169,
-  "kverts": 540,
-  "maxKverts": 620,
-  "jsMs": 0.99
+  "calls": 147,
+  "maxCalls": 164,
+  "kverts": 531,
+  "maxKverts": 613,
+  "jsMs": 1.04
  },
  "harju": {
-  "calls": 174,
-  "maxCalls": 207,
-  "kverts": 512,
-  "maxKverts": 777,
-  "jsMs": 0.44
+  "calls": 172,
+  "maxCalls": 204,
+  "kverts": 496,
+  "maxKverts": 723,
+  "jsMs": 0.5
  },
  "bathurst": {
-  "calls": 162,
-  "maxCalls": 251,
-  "kverts": 371,
-  "maxKverts": 425,
-  "jsMs": 1.62
+  "calls": 165,
+  "maxCalls": 252,
+  "kverts": 383,
+  "maxKverts": 462,
+  "jsMs": 1.72
  },
  "chapman": {
-  "calls": 136,
-  "maxCalls": 146,
-  "kverts": 404,
-  "maxKverts": 451,
-  "jsMs": 1.59
+  "calls": 137,
+  "maxCalls": 147,
+  "kverts": 406,
+  "maxKverts": 460,
+  "jsMs": 2.17
  },
  "bigsur": {
   "calls": 138,
   "maxCalls": 153,
-  "kverts": 325,
-  "maxKverts": 387,
-  "jsMs": 1.44
+  "kverts": 323,
+  "maxKverts": 379,
+  "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 156,
-  "maxCalls": 212,
-  "kverts": 647,
-  "maxKverts": 816,
-  "jsMs": 0.87
+  "calls": 153,
+  "maxCalls": 208,
+  "kverts": 584,
+  "maxKverts": 725,
+  "jsMs": 1.18
  },
  "uncompahgre": {
   "calls": 161,
   "maxCalls": 195,
-  "kverts": 378,
-  "maxKverts": 478,
-  "jsMs": 1.6
+  "kverts": 361,
+  "maxKverts": 468,
+  "jsMs": 1.26
  },
  "sani": {
-  "calls": 105,
-  "maxCalls": 126,
-  "kverts": 190,
-  "maxKverts": 221,
-  "jsMs": 1.58
+  "calls": 107,
+  "maxCalls": 132,
+  "kverts": 192,
+  "maxKverts": 228,
+  "jsMs": 2.31
  },
  "iroha": {
-  "calls": 197,
-  "maxCalls": 261,
-  "kverts": 601,
-  "maxKverts": 763,
-  "jsMs": 1.21
+  "calls": 196,
+  "maxCalls": 264,
+  "kverts": 511,
+  "maxKverts": 676,
+  "jsMs": 1.36
  },
  "mulholland": {
-  "calls": 147,
+  "calls": 146,
   "maxCalls": 168,
-  "kverts": 486,
-  "maxKverts": 718,
-  "jsMs": 1.54
+  "kverts": 472,
+  "maxKverts": 669,
+  "jsMs": 1.58
  },
  "beartooth": {
   "calls": 168,
-  "maxCalls": 254,
-  "kverts": 314,
-  "maxKverts": 458,
-  "jsMs": 1.21
+  "maxCalls": 252,
+  "kverts": 300,
+  "maxKverts": 420,
+  "jsMs": 1.74
  },
  "rastro": {
-  "calls": 176,
-  "maxCalls": 228,
-  "kverts": 509,
-  "maxKverts": 565,
-  "jsMs": 1.25
+  "calls": 174,
+  "maxCalls": 225,
+  "kverts": 436,
+  "maxKverts": 498,
+  "jsMs": 1.27
  },
  "moki": {
-  "calls": 130,
-  "maxCalls": 162,
+  "calls": 129,
+  "maxCalls": 161,
   "kverts": 205,
-  "maxKverts": 266,
-  "jsMs": 1.48
+  "maxKverts": 265,
+  "jsMs": 1.15
  },
  "maunakea": {
-  "calls": 111,
-  "maxCalls": 129,
-  "kverts": 196,
-  "maxKverts": 269,
-  "jsMs": 1.58
+  "calls": 114,
+  "maxCalls": 131,
+  "kverts": 201,
+  "maxKverts": 273,
+  "jsMs": 1.55
  },
  "baldy": {
-  "calls": 152,
-  "maxCalls": 174,
-  "kverts": 486,
-  "maxKverts": 559,
-  "jsMs": 1.83
+  "calls": 154,
+  "maxCalls": 181,
+  "kverts": 481,
+  "maxKverts": 552,
+  "jsMs": 1.53
  },
  "cpalace": {
-  "calls": 190,
-  "maxCalls": 211,
-  "kverts": 530,
-  "maxKverts": 658,
-  "jsMs": 2.16
+  "calls": 193,
+  "maxCalls": 223,
+  "kverts": 521,
+  "maxKverts": 608,
+  "jsMs": 1.42
  },
  "riverside": {
-  "calls": 157,
-  "maxCalls": 200,
-  "kverts": 274,
+  "calls": 163,
+  "maxCalls": 203,
+  "kverts": 283,
   "maxKverts": 345,
-  "jsMs": 1.38
+  "jsMs": 0.9
  },
  "monterey": {
   "calls": 199,
-  "maxCalls": 234,
+  "maxCalls": 233,
   "kverts": 534,
-  "maxKverts": 612,
-  "jsMs": 1.98
+  "maxKverts": 611,
+  "jsMs": 0.92
  },
  "longford": {
-  "calls": 170,
-  "maxCalls": 206,
-  "kverts": 418,
-  "maxKverts": 465,
-  "jsMs": 1.57
+  "calls": 171,
+  "maxCalls": 205,
+  "kverts": 414,
+  "maxKverts": 460,
+  "jsMs": 1.25
  },
  "newcastle": {
-  "calls": 227,
-  "maxCalls": 260,
-  "kverts": 733,
-  "maxKverts": 825,
-  "jsMs": 1.71
+  "calls": 230,
+  "maxCalls": 263,
+  "kverts": 738,
+  "maxKverts": 861,
+  "jsMs": 0.96
  },
  "rio": {
-  "calls": 201,
-  "maxCalls": 265,
-  "kverts": 529,
-  "maxKverts": 710,
-  "jsMs": 1.67
+  "calls": 205,
+  "maxCalls": 273,
+  "kverts": 530,
+  "maxKverts": 740,
+  "jsMs": 1.26
  },
  "toronto": {
-  "calls": 191,
-  "maxCalls": 225,
-  "kverts": 697,
-  "maxKverts": 776,
-  "jsMs": 1.42
+  "calls": 193,
+  "maxCalls": 229,
+  "kverts": 699,
+  "maxKverts": 808,
+  "jsMs": 1.02
  },
  "medvode": {
-  "calls": 127,
-  "maxCalls": 152,
-  "kverts": 372,
-  "maxKverts": 538,
-  "jsMs": 1.47
+  "calls": 129,
+  "maxCalls": 151,
+  "kverts": 369,
+  "maxKverts": 535,
+  "jsMs": 1.25
  },
  "montreal": {
-  "calls": 206,
-  "maxCalls": 252,
+  "calls": 209,
+  "maxCalls": 251,
   "kverts": 456,
-  "maxKverts": 636,
-  "jsMs": 1.29
+  "maxKverts": 611,
+  "jsMs": 1.15
  },
  "greatalpine": {
-  "calls": 150,
-  "maxCalls": 166,
-  "kverts": 499,
-  "maxKverts": 627,
-  "jsMs": 1.72
+  "calls": 156,
+  "maxCalls": 174,
+  "kverts": 505,
+  "maxKverts": 643,
+  "jsMs": 2.29
  },
  "detroit": {
-  "calls": 218,
-  "maxCalls": 236,
-  "kverts": 685,
-  "maxKverts": 789,
-  "jsMs": 1.69
+  "calls": 220,
+  "maxCalls": 245,
+  "kverts": 670,
+  "maxKverts": 786,
+  "jsMs": 1.19
  },
  "palomar": {
   "calls": 148,
-  "maxCalls": 171,
-  "kverts": 439,
-  "maxKverts": 530,
-  "jsMs": 1.76
+  "maxCalls": 170,
+  "kverts": 415,
+  "maxKverts": 478,
+  "jsMs": 1.45
  },
  "bangsaen": {
-  "calls": 215,
-  "maxCalls": 279,
-  "kverts": 619,
-  "maxKverts": 807,
-  "jsMs": 1.84
+  "calls": 218,
+  "maxCalls": 278,
+  "kverts": 622,
+  "maxKverts": 795,
+  "jsMs": 1.06
  },
  "hotham": {
-  "calls": 147,
-  "maxCalls": 160,
-  "kverts": 447,
+  "calls": 149,
+  "maxCalls": 164,
+  "kverts": 448,
   "maxKverts": 497,
-  "jsMs": 2.09
+  "jsMs": 1.69
  },
  "townsville": {
-  "calls": 196,
-  "maxCalls": 231,
-  "kverts": 604,
-  "maxKverts": 730,
-  "jsMs": 1.61
+  "calls": 199,
+  "maxCalls": 238,
+  "kverts": 627,
+  "maxKverts": 782,
+  "jsMs": 1.09
  },
  "marrakesh": {
-  "calls": 175,
-  "maxCalls": 225,
-  "kverts": 630,
-  "maxKverts": 711,
-  "jsMs": 1.07
+  "calls": 177,
+  "maxCalls": 228,
+  "kverts": 658,
+  "maxKverts": 763,
+  "jsMs": 1.02
  },
  "troisrivieres": {
-  "calls": 211,
-  "maxCalls": 247,
-  "kverts": 693,
-  "maxKverts": 809,
-  "jsMs": 1.38
+  "calls": 212,
+  "maxCalls": 248,
+  "kverts": 691,
+  "maxKverts": 833,
+  "jsMs": 1.03
+ },
+ "livorno": {
+  "calls": 165,
+  "maxCalls": 211,
+  "kverts": 365,
+  "maxKverts": 532,
+  "jsMs": 3.3
  },
  "jezero": {
   "calls": 172,
@@ -342,11 +349,11 @@
   "maxKverts": 1550,
   "jsMs": 0
  },
- "livorno": {
-  "calls": 165,
-  "maxCalls": 211,
-  "kverts": 394,
-  "maxKverts": 587,
-  "jsMs": 3.15
+ "mountbuller": {
+  "calls": 137,
+  "maxCalls": 164,
+  "kverts": 311,
+  "maxKverts": 373,
+  "jsMs": 2.82
  }
 }

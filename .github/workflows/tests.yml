@@ -12,17 +12,21 @@ on:
 permissions:
   contents: read
 
-# nov zagon na isti veji prekine starega (ki bi preverjal staro stanje)
+# Pull request: nov zagon na isti veji prekine starega (ki bi preverjal staro stanje).
+# main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026);
+# prej je vsaka združitev prekinila krog na main, zato se noben ni končal in varovalka po združitvi ni delovala.
 concurrency:
   group: testi-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   node:
     name: Fizika, AI in dirke
     if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 40   # (nabor traja na CI ~20 min: omejitev mora imeti rezervo)
+    # (nabor traja na CI 19–21, 27–33 ali 37–42 min, odvisno od stroja, ki ga dodeli GitHub (3. 11. 2026: počasni stroji več kot polovica
+    # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min)
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -31,6 +35,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:node
+        env:
+          TEST_TIMEOUT_MIN: 25   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min in raste z vsako progo)
 
   # Brskalniški testi na štirih strojih hkrati: tests/run.js --shard k/4 razdeli teste po tem, koliko časa traja vsak (SECS v
   # tests/run.js, časi iz teka 29. 10. 2026: ~64 min na del). Celoten nabor na enem stroju bi trajal ~4 h in se z vsako novo progo podaljša.
