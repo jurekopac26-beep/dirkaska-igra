@@ -5,8 +5,10 @@
 import json, math, os, re, shutil, subprocess, sys
 from PIL import Image, ImageEnhance
 
-RAW, SITE = 'raw/maps', sys.argv[1] if len(sys.argv) > 1 else '..'
-ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None   # (python3 routes.py <site> vrsic,spa: only these again, the others kept from <site>/routes.js)
+FLY = '--fly' in sys.argv   # (python3 routes.py <site> vrsic,spa --fly: only these tracks' flyovers again, flyover.mjs; their maps, places and heights kept from <site>/routes.js)
+ARGS = [a for a in sys.argv[1:] if a != '--fly']
+RAW, SITE = 'raw/maps', ARGS[0] if ARGS else '..'
+ONLY = ARGS[1].split(',') if len(ARGS) > 1 else None   # (python3 routes.py <site> vrsic,spa: only these again, the others kept from <site>/routes.js)
 try:
     import imageio_ffmpeg; FF0 = imageio_ffmpeg.get_ffmpeg_exe()   # pip install imageio-ffmpeg (has VP9)
 except ImportError: FF0 = 'ffmpeg'
@@ -76,6 +78,27 @@ def pace(route, d, mpp):   # the corners of a track from its route on the top ma
         else: i += 1
     return out
 
+def fly(t, R, L):   # the flyover (map version 1) of a track whose map R (its places) and length L are known (flyover.mjs drew it)
+    # the video, its first frame, and per frame [metres, start, finish, 0, places] where the menu shows them
+    # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
+    fj = os.path.join(RAW, 'fly-%s.json' % t)
+    if os.path.exists(fj):
+        F = json.load(open(fj)); F['places'] = [neutral(x) for x in F['places']]
+        src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
+        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
+            if F['W'] <= 720: shutil.copyfile(src, dst)   # drawn at the menu's size already
+            else:   # smaller for a phone: 660 px wide (the names still use the frame's own size)
+                subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', src, '-vf', 'scale=660:-2', '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '42',
+                                '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-pix_fmt', 'yuv420p', '-an', dst], check=True)
+        Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=72, method=6)
+        pd = []
+        for nm in F['places']:
+            q = next((x for x in R['places'] if x[0] == nm), None) or next((x for x in R['places'] if nm in x[0]), None)   # (the same name first, as the menu)
+            pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
+        keep = lambda P, on: P if on and P and P[2] else 0
+        fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
+        R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
+
 def old_routes():
     p = os.path.join(SITE, 'routes.js')
     if not os.path.exists(p): return {}
@@ -86,6 +109,9 @@ for t in TRACKS:
     if ONLY and t not in ONLY:
         if t in OLD: data[t] = OLD[t]
         continue
+    if FLY:
+        if t not in OLD: print(t, 'not in', SITE + '/routes.js yet'); continue
+        R = OLD[t]; fly(t, R, R['len']); data[t] = R; print(t, 'flyover', 'fly' in R); continue
     R = {}
     if not os.path.exists(os.path.join(RAW, 'top-%s.json' % t)): print(t, 'no map yet'); continue
     # the map from above (map version 2): the land fills it (no transparency)
@@ -112,25 +138,7 @@ for t in TRACKS:
     if len(H) == 1 and t not in ROADS: H += [[max(1, round(c[0]) - 40), 'Turn %d' % (k + 1)] for k, c in enumerate(pace(J['route'], J['d'], J['mPerPx']))]
     if not R['open']: H.append([round(L - 150), 'Start · finish'])
     R['hud'] = H
-    # the flyover (map version 1): the video, its first frame, and per frame [metres, start, finish, 0, places] where the menu shows them
-    # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
-    fj = os.path.join(RAW, 'fly-%s.json' % t)
-    if os.path.exists(fj):
-        F = json.load(open(fj)); F['places'] = [neutral(x) for x in F['places']]
-        src, dst = os.path.join(RAW, 'fly-%s.webm' % t), os.path.join(OUT, 'fly-%s.webm' % t)
-        if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
-            if F['W'] <= 720: shutil.copyfile(src, dst)   # drawn at the menu's size already
-            else:   # smaller for a phone: 660 px wide (the names still use the frame's own size)
-                subprocess.run([FF, '-hide_banner', '-loglevel', 'error', '-y', '-i', src, '-vf', 'scale=660:-2', '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '42',
-                                '-row-mt', '1', '-deadline', 'good', '-cpu-used', '2', '-pix_fmt', 'yuv420p', '-an', dst], check=True)
-        Image.open(os.path.join(RAW, 'fly-%s-poster.jpg' % t)).convert('RGB').save(os.path.join(OUT, 'fly-%s.webp' % t), 'WEBP', quality=72, method=6)
-        pd = []
-        for nm in F['places']:
-            q = next((x for x in R['places'] if x[0] == nm), None) or next((x for x in R['places'] if nm in x[0]), None)   # (the same name first, as the menu)
-            pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
-        keep = lambda P, on: P if on and P and P[2] else 0
-        fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
-        R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
+    fly(t, R, L)
     data[t] = R
     print(t, 'len', L, 'places', len(R['places']), 'hud', len(H), 'fly', 'fly' in R)
 
