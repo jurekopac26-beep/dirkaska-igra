@@ -27,7 +27,7 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 1 | zbirna veja `zbirna/racun2` (#295 + #240 + #287 + #292) | meni sklop 6, trki v polju 100 avtov, gume KOLIBRIJA, ostrenje slike; en krog testov | 2 | v delu (nova seja koordinacije računa 2); posamezni PR-ji se zaprejo ob združitvi |
+| 1 | #303 zbirna veja `zbirna/racun2` (#295 + #240 + #287 + #292) | meni sklop 6, trki v polju 100 avtov, gume KOLIBRIJA, ostrenje slike; en krog testov | 2 | osnutek, lokalni testi tečejo (nova seja koordinacije računa 2); posamezni PR-ji se zaprejo ob združitvi |
 | 2 | #246 | preleti | 3 | čaka |
 | 3 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 4 | #259 | tribune iz OSM | 3 | čaka |
