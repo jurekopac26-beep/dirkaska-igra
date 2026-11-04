@@ -5631,9 +5631,9 @@ const Render = (function () {
   function crewExitStep(c, dt, near) {
     const E = c.exit, R = curRace; if (!E || !R) return;
     const T = curTrack, L = T.len, dS = (ss) => { let x = ss - T.startS; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }, J = E.J;
-    // the exit closed: before the start, under a red flag (7A: the race stopped, Race.fl.red), or the safety car (or the leader behind it)
-    // within 250 m before where the lanes meet
-    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || !!(F && F.red) || (scD > -20 && scD < 250);
+    // the exit closed: before the start, under a red flag (7A: the race stopped, Race.fl.red, until its restart), or the safety car (or the
+    // leader behind it) within 250 m before where the lanes meet (not the red flag's own at the restart: the queue out of the lane behind it)
+    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' && !F.sc.red ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || !!(F && F.red && F.red.st !== 'go') || (scD > -20 && scD < 250);
     // the blue flag: a car on its way out (on the pit road past the boxes) while another comes along the circuit to the acceleration lane's end
     let out = false, come = false;
     for (const o of R.cars) { if (o.finished || !o.q) continue; const dd = dS(o.q.s);
@@ -5666,10 +5666,11 @@ const Render = (function () {
   function crewLogic(dt, snap) {   // (snap: the replay jumped in time, crewJump)
     const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
     const ps = P.rpPit || P, bd = T.def.pit ? T.def.pit[3] : null, dB = P.q && bd != null ? -T.boxX(P.q.s, bd) : -999;   // (ps: the pit state, in the replay the recording's, c.rpPit, game.js rpPit; dB: metres from the car to its box along the lane: Core's box, where the car stops)
+    const nb = P.rpPit ? !!P.rpPit.nb : !!(P.fl && P.fl.rq) && !(curRace && curRace._inStop && curRace._inStop(P));   // (the red flag's queue through the lane: no stop, the crew stays in)
     const prev = c.mode; let mode;
     if (ps.pitState === 'repair') mode = 'work';
     else if (prev === 'work' || prev === 'clear') mode = ps.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
-    else mode = !ps.inPit || ps.pitDone ? 'home' : (ps.pitState === 'stop' || dB < c.dOut) && dB > -4 ? 'out' : dB > 0 ? 'ready' : 'home';
+    else mode = !ps.inPit || ps.pitDone || nb ? 'home' : (ps.pitState === 'stop' || dB < c.dOut) && dB > -4 ? 'out' : dB > 0 ? 'ready' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
       if (mode === 'ready' || (mode === 'out' && prev !== 'ready')) c.frame = crStopAt(T, bd, c.pb);
       if (mode === 'out') for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; }

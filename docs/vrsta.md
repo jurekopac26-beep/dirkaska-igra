@@ -20,7 +20,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Garaža, sklopi 6–8 (nagrade po vrednosti avta, škoda, gume in deli z rokama) | 1 | ko je #248 na `main`; `js/cars/kolibri.js` in `js/deli/*` pred 8. 11. ne spreminja |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
-| Rdeča zastava (P7 sklopa Boksi): pravilo dirke in znaki v vmesniku, izris zastav ob progi ostane | 2 | po #284 |
 
 ## Vrsta (stanje 4. 11. 2026)
 
@@ -35,7 +34,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #284 | boksi (kamera v boksih, postanek po meri, garaže, Monterey z boksi …) | 2 | čaka |
+| 9 | #284 (+#296 P7) | boksi (kamera v boksih, postanek po meri, garaže, Monterey z boksi …) in rdeča zastava (P7, #296 gre na `main` v #284) | 2 | čaka |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 

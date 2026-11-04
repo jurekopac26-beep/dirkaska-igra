@@ -106,6 +106,8 @@ const Comm = (() => {
     sc: ['The safety car is out! No overtaking!', 'Safety car deployed! The field will bunch up behind it.', 'Here comes the safety car! Everyone slows down.'],
     scIn: ['The safety car is coming in! Get ready for the restart!', 'Safety car in this lap! Warm up those tyres!', 'The lights are off on the safety car, restart coming!'],
     green: ['Green flag! We are racing again!', 'And we are green! Back to racing!', 'Green, green, green! Racing resumes!'],
+    red: ['Red flag! The race has been stopped!', 'Red flag, red flag! They are stopping the race after that crash!', 'The red flag is out! Everyone slows right down and lines up.'],   // (game.js flagEvent: the red flag, Core Race._redOut)
+    redGo: ['The restart is on! They follow the safety car away.', 'And we are going again, behind the safety car!', 'Restart! The queue is moving again.'],
     passWarn: ['Overtaking under the flag! Give that place back!', 'That was a pass under yellow! Let him back through!', 'No overtaking under the flag! Give the position back!'],
     penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
     // a changing weather (the rain starts or stops during the race) and the tyres
@@ -139,6 +141,9 @@ const Comm = (() => {
     radioFcDry: ['Forecast: dry to the finish.', 'No rain on the radar, dry to the end.'],
     radioFcWet: ['Forecast: rain to the finish.', 'It stays wet to the end.'],
     radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
+    radioRedPit: ['Red flag, red flag. Slowly into the pit lane, stay behind the car ahead.', 'Red flag. Into the pits, no overtaking, line up behind the car ahead.'],   // (the red flag, game.js flagEvent: the queue in the pit lane, or on the grid)
+    radioRedGrid: ['Red flag, red flag. Slowly to the grid, stay behind the car ahead.', 'Red flag. Back to the start straight, no overtaking, line up behind the car ahead.'],
+    radioRedGo: ['Restart behind the safety car. Get some heat in those tyres.', 'We are restarting behind the safety car. Warm the tyres up.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
     radioGo: ['Go, go, go!', 'Go, go, go! All yours.', 'Go, go, go! Push now!'],   // (the hand-back after a stop: VOZIŠ TI!, game.js pitFree)
     radioGain: ['Great stop, you gained {n} {pl}. P{pos} now.', 'The stop worked, up {n} {pl} to P{pos}.'],   // (the places a stop gained or lost, game.js swingRadio)

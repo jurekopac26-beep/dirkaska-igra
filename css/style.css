@@ -263,6 +263,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 #h-pit i { display: block; height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(255, 255, 255, .16); overflow: hidden; }
 #h-pit em { display: block; width: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--lcd), var(--meter)); }
 #h-pit b::before { content: ''; display: inline-block; width: 1.3em; height: 1.3em; margin-right: .3em; vertical-align: -.3em; background: center / contain no-repeat var(--ic-wrench); }   /* (the wrench at the start of the title) */
+#h-pit.red { border-left-color: var(--curb); } #h-pit.red b { color: #ff6b5e; } #h-pit.red b::before { display: none; } #h-pit.red em { background: var(--curb); }   /* (the red flag's autopilot, game.js pitBar: a red edge and bar, no wrench) */
 /* the custom stop (POSTANEK PO MERI, game.js stopOpen) from the way in to the box: upright a sheet at the bottom over the steering and the
    pedals (the autopilot drives), on its side a panel at the right under the column (hudCol stops the column above it), the car in the middle
    left clear. A bar draining to the box and its seconds; a row of buttons (44 px tall at least) for the tyres, the fuel and the repairs, the
@@ -896,6 +897,7 @@ select.txt:disabled { opacity: .75; }
 #h-flag.scin { background: #ffe98a; }
 #h-flag.restart { background: rgba(10, 13, 18, .7); color: #ffd21f; border: 1.5px solid #ffd21f; }
 #h-flag.owe { background: rgba(200, 30, 30, .85); color: #fff; }
+#h-flag.red { background: #e3241b; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.5); animation: flagWave .5s ease-in-out infinite alternate; }   /* (the red flag: the race stopped, game.js flagHUD) */
 @keyframes flagWave { from { transform: skewX(-6deg); } to { transform: skewX(6deg); } }
 #res-table small.pen { color: #ff8a7a; font-size: .8em; }
 
