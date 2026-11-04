@@ -1,5 +1,5 @@
 // The phone's vibration in the pits (Core.HAPTIC's patterns, Input.buzz; navigator.vibrate replaced before the game loads: each call
-// logged with the race's time). Bathurst, the player's stop on the autopilot (damaged on the first lap: in at its end; a metre before the
+// logged with the race's time). Bathurst, the player's stop on the autopilot (damaged on the first lap: in at its end; from 3 m before the
 // pit wall's line the car at 100 km/h, as a player who comes in fast: the autopilot itself takes the way in at 54 km/h), the renderer (the
 // crew) stepped along with the race every 0.05 s: the autopilot's pattern at the line and the limiter's after it (the car came in faster
 // than the lane's 80 km/h), braking into the box, the stop's thud, the front jack, the four guns undoing the nuts, the rear jack, the new
@@ -39,8 +39,9 @@ try {
       const near = !!(pz || P.inPit || P.pitG);
       if (!near && !rep) { g.sim(0.5, true); continue; }
       if (!near) break;
-      const in0 = P.inPit, v0 = P.speed;
-      if (!in0 && !rep && !s.fast && pz && pz.gap && P.q.d * pz.sd - pz.wall > -1.2) { const k = 27.8 / Math.max(1, P.speed); P.vx *= k; P.vz *= k; s.fast = true; }   // (100 km/h, a metre before the line)
+      const in0 = P.inPit;
+      let v0 = P.speed;
+      if (!in0 && !rep && pz && pz.gap && P.q.d * pz.sd - pz.wall > -3 && P.speed < 27.8) { const k = 27.8 / Math.max(1, P.speed); P.vx *= k; P.vz *= k; s.fast = true; v0 = 27.8; }   // (100 km/h from 3 m before the line till over it, however steep or shallow the autopilot's way in: else it may brake under the lane's limit first)
       g.sim(0.05, true);
       if (!in0 && P.inPit && s.vIn == null) s.vIn = +v0.toFixed(2);   // (its speed just before the line)
       Render.scene.visible = false; Render.frame(0.05, 1, P, 'chase', {}); Render.scene.visible = true;
