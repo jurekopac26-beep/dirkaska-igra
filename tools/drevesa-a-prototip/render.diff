@@ -1,0 +1,31 @@
+--- a/js/render.js
++++ b/js/render.js
+@@ -3276,8 +3276,8 @@
+     basePR = settings.quality === 'retro' ? 0.5 : settings.quality === 'normal' ? 1 : Math.min(dpr, 2);
+     renderer.domElement.style.imageRendering = settings.quality === 'retro' ? 'pixelated' : 'auto';
+     renderer.shadowMap.enabled = !!settings.shadows;
+-    renderer.shadowMap.type = settings.quality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+-    const ms = settings.quality === 'high' ? 2048 : 1024;
++    renderer.shadowMap.type = window.__STY && window.__STY.vsm ? THREE.VSMShadowMap : settings.quality === 'high' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; if (window.__STY && window.__STY.vsm) { sun.shadow.radius = window.__STY.vsm; if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
++    const ms = (window.__STY && window.__STY.soft) || (settings.quality === 'high' ? 2048 : 1024);
+     if (sun.shadow.mapSize.x !== ms) { sun.shadow.mapSize.set(ms, ms); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+     if (!settings.shadows && sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }   // shadows off: free the shadow map
+     // every material is rebuilt, so shadow receiving goes in or out of its shader (three.js r128 has no getter for needsUpdate:
+@@ -3403,7 +3403,7 @@
+     N.off = [-40, 110, 60]; N.tint = [0.86, 0.93, 1.12]; N.sat = D.sat * 0.85; N.uHaze = 0; N.postHaze = 0; N.hazeCol = K.hazeCol.slice();   // (no sun glow at night, not even Pikes Peak's)
+     N.shT = [1, 1, 1]; N.hiT = [1.02, 1.0, 0.97]; N.bloom = 1.05 + 0.25 * r; N.bThr = 0.62; N.lit = [0.36, 0.4, 0.5];   // (the lamps' light a little warm)
+     const B = todK <= 0.5 ? blendSt(D, K, todK / 0.5, _bl) : blendSt(K, N, (todK - 0.5) / 0.5, _bl);
+-    scene.fog.color.copy(B.fog); hemi.color.copy(B.sky); hemi.groundColor.copy(B.gnd); hemi.intensity = B.hemiI; sun.color.copy(B.sunC); sun.intensity = B.sunI; sunOff = B.off.slice();
++    scene.fog.color.copy(B.fog); hemi.color.copy(B.sky); hemi.groundColor.copy(B.gnd); hemi.intensity = B.hemiI * ((window.__STY && window.__STY.hemiK) || 1); sun.color.copy(B.sunC); sun.intensity = B.sunI * ((window.__STY && window.__STY.sunK) || 1); sunOff = B.off.slice();
+     let sat = B.sat, tint = B.tint.slice();
+     // the season on top: winter a paler, colder light (by day and at dusk), an autumn day a warmer sun
+     const A = atmos, wW = todK <= 0.5 ? 1 : 1 - (todK - 0.5) / 0.5, wA = todK < 0.5 ? 1 - todK / 0.5 : 0;
+@@ -3548,7 +3548,7 @@
+     if (on !== pkL.on) { pkL.on = on; pkL.b = null;
+       if (on) { S.bias = -0.0005; S.normalBias = 0.045; S.radius = 2.5; }
+       else { S.bias = -0.0006; S.normalBias = 0.03; S.radius = 1; if (post) post.mat.uniforms.uCon.value = 1.04; pkRays(0); pkFlare(0); } }
+-    const ms = on ? (settings.quality === 'high' ? 1536 : 1024) : settings.quality === 'high' ? 2048 : 1024;   // (high: a softer PCF-soft edge, ~0.12 m texels)
++    const ms = (window.__STY && window.__STY.soft) || (on ? (settings.quality === 'high' ? 1536 : 1024) : settings.quality === 'high' ? 2048 : 1024); if (window.__STY && window.__STY.softR) S.radius = window.__STY.softR;   // (high: a softer PCF-soft edge, ~0.12 m texels)
+     if (S.mapSize.x !== ms) { S.mapSize.set(ms, ms); if (S.map) { S.map.dispose(); S.map = null; } }
+     if (!on) return;
+     const T = curTrack, U = post && post.mat.uniforms, W = pkL.w, dt = clamp(time - pkL.t, 0, 0.25); pkL.t = time;
