@@ -4,15 +4,15 @@
 // crew) stepped along with the race every 0.05 s: the autopilot's pattern at the line and the limiter's after it (the car came in faster
 // than the lane's 80 km/h), braking into the box, the stop's thud, the front jack, the four guns undoing the nuts, the rear jack, the new
 // wheels, the four guns doing them up with the last torque, the tail and the nose let down, the release, VOZIŠ TI! and back on the
-// circuit: each once, in that order (the jacks up as their men get there: before the nuts are done up), each the table's own pattern,
-// each at its moment (as the crew draws it), one at a time on the race's clock (none before the one before it has ended, unless it
-// matters more); besides them only a rival passing the box and the places lost (from braking into the box till back on the circuit), the
-// guns' rattle on a long stop and the old pulses (a knock on the way). Paused while the guns do the nuts up: navigator.vibrate(0) at
-// once, nothing waiting, the stop's next moments felt after it. Nastavitve · Vibracija · Izklop: navigator.vibrate(0) at once (one was
-// playing), then nothing at all; Osnovno: the basic patterns and the old pulses, nothing above them; Vse again: all of them. A second stop
-// with Osnovno: only the stop's thud, the release and VOZIŠ TI!, each at its moment (the crew's work, the way in and out not felt). The
-// setting as an older build saved it (Izklop / Vklop, 0 / 1): Vklop is Vse now (2, stored so), Izklop stays; Osnovno saved by this build
-// stays Osnovno.
+// circuit: each once, in that order (the jacks up as their men get there: before the nuts are done up), each the table's own pattern, each
+// at its moment (as the crew draws it), one at a time on the race's clock (none before the one before it has ended or the pause stopped
+// it, unless it matters more); besides them only a rival passing the box and the places lost (from braking into the box till back on the
+// circuit), the guns' rattle on a long stop and the old pulses (a knock on the way). Paused while the guns do the nuts up:
+// navigator.vibrate(0) at once, nothing waiting, the stop's next moments felt after it. Nastavitve · Vibracija · Izklop:
+// navigator.vibrate(0) at once (one was playing), then nothing at all; Osnovno: the basic patterns and the old pulses, nothing above them;
+// Vse again: all of them. A second stop with Osnovno: only the stop's thud, the release and VOZIŠ TI!, each at its moment (the crew's
+// work, the way in and out not felt). The setting as an older build saved it (Izklop / Vklop, 0 / 1): Vklop is Vse now (2, stored so),
+// Izklop stays; Osnovno saved by this build stays Osnovno.
 //   node tests/browser/haptics.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -50,7 +50,7 @@ try {
       // paused while the guns do the nuts up (the pattern playing, nothing waiting): the motor off at once, nothing left to play
       if (pauseIt && !s.pause && last && last[0] === 'gunOn' && H.busy && P.pitState === 'repair') {
         const n0 = V.length; g.resume(); g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
-        const H1 = Input.haptics; s.pause = { t: +g.race.time.toFixed(3), calls: V.slice(n0), busy: H1.busy, waiting: H1.waiting.slice() };
+        const H1 = Input.haptics; s.pause = { t: +g.race.time.toFixed(3), calls: V.slice(n0), busy: H1.busy, waiting: H1.waiting.slice(), n: H1.n.play - s.p0 };
       }
     }
     P.pitWant = false;
@@ -82,9 +82,10 @@ try {
   };
   const L = look(A), { tOf, W, inW } = L;
   T.check('each one navigator.vibrate with the table\'s own pattern', L.same, JSON.stringify({ calls: L.calls.length, log: log.length, first: L.calls.slice(0, 4).map(c => c[0]) }));
-  // one at a time on the race's clock: each started once the one before had ended (its length and a short pause), or mattering more
+  // one at a time on the race's clock: each started once the one before had ended (its length and a short pause), or mattering more;
+  // the first after the pause free to start at once (the pause stopped the one playing: navigator.vibrate(0)). The log's times in ms
   const len = (e) => e[0] === 'pulse' ? 0 : HAP.H[e[0]].p.reduce((a, b) => a + b, 0) / 1000, pri = (e) => e[0] === 'pulse' ? 3 : HAP.H[e[0]].pri;
-  const over = log.filter((e, i) => i && log[i - 1][1] + len(log[i - 1]) + 0.04 > e[1] + 1e-6 && pri(e) <= pri(log[i - 1]));
+  const over = log.filter((e, i) => i && !(s.pause && i === s.pause.n) && log[i - 1][1] + len(log[i - 1]) + 0.04 > e[1] + 2e-3 && pri(e) <= pri(log[i - 1]));
   T.check('one at a time on the race\'s clock (or one that matters more cutting in)', !over.length, JSON.stringify(over.slice(0, 4)));
   const crew = ['jackF', 'gunOff', 'jackR', 'wheelsOn', 'gunOn', 'dropR', 'dropF'].every(k => { const t = tOf(k); return W.rep && W.done && t != null && t > W.rep[0] && t <= W.done[1] + 0.36; });
   T.check('each at its moment: the autopilot and the limiter at the line, the stop\'s thud as the car stops, the guns off and on as the crew draws them on the nuts, the crew\'s work during the stop, the release at its end, VOZIŠ TI! at the hand-back, back on the circuit at the way out',
