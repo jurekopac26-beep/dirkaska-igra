@@ -37,12 +37,13 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 11 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ) |
 | 12 | #291 | klikljiva vprašanja (samo dokumenti) | 2 | pripravljen (koordinacija računa 2, session_01Ck3D3TdgbJaDJhTPBLsW1F) |
 | 13 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY) |
+| 14 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: #261 Hakone, #153 Medvode, #294 krog testov na `main` se izteče. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #283 Killar, #202 fizika.
+- Račun 2: #202 fizika.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
