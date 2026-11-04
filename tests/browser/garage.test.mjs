@@ -447,14 +447,18 @@ try {
     const b = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, name: document.getElementById('car-name').textContent, url: location.search, on: document.getElementById('car-garage').classList.contains('on') }));
     T.check('the garage\'s back button: the game\'s car screen again, on the TITAN (the address plain again)', b.screen === 'car' && b.car === 'titan' && b.name === 'TITAN' && b.url === '' && b.on, JSON.stringify(b));
   }
-  // the garage's Izberi progo: the game again, on its track screen with that car (the player's)
+  // the garage's Izberi progo: grey on a car not the player's (the TITAN: buy or rent it first, answer 3 of 2. 11.); on the player's
+  // car the game again, on its track screen with that car
   {
     await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.evaluate(() => { __game.onAction('car-garage'); }).catch(() => {})]);
     await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+    const g0 = await page.evaluate(() => { const b = document.getElementById('g-track'), S = __garage.S; return { car: S.car, off: b.disabled, txt: b.textContent, mine: Object.keys(S.cars).find(id => S.cars[id].own) || null }; });
+    T.check('the garage\'s Izberi progo on the TITAN (not the player\'s): grey, "Najprej kupi ali najemi avto"', g0.car === 'titan' && g0.off && g0.txt === 'Najprej kupi ali najemi avto' && !!g0.mine, JSON.stringify(g0));
+    await page.evaluate((id) => __garage.pickCar(id), g0.mine); await run();
     await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('#g-track')]);
     await page.waitForFunction(() => window.__game && __game.screen === 'track', null, { timeout: 180000 });
     const t = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, url: location.search }));
-    T.check('the garage\'s Izberi progo: the game\'s track screen with the TITAN (the address plain again)', t.screen === 'track' && t.car === 'titan' && t.url === '', JSON.stringify(t));
+    T.check(`the garage's Izberi progo on the player's car (${g0.mine}): the game's track screen with it (the address plain again)`, t.screen === 'track' && t.car === g0.mine && t.url === '', JSON.stringify(t));
   }
   T.check('no page errors in the game and back', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
