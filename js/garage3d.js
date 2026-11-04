@@ -3688,7 +3688,7 @@ const Garage3D = (function () {
      (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
      THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
      and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
-  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450 €', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450\u00a0\u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
   const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
@@ -3704,7 +3704,14 @@ const Garage3D = (function () {
       g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffffff'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 20); };
     sign(FRA.YOUR, '#1f9a4a', 'YOUR CAR'); sign(FRA.RENT, '#1c4fb3', 'RENT A CAR'); sign(FRA.SALE, '#1c4fb3', 'FOR SALE');
     for (const [r, t] of [[FRA.T0, FRONT.price[0]], [FRA.T1, FRONT.price[1]]]) { const [x, y, w, h] = r; g.fillStyle = '#d81f2a'; g.fillRect(x + 2, y + 2, w - 4, h - 4); g.strokeStyle = '#ffd9d6'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
-      g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10); }
+      g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      // a price in coins (450 🪙): the number and a gold coin drawn after it (not the emoji: not every phone's font has it)
+      const cn = t.endsWith('\u{1FA99}'), s = cn ? t.slice(0, -2).trim() : t;
+      if (!cn) g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10);
+      else { const r = 10, tw = Math.min(g.measureText(s).width, w - 22 - 2 * r), x0 = x + (w - tw - 6 - 2 * r) / 2, cx = x0 + tw + 6 + r, cy = y + h / 2 + 1;
+        g.textAlign = 'left'; g.fillText(s, x0, cy, tw);
+        const gr = g.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, r); gr.addColorStop(0, '#ffe28a'); gr.addColorStop(0.55, '#f0b92e'); gr.addColorStop(1, '#b98419');
+        g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#d79f22'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r - 1, 0, Math.PI * 2); g.stroke(); } }
     const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
     [FRA.L0, FRA.L1, FRA.L2].forEach((r, i) => lab(r, FRONT.names[i] || '')); lab(FRA.SV, 'SERVICE');   // (under each maquette its car's name)
     if (FRONT.tex) FRONT.tex.needsUpdate = true;
