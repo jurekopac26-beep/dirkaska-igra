@@ -27,15 +27,19 @@ const VER = 1;   // (the profile's own format: profil.json's verzija)
 
 // the measuring rules (docs/ai-po-tvoji-liniji.md, Pravila meritve)
 export const RULES = {
-  spinDeg: 75, spinV: 5, spinT: 0.15,   // a spin: the nose more than 75° off the road's direction above 5 m/s, for 0.15 s (a clean lap's slide: under 30°)
+  spinDeg: 75, spinV: 5, spinT: 0.15,   // a spin: the nose more than 75° off the road's direction and off the car's own travel above 5 m/s, for 0.15 s (a clean lap's slide: under 30°; a hairpin taken sideways: up to ~60° off its travel)
   revV: 1, revT: 0.3,                   // ... or backwards (along the road) faster than 1 m/s for 0.3 s
-  offM: 1, offT: 0.25,                  // off the road: the car's middle 1 m past the asphalt's edge (and its kerb), all four wheels off, for 0.25 s
+  offM: 1, offLong: 3,                  // off the road: the car's middle 1 m past the asphalt's edge (and its kerb), all four wheels off, for 3 s or more: the lap left out; a shorter trip (a corner cut over the verge, a wide exit onto it) is the player's driving and kept (tr: the AI goes over there too)
   hitA: 50,                             // a hit (the barrier, a car): more than 50 m/s² of speed lost between two samples, over the ground and the car's own (into a wall: 100-150; the brakes up to ~16, a car sliding sideways in a spin ~30)
   side: [7, 5], behind: [22, 3],        // traffic: another car within 7 m along and 5 m across (beside it), or 0-22 m ahead within 3 m across
   margin: 1,                            // ... and 1 s before and after (the run up to a pass, pulling away)
   wetIn: 40, dryIn: 240,                // a changing weather: the road as wet as the rain 40 s after the rain has its new value, dry 240 s after it stops (less rain: 240 s per unit; Race._weather)
   apexDrop: 3, apexWin: 60,             // a corner: a minimum of the mean speed within 60 m either side, at least 3 m/s under the speed before it
   brakeWin: 500, brakeGap: 0.4,         // its braking: within 500 m before the apex; the brake let off for up to 0.4 s is still one braking
+  grassIn: 0.6,                         // over the verge (tr): the car's middle within 0.6 m of the asphalt's edge or past it, its outer wheels off
+  trMin: 0.4,                           // ... for the AI (the game's data): only where 40 % of the laps or more went over it (a deliberate cut, not one lap's run wide)
+  plA: 0.6, plV: 2, plZ: 0.2,             // on the throttle (pl): accelerating at 60 % of the car's full throttle (fullAcc), or no more than 2 m/s under the autopilot where it is on full throttle; braking on fewer than 20 % of the laps
+  kgV: 5, kg: [0.9, 1.3],                // the pace over the ground (kg): from 5 m/s up, within 0.9-1.3 of the car's own (Korak 2)
   qMin: [20, 15],                       // against the autopilot's own braking (autoOf): where it starts 20 m or more before the apex; the deceleration where both brake over 15 m or more
   enough: { krog: [3, 5, 8], cesta: [3, 5] }   // clean laps: the least, good, best (a circuit: 8-10; more than 10 hardly helps)
 };
@@ -114,7 +118,7 @@ function autoOf(C, t, car, cond, cache) {
     const race = new C.Race(T, { numAI: 0, playerModel: M, fieldModel: FM || undefined, playerUpg: pf.upg || undefined, playerSetup: pf.setup || undefined, playerDeli: pf.deli || undefined,
       laps: t.open ? 1 : 2, rain: cond.rain, winter: cond.winter, tyres: cond.tyres, assist: pf.as != null ? pf.as : 2, seed: 7, damage: 0 });
     race.start();
-    const P = race.player, S = { t: [], s: [], v: [], b: [] }, kMax = Math.ceil(((t.open ? 1 : 2) * len / 8 + 120) / DT);
+    const P = race.player, S = { t: [], s: [], d: [], v: [], b: [], th: [], g: [] }, kMax = Math.ceil(((t.open ? 1 : 2) * len / 8 + 120) / DT);
     let next = 0;
     for (let k = 1; k <= kMax && !P.finished; k++) {
       Math.random = seeded(1000 + k);
@@ -123,7 +127,7 @@ function autoOf(C, t, car, cond, cache) {
       race.step(DT);
       if ((race.state === 'racing' || race.state === 'done') && race.time >= next) {
         next = race.time + 0.05; const q = P.q;
-        S.t.push(race.time); S.s.push(t.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len); S.v.push(P.vl || 0); S.b.push(P.inBrk > 0.08 && P.vl > 0.5 ? 1 : 0);
+        S.t.push(race.time); S.s.push(t.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len); S.v.push(P.vl || 0); S.b.push(P.inBrk > 0.08 && P.vl > 0.5 ? 1 : 0); S.d.push(q.d); S.th.push(P.inThr || 0); S.g.push(Math.hypot(P.vx, P.vz));
       }
     }
     if (P.finished) {
@@ -190,7 +194,7 @@ function scanFile(C, N, file, tc, paces) {
   const T = t.T, W = H.w, n = H.n, o = 1 + pk * W, NF = F.length, len = t.len;
   const tyres = H.ty != null ? !!H.ty : !H.tt && !!t.def.pit;   // (the race with tyres: the header's ty, js/game.js rrpOf; older recordings as the game sets it)
   // the player's car in every sample: s (from the start line), d, the road's way, its speed, its bits; the faults sample by sample
-  const S = { t: new Float64Array(NF), s: new Float64Array(NF), d: new Float32Array(NF), v: new Float32Array(NF), b: new Uint8Array(NF), ex: new Uint8Array(NF),
+  const S = { t: new Float64Array(NF), s: new Float64Array(NF), d: new Float32Array(NF), v: new Float32Array(NF), g: new Float32Array(NF), b: new Uint8Array(NF), ex: new Uint8Array(NF),
     spin: new Uint8Array(NF), rev: new Uint8Array(NF), off: new Uint8Array(NF), hit: new Uint8Array(NF) };
   const q = {}; let hint = -1;
   const TX = new Float32Array(NF), TZ = new Float32Array(NF), NX = new Float32Array(NF), NZ = new Float32Array(NF)
@@ -207,13 +211,20 @@ function scanFile(C, N, file, tc, paces) {
       const dt = S.t[j] - S.t[j - 1], g = F[j - 1], dx = x - g[o], dz = z - g[o + 2];
       if (dt > 1e-4) {
         const sp = Math.hypot(dx, dz) / dt, fw = (dx * q.tx + dz * q.tz) / dt;
-        if (sp > RULES.spinV && Math.atan2(Math.abs(cr), dot) > RULES.spinDeg * Math.PI / 180) S.spin[j] = 1;
+        const hx = Math.cos(h), hz = Math.sin(h), slip = sp > 1e-3 ? Math.atan2(Math.abs(hx * dz - hz * dx), hx * dx + hz * dz) : 0;   // (the nose against the direction it travels over the ground: a hairpin taken sideways, across the road, is no spin)
+        if (sp > RULES.spinV && Math.atan2(Math.abs(cr), dot) > RULES.spinDeg * Math.PI / 180 && slip > RULES.spinDeg * Math.PI / 180) S.spin[j] = 1;
         if (fw < -RULES.revV) S.rev[j] = 1;
         // (a hit: the speed over the ground and the car's own both drop at once; in a spin only the car's own does, it slides on sideways)
         if (j > 1 && SP[j - 1] >= 0) { const tm = (S.t[j] - S.t[j - 2]) / 2; if (tm > 1e-4 && Math.min(S.v[j - 1] - S.v[j], SP[j - 1] - sp) / tm > RULES.hitA) S.hit[j] = 1; }
         SP[j] = sp;
       }
     }
+  }
+  // the speed over the ground (S.g): from the positions of the samples either side (the recorded speed is the car's own, along its nose:
+  // lower than over the ground when it slides, in a hairpin taken sideways the most; the pace the AI is given is the one over the ground)
+  for (let j = 0; j < NF; j++) {
+    const a = F[Math.max(0, j - 1)], b = F[Math.min(NF - 1, j + 1)], dt = b[0] - a[0];
+    S.g[j] = dt > 1e-4 ? Math.hypot(b[o] - a[o], b[o + 2] - a[o + 2]) / dt : Math.abs(S.v[j]);
   }
   // the parts left out: beside another car or right behind it (and RULES.margin s either side), the safety car out
   const near = new Uint8Array(NF), sc = new Uint8Array(NF);
@@ -273,12 +284,13 @@ function scanFile(C, N, file, tc, paces) {
       ['boksi', (() => { for (let m = 0; m < idx.length; m++) if (inLap(m) && (S.b[idx[m]] & 4) && S.t[idx[m]] < L.t1 - 0.1) return m; return -1; })()],
       ['vrtenje', runOf(S.spin, RULES.spinT)],
       ['vožnja nazaj', runOf(S.rev, RULES.revT)],
-      ['zlet s ceste', runOf(S.off, RULES.offT)],
+      ['zlet s ceste', runOf(S.off, RULES.offLong)],
       ['trk', (() => { for (let m = 1; m < idx.length; m++) if (inLap(m) && S.hit[idx[m]]) return m; return -1; })()]
     ].filter(f => f[1] >= 0).sort((a, b) => a[1] - b[1]);
     if (faults.length) { const m = faults[0][1]; lap.skip = faults[0][0]; lap.s = Math.round(clamp(u[m], 0, len)); lap.tf = r2(S.t[idx[m]]); continue; }
-    // the samples left out: traffic, the safety car; the standing start of a race's first lap (a circuit, not a qualifying lap: up to the first corner)
-    const pace = paceOf(C, t, run.car, cond, paces), sA = !t.open && L.k === 1 && !quali ? firstApex(pace) : -1;
+    // the samples left out: traffic, the safety car; the standing start of a race's first lap (a circuit, not a qualifying lap; an open
+    // road: its run from the line, the player there from rest, the AI's cars already moving from the grid behind it), up to the first corner
+    const pace = paceOf(C, t, run.car, cond, paces), sA = (t.open || L.k === 1) && !quali ? firstApex(pace) : -1;
     const ex = new Uint8Array(idx.length); for (let m = 0; m < idx.length; m++) ex[m] = S.ex[idx[m]] || (sA > 0 && u[m] < sA ? 3 : 0);
     Object.assign(lap, { idx, u, ex, pace, S, startTo: sA, auto: autoOf(C, t, run.car, cond, paces) });
   }
@@ -286,9 +298,29 @@ function scanFile(C, N, file, tc, paces) {
 }
 
 /* ---------------- a lap on the grid of s: its values at 0, korak, 2 korak ... between the samples either side (null: left out there) ---------------- */
+// a moving mean over ±w points (nulls left out; a circuit round past its start)
+function smoothN(A, w, open) {
+  const n = A.length, out = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = -w; k <= w; k++) { let j = i + k; if (open) { if (j < 0 || j >= n) continue; } else j = (j + n) % n; if (A[j] != null) { s += A[j]; c++; } } if (c) out[i] = s / c; }
+  return out;
+}
+// the car's acceleration on full throttle by speed (the autopilot's samples on full throttle, not braking: the most in each 2 m/s, then
+// never more at a higher speed; a speed it never reached: the nearest one's)
+function fullAcc(S) {
+  const B = [];
+  for (let j = 1; j < S.t.length - 1; j++) {
+    if (!(S.th[j - 1] >= 0.99 && S.th[j] >= 0.99 && S.th[j + 1] >= 0.99) || S.b[j - 1] || S.b[j] || S.b[j + 1] || !(S.t[j + 1] > S.t[j - 1])) continue;
+    const a = (S.v[j + 1] - S.v[j - 1]) / (S.t[j + 1] - S.t[j - 1]), k = Math.floor(S.v[j] / 2); if (k >= 0 && k < 60) B[k] = Math.max(B[k] == null ? -1e9 : B[k], a);
+  }
+  const ks = B.map((x, k) => x != null ? k : -1).filter(k => k >= 0); if (!ks.length) return null;
+  const E = new Array(60);
+  for (let k = 0; k < 60; k++) { let best = ks[0]; for (const q of ks) if (Math.abs(q - k) < Math.abs(best - k)) best = q; E[k] = B[best]; }
+  for (let k = 1; k < 60; k++) E[k] = Math.min(E[k], E[k - 1]);
+  return (v) => Math.max(0.15, E[clamp(Math.floor(v / 2), 0, 59)]);
+}
 function lapGrid(lap, len, step) {
   const { idx, u, ex, S } = lap, ns = Math.floor((len - 1e-6) / step) + 1;
-  const g = { d: new Array(ns).fill(null), v: new Array(ns).fill(null), a: new Array(ns).fill(null), b: new Array(ns).fill(null), out: { promet: 0, 'varnostni avto': 0, start: 0 } };
+  const g = { d: new Array(ns).fill(null), v: new Array(ns).fill(null), a: new Array(ns).fill(null), b: new Array(ns).fill(null), th: S.th ? new Array(ns).fill(null) : null, gs: S.g ? new Array(ns).fill(null) : null, out: { promet: 0, 'varnostni avto': 0, start: 0 } };
   let m = 0;
   for (let i = 0; i < ns; i++) {
     const s = i * step;
@@ -300,6 +332,8 @@ function lapGrid(lap, len, step) {
     const pa = idx[Math.max(0, m - 1)], pb = idx[Math.min(idx.length - 1, m + 2)];   // (the acceleration over four sample gaps)
     g.a[i] = S.t[pb] > S.t[pa] ? (S.v[pb] - S.v[pa]) / (S.t[pb] - S.t[pa]) : 0;
     g.b[i] = (S.b[ja] | S.b[jb]) & 1;
+    if (g.th) g.th[i] = Math.min(S.th[ja], S.th[jb]);
+    if (g.gs) g.gs[i] = S.g[ja] + (S.g[jb] - S.g[ja]) * w;
   }
   return g;
 }
@@ -350,6 +384,48 @@ function profileOf(key, laps, step) {
     P.s.push(s); P.n.push(ds.length); P.d.push(D ? r2(D.m) : null); P.d_sd.push(D ? r2(D.sd) : null); P.v.push(V ? r2(V.m) : null); P.v_sd.push(V ? r2(V.sd) : null);
     P.vq.push(Q ? r3(Math.min(2, Q.m)) : null); P.vq_sd.push(Q ? r3(Q.sd) : null); P.a.push(as.length ? r2(mean(as)) : null); P.zav.push(bs.length ? r2(mean(bs)) : null);
     P.rl.push(r2(along(t, T.rl, s))); P.vref.push(pace0 ? r2(along(t, pace0.v, s)) : null);
+  }
+  // the autopilot's own lap in the car of most laps (autoOf) on the same points: its line d_ap (the player's line against it, d − d_ap, is
+  // what the AI adds to the racing line it steers by, so the cut of the corners by its steering is not counted twice; Race._voznja) and its
+  // speed v_ap. pl: the player on the throttle (no braking on 4 laps in 5 or more, and accelerating at 60 % or more of what the car does on
+  // full throttle at that speed, aMax from the autopilot's laps, or as fast as the autopilot where it is on full throttle, 2 m/s at most
+  // slower): there the AI is not held to the player's speed, its engine decides (docs/ai-po-tvoji-liniji.md, Korak 2)
+  const A0 = main && main[1][0].auto, ag = A0 ? lapGrid(A0.lap, len, step) : null, aMax = A0 ? fullAcc(A0.lap.S) : null;
+  P.d_ap = []; P.v_ap = []; P.pl = [];
+  for (let i = 0; i < ns; i++) {
+    P.d_ap.push(ag && ag.d[i] != null ? r2(ag.d[i]) : null); P.v_ap.push(ag && ag.v[i] != null ? r2(ag.v[i]) : null);
+    const v = P.v[i], a = P.a[i], z = P.zav[i];
+    if (v == null || a == null || z == null) { P.pl.push(null); continue; }
+    const full = aMax && a >= RULES.plA * aMax(v), asAp = ag && ag.th[i] != null && ag.th[i] >= 0.99 && ag.v[i] != null && v >= ag.v[i] - RULES.plV;
+    P.pl.push(z < RULES.plZ && (full || asAp) ? 1 : 0);
+  }
+  // kg: the player's speed over the ground per their car's own (it slides: a hairpin taken sideways) against the autopilot's in the same
+  // place, over ±15 m (1: no measurement). The share of the pace the AI is given is vq × kg: the AI slides as the autopilot does, so it
+  // is held to the player's pace over the ground, not to the lower one of their car's nose (docs/ai-po-tvoji-liniji.md, Korak 2)
+  { const r = new Array(ns).fill(null);
+    for (let i = 0; i < ns; i++) {
+      if (!ag || !(ag.gs && ag.gs[i] > 0) || !(ag.v[i] > RULES.kgV)) continue;
+      let a = 0, b = 0; for (const g of grids) if (g.gs && g.gs[i] != null && g.v[i] > RULES.kgV) { a += g.gs[i]; b += g.v[i]; }
+      if (b > 0) r[i] = (a / b) / (ag.gs[i] / ag.v[i]);
+    }
+    P.kg = smoothN(r, Math.round(15 / step), t.open).map(x => x == null ? null : r3(clamp(x, RULES.kg[0], RULES.kg[1]))); }
+  // the slower and the quicker laps (by their time against the autopilot's in the same car, as cas_q; a third of the laps each, at least
+  // one): their share of the pace against all laps' (ql, qh), over ±5 m (their own braking and speed through each corner, not an
+  // average over a stretch: a quicker lap's gain on a straight is not carried into the corner after it). On easy the AI drives like the
+  // slower ones, on hard like the quicker ones; the line stays the average's (Race._voznja)
+  const lq = (g) => { const L = g.L; return L.auto ? L.time / (L.startTo > 0 ? L.auto.time1 : L.auto.time) : L.time; };
+  const byQ = grids.slice().sort((a, b) => lq(a) - lq(b)), kq = Math.max(1, Math.round(byQ.length / 3));
+  const grpQ = (G) => { const r = new Array(ns).fill(null);
+    for (let i = 0; i < ns; i++) { const s = i * step, x = []; for (const g of G) { if (g.v[i] == null) continue; const vr = along(t, g.L.pace.v, s); if (vr > 0.5) x.push(g.v[i] / vr); } if (x.length && P.vq[i] > 0) r[i] = mean(x) / P.vq[i]; }
+    return smoothN(r, Math.max(1, Math.round(5 / step)), t.open).map(x => x == null ? null : r3(x)); };
+  P.ql = byQ.length > 1 ? grpQ(byQ.slice(-kq)) : null; P.qh = byQ.length > 1 ? grpQ(byQ.slice(0, kq)) : null;
+  // over the verge: tr, the share of laps with the outer wheels past the asphalt's edge (and its kerb) there (the car's middle within
+  // RULES.grassIn m of it or past it); d_tr, their mean line there. The AI's cars go over it in turn, as often as the player did (Race._voznja)
+  P.tr = []; P.d_tr = [];
+  for (let i = 0; i < ns; i++) {
+    const ia = T.idx(T.startS + i * step), E = T.wAt(ia) + (T.curb && T.curb[ia] ? T.curbW || 1.5 : 0); let k = 0, sum = 0, nn = 0;
+    for (const g of grids) { if (g.d[i] == null) continue; nn++; if (Math.abs(g.d[i]) > E - RULES.grassIn) { k++; sum += g.d[i]; } }
+    P.tr.push(nn ? r2(k / nn) : null); P.d_tr.push(k ? r2(sum / k) : null);
   }
   // the corners (on the mean speed of the main car, or of all laps), each lap's braking into them
   const vbar = P.v.map((v, i) => v != null ? v : null), cs = main ? cornersOf(t, vbar, step) : [];
@@ -439,11 +515,60 @@ export function measure(files, opts = {}) {
   return { profil: { orodje: 'tools/voznja.mjs', verzija: VER, narejeno: new Date().toISOString(), pravila: RULES, datoteke: runs.map(r => r.name), proge: profiles }, text: text.join('\n\n') };
 }
 
+/* ---------------- the profiles as the game's data (--js <file>, js/data/voznja.js; docs/ai-po-tvoji-liniji.md, Korak 2): the averages only,
+   for the AI on each track and in each weather (Race opts.voznja, Race._voznja). Only a profile of a car among its own rivals (v_razredu)
+   with enough clean laps (RULES.enough: the least). Per point (korak m from the start line): dd, the player's line against the autopilot's
+   own in that car (d − d_ap; without it d − rl), m; vq, the share of the pace (0: no measurement); pl, on the throttle (1). Gaps of up to
+   40 m filled in between the points either side, longer ones left without (dd 0, vq 0); dd and vq smoothed over three points ---------------- */
+export function gameData(profil, kal) {
+  const out = [];
+  for (const P of profil.proge) {
+    const nL = P.krogi.uporabljeni.length, least = P.odprta ? RULES.enough.cesta[0] : RULES.enough.krog[0];
+    if (!P.v_razredu || nL < least) continue;
+    const n = P.s.length, open = P.odprta, fillMax = Math.round(40 / P.korak);
+    const dd = P.d.map((d, i) => d == null ? null : P.d_ap && P.d_ap[i] != null ? d - P.d_ap[i] : d - P.rl[i]);
+    const vq = P.vq.map((q, i) => q == null ? null : q * (P.kg && P.kg[i] > 0 ? P.kg[i] : 1)), pl = P.pl ? P.pl.slice() : new Array(n).fill(0);   // (the pace over the ground: kg)
+    const dtr = P.d_tr ? P.d_tr.map((d, i) => d == null ? null : P.d_ap && P.d_ap[i] != null ? d - P.d_ap[i] : d - P.rl[i]) : null;
+    const fill = (A, none) => {   // (between the nearest measured points either side of a gap; a circuit: round past its start)
+      const ok = A.map(x => x != null), B = A.slice();
+      for (let i = 0; i < n; i++) {
+        if (ok[i]) continue;
+        let a = -1, b = -1, ga = 0, gb = 0;
+        for (let k = 1; k < n; k++) { const j = i - k; if (open && j < 0) break; if (ok[(j + n) % n]) { a = (j + n) % n; ga = k; break; } }
+        for (let k = 1; k < n; k++) { const j = i + k; if (open && j >= n) break; if (ok[j % n]) { b = j % n; gb = k; break; } }
+        B[i] = a >= 0 && b >= 0 && ga + gb - 1 <= fillMax ? A[a] + (A[b] - A[a]) * ga / (ga + gb) : none;
+      }
+      return B;
+    };
+    const smooth = (A, keep) => A.map((x, i) => { if (keep && !(x > 0)) return x; const a = A[open ? Math.max(0, i - 1) : (i - 1 + n) % n], b = A[open ? Math.min(n - 1, i + 1) : (i + 1) % n];
+      return keep && !(a > 0 && b > 0) ? x : (a + 2 * x + b) / 4; });
+    const dF = fill(dd, 0), qF = fill(vq, 0);
+    for (let i = 0; i < n; i++) if (pl[i] == null) pl[i] = 0;
+    const r2x = (x) => Math.round(x * 100) / 100, r3x = (x) => Math.round(x * 1000) / 1000;
+    const o = { proga: P.proga, vreme: P.vreme, razred: P.razred, avto: P.avto, korak: P.korak, krogov: nL, cas_q: P.avti && P.avti[P.avto] ? P.avti[P.avto].cas_q : null,
+      dd: smooth(dF).map(r2x), vq: smooth(qF, true).map(r3x), pl: pl.map(x => x ? 1 : 0) };
+    if (P.ql && P.qh) { o.ql = P.ql.map(x => x == null ? 1 : r3x(x)); o.qh = P.qh.map(x => x == null ? 1 : r3x(x)); }
+    if (kal && o.ql) { if (kal.k0 > 0) o.k0 = kal.k0; if (kal.ks > 0) o.ks = kal.ks; }   // (the AI's pace at lam 0 and its spread toward the slower laps: --k0, --ks)
+    if (P.tr && P.tr.some(x => x >= RULES.trMin)) { o.tr = P.tr.map(x => x >= RULES.trMin ? r2x(x) : 0); o.dt = dtr.map((x, i) => P.tr[i] >= RULES.trMin && x != null ? r2x(x) : 0); }   // (over the verge: RULES.trMin)
+    out.push(o);
+  }
+  return out;
+}
+export function gameDataJs(list, date) {
+  return '/* Profili vožnje igralca za tekmece (docs/ai-po-tvoji-liniji.md, korak 2): samo povprečja, ki jih je iz posnetkov dirk izmeril\n' +
+    '   tools/voznja.mjs (--js); posnetkov v repozitoriju ni. Vsak profil: proga, vreme, razred (avti tekmecev), korak (m od štartne črte), dd (odmik\n' +
+    '   od linije avtopilota v istem avtu, m, + desno), vq (delež tempa čez tla, 0: ni meritve), pl (1: na plinu), ql, qh (počasnejši, hitrejši\n' +
+    '   krogi), k0, ks (umeritev tempa tekmecev), tr, dt (čez rob ceste). Bere Race._voznja (js/core.js) prek\n' +
+    '   opts.voznja (js/game.js, vklop index.html?voznja=1). Samo podatki' + (date ? '; ' + date : '') + '. */\n' +
+    'var VOZNJA_PROFILI = ' + (list.length ? '[\n' + list.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]' : '[]') + ';\n';
+}
+
 if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
-  const outArg = flag('--out'), korak = flag('--korak'), files = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
-  if (!files.length || bad.length || (korak != null && !(+korak >= 1 && +korak <= 50))) {
-    console.log('usage: node tools/voznja.mjs <posnetek.rrp> [...] [--out <profil.json>|<mapa>] [--korak <m>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
+  const outArg = flag('--out'), korak = flag('--korak'), jsArg = flag('--js'), k0 = flag('--k0'), ks = flag('--ks'), files = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
+  const kOk = (x, a, b) => x == null || (+x >= a && +x <= b);
+  if (!files.length || bad.length || (korak != null && !(+korak >= 1 && +korak <= 50)) || !kOk(k0, 0.8, 1.1) || !kOk(ks, 0.5, 3)) {
+    console.log('usage: node tools/voznja.mjs <posnetek.rrp> [...] [--out <profil.json>|<mapa>] [--korak <m>] [--js js/data/voznja.js [--k0 0.8-1.1] [--ks 0.5-3]]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
     process.exit(2);
   }
   const miss = files.filter(f => !fs.existsSync(f)); if (miss.length) { console.log('no such file: ' + miss.join(', ')); process.exit(2); }
@@ -453,6 +578,8 @@ if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const sumFile = path.basename(json) === 'profil.json' ? path.join(path.dirname(json), 'povzetek.txt') : json.replace(/\.json$/i, '.txt');
   fs.writeFileSync(json, JSON.stringify(r.profil)); fs.writeFileSync(sumFile, r.text + '\n');
   const rel = (f) => { const p = path.relative(process.cwd(), f); return p.startsWith('..') ? f : p; };
-  console.log(r.text + '\n\n→ ' + rel(json) + ', ' + rel(sumFile));
+  let jsNote = '';
+  if (jsArg) { const L = gameData(r.profil, { k0: k0 != null ? +k0 : 0, ks: ks != null ? +ks : 0 }); fs.writeFileSync(path.resolve(jsArg), gameDataJs(L, new Date().toISOString().slice(0, 10))); jsNote = ', ' + rel(path.resolve(jsArg)) + ' (' + L.map(p => p.proga + ' ' + p.vreme + ' ' + p.krogov).join('; ') + ')'; }
+  console.log(r.text + '\n\n→ ' + rel(json) + ', ' + rel(sumFile) + jsNote);
   process.exit(r.profil.proge.some(p => p.krogi.uporabljeni.length) ? 0 : 1);
 }

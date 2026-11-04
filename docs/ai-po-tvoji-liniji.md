@@ -5,8 +5,8 @@
 ## Koraki
 
 1. **Orodje** `tools/voznja.mjs` (narejeno, pull request #300): iz uporabnikovih posnetkov dirk (`.rrp`) za vsako progo in vreme izmeri povprečno linijo, hitrost in zaviranje. Test `tests/voznja.test.js`.
-2. **AI v `js/core.js`** vozi po profilu; vsak tekmovalec z malo razlike glede na težavnost. Nova seja z Opusom, ko pridejo posnetki in je profil izmerjen (načrt spodaj).
-3. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga.
+2. **AI v `js/core.js`** vozi po profilu (`Race._voznja`, `aiDrive`), vsak tekmovalec po svoji težavnosti: poskus na eni progi (Tianmen, veja `ai-linija/korak-2`, vklop `index.html?voznja=1`; razdelek »Korak 2« spodaj).
+3. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga (začetek v `tests/voznja.test.js`: podatki za igro in dirka na njih).
 
 ## Posnetki in zasebnost
 
@@ -39,13 +39,36 @@
 - Linija je odmik od sredine ceste (`d`); `rl` je zraven, da korak 2 lahko uporabi tudi odmik od idealne linije (`d − rl`).
 - Ni zajeto: zmes in obraba gum (`aiDrive`: `c.wet / profW`), spretnost tekmecev (avtopilot igralca je nima).
 
-## Korak 2 (načrt za novo sejo)
+## Korak 2: poskus na eni progi (4. 11. 2026)
 
-- Profil po progah in vremenu kot podatki v kodi (samo povprečja, brez posnetkov), npr. `js/data/voznja-<id>.js` ali v datoteki proge.
-- V `aiDrive`: ciljna linija iz `d` (namesto `rl + aiOff`, prehitevanje in obramba ostaneta), ciljna hitrost `vq × vprof` (na polnem plinu brez omejitve), zaviranje po `zav_pred_q` in `pojemek_q` (delež lastnega zaviranja, zato velja za vsak avto); vsak tekmovalec z malo razlike glede na težavnost (npr. `vq` in odmik linije po spretnosti in raztrosu `vq_sd`, `d_sd`).
-- Proge brez uporabnikovih posnetkov: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve (možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje: kako zgodaj zavira, koliko reže ovinke). Odgovor zapiši sem.
-- Test (korak 3): dirka s profilom, AI vozi blizu uporabnikove linije (odmik) in njegovega časa kroga (`cas_q` krat čas avtopilota); zlate reference znova z `npm run golden:update`.
+- Uporabnik: »ali lahko danes sprobava samo na eni progi nastimat« (Tianmen, 5 posnetkov) in »v kategoriji lazje vozijo bolj podobno kot jaz v pocasnih voznjah in super teska tako kot jaz v hitrih voznjah. ampak se vedno pa nekje vsi vozijo po liniji mojega povprecja in bremzajo tudi tam kot jaz, prav tako kdaj zavijajo in kdaj dajo gas, tudi ai naj gre kdaj cez travo in to naj ge na tistih delih kjer sem sel jaz«.
+- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj je v datoteki en profil: Tianmen, suho, avto Perun, 5 voženj.
+- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa in na progah brez profila je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake).
+- **Linija** (enaka za vse težavnosti): idealna linija in igralčev odmik od linije avtopilota v istem avtu (`dd`, `c.uRl`). Rezanje ovinkov z volanom je v obeh, zato ni šteto dvakrat. Prehitevanje in obramba ostaneta.
+- **Hitrost** (`c.uT`) je igralčev delež tempa po tleh (`vq`) krat lastni profil tekmeca (njegov avto, vreme in zavore).
+  - Orodje vzdolžno hitrost posnetka popravi z razmerjem `kg` (0,9–1,3): to je hitrost igralca po tleh proti hitrosti avtopilota po tleh. Popravek je potreben, ker avto, ki drsi, vzdolžno kaže manj.
+  - Cilj je postavljen naprej po cesti za toliko, kolikor `aiDrive` bere naprej (`v·0,22 + 3 m`), zato ima tekmec hitrost tam, kjer jo je imel igralec.
+  - Kjer je igralec na plinu (`pl`), je cilj `VZ_PL` (2,5 m/s) nad njegovo hitrostjo, ker tam odloča motor. Drugje je cilj `VZ_M` (0,5 m/s) nad njo, ker se `aiDrive` drži malo pod ciljem.
+  - Zaviranje: prehod nazaj z najmočnejšim pojemkom profila avta. Tekmec zato zavira pred mestom, kjer je igralec upočasnil; `zav_pred_q` in `pojemek_q` niso potrebni.
+  - Meja na liniji je `VZ_CAP` (1,5 profila), ker igralec ovinek zna peljati hitreje od profila. Zunaj linije (pri prehitevanju) velja meja njegove spretnosti.
+- **Težavnost** se določi po spretnosti avta (`lamOf`):
+  - lahka vozi kot igralčevi počasnejši krogi (`ql`);
+  - srednja vozi med njimi in povprečjem;
+  - težka in super težka (ta se dirka kot težka) vozita od povprečja proti hitrejšim krogom (`qh`).
+  - `ql` in `qh` sta tempo počasnejše in hitrejše polovice krogov proti povprečju, glajen na ±5 m. Pri ±50 m je težkim tekmecem zanašalo zadek.
+  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`).
+- **Umeritev**: `k0` je tempo pri srednji vrednosti (lam 0), `ks` raztros proti počasnejšim krogom. Umerjeno s tekmecem samim na progi, brez gumijaste vrvi (`DIFF`): lam −1 vozi kot igralčevi počasnejši krogi, lam 0 kot njihovo povprečje. Za Tianmen `k0` 0,95 in `ks` 1,4.
+- **Čez rob** (`tr`, `dt`): samo tam, kjer je čez rob šlo vsaj 40 % krogov (`trMin`; na Tianmnu 2 od 5), in tam toliko kot igralec.
+- **Odprta cesta**: štart z mesta do prvega ovinka orodje izpusti, kot pri prvem krogu krožne proge. Igralčevo počasno speljevanje bi sicer tekmece ustavilo na štartni črti; tam vozijo svoj tempo.
+- **Rezultat na Tianmnu** (igralec povprečno 3:15,7; počasnejše vožnje okoli 3:21,6, hitrejše okoli 3:10,5):
+  - Tekmec sam na progi: lahka ≈ 3:20–3:22, srednja ≈ 3:17–3:20, težka 3:13–3:16.
+  - Polje 6 tekmecev z avtopilotom igralca zadaj: vsi so prišli do cilja, nobenega ni bilo treba vrniti na cesto.
+  - Povprečja v polju: lahka 3:31,7 (brez profila 3:52,9), srednja 3:26,2 (3:38,5), težka 3:20,4 (3:26,2). Polje je počasnejše od tekmeca samega, ker ga gumijasta vrv drži ob počasnem avtopilotu (3:24,6) in ker je na cesti promet.
+- **Omejitev**: težka ne doseže igralčevih najhitrejših voženj. Igralec skozi ovinke drsi hitreje, kot jih AI zna peljati po povprečni liniji.
+- **Proge brez uporabnikovih posnetkov**: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve. Možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje (kako zgodaj zavira, koliko reže ovinke). Odgovor zapiši sem.
+- **Naprej**: po odzivu uporabnika na poskus pridejo nove proge s posnetki in test proti igralčevemu času (korak 3).
 
 ## Stanje
 
 - 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
+- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek pull requesta z oznako »predogled«); čaka odziv uporabnika.

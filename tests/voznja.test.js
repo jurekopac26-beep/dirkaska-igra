@@ -69,8 +69,8 @@ function record(tid, opts, plan, ghost) {
   } finally { Math.random = orig; }
 }
 const save = (name, r, H) => { const f = path.join(OUT, name); fs.writeFileSync(f, zlib.gzipSync(Buffer.from(NK.rrp.pack(H || r.H, r.frames)))); return f; };
-const tool = (files, out) => {
-  const p = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs'), ...files, '--out', out], { encoding: 'utf8', timeout: 600000 });
+const tool = (files, out, more) => {
+  const p = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs'), ...files, '--out', out, ...(more || [])], { encoding: 'utf8', timeout: 600000 });
   const prof = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : null;
   return { code: p.status, text: (p.stdout || '') + (p.stderr || ''), prof };
 };
@@ -198,8 +198,9 @@ check('open road: one profile, each run a lap (»vožnja«), all three used, »n
 if (pB) {
   // (where the 1.5 m line still fits on the road: the autopilot keeps 1.25 m from the edge, Core aiDrive)
   const fr = pB.s.map((s, i) => i).filter(i => pB.d[i] != null && pB.n[i] === 3 && pB.rl[i] < TB.wAt(TB.idx(TB.startS + pB.s[i])) - 1.25 - 1.5 - 0.1), off = mean(fr.map(i => pB.d[i] - pB.rl[i]));
-  check('open road: the whole run from the start line to the finish (2.5 km), the line 1 m right of the racing line on average (±0.25 m)', pB.dolzina > 2400 && pB.dolzina < 2600 && pB.n[1] === 3 && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
-    `${off.toFixed(3)} m over ${fr.length} points`);
+  const s0 = pB.n.findIndex(x => x === 3) * pB.korak;   // (the standing start from the line left out up to the first corner, as a circuit's first lap: the AI's cars are already moving from the grid behind it)
+  check('open road: the whole run from the first corner (the standing start left out) to the finish (2.5 km), the line 1 m right of the racing line on average (±0.25 m)', pB.dolzina > 2400 && pB.dolzina < 2600 && s0 > 0 && s0 <= 500 && pB.krogi.uporabljeni.every(k => k.izpusceno_m && k.izpusceno_m.start > 0) && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
+    `${off.toFixed(3)} m over ${fr.length} points, the start left out to ${s0} m`);
 }
 
 // 4. a changing weather (the header's wxs, js/game.js rrpOf): rain from 150 s into the dry race, full after 25 s: lap 1 dry, lap 2 left out
@@ -212,7 +213,40 @@ if (pB) {
     w3.krogi.uporabljeni.map(r => r.krog).join() === '4,5,7', P3.map(p => `${p.vreme}: ${p.krogi.uporabljeni.map(r => r.krog).join()} / ${p.krogi.izpusceni.map(r => r.krog + ' ' + r.razlog).join(', ')}`).join(' | '));
 }
 
-// 5. a file that is no recording, a missing argument
+// 5. Korak 2: the game's data (--js, with --k0 / --ks) from the dry Bathurst laps and a race on it: every AI car of the class steers by the
+// player's line (c.uRl: the racing line plus dd) and drives at their pace (c.uT); all finish, none put back, about as quick as the race's
+// own AI (the laps were the autopilot's: the same pace); a race without the profile has none of it
+{
+  const js = path.join(OUT, 'voznja.js'), r6 = tool([fDry], path.join(OUT, 'igra.json'), ['--js', js, '--k0', '0.97', '--ks', '1.2']);
+  const cx = vm.createContext({}); let L = null;
+  try { vm.runInContext(fs.readFileSync(js, 'utf8') + '\n;this.L = VOZNJA_PROFILI;', cx); L = cx.L; } catch (e) { L = null; }
+  const V = L && L.find(p => p.proga === 'bathurst' && p.vreme === 'suho'), nP = V ? V.vq.length : 0;
+  check('the game\'s data: one dry Bathurst profile of the averages only (dd, vq, pl, ql, qh, k0, ks; no lap of its own), every point between 0 and 2 of the pace', r6.code === 0 && L && L.length === 1 && V && V.korak === 5 && V.dd.length === nP && V.pl.length === nP && V.ql && V.qh && V.k0 === 0.97 && V.ks === 1.2 && V.vq.every(x => x >= 0 && x < 2) && !('krogi' in V) && !('d' in V),
+    V ? `${nP} points, ${V.krogov} laps, k0 ${V.k0}, ks ${V.ks}` : `exit ${r6.code}`);
+  if (V) {
+    const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst')), M = C.MODELS.find(m => m.id === V.avto), orig = Math.random;
+    const run = (voz) => {
+      Math.random = seeded(5);
+      try {
+        const r = new C.Race(T, { numAI: 3, playerGrid: 4, playerModel: M, assist: 2, laps: 1, seed: 5, difficulty: 1, damage: 0, voznja: voz });
+        r.start(); const AI = r.cars.filter(c => !c.isPlayer), P = r.player; let resc = 0;
+        for (let k = 1; k < 120 * 400 && !AI.every(c => c.finished); k++) {
+          Math.random = seeded(9000 + k);
+          const pre = AI.map(c => r.putT && r.putT.get(c));
+          if (!P.finished) { C.aiControl(P, r, DT); if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+          r.step(DT); AI.forEach((c, j) => { if (r.putT && r.putT.get(c) !== pre[j]) resc++; });
+        }
+        return { AI, resc, t: AI.map(c => c.finished ? c.finishTime : NaN) };
+      } finally { Math.random = orig; }
+    };
+    const a = run([V]), b = run(undefined), mA = mean(a.t), mB = mean(b.t);
+    const lineOk = a.AI.every(c => c.uRl && c.uT && Math.abs(c.uRl[100] - T.rl[100]) < 3);
+    check('a race on it: all three AI cars steer by the player\'s line and drive at their pace, finish, none put back; within 4 % of the race\'s own AI (the laps were the autopilot\'s); without the profile none of it', lineOk && a.t.every(Number.isFinite) && b.t.every(Number.isFinite) && a.resc === 0 && Math.abs(mA / mB - 1) < 0.04 && b.AI.every(c => !c.uT),
+      `profile ${a.t.map(x => x.toFixed(1)).join(' / ')} s, own AI ${b.t.map(x => x.toFixed(1)).join(' / ')} s, put back ${a.resc}`);
+  }
+}
+
+// 6. a file that is no recording, a missing argument
 {
   const f = path.join(OUT, 'posnetek_nic.rrp'); fs.writeFileSync(f, Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9]));
   const r4 = tool([f], path.join(OUT, 'nic.json')), r5 = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs')], { encoding: 'utf8' });
