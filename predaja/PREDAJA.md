@@ -101,3 +101,8 @@ Then one diff review, the fixes, and ask the user before opening and merging the
 **State when stopped:** `claude/boksi-vse` on GitHub = d606543. It is origin/main plus the merges of boksi-zvok and boksi-posnetek. The merge of boksi-izbira was in progress and is lost, so redo it, then continue with gume, obvestila, noc-dez, ekipa, gume-pavza, proga-opozorila and prikljucek-b. Keep a progress file `predaja/NAPREDEK.md` on `claude/boksi-vse` and push after every 2–3 steps.
 
 `boksi-vse-slike.pdf` in this folder has all the images and choices in one file.
+
+## Update 4 Nov: user answers (page Odločitve)
+- 84 rubbered-in track: add it now, variant **B5-6** (early race, barely visible).
+- New proposals: **104** (radio: rival ahead pits this lap, undercut hint), **105** (cold tyres after a stop, blue until warm), **107** (pit-stop statistics after the race + fastest stop award). Descriptions: https://claude.ai/artifact/Y6rg7MmTf2xRqre9zBG2xk
+- Code only after the user writes »začni«. Main pit work is in PR #284 (boksi/vse-na-main).

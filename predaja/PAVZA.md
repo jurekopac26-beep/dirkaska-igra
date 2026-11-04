@@ -48,3 +48,4 @@
 ---\n- 1A: 11 vej potisnjenih na GitHub (27. 10.), brez PR. Predaja: veja claude/boksi-predaja, predaja/PREDAJA.md.
 - Opomnik prestavljen na 3. 11. ob 23.00 (22:00 UTC) po želji uporabnika.
 - 27. 10. ZAUSTAVLJENO po »začni«: agent 1 (združevanje) ustavljen. Na GitHubu claude/boksi-vse = d606543 (združena zvok + posnetek). Lokalno v scratchpad/vse-wt nedokončan merge boksi-izbira (spori rešeni, ne commitano).
+- 4. 11. (stran Odločitve): 84 → DODAJ, različica B5-6 (zgodaj, komaj opazno); novi predlogi → 104, 105, 107. Koda šele po »začni«.
