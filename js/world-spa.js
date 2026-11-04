@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, brookMat, clamp, cone, crH, crowdAt, crowdCtx, crowdFinish, crowdRun, crowdUV,
+    Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, parkedCar, brookMat, clamp, cone, crH, crowdAt, crowdCtx, crowdFinish, crowdRun, crowdUV,
     cyl, gable, ico, lerp, nrAUV, nrDist, nrEdge, nrFir, nrGCol, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade,
     nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pitLaneScenery, pixAvg, propFloorTable, rng, roadsideProps, spaScreenTex, sstep, vary
   } = API;
@@ -313,8 +313,7 @@
     const fans = [[0.9, 0.2, 0.15], [0.96, 0.82, 0.2], [0.2, 0.45, 0.9], [0.95, 0.95, 0.95], [0.2, 0.7, 0.3], [1, 0.55, 0.1], [0.15, 0.5, 0.55], [0.7, 0.2, 0.5], [0.12, 0.14, 0.2]];
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.8 });   // spectators (instanced)
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const DR = rng(9331);   // (the camp props' own random stream)
     const BE = [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]];   // the Belgian flag (upright stripes)
     const flagPole = (g, x, y, z, rot, cols) => { const c = Math.cos(rot), s = Math.sin(rot); cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
@@ -386,8 +385,8 @@
         const tiers = Math.max(6, Math.min(12, Math.round(Wb / 1.6))), dep = Wb / tiers, seat = SEATS[Math.floor(crH(bx, bz, 61) * SEATS.length)];
         for (let t = 0; t < tiers; t++) { const b = fa * (Wb / 2 - (t + 0.5) * dep), cx = bx - sa * b, cz = bz + ca * b, hgt = 0.9 + t * 0.8;
           box(g, cx, y0, cz, Lb, hgt, dep, ang, [0.6, 0.61, 0.64], seat);
-          const b0 = b - fa * dep * 0.45, b1 = b + fa * dep * 0.1, yy = y0 + hgt + 0.02, A = [bx - ca * Lb / 2 - sa * b0, yy, bz - sa * Lb / 2 + ca * b0], B = [bx + ca * Lb / 2 - sa * b0, yy, bz + sa * Lb / 2 + ca * b0], C = [bx + ca * Lb / 2 - sa * b1, yy, bz + sa * Lb / 2 + ca * b1], D = [bx - ca * Lb / 2 - sa * b1, yy, bz - sa * Lb / 2 + ca * b1];
-          if (crH(bx + t, bz, 62) < 0.9) crowdG.quadUp(A, B, C, D, [W1, W1, W1, W1], [[0, t * 0.11], [Lb / 12, t * 0.11], [Lb / 12, t * 0.11 + 0.1], [0, t * 0.11 + 0.1]]); }
+          const b0 = b - fa * dep * 0.5, b1 = b + fa * dep * 0.5, yy = y0 + hgt + 0.02, A = [bx - ca * Lb / 2 - sa * b0, yy, bz - sa * Lb / 2 + ca * b0], B = [bx + ca * Lb / 2 - sa * b0, yy, bz + sa * Lb / 2 + ca * b0], C = [bx + ca * Lb / 2 - sa * b1, yy, bz + sa * Lb / 2 + ca * b1], D = [bx - ca * Lb / 2 - sa * b1, yy, bz - sa * Lb / 2 + ca * b1];
+          crowdG.quadUp(A, B, C, D, [W1, W1, W1, W1], [[0, t * 0.11], [Lb / 12, t * 0.11], [Lb / 12, t * 0.11 + 0.1], [0, t * 0.11 + 0.1]]); }
         const top = 0.9 + tiers * 0.8, bb = -fa * (Wb / 2 + 0.3); box(g, bx - sa * bb, y0, bz + ca * bb, Lb, top + 0.6, 0.5, ang, [0.52, 0.53, 0.57]);   // the back wall
         const rb = -fa * (Wb / 2 - Wb * 0.32), rW = Wb * 0.7, ry = y0 + top + 3.2;
         for (let a = -Lb / 2; a <= Lb / 2 + 0.1; a += Lb / Math.max(2, Math.round(Lb / 14))) { const px = bx + ca * a - sa * bb * 0.98, pz = bz + sa * a + ca * bb * 0.98; box(g, px, y0, pz, 0.4, ry - y0, 0.4, ang, [0.84, 0.85, 0.88]); }

@@ -1,6 +1,6 @@
 // Special mission 47 · Gozdni požar (js/missions/m47.js, the kit js/missions/kit.js), no browser: its race (Great Alpine Road, alone, the
 // fire engine), the fire's edge (K.N cells along the road on one side, the farm on the other), the cells creeping toward the road with the
-// wind and growing back, the water on a cell (slowly enough and within reach) putting it out, too fast or too far: no water, the pond
+// wind and growing back, the water on a cell (within reach) putting it out, all of it up to 25 km/h, half at 37,5, none from 50 km/h or too far, the pond
 // filling the tank, a cell at the road: the fire jumps it, failed; all out: done; past the fire: failed; the gauges.
 //   node tests/m47.test.js
 'use strict';
@@ -32,10 +32,14 @@ const c0 = r.cells[3]; F.player.q.s = c0.s; F.player.x = c0.x - 10; F.player.z =
 const w0 = r.water; for (let i = 0; i < 60 * 3; i++) r.step(1 / 60);
 check('the water on a cell, standing: out in under 3 s, the water used', c0.f === 0 && r.water < w0 - K.FLOW * 1, `${c0.f} ${(w0 - r.water).toFixed(0)}`);
 check('POGAŠENO counts it', r.vals.pog.text === Math.round(100 / K.N) + ' %', r.vals.pog.text);
-const c1 = r.cells[4]; F.player.vx = K.VMAX + 1; r.autoSpray = { x: c1.x, y: c1.y, z: c1.z }; F.player.x = c1.x - 10; F.player.z = c1.z; const f1 = c1.f, w1 = r.water; r.step(0.5);
-check('too fast: no water', c1.f >= f1 && r.water === w1 && /Prehitro/.test(r.hint), r.hint);
+const c1 = r.cells[4]; F.player.vx = 50 / 3.6 + 1; r.autoSpray = { x: c1.x, y: c1.y, z: c1.z }; F.player.x = c1.x - 10; F.player.z = c1.z; const f1 = c1.f, w1 = r.water; r.step(0.5);
+check('50 km/h or more: no water', c1.f >= f1 && r.water === w1 && /Prehitro/.test(r.hint), r.hint);
 F.player.vx = 0; F.player.x = c1.x - K.RANGE - 5; r.step(0.5);
 check('too far: no water', r.water === w1 && /Predaleč/.test(r.hint), r.hint);
+F.player.x = c1.x - 10; F.player.vx = 37.5 / 3.6; const w2 = r.water; r.step(1);
+check('37,5 km/h: half the water', Math.abs(w2 - r.water - K.FLOW * 0.5) < 0.5 && /Prehitro/.test(r.hint), `${(w2 - r.water).toFixed(1)} ${r.hint}`);
+F.player.vx = 20 / 3.6; const w3 = r.water; r.step(1);
+check('20 km/h: all the water', Math.abs(w3 - r.water - K.FLOW) < 0.5, (w3 - r.water).toFixed(1));
 r.autoSpray = null;
 // the pond fills the tank
 r.water = 100; F.player.q.s = r.sP; F.player.vx = 0; r.step(1);

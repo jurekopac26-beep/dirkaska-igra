@@ -1,5 +1,5 @@
 // Phone budget: on a phone-size screen (844x390, quality 'normal', graphics detail 'low' = NIZKA, shadows on, chase
-// camera) every track is driven on autopilot and the WebGL work per frame is counted (draw calls and vertices of all
+// camera, its shake on: SHAKE) every track is driven on autopilot and the WebGL work per frame is counted (draw calls and vertices of all
 // passes: shadows and scene) at six places around the lap. The NIZKA tier is the one the weakest phones run, so this is
 // the budget from CLAUDE.md (up to ~300 draw calls and ~900k vertices per track); the higher tiers may exceed it.
 // Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
@@ -18,10 +18,18 @@ import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
+// the camera's shake on (Nastavitve · Tresenje kamere, off by default since 2. 11. 2026), as when the references were recorded: its jitter
+// draws from Math.random, which the seeded run shares with the race, so with it off the race goes otherwise and the six samples fall
+// elsewhere on the lap (the jitter itself adds no draw call); tools/obremenitev.mjs the same. And the knocks between cars as when the
+// references were recorded (Trki med avti: Stara, crV 4; the default since 2. 11. 2026 is Simulacija): the knock moves the cars otherwise,
+// so where the six samples fall and how many rivals are in view there goes with it (the cost of a car is the same in every version; on the
+// Nordschleife the busiest sample took 361k vertices against 354k, the fleet's heaviest one-make fields 430k against 402k: where the cars
+// were, not what they cost). tests/browser/fleet.test.mjs, which measures its fields against these references, the same
+const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4 };
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
 // place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {
-  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345, menu: true });
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345, menu: true });
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };
     const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -66,7 +74,7 @@ const srv = await serve();
 const browser = await launch();
 const out = {};
 try {
-  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345 });
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {   // count every WebGL draw (all render passes)
     window.__gl = { calls: 0, verts: 0 };
     const gl = Render.info && document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -83,6 +91,7 @@ try {
       const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.onAction('restart'); g.pause();
       g.race.lch = null; for (const c of g.race.cars) c.lch = null;   // (the start's reaction off: the samples measure what is drawn, at the same spots on the lap as ever)
+      g.race.player.kt = null;   // (the player's own tyres too, Car.kt, every vehicle's since 1. 11. 2026: their wear changes the grip and so the car's way round the lap)
       const P = g.race.player, s = [];
       let tPhys = 0, tRend = 0;
       for (let k = 0; k < 6; k++) {

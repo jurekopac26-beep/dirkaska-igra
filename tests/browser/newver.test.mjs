@@ -1,7 +1,7 @@
 // NEW VERSION · TEST 1 (the title's button, js/game.js nvStart, js/newmap.js): the button top right on the title (upright and on its side),
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
-// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START, the others' choices and START say V IZDELAVI, HOME's box Garaža v izdelavi);
+// (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START starts it (js/nvschool.js), the other garages twelve challenges in four levels of three that say V IZDELAVI, HOME's box Garaža v izdelavi);
 // the small circuit's infield (the park with its solid volcano, the rescue base, the edges, road 2's fork) and the park's loose things the car knocks over
 // (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
 // car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
@@ -233,6 +233,24 @@ try {
         out.drive.push({ turn: a, out: k > e, sink: +sink.toFixed(2) }); }
       P.vx = P.vz = 0; return out; });
     T.check('the motocross\'s five berms: the cars\' ground as drawn across the bed (within 0.25 m); a car on the banked outer line rides on the sand through each (never 0.35 m under it) and comes out at its end', q5.fit.length === 5 && q5.fit.every(w => w < 0.25) && q5.drive.every(d => d.out && d.sink < 0.35), JSON.stringify(q5));
+    // the course for jet skis and boats where the go-kart track was (sklop 9: js/nvboat.js): no go-kart track, practice lot or big lot; its ground, water
+    // and things built; HOME's wooden bridge 1.7 m over the water and the ring road's humped bridge over the canal are ground: a car driven along HOME's
+    // way goes up over the bridge and down off it (never under its deck)
+    const q6 = await page.evaluate(() => { const g = __game, P = g.race.player, H = __H3, C = H.boatC, B = H.waterCourse, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+      const out = { c: C, kart: !!H.kart || (H.net || []).some(e => e.id === 'kart'), lots: (H.lot && H.lot.x0 === 62 && H.lot.z0 === 170) || !!H.bigLot, wet: B ? [B.dW(-108, 226), B.dW(140, 214), B.dW(-60, 160)].map(v => +Math.min(99, v).toFixed(1)) : null };
+      if (B && B.ring) { let b = null; B.ring.L2.P.forEach((p, i) => { const d = Math.abs(B.ring.L2.A[i] - B.ring.sc); if (!b || d < b.d) b = { d, p }; }); out.ring = +H.ground(b.p[0], b.p[1]).toFixed(2); }
+      if (B && B.home) { const S = B.home.S, at = (s) => S.P[Math.max(0, Math.min(S.P.length - 1, Math.round(s / S.L * (S.P.length - 1))))], m = at((B.home.sa + B.home.sb) / 2), e0 = at(B.home.sa - 2);
+        out.home = [+H.ground(m[0], m[1]).toFixed(2), +H.ground(e0[0], e0[1]).toFixed(2)];
+        const s0 = B.home.sa - 8, p0 = at(s0), p1 = at(s0 + 2); P.place(p0[0], p0[1], Math.atan2(p1[1] - p0[1], p1[0] - p0[0])); P.vx = P.vz = 0; let s = s0, top = -9, under = 0;
+        for (let t = 0; t < 16 && s < B.home.sb + 4; t += 1 / 30) { const pt = at(s + 6), d = wrap(Math.atan2(pt[1] - P.z, pt[0] - P.x) - P.h); g.sim(1 / 30, false, Math.max(-1, Math.min(1, d * 2.5)), Math.hypot(P.vx, P.vz) < 9 ? 0.7 : 0);
+          s = B.home.near(P.x, P.z).s; top = Math.max(top, P.y); under = Math.max(under, H.ground(P.x, P.z) - P.y); }
+        out.drive = { across: s >= B.home.sb + 2, top: +top.toFixed(2), under: +under.toFixed(2) }; P.vx = P.vz = 0; }
+      return out; });
+    { const c = q6.c || {}, d = c.dress || {};
+      T.check('the course for jet skis where the go-kart track was: no go-kart track, practice lot or big lot; its ground and water to the sea, the start, jet skis, buoys, three lines of floats, umbrellas, nets, cabins, rings; HOME\'s wooden bridge 1.7 m up with its pier (a car drives over it), the ring road 2.4 m up over the canal',
+        !q6.kart && !q6.lots && c.floor && c.floor.verts > 10000 && c.water.verts > 1000 && d.floats > 500 && d.umbrellas >= 10 && d.nets >= 2 && d.cabins >= 2 && d.rings >= 10 && d.buoys >= 5 && c.home && c.home.pier &&
+        q6.home && q6.home[0] > 1.6 && q6.home[0] < 1.8 && q6.home[1] < 0.4 && q6.drive.across && q6.drive.top > 1.5 && q6.drive.under < 0.35 && q6.ring > 2.2 && q6.ring < 2.9 && q6.wet[0] < -5 && q6.wet[1] < -2 && q6.wet[2] > 0,
+        JSON.stringify({ kart: q6.kart, lots: q6.lots, floor: c.floor, water: c.water, dress: d, home: c.home, h: q6.home, drive: q6.drive, ring: q6.ring, wet: q6.wet })); }
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });
@@ -254,12 +272,17 @@ try {
     T.check('a tap on a task: its card with START', m2 && m2.lvl === 2 && m2.go && m2.rows.length === 0, JSON.stringify(m2));
     // (the note shows 1.4 s: read at the tap itself, a frame of the new map in a browser without a GPU takes seconds)
     const tapWip = (sel) => page.evaluate((sel) => { document.querySelector(sel).click(); const w = document.querySelector('#nvm .wip'); return { wip: w.classList.contains('on'), t: w.textContent }; }, sel);
-    const m3 = await tapWip('#nvm .go');
-    T.check('START: V IZDELAVI (the tasks are not built yet)', m3.wip && /izdelavi/i.test(m3.t), JSON.stringify(m3));
-    await page.click('#nvm [data-a="back"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
+    const m3 = await page.evaluate(() => { document.querySelector('#nvm .go').click(); return new Promise(r => setTimeout(() => { const s = NVSchool.state(); NVSchool.stop(); r(s); }, 600)); });
+    T.check('START: the task starts (GRAVEL LICENCE, task 5; js/nvschool.js, tests/browser/nvschool.test.mjs)', m3 && m3.l === 'm' && m3.i === 4, JSON.stringify(m3));
+    await go('school'); await page.click('#nvm [data-a="lic"][data-i="1"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
     T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 2 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
     const s6 = await go('circuit'), m6 = await menu(), w6 = await tapWip('#nvm [data-a="wip"][data-i="2"]');
-    T.check('another garage (circuit race): its three choices; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.rows.length === 3 && w6.wip, JSON.stringify({ rows: m6 && m6.rows, w6 }));
+    T.check('another garage (circuit race): level 1 of its twelve races (1-3), LEVEL 1 at 0 %, level 2 shut until 50 %; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.lv === 1 && m6.rows.length === 3 && /^1 ?TUSCANY, ITALY/.test(m6.rows[0]) && /^3 ?STYRIA/.test(m6.rows[2]) && /LEVEL 1/.test(m6.bar) && /0 %/.test(m6.bar) && /at 50 % level 2 opens/.test(m6.bar) && !m6.next && w6.wip, JSON.stringify({ rows: m6 && m6.rows, bar: m6 && m6.bar, w6 }));
+    // the levels of every other garage as the school's (uporabnik 3. 11.): twelve challenges, four levels of three, the next open at 50 % (places set from here)
+    await page.evaluate(() => { NVMenu.setGarage('circuit', 0, 1); NVMenu.setGarage('circuit', 1, 3); }); const m6a = await menu();
+    await page.click('#nvm [data-a="lvn"]'); const m6b = await menu(), w6b = await tapWip('#nvm [data-a="wip"][data-i="4"]');
+    const g12 = await page.evaluate(() => Object.entries(NVMenu.MENUS).filter(([k, M]) => M.items).map(([k, M]) => [k, M.items.length]));
+    T.check('the garages\' levels: 1st + 3rd + one not driven = 50 %, level 2 opens; › its three races (4-6), a tap: V IZDELAVI; twelve challenges in every garage but multiplayer (three)', m6a && /50 %/.test(m6a.bar) && m6a.next && /100 %/.test(m6a.rows[0]) && m6b && m6b.lv === 2 && m6b.rows.length === 3 && /^4 ?SPA, BELGIUM/.test(m6b.rows[0]) && /LEVEL 2/.test(m6b.bar) && w6b.wip && g12.length === 11 && g12.every(([k, n]) => n === (k === 'multi' ? 3 : 12)), JSON.stringify({ a: m6a && m6a.bar, rows: m6b && m6b.rows, bar: m6b && m6b.bar, g12 }));
     const s7 = await go('home'), m7 = await menu();
     T.check('HOME\'s box: only Garaža v izdelavi (the new garage is made apart)', s7 && m7 && m7.key === 'home' && m7.rows.length === 0 && /Garaža v izdelavi/i.test(m7.note), JSON.stringify(m7));
     const vp = page.viewportSize(); await page.mouse.click(vp.width / 2, vp.height * 0.6); await page.waitForTimeout(300);

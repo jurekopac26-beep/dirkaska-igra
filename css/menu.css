@@ -35,7 +35,7 @@ svg { display: block; }
 .scr { position: absolute; inset: 0; display: flex; flex-direction: column; animation: scr-in .28s ease-out; }
 @keyframes scr-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .scr.still { animation: none; }
-@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img, .hud b { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .scr, .float, .dio img { animation: none !important; } }
 /* top bar of the inner screens */
 .topbar { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 14px 16px 6px; z-index: 3; }
 .topbar h2 { flex: 1; min-width: 0; margin: 0; font: 900 italic clamp(20px, 6.4vw, 26px)/1 var(--f-ui); letter-spacing: -.3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -221,6 +221,14 @@ svg { display: block; }
 .sheet.credits dl { margin: 12px 0 16px; }
 .sheet.credits dt { margin-top: 12px; font: 800 italic 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
 .sheet.credits dd { margin: 4px 0 0; font: 500 13px/1.45 var(--f-ui); color: var(--lav); }
+/* the browser darkens the page by force (menu.js darkSheet): only dark grounds and light text, which such a browser leaves as they are */
+.sheet.dtip { max-height: 88%; overflow-y: auto; }
+.sheet.dtip ol { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font: 500 14px/1.4 var(--f-ui); color: var(--text2); }
+.sheet.dtip li { display: list-item; font: inherit; }
+.sheet.dtip b { font-weight: 800; color: var(--text); }
+.sheet.dtip p.fine { margin: 0 0 14px; font-size: 13px; }
+.sheet.dtip .tlink { display: block; margin: 12px auto 0; }
+.t-links { display: flex; justify-content: center; }
 .loading { position: absolute; inset: 0; z-index: 25; background: radial-gradient(120% 60% at 50% 35%, #16304d, var(--navy2) 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; text-align: center; animation: fade .2s ease-out; }
 .toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 30; max-width: calc(100% - 32px); padding: 11px 16px; border-radius: 12px; background: rgba(8, 12, 20, .94); border: 1.5px solid rgba(255, 255, 255, .25); font: 700 italic 14px/1.3 var(--f-ui); text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); animation: up .2s ease-out; }
 /* ---------------- main menu: logo, three picture buttons, two small ones, the purchase ---------------- */
@@ -373,10 +381,11 @@ svg { display: block; }
 .res-head.busted .pos { background: linear-gradient(90deg, #d42a33 0 50%, #2a5fd4 50% 100%); color: #fff; border-color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
 .places button.busted { background: linear-gradient(90deg, #c8262f, #2856c8); border-color: rgba(255, 255, 255, .6); }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
-.mapv { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
-.mapv button { width: 22px; height: 22px; border-radius: 50%; font: 900 12px/22px var(--f-ui); color: var(--lbl); }
-.mapv button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
-@media (max-width: 380px) { .mapv em { display: none; } }
+/* the stage's three cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner; the chosen one gold */
+.cams { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
+.cams button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--lbl); }
+.cams button svg { width: 15px; height: 15px; }
+.cams button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
    From the top: the head (house, country and place and height, globe), the stage (camera top left, weather down the right side), the row of
    numbers, the yard (the car before the road sign), the two neighbouring tracks, Back and Race!. On its side: the stage the whole height at
@@ -392,7 +401,6 @@ svg { display: block; }
 .globe svg { width: 26px; height: 26px; }
 .globe canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }   /* (the Earth turned to the track: js/menu.js globe) */
 #s-track .stage { flex: 0 1 48%; min-height: 150px; overflow: hidden; }
-#track-stage .hud { display: none; }   /* (the flyover's place and height: not on this screen) */
 /* the height graph across the stage's foot (js/menu.js graphOf): the part flown over coloured by the climb, the rest a thin white line */
 .hgraph { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; z-index: 3; pointer-events: none; background: linear-gradient(rgba(5, 9, 16, 0), rgba(5, 9, 16, .5) 45%, rgba(5, 9, 16, .72)); }
 .hgraph svg { display: block; overflow: visible; }
@@ -422,6 +430,8 @@ svg { display: block; }
 .trow b { font: 800 italic 15px/1 var(--f-ui); color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .trow .opp { flex: 0 0 auto; }
 .trow .opp b { font-size: 30px; font-weight: 900; line-height: .9; }
+.trow .opp > button { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 100%; border-radius: 8px; }   /* (a race's: a tap opens the opponents' sheet) */
+.trow .opp > button:active b { color: var(--gold); }
 .trow .best small, .trow .best b, .trow .gt small, .trow .gt b { color: var(--gold); }
 .trow .flag { flex: 0 0 auto; padding-right: 0; }
 .trow .flag img { display: block; height: 28px; width: auto; max-width: 52px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
@@ -434,7 +444,11 @@ svg { display: block; }
 .sign i { flex: 0 0 auto; font: 900 italic 12px/1 var(--f-ui); padding: 4px 6px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); }
 .post { position: absolute; top: 48%; bottom: 30%; width: 7px; background: linear-gradient(90deg, #6d7684, #c9d0da 45%, #7a8392); border-radius: 2px; filter: brightness(.88); }
 .post.a { left: 52%; } .post.b { right: 12%; }
-.yard .car { position: absolute; left: 2%; bottom: 4%; width: 62%; height: 84%; z-index: 2; display: flex; align-items: flex-end; justify-content: flex-start; }
+/* the car in 3D with the wind round it (js/menu-car.js): a canvas over the whole yard, over the sign; the car's button (the tap: the garage) over it */
+.yard .c3d { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .3s ease; }
+.yard.c3d-on .c3d { opacity: 1; }
+.yard:has(.car:active) .c3d { transform: translateY(2px); }   /* (the tap on the car: it gives a little, as a button) */
+.yard .car { position: absolute; left: 2%; bottom: 4%; width: 62%; height: 84%; z-index: 3; display: flex; align-items: flex-end; justify-content: flex-start; }
 .yard .car img { width: 100%; height: 100%; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
 .yard .car .mono { width: 72px; height: 72px; margin: 0 0 6px 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .35); font: 900 italic 34px/1 var(--f-ui); }
 .yard .car:active { transform: translateY(2px); }
@@ -459,19 +473,16 @@ svg { display: block; }
 }
 @media (max-width: 380px), (orientation: landscape) and (max-width: 760px) { .trow small { font-size: 10.5px; } .trow b { font-size: 13.5px; } .trow > div { padding: 0 3px; } }
 /* version 1: the flyover video and the names over it */
-.dio.fly { background: #0b1626; }
-.dio.fly video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }
-.stage.rainy .dio.fly video { filter: saturate(.72) brightness(.8) contrast(1.05); }
+.dio.fly, .dio.corner { background: #0b1626; }
+.dio.fly video, .dio.corner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: filter .7s ease; }
+.stage.rainy .dio.fly video, .stage.rainy .dio.corner video { filter: saturate(.72) brightness(.8) contrast(1.05); }
 .flab { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .flab > div { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .35s ease; will-change: transform; }
 .fl-s { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; translate: -3px -100%; }
 .fl-s b { order: 1; background: #fff; color: #10151d; font: 900 italic 15px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
-.fl-s small { order: 2; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-left: 12px; white-space: nowrap; }
+.fl-s small { order: 2; align-self: flex-end; background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 3px 8px; transform: skewX(-10deg); margin-right: 6px; white-space: nowrap; }   /* (the height under the name, at its right) */
 .fl-s svg { order: 3; margin-top: 1px; }
 .fl-s.finish b { background: #101820; color: #fff; }
-.fl-q { translate: -50% -100%; display: flex; flex-direction: column; align-items: center; }
-.fl-q b { background: rgba(10, 16, 26, .84); color: #fff; font: 800 italic 12px/1 var(--f-ui); padding: 5px 8px 4px; border-left: 3px solid var(--gold); white-space: nowrap; box-shadow: 0 3px 8px rgba(0, 0, 0, .35); }
-.fl-q::after { content: ''; width: 2px; height: 16px; background: rgba(255, 255, 255, .85); }
 .fly .fl svg, .fl-s svg path { stroke: #fff; }
 .fl path { stroke: #fff; stroke-width: 2.4; stroke-linecap: round; fill: none; }
 .fl .fg { fill: #3fd0ff; stroke: none; }
@@ -490,11 +501,14 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 @keyframes rtdraw { to { stroke-dashoffset: 0; } }
 /* (a map that comes in during a run, or whose route has been drawn: the route whole, not drawn again) */
 .topmap.drawn path.rt { animation: none; stroke-dashoffset: 0; }
-/* the switch 1 / 2: the other view of the same run waits for its picture over the one shown (pend), then fades in; the one under it then goes */
+/* the cameras 1 and 2: the other view of the same run waits for its picture over the one shown (pend), then fades in; the one under it then goes */
 .stage .dio.fly, .stage .dio.topmap { transition: opacity .3s ease; }
 .stage .dio.pend { opacity: 0; pointer-events: none; }
 .mk circle { fill: #fff; stroke: #10151d; stroke-width: 3; }
 .mk text { font: 900 italic 21px/1 var(--f-ui); fill: #fff; stroke: rgba(8, 12, 20, .92); stroke-width: 6; paint-order: stroke; stroke-linejoin: round; text-transform: uppercase; }
+#track-stage .mk text { display: none; }   /* (the track step's map: its names are boxes over it, .mlab) */
+.mlab { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.mlab .fl-s { position: absolute; translate: 0 -100%; transform-origin: 0 100%; }   /* (left, top: its bottom left corner; made smaller about it: mapLabels) */
 .mk text .sub { font-size: 16px; font-weight: 600; fill: var(--gold); text-transform: none; }
 /* (2,862 m: a metre, not M) */
 .sp rect { fill: #10151d; stroke: #fff; stroke-width: 2.5; }
@@ -507,14 +521,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (the switch and the notes read on any land) */
 .topmap image.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio image.wet { opacity: 1; }
-.dio.topmap.lock .mapsvg image, .dio.fly.lock video { filter: saturate(.55) brightness(.8); }
-/* the flyover and the intro: the place the video has reached and its height, high in the right corner */
-.hud { position: absolute; right: 10px; top: 10px; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; max-width: calc(100% - 20px); }
-.hud b { background: #fff; color: #10151d; font: 900 italic 14px/1 var(--f-ui); letter-spacing: .02em; padding: 6px 10px 5px; transform: skewX(-10deg); text-transform: uppercase; box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.hud small { background: var(--gold); color: var(--gold-ink); font: 900 italic 12px/1 var(--f-ui); padding: 4px 9px 3px; transform: skewX(-10deg); margin-right: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.hud b:empty, .hud small:empty { display: none; }
-.hud.in b { animation: hud-in .5s cubic-bezier(.2, .8, .3, 1) both; }
-@keyframes hud-in { from { opacity: 0; transform: translateX(18px) skewX(-10deg); } }
+.dio.topmap.lock .mapsvg image, .dio.fly.lock video, .dio.corner.lock video { filter: saturate(.55) brightness(.8); }
 /* ---------------- main menu: Single race and Career open in the same frame (the race goes on behind it) ---------------- */
 .title-panel.sub { gap: 10px; }
 .t-subhead { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -829,6 +836,26 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .drow .mono { flex: 0 0 auto; width: 62px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #2a3c5a, #17233a); border: 1px solid rgba(255, 255, 255, .16); font: 900 italic 20px/1 var(--f-ui); color: var(--gold); }
 .tlink { align-self: center; padding: 8px 16px; font: 600 12.5px/1 var(--f-ui); color: var(--lbl); text-decoration: underline; text-underline-offset: 3px; opacity: .9; }
 .tlink:active { opacity: .6; }
+/* the opponents' sheet (the row's Opponents): the number big, the quick picks, the slider (its gold part up to the thumb: --p), Done */
+.sheet.riv .rnum { display: flex; flex-direction: column; align-items: center; margin: 2px 0 12px; }
+.sheet.riv .rnum b { font: 900 italic 84px/.95 var(--f-ui); font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.sheet.riv .rnum span { margin-top: 6px; font: 600 14px/1.2 var(--f-ui); color: var(--lav); text-align: center; }
+.sheet.riv .rquick { display: flex; gap: 6px; margin-bottom: 12px; }
+.sheet.riv .rquick button { flex: 1 1 0; min-width: 0; height: 48px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .14); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font: 800 italic 17px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.sheet.riv .rquick button small { font: 700 9.5px/1 var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--lbl); }
+.sheet.riv .rquick button[aria-pressed="true"] { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 50%, var(--gold-lo)); border-color: #fff0b0; color: var(--gold-ink); }
+.sheet.riv .rquick button[aria-pressed="true"] small { color: var(--gold-ink); }
+.sheet.riv .rquick button:disabled { opacity: .3; cursor: default; }
+.rslide { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 36px; margin: 0; background: transparent; cursor: pointer; }
+.rslide:focus { outline: none; }
+.rslide:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; border-radius: 8px; }
+.rslide::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--gold) var(--p, 0%), rgba(255, 255, 255, .16) var(--p, 0%)); }
+.rslide::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; margin-top: -11px; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.rslide::-moz-range-track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .16); }
+.rslide::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--gold); }
+.rslide::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.sheet.riv .rends { display: flex; justify-content: space-between; margin: 2px 4px 14px; font: 600 12px/1 var(--f-ui); color: var(--lbl); font-variant-numeric: tabular-nums; }
 .sheet.opts { max-height: 88%; display: flex; flex-direction: column; }
 .sheet.opts .orows { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 12px -6px 14px; padding: 0 6px; display: flex; flex-direction: column; gap: 12px; overscroll-behavior: contain; }
 .orow { display: flex; flex-direction: column; gap: 6px; }
@@ -881,6 +908,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .wopts { margin: 10px 0 8px; }
   .wopts button { padding: 9px 4px 8px; gap: 5px; }
   .lapsrow { margin-bottom: 10px; padding: 6px 10px 6px 12px; }
+  .sheet.riv .rnum { margin: 0 0 8px; } .sheet.riv .rnum b { font-size: 56px; } .sheet.riv .rnum span { margin-top: 4px; font-size: 13px; }
+  .sheet.riv .rquick { margin-bottom: 6px; } .sheet.riv .rquick button { height: 40px; } .sheet.riv .rends { margin-bottom: 10px; } .sheet.riv .go { height: 46px; }
 }
 /* the career's four cards (a drawn picture each, not a rendered one) */
 .mode .im svg.bigcup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(70px, 74%); height: auto; max-height: 86%; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }

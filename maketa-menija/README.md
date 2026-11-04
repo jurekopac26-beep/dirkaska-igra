@@ -259,7 +259,7 @@ node carimgs.mjs && python3 menuimg.py           # avti v vseh barvah, slike gum
 node bgvideo.mjs '[["jezero",7],["gora",7]]' 1.25 14   # posnetki -> ../assets/video/
 node dio2.mjs proge.json                         # makete prog, suhe in v dežju -> raw/tracks/w_*.png (proge.json: [[id, ime, nastavitve], …])
 python3 mkwebp.py                                # raw/tracks -> ../assets/tracks/<proga>.webp in <proga>-rain.webp
-node dio2.mjs proge_igra.json                    # makete 20 prog, ki so v igri od vključitve menija (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
+node dio2.mjs proge_igra.json                    # makete prog, ki so v igri od vključitve menija (tudi `pikesg`, makadam) (isti izris za vse: soil 38, rot 0.45, el 44, fitW 1.06, fitH 0.9) -> raw/tracks/
 python3 mkwebp.py ../../assets/tracks bathurst beartooth …   # samo naštete proge, v mapo igre (assets/tracks/ v korenu repozitorija; nova proga: dodaj vrstico v proge_igra.json)
 node gen_tracks2.js raw/tracks.js                # obrisi prog (nato v outlines.js)
 node check.mjs                                   # vsi zasloni v vseh stanjih -> shots/
@@ -343,7 +343,7 @@ Prava proga je dokončana, ko ima vse, kar imajo Vršič, Pikes Peak, Ouninpohja
 8. Prelet (po koraku 5: resnična okolica `geo_far.py` in `geo_lc.py`): vrstica v `flyovers.json` (hitrost, kamera in megla so skupni, `CAMERA` v `flyover.mjs`; `places` z angleškimi imeni iz `R.places` v `routes.js`; `kbps`), `GAME=../game_main node flyover.mjs flyovers.json <ids>`, nato znova korak 7 (`routes.py`, prenese tudi `fly-<id>.webm|webp`).
 9. Let s helikopterjem: kraji v `landmarks.json` (samo zemljepisna imena), vrstica v `drones.json` (`{"mode": "demo", "warm": 2, "kbps": …, "shots": []}`), po potrebi `heli.json` (`sea: true` ob morju), `EXPORT=1 node heli.mjs nring` enkrat, nato `GAME=../game_main node heli.mjs <ids>`, `python3 intro_data.py raw/site <ids>` in `python3 intro_assets.py raw/site` (kopiraj `heli-<id>.*` in glasbo v igro).
 10. Glasba nove države: `glasba/<država>.py` po vzoru drugih (`glasba/synth.py`), `MUSIC` v `intro_data.py`.
-11. `node tools/stamp.js`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`).
+11. `node tools/stamp.js --check`, testi (`npm run test:related`, `node tests/browser/menu.test.mjs`).
 
 ## Viri podatkov
 

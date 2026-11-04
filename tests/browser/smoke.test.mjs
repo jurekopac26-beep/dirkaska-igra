@@ -63,18 +63,33 @@ try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
   T.check('track menu lists every track of the game', [...ids].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, ids.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
+  // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
+  // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
+  // can push it off the road into the barrier, where it stood for the rest of the 20 s). The other autopilot races do the same (radio, fuel,
+  // memory; races.test.js, lib/sim.js)
+  const drive = (sec) => page.evaluate(async (sec) => {
+    const g = window.__game; let nan = false, resc = 0;
+    for (let i = 0; i < sec; i++) {
+      g.sim(1, true);
+      const R = g.race, P = R && R.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) { R.rescue(P); resc++; }
+      await new Promise(r => requestAnimationFrame(r));
+      for (const c of g.race.cars) if (!Number.isFinite(c.x) || !Number.isFinite(c.z) || !Number.isFinite(c.speed)) nan = true;
+    }
+    return { nan, resc };
+  }, sec);
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
-    const nan = await simulate(page, 20);
+    const { nan, resc } = await drive(20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -84,15 +99,20 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
-      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
+      // (the clock's block as game.js placeNote sees it: its bottom moves with the fonts, a line under the clock (a place's name, a corner's
+      // number) a pixel more or less tall from one browser's font to another's)
+      const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); }
+      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), clk: +clk.toFixed(1), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
     const n1 = await sign(null);
     {
+      // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
+      // phone; never over the block. Pikes Peak's checkpoint tiles and the police's block lower: under those)
       await page.setViewportSize({ width: 270, height: 480 });
-      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : 95;
+      const n2 = await sign(n1.s), lim2 = n2.pol ? 200 : n2.pkc ? 106 : Math.max(83, Math.ceil(n2.clk) + 7);
       await page.setViewportSize({ width: 480, height: 270 });
-      T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright under the clock (top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2,
-        `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px`);
+      T.check(`${id}: the corner sign shown high: lying in the top row (top ≤ 10 px), upright right under the clock (not over its block, top ≤ ${lim2} px)`, n1.s != null && /\bshow\b/.test(n1.cls) && n1.top <= 10 && /\bshow\b/.test(n2.cls) && n2.top <= lim2 && n2.top >= n2.clk - 0.5,
+        `'${n1.cls}' top ${n1.top} px / upright '${n2.cls}' top ${n2.top} px (the clock's block to ${n2.clk} px)`);
     }
     await page.evaluate(() => window.__game.noteAt(null));
   }
@@ -241,15 +261,21 @@ try {
         }
         // (in the chase the patrol cars may lose the player for a while, searching with their lights off: the HUD's count of them after the
         // player and their lights read through the chase, not only at its end)
-        let peds = 0, tail = [], rot = [], caps = [], chased = 0, lamp = false;
+        // (each arrow's turn is checked against where the patrol cars are as the frame drew it: 180 straight behind, less to the right. A car
+        // behind along the road may be beside or even ahead of the player in a hairpin, so how many of them point back depends on where on the
+        // road the chase is, which the race's chance decides)
+        let peds = 0, tail = [], rot = [], aim = [], caps = [], chased = 0, lamp = false;
         for (let i = 0; i < 30; i++) { g.sim(1, true); await frame(); peds = Math.max(peds, (Render.roadInfo() || {}).ped || 0);   // (people drawn on the way: between the villages there may be nobody about)
           if (md === 'police') { chased = Math.max(chased, +txt('h-pos') || 0); if ((Render.roadInfo() || {}).lampOn) lamp = true;
-            for (const el of document.querySelectorAll('#h-tail i.on')) { tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1])); }
+            const Pl = g.race.player, ch = Math.cos(Pl.h), sh = Math.sin(Pl.h);
+            const cars = g.race.pol.cars.filter(c => c.pol.mode === 'chase' || c.pol.mode === 'search').map(c => { const dx = c.x - Pl.x, dz = c.z - Pl.z; return 180 - Math.atan2(-dx * sh + dz * ch, -(dx * ch + dz * sh)) * 180 / Math.PI; });
+            for (const el of document.querySelectorAll('#h-tail i.on')) { const r = parseFloat((/rotate\(([-\d.]+)deg\)/.exec(el.firstElementChild.style.transform) || [])[1]);
+              tail.push(el.className.replace('on ', '') + ' ' + el.lastElementChild.textContent); rot.push(r); aim.push(cars.some(w => Math.abs(((r - w) % 360 + 540) % 360 - 180) <= 2)); }
             if (g.radio.cap) caps.push(g.radio.cap); } }
         for (let i = 0; i < 16; i++) { await frame(); if ((Render.roadInfo() || {}).lampOn) lamp = true; }   // (the lights flash: on in some of the frames)
         const hud = document.getElementById('hud'), road = Object.assign({}, Render.roadInfo(), { lampOn: lamp, ped: Math.max(peds, (Render.roadInfo() || {}).ped || 0) });
         out[md] = { mode: g.S.mode, cars: g.race.cars.length, tf: !!g.race.tf, pol: g.race.pol ? g.race.pol.cars.length : 0, duel: hud.classList.contains('duel'), polHud: hud.classList.contains('pol'), gap: txt('h-gap'),
-          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, caps: [...new Set(caps)] };
+          lbl: document.querySelector('#h-rank .h-lbl').textContent, pos: txt('h-pos'), chased, heat: txt('h-heat'), road, dist: g.race.player.dist, phase: g.phase, radioMode: g.radio && g.radio.mode, tail: [...new Set(tail)].slice(0, 12), rot, aim, caps: [...new Set(caps)] };
         if (md === 'police') {   // the heat up (as if the player had wrecked half the police's cars): the helicopter comes, the radio says so
           let heli = false;
           g.race.pol.cool = -3; for (let i = 0; i < 40 && !heli; i++) { g.sim(1, true); await frame(); heli = !!(Render.roadInfo() || {}).heli; }
@@ -292,9 +318,9 @@ try {
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
-    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, pointing back',
-      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.rot.filter(a => a > 95 && a < 265).length >= P.rot.length * 0.6,
-      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}`);
+    T.check('Vršič Policija: arrows at the bottom for the patrol cars behind (blue and red in the chase), how many metres back, each pointing where a patrol car is',
+      P.tail.length >= 1 && P.tail.every(t => /^[brs]( n)? (\d+ m|ob tebi)$/.test(t)) && P.aim.length === P.rot.length && P.aim.every(Boolean),
+      `${JSON.stringify(P.tail)}, angles ${P.rot.slice(0, 8).join(' ')}, ${P.aim.filter(Boolean).length} of ${P.aim.length} at a patrol car`);
     T.check('Vršič Policija: the police radio talks in the chase (the speakers\' call signs, the real places)',
       P.caps.some(c => /^(KG-\d+|OKC KRANJ|MOTORIST \d+|CIVILNA \d+|BOBER|PP BOVEC|POLICIST) .{12,}/.test(c)) && P.log.some(l => /(pri|na|v|pod|pred) (Jasni|Jasno|Kranjski Gori|Vršiški cesti|Eriškem|Eriškim|razglednem|Šumici|\d+\. serpentin)/.test(l)),
       JSON.stringify(P.caps.slice(0, 4)));

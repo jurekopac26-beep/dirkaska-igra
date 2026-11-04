@@ -38,6 +38,10 @@ try {
     return document.fonts.check('italic 800 32px ApexMenu') && document.fonts.check('700 9px ApexMenu'); });
   T.check('the HUD\'s face (ApexMenu, the menu\'s Roboto) loaded before anything is measured', fonts);
   await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 800 && g.phase !== 'racing'; k++) g.sim(0.05, false, 0, 0); g.sim(3, true); g.hud(); });
+  // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt: the four dots each its own tyre, tests/browser/kolibri-hud.test.mjs;
+  // the set's HUD checked below on a car without them, as in a race with a friend)
+  const ownT = await page.evaluate(() => { const g = window.__game, P = g.race.player, kt = !!P.kt, cls = document.getElementById('h-tyre').className; P.kt = null; g.hud(); return { id: P.m.id, kt, cls }; });
+  T.check('the player\'s car with its own tyres (Car.kt: the HUD\'s dots each its own tyre, class kt); the set\'s HUD below on a car without them, as in a race with a friend', ownT.kt && /\bkt\b/.test(ownT.cls), JSON.stringify(ownT));
 
   // 1. the old pieces gone
   const gone = await page.evaluate(() => ['h-gear', 'h-dmg', 'btn-tyre', 'speedo', 'speedo-c', 'h-dmgrow', 'dmg-ns'].filter(id => document.getElementById(id)));

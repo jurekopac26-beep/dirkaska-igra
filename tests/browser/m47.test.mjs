@@ -1,6 +1,6 @@
 // Special mission 47 · Gozdni požar (js/missions/m47.js, the kit js/missions/kit.js) in the browser, upright (360 x 640): ?misija=47 on the
 // Great Alpine Road at dusk, the fire engine; the panel (VODA, OGENJ DO HIŠE, VETER, POGAŠENO), no timing tower; the fire's flames, the
-// house, the pond and the kangaroos in the scene; near the fire the pad and GASI shown with the driving controls kept (aimed while
+// house, the pond and the kangaroos in the scene; near the fire the pad shown with the driving controls kept (aimed while
 // driving); a driver along the fire (slowly, the water on the nearest cell, to the pond when dry): every cell out, done. Back to the title:
 // the fire and the pad gone. No errors on the page.
 //   node tests/browser/m47.test.mjs
@@ -23,7 +23,7 @@ try {
   T.check('the fire, the house and three kangaroos in the scene', S.fire && S.house && S.roos === 3, JSON.stringify(S));
   await page.evaluate(() => { const g = window.__game, r = Missions.run; for (let k = 0; k < 3000 && !r.end && r.P.q.s < r.s1 - 60; k++) g.sim(0.25, true); });
   s = await st(page);
-  T.check('near the fire: the pad and GASI shown, the driving controls kept', s.pad && s.drive && s.gasi && s.touch, JSON.stringify({ pad: s.pad, drive: s.drive, gasi: s.gasi, touch: s.touch }));
+  T.check('near the fire: the pad (taps) shown, no GASI button, the driving controls kept', s.pad && s.drive && !s.gasi && s.touch, JSON.stringify({ pad: s.pad, drive: s.drive, gasi: s.gasi, touch: s.touch }));
   // a driver along the fire: slowly to the first burning cell, the water on the nearest one in reach, to the pond when dry
   await page.evaluate(() => { const g = window.__game, r = Missions.run, K = r.def.K;
     for (let k = 0; k < 6000 && !r.end; k++) {
