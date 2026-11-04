@@ -12,7 +12,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
-| ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
+| ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey, Palomar Mountain (Santa Monica Mountains, Detroit, Moki Dugway, Riverside in Mauna Kea so od 4. 11. 2026 testne) | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
 | Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
@@ -30,6 +30,23 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace | – | – |
 | Tajska | Bang Saen | – | – |
+
+## Ocene prog v igri: ena proga na državo
+
+Uporabnik 4. 11. 2026: »prosim shrani si ocene, da izberem samo 1 progo na državo«. Ocene od 1 do 5 (5 najboljša), kot jih da uporabnik; ko so ocenjene vse proge države, uporabnik izbere tisto, ki ostane (ostale lahko gredo med testne, kot Santa Monica Mountains, Detroit, Moki Dugway, Riverside in Mauna Kea 4. 11. 2026). Države z eno progo v igri tu niso naštete.
+
+| Država | Proge v igri: ocena | Izbrana |
+|---|---|---|
+| ZDA | Pikes Peak (asfalt in makadam) **5** (4. 11. 2026), Big Sur –, Uncompahgre –, Beartooth –, Moki Dugway **4** (4. 11. 2026; med testne istega dne), Mauna Kea **4** (4. 11. 2026; med testne istega dne), Mount Baldy –, Riverside **3** (4. 11. 2026; med testne istega dne), Monterey –, Palomar Mountain – | – |
+| Avstralija | Bathurst **4,5** (4. 11. 2026), Longford –, Newcastle –, Great Alpine Road –, Mount Hotham –, Townsville – | – |
+| Kanada | Toronto –, Montréal –, Trois-Rivières – | – |
+| Japonska | Suzuka –, Irohazaka **5** (4. 11. 2026) | – |
+| Brazilija | Rio do Rastro **5** (4. 11. 2026), Rio de Janeiro – | – |
+| Južna Afrika | Chapman's Peak **5** (4. 11. 2026), Sani Pass **4** (4. 11. 2026) | – |
+| Finska | Ouninpohja –, Harju – | – |
+| Slovenija | Vršič –, Medvode – | – |
+
+Ocene prog iz držav z eno progo v igri (za primerjavo): Spa, Belgija **5** (4. 11. 2026).
 
 ## Države brez proge v igri: po vrsti
 

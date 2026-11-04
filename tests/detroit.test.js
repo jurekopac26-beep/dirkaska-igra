@@ -14,8 +14,8 @@ const def = C.TRACKS.find(d => d.id === 'detroit'), T = new C.Track(def);
 const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a)), sAt = (d) => (((T.startS + d) % T.len) + T.len) % T.len, dOf = (i) => { let d = i * T.ds - T.startS; d = ((d % T.len) + T.len) % T.len; return d; };
 
 // 1. the track: a closed street circuit, 5 laps, its length within 0.5 % of the official 2.647 km
-check('track: a closed circuit (laps and time trials), 5 laps, "Detroit, ZDA" / "Detroit, USA", pits, not a test track',
-  !def.open && !def.timeTrial && def.laps === 5 && def.name === 'Detroit, ZDA' && def.en.name === 'Detroit, USA' && !!def.pit && !def.test && def.realKm === 2.647,
+check('track: a closed circuit (laps and time trials), 5 laps, "Detroit, ZDA" / "Detroit, USA", pits, a test track (the user, 4. 11. 2026: »progo detroit prestavi v kategorijo test«)',
+  !def.open && !def.timeTrial && def.laps === 5 && def.name === 'Detroit, ZDA' && def.en.name === 'Detroit, USA' && !!def.pit && def.test === true && def.realKm === 2.647,
   `${def.name}, ${def.laps} laps`);
 check('track: the lap 2.647 km (within 0.5 % of the official length; the hairpin placed so)', Math.abs(T.len / 2647 - 1) < 0.005, `${T.len.toFixed(1)} m (${((T.len / 2647 - 1) * 100).toFixed(2)} %)`);
 

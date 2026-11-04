@@ -126,11 +126,11 @@
   "jsMs": 1.36
  },
  "mulholland": {
-  "calls": 146,
-  "maxCalls": 168,
-  "kverts": 472,
-  "maxKverts": 669,
-  "jsMs": 1.58
+  "calls": 149,
+  "maxCalls": 171,
+  "kverts": 490,
+  "maxKverts": 730,
+  "jsMs": 2.3
  },
  "beartooth": {
   "calls": 168,
@@ -147,11 +147,11 @@
   "jsMs": 1.27
  },
  "moki": {
-  "calls": 129,
-  "maxCalls": 161,
-  "kverts": 205,
-  "maxKverts": 265,
-  "jsMs": 1.15
+  "calls": 131,
+  "maxCalls": 165,
+  "kverts": 206,
+  "maxKverts": 266,
+  "jsMs": 1.62
  },
  "maunakea": {
   "calls": 114,
@@ -238,11 +238,11 @@
   "jsMs": 2.29
  },
  "detroit": {
-  "calls": 220,
-  "maxCalls": 245,
-  "kverts": 670,
-  "maxKverts": 786,
-  "jsMs": 1.19
+  "calls": 218,
+  "maxCalls": 235,
+  "kverts": 702,
+  "maxKverts": 826,
+  "jsMs": 1.72
  },
  "palomar": {
   "calls": 148,
