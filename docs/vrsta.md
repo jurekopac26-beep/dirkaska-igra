@@ -29,12 +29,11 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 1 | #241 | Mount Buller | 3 | na vrsti |
 | 3 | #250 | 7 novosti | 3 | čaka |
 | 4 | #226 | Bâlea | 3 | čaka |
-| 5 | #246 | preleti | 3 | čaka |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 
-Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
+Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani); #246 preleti (račun 3; odločitev uporabnika 4. 11.: počaka, dokler ne bo znano, katere proge gredo v igro; takrat ga nadaljuje nova seja po opisu pull requesta).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
