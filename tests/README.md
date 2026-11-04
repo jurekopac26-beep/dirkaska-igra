@@ -82,11 +82,11 @@ Dolg test ima lahko tudi `TEST_SLOW`-kratni čas, ki ga porabi na GitHubu (`SECS
 stroj oblačne seje potrebuje 2- do 2,5-krat toliko časa kot GitHub (`world`, `gfx` ~25–30 min, `perf` ~70 min); na GitHubu 2-kratni. Doma
 ima tako `world` 45 min, `gfx` 49 min, `perf` 124 min, `memory` 177 min.
 
-Brskalniški testi na GitHubu tečejo na štirih strojih hkrati (posli »Igra v brskalniku (1/4)« do »(4/4)«, vsak do 120 minut, več kot omejitev testa pomnilnika),
+Brskalniški testi na GitHubu tečejo na štirih strojih hkrati (posli »Igra v brskalniku (1/4)« do »(4/4)«, vsak do 160 minut, več kot omejitev testa pomnilnika in ostalih testov v njegovem delu),
 posel »Igra v brskalniku« pa je zelen, ko so zeleni vsi štirje deli. `tests/run.js --shard k/4` razdeli teste po tem, koliko časa traja
 vsak na GitHubu (tabela `SECS` v `tests/run.js`; test, ki ga ni v tabeli, šteje 60 s): najdaljši najprej, vsak v del, ki ima do tedaj
-najmanj časa. Na hitrem stroju traja vsak del ~26 min, na počasnem do dvakrat dlje (prej je celoten nabor na enem stroju trajal
-od ~105 do več kot 180 min). Ko se kak test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo), popravi njegov čas v
+najmanj časa. Po časih iz teka main 4. 11. 2026 traja vsak del ~99 min, na hitrem stroju do pol manj (celoten nabor na enem stroju bi
+trajal ~6,5 h). Ko se kak test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo), popravi njegov čas v
 `SECS` po povzetku zadnjega zagona, da ostanejo deli enako dolgi.
 
 ## Kaj preverjajo
