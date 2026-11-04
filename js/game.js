@@ -3819,12 +3819,24 @@
     return { k: f.k, big, laps, B: need && B < N ? B : null };
   }
   // the row as wide as it is: all of it (the icons spread out) or, more than fit, a swipe (the cells PW_C px or a little more, so many that
-  // the next one is half out at the edge) and the line under it
+  // the next one is half out at the edge) and the line under it; a cell never narrower than the widest lap's name (Krog 18) in the font there is
   const PW_C = 50, PW_GAP = 4;
   function pwFit() {
+    pbFit();
     const wx = $('pause-wx'), row = wx.querySelector('.pw-row'), n = row.children.length, W = row.clientWidth; if (!n || !W) return;
-    const long = n * PW_C + (n - 1) * PW_GAP > W + 0.5, k = Math.max(1, Math.floor((W + PW_GAP) / (PW_C + PW_GAP)));
+    let lw = 0; for (const c of row.children) { const b = c.querySelector('b'); if (b) lw = Math.max(lw, b.offsetWidth); }
+    const C = Math.max(PW_C, Math.ceil(lw) + 2), long = n * C + (n - 1) * PW_GAP > W + 0.5, k = Math.max(1, Math.floor((W + PW_GAP) / (C + PW_GAP)));
     wx.classList.toggle('long', long); row.style.setProperty('--pwc', long ? ((W + PW_GAP) / (k + 0.5) - PW_GAP).toFixed(2) + 'px' : ''); if (piInfo && piInfo.wx) piInfo.wx.long = long;
+  }
+  // the buttons in two columns (an upright phone): a label wider than its half (a UI font wider than the one they were fitted to: the system's
+  // own where the game's is missing) makes them all a little smaller, the same size, each on one line
+  function pbFit() {
+    const bx = $('s-pause').querySelector('.btns'); if (!bx) return;
+    const bs = [...bx.querySelectorAll('.btn')]; for (const b of bs) b.style.fontSize = '';
+    if (getComputedStyle(bx).display !== 'grid') return;
+    let q = 1, fs = 0;
+    for (const b of bs) { if (!b.offsetParent) continue; const cs = getComputedStyle(b), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), room = b.clientWidth - pad, txt = b.scrollWidth - pad; if (txt > room + 0.5 && room > 0) { q = Math.min(q, room / txt); fs = parseFloat(cs.fontSize); } }
+    if (q < 1) { const px = Math.max(11, Math.floor(fs * q * 0.97 * 2) / 2) + 'px'; for (const b of bs) b.style.fontSize = px; }
   }
   if (window.ResizeObserver) new ResizeObserver(() => pwFit()).observe($('pause-wx').querySelector('.pw-row'));   // (shown, turned, the panel resized: fitted again)
   window.addEventListener('resize', () => { if (screen === 'pause') { pwFit(); requestAnimationFrame(pwFit); setTimeout(pwFit, 80); } });   // (and at once on a turn: the layout may come a frame later)

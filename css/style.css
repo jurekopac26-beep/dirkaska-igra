@@ -1127,7 +1127,7 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 #s-pause.pi .pause-body { overscroll-behavior: contain; }   /* (a screen smaller than any it was fitted to: it scrolls, nothing out of reach) */
 @media (orientation: portrait) { #s-pause.pi .small-panel { padding-top: 14px; padding-bottom: 14px; } }
 @media (orientation: portrait) and (max-height: 760px) {
-  #s-pause.pi .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  #s-pause.pi .btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }   /* (the columns never wider than their half: a label too long for one shrinks them all, pbFit in game.js) */
   #s-pause.pi .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
   #s-pause.pi .btns .btn.primary, #s-pause.pi .btns .btn.ghost { grid-column: 1 / -1; }
   #s-pause.pi .panel h2 { margin-bottom: 4px; font-size: 28px; }
@@ -1137,7 +1137,7 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
   #s-pause.pi .pit-row { margin-top: 6px; }
 }
 @media (orientation: portrait) and (max-height: 940px) {   /* (the same with the weather's row over the buttons: up to a tall phone) */
-  #s-pause.pi.wx .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  #s-pause.pi.wx .btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   #s-pause.pi.wx .btns .btn { padding-left: 12px; padding-right: 8px; white-space: nowrap; font-size: clamp(13px, 4.2vw, 16px); }
   #s-pause.pi.wx .btns .btn.primary, #s-pause.pi.wx .btns .btn.ghost { grid-column: 1 / -1; }
   #s-pause.pi.wx .panel h2 { margin-bottom: 4px; font-size: 28px; }
