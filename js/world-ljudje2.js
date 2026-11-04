@@ -1297,7 +1297,7 @@
   // zaposlenih«: the circuits have their staff's scenes); two or three each, where the chase camera sees them, the ground level and nothing
   // else there and no side road (a car may drive into one, the police waits in it), at least 260 m from the other fans' scenes (the staff's
   // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
-  site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
+  site('medvode', [['kotlicek', 1384, 1], ['badminton', 2456, 1], ['nogomet', 3208, 1]]);
   site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
   site('vrsic', [['kotlicek', 1000, 1], ['motoristi', 5160, 1]]);
   site('harju', [['plaza', 1856, -1]]);

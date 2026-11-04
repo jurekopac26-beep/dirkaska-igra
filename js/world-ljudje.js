@@ -1414,7 +1414,7 @@
     longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5488, 1], ['gasilci', 5952, 1], ['foto2', 6552, 1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
     maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
-    medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
+    medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2880, 1], ['kolesarji', 4384, -1]],
     moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
     monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
