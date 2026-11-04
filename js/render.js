@@ -3732,6 +3732,8 @@ const Render = (function () {
   THEMES.townsville = { fog: 0xcfdde8, sun: 0xfff2da, sunI: 1.34, sky: 0xb4d2f4, gnd: 0x6f6a48, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.1, sunOff: [-62, 96, -66] };   // Townsville: a clear dry-season afternoon in the tropics, a strong high sun from the north-west
   SPLIT.townsville = [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]];
   SPLIT.greatalpine = [[0.95, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (the Great Alpine Road: blue shade under the gums, a warm sun)
+  THEMES.hakone = { fog: 0xc8d5dc, sun: 0xfff0d4, sunI: 1.14, sky: 0xcadcee, gnd: 0x4a5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-84, 80, 52] };   // Hakone: a clear early-summer afternoon over the old Tōkaidō, the sun in the south-west over the caldera, a soft humid haze in the valleys
+  SPLIT.hakone = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];   // (cool shade under the cedars, a warm sun)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the

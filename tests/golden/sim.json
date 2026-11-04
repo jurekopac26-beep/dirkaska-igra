@@ -4800,5 +4800,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "hakone/race/cs": {
+  "digest": "7d50af62bdd1a70eac4fdf2d",
+  "lead": 2017.2,
+  "car0": [
+   -1643.27,
+   -22.33
+  ],
+  "cover": {
+   "dmg": 0.18,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/demo/cs": {
+  "digest": "4df002f6f0d14ec39be50c80",
+  "lead": 2152.5,
+  "car0": [
+   -1749.03,
+   -87.45
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/upg/cs": {
+  "digest": "dc0ceb7c7f75ee4515171784",
+  "lead": 2124.5,
+  "car0": [
+   -1728.41,
+   -106.94
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/crash/cs": {
+  "digest": "773d8bfdd88752e762c4adb9",
+  "lead": 1996.9,
+  "car0": [
+   -1642.43,
+   31.3
+  ],
+  "cover": {
+   "dmg": 0.89,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/formula/cs": {
+  "digest": "1162c7c41c946722abdfc7ff",
+  "lead": 2254.8,
+  "car0": [
+   -1690.65,
+   -121.74
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/lm/cs": {
+  "digest": "0e284987f9bf60f601de5f09",
+  "lead": 2212,
+  "car0": [
+   -1641.61,
+   -66.96
+  ],
+  "cover": {
+   "dmg": 0.58,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "hakone/car/cs": {
+  "digest": "95d45a1d57134ad7e5ba1688",
+  "lead": 1985,
+  "car0": [
+   -1598.91,
+   79.94
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

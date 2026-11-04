@@ -298,6 +298,7 @@
     sani: { a: ['eland', 'horseG', 'cowK', 'baboon'], t: [], open: true },
     marrakesh: { a: ['camel', 'donkey', 'stork'], t: ['palmHut'], city: true },
     iroha: { a: ['macaque', 'sika', 'serow'], t: ['torii', 'lantern', 'vending', 'logPile'] },
+    hakone: { a: ['sika', 'boar', 'macaque', 'serow'], t: ['lantern', 'torii', 'logPile', 'vending'] },   // (the Hakone mountains: sika deer, boar, macaques, serow)
     suzuka: { a: ['sika', 'macaque'], t: ['torii', 'lantern', 'vending'] },
     tianmen: { a: ['macaque'], t: ['lantern', 'signPost'] },
     katu: { a: ['yak', 'horse', 'ibex', 'elk'], t: ['cabin', 'logPile'], open: true },
