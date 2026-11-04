@@ -70,6 +70,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 - Predaja velike seje pri ~300 tisoč (`CLAUDE.md`, Seje) pride pred povzetkom; povzetek je rezerva, kadar predaje ni.
 
 ## Svež main pred združitvijo (`zetoni-4`)
+Krog testov na `main` se ne prekine (`concurrency` v `.github/workflows/tests.yml`: začeti krog se izteče, najnovejši počaka, vmesni odpadejo; pull requesti se še naprej prekinjajo), zato je varovalka po združitvi res krog testov (odločitev uporabnika `ci-main-krog`, 4. 11. 2026).
 
 Pravilo je v `CLAUDE.md` (Postopek): ko je pull request na GitHubu zelen, spoji svež `main` in poženi lokalne povezane teste; brez sporov ali s spori samo v žigih, seznamih testov ali kazalu (hitro združevanje) pull request združi brez novega kroga na GitHubu, varovalka je krog testov na `main` po združitvi; ob drugih sporih potisk in celoten krog. Pred združitvijo seja preveri zadnji krog testov na `main` in rdečega najprej popravi. Spore v žigih je odpravil #271 (žigov v repozitoriju ni, doda jih objava; na `main` 3. 11. 2026).
 
