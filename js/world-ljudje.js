@@ -1239,8 +1239,7 @@
     const carA = car && Sc.da != null ? -Sc.da : -1e9;
     for (const p of Sc.people) {
       const P = p.P, st = P.seat; if (!st) { if (P.fix) poseCam(Sc, p, fixed ? 0 : t, car); else poseWalker(Sc, p, fixed ? 0 : t, car); continue; }
-      const ax = st.x * Sc.sgn, dA = ax - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0;
-      const f0 = p.up || 0, f = p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6);
+      const f = standUp(Sc, p, carA, dt, fixed);
       const sig = f > 0 ? -1 : (car && carA > -60 && carA < Sc.len + 30 ? 1 : 0);
       if (!fixed && sig === p.sig && sig >= 0 && p.wet === WET) continue; p.sig = sig; p.wet = WET;   // (still: not posed again; the rain's start or end: all again)
       const up = poseJ(st.up || (st.k < 0.55 ? 'cheer' : st.k < 0.75 ? 'jump' : st.k < 0.9 ? 'wave' : 'phoneUp'), t * 6.5 + st.k * 9), sit = poseJ(st.pose || (st.k < 0.65 ? 'sit' : 'sitLean'));
@@ -1359,14 +1358,60 @@
   /* ---------------- every frame (World.update): the followed car's way to each scene, the scenes near the camera posed ---------------- */
   const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _cv = new THREE.Vector3();
   const SUMMER = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the scenes of a summer's day: out of the world under snow; js/world-ljudje2.js's too)
-  function step(W, t, car, cam) {
+  // what a scene does as the followed car comes (it at cs along the road, v fast): ready for it (arm), out to the fence (alert), the car past, back
+  function react(Sc, T, t, cs, v) {
+    let da = Sc.s0 - cs; if (!T.open) da -= T.len * Math.round(da / T.len);
+    Sc.da = da; const eta = v > 2 ? da / v : 1e9;
+    if (Sc.arm) { if (da > -4 && da < 700 && eta < WARN) alert(Sc, t); }
+    else if (Sc.al >= 0) {
+      if (Sc.pass < 0 && da < -3) Sc.pass = t;
+      if (Sc.back < 0 && ((Sc.pass >= 0 && t > Sc.pass + BACK) || t > Sc.al + 16)) goBack(Sc, t);
+      if (Sc.back >= 0 && t > Sc.done) { Sc.al = -1; for (const p of Sc.people.concat(Sc.pets)) p.segs = null; }   // (all back at what they were doing)
+    } else if (da > 160 || da < -120) Sc.arm = true;   // (the car far away again: the next time it comes)
+  }
+  // a seat's person up for the car (p.up 0..1: up as it comes, down after it; carA where the car is along the stand)
+  function standUp(Sc, p, carA, dt, fixed) {
+    const st = p.P.seat, dA = st.x * Sc.sgn - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0, f0 = p.up || 0;
+    return (p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6));
+  }
+  // a replay's timeline (the user, 4. 11. 2026: »gledalci naj se premikajo v časovnici nazaj tako kot jaz z avtomobilom«): every scene at t as
+  // the race had it there, the same however the replay got to t: from a reset, the scenes' logic over the recording from a whole RS_GRID s
+  // at least RESIM s before t (the car followed, rp.k, where rp.at has it, RS_DT apart; the same start for nearby times: the same story),
+  // the stands' people up or down as the last 1.2 s left them
+  const RESIM = 45, RS_GRID = 30, RS_DT = 0.1, _ra = { x: 0, z: 0, v: 0 };
+  function resim(W, t, rp, winter) {
+    const T = W.T, t0 = Math.max(rp.t0, Math.floor((t - RESIM) / RS_GRID) * RS_GRID), n = Math.max(0, Math.ceil((t - t0) / RS_DT - 1e-6));
+    for (const Sc of W.scenes) { reset(Sc); for (const p of Sc.people.concat(Sc.pets)) p.po = 0; }
+    W.cs = null; W.hint = -1; let lt = t0;   // (the car's place found afresh: it may be far from where it was)
+    for (let k = 0; k <= n; k++) {
+      const tt = k === n ? t : t0 + k * RS_DT, d = tt - lt; rp.at(tt, _ra);
+      const q = T.query(_ra.x, _ra.z, W.hint, W.q); W.hint = q.i; const cs = q.s;
+      if (W.cs == null) W.v = _ra.v;
+      else if (d > 1e-4) { let ds = cs - W.cs; if (!T.open) ds -= T.len * Math.round(ds / T.len); W.v += (clamp(ds / d, -120, 160) - W.v) * Math.min(1, d * 5); }
+      W.cs = cs; lt = tt;
+      for (const Sc of W.scenes) {
+        if (winter && SUMMER.has(Sc.name)) continue;
+        react(Sc, T, tt, cs, W.v);
+        if (Sc.stand && tt > t - 1.2) for (const p of Sc.people) if (p.P.seat) standUp(Sc, p, -Sc.da, d, false);
+      }
+    }
+    for (const Sc of W.scenes) Sc.ts = t;
+  }
+  function step(W, t, car, cam, rp) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built (dry: no umbrellas)
       WET = false; for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
       W.root.visible = true; smokeStep(W, 0, true); if (W.umb) { W.umb.count = 0; W.umb.visible = false; } W.cs = null; W.lt = 0; return;
     }
     // a special mission (js/missions.js, Missions.run): not a race day (a flood, a fire, a rescue), so none of these out; back when it is over
     const mis = typeof Missions !== 'undefined' && !!Missions.run; W.root.visible = !mis; if (mis) { W.cs = null; return; }
-    const T = W.T, dt = t - W.lt, winter = W.o.seasonKey === 'winter'; W.lt = t;   // (winter: the world under snow, js/render.js seasonWorld)
+    const T = W.T, winter = W.o.seasonKey === 'winter';   // (winter: the world under snow, js/render.js seasonWorld)
+    // a replay (rp, js/game.js replayFrame): the scenes on its timeline. Its start, a jump on it (back, a seek, a frame back) or another car
+    // followed: every scene as the race had it at t (resim); out of a replay, back in the race: every scene as at a new race's start
+    if (rp ? W.rk !== rp.k || t < W.lt - 1e-3 || t > W.lt + 0.5 : W.rk != null) {
+      if (rp) resim(W, t, rp, winter); else { for (const Sc of W.scenes) reset(Sc); W.cs = null; }
+      W.rk = rp ? rp.k : null; W.lt = t;
+    }
+    const dt = t - W.lt; W.lt = t;
     const wet = typeof Render !== 'undefined' && !!Render.raining && !winter;   // (the rain falling, not snow: umbrellas up)
     if (wet !== WET) { WET = wet; for (const Sc of W.scenes) for (const p of Sc.people) p.sig = null; }
     if (dt < -0.5) for (const Sc of W.scenes) reset(Sc);   // (time went back: a new race)
@@ -1379,14 +1424,7 @@
     const cp = cam ? cam.position : null;
     for (const Sc of W.scenes) {
       if (winter && SUMMER.has(Sc.name)) { Sc.grp.visible = false; Sc.on = false; continue; }   // (no picnic blanket or resting cyclists in the snow)
-      let da = Sc.s0 - cs; if (!T.open) da -= T.len * Math.round(da / T.len);
-      Sc.da = da; const eta = W.v > 2 ? da / W.v : 1e9;
-      if (Sc.arm) { if (da > -4 && da < 700 && eta < WARN) alert(Sc, t); }
-      else if (Sc.al >= 0) {
-        if (Sc.pass < 0 && da < -3) Sc.pass = t;
-        if (Sc.back < 0 && ((Sc.pass >= 0 && t > Sc.pass + BACK) || t > Sc.al + 16)) goBack(Sc, t);
-        if (Sc.back >= 0 && t > Sc.done) { Sc.al = -1; for (const p of Sc.people.concat(Sc.pets)) p.segs = null; }   // (all back at what they were doing)
-      } else if (da > 160 || da < -120) Sc.arm = true;   // (the car far away again: the next time it comes)
+      react(Sc, T, t, cs, W.v);
       const dc = cp ? Math.hypot(cp.x - Sc.cx, cp.z - Sc.cz) : 0;
       Sc.grp.visible = dc < W.rShow; Sc.ppl.visible = dc < W.rPpl;
       Sc.on = dc < W.rPose && (!cam || _fr.intersectsSphere(_sp.set(_cv.set(Sc.cx, Sc.cy, Sc.cz), Sc.r)));
@@ -2309,7 +2347,7 @@
         M.setColorAt(0, new THREE.Color(1, 1, 1)); M.instanceColor.noSeason = true; M.count = 0; M.visible = false; M.frustumCulled = false; M.castShadow = false; M.receiveShadow = true; M.name = 'umbrellas'; root.add(M); }
       stats.umbrellas = nu; }
     const t1 = performance.now(); stats.cleared = clearAll(o, circles, A); stats.ms = Math.round(performance.now() - t0); stats.msClear = Math.round(performance.now() - t1);
-    o.dyn.people = (t, car, cam) => step(W, t, car, cam);
+    o.dyn.people = (t, car, cam, rp) => step(W, t, car, cam, rp);
     step(W, 0, null, null);
     o.peopleStats = stats; o.peopleW = W;
     return stats;

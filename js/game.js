@@ -1131,6 +1131,11 @@
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
   }
   // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
+  function rpAt(k, t, out) {   // where car k was at time t (between the recording's frames): x, z and its speed, for the people by the road
+    const F = recd.frames, i = rpIdx(F, t), A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0, o = 1 + k * REC_W;
+    out.x = A[o] + (B[o] - A[o]) * u; out.z = A[o + 2] + (B[o + 2] - A[o + 2]) * u; out.v = Math.abs(A[o + 4] + (B[o + 4] - A[o + 4]) * u);
+    return out;
+  }
   function rpPoseAll(t, i) {
     const P = replay, R = recd, F = R.frames;
     while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
@@ -1156,7 +1161,9 @@
     $('rp-info').textContent = (c.isPlayer ? tr('Ti') : c.name) + ' · ' + fmt(Math.max(0, P.t), true);
     const pc = (C ? Core.clamp(100 * (P.t - C.t0) / Math.max(1e-3, C.t1 - C.t0), 0, 100) : 100 * (P.t - F[0][0]) / Math.max(1e-3, P.t1 - F[0][0])).toFixed(1) + '%';
     $('rp-prog').style.width = pc; $('rp-knob').style.left = pc; $('rp-now').textContent = rpClock(P.t); $('rp-len').textContent = rpClock(P.t1);
-    Render.frame(dt, 1, c, P.cam, { noFx: true });
+    const W = P.rpw || (P.rpw = { t: 0, k: 0, t0: F[0][0], at: (t, o) => rpAt(P.rpw.k, t, o) });   // (the spectators on the timeline: js/world-ljudje.js resim)
+    W.t = P.t; W.k = P.k;
+    Render.frame(dt, 1, c, P.cam, { noFx: true, rp: W });
     if (hlRec) { hlvDraw(dt); if (C && P.t >= C.t1 && ++hlRec.tail >= HLV_TAIL) hlvStop(); }   // (the video ends with the moment's last picture, held a few frames: the encoder's last ones are lost at its stop)
   }
 
