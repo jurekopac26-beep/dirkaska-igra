@@ -36,7 +36,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 13 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 14 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 15 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
-| 16 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9EJeUwxQ2cr5vyMUg2) |
+| 16 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
