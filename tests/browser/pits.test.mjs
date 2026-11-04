@@ -50,7 +50,11 @@ try {
         const lock = P.inPit && !P.pitDone && P.pitState !== 'stop' && P.pitState !== 'repair', d0 = P.dmg;   // (in the lane on the way to the box: the wheel held at full left lock, no gas: the autopilot drives, gas and all)
         // the brake once in the lane, >70 m before the box: 1.2 s of full brake (the autopilot's throttle off, never into reverse)
         if (!window.__brk && g.pitAuto.st === 'lane' && !P.pitState && Tk.boxX(P.q.s, Tk.def.pit[3]) < -70) { const B = window.__brk = { min: 99, vl: 9, rev: false, thr: false }; for (let j = 0; j < 144; j++) { g.sim(1 / 120, false, -1, 0, 1); B.min = Math.min(B.min, P.speed); B.vl = Math.min(B.vl, P.vl); if (P.gear === -1) B.rev = true; if (P.inThr > 0) B.thr = true; } }
-        if (lock) one(0.05, -1); else if (g.pitAuto.st || (P.inPit && window.__hbT == null)) for (let j = 0; j < 6; j++) one(1 / 120, -1); else { g.sim(0.05, true); bar(null, null); if (window.__hbT != null && P.inPit) window.__hbT += 0.05; }
+        // (on the circuit the autopilot drives; stuck or the wrong way round it is put back on the road, like a player tapping Na progo: it
+        // has no reverse gear and the race rescues only the rivals. Trki med avti, Simulacija: a knock can leave the player's car against the
+        // barrier; in CI the player once never reached the second lap, and so its stop, in the whole race)
+        if (lock) one(0.05, -1); else if (g.pitAuto.st || (P.inPit && window.__hbT == null)) for (let j = 0; j < 6; j++) one(1 / 120, -1); else { g.sim(0.05, true); bar(null, null); if (window.__hbT != null && P.inPit) window.__hbT += 0.05;
+          if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); }
         Render.frame(0.05, 1, P, g.S.camera, {}); const c = Render.crew; st.push([P.pitState, c && c.mode, c ? c.lift : 0]);
         if (lock) { o.lock++; const p = Tk.pitAt(P.q.s); if (p && !p.gap && Tk.boxX(P.q.s, Tk.def.pit[3]) < -Core.BAY.inL - 10) o.dev = Math.max(o.dev, Math.abs(P.q.d * p.sd - p.o)); }   // (before the S onto the apron: in the middle of the lane)
         if (P.inPit) { if (P.pitG) o.ghost++; if (P.pitState !== 'repair') o.dmg += Math.max(0, P.dmg - d0); }
