@@ -29,18 +29,18 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 3 | #226 | Bâlea | 3 | čaka (rabi svež `main` in nov krog testov) |
 | 4 | #259 | tribune iz OSM | 3 | čaka (osnutek) |
 | 5 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu (osnutek) |
-| 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 7 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 8 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 9 | #291 | klikljiva vprašanja (samo dokumenti) | 2 | pripravljen (koordinacija računa 2, session_01Ck3D3TdgbJaDJhTPBLsW1F); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 10 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 11 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame račun 3, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 7 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 8 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 9 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 10 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 11 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani); #246 preleti (račun 3; odločitev uporabnika 4. 11.: počaka, dokler ne bo znano, katere proge gredo v igro; takrat ga nadaljuje nova seja po opisu pull requesta; ostane označen, ker bi dogodek na njem zbudil staro veliko sejo, nanj pa nihče ne potiska).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: #298 most na novi mapi, #293 rezultati testiranja, #261 Hakone, #153 Medvode, #297 Garaža, sklopi 6–8. Tema: redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #295 meni, sklop 6, #202 fizika, #296 rdeča zastava.
+- Račun 2: #202 fizika, #296 rdeča zastava.
 
 Vsi so osnutki (4. 11. 2026, pravilo »Osnutek do vrste«). Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj in ostane osnutek, dokler ne pride med prva dva.
