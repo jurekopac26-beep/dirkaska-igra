@@ -33,8 +33,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #300 | AI po tvoji liniji, korak 1: orodje za meritev vožnje iz posnetkov | 1 | čaka |
-| 10 | #305 | AI po tvoji liniji, korak 2: poskus na Tianmnu (vklop `?voznja=1`; vsebuje #300, gre za njim) | 1 | osnutek, povezani testi lokalno zeleni; čaka odziv uporabnika na poskus |
+| 9 | #305 (vsebuje #300, ki je zaprt) | AI po tvoji liniji, koraka 1 in 2: orodje za meritev vožnje iz posnetkov in tekmeci po njej (poskus na Tianmnu, vklop `?voznja=1`); en krog testov | 1 | čaka; povezani testi lokalno zeleni, uporabnik je poskus preizkusil |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 

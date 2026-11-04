@@ -4,7 +4,7 @@
 
 ## Koraki
 
-1. **Orodje** `tools/voznja.mjs` (narejeno, pull request #300): iz uporabnikovih posnetkov dirk (`.rrp`) za vsako progo in vreme izmeri povprečno linijo, hitrost in zaviranje. Test `tests/voznja.test.js`.
+1. **Orodje** `tools/voznja.mjs` (narejeno v #300, ki gre na `main` skupaj s korakom 2 v #305): iz uporabnikovih posnetkov dirk (`.rrp`) za vsako progo in vreme izmeri povprečno linijo, hitrost in zaviranje. Test `tests/voznja.test.js`.
 2. **AI v `js/core.js`** vozi po profilu (`Race._voznja`, `aiDrive`), vsak tekmovalec po svoji težavnosti: poskus na eni progi (Tianmen, veja `ai-linija/korak-2`, vklop `index.html?voznja=1`; razdelek »Korak 2« spodaj).
 3. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga (začetek v `tests/voznja.test.js`: podatki za igro in dirka na njih).
 
@@ -71,4 +71,4 @@
 ## Stanje
 
 - 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
-- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek #305 z oznako »predogled«, predogled `beta/305/?voznja=1`); čaka odziv uporabnika.
+- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek #305 z oznako »predogled«, predogled `beta/305/?voznja=1`). Uporabnik je poskus preizkusil: »sem stestiral, mnogo bolje bravo!« #300 je zaprt, njegova vsebina gre na `main` v #305 (en krog testov). Vprašanje `ai-linija-privzeto` na strani Odločitve: ali tekmeci po njegovi vožnji veljajo za vse brez stikala.
