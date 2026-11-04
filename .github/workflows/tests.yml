@@ -12,10 +12,12 @@ on:
 permissions:
   contents: read
 
-# nov zagon na isti veji prekine starega (ki bi preverjal staro stanje)
+# Pull request: nov zagon na isti veji prekine starega (ki bi preverjal staro stanje).
+# main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026);
+# prej je vsaka združitev prekinila krog na main, zato se noben ni končal in varovalka po združitvi ni delovala.
 concurrency:
   group: testi-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   node:
