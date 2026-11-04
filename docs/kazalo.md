@@ -15,7 +15,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 - **Orodje za napake:** `js/napake.js`, `css/napake.css` (»Orodje za napake«, imena v poročilih: »Imena v poročilih o napakah«); posnetek `.rrp`: `tools/posnetek.mjs`.
 - **Testi:** `tests/run.js` (`npm run test:related`), »Testi po temah«, opisi v `tests/README.md`, reference `tests/golden/`.
 - **Orodja:** `tools/stamp.js` (žigi), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`.
-- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
+- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/table-pred-ograjo.md` (table pred ograjo na pravih progah), `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
 
 ## Datoteke
 
