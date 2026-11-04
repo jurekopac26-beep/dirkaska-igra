@@ -26,6 +26,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 0 | #288 | hitri popravek `main`: nestabilni testi po #262 (flags, napake-zastavice, hlvid, lang, pits) | 2 | na vrsti (zelen 4. 11.) |
 | 1 | #241 | Mount Buller | 3 | na vrsti |
 | 2 | #248 | kovanci, denarnica, sledi gum | 3 | pripravljen |
 | 3 | #250 | 7 novosti | 3 | čaka |
@@ -41,6 +42,6 @@ Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orod
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: #261 Hakone, #153 Medvode, #294 krog testov na `main` se izteče. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #288 testi zastavic, #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
+- Račun 2: #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
