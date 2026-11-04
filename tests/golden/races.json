@@ -1907,7 +1907,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "63a50bf38bb4cc6d4f4b6f36"
+  "digest": "38e90d0137e2cd410d1d960f"
  },
  "medvode/cs/rain": {
   "finished": 13,
@@ -1917,7 +1917,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "0d67f6cb75320652a785fba0"
+  "digest": "9f76ba5741f8407b8d6e84bd"
  },
  "medvode/cs/formula": {
   "finished": 13,
@@ -1947,7 +1947,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "ee9535700f02e5c0dcec970a"
+  "digest": "e8b6c9b70fc844f8da4f2ebe"
  },
  "montreal/cs": {
   "finished": 13,

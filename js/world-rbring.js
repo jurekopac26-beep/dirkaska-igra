@@ -1954,11 +1954,7 @@
           for (let k = 0; k < rows; k++) { const a0 = A.pts[1 + k * 2], a1 = A.pts[2 + k * 2], b0 = B.pts[1 + k * 2], b1 = B.pts[2 + k * 2], v = (k * 0.11) % 1, u0 = (m * 5) / 12;
             cg.quadUp([a0[0], a0[1] + 0.02, a0[2]], [a1[0], a1[1] + 0.02, a1[2]], [b1[0], b1[1] + 0.02, b1[2]], [b0[0], b0[1] + 0.02, b0[2]], [W1, W1, W1, W1], [[u0, v], [u0, v + 0.1], [u0 + len / 12, v + 0.1], [u0 + len / 12, v]]); }
         }
-        for (let m = 3; m + 3 < rows2.length; m += 3) {   // stairs between the blocks: a strip of bare concrete up the tiers every 15 m
-          const A = rows2[m], g = scen.get(A.pts[1][0], A.pts[1][2]);
-          for (let k = 0; k < rows; k++) { const [o0, y] = A.prof[1 + k * 2], o1 = A.prof[2 + k * 2][0], P = (ds2, o) => { const [x, z] = atSf(A.s + ds2, side * o); return [x, y + 0.045, z]; };
-            g.quadUp(P(-0.6, o0), P(0.6, o0), P(0.6, o1), P(-0.6, o1), [[0.76, 0.76, 0.74], [0.76, 0.76, 0.74], [0.8, 0.8, 0.78], [0.8, 0.8, 0.78]]); }
-        }
+        // (the stairs between the blocks: the aisles of the stands' seats, World.people's standBuild)
         const underWing = (r) => def.wing && side === def.wing[1] && Math.abs(dS(r.s) - def.wing[0]) < 45.5;   // (Start-Ziel: the wing is the roof there)
         if (roof) for (let m = 0; m + 1 < rows2.length; m++) {   // the roof: a slab over the upper half, tilted up towards the track, columns at the back
           const A = rows2[m], B = rows2[m + 1], tA = A.top, tB = B.top, a0 = A.o0, a1 = A.o1, b0 = B.o0, b1 = B.o1;
@@ -2031,10 +2027,11 @@
             board(q[0], q[1], q[2], wsd * T.nx[i], wsd * T.nz[i], 20, 2.4, k); }
           for (let d = S0 + 10; d < S1 - 5; d += 20) { const q = WQ(d, 42, 0); exclPush(q[0], q[2], 14); CR.exclAdd(q[0], q[2], 12); }
         }
-        // the name on the main plane, as on a racing car's rear wing: two panels, the text read from the high cameras behind the stand
+        // the name on the main plane, as on a racing car's rear wing: two panels, the text read from the track's side (the high cameras behind
+        // the stand are gone: the chase camera's, the replay's and the photos' views)
         const gt = new GB(true), [u0, v0, u1, v1] = AUV(AT.rbr), yo = (o) => { let k = 0; while (k + 2 < up.length && up[k + 1][0] < o) k++; const [a, b] = [up[k], up[k + 1]]; return a[1] + (b[1] - a[1]) * (o - a[0]) / (b[0] - a[0]) + 0.15; };   // (just above the cambered plane)
-        for (const dc of [wd - 22, wd + 22]) { const dl = dc - 14, dh = dc + 14, oL = 28.0, oH = 35.0;   // (the text's right: against the traffic, its top: towards the track)
-          gt.quadO(WQ(dh, oH, yo(oH)), WQ(dl, oH, yo(oH)), WQ(dl, oL, yo(oL)), WQ(dh, oL, yo(oL)), W1, WQ(dc, 31.5, yo(31.5) - 20), [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+        for (const dc of [wd - 22, wd + 22]) { const dl = dc - 14, dh = dc + 14, oL = 28.0, oH = 35.0;   // (the text's right: with the traffic, its top: away from the track)
+          gt.quadO(WQ(dh, oH, yo(oH)), WQ(dl, oH, yo(oH)), WQ(dl, oL, yo(oL)), WQ(dh, oL, yo(oL)), W1, WQ(dc, 31.5, yo(31.5) - 20), [[u1, v1], [u0, v1], [u0, v0], [u1, v0]]); }
         const fl = [];
         for (const [geo, mt] of [[g, new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true })], [gt, new THREE.MeshLambertMaterial({ map: atlas, transparent: true })]]) {
           const m = new THREE.Mesh(geo.geometry(), mt); m.castShadow = geo === g; m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); fl.push({ mesh: m, mat: mt }); }
