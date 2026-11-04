@@ -70,6 +70,9 @@ const FIT = () => { const r = (e) => e.getBoundingClientRect(), pn = document.qu
 const sizes = [[390, 844], [360, 640], [412, 915], [640, 360], [844, 390]];
 // a new size, and the page's own answer to it (the resize event and the layout's observers run with the next frames)
 const resize = async (page, w, h) => { await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(150); await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))); };
+// measured once the game's fonts are there (css/fonts.css, loaded as the pause first shows them: on a slow machine the fallback's wider
+// words were measured before, a lap's cell and the buttons too wide), and the frames after them
+const fitOf = async (p) => { await p.evaluate(() => document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))); return p.evaluate(FIT); };
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', weather: 'change', length: 'long', fuel: 1 }, { width: 390, height: 844 });
   await startTrack(page, 'bathurst');
@@ -104,7 +107,7 @@ try {
   // the layouts with a few laps left
   for (const [w, h] of sizes) {
     await resize(page, w, h);
-    const a = await page.evaluate(FIT);
+    const a = await fitOf(page);
     T.check(`it fits ${w} × ${h} (2 laps left): the panel on the screen, the row, the box and every button in it (40 px tall at least), nothing cut off or wider than its place${w > h ? '; the row left over the buttons, the box right' : ''}`, !a.bad.length && a.n === 2 && !a.long, JSON.stringify(a));
   }
   await resize(page, 390, 844);
@@ -127,7 +130,7 @@ try {
     JSON.stringify({ n: an.n, list: an.list.slice(0, 6), textMoves: an.textMoves }));
   for (const [w, h] of sizes) {
     await resize(page, w, h);
-    const a = await page.evaluate(FIT), more = await page.evaluate(() => { const m = document.querySelector('#pause-wx .pw-more'); return getComputedStyle(m).display !== 'none' ? m.textContent : ''; });
+    const a = await fitOf(page), more = await page.evaluate(() => { const m = document.querySelector('#pause-wx .pw-more'); return getComputedStyle(m).display !== 'none' ? m.textContent : ''; });
     T.check(`it fits ${w} × ${h} (18 laps left): it swipes sideways (about ${w > h ? 8 : 6} across, the next one cut at the edge), »Povleci za vseh 18 krogov →« under it, every lap there to the last, nothing cut off or wider than its place`,
       !a.bad.length && a.n === 18 && a.long && a.sw > a.cw + 20 && a.cut && a.seen && a.vis >= (w > h ? 5 : 5) && a.vis <= (w > h ? 9 : 7) && a.cellW >= 48 && more === 'Povleci za vseh 18 krogov →', JSON.stringify(Object.assign(a, { more })));
   }
@@ -158,13 +161,13 @@ try {
   for (const [wx, kind] of [['dry', 'sun'], ['rain', 'rain']]) {
     const { page: p3, errors: e3 } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', weather: wx, length: 'long' }, { width: 390, height: 844 });
     await startTrack(p3, 'bathurst'); await p3.evaluate(ON, [0.6, false]); await p3.evaluate(PAUSE);
-    const s4 = await p3.evaluate(STATE), f4 = await p3.evaluate(FIT), w4 = want(s4), ks = new Set(s4.cells.map(c => c.k));
+    const s4 = await p3.evaluate(STATE), f4 = await fitOf(p3), w4 = want(s4), ks = new Set(s4.cells.map(c => c.k));
     T.check(`a steady weather (${wx} all the race): the row is there, an icon for every lap after the one under way (Krog ${w4.cur + 1} … Krog ${s4.laps}), all alike (${kind}), no P and no words under it, the stops under it, it fits`,
       !s4.f && s4.shown && s4.cells.length === s4.laps - w4.cur && s4.cells.length >= 2 && s4.cells.every((c, i) => c.lbl === `Krog ${w4.laps[i][0]}` && c.k === w4.laps[i][1] && c.svg && !c.p) && ks.size === 1 && (kind === 'sun' ? ks.has('sun') : ks.has('rain') || ks.has('heavy')) && !s4.tip && s4.box.shown && !f4.bad.length,
       JSON.stringify({ cells: s4.cells.map(c => c.lbl + ':' + c.k).join(' '), rain: s4.rain, tip: s4.tip, shown: s4.shown, box: s4.box, fit: f4 }));
     // a long race: the same swipe as in a changing weather (the next icon cut at the edge, the line under the row, the last lap reachable)
     await p3.evaluate(() => { window.__game.race.laps = 20; }); await p3.evaluate(PAUSE); await p3.waitForTimeout(150);
-    const s5 = await p3.evaluate(STATE), f5 = await p3.evaluate(FIT), w5 = want(s5), k5 = new Set(s5.cells.map(c => c.k));
+    const s5 = await p3.evaluate(STATE), f5 = await fitOf(p3), w5 = want(s5), k5 = new Set(s5.cells.map(c => c.k));
     T.check(`a steady weather (${wx}), 20 laps: an icon for every lap to the finish, all alike, the row swipes (the line under it says so), it fits`,
       s5.cells.length === 20 - w5.cur && s5.cells.every((c, i) => c.lbl === `Krog ${w5.laps[i][0]}`) && k5.size === 1 && s5.long && s5.more.includes(String(s5.cells.length)) && !f5.bad.length,
       JSON.stringify({ n: s5.cells.length, long: s5.long, more: s5.more, kinds: [...k5], fit: f5 }));
