@@ -47,6 +47,11 @@
     'AIR FILTER': ['filter_zraka', 'Air filter'], 'ECU CHIP': ['cip', 'Chip'], TURBO: ['turbo', 'Turbo'], 'LIGHT BATTERY': ['akumulator', 'Light battery'], SPRINGS: ['vzmeti', 'Springs'],
     DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], 'FUEL CAP': ['zamasek', 'Anodised red'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
     DUCKTAIL: ['krilo', 'Ducktail'], 'SHORT WING': ['krilo', 'Short wing'], 'LOW WING': ['krilo', 'Low wing'], 'GT WING': ['krilo', 'GT wing'], 'DOUBLE WING': ['krilo', 'Double wing'] };
+  // (the cabinet's drawers, sklop 6d: each element's four parts in it (the options' English names), as Garage3D's DRW lays them out: the
+  // concept's mn/predali_pred_po with the user's four to a drawer (the chrome indicators, the bolt, the sport discs))
+  const DRAWER = { zarometi: ['LED', 'Yellow', 'Smoked', 'Bi-LED'], luc_pod_avtom: ['Blue', 'Turquoise', 'Purple', 'Red'], zadnje_luci: ['Smoked', 'Clear', 'Round', 'LED strip'],
+    zmigavci: ['Clear', 'Smoked', 'Sequential', 'Chrome'], maska: ['Honeycomb', 'Mesh', 'Chrome', 'Carbon'], celjusti: ['Red', 'Yellow', 'Gold', 'Body colour'],
+    nalepke: ['Flames', 'Chequers', 'Star', 'Big bolt'], zavore: ['Sport pads', 'Sport discs', 'Racing discs', 'Ceramic'] };
   // (a regal's part the shop sells: every plate's element in the game's list of parts (in the horn's place the fuel cap: the game has no
   // horn, docs/deli.md, the user's choice 2. 11. 2026))
   const sold = (n) => !!(REGAL[n] && EL[REGAL[n][0]]);
@@ -195,6 +200,34 @@
       '<svg viewBox="0 0 44 44"><path d="M5 30v-6l5-2 5-7h15l7 7 3 2v6z" fill="#7b8594"/><path d="M33 6l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#ffd23f"/></svg>',
       '<svg viewBox="0 0 44 44"><path d="M8 18h21l6-6h3v6l-7 7v8H8z" fill="#4a5160"/><path d="M13 18v-5h9v5" fill="none" stroke="#4a5160" stroke-width="3"/><path d="M22 33c3-4 5-6 5-8a5 5 0 0 0-10 0c0 2 2 4 5 8z" fill="#d9a520"/></svg>',
       '<svg viewBox="0 0 44 44"><path d="M29 6a9 9 0 0 0-8 12L7 32v5h5l14-14a9 9 0 0 0 12-8l-5 2-4-4 2-5z" fill="#2f9e5b"/></svg>'][i],
+    // (the cabinet's drawers: hex the car's colour, for its body-coloured ones)
+    zarometi: (t, j) => { const c = [['#fff1c4', '#f4f6fa', '#f4f6fa', '#fff1c4'], ['#e8f2ff', '#ffd23f', '#5a6170', '#e8f2ff'], ['#cfe3ff', '#6d7686', '#cfe3ff', '#e8f2ff'], ['#bfe0ff', '#6d7686', '#9fd0ff', '#9fd0ff']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="3" y="12" width="38" height="20" rx="6" fill="' + (t === 0 && j === 2 ? '#0e0f12' : '#2b2e35') + '"/>' + [15, 29].map(x => '<circle cx="' + x + '" cy="22" r="6" fill="' + c + '"/>' +
+        (t >= 2 ? '<circle cx="' + x + '" cy="22" r="8" fill="none" stroke="#7fc4ff" stroke-width="1.6"/>' : '')).join('') + (t === 1 && j === 3 ? '<path d="M8 29h28" stroke="#e8f2ff" stroke-width="2"/>' : '') + '</svg>'; },
+    zadnje_luci: (t, j) => { const c = [['#d8261d', '#5a1418', '#e8ebf0', '#d8261d'], ['#d8261d', '#5a1418', '#ff4a3a', '#d8261d'], ['#c41f1a', '#5a1418', '#ff4a3a', '#c41f1a'], ['#ff3a30', '#6a1a1e', '#ff4a3a', '#ff3a30']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="3" y="13" width="38" height="18" rx="4" fill="#1d1f24"/>' + (t === 0 && j === 3 ? '<circle cx="15" cy="22" r="6" fill="' + c + '"/><circle cx="29" cy="22" r="6" fill="' + c + '"/>' : '<rect x="6" y="16" width="32" height="12" rx="2.5" fill="' + c + '"/>') +
+        (j === 3 && t ? '<rect x="7" y="20.5" width="30" height="3" rx="1.5" fill="#ffb3ad"/>' : '') + (t === 0 && j === 2 ? [14, 22, 30].map(x => '<circle cx="' + x + '" cy="22" r="2.5" fill="#d8261d"/>').join('') : '') + '</svg>'; },
+    luc_pod_avtom: (t, j) => '<svg viewBox="0 0 44 44">' + (t === 0 ? '<ellipse cx="22" cy="33" rx="19" ry="4.5" fill="' + ['#47a3ff', '#2fe0d0', '#a35bff', '#ff4a3a'][j] + '"/>' : ['#ff4a3a', '#2fbf5a', '#47a3ff'].map((c, k) => '<ellipse cx="' + (10 + k * 12) + '" cy="33" rx="7.5" ry="4" fill="' + c + '"/>').join('')) +
+      '<path d="M3 28v-5l5-1 5-7h15l7 6 6 2v5z" fill="#4a5160"/><circle cx="12" cy="29" r="4" fill="#1d1f24"/><circle cx="32" cy="29" r="4" fill="#1d1f24"/></svg>',
+    zmigavci: (t, j) => { const chrome = j === 3 && t < 2, lens = [['#ffb02e', '#e8ebf0', '#5a6170', '#ffb02e'], ['#e8ebf0', '#5a6170', '#ffb02e', '#ffb02e'], ['#ffb02e', '#5a6170', '#ffb02e', '#ffb02e'], ['#ffb02e', '#ffb02e', '#ffb02e', '#ffb02e']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="4" y="14" width="36" height="16" rx="4" fill="' + (chrome ? '#c8ced8' : '#1d1f24') + '"/><rect x="7" y="17" width="30" height="10" rx="2" fill="' + lens + '"/>' +
+        (t >= 2 ? [0, 1, 2].map(k => '<path d="M' + (13 + k * 7) + ' 18.5l3.5 3.5-3.5 3.5" fill="none" stroke="#fff3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>').join('') : '<circle cx="22" cy="22" r="3" fill="#ff8a1a"/>') + '</svg>'; },
+    maska: (t, j, hex) => { const fr = t === 1 ? (j === 3 ? CSS(hex || 0x3b78d8) : '#c8ced8') : t === 3 && (j === 1 || j === 3) ? '#47a3ff' : '#2b2e35', grid = t >= 2 && !(t === 2 && j === 2);
+      const pat = grid ? Array.from({ length: 16 }, (_, k) => '<rect x="' + (9 + (k % 4) * 6.5) + '" y="' + (15 + (k >> 2) * 3.6) + '" width="6.5" height="3.6" fill="' + ((k + (k >> 2)) & 1 ? '#3a3f48' : '#16181c') + '"/>').join('') :
+        t === 0 && j === 1 ? Array.from({ length: 10 }, (_, k) => '<circle cx="' + (12 + (k % 5) * 5 + (k >= 5 ? 2.5 : 0)) + '" cy="' + (k >= 5 ? 25 : 19.5) + '" r="2" fill="#4a5160"/>').join('') :
+        t === 1 && j === 1 ? '<path d="M10 18h24M10 22h24M10 26h24" stroke="#eef1f5" stroke-width="2.2"/>' : '<path d="M9 15l7 14M16 15l7 14M23 15l7 14M30 15l5 10M9 29l7-14M16 29l7-14M23 29l7-14M30 29l5-10" stroke="#6d7686" stroke-width="1.2"/>';
+      return '<svg viewBox="0 0 44 44"><rect x="5" y="11" width="34" height="22" rx="5" fill="' + fr + '"/><rect x="8.5" y="14.5" width="27" height="15" rx="2" fill="#16181c"/>' + pat + '</svg>'; },
+    nalepke: (t, j) => { const k = [['star', 'bolt', 'cheq', 'flame'], ['star', 'flame', 'cheq', 'bolt'], ['flame', 'cheq', 'stripe', 'band'], ['stripe', 'camo', 'band', 'custom']][t][j], sm = t === 0;
+      const M = { star: '<path d="M22 8l4.1 8.6 9.4 1-7 6.4 2 9.3-8.5-4.8-8.5 4.8 2-9.3-7-6.4 9.4-1z" fill="#ffc21a"/>', bolt: '<path d="M26 6L12 25h8.5l-3.5 13 15.5-20H24z" fill="#ffc21a"/>',
+        cheq: Array.from({ length: 12 }, (_, q) => ((q % 4) + (q >> 2)) & 1 ? '<rect x="' + (10 + (q % 4) * 6) + '" y="' + (13 + (q >> 2) * 6) + '" width="6" height="6" fill="#1d1f24"/>' : '').join(''),
+        flame: '<path d="M8 33c3-3 5-7 5-12 3 2 4 5 4 8 2-4 2-9 1-14 5 3 8 9 8 15 2-2 3-5 3-8 3 3 6 7 7 11z" fill="#ff5a1a"/><path d="M14 33c1-2 2-4 2-6 2 2 3 4 3 6 1-2 2-5 2-8 3 2 4 6 4 8z" fill="#ffd23f"/>',
+        stripe: '<path d="M17 6v32M27 6v32" stroke="#d8261d" stroke-width="5"/>', band: '<path d="M6 30l32-16M6 36l32-16" stroke="#ff8a1a" stroke-width="4"/><path d="M6 24l32-16" stroke="#ffc21a" stroke-width="4"/>',
+        camo: '<path d="M8 12c6-3 10 2 15 0s9 2 12 6c-4 3-9 0-13 3s-10 3-14-1z" fill="#5d6b3a"/><path d="M10 30c4-4 9-1 13-3s8 1 11 4c-5 3-9 1-13 2s-8 0-11-3z" fill="#3e4a26"/>',
+        custom: ['#d8261d', '#ffc21a', '#2fbf5a', '#47a3ff'].map((c, q) => '<circle cx="' + (15 + (q & 1) * 14) + '" cy="' + (15 + (q >> 1) * 14) + '" r="5.5" fill="' + c + '"/>').join('') }[k];
+      return '<svg viewBox="0 0 44 44"><rect x="6" y="6" width="32" height="32" rx="3" fill="#eef0f3"/>' + (sm ? '<g transform="translate(6.6 6.6) scale(.7)">' + M + '</g>' : M) + '</svg>'; },
+    celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
+      return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
+        (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
   };
 
   /* ---------------- the cabinet's three cars: YOUR CAR the player's (the one on the table when it is theirs, else the last that was),
@@ -292,16 +325,20 @@
      the same (the service: its four as the tiles, no tabs; the paint: the colour of the circle tapped, its four kinds of work) ---------------- */
   let menu = null;   // { el, tab, sel: [t, j], key: the tapped thing, color (the paint's) }
   const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return num(Math.min(...o)) + '–' + eur(Math.max(...o)); };   // (850–1.400 🪙 / 850–1,400 🪙)
-  // (the things on the screen of an element's menu: the regal's parts with its options, the maquettes for the aero kit, the circles)
-  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
-  function keyOfOpt(el, t, j) {
-    for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; } return null; }
+  // (the things on the screen of an element's menu: the regal's parts with its options, its drawer, the circles)
+  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (it.kind === 'drw' && it.el === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
+  // (an option's thing: its part on the regal, else its drawer (from: the menu's tapped thing, kept when it holds the option too))
+  const inDrawer = (el, t, j) => !!DRAWER[el] && DRAWER[el].some(n => { const o = findOpt(el, n); return !!o && o[0] === t && o[1] === j; });
+  function keyOfOpt(el, t, j, from) {
+    if (from && from.startsWith('drw:') && inDrawer(el, t, j)) return from;
+    for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; }
+    return inDrawer(el, t, j) ? 'drw:' + el : null; }
   function openMenu(m) {
     const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : S.rent === S.car ? tr('Najet avto vozi tak, kot je.') : tr('Najprej kupi avto.'), true); return; }
     menu = m; if (!menu.sel) menu.sel = has(c, m.el) && m.el !== 'barva' ? has(c, m.el).slice() : m.el === 'servis' ? [0, 3] : [0, 0]; if (menu.tab == null) menu.tab = menu.sel[0];
     $('g-low').classList.add('hide'); drawMenu(); requestAnimationFrame(() => { if (menu) $('g-menu').classList.add('on'); });
   }
-  function closeMenu() { if (!menu) return; menu = null; $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); }
+  function closeMenu() { if (!menu) return; menu = null; $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -323,7 +360,7 @@
       html += '<div class="g-mh"><h3>' + esc(L2(E.n)) + '</h3>' + (col ? '<span>' + esc(tr(col[1])) + '</span>' : '') + '</div><div class="g-mg">' + E.c[t][1].map((o, j) => {
         const fit = el === 'barva' ? (c.parts.barva ? c.parts.barva[0] === t && c.parts.barva[1] === j : false) && m.color === c.color : !!has(c, el) && has(c, el)[0] === t && has(c, el)[1] === j;
         const lock = el === 'aero' && t >= 2 && raceLocked(c), pr = price(el, t, j), promo = pr !== o[1], mine = !fit && haveIt(c, el, [t, j]);
-        return '<button class="g-tl' + (m.sel[0] === t && m.sel[1] === j ? ' sel' : '') + (fit ? ' fit' : '') + (lock ? ' lock' : '') + '" data-tile="' + t + ',' + j + '"><span class="pi">' + ICON[el](t, j, col && col[0]) + '</span><div><b>' + esc(L2(o[0])) + '</b><small>' + esc(lock ? tr('🔒 najprej športni paket') : L2(o[2])) + '</small><i>' +
+        return '<button class="g-tl' + (m.sel[0] === t && m.sel[1] === j ? ' sel' : '') + (fit ? ' fit' : '') + (lock ? ' lock' : '') + '" data-tile="' + t + ',' + j + '"><span class="pi">' + ICON[el](t, j, col ? col[0] : COLORS[c.color] && COLORS[c.color][0]) + '</span><div><b>' + esc(L2(o[0])) + '</b><small>' + esc(lock ? tr('🔒 najprej športni paket') : L2(o[2])) + '</small><i>' +
           (mine ? '<em class="own">' + esc(tr('tvoj')) + '</em>' : promo ? '<s>' + eur(o[1]) + '</s><em>' + eur(pr) + '</em>' : eur(pr)) + '</i></div></button>'; }).join('') + '</div>';
       const [st, sj] = m.sel, fitSel = el === 'barva' ? !!c.parts.barva && c.parts.barva[0] === st && c.parts.barva[1] === sj && m.color === c.color : !!has(c, el) && has(c, el)[0] === st && has(c, el)[1] === sj;
       const lockSel = el === 'aero' && st >= 2 && raceLocked(c), mineSel = haveIt(c, el, [st, sj]);
@@ -334,11 +371,15 @@
     html += '<div class="g-mb"><button class="back" data-mact="close">‹ ' + esc(tr('NAZAJ')) + '</button><button class="buy' + (ok ? ' ok' : '') + '" data-mact="buy"' + (can ? '' : ' disabled') + '>' + esc(buy) + (note ? '<small>' + esc(note) + '</small>' : '') + '</button></div>';
     box.innerHTML = html; void en;
     // the marks: the thing of the chosen tile blue (else the one tapped), the others of this menu orange; the new part seen on the car
-    const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1])) || m.key;
+    const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1], m.key)) || m.key;
     G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
+    G.drawer(kb && kb.startsWith('drw:') ? el : null);   // (the chosen part's drawer out)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
-    // the menu at the bottom when at the top it would cover what was tapped
-    box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330; box.classList.toggle('bot', !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
+    // the menu at the bottom when at the top it would cover what was tapped; a drawer: the menu stays at the top, the picture lowered
+    // till the drawer is under it (when it fits on the screen; measured as the picture stands without it)
+    box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330, dw = !!kb && kb.startsWith('drw:') && G.drawerBox(kb.slice(4));
+    let drop = 0; if (dw) { const need = Math.ceil(top + h + 8 - dw.y); if (need > 0 && dw.y + dw.h + need <= $('g-stage').clientHeight - 4) drop = need; }
+    G.drop(drop); box.classList.toggle('bot', !dw && !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
   }
   function tile(t, j) { if (!menu) return; menu.sel = [t, j]; drawMenu(); }
   // buying the chosen option: paid, fitted, the menu closed; the car's upgrade played when one of its four levels changes, else a word
@@ -420,7 +461,8 @@
     S.rent = id; save(); render(); G.sfx('ping');
     chip(tr('NAJET ZA ENO DIRKO'), esc(M().name));
   }
-  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a maquette (its car onto the table), the SERVICE button,
+  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a drawer of the cabinet (its element's menu, it comes
+  // out), a maquette (its car onto the table), the SERVICE button,
   // a colour circle (the paint in that colour), the lift's plate (the car up or down), the car (its wheels: the tyres; its body: the
   // aero kits); elsewhere: the menu closed
   function onTap(x, y) {
@@ -430,6 +472,7 @@
     let m = null;
     if (h.kind === 'mq') { const id = cabinet()[h.i]; closeMenu(); if (id) pickCar(id); return; }   // (a maquette: its car onto the table)
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
+    else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
     else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
@@ -459,10 +502,11 @@
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
 
   /* ---------------- the guide on the first visit: what can be tapped, one thing at a time ---------------- */
-  const GUIDE_AT = ['rgl:TURBO', 'mq0,mq1,mq2', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: things in the picture (one ring round them), or the page's elements, each its own ring)
+  const GUIDE_AT = ['rgl:TURBO', 'mq0,mq1,mq2', 'drw:zarometi,drw:zavore', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: things in the picture (one ring round them), or the page's elements, each its own ring)
   const GUIDE = [
     ['Deli na regalu', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.'],
     ['Avti na omarici', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.'],
+    ['Predali', 'V predalih omarice so luči, maske, nalepke, čeljusti in zavore. Tapni predal in izvleče se.'],
     ['Servis', 'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.'],
     ['Barva', 'Tapni barvni krog: avto prebarvamo v stekleni komori.'],
     ['Drugi avti', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.'],
@@ -554,7 +598,7 @@
     G.show(spec(S.car));
     setLang();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

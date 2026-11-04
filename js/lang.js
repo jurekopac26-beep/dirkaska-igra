@@ -492,6 +492,7 @@
     'KUPI IN NAMESTI · {0}': 'BUY AND FIT · {0}', 'premalo denarja · imaš {0}': 'not enough money · you have {0}', 'SERIJSKO': 'STOCK', 'NAZAJ': 'BACK', 'Kovanci': 'Coins',
     'Premalo denarja: potrebuješ {0}, imaš {1}.': 'Not enough money: you need {0}, you have {1}.', 'Imaš {0}.': 'You have {0}.', 'Razumem': 'Got it',
     'Deli na regalu': 'Parts on the rack', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.': 'Tap a part on the rack: a menu opens with the options and their prices. The one you pick shows see-through on the car.',
+    'Predali': 'Drawers', 'V predalih omarice so luči, maske, nalepke, čeljusti in zavore. Tapni predal in izvleče se.': 'The cabinet\'s drawers hold lamps, grilles, decals, calipers and brakes. Tap a drawer and it slides out.',
     'Avti na omarici': 'Cars on the cabinet', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.': 'On the cabinet: your car, a car to rent and a car for sale. Tap a model and that car drives onto the turntable.',
     'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.': 'The red SERVICE button: wash, bodywork, engine and oil.', 'Tapni barvni krog: avto prebarvamo v stekleni komori.': 'Tap a colour circle: the car is painted in the glass chamber.',
     'Drugi avti': 'Other cars', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.': 'The two buttons below bring in the car before or after this one.',

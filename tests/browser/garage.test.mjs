@@ -1,7 +1,7 @@
 // The garage (garaza.html): the workshop over the whole screen (the page's buttons over it: Izberi progo and the coins at the top, the
 // car's name, the cars before and after it, back and Izberi at the bottom), the guide on the first visit; the regal behind the car (the
 // names on its prisms in British English, its cost), the cabinet before it (the three cars' maquettes, the signs, the SERVICE
-// button), the colour circles, the lift's plate; ring 9 over the car with its two hanging arms (no robot nor stand on the floor), the
+// button, its eight drawers: each its element's menu, out under it), the colour circles, the lift's plate; ring 9 over the car with its two hanging arms (no robot nor stand on the floor), the
 // chamber's glass; the camera (left and right only); a tap on a part: its menu (four tabs with their prices, four tiles, the chosen one
 // blue and the others orange in the picture too, the new part seen through on the car, at the bottom when at the top it would cover
 // the part), buying (coins, the tyres on offer, the stock part back), the four upgrades from the parts (the chip over the car: MOČ
@@ -26,12 +26,12 @@ try {
   await page.goto(srv.base + '/garaza.html');
   await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
   await page.waitForTimeout(800);
-  // the guide on the first visit (a fresh profile): five steps, each a ring round what to tap and a bubble; done, it is not shown again
+  // the guide on the first visit (a fresh profile): six steps, each a ring round what to tap and a bubble; done, it is not shown again
   {
     const g = await page.evaluate(async () => { const el = document.getElementById('g-guide'), out = { on: el.classList.contains('on'), steps: [] };
       for (let i = 0; i < 8 && el.classList.contains('on'); i++) { out.steps.push({ ring: el.querySelectorAll('.ring').length, t: el.querySelector('.bub b').textContent }); el.querySelector('[data-guide]').click(); }
       out.after = el.classList.contains('on'); out.saved = JSON.parse(localStorage.getItem('apex-garage')).guide; return out; });
-    T.check('the guide on the first visit: 5 steps (the regal, the cars on the cabinet, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 5 && g.steps.every((s, i) => s.ring === (i === 4 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && !g.after && g.saved === 1, JSON.stringify(g));
+    T.check('the guide on the first visit: 6 steps (the regal, the cars on the cabinet, its drawers, the service, the paint, the other cars), each with its ring (the last two: the buttons for the cars before and after); then gone, remembered', g.on && g.steps.length === 6 && g.steps.every((s, i) => s.ring === (i === 5 ? 2 : 1)) && g.steps[0].t === 'Deli na regalu' && g.steps[2].t === 'Predali' && !g.after && g.saved === 1, JSON.stringify(g));
   }
   await page.evaluate(() => { __garage.hold = true; });
   // the animations to their end (the clock stepped half a second at a time while a show plays or waits); returns the seconds it took
@@ -105,11 +105,11 @@ try {
     // the cabinet before the car and the colour circles: every thing to tap on the screen in the first view, clear of the page's buttons,
     // at least 40 x 40 px to a tap (the small ones' places grown round their middles: pick)
     const FR = await page.evaluate(() => { const G = Garage3D, st = document.getElementById('g-stage').getBoundingClientRect(), low = document.getElementById('g-low').getBoundingClientRect(), head = document.querySelector('.g-head').getBoundingClientRect();
-      const keys = ['mq0', 'mq1', 'mq2', 'service', 'lift', ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => 'col' + i), 'rgl:TURBO', 'rgl:SNOW', 'rgl:GT WING'], out = {};
+      const keys = ['mq0', 'mq1', 'mq2', 'service', 'lift', ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => 'col' + i), 'rgl:TURBO', 'rgl:SNOW', 'rgl:GT WING', ...G.drawers.els.map(e => 'drw:' + e)], out = {};
       for (const k of keys) { const b = G.box(k), cx = b.x + b.w / 2, cy = b.y + b.h / 2, h = G.pick(cx, cy); out[k] = { on: cx > 0 && cx < st.width && cy > head.bottom - st.top && cy < low.top - st.top, hit: h && h.key === k, w: Math.round(b.w), h: Math.round(b.h) }; }
       return out; });
     const bad = Object.entries(FR).filter(([k, q]) => !q.on || !q.hit);
-    T.check('the first view: the 3 maquettes, the SERVICE button, the lift\'s plate, the 8 colour circles and the regal\'s parts on the screen between the page\'s buttons, each tapped at its middle picked', !bad.length, JSON.stringify(bad.length ? bad : FR));
+    T.check('the first view: the 3 maquettes, the SERVICE button, the lift\'s plate, the 8 colour circles, the regal\'s parts and the cabinet\'s 8 drawers on the screen between the page\'s buttons, each tapped at its middle picked', !bad.length, JSON.stringify(bad.length ? bad : FR));
   }
 
   // 1c. the ring's moves through the shows' queue: the chamber down round the car and up (the glass's foot on the floor, clear of the
@@ -266,6 +266,28 @@ try {
     T.check('FOR SALE\'s maquette tapped: that car drives onto the table (the lamps over FOR SALE, YOUR CAR still the muscle car); YOUR CAR\'s: the muscle car back', c2.car === cab.free[0] && c2.shown === cab.free[0] && c2.fr.lit === 2 && c2.fr.names[0] === cab.names[0] && c3.car === 'muscle' && c3.shown === 'muscle' && c3.fr.lit === 0, JSON.stringify({ c2, c3 }));
   }
 
+  // 4b. the cabinet's drawers (sklop 6d): the cabinet whole on an upright screen (every drawer on it), the eight drawers each tapped at
+  // its middle: its element's menu (its four parts the game's options), the drawer out, the others in, the menu at the top and the drawer
+  // seen under it; closed: back in; the calipers' body-coloured one in the car's colour. On a low screen (360 x 560: a phone with its
+  // browser's bar) the picture lowered under the menu so the drawer shows, raised again when it closes
+  {
+    const drawers = () => page.evaluate(() => { const G = Garage3D, W = document.getElementById('g-stage').clientWidth, H = document.getElementById('g-stage').clientHeight, mn = document.getElementById('g-menu'), out = { tap: [] };
+      const fr = (n) => { for (let i = 0; i < n; i++) __garage.advance(0.5); };
+      out.whole = G.drawers.els.every(e => { const b = G.box('drw:' + e); return b && b.x >= 0 && b.x + b.w <= W && b.y + b.h <= H; });
+      for (const e of G.drawers.els) { const b = G.box('drw:' + e); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); fr(3); const m = __garage.menu, o = G.box('drw:' + e), k = G.drawers.k;
+        out.tap.push({ e, el: m && m.el, out: k[G.drawers.els.indexOf(e)] === 1 && k.filter(v => v > 0).length === 1, top: !mn.classList.contains('bot'), under: o.y >= mn.offsetTop + mn.offsetHeight, on: o.y + o.h <= H, drop: Math.round(G.dropped),
+          opts: __garage.DRAWER[e].length === 4 && __garage.DRAWER[e].every(n => !!__garage.findOpt(e, n)) });
+        __garage.closeMenu(); fr(2); }
+      out.back = G.drawers.k.every(v => v === 0) && G.dropped === 0; out.col = G.drawers.col === G.info.color; return out; });
+    const D1 = await drawers(), bad1 = D1.tap.filter(q => q.el !== q.e || !q.out || !q.top || !q.under || !q.on || !q.opts);
+    T.check('the cabinet whole on the screen, its 8 drawers each tapped: its element\'s menu (its 4 parts the game\'s options), it alone out, under the menu at the top; closed: all back in', D1.whole && D1.tap.length === 8 && !bad1.length && D1.back && D1.col, JSON.stringify(D1));
+    await page.setViewportSize({ width: 360, height: 560 }); await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    const D2 = await drawers(), bad2 = D2.tap.filter(q => q.el !== q.e || !q.out || !q.top || !q.under || !q.on);
+    await page.setViewportSize({ width: 412, height: 915 }); await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    T.check('a low screen (360 x 560): every drawer still on it, out under its menu (the picture lowered for the ones the menu would cover: ' + D2.tap.map(q => q.drop).join(', ') + ' px), raised again when closed',
+      D2.whole && !bad2.length && D2.tap.some(q => q.drop > 0) && D2.back, JSON.stringify(D2));
+  }
+
   // 5. the service by the SERVICE button (the rally car: dirty, scratched, its engine worn): its prices by the wear and the car's worth,
   // the full service 15 % off; done by the arms; the paint: a colour circle tapped, the eight colours at one price by the car's size (no
   // kinds of work, the user's choice of 2. 11. 2026), bought: in the glass chamber (down while it paints), the car green
@@ -398,7 +420,7 @@ try {
         return { car: __garage.S.car, top: Math.round(top), name: Math.round(name), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]),
           ok: !!car && car.y >= top - 2 && car.y + car.h <= name && b.every(x => x && x.y >= top && x.y + 20 <= name) }; }));
       // (the guide's last step: a ring round each of the buttons for the other cars, its bubble beside them, clear of them)
-      R.push(await page.evaluate(() => { __garage.guide(4); const el = document.getElementById('g-guide'), rings = [...el.querySelectorAll('.ring')].map(e => e.getBoundingClientRect()), bub = el.querySelector('.bub').getBoundingClientRect(); __garage.guide(5);
+      R.push(await page.evaluate(() => { __garage.guide(5); const el = document.getElementById('g-guide'), rings = [...el.querySelectorAll('.ring')].map(e => e.getBoundingClientRect()), bub = el.querySelector('.bub').getBoundingClientRect(); __garage.guide(6);
         return { rings: rings.map(r => [Math.round(r.left), Math.round(r.top), Math.round(r.width)]), bub: [Math.round(bub.left), Math.round(bub.top), Math.round(bub.width), Math.round(bub.bottom)], ok: rings.length === 2 && rings.every(r => r.width > 60 && bub.bottom <= r.top) }; }));
     }
     // (a menu at the bottom lying down: where it opens, not left low and small)

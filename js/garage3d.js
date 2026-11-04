@@ -3661,8 +3661,9 @@ const Garage3D = (function () {
   function stepFixtures(dt) {
     for (const A of RB) if (A.dirty) poseArm(A.i);
     if (CH.dirty) poseChamber();
-    stepFront(dt);
+    stepFront(dt); stepDrawers(dt);
     if (cur && RGL.mesh && cur.spec.color !== RGL.col) rglColor(cur.spec.color);
+    if (cur && DRW.meshes.length && cur.spec.color !== DRW.col) drwColor(cur.spec.color);
   }
   function buildFixtures() {
     const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]); buildRing(g, gl);
@@ -3688,18 +3689,21 @@ const Garage3D = (function () {
      (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
      THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
      and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
-  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.95, x1: 1.95, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450\u00a0\u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  // (x0 .. x1: the cabinet as wide as an upright screen sees it at its face (360 x 640 and every other: -1.85 .. 1.66 at its deck), whole
+  // with its drawers)
+  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.79, x1: 1.6, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450\u00a0\u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
   const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
   const _tv = new V3(), _yAx = new V3(0, 1, 0);
   const gbSlice = (g, a, b) => [Float32Array.from(g.P.slice(a * 3, b * 3)), Float32Array.from(g.N.slice(a * 3, b * 3))];
-  // the signs' and the labels' atlas (512 x 256): YOUR CAR, RENT A CAR, FOR SALE, the two red tags (their prices: drawn again), the
-  // labels on the deck's edge (STREET, SPORT, RACE · LOCKED, AERO KITS, SERVICE)
-  const FRA = { YOUR: [0, 0, 256, 56], RENT: [256, 0, 256, 56], SALE: [0, 56, 256, 56], T0: [256, 56, 128, 44], T1: [384, 56, 128, 44], L0: [0, 112, 170, 34], L1: [170, 112, 170, 34], L2: [340, 112, 172, 34], AK: [0, 146, 256, 34], SV: [256, 146, 256, 34] };
+  // the signs' and the labels' atlas (512 x 512, FAH its height): YOUR CAR, RENT A CAR, FOR SALE, the two red tags (their prices: drawn
+  // again), the labels on the deck's edge (STREET, SPORT, RACE · LOCKED, AERO KITS, SERVICE), the drawers' names (D0 .. D7, DRW.names)
+  const FAH = 512, FRA = { YOUR: [0, 0, 256, 56], RENT: [256, 0, 256, 56], SALE: [0, 56, 256, 56], T0: [256, 56, 128, 44], T1: [384, 56, 128, 44], L0: [0, 112, 170, 34], L1: [170, 112, 170, 34], L2: [340, 112, 172, 34], AK: [0, 146, 256, 34], SV: [256, 146, 256, 34] };
+  for (let i = 0; i < 8; i++) FRA['D' + i] = [(i & 1) * 256, 184 + (i >> 1) * 22, 256, 20];
   function frontTex() {
-    const c = FRONT.cv || (FRONT.cv = document.createElement('canvas')); c.width = 512; c.height = 256; const g = c.getContext('2d');
-    g.clearRect(0, 0, 512, 256);
+    const c = FRONT.cv || (FRONT.cv = document.createElement('canvas')); c.width = 512; c.height = FAH; const g = c.getContext('2d');
+    g.clearRect(0, 0, 512, FAH);
     const sign = (r, bg, t) => { const [x, y, w, h] = r; g.fillStyle = bg; g.beginPath(); if (g.roundRect) g.roundRect(x + 3, y + 3, w - 6, h - 6, 7); else g.rect(x + 3, y + 3, w - 6, h - 6); g.fill();
       g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffffff'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 20); };
     sign(FRA.YOUR, '#1f9a4a', 'YOUR CAR'); sign(FRA.RENT, '#1c4fb3', 'RENT A CAR'); sign(FRA.SALE, '#1c4fb3', 'FOR SALE');
@@ -3714,18 +3718,133 @@ const Garage3D = (function () {
         g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#d79f22'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r - 1, 0, Math.PI * 2); g.stroke(); } }
     const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
     [FRA.L0, FRA.L1, FRA.L2].forEach((r, i) => lab(r, FRONT.names[i] || '')); lab(FRA.SV, 'SERVICE');   // (under each maquette its car's name)
+    DRW.names.forEach((t, i) => { const [x, y, w, h] = FRA['D' + i]; g.fillStyle = '#e9eef6'; g.font = 'italic 800 17px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 12); });   // (the drawers' names)
     if (FRONT.tex) FRONT.tex.needsUpdate = true;
   }
   // (a quad of the atlas' cell r: its middle c, its right and up ways (world), its size w x h)
-  function atlasQuad(G, r, c, ri, up, w, h) { const [x, y, cw, ch] = r, u0 = x / 512, u1 = (x + cw) / 512, v1 = 1 - y / 256, v0 = 1 - (y + ch) / 256, P = (a, b) => [c.x + ri.x * a * w / 2 + up.x * b * h / 2, c.y + ri.y * a * w / 2 + up.y * b * h / 2, c.z + ri.z * a * w / 2 + up.z * b * h / 2];
+  function atlasQuad(G, r, c, ri, up, w, h) { const [x, y, cw, ch] = r, u0 = x / 512, u1 = (x + cw) / 512, v1 = 1 - y / FAH, v0 = 1 - (y + ch) / FAH, P = (a, b) => [c.x + ri.x * a * w / 2 + up.x * b * h / 2, c.y + ri.y * a * w / 2 + up.y * b * h / 2, c.z + ri.z * a * w / 2 + up.z * b * h / 2];
     const n = new V3().crossVectors(ri, up).normalize(), ins = [c.x - n.x, c.y - n.y, c.z - n.z]; G.quadO(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), [1, 1, 1], ins, [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
+  /* ---------------- the cabinet's drawers (sklop 6d; the concept's mn/predali_pred_po, »vsaka vrsta predalov en meni s štirimi deli«):
+     eight open drawers in its face, four across and two high: its left half the front's (HEADLAMPS · UNDERGLOW over GRILLES ·
+     CALIPERS), its right the rear's and the rest (TAIL LAMPS · INDICATORS over DECALS · BRAKES), as the concept's two columns; in each
+     the four parts of its element the garage keeps (as js/garage.js DRAWER: the menu's), tilted back to the camera, its name on its lip.
+     A tap on one (drw:<element>) opens its element's menu and pulls it out (drawer()), it slides back when the menu closes. The eight
+     in three meshes: their trays and parts (lit as the cabinet), the parts' lights (unlit, over 1: they glow), the names (the front's
+     atlas); a drawer moved by writing its vertices again (base + its way out, along the cabinet's face's normal) ---------------- */
+  const DRW = { els: ['zarometi', 'luc_pod_avtom', 'zadnje_luci', 'zmigavci', 'maska', 'celjusti', 'nalepke', 'zavore'],
+    names: ['HEADLAMPS', 'UNDERGLOW', 'TAIL LAMPS', 'INDICATORS', 'GRILLES', 'CALIPERS', 'DECALS', 'BRAKES'],
+    rows: [0.45, 0.11], ch: 0.3, d: 0.42, lip: 0.08, out: 0.3, tilt: 0.6, pz: 0.13, rails: [[0.08, 0.11], [0.41, 0.45], [0.75, 0.78]],
+    k: new Float32Array(8), want: -1, meshes: [], ranges: [], base: [], dir: null, col: null, cal: null };
+  // (the four columns across the cabinet: its end stiles 5 cm, the middle one 8 cm (the two halves), the others 4 cm; each part as big
+  // as the drawer's quarter lets it (0.22 m: its full size))
+  { const F = FRONT, D = DRW, e = 0.05, m = 0.08, s = 0.04, xm = (F.x0 + F.x1) / 2, cw = D.cw = (F.x1 - F.x0 - 2 * e - m - 2 * s) / 4;
+    D.cx = [F.x0 + e + cw / 2, F.x0 + e + cw * 1.5 + s, xm + m / 2 + cw / 2, xm + m / 2 + cw * 1.5 + s];
+    D.stiles = [[F.x0, F.x0 + e], [F.x0 + e + cw, F.x0 + e + cw + s], [xm - m / 2, xm + m / 2], [xm + m / 2 + cw, xm + m / 2 + cw + s], [F.x1 - e, F.x1]];
+    D.ps = Math.min(1, (cw - 0.03) / 4 / 0.22); }
+  // (a quad facing +z at depth z; a vertical ring facing +z)
+  const fq = (G, x0, y0, x1, y1, z, col) => G.quadO([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], col, [(x0 + x1) / 2, (y0 + y1) / 2, z - 1]);
+  // one part in a drawer: its element's k-th of the four, built at its foot facing +z (g: lit, its gloss marked by gl; L: its lights)
+  function drwPart(g, L, gl, el, k) {
+    const HS = [0.09, 0.09, 0.1], CHR = [0.8, 0.82, 0.86], DK2 = [0.05, 0.05, 0.06];
+    if (el === 'zarometi') {   // a headlamp: two round lenses in a dark housing (LED, yellow, smoked, bi-LED with its ring of light)
+      gl(SATIN); World.box(g, 0, 0, 0, 0.17, 0.08, 0.05, 0, HS); const lens = [[0.93, 0.95, 1], [1, 0.8, 0.2], [0.22, 0.24, 0.28], [0.9, 0.94, 1]][k];
+      for (const x of [-0.042, 0.042]) { gl(METAL); discZ(g, x, 0.04, 0.026, 0.026, 0.033, 14, CHR, 1); gl(PAINT); cylA(g, [x, 0.04, 0.028], 'z', 0.026, 0.004, 14, lens); cylA(g, [x, 0.04, 0.031], 'z', 0.01, 0.004, 10, k === 2 ? [0.5, 0.52, 0.56] : [1, 1, 1]);
+        if (k === 3) discZ(L, x, 0.04, 0.0335, 0.016, 0.022, 14, [1.2, 1.7, 2.6], 1); } }
+    else if (el === 'luc_pod_avtom') {   // a strip of light in its black channel (blue, turquoise, purple, red)
+      gl(SATIN); World.box(g, 0, 0, 0, 0.19, 0.022, 0.032, 0, DK2); for (const x of [-0.098, 0.098]) World.box(g, x, 0, 0, 0.012, 0.034, 0.036, 0, HS);
+      World.box(L, 0, 0.022, 0, 0.184, 0.012, 0.022, 0, [[0.3, 0.7, 2.6], [0.25, 2.1, 1.9], [1.6, 0.35, 2.5], [2.6, 0.22, 0.25]][k]); }
+    else if (el === 'zadnje_luci') {   // a tail lamp: smoked, clear with its red dots, two round ones, an LED strip across
+      gl(SATIN); World.box(g, 0, 0, 0, 0.18, 0.066, 0.04, 0, HS); gl(PAINT);
+      if (k === 0) fq(g, -0.082, 0.008, 0.082, 0.058, 0.0205, [0.3, 0.035, 0.045]);
+      else if (k === 1) { fq(g, -0.082, 0.008, 0.082, 0.058, 0.0205, [0.86, 0.87, 0.9]); for (const x of [-0.05, 0, 0.05]) cylA(g, [x, 0.033, 0.022], 'z', 0.012, 0.004, 10, [0.85, 0.07, 0.07]); }
+      else if (k === 2) { fq(g, -0.082, 0.008, 0.082, 0.058, 0.0205, [0.12, 0.12, 0.13]); for (const x of [-0.042, 0.042]) { discZ(g, x, 0.033, 0.0215, 0.022, 0.027, 14, CHR, 1); cylA(g, [x, 0.033, 0.022], 'z', 0.022, 0.004, 14, [0.82, 0.06, 0.07]); } }
+      else { fq(g, -0.082, 0.008, 0.082, 0.058, 0.0205, [0.1, 0.02, 0.03]); World.box(L, 0, 0.026, 0.021, 0.16, 0.012, 0.004, 0, [2.6, 0.15, 0.15]); } }
+    else if (el === 'zmigavci') {   // an indicator: clear (an amber bulb in it), smoked, sequential (its lights in a row), chrome-framed
+      gl(k === 3 ? METAL : SATIN); World.box(g, 0, 0, 0, 0.13, 0.05, 0.034, 0, k === 3 ? CHR : HS); gl(PAINT);
+      if (k === 0 || k === 1) { fq(g, -0.056, 0.007, 0.056, 0.043, 0.0175, k ? [0.2, 0.21, 0.24] : [0.86, 0.87, 0.9]); cylA(g, [0, 0.025, 0.019], 'z', 0.011, 0.004, 10, k ? [0.62, 0.36, 0.07] : [1, 0.6, 0.1]); }
+      else if (k === 2) { fq(g, -0.056, 0.007, 0.056, 0.043, 0.0175, [0.12, 0.11, 0.1]); for (let j = 0; j < 5; j++) World.box(L, -0.044 + j * 0.022, 0.014, 0.0185, 0.016, 0.022, 0.003, 0, [2.6, 1.25, 0.15].map(v => v * (0.45 + 0.14 * j))); }
+      else fq(g, -0.052, 0.009, 0.052, 0.041, 0.0175, [0.98, 0.58, 0.1]); }
+    else if (el === 'maska') {   // a grille: honeycomb, mesh, chrome slats, carbon weave, each in its frame
+      gl(SATIN); World.box(g, 0, 0, 0, 0.18, 0.09, 0.026, 0, k === 2 ? [0.16, 0.16, 0.17] : [0.12, 0.12, 0.13]); const z = 0.0135;
+      if (k === 0) { fq(g, -0.08, 0.008, 0.08, 0.082, z, [0.2, 0.2, 0.21]); for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) { const x = -0.065 + c * 0.026 + (r & 1) * 0.013, y = 0.02 + r * 0.025; if (x < 0.07) cylA(g, [x, y, z + 0.001], 'z', 0.0105, 0.002, 6, [0.04, 0.04, 0.045]); } }
+      else if (k === 1) { fq(g, -0.08, 0.008, 0.08, 0.082, z, [0.06, 0.06, 0.065]); for (let c = 0; c < 9; c++) for (let r = 0; r < 4; r++) fq(g, -0.076 + c * 0.0172, 0.012 + r * 0.0175, -0.066 + c * 0.0172, 0.0222 + r * 0.0175, z + 0.001, [0.26, 0.27, 0.29]); }
+      else if (k === 2) { fq(g, -0.08, 0.008, 0.08, 0.082, z, [0.04, 0.04, 0.045]); gl(METAL); for (let r = 0; r < 4; r++) World.box(g, 0, 0.014 + r * 0.018, z, 0.158, 0.009, 0.006, 0, CHR); }
+      else { gl(PAINT); for (let c = 0; c < 8; c++) for (let r = 0; r < 4; r++) fq(g, -0.08 + c * 0.02, 0.008 + r * 0.0185, -0.06 + c * 0.02, 0.0265 + r * 0.0185, z, (c + r) & 1 ? [0.16, 0.16, 0.18] : [0.07, 0.07, 0.08]); } }
+    else if (el === 'celjusti') {   // a brake caliper (red, yellow, gold, the car's colour: DRW.cal its faces), its bridge over the disc's edge
+      gl(PAINT); const v0 = g.P.length / 3, col = [[0.82, 0.1, 0.09], [0.95, 0.76, 0.12], [0.82, 0.6, 0.18], [0.12, 0.3, 0.75]][k];
+      gAdd(g, new THREE.TorusGeometry(0.05, 0.02, 6, 12, Math.PI * 0.75), M4(0, 0.006, 0, 0, 0, Math.PI * 0.125), col);
+      World.box(g, 0, 0.068, 0, 0.05, 0.016, 0.03, 0, col); gl(METAL); for (const s of [-1, 1]) cylA(g, [s * 0.044, 0.022, 0.012], 'z', 0.007, 0.012, 8, CHR);
+      if (k === 3) DRW.cal = [v0, g.P.length / 3]; }
+    else if (el === 'nalepke') {   // a sheet of stickers on white: flames, chequers, a star, a big bolt
+      gl(SATIN); World.box(g, 0, 0, 0, 0.15, 0.115, 0.006, 0, [0.9, 0.9, 0.88]); const z = 0.0035, M = M4(0, 0.0575, z);
+      if (k === 0) [[[0.9, 0.12, 0.08], 1], [[1, 0.5, 0.08], 0.78], [[1, 0.85, 0.2], 0.55]].forEach(([c, s], j) => { const sh = new THREE.Shape(); sh.moveTo(-0.06, -0.035); sh.lineTo(0.06, -0.035 + 0.02 * s);
+        for (let f = 0; f < 3; f++) { const x = 0.05 - f * 0.04; sh.quadraticCurveTo(x, 0.02 * s, x - 0.005, 0.045 * s); sh.quadraticCurveTo(x - 0.015, 0.0, x - 0.03, -0.01 + 0.01 * s); } sh.lineTo(-0.06, -0.035);
+        gAdd(g, new THREE.ShapeGeometry(sh, 6), M4(0, 0.0575, z + j * 0.0005), c); });
+      else if (k === 1) { for (let c = 0; c < 6; c++) for (let r = 0; r < 4; r++) if ((c + r) & 1) fq(g, -0.066 + c * 0.022, 0.014 + r * 0.022, -0.044 + c * 0.022, 0.036 + r * 0.022, z, [0.06, 0.06, 0.07]); }
+      else if (k === 2) { const sh = new THREE.Shape(); for (let j = 0; j < 10; j++) { const a = Math.PI / 2 + j * Math.PI / 5, r = j & 1 ? 0.019 : 0.048; if (j) sh.lineTo(Math.cos(a) * r, Math.sin(a) * r); else sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); } gAdd(g, new THREE.ShapeGeometry(sh), M, [1, 0.78, 0.14]); }
+      else { const sh = new THREE.Shape(); [[0.012, 0.05], [-0.03, -0.004], [-0.004, -0.004], [-0.016, -0.05], [0.03, 0.01], [0.004, 0.01], [0.022, 0.05]].forEach(([x, y], j) => j ? sh.lineTo(x, y) : sh.moveTo(x, y)); gAdd(g, new THREE.ShapeGeometry(sh), M, [1, 0.8, 0.12]); } }
+    else if (el === 'zavore') {   // the brakes: a pair of sport pads, a slotted disc, a drilled one with its red hat, a ceramic one (its hat yellow)
+      if (k === 0) { for (const x of [-0.04, 0.04]) { gl(METAL); World.box(g, x, 0.004, 0, 0.07, 0.05, 0.008, 0, [0.62, 0.1, 0.09]); gl(MATTE); World.box(g, x, 0.008, 0.008, 0.062, 0.042, 0.012, 0, [0.16, 0.15, 0.15]); } }
+      else { const r = 0.068, y = r + 0.004; gl(METAL); cylA(g, [0, y, 0], 'z', r, 0.012, 24, k === 3 ? [0.32, 0.33, 0.35] : [0.58, 0.6, 0.63]); gl(PAINT); cylA(g, [0, y, 0.01], 'z', 0.03, 0.01, 16, [[0.62, 0.64, 0.68], [0.75, 0.1, 0.09], [0.95, 0.75, 0.12]][k - 1]);
+        if (k === 1) for (let j = 0; j < 6; j++) { const a = j / 6 * TAU, c = Math.cos(a), s = Math.sin(a), p = (u, v) => [c * u - s * v, y + s * u + c * v, 0.0065]; g.quadO(p(0.036, -0.002), p(0.062, 0.004), p(0.062, 0.008), p(0.036, 0.002), [0.14, 0.14, 0.15], [0, y, -1]); }
+        else for (let j = 0; j < 12; j++) { const a = j / 12 * TAU, q = j & 1 ? 0.045 : 0.056; discZ(g, Math.cos(a) * q, y + Math.sin(a) * q, 0.0065, 0, 0.0045, 6, [0.1, 0.1, 0.11], 1); }
+        gl(MATTE); World.box(g, 0, 0, -0.01, 0.06, 0.012, 0.03, 0, DK2); } }
+  }
+  function buildDrawers(MR) {
+    const F = FRONT, D = DRW, z1 = F.z + F.d / 2, g = new World.GB(), L = new World.GB(), T = new World.GB(true), gls = [], gl = (k) => gls.push([g.P.length / 3, k]);
+    const TRAY = [0.2, 0.22, 0.26], LIP = [0.13, 0.17, 0.33], W = FXC.W, its = [];
+    for (let i = 0; i < 8; i++) { const x = D.cx[i & 3], yb = D.rows[i >> 2], w = D.cw - 0.03, el = D.els[i], r0 = [g.P.length / 3, L.P.length / 3, T.P.length / 3];
+      // the tray: its floor, its low sides and back; its lip (its top edge white), its name on it
+      gl(SATIN); World.box(g, x, yb + 0.003, z1 - D.d / 2 - 0.01, w, 0.014, D.d - 0.03, 0, TRAY); for (const s of [-1, 1]) World.box(g, x + s * (w / 2 - 0.006), yb + 0.003, z1 - D.d / 2 - 0.01, 0.012, 0.06, D.d - 0.03, 0, TRAY);
+      World.box(g, x, yb + 0.003, z1 - D.d + 0.026, w, 0.06, 0.012, 0, TRAY);
+      gl(PAINT); World.box(g, x, yb, z1 - 0.012, w + 0.01, D.lip, 0.022, 0, LIP, W);
+      atlasQuad(T, FRA['D' + i], new V3(x, yb + D.lip / 2, z1 + 0.0012), new V3(1, 0, 0), new V3(0, 1, 0), w - 0.08, (w - 0.08) / 12.8);   // (the cell's 256 x 20)
+      // its four parts, tilted back to the camera, standing in a row before the tray's middle
+      const pv = g.P.length / 3;
+      for (let k = 0; k < 4; k++) { const a = g.P.length / 3, b = L.P.length / 3; drwPart(g, L, gl, el, k); const M = M4(x + (k - 1.5) * (w / 4), yb + 0.017, z1 - D.pz, -D.tilt, 0, 0, D.ps); placeGB(g, a, M); placeGB(L, b, M); }
+      D.ranges.push([[r0[0], g.P.length / 3], [r0[1], L.P.length / 3], [r0[2], T.P.length / 3]]); its.push([i, r0[0], g.P.length / 3, pv]); }
+    // all of it turned as the cabinet; the eight things to tap (their outline: the tray, its lip and its parts; their box the cubby's
+    // opening, to the drawer's front when it is out: drwBox, not the tray's whole box (it would lie over the drawers round it))
+    for (const G of [g, L, T]) placeGB(G, 0, MR);
+    D.dir = new V3(Math.sin(F.ry), 0, Math.cos(F.ry)); D.MR = MR;
+    D.items = its.map(([i, a, z]) => { const [P, N] = gbSlice(g, a, z), it = tapItem('drw:' + D.els[i], 'drw', P, N, { el: D.els[i], drw: i }); drwBox(it, 0); return it; });
+    const mk = (geo, mat, main) => { geo.attributes.position.setUsage(THREE.DynamicDrawUsage); const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; scene.add(main ? mainOnly(m) : m); D.meshes.push(m); D.base.push(Float32Array.from(geo.attributes.position.array)); return m; };
+    const dm = mk(withGloss(g.geometry(), gls), fxMat()); dm.receiveShadow = true; dm.geometry.attributes.color.setUsage(THREE.DynamicDrawUsage);
+    mk(L.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true }), true);
+    const tm = mk(T.geometry(), new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }), true); tm.renderOrder = 2;
+  }
+  // (a drawer's box to tap: its cubby's opening, deep to its front s metres out (its eight corners, turned as the cabinet))
+  function drwBox(it, s) { const D = DRW, x = D.cx[it.drw & 3], y = D.rows[it.drw >> 2], z1 = FRONT.z + FRONT.d / 2, hw = D.cw / 2;
+    it.pts = []; for (let i = 0; i < 8; i++) it.pts.push(new V3(i & 1 ? x + hw : x - hw, i & 2 ? y + D.ch : y, i & 4 ? z1 + s : z1 - 0.01).applyMatrix4(D.MR));
+    it.box.setFromPoints(it.pts); }
+  // (the body-colour caliper in the car's colour; a drawer at s metres out, its marks with it)
+  function drwColor(hex) { const D = DRW; D.col = hex; if (!D.cal) return; const a = D.meshes[0].geometry.attributes.color, c = hexRgb(hex); for (let v = D.cal[0]; v < D.cal[1]; v++) a.array.set(c, v * 3); sendRange(a, D.cal[0], D.cal[1]); }
+  function drwPlace(i, s) { const D = DRW, dx = D.dir.x * s, dz = D.dir.z * s;
+    D.meshes.forEach((m, j) => { const [v0, v1] = D.ranges[i][j]; if (v1 <= v0) return; const a = m.geometry.attributes.position, P = a.array, B = D.base[j];
+      for (let v = v0 * 3; v < v1 * 3; v += 3) { P[v] = B[v] + dx; P[v + 1] = B[v + 1]; P[v + 2] = B[v + 2] + dz; } sendRange(a, v0, v1); });
+    for (const o of TAPM.list) if (o.userData.drw === i) o.position.set(dx, 0, dz);
+    drwBox(D.items[i], s); }
+  // each frame: the wanted drawer out (0.35 s), the others in (0.3 s); true while one moves
+  function stepDrawers(dt) { const D = DRW; let mv = false;
+    for (let i = 0; i < 8; i++) { const t = D.want === i ? 1 : 0, k0 = D.k[i]; if (k0 === t) continue; mv = true;
+      const k = D.k[i] = t > k0 ? Math.min(1, k0 + dt / 0.35) : Math.max(0, k0 - dt / 0.3); drwPlace(i, EZ.sine(k) * D.out); }
+    return mv; }
+  const drwMoving = () => { for (let i = 0; i < 8; i++) if (DRW.k[i] !== (DRW.want === i ? 1 : 0)) return true; return false; };
   function buildFront() {
     const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]), S = new World.GB(true), L = new World.GB(), F = FRONT, { NV, W, DK, ST } = FXC, y1 = F.h;
     const z0 = F.z - F.d / 2, z1 = F.z + F.d / 2, xm = (F.x0 + F.x1) / 2, wd = F.x1 - F.x0, GR = [0.62, 0.65, 0.7];
-    // the cabinet: its plinth, its navy body (the drawers' lines on its face), the deck (grey, a white lip at its front), a line of light
-    gl(PAINT); World.box(g, xm, 0, F.z, wd, 0.08, F.d - 0.06, 0, DK); World.box(g, xm, 0.08, F.z, wd, y1 - 0.12, F.d, 0, NV, NV);
-    for (let x = F.x0 + 0.6; x < F.x1 - 0.1; x += 0.6) World.box(g, x, 0.1, z1 + 0.002, 0.012, y1 - 0.16, 0.004, 0, [0.06, 0.08, 0.17]);
-    World.box(g, xm, 0.45, z1 + 0.002, wd - 0.04, 0.012, 0.004, 0, [0.06, 0.08, 0.17]);
+    // the cabinet: its plinth, its navy body behind the drawers' cubbies (DRW: eight in its face), the frame round them (rails over,
+    // between and under the two rows, stiles at the ends and between the drawers, the middle one wider: the two halves), each cubby's
+    // inside darker (its back, its roof, its sides), the deck (grey, a white lip at its front)
+    const D = DRW, zb = z1 - D.d;
+    gl(PAINT); World.box(g, xm, 0, F.z, wd, 0.08, F.d - 0.06, 0, DK); World.box(g, xm, 0.08, (z0 + zb) / 2, wd, y1 - 0.12, zb - z0, 0, NV, NV);
+    for (const [ya, yb] of D.rails) World.box(g, xm, ya, z1 - D.d / 2, wd, yb - ya, D.d, 0, NV, NV);
+    for (const [xa, xb] of D.stiles) World.box(g, (xa + xb) / 2, 0.08, z1 - D.d / 2, xb - xa, y1 - 0.12, D.d, 0, NV, NV);
+    gl(MATTE); for (let i = 0; i < 8; i++) { const x = D.cx[i & 3], y = D.rows[i >> 2], hw = D.cw / 2, h = D.ch, e = 0.001;
+      g.quadO([x - hw, y, zb + e], [x + hw, y, zb + e], [x + hw, y + h, zb + e], [x - hw, y + h, zb + e], [0.035, 0.045, 0.085], [x, y, zb - 1]);
+      g.quadO([x - hw, y + h - e, zb], [x + hw, y + h - e, zb], [x + hw, y + h - e, z1], [x - hw, y + h - e, z1], [0.045, 0.055, 0.1], [x, y + h + 1, z1]);
+      for (const s of [-1, 1]) g.quadO([x + s * (hw - e), y, zb], [x + s * (hw - e), y + h, zb], [x + s * (hw - e), y + h, z1], [x + s * (hw - e), y, z1], [0.07, 0.085, 0.16], [x + s * (hw + 1), y, z1]); }
+    gl(PAINT);
     gl(SATIN); World.box(g, xm, y1 - 0.04, F.z, wd + 0.04, 0.04, F.d + 0.04, 0, GR, [0.7, 0.73, 0.78]); World.box(g, xm, y1 - 0.045, z1 + 0.025, wd + 0.04, 0.05, 0.02, 0, W);
     // the plinths (dark discs, a steel rim), the posts of the signs
     const cam = camAt(HOME), q = new V3();
@@ -3741,8 +3860,9 @@ const Garage3D = (function () {
     const MR = M4(0, 0, 0, 0, F.ry, 0), turn = (o) => o.applyMatrix4(MR); placeGB(g, 0, MR);
     { const [P, N] = gbSlice(g, F.svR[0], F.svR[1]); tapItem('service', 'service', P, N); }
     const geo = withGloss(g.geometry(), gls); const m = F.mesh = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; m.castShadow = true; scene.add(m);
-    // the signs, the tags and the labels: the atlas on quads facing the camera's first view (tilted back), unlit
+    // the signs, the tags and the labels: the atlas on quads facing the camera's first view (tilted back), unlit (the drawers' names too)
     frontTex(); F.tex = new THREE.CanvasTexture(F.cv); F.tex.anisotropy = 4;
+    buildDrawers(MR);
     const toCam = (p) => { const d = q.copy(cam).sub(p).normalize(), ri = new V3(d.z, 0, -d.x).normalize(), up = new V3().crossVectors(d, ri).normalize(); return [ri, up]; };
     const SIGN = [FRA.YOUR, FRA.RENT, FRA.SALE];
     F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.56, F.mz - 0.24)), [ri, up] = toCam(c); atlasQuad(S, SIGN[i], c, ri, up, 0.62, 0.136);
@@ -3803,7 +3923,7 @@ const Garage3D = (function () {
     if (TAPM.list.length) { const on = !rglAway(); for (const o of TAPM.list) if (o.userData.rgl) o.visible = on; } }
   /* ---------------- a tap on the picture: what it hits (pick), the marks on what a menu is for (mark), the new part seen through on the
      car (ghost) ----------------
-     pick: every thing to tap (the regal's parts, the maquettes, the SERVICE button, the colour circles, the lift's plate) as its box on
+     pick: every thing to tap (the regal's parts, the maquettes, the drawers, the SERVICE button, the colour circles, the lift's plate) as its box on
      the screen, at least 44 x 44 px (a small one's place grown round its middle), the nearest one the tap is in; the car before it
      (a ray into its meshes): its wheels or its body. mark: the tapped one blue (a blue outline with a glow, a thin white line inside it,
      a light blue sheen over it), the other things of its menu orange (a see-through orange over them, no outline); each mark a mesh
@@ -3846,11 +3966,13 @@ const Garage3D = (function () {
     renderer.setRenderTarget(DIM.rt); renderer.clear(); renderer.render(scene, camera);
     scene.background = bg; scene.overrideMaterial = ov; camera.layers.mask = ly; renderer.shadowMap.enabled = sh; renderer.setClearColor(cc, ca);
   }
-  function tapMark(blue, orange, car) { tapMarkOff(); const M = tapMats(); let rg = false; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; scene.add(mainOnly(o)); TAPM.list.push(o); };
-    for (const k of orange || []) { const it = tapOf(k); rg = !!it && it.bay != null; if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
-    const it = blue && tapOf(blue); rg = !!it && it.bay != null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); }
-    for (const k of new Set([blue, ...(orange || [])])) { const q = k && tapOf(k); if (q) { const o = new THREE.Mesh(tapGeo(q), TAPM.mats.orange); o.layers.set(DIM_L); o.frustumCulled = false; o.userData.rgl = q.bay != null; scene.add(o); TAPM.list.push(o); } }   // (the marked things in the veil's mask)
+  function tapMark(blue, orange, car) { tapMarkOff(); const M = tapMats(); let rg = false, dw = null; const add = (g, m, ro) => { const o = new THREE.Mesh(g, m); o.renderOrder = ro; o.frustumCulled = false; o.userData.rgl = rg; drwMark(o, dw); scene.add(mainOnly(o)); TAPM.list.push(o); };
+    for (const k of orange || []) { const it = tapOf(k); rg = !!it && it.bay != null; dw = it ? it.drw : null; if (it && k !== blue) add(tapGeo(it), M.orange, 6); }
+    const it = blue && tapOf(blue); rg = !!it && it.bay != null; dw = it ? it.drw : null; if (it) { const gs = tapGeo(it, true); add(gs, M.blue, 4); add(gs.clone(), M.white, 5); add(tapGeo(it), M.sheen, 6); }
+    for (const k of new Set([blue, ...(orange || [])])) { const q = k && tapOf(k); if (q) { const o = new THREE.Mesh(tapGeo(q), TAPM.mats.orange); o.layers.set(DIM_L); o.frustumCulled = false; o.userData.rgl = q.bay != null; drwMark(o, q.drw); scene.add(o); TAPM.list.push(o); } }   // (the marked things in the veil's mask)
     dimSet(true, car); }
+  // (a drawer's mark: with the drawer, as far out as it is now)
+  function drwMark(o, i) { if (i == null) return; o.userData.drw = i; const s = EZ.sine(DRW.k[i]) * DRW.out; o.position.set(DRW.dir.x * s, 0, DRW.dir.z * s); }
   function ghostOff() { if (GH.grp) { dropParts(GH.grp); GH.grp = null; } if (GH.hid) { GH.hid.visible = true; GH.hid = null; } for (const e of GH.hidX) e.visible = true; GH.hidX = []; GH.kind = null; shadowDirty = 2; }
   function ghost(kind, lv) { ghostOff(); const cv = cur; if (!cv || !kind || busy) return; const g = partsFor(cv, kind, lv); partsK(g, 1);
     const see = (o) => { if (!o.isMesh || !o.material) return; const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone(); m.transparent = true; m.opacity = 0.5; m.depthWrite = false;
@@ -3859,8 +3981,8 @@ const Garage3D = (function () {
     GH.grp = g; GH.kind = kind; if (DIM.on) { dimSet(false); dimSet(true); } const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; GH.hidX = (old.userData.extra || []).filter(e => e.visible); for (const e of GH.hidX) e.visible = false; } shadowDirty = 2; }   // (its extras too: the tyres' bands on the wheels)
   // (a thing's box on the screen in CSS px (x, y, w, h), its depth; null behind the camera)
   const _pk = new V3();
-  function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box;
-    for (let i = 0; i < 8; i++) { _pk.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); if (_pk.z > 1) return null; const x = (_pk.x + 1) / 2 * W, y = (1 - _pk.y) / 2 * H; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box, q = it.pts;   // (pts: its own eight corners, a turned box's)
+    for (let i = 0; i < 8; i++) { if (q) _pk.copy(q[i]).project(camera); else _pk.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); if (_pk.z > 1) return null; const x = (_pk.x + 1) / 2 * W, y = (1 - _pk.y) / 2 * H; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, d: b.getCenter(_pk).distanceTo(camera.position) }; }
   const _rc = new THREE.Raycaster(), _rv2 = new THREE.Vector2();
   function pick(x, y) {
@@ -3871,7 +3993,7 @@ const Garage3D = (function () {
     if (!best && near) { best = near; bd = screenBox(near).d; }
     const cv = cur; if (cv) { _rv2.set(x / W * 2 - 1, 1 - y / H * 2); _rc.setFromCamera(_rv2, camera); const hit = _rc.intersectObject(cv.v.grp, true).find(h => h.object.visible);
       if (hit && hit.distance < bd - 0.3) { const p = hit.point, w = cv.wheels.find(w => cv.v.grp.localToWorld(_pk.set(w.x, w.y, w.z)).distanceTo(p) < w.r * 1.15); return { key: w ? 'car:wheel' : 'car:body', kind: 'car' }; } }
-    return best ? { key: best.key, kind: best.kind, name: best.name, i: best.i, hex: best.hex } : null; }
+    return best ? { key: best.key, kind: best.kind, name: best.name, i: best.i, hex: best.hex, el: best.el } : null; }
   /* ---------------- the floor: epoxy with a mirror image (a planar reflection drawn every frame at half size), blurred and faded ---------------- */
   // REF.depth: the mirror image's depth kept (WebGL2, or WEBGL_depth_texture): a pass (REF.gm) then writes the image again into REF.gt
   // with each texel's gap in its alpha (how far over the floor the reflected point is), so the floor's taps read both, filtered
@@ -4005,7 +4127,7 @@ const Garage3D = (function () {
   const ZOOM = [0.55, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: close to the car (odlocitve 30. 10.: »bolj približam«), out: the room's walls step aside)
   // (a factor on every view's distance and a lift of its height for the car on the table: k, dy now (eased while a new car drives in),
   // kw, dyw the car's own (the plans' views); every car as far (camFit))
-  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0 };
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0, dn: 0, dw: 0 };   // (dn: the picture lowered by so many px, toward dw: drop())
   // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
   // and down (its own fov wider))
   // (one wider than AWIDE (lying down): more of it up and down too, the more the less of the picture is free between the page's buttons
@@ -4029,10 +4151,11 @@ const Garage3D = (function () {
   function placeCamera(dt) {
     if (!user.drag) { user.yaw += user.vy * dt; user.vy *= Math.exp(-dt * 3); }
     { const e = 1 - Math.exp(-dt * 2.5); CAM.k += (CAM.kw - CAM.k) * e; CAM.dy += (CAM.dyw - CAM.dy) * e; }
+    SHIFT.dn += (SHIFT.dw - SHIFT.dn) * (1 - Math.exp(-dt * 9)); if (Math.abs(SHIFT.dw - SHIFT.dn) < 0.5) SHIFT.dn = SHIFT.dw;
     const aspect = W / H, fov = tallFov(rig.fov), th = Math.tan(rig.fov * Math.PI / 360), need = 3.5 / (th * Math.max(aspect, AREF)), fit = Math.max(1, need / HOME.dist);
     const yaw = rig.yaw + user.yaw, pitch = clamp(rig.pitch, -0.12, 1.2), d = rig.dist * fit * CAM.k * user.zoom;   // (under 0: a show's look up at the car on the lift)
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
-    if (SHIFT.y) camera.setViewOffset(W, H, 0, SHIFT.y, W, H); else if (camera.view) camera.clearViewOffset();   // (the picture raised: the page's buttons cover its foot)
+    const oy = SHIFT.y - SHIFT.dn; if (oy) camera.setViewOffset(W, H, 0, oy, W, H); else if (camera.view) camera.clearViewOffset();   // (the picture raised: the page's buttons cover its foot)
     const ty = rig.ty + CAM.dy + Math.sin(time * 0.31) * 0.012;
     camera.position.set(rig.tx + Math.sin(yaw) * Math.cos(pitch) * d, ty + Math.sin(pitch) * d, rig.tz + Math.cos(yaw) * Math.cos(pitch) * d);
     if (camera.position.y < 0.18) camera.position.y = 0.18;
@@ -5774,14 +5897,21 @@ const Garage3D = (function () {
     // locked maquettes, its tags' prices; the lift's plate)
     shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
-    get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex })); },
+    get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex, el: it.el })); },
+    // (a drawer of the cabinet out: its element's (DRW.els), the others in; null: all in)
+    drawer(el) { DRW.want = el ? DRW.els.indexOf(el) : -1; },
+    // (the picture lowered by px (eased): a drawer's menu at the top, the drawer seen under it; 0 back)
+    drop(px) { SHIFT.dw = Math.max(0, px || 0); }, get dropped() { return SHIFT.dn; },
+    // (a drawer's box on the screen when it is out, as the picture stands without drop())
+    drawerBox(el) { const i = DRW.els.indexOf(el), it = DRW.items && DRW.items[i]; if (!it) return null; drwBox(it, DRW.out); const r = screenBox(it); drwBox(it, EZ.sine(DRW.k[i]) * DRW.out);
+      if (r) r.y -= SHIFT.dn; return r; }, get drawers() { return { col: DRW.col, els: DRW.els.slice(), names: DRW.names.slice(), want: DRW.want, k: Array.from(DRW.k, v => +v.toFixed(3)) }; },
     front(o) { if (o.cars) { FRONT.cars = o.cars.slice(); FRONT.names = o.cars.map(c => c ? c.M.name : ''); } if (o.lit != null) FRONT.lit = o.lit; if (o.lock) FRONT.lock = o.lock.slice(); if (o.price) FRONT.price = o.price.slice(); frontTex(); frontLamps(); },
     lift() { return play(function* () { const cv = cur; if (!cv) return; if (lift > 0.01 || LIFT.on) yield* liftDown(cv, false); else { yield* liftUp(cv, LIFT_H, false); yield* wait(0.4); } }); },
     set fast(k) { fast = k > 0 ? k : 1; },
     get busy() { return busy > 0; }, get thumbed() { return THB.at === THB.n; },   // (a car's picture drawn this frame already)
     reshow(spec) { if (swapP) { swapNext = Object.assign({}, spec, { again: true }); return swapP; } return play(function* () { show(spec); }); },   // (the car shown again at once (another profile), after the show that plays)
     get ready() { return ready; },
-    get idle() { return !busy && !moving() && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
+    get idle() { return !busy && !moving() && !drwMoving() && SHIFT.dn === SHIFT.dw && !user.drag && !autoSpin && Math.abs(user.vy) < 0.01 && !FLM.n && !MK.alive; },   // (nothing moving but the dust: the page draws less often)
     sound(on) { sndInit(); if (SND.out) SND.out.gain.value = on ? 0.7 : 0; SND.vol = on ? 0.7 : 0; if (typeof Sfx !== 'undefined') { Sfx.resume(); Sfx.setEnabled(on); } },
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
