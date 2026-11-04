@@ -33,7 +33,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° | 2 | pripravljen (zelen 4. 11. na 7ddcc00; po spoju svežega `main` nov krog) |
+| 9 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70°; tabela `SECS` po časih 4. 11. in meja dela brskalniških testov 160 min (ločen commit, primeren za hiter popravek) | 2 | pripravljen (zelen 4. 11. na 7ddcc00; na 84ffa0b del 4/4 prekinjen pri meji 120 min, preobremenjen tudi na `main`: 116,7 min; nov krog s popravkom) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
