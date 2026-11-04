@@ -170,13 +170,22 @@ if (pD && pW) {
 // car; tools/voznja.mjs paceOf with the header's pf)
 {
   const apex = (p) => { const o = p.ovinki.filter(c => c.vq_vrh != null && c.v_vrh != null); return { q: mean(o.map(c => c.vq_vrh)), v: mean(o.map(c => c.v_vrh)), n: o.length }; };
-  const run = (name, opts) => { const r = tool([save(name, record('bathurst', Object.assign({ laps: 2 }, opts), (P, race, lap) => { P.laneBias = BIAS(lap); }))], path.join(OUT, name.replace('.rrp', '.json')));
-    const p = r.prof && r.prof.proge && r.prof.proge[0]; return { r, p, a: p && apex(p) }; };
+  const run = (name, opts) => { const f = save(name, record('bathurst', Object.assign({ laps: 2 }, opts), (P, race, lap) => { P.laneBias = BIAS(lap); })), r = tool([f], path.join(OUT, name.replace('.rrp', '.json')));
+    const p = r.prof && r.prof.proge && r.prof.proge[0]; return { f, r, p, a: p && apex(p) }; };
   const U = run('posnetek_bathurst_20261104-1130.rrp', { playerUpg: { motor: 3, gume: 2, zavore: 3, aero: 3 } }), Fm = run('posnetek_bathurst_20261104-1140.rrp', { playerModel: C.MODELS.find(m => m.id === 'formula') });
   const aD = pD && apex(pD), ok = (x) => x.p && x.r.code === 0 && x.a.n >= 10 && Math.abs(x.a.q - aD.q) < 0.03 && x.a.q > 0.95 && x.a.q < 1.05;
   check('an upgraded car and the formula: each its own profile (»kaze+m3g2z3a3«, »formula«), quicker at the apexes than the stock car (the formula by 10 % or more), the same share of its own pace there (within 0.03, 0.95-1.05)',
     pD && ok(U) && ok(Fm) && U.p.avto === 'kaze+m3g2z3a3' && U.p.avti['kaze+m3g2z3a3'] && Fm.p.avto === 'formula' && U.a.v > aD.v && Fm.a.v > aD.v * 1.1,
     [['upgraded', U], ['formula', Fm]].map(([k, x]) => x.p ? `${k} ${x.p.avto}: ${x.a.v.toFixed(2)} m/s at ${x.a.q.toFixed(3)} of its pace (${x.a.n} corners)` : k + ': ' + x.r.text.slice(0, 200)).join('; ') + (aD ? `; stock ${aD.v.toFixed(2)} m/s at ${aD.q.toFixed(3)}` : ''));
+  // (all of them together, and the dry race once more with its car named the truck: a profile per class, the rivals a race gives the car,
+  // tools/voznja.mjs classOf; the truck races the road cars but is not one of them: a profile of its own, v_razredu false)
+  const Ht = JSON.parse(JSON.stringify(dry.H)); Ht.cars[0].m = 'truck';
+  const rc = tool([fDry, U.f, Fm.f, save('posnetek_bathurst_20261104-1150.rrp', dry, Ht)], path.join(OUT, 'razredi.json')), PC = ((rc.prof && rc.prof.proge) || []).filter(p => p.proga === 'bathurst' && p.vreme === 'suho');
+  const road = PC.find(p => p.razred.join() === 'kaze,pico,strega,vortex' && p.v_razredu), fo = PC.find(p => p.razred.join() === 'formula'), tr = PC.find(p => !p.v_razredu);
+  check('a profile per class of cars (the rivals a race gives the car): the stock and the upgraded car in one (the road cars), the formula its own, the truck among the road cars its own (not one of them)',
+    rc.code === 0 && PC.length === 3 && road && road.avti.kaze && road.avti['kaze+m3g2z3a3'] && U.p && road.krogi.uporabljeni.length === 5 + U.p.krogi.uporabljeni.length &&
+    fo && fo.avto === 'formula' && fo.v_razredu && tr && tr.avto === 'truck' && tr.razred.join() === 'kaze,pico,strega,vortex' && tr.krogi.uporabljeni.length === 5 && /ni med njimi/.test(rc.text),
+    PC.map(p => `${p.razred.join(',')}${p.v_razredu ? '' : ' (not one of them)'}: ${Object.keys(p.avti).join(' + ')}, ${p.krogi.uporabljeni.length} laps`).join(' | ') || rc.text.slice(0, 300));
 }
 
 // 3. Mount Buller, an open road: three runs (each its own recording), the line 0.5 / 1 / 1.5 m right of the racing line

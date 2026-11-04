@@ -163,6 +163,18 @@ function carKey(m, pf) {
   if (pf && pf.as != null && +pf.as !== 2) k += '+as' + pf.as;   // (the assist, Core.ASSISTS: not the game's default, 2; its brakes and grip differ)
   return k;
 }
+// a car's class: the cars a race gives it as rivals (Core's own choice, aiModel: the field of the player's vehicle or of the championship's car,
+// pf.fm; a one-make car, the formula: its own kind; without a field the four road cars). One profile per class: its cars alike, so the share
+// of their own pace (vq) carries over between them in step 2. A car that is not one of its rivals (the truck, the rally car among the road
+// cars): a profile of its own in that class (v_razredu false: its speed does not carry over to them)
+function classOf(C, car) {
+  const M = C.MODELS.find(m => m.id === car.m), FM = car.pf && car.pf.fm ? C.MODELS.find(m => m.id === car.pf.fm) : null;
+  if (!M) return [String(car.m)];
+  if (M.oneMake) return [M.id];
+  const pm = FM || M, n = C.fieldSize ? C.fieldSize(pm, 12) : 12, ids = new Set();
+  for (let k = 0; k < n; k++) { const A = C.aiModel(k, pm, n); if (A) ids.add(A.id); }
+  return ids.size ? [...ids].sort() : [M.id];
+}
 
 /* ---------------- one recording: the player's car in every sample on the track, its laps, each lap checked and its parts left out ---------------- */
 function scanFile(C, N, file, tc, paces) {
@@ -226,6 +238,7 @@ function scanFile(C, N, file, tc, paces) {
   if (t.open) { if (P.fin && P.ft > 0) laps.push({ k: 1, t0: P.lap > 1 && P.lapStart > 0 && P.lapStart < P.ft ? P.lapStart : 0, t1: P.ft, time: P.ft }); }
   else { let st = P.lapStart || 0; for (let j = lt.length - 1; j >= 0; j--) { laps.unshift({ k: j + 1, t0: st - lt[j], t1: st, time: lt[j] }); st -= lt[j]; } }
   const run = { name, H, t, pk, car: { m: P.m, pf: P.pf || null, name: P.name, key: carKey(P.m, P.pf) }, laps: [], why: '', notes: [] };
+  run.cls = classOf(C, run.car);
   if (why) { run.why = why; return run; }
   if (!laps.length) { run.why = (t.open ? 'vožnja ni končana' : 'ni celega kroga') + ' (v posnetku ' + Math.round(F[NF - 1][0] - F[0][0]) + ' s dirke)'; return run; }
   if (!P.pf) run.notes.push('brez podatkov o nadgradnjah avta (starejši posnetek): tempo avtopilota za serijski avto');
@@ -327,7 +340,7 @@ function profileOf(key, laps, step) {
   const cars = new Map(); for (const L of used) { const m = L.run.car.key; cars.set(m, (cars.get(m) || []).concat([L])); }
   const main = [...cars.entries()].sort((a, b) => b[1].length - a[1].length)[0];
   const grids = used.map(L => Object.assign(lapGrid(L, len, step), { L }));
-  const P = { proga: t.def.id, ime: t.def.name, odprta: t.open, dolzina: Math.round(len), vreme: key, korak: step, avto: main ? main[0] : null,
+  const P = { proga: t.def.id, ime: t.def.name, odprta: t.open, dolzina: Math.round(len), vreme: key, razred: laps[0].run.cls, v_razredu: laps[0].run.cls.includes(laps[0].run.car.m), korak: step, avto: main ? main[0] : null,
     s: [], n: [], d: [], d_sd: [], v: [], v_sd: [], vq: [], vq_sd: [], a: [], zav: [], rl: [], vref: [] };
   const pace0 = main ? main[1][0].pace : null;
   for (let i = 0; i < ns; i++) {
@@ -384,7 +397,7 @@ function summaryOf(P, fileCount) {
   const N = P.natancnost, E = RULES.enough[P.odprta ? 'cesta' : 'krog'], u = P.krogi.uporabljeni, x = P.krogi.izpusceni;
   // (Slovenian plurals by n mod 100: 1 · 2 · 3–4 · 0 and 5 on; the genitive after »iz«, »od«: 1 · every other)
   const w = (n, a, b, c, d) => { const k = n % 100; return k === 1 ? a : k === 2 ? b : k === 3 || k === 4 ? c : d; }, krog = (n) => n + ' ' + w(n, 'krog', 'kroga', 'krogi', 'krogov'), gen = (n) => n + ' ' + (n % 100 === 1 ? 'kroga' : 'krogov');
-  const L = [`${P.ime} (${P.proga}) · ${P.vreme} · ${fileCount} ${w(fileCount, 'posnetek', 'posnetka', 'posnetki', 'posnetkov')}`];
+  const L = [`${P.ime} (${P.proga}) · ${P.vreme} · razred ${P.razred.join(', ')}${P.v_razredu ? '' : ' (tvoj avto ni med njimi: hitrost ne velja zanje)'} · ${fileCount} ${w(fileCount, 'posnetek', 'posnetka', 'posnetki', 'posnetkov')}`];
   L.push(`  ${P.odprta ? 'vožnje' : 'krogi'}: ${u.length + x.length}, uporabljenih ${u.length}, izpuščenih ${x.length} · čistih ${N.krogov}: ${N.ocena}` +
     (P.odprta ? ` (potrebnih je ${E[0]}–${E[1]} voženj)` : ` (najmanj ${E[0]}, dobro ${E[1]}, najbolje ${E[2]}–10; več kot 10 skoraj nič ne izboljša)`));
   const out = (r) => { const o = Object.entries(r.izpusceno_m || {}).map(([k, m]) => `${m} m ${k === 'promet' ? 'ob drugih avtih' : k === 'start' ? 'štarta' : 'za varnostnim avtom'}`); return o.length ? '; brez ' + o.join(', ') : ''; };
@@ -413,7 +426,8 @@ export function measure(files, opts = {}) {
   const step = opts.korak || 5, C = opts.core || loadCore(), N = opts.napake || napake(), tc = new Map(), paces = new Map(), runs = [];
   for (const f of files) runs.push(scanFile(C, N, f, tc, paces));
   const groups = new Map();
-  for (const r of runs) for (const L of r.laps || []) { L.run = r; const key = r.t.def.id + '|' + (L.cond && L.cond.key ? L.cond.key : (r.H.rain > 0 ? 'mokro' : 'suho') + (r.H.season === 'winter' ? '·zima' : '')); groups.set(key, (groups.get(key) || []).concat([L])); }
+  // (a profile: one track, one weather, one class of cars, classOf)
+  for (const r of runs) for (const L of r.laps || []) { L.run = r; const key = r.t.def.id + '|' + (L.cond && L.cond.key ? L.cond.key : (r.H.rain > 0 ? 'mokro' : 'suho') + (r.H.season === 'winter' ? '·zima' : '')) + '|' + r.cls.join(',') + (r.cls.includes(r.car.m) ? '' : '/' + r.car.m); groups.set(key, (groups.get(key) || []).concat([L])); }
   const profiles = [], text = [];
   for (const [key, laps] of groups) {
     const P = profileOf(key.split('|')[1], laps, step), fc = new Set(laps.map(L => L.file)).size;
