@@ -147,11 +147,11 @@
   "jsMs": 1.27
  },
  "moki": {
-  "calls": 131,
-  "maxCalls": 165,
-  "kverts": 206,
-  "maxKverts": 266,
-  "jsMs": 1.62
+  "calls": 146,
+  "maxCalls": 202,
+  "kverts": 228,
+  "maxKverts": 313,
+  "jsMs": 1.42
  },
  "maunakea": {
   "calls": 112,
@@ -210,11 +210,11 @@
   "jsMs": 1.26
  },
  "toronto": {
-  "calls": 193,
-  "maxCalls": 229,
-  "kverts": 699,
-  "maxKverts": 808,
-  "jsMs": 1.02
+  "calls": 206,
+  "maxCalls": 262,
+  "kverts": 711,
+  "maxKverts": 807,
+  "jsMs": 1.99
  },
  "medvode": {
   "calls": 129,
