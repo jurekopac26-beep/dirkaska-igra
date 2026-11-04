@@ -179,7 +179,7 @@ try {
   {
     await page.evaluate(() => { __garage.pickCar('kaze'); }); await run();
     const u = await ui();
-    T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table, its price in coins under its name and on the go button', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && /Kupi · 30\.000 🪙/.test(u.go), JSON.stringify({ car: u.info.car, go: u.go }));
+    T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table, its price in coins under its name and on the go button (the RENT A CAR maquette\'s car: its word over its price)', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && /^Kupi62\.000\s🪙$/.test(u.go), JSON.stringify({ car: u.info.car, go: u.go }));
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
     T.check('too little money for it: refused, the money unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo denarja/.test(toast), toast);
@@ -192,10 +192,10 @@ try {
     await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
     const u = await ui();
     T.check('the veteran: 248.500, the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)', u.money === '248.500' && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ money: u.money, car: u.info.car, upg: u.info.upg }));
-    await page.evaluate(() => __garage.pickCar('formula')); await run();
+    await page.evaluate(() => __garage.pickCar('kozorog')); await run();
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
-    T.check('bought: the FORMULA ORKAN for 90.000 🪙 (248.500 -> 158.500), the go button now chooses it', u2.S.cars.formula.own && u2.S.money === 158500 && u2.go === 'Izberi' && u2.info.car === 'formula', JSON.stringify({ money: u2.S.money, go: u2.go }));
+    T.check('bought: the KOZOROG TC for 140.000 🪙 (248.500 -> 108.500), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === 108500 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four

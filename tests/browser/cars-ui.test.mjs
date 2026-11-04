@@ -77,7 +77,7 @@ try {
       JSON.stringify({ overflow: L.overflow, arrows: L.arrows, next: L.next, cat: L.cat }));
     T.check('844×390: the car is the garage\'s button (over its place, left of the panel, between the categories and the strip), its hint under it "Tapni avto za garažo"', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, txt: L.hintTxt, on: L.garOn }));
     T.check('844×390: 10 category chips, the car\'s chosen and in view; its category\'s cars in the strip (cheapest first), the chosen one in view; no chip with an arrow\'s data-act',
-      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,panter,vortex,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
+      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,panter,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
       JSON.stringify({ nCats: L.nCats, catSel: L.catSel, catIn: L.catIn, strip: L.stripIds, carIn: L.carIn, acts: L.acts }));
 
     // 2. switching by touch: a category (its first car, later the one last looked at there), a car of the strip
@@ -87,8 +87,8 @@ try {
     await tap('#car-strip [data-car="' + await page.evaluate(() => Core.MODELS.findIndex(m => m.id === 'kamen')) + '"]'); await wait(150); const t2 = await now();
     await tap('#car-cats [data-cat="mali"]'); await wait(150); const t3 = await now();
     await tap('#car-cats [data-cat="tovornjaki"]'); await wait(150); const t4 = await now();
-    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN), a tap on KAMEN PUŠČAVA picks it, Mali avti the PICO TURBO, Tovornjaki again the KAMEN (the one last looked at)',
-      t1.id === 'titan' && t1.strip === 'titan,kamen' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/2$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'pico' && t3.sel === 'mali' && t4.id === 'kamen',
+    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
+      t1.id === 'titan' && t1.strip === 'titan,kamen' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/2$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
       JSON.stringify({ t1, t2, t3, t4 }));
 
     // 3. the gamepad: Start on "Naprej" (as ever), X / Y the categories, LB / RB the cars in the display order
@@ -154,8 +154,8 @@ try {
       for (let k = 0; k < 3; k++) { g.onAction('champ-car-next'); ids.push(id()); } g.onAction('champ-car-prev'); ids.push(id());
       return { ids, shown: document.getElementById('ch-mycar').textContent }; });
     await press(3); const chY = await page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, shown: document.getElementById('ch-mycar').textContent }));
-    T.check('the championship\'s picker: the same order (MIŠKA → KOLIBRI → RAKETA 16V, back to KOLIBRI); Y on the pad: the next category\'s car (LISICA)',
-      chp.ids.join() === 'miska,kolibri,raketa,kolibri' && chp.shown === 'KOLIBRI' && chY.id === 'lisica' && chY.shown === 'LISICA', JSON.stringify({ chp, chY }));
+    T.check('the championship\'s picker: the same order (from the PICO TURBO, the dearest small car: LISICA → KAZE RS → SOKOL, back to KAZE RS); Y on the pad: the next category\'s car (STREGA MR)',
+      chp.ids.join() === 'lisica,kaze,sokol,kaze' && chp.shown === 'KAZE RS' && chY.id === 'strega' && chY.shown === 'STREGA MR', JSON.stringify({ chp, chY }));
     T.check('no page errors (844×390)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -169,7 +169,7 @@ try {
       L.cats.t === 8 && L.cats.b === 42 && L.strip.t === 48 && L.strip.b === 92 && L.cats.l === 10 && L.cats.r === L.vw - 10 && L.strip.l === 10 && L.strip.r === L.vw - 10, JSON.stringify({ cats: L.cats, strip: L.strip }));
     T.check('390×844: nothing off the screen, the rows clear of the panel and the arrows, the panel as it was, the chosen chips in view (Dirkalni, TIGER GT)',
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
-      L.stripIds.join() === 'mravlja,kozorog,tornado,strelica,tiger,bizon,formula,lm' && /^Dirkalni · 5\/8$/.test(L.cat),
+      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,tiger,lm,formula' && /^Dirkalni · 6\/8$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
     T.check('390×844: the car is the garage\'s button (over its place, under the strip, over the panel), its hint under it', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, panel: L.panel, on: L.garOn }));
     // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
@@ -286,7 +286,7 @@ try {
     // Izberi avto: the car screen (its button "Izberi", Nazaj back to the championship), the PICO TURBO picked, back
     await act('champ-car'); await wait(200);
     const cs = await page.evaluate(() => ({ screen: window.__game.screen, next: document.getElementById('car-next').dataset.act + ':' + document.getElementById('car-next').textContent, back: document.getElementById('car-back').dataset.act }));
-    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); }); await wait(100);
+    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); document.querySelector('#car-strip [data-car="' + Core.MODELS.findIndex(m => m.id === 'pico') + '"]').click(); }); await wait(100);
     await page.evaluate(() => document.getElementById('car-next').click()); await wait(300);
     const s2 = await st();
     T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the PICO TURBO; its rivals still the TITAN\'s field (the standings: its TITANs and fill cars, "tekmeci: različni avti")',
