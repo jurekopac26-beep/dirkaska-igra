@@ -25,22 +25,24 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 0 | #288 | hitri popravek `main`: nestabilni testi po #262 (flags, napake-zastavice, hlvid, lang, pits) | 2 | na vrsti (zelen 4. 11.) |
 | 1 | #241 | Mount Buller | 3 | na vrsti |
-| 2 | #248 | kovanci, denarnica, sledi gum | 3 | pripravljen |
 | 3 | #250 | 7 novosti | 3 | čaka |
 | 4 | #226 | Bâlea | 3 | čaka |
 | 5 | #246 | preleti | 3 | čaka |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 9 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs) |
 | 10 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY) |
-| 11 | #291 | klikljiva vprašanja (samo dokumenti) | 2 | pripravljen (koordinacija računa 2, session_01Ck3D3TdgbJaDJhTPBLsW1F) |
+| 11 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ) |
+| 12 | #291 | klikljiva vprašanja (samo dokumenti) | 2 | pripravljen (koordinacija računa 2, session_01Ck3D3TdgbJaDJhTPBLsW1F) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: #261 Hakone, #153 Medvode, #294 krog testov na `main` se izteče. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #288 testi zastavic, #284 boksi, #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
+- Račun 2: #283 Killar, #202 fizika, #292 ostrenje slike.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
