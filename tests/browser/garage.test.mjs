@@ -306,10 +306,16 @@ try {
     // (Izberi), NAJET ZA ENO DIRKO; YOUR CAR's maquette: the muscle car back
     await tap('mq1'); await run(); const r0 = await ui(), rb = await page.evaluate(() => { const b = document.getElementById('g-rent'); return { shown: !b.hidden, t: b.textContent.replace(/ /g, ' ') }; });
     await page.evaluate(() => document.getElementById('g-rent').click()); await page.evaluate(() => new Promise(r => setTimeout(r, 50))); const r1 = await ui(), rc = await page.evaluate(() => document.getElementById('g-chip').textContent);
+    // (one car rented at a time: another one rented gives the first back, its rent paid back; the review of 4. 11. 2026)
+    const sw = await page.evaluate(async (a) => { const S = __garage.S, b = Object.keys(S.cars).filter(id => !S.cars[id].own && id !== a).sort((p, q) => __garage.rentOf(q) - __garage.rentOf(p))[0];
+      S.rent = b; __garage.render(); const m0 = S.money, shown = !document.getElementById('g-rent').hidden; document.getElementById('g-rent').click(); await new Promise(r => setTimeout(r, 50));
+      return { b, shown, back: m0 - S.money === __garage.rentOf(a) - __garage.rentOf(b), rent: S.rent, toast: document.getElementById('g-toast').textContent }; }, cab.free[1]);
     await tap('mq0'); await run(); await page.evaluate(() => { __garage.S.rent = null; __garage.render(); });   // (given back: the rest as before)
     T.check('RENT A CAR: its car on the table, Najemi with its rent (' + cab.rent + ' 🪙) paid, the car rented for one race (Izberi, not bought), NAJET ZA ENO DIRKO; the muscle car back after',
       r0.info.car === cab.free[1] && rb.shown && rb.t.replace(/[^0-9]/g, '') === String(cab.rent) && r0.S.money - r1.S.money === cab.rent && r1.S.rent === cab.free[1] && !r1.S.cars[cab.free[1]].own && r1.go === 'Izberi' && /NAJET ZA ENO DIRKO/.test(rc)
       && (await ui()).info.car === 'muscle', JSON.stringify({ r0: { car: r0.info.car, money: r0.S.money }, rb, r1: { money: r1.S.money, rent: r1.S.rent, go: r1.go }, rc }));
+    T.check('RENT A CAR again while another car is rented: Najemi shown, the first car given back (its rent paid back: the difference taken), this one rented, the toast says so',
+      sw.shown && sw.back && sw.rent === cab.free[1] && /vrnjen/.test(sw.toast), JSON.stringify(sw));
   }
 
   // 4b. the cabinet's drawers (sklop 6d): the cabinet whole on an upright screen (every drawer on it), the eight drawers each tapped at

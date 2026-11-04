@@ -496,7 +496,7 @@
     'Avti na omarici': 'Cars on the cabinet', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.': 'On the cabinet: your car, a car to rent and a car for sale. Tap a model and that car drives onto the turntable.',
     'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.': 'The red SERVICE button: wash, bodywork, engine and oil.', 'Tapni barvni krog: avto prebarvamo v stekleni komori.': 'Tap a colour circle: the car is painted in the glass chamber.',
     'Drugi avti': 'Other cars', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.': 'The two buttons below bring in the car before or after this one.',
-    'Kupi': 'Buy', 'Najemi': 'Rent', 'NAJET ZA ENO DIRKO': 'RENTED FOR ONE RACE', 'Najprej kupi ali najemi avto': 'Buy or rent the car first', 'Najet avto vozi tak, kot je.': 'A rented car is driven as it is.',
+    'Kupi': 'Buy', 'Najemi': 'Rent', 'NAJET ZA ENO DIRKO': 'RENTED FOR ONE RACE', '{0} je vrnjen, najemnina povrnjena.': '{0} returned, its rent refunded.', 'Najprej kupi ali najemi avto': 'Buy or rent the car first', 'Najet avto vozi tak, kot je.': 'A rented car is driven as it is.',
     'tvoj': 'yours', 'NAMESTI': 'FIT',
     'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
     'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',

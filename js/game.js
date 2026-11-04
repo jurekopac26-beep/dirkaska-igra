@@ -4819,7 +4819,7 @@
     Net.close(true); mp = null;
     if (race) toTitle(); else showScreen('title');
   }
-  const meInfo = () => ({ name: S.name || tr('Igralec'), car: Core.MODELS[S.car].id, color: S.color, num: carNum() });
+  const meInfo = () => ({ name: S.name || tr('Igralec'), car: Core.MODELS[S.car].id, color: colNow(), num: carNum() });   // (the colour the player's own car is drawn in: the garage's paint in the career)
   function me() { return Object.assign({ t: 'me' }, meInfo()); }
   function onNet(type, m, id) {
     if (!mp) return;
@@ -4940,8 +4940,8 @@
         : others().length > 1 ? 'Prijatelji so v sobi. Izberi progo in začni dirko.' : 'Prijatelj je v sobi. Izberi progo in začni dirko.')
       : (!open ? tr('Povezujem se s sobo {0} …', mp.code) : tr('Povezan. Gostitelj izbere progo in začne dirko.'));
     const M = Core.MODELS[S.car], row = (k, name, car, col, mine) => '<div><span class="dot" style="background:' + hexCss(PLAYER_COLORS[col] || PLAYER_COLORS[0]) + '"></span>' + k + '. ' + esc(name) + (mine ? tr(' (ti)') : '') + ' · ' + esc(car) + '</div>';
-    let h = mp.players.map((p, i) => p.id === mp.me ? row(i + 1, S.name || tr('Igralec'), M.name, S.color, true) : row(i + 1, p.name, modelById(p.car).name, p.color, false)).join('');
-    if (!mp.players.some(p => p.id === mp.me)) h = row(n + 1, S.name || tr('Igralec'), M.name, S.color, true) + h;   // (a friend before the list arrives)
+    let h = mp.players.map((p, i) => p.id === mp.me ? row(i + 1, S.name || tr('Igralec'), M.name, colNow(), true) : row(i + 1, p.name, modelById(p.car).name, p.color, false)).join('');
+    if (!mp.players.some(p => p.id === mp.me)) h = row(n + 1, S.name || tr('Igralec'), M.name, colNow(), true) + h;   // (a friend before the list arrives)
     if (host ? !full && (!mp.quick || !Net.locked) : !n) h += '<div class="wait">' + tr('{0}. čakam …', Math.max(n, 1) + 1) + '</div>';
     $('on-players').innerHTML = h; $('on-players').classList.toggle('many', n > 4);   // (a big room: in columns)
     $('on-mycar').textContent = M.name;
@@ -5118,7 +5118,7 @@
   function netResults() {
     const R = mp.race, P = race.player, M = Core.MODELS[S.car]; $('res-laps').classList.add('off');
     phase = 'done'; Sfx.setRunning(false);
-    const rows = [{ me: true, name: S.name || tr('Igralec'), car: M.name, col: S.color, t: R.mine, best: P.lapTimes.length ? Math.min(...P.lapTimes) : NaN }];
+    const rows = [{ me: true, name: S.name || tr('Igralec'), car: M.name, col: colNow(), t: R.mine, best: P.lapTimes.length ? Math.min(...P.lapTimes) : NaN }];
     for (const c of race.remotes) { const C = R.cars.get(c.netOf.id) || {}; rows.push({ me: false, name: c.name, car: c.m.name, color: c.color, t: C.fin, left: C.left && C.fin == null }); }
     rows.sort((a, b) => (a.t == null) - (b.t == null) || a.t - b.t);
     const myPos = rows.findIndex(r => r.me) + 1, waiting = rows.some(r => !r.me && r.t == null && !r.left), two = rows.length === 2, other = rows.find(r => !r.me);
@@ -5644,7 +5644,8 @@
       case 'resume': resume(); break;
       case 'over-again': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else newRace(); break;   // (KONEC IGRE: the same race again, a championship's round too)
       case 'over-res': finishRace(); break;
-      case 'restart': if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
+      case 'restart': if (!owned(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); break; }   // (a rented car's race over: its rent given back at the results)
+        if (race && race.chal) chalGo(); else if (race && race.quali) newRace('quali'); else if (race && race.champ && (race.player.finished || race.isOut(race.player))) openChamp(); else newRace(); break;   // (qualifying: its lap again; a championship round already driven (or retired from) counts: on to the standings)
       case 'calibrate': Input.calibrate(); toast(tr('Sredina nagiba je nastavljena.')); break;
       case 'tilt-invert': S.tiltInvert = S.tiltInvert ? 0 : 1; save(); applySettings(); break;
       case 'fullscreen': goFullscreen(); break;

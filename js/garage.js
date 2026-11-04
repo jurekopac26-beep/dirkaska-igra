@@ -93,6 +93,8 @@
     }
     return S;
   }
+  // (the game's colour (its car screen's, tdgp-settings; none: its first, red): an owned car the garage has not saved yet is drawn in it)
+  function S0color() { try { const s = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'), k = s && s.color; if (Number.isInteger(k) && k >= 0 && k < COLORS.length) return k; } catch (_) { } return 0; }
   function S0lang() { try { const s = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (s && s.lang === 'en') return 'en'; } catch (_) { } return 'sl'; }
   let S = null;
   // (a car's parts as the game's contract has them (docs/deli.md): { element: its option 1 .. 16 }; here [tab, place] each)
@@ -142,7 +144,7 @@
     const c = careerRead(), g = c.garage && typeof c.garage === 'object' ? c.garage : {}, gc = g.cars && typeof g.cars === 'object' ? g.cars : {};
     const d = { v: 2, mode: 'game', money: Number.isFinite(c.money) ? Math.max(0, Math.floor(c.money)) : 0, car: CAR0, cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
     const has = new Set((Array.isArray(c.cars) ? c.cars : []).map(heirId)); has.add(CAR0);
-    for (const id of ORDER) { const k = d.cars[id] = carNew(id, has.has(id)); if (gc[id] && typeof gc[id] === 'object') carFrom(k, gc[id]);
+    for (const id of ORDER) { const k = d.cars[id] = carNew(id, has.has(id)); if (gc[id] && typeof gc[id] === 'object') carFrom(k, gc[id]); else if (k.own) k.color = S0color();
       if (!k.own) continue; const want = careerUpg(c, id);
       for (const u of ['motor', 'gume', 'zavore', 'aero']) if (levels(k.parts)[u] !== want[u]) k.parts = levelParts(k.parts, u, want[u]); }
     if (ORDER.includes(heirId(g.car))) d.car = heirId(g.car);
@@ -463,9 +465,12 @@
     chip(tr('NOV AVTO V GARAŽI'), esc(M().name));
   }
   // RENT A CAR: the car for one race (its rent paid now; another rented before is given back), driven as it is, no service after
+  // (one car rented at a time: another one rented before the race gives the first back, its rent paid back)
   function rent() {
-    const id = S.car; if (S.cars[id].own || S.rent === id || locked(id) || !pay(rentOf(id))) return;
-    S.rent = id; save(); render(); G.sfx('ping');
+    const id = S.car, old = S.rent && S.rent !== id ? S.rent : null; if (S.cars[id].own || S.rent === id || locked(id)) return;
+    const net = rentOf(id) - (old ? rentOf(old) : 0); if (net > 0 && !pay(net)) return;
+    if (net < 0) { const from = S.money; S.money -= net; countMoney(from, S.money); }
+    S.rent = id; save(); render(); G.sfx('ping'); if (old) toast(tr('{0} je vrnjen, najemnina povrnjena.', model(old).name));
     chip(tr('NAJET ZA ENO DIRKO'), esc(M().name));
   }
   // a tap on the picture: a part of the regal (its element's menu, its option chosen), a drawer of the cabinet (its element's menu, it comes

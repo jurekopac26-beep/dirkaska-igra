@@ -4,7 +4,8 @@
 // part kept for the garage, its races and wins as they were; the KAZE RS bought (62.000): the career has it (27.500 left). The mockup's
 // Veteran: its own test money (248.500), the career untouched; Kariera again: 27.500, the KAZE there, the turbo still on the PICO. The
 // game (index.html): the career's 27.500 and both cars, the PICO's engine at level 1 on its upgrade screen; the KAZE's aero level 2
-// bought there (its price taken). In the garage again: the career's coins, the KAZE with the parts of that level (the SPORT kit).
+// bought there (its price taken). In the garage again: the career's coins, the KAZE with the parts of that level (the SPORT kit). An
+// owned car the garage has not saved yet: the game's colour (tdgp-settings) in the garage and in the career.
 //   node tests/browser/denarnica.test.mjs
 import { serve, launch, checker } from './lib.mjs';
 
@@ -76,6 +77,17 @@ try {
   await page.evaluate(() => __garage.pickCar('kaze')); await run();
   const k = await page.evaluate(() => { const c = __garage.S.cars.kaze; return { money: __garage.S.money, aero: c.parts.aero, want: __garage.findOpt('aero', 'Sport'), lv: __garage.levels(c.parts), info: Garage3D.info.upg }; });
   T.check('the garage again: the career\'s coins, the KAZE with the parts of the level the game bought (aero 2: the SPORT kit), drawn so', k.money === c4.money && JSON.stringify(k.aero) === JSON.stringify(k.want) && k.lv.aero === 2 && k.lv.motor === 0 && k.info.aero === 2, JSON.stringify(k));
+
+  // 7. an owned car the garage has not saved yet (the LEV S, no garage entry): in the game's colour (tdgp-settings, green 5) in the
+  // garage and so kept in the career, not the garage's first colour for it; the KAZE's as it was (the review of 4. 11. 2026)
+  await page.evaluate(() => { const c = JSON.parse(localStorage.getItem('tdgp-career')); c.cars.push('levs'); if (c.garage && c.garage.cars) delete c.garage.cars.levs; localStorage.setItem('tdgp-career', JSON.stringify(c));
+    const s = JSON.parse(localStorage.getItem('tdgp-settings') || '{}'); s.color = 5; localStorage.setItem('tdgp-settings', JSON.stringify(s)); });
+  const c4b = await career();
+  await garage();
+  await page.evaluate(() => __garage.pickCar('levs')); await run();
+  const c5 = await career(), lc = await page.evaluate(() => __garage.S.cars.levs.color);
+  T.check('an owned car the garage had not saved (the LEV S): the game\'s colour (5) in the garage and so in the career; the KAZE\'s kept',
+    lc === 5 && !!c5.garage && !!c5.garage.cars.levs && c5.garage.cars.levs.color === 5 && c4b.garage.cars.kaze.color === c5.garage.cars.kaze.color, JSON.stringify({ lc, levs: c5.garage && c5.garage.cars.levs, kaze: [c4b.garage.cars.kaze.color, c5.garage.cars.kaze.color] }));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 } catch (e) {

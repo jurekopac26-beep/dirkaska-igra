@@ -32,12 +32,13 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 9 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | čaka |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
-- Račun 1: #261 Hakone, garaža sklopi 6–8 (osnutek), #153 Medvode, #294 krog testov na `main` se izteče. Teme: redčenje gozda na pravih progah (po Hakoneju).
+- Račun 1: #261 Hakone, #153 Medvode. Teme: redčenje gozda na pravih progah (po Hakoneju).
 - Račun 2: #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #284 boksi, #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.

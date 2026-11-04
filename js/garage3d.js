@@ -5284,8 +5284,9 @@ const Garage3D = (function () {
       const up = lv > from, old = cv.parts[kind], nw = partsFor(cv, kind, lv); partsK(nw, 0); cv.spec.upg[kind] = lv;
       const K = cv.kit;
       if (kind === 'motor') {   // the exhaust (or the electric car's light under it), then the bonnet; the engine revved: flames, the power
-        let running = false;
+        let running = false, pw = false;
         const start = function* () { if (running) return; running = true; engStart(cv.M); lamps(cv, 1, 0.5); yield* tween(0.3, (k) => { cv.shake = k * 2; }); };
+        const power = () => { if (!pw) { pw = true; hud('power', { kind, lv, from, kw: cv.M.kw }); } };   // (the power's chip once: also when the car draws its own exhaust (no tips at the rear))
         for (const zone of ['rear', 'side', 'front']) {
           if (!hasZone(old, zone) && !hasZone(nw, zone)) continue;
           yield* goZone(cv, kind, zone);
@@ -5293,14 +5294,14 @@ const Garage3D = (function () {
           if (up && hasZone(nw, zone)) yield* weld(cv, nw, zone);
           yield* partsIn(cv, nw, kind, 0.7, zone);
           if (zone === 'rear' || (zone === 'side' && cv.M.ev)) {
-            hud('power', { kind, lv, from, kw: cv.M.kw });
+            power();
             yield* start();
             if (cv.M.ev) yield* evPulse(cv, nw, up ? 2 : 1);
             else { yield* revs(cv, up ? 2 : 1, up && lv >= 2); if (up && lv === 3) yield* revs(cv, 1, true); }
           } else if (zone === 'front') { yield* start(); if (!cv.M.ev) yield* revs(cv, 1, false); }
         }
-        if (!running) { hud('power', { kind, lv, from, kw: cv.M.kw }); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
-        yield* wait(0.3); idleOn(cv);
+        if (!running) { power(); yield* goZone(cv, kind, 'rear'); yield* start(); if (cv.M.ev) yield* evPulse(cv, nw, 1); else yield* revs(cv, 1, false); }
+        power(); yield* wait(0.3); idleOn(cv);
       } else if (kind === 'gume' || kind === 'zavore') {
         // the camera round to the wheel while the lift's arms swing in under the sills (the column's foot between the wheels, not under
         // this one); the car up on the lift, the wheels free, the camera with it, looking up at it a little: from under the sills' line,
@@ -5508,12 +5509,12 @@ const Garage3D = (function () {
   // (a part laid on the deck, its outer face up, its inner one on the deck (in the cart's frame))
   function onDeck(p) { const R = CART.root; R.add(p.o); p.o.matrixAutoUpdate = false;
     p.o.matrix.compose(new V3(0, CART.deck + 0.004 - p.zb, 0), new THREE.Quaternion().setFromAxisAngle(new V3(1, 0, 0), -Math.PI / 2), _h1); p.o.matrixWorldNeedsUpdate = true; }
-  // (the new car in the old one's place at once, as the old one stands: up on the lift, its wheels' turn, the lift's plan, the robots'
-  // look at its body (the same body: only its wheels' parts are new))
-  function fitSwap(cv, nw) {
+  // (the new car in the old one's place at once, as the old one stands: up on the lift, its wheels' turn; same (the wheels' parts only
+  // new, fitWheels): the lift's plan and the robots' look at its body kept, else (a part on the body, fitPart) measured again)
+  function fitSwap(cv, nw, same) {
     nw.root.position.copy(cv.root.position); nw.root.quaternion.copy(cv.root.quaternion); nw.v.grp.position.y = cv.v.grp.position.y;
     for (const k of ['spin', 'pitch', 'bounce', 'roll', 'shake', 'steer']) nw[k] = cv[k];
-    nw.lp = cv.lp; nw.hgrid = cv.hgrid; nw.way = cv.way; cur = nw; svcForget(); tt.remove(cv.root); poseCar(nw, 0); planAhead(nw); idleOn(nw); freeCar(cv);
+    if (same) { nw.lp = cv.lp; nw.hgrid = cv.hgrid; } nw.way = cv.way; cur = nw; svcForget(); tt.remove(cv.root); poseCar(nw, 0); planAhead(nw); idleOn(nw); freeCar(cv);
   }
 
   // the show: el 'gume' or 'platisca', spec the car with the new part, o.src the regal's part ('rgl:NAME') or none (the trolley)
@@ -5555,7 +5556,7 @@ const Garage3D = (function () {
       fitLog('plain', { regal });
       if (oldP) disposeTree(oldP.o); if (newT) disposeTree(newT.o);
       for (const q of cv.wheels) { const p = cv.v.grp.localToWorld(new V3(q.x, q.y, q.z)); for (let k = 0; k < 6; k++) puffs.emit(p.x, p.y, p.z, rnd(-0.6, 0.6), rnd(0.2, 0.8), rnd(-0.6, 0.6), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02); }
-      SFX.clunk(0.4); fitSwap(cv, nw); done(); return;
+      SFX.clunk(0.4); fitSwap(cv, nw, true); done(); return;
     }
     fitLog('plan', { regal, arm: i, tool, wheel: w.front ? 'front' : 'rear', side: w.sd, bay: regal ? pcs[0].bay : -1, at: WF.c.toArray().map(q => +q.toFixed(2)), piece: pc ? pcs.indexOf(pc) : -1, ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
     if (regal) { disposeTree(newT.o); RGL.P.stay = true; }   // (the regal's own part goes on: the car's own is the new car's; the regal in the picture till it is back)
@@ -5585,7 +5586,7 @@ const Garage3D = (function () {
     const p0 = WF.c; for (let k = 0; k < 10; k++) puffs.emit(p0.x, p0.y, p0.z, rnd(-0.5, 0.5), rnd(0.1, 0.7), WF.t.z * rnd(0.2, 0.9), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
     SFX.clunk(0.5);
     disposeTree(letGo(i));
-    const Fo = wheelFrame(cv, w).F; fitSwap(cv, nw); hold(i, oldP.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw });
+    const Fo = wheelFrame(cv, w).F; fitSwap(cv, nw, true); hold(i, oldP.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw });
     yield* wait(0.15); SFX.wrench();
     yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine);
     // the old part back where the new one was: on the regal (a tyre standing on the board, a rim on its peg), on the deck
