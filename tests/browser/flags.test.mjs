@@ -48,9 +48,13 @@ try {
   T.check('... it goes in ("VARNOSTNI AVTO GRE ...", its lamps off), the race is green again at the line ("ZELENA ZASTAVA!"); the lamps flashed while out',
     !!inSeen && /^on scin:SC GRE S PROGE$/.test(inSeen.flag) && !inSeen.lamp && !s2.sc && !s2.scDrawn && lampSeen && (/ZELENA ZASTAVA/.test(s2.msg) || /(^|,)green(,|$)/.test(said) || s2.phase !== 'racing'), JSON.stringify({ inSeen, s2, said }));
 
-  // 2. a rival stopped 550 m ahead of the player (put there, at the edge of the road): a yellow flag, the marshal's flag, the flag on the HUD in the zone
+  // 2. a rival stopped 550 m ahead of the player (put there, at the edge of the road away from the racing line): a yellow flag, the marshal's
+  // flag, the flag on the HUD in the zone. (Not on the line: after the safety car the field is strung out ahead of the player, and a rival
+  // that comes upon the car at racing speed sees it only 22 m ahead (aiDrive) and rams it; the knocks moved it on and started its stop
+  // again, and it had not stood the yellow flag's 1 s by the check. The + edge, T.w - 1.5, lies within 2.2 m of the line on Štajerska (rbring)
+  // over 63 % of the lap, at this spot nearly always; the other edge is 5 m or more from it)
   await page.evaluate(() => { const r = window.__game.race, P = r.player, T = r.track, c = r.order.filter(o => !o.isPlayer && !o.finished).pop(); if (!c) return;   // (every rival already home: nothing to stop)
-    const i = T.idx(P.q.s + 550), off = T.w - 1.5; c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
+    const i = T.idx(P.q.s + 550), off = (T.rl[i] > 0 ? -1 : 1) * (T.w - 1.5); c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
     c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.dist = P.dist + 550; window.__stop = c; });
   // (the HUD's message and toast logged as they come: the player may cross the line within the same steps, its last lap's message and an
   // achievement's toast then take both at once)
@@ -58,12 +62,9 @@ try {
     for (const id of ['h-msg', 'toast']) window.__mo.observe(document.getElementById(id), { childList: true, subtree: true }); } });
   const hasStop = await page.evaluate(() => !!window.__stop);
   if (hasStop) {
-    // (the car put down stands from the start: its speed over the last half second, from the pace it raced at, is let go, or its 1 s of standing
-    // would wait for that to die away first. At the road edge among the field another car may knock it (kTake, up to 30 m/s) and the standing
-    // starts over: the 4 s are held up to 8 s, until the stop has raised the flag. The flag has its own part below)
-    await page.evaluate(() => { const f = window.__stop.fl; if (f) f.v = 0; });
-    const flagUp = () => page.evaluate(() => { const f = window.__stop.fl; return !!(f && f.yel); });
-    for (let k = 0; k < 40 && (k < 20 || !(await flagUp())); k++) await page.evaluate(() => { const c = window.__stop, g = window.__game; c.vx = c.vz = 0; c.locked = true; g.pause(); g.sim(0.2, true); });
+    // (held there until it has stood more than 1.2 s by the race's own measure (fl.stopT; the yellow flag comes after 1 s), at most 10 s:
+    // not a fixed 4 s, a rival that still touches it moves it on and starts its stop again)
+    for (let k = 0; k < 50; k++) if (await page.evaluate(() => { const c = window.__stop, g = window.__game; c.vx = c.vz = 0; c.locked = true; g.pause(); g.sim(0.2, true); return !!c.fl && c.fl.stopT > 1.2; })) break;
     await sim(0.1);
     const y1 = Object.assign(await hud(), await page.evaluate(() => { const c = window.__stop, P = window.__game.race.player, L = window.__game.race.track.len; return { stopped: c.name, fl: c.fl && { stopT: +c.fl.stopT.toFixed(2), v: +c.fl.v.toFixed(1) }, ahead: Math.round((((c.q.s - P.q.s) % L) + L) % L), said: window.__said2.splice(0) }; }));
     T.check('a car stopped ahead: "RUMENA ZASTAVA" (or another message at the same moment, the rule told), a marshal waving the flag beside the track', y1.yel >= 1 && y1.marshals >= 1 && [y1.msg, y1.toast, ...y1.said].some(t => /RUMENA ZASTAVA/.test(t) || /^Rumena zastava: pred tabo je ustavljen avto/.test(t)), JSON.stringify(y1));

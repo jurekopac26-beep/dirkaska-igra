@@ -12,6 +12,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // as before), and the race up it against 21 rivals (Race: opts.tt false; ~40 m of road below the start line: the grid in rows four abreast, Race _gridWide).
   TRACK_DEFS.push({
     id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, modes: ['tt', 'race'], laps: 1, halfWidth: 7,
+    maxRivals: 28,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the summit's ~85 m of road past the line: two rows a side of 28 cars at most, the longest vehicles' (6.3 m) clear of each other
     desc: 'Vzpon na Pikes Peak od starta na 2862 m do vrha na 4301 m: kronometer proti uri ali dirka z 21 tekmeci. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom.',
     en: { name: 'Pikes Peak, USA', desc: 'The climb up Pikes Peak from the start at 2862 m to the summit at 4301 m: a time trial against the clock or a race against 21 rivals. Forest bends, the “W” hairpins, a fast ridge and switchbacks below the snowy summit.' },   // (the English page: Jezik · Language)
     realKm: 19.99, alt: [2862, 4301],
