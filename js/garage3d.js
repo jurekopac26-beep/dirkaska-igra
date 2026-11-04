@@ -5449,7 +5449,7 @@ const Garage3D = (function () {
   // (a part held (off) put on or down: its middle at c, its axle along ax (sym: either way round), turned in the hand the least from how
   // it is held for the tool's way d; of the ways dirs ([d, yaw]) the one it turns least for (the earlier the better), its place and the
   // one pre further out along pd (where it comes from and goes back to) both in the arm's reach: { s, ext, pre: { s, ext }, off, turn })
-  function placePlan(i, tool, off, c, ax, sym, dirs, pd, pre) {
+  function placePlan(i, tool, off, c, ax, sym, dirs, pd, pre, clr) {
     const to = new V3(), qo = new THREE.Quaternion(); off.decompose(to, qo, _hs); const h = to.clone().negate().applyQuaternion(qo.clone().invert()); let best = null;
     dirs.forEach(([d, yaw], j) => {
       const dd = v3(d).normalize(), pitch = Math.acos(clamp(-dd.y, -1, 1)), yw = yaw != null ? yaw : Math.sin(pitch) > 1e-3 ? Math.atan2(dd.z, -dd.x) : RB[i].s.yaw;
@@ -5457,6 +5457,7 @@ const Garage3D = (function () {
       const q1 = new THREE.Quaternion().setFromUnitVectors(a, t).multiply(qp), tip = c.clone().add(h.clone().applyQuaternion(q1)), turn = 2 * Math.acos(clamp(Math.abs(qp.dot(q1)), 0, 1)), sc = turn + j * 0.02;
       if (best && sc >= best.sc) return;
       const p = poseAt(i, tool, tip, dd, yw); if (!p) return; const p2 = poseAt(i, tool, tip.clone().add(v3(pd).normalize().multiplyScalar(pre)), dd, yw); if (!p2) return;
+      if (clr && !clr(tip, p.s)) return;
       const F = new THREE.Matrix4().compose(c, q1, _h1); p.off = tipM(p.s, TL[tool] + p.ext).invert().multiply(F); p.pre = p2; p.turn = turn; p.sc = sc; best = p; });
     return best;
   }
@@ -5627,20 +5628,30 @@ const Garage3D = (function () {
   // (an element's place on the car on side sd (+1 the near one) and the way out from the body there (world): its spot in the car's frame
   // (the middle ones a little to sd's side: an arm reaches in from its own), met from outside along the way in (a ray: the body's first face))
   function partSpot(cv, el, sd) {
-    const K = cv.kit, hh = (f) => K.bottom + (K.top - K.bottom) * f, at = (s) => PART_AT[s].includes(el);
-    let x = (K.wfx + K.wrx) / 2, y = hh(0.45), z = K.hw, out = [0, 0, 1];   // (the side's middle: the decals)
-    if (at('front')) { x = K.front; y = hh({ zarometi: 0.55, maska: 0.32, zmigavci: 0.48, aero: 0.08 }[el]); z = K.hw * { zarometi: 0.62, zmigavci: 0.86, maska: 0.3, aero: 0.35 }[el]; out = [1, 0, 0]; }
-    else if (at('rear')) { x = K.rear; y = el === 'auspuh' ? K.exY : hh(0.58); z = K.hw * (el === 'auspuh' ? 0.45 : 0.62); out = [-1, 0, 0]; }
+    const K = cv.kit, v = cv.v, G = v.grp, hh = (f) => K.bottom + (K.top - K.bottom) * f, at = (s) => PART_AT[s].includes(el); G.updateMatrixWorld(true);
+    // (a lamp of side sd in the car's frame (k 0: a head lamp, 2: a tail lamp; where the car's glow is); none: none there (a formula's nose,
+    // a body without them: a kart's, an old racer's))
+    const lamp = (k) => (k ? v.kit && v.kit.noTailGlow : v.noHead || (v.kit && v.kit.noHeadGlow)) ? null : G.worldToLocal(v.bodyG.localToWorld(v.lights[k + (sd > 0 ? 1 : 0)].clone()));
+    let x = (K.wfx + K.wrx) / 2, y = hh(0.45), z = K.hw, out = [0, 0, 1], L = null;   // (the side's middle: the decals)
+    if (at('front')) { x = K.front; y = hh({ zarometi: 0.55, maska: 0.32, zmigavci: 0.48, aero: 0.08 }[el]); z = K.hw * { zarometi: 0.62, zmigavci: 0.86, maska: 0.3, aero: 0.35 }[el]; out = [1, 0, 0];
+      if ((el === 'zarometi' || el === 'zmigavci') && (L = lamp(0))) { y = L.y; if (el === 'zarometi') z = Math.abs(L.z); } }   // (the lamps on the car's own, the indicators at their height)
+    else if (at('rear')) { x = K.rear; y = el === 'auspuh' ? K.exY : hh(0.58); z = K.hw * (el === 'auspuh' ? 0.45 : 0.62); out = [-1, 0, 0];
+      if (el === 'zadnje_luci' && (L = lamp(2))) { y = L.y; z = Math.abs(L.z); } }
     else if (at('top')) { x = el === 'krilo' ? K.deckX : K.hoodX; y = K.top + 0.1; z = K.hw * (el === 'krilo' && sd < 0 ? 0 : 0.22); out = [0, 1, 0]; }
     else if (at('wheel')) { x = el === 'dim_gum' ? K.wrx : K.wfx; y = K.wr * (['zavore', 'celjusti', 'dim_gum'].includes(el) ? 1 : 1.8); }
     else if (el === 'luc_pod_avtom') y = K.bottom + 0.05;
-    else if (el === 'zamasek') { x = K.wrx - 0.2; y = hh(0.6); }
+    else if (el === 'zamasek') { x = K.wrx - 0.2; y = Math.min(hh(0.6), Math.max(2 * K.wr + 0.15, hh(0.42))); }   // (over the rear wheel's arch, under the windows: a pickup's on its bed's side, not over it)
     z *= sd; if (out[2]) out[2] = sd;
-    const G = cv.v.grp; G.updateMatrixWorld(true);
-    const o = new V3(...out).applyQuaternion(G.getWorldQuaternion(new THREE.Quaternion())), c = G.localToWorld(new V3(x, y, z)), f0 = rayAll.far;
+    const o = new V3(...out).applyQuaternion(G.getWorldQuaternion(new THREE.Quaternion())), f0 = rayAll.far;
     rayAll.far = 6; rayAll.camera = camera;   // (the car's sprites (its marks) want the camera)
     const ray = (q) => { rayAll.set(q.clone().addScaledVector(o, 3), o.clone().negate()); return rayAll.intersectObject(G, true).find(r => r.object.isMesh && r.object.visible); };
-    let hit = ray(c); for (const k of [0.8, 0.6, 0.4]) { if (hit || !z || out[1]) break; const q = G.localToWorld(new V3(x, y, z * k)); hit = ray(q); if (hit) c.copy(q); }   // (none at a corner (a rounded one): nearer the middle)
+    // (on the car's face, not deep in it (at an end: over a low nose the windscreen's foot, under a raised nose its floor; at the side: over a
+    // pickup's bed side its far wall): else lower by steps, then a little higher (the exhaust: at its height only), at an end nearer the middle too (a rounded corner);
+    // none: the spot on the car's outline)
+    const dm = Math.min(0.5, 0.15 * (K.front - K.rear)), deep = (h) => { const q = G.worldToLocal(h.point.clone()); return out[1] ? false : out[0] ? Math.abs(q.x - x) > dm : el === 'luc_pod_avtom' ? K.hw - Math.abs(q.z) > 0.3 : q.z * sd < 0.1; };   // (a kart's: its seat's back; a light under the sill: not in under a side pod, a frame)
+    const ys = out[1] || el === 'auspuh' ? [y] : [y, ...[0.8, 0.6, 0.45].map(f => K.bottom + (y - K.bottom) * f), y + 0.08, y + 0.16], zs = out[0] ? [1, 0.8, 0.6, 0.4] : [1];
+    let c = G.localToWorld(new V3(x, y, z)), hit = null;
+    for (const yy of ys) { for (const k of zs) { const q = G.localToWorld(new V3(x, yy, z * k)), h = ray(q); if (h && !deep(h)) { hit = h; c = q; break; } } if (hit) break; }
     rayAll.far = f0;
     return { p: hit ? hit.point.clone() : c, out: o, hit: !!hit, sd };
   }
@@ -5679,24 +5690,38 @@ const Garage3D = (function () {
       const a = a0 + da; r.push([[-Math.cos(a) * Math.sin(th), -Math.cos(th), -Math.sin(a) * Math.sin(th)], null]); }
     return r;
   }
+  // (the arm's way clear of the car G: its column down to the wrist (s), its tool from there to just off the part (tip), each looked along
+  // from the arm's end in (a body's shell seen from outside: open under a sill, a side pod); n.k: the checks left (none clear in time: no arm))
+  function clearOf(G, tip, s, n) {
+    if (n.k-- <= 0) return false;
+    const w = new V3(s.x, s.y - 0.07, s.z), d = tip.clone().sub(w), L = d.length(), top = Math.max(w.y + 0.1, 4.4), f0 = rayAll.far;
+    const hit = (a, u, far) => { rayAll.set(a, u); rayAll.far = far; return rayAll.intersectObject(G, true).some(r => r.object.isMesh && r.object.visible); };
+    rayAll.camera = camera; d.divideScalar(L || 1);
+    const bad = hit(new V3(w.x, top, w.z), new V3(0, -1, 0), top - w.y) || (L > 0.1 && hit(w, d, L - 0.08));
+    rayAll.far = f0; return !bad;
+  }
   // (a part held (off) put exactly in frame F (where the car draws it, its place on the regal or the deck): held by the same point as it
   // was taken, turned in the hand the least of the ways dirs (the earlier the better); its place and the one pre further out along pd both
   // in the arm's reach: as placePlan's)
-  function framePlan(i, tool, off, F, dirs, pd, pre) {
+  function framePlan(i, tool, off, F, dirs, pd, pre, clr) {
     const tip = new V3().setFromMatrixPosition(off.clone().invert()).applyMatrix4(F), qo = new THREE.Quaternion().setFromRotationMatrix(off), q2 = new THREE.Quaternion(); let best = null;
     dirs.forEach(([d, yaw], j) => { if (best && j * 0.02 >= best.sc) return;
       const p = poseAt(i, tool, tip, d, yaw); if (!p) return; const p2 = poseAt(i, tool, tip.clone().addScaledVector(v3(pd).normalize(), pre), p.d, p.s.yaw); if (!p2) return;
       const o2 = tipM(p.s, TL[tool] + p.ext).invert().multiply(F), turn = 2 * Math.acos(clamp(Math.abs(qo.dot(q2.setFromRotationMatrix(o2))), 0, 1)), sc = turn + j * 0.02;
-      if (!best || sc < best.sc) { p.off = o2; p.pre = p2; p.turn = turn; p.sc = sc; best = p; } });
+      if ((!best || sc < best.sc) && (!clr || clr(tip, p.s))) { p.off = o2; p.pre = p2; p.turn = turn; p.sc = sc; best = p; } });
     return best;
   }
   // (the camera: at the regal from the side the arm comes in on (its tool in the bay, the part on it); at a spot of the car from out there:
   // the near side's from before or behind the car on that side, the far side's from beyond the car's end, the top's from over the near side)
   function rglView(grab, bay) { const wr = new V3(grab.s.x, grab.s.y, grab.s.z), tp = grab.tip, a = Math.atan2(wr.x - tp.x, wr.z - tp.z), side = bay.x > -2 ? 1 : -1;
     return view({ at: [wr.x * 0.35 + tp.x * 0.65, wr.y * 0.35 + tp.y * 0.65 + 0.2, wr.z * 0.35 + tp.z * 0.65], yaw: a + side * (side > 0 ? 0.9 : 1.1), pitch: 0.27, dist: 3.4, fov: 35 }); }
-  function spotView(S) { const o = S.out, up = o.y > 0.7, side = Math.abs(o.z) > 0.7;
+  function spotView(S) { const o = S.out, up = o.y > 0.7, side = Math.abs(o.z) > 0.7, far = side && o.z < 0;
     const yaw = up ? 0.5 : side ? (o.z > 0 ? 0.35 : Math.sign(S.p.x || 1) * 2.2) : Math.atan2(o.x, o.z) - Math.sign(o.x) * 0.55;
-    return view({ at: [S.p.x, S.p.y + (up ? 0 : 0.1), S.p.z], yaw, pitch: up ? 0.7 : 0.3, dist: up ? 3.8 : 3.4, fov: 34 }); }
+    // (the camera further off on a phone held upright (placeCamera's fit): over the top under the ring at the most (lower over a tall car's
+    // roof); at the far side not past x 5 out (a long car's spot near its end: nearer, not out behind the back wall's cabinets' end)
+    const fit = Math.max(1, 3.5 / (Math.tan(34 * Math.PI / 360) * Math.max(W / H, AREF)) / HOME.dist), pitch = up ? Math.asin(clamp((3.5 - S.p.y) / (3.8 * fit), 0.2, Math.sin(0.7))) : 0.3;
+    const dist = up ? 3.8 : far ? clamp((5.05 - Math.abs(S.p.x)) / (0.81 * fit * Math.cos(pitch)), 2.2, 3.4) : 3.4;
+    return view({ at: [S.p.x, S.p.y + (up ? 0 : 0.1), S.p.z], yaw, pitch, dist, fov: 34 }); }
   // (a part from a to b (world) in an arc, its frame turned from qa to qb)
   function* hop(o, a, qa, b, qb, s) { const q = new THREE.Quaternion(), p = new V3();
     yield* tween(s, (k) => { p.lerpVectors(a, b, k); p.y += Math.sin(Math.PI * k) * 0.3; o.matrix.compose(p, q.copy(qa).slerp(qb, k), _h1); o.matrixWorldNeedsUpdate = true; }, EZ.io); }
@@ -5726,18 +5751,25 @@ const Garage3D = (function () {
     const hs = regal ? pc.hs : np.hs, pipe = regal && el === 'auspuh', face = up ? (el === 'krilo' ? ax(-1, 0, 0) : ax(0, 0, 1)) : pipe ? ax(0, 0, sd) : S.out.clone();
     const cT = S.p.clone().addScaledVector(S.out, up ? hs.y + 0.03 : pipe ? hs.x - 0.15 : hs.z + 0.03), pd = up || pipe ? (up ? S.out.clone() : ax(0, 1, 0)) : S.out.clone().multiplyScalar(0.5).add(ax(0, 1, 0)).normalize(), dirs = inDirs(S.out);
     let grab = null, plan = null, park = null, exact = false, why = 'grab';
+    // (by the car's end or side the arm's way clear of it: in beside a bumper, a sill, a nose, not down through the body (none: no arm))
+    const NC = { k: 160 }, clr = up ? null : (tip, s) => clearOf(G, tip, s, NC);
     if (regal) {   // (the reach straight in to the part's face (its frame's z: out of the bay), turned and tilted down the least)
       const n = new V3().setFromMatrixColumn(pc.M, 2).normalize(), tip = new V3().setFromMatrixPosition(pc.M).addScaledVector(n, pc.hs.z + 0.004), g = reachPlan(1, 'reach', tip, n.clone().negate());
       if (g) { g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.5), g.d, g.s.yaw); g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(pc.M);
-        if (g.pre) { grab = g; why = 'place';   // (the exhaust level, its pipe along the car: exactly so; the rest its face out)
-          if (pipe) plan = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(sd, 0, 0), ax(0, 1, 0), ax(0, 0, sd)).setPosition(cT), dirs, pd, 0.3);
-          if (!plan) plan = placePlan(1, 'reach', g.off, cT, face, false, dirs, pd, 0.3); } }
+        if (g.pre) { grab = g; why = 'place';   // (the exhaust level, its pipe along the car: exactly so; on the top (not a wing) upright as on the regal; the rest its face out)
+          if (pipe) plan = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(sd, 0, 0), ax(0, 1, 0), ax(0, 0, sd)).setPosition(cT), dirs, pd, 0.3, clr);
+          if (up && el !== 'krilo') for (const a of [1, -1]) { const q = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(a, 0, 0), ax(0, 1, 0), ax(0, 0, a)).setPosition(cT), dirs, pd, 0.3); if (q && (!plan || q.sc < plan.sc)) plan = q; }
+          for (const q of [pd, ax(0, 1, 0)]) if (!plan) plan = placePlan(1, 'reach', g.off, cT, face, false, dirs, q, 0.3, clr);   // (back out along the way out and up, else (a long car's end) straight up)
+          if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(1, 'reach', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     } else {   // (the part on the deck by the car's near side, before its spot; the gripper down onto its top, toward its near end)
       park = [clamp(S.p.x - (up ? 0.9 : 0.75), K.rear + 0.5, K.front - 0.5), K.hw + 0.62];
       const top = new V3(park[0], CART.deck + 0.006 + 2 * np.hs.y, park[1] + Math.min(np.hs.z * 0.6, 0.45)), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2);
       if (g) { g.tip = top; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(deckAt(np, park[0], park[1]));
-        if (g.pre) { grab = g; why = 'place'; if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(0, 'gripper', g.off, inCar(np), dirs, pd, 0.3); exact = !!plan; }
-          if (!plan) plan = placePlan(0, 'gripper', g.off, cT, face, false, dirs, pd, 0.3); } }
+        if (g.pre) { grab = g; why = 'place';
+          for (const q of [pd, ax(0, 1, 0)]) { if (plan) break;   // (back out along the way out and up, else (a long car's end beyond the arm's reach that way) straight up)
+            if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(0, 'gripper', g.off, inCar(np), dirs, q, 0.3, clr); exact = !!plan; }
+            if (!plan) plan = placePlan(0, 'gripper', g.off, cT, face, false, dirs, q, 0.3, clr); }
+          if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(0, 'gripper', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     }
     const done = () => { if (!o.up) hud('done', { kind: el }); };
     if (!plan || !grab) {   // (no arm can: the new car in the old one's place with a puff at the spot)
@@ -5747,7 +5779,9 @@ const Garage3D = (function () {
     }
     fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
     if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
-    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = spotView(S);
+    // (the camera at the part's own place when it goes on exactly where the car draws it: a flat one (a decal on the bonnet) from over the top)
+    const PX = exact ? new V3().setFromMatrixPosition(inCar(np)) : null, flat = exact && np.hs.y < 0.06 && np.hs.y * 3 < Math.min(np.hs.x, np.hs.z);
+    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = spotView(exact ? { p: PX, out: flat ? ax(0, 1, 0) : S.out } : S);
     // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
     // onto its deck, the drawer in; then across the room's right and along the car's near side)
     const cart = regal ? null : CART.root || buildCart(), ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;

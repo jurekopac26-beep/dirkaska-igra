@@ -50,6 +50,12 @@ try {
   // (a tap on a thing of the picture (its box's middle on the screen): the menu it opened)
   // (the menu shown on the next frame: waited for)
   const tap = (key) => page.evaluate(async (key) => { const b = Garage3D.box(key); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return __garage.menu && JSON.parse(JSON.stringify(__garage.menu)); }, key);
+  // (the viewport changed and the garage sized by it: its canvas at the stage's size, the page's resize handled (a busy machine's browser
+  // may send it late), then ms more)
+  const viewport = async (w, h, ms) => { await page.setViewportSize({ width: w, height: h });
+    await page.waitForFunction(() => { const c = document.getElementById('g-gl'), r = document.getElementById('g-stage').getBoundingClientRect(), pr = Math.min(window.devicePixelRatio || 1, 2);
+      return c.width === Math.floor(Math.max(2, r.width) * pr) && c.height === Math.floor(Math.max(2, r.height) * pr); }, null, { polling: 100, timeout: 60000 });
+    await page.waitForTimeout(ms); };
   const menuDom = () => page.evaluate(() => { const m = document.getElementById('g-menu'); return { on: m.classList.contains('on'), bot: m.classList.contains('bot'), tabs: [...m.querySelectorAll('.g-mt button')].map(b => [b.querySelector('b').textContent, b.querySelector('small').textContent.replace(/\u00a0/g, ' '), b.classList.contains('sel')]),
     tiles: [...m.querySelectorAll('.g-tl')].map(b => ({ n: b.querySelector('b') ? b.querySelector('b').textContent : b.getAttribute('aria-label'), p: b.querySelector('i') ? b.querySelector('i').textContent.replace(/\u00a0/g, ' ') : '', sel: b.classList.contains('sel'), fit: b.classList.contains('fit'), old: !!b.querySelector('s') })),
     buy: m.querySelector('.buy') && m.querySelector('.buy').textContent.replace(/\u00a0/g, ' '), can: m.querySelector('.buy') && !m.querySelector('.buy').disabled, stock: !!m.querySelector('[data-mact="stock"]'), rect: m.getBoundingClientRect().toJSON() }; });
@@ -287,11 +293,17 @@ try {
       f4.log === 'plan,grab,swap,put' && f4.plan.regal && f4.plan.arm === 1 && f4.plan.tool === 'reach' && f4.plan.side === -1 && f4.plan.el === 'zamasek' && f4.old === 'regal' && f4.put === 'regal' && f4.ret >= 1 && !f4.stay && f4.parked && /KONČANO/.test(f4.chip)
       && u7.S.money - u8.S.money === zc && JSON.stringify(u8.S.cars.muscle.parts.zamasek) === JSON.stringify(await page.evaluate(() => __garage.findOpt('zamasek', 'Anodised red'))), JSON.stringify({ f4, paid: u7.S.money - u8.S.money }));
     await page.evaluate(() => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: __garage.findOpt('zarometi', 'LED') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run(); const f5 = await fitOf(), u9 = await ui();
-    T.check('the LED headlamps out of their drawer: the trolley to the cabinet (the part onto its deck), to the car\'s near side, the near arm\'s gripper puts them on, the old ones (stock: a parts case) onto the trolley and off with it, KONČANO',
-      f5.log === 'plan,cart.in,cart.loaded,cart.parked,grab,swap,put,cart.out' && f5.plan.drawer && !f5.plan.regal && f5.plan.arm === 0 && f5.plan.tool === 'gripper' && f5.plan.side === 1 && f5.plan.el === 'zarometi' && f5.old === 'case' && f5.put === 'cart' && f5.cart && !f5.cart.on && f5.cart.load === 0 && f5.parked && /KONČANO/.test(f5.chip)
+    T.check('the LED headlamps out of their drawer: the trolley to the cabinet (the part onto its deck), to the car\'s near side, the near arm\'s gripper puts them on (at the lamps on the nose, not the windscreen\'s foot), the old ones (stock: a parts case) onto the trolley and off with it, KONČANO',
+      f5.log === 'plan,cart.in,cart.loaded,cart.parked,grab,swap,put,cart.out' && f5.plan.hit && f5.plan.out[0] > 0.9 && f5.plan.at[0] > 2 && f5.plan.drawer && !f5.plan.regal && f5.plan.arm === 0 && f5.plan.tool === 'gripper' && f5.plan.side === 1 && f5.plan.el === 'zarometi' && f5.old === 'case' && f5.put === 'cart' && f5.cart && !f5.cart.on && f5.cart.load === 0 && f5.parked && /KONČANO/.test(f5.chip)
       && u8.S.money > u9.S.money && !!u9.S.cars.muscle.parts.zarometi, JSON.stringify({ f5, paid: u8.S.money - u9.S.money }));
     await page.evaluate(() => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: __garage.findOpt('zarometi', 'Yellow') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run(); const f6 = await fitOf();
     T.check('the yellow headlamps out of the same drawer: the LED ones back into it on the trolley\'s way out', f6.log === 'plan,cart.in,cart.loaded,cart.parked,grab,swap,put,drawer.back,cart.out' && f6.plan.drawer && f6.put === 'cart' && f6.cart && !f6.cart.on && f6.cart.load === 0 && f6.parked, JSON.stringify(f6));
+    // (a long car's exhaust off the regal (the muscle car): behind it beyond the far arm's reach, pushed in under the car the arm would go
+    // down through the body: put on without the arm, its spot on the rear's outline (the final review of 4. 11. 2026))
+    await page.evaluate(() => { __garage.openMenu({ el: 'auspuh', key: 'rgl:SPORT', sel: __garage.findOpt('auspuh', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
+    const fx = await fitOf(), ux = await page.evaluate(() => Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null);
+    T.check('a long car\'s exhaust off the regal (the muscle car): beyond the far arm\'s reach behind it, not pushed in under the body (the arm down through it): put on without the arm, at the rear\'s outline; the arms parked',
+      /^plain/.test(fx.log) && ux && ux.regal && ux.el === 'auspuh' && ux.at[0] < -2.2 && fx.parked, JSON.stringify({ fx, ux }));
     // the cabinet's three cars: YOUR CAR the muscle car (the lamps over it), FOR SALE and RENT A CAR the next two cars not owned (FOR SALE
     // locked, its price on its tag; the rent on RENT A CAR's), their names under them, all three drawn; a tap on FOR SALE's maquette:
     // that car drives onto the table (the lamps over FOR SALE); on YOUR CAR's: the muscle car back
@@ -333,9 +345,9 @@ try {
       out.back = G.drawers.k.every(v => v === 0) && G.dropped === 0; out.col = G.drawers.col === G.info.color; return out; });
     const D1 = await drawers(), bad1 = D1.tap.filter(q => q.el !== q.e || !q.out || !q.top || !q.under || !q.on || !q.opts);
     T.check('the cabinet whole on the screen, its 8 drawers each tapped: its element\'s menu (its 4 parts the game\'s options), it alone out, under the menu at the top; closed: all back in', D1.whole && D1.tap.length === 8 && !bad1.length && D1.back && D1.col, JSON.stringify(D1));
-    await page.setViewportSize({ width: 360, height: 560 }); await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    await viewport(360, 560, 300);
     const D2 = await drawers(), bad2 = D2.tap.filter(q => q.el !== q.e || !q.out || !q.top || !q.under || !q.on);
-    await page.setViewportSize({ width: 412, height: 915 }); await page.evaluate(() => new Promise(r => setTimeout(r, 300)));
+    await viewport(412, 915, 300);
     T.check('a low screen (360 x 560): every drawer still on it, out under its menu (the picture lowered for the ones the menu would cover: ' + D2.tap.map(q => q.drop).join(', ') + ' px), raised again when closed',
       D2.whole && !bad2.length && D2.tap.some(q => q.drop > 0) && D2.back, JSON.stringify(D2));
   }
@@ -466,7 +478,7 @@ try {
   {
     const R = [];
     for (const [w, h] of [[640, 360], [915, 412]]) {
-      await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(600);
+      await viewport(w, h, 600);
       R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, name = r('g-name').top - app.top;
         const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k));
         return { car: __garage.S.car, top: Math.round(top), name: Math.round(name), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]),
@@ -478,7 +490,7 @@ try {
     // (a menu at the bottom lying down: where it opens, not left low and small)
     R.push(await page.evaluate(async () => { __garage.openMenu({ el: 'turbo', key: 'rgl:TURBO' }); const el = document.getElementById('g-menu'); el.classList.add('bot'); await new Promise(r => setTimeout(r, 450));
       const t = new DOMMatrix(getComputedStyle(el).transform), b = el.getBoundingClientRect(); __garage.closeMenu(); return { menu: [t.a, t.f, Math.round(b.bottom), innerHeight], ok: t.a === 1 && t.f === 0 && b.bottom <= innerHeight - 9 }; }));
-    await page.setViewportSize({ width: 412, height: 915 }); await page.waitForTimeout(600);
+    await viewport(412, 915, 600);
     T.check('lying down (640 × 360, 915 × 412): the car whole between the buttons at the top and its name; the maquettes, SERVICE and the colour circles in the picture over the name; the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
   }
 
