@@ -25,21 +25,24 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 0 | #288 | hitri popravek `main`: nestabilni testi po #262 (flags, napake-zastavice, hlvid, lang, pits) | 2 | na vrsti (zelen 4. 11.) |
-| 1 | #241 | Mount Buller | 3 | na vrsti |
-| 3 | #250 | 7 novosti | 3 | čaka |
+| 3 | #250 | 7 novosti | 3 | na vrsti |
 | 4 | #226 | Bâlea | 3 | čaka |
 | 5 | #246 | preleti | 3 | čaka |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #293 | rezultati testiranja: testne proge (5), zavetrje, nova mapa, posnetek, orodje za napake | 1 | pripravljen (CI v teku) |
+| 9 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 10 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 11 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 13 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 14 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 15 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
-- Račun 1: #261 Hakone, #153 Medvode, #294 krog testov na `main` se izteče. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #284 boksi, #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
+- Račun 1: #261 Hakone, #153 Medvode. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
+- Račun 2: #202 fizika.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
