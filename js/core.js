@@ -5183,7 +5183,8 @@ const Core = (function () {
     'L. Girard', 'P. Rinaldi', 'K. Virtanen', 'D. Ueda', 'F. Kos', 'E. Rousseau', 'G. Nagy', 'H. Lehmann', 'J. Pirc', 'M. Esposito', 'T. Holm', 'V. Marin', 'B. Castro', 'C. Greco',
     'I. Sokolov', 'N. Hall', 'O. Dahl', 'K. Mlakar', 'R. Barros', 'S. Weiss', 'A. Zorman', 'L. Okafor', 'P. Jankowski', 'D. Quintero', 'M. Hoffmann', 'E. Vasquez', 'Y. Tamura', 'G. Pellegrini',
     'T. Becker', 'F. Almeida', 'H. Eriksen', 'J. Kuhar', 'R. Dumont', 'K. Hirano', 'N. Romano', 'B. Schmid', 'S. Turk', 'A. Jovanović', 'L. Hughes', 'V. Galli', 'O. Lund', 'M. Szabo',
-    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvelos', 'R. Moser'];
+    'C. Doyle', 'I. Vogel', 'D. Pavlin', 'E. Kato', 'G. Santos', 'P. Keane', 'T. Rebolj', 'J. Carvelos', 'R. Moser',
+    'U. Ferlan'];   // (the 100th: the menu's Opponents goes up to 100)
   // each driver's character (opts.chars), the same in every race: [agg 0 careful .. 1 aggressive, err 0 cool .. 1 cracks under pressure]
   const DRIVER_CHAR = [[0.8, 0.2], [0.3, 0.1], [0.9, 0.65], [0.2, 0.3], [0.5, 0.2], [0.85, 0.35], [0.6, 0.55], [0.25, 0.15], [0.55, 0.75], [0.7, 0.4],
     [0.35, 0.2], [0.75, 0.6], [0.4, 0.45], [0.3, 0.25], [0.65, 0.3], [0.5, 0.65], [0.8, 0.5], [0.45, 0.35], [0.6, 0.25], [0.2, 0.55],
@@ -5201,7 +5202,7 @@ const Core = (function () {
     0xef8439, 0x4db394, 0x6c136c, 0xc2de7c, 0x39ef56, 0x7b4db3, 0x6c5613, 0x7cdbde, 0x477e25, 0x3949ef, 0xb3614d, 0xca7cde, 0xbbc91d, 0x255d7e, 0xef3976, 0x51b34d, 0x29136c, 0xdeb17c, 0x1dc9ac, 0xa3ef39,
     0x4d6ab3, 0x811dc9, 0x7e7325, 0x39d1ef, 0x807cde, 0xc9561d, 0xe039ef, 0x13406c, 0x1dc92b, 0x4db3ae, 0xa9de7c, 0x1d39c9, 0x7e3025, 0x39ef85, 0x954db3, 0x6c6c13, 0x5839ef, 0xb37b4d, 0x8fc91d, 0x25467e,
     0xef3948, 0xdeca7c, 0x7e255d, 0x75ef39, 0x4d50b3, 0x6c2a13, 0x7cdeb2, 0xad1dc9, 0x39a2ef, 0xb34d6a, 0x136c14, 0xc9821d, 0x257e74, 0xef39d0, 0x83b34d, 0x13296c, 0xde817c, 0x1dc957, 0xefe139];   // (one for each driver: no two alike, none like the one before it on the grid)
-  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 100; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..100 in order, every car of a 100-car field its own
+  const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 101; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..101 in order, every car of a 101-car field its own (the menu's Opponents: up to 100 and the player)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
   // one with a glb player-only skin and no render look of its own for the AI's cars (def.look);
@@ -5249,7 +5250,7 @@ const Core = (function () {
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs' && opts.phys !== 'nova') opts = Object.assign({}, opts, { phys: 'cs' });   // two driving physics, 'cs' and 'nova' (the old 'rally' and 'arcade' map to cs, as in Car)
-      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ) opts = Object.assign({}, opts, { numAI: Math.max(opts.numAI, track.def.rivals) });   // a track's own field size (def.rivals: at least that many) in a normal race; not the title-screen demo, a time trial, an online race or a championship round (its own drivers in every round). A bigger field asked for stays (the game's Nordschleife: def.raceRivals)
+      if (track.def.rivals && opts.numAI > 0 && !opts.noPlayer && !opts.remote && !opts.champ && !opts.numSet) opts = Object.assign({}, opts, { numAI: Math.max(opts.numAI, track.def.rivals) });   // a track's own field size (def.rivals: at least that many) in a normal race; not the title-screen demo, a time trial, an online race, a championship round (its own drivers in every round) or a field the player chose (opts.numSet: the menu's Opponents, 0..100). A bigger field asked for stays (the game's Nordschleife: def.raceRivals)
       this.track = track;
       this.opts = opts;
       this.laps = opts.laps || 3;
@@ -5489,12 +5490,15 @@ const Core = (function () {
       }
       return this._gw;
     }
+    // a vehicle wider than 2.6 m (the monster truck) where the grid's columns or the racing line (the flying start's column) would put its side
+    // at the asphalt's edge: that much further in, 0.3 m of asphalt outside it (a narrower car where it always stood)
+    _inside(c, i, lat) { const hw = (c.m.wid || 1.9) / 2, lim = Math.max(0, this.track.wAt(i) - hw - 0.3); return hw > 1.3 && Math.abs(lat) > lim ? Math.sign(lat) * lim : lat; }
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const W = this.timeTrial ? null : this._gridWide(), lat = this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide)
+      const W = this.timeTrial ? null : this._gridWide(), lat = this._inside(c, i, this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : W ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6));   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide; a wide vehicle: _inside)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -5541,7 +5545,7 @@ const Core = (function () {
       for (let k = kp - 1; k >= 0; k--) { const near = k === kp - 1, m = near ? Math.max(10, (cs[k].m.len + Pl.m.len) / 2 + 8) : 12; let s = Math.min(s0 + len, pos[k + 1] + Math.max(m, (near ? FLY_NEAR * FLY_PL : tg) * at(paceOf(cs[k + 1]), pos[k + 1]))); while (s < s0 + len && apart(s, pos[k + 1]) < m) s += DS; pos[k] = s; }   // (ahead: the next car covers the gap in tg s; the one right ahead of the player in FLY_NEAR s at the player's pace)
       for (let k = 0; k < n; k++) {
         const c = cs[k], M = c.m, s = pos[k];
-        const i = T.idx(s), lat = T.rl[i], x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
+        const i = T.idx(s), lat = this._inside(c, i, T.rl[i]), x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
         if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t; }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
@@ -6247,14 +6251,14 @@ const Core = (function () {
         // in turn, 9 m apart, from 70 m past the line), clear of the ones still coming up the middle (aiControl drives it there: c.parkS, c.parkD).
         // A short road past the line (Pikes Peak's summit, ~100 m): the slots closer together, from nearer the line, so the field still fits
         // (the slots for the whole field: 13 cars as ever, a bigger one closer together still, never past the end of the road). A big field
-        // whose slots on a side come closer than its longest car (Pikes Peak's summit, 22 cars): two rows a side, the outer one off the asphalt
-        // as far as the barrier lets it, filled from the top down (the winner in the farthest slot: nobody then drives past a parked car or
-        // across the inner row to the outer one)
+        // whose slots on a side come closer than its longest car (Pikes Peak's summit, 22 cars; a field of long vehicles sooner): two rows a
+        // side, the outer one off the asphalt as far as the barrier lets it (a wide vehicle's side no farther out than a 1.9 m car's), filled
+        // from the top down (the winner in the farthest slot: nobody then drives past a parked car or across the inner row to the outer one)
         if (!this.timeTrial) { const room = T.len - 20 - T.finishS, nP = Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;
           let L = 0, W = 0; if (nP > 12) for (const o of this.cars) { L = Math.max(L, o.m.len || 4.4); W = Math.max(W, o.m.wid || 1.9); }   // (the field's longest and widest car)
           const two = nP > 12 && 2 * st < L + 0.8, k = two ? Math.max(0, nP - c.finishPos + 1) : c.finishPos - 1, sd = k % 2 ? -1 : 1;
-          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.2);
-          c.parkD = sd * (two ? ((k >> 1) % 2 ? dO : Math.min(T.wAt(pi) - 1.5, dO - W - 0.5)) : this.tf ? dO : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic)
+          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.3), xw = (w) => Math.max(0, w / 2 - 0.95);   // (xw: a car wider than 1.9 m that much further in, its outer side where a 1.9 m one's is)
+          c.parkD = sd * (two ? ((k >> 1) % 2 ? dO - xw(c.m.wid || 1.9) : Math.min(T.wAt(pi) - 1.5, dO - xw(W) - W - 0.5)) : this.tf ? dO - xw(c.m.wid || 1.9) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic; the inner row clear of the outer one's widest)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }

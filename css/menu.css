@@ -430,6 +430,8 @@ svg { display: block; }
 .trow b { font: 800 italic 15px/1 var(--f-ui); color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .trow .opp { flex: 0 0 auto; }
 .trow .opp b { font-size: 30px; font-weight: 900; line-height: .9; }
+.trow .opp > button { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 100%; border-radius: 8px; }   /* (a race's: a tap opens the opponents' sheet) */
+.trow .opp > button:active b { color: var(--gold); }
 .trow .best small, .trow .best b, .trow .gt small, .trow .gt b { color: var(--gold); }
 .trow .flag { flex: 0 0 auto; padding-right: 0; }
 .trow .flag img { display: block; height: 28px; width: auto; max-width: 52px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
@@ -829,6 +831,26 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .drow .mono { flex: 0 0 auto; width: 62px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #2a3c5a, #17233a); border: 1px solid rgba(255, 255, 255, .16); font: 900 italic 20px/1 var(--f-ui); color: var(--gold); }
 .tlink { align-self: center; padding: 8px 16px; font: 600 12.5px/1 var(--f-ui); color: var(--lbl); text-decoration: underline; text-underline-offset: 3px; opacity: .9; }
 .tlink:active { opacity: .6; }
+/* the opponents' sheet (the row's Opponents): the number big, the quick picks, the slider (its gold part up to the thumb: --p), Done */
+.sheet.riv .rnum { display: flex; flex-direction: column; align-items: center; margin: 2px 0 12px; }
+.sheet.riv .rnum b { font: 900 italic 84px/.95 var(--f-ui); font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.sheet.riv .rnum span { margin-top: 6px; font: 600 14px/1.2 var(--f-ui); color: var(--lav); text-align: center; }
+.sheet.riv .rquick { display: flex; gap: 6px; margin-bottom: 12px; }
+.sheet.riv .rquick button { flex: 1 1 0; min-width: 0; height: 48px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .14); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font: 800 italic 17px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.sheet.riv .rquick button small { font: 700 9.5px/1 var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--lbl); }
+.sheet.riv .rquick button[aria-pressed="true"] { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 50%, var(--gold-lo)); border-color: #fff0b0; color: var(--gold-ink); }
+.sheet.riv .rquick button[aria-pressed="true"] small { color: var(--gold-ink); }
+.sheet.riv .rquick button:disabled { opacity: .3; cursor: default; }
+.rslide { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 36px; margin: 0; background: transparent; cursor: pointer; }
+.rslide:focus { outline: none; }
+.rslide:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; border-radius: 8px; }
+.rslide::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--gold) var(--p, 0%), rgba(255, 255, 255, .16) var(--p, 0%)); }
+.rslide::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; margin-top: -11px; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.rslide::-moz-range-track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .16); }
+.rslide::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--gold); }
+.rslide::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.sheet.riv .rends { display: flex; justify-content: space-between; margin: 2px 4px 14px; font: 600 12px/1 var(--f-ui); color: var(--lbl); font-variant-numeric: tabular-nums; }
 .sheet.opts { max-height: 88%; display: flex; flex-direction: column; }
 .sheet.opts .orows { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 12px -6px 14px; padding: 0 6px; display: flex; flex-direction: column; gap: 12px; overscroll-behavior: contain; }
 .orow { display: flex; flex-direction: column; gap: 6px; }
@@ -881,6 +903,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .wopts { margin: 10px 0 8px; }
   .wopts button { padding: 9px 4px 8px; gap: 5px; }
   .lapsrow { margin-bottom: 10px; padding: 6px 10px 6px 12px; }
+  .sheet.riv .rnum { margin: 0 0 8px; } .sheet.riv .rnum b { font-size: 56px; } .sheet.riv .rnum span { margin-top: 4px; font-size: 13px; }
+  .sheet.riv .rquick { margin-bottom: 6px; } .sheet.riv .rquick button { height: 40px; } .sheet.riv .rends { margin-bottom: 10px; } .sheet.riv .go { height: 46px; }
 }
 /* the career's four cards (a drawn picture each, not a rendered one) */
 .mode .im svg.bigcup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(70px, 74%); height: auto; max-height: 86%; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .5)); }
