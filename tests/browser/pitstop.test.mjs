@@ -16,9 +16,9 @@ const T = checker('the custom stop (bathurst)');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1, length: 'long' }, { width: 640, height: 360 }, { context: { reducedMotion: 'reduce' } });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1, length: 'long', rivals: 0 }, { width: 640, height: 360 }, { context: { reducedMotion: 'reduce' } });
   await startTrack(page, 'bathurst');
-  // (the rivals' planned stops (Core STRAT: most of them on laps 1 and 3 in a long race) are not under test: a lane full of cars working in
+  // (alone, rivals: 0: a rival knocking the car as it slows for the way in (Trki med avti, #262) is not under test either; the rivals' planned stops (Core STRAT: most of them on laps 1 and 3 in a long race) are not under test: a lane full of cars working in
   // their boxes holds the player's car up, its stop longer than the time the panel estimates)
   await page.evaluate(() => { for (const c of window.__game.race.cars) if (!c.isPlayer && c.st && c.st.at) { c.st.at = []; c.st.win = []; } });
   await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });

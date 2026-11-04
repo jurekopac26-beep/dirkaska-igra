@@ -29,6 +29,7 @@ const ONLY = process.env.PITCAM_ONLY ? process.env.PITCAM_ONLY.split(',') : null
 // in the page: on to 60 m before the way in, then one stop, a frame each 3 steps of 1/60 s; POTRDI pot s after the takeover. Each frame:
 // the camera against the car in the lane's frame (al: along, als: along the lane's own way, gar: towards the garages, h: up), the pit camera's own numbers (Render.pitCamInfo:
 // f pulled back, s swung, k risen; base: the view behind the car under it), the rail's margin, the buttons' opacity
+// (alone, rivals: 0 in openGame: a rival knocking the car as it slows for the way in (Trki med avti, #262) put it sideways at the lane's start now and then)
 const RUN = (pot) => {
   const g = window.__game, P = g.race.player, Tk = g.race.track, C = Render.camera, sm = Tk.def.pit[0] < 0 ? -1 : 1; g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
   for (const id of ['touch', 'btn-pause']) document.getElementById(id).classList.remove('off');   // (as in the running race: the buttons laid out, the pause button there)
@@ -109,11 +110,15 @@ function common(L, lbl) {
     JSON.stringify({ n: box.length, ph0: b0 && +ph(b0).toFixed(2), ph1: b1 && +ph(b1).toFixed(2), rate: +rate.toFixed(3), back: back.length, far: far[0] && { al: far[0].al, gar: far[0].gar, h: far[0].h, wallM: far[0].wallM }, ndc: Math.max(0, ...box.map(r => Math.abs(r.ndc[0]))), fit: fits.find(r => r.fit.out) || { nMax: Math.max(0, ...fits.map(r => r.fit.n)) } }));
   // the user's rules over the whole stop, from the takeover to the hand-back: never looking back against the car's way, never still
   const all = hb > 0 ? L.slice(0, hb + 1).filter(r => r.t >= 0) : [], bk = all.filter(r => !(r.vd >= 0)), still = [];
-  for (let i = 1; i < all.length; i++) { const a = all[i - 1], b = all[i], mv = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]) + 10 * Math.hypot(b.vdir[0] - a.vdir[0], b.vdir[1] - a.vdir[1]); if (mv < 0.005) still.push({ t: b.t, st: b.st, x: b.x, mv: +mv.toFixed(5) }); }
+  const mvOf = (a, b) => Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]) + 10 * Math.hypot(b.vdir[0] - a.vdir[0], b.vdir[1] - a.vdir[1]), dpOf = (a, b) => [0, 1, 2].map(j => b.p[j] - a.p[j]);
+  // (a turn of its way is not a stop: one frame between two that move, the other way round, as where the car pulls away from its box and the orbit's slow drift back
+  // becomes the way on with it: no turn round passes without a moment at nought; the frames either side each move, so a camera that stands still is still found)
+  const turn = (i) => { if (i < 2 || i + 1 >= all.length || mvOf(all[i - 2], all[i - 1]) < 0.005 || mvOf(all[i], all[i + 1]) < 0.005) return false; const u = dpOf(all[i - 2], all[i - 1]), w = dpOf(all[i], all[i + 1]); return u[0] * w[0] + u[1] * w[1] + u[2] * w[2] < 0; };
+  for (let i = 1; i < all.length; i++) { const a = all[i - 1], b = all[i], mv = mvOf(a, b); if (mv < 0.005 && !turn(i)) still.push({ t: b.t, st: b.st, x: b.x, mv: +mv.toFixed(5) }); }
   T.check(`${lbl}: never looking back: the view across the ground at least square to the car's heading in every frame from the takeover to the hand-back (pull-back, swing, side, the last 25 m, the box, the way out, the rise)`,
     all.length > 50 && !bk.length && all.some(r => r.hv != null) && all.every(r => r.hv == null || r.hv > 0.5),
     JSON.stringify({ n: all.length, min: +Math.min(...all.map(r => r.vd)).toFixed(4), bad: bk.slice(0, 3).map(r => ({ t: r.t, st: r.st, x: r.x, vd: r.vd, s: r.s, k: r.k, low: r.low && { a: r.low.a, phi: r.low.phi, psi: r.low.psi } })), hv: Math.min(...all.filter(r => r.hv != null).map(r => r.hv)) }));
-  T.check(`${lbl}: never still: every frame (0.05 s) from the takeover to the hand-back the camera moves or turns a little (at least 5 mm, a turn counted 10 m out)`,
+  T.check(`${lbl}: never still: every frame (0.05 s) from the takeover to the hand-back the camera moves or turns a little (at least 5 mm, a turn counted 10 m out; one frame where its way turns round is a turn, not a stop)`,
     all.length > 50 && !still.length, JSON.stringify({ n: all.length, still: still.length, first: still.slice(0, 3) }));
   const lowW = ex.filter(r => r.wallM != null), minW = Math.min(...lowW.map(r => r.wallM)), dn = [];
   for (let i = 1; i < ex.length; i++) { const a = ex[i - 1], b = ex[i], dh = b.h - a.h, db = b.hb - a.hb; if (dh < Math.min(0, db) - 0.01) dn.push({ t: b.t, dh: +dh.toFixed(3), db: +db.toFixed(3) }); }
@@ -125,7 +130,7 @@ function common(L, lbl) {
     !!last && last.w <= 0.02 && last.d3 <= 0.3 && after.length > 5 && after.every(r => r.w === 0), JSON.stringify({ last: last && { t: last.t, w: last.w, d3: last.d3, k: last.k }, after: after.length }));
 }
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1 }, { width: 390, height: 844 }, { seed: 34 });   // (seeded and stepped: the same race each time)
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', damage: 2, fuel: 1, rivals: 0 }, { width: 390, height: 844 }, { seed: 34 });   // (seeded and stepped: the same race each time)
   await startTrack(page, 'bathurst');
   const R = await page.evaluate(RUN, 2.5), L = R.L, hb = hbIdx(L), tHB = hb > 0 ? L[hb].t : null;
   T.check('Bathurst: one stop, the hand-back in the lane', hb > 0 && L.some(r => r.st === 'repair'), `hand-back at ${tHB}`);
