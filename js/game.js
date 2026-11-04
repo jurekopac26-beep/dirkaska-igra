@@ -1055,12 +1055,16 @@
      Odpri posnetek, tools/posnetek.mjs): besides the frames what the replay needs, the cars (model, name, colour, number, grid, the laps for
      rpLap), the race (laps, weather, a time trial, the finish order), its moments (ev, the highlights) and its flags. Opened, a race of its
      own is set up on the track with those cars (never stepped: the replay poses them) and the replay plays it; Končaj: the title */
+  // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts and the field's car;
+  // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
-    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
+    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
+    const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: { upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null } };
     const H = Object.assign(rpMeta(), { w: REC_W, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {})),
-      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
+      cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {}, c.isPlayer ? pf(k) : {})),
+      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) },
+      F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
   // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not

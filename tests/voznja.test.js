@@ -1,0 +1,192 @@
+// AI po tvoji liniji, korak 1 (docs/ai-po-tvoji-liniji.md): tools/voznja.mjs measures the player's driving from recordings of their races.
+// The recordings here are made by Core in Node as the game records a race (js/game.js recStep: every car's x, y, z, h, vl, front wheel
+// angle and bits every 0.05 s; the header as rrpOf; packed by the game's own js/napake.js and gzip): the player on the autopilot with a known
+// offset of its line (Car.laneBias, the line 0.6 m and 1.4 m to the right of the racing line on alternate laps), on Bathurst seven laps in
+// the dry (lap 3 a spin, lap 6 a hit into the wall; on lap 2 another car beside it for 10 s) and three in the rain, on Mount Buller
+// three runs up the road (the line 0.5 / 1 / 1.5 m to the right). The tool's profile against what the race itself had at the same
+// points (the player's d and speed, the race's speed profile): the line and the speed within bounds, the spin and the hit laps left out with their reasons,
+// the part beside the other car left out of lap 2, the rain a profile of its own, an open road's runs each a lap; the corners' braking;
+// a changing weather (wxs) leaves out the laps while the road gets wet.
+//   node tests/voznja.test.js
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const zlib = require('zlib');
+const { spawnSync } = require('child_process');
+const { loadCore, ROOT } = require('./lib/core.js');
+const { DT, seeded } = require('./lib/sim.js');
+
+const C = loadCore();
+let bad = 0, n = 0;
+const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
+const OUT = path.join(ROOT, 'test-results', 'voznja-test'); fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true });
+const ctx = vm.createContext({ TextEncoder, TextDecoder });
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'napake.js'), 'utf8') + '\n;this.Napake = Napake;', ctx, { filename: 'js/napake.js' });
+const NK = ctx.Napake;
+const STEP = 5, W = 7;
+const median = (a) => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : NaN; };
+const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+
+// a race driven by the autopilot and recorded: plan(P, race, lap, tLap) each step after the autopilot's controls (the line, a spin);
+// ghost(f, race, P): another car's numbers in a sample (null: none); the truth: the player's d and speed at every STEP m of each lap
+function record(tid, opts, plan, ghost) {
+  const def = C.TRACKS.find(d => d.id === tid), T = new C.Track(def), orig = Math.random;
+  try {
+    Math.random = seeded(7);
+    const race = new C.Race(T, Object.assign({ numAI: 0, playerModel: C.MODELS[0], assist: 2, seed: 3, damage: 0 }, opts));
+    race.start();
+    const P = race.player, frames = [], truth = new Map(), len = T.open ? T.raceLen : T.len, nc = ghost ? 2 : 1;
+    let next = 0, prev = -1, lastS = null;
+    for (let k = 1; k < 120 * 1500; k++) {
+      Math.random = seeded(1000 + k);
+      C.aiControl(P, race, DT);
+      const lap = Math.max(1, P.lap), tLap = race.time - (P.lapStart || 0);
+      if (plan) plan(P, race, lap, tLap);
+      if (P.stuckT > 3 || P.wrongT > 3) race.rescue(P);
+      race.step(DT);
+      if (P.lap >= 1 && !P.finished) {   // (the truth: the player's own d and speed where it passes each STEP m of its lap)
+        const s = T.open ? P.q.s - T.startS : ((P.q.s - T.startS) % T.len + T.len) % T.len, g = Math.floor(s / STEP);
+        if (lastS != null && g !== lastS && s - lastS * STEP < 3 * STEP && s >= 0) { const key = P.lap + ':' + g; if (!truth.has(key)) truth.set(key, { d: P.q.d, v: P.vl, t: race.time }); }
+        lastS = g;
+      }
+      if ((race.state === 'racing' || race.state === 'done') && race.time >= next) {
+        next = race.time + 0.05;
+        const f = new Float32Array(1 + (nc + 1) * W); f[0] = race.time;
+        const put = (o, c, bits) => { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
+        put(1, P, (P.inBrk > 0.08 && P.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(P) > prev ? 2 : 0) + (P.inPit || race.isOut(P) ? 4 : 0));
+        if (ghost) { const gh = ghost(race, P); if (gh) for (let j = 0; j < W; j++) f[1 + W + j] = gh[j]; else { f[1 + W] = 1e4; f[1 + W + 2] = 1e4; f[1 + W + 6] = 4; } }
+        frames.push(f); prev = race.time;
+      }
+      if (P.finished && race.time > P.finishTime + 3) break;
+    }
+    const car = (c, pl) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {});
+    const H = { ver: 'test', track: tid, name: def.name, mode: T.open ? 'tt' : 'race', wx: race.rain ? 'dez' : 'suho', laps: race.laps, w: W, n: nc, tt: false, rain: race.rain || 0, season: 'summer', tod: 'day',
+      cars: [Object.assign(car(P, 1), { pf: { upg: P.upg, setup: P.setup, deli: P.deli || null } })].concat(ghost ? [{ m: 'kaze', name: 'Tekmec', color: 0, num: 7, grid: 2, pl: 0, lap: 1, lapStart: 0, lapTimes: [] }] : []),
+      fin: [0], ev: [], flags: [], dev: 'test', devIme: 'test', date: Date.now(), dn: [] };
+    return { H, frames, truth, race, T, P };
+  } finally { Math.random = orig; }
+}
+const save = (name, r, H) => { const f = path.join(OUT, name); fs.writeFileSync(f, zlib.gzipSync(Buffer.from(NK.rrp.pack(H || r.H, r.frames)))); return f; };
+const tool = (files, out) => {
+  const p = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs'), ...files, '--out', out], { encoding: 'utf8', timeout: 600000 });
+  const prof = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : null;
+  return { code: p.status, text: (p.stdout || '') + (p.stderr || ''), prof };
+};
+
+// 1. Bathurst in the dry: seven laps, the line 0.6 / 1.4 m right of the racing line on alternate laps; lap 3 a spin on the straight up the
+// mountain (from 600 m into the lap the car's yaw rate held at 3.5 rad/s for 0.6 s, off the throttle: it turns some 120° and slides on along
+// the road), lap 6 a hit (full right lock and throttle from 40 s into the lap for 1.2 s: into the wall of the cutting, ~1890 m); another car
+// 2.6 m to the right of the player from 30 to 40 s into lap 2
+const BIAS = (lap) => lap % 2 ? 0.6 : 1.4, SPIN = { lap: 3, s: 600, dur: 0.6, w: 3.5 }, HIT = { lap: 6, t: 40, dur: 1.2 }, GH = { lap: 2, t0: 30, t1: 40 }, CLEAN = [1, 2, 4, 5, 7];
+let lap2 = null, spinAt = null;
+const dry = record('bathurst', { laps: 7 }, (P, race, lap, tl) => {
+  P.laneBias = BIAS(lap);
+  const s = ((P.q.s - race.track.startS) % race.track.len + race.track.len) % race.track.len;
+  if (lap === SPIN.lap && !spinAt && s >= SPIN.s && s < SPIN.s + 100) spinAt = { t: race.time, s };
+  if (spinAt && race.time - spinAt.t < SPIN.dur) { P.w = SPIN.w; P.inThr = 0; P.inBrk = 0; }
+  if (lap === HIT.lap && tl >= HIT.t && tl < HIT.t + HIT.dur) { P.inSteer = 1; P.inThr = 1; P.inBrk = 0; P.digitalSteer = true; } else P.digitalSteer = false;
+}, (race, P) => {
+  if (P.lap === GH.lap && !lap2) lap2 = { t0: P.lapStart };
+  const tl = lap2 ? race.time - lap2.t0 : -1;
+  if (P.lap !== GH.lap || tl < GH.t0 || tl >= GH.t1) return null;
+  if (!lap2.s0) lap2.s0 = P.dist; lap2.s1 = P.dist;
+  return [P.x + P.q.nx * 2.6, P.y || 0, P.z + P.q.nz * 2.6, P.h, P.vl, 0, 0];
+});
+const fDry = save('posnetek_bathurst_20261104-1000.rrp', dry);
+// 2. Bathurst in the rain: three laps, the same lines (no spin, no other car)
+const wet = record('bathurst', { laps: 3, rain: 1 }, (P, race, lap) => { P.laneBias = BIAS(lap); });
+const fWet = save('posnetek_bathurst_20261104-1100.rrp', wet);
+const r1 = tool([fDry, fWet], path.join(OUT, 'profil.json')), PR = (r1.prof && r1.prof.proge) || [];
+const pD = PR.find(p => p.proga === 'bathurst' && p.vreme === 'suho'), pW = PR.find(p => p.proga === 'bathurst' && p.vreme === 'mokro');
+console.log(r1.text.split('\n').filter(l => !/^\s+(Zavoj|ovinek) /.test(l)).slice(0, 30).map(l => '  | ' + l).join('\n'));
+check('the tool runs on two recordings: a profile for Bathurst in the dry and one in the rain, the summary names them', r1.code === 0 && pD && pW && PR.length === 2 && /Bathurst, Avstralija \(bathurst\) · suho/.test(r1.text) && /· mokro/.test(r1.text),
+  `exit ${r1.code}, profiles ${PR.map(p => p.proga + '/' + p.vreme).join(', ')}`);
+if (pD && pW) {
+  const U = pD.krogi.uporabljeni, X = pD.krogi.izpusceni;
+  check('dry: laps 1, 2, 4, 5, 7 used, lap 3 left out for its spin, lap 6 for its hit', U.map(r => r.krog).join() === CLEAN.join() && X.length === 2 && X[0].krog === 3 && X[0].razlog === 'vrtenje' && X[1].krog === 6 && X[1].razlog === 'trk',
+    `used ${U.map(r => r.krog).join()}, out ${X.map(r => r.krog + ': ' + r.razlog + ' @' + r.s + ' m').join('; ')}`);
+  const T = dry.T, spinS = spinAt && spinAt.s;
+  check('dry: the places in the summary: the spin within 100 m after where it was forced, the hit at the cutting\'s wall (1850-1950 m)', X.length === 2 && spinS != null && X[0].s >= spinS && X[0].s - spinS < 100 && X[1].s > 1850 && X[1].s < 1950,
+    `spin ${X[0] && X[0].s} m (forced at ${spinS && spinS.toFixed(0)} m), hit ${X[1] && X[1].s} m`);
+  check('dry: five clean laps, »dobro« (najmanj 3, dobro 5, najbolje 8-10); rain: three, »najmanj«', pD.natancnost.krogov === 5 && pD.natancnost.ocena === 'dobro' && pW.natancnost.krogov === 3 && pW.natancnost.ocena === 'najmanj',
+    `${pD.natancnost.krogov} ${pD.natancnost.ocena}, ${pW.natancnost.krogov} ${pW.natancnost.ocena}`);
+  // the line and the speed against the race's own (truth): the same laps, the samples the tool kept
+  const cmp = (p, r, laps) => { const dd = [], dv = [], dq = [], vp = r.race.player.vprof || r.race.vprof;
+    for (let i = 0; i < p.s.length; i++) { if (p.d[i] == null || p.n[i] < laps.length) continue; const tr = laps.map(L => r.truth.get(L + ':' + i)).filter(Boolean); if (tr.length < laps.length) continue;
+      const vT = mean(tr.map(x => x.v)), vr = vp[r.T.idx(r.T.startS + p.s[i])]; dd.push(Math.abs(mean(tr.map(x => x.d)) - p.d[i])); dv.push(Math.abs(vT - p.v[i])); dq.push(Math.abs(mean(tr.map(x => x.v / vr)) - p.vq[i])); }
+    return { n: dd.length, d: median(dd), v: median(dv), q: median(dq), d95: dd.sort((a, b) => a - b)[Math.floor(dd.length * 0.95)] }; };
+  const cD = cmp(pD, dry, CLEAN), cW = cmp(pW, wet, [1, 2, 3]);
+  check('dry: the line and the speed as the race had them (median off by under 3 cm and 0.1 m/s; 95 % of the points under 15 cm)', cD.n > 800 && cD.d < 0.03 && cD.v < 0.1 && cD.d95 < 0.15, JSON.stringify(cD));
+  check('rain: the same (the points where all three laps count)', cW.n > 800 && cW.d < 0.03 && cW.v < 0.1 && cW.d95 < 0.15, JSON.stringify(cW));
+  check('the speed as a share of the autopilot\'s pace (vq) against the race\'s own speed profile of that car and weather (median off by under 0.005)', cD.q < 0.005 && cW.q < 0.005, `dry ${cD.q.toFixed(4)}, rain ${cW.q.toFixed(4)}`);
+  // the known offset: where neither line is held in by the road's edge, the line right of the racing line by the laps' mean, its spread
+  const free = (p) => p.s.map((s, i) => i).filter(i => p.d[i] != null && Math.abs(p.rl[i]) < 2.4 && p.n[i] >= 3);
+  const fD = free(pD), offD = mean(fD.map(i => pD.d[i] - pD.rl[i])), sdD = median(fD.map(i => pD.d_sd[i])), want = mean(CLEAN.map(BIAS)), sdWant = Math.sqrt(CLEAN.map(BIAS).reduce((a, b) => a + (b - want) ** 2, 0) / 4);
+  check(`dry: the line ${want.toFixed(2)} m right of the racing line on average (±0.25 m), spread over the laps ${sdWant.toFixed(2)} m (±0.12 m)`, fD.length > 300 && Math.abs(offD - want) < 0.25 && Math.abs(sdD - sdWant) < 0.12, `${offD.toFixed(3)} m, spread ${sdD.toFixed(3)} m over ${fD.length} points`);
+  const fW = free(pW), offW = mean(fW.map(i => pW.d[i] - pW.rl[i])), wantW = mean([1, 2, 3].map(BIAS));
+  check(`rain: the line ${wantW.toFixed(2)} m right of the racing line on average (±0.25 m)`, fW.length > 300 && Math.abs(offW - wantW) < 0.25, `${offW.toFixed(3)} m over ${fW.length} points`);
+  // the other car beside the player on lap 2: those metres (and a second either side) left out of lap 2 only
+  const u2 = U.find(r => r.krog === 2), gm = lap2 && lap2.s1 - lap2.s0, om = u2 && u2.izpusceno_m && u2.izpusceno_m.promet;
+  check('dry: the 10 s beside the other car on lap 2 left out of it (its metres and a second either side), no other lap', om > gm && om < gm + 2 * 1.1 * 75 && U.filter(r => r.izpusceno_m && r.izpusceno_m.promet).length === 1,
+    `left out ${om} m, beside it ${gm && gm.toFixed(0)} m`);
+  check('dry: the standing start of lap 1 left out up to the first corner, no other lap', U[0].izpusceno_m && U[0].izpusceno_m.start > 100 && U[0].izpusceno_m.start < 400 && U.slice(1).every(r => !(r.izpusceno_m && r.izpusceno_m.start)), JSON.stringify(U[0].izpusceno_m));
+  check('rain: slower than the dry (the autopilot\'s pace lower in the corners), the same share of it (vq) within 3 %', (() => {
+    const i = pD.s.map((s, i) => i).filter(i => pD.v[i] != null && pW.v[i] != null && pD.vref[i] < 40);
+    return i.length > 100 && mean(i.map(j => pW.v[j])) < mean(i.map(j => pD.v[j])) - 1 && Math.abs(mean(i.map(j => pW.vq[j])) - mean(i.map(j => pD.vq[j]))) < 0.03; })(),
+    `vref dry ${median(pD.vref).toFixed(1)}, rain ${median(pW.vref).toFixed(1)}`);
+  // the corners: the minima of the speed, the braking into each
+  // (the truth: the minima of the race's own speed profile, each the slowest within 60 m and 3 m/s or more below the fastest of the 500 m before it)
+  const O = pD.ovinki, big = O.slice().sort((a, b) => (b.v_zav || 0) - (b.v_vrh || 0) - ((a.v_zav || 0) - (a.v_vrh || 0)))[0], vp = dry.race.player.vprof || dry.race.vprof, N = T.N;
+  const at = (i) => vp[((i % N) + N) % N], fromLine = (s) => ((s - T.startS) % T.len + T.len) % T.len, minima = [];
+  for (let i = 0; i < N; i++) { let ok = true; for (let k = -30; k <= 30 && ok; k++) if (k && at(i + k) < at(i)) ok = false; if (!ok) continue; let hi = 0; for (let k = 1; k <= 250; k++) hi = Math.max(hi, at(i - k)); if (hi - at(i) >= 3) minima.push(fromLine(i * T.ds)); }
+  const gap = (a, b) => Math.min(Math.abs(a - b), T.len - Math.abs(a - b)), atMin = O.filter(c => minima.some(m => gap(m, c.s) < 40)).length;
+  const sharp = T.corners.filter(k => k.minR < 40), caught = sharp.filter(k => { const s0 = fromLine(k.s0), s1 = s0 + (k.i1 - k.i0 + N) % N * T.ds; return O.some(c => c.s >= s0 - 60 && c.s <= s1 + 60); }).length;
+  check('dry: the corners found (12-20), each at a minimum of the race\'s speed profile (±40 m), every sharp corner (Track.corners, radius under 40 m) among them, the autopilot brakes into most',
+    O.length >= 12 && O.length <= 20 && atMin === O.length && caught === sharp.length && O.filter(c => c.zavira > 0).length >= O.length / 2,
+    `${O.length} corners, ${atMin} at the profile's ${minima.length} minima, ${caught} of the ${sharp.length} sharp, ${O.filter(c => c.zavira > 0).length} braked into: ${O.map(c => c.s + (c.ime ? ' ' + c.ime : '')).join(', ')}`);
+  const named = O.filter(c => c.ime), names = T.names || [];
+  check('dry: the track\'s corner names (Track.names) each on the corner at it (within 80 m), none twice', named.length >= 6 && new Set(named.map(c => c.ime)).size === named.length && named.every(c => names.some(q => q.n === c.ime && gap(q.d, c.s) < 80)),
+    named.map(c => c.ime + '@' + c.s).join(', '));
+  check('dry: the hardest braking (the chicane at the end of the long straight) 80-350 m before its apex from over 200 km/h, 8-16 m/s², 0.6-1.4 of the autopilot\'s braking there, the apex at 0.85-1.1 of its pace',
+    big && big.zav_pred > 80 && big.zav_pred < 350 && big.v_zav * 3.6 > 200 && big.pojemek > 8 && big.pojemek < 16 && big.pojemek_q > 0.6 && big.pojemek_q < 1.4 && big.vq_vrh > 0.85 && big.vq_vrh < 1.1 && big.zavira === 5,
+    JSON.stringify(big));
+  check('the profile: one point every 5 m round the lap (6194 m: 1239), the AI\'s line and pace beside it, the lap times of the car', pD.s.length === Math.floor(6194 / 5) + 1 && pD.s[1] === 5 && pD.rl.length === pD.s.length && pD.vref.every(v => v > 5) &&
+    pD.avti.kaze && pD.avti.kaze.krogov === 5 && Math.abs(pD.avti.kaze.najboljsi - Math.min(...CLEAN.map(k => dry.P.lapTimes[k - 1]))) < 0.01 && pD.avto === 'kaze',
+    `${pD.s.length} points, best ${pD.avti.kaze && pD.avti.kaze.najboljsi}`);
+}
+
+// 3. Mount Buller, an open road: three runs (each its own recording), the line 0.5 / 1 / 1.5 m right of the racing line
+const rB = [0.5, 1, 1.5].map((b, j) => record('mountbuller', { laps: 1, seed: 3 + j }, (P) => { P.laneBias = b; })), TB = rB[0].T;
+const runs = rB.map((r, j) => save(`posnetek_mountbuller_20261104-12${j}0.rrp`, r));
+const r2 = tool(runs, path.join(OUT, 'buller.json')), pB = r2.prof && r2.prof.proge && r2.prof.proge[0];
+console.log(r2.text.split('\n').slice(0, 6).map(l => '  | ' + l).join('\n'));
+check('open road: one profile, each run a lap (»vožnja«), all three used, »najmanj« (3-5 runs)', r2.code === 0 && pB && pB.odprta && r2.prof.proge.length === 1 && pB.krogi.uporabljeni.length === 3 && pB.natancnost.ocena === 'najmanj' && /vožnja \d/.test(r2.text),
+  pB ? `${pB.krogi.uporabljeni.length} used, ${pB.natancnost.ocena}, ${pB.s.length} points over ${pB.dolzina} m` : r2.text.slice(0, 300));
+if (pB) {
+  // (where the 1.5 m line still fits on the road: the autopilot keeps 1.25 m from the edge, Core aiDrive)
+  const fr = pB.s.map((s, i) => i).filter(i => pB.d[i] != null && pB.n[i] === 3 && pB.rl[i] < TB.wAt(TB.idx(TB.startS + pB.s[i])) - 1.25 - 1.5 - 0.1), off = mean(fr.map(i => pB.d[i] - pB.rl[i]));
+  check('open road: the whole run from the start line to the finish (2.5 km), the line 1 m right of the racing line on average (±0.25 m)', pB.dolzina > 2400 && pB.dolzina < 2600 && pB.n[1] === 3 && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
+    `${off.toFixed(3)} m over ${fr.length} points`);
+}
+
+// 4. a changing weather (the header's wxs, js/game.js rrpOf): rain from 150 s into the dry race, full after 25 s: lap 1 dry, lap 2 left out
+// while the road gets wet, later laps wet (40 s after the rain is full); the spin and the hit laps left out for their own reasons
+{
+  const H = Object.assign({}, dry.H, { wxs: { at: 150, dur: 25, r0: 0, r1: 1 }, rain: 1, wx: 'dez' });
+  const r3 = tool([save('posnetek_bathurst_20261104-1300.rrp', dry, H)], path.join(OUT, 'menjava.json')), P3 = (r3.prof && r3.prof.proge) || [];
+  const s3 = P3.find(p => p.vreme === 'suho'), w3 = P3.find(p => p.vreme === 'mokro');
+  check('a changing weather: lap 1 in the dry profile, lap 2 left out (»vreme se spreminja«), laps 4, 5, 7 in the wet one', s3 && w3 && s3.krogi.uporabljeni.map(r => r.krog).join() === '1' && P3.some(p => p.krogi.izpusceni.some(r => r.krog === 2 && r.razlog === 'vreme se spreminja')) &&
+    w3.krogi.uporabljeni.map(r => r.krog).join() === '4,5,7', P3.map(p => `${p.vreme}: ${p.krogi.uporabljeni.map(r => r.krog).join()} / ${p.krogi.izpusceni.map(r => r.krog + ' ' + r.razlog).join(', ')}`).join(' | '));
+}
+
+// 5. a file that is no recording, a missing argument
+{
+  const f = path.join(OUT, 'posnetek_nic.rrp'); fs.writeFileSync(f, Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9]));
+  const r4 = tool([f], path.join(OUT, 'nic.json')), r5 = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs')], { encoding: 'utf8' });
+  check('not a recording: left out with the reason (»to ni posnetek igre«), exit 1; no file given: usage, exit 2', r4.code === 1 && /posnetek_nic\.rrp: posnetka ni mogoče prebrati: to ni posnetek igre/.test(r4.text) && r5.status === 2 && /usage/.test(r5.stdout),
+    `exit ${r4.code} / ${r5.status}`);
+}
+
+console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
+process.exitCode = bad ? 1 : 0;
