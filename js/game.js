@@ -383,6 +383,7 @@
   // (its end on the clock: in a race hudCol moves it on while the toast waits for room in the column, by TOAST_WAIT s at most: what waits
   // longer is not shown any more; tag: what it is about, e.g. 'pit': gone with the pit stop's autopilot, pitFree)
   function toast(txt, ms, tag) {
+    if (inStep && paused) toastHeld = null;   // (P1A: the race's newer toast while paused, online or a simulated step: on resume the one held before it not back over it)
     const el = $('toast'); el.textContent = txt; el.classList.add('show'); toastEnd = performance.now() + (ms || 2600); toastCap = toastEnd + TOAST_WAIT * 1000; toastTag = tag || '';
     clearTimeout(toast._t); const tick = () => { const left = toastEnd - performance.now(); if (left > 1) toast._t = setTimeout(tick, left); else { el.classList.remove('show'); toastTag = ''; } };
     toast._t = setTimeout(tick, ms || 2600); hudCol(0);
@@ -392,8 +393,9 @@
   let toastEnd = 0, toastCap = 0, toastTag = '';
   // P1A: a race's toast (a new achievement, a notice) is not shown over the pause: held there with the time it had left (toastHold, pause)
   // and shown again as the race goes on (toastBack, resume), for TOAST_BACK s at least; a toast of the pause's own buttons shows as ever
+  // (the race's own newer toast while paused, as online, where the race goes on, drops the one held: the newest stays)
   const TOAST_BACK = 1.5;
-  let toastHeld = null;
+  let toastHeld = null, inStep = false;   // (inStep: a race step running, stepRace: a toast from it is the race's)
   function toastHold() { const el = $('toast'); if (!el.classList.contains('show')) return; toastHeld = { txt: el.textContent, left: toastEnd - performance.now(), tag: toastTag }; clearTimeout(toast._t); el.classList.remove('show', 'wait'); toastTag = ''; }
   function toastBack() { const h = toastHeld; toastHeld = null; if (h) toast(h.txt, Math.max(h.left, TOAST_BACK * 1000), h.tag); }
   function showMsg(txt, cls, dur) {
@@ -2834,7 +2836,8 @@
   }
 
   /* ---------------- per-step race logic ---------------- */
-  function stepRace(dt, inp) {
+  function stepRace(dt, inp) { inStep = true; try { raceStep(dt, inp); } finally { inStep = false; } }
+  function raceStep(dt, inp) {
     recStep(); Input.buzzStep(dt);   // (the vibration's clock: the race's)
     const P = race.player;
     const pol = race.pol, hold = pol && (pol.hold || (pol.stage === 'check' && /^(stopped|walk|docs)$/.test(pol.chk.st) && !(inp.gas > 0) && !autoDrive));   // (the police: parked, arrested, in the building; stopped at the officer: the foot on the brake unless on the gas itself (Samodejni plin: the gas pressed to drive off))
