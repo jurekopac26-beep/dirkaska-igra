@@ -46,7 +46,7 @@ Uporabnik 4. 11. 2026: »prosim shrani si ocene, da izberem samo 1 progo na drž
 | Finska | Ouninpohja –, Harju – | – |
 | Slovenija | Vršič –, Medvode – | – |
 
-Ocene prog iz držav z eno progo v igri (za primerjavo): Spa, Belgija **5** (4. 11. 2026).
+Ocene prog iz držav z eno progo v igri (za primerjavo): Spa, Belgija **5** (4. 11. 2026); Los Caracoles, Čile **5** (4. 11. 2026).
 
 ## Države brez proge v igri: po vrsti
 
