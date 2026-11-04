@@ -73,7 +73,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | 7 · vleka, žaromet, led, baterija | 04, 08, 17, 26 | 10–14 | končano (PR #233) |
 | 8 · ostalo, garaže in naslovnica | 11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS | 18–25 | |
 
-Santa Monica Mountains (`mulholland`) je od 4. 11. 2026 testna proga (odločitev uporabnika, `CLAUDE.md`): misiji 06 in »Vaja: na vrh« tečeta na njej. Pred izbrisom testnih prog (pred Google Play) ju je treba prestaviti na pravo progo; to odloči uporabnik.
+Santa Monica Mountains (`mulholland`) je od 4. 11. 2026 testna proga (odločitev uporabnika, `CLAUDE.md`): misiji 06 in »Vaja: na vrh« tečeta na njej. Pred izbrisom testnih prog (pred Google Play) ju je treba prestaviti na pravo progo; to odloči uporabnik. Test `tests/missions.test.js` (»vsaka misija na pravi progi«) dovoli to samo za misijo 06 (`ON_TEST_TRACK`); misija 06 mora pred izbrisom na pravo progo ali izpasti, druga misija na testni progi pa test pade.
 
 ## Predaja
 - Po skupini 1: sistem in misija 06 sta narejena. Naslednja je skupina 2 (ogenj): gasilski avto C iz `v2.glb` (THREE je r128, `GLTFLoader` ni v repozitoriju: avto zgradi iz preprostih teles po merah v `v2.json` ali `blender/gas.py`), ogenj, curek vode, gašenje s prstom.
