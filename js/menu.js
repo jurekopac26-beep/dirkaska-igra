@@ -620,6 +620,7 @@
     let first;
     if (mode === 'chase') first = cell('Police', 'On you', 'opp');
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
+    else if (mode === 'race' && rivOf(d)) { const n = G.rivals(d); first = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + n + '. Choose how many"><small>Opponents</small><b>' + n + '</b></button></div>'; }   // (a tap: the sheet with 0..100, rivSheet)
     else first = cell('Opponents', String(mode === 'duel' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
@@ -677,6 +678,33 @@
       optionsRows().map(r => '<div class="orow"><span>' + r[1] + '</span><div class="oseg">' + r[2].map(o => '<button aria-pressed="' + (String(r[3]) === o[0]) + '" data-act="opt:' + r[0] + ':' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>').join('') +
       '</div><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
+
+  // the race's opponents (the row's Opponents, a race of its own outside the career): the number big, the quick picks (0: Trial, alone
+  // against the clock), a slider up to what the track takes (def.maxRivals: Pikes Peak's summit, the parking past the line of a few roads;
+  // a big vehicle's field fewer) and Done. A pick is the game's setting at once (rivals: the next race; -1, the track's own field, until the
+  // first pick); the slider moves the number as it goes and keeps it when let go, the screen behind it (the row) follows
+  const RIV_QUICK = [[0, 'Trial'], [1], [5], [12], [25], [50], [100]];
+  const rivOf = (d) => G.rivPick ? G.rivPick(d) : null;   // ({ max, car }: the most the track takes with this car, car: a big vehicle's field the limit; null: no choice here, the career)
+  const rivSub = (n) => n === 0 ? 'Trial · you alone against the clock' : n === 1 ? '1 rival · 2 cars' : n + ' rivals · ' + (n + 1) + ' cars';
+  function rivSheet() {
+    const t = curTrack(), p = t && rivOf(t.def); if (!p) return '';
+    const n = G.rivals(t.def), max = p.max, road = !!t.def.open;
+    return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet riv" role="dialog" aria-label="Opponents"><h2>Opponents</h2>' +
+      '<div class="rnum" aria-live="polite"><b>' + n + '</b><span>' + rivSub(n) + '</span></div>' +
+      '<div class="rquick">' + RIV_QUICK.map(([k, l]) => '<button data-act="riv-n:' + k + '" aria-pressed="' + (k === n) + '"' + (k > max ? ' disabled' : '') + '>' + k + (l ? '<small>' + l + '</small>' : '') + '</button>').join('') + '</div>' +
+      '<input class="rslide" type="range" min="0" max="' + max + '" step="1" value="' + n + '" aria-label="Opponents, 0 to ' + max + '" style="--p:' + (n / Math.max(1, max) * 100).toFixed(2) + '%">' +
+      '<div class="rends"><span>0</span><span>' + (max < 100 ? max + ' at most ' + (p.car ? 'with this car' : 'on this ' + (road ? 'road' : 'track')) : '100') + '</span></div>' +
+      '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+  }
+  // the sheet's number, its picks and the slider at n, and the row behind it (no new drawing: the slider keeps its drag)
+  function rivPaint(n) {
+    const sh = $('.sheet.riv', app); if (!sh) return;
+    $('.rnum b', sh).textContent = n; $('.rnum span', sh).textContent = rivSub(n);
+    for (const b of sh.querySelectorAll('.rquick button')) b.setAttribute('aria-pressed', String(+b.dataset.act.slice(6) === n));
+    const r = $('.rslide', sh); if (+r.value !== n) r.value = n; r.style.setProperty('--p', (n / Math.max(1, +r.max) * 100).toFixed(2) + '%');
+    const o = $('#s-track .trow .opp button', app); if (o) { $('b', o).textContent = n; o.setAttribute('aria-label', 'Opponents: ' + n + '. Choose how many'); }
+  }
+  const rivSet = (n) => { if (n !== G.S.rivals) G.setOption('rivals', n); rivPaint(n); };
 
   /* ---------------- rendering ---------------- */
   const VIEWS = { title: vTitle, track: vTrack };
@@ -1161,11 +1189,13 @@
       }
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back: the game's car screen, whose Back and Next come back to the track step)
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'riv': sheet = rivSheet; render(true); break;   // (the row's Opponents: how many, 0..100)
+      case 'riv-n': rivSet(+v); break;
       case 'dark-tip': sheet = darkSheet; render(true); break;
       case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
       case 'chrome': location.href = chromeUrl(); break;
       case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
-      case 'close-sheet': sheet = null; render(true); break;
+      case 'close-sheet': { const r = $('.sheet.riv .rslide', app); if (r && +r.value !== G.rivals((curTrack() || {}).def || {})) rivSet(+r.value); sheet = null; render(true); break; }   // (the opponents' slider not let go yet: its number kept)
       case 'game': G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's)
       case 'race-single': {
         const t = curTrack(); if (!t) break;
@@ -1214,6 +1244,12 @@
       if (screen === 'track' && !sheet && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
+    // the opponents' slider: the number follows it, the setting when it is let go (and on Done: rivSheet)
+    app.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('rslide')) rivPaint(+e.target.value); });
+    app.addEventListener('change', (e) => { if (e.target.classList && e.target.classList.contains('rslide')) rivSet(+e.target.value); });
+    // its own keys (the arrows, Home, End, Page Up and Down) stay with it: the game takes the arrows on the window for driving (js/input.js),
+    // where an element of this shadow root is not an input
+    app.addEventListener('keydown', (e) => { if (e.target.classList && e.target.classList.contains('rslide') && /^(Arrow|Home$|End$|Page)/.test(e.key)) e.stopPropagation(); });
     // swipe the track model to change the track
     let sw = null;
     app.addEventListener('pointerdown', (e) => { if (screen === 'track' && e.target.closest('.dio')) sw = { x: e.clientX, y: e.clientY }; });
@@ -1273,7 +1309,12 @@
     } catch (e) { fail(e); }
   }
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
+  // the menu hides the whole screen (game.js frame(): the demo behind it unseen, not drawn): the track step (its own background; the title
+  // is see-through, the game's scene behind it, css/menu.css #s-title) on a phone either way up; a tablet held upright has the menu as a
+  // column in the middle (#mn, 432 px), the game's demo seen at its sides
+  const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
+  const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the game's car screen was opened from the track step (its Nazaj goes back there); set again when the game comes back to
   // that screen from the garage (game.js garageBack)
-  window.Menu = { init, show, hide, refresh, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl() }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, set fromTrack(v) { carFrom = !!v; if (carFrom) screen = 'track'; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl() }) };
 })();

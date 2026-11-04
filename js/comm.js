@@ -20,10 +20,11 @@ const Comm = (() => {
   // a number of cars or rivals in words, for the lines that say how many ({cars}, {rivals}: twenty-two, a hundred)
   const ONES = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
   const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-  const words = (n) => n >= 0 && n < 20 ? ONES[n] : n < 100 ? TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '') : n === 100 ? 'a hundred' : String(n);
+  const words = (n) => n >= 0 && n < 20 ? ONES[n] : n < 100 ? TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '') : n === 100 ? 'a hundred' : n < 200 ? 'a hundred and ' + words(n - 100) : String(n);   // (101: the menu's hundred rivals and the player)
 
   const LINES = {
     intro: ['Welcome to {track}! {laps} laps, {cars} cars, and you line up {grid} on the grid.', 'Good day and welcome to {track}. {laps} laps ahead, and you start from {grid}.', 'Here we are at {track}! {cars} cars, {laps} laps, and you start {grid}.'],
+    introAlone: ['Welcome to {track}! An empty grid today: {run}, just you and the clock.', 'Here we are at {track}. No rivals this time: {run} against the clock.'],   // (a race without rivals: the menu's Opponents 0; {run}: one lap, three laps)
     introNet: ['Welcome to {track}! Just two cars today, {laps}: you and {name}, side by side on the front row.', 'Here we are at {track} for a duel with {name} over {laps}. May the better driver win!', 'Good day and welcome to {track}! You against {name}, {laps}. Let\'s see who takes it.'],
     introNetN: ['Welcome to {track}! {n} friends on the grid today, {laps}, and no one else. Let the best driver win!', 'Here we are at {track}: {n} of you over {laps}. Friends now, rivals for a while!', 'Good day and welcome to {track}! {n} players, {laps}. Who takes this one?'],
     // the open road (Vršič, Los Caracoles: traffic both ways): the duel with one rival, the run from the police (on Vršič the police radio instead, game.js)
@@ -82,6 +83,7 @@ const Comm = (() => {
     pressure: ["Watch your mirrors, there's a car right behind you!", "Under pressure! Someone's all over your rear bumper!"],
     win: ['Chequered flag! Victory! What a drive!', 'And you win it! Absolutely brilliant!', 'Winner! Take a bow!'],
     podium: ['Chequered flag! {pos} place, a podium finish!', 'Across the line in {pos}! On the podium!'],
+    finishAlone: ['Chequered flag! A clean run to the line, just you and the clock.', "That's the flag. Let's see what the clock says."],   // (no rivals: no place to call)
     finish: ['Chequered flag. You finish {pos}.', 'Across the line in {pos}. Better luck next time!', "That's the flag. {pos} place today."],
     wrong: ['Wrong way! Turn it around!', "You're going the wrong way!"],
     damage: ["That car's taking a real beating!", 'The bodywork is looking battered now!', "There's some serious damage there!"],
