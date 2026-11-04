@@ -5,6 +5,9 @@
 // and on each preview in beta/<number>/, then the workflow checks every tree with --check-stamped).
 //   node tools/stamp.js --check                 the repo: exit 1 if a link points to a missing file or carries a stamp
 //   node tools/stamp.js --strip                 take the stamps off the repo's pages (e.g. brought back by merging an older branch)
+//   node tools/stamp.js --merge                 a merge (git merge origin/main) that stopped on a conflict in index.html or garaza.html: each such
+//                                               page merged again without stamps; where both sides added script or style links at the same
+//                                               place (two new tracks), both kept; git add when no other conflict is left
 //   node tools/stamp.js --find <stamp> [file]   the commits whose js/game.js (or file) had this stamp: the version (v=…) in an RRA-NAPAKE
 //                                               report or in a recording (posnetek_….rrp) from the published game
 //   GAME_ROOT=<folder> node tools/stamp.js                   stamp a copy of the game (the publish step, the tests; never the repo itself)
@@ -18,7 +21,7 @@ const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const REPO = path.resolve(__dirname, '..');
-const USAGE = 'usage: node tools/stamp.js --check | --strip | --find <stamp> [file]\n       GAME_ROOT=<folder> node tools/stamp.js [--check-stamped]';
+const USAGE = 'usage: node tools/stamp.js --check | --strip | --merge | --find <stamp> [file]\n       GAME_ROOT=<folder> node tools/stamp.js [--check-stamped]';
 
 // the content stamp of some bytes, of a file: sha256 with CRLF read as LF, first 8 hex digits
 const stampOfBytes = (buf) => crypto.createHash('sha256').update(buf.toString('latin1').replace(/\r\n/g, '\n'), 'latin1').digest('hex').slice(0, 8);
@@ -78,6 +81,7 @@ function pass(root, mode) {
 function main(argv) {
   const [flag = '', ...rest] = argv;
   if (flag === '--find') return find(rest);
+  if (flag === '--merge') { if (rest.length) { console.log(USAGE); return 2; } return merge(); }
   const mode = { '': 'stamp', '--strip': 'strip', '--check': 'check', '--check-stamped': 'check-stamped' }[flag];
   if (!mode || rest.length) { console.log(USAGE); return 2; }
   const root = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : REPO;
@@ -139,6 +143,51 @@ function find(args) {
   for (const c of had) console.log(`  ${c.sha.slice(0, 9)} ${c.date} ${c.subject}`);
   console.log(`changed since then: git log --oneline ${had[0].sha.slice(0, 9)}..origin/main`);
   return 0;
+}
+
+// a merge that stopped on a conflict in index.html or garaza.html (most often the stamps of a branch from before 3. 11. 2026, or two new
+// tracks at the same place): each such page merged again from its common base and its two sides (git's stages 1, 2, 3), all three without
+// stamps; the git repository of the current folder
+function merge() {
+  const git = (a) => execFileSync('git', a, { encoding: 'utf8', maxBuffer: 1 << 28 });
+  const top = git(['rev-parse', '--show-toplevel']).trim();
+  const pages = git(['diff', '--name-only', '--diff-filter=U']).split('\n').filter(f => f === 'index.html' || f === 'garaza.html');
+  if (!pages.length) { console.log('no page in a merge conflict (index.html, garaza.html): nothing to do'); return 0; }
+  const strip = (html) => eachLink(top, html, ({ params }) => (params.some(isStamp) ? params.filter(p => !isStamp(p)) : null));
+  let left = 0;
+  for (const page of pages) {
+    const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'stamp-merge-'));
+    const side = (n) => { let t = ''; try { t = git(['show', `:${n}:${page}`]); } catch (_) { } const f = path.join(tmp, n + '.html'); fs.writeFileSync(f, strip(t)); return f; };
+    const [mine, base, theirs] = [2, 1, 3].map(side);   // (2 this branch, 1 the common base, 3 the branch merged in)
+    let out;
+    try { out = git(['merge-file', '-p', '--diff3', '-L', 'this branch', '-L', 'common base', '-L', 'merged in', mine, base, theirs]); }
+    catch (e) { if (typeof e.stdout !== 'string' || !(e.status > 0)) throw e; out = e.stdout; }   // (exit n > 0: n conflicts left, marked)
+    fs.rmSync(tmp, { recursive: true, force: true });
+    const m = keepBoth(out);
+    fs.writeFileSync(path.join(top, page), m.text);
+    if (!m.left) { git(['add', '--', page]); console.log(page + ': merged without the stamps' + (m.both ? `; ${m.both} place(s) where both sides added links: both kept` : '') + '; no conflict left (git add done)'); }
+    else { left += m.left; console.log(page + `: merged without the stamps, but ${m.left} place(s) where both sides changed the same lines are marked: resolve them, then git add ${page}`); }
+  }
+  return left ? 1 : 0;
+}
+// the conflicts git left (diff3: this branch ||||||| base ======= merged in) where both sides only added script or style links at the same
+// place, the base having nothing there: both sides kept, this branch's first, a link both added only once; any other conflict stays marked
+// as git marks it (two sides, no base)
+function keepBoth(text) {
+  const L = text.split('\n'), out = [], LINK = /^\s*(<script\b[^>]*><\/script>|<link\b[^>]*>)?\s*$/i;
+  let left = 0, both = 0;
+  for (let i = 0; i < L.length; i++) {
+    if (!L[i].startsWith('<<<<<<< ')) { out.push(L[i]); continue; }
+    const a = [], b = [], c = [];
+    let j = i + 1, part = a;
+    for (; j < L.length && !L[j].startsWith('>>>>>>> '); j++) {
+      if (L[j].startsWith('||||||| ')) part = b; else if (L[j] === '=======') part = c; else part.push(L[j]);
+    }
+    if (!b.some(l => l.trim()) && a.concat(c).every(l => LINK.test(l))) { out.push(...a, ...c.filter(l => !l.trim() || !a.includes(l))); both++; }
+    else { out.push(L[i], ...a, '=======', ...c, L[j]); left++; }
+    i = j;
+  }
+  return { text: out.join('\n'), left, both };
 }
 
 module.exports = { stampOf, stampOfBytes, eachLink, pagesOf };
