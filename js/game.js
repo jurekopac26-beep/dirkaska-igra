@@ -3821,8 +3821,8 @@
   // the row as wide as it is: all of it (the icons spread out) or, more than fit, a swipe (the cells PW_C px or a little more, so many that
   // the next one is half out at the edge) and the line under it; a cell never narrower than the widest lap's name (Krog 18) in the font there is
   const PW_C = 50, PW_GAP = 4;
-  function pwFit() {
-    pbFit();
+  function pwFit() { pbFit(); pwRow(); phFit(); }
+  function pwRow() {
     const wx = $('pause-wx'), row = wx.querySelector('.pw-row'), n = row.children.length, W = row.clientWidth; if (!n || !W) return;
     let lw = 0; for (const c of row.children) { const b = c.querySelector('b'); if (b) lw = Math.max(lw, b.offsetWidth); }
     const C = Math.max(PW_C, Math.ceil(lw) + 2), long = n * C + (n - 1) * PW_GAP > W + 0.5, k = Math.max(1, Math.floor((W + PW_GAP) / (C + PW_GAP)));
@@ -3837,6 +3837,13 @@
     let q = 1, fs = 0;
     for (const b of bs) { if (!b.offsetParent) continue; const cs = getComputedStyle(b), pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight), room = b.clientWidth - pad, txt = b.scrollWidth - pad; if (txt > room + 0.5 && room > 0) { q = Math.min(q, room / txt); fs = parseFloat(cs.fontSize); } }
     if (q < 1) { const px = Math.max(11, Math.floor(fs * q * 0.97 * 2) / 2) + 'px'; for (const b of bs) b.style.fontSize = px; }
+  }
+  // the pause on an upright screen all there without scrolling: a font wider than the one it was fitted to (more lines, Trki med avti's choices
+  // in two) makes the list of stops, the strategy's words and the gaps a little smaller (#s-pause.fit1), then the rows of choices lower (.fit2)
+  function phFit() {
+    const s = $('s-pause'), body = $('pause-body'); s.classList.remove('fit1', 'fit2');
+    if (!body || !body.clientHeight || innerWidth > innerHeight) return;
+    for (const c of ['fit1', 'fit2']) { if (body.scrollHeight <= body.clientHeight + 1) break; s.classList.add(c); }
   }
   if (window.ResizeObserver) new ResizeObserver(() => pwFit()).observe($('pause-wx').querySelector('.pw-row'));   // (shown, turned, the panel resized: fitted again)
   window.addEventListener('resize', () => { if (screen === 'pause') { pwFit(); requestAnimationFrame(pwFit); setTimeout(pwFit, 80); } });   // (and at once on a turn: the layout may come a frame later)
