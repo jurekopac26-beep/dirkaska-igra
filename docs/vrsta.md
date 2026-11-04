@@ -17,13 +17,11 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Deli iz garaže: sklop 4 | 3 | ko se izprazni vrsta; na `main` pred ned. 8. 11. 10:00 |
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
-| Gorske proge, skupina A (brez Aulija) | 3 | ko sta sklop 4 in #257 na `main` |
-| Zavite proge, korak 1: Ouro Preto (+ gradniki) | 3 | ko je #241 na `main` |
-| Furka 2A, Kapelmuur | 3 | po vrsti |
 | Garaža, sklopi 6–8 (nagrade po vrednosti avta, škoda, gume in deli z rokama) | 1 | ko je #248 na `main`; `js/cars/kolibri.js` in `js/deli/*` pred 8. 11. ne spreminja |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
+| Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 
-## Vrsta (stanje 3. 11. 2026)
+## Vrsta (stanje 4. 11. 2026)
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
@@ -36,11 +34,11 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 
-Zadržano: #279 (račun 3; prekriva se s #286 računa 1, oba samodejno razrešita spor v `index.html`; odloči uporabnik).
+Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
-- Račun 1: #286 `stamp.js --merge` (stoji do odločitve uporabnika), #261 Hakone, #153 Medvode. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju), krog testov na `main` se izteče.
-- Račun 2: #288 testi zastavic, #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #284 boksi, #283 Killar, #267 meni sklop 5, #240 trki 100 avtov, #202 fizika.
+- Račun 1: #261 Hakone, #153 Medvode, #294 krog testov na `main` se izteče. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
+- Račun 2: #288 testi zastavic, #287 gume KOLIBRIJA (od 8. 11. ureja `js/cars/*`), #284 boksi, #283 Killar, #240 trki 100 avtov, #202 fizika, #292 ostrenje slike.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
