@@ -4006,7 +4006,7 @@
         k = clamp(1 - cst.h / cst.h0, 0, 0.995); lbl = tr('Prevzem čez {0} s', Lang.dec(cst.h.toFixed(1)));
       }
     } else if (pa.st === 'merge') { k = PB_M + (1 - PB_M) * clamp(1 - pa.t / PIT_OUT, 0, 1); lbl = tr('Prevzameš čez {0}', pa.n || 1); }
-    const tch = $('touch'), ap = k >= 0 || cst.on; if (tch.classList.contains('ap') !== ap) tch.classList.toggle('ap', ap);   // (#touch.ap: no tilt meter while the autopilot steers, css)
+    const tch = $('touch'), ap = k >= 0 || cst.on || fly.on; if (tch.classList.contains('ap') !== ap) tch.classList.toggle('ap', ap);   // (#touch.ap: no tilt meter while the autopilot steers, css; on a flying start's run to the line too, flyStep)
     { const v = pitBtnVis(P); if (v !== pa.bv) { pa.bv = v; if (v >= 1) tch.style.removeProperty('--apv'); else tch.style.setProperty('--apv', v.toFixed(3)); } }   // (the driving buttons: css #touch .tb, #c-wheel)
     if (k < 0) { if (el.classList.contains('on')) el.classList.remove('on'); return; }
     pa.k = Math.max(pa.k, k);
