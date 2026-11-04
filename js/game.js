@@ -719,17 +719,18 @@
     location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[S.color].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
-  // address plain again (a reload: the title)
+  // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
+  // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)
   function garageBack() {
     let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
     if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
     let o = null; try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
-    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car) { S.car = k; save(); }
+    const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1, step = !ch && !!(o && o.track && menuOn);
+    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car && (!step || owned(Core.MODELS[k].id))) { S.car = k; save(); }
     const next = P.get('naprej');   // (the garage's Izberi progo: on to the track screen with that car, when it is the player's)
     try { P.delete('zaslon'); P.delete('avto'); P.delete('naprej'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
-    const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1;
     carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
-    if (o && o.track && menuOn) Menu.fromTrack = true;   // (the new menu's track step: its Nazaj there again)
+    if (step) { showScreen('track'); return; }   // (the new menu's track step, the same track: its Back the title as before the garage)
     bg = 'show'; buildCarScreen(); showScreen('car');
     if (next === 'proga' && owned(Core.MODELS[S.car].id)) {   // (from the championship's car: back to it, as the car screen's Izberi)
       if (ch) { carFrom = 'title'; save(); toTitle(); openChamp(); } else { if (!menuOn) buildTrackScreen(); showScreen('track'); } }
@@ -5394,7 +5395,7 @@
       case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
       case 'car-garage': garageOpen(); break;   // (the car on the car screen tapped: the garage with it)
-      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back the car screen, whose Nazaj leads to that step: Menu.fromTrack)
+      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back that step again: garageBack, Menu.fromTrack)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
