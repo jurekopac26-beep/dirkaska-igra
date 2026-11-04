@@ -19,7 +19,12 @@ const init = { content: `(() => {
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', hlv: 1 }, { width: 390, height: 844 }, { init });
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
-  const race = () => page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); return g.phase; });
+  // (a race to the end on autopilot, at most 600 s; stuck or the wrong way round it is put back on the road after each 2 s, like a player
+  // tapping Na progo: the autopilot has no reverse gear and the race rescues only the rivals. Trki med avti, Simulacija: a knock can leave
+  // the player's car against the barrier; in CI the fourth race once stood the whole 600 s. Not over: the phase and where the car is)
+  const race = () => page.evaluate(() => { const g = window.__game; g.pause();
+    for (let k = 0; k < 300 && g.phase !== 'done'; k++) { g.sim(2, true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); }
+    const P = g.race && g.race.player; return g.phase === 'done' || !P ? g.phase : g.phase + ' ' + JSON.stringify({ t: +g.race.time.toFixed(1), lap: P.lap, s: Math.round(P.q.s), v: +P.speed.toFixed(1), stuck: +(P.stuckT || 0).toFixed(1), wrong: +(P.wrongT || 0).toFixed(1), dmg: +(P.dmg || 0).toFixed(2), inPit: !!P.inPit }); });
   const playing = () => page.evaluate(() => { const g = window.__game, el = (id) => document.getElementById(id), ui = el('replay-ui'), cap = el('rp-hl-cap');
     return { screen: g.screen, ui: !ui.classList.contains('off'), auto: ui.classList.contains('auto'), cap: cap.classList.contains('off') ? '' : cap.textContent,
       shown: [...ui.querySelectorAll('.rp-bar button')].filter(b => getComputedStyle(b).display !== 'none').map(b => b.dataset.act), rec: g.hlv.rec, vid: g.hlv.vid }; });
@@ -104,9 +109,9 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-settings'); document.querySelector('[data-set="hlv"] button[data-v="0"]').click(); document.querySelector('[data-set="lang"] button[data-v="sl"]').click(); g.onAction('settings-done'); });
   await act('restart');
   await page.waitForFunction(() => { const g = window.__game; return g.race && g.phase !== 'done' && g.screen === 'none'; }, null, { timeout: 60000 });
-  await race();
+  const ph8 = await race();
   await page.waitForTimeout(800);
-  const off = await page.evaluate(() => ({ screen: window.__game.screen, ui: !document.getElementById('replay-ui').classList.contains('off'), rec: window.__game.hlv.rec, vid: window.__game.hlv.vid, stored: JSON.parse(localStorage.getItem('tdgp-settings')).hlv }));
+  const off = await page.evaluate((ph) => ({ ph, screen: window.__game.screen, ui: !document.getElementById('replay-ui').classList.contains('off'), rec: window.__game.hlv.rec, vid: window.__game.hlv.vid, stored: JSON.parse(localStorage.getItem('tdgp-settings')).hlv }), ph8);
   T.check('switched off in the settings: the results straight away, no video (kept)', off.screen === 'results' && !off.ui && !off.rec && !off.vid && off.stored === 0, JSON.stringify(off));
 
   // (a video the browser reads from memory in pieces, as it plays: it may let a read go unfinished, net::ERR_ABORTED, which is no error)
