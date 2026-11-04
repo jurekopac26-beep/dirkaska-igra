@@ -36,7 +36,8 @@ try {
 
   // 2. a race to the line: the browser asked to keep the storage, the offer on the results
   await startTrack(pa, 'troisrivieres');
-  await pa.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 400 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
+  // (the autopilot on this circuit now and then stops for good, and the race does not end in 400 steps: put back on the road as in pits, fuel, hlvid, lang and memory)
+  await pa.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 400 && g.phase !== 'done'; k++) { g.sim(2, true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); } if (g.phase !== 'done') g.resume(); });
   await pa.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   await pa.waitForTimeout(300);
   const r1 = await pa.evaluate(() => ({ asked: window.__persist.asked, kept: Shramba.state.persisted, races: window.__game.stats.races, off: document.getElementById('res-save').classList.contains('off'), txt: document.getElementById('res-save').innerText.replace(/\s+/g, ' '),
