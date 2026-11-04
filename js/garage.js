@@ -171,7 +171,7 @@
   // 600, a truck (4 t and more) 12.000, any other car 3.500
   const paintPrice = (id) => { const Mm = model(id); return Mm.len * Mm.wid < 4 ? 600 : Mm.mass >= 4000 ? 12000 : 3500; };
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
-  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
+  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
   // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
   const raceLocked = (c) => { const p = c.parts.aero; return !p || (p[0] < 1 || (p[0] === 1 && p[1] < 2)); };
 
@@ -396,6 +396,8 @@
     const c = C(), L0 = levels(c.parts); if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
     const name = L2(EL[el].n) + ' · ' + (v ? L2(opt(el, v[0], v[1])[0]) : tr('serijsko'));
     lastFit = name;
+    // (a tyre or a rim: an arm puts it on, from the regal when it stands there, else off the trolley; KONČANO when it is on)
+    if (el === 'gume' || el === 'platisca') { const key = v ? keyOfOpt(el, v[0], v[1]) : null; G.fit(el, spec(S.car), { src: key && key.startsWith('rgl:') ? key : null }); return; }
     if (k && L1[k] !== L0[k]) G.upgrade(k, L1[k]); else { G.sfx('ping'); chip(tr('KONČANO'), esc(name)); lastFit = null; }
   }
   let lastFit = null;

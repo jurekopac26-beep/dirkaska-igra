@@ -242,6 +242,23 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r2 = await run();
     const u3 = await ui();
     T.check('the track slicks (on offer: 1.600 🪙 -> 1.300 🪙) bought: the tyres\' level 3 (DIRKALNE, from PREMIUM), the car up on the lift (>= 0.4 m) and down, the table still', d5.tabs[3][2] && d5.tabs[3][1] === '1.300–6.000 🪙' && d5.tiles[0].old && u2.S.money - u3.S.money === 1300 && u3.info.upg.gume === 3 && r2.lift >= 0.4 && u3.info.lift === 0 && r2.table === 0, JSON.stringify({ paid: u2.S.money - u3.S.money, upg: u3.info.upg, r2, d5 }));
+    // the arms at the work (sklop 7): the far one's reach takes the slicks off the regal (the regal in the picture), on the far wheel, the old
+    // ones back on the regal; the gravel tyres (not on the regal) come on the trolley: the near arm's gripper puts them on the near wheel,
+    // the old ones onto the trolley, off with it; the slicks again: the car's own (tvoj), NAMESTI, free, off the regal again
+    const fitOf = () => page.evaluate(() => { const D = Garage3D._dbg, L = D.FIT.log, st = (k) => L.find(q => q.step === k) || {};
+      return { log: L.map(q => q.step).join(), plan: st('plan'), rgl: st('grab').rgl, put: st('put').where, parked: D.fx.parked, stay: !!D.RGL.P.stay, ret: D.RGL.ret.length, cart: D.cart, chip: document.getElementById('g-chip').textContent }; });
+    const f1 = await fitOf();
+    T.check('the slicks on by the far arm: its reach to the regal (the regal in the picture), on the far wheel, the old tyres back on the regal, KONČANO; the arms parked after',
+      f1.log === 'plan,grab,swap,put' && f1.plan.regal && f1.plan.arm === 1 && f1.plan.tool === 'reach' && f1.plan.side === -1 && f1.rgl === 0 && f1.put === 'regal' && f1.ret === 1 && !f1.stay && f1.parked && /KONČANO/.test(f1.chip), JSON.stringify(f1));
+    await page.evaluate(() => { __garage.openMenu({ el: 'gume', key: null, sel: __garage.findOpt('gume', 'Gravel') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
+    const f2 = await fitOf(), u5 = await ui(), pg = await page.evaluate(() => __garage.price('gume', 1, 1));
+    T.check('the gravel tyres bought (' + pg + ' 🪙): on the trolley, the near arm\'s gripper puts them on the near wheel, the old ones onto the trolley and off with it; the arms parked',
+      f2.log === 'plan,cart.in,cart.parked,grab,swap,put,cart.out' && !f2.plan.regal && f2.plan.arm === 0 && f2.plan.tool === 'gripper' && f2.plan.side === 1 && f2.put === 'cart' && f2.cart && !f2.cart.on && f2.cart.load === 0 && f2.parked
+      && u3.S.money - u5.S.money === pg && u5.S.cars.muscle.parts.gume.join() === '1,1', JSON.stringify({ f2, paid: u3.S.money - u5.S.money }));
+    await page.evaluate(() => __garage.openMenu({ el: 'gume', key: null, sel: __garage.findOpt('gume', 'Track Slick') })); const d6 = await menuDom();
+    await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run(); const f3 = await fitOf(), u6 = await ui();
+    T.check('the slicks again: the car\'s own (tvoj), NAMESTI, free; off the regal again, the tyres\' level 3', d6.tiles[0].p === 'tvoj' && d6.buy === 'NAMESTI' && d6.can && u6.S.money === u5.S.money && f3.log === 'plan,grab,swap,put' && f3.plan.regal && u6.info.upg.gume === 3,
+      JSON.stringify({ d6: { buy: d6.buy, t0: d6.tiles[0] }, f3, paid: u5.S.money - u6.S.money }));
     // the aero kits' menu (a tap on the car's body): RACE locked; SPORT bought, then RACE open
     const mb = await page.evaluate(async () => { const b = Garage3D.box('car'); __garage.onTap(b.x + b.w / 2, b.y + b.h * 0.35); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const m = __garage.menu && __garage.menu.el; __garage.closeMenu(); return m; });
     T.check('a tap on the car\'s body: the aero kits\' menu', mb === 'aero', mb);
@@ -249,7 +266,7 @@ try {
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
     await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
     const u4 = await ui();
-    T.check('the SPORT kit bought (2.600 🪙): the aero level from it', u3.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: u3.S.money - u4.S.money, upg: u4.info.upg }));
+    T.check('the SPORT kit bought (2.600 🪙): the aero level from it', u6.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: u6.S.money - u4.S.money, upg: u4.info.upg }));
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); await page.waitForTimeout(100); const dR2 = await menuDom();
     await page.evaluate(() => { const b = Garage3D.box('mq0'); __garage.onTap(5, b.y - 120); });
     const shut = await page.evaluate(() => ({ menu: !!__garage.menu, marks: Garage3D._dbg.marks, on: document.getElementById('g-menu').classList.contains('on'), low: !document.getElementById('g-low').classList.contains('hide') }));
@@ -264,6 +281,14 @@ try {
     await tap('mq2'); await run(); const c2 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
     await tap('mq0'); await run(); const c3 = await page.evaluate(() => ({ car: __garage.S.car, shown: Garage3D.info.car, fr: Garage3D._dbg.front }));
     T.check('FOR SALE\'s maquette tapped: that car drives onto the table (the lamps over FOR SALE, YOUR CAR still the muscle car); YOUR CAR\'s: the muscle car back', c2.car === cab.free[0] && c2.shown === cab.free[0] && c2.fr.lit === 2 && c2.fr.names[0] === cab.names[0] && c3.car === 'muscle' && c3.shown === 'muscle' && c3.fr.lit === 0, JSON.stringify({ c2, c3 }));
+    // RENT A CAR: its maquette tapped (its car on the table), Najemi: the rent paid (5 % of its price), the car the player's for one race
+    // (Izberi), NAJET ZA ENO DIRKO; YOUR CAR's maquette: the muscle car back
+    await tap('mq1'); await run(); const r0 = await ui(), rb = await page.evaluate(() => { const b = document.getElementById('g-rent'); return { shown: !b.hidden, t: b.textContent.replace(/ /g, ' ') }; });
+    await page.evaluate(() => document.getElementById('g-rent').click()); await page.evaluate(() => new Promise(r => setTimeout(r, 50))); const r1 = await ui(), rc = await page.evaluate(() => document.getElementById('g-chip').textContent);
+    await tap('mq0'); await run(); await page.evaluate(() => { __garage.S.rent = null; __garage.render(); });   // (given back: the rest as before)
+    T.check('RENT A CAR: its car on the table, Najemi with its rent (' + cab.rent + ' 🪙) paid, the car rented for one race (Izberi, not bought), NAJET ZA ENO DIRKO; the muscle car back after',
+      r0.info.car === cab.free[1] && rb.shown && rb.t.replace(/[^0-9]/g, '') === String(cab.rent) && r0.S.money - r1.S.money === cab.rent && r1.S.rent === cab.free[1] && !r1.S.cars[cab.free[1]].own && r1.go === 'Izberi' && /NAJET ZA ENO DIRKO/.test(rc)
+      && (await ui()).info.car === 'muscle', JSON.stringify({ r0: { car: r0.info.car, money: r0.S.money }, rb, r1: { money: r1.S.money, rent: r1.S.rent, go: r1.go }, rc }));
   }
 
   // 4b. the cabinet's drawers (sklop 6d): the cabinet whole on an upright screen (every drawer on it), the eight drawers each tapped at

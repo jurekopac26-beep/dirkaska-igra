@@ -9845,7 +9845,7 @@ const Render = (function () {
 
   /* ---------------- the garage (garaza.html, js/garage3d.js): the race's own car meshes, in a scene of the garage's own ---------------- */
   // a car as the race draws it (body, wheels, lamps, the paint's dirt and scratches: dirtU, scrU), without the player's marker
-  function garageCar(model, color, num, stripe) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true }, { noMarker: true }); }
+  function garageCar(model, color, num, stripe, deli) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true, deli: deli || undefined }, { noMarker: true }); }   // (deli: the garage's parts fitted, car.deli)
   // the paint's sun glint and the tint of the sky in it (as cgSet): the garage's key lamp (direction, colour, strength) and the room's tint
   function garageLight(dir, col, k, env) { CGU.sun.value.set(dir.x, dir.y, dir.z).normalize(); CGU.sunC.value.setHex(col).multiplyScalar(k); CGU.env.value.setHex(env == null ? 0xffffff : env); }
 
