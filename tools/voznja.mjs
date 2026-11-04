@@ -21,6 +21,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { loadCore } = require('../tests/lib/core.js');
+const { DT, seeded } = require('../tests/lib/sim.js');
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const VER = 1;   // (the profile's own format: profil.json's verzija)
 
@@ -35,6 +36,7 @@ export const RULES = {
   wetIn: 40, dryIn: 240,                // a changing weather: the road as wet as the rain 40 s after the rain has its new value, dry 240 s after it stops (less rain: 240 s per unit; Race._weather)
   apexDrop: 3, apexWin: 60,             // a corner: a minimum of the mean speed within 60 m either side, at least 3 m/s under the speed before it
   brakeWin: 500, brakeGap: 0.4,         // its braking: within 500 m before the apex; the brake let off for up to 0.4 s is still one braking
+  qMin: [20, 15],                       // against the autopilot's own braking (autoOf): where it starts 20 m or more before the apex; the deceleration where both brake over 15 m or more
   enough: { krog: [3, 5, 8], cesta: [3, 5] }   // clean laps: the least, good, best (a circuit: 8-10; more than 10 hardly helps)
 };
 
@@ -99,11 +101,40 @@ function paceOf(C, t, car, cond, cache) {
   const r = { v: out, model: M.id, stock: !car.pf };
   cache.set(key, r); return r;
 }
-// the deceleration of a pace profile per sample (m/s², where it brakes: v² falls by 2 a ds)
-function brakingOf(T, v) {
-  const N = T.N, a = new Float32Array(N);
-  for (let i = 0; i < N; i++) { const j = T.open ? Math.min(N - 1, i + 1) : (i + 1) % N, ds = T.rds && T.rds[i] > 0.1 ? T.rds[i] : T.ds; a[i] = Math.max(0, (v[i] * v[i] - v[j] * v[j]) / (2 * ds)); }
-  return a;
+/* ---------------- the autopilot's own lap in that car and weather (the reference for the braking and the lap time): a race of its own in
+   Core, the car alone on the autopilot (Core.aiControl: the game's autopilot, the AI's driving), the race's random numbers seeded as the
+   tests do (tests/lib/sim.js); its second lap (a flying one; an open road: its run up to the finish) ---------------- */
+function autoOf(C, t, car, cond, cache) {
+  const pf = car.pf || {}, key = 'ap|' + [car.m, JSON.stringify(pf), cond.rain, cond.winter ? 1 : 0, cond.tyres ? 1 : 0].join('|');
+  if (cache.has(key)) return cache.get(key);
+  const M = C.MODELS.find(m => m.id === car.m) || C.MODELS[0], FM = pf.fm ? C.MODELS.find(m => m.id === pf.fm) : null, T = t.T, len = t.len, orig = Math.random;
+  let out = null;
+  try {
+    Math.random = seeded(7);
+    const race = new C.Race(T, { numAI: 0, playerModel: M, fieldModel: FM || undefined, playerUpg: pf.upg || undefined, playerSetup: pf.setup || undefined, playerDeli: pf.deli || undefined,
+      laps: t.open ? 1 : 2, rain: cond.rain, winter: cond.winter, tyres: cond.tyres, assist: pf.as != null ? pf.as : 2, seed: 7, damage: 0 });
+    race.start();
+    const P = race.player, S = { t: [], s: [], v: [], b: [] }, kMax = Math.ceil(((t.open ? 1 : 2) * len / 8 + 120) / DT);
+    let next = 0;
+    for (let k = 1; k <= kMax && !P.finished; k++) {
+      Math.random = seeded(1000 + k);
+      C.aiControl(P, race, DT);
+      if (P.stuckT > 3 || P.wrongT > 3) race.rescue(P);
+      race.step(DT);
+      if ((race.state === 'racing' || race.state === 'done') && race.time >= next) {
+        next = race.time + 0.05; const q = P.q;
+        S.t.push(race.time); S.s.push(t.open ? q.s - T.startS : ((q.s - T.startS) % T.len + T.len) % T.len); S.v.push(P.vl || 0); S.b.push(P.inBrk > 0.08 && P.vl > 0.5 ? 1 : 0);
+      }
+    }
+    if (P.finished) {
+      const lt = P.lapTimes || [], t1 = P.finishTime, t0 = t.open ? 0 : t1 - lt[lt.length - 1], idx = [];
+      for (let j = 0; j < S.t.length; j++) if (S.t[j] >= t0 - 0.06 && S.t[j] <= t1 + 0.06) idx.push(j);
+      const u = new Float64Array(idx.length);
+      for (let m = 0; m < idx.length; m++) { const v = S.s[idx[m]]; if (t.open || m === 0) u[m] = t.open ? v : v > len / 2 ? v - len : v; else { let d = v - S.s[idx[m - 1]]; if (d > len / 2) d -= len; else if (d < -len / 2) d += len; u[m] = u[m - 1] + d; } }
+      out = { time: t.open ? t1 : lt[lt.length - 1], time1: t.open ? t1 : lt[0], lap: { idx, u, ex: new Uint8Array(idx.length), S }, cor: new Map() };
+    }
+  } finally { Math.random = orig; }
+  cache.set(key, out); return out;
 }
 
 /* ---------------- the weather of a lap: the header's (wx, rain; wxs: a changing weather's rain from r0 to r1 over dur s from at, the
@@ -118,6 +149,19 @@ function condOf(H, t0, t1, tyres) {
     else return { skip: 'vreme se spreminja' };
   } else rain = H.rain > 0 ? H.rain : /^dez/.test(H.wx || '') ? 1 : 0;
   return { rain, wet: rain > 0, winter, tyres, key: (rain > 0 ? 'mokro' : 'suho') + (winter ? '·zima' : '') };
+}
+
+// a car as the profile tells them apart: its model, and its upgrades (motor, gume, zavore, aero levels), a set-up other than the standard
+// one (krilo, prestave), garage parts, another field's car (kaze, kaze+m3g2z3a3, kaze/k0p2, kaze+deli): the speeds of one car only together
+function carKey(m, pf) {
+  const U = pf && pf.upg, S = pf && pf.setup, lv = (k) => (U && +U[k]) || 0;
+  let k = String(m);
+  if (U && ['motor', 'gume', 'zavore', 'aero'].some(x => lv(x) > 0)) k += '+m' + lv('motor') + 'g' + lv('gume') + 'z' + lv('zavore') + 'a' + lv('aero');
+  if (S && ((S.wing != null && +S.wing !== 1) || (S.gear != null && +S.gear !== 1))) k += '/k' + (S.wing != null ? +S.wing : 1) + 'p' + (S.gear != null ? +S.gear : 1);
+  if (pf && pf.deli && Object.keys(pf.deli).length) k += '+deli';
+  if (pf && pf.fm && pf.fm !== m) k += '@' + pf.fm;
+  if (pf && pf.as != null && +pf.as !== 2) k += '+as' + pf.as;   // (the assist, Core.ASSISTS: not the game's default, 2; its brakes and grip differ)
+  return k;
 }
 
 /* ---------------- one recording: the player's car in every sample on the track, its laps, each lap checked and its parts left out ---------------- */
@@ -181,7 +225,7 @@ function scanFile(C, N, file, tc, paces) {
   const P = H.cars[pk], lt = (P.lapTimes || []).slice(), laps = [];
   if (t.open) { if (P.fin && P.ft > 0) laps.push({ k: 1, t0: P.lap > 1 && P.lapStart > 0 && P.lapStart < P.ft ? P.lapStart : 0, t1: P.ft, time: P.ft }); }
   else { let st = P.lapStart || 0; for (let j = lt.length - 1; j >= 0; j--) { laps.unshift({ k: j + 1, t0: st - lt[j], t1: st, time: lt[j] }); st -= lt[j]; } }
-  const run = { name, H, t, pk, car: { m: P.m, pf: P.pf || null, name: P.name }, laps: [], why: '', notes: [] };
+  const run = { name, H, t, pk, car: { m: P.m, pf: P.pf || null, name: P.name, key: carKey(P.m, P.pf) }, laps: [], why: '', notes: [] };
   if (why) { run.why = why; return run; }
   if (!laps.length) { run.why = (t.open ? 'vožnja ni končana' : 'ni celega kroga') + ' (v posnetku ' + Math.round(F[NF - 1][0] - F[0][0]) + ' s dirke)'; return run; }
   if (!P.pf) run.notes.push('brez podatkov o nadgradnjah avta (starejši posnetek): tempo avtopilota za serijski avto');
@@ -223,7 +267,7 @@ function scanFile(C, N, file, tc, paces) {
     // the samples left out: traffic, the safety car; the standing start of a race's first lap (a circuit, not a qualifying lap: up to the first corner)
     const pace = paceOf(C, t, run.car, cond, paces), sA = !t.open && L.k === 1 && !quali ? firstApex(pace) : -1;
     const ex = new Uint8Array(idx.length); for (let m = 0; m < idx.length; m++) ex[m] = S.ex[idx[m]] || (sA > 0 && u[m] < sA ? 3 : 0);
-    Object.assign(lap, { idx, u, ex, pace, S, startTo: sA });
+    Object.assign(lap, { idx, u, ex, pace, S, startTo: sA, auto: autoOf(C, t, run.car, cond, paces) });
   }
   return run;
 }
@@ -280,7 +324,7 @@ function brakingInto(lap, sApex, sPrev) {
 /* ---------------- a profile: the laps of one track in one weather together ---------------- */
 function profileOf(key, laps, step) {
   const t = laps[0].run.t, T = t.T, len = t.len, ns = Math.floor((len - 1e-6) / step) + 1, used = laps.filter(L => !L.skip);
-  const cars = new Map(); for (const L of used) { const m = L.run.car.m; cars.set(m, (cars.get(m) || []).concat([L])); }
+  const cars = new Map(); for (const L of used) { const m = L.run.car.key; cars.set(m, (cars.get(m) || []).concat([L])); }
   const main = [...cars.entries()].sort((a, b) => b[1].length - a[1].length)[0];
   const grids = used.map(L => Object.assign(lapGrid(L, len, step), { L }));
   const P = { proga: t.def.id, ime: t.def.name, odprta: t.open, dolzina: Math.round(len), vreme: key, korak: step, avto: main ? main[0] : null,
@@ -288,7 +332,7 @@ function profileOf(key, laps, step) {
   const pace0 = main ? main[1][0].pace : null;
   for (let i = 0; i < ns; i++) {
     const s = i * step, ds = [], vs = [], qs = [], as = [], bs = [], vm = [];
-    for (const g of grids) { if (g.d[i] == null) continue; const vr = along(t, g.L.pace.v, s); ds.push(g.d[i]); vs.push(g.v[i]); qs.push(vr > 0.5 ? g.v[i] / vr : NaN); as.push(g.a[i]); bs.push(g.b[i]); if (main && g.L.run.car.m === main[0]) vm.push(g.v[i]); }
+    for (const g of grids) { if (g.d[i] == null) continue; const vr = along(t, g.L.pace.v, s); ds.push(g.d[i]); vs.push(g.v[i]); qs.push(vr > 0.5 ? g.v[i] / vr : NaN); as.push(g.a[i]); bs.push(g.b[i]); if (main && g.L.run.car.key === main[0]) vm.push(g.v[i]); }
     const D = robust(ds, SCALE.d), V = robust(vm, SCALE.v), Q = robust(qs.filter(Number.isFinite), SCALE.q);
     P.s.push(s); P.n.push(ds.length); P.d.push(D ? r2(D.m) : null); P.d_sd.push(D ? r2(D.sd) : null); P.v.push(V ? r2(V.m) : null); P.v_sd.push(V ? r2(V.sd) : null);
     P.vq.push(Q ? r3(Math.min(2, Q.m)) : null); P.vq_sd.push(Q ? r3(Q.sd) : null); P.a.push(as.length ? r2(mean(as)) : null); P.zav.push(bs.length ? r2(mean(bs)) : null);
@@ -304,20 +348,28 @@ function profileOf(key, laps, step) {
   P.ovinki = cs.map((c, j) => {
     const prev = j > 0 ? cs[j - 1].s : t.open ? 0 : cs[cs.length - 1].s - len, R = [];
     for (const L of used) { const r = brakingInto(L, c.s, prev); if (r && !r.out) R.push({ r, L }); }
-    const br = R.filter(x => x.r.brake), vr = (x, s) => along(t, x.L.pace.v, s), aref = new Map();
-    const refDec = (x) => { const k = x.L.pace; if (!aref.has(k)) aref.set(k, brakingOf(T, k.v)); const A = aref.get(k), b = x.r.brake, v = [];
-      for (let s = b.s; s <= Math.max(b.sE, b.s + 2); s += 2) { const a = along(t, A, s); if (a > 0.5) v.push(a); } return v.length ? median(v) : null; };
+    const br = R.filter(x => x.r.brake), vr = (x, s) => along(t, x.L.pace.v, s);
+    // (the autopilot of each lap's car in its weather, autoOf: its own braking into this corner; per lap the ratios to it)
+    const apOf = (A) => { if (!A) return null; const k = c.s + '|' + prev; if (!A.cor.has(k)) A.cor.set(k, brakingInto(A.lap, c.s, prev)); return A.cor.get(k); };
+    const qOf = (x, f) => { const a = apOf(x.L.auto); return a && a.brake && x.r.brake ? f(x.r, a) : NaN; };
     const st = (arr, s0) => { const R2 = robust(arr.filter(Number.isFinite), s0); return R2 ? { m: R2.m, sd: R2.sd, n: R2.n } : null; };
     const vmin = st(R.map(x => x.r.vMin), SCALE.v), vq = st(R.map(x => x.r.vMin / Math.max(0.5, vr(x, x.r.sMin))), SCALE.q);
-    const bS = st(br.map(x => x.r.brake.s), SCALE.s), bBefore = st(br.map(x => c.s - x.r.brake.s), SCALE.s), vB = st(br.map(x => x.r.brake.vB), SCALE.v), dc = st(br.map(x => x.r.brake.dec), SCALE.dec), dq = st(br.map(x => { const a = refDec(x); return a ? x.r.brake.dec / a : NaN; }), SCALE.q * 5);
+    const bS = st(br.map(x => x.r.brake.s), SCALE.s), bBefore = st(br.map(x => c.s - x.r.brake.s), SCALE.s), vB = st(br.map(x => x.r.brake.vB), SCALE.v), dc = st(br.map(x => x.r.brake.dec), SCALE.dec);
+    // (a ratio only where it means something, RULES.qMin: the autopilot starts braking 20 m or more before the apex; both brake over 15 m or
+    // more, a tap's deceleration over a few metres and 0.05 s samples is noise)
+    const zq = st(br.map(x => qOf(x, (r, a) => c.s - a.brake.s >= RULES.qMin[0] ? (c.s - r.brake.s) / (c.s - a.brake.s) : NaN)), SCALE.q * 5);
+    const dq = st(br.map(x => qOf(x, (r, a) => a.brake.sE - a.brake.s >= RULES.qMin[1] && r.brake.sE - r.brake.s >= RULES.qMin[1] && a.brake.dec > 1 ? r.brake.dec / a.brake.dec : NaN)), SCALE.q * 5);
+    const A0 = main ? apOf(main[1][0].auto) : null, Ab = A0 && A0.brake;
     return { s: c.s, ime: nameAt(j), krogov: R.length, zavira: br.length, v_vrh: vmin ? r2(vmin.m) : null, v_vrh_sd: vmin ? r2(vmin.sd) : null, vq_vrh: vq ? r3(vq.m) : null,
       zav_s: bS ? Math.round(bS.m) : null, zav_pred: bBefore ? r2(bBefore.m) : null, zav_pred_sd: bBefore ? r2(bBefore.sd) : null, v_zav: vB ? r2(vB.m) : null,
-      pojemek: dc ? r2(dc.m) : null, pojemek_sd: dc ? r2(dc.sd) : null, pojemek_q: dq ? r3(dq.m) : null };
+      pojemek: dc ? r2(dc.m) : null, pojemek_sd: dc ? r2(dc.sd) : null, zav_pred_q: zq ? r3(zq.m) : null, pojemek_q: dq ? r3(dq.m) : null,
+      ap_zav_pred: Ab ? r2(c.s - Ab.s) : null, ap_v_zav: Ab ? r2(Ab.vB) : null, ap_pojemek: Ab ? r2(Ab.dec) : null, ap_v_vrh: A0 ? r2(A0.vMin) : null };
   });
   // the laps, the cars, the accuracy
-  const lapRow = (L, g) => Object.assign({ datoteka: L.file, krog: L.k, cas: r3(L.time), avto: L.run.car.m }, g ? { delez: r3(g.d.filter(x => x != null).length / ns), izpusceno_m: Object.fromEntries(Object.entries(g.out).filter(e => e[1] > 0)) } : {});
+  const lapRow = (L, g) => Object.assign({ datoteka: L.file, krog: L.k, cas: r3(L.time), avto: L.run.car.key }, g ? { delez: r3(g.d.filter(x => x != null).length / ns), izpusceno_m: Object.fromEntries(Object.entries(g.out).filter(e => e[1] > 0)) } : {});
   P.krogi = { uporabljeni: grids.map(g => lapRow(g.L, g)), izpusceni: laps.filter(L => L.skip).map(L => Object.assign(lapRow(L), { razlog: L.skip }, L.s != null ? { s: L.s, t: L.tf } : {})) };
-  P.avti = Object.fromEntries([...cars.entries()].map(([m, Ls]) => { const ts = Ls.map(L => L.time); const M = mean(ts); return [m, { krogov: Ls.length, cas: r3(M), cas_sd: r3(sdev(ts, M)), cas_med: r3(median(ts)), najboljsi: r3(Math.min(...ts)), serijski: Ls.every(L => !L.run.car.pf) }]; }));
+  P.avti = Object.fromEntries([...cars.entries()].map(([m, Ls]) => { const ts = Ls.map(L => L.time); const M = mean(ts); return [m, { krogov: Ls.length, cas: r3(M), cas_sd: r3(sdev(ts, M)), cas_med: r3(median(ts)), najboljsi: r3(Math.min(...ts)), serijski: Ls.every(L => !L.run.car.pf),
+    avtopilot: Ls[0].auto ? r3(Ls[0].auto.time) : null, cas_q: Ls[0].auto ? r3(median(Ls.map(L => L.auto ? L.time / (L.startTo > 0 ? L.auto.time1 : L.auto.time) : NaN).filter(Number.isFinite))) : null }]; }));
   const kept = P.n.map((n, i) => i).filter(i => P.n[i] >= 2), cnt = used.length, E = RULES.enough[t.open ? 'cesta' : 'krog'];
   P.natancnost = { krogov: cnt, ocena: cnt < E[0] ? 'premalo' : cnt < E[1] ? 'najmanj' : t.open || cnt < E[2] ? 'dobro' : 'najbolje',
     d_se: kept.length ? r3(mean(kept.map(i => P.d_sd[i] / Math.sqrt(P.n[i])))) : null, v_se: kept.length ? r3(mean(kept.filter(i => P.v_sd[i] != null).map(i => P.v_sd[i] / Math.sqrt(P.n[i])))) : null,
@@ -329,24 +381,29 @@ function profileOf(key, laps, step) {
 
 /* ---------------- the summary: for the chat, in Slovenian ---------------- */
 function summaryOf(P, fileCount) {
-  const N = P.natancnost, E = RULES.enough[P.odprta ? 'cesta' : 'krog'], u = P.krogi.uporabljeni, x = P.krogi.izpusceni, w = (n, a, b, c) => n === 1 ? a : n === 2 ? b : c;
-  const L = [`${P.ime} (${P.proga}) · ${P.vreme} · ${fileCount} ${w(fileCount, 'posnetek', 'posnetka', 'posnetkov')}`];
+  const N = P.natancnost, E = RULES.enough[P.odprta ? 'cesta' : 'krog'], u = P.krogi.uporabljeni, x = P.krogi.izpusceni;
+  // (Slovenian plurals by n mod 100: 1 · 2 · 3–4 · 0 and 5 on; the genitive after »iz«, »od«: 1 · every other)
+  const w = (n, a, b, c, d) => { const k = n % 100; return k === 1 ? a : k === 2 ? b : k === 3 || k === 4 ? c : d; }, krog = (n) => n + ' ' + w(n, 'krog', 'kroga', 'krogi', 'krogov'), gen = (n) => n + ' ' + (n % 100 === 1 ? 'kroga' : 'krogov');
+  const L = [`${P.ime} (${P.proga}) · ${P.vreme} · ${fileCount} ${w(fileCount, 'posnetek', 'posnetka', 'posnetki', 'posnetkov')}`];
   L.push(`  ${P.odprta ? 'vožnje' : 'krogi'}: ${u.length + x.length}, uporabljenih ${u.length}, izpuščenih ${x.length} · čistih ${N.krogov}: ${N.ocena}` +
-    (P.odprta ? ` (potrebne so ${E[0]}–${E[1]} vožnje)` : ` (najmanj ${E[0]}, dobro ${E[1]}, najbolje ${E[2]}–10; več kot 10 skoraj nič ne izboljša)`));
+    (P.odprta ? ` (potrebnih je ${E[0]}–${E[1]} voženj)` : ` (najmanj ${E[0]}, dobro ${E[1]}, najbolje ${E[2]}–10; več kot 10 skoraj nič ne izboljša)`));
   const out = (r) => { const o = Object.entries(r.izpusceno_m || {}).map(([k, m]) => `${m} m ${k === 'promet' ? 'ob drugih avtih' : k === 'start' ? 'štarta' : 'za varnostnim avtom'}`); return o.length ? '; brez ' + o.join(', ') : ''; };
   for (const r of u) L.push(`    ✓ ${r.datoteka} ${P.odprta ? 'vožnja' : 'K' + r.krog} ${clock(r.cas)} ${r.avto} (${Math.round(r.delez * 100)} % proge${out(r)})`);
   for (const r of x) L.push(`    ✗ ${r.datoteka} ${P.odprta ? 'vožnja' : 'K' + r.krog} ${clock(r.cas)} ${r.avto}: ${r.razlog}${r.s != null ? ' pri ' + r.s + ' m' : ''}`);
   if (!u.length) return L.join('\n');
-  L.push(`  natančnost povprečja: linija ±${dec(N.d_se, 2)} m, hitrost ±${dec(N.v_se * 3.6, 1)} km/h; raztros med krogi: linija ${dec(N.d_sd, 2)} m, hitrost ${dec(N.v_sd * 3.6, 1)} km/h; ${Math.round(N.pokritost * 100)} % proge iz vsaj ${Math.min(3, N.krogov)} ${w(Math.min(3, N.krogov), 'kroga', 'krogov', 'krogov')}`);
+  L.push(`  natančnost povprečja: linija ±${dec(N.d_se, 2)} m, hitrost ±${dec(N.v_se * 3.6, 1)} km/h; raztros med krogi: linija ${dec(N.d_sd, 2)} m, hitrost ${dec(N.v_sd * 3.6, 1)} km/h; ${Math.round(N.pokritost * 100)} % proge iz vsaj ${gen(Math.min(3, N.krogov))}`);
   const off = P.d.map((d, i) => d != null && P.rl[i] != null ? d - P.rl[i] : null), ok = off.filter(v => v != null);
   if (ok.length) { let im = 0; off.forEach((v, i) => { if (v != null && Math.abs(v) > Math.abs(off[im] || 0)) im = i; }); const m = mean(ok);
     L.push(`  linija: povprečno ${dec(Math.abs(m), 2)} m ${m >= 0 ? 'desno' : 'levo'} od idealne linije igre, povprečni odmik ${dec(mean(ok.map(Math.abs)), 2)} m, največji ${dec(Math.abs(off[im]), 1)} m ${off[im] >= 0 ? 'desno' : 'levo'} pri ${P.s[im]} m`); }
-  for (const [m, a] of Object.entries(P.avti)) L.push(`  ${m}: ${a.krogov} ${w(a.krogov, 'krog', 'kroga', 'krogov')}, povprečno ${clock(a.cas)} (±${dec(a.cas_sd, 2)} s), najboljši ${clock(a.najboljsi)}${a.serijski ? ', serijski avto' : ''}`);
+  for (const [m, a] of Object.entries(P.avti)) L.push(`  ${m}: ${krog(a.krogov)}, povprečno ${clock(a.cas)} (±${dec(a.cas_sd, 2)} s), najboljši ${clock(a.najboljsi)}${a.serijski ? ', serijski avto' : ''}` +
+    (a.avtopilot ? ` · avtopilot v tem avtu ${clock(a.avtopilot)}, čas kroga ${dec(a.cas_q, 3)} njegovega` : ''));
   const cq = P.ovinki.map(c => c.vq_vrh).filter(v => v != null);
   if (cq.length) L.push(`  hitrost v vrhovih ovinkov: povprečno ${dec(mean(cq), 2)} tempa avtopilota (${dec(Math.min(...cq), 2)}–${dec(Math.max(...cq), 2)})`);
-  if (P.ovinki.length) L.push(`  ovinki (${P.ovinki.length}): kje začne zavirati, pri kateri hitrosti, pojemek, hitrost v vrhu`);
-  for (const c of P.ovinki) L.push(`    ${c.ime || 'ovinek'} · ${c.s} m: ` + (c.zavira ? `zavira ${dec(c.zav_pred, 0)} m prej (±${dec(c.zav_pred_sd, 0)} m) pri ${kmh(c.v_zav)} km/h, ${dec(c.pojemek, 1)} m/s² (${dec(c.pojemek_q, 2)} avtopilota)` : 'samo s plina') +
-    `, v vrhu ${kmh(c.v_vrh)} km/h (±${dec(c.v_vrh_sd * 3.6, 1)}; ${dec(c.vq_vrh, 2)} tempa avtopilota)` + (c.zavira && c.zavira < c.krogov ? `; zavira ${c.zavira} od ${c.krogov} krogov` : '') + (c.krogov < N.krogov ? ` · ${c.krogov} ${w(c.krogov, 'krog', 'kroga', 'krogov')}` : ''));
+  if (P.ovinki.length) L.push(`  ovinki (${P.ovinki.length}): kje začne zavirati, pri kateri hitrosti, pojemek, hitrost v vrhu; za » · « avtopilot v istem avtu in vremenu`);
+  for (const c of P.ovinki) L.push(`    ${c.ime || 'ovinek'} · ${c.s} m: ` + (c.zavira ? `zavira ${dec(c.zav_pred, 0)} m pred vrhom (±${dec(c.zav_pred_sd, 0)} m) pri ${kmh(c.v_zav)} km/h, ${dec(c.pojemek, 1)} m/s²` : 'samo s plina') +
+    `, v vrhu ${kmh(c.v_vrh)} km/h (±${dec(c.v_vrh_sd * 3.6, 1)}; ${dec(c.vq_vrh, 2)} tempa avtopilota)` + (c.zavira && c.zavira < c.krogov ? `; zavira ${c.zavira} od ${gen(c.krogov)}` : '') + (c.krogov < N.krogov ? `; ${krog(c.krogov)}` : '') +
+    (c.ap_v_vrh == null ? '' : ' · ' + (c.ap_zav_pred != null ? `${dec(c.ap_zav_pred, 0)} m, ${kmh(c.ap_v_zav)} km/h, ${dec(c.ap_pojemek, 1)} m/s²` : 'samo s plina') + `, v vrhu ${kmh(c.ap_v_vrh)} km/h` +
+      (c.zav_pred_q != null || c.pojemek_q != null ? ' (' + [c.zav_pred_q != null ? 'razdalja ×' + dec(c.zav_pred_q, 2) : '', c.pojemek_q != null ? 'pojemek ×' + dec(c.pojemek_q, 2) : ''].filter(Boolean).join(', ') + ')' : '')));
   for (const o of P.opombe) L.push('  opomba: ' + o);
   return L.join('\n');
 }

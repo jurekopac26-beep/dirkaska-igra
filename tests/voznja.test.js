@@ -1,12 +1,13 @@
 // AI po tvoji liniji, korak 1 (docs/ai-po-tvoji-liniji.md): tools/voznja.mjs measures the player's driving from recordings of their races.
 // The recordings here are made by Core in Node as the game records a race (js/game.js recStep: every car's x, y, z, h, vl, front wheel
 // angle and bits every 0.05 s; the header as rrpOf; packed by the game's own js/napake.js and gzip): the player on the autopilot with a known
-// offset of its line (Car.laneBias, the line 0.6 m and 1.4 m to the right of the racing line on alternate laps), on Bathurst seven laps in
-// the dry (lap 3 a spin, lap 6 a hit into the wall; on lap 2 another car beside it for 10 s) and three in the rain, on Mount Buller
-// three runs up the road (the line 0.5 / 1 / 1.5 m to the right). The tool's profile against what the race itself had at the same
-// points (the player's d and speed, the race's speed profile): the line and the speed within bounds, the spin and the hit laps left out with their reasons,
-// the part beside the other car left out of lap 2, the rain a profile of its own, an open road's runs each a lap; the corners' braking;
-// a changing weather (wxs) leaves out the laps while the road gets wet.
+// offset of its line (Car.laneBias, the line 0.6 m and 1.4 m to the right of the racing line on alternate laps). Bathurst: seven laps in the
+// dry (lap 3 a spin, lap 6 a hit into the wall; on lap 2 another car beside it for 10 s), three in the rain, two in an upgraded car and two
+// in the formula; Mount Buller: three runs up the road (the line 0.5 / 1 / 1.5 m to the right). The tool's profile against what the race
+// itself had at the same points (the player's d and speed, the race's speed profile): the line and the speed within bounds, the spin and the
+// hit laps left out with their reasons, the part beside the other car left out of lap 2, the rain a profile of its own (and each car), the
+// share of the pace (vq) the same in every car, an open road's runs each a lap; the corners' braking; a changing weather (wxs) leaves out the
+// laps while the road gets wet.
 //   node tests/voznja.test.js
 'use strict';
 const fs = require('fs');
@@ -148,12 +149,34 @@ if (pD && pW) {
   const named = O.filter(c => c.ime), names = T.names || [];
   check('dry: the track\'s corner names (Track.names) each on the corner at it (within 80 m), none twice', named.length >= 6 && new Set(named.map(c => c.ime)).size === named.length && named.every(c => names.some(q => q.n === c.ime && gap(q.d, c.s) < 80)),
     named.map(c => c.ime + '@' + c.s).join(', '));
-  check('dry: the hardest braking (the chicane at the end of the long straight) 80-350 m before its apex from over 200 km/h, 8-16 m/s², 0.6-1.4 of the autopilot\'s braking there, the apex at 0.85-1.1 of its pace',
-    big && big.zav_pred > 80 && big.zav_pred < 350 && big.v_zav * 3.6 > 200 && big.pojemek > 8 && big.pojemek < 16 && big.pojemek_q > 0.6 && big.pojemek_q < 1.4 && big.vq_vrh > 0.85 && big.vq_vrh < 1.1 && big.zavira === 5,
+  check('dry: the hardest braking (the chicane at the end of the long straight) 80-350 m before its apex from over 200 km/h, 8-16 m/s², where the autopilot brakes there (distance and deceleration within 10 %), the apex at 0.85-1.1 of its pace',
+    big && big.zav_pred > 80 && big.zav_pred < 350 && big.v_zav * 3.6 > 200 && big.pojemek > 8 && big.pojemek < 16 && Math.abs(big.zav_pred_q - 1) < 0.1 && Math.abs(big.pojemek_q - 1) < 0.1 &&
+    Math.abs(big.ap_zav_pred - big.zav_pred) < 15 && big.vq_vrh > 0.85 && big.vq_vrh < 1.1 && big.zavira === 5,
     JSON.stringify(big));
   check('the profile: one point every 5 m round the lap (6194 m: 1239), the AI\'s line and pace beside it, the lap times of the car', pD.s.length === Math.floor(6194 / 5) + 1 && pD.s[1] === 5 && pD.rl.length === pD.s.length && pD.vref.every(v => v > 5) &&
     pD.avti.kaze && pD.avti.kaze.krogov === 5 && Math.abs(pD.avti.kaze.najboljsi - Math.min(...CLEAN.map(k => dry.P.lapTimes[k - 1]))) < 0.01 && pD.avto === 'kaze',
     `${pD.s.length} points, best ${pD.avti.kaze && pD.avti.kaze.najboljsi}`);
+  // (the autopilot in the same car and weather, the tool's own race of it in Core: these laps are the autopilot's, a little off its line)
+  const qs = (k) => pD.ovinki.map(c => c[k]).filter(v => v != null), share = (a, lo, hi) => a.filter(v => v >= lo && v <= hi).length / Math.max(1, a.length);
+  const zq = qs('zav_pred_q'), dq = qs('pojemek_q'), aD = pD.avti.kaze, aW = pW.avti.kaze;
+  check('against the autopilot in the same car and weather: the braking into the corners as its own (the median of the corners\' ratios 0.95-1.05, 80 % of them 0.85-1.15), the lap time as its (0.99-1.01), dry and wet',
+    zq.length >= 8 && dq.length >= 8 && Math.abs(median(zq) - 1) < 0.05 && Math.abs(median(dq) - 1) < 0.05 && share(zq, 0.85, 1.15) >= 0.8 && share(dq, 0.85, 1.15) >= 0.8 &&
+    pD.ovinki.every(c => c.ap_v_vrh > 0) && aD && Math.abs(aD.cas_q - 1) < 0.01 && aD.avtopilot > 120 && aW && Math.abs(aW.cas_q - 1) < 0.01 && aW.avtopilot > aD.avtopilot,
+    `distance ${zq.length} corners, median ${median(zq).toFixed(3)}; deceleration ${dq.length}, ${median(dq).toFixed(3)}; lap ${aD && aD.cas_q} of ${aD && aD.avtopilot} s dry, ${aW && aW.cas_q} of ${aW && aW.avtopilot} s wet`);
+}
+
+// 2b. the same driver (the autopilot) in an upgraded car and in another car (the formula): each its own profile (the car told apart by its
+// model and upgrades), the speeds at the apexes their own, the same share of each car's own pace there (vq: what carries over to another
+// car; tools/voznja.mjs paceOf with the header's pf)
+{
+  const apex = (p) => { const o = p.ovinki.filter(c => c.vq_vrh != null && c.v_vrh != null); return { q: mean(o.map(c => c.vq_vrh)), v: mean(o.map(c => c.v_vrh)), n: o.length }; };
+  const run = (name, opts) => { const r = tool([save(name, record('bathurst', Object.assign({ laps: 2 }, opts), (P, race, lap) => { P.laneBias = BIAS(lap); }))], path.join(OUT, name.replace('.rrp', '.json')));
+    const p = r.prof && r.prof.proge && r.prof.proge[0]; return { r, p, a: p && apex(p) }; };
+  const U = run('posnetek_bathurst_20261104-1130.rrp', { playerUpg: { motor: 3, gume: 2, zavore: 3, aero: 3 } }), Fm = run('posnetek_bathurst_20261104-1140.rrp', { playerModel: C.MODELS.find(m => m.id === 'formula') });
+  const aD = pD && apex(pD), ok = (x) => x.p && x.r.code === 0 && x.a.n >= 10 && Math.abs(x.a.q - aD.q) < 0.03 && x.a.q > 0.95 && x.a.q < 1.05;
+  check('an upgraded car and the formula: each its own profile (»kaze+m3g2z3a3«, »formula«), quicker at the apexes than the stock car (the formula by 10 % or more), the same share of its own pace there (within 0.03, 0.95-1.05)',
+    pD && ok(U) && ok(Fm) && U.p.avto === 'kaze+m3g2z3a3' && U.p.avti['kaze+m3g2z3a3'] && Fm.p.avto === 'formula' && U.a.v > aD.v && Fm.a.v > aD.v * 1.1,
+    [['upgraded', U], ['formula', Fm]].map(([k, x]) => x.p ? `${k} ${x.p.avto}: ${x.a.v.toFixed(2)} m/s at ${x.a.q.toFixed(3)} of its pace (${x.a.n} corners)` : k + ': ' + x.r.text.slice(0, 200)).join('; ') + (aD ? `; stock ${aD.v.toFixed(2)} m/s at ${aD.q.toFixed(3)}` : ''));
 }
 
 // 3. Mount Buller, an open road: three runs (each its own recording), the line 0.5 / 1 / 1.5 m right of the racing line

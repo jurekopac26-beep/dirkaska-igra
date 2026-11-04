@@ -52,8 +52,8 @@ try {
     r1.flags.length === 1 && Math.abs(r1.flags[0].t - r0.flags[0].t) < 1e-9 && /^race/.test(r1.mode) && /^suho/.test(r1.wx) && typeof r1.dev === 'string' && r1.date > 0,
     JSON.stringify({ r1: Object.assign({}, r1, { cars: r1.cars.length }), sum0: r0.sum, ver: r0.ver }));
   // (AI po tvoji liniji, tools/voznja.mjs: the player's car as the race built it, the tyres, a changing weather: none in the quick entry)
-  T.check('the header for tools/voznja.mjs: the player\'s car (pf: its upgrades and set-up as the race has them), no other car\'s; ty 1 (Bathurst\'s race with tyres); no wxs (the weather does not change)',
-    r1.pf && JSON.stringify(r1.pf.upg) === r1.upg && JSON.stringify(r1.pf.setup) === r1.setup && 'deli' in r1.pf && 'fm' in r1.pf && r1.pfs === 1 && r1.ty === 1 && r1.wxs === 'none',
+  T.check('the header for tools/voznja.mjs: the player\'s car (pf: its upgrades, set-up and assist as the race has them), no other car\'s; ty 1 (Bathurst\'s race with tyres); no wxs (the weather does not change)',
+    r1.pf && JSON.stringify(r1.pf.upg) === r1.upg && JSON.stringify(r1.pf.setup) === r1.setup && 'deli' in r1.pf && 'fm' in r1.pf && Number.isInteger(r1.pf.as) && r1.pf.as >= 0 && r1.pfs === 1 && r1.ty === 1 && r1.wxs === 'none',
     JSON.stringify({ pf: r1.pf, pfs: r1.pfs, ty: r1.ty, wxs: r1.wxs, upg: r1.upg, setup: r1.setup }));
 
   // 3. not a recording: why, and no replay
