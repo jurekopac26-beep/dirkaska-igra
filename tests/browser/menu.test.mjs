@@ -74,7 +74,7 @@ try {
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
       T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak, Sani Pass and the Moki Dugway too)`, roads.race === roads.trial && roads.race >= 19, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too; the Santa Monica Mountains, the Moki Dugway and Mauna Kea test tracks since 4. 11. 2026)`, roads.race === roads.trial && roads.race >= 16, JSON.stringify(roads));
       const first = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       let seen = 0; const bad = [], urls = new Set();
       for (let k = 0; k < exp.ids.length; k++) {
