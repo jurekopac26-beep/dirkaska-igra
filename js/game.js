@@ -2021,7 +2021,7 @@
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
-    const pick = !on && !ch && !duel && !chase && cr < 0 && !MS.cur ? rivSet(track.def) : -1;   // (the rivals chosen in the menu, Opponents: a race of its own, not online, a challenge, a championship round or a mission)
+    const pick = !on && !ch && !duel && !chase && cr < 0 && !MS.cur ? quickRivals(rivSet(track.def)) : -1;   // (the rivals chosen in the menu, Opponents, or for the visit the quick entry's tekmeci: a race of its own, not online, a challenge, a championship round or a mission)
     const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && (!!track.def.open || (!!track.def.flyStart && cr < 0) || pick > NUM_AI);   // a race up an open road, the Nordschleife's Circuit race (def.flyStart; a championship round there, and its race after qualifying (Q, below): the lights, from the grid): the flying start (the column, the autopilot up to the start line, FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     // (pick > NUM_AI: a field the player chose bigger than the game's own 22 cars, the menu's Opponents: flying on a circuit too, as the
     // Nordschleife's 100; a standing start of a big field piled up in its first corners, the knocks between cars, js/core.js KV, and stood there.
@@ -5840,7 +5840,7 @@
     $('on-code').addEventListener('keyup', (e) => e.stopPropagation());
   }
 
-  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> (Core.quickArgs) opens the game
+  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id>&tekmeci=<n>&lod=0|1 (Core.quickArgs) opens the game
      straight on a race on that track, without the menus, the flyover or qualifying (for the tests and tools/shot.mjs; a player's link works
      the same). The way, the weather and the car are set as the menus set them; t: the race driven on the autopilot to t s after the start
      (the loading screen meanwhile; the replay has it too), then paused there. Not with a friend's challenge or ghost link ---------------- */
@@ -5855,6 +5855,7 @@
     if (q.mode && d.modes) S.mode = q.mode;
     if (q.weather) S.weather = q.weather;
     if (q.car) { if (owned(q.car)) S.car = Core.MODELS.findIndex(m => m.id === q.car); else toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); }
+    if (q.lod != null) Core.LOD.off = q.lod === 0;   // (lod=0: a big field's cars all at the full rate for the visit)
     save(); refreshSegs();
     if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
     if (S.control === 'tilt') enableTilt(true);
@@ -5862,6 +5863,10 @@
     repro = { seed: q.seed || 1, R: null };   // (the test mode for the visit: repeatable races)
     ensureTrack(S.track, () => { newRace(); pkFlySkip(); if (q.t > 0) quickRun(q.t); else quick.done = true; });
   }
+  // the quick entry's tekmeci=<n>: a race on its track with n rivals, as the menu's Opponents for the visit (newRace's pick: at most what the
+  // track takes, rivMax; more than the game's own 21 from the flying start; the Nordschleife's 100 cars against 22 or 1 on the same road);
+  // any other race the menu's choice or its own (n)
+  function quickRivals(n) { const q = quick && quick.q; return q && q.rivals != null && q.track === track.def.id ? Math.min(q.rivals, rivMax(track.def)) : n; }
   // the race on the autopilot up to t s after the start (or to the player's finish), a slice of it per frame under the loading screen
   function quickRun(t) {
     $('ld-msg').textContent = tr('Previjam dirko na {0} …', fmt(t)); $('loading').classList.remove('off');
