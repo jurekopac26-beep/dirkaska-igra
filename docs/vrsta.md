@@ -23,20 +23,22 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 ## Vrsta (stanje 4. 11. 2026)
 
+Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #287, #289, #259, #250, #292, #285, #284 + #296), nato ostali. Pravilo »osnutek do vrste« ostane: Ready sta samo prva dva.
+
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 3 | #250 | 7 novosti | 3 | na vrsti |
-| 4 | #226 | Bâlea | 3 | čaka |
-| 5 | #246 | preleti | 3 | čaka |
+| 1 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | na vrsti (Ready); pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
+| 2 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 3 | #246 | preleti | 3 | čaka |
+| 4 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 5 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
-| 7 | #285 | testne proge zamrznjene | 3 | čaka |
-| 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 10 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 11 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 13 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 14 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 15 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
+| 7 | #250 | 7 novosti | 3 | čaka |
+| 8 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 9 | #285 | testne proge zamrznjene | 3 | čaka |
+| 10 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 11 | #226 | Bâlea | 3 | čaka |
+| 12 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
