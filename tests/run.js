@@ -38,7 +38,7 @@ const SECS = {
   'browser/career.test.mjs': 41, 'browser/medvode-props.test.mjs': 37, 'browser/medvode-castle.test.mjs': 36, 'browser/tower.test.mjs': 35,
   'browser/townsville.test.mjs': 29, 'browser/napake-zastavice.test.mjs': 28, 'browser/rivals.test.mjs': 27, 'browser/quick.test.mjs': 26,
   'browser/atmos.test.mjs': 23,
-  'browser/pitlights.test.mjs': 120, 'browser/pitrain.test.mjs': 150, 'browser/pitjoin.test.mjs': 420, 'browser/garages.test.mjs': 120, 'browser/pitkit.test.mjs': 200, 'browser/crew.test.mjs': 150, 'browser/pitcam.test.mjs': 240, 'browser/pauseinfo.test.mjs': 150, 'browser/pitout.test.mjs': 60, 'browser/boxwarn.test.mjs': 120, 'browser/pitswing.test.mjs': 75, 'browser/pitfight.test.mjs': 120, 'browser/pitexit.test.mjs': 100, 'browser/voices.test.mjs': 120,
+  'browser/pitlights.test.mjs': 120, 'browser/pitrain.test.mjs': 150, 'browser/pitjoin.test.mjs': 420, 'browser/garages.test.mjs': 120, 'browser/pitkit.test.mjs': 200, 'browser/crew.test.mjs': 150, 'browser/pitcam.test.mjs': 240, 'browser/pauseinfo.test.mjs': 150, 'browser/pitout.test.mjs': 60, 'browser/boxwarn.test.mjs': 120, 'browser/pitswing.test.mjs': 75, 'browser/pitfight.test.mjs': 120, 'browser/pitexit.test.mjs': 100, 'browser/voices.test.mjs': 120, 'browser/redflag.test.mjs': 200,
   'browser/garage.test.mjs': 900,
   'browser/ljudje.test.mjs': 300,
 };
