@@ -33,7 +33,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #285 | testne proge zamrznjene | 3 | čaka |
 | 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #292 | ostrenje slike (CAS) na Visoka pri znižani ločljivosti | 2 | pripravljen |
+| 9 | #292 | ostrenje slike (CAS) na Visoka pri znižani ločljivosti | 2 | pripravljen; prevzame račun 3, dokler račun stoji |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
 
