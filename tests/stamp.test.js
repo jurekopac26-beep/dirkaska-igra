@@ -4,7 +4,7 @@
 // own and stamped, every local link gets its own file's stamp (?v=<sha256 of the file, CRLF read as LF, 8 hex>), --check-stamped takes the
 // copy, a changed file makes it fail until stamped again, --strip gives back the repository's pages byte for byte. The links' details on a
 // page of its own (quotes, other parameters, anchors, comments, outside addresses, the manifest, a missing file); the tool never stamps the
-// repository itself; --find <stamp> finds the commit of js/game.js's content.
+// repository itself; --find <stamp> finds the commit of js/game.js's content; --merge merges again a page that stopped a merge on a conflict.
 //   node tests/stamp.test.js
 'use strict';
 const { spawnSync, execFileSync } = require('child_process');
@@ -139,6 +139,40 @@ try {
     check('--find: the stamp of js/game.js as it is here, and of HEAD\'s js/game.js: the commit it came in with; an unknown stamp: exit 1; not a stamp: exit 2',
       a.st === 0 && /js\/game\.js v=[0-9a-f]{8}: the file as it is here now/.test(a.out) && (!b || (b.st === 0 && /came in with/.test(b.out) && /^ {2}[0-9a-f]{9} \d{4}-\d\d-\d\d /m.test(b.out))) &&
       z.st === 1 && /not in the history here/.test(z.out) && w.st === 2, [a, b, z].filter(Boolean).map(x => x.out.trim().split('\n').slice(0, 2).join(' / ')).join(' | '));
+  }
+
+  // 6. --merge: a merge that stopped on a conflict in index.html (a branch from before the stamps were taken off, with a new track, merging
+  // main without stamps and with another new track at the same place): merged again without stamps, both new tracks kept (this branch's
+  // first), git add done; then a real conflict (both sides changed the same line) stays marked as git marks it, exit 1
+  {
+    const g = path.join(tmp, 'merge'); fs.mkdirSync(g);
+    const sh = (...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { cwd: g, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    const page = (lines) => fs.writeFileSync(path.join(g, 'index.html'), ['<!doctype html>', ...lines, ''].join('\n'));
+    const head = (a, b) => [`<script src="js/a.js${a ? '?v=' + a : ''}"></script>`, `<script src="js/b.js${b ? '?v=' + b : ''}"></script>`];
+    const tail = (p) => ['<script src="js/core.js"></script>', `<p>${p}</p>`];
+    const merging = () => { try { sh('merge', '-q', 'main'); return false; } catch (_) { return true; } };
+    const run = () => { const r = spawnSync(process.execPath, [TOOL, '--merge'], { encoding: 'utf8', cwd: g }); return { st: r.status, out: (r.stdout || '') + (r.stderr || '') }; };
+    sh('init', '-q'); sh('checkout', '-qb', 'main');
+    page([...head('1111aaaa', '2222bbbb'), ...tail('base')]); sh('add', '.'); sh('commit', '-qm', 'base');
+    sh('checkout', '-qb', 'old'); page([...head('9999ffff', '2222bbbb'), '<script src="js/tracks/hakone.js?v=5555eeee"></script>', ...tail('base')]); sh('commit', '-qam', 'old');
+    sh('checkout', '-q', 'main'); page([...head(), '<script src="js/tracks/livorno.js"></script>', ...tail('base')]); sh('commit', '-qam', 'main');
+    sh('checkout', '-q', 'old');
+    const stopped = merging(), r = run(), t = read(path.join(g, 'index.html')), left = sh('diff', '--name-only', '--diff-filter=U').trim();
+    const order = ['js/a.js', 'js/b.js', 'js/tracks/hakone.js', 'js/tracks/livorno.js', 'js/core.js'];
+    check('--merge: a conflict of old stamps and two new tracks at the same place: no stamps, both tracks kept (this branch\'s first), added, exit 0',
+      stopped && r.st === 0 && /both kept/.test(r.out) && !/<<<<<<<|=======|>>>>>>>|\?v=/.test(t) && !left &&
+      JSON.stringify(links(t).map(l => l.url)) === JSON.stringify(order) && t.includes('<p>base</p>'), r.out.trim() + ' | ' + t.replace(/\n/g, ' '));
+    sh('commit', '-qm', 'merged');
+    page([...head('7777cccc'), '<script src="js/tracks/hakone.js"></script>', '<script src="js/tracks/livorno.js"></script>', ...tail('old')]); sh('commit', '-qam', 'old 2');
+    sh('checkout', '-q', 'main'); page([...head(), '<script src="js/tracks/livorno.js"></script>', ...tail('main')]); sh('commit', '-qam', 'main 2');
+    sh('checkout', '-q', 'old');
+    const stopped2 = merging(), r2 = run(), t2 = read(path.join(g, 'index.html')), left2 = sh('diff', '--name-only', '--diff-filter=U').trim();
+    check('--merge: both sides changed the same line: marked as git marks it (this branch, merged in), no stamps, not added, exit 1',
+      stopped2 && r2.st === 1 && /resolve them/.test(r2.out) && /^<<<<<<< this branch\n<p>old<\/p>\n=======\n<p>main<\/p>\n>>>>>>> merged in$/m.test(t2) &&
+      !/\|\|\|\|\|\|\||\?v=/.test(t2) && left2 === 'index.html', r2.out.trim() + ' | ' + t2.replace(/\n/g, ' '));
+    sh('merge', '--abort');
+    const r3 = run();
+    check('--merge with no page in a conflict: nothing to do, exit 0', r3.st === 0 && /nothing to do/.test(r3.out), r3.out.trim());
   }
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
