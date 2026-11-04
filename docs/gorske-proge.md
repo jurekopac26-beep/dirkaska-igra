@@ -158,9 +158,9 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 
 | Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | v delu |
-| A | 2 Nozawa Onsen, 3 Medeu, 4 Auli | `gorske-proge/skupina-A` | čaka |
-| B | 5 Guoliang, 6 Milford Sound, 7 Corvo Branco | `gorske-proge/skupina-B` | čaka |
-| C1 | 8 Yungas, 9 Hana, 10 Ella | `gorske-proge/skupina-C1` | čaka |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026) |
+| A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | čaka na znak VSE SEJE 2 (prej Deli sklop 4 in delitev skupnih datotek prog) |
+| B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | čaka |
+| C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | čaka |
 | C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | čaka |
-| D | 14 Punta del Este, 15 Green Point, 16 Puerto Madero | `gorske-proge/skupina-D` | čaka |
+| D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | čaka |
