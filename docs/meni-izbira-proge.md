@@ -35,8 +35,8 @@ Od zgoraj navzdol:
 | 2 | Zastave v igri (iz `assets/flags`), globus z obrisi držav, graf višine za vse proge | 5–6 h | na main (PR #244, 1. 11. 2026) |
 | 3 | 3D avto z vetrom (valovi), dotik → garaža | 4–5 h | na main (PR #249, 1. 11. 2026) |
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | na main (PR #255, 2. 11. 2026) |
-| 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | v delu (veja `meni-izbira-proge/sklop-5`) |
-| 6 | Uporabnikovi popravki, dokumentacija, celotni testi | 2–3 h | |
+| 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | na main (PR #267, 4. 11. 2026) |
+| 6 | Uporabnikovi popravki, dokumentacija, celotni testi | 2–3 h | v delu (veja `meni-izbira-proge/sklop-6`) |
 
 ### Sklop 1: kaj je narejeno
 
