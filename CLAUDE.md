@@ -19,6 +19,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Država, ki že ima progo v igri: nova proga iz nje se dela samo, če jo je uporabnik izbral (vprašanja `ena-proga-<država>` na strani Odločitve). Dokler izbire ni, je ne začni; druge proge iste skupine ali koraka naredi.
 - Država brez proge: proge gredo v delo, ko pridejo na vrsto. Prva iz države se naredi, druge iz iste države potem odpadejo.
 - Nov načrt prog predlaga največ eno progo na državo in izpusti države, ki progo že imajo.
+- **Nove proge so vedno zadnje** (odločitev uporabnika 4. 11. 2026): izdelava novih prog je zadnje delo pred pripravo na Google Play; vsako novo delo, ki pride, gre na vrsto pred njo (proga, ki je že v izdelavi, se dokonča). Vrstni red: `docs/proge-po-drzavah.md`.
 
 ## Kamere in grafika
 - V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere izometrična, kino in kokpit so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
