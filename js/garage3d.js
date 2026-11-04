@@ -3515,7 +3515,10 @@ const Garage3D = (function () {
       for (const key in RGL.pcs) for (const q of RGL.pcs[key]) if (q.bay === k && !q.w0) { q.M.premultiply(b.M); q.w0 = true; }   // (the parts' frames in the room)
       // (each part a thing to tap: its outline as it stands now, in the world)
       for (const [nm, kind, a, z] of its) { const P = Float32Array.from(g.P.slice(a * 3, z * 3)), N = Float32Array.from(g.N.slice(a * 3, z * 3)), bb = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) bb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]));
-        RGL.items.push({ key: 'rgl:' + nm, kind, name: nm, bay: k, box: bb, P, N }); }
+        RGL.items.push({ key: 'rgl:' + nm, kind, name: nm, bay: k, box: bb, P, N });
+        if (kind !== 'tyre' && kind !== 'rim') {   // (sklop 8: the other parts as the far arm takes them: their frame the bay's at their box's middle (its face +z), their half sizes)
+          const iv = b.M.clone().invert(), lb = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) lb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]).applyMatrix4(iv)); const c = lb.getCenter(new V3());
+          RGL.pcs['rgl:' + nm] = [{ kind, g: [a, z], a: null, s: 1, M: b.M.clone().multiply(new THREE.Matrix4().makeTranslation(c.x, c.y, c.z)), hs: lb.getSize(new V3()).multiplyScalar(0.5), bay: k, w0: true }]; } }
     });
     // the atlas' faces lit by the key light (baked: the mesh is unlit), the room's light on them as a whole
     { const C = A.C, N = A.N, K = KEY_DIR; for (const [v0, v1] of bake) for (let v = v0; v < v1; v++) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2], k = 0.5 + 0.36 * Math.max(0, nx * K.x + ny * K.y + nz * K.z) + 0.14 * (0.5 + 0.5 * ny);
@@ -4616,7 +4619,7 @@ const Garage3D = (function () {
           grp.userData.tips = [];
         }
       } else {
-        const tips = [], zs = lv === 1 ? [K.hw * 0.48] : lv === 2 ? [-K.hw * 0.52, K.hw * 0.52] : lv === 3 ? [-K.hw * 0.62, -K.hw * 0.42, K.hw * 0.42, K.hw * 0.62] : [];
+        const tips = [], zs = deliOn(cv, 'auspuh') ? [] : lv === 1 ? [K.hw * 0.48] : lv === 2 ? [-K.hw * 0.52, K.hw * 0.52] : lv === 3 ? [-K.hw * 0.62, -K.hw * 0.42, K.hw * 0.42, K.hw * 0.62] : [];
         const cz = K.open ? zs.map(z => z * 0.18) : zs;
         cz.forEach((z) => {
           const r = lv === 1 ? 0.06 : lv === 2 ? 0.052 : 0.042, len = 0.22, x = (K.open ? K.exXc : K.exX) - 0.05;
@@ -4647,12 +4650,12 @@ const Garage3D = (function () {
       }
     } else if (kind === 'aero') {
       const sp = K.hw * 2;
-      if (lv >= 1 && !K.open) {   // a lip on the deck's edge, a lip under the front bumper
+      if (lv >= 1 && !K.open && !deliOn(cv, 'aero')) {   // a lip on the deck's edge, a lip under the front bumper (not when the car draws its aero kit: js/deli.js)
         const lip = new THREE.Mesh(foil(0.14, sp * (K.winged ? 0.7 : 0.82), 0.05), PM.carbon); lip.position.set(K.deckX - 0.05, K.deckY + 0.015, 0); lip.rotation.z = 0.18; lip.castShadow = true;
         if (!K.winged) grp.add(item(lip, 'up'));
         const fl = new THREE.Mesh(bx(0.24 + (lv >= 2 ? 0.08 : 0), 0.018, sp * 0.84), PM.carbon); fl.position.set(K.frontX - 0.08 + (lv >= 2 ? 0.04 : 0), K.frontLow - 0.006, 0); fl.castShadow = true; grp.add(item(fl, 'front'));
       }
-      if (lv >= 2 && !K.winged) {   // the rear wing: on two posts; the GT package's is bigger, higher, with end plates and a gurney
+      if (lv >= 2 && !K.winged && !deliOn(cv, 'krilo')) {   // the rear wing (not when the car draws its own fitted: js/deli.js): on two posts; the GT package's is bigger, higher, with end plates and a gurney
         const gt = lv >= 3, span = sp * (gt ? 0.98 : 0.86), chord = gt ? 0.36 : 0.28, hgt = (gt ? 0.4 : 0.3) * (K.highDeck ? 0.55 : 1), wy = K.deckY + hgt, wx = K.deckX + 0.02;
         const wing = new THREE.Group(); wing.position.set(wx, wy, 0);
         const w = new THREE.Mesh(foil(chord, span, 0.07), PM.carbon); w.rotation.z = gt ? -0.12 : -0.08; w.castShadow = true; wing.add(w);
@@ -4666,13 +4669,13 @@ const Garage3D = (function () {
       if (lv >= 2 && K.winged) {   // (the cars with a wing of their own: dive planes at the front corners first)
         for (const sd of [-1, 1]) for (const k of [0, 1]) { const c = new THREE.Mesh(bx(0.16, 0.012, 0.11), PM.carbon); c.position.set(K.frontX - 0.12 - k * 0.12, K.frontLow + 0.14 + k * 0.08, sd * (K.hw - 0.03)); c.rotation.z = 0.25; c.rotation.y = sd * 0.25; grp.add(item(c, 'side')); }
       }
-      if (lv >= 3) {
+      if (lv >= 3 && !deliOn(cv, 'aero')) {
         if (!K.winged) for (const sd of [-1, 1]) for (const k of [0, 1]) { const c = new THREE.Mesh(bx(0.16, 0.012, 0.12), PM.carbon); c.position.set(K.frontX - 0.1 - k * 0.1, K.frontLow + 0.12 + k * 0.08, sd * (K.hw - 0.04)); c.rotation.z = 0.25; c.rotation.y = sd * 0.25; c.castShadow = true; grp.add(item(c, 'side')); }
         if (M.body !== 'formula') for (const sd of [-1, 1]) { const s = new THREE.Mesh(bx(Math.max(0.5, K.wfx - K.wrx - 2 * K.wr - 0.1), 0.05, 0.06), PM.carbon); s.position.set((K.wfx + K.wrx) / 2, K.bottom + 0.0, sd * (K.sideZ + 0.01)); s.castShadow = true; grp.add(item(s, 'side')); }
         for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(bx(0.3, 0.1, 0.012), PM.carbonFlat); f.position.set(K.exXc + 0.1, K.exY - 0.03, (i - 1.5) * K.hw * 0.32); grp.add(item(f, 'back')); }
         if (K.open) { const fin = new THREE.Mesh(bx(0.9, 0.22, 0.012), PM.carbon); fin.position.set(K.rear * 0.35, K.top - 0.08, 0); fin.castShadow = true; grp.add(item(fin, 'up')); }
       }
-    } else if (kind === 'zavore' && !K.open) {   // a disc and a caliper in every wheel (between the rim's dish and its spokes)
+    } else if (kind === 'zavore' && !K.open && !deliOn(cv, 'zavore')) {   // a disc and a caliper in every wheel (not when the car draws its brakes fitted: js/deli.js) (between the rim's dish and its spokes)
       grp.userData.discs = [];
       for (const w of cv.wheels) {
         const sd = w.sd, r = w.r, gap = Math.max(0.002, w.spk - w.dish), zc = w.z + sd * (w.dish + Math.min(0.003, gap * 0.3)), zk = w.z + sd * (w.dish + Math.min(0.007, gap * 0.62));
@@ -5273,8 +5276,9 @@ const Garage3D = (function () {
   // an upgrade fitted (or taken off): the camera goes round to the place (the tyres and the brakes: the car up on the lift), the old parts
   // go, the new ones come, then it shows what they do
   const WHEEL_VIEW = (cv) => { const w = cv.wheels.find(q => q.front && q.sd > 0) || cv.wheels[0]; return { at: [w.x - 0.35, w.y + 0.12, w.z + 0.15], yaw: 0.55, pitch: 0.08, dist: 4.3, fov: 32 }; };
-  function upgrade(kind, lv) {
-    return play(function* () {
+  function upgrade(kind, lv) { return play(() => upShow(kind, lv)); }
+  function* upShow(kind, lv) {   // (its show alone: a part's that changes the level ends with it, fitPart)
+    {
       const cv = cur; if (!cv) return;
       const from = cv.spec.upg[kind] || 0; if (from === lv) return;
       const up = lv > from, old = cv.parts[kind], nw = partsFor(cv, kind, lv); partsK(nw, 0); cv.spec.upg[kind] = lv;
@@ -5347,7 +5351,7 @@ const Garage3D = (function () {
       if (kind === 'aero' || kind === 'motor' || kind === 'gume') { if (kind !== 'gume') cv.lp = null; cv.hgrid = cv.lpG = cv.svW = null; planAhead(cv); }   // (the lift's pads planned again while the camera goes home: new skirts, light strips under the sills; the robots' view of the body with its new parts)
       hud('done', { kind, lv });
       yield* par(home(1.4), lift > 1e-3 || LIFT.s > 1e-3 ? liftDown(cv, false) : null);   // (off the lift: the car down, the arms out)
-    });
+    }
   }
   /* ---------------- the tyres and the rims: the ring's arms change them on a wheel ----------------
      A part on the regal: the far arm takes it with its reach (its tubes out under the ring: the ring and its glass are in the carriage's
@@ -5558,8 +5562,7 @@ const Garage3D = (function () {
     // the camera: at the regal from the side the arm comes in on (its tool in the bay, the part on it; RGL.P.stay: the regal in the
     // picture), then the far wheel from beyond the car's end on the far side; the near front wheel and the trolley
     let V1, V2;
-    if (regal) { const wr = new V3(grab.s.x, grab.s.y, grab.s.z), tp = grab.tip, a = Math.atan2(wr.x - tp.x, wr.z - tp.z), side = bay.x > -2 ? 1 : -1;
-      V1 = view({ at: [wr.x * 0.35 + tp.x * 0.65, wr.y * 0.35 + tp.y * 0.65 + 0.2, wr.z * 0.35 + tp.z * 0.65], yaw: a + side * (side > 0 ? 0.9 : 1.1), pitch: 0.27, dist: 3.4, fov: 35 });
+    if (regal) { V1 = rglView(grab, bay);
       V2 = view({ at: [WF.c.x, WF.c.y + 0.2, WF.c.z], yaw: sx * 2.2, pitch: 0.25, dist: 2.9, fov: 34 }); }
     else V1 = V2 = view({ at: [w.x - 0.55, WF.c.y - 0.1, w.z + 0.45], yaw: 0.62, pitch: 0.16, dist: 4.4, fov: 33 });
     // up on the lift, the arm's tool, to the part (the trolley in meanwhile)
@@ -5602,8 +5605,205 @@ const Garage3D = (function () {
     } else { fitLog('put', { where: 'none' }); disposeTree(letGo(i)); yield* armExt(i, plan.pre.s, 0, 0.3); }
     // a glint off the new part; home, the car down, the arm parked, the trolley off with the old part
     const cartOut = cart ? (function* () { yield* cartGo([[cur.kit.front + 0.95, park[1]], [cur.kit.front + 0.95, 0], [CART.out, 0]], 4.6); cart.visible = false; for (const q of cart.children.slice(1)) disposeTree(q); fitLog('cart.out'); })() : null;
-    sparkle(cur, 6); SFX.ping(1760); done(); if (RGL.P) RGL.P.stay = false;
-    yield* par(home(1.4), liftDown(cur, false), armRest(i, 1.2), cartOut);
+    sparkle(cur, 6); SFX.ping(1760); done();
+    yield* par(home(1.4), liftDown(cur, false), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null);
+  }
+  // (the regal free to step aside again once the camera has left it)
+  function* rglUnstay(s) { yield* wait(s); if (RGL.P) RGL.P.stay = false; }
+
+  /* ---------------- SKLOP 8 · the other parts by the arms (the user's answer 3 of 3. 11. 2026: the arm takes the new part off the regal or
+     out of its drawer and gives the old one back; what the garage has not, the trolley brings). Off the regal: the far arm's reach, to the
+     car's far side or its top (as a tyre); out of a drawer: the trolley to the cabinet first (the drawer out, the part hops onto its deck,
+     the drawer in), then along the room's side to the car's near side, the near arm's gripper; from outside: the trolley in through the
+     door. The part to its element's place on the car (partSpot), held against the body there; a part the car draws as it is
+     (Render.deliMesh: so far the KOLIBRI's) put exactly where it goes (of a pair the near one: the far one comes with the car). The car
+     changes (the new one in the old one's place), the old part in the hand (as the car drew it, else a parts case), back where the new
+     one came from: onto the regal; onto the deck, into its drawer (one of the drawer's) or out with the trolley ---------------- */
+  const PART_AT = { front: ['zarometi', 'maska', 'zmigavci', 'aero'], rear: ['zadnje_luci', 'auspuh'], top: ['krilo', 'filter_zraka', 'cip', 'turbo', 'akumulator'],
+    wheel: ['vzmeti', 'amortizerji', 'stabilizatorji', 'zavore', 'celjusti', 'dim_gum'], hidden: ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum'],
+    wheels: ['platisca', 'zavore', 'matice'] };   // (wheels: drawn on the four wheels (render.js' KIT_WHEEL_DELI, the rims): a parts case)
+  const CAB = { x: 4.7, z: 5.9 };   // (the trolley's way to the cabinet: in along the lane to x, across the room's right to z, before the cabinet's end)
+  // (an element's place on the car on side sd (+1 the near one) and the way out from the body there (world): its spot in the car's frame
+  // (the middle ones a little to sd's side: an arm reaches in from its own), met from outside along the way in (a ray: the body's first face))
+  function partSpot(cv, el, sd) {
+    const K = cv.kit, hh = (f) => K.bottom + (K.top - K.bottom) * f, at = (s) => PART_AT[s].includes(el);
+    let x = (K.wfx + K.wrx) / 2, y = hh(0.45), z = K.hw, out = [0, 0, 1];   // (the side's middle: the decals)
+    if (at('front')) { x = K.front; y = hh({ zarometi: 0.55, maska: 0.32, zmigavci: 0.48, aero: 0.08 }[el]); z = K.hw * { zarometi: 0.62, zmigavci: 0.86, maska: 0.3, aero: 0.35 }[el]; out = [1, 0, 0]; }
+    else if (at('rear')) { x = K.rear; y = el === 'auspuh' ? K.exY : hh(0.58); z = K.hw * (el === 'auspuh' ? 0.45 : 0.62); out = [-1, 0, 0]; }
+    else if (at('top')) { x = el === 'krilo' ? K.deckX : K.hoodX; y = K.top + 0.1; z = K.hw * (el === 'krilo' && sd < 0 ? 0 : 0.22); out = [0, 1, 0]; }
+    else if (at('wheel')) { x = el === 'dim_gum' ? K.wrx : K.wfx; y = K.wr * (['zavore', 'celjusti', 'dim_gum'].includes(el) ? 1 : 1.8); }
+    else if (el === 'luc_pod_avtom') y = K.bottom + 0.05;
+    else if (el === 'zamasek') { x = K.wrx - 0.2; y = hh(0.6); }
+    z *= sd; if (out[2]) out[2] = sd;
+    const G = cv.v.grp; G.updateMatrixWorld(true);
+    const o = new V3(...out).applyQuaternion(G.getWorldQuaternion(new THREE.Quaternion())), c = G.localToWorld(new V3(x, y, z)), f0 = rayAll.far;
+    rayAll.far = 6; rayAll.camera = camera;   // (the car's sprites (its marks) want the camera)
+    const ray = (q) => { rayAll.set(q.clone().addScaledVector(o, 3), o.clone().negate()); return rayAll.intersectObject(G, true).find(r => r.object.isMesh && r.object.visible); };
+    let hit = ray(c); for (const k of [0.8, 0.6, 0.4]) { if (hit || !z || out[1]) break; const q = G.localToWorld(new V3(x, y, z * k)); hit = ray(q); if (hit) c.copy(q); }   // (none at a corner (a rounded one): nearer the middle)
+    rayAll.far = f0;
+    return { p: hit ? hit.point.clone() : c, out: o, hit: !!hit, sd };
+  }
+  // (of a part's triangles (not indexed) the ones on side sd when it is a pair (none about the middle: two lamps), else all; null: none)
+  function halfGeo(src, sd) {
+    const P = src.attributes.position.array, nt = Math.floor(P.length / 9), cz = (t) => (P[t * 9 + 2] + P[t * 9 + 5] + P[t * 9 + 8]) / 3; if (!nt) return null;
+    let mid = 0, l = 0, r = 0; for (let t = 0; t < nt; t++) { const z = cz(t); if (Math.abs(z) < 0.12) mid++; else if (z > 0) r++; else l++; }
+    const pair = mid < nt * 0.02 && l > 0 && r > 0, keep = []; for (let t = 0; t < nt; t++) if (!pair || cz(t) * sd > 0) keep.push(t); if (!keep.length) return null;
+    const geo = new THREE.BufferGeometry();
+    for (const k in src.attributes) { const a = src.attributes[k], s = a.itemSize * 3, arr = new a.array.constructor(keep.length * s); keep.forEach((t, j) => arr.set(a.array.subarray(t * s, t * s + s), j * s)); geo.setAttribute(k, new THREE.BufferAttribute(arr, a.itemSize, a.normalized)); }
+    return geo;
+  }
+  // (a part to carry: option n as the car draws it (Render.deliMesh; of a pair the one on side sd; its middle the frame's origin, the car's
+  // axes; c: its middle in the car body's frame), else a parts case (grey, an amber band round it); hs: its half sizes)
+  function partObj(cv, el, n, sd) {
+    let g = null; if (n && !PART_AT.wheels.includes(el) && Render.deliMesh) try { g = Render.deliMesh(cv.M, el, n, cv.spec.color); } catch (_) { g = null; }
+    if (g) {   // (deliMesh's own geometry the car's or new and never drawn: left as it is; the halves new: the show's, disposed with the part)
+      const w = new THREE.Group(), b = new THREE.Box3();
+      g.traverse(q => { if (!q.isMesh) return; const h = halfGeo(q.geometry.index ? q.geometry.toNonIndexed() : q.geometry, sd); if (!h) return;
+        h.computeBoundingBox(); b.union(h.boundingBox); const m = new THREE.Mesh(h, q.material); m.castShadow = true; w.add(m); });
+      const sz = b.getSize(new V3());
+      if (w.children.length && sz.length() < 1.7) { const c = b.getCenter(new V3()); for (const m of w.children) { m.geometry.translate(-c.x, -c.y, -c.z); m.geometry.computeBoundingSphere(); }
+        return { o: w, c, real: true, hs: sz.multiplyScalar(0.5) }; }
+      for (const m of w.children) m.geometry.dispose(); }
+    const w = new THREE.Group(), m = fxMat(); m.userData.own = true;
+    for (const [sx, sy, sz, col] of [[0.36, 0.2, 0.28, [0.32, 0.34, 0.38]], [0.366, 0.045, 0.286, [0.95, 0.58, 0.1]]]) {
+      const b = new THREE.BoxGeometry(sx, sy, sz), nv = b.attributes.position.count, cc = new Float32Array(nv * 3); for (let v = 0; v < nv; v++) cc.set(col, v * 3);
+      b.setAttribute('color', new THREE.BufferAttribute(cc, 3)); b.setAttribute('gloss', new THREE.BufferAttribute(new Float32Array(nv).fill(SATIN), 1)); const q = new THREE.Mesh(b, m); q.castShadow = true; w.add(q); }
+    return { o: w, c: null, real: false, hs: new V3(0.183, 0.1, 0.143) };
+  }
+  // (the ways in to a spot: straight down first, then tilted toward the way out (o) and turned round it by steps (an arm comes in from its
+  // own side), level at the most)
+  function inDirs(o) {
+    const r = [[[0, -1, 0], null]], up = Math.abs(o.y) > 0.7, a0 = up ? 0 : Math.atan2(o.z, o.x);
+    for (let th = 0.12; th <= (up ? 1.21 : 1.45); th += 0.12) for (const da of up ? [0, 1.57, -1.57, 3.14] : [0, 0.5, -0.5, 1, -1, 1.5, -1.5]) {
+      const a = a0 + da; r.push([[-Math.cos(a) * Math.sin(th), -Math.cos(th), -Math.sin(a) * Math.sin(th)], null]); }
+    return r;
+  }
+  // (a part held (off) put exactly in frame F (where the car draws it, its place on the regal or the deck): held by the same point as it
+  // was taken, turned in the hand the least of the ways dirs (the earlier the better); its place and the one pre further out along pd both
+  // in the arm's reach: as placePlan's)
+  function framePlan(i, tool, off, F, dirs, pd, pre) {
+    const tip = new V3().setFromMatrixPosition(off.clone().invert()).applyMatrix4(F), qo = new THREE.Quaternion().setFromRotationMatrix(off), q2 = new THREE.Quaternion(); let best = null;
+    dirs.forEach(([d, yaw], j) => { if (best && j * 0.02 >= best.sc) return;
+      const p = poseAt(i, tool, tip, d, yaw); if (!p) return; const p2 = poseAt(i, tool, tip.clone().addScaledVector(v3(pd).normalize(), pre), p.d, p.s.yaw); if (!p2) return;
+      const o2 = tipM(p.s, TL[tool] + p.ext).invert().multiply(F), turn = 2 * Math.acos(clamp(Math.abs(qo.dot(q2.setFromRotationMatrix(o2))), 0, 1)), sc = turn + j * 0.02;
+      if (!best || sc < best.sc) { p.off = o2; p.pre = p2; p.turn = turn; p.sc = sc; best = p; } });
+    return best;
+  }
+  // (the camera: at the regal from the side the arm comes in on (its tool in the bay, the part on it); at a spot of the car from out there:
+  // the near side's from before or behind the car on that side, the far side's from beyond the car's end, the top's from over the near side)
+  function rglView(grab, bay) { const wr = new V3(grab.s.x, grab.s.y, grab.s.z), tp = grab.tip, a = Math.atan2(wr.x - tp.x, wr.z - tp.z), side = bay.x > -2 ? 1 : -1;
+    return view({ at: [wr.x * 0.35 + tp.x * 0.65, wr.y * 0.35 + tp.y * 0.65 + 0.2, wr.z * 0.35 + tp.z * 0.65], yaw: a + side * (side > 0 ? 0.9 : 1.1), pitch: 0.27, dist: 3.4, fov: 35 }); }
+  function spotView(S) { const o = S.out, up = o.y > 0.7, side = Math.abs(o.z) > 0.7;
+    const yaw = up ? 0.5 : side ? (o.z > 0 ? 0.35 : Math.sign(S.p.x || 1) * 2.2) : Math.atan2(o.x, o.z) - Math.sign(o.x) * 0.55;
+    return view({ at: [S.p.x, S.p.y + (up ? 0 : 0.1), S.p.z], yaw, pitch: up ? 0.7 : 0.3, dist: up ? 3.8 : 3.4, fov: 34 }); }
+  // (a part from a to b (world) in an arc, its frame turned from qa to qb)
+  function* hop(o, a, qa, b, qb, s) { const q = new THREE.Quaternion(), p = new V3();
+    yield* tween(s, (k) => { p.lerpVectors(a, b, k); p.y += Math.sin(Math.PI * k) * 0.3; o.matrix.compose(p, q.copy(qa).slerp(qb, k), _h1); o.matrixWorldNeedsUpdate = true; }, EZ.io); }
+  // (a part on the trolley's deck at its middle, its bottom on the deck, the room's axes (the cart's frame); the deck's middle for a cart at x, z)
+  function deckPut(P) { const R = CART.root; if (P.o.parent) P.o.parent.remove(P.o); R.add(P.o); P.o.matrixAutoUpdate = false; P.o.matrix.makeTranslation(0, CART.deck + 0.004 + P.hs.y, 0); P.o.matrixWorldNeedsUpdate = true; }
+  const deckAt = (P, x, z) => new THREE.Matrix4().makeTranslation(x, CART.deck + 0.004 + P.hs.y, z);
+  // (a drawer's front (its middle, the drawer in), a part of its four in the tray (k; -1: the tray's middle) with the drawer out, where the
+  // trolley stops before it)
+  function drwSpot(i, k) { const D = DRW, w = D.cw - 0.03, z1 = FRONT.z + FRONT.d / 2, x = D.cx[i & 3], y = D.rows[i >> 2];
+    const m = new V3(x, y + D.ch / 2, z1).applyMatrix4(D.MR), p = new V3(x + (k >= 0 ? k - 1.5 : 0) * (w / 4), y + 0.05, z1 - D.pz).applyMatrix4(D.MR).addScaledVector(D.dir, D.out);
+    return { m, p, stop: [m.x + D.dir.x * (D.out + 0.42), m.z + D.dir.z * (D.out + 0.42)] }; }
+
+  // the show: el an element (not the wheels' two, not the paint), spec the car with its new part (spec.upg: the levels before, when the
+  // part changes one: o.up [kind, level], its upgrade's show at the end, its chips), o.src its thing ('rgl:NAME', 'drw:el', none: the trolley), o.from o.to the old
+  // and the new option's numbers (0: stock), o.fromK o.toK their places in the drawer (-1: not in it)
+  function* fitPart(el, spec, o) {
+    const cv = cur; if (!cv) return; FIT.n++; FIT.log.length = 0;
+    spawn(rglRestock());
+    const pcs = o.src && o.src.startsWith('rgl:') && RGL.pcs && RGL.pcs[o.src], regal = !!(pcs && pcs.length && pcs[0].hs), di = !regal && o.src === 'drw:' + el ? DRW.els.indexOf(el) : -1;
+    const i = regal ? 1 : 0, tool = regal ? 'reach' : 'gripper', sd = regal ? -1 : 1, pc = regal ? pcs[0] : null, S = partSpot(cv, el, sd), K = cv.kit, up = S.out.y > 0.7;
+    const nw = makeCar(spec); nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);   // (its shaders made now: no stutter at the swap)
+    const np = regal ? null : partObj(cv, el, o.to, sd), G = cv.v.grp, gq = G.getWorldQuaternion(new THREE.Quaternion()), ax = (x, y, z) => new V3(x, y, z).applyQuaternion(gq);
+    cv.v.bodyG.updateMatrixWorld(true); const BW = cv.v.bodyG.matrixWorld.clone(), inCar = (P) => BW.clone().multiply(new THREE.Matrix4().makeTranslation(P.c.x, P.c.y, P.c.z));
+    // (how it goes on: its face (its frame's z) out from the body; on the top upright, a wing's along the car (its span across it), the
+    // rest's to the near side; the regal's exhaust's to the side (its pipe along the car, its end in under the bumper, the arm up off it:
+    // behind the car the arm's way out is beyond its reach); its middle out from the spot by its half size)
+    const hs = regal ? pc.hs : np.hs, pipe = regal && el === 'auspuh', face = up ? (el === 'krilo' ? ax(-1, 0, 0) : ax(0, 0, 1)) : pipe ? ax(0, 0, sd) : S.out.clone();
+    const cT = S.p.clone().addScaledVector(S.out, up ? hs.y + 0.03 : pipe ? hs.x - 0.15 : hs.z + 0.03), pd = up || pipe ? (up ? S.out.clone() : ax(0, 1, 0)) : S.out.clone().multiplyScalar(0.5).add(ax(0, 1, 0)).normalize(), dirs = inDirs(S.out);
+    let grab = null, plan = null, park = null, exact = false, why = 'grab';
+    if (regal) {   // (the reach straight in to the part's face (its frame's z: out of the bay), turned and tilted down the least)
+      const n = new V3().setFromMatrixColumn(pc.M, 2).normalize(), tip = new V3().setFromMatrixPosition(pc.M).addScaledVector(n, pc.hs.z + 0.004), g = reachPlan(1, 'reach', tip, n.clone().negate());
+      if (g) { g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.5), g.d, g.s.yaw); g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(pc.M);
+        if (g.pre) { grab = g; why = 'place';   // (the exhaust level, its pipe along the car: exactly so; the rest its face out)
+          if (pipe) plan = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(sd, 0, 0), ax(0, 1, 0), ax(0, 0, sd)).setPosition(cT), dirs, pd, 0.3);
+          if (!plan) plan = placePlan(1, 'reach', g.off, cT, face, false, dirs, pd, 0.3); } }
+    } else {   // (the part on the deck by the car's near side, before its spot; the gripper down onto its top, toward its near end)
+      park = [clamp(S.p.x - (up ? 0.9 : 0.75), K.rear + 0.5, K.front - 0.5), K.hw + 0.62];
+      const top = new V3(park[0], CART.deck + 0.006 + 2 * np.hs.y, park[1] + Math.min(np.hs.z * 0.6, 0.45)), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2);
+      if (g) { g.tip = top; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(deckAt(np, park[0], park[1]));
+        if (g.pre) { grab = g; why = 'place'; if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(0, 'gripper', g.off, inCar(np), dirs, pd, 0.3); exact = !!plan; }
+          if (!plan) plan = placePlan(0, 'gripper', g.off, cT, face, false, dirs, pd, 0.3); } }
+    }
+    const done = () => { if (!o.up) hud('done', { kind: el }); };
+    if (!plan || !grab) {   // (no arm can: the new car in the old one's place with a puff at the spot)
+      fitLog('plain', { regal, el, why, at: S.p.toArray().map(q => +q.toFixed(2)), hs: hs.toArray().map(q => +q.toFixed(2)) }); if (np) disposeTree(np.o);
+      for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, rnd(-0.5, 0.5), rnd(0.2, 0.8), rnd(-0.5, 0.5), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02);
+      SFX.clunk(0.4); fitSwap(cv, nw); done(); if (o.up) yield* upShow(o.up[0], o.up[1]); return;
+    }
+    fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
+    if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
+    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = spotView(S);
+    // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
+    // onto its deck, the drawer in; then across the room's right and along the car's near side)
+    const cart = regal ? null : CART.root || buildCart(), ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;
+    const toPart = function* () { yield* armTool(i, tool); yield* armCarry(i, grab.pre.s, grab.pre.ext, 1.3); };
+    if (cart) { cart.position.set(CART.out, 0, 0); cart.visible = true; }
+    if (ds) {
+      fitLog('cart.in'); SFX.click();
+      yield* par(camTo(view({ at: [ds.stop[0] - 0.1, 0.45, ds.stop[1] - 0.45], yaw: FRONT.ry + 0.45, pitch: 0.38, dist: 3.4, fov: 34 }), 1.4), cartGo([[CAB.x, 0], [CAB.x, CAB.z], ds.stop], 4.2), armTool(i, tool));
+      DRW.want = di; yield* wait(0.45); scene.add(np.o); np.o.matrixAutoUpdate = false; const q0 = new THREE.Quaternion();
+      SFX.whoosh(0.4); yield* hop(np.o, ds.p, q0, new V3(ds.stop[0], CART.deck + 0.004 + np.hs.y, ds.stop[1]), q0, 0.6); deckPut(np); SFX.clunk(0.2); DRW.want = -1; fitLog('cart.loaded');
+      yield* par(camTo(V1, 1.6), cartGo([[CAB.x, CAB.z], lane, park], 4.2), armCarry(i, grab.pre.s, grab.pre.ext, 1.3));
+      SFX.ping(1320); fitLog('cart.parked');
+    } else if (cart) {
+      deckPut(np); fitLog('cart.in'); SFX.click();
+      yield* par(camTo(V1, 1.3), toPart(), (function* () { yield* cartGo([[K.front + 0.95, 0], [K.front + 0.95, park[1]], park], 4.2); SFX.ping(1320); fitLog('cart.parked'); })());
+    } else yield* par(camTo(V1, 1.3), toPart());
+    // the part taken: the tubes out to it (the gripper down onto it), a clunk, back out with it
+    yield* armExt(i, grab.s, grab.ext, regal ? 0.55 : 0.4); SFX.clunk(0.3);
+    if (regal) { const cp = rglCopy(pc); rglHide(pc, true); pc.take = FIT.n; hold(i, cp, pc.M); }
+    else { cart.updateMatrixWorld(true); hold(i, np.o, np.o.matrixWorld.clone()); }
+    fitLog('grab', { rgl: regal ? +RGL.P.k.toFixed(2) : null });
+    yield* armExt(i, grab.pre.s, grab.pre.ext, regal ? 0.45 : 0.35);
+    // to its place (turned in the hand meanwhile as it is to go on), pressed on
+    yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.4), holdTo(i, plan.off, 1.3), camTo(V2, 1.4));
+    yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine); SFX.wrench();
+    // the swap: the car changes (the new one in its place), the old part in the hand now (as the car drew it, where it was; else where the
+    // new one is), a puff off the body
+    for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, S.out.x * rnd(0.2, 0.8) + rnd(-0.3, 0.3), rnd(0.1, 0.6), S.out.z * rnd(0.2, 0.8) + rnd(-0.3, 0.3), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
+    SFX.clunk(0.5);
+    const held = letGo(i), op = regal ? { o: rglCopy(pc), real: false } : partObj(cv, el, o.from, sd), Fo = op.real && !PART_AT.hidden.includes(el) ? inCar(op) : held.matrix.clone();
+    disposeTree(held); fitSwap(cv, nw); hold(i, op.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: op.real ? 'real' : regal ? 'regal' : 'case' });
+    yield* wait(0.15); SFX.wrench();
+    yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine);
+    // the old part back where the new one came from: on the regal as the new one stood (in by the way it was taken), on the deck
+    let put = null;
+    if (regal) { const ways = [[grab.d, null]]; for (const a of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24]) for (const th of [0, 0.06, 0.12]) ways.push([turnDir(grab.d, a, th), null]);
+      put = framePlan(1, 'reach', RB[1].held.a, pc.M, ways, grab.d.clone().negate(), 0.5); }
+    else put = framePlan(0, 'gripper', RB[0].held.a, deckAt(op, park[0], park[1]), [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]], new V3(0, 1, 0), 0.35);
+    if (put) {
+      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4), holdTo(i, put.off, 1.3), camTo(V1, 1.4));
+      yield* armExt(i, put.s, put.ext, regal ? 0.5 : 0.4); SFX.clunk(0.3);
+      const ob = letGo(i); fitLog('put', { where: regal ? 'regal' : 'cart' });
+      if (regal) RGL.ret.push(ob); else deckPut(op);
+      yield* armExt(i, put.pre.s, 0, 0.4);
+    } else { fitLog('put', { where: 'none' }); disposeTree(letGo(i)); yield* armExt(i, plan.pre.s, 0, 0.3); }
+    // home, the arm parked, the trolley off with the old part (one of a drawer's back into it on the way, the new one from there or not)
+    const bi = DRW.els.indexOf(el), back = cart && put && bi >= 0 && o.fromK != null && o.fromK >= 0 ? drwSpot(bi, o.fromK) : null;
+    const cartOut = cart ? (function* () {
+      if (back) { yield* cartGo([lane, [CAB.x, CAB.z], back.stop], 4.6); DRW.want = bi; yield* wait(0.4);
+        cart.updateMatrixWorld(true); const a = new V3().setFromMatrixPosition(op.o.matrixWorld), q = new THREE.Quaternion(); cart.remove(op.o); scene.add(op.o);
+        SFX.whoosh(0.4); yield* hop(op.o, a, q, back.p, q, 0.55); disposeTree(op.o); SFX.clunk(0.2); fitLog('drawer.back'); DRW.want = -1; yield* wait(0.3);
+        yield* cartGo([[CAB.x, CAB.z], [CAB.x, 0], [CART.out, 0]], 4.6); }
+      else if (ds) yield* cartGo([lane, [CAB.x, 0], [CART.out, 0]], 4.6);
+      else yield* cartGo([[K.front + 0.95, park[1]], [K.front + 0.95, 0], [CART.out, 0]], 4.6);
+      cart.visible = false; for (const q of cart.children.slice(1)) disposeTree(q); fitLog('cart.out'); })() : null;
+    sparkle(cur, 6); SFX.ping(1760); done();
+    yield* par(o.up ? upShow(o.up[0], o.up[1]) : home(1.4), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null);   // (a level changed: its upgrade's show now, as one: the camera round the car)
   }
   const hasZone = (grp, z) => !!grp && grp.userData.items.some(it => !z || it.zone === z);
   function zoneBox(grp, zone) { const b = new THREE.Box3(); for (const it of grp.userData.items) if (!zone || it.zone === zone) b.expandByObject(it.o); return b; }
@@ -6185,7 +6385,8 @@ const Garage3D = (function () {
   const thumb = (spec, w, h, o) => thumbCanvas(spec, w, h, o).toDataURL('image/png');
 
   return {
-    init, resize, frame, show, swap, upgrade, service, paint, fit(el, spec, o) { return play(function* () { yield* fitWheels(el, spec, o || {}); }); }, thumb, view: setView, sfx: (k) => { if (SFX[k]) SFX[k](); },
+    init, resize, frame, show, swap, upgrade, service, paint, fit(el, spec, o) { return play(function* () { yield* fitWheels(el, spec, o || {}); }); },
+    fitPart(el, spec, o) { return play(function* () { yield* fitPart(el, spec, o || {}); }); }, thumb, view: setView, sfx: (k) => { if (SFX[k]) SFX[k](); },
     set onHud(f) { hud = f || (() => {}); }, set onTap(f) { onTap = f || (() => {}); },
     // (the page: the picture raised by px (lying down: free, the part of its height free between the page's buttons); what a tap hits;
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);

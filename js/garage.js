@@ -390,17 +390,22 @@
     const [t, j] = m.sel; if (el === 'aero' && t >= 2 && raceLocked(c)) return;
     if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); doPaint(col, true); return; }
     const mine = haveIt(c, el, [t, j]), p = mine ? 0 : price(el, t, j); if (!pay(p)) { drawMenu(); return; }   // (a part the car has: fitted again free)
-    haveAdd(c, el, [t, j]); closeMenu(); fit(el, [t, j]);
+    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); fit(el, [t, j], from);
   }
-  function fit(el, v) {
-    const c = C(), L0 = levels(c.parts); if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
+  function fit(el, v, from) {
+    const c = C(), L0 = levels(c.parts), was = c.parts[el]; if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
     const name = L2(EL[el].n) + ' · ' + (v ? L2(opt(el, v[0], v[1])[0]) : tr('serijsko'));
     lastFit = name;
     // (a tyre or a rim: an arm puts it on, from the regal when it stands there, else off the trolley; KONČANO when it is on)
     if (el === 'gume' || el === 'platisca') { const key = v ? keyOfOpt(el, v[0], v[1]) : null; G.fit(el, spec(S.car), { src: key && key.startsWith('rgl:') ? key : null }); return; }
-    if (k && L1[k] !== L0[k]) G.upgrade(k, L1[k]); else { G.sfx('ping'); chip(tr('KONČANO'), esc(name)); lastFit = null; }
+    // (the other parts, sklop 8: an arm puts it on (off the regal, out of its drawer, else off the trolley) and gives the old one back;
+    // a level changed: the car with the old levels, its upgrade's show at the end (its parts, the chip MOČ), KONČANO else)
+    const key = v ? keyOfOpt(el, v[0], v[1], from) : null, lvc = !!k && L1[k] !== L0[k], sp = spec(S.car), real = (w) => w && !isStock(el, w) ? w : null; if (lvc) sp.upg = L0;
+    G.fitPart(el, sp, { src: key, from: real(was) ? optN(was) : 0, to: real(v) ? optN(v) : 0, fromK: slotOf(el, real(was)), toK: slotOf(el, real(v)), up: lvc ? [k, L1[k]] : null });
   }
   let lastFit = null;
+  // (an option's place among its drawer's four, -1: not in it)
+  const slotOf = (el, v) => !v || !DRAWER[el] ? -1 : DRAWER[el].findIndex(n => { const o = findOpt(el, n); return !!o && o[0] === v[0] && o[1] === v[1]; });
   function stock() { if (!menu) return; const el = menu.el; closeMenu(); fit(el, null); }
 
   /* ---------------- what the buttons and the taps do ---------------- */
