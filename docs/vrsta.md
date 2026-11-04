@@ -27,7 +27,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 |---|---|---|---|---|
 | 0 | #288 | hitri popravek `main`: nestabilni testi po #262 (flags, napake-zastavice, hlvid, lang, pits) | 2 | na vrsti (zelen 4. 11.) |
 | 1 | #241 | Mount Buller | 3 | na vrsti |
-| 2 | #248 | kovanci, denarnica, sledi gum | 3 | pripravljen |
 | 3 | #250 | 7 novosti | 3 | čaka |
 | 4 | #226 | Bâlea | 3 | čaka |
 | 5 | #246 | preleti | 3 | čaka |
