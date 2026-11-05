@@ -3,8 +3,8 @@
 // longest, then the test tracks; each with its pictures in the stage's three cameras: 1 the map from above, 2 the flyover with the height
 // graph, 3 the corner's video, else the model of the land), the track step's head, row of numbers, road sign and neighbours
 // (docs/meni-izbira-proge.md), the weather and the race options, the car in 3D with the wind round it
-// (js/menu-car.js: in the player's colour, the wind drawn and moving, its picture without WebGL; tapped: the garage, whose back is the game's
-// car screen, its Back and Next the track step), a race from the menu (the intro
+// (js/menu-car.js: in the player's colour, the wind drawn and moving, its picture without WebGL; its name over it; tapped: the garage, whose
+// back and Izberi progo lead straight to the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
@@ -28,6 +28,19 @@ try {
   // (a picture still on its way when the next track is stepped to is cancelled by the browser: not an error of the page)
   const real = (errs) => errs.filter(e => !/^request failed: \S+\/assets\//.test(e));
   const raceOn = (page, id) => page.waitForFunction((id) => window.__game.race && window.__game.race.track.def.id === id, id, { timeout: 120000 });
+  // (a wait that ran out: what the page shows, for the log: its address and load state, on show or not and whether it still draws frames
+  // (raf: ms to the next frame), the game's screen, the menu, the loading screen's message (a start that failed shows it there), the
+  // service worker; a page that does not answer in 10 s (busy) is said so)
+  const pageState = (page) => Promise.race([
+    page.evaluate(() => new Promise((res) => {
+      const ld = document.getElementById('loading'), nav = performance.getEntriesByType('navigation')[0];
+      const st = { url: location.pathname + location.search, rs: document.readyState, vis: document.visibilityState, game: !!window.__game, screen: window.__game ? __game.screen : null,
+        menu: !!window.Menu, ready: !!(window.Menu && Menu.ready), loading: ld && !ld.classList.contains('off') ? document.getElementById('ld-msg').textContent : '',
+        shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+        nav: nav ? nav.type + ', answer ' + Math.round(nav.responseStart) + ' ms, load ' + Math.round(nav.loadEventEnd) + ' ms' : '', t: Math.round(performance.now()), raf: null };
+      requestAnimationFrame(() => { st.raf = Math.round(performance.now() - st.t); }); setTimeout(() => res(st), 1000);
+    })),
+    new Promise((res) => setTimeout(() => res({ answer: 'none in 10 s (the page busy)' }), 10000))]).catch((e) => ({ err: String(e).slice(0, 200) }));
 
   // 1. the title: the menu is the screen on show; a new player's track is a real one, not the test track the game starts on
   {
@@ -105,19 +118,20 @@ try {
     const withC = H.filter(x => x.ctry), noglobe = withC.filter(x => x.globe !== x.ctry).map(x => x.id + ':' + x.ctry + '/' + x.globe);
     T.check(`every track with a country (${withC.length} of ${H.length}: the test tracks Copper Forest and Thunder Cape have none) has its globe in the head, that country gold on it`, withC.length >= 90 && withC.length >= H.length - 4 && !noglobe.length, noglobe.join(', '));
     // the wide maps: for every track in MENU.wideMaps the painted land (dry, rain) is the map and a margin all round it (the margin in the map's
-    // pixels, half as many pixels in the file), and the isle (dry, rain) the map's own size
+    // pixels; the file at 0.8 of the map's scale with the island's detail, wide_detail.py: a test track's as wide_map.py left it, half as
+    // many pixels), and the isle (dry, rain) the map's own size
     const dims = await page.evaluate(async () => {
       const load = (u) => new Promise((res) => { const i = new Image(); i.onload = () => res([i.naturalWidth, i.naturalHeight]); i.onerror = () => res(null); i.src = u; });
       const out = [];
       for (const [id, E] of Object.entries(window.MENU.wideMaps || {})) {
         const T = window.ROUTES[id].top, A = 'assets/maps/';
-        out.push({ id, E, W: T.W, H: T.H, w: await load(A + 'wide-' + id + '.webp'), r: await load(A + 'wide-' + id + '-rain.webp'), a: await load(A + 'isle-' + id + '.webp'), b: await load(A + 'isle-' + id + '-rain.webp') });
+        out.push({ id, E, test: !!(Core.TRACKS.find(d => d.id === id) || {}).test, W: T.W, H: T.H, w: await load(A + 'wide-' + id + '.webp'), r: await load(A + 'wide-' + id + '-rain.webp'), a: await load(A + 'isle-' + id + '.webp'), b: await load(A + 'isle-' + id + '-rain.webp') });
       }
       return out;
     });
     const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
-      Math.abs(d.w[0] - (d.W + 2 * d.E) / 2) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) / 2) <= 2)).map(d => d.id);
-    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
+      Math.abs(d.w[0] - (d.W + 2 * d.E) * (d.test ? 0.5 : 0.8)) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * (d.test ? 0.5 : 0.8)) <= 2)).map(d => d.id);
+    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
     T.check('no page errors in the title, the modes and the track list', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -251,6 +265,105 @@ try {
       T.check(`from there, back to the menu's title`, sc.startsWith('title:'), sc);
     }
     T.check('no page errors on the track step, in the weather, the options, the car, the race and the links', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 4b. the row's Opponents (docs/meni-izbira-proge.md, sklop 5): a tap on the number opens the sheet (the number big, the quick picks 0 Trial
+  //     .. 100, the slider up to what the track takes, Done); a pick is the game's setting at once and the row's number behind the sheet, the
+  //     slider moves it as it goes (the keys too); Pikes Peak takes 28 (its summit's parking: def.maxRivals), its picks past that off; the
+  //     choice is the same on the next track (its own most there); a race from the menu with it (the Nordschleife: 12 rivals, 13 cars, its
+  //     own 20 not added); the career keeps its own field (no choice); under the track step on a phone the game's demo is not drawn (one
+  //     frame a second: Menu.covers), under the title (see-through: the game's scene its background) and on a tablet held upright (the
+  //     menu a column) it is
+  {
+    const { ctx, page, errors } = await open({ track: 'pikes', lastTrack: 'pikes', mode: 'race' });
+    await ready(page);
+    const demoN = (ms) => page.evaluate(async (ms) => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, ms)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; }, ms);
+    const dt = await demoN(2600);
+    T.check('a phone, the title: the game\'s scene its background, drawn on', !dt.covers && dt.n >= 2 * Math.ceil(dt.s) + 2, JSON.stringify(dt));
+    await click(page, 'single'); await click(page, 'mode:race');
+    const dm = await demoN(2600);
+    T.check('a phone, the track step: the game\'s demo race under it not drawn, one frame a second at most (Menu.covers)', dm.covers && dm.n <= Math.ceil(dm.s) + 1, JSON.stringify(dm));
+    const row0 = await ev(page, 'const d = Menu.debug(), o = root.querySelector(".trow .opp"); return { id: d.list[d.trackIdx], txt: o.textContent, btn: !!o.querySelector("button[data-act=\\"riv\\"]"), set: __game.S.rivals };');
+    T.check('Pikes Peak in Circuit race: the row\'s Opponents a button (21, the track\'s own: no choice yet)', row0.id === 'pikes' && row0.txt === 'Opponents21' && row0.btn && row0.set === -1, JSON.stringify(row0));
+    await click(page, 'riv'); await page.waitForTimeout(300);
+    const sh = (extra) => ev(page, 'const s = root.querySelector(".sheet.riv"); if (!s) return null; const r = s.querySelector(".rslide"); return { num: s.querySelector(".rnum b").textContent, sub: s.querySelector(".rnum span").textContent, picks: [...s.querySelectorAll(".rquick button")].map(b => b.textContent + (b.disabled ? "-" : "") + (b.getAttribute("aria-pressed") === "true" ? "*" : "")), max: +r.max, val: +r.value, ends: s.querySelector(".rends").textContent, row: root.querySelector(".trow .opp").textContent, set: __game.S.rivals, done: !!s.querySelector(".go[data-act=\\"close-sheet\\"]") };');
+    let o = await sh();
+    T.check('the sheet: 21 big, the quick picks 0 Trial, 1, 5, 12, 25 (50 and 100 off: Pikes Peak takes 28), the slider 0..28 at 21, Done',
+      o && o.num === '21' && /^21 rivals · 22 cars$/.test(o.sub) && o.picks.join() === '0Trial,1,5,12,25,50-,100-' && o.max === 28 && o.val === 21 && /^028 at most on this road$/.test(o.ends) && o.done, JSON.stringify(o));
+    await click(page, 'riv-n:5'); o = await sh();
+    T.check('a quick pick (5): the game\'s setting at once, the number, the pick lit, the slider, the row behind the sheet', o.set === 5 && o.num === '5' && o.picks[2] === '5*' && o.val === 5 && o.row === 'Opponents5', JSON.stringify(o));
+    await click(page, 'riv-n:0'); o = await sh();
+    T.check('0: Trial, alone against the clock', o.set === 0 && o.num === '0' && /^Trial/.test(o.sub) && o.picks[0] === '0Trial*', JSON.stringify(o));
+    await page.focus('.sheet .rslide'); await page.keyboard.press('End'); o = await sh();
+    T.check('the slider (End): to the most the track takes, 28, the setting with it', o.val === 28 && o.num === '28' && o.set === 28 && o.row === 'Opponents28' && !o.picks.some(p => p.endsWith('*')), JSON.stringify(o));
+    await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft'); o = await sh();
+    T.check('the slider (two steps back): 26', o.val === 26 && o.num === '26' && o.set === 26 && o.row === 'Opponents26', JSON.stringify(o));
+    await click(page, 'riv-n:12'); await done(page);
+    const row1 = await ev(page, 'return { sheet: !!root.querySelector(".sheet"), txt: root.querySelector(".trow .opp").textContent, set: __game.S.rivals };');
+    T.check('Done: the sheet gone, the row 12', !row1.sheet && row1.txt === 'Opponents12' && row1.set === 12, JSON.stringify(row1));
+    // the next tracks: the same choice (12; the Nordschleife too, whose own field is 99)
+    let n = 0, at = '';
+    for (; n < 60; n++) { at = await ev(page, 'const d = Menu.debug(); return d.list[d.trackIdx];'); if (at === 'nring') break; await click(page, 'track:1'); }
+    const row2 = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    T.check('the choice on another track too: the Nordschleife (its own 99) with 12', at === 'nring' && row2 === 'Opponents12', JSON.stringify({ at, row2, n }));
+    await click(page, 'race-single');
+    await raceOn(page, 'nring').catch(() => null);
+    const rc = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, cars: __game.race && __game.race.cars.length }));
+    T.check('a race from the menu with 12 rivals: 13 cars (the Nordschleife\'s own 20 not added)', rc.id === 'nring' && rc.cars === 13, JSON.stringify(rc));
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(500);
+    // the career: its races keep their own field, the row no choice
+    await page.evaluate(() => __game.onAction('career-toggle'));
+    await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const car = await ev(page, 'const o = root.querySelector(".trow .opp"); return { txt: o.textContent, btn: !!o.querySelector("button"), riv: __game.S.rivals };');
+    T.check('the career: the row\'s Opponents the track\'s own field, no choice (no button)', /^Opponents\d+$/.test(car.txt) && car.txt !== 'Opponents12' && !car.btn && car.riv === 12, JSON.stringify(car));
+    T.check('no page errors with the opponents\' sheet', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // 0 opponents (Trial): the race alone (a short one: 3 laps), to the finish on the autopilot: Cilj (a tick, no place), no win in the
+    //   statistics, no page error
+    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 0, length: 'short' });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    await click(page, 'race-single');
+    await raceOn(page, 'troisrivieres').catch(() => null);
+    const st0 = await page.evaluate(() => ({ cars: __game.race && __game.race.cars.length, laps: __game.race && __game.race.laps, wins: __game.stats.wins || 0, races: __game.stats.races || 0 }));
+    const fin = await page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 90 && g.phase !== 'done'; k++) { g.sim(10, true); await new Promise(r => setTimeout(r, 0)); }
+      return { phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), wins: g.stats.wins || 0, races: g.stats.races || 0 }; });
+    T.check('0 opponents: the row 0, the race alone (1 car, 3 laps), home on the autopilot: Cilj with a tick (no place), a race counted, no win',
+      row === 'Opponents0' && st0.cars === 1 && st0.laps === 3 && fin.phase === 'done' && fin.title === 'Cilj' && fin.pos === '\u2713' && fin.shown === 's-results' && fin.races === st0.races + 1 && fin.wins === st0.wins, JSON.stringify({ row, st0, fin }));
+    T.check('no page errors in a race alone', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // a field bigger than the game's own (40 opponents on Trois-Rivières): the race starts flying (the column, as the Nordschleife's 100:
+    //   a big field's standing start piled up in its first corners with the knocks between cars, game.js newRace flyGo), the player's car
+    //   over the line hands it over, the field rolling on 15 s more: no rival standing 3 s on end; no page error
+    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 40, length: 'short' });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
+    await click(page, 'race-single');
+    await raceOn(page, 'troisrivieres').catch(() => null);
+    const fl = await page.evaluate(async () => { const g = window.__game, r = g.race, st = new Map(), yld = () => new Promise(q => setTimeout(q, 0)); let worst = 0, t = 0, k = 0;
+      const o = { cars: r.cars.length, flying: r.opts.flying || 0 };
+      for (; t < 40 && (g.phase !== 'racing' || r.flyOn); t += 0.25) { g.sim(0.25, true); if (++k % 8 === 0) await yld(); }
+      o.took = +t.toFixed(2); o.flyOn = !!r.flyOn; o.phase = g.phase;
+      for (let j = 0; j < 60; j++) { g.sim(0.25, true); for (const c of r.cars) if (!c.isPlayer) { const v = Math.hypot(c.vx, c.vz) < 3 ? (st.get(c) || 0) + 0.25 : 0; st.set(c, v); worst = Math.max(worst, v); } if (j % 8 === 0) await yld(); }
+      o.worst = worst; o.dist = Math.round(r.player.dist); return o; });
+    T.check('40 opponents on Trois-Rivières (more than the game\'s own 21): the row 40, 41 cars from a flying start, the player\'s over the line, then 15 s on: no rival standing 3 s on end',
+      row === 'Opponents40' && fl.cars === 41 && fl.flying > 0 && fl.phase === 'racing' && !fl.flyOn && fl.worst < 3 && fl.dist > 0, JSON.stringify({ row, fl }));
+    T.check('no page errors in a big field\'s flying start', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // a tablet held upright: the menu a column, the game's demo seen at its sides and drawn, on the track step too
+    const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const dm = await page.evaluate(async () => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
+    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.n >= 2 * Math.ceil(dm.s) + 2, JSON.stringify(dm));
+    T.check('no page errors on the tablet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 
@@ -520,29 +633,41 @@ try {
     await ctx.close();
   }
 
-  // 10. the car in the yard tapped: the garage with it, in its colour (here a stand-in page that goes back as the garage's back button does:
-  // index.html?zaslon=avto&avto=<id>), then the game's car screen on that car, its hint there; its Back: the track step, the same track;
-  // again, and its Next: the track step too
+  // 10. the car in the yard tapped (or its name over it): the garage with it, in its colour (here a stand-in page that goes back as the
+  // garage's buttons do: its back index.html?zaslon=avto&avto=<id>, its Izberi progo with &naprej=proga), then straight the track step
+  // again, the same track (stran Odločitve m8, 2: not the game's car screen), on the garage's car (here another one for Izberi progo)
   {
     const { ctx, page, errors } = await open();
     await ready(page);
-    let gar = null;
-    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + new URLSearchParams(location.search).get("car"))</script>' }); });
+    let gar = null, way = 'back', other = '';
+    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + ' +
+      (way === 'back' ? 'new URLSearchParams(location.search).get("car")' : JSON.stringify(other) + ' + "&naprej=proga"') + ')</script>' }); });
     const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
-    for (const way of ['back', 'next']) {
+    other = await page.evaluate((id) => Core.MODELS.find(m => !m.retired && m.id !== id).id, car0.id);   // (the garage's other car: Izberi progo on it)
+    for (const w of ['back', 'next']) {
+      way = w;
       await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
       const was = await ev(page, 'return root.querySelector(".where .w2").textContent;');
       const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
+      const car1 = await page.evaluate(() => Core.MODELS[__game.S.car].id);
       gar = null;
-      await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), click(page, 'garage')]);
-      await page.waitForFunction(() => window.__game && __game.screen === 'car' && window.Menu && Menu.ready, null, { timeout: 120000 });
-      await page.waitForTimeout(300);
-      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, on: document.getElementById('car-garage').classList.contains('on'), url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
-      T.check(`the yard's car tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its back: the game's car screen on that car (the address plain again) [${way}]`,
-        gar && gar.endsWith('/garaza.html?car=' + car0.id + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === car0.id && g.on && g.url === '' && g.shown === 's-car', JSON.stringify({ gar, car0, dz, g }));
-      await page.click(way === 'back' ? '#car-back' : '#car-next'); await page.waitForTimeout(400);
-      const back = await ev(page, 'return { scr: Menu.debug().screen, h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent };');
-      T.check(`back from the garage, the car screen's ${way === 'back' ? 'Back' : 'Next'}: the track step, the same track`, back.scr === 'track' && back.h1 === was && (await shown(page)).join() === 's-menu', JSON.stringify({ was, back }));
+      // (the name: a real click at its middle, after a look that it is a button on top there: a plain span, its listener far up, is no
+      // target to a phone's touch adjustment and its tap went elsewhere)
+      const nm = w === 'back' ? null : await ev(page, 'const e = root.querySelector(".yard .cname"), b = e.getBoundingClientRect(), x = b.left + b.width / 2, y = b.top + b.height / 2; return { tag: e.tagName, top: root.elementFromPoint(x, y) === e, x, y };');
+      if (nm) T.check('the car\'s name over it: a button of its own, on top at its middle', nm.tag === 'BUTTON' && nm.top, JSON.stringify(nm));
+      await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), nm ? page.mouse.click(nm.x, nm.y) : page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('.yard .car').click())]);
+      const there = await page.waitForFunction(() => window.__game && __game.screen === 'track' && window.Menu && Menu.ready && Menu.debug().screen === 'track' && document.getElementById('menu-host').shadowRoot.querySelector('#s-track .where'), null, { timeout: 120000 }).then(() => true, () => false);
+      if (!there) {   // (seen on GitHub now and then, never locally: the page's state and its errors in the log, not a test stopped without them)
+        T.check(`back from the garage [${w}]: the track step within 120 s`, false, JSON.stringify(await pageState(page)) + ' — ' + errors.slice(-10).join(' | '));
+        break;
+      }
+      await page.waitForTimeout(400);
+      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
+      const back = await ev(page, 'return { h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent, name: root.querySelector(".yard .cname") && root.querySelector(".yard .cname").textContent };');
+      const want = w === 'back' ? car0.id : other, wname = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, want);
+      T.check(`the yard's ${w === 'back' ? 'car' : 'car\'s name'} tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its ${w === 'back' ? 'back' : 'Izberi progo'}: the track step again, the same track, on the garage's car, its name over it (the address plain again)`,
+        gar && gar.endsWith('/garaza.html?car=' + car1 + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === want && g.url === '' && g.shown === 's-menu' && back.h1 === was && back.name === wname,
+        JSON.stringify({ gar, car0, car1, dz, g, was, back, want, wname }));
       await click(page, 'home');
     }
     T.check('the garage and back: no page errors', !real(errors).length, real(errors).join(' | '));
