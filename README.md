@@ -48,7 +48,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Townsville, Avstralija](docs/proge/townsville.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
-- [Mount Buller, Avstralija](docs/proge/mountbuller.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
@@ -60,6 +59,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - Bakreni gozd (opis še ni napisan)
 - [Toskana, Italija](docs/proge/toskana.md)
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
+- [Mount Buller, Avstralija](docs/proge/mountbuller.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

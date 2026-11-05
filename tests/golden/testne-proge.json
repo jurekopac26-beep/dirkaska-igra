@@ -6,6 +6,7 @@
   "grom",
   "jezero",
   "monaco",
+  "mountbuller",
   "riviera",
   "toskana"
  ],
@@ -75,18 +76,23 @@
   "assets/tracks/jezero.webp": "506ffffd2a9d8e02",
   "assets/tracks/monaco-rain.webp": "14bf9a0182035530",
   "assets/tracks/monaco.webp": "c7bd86d815a9c02e",
+  "assets/tracks/mountbuller-rain.webp": "18f1f0f8ab21e5d9",
+  "assets/tracks/mountbuller.webp": "fad451c755c460fc",
   "assets/tracks/riviera-rain.webp": "722bb147ce7f9083",
   "assets/tracks/riviera.webp": "f6abccb22e784bfb",
   "assets/tracks/toskana-rain.webp": "be3ffb1a67235699",
   "assets/tracks/toskana.webp": "b2b4a143b93f7670",
+  "docs/proge/mountbuller.md": "aeb82462e7c402a4",
   "docs/proge/toskana.md": "48f9e7e8dd76e500",
   "js/tracks/gora.js": "2f20b716c43be01a",
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/jezero.js": "16733742a2d9e030",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
+  "js/tracks/mountbuller.js": "2637ea6af6a53f75",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
+  "js/world-mountbuller.js": "989d8466538bd67f",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -146,13 +152,19 @@
   "maketa-menija/assets/video/poster-gora.jpg": "05876f12d744ab23",
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
-  "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681"
+  "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
+  "tests/mountbuller.test.js": "62a5d26779a470bb"
  },
  "dovoljenja": [
   {
    "datum": "2026-11-03",
    "proga": "vse",
    "razlog": "Začetek: testne proge zamrznjene do izbrisa pred objavo na Google Play (uporabnik v pogovoru 3. 11. 2026: »da se te proge ne posodabljajo in ne popravljajo«)"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "mountbuller",
+   "razlog": "uporabnik 5. 11. 2026: Prestavi progo v test (sporoča VSE SEJE 2), Mount Buller, Avstralija v test (PR #379)"
   }
  ]
 }
