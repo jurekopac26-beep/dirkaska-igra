@@ -3,7 +3,7 @@
 // 120 s on real tracks, in both driving physics (classic cs and nova): Bathurst (a circuit, the grid), Vršič and Caracoles (open roads, the
 // flying start). Every step: every number of a tractor and of both tanks finite; tank 1 on the tractor's fifth wheel and tank 2 on the dolly's
 // (both within 5 cm) unless torn off; each fold within its stop (tank 1: TLK.lim, tank 2: its own lim). After 120 s: every train has gone on,
-// few rescues of the player, few contacts. Then the train alone on the flat test plane: braking hard in a bend folds the first joint more,
+// few rescues of the player, few contacts, joint 2 well within its stop (no swing of the second tank). Then the train alone on the flat test plane: braking hard in a bend folds the first joint more,
 // never past a stop; straight on both joints come back in line.
 //   node tests/zrcalni.test.js
 'use strict';
@@ -54,6 +54,8 @@ for (const d of TRACKS) for (const phys of ['cs', 'nova']) {
       nan ? 'not finite: ' + nan : `${trains} trains, gaps ${(g1 * 100).toFixed(2)} / ${(g2 * 100).toFixed(2)} cm, ${over} steps past a stop`);
     check(`${tag}: in ${SEC} s the player drove at least 2 km (the autopilot), the field's slowest at least 1 km, at most 2 rescues, at most 40 contacts`, mine > 2000 && slow > 1000 && rescues <= 2 && hits <= 40,
       `${mine.toFixed(0)} m, ${slow.toFixed(0)} m, ${rescues} rescues, ${hits} contacts`);
+    // (the second tank's sway: its axles kept their grip over the road's small steps (tlRide), joint 2 at its stop only in a real slide)
+    check(`${tag}: joint 2 well within its stop (under 50 deg of ${deg(ZV.trailer.next.lim)}): the second tank never swings out`, m2 < 50 * Math.PI / 180, `${deg(m2)} deg`);
   } finally { Math.random = orig; }
 }
 
