@@ -79,6 +79,10 @@ const Core = (function () {
   // race (RUB.n car-laps for most of it; the rain washes it as the marbles). A car on it grips a little more (RUB.g on the darkest, its
   // middle within RUB.in m of the line, none from RUB.out m: beside it the marbles' band takes over, MARB.gap, so nothing is counted twice)
   const RUB = { n: 60, g: 0.02, in: 0.6, out: 1.2 };
+  // cold tyres after a stop (105, every car with tyres, the rivals as the player): a new set from the pits grips TCOLD.g less while cold
+  // (ty.cold 1 from the fitting to the way out of the lane, ty.co the distance there), warming up smoothly over the first TCOLD.d of a lap
+  // after it (ty.cold to 0, Race._weather). The KOLIBRI keeps its own (KT.cold, Car.kt). A set kept on at a stop, the start's: never cold
+  const TCOLD = { g: 0.1, d: 0.5 };
 
   class Track {
     constructor(def) {
@@ -2726,8 +2730,8 @@ const Core = (function () {
   // knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to none, up to KT.dMax. A tyre burns (kt.hot, never more than
   // one: ktFire) only where the car caught fire before, the wheel rule's first wheel (the car's damage at 80 %, a hard hit from 70 %): the
   // most knocked one; less side grip for the whole car (KT.burn), the speed, the drive and the brakes as ever. The wear never sets one on
-  // fire. New ones from a stop are cold on every car (kt.cold 1, 0 a lap after the stop: the dots light blue), but only the cars of
-  // opts.tyreCold (the Kolibri: kt.cg) grip KT.cold less meanwhile; the others' cold tyres are only to be seen. A burning tyre's wheel comes
+  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop: the dots light blue); the cars of opts.tyreCold (the
+  // Kolibri: kt.cg) grip KT.cold less meanwhile (every other car's new set: TCOLD, on its c.ty). A burning tyre's wheel comes
   // off at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt). No mission has them (js/missions.js: no tyreRule)
   const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, wet: 2.5, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
   const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
@@ -5700,10 +5704,12 @@ const Core = (function () {
       if (W.water < r) { W.water = Math.min(r, W.water + dt / 45 * (0.3 + r)); W.line = W.water; }
       else { W.water = Math.max(r, W.water - dt / 240); W.line = Math.min(W.water, Math.max(r, W.line - dt / 120)); }
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
+        const ty = c.ty; let cg = 1;   // (cold tyres after a stop: TCOLD)
+        if (ty && ty.cold > 0) { if (c.inPit) ty.co = c.dist; ty.cold = 1 - sstep(0, TCOLD.d * T.len, c.dist - ty.co); if (!c.kt && W.tyres) cg = 1 - TCOLD.g * ty.cold; }
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
         const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
         const wl = W.tyres && c.ty && !c.kt ? Math.min(1, c.ty.wear) : 0;   // (the compound's own loss up to a wear of 1; past 0.8 the cliff on top)
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w) * this.cold.gk; }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w) * this.cold.gk * cg; }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
       if (this.mb) this._marbles(dt);
@@ -6278,7 +6284,7 @@ const Core = (function () {
           const pl = c.pitPlan, t = pl && pl.ty, keep = keepTyres(c, pl);   // (the player's own choice, game.js: its tyres, dry or wet against the water too, the fuel and the repairs it asked for; then gone. keep: its set stays on, unless one is cut or a wheel is off)
           if (!pl || pl.fix === 'all') this.repairCar(c); else this._mend(c, pl.fix === 'need');
           if (c.kt) ktNew(c, true);   // (the Kolibri: four new tyres, cold)
-          if (c.ty && !keep) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
+          if (c.ty && !keep) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; c.ty.cold = 1; c.ty.co = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
             if (c.st) { c.st.hist.push(c.ty.k === 'wet' ? 'W' : c.ty.c); c.st.laps.push(this._stratLap(c)); } }   // (a strategy race: a rival's plan from here, every car's sets and stops for the results; a stop that keeps its set is no new one)
           if (c.fuel != null && this.fuelRate) {
             if (!pl) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; if (c.fuelF != null) c.fuelF = 1; }   // (fuel: a full tank)
@@ -7299,7 +7305,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
 })();

@@ -6,7 +6,7 @@
 // the left; the wrong tyres: the word on a red chip. DRS (dim, white armed, green open) and ZAVETRJE (white, not the cold tyres' blue) in
 // small tags under the rows (ZAVETRJE no longer shown). The start's set never cold; after a real pit stop (the autopilot through the lane, as
 // tests/browser/pits.test.mjs drives it) the word and the dots light blue (#7fd3ff) at the fitting and at the way out, about half way to
-// their own colours half a lap on, their own a lap on. The fastest lap's time under the clock: upright the time and a star, lying the
+// their own colours a quarter of a lap on, their own half a lap on (they warm up: Core TCOLD, 105). The fastest lap's time under the clock: upright the time and a star, lying the
 // word. The budgets, with the worst texts forced and the HUD's face (ApexMenu) loaded, measured on the letters' boxes, the corner sign
 // where the game puts it (window.__game.noteAt): upright (360x640, 390x844, 412x915) row 1 left of the clock, the line under the clock
 // under row 2 (never on its line: SEKTOR 2  1:05.123, the fastest lap with its star, the longest place names of the real tracks in two
@@ -103,16 +103,16 @@ try {
   T.check('the wrong tyres for the road (slicks on a wet line): the word white on a red chip, class "bad"', / bad/.test(bad.cls) && bad.chip === 'rgba(190, 30, 30, 0.78)' && bad.word === 'rgb(255, 255, 255)' && bad.txt === 'SREDNJE', JSON.stringify(bad));
 
   // 4. a real pit stop at the end of the first lap (the stop's tyres: Srednje, as the T key or the pause menu would set them): cold at the
-  // fitting and at the way out, about half way half a lap on, their own colours a lap on
+  // fitting and at the way out, about half way a quarter of a lap on, their own colours half a lap on (Core TCOLD: the grip with them)
   const cold = await page.evaluate((src) => {
     const g = window.__game, P = g.race.player, L = g.race.track.len, f = (0, eval)(src), out = {}; P.pitCmp = 'M';
     for (let k = 0; k < 6000 && !P.pitDone; k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
     out.done = f(); out.done.pit = P.pitState;
     for (let k = 0; k < 6000 && P.pitDone; k++) g.sim(1 / 60, false, 0, 0);
     out.exit = f(); out.exit.inPit = P.inPit; const x0 = P.dist;
-    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.25 * L; k++) g.sim(0.05, true);
     out.half = f(); out.half.k = +((P.dist - x0) / L).toFixed(3);
-    for (let k = 0; k < 9000 && P.dist < x0 + L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) g.sim(0.05, true);
     out.lap = f(); out.lap.k = +((P.dist - x0) / L).toFixed(3); out.laps = g.race.laps; out.phase = g.phase;
     return out; }, TYRES.toString());
   const isCold = (o) => !!o && / cold/.test(o.cls) && o.word === COLD && o.dots.length === 4 && o.dots.every(c => c === COLD);
@@ -121,9 +121,9 @@ try {
   T.check('the race\'s start: the tyres not cold (their own colours)', !/cold/.test(sl.cls) && sl.word === OWN.M, sl.cls);
   T.check('right after the pit stop\'s new set (done, still in the box\'s lane): the word and the four dots light blue (#7fd3ff), class "cold"', isCold(cold.done) && cold.done.c === 'M', JSON.stringify(cold.done));
   T.check('at the way out of the pit lane: still light blue', isCold(cold.exit) && !cold.exit.inPit, JSON.stringify(cold.exit));
-  T.check('half a lap from the way out: about half way to their own colours (the word and the dots)', !!cold.half && Math.abs(t(cold.half.word, own) - 0.5) <= 0.08 && Math.abs(t(cold.half.dots[0], cold.half.wants[0]) - 0.5) <= 0.08 && / cold/.test(cold.half.cls),
+  T.check('a quarter of a lap from the way out: about half way to their own colours (the word and the dots)', !!cold.half && Math.abs(t(cold.half.word, own) - 0.5) <= 0.08 && Math.abs(t(cold.half.dots[0], cold.half.wants[0]) - 0.5) <= 0.08 && / cold/.test(cold.half.cls),
     JSON.stringify({ half: cold.half, tw: cold.half && +t(cold.half.word, own).toFixed(2) }));
-  T.check('a lap from the way out: their own colours (SREDNJE yellow, the dots by the wear), no longer cold', !!cold.lap && !/cold/.test(cold.lap.cls) && cold.lap.word === own && cold.lap.dots.every((c, k) => near(c, cold.lap.wants[k])) && cold.phase === 'racing',
+  T.check('half a lap from the way out: their own colours (SREDNJE yellow, the dots by the wear), no longer cold', !!cold.lap && !/cold/.test(cold.lap.cls) && cold.lap.word === own && cold.lap.dots.every((c, k) => near(c, cold.lap.wants[k])) && cold.phase === 'racing',
     JSON.stringify(cold.lap));
 
   // 4b. the fastest lap's time under the clock, as the game writes it at the line (a lap faster than all before it): upright the time and a
