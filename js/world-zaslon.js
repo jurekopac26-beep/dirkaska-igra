@@ -280,7 +280,7 @@
       const s = (((Z.s + d) % L) + L) % L, i = T.idx(s), x = T.px[i], y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.8, z = T.pz[i], k0 = Math.floor(s / 170) % n;
       const sees = (k) => { const p = X.tvPost(k); return X.sees(p.x, p.y, p.z, x, y, z); }, far = (k) => { const p = X.tvPost(k); return Math.hypot(p.x - x, p.z - z); };
       let k = k0, a = ((s - X.tvPost(k0).s) % L + L) % L; if (a > L / 2) a -= L;
-      if (n > 2 && (a < -100 || a > 30) && !sees(k0)) {   // (from 100 m before the post to 30 m past it the replay's check has seen the road) const alt = [(k0 + n - 1) % n, (k0 + 1) % n].sort((a, b) => far(a) - far(b)); for (const a of alt) if (sees(a)) { k = a; break; } }
+      if (n > 2 && (a < -100 || a > 30) && !sees(k0)) { const alt = [(k0 + n - 1) % n, (k0 + 1) % n].sort((p, q) => far(p) - far(q)); for (const b of alt) if (sees(b)) { k = b; break; } }   // (from 100 m before the post to 30 m past it the replay's check has seen the road)
       dir.push(k);
     }
     for (let j = 1; j < dir.length - 1; j++) if (dir[j - 1] === dir[j + 1] && dir[j] !== dir[j - 1]) dir[j] = dir[j - 1];
