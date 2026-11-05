@@ -69,7 +69,7 @@
     const P = [], N = [], C = [], F = [], I = [], UV = o.map ? [] : null; let v = 0;
     for (const e of list) {
       const [x, y, z, rot, look, W, H, amp] = e, c = Math.cos(rot), s = Math.sin(rot), ph = hash(x, z) * TAU, A = W * AMP * (amp == null ? 1 : amp);
-      const SEG = Math.max(6, Math.min(12, Math.round(W / 0.14))), CL = cells(look), tri = !!(look && look.tri);   // (segments along the cloth, about eight to a wave: a long one more)
+      const SEG = o.tier === 0 ? Math.max(4, Math.min(6, Math.round(W / 0.3))) : Math.max(6, Math.min(12, Math.round(W / 0.14))), CL = cells(look), tri = !!(look && look.tri);   // (segments along the cloth, about eight to a wave, a long one more; NIZKA four to six: about as many triangles as the stiff boxes had)
       const US = new Set(), q5 = (u) => Math.round(u * 1e5) / 1e5; for (let j = 0; j <= SEG; j++) US.add(q5(j / SEG)); for (const q of CL) { US.add(q5(q[0])); US.add(q5(q[1])); }
       const us = [...US].sort((p, q) => p - q);   // (every cell's u at the same places, its neighbours' edges among them: no cracks between rows)
       for (const [u0, u1, v0, v1, col] of CL) {
