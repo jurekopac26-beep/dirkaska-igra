@@ -31,6 +31,8 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Lestvica prijateljev: časi prijateljev po progah prek podpisane povezave, brez strežnika, tabela ob izbiri proge (načrt `docs/lestvica-prijateljev.md`; seja načrta session_01WbgGztpv919FLrFJ1tPuh5) | 3 | pred novimi progami, po potrditvi načrta (vprašanja `lp-meni`, `lp-povezava`, `lp-obseg` na strani Odločitve 3) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) in je #202 (fizika, račun 2) na `main` ali zaprt |
+| Videz avta povsod: barva, izvedba laka, črte z barvo, nalepke, senčni pas, svoja številka in platišča v vsaki dirki, v posnetku in pri prijateljih (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanji `videz-1` in `videz-2` na strani Odločitve 3) in po #297 (garaža, račun 1) |
+| Beg pred policijo: kratka različica 3:00 (pregon od štarta, tudi Moki in Sani); cel način bega že obstaja (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanje `beg-1` na strani Odločitve 3) in po #250 (Zabava) |
 
 ## Vrsta (stanje 4. 11. 2026)
 
