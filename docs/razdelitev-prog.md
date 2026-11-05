@@ -44,6 +44,12 @@ Nova proga po razdelitvi ničesar ne dopisuje v skupne sezname: polja da v svojo
 
 Preverjeno: kopija s staro obliko `js/render.js`, `js/game.js`, `js/world.js` (seznami, vrstice sproščanja), `js/world-zivali.js` in `js/world-rbring.js` izpred razdelitve ob obstoječih datotekah prog in delov se z orodjem vrne v enako drevo bajt za bajtom.
 
+## Naslednje (ni del te teme)
+
+- `SCENE` v `js/world-zivali.js` (prizori z živalmi, ključ id proge): enak premik v polje `scene` šele, ko je na `main` #289, ki tabelo spreminja (vrednosti čez več vrstic, komentarji med vnosi; blok v datoteki proge zdaj sprejme le vrednosti v eni vrstici).
+- Drugi skupni seznami po progah zunaj sveta: angleška imena in opisi v `js/lang.js` (`EN`), `MENU.corners` v `js/menu.js`, `js/routes.js`.
+- Veje kode za posamezno progo v skupnih funkcijah (npr. `'pikes'` v `js/render.js` in `js/game.js`) niso seznami, ki jih dopolnjuje vsaka nova proga, zato ostanejo.
+
 ## Stanje
 
 - [x] orodje in premik podatkov (`look`, `say`, `rainP`, polja sveta, `zivali`)
