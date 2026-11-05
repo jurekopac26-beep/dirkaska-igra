@@ -3,10 +3,12 @@
 //   node tests/run.js node      only the Node tests (physics, AI, races; ~4 min)
 //   node tests/run.js browser   only the browser tests (Playwright; ~75 min with software WebGL)
 //   node tests/run.js fleet     only the vehicle fleet (the render kit's rules, the garage's parts, the registry, every vehicle's handling, destruction and AI; how each is drawn; the car screen; ~10 min)
-//   node tests/run.js browser --shard 2/4         one share of a suite (GitHub runs the browser tests on 4 machines at once, see SECS)
-//   node tests/run.js browser --shard 2/4 --list  only print which tests that share has
+//   node tests/run.js browser --shard 2/6         one share of a suite (GitHub runs the browser tests on 6 machines at once, see SECS)
+//   node tests/run.js browser --shard 2/6 --list  only print which tests that share has
 //   node tests/run.js --related   only the tests related to what changed against main (npm run test:related; see RELATED below)
 //   node tests/run.js --related --files js/lang.js,docs/proge/spa.md --list   the same for the files given (no git)
+//   node tests/run.js --koda      the fingerprint of the code under test (KODA_MD below): GitHub runs the heavy jobs once for each
+//   node tests/run.js --dokumenti only the tests that read the .md files (MD_TESTS below): what GitHub runs when that code has passed
 //   --quiet   only the failures (a failed test's FAIL lines and its last lines) and the summary
 // A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15), or than TEST_SLOW (default 4) times its usual time on GitHub (SECS)
 // if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF).
@@ -19,37 +21,40 @@ const SUITES = {
   fleet: ['kit.test.js', 'deli.test.js', 'deli-barve.test.js', 'fleet.test.js', 'browser/fleet.test.mjs', 'browser/cars-ui.test.mjs', 'browser/deli-barve.test.mjs'],
   browser: ['browser/garage.test.mjs', 'browser/smoke.test.mjs', 'browser/zivali.test.mjs', 'browser/ljudje.test.mjs', 'browser/repro.test.mjs', 'browser/flystart.test.mjs', 'browser/startcam.test.mjs', 'browser/newver.test.mjs', 'browser/nvschool.test.mjs', 'browser/nvheli.test.mjs', 'browser/nvride.test.mjs', 'browser/nvwater.test.mjs', 'browser/app.test.mjs', 'browser/crash.test.mjs', 'browser/nova.test.mjs', 'browser/kolibri.test.mjs', 'browser/wheels.test.mjs', 'browser/world.test.mjs', 'browser/pits.test.mjs', 'browser/repair.test.mjs', 'browser/carcull.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/flags.test.mjs', 'browser/career.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/sound.test.mjs', 'browser/fire.test.mjs', 'browser/gfx.test.mjs', 'browser/look.test.mjs', 'browser/look2.test.mjs', 'browser/carlow.test.mjs', 'browser/camtilt.test.mjs', 'browser/camshake.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs', 'browser/online4.test.mjs', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs', 'browser/lang.test.mjs', 'browser/menu.test.mjs', 'browser/darktip.test.mjs', 'browser/saver.test.mjs', 'browser/ostrenje.test.mjs', 'browser/tower.test.mjs', 'browser/share.test.mjs', 'browser/shramba.test.mjs', 'browser/prvi.test.mjs', 'browser/sledi.test.mjs', 'browser/denarnica.test.mjs', 'browser/sky.test.mjs', 'browser/fuel.test.mjs', 'browser/rivals.test.mjs', 'browser/school.test.mjs', 'browser/slip.test.mjs', 'browser/faults.test.mjs', 'browser/radio.test.mjs', 'browser/chal.test.mjs', 'browser/onchamp.test.mjs', 'browser/hlvid.test.mjs', 'browser/ctrl.test.mjs', 'browser/rio.test.mjs', 'browser/townsville.test.mjs', 'browser/start.test.mjs', 'browser/hudcol.test.mjs', 'browser/hud.test.mjs', 'browser/notes.test.mjs', 'browser/kerb.test.mjs', 'browser/marks.test.mjs', 'browser/boards.test.mjs', 'browser/covers.test.mjs', 'browser/roadside.test.mjs', 'browser/quick.test.mjs', 'browser/seams.test.mjs', 'browser/napake.test.mjs', 'browser/napake-slika.test.mjs', 'browser/napake-zastavice.test.mjs', 'browser/napake-samodejno.test.mjs', 'browser/napake-posnetek.test.mjs', 'browser/napake-zadnji.test.mjs', 'browser/missions.test.mjs', 'browser/m06.test.mjs', 'browser/m01.test.mjs', 'browser/m49.test.mjs', 'browser/m47.test.mjs', 'browser/m46.test.mjs', 'browser/m19.test.mjs', 'browser/m35.test.mjs', 'browser/m37.test.mjs', 'browser/m48.test.mjs', 'browser/m30.test.mjs', 'browser/m33.test.mjs', 'browser/m53.test.mjs', 'browser/m07.test.mjs', 'browser/m09.test.mjs', 'browser/m43.test.mjs', 'browser/m51.test.mjs', 'browser/m52.test.mjs', 'browser/m54.test.mjs', 'browser/m39.test.mjs', 'browser/m50.test.mjs', 'browser/m34.test.mjs', 'browser/m55.test.mjs', 'browser/m10.test.mjs', 'browser/m02.test.mjs', 'browser/m04.test.mjs', 'browser/m08.test.mjs', 'browser/m17.test.mjs', 'browser/m26.test.mjs'],
 };
-// How long each browser test takes on GitHub (seconds, from the summaries of the run of main on 4. 11. 2026, run 1153 on b9aa444, menu's with its sklop 6 checks: ~99 min a share): --shard deals the tests out by it,
-// and a test's time limit grows with it (LIMIT_OF). Update it from a run's summary when a test grows a lot (smoke, memory, perf, gfx and
-// world grow with every track); a test not listed counts as DEF_SECS
+// How long each browser test takes on GitHub (seconds: the median of 6 runs' summaries, 5. 11. 2026, runs 1229-1246, 3 of main and 3 of pull
+// requests, each time scaled to a machine of median speed: GitHub's machines differ, one job's tests all take 0.5 to 1.35 times as long;
+// ~61 min a share of 6, memory alone in one): --shard deals the tests out by it, and a test's time limit grows with it (LIMIT_OF). Update it
+// from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not listed counts as DEF_SECS
 const SECS = {
-  'browser/memory.test.mjs': 3586, 'browser/perf.test.mjs': 2133, 'browser/smoke.test.mjs': 1841, 'browser/crash.test.mjs': 1234,
-  'browser/menu.test.mjs': 1100, 'browser/gfx.test.mjs': 1088, 'browser/world.test.mjs': 979, 'browser/garage.test.mjs': 696,
-  'browser/covers.test.mjs': 657, 'browser/kolibri.test.mjs': 385, 'browser/online.test.mjs': 361, 'browser/hudcol.test.mjs': 340,
-  'browser/marks.test.mjs': 332, 'browser/online4.test.mjs': 306, 'browser/notes.test.mjs': 274, 'browser/carlow.test.mjs': 270,
-  'browser/kerb.test.mjs': 263, 'browser/prvi.test.mjs': 245, 'browser/nova.test.mjs': 243, 'browser/ljudje.test.mjs': 227,
-  'browser/startcam.test.mjs': 216, 'browser/share.test.mjs': 211, 'browser/pits.test.mjs': 208, 'browser/quali.test.mjs': 205,
-  'browser/school.test.mjs': 205, 'browser/radio.test.mjs': 196, 'browser/onchamp.test.mjs': 193, 'browser/chal.test.mjs': 175,
-  'browser/sledi.test.mjs': 172, 'browser/app.test.mjs': 160, 'browser/look.test.mjs': 157, 'browser/replay.test.mjs': 155,
-  'browser/wheels.test.mjs': 154, 'browser/napake-zadnji.test.mjs': 149, 'browser/roadside.test.mjs': 148, 'browser/pad.test.mjs': 147,
-  'browser/look2.test.mjs': 140, 'browser/medvode-fence.test.mjs': 138, 'browser/flystart.test.mjs': 135, 'browser/sound.test.mjs': 132,
-  'browser/fuel.test.mjs': 123, 'browser/newver.test.mjs': 123, 'browser/nvschool.test.mjs': 120, 'browser/slip.test.mjs': 117,
-  'browser/repair.test.mjs': 116, 'browser/rio.test.mjs': 114, 'browser/sky.test.mjs': 112, 'browser/flags.test.mjs': 108,
-  'browser/napake-slika.test.mjs': 108, 'browser/zivali.test.mjs': 98, 'browser/ctrl.test.mjs': 94, 'browser/seams.test.mjs': 89,
-  'browser/darktip.test.mjs': 86, 'browser/napake.test.mjs': 81, 'browser/career.test.mjs': 80, 'browser/start.test.mjs': 80,
-  'browser/weather.test.mjs': 80, 'browser/hlvid.test.mjs': 76, 'browser/nvheli.test.mjs': 76, 'browser/carcull.test.mjs': 70,
-  'browser/repro.test.mjs': 70, 'browser/napake-posnetek.test.mjs': 68, 'browser/denarnica.test.mjs': 67, 'browser/camtilt.test.mjs': 63,
-  'browser/shramba.test.mjs': 58, 'browser/champ.test.mjs': 57, 'browser/boards.test.mjs': 53, 'browser/napake-samodejno.test.mjs': 53,
-  'browser/nvride.test.mjs': 53, 'browser/nvwater.test.mjs': 90, 'browser/hud.test.mjs': 52, 'browser/atmos.test.mjs': 51, 'browser/medvode-castle.test.mjs': 51,
-  'browser/napake-zastavice.test.mjs': 49, 'browser/rivals.test.mjs': 49, 'browser/saver.test.mjs': 49, 'browser/lang.test.mjs': 48,
-  'browser/missions.test.mjs': 48, 'browser/faults.test.mjs': 47, 'browser/medvode-props.test.mjs': 45, 'browser/fire.test.mjs': 43,
-  'browser/quick.test.mjs': 42, 'browser/camshake.test.mjs': 40, 'browser/tower.test.mjs': 39, 'browser/townsville.test.mjs': 36,
-  'browser/m09.test.mjs': 29, 'browser/m26.test.mjs': 29, 'browser/m52.test.mjs': 29, 'browser/m04.test.mjs': 28, 'browser/m30.test.mjs': 28,
-  'browser/m02.test.mjs': 27, 'browser/m33.test.mjs': 27, 'browser/m39.test.mjs': 27, 'browser/m43.test.mjs': 27, 'browser/m08.test.mjs': 26,
-  'browser/m35.test.mjs': 26, 'browser/m47.test.mjs': 26, 'browser/m53.test.mjs': 26, 'browser/m01.test.mjs': 25, 'browser/m06.test.mjs': 25,
-  'browser/m50.test.mjs': 25, 'browser/m17.test.mjs': 24, 'browser/m37.test.mjs': 24, 'browser/m34.test.mjs': 23, 'browser/m46.test.mjs': 23,
-  'browser/m48.test.mjs': 23, 'browser/m51.test.mjs': 23, 'browser/m54.test.mjs': 23, 'browser/m07.test.mjs': 22, 'browser/m10.test.mjs': 22,
-  'browser/m55.test.mjs': 22, 'browser/m49.test.mjs': 21, 'browser/m19.test.mjs': 19,
+  'browser/memory.test.mjs': 3661, 'browser/perf.test.mjs': 2034, 'browser/smoke.test.mjs': 1684, 'browser/crash.test.mjs': 1030,
+  'browser/world.test.mjs': 970, 'browser/gfx.test.mjs': 950, 'browser/menu.test.mjs': 759, 'browser/covers.test.mjs': 558,
+  'browser/garage.test.mjs': 527, 'browser/online.test.mjs': 335, 'browser/marks.test.mjs': 319, 'browser/kolibri.test.mjs': 308,
+  'browser/hudcol.test.mjs': 296, 'browser/online4.test.mjs': 286, 'browser/kerb.test.mjs': 269, 'browser/notes.test.mjs': 247,
+  'browser/nova.test.mjs': 245, 'browser/carlow.test.mjs': 225, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
+  'browser/school.test.mjs': 190, 'browser/onchamp.test.mjs': 189, 'browser/radio.test.mjs': 185, 'browser/look.test.mjs': 182,
+  'browser/share.test.mjs': 177, 'browser/ljudje.test.mjs': 176, 'browser/sledi.test.mjs': 164, 'browser/look2.test.mjs': 163,
+  'browser/prvi.test.mjs': 160, 'browser/wheels.test.mjs': 150, 'browser/roadside.test.mjs': 146, 'browser/app.test.mjs': 142,
+  'browser/quali.test.mjs': 141, 'browser/sound.test.mjs': 134, 'browser/chal.test.mjs': 134, 'browser/flystart.test.mjs': 132,
+  'browser/sky.test.mjs': 128, 'browser/napake-zadnji.test.mjs': 125, 'browser/replay.test.mjs': 122, 'browser/medvode-fence.test.mjs': 121,
+  'browser/newver.test.mjs': 120, 'browser/pad.test.mjs': 119, 'browser/repair.test.mjs': 113, 'browser/nvschool.test.mjs': 111,
+  'browser/fuel.test.mjs': 111, 'browser/napake-slika.test.mjs': 107, 'browser/slip.test.mjs': 98, 'browser/rio.test.mjs': 98,
+  'browser/ctrl.test.mjs': 97, 'browser/flags.test.mjs': 89, 'browser/zivali.test.mjs': 86, 'browser/weather.test.mjs': 78,
+  'browser/darktip.test.mjs': 78, 'browser/seams.test.mjs': 76, 'browser/napake.test.mjs': 75, 'browser/hlvid.test.mjs': 73,
+  'browser/nvheli.test.mjs': 72, 'browser/repro.test.mjs': 71, 'browser/carcull.test.mjs': 71, 'browser/start.test.mjs': 68,
+  'browser/napake-posnetek.test.mjs': 62, 'browser/ostrenje.test.mjs': 60, 'browser/shramba.test.mjs': 60, 'browser/camtilt.test.mjs': 59,
+  'browser/career.test.mjs': 58, 'browser/atmos.test.mjs': 55, 'browser/camshake.test.mjs': 54, 'browser/denarnica.test.mjs': 53,
+  'browser/champ.test.mjs': 51, 'browser/nvride.test.mjs': 50, 'browser/nvwater.test.mjs': 90, 'browser/boards.test.mjs': 50, 'browser/lang.test.mjs': 49,
+  'browser/medvode-castle.test.mjs': 48, 'browser/rivals.test.mjs': 48, 'browser/faults.test.mjs': 48, 'browser/napake-samodejno.test.mjs': 48,
+  'browser/quick.test.mjs': 47, 'browser/missions.test.mjs': 47, 'browser/saver.test.mjs': 46, 'browser/napake-zastavice.test.mjs': 46,
+  'browser/hud.test.mjs': 42, 'browser/medvode-props.test.mjs': 41, 'browser/fire.test.mjs': 40, 'browser/tower.test.mjs': 35,
+  'browser/townsville.test.mjs': 31, 'browser/m30.test.mjs': 28, 'browser/m09.test.mjs': 28, 'browser/m26.test.mjs': 27,
+  'browser/m43.test.mjs': 26, 'browser/m39.test.mjs': 26, 'browser/m06.test.mjs': 25, 'browser/m33.test.mjs': 25,
+  'browser/m53.test.mjs': 25, 'browser/m52.test.mjs': 25, 'browser/m50.test.mjs': 25, 'browser/m35.test.mjs': 24,
+  'browser/m48.test.mjs': 24, 'browser/m02.test.mjs': 24, 'browser/m04.test.mjs': 24, 'browser/m08.test.mjs': 24,
+  'browser/m01.test.mjs': 23, 'browser/m47.test.mjs': 23, 'browser/m37.test.mjs': 23, 'browser/m54.test.mjs': 22,
+  'browser/m49.test.mjs': 21, 'browser/m07.test.mjs': 21, 'browser/m51.test.mjs': 21, 'browser/m55.test.mjs': 21,
+  'browser/m10.test.mjs': 21, 'browser/m17.test.mjs': 21, 'browser/m46.test.mjs': 20, 'browser/m34.test.mjs': 20,
+  'browser/m19.test.mjs': 18,
 };
 const DEF_SECS = 60, secs = (f) => SECS[f] || DEF_SECS;
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
@@ -124,17 +129,34 @@ function changedFiles() {
   const bases = refs.map(r => git('merge-base', 'HEAD', r) || r), base = bases.reduce((a, b) => git('merge-base', '--is-ancestor', a, b) != null ? b : a);
   return [...new Set([git('diff', '--name-only', base), git('ls-files', '--others', '--exclude-standard')].join('\n').split('\n').filter(Boolean))];
 }
+// --koda: the fingerprint of the code the tests test, the committed tree of the repository the command runs in: every file's path, mode and
+// content but the .md ones (documents, which only the tests of MD_TESTS read), except KODA_MD, which a test reads as data. GitHub's run
+// (.github/workflows/tests.yml) records it when every job has passed; a later run of the same fingerprint (only documents changed:
+// docs/vrsta.md, a plan, README.md; or main after merging a pull request whose code passed) runs only MD_TESTS (--dokumenti)
+const KODA_MD = ['docs/gorske-proge.md'];   // (the table of the mountain roads: tests/lib/gore.js)
+// the tests that read .md files they do not name, listing the repository's files: the car makers' names in every file, the frozen files of
+// the test tracks (docs/proge/<id>.md among them). Every test that lists the repository's files is here (tests/shards.test.js checks)
+const MD_TESTS = ['fleet.test.js', 'testne-proge.test.js'];
+function koda() {
+  const r = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', 'HEAD'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+  if (r.status !== 0) { console.error('--koda: ' + ((r.stderr || '').trim() || 'git ls-tree failed')); process.exit(2); }
+  const kept = r.stdout.split('\0').filter(e => { const f = e.slice(e.indexOf('\t') + 1); return e && (!/\.md$/.test(f) || KODA_MD.includes(f)); });
+  return require('crypto').createHash('sha256').update(kept.join('\0')).digest('hex');
+}
 
-const args = process.argv.slice(2), opt = { which: null, shard: null, list: false, quiet: false, related: false, files: null };
+const args = process.argv.slice(2), opt = { which: null, shard: null, list: false, quiet: false, related: false, files: null, koda: false, dokumenti: false };
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--shard') opt.shard = args[i + 1] && !args[i + 1].startsWith('--') ? args[++i] : '';
   else if (args[i] === '--list') opt.list = true; else if (args[i] === '--quiet') opt.quiet = true; else if (args[i] === '--related') opt.related = true;
+  else if (args[i] === '--koda') opt.koda = true; else if (args[i] === '--dokumenti') opt.dokumenti = true;
   else if (args[i] === '--files') opt.files = args[i + 1] && !args[i + 1].startsWith('--') ? args[++i].split(',').map(f => f.trim()).filter(Boolean) : [];
   else if (!opt.which) opt.which = args[i]; else { console.error('unexpected argument: ' + args[i]); process.exit(2); }
 }
 if (opt.files && !opt.related) { console.error('--files goes with --related'); process.exit(2); }
+if (opt.koda) { if (opt.which || opt.shard != null || opt.related || opt.list || opt.quiet || opt.dokumenti) { console.error('--koda goes alone'); process.exit(2); } console.log(koda()); process.exit(0); }
+if (opt.dokumenti && (opt.which || opt.shard != null || opt.related)) { console.error('--dokumenti goes alone (or with --list, --quiet)'); process.exit(2); }
 const which = opt.which;
-let list = which ? SUITES[which] : [...SUITES.node, ...SUITES.fleet, ...SUITES.browser];
+let list = opt.dokumenti ? MD_TESTS : which ? SUITES[which] : [...SUITES.node, ...SUITES.fleet, ...SUITES.browser];
 if (!list) { console.error('unknown suite: ' + which + ' (node | fleet | browser)'); process.exit(2); }
 if (opt.related) {
   const files = opt.files || changedFiles();
