@@ -15,7 +15,7 @@
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const K = { N: 3, VMAX: 8, C0: 2.6, LW: 3.6, LC: 4.9, BF: 0.6, BL: 4.0, BW: 1.9, CURB: 0.05, OFF: 0.3, WARN: 0.6, P0: 36, HIT: 3, PMIN: 18,
-    PRE: 160, STOP: 3200, ZONE: 6, VSTOP: 0.6, HOLD: 1.0, PAST: 120, LIMIT: 600, AHEAD: 220, RC: 45 };
+    PRE: 160, STOP: 3200, ZONE: 6, VSTOP: 0.6, HOLD: 1.0, PAST: 120, LIMIT: 720, AHEAD: 220, RC: 45 };
   const has3 = () => typeof THREE !== 'undefined' && typeof Render !== 'undefined' && !!Render.scene;
   // a tag's place for MisKit.tags: one farther than half the camera's reach pulled in along the line of sight (the same spot on the screen)
   const reach = (C, x, y, z) => { if (!C) return { x, y, z }; const dx = x - C.position.x, dy = y - C.position.y, dz = z - C.position.z, d = Math.hypot(dx, dy, dz), m = 0.5 * (C.far || 400); if (d <= m) return { x, y, z }; const k = m / d; return { x: C.position.x + dx * k, y: C.position.y + dy * k, z: C.position.z + dz * k }; };

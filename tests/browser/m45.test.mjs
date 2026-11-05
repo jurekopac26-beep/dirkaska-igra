@@ -14,9 +14,11 @@ const ready = (page) => page.waitForFunction(() => window.__game.race && typeof 
 const st = (page) => page.evaluate(() => { const g = window.__game, R = g.race, r = Missions.run, m = document.getElementById('mis');
   return { track: R.track.def.id, car: R.player.m.id, vLim: R.player.m.vLim, ai: R.cars.length - 1, dist: R.player.dist, run: r && { end: r.end, why: r.why, hits: r.hits, happy: r.happy, stars: r.stars }, rows: m ? [...m.querySelectorAll('.mis-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) : [],
     tag: (document.getElementById('mis-tags') || {}).innerText || '', res: document.getElementById('mis-res') && document.getElementById('mis-res').innerText.replace(/\s+/g, ' ') }; });
+// (o.stop: then braked to a standstill, so the real frames between the calls change nothing)
 const drive = (page, cond, maxT, o) => page.evaluate(([cond, maxT, o]) => {
-  const g = window.__game, r = Missions.run, f = new Function('r', 'return ' + cond), t0 = r.t;
+  const g = window.__game, r = Missions.run, f = new Function('r', 'return ' + cond), t0 = r.t, v = () => Math.hypot(r.P.vx, r.P.vz);
   for (let k = 0; k < 40000 && !r.end && r.t - t0 < maxT && !f(r); k++) { const a = r.def.pilot(r, o || {}); g.sim(0.05, false, a[0], a[1], a[2]); }
+  if (o && o.stop) for (let k = 0; k < 100 && !r.end && v() > 0.3; k++) g.sim(0.05, false, 0, 0, 1);
   return { t: r.t, end: r.end, dist: r.P.dist, hits: r.hits };
 }, [cond, maxT, o]);
 try {
@@ -36,10 +38,11 @@ try {
     const p = f.wag.map(m => [m.position.x, m.position.z]); return { c0: Math.hypot(p[0][0] - cx, p[0][1] - cz), gaps: [1, 2].map(k => Math.hypot(p[k][0] - p[k - 1][0], p[k][1] - p[k - 1][1])) }; });
   T.check('the wagons drawn behind the locomotive: the first at its coupling, each K.LC m behind the one ahead', W.c0 < 0.05 && W.gaps.every(d => Math.abs(d - K.LC) < 0.05), JSON.stringify(W));
   // on the inside of the bends: a wagon on the kerb
-  let d = await drive(page, 'r.hits > 0', 120, { cut: true });
+  let d = await drive(page, 'r.hits > 0', 120, { cut: true, stop: true });
   s = await st(page);
   const tagHit = s.tag;
-  T.check('on the inside of a bend: a wagon on the kerb, POTNIKI less, the tag ROBNIK!', d.hits >= 1 && s.rows[1] === 'POTNIKI ' + (K.P0 - K.HIT * d.hits) && /ROBNIK!/.test(tagHit), JSON.stringify({ d, rows: s.rows, tag: tagHit }));
+  // (the game runs on in real frames between the calls: the panel and the run read together, in one)
+  T.check('on the inside of a bend: a wagon on the kerb, POTNIKI less, the tag ROBNIK!', d.hits >= 1 && s.run.hits >= d.hits && s.run.happy === K.P0 - K.HIT * s.run.hits && s.rows[1] === 'POTNIKI ' + s.run.happy && /ROBNIK!/.test(tagHit), JSON.stringify({ d, run: s.run, rows: s.rows, tag: tagHit }));
   // wide on to the viewpoint
   d = await drive(page, 'r.P.dist > r.def.K.STOP - 120', 600);
   await page.waitForTimeout(500);
