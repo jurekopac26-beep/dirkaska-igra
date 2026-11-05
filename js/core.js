@@ -873,8 +873,13 @@ const Core = (function () {
           }
         }
       };
-      // limit by proximity to other parts of the track (every other sample j within 80 m, found through an 80 m spatial hash: O(N))
-      const px = this.px, pz = this.pz, nx = this.nx, nz = this.nz;
+      // limit by proximity to other parts of the track (every other sample j within 80 m, found through an 80 m spatial hash: O(N)): 70 m
+      // or more along the road, no further out than 1 m short of halfway to it; nearer along the road only the other leg of a hairpin (the
+      // road between them LEG0-LEG1 times as long as the straight line, eased in: a bend reaches 1.25 at ~125 degrees, and a round one's own
+      // samples hold the barrier at its centre, wider than limitInside), 1 m short of the middle between them along this sample's normal
+      // (d * d / 2 / side), so the run-offs of a hairpin's two legs never overlap (on the lower leg a car run wide went on under the upper
+      // leg's verge, Tianmen's bend 55, and over into its road)
+      const px = this.px, pz = this.pz, nx = this.nx, nz = this.nz, LEG0 = 1.15, LEG1 = 1.4;
       const CELL = 80, hash = new Map(), hkey = (cx, cz) => cx * 131072 + cz;
       for (let j = 0; j < N; j += 2) { const key = hkey(Math.floor(px[j] / CELL), Math.floor(pz[j] / CELL)); let L = hash.get(key); if (!L) hash.set(key, L = []); L.push(j); }
       // a crossing on two levels: around it the two legs do not limit each other's barriers (one passes over the other)
@@ -888,13 +893,13 @@ const Core = (function () {
           for (let n = 0; n < L.length; n++) {
             const j = L[n];
             let di = Math.abs(i - j); if (!open) di = Math.min(di, N - di);
-            if (di * ds < 70) continue;
             const dx = px[j] - px[i], dz = pz[j] - pz[i];
-            const d = Math.hypot(dx, dz);
+            const d = Math.hypot(dx, dz), near = di * ds < 70;
+            if (near && !(d > 0 && di * ds > LEG0 * d)) continue;   // (the same stretch of road)
             if (d > 80) continue;
             if (X.length && crossPair(i, j)) continue;
             const side = dx * nx[i] + dz * nz[i];
-            const lim = d * 0.5 - 1;
+            const lim = near ? d * d / (2 * Math.max(1e-3, Math.abs(side))) - 1 + 60 * (1 - sstep(LEG0, LEG1, di * ds / d)) : d * 0.5 - 1;
             if (side > 0) BR[i] = Math.min(BR[i], lim); else BL[i] = Math.min(BL[i], lim);
           }
           }
