@@ -1,6 +1,6 @@
 # Novi avti: 5 sodobnih vozil (načrt)
 
-Izbira uporabnika 5. 11. 2026: »5 novih avtov iz sedanjega časa (sodobni, ne klasika)«. Načrt: seja session_01WbgGzuwVYnMe1PqsfUDJyt (račun 3, koordinacija VSE SEJE 2). **Stanje: načrt.** Koda šele po odgovorih uporabnika (vprašanji `novi-avti-izbor` in `novi-avti-videz` na strani Odločitve 3), po #315 in po dogovoru v `docs/vrsta.md`; pred novimi progami (nove proge so vedno zadnje).
+Izbira uporabnika 5. 11. 2026: »5 novih avtov iz sedanjega časa (sodobni, ne klasika)«. Načrt: seja session_01WbgGzuwVYnMe1PqsfUDJyt (račun 3, koordinacija VSE SEJE 2). **Stanje: OSA R v delu** (odločitev uporabnika 5. 11. ob 17.35 pri koordinaciji VSE SEJE 2: OSA R začni takoj, ker je v vseh možnostih izbora; #315 je na `main`). Druga vozila šele po odgovorih uporabnika (vprašanji `novi-avti-izbor` in `novi-avti-videz` na strani Odločitve 3) in po dogovoru v `docs/vrsta.md`; pred novimi progami (nove proge so vedno zadnje). Zbirna veja je `novi-avti/vozila` (ime `novi-avti` ni mogoče, ker veja načrta `novi-avti/nacrt` ostane na GitHubu).
 
 ## Pravila
 - Vsa vozila so izmišljena: ime je žival + splošna oznaka (R, V8, E, D, GT3, RH so oznake vrste ali razreda, ne imena modelov). Brez znamk, logotipov, imen modelov in oseb; nalepke so samo številke in splošni vzorci.
@@ -15,7 +15,7 @@ Moč je moč v igri (kW, kot v obstoječih vozilih), cena je vrednost v EUR po m
 
 | id | Ime | Kategorija | Pogon | Moč | Masa | Cena | Zvok | Zakaj |
 |---|---|---|---|---|---|---|---|---|
-| `osa` | OSA R | mali | AWD | 320 kW | 1450 kg | 55 000 | `i4`, turbo | sodoben vroči hečbek 4x4; najhitrejši mali avto, na makadamu za LEV R |
+| `osa` | OSA R | mali | AWD | 310 kW | 1450 kg | 55 000 | `i4`, turbo | sodoben vroči hečbek 4x4; najhitrejši mali avto, na makadamu za LEV R |
 | `los` | LOS V8 | sportni | AWD | 520 kW | 2050 kg | 140 000 | `v8`, nizek | družinski karavan z dvoturbo V8: težak, zelo hiter na ravnini, miren; nova vrsta vozila |
 | `nosorog` | NOSOROG E | elektricni | AWD (3 motorji) | 620 kW | 3100 kg | 110 000 | `ev`, nizek, šum gum | prvi električni terenec: takoj pospeši, visoko težišče, dober na makadamu in skokih |
 | `sakal` | ŠAKAL D | sportni | FR | 560 kW | 1350 kg | 180 000 | `i6`, turbo | sodoben tekmovalni drift kupe: velik zasuk koles, zadaj lahko zanaša; za avtošolo Drift |
@@ -25,9 +25,9 @@ Moč je moč v igri (kW, kot v obstoječih vozilih), cena je vrednost v EUR po m
 Videz (vprašanje `novi-avti-videz`): LOS V8 kot **karavan** (priporočeno, dolga streha in strešni nosilci se s kamere za avtom lepo vidijo) ali limuzina; NOSOROG E kot **pickup** (priporočeno, odprt keson s tovorom je viden od zgoraj) ali SUV.
 
 ## Fizika (`phys`, cilji za `expect`)
-Številke `expect` (t100, vmax, latG, d100) se izmerijo s `tests/fleet.test.js` po izdelavi; cilj je uvrstitev med obstoječa vozila, ne prave vrednosti.
-- **OSA R**: t100 med LEV S in LEV R (~2,9–3,3), vmax ~245–255; štirikolesni pogon z več oprijema pri pospeševanju (`tracK` ~1,1), na makadamu (`loose`) slabši od LEV R, boljši od LEV S.
-- **LOS V8**: t100 ~2,7–3,1, vmax ~275–290; velika masa, daljše zaviranje (d100 daljši od TIGER GT), nagibanje (`sway` ~1,2), manjši zasuk koles.
+Številke `expect` (t100, vmax, latG, d100) se izmerijo po izdelavi (kot `tests/fleet.test.js`, `tests/lib/handling.js`); cilj je uvrstitev med obstoječa vozila, ne prave vrednosti. Cilji morajo biti v mejah kategorije (`ENVELOPE` v `tests/fleet.test.js`), npr. mali: 0–100 vsaj 3,0 s, največ 245 km/h; športni: 0–100 vsaj 2,7 s, največ 265 km/h.
+- **OSA R** (narejeno): izmerjeno 0–100 3,08 s (LEV S 3,28), 240 km/h z omejevalnikom (`vLim` 242), 2,37 g, 23,0 m; štirikolesni pogon LEV R, malo manj oprijema pri speljevanju (`tracK` 0,93, težji avto na cestnih gumah), majhen zračni upor.
+- **LOS V8**: t100 ~2,8–3,1, vmax ~255–265 (meja kategorije); velika masa, daljše zaviranje (d100 daljši od TIGER GT), nagibanje (`sway` ~1,2), manjši zasuk koles.
 - **NOSOROG E**: `ev` (brez menjalnika), t100 ~2,7–3,1, vmax omejen (`vLim` ~200 km/h); visoko težišče (`sway` ~2), na makadamu kot MEDVED 4x4, dobro prenese skoke (`landV`, `landK`), robusten (`dmgK` ~0,8); `len` 5,45 m, `wid` 2,06 m.
 - **ŠAKAL D**: zasuk koles (`steerMax`) ~40 % večji od SOKOL R, zadnja kolesa se lažje zavrtijo v prazno (`spinK` > 1), t100 ~3,0–3,4 (omejen z oprijemom), vmax ~250–260; najboljši rezultat v avtošoli Drift.
 - **OREL GT3**: veliko aerodinamike (`aero` ~0,00045, meja 0,0005), zavore `brakeK` ~1,4, t100 ~2,7–3,1, vmax ~265–280; motor v sredini: bolj živ pri zavijanju kot TIGER GT. **Izenačitev razreda**: krog z OREL in s TIGER GT na Bathurstu in Spa se razlikuje za največ 1 % (meritev v testu).
@@ -80,5 +80,6 @@ Imena ostanejo, kot so (tudi v angleščini). Opis (`desc`) vsakega vozila se pr
 Skupaj **~34 h** dela sej (brez čakanja na teste).
 
 ## Odločitve uporabnika
+- 5. 11. ob 17.35 (pri koordinaciji VSE SEJE 2): OSA R začni takoj, Opus, napor max; nove datoteke, skupni seznami samo na konec; ne spreminjaj `js/cars/kolibri.js` in `js/deli/*` (dogovor z računom 2); v testih in slikah ne uporabljaj prog ZDA razen Pikes Peaka (postanejo testne, #355).
 - Izbor vozil (`novi-avti-izbor`): čaka na odgovor.
 - Videz LOS V8 in NOSOROG E (`novi-avti-videz`): čaka na odgovor.
