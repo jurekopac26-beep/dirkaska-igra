@@ -9,12 +9,12 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 - **Promet se gosti** s prevoženo razdaljo (+20 % na km, do 4-kratne gostote dvoboja v prometu).
 - **Konec ob trku** s prometom ali ob hudem udarcu v ograjo ali steno; dotik brez sunka samo prekine niz.
 - **Rekord** za vsako cesto (in fiziko) z lestvico 10 najboljših; najboljši rezultat piše na ploščici načina.
-- Priporočena izvedba: na **19 pravih odprtih cestah** igre, ki že imajo promet (dvoboj v prometu); ena seja, en pull request, **~12–16 h**. Izmišljena neskončna avtocesta je mogoča, a je nova cesta s pokrajino (~35–50 h).
+- Priporočena izvedba: na **11 pravih odprtih cestah** igre zunaj ZDA, ki že imajo promet (dvoboj v prometu; ceste ZDA postanejo testne, odločitev uporabnika 5. 11.); ena seja, en pull request, **~12–16 h**. Izmišljena neskončna avtocesta je mogoča, a je nova cesta s pokrajino (~35–50 h).
 
 ## Kaj že obstaja in kaj se prekriva
 
 - **Promet na odprtih cestah** (`js/core.js`, razred `Traffic`, komentar »THE OPEN ROAD: TRAFFIC AND PEOPLE«): vozila obeh smeri na svoji polovici ceste (na progah z `def.leftHand` zrcalno), model inteligentnega voznika (razdalja do vozila pred sabo, mirna vožnja do 70 km/h, umik dirkalniku), vozilo po močnem sunku zdrsne in obstane, vozila s konca ceste se vrnejo na začetek izven pogleda (`_recycle`). Mešanico vozil brez kolesarjev in pešcev že zna (`opts.tfCars`, misije). Promet ustvari `Race`, ko je `opts.traffic` ali `opts.police` (dvoboj v prometu, beg pred policijo); vsaka druga dirka ga ne vidi.
-- **Dvoboj v prometu** (`'traffic'`, v meniju *Traffic duel*, hitri vstop `nacin=promet`) in **beg pred policijo** (`'police'`) imata vse **19 odprtih cest** (`def.modes` v `js/tracks/<id>.js`). Rekordi načinov so ločeni (`recKey` v `js/game.js`: `id-traffic@cs` …). Dogodke s ceste (trk, povožen pešec) obdela `roadEvent` v `js/game.js`.
+- **Dvoboj v prometu** (`'traffic'`, v meniju *Traffic duel*, hitri vstop `nacin=promet`) in **beg pred policijo** (`'police'`) imata vse **19 odprtih cest** (`def.modes` v `js/tracks/<id>.js`). **Ceste ZDA razen Pikes Peaka** (Mount Baldy, Beartooth, Big Sur, Mauna Kea, Moki Dugway, Santa Monica Mountains, Palomar Mountain, Uncompahgre) po odločitvi uporabnika 5. 11. postanejo testne in zamrznjene (#355, račun 2), zato neskončna vožnja velja za ostalih 11: Vršič, Medvode, Great Alpine Road, Mount Hotham, Mount Buller, Chapman's Peak, Sani Pass, Tianmen, Irohazaka, Rio do Rastro, Los Caracoles. Rekordi načinov so ločeni (`recKey` v `js/game.js`: `id-traffic@cs` …). Dogodke s ceste (trk, povožen pešec) obdela `roadEvent` v `js/game.js`.
 - **Izris prometa** (`js/render.js`, `updateRoad`): en instanciran mesh za vsako vrsto vozila (en klic risanja za vse avte iste vrste), vozila dlje od 250 m se ne rišejo. Gostejši promet zato doda oglišča, klicev risanja skoraj ne.
 - **#250 Zabava** (račun 3, osnutek, 7. v vrsti; še ni na `main`): način *Ti loviš* (`?nacin=lov`, s policijskim avtom loviš begunca po odprti cesti s prometom), *Živa cesta* (kamenje, žival, dela s semaforjem, traktor; v Nastavitvah), *Single race* dobi šest načinov. Prekrivanje: seznam načinov v meniju (`MODES` v `js/menu.js`, `js/menu-data.js`), priklopi v `js/game.js`, rezultati. Zato **koda neskončne vožnje začne na `main` po #250** in doda sedmi način; Živa cesta je v neskončni vožnji izklopljena (prva različica).
 - **Nova mapa** (`js/newmap.js`, NEW VERSION · TEST 1) je zgrajena na Toskani (testna proga, zamrznjena, odide pred objavo); prometa na cesti nima. Ni podlaga za ta način.
@@ -26,7 +26,7 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 
 | Možnost | Kaj | Delo | Za in proti |
 |---|---|---|---|
-| **1 · Prave odprte ceste (priporočeno)** | Vseh 19 odprtih cest igre s prometom: od položnih (Big Sur, Mauna Kea, Uncompahgre, Great Alpine Road, Mount Hotham: 177–309 °/km) do serpentin (Tianmen, Irohazaka, Sani Pass). Dve smeri na dveh pasovih: prehitevaš čez nasprotni pas, ko je prost. | ~12–16 h | Promet, pokrajina in obremenitev že obstajajo in so preverjeni; brez nove proge in brez izjem od pravil; rekord za vsako cesto. Cesta je dolga 2,5–12,3 km, zato potrebuje pravilo za konec ceste (`neskoncna-2`). |
+| **1 · Prave odprte ceste (priporočeno)** | 11 odprtih cest igre s prometom zunaj ZDA: od položnih (Great Alpine Road, Mount Hotham: 293–309 °/km; Chapman's Peak, Medvode: 406–448 °/km) do serpentin (Tianmen, Irohazaka, Sani Pass, Rio do Rastro). Dve smeri na dveh pasovih: prehitevaš čez nasprotni pas, ko je prost. | ~12–16 h | Promet, pokrajina in obremenitev že obstajajo in so preverjeni; brez nove proge in brez izjem od pravil; rekord za vsako cesto. Cesta je dolga 2,5–12,3 km, zato potrebuje pravilo za konec ceste (`neskoncna-2`). |
 | **2 · Izmišljena neskončna avtocesta** | Nova cesta, ki jo igra sproti gradi pred avtom: 2 + 2 pasova, smeri ločeni z ograjo, blagi ovinki, polja, griči, nadvozi. | ~35–50 h (3–4 seje) | Najbližje zvrsti, res brez konca. Nova pokrajina po kosih (gradnja pred avtom, brisanje za njim), promet z menjavo pasov, nove meritve obremenitve; ime brez kraja je izjema od pravila »Kraj, Država« (resnična avtocesta bi bila nova proga in bi po pravilu »Nove proge so vedno zadnje« čakala). |
 | **3 · Oboje** | Najprej prave ceste (korak 1), avtocesta pozneje kot svoj korak. | ~12–16 h + ~35–50 h | Igralno hitro, avtocesta po presoji pozneje (vprašanje znova, ko pride na vrsto). |
 
@@ -52,20 +52,20 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 ## Meni
 
 - **Izbira načina**: nova ploščica *Endless traffic* (podnapis »Denser and denser traffic on the open road. One crash ends the run.«, oznaka *BEST 48 210* ali *NEW*, slika `assets/menu/mode-endless.webp` s kamere za avtom v prometu, brez HUD-a). V `js/menu.js` gre v `MODES` za *Traffic duel* in v preslikavi `GAME_MODE` / `MENU_MODE` (`endless` ↔ `'endless'`).
-- **Izbira proge**: v tem načinu samo odprte ceste (kot pri dvoboju). Način ne zahteva sprememb 19 datotek prog: velja za vsako progo z `'traffic'` v `def.modes` (manj sporov z razdelitvijo prog, #319).
+- **Izbira proge**: v tem načinu samo odprte ceste (kot pri dvoboju). Način ne zahteva sprememb datotek prog: velja za vsako pravo progo z `'traffic'` v `def.modes` in brez `test` (testne proge, tudi ceste ZDA po #355, ga nimajo; manj sporov z razdelitvijo prog, #319).
 - **Hitri vstop**: `index.html?proga=<id>&nacin=neskoncno` (testi in orodja; opis v `tests/README.md`).
 - Meni mora delovati pokonci in ležeče (360 × 640, 640 × 360): `node tests/browser/menu.test.mjs`.
 
 ## Prevodi
 
-Napisi med vožnjo gredo skozi `tr()` s slovenskim ključem in angleškim prevodom v `js/lang.js` (`tests/lang.test.js` jih preveri): *TESNO!* (CLOSE!), *ZELO TESNO!* (VERY CLOSE!), *NIZ ×{n}* (COMBO ×{n}), *ODSEK {n}* (STAGE {n}), *PROMET ×{x}* (TRAFFIC ×{x}), *TRK! KONEC VOŽNJE* (CRASH! RUN OVER), *TOČKE* (SCORE) in vrstice rezultatov. Meni je v angleščini (ploščica, podnapis, oznaka). Komentator: obstoječi `trafficCrash` ob trku, po želji 2–3 nove vrstice (nov rekord, dolg niz) v obeh jezikih.
+Napisi med vožnjo gredo skozi `tr()` s slovenskim ključem in angleškim prevodom v `js/lang.js` (`tests/lang.test.js` jih preveri): *TESNO!* (CLOSE!), *ZELO TESNO!* (VERY CLOSE!), *NIZ ×{n}* (COMBO ×{n}), *ODSEK {n}* (STAGE {n}), *PROMET ×{x}* (TRAFFIC ×{x}), *TRK! KONEC VOŽNJE* (CRASH! RUN OVER), *TOČKE* (SCORE) in vrstice rezultatov. Meni je v angleščini (ploščica, podnapis, oznaka). Komentator govori samo angleško (odločitev uporabnika 5. 11.: vsi zvoki v angleščini): obstoječi `trafficCrash` ob trku, po želji 2–3 nove angleške vrstice (nov rekord, dolg niz).
 
 ## Testi
 
 - **Node `tests/neskoncna.test.js`** (samo Core, simulacija, isto seme): na Vršiču (desna stran, dvosmerna), Chapman's Peak (leva stran) in Irohazaki (enosmerna): gostota raste po razdalji do meje; novo vozilo nikoli bližje kot 300 m pred igralcem in nikoli na drugem; število vozil ostane v oknu; tesna prehitevanja z narisanimi mimovoznimi (0,4 / 0,8 / 1,4 m prostora) dajo prave bonuse; niz se dviga in ponastavi; dotik nad mejo konča vožnjo, rahel dotik samo prekine niz; konec ceste ohrani točke, hitrost in niz; rekord pod `<id>-endless@cs`, lestvica urejena; isto seme da isto vožnjo z avtopilotom (3 km).
 - **Brskalniški `tests/browser/neskoncna.test.mjs`**: pot v meniju (Single race → Endless traffic → samo odprte ceste → štart), točke in niz na zaslonu pokonci in ležeče, izsiljen trk → rezultati z rekordom, angleščina.
 - **Obstoječi**: `tests/traffic.test.js` in `tests/police.test.js` ostaneta zelena (skupni razred `Traffic`: dvoboj in beg pred policijo se ne spremenita), `tests/lang.test.js`, `tests/browser/menu.test.mjs`, `node tools/stamp.js --check` (nova skripta v `index.html`).
-- **Obremenitev**: `perf.test.mjs` dobi meritev neskončne vožnje pri 4-kratni gostoti na Vršiču (najtežja odprta cesta, Kranjska Gora) in na Big Suru; reference drugih prog ostanejo, ker način ne spreminja dirk.
+- **Obremenitev**: `perf.test.mjs` dobi meritev neskončne vožnje pri 4-kratni gostoti na Vršiču (najtežja odprta cesta, Kranjska Gora) in na Great Alpine Road; reference drugih prog ostanejo, ker način ne spreminja dirk.
 - Pred potiskom `npm run test:related`; celotni nabori na GitHubu v pull requestu.
 
 ## Obremenitev telefona
@@ -102,3 +102,4 @@ Privzeto brez vprašanja (pove načrt; uporabnik lahko spremeni): brez kolesarje
 ## Stanje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
+- 5. 11. 2026 popoldne: ceste ZDA razen Pikes Peaka postanejo testne (odločitev uporabnika, #355; sporočilo koordinacije VSE SEJE 2). Seznam cest je zdaj 11 cest zunaj ZDA; vprašanji `neskoncna-1` in `neskoncna-3` imata nove slike (Great Alpine Road, Vršič, Medvode) in besedilo brez cest ZDA. Komentator samo angleško.
