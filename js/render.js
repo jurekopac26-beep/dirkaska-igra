@@ -3370,9 +3370,9 @@ const Render = (function () {
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
     if (World.zaslon) { const Z = World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
-      if (Z && tierNow >= 2 && world.root) {   // (the TV posts it films from while the player comes to it: checked with the world now, not in the race)
-        const t0 = performance.now(), ks = World.zaslon.posts(Z, tvCams(track).length); world.root.updateMatrixWorld(true); for (const k of ks) tvPost(track, k);
-        Z.info.prep = ks.length; Z.info.prepMs = Math.round(performance.now() - t0); } }
+      if (Z && tierNow >= 2 && world.root) {   // (its TV director by the straight: the posts checked with the world now, not in the race)
+        const t0 = performance.now(); world.root.updateMatrixWorld(true);
+        World.zaslon.prep(Z, { tvCams: () => tvCams(track), tvPost: (k) => tvPost(track, k), sees: tvSees }); Z.info.prepMs = Math.round(performance.now() - t0); } }
     // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
     // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
     if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });

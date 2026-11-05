@@ -2,8 +2,8 @@
 //  - every real circuit with pits has its place (World.zaslon.SPOT), no other track (the test tracks and the roads: no screen built)
 //  - Bathurst, VISOKA: the live picture, drawn into its own small target (512 x 256) from a TV post beside the track, only while the screen
 //    is in the view (the car 40 m before it: pictures; 1.5 km away: none); the screen's face shows that target; the picture is not empty
-//    (the track and the cars, LIVE's red dot over it); what one picture costs (its draws, under PIC_CALLS); the TV posts it films from by the
-//    straight checked with the world while it was built (Render's tvPost: no hitch in the race)
+//    (the track and the cars, LIVE's red dot over it); what one picture costs (its draws, under PIC_CALLS); the TV director by the straight
+//    (World.zaslon.prep: a post for every 20 m, the posts checked with the world) made while the world was built (no hitch in the race)
 //  - the battery saver: the still instead (the face shows the standings), live again without it
 //  - a new world (Vršič, a road without pits): no screen there, the last one's target freed
 //  - Spa, NIZKA (the phone budget): the still only (no target made, no picture drawn), drawn again when the order changes
@@ -36,7 +36,7 @@ try {
   await quick(page, 'bathurst'); await page.evaluate(helpers);
   const live = await page.evaluate(async () => {
     const g = window.__game; g.pause(); const Z = Render.world.dyn.zaslon; if (!Z) return { none: true };
-    const C = g.race.track._tv, ks = C ? World.zaslon.posts(Z, C.length) : [], prep = { n: Z.info.prep, ms: Z.info.prepMs, ok: ks.length > 0 && ks.every(k => C[k].ok), feeds: Z.info.feeds };
+    const C = g.race.track._tv, ks = Z.dir ? [...new Set(Z.dir)] : [], prep = { dir: Z.dir, ms: Z.info.prepMs, ok: !!C && ks.length > 0 && ks.every(k => C[k] && C[k].ok), feeds: Z.info.feeds };
     window.__zsPut(40); await window.__zsRun(12);
     const r = { prep, live: Z.live, rt: !!Z.rt, map: !!Z.rt && Z.face.material.map === Z.rt.texture, feeds: Z.info.feeds, group: !!Render.world.root.getObjectByName('zaslon'), calls: Z.info.calls, tris: Z.info.tris };
     if (Z.rt && Z.ren) {   // the picture: many colours (not one cleared colour), LIVE's red dot where the graphics put it (the canvas's top row is the target's last)
@@ -56,7 +56,7 @@ try {
   });
   T.check('Bathurst, VISOKA: the screen built (its group in the world), live: its own target, the face showing it, pictures drawn while it is in the view',
     !live.none && live.group && live.live && live.rt && live.map && live.feeds > 0, JSON.stringify(live));
-  T.check('Bathurst, VISOKA: the TV posts it films from by the straight checked with the world when it was built, not in the race', !live.none && live.prep.n > 0 && live.prep.ok, JSON.stringify(live.prep));
+  T.check('Bathurst, VISOKA: the TV director by the straight (a post for every 20 m, checked with the world) made when the world was built, not in the race', !live.none && live.prep.dir && live.prep.dir.length === 22 && live.prep.ok, JSON.stringify(live.prep));
   T.check('Bathurst, VISOKA: the live picture not empty (many colours) and LIVE\'s red dot over it', live.cols >= 24 && live.red, JSON.stringify({ cols: live.cols, red: live.red }));
   T.check(`Bathurst, VISOKA: one live picture costs at most ${PIC_CALLS} draws`, live.calls > 0 && live.calls <= PIC_CALLS, JSON.stringify({ calls: live.calls, tris: live.tris }));
   T.check('Bathurst, VISOKA: no picture drawn while the screen is out of the view (the car 1.5 km away), again once it is back in it', live.far === 0 && live.back > 0, JSON.stringify({ far: live.far, back: live.back }));

@@ -6,7 +6,8 @@
    comes down the straight to the screen), with a small tower of the first three and LIVE over it; at SREDNJA and NIZKA, and with the battery
    saver, a still: the standings without names (place, the car's colour and number; the laps; the circuit's outline), drawn again only when the
    order changes. No logos, no names, no words but LIVE.
-   World.zaslon.build(world, track, tier): after World.build (Render.buildWorld): the rig into world.root, world.dyn.zaslon.
+   World.zaslon.build(world, track, tier): after World.build (Render.buildWorld): the rig into world.root, world.dyn.zaslon; at VISOKA then
+   World.zaslon.prep(Z, X): the TV director by the straight, its posts checked with the world while it loads.
    World.zaslon.step(Z, X): every frame (Render.frame, after the picture: what the screen shows from the next frame on): the standings, the TV
    director; true when the live picture is to be drawn now (Render's zaslonFeed draws it: World.zaslon.draw). */
 (function () {
@@ -239,12 +240,11 @@
     cam.updateMatrixWorld(); _m.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); _fr.setFromProjectionMatrix(_m);
     if (!_fr.intersectsSphere(Z.sphere)) return false;
     if (Z.drawn && Z.acc < 1 / FPS) return false;
-    // the TV camera: the replay's post ahead of the car until it is 60 m past it (Render's tvCams), zoomed so the car fills a third of the
-    // picture's width, panning smoothly after it
+    // the TV camera: the replay's post ahead of the car until it is 60 m past it (Render's tvCams; by the straight the director's, prep),
+    // zoomed so the car fills a third of the picture's width, panning smoothly after it
     const who = Z.who; if (!who) return false;
     const T = Z.T, C = X.tvCams(), n = C.length, s = who.q && Number.isFinite(who.q.s) ? who.q.s : 0;
-    let k = Math.floor(s / 170) % n; if (T.open) k = clamp(k, 0, n - 1);
-    const p = X.tvPost(k, 1); if (!p) return false;   // (a post not yet checked with the world: a ray or two a frame, the last picture meanwhile)
+    const k = postOf(Z, s, n), p = X.tvPost(k, 1); if (!p) return false;   // (a post not yet checked with the world: a ray or two a frame, the last picture meanwhile)
     const ty = (who.y || 0) + 0.7, ea = Z.drawn ? 1 - Math.exp(-Math.min(Z.acc, 0.5) * 9) : 1;
     if (k !== Z.k) { Z.k = k; Z.ax = who.x; Z.az = who.z; } else { Z.ax += (who.x - Z.ax) * ea; Z.az += (who.z - Z.az) * ea; }
     const d = Math.hypot(p.x - Z.ax, p.y - ty, p.z - Z.az), fov = clamp(2 * Math.atan(3.6 / Math.max(1, d)) * 180 / Math.PI, 3, 50);
@@ -268,9 +268,29 @@
     }
   }
 
-  // the TV posts the live picture films from while the player comes down the straight to the screen (step): Render checks them with the
-  // world when it builds it (on the highest detail), not when the picture first needs one in the race
-  function posts(Z, n) { const L = Z.T.len, out = new Set(); for (let d = -360; d <= 60; d += 20) out.add(Math.floor((((Z.s + d) % L) + L) % L / 170) % n); return [...out]; }
+  // the TV director by the straight, while the player comes down it to the screen: for every DIR_S metres of the road from DIR0 before the
+  // screen to DIR1 past it, the post that films a car there: the replay's post ahead of it (Render's tvPost, checked with the world), else
+  // the one behind it or the next one, the nearer that sees the road there (X.sees: a ray into the world; the replay checks its posts only
+  // from 100 m before them to 30 m past, and the gap over the line to the first post is longer); a lone other between two the same: those
+  // (no cut and back). Render calls it when it builds the world (VISOKA), not in the race: Z.dir
+  const DIR0 = -360, DIR1 = 60, DIR_S = 20;
+  function prep(Z, X) {
+    const T = Z.T, L = T.len, C = X.tvCams(), n = C.length, dir = [];
+    for (let d = DIR0; d <= DIR1; d += DIR_S) {
+      const s = (((Z.s + d) % L) + L) % L, i = T.idx(s), x = T.px[i], y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.8, z = T.pz[i], k0 = Math.floor(s / 170) % n;
+      const sees = (k) => { const p = X.tvPost(k); return X.sees(p.x, p.y, p.z, x, y, z); }, far = (k) => { const p = X.tvPost(k); return Math.hypot(p.x - x, p.z - z); };
+      let k = k0;
+      if (n > 2 && !sees(k0)) { const alt = [(k0 + n - 1) % n, (k0 + 1) % n].sort((a, b) => far(a) - far(b)); for (const a of alt) if (sees(a)) { k = a; break; } }
+      dir.push(k);
+    }
+    for (let j = 1; j < dir.length - 1; j++) if (dir[j - 1] === dir[j + 1] && dir[j] !== dir[j - 1]) dir[j] = dir[j - 1];
+    Z.dir = dir; return dir;
+  }
+  function postOf(Z, s, n) {   // the post filming a car at s (step)
+    const T = Z.T, L = T.len;
+    if (Z.dir) { let e = ((s - Z.s) % L + L) % L; if (e > L / 2) e -= L; if (e >= DIR0 - DIR_S / 2 && e < DIR1 + DIR_S / 2) return Z.dir[clamp(Math.round((e - DIR0) / DIR_S), 0, Z.dir.length - 1)]; }
+    const k = Math.floor(s / 170) % n; return T.open ? clamp(k, 0, n - 1) : k;
+  }
 
-  World.zaslon = { build, step, draw, posts, SPOT, RW, RH, FPS };
+  World.zaslon = { build, step, draw, prep, SPOT, RW, RH, FPS };
 })();
