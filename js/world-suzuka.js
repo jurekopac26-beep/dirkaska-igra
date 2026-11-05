@@ -753,5 +753,6 @@
 
   Object.assign(API, { szWheel });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { SZ: { get: () => SZ, set: (v) => { SZ = v; } } });
+  World.keep('SZ', 'suzuka');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.suzuka = (scene, tex, opts) => buildSuzuka(scene, tex, opts);
 })();
