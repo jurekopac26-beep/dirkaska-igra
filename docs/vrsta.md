@@ -17,32 +17,33 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Deli iz garaže: sklop 4 | 3 | ko se izprazni vrsta; na `main` pred ned. 8. 11. 10:00 |
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
-| Garaža, sklopi 6–8 (nagrade po vrednosti avta, škoda, gume in deli z rokama) | 1 | ko je #248 na `main`; `js/cars/kolibri.js` in `js/deli/*` pred 8. 11. ne spreminja |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 
 ## Vrsta (stanje 4. 11. 2026)
 
+Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #287, #289, #259, #250, #292, #285, #284 + #296), nato ostali. Isti večer je uporabnik izbral zbirno vejo za #295, #240, #287 in #292 (en krog testov, 1. mesto). Pravilo »osnutek do vrste« ostane: Ready sta samo prva dva.
+
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 3 | #250 | 7 novosti | 3 | na vrsti |
-| 4 | #226 | Bâlea | 3 | čaka |
-| 5 | #246 | preleti | 3 | čaka |
-| 6 | #259 | tribune iz OSM | 3 | čaka |
-| 7 | #285 | testne proge zamrznjene | 3 | čaka |
-| 8 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 9 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 10 | #287 | gume KOLIBRIJA (mrzle gume, dežne na sušeči cesti) | 2 | pripravljen (seja session_01Ck3D3TpVUpBcMoNaC5v1LY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 11 | #240 | trki in tekmeci v polju 100 avtov (LOD.nr, LOD.fol, tekmeci=) | 2 | pripravljen, zelen 4. 11. (seja session_01Ck3D3SByFBa5xm8C9fepVZ); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 13 | #292 | ostrenje slike (AMD CAS, samo Visoka pod ločljivostjo zaslona) | 2 | pripravljen (seja session_01Ck3D3R3APWG4yoZxhLpKoY); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 14 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 15 | #295 | meni, sklop 6: ime avta nad avtom, garaža nazaj na izbiro proge, zemljevid nagnjen 70° (commit z mejo 160 min in tabelo `SECS` je šel naprej z #299) | 2 | pripravljen; prevzame biketraveler, dokler račun stoji (osnutek do vrste, predaja v opisu PR do 5. 11. 12.00) |
+| 2 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 3 | #259 | tribune iz OSM | 3 | čaka |
+| 4 | #250 | 7 novosti | 3 | čaka |
+| 5 | #285 | testne proge zamrznjene | 3 | čaka |
+| 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 7 | #226 | Bâlea | 3 | čaka |
+| 8 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 9 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ); zelen na GitHubu (glava c41c3b3), osnutek do vrste; predogled: oznaka `predogled`, `beta/297/` |
+| 10 | #293 | rezultati testiranja: 5 testnih prog, orodje za napake, posnetek dirke, zavetrje, mostova na novi mapi | 1 | pripravljen (seja session_01UuPU9CJbCFThzptDfhjjXN); glava 1f9c97eb spojena z `main` (ab2f4e9), osnutek do vrste; ob vrsti: spoj `main`, spor v `CLAUDE.md` z #285, `--dovoli` za 5 testnih prog, povezani testi, Ready; mesto čaka na uporabnika (stran Odločitve, vprašanje `vrsta-293`) |
+| 11 | #306 | popravek: v serpentinah avto zapelje pod bankino zgornjega kraka (Tianmen 190 m); ograje krakov serpentin v `js/core.js`, test `serpentine.test.js` | 1 | pripravljen (seja session_01UuPU9Ebi98qUtukoDziRsQ); povezani testi lokalno zeleni na 6e7a462, osnutek do vrste |
+| 12 | #307 | orodje za napake, sklop 21: Zadnji posnetki in Zgodovina napak z avtom in časom (do cilja zeleno), večja slika, stari zapisi se odprejo (zahteva uporabnika 5. 11.); `js/napake.js`, `css/napake.css`, 2 vrstici v `js/game.js` | 1 | pripravljen (seja session_01UuPU9DMmxrQoyutWZCr6j6); povezani testi lokalno zeleni na 06a0229, osnutek do vrste; predogled: oznaka `predogled`, `beta/307/` |
+| 13 | #304 | TITAN s cisterno: prikolica s pravim fizikalnim zgibom (sklopi 1–5: fizika, AI, kamera, posnetek, duh, več telefonov, testi, obremenitev telefona) | 2 | pripravljen (seja session_01Ck3D3TnwDBsrTGSFeJMAva); povezani testi lokalno zeleni na 4a2c7c1 (spojen `main` 8ba8914), osnutek do vrste; ob vrsti nova seja po predaji (koordinacija računa 2, `docs/titan-cisterna.md`, razdelek »Stanje in predaja«); prevzame biketraveler, dokler račun stoji (predaja v opisu PR) |
 
-Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
+Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani). #246 preleti (račun 3; odločitev uporabnika 5. 11.: počakajo, dokler ne bo izbrana ena proga na državo; predaja v opisu PR).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
-- Račun 1: #261 Hakone, #153 Medvode. Teme: Garaža, sklopi 6–8 (po #248), redčenje gozda na pravih progah (po Hakoneju).
+- Račun 1: #261 Hakone, #153 Medvode. Teme: redčenje gozda na pravih progah (po Hakoneju).
 - Račun 2: #202 fizika.
 
 Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj.
