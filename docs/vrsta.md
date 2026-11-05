@@ -39,7 +39,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 1 | #315 | Deli iz garaže, sklop 4 (pregled 608 možnosti KOLIBRIJA, stran za ogled, testi) | 3 | pripravljen (seja session_01WbgGzuLb5rcyQy259XTWg8); povezani testi lokalno zeleni, Ready; rok ned. 8. 11. 10.00 (pred račun 2 ureja `js/cars/*`) |
 | 4 | #319 | razdelitev skupnih datotek prog po progah (nastavitve v `js/tracks/<id>.js`, `World.keep`, `world-rbring.js` razdeljen; orodje `tools/razdeli-proge.mjs` za spajanje) | 3 | pripravljen (seja session_01WbgGzvapct4nquxyUD7zK3); povezani testi lokalno zeleni (68/68) na e10f4624, osnutek do vrste; prednost, ker zmanjša spore med vejami (CLAUDE.md); veje izpred razdelitve spajajo po `docs/razdelitev-prog.md` |
 | 5 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
