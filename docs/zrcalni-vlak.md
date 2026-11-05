@@ -20,6 +20,28 @@ Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verz
 
 TITAN s cisterno (#304) mora delovati enako (njegove reference se ne smejo spremeniti).
 
+## Nadaljevanje (5. 11. 2026 popoldne, seja session_01Ck3D3TpE6eSmUqcu4PnUtv)
+Sproti zapisano, da je delo varno ob nenadni ustavitvi računa. Vse spodaj je potisnjeno na vejo.
+
+**Nihanje druge cisterne: odpravljeno.** Vzroka sta bila dva, oba samo pri vlaku (TITAN je bit za bitom enak):
+1. Osi cistern so ob vsakem pregibu višinskega profila in ob skoku mesta ob cesti (v ozkem ovinku os seka notranjost in se njena projekcija na sredino ceste premakne) za nekaj korakov »poletele«, takrat brez oprijema: Bathurst 4 % korakov, Caracoles 15 %, Tianmen 22 %. Zdaj `tlRide` (`js/core.js`): os vlakove cisterne odleti samo, kjer greben pod njo pada hitreje, kot ona pada (pravilo avta v `stepCS`: `vl² · curv < −0,85 · JUMP_G`), sicer je na cesti. Cisterne zdaj letijo le tam, kjer leti tudi traktor (Ouninpohja).
+2. Ograja: potisk na vogal cisterne pred njenim sedlom jo je zavrtel v ograjo, vsak korak močneje (Bathurst, nova, L. Rossi 81,8 s: zgib 2 s −7° na −57° v 0,1 s). Zdaj nobena cisterna vlaka nima točk za ograjo pred sedlom; prva ima točki dollyja (njegova zadnja os).
+
+**Mreža**: postavila je vlake samo po dolžini prve cisterne, zato je traktor stal na drugi cisterni vlaka pred sabo in avtopilot je zavrl (reševanje ob štartu na Bathurstu). Zdaj `tlTail` (rep vlaka za sredino traktorja) in druga cisterna v `_tlSlots` in `_tlFree`. Reševanj ob štartu ni več.
+
+**Meritve po popravku** (`tests/zrcalni.test.js`, 20/20; nov preizkus: zgib 2 pod 50°):
+
+| Proga | Fizika | Igralec | Najpočasnejši | Zgib 1 / 2 | Reševanja | Stiki |
+|---|---|---|---|---|---|---|
+| Bathurst | cs | 2868 m | 2868 m | 39° / 28° | 0 | 3 |
+| Bathurst | nova | 2974 m | 2916 m | 40° / 24° | 0 | 2 |
+| Vršič | cs | 3092 m | 2994 m | 39° / 21° | 0 | 0 |
+| Vršič | nova | 3074 m | 3046 m | 26° / 16° | 0 | 2 |
+| Caracoles | cs | 2351 m | 2351 m | 65° / 39° | 0 | 2 |
+| Caracoles | nova | 2376 m | 2376 m | 44° / 36° | 0 | 2 |
+
+Na desetih drugih progah zgib 2 doseže mejo samo v serpentinah s polmerom 7–15 m pri 25–42 km/h (Tianmen, Pikes, Harju, Katu, Spa La Source): oba zgiba sta zložena v isto smer, cisterna 2 skoraj ne drsi. To je geometrija 25 m dolgega vlaka, ne nihanje.
+
 ## Stanje in predaja (5. 11. 2026, seja session_01Ck3D3SdW9ZXQFowWCQHVjR)
 Veja `cisterna/zrcalni-vlak`, osnutek #322 (na `main` za #304). Vse je potisnjeno.
 
