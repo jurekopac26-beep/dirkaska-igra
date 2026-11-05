@@ -31,7 +31,7 @@ try {
       if (!st) return { none: true, meshes: meshes + liveMeshes };
       // the kinds allowed on this track: its own, the company they keep (SOC: the females, the males, the leads, the others, the young), the scene's
       const ok = new Set(Z.a), add = (k) => { ok.add(k); const S = SOC[k]; if (!S) return; for (const f of ['M', 'F', 'lead', 'y']) if (S[f]) ok.add(S[f]); if (S.rest) [].concat(S.rest).forEach(x => ok.add(x)); };
-      for (const k of Z.a) add(k); if (SC) { add(SC.kind); if (SC.with) add(SC.with[0]); }
+      for (const k of Z.a) add(k); for (const S1 of [].concat(SC || [])) { add(S1.kind); if (S1.with) add(S1.with[0]); }   // (a track's scenes: one, or a list of them)
       const strange = Object.keys(st.kinds).filter(k => !ok.has(k));
       // nothing on the road: each glade's centre at least 3 m beyond the barrier (A.clearance: the distance beyond the nearest barrier)
       let near = 0; for (const [m, side, b] of st.at) { const s = T.startS + m, i = T.idx(((s % T.len) + T.len) % T.len), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + b);
@@ -57,7 +57,7 @@ try {
         const a = pic(0), b = pic(6); let n = 0; for (let k = 0; k < a.length; k += 4) if (Math.abs(a[k] - b[k]) + Math.abs(a[k + 1] - b[k + 1]) + Math.abs(a[k + 2] - b[k + 2]) > 40) n++;
         delete L.U.value; L.U.value = 0; Render.setShot(null); herdPic = +(n / (a.length / 4) * 100).toFixed(2);
       }
-      return { things: st.things, groups: st.groups, animals: st.animals, live: st.live, liveMeshes, herdMeshes, herdAnimals, herdPic, soft, hard, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? SC.kind : null };
+      return { things: st.things, groups: st.groups, animals: st.animals, live: st.live, liveMeshes, herdMeshes, herdAnimals, herdPic, soft, hard, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? [].concat(SC)[0].kind : null };
     }, id);
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no life in its woods', !!r.none && !r.meshes, JSON.stringify(r)); continue; }
     T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= 8 && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));

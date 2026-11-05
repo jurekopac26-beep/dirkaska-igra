@@ -448,6 +448,52 @@
     const t = { geo, soft, n0: r.n0, graze: r.graze, len: r.len, rig: r.rig, hop: r.hop };
     TPLL.set(kind, t); return t;
   }
+  // the stork that flies off its nest (the user, 4. 11. 2026: »štorklja naj bo samo ena in to na drogu, ko prideš z avtom blizu, ona odleti stran od
+  // avta, saj se je preplašila«): in flight its neck stretched ahead, its legs trailing, the wings white with their trailing half black, each in
+  // two pieces that beat (flyPose: the shoulder and the elbow, on the CPU, only while it flies); J: 0 its body, ±1 a wing's inner piece, ±2 its
+  // outer one (the sign: its side)
+  function storkFlyGeo() {
+    const P = [], N = [], C = [], J = [], v = new THREE.Vector3(), n = new THREE.Vector3(), nm = new THREE.Matrix3(), WH = 0xf2f2ee, BK = 0x15171c, RD = 0xd8262a;
+    const bake = (g, j) => { g.updateMatrixWorld(true); g.traverse(m => { if (!m.isMesh) return;
+      const geo = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry, pa = geo.attributes.position, na = geo.attributes.normal, c = m.material.color; nm.getNormalMatrix(m.matrixWorld);
+      for (let i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); n.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z); C.push(c.r, c.g, c.b); J.push(j); }
+      if (geo !== m.geometry) geo.dispose(); }); };
+    bake(grp(sph(0.17, 7, 4, WH, 0, 0, 0, { s: [0.95, 0.85, 2.0] }), box(0.08, 0.08, 0.34, WH, 0, 0.03, 0.47), sph(0.075, 6, 3, WH, 0, 0.04, 0.66), box(0.035, 0.035, 0.28, RD, 0, 0.03, 0.84),
+      box(0.2, 0.04, 0.2, WH, 0, 0.02, -0.4), bar([0.05, -0.07, -0.25], [0.05, -0.1, -0.78], 0.03, RD), bar([-0.05, -0.07, -0.25], [-0.05, -0.1, -0.78], 0.03, RD)), 0);
+    for (const sd of [1, -1]) {
+      bake(grp(box(0.62, 0.03, 0.22, WH, sd * 0.45, 0.05, 0.1), box(0.62, 0.03, 0.2, BK, sd * 0.45, 0.05, -0.11)), sd);
+      bake(grp(box(0.58, 0.025, 0.1, WH, sd * 1.05, 0.05, 0.12), box(0.58, 0.025, 0.24, BK, sd * 1.05, 0.05, -0.05)), sd * 2); }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(P), 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(N), 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(C), 3));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1.7);
+    const wing = []; for (let k = 0; k < J.length; k++) if (J[k]) wing.push(k);
+    return { geo, P0: new Float32Array(P), N0: new Float32Array(N), J, wing };
+  }
+  function flyPose(G, ph) {   // the wings at their beat's angle ph (up: +), the outer piece bent on at the elbow
+    const p = G.geo.attributes.position.array, q = G.geo.attributes.normal.array, P0 = G.P0, N0 = G.N0;
+    for (const k of G.wing) { const j = G.J[k], sd = j > 0 ? 1 : -1, o = k * 3; let x = P0[o], y = P0[o + 1], nx = N0[o], ny = N0[o + 1];
+      if (j === 2 || j === -2) { const a = sd * ph * 0.7, c = Math.cos(a), s = Math.sin(a), dx = x - sd * 0.76, dy = y - 0.05, m = nx * c - ny * s; x = sd * 0.76 + dx * c - dy * s; y = 0.05 + dx * s + dy * c; ny = nx * s + ny * c; nx = m; }
+      const a = sd * ph, c = Math.cos(a), s = Math.sin(a), dx = x - sd * 0.14, dy = y - 0.05;
+      p[o] = sd * 0.14 + dx * c - dy * s; p[o + 1] = 0.05 + dx * s + dy * c; q[o] = nx * c - ny * s; q[o + 1] = nx * s + ny * c; }
+    G.geo.attributes.position.needsUpdate = true; G.geo.attributes.normal.needsUpdate = true;
+  }
+  // the flyer each frame: on its nest until the car comes within 55 m, then up and away from it (away from the road too), climbing, its wings
+  // beating hard at first, then gliding with slower beats; out of sight after 16 s. Back on its nest when the time goes back (a replay) or
+  // long after, the car far away; without a car on its nest
+  function flyStep(F, t, car, cp, far2) {
+    if (!cp) { F.st = 0; F.sit.visible = true; F.fly.visible = false; return; }
+    const dc = Math.hypot(car.x - F.x, car.z - F.z);
+    if (F.st && (t < F.t0 - 0.5 || (t - F.t0 > 30 && dc > 150))) F.st = 0;
+    if (!F.st && dc < 55) { F.st = 1; F.t0 = t; const l = dc || 1, ax = (F.x - car.x) / l + F.ax, az = (F.z - car.z) / l + F.az; F.th = Math.atan2(ax, az);
+      F.k = 0.004 * (Math.cos(F.th) * F.ax - Math.sin(F.th) * F.az >= 0 ? 1 : -1); }
+    F.sit.visible = !F.st && (F.x - cp.x) ** 2 + (F.z - cp.z) ** 2 < far2;
+    const u = F.st ? Math.max(0, t - F.t0) : 0; F.fly.visible = !!F.st && u < 16; if (!F.fly.visible) return;
+    const d = 11 * (u - 1.5 * (1 - Math.exp(-u / 1.5))), th = F.th + F.k * d, w = SM(2.5, 5, u);
+    F.fly.position.set(F.x + (Math.cos(F.th) - Math.cos(th)) / F.k, F.y + 0.45 + 14 * (1 - Math.exp(-u / 6)) + 0.3 * u, F.z + (Math.sin(th) - Math.sin(F.th)) / F.k);
+    F.fly.rotation.set(-(0.35 * Math.exp(-u / 2) + 0.05), th, -Math.sign(F.k) * 0.18 * w, 'YXZ');
+    flyPose(F.G, 0.08 + (0.75 - 0.45 * w) * Math.sin(TAU * (2.2 - 0.6 * w) * u));
+  }
   const LIVE_VS_HEAD = 'attribute vec4 aJ;\nuniform vec3 uA;\nuniform vec3 uN0;\nvec3 zvRx( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x, p.y * c - p.z * s, p.y * s + p.z * c ); }';
   const LIVE_VS_NORMAL = [
     'float zvK = aJ.w, zvLeg = step( 0.5, zvK ) * ( 1.0 - step( 4.5, zvK ) ), zvHd = step( 6.5, zvK ) * ( 1.0 - step( 7.5, zvK ) );',
@@ -495,6 +541,7 @@
       a.U.uA.value.set(o.gait % (TAU * 64), o.legs, o.head);
       if (!cp) { a.m.visible = true; a.m.updateMatrixWorld(true); }
     }
+    for (const F of L.fly || []) flyStep(F, t, car, cp, L.far2);
     if (L.U) L.U.value = cp ? t % 3600 : 0;   // (the herds in the chunks: their shader's time; without a car, as built)
   };
 
@@ -712,7 +759,8 @@
     nring: { kind: 'stag', n: 8, thing: 'feedRack', live: 2 },   // (red deer at a feeder)
     vrsic: { kind: 'chamois', n: 8, with: ['ibex', 'pair'], live: 1 },   // (chamois, a pair of ibex)
     bathurst: { kind: 'kangaroo', n: 10, live: 2 },   // (a mob of kangaroos)
-    ouninpohja: { kind: 'moose', n: 3, with: ['moose', 'one'], pond: true, live: 1 },   // (a cow moose and her calves at a pool, a bull)
+    ouninpohja: [{ kind: 'horse', n: 5, m: 1690, side: 1, b: 7.5, things: [{ t: 'paddock', a: 0, b: 0.8 }, { t: 'trough', a: 4.2, b: -2.6, ry: 0.3 }], tight: 0.5, room: 10 },   // (horses in their paddock by the farm's barn, its trough: the user, »tam kjer so v resnici«)
+      { kind: 'moose', n: 3, with: ['moose', 'one'], pond: true, live: 1 }],   // (a cow moose and her calves at a pool, a bull)
     iroha: { kind: 'macaque', n: 9, thing: 'lantern' },   // (a troop of macaques by a stone lantern)
     caracoles: { kind: 'guanaco', n: 9, live: 2 },   // (guanacos on the slope)
     spa: { kind: 'cowB', n: 8, thing: 'trough', live: 2 },   // (cows at a trough)
@@ -725,12 +773,14 @@
     // (from the spot: along the road, away from it), ry (its turn from facing the road), on: animals perched on it [kind, its x, y, z, scale,
     // turn] (in a nest, in a tree's fork, on a table: they stay there) }]; pond { a, b, r, mud }; at: the herd's middle; tight: its spacing;
     // withAt: the second company's place; room: the spot's radius kept clear of anything built (7 m)
-    medvode: { kind: 'stork', n: 3, things: [{ t: 'storkNest', a: 2.6, b: 3.2, on: [['stork', 0.18, 6.62, 0.05, 1, 0.5], ['stork', -0.22, 6.2, -0.12, 0.96, 2.6]] }, { t: 'logPile', a: -4.6, b: 3.6, ry: 1.3 }], tight: 0.9, room: 8 },   // (storks: two in their nest on its pole, three in the meadow; a pile of logs)
-    cpalace: { kind: 'duck', n: 7, pond: { a: 0, b: 0, r: 4.2 }, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on a park's pond, their duck house)
+    // medvode: the stork alone on its nest (the user, 4. 11. 2026: »samo ena in to na drogu«: fly, it takes off as the car comes); the pigs and hens
+    // at the farm in Zbilje where it really is (OSM: the farm's buildings 30 m off the road, right; m, side, b: a scene's fixed place, metres
+    // after the start, its side, metres beyond the barrier: not searched)
+    medvode: [{ kind: 'pig', n: 7, m: 2940, side: 1, b: 7.5, things: [{ t: 'pigsty', a: 0, b: 0 }], pond: { a: 1.4, b: 0.3, r: 1.5, mud: true }, tight: 0.42, with: ['hen', 'herd', 6], withAt: [-7.0, 2.0], room: 8 },   // (pigs in their pen round a mud wallow, its shed; hens outside it)
+      { kind: 'stork', n: 0, things: [{ t: 'storkNest', a: 2.6, b: 3.2, fly: ['stork', 0.18, 6.62, 0.05, 1, 0.5] }, { t: 'logPile', a: -4.6, b: 3.6, ry: 1.3 }], room: 8 }],   // (one stork on its nest on its pole; a pile of logs)
+    cpalace: { kind: 'duck', n: 7, m: 1990, side: 1, b: 4, float: 11.7, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on the park's lake by the road, their duck house: the user, »race postavi v že narejeno vodo«; float: the water's level, they float on it)
     greatalpine: { kind: 'koala', n: 1, at: [-1.2, -0.6], things: [{ t: 'eucalyptus', a: 0.5, b: 1.6, on: [['koala', 0, 2.56, 0.07, 1.4, 0]] }, { t: 'eucalyptus', a: 4.6, b: 3.6, ry: 2.2, on: [['koala', 0, 2.56, 0.07, 1.3, 2.4]] }, { t: 'waterTank', a: -7.0, b: 5.0 }], with: ['emu', 'pair'], withAt: [-4.5, 1.5] },   // (koalas: two in the gum trees' forks, one come down to the ground; two emus)
     uncompahgre: { kind: 'blackbearC', n: 3, at: [0.5, 0.5], things: [{ t: 'bearBin', a: 2.6, b: 3.2, ry: 0.2 }, { t: 'picnic', a: -2.6, b: 2.6, ry: 0.35, on: [['blackbearC', 0.35, 0.78, 0.05, 0.42, 1.2]] }, { t: 'signPost', a: -5.5, b: 0.5 }] },   // (a cinnamon black bear and two of her cubs at the bear-proof bins, the third up on the picnic table)
-    rastro: { kind: 'pig', n: 7, things: [{ t: 'pigsty', a: 0, b: 0 }], pond: { a: 1.4, b: 0.3, r: 1.5, mud: true }, tight: 0.42, with: ['hen', 'herd', 6], withAt: [-7.0, 2.0], room: 8 },   // (pigs in their pen round a mud wallow, its shed; hens outside it)
-    rbring: { kind: 'horse', n: 5, things: [{ t: 'paddock', a: 0, b: 0.8 }, { t: 'stable', a: -3.0, b: 8.4 }, { t: 'trough', a: 4.2, b: -2.6, ry: 0.3 }], tight: 0.5, room: 10 },   // (horses in their paddock, the stable, the trough)
   };
   function pond(g, gH, x, z, r, R, mud) {   // a pool on the ground (it follows it: the scene's spot is near flat), a muddy rim round it; mud: a wallow
     const n = 14, rim = mud ? [0.42, 0.35, 0.25] : [0.36, 0.3, 0.22], wat = mud ? [0.3, 0.23, 0.15] : [0.16, 0.27, 0.3], pts = [];
@@ -750,7 +800,7 @@
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
     const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
-    const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null };
+    const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null, scenes: [] }, fly = [];
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
     const free = (x, z, r) => { for (const p of placed) if ((p[0] - x) ** 2 + (p[1] - z) ** 2 < (p[2] + r + 6) ** 2) return false; return true; };
@@ -782,14 +832,14 @@
     }
     // a company round (x, z): the lead in the middle, the others on a sunflower spiral, each turned its own way about yaw; liveN of them
     // (not the lead) walk or graze; returns the herd's radius
-    function herdAt(g, crew, x, z, yaw, liveN, tight) {
+    function herdAt(g, crew, x, z, yaw, liveN, tight, hf) {   // (hf: the ground's height, or the water's level)
       const sp = HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * (tight || 1), at = []; let lv = 0;
       crew.forEach(([kk, sc], k) => {
-        const d = k ? sp * Math.sqrt(k) * (0.8 + R() * 0.4) : 0, an = k * 2.39996 + yaw * 0.37 + (R() - 0.5) * 0.6, ax = x + Math.cos(an) * d, az = z + Math.sin(an) * d, ah = gH(ax, az);
+        const d = k ? sp * Math.sqrt(k) * (0.8 + R() * 0.4) : 0, an = k * 2.39996 + yaw * 0.37 + (R() - 0.5) * 0.6, ax = x + Math.cos(an) * d, az = z + Math.sin(an) * d, ah = (hf || gH)(ax, az);
         if (!Number.isFinite(ah)) return;
         const ay = yaw + (R() - 0.5) * 1.8;
         if (k && lv < (liveN || 0) && goLive(kk, sc, ax, az, ay)) { lv++; at.push([ax, az, null]); return; }
-        at.push([ax, az, stand(g, kk, sc, ax, ah, az, ay, k ? R() < 0.45 : R() < 0.15)]);
+        at.push([ax, az, stand(g, kk, sc, ax, ah, az, ay, k ? R() < 0.45 : R() < 0.15, hf)]);
       });
       for (const [ax, az, e] of at) if (e) {   // (each one's way no longer than the room to its nearest neighbour: they do not walk into each other)
         let dn = 1e9; for (const [bx, bz] of at) if (bx !== ax || bz !== az) dn = Math.min(dn, Math.hypot(bx - ax, bz - az));
@@ -797,44 +847,57 @@
       }
       return sp * Math.sqrt(crew.length);
     }
-    function stand(g, kk, sc, x, h, z, yaw, graze) {   // one of a herd or alone: baked into its chunk upright, the chunk's shader moves it (graze: as it was, the random draw kept)
+    function stand(g, kk, sc, x, h, z, yaw, graze, hf) {   // one of a herd or alone: baked into its chunk upright, the chunk's shader moves it (graze: as it was, the random draw kept)
       const r = tplRig(kk), t = r && r.herd; if (!t) return null; const k = sc * 1.15;
-      const e = herdPut(g, gH, kk, t, x, h - 0.02, z, yaw, k, 0.9 + R() * 0.16); count(kk); return e;
+      const e = herdPut(g, hf || gH, kk, t, x, h - 0.02, z, yaw, k, 0.9 + R() * 0.16); count(kk); return e;
     }
     const tally = (crew) => { stats.sizes[crew.length === 1 ? 'one' : crew.length === 2 ? 'pair' : 'herd']++; };
 
-    // 1) the track's scene (eighteen tracks), first: the glades keep away from it
-    const Sc = SCENE[def.id];
-    if (Sc) {
+    // 1) the track's scenes (sixteen tracks, two on two of them), first: the glades keep away from them. A scene with its place (m, side, b: where
+    // it really is) there; the others where the search finds a flat open spot, 200 m or more from the scene before
+    const done = [];
+    for (const Sc of [].concat(SCENE[def.id] || [])) {
+      let c = null;
+      if (Sc.m != null) { const s = (T.startS || 0) + Sc.m, i = T.idx(((s % T.len) + T.len) % T.len), bar = Sc.side > 0 ? T.br[i] : T.bl[i], off = Sc.side * (bar + Sc.b);
+        c = [0, i, Sc.side, T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, Sc.b]; }
+      else {
       const cand = [], r = 7, PS = (World.peopleSites && World.peopleSites[def.id]) || [];   // (the people's scenes, js/world-ljudje.js: their places are fixed, this one keeps 45 m away from them on their side)
       const nearPpl = (s, side) => PS.some(e => e[2] === side && Math.abs((((s - (T.startS || 0) - e[1]) % T.len) + T.len * 1.5) % T.len - T.len / 2) < 45);
+      const nearSc = (s) => done.some(m => { let d = Math.abs(s - (T.startS || 0) - m); if (!T.open) d = Math.min(d, T.len - d); return d < 200; });
       for (let s = L0 + 250; s < L1 - 250; s += 12) for (const side of [-1, 1]) for (const b of [9, 12, 15]) {   // (the nearest first: farther only where nearer is taken)
         const i = T.idx(((s % T.len) + T.len) % T.len), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar + b), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
         if (cl(x, z) < b - 1.5) continue;
         const h = gH(x, z); if (!Number.isFinite(h)) continue; const sl = slope(x, z, r * 0.7); if (sl > (Sc.pond ? 0.1 : 0.3)) continue;
         const ry = T.hy ? T.hy[i] : h; if (Math.abs(h - ry) > 3.5) continue;
         const j = T.idx((((s - 60) % T.len) + T.len) % T.len); let dh = Math.abs(T.hd[i] - T.hd[j]) % TAU; dh = Math.min(dh, TAU - dh);
-        const sc0 = -sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4; if (!nearPpl(s, side)) cand.push([sc0, i, side, x, z, b]);   // (the random draw for every spot as before: the rest of the life as built without the people)
+        const sc0 = -sl * 8 - Math.abs(h - ry) * 0.3 - dh * 2 - (b - 9) * 0.15 + R() * 0.4; if (!nearPpl(s, side) && !nearSc(s)) cand.push([sc0, i, side, x, z, b]);   // (the random draw for every spot as before: the rest of the life as built without the people)
       }
       cand.sort((p, q) => q[0] - p[0]);
-      const c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], Sc.room || r) === 0);   // (room: a scene with things farther out, nothing built within it)
+      c = cand.slice(0, 400).find(c => occupied(G, gH, cl, c[3], c[4], Sc.room || r) === 0);   // (room: a scene with things farther out, nothing built within it)
+      }
       if (c) {
         const [, i, side, x, z, b] = c, toRoad = Math.atan2(-side * T.nx[i], -side * T.nz[i]), along = Math.atan2(T.tx[i], T.tz[i]), g = chunks.get(x, z);
         const nx = T.nx[i] * side, nz = T.nz[i] * side, tx = T.tx[i], tz = T.tz[i], P = (a, bb) => [x + tx * a + nx * bb, z + tz * a + nz * bb];   // (a along the road, bb away from it)
+        const hf = Sc.float != null ? () => Sc.float : gH;   // (on the water: its level)
         cut(W, x, z, 13); peek(i, side, b, 9);
         if (Sc.pond) { const po = Sc.pond === true ? { a: -2.5, b: 1.5, r: 2.6 } : Sc.pond, [px, pz] = P(po.a, po.b), pg = new A.GB(); pond(pg, gH, px, pz, po.r, R, po.mud);   // (its own mesh, drawn over the ground: NIZKA's ground covered it in places)
           A.ownRnd(() => { const pm = new THREE.Mesh(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }));
             pm.receiveShadow = true; pm.matrixAutoUpdate = false; pm.updateMatrix(); pm.name = 'life'; grp.add(pm); }); }
         if (Sc.thing) { const t = tpl(Sc.thing), [px, pz] = P(2.5, 3.5), ph = gH(px, pz); if (t && Number.isFinite(ph)) { put(g, t, px, ph - 0.05, pz, toRoad + (R() - 0.5) * 0.4, 1); stats.things++; } }
-        for (const th of Sc.things || []) { const t = tpl(th.t), [px, pz] = P(th.a, th.b), ph = gH(px, pz), yw = toRoad + (th.ry || 0); if (!t || !Number.isFinite(ph)) continue;
+        for (const th of Sc.things || []) { const t = tpl(th.t), [px, pz] = P(th.a, th.b), ph = hf(px, pz), yw = toRoad + (th.ry || 0); if (!t || !Number.isFinite(ph)) continue;
           put(g, t, px, ph - 0.05, pz, yw, 1); stats.things++;
           const c2 = Math.cos(yw), s2 = Math.sin(yw);
           for (const [kk, lx, ly, lz, sc, ry] of th.on || []) { const e = stand(g, kk, sc, px + lx * c2 + lz * s2, ph - 0.05 + ly, pz - lx * s2 + lz * c2, yw + ry, false); if (e) e.S = 0; }   // (perched: it stays where it sits)
+          if (th.fly) { const [kk, lx, ly, lz, sc, ry] = th.fly, tl = tplLive(kk), k = sc * 1.15; if (tl) {   // (the one that flies off: on its nest its own mesh as it stands, in the air the flyer)
+            const fx = px + lx * c2 + lz * s2, fz = pz - lx * s2 + lz * c2, fy = ph - 0.05 + ly - 0.02, G = storkFlyGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+            const sit = new THREE.Mesh(tl.geo, mat); sit.scale.setScalar(k); sit.position.set(fx, fy, fz); sit.rotation.y = yw + ry; sit.name = 'life';
+            const fl = new THREE.Mesh(G.geo, mat); fl.scale.setScalar(k); fl.visible = false; fl.name = 'life'; fl.frustumCulled = false;
+            grp.add(sit); grp.add(fl); fly.push({ sit, fly: fl, G, x: fx, y: fy, z: fz, ax: nx, az: nz, st: 0, t0: 0, th: 0, k: 0.004 }); stats.live++; count(kk); } }
         }
-        const crew = company(Sc.kind, R, 'herd', Sc.n), [hx, hz] = Sc.at ? P(Sc.at[0], Sc.at[1]) : [x, z]; tally(crew);
-        herdAt(g, crew, hx, hz, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, Sc.tight || 0.6); stats.groups++;   // (the scene's herd keeps together)
-        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(...(Sc.withAt || [-7.5, 3])); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, Sc.withAt ? Sc.tight || 0.6 : 0.6); stats.groups++; }
-        placed.push([x, z, 13]); stats.scene = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z };
+        if (Sc.n) { const crew = company(Sc.kind, R, 'herd', Sc.n), [hx, hz] = Sc.at ? P(Sc.at[0], Sc.at[1]) : [x, z]; tally(crew);
+          herdAt(g, crew, hx, hz, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, Sc.tight || 0.6, hf); stats.groups++; }   // (the scene's herd keeps together)
+        if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(...(Sc.withAt || [-7.5, 3])); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, Sc.withAt ? Sc.tight || 0.6 : 0.6, hf); stats.groups++; }
+        placed.push([x, z, 13]); const sc = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z }; if (!stats.scene) stats.scene = sc; stats.scenes.push(sc); done.push(sc.m);
         stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, b, Sc.kind]);
       }
     }
@@ -878,7 +941,7 @@
       const sg = m.geometry.userData.soft; if (sg) {   // (the animals' soft shadows: drawn after the ground, over it)
         const sm = A.ownRnd(() => new THREE.Mesh(sg, HM.b)); sm.matrixAutoUpdate = false; sm.updateMatrix(); sm.name = 'life'; sm.renderOrder = 1; grp.add(sm);
         if (o.cull) o.cull.push({ m: sm, x: bs.center.x, z: bs.center.z, r: bs.radius }); } }
-    if (live.length || herds) { o.dyn.life = { live, gH, far2: LOD.radius(LIVE_R) ** 2, tmp: {}, U }; World.lifeStep(o.dyn.life, 0, null, null); }
+    if (live.length || herds || fly.length) { o.dyn.life = { live, fly, gH, far2: LOD.radius(LIVE_R) ** 2, tmp: {}, U }; World.lifeStep(o.dyn.life, 0, null, null); }
     o.lifeStats = stats; return stats;
   };
   World.lifeTable = ZIV;   // (for the tests and the docs)
