@@ -31,7 +31,7 @@
 //    with no fill, fieldN caps it) on Jezero and the Nordschleife (the game's own race: 21 and 99 rivals; perf.json
 //    measured with the same fields, so it is regenerated with them), within tests/golden/perf.json's phone budget
 //    (+10 % +5 calls, +10 % +20k vertices; on the NIZKA tier, graphics detail 'low', the one perf.test.mjs measures it on):
-//    perf.test.mjs's six samples of the default race, each frame without its rivals (the world and
+//    perf.test.mjs's six samples of the default race (its very frames: its camera shake, its steps between them), each frame without its rivals (the world and
 //    the player, the player then swapped for the vehicle) plus the vehicle's rival cost times as many rivals as the default field had
 //    drawn there (its rivals' calls / vertices in that frame over one default rival's whole cost; at most the field's size), the vehicle's
 //    own costs (as the player, as a rival, a piece of its wreck) measured on that tier too (a rival's shadow is its hull there, a piece casts
@@ -545,25 +545,36 @@ try {
   for (const tid of ['jezero', 'nring']) {
     await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'rally'); });
     await startTrack(page, tid);
+    // (perf.test.mjs's very six frames: its camera shake on (its jitter draws from the race's Math.random) and after each sample its 30 steps
+    // of 1/60 s and 30 frames with the scene hidden; what only this test measures, the costs and the frame without the rivals, on a generator
+    // of its own, so the race draws what perf.test.mjs's does. Without them (the shake off since 2. 11. 2026) the field was elsewhere at the
+    // samples than where perf.json was measured: on the Nordschleife a change to the 100-car field's AI put 34 rivals in one sample, perf's 23)
     const B = await page.evaluate(() => {
       const g = window.__game, FL = window.__fl; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      const side = (f) => { const keep = Math.random; let t = 777; Math.random = () => { t = (t * 16807) % 2147483647; return t / 2147483647; }; try { return f(); } finally { Math.random = keep; } };
+      const sh0 = Render.cam.shOn; Render.cam.shOn = { hit: 1, land: 1, kerb: 1, mis: 1 };   // (perf.test.mjs's SHAKE)
       g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, s = [], seen = new Map();
       R.lch = null; for (const c of R.cars) c.lch = null;   // (the start's reaction off: the field where perf.test.mjs measures its budget)
       P.kt = null;   // (the player's own tyres off too, as perf.test.mjs: their wear changes the grip and so the car's way round the lap, its spots)
-      Render.frame(0, 1, P, g.S.camera, {});
-      for (const c of R.cars) if (!c.isPlayer && !seen.has(c.m.id)) seen.set(c.m.id, FL.costOf(Render.viewOf(c), P));   // (one default rival's whole cost, the four averaged)
+      const pl = side(() => {
+        Render.frame(0, 1, P, g.S.camera, {});
+        for (const c of R.cars) if (!c.isPlayer && !seen.has(c.m.id)) seen.set(c.m.id, FL.costOf(Render.viewOf(c), P));   // (one default rival's whole cost, the four averaged)
+        return FL.costOf(Render.viewOf(P), P);
+      });
       const unit = [0, 0]; for (const q of seen.values()) { unit[0] += q.calls / seen.size; unit[1] += q.verts / seen.size; }
-      const pl = FL.costOf(Render.viewOf(P), P);
       for (let k = 0; k < 6; k++) {
         const dt = Math.min(30, R.track.len / 45 / 6); for (let i = 0; i < dt; i++) g.sim(1, true);
         Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});
         const ai = R.cars.filter(c => !c.isPlayer).map(c => Render.viewOf(c)).filter(Boolean), was = ai.map(v => v.grp.visible);
         const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); const all = [__gl.calls - c0, __gl.verts - v0];
-        for (const v of ai) v.grp.visible = false;
-        const c1 = __gl.calls, v1 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push({ all, base: [__gl.calls - c1, __gl.verts - v1] });
+        const base = side(() => { for (const v of ai) v.grp.visible = false; const c1 = __gl.calls, v1 = __gl.verts; Render.frame(0, 1, P, g.S.camera, {}); return [__gl.calls - c1, __gl.verts - v1]; });
         ai.forEach((v, i) => { v.grp.visible = was[i]; });
+        s.push({ all, base });
+        for (let i = 0; i < 30; i++) g.sim(1 / 60, true);   // (perf.test.mjs's steps after a sample, as it times them)
+        Render.scene.visible = false; for (let i = 0; i < 30; i++) Render.frame(1 / 60, 1, R.player, g.S.camera, {}); Render.scene.visible = true;
       }
+      Render.cam.shOn = sh0;
       return { s, pl, unit, nAI: R.cars.length - 1 };
     });
     if (!C5) C5 = await page.evaluate((ids) => ids.map(id => {   // (each vehicle on the NIZKA tier: Jezero's world, its own field)

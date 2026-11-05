@@ -731,17 +731,18 @@
     location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[S.color].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
-  // address plain again (a reload: the title)
+  // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
+  // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)
   function garageBack() {
     let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
     if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
     let o = null; try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
-    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car) { S.car = k; save(); }
+    const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1, step = !ch && !!(o && o.track && menuOn);
+    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car && (!step || owned(Core.MODELS[k].id))) { S.car = k; save(); }
     const next = P.get('naprej');   // (the garage's Izberi progo: on to the track screen with that car, when it is the player's)
     try { P.delete('zaslon'); P.delete('avto'); P.delete('naprej'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
-    const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1;
     carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
-    if (o && o.track && menuOn) Menu.fromTrack = true;   // (the new menu's track step: its Nazaj there again)
+    if (step) { showScreen('track'); return; }   // (the new menu's track step, the same track: its Back the title as before the garage)
     bg = 'show'; buildCarScreen(); showScreen('car');
     if (next === 'proga' && owned(Core.MODELS[S.car].id)) {   // (from the championship's car: back to it, as the car screen's Izberi)
       if (ch) { carFrom = 'title'; save(); toTitle(); openChamp(); } else { if (!menuOn) buildTrackScreen(); showScreen('track'); } }
@@ -2036,7 +2037,7 @@
     const on = mp && mp.race, md = on || !track.def.modes ? 'race' : track.def.modes.indexOf(S.mode) >= 0 ? S.mode : track.def.modes[0], tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
-    const pick = !on && !ch && !duel && !chase && cr < 0 && !MS.cur ? rivSet(track.def) : -1;   // (the rivals chosen in the menu, Opponents: a race of its own, not online, a challenge, a championship round or a mission)
+    const pick = !on && !ch && !duel && !chase && cr < 0 && !MS.cur ? quickRivals(rivSet(track.def)) : -1;   // (the rivals chosen in the menu, Opponents, or for the visit the quick entry's tekmeci: a race of its own, not online, a challenge, a championship round or a mission)
     const flyGo = !on && !tt && !duel && !chase && !ch && mode !== 'quali' && (!!track.def.open || (!!track.def.flyStart && cr < 0) || pick > NUM_AI);   // a race up an open road, the Nordschleife's Circuit race (def.flyStart; a championship round there, and its race after qualifying (Q, below): the lights, from the grid): the flying start (the column, the autopilot up to the start line, FLY_T s); online the lights as ever   // (Vršič's open road: the duel with one rival in the traffic, the run from the police)
     // (pick > NUM_AI: a field the player chose bigger than the game's own 22 cars, the menu's Opponents: flying on a circuit too, as the
     // Nordschleife's 100; a standing start of a big field piled up in its first corners, the knocks between cars, js/core.js KV, and stood there.
@@ -2069,7 +2070,7 @@
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
     }, MS.opts(), prviOpts()));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race)
     if (race.player) race.player.pitCmp = S.pitCmp;
     MS.made(race);   // (a special mission: its own cars, before they are drawn)
@@ -4024,7 +4025,8 @@
   // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
   // the next real knock (Core ktHit), already with damage Samo videz
   const WHEEL_RULE = Core.MODELS.map(m => m.id);
-  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline)
+  const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline; no mission: js/missions.js)
+  const TYRE_COLD = ['kolibri'];   // (the vehicles whose new tyres after a stop grip less while cold, Core ktGrip; the others' cold ones (light blue dots) are only to be seen: the user's choice 3. 11. 2026)
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
@@ -5557,7 +5559,7 @@
       case 'to-track': if (!menuOn) buildTrackScreen(); showScreen('track'); break;
       case 'to-upg': buildUpgScreen(); showScreen('upg'); break;
       case 'car-garage': garageOpen(); break;   // (the car on the car screen tapped: the garage with it)
-      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back the car screen, whose Nazaj leads to that step: Menu.fromTrack)
+      case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back that step again: garageBack, Menu.fromTrack)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
@@ -5857,7 +5859,7 @@
     $('on-code').addEventListener('keyup', (e) => e.stopPropagation());
   }
 
-  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> (Core.quickArgs) opens the game
+  /* ---------------- the quick entry (hitri vstop): ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id>&tekmeci=<n>&lod=0|1 (Core.quickArgs) opens the game
      straight on a race on that track, without the menus, the flyover or qualifying (for the tests and tools/shot.mjs; a player's link works
      the same). The way, the weather and the car are set as the menus set them; t: the race driven on the autopilot to t s after the start
      (the loading screen meanwhile; the replay has it too), then paused there. Not with a friend's challenge or ghost link ---------------- */
@@ -5872,6 +5874,7 @@
     if (q.mode && d.modes) S.mode = q.mode;
     if (q.weather) S.weather = q.weather;
     if (q.car) { if (owned(q.car)) S.car = Core.MODELS.findIndex(m => m.id === q.car); else toast(tr('Ta avto še ni tvoj: kupi ga v izbiri avta.'), 3000); }
+    if (q.lod != null) Core.LOD.off = q.lod === 0;   // (lod=0: a big field's cars all at the full rate for the visit)
     save(); refreshSegs();
     if (!owned(Core.MODELS[S.car].id)) { quick.done = true; return; }   // (a career's car not bought: the menus, as their Start)
     if (S.control === 'tilt') enableTilt(true);
@@ -5879,6 +5882,10 @@
     repro = { seed: q.seed || 1, R: null };   // (the test mode for the visit: repeatable races)
     ensureTrack(S.track, () => { newRace(); pkFlySkip(); if (q.t > 0) quickRun(q.t); else quick.done = true; });
   }
+  // the quick entry's tekmeci=<n>: a race on its track with n rivals, as the menu's Opponents for the visit (newRace's pick: at most what the
+  // track takes, rivMax; more than the game's own 21 from the flying start; the Nordschleife's 100 cars against 22 or 1 on the same road);
+  // any other race the menu's choice or its own (n)
+  function quickRivals(n) { const q = quick && quick.q; return q && q.rivals != null && q.track === track.def.id ? Math.min(q.rivals, rivMax(track.def)) : n; }
   // the race on the autopilot up to t s after the start (or to the player's finish), a slice of it per frame under the loading screen
   function quickRun(t) {
     $('ld-msg').textContent = tr('Previjam dirko na {0} …', fmt(t)); $('loading').classList.remove('off');
