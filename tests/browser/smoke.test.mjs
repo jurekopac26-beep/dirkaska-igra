@@ -100,6 +100,11 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
+      // (measured right after a frame the game drew: the line under the clock (#h-split) is emptied in a timer 350 ms after it fades, the
+      // block shorter from then, and placeNote moves the sign up under it only in the game's next frame; measured in between, after the
+      // timer above, the sign stood under the block as it had been (on GitHub 95 px under a block to 76.5 px). The game's frames counted,
+      // not the page's: the battery saver draws only every other one)
+      const f0 = g.fr.drawn; for (let k = 0; k < 600 && g.fr.drawn < f0 + 2; k++) await new Promise(r => requestAnimationFrame(r));
       // (the clock's block as game.js placeNote sees it: its bottom moves with the fonts, a line under the clock (a place's name, a corner's
       // number) a pixel more or less tall from one browser's font to another's)
       const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); }
