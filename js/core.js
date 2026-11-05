@@ -6565,11 +6565,15 @@ const Core = (function () {
       return k < 0 ? null : tb[k] - ta[k];
     }
     // what a stop now would cost c (s): the pit lane at 80 km/h against the road beside it at the race's pace, the braking into the lane
-    // and the speeding up out of it (LANE_K), and the stop itself; behind the safety car the field is slow, the lane costs less (SC_K)
+    // and the speeding up out of it (LANE_K), and the stop itself; behind the safety car the field is slow, the lane costs less (SC_K); a
+    // new set of tyres the warming up of it too (105, TCOLD: the speed as the square root of the grip over the first TCOLD.d of a lap past
+    // the way out, at the race's pace)
     pitLoss(c) {
       const T = this.track, P = T.def.pit, M = this.mk; if (!P || !M) return null;
       if (M.lane == null) { let tr = 0; for (let d = P[1]; d < P[2]; d += T.ds) tr += T.ds / Math.max(PIT_V, this.vprof[T.idx(T.startS + d)]); M.lane = (P[2] - P[1]) / PIT_V - tr + LANE_K; }
-      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this, c.pitPlan) + BAY.k;   // (the S onto the apron to the box and back; the player's own choice, once it made one)
+      if (M.cold == null) { let t = 0; const D = TCOLD.d * T.len; for (let d = 0; d < D; d += T.ds) t += T.ds / Math.max(5, this.vprof[T.idx(T.startS + P[2] + d)]) * (1 / Math.sqrt(1 - TCOLD.g * (1 - sstep(0, D, d))) - 1); M.cold = t; }
+      const cold = this.wst && this.wst.tyres && c.ty && !c.kt && !keepTyres(c, c.pitPlan) ? M.cold : 0;
+      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this, c.pitPlan) + BAY.k + cold;   // (the S onto the apron to the box and back; the player's own choice, once it made one)
     }
     // the time (s) the autopilot takes in the pit lane as it drives it (aiControl, pitStep), for the player's pit stop panel (game.js): box,
     // from where c is to its box (0 once it stands there): the lane's limit (15 m/s through the S of the way in and out), the turn onto the
