@@ -1,6 +1,6 @@
 # Neskončna vožnja v prometu (načrt)
 
-Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtocesti, promet je vse gostejši; točke dobiš za hitrost in tesna prehitevanja; vožnja se konča ob trku; rekord se shrani. Ta dokument je načrt (seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija »VSE SEJE 2«, račun 3). **Koda se začne šele po odgovorih uporabnika** na strani Odločitve 3 (vprašanja `neskoncna-1`, `neskoncna-2`, `neskoncna-3`; razdelek Odločitve spodaj). Tema je v `docs/vrsta.md` (Načrtovano: pred novimi progami, po potrditvi načrta).
+Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtocesti, promet je vse gostejši; točke dobiš za hitrost in tesna prehitevanja; vožnja se konča ob trku; rekord se shrani. Ta dokument je načrt (seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija »VSE SEJE 2«, račun 3). Uporabnik je izbral prave odprte ceste (`neskoncna-1` = 1); **koda je v delu v #372** (osnutek, veja `neskoncna-voznja/koda` na #250), za `neskoncna-2` in `neskoncna-3` do odgovora veljata priporočeni možnosti (razdelek Odločitve spodaj).
 
 ## Na kratko
 
@@ -85,7 +85,7 @@ Napisi med vožnjo gredo skozi `tr()` s slovenskim ključem in angleškim prevod
 | | **Skupaj** | **12–16** |
 
 - Ena seja (Opus, napor max), ena veja `neskoncna-voznja/koda`, en pull request (osnutek ob začetku dela, nato vrsta po `docs/vrsta.md`).
-- **Kdaj**: po odgovorih uporabnika in ko je #250 na `main`; pred novimi progami (vrsta v Načrtovano).
+- **Kdaj**: koda od 5. 11. zvečer v #372 na veji, ki stoji na #250 (uporablja njegove priklope načinov, `Zabava.add`); na `main` gre po #250, pred novimi progami.
 - Dodatno po izbiri: `neskoncna-1` 2 ali 3 (avtocesta) +35–50 h v 3–4 sejah (svoj načrt pred kodo); `neskoncna-2` 2 (naslednja prava cesta) +4–6 h; `neskoncna-3` 1 (nasprotni pas) +0,5 h.
 - Pozneje po želji (ni v tem delu): dosežki za neskončno vožnjo, denar v karieri za točke, izziv s povezavo (»premagaj moje točke«), policija pri preveliki hitrosti, Živa cesta (#250) kot ovire.
 
@@ -93,7 +93,7 @@ Napisi med vožnjo gredo skozi `tr()` s slovenskim ključem in angleškim prevod
 
 Vprašanja na strani Odločitve 3 (https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV), odgovore prebere ta seja (`docs/vprasanja.md`, razdelek Odgovor):
 
-- `neskoncna-1` **Cesta**: 1 prave odprte ceste (priporočeno) · 2 izmišljena neskončna avtocesta · 3 oboje (najprej prave ceste).
+- `neskoncna-1` **Cesta**: 1 prave odprte ceste (priporočeno) · 2 izmišljena neskončna avtocesta · 3 oboje (najprej prave ceste). **Izbrano: 1** (uporabnik 5. 11. v pogovoru s koordinacijo VSE SEJE 2; 11 cest zunaj ZDA).
 - `neskoncna-2` **Konec ceste**: 1 nadaljuješ na začetku iste ceste (priporočeno) · 2 nadaljuješ na drugi pravi cesti (nalaganje nekaj sekund) · 3 konec ceste je cilj (vožnja se konča z bonusom).
 - `neskoncna-3` **Nasprotni pas**: 1 dvojne točke za hitrost na nasprotnem pasu (priporočeno) · 2 samo hitrost in tesna prehitevanja.
 
@@ -103,3 +103,4 @@ Privzeto brez vprašanja (pove načrt; uporabnik lahko spremeni): brez kolesarje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
 - 5. 11. 2026 popoldne: ceste ZDA razen Pikes Peaka postanejo testne (odločitev uporabnika, #355; sporočilo koordinacije VSE SEJE 2). Seznam cest je zdaj 11 cest zunaj ZDA; vprašanji `neskoncna-1` in `neskoncna-3` imata nove slike (Great Alpine Road, Vršič, Medvode) in besedilo brez cest ZDA. Komentator samo angleško.
+- 5. 11. 2026 zvečer: `neskoncna-1` = 1 (prave odprte ceste). Koda se začne v #372 (koordinacija: začni zdaj, Opus, max); do odgovorov na `neskoncna-2` in `neskoncna-3` veljata priporočeni možnosti, ki se ju po odgovoru prilagodi. Vrstica v Načrtovano (`docs/vrsta.md`) je izbrisana, ker je odprt osnutek.
