@@ -748,6 +748,20 @@
     'Drži VRZI: dlje držiš, dlje leti. Spusti, ko je pika v krogu.': 'Hold THROW: the longer you hold it, the farther the present flies. Let go when the dot is in the circle.',
     'Pelji do naslednje hiše z lučkami.': 'Drive on to the next house with lights.', 'Premalo daril je pristalo v zlatih krogih.': 'Too few presents landed in the golden circles.',
     'Odbila je polnoč, preden so bila darila raznesena.': 'Midnight struck before the presents were delivered.',
+    // special mission 40 · Varnostni avto (js/missions/m40.js)
+    'Varnostni avto': 'Safety car', 'Dirkalnik je trčil v zid na vrhu griča. Proga je pod rumeno zastavo, kolona čaka nate.': 'A race car has hit the wall at the top of the hill. The track is under a yellow flag and the field is waiting for you.',
+    'Vodi kolono s pravo hitrostjo, dokler ne odpeljejo razbitega avta, nato ugasni luči in se umakni v bokse.': 'Lead the field at the right speed until the wreck is towed away, then switch off your lights and pull into the pit lane.',
+    'Vozi s pravo hitrostjo: prepočasi se gume ohladijo, prehitro kolona razpade.': 'Drive at the right speed: too slow and the tyres go cold, too fast and the field breaks up.',
+    'DELTA': 'DELTA', 'KOLONA': 'FIELD', 'ODSTRANJEVANJE': 'RECOVERY', 'GUME': 'TYRES', 'UGASNI LUČI': 'LIGHTS OFF', 'RAZBIT AVTO': 'WRECK',
+    'Kolona je razpadla: vozil si prehitro.': 'The field broke up: you drove too fast.', 'Dirkalnikom so se ohladile gume: vozil si prepočasi.': 'The race cars’ tyres went cold: you drove too slowly.',
+    'Proga je čista! Ugasni luči: v tem krogu greš v bokse.': 'The track is clear! Switch off your lights: you go into the pits this lap.',
+    'Luči so ugasnjene: na koncu kroga zapelji levo v bokse.': 'Lights off: at the end of the lap, turn left into the pit lane.',
+    'V bokse si zapeljal s prižganimi lučmi: kolona ni vedela, da se dirka nadaljuje.': 'You went into the pits with your lights on: the field didn’t know the race was resuming.',
+    'V bokse si zapeljal, preden je bila proga čista.': 'You went into the pits before the track was clear.',
+    'Prehitro! Kolona ne more slediti.': 'Too fast! The field can’t keep up.', 'Prepočasi! Gume dirkalnikov se hladijo.': 'Too slow! The race cars’ tyres are cooling down.',
+    'Proga je čista: ugasni luči, v tem krogu greš v bokse.': 'The track is clear: switch off your lights, you go into the pits this lap.',
+    'Na vrhu griča je razbit avto: počasi mimo redarjev.': 'There is a wreck at the top of the hill: slowly past the marshals.',
+    'Nisi zapeljal v bokse: kolona je ostala za tabo.': 'You didn’t go into the pits: the field is still stuck behind you.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
