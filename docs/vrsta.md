@@ -27,7 +27,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (Medeu, brez Aulija), Furka 2A; brez izletne cone se ne začnejo (odločitev uporabnika 5. 11., `docs/proge-po-drzavah.md`, razdelek »Izletna cona«): Zavite proge korak 1 Ouro Preto, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) (#202 je zaprt 5. 11. po odločitvi uporabnika: nova fizika in trki ostanejo, kot so na `main`; na #202 ne čaka več) |
 | Videz avta povsod: barva, izvedba laka, črte z barvo, nalepke, senčni pas, svoja številka in platišča v vsaki dirki, v posnetku in pri prijateljih (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanji `videz-1` in `videz-2` na strani Odločitve 3) in po #297 (garaža, račun 1) |
-| Beg pred policijo s prijatelji: en prijatelj vozi patruljo, drugi bežijo po cesti s prometom (izbira uporabnika 5. 11., `beg-1` = 3; načrt `docs/novosti-e.md`) | 3 | B1–B2 (promet na spletu, patrulja prijatelja) v delu na veji `novosti-e/beg-prijatelji` (osnutek pull requesta); B3–B6 po #250 (Zabava) |
 
 ## Vrsta (stanje 4. 11. 2026)
 
