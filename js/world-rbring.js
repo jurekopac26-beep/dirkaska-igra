@@ -2408,8 +2408,12 @@
   }
 
   Object.assign(API, { RB_WIND, auRoos, auTreeGeo, cpMastStep, rbAirStep, rbCrowdTex, rbFlags, rbGravelTex, rbSmoke, rbSmokeTex, rbVerge, rioSkyline, rioStep });   // (what World and the other worlds use of this one)
+  World.keep('NR', 'rbring');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.rbring = (scene, tex, opts) => buildRbring(scene, tex, opts);
+  World.keep('NR', 'bathurst');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.bathurst = (scene, tex, opts) => buildRbring(scene, tex, opts);
+  World.keep('NR', 'rio');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.rio = (scene, tex, opts) => buildRbring(scene, tex, opts);
+  World.keep('NR', 'cpalace');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.cpalace = (scene, tex, opts) => buildRbring(scene, tex, opts);
 })();
