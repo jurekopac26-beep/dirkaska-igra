@@ -27,17 +27,16 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 1 | zbirna veja `zbirna/racun2` (#295 + #240 + #287 + #292) | meni sklop 6, trki v polju 100 avtov, gume KOLIBRIJA, ostrenje slike; en krog testov | 2 | v delu (nova seja koordinacije računa 2); posamezni PR-ji se zaprejo ob združitvi |
-| 2 | #246 | preleti | 3 | čaka |
-| 3 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 4 | #259 | tribune iz OSM | 3 | čaka |
-| 5 | #250 | 7 novosti | 3 | čaka |
-| 6 | #285 | testne proge zamrznjene | 3 | čaka |
-| 7 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 8 | #226 | Bâlea | 3 | čaka |
-| 9 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
-| 10 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ); zelen na GitHubu (glava c41c3b3), osnutek do vrste; predogled: oznaka `predogled`, `beta/297/` |
+| 2 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 3 | #259 | tribune iz OSM | 3 | čaka |
+| 4 | #250 | 7 novosti | 3 | čaka |
+| 5 | #285 | testne proge zamrznjene | 3 | čaka |
+| 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 7 | #226 | Bâlea | 3 | čaka |
+| 8 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
+| 9 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ); zelen na GitHubu (glava c41c3b3), osnutek do vrste; predogled: oznaka `predogled`, `beta/297/` |
 
-Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani).
+Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani). #246 preleti (račun 3; odločitev uporabnika 5. 11.: počakajo, dokler ne bo izbrana ena proga na državo; predaja v opisu PR).
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
