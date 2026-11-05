@@ -6,6 +6,7 @@
   "grom",
   "jezero",
   "monaco",
+  "rio",
   "riviera",
   "toskana"
  ],
@@ -75,16 +76,20 @@
   "assets/tracks/jezero.webp": "506ffffd2a9d8e02",
   "assets/tracks/monaco-rain.webp": "14bf9a0182035530",
   "assets/tracks/monaco.webp": "c7bd86d815a9c02e",
+  "assets/tracks/rio-rain.webp": "dfe1cbe53fad171d",
+  "assets/tracks/rio.webp": "d1b40b2212910718",
   "assets/tracks/riviera-rain.webp": "722bb147ce7f9083",
   "assets/tracks/riviera.webp": "f6abccb22e784bfb",
   "assets/tracks/toskana-rain.webp": "be3ffb1a67235699",
   "assets/tracks/toskana.webp": "b2b4a143b93f7670",
+  "docs/proge/rio.md": "d844e8cdd75182bc",
   "docs/proge/toskana.md": "48f9e7e8dd76e500",
   "js/tracks/gora.js": "2f20b716c43be01a",
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/jezero.js": "16733742a2d9e030",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
+  "js/tracks/rio.js": "a19bd3cb46cbd100",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
@@ -146,13 +151,20 @@
   "maketa-menija/assets/video/poster-gora.jpg": "05876f12d744ab23",
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
-  "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681"
+  "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
+  "tests/browser/rio.test.mjs": "f83193ae2e3cf134",
+  "tests/rio.test.js": "83d4197a56a332e9"
  },
  "dovoljenja": [
   {
    "datum": "2026-11-03",
    "proga": "vse",
    "razlog": "Začetek: testne proge zamrznjene do izbrisa pred objavo na Google Play (uporabnik v pogovoru 3. 11. 2026: »da se te proge ne posodabljajo in ne popravljajo«)"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "rio",
+   "razlog": "uporabnik 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro (rastro). Vse ostale brazilske proge prestavi v test.« Rio de Janeiro v test (PR #365), ena proga na državo"
   }
  ]
 }

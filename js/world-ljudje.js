@@ -1427,7 +1427,6 @@
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
-    rio: [['foto', 1200, 1], ['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 3376, -1], ['marsali', 4040, -1]],
     riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['foto2', 4312, 1], ['tribuna', 4568, -1]],
     sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
