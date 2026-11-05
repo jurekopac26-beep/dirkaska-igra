@@ -1045,5 +1045,6 @@
 
   Object.assign(API, { hjCutMat, ouCutMat, ouFlag, ouGTex, ouRoadTex, ouRod, ouVegMat });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { OU: { get: () => OU, set: (v) => { OU = v; } } });
+  World.keep('OU', 'ouni');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.ouni = (scene, tex, opts) => buildOuni(scene, tex, opts);
 })();
