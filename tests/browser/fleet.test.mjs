@@ -263,14 +263,15 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1, tl: !!(M.trailer && M.trailer.look) };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1, tl: !!(M.trailer && M.trailer.look), tl2: !!(M.trailer && M.trailer.next && M.trailer.next.look) };
     }, m.id);
     R4.push(r);
   }
   const lim = (f, n) => R4.filter(f).map(r => r.id).slice(0, n || 6).join(', ');
   const fmtC = (r) => `${r.id} ${r.pc.calls}/${r.ac.calls}`;
-  // (a semi-trailer's rig, docs/titan-cisterna.md: its trailer 4 more, its body, its lamps, its blob, its shadow; drawn with the tractor, tlDraw)
-  const tlC = (r) => r.tl ? 4 : 0;
+  // (a semi-trailer's rig, docs/titan-cisterna.md: its trailer 4 more, its body, its lamps, its blob, its shadow; drawn with the tractor, tlDraw;
+  // a road train's second tank 4 more again, tl2Draw, docs/zrcalni-vlak.md)
+  const tlC = (r) => r.tl ? (r.tl2 ? 8 : 4) : 0;
   T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9 (a semi-trailer\'s rig 4 more each)', R4.length === kits.length && R4.every(r => r.pc.calls <= 14 + tlC(r) && r.ac.calls <= 9 + tlC(r)),
     R4.filter(r => r.pc.calls > 14 + tlC(r) || r.ac.calls > 9 + tlC(r)).concat(R4).slice(0, 8).map(fmtC).join(', '));
   T.check('the four wheels exactly on the physics\' hubs (M.a / -M.b, rw, +-hw; the left ones mirrored), one mesh for each wheel part; the player\'s cast shadows, a rival\'s none and <= 160 triangles',

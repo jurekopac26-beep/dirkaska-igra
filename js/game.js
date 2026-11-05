@@ -1313,7 +1313,7 @@
   // of all of it, the tractor's nose to the trailer's tail (len: that length, straight; ht, wid: the taller, the wider of the two)
   function phMid(c) {
     const T = c.tl; if (!T) return { x: c.x, z: c.z, len: c.m.len, wid: c.m.wid, ht: 0 };
-    const hl = c.m.len / 2, tl = T.m.len / 2, nx = c.x + Math.cos(c.h) * hl, nz = c.z + Math.sin(c.h) * hl, ex = T.x - Math.cos(T.h) * tl, ez = T.z - Math.sin(T.h) * tl;
+    const E = T.next || T, hl = c.m.len / 2, tl = E.m.len / 2, nx = c.x + Math.cos(c.h) * hl, nz = c.z + Math.sin(c.h) * hl, ex = E.x - Math.cos(E.h) * tl, ez = E.z - Math.sin(E.h) * tl;   // (E: a road train's second tank, docs/zrcalni-vlak.md)
     return { x: (nx + ex) / 2, z: (nz + ez) / 2, len: c.m.len + T.back, wid: Math.max(c.m.wid, T.D.wid), ht: T.D.ht };
   }
   function photoStart(from, view) {

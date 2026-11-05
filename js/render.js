@@ -4720,7 +4720,7 @@ const Render = (function () {
   // (between its steps), its pitch down to the road under its axles; torn off (Core: T.fall) where the core has it
   function tlDraw(v, c, u, dt, braking, vis) {
     const G = v.tlG, T = c.tl;
-    if (!T) { G.visible = false; return; }
+    if (!T) { G.visible = false; if (v.tlG2) v.tlG2.visible = false; return; }   // (a road train's second tank is a group of its own in the scene: off too)
     G.visible = v.grp.visible;
     const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
     if (T.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
@@ -9981,9 +9981,9 @@ const Render = (function () {
     showScene.add(showCar.grp);
     // framed by its size (a kart close, a truck from further off): the distance x clamp(max(len / 4.4, h / 1.45, wid / 1.9), .75, 1.55), the view
     // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9)) (a rig: its length, its trailer's
-    // height, up to 4)
+    // height, up to 4; a road train's up to 7)
     const bg = showCar.body.geometry; if (!bg.boundingBox) bg.computeBoundingBox();
-    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? 4 : 1.55);
+    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? (model.trailer.next ? 7 : 4) : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7)
     showFr.k = k; showFr.dy = hr / 2 - 0.7 * k; showCar.h = h;
     const ring = Math.max(4.2, L / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
