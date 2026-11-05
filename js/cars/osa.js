@@ -32,7 +32,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.2, h: 0.08, lx: -1.06, lz: 0.61, y: 0.84 },
         wiperFront: { z: 0, th: 0.65, m: 0.5, r: 0.45, h: 0.03, lx: 0.45, lz: -0.09, y: 0.97 },
       },
-      over: { trunk: { lx: -1.02, y: 1.0 } } },   // (the hatch's tailgate: at the tail, where the look has it)
+      over: { trunk: { lx: -1.02, y: 1.0 }, hood: { lx: 0.76, y: 0.86 } } },   // (the hatch's tailgate: at the tail, where the look has it; the bonnet's middle)
     // where the garage's parts go (js/deli.js, look units): the wing over the roof's rear edge in the spoiler's part; the head lamps where
     // the slim lamps are (one unit a side over each lamp), in the lamps' parts; the rims on its wheels
     mounts: {
