@@ -966,6 +966,11 @@ select.txt:disabled { opacity: .75; }
 .ltab .tset { display: inline-block; min-width: 1.3em; padding: 0 3px; border: 2px solid #f2c616; border-radius: 9px; background: rgba(10, 13, 18, .62); color: #fff; font: 700 italic .92em/1.15 var(--f-ui); text-align: center; }
 .ltab .tset.tS { border-color: #e8352b; } .ltab .tset.tH { border-color: #f4f4f0; } .ltab .tset.tW { border-color: #4fa8ff; }
 .ltab-k { margin: 4px 0 0; color: var(--muted); font: 600 clamp(10px, 2.8vh, 12px)/1.3 var(--f-ui); }
+/* the pit stops of the race (107): every stop, the race's fastest highlighted (purple, as the fastest lap) with its award over the table */
+.ltab.stops td.st { font-variant-numeric: tabular-nums; } .ltab.stops td.st small { color: var(--muted); font-weight: 600; }
+.ltab.stops tr.best td { color: #c77dff; font-weight: 700; }
+.ltab.stops tr.me.best td { color: #111; }
+.stop-best { margin: 2px 0 4px; padding: 3px 8px; border-left: 3px solid #c77dff; color: #e2c4ff; font: 700 italic clamp(11px, 3vh, 13px)/1.25 var(--f-ui); }
 /* Dosežki: the player's numbers in a grid, the achievements in a list (unlocked: gold) */
 .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin: 4px 0 8px; }
 /* the driving school: its lessons; the lesson's line on the HUD */

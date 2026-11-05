@@ -4139,6 +4139,7 @@
       const fw = !fu ? '' : pc >= 100 ? tr(ev ? 'BATERIJA POLNA' : 'POLNO') : tr(ev ? 'NAPOLNJENO DO {0} %' : 'DOLITO DO {0} %', pc);
       showMsg((ty ? tr('{0} GUME', tr(tyreName(ty))) + (pitFix ? tr(' · POPRAVLJENO') : '') : fw ? fw + (pitFix ? tr(' · POPRAVLJENO') : '') : pitFix ? tr('POPRAVLJENO!') : tr('POSTANEK OPRAVLJEN')) + (ty && fw ? ' · ' + fw : ''), 'gold', 1.8); Sfx.beep(880, 0.12, 0.12); setTimeout(() => Sfx.beep(1175, 0.18, 0.12), 130); hap(fu ? (ev ? 'goCharge' : 'goFuel') : 'go'); Comm.say(fu ? (ev ? 'batteryIn' : 'fuelIn') : 'pitOut', null, 2); }
     else if (e === 'exit') { if (hz.done) hap('rejoin');   // (back on the circuit after a stop)
+      { const P = race.player, L = race.pst ? race.pst.log : [], me = L.filter(x => x.c === P).pop(), f = race.fastestStop(); if (me && me.lane != null && race.time - me.at < 120 && f === me) toast(tr('Najhitrejši postanek dirke doslej: {0} s', Lang.dec(me.lane.toFixed(1))), 2600, 'fastStop'); }   // (107: out of the lane after a stop the race's fastest so far)
       if (pa.st === 'lane' && pa.stop && !race.player.finished) { pa.st = 'merge'; pa.t = PIT_OUT; pa.n = PIT_OUT; Sfx.beep(520, 0.16, 0.14); } }   // (the countdown in the progress bar's label: pitBar)
   }
   function pitCtl(P, hold) {   // each step before the inputs: which part of the pit stop the autopilot drives (null: none)
@@ -5104,8 +5105,21 @@
       res.map((r, i) => { const c = r.car, lt = c.lapTimes.filter(t => t > 0), pb = lt.length ? Math.min(...lt) : NaN;
         return '<tr class="' + (c.isPlayer ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm"><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(c.isPlayer ? tr('Ti') : c.name) + '</td>' +
           cols.map(k => { const t = c.lapTimes[k]; return '<td class="' + (t === best ? 'ob' : t === pb ? 'pb' : '') + '">' + (t > 0 ? fmt(t) : '–') + '</td>'; }).join('') + (st && c.st ? '<td class="sets">' + setsHtml(c) : '<td>' + ((tw && tw.stops.get(c)) || 0)) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-      (st ? '<p class="ltab-k">' + tr('Gume: S mehke, M srednje, H trde, W dežne.') + '</p>' : '');
+      (st ? '<p class="ltab-k">' + tr('Gume: S mehke, M srednje, H trde, W dežne.') + '</p>' : '') + stopTable();
     el.classList.remove('off');
+  }
+  // the pit stops of the race (107, Core Race pst.log; a race with stops): every one in the order made, the driver, the lap, the stop's time
+  // (in the pit lane from its line in to its line out; standing in the box in brackets) and the new set (a chip in its compound's colour as
+  // above; – the set kept on); the race's fastest stop (Core fastestStop: by the lane's time) highlighted, its award over the table
+  const STOP_TY = { S: 'S', M: 'M', H: 'H', W: 'W', D: 'SUHE' };
+  function stopTable() {
+    const L = race.pst ? race.pst.log : [], f = race.fastestStop && race.fastestStop(); if (!L.length || !f) return '';
+    const who = (c) => c.isPlayer ? tr('Ti') : c.name, s1 = (t) => Lang.dec(t.toFixed(1)) + ' s';
+    return '<p class="ltab-h">' + tr('Postanki v boksih') + '</p><p class="stop-best">\u2605 ' + esc(tr('Najhitrejši postanek dirke: {0}, {1} ({2}. krog)', who(f.c), s1(f.lane), f.lap)) + '</p>' +
+      '<div class="laps-wrap"><table class="ltab stops"><thead><tr><th>' + tr('Voznik') + '</th><th>' + tr('Krog') + '</th><th>' + tr('Postanek') + '</th><th>' + tr('Gume') + '</th></tr></thead><tbody>' +
+      L.map(e => '<tr class="' + (e.c.isPlayer ? 'me' : '') + (e === f ? ' best' : '') + '"><td class="nm"><span class="dot" style="background:' + hexCss(e.c.color) + '"></span>' + esc(who(e.c)) + '</td><td>' + e.lap + '</td><td class="st">' + (e.lane != null ? s1(e.lane) : '\u2013') + ' <small>(' + Lang.dec(e.t.toFixed(1)) + ')</small>' + (e === f ? ' \u2605' : '') + '</td><td>' +
+        (e.ty ? '<b class="tset t' + e.ty + '">' + tr(STOP_TY[e.ty]) + '</b>' : '\u2013') + '</td></tr>').join('') + '</tbody></table></div>' +
+      '<p class="ltab-k">' + tr('Postanek: čas v pasu boksov od črte uvoza do črte izvoza, v oklepaju čas stanja v boksu.') + '</p>';
   }
 
   /* ---------------- commentator (English) ---------------- */

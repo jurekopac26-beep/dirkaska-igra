@@ -5647,7 +5647,12 @@ const Core = (function () {
       if (this.slip) for (const c of this.cars) c.tow = 0;
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
-      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;   // (rb: the rubbered-in line, RUB)
+      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;
+      // every stop made in the pits (107: the results' table, the fastest stop; in an object: the golden references digest only the plain
+      // fields): log, each { c: the car, lap: the lap whose way in it took (_stratLap), t: the time standing in the box (s), lane: the time
+      // in the pit lane, from its line in to its line out (s; null until out: _pitLane), ty: the new set ('S', 'M', 'H', 'W' the rain tyres,
+      // 'D' slicks without compounds; '' none: the set kept on), at: the race time it was done }; inT: each car's time over the line in
+      this.pst = { log: [], inT: new Map() };   // (rb: the rubbered-in line, RUB)
       // failures (opts.faults, not in a time trial): every car's brakes and engine with a temperature, a tyre that a hard knock may cut (Car.flt,
       // see Car._heat and puncture; in an object: the golden references digest only the plain fields). The friends' cars: on their own phones
       if (opts.faults && !this.timeTrial) for (const c of this.cars) if (!c.net) c.flt = { pw: -1, pk: 0, brT: 20, enT: 85, brH: false, enH: false, ev: '' };
@@ -5769,6 +5774,16 @@ const Core = (function () {
     autoCmp(left) {
       const G = this.strat; if (!G) return cmpFor(left);
       const n = left / this.track.len; return n <= STRAT.w * G.life.S ? 'S' : n <= STRAT.w * G.life.M ? 'M' : 'H';
+    }
+    // the fastest stop of the race so far (107: Race pst.log, by the time in the pit lane: the stop, the release, the lane's limit; the
+    // earliest of equal ones), or null
+    fastestStop() { let b = null; for (const e of this.pst.log) if (e.lane != null && (!b || e.lane < b.lane)) b = e; return b; }
+    // a car over the pit lane's line in or out (107, from pitStep's first part): the time in, and a stop's lane time once out
+    _pitLane(c) {
+      const S = this.pst;
+      if (c.inPit) { S.inT.set(c, this.time); return; }
+      const t0 = S.inT.get(c); if (t0 == null) return;
+      for (let i = S.log.length - 1; i >= 0; i--) { const e = S.log[i]; if (e.c !== c) continue; if (e.lane == null && e.at >= t0) e.lane = this.time - t0; break; }
     }
     _stratLap(c) { const P = this.track.def.pit; return clamp(Math.floor((c.dist - P[1]) / this.track.len), 0, this.laps); }   // (a stop's lap: the one whose way in it took)
     // a rival's planned stop (Race step, a strategy race): in at the way in on the lap of its next one (or a lap later when it missed the way
@@ -6092,7 +6107,7 @@ const Core = (function () {
           let g; if (c.netPG != null) g = !!c.netPG; else { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null; g = !!pz && q.d * pz.sd > (pz.gap && c.pitG ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); }
           if (g !== !!c.pitG) c.pitG = g;
         }
-        else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) this.pitStep(c, dt, true);
+        else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) { const was = !!c.inPit; this.pitStep(c, dt, true); if (!!c.inPit !== was) this._pitLane(c); }   // (107: the time in the pit lane)
       }
       for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true); }
       if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
@@ -6291,6 +6306,7 @@ const Core = (function () {
             else if (pl.fuel > c.fuel) { c.fuel = Math.min(1, pl.fuel); c.fuelKg = c.tankKg * c.fuel; c.fuelD = c.dist; c.fuelF = c.fuel; }   // (up to the share asked for; more in it already: nothing)
           }
           if (pl) c.pitPlan = null;
+          this.pst.log.push({ c, lap: Math.max(1, this._stratLap(c)), t: c.pitDur, lane: null, ty: !c.ty || keep ? '' : c.ty.k === 'wet' ? 'W' : c.ty.c || 'D', at: this.time });   // (107)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
         return;
