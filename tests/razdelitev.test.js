@@ -3,7 +3,7 @@
 // THEMES and SPLIT, js/game.js EN_NAME and RAIN_P, js/world.js CLOUD_TH, ROAD_WEAR, GRASS_NAT, LAWN, BB_CLASSIC and the grids World.build
 // frees, js/world-zivali.js ZIV) and Bathurst's, Rio's and Crystal Palace's own parts are in js/world-<theme>.js, not in js/world-rbring.js.
 // On a copy, as a branch from before the split brings it: an entry put back into a list goes to its track's file (the same value quietly,
-// another only with --seznam, the list's, or --proga, the file's), a new track's entry makes the block in its file, a grid freed the old way
+// another only with --seznam, the list's, or --proga, the file's, for one track --seznam=<id>), a new track's entry makes the block in its file, a grid freed the old way
 // becomes World.keep in its world's file, a part of Rio's added to js/world-rbring.js goes to js/world-rio.js; a second run changes nothing.
 //   node tests/razdelitev.test.js
 'use strict';
@@ -42,7 +42,8 @@ try {
   check("GRASS_NAT: Spa's gone, the test track's kept", lineOf('js/world.js', /const GRASS_NAT = \{/).includes('{ lake: 0.75 }'), lineOf('js/world.js', /const GRASS_NAT = \{/));
   check("the grid freed the old way: World.keep('LV', 'livorno') before World.ext.livorno, the line gone from World.build",
     /World\.keep\('LV', 'livorno'\);[^\n]*\n\s*World\.ext\.livorno =/.test(rd('js/world-livorno.js')) && !rd('js/world.js').includes("API.LV = null"));
-  check("Rio's part added to js/world-rbring.js is in js/world-rio.js", rd('js/world-rio.js').includes('function rioTest()') && !rd('js/world-rbring.js').includes('function rioTest()'));
+  { const was = fs.readFileSync(path.join(REPO, 'js/world-rio.js'), 'utf8'), now = rd('js/world-rio.js'), add = now.split('\n').filter(l => l.includes('function rioTest()'));
+    check("Rio's part added to js/world-rbring.js is in js/world-rio.js, the rest of it as it was (its prologue, exports)", add.length === 1 && now.split('\n').filter(l => l !== add[0]).join('\n') === was && !rd('js/world-rbring.js').includes('function rioTest()')); }
   r = run(tmp, '--check');
   check('a second run changes nothing (--check)', r.status === 0, said(r));
   // a value other than its file's: only with a choice
@@ -54,6 +55,20 @@ try {
   edit('js/game.js', 'const RAIN_P = {};', 'const RAIN_P = { spa: 0.6 };');
   r = run(tmp, '--seznam');
   check("--seznam: the list's 0.6 in its file", r.status === 0 && /say: 'Spa', rainP: 0\.6,/.test(rd('js/tracks/spa.js')), said(r));
+  // the choice for some tracks only: another's difference still stops it
+  edit('js/game.js', 'const RAIN_P = {};', 'const RAIN_P = { spa: 0.7, nring: 0.9 };');
+  r = run(tmp, '--seznam=spa');
+  check("--seznam=spa: Nürburg's difference has no choice, no change (exit 2)", r.status === 2 && said(r).includes('nring.js rainP') && !said(r).includes('spa.js') && /say: 'Spa', rainP: 0\.6,/.test(rd('js/tracks/spa.js')), said(r));
+  r = run(tmp, '--seznam=spa', '--proga=nring');
+  check("--seznam=spa --proga=nring: Spa's 0.7 from the list, Nürburg's 0.45 kept, the list's entries gone", r.status === 0 && /say: 'Spa', rainP: 0\.7,/.test(rd('js/tracks/spa.js')) && /say: 'Nürburg', rainP: 0\.45,/.test(rd('js/tracks/nring.js')) && lineOf('js/game.js', /const RAIN_P = /).includes('const RAIN_P = {};'), said(r));
+  // a part of Rio's changed the old way (in js/world-rbring.js, as a branch from before the split brings it): only with a choice
+  edit('js/world-rbring.js', '  function buildRbring(', "  function rioTest() { return T.len + 1; }   // (a part of Rio's, changed the old way)\n  function buildRbring(");
+  r = run(tmp);
+  check("Rio's part changed the old way: no choice, no change (exit 2)", r.status === 2 && said(r).includes('world-rio.js rioTest') && rd('js/world-rbring.js').includes('T.len + 1') && !rd('js/world-rio.js').includes('T.len + 1'), said(r));
+  r = run(tmp, '--seznam=rio');
+  check('--seznam=rio: the changed part in js/world-rio.js, gone from js/world-rbring.js', r.status === 0 && rd('js/world-rio.js').includes('{ return T.len + 1; }') && !rd('js/world-rio.js').includes('{ return T.len; }') && !rd('js/world-rbring.js').includes('rioTest'), said(r));
+  r = run(tmp, '--seznm');
+  check('an option it does not know: an error (exit 2), no change', r.status === 2 && /--seznm/.test(said(r)), said(r));
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

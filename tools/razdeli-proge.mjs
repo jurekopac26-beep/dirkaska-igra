@@ -2,21 +2,35 @@
 // js/tracks/<id>.js, da se veje, ki dodajajo ali urejajo različne proge, ne srečajo v isti vrstici. Testne proge (test: true) ostanejo, kjer so.
 //   node tools/razdeli-proge.mjs             premakne vnose pravih prog in poskrbi za vrstice, ki sezname ob nalaganju napolnijo iz datotek prog
 //   node tools/razdeli-proge.mjs --check     samo preveri (tests/razdelitev.test.js): izhod 1, če bi orodje kaj spremenilo
-//   ... --seznam | --proga                   ob razliki med vnosom v seznamu in poljem v datoteki proge obdrži seznam (npr. svež main ob
-//                                            spajanju v vejo razdelitve) oz. datoteko proge (veja s starim seznamom ob spajanju svežega main)
+//   ... --seznam | --proga                   ob razliki med vnosom v seznamu (delom v js/world-rbring.js) in datoteko proge (njenim delom
+//                                            sveta) obdrži seznam oz. datoteko proge; brez izbire ob razliki ne spremeni ničesar (izhod 2)
+//   ... --seznam=spa,rio --proga=bathurst    izbira le za naštete proge (id), druge po golem --seznam/--proga ali brez izbire
 // Seznami (SPECS): js/render.js THEMES + SPLIT -> look (look.split), js/game.js EN_NAME -> say, RAIN_P -> rainP, js/world.js CLOUD_TH -> cloudTh,
 // ROAD_WEAR -> roadWear, GRASS_NAT -> grassNat, LAWN -> lawn, BB_CLASSIC -> bbClassic, js/world-zivali.js ZIV -> zivali. Vnosi gredo na začetek
 // opisa proge (takoj za vrstico TRACK_DEFS.push(), v blok pod vrstico z oznako tega orodja); za vsakim seznamom je ustvarjena vrstica, ki ga
 // napolni iz TRACK_DEFS. V js/world.js še sproščanje mrež zadnje gradnje: vrstice »if (THEME !== ...) API.X = null;« postanejo
-// World.keep('X', tema) v datoteki sveta proge (pred World.ext.<tema> = ...) in ena skupna vrstica v build().
-// Ponovni zagon ne spremeni ničesar. Spor ob spajanju v vrstici skupnega seznama: obdrži stran s starim seznamom (vsi vnosi), nato to orodje.
+// World.keep('X', tema) v datoteki sveta proge (pred World.ext.<tema> = ...) in ena skupna vrstica v build(). Lastni deli Bathursta, Ria in
+// Crystal Palace iz js/world-rbring.js gredo v js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js (WSPLIT, korak 6).
+// Ponovni zagon ne spremeni ničesar. Spor ob spajanju v vrstici skupnega seznama: obdrži stran s starim seznamom (vsi vnosi), nato to orodje
+// (postopek v docs/razdelitev-prog.md).
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import vm from 'node:vm';
 
 const REPO = process.env.RAZDELI_ROOT ? path.resolve(process.env.RAZDELI_ROOT) : path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');   // (RAZDELI_ROOT: a copy, tests/razdelitev.test.js)
-const args = process.argv.slice(2), CHECK = args.includes('--check'), PREFER = args.includes('--seznam') ? 'map' : args.includes('--proga') ? 'def' : null;
+const args = process.argv.slice(2), CHECK = args.includes('--check');
+const bad = args.filter(a => !/^--(check|(seznam|proga)(=[\w,-]+)?)$/.test(a));
+if (bad.length) { console.error(`razdeli-proge: ne poznam ${bad.join(' ')} (--check, --seznam[=id,…], --proga[=id,…])`); process.exit(2); }
+const PICK = new Map(); let pickAll = null;   // (a track's choice on a difference: 'map' the list's, 'def' its file's)
+for (const a of args) {
+  const m = /^--(seznam|proga)(?:=(.*))?$/.exec(a); if (!m) continue;
+  const v = m[1] === 'seznam' ? 'map' : 'def';
+  if (m[2] == null) { if (pickAll && pickAll !== v) { console.error('razdeli-proge: --seznam in --proga hkrati brez naštetih prog'); process.exit(2); } pickAll = v; continue; }
+  for (const id of m[2].split(',').filter(Boolean)) { if (PICK.has(id) && PICK.get(id) !== v) { console.error(`razdeli-proge: ${id} v --seznam in --proga`); process.exit(2); } PICK.set(id, v); }
+}
+const PREFER = (id) => PICK.get(id) || pickAll;   // (id: the track's, as in js/tracks/<id>.js, or a part's theme)
+const idOf = (f) => path.basename(f, '.js');
 const files = new Map();   // path -> text (read once, written at the end)
 const rd = (f) => { if (!files.has(f)) files.set(f, fs.readFileSync(path.join(REPO, f), 'utf8')); return files.get(f); };
 const orig = new Map();
@@ -294,6 +308,7 @@ function chunksOf(t) {   // { pre, chunks: [{ name, names, text }], post }: the 
 const joinChunks = (C) => C.pre + '\n' + C.chunks.map(c => c.text).join('\n') + '\n' + C.post;
 const PROLOGUE = new Set(['?', 'if', 'API', 'const', 'LOD', 'API.sync.push']);   // (the chunks every world file starts with)
 const SYNCED = ['LOD', 'T', 'THEME'];
+const isPro = (c) => PROLOGUE.has(c.name) || (/^\s*let\b/.test(codeOnly(c.text).trim()) && c.names.length > 0 && c.names.every(n => SYNCED.includes(n)));   // (a part file's own let of World's build state, e.g. »let T;«, is its prologue too)
 const keepLine = (c) => c.text.split('\n').find(l => /^  World\.keep\(/.test(l));
 const wdiffs = [];
 for (const W of WSPLIT) {
@@ -305,13 +320,13 @@ for (const W of WSPLIT) {
   let moved = 0;
   for (const P of W.parts) {
     const PF = `js/world-${P.theme}.js`, mine = (c) => c.names.length ? P.re.test(c.names[0]) : false;
-    const own = S.chunks.filter(c => !PROLOGUE.has(c.name) && (mine(c) || c.name === `World.ext.${P.theme}` || new RegExp(`^World\\.keep:${P.theme}:`).test(c.name)));
+    const own = S.chunks.filter(c => !isPro(c) && (mine(c) || c.name === `World.ext.${P.theme}` || new RegExp(`^World\\.keep:${P.theme}:`).test(c.name)));
     const txt = joinChunks(S), A = declAt(txt, W.look), LP = parseObj(txt, A.open), le = LP.ents.find(e => e.key === P.theme);
     if (!own.length && !le) continue;   // (split already)
     moved++;
     // the part file: as it is (when there), its body chunks merged with the shared file's
     const old = fs.existsSync(path.join(REPO, PF)) || files.has(PF) ? chunksOf(rd(PF)) : null;
-    const body = old ? old.chunks.filter(c => !PROLOGUE.has(c.name) && !/^(API\.rbLook|Object\.assign\(API|World\.keep:|World\.ext\.)/.test(c.name)) : [];
+    const body = old ? old.chunks.filter(c => !isPro(c) && !/^(API\.rbLook|Object\.assign\(API|World\.keep:|World\.ext\.)/.test(c.name)) : [];
     const exps = new Set(), keeps = [];
     if (old) for (const c of old.chunks) { if (c.name === 'Object.assign(API') for (const n of idents(c.text)) if (n !== 'Object' && n !== 'API') exps.add(n); if (/^World\.keep:/.test(c.name)) keeps.push(keepLine(c)); }
     let prevAt = -1;
@@ -322,8 +337,8 @@ for (const W of WSPLIT) {
       if (k < 0) { body.splice(prevAt + 1, 0, c); prevAt++; continue; }
       prevAt = k;
       if (body[k].text === c.text) continue;
-      wdiffs.push(`${PF} ${c.names[0]}: v ${W.file} drugačen kot v ${PF}`);
-      if (PREFER === 'map') body[k] = c;
+      if (!PREFER(P.theme)) wdiffs.push(`${PF} ${c.names[0]}: v ${W.file} drugačen kot v ${PF}`);
+      if (PREFER(P.theme) === 'map') body[k] = c;
     }
     // its look: the entry of the shared table (or the part file's, when it has one already)
     let look = le ? txt.slice(lineStart(txt, le.ks), lineEnd(txt, le.ve)) : null;
@@ -331,14 +346,14 @@ for (const W of WSPLIT) {
     if (oldLook) {
       const o = oldLook.text, oa = o.indexOf('{', o.indexOf('Object.assign(')), OP = parseObj(o, o.indexOf('{', oa + 1)), oe = OP.ents.find(e => e.key === P.theme);
       const ol = oe ? o.slice(lineStart(o, oe.ks), lineEnd(o, oe.ve)) : null;
-      if (look && ol && ol !== look) { wdiffs.push(`${PF} ${W.look}.${P.theme}: v ${W.file} drugačen kot v ${PF}`); if (PREFER !== 'map') look = ol; }
+      if (look && ol && ol !== look) { if (!PREFER(P.theme)) wdiffs.push(`${PF} ${W.look}.${P.theme}: v ${W.file} drugačen kot v ${PF}`); if (PREFER(P.theme) !== 'map') look = ol; }
       else if (!look) look = ol;
     }
     // what it uses: World's helpers (as the shared file takes them), the build's track and theme, a copy of the shared file's small helpers
     const used = new Set(); for (const t of [...body.map(c => c.text), look || '']) for (const n of idents(t)) used.add(n);
     const defined = new Set(body.flatMap(c => c.names));
     for (const n of W.copy) if (used.has(n) && !defined.has(n) && srcTop.has(n)) { body.unshift(srcTop.get(n)); defined.add(n); for (const m of idents(srcTop.get(n).text)) used.add(m); }
-    const bad = [...used].filter(n => srcTop.has(n) && !defined.has(n) && !mine(srcTop.get(n)) && !PROLOGUE.has(srcTop.get(n).name) && !W.parts.some(Q => Q !== P && Q.re.test(n)) && n !== W.look);
+    const bad = [...used].filter(n => srcTop.has(n) && !defined.has(n) && !mine(srcTop.get(n)) && !isPro(srcTop.get(n)) && !W.parts.some(Q => Q !== P && Q.re.test(n)) && n !== W.look);
     if (bad.length) fail(`${PF}: uporablja ${bad.join(', ')} iz ${W.file} (ni v API): razdeli ročno`);
     const other = [...used].filter(n => W.parts.some(Q => Q !== P && Q.re.test(n)) && srcTop.has(n));
     if (other.length) fail(`${PF}: uporablja dele drugih prog (${other.join(', ')})`);
@@ -373,7 +388,7 @@ for (const W of WSPLIT) {
   }
   // the shared file: the parts' names it reads (from API, the part files are loaded before it) and their looks in its table
   const parts = W.parts.map(P => `js/world-${P.theme}.js`).filter(f => files.has(f) || fs.existsSync(path.join(REPO, f)));
-  const theirs = new Set(parts.flatMap(f => chunksOf(rd(f)).chunks.filter(c => !PROLOGUE.has(c.name)).flatMap(c => c.names)));
+  const theirs = new Set(parts.flatMap(f => chunksOf(rd(f)).chunks.filter(c => !isPro(c)).flatMap(c => c.names)));
   for (const n of W.copy) theirs.delete(n);
   const gen = S.chunks.filter(c => c.text.includes(MARK) && (c.name === 'const' || c.name === `Object.assign(${W.look}`));
   S.chunks = S.chunks.filter(c => !gen.includes(c));
@@ -388,7 +403,7 @@ for (const W of WSPLIT) {
     put(W.file, joinChunks(S));
   }
 }
-if (wdiffs.length && !PREFER) { console.error('razdeli-proge: del v skupni datoteki sveta in v datoteki proge se razlikuje (izberi --seznam ali --proga):\n  ' + wdiffs.join('\n  ')); process.exit(2); }
+if (wdiffs.length) { console.error('razdeli-proge: del v skupni datoteki sveta in v datoteki proge se razlikuje (izberi --seznam ali --proga, za eno progo --seznam=<id>):\n  ' + wdiffs.join('\n  ')); process.exit(2); }
 
 /* ---- 4. the track files: a block at the top of the def (right after TRACK_DEFS.push() with what came from the lists ---- */
 const FIELDS =[['look'], ['say', 'rainP'], ['cloudTh', 'roadWear', 'grassNat', 'lawn', 'bbClassic'], ['zivali']], ALL = FIELDS.flat();
@@ -414,8 +429,8 @@ for (const f of new Set([...moves.keys(), ...TF.filter(hasBlock)])) {   // (the 
     const have = old.get(field), elsewhere = !have && def[field] !== undefined && !(def.variantOf && D0.get(byId.get(def.variantOf)).some(x => same(x[field], def[field])));
     const cur = have ? evalLit(have.val, f) : elsewhere ? def[field] : undefined, nv = evalLit(mv.val, mv.from);
     if (cur === undefined || same(cur, nv)) { if (!have && !elsewhere) old.set(field, mv); continue; }
-    chosen.add(field + ':' + f); diffs.push(`${f} ${field}: v seznamu ${mv.val.slice(0, 70)} … v datoteki proge ${JSON.stringify(cur).slice(0, 70)} …`);
-    if (PREFER === 'map') { if (elsewhere) fail(`${f}: ${field} je v opisu proge drugje (ne v bloku): popravi ročno`); old.set(field, mv); }
+    chosen.add(field + ':' + f); if (!PREFER(idOf(f))) diffs.push(`${f} ${field}: v seznamu ${mv.val.slice(0, 70)} … v datoteki proge ${JSON.stringify(cur).slice(0, 70)} …`);
+    if (PREFER(idOf(f)) === 'map') { if (elsewhere) fail(`${f}: ${field} je v opisu proge drugje (ne v bloku): popravi ročno`); old.set(field, mv); }
   }
   const body = FIELDS.map(g => g.filter(k => old.has(k))).filter(g => g.length).map(g => {
     const one = g.length === 1 && old.get(g[0]).com;
@@ -424,7 +439,7 @@ for (const f of new Set([...moves.keys(), ...TF.filter(hasBlock)])) {   // (the 
   t = t.slice(0, L0) + (body.length ? [ind + HEAD, ...body].join('\n') + '\n' : '') + t.slice(L1);
   put(f, t);
 }
-if (diffs.length && !PREFER) { console.error('razdeli-proge: vnos v seznamu in polje v datoteki proge se razlikujeta (izberi --seznam ali --proga):\n  ' + diffs.join('\n  ')); process.exit(2); }
+if (diffs.length) { console.error('razdeli-proge: vnos v seznamu in polje v datoteki proge se razlikujeta (izberi --seznam ali --proga, za eno progo --seznam=<id>):\n  ' + diffs.join('\n  ')); process.exit(2); }
 
 /* ---- 5. check: every track's own value as the game sees it, before and after (the lists filled from the defs) ---- */
 {
@@ -453,8 +468,8 @@ if (diffs.length && !PREFER) { console.error('razdeli-proge: vnos v seznamu in p
 /* ---- write (or only tell) ---- */
 const changed = [...files].filter(([f, t]) => orig.has(f) && orig.get(f) !== t).map(([f]) => f);
 if (CHECK) {
-  if (changed.length) { console.log('razdeli-proge: vnosi pravih prog so v skupnih seznamih, poženi node tools/razdeli-proge.mjs (' + changed.join(', ') + ')'); process.exit(1); }
-  console.log('razdeli-proge: v redu (skupni seznami imajo le testne proge)');
+  if (changed.length) { console.log('razdeli-proge: nastavitve ali deli sveta pravih prog so v skupnih datotekah, poženi node tools/razdeli-proge.mjs (' + changed.join(', ') + ')'); process.exit(1); }
+  console.log('razdeli-proge: v redu (skupni seznami imajo le testne proge, deli sveta so v datotekah prog)');
 } else {
   for (const f of changed) fs.writeFileSync(path.join(REPO, f), files.get(f));
   console.log(changed.length ? 'razdeli-proge: ' + changed.length + ' datotek: ' + changed.join(', ') : 'razdeli-proge: ni sprememb');

@@ -4,9 +4,9 @@ Tema iz `docs/vrsta.md` (račun 3, koordinacija VSE SEJE 2): koda in nastavitve 
 
 ## Kje so nastajali spori (veje Killar, Hakone, Bâlea, Medvode, tribune)
 
-Svet prav prog je že v `js/world-<tema>.js` (izjema: `js/world-rbring.js` s Štajersko, Bathurstom, Crystal Palace in Riom). Spori so nastajali v skupnih seznamih, ki jih vsaka nova proga dopolni, pogosto v isti dolgi vrstici:
+Svet pravih prog je že v `js/world-<tema>.js` (izjema: `js/world-rbring.js` s Štajersko, Bathurstom, Crystal Palace in Riom). Spori so nastajali v skupnih seznamih, ki jih vsaka nova proga dopolni, pogosto v isti dolgi vrstici:
 
-| Datoteka | Seznam | Rešitev |
+| Datoteka | Seznam | Zdaj |
 |---|---|---|
 | `js/render.js` | `THEMES`, `SPLIT` (svetloba, megla, nebo, barvni ton) | `look` (in `look.split`) v datoteki proge |
 | `js/game.js` | `EN_NAME` (ime v komentarju), `RAIN_P` (dež v naslovni predstavitvi) | `say`, `rainP` v datoteki proge |
@@ -15,20 +15,39 @@ Svet prav prog je že v `js/world-<tema>.js` (izjema: `js/world-rbring.js` s Št
 | `js/world-zivali.js` | `ZIV` (živali in predmeti ob cesti) | `zivali` v datoteki proge |
 | `js/world-rbring.js` | lastni deli Bathursta, Crystal Palace in Ria | `js/world-bathurst.js`, `js/world-cpalace.js`, `js/world-rio.js` |
 
+## Kako je zdaj
+
+- **Nastavitve**: v `js/tracks/<id>.js` takoj za `TRACK_DEFS.push({` je blok z oznako orodja (`look`, `say`, `rainP`, `cloudTh`, `roadWear`, `grassNat`, `lawn`, `bbClassic`, `zivali`). Datoteke prog se naložijo pred `js/world.js`, `js/render.js` in `js/game.js`; za vsakim skupnim seznamom je ustvarjena vrstica, ki ga ob nalaganju dopolni iz `TRACK_DEFS` (vnos v seznamu ima prednost). V seznamih so le testne proge. Različica proge (`variantOf`, npr. `pikesg`) podeduje polja svoje proge.
+- **Mreže med gradnjami**: `World.keep('PK', 'pikes')` v `js/world-pikes.js` (pred `World.ext.pikes = …`) pove, da svet obdrži mrežo `API.PK` (ali `NR`) med svojimi gradnjami; `World.build` sprosti mreže drugih svetov (tabela `KEEP` v `js/world.js`).
+- **`js/world-rbring.js`** je skupni graditelj Štajerske in treh prog (`buildRbring`, `rb*`, `RB_LOOK.rbring`). Lastni deli Bathursta, Ria in Crystal Palace so v `js/world-bathurst.js`, `js/world-rio.js`, `js/world-cpalace.js`, naloženih pred njim (`index.html`): kar uporabljajo graditelj, World in drugi svetovi, dajo v `World.api`, videz (vnos tabele `RB_LOOK`) v `API.rbLook`; graditelj jih vzame z ustvarjenima vrsticama `const { … } = API;` in `Object.assign(RB_LOOK, API.rbLook);`. `World.ext.rio` itd. pokliče `World.ext.rbring`. Del je stavek na vrhu datoteke (zamik 2) s komentarjem pred njim; progi pripada po imenu (`BT_*`, `bt*`, `au*` Bathurst; `RIO_*`, `rio*` Rio; `CP_*`, `CPK`, `cp*` Crystal Palace; tabela `WSPLIT` v orodju).
+
 ## Orodje `tools/razdeli-proge.mjs`
 
-Premike podatkov (vrstice zgornjih seznamov v datoteke prog) naredi orodje, zato se razdelitev ob spajanju lahko ponovi na svežem `main`:
+Premike naredi orodje, zato se razdelitev ob spajanju lahko ponovi na svežem `main`:
 
-- `node tools/razdeli-proge.mjs` premakne vnose pravih prog iz skupnih seznamov v `js/tracks/<id>.js` (na začetek opisa proge, takoj za `TRACK_DEFS.push(`), testne pustí. Ponovni zagon ne spremeni ničesar.
-- `node tools/razdeli-proge.mjs --check` samo preveri (test `tests/razdelitev.test.js`): vnos prave proge v skupnem seznamu je napaka.
+- `node tools/razdeli-proge.mjs`: vnose pravih prog iz skupnih seznamov premakne v datoteke prog, vrstice `if (THEME !== …) API.X = null` v `World.keep`, lastne dele Bathursta, Ria in Crystal Palace iz `js/world-rbring.js` v njihove datoteke (in vpiše njihove `<script>` v `index.html`). Enaka vrednost na obeh mestih gre tiho; ponovni zagon ne spremeni ničesar.
+- `--check`: samo preveri (izhod 1, če bi kaj spremenilo; test `tests/razdelitev.test.js`).
+- **Razlika** (vnos v seznamu ali del v `js/world-rbring.js` drugačen kot v datoteki proge): orodje ne spremeni ničesar, izpiše razlike in konča z izhodom 2. Izbira: `--seznam` (vrednost iz seznama oz. `js/world-rbring.js`) ali `--proga` (iz datoteke proge oz. njenega dela), za posamezne proge `--seznam=spa,rio --proga=bathurst`.
+- Na koncu preveri, da ima vsaka proga po dopolnitvi seznamov enake vrednosti kot prej (razen izbranih), in se ustavi, če bi del sveta uporabljal ime iz `js/world-rbring.js`, ki ni v `World.api`, ali del druge proge (tak primer razdeli ročno).
 
-## Spajanje z vejo, ki še dodaja v stare sezname
+## Spajanje z vejo izpred razdelitve
 
-Spor v vrstici skupnega seznama (npr. `const EN_NAME = {…}`): obdrži stran z vnosi (stara oblika, vse proge), nato `node tools/razdeli-proge.mjs`, ki vnose premakne v datoteke prog. Nova proga po razdelitvi ničesar ne dopisuje v te sezname: polja da v svojo datoteko (`tools/nova-proga.mjs` to že dela).
+Veja, ki je nastala pred razdelitvijo (npr. #289 ljudje ob progi, »Grafika 02 zastavice«), ob spajanju svežega `main` dobi spore tam, kjer je razdelitev vnose ali dele premaknila, veja pa jih je spremenila ali dodala:
+
+1. **Seznam** (`const EN_NAME = {…}`, `THEMES`, `SPLIT`, `ZIV`, `GRASS_NAT` …) ali **vrstice `if (THEME !== …) API.X = null`** v `World.build`: obdrži stran veje (stara oblika z vsemi vnosi) in ustvarjene vrstice `main` (dopolnitev pod seznamom, `for (const k in KEEP)`), če so v sporu.
+2. **`js/world-rbring.js`**: kjer je `main` kodo premaknil v `world-bathurst.js`, `world-rio.js` ali `world-cpalace.js`, veja pa jo je spremenila ali dodala, obdrži stran veje (koda ostane v `js/world-rbring.js`); druge spore v tej datoteki razreši kot običajno. Ne vzemi cele datoteke ene strani: spremembe skupnega graditelja na `main` bi se izgubile.
+3. **`js/tracks/<id>.js`**: obdrži obe strani (blok z oznako orodja in spremembe veje). **`index.html`**: `node tools/stamp.js --merge`.
+4. `node tools/razdeli-proge.mjs`. Ob razliki (izhod 2) izberi po progah: za proge, ki jih je spremenila veja (`git diff $(git merge-base HEAD MERGE_HEAD) HEAD -- <datoteka>` pokaže njene spremembe seznama), `--seznam=<id>,…`; za ostale `--proga` (vrednost z `main`). Če sta isto stvar spremenili obe strani, jo uredi ročno v datoteki proge in orodje poženi znova.
+5. `node tools/razdeli-proge.mjs --check` in povezani testi (`tests/razdelitev.test.js`, `browser/world.test.mjs` za spremenjene proge).
+
+Nova proga po razdelitvi ničesar ne dopisuje v skupne sezname: polja da v svojo datoteko (`tools/nova-proga.mjs` to že dela, ime za komentatorja kot `say`).
+
+Preverjeno: kopija s staro obliko `js/render.js`, `js/game.js`, `js/world.js` (seznami, vrstice sproščanja), `js/world-zivali.js` in `js/world-rbring.js` izpred razdelitve ob obstoječih datotekah prog in delov se z orodjem vrne v enako drevo bajt za bajtom.
 
 ## Stanje
 
-- [ ] orodje in premik podatkov (`look`, `say`, `rainP`, polja sveta, `zivali`)
-- [ ] `World.keep` namesto seznamov v `build()`
-- [ ] `js/world-rbring.js` razdeljen po progah
-- [ ] testi: `world.test.mjs` (odtis sveta vseh prog), `perf.test.mjs`, povezani testi
+- [x] orodje in premik podatkov (`look`, `say`, `rainP`, polja sveta, `zivali`)
+- [x] `World.keep` namesto seznamov v `build()`
+- [x] `js/world-rbring.js` razdeljen po progah
+- [x] testi: `tests/razdelitev.test.js`; odtis sveta (`world.test.mjs`) za Štajersko, Bathurst, Crystal Palace in Rio enak referenci
+- [ ] povezani testi (`npm run test:related`), `perf.test.mjs` za proge z deljenim graditeljem
