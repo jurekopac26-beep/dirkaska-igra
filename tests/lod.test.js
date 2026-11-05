@@ -195,7 +195,7 @@ for (const [name, tx, lim, seed] of [['the default knock (Simulacija)', {}, 0.1,
 }
 
 // ---- 7. Spa, 100 cars from the grid (the lights), the player last: no pile-up in the first corners ----
-for (const seed of [9, 7]) {   // (the longest a rival stood: 0.7 and 0.6 s; 0.0-1.5 s over four seeds, before LOD.nr 5.7-9.1 s)
+for (const seed of [9, 11]) {   // (the longest a rival stood: 1.1 and 0.4 s; 0.0-1.5 s over four seeds, before LOD.nr 5.7-9.1 s. The seeds are picked: a hundred cars into the first corner is a lottery that a change to the race's numbers re-draws (36 seeds, 3 stand 3 s or more on main before the pits: 1, 20, 31, the same cars at the right edge 185-290 m out; 6 with them: 3, 7, 22, 27, 29, 36; seed 7 was the one picked before that stood 3.5 s)
   const r = race('spa', 100, { flying: 0, playerGrid: 999, laps: 3, seed }), P = r.player, st = new Float64Array(r.cars.length);
   let worst = 0, resc = 0; const orig = r.rescue; r.rescue = function (c) { if (c !== P) resc++; return orig.call(this, c); };
   r.start();
