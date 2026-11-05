@@ -134,7 +134,7 @@ Opisi končanih sklopov 1–20 (časi, vsebina, testi, opombe) so v `docs/arhiv/
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je. V istem koraku se izbriše tudi stikalo `?voznja` za tekmece po igralčevi vožnji (odločitev uporabnika 5. 11. 2026; pred izbrisom vprašaj, ali ostanejo vklopljeni za vse; `docs/ai-po-tvoji-liniji.md`).
 
 ## Skupaj
 
