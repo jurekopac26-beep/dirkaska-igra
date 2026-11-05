@@ -15,8 +15,8 @@ Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verz
 |---|---|---|
 | a | Model: črna kabina, dve zrcalni cisterni, dolly | narejeno |
 | b | Fizika dveh zgibov (sedlo + dolly): lomljenje, potiskanje, škarje, trki, padec | narejeno (odprti vprašanji spodaj) |
-| c | Tekmeci in promet z dolgim vozilom, kamera, posnetek, več telefonov | narejeno (duh 9 kanalov; brskalniški test vlaka manjka) |
-| d | Testi vozila, obremenitev telefona, README, reference | delno: `tests/zrcalni.test.js`, flota, README, kazalo; manjkata obremenitev telefona in brskalniški test vlaka |
+| c | Tekmeci in promet z dolgim vozilom, kamera, posnetek, več telefonov | narejeno (duh 9 kanalov; brskalniški test z drugo cisterno) |
+| d | Testi vozila, obremenitev telefona, README, reference | narejeno: `tests/zrcalni.test.js`, `tests/browser/zrcalni.test.mjs`, flota z obremenitvijo, README, kazalo, `docs/igra.md` |
 
 TITAN s cisterno (#304) mora delovati enako (njegove reference se ne smejo spremeniti).
 
@@ -40,7 +40,15 @@ Sproti zapisano, da je delo varno ob nenadni ustavitvi računa. Vse spodaj je po
 | Caracoles | cs | 2351 m | 2351 m | 65° / 39° | 0 | 2 |
 | Caracoles | nova | 2376 m | 2376 m | 44° / 36° | 0 | 2 |
 
-Na desetih drugih progah zgib 2 doseže mejo samo v serpentinah s polmerom 7–15 m pri 25–42 km/h (Tianmen, Pikes, Harju, Katu, Spa La Source): oba zgiba sta zložena v isto smer, cisterna 2 skoraj ne drsi. To je geometrija 25 m dolgega vlaka, ne nihanje.
+Na desetih drugih progah zgib 2 doseže mejo samo v serpentinah s polmerom 7–15 m pri 25–42 km/h (Tianmen, Pikes, Harju, Katu, Spa La Source): oba zgiba sta zložena v isto smer, cisterna 2 skoraj ne drsi. To je geometrija 28 m dolgega vlaka, ne nihanje.
+
+**Obremenitev telefona** (`FLEET_ONLY=zrcalni,cisterna node tests/browser/fleet.test.mjs`, 41/41; preverjanje »each vehicle's own field« vsebuje vlak samo od sebe): polje treh vlakov, vsi narisani v celoti, Jezero 142 klicev in 594 tisoč oglišč (meja 240 in 673 tisoč), z razbitino 40 kosov v proračunu; Nürburgring 145 klicev in 377 tisoč (meja 198 in 393 tisoč). Vlak sam: igralec 22 klicev, tekmec 17 (prikolica 4 klice več na cisterno). Proge z navadnim poljem: brez spremembe (vlak ni v privzetem polju, `perf.json` ostane).
+
+**Brskalniški test** (`tests/browser/zrcalni.test.mjs`, 17/17): kamera ima v kadru tudi rep druge cisterne (24 točk: obe cisterni in vlačilec; rep pri −0,84 do −0,95 višine zaslona), posnetek hrani in vrne oba kota (9. število), »Nazaj na dirko« vrne obe cisterni, duh nariše drugo cisterno (`v.tlG2`, otrok skupine prve) na sedlu dollyja (2,8 cm od njega, kot natančen na 0,0001 rad).
+
+**Opis**: `docs/igra.md` (Tovornjaki: vrstica in razdelek »Zrcalni cestni vlak«, polje 3). Dolžina v opisu vozila popravljena s 25 na 28 m (od nosu do repa 28,25 m; `js/cars/zrcalni.js`, `js/lang.js`).
+
+**Cisterna 2 in lasten vlačilec**: trka ne računamo, ker ga zgiba ne dopustita. Najbližja točka cisterne 2 je vsaj ~11 m od sedla 1 (12,6 m do sedla 2, manj 0,9 m nosu in pol širine), vlačilec seže največ 5,3 m od sedla 1; pri zgibih do 83° in 57° v katerokoli smer se ne dotakneta.
 
 ## Stanje in predaja (5. 11. 2026, seja session_01Ck3D3SdW9ZXQFowWCQHVjR)
 Veja `cisterna/zrcalni-vlak`, osnutek #322 (na `main` za #304). Vse je potisnjeno.
@@ -94,17 +102,17 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
 - `lang`, `shards`, `node tools/stamp.js --check`;
 - brskalniški testi: glej »Brskalniški testi« spodaj.
 
-**Kaj manjka (seja v nedeljo):**
-1. `tests/browser/zrcalni.test.mjs` je kopija `tests/browser/cisterna.test.mjs` za vlak (16/16 lokalno). Dodaj preverjanja druge cisterne: v kameri njen rep, v posnetku njen kot, pri duhu njeno skupino `v.tlG2` na sedlu dollyja.
-2. Obremenitev telefona z vlakom v polju (`perf`, polje `fieldN 3`) in vpis v test.
-3. README (»Novo vozilo«: `trailer.next`, `look.mirror`) in `docs/kazalo.md` sta dopolnjena. Manjka opis vlaka v `docs/igra.md` (vozila).
-4. **Nihanje druge cisterne** (najpomembnejše). Primer: Bathurst, cs, tekmec M. Kovač, 55–59 s, s ≈ 1340–1430. Med zaviranjem v ovinek s 101 na 77 km/h zgib 2 zraste z 0 na −35° in zaniha na +57° (meja), nato upada (33° pri 59,2 s). Zgib 1 ostane med −20° in +7°. Cisterna 2 zaide 7,4 m od sredine ceste; trka ni bilo.
+**Kaj je manjkalo (seja v nedeljo; 1–6 zdaj rešeno, glej »Nadaljevanje« zgoraj):**
+1. *(rešeno)* `tests/browser/zrcalni.test.mjs` je kopija `tests/browser/cisterna.test.mjs` za vlak (16/16 lokalno). Dodaj preverjanja druge cisterne: v kameri njen rep, v posnetku njen kot, pri duhu njeno skupino `v.tlG2` na sedlu dollyja.
+2. *(rešeno)* Obremenitev telefona z vlakom v polju (`perf`, polje `fieldN 3`) in vpis v test.
+3. *(rešeno)* README (»Novo vozilo«: `trailer.next`, `look.mirror`) in `docs/kazalo.md` sta dopolnjena. Manjka opis vlaka v `docs/igra.md` (vozila).
+4. *(rešeno)* **Nihanje druge cisterne** (najpomembnejše). Primer: Bathurst, cs, tekmec M. Kovač, 55–59 s, s ≈ 1340–1430. Med zaviranjem v ovinek s 101 na 77 km/h zgib 2 zraste z 0 na −35° in zaniha na +57° (meja), nato upada (33° pri 59,2 s). Zgib 1 ostane med −20° in +7°. Cisterna 2 zaide 7,4 m od sredine ceste; trka ni bilo.
    - Gre za slabo dušeno nihanje zadnjega priklopnika (»rearward amplification«).
    - Na Vršiču je zgib 2 na meji v serpentinah (43–59 km/h, zgib 1 do −27°), kar je verjetno pravilno.
    - Poskusi dušenje zasuka na sedlu dollyja ali v `tl2Tyre` (oprijem in togost gum dollyja) in razporeditev teže (`T.k2`, `T.xt`). Meje `lim` ne višaj, dokler nihanje ni dušeno.
    - Merilni skripti sta v predaji spodaj (Kako testirati).
-5. Reševanje na Bathurstu (obe fiziki) je ob štartu: 3,0 s, s = 6156, 2 km/h, `stuckT` 3 s. Težek vlak (29 t) z mreže spelje prepočasi za avtopilotov števec zastoja. Preveri speljevanje (navor in prenos pri 0 km/h) ali naj test prvih nekaj sekund ne šteje.
-6. Cisterna 2 ne trči v lasten vlačilec (pri škarjah gre skozenj). Trki z drugimi avti, cisternami in stenami delujejo.
+5. *(rešeno: mreža)* Reševanje na Bathurstu (obe fiziki) je ob štartu: 3,0 s, s = 6156, 2 km/h, `stuckT` 3 s. Težek vlak (29 t) z mreže spelje prepočasi za avtopilotov števec zastoja. Preveri speljevanje (navor in prenos pri 0 km/h) ali naj test prvih nekaj sekund ne šteje.
+6. *(ni potrebno)* Cisterna 2 ne trči v lasten vlačilec (pri škarjah gre skozenj). Trki z drugimi avti, cisternami in stenami delujejo.
 7. Celoten `npm run test:related`. Diff proti `main` vsebuje vse iz #304, zato je dolg.
 8. Po združitvi #304: spoji `main`, vpiši #322 v `docs/vrsta.md` in ga označi »Ready«, ko je med prvima dvema.
 
@@ -116,8 +124,8 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
 
 ### Brskalniški testi
 - `node tests/browser/cisterna.test.mjs` (TITAN): 16/16, enako kot prej.
-- `node tests/browser/zrcalni.test.mjs` (vlak): 16/16.
-  - Kamera: rep cisterne 1 pri −0,30 do −0,60 višine zaslona.
+- `node tests/browser/zrcalni.test.mjs` (vlak): 17/17 (prej 16/16; dodano: druga cisterna v kameri, posnetku in duhu).
+  - Kamera: rep cisterne 2 pri −0,84 do −0,95 višine zaslona.
   - Posnetek: `w` 9.
   - Duh: `ch` 9, n 2322.
   - Meni: vlak 28,25 m, 15 klicev risanja, 30.922 trikotnikov.

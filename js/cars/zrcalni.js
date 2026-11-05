@@ -123,14 +123,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
 
   VEHICLE_DEFS.push({
     id: 'zrcalni', name: 'ZRCALNI VLAK', cat: 'tovornjaki', ord: 4, drive: 'AWD',
-    desc: 'Cestni vlak: črna kabina, dve zrcalni cisterni in dolly; dva zgiba, 25 metrov.',
+    desc: 'Cestni vlak: črna kabina, dve zrcalni cisterni in dolly; dva zgiba, 28 metrov.',
     phys: { mass: 7000, a: 2, b: 2.2, kI: 1.75, kw: 1000, redline: 2600, idle: 600, gears: [6, 4.7, 3.7, 2.95, 2.4, 1.95, 1.6, 1.33, 1.13, 1], final: 4.31, rw: 0.65, cDrag: 1.0, len: 6.3, wid: 2.5, steerMax: 0.55,
       tracK: 0.55, brakeK: 0.7, spinK: 0.4, loose: 1.3, looseDrag: 0.4, landV: 13, dmgK: 0.55, vLim: 140, sway: 1.6 },
     arc: { amax: 1.0, kv: 1.8, rmin: 9 },   // (as the TITAN CISTERNA's: what its axles hold with the kingpin's push, tlHoldSet)
     csp: { bx: 0.12, coast: -0.07, thr: -0.015, liftP: 0, pwr: 0.03, out: 1.1, turn: 0.7, w: 0.9, tv: 1.25 },   // (the KAMEN's AWD layer)
     stats: { power: 10, grip: 1, weight: 1, drift: 10 },
     expect: { t100: [13.32, 14.72], vmax: [133, 141], latG: [1.18, 1.31], d100: [42.0, 46.4] },   // (the train: tests/fleet.test.js, its envelope 'vlak')
-    price: 90000, pk: 'open', field: ['zrcalni'], fieldN: 3,   // (3 of its own, no others: a 25 m train each, the phone's budget)
+    price: 90000, pk: 'open', field: ['zrcalni'], fieldN: 3,   // (3 of its own, no others: a 28 m train each, the phone's budget)
     snd: { kind: 'diesel', hz: 0.8, turbo: 0.75, loud: 1.4 },
     partNames: { headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamps', tailR: 'right tail lamps', wiperFront: 'windscreen wipers' },
     parts: { set: 'truck', ht: 3.3, y0: 0.75,
