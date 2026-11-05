@@ -89,9 +89,10 @@
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/jezero.js": "16733742a2d9e030",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
-  "js/tracks/rio.js": "a19bd3cb46cbd100",
+  "js/tracks/rio.js": "c77e45db790ffa2f",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
+  "js/world-rio.js": "07e265f0f1cb919e",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -165,6 +166,11 @@
    "datum": "2026-11-05",
    "proga": "rio",
    "razlog": "uporabnik 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro (rastro). Vse ostale brazilske proge prestavi v test.« Rio de Janeiro v test (PR #365), ena proga na državo"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "rio",
+   "razlog": "uporabnik 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro (rastro). Vse ostale brazilske proge prestavi v test.« Rio de Janeiro v test (PR #365), ena proga na državo; znova po spoju main z #319 (js/world-rio.js)"
   }
  ]
 }
