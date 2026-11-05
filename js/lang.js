@@ -762,6 +762,15 @@
     'Proga je čista: ugasni luči, v tem krogu greš v bokse.': 'The track is clear: switch off your lights, you go into the pits this lap.',
     'Na vrhu griča je razbit avto: počasi mimo redarjev.': 'There is a wreck at the top of the hill: slowly past the marshals.',
     'Nisi zapeljal v bokse: kolona je ostala za tabo.': 'You didn’t go into the pits: the field is still stuck behind you.',
+    // special mission 45 · Turistični vlakec (js/missions/m45.js)
+    'Turistični vlakec': 'Tourist train', 'Turistični vlakec vozi goste ob morju in po ozkem ovinku navzgor do razgledne točke.': 'The tourist train takes its guests along the sea and up a narrow bend to the viewpoint.',
+    'Pelji vlakec skozi ovinke tako, da noben vagonček ne zadene robnika, in ustavi ob razgledni točki.': 'Drive the train through the bends so that no wagon hits the kerb, and stop at the viewpoint.',
+    'Zavij široko: zadnji vagonček reže ovinek in zadene robnik.': 'Turn wide: the last wagon cuts the corner and hits the kerb.',
+    'OVINEK': 'BEND', 'ZADNJI': 'LAST WAGON', 'DESNI': 'RIGHT', 'LEVI': 'LEFT', 'NA ROBNIKU': 'ON THE KERB', 'REŽE OVINEK': 'CUTTING IN', 'NA CESTI': 'ON THE ROAD',
+    'ROBNIK!': 'KERB!', 'RAZGLED': 'VIEWPOINT', 'ustavi tukaj': 'stop here',
+    'Robnik! Vagonček je zadel robnik, potniki so poskočili.': 'Kerb! A wagon hit the kerb and the passengers jumped.', 'Potniki so prestrašeni: preveč robnikov.': 'The passengers are frightened: too many kerbs.',
+    'Zapeljal si mimo razgledne točke.': 'You drove past the viewpoint.', 'Zapeljal si mimo okvirja: zapelji vzvratno do razgleda.': 'You drove past the box: reverse back to the viewpoint.',
+    'Ustavi v rumenem okvirju ob razgledni točki.': 'Stop in the yellow box at the viewpoint.', 'Pelji mirno: potniki uživajo v razgledu.': 'Drive smoothly: the passengers are enjoying the view.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
