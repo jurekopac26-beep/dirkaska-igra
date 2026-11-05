@@ -17,7 +17,8 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 |---|---|---|
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
-| Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
+| Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
+| Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 
@@ -43,15 +44,17 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | 14 | #304 | TITAN s cisterno: prikolica s pravim fizikalnim zgibom (sklopi 1–5: fizika, AI, kamera, posnetek, duh, več telefonov, testi, obremenitev telefona) | 2 | pripravljen (seja session_01Ck3D3TnwDBsrTGSFeJMAva); povezani testi lokalno zeleni na 4a2c7c1 (spojen `main` 8ba8914), osnutek do vrste; ob vrsti nova seja po predaji (koordinacija računa 2, `docs/titan-cisterna.md`, razdelek »Stanje in predaja«); prevzame biketraveler, dokler račun stoji (predaja v opisu PR) |
 | 15 | #305 | AI po tvoji liniji, koraka 1 in 2 (vsebuje zaprti #300): orodje za meritev vožnje iz posnetkov (`tools/voznja.mjs`) in tekmeci po igralčevi vožnji (poskus na Tianmnu, vklop `?voznja=1`; `js/core.js`, `js/data/voznja.js`, 1 vrstica v `js/game.js`) | 1 | pripravljen (seja session_01UuPU9AV2hPAkeSiurAK3AA); povezani testi lokalno zeleni na f8593bd, osnutek do vrste; predogled: oznaka `predogled`, `beta/305/?voznja=1`; uporabnik je poskus preizkusil |
 | 16 | #261 | nova proga Hakone, Japonska (izbrana nova proga Japonske, `docs/proge-po-drzavah.md`) | 1 | pripravljen (seja session_01UuPU9DirUpzFVs48Vkgx5Z); zelen na GitHubu na 6d5db4e (4. 11.), osnutek do vrste; ob vrsti: spoj `main` (spori v referencah world/perf/sim/races, menu-data, `js/game.js`), reference Hakoneja znova, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika |
-| 17 | #153 | Medvode, Slovenija: proga v pravi širini po risbah uporabnika (krožišča K1–K4, odseki ob startu) | 1 | pripravljen (seja session_01UuPU9BT6dySw4yn5KSRQFx); zelen na GitHubu na ff57545, osnutek do vrste; ob vrsti: spoj svežega `main`, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika, ne čaka več na zadržani #246 |
+| 17 | #153 | Medvode, Slovenija: proga v pravi širini po risbah uporabnika (krožišča K1–K4, odseki ob startu) | 1 | pripravljen (seja session_01UuPU9BT6dySw4yn5KSRQFx); zelen na GitHubu na ff57545, osnutek do vrste; ob vrsti: spoj svežega `main`, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika, ne čaka več na zadržani #246; po spoju `main` preveri prizore iz #289 v Zbiljah (ribiči ob jezeru, kmetija), da niso na razširjeni cesti ali v krožiščih |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani). #246 preleti (račun 3; odločitev uporabnika 5. 11.: počakajo, dokler ne bo izbrana ena proga na državo; predaja v opisu PR).
 
-Prevzem zdaj (4. 11. 2026): račun, ki stoji od čet. 5. 11. ~13:00 do ned. 8. 11. 10:00, svoje končane pull requeste vpiše v vrsto s pripisom »prevzame račun 3«. Račun 3 jih do pet. 6. 11. 03:00 samo pripelje na `main` (lahko delo), potem tudi popravlja.
+Prevzem zdaj (dogovor 4. 11. 2026, usklajeno 5. 11.): račun 2 (jure.kopac26) stoji od čet. 5. 11. ~13:00 do ned. 8. 11. 10:00. Njegove končane pull requeste (#284 + #296, #283, #304 in vsak, ki ga do ustavitve vpiše v vrsto, npr. #322) vodi na `main` samo račun 1 (biketraveler, seja »Prevzem PR-jev računa jure.kopac26«, session_01UuPU9Afm7stdrEXFjiTv5Y), kot pišejo vrstice s pripisom »prevzame biketraveler«; račun 3 jih ne vodi, da ne delamo dvojno. Od ned. 8. 11. 10:00 jih spet vodi račun 2.
+
+Usklajevanje med računi (5. 11. 2026, da ne delamo dvojno): pred začetkom teme ali potiskom na tujo vejo vsaka seja pogleda to datoteko in odprte pull requeste vseh računov. Stiki zdaj: (1) #289 (račun 3) in #153 (račun 1) spreminjata okolico Medvod (prizori v Zbiljah / širina ceste in krožišča K1–K4): #153 gre na `main` za #289 in po spoju preveri prizore. (2) Redčenje gozda (račun 1) se začne po #319 (račun 3). (3) Nove točke boksov dela seja BOKSI računa 1 (vrstica v Načrtovano), #284 + #296 pa prevzem računa 1.
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: #298 most na novi mapi (zgrajen na veji #293, gre na `main` po #293). Teme: redčenje gozda na pravih progah (po Hakoneju).
-- Račun 2: #202 fizika.
+- Račun 2: #202 fizika, #322 zrcalni cestni vlak (osnutek z dne 5. 11.).
 
 Vsi so osnutki (4. 11. 2026, pravilo »Osnutek do vrste«). Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj in ostane osnutek, dokler ne pride med prva dva.
