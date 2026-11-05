@@ -737,6 +737,17 @@
     'Meteorit je tvoj!': 'The meteorite is yours!', 'Tekmec je pobral meteorit!': 'A rival has picked up a meteorite!', 'Pazi, udar! Meteorit pada v rumeni krog.': 'Look out, impact! The meteorite is falling into the yellow ring.',
     'Ustavi se ob ohlajenem meteoritu in ga poberi.': 'Stop by the cooled meteorite to pick it up.', 'Krog pokaže, kam bo padel meteorit.': 'The ring shows where the meteorite will fall.',
     'Tekmeci so pobrali preveč meteoritov.': 'The rivals have picked up too many meteorites.',
+    'Božična noč': 'Christmas night', 'Božična noč v zasneženih vaseh. Na kesonu je dvanajst daril.': 'Christmas night in the snowy villages. Twelve presents ride in the back of the pickup.',
+    'Med vožnjo vrzi darila v zlate kroge pred hišami z lučkami, preden odbije polnoč. Vsaj osem jih mora pristati v krogu.': 'As you drive, throw the presents into the golden circles in front of the houses with lights before midnight strikes. At least eight have to land in a circle.',
+    'Vrzi darilo v zlati krog pred vrati, ne v okno.': 'Throw the present into the golden circle by the door, not through the window.',
+    'TARČA': 'TARGET', 'DARILA': 'PRESENTS', 'ZADETKI V KROG': 'IN THE CIRCLE', 'VRZI': 'THROW', 'TU PADE': 'LANDS HERE', 'HIŠA Z LUČKAMI': 'HOUSE WITH LIGHTS', 'ZADETEK': 'HIT',
+    'Zadetek! Darilo je pred vrati.': 'A hit! The present is at the door.', 'V okno! Meri v zlati krog pred vrati.': 'Through the window! Aim for the golden circle by the door.',
+    'Prekratko: darilo je obležalo v snegu.': 'Too short: the present is lying in the snow.', 'Predolgo: darilo je obležalo v snegu.': 'Too long: the present is lying in the snow.',
+    'Hišo si zgrešil: ostala je brez darila.': 'You missed a house: it got no present.', 'Drži VRZI dlje: dlje držiš, dlje leti.': 'Hold THROW longer: the longer you hold it, the farther the present flies.',
+    'Spusti! Pika je v krogu.': 'Let go! The dot is in the circle.', 'Drži še: pika mora v zlati krog.': 'Keep holding: the dot has to reach the golden circle.', 'Predaleč: spusti prej.': 'Too far: let go sooner.',
+    'Drži VRZI: dlje držiš, dlje leti. Spusti, ko je pika v krogu.': 'Hold THROW: the longer you hold it, the farther the present flies. Let go when the dot is in the circle.',
+    'Pelji do naslednje hiše z lučkami.': 'Drive on to the next house with lights.', 'Premalo daril je pristalo v zlatih krogih.': 'Too few presents landed in the golden circles.',
+    'Odbila je polnoč, preden so bila darila raznesena.': 'Midnight struck before the presents were delivered.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
