@@ -99,4 +99,7 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
   - Posnetek: `w` 9.
   - Duh: `ch` 9, n 2322.
   - Meni: vlak 28,25 m, 15 klicev risanja, 30.922 trikotnikov.
-- `FLEET_ONLY=zrcalni,cisterna node tests/browser/fleet.test.mjs`: garaža zdaj v redu (prej je vlak segal čez ploščo), razbitina in popravilo v redu.
+- `FLEET_ONLY=zrcalni,cisterna node tests/browser/fleet.test.mjs`:
+  - Garaža je zdaj v redu (prej je vlak segal čez ploščo). Razbitina in popravilo sta v redu.
+  - Strošek polja treh vlakov je bil na Nürburgringu za las nad mejo oglišč 393k. Tekmeci imajo zato lažje obroče (vsak drugi, brez stranic, `B.hoop` `flat`).
+  - Zdaj: Nürburgring 163 klicev in 387k oglišč, Jezero 160 klicev in 603k (TITAN 377k in 594k, kot prej).

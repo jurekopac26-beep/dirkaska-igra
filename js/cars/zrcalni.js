@@ -83,7 +83,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     if (!sh) for (const x of [-0.3, -5.0, -9.6]) B.box(x, 1.54, 0, 0.3, 0.16, 1.7, DK);
     // the tank: polished, its hoops, the covers and the catwalk with its railing on top
     B.tank(TK.x0, TK.x1, TK.yc, TK.ry, TK.rz, { n: [32, 16, 10][lo], uv: PIC.skin, end: PIC.end, dome: TK.dome });
-    if (!sh) for (const x of HOOPS) B.hoop(x, TK.yc, TK.ry, TK.rz, full ? 0.1 : 0.14, 0.03, SHINE, { n: full ? 32 : 16 });
+    if (!sh) for (const x of full ? HOOPS : HOOPS.filter((_, i) => i % 2 === 0)) B.hoop(x, TK.yc, TK.ry, TK.rz, full ? 0.1 : 0.14, 0.03, SHINE, { n: full ? 32 : 16, flat: !full });   // (a rival's: every other hoop, its outer face only: the phone's budget of a field of trains, browser/fleet)
     const top = TK.yc + TK.ry;
     if (!sh) {
       B.box(-4.8, top + 0.03, 0, 9.2, 0.04, 0.56, 0x5d6168, { face: '+y', uv: PIC.grate });

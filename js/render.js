@@ -4664,7 +4664,8 @@ const Render = (function () {
           }
         }
       },
-      // a hoop round the tank at x: w wide, t proud of it (the tank's yc, ry, rz; o.n its sides, as the tank's)
+      // a hoop round the tank at x: w wide, t proud of it (the tank's yc, ry, rz; o.n its sides, as the tank's; o.flat: its outer face only, no
+      // sides: a light look's, a third of the vertices)
       hoop(x, yc, ry, rz, w, t, k, o) {
         const K = col(k), n = (o && o.n) || 32, xa = x - w / 2, xb = x + w / 2;
         for (let i = 0; i < n; i++) {
@@ -4672,7 +4673,7 @@ const Render = (function () {
           const o0 = ell(0, yc, ry + t, rz + t, f0, 1), o1 = ell(0, yc, ry + t, rz + t, f1, 1), i0 = ell(0, yc, ry, rz, f0, 1), i1 = ell(0, yc, ry, rz, f1, 1);
           const A = (p, xx) => [xx, p[1], p[2]];
           tri(A(o0, xa), A(o1, xa), A(o1, xb), n0, n1, n1, K); tri(A(o0, xa), A(o1, xb), A(o0, xb), n0, n1, n0, K);
-          for (const [xx, s] of [[xa, -1], [xb, 1]]) quad(A(i0, xx), A(i1, xx), A(o1, xx), A(o0, xx), [s, 0, 0], K);
+          if (!(o && o.flat)) for (const [xx, s] of [[xa, -1], [xb, 1]]) quad(A(i0, xx), A(i1, xx), A(o1, xx), A(o0, xx), [s, 0, 0], K);
         }
       },
       // a tail lamp facing back (-x): its middle, its height and width; lit with the tractor's (its own mesh)
