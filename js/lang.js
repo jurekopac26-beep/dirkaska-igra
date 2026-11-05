@@ -503,7 +503,7 @@
     'Rdeče čeljusti': 'Red calipers', 'Rumene čeljusti': 'Yellow calipers', 'Zlate, karbonski diski': 'Gold calipers, carbon discs', 'Spojler, spodnja ustnica': 'Spoiler, front lip', 'Zadnje krilo': 'Rear wing', 'Krilo GT, krilca, pragovi': 'GT wing, dive planes, side skirts',
     /* ---- the special missions (js/missions.js) ---- */
     'Zmanjkalo je časa.': 'Out of time.', 'MISIJA NEUSPELA': 'MISSION FAILED', 'MISIJA {0}': 'MISSION {0}', 'Najboljši': 'Best', 'Ponovi': 'Again', 'Misije': 'Missions',
-    'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
+    'NOVA': 'NEW', 'Posebne misije': 'Special missions', 'Gasilci': 'Fire brigade', 'Reševalci': 'Rescue', 'Tovor': 'Cargo', 'Na cesti': 'On the road', 'Divjina': 'The wild', 'Druge misije': 'Other missions', 'Zapri': 'Close', 'Misije so v izdelavi.': 'The missions are being made.', 'Avto je preveč poškodovan.': 'The car is too badly damaged.',
     'DO CILJA': 'TO THE FINISH', 'AVTO': 'CAR',
     'Srce v hladilni torbi': 'A heart in the cool box', 'Ponoči moraš čez hribe pripeljati srce za presaditev. Pred tabo vozi policija.': 'At night you must take a heart for a transplant over the hills. The police drive ahead of you.',
     'Za policijo dostavi organ v bolnišnico, dokler je hladen.': 'Follow the police and deliver the organ to the hospital while it is still cold.',

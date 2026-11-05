@@ -29,6 +29,16 @@ for (const d of M.DEFS) {
   check(`mission ${d.id}: the track's name ("Kraj, Država")`, /, /.test(M.placeOf(d)), M.placeOf(d));
 }
 
+// the six garages by trade (docs/misije.md, Odločitve 1): 33 missions, each in one garage, in the user's order (easiest first)
+const GAR = { gasilci: '01,49,46,47', resevalci: '06,02,35,19,48,37', tovor: '50,39,07,43,51,52,54,09', zima: '29,33,17,53,30', cesta: '26,34,04,45,40', divjina: '10,55,08,23,11' };
+check('garages: the six by trade, in the user\'s order', M.GARAGES.map(g => g.id + ':' + g.ids.join()).join(' ') === Object.keys(GAR).map(k => k + ':' + GAR[k]).join(' '), M.GARAGES.map(g => g.id).join());
+const allG = M.GARAGES.flatMap(g => g.ids);
+check('garages: 33 missions, none twice', allG.length === 33 && new Set(allG).size === 33, String(allG.length));
+const noG = M.DEFS.filter(d => !d.test && !M.garageOf(d.id)).map(d => d.id);
+check('garages: every mission in the game is in a garage', !noG.length, noG.join());
+const gEn = M.GARAGES.map(g => g.name).concat(['Druge misije']).filter(s => !has(s));
+check('garages: their names in English', !gEn.length, gEn.join());
+
 // the run
 const race = () => ({ player: { finished: false, dist: 0, dmg: 0 }, track: { len: 5000, raceLen: 4000 } });
 const def = { id: 't1', title: 'T', limit: 10, stars: [5, 8], rows: [], step: null };
