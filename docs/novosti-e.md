@@ -1,6 +1,6 @@
-# Novosti E: videz avta povsod in kratek beg pred policijo
+# Novosti E: videz avta povsod in beg pred policijo s prijatelji
 
-Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE SEJE 2«, `session_01WbgGzv4TzuAXEWDMgtBJpF`; načrt je napisala seja `session_01WbgGzv9AmeVnfowhnJKRRN`). Kodo pišemo šele po odgovorih na strani Odločitve 3 (vprašanja `videz-1`, `videz-2`, `beg-1`, razdelek Odločitve). Obe temi sta v `docs/vrsta.md` (Načrtovano, račun 3): pred novimi progami. Videz pride po #297 (garaža, račun 1), beg pa po #250 (Zabava). Vsaka novost ima svojo sejo (Opus), svojo vejo in en pull request.
+Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE SEJE 2«, `session_01WbgGzv4TzuAXEWDMgtBJpF`; načrt je napisala seja `session_01WbgGzv9AmeVnfowhnJKRRN`). Kodo pišemo šele po odgovorih na strani Odločitve 3 (vprašanja `videz-1`, `videz-2`, `beg-1`, razdelek Odločitve). Obe temi sta v `docs/vrsta.md` (Načrtovano, račun 3): pred novimi progami. Videz pride po #297 (garaža, račun 1). Za beg je uporabnik 5. 11. izbral beg s prijatelji (`beg-1` = 3): B1 in B2 se delata že zdaj, drugo po #250 (Zabava). Vsaka novost ima svojo sejo (Opus), svojo vejo in en pull request.
 
 ## Kaj že obstaja (pregled 5. 11. 2026)
 
@@ -19,10 +19,10 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 | V posnetku | posnetek po dirki: avti iz dirke. Posnetek iz datoteke (`.rrp`, `rrpOf` / `rrpOpen`) ima samo barvo in številko | `js/game.js` |
 | Prijatelji | vidijo samo tvojo barvo (indeks) in številko (`meInfo`, `opts.remote`) | `js/game.js`, `js/core.js` `Race` |
 
-**Beg pred policijo: cel način že obstaja.** To je *Police chase* v *Single race* (`modes: [… 'police']`) na 17 odprtih cestah s prometom; 7 ameriških (`baldy`, `beartooth`, `bigsur`, `maunakea`, `mulholland`, `palomar`, `uncompahgre`) po odločitvi uporabnika 5. 11. 2026 postane testnih in zamrznjenih (#293, #355), pravih ostane 10. Ima kontrolno točko, pregon s 4–6 patruljami in motoristi, ježke, zapore, helikopter, zasede, civilni avto, hlode, vročino (zvezdice), policijski radio in seznam prekrškov. V karieri da »Nagrado za pobeg«, ima dosežek *Neulovljiv* in rekorde po cesti (`js/core.js` `Police`, `js/game.js` `finishPolice`, test `tests/police.test.js`). Konča se z aretacijo, s skrivališčem v stavbi na vrhu (Vršič) ali čez cilj. Na novi mapi so še policijske misije (`js/nvmenu.js`). Novo bi bilo samo dvoje: **časovna omejitev 3:00** s pregonom od štarta (zrcalno kot »Ti loviš« iz #250) ter Sani, ki promet ima, pregona pa ne (Moki postane testna proga in ostane brez).
+**Beg pred policijo: cel način že obstaja.** To je *Police chase* v *Single race* (`modes: [… 'police']`) na 17 odprtih cestah s prometom; 7 ameriških (`baldy`, `beartooth`, `bigsur`, `maunakea`, `mulholland`, `palomar`, `uncompahgre`) po odločitvi uporabnika 5. 11. 2026 postane testnih in zamrznjenih (#293, #355), pravih ostane 10. Ima kontrolno točko, pregon s 4–6 patruljami in motoristi, ježke, zapore, helikopter, zasede, civilni avto, hlode, vročino (zvezdice), policijski radio in seznam prekrškov. V karieri da »Nagrado za pobeg«, ima dosežek *Neulovljiv* in rekorde po cesti (`js/core.js` `Police`, `js/game.js` `finishPolice`, test `tests/police.test.js`). Konča se z aretacijo, s skrivališčem v stavbi na vrhu (Vršič) ali čez cilj. Na novi mapi so še policijske misije (`js/nvmenu.js`). Na spletu bega še ni: spletna dirka nima ne prometa ne policije. Uporabnik je 5. 11. izbral **beg s prijatelji** (`beg-1` = 3, Novost 2).
 
 ## Česa ne delamo in zakaj
-- **Nov način bega od začetka:** že obstaja (zgoraj). Dodamo samo kratko različico, če jo uporabnik izbere (`beg-1`).
+- **Nov način bega za enega igralca:** že obstaja (zgoraj). Kratke različice 3:00 in pregona na Saniju ne delamo (`beg-1` = 3).
 - **Deli na duhu** (duh, izziv s povezavo): duh je prosojen in enobarven, deli se na njem ne bi videli. Ostane barva.
 - **Nove vrste nalepk ali črt:** 16 + 16 izmišljenih je dovolj. Nalepk z imeni, znamkami ali številkami ne delamo (pravna varnost, odločitev uporabnika 30.–31. 10. 2026: brez številk in krogov v nalepkah).
 - **Učinek delov na spletu:** dirka s prijatelji ostane brez nadgradenj (pravilo igre). Prijatelji vidijo samo videz.
@@ -87,49 +87,58 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 | V5 | obremenitev, dokumenti (`docs/igra.md`, `README.md`, kazalo), spoj `main`, osnutek PR | 3 |
 | | skupaj s priporočenimi izbirami (z `videz-1` = 2 brez V4: ~15 h) | ~29 |
 
-## Novost 2: kratek beg 3:00 (če `beg-1` = 1)
+## Novost 2: beg s prijatelji (`beg-1` = 3, odločitev uporabnika 5. 11. 2026)
+
+**Cilj:** v sobi s prijatelji (2–4 telefoni) en prijatelj vozi patruljo, drugi bežijo po odprti cesti s prometom. To je *Police chase* na spletu in hkrati »Ti loviš s prijatelji« (`docs/zabava.md`, c: »s prijatelji pozneje (posebej)«). Kratke različice 3:00 za enega igralca in pregona na Saniju ne delamo.
 
 **Pravila:**
-- V načinu *Police chase* izbereš dolžino: *Whole road* (kot zdaj) ali *3 min*.
-- Pri *3 min* se pregon začne takoj, brez kontrolne točke. Prva patrulja štarta 150 m za tabo (zrcalno kot begunec v »Ti loviš«). Vse drugo je obstoječa policija (ježki, zapore, helikopter … po težavnosti).
-- Pobegneš, ko zdržiš 3:00 ali prideš do cilja. Ujamejo te po zdajšnjem pravilu: skoraj stojiš, patrulja pa je ob tebi 1,6–3 s (`POL_DIFF.bust`).
-- Odštevanje je pod ploščo **POLICIJA**.
-- Ceste: prave odprte ceste s prometom, torej 10 s policijo (`caracoles`, `chapman`, `greatalpine`, `hotham`, `iroha`, `medvode`, `mountbuller`, `rastro`, `tianmen`, `vrsic`) in Sani. Sani dobi pregon le, če policija tam vozi dobro; sicer ostane brez. Ameriške ceste razen Pikes Peaka so testne in zamrznjene (odločitev uporabnika 5. 11. 2026): izbira 3:00 je tam le prek skupne kode, njihovih datotek ne spreminjamo in testi jih preskočijo.
+- Ceste: prave odprte ceste s prometom (način `traffic`, enako kot »Ti loviš«): 10 s policijo (`caracoles`, `chapman`, `greatalpine`, `hotham`, `iroha`, `medvode`, `mountbuller`, `rastro`, `tianmen`, `vrsic`) in Sani. Testnih prog ne spreminjamo.
+- Vloge: gostitelj v sobi izbere način *Police chase* in tapne igralca, ki vozi patruljo. Privzeto se patrulja vrsti od dirke do dirke, da pride vsak na vrsto.
+- Štart: patrulja je na štartu, begunci 150 m pred njo (kot begunec v »Ti loviš«). Patrulja ima luči in sireno, promet se ji umika (`Traffic._siren`). Begunci sireno slišijo glede na razdaljo.
+- Ulov (pravilo iz »Ti loviš«, `K` v `js/zabava/lov.js`): patrulja je skupaj 5 s manj kot 15 m od begunca (dotik šteje več), merilnik počasi pada. Ulovljen begunec zapelje ob rob in obstane, do konca gleda.
+- Pobeg: begunec zdrži 3:00, pripelje do cilja ali je 10 s več kot 400 m pred patruljo.
+- Konec: ko noben begunec več ne beži. O ulovu in pobegu odloča gostitelj (kot o izločitvah v eliminaciji iz #250) in to pošlje vsem; merilnik vsak telefon prikazuje sam.
+- Rezultati: patrulja »Ujel 2 od 3«, begunci »Pobegnil« (3:00, cilj, predaleč) ali »Ulovljen po 1:42«. Najprej so pobegli, nato ulovljeni po času (dlje je bolje).
+- Promet je na vseh telefonih isti (seme gostitelja, gostota kot v begu 0,85). Trke s prometom računa vsak telefon zase.
 
 **Priklop:**
-- `js/beg.js` (nova datoteka): izbira dolžine, odštevanje, konec pri 3:00, rezultat in rekord. Narejeno je kot novost `Zabava.add` iz #250, ki je takrat že na `main`.
-- `js/core.js` `Police`: `opts.police.limit` (sekunde) in `opts.police.hot` (pregon od štarta, brez `_check`), nekaj vrstic.
-- `js/game.js`: `finishPolice` (razlog konca »3:00«) in nastavitev `S.polLen`.
-- `js/tracks/sani.js`: v `modes` se doda `'police'`. Datotek testnih prog (tudi `moki.js`) ne spreminjamo.
+- Zdaj, neodvisno od #250 (veja iz `main`):
+  - **B1, promet v spletni dirki:** gostitelj v sporočilu `setup` pošlje promet in seme. `newRace` (veja `on`) ustvari `Traffic` z istim semenom (`opts.seed` že obstaja). Promet je brez dvoboja in kazni za povožene. Spletne dirke brez tega ostanejo, kot so.
+  - **B2, patrulja prijatelja:** v `setup` je še id patrulje. Patrulja, tvoja ali prijateljeva, dobi `police` in `pol: { mode: 'chase', kind: 'car' }`. Podoba z lučmi (`polGear`) in umik prometa že obstajata. Sirena prijateljeve patrulje se ravna po razdalji (`Sfx.siren(lev, pan)`).
+- Po #250 na `main`:
+  - `js/zabava/beg.js` (nova datoteka, `Zabava.add`), način `beg` na spletu:
+    - stikalo in izbira patrulje v sobi (`ZB.room`, `ZB.netSetup`);
+    - merilnik, pobeg in konec (`K` iz `lov.js`);
+    - sporočila `zb` (`ZB.net`);
+    - rezultati (kot izpadli v eliminaciji, `ZB_OUT`).
+  - `js/lang.js`: prevodi. `index.html`: skripta.
 
-**Meni:** v `js/menu.js` celica *Police · On you* v vrstici načina *Police chase* postane izbira *Whole road* / *3 min*, kot gumb *Opponents* pri dirki. Podnaslov igre (`title-sub`) dobi »· 3 min«. Po spremembi: `node tests/browser/menu.test.mjs`.
+**Meni:** ploščica za igro s prijatelji ostane, izbira je v sobi (`buildRoom` v `js/game.js`): *Race*, *Elimination* in *Police chase*. *Police chase* je samo na cesti s prometom in v zasebni sobi (hitra igra do 22 ostane dirka). Po spremembi: `node tests/browser/menu.test.mjs`.
 
-**Nagrade:**
-- V karieri je nagrada kot za pobeg, sorazmerna prevoženi poti (`Core.careerPrize`).
-- Pobeg šteje v statistiko in za dosežek *Neulovljiv*.
-- Rekord ceste za 3:00 je ločen (najdaljša pot v 3:00, ključ `<id>-police3`).
+**Nagrade:** na spletu ni nagrad kariere in rekordov (kot pri dirki s prijatelji).
 
-**Prevodi:** *3 min*, *Whole road*, »ZDRŽI 3:00!«, »POBEGNIL SI!« in vrstice rezultata, sl/en v `js/lang.js`. Radijska sporočila policije že obstajajo.
+**Prevodi:** »PATRULJA«, »BEŽI!«, »ULOVLJEN!«, »POBEGNIL SI!«, merilnik (»ARETACIJA {0} %«, »PATRULJA {0} m«) in vrstice rezultata, sl/en v `js/lang.js`.
 
 **Testi:**
-- `tests/police.test.js`: z `limit: 180` je pri 3:00 konec s pobegom, aretacija pred tem še velja, pregon se začne od štarta (brez kontrolne točke).
-- `tests/browser/menu.test.mjs`: izbira dolžine, pokonci in ležeče.
-- `races.test.js`: beg na Saniju.
-- Golden: beg na Vršiču ostane enak.
+- B1, Node: dve dirki (dva telefona) z istim semenom in istimi avti imata po 60 s enak promet, dokler ga avti ne zadenejo. Spletna dirka brez prometa ostane enaka.
+- B2, Node: patrulja prijatelja ima podobo in promet se ji umika.
+- `tests/zabava.test.js`: ulov in pobeg z oddaljenim avtom, vrstni red patrulje, rezultati.
+- `tests/browser/online.test.mjs`: dva telefona (lokalni strežnik PeerJS), patrulja in begunec, ulov in konec na obeh.
+- Golden in obstoječe spletne dirke ostanejo enake.
 
-**Obremenitev:** nove grafike ni (iste patrulje). Pri 3:00 so patrulje že od štarta blizu, zato meritev obremenitve v begu na Vršiču (`maxCalls`, `maxKverts` pod mejo `tests/golden/perf.json`).
+**Obremenitev:** promet je enak kot v begu. Meritev v spletnem begu na Vršiču: `maxCalls` in `maxKverts` pod mejo `tests/golden/perf.json`.
 
 **Koraki in ocena ur:**
 
-| Korak | Kaj | Ure |
-|---|---|---|
-| B1 | pravila in priklop | 3 |
-| B2 | meni in rezultat | 1,5 |
-| B3 | Sani | 0,5 |
-| B4 | testi in dokumenti | 1,5 |
-| | skupaj | ~6,5 |
-
-Če uporabnik izbere `beg-1` = 3 (beg s prijatelji: en prijatelj vozi patruljo, drugi bežijo, pravilo ulova iz »Ti loviš«), je to ~14 h. Dela se po #250, skupaj z »Ti loviš s prijatelji«.
+| Korak | Kaj | Ure | Kdaj |
+|---|---|---|---|
+| B1 | promet v spletni dirki (isto seme), test | 2 | zdaj |
+| B2 | patrulja prijatelja: podoba, sirena, umik prometa | 1,5 | zdaj |
+| B3 | soba: način, izbira patrulje, vrstni red | 2,5 | po #250 |
+| B4 | ulov, pobeg, konec, rezultati (`js/zabava/beg.js`) | 3,5 | po #250 |
+| B5 | prevodi, opis v `docs/igra.md` | 1 | po #250 |
+| B6 | testi (Node, brskalnik z dvema telefonoma), obremenitev | 3,5 | po #250 |
+| | skupaj | ~14 | |
 
 ## Odločitve (stran Odločitve 3)
 
@@ -137,9 +146,9 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 |---|---|---|---|
 | `videz-1` | črte, nalepke in senčni pas na vseh avtih | 1 vsi avti, samodejno · 2 samo KOLIBRI (kot zdaj) | čaka |
 | `videz-2` | koliko barv | 1 16 barv · 2 ostane 8 · 3 poljubna barva | čaka |
-| `beg-1` | beg pred policijo že obstaja: kaj dodamo | 1 kratek beg 3:00 · 2 nič · 3 beg s prijatelji | čaka |
+| `beg-1` | beg pred policijo že obstaja: kaj dodamo | 1 kratek beg 3:00 · 2 nič · 3 beg s prijatelji | **3** (5. 11., v pogovoru s koordinacijo) |
 
-Seja načrta odgovore prebere ob 23.20 (`send_later`), vpiše jih sem in obvesti koordinacijo.
+Seja načrta odgovora `videz-1` in `videz-2` prebere ob 23.20 (`send_later`), ju vpiše sem in obvesti koordinacijo.
 
 ## Stanje
 
@@ -147,4 +156,4 @@ Seja načrta odgovore prebere ob 23.20 (`send_later`), vpiše jih sem in obvesti
 |---|---|
 | Načrt, vprašanja, vpis v Načrtovano | narejeno 5. 11. 2026 |
 | Novost 1 (V1–V5) | čaka na odgovore in na #297 |
-| Novost 2 (B1–B4) | čaka na odgovor in na #250 |
+| Novost 2 (B1–B6) | B1–B2 v delu (veja `novosti-e/beg-prijatelji`, osnutek pull requesta); B3–B6 po #250 |
