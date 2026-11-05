@@ -722,6 +722,14 @@
     'Plin hitro prazni baterijo: pusti avto, da se spušča sam.': 'The throttle drains the battery fast: let the car roll down by itself.',
     'Premočno zaviraš: del energije gre v zavore. Zaviraj prej in nežneje.': 'You are braking too hard: some of the energy goes into the brakes. Brake earlier and more gently.',
     'Baterija se je izpraznila pred polnilnico.': 'The battery ran out before the charger.',
+    'Ognjena reka': 'River of fire', 'Sosednji vulkan je izbruhnil. Lava teče čez cesto pod goro, z neba padajo žareči kamni.': 'The neighbouring volcano has erupted. Lava is flowing across the road below the mountain, glowing stones are falling from the sky.',
+    'Pripelji raziskovalce z observatorija v dolino, preden lava zapre zadnji prehod.': 'Bring the researchers from the observatory down to the valley before the lava closes the last crossing.',
+    'Rdeči krog pomeni, da tja pade žareč kamen.': 'A red circle means that a glowing stone will land there.',
+    'PREHODI ODPRTI': 'CROSSINGS OPEN', 'ZAPRE SE': 'CLOSES IN', 'PEPEL': 'ASH',
+    'Zadel te je žareč kamen!': 'A glowing stone hit you!', 'Lava! Zapelji na drugo stran ceste.': 'Lava! Move over to the other side of the road.', 'Umakni se iz rdečega kroga!': 'Get out of the red circle!',
+    'Lava se širi čez cesto: pelji ob desnem robu.': 'The lava is spreading across the road: keep to the right edge.', 'Lava se širi čez cesto: pelji ob levem robu.': 'The lava is spreading across the road: keep to the left edge.',
+    'Lava je zaprla cesto pred tabo.': 'The lava has closed the road ahead of you.', 'Avto je obtičal v lavi.': 'The car got stuck in the lava.', 'Žareči kamni so uničili avto.': 'The glowing stones wrecked the car.',
+    'Raziskovalce moraš pripeljati v dolino.': 'You have to bring the researchers down to the valley.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
