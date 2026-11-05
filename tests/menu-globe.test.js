@@ -17,7 +17,8 @@ require(path.join(ROOT, 'js', 'geo.js')); require(path.join(ROOT, 'js', 'menu-da
 const GEO = global.GEO, GB = global.MENU.globe || { places: {}, outlines: {} };
 // a track's country as the menu reads it: the end of its English name ("Vršič, Slovenia"), else where geo.js puts it
 const countryOf = (d) => { const full = (d.en && d.en.name) || d.name, k = full.lastIndexOf(', '); return k > 0 ? full.slice(k + 2) : GEO.tracks[d.id] ? GEO.tracks[d.id].names.country : ''; };
-const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test);
+const { ZDA } = require('./lib/zda.js');   // (the roads of the USA, test tracks since 5. 11. 2026: they keep their places, Mauna Kea its Hawaii)
+const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test), kept = real.concat(defs.filter(d => d.test && ZDA.includes(d.id)));
 
 // the flags: a file for every real track's country, and the menu knows it (FLAG_FILES)
 const menu = fs.readFileSync(path.join(ROOT, 'js', 'menu.js'), 'utf8'), m = /const FLAG_FILES = \[([^\]]*)\]/.exec(menu), FILES = m ? m[1].match(/'[^']+'/g).map(s => s.slice(1, -1)) : [];
@@ -49,8 +50,8 @@ for (const d of real) {
   if (R && !inside(R, p[1], p[0]) && nearKm(R, p[1], p[0]) > 30) off.push(d.id + ': ' + p.join(', ') + ' not in ' + c + ' (' + Math.round(nearKm(R, p[1], p[0])) + ' km)');
 }
 check(`every real track (${real.length}) has its place for the globe's ring, in its country`, !off.length, off.join('; '));
-// (a country geo.js has: only the part round a real track it left out, more than 30 km off its outline)
-const spare = Object.keys(GB.outlines).filter(c => !all.includes(c) || (GEO.outlines[c] && !real.some(d => { const gt = GEO.tracks[d.id]; return countryOf(d) === c && gt && !inside(GEO.outlines[c], gt.lon0, gt.lat0) && nearKm(GEO.outlines[c], gt.lon0, gt.lat0) > 30; })));
+// (a country geo.js has: only the part round a real track it left out, more than 30 km off its outline; or round a road of the USA, tests/lib/zda.js)
+const spare = Object.keys(GB.outlines).filter(c => !all.includes(c) || (GEO.outlines[c] && !kept.some(d => { const gt = GEO.tracks[d.id]; return countryOf(d) === c && gt && !inside(GEO.outlines[c], gt.lon0, gt.lat0) && nearKm(GEO.outlines[c], gt.lon0, gt.lat0) > 30; })));
 check('the menu\'s outlines: a country geo.js has not got, or the part of one round a real track it left out (Hawaii)', !spare.length, spare.join(', '));
 const pspare = Object.keys(GB.places).filter(id => GEO.tracks[id] || !real.some(d => d.id === id));
 check('no place in the menu\'s table that geo.js has, or for a track that is not a real one of the game', !pspare.length, pspare.join(', '));

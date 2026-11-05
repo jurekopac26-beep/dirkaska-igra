@@ -27,8 +27,9 @@ for (const f of ['js/world-ljudje.js', 'js/world-ljudje2.js']) vm.runInContext(f
 const SITES = ctx.World.peopleKit.SITES, STAFF = ctx.World.peopleKit.STAFF_SCENES, ids = Object.keys(SITES).sort(), all = ids.reduce((a, id) => a + SITES[id].length, 0);
 
 // 1. the tracks
-const defs = new Map(C.TRACKS.map(d => [d.id, d])), unknown = ids.filter(id => !defs.has(id)), test = ids.filter(id => defs.has(id) && defs.get(id).test);
-check(`${all} places on ${ids.length} tracks, all real ones (none on a test track, none on a track the game does not have)`, all > 150 && !unknown.length && !test.length,
+const { ZDA } = require('./lib/zda.js');   // (the roads of the USA, test tracks since 5. 11. 2026: their places stay as they were)
+const defs = new Map(C.TRACKS.map(d => [d.id, d])), unknown = ids.filter(id => !defs.has(id)), test = ids.filter(id => defs.has(id) && defs.get(id).test && !ZDA.includes(id));
+check(`${all} places on ${ids.length} tracks, all real ones (none on a test track but the roads of the USA, which keep theirs: tests/lib/zda.js; none on a track the game does not have)`, all > 150 && !unknown.length && !test.length,
   (unknown.length ? 'unknown: ' + unknown.join(', ') + '; ' : '') + (test.length ? 'test: ' + test.join(', ') : ''));
 
 const segD = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
