@@ -875,8 +875,8 @@ const Core = (function () {
       };
       // limit by proximity to other parts of the track (every other sample j within 80 m, found through an 80 m spatial hash: O(N)): 70 m
       // or more along the road, no further out than 1 m short of halfway to it; nearer along the road only the other leg of a hairpin (the
-      // road between them LEG0-LEG1 times as long as the straight line, eased in: a bend reaches 1.25 at ~125 degrees, and a round one's own
-      // samples hold the barrier at its centre, wider than limitInside), 1 m short of the middle between them along this sample's normal
+      // road between them LEG0-LEG1 times as long as the straight line, eased in: a round bend reaches 1.15 at ~105 degrees and 1.4 at ~155,
+      // and its own samples hold the barrier 1 m short of its centre, wider than limitInside), 1 m short of the middle between them along this sample's normal
       // (d * d / 2 / side), so the run-offs of a hairpin's two legs never overlap (on the lower leg a car run wide went on under the upper
       // leg's verge, Tianmen's bend 55, and over into its road)
       const px = this.px, pz = this.pz, nx = this.nx, nz = this.nz, LEG0 = 1.15, LEG1 = 1.4;
