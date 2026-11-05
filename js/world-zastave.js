@@ -10,10 +10,10 @@
    list: [x, y, z, rot, look, W, H, amp]: the pole at the cloth's top edge (x, y, z), the way the cloth flies from it (rot: radians from
    +x, as World's box turns a box), the cloth's length W and height H, its look: stripes across, top to bottom ([[r, g, b], ...]),
    { up: [...] } upright bands from the pole out, { chq: [nx, ny, c0, c1] } a chequer, { grid: [u edges, v edges, colours by row] } a
-   canton or a cross, { tri: colour } a pennant; amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
+   canton or a cross, { tri: colour } a pennant, { uv: [u0, u1, v top, v bottom], map } a picture from a texture (o.map: one mesh for each texture); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
    for a world that had no such mesh (the worlds that had one, rbFlags, make theirs with Math.random as they always did).
    World.api.flags: the flags of the build under way (add as they are put up; World's build makes their mesh at the end), its clock the
-   world's wind.
+   world's wind; canton(): the look of stripes with a canton.
    ========================================================================= */
 (function () {
   'use strict';
@@ -31,6 +31,7 @@
     if (look && look.chq) { const [nx, ny, c0, c1] = look.chq, out = []; for (let a = 0; a < nx; a++) for (let b = 0; b < ny; b++) out.push([a / nx, (a + 1) / nx, b / ny, (b + 1) / ny, (a + b) % 2 ? c1 : c0]); return out; }   // a chequer
     if (look && look.grid) { const [us, vs, cols] = look.grid, out = []; for (let b = 0; b + 1 < vs.length; b++) for (let a = 0; a + 1 < us.length; a++) out.push([us[a], us[a + 1], vs[b], vs[b + 1], cols[b][a]]); return out; }   // a canton, a cross: [u edges, v edges, colours by row]
     if (look && look.tri) return [[0, 1, 0, 1, look.tri]];   // a pennant: one colour, narrowing to a point
+    if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.map)
     return [[0, 1, 0, 1, [0.92, 0.92, 0.9]]];
   }
 
@@ -51,8 +52,8 @@
     'transformed.y -= (0.55 + 0.45 * zwW) * zwA * 0.3 * zwU * zwU;',   // (and it sags as it swings)
     '#ifdef USE_COLOR', 'vColor.rgb *= clamp(1.0 + 0.3 * zwS, 0.66, 1.2);', '#endif'].join('\n');   // (the folds: light on one side of a wave, shade on the other, whatever the sun)
 
-  function flagMat(uTime, far) {
-    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  function flagMat(uTime, far, map) {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, map: map || null });
     const uFar = { value: far };
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uFlagT = uTime; sh.uniforms.uFlagFar = uFar;
@@ -65,7 +66,7 @@
 
   function flagMesh(list, uTime, o) {
     o = o || {};
-    const P = [], N = [], C = [], F = [], I = []; let v = 0;
+    const P = [], N = [], C = [], F = [], I = [], UV = o.map ? [] : null; let v = 0;
     for (const e of list) {
       const [x, y, z, rot, look, W, H, amp] = e, c = Math.cos(rot), s = Math.sin(rot), ph = hash(x, z) * TAU, A = W * AMP * (amp == null ? 1 : amp);
       const SEG = Math.max(6, Math.min(12, Math.round(W / 0.14))), CL = cells(look), tri = !!(look && look.tri);   // (segments along the cloth, about eight to a wave: a long one more)
@@ -76,6 +77,7 @@
         for (const u of uu) for (const f of [v0, v1]) {
           const fv = tri ? 0.5 + (f - 0.5) * (1 - 0.94 * u) : f;   // (a pennant narrows to its tip)
           P.push(x + c * W * u, y - H * fv - u * u * 0.08 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, A, W);
+          if (UV) { const q = look.uv; UV.push(q[0] + (q[1] - q[0]) * u, q[2] + (q[3] - q[2]) * fv); }   // (look.uv: [u at the pole, u at the free end, v at the top, v at the bottom])
         }
         for (let j = 0; j < k; j++) { const a = v + j * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
         v += (k + 1) * 2;
@@ -85,9 +87,9 @@
     const make = () => {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('aFlag', new THREE.Float32BufferAttribute(F, 4)); g.setIndex(I);
+      g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('aFlag', new THREE.Float32BufferAttribute(F, 4)); if (UV) g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setIndex(I);
       g.computeBoundingSphere(); g.boundingSphere.radius += 1;   // (the wave reaches a little out of the cloths' rest)
-      const mesh = new THREE.Mesh(g, flagMat(uTime, o.tier === 0 ? FAR : 0));
+      const mesh = new THREE.Mesh(g, flagMat(uTime, o.tier === 0 ? FAR : 0, o.map));
       mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; mesh.name = 'flags'; mesh.userData.flags = list.length;
       return mesh;
     };
@@ -100,15 +102,23 @@
   // Red Bull Ring's builder and the two that use its rbFlags)
   let cur = null;
   const flags = {
+    // a look: stripes across (top to bottom) with a canton in the top corner at the pole (u 0..cu, v 0..cv) of colour col (the US flag, Chile's)
+    canton(stripes, cu, cv, col) {
+      const n = stripes.length, vs = [0], rows = [];
+      for (let b = 1; b <= n; b++) { const e = b / n; if (cv > vs[vs.length - 1] + 1e-6 && cv < e - 1e-6) vs.push(cv); vs.push(e); }
+      for (let r = 0; r + 1 < vs.length; r++) { const m = (vs[r] + vs[r + 1]) / 2, st = stripes[Math.min(n - 1, Math.floor(m * n))]; rows.push([m < cv ? col : st, st]); }
+      return { grid: [[0, cu, 1], vs, rows] };
+    },
     begin() { cur = []; },
-    add(x, y, z, rot, look, W, H, amp) { if (!cur) return false; cur.push([x, y, z, rot, look, W, H, amp]); return true; },
+    add(x, y, z, rot, look, W, H, amp, grp) { if (!cur) return false; cur.push([x, y, z, rot, look, W, H, amp, grp]); return true; },   // (grp: a part of the world that comes and goes, its flags a mesh of their own in it: Vršič's finish, out.dyn.vrFin)
     take() { const L = cur || []; if (cur) cur = []; return L; },
     done(out) {
       const L = cur; cur = null;
       if (!L || !L.length || !out || !out.root) return out;
-      const wind = out.dyn.wind || (out.dyn.wind = { value: 0 });   // (World.update drives it: t % 1000)
-      const m = flagMesh(L, wind, { own: true, tier: World.api && World.api.LOD ? World.api.LOD.tier : 2 });
-      if (m) out.root.add(m);
+      const wind = out.dyn.wind || (out.dyn.wind = { value: 0 }), o = { own: true, tier: World.api && World.api.LOD ? World.api.LOD.tier : 2 };   // (World.update drives the wind: t % 1000)
+      const by = new Map();   // (a mesh for each group and texture)
+      for (const e of L) { const g = e[8] || out.root, mp = (e[4] && e[4].map) || null; let k = by.get(g); if (!k) by.set(g, k = new Map()); if (!k.has(mp)) k.set(mp, []); k.get(mp).push(e); }
+      for (const [g, k] of by) for (const [mp, l] of k) { const m = flagMesh(l, wind, Object.assign({ map: mp }, o)); if (m) g.add(m); }
       return out;
     }
   };

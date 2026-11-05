@@ -422,8 +422,7 @@
       const pc = [[0.06, 0.4, 0.26], [0.98, 0.8, 0.1], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6]];
       for (let s = 8, k = 0; s < sStart + 50; s += 12, k++) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if ((excluded(px, pz) && s > sStart - 8) || vrStubAt(px, pz, 1)) continue;   // pennants on poles
         const g = scen.get(px, pz), py = vrGround(px, pz); cyl(g, px, py - 0.2, pz, 0.05, 5.2, 5, [0.9, 0.9, 0.92]);
-        const tri = (yy, c) => { const a = [px, py + yy, pz], b = [px, py + yy - 1.0, pz], cc = [px + T.tx[ii] * 1.6, py + yy - 0.5, pz + T.tz[ii] * 1.6]; g.triO(a, b, cc, c, [px - T.nx[ii], py + yy, pz - T.nz[ii]]); g.triO(a, cc, b, c, [px + T.nx[ii], py + yy, pz + T.nz[ii]]); };
-        tri(4.9, pc[(k + (side > 0 ? 1 : 0)) % 4]); }
+        API.flags.add(px, py + 4.9, pz, T.hd[ii], { tri: pc[(k + (side > 0 ? 1 : 0)) % 4] }, 1.6, 1); }   // (the pennant waves: js/world-zastave.js)
       { const RC = rng(1931), hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh);   // the paddock: the teams' four-wheel drives and vans
         for (let k = 0; k < 8; k++) { const a = -9 + (k % 4) * 6, b = (k < 4 ? -4 : 4), px = padS.x - sn * b + c * a, pz = padS.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5) continue; parked(scen.get(px, pz), px, vrGround(px, pz), pz, hh + PI / 2, k, RC); } }
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road: concrete barriers across it
@@ -441,7 +440,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4); if (vrStubAt(px, pz, 1)) continue; const py = vrGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1); }   // (the chequered cloth waves: js/world-zastave.js)
       const [sx, sz, si] = onSide(sFin - 40, -1, 3.0), sy = vrGround(sx, sz), gs = scen.get(sx, sz), tl = 0.9, W2 = 7, H2 = W2 / 8;   // the village's board: timber on posts leaning back, on a stone plinth
       if (!excluded(sx, sz)) {
         for (const o of [-2.9, 2.9]) { const px = sx + T.tx[si] * o, pz = sz + T.tz[si] * o; box(gs, px, sy, pz, 0.26, 1.3 + H2, 0.26, T.hd[si], [0.36, 0.24, 0.14]); }

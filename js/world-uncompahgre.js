@@ -447,9 +447,8 @@
     const person = (x, z, ro, col) => crowdPut(CR, x, unGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const flagUS = (g, x, y, z, rot, h) => {   // a pole with the US flag: red and white stripes, the blue canton (both faces)
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.9, fh = 1.0, y0 = y + h - fh - 0.15;
-      for (let k = 0; k < 5; k++) { const fx = x + c * (fw / 2 + 0.06), fz = z + s * (fw / 2 + 0.06); box(g, fx, y0 + k * fh / 5, fz, fw, fh / 5, 0.04, rot, k % 2 ? [0.95, 0.95, 0.94] : [0.7, 0.13, 0.17]); }
-      box(g, x + c * (fw * 0.21 + 0.06), y0 + fh * 0.45, z + s * (fw * 0.21 + 0.06), fw * 0.42, fh * 0.55, 0.06, rot, [0.2, 0.2, 0.42]);
+      const c = Math.cos(rot), s = Math.sin(rot), r = [0.7, 0.13, 0.17], w = [0.95, 0.95, 0.94];   // (the cloth waves: js/world-zastave.js)
+      API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, API.flags.canton([r, w, r, w, r], 0.42, 0.55, [0.2, 0.2, 0.42]), 1.9, 1);
     };
     const carCols = [[0.85, 0.85, 0.83], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.2, 0.2, 0.22], [0.5, 0.52, 0.54], [0.24, 0.38, 0.26], [0.95, 0.95, 0.94]];
     const camper = (g, x, y, z, rot, col) => {   // a camper van: a tall box on a van chassis, the cab at +x
@@ -600,7 +599,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const ii0 = T.idx(s); if (dropAt(ii0, side)) continue; const [px, pz, ii] = onSide(s, side, 1.2), py = unGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1); }   // (the chequered cloth waves: js/world-zastave.js)
       const sdP = padF.sd, [sx, sz, si] = onSide(sFin + 18, sdP, 3.0), sy = unGround(sx, sz), gs = scen.get(sx, sz), tl = 0.9, W2 = 7, H2 = W2 / 8;   // the board: on posts leaning back, facing the arriving cars
       for (const o of [-2.9, 2.9]) { const px = sx + T.nx[si] * o, pz = sz + T.nz[si] * o; box(gs, px, sy, pz, 0.26, 1.3, 0.26, T.hd[si], [0.36, 0.24, 0.14]); box(gs, px + T.tx[si] * H2 * Math.sin(tl), sy, pz + T.tz[si] * H2 * Math.sin(tl), 0.26, 1.25 + H2 * Math.cos(tl), 0.26, T.hd[si], [0.36, 0.24, 0.14]); }
       box(gs, sx + T.tx[si] * 0.35, sy - 0.3, sz + T.tz[si] * 0.35, 1.5, 0.65, W2 + 1.1, T.hd[si], [0.56, 0.5, 0.46], [0.62, 0.56, 0.5]);

@@ -367,11 +367,8 @@
   }
   function ouFlag(g, x, y, z, rot, h) {   // flag pole with a Finnish flag (blue cross on white), the flag on both faces
     cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-    const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 1.1, fy = y + h - fh - 0.15, blue = [0.07, 0.21, 0.5];
-    const at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)];
-    let [fx, fz] = at(fw / 2); box(g, fx, fy, fz, fw, fh, 0.04, rot, [0.97, 0.97, 0.96], null, false);
-    [fx, fz] = at(fw * 6.5 / 18); box(g, fx, fy, fz, fw * 3 / 18, fh, 0.06, rot, blue, null, false);
-    [fx, fz] = at(fw / 2); box(g, fx, fy + fh * 4 / 11, fz, fw, fh * 3 / 11, 0.06, rot, blue, null, false);
+    const c = Math.cos(rot), s = Math.sin(rot), bl = [0.07, 0.21, 0.5], wh = [0.97, 0.97, 0.96];   // (the cloth waves: js/world-zastave.js; the cross in cells)
+    API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, { grid: [[0, 5 / 18, 8 / 18, 1], [0, 4 / 11, 7 / 11, 1], [[wh, bl, wh], [bl, bl, bl], [wh, bl, wh]]] }, 1.8, 1.1);
   }
   // knockable props: marker posts on the outside of the bends, straw bale stacks on the outside of the junctions (buildOuni puts those in out.props
   // first); the props stand on the verge's own height (the verge ribbon's cross-section). Drawn out to 150 m (a long view down the straights)
