@@ -1,7 +1,8 @@
 // Sector times, the set-up, tyres and a changing weather in the game (the Red Bull Ring, the player on autopilot): the track screen's
 // set-up rows (wing and gears, kept per track, given to the race) and the "Menljivo" weather; a race where the rain starts at 20 s: the
-// message, the hint to come in for rain tyres, the tyres on the HUD (the compound's word, no %; on a red chip: the wrong ones), a pit stop
-// for rain tyres (the message, the new set on the HUD cold: the word and the dots light blue); the sector times on the HUD (S1-S3); a race
+// message, the hint to come in for rain tyres, the tyres on the HUD (each its own since 1. 11. 2026, Car.kt: the four dots, class kt; the
+// compound's word, no %; on a red chip: the wrong ones), a pit stop for rain tyres (the message, the new set on the HUD cold: the word and
+// the dots light blue); the sector times on the HUD (S1-S3); a race
 // where the rain stops: the message, the drying road and the dry racing line.
 //   node tests/browser/weather.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -46,7 +47,7 @@ try {
   await startTrack(page, 'rbring');
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
-  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
+  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on kt dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
   await msgs(); await simTo(22);
   const h1 = await hud(), m1 = await msgs();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
@@ -54,9 +55,9 @@ try {
   let h2 = null, hb = null; await msgs();
   for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane)
   const h2b = await hud(), m2 = await msgs();
-  T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
+  T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on kt dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();
-  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD and cold: the word and the four dots light blue', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on wet cold:DEŽNE$/.test(h3.tyre) && h3.tyC === COLD && h3.dotC.length === 4 && h3.dotC.every(c => c === COLD), JSON.stringify({ h2, h3, m2 }));
+  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD and cold: the word and the four dots light blue', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on kt wet cold:DEŽNE$/.test(h3.tyre) && h3.tyC === COLD && h3.dotC.length === 4 && h3.dotC.every(c => c === COLD), JSON.stringify({ h2, h3, m2 }));
   T.check('sector times on the HUD: S1 with a time', /^(ob|pb|sl):S1 \d+\.\d+$/.test(h2b.sec[0]), h2b.sec.join(' | '));
   await page.evaluate(() => window.__game.resume());
 

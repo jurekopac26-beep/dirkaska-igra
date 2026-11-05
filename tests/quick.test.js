@@ -3,6 +3,7 @@
 // code names them, only those the track has; t in seconds (a decimal comma too, up to an hour); the weather; a car by its id (a retired
 // one's heir); what is not valid listed as written; no proga: nothing.
 // &seme=<n>: the test mode's seed (repeatable races, sklop 16; the game: tests/browser/repro.test.mjs).
+// &tekmeci=<n>&lod=0|1: the race's rivals (0-99, at most the track's own field) and the big field's LOD off (Nürburg's 100 cars against 22 or 1).
 //   node tests/quick.test.js
 'use strict';
 const { loadCore } = require('./lib/core');
@@ -18,7 +19,7 @@ check('no proga: nothing (also an empty address, other parameters only)', Q('') 
 }
 {
   const q = Q('?proga=bathurst');
-  check('?proga=bathurst: the track, nothing else asked', J(q) === J({ track: 'bathurst', mode: null, t: null, weather: null, car: null, seed: null, bad: [] }), J(q));
+  check('?proga=bathurst: the track, nothing else asked', J(q) === J({ track: 'bathurst', mode: null, t: null, weather: null, car: null, seed: null, rivals: null, lod: null, bad: [] }), J(q));
   check('the id in capitals and with spaces: the track', Q('?proga=%20Spa%20').track === 'spa');
 }
 {
@@ -44,10 +45,17 @@ check('vreme: suho, dez (dež): dry, rain', Q('?proga=spa&vreme=suho').weather =
   check('seme: the test mode\'s seed, a whole number from 1 (to 2^31 - 1); anything else not valid', ok.every(g => g[1]) && !no.length, ok.filter(g => !g[1]).map(g => g[0]).concat(no.map(g => g[0])).join(', '));
 }
 {
+  const ok = [['21', 21], ['0', 0], [' 99 ', 99], ['5', 5]].map(([v, x]) => [v, Q('?proga=nring&tekmeci=' + encodeURIComponent(v)).rivals === x]);
+  const no = ['100', '-1', '2.5', 'abc', ''].map(v => [v, Q('?proga=nring&tekmeci=' + encodeURIComponent(v))]).filter(([v, q]) => q.rivals !== null || q.bad.join() !== 'tekmeci=' + v);
+  check('tekmeci: the race\'s rivals, a whole number 0 to 99; anything else not valid', ok.every(g => g[1]) && !no.length, ok.filter(g => !g[1]).map(g => g[0]).concat(no.map(g => g[0])).join(', '));
+  const l0 = Q('?proga=nring&lod=0'), l1 = Q('?proga=nring&lod=1'), lx = Q('?proga=nring&lod=da');
+  check('lod: 0 (a big field all at the full rate) or 1; anything else not valid', l0.lod === 0 && l1.lod === 1 && lx.lod === null && lx.bad.join() === 'lod=da', J([l0.lod, l1.lod, lx.bad]));
+}
+{
   const q = Q('?proga=nikjer&nacin=letenje&t=-3&vreme=sneg&avto=letalo');
-  check('what is not valid: listed as written, in order; the rest null', J(q) === J({ track: null, mode: null, t: null, weather: null, car: null, seed: null, bad: ['proga=nikjer', 'nacin=letenje', 't=-3', 'vreme=sneg', 'avto=letalo'] }), J(q));
+  check('what is not valid: listed as written, in order; the rest null', J(q) === J({ track: null, mode: null, t: null, weather: null, car: null, seed: null, rivals: null, lod: null, bad: ['proga=nikjer', 'nacin=letenje', 't=-3', 'vreme=sneg', 'avto=letalo'] }), J(q));
   const all = Q('?proga=vrsic&nacin=promet&t=20&vreme=dez&avto=bizon');
-  check('all at once: ?proga=vrsic&nacin=promet&t=20&vreme=dez&avto=bizon', J(all) === J({ track: 'vrsic', mode: 'traffic', t: 20, weather: 'rain', car: 'bizon', seed: null, bad: [] }), J(all));
+  check('all at once: ?proga=vrsic&nacin=promet&t=20&vreme=dez&avto=bizon', J(all) === J({ track: 'vrsic', mode: 'traffic', t: 20, weather: 'rain', car: 'bizon', seed: null, rivals: null, lod: null, bad: [] }), J(all));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);
