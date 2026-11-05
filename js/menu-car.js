@@ -14,7 +14,8 @@
    MenuCar.attach(yard, { id, color, num }, onFail): the canvas into the yard (one canvas, moved into each new yard the menu draws), the
    car built when it changed, drawing on; true when that car is drawn already. onFail(): no WebGL for it after all (the menu shows the
    car's picture then). detach(): the drawing stops (another screen). rest(): before a race: stopped, the canvas 1 x 1 (its buffers
-   freed; the context, the car and the shaders kept for the way back). supported(): WebGL there and not lost. info(): for the tests.
+   freed; the context, the car and the shaders kept for the way back). supported(): WebGL there and not lost. placed(): where the car
+   stands in the yard, as a style attribute for the menu's next yard (the car's name over it: --car-top, --car-left). info(): for the tests.
    ========================================================================= */
 window.MenuCar = (function () {
   'use strict';
@@ -152,7 +153,13 @@ window.MenuCar = (function () {
     cam.projectionMatrix.premultiply(new THREE.Matrix4().set(sc, 0, 0, ox, 0, sc, 0, oy, 0, 0, 1, 0, 0, 0, 0, 1));
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     car.fit = { sc, box: [bx0 * sc + ox, by0 * sc + oy, bx1 * sc + ox, by1 * sc + oy] };
+    pos = [Math.round((1 - car.fit.box[3]) * H / 2), Math.round((car.fit.box[0] + 1) * W / 2)]; place(yard);
   }
+  // where the car stands in the yard (CSS px from its top left: the car's top and left), for the menu's name over it (css/menu.css .cname):
+  // on the yard now, on a new drawing's yard at once (attach; placed(): in its markup, so the name is never seen elsewhere first)
+  let pos = null;
+  function place(el) { if (el && pos) { el.style.setProperty('--car-top', pos[0] + 'px'); el.style.setProperty('--car-left', pos[1] + 'px'); } }
+  const placed = () => pos ? ' style="--car-top:' + pos[0] + 'px;--car-left:' + pos[1] + 'px"' : '';
 
   /* ---------------- the wind ---------------- */
   // the lines: over the top (across the width, close over the body and further up), along the near side (low to high), two on the far
@@ -325,6 +332,7 @@ window.MenuCar = (function () {
       dirty = true;
     }
     if (canvas.parentNode !== el) el.insertBefore(canvas, el.firstChild);
+    place(el);
     const k = spec.id + '|' + spec.color + '|' + (spec.num || 0);
     if (k !== key || !car) { key = k; try { if (!build(spec)) { key = ''; return false; } } catch (e) { try { console.error('menu car:', e && e.message ? e.message : e); } catch (_) { } fail(); return false; } }
     if (drawn) el.classList.add('c3d-on');
@@ -358,5 +366,5 @@ window.MenuCar = (function () {
     }
     return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height] };
   }
-  return { supported, attach, detach, rest, live, info, sample };
+  return { supported, attach, detach, rest, live, placed, info, sample };
 })();

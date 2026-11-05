@@ -452,6 +452,14 @@ svg { display: block; }
 .yard .car img { width: 100%; height: 100%; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
 .yard .car .mono { width: 72px; height: 72px; margin: 0 0 6px 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .35); font: 900 italic 34px/1 var(--f-ui); }
 .yard .car:active { transform: translateY(2px); }
+/* the car's name in a small box over it (stran Odločitve m6): over the car's top at its left (js/menu-car.js sets --car-top/--car-left
+   as it fits the car; its picture: the top of the yard), never above the yard; with a 3D car still on its way: shown with it; a button
+   (the tap: the garage, as on the car) */
+.yard .cname { position: absolute; z-index: 4; display: block; margin: 0; text-align: left; top: max(3px, calc(var(--car-top, 12%) - 25px)); left: calc(var(--car-left, 2%) + 10px); max-width: 56%; padding: 4px 8px 4px 7px; border-radius: 6px;
+  background: rgba(8, 15, 27, .86); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); color: #f4f7fb; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .04em;
+  text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .3s ease; }
+.yard.c3d-wait:not(.c3d-on) .cname { opacity: 0; }
+.yard .cname:active { transform: translateY(1px); }
 /* the two neighbouring tracks: the flag at its hoist, its last column stretched to the far edge (js/menu.js flagFill), a double arrow */
 .nbrs { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 14px 0; }
 .nb { position: relative; height: 54px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; background: #3b4352 center / 100% 100% no-repeat; border: 2px solid rgba(255, 255, 255, .85);
