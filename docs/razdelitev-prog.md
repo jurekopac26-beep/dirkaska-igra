@@ -57,4 +57,4 @@ Preverjeno: kopija s staro obliko `js/render.js`, `js/game.js`, `js/world.js` (s
 - [x] `js/world-rbring.js` razdeljen po progah
 - [x] testi: `tests/razdelitev.test.js`; odtis sveta (`world.test.mjs`) za Štajersko, Bathurst, Crystal Palace in Rio enak referenci
 - [x] povezani testi (`npm run test:related`: 68/68, tudi odtis sveta vseh prog in `gfx.test.mjs`)
-- [ ] `perf.test.mjs` za proge z deljenim graditeljem (Štajerska, Bathurst, Crystal Palace, Rio) in Spa
+- [x] `perf.test.mjs` za proge z deljenim graditeljem (Štajerska, Bathurst, Crystal Palace, Rio) in Spa: klici in oglišča enaki referenci
