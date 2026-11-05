@@ -38,6 +38,7 @@
 
   // ================================================================ aero: the kit round the car's foot (the bumpers' lips, the skirts, the
   // diffuser, the arches' flares), in place of the stock lips under the bumpers
+  DELI.skirts = (n) => !!n && n !== 1 && n !== 4;   // (the aero options with skirts along the sills: lovilci_blata's front flaps ahead of them)
   function aero(K, n, m) {
     const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill[0], s1 = m.sill[1], ws = m.ws, ys = m.ys;
     const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of the exhaust)

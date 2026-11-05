@@ -283,7 +283,9 @@
       { col: TI, sides: 12, r: 0.05, flange: true, open: true, burnt: true },  // 16 titanove, dirkalne (spline, open)
     ][n];
     if (!O) return;
-    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl);
+    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl), PL = pl ? DELI.wheel(pl) || {} : {};
+    if (PL.cover) return;   // (under a hubcap: unseen)
+    const seat = PL.seat || 0.01;   // (their foot over the dish: on the rim's hub, over its cap's edge)
     const V = h.vis, fan = (c, pts, z, col, apex) => { for (let i = 0; i < pts.length; i++) G.triO([c[0], c[1], z + (apex || 0)], [pts[i][0], pts[i][1], z], [pts[(i + 1) % pts.length][0], pts[(i + 1) % pts.length][1], z], col, [c[0], c[1], z - 1]); };
     const nut = (cx, cy, R, z0, z1, lock) => {   // (Normalni: a hex prism and its top; Visoki: the spline, the washer, the chamfered top)
       const col = lock || O.col, top = O.top || lerp(col, [1, 1, 1], 0.15), sides = lock ? (V ? 10 : 6) : O.sides === 12 && V ? 8 : 6, c = [cx, cy];
@@ -300,7 +302,7 @@
     if (lockR) { nut(0, 0, rr * 0.17, h.zd + 0.05, h.zd + 0.07, null); return; }   // (a centre lock: one big nut over the rim's own)
     const k = (m && m.k) || 4, pr = rr * ((m && m.r) || 0.2), R = rr * (O.r || 0.062), tall = O.tall || 1;
     for (let i = 0; i < k; i++) { const a = i / k * Math.PI * 2 + Math.PI / 4;
-      nut(Math.cos(a) * pr, Math.sin(a) * pr, R, h.zd + 0.01, h.zd + 0.01 + 0.024 * tall, O.lock && i === 0 ? O.lock : null); }
+      nut(Math.cos(a) * pr, Math.sin(a) * pr, R, h.zd + seat, h.zd + seat + 0.024 * tall, O.lock && i === 0 ? O.lock : null); }
   }
   DELI.add('matice', matice);
 })();

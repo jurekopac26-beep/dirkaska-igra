@@ -245,6 +245,7 @@
     9: [0.66, 0.06, 0.05], 10: [0.86, 0.7, 0.07], 11: [0.72, 0.56, 0.18], 12: [0.78, 0.07, 0.06], 13: [0.95, 0.12, 0.2], 14: [0.12, 0.36, 0.95], 15: [0.98, 0.76, 0.26], 16: [0.9, 0.91, 0.94] };
   function celjusti(K, n, m) {
     const col0 = CAL[n]; if (!col0) return; const col = col0 === 'p' ? K.paint : col0, W = K.wheels || {}, R = m.r || [0.075, 0.14], A = m.a || [70, 125];
+    if (W.dish === 'rim') return;   // (a steel wheel's solid face or a hubcap (platisca 1-4) hides them, as the brakes: js/deli/bok.js FIXED)
     const w = W.w || K.rw * 0.68, dish = W.deep || W.style === 'deep' ? 0.07 : W.style === 'slick' ? 0.035 : 0.024, zf = (K.hw * K.sz + w / 2 - dish + 0.0075) / K.sz, th = 0.035 / K.sz, q = K.hi ? 4 : 3;
     const lit = n >= 5 ? (n === 12 ? BLK : [0.95, 0.95, 0.93]) : null;   // (a sprayed or a premium caliper: a light flash across its face (no name on it); the two-tone's black half)
     for (const A0 of K.arches) for (const sd of [-1, 1]) {

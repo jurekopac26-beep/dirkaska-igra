@@ -943,6 +943,7 @@ const Render = (function () {
      K (inside build(K)):
        K.M, K.def, K.look, K.body (look.body completed), K.wheels (look.wheels completed), K.parts (the table's part ids, wheels left out)
        K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
+       K.fitted                the garage's parts fitted (car.deli, {} for none): a part makes room for another (js/deli/*.js)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
        K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
                                units), the circle's radius and middle height (metres): place flares and decals round them
@@ -2045,7 +2046,7 @@ const Render = (function () {
     if (hi && kx.spare.segHi) kx.spare.seg = kx.spare.segHi;   // (the spare's: its stock rim's, as on the stock car)
     const wd = deli && typeof DELI !== 'undefined' ? KIT_WHEEL_DELI.filter(id => deli[id] && DELI.has(id) && M.def.mounts && M.def.mounts[id]) : [];
     if (wd.length) kx.wheels.deliW = wd.map(id => [id, deli[id], M.def.mounts[id], M, !!hi, deli]);   // (the wheel parts: drawn on the player's wheels, kitWheelGeo)
-    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
+    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi; K.fitted = kx.deli || {};
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');

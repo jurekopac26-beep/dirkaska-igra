@@ -6,7 +6,8 @@
    core.js applyDeli), the body lower on its springs (vzmeti: DELI.dress, js/deli/barve.js), the
    tyre smoke's colour (DELI.dim: render.js, the drift's smoke).
    mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle); vzmeti, amortizerji,
-   stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height) */
+   stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
+   stabilizatorji floor: the height of the floor under the bars, K.rw - 0.06 if not given) */
 (function () {
   'use strict';
   if (typeof DELI === 'undefined') return;
@@ -81,9 +82,11 @@
       if (n === 10 || n >= 15) cyl(K, [x + 0.038, y0 + 0.08, z - sd * 0.038], [x + 0.038, y0 + 0.2, z - sd * 0.038], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir, against the body)
   }
   function stabilizatorji(K, n, m) {
-    const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06, y = K.rw - 0.02;
+    const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06;
+    const fl = m.floor != null ? m.floor : K.rw - 0.06, y = fl + 0.035;   // (the floor under it: the bar 3.5 cm above, in two clamps)
     const axle = (A, front) => { const x = A.x + (front ? -0.12 : 0.12); K.bar([x, y, -(K.hw - ti)], [x, y, K.hw - ti], r, col, Object.assign({ n: K.hi ? 6 : 5 }, IN));
-      for (const sd of [-1, 1]) K.bar([x, y, sd * (K.hw - ti)], [A.x, y + 0.08, sd * (K.hw - ti)], r * 0.8, col, Object.assign({ n: 4 }, IN)); };   // (its arms forward to the wheel)
+      for (const sd of [-1, 1]) { K.bar([x, y, sd * (K.hw - ti)], [A.x, y + 0.08, sd * (K.hw - ti)], r * 0.8, col, Object.assign({ n: 4 }, IN));   // (its arms forward to the wheel)
+        box(K, x, fl - 0.006, sd * (K.hw - ti) * 0.55, 0.05, y - fl + r + 0.012, 0.035, DK); } };   // (a clamp on the floor)
     if (n !== 2) axle(K.arches[1], false);
     if (n === 2 || n >= 5) axle(K.arches[0], true);
   }
