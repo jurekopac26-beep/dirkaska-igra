@@ -717,12 +717,12 @@
   }
  },
  "monterey": {
-  "meshes": 465,
-  "verts": 589922,
+  "meshes": 463,
+  "verts": 589546,
   "instances": 9816,
   "props": 162,
   "crowd": 357,
-  "world": "2419330a",
+  "world": "200ad269",
   "propsHash": "b5551806",
   "floor": "72a7b31b/7196",
   "groups": {
@@ -741,9 +741,7 @@
    "people:MeshLambertMaterial": "88ce8588",
    "sceneSmoke:MeshLambertMaterial": "cabfaaab",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "38408efe",
-   "zaslon-okvir:MeshLambertMaterial": "f9177d2c",
-   "zaslon-slika:MeshBasicMaterial": "b6526691"
+   "standSteps:MeshLambertMaterial": "38408efe"
   }
  },
  "longford": {
@@ -998,12 +996,12 @@
   }
  },
  "detroit": {
-  "meshes": 401,
-  "verts": 1115177,
+  "meshes": 399,
+  "verts": 1114801,
   "instances": 2459,
   "props": 180,
   "crowd": 104,
-  "world": "d079581a",
+  "world": "8e3c0532",
   "propsHash": "fcda6fe5",
   "floor": null,
   "groups": {
@@ -1033,9 +1031,7 @@
    "sceneLamps:MeshBasicMaterial": "5d8d2a5b",
    "people:MeshLambertMaterial": "b05de23",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "8346c87a",
-   "zaslon-okvir:MeshLambertMaterial": "c438575b",
-   "zaslon-slika:MeshBasicMaterial": "6b7a84f5"
+   "standSteps:MeshLambertMaterial": "8346c87a"
   }
  },
  "palomar": {

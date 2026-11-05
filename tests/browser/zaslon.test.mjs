@@ -1,5 +1,6 @@
 // The big screen by the main grandstand (Grafika 03, js/world-zaslon.js; Render's zaslonFeed), at the phone's size on its side (844x390):
-//  - every real circuit with pits has its place (World.zaslon.SPOT), no other track (the test tracks and the roads: no screen built)
+//  - every real circuit with pits has its place (World.zaslon.SPOT), no other track (the test tracks and the roads: no screen built; nor Detroit
+//    and Monterey, the US tracks going to test, the user's decision 5. 11. 2026)
 //  - Bathurst, VISOKA: the live picture, drawn into its own small target (512 x 256) from a TV post beside the track, only while the screen
 //    is in the view (the car 40 m before it: pictures; 1.5 km away: none); the screen's face shows that target; the picture is not empty
 //    (the track and the cars, LIVE's red dot over it); what one picture costs (its draws, under PIC_CALLS); the TV director by the straight
@@ -28,9 +29,10 @@ const helpers = () => {
 const words = (set) => [...set].filter(w => !/^(\d{1,3}|\d{1,3}\/\d{1,3}|LIVE)$/.test(w));
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', detail: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day' }, { width: 844, height: 390 }, { seed: 303, init });
-  const pl = await page.evaluate(() => { const S = World.zaslon.SPOT, pit = Core.TRACKS.filter(d => d.pit && !d.test).map(d => d.id);
-    return { missing: pit.filter(id => !S[id]), extra: Object.keys(S).filter(id => !pit.includes(id)), n: pit.length }; });
-  T.check(`every real circuit with pits has the screen's place (${pl.n}), no other track`, !pl.missing.length && !pl.extra.length, JSON.stringify(pl));
+  const ZDA = ['detroit', 'monterey'];   // (going to test with the other US tracks; a place left on a test track is harmless: the builder skips them)
+  const pl = await page.evaluate((ZDA) => { const S = World.zaslon.SPOT, pit = Core.TRACKS.filter(d => d.pit && !d.test && !ZDA.includes(d.id)).map(d => d.id);
+    return { missing: pit.filter(id => !S[id]), extra: Object.keys(S).filter(id => !pit.includes(id) && !Core.TRACKS.some(d => d.id === id && d.test)), n: pit.length }; }, ZDA);
+  T.check(`every real circuit with pits has the screen's place (${pl.n}), not Detroit and Monterey (going to test), no other track`, !pl.missing.length && !pl.extra.length, JSON.stringify(pl));
 
   // Bathurst at VISOKA: live while in the view
   await quick(page, 'bathurst'); await page.evaluate(helpers);
