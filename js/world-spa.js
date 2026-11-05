@@ -540,7 +540,7 @@
         exclPush(x, z, 4.5); CR.avoid(x, z, 2.4);
       }
       const scrTex = ownTex(spaScreenTex()), scrG = new GB(true);   // the big screens: across the track from the grandstands, facing them
-      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1], [6930, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source, the pit straight)
+      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source; the pit straight's is the live one, js/world-zaslon.js)
         const p = place(d0, -sg, 5.5, 5); if (!p) continue;
         const [x, z, i] = p, g = scen.get(x, z), y = nrGround(x, z), Wsc = 7.2, Hs = 4.05, y0 = y + 3.2, fx = T.nx[i] * sg, fz = T.nz[i] * sg, ux = -fz, uz = fx;
         for (const o of [-Wsc / 2 + 0.5, Wsc / 2 - 0.5]) box(g, x + ux * o - fx * 0.3, y - 0.2, z + uz * o - fz * 0.3, 0.3, y0 - y + Hs + 0.2, 0.3, Math.atan2(uz, ux), dark);

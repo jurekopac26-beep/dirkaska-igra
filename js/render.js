@@ -3369,6 +3369,7 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    if (World.zaslon) World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
     // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
     // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
     if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
@@ -4510,6 +4511,28 @@ const Render = (function () {
     return false;
   }
   function unviewCull() { for (const m of offView) { m.visible = true; m.userData.ov = false; } offView.length = 0; }
+  // the big screen by the main grandstand (js/world-zaslon.js): its live picture (VISOKA) drawn after the frame from a TV post beside the
+  // track, for the next frame's view: the haze for that camera's distance, the sky dome round it, the cars out of the main view (carCull)
+  // near the car it follows put back for it, no names over the cars, the glows sized for its lens; all as it was after
+  const zsX = { race: null, dt: 0, tier: 2, low: false, cam: null, tvCams: () => tvCams(curTrack), tvPost: (k) => tvPost(curTrack, k) }, zsIn = [], zsTag = [], _zsP = new THREE.Vector3();
+  function zaslonFeed(dt) {
+    const Z = world && world.dyn && world.dyn.zaslon; if (!Z || !World.zaslon || snapping || !curTrack) return;
+    zsX.race = curRace; zsX.dt = dt; zsX.tier = tierNow; zsX.low = saverK < 1; zsX.cam = camera;
+    if (!World.zaslon.step(Z, zsX)) return;
+    const F = scene.fog, fn = F.near, ff = F.far, r = Math.max(0, wet), dC = Math.max(60, Z.dist || 0) * ((THEMES[themeId] || {}).fogK || 1), C = Z.cam;
+    F.near = dC * (1.35 - 0.4 * r); F.far = dC * (5.5 - 1.6 * r);
+    const sk = sky && sky.mesh.visible ? sky.mesh : null, mo = nsky.moon && nsky.moon.visible;
+    if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.updateMatrixWorld(); }
+    if (mo) nsky.moon.visible = nsky.halo.visible = false;
+    for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
+    for (const g of GV) if (g && g.tag && g.tag.visible) { g.tag.visible = false; zsTag.push(g.tag); }
+    const ps = World.zaslon.RH / (2 * Math.tan(C.fov * Math.PI / 360)); particles.mat.uniforms.uScale.value = ps; if (sparkP) sparkP.mat.uniforms.uScale.value = ps; if (glows) glows.mat.uniforms.uScale.value = ps;
+    try { World.zaslon.draw(Z, renderer, scene); }
+    finally {
+      F.near = fn; F.far = ff; if (sk) { sk.position.copy(_zsP); sk.updateMatrixWorld(); } if (mo) nsky.moon.visible = nsky.halo.visible = true;
+      for (const g of zsIn) scene.remove(g); zsIn.length = 0; for (const t of zsTag) t.visible = true; zsTag.length = 0; updatePointScale();
+    }
+  }
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
@@ -9700,6 +9723,7 @@ const Render = (function () {
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { casDrawn = 0; renderer.render(scene, camera); }
     unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
+    zaslonFeed(dt);   // (the big screen's live picture, js/world-zaslon.js)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)
