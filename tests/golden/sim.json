@@ -4788,15 +4788,15 @@
   }
  },
  "balea/car/cs": {
-  "digest": "6e7fcc3e0e562036ba5ef6d7",
-  "lead": 1686.7,
+  "digest": "ed0fca75f8a235c35eb07f0d",
+  "lead": 1685.8,
   "car0": [
-   252.7,
-   11.89
+   207.29,
+   120.08
   ],
   "cover": {
-   "dmg": 0.66,
-   "loose": 2,
+   "dmg": 1,
+   "loose": 8,
    "rescues": 1,
    "repairs": 0
   }
