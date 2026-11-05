@@ -118,7 +118,8 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 ## Kje velja
 
-- **Privzeto** (možnost 1 vprašanja `sovoznik-kje`): na vseh pravih odprtih cestah. To so ceste z `track.open` brez `test`: 19 cest in 4 kronometri (Harju, Ouninpohja, Katu-Jaryk, Pikes Peak). Nove ceste (Hakone, Bâlea, Killar …) ga dobijo same.
+- **Privzeto** (možnost 1 vprašanja `sovoznik-kje`): na vseh pravih odprtih cestah. To so ceste z `track.open` brez `test`, 15 prog: 11 cest (Tianmen, Irohazaka, Sani Pass, Rio do Rastro, Vršič, Mount Buller, Los Caracoles, Medvode, Chapman's Peak, Mount Hotham, Great Alpine Road) in 4 kronometri (Harju, Ouninpohja, Katu-Jaryk, Pikes Peak na asfaltu in makadamu, `pikes` in `pikesg`). Nove ceste ga dobijo same.
+- **Proge ZDA razen Pikes Peaka** (Mount Baldy, Beartooth, Big Sur, Mauna Kea, Moki Dugway, Santa Monica Mountains, Palomar Mountain, Uncompahgre ter dirkališča Detroit, Monterey in Riverside) postanejo testne in zamrznjene (odločitev uporabnika 5. 11., PR računa 2, veja `proge/zda-v-test`). Sovoznika ne dobijo: izloči jih pravilo »brez `test`«, njihovih datotek seja ne spreminja, slik in meritev na njih ne dela. Če koda sovoznika pride na `main` pred tem PR-jem, jih seja do tedaj izključi z istim seznamom.
 - **Načini**: dirka, kronometer, kariera, prvenstvo, promet, policija (radio ima prednost), dirka s prijatelji (vsak telefon ima svojega sovoznika) in »Prvič na cesti«.
 - **Ne velja**:
   - na dirkališčih, razen če uporabnik izbere drugače; tam ostanejo table pred zaviranjem;
@@ -180,6 +181,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - stikalo Izklop · Napis · Glas in napis, privzeto vklop;
   - napis zgoraj pod uro, številka na znaku;
   - komentator ostane angleški.
+- **5. 11. 2026, uporabnik** (sporočilo koordinaciji VSE SEJE 2, »ena proga na državo«): proge ZDA razen Pikes Peaka postanejo testne in zamrznjene. Sovoznik velja na 15 progah namesto 23 (razdelek Kje velja), vprašanje `sovoznik-kje` je popravljeno.
 - **5. 11. 2026 ob 16.06, uporabnik** (sporočilo koordinaciji VSE SEJE 2): »Vse zvoke delaj v angleščini«. Sovoznik govori samo angleško, tudi v slovenski igri. Napis na znaku in zgoraj sledi jeziku igre. Slovenski glas in Hugging Face nista več potrebna.
 - **Vprašanji na strani Odločitve 3** (5. 11. 2026); odgovora se zapišeta sem:
   - `sovoznik-glas`: kateri angleški glas (prilagojeno po odločitvi o angleščini): angleški glas telefona (priporočeno), posneti zvoki iz angleškega sintetizatorja, tvoj glas v angleščini;
