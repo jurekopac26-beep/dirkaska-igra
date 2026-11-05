@@ -809,7 +809,7 @@
       const atl = ownTex(new THREE.CanvasTexture(c)), gb = new GB(true), W1 = [1, 1, 1];
       const flagAt = (fx, fy, fz, k, Wd) => { const Hf = Wd * 0.5, u0 = k === 'nsw' ? 0.25 : 0;   // (the cloth flies downwind, the sea breeze from the north-east, and waves: js/world-zastave.js)
         cyl(scen.get(fx, fz), fx, ncGround(fx, fz), fz, 0.05, fy + Hf - ncGround(fx, fz) + 0.2, 5, [0.9, 0.9, 0.92]);
-        API.flags.add(fx, fy + Hf, fz, 0.9, { uv: [u0, u0 + 0.25, 0.2, 0], map: atl }, Wd, Hf); };
+        API.flags.add(fx, fy + Hf, fz, 0.9, { uv: [u0, u0 + 0.25, 0.2, 0], tex: atl }, Wd, Hf); };
       const board = (cx, cy, cz, fx, fz, Wd, H, u0, u1, v0, v1) => { const ux = fz, uz = -fx, A = [cx - ux * Wd / 2, cy, cz - uz * Wd / 2], B = [cx + ux * Wd / 2, cy, cz + uz * Wd / 2];
         gb.quadO(A, B, [B[0], cy + H, B[2]], [A[0], cy + H, A[2]], W1, [cx - fx, cy + H / 2, cz - fz], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); };
       { const [gx, gz, , gi] = atS(sStart, 0), span = Math.max(T.bl[gi], T.br[gi]) + 1.2; for (const sd of [-1, 1]) board(gx + T.tx[gi] * sd * 0.6, T.hy[gi] + 5.75, gz + T.tz[gi] * sd * 0.6, T.tx[gi] * sd, T.tz[gi] * sd, span * 2 - 2, 1.3, 0, 1, 0.8, 1); }

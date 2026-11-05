@@ -10,7 +10,7 @@
    list: [x, y, z, rot, look, W, H, amp]: the pole at the cloth's top edge (x, y, z), the way the cloth flies from it (rot: radians from
    +x, as World's box turns a box), the cloth's length W and height H, its look: stripes across, top to bottom ([[r, g, b], ...]),
    { up: [...] } upright bands from the pole out, { chq: [nx, ny, c0, c1] } a chequer, { grid: [u edges, v edges, colours by row] } a
-   canton or a cross, { tri: colour } a pennant, { uv: [u0, u1, v top, v bottom], map } a picture from a texture (o.map: one mesh for each texture); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
+   canton or a cross, { tri: colour } a pennant, { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
    for a world that had no such mesh (the worlds that had one, rbFlags, make theirs with Math.random as they always did).
    World.api.flags: the flags of the build under way (add as they are put up; World's build makes their mesh at the end), its clock the
    world's wind; canton(): the look of stripes with a canton.
@@ -31,7 +31,7 @@
     if (look && look.chq) { const [nx, ny, c0, c1] = look.chq, out = []; for (let a = 0; a < nx; a++) for (let b = 0; b < ny; b++) out.push([a / nx, (a + 1) / nx, b / ny, (b + 1) / ny, (a + b) % 2 ? c1 : c0]); return out; }   // a chequer
     if (look && look.grid) { const [us, vs, cols] = look.grid, out = []; for (let b = 0; b + 1 < vs.length; b++) for (let a = 0; a + 1 < us.length; a++) out.push([us[a], us[a + 1], vs[b], vs[b + 1], cols[b][a]]); return out; }   // a canton, a cross: [u edges, v edges, colours by row]
     if (look && look.tri) return [[0, 1, 0, 1, look.tri]];   // a pennant: one colour, narrowing to a point
-    if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.map)
+    if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.tex)
     return [[0, 1, 0, 1, [0.92, 0.92, 0.9]]];
   }
 
@@ -117,7 +117,7 @@
       if (!L || !L.length || !out || !out.root) return out;
       const wind = out.dyn.wind || (out.dyn.wind = { value: 0 }), o = { own: true, tier: World.api && World.api.LOD ? World.api.LOD.tier : 2 };   // (World.update drives the wind: t % 1000)
       const by = new Map();   // (a mesh for each group and texture)
-      for (const e of L) { const g = e[8] || out.root, mp = (e[4] && e[4].map) || null; let k = by.get(g); if (!k) by.set(g, k = new Map()); if (!k.has(mp)) k.set(mp, []); k.get(mp).push(e); }
+      for (const e of L) { const g = e[8] || out.root, mp = (e[4] && !Array.isArray(e[4]) && e[4].tex) || null; let k = by.get(g); if (!k) by.set(g, k = new Map()); if (!k.has(mp)) k.set(mp, []); k.get(mp).push(e); }
       for (const [g, k] of by) for (const [mp, l] of k) { const m = flagMesh(l, wind, Object.assign({ map: mp }, o)); if (m) g.add(m); }
       return out;
     }
