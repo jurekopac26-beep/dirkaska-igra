@@ -8,6 +8,7 @@
 //   node tests/run.js --related   only the tests related to what changed against main (npm run test:related; see RELATED below)
 //   node tests/run.js --related --files js/lang.js,docs/proge/spa.md --list   the same for the files given (no git)
 //   node tests/run.js --koda      the fingerprint of the code under test (KODA_MD below): GitHub runs the heavy jobs once for each
+//   node tests/run.js --dokumenti only the tests that read the .md files (MD_TESTS below): what GitHub runs when that code has passed
 //   --quiet   only the failures (a failed test's FAIL lines and its last lines) and the summary
 // A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15), or than TEST_SLOW (default 4) times its usual time on GitHub (SECS)
 // if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF).
@@ -128,10 +129,13 @@ function changedFiles() {
   return [...new Set([git('diff', '--name-only', base), git('ls-files', '--others', '--exclude-standard')].join('\n').split('\n').filter(Boolean))];
 }
 // --koda: the fingerprint of the code the tests test, the committed tree of the repository the command runs in: every file's path, mode and
-// content but the .md ones (documents, which no test reads but fleet.test.js, the car makers' names in every .md), except KODA_MD, which a
-// test reads as data. GitHub's run (.github/workflows/tests.yml) records it when every job has passed; a later run of the same fingerprint
-// (only documents changed: docs/vrsta.md, a plan, README.md; or main after merging a pull request whose code passed) runs only fleet.test.js
+// content but the .md ones (documents, which only the tests of MD_TESTS read), except KODA_MD, which a test reads as data. GitHub's run
+// (.github/workflows/tests.yml) records it when every job has passed; a later run of the same fingerprint (only documents changed:
+// docs/vrsta.md, a plan, README.md; or main after merging a pull request whose code passed) runs only MD_TESTS (--dokumenti)
 const KODA_MD = ['docs/gorske-proge.md'];   // (the table of the mountain roads: tests/lib/gore.js)
+// the tests that read .md files they do not name, listing the repository's files: the car makers' names in every file, the frozen files of
+// the test tracks (docs/proge/<id>.md among them). Every test that lists the repository's files is here (tests/shards.test.js checks)
+const MD_TESTS = ['fleet.test.js', 'testne-proge.test.js'];
 function koda() {
   const r = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', 'HEAD'], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
   if (r.status !== 0) { console.error('--koda: ' + ((r.stderr || '').trim() || 'git ls-tree failed')); process.exit(2); }
@@ -139,18 +143,19 @@ function koda() {
   return require('crypto').createHash('sha256').update(kept.join('\0')).digest('hex');
 }
 
-const args = process.argv.slice(2), opt = { which: null, shard: null, list: false, quiet: false, related: false, files: null, koda: false };
+const args = process.argv.slice(2), opt = { which: null, shard: null, list: false, quiet: false, related: false, files: null, koda: false, dokumenti: false };
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--shard') opt.shard = args[i + 1] && !args[i + 1].startsWith('--') ? args[++i] : '';
   else if (args[i] === '--list') opt.list = true; else if (args[i] === '--quiet') opt.quiet = true; else if (args[i] === '--related') opt.related = true;
-  else if (args[i] === '--koda') opt.koda = true;
+  else if (args[i] === '--koda') opt.koda = true; else if (args[i] === '--dokumenti') opt.dokumenti = true;
   else if (args[i] === '--files') opt.files = args[i + 1] && !args[i + 1].startsWith('--') ? args[++i].split(',').map(f => f.trim()).filter(Boolean) : [];
   else if (!opt.which) opt.which = args[i]; else { console.error('unexpected argument: ' + args[i]); process.exit(2); }
 }
 if (opt.files && !opt.related) { console.error('--files goes with --related'); process.exit(2); }
-if (opt.koda) { if (opt.which || opt.shard != null || opt.related || opt.list || opt.quiet) { console.error('--koda goes alone'); process.exit(2); } console.log(koda()); process.exit(0); }
+if (opt.koda) { if (opt.which || opt.shard != null || opt.related || opt.list || opt.quiet || opt.dokumenti) { console.error('--koda goes alone'); process.exit(2); } console.log(koda()); process.exit(0); }
+if (opt.dokumenti && (opt.which || opt.shard != null || opt.related)) { console.error('--dokumenti goes alone (or with --list, --quiet)'); process.exit(2); }
 const which = opt.which;
-let list = which ? SUITES[which] : [...SUITES.node, ...SUITES.fleet, ...SUITES.browser];
+let list = opt.dokumenti ? MD_TESTS : which ? SUITES[which] : [...SUITES.node, ...SUITES.fleet, ...SUITES.browser];
 if (!list) { console.error('unknown suite: ' + which + ' (node | fleet | browser)'); process.exit(2); }
 if (opt.related) {
   const files = opt.files || changedFiles();

@@ -3,7 +3,7 @@
 # potisku (odločitev uporabnika 31. 10. 2026: manj čakanja v vrsti, GitHub hkrati izvaja le ~20 poslov).
 # Ista koda se ne testira dvakrat (5. 11. 2026): posel Koda izračuna prstni odtis kode (tests/run.js --koda: vse datoteke razen .md, ki jih
 # bere samo test dokumentov); če je ista koda že prestala vse posle (artefakt koda-<odtis>, ki ga zapiše posel Zapis), težki posli odpadejo
-# (preskočen posel šteje kot uspešen) in teče samo test dokumentov (fleet.test.js: imena znamk v vseh .md). Tako odpadeta krog na main po
+# (preskočen posel šteje kot uspešen) in tečejo samo testi, ki berejo .md (tests/run.js --dokumenti: imena znamk, zamrznjene testne proge). Tako odpadeta krog na main po
 # združitvi pull requesta, katerega koda je že prestala vse teste, in krog po potisku samo dokumentov (docs/vrsta.md, načrt teme, README.md).
 # Ročni zagon (workflow_dispatch) teče v celoti, razen z vhodom preskoci.
 name: Testi
@@ -61,7 +61,7 @@ jobs:
           echo "odtis=$odtis" >> "$GITHUB_OUTPUT"
           echo "preverjeno=$preverjeno" >> "$GITHUB_OUTPUT"
           if [ "$preverjeno" = true ]; then
-            echo "Ista koda (tests/run.js --koda: $odtis) je že prestala vse teste v teku $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$tek: težki posli odpadejo, teče samo test dokumentov." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "Ista koda (tests/run.js --koda: $odtis) je že prestala vse teste v teku $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$tek: težki posli odpadejo, tečejo samo testi dokumentov (tests/run.js --dokumenti)." | tee -a "$GITHUB_STEP_SUMMARY"
           else
             echo "Koda $odtis: tečejo vsi posli$([ "$SME" = true ] || echo ' (ročni zagon brez preskoka)')." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
@@ -139,7 +139,8 @@ jobs:
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:fleet
 
-  # ista koda je že prestala vse teste: spremenjeni so lahko samo dokumenti (.md), zato samo njihov test (imena znamk v vseh .md)
+  # ista koda je že prestala vse teste: spremenjeni so lahko samo dokumenti (.md), zato samo testi, ki jih berejo (tests/run.js --dokumenti:
+  # imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi docs/proge/<id>.md)
   dokumenti:
     name: Dokumenti
     needs: koda
@@ -151,7 +152,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - run: node tests/fleet.test.js
+      - run: node tests/run.js --dokumenti
 
   # vsi težki posli so uspeli: prstni odtis te kode kot artefakt, da je naslednji tek iste kode ne testira znova
   zapis:

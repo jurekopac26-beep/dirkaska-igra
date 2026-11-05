@@ -4,7 +4,8 @@
 // takes long (over 4 min) has its time in SECS, and SECS names only tests in the list; a bad --shard stops with an error, never runs
 // everything. --related (npm run test:related): the tests of the files given (--files) by their names and RELATED; --quiet: a passing test
 // prints nothing, the summary how many passed. --koda: the code's fingerprint, the same when only documents (.md) change, not when the code
-// or a .md a test reads (KODA_MD) does; every .md a test reads by its name is in KODA_MD.
+// or a .md a test reads (KODA_MD) does; every .md a test reads by its name is in KODA_MD. --dokumenti: the tests that read .md files they do
+// not name (MD_TESTS), every test that lists the repository's files among them, each in a suite too, and GitHub's job Dokumenti runs them.
 //   node tests/shards.test.js
 'use strict';
 const { spawnSync } = require('child_process');
@@ -121,6 +122,22 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
     }
   }
   check('every .md a test reads by its name is in KODA_MD (tests/run.js): a change to it runs every test', kodaMd.length > 0 && !stray.length, stray.join('; ') || kodaMd.join(', '));
+}
+
+// 9. every test that lists the repository's files (git ls-files, or the root's folder) reads .md files it does not name: it is in MD_TESTS
+// (tests/run.js --dokumenti), which GitHub's job Dokumenti runs also when the same code has passed every test already (the code's
+// fingerprint leaves the .md files out); each of MD_TESTS is in a suite as well, so a change to the code runs it with the rest
+{
+  const md = lines(run('--dokumenti', '--list')), all = ['node', 'fleet', 'browser'].flatMap(s => lines(run(s, '--list'))), lister = [];
+  for (const d of ['', 'lib', 'browser']) for (const f of fs.readdirSync(path.join(__dirname, d)).filter(f => /\.m?js$/.test(f) && f !== 'run.js')) {
+    const src = fs.readFileSync(path.join(__dirname, d, f), 'utf8').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+    if (/['"]ls-files['"]|readdirSync\(\s*(ROOT|REPO)\s*[,)]/.test(src)) lister.push(path.posix.join(d, f));
+  }
+  const wf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'tests.yml'), 'utf8'), job = (/\n  dokumenti:\n([\s\S]*?)(\n  \w[\w-]*:\n|$)/.exec(wf) || [])[1] || '';
+  const stray = lister.filter(f => !md.includes(f)), lone = md.filter(f => !all.includes(f));
+  check('every test that lists the repository\'s files is in MD_TESTS (tests/run.js --dokumenti), each of them in a suite too; GitHub\'s job Dokumenti runs them',
+    md.length > 0 && lister.length > 0 && !stray.length && !lone.length && /node tests\/run\.js --dokumenti\b/.test(job),
+    [stray.length ? 'not in MD_TESTS: ' + stray.join(', ') : '', lone.length ? 'in no suite: ' + lone.join(', ') : '', /--dokumenti/.test(job) ? '' : 'job dokumenti does not run tests/run.js --dokumenti'].filter(Boolean).join('; ') || md.join(', '));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);
