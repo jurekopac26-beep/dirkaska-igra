@@ -34,7 +34,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 5 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #250 | 7 novosti | 3 | čaka |
 | 8 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
