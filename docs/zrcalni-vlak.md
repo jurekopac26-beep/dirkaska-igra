@@ -73,11 +73,15 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
 - brskalniški testi: glej »Brskalniški testi« spodaj.
 
 **Kaj manjka (seja v nedeljo):**
-1. `tests/browser/zrcalni.test.mjs` po vzoru `tests/browser/cisterna.test.mjs`. Preveri kamero, posnetek z 9 števili, duh s `ch` 9 in meni. Za poskus lokalno: `sed 's/avto=cisterna/avto=zrcalni/; s/r.w === 8/r.w === 9/; s/a.ch === 8/a.ch === 9/' …`. Izid je v razdelku »Brskalniški testi«.
+1. `tests/browser/zrcalni.test.mjs` je kopija `tests/browser/cisterna.test.mjs` za vlak (16/16 lokalno). Dodaj preverjanja druge cisterne: v kameri njen rep, v posnetku njen kot, pri duhu njeno skupino `v.tlG2` na sedlu dollyja.
 2. Obremenitev telefona z vlakom v polju (`perf`, polje `fieldN 3`) in vpis v test.
 3. README (»Novo vozilo«: `trailer.next`, `look.mirror`) in `docs/kazalo.md` sta dopolnjena. Manjka opis vlaka v `docs/igra.md` (vozila).
-4. Zgib 2 na vsaki progi doseže mejo 57°: poglej, ali je meja prenizka ali tekmeci vlak preveč lomijo (npr. `lim` 1,2 in primerjaj).
-5. Na Bathurstu igralec (avtopilot) potrebuje 1 reševanje v obeh fizikah. Poišči kraj (`r.rescue`) in razlog.
+4. **Nihanje druge cisterne** (najpomembnejše). Primer: Bathurst, cs, tekmec M. Kovač, 55–59 s, s ≈ 1340–1430. Med zaviranjem v ovinek s 101 na 77 km/h zgib 2 zraste z 0 na −35° in zaniha na +57° (meja), nato upada (33° pri 59,2 s). Zgib 1 ostane med −20° in +7°. Cisterna 2 zaide 7,4 m od sredine ceste; trka ni bilo.
+   - Gre za slabo dušeno nihanje zadnjega priklopnika (»rearward amplification«).
+   - Na Vršiču je zgib 2 na meji v serpentinah (43–59 km/h, zgib 1 do −27°), kar je verjetno pravilno.
+   - Poskusi dušenje zasuka na sedlu dollyja ali v `tl2Tyre` (oprijem in togost gum dollyja) in razporeditev teže (`T.k2`, `T.xt`). Meje `lim` ne višaj, dokler nihanje ni dušeno.
+   - Merilni skripti sta v predaji spodaj (Kako testirati).
+5. Reševanje na Bathurstu (obe fiziki) je ob štartu: 3,0 s, s = 6156, 2 km/h, `stuckT` 3 s. Težek vlak (29 t) z mreže spelje prepočasi za avtopilotov števec zastoja. Preveri speljevanje (navor in prenos pri 0 km/h) ali naj test prvih nekaj sekund ne šteje.
 6. Cisterna 2 ne trči v lasten vlačilec (pri škarjah gre skozenj). Trki z drugimi avti, cisternami in stenami delujejo.
 7. Celoten `npm run test:related`. Diff proti `main` vsebuje vse iz #304, zato je dolg.
 8. Po združitvi #304: spoji `main`, vpiši #322 v `docs/vrsta.md` in ga označi »Ready«, ko je med prvima dvema.
@@ -86,6 +90,13 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
 - Node: `node tests/zrcalni.test.js` (~1 min) in `node tests/fleet.test.js`. TITAN: `node tests/cisterna.test.js` in `node tests/golden.test.js` (reference se ne smejo spremeniti).
 - Brskalnik: `FLEET_ONLY=zrcalni,cisterna node tests/browser/fleet.test.mjs` in `node tests/browser/cisterna.test.mjs`. Če Playwrighta ni: `ln -sfn $(npm root -g)/playwright node_modules/playwright`.
 - V igri: `index.html?proga=bathurst&nacin=dirka&avto=zrcalni&t=20&tekmeci=2`; časovna vožnja (duh): `nacin=kronometer`.
+- Nihanje zgiba 2: v zanki `tests/zrcalni.test.js` za vsak avto štej korake z `|c.tl.next.rel| > lim − 0,02` in izpiši hitrost, `c.tl.rel` in `c.tl.next.qa.d` (odmik od sredine ceste) vsakih 0,2 s okoli prvega takega koraka (Bathurst, cs, seme 7: tekmec M. Kovač pri 58,1 s).
 
 ### Brskalniški testi
-(izid spodaj)
+- `node tests/browser/cisterna.test.mjs` (TITAN): 16/16, enako kot prej.
+- `node tests/browser/zrcalni.test.mjs` (vlak): 16/16.
+  - Kamera: rep cisterne 1 pri −0,30 do −0,60 višine zaslona.
+  - Posnetek: `w` 9.
+  - Duh: `ch` 9, n 2322.
+  - Meni: vlak 28,25 m, 15 klicev risanja, 30.922 trikotnikov.
+- `FLEET_ONLY=zrcalni,cisterna node tests/browser/fleet.test.mjs`: garaža zdaj v redu (prej je vlak segal čez ploščo), razbitina in popravilo v redu.
