@@ -4547,7 +4547,7 @@ const Render = (function () {
     if (v.charSh) for (const m of v.charSh.values()) if (!(keep && keep.has(m))) m.dispose();   // (its charred copies a pit repair took off the car: a smashed lens's, a tail lamp cover's)
     if (v.loose) { for (const n in v.loose) { const L = v.loose[n]; if (!L.shared && !(keep && keep.has(L.geo))) L.geo.dispose(); delete v.loose[n]; } }
   }
-  function disposeView(v, keep) { scene.remove(v.grp); if (v.tlG) { scene.remove(v.tlG); v.tlG = null; } if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
+  function disposeView(v, keep) { scene.remove(v.grp); if (v.tlG) { scene.remove(v.tlG); v.tlG = null; } if (v.tlG2) { scene.remove(v.tlG2); v.tlG2 = null; } if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
   // geometry and materials the loose panels on the track are drawn with
   function debrisRes() { const s = new Set(), add = (o) => { if (o.geometry) s.add(o.geometry); if (o.material) s.add(o.material); }; for (const d of debrisMeshes) if (d.mesh && d.mesh.traverse) d.mesh.traverse(add); for (const m of xGround) m.traverse(add); return s; }   // (xGround: Razbijanje · nov način's pieces on the road)
   // what the cars drawn now and the loose pieces on the track are drawn with (a dead piece is freed but for these: debris dies, kept out)
@@ -4571,11 +4571,17 @@ const Render = (function () {
     const D = M.trailer, A = tlGeo(M, 0), L = A && tlGeo(M, 1), S = L && tlGeo(M, 2);
     if (!A || !L || !S) { tlLooks.set(M.id, null); return null; }
     let map = null; if (A.cv) { map = new THREE.CanvasTexture(A.cv); map.flipY = false; map.anisotropy = Math.min(4, renderer ? renderer.capabilities.getMaxAnisotropy() : 1); }
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
+    // a polished tank (look.mirror, the road train's: js/cars/zrcalni.js): the race's sky mixed in (envTex: no live mirror, no draw call more),
+    // only on the picture's skin and ends (mirror.uv: white in its specular map, the rest black)
+    const mr = D.look && D.look.mirror; let spec = null;
+    if (mr && A.cv && envTex) { const sc = document.createElement('canvas'), g = sc.getContext('2d'); sc.width = A.cv.width; sc.height = A.cv.height; g.fillStyle = '#000'; g.fillRect(0, 0, sc.width, sc.height); g.fillStyle = '#fff'; for (const r of mr.uv || []) g.fillRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); spec = new THREE.CanvasTexture(sc); spec.flipY = false; }
+    const mat = spec ? new THREE.MeshLambertMaterial({ vertexColors: true, map, specularMap: spec, envMap: envTex, combine: THREE.MixOperation, reflectivity: mr.k || 0.6 }) : new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
     const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
     const R = { geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris };
     tlLooks.set(M.id, R); return R;
   }
+  // the road train's second tank (model.trailer.next): its look built as a trailer's of its own (its cache key the model's id and #2)
+  function tlBuild2(M) { const N = M.trailer && M.trailer.next; return N && N.look ? tlBuild({ id: M.id + '#2', trailer: N }) : null; }
   // the look's geometry (tlBuild): the builder run once a level (B.lo: 0 the look, the player's trailer and the previews; 1 the light look,
   // a rival's: fewer sides, no small parts, as the builder chooses; 2 the shadow, drawn only into the shadow map), on the full look's picture
   // (the lighter ones not painted again)
@@ -4688,6 +4694,11 @@ const Render = (function () {
     sh.castShadow = true; sh.visible = false; (v.shadowOnly || (v.shadowOnly = [])).push(sh);
     bl.renderOrder = 1; G.add(b, L, bl, sh); G.rotation.order = 'YZX';
     v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlR = R; v.tlRoll = 0; scene.add(G);
+    const R2 = c.tl && c.tl.next ? tlBuild2(c.m) : null; if (!R2) return;   // (the road train's second tank: a group of its own on the dolly, tl2Draw)
+    const G2 = new THREE.Group(), b2 = new THREE.Mesh(c.isPlayer ? R2.geo : R2.lo, R2.mat), L2 = new THREE.Mesh(R2.lgeo, matTailOff), bl2 = new THREE.Mesh(R2.blob, matBlob), sh2 = new THREE.Mesh(R2.sh, matHull);
+    sh2.castShadow = true; sh2.visible = false; v.shadowOnly.push(sh2);
+    bl2.renderOrder = 1; G2.add(b2, L2, bl2, sh2); G2.rotation.order = 'YZX';
+    v.tlG2 = G2; v.tlL2 = L2; v.tlS2 = bl2; v.tlR2 = R2; v.tlRoll2 = 0; scene.add(G2);
   }
   // a preview's trailer (the car screen's turntable, setShowCar; the new menu's yard, js/menu-car.js: Render.garageTrailer; not the garage's
   // workshop, which takes the tractor alone): its group in the tractor's (v.grp), straight behind on the kingpin, its tail lamps off, its blob
@@ -4716,10 +4727,33 @@ const Render = (function () {
     G.rotation.set((v.broll || 0) + v.tlRoll, -h, pit, 'YZX');
     v.tlS.material = settings.shadows ? matBlob : matBlobS;
     v.tlL.material = braking ? matTailOn : matTailOff;
+    if (v.tlG2) tl2Draw(v, c, T, G, u, dt, braking, vis);
     if (!vis) return;
     G.updateMatrixWorld(true);
     const Q = v.gq; if (!Q || !G.visible) return;
     for (const p of v.tlR.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);   // (its tail lamps' glow, as the tractor's: carGlows)
+      glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
+      if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
+  }
+  // the road train's second tank drawn this frame (tlDraw, after the first one): on the dolly's fifth wheel as the first tank is drawn (its
+  // kingpin at kp0 behind the first one's, the dolly's height), its heading the core's, pitched down to the road under its axles
+  function tl2Draw(v, c, T1, G1, u, dt, braking, vis) {
+    const G = v.tlG2, T = T1.next;
+    if (!T) { G.visible = false; return; }
+    G.visible = G1.visible;
+    const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
+    if (T.fall || T1.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
+    else { G1.updateMatrixWorld(true); G.position.copy(_tlK.set(D.kp0, D.kp[1] - T1.D.kp[1], 0).applyMatrix4(G1.matrixWorld)); }
+    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA, run);
+    const lat = clamp(T.w * Math.hypot(T.vx, T.vz), -16, 16);
+    v.tlRoll2 += (clamp(-lat * 0.0036 * sw, -0.05 * sw, 0.05 * sw) - v.tlRoll2) * Math.min(1, dt * 5);
+    G.rotation.set((v.broll || 0) + v.tlRoll2, -h, pit, 'YZX');
+    v.tlS2.material = settings.shadows ? matBlob : matBlobS;
+    v.tlL2.material = braking ? matTailOn : matTailOff;
+    if (!vis) return;
+    G.updateMatrixWorld(true);
+    const Q = v.gq; if (!Q || !G.visible) return;
+    for (const p of v.tlR2.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);
       glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
       if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
   }

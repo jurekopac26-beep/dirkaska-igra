@@ -1874,10 +1874,18 @@ const Core = (function () {
     const ok = isNum(D.mass, 500, 40000) && isNum(D.len, 4, 16) && isNum(D.wid, 1.5, 2.6) && isNum(D.ht, 1, 4.5) && isNum(D.f, 0, 3) && isNum(D.rw, 0.25, 0.7)
       && isNum(D.mu, 0.5, 2.5) && isNum(D.brk, 0, 14) && Array.isArray(D.ax) && D.ax.length >= 1 && D.ax.length <= 4 && D.ax.every(x => isNum(x, -D.len + D.f + 0.3, -1))
       && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look));
-    return ok ? '' : 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, look }';
+    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, look }';
+    if (D.next == null) return '';
+    // the road train's second tank (docs/zrcalni-vlak.md): on the dolly's fifth wheel, kp[0] behind the first kingpin; dax the dolly's axles
+    // (rigid to the first tank: a B-dolly), lim its fold against the first tank
+    const N = D.next, b = isObj(N) ? tlDefBad(Object.assign({}, N, { kp: [-1, Array.isArray(N.kp) ? N.kp[1] : NaN], next: null })) : 'an object';
+    if (b) return 'trailer.next: ' + b;
+    const k = N.kp[0], ok2 = isNum(k, -D.len - 4, -(D.len - D.f)) && Array.isArray(N.dax) && N.dax.length >= 1 && N.dax.length <= 3 && N.dax.every(x => isNum(x, k - 2, k + 2))
+      && (N.lim == null || isNum(N.lim, 0.3, TLK.lim));
+    return ok2 ? '' : 'trailer.next: { mass, len, wid, ht, f, ax, kp [x behind the first kingpin, y], dax [the dolly\'s axles], lim, rw, mu, brk, look }';
   }
-  function tlMake(c) {
-    const D = c.m.trailer, L = D.len, W = D.wid, xa = D.ax.reduce((s, v) => s + v, 0) / D.ax.length, cx = D.f - L / 2;
+  function tlMake(c, D2, P) {
+    const D = D2 || c.m.trailer, L = D.len, W = D.wid, xa = D.ax.reduce((s, v) => s + v, 0) / D.ax.length, cx = D.f - L / 2;
     const T = { tl: true, D, id: c.id, x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, y: 0, vy: 0, px: 0, pz: 0, ph: 0, py: 0,
       m: { mass: D.mass, len: L, wid: W, a: L / 2, b: L / 2, kI: Math.sqrt((L * L + W * W) / 12) }, I: D.mass * (L * L + W * W) / 12,
       cx, xa: xa - cx, axS: cx / xa,   // (the box's middle from the kingpin, < 0; the axles' middle from the box's; the axles' share of its weight)
@@ -1889,7 +1897,28 @@ const Core = (function () {
     for (let k = 0; k <= 4; k++) { const x = L / 2 - L * k / 4; T.corners.push([x, -W / 2], [x, W / 2]); }   // (its sides' points: the walls touch it all along)
     const sp = L - W, n = Math.ceil(sp / (0.9 * T.rad)) + 1;
     for (let i = 0; i < n; i++) T.circles.push(-sp / 2 + sp * i / (n - 1));
+    if (D.lim) T.lim = D.lim;
+    if (D.next && !P) tlChain(c, T);
     return T;
+  }
+  // the road train (model.trailer.next, docs/zrcalni-vlak.md): the second tank T.next on the B-dolly's fifth wheel. The dolly is rigid to the
+  // first tank (its two drawbars): its axles are the first tank's too, carrying the second tank's kingpin load; the first tank's tyre sits
+  // where its axles and the dolly's carry it (xt, from its middle; its road height stays at its own axles: xa). The second tank is a
+  // semi-trailer whose 'tractor' is the first tank: its kp[0] from the first tank's middle (tlPin, tlSnap, tlFold take the first tank as the
+  // car); back: the train's tail past the tractor's (the AI, the camera, the grid)
+  function tlChain(c, T) {
+    const N = T.D.next, kx = N.kp[0], T2 = tlMake(c, Object.assign({}, N, { kp: [kx - T.cx, N.kp[1]], kp0: kx, next: null }), T);
+    const w1 = T.m.mass * T.axS, w2 = T2.m.mass * (1 - T2.axS), xd = N.dax.reduce((s, v) => s + v, 0) / N.dax.length, xo = T.cx / T.axS;
+    T.next = T2; T2.par = T; T.k2 = w2;
+    T.xt = (w1 * xo + w2 * xd) / (w1 + w2) - T.cx;
+    T.back = -T.D.kp[0] - kx + N.len - N.f - c.m.len / 2;
+    const xe = T.xt + T.cx, x2 = T2.cx / T2.axS;
+    T.kd2 = xe * xe - (kx - xe) * (kx - xe) + x2 * x2;
+  }
+  // the ground under the second tank's kingpin (the dolly): the first tank's ground line (its kingpin's to its axles') carried on back
+  function tlHitchY(P, T) {
+    const run = -P.cx / P.axS, yk = P.yK - P.D.kp[1];
+    return yk + (P.yA - yk) * -T.D.kp0 / run;
   }
   // the trailer on the kingpin, straight behind (trk: its axles on the road's line behind, as far off it as the kingpin), moving with the tractor
   const _tlQ = { i: -1 };
@@ -1909,11 +1938,29 @@ const Core = (function () {
     const v = (c.vx || 0) * Math.cos(h) + (c.vz || 0) * Math.sin(h); T.vx = Math.cos(h) * v; T.vz = Math.sin(h) * v; T.w = 0;
     T.fall = null; T.torn = 0; T.air = 0; T.vy = 0; T.vyA = 0; T.airA = 0; T.fold = 0; T.slide = 0; T.xgl = 0;
     T.yK = (c.y || 0) + D.kp[1]; T.yA = c.y || 0; T.y = T.py = c.y || 0; T.pit = 0; T.q.i = -1; T.qa.i = -1;
+    if (T.next) tl2Place(c, T, T.next, trk);
+  }
+  // the road train's second tank (tlChain) on the dolly's fifth wheel behind the first one (P), straight behind along the road
+  function tl2Place(c, P, T, trk) {
+    const D = T.D, kx = P.x + D.kp[0] * Math.cos(P.h), kz = P.z + D.kp[0] * Math.sin(P.h), lim = T.lim || TLK.lim;
+    let h = P.h;
+    if (trk && trk.N) {
+      const q = trk.query(kx, kz, c.q && c.q.i >= 0 ? c.q.i : -1, _tlQ), back = T.cx / T.axS;
+      let s = q.s + back; if (!trk.open) s = ((s % trk.len) + trk.len) % trk.len;
+      if (Number.isFinite(s) && s >= 0 && Math.abs(q.d || 0) < trk.w + 6) {
+        const i = trk.idx(s), d = q.d || 0, a = Math.atan2(kz - (trk.pz[i] + trk.nz[i] * d), kx - (trk.px[i] + trk.nx[i] * d));
+        if (Math.abs(wrapPi(a - P.h)) < lim * 0.8) h = a;
+      }
+    }
+    T.h = T.ph = h; T.rel = wrapPi(h - P.h); T.x = T.px = kx + Math.cos(h) * T.cx; T.z = T.pz = kz + Math.sin(h) * T.cx;
+    const v = (P.vx || 0) * Math.cos(h) + (P.vz || 0) * Math.sin(h); T.vx = Math.cos(h) * v; T.vz = Math.sin(h) * v; T.w = 0;
+    T.fall = null; T.torn = 0; T.air = 0; T.vy = 0; T.vyA = 0; T.airA = 0; T.fold = 0; T.slide = 0; T.xgl = 0;
+    T.yA = P.yA; T.yK = tlHitchY(P, T) + D.kp[1]; T.y = T.py = P.yA; T.pit = 0; T.q.i = -1; T.qa.i = -1;
   }
   // a recorded or a friend's trailer (the replay, the network): its angle to the tractor rel, put on the kingpin, no physics. Posed where the
   // tractor is shown (nothing to draw between two poses: the previous one this one), moving with it, never falling; trk: its axles on the
   // road under them (their own search, _qp: T.q and T.qa stay as they were, a friend's never searched: the AI and the traffic see its tractor)
-  function tlPose(c, rel, trk) {
+  function tlPose(c, rel, trk, rel2) {
     const T = c.tl; if (!T) return;
     const D = T.D, r = clamp(rel || 0, -TLK.lim, TLK.lim), h = c.h + r, kx = c.x + D.kp[0] * Math.cos(c.h), kz = c.z + D.kp[0] * Math.sin(c.h);
     T.h = T.ph = h; T.rel = r; T.x = T.px = kx + Math.cos(h) * T.cx; T.z = T.pz = kz + Math.sin(h) * T.cx; T.fall = null;
@@ -1927,6 +1974,22 @@ const Core = (function () {
       if (!Number.isFinite(yA)) yA = c.y || 0;
     }
     T.yA = yA; tlSnap(c, T); T.py = T.y;
+    if (T.next) tl2Pose(c, T, T.next, rel2, trk);
+  }
+  // the second tank posed (the replay, the network): its angle to the first one rel, on the dolly's fifth wheel, no physics
+  function tl2Pose(c, P, T, rel, trk) {
+    const D = T.D, lim = T.lim || TLK.lim, r = clamp(rel || 0, -lim, lim), h = P.h + r, kx = P.x + D.kp[0] * Math.cos(P.h), kz = P.z + D.kp[0] * Math.sin(P.h);
+    T.h = T.ph = h; T.rel = r; T.x = T.px = kx + Math.cos(h) * T.cx; T.z = T.pz = kz + Math.sin(h) * T.cx; T.fall = null;
+    T.vx = P.vx || 0; T.vz = P.vz || 0; T.w = P.w || 0; T.vy = T.vyA = 0; T.air = T.airA = 0;
+    let yA = P.yA;
+    if (trk && trk.N) {
+      if (!T._qp) Object.defineProperty(T, '_qp', { value: { i: -1 }, enumerable: false });
+      const ax = T.x + Math.cos(h) * T.xa, az = T.z + Math.sin(h) * T.xa, hi = T._qp.i >= 0 ? T._qp.i : P._qp && P._qp.i >= 0 ? P._qp.i : c.q && c.q.i >= 0 ? c.q.i : -1, q = trk.query(ax, az, hi, T._qp);
+      if (trk.hasElev) { yA = trk.elevAt(q.s, _elv).y; if (q.k >= 0 && q.fb > 0) yA = q.y; }
+      if (trk.ground2) yA += trk.ground2(ax, az, yA);
+      if (!Number.isFinite(yA)) yA = P.yA;
+    }
+    T.yA = yA; tlSnap(P, T); T.py = T.y;
   }
   // the kingpin's joint: the impulse J (on the trailer at the kingpin, -J on the tractor's fifth wheel, both free bodies) that makes the
   // two points' speeds one; the trailer's and the tractor's speeds updated
@@ -1982,9 +2045,10 @@ const Core = (function () {
   const tlKing = (c) => c.tl.fall ? 0 : c.tl.m.mass * (1 - c.tl.axS);
   // the trailer's step (Car.step, after the tractor's): see above
   function tlStep(c, dt, trk) {
-    const T = c.tl, D = T.D;
+    const T = c.tl, D = T.D, T2 = T.next;
     T.px = T.x; T.pz = T.z; T.ph = T.h; T.py = T.y; T.isPlayer = c.isPlayer; T.inPit = c.inPit; T.pitWant = c.pitWant; T.pitG = c.pitG; T.boxD = c.boxD;
-    if (T.fall) { tlFly(T, dt, trk); return; }
+    if (T2) { T2.px = T2.x; T2.pz = T2.z; T2.ph = T2.h; T2.py = T2.y; T2.isPlayer = c.isPlayer; T2.inPit = c.inPit; T2.pitWant = c.pitWant; T2.pitG = c.pitG; T2.boxD = c.boxD; }
+    if (T.fall) { tlFly(T, dt, trk); if (T2) { if (!T2.fall) { T2.fall = { t: 0 }; T2.vy = T.vy; } tlFly(T2, dt, trk); } return; }
     const fresh = T.q.i < 0;   // (just put on the kingpin (tlPlace): moving with the tractor and on the road at its height, whatever set its speed and height since)
     if (fresh) { const v = c.vx * Math.cos(T.h) + c.vz * Math.sin(T.h); T.vx = Math.cos(T.h) * v; T.vz = Math.sin(T.h) * v; T.w = c.w; T.yA = T.y = T.py = c.y || 0; T.vyA = 0; }
     const m = T.m.mass, I = T.I, ct = Math.cos(T.h), st = Math.sin(T.h), rAx = T.xa * ct, rAz = T.xa * st, ax = T.x + rAx, az = T.z + rAz;
@@ -1996,7 +2060,7 @@ const Core = (function () {
     const yb = T.yA + T.vyA * dt - JUMP_G * dt * dt;   // (over a crest faster than it falls: in the air)
     if (yb <= yR || !(trk.hasElev || trk.ground2)) { T.vyA = (yR - T.yA) / dt; T.yA = yR; T.airA = 0; } else { T.vyA -= JUMP_G * dt; T.yA = yb; T.airA = 1; }
     if (T.vyA > 30 || T.vyA < -30) T.vyA = clamp(T.vyA, -30, 30);
-    const N = m * G * T.axS, mu = T.airA ? 0 : D.mu * S.lat * (c.wet || 1) * (c.glassK || 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1);
+    const N = m * G * T.axS + (T2 && !T2.fall ? T.k2 * G : 0), mu = T.airA ? 0 : D.mu * S.lat * (c.wet || 1) * (c.glassK || 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1);
     // ---- its forces: the slope (where the track has it), the rolling and its brakes along it, the air ----
     let vl = T.vx * ct + T.vz * st;
     if (trk.def.gradeForce && !T.airA) { const gH = gr * (ct * (q.tx || 0) + st * (q.tz || 0)), a = -G * gH / Math.sqrt(1 + gH * gH); T.vx += ct * a * dt; T.vz += st * a * dt; vl += a * dt; }
@@ -2006,32 +2070,76 @@ const Core = (function () {
     const sp = Math.hypot(T.vx, T.vz); if (sp > 0.1) { const k = Math.min(sp, TLK.cd * sp * sp / m * dt) / sp; T.vx -= T.vx * k; T.vz -= T.vz * k; }
     const Flat = Math.sqrt(Math.max(0, Fmax * Fmax - Fb * Fb)) * dt;
     // ---- the tyre across and the kingpin, together ----
-    const hold = c.phys !== 'nova' && !c.air, ux = -st, uz = ct, rn = rAx * uz - rAz * ux, kA = 1 / m + rn * rn / I;   // (hold: the classic tractor on the road, tlHoldSet)
+    const tX = T.xt != null ? T.xt * ct : rAx, tZ = T.xt != null ? T.xt * st : rAz;   // (its tyre: on its axles; the road train's first tank on its and the dolly's, tlChain)
+    const hold = c.phys !== 'nova' && !c.air, ux = -st, uz = ct, rn = tX * uz - tZ * ux, kA = 1 / m + rn * rn / I;   // (hold: the classic tractor on the road, tlHoldSet)
     const gam = Math.max(Math.abs(vl), 0.5) / (TLK.ck * Math.max(N, 1) * dt);   // (soft: the slip angle a side force takes; standing, as good as rigid)
     let LA = 0; T.fold *= Math.exp(-dt / 0.4);
     if (hold) tlHoldSet(c, T, dt);
+    const B2 = T2 && !T2.fall ? tl2Pre(c, T, T2, dt, trk) : null;
     for (let it = 0; it < TLK.it; it++) {
       if (Flat > 0) {
-        const vA = (T.vx - T.w * rAz) * ux + (T.vz + T.w * rAx) * uz, L0 = LA;
+        const vA = (T.vx - T.w * tZ) * ux + (T.vz + T.w * tX) * uz, L0 = LA;
         LA = clamp(LA - (vA + gam * LA) / (kA + gam), -Flat, Flat);
         const dL = LA - L0; T.vx += ux * dL / m; T.vz += uz * dL / m; T.w += rn * dL / I;
       }
       tlPin(c, T);
       if (hold) tlHoldIt(c);
+      if (B2) { tl2Tyre(T2, B2); tlPin(T, T2); }
     }
     if (hold) tlHoldEnd(c, T);
-    T.slide = Math.abs((T.vx - T.w * rAz) * ux + (T.vz + T.w * rAx) * uz);   // (its tyres sliding across, m/s: the renderer's marks)
+    T.slide = Math.abs((T.vx - T.w * tZ) * ux + (T.vz + T.w * tX) * uz);   // (its tyres sliding across, m/s: the renderer's marks)
     // ---- it turns about the kingpin (the fold's stop: the two turn as one), and is put back on it ----
     T.h += T.w * dt;
     tlFold(c, T);
     tlSnap(c, T);
     T.q = trk.query(T.x, T.z, T.q.i >= 0 ? T.q.i : c.q.i, T.q);
+    if (!T2) return;
+    if (T2.fall) { tlFly(T2, dt, trk); return; }
+    T2.slide = Math.abs((T2.vx - T2.w * B2.rAz) * B2.ux + (T2.vz + T2.w * B2.rAx) * B2.uz);
+    T2.h += T2.w * dt;
+    tlFold(T, T2);
+    tlSnap(T, T2);
+    T2.q = trk.query(T2.x, T2.z, T2.q.i >= 0 ? T2.q.i : T.q.i, T2.q);
+  }
+  // the second tank's step before the rounds (tlStep): as the first one's (its road, its height, its forces), the first tank its car; what
+  // its tyre needs in the rounds (tl2Tyre) in _tl2
+  const _tl2 = { m: 1, I: 1, rAx: 0, rAz: 0, ux: 0, uz: 1, rn: 0, kA: 1, gam: 1, Flat: 0, LA: 0 };
+  function tl2Pre(c, P, T, dt, trk) {
+    const D = T.D, fresh = T.q.i < 0;
+    if (fresh) { const v = P.vx * Math.cos(T.h) + P.vz * Math.sin(T.h); T.vx = Math.cos(T.h) * v; T.vz = Math.sin(T.h) * v; T.w = P.w; T.yA = T.y = T.py = P.yA || 0; T.vyA = 0; }
+    const m = T.m.mass, I = T.I, ct = Math.cos(T.h), st = Math.sin(T.h), rAx = T.xa * ct, rAz = T.xa * st, ax = T.x + rAx, az = T.z + rAz;
+    const q = trk.query(ax, az, T.qa.i >= 0 ? T.qa.i : P.qa.i >= 0 ? P.qa.i : c.q.i, T.qa), sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(ax, az, T.yA) : sf0, S = CSSURF[sf] || CSSURF[0];
+    let yR = 0, gr = 0; if (trk.hasElev) { const e = trk.elevAt(q.s, _elv); yR = e.y; gr = e.grade; if (q.k >= 0 && q.fb > 0) { yR = q.y; gr = q.g; } }
+    if (trk.ground2) yR += trk.ground2(ax, az, T.yA);
+    if (fresh) T.yA = yR;
+    const yb = T.yA + T.vyA * dt - JUMP_G * dt * dt;
+    if (yb <= yR || !(trk.hasElev || trk.ground2)) { T.vyA = (yR - T.yA) / dt; T.yA = yR; T.airA = 0; } else { T.vyA -= JUMP_G * dt; T.yA = yb; T.airA = 1; }
+    if (T.vyA > 30 || T.vyA < -30) T.vyA = clamp(T.vyA, -30, 30);
+    const N = m * G * T.axS, mu = T.airA ? 0 : D.mu * S.lat * (c.wet || 1) * (c.glassK || 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1);
+    let vl = T.vx * ct + T.vz * st;
+    if (trk.def.gradeForce && !T.airA) { const gH = gr * (ct * (q.tx || 0) + st * (q.tz || 0)), a = -G * gH / Math.sqrt(1 + gH * gH); T.vx += ct * a * dt; T.vz += st * a * dt; vl += a * dt; }
+    const Fmax = mu * N, brk = c.locked && !(c.speed > 0.5) ? 1 : clamp(c.csB || 0, 0, 1);
+    const Fb = T.airA ? 0 : Math.min(Fmax * 0.97, (TLK.roll * G + D.brk * brk * (0.55 + 0.45 * S.tr) + (S.c0 * Math.min(1, Math.abs(vl) / 3) + S.c1 * Math.abs(vl)) * 0.5) * m);
+    const dv = Math.min(Math.abs(vl), Fb / m * dt) * Math.sign(vl); T.vx -= ct * dv; T.vz -= st * dv;
+    const sp = Math.hypot(T.vx, T.vz); if (sp > 0.1) { const k = Math.min(sp, TLK.cd * sp * sp / m * dt) / sp; T.vx -= T.vx * k; T.vz -= T.vz * k; }
+    const B = _tl2, ux = -st, uz = ct, rn = rAx * uz - rAz * ux;
+    B.m = m; B.I = I; B.rAx = rAx; B.rAz = rAz; B.ux = ux; B.uz = uz; B.rn = rn; B.kA = 1 / m + rn * rn / I; B.LA = 0;
+    B.Flat = Math.sqrt(Math.max(0, Fmax * Fmax - Fb * Fb)) * dt; B.gam = Math.max(Math.abs(vl), 0.5) / (TLK.ck * Math.max(N, 1) * dt);
+    T.fold *= Math.exp(-dt / 0.4);
+    return B;
+  }
+  // the second tank's tyre, one round (tlStep): as the first one's
+  function tl2Tyre(T, B) {
+    if (!(B.Flat > 0)) return;
+    const vA = (T.vx - T.w * B.rAz) * B.ux + (T.vz + T.w * B.rAx) * B.uz, L0 = B.LA;
+    B.LA = clamp(B.LA - (vA + B.gam * B.LA) / (B.kA + B.gam), -B.Flat, B.Flat);
+    const dL = B.LA - L0; T.vx += B.ux * dL / B.m; T.vz += B.uz * dL / B.m; T.w += B.rn * dL / B.I;
   }
   // the fold's stop: past TLK.lim the trailer's turn to the tractor is taken out, shared by their turning masses (a knock on the tractor)
   function tlFold(c, T) {
-    const r = wrapPi(T.h - c.h);
-    if (Math.abs(r) <= TLK.lim) { T.rel = r; return; }
-    const sg = Math.sign(r); T.rel = sg * TLK.lim; T.h = c.h + T.rel;
+    const r = wrapPi(T.h - c.h), lim = T.lim || TLK.lim;
+    if (Math.abs(r) <= lim) { T.rel = r; return; }
+    const sg = Math.sign(r); T.rel = sg * lim; T.h = c.h + T.rel;
     const wr = T.w - c.w;
     if (wr * sg > 0) { const Ic = c.I * 3, wm = (T.I * T.w + Ic * c.w) / (T.I + Ic); if (wr * sg > 1.2 && c.dmgMode) applyDamage(c, Math.min(0.05, (Math.abs(wr) - 1.2) * 0.02), c.m.b * -0.6, sg * c.m.wid * 0.4); T.w = wm; c.w = wm; }
   }
@@ -2039,7 +2147,7 @@ const Core = (function () {
   function tlSnap(c, T) {
     const D = T.D, ch = Math.cos(c.h), sh = Math.sin(c.h), kx = c.x + D.kp[0] * ch, kz = c.z + D.kp[0] * sh;
     T.x = kx + Math.cos(T.h) * T.cx; T.z = kz + Math.sin(T.h) * T.cx;
-    T.yK = (c.y || 0) + D.kp[1];
+    T.yK = (T.par ? tlHitchY(T.par, T) : c.y || 0) + D.kp[1];
     const run = -T.cx / T.axS;   // (the kingpin to the axles' middle)
     T.pit = Math.atan2(T.yK - D.kp[1] - T.yA, run); T.y = T.yA + (T.yK - D.kp[1] - T.yA) * (1 - T.axS);
   }
@@ -4046,7 +4154,7 @@ const Core = (function () {
 
     step(dt) {
       const race = this.race, cl = this.cl; cl.length = 0;
-      for (const c of race.cars) if (!c.net) { cl.push(c); if (c.tl && !c.tl.fall && c.tl.q.i >= 0) cl.push(c.tl); }   // (a semi-trailer as a race car of its own: followed, run into, kept clear of)
+      for (const c of race.cars) if (!c.net) { cl.push(c); if (c.tl && !c.tl.fall && c.tl.q.i >= 0) cl.push(c.tl); const R2 = c.tl && c.tl.next; if (R2 && !R2.fall && R2.q.i >= 0) cl.push(R2); }   // (a semi-trailer as a race car of its own: followed, run into, kept clear of)
       if (race.pol) for (const c of race.pol.cars) cl.push(c);
       this.t += dt;
       this._order();
@@ -4882,6 +4990,7 @@ const Core = (function () {
       for (let i = 0; i < pc.length; i++) {
         const p = pc[i].pol;
         for (const c of cars) { let imp = crashCollide(pc[i], c); const R = c.tl; if (R && !R.fall && !c.net) { const it = crashCollide(pc[i], R); if (it > imp) { imp = it; c.contactX = R.contactX; c.contactZ = R.contactZ; } }   // (its semi-trailer: rammed as the car)
+          const R2 = R && R.next; if (R2 && !R2.fall && !c.net) { const it = crashCollide(pc[i], R2); if (it > imp) { imp = it; c.contactX = R2.contactX; c.contactZ = R2.contactZ; } }   // (a road train's second tank too)
           if (imp > 0.3 && c.isPlayer) { if (now - p.hitP > 0.25) p.pushT = now; p.hitP = now;
           if (p.mode === 'chase' && p.kind !== 'moto') { if (imp > 2) { this.rams++; if (!(p.cool > 0) && imp > 4) { this._event('ram', c.contactX, c.contactZ, pc[i]); this.st.eur += POL_EUR.ram; } }
             if (!(p.cool > 0) && (imp > 6 || now - p.pushT > this.D.pit)) p.cool = this.D.cool + this.R() * this.D.coolR; }
@@ -6628,21 +6737,38 @@ const Core = (function () {
           const o = cars[j]; if (o === c || o.fall || (o.pitG && !c.pitG) || (lv && Math.abs((R.y || 0) - (o.y || 0)) >= 3)) continue;
           carCollide(R, o);
           if (o.tl && j > A[k] && !o.tl.fall && !o.net) carCollide(R, o.tl);
+          if (o.tl && o.tl.next && j > A[k] && !o.tl.next.fall && !o.net) carCollide(R, o.tl.next);   // (a road train's second tank, tlChain)
+        }
+        const R2 = R.next; if (!R2 || R2.fall) continue;   // (the road train's second tank: the cars, the other trailers)
+        for (let j = 0; j < cars.length; j++) {
+          const o = cars[j]; if (o === c || o.fall || (o.pitG && !c.pitG) || (lv && Math.abs((R2.y || 0) - (o.y || 0)) >= 3)) continue;
+          carCollide(R2, o);
+          const L = o.tl; if (L && j > A[k] && !o.net) { if (!L.fall) carCollide(R2, L); if (L.next && !L.next.fall) carCollide(R2, L.next); }
         }
       }
       for (let k = 0; k < A.length; k++) {
         const c = cars[A[k]], R = c.tl; if (c.net || c.fall || R.fall) continue;
         wallCollide(R, T, true); if (R.rl) R.rl = null;
-        if (R.fall) { R.torn = 1; R.vy = Math.max(0, R.vy || 0); if (c.dmgMode) applyDamage(c, 0.04, -c.m.len * 0.4, 0); continue; }   // (over the edge: torn off the kingpin, a jerk at the tractor's tail)
+        if (R.fall) { R.torn = 1; R.vy = Math.max(0, R.vy || 0); if (c.dmgMode) applyDamage(c, 0.04, -c.m.len * 0.4, 0); if (R.next && !R.next.fall) { R.next.fall = { t: 0 }; R.next.vy = R.vy; } continue; }   // (over the edge: torn off the kingpin, a jerk at the tractor's tail; the second tank with it)
         tlJoin(c, R, dt);
+        const R2 = R.next; if (!R2 || R2.fall) continue;   // (the second tank: back on the dolly where the first one is now, its walls, on the dolly again)
+        tlSnap(R, R2);
+        wallCollide(R2, T, true); if (R2.rl) R2.rl = null;
+        if (R2.fall) { R2.torn = 1; R2.vy = Math.max(0, R2.vy || 0); continue; }
+        tlJoin(R, R2, dt);
       }
-      for (let k = 0; k < A.length; k++) { const c = cars[A[k]], R = c.tl; if (R.fall && !c.fall && R.fall.t >= TLK.fallT) { c.falls = (c.falls || 0) + 1; applyDamage(c, 0.2); this.rescue(c); } }
+      for (let k = 0; k < A.length; k++) { const c = cars[A[k]], R = c.tl; if (R.fall && !c.fall && R.fall.t >= TLK.fallT) { c.falls = (c.falls || 0) + 1; applyDamage(c, 0.2); this.rescue(c); } else if (R.next && R.next.fall && !R.fall && !c.fall && R.next.fall.t >= TLK.fallT) { c.falls = (c.falls || 0) + 1; applyDamage(c, 0.2); this.rescue(c); } }
       for (let k = 0; k < A.length; k++) {   // its knocks the tractor's (the game's sounds and the renderer's sparks read the race's cars; the trailer's own cleared), its speed (the traffic)
         const c = cars[A[k]], R = c.tl; if (c.net) continue;
         if (R.hitWall > c.hitWall) c.hitWall = R.hitWall; if (R.hitCar > c.hitCar) c.hitCar = R.hitCar;
         if (R.fxWall > (c.fxWall || 0)) { c.fxWall = R.fxWall; c.wallX = R.wallX; c.wallZ = R.wallZ; }
         if (R.fxCar > (c.fxCar || 0)) { c.fxCar = R.fxCar; c.contactX = R.contactX; c.contactZ = R.contactZ; if (R.fxQ) c.fxQ = R.fxQ; }
         R.hitWall = R.hitCar = R.fxWall = R.fxCar = R.fxQ = 0; R.speed = Math.hypot(R.vx, R.vz);
+        const R2 = R.next; if (!R2) continue;   // (the second tank's knocks the tractor's too)
+        if (R2.hitWall > c.hitWall) c.hitWall = R2.hitWall; if (R2.hitCar > c.hitCar) c.hitCar = R2.hitCar;
+        if (R2.fxWall > (c.fxWall || 0)) { c.fxWall = R2.fxWall; c.wallX = R2.wallX; c.wallZ = R2.wallZ; }
+        if (R2.fxCar > (c.fxCar || 0)) { c.fxCar = R2.fxCar; c.contactX = R2.contactX; c.contactZ = R2.contactZ; if (R2.fxQ) c.fxQ = R2.fxQ; }
+        R2.hitWall = R2.hitCar = R2.fxWall = R2.fxCar = R2.fxQ = 0; R2.speed = Math.hypot(R2.vx, R2.vz);
       }
     }
     _fall(c, dt) {
@@ -6650,7 +6776,7 @@ const Core = (function () {
       c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y;
       c.vy -= JUMP_G * dt; c.y += c.vy * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.h += c.w * dt;
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
-      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); }   // (its semi-trailer falls with it)
+      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); } }   // (its semi-trailer falls with it; a road train's second tank too)
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
     }
     // when a car was last put somewhere else at once (rescue, the marshals' refit beside the road): the replay's recording marks it (game.js
