@@ -21,7 +21,7 @@ Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verz
 TITAN s cisterno (#304) mora delovati enako (njegove reference se ne smejo spremeniti).
 
 ## Nadaljevanje (5. 11. 2026 popoldne, seja session_01Ck3D3TpE6eSmUqcu4PnUtv)
-Sproti zapisano, da je delo varno ob nenadni ustavitvi računa. Vse spodaj je potisnjeno na vejo.
+Sproti zapisano, da je delo varno ob nenadni ustavitvi računa. Vse spodaj je potisnjeno na vejo. **Stanje ob koncu seje: delo je končano**, #322 je v vrsti (`docs/vrsta.md`, takoj za #304) in ostane osnutek; odprto ni nič.
 
 **Nihanje druge cisterne: odpravljeno.** Vzroka sta bila dva, oba samo pri vlaku (TITAN je bit za bitom enak):
 1. Osi cistern so ob vsakem pregibu višinskega profila in ob skoku mesta ob cesti (v ozkem ovinku os seka notranjost in se njena projekcija na sredino ceste premakne) za nekaj korakov »poletele«, takrat brez oprijema: Bathurst 4 % korakov, Caracoles 15 %, Tianmen 22 %. Zdaj `tlRide` (`js/core.js`): os vlakove cisterne odleti samo, kjer greben pod njo pada hitreje, kot ona pada (pravilo avta v `stepCS`: `vl² · curv < −0,85 · JUMP_G`), sicer je na cesti. Cisterne zdaj letijo le tam, kjer leti tudi traktor (Ouninpohja).
@@ -113,8 +113,8 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
    - Merilni skripti sta v predaji spodaj (Kako testirati).
 5. *(rešeno: mreža)* Reševanje na Bathurstu (obe fiziki) je ob štartu: 3,0 s, s = 6156, 2 km/h, `stuckT` 3 s. Težek vlak (29 t) z mreže spelje prepočasi za avtopilotov števec zastoja. Preveri speljevanje (navor in prenos pri 0 km/h) ali naj test prvih nekaj sekund ne šteje.
 6. *(ni potrebno)* Cisterna 2 ne trči v lasten vlačilec (pri škarjah gre skozenj). Trki z drugimi avti, cisternami in stenami delujejo.
-7. Celoten `npm run test:related`. Diff proti `main` vsebuje vse iz #304, zato je dolg.
-8. Po združitvi #304: spoji `main`, vpiši #322 v `docs/vrsta.md` in ga označi »Ready«, ko je med prvima dvema.
+7. *(rešeno: 31 povezanih testov glede na #304 zelenih na cb98aef, med njimi `world`, `gfx`, `fleet`, `marks`; golden 350/350 enakih)* Celoten `npm run test:related`. Diff proti `main` vsebuje vse iz #304, zato je dolg.
+8. *(vpis narejen: #366, mesto takoj za #304)* Po združitvi #304: spoji `main`, poženi povezane teste in #322 označi »Ready«, ko je med prvima dvema (to naredi biketraveler, dokler račun 2 stoji).
 
 **Kako testirati:**
 - Node: `node tests/zrcalni.test.js` (~1 min) in `node tests/fleet.test.js`. TITAN: `node tests/cisterna.test.js` in `node tests/golden.test.js` (reference se ne smejo spremeniti).
