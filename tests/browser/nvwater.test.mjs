@@ -89,6 +89,15 @@ try {
     return { backs: NVWater.state().backs - b0, wet: +wet.toFixed(2), maxD: +maxD.toFixed(2), d: NVWater.depth(P.x, P.z), v: +Math.hypot(P.vx, P.vz).toFixed(2), dmg: +((P.dmg || 0) - dmg0).toFixed(3), face: +Math.cos(P.h - from).toFixed(2), shore: +C.dW(P.x, P.z).toFixed(1) }; });
   T.check('into the deep water: the car sinks in, then is put back on the shore (on the land, still, facing away from the water), with no damage', dp.backs === 1 && dp.wet > 0.5 && dp.d === 0 && dp.v < 0.5 && dp.dmg <= 0 && dp.face > 0.5 && dp.shore > 0, JSON.stringify(dp));
 
+  const se = await page.evaluate(() => { const g = __game, P = g.race.player, C = __H3.waterCourse, W = __H3.water, Q = C.C.P, n = Q.length, h = Math.atan2(Q[n - 1][1] - Q[n - 6][1], Q[n - 1][0] - Q[n - 6][0]);
+    const sx = Q[n - 1][0] + Math.cos(h) * 30, sz = Q[n - 1][1] + Math.sin(h) * 30; let best = null;   // (out on the sea off the canal's mouth: the nearest dry beach)
+    for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; for (let r = 2; r < 160; r += 1) { const x = sx + Math.cos(a) * r, z = sz + Math.sin(a) * r; if (NVWater.depth(x, z) === 0) { if (!best || r < best.r) best = { a, r }; break; } } }
+    if (!best) return null; const x = sx + Math.cos(best.a) * (best.r + 8), z = sz + Math.sin(best.a) * (best.r + 8); P.place(x, z, best.a + Math.PI); P.y = P.py = P.roadY = __game.race.track.ground2(x, z, 5); P.vx = P.vz = 0; g.sim(0.5, false, 0, 0, 0);
+    const b0 = NVWater.state().backs, dmg0 = P.dmg || 0; let sea = 0;
+    for (let k = 0; k < 60 * 10 && NVWater.state().backs === b0; k++) { g.sim(1 / 60, false, 0, 0.6, 0); if (W.region(P.x, P.z)) sea = Math.max(sea, NVWater.depth(P.x, P.z)); }
+    g.sim(0.05, false, 0, 0, 0); return { backs: NVWater.state().backs - b0, sea: +sea.toFixed(2), d: NVWater.depth(P.x, P.z), v: +Math.hypot(P.vx, P.vz).toFixed(2), dmg: +((P.dmg || 0) - dmg0).toFixed(3), from: best.r }; });
+  T.check('into the sea from its beach: deep, then put back on the shore (on the land, still), with no damage', !!se && se.backs === 1 && se.sea > 0.7 && se.d === 0 && se.v < 0.5 && se.dmg <= 0, JSON.stringify(se));
+
   // 8. the start's free jet ski taken, then a restart at HOME: in the car, the jet skis back in their places
   const rs = await page.evaluate(() => { const g = __game, P = g.race.player, k = NVWater.state().skis.find(q => q.at === 'start'); let b = null;
     for (let r = 3; r < 13 && !b; r += 0.5) for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2, x = k.x + Math.cos(a) * r, z = k.z + Math.sin(a) * r; if (NVWater.depth(x, z) === 0) { b = { x, z }; break; } }

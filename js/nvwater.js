@@ -24,10 +24,23 @@ const NVWater = (function () {
   function depth(x, z) {
     let d = 0; const C = H3 && H3.waterCourse, W = H3 && H3.water;
     if (C && C.depth) d = C.depth(x, z);
-    if (W && W.region && W.bedAt && x > 55 && W.region(x, z)) d = Math.max(d, W.WL - W.bedAt(x, z).y);
+    if (W && W.region && W.bedAt) d = Math.max(d, seaDepth(W, x, z));
     return d > 0 ? d : 0;
   }
-  const seaAt = (x, z) => { const W = H3 && H3.water; return !!(W && W.region && x > 55 && W.region(x, z)); };
+  // the sea's depth from a grid of SG.cs m over its outline, filled as it is asked for (its bed's look-up is slow, ~10 us: the car's ground
+  // asks for it many times a step), between its corners linearly
+  let SG = null;
+  function seaDepth(W, x, z) {
+    if (!SG) { const P = W.poly || [], cs = 2; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [a, b] of P) { x0 = Math.min(x0, a); x1 = Math.max(x1, a); z0 = Math.min(z0, b); z1 = Math.max(z1, b); }
+      if (!P.length) { SG = { nx: 0 }; return 0; }
+      const nx = Math.ceil((x1 - x0) / cs) + 1, nz = Math.ceil((z1 - z0) / cs) + 1; SG = { x0, z0, cs, nx, nz, a: new Float32Array((nx + 1) * (nz + 1)).fill(NaN) }; }
+    if (!SG.nx) return 0;
+    const fx = (x - SG.x0) / SG.cs, fz = (z - SG.z0) / SG.cs, i = Math.floor(fx), j = Math.floor(fz); if (i < 0 || j < 0 || i >= SG.nx || j >= SG.nz) return 0;
+    const u = fx - i, v = fz - j, c = (ii, jj) => { const k = jj * (SG.nx + 1) + ii; let d = SG.a[k];
+      if (d !== d) { const px = SG.x0 + ii * SG.cs, pz = SG.z0 + jj * SG.cs; d = W.region(px, pz) ? Math.max(0, W.WL - W.bedAt(px, pz).y) : 0; SG.a[k] = d; } return d; };
+    return (c(i, j) * (1 - u) + c(i + 1, j) * u) * (1 - v) + (c(i, j + 1) * (1 - u) + c(i + 1, j + 1) * u) * v;
+  }
+  const seaAt = (x, z) => { const W = H3 && H3.water; return !!(W && W.region && W.bedAt && seaDepth(W, x, z) > 0.3); };
   const inMap = (x, z) => { const f = trk && trk.free; return !f || (x > f[0] + 3 && x < f[1] - 3 && z > f[2] + 3 && z < f[3] - 3); };
   const wet = (x, z) => inMap(x, z) && depth(x, z) >= K.WET;
   // the waves under a jet ski: a chop everywhere, the sea's swell where it is (seaK: eased in and out along the canal's mouth)
@@ -52,7 +65,8 @@ const NVWater = (function () {
     const m = S.idle, g = n ? B.mesh(VC).geometry : new THREE.BufferGeometry(); if (m.geometry) m.geometry.dispose(); m.geometry = g; m.visible = n > 0; S.idleN = n;
   }
   function wakeMesh() {
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-1.2, 0, 0, -6.5, 0, -1.6, -6.5, 0, 1.6], 3)); g.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0.75, 0.88, 0.95, 0.75, 0.88, 0.95], 3)); g.setIndex([0, 2, 1, 0, 1, 2]);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-1.2, 0, 0, -6.5, 0, -1.25, -6.5, 0, 1.25], 3)); g.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0.3, 0.6, 0.76, 0.3, 0.6, 0.76], 3));   // (white foam at the stern, fading into the water's blue)
+    g.setIndex([0, 2, 1, 0, 1, 2]);
     const m = new THREE.Mesh(g, WK); m.position.y = -0.1; m.renderOrder = 3; m.userData.dyn = true; m.visible = false; return m;
   }
 
@@ -66,7 +80,8 @@ const NVWater = (function () {
     const st = startSpot(C); if (st) list.push(st);
     const skis = list.map((s) => { const mesh = rideMesh(s.col), B = MisKit.boat(run, { x: s.x, z: s.z, h: s.h, y: WL + 0.02, vmax: K.VMAX, acc: K.ACC, brake: K.BRAKE, turn: K.TURN, drag: K.DRAG, wet, wave, mesh, keep: false, D: [15, 10.5] });
       B.cam = camOf(B); return { home: { x: s.x, z: s.z, h: s.h }, col: s.col, at: s.at, mesh, B }; });
-    const idle = new THREE.Mesh(new THREE.BufferGeometry(), VC); idle.castShadow = true; idle.userData.dyn = true; Render.scene.add(idle);
+    const idle = new THREE.Mesh(new THREE.BufferGeometry(), VC); idle.userData.dyn = true;   // (no shadow: no second draw call in the shadow's pass)
+    Render.scene.add(idle);
     return { skis, idle, idleN: 0, wk: wakeMesh(), ride: -1, car: null, dry: null, sink: 0, mh: 0, roll: 0, zone: null, pick: null, near: -1, backs: 0, rides: 0, lands: 0 };
   }
   // (one moored in too shallow water for it to get away, by the pier's land end: nudged out towards the deeper water, at most 6 m)
@@ -162,7 +177,7 @@ const NVWater = (function () {
     { const fx = Math.cos(B.h) * 2, fz = Math.sin(B.h) * 2, c = (wave(B.x + fx, B.z + fz, B.t) - wave(B.x - fx, B.z - fz, B.t)) / 4; if (c > 0 && B.v > 0) B.v *= Math.exp(-dt * c * K.BUMP); }
     S.roll += (I[0] * K.LEAN * clamp(sp / 8, 0, 1) - S.roll) * (1 - Math.exp(-dt * 5));
     sk.mesh.position.set(B.x, B.y, B.z); sk.mesh.rotation.x = S.roll;
-    S.wk.visible = sp > 1.5; if (S.wk.visible) S.wk.scale.set(clamp(sp / K.VMAX, 0.25, 1), 1, clamp(sp / K.VMAX, 0.4, 1));
+    S.wk.visible = sp > 1.5; S.wk.rotation.y = wrap(B.h - S.mh); if (S.wk.visible) S.wk.scale.set(clamp(sp / K.VMAX, 0.25, 1), 1, clamp(sp / K.VMAX, 0.4, 1));
   }
   // the car in the water: the shallow slows it, the deep puts it back on the shore where it left it (facing the land)
   function carWater(dt, P) {
@@ -202,6 +217,7 @@ const NVWater = (function () {
 
   // ---- the hooks: the car's ground under the water (its bed), the jet skis built (before the merging)
   function init(h3, track) {
+    if (h3 !== H3) SG = null;
     H3 = h3; trk = track; if (!H3 || !trk || typeof MisKit === 'undefined' || !MisKit.boat) return false;
     WL = H3.water && H3.water.WL != null ? H3.water.WL : -0.12;
     if (!trk.nvWater && trk.ground2) { g0 = trk.ground2; trk.nvWater = true;
