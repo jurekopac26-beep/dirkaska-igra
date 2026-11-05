@@ -567,7 +567,7 @@ if (diffs.length) { console.error('razdeli-proge: vnos v seznamu in polje v dato
   for (const th of realTheme) {
     if ((byTheme.get(th) || []).some(f => chosen.has('look:' + f))) continue;
     // before: a half in the lists over the other half in the track's file (as step 2 takes them: a merge may bring one half only)
-    const fl = (all0.find(d => d.theme === th && d.look) || {}).look, tb = TB[th] ? noSplit(TB[th]) : noSplit(fl), sb = th in SB ? SB[th] : fl && fl.split;
+    const fl = (all0.find(d => d.theme === th && d.look) || {}).look, tb = TB[th] ? noSplit(TB[th]) : noSplit(fl), sb = Object.prototype.hasOwnProperty.call(SB, th) ? SB[th] : fl && fl.split;
     if (!same(tb || null, noSplit(TA[th]) || null) && tb) fail(`preverjanje: THEMES.${th} ni več enak`);
     if (!same(sb || null, SA[th] || null) && (sb || tb)) fail(`preverjanje: SPLIT.${th} ni več enak`);
   }
