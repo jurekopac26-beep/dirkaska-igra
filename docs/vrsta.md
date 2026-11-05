@@ -42,6 +42,8 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | 13 | #307 | orodje za napake, sklop 21: Zadnji posnetki in Zgodovina napak z avtom in časom (do cilja zeleno), večja slika, stari zapisi se odprejo (zahteva uporabnika 5. 11.); `js/napake.js`, `css/napake.css`, 2 vrstici v `js/game.js` | 1 | pripravljen (seja session_01UuPU9DMmxrQoyutWZCr6j6); povezani testi lokalno zeleni na 06a0229, osnutek do vrste; predogled: oznaka `predogled`, `beta/307/` |
 | 14 | #304 | TITAN s cisterno: prikolica s pravim fizikalnim zgibom (sklopi 1–5: fizika, AI, kamera, posnetek, duh, več telefonov, testi, obremenitev telefona) | 2 | pripravljen (seja session_01Ck3D3TnwDBsrTGSFeJMAva); povezani testi lokalno zeleni na 4a2c7c1 (spojen `main` 8ba8914), osnutek do vrste; ob vrsti nova seja po predaji (koordinacija računa 2, `docs/titan-cisterna.md`, razdelek »Stanje in predaja«); prevzame biketraveler, dokler račun stoji (predaja v opisu PR) |
 | 15 | #305 | AI po tvoji liniji, koraka 1 in 2 (vsebuje zaprti #300): orodje za meritev vožnje iz posnetkov (`tools/voznja.mjs`) in tekmeci po igralčevi vožnji (poskus na Tianmnu, vklop `?voznja=1`; `js/core.js`, `js/data/voznja.js`, 1 vrstica v `js/game.js`) | 1 | pripravljen (seja session_01UuPU9AV2hPAkeSiurAK3AA); povezani testi lokalno zeleni na f8593bd, osnutek do vrste; predogled: oznaka `predogled`, `beta/305/?voznja=1`; uporabnik je poskus preizkusil |
+| 16 | #261 | nova proga Hakone, Japonska (izbrana nova proga Japonske, `docs/proge-po-drzavah.md`) | 1 | pripravljen (seja session_01UuPU9DirUpzFVs48Vkgx5Z); zelen na GitHubu na 6d5db4e (4. 11.), osnutek do vrste; ob vrsti: spoj `main` (spori v referencah world/perf/sim/races, menu-data, `js/game.js`), reference Hakoneja znova, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika |
+| 17 | #153 | Medvode, Slovenija: proga v pravi širini po risbah uporabnika (krožišča K1–K4, odseki ob startu) | 1 | pripravljen (seja session_01UuPU9BT6dySw4yn5KSRQFx); zelen na GitHubu na ff57545, osnutek do vrste; ob vrsti: spoj svežega `main`, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika, ne čaka več na zadržani #246 |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani). #246 preleti (račun 3; odločitev uporabnika 5. 11.: počakajo, dokler ne bo izbrana ena proga na državo; predaja v opisu PR).
 
@@ -49,7 +51,7 @@ Prevzem zdaj (4. 11. 2026): račun, ki stoji od čet. 5. 11. ~13:00 do ned. 8. 1
 
 ## Odprti pull requesti drugih računov (še niso v vrsti)
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
-- Račun 1: #261 Hakone, #153 Medvode. Teme: redčenje gozda na pravih progah (po Hakoneju).
+- Račun 1: #298 most na novi mapi (zgrajen na veji #293, gre na `main` po #293). Teme: redčenje gozda na pravih progah (po Hakoneju).
 - Račun 2: #202 fizika.
 
 Vsi so osnutki (4. 11. 2026, pravilo »Osnutek do vrste«). Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj in ostane osnutek, dokler ne pride med prva dva.
