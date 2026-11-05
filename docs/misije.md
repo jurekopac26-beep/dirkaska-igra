@@ -73,7 +73,7 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 | 7 · vleka, žaromet, led, baterija | 04, 08, 17, 26 | 10–14 | končano (PR #233) |
 | 8 · ostalo, garaže in naslovnica | 11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS | 18–25 | |
 
-Toronto in Trois-Rivières sta od 5. 11. 2026 testni progi (odločitev uporabnika: iz Kanade ostane samo Montréal; `CLAUDE.md`). Misiji 34 (Toronto) in 17 (Trois-Rivières) ostaneta nanju, dokler ju uporabnik ne uredi; pred izbrisom testnih prog (pred Google Play) morata na pravo progo ali izpasti. Test `tests/missions.test.js` (»vsaka misija na pravi progi«) ju dovoli po imenu (`ON_TEST_TRACK`); druga misija na testni progi test pade.
+Toronto in Trois-Rivières, Sani Pass in Bang Saen so od 5. 11. 2026 testne proge (odločitev uporabnika: iz Kanade ostane samo Montréal, iz Južne Afrike Chapman's Peak, Tajska nima prave proge; `CLAUDE.md`). Misije 34 (Toronto), 17 (Trois-Rivières), 07 (Sani Pass) in 37 (Bang Saen) ostanejo nanje, dokler jih uporabnik ne uredi; pred izbrisom testnih prog (pred Google Play) morajo na pravo progo ali izpasti. Test `tests/missions.test.js` (»vsaka misija na pravi progi«) jih dovoli po imenu (`ON_TEST_TRACK`); druga misija na testni progi test pade.
 
 ## Predaja
 - Po skupini 1: sistem in misija 06 sta narejena. Naslednja je skupina 2 (ogenj): gasilski avto C iz `v2.glb` (THREE je r128, `GLTFLoader` ni v repozitoriju: avto zgradi iz preprostih teles po merah v `v2.json` ali `blender/gas.py`), ogenj, curek vode, gašenje s prstom.

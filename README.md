@@ -23,7 +23,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Big Sur, ZDA](docs/proge/bigsur.md)
 - [Tianmen, Kitajska](docs/proge/tianmen.md)
 - [Uncompahgre, ZDA](docs/proge/uncompahgre.md)
-- [Sani Pass, Južna Afrika](docs/proge/sani.md)
 - [Irohazaka, Japonska](docs/proge/iroha.md)
 - [Santa Monica Mountains, ZDA](docs/proge/mulholland.md)
 - [Beartooth, ZDA](docs/proge/beartooth.md)
@@ -42,7 +41,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
 - [Detroit, ZDA](docs/proge/detroit.md)
 - [Palomar Mountain, ZDA](docs/proge/palomar.md)
-- [Bang Saen, Tajska](docs/proge/bangsaen.md)
 - [Mount Hotham, Avstralija](docs/proge/hotham.md)
 - [Townsville, Avstralija](docs/proge/townsville.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
@@ -60,6 +58,8 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Mount Buller, Avstralija](docs/proge/mountbuller.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Toronto, Kanada](docs/proge/toronto.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Sani Pass, Južna Afrika](docs/proge/sani.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

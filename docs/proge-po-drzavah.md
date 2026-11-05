@@ -59,7 +59,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 | Kanada | Montréal; od 5. 11. 2026 samo ta (odločitev uporabnika), Toronto in Trois-Rivières gresta med testne (`test: true`, za izbris) | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026); odprto: ali ostane, ko je Montréal edina predstavnica Kanade (odloči uporabnik) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1) — **ne začni** (brez izletne cone, 5. 11. 2026) | Corvo Branco (kratke, B); stara veja: São Paulo |
-| Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
+| Južna Afrika | Chapman's Peak; Sani Pass je od 5. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #379), država ima še Chapman's Peak | nobena (Sani Pass gre v test) | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
 | Finska | Ouninpohja, Harju | – | – |
 | Slovenija | Vršič, Medvode | – | – |
 | Kitajska | Tianmen | Hongkong (zavite, 3) — **ne začni** (brez izletne cone, 5. 11. 2026) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
@@ -71,7 +71,6 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 | Avstrija | Štajerska | – | – |
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace | – | – |
-| Tajska | Bang Saen | – | – |
 
 ## Države brez proge v igri: po vrsti
 
@@ -98,6 +97,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
+| Tajska | nobene na čakanju; Bang Saen je od 5. 11. 2026 testna (`test: true`, za izbris; preveč ravnine; odločitev uporabnika, PR #379), zato Tajska nima prave proge v igri | prva nova proga iz Tajske, ko pride na vrsto |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | stara veja: Höljes (ni v načrtu) | ne pride na vrsto |
 

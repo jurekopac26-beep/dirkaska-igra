@@ -2,7 +2,7 @@
 
 Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so v [`docs/proge/`](proge/), seznam prog v [`README.md`](../README.md#proge). Datoteka je velika: poišči naslov razdelka z grepom.
 
-Mount Buller, Avstralija ter Toronto in Trois-Rivières, Kanada so od 5. 11. 2026 testne proge (`test: true`; odločitev uporabnika: iz Kanade ostane samo Montréal; `CLAUDE.md`, »Testne proge«): igra jih gradi kot druge testne proge, brez tabel pred zaviranjem (krožni progi) ter tabel in smernikov ob odprtih cestah (Mount Buller; `roadside` v `js/world.js`), prizorov ljudi (njihovi kraji v `SITES` in `site()` so zbrisani), kotnega videa in kraja na globusu v meniju, gledalcev ob cesti ne redči. Kjer spodaj piše katera od njih, opis velja za čas, ko je bila prava proga.
+Mount Buller, Avstralija, Sani Pass, Južna Afrika, Toronto in Trois-Rivières, Kanada ter Bang Saen, Tajska so od 5. 11. 2026 testne proge (`test: true`; odločitev uporabnika: iz Kanade ostane samo Montréal, iz Južne Afrike Chapman's Peak, Tajska nima prave proge; `CLAUDE.md`, »Testne proge«): igra jih gradi kot druge testne proge, brez tabel pred zaviranjem (krožne proge: Toronto, Trois-Rivières, Bang Saen) ter tabel in smernikov ob odprtih cestah (Mount Buller, Sani Pass; `roadside` v `js/world.js`), prizorov ljudi (njihovi kraji v `SITES` in `site()` so zbrisani) in živali (`js/world-zivali.js`), kotnega videa in kraja na globusu v meniju, gledalcev ob cesti ne redči. Kjer spodaj piše katera od njih, opis velja za čas, ko je bila prava proga.
 
 - [Križišča in stranske ceste](#križišča-in-stranske-ceste)
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)

@@ -1400,7 +1400,6 @@
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
     baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['tribuna', 528, 1], ['foto', 1864, -1], ['gasilci', 2296, 1], ['marsali', 2440, 1], ['gasilci', 2728, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     beartooth: [['piknik', 1696, -1]],
     bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
@@ -1429,7 +1428,6 @@
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
     rio: [['foto', 1200, 1], ['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 3376, -1], ['marsali', 4040, -1]],
     riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['foto2', 4312, 1], ['tribuna', 4568, -1]],
-    sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
