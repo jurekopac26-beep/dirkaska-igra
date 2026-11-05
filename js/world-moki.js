@@ -411,5 +411,6 @@
     return out;
   }
 
+  World.keep('VR', 'moki');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.moki = (scene, tex, opts) => buildMoki(scene, tex, opts);
 })();

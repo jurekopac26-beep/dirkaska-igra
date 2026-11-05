@@ -572,5 +572,6 @@
     return out;
   }
 
+  World.keep('VR', 'palomar');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.palomar = (scene, tex, opts) => buildPalomar(scene, tex, opts);
 })();
