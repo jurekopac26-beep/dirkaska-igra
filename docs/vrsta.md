@@ -14,7 +14,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Deli iz garaže: sklop 4 | 3 | ko se izprazni vrsta; na `main` pred ned. 8. 11. 10:00 |
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
@@ -26,6 +25,7 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 1 | #315 | Deli iz garaže, sklop 4 (pregled 608 možnosti KOLIBRIJA, stran za ogled, testi) | 3 | pripravljen (seja session_01WbgGzuLb5rcyQy259XTWg8); povezani testi lokalno zeleni, Ready; rok ned. 8. 11. 10.00 (pred račun 2 ureja `js/cars/*`) |
 | 2 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 3 | #259 | tribune iz OSM | 3 | čaka |
 | 4 | #250 | 7 novosti | 3 | čaka |
