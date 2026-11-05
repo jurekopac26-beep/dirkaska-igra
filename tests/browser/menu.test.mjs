@@ -129,9 +129,11 @@ try {
       }
       return out;
     });
+    // (a track made a test track after its wide map was detailed, the roads of the USA on 4. and 5. 11. 2026, keeps its map as it was: 0.8)
+    const at = (d, k) => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2;
     const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
-      Math.abs(d.w[0] - (d.W + 2 * d.E) * (d.test ? 0.5 : 0.8)) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * (d.test ? 0.5 : 0.8)) <= 2)).map(d => d.id);
-    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
+      (at(d, 0.8) || (d.test && at(d, 0.5))))).map(d => d.id);
+    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half or, made a test track later, as it was)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
     T.check('no page errors in the title, the modes and the track list', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -492,19 +494,22 @@ try {
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest: Trois-Rivières; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Trois-Rivières', JSON.stringify(g));
+    // (the first real track of the list, the shortest: its id and its place's name from the menu's own list, which changes whenever a track becomes a
+    // test track: Trois-Rivières until 5. 11. 2026, since then Newcastle)
+    const first = await page.evaluate(() => { const id = Menu.debug().list[0], d = Core.TRACKS.find(t => t.id === id); return { id, test: !!d.test, name: ((d.en && d.en.name) || d.name).split(',')[0].trim() }; });
+    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && !first.test && g.name === first.name, JSON.stringify({ g, first }));
     g = await press(5);
     const next = g.name;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Trois-Rivières' && next !== '' && g.name === 'Trois-Rivières', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== first.name && next !== '' && g.name === first.name, JSON.stringify({ next, g, first }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'troisrivieres').catch(() => null);
+    await raceOn(page, first.id).catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'troisrivieres', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === first.id, JSON.stringify({ r, first }));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
