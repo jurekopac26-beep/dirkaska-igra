@@ -3750,7 +3750,8 @@ const Core = (function () {
   const tlGap = (c, o, gap) => gap > 0 ? Math.max(1e-3, gap - tlX(o)) : Math.min(0, gap + tlX(c));
   // where a car ahead is across the road for an AI car on the line d: a rig's tractor or its trailer's axles (Car.tl.qa), whichever is nearer
   // d (in a hairpin its trailer folded across the road is in the way, its tractor off to the side; a friend's trailer, never stepped: its tractor)
-  const tlD = (o, d) => { const L = o.tl; return L && !L.fall && L.qa.i >= 0 && Math.abs(L.qa.d - d) < Math.abs(o.q.d - d) ? L.qa.d : o.q.d; };
+  const tlD = (o, d) => { const L = o.tl, r = L && !L.fall && L.qa.i >= 0 && Math.abs(L.qa.d - d) < Math.abs(o.q.d - d) ? L.qa.d : o.q.d, L2 = L && L.next;
+    return L2 && !L2.fall && L2.qa.i >= 0 && Math.abs(L2.qa.d - d) < Math.abs(r - d) ? L2.qa.d : r; };   // (a road train's second tank too, tlChain)
   // a car in the lane an AI car would pass in (w: m across the road): alongside it, or up to beside the car ahead (thr, g m ahead)
   function aiLaneBusy(c, race, thr, w, g) {
     const X = race._tlX || 0, gt = X ? g + tlX(thr) : g;   // (the car ahead's semi-trailer: beside it too)
