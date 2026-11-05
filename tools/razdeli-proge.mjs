@@ -15,12 +15,12 @@ import path from 'node:path';
 import url from 'node:url';
 import vm from 'node:vm';
 
-const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
+const REPO = process.env.RAZDELI_ROOT ? path.resolve(process.env.RAZDELI_ROOT) : path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');   // (RAZDELI_ROOT: a copy, tests/razdelitev.test.js)
 const args = process.argv.slice(2), CHECK = args.includes('--check'), PREFER = args.includes('--seznam') ? 'map' : args.includes('--proga') ? 'def' : null;
 const files = new Map();   // path -> text (read once, written at the end)
 const rd = (f) => { if (!files.has(f)) files.set(f, fs.readFileSync(path.join(REPO, f), 'utf8')); return files.get(f); };
 const orig = new Map();
-const put = (f, s) => { if (!orig.has(f)) orig.set(f, rd(f)); files.set(f, s); };
+const put = (f, s) => { if (!orig.has(f)) orig.set(f, files.has(f) || fs.existsSync(path.join(REPO, f)) ? rd(f) : null); files.set(f, s); };   // (orig null: a new file)
 const lineAt = (s, i) => s.slice(0, i).split('\n').length;
 const same = (a, b) => {   // deep equality of plain data, whatever realm (sandbox) made it
   if (a === b) return true;
@@ -232,10 +232,168 @@ for (const sp of SPECS) {
   }
 }
 
+/* ---- 6. a world file of several tracks split by track (WSPLIT): each track's own parts of js/world-rbring.js go to js/world-<theme>.js,
+   loaded before it (index.html). A part file puts on World.api (API) what the shared builder and World use of it and its look (an entry of
+   the builder's look table) on API.rbLook, which the table takes; its World.ext.<theme> calls the shared builder's. The chunks are the
+   file's top-level statements, each with the comment right before it; a part's are those whose (first) name its pattern matches. A chunk
+   already in the part file is replaced only when it is the same (else --seznam: the shared file's, --proga: the part file's) ---- */
+const WSPLIT = [{ file: 'js/world-rbring.js', look: 'RB_LOOK', builder: 'rbring', copy: ['sAtS'], parts: [
+  { theme: 'bathurst', re: /^(BT_\w+|bt[A-Z]\w*|au[A-Z]\w*|_rM)$/ },
+  { theme: 'rio', re: /^(RIO_\w+|rio[A-Z]\w*)$/ },
+  { theme: 'cpalace', re: /^(CP_\w+|CPK|cp[A-Z]\w*)$/ },
+] }];
+function codeOnly(t) {   // t without its comments and its strings' text (a template's ${...} kept)
+  let o = '', i = 0;
+  while (i < t.length) {
+    const c = t[i];
+    if (c === '/' && t[i + 1] === '/') { const e = t.indexOf('\n', i); i = e < 0 ? t.length : e; continue; }
+    if (c === '/' && t[i + 1] === '*') { const e = t.indexOf('*/', i + 2); i = e < 0 ? t.length : e + 2; o += ' '; continue; }
+    if (c === "'" || c === '"') { i = skipStr(t, i); o += "''"; continue; }
+    if (c === '`') {
+      i++;
+      while (i < t.length && t[i] !== '`') {
+        if (t[i] === '\\') { i += 2; continue; }
+        if (t[i] === '$' && t[i + 1] === '{') { let d = 1, j = i + 2; while (j < t.length && d) { if (t[j] === '{') d++; else if (t[j] === '}') d--; j++; } o += ' ' + t.slice(i + 2, j - 1) + ' '; i = j; continue; }
+        i++;
+      }
+      i++; o += "''"; continue;
+    }
+    o += c; i++;
+  }
+  return o;
+}
+const idents = (t) => new Set([...codeOnly(t).matchAll(/(?<![\w$.])[A-Za-z_$][\w$]*(?![\w$:])/g)].map(m => m[0]));   // (no property names, no object keys)
+const nameOf = (l) => {
+  let m = /^  Object\.assign\(([\w$.]+)/.exec(l); if (m) return 'Object.assign(' + m[1];
+  if ((m = /^  World\.keep\('(\w+)', '(\w+)'\)/.exec(l))) return `World.keep:${m[2]}:${m[1]}`;
+  m = /^  (?:async )?(?:function\*? |const |let |var )?([A-Za-z_$][\w$.]*)/.exec(l); return m ? m[1] : '?';
+};
+function declNames(t) {   // the top-level names a chunk declares
+  const c = codeOnly(t).replace(/^\s+/, ''); let m = /^(?:async\s+)?function\*?\s+([\w$]+)/.exec(c); if (m) return [m[1]];
+  if (!(m = /^(?:const|let|var)\s+/.exec(c)) || /^(?:const|let|var)\s+[{[]/.test(c)) return [];
+  const out = []; let i = m[0].length;
+  for (;;) { i = skipWs(c, i); const n = /^[A-Za-z_$][\w$]*/.exec(c.slice(i, i + 100)); if (!n) break; out.push(n[0]); i = exprEnd(c, i); if (c[i] !== ',') break; i++; }
+  return out;
+}
+function chunksOf(t) {   // { pre, chunks: [{ name, names, text }], post }: the IIFE's top-level statements with the comments right before them
+  const L = t.split('\n'); let end = L.length;
+  for (let k = L.length - 1; k >= 0; k--) if (/^\}\)\(\);/.test(L[k])) { end = k; break; }
+  let inCom = false; const st = [];
+  for (let k = 0; k < end; k++) {
+    const l = L[k];
+    if (inCom) { if (l.includes('*/')) inCom = false; continue; }
+    if (/^  \/\*/.test(l)) { st.push({ k, kind: 'block' }); if (!l.includes('*/')) inCom = true; continue; }
+    if (/^  \/\//.test(l)) { st.push({ k, kind: 'line' }); continue; }
+    if (/^  [^\s})\]]/.test(l)) st.push({ k, kind: 'st' });
+  }
+  const from = [];
+  st.forEach((x, n) => { if (x.kind !== 'st') return; let a = n; const kd = n > 0 ? st[n - 1].kind : 'st'; if (kd !== 'st') while (a > 0 && st[a - 1].kind === kd) a--; from.push([st[a].k, x.k]); });
+  const chunks = from.map(([a, k], n) => { const text = L.slice(a, n + 1 < from.length ? from[n + 1][0] : end).join('\n'); return { name: nameOf(L[k]), text, names: declNames(L.slice(k, n + 1 < from.length ? from[n + 1][0] : end).join('\n')) }; });
+  return { pre: L.slice(0, from.length ? from[0][0] : end).join('\n'), chunks, post: L.slice(end).join('\n') };
+}
+const joinChunks = (C) => C.pre + '\n' + C.chunks.map(c => c.text).join('\n') + '\n' + C.post;
+const PROLOGUE = new Set(['?', 'if', 'API', 'const', 'LOD', 'API.sync.push']);   // (the chunks every world file starts with)
+const SYNCED = ['LOD', 'T', 'THEME'];
+const keepLine = (c) => c.text.split('\n').find(l => /^  World\.keep\(/.test(l));
+const wdiffs = [];
+for (const W of WSPLIT) {
+  let S = chunksOf(rd(W.file));
+  if (!declAt(joinChunks(S), W.look)) fail(`${W.file}: ni ${W.look}`);
+  const srcTop = new Map(); for (const c of S.chunks) for (const n of c.names) srcTop.set(n, c);
+  const preNames = (C) => { const d = C.chunks.find(c => c.name === 'const' && /=\s*API;/.test(c.text) && !c.text.includes(MARK)); return d ? [...codeOnly(d.text).matchAll(/[A-Za-z_$][\w$]*/g)].map(m => m[0]).filter(n => n !== 'const' && n !== 'API') : []; };
+  const helpers = preNames(S);
+  let moved = 0;
+  for (const P of W.parts) {
+    const PF = `js/world-${P.theme}.js`, mine = (c) => c.names.length ? P.re.test(c.names[0]) : false;
+    const own = S.chunks.filter(c => !PROLOGUE.has(c.name) && (mine(c) || c.name === `World.ext.${P.theme}` || new RegExp(`^World\\.keep:${P.theme}:`).test(c.name)));
+    const txt = joinChunks(S), A = declAt(txt, W.look), LP = parseObj(txt, A.open), le = LP.ents.find(e => e.key === P.theme);
+    if (!own.length && !le) continue;   // (split already)
+    moved++;
+    // the part file: as it is (when there), its body chunks merged with the shared file's
+    const old = fs.existsSync(path.join(REPO, PF)) || files.has(PF) ? chunksOf(rd(PF)) : null;
+    const body = old ? old.chunks.filter(c => !PROLOGUE.has(c.name) && !/^(API\.rbLook|Object\.assign\(API|World\.keep:|World\.ext\.)/.test(c.name)) : [];
+    const exps = new Set(), keeps = [];
+    if (old) for (const c of old.chunks) { if (c.name === 'Object.assign(API') for (const n of idents(c.text)) if (n !== 'Object' && n !== 'API') exps.add(n); if (/^World\.keep:/.test(c.name)) keeps.push(keepLine(c)); }
+    let prevAt = -1;
+    for (const c of own) {
+      if (/^World\.keep:/.test(c.name)) { const l = keepLine(c); if (!keeps.includes(l)) keeps.push(l); continue; }
+      if (c.name.startsWith('World.ext.')) continue;
+      const k = body.findIndex(b => b.names[0] === c.names[0]);
+      if (k < 0) { body.splice(prevAt + 1, 0, c); prevAt++; continue; }
+      prevAt = k;
+      if (body[k].text === c.text) continue;
+      wdiffs.push(`${PF} ${c.names[0]}: v ${W.file} drugačen kot v ${PF}`);
+      if (PREFER === 'map') body[k] = c;
+    }
+    // its look: the entry of the shared table (or the part file's, when it has one already)
+    let look = le ? txt.slice(lineStart(txt, le.ks), lineEnd(txt, le.ve)) : null;
+    const oldLook = old && old.chunks.find(c => c.name === 'API.rbLook');
+    if (oldLook) {
+      const o = oldLook.text, oa = o.indexOf('{', o.indexOf('Object.assign(')), OP = parseObj(o, o.indexOf('{', oa + 1)), oe = OP.ents.find(e => e.key === P.theme);
+      const ol = oe ? o.slice(lineStart(o, oe.ks), lineEnd(o, oe.ve)) : null;
+      if (look && ol && ol !== look) { wdiffs.push(`${PF} ${W.look}.${P.theme}: v ${W.file} drugačen kot v ${PF}`); if (PREFER !== 'map') look = ol; }
+      else if (!look) look = ol;
+    }
+    // what it uses: World's helpers (as the shared file takes them), the build's track and theme, a copy of the shared file's small helpers
+    const used = new Set(); for (const t of [...body.map(c => c.text), look || '']) for (const n of idents(t)) used.add(n);
+    const defined = new Set(body.flatMap(c => c.names));
+    for (const n of W.copy) if (used.has(n) && !defined.has(n) && srcTop.has(n)) { body.unshift(srcTop.get(n)); defined.add(n); for (const m of idents(srcTop.get(n).text)) used.add(m); }
+    const bad = [...used].filter(n => srcTop.has(n) && !defined.has(n) && !mine(srcTop.get(n)) && !PROLOGUE.has(srcTop.get(n).name) && !W.parts.some(Q => Q !== P && Q.re.test(n)) && n !== W.look);
+    if (bad.length) fail(`${PF}: uporablja ${bad.join(', ')} iz ${W.file} (ni v API): razdeli ročno`);
+    const other = [...used].filter(n => W.parts.some(Q => Q !== P && Q.re.test(n)) && srcTop.has(n));
+    if (other.length) fail(`${PF}: uporablja dele drugih prog (${other.join(', ')})`);
+    const hp = [...new Set([...helpers, ...(old ? preNames(old) : [])])].filter(n => used.has(n) && !defined.has(n)), sy = SYNCED.filter(n => used.has(n) && !defined.has(n));
+    // what the shared file, World and the other worlds use of it: the names the shared file still reads, those it put on API for them
+    const ex0 = S.chunks.find(c => c.name === 'Object.assign(API');
+    // the shared file without them
+    S.chunks = S.chunks.filter(c => !own.includes(c));
+    if (le) { const t2 = joinChunks(S), A2 = declAt(t2, W.look), P2 = parseObj(t2, A2.open), k = P2.ents.findIndex(e => e.key === P.theme); S = chunksOf(removeEntries(t2, P2, new Set([k]), A2.ind)); }
+    const rest = S.chunks.filter(c => c.name !== 'Object.assign(API' && !(c.name === 'const' && c.text.includes(MARK))), restUsed = new Set(rest.flatMap(c => [...idents(c.text)]));
+    for (const n of defined) if (restUsed.has(n) || (ex0 && idents(ex0.text).has(n))) exps.add(n);
+    for (const n of [...exps]) if (!defined.has(n) || W.copy.includes(n)) exps.delete(n);   // (a copy of a small helper stays its own)
+    const def = [...D0.values()].flat().find(d => !d.test && d.theme === P.theme) || {};
+    const head = ['/* =========================================================================',
+      `   WORLD — ${def.name || P.theme} (theme '${P.theme}'): its own parts on the shared builder of ${W.file} (World.ext.${W.builder}), split out of it by`,
+      `   ${MARK} (docs/razdelitev-prog.md) and loaded before it (index.html). What the builder, World and the other worlds use of them`,
+      `   goes on World.api (API), its look (${W.look}.${P.theme}) on API.rbLook; World.ext.${P.theme} builds it with World.ext.${W.builder}.`,
+      '   ========================================================================= */',
+      '(function () {', '  \'use strict\';', '  if (typeof World === \'undefined\' || !World.api) return;', '  const API = World.api;'];
+    if (hp.length) head.push(`  const { ${hp.join(', ')} } = API;`);
+    if (sy.length) head.push(`  let ${sy.join(', ')};   // (World's, for the build under way)`, `  API.sync.push(() => { ({ ${sy.join(', ')} } = API); });`);
+    const tail = [];
+    if (look) tail.push(`  API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (${W.look} in ${W.file} takes it: ${MARK})`, look, '  });');
+    if (exps.size) tail.push(`  Object.assign(API, { ${[...defined].filter(n => exps.has(n)).join(', ')} });   // (what ${W.file}, World and the other worlds use: ${MARK})`);
+    tail.push(...keeps, `  World.ext.${P.theme} = (scene, tex, opts) => World.ext.${W.builder}(scene, tex, opts);   // (the shared builder: ${W.file})`);
+    put(PF, head.join('\n') + '\n' + body.map(c => c.text).join('\n') + '\n' + tail.join('\n') + '\n})();\n');
+    const ex = S.chunks.find(c => c.name === 'Object.assign(API');
+    if (ex) ex.text = ex.text.replace(/\{([^}]*)\}/, (m, l) => '{ ' + l.split(',').map(x => x.trim()).filter(n => n && !defined.has(n)).join(', ') + ' }');
+    // index.html: the part's script before the shared file's
+    let h = rd('index.html'); const tag = `<script src="${PF}"></script>`;
+    if (!h.includes(tag)) { const w = `<script src="${W.file}"></script>`; if (!h.includes(w)) fail(`index.html: ni ${w}`); h = h.replace(w, tag + '\n' + w); put('index.html', h); }
+  }
+  // the shared file: the parts' names it reads (from API, the part files are loaded before it) and their looks in its table
+  const parts = W.parts.map(P => `js/world-${P.theme}.js`).filter(f => files.has(f) || fs.existsSync(path.join(REPO, f)));
+  const theirs = new Set(parts.flatMap(f => chunksOf(rd(f)).chunks.filter(c => !PROLOGUE.has(c.name)).flatMap(c => c.names)));
+  for (const n of W.copy) theirs.delete(n);
+  const gen = S.chunks.filter(c => c.text.includes(MARK) && (c.name === 'const' || c.name === `Object.assign(${W.look}`));
+  S.chunks = S.chunks.filter(c => !gen.includes(c));
+  const reads = new Set(S.chunks.filter(c => c.name !== 'Object.assign(API').flatMap(c => [...idents(c.text)]));
+  const need = [...theirs].filter(n => reads.has(n) && !S.chunks.some(c => c.names.includes(n)));
+  if (moved || gen.length || need.length) {
+    const sync = S.chunks.findIndex(c => c.name === 'API.sync.push'), lk = S.chunks.findIndex(c => c.names.includes(W.look));
+    if (sync < 0 || lk < 0) fail(`${W.file}: ni API.sync.push ali ${W.look}`);
+    const tellParts = parts.join(', ');
+    S.chunks.splice(lk + 1, 0, { name: `Object.assign(${W.look}`, names: [], text: `  Object.assign(${W.look}, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: ${tellParts}; ${MARK})` });
+    if (need.length) S.chunks.splice(S.chunks.findIndex(c => c.name === 'const' && /=\s*API;/.test(c.text)) + 1, 0, { name: 'const', names: [], text: `  const { ${need.join(', ')} } = API;   // (the own parts of the worlds on this builder, in ${tellParts}, loaded before this file: ${MARK})` });
+    put(W.file, joinChunks(S));
+  }
+}
+if (wdiffs.length && !PREFER) { console.error('razdeli-proge: del v skupni datoteki sveta in v datoteki proge se razlikuje (izberi --seznam ali --proga):\n  ' + wdiffs.join('\n  ')); process.exit(2); }
+
 /* ---- 4. the track files: a block at the top of the def (right after TRACK_DEFS.push() with what came from the lists ---- */
-const FIELDS = [['look'], ['say', 'rainP'], ['cloudTh', 'roadWear', 'grassNat', 'lawn', 'bbClassic'], ['zivali']], ALL = FIELDS.flat();
+const FIELDS =[['look'], ['say', 'rainP'], ['cloudTh', 'roadWear', 'grassNat', 'lawn', 'bbClassic'], ['zivali']], ALL = FIELDS.flat();
 const HEAD = `// ---- its own, once in the shared lists (${MARK}): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)`;
-const diffs = [];
+const diffs = [], chosen = new Set();   // (chosen: field:file whose value --seznam or --proga chose)
 const hasBlock = (f) => { const t = rd(f), p = t.indexOf('TRACK_DEFS.push('), L0 = p < 0 ? -1 : lineEnd(t, p) + 1; return L0 > 0 && t.slice(L0, lineEnd(t, L0)).includes(MARK); };
 for (const f of new Set([...moves.keys(), ...TF.filter(hasBlock)])) {   // (the files with something new, and those with a block already: the block written again as this tool writes it)
   const M = moves.get(f) || new Map();
@@ -256,7 +414,7 @@ for (const f of new Set([...moves.keys(), ...TF.filter(hasBlock)])) {   // (the 
     const have = old.get(field), elsewhere = !have && def[field] !== undefined && !(def.variantOf && D0.get(byId.get(def.variantOf)).some(x => same(x[field], def[field])));
     const cur = have ? evalLit(have.val, f) : elsewhere ? def[field] : undefined, nv = evalLit(mv.val, mv.from);
     if (cur === undefined || same(cur, nv)) { if (!have && !elsewhere) old.set(field, mv); continue; }
-    diffs.push(`${f} ${field}: v seznamu ${mv.val.slice(0, 70)} … v datoteki proge ${JSON.stringify(cur).slice(0, 70)} …`);
+    chosen.add(field + ':' + f); diffs.push(`${f} ${field}: v seznamu ${mv.val.slice(0, 70)} … v datoteki proge ${JSON.stringify(cur).slice(0, 70)} …`);
     if (PREFER === 'map') { if (elsewhere) fail(`${f}: ${field} je v opisu proge drugje (ne v bloku): popravi ročno`); old.set(field, mv); }
   }
   const body = FIELDS.map(g => g.filter(k => old.has(k))).filter(g => g.length).map(g => {
@@ -277,7 +435,7 @@ if (diffs.length && !PREFER) { console.error('razdeli-proge: vnos v seznamu in p
   const stmts = (src, name) => { const o = {}; for (const l of src.split('\n')) { const m = new RegExp(`^\\s*${name}\\.([a-z0-9]+) = `).exec(l); if (m) { const e = exprEnd(l, m[0].length); o[m[1]] = evalLit(l.slice(m[0].length, e), name); } } return o; };
   for (const sp of SPECS) {
     const B = fillIt(before(sp.file, sp.name), sp.field, sp.by, all0), A = fillIt(after(sp.file, sp.name), sp.field, sp.by, all);
-    for (const d of all) { const k = d[sp.by]; if (!same(B[k], A[k])) fail(`preverjanje: ${sp.name}.${k} ni več enak (${JSON.stringify(B[k])} -> ${JSON.stringify(A[k])}, ${d.id})`); }
+    for (const [f, ds] of D1) for (const d of ds) { const k = d[sp.by]; if (chosen.has(sp.field + ':' + f)) continue; if (!same(B[k], A[k])) fail(`preverjanje: ${sp.name}.${k} ni več enak (${JSON.stringify(B[k])} -> ${JSON.stringify(A[k])}, ${d.id})`); }
   }
   const R0 = orig.get('js/render.js') || files.get('js/render.js'), R1 = files.get('js/render.js');
   const TB = Object.assign(lit(R0, 'THEMES'), stmts(R0, 'THEMES')), SB = Object.assign(lit(R0, 'SPLIT'), stmts(R0, 'SPLIT'));
@@ -285,6 +443,7 @@ if (diffs.length && !PREFER) { console.error('razdeli-proge: vnos v seznamu in p
   const fillLk = (T, S, ds) => { for (const d of ds) if (d.look && d.theme && !T[d.theme]) { T[d.theme] = d.look; if (d.look.split) S[d.theme] = d.look.split; } };
   fillLk(TB, SB, all0); fillLk(TA, SA, all);
   for (const th of realTheme) {
+    if ((byTheme.get(th) || []).some(f => chosen.has('look:' + f))) continue;
     const strip = (o) => { if (!o) return o; const c = Object.assign({}, o); delete c.split; return c; };
     if (!same(strip(TB[th]) || null, strip(TA[th]) || null) && TB[th]) fail(`preverjanje: THEMES.${th} ni več enak`);
     if (!same(SB[th] || null, SA[th] || null) && (SB[th] || TB[th])) fail(`preverjanje: SPLIT.${th} ni več enak`);
