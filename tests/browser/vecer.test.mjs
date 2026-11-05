@@ -2,7 +2,7 @@
 // the floodlights on their poles and the stands' lamps (a row under a roof's front edge, masts on an open stand's back), each with a pool of
 // light on the road and a glow round the lamp, fainter than at night; the dusk's light later than the golden hour (the sun and the sky's
 // light dimmer, the sky bluer). On NIZKA in the evening only the pools on the road (no poles, lamps nor glows); at night the floodlights
-// whole on every tier, as before. An endurance race's evening (setTodK): no lights by day, on from sunset, the night's full strength at
+// whole on every tier, as before; in the rain the wet road mirrors the lamps as strongly as they shine (none on NIZKA's evening). An endurance race's evening (setTodK): no lights by day, on from sunset, the night's full strength at
 // night. Jutro stays as it was (no lights). A test track (Jezero) as before: no floodlights at Večer, its dusk's light as it was.
 //   node tests/browser/vecer.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -25,6 +25,15 @@ const lights = (page) => page.evaluate(() => {
     poles: poles && poles.visible ? poles.count : 0, heads: heads && heads.visible ? heads.count : 0, glows: G && G.visible ? ga.length : 0,
     glowA: ga.length ? +Math.max(...ga).toFixed(3) : 0, standLamps: (W.standLamps || []).length / 6, st: { glow: st.glow.length, mast: st.mast.length, pool: st.pool.length }, len: Tk.len };
 });
+// in the rain: the wet road's reflections of the lamps (Render's streaks in the floodlights' colour): how many, the strongest
+const wetLamps = (page) => page.evaluate(() => {
+  const g = window.__game, R = g.race; R.setRain(1);   // (the rain and the water on the road at once)
+  for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, R.player, g.S.camera, {});
+  const m = Render.scene.children.find(o => o.geometry && o.geometry.attributes && o.geometry.attributes.iCol), C = m.geometry.attributes.iCol.array, n = m.geometry.instanceCount;
+  let c = 0, a = 0; for (let i = 0; i < n; i++) if (Math.abs(C[i * 4] - 1) < 1e-3 && Math.abs(C[i * 4 + 1] - 0.8) < 1e-3 && Math.abs(C[i * 4 + 2] - 0.52) < 1e-3) { c++; a = Math.max(a, C[i * 4 + 3]); }
+  R.setRain(0); for (let i = 0; i < 2; i++) Render.frame(1 / 60, 1, R.player, g.S.camera, {});
+  return { n: c, a: +a.toFixed(3) };
+});
 try {
   // 1. Bathurst at Večer, Visoka: the floodlights and the stands' lamps on, fainter than at night
   {
@@ -46,9 +55,11 @@ try {
     });
     T.check('the dusk\'s light on a real track: the sun and the sky\'s light dimmer, the sky bluer; a test track\'s as it was; in the rain less', dk.real.sunI < 0.8 && dk.real.hemiI < 0.85 && dk.real.blue > 0 && dk.test.sunI === 1 && dk.test.hemiI === 1 && dk.test.sky === 0xc49ab8 && dk.test.bloom === 0.5 && dk.rain > dk.real.sunI && dk.rain < 1,
       JSON.stringify(dk));
+    const wd = await wetLamps(page);
     // night, as before: the floodlights at their full strength
     await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'night' }));
-    const n = await lights(page);
+    const n = await lights(page), wn = await wetLamps(page);
+    T.check('in the rain the wet road mirrors the lamps: at Večer as strong as they shine, at night in full', wd.n > 0 && wn.n > 0 && Math.abs(wd.a - 0.38 * K) < 0.01 && Math.abs(wn.a - 0.38) < 0.01, JSON.stringify({ vecer: wd, noc: wn, K }));
     T.check('Noč: the floodlights and the stands\' lamps at their full strength', n.flood && Math.abs(n.opacity - 0.56) < 0.002 && n.poles === d.poles && n.glows === d.glows && n.glowA > d.glowA,
       JSON.stringify({ opacity: n.opacity, poles: n.poles, glows: n.glows, glowA: [d.glowA, n.glowA] }));
     // an endurance race's evening (setTodK): dark by day, on from sunset, the night's at night
@@ -67,12 +78,12 @@ try {
   {
     const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', Object.assign({ detail: 'low', tod: 'dusk' }, base), { width: 640, height: 360 });
     await race(page, 'bathurst');
-    const d = await lights(page);
-    T.check('Večer on NIZKA: the pools of light on the road, no poles, lamps nor glows', d.flood && d.pools > 50 && d.opacity > 0.3 && d.poles === 0 && d.heads === 0 && d.glows === 0,
-      JSON.stringify({ flood: d.flood, pools: d.pools, opacity: d.opacity, poles: d.poles, glows: d.glows }));
+    const d = await lights(page), wd = await wetLamps(page);
+    T.check('Večer on NIZKA: the pools of light on the road, no poles, lamps nor glows (in the rain no reflections of them)', d.flood && d.pools > 50 && d.opacity > 0.3 && d.poles === 0 && d.heads === 0 && d.glows === 0 && wd.n === 0,
+      JSON.stringify({ flood: d.flood, pools: d.pools, opacity: d.opacity, poles: d.poles, glows: d.glows, wet: wd }));
     await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'night' }));
-    const n = await lights(page);
-    T.check('Noč on NIZKA: the floodlights whole, as before', n.flood && n.pools > 50 && n.poles > 30 && n.heads === n.poles && n.glows > 30, JSON.stringify({ pools: n.pools, poles: n.poles, glows: n.glows }));
+    const n = await lights(page), wn = await wetLamps(page);
+    T.check('Noč on NIZKA: the floodlights whole, as before (in the rain their reflections in full)', n.flood && n.pools > 50 && n.poles > 30 && n.heads === n.poles && n.glows > 30 && wn.n > 0 && Math.abs(wn.a - 0.38) < 0.01, JSON.stringify({ pools: n.pools, poles: n.poles, glows: n.glows, wet: wn }));
     T.check('no page errors (NIZKA)', errors.length === 0, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -82,8 +93,10 @@ try {
     await race(page, 'jezero');
     const d = await lights(page);
     const k = await page.evaluate(() => { const V = Render.ext.vecer, def = window.__game.race.track.def; return { test: !!def.test, dusk: V.lampK(0.5, def), night: V.lampK(1, def), look: V.look(0.5, def, 0), stands: V.stands(Render.world, window.__game.race.track).glow.length }; });
-    T.check('a test track (Jezero) at Večer as before: no floodlights, no stands\' lamps; at night the floodlights as before', k.test && !d.flood && d.pools === 0 && k.dusk === 0 && k.night === 1 && k.look.glow === 1 && !k.look.bare && k.stands === 0,
-      JSON.stringify({ flood: d.flood, k }));
+    await page.evaluate(() => Render.setAtmos({ season: 'summer', tod: 'night' }));
+    const wn = await wetLamps(page);
+    T.check('a test track (Jezero) at Večer as before: no floodlights, no stands\' lamps; at night the floodlights and their reflections in the rain as before', k.test && !d.flood && d.pools === 0 && k.dusk === 0 && k.night === 1 && k.look.glow === 1 && k.look.refl === 1 && !k.look.bare && k.stands === 0 && wn.n > 0 && Math.abs(wn.a - 0.38) < 0.01,
+      JSON.stringify({ flood: d.flood, k, wet: wn }));
     T.check('no page errors (Jezero)', errors.length === 0, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }

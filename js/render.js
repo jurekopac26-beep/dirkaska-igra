@@ -4315,8 +4315,8 @@ const Render = (function () {
   function lampK() { return lit() ? EXT.vecer.lampK(todK, curTrack.def) : sstep(0.6, 0.9, todK); }
   function floodLook() {
     if (!flood) return;
-    const L = lit() ? EXT.vecer.look(todK, curTrack.def, tierNow) : { k: lampK(), bare: false, glow: 1 }, C = flood.halo.geometry.attributes.pcolor;
-    flood.pools.material.opacity = 0.56 * L.k; flood.poles.visible = flood.heads.visible = flood.halo.visible = !L.bare;
+    const L = lit() ? EXT.vecer.look(todK, curTrack.def, tierNow) : { k: lampK(), bare: false, glow: 1, refl: 1 }, C = flood.halo.geometry.attributes.pcolor;
+    flood.pools.material.opacity = 0.56 * L.k; flood.poles.visible = flood.heads.visible = flood.halo.visible = !L.bare; flood.refl = L.bare ? 0 : L.refl;   // (refl: the wet road's reflections of the lamps, updateCars)
     if (flood.hk !== L.glow) { flood.hk = L.glow; for (let j = 0; j < flood.ha.length; j++) C.array[j * 4 + 3] = flood.ha[j] * L.glow; C.needsUpdate = true; }   // (the glows: a real track's a little fainter in the evening)
   }
   // the open roads' signs at dusk and at night: their faces shine in the headlights (World's roadside: the static mesh, Render's knockable ones)
@@ -6268,9 +6268,9 @@ const Render = (function () {
       if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
     glows.end();
-    if (wk && flood && flood.fp) {   // (at night the floodlights too: those round the view)
-      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0;
-      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
+    if (wk && flood && flood.fp && flood.refl > 0) {   // (at night the floodlights too: those round the view; a real track's evening fainter, none where only their pools are drawn: floodLook's refl)
+      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0, a = 0.38 * wk * flood.refl;
+      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, a, 1.8, 12, k * 0.13); }
     }
     streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); }
     skids.flush(); if (sandRuts) { sandRuts.tick(performance.now() / 1000); sandRuts.flush(); }

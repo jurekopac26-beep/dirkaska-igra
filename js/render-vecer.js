@@ -29,8 +29,9 @@
   }
   // the floodlights' look (js/render.js floodLook) at todK on a track (def) built at a detail tier (0 NIZKA): k their strength (the pools'), bare
   // only the pools on the road (a real track's evening on NIZKA: no poles, lamps nor glows; the night's floodlights whole on every tier, as
-  // before), glow the glows' share of their own (a real track's a little fainter in the evening; a test track's as before)
-  function look(todK, def, tier) { const k = lampK(todK, def), r = real(def); return { k, bare: r && tier === 0 && todK < 0.6, glow: r ? 0.4 + 0.6 * k : 1 }; }
+  // before), glow the glows' share of their own (a real track's a little fainter in the evening; a test track's as before), refl the wet
+  // road's reflections of the lamps (js/render.js updateCars: a real track's as strong as the lamps; none where they are bare)
+  function look(todK, def, tier) { const k = lampK(todK, def), r = real(def); return { k, bare: r && tier === 0 && todK < 0.6, glow: r ? 0.4 + 0.6 * k : 1, refl: r ? k : 1 }; }
 
   // the stands' lamps (world.standLamps: [x, y, z, nx, nz, roof] every 2 m or so along a stand, (nx, nz) the way it faces, roof 1 under a
   // roof's front edge, 0 along its back): a roof's a glow every ROOF m; where a stand has no roof (none of its front edge's lamps within
