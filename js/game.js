@@ -801,25 +801,27 @@
   /* ---------------- replay: the race recorded (every car 20 times a second, from the start to the results), watched after the finish
      with the camera the player drove with (then the TV cameras beside the track, behind a car, from above); any car followed, played
      faster or slower ---------------- */
-  const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on; 20 min at most)
+  const REC_DT = 0.05, REC_W = 7, REC_TL = 8, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on; 20 min at most)
+  // (a race with semi-trailers, Core c.tl (docs/titan-cisterna.md): REC_TL numbers a car, the 8th its trailer's angle to the tractor (rad, c.tl.rel;
+  // none: 0), the replay poses the trailer on the kingpin (Core.tlPose); recd.w the recording's own width, a file's H.w: the older ones 7)
   // a very big field (more than REC_BIG cars, Nürburg's hundred): a sample every 2 x REC_DT (the replay goes between them as ever); any field at most
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; trk: its track)
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, w: race.cars.some(c => c.tl) ? REC_TL : REC_W, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; trk: its track)
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
     const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX || R.bytes >= REC_BYTES) return;
     if (R.out == null && R.cars.every(c => race.isOut(c))) R.out = race.time; if (R.out != null && race.time > R.out + 3) return;   // (every car finished or retired 3 s ago: the recording is over)
     R.next = race.time + (R.n > REC_BIG ? 2 * REC_DT : REC_DT);
-    const n = R.n, f = new Float32Array(1 + (n + 1) * REC_W), LD = race._lod && race._lod.on; f[0] = race.time; R.bytes += f.byteLength;
+    const n = R.n, W = R.w, f = new Float32Array(1 + (n + 1) * W), LD = race._lod && race._lod.on; f[0] = race.time; R.bytes += f.byteLength;
     const put = (c, o, bits) => { const u = LD ? race.lodT(c, 1) : 1;   // (a car worked out at a lower rate, Core LOD: where it is by now, on along its way since its last step)
       if (u !== 1) { f[o] = c.px + (c.x - c.px) * u; f[o + 1] = (c.py || 0) + ((c.y || 0) - (c.py || 0)) * u; f[o + 2] = c.pz + (c.z - c.pz) * u; f[o + 3] = c.ph + Core.wrapPi(c.h - c.ph) * u; }
       else { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; }
-      f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
-    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
-    const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0));
+      f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; if (W > REC_W) f[o + 7] = c.tl ? c.tl.rel : 0; };
+    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
+    const S = race.fl && race.fl.sc; if (S && S.car) put(S.car, 1 + n * W, 2 + (S.state === 'out' ? 4 : 0));
     R.frames.push(f); R.prev = race.time;
     if (!race.timeTrial && !(mp && mp.race)) recPasses(R);
   }
@@ -922,14 +924,14 @@
     replayStart({ keep: rpKeep(), wait: laps ? tr('Dirka čaka na pavzi · krog {0}/{1}', Core.clamp(P.lap, 1, race.laps), race.laps) : tr('Dirka čaka na pavzi') });
   }
   function rpKeep() {
-    const cars = recd.cars.map(c => ({ o: Object.assign({}, c), q: c.q && Object.assign({}, c.q), ws: c.ws && Array.from(c.ws) }));
+    const cars = recd.cars.map(c => ({ o: Object.assign({}, c), q: c.q && Object.assign({}, c.q), ws: c.ws && Array.from(c.ws), tl: c.tl && Object.assign({}, c.tl) }));   // (tl: its semi-trailer, which the replay poses: Core.tlPose)
     return { cars, sc: race.fl ? race.fl.sc : null };
   }
   function rpBack(K) {
     recd.cars.forEach((c, j) => {
-      const { o, q, ws } = K.cars[j];
+      const { o, q, ws, tl } = K.cars[j];
       if (!('rl' in o)) delete c.rl;   // (a roll the replay posed)
-      Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i];
+      Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i]; if (tl && c.tl) Object.assign(c.tl, tl);
     });
     if (race.fl) race.fl.sc = K.sc;
   }
@@ -988,7 +990,7 @@
   function rpWhere(t, k) {   // a car at time t as recorded (k: the player's when not given, a flag of the race): its lap, metres from the start, where on the map
     const F = recd && recd.frames; if (!F || !F.length) return null;
     if (k == null) k = Math.max(0, recd.cars.indexOf(race.player));
-    const f = F[rpIdx(F, t)], o = 1 + k * REC_W, x = f[o], z = f[o + 2];
+    const f = F[rpIdx(F, t)], o = 1 + k * recd.w, x = f[o], z = f[o + 2];
     return { lap: rpLap(recd.cars[k], t), s: rpS(track.query(x, z, -1, {})), x, z };
   }
   // the version (js/game.js's stamp, which the publish step puts on the page: tools/stamp.js; node tools/stamp.js --find <stamp> finds its
@@ -1058,7 +1060,7 @@
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
-    const H = Object.assign(rpMeta(), { w: REC_W, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
+    const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
       cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {})),
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
     delete H.file; delete H.dev; return { H, frames: R.frames };
@@ -1067,7 +1069,8 @@
   function rrpOpen(H, frames) {
     const d = Core.TRACKS.find(x => x.id === H.track); if (!d) return 'proge ' + H.track + ' ta različica igre nima';
     if (mp && mp.race) return 'dirka s prijateljem še teče';
-    if (H.w !== REC_W) frames = frames.map(f => { const g = new Float32Array(1 + (H.n + 1) * REC_W); g[0] = f[0]; for (let k = 0; k <= H.n; k++) for (let j = 0; j < Math.min(H.w, REC_W); j++) g[1 + k * REC_W + j] = f[1 + k * H.w + j]; return g; });   // (another width of a car: what both have)
+    const W = H.w >= REC_TL ? REC_TL : REC_W;   // (the width kept: with the trailers' angles or without)
+    if (H.w !== W) frames = frames.map(f => { const g = new Float32Array(1 + (H.n + 1) * W); g[0] = f[0]; for (let k = 0; k <= H.n; k++) for (let j = 0; j < Math.min(H.w, W); j++) g[1 + k * W + j] = f[1 + k * H.w + j]; return g; });   // (another width of a car: what both have)
     if (replay) { Napake.close(); hlOff(); replay = null; }
     if (bg === 'race') toTitle();
     Render.setAtmos({ season: H.season || 'summer', tod: H.tod || 'day' }, true);
@@ -1080,14 +1083,14 @@
       race.fl = !track.open && cars.length > 1 ? { yel: [], ev: 0, evK: '', sc: null, scUsed: false, pev: 0, pevK: '' } : null;   // (the safety car, where it was out)
       Render.setStorm(false); Render.setLine(false); Render.setMarks(null); Render.attachRace(race); Render.resetCam();
       bg = 'race'; phase = 'done'; phaseT = 0; paused = false; school = null; qual = null; champRun = false;
-      recd = { cars, n: cars.length, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
+      recd = { cars, n: cars.length, w: W, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
       replayStart();
     });
     return '';
   }
   const NK_HOOKS = {
     replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
-    inLoops: rpInLoops, track: () => track, recW: REC_W, dev: (on) => { PH.dev = !!on; },
+    inLoops: rpInLoops, track: () => track, get recW() { return recd ? recd.w : REC_W; }, dev: (on) => { PH.dev = !!on; },
     kje: () => (race && bg === 'race' && !(mp && mp.race) ? { t: race.time, track: track.def.id, rec: recd, lap: rpLap(race.player, race.time), s: rpS(race.player.q) } : null),   // (the race now: a note of the log, js/napake.js)
     where: rpWhere, meta: rpMeta, map: rpMap, shotAt: rpShotAt, flag: rpFlag, flags: () => (recd ? recd.flags : []),
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
@@ -1141,8 +1144,8 @@
     const up = (e) => { if (!drag || e.pointerId !== drag.id) return; if (replay) { replay.play = drag.play && replay.t < replay.t1; replayUI(); } drag = null; };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   }
-  // a car where the recording has it at time t (between two samples)
-  function rpPose(c, A, B, o, u) {
+  // a car where the recording has it at time t (between two samples); W: the recording's width (its semi-trailer's angle, REC_TL)
+  function rpPose(c, A, B, o, u, W) {
     const L = (j) => A[o + j] + (B[o + j] - A[o + j]) * u;
     c.x = c.px = L(0); c.y = c.py = L(1); c.z = c.pz = L(2); c.h = c.ph = A[o + 3] + Core.wrapPi(B[o + 3] - A[o + 3]) * u;
     c.vl = L(4); c.delta = L(5); c.inBrk = A[o + 6] & 1 ? 1 : 0; c.vx = Math.cos(c.h) * c.vl; c.vz = Math.sin(c.h) * c.vl;
@@ -1151,14 +1154,15 @@
     const gv = Math.abs(c.vl) / 14;   // (the gear and the revs as they might have been: a gear every 14 m/s; the cockpit's instruments)
     c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0); c.nvY = c.nvR = c.nvP = 0;   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
+    if (c.tl) Core.tlPose(c, W > REC_W ? A[o + 7] + (B[o + 7] - A[o + 7]) * u : 0, track);   // (its semi-trailer on the kingpin at its angle; an older recording: straight behind)
   }
   // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
   function rpPoseAll(t, i) {
     const P = replay, R = recd, F = R.frames;
     while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
-    for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * REC_W, u);
-    const o = 1 + R.n * REC_W, scOn = A[o + 6] >= 2;   // (the safety car, where it was out: its own car, posed like the others)
+    for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * R.w, u, R.w);
+    const o = 1 + R.n * R.w, scOn = A[o + 6] >= 2;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
       if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] >= 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in' }; }
       else race.fl.sc = null;
@@ -1303,10 +1307,17 @@
   }
   // from: 'pause', 'replay' or 'results' (the race stands still meanwhile); view (Ogled vozila on the pause and the results): the player's
   // car up close (the wreck seen as it is), else the camera starts where the game's was
+  // the point the photo mode looks at and goes round: the car's middle; a semi-trailer's rig (Core c.tl, docs/titan-cisterna.md) the middle
+  // of all of it, the tractor's nose to the trailer's tail (len: that length, straight; ht, wid: the taller, the wider of the two)
+  function phMid(c) {
+    const T = c.tl; if (!T) return { x: c.x, z: c.z, len: c.m.len, wid: c.m.wid, ht: 0 };
+    const hl = c.m.len / 2, tl = T.m.len / 2, nx = c.x + Math.cos(c.h) * hl, nz = c.z + Math.sin(c.h) * hl, ex = T.x - Math.cos(T.h) * tl, ez = T.z - Math.sin(T.h) * tl;
+    return { x: (nx + ex) / 2, z: (nz + ez) / 2, len: c.m.len + T.back, wid: Math.max(c.m.wid, T.D.wid), ht: T.D.ht };
+  }
   function photoStart(from, view) {
     const car = from === 'replay' && replay ? recd.cars[replay.k] : race && race.player; if (!car) return;
     if (from === 'replay') { replay.play = false; replayUI(); $('replay-ui').classList.add('off'); }
-    const cm = Render.camera, cy = (car.y || 0) + 0.7, dx = cm.position.x - car.x, dz = cm.position.z - car.z, dy = cm.position.y - cy, d = Math.hypot(dx, dy, dz);
+    const cm = Render.camera, cy = (car.y || 0) + 0.7, mid = phMid(car), dx = cm.position.x - mid.x, dz = cm.position.z - mid.z, dy = cm.position.y - cy, d = Math.hypot(dx, dy, dz);
     const inCar = d < 3;   // (from the cockpit: behind the car, a little above it)
     photo = { from, car, yaw: inCar ? car.h + Math.PI + 0.5 : Math.atan2(dz, dx), pitch: inCar ? 0.22 : Core.clamp(Math.asin(dy / Math.max(1, d)), 0.03, 1.4), dist: inCar ? 8 : Core.clamp(d, 4, 40),
       lens: 1, filt: 0, blur: false, hide: false, ptrs: new Map(), pinch: 0, moved: 0, prev: Render.cam.shot || null, shot: { sky: true, floor: true, near: 0.3, blur: 0 }, wasPaused: paused, view: !!view };
@@ -1316,16 +1327,16 @@
       // where no other car stands in between (in a pack, the side with fewer); from behind when the car stands across the road and its
       // front is no better)
       const M = car.m, a = 0.62, pitch = 0.3, up = window.innerWidth < window.innerHeight, lens = up ? 0 : 2, tv = Math.tan(PH_LENS[lens][1] * Math.PI / 360);
-      const ht = (M.def && M.def.parts && M.def.parts.ht) || 1.4, asp = Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
-      photo.pitch = pitch; photo.lens = lens; photo.dist = Core.clamp(viewFit(M.len, M.wid, ht, a, pitch, tv, asp, up ? 0.92 : 0.66, up ? 0.8 : 0.66), 4, 40);
+      const ht = Math.max((M.def && M.def.parts && M.def.parts.ht) || 1.4, mid.ht), asp = Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
+      photo.pitch = pitch; photo.lens = lens; photo.dist = Core.clamp(viewFit(mid.len, mid.wid, ht, a, pitch, tv, asp, up ? 0.92 : 0.66, up ? 0.8 : 0.66), 4, 40);
       const T = race.track, q = {}, r = Math.cos(pitch) * photo.dist; let best = Infinity;
       const inWay = (cx, cz) => {   // (how many other cars stand with their middle in the line of sight, between the camera and the car's nose)
-        const ex = car.x - cx, ez = car.z - cz, e2 = ex * ex + ez * ez, t1 = 1 - M.len * 0.5 / r; let n = 0;
+        const ex = mid.x - cx, ez = mid.z - cz, e2 = ex * ex + ez * ez, t1 = 1 - mid.len * 0.5 / r; let n = 0;
         for (const o of race.cars) { if (o === car) continue; const t = ((o.x - cx) * ex + (o.z - cz) * ez) / e2;
           if (t > 0 && t < t1 && Math.hypot(o.x - cx - t * ex, o.z - cz - t * ez) < o.m.wid * 0.5 + 0.5) n++; }
         return n; };
       for (const [y, pen] of [[car.h + a, 0], [car.h - a, 0], [car.h + Math.PI - a, 3], [car.h + Math.PI + a, 3]]) {
-        const cx = car.x + Math.cos(y) * r, cz = car.z + Math.sin(y) * r; T.query(cx, cz, car.q ? car.q.i : -1, q);
+        const cx = mid.x + Math.cos(y) * r, cz = mid.z + Math.sin(y) * r; T.query(cx, cz, car.q ? car.q.i : -1, q);
         const k = Math.abs(q.d) + pen + 5 * inWay(cx, cz); if (k < best) { best = k; photo.yaw = y; }
       }
     }
@@ -1340,9 +1351,9 @@
     else { paused = P.wasPaused; showScreen(P.from === 'results' ? 'results' : 'pause'); }
   }
   function photoPose() {
-    const P = photo, c = P.car, S0 = P.shot, cy = (c.y || 0) + 0.7, cp = Math.cos(P.pitch);
-    S0.px = c.x + Math.cos(P.yaw) * cp * P.dist; S0.pz = c.z + Math.sin(P.yaw) * cp * P.dist; S0.py = cy + Math.sin(P.pitch) * P.dist;
-    S0.tx = c.x; S0.ty = cy; S0.tz = c.z; S0.fov = PH_LENS[P.lens][1]; S0.fogD = Math.max(70, P.dist * 1.6); S0.blur = P.blur ? 0.9 : 0;
+    const P = photo, c = P.car, S0 = P.shot, cy = (c.y || 0) + 0.7, cp = Math.cos(P.pitch), m = phMid(c);
+    S0.px = m.x + Math.cos(P.yaw) * cp * P.dist; S0.pz = m.z + Math.sin(P.yaw) * cp * P.dist; S0.py = cy + Math.sin(P.pitch) * P.dist;
+    S0.tx = m.x; S0.ty = cy; S0.tz = m.z; S0.fov = PH_LENS[P.lens][1]; S0.fogD = Math.max(70, P.dist * 1.6); S0.blur = P.blur ? 0.9 : 0;
   }
   function photoUI() {
     const P = photo; if (!P) return;
@@ -1559,28 +1570,31 @@
   // replays as a see-through car (Render.setGhost) in the next runs, on the race clock. Only drawn: it never touches the race.
   // On a circuit every flying lap is sampled the same way on the lap clock (from the line: the qualifying lap, a race's laps from the
   // second on); the best one is kept (lap: 1) and replays on the lap clock during the next flying laps, from the next lap on.
-  // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
-  // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad)
+  // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, ch?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
+  // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad); a car with a semi-trailer (Core c.tl, ghCh) ch 8:
+  // the 8th its trailer's angle to the tractor (1e-4 rad)
   const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
   const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
   let ghRec = null, ghPlay = null, ghLap = null, ghFr = null;   // (ghFr: a friend's shared ghost of this track { name, t, g })   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
-  function ghPose(P, f, k, a) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k
-    const o = k * GH_CH, lat = clamp(P.w * P.speed, -16, 16);
+  const ghCh = (c) => c && c.tl ? GH_CH + 1 : GH_CH;   // (a ghost's channels: a semi-trailer's angle too)
+  function ghPose(P, f, k, a, ch) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k (ch: the ghost's channels, GH_CH if none given)
+    const n = ch || GH_CH, o = k * n, lat = clamp(P.w * P.speed, -16, 16);
     f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
     f[o + 4] = P.delta || 0; f[o + 5] = P.air ? Math.atan2(P.vy, Math.max(Math.abs(P.vl), 6)) * 0.8 : Math.atan(P.gradeNow || 0); f[o + 6] = clamp(-lat * 0.0042, -0.06, 0.06);
+    if (n > GH_CH) { const T = P.tl, r0 = T ? Core.wrapPi(T.ph - P.ph) : 0; f[o + 7] = T ? r0 + (T.rel - r0) * a : 0; }
   }
   function ghSample(P) {   // after each physics step of a time trial, until the finish
     if (!ghRec || ghRec.done || race.state !== 'racing' || phase !== 'racing') return;
     const t1 = race.time, t0 = t1 - STEP;
-    while (ghRec.n < GH_MAX && ghRec.n * GH_DT <= t1 + 1e-9) { ghPose(P, ghRec.f, ghRec.n, clamp((ghRec.n * GH_DT - t0) / STEP, 0, 1)); ghRec.n++; }
-    if (P.finished) { if (ghRec.n < GH_MAX) { ghPose(P, ghRec.f, ghRec.n, 1); ghRec.n++; } ghRec.done = true; }   // (the last sample: just past the line)
+    while (ghRec.n < GH_MAX && ghRec.n * GH_DT <= t1 + 1e-9) { ghPose(P, ghRec.f, ghRec.n, clamp((ghRec.n * GH_DT - t0) / STEP, 0, 1), ghRec.ch); ghRec.n++; }
+    if (P.finished) { if (ghRec.n < GH_MAX) { ghPose(P, ghRec.f, ghRec.n, 1, ghRec.ch); ghRec.n++; } ghRec.done = true; }   // (the last sample: just past the line)
   }
   function ghEncode(G) {
-    const n = G.n, f = G.f, a = new Int16Array(n * GH_CH), q0 = [Math.round(f[0] * 100), Math.round(f[1] * 100), Math.round(f[2] * 100)], q = q0.slice();
+    const n = G.n, f = G.f, ch = G.ch || GH_CH, a = new Int16Array(n * ch), q0 = [Math.round(f[0] * 100), Math.round(f[1] * 100), Math.round(f[2] * 100)], q = q0.slice();
     const i16 = (v) => Math.max(-32767, Math.min(32767, Math.round(v)));
-    for (let k = 0; k < n; k++) { const o = k * GH_CH;
+    for (let k = 0; k < n; k++) { const o = k * ch;
       for (let c = 0; c < 3; c++) { const v = Math.round(f[o + c] * 100), d = v - q[c]; if (Math.abs(d) > 32767) return null; a[o + c] = d; q[c] = v; }   // (a jump of over 327 m: not a drive)
-      a[o + 3] = i16(Core.wrapPi(f[o + 3]) * 1e4); for (let c = 4; c < 7; c++) a[o + c] = i16(f[o + c] * 1e4); }
+      a[o + 3] = i16(Core.wrapPi(f[o + 3]) * 1e4); for (let c = 4; c < ch; c++) a[o + c] = i16(f[o + c] * 1e4); }
     const b = new Uint8Array(a.buffer); let s = '';
     for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
     return { q0, d: btoa(s) };
@@ -1589,7 +1603,7 @@
     try { localStorage.removeItem(ghKey(id)); } catch (_) { }
     if (!G || G.n < 2) return;
     const M = Core.MODELS[S.car], e = ghEncode(G); if (!e) return;
-    const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[S.color], stripe: race.player.stripe !== false, lap: lap ? 1 : undefined, q0: e.q0, d: e.d,
+    const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[S.color], stripe: race.player.stripe !== false, lap: lap ? 1 : undefined, ch: G.ch > GH_CH ? G.ch : undefined, q0: e.q0, d: e.d,
       cond: { rain: race.rain ? 1 : 0, tod: race.endu ? 'day' : S.tod, season: S.season, upg: Object.assign({}, upgOf(M.id)), setup: Object.assign({}, setupOf(id)) } });   // (how the run was driven: a challenge takes it along)
     if (j.length > GH_BYTES) return;
     Shramba.keep(ghKey(id), j);   // (a full storage: older ghosts make room for the new best)
@@ -1601,12 +1615,13 @@
   // a stored ghost ({ v, dt, n, t, car, color, stripe, lap?, q0, d }): checked and unpacked to its poses (null: not a ghost of this game)
   function ghParse(o) {
     if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
+    const ch = o.ch == null ? GH_CH : o.ch; if (ch !== GH_CH && ch !== GH_CH + 1) return null;   // (ch 8: with a semi-trailer's angle)
     let b; try { b = atob(o.d); } catch (_) { return null; }
-    if (b.length !== o.n * GH_CH * 2) return null;
+    if (b.length !== o.n * ch * 2) return null;
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
-    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
-    for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < 7; c++) f[i + c] = a[i + c] / 1e4; }
-    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, lap: o.lap === 1 };
+    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * ch), q = o.q0.map(v => +v || 0);
+    for (let k = 0; k < o.n; k++) { const i = k * ch; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < ch; c++) f[i + c] = a[i + c] / 1e4; }
+    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
   }
   function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
     let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
@@ -1615,8 +1630,9 @@
   }
   function ghStart() {   // newRace: record every time trial and every flying lap on a circuit (never online); replay the best one when there is one
     const on = mp && mp.race, tt = race.timeTrial && !on, circ = !race.timeTrial && !on;
-    ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), done: false } : null;
-    ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), t0: 0, lap: -1, on: false } : null;
+    const ch = ghCh(race.player);   // (a semi-trailer: its angle too)
+    ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * ch), ch, done: false } : null;
+    ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * ch), ch, t0: 0, lap: -1, on: false } : null;
     const R0 = tt ? rec(track.def.id) : null;
     ghPlay = race.chal ? null : R0 && R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : circ ? ghLoad(track.def.id, 0, true) : null;   // (a challenge: only the friend's)
     const F = tt || circ ? ghFriend(track.def.id) : null, C = race.chal; ghFr = F && F.g.lap === !tt && (!C || (C.ghost && Math.abs(F.t - C.time) < 0.001)) ? F : null;   // (a challenge: its own ghost only, if it came with it)   // (a friend's time trial run in a time trial, a friend's lap on a circuit's flying laps)
@@ -1683,25 +1699,25 @@
     }
     if (!G.on) return;
     const t1 = race.time, tp = t1 - STEP;
-    while (G.n < GH_MAX && G.t0 + G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.t0 + G.n * GH_DT - tp) / STEP, 0, 1)); G.n++; }
+    while (G.n < GH_MAX && G.t0 + G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.t0 + G.n * GH_DT - tp) / STEP, 0, 1), G.ch); G.n++; }
   }
   function ghLapEnd(G, P, t) {   // a flying lap is over: the best one so far (the first, or faster than the ghost) is stored and replays from the next lap on
-    if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1); G.n++; }   // (the last sample: just past the line)
-    if (race.chal) { if (G.n >= 2) race.chal.mine = { n: G.n, f: G.f.slice(0, G.n * GH_CH), t }; return; }   // (a challenge's lap: for the reply, not the player's own ghost)
+    if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1, G.ch); G.n++; }   // (the last sample: just past the line)
+    if (race.chal) { if (G.n >= 2) race.chal.mine = { n: G.n, f: G.f.slice(0, G.n * G.ch), ch: G.ch, t }; return; }   // (a challenge's lap: for the reply, not the player's own ghost)
     if (G.n < 2 || (ghPlay && ghPlay.t <= t)) return;
-    const f = G.f.slice(0, G.n * GH_CH);
-    ghPlay = { n: G.n, t, M: Core.MODELS[S.car], color: PLAYER_COLORS[S.color], stripe: P.stripe !== false, f, lap: true };
-    ghWrite(track.def.id, { n: G.n, f }, t, true);
+    const f = G.f.slice(0, G.n * G.ch);
+    ghPlay = { n: G.n, t, M: Core.MODELS[S.car], color: PLAYER_COLORS[S.color], stripe: P.stripe !== false, f, ch: G.ch, lap: true };
+    ghWrite(track.def.id, { n: G.n, f, ch: G.ch }, t, true);
   }
-  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
+  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, tl: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
   function ghAt(G, alpha, g) {   // the ghost G where its run was at this moment of the race clock (a circuit's lap: of the lap clock), into g; null while it is not on
     const P = race.player;
     if (G.lap && (P.finished || !(P.lap >= (race.quali ? 1 : 2)))) return null;   // (a circuit: only while a flying lap is under way)
     const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP - (G.lap ? P.lapStart : 0)), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
     if (t > end + 0.6) return null;   // the run is over (it ends just past the line)
-    const f = G.f, o = k * GH_CH, n2 = o + GH_CH, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
+    const f = G.f, ch = G.ch || GH_CH, o = k * ch, n2 = o + ch, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
     g.M = G.M; g.color = G.color; g.stripe = G.stripe;
-    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6);
+    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6); g.tl = ch > GH_CH ? L(7) : 0;   // (tl: a semi-trailer's angle)
     const dd = Math.hypot(g.x - P.x, g.z - P.z);
     g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
     return g;
@@ -1895,7 +1911,7 @@
   const chalCan = () => !!track && !school && !(mp && mp.race) && !race.chal && (race.timeTrial || (!track.def.open && !race.pol)) && !!ghOwn(track.def.id);
   function chalFinish() {   // the results of a challenge: the two times side by side; again, or the player's run back to the friend
     const C = race.chal, P = race.player, t = chalTime(), d = t - C.time, won = d < 0;
-    if (!C.lap && ghRec && ghRec.done && ghRec.n >= 2) C.mine = { n: ghRec.n, f: ghRec.f.slice(0, ghRec.n * GH_CH), t };   // (a time trial's run: the recording)
+    if (!C.lap && ghRec && ghRec.done && ghRec.n >= 2) C.mine = { n: ghRec.n, f: ghRec.f.slice(0, ghRec.n * ghRec.ch), ch: ghRec.ch, t };   // (a time trial's run: the recording)
     ghRec = null;
     const M = modelById(C.car), rows = [{ name: C.name, time: C.time }, { me: true, name: tr('Ti'), time: t }].sort((a, b) => a.time - b.time), best = rows[0].time;
     $('res-head').classList.add('tt'); $('res-tt').classList.add('off');
@@ -1934,7 +1950,7 @@
   function chalReply() {   // the challenge's run back to the friend: the player's run in the same car and conditions
     const C = race && race.chal; if (!C || !C.mine) return;
     const e = ghEncode(C.mine); if (!e) return;
-    const ghost = { v: GH_V, dt: GH_DT, n: C.mine.n, t: C.mine.t, car: C.car, color: C.color, stripe: true, lap: C.lap ? 1 : undefined, q0: e.q0, d: e.d, cond: C.cond };
+    const ghost = { v: GH_V, dt: GH_DT, n: C.mine.n, t: C.mine.t, car: C.car, color: C.color, stripe: true, lap: C.lap ? 1 : undefined, ch: C.mine.ch > GH_CH ? C.mine.ch : undefined, q0: e.q0, d: e.d, cond: C.cond };
     const title = tr('Izziv · {0} · {1}', Lang.of(track.def, 'name'), fmt(C.mine.t));
     return (C.lap ? Promise.resolve([]) : mkShare(C.track, C.cond.season)).then(marks => chalLink({ app: 'apex-racing', kind: 'challenge', v: 1, track: C.track, name: S.name, time: C.mine.t, lap: C.lap ? 1 : 0, car: C.car, color: C.color, cond: C.cond, ghost, marks }, title));   // (the player's tyre marks back too, as many as fit)
   }
@@ -4062,7 +4078,7 @@
   // legs of a hairpin ladder), kept rising (after a spin or a moment backwards it counts from the first time the best run got there)
   function hxTable(G) {
     const s = new Float32Array(G.n), q = {}; let hint = track.startIdx, m = -1e9;
-    for (let k = 0; k < G.n; k++) { track.query(G.f[k * GH_CH], G.f[k * GH_CH + 2], hint, q); hint = q.i; if (q.s > m) m = q.s; s[k] = m; }
+    const ch = G.ch || GH_CH; for (let k = 0; k < G.n; k++) { track.query(G.f[k * ch], G.f[k * ch + 2], hint, q); hint = q.i; if (q.s > m) m = q.s; s[k] = m; }
     return s;
   }
   function hxTimeAt(s) {   // the race time at which the best run reached road position s (null past its end)
@@ -5018,7 +5034,7 @@
     const C = R.cars.get(who); if (C && !C.off) { C.buf.push(m); if (C.buf.length > 40) C.buf.shift(); if (m.ft != null) finishOf(who, +m.ft); }
   }
   // a big grid's batch: the states as arrays of their values in this order (a third of the size of the same states with their names)
-  const ST_KEYS = ['id', 'k', 'x', 'z', 'y', 'h', 'vx', 'vz', 'vy', 'w', 'vl', 'a', 'd', 'b', 'hb', 'th', 'g', 'rp', 'ax', 'ry', 'gr', 'bs', 'cb', 'ws', 'lr', 'be', 'sp', 'lk', 'sf', 'di', 'lp', 'ft'];
+  const ST_KEYS = ['id', 'k', 'x', 'z', 'y', 'h', 'vx', 'vz', 'vy', 'w', 'vl', 'a', 'd', 'b', 'hb', 'th', 'g', 'rp', 'ax', 'ry', 'gr', 'bs', 'cb', 'ws', 'lr', 'be', 'sp', 'lk', 'sf', 'di', 'lp', 'ft', 'tl'];   // (tl last: an older phone's state is one shorter)
   const stPack = (m) => ST_KEYS.map(k => (m[k] === undefined ? null : m[k]));
   const stOpen = (a) => { const o = {}; for (let i = 0; i < ST_KEYS.length; i++) o[ST_KEYS[i]] = a[i]; return o; };
   // host, a big grid: what came in since the last batch (and its own state) on to every friend, in one message each (every 50 ms at
@@ -5051,6 +5067,7 @@
         a: r2(P.air), d: r3(P.delta), b: r2(P.inBrk), hb: r2(P.inHand), th: r2(P.inThr * v), g: P.gear | 0, rp: Math.round(still ? P.m.idle : P.rpm), ax: r2(P.axF), ry: r2(P.roadY), gr: r3(P.gradeNow),
         bs: r3(P.bankSl), cb: P.onCurb ? 1 : 0, ws: P.ws.join(''), lr: r2(P.latR * v), be: r3(P.beta), sp: r2(P.spin * v), lk: P.lock && !still ? 1 : 0, sf: r2(P.slipF * v),
         di: r2(P.dist), lp: P.lap | 0, ft: R.mine, pg: P.pitG ? 1 : 0 };   // (pg: a ghost on the pit road, Race.pitStep: the friend's phone skips the same contacts)
+      if (P.tl) m.tl = r3(P.tl.rel);   // (a semi-trailer's angle to the tractor: the friend's phone poses it, Core.tlPose; docs/titan-cisterna.md)
       if (mp.role === 'host') { m.id = 'h'; if (R.big) R.fwd.push(m); else for (const id of R.grid) if (id !== 'h') Net.sendTo(id, m); } else Net.send(m);
     }
     if (R.big && mp.role === 'host') netBatch(now);
@@ -5069,6 +5086,7 @@
     c.axF = L('ax'); c.roadY = L('ry'); c.gradeNow = L('gr'); c.bankSl = L('bs'); c.onCurb = n.cb; for (let i = 0; i < 4; i++) c.ws[i] = +(n.ws || '')[i] || 0;
     c.latR = L('lr'); c.beta = L('be'); c.spin = L('sp'); c.lock = n.lk; c.slipF = L('sf');   // (for the smoke, skid marks and dust)
     c.netPG = n.pg == null ? null : n.pg ? 1 : 0;   // (on the pit road its phone's way: Race.step)
+    if (c.tl) Core.tlPose(c, b && b.tl != null && a.tl != null ? L('tl') : n.tl, track);   // (its semi-trailer at its angle, on the road; never simulated here: the AI and the traffic see its tractor)
     if (!b && t - a.k > lag + 150) { c.vx = c.vz = c.vy = c.w = c.vl = c.latR = c.spin = c.slipF = c.inThr = 0; c.lock = 0; c.rpm = c.m.idle; }   // (no word from it for a while: it stands, also for a bump)
     const z = B[B.length - 1]; c.dist = z.di; c.lap = z.lp;
   }

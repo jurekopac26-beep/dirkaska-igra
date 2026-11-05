@@ -2790,11 +2790,12 @@ const Render = (function () {
   // race (no physics, no collisions, no sound, no shadow, no glows or dust). One material for all its parts, kept for the whole visit.
   // Two of them: the player's own (0: bluish, setGhost) and a friend's shared one (1: orange with the friend's name over it, setGhostF).
   const GV = [null, null], GMAT = [null, null], GCOL = [[0xcfe4ff, 0x2b4a72], [0xffc98a, 0x7a3a08]];
-  function ghostDrop(k) { const v = GV[k]; if (!v) return; scene.remove(v.grp); freeOwn(v.grp, new Set([GMAT[k]])); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); } GV[k] = null; }
-  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1), tag (a name over it) }
+  function ghostDrop(k) { const v = GV[k]; if (!v) return; scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); freeOwn(v.grp, new Set([GMAT[k]])); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); } GV[k] = null; }   // (its semi-trailer's look: shared, tlLooks)
+  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), tl (a semi-trailer's angle to
+  // the tractor: its trailer on the kingpin, see-through as the car), op (opacity 0..1), tag (a name over it) }
   function ghostSet(k, g, drop) {
     let v = GV[k];
-    if (!g) { if (drop) ghostDrop(k); else if (v) v.grp.visible = false; return; }
+    if (!g) { if (drop) ghostDrop(k); else if (v) { v.grp.visible = false; if (v.tlG) v.tlG.visible = false; } return; }
     if (!scene) return;
     if (!GMAT[k]) GMAT[k] = new THREE.MeshLambertMaterial({ color: GCOL[k][0], emissive: GCOL[k][1], transparent: true, opacity: 0.4 });
     const mat = GMAT[k];
@@ -2813,6 +2814,8 @@ const Render = (function () {
         v.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false })); v.tag.scale.set(4, 1, 1); v.tag.position.y = 2.4; v.tag.renderOrder = 4; v.grp.add(v.tag);
       }
       v.M = g.M; v.color = g.color; v.tagTxt = g.tag || ''; v.spin = 0; v.lx = g.x; v.lz = g.z;
+      const R = g.M.trailer && g.M.trailer.look ? tlBuild(g.M) : null;   // (a semi-trailer: its look in the ghost's material, a group of its own on the kingpin)
+      if (R) { const b = new THREE.Mesh(R.geo, mat); b.renderOrder = 2; v.tlG = new THREE.Group(); v.tlG.add(b); v.tlG.rotation.order = 'YZX'; scene.add(v.tlG); }
       scene.add(v.grp); GV[k] = v;
     }
     const M = g.M;
@@ -2824,6 +2827,8 @@ const Render = (function () {
     if (mv < 5) v.spin += mv / M.rw;   // (wheels roll with the distance moved; not across a jump back in the replay)
     for (const w of v.wf) w.rotation.set(0, -(g.d || 0), -v.spin);
     for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
+    if (v.tlG) { const D = M.trailer, G = v.tlG; G.visible = v.grp.visible; v.grp.updateMatrixWorld(true);
+      G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld)); G.rotation.set(0, -(g.h + (g.tl || 0)), g.p || 0, 'YZX'); }
   }
   const setGhost = (g, drop) => ghostSet(0, g, drop), setGhostF = (g, drop) => ghostSet(1, g, drop);
 
@@ -4494,6 +4499,7 @@ const Render = (function () {
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat);   // (matFpM: the formula's rivals' parts, remerge; farMat: the far rivals' one material)
+    for (const R of tlLooks.values()) if (R) { g.add(R.geo); g.add(R.lgeo); g.add(R.lo); g.add(R.sh); g.add(R.blob); m.add(R.mat); }   // (a semi-trailer's look: the model's, a preview's trailer in its tractor's group, tlShow)
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -4533,8 +4539,20 @@ const Render = (function () {
   const tlLooks = new Map(), _tlK = new THREE.Vector3(), _tlP = new THREE.Vector3(), TL_TAU = Math.PI * 2;
   function tlBuild(M) {
     if (tlLooks.has(M.id)) return tlLooks.get(M.id);
+    const D = M.trailer, A = tlGeo(M, 0), L = A && tlGeo(M, 1), S = L && tlGeo(M, 2);
+    if (!A || !L || !S) { tlLooks.set(M.id, null); return null; }
+    let map = null; if (A.cv) { map = new THREE.CanvasTexture(A.cv); map.flipY = false; map.anisotropy = Math.min(4, renderer ? renderer.capabilities.getMaxAnisotropy() : 1); }
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
+    const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
+    const R = { geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris };
+    tlLooks.set(M.id, R); return R;
+  }
+  // the look's geometry (tlBuild): the builder run once a level (B.lo: 0 the look, the player's trailer and the previews; 1 the light look,
+  // a rival's: fewer sides, no small parts, as the builder chooses; 2 the shadow, drawn only into the shadow map), on the full look's picture
+  // (the lighter ones not painted again)
+  function tlGeo(M, lo) {
     const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1];
-    let cv = null;
+    let cv = null, TW = 1, TH = 1;
     const col = (k) => typeof k === 'number' ? colArr(k) : k || [1, 1, 1];
     // a triangle: its corners, their normals (outward: the winding follows them), its colour, its corners on the picture (pixels; none: the white corner)
     function tri(a, b, c, na, nb, nc, k, ua, ub, uc, lamp) {
@@ -4553,7 +4571,9 @@ const Render = (function () {
     const eln = (ry, rz, f, ax) => unit([ax || 0, -Math.cos(f) / ry, Math.sin(f) / rz]);
     const B = {
       // the picture (w x h px): draw(g, w, h) paints it; its corner (the last 8 x 8 px) is made white for the pieces without a part of it
-      tex(w, h, draw) { cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); draw(g, w, h); g.fillStyle = '#fff'; g.fillRect(w - 8, h - 8, 8, 8); },
+      lo: lo || 0,
+      tex(w, h, draw) { TW = w; TH = h; if (lo) return; cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true }); draw(g, w, h);   // (a canvas in memory: the look reads its pixels back (getImageData), no wait for the graphics card's)
+        g.fillStyle = '#fff'; g.fillRect(w - 8, h - 8, 8, 8); },
       // a box: its middle, its sizes, its colour; o.face ('-x' the rear, '+x', '+y', '-y', '+z', '-z') takes o.uv ([u0, v0, u1, v1] px: as seen
       // from outside, its top left to its bottom right; '+y': x along, z down) in o.faceK (white: the picture as it is); o.skip: faces left out
       box(x, y, z, lx, ly, lz, k, o, lamp) {
@@ -4622,25 +4642,35 @@ const Render = (function () {
       lamp(x, y, z, ly, lz) { B.box(x, y, z, 0.04, ly, lz, null, { skip: ['+x'] }, true); lamps.push([x - 0.03, y, z]); },
       rgb: colArr,
     };
-    try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + '): ' + (e && e.message)); tlLooks.set(M.id, null); return null; }
-    const TW = cv ? cv.width : 1, TH = cv ? cv.height : 1, wu = cv ? (TW - 4) / TW : 0, wv = cv ? (TH - 4) / TH : 0;
+    try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + (lo ? ', level ' + lo : '') + '): ' + (e && e.message)); return null; }
+    const pic = TW > 1, wu = pic ? (TW - 4) / TW : 0, wv = pic ? (TH - 4) / TH : 0;
     for (let i = 0; i < UV.length; i += 2) { if (UV[i] < 0) { UV[i] = wu; UV[i + 1] = wv; } else { UV[i] /= TW; UV[i + 1] /= TH; } }
     const y0 = -D.kp[1], geo = new THREE.BufferGeometry(), lgeo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
     geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); geo.translate(0, y0, 0); geo.computeBoundingSphere();
     lgeo.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3)); lgeo.setAttribute('normal', new THREE.Float32BufferAttribute(LN, 3)); lgeo.translate(0, y0, 0); lgeo.computeBoundingSphere();
-    let map = null; if (cv) { map = new THREE.CanvasTexture(cv); map.flipY = false; map.anisotropy = Math.min(4, renderer ? renderer.capabilities.getMaxAnisotropy() : 1); }
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map });
-    const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
-    const R = { geo, lgeo, mat, blob, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9 };
-    tlLooks.set(M.id, R); return R;
+    return { geo, lgeo, cv, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9 };
   }
-  // the trailer's group (makeView): its body, its lamps, its blob; in the scene with the tractor (carCull takes the two out together)
+  // the trailer's group (makeView): its body (a rival's the light look: the phone's budget, docs/titan-cisterna.md), its lamps, its blob, its
+  // shadow from the light look (drawn only into the shadow map: v.shadowOnly); in the scene with the tractor (carCull takes the two out together)
   function tlView(v, c) {
     const R = tlBuild(c.m); if (!R) return;
-    const G = new THREE.Group(), b = new THREE.Mesh(R.geo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob);
-    b.castShadow = true; bl.renderOrder = 1; G.add(b, L, bl); G.rotation.order = 'YZX';
+    const G = new THREE.Group(), b = new THREE.Mesh(c.isPlayer ? R.geo : R.lo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob), sh = new THREE.Mesh(R.sh, matHull);
+    sh.castShadow = true; sh.visible = false; (v.shadowOnly || (v.shadowOnly = [])).push(sh);
+    bl.renderOrder = 1; G.add(b, L, bl, sh); G.rotation.order = 'YZX';
     v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlR = R; v.tlRoll = 0; scene.add(G);
+  }
+  // a preview's trailer (the car screen's turntable, setShowCar; the new menu's yard, js/menu-car.js: Render.garageTrailer; not the garage's
+  // workshop, which takes the tractor alone): its group in the tractor's (v.grp), straight behind on the kingpin, its tail lamps off, its blob
+  // (v.rigS: no part of the vehicle's shape). v.rig: the whole rig from the tractor's nose to the trailer's tail, car frame { x0, x1, len,
+  // mid, wid, ht }; null (nothing added) for a vehicle without a trailer
+  function tlShow(v, M) {
+    const D = M.trailer, R = D && D.look ? tlBuild(M) : null; if (!R) return null;
+    const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
+    G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
+    const x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len), x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    v.rigG = G; v.rigS = bl; v.rig = { x0, x1, len: x1 - x0, mid: (x0 + x1) / 2, wid: Math.max(M.wid, D.wid), ht: D.ht };
+    return v.rig;
   }
   // the trailer drawn this frame (updateCars, after the tractor's matrix): on the fifth wheel as the tractor is drawn, its heading the core's
   // (between its steps), its pitch down to the road under its axles; torn off (Core: T.fall) where the core has it
@@ -9142,9 +9172,10 @@ const Render = (function () {
     } else if (mode === 'tv' && curTrack.def.theme === 'pikes' && world && world.groundH && curTrack.hy) {
       // Pikes Peak's own TV cameras (pkTv): the helicopter over the open road, fixed cameras at the famous places, the summit's view
       const o = pkTv(c, dt, x, z); px = o.px; py = o.py; pz = o.pz; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      const tlH = tvRig(c, alpha); tx += tlH.dx; tz += tlH.dz;   // (a semi-trailer: the rig's middle, all of it in the picture)
       if (cam.tvK !== o.key) { cam.tvK = o.key; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;
-      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(o.half / Math.max(1, d)) * 180 / Math.PI, 3, 55);
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan((o.half + tlH.half) / Math.max(1, d)) * 180 / Math.PI, 3, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else if (mode === 'tv') {
@@ -9153,9 +9184,10 @@ const Render = (function () {
       const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length;
       let k = Math.floor(s / 170) % n; if (curTrack.open) k = Core.clamp(k, 0, n - 1);
       const P = tvPost(curTrack, k); px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      const tlH = tvRig(c, alpha); tx += tlH.dx; tz += tlH.dz;   // (a semi-trailer: the rig's middle, all of it in the picture)
       if (cam.tvK !== k) { cam.tvK = k; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;   // (a camera operator's smooth pan)
-      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan((6.5 + tlH.half) / Math.max(1, d)) * 180 / Math.PI, 4, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
@@ -9175,12 +9207,14 @@ const Render = (function () {
       const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
       const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
       let back = cam.userBack || 0;
-      if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
+      const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
+      if (back > 0 || tlB > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
         // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
-        // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before
-        const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4;
+        // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before.
+        // A semi-trailer's tail (16 m of rig) past the foot (on its side, slow, Blizu): the view back by as much, the whole rig on the screen
+        const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4 + tlB;
         const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
-        if (room < 20) back *= Math.max(0, room) / 20;
+        if (tlB > 0 && room < 0) back = room; else if (room < 20) back *= Math.max(0, room) / 20;
       }
       const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
       const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
@@ -9260,6 +9294,14 @@ const Render = (function () {
     R.rc.set(R.o, R.d.multiplyScalar(1 / len)); R.rc.near = 0.5; R.rc.far = len - 3;
     for (const h of R.rc.intersectObject(world.root, true)) { const m = h.object.material; if (!m || m.transparent || m.alphaTest > 0 || !h.object.visible) continue; return false; }   // (fences and other see-through meshes: seen through)
     return true;
+  }
+  // a semi-trailer (Core c.tl) in a TV camera's picture: the point looked at moved from the tractor's middle toward the trailer's (dx, dz:
+  // about the rig's middle), the picture's half wider by half its tail's reach past the tractor's (half, m); no trailer: nothing
+  const _tvRig = { dx: 0, dz: 0, half: 0 };
+  function tvRig(c, u) {
+    const T = c.tl, R = _tvRig; R.dx = R.dz = R.half = 0; if (!T) return R;
+    R.dx = (lerp(T.px, T.x, u) - lerp(c.px, c.x, u)) * 0.7; R.dz = (lerp(T.pz, T.z, u) - lerp(c.pz, c.z, u)) * 0.7; R.half = T.back * 0.5;
+    return R;
   }
   function tvPost(T, k) {
     const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
@@ -9866,14 +9908,17 @@ const Render = (function () {
     const prev = showCar;
     const fake = { m: model, color, num, stripe: true, isPlayer: false, deli };
     showCar = makeCarMesh(fake, { noMarker: true, show: true });
+    const rig = tlShow(showCar, model);   // (a semi-trailer behind the tractor, docs/titan-cisterna.md: the turntable turns the whole rig round its middle, showTurn)
+    showCar.cx = rig ? -rig.mid : 0;
     showCar.grp.position.set(0, 0, 0);
     showScene.add(showCar.grp);
     // framed by its size (a kart close, a truck from further off): the distance x clamp(max(len / 4.4, h / 1.45, wid / 1.9), .75, 1.55), the view
-    // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9))
+    // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9)) (a rig: its length, its trailer's
+    // height, up to 4)
     const bg = showCar.body.geometry; if (!bg.boundingBox) bg.computeBoundingBox();
-    const h = Math.max(0.5, bg.boundingBox.max.y), k = clamp(Math.max(model.len / 4.4, h / 1.45, model.wid / 1.9), 0.75, 1.55);
-    showFr.k = k; showFr.dy = h / 2 - 0.7 * k; showCar.h = h;
-    const ring = Math.max(4.2, model.len / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
+    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? 4 : 1.55);
+    showFr.k = k; showFr.dy = hr / 2 - 0.7 * k; showCar.h = h;
+    const ring = Math.max(4.2, L / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
   function showCamSet() {   // the showroom's camera for the screen's shape (landscape: the car left of the panel; portrait: above it), framed by the car's size
@@ -9882,10 +9927,12 @@ const Render = (function () {
     showCam.aspect = aspect; showCam.updateProjectionMatrix();
     showCam.position.set(2.2 * k, (portraitS ? 4.4 : 3.1) * k + dy, d * k); showCam.lookAt((aspect > 1.2 ? 3.1 : 0) * k, (portraitS ? -2.6 : 0.55) * k + dy, 0);
   }
+  // the showroom car turned to a (a rig, showCar.cx: round its middle, the tractor's origin that far off the turntable's axis)
+  function showTurn(a) { const g = showCar.grp, o = showCar.cx || 0; g.rotation.y = a; if (o) g.position.set(o * Math.cos(a), 0, -o * Math.sin(a)); }
   function renderShowroom(dt) {
     if (!showScene) return;
     showAngle += dt * 0.35;
-    if (showCar) showCar.grp.rotation.y = showAngle;
+    if (showCar) showTurn(showAngle);
     if (showCar && showCar.dl && showCar.dl.step) showCar.dl.step(dt, null, time, 0, false);
     showCamSet();
     cgSet(true); renderer.render(showScene, showCam);
@@ -9898,16 +9945,16 @@ const Render = (function () {
     const a0 = showCar.grp.rotation.y, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3();
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (let k = 0; k < 36; k++) {
-      showCar.grp.rotation.y = k / 36 * Math.PI * 2; showCar.grp.updateMatrixWorld(true);
+      showTurn(k / 36 * Math.PI * 2); showCar.grp.updateMatrixWorld(true);
       showCar.grp.traverse(m => {
-        if (!m.isMesh || m === showCar.blob || !m.geometry.attributes.position) return;
+        if (!m.isMesh || m === showCar.blob || m === showCar.rigS || !m.geometry.attributes.position) return;
         for (let q = m; q; q = q.parent) if (!q.visible) return;   // (drawn only: a hidden mesh does not count)
         const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count);
         for (let i = 0; i < n; i++) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld).project(showCam);
           const sx = (p.x * 0.5 + 0.5) * W, sy = (0.5 - p.y * 0.5) * H; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy; }
       });
     }
-    showCar.grp.rotation.y = a0; showCar.grp.updateMatrixWorld(true);
+    showTurn(a0); showCar.grp.updateMatrixWorld(true);
     return { x0, x1, y0, y1, w: W, h: H };
   }
   // (the car screen's tap on the car, game.js carTapLay) where the showroom car is on the screen over a whole turn, cheaply: the cylinder
@@ -9915,10 +9962,10 @@ const Render = (function () {
   function showRect() {
     if (!showCar) return null;
     showCamSet(); showCam.updateMatrixWorld();
-    const M = showArgs[0], bb = showCar.body.geometry.boundingBox, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3();
-    const r = Math.max(Math.hypot(M.len / 2, M.wid / 2), bb ? Math.hypot(Math.max(-bb.min.x, bb.max.x), Math.max(-bb.min.z, bb.max.z)) : 0);
+    const M = showArgs[0], bb = showCar.body.geometry.boundingBox, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3(), G = showCar.rig;
+    const r = G ? Math.hypot(G.len / 2, G.wid / 2) : Math.max(Math.hypot(M.len / 2, M.wid / 2), bb ? Math.hypot(Math.max(-bb.min.x, bb.max.x), Math.max(-bb.min.z, bb.max.z)) : 0);   // (a rig: round its middle)
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-    for (let k = 0; k < 24; k++) for (const y of [0, showCar.h]) {
+    for (let k = 0; k < 24; k++) for (const y of [0, G ? Math.max(showCar.h, G.ht) : showCar.h]) {
       p.set(Math.cos(k / 24 * Math.PI * 2) * r, y, Math.sin(k / 24 * Math.PI * 2) * r).project(showCam);
       const sx = (p.x * 0.5 + 0.5) * W, sy = (0.5 - p.y * 0.5) * H; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy;
     }
@@ -9939,7 +9986,8 @@ const Render = (function () {
     const W = o.w || 800, H = o.h || 450, v = o.view || 'side', ortho = ['side', 'front', 'rear', 'top'].indexOf(v) >= 0, car = showCar, hh = car.h;
     renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H;
     const fov0 = showCam.fov, up0 = showCam.up.clone(); showFloor.visible = o.floor !== false;
-    car.grp.rotation.y = 0;
+    const solo = !!car.rigG && (ortho || !!o.cam), cx0 = car.cx; if (solo) { car.rigG.visible = false; car.cx = 0; }   // (a rig: its tractor alone in a check sheet's view (its box, grid and hubs) and a camera of the car's own; the rig in the three-quarter views)
+    showTurn(0);
     let geo0 = null;   // o.cut: [parts]: those parts taken off (their ranges collapsed on a copy of its own) and the whole buffer drawn: the lining, the floor, the cabin, the engine bay
     if (o.cut && M.kit) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
       for (const n of o.cut) { const R = U.ranges[n]; if (!R) continue; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { pa[i * 3] = pa[a * 3]; pa[i * 3 + 1] = pa[a * 3 + 1]; pa[i * 3 + 2] = pa[a * 3 + 2]; } }
@@ -9961,7 +10009,7 @@ const Render = (function () {
       showCam.updateProjectionMatrix(); showCam.lookAt(c[0], c[1], c[2]);
     } else {   // (the showroom's camera as in landscape, the car turned to show its front or its back three quarters)
       const k = showFr.k, dy = showFr.dy; showCam.fov = 32; showCam.updateProjectionMatrix();
-      car.grp.rotation.y = v === '34r' ? 0.6 : -0.6;   // (34f: the nose and the right side towards the camera; 34r: the tail and the right side)
+      showTurn(v === '34r' ? 0.6 : -0.6);   // (34f: the nose and the right side towards the camera; 34r: the tail and the right side)
       showCam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); showCam.lookAt(0, 0.55 * k + dy, 0);
     }
     const tl0 = o.brake && car.tail ? car.tail.material : null; if (tl0) car.tail.material = matTailOn;   // (o.brake: the tail lamps lit, as when braking)
@@ -9983,7 +10031,8 @@ const Render = (function () {
       x.strokeStyle = 'rgba(80,220,255,0.95)'; x.lineWidth = 2;
       for (const [a, b] of hubs) { const c = P(a, b), r = 7; x.beginPath(); x.moveTo(c[0] - r, c[1]); x.lineTo(c[0] + r, c[1]); x.moveTo(c[0], c[1] - r); x.lineTo(c[0], c[1] + r); x.stroke(); }
     }
-    showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; car.grp.rotation.y = showAngle;
+    if (solo) { car.rigG.visible = true; car.cx = cx0; }
+    showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; showTurn(showAngle);
     if (geo0) { car.body.geometry.dispose(); car.body.geometry = geo0; }
     if (gh) { for (const [m, mat] of gh.mats) { m.material.dispose(); m.material = mat; } if (gh.part) { car.bodyG.remove(gh.part); gh.part.traverse(m => { if (m.geometry) m.geometry.dispose(); }); } }
     resize();
@@ -9999,7 +10048,7 @@ const Render = (function () {
   // debug: render the showroom car from a fixed camera (used for visual checks)
   function debugShot(px, py, pz, tx, ty, tz, rotY, fov) {
     if (!showScene || !showCar) return;
-    showCar.grp.rotation.y = rotY || 0;
+    showTurn(rotY || 0);
     const f = showCam.fov; if (fov) { showCam.fov = fov; showCam.updateProjectionMatrix(); }
     showCam.position.set(px, py, pz); showCam.lookAt(tx, ty, tz);
     cgSet(true); renderer.render(showScene, showCam);
@@ -10024,6 +10073,6 @@ const Render = (function () {
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

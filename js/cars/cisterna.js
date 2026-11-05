@@ -132,52 +132,63 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   }
 
   // ---- the trailer's pieces (the renderer's builder B; its metres: x forward from the kingpin, y up from the ground, z across: +z the walkway's side) ----
+  // B.lo: 0 the look (the player's trailer, the previews), 1 the light look (a rival's: the phone's budget; fewer sides, no small parts, the
+  // hoops and the tyres' rims in their colour on the tyres' sides), 2 the shadow (drawn only into the shadow map: the tank, the frame, the
+  // wheels, the rack as blocks)
   function build(B) {
     const DK = 0x1c1c1e, FRM = 0x2a2a2c, BLK = 0x131313, RUST = 0x7a3f1e, RUSTD = 0x5c3420, RAIL = 0x6b625a, TYRE = 0x1b1b1b, RIM = 0x76665a, YEL = 0xe0b21c;
+    const lo = B.lo || 0, full = !lo, sh = lo === 2;
     B.tex(1024, 512, paint);
     // the frame: its rails, the kingpin's plate, the cross members, the saddles under the tank
     for (const sd of [-1, 1]) B.box(-5.3, 1.09, sd * 0.5, 12.0, 0.22, 0.14, DK);
     B.box(-0.2, 1.02, 0, 2.1, 0.08, 1.9, DK);
-    for (const x of [-1.8, -3.3, -4.8, -6.3, -10.9]) B.box(x, 1.06, 0, 0.1, 0.12, 1.9, DK);
-    for (const x of [-0.3, -5.0, -9.7]) B.box(x, 1.3, 0, 0.3, 0.2, 1.7, 0x2a2420);
+    if (full) for (const x of [-1.8, -3.3, -4.8, -6.3, -10.9]) B.box(x, 1.06, 0, 0.1, 0.12, 1.9, DK);
+    if (!sh) for (const x of [-0.3, -5.0, -9.7]) B.box(x, 1.3, 0, 0.3, 0.2, 1.7, 0x2a2420);
     // the tank, its hoops, its manhole covers on top
-    B.tank(TK.x0, TK.x1, TK.yc, TK.ry, TK.rz, { n: 32, uv: PIC.skin, end: PIC.end, dome: TK.dome });
-    for (const x of HOOPS) B.hoop(x, TK.yc, TK.ry, TK.rz, 0.12, 0.035, 0x8b5a33);
-    for (const x of COVERS) { B.cyl([x, 3.06, 0], [x, 3.3, 0], 0.3, 0x5e4330, { n: 12 }); B.cyl([x, 3.3, 0], [x, 3.35, 0], 0.34, 0x4c3324, { n: 12 }); B.box(x + 0.36, 3.31, 0, 0.06, 0.06, 0.2, RUSTD); }
+    B.tank(TK.x0, TK.x1, TK.yc, TK.ry, TK.rz, { n: [32, 16, 10][lo], uv: PIC.skin, end: PIC.end, dome: TK.dome });
+    if (full) for (const x of HOOPS) B.hoop(x, TK.yc, TK.ry, TK.rz, 0.12, 0.035, 0x8b5a33);
+    if (!sh) for (const x of COVERS) { B.cyl([x, 3.06, 0], [x, 3.3, 0], 0.3, 0x5e4330, { n: full ? 12 : 6 }); if (full) { B.cyl([x, 3.3, 0], [x, 3.35, 0], 0.34, 0x4c3324, { n: 12 }); B.box(x + 0.36, 3.31, 0, 0.06, 0.06, 0.2, RUSTD); } }
     // the railing on top: posts both sides, a top and a middle rail
     const TP = [-1.0, -2.3, -3.6, -4.9, -6.2, -7.5, -8.8, -9.8];
-    for (const sd of [-1, 1]) { for (const x of TP) B.box(x, 3.28, sd * 0.6, 0.04, 0.56, 0.04, RAIL); for (const y of [3.55, 3.3]) B.box(-5.4, y, sd * 0.6, 8.84, 0.04, 0.04, RAIL); }
+    if (!sh) for (const sd of [-1, 1]) { if (full) for (const x of TP) B.box(x, 3.28, sd * 0.6, 0.04, 0.56, 0.04, RAIL); for (const y of [3.55, 3.3]) B.box(-5.4, y, sd * 0.6, 8.84, 0.04, 0.04, RAIL); }
     // the walkway along the +z side: its grating, its brackets, its rusty railing (two of its middle tubes gone), the ladder up to it (a rung gone)
     B.box(-5.35, 1.32, 0.93, 8.7, 0.04, 0.62, 0x3a2414, { face: '+y', uv: PIC.grate });
-    for (const x of [-1.2, -2.6, -4.0, -5.4, -6.8, -8.2, -9.55]) B.box(x, 1.26, 0.86, 0.06, 0.08, 0.76, DK);
     const WP = [-1.75, -3.05, -4.35, -5.65, -6.95, -8.25, -9.6];
-    for (const x of WP) B.box(x, 1.83, 1.215, 0.04, 0.98, 0.04, RUST);
-    B.box((WP[0] + WP[6]) / 2, 2.33, 1.215, WP[0] - WP[6] + 0.04, 0.04, 0.04, RUST);
-    for (let i = 0; i < WP.length - 1; i++) if (i !== 1 && i !== 4) B.box((WP[i] + WP[i + 1]) / 2, 1.83, 1.215, WP[i] - WP[i + 1], 0.035, 0.035, RUST);
-    for (const x of [-1.05, -1.45]) B.box(x, 1.09, 1.235, 0.04, 1.62, 0.04, RUST);
-    [0.46, 0.73, 1.0, 1.27].forEach((y, i) => { if (i !== 2) B.box(-1.25, y, 1.235, 0.4, 0.035, 0.035, RUST); });
+    if (full) { for (const x of [-1.2, -2.6, -4.0, -5.4, -6.8, -8.2, -9.55]) B.box(x, 1.26, 0.86, 0.06, 0.08, 0.76, DK); for (const x of WP) B.box(x, 1.83, 1.215, 0.04, 0.98, 0.04, RUST); }
+    if (!sh) B.box((WP[0] + WP[6]) / 2, 2.33, 1.215, WP[0] - WP[6] + 0.04, 0.04, 0.04, RUST);
+    if (full) {
+      for (let i = 0; i < WP.length - 1; i++) if (i !== 1 && i !== 4) B.box((WP[i] + WP[i + 1]) / 2, 1.83, 1.215, WP[i] - WP[i + 1], 0.035, 0.035, RUST);
+      for (const x of [-1.05, -1.45]) B.box(x, 1.09, 1.235, 0.04, 1.62, 0.04, RUST);
+      [0.46, 0.73, 1.0, 1.27].forEach((y, i) => { if (i !== 2) B.box(-1.25, y, 1.235, 0.4, 0.035, 0.035, RUST); });
+    }
     // the landing gear, the side guards
-    for (const sd of [-1, 1]) { B.box(-2.1, 0.62, sd * 0.55, 0.14, 0.78, 0.14, FRM); B.box(-2.1, 0.2, sd * 0.55, 0.32, 0.05, 0.32, DK); }
-    B.box(-2.1, 0.75, 0, 0.06, 0.06, 1.1, DK); B.box(-2.1, 0.85, -0.7, 0.06, 0.06, 0.22, DK);
-    for (const sd of [-1, 1]) { B.box(-4.7, 0.68, sd * 1.18, 4.2, 0.1, 0.05, 0x202022); for (const x of [-3.0, -4.7, -6.4]) B.box(x, 0.85, sd * 0.86, 0.06, 0.06, 0.64, DK); }
+    if (!sh) for (const sd of [-1, 1]) { B.box(-2.1, 0.62, sd * 0.55, 0.14, 0.78, 0.14, FRM); if (full) B.box(-2.1, 0.2, sd * 0.55, 0.32, 0.05, 0.32, DK); }
+    if (full) { B.box(-2.1, 0.75, 0, 0.06, 0.06, 1.1, DK); B.box(-2.1, 0.85, -0.7, 0.06, 0.06, 0.22, DK); }
+    if (!sh) for (const sd of [-1, 1]) { B.box(-4.7, 0.68, sd * 1.18, 4.2, 0.1, 0.05, 0x202022); if (full) for (const x of [-3.0, -4.7, -6.4]) B.box(x, 0.85, sd * 0.86, 0.06, 0.06, 0.64, DK); }
     // the wheels on their three axles (rusty rims), the mudguards over them, the mud flaps behind
     for (const ax of [-7.5, -8.8, -10.1]) {
-      B.box(ax, 0.5, 0, 0.12, 0.12, 1.72, DK);
-      for (const sd of [-1, 1]) { B.cyl([ax, 0.5, sd * 0.86], [ax, 0.5, sd * 1.22], 0.5, TYRE, { n: 14 }); B.cyl([ax, 0.5, sd * 1.22], [ax, 0.5, sd * 1.235], 0.3, RIM, { n: 12 }); B.cyl([ax, 0.5, sd * 1.235], [ax, 0.5, sd * 1.25], 0.09, RUSTD, { n: 8 }); }
+      if (!sh) B.box(ax, 0.5, 0, 0.12, 0.12, 1.72, DK);
+      for (const sd of [-1, 1]) {
+        if (full) { B.cyl([ax, 0.5, sd * 0.86], [ax, 0.5, sd * 1.22], 0.5, TYRE, { n: 14 }); B.cyl([ax, 0.5, sd * 1.22], [ax, 0.5, sd * 1.235], 0.3, RIM, { n: 12 }); B.cyl([ax, 0.5, sd * 1.235], [ax, 0.5, sd * 1.25], 0.09, RUSTD, { n: 8 }); }
+        else B.cyl([ax, 0.5, sd * 0.86], [ax, 0.5, sd * 1.23], 0.5, TYRE, { n: sh ? 6 : 8, capK: RIM });
+      }
     }
-    for (const sd of [-1, 1]) { B.box(-8.8, 1.1, sd * 1.04, 3.9, 0.05, 0.42, BLK); B.box(-10.78, 0.68, sd * 1.04, 0.02, 0.8, 0.4, BLK); }
+    for (const sd of [-1, 1]) { B.box(-8.8, 1.1, sd * 1.04, 3.9, 0.05, 0.42, BLK); if (!sh) B.box(-10.78, 0.68, sd * 1.04, 0.02, 0.8, 0.4, BLK); }
     // the rear rack: its floor, posts and bars; four spare tyres side by side, the shelf over them with twelve cans (red and green), all strapped down
     B.box(-11.02, 0.6, 0, 0.82, 0.05, 2.4, BLK);
-    for (const sd of [-1, 1]) { B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 1.12, sd * 1.18, 0.05, 1.04, 0.05, BLK); B.box(-11.02, 1.62, sd * 1.18, 0.8, 0.04, 0.04, BLK); }
-    for (const z of [-0.87, -0.29, 0.29, 0.87]) { B.cyl([-11.0, 0.905, z], [-11.24, 0.905, z], 0.28, TYRE, { n: 12, capK: 0x262626 }); B.cyl([-11.24, 0.905, z], [-11.255, 0.905, z], 0.16, RIM, { n: 10 }); }
-    B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK);
     const CAN = [0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f, 0x2e6a33, 0x2e6a33, 0xa3281f, 0x2e6a33, 0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f];
-    CAN.forEach((c, i) => { const z = -1.045 + i * 0.19; B.box(-11.15, 1.435, z, 0.3, 0.33, 0.17, c); B.box(-11.06, 1.625, z + 0.04, 0.06, 0.05, 0.05, i % 3 ? 0x1a1a1a : 0xd8c23a); });
-    for (const sd of [-1, 1]) { B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL); B.box(-11.305, 1.445, sd * 0.58, 0.012, 0.36, 0.05, YEL); B.box(-11.15, 1.607, sd * 0.58, 0.31, 0.012, 0.05, YEL); }
-    B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL); B.box(-11.305, 1.47, 0, 0.012, 0.05, 2.36, YEL);
+    if (sh) { B.box(-11.12, 0.905, 0, 0.24, 0.56, 2.3, TYRE); B.box(-11.05, 1.3, 0, 0.75, 0.43, 2.4, BLK); }   // (the shadow: the tyres, the shelf and its cans as blocks)
+    else {
+      for (const sd of [-1, 1]) { if (full) B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 1.12, sd * 1.18, 0.05, 1.04, 0.05, BLK); B.box(-11.02, 1.62, sd * 1.18, 0.8, 0.04, 0.04, BLK); }
+      for (const z of [-0.87, -0.29, 0.29, 0.87]) { B.cyl([-11.0, 0.905, z], [-11.24, 0.905, z], 0.28, TYRE, { n: full ? 12 : 8, capK: 0x262626 }); if (full) B.cyl([-11.24, 0.905, z], [-11.255, 0.905, z], 0.16, RIM, { n: 10 }); }
+      B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK);
+      CAN.forEach((c, i) => { const z = -1.045 + i * 0.19; B.box(-11.15, 1.435, z, 0.3, 0.33, 0.17, c); if (full) B.box(-11.06, 1.625, z + 0.04, 0.06, 0.05, 0.05, i % 3 ? 0x1a1a1a : 0xd8c23a); });
+      for (const sd of [-1, 1]) { B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL); B.box(-11.305, 1.445, sd * 0.58, 0.012, 0.36, 0.05, YEL); if (full) B.box(-11.15, 1.607, sd * 0.58, 0.31, 0.012, 0.05, YEL); }
+      B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL); B.box(-11.305, 1.47, 0, 0.012, 0.05, 2.36, YEL);
+    }
     // the yellow bumper with its label, the lamps' housings at its ends, its brackets; the tail lamps
     B.box(-11.44, 0.42, 0, 0.08, 0.2, 1.7, 0xdbb11f, { face: '-x', uv: PIC.label });
-    for (const sd of [-1, 1]) { B.box(-11.44, 0.42, sd * 1.025, 0.08, 0.2, 0.35, BLK); B.box(-11.33, 0.75, sd * 0.5, 0.06, 0.46, 0.08, DK); B.lamp(-11.485, 0.43, sd * 1.03, 0.12, 0.26); }
+    if (!sh) for (const sd of [-1, 1]) { B.box(-11.44, 0.42, sd * 1.025, 0.08, 0.2, 0.35, BLK); if (full) B.box(-11.33, 0.75, sd * 0.5, 0.06, 0.46, 0.08, DK); B.lamp(-11.485, 0.43, sd * 1.03, 0.12, 0.26); }
   }
 
   VEHICLE_DEFS.push({

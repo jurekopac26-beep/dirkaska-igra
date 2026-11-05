@@ -588,7 +588,7 @@ Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik L
 V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
 - **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega) odpre garažo, njena puščica nazaj pa zaslon za izbiro avta; **Nazaj** ali **Naprej** te od tam vrne na isto progo. **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
-- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5. Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
+- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5, TITAN CISTERNA 5 (polje samo iz tovornjakov s cisterno, brez dopolnitve). Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
 
@@ -669,6 +669,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 |---|---|---|---|---|---|
 | **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 kovančkov | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
 | **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+| **TITAN CISTERNA** | zadnji | 1115 KM | 5300 kg in 12 t prikolice | 75.000 kovančkov | TITAN s cisterno na sedlu: prikolica se v ovinku lomi, pri zaviranju potiska in je težka (glej spodaj). |
 
 ### Električni
 
@@ -693,6 +694,16 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 - Težak je: zavira dlje (s 100 km/h na ~32 m), v ovinkih se nagne in ima manj oprijema, obrne se šele v širšem krogu kot avto. Zadnji pogon mu rad obrne rep. Ima trdno šasijo, zato ga trki poškodujejo manj kot avto.
 - Ob trkih odletijo odbijača, rešetka, strešni deflektor, stranska oklepa, vrata kabine, ogledali in kolesa.
 - Z njim dirka do 9 tekmecev v enakih tovornjakih (vsak v svoji barvi).
+
+### TITAN s cisterno
+
+**TITAN CISTERNA** je TITAN, ki na sedlu vleče cisterno. Prikolica je svoje telo na pravem zgibu: ne sledi samo poti, ampak se v ovinku lomi, pri zaviranju potiska in s težo vpliva na vožnjo.
+
+- Vlačilec je TITAN (1115 KM, deset prestav), malo zarjavel ob spodnjih robovih. Cisterna je dolga 12,4 m in polna tehta 12 t: od sonca zbledela, močno zarjavela, s šestimi navarjenimi sivimi ploščami, bočno pohodno potjo, lestvijo, štirimi rezervnimi gumami in polico s kanticami zadaj. Ves tovornjak je dolg 16 m.
+- Od 0 do 100 km/h pospeši v ~9,6 s, najhitreje vozi ~148 km/h, s 100 km/h se ustavi na ~43 m. Kdor zavira v ovinku, mu prikolica potisne zadek vlačilca ven in se zlomi bolj (največ do 83°); s preveč zaviranja gre tovornjak v »škarje«.
+- Prikolica ima prave trke z ograjo, robom ceste, vozili in policijo in lahko pade čez prepad, tudi sama.
+- Kamera za avtom pokaže ves tovornjak; prikolica se vidi tudi v posnetku dirke, v duhu in v igri na več telefonih. V garaži je samo vlačilec (prikolica ostane zunaj delavnice).
+- Z njim dirka do 5 tekmecev v enakih tovornjakih s cisterno (vsak v svoji barvi).
 
 ### Družina LEV
 

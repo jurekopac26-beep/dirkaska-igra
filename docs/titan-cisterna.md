@@ -1,6 +1,6 @@
 # TITAN s cisterno (načrt teme)
 
-TITAN (`js/cars/titan.js`) vleče cisterno na sedlu: prikolica s pravim fizikalnim zgibom. Veja `titan-cisterna`, en pull request. Predaja iz seje session_01QiZPCZFYZECemerxaNXvMZ (4. 11. 2026); nadaljuje session_01Ck3D3QeTeMFcEZM6bLAKNd.
+TITAN (`js/cars/titan.js`) vleče cisterno na sedlu: prikolica s pravim fizikalnim zgibom. Veja `titan-cisterna`, en pull request. Predaja iz seje session_01QiZPCZFYZECemerxaNXvMZ (4. 11. 2026); nadaljuje session_01Ck3D3QeTeMFcEZM6bLAKNd (sklopi 1–3), sklop 4 in naprej session_01Ck3D3TnwDBsrTGSFeJMAva (5. 11. 2026).
 
 ![Cisterna 4 s sivimi krpami, 6 pogledov](titan-cisterna/cisterna-4-krpe-sive.webp)
 
@@ -22,8 +22,8 @@ TITAN (`js/cars/titan.js`) vleče cisterno na sedlu: prikolica s pravim fizikaln
 | 1 | Model v igri, vpis v vozni park | ~0,5 dneva | narejeno (5. 11.) |
 | 2 | Fizika zgiba | ~1–2 dni | narejeno, uglaševanje ob AI (5. 11.) |
 | 3 | AI in promet: širši zavoji tekmecev, manj tekmecev | ~0,5–1 dan | narejeno (5. 11.) |
-| 4 | Kamera za dolgo vozilo, posnetek, kot prikolice med telefoni | ~0,5 dneva | |
-| 5 | Testi (tudi Killar, ko bo na `main`, in krožna proga), obremenitev, README, objava | ~0,5–1 dan | |
+| 4 | Kamera za dolgo vozilo, posnetek, kot prikolice med telefoni | ~0,5 dneva | narejeno (5. 11.) |
+| 5 | Testi (tudi Killar, ko bo na `main`, in krožna proga), obremenitev, README, objava | ~0,5–1 dan | narejeno (5. 11.); na `main` po vrsti |
 
 Po vsakem sklopu uporabnik dobi eno sliko (kamera za avtom) ali kratek opis.
 
@@ -43,10 +43,27 @@ Po vsakem sklopu uporabnik dobi eno sliko (kamera za avtom) ali kratek opis.
 
 **Promet in policija**: promet vidi prikolico kot svoje vozilo (`Traffic.step`: v `cl`; sledenje, trki, ljudje), policija jo zadene kot avto (`crashCollide`, doseg po dolžini). Udarec prikolice v ograjo ali vozilo gre vlačilcu (`hitWall`, `hitCar`, iskre in točka stika: zvok, iskre, škoda) na koncu `Race._tlStep`. Prikolica ob postavitvi (`tlPlace`) prvi korak dobi hitrost in višino vlačilca in ceste (ni skoka).
 
-## Predaja za sklop 4 (5. 11. 2026)
-Sklopi 1–3 so na veji `titan-cisterna` (osnutek pull requesta #304); povezani testi lokalno zeleni (grid, golden, fleet, nova, startcam, world, gfx, lang, sledi, denarnica, marks, quick, repro, trki, start, rivals-n …). Sklop 4, kje začeti:
-- **Kamera za avtom** za 16 m dolgo vozilo (`js/render.js`, kamera `chase`; v posnetku še TV kamere in kamera za avtom, foto način): preveri na Bathurstu in Vršiču (serpentine, prelomljena prikolica), da prikolica ne zakrije ceste pred avtom; konec prikolice za kamero je že izračunan ob `v.tlG` (`render.js`, ~9741).
-- **Posnetek dirke**: kot prikolice `tl.rel` kot nov kanal vzorca (`js/game.js` `REC_W = 7`: x, y, z, h, vl, kot koles, biti); širina na posnetek, da se stari posnetki še odprejo (`js/napake.js` `recW`, `tools/posnetek.mjs`); predvajanje s `Core.tlPose(c, rel)` (prikolica brez fizike).
-- **Duh** (`ghPose`, `js/game.js` ~1567) in **več telefonov** (`js/net.js`): pošlji `rel`, prejemnik `tlPose`. Prijateljeve prikolice se ne simulira (`qa.i < 0`): AI (`tlD`) in promet tedaj gledata vlačilec.
-- **Garaža in meni**: predogled vozila s prikolico.
-- Meritev AI po spremembah: dirka 6 cistern (`numAI 5`), 8 semen × 300 s, Vršič in Caracoles z letečim štartom, Bathurst; štej stike (`hitCar > 2`, nov stik po 0,5 s), ograjo, čas mimo ceste in prikolico nad 69°; igralca na avtopilotu, ki obtiči, reši po 3 s (kot `game.js` ~2704). Številke v razdelku AI zgoraj.
+**Kamera, posnetek, duh, več telefonov, predogled** (sklop 4):
+- **Kamera za avtom** (`render.js` `updateCamera`): rep prikolice za vlačilcem (`T.back`) šteje k dolžini vozila; kjer bi rep padel pod spodnji rob zaslona (ležeče, počasi, Blizu), gre pogled nazaj za toliko, da je v sliki cel tovornjak. Pokonci in pri navadni hitrosti je kamera kot prej. TV kamere v posnetku gledajo sredino vozila (`tvRig`: 0,7 poti proti prikolici, kot širši za pol repa); foto način kroži okoli sredine vozila in ga meri od nosu do repa (`game.js` `phMid`).
+- **Posnetek dirke**: dirka s prikolico ima na avto 8 števil (`REC_TL`, osmo je kot prikolice `tl.rel`), druge dirke ostanejo pri 7 (`recd.w`, v datoteki `.rrp` `H.w`): stari posnetki, `tools/posnetek.mjs` in orodje za napake (`G.recW`) delujejo kot prej. Predvajanje postavi prikolico na sedlo pod posnetim kotom (`Core.tlPose(c, rel, track)`: osi na cesti, brez fizike, svoje iskanje `_qp`), »Nazaj v dirko« vrne njeno stanje (`rpKeep`, `rpBack`).
+- **Duh**: vozilo s prikolico shrani 8 kanalov (`ch: 8`, osmi kot prikolice v 1e-4 rad; brez prikolice zapis brez `ch`, kot prej); duh nariše prikolico prosojno na sedlu (`ghostSet`, `v.tlG`). Legende Pikes Peaka ostanejo s 7 kanali.
+- **Več telefonov**: stanje avta ima na koncu ključ `tl` (`ST_KEYS`; starejši telefon ga ne pošlje: prikolica naravnost); prejemnik prikolico postavi s `tlPose` (med stanji kot drugo), ne simulira je: AI in promet vidita vlačilec.
+- **Predogled**: zaslon avta (vrtljiva plošča, `setShowCar`) in meni (dvorišče ob izbiri proge, `js/menu-car.js`) kažeta cel tovornjak, prikolica naravnost za vlačilcem (`Render.garageTrailer` = `tlShow`, njena senca `rigS` ni del oblike za veter in okvir). Plošča vrti vozilo okoli njegove sredine (`showTurn`), okvir po dolžini vozila (`k` do 4), obroč večji. Preglednice vozil (`carShot` od strani, spredaj, zadaj, zgoraj, lastna kamera) kažejo sam vlačilec, tričetrtinska pogleda (tudi slika menija brez WebGL) cel tovornjak. Garaža (`garaza.html`) kaže sam vlačilec: 16 m vozilo ne gre v delavnico (prikolica ostane zunaj).
+- Tekstura cisterne (`B.tex`) je platno v pomnilniku (`willReadFrequently`): videz se zgradi v ~0,15 s namesto ~1,6 s (`getImageData` je čakal na grafično kartico; tudi ob štartu dirke). Slika enaka.
+- Omejitvi: prikolica, ki sama pade čez prepad, je v posnetku pripeta (posnet je le kot); prijateljeva prikolica nima trkov (samo videz). Starejša različica igre duha s `ch: 8` ne prikaže.
+- Preverjeno: Bathurst in Vršič (kamera ležeče in pokonci, posnetek: kot do 1e-4 rad enak dirki, osi na cesti, »Nazaj v dirko« vrne stanje točno), Mount Buller (duh na kronometru, prikolica na sedlu duha), Bathurst na dveh telefonih (prijatelj vidi kot gostitelja, brez napak), predogled pokonci in ležeče (`showBox` v sliki in mimo plošče s podatki).
+
+**Testi, obremenitev, README** (sklop 5):
+- `tests/cisterna.test.js` (Node, ~20 s; sklop `fleet`, povezan z `js/core.js`): dirka šestih tovornjakov s cisterno (igralec na avtopilotu in 5 tekmecev) 120 s na Bathurstu (krožna proga, mreža), Vršiču in Caracolesu (leteči štart) v obeh fizikah; Killar (Indija) vzame sam, ko bo v igri. Vsak korak: vsa števila končna, kingpin na sedlu (do 5 cm; izmerjeno 0,00 cm), zgib do omejila (83°). Po 120 s: igralec več kot 2 km (izmerjeno 2,4–3,2 km), najpočasnejši več kot 1 km, do 2 reševanji (0), do 40 stikov (0–6). Nato vlačilec sam na ravni plošči (`tests/lib/handling.js`): polne zavore v ovinku pri 90 km/h zgib povečajo (cs 12° → 36°, nova 8° → 18°), nikoli čez omejilo; naravnost se poravna (0°).
+- `tests/browser/cisterna.test.mjs` (brskalnik, ~3 min, sklop `fleet`): kamera za avtom ima cel tovornjak v sliki (Bathurst, ležeče 640×360 in pokonci 360×640, Srednje in Blizu z avtom 20 m nižje, ob štartu in pri hitrosti); posnetek ima 8 števil na avto (tudi v datoteki), predvajanje postavi prikolico pod kotom dirke, »Nazaj na dirko« vrne stanje točno; duh na kronometru (`ch: 8`, prikolica na sedlu duha od 2. kroga; do 15 cm, ker se vlačilec na klancu nagne); meni: dvorišče ob izbiri proge, pokonci in ležeče (cel tovornjak v okvirju; 12 klicev, 21 tisoč trikotnikov).
+- **Obremenitev telefona**: graditelj videza ima tri stopnje (`B.lo`, `render.js` `tlGeo`): 0 polna prikolica (igralec, predogledi, duh), 1 lahka (tekmeci: cisterna s 16 stranicami namesto 32, brez obročev, pokrovov, ograje, stopnic in drobnih delov, platišča v barvi na boku gume), 2 senca (samo v senčni karti, `v.shadowOnly`: cisterna z 10 stranicami, okvir, kolesa, regal kot dva kvadra). Vozilo: igralec 18 klicev in 34 tisoč oglišč (prej 47 tisoč), tekmec 13 in 18 tisoč (prej 41 tisoč); prikolica ima 4 klice (telo, luči, senca pod njo, senca v senčni karti), zato `browser/fleet.test.mjs` vozilu s prikolico dovoli 4 klice več. Polje petih cistern, vsi tekmeci narisani v celoti: Jezero 144 klicev in 592 tisoč oglišč (meja 240 in 673 tisoč; prej 722 tisoč), z razbitino 597 tisoč, Nordschleife 143 in 379 tisoč (meja 198 in 393 tisoč; prej 508 tisoč). Na proge z navadnim poljem sprememba ne vpliva (perf.json ostane).
+- Razbitina: slika »razbitina, kot jo vidi igralec« (`browser/fleet.test.mjs`) je brez prikolice: od zadaj cisterna zakrije ogenj vlačilca (dim je viden).
+- `README.md`, razdelek »Novo vozilo«: polje `trailer` (masa, mere, osi, kingpin, oprijem in zavore, videz s tremi stopnjami; zgled `js/cars/cisterna.js`).
+
+## Stanje in predaja (5. 11. 2026)
+Sklopi 1–5 so narejeni na veji `titan-cisterna` (pull request #304, osnutek do vrste); povezani testi (`npm run test:related`) lokalno zeleni po spoju `main` (glej zadnji commit veje). Pull request je v vrsti za `main` (`docs/vrsta.md`); seja čaka v zbirki `cakanje` (stran Odločitve).
+
+Ob vrsti (ko je pull request drugi v vrsti):
+1. `git fetch origin main`, spoj v `titan-cisterna` (brez force-pusha). Spori: `index.html`/`garaza.html` z `node tools/stamp.js --merge`; v `tests/run.js` (sklop `fleet`, `RELATED`), `tests/shards.test.js`, `docs/kazalo.md`, `tests/README.md` in `docs/vrsta.md` obdrži obe strani.
+2. Če je prišel Killar (#283), ga `tests/cisterna.test.js` vzame sam; zažene ga `npm run test:related` (spremenjen `js/core.js`).
+3. `npm run test:related`, `node tools/stamp.js --check`; nato »Ready for review« in krog na GitHubu (`subscribe_pr_activity`). Po zelenem krogu pravilo »Svež main pred združitvijo« iz `CLAUDE.md`, nato združitev, vrstica #304 iz `docs/vrsta.md`, sporočila sejam iz zbirke `cakanje` (`pr` 304).

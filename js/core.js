@@ -1910,12 +1910,23 @@ const Core = (function () {
     T.fall = null; T.torn = 0; T.air = 0; T.vy = 0; T.vyA = 0; T.airA = 0; T.fold = 0; T.slide = 0; T.xgl = 0;
     T.yK = (c.y || 0) + D.kp[1]; T.yA = c.y || 0; T.y = T.py = c.y || 0; T.pit = 0; T.q.i = -1; T.qa.i = -1;
   }
-  // a recorded or a friend's trailer (the replay, the network): its angle to the tractor rel, put on the kingpin, no physics
-  function tlPose(c, rel) {
+  // a recorded or a friend's trailer (the replay, the network): its angle to the tractor rel, put on the kingpin, no physics. Posed where the
+  // tractor is shown (nothing to draw between two poses: the previous one this one), moving with it, never falling; trk: its axles on the
+  // road under them (their own search, _qp: T.q and T.qa stay as they were, a friend's never searched: the AI and the traffic see its tractor)
+  function tlPose(c, rel, trk) {
     const T = c.tl; if (!T) return;
-    const D = T.D, h = c.h + (rel || 0), kx = c.x + D.kp[0] * Math.cos(c.h), kz = c.z + D.kp[0] * Math.sin(c.h);
-    T.px = T.x; T.pz = T.z; T.ph = T.h; T.py = T.y;
-    T.h = h; T.rel = rel || 0; T.x = kx + Math.cos(h) * T.cx; T.z = kz + Math.sin(h) * T.cx; T.yK = (c.y || 0) + D.kp[1]; T.yA = c.y || 0; T.y = c.y || 0; T.pit = 0;
+    const D = T.D, r = clamp(rel || 0, -TLK.lim, TLK.lim), h = c.h + r, kx = c.x + D.kp[0] * Math.cos(c.h), kz = c.z + D.kp[0] * Math.sin(c.h);
+    T.h = T.ph = h; T.rel = r; T.x = T.px = kx + Math.cos(h) * T.cx; T.z = T.pz = kz + Math.sin(h) * T.cx; T.fall = null;
+    T.vx = c.vx || 0; T.vz = c.vz || 0; T.w = c.w || 0; T.vy = T.vyA = 0; T.air = T.airA = 0;
+    let yA = c.y || 0;
+    if (trk && trk.N) {
+      if (!T._qp) Object.defineProperty(T, '_qp', { value: { i: -1 }, enumerable: false });
+      const ax = T.x + Math.cos(h) * T.xa, az = T.z + Math.sin(h) * T.xa, q = trk.query(ax, az, T._qp.i >= 0 ? T._qp.i : c.q && c.q.i >= 0 ? c.q.i : -1, T._qp);
+      if (trk.hasElev) { yA = trk.elevAt(q.s, _elv).y; if (q.k >= 0 && q.fb > 0) yA = q.y; }
+      if (trk.ground2) yA += trk.ground2(ax, az, yA);
+      if (!Number.isFinite(yA)) yA = c.y || 0;
+    }
+    T.yA = yA; tlSnap(c, T); T.py = T.y;
   }
   // the kingpin's joint: the impulse J (on the trailer at the kingpin, -J on the tractor's fifth wheel, both free bodies) that makes the
   // two points' speeds one; the trailer's and the tractor's speeds updated
