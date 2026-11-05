@@ -15,7 +15,7 @@ Ves zvok igre je sintetiziran v Web Audio (`js/sfx.js`), brez datotek in brez li
 
 ## Viri zvoka
 
-Priporočilo: **vse sintetizirano v igri**, enako kot motorji, navijači in zvonci na Pikes Peaku. Prenos 0 KB, nobene licence in nič v »Zasluge«, deluje brez povezave, vsak gozd ima lahko svoje ptice (seme proge). Ptice so preprostejše od pravih posnetkov, a pod motorjem in tiho se razlika komaj sliši. Prototip vseh zvokov je stran s primeri (povezava pri vprašanjih, razdelek Odločitve); koda igre ga prenese v `js/sfx-okolje.js`.
+Priporočilo: **vse sintetizirano v igri**, enako kot motorji, navijači in zvonci na Pikes Peaku. Prenos 0 KB, nobene licence in nič v »Zasluge«, deluje brez povezave, vsak gozd ima lahko svoje ptice (seme proge). Ptice so preprostejše od pravih posnetkov, a pod motorjem in tiho se razlika komaj sliši. Prototip vseh zvokov je stran s primeri https://claude.ai/artifact/RAKVe7d2UNWUAStf16xv2h (sinteza v brskalniku; glasnost ob motorju izmerjena z `OfflineAudioContext`: Tiho ~24–28 dB pod motorjem pri 60 km/h, ~32–35 dB pri 160 km/h); koda igre jo prenese v `js/sfx-okolje.js`.
 
 Druge možnosti (vprašanje `zvoki-okolja-vir`):
 
@@ -118,8 +118,8 @@ Pogoj za začetek: odgovori na vprašanja; #319 (razdelitev datotek prog) in #28
 - `zvoki-okolja-nabor`: nabor zvokov (priporočeno 1 · šest zvokov po kraju).
 - `zvoki-okolja-glasnost`: glasnost in stikalo (priporočeno 1 · Izklop / Tiho / Glasneje, privzeto Tiho).
 
-Primeri vseh zvokov (prototip v brskalniku, z motorjem za primerjavo glasnosti) so povezani pri vprašanjih.
+Primeri vseh zvokov (prototip v brskalniku, z motorjem za primerjavo glasnosti): https://claude.ai/artifact/RAKVe7d2UNWUAStf16xv2h, povezani tudi pri vprašanjih. Seja odgovore prebere ob 23.20 (`docs/vprasanja.md`, razdelek Odgovor).
 
 ## Stanje
 
-- 5. 11. 2026: načrt napisan; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338).
+- 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338).
