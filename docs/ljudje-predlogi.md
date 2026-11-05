@@ -24,7 +24,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Bang Saen, Tajska | 6 | tribuna z valom 528, fotografi in TV kamera 1864, varnostniki s psom 2080, gasilci in reševalci 2296, maršali 2440, gasilci in reševalci 2728 |
 | Bathurst, Avstralija | 10 | mehaniki pri zidu boksov 70, žar pred avtodomom 640, delavci na progi 744, gasilci in reševalci 1104, vhod 1976, maršali 2784, fotografi in TV kamera 4456, oder iz gradbenih odrov 4984, reševalna postaja 5296, tribuna z valom 5790 |
 | Beartooth, ZDA | 1 | piknik 1696 |
-| Big Sur, ZDA | 5 | piknik 56, ležalniki in senčniki 392, otroški rojstni dan 792, fotografi na bregu 1984, kolesarji 3664 |
+| Big Sur, ZDA | 5 | piknik 56, ležalniki in senčniki 392, otroški rojstni dan s starši 792, fotografi na bregu 1984, kolesarji 3664 |
 | Los Caracoles, Čile | 4 | kamp s prikolico 40, piknik 6152, navijaški klub 9936, fotografi na bregu 10488 |
 | Crystal Palace, Anglija | 6 | maršali 96, sodniki s časomerom 248, gasilci in reševalci 600, fotografi na bregu 1064, piknik 1424, vhod 2912 |
 | Detroit, ZDA | 1 | maršali 1944 |
@@ -32,18 +32,17 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Harju, Finska | 4 | redarji ob traku 392, oder iz gradbenih odrov 1464, ležalniki in senčniki 1856, fotografi na bregu 2144 |
 | Mount Hotham, Avstralija | 6 | fotografi na bregu 832, kamp s prikolico 2760, igra kart pod senčnikom 3160, selfie in snemanje 6448, piknik 7608, badminton in frizbi 7872 |
 | Katu-Jaryk, Rusija | 4 | na lestvah in tovornjaku 64, navijaški klub 392, ogenj na travi 720, kamp s prikolico 4544 |
-| Livorno, Italija | 2 | balinanje pod brajdo 15944, šah v parku 18656 |
-| Longford, Avstralija | 9 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, otroški rojstni dan 5128, žar pred avtodomom 5488, gasilci in reševalci 5952, fotografi na bregu 6552 |
+| Longford, Avstralija | 9 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, otroški rojstni dan s starši 5128, žar pred avtodomom 5488, gasilci in reševalci 5952, fotografi na bregu 6552 |
 | Marrakesh, Maroko | 6 | gasilci in reševalci 80, maršali 480, tribuna z valom 1112, delavci na progi 1424, maršali 1560, fotografi in TV kamera 2320 |
 | Mauna Kea, ZDA | 4 | fotografi na bregu 136, kamp s prikolico 3472, spuščanje zmaja 3776, kitara in ples 4488 |
-| Medvode, Slovenija | 10 | fotografi na bregu 96, golaž v kotlu 1384, piknik 1664, čebelarji in med 2144, badminton in frizbi 2408, družina pri hiši 2896, nogomet na travi 3160, ribiči ob ribniku 3472, balinanje pod brajdo 4016, kolesarji 4336 |
+| Medvode, Slovenija | 9 | fotografi na bregu 96, golaž v kotlu 1384, piknik 1664, čebelarji in med 2144, badminton in frizbi 2408, družina pri hiši 2896, nogomet na travi 3160, ribiči na bregu Zbiljskega jezera 3604, kolesarji 4336 |
 | Moki Dugway, ZDA | 2 | kamp s prikolico 264, fotografi na bregu 4880 |
 | Monterey, ZDA | 6 | fotografi in TV kamera 944, maršali 1440, gasilci in reševalci 1904, oder iz gradbenih odrov 2288, tribuna z valom 3160, žar pred avtodomom 3560 |
 | Montréal, Kanada | 7 | gasilci in reševalci 136, fotografi in TV kamera 1736, maršali 2520, TV ekipa 2656, maršali 3232, odvozna služba 3888, tribuna z valom 4064 |
 | Santa Monica Mountains, ZDA | 2 | piknik 328, fotografi na bregu 2264 |
 | Newcastle, Avstralija | 5 | tribuna z valom 144, maršali 720, fotografi in TV kamera 1072, gasilci in reševalci 1608, gasilci in reševalci 1976 |
 | Nürburg, Nemčija | 15 | oder iz gradbenih odrov 1950, žar pred avtodomom 3300, TV pod šotorom 4720, ogenj na travi 5640, fotografi na bregu 7672, gasilci in reševalci 8424, odvozna služba 8832, ogenj na travi 9832, oder iz gradbenih odrov 11088, piknik 12392, žar pred avtodomom 14624, TV pod šotorom 16350, kamp s prikolico 17168, telovadba 18450, maršali 19976 |
-| Ouninpohja, Finska | 14 | družina pri hiši 1064, hiša ob cesti 2240, ogenj na travi 3336, selfie in snemanje 3744, fotografi na bregu 4808, starejši s časomerom 5296, redarji ob traku 6096, golaž v kotlu 6696, nogomet na travi 7024, oder iz gradbenih odrov 7320, ribiči ob ribniku 7672, spravilo sena 8024, redarji ob traku 8648, kamp s prikolico 9568 |
+| Ouninpohja, Finska | 14 | družina pri hiši 1064, spravilo sena na njivi 1900, hiša ob cesti 2240, ogenj na travi 3336, selfie in snemanje 3744, fotografi na bregu 4808, starejši s časomerom 5296, ribiči na bregu jezera 5640, redarji ob traku 6096, golaž v kotlu 6696, nogomet na travi 7024, oder iz gradbenih odrov 7320, redarji ob traku 8648, kamp s prikolico 9568 |
 | Palomar Mountain, ZDA | 3 | fotografi na bregu 152, kolesarji 1576, piknik 4720 |
 | Pikes Peak, ZDA | 2 | starejši s časomerom 3824, fotografi na bregu 4672 |
 | Pikes Peak (makadam), ZDA | 1 | fotografi na bregu 3824 |
@@ -58,7 +57,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Townsville, Avstralija | 6 | maršali 88, gasilci in reševalci 504, vhod 888, fotografi in TV kamera 1560, tribuna z valom 2176, varnostniki s psom 2496 |
 | Trois-Rivières, Kanada | 5 | maršali 144, fotografi in TV kamera 496, gasilci in reševalci 904, tribuna z valom 1456, vhod 1960 |
 | Uncompahgre, ZDA | 2 | kamp s prikolico 600, ogenj na travi 2720 |
-| Vršič, Slovenija | 8 | spravilo sena 312, kolesarji 648, golaž v kotlu 1000, kamp s prikolico 1576, piknik 2560, motoristi 5160, kolesarji 8152, fotografi na bregu 12248 |
+| Vršič, Slovenija | 8 | kolesarji 648, golaž v kotlu 1000, kamp s prikolico 1576, piknik 2560, spravilo sena na travniku 3464, motoristi 5160, kolesarji 8152, fotografi na bregu 12248 |
 
 ## Orodje (`tools/ljudje/`)
 
@@ -114,22 +113,16 @@ Prizori stojijo na mestih, kjer je ograja blizu ceste in je pred njimi ravnina: 
 - **Živali in elementi po gozdovih glede na državo** (`js/world-zivali.js`, opis v `docs/igra.md`, razdelek Grafika).
 - **Avtomobili ob cesti posodobljeni** (`parkedCar` v `js/world.js`).
 
-## Naprej (predaja 3. 11. 2026)
+## Želje po slikah 1–12 (3. 11. 2026) in kaj je narejeno (5. 11. 2026)
 
-- **Veja `claude/beautiful-gauss-v7ksgu-nove-skupine`** (osnutek pull requesta »Ljudje in živali: 6 novih skupin in 6 prizorov živali«): skupine ljudi so v `js/world-ljudje3.js`, prizori živali v `SCENE` v `js/world-zivali.js`. Slike prizorov naredita `tools/ljudje/igra.mjs` in `tools/ljudje/zivali.mjs`.
-- **Želje uporabnika 3. 11. 2026 po slikah 1–12.** Slike so: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so.
-  - 1, 2, 4 in 5: »postavi samo tam kjer je tudi v resnici«. Ribiči ob pravi vodi, kjer se lovi; seno na pravem travniku; balinanje na pravem balinišču; šah tam, kjer se v resnici igra. Kjer takega mesta ob progi ni, prizora ni.
-  - 6: »ce je otroski rojstni dan potem je tukaj tudi veliko starsev in se ostali elementi za starse«.
-  - 7: »storklja naj bo samo ena in to na drogu, ko prides z avtom blizu ona odleti stran od avta saj se je preplasila«.
-  - 8: »ce tam ni ribnika v resnici potem ne delaj ribnika, bolje potem da race postavis v ze narejeno vodo kot morje ali jezero«.
-  - 11 in 12: »11 in 12 naj bosta nekje pred hiso. Ampak ne pred kr eno hiso postavi jih tam kjer so v resnici«.
-- **Kako najti prava mesta:**
-  - Mesta poišči ob progi v OSM, nikoli v Googlu. Uporabi API `api.openstreetmap.org/api/0.6/map?bbox=…`, ker je Overpass v oblačnih sejah blokiran.
-  - Oznake za kmetije: `landuse=farmyard`, `building=farm|house|barn|stable|cowshed`, `landuse=animal_keeping`, `leisure=horse_riding`.
-  - Oznake za druge prizore: `leisure=fishing`, `natural=water`, `landuse=meadow`, `sport=boules|bocce`, `sport=chess`.
-  - Prizor dobi v `SCENE` ali `site(…)` stalno mesto na pravi točki namesto samodejnega iskanja ravnine. Rio do Rastro ima stavbe OSM v `bld` datoteke proge, Štajerska jih nima.
-  - Za vsak spremenjeni prizor naredi eno ali dve sliki z `tools/ljudje/igra.mjs` oziroma `tools/ljudje/zivali.mjs`.
-- **Ob spoju svežega `main`**:
-  - `index.html` brez žigov (`node tools/stamp.js --strip`), vrstica `js/world-ljudje3.js` za `world-ljudje2.js`.
-  - Vrstica v kratkem kazalu.
-  - Nove reference `world` in `perf` za 11 prog: Ouninpohja, Medvode, Vršič, Livorno, Longford, Big Sur, Crystal Palace, Great Alpine Road, Uncompahgre, Rio do Rastro in Štajerska.
+Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so. Mesta so iz OSM (API `api.openstreetmap.org/api/0.6/map?bbox=…`, nikoli Google), preverjena z `tools/ljudje/mesta.mjs --preveri` in `tests/ljudje-mesta.test.js`.
+
+- **1, 2, 4 in 5** (»postavi samo tam kjer je tudi v resnici«):
+  - Ribiči na bregu pravega jezera, brez lastnega ribnika (`K.lake`: breg toliko metrov za ograjo; trstičje ob bregu, pomol v vodo; do ograje je daleč, zato ostanejo na mestu in mahajo): Medvode, Zbiljsko jezero, 3604 desno (breg 28 m za ograjo); Ouninpohja, jezero ob vasi Ouni (`def.lakes`), 5640 desno (breg 18,5 m).
+  - Seno na pravem travniku: Vršič 3464 desno (OSM `landuse=meadow`, trajni travnik), Ouninpohja 1900 levo (njiva iz `def.fields`, ob senenem skednju).
+  - Balinanje in šah nimata mesta: ob nobeni progi ni balinišča ali šahovnice ob cesti (Medvode nič v 400 m, Livorno šahovske mize v parku 200 m od ceste, kamera jih ne vidi). Koda prizorov ostane za pravo mesto, če se pojavi.
+- **6** (»… tukaj tudi veliko staršev in še ostali elementi za starše«): trije starši pri svoji mizi pod belim šotorom, pijača (hladilna torba, zaboji), dva starša s skodelicama ob gradu in otroški voziček, avtomobila zadaj; ko pride avto, gre ena mama z otrokoma do ograje, drugi mahajo.
+- **7** (»štorklja naj bo samo ena in to na drogu …«): ena štorklja v gnezdu na drogu; ko je avto 55 m blizu, odleti stran od avta in od ceste, nizko nad travnikom, in čez 16 s izgine (`fly`, `flyStep` v `js/world-zivali.js`); brez avta (preizkus sveta) sedi v gnezdu, ob vrnitvi časa (posnetek) spet sedi.
+- **8** (»… race postavi v že narejeno vodo«): race, labodi in račja hišica na pravem jezeru ob cesti v Crystal Palace, 1990 desno, na gladini (`float: 11.7`); brez umetnega ribnika.
+- **11 in 12** (»… postavi jih tam, kjer so v resnici«): prašiči in kokoši pri kmetiji v Zbiljah (Medvode 2940 desno, kmetijska poslopja 30 m od ceste), konji v ogradi ob skednju kmetije v Ouninpohji (1690 desno, `def.farms`; hlev je pravi skedenj). Na Štajerskem in Rio do Rastro ob cesti ni kmetije (OSM: najbližja 370–700 m od dirkališča, ob Rio do Rastro samo razgledišča), zato tam ni več prizora živali.
+- Slike: `node tools/ljudje/igra.mjs <proga> ribici,seno --pri 60,32,14`, `node tools/ljudje/zivali.mjs medvode --let 1,2.5,4` (štorklja po vzletu).
