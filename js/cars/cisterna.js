@@ -187,7 +187,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       tracK: 0.55, brakeK: 0.7, spinK: 0.4, dmgK: 0.6, vLim: 150, sway: 1.4, landV: 13 },
     arc: { amax: 1.0, kv: 1.8, rmin: 9 },   // (1.3 g: what its axles hold with the kingpin's push, tlHoldSet)
     csp: { bx: 0.12, coast: -0.06, thr: -0.01, liftP: 0.04, pwr: 0.04, out: 1.2, turn: 0.75, w: 0.92, tv: 1.2 },   // (the TITAN's)
-    stats: { power: 7, grip: 1, weight: 0, drift: 9 },
+    stats: { power: 10, grip: 1, weight: 1, drift: 10 },   // (Core.statsOf: the TITAN's engine, the rig's grip)
+    expect: { t100: [9.15, 10.15], vmax: [144, 152], latG: [1.17, 1.29], d100: [40.9, 45.1] },   // (the rig: tests/fleet.test.js, its envelope 'prikolica')
     price: 75000, pk: 'open', field: ['cisterna'], fieldN: 5,   // (5 of its own, no others: a long rig each, the phone's budget)
     snd: { kind: 'diesel', hz: 0.95, turbo: 0.8, loud: 1.35 },
     partNames: { grille: 'front grille', deflector: 'roof deflector', skirtL: 'left side skirt', skirtR: 'right side skirt' },
