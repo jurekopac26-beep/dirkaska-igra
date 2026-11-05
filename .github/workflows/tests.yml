@@ -26,8 +26,10 @@ permissions:
 # tekoči krog (po združitvi isto kodo preveri krog na main, zaprt pull request rezultata ne potrebuje) in sam ne požene ničesar.
 # main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026);
 # prej je vsaka združitev prekinila krog na main, zato se noben ni končal in varovalka po združitvi ni delovala.
+# Skupina pull requesta je po njegovi številki: dogodek »closed« združenega PR ima github.ref = refs/heads/main in bi sicer
+# s cancel-in-progress prekinil tekoči krog na main (5. 11. 2026, po #321).
 concurrency:
-  group: testi-${{ github.ref }}
+  group: testi-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
