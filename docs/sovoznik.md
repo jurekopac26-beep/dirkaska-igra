@@ -43,7 +43,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - »dolgo« / »long«: zasuk nad ~97°.
   - »zapira« / »tightens«: najožji del v zadnji tretjini ovinka, dolgega nad 30 m.
   - »odpira« / »opens«: najožji del v prvi tretjini.
-- **Znak `#h-note`** dobi številko ovinka, ki ga kaže, iz iste lestvice, kadar je sovoznik vklopljen. Barva ostane po `sev` (1–2 rdeča, 3–4 oranžna, 5–6 rumena).
+- **Znak `#h-note`** dobi številko ovinka, ki ga kaže, iz iste lestvice, kadar je sovoznik vklopljen. Barva ostane po `sev`, kot doslej (zelena, rumena, rdeča).
 
 ## Združevanje, skoki in posebnosti
 
@@ -55,7 +55,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - pred ciljem: »… do cilja« / »… to finish«.
   - V klicu so največ tri opombe, kot zdaj.
 - **»Pozor«** / »caution« na začetku klica:
-  - pred vsakim skokom (»pozor, skok«);
+  - pred velikim skokom in pred skokom, ki mu v istem klicu sledi ovinek 1–3 (»pozor, skok«; pred vsakim skokom bi bil na Ouninpohji v 28 klicih);
   - pred ovinkom 1–2 ali lasnico za ravnino, dolgo vsaj 250 m;
   - pred ovinkom, ki se zapre za vsaj dve stopnji;
   - pred ovinkom manj kot 30 m za grbino (slep).
@@ -66,11 +66,12 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - Test preveri, da na ravni cesti ni skokov in da skoki Ouninpohje ostanejo.
 - **Krožišča** (`def.rings`, npr. Medvode): »krožišče naravnost / desno / levo« po smeri izvoza.
 - **Šikane** (`def.notes`, `hudSigns`): »šikana levo« ali »šikana desno« po prvi smeri.
-- **Podlaga**: »na makadam«, »na asfalt«, »na tlakovce« (»onto gravel« …).
-- **Izvedba**: `paceNotes()` vrne opombe kot jezikovno neodvisne žetone (npr. `['L', 4, 'long', 'into', 'R', 3, 'tightens', 'd150']`) in ob njih angleško besedilo `text`, enako kot zdaj, da stari testi ostanejo. Angleške besede za glas in napis v jeziku igre sestavi nova funkcija `Sovoznik.words(žetoni, jezik)`.
+- **Podlaga**: »na makadam«, »na asfalt«, »na tlakovce« (»onto gravel« …). Menjava podlage do 30 m za opombo gre v isti klic brez »into« ali »and«.
+- **Izvedba**: `paceNotes()` vrne opombe kot jezikovno neodvisne žetone (npr. `['L', 4, 'long', 'into', 'R', 3, 'tightens', 'd150']`) in ob njih angleško besedilo `text`, enako kot zdaj, da stari testi ostanejo. Glas sestavi `Core.codrvSay(žetoni)` (angleško), napis v jeziku igre `Core.codrvCap(žetoni, jezik)`.
 
 ## Kdaj govori
 
+- **Zdaj** (napisi na cestah, glas na reliju): klic se pokaže 2,4 s pri trenutni hitrosti in 30 m pred prvo opombo (55–170 m), kot doslej pri relijskem sovozniku. Spodnja pravila pridejo z glasom na cestah (korak 2).
 - **Začetek klica**: klic se začne, ko je avto `d = v · (T + 1,2 s) + 25 m` pred prvo opombo, najmanj 60 m in največ 260 m. T je trajanje klica: vsota dolžin posnetkov ali ~0,3 s na besedo. Zdaj je 2,4 s oziroma 55–170 m, kar je pri hitri vožnji in dolgem klicu prepozno.
   - Pri 25 m/s (90 km/h) in klicu 2 s: 105 m.
   - Pri 50 m/s (180 km/h) in klicu 2,5 s: 210 m.
@@ -101,31 +102,30 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 ## Napis in znak (telefon pokonci in ležeče)
 
 - **Napis** (`#h-codrv`, en element DOM):
-  - Besedilo klica je zgoraj na sredini pod uro (`#h-times`), npr. »LEVO 4 · DOLGO«, »POZOR · SKOK«, »L4 › D3 ZAPIRA«.
-  - Klic, daljši od ~22 znakov, se skrajša na L/D in številko.
-  - Postavljen je kot znak (`placeNote`), da ne prekrije ure, vmesnih časov in policijske vrstice.
-  - Pokaže se ob začetku klica in ugasne, ko avto pride do prve opombe (najmanj 1,5 s).
-- **Znak** `#h-note` dobi številko 1–6 (razdelek Lestvica). Puščica ostane, kot je.
-- **Slike**: Vršič, kamera za avtom, pokonci in ležeče, ob koncu dela v opisu pull requesta in za uporabnika.
+  - Besedilo klica v jeziku igre, npr. »LEVO 4 · DOLGO«, »POZOR · SKOK«, »L4 › D3 ZAPIRA«: ena opomba v celoti, več opomb na kratko (L/D in številka). Napis, daljši od 24 znakov, izpusti razdaljo, nato dodatke (`Core.codrvCap`).
+  - Ležeče je pod uro (pod vrsticami `#h-times`: NAJ, sektorji, vmesni čas), pokonci pod znakom ovinka, ki je tam pod uro (`placeCap` v `js/game.js`). Znaka ne premakne in ne prekrije ničesar na HUD-u (preveri brskalniški test).
+  - Pokaže se ob začetku klica in ugasne, ko avto pride do prve opombe (najmanj 1,5 s). Pri hitrosti AI pride naslednji klic vsaj ~1,5 s za prejšnjim (izmerjeno na vseh cestah), zato napis ne potrebuje zadrževanja.
+- **Znak** `#h-note` dobi številko 1–6 (razdelek Lestvica), kadar sovoznik na tej progi bere. Puščica ostane, kot je.
+- **Slike**: Vršič, kamera za avtom, pokonci in ležeče, v opisu pull requesta.
 
 ## Stikalo v Nastavitvah
 
 - Vrstica »Sovoznik na reliju (angleščina)« (`S.codrv`) postane **»Sovoznik«** z izbiro **Izklop · Napis · Glas in napis**.
   - Vrednosti so 0, 2 in 1. Privzeto je »Glas in napis«: shranjena 1 pomeni »Glas in napis«, 0 »Izklop«, zato se igralcem nič ne preklopi samo od sebe.
   - Angleško: »Co-driver« · Off · Captions · Voice and captions.
-- Gumb ▶ ob vrstici prebere vzorčni klic (»left four long into right two«), kot »▶ Preizkusi glas« pri komentatorju.
+- Gumb ▶ ob vrstici prebere vzorčni klic (»left four long into right two«), kot »▶ Preizkusi glas« pri komentatorju (z glasom na cestah, korak 2).
 - »Opozorila za ovinke« (`S.notes`, znak) ostanejo posebej.
 
 ## Kje velja
 
 - **Privzeto** (možnost 1 vprašanja `sovoznik-kje`): na vseh pravih odprtih cestah. To so ceste z `track.open` brez `test`, 15 prog: 11 cest (Tianmen, Irohazaka, Sani Pass, Rio do Rastro, Vršič, Mount Buller, Los Caracoles, Medvode, Chapman's Peak, Mount Hotham, Great Alpine Road) in 4 kronometri (Harju, Ouninpohja, Katu-Jaryk, Pikes Peak na asfaltu in makadamu, `pikes` in `pikesg`). Nove ceste ga dobijo same.
-- **Proge ZDA razen Pikes Peaka** (Mount Baldy, Beartooth, Big Sur, Mauna Kea, Moki Dugway, Santa Monica Mountains, Palomar Mountain, Uncompahgre ter dirkališča Detroit, Monterey in Riverside) postanejo testne in zamrznjene (odločitev uporabnika 5. 11., PR računa 2, veja `proge/zda-v-test`). Sovoznika ne dobijo: izloči jih pravilo »brez `test`«, njihovih datotek seja ne spreminja, slik in meritev na njih ne dela. Če koda sovoznika pride na `main` pred tem PR-jem, jih seja do tedaj izključi z istim seznamom.
-- **Načini**: dirka, kronometer, kariera, prvenstvo, promet, policija (radio ima prednost), dirka s prijatelji (vsak telefon ima svojega sovoznika) in »Prvič na cesti«.
+- **Proge ZDA razen Pikes Peaka** (Mount Baldy, Beartooth, Big Sur, Mauna Kea, Moki Dugway, Santa Monica Mountains, Palomar Mountain, Uncompahgre ter dirkališča Detroit, Monterey in Riverside) postanejo testne in zamrznjene (odločitev uporabnika 5. 11., PR računa 2, veja `proge/zda-v-test`). Sovoznika ne dobijo: izloči jih pravilo »brez `test`«, njihovih datotek seja ne spreminja, slik in meritev na njih ne dela. Do tedaj jih izključi seznam `CD_SKIP` v `js/core.js` (`codrvRoad`); ko so testne, seznam ni več potreben.
+- **Načini**: dirka, kronometer, kariera, prvenstvo, promet, policija (radio ima prednost), dirka s prijatelji (vsak telefon ima svojega sovoznika).
 - **Ne velja**:
   - na dirkališčih, razen če uporabnik izbere drugače; tam ostanejo table pred zaviranjem;
   - na testnih progah (zamrznjene);
   - na novi mapi in v misijah (svoje opombe);
-  - v avtošoli, posnetku dirke in foto načinu.
+  - v avtošoli (tudi »Prvič na cesti«), posnetku dirke in foto načinu.
 - **Druge izbire**: pri možnosti 2 govori tudi na dirkališčih v prvem krogu, pri možnosti 3 v vsakem krogu.
 
 ## Pravna varnost
@@ -158,6 +158,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - slovenski in angleški napis ob angleškem glasu;
   - dirkališče brez sovoznika ali po izbiri uporabnika.
 - **`smoke.test.mjs`, `tests/lang.test.js` in `perf.test.mjs`** ostanejo zeleni.
+- Izvedeno 5. 11. 2026: opis obeh testov je v `tests/README.md`. Dirkališče brez sovoznika preveri Node test (`codrvRoad`); posnetke besed preveri test, ko pride glas.
 
 ## Koraki izvedbe in ocena
 
@@ -184,6 +185,12 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **5. 11. 2026, uporabnik** (sporočilo koordinaciji VSE SEJE 2, »ena proga na državo«): proge ZDA razen Pikes Peaka postanejo testne in zamrznjene. Sovoznik velja na 15 progah namesto 23 (razdelek Kje velja), vprašanje `sovoznik-kje` je popravljeno.
 - **5. 11. 2026 ob 16.06, uporabnik** (sporočilo koordinaciji VSE SEJE 2): »Vse zvoke delaj v angleščini«. Sovoznik govori samo angleško, tudi v slovenski igri. Napis na znaku in zgoraj sledi jeziku igre. Slovenski glas in Hugging Face nista več potrebna.
 - **5. 11. 2026 ob 17.34, uporabnik** (izbira na vprašanje koordinacije VSE SEJE 2, katere novosti začeti takoj): »Sovoznik: opombe na cestah«. Koda za opombe (`Track.paceNotes`) in napise na odprtih cestah se začne takoj, brez prog ZDA razen Pikes Peaka. Glas na cestah pride po odgovoru `sovoznik-glas`; do takrat sovoznik govori samo na relijskih kronometrih, kot doslej.
+- **5. 11. 2026, seja ob izvedbi** (privzete izbire, brez vprašanja):
+  - »caution« pred velikim skokom in pred skokom v ovinek 1–3, ne pred vsakim skokom;
+  - napis ležeče pod uro, pokonci pod znakom ovinka; znak ostane na svojem mestu;
+  - napis ostane do ovinka (najmanj 1,5 s), naslednji klic ga zamenja brez zadrževanja;
+  - številka na znaku samo, kadar sovoznik na progi bere;
+  - proge ZDA razen Pikes Peaka do PR-ja #355 izključi seznam v `js/core.js`.
 - **Vprašanji na strani Odločitve 3** (5. 11. 2026); odgovora se zapišeta sem:
   - `sovoznik-glas`: kateri angleški glas (prilagojeno po odločitvi o angleščini): angleški glas telefona (priporočeno), posneti zvoki iz angleškega sintetizatorja, tvoj glas v angleščini;
   - `sovoznik-kje`: samo odprte ceste ali tudi dirkališča (v prvem krogu ali v vsakem).
@@ -191,4 +198,4 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 ## Stanje
 
 - 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki (#340), vprašanji na strani Odločitve 3; `sovoznik-glas` prilagojeno na angleški glas.
-- 5. 11. 2026: koda v delu (veja `sovoznik/cesta`): opombe in napisi na odprtih cestah, številka na znaku, stikalo; glas na cestah po odgovoru `sovoznik-glas`.
+- 5. 11. 2026: koda opomb in napisov končana (PR #359, veja `sovoznik/cesta`): klici vseh 15 cest, napis pokonci in ležeče, številka na znaku, stikalo Izklop · Napis · Glas in napis, testi. Naslednje: glas na cestah po odgovoru `sovoznik-glas` (korak 2), dirkališča po odgovoru `sovoznik-kje`.
