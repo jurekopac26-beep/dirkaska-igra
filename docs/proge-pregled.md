@@ -1,6 +1,6 @@
 # Pregled prog v igri
 
-Ena datoteka za vprašanja o progah, ki so že v igri: dolžina, zavitost in kaj je do ~60 m ob cesti (to vidi kamera za avtom). Seja jo prebere namesto 43 opisov v `docs/proge/`; podrobnosti so v opisu posamezne proge. Pregled s slikami kamere 1 iz menija: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
+Ena datoteka za vprašanja o progah, ki so že v igri: dolžina, zavitost in kaj je do ~60 m ob cesti (to vidi kamera za avtom). Seja jo prebere namesto 44 opisov v `docs/proge/`; podrobnosti so v opisu posamezne proge. Pregled s slikami kamere 1 iz menija: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
 ## Meritve
 
@@ -18,6 +18,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Sani Pass, Južna Afrika | `sani` | odprta cesta | 5,0 km | 906 | 33 % | 7 | +643 m |
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
 | Santa Monica Mountains, ZDA | `mulholland` | odprta cesta | 4,2 km | 729 | 37 % | 6 | +287 m |
+| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Vršič, Slovenija | `vrsic` | odprta cesta | 12,3 km | 704 | 45 % | 24 | +813 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Palomar Mountain, ZDA | `palomar` | odprta cesta | 8,0 km | 684 | 31 % | 13 | +576 m |
@@ -61,6 +62,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 
 Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, ko je opis proge narejen.
 
+- **Bâlea, Romunija** (`balea`, asfalt): Jeklene varnostne ograje, kjer teren pada, in na zunanji strani ovinkov, beli smerni stebrički; opozorilni trikotniki 90 m pred vsako serpentino in rdeče table z belimi puščicami; Pod zgornjim krakom ob serpentinah visok kamnit podporni zid iz skrilavca (rahlo nagnjen), drugod nizki zidovi; Alpski pašniki s šopi trave in nizkim cvetjem, v zaplatah ruševje in brin; sivo-rjavi skrilavec v ploščah in balvanih, melišča pod stenami, staro snežišče v žlebovih nad ~2.120 m; Trije tropi ovc s pastirjem na pašnikih ob cesti, redki gledalci ob startu, cilju in serpentinah; Žičnica z jeklenimi stebri in kabino ob zgornjem delu; ob jezeru koče in stojnice (kamnito pritličje, strma pločevinasta streha), parkirišče z avtomobili in ljudmi; za ciljem betonski portal predora pod skalo. Dlje: Greben Făgăraș s krnicami, dolina proti severu; jezero Bâlea (modrozeleno, ~4,9 ha) pri cilju.
 - **Bang Saen, Tajska** (`bangsaen`, asfalt): Betonske ograje z mrežo ob progi; v ustjih križišč zebre in stop črte; Tajski semaforji z odštevalniki, znaki, stebrički, hidranti, omarice, svetilke: vse podirljivo; Vrste tajskih trgovskih hiš (2–4 nadstropja) z roloji in nadstreški ob cesti; Električni drogovi z gostimi snopi žic, oltarčki duhov, vrste parkiranih motorjev; Ravnina ob plaži: kazuarine, kokosove palme, senčniki z ležalniki, vozički s hrano; Tribune ob ravnini in Laem Thaenu; boksi na strani morja z belimi šotori ekip. Dlje: Morje do obzorja; za mestom griči s Khao Sam Mukom.
 - **Bathurst, Avstralija** (`bathurst`, asfalt): Zidovi z lovilnimi ograjami blizu ceste; na grebenu betonski, 1,5 m od roba; Asfaltni izletni pas na koncu 1. zavoja, šikane in zadnjega zavoja; Skalni usek pri 4. zavoju: plasti skrilavca, peščenjaka in rdeče-rjave zemlje; Evkalipti in akacije, pašniki s travo v šopih; kenguruji odskačejo pred avtom; Pokrita tribuna in stavba boksov ob ciljni ravnini, 13 odprtih garaž z mehaniki; Kampi navijačev s šotori in avtodomi, domačije s pločevinastimi strehami, parkirišča. Dlje: Hiše mesta dlje od proge, modrikasta meglica nad evkaliptovimi gozdovi.
 - **Beartooth, ZDA** (`beartooth`, asfalt): Jeklene ograje na lesenih stebrih, kamniti podporni zidovi, rumene table pred ovinki; Alpska tundra s šopi šaša in blazinami cvetja; granitne plošče in balvani; Gozd smrek, jelk in zvitih borov, više redkejši; srebrni suhi štori na gozdni meji; Od ~2.700 m snežni zameti ob cesti in oranžno-črni količki za rob; Razgledišče ob 4. ovinku: parkirišče z avti in avtodomi, sanitarije, ograjena ploščad; Svizci na balvanih ob cesti, gorske koze na skalah nad cesto. Dlje: Dolina Rock Creek ~500 m globoko pod razglediščem; jezer na progi ni.
