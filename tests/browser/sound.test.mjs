@@ -187,6 +187,9 @@ try {
     //    beep), quiet between the lines
     await page.evaluate(() => { window.__game.S.mode = 'police'; });
     await startTrack(page, 'vrsic');
+    // (the radio speaks once the race is on: first its intro, in the game's time; on a slow machine the new world's first frames take a while
+    // and the intro with them, so the race racing first, up to two minutes, then the radio's lines in real time)
+    await page.waitForFunction(() => window.__game.phase === 'racing', null, { timeout: 120000, polling: 200 }).catch(() => {});
     const rad = await page.evaluate(async () => {
       const g = window.__game, out = { on: [], off: [], caps: [] };
       for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)

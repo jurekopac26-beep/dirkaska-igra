@@ -10,7 +10,7 @@
   const {
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, brookMat, caNear, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl,
     lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, puff, rng, roadsideProps, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails,
-    stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrLC, vrNear, vrPrep, vrStubH, vrStubs
+    stubVerge, tuftWindMat, valueNoise2, vary, vrDem, vrDist, vrGritTex, vrLC, vrNear, vrPrep, vrStubH, vrStubs, parkOn
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -336,7 +336,7 @@
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.6;
-    const SB = stubGeo({ gCol: gaGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.7, 0.62, 0.5], shC: [0.66, 0.6, 0.5] });   // the side roads: their mouths, their surfaces (in the road's chunks below)
+    const SB = stubGeo({ gCol: gaGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.6, 0.57, 0.5], shC: [0.6, 0.57, 0.5] });   // the side roads: their mouths, their surfaces (in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return gaGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
@@ -503,7 +503,7 @@
     (def.pulls || []).forEach(([d, side, grav], k) => {
       if (!grav || (k % 2 && k !== 3)) return;
       const s = sStart + d, i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) - 3.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = gaGround(x, z), g = scen.get(x, z);
-      if (k === 3) logTruck(g, x, y, z, T.hd[i]); else car(g, x, y, z, T.hd[i] + 0.15, vary([0.88, 0.88, 0.86], R, 0.2), true);
+      if (k === 3) parkOn(logTruck, gaGround, 14, g, x, y, z, T.hd[i]); else parkOn(car, gaGround, 4.4, g, x, y, z, T.hd[i] + 0.15, vary([0.88, 0.88, 0.86], R, 0.2), true);
       exclPush(x, z, k === 3 ? 10 : 4); CR.block(x, z, k === 3 ? 15 : 5, 2.6, T.hd[i]);
     });
     (def.pulls || []).forEach(([d, side, grav], k) => {   // the stockpile sites: heaps of crushed rock and road base at the back of the gravel

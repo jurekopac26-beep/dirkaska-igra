@@ -10,7 +10,7 @@
   const {
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caNear, caProps, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, ico,
     lerp, ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails, stubVerge, tuftWindMat, valueNoise2, vary,
-    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubH
+    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubH, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -282,7 +282,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const onBr = new Uint8Array(N), sw = 0.6;
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
-    const SB = stubGeo({ gCol: chGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.72, 0.62, 0.5], shC: [0.7, 0.62, 0.5], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
+    const SB = stubGeo({ gCol: chGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.74, 0.68, 0.58], shC: [0.74, 0.68, 0.58], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     // the verge's profile across the road's side, outwards: [offset from the centre line, height above the road]: the shoulder's edge, three points
     // across the (up to 11 m wide) verge (its colours: the fynbos' mosaic, not one smooth band), the barrier line, the ditch or wall, out onto the ground
     const vMid = (P5) => { const [a, b] = P5; return [a, [lerp(a[0], b[0], 0.25), lerp(a[1], b[1], 0.25)], [lerp(a[0], b[0], 0.5), lerp(a[1], b[1], 0.5)], [lerp(a[0], b[0], 0.75), lerp(a[1], b[1], 0.75)], ...P5.slice(1)]; };
@@ -436,7 +436,7 @@
       for (const v of views) {
         const hh = T.hd[v.i], c = Math.cos(hh), sn = Math.sin(hh), nx = T.nx[v.i] * v.sd, nz = T.nz[v.i] * v.sd;
         for (let k = 0; k < 3; k++) { const a = (k - 1) * 5.2, px = v.x + c * a - nx * 1.5, pz = v.z + sn * a - nz * 1.5; if (vrNear(px, pz).dd < 1.2 || RV() < 0.3) continue;
-          caCar(scen.get(px, pz), px, chGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RV() * carCols.length)]); }
+          parkOn(caCar, chGround, 4.4, scen.get(px, pz), px, chGround(px, pz), pz, hh + PI / 2, carCols[Math.floor(RV() * carCols.length)]); }
         { const g = scen.get(v.x, v.z); for (let u = -v.r; u < v.r; u += 2) { const px = v.x + c * u + nx * (v.r - 0.6), pz = v.z + sn * u + nz * (v.r - 0.6); box(g, px, chGround(px, pz) - 0.2, pz, 2.0, 0.85, 0.55, hh, vary([0.6, 0.52, 0.42], RV, 0.1), [0.66, 0.6, 0.5], true); } }   // the wall at the drop
         { const px = v.x + nx * (v.r - 2), pz = v.z + nz * (v.r - 2), g = scen.get(px, pz), py = chGround(px, pz); box(g, px, py + 0.4, pz, 1.8, 0.08, 0.45, hh, [0.5, 0.36, 0.22]); for (const u of [-0.7, 0.7]) box(g, px + c * u, py, pz + sn * u, 0.1, 0.45, 0.4, hh, [0.3, 0.3, 0.32]); }   // a bench
         for (let k = 0; k < 4; k++) { const u = (RV() - 0.5) * v.r * 1.4, px = v.x + c * u + nx * (v.r - 1.6), pz = v.z + sn * u + nz * (v.r - 1.6); if (vrNear(px, pz).dd < 1) continue; person(px, pz, Math.atan2(nz, nx) - PI / 2); }

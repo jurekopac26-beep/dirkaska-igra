@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, clamp, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, ouCutMat,
     ouRod, pkGroundMat, propFloorTable, puff, rng, roadsideProps, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails, stubVerge,
-    tuftWindMat, vary, vrDist, vrFar, vrGH, vrGritTex, vrGround, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubs, vrWater
+    tuftWindMat, vary, vrDist, vrFar, vrGH, vrGritTex, vrGround, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubs, vrWater, parkOn
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -298,7 +298,7 @@
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.6;
-    const SB = stubGeo({ gCol: hoGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.7, 0.62, 0.5], shC: [0.66, 0.6, 0.5] });   // the side roads: their mouths, their surfaces (in the road's chunks below)
+    const SB = stubGeo({ gCol: hoGCol, edge: 'dash', line: 'dash', paveC: [0.8, 0.8, 0.82], gravC: [0.66, 0.66, 0.65], shC: [0.66, 0.66, 0.65] });   // the side roads: their mouths, their surfaces (in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
@@ -381,7 +381,7 @@
       box(g, x + c * 2.6, y + 0.4, z + s * 2.6, 0.2, 0.75, 1.8, rot, [0.1, 0.1, 0.11], null, true);
       for (const [a, b] of [[1.6, 0.85], [1.6, -0.85], [-1.6, 0.85], [-1.6, -0.85]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.8, 0.8, 0.3, rot, [0.08, 0.08, 0.09], null, true);
     };
-    const parked = (g, x, y, z, rot, k, RC) => { const col = vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.12); if (k % 3 === 1) ute(g, x, y, z, rot, col); else caCar(g, x, y, z, rot, col); };
+    const parked = (g, x, y, z, rot, k, RC) => { const col = vary(carCols[Math.floor(RC() * carCols.length)], RC, 0.12); if (k % 3 === 1) parkOn(ute, vrGround, 5, g, x, y, z, rot, col); else parkOn(caCar, vrGround, 4.4, g, x, y, z, rot, col); };
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
     const cpAlt = T.cpS.map(s => fmtAlt(T.altAt(T.hy[T.idx(s)])));
     let hiI = T.startIdx; for (let i = T.startIdx; i <= T.finishIdx; i++) if (T.hy[i] > T.hy[hiI]) hiI = i;
