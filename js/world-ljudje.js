@@ -1188,8 +1188,9 @@
     const sg = segAt(p, Sc, t), F = Sc.F; let yaw, dy = 0;
     if (sg.mv) { const f = clamp((t - sg.t0) / Math.max(1e-3, sg.t1 - sg.t0), 0, 1), pl = lerpPlace(sg.mv, f); placeOf(Sc, pl, _w); yaw = sg.mv.th != null && !pl.on ? legYaw(F, sg.mv, t, sg.t0) : F.yaw(sg.mv.to.a - sg.mv.from.a, sg.mv.to.b - sg.mv.from.b) || 0; dy = 0.07 * Math.abs(Math.sin(f * sg.mv.d * 3.2)); }
     else { const s = sg.s; let pl = s;
-      if (sg.fence && Sc.pass >= 0) { const u = clamp((t - Sc.pass) / 2.2, 0, 1); pl = { a: s.a + u * 3.5, b: s.b }; dy = u < 1 ? 0.07 * Math.abs(Math.sin(u * 14)) : 0; }   // (along the fence after the car)
-      else if (sg.fence) dy = 0.05 * Math.abs(Math.sin(t * 9));   // (barking, jumping at the fence)
+      const stay = p.st && p.st.run === false;   // (one that stays by its master: it barks as the car comes, then lies quiet; no run along the fence)
+      if (sg.fence && Sc.pass >= 0 && !stay) { const u = clamp((t - Sc.pass) / 2.2, 0, 1); pl = { a: s.a + u * 3.5, b: s.b }; dy = u < 1 ? 0.07 * Math.abs(Math.sin(u * 14)) : 0; }   // (along the fence after the car)
+      else if (sg.fence && !(stay && Sc.pass >= 0)) dy = 0.05 * Math.abs(Math.sin(t * 9));   // (barking, jumping at the fence)
       placeOf(Sc, pl, _w); const fc = s.face || [0, -1]; yaw = F.yaw(fc[0], fc[1]);
       if (sg.aa != null && !s.on && t - sg.t0 < ARR_T) { const u = clamp((t - sg.t0) / ARR_T, 0, 1), y0 = F.yaw(Math.cos(sg.aa), Math.sin(sg.aa)); yaw = y0 + wrapA(yaw - y0) * u * u * (3 - 2 * u); } }
     const P = p.P; P.root.position.set(_w.x, _w.y + dy, _w.z); P.root.rotation.set(0, yaw, 0); P.root.updateMatrixWorld(true); write(P, null, Sc.pos, Sc.nor);

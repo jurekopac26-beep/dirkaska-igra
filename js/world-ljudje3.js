@@ -1,7 +1,8 @@
 /* =========================================================================
    PEOPLE ALONG THE TRACKS, ROUND THREE — six more groups on World.people's kit (js/world-ljudje.js, World.peopleKit), each busy with its own
-   work or game, some of them further back from the road: anglers at a pond, a family bringing in the hay, beekeepers at their bee house,
-   old men at bocce under a vine, a game of garden chess, a child's birthday with a bouncy castle. The user, 3. 11. 2026: »naredi mi še
+   work or game, some of them further back from the road: anglers on a lake's shore (or at a pond of their own), a family bringing in the
+   hay, beekeepers at their bee house, old men at bocce under a vine, a game of garden chess, a child's birthday with a bouncy castle. Each
+   only where it really is (the user, 3. 11. 2026, OSM): the bocce and the chess have no place yet (no court, no board by a track). The user, 3. 11. 2026: »naredi mi še
    dodatne ljudi … 6 slik novih skupin ljudi, ki delajo različne stvari (lahko tudi, da niso vedno ob cesti) in da imajo različne elemente«.
    A scene type as in js/world-ljudje2.js: S.<name> = { seed, clear: [[a, b, r]], build(C, F, K) } (the frame F: a along the track, + ahead;
    b from the barrier away from the road); its places: site(trackId, [[name, metres after the start line, side]]). Hand-held things are made
@@ -62,7 +63,7 @@
   POSEX.l3_sitWave = (t, s) => ({ hy: 0.5, hp: [1.5, 1.5], kn: [1.5, 1.5], lean: -0.04, shz: [2.35 + 0.25 * s, 0.12], shx: [0.2, 0.35], el: [0.55, 0.9] });
   RATE.l3_sitWave = 7.5;
 
-  /* 1 · Ribiči ob ribniku (Ouninpohja, Medvode): a pond back from the road (reeds and cattails round its far side, water lilies, a muddy
+  /* 1 · Ribiči ob ribniku (K.lake: on the real lake's shore, Ouninpohja and Medvode, no pond; there all stay on the shore, see build): a pond back from the road (reeds and cattails round its far side, water lilies, a muddy
      shore), a small wooden jetty; an angler in a folding chair at its end, his rod out over the water, its line and float; another stands on
      the shore working his lure; a kid crouches at the water with a landing net, a bucket by him; under a green fishing umbrella an old angler
      sits with his coffee, his two rods on their rest before him, his dog by his chair; their car on the grass. As the car comes the kid runs
@@ -164,7 +165,7 @@
         C.prop(L.cooler(pick([0x2f63c9, 0xd8262a, 0xf2f2f2])), UA - 0.85, UB + 0.15, [1, 0.2]);
         C.man({ shirt: 0x2f5a3a, pants: 0x47494f, long: true, hair: 'bald', hairCol: 0x9a9a98, scale: 0.94 }, { act: { a: UA, b: UB, pose: 'sitDrink', face: [0.25, 1], hold: [['cup', 1, { c: 0x2a2c31 }]] },
           bliza: { look: 'car' }, run: false, fence: { a: UA, b: UB, pose: 'l3_sitWave', face: [0.25, 1], hold: [['cup', 1, { c: 0x2a2c31 }]], look: 'car' } });
-        C.pet(L.dog(pick([0x5c3a22, 0xc8a878, 0x2a221c])), { act: { a: UA + 0.85, b: UB - 0.35, face: [-0.6, -1] }, fence: lake ? { a: UA + 0.85, b: UB - 0.35, face: [-1, -0.4] } : { a: UA - 0.6, b: 1.0, face: [-1, -0.2] }, run: lake ? false : { f: 1.05 } });
+        C.pet(L.dog(pick([0x5c3a22, 0xc8a878, 0x2a221c])), { act: { a: UA + 0.85, b: UB - 0.35, face: [-0.6, -1] }, fence: lake ? { a: UA + 0.85, b: UB - 0.35, face: [-1, -0.4] } : { a: UA - 0.6, b: 1.0, face: [1, -0.2] }, run: lake ? false : { f: 1.05 } });   // (by the lake it stays by the old angler: run false; at the fence it runs on after the car, facing the way it goes)
         C.prop(L.car(pick(CARS)), 9.4, at.car, fw(-1, 0.15));
       } };
   }
@@ -268,7 +269,7 @@
       } };
   }
 
-  /* 3 · Čebelarji (Medvode, Vršič): a bee house with its hives in three rows, their fronts painted in bright colours (blocks of colour: no
+  /* 3 · Čebelarji (Medvode): a bee house with its hives in three rows, their fronts painted in bright colours (blocks of colour: no
      pictures), a spare stack of hives, flowers before it; two beekeepers in white with veiled hats: one holds a comb up to the light, one
      puffs his smoker at the hives; by the road the grandmother sells their honey (jars on a table under a parasol, a plain board), a child
      licks honey from a spoon, a man looks at the jar he is buying. As the car comes the child runs to the fence and jumps, the man walks after
@@ -334,7 +335,7 @@
       } };
   }
 
-  /* 4 · Balinanje (Livorno, Rio do Rastro): a sand court along the road inside its low boards, the balls round the jack at its near end; one
+  /* 4 · Balinanje (no place yet: no bocce court by a track): a sand court along the road inside its low boards, the balls round the jack at its near end; one
      player bowls from the far end (the swing, the step), one crouches by the jack measuring which ball is nearer; two more wait at the side,
      balls in their hands; behind them a pergola under a vine (bunches of grapes), the old men at its table with wine; a chalk board for the
      score, a bicycle against a post. As the car comes the two waiting walk to the fence; the bowler and the one measuring stop and look, the
@@ -398,7 +399,7 @@
       } };
   }
 
-  /* 5 · Šah v parku (Harju, Livorno): a paved square with a garden chessboard (8 x 8 tiles of half a metre) and its knee-high pieces in the
+  /* 5 · Šah v parku (no place yet: no garden chess by a track): a paved square with a garden chessboard (8 x 8 tiles of half a metre) and its knee-high pieces in the
      middle of a game, the taken ones lined up beside it; one player stands at the board's edge, his hand at his chin, the other carries her
      knight across to its square; two old men watch from the far side, one pointing at the move he would make; another reads his paper on a
      bench; a lamp, a bin, low shrubs, the chest the pieces are kept in. As the car comes the two watching walk to the fence; the players and
@@ -456,7 +457,7 @@
       } };
   }
 
-  /* 6 · Rojstni dan (Santa Monica Mountains, Townsville): a child's birthday on the lawn: a bouncy castle (towers, net walls), three children
+  /* 6 · Rojstni dan (Longford, Big Sur): a child's birthday on the lawn: a bouncy castle (towers, net walls), three children
      jumping in it; a table with a pink cloth, the cake and its candles, plates, cups, juice, presents beside it; bunches of balloons, a line
      of bunting from the castle to a pole; the father at the grill, the mother filming the castle, the grandfather in a chair with his coffee;
      two more children in party hats, balloons on strings. As the car comes the two run to the fence with their balloons and wave; the ones in

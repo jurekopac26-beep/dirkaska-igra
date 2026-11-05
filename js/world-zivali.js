@@ -801,7 +801,7 @@
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
     const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
-    const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null, scenes: [] }, fly = [];
+    const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, fly: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null, scenes: [] }, fly = [];   // (fly: the bird that flies off, apart from the live ones: no soft shadow of its own)
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
     const free = (x, z, r) => { for (const p of placed) if ((p[0] - x) ** 2 + (p[1] - z) ** 2 < (p[2] + r + 6) ** 2) return false; return true; };
@@ -885,20 +885,24 @@
           A.ownRnd(() => { const pm = new THREE.Mesh(pg.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 }));
             pm.receiveShadow = true; pm.matrixAutoUpdate = false; pm.updateMatrix(); pm.name = 'life'; grp.add(pm); }); }
         if (Sc.thing) { const t = tpl(Sc.thing), [px, pz] = P(2.5, 3.5), ph = gH(px, pz); if (t && Number.isFinite(ph)) { put(g, t, px, ph - 0.05, pz, toRoad + (R() - 0.5) * 0.4, 1); stats.things++; } }
+        let up = 0;   // (how high the perched ones sit above the thing's foot: the tests)
         for (const th of Sc.things || []) { const t = tpl(th.t), [px, pz] = P(th.a, th.b), ph = hf(px, pz), yw = toRoad + (th.ry || 0); if (!t || !Number.isFinite(ph)) continue;
           put(g, t, px, ph - 0.05, pz, yw, 1); stats.things++;
           const c2 = Math.cos(yw), s2 = Math.sin(yw);
-          for (const [kk, lx, ly, lz, sc, ry] of th.on || []) { const e = stand(g, kk, sc, px + lx * c2 + lz * s2, ph - 0.05 + ly, pz - lx * s2 + lz * c2, yw + ry, false); if (e) e.S = 0; }   // (perched: it stays where it sits)
-          if (th.fly) { const [kk, lx, ly, lz, sc, ry] = th.fly, tl = tplLive(kk), k = sc * 1.15; if (tl) {   // (the one that flies off: on its nest its own mesh as it stands, in the air the flyer)
-            const fx = px + lx * c2 + lz * s2, fz = pz - lx * s2 + lz * c2, fy = ph - 0.05 + ly - 0.02, G = storkFlyGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-            const sit = new THREE.Mesh(tl.geo, mat); sit.scale.setScalar(k); sit.position.set(fx, fy, fz); sit.rotation.y = yw + ry; sit.name = 'life';
-            const fl = new THREE.Mesh(G.geo, mat); fl.scale.setScalar(k); fl.visible = false; fl.name = 'life'; fl.frustumCulled = false;
-            grp.add(sit); grp.add(fl); fly.push({ sit, fly: fl, G, x: fx, y: fy, z: fz, ax: nx, az: nz, st: 0, t0: 0, th: 0, k: 0.004 }); stats.live++; count(kk); } }
+          for (const [kk, lx, ly, lz, sc, ry] of th.on || []) { const e = stand(g, kk, sc, px + lx * c2 + lz * s2, ph - 0.05 + ly, pz - lx * s2 + lz * c2, yw + ry, false); if (e) { e.S = 0; up = Math.max(up, ly); } }   // (perched: it stays where it sits)
+          if (th.fly) { const [kk, lx, ly, lz, sc, ry] = th.fly, tl = liveOK && tplLive(kk), k = sc * 1.15, fx = px + lx * c2 + lz * s2, fz = pz - lx * s2 + lz * c2;
+            if (tl) {   // (the one that flies off: on its nest its own mesh as it stands, in the air the flyer)
+              const fy = ph - 0.05 + ly - 0.02, G = storkFlyGeo(), mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+              const sit = new THREE.Mesh(tl.geo, mat); sit.scale.setScalar(k); sit.position.set(fx, fy, fz); sit.rotation.y = yw + ry; sit.name = 'life';
+              const fl = new THREE.Mesh(G.geo, mat); fl.scale.setScalar(k); fl.visible = false; fl.name = 'life'; fl.frustumCulled = false;
+              grp.add(sit); grp.add(fl); fly.push({ sit, fly: fl, G, x: fx, y: fy, z: fz, ax: nx, az: nz, st: 0, t0: 0, th: 0, k: 0.004 }); stats.fly++; count(kk); up = Math.max(up, ly);
+            } else { const e = stand(g, kk, sc, fx, ph - 0.05 + ly, fz, yw + ry, false); if (e) { e.S = 0; up = Math.max(up, ly); } }   // (no live animals, NIZKA: it sits on its nest as the perched ones)
+          }
         }
         if (Sc.n) { const crew = company(Sc.kind, R, 'herd', Sc.n), [hx, hz] = Sc.at ? P(Sc.at[0], Sc.at[1]) : [x, z]; tally(crew);
           herdAt(g, crew, hx, hz, along + (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.6, Sc.live || 0, Sc.tight || 0.6, hf); stats.groups++; }   // (the scene's herd keeps together)
         if (Sc.with) { const w = company(Sc.with[0], R, Sc.with[1], Sc.with[2]), [wx, wz] = P(...(Sc.withAt || [-7.5, 3])); tally(w); herdAt(g, w, wx, wz, toRoad + (R() - 0.5) * 1.2, 0, Sc.withAt ? Sc.tight || 0.6 : 0.6, hf); stats.groups++; }
-        placed.push([x, z, 13]); const sc = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z }; if (!stats.scene) stats.scene = sc; stats.scenes.push(sc); done.push(sc.m);
+        placed.push([x, z, 13]); const sc = { kind: Sc.kind, m: Math.round(i * T.ds - (T.startS || 0)), side, x, z, y: +hf(x, z).toFixed(2), g: +gH(x, z).toFixed(2), up }; if (!stats.scene) stats.scene = sc; stats.scenes.push(sc); done.push(sc.m);   // (y: its herd's foot, g: the ground there, up: its perched ones)
         stats.at.push([Math.round(i * T.ds - (T.startS || 0)), side, b, Sc.kind]);
       }
     }
