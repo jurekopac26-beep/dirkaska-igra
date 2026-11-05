@@ -3498,7 +3498,7 @@ const World = (function () {
      under the rain's overcast). The uniforms are shared by every build (one world at a time) ---- */
   const CLOUD_S = 110, CLOUD_NP = 64;   // noise cell (m) and its period in cells (the drift offset wraps without a seam)
   const CLOUD_O = { value: new THREE.Vector2() }, CLOUD_K = { value: 0.16 };
-  const CLOUD_TH = { forest: 0.14, italia: 0.14, kamp: 0.14 };   // how much a cloud darkens, per theme (else 0.2; Mauna Kea: above the clouds, none overhead)
+  const CLOUD_TH = { forest: 0.14, italia: 0.14, kamp: 0.14 };   // how much a cloud darkens, per theme (else 0.2; the real tracks' own: cloudTh in js/tracks/<id>.js)
   for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.cloudTh != null && d.theme != null && CLOUD_TH[d.theme] == null) CLOUD_TH[d.theme] = d.cloudTh;   // (the real tracks' own: def.cloudTh in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   const CLOUD_VH = '#include <common>\nuniform vec2 clO;\nuniform float clK;\nvarying float vCloud;\n' +
     'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
@@ -3586,7 +3586,7 @@ const World = (function () {
   //   multiplied over whatever lies under them) < 2 the live tyre marks (Render's Skids; a road surface over the track's height lifts them:
   //   world.markLift, Detroit) < 4 and up: smoke, dust, particles (Longford's puffs, Spa's smoke, Render's particles), over the road and the
   //   marks behind them. Anything transparent that does not write depth and can stand in front of the road belongs above 2, never at 0.
-  const ROAD_WEAR = { monaco: 0.75, city: 0.75 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
+  const ROAD_WEAR = { monaco: 0.75, city: 0.75 };   // how worn the road is, per theme (else a modern circuit's: 0.3, an open road's: 0.8; the real tracks' own: roadWear in js/tracks/<id>.js)
   for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.roadWear != null && d.theme != null && ROAD_WEAR[d.theme] == null) ROAD_WEAR[d.theme] = d.roadWear;   // (the real tracks' own: def.roadWear in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   function roadWear(o, tex) {
     if ((T.def.roadSurface === 'makadam' && !(T.def.wearPaved && T.pavedAt)) || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches; a gravel road with def.wearPaved: only its asphalt worn)

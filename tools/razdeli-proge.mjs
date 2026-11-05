@@ -12,7 +12,7 @@
 // World.keep('X', tema) v datoteki sveta proge (pred World.ext.<tema> = ...) in ena skupna vrstica v build(). Lastni deli Bathursta, Ria in
 // Crystal Palace iz js/world-rbring.js gredo v js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js (WSPLIT, korak 6).
 // Ponovni zagon ne spremeni ničesar. Spor ob spajanju v vrstici skupnega seznama: obdrži stran s starim seznamom (vsi vnosi), nato to orodje
-// (postopek v docs/razdelitev-prog.md).
+// (postopek v docs/razdelitev-prog.md); THEMES ali SPLIT sam (spoj obdrži eno polovico): druga polovica iz look v datoteki proge.
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -170,6 +170,13 @@ function ensureLine(s, after, line) {   // the generated line right after positi
   const e = lineEnd(s, after); return s.slice(0, e) + '\n' + line + s.slice(e);
 }
 const dropOld = (s, re) => s.split('\n').filter(l => !(l.includes(MARK) && re.test(l))).join('\n');   // an older generated line of the same list
+function fileLook(f) {   // a track file's look as text, as it is now: { base (without split), split, com } (its block's look: line, or one elsewhere in its def)
+  const t = rd(f), p = t.indexOf('TRACK_DEFS.push('); if (p < 0) return null;
+  const re = /^[ \t]*look:\s*\{/mg; re.lastIndex = p; const m = re.exec(t); if (!m) return null;
+  const vs = m.index + m[0].length - 1, e = exprEnd(t, vs), val = t.slice(vs, e).trim(), P = parseObj(val, 0), k = P.ents.findIndex(x => x.key === 'split');
+  return { base: k < 0 ? val : removeEntries(val, P, new Set([k]), ''), split: k < 0 ? null : P.ents[k].val, com: comOf(t.slice(e, lineEnd(t, e))) };
+}
+const noSplit = (o) => { if (!o || typeof o !== 'object') return o; const c = Object.assign({}, o); delete c.split; return c; };
 
 /* ---- 1. the plain lists ---- */
 for (const sp of SPECS) {
@@ -213,11 +220,17 @@ for (const sp of SPECS) {
     const v0 = m[0].length, e = exprEnd(l, v0); if (l[e] !== ';') fail(`${F}: ${m[1]}.${m[2]} ni v eni vrstici`);
     (m[1] === 'THEMES' ? look : split).set(m[2], { val: l.slice(v0, e).trim(), com: comOf(l.slice(e + 1)) }); return false;
   }).join('\n');
+  // a half only (a merge with main keeps a branch's THEMES, where it changed it, and takes main's SPLIT without the real tracks', or the
+  // other way round): the other half from the track's file, as it is there
   for (const th of new Set([...look.keys(), ...split.keys()])) {
     const L = look.get(th), S = split.get(th);
-    if (!L) fail(`${F}: ${th} ima SPLIT brez THEMES`);
-    const val = S ? L.val.replace(/\s*\}$/, `, split: ${S.val} }`) : L.val, com = [L.com, S && S.com].filter(Boolean).join(' ');
-    for (const f of byTheme.get(th) || fail(`tema ${th} ni zapisana v nobeni datoteki proge`)) addMove(f, 'look', val, com, `THEMES.${th}`);
+    for (const f of byTheme.get(th) || fail(`tema ${th} ni zapisana v nobeni datoteki proge`)) {
+      const FL = fileLook(f);
+      if (!L && !FL) fail(`${F}: ${th} ima SPLIT brez THEMES (in v ${f} ni look)`);
+      const base = L ? L.val : FL.base, sp = S ? S.val : FL && FL.split;
+      const com = L && S ? [L.com, S.com].filter(Boolean).join(' ') : (FL && FL.com) || (L || S).com;
+      addMove(f, 'look', sp ? base.replace(/\s*\}$/, `, split: ${sp} }`) : base, com, L ? `THEMES.${th}` : `SPLIT.${th}`);
+    }
   }
   s = dropOld(s, /\bTHEMES\[d\.theme\] = d\.look/);   // (the generated line again after both lists, wherever it was)
   const ends = ['THEMES', 'SPLIT'].map(n => stmtEnd(s, parseObj(s, declAt(s, n).open).close + 1));
@@ -250,7 +263,9 @@ for (const sp of SPECS) {
    loaded before it (index.html). A part file puts on World.api (API) what the shared builder and World use of it and its look (an entry of
    the builder's look table) on API.rbLook, which the table takes; its World.ext.<theme> calls the shared builder's. The chunks are the
    file's top-level statements, each with the comment right before it; a part's are those whose (first) name its pattern matches. A chunk
-   already in the part file is replaced only when it is the same (else --seznam: the shared file's, --proga: the part file's) ---- */
+   already in the part file is replaced only when it is the same (else --seznam: the shared file's, --proga: the part file's). What the
+   shared file reads of a part, or a branch from before the split put in its export, the part exports (never a let or var: World.api would
+   hold its value at the load only, an error); a part's copy of a small helper of the shared file (W.copy) follows the shared file's ---- */
 const WSPLIT = [{ file: 'js/world-rbring.js', look: 'RB_LOOK', builder: 'rbring', copy: ['sAtS'], parts: [
   { theme: 'bathurst', re: /^(BT_\w+|bt[A-Z]\w*|au[A-Z]\w*|_rM)$/ },
   { theme: 'rio', re: /^(RIO_\w+|rio[A-Z]\w*)$/ },
@@ -276,17 +291,66 @@ function codeOnly(t) {   // t without its comments and its strings' text (a temp
   }
   return o;
 }
-const idents = (t) => new Set([...codeOnly(t).matchAll(/(?<![\w$.])[A-Za-z_$][\w$]*(?![\w$:])/g)].map(m => m[0]));   // (no property names, no object keys)
+function idents(t) {   // the names a text reads or writes: not property names (after '.', but a '...' spread's) nor object keys (a name with ':' after '{' or ',')
+  const c = codeOnly(t), out = new Set(), re = /[A-Za-z_$][\w$]*/g; let m;
+  while ((m = re.exec(c))) {
+    const a = m.index; if (a > 0 && /[\w$]/.test(c[a - 1])) continue;   // (in a number: 0x1f, 1e5)
+    let p = a - 1; while (p >= 0 && /\s/.test(c[p])) p--;
+    if (c[p] === '.' && !(c[p - 1] === '.' && c[p - 2] === '.')) continue;
+    let q = a + m[0].length; while (q < c.length && /\s/.test(c[q])) q++;
+    if (c[q] === ':' && (c[p] === '{' || c[p] === ',')) continue;
+    out.add(m[0]);
+  }
+  return out;
+}
 const nameOf = (l) => {
   let m = /^  Object\.assign\(([\w$.]+)/.exec(l); if (m) return 'Object.assign(' + m[1];
   if ((m = /^  World\.keep\('(\w+)', '(\w+)'\)/.exec(l))) return `World.keep:${m[2]}:${m[1]}`;
   m = /^  (?:async )?(?:function\*? |const |let |var )?([A-Za-z_$][\w$.]*)/.exec(l); return m ? m[1] : '?';
 };
-function declNames(t) {   // the top-level names a chunk declares
-  const c = codeOnly(t).replace(/^\s+/, ''); let m = /^(?:async\s+)?function\*?\s+([\w$]+)/.exec(c); if (m) return [m[1]];
-  if (!(m = /^(?:const|let|var)\s+/.exec(c)) || /^(?:const|let|var)\s+[{[]/.test(c)) return [];
+function closeOf(s, i) {   // s[i] an opening bracket: the index of its closing one
+  let d = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === '"' || c === "'" || c === '`') { i = skipStr(s, i); continue; }
+    if (isCom(s, i)) { i = skipCom(s, i); continue; }
+    if ('([{'.includes(c)) d++; else if (')]}'.includes(c) && --d === 0) return i;
+    i++;
+  }
+  return s.length;
+}
+function topAt(s, ok) {   // the first index at depth 0 where ok(s, i), or -1
+  for (let i = 0, d = 0; i < s.length;) {
+    const c = s[i];
+    if (c === '"' || c === "'" || c === '`') { i = skipStr(s, i); continue; }
+    if (isCom(s, i)) { i = skipCom(s, i); continue; }
+    if ('([{'.includes(c)) d++; else if (')]}'.includes(c)) d--; else if (d === 0 && ok(s, i)) return i;
+    i++;
+  }
+  return -1;
+}
+function patNames(p) {   // the names a destructuring pattern ([...] or {...}) binds
+  const out = [], obj = p[0] === '{', s = p.slice(1, closeOf(p, 0));
+  for (let i = 0; i < s.length;) {
+    const e = exprEnd(s, i); let el = s.slice(i, e).trim(); i = e + 1;
+    if (!el) continue;   // (a hole)
+    el = el.replace(/^\.\.\./, '');
+    const eq = topAt(el, (t, k) => t[k] === '=' && !'=>'.includes(t[k + 1] || '#') && !'=!<>'.includes(t[k - 1] || '#')); if (eq >= 0) el = el.slice(0, eq).trim();   // (a default)
+    const co = obj ? topAt(el, (t, k) => t[k] === ':') : -1; if (co >= 0) el = el.slice(co + 1).trim();   // (key: name)
+    if (/^[[{]/.test(el)) out.push(...patNames(el)); else if (/^[A-Za-z_$][\w$]*$/.test(el)) out.push(el);
+  }
+  return out;
+}
+function declNames(t) {   // the top-level names a chunk declares (a function's, a class's, those of a const / let / var, destructured too)
+  const c = codeOnly(t).replace(/^\s+/, ''); let m = /^(?:async\s+)?function\*?\s+([\w$]+)/.exec(c) || /^class\s+([\w$]+)/.exec(c); if (m) return [m[1]];
+  if (!(m = /^(?:const|let|var)\s+/.exec(c))) return [];
   const out = []; let i = m[0].length;
-  for (;;) { i = skipWs(c, i); const n = /^[A-Za-z_$][\w$]*/.exec(c.slice(i, i + 100)); if (!n) break; out.push(n[0]); i = exprEnd(c, i); if (c[i] !== ',') break; i++; }
+  for (;;) {
+    i = skipWs(c, i);
+    if (c[i] === '[' || c[i] === '{') { const e = closeOf(c, i); out.push(...patNames(c.slice(i, e + 1))); i = exprEnd(c, e + 1); }
+    else { const n = /^[A-Za-z_$][\w$]*/.exec(c.slice(i, i + 100)); if (!n) break; out.push(n[0]); i = exprEnd(c, i); }
+    if (c[i] !== ',') break; i++;
+  }
   return out;
 }
 function chunksOf(t) {   // { pre, chunks: [{ name, names, text }], post }: the IIFE's top-level statements with the comments right before them
@@ -306,16 +370,27 @@ function chunksOf(t) {   // { pre, chunks: [{ name, names, text }], post }: the 
   return { pre: L.slice(0, from.length ? from[0][0] : end).join('\n'), chunks, post: L.slice(end).join('\n') };
 }
 const joinChunks = (C) => C.pre + '\n' + C.chunks.map(c => c.text).join('\n') + '\n' + C.post;
-const PROLOGUE = new Set(['?', 'if', 'API', 'const', 'LOD', 'API.sync.push']);   // (the chunks every world file starts with)
+// the chunks every world file starts with, by their code (comments and spaces aside): 'use strict', the guard, API and the helpers taken
+// from it, World's build state (»let LOD, T, THEME;« or a part file's »let T;«) and the API.sync line that copies it in at each build
 const SYNCED = ['LOD', 'T', 'THEME'];
-const isPro = (c) => PROLOGUE.has(c.name) || (/^\s*let\b/.test(codeOnly(c.text).trim()) && c.names.length > 0 && c.names.every(n => SYNCED.includes(n)));   // (a part file's own let of World's build state, e.g. »let T;«, is its prologue too)
+const PRO = [/^'';$/, /^if \(typeof World === '' \|\| !World\.api\) return;$/, /^const API = World\.api;$/, /^const \{[\w$, ]*\} = API;$/, /^API\.sync\.push\(\(\) => \{ \(\{ [\w$, ]+ \} = API\); \}\);$/];
+const isPro = (c) => { const k = codeOnly(c.text).replace(/\s+/g, ' ').trim(); return PRO.some(re => re.test(k)) || (/^let [\w$, ]+;$/.test(k) && c.names.every(n => SYNCED.includes(n))); };
+const isApiDecl = (c) => c.name === 'const' && /^const \{[\w$, ]*\} = API;$/.test(codeOnly(c.text).replace(/\s+/g, ' ').trim());
+const exportNames = (t, where) => {   // the names of a chunk »Object.assign(API, { a, b });«
+  const m = /Object\.assign\(API, \{([^}]*)\}\)/.exec(codeOnly(t)), ns = m ? m[1].split(',').map(x => x.trim()).filter(Boolean) : null;
+  if (!ns || ns.some(n => !/^[A-Za-z_$][\w$]*$/.test(n))) fail(`${where}: izvoz ni v obliki »Object.assign(API, { a, b });« (samo imena)`);
+  return ns;
+};
+const setExports = (t, ns) => t.replace(/(Object\.assign\(API, \{)[^}]*\}/, (m, a) => `${a} ${ns.join(', ')} }`);
+const isVar = (c) => /^(?:let|var)\b/.test(codeOnly(c.text).trim());   // (World.api would hold its value at the load only)
+const notes = [];
 const keepLine = (c) => c.text.split('\n').find(l => /^  World\.keep\(/.test(l));
 const wdiffs = [];
 for (const W of WSPLIT) {
   let S = chunksOf(rd(W.file));
   if (!declAt(joinChunks(S), W.look)) fail(`${W.file}: ni ${W.look}`);
   const srcTop = new Map(); for (const c of S.chunks) for (const n of c.names) srcTop.set(n, c);
-  const preNames = (C) => { const d = C.chunks.find(c => c.name === 'const' && /=\s*API;/.test(c.text) && !c.text.includes(MARK)); return d ? [...codeOnly(d.text).matchAll(/[A-Za-z_$][\w$]*/g)].map(m => m[0]).filter(n => n !== 'const' && n !== 'API') : []; };
+  const preNames = (C) => C.chunks.filter(c => isApiDecl(c) && !c.text.includes(MARK)).flatMap(c => c.names);   // (World's helpers it takes from API)
   const helpers = preNames(S);
   let moved = 0;
   for (const P of W.parts) {
@@ -366,6 +441,8 @@ for (const W of WSPLIT) {
     const rest = S.chunks.filter(c => c.name !== 'Object.assign(API' && !(c.name === 'const' && c.text.includes(MARK))), restUsed = new Set(rest.flatMap(c => [...idents(c.text)]));
     for (const n of defined) if (restUsed.has(n) || (ex0 && idents(ex0.text).has(n))) exps.add(n);
     for (const n of [...exps]) if (!defined.has(n) || W.copy.includes(n)) exps.delete(n);   // (a copy of a small helper stays its own)
+    const ve = [...exps].filter(n => isVar(body.find(c => c.names.includes(n))));
+    if (ve.length) fail(`${PF}: ${ve.join(', ')} (let ali var) bi šel v World.api, ki bi imel le vrednost ob nalaganju (${W.file}, World ali drugi svetovi ga berejo): razdeli ročno`);
     const def = [...D0.values()].flat().find(d => !d.test && d.theme === P.theme) || {};
     const head = ['/* =========================================================================',
       `   WORLD — ${def.name || P.theme} (theme '${P.theme}'): its own parts on the shared builder of ${W.file} (World.ext.${W.builder}), split out of it by`,
@@ -381,25 +458,49 @@ for (const W of WSPLIT) {
     tail.push(...keeps, `  World.ext.${P.theme} = (scene, tex, opts) => World.ext.${W.builder}(scene, tex, opts);   // (the shared builder: ${W.file})`);
     put(PF, head.join('\n') + '\n' + body.map(c => c.text).join('\n') + '\n' + tail.join('\n') + '\n})();\n');
     const ex = S.chunks.find(c => c.name === 'Object.assign(API');
-    if (ex) ex.text = ex.text.replace(/\{([^}]*)\}/, (m, l) => '{ ' + l.split(',').map(x => x.trim()).filter(n => n && !defined.has(n)).join(', ') + ' }');
+    if (ex) ex.text = setExports(ex.text, exportNames(ex.text, W.file).filter(n => !defined.has(n)));
     // index.html: the part's script before the shared file's
     let h = rd('index.html'); const tag = `<script src="${PF}"></script>`;
     if (!h.includes(tag)) { const w = `<script src="${W.file}"></script>`; if (!h.includes(w)) fail(`index.html: ni ${w}`); h = h.replace(w, tag + '\n' + w); put('index.html', h); }
   }
-  // the shared file: the parts' names it reads (from API, the part files are loaded before it) and their looks in its table
+  // the part files as they are now: their copies of the shared file's small helpers (W.copy) as the shared file has them
   const parts = W.parts.map(P => `js/world-${P.theme}.js`).filter(f => files.has(f) || fs.existsSync(path.join(REPO, f)));
-  const theirs = new Set(parts.flatMap(f => chunksOf(rd(f)).chunks.filter(c => !isPro(c)).flatMap(c => c.names)));
-  for (const n of W.copy) theirs.delete(n);
+  const PC = new Map(parts.map(f => [f, chunksOf(rd(f))])), touched = new Set();
+  for (const [f, C] of PC) for (const c of C.chunks) {
+    const n = c.names.find(x => W.copy.includes(x)), src = n && srcTop.get(n);
+    if (src && !isPro(c) && c.text !== src.text) { c.text = src.text; touched.add(f); notes.push(`${f}: kopija ${n} kot v ${W.file}`); }
+  }
+  // the shared file: the parts' names it reads (from API: the part files are loaded before it) and those a branch from before the split
+  // put in its export, exported by their parts (in the order they declare them; not a let or var: API would hold its value at the load)
+  const owner = new Map(); for (const [f, C] of PC) for (const c of C.chunks) if (!isPro(c)) for (const n of c.names) if (!W.copy.includes(n)) owner.set(n, { f, c });
   const gen = S.chunks.filter(c => c.text.includes(MARK) && (c.name === 'const' || c.name === `Object.assign(${W.look}`));
   S.chunks = S.chunks.filter(c => !gen.includes(c));
+  const ownS = (n) => S.chunks.some(c => c.names.includes(n)), want = new Map();
+  const wantIt = (n) => { const { f } = owner.get(n); if (!want.has(f)) want.set(f, []); if (!want.get(f).includes(n)) want.get(f).push(n); };
+  const ex = S.chunks.find(c => c.name === 'Object.assign(API'), exOut = ex ? exportNames(ex.text, W.file).filter(n => owner.has(n) && !ownS(n)) : [];
+  if (exOut.length) { exOut.forEach(wantIt); ex.text = setExports(ex.text, exportNames(ex.text, W.file).filter(n => !exOut.includes(n))); }
   const reads = new Set(S.chunks.filter(c => c.name !== 'Object.assign(API').flatMap(c => [...idents(c.text)]));
-  const need = [...theirs].filter(n => reads.has(n) && !S.chunks.some(c => c.names.includes(n)));
-  if (moved || gen.length || need.length) {
+  const need = [...owner.keys()].filter(n => reads.has(n) && !ownS(n)); need.forEach(wantIt);
+  for (const [f, ns] of want) {
+    const ve = ns.filter(n => isVar(owner.get(n).c));
+    if (ve.length) fail(`${W.file} bere ${ve.join(', ')} iz ${f} (let ali var: World.api bi imel le vrednost ob nalaganju): razdeli ročno`);
+    const C = PC.get(f), x = C.chunks.find(c => c.name === 'Object.assign(API'), have = x ? exportNames(x.text, f) : [];
+    if (ns.every(n => have.includes(n))) continue;
+    const order = C.chunks.filter(c => !isPro(c)).flatMap(c => c.names), list = order.filter(n => have.includes(n) || ns.includes(n)).concat(have.filter(n => !order.includes(n)));
+    if (x) x.text = setExports(x.text, list);
+    else {
+      const at = C.chunks.findIndex(c => /^(World\.keep:|World\.ext\.)/.test(c.name));
+      C.chunks.splice(at < 0 ? C.chunks.length : at, 0, { name: 'Object.assign(API', names: [], text: `  Object.assign(API, { ${list.join(', ')} });   // (what ${W.file}, World and the other worlds use: ${MARK})` });
+    }
+    touched.add(f);
+  }
+  for (const f of touched) put(f, joinChunks(PC.get(f)));
+  if (moved || gen.length || need.length || exOut.length) {
     const sync = S.chunks.findIndex(c => c.name === 'API.sync.push'), lk = S.chunks.findIndex(c => c.names.includes(W.look));
     if (sync < 0 || lk < 0) fail(`${W.file}: ni API.sync.push ali ${W.look}`);
     const tellParts = parts.join(', ');
     S.chunks.splice(lk + 1, 0, { name: `Object.assign(${W.look}`, names: [], text: `  Object.assign(${W.look}, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: ${tellParts}; ${MARK})` });
-    if (need.length) S.chunks.splice(S.chunks.findIndex(c => c.name === 'const' && /=\s*API;/.test(c.text)) + 1, 0, { name: 'const', names: [], text: `  const { ${need.join(', ')} } = API;   // (the own parts of the worlds on this builder, in ${tellParts}, loaded before this file: ${MARK})` });
+    if (need.length) S.chunks.splice(S.chunks.findIndex(isApiDecl) + 1, 0, { name: 'const', names: need, text: `  const { ${need.join(', ')} } = API;   // (the own parts of the worlds on this builder, in ${tellParts}, loaded before this file: ${MARK})` });
     put(W.file, joinChunks(S));
   }
 }
@@ -429,7 +530,13 @@ for (const f of new Set([...moves.keys(), ...TF.filter(hasBlock)])) {   // (the 
     const have = old.get(field), elsewhere = !have && def[field] !== undefined && !(def.variantOf && D0.get(byId.get(def.variantOf)).some(x => same(x[field], def[field])));
     const cur = have ? evalLit(have.val, f) : elsewhere ? def[field] : undefined, nv = evalLit(mv.val, mv.from);
     if (cur === undefined || same(cur, nv)) { if (!have && !elsewhere) old.set(field, mv); continue; }
-    chosen.add(field + ':' + f); if (!PREFER(idOf(f))) diffs.push(`${f} ${field}: v seznamu ${mv.val.slice(0, 70)} … v datoteki proge ${JSON.stringify(cur).slice(0, 70)} …`);
+    chosen.add(field + ':' + f);
+    if (!PREFER(idOf(f))) {   // (look: which half, THEMES's or SPLIT's)
+      const half = field !== 'look' ? null : same(noSplit(cur), noSplit(nv)) ? 'split' : same(cur.split, nv.split) ? 'base' : null;
+      const js = (x) => String(JSON.stringify(x));
+      const [what, a, b] = half === 'split' ? ['look.split', js(nv.split), js(cur.split)] : half === 'base' ? ['look (brez split)', js(noSplit(nv)), js(noSplit(cur))] : [field, mv.val, js(cur)];
+      diffs.push(`${f} ${what}: v seznamu ${a.slice(0, 70)} … v datoteki proge ${b.slice(0, 70)} …`);
+    }
     if (PREFER(idOf(f)) === 'map') { if (elsewhere) fail(`${f}: ${field} je v opisu proge drugje (ne v bloku): popravi ročno`); old.set(field, mv); }
   }
   const body = FIELDS.map(g => g.filter(k => old.has(k))).filter(g => g.length).map(g => {
@@ -456,17 +563,19 @@ if (diffs.length) { console.error('razdeli-proge: vnos v seznamu in polje v dato
   const TB = Object.assign(lit(R0, 'THEMES'), stmts(R0, 'THEMES')), SB = Object.assign(lit(R0, 'SPLIT'), stmts(R0, 'SPLIT'));
   const TA = Object.assign(lit(R1, 'THEMES'), stmts(R1, 'THEMES')), SA = Object.assign(lit(R1, 'SPLIT'), stmts(R1, 'SPLIT'));
   const fillLk = (T, S, ds) => { for (const d of ds) if (d.look && d.theme && !T[d.theme]) { T[d.theme] = d.look; if (d.look.split) S[d.theme] = d.look.split; } };
-  fillLk(TB, SB, all0); fillLk(TA, SA, all);
+  fillLk(TA, SA, all);
   for (const th of realTheme) {
     if ((byTheme.get(th) || []).some(f => chosen.has('look:' + f))) continue;
-    const strip = (o) => { if (!o) return o; const c = Object.assign({}, o); delete c.split; return c; };
-    if (!same(strip(TB[th]) || null, strip(TA[th]) || null) && TB[th]) fail(`preverjanje: THEMES.${th} ni več enak`);
-    if (!same(SB[th] || null, SA[th] || null) && (SB[th] || TB[th])) fail(`preverjanje: SPLIT.${th} ni več enak`);
+    // before: a half in the lists over the other half in the track's file (as step 2 takes them: a merge may bring one half only)
+    const fl = (all0.find(d => d.theme === th && d.look) || {}).look, tb = TB[th] ? noSplit(TB[th]) : noSplit(fl), sb = th in SB ? SB[th] : fl && fl.split;
+    if (!same(tb || null, noSplit(TA[th]) || null) && tb) fail(`preverjanje: THEMES.${th} ni več enak`);
+    if (!same(sb || null, SA[th] || null) && (sb || tb)) fail(`preverjanje: SPLIT.${th} ni več enak`);
   }
 }
 
 /* ---- write (or only tell) ---- */
 const changed = [...files].filter(([f, t]) => orig.has(f) && orig.get(f) !== t).map(([f]) => f);
+for (const n of notes) console.log('razdeli-proge: ' + n);
 if (CHECK) {
   if (changed.length) { console.log('razdeli-proge: nastavitve ali deli sveta pravih prog so v skupnih datotekah, poženi node tools/razdeli-proge.mjs (' + changed.join(', ') + ')'); process.exit(1); }
   console.log('razdeli-proge: v redu (skupni seznami imajo le testne proge, deli sveta so v datotekah prog)');

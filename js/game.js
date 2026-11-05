@@ -544,7 +544,7 @@
   }
   // the weather: dry, rain, or at random for every race (rain more often in the Ardennes, the Eifel and the Julian Alps in the autumn, less in the Andes);
   // the title demo rains only with 'rain'
-  const RAIN_P = {};   // (the Andes in summer, the Californian coast: mostly dry; the Serra Geral: humid; Rio in March: tropical showers)
+  const RAIN_P = {};   // the chance of rain per track (else 0.35; the real tracks' own: rainP in js/tracks/<id>.js)
   for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.rainP != null && d.id != null && RAIN_P[d.id] == null) RAIN_P[d.id] = d.rainP;   // (the real tracks' own: def.rainP in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   const rainOf = () => S.weather === 'rain' || S.weather === 'storm' ? 1 : (S.weather === 'random' || S.weather === 'change') && grand() < (RAIN_P[track && track.def.id] || 0.35) ? 1 : 0;
   // 'change': the weather changes during a race (on a circuit, or up the Vršič; Race opts weather): it starts dry and rains later on, or it starts wet,
