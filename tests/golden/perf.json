@@ -14,18 +14,18 @@
   "jsMs": 1.37
  },
  "ouninpohja": {
-  "calls": 170,
-  "maxCalls": 185,
-  "kverts": 404,
-  "maxKverts": 491,
-  "jsMs": 1.47
+  "calls": 167,
+  "maxCalls": 186,
+  "kverts": 398,
+  "maxKverts": 473,
+  "jsMs": 1.67
  },
  "vrsic": {
   "calls": 163,
   "maxCalls": 193,
   "kverts": 263,
   "maxKverts": 325,
-  "jsMs": 2.23
+  "jsMs": 3.51
  },
  "nring": {
   "calls": 153,
@@ -43,10 +43,10 @@
  },
  "rbring": {
   "calls": 216,
-  "maxCalls": 249,
-  "kverts": 432,
+  "maxCalls": 251,
+  "kverts": 431,
   "maxKverts": 615,
-  "jsMs": 1.55
+  "jsMs": 2.57
  },
  "suzuka": {
   "calls": 194,
@@ -93,9 +93,9 @@
  "bigsur": {
   "calls": 139,
   "maxCalls": 153,
-  "kverts": 327,
-  "maxKverts": 400,
-  "jsMs": 1.3
+  "kverts": 329,
+  "maxKverts": 411,
+  "jsMs": 2.13
  },
  "tianmen": {
   "calls": 153,
@@ -109,7 +109,7 @@
   "maxCalls": 195,
   "kverts": 361,
   "maxKverts": 466,
-  "jsMs": 1.48
+  "jsMs": 1.79
  },
  "sani": {
   "calls": 107,
@@ -140,11 +140,11 @@
   "jsMs": 1.74
  },
  "rastro": {
-  "calls": 176,
-  "maxCalls": 228,
+  "calls": 174,
+  "maxCalls": 225,
   "kverts": 436,
   "maxKverts": 498,
-  "jsMs": 0.98
+  "jsMs": 2.92
  },
  "moki": {
   "calls": 129,
@@ -170,9 +170,9 @@
  "cpalace": {
   "calls": 193,
   "maxCalls": 223,
-  "kverts": 521,
+  "kverts": 522,
   "maxKverts": 607,
-  "jsMs": 1.12
+  "jsMs": 4.02
  },
  "riverside": {
   "calls": 163,
@@ -193,7 +193,7 @@
   "maxCalls": 205,
   "kverts": 414,
   "maxKverts": 460,
-  "jsMs": 1.32
+  "jsMs": 1.96
  },
  "newcastle": {
   "calls": 230,
@@ -218,10 +218,10 @@
  },
  "medvode": {
   "calls": 130,
-  "maxCalls": 152,
-  "kverts": 373,
-  "maxKverts": 535,
-  "jsMs": 1.24
+  "maxCalls": 154,
+  "kverts": 372,
+  "maxKverts": 537,
+  "jsMs": 1.54
  },
  "montreal": {
   "calls": 209,
@@ -235,7 +235,7 @@
   "maxCalls": 173,
   "kverts": 507,
   "maxKverts": 649,
-  "jsMs": 1.1
+  "jsMs": 1.98
  },
  "detroit": {
   "calls": 220,
@@ -287,11 +287,11 @@
   "jsMs": 1.03
  },
  "livorno": {
-  "calls": 165,
-  "maxCalls": 211,
-  "kverts": 365,
-  "maxKverts": 532,
-  "jsMs": 2.45
+  "calls": 140,
+  "maxCalls": 169,
+  "kverts": 317,
+  "maxKverts": 399,
+  "jsMs": 4.34
  },
  "jezero": {
   "calls": 172,
