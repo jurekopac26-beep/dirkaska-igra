@@ -62,11 +62,11 @@ try {
   T.check('... and the road there darker with the band than without it', on.lum > 0 && on.lum < off.lum - 4, `luminance ${on.lum.toFixed(1)} with the band, ${off.lum.toFixed(1)} without`);
 
   // the rubbered-in line (84): after two laps its layer drawn on the racing line (one mesh over the lap, a row every 4 m), faint and
-  // darkening as the race lays it (rb); from the same spot one draw call more with it than without, the racing line darker with it
+  // darkening as the race lays it (rb), a row every 4 m in the bends, every 8 m on the straights; from the same spot one draw call more with it than without, the racing line darker with it
   const rub = await page.evaluate(() => { const m = Render.scene.getObjectByName('rubberline'), R = window.__game.race;
-    return { rb: +R.mb.rb.toFixed(3), lv: +R.mb.lv.toFixed(3), mesh: m ? { vis: m.visible, op: +m.material.opacity.toFixed(3), rows: m.geometry.attributes.position.count / 6, N: R.track.N } : null }; });
-  T.check('the rubbered-in line after two laps: drawn over the whole lap, fainter than the marbles laid (rb < lv), opacity as dark as rb', !!rub.mesh && rub.mesh.vis && rub.rb > 0.2 && rub.rb < rub.lv &&
-    Math.abs(rub.mesh.op - (0.22 + 0.5 * Math.round(rub.rb * 100) / 100)) < 0.006 && rub.mesh.rows === Math.ceil(rub.mesh.N / 2) + 1, JSON.stringify(rub));
+    return { rb: +R.mb.rb.toFixed(3), lv: +R.mb.lv.toFixed(3), mesh: m ? { vis: m.visible, op: +m.material.opacity.toFixed(3), rows: m.geometry.attributes.position.count / 5, N: R.track.N } : null }; });
+  T.check('the rubbered-in line after two laps: drawn over the whole lap (a row every 4-8 m), fainter than the marbles laid (rb < lv), opacity as dark as rb', !!rub.mesh && rub.mesh.vis && rub.rb > 0.2 && rub.rb < rub.lv &&
+    Math.abs(rub.mesh.op - (0.22 + 0.5 * Math.round(rub.rb * 100) / 100)) < 0.006 && rub.mesh.rows > rub.mesh.N / 4 && rub.mesh.rows <= Math.ceil(rub.mesh.N / 2) + 1, JSON.stringify(rub));
   const shotR = (on) => page.evaluate(([on, bi]) => {
     const g = window.__game, R = g.race, Tk = R.track, N = Tk.N, P = R.player, gl = document.getElementById('gl').getContext('webgl2') || document.getElementById('gl').getContext('webgl');
     if (window.__rb == null) window.__rb = R.mb.rb;
