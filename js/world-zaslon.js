@@ -16,7 +16,8 @@
 
   // where on each track: d metres after the start line, side +1 right / -1 left of the driving direction, off metres from the road's centre
   // line, turn degrees towards the cars coming (0: square to the road), W x H metres, y the bottom edge over the ground; none on Detroit and
-  // Monterey (the US tracks go to test, the user's decision 5. 11. 2026)
+  // Monterey (the US tracks go to test, the user's decision 5. 11. 2026); a new track with pits keeps its place in its own file (zaslon: { d,
+  // side, off[, turn] }, the rest as below; node tools/zaslon-mesto.mjs <id> finds one)
   const SPOT = {
     bathurst: { d: 192, side: 1, off: 19, turn: 58, W: 10, H: 5, y: 2.4 },   // (at the end of the grandstand, shortened for it: js/tracks/bathurst.js)
     bangsaen: { d: -157, side: -1, off: 15.5, turn: 50, W: 10, H: 5, y: 2.4 },
@@ -175,7 +176,8 @@
     const old = world && world.dyn && world.dyn.zaslon; if (old && old.grp.parent) { old.grp.parent.remove(old.grp); old.frame.geometry.dispose(); old.frame.material.dispose(); old.face.geometry.dispose(); old.face.material.dispose(); }   // (built again on the same world)
     if (world && world.dyn) world.dyn.zaslon = null;
     const def = track && track.def; if (!def || def.test || !def.pit || !world || !world.root || !world.dyn) return null;
-    const sp = SPOT[def.id]; if (!sp) return null;
+    const own = def.zaslon || SPOT[def.id]; if (!own) return null;
+    const sp = Object.assign({ turn: 50, W: 10, H: 5, y: 2.4 }, own);   // (a track's own place in its file: zaslon: { d, side, off })
     const T = track, L = T.len, s = (((T.startS || 0) + sp.d) % L + L) % L, i = T.idx(s), j = T.idx(s + 4);
     let tx = T.px[j] - T.px[i], tz = T.pz[j] - T.pz[i]; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
     const nx = T.nx[i] * sp.side, nz = T.nz[i] * sp.side, a = sp.turn * Math.PI / 180;
