@@ -169,7 +169,7 @@ try {
       L.cats.t === 8 && L.cats.b === 42 && L.strip.t === 48 && L.strip.b === 92 && L.cats.l === 10 && L.cats.r === L.vw - 10 && L.strip.l === 10 && L.strip.r === L.vw - 10, JSON.stringify({ cats: L.cats, strip: L.strip }));
     T.check('390×844: nothing off the screen, the rows clear of the panel and the arrows, the panel as it was, the chosen chips in view (Dirkalni, TIGER GT)',
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
-      L.stripIds.join() === 'mravlja,kozorog,tornado,strelica,tiger,bizon,formula,lm' && /^Dirkalni · 5\/8$/.test(L.cat),
+      L.stripIds.join() === 'mravlja,kozorog,tornado,strelica,tiger,bizon,formula,lm,orel' && /^Dirkalni · 5\/9$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
     T.check('390×844: the car is the garage\'s button (over its place, under the strip, over the panel), its hint under it', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, panel: L.panel, on: L.garOn }));
     // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
