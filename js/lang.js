@@ -730,6 +730,13 @@
     'Lava se širi čez cesto: pelji ob desnem robu.': 'The lava is spreading across the road: keep to the right edge.', 'Lava se širi čez cesto: pelji ob levem robu.': 'The lava is spreading across the road: keep to the left edge.',
     'Lava je zaprla cesto pred tabo.': 'The lava has closed the road ahead of you.', 'Avto je obtičal v lavi.': 'The car got stuck in the lava.', 'Žareči kamni so uničili avto.': 'The glowing stones wrecked the car.',
     'Raziskovalce moraš pripeljati v dolino.': 'You have to bring the researchers down to the valley.',
+    'Lovec na meteorite': 'Meteorite hunter', 'Nocoj nad puščavo pada meteorski dež. Nekateri kamni priletijo do tal še žareči.': 'Tonight a meteor shower is falling over the desert. Some of the stones reach the ground still glowing.',
+    'S terencem poišči in poberi osem meteoritov, preden jih najdejo drugi lovci. Krogi pokažejo, kam bo padlo.': 'Find and pick up eight meteorites in the 4x4 before the other hunters find them. The rings show where they will fall.',
+    'Žareč kamen je prevroč: počakaj, da se ohladi.': 'A glowing stone is too hot: wait for it to cool down.',
+    'METEORITI': 'METEORITES', 'NASLEDNJI UDAR': 'NEXT IMPACT', 'TEKMECI': 'RIVALS', 'LOVEC': 'HUNTER', 'METEORIT': 'METEORITE', 'UDAR': 'IMPACT',
+    'Meteorit je tvoj!': 'The meteorite is yours!', 'Tekmec je pobral meteorit!': 'A rival has picked up a meteorite!', 'Pazi, udar! Meteorit pada v rumeni krog.': 'Look out, impact! The meteorite is falling into the yellow ring.',
+    'Ustavi se ob ohlajenem meteoritu in ga poberi.': 'Stop by the cooled meteorite to pick it up.', 'Krog pokaže, kam bo padel meteorit.': 'The ring shows where the meteorite will fall.',
+    'Tekmeci so pobrali preveč meteoritov.': 'The rivals have picked up too many meteorites.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
