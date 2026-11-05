@@ -17,7 +17,7 @@ const srv = await serve();
 const browser = await launch();
 // every word written on the screen's canvases (fillText on a canvas World.zaslon marks __zs), kept per page
 const init = () => { const f = CanvasRenderingContext2D.prototype.fillText; window.__zsTxt = new Set(); CanvasRenderingContext2D.prototype.fillText = function (t, ...a) { if (this.canvas && this.canvas.__zs) window.__zsTxt.add(String(t)); return f.call(this, t, ...a); }; };
-const quick = async (page, id) => { await page.goto(srv.base + '/index.html?proga=' + id + '&t=3'); await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 }); };
+const quick = async (page, id) => { await page.goto(srv.base + '/index.html?proga=' + id + '&t=3', { timeout: 300000 }); await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 }); };
 // in the page: the car on the ideal line `back` metres before the screen, still; n frames of the race's view
 const helpers = () => {
   window.__zsPut = (back) => { const g = window.__game, R = g.race, T = R.track, P = R.player, Z = Render.world.dyn.zaslon, s = Z.s - back, i = T.idx(((s % T.len) + T.len) % T.len), off = T.rl ? T.rl[i] : 0;
