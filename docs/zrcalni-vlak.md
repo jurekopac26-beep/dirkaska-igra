@@ -16,7 +16,7 @@ Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verz
 | a | Model: črna kabina, dve zrcalni cisterni, dolly | narejeno |
 | b | Fizika dveh zgibov (sedlo + dolly): lomljenje, potiskanje, škarje, trki, padec | narejeno (odprti vprašanji spodaj) |
 | c | Tekmeci in promet z dolgim vozilom, kamera, posnetek, več telefonov | narejeno (duh 9 kanalov; brskalniški test vlaka manjka) |
-| d | Testi vozila, obremenitev telefona, README, reference | delno: `tests/zrcalni.test.js`, flota; manjkajo obremenitev, README, kazalo |
+| d | Testi vozila, obremenitev telefona, README, reference | delno: `tests/zrcalni.test.js`, flota, README, kazalo; manjkata obremenitev telefona in brskalniški test vlaka |
 
 TITAN s cisterno (#304) mora delovati enako (njegove reference se ne smejo spremeniti).
 
@@ -75,7 +75,7 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
 **Kaj manjka (seja v nedeljo):**
 1. `tests/browser/zrcalni.test.mjs` po vzoru `tests/browser/cisterna.test.mjs`. Preveri kamero, posnetek z 9 števili, duh s `ch` 9 in meni. Za poskus lokalno: `sed 's/avto=cisterna/avto=zrcalni/; s/r.w === 8/r.w === 9/; s/a.ch === 8/a.ch === 9/' …`. Izid je v razdelku »Brskalniški testi«.
 2. Obremenitev telefona z vlakom v polju (`perf`, polje `fieldN 3`) in vpis v test.
-3. README, razdelek »Novo vozilo«: `trailer.next` (`kp`, `dax`, `lim`) in `look.mirror { k, uv }`. Dopolni še `docs/kazalo.md` in `docs/igra.md`.
+3. README (»Novo vozilo«: `trailer.next`, `look.mirror`) in `docs/kazalo.md` sta dopolnjena. Manjka opis vlaka v `docs/igra.md` (vozila).
 4. Zgib 2 na vsaki progi doseže mejo 57°: poglej, ali je meja prenizka ali tekmeci vlak preveč lomijo (npr. `lim` 1,2 in primerjaj).
 5. Na Bathurstu igralec (avtopilot) potrebuje 1 reševanje v obeh fizikah. Poišči kraj (`r.rescue`) in razlog.
 6. Cisterna 2 ne trči v lasten vlačilec (pri škarjah gre skozenj). Trki z drugimi avti, cisternami in stenami delujejo.
