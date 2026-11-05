@@ -4128,7 +4128,7 @@ const Render = (function () {
   }
   // the lights of the time of day: the floodlights (from late dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights again
   function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); rsGlowAll(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
-  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
+  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); if (v.tlB) v.tlB.material.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
   // and floor, the wall's colour); the facade materials get it in their shader at the first dusk or night (winU 0 by day: as built)
@@ -4512,7 +4512,7 @@ const Render = (function () {
     if (v.charSh) for (const m of v.charSh.values()) if (!(keep && keep.has(m))) m.dispose();   // (its charred copies a pit repair took off the car: a smashed lens's, a tail lamp cover's)
     if (v.loose) { for (const n in v.loose) { const L = v.loose[n]; if (!L.shared && !(keep && keep.has(L.geo))) L.geo.dispose(); delete v.loose[n]; } }
   }
-  function disposeView(v, keep) { scene.remove(v.grp); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
+  function disposeView(v, keep) { scene.remove(v.grp); if (v.tlG) { scene.remove(v.tlG); v.tlG = null; } if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
   // geometry and materials the loose panels on the track are drawn with
   function debrisRes() { const s = new Set(), add = (o) => { if (o.geometry) s.add(o.geometry); if (o.material) s.add(o.material); }; for (const d of debrisMeshes) if (d.mesh && d.mesh.traverse) d.mesh.traverse(add); for (const m of xGround) m.traverse(add); return s; }   // (xGround: Razbijanje · nov način's pieces on the road)
   // what the cars drawn now and the loose pieces on the track are drawn with (a dead piece is freed but for these: debris dies, kept out)
@@ -4520,6 +4520,149 @@ const Render = (function () {
     const s = debrisRes(), add = (o) => { if (o.geometry) s.add(o.geometry); const m = o.material; if (Array.isArray(m)) for (const q of m) s.add(q); else if (m) s.add(m); };
     for (const v of views) v.grp.traverse(add);
     return s;
+  }
+  /* ---------------------------------------------------------------------
+     THE SEMI-TRAILER (Core: Car.tl, model.trailer; the TITAN CISTERNA's tank, docs/titan-cisterna.md): a group of its own in the scene
+     beside the tractor's, its origin on the kingpin. tlDraw puts it where the tractor's fifth wheel is drawn this frame, turned to the core
+     trailer's heading, pitched from the kingpin down to the road under its axles, rolled a little in a bend. Its look (model.trailer.look
+     .build(B)) is built once a model with the builder B (tlBuild): boxes, cylinders, a tank and its hoops, its tail lamps, one picture
+     (B.tex: the tank's skin and an atlas); one mesh of vertex colours on the picture (a piece with no part of it on its white corner), the
+     lamps a mesh of their own (lit with the tractor's), a shadow blob. Its metres: x forward from the kingpin, y up from the ground (the
+     kingpin at kp[1]), z across. Shared by the model's cars, never freed (tlLooks, as the bodies' cache)
+     --------------------------------------------------------------------- */
+  const tlLooks = new Map(), _tlK = new THREE.Vector3(), _tlP = new THREE.Vector3(), TL_TAU = Math.PI * 2;
+  function tlBuild(M) {
+    if (tlLooks.has(M.id)) return tlLooks.get(M.id);
+    const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1];
+    let cv = null;
+    const col = (k) => typeof k === 'number' ? colArr(k) : k || [1, 1, 1];
+    // a triangle: its corners, their normals (outward: the winding follows them), its colour, its corners on the picture (pixels; none: the white corner)
+    function tri(a, b, c, na, nb, nc, k, ua, ub, uc, lamp) {
+      const ex = b[0] - a[0], ey = b[1] - a[1], ez = b[2] - a[2], fx = c[0] - a[0], fy = c[1] - a[1], fz = c[2] - a[2];
+      if ((ey * fz - ez * fy) * (na[0] + nb[0] + nc[0]) + (ez * fx - ex * fz) * (na[1] + nb[1] + nc[1]) + (ex * fy - ey * fx) * (na[2] + nb[2] + nc[2]) < 0) {
+        let t = b; b = c; c = t; t = nb; nb = nc; nc = t; t = ub; ub = uc; uc = t; }
+      if (lamp) { LP.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); LN.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]); return; }
+      P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); N.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
+      for (let i = 0; i < 3; i++) C.push(k[0], k[1], k[2]);
+      ua = ua || WH; ub = ub || WH; uc = uc || WH; UV.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
+    }
+    const quad = (a, b, c, d, n, k, q, lamp) => { tri(a, b, c, n, n, n, k, q && q[0], q && q[1], q && q[2], lamp); tri(a, c, d, n, n, n, k, q && q[0], q && q[2], q && q[3], lamp); };
+    const unit = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    // an ellipse across x (the tank's, its hoops'): its point and its normal at the angle f from the bottom (f = pi/2 on the +z side)
+    const ell = (x, yc, ry, rz, f, s) => [x, yc - ry * s * Math.cos(f), rz * s * Math.sin(f)];
+    const eln = (ry, rz, f, ax) => unit([ax || 0, -Math.cos(f) / ry, Math.sin(f) / rz]);
+    const B = {
+      // the picture (w x h px): draw(g, w, h) paints it; its corner (the last 8 x 8 px) is made white for the pieces without a part of it
+      tex(w, h, draw) { cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'); draw(g, w, h); g.fillStyle = '#fff'; g.fillRect(w - 8, h - 8, 8, 8); },
+      // a box: its middle, its sizes, its colour; o.face ('-x' the rear, '+x', '+y', '-y', '+z', '-z') takes o.uv ([u0, v0, u1, v1] px: as seen
+      // from outside, its top left to its bottom right; '+y': x along, z down) in o.faceK (white: the picture as it is); o.skip: faces left out
+      box(x, y, z, lx, ly, lz, k, o, lamp) {
+        const K = col(k), hx = lx / 2, hy = ly / 2, hz = lz / 2, V = (sx, sy, sz) => [x + sx * hx, y + sy * hy, z + sz * hz];
+        const F = { '-x': [[-1, 0, 0], V(-1, 1, -1), V(-1, 1, 1), V(-1, -1, 1), V(-1, -1, -1)], '+x': [[1, 0, 0], V(1, 1, 1), V(1, 1, -1), V(1, -1, -1), V(1, -1, 1)],
+          '+z': [[0, 0, 1], V(-1, 1, 1), V(1, 1, 1), V(1, -1, 1), V(-1, -1, 1)], '-z': [[0, 0, -1], V(1, 1, -1), V(-1, 1, -1), V(-1, -1, -1), V(1, -1, -1)],
+          '+y': [[0, 1, 0], V(-1, 1, -1), V(1, 1, -1), V(1, 1, 1), V(-1, 1, 1)], '-y': [[0, -1, 0], V(-1, -1, 1), V(1, -1, 1), V(1, -1, -1), V(-1, -1, -1)] };
+        for (const s in F) {
+          if (o && o.skip && o.skip.indexOf(s) >= 0) continue;
+          const [n, a, b, c, d] = F[s], r = o && o.face === s && o.uv;
+          quad(a, b, c, d, n, r ? col(o.faceK || [1, 1, 1]) : K, r ? [[r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]] : null, lamp);
+        }
+      },
+      // a cylinder from a to b ([x, y, z]), its radius (o.r2 at b), o.n sides, its ends closed (o.caps false: open; o.capK their colour)
+      cyl(a, b, r, k, o) {
+        const K = col(k), KC = o && o.capK != null ? col(o.capK) : K, n = (o && o.n) || 10, r2 = o && o.r2 != null ? o.r2 : r, caps = !(o && o.caps === false);
+        const d = unit([b[0] - a[0], b[1] - a[1], b[2] - a[2]]), rf = Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], dt = rf[0] * d[0] + rf[1] * d[1] + rf[2] * d[2];
+        const e1 = unit([rf[0] - d[0] * dt, rf[1] - d[1] * dt, rf[2] - d[2] * dt]), e2 = [d[1] * e1[2] - d[2] * e1[1], d[2] * e1[0] - d[0] * e1[2], d[0] * e1[1] - d[1] * e1[0]];
+        const nr = (i) => { const t = TL_TAU * i / n, c = Math.cos(t), s = Math.sin(t); return [e1[0] * c + e2[0] * s, e1[1] * c + e2[1] * s, e1[2] * c + e2[2] * s]; };
+        const at = (p, R, q) => [p[0] + R * q[0], p[1] + R * q[1], p[2] + R * q[2]], na = [-d[0], -d[1], -d[2]];
+        for (let i = 0; i < n; i++) {
+          const n0 = nr(i), n1 = nr(i + 1), p0 = at(a, r, n0), p1 = at(a, r, n1), q0 = at(b, r2, n0), q1 = at(b, r2, n1);
+          tri(p0, p1, q1, n0, n1, n1, K); tri(p0, q1, q0, n0, n1, n0, K);
+          if (caps) { tri(a, p0, p1, na, na, na, KC); tri(b, q1, q0, d, d, d, KC); }
+        }
+      },
+      // the tank: an elliptic cylinder along x from x0 (its rear) to x1, its middle yc, half its height ry, half its width rz, o.n sides;
+      // o.uv its skin on the picture ([u0, v0, u1, v1] px: x0 to x1 along, around from the bottom up the +z side, over the top, down the -z
+      // side); o.dome deep domed ends (m), o.end their picture ([u0, v0, u1, v1] px, a square: the end as seen from outside)
+      tank(x0, x1, yc, ry, rz, o) {
+        const n = (o && o.n) || 32, S = o && o.uv, E = o && o.end, dm = (o && o.dome) || 0, W = [1, 1, 1];
+        const sv = (i) => S ? [0, S[1] + (S[3] - S[1]) * i / n] : null;
+        for (let i = 0; i < n; i++) {
+          const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, a = ell(x0, yc, ry, rz, f0, 1), b = ell(x0, yc, ry, rz, f1, 1), c = ell(x1, yc, ry, rz, f1, 1), d = ell(x1, yc, ry, rz, f0, 1);
+          const n0 = eln(ry, rz, f0), n1 = eln(ry, rz, f1), v0 = sv(i), v1 = sv(i + 1);
+          const ua = S && [S[0], v0[1]], ub = S && [S[0], v1[1]], uc = S && [S[2], v1[1]], ud = S && [S[2], v0[1]];
+          tri(a, b, c, n0, n1, n1, W, ua, ub, uc); tri(a, c, d, n0, n1, n0, W, ua, uc, ud);
+        }
+        if (!(dm > 0)) return;
+        const TT = [0, 0.4, 0.7, 0.9, 1];
+        for (const sd of [-1, 1]) {   // (-1 the rear, 1 the front)
+          const xb = sd < 0 ? x0 : x1, uvE = (p) => { if (!E) return null; const cx = (E[0] + E[2]) / 2, cy = (E[1] + E[3]) / 2, R = (E[2] - E[0]) / 2 - 2; return [cx - sd * p[2] / rz * R, cy - (p[1] - yc) / ry * R]; };
+          for (let k = 0; k < TT.length - 1; k++) {
+            const t0 = TT[k], t1 = TT[k + 1], s0 = Math.sqrt(1 - t0 * t0), s1 = Math.sqrt(1 - t1 * t1), xa = xb + sd * dm * t0, xc = xb + sd * dm * t1;
+            for (let i = 0; i < n; i++) {
+              const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, a = ell(xa, yc, ry, rz, f0, s0), b = ell(xa, yc, ry, rz, f1, s0), c = ell(xc, yc, ry, rz, f1, s1), d = ell(xc, yc, ry, rz, f0, s1);
+              const na = unit([sd * t0 / dm, -s0 * Math.cos(f0) / ry, s0 * Math.sin(f0) / rz]), nb = unit([sd * t0 / dm, -s0 * Math.cos(f1) / ry, s0 * Math.sin(f1) / rz]);
+              const nc = unit([sd * t1 / dm, -s1 * Math.cos(f1) / ry, s1 * Math.sin(f1) / rz]), nd = unit([sd * t1 / dm, -s1 * Math.cos(f0) / ry, s1 * Math.sin(f0) / rz]);
+              tri(a, b, c, na, nb, nc, W, uvE(a), uvE(b), uvE(c)); if (s1 > 0) tri(a, c, d, na, nc, nd, W, uvE(a), uvE(c), uvE(d));
+            }
+          }
+        }
+      },
+      // a hoop round the tank at x: w wide, t proud of it (the tank's yc, ry, rz; o.n its sides, as the tank's)
+      hoop(x, yc, ry, rz, w, t, k, o) {
+        const K = col(k), n = (o && o.n) || 32, xa = x - w / 2, xb = x + w / 2;
+        for (let i = 0; i < n; i++) {
+          const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, n0 = eln(ry, rz, f0), n1 = eln(ry, rz, f1);
+          const o0 = ell(0, yc, ry + t, rz + t, f0, 1), o1 = ell(0, yc, ry + t, rz + t, f1, 1), i0 = ell(0, yc, ry, rz, f0, 1), i1 = ell(0, yc, ry, rz, f1, 1);
+          const A = (p, xx) => [xx, p[1], p[2]];
+          tri(A(o0, xa), A(o1, xa), A(o1, xb), n0, n1, n1, K); tri(A(o0, xa), A(o1, xb), A(o0, xb), n0, n1, n0, K);
+          for (const [xx, s] of [[xa, -1], [xb, 1]]) quad(A(i0, xx), A(i1, xx), A(o1, xx), A(o0, xx), [s, 0, 0], K);
+        }
+      },
+      // a tail lamp facing back (-x): its middle, its height and width; lit with the tractor's (its own mesh)
+      lamp(x, y, z, ly, lz) { B.box(x, y, z, 0.04, ly, lz, null, { skip: ['+x'] }, true); lamps.push([x - 0.03, y, z]); },
+      rgb: colArr,
+    };
+    try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + '): ' + (e && e.message)); tlLooks.set(M.id, null); return null; }
+    const TW = cv ? cv.width : 1, TH = cv ? cv.height : 1, wu = cv ? (TW - 4) / TW : 0, wv = cv ? (TH - 4) / TH : 0;
+    for (let i = 0; i < UV.length; i += 2) { if (UV[i] < 0) { UV[i] = wu; UV[i + 1] = wv; } else { UV[i] /= TW; UV[i + 1] /= TH; } }
+    const y0 = -D.kp[1], geo = new THREE.BufferGeometry(), lgeo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); geo.translate(0, y0, 0); geo.computeBoundingSphere();
+    lgeo.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3)); lgeo.setAttribute('normal', new THREE.Float32BufferAttribute(LN, 3)); lgeo.translate(0, y0, 0); lgeo.computeBoundingSphere();
+    let map = null; if (cv) { map = new THREE.CanvasTexture(cv); map.flipY = false; map.anisotropy = Math.min(4, renderer ? renderer.capabilities.getMaxAnisotropy() : 1); }
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, map });
+    const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
+    const R = { geo, lgeo, mat, blob, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9 };
+    tlLooks.set(M.id, R); return R;
+  }
+  // the trailer's group (makeView): its body, its lamps, its blob; in the scene with the tractor (carCull takes the two out together)
+  function tlView(v, c) {
+    const R = tlBuild(c.m); if (!R) return;
+    const G = new THREE.Group(), b = new THREE.Mesh(R.geo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob);
+    b.castShadow = true; bl.renderOrder = 1; G.add(b, L, bl); G.rotation.order = 'YZX';
+    v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlR = R; v.tlRoll = 0; scene.add(G);
+  }
+  // the trailer drawn this frame (updateCars, after the tractor's matrix): on the fifth wheel as the tractor is drawn, its heading the core's
+  // (between its steps), its pitch down to the road under its axles; torn off (Core: T.fall) where the core has it
+  function tlDraw(v, c, u, dt, braking, vis) {
+    const G = v.tlG, T = c.tl;
+    if (!T) { G.visible = false; return; }
+    G.visible = v.grp.visible;
+    const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
+    if (T.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
+    else G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld));
+    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA, run);
+    const lat = clamp(T.w * Math.hypot(T.vx, T.vz), -16, 16);
+    v.tlRoll += (clamp(-lat * 0.0036 * sw, -0.05 * sw, 0.05 * sw) - v.tlRoll) * Math.min(1, dt * 5);
+    G.rotation.set((v.broll || 0) + v.tlRoll, -h, pit, 'YZX');
+    v.tlS.material = settings.shadows ? matBlob : matBlobS;
+    v.tlL.material = braking ? matTailOn : matTailOff;
+    if (!vis) return;
+    G.updateMatrixWorld(true);
+    const Q = v.gq; if (!Q || !G.visible) return;
+    for (const p of v.tlR.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);   // (its tail lamps' glow, as the tractor's: carGlows)
+      glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
+      if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
   }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
@@ -4542,6 +4685,7 @@ const Render = (function () {
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
     if (c.chr && c.chr.rival) nameTag(v, c.name, '#ff8a7a');   // the player's standing rival (the career): its name over the car
     if (tierNow === 0 && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
+    if (c.tl && c.m.trailer && c.m.trailer.look) tlView(v, c);   // (its semi-trailer: a group of its own on the kingpin, tlDraw)
     scene.add(v.grp); return v;
   }
   // NIZKA: a rival far from the camera drawn as one coarse mesh (farBuild): its opaque parts, the body and the wheels, merged in the body's frame,
@@ -6182,6 +6326,7 @@ const Render = (function () {
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
       v.gq = { braking, rainL, wk, sk, x, y, z, nt, rl, gy };   // (carGlows: this frame's lamps, also for carCull's car back in view)
       if (vis) carGlows(v);
+      if (v.tlG) tlDraw(v, c, u, dt, braking, vis);   // (its semi-trailer on the kingpin, as the tractor is drawn)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
       if (v.blob && vis) {   // without shadow maps: a shadow of the car's shape, cast a little away from the sun (with them: the soft contact shadow only)
         const off = !settings.shadows; if (v.blobOff !== off) { v.blobOff = off; v.blob.material = off ? matBlobS : matBlob; }
@@ -9593,10 +9738,13 @@ const Render = (function () {
       if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
         _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
         _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
+        if (v.tlG) { const G = v.tlG, th = -G.rotation.y, tl = c.tl.D.len - c.tl.D.f, ex = G.position.x - Math.cos(th) * tl, ez = G.position.z - Math.sin(th) * tl;   // (a semi-trailer: the sphere round the rig, its nose to the trailer's tail)
+          const nx = v.grp.position.x + Math.cos(h) * (c.m.len * 0.5 + 2 * bm), nz = v.grp.position.z + Math.sin(h) * (c.m.len * 0.5 + 2 * bm);
+          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0); }
         out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
-      v.cull = out; if (out) { scene.remove(v.grp); continue; }
-      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
+      v.cull = out; if (out) { scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); continue; }
+      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); if (v.tlG) { scene.add(v.tlG); v.tlG.updateMatrixWorld(true); } back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
     if (back) { glows.end(); streaks.end(); }
   }
   function frame(dt, alpha, target, mode, opt) {
