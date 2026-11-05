@@ -7,9 +7,10 @@
    odvisno katere živali«, »nekatere živali pa naj bodo same ter se sprehajajo ali pa jejo travo«, »12 prizorov različnih živali na različnih
    progah«: how they keep company is the species' own (SOC: alone, a male and a female, or a herd of 3-10 with their young: a red deer stag with
    his hinds, a sow with her piglets, a mob of kangaroos ...); one alone walks to and fro or grazes (LIVE: its own mesh, legs and head moved in
-   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and eighteen tracks have a scene of their
-   own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland, storks at their nest
-   in Medvode, koalas in the gum trees, pigs in their pen ...).
+   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and sixteen tracks have eighteen scenes
+   of their own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland, koalas in
+   the gum trees ...; the farm's animals, the ducks and the stork where they really are, from OSM: pigs at the farm in Zbilje, horses at a farm
+   in Ouninpohja, ducks and swans on the lake at Crystal Palace, one stork on its pole in Medvode that flies off as the car comes, flyStep).
    World.life(o) runs at the end of every build (finish in js/world.js): the woods are read from the instanced trees (o.cull: IChunks), the
    glade's trees are taken out (their instances scaled to nothing), the things and the animals that are not live are merged into one
    vertex-coloured mesh per 256 m chunk (one draw call per chunk in view, far chunks culled like the plants on the lower tiers); the animals in

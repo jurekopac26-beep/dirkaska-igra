@@ -2322,6 +2322,18 @@
     return stats;
   };
   World.peopleSites = SITES;   // (for the tests and the docs)
+  // the ground of a track's scenes before they are built ([x, z, r]: their kinds' clear circles), for a world that merges its own verge into
+  // its chunks (shrubs, tufts, rocks: clearAll takes out only the instanced ones) to keep it free there: Vršič (its exclusion circles)
+  World.peopleGround = function (T) {
+    const def = T && T.def, out = []; if (!def || def.test) return out;
+    for (const [name, at, side] of SITES[def.id] || []) {
+      const d = S[name]; if (!d) continue;
+      const s = T.startS + at; if (T.open && (s < 0 || s > T.len)) continue;
+      const F = frame(T, () => 0, s, side === 'room' ? roomSide(T, s) : side);
+      for (const [a, b, r] of d.clear && d.clear.length ? d.clear : [[0, 7, 13]]) { const [x, z] = F.w(a, b); out.push([x, z, r]); }
+    }
+    return out;
+  };
   // the kit for more scene types in files of their own (js/world-ljudje2.js, js/world-ljudje3.js): the scenes, the props, more hand things, hats and poses, the motions, the
   // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
   World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, HATX, SUMMER, BUSY_HANDS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };

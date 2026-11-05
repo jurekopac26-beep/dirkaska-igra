@@ -7,7 +7,7 @@ import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../tests/browser/lib.mjs';
 
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-if (!args[0] || args[0].startsWith('--')) { console.log('node tools/ljudje/zivali.mjs <proga>[,<proga>…] [--d 40,24] [--pol 9] [--pokonci]'); process.exit(2); }
+if (!args[0] || args[0].startsWith('--')) { console.log('node tools/ljudje/zivali.mjs <proga>[,<proga>…] [--d 40,24] [--pol 9] [--pokonci] [--let 1.5,3]'); process.exit(2); }
 const ids = args[0].split(','), Ds = flag('--d', '40,24').split(',').map(Number), half = +flag('--pol', 9), portrait = args.includes('--pokonci'), lets = (flag('--let', '') || '').split(',').filter(Boolean).map(Number);
 const OUT = path.join(REPO, 'test-results', 'ljudje', 'zivali'); fs.mkdirSync(OUT, { recursive: true });
 const png = (f, src) => fs.writeFileSync(f, Buffer.from(src.split(',')[1], 'base64'));
