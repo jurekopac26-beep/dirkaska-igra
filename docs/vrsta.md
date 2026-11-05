@@ -28,9 +28,10 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 1 | #315 | Deli iz garaže, sklop 4 (pregled 608 možnosti KOLIBRIJA, stran za ogled, testi) | 3 | pripravljen (seja session_01WbgGzuLb5rcyQy259XTWg8); povezani testi lokalno zeleni, Ready; rok ned. 8. 11. 10.00 (pred račun 2 ureja `js/cars/*`) |
-| 2 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 3 | #259 | tribune iz OSM | 3 | čaka |
-| 4 | #250 | 7 novosti | 3 | čaka |
+| 2 | #321 | krajši krog testov na GitHubu: brskalniški testi v 6 delih (~112 → ~76 min), krog iste kode ~5 min (krogi samo z dokumenti odpadejo) | 3 | pripravljen (seja session_01WbgGztTqNStyLT9BjAp1ez); osnutek do vrste; prednost, ker skrajša vse naslednje kroge (odločitev uporabnika 5. 11.: hitrejši testi) |
+| 3 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 4 | #259 | tribune iz OSM | 3 | čaka |
+| 5 | #250 | 7 novosti | 3 | čaka |
 | 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 7 | #226 | Bâlea | 3 | čaka |
 | 8 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
