@@ -16,7 +16,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
-| Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
 | Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
