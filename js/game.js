@@ -534,7 +534,7 @@
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom, kjer zaslon nima prostora, sorazmerno manj: Render updateCamera)
     Render.cam.shOn = { hit: +S.camShake, land: +S.camLand, kerb: +S.camKerb, mis: +S.camMis };   // (Tresenje kamere: ob trku, ob pristanku po skoku, na robnikih, v misijah)
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
-    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv);
+    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(+S.codrv === 1);   // (2: the co-driver's captions only)
     Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik: {0}', v.codrv) : '') + (v.radio ? tr(' · policijski radio: {0} ({1})', v.radio, v.radioLang) : tr(' · policijski radio: ni glasu za slovenščino, govori angleško')); });
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: !!S.vibrate });
@@ -3912,13 +3912,14 @@
     if (g) {
       const blue = g.kind === 'ring' || g.kind === 'chic', lr = g.dir > 0 ? 'r' : 'l';
       const pk = g.kind === 'ring' ? (track.def.leftHand ? 'ringcw' : 'ring') : g.kind === 'chic' ? 'c' + lr : lr + (g.hair ? '3' : g.kind === 'fast' || !g.sev ? '0' : '1');
-      key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
+      const num = cdN && !blue && g.r ? Core.noteGrade(g.r) : 0;   // (the co-driver's grade of the bend, 1-6, while he reads the road)
+      key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev) + (num ? '|' + num : '');
     }
     if (key === lastNote) { if (key) placeNote(el); return; }
     lastNote = key; noteAt0 = '';
     if (!key) { el.className = ''; return; }
-    const [pk, cls] = key.split('|');
-    $('h-note-path').setAttribute('d', NOTE_PATHS[pk]);
+    const [pk, cls, num] = key.split('|'), nt = $('h-note-num');
+    $('h-note-path').setAttribute('d', NOTE_PATHS[pk]); nt.textContent = num || ''; if (num) nt.setAttribute('x', pk[0] === 'r' ? 52 : 12);   // (in the corner the arrow leaves free)
     el.className = 'show ' + cls; placeNote(el);
   }
   // the sign clear of the block at the top in the middle (the clock, the splits, the police's), however wide the phone's fonts make it: css
@@ -4163,22 +4164,54 @@
     if (!r) { item = Comm.say(key, null, 0); if (item) { st.said[k] = { lap, item }; st.lastT = race.time; } else r = 'off'; }
     st.log.push({ k, n: track.names[k].n, lap, t: race.time, r: r || 'say', item }); if (st.log.length > 300) st.log.shift();
   }
-  /* ---------------- the co-driver (a rally stage, S.codrv): the pace notes (Track.paceNotes) read out ahead of the car ----------------
-     A call is said when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a rescue, a spin) is skipped. */
-  let cdN = null, cdK = 0, cdLog = [];
+  /* ---------------- the co-driver (S.codrv: 0 off, 2 the captions, 1 voice and captions; docs/sovoznik.md): the pace notes (Track.paceNotes)
+     ahead of the car. On every real open road (not a test track; not the new map with its missions, nor the driving school) the call's
+     caption (#h-codrv, in the game's language: Core.codrvCap; lying under the clock's block, upright under the corner sign: placeCap) and the
+     bends' grade on the corner sign; the voice (English, Comm.note) on a rally stage's time trial, as before (on the roads after the answer
+     to the question sovoznik-glas). A call is due when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a
+     rescue, a spin) is skipped. Its caption stays until the car is at that first note, 1.5 s at least, or the next call's takes its place. */
+  let cdN = null, cdK = 0, cdLog = [], cdVoice = false, cdCap = null;
+  const codrvRoad = () => Core.codrvRoad(track.def) && !race.nv && !school;   // (the real open roads: Core's list)
   function codrvInit() {
-    cdN = race.timeTrial && (isRally(track.def) || isDesc(track.def)) && +S.codrv ? track.paceNotes() : null; cdK = 0; cdLog = [];   // (a rally stage, a gravel descent)
-    const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, log: cdLog.slice() }) });   // (tests)
+    const rally = race.timeTrial && (isRally(track.def) || isDesc(track.def));   // (a rally stage, a gravel descent: the voice too)
+    cdN = +S.codrv && (rally || codrvRoad()) ? track.paceNotes() : null; cdK = 0; cdLog = []; cdVoice = !!cdN && rally && +S.codrv === 1; capOff();
+    const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, voice: cdVoice, cap: cdCap ? cdCap.text : '', log: cdLog.slice() }) });   // (tests)
   }
+  function capOff() { const el = $('h-codrv'); if (cdCap || el.className) { cdCap = null; el.className = ''; el.textContent = ''; } }
   const cdLead = (P) => clamp(P.speed * 2.4 + 30, 55, 170);
   function updateCodrv(P) {
-    if (!cdN || phase !== 'racing' || P.finished) return;
+    if (!cdN) return;
+    if (phase !== 'racing' || P.finished) { if (cdCap) capOff(); return; }
     const s = P.q.s;
+    if (cdCap && s >= cdCap.s && race.time - cdCap.t >= 1.5) capOff();   // (the car at its first note)
     while (cdK < cdN.length && cdN[cdK].s < s - 10) cdK++;   // (driven past without it)
     const c = cdN[cdK];
-    if (c && c.s - s <= cdLead(P)) { const it = Comm.note(c.text); cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, item: !!it }); if (cdLog.length > 200) cdLog.shift(); cdK++; }
+    if (c && c.s - s <= cdLead(P)) {
+      const it = cdVoice ? Comm.note(c.text) : null, el = $('h-codrv');
+      cdCap = { text: Core.codrvCap(c.toks, S.lang), s: c.s, t: race.time }; el.textContent = cdCap.text; el.className = 'show'; capAt0 = '';
+      cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, cap: cdCap.text, item: !!it }); if (cdLog.length > 200) cdLog.shift(); cdK++;
+    }
+    if (cdCap) placeCap();
   }
-  const codrvSoon = (P, sec) => { const c = cdN && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed)
+  const codrvSoon = (P, sec) => { const c = cdVoice && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed; the captions alone keep no one quiet)
+  // the caption's place: on its side under the clock's block (with whatever is under the clock: the line under it, the duel's gap, the
+  // police's panel) and, where a wide caption would reach under the corner sign beside the block, under the sign too; upright under the
+  // sign's place (its box as css and placeNote have it, shown or not); centred. Measured again with each new caption (capAt0 cleared:
+  // its width) and when the screen, the HUD's state, the block or the sign's place changes
+  let capAt0 = '';
+  function placeCap() {
+    const el = $('h-codrv'), B = $('h-times'), N = $('h-note'), land = innerWidth > innerHeight;
+    const k = innerWidth + 'x' + innerHeight + '|' + $('hud').className + '|' + B.offsetWidth + 'x' + B.offsetHeight + '|' + N.offsetLeft + ',' + N.offsetTop + '|' + N.offsetHeight;
+    if (k === capAt0 || !el.offsetParent) return; capAt0 = k;
+    const O = el.offsetParent.getBoundingClientRect(), nb = N.offsetTop + N.offsetHeight;
+    let y = nb + 6;
+    if (land) {
+      y = -Infinity; for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) y = Math.max(y, r.bottom - O.top + 4); }
+      const h = el.offsetWidth / 2, c = O.width / 2;   // (the caption centred on the HUD)
+      if (y > -Infinity && y < nb + 4 && c - h < N.offsetLeft + N.offsetWidth + 4 && c + h > N.offsetLeft - 4) y = nb + 4;
+    }
+    if (y > -Infinity) el.style.top = Math.round(y) + 'px';
+  }
 
   // tests: window.__game.places (the names, their commentator keys, what was said and why places were skipped)
   function placeExpose() {
