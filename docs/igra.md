@@ -2,6 +2,8 @@
 
 Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so v [`docs/proge/`](proge/), seznam prog v [`README.md`](../README.md#proge). Datoteka je velika: poišči naslov razdelka z grepom.
 
+Testne proge (`test: true`, od 5. 11. 2026 tudi proge iz ZDA razen Pikes Peaka; `CLAUDE.md`, »Testne proge«) igra gradi kot prej: brez tabel pred zaviranjem, prizorov ljudi in živali, tabel in smernikov ob odprtih cestah in podrobnejših gledalcev na tribunah, gledalcev ob cesti ne redči. Kjer spodaj piše katera od njih, opis velja za čas, ko je bila prava proga.
+
 - [Križišča in stranske ceste](#križišča-in-stranske-ceste)
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
 - [Kje na progi si (proge po resničnih krajih)](#kje-na-progi-si-proge-po-resničnih-krajih)
