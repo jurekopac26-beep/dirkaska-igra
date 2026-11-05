@@ -479,6 +479,7 @@
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
     'Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler.': 'A modern hot hatch with four-wheel drive: wide arches, a black roof and a big roof spoiler.',
     'Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles.': 'A modern competition drift coupe: wide arches, a big wing and a big steering lock.',
+    'Sodoben relijski hibrid: veliko krilo, odprtine na blatnikih, zračnik na strehi.': 'A modern hybrid rally car: a big wing, vented arches and a roof scoop.',
     'Dirkalnik GT3 z motorjem v sredini, zračnikom na strehi in velikim krilom s stranicama.': 'A mid-engined GT3 racer with a scoop on the roof and a big wing with tall endplates.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
