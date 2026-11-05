@@ -37,7 +37,9 @@ Nabor je vprašanje `zvoki-okolja-nabor`; priporočenih je šest zvokov:
 | **Morje** | valovanje (šum, val vsakih 7–11 s, pršenje ob lomu) in galebi (klici v skupinah po 2–4) | proge ob morju (`def.sea` ali velika voda ob cesti) | vedno; galebi ne ponoči in ne v dežju |
 | **Žuželke** | črički (pulzi 4–5 kHz) zvečer in ponoči, škržati (brenčanje 5–7 kHz, valovi po 5–10 s) podnevi v toplih krajih | podnebje proge: zemljepisna širina in nadmorska višina (`GEO`), drevesa ali grmovje ob cesti | samo poleti; ne v dežju, ne na snegu |
 
-Možnost 3 vprašanja doda še živali ob progi (kravji zvonci na pašnikih, ovce; po živalih iz `World.life`, ki so res tam) in mestno ozadje na uličnih progah (oddaljen promet, golobi), ~3 h več.
+Možnost 3 vprašanja doda še živali ob progi (kravji zvonci na pašnikih, ovce; po živalih iz `World.life`, ki so res tam), mestno ozadje na uličnih progah (oddaljen promet, golobi) ter na dirkališčih razglas po zvočniku in vzklike ljudi v angleščini (posneti kratki stavki; glas po izbiri pri sovozniku, `docs/sovoznik.md`), ~5 h več.
+
+**Govor v angleščini** (odločitev uporabnika 5. 11. 2026 ob 16.10: »Vse zvoke delaj v angleščini.«): šest priporočenih zvokov je brez govora. Kjer je v zvokih okolja govor (razglas po zvočniku, napovedovalec, vzkliki ljudi), je vedno v angleščini, tudi ko je igra v slovenščini, in brez imen resničnih oseb in podjetij (`CLAUDE.md`, Pravna varnost).
 
 Pričakovano po progah (potrdi orodje v koraku 1): gozd in ptice Vršič, Nürburg, Spa, Ouninpohja, Pikes Peak (pod gozdno mejo), Beartooth, Irohazaka, Great Alpine Road, Uncompahgre, Palomar; voda Sani Pass (potoki, slapovi), Uncompahgre (slap), Great Alpine Road in Longford (reka), Medvode (Sava, jezero v Zbiljah), Vršič (jezero Jasna); vas Vršič (Kranjska Gora), Medvode (Medvode, Zbilje, Valburga, Smlednik), Ouninpohja, Livorno, Nürburg; veter Vršič (prelaz), Beartooth, Mauna Kea, Sani Pass, Mount Hotham, Mount Buller, Uncompahgre, Los Caracoles, Katu-Jaryk, Tianmen, Rio do Rastro, Moki Dugway; morje Big Sur, Chapman's Peak, Livorno, Bang Saen, Newcastle; žuželke Livorno, Marrakesh, Bang Saen, Townsville, Suzuka, Irohazaka, kalifornijske ceste, brazilski in avstralski kraji.
 
@@ -108,7 +110,7 @@ Ostali povezani testi: `lang.test.js` (angleška vrstica), `perf.test.mjs` (nesp
 | 4 | Testi in meritve obremenitve | 2,5 |
 | 5 | Uglaševanje na Vršiču, Ouninpohji, Big Suru, Sani Passu in v Livornu; dokumenti; kratki posnetki iz igre za uporabnika | 2 |
 
-Skupaj ~15 h (±3 h): seja 1 koraki 1–3 (~11 h), seja 2 koraka 4–5 (~4,5 h); Opus, napor max. Posnetki CC0 ali lastni: +2–3 h. Nabor z živalmi in mestom: +3 h.
+Skupaj ~15 h (±3 h): seja 1 koraki 1–3 (~11 h), seja 2 koraka 4–5 (~4,5 h); Opus, napor max. Posnetki CC0 ali lastni: +2–3 h. Nabor z živalmi, mestom in razglasi v angleščini: +5 h.
 
 Pogoj za začetek: odgovori na vprašanja; #319 (razdelitev datotek prog) in #284 (boksi, `js/sfx.js`) na `main` ali zaprta, da ni sporov; pred novimi progami (`docs/vrsta.md`). Seja odpre osnutek pull requesta »Zvoki okolja« in vrstico iz Načrtovano izbriše.
 
@@ -118,8 +120,10 @@ Pogoj za začetek: odgovori na vprašanja; #319 (razdelitev datotek prog) in #28
 - `zvoki-okolja-nabor`: nabor zvokov (priporočeno 1 · šest zvokov po kraju).
 - `zvoki-okolja-glasnost`: glasnost in stikalo (priporočeno 1 · Izklop / Tiho / Glasneje, privzeto Tiho).
 
+Odločitev uporabnika 5. 11. 2026 ob 16.10 (sporočila koordinacija »VSE SEJE 2«): »Vse zvoke delaj v angleščini.« Govor v zvokih okolja je v angleščini (razdelek Zvoki in kdaj se slišijo); vprašanji `zvoki-okolja-nabor` in `zvoki-okolja-vir` sta prilagojeni.
+
 Primeri vseh zvokov (prototip v brskalniku, z motorjem za primerjavo glasnosti): https://claude.ai/artifact/RAKVe7d2UNWUAStf16xv2h, povezani tudi pri vprašanjih. Seja odgovore prebere ob 23.20 (`docs/vprasanja.md`, razdelek Odgovor).
 
 ## Stanje
 
-- 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338).
+- 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338). Ob 16.10 odločitev uporabnika: govor v zvokih okolja v angleščini (načrt in vprašanji prilagojena).
