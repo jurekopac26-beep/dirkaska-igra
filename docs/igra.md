@@ -603,7 +603,7 @@ V igri je **46 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
-| **OSA R** | 4WD | 422 KM | 1450 kg | 55.000 kovančkov | Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler. Najhitrejši mali avti (0–100 hitreje od LEV S), končna hitrost omejena. |
+| **OSA R** | 4WD | 422 KM | 1450 kg | 55.000 kovančkov | Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler. Najhitrejši mali avto (0–100 hitreje od LEV S). |
 
 ### Športni
 
