@@ -6,7 +6,7 @@
 // in its garage loads with the LEV S in its place (once, with its upgrades; both owned: the better level of each part), the garage
 // listing the LEV S once and never the retired model.
 //   node tests/browser/career.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('career');
 const srv = await serve();
@@ -60,8 +60,7 @@ try {
   // 4. a race on autopilot: the prize on the results screen
   await startTrack(page, 'jezero');
   const info = await page.evaluate(() => { const r = window.__game.race; return { len: r.track.len, laps: r.laps, n: r.cars.length, diff: window.__game.S.difficulty, upg: r.player.upg }; });
-  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });   // (done: the results screen is up, a resume would close it)
-  await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  await driveToResults(page);   // (stuck against the barrier, put back on the road: lib.mjs)
   const res = await page.evaluate(() => ({ sub: document.getElementById('res-sub').textContent, pos: parseInt(document.getElementById('res-pos').textContent, 10) }));
   const c4 = await cr();
   const prize = await page.evaluate((a) => Core.careerPrize(a.pos, a.n, a.len * a.laps, a.diff), { pos: res.pos, n: info.n, len: info.len, laps: info.laps, diff: info.diff });
