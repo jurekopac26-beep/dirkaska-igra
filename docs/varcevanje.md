@@ -83,11 +83,11 @@ Na strani 3 (`docs/vprasanja.md`) je uporabnik 3. 11. 2026 izbral »Vse (A–G)�
 - **C · `tools/spoji-main.mjs`:** spoj `main` ali druge veje sam reši mehanske spore (kazalo, `tests/run.js`, `README.md`, `js/lang.js`; strani `index.html` in `garaza.html` prepusti `stamp.js --merge` iz #286), odstrani žige starejših vej (`stamp.js --strip`) in preveri povezave (`--check`); ostale spore izpiše z namigom.
 - **D, F, G** (več agentov samo za težko delo, krajši `CLAUDE.md` in vrh kazala, manj slik in kratki izpisi): pokrito s pravili zgoraj.
 - **E · `.ignore` in `-diff`:** generirani podatki z ogromnimi vrsticami (`js/routes.js`, `assets/maps/`, `maketa-menija/assets/` …) niso med zadetki Grep in Glob in ne v `git diff`.
-- **`zetoni-3` strani 3:** 2 · pull request samo z datotekami `.md` na GitHubu požene samo `fleet.test.js` (`.github/workflows/tests.yml`: posel »Spremembe« ugotovi iz `git diff`, posel »Samo dokumenti«; težki posli se preskočijo, »Igra v brskalniku« ostane zelena; potiski na `main` in ročni zagoni tečejo v celoti); 5 · kratki izpisi orodij (`CLAUDE.md`, Varčevanje); 1 in 3 VSE SEJE 2; 4 · `docs/proge-pregled.md` (#280); 6 (arhiv sej, brisanje vej) čaka na uporabnika.
+- **`zetoni-3` strani 3:** 2 · pull request samo z datotekami `.md` na GitHubu požene samo teste dokumentov: ni več v #279, ker to naredi #321 (krajši krog testov; dogovor koordinacije VSE SEJE 2 5. 11. 2026, da se pull requesta ne spreta v `.github/workflows/tests.yml`); 5 · kratki izpisi orodij (`CLAUDE.md`, Varčevanje); 1 in 3 VSE SEJE 2; 4 · `docs/proge-pregled.md` (#280); 6 (arhiv sej, brisanje vej) čaka na uporabnika.
 
 ## Stanje
 
 - 3. 11. 2026: uvedeni a–e, okno za povzetek in pravilo za svež `main`; obvestili (`trig_01EXowtvXGXmqji2E2QtKhYd`, `trig_014yjhh3oDoyL7yFFPU8nwY9`) tečeta na modelu Haiku in bereta samo odprta vprašanja. Okolje »Koordinacija« čaka na uporabnika (vsi računi).
 - 3. 11. 2026: pravila združena s pravili drugih sej (PR #277 in drugi na `main`); spoj je imel spore v `CLAUDE.md` in `docs/vprasanja.md`, zato je pull request #281 šel skozi celoten krog.
-- 3. 11. 2026, račun strani 3: C, E ter `zetoni-3` 2 in 5 v PR #279 (spojen z `main` po #281, v obliki teh pravil).
+- 3. 11. 2026, račun strani 3: C, E ter `zetoni-3` 2 in 5 v PR #279 (spojen z `main` po #281, v obliki teh pravil). Točko 2 je 5. 11. prevzel #321 (del `tests.yml` je iz #279 izpuščen).
 - 5. 11. 2026, račun strani 3: #279 spojen s svežim `main` (570ebca; obdržano vse z `main`, tudi #277); `tools/spoji-main.mjs` prilagojen #286: strani `index.html` in `garaza.html` reši `stamp.js --merge`, orodje ostane za kazalo, sezname testov, `README.md` in `js/lang.js`.

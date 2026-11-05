@@ -20,49 +20,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Ali pull request spremeni samo datoteke .md (odločitev uporabnika 3. 11. 2026, zetoni-3, točka 2; docs/varcevanje.md): takrat
-  # tečejo samo testi dokumentov (fleet.test.js preveri vse .md za imena znamk avtomobilov), težki posli se preskočijo (preskočen posel
-  # šteje kot uspešen). Potiski na main in ročni zagoni tečejo vedno v celoti.
-  spremembe:
-    name: Spremembe
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    outputs:
-      samo_md: ${{ steps.d.outputs.samo_md }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - id: d
-        run: |
-          samo_md=false
-          if [ "${{ github.event_name }}" = pull_request ]; then
-            files=$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")
-            echo "$files"
-            if [ -n "$files" ] && ! echo "$files" | grep -qv '\.md$'; then samo_md=true; fi
-          fi
-          echo "samo .md: $samo_md"
-          echo "samo_md=$samo_md" >> "$GITHUB_OUTPUT"
-
-  docs:
-    name: Samo dokumenti
-    needs: spremembe
-    if: ${{ needs.spremembe.outputs.samo_md == 'true' }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: node tests/fleet.test.js
   node:
     name: Fizika, AI in dirke
-    needs: spremembe
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) && needs.spremembe.outputs.samo_md != 'true' }}
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     # (nabor traja na CI 19–21, 27–33 ali 37–42 min, odvisno od stroja, ki ga dodeli GitHub (3. 11. 2026: počasni stroji več kot polovica
     # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min)
@@ -82,8 +42,7 @@ jobs:
   # tests/run.js, časi iz povzetkov teka main 4. 11. 2026: ~99 min na del). Celoten nabor na enem stroju bi trajal ~6,5 h in se z vsako novo progo podaljša.
   browser:
     name: Igra v brskalniku (${{ matrix.shard }}/4)
-    needs: spremembe
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) && needs.spremembe.outputs.samo_md != 'true' }}
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 160   # (en del ~99 min; več kot omejitev testa memory (2 × SECS = 120 min) in ostalih testov v njegovem delu (~40 min), da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
     strategy:
@@ -106,19 +65,18 @@ jobs:
   # en rezultat za vse štiri dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli)
   browser-all:
     name: Igra v brskalniku
-    needs: [spremembe, browser]
+    needs: browser
     if: ${{ !cancelled() && !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - run: |
-          echo "deli brskalniških testov: ${{ needs.browser.result }} (samo .md: ${{ needs.spremembe.outputs.samo_md }})"
-          test "${{ needs.browser.result }}" = success || test "${{ needs.spremembe.outputs.samo_md }}" = true
+          echo "deli brskalniških testov: ${{ needs.browser.result }}"
+          test "${{ needs.browser.result }}" = success
 
   fleet:
     name: Vozila
-    needs: spremembe
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) && needs.spremembe.outputs.samo_md != 'true' }}
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:
