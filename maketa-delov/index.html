@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deli KOLIBRIJA</title>
+<!-- Maketa delov iz garaže (docs/deli.md, sklop 4): KOLIBRI na vrtljivi plošči, izbira elementa in možnosti. Ni v meniju igre.
+     Naslov: maketa-delov/index.html?el=krilo&n=12 (en del), ?deli=krilo:12,platisca:7 (več delov), &barva=2f6fd6 (barva karoserije). -->
+<style>
+  :root { --bg: #10151d; --panel: rgba(18, 24, 33, 0.94); --ink: #e9eef4; --mute: #98a5b5; --acc: #f2b233; --line: #2b3646; --on: #f2b233; --onInk: #1a1406; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(390px, 44vw); box-sizing: border-box; padding: 14px 16px 18px; background: var(--panel);
+    border-left: 1px solid var(--line); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  @media (max-aspect-ratio: 6/5) { #panel { top: auto; left: 0; width: auto; height: 48vh; border-left: 0; border-top: 1px solid var(--line); } }
+  h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: 0.02em; }
+  .mute { color: var(--mute); font-size: 12.5px; margin: 0 0 12px; }
+  label.row { display: block; margin: 0 0 10px; font-weight: 600; }
+  select { width: 100%; margin-top: 4px; padding: 7px 8px; font: inherit; color: var(--ink); background: #0c1118; border: 1px solid var(--line); border-radius: 6px; }
+  .opts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 6px 0 10px; }
+  .opts button { padding: 7px 0; font: 600 13px/1 system-ui, sans-serif; color: var(--ink); background: #1a2330; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  .opts button.on { background: var(--on); color: var(--onInk); border-color: var(--on); }
+  .opts button.cat { grid-column: 1 / -1; padding: 2px 0 0; background: none; border: 0; color: var(--mute); font-weight: 500; font-size: 11.5px; text-align: left; cursor: default; }
+  #info { background: #0c1118; border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; margin: 0 0 10px; min-height: 44px; }
+  #info b { font-size: 14.5px; } #info .en { color: var(--mute); } #info .eff { color: var(--acc); margin-top: 3px; }
+  #ghost { display: none; width: 100%; border-radius: 8px; border: 1px solid var(--line); margin: 0 0 10px; }
+  .chk { display: flex; gap: 7px; align-items: center; margin: 0 0 8px; }
+  #fitted { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 10px; }
+  #fitted span { background: #1a2330; border: 1px solid var(--line); border-radius: 12px; padding: 2px 4px 2px 9px; font-size: 12.5px; }
+  #fitted span button { margin-left: 4px; background: none; border: 0; color: var(--mute); cursor: pointer; font-size: 13px; }
+  .sw { display: flex; gap: 6px; margin: 0 0 10px; } .sw button { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; }
+  .sw button.on { border-color: var(--ink); }
+  #clear { padding: 7px 12px; font: inherit; color: var(--ink); background: #1a2330; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  #err { display: none; position: fixed; left: 12px; top: 12px; max-width: 50vw; padding: 8px 10px; background: #5a1414; color: #fff; border-radius: 6px; font-size: 13px; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="err"></div>
+<div id="panel">
+  <h1>KOLIBRI · deli iz garaže</h1>
+  <p class="mute">Maketa za ogled vseh možnosti (ni v meniju igre). Avto se vrti na plošči; izberi element in možnost.</p>
+  <label class="row">Element <select id="el"></select></label>
+  <div class="opts" id="opts"></div>
+  <div id="info"></div>
+  <img id="ghost" alt="Del pod prosojno karoserijo">
+  <label class="chk"><input type="checkbox" id="keep"> obdrži ostale nameščene dele</label>
+  <div id="fitted"></div>
+  <div class="sw" id="sw"></div>
+  <button id="clear">Vse serijsko</button>
+</div>
+<script src="../js/vendor/three.r128.min.js"></script>
+<script src="../js/lang.js"></script>
+<script src="../js/data/deli.js"></script>
+<script src="../js/deli.js"></script>
+<script src="../js/deli/spredaj.js"></script>
+<script src="../js/deli/zadaj.js"></script>
+<script src="../js/deli/streha.js"></script>
+<script src="../js/deli/bok.js"></script>
+<script src="../js/deli/barve.js"></script>
+<script src="../js/deli/skriti.js"></script>
+<script src="../js/cars/miska.js"></script>
+<script src="../js/cars/kolibri.js"></script>
+<script src="../js/cars/raketa.js"></script>
+<script src="../js/cars/jezek.js"></script>
+<script src="../js/cars/sokol.js"></script>
+<script src="../js/cars/panter.js"></script>
+<script src="../js/cars/jelen.js"></script>
+<script src="../js/cars/lisica.js"></script>
+<script src="../js/cars/perun.js"></script>
+<script src="../js/cars/skorpijon.js"></script>
+<script src="../js/cars/modras.js"></script>
+<script src="../js/cars/jastreb.js"></script>
+<script src="../js/cars/gad.js"></script>
+<script src="../js/cars/blisk.js"></script>
+<script src="../js/cars/lev.js"></script>
+<script src="../js/cars/zmaj.js"></script>
+<script src="../js/cars/pescenjak.js"></script>
+<script src="../js/cars/medved.js"></script>
+<script src="../js/cars/hrosc.js"></script>
+<script src="../js/cars/gozdar.js"></script>
+<script src="../js/cars/kozorog.js"></script>
+<script src="../js/cars/tiger.js"></script>
+<script src="../js/cars/tornado.js"></script>
+<script src="../js/cars/strelica.js"></script>
+<script src="../js/cars/mravlja.js"></script>
+<script src="../js/cars/bizon.js"></script>
+<script src="../js/cars/titan.js"></script>
+<script src="../js/cars/kamen.js"></script>
+<script src="../js/cars/superkombi.js"></script>
+<script src="../js/cars/predsednik.js"></script>
+<script src="../js/cars/goljat.js"></script>
+<script src="../js/cars/levs.js"></script>
+<script src="../js/cars/levk.js"></script>
+<script src="../js/core.js"></script>
+<script src="../js/tex.js"></script>
+<script src="../js/world.js"></script>
+<script src="../js/render.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id), M = Core.MODELS.find(m => m.id === 'kolibri'), MO = M.def.mounts || {};
+  const E = DELI_DATA.elementi.filter(e => MO[e.id]);   // (the elements KOLIBRI has a mount for: the garage offers only those)
+  const HID = ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum'];
+  const GROUPS = [['Vidni deli', (e) => !HID.includes(e.id) && !['barva', 'crte', 'stevilke', 'nalepke', 'gume', 'soncni_pas', 'zatemnitev', 'luc_pod_avtom', 'celjusti'].includes(e.id)],
+    ['Barve, nalepke, gume', (e) => ['barva', 'crte', 'stevilke', 'nalepke', 'gume', 'soncni_pas', 'zatemnitev', 'luc_pod_avtom', 'celjusti'].includes(e.id)], ['Skriti deli (le učinek)', (e) => HID.includes(e.id)]];
+  // the hidden parts seen under the see-through body (as the garage's panels: tools/deli-plosca.mjs, GHOST)
+  const CAM = { bay: { p: [3.3, 2.5, 2.3], t: [1.12, 0.48, 0], fov: 26 }, arches: { p: [2.4, 2.2, 3.6], t: [0, 0.42, 0], fov: 36 }, dim_gum: { p: [-2.4, 1.2, 3.0], t: [-1.18, 0.3, 0.45], fov: 22 } };
+  const GH = { filter_zraka: 'bay', cip: 'bay', turbo: 'bay', akumulator: 'bay', vzmeti: 'arches', amortizerji: 'arches', stabilizatorji: 'arches', dim_gum: 'dim_gum' };
+  const COLS = [0x2f6fd6, 0xc0392b, 0xf2f2ee, 0x1d1f22, 0xf2b233, 0x2e8b57];
+  const q = new URLSearchParams(location.search), st = { el: 'krilo', deli: {}, color: COLS[0], keep: false };
+  const opts = (e) => [].concat(...e.kategorije.map((k, i) => k.moznosti.map((o, j) => Object.assign({ cat: k.ime, ci: i, n: 0 }, o)))).map((o, i) => Object.assign(o, { n: i + 1 }));
+  const fmt = (v) => v == null ? '' : v.toLocaleString('sl-SI') + ' €';
+
+  // the element list, grouped
+  for (const [name, f] of GROUPS) { const g = document.createElement('optgroup'); g.label = name;
+    for (const e of E.filter(f)) { const o = document.createElement('option'); o.value = e.id; o.textContent = e.element + ' · ' + e.element_en; g.appendChild(o); }
+    if (g.children.length) $('el').appendChild(g); }
+  for (const c of COLS) { const b = document.createElement('button'); b.style.background = '#' + c.toString(16).padStart(6, '0'); b.title = 'barva karoserije'; b.onclick = () => { st.color = c; show(); }; b.dataset.c = c; $('sw').appendChild(b); }
+
+  function show() {
+    const e = E.find(x => x.id === st.el), list = opts(e), n = st.deli[st.el] || 0, o = list[n - 1];
+    $('el').value = st.el;
+    const box = $('opts'); box.innerHTML = '';
+    const btn = (label, k, title) => { const b = document.createElement('button'); b.textContent = label; b.title = title; if (k === n) b.className = 'on'; b.onclick = () => pick(k); box.appendChild(b); };
+    btn('S', 0, 'serijski');
+    let ci = -1; for (const p of list) { if (p.ci !== ci) { ci = p.ci; const c = document.createElement('button'); c.className = 'cat'; c.textContent = p.cat; box.appendChild(c); } btn(String(p.n), p.n, p.ime); }
+    const ef = n && typeof DELI !== 'undefined' && DELI.effect ? DELI.effect(st.el, n) : null, efs = ef ? Object.entries(ef).filter(([, v]) => typeof v === 'number' && v).map(([k, v]) => k + ' ' + (Math.abs(v) < 1 ? (v > 0 ? '+' : '') + Math.round(v * 1000) / 10 + ' %' : v)).join(', ') : '';
+    $('info').innerHTML = o ? `<b>${n}. ${o.ime}</b> <span class="en">· ${o.ime_en}</span><div class="en">${o.cat} · ${fmt(o.cena_eur)}</div><div class="eff">${o.kaj_nudi || ''}${efs ? ' <span class="en">(' + efs + ')</span>' : ''}</div>`
+      : `<b>Serijski</b> <span class="en">· stock</span><div class="en">${e.serijsko || ''}</div>`;
+    const fit = $('fitted'); fit.innerHTML = '';
+    for (const [id, k] of Object.entries(st.deli)) { const x = E.find(y => y.id === id), s = document.createElement('span'); s.textContent = (x ? x.element : id) + ' ' + k;
+      const b = document.createElement('button'); b.textContent = '×'; b.title = 'odstrani'; b.onclick = () => { delete st.deli[id]; show(); }; s.appendChild(b); fit.appendChild(s); }
+    for (const b of $('sw').children) b.className = +b.dataset.c === st.color ? 'on' : '';
+    $('keep').checked = st.keep;
+    Render.setShowCar(M, st.color, 7, Object.keys(st.deli).length ? Object.assign({}, st.deli) : undefined); place();
+    const gi = $('ghost'), gv = GH[st.el];
+    if (gv && n) { const c = Render.carShot({ id: 'kolibri', deli: Object.assign({}, st.deli), color: st.color, cam: CAM[gv], w: 640, h: 380, grid: false, ghost: [st.el, n] }); gi.src = c ? c.toDataURL('image/jpeg', 0.85) : ''; gi.style.display = c ? 'block' : 'none'; }
+    else gi.style.display = 'none';
+    const p = new URLSearchParams(); p.set('el', st.el); if (Object.keys(st.deli).length) p.set('deli', Object.entries(st.deli).map(([k, v]) => k + ':' + v).join(',')); if (st.color !== COLS[0]) p.set('barva', st.color.toString(16).padStart(6, '0'));
+    history.replaceState(null, '', '?' + p.toString());
+    window.__maketa.deli = Object.assign({}, st.deli);
+  }
+  // the car in the middle of the free part of the screen (left of the panel, or above it): the garage's camera for this window's shape, its
+  // picture moved and zoomed (Render.setShowView) to put the turntable's car (Render.showRect: its cylinder over a whole turn) there
+  function place() {
+    if (!Render.setShowView) return;
+    Render.setShowView(null); const r = Render.showRect(); if (!r) return;
+    const P = $('panel').getBoundingClientRect(), side = P.top < 1, fw = side ? P.left : innerWidth, fh = side ? innerHeight : P.top;
+    const s = Math.max(0.4, Math.min(2, 0.92 * fw / (r.x1 - r.x0), 0.92 * fh / (r.y1 - r.y0)));
+    Render.setShowView({ cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2, x: fw / 2, y: fh / 2, s });
+  }
+  function pick(k) { if (!st.keep) for (const id of Object.keys(st.deli)) if (id !== st.el) delete st.deli[id]; if (k) st.deli[st.el] = k; else delete st.deli[st.el]; show(); }
+
+  // from the address: ?el=krilo&n=12, ?deli=krilo:12,platisca:7, &barva=2f6fd6
+  window.__maketa = { ready: false, deli: {}, errors: [], set(deli, el) { st.deli = Object.assign({}, deli || {}); if (el) st.el = el; st.keep = Object.keys(st.deli).length > 1; show(); } };
+  if (q.get('deli')) for (const s of q.get('deli').split(',')) { const [id, k] = s.split(':'); if (E.some(e => e.id === id) && +k >= 1 && +k <= 16) st.deli[id] = +k; }
+  if (q.get('el') && E.some(e => e.id === q.get('el'))) st.el = q.get('el');
+  if (q.get('n') && +q.get('n') >= 1 && +q.get('n') <= 16) st.deli[st.el] = +q.get('n');
+  if (q.get('barva') && /^[0-9a-f]{6}$/i.test(q.get('barva'))) st.color = parseInt(q.get('barva'), 16);
+  st.keep = Object.keys(st.deli).length > 1;
+  $('el').onchange = () => { st.el = $('el').value; show(); };
+  $('keep').onchange = () => { st.keep = $('keep').checked; show(); };
+  $('clear').onclick = () => { st.deli = {}; show(); };
+
+  try {
+    Render.init($('gl')); Render.resize();
+    show();
+    let t0 = performance.now(); const loop = (t) => { const dt = Math.min(0.05, (t - t0) / 1000); t0 = t; Render.renderShowroom(dt); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    addEventListener('resize', () => { Render.resize(); place(); });
+    window.__maketa.ready = true;
+  } catch (err) { $('err').style.display = 'block'; $('err').textContent = 'Napaka: ' + err.message; window.__maketa.errors.push(String(err && err.stack || err)); }
+})();
+</script>
+</body>
+</html>
