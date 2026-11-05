@@ -20,6 +20,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Država brez proge: proge gredo v delo, ko pridejo na vrsto. Prva iz države se naredi, druge iz iste države potem odpadejo.
 - Nov načrt prog predlaga največ eno progo na državo in izpusti države, ki progo že imajo.
 - **Nove proge so vedno zadnje** (odločitev uporabnika 4. 11. 2026): izdelava novih prog je zadnje delo pred pripravo na Google Play; vsako novo delo, ki pride, gre na vrsto pred njo (proga, ki je že v izdelavi, se dokonča). Vrstni red: `docs/proge-po-drzavah.md`.
+- **Nova proga mora imeti izletno cono** (odločitev uporabnika 5. 11. 2026): proga, ki ima ograjo, zid, hiše ali prepad večinoma (na več kot pol dolžine) do ~3 m od roba asfalta (ulične proge, ozke mestne ulice, police v steni), se ne začne; proga, ki je že v pull requestu, se samo javi. Merilo, meritve in oznake »ne začni« so v `docs/proge-po-drzavah.md` (razdelek »Izletna cona«).
 
 ## Kamere in grafika
 - V igri je samo **ena kamera**: **za avtom** (`chase`), na telefonu pokonci in ležeče. Kamere izometrična, kino in kokpit so izbrisane; ne dodajaj jih nazaj. V posnetku dirke sta še TV kamere ob progi in kamera za avtom, foto način ostane.
