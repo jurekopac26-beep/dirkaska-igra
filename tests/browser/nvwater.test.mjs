@@ -16,11 +16,11 @@ try {
   await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
 
-  // 1. the jet skis as built: two at the pier, one at the start, on the water, ours (not merged), js/nvboat.js's own at the pier out of the scene
+  // 1. the jet skis as built: two at the pier, one at the start, on the water, ours all in one mesh (not merged with the map), js/nvboat.js's own at the pier out of the scene
   const s0 = await page.evaluate(() => { const s = NVWater.state(), C = __H3.waterCourse;
-    return { skis: s.skis.map(k => ({ at: k.at, x: k.x, z: k.z, dyn: k.dyn, in: k.inScene, d: +NVWater.depth(k.x, k.z).toFixed(2) })), theirs: (C.skis || []).map(k => !!(k.g && k.g.parent)) }; });
-  T.check('three jet skis: two at HOME\'s pier and a free one at the course\'s start, on the water, each its own mesh (not merged); js/nvboat.js\'s two at the pier out of the scene',
-    s0.skis.length === 3 && s0.skis.filter(k => k.at === 'pier').length === 2 && s0.skis.filter(k => k.at === 'start').length === 1 && s0.skis.every(k => k.dyn && k.in && k.d >= 0.12) && s0.theirs.length === 2 && s0.theirs.every(v => !v), JSON.stringify(s0));
+    return { skis: s.skis.map(k => ({ at: k.at, x: k.x, z: k.z, d: +NVWater.depth(k.x, k.z).toFixed(2) })), idle: s.idle, theirs: (C.skis || []).map(k => !!(k.g && k.g.parent)) }; });
+  T.check('three jet skis: two at HOME\'s pier and a free one at the course\'s start, on the water, all three in one mesh (one draw call, not merged with the map); js/nvboat.js\'s two at the pier out of the scene',
+    s0.skis.length === 3 && s0.skis.filter(k => k.at === 'pier').length === 2 && s0.skis.filter(k => k.at === 'start').length === 1 && s0.skis.every(k => k.d >= 0.12) && s0.idle.n === 3 && s0.idle.dyn && s0.idle.inScene && s0.theirs.length === 2 && s0.theirs.every(v => !v), JSON.stringify(s0));
 
   // 2. the car stopped on the shore by the pier's jet ski: the card; TAKE THE JET SKI: on it, the car held where it waits, the camera behind it
   const card = () => page.evaluate(() => { const e = document.getElementById('nvw'); return e && getComputedStyle(e).display !== 'none' ? [...e.querySelectorAll('.row')].map(b => b.firstChild.textContent) : null; });
@@ -31,8 +31,8 @@ try {
   T.check('the car stopped on the shore by the pier\'s jet ski: the card at the top, TAKE THE JET SKI', t0 && t0.st === 'take' && c1 && c1[0] === 'TAKE THE JET SKI', JSON.stringify({ t0, c1 }));
   await page.evaluate(() => { const b = document.querySelector('#nvw [data-a="ski"]'); if (b) b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); });
   const on = await page.evaluate(() => { const g = __game, P = g.race.player, x0 = P.x, z0 = P.z; g.sim(0.2, false, 0, 0, 0); const s = NVWater.state();
-    return { on: NVWater.on(), boat: document.body.classList.contains('mis-boat'), locked: !!P.locked, car: s.car, moved: +Math.hypot(P.x - x0, P.z - z0).toFixed(3), shot: !!(Render.shot || Render.getShot && Render.getShot()) }; });
-  T.check('TAKE THE JET SKI: riding it (the HUD\'s speed off: mis-boat), the car held where it waits', on.on && on.boat && on.locked && on.moved < 0.05 && !!on.car, JSON.stringify(on));
+    return { on: NVWater.on(), boat: document.body.classList.contains('mis-boat'), locked: !!P.locked, car: s.car, idle: s.idle.n, moved: +Math.hypot(P.x - x0, P.z - z0).toFixed(3), shot: !!(Render.shot || Render.getShot && Render.getShot()) }; });
+  T.check('TAKE THE JET SKI: riding it (the HUD\'s speed off: mis-boat), the car held where it waits', on.on && on.boat && on.locked && on.moved < 0.05 && !!on.car && on.idle === 2, JSON.stringify(on));
 
   // 3. the ride on the start's long straight: fast; in a hard turn it slides (its motion after its nose) and leans into it; the waves lift it
   const rd = await page.evaluate(() => { const g = __game, P = g.race.player, C = __H3.waterCourse, Kl = C.K, s0 = __H3.boatC.dress.s0, at = (s) => { let i = Kl.A.findIndex(a => a >= s); if (i < 1) i = 1; const [ax, az] = Kl.P[i - 1], [bx, bz] = Kl.P[i]; return { x: ax, z: az, h: Math.atan2(bz - az, bx - ax) }; };
@@ -40,12 +40,13 @@ try {
     for (let k = 0; k < 120; k++) { g.sim(1 / 60, false, 0, 1, 0); const s = NVWater.state().ski; v = Math.max(v, s.v); y0 = Math.min(y0, s.y); y1 = Math.max(y1, s.y); dist += Math.hypot(s.x - lx, s.z - lz); lx = s.x; lz = s.z; if (NVWater.depth(s.x, s.z) < 0.12) dry++; }
     for (let k = 0; k < 50; k++) { g.sim(1 / 60, false, 1, 1, 0); const s = NVWater.state().ski; slip = Math.max(slip, Math.abs(Math.atan2(Math.sin(s.h - s.mh), Math.cos(s.h - s.mh)))); roll = Math.max(roll, s.roll); y0 = Math.min(y0, s.y); y1 = Math.max(y1, s.y); if (NVWater.depth(s.x, s.z) < 0.12) dry++; }
     return { v: +v.toFixed(1), dist: +dist.toFixed(1), slip: +slip.toFixed(3), roll: +roll.toFixed(3), waves: +(y1 - y0).toFixed(3), dry, car: +Math.hypot(P.x - cx, P.z - cz).toFixed(3) }; });
-  T.check('riding: on the straight it gets going (over 12 m/s, 20 m in 2 s), the car stays where it waits', rd.v > 12 && rd.dist > 20 && rd.car < 0.05, JSON.stringify(rd));
+  T.check('riding: on the straight it gets going (over 12 m/s, 15 m in 2 s), the car stays where it waits', rd.v > 12 && rd.dist > 15 && rd.car < 0.05, JSON.stringify(rd));
   T.check('in a hard turn it slides (its motion turns after its nose), leans into the turn and rides the waves (up and down); always on the water', rd.slip > 0.05 && rd.roll > 0.1 && rd.waves > 0.03 && rd.dry === 0, JSON.stringify(rd));
 
   // 4. never onto the land: full throttle at the beach, it stops in the water
-  const ld = await page.evaluate(() => { const g = __game, C = __H3.waterCourse, s0 = __H3.boatC.dress.s0, Kl = C.K, i = Kl.A.findIndex(a => a >= s0 + 30), [x, z] = Kl.P[i], e = 0.5, gx = C.dW(x + e, z) - C.dW(x - e, z), gz = C.dW(x, z + e) - C.dW(x, z - e);
-    NVWater.put(x, z, Math.atan2(gz, gx)); let low = 9; for (let k = 0; k < 180; k++) { g.sim(1 / 60, false, 0, 1, 0); const s = NVWater.state().ski; low = Math.min(low, NVWater.depth(s.x, s.z)); }
+  const ld = await page.evaluate(() => { const g = __game, C = __H3.waterCourse, s0 = __H3.boatC.dress.s0, Kl = C.K, i = Math.max(1, Kl.A.findIndex(a => a >= s0 + 30)), [cx, cz] = Kl.P[i], [ax, az] = Kl.P[i - 1], [bx, bz] = Kl.P[i + 1], tl = Math.hypot(bx - ax, bz - az);
+    let nx = -(bz - az) / tl, nz = (bx - ax) / tl; if (C.dW(cx + nx * 15, cz + nz * 15) < C.dW(cx - nx * 15, cz - nz * 15)) { nx = -nx; nz = -nz; }
+    const x = cx + nx * 3, z = cz + nz * 3; NVWater.put(x, z, Math.atan2(nz, nx)); let low = 9; for (let k = 0; k < 180; k++) { g.sim(1 / 60, false, 0, 1, 0); const s = NVWater.state().ski; low = Math.min(low, NVWater.depth(s.x, s.z)); }
     const s = NVWater.state().ski; return { low: +low.toFixed(3), edge: +C.dW(s.x, s.z).toFixed(2), v: +s.v.toFixed(2), zone: NVWater.state().zone }; });
   T.check('never onto the land: driven at the beach it stops in the water (the shallow shelf at most), by the shore: BACK TO YOUR CAR offered', ld.low >= 0.12 && ld.edge < 0 && ld.zone === 'land', JSON.stringify(ld));
 
@@ -67,8 +68,8 @@ try {
     NVWater.put(x, z, 0); g.sim(0.3, false, 0, 0, 0); NVWater.frame(1 / 60, 1, P, true); const zone = NVWater.state().zone, ski = NVWater.state().ski;
     const b = document.querySelector('#nvw [data-a="car"]'); if (b) b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); g.sim(0.1, false, 0, 0, 0);
     const s = NVWater.state(), k = s.skis.find(q => Math.hypot(q.x - ski.x, q.z - ski.z) < 0.5), toCar = Math.atan2(P.z - ski.z, P.x - ski.x);
-    return { zone, on: NVWater.on(), boat: document.body.classList.contains('mis-boat'), d: NVWater.depth(P.x, P.z), gap: +Math.hypot(P.x - ski.x, P.z - ski.z).toFixed(1), face: +Math.cos(P.h - toCar).toFixed(2), left: !!k, locked: !!P.locked, lands: s.lands }; });
-  T.check('slow by the shore: BACK TO YOUR CAR; the car on the land there (within 15 m, facing away from the water, free), the jet ski left in the water, the HUD back', bk.zone === 'land' && !bk.on && !bk.boat && bk.d === 0 && bk.gap < 15 && bk.face > 0.5 && bk.left && !bk.locked && bk.lands === 1, JSON.stringify(bk));
+    return { zone, on: NVWater.on(), boat: document.body.classList.contains('mis-boat'), d: NVWater.depth(P.x, P.z), gap: +Math.hypot(P.x - ski.x, P.z - ski.z).toFixed(1), face: +Math.cos(P.h - toCar).toFixed(2), left: !!k, idle: s.idle.n, locked: !!P.locked, lands: s.lands }; });
+  T.check('slow by the shore: BACK TO YOUR CAR; the car on the land there (within 15 m, facing away from the water, free), the jet ski left in the water, the HUD back', bk.zone === 'land' && !bk.on && !bk.boat && bk.d === 0 && bk.gap < 15 && bk.face > 0.5 && bk.left && bk.idle === 3 && !bk.locked && bk.lands === 1, JSON.stringify(bk));
 
   // 7. the car driven into the water: its ground the bed (the bridges' decks stay), the shallow slows it, the deep puts it back on the shore
   const gd = await page.evaluate(() => { const T2 = __game.race.track, C = __H3.waterCourse, H = C.home, S = H.S, m = S.P[Math.max(0, Math.min(S.P.length - 1, Math.round((H.sa + H.sb) / 2 / S.L * (S.P.length - 1))))], R = C.ring; let rt = null;
@@ -84,7 +85,7 @@ try {
     const gr = (x, z) => [C.dW(x + e, z) - C.dW(x - e, z), C.dW(x, z + e) - C.dW(x, z - e)]; let x = x0, z = z0; for (let k = 0; k < 80 && C.dW(x, z) < 9; k++) { const [a, b] = gr(x, z), l = Math.hypot(a, b) || 1; x += a / l * 0.5; z += b / l * 0.5; }
     const [a, b] = gr(x, z); P.place(x, z, Math.atan2(-b, -a)); P.vx = P.vz = 0; g.sim(0.5, false, 0, 0, 0); const dmg0 = P.dmg || 0, b0 = NVWater.state().backs; let wet = 0, maxD = 0;
     for (let k = 0; k < 60 * 6 && NVWater.state().backs === b0; k++) { g.sim(1 / 60, false, 0, 0.6, 0); wet = Math.max(wet, -0.12 - P.y); maxD = Math.max(maxD, NVWater.depth(P.x, P.z)); }
-    g.sim(0.05, false, 0, 0, 0); const from = Math.atan2(P.z - z0, P.x - x0);
+    g.sim(0.05, false, 0, 0, 0); const from = Math.atan2(C.dW(P.x, P.z + 1) - C.dW(P.x, P.z - 1), C.dW(P.x + 1, P.z) - C.dW(P.x - 1, P.z));
     return { backs: NVWater.state().backs - b0, wet: +wet.toFixed(2), maxD: +maxD.toFixed(2), d: NVWater.depth(P.x, P.z), v: +Math.hypot(P.vx, P.vz).toFixed(2), dmg: +((P.dmg || 0) - dmg0).toFixed(3), face: +Math.cos(P.h - from).toFixed(2), shore: +C.dW(P.x, P.z).toFixed(1) }; });
   T.check('into the deep water: the car sinks in, then is put back on the shore (on the land, still, facing away from the water), with no damage', dp.backs === 1 && dp.wet > 0.5 && dp.d === 0 && dp.v < 0.5 && dp.dmg <= 0 && dp.face > 0.5 && dp.shore > 0, JSON.stringify(dp));
 

@@ -9,14 +9,15 @@
 // The car in the water (no jet ski): its ground under the water is the bed (the course's and the canal's as js/nvboat.js draws it, the sea's:
 // H3.water.bedAt; a bridge's deck over the water stays), the shallow water slows it (MisKit.wade); in the deep (over K.DEEP m, sunk for
 // K.SINK s) it goes back on the shore where it left it, facing the land (as Na progo puts a car back on the road): no damage, no VOZILO UNIČENO.
-// Loaded with the new map (js/game.js nvStart); its hooks after the map's (init: before the still meshes are merged, js/nvbake.js), stepped
+// Drawn: the jet skis not ridden all in one mesh (one draw call, made again when one is taken or left; js/nvboat.js's two at the pier taken
+// out of the map's merged meshes), the ridden one in its own with its rider, the wake. Loaded with the new map (js/game.js nvStart); its hooks after the map's (init: before the still meshes are merged, js/nvbake.js), stepped
 // with the race (step before the cars move: its event, e.g. NAZAJ NA OBALO, shown by the game), drawn between the steps (frame: the card).
 const NVWater = (function () {
   'use strict';
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const K = { VMAX: 18, ACC: 11, BRAKE: 8, TURN: 1.6, DRAG: 0.25, GRIP: 4, SLIDE: 0.7, LEAN: 0.3, CHOP: 0.06, SWELL: 0.2, BUMP: 3,
-    WADE: 2.2, TAKE: 12, VTAKE: 2.2, LAND: 3, VLAND: 2.6, WET: 0.12, DEEP: 0.75, SINK: 0.3, AWAY: 3, SHOW: 230, START: 3, STARTU: 2.5 };
+    WADE: 2.2, TAKE: 12, VTAKE: 2.2, LAND: 3, VLAND: 2.6, WET: 0.12, DEEP: 0.75, SINK: 0.3, AWAY: 3, SHOW: 230, START: 3, STARTU: 4 };
   let H3 = null, trk = null, g0 = null, WL = -0.12, S = null, el = null, seaK = 0;
 
   // ---- the water where it is: its depth (m; 0 on the land), the sea or not, a jet ski's place or not
@@ -32,18 +33,23 @@ const NVWater = (function () {
   // the waves under a jet ski: a chop everywhere, the sea's swell where it is (seaK: eased in and out along the canal's mouth)
   const wave = (x, z, t) => K.CHOP * (0.55 * Math.sin(x * 0.9 + t * 2.3) + 0.45 * Math.sin(z * 0.75 - t * 1.9 + 1.3)) + K.SWELL * seaK * Math.sin((x * 0.55 + z * 0.84) / 9 - t * 1.25);
 
-  // ---- the jet ski's look (js/nvboat.js jetski: hull, stripe, seat, handlebar, nose; one mesh), the rider and the wake (only while ridden)
+  // ---- the jet ski's look (js/nvboat.js jetski: hull, stripe, seat, handlebar, nose; the ridden one's mesh with its rider), the wake (only while ridden)
   let VC = null, WK = null;
-  function skiMesh(col) {
-    const B = MisKit.parts(), M = new THREE.Matrix4();
-    B.box(0, 0.12, 0, 2.6, 0.42, 0.95, col); B.box(0, 0.3, 0, 2.62, 0.08, 0.97, 0xf4f4f0); B.box(-0.3, 0.42, 0, 1.0, 0.22, 0.42, 0x1c1c1e); B.box(0.55, 0.62, 0, 0.12, 0.08, 0.7, 0x2a2e34);
-    const nose = new THREE.ConeGeometry(0.48, 0.9, 4); M.makeRotationFromEuler(new THREE.Euler(Math.PI / 4, 0, -Math.PI / 2)); M.scale(new THREE.Vector3(1, 1, 0.55)); M.setPosition(1.72, 0.12, 0); B.L.push({ g: nose, m: M, c: col });
-    const m = B.mesh(VC); m.castShadow = true; m.userData.dyn = true; return m;
+  // a jet ski's simple bodies (with its rider: the ridden one) into a parts list, at the frame W (none: its own)
+  function skiParts(B, col, W, rider) {
+    const put = (g, m, c) => B.L.push({ g, m: W ? new THREE.Matrix4().multiplyMatrices(W, m) : m, c }), M = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z);
+    const box = (x, y, z, lx, ly, lz, c) => put(new THREE.BoxGeometry(lx, ly, lz), M(x, y, z), c);
+    box(0, 0.12, 0, 2.6, 0.42, 0.95, col); box(0, 0.3, 0, 2.62, 0.08, 0.97, 0xf4f4f0); box(-0.3, 0.42, 0, 1.0, 0.22, 0.42, 0x1c1c1e); box(0.55, 0.62, 0, 0.12, 0.08, 0.7, 0x2a2e34);
+    const N = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.PI / 4, 0, -Math.PI / 2)); N.scale(new THREE.Vector3(1, 1, 0.55)); N.setPosition(1.72, 0.12, 0); put(new THREE.ConeGeometry(0.48, 0.9, 4), N, col);
+    if (rider) { box(-0.15, 0.95, 0, 0.42, 0.8, 0.5, 0x2a2e34); box(0.2, 0.95, 0.2, 0.5, 0.1, 0.1, 0xd9a77e); box(0.2, 0.95, -0.2, 0.5, 0.1, 0.1, 0xd9a77e); put(new THREE.SphereGeometry(0.2, 8, 6), M(-0.05, 1.5, 0), 0xf2c12e); }
   }
-  function riderMesh() {
-    const B = MisKit.parts(), M = new THREE.Matrix4(); B.box(-0.15, 0.95, 0, 0.42, 0.8, 0.5, 0x2a2e34); B.box(0.2, 0.95, 0.2, 0.5, 0.1, 0.1, 0xd9a77e); B.box(0.2, 0.95, -0.2, 0.5, 0.1, 0.1, 0xd9a77e);
-    M.setPosition(-0.05, 1.5, 0); B.L.push({ g: new THREE.SphereGeometry(0.2, 8, 6), m: M, c: 0xf2c12e });
-    const m = B.mesh(VC); m.castShadow = true; m.userData.dyn = true; return m;
+  // the ridden one: its own mesh with its rider (drawn only while ridden: MisKit.boat's o.mesh, not kept)
+  function rideMesh(col) { const B = MisKit.parts(); skiParts(B, col, null, true); const m = B.mesh(VC); m.castShadow = true; m.userData.dyn = true; return m; }
+  // the ones not ridden (at their places, or where they were left) all in one mesh: one draw call; made again when one is taken or left
+  function idleBuild() {
+    const B = MisKit.parts(), W = new THREE.Matrix4(); let n = 0;
+    S.skis.forEach((sk, i) => { if (i === S.ride) return; W.makeRotationY(-sk.B.h); W.setPosition(sk.B.x, WL + 0.02, sk.B.z); skiParts(B, sk.col, W, false); n++; });
+    const m = S.idle, g = n ? B.mesh(VC).geometry : new THREE.BufferGeometry(); if (m.geometry) m.geometry.dispose(); m.geometry = g; m.visible = n > 0; S.idleN = n;
   }
   function wakeMesh() {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-1.2, 0, 0, -6.5, 0, -1.6, -6.5, 0, 1.6], 3)); g.setAttribute('color', new THREE.Float32BufferAttribute([1, 1, 1, 0.75, 0.88, 0.95, 0.75, 0.88, 0.95], 3)); g.setIndex([0, 2, 1, 0, 1, 2]);
@@ -56,12 +62,19 @@ const NVWater = (function () {
     const C = H3.waterCourse; if (!C || typeof THREE === 'undefined' || typeof Render === 'undefined' || !Render.scene) return null;
     if (!VC) { VC = new THREE.MeshLambertMaterial({ vertexColors: true }); WK = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false }); }
     const run = { props: [], add(o) { if (!(o.userData && o.userData.misUndo)) Render.scene.add(o); this.props.push(o); return o; } }, list = [];
-    for (const s of C.skis || []) { if (s.at !== 'pier') continue; if (s.g && s.g.parent) s.g.parent.remove(s.g); list.push({ x: s.x, z: s.z, h: s.h, col: s.col, at: 'pier' }); }
+    for (const s of C.skis || []) { if (s.at !== 'pier') continue; if (s.g && s.g.parent) s.g.parent.remove(s.g); list.push(afloat({ x: s.x, z: s.z, h: s.h, col: s.col, at: 'pier' })); }
     const st = startSpot(C); if (st) list.push(st);
-    const skis = list.map((s) => { const mesh = skiMesh(s.col), B = MisKit.boat(run, { x: s.x, z: s.z, h: s.h, y: WL + 0.02, vmax: K.VMAX, acc: K.ACC, brake: K.BRAKE, turn: K.TURN, drag: K.DRAG, wet, wave, mesh, keep: true, D: [15, 10.5] });
-      B.cam = camOf(B); B.step(0, 0, 0, 0); return { home: { x: s.x, z: s.z, h: s.h }, col: s.col, at: s.at, mesh, B, near: false }; });
-    const rider = riderMesh(), wk = wakeMesh();
-    return { skis, rider, wk, ride: -1, car: null, dry: null, sink: 0, mh: 0, roll: 0, zone: null, pick: null, near: -1, backs: 0, rides: 0, lands: 0 };
+    const skis = list.map((s) => { const mesh = rideMesh(s.col), B = MisKit.boat(run, { x: s.x, z: s.z, h: s.h, y: WL + 0.02, vmax: K.VMAX, acc: K.ACC, brake: K.BRAKE, turn: K.TURN, drag: K.DRAG, wet, wave, mesh, keep: false, D: [15, 10.5] });
+      B.cam = camOf(B); return { home: { x: s.x, z: s.z, h: s.h }, col: s.col, at: s.at, mesh, B }; });
+    const idle = new THREE.Mesh(new THREE.BufferGeometry(), VC); idle.castShadow = true; idle.userData.dyn = true; Render.scene.add(idle);
+    return { skis, idle, idleN: 0, wk: wakeMesh(), ride: -1, car: null, dry: null, sink: 0, mh: 0, roll: 0, zone: null, pick: null, near: -1, backs: 0, rides: 0, lands: 0 };
+  }
+  // (one moored in too shallow water for it to get away, by the pier's land end: nudged out towards the deeper water, at most 6 m)
+  function afloat(s) {
+    for (let k = 0; k < 24 && depth(s.x, s.z) < 0.2; k++) { let b = null, bd = -1;
+      for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6, x = s.x + Math.cos(a) * 0.25, z = s.z + Math.sin(a) * 0.25, d = depth(x, z); if (d > bd) { bd = d; b = [x, z]; } }
+      s.x = b[0]; s.z = b[1]; }
+    return s;
   }
   function startSpot(C) {
     const B = H3.boatC, Kl = C.K; if (!B || !B.dress || !Kl) return null;
@@ -88,13 +101,13 @@ const NVWater = (function () {
   function take(P, k) {
     const sk = S.skis[k]; if (!sk) return;
     S.car = { x: P.x, z: P.z, h: P.h }; S.ride = k; S.mh = sk.B.h; S.roll = 0; S.rides++; seaK = seaAt(sk.B.x, sk.B.z) ? 1 : 0;
-    sk.mesh.add(S.rider); sk.mesh.add(S.wk); sk.B.v = 0; sk.B.go(true); sk.mesh.visible = true;
+    sk.mesh.add(S.wk); sk.B.v = 0; sk.B.go(true); sk.B.step(0, 0, 0, 0); idleBuild();
     MisKit.hold(P); P.stuckT = 0; P.wrongT = 0;
   }
   function leave(P, spot) {
     const sk = S.skis[S.ride]; if (!sk) return;
-    sk.B.go(false); sk.B.v = 0; sk.mesh.rotation.x = 0; sk.mesh.remove(S.rider); sk.mesh.remove(S.wk); S.wk.visible = false;
-    S.ride = -1; MisKit.hold(P, false);
+    sk.B.go(false); sk.B.v = 0; sk.mesh.rotation.x = 0; sk.mesh.remove(S.wk); S.wk.visible = false;
+    S.ride = -1; MisKit.hold(P, false); idleBuild();
     if (spot) { place(P, spot.x, spot.z, spot.h); S.lands++; } else if (S.car) place(P, S.car.x, S.car.z, S.car.h);
     S.car = null; S.dry = null;
   }
@@ -133,7 +146,6 @@ const NVWater = (function () {
       S.near = k; S.zone = k >= 0 ? 'take' : null;
       if (pick === 'ski' && k >= 0) take(P, k);
     }
-    for (let i = 0; i < S.skis.length; i++) if (i !== S.ride) S.skis[i].B.step(dt, 0, 0, 0);   // (the others bob on the chop where they lie)
     return ev;
   }
   function post(P) { if (S && S.ride >= 0 && P) { P.stuckT = 0; P.wrongT = 0; } }
@@ -171,10 +183,10 @@ const NVWater = (function () {
   // the car busy elsewhere: in the helicopter, a gondola's cabin, on the train, the fire engine (js/nvheli.js, js/nvride.js)
   const busy = () => (typeof NVHeli !== 'undefined' && NVHeli.on && NVHeli.on()) || (typeof NVRide !== 'undefined' && NVRide.on && NVRide.on());
 
-  // ---- drawn between the steps: the card at the top (the fire engine's look, js/nvride.js); the jet skis far off hidden
+  // ---- drawn between the steps: the card at the top (the fire engine's look, js/nvride.js); the idle jet skis far off hidden
   function frame(dt, alpha, P, live) {
     if (!S) return; const C = Render.camera;
-    if (C) for (let i = 0; i < S.skis.length; i++) { const m = S.skis[i].mesh; m.visible = i === S.ride || Math.hypot(m.position.x - C.position.x, m.position.z - C.position.z) < K.SHOW; }
+    const b = S.idle.geometry.boundingSphere; if (C && b) S.idle.visible = S.idleN > 0 && Math.hypot(b.center.x - C.position.x, b.center.z - C.position.z) < b.radius + K.SHOW;
     card(!!live);
   }
   function card(live) {
@@ -194,20 +206,20 @@ const NVWater = (function () {
     WL = H3.water && H3.water.WL != null ? H3.water.WL : -0.12;
     if (!trk.nvWater && trk.ground2) { g0 = trk.ground2; trk.nvWater = true;
       trk.ground2 = (x, z, y) => { const g = g0(x, z, y); if (g > WL + 0.8) return g; const d = depth(x, z); return d > 0.01 ? Math.min(g, WL - d) : g; }; }
-    if (!S) S = build();
+    if (!S) { S = build(); if (S) idleBuild(); }
     return !!S;
   }
   // a restart at HOME: off the jet ski, the jet skis back in their places
   function reset(P) {
     if (!S) return; if (S.ride >= 0) leave(P, null);
-    for (const sk of S.skis) { sk.B.place(sk.home.x, sk.home.z, sk.home.h); sk.B.step(0, 0, 0, 0); }
-    S.zone = null; S.pick = null; S.dry = null; S.sink = 0; S.near = -1;
+    for (const sk of S.skis) sk.B.place(sk.home.x, sk.home.z, sk.home.h);
+    idleBuild(); S.zone = null; S.pick = null; S.dry = null; S.sink = 0; S.near = -1;
   }
   const on = () => !!(S && S.ride >= 0);
   function state() {
     if (!S) return null; const r = S.ride >= 0 ? S.skis[S.ride].B : null;
-    return { skis: S.skis.map(s => ({ at: s.at, x: +s.B.x.toFixed(2), z: +s.B.z.toFixed(2), h: +s.B.h.toFixed(3), y: +s.B.y.toFixed(3), home: s.home, dyn: !!s.mesh.userData.dyn, inScene: !!s.mesh.parent })),
-      ride: S.ride, zone: S.zone, near: S.near, car: S.car, dry: S.dry, backs: S.backs, rides: S.rides, lands: S.lands,
+    return { skis: S.skis.map(s => ({ at: s.at, x: +s.B.x.toFixed(2), z: +s.B.z.toFixed(2), h: +s.B.h.toFixed(3), y: +s.B.y.toFixed(3), home: s.home })),
+      idle: { n: S.idleN, dyn: !!S.idle.userData.dyn, inScene: !!S.idle.parent, shown: S.idle.visible }, ride: S.ride, zone: S.zone, near: S.near, car: S.car, dry: S.dry, backs: S.backs, rides: S.rides, lands: S.lands,
       ski: r ? { x: r.x, z: r.z, h: r.h, v: r.v, y: r.y, mh: S.mh, roll: S.roll, stuck: r.stuck, sea: seaK } : null };
   }
   // (the tests: the jet ski ridden put at a place, still)
