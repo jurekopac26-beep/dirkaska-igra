@@ -18,7 +18,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
-| Nestabilni testi: online (štart 400 ms), repair (KAZE RS), misija m06, share in sound (avtopilot obstane) | 3 | zdaj (seja session_01WbgGzuQPHimjQLjQ5mhBQC, naročila VSE SEJE 2 5. 11.) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 
 ## Vrsta (stanje 4. 11. 2026)
