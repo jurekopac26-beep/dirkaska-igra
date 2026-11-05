@@ -18,14 +18,14 @@
   "maxCalls": 186,
   "kverts": 398,
   "maxKverts": 473,
-  "jsMs": 1.67
+  "jsMs": 2.04
  },
  "vrsic": {
   "calls": 163,
   "maxCalls": 193,
   "kverts": 263,
   "maxKverts": 325,
-  "jsMs": 3.51
+  "jsMs": 3.48
  },
  "nring": {
   "calls": 153,
