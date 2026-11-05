@@ -206,12 +206,14 @@ try {
     const big = await Q.evaluate(() => { const d = document.getElementById('nk-big').getBoundingClientRect(), x = document.querySelector('#nk-big .nk-big-x').getBoundingClientRect(); return { w: d.width, h: d.height, W: innerWidth, H: innerHeight, x: x.left >= 0 && x.right <= innerWidth && x.top >= 0 && x.height >= 36 }; });
     await Q.keyboard.press('Escape');
     await Q.evaluate(() => { document.getElementById('nk-zg').remove(); Napake.zadnji(); }); await Q.waitForFunction(() => document.querySelectorAll('#nk-pz .nk-pzi').length === 7, null, { timeout: 10000, polling: 50 }); await Q.waitForTimeout(250);
-    const c = await fits('#nk-pz'), th = await Q.evaluate(() => { const r = document.querySelector('#nk-pz .nk-th').getBoundingClientRect(), t = document.querySelector('#nk-pz .nk-bd').getBoundingClientRect(); return { th: r.width >= 44 && r.height >= 44, bd: t.height >= 44 }; });
+    const c = await fits('#nk-pz'), th = await Q.evaluate(() => { const r = document.querySelector('#nk-pz .nk-th').getBoundingClientRect(), t = document.querySelector('#nk-pz .nk-bd').getBoundingClientRect(), x = document.querySelector('#nk-pz .nk-it').getBoundingClientRect(),
+      bs = [...document.querySelectorAll('#nk-pz .nk-pzb')].map(e => e.getBoundingClientRect());
+      return { th: r.width >= 44 && r.height >= 44, bd: t.height >= 44, it: Math.round(x.width), text: x.width >= 130, btn: bs.length === 14 && bs.every(b => b.width >= 36 && b.height >= 36) }; });
     await Q.evaluate(() => { document.getElementById('nk-pz').remove(); Napake.nastavitve(); }); await Q.waitForFunction(() => /\(7\/10\)/.test((document.querySelector('#nk-set .nk-pz-n') || {}).textContent || ''), null, { timeout: 10000, polling: 50 }); await Q.waitForTimeout(250);
     const d = await fits('#nk-set');
     orient[name] = { a, b, big, c, d, th };
-    T.check(name + ' (' + vp.width + ' × ' + vp.height + '): Zgodovina napak (list, record with the recording\'s buttons), Zadnji posnetki and the settings inside the screen, nothing wider than its box; the picture over the whole window, Zapri inside it; the picture and the text big enough to tap',
-      fitOk(a) && fitOk(b) && fitOk(c) && fitOk(d) && Math.abs(big.w - big.W) < 1 && Math.abs(big.h - big.H) < 1 && big.x && th.th && th.bd, JSON.stringify(orient[name]));
+    T.check(name + ' (' + vp.width + ' × ' + vp.height + '): Zgodovina napak (list, record with the recording\'s buttons), Zadnji posnetki and the settings inside the screen, nothing wider than its box; the picture over the whole window, Zapri inside it; the picture and the text big enough to tap, the text of an entry of Zadnji posnetki at least 130 px wide (not a word to a line) and .rrp and ✕ at least 36 px',
+      fitOk(a) && fitOk(b) && fitOk(c) && fitOk(d) && Math.abs(big.w - big.W) < 1 && Math.abs(big.h - big.H) < 1 && big.x && th.th && th.bd && th.text && th.btn, JSON.stringify(orient[name]));
     await Q.evaluate(() => { document.getElementById('nk-set').remove(); });
   }
 

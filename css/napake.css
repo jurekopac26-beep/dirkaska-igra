@@ -130,6 +130,13 @@ html[lang="en"] .nk-setrow { display: none; }   /* (the tool is Slovenian only) 
 .nk-pzi { display: flex; align-items: stretch; gap: 6px; }
 .nk-pzi .nk-item { flex: 1 1 auto; min-width: 0; }
 .nk-box .nk-pzb { flex: none; min-width: 44px; min-height: 0; padding: 0 8px; font-size: 12px; }
+@media (max-width: 460px) {   /* upright (a narrow screen): the state under the text, .rrp and ✕ one above the other, so the text keeps its room (not a word to a line) */
+  .nk-pzi { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 4px 6px; }
+  .nk-pzi .nk-item { grid-row: 1 / span 2; }
+  .nk-box .nk-pzb { min-width: 0; padding: 0 2px; }
+  .nk-pzi .nk-bd { flex-direction: column; align-items: flex-start; gap: 5px; }
+  .nk-pzi .nk-th { width: 64px; height: 44px; margin-right: 6px; }
+}
 .st-cilj { color: #4cd964; } .st-nedok { color: #FF9500; }
 .nk-pz-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 2px; }
 .nk-pz-hn, .nk-pz-c { color: #4cd964; font-weight: 800; font-size: 13px; }
