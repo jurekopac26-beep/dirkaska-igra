@@ -4708,7 +4708,11 @@ const Render = (function () {
     const D = M.trailer, R = D && D.look ? tlBuild(M) : null; if (!R) return null;
     const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
     G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
-    const x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len), x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    const N = D.next, R2 = N ? tlBuild2(M) : null;   // (the road train's second tank: on the dolly's fifth wheel, straight behind the first one)
+    if (R2) { const G2 = new THREE.Group(), bl2 = new THREE.Mesh(R2.blob, matBlob); bl2.renderOrder = 1;
+      G2.add(new THREE.Mesh(R2.geo, R2.mat), new THREE.Mesh(R2.lgeo, matTailOff), bl2); G2.position.set(N.kp[0], N.kp[1] - D.kp[1], 0); G.add(G2);
+      x0 = Math.min(x0, D.kp[0] + N.kp[0] + N.f - N.len); }
     v.rigG = G; v.rigS = bl; v.rig = { x0, x1, len: x1 - x0, mid: (x0 + x1) / 2, wid: Math.max(M.wid, D.wid), ht: D.ht };
     return v.rig;
   }
