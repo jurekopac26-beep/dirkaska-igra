@@ -14,7 +14,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 |---|---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
 | Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville; Mount Buller (narejena, PR #241) je od 5. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #379) | nobena (Mount Buller gre v test) | stara veja: Phillip Island |
-| Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) | – |
+| Kanada | Montréal; od 5. 11. 2026 samo ta (odločitev uporabnika), Toronto in Trois-Rivières gresta med testne (`test: true`, za izbris) | Québec (zavite, 2); odprto: ali ostane, ko je Montréal edina predstavnica Kanade (odloči uporabnik) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1) | Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |

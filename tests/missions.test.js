@@ -21,9 +21,13 @@ const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
 check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === M.DEFS.filter(d => !d.test).map(d => d.id).sort().join() + ',vaja' && M.DEFS.map(d => d.id).indexOf('99') === M.DEFS.length - 2, M.DEFS.map(d => d.id).join());
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
+// (Toronto and Trois-Rivières became test tracks on 5. 11. 2026, the user's decision (every track of Canada but Montréal, CLAUDE.md »Testne proge«); the
+// missions on them stay there until the user moves them, later, when it is known which tracks stay (docs/misije.md): these exceptions only, no other
+// mission may run on a test track)
+const ON_TEST_TRACK = { '17': 'troisrivieres', '34': 'toronto' };
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
-  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test));
+  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));
   const miss = [d.title, d.story, d.goal, d.hint].concat(d.rows.map(r => r.label)).filter(s => s && !has(s));
   check(`mission ${d.id}: its texts in English`, !miss.length, miss.join(' | '));
   check(`mission ${d.id}: the track's name ("Kraj, Država")`, /, /.test(M.placeOf(d)), M.placeOf(d));

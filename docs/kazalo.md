@@ -209,9 +209,9 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
-| toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
+| *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
-| troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
+| *troisrivieres* | *Trois-Rivières, Kanada (test)* | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | uncompahgre | Uncompahgre, ZDA | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
 | vrsic | Vršič, Slovenija | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |

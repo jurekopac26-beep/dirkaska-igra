@@ -1432,9 +1432,7 @@
     sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
-    toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
-    troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1456, -1], ['vhod', 1960, -1]],
     uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
     vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };

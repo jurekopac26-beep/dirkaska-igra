@@ -8,7 +8,9 @@
   "monaco",
   "mountbuller",
   "riviera",
-  "toskana"
+  "toronto",
+  "toskana",
+  "troisrivieres"
  ],
  "datoteke": {
   "assets/flags/monaco.svg": "5f9c273b3bceeb2f",
@@ -21,6 +23,10 @@
   "assets/geo/l2-monaco.webp": "89eb650c592532a5",
   "assets/geo/l2-riviera-h.png": "203aa03db0a10ff8",
   "assets/geo/l2-riviera.webp": "9deeb2611d077d6c",
+  "assets/geo/l2-toronto-h.png": "b69afef6d44194e7",
+  "assets/geo/l2-toronto.webp": "e159bc5e9dd1539a",
+  "assets/geo/l2-troisrivieres-h.png": "0cae6e115f96da2a",
+  "assets/geo/l2-troisrivieres.webp": "c34ec3c5e0fad7aa",
   "assets/geo/l3-gora-h.png": "3b6271aca6183422",
   "assets/geo/l3-gora.webp": "f358cfcf6bd9caf8",
   "assets/geo/l3-jezero-h.png": "3b4ae559a7f793a1",
@@ -29,6 +35,10 @@
   "assets/geo/l3-monaco.webp": "5fdf36979606736c",
   "assets/geo/l3-riviera-h.png": "312bfb0988ef1608",
   "assets/geo/l3-riviera.webp": "fd1fa88a36810132",
+  "assets/geo/l3-toronto-h.png": "3db0b5f637dae188",
+  "assets/geo/l3-toronto.webp": "e1a922559c1ae476",
+  "assets/geo/l3-troisrivieres-h.png": "ba694e95cd56603a",
+  "assets/geo/l3-troisrivieres.webp": "2e92657bd5ef8373",
   "assets/maps/fly-gora.webm": "461da34d368441f0",
   "assets/maps/fly-gora.webp": "6aeee3ec0f7de82a",
   "assets/maps/fly-jezero.webm": "2cd4852cad898995",
@@ -53,6 +63,10 @@
   "assets/maps/isle-monaco.webp": "9bffc83e1238d073",
   "assets/maps/isle-riviera-rain.webp": "655fa0c6293fb318",
   "assets/maps/isle-riviera.webp": "2544c3715604880f",
+  "assets/maps/isle-toronto-rain.webp": "df9442df7f6a4fe0",
+  "assets/maps/isle-toronto.webp": "8e536dd7e94bf048",
+  "assets/maps/isle-troisrivieres-rain.webp": "5a558b24f38f85bd",
+  "assets/maps/isle-troisrivieres.webp": "e6b2ede46dca1613",
   "assets/maps/top-gora-rain.webp": "2bc2b623972c8838",
   "assets/maps/top-gora.webp": "7fc36bec7bfb5344",
   "assets/maps/top-jezero-rain.webp": "778290a00bb7a5a6",
@@ -61,10 +75,18 @@
   "assets/maps/top-monaco.webp": "a37aecb4921e14d8",
   "assets/maps/top-riviera-rain.webp": "d5cfe1dc0b0dda9e",
   "assets/maps/top-riviera.webp": "f486a80b66c7b26d",
+  "assets/maps/top-toronto-rain.webp": "3b7e36990851fb4c",
+  "assets/maps/top-toronto.webp": "1e08e7110f84fc2e",
+  "assets/maps/top-troisrivieres-rain.webp": "a49f99d9456cc87a",
+  "assets/maps/top-troisrivieres.webp": "cd3f5718ff7021ca",
   "assets/maps/wide-monaco-rain.webp": "c189bd883a183602",
   "assets/maps/wide-monaco.webp": "b3f9865e3a616b1a",
   "assets/maps/wide-riviera-rain.webp": "19d9a6bdd8407c28",
   "assets/maps/wide-riviera.webp": "2e14b593a5e83a17",
+  "assets/maps/wide-toronto-rain.webp": "f98637b6e8a9578f",
+  "assets/maps/wide-toronto.webp": "a0cf948492c0b39d",
+  "assets/maps/wide-troisrivieres-rain.webp": "96a8594cbfed3fe3",
+  "assets/maps/wide-troisrivieres.webp": "b8b113643136a0dd",
   "assets/music/monaco.mp3": "ba14426db33be716",
   "assets/tracks/gora-rain.webp": "417f59a92405976f",
   "assets/tracks/gora.webp": "615a48c8bce362c4",
@@ -80,10 +102,16 @@
   "assets/tracks/mountbuller.webp": "fad451c755c460fc",
   "assets/tracks/riviera-rain.webp": "722bb147ce7f9083",
   "assets/tracks/riviera.webp": "f6abccb22e784bfb",
+  "assets/tracks/toronto-rain.webp": "d446fac775eb6d0c",
+  "assets/tracks/toronto.webp": "4277e929cd430c74",
   "assets/tracks/toskana-rain.webp": "be3ffb1a67235699",
   "assets/tracks/toskana.webp": "b2b4a143b93f7670",
+  "assets/tracks/troisrivieres-rain.webp": "004bb194967dba3a",
+  "assets/tracks/troisrivieres.webp": "ed0f7e55fc6a85fa",
   "docs/proge/mountbuller.md": "aeb82462e7c402a4",
+  "docs/proge/toronto.md": "74fe36cd2aca6f0d",
   "docs/proge/toskana.md": "48f9e7e8dd76e500",
+  "docs/proge/troisrivieres.md": "4e6c3019fcd6ea00",
   "js/tracks/gora.js": "2f20b716c43be01a",
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/grom.js": "ff4ef504543ec79d",
@@ -91,8 +119,12 @@
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
   "js/tracks/mountbuller.js": "f2929bc087edb4ef",
   "js/tracks/riviera.js": "21aeba7841f707f9",
+  "js/tracks/toronto.js": "0c6d48f26e4a3987",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
+  "js/tracks/troisrivieres.js": "809690b5d588dbf1",
   "js/world-mountbuller.js": "989d8466538bd67f",
+  "js/world-toronto.js": "1abe26eb1a4f04b1",
+  "js/world-troisrivieres.js": "c7686c249570a83d",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -153,7 +185,9 @@
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
   "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
-  "tests/mountbuller.test.js": "62a5d26779a470bb"
+  "tests/mountbuller.test.js": "62a5d26779a470bb",
+  "tests/toronto.test.js": "721b6a6a588d95c4",
+  "tests/troisrivieres.test.js": "d2f4916e3dc5614b"
  },
  "dovoljenja": [
   {
@@ -165,6 +199,16 @@
    "datum": "2026-11-05",
    "proga": "mountbuller",
    "razlog": "uporabnik 5. 11. 2026: Prestavi progo v test (sporoča VSE SEJE 2), Mount Buller, Avstralija v test (PR #379)"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "toronto",
+   "razlog": "uporabnik 5. 11. 2026: vse proge iz Kanade v test, razen Montréala (sporoča VSE SEJE 2), PR #379"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "troisrivieres",
+   "razlog": "uporabnik 5. 11. 2026: vse proge iz Kanade v test, razen Montréala (sporoča VSE SEJE 2), PR #379"
   }
  ]
 }

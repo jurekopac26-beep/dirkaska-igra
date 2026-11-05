@@ -37,7 +37,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Longford, Avstralija](docs/proge/longford.md)
 - [Newcastle, Avstralija](docs/proge/newcastle.md)
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md)
-- [Toronto, Kanada](docs/proge/toronto.md)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
@@ -47,7 +46,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Mount Hotham, Avstralija](docs/proge/hotham.md)
 - [Townsville, Avstralija](docs/proge/townsville.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
-- [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
@@ -60,6 +58,8 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Toskana, Italija](docs/proge/toskana.md)
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
 - [Mount Buller, Avstralija](docs/proge/mountbuller.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Toronto, Kanada](docs/proge/toronto.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Trois-Rivières, Kanada](docs/proge/troisrivieres.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 
