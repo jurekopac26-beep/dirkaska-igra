@@ -17,6 +17,19 @@
   // line, turn degrees towards the cars coming (0: square to the road), W x H metres, y the bottom edge over the ground
   const SPOT = {
     bathurst: { d: 192, side: 1, off: 19, turn: 58, W: 10, H: 5, y: 2.4 },   // (at the end of the grandstand, shortened for it: js/tracks/bathurst.js)
+    bangsaen: { d: -157, side: -1, off: 15.5, turn: 50, W: 10, H: 5, y: 2.4 },
+    cpalace: { d: -67, side: -1, off: 14, turn: 50, W: 10, H: 5, y: 2.4 },
+    detroit: { d: 84, side: -1, off: 15, turn: 50, W: 10, H: 5, y: 2.4 },
+    longford: { d: -77, side: -1, off: 14.1, turn: 50, W: 10, H: 5, y: 2.4 },
+    monterey: { d: -14, side: 1, off: 17.3, turn: 50, W: 10, H: 5, y: 2.4 },
+    montreal: { d: -182, side: 1, off: 14.2, turn: 50, W: 10, H: 5, y: 2.4 },
+    newcastle: { d: -177, side: -1, off: 15, turn: 50, W: 10, H: 5, y: 2.4 },
+    rbring: { d: 147, side: -1, off: 16.5, turn: 50, W: 10, H: 5, y: 2.4 },
+    rio: { d: -254, side: -1, off: 17.5, turn: 50, W: 10, H: 5, y: 2.4 },
+    toronto: { d: 4, side: 1, off: 22, turn: 50, W: 10, H: 5, y: 2.4 },
+    spa: { d: -21, side: -1, off: 15.7, turn: 50, W: 10, H: 5, y: 2.4 },
+    townsville: { d: -220, side: -1, off: 15, turn: 50, W: 10, H: 5, y: 2.4 },
+    troisrivieres: { d: 3, side: 1, off: 14.8, turn: 50, W: 10, H: 5, y: 2.4 },
   };
   const RW = 512, RH = 256;   // the picture, live and still (2:1, as the wall)
   const FPS = 20;             // the live picture's frames a second
@@ -175,7 +188,7 @@
     const S = Object.assign({}, sp, { gL, gR });
     const grp = new THREE.Group(); grp.name = 'zaslon';
     const frame = new THREE.Mesh(rig([cx, cz], [fx, fz], [rx, rz], gy, S), new THREE.MeshLambertMaterial({ vertexColors: true }));
-    frame.castShadow = true; frame.receiveShadow = true; frame.matrixAutoUpdate = false; frame.name = 'zaslon-okvir'; grp.add(frame);
+    frame.castShadow = tier >= 1; frame.receiveShadow = true; frame.matrixAutoUpdate = false; frame.name = 'zaslon-okvir'; grp.add(frame);   // (NIZKA: no shadow pass for it, the phone budget)
     // the picture: a quad on the cabinet's front, unlit (it glows at night); the still's canvas, or the live target's picture
     const bc = document.createElement('canvas'); bc.width = RW; bc.height = RH; bc.__zs = true;
     const still = new THREE.CanvasTexture(bc); still.anisotropy = 4;
@@ -207,9 +220,8 @@
   function step(Z, X) {
     const R = X.race; if (!R) return false;
     const live = X.tier >= 2 && !X.low;
-    if (live !== Z.live) { Z.live = live; Z.key = ''; Z.tb = 0;
-      if (live && !Z.rt) { Z.rt = new THREE.WebGLRenderTarget(RW, RH, { minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false, generateMipmaps: true }); Z.rt.texture.anisotropy = 4; Z.drawn = false; }
-      Z.face.material.map = live ? Z.rt.texture : Z.still; }
+    if (live !== Z.live) { Z.live = live; Z.key = ''; Z.tb = 0; Z.drawn = false; Z.face.material.map = Z.still;   // (live: the still until the first picture, draw)
+      if (live && !Z.rt) { Z.rt = new THREE.WebGLRenderTarget(RW, RH, { minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false, generateMipmaps: true }); Z.rt.texture.anisotropy = 4; } }
     const dt = Math.max(0, X.dt || 0);
     // the car followed: the leader; the player's own while it comes down the straight to the screen (300 m before it to 40 m past it)
     if (live) {
@@ -232,7 +244,8 @@
     const who = Z.who; if (!who) return false;
     const T = Z.T, C = X.tvCams(), n = C.length, s = who.q && Number.isFinite(who.q.s) ? who.q.s : 0;
     let k = Math.floor(s / 170) % n; if (T.open) k = clamp(k, 0, n - 1);
-    const p = X.tvPost(k), ty = (who.y || 0) + 0.7, ea = Z.drawn ? 1 - Math.exp(-Math.min(Z.acc, 0.5) * 9) : 1;
+    const p = X.tvPost(k, 1); if (!p) return false;   // (a post not yet checked with the world: a ray or two a frame, the last picture meanwhile)
+    const ty = (who.y || 0) + 0.7, ea = Z.drawn ? 1 - Math.exp(-Math.min(Z.acc, 0.5) * 9) : 1;
     if (k !== Z.k) { Z.k = k; Z.ax = who.x; Z.az = who.z; } else { Z.ax += (who.x - Z.ax) * ea; Z.az += (who.z - Z.az) * ea; }
     const d = Math.hypot(p.x - Z.ax, p.y - ty, p.z - Z.az), fov = clamp(2 * Math.atan(3.6 / Math.max(1, d)) * 180 / Math.PI, 3, 50);
     const tc = Z.cam; tc.position.set(p.x, p.y, p.z); tc.lookAt(Z.ax, ty, Z.az); if (Math.abs(tc.fov - fov) > 0.01) { tc.fov = fov; tc.updateProjectionMatrix(); } tc.updateMatrixWorld();
@@ -248,11 +261,16 @@
     try {
       renderer.setRenderTarget(Z.rt); renderer.render(scene, Z.cam);
       Z.rt.texture.generateMipmaps = true; renderer.autoClear = false; renderer.render(Z.ovl.scene, Z.ovl.cam);
+      Z.face.material.map = Z.rt.texture;
     } finally {
       Z.info.calls = I.render.calls - c0; Z.info.tris = I.render.triangles - t0;   // (what one picture costs: its draws and triangles, the tests)
       renderer.autoClear = ac; renderer.setRenderTarget(rt0); renderer.shadowMap.autoUpdate = sh; scene.autoUpdate = au; I.autoReset = ar; Z.face.visible = true; Z.rt.texture.generateMipmaps = true;
     }
   }
 
-  World.zaslon = { build, step, draw, SPOT, RW, RH, FPS };
+  // the TV posts the live picture films from while the player comes down the straight to the screen (step): Render checks them with the
+  // world when it builds it (on the highest detail), not when the picture first needs one in the race
+  function posts(Z, n) { const L = Z.T.len, out = new Set(); for (let d = -360; d <= 60; d += 20) out.add(Math.floor((((Z.s + d) % L) + L) % L / 170) % n); return [...out]; }
+
+  World.zaslon = { build, step, draw, posts, SPOT, RW, RH, FPS };
 })();

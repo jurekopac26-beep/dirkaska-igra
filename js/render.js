@@ -3369,7 +3369,10 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
-    if (World.zaslon) World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
+    if (World.zaslon) { const Z = World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
+      if (Z && tierNow >= 2 && world.root) {   // (the TV posts it films from while the player comes to it: checked with the world now, not in the race)
+        const t0 = performance.now(), ks = World.zaslon.posts(Z, tvCams(track).length); world.root.updateMatrixWorld(true); for (const k of ks) tvPost(track, k);
+        Z.info.prep = ks.length; Z.info.prepMs = Math.round(performance.now() - t0); } }
     // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
     // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
     if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
@@ -4514,22 +4517,23 @@ const Render = (function () {
   // the big screen by the main grandstand (js/world-zaslon.js): its live picture (VISOKA) drawn after the frame from a TV post beside the
   // track, for the next frame's view: the haze for that camera's distance, the sky dome round it, the cars out of the main view (carCull)
   // near the car it follows put back for it, no names over the cars, the glows sized for its lens; all as it was after
-  const zsX = { race: null, dt: 0, tier: 2, low: false, cam: null, tvCams: () => tvCams(curTrack), tvPost: (k) => tvPost(curTrack, k) }, zsIn = [], zsTag = [], _zsP = new THREE.Vector3();
+  const zsX = { race: null, dt: 0, tier: 2, low: false, cam: null, tvCams: () => tvCams(curTrack), tvPost: (k, b) => tvPost(curTrack, k, b) }, zsIn = [], zsTag = [], _zsP = new THREE.Vector3();
   function zaslonFeed(dt) {
     const Z = world && world.dyn && world.dyn.zaslon; if (!Z || !World.zaslon || snapping || !curTrack) return;
     zsX.race = curRace; zsX.dt = dt; zsX.tier = tierNow; zsX.low = saverK < 1; zsX.cam = camera;
     if (!World.zaslon.step(Z, zsX)) return;
     const F = scene.fog, fn = F.near, ff = F.far, r = Math.max(0, wet), dC = Math.max(60, Z.dist || 0) * ((THEMES[themeId] || {}).fogK || 1), C = Z.cam;
     F.near = dC * (1.35 - 0.4 * r); F.far = dC * (5.5 - 1.6 * r);
+    { const fr = Math.min(900, F.far + 40); if (Math.abs(C.far - fr) > 5) { C.far = fr; C.updateProjectionMatrix(); } }   // (nothing past the haze drawn into it)
     const sk = sky && sky.mesh.visible ? sky.mesh : null, mo = nsky.moon && nsky.moon.visible;
-    if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.updateMatrixWorld(); }
+    const ss = sk ? sk.scale.x : 1; if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.scale.setScalar(C.far * 0.8); sk.updateMatrixWorld(); }   // (the dome round the TV post, inside its far plane)
     if (mo) nsky.moon.visible = nsky.halo.visible = false;
     for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
     for (const g of GV) if (g && g.tag && g.tag.visible) { g.tag.visible = false; zsTag.push(g.tag); }
     const ps = World.zaslon.RH / (2 * Math.tan(C.fov * Math.PI / 360)); particles.mat.uniforms.uScale.value = ps; if (sparkP) sparkP.mat.uniforms.uScale.value = ps; if (glows) glows.mat.uniforms.uScale.value = ps;
     try { World.zaslon.draw(Z, renderer, scene); }
     finally {
-      F.near = fn; F.far = ff; if (sk) { sk.position.copy(_zsP); sk.updateMatrixWorld(); } if (mo) nsky.moon.visible = nsky.halo.visible = true;
+      F.near = fn; F.far = ff; if (sk) { sk.position.copy(_zsP); sk.scale.setScalar(ss); sk.updateMatrixWorld(); } if (mo) nsky.moon.visible = nsky.halo.visible = true;
       for (const g of zsIn) scene.remove(g); zsIn.length = 0; for (const t of zsTag) t.visible = true; zsTag.length = 0; updatePointScale();
     }
   }
@@ -9158,7 +9162,8 @@ const Render = (function () {
   }
   // a post has to see the road where the car comes to it from (trees, stands and buildings, a bank in the way): the first time it films, the
   // place above is checked with rays into the world, else the other side of the track, nearer the barrier, higher up; the first that sees
-  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above)
+  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above). budget (ms): a few rays a frame, null until it is
+  // done (the big screen's live picture, js/world-zaslon.js); none: all at once (the replay)
   let _tvRc = null;
   function tvSees(x, y, z, tx, ty, tz) {
     if (!world || !world.root) return true;
@@ -9168,16 +9173,20 @@ const Render = (function () {
     for (const h of R.rc.intersectObject(world.root, true)) { const m = h.object.material; if (!m || m.transparent || m.alphaTest > 0 || !h.object.visible) continue; return false; }   // (fences and other see-through meshes: seen through)
     return true;
   }
-  function tvPost(T, k) {
-    const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
+  const TV_TRY = [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]];   // [the side (1: the post's own), metres beyond the barrier, up]
+  function tvPost(T, k, budget) {
+    const P = tvCams(T)[k]; if (P.ok) return P;
+    const q = P.q || (P.q = { c: 0, r: 0 }), t0 = budget ? performance.now() : 0;   // (the place and the ray being checked)
     const gy = (i) => (T.hasElev && T.hy ? T.hy[i] : 0), road = [-100, -45, 30].map(d => { const j = T.idx(P.s + d); return [T.px[j], gy(j) + 0.8, T.pz[j]]; });
     const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w, off = side * (Math.max(T.w, bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
       let y = gy(i) + up; if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + up - 4); } return { x, y, z }; };
-    for (const [sd, ex, up] of [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]]) {
-      const c = at(sd * P.side, ex, up);
-      if (road.every(r => tvSees(c.x, c.y, c.z, r[0], r[1], r[2]))) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+    while (q.c < TV_TRY.length) {
+      const [sd, ex, up] = TV_TRY[q.c], c = at(sd * P.side, ex, up), r = road[q.r];
+      if (!tvSees(c.x, c.y, c.z, r[0], r[1], r[2])) { q.c++; q.r = 0; }
+      else if (++q.r === road.length) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+      if (budget && q.c < TV_TRY.length && performance.now() - t0 >= budget) return null;
     }
-    return P;
+    P.ok = true; P.q = null; return P;
   }
   // Pikes Peak's TV cameras (the replay, 'tv'): a helicopter's high tracking shot over the open road (over the lower ground beside the car,
   // a little behind it), fixed cameras at the famous places (Engineer's Corner, the W's seen from high up, Devil's Playground, Bottomless
