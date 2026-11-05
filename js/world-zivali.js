@@ -316,48 +316,8 @@
     return out;
   }
   const ZIV = {
-    nring: { a: ['roe', 'stag', 'boar', 'fox', 'hare'], t: ['huntStand', 'feedRack', 'logPile', 'fallenTree', 'stumps', 'mushrooms'] },
-    spa: { a: ['roe', 'boar', 'fox', 'cowB', 'hare'], t: ['huntStand', 'logPile', 'fallenTree', 'stumps', 'feedRack'], open: true },
-    rbring: { a: ['roe', 'chamois', 'cowB', 'fox'], t: ['huntStand', 'feedRack', 'logPile', 'cabin', 'hayrack'], open: true },
-    vrsic: { a: ['chamois', 'ibex', 'roe', 'sheep', 'bear'], t: ['beehive', 'hayrack', 'huntStand', 'feedRack', 'logPile', 'cabin'], open: true },
-    medvode: { a: ['roe', 'boar', 'fox', 'bear', 'stork'], t: ['beehive', 'hayrack', 'huntStand', 'feedRack', 'logPile'], open: true },
-    cpalace: { a: ['fox', 'magpie', 'goose'], t: ['logPile', 'fallenTree', 'signPost'], city: true },
-    ouninpohja: { a: ['moose', 'hare', 'fox'], t: ['cabinR', 'logPile', 'huntStand', 'fallenTree', 'mushrooms'] },
-    harju: { a: ['hare', 'fox', 'magpie'], t: ['logPile', 'signPost'], city: true, nizka: false },   // (Harju is on the phone budget's edge: nothing at NIZKA)
-    pikes: { a: ['elk', 'bighorn', 'muleDeer'], t: ['cabin', 'logPile', 'signPost', 'picnic'] },
-    pikesg: { a: ['elk', 'bighorn', 'muleDeer'], t: ['cabin', 'logPile', 'signPost', 'picnic'] },
-    beartooth: { a: ['bison', 'elk', 'goatW', 'moose', 'blackbear'], t: ['cabin', 'logPile', 'signPost'], open: true },
-    uncompahgre: { a: ['elk', 'bighorn', 'muleDeer', 'blackbear'], t: ['cabin', 'logPile', 'fallenTree'] },
-    baldy: { a: ['bighorn', 'muleDeer', 'coyote', 'blackbear'], t: ['cabin', 'picnic', 'signPost', 'logPile'] },
-    bigsur: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost', 'fallenTree'] },
-    mulholland: { a: ['coyote', 'muleDeer'], t: ['picnic', 'signPost'] },
-    palomar: { a: ['muleDeer', 'coyote', 'cowB'], t: ['cabin', 'picnic', 'logPile'] },
-    monterey: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost'] },
-    riverside: { a: ['coyote', 'hare', 'horse'], t: ['windpump', 'waterTank', 'picnic'], open: true },
-    moki: { a: ['bighorn', 'coyote', 'cowB'], t: ['signPost'], open: true },
-    maunakea: { a: ['mouflon', 'goose'], t: [], open: true },
-    detroit: { a: ['goose'], t: [], city: true },
-    montreal: { a: ['goose', 'fox'], t: ['picnic'], city: true },
-    toronto: { a: ['goose'], t: [], city: true },
-    troisrivieres: { a: ['fox', 'goose'], t: ['picnic'], city: true },
-    rastro: { a: ['coati', 'cowB', 'horse'], t: ['signPost', 'picnic'] },
-    rio: { a: ['capybara', 'caiman', 'egret'], t: ['palmHut'], city: true },
-    caracoles: { a: ['guanaco', 'horse'], t: [], open: true },
-    chapman: { a: ['baboon', 'dassie'], t: ['signPost', 'picnic'], open: true },
-    sani: { a: ['eland', 'horseG', 'cowK', 'baboon'], t: [], open: true },
-    marrakesh: { a: ['camel', 'donkey', 'stork'], t: ['palmHut'], city: true },
-    iroha: { a: ['macaque', 'sika', 'serow'], t: ['torii', 'lantern', 'vending', 'logPile'] },
-    suzuka: { a: ['sika', 'macaque'], t: ['torii', 'lantern', 'vending'] },
-    tianmen: { a: ['macaque'], t: ['lantern', 'signPost'] },
-    katu: { a: ['yak', 'horse', 'ibex', 'elk'], t: ['cabin', 'logPile'], open: true },
-    bangsaen: { a: ['macaque', 'buffalo', 'egret'], t: ['shrine', 'palmHut'], city: true },
-    bathurst: { a: ['kangaroo', 'cockatoo', 'galah', 'wombat'], t: ['waterTank', 'windpump', 'logPile', 'fallenTree'], open: true },
-    greatalpine: { a: ['wallaby', 'wombat', 'cockatoo', 'emu'], t: ['waterTank', 'logPile', 'fallenTree', 'signPost'], open: true },
-    hotham: { a: ['wombat', 'wallaby', 'horse', 'cockatoo'], t: ['cabin', 'logPile', 'waterTank'], open: true },
-    longford: { a: ['wallaby', 'wombat', 'devil', 'kangaroo', 'sheep'], t: ['waterTank', 'windpump', 'fallenTree'], open: true },
-    newcastle: { a: ['magpie', 'galah'], t: [], city: true },
-    townsville: { a: ['wallaby', 'egret'], t: ['palmHut'], city: true },
   };
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.zivali != null && d.id != null && ZIV[d.id] == null) ZIV[d.id] = d.zivali;   // (the real tracks' own: def.zivali in js/tracks/<id>.js, tools/razdeli-proge.mjs)
 
   /* ---------------- the templates: a model baked once into arrays (its bottom faces dropped: no camera sees them) ---------------- */
   const TPL = new Map();
