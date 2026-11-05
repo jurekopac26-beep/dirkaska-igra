@@ -18,7 +18,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Grafika 03: velik zaslon ob glavni tribuni (#332, osnutek) | 3 | v delu (5. 11.) |
 | Pregled kode z več agenti za #289 in #319 (najdbe popravita lastnika PR) | 3 | v delu (5. 11.) |
 | Lestvica prijateljev: časi prijateljev po progah prek povezave, brez strežnika (izbira uporabnika 5. 11.) | 3 | načrt v delu, koda po potrditvi; pred novimi progami |
-| Novi avti: 5 sodobnih vozil, izmišljenih, v novih datotekah `js/cars/` (izbira uporabnika 5. 11.; načrt `docs/novi-avti.md`, vprašanji `novi-avti-izbor` in `novi-avti-videz` na strani Odločitve 3; seja načrta session_01WbgGzuwVYnMe1PqsfUDJyt, koordinacija VSE SEJE 2) | 3 | pred novimi progami, po potrditvi načrta; koda po #315 in po dogovoru z računom 2 (garaža, `js/cars/*`) in #297 |
 | Barve in nalepke avta v garaži (barva, vzorec, številka, platišča; vidno v dirki, posnetku in pri prijateljih) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po dogovoru z #297 (garaža, račun 1) |
 | Beg pred policijo: na odprti cesti s prometom bežiš pred policijo (obratno od »Ti loviš« iz #250) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #250 |
 | Redčenje gozda na pravih progah (en pull request na progo; proge ZDA razen Pikes Peaka odpadejo, ker postanejo testne, odločitev uporabnika 5. 11.) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
