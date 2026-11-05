@@ -46,7 +46,7 @@
   "maxCalls": 251,
   "kverts": 431,
   "maxKverts": 615,
-  "jsMs": 2.57
+  "jsMs": 1.36
  },
  "suzuka": {
   "calls": 194,
@@ -144,7 +144,7 @@
   "maxCalls": 225,
   "kverts": 436,
   "maxKverts": 498,
-  "jsMs": 2.92
+  "jsMs": 1.27
  },
  "moki": {
   "calls": 129,
@@ -287,11 +287,11 @@
   "jsMs": 1.03
  },
  "livorno": {
-  "calls": 140,
-  "maxCalls": 169,
-  "kverts": 317,
-  "maxKverts": 399,
-  "jsMs": 4.34
+  "calls": 165,
+  "maxCalls": 211,
+  "kverts": 365,
+  "maxKverts": 532,
+  "jsMs": 3.3
  },
  "jezero": {
   "calls": 172,
