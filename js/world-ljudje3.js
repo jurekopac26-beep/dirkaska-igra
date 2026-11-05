@@ -169,14 +169,14 @@
       } };
   }
 
-  /* 2 · Spravilo sena (Vršič, Ouninpohja, Medvode): a mown meadow, its hay raked into windrows; an old open tractor and a farm wagon with
+  /* 2 · Spravilo sena (Vršič, Ouninpohja): on a meadow, its hay raked into windrows (on the meadow's own grass); an old open tractor and a farm wagon with
      ladder sides, a heap of loose hay on it. A man stands on the heap and spreads what his son forks up to him from the windrow; the
      grandfather sits on the tractor; a woman in a headscarf rakes the next windrow; the grandmother rests on a bale with a jug of water, the
      bread in a basket by her, the farm dog with her; a child sits up on the hay. Wrapped round bales lie at the field's end. As the car comes
      the woman walks to the fence with her rake and waves, the dog runs along; the rest stay at their work and look: the one with the fork
      leans on it, the one on the heap waves, the child cheers, the grandfather waves from his seat */
   {
-    const HAY = [0xcdbb66, 0xc2b05c, 0xd6c674, 0xb9a85a], MOWN = 0x8c9a4e;
+    const HAY = [0xcdbb66, 0xc2b05c, 0xd6c674, 0xb9a85a];
     // an old open tractor along x (front +x): the seat's top at 1.17 (x -0.75), its steering wheel; the hitch at x -1.35, 0.55 high
     function tractor(col) { const g = grp(), T = 0x17181b, RIM = 0xb9bec6, DK = 0x2a2c31;   // (plain colours, grey wheels: no maker's livery)
       g.add(box(1.55, 0.62, 0.66, col, 0.62, 1.12, 0)); g.add(box(0.1, 0.56, 0.58, 0x3a3c40, 1.42, 1.08, 0)); g.add(box(1.25, 0.42, 0.52, 0x3a3c40, 0.55, 0.62, 0));   // (the bonnet, the grille, the engine)
@@ -235,8 +235,8 @@
     S.seno = { seed: 353, clear: [[-1.0, 8.4, 10.5], [6.5, 9.4, 4.5]],
       build(C, F, K) {
         const fw = fwOf(F), side = F.side, lz = (db) => db * side, onYaw = (da, db) => Math.atan2(da, side * db);
-        // the mown meadow, its windrows (one raked so far, one by the wagon), the wrapped bales at its end
-        ground(C, F, -1.5, 8, [{ col: MOWN, tris: rectTris(-12.5, 9.5, 2.6, 13.4, 0.02, 2.2) }]);
+        // the windrows (one raked so far, one by the wagon), the wrapped bales at the end, on the meadow's own grass (no mown patch under them:
+        // the user, 5. 11. 2026: »zbriši zeleno podlago, ki deluje kot tepih«)
         const row = (b, a0, a1) => { for (let a = a0; a < a1; a += 2.1) { const seg = grp(sph(1, 7, 3, HAY[Math.floor(rnd() * 4)], 0, 0, 0, { half: true, s: [1.2, 0.3, 0.45] }));
           C.prop(seg, a + 1.05 + (rnd() - 0.5) * 0.2, b + (rnd() - 0.5) * 0.18, fw(1, (rnd() - 0.5) * 0.12), null, 0.03); } };
         row(5.0, -11.5, -4.6); row(7.0, -11.5, -0.4); row(11.6, -11.5, -3.0);
