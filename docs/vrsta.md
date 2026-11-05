@@ -15,11 +15,19 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
-| Grafika: 05 večerne dirke | 3 | po vrsti |
+| Grafika 03: velik zaslon ob glavni tribuni (#332, osnutek) | 3 | v delu (5. 11.) |
+| Grafika 05: večerne dirke, reflektorji ob progi in na tribunah (#334, osnutek) | 3 | v delu (5. 11.) |
+| Pregled kode z več agenti za #289 in #319 (najdbe popravita lastnika PR) | 3 | v delu (5. 11.) |
+| Lestvica prijateljev: časi prijateljev po progah prek povezave, brez strežnika (izbira uporabnika 5. 11.) | 3 | načrt v delu, koda po potrditvi; pred novimi progami |
+| Novi avti: 5 sodobnih vozil, izmišljenih, v novih datotekah `js/cars/` (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #315 in po dogovoru z računom 2 (garaža, `js/cars/*`) |
+| Barve in nalepke avta v garaži (barva, vzorec, številka, platišča; vidno v dirki, posnetku in pri prijateljih) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po dogovoru z #297 (garaža, račun 1) |
+| Beg pred policijo: na odprti cesti s prometom bežiš pred policijo (obratno od »Ti loviš« iz #250) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #250 |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
 | Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
+| Sovoznik na cestah: glas in znak napovedujeta ovinke kot na reliju (»levo 4, dolgo«, »pozor, skok«) na vseh pravih odprtih cestah, na telefonu kratki napisi zgoraj (izbira uporabnika 5. 11.; najprej načrt `docs/sovoznik.md` in vprašanja na strani Odločitve 3, koda šele po potrditvi uporabnika; seja session_01WbgGzskQ1Ti5o2wRq17RUn, koordinacija VSE SEJE 2) | 3 | po vrsti, pred novimi progami |
+| Neskončna vožnja v prometu: odprta cesta s prometom, ki je vse gostejši; točke za hitrost in tesna prehitevanja, konec ob trku, rekord se shrani (izbira uporabnika 5. 11.; najprej načrt `docs/neskoncna-voznja.md` in vprašanja na strani Odločitve 3, koda šele po potrditvi uporabnika; seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija VSE SEJE 2) | 3 | pred novimi progami, po potrditvi načrta |
+| Zvoki okolja: ob progi tiho ptice v gozdu, voda, zvonovi v vasi, veter na prelazu, brez dodatne obremenitve telefona (izbira uporabnika 5. 11.; načrt `docs/zvoki-okolja.md`, seja session_01WbgGztWoUK4NRECTrwWMu3) | 3 | pred novimi progami, po potrditvi načrta (odgovori na strani Odločitve 3) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) in je #202 (fizika, račun 2) na `main` ali zaprt |
 
@@ -49,6 +57,7 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | 18 | #325 | misije, skupina 8: misije 11, 23, 29, 40, 45, 6 garaž po poklicu, ploščica MISSIONS | 2 | pripravljen (osnutek do vrste; predaja v docs/misije.md »Po skupini 8, del 2«); ob vrsti nova seja koordinacije računa 2 ali prevzemni račun; pred progami (nove proge vedno zadnje) |
 | 19 | #261 | nova proga Hakone, Japonska (izbrana nova proga Japonske, `docs/proge-po-drzavah.md`) | 1 | pripravljen (seja session_01UuPU9DirUpzFVs48Vkgx5Z); zelen na GitHubu na 6d5db4e (4. 11.), osnutek do vrste; ob vrsti: spoj `main` (spori v referencah world/perf/sim/races, menu-data, `js/game.js`), reference Hakoneja znova, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika |
 | 20 | #153 | Medvode, Slovenija: proga v pravi širini po risbah uporabnika (krožišča K1–K4, odseki ob startu) | 1 | pripravljen (seja session_01UuPU9BT6dySw4yn5KSRQFx); zelen na GitHubu na ff57545, osnutek do vrste; ob vrsti: spoj svežega `main`, povezani testi, Ready; vpisan 5. 11. po odločitvi uporabnika, ne čaka več na zadržani #246; po spoju `main` preveri prizore iz #289 v Zbiljah (ribiči ob jezeru, kmetija), da niso na razširjeni cesti ali v krožiščih |
+| 21 | #331 | Nova mapa: vožnja po vodi (vodni skuterji s pomola pri HOME in s štarta proge za skuterje, kanal do morja, morje; avto v vodi: plitvina upočasni, iz globine nazaj na obalo; `js/nvwater.js`, test `nvwater.test.mjs`) | 2 | pripravljen (seja session_01Ck3D3ThP6BaLDC1ok7gvsJ, ustavljena 5. 11.); povezani testi lokalno zeleni na 4a9a4e3 (spojen `main` 732f25a, nato samo dokumenti), osnutek do vrste; ob vrsti nova seja: spoj svež `main`, `npm run test:related`, Ready (predaja v opisu PR in `docs/nova-mapa-voda.md`); prevzame račun, ki vodi pull requeste računa 2, dokler račun stoji |
 
 Zadržano: #279 (račun 3; `#286 stamp.js --merge` je na `main`, #279 svoje orodje za spajanje prilagodi nanj ali ga odstrani). #246 preleti (račun 3; odločitev uporabnika 5. 11.: počakajo, dokler ne bo izbrana ena proga na državo; predaja v opisu PR).
 
