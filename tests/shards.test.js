@@ -54,16 +54,17 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
 {
   const rel = (files) => { const r = run('--related', '--files', files, '--list'); return r.status === 0 ? lines(r).slice(1) : ['exit ' + r.status]; };
   const cases = [
-    ['docs/proge/medvode.md', ['medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
+    ['docs/proge/medvode.md', ['testne-proge.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
     ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/gfx.test.mjs']],
     ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'ljudje-mesta.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'browser/repro.test.mjs']],
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
     ['README.md', ['fleet.test.js']],
     ['tools/carshots.mjs', []],
-    ['assets/maps/corner-spa.webm', ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
+    ['assets/maps/corner-spa.webm', ['testne-proge.test.js', 'menu-corner.test.js', 'browser/menu.test.mjs']],   // (an asset: its tests by RELATED only, not the track's by its name)
+    ['assets/tracks/gozd.webp', ['testne-proge.test.js']],   // (a test track's picture: only the freeze, CLAUDE.md »Testne proge«)
   ];
   const off = cases.map(([f, want]) => [f, rel(f)]).filter(([f, got], i) => got.join() !== cases[i][1].join());
-  check('--related --files: a file\'s tests by name (a track\'s description, a world of its own), the big shared files by RELATED, a changed test itself (and its theme\'s), the .md files the brand check; none for an unrelated tool; an asset\'s by RELATED only',
+  check('--related --files: a file\'s tests by name (a track\'s description, a world of its own), the big shared files by RELATED, a changed test itself (and its theme\'s), the .md files the brand check; none for an unrelated tool; an asset\'s by RELATED only; where the test tracks\' files are, the freeze',
     !off.length, off.map(([f, got]) => `${f}: ${got.join(', ') || 'none'}`).join('; '));
   const r = run('--files', 'js/core.js', '--list');
   check('--files without --related: an error (exit 2)', r.status === 2);
