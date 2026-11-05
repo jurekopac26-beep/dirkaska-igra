@@ -37,7 +37,7 @@
   const feat = {
     id: 'cesta', KINDS, plan, animalOf, at,
     on: false, L: null, ev: null,
-    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !ctx.prvi && !!race.player && !!race.track.open && !race.track.def.test,
+    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !ctx.prvi && !!race.player && !!race.track.open && !race.track.def.test && !race.en,   // (not in the endless drive: its own traffic, js/neskoncna.js)
     begin(race, ctx) {
       this.clear(); this.ev = null;
       this.on = Z.on('cesta', 'zbCesta') && this.fits(race, ctx);

@@ -99,6 +99,18 @@ Vprašanja na strani Odločitve 3 (https://claude.ai/artifact/1jxNEJ27WiYpCAw3Yb
 
 Privzeto brez vprašanja (pove načrt; uporabnik lahko spremeni): brez kolesarjev, pešcev, policije in tekmecev; vsak avto iz voznega parka; Živa cesta izklopljena; en rekord na cesto in fiziko (suho in dež skupaj); način v Single race; meje in vrednosti točk se uglasijo med testiranjem.
 
+## Izvedba (#372; kar se razlikuje od načrta zgoraj)
+
+- **Štart**: igrin leteči štart odprtih cest; točke štejejo od štartne črte naprej (`race.flyOn`), ne od ~120 m po njej.
+- **Okno prometa**: od 150 m za igralcem (nasproti vozeča 60 m) do 1600 m pred njim; novo vozilo vsaj 300 m pred igralcem po cesti in več kot 260 m zračne razdalje (serpentine), v najdaljšem prostem delu okna, nikoli na drugem vozilu. Vozila so iz zaloge, narejene ob štartu (parkirana, `off`), med vožnjo nič novih predmetov. Mešanica vozil je cestina (`def.traffic.mix`, sicer `EN.mix`), brez kolesarjev in pešcev. Promet je samo na delu ceste, kjer ga ima dvoboj (`def.trafficEnd`: na Medvodah je cesta za tem delom prazna).
+- **Nova etapa** (`neskoncna-2` = 1 začasno): 60 m pred ciljem na štartno črto (ne 120 m po njej) z isto hitrostjo, kotom do ceste in odmikom od sredine; zatemnitev 0,7 s; napis **ETAPA n** (ne ODSEK: `ODSEK {0}` je že prevod za `SECTION {0}`).
+- **Merilo konca**: dogodek `'crash'` s prometom, ograja nad 6 m/s (`EN.wallEnd`), prevrnitev, padec, dve izgubljeni kolesi. Niz prekine dotik ograje nad 1,5 m/s ali vozila nad 0,5 m/s.
+- **Tesna prehitevanja**: prostor se meri prečno na cesto (razlika odmikov od sredine minus polovični širini, zato ga ovinek ne popači), najmanjši, dokler sta vozili vzporedno; točke, ko je vozilo za igralcem.
+- **Rekordi**: `bestScore` in `enBoard` (10 najboljših: točke, km, etapa, avto, datum), ne `board`, ker nalagalnik rekordov tam pusti samo vnose s časom.
+- **Živa cesta** in **izzivi ob cesti** sta v tem načinu izklopljeni (pozneje po želji).
+- **Rezultati**: zaslon rezultatov igre z devetimi vrsticami in lestvico 10 najboljših; gumb *Vozi znova* (ista cesta in avto); kartica proge v meniju pokaže *Best score*. Slika ploščice `assets/menu/mode-endless.webp` je v slogu drugih ploščic (izrezi avtov), ne posnetek s kamere za avtom.
+- **Obremenitev** se meri v `tests/browser/neskoncna.test.mjs` (ne v `perf.test.mjs`, ki meri dirke vseh prog): nastavitve meritve `perf.test.mjs`, 4-kratna gostota, šest mest. Meritev vseh 11 cest 5. 11. pri 4-kratni gostoti: Tianmen in Rio do Rastro sta v najbolj obremenjenem trenutku potrebovala do 878 tisoč oglišč (meja 900 tisoč; 40–47 vozil v 250 m na serpentinah), zato se v tem načinu (`js/render.js`, samo pri `race.en`) vozila zunaj senčnega okvira rišejo brez sence (dvojčki mrež, zunaj okvira senca ni vidna) in vozila dlje od 90 m kot nekaj kvadrov (`rdFarGeo`: oblika, barva, okna, temen pas koles; ~100 oglišč namesto 1.500–7.500). Zdaj Tianmen ~830 tisoč, Rio do Rastro ~700 tisoč, druge ceste do ~680 tisoč, klicev risanja največ ~210 (Irohazaka). Test meri Vršič, Great Alpine Road in Tianmen.
+
 ## Stanje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
