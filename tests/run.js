@@ -30,7 +30,7 @@ const SECS = {
   'browser/world.test.mjs': 970, 'browser/gfx.test.mjs': 950, 'browser/menu.test.mjs': 759, 'browser/covers.test.mjs': 558,
   'browser/garage.test.mjs': 527, 'browser/online.test.mjs': 335, 'browser/marks.test.mjs': 319, 'browser/kolibri.test.mjs': 308,
   'browser/hudcol.test.mjs': 296, 'browser/online4.test.mjs': 286, 'browser/kerb.test.mjs': 269, 'browser/notes.test.mjs': 247,
-  'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 235, 'browser/carlow.test.mjs': 225, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
+  'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 275, 'browser/carlow.test.mjs': 225, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
   'browser/school.test.mjs': 190, 'browser/onchamp.test.mjs': 189, 'browser/radio.test.mjs': 185, 'browser/look.test.mjs': 182,
   'browser/share.test.mjs': 177, 'browser/ljudje.test.mjs': 176, 'browser/sledi.test.mjs': 164, 'browser/look2.test.mjs': 163,
   'browser/prvi.test.mjs': 160, 'browser/wheels.test.mjs': 150, 'browser/roadside.test.mjs': 146, 'browser/app.test.mjs': 142,

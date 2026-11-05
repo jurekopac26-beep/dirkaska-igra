@@ -4195,16 +4195,21 @@
   }
   const codrvSoon = (P, sec) => { const c = cdVoice && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed; the captions alone keep no one quiet)
   // the caption's place: on its side under the clock's block (with whatever is under the clock: the line under it, the duel's gap, the
-  // police's panel), upright under the corner sign's place (its box as css and placeNote have it, shown or not); centred. Measured again
-  // only when the screen, the HUD's state, the block or the sign's place changes
+  // police's panel) and, where a wide caption would reach under the corner sign beside the block, under the sign too; upright under the
+  // sign's place (its box as css and placeNote have it, shown or not); centred. Measured again with each new caption (capAt0 cleared:
+  // its width) and when the screen, the HUD's state, the block or the sign's place changes
   let capAt0 = '';
   function placeCap() {
     const el = $('h-codrv'), B = $('h-times'), N = $('h-note'), land = innerWidth > innerHeight;
-    const k = innerWidth + 'x' + innerHeight + '|' + $('hud').className + '|' + B.offsetWidth + 'x' + B.offsetHeight + '|' + N.offsetTop + '|' + N.offsetHeight;
+    const k = innerWidth + 'x' + innerHeight + '|' + $('hud').className + '|' + B.offsetWidth + 'x' + B.offsetHeight + '|' + N.offsetLeft + ',' + N.offsetTop + '|' + N.offsetHeight;
     if (k === capAt0 || !el.offsetParent) return; capAt0 = k;
-    const O = el.offsetParent.getBoundingClientRect();
-    let y = N.offsetTop + N.offsetHeight + 6;
-    if (land) { y = -Infinity; for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) y = Math.max(y, r.bottom - O.top + 4); } }
+    const O = el.offsetParent.getBoundingClientRect(), nb = N.offsetTop + N.offsetHeight;
+    let y = nb + 6;
+    if (land) {
+      y = -Infinity; for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) y = Math.max(y, r.bottom - O.top + 4); }
+      const h = el.offsetWidth / 2, c = O.width / 2;   // (the caption centred on the HUD)
+      if (y > -Infinity && y < nb + 4 && c - h < N.offsetLeft + N.offsetWidth + 4 && c + h > N.offsetLeft - 4) y = nb + 4;
+    }
     if (y > -Infinity) el.style.top = Math.round(y) + 'px';
   }
 

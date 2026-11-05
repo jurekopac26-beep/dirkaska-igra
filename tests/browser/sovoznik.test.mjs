@@ -1,10 +1,10 @@
-// The co-driver on the real open roads (docs/sovoznik.md): Vršič's run on the autopilot, on a phone lying (the game in Slovenian) and
-// upright (in English): the calls of the road (Track.paceNotes), each one's caption (#h-codrv) in the game's language as Core.codrvCap
-// writes it, shown ahead of the bend (game.js cdLead: 55-170 m) and gone after it, over nothing of the HUD (the clock's block, the map, the
-// corner sign, the buttons, the controls) and inside the screen, the corner sign where it was without the caption, with the bend's grade
-// (1-6) on it; no voice on a road (the voice: after the user's answer, sovoznik-glas). The switch in the settings (Sovoznik: Izklop, Napis,
-// Glas in napis): off, no calls and no numbers on the sign; the captions only, a rally stage without the voice; the voice on a rally stage
-// as before. The calls themselves (and none on a circuit): tests/sovoznik.test.js.
+// The co-driver on the real open roads (docs/sovoznik.md): Vršič's run on the autopilot, on a phone lying (the game in Slovenian; 640×360,
+// then 915×412) and upright (in English): the calls of the road (Track.paceNotes), each one's caption (#h-codrv) in the game's language as
+// Core.codrvCap writes it, shown ahead of the bend (game.js cdLead: 55-170 m) and gone after it, over nothing of the HUD (the clock's
+// block, the map, the corner sign, the buttons, the controls) and inside the screen, the corner sign where it was without the caption, with
+// the bend's grade (1-6) on it; no voice on a road (the voice: after the user's answer, sovoznik-glas). The switch in the settings
+// (Sovoznik: Izklop, Napis, Glas in napis): off, no calls and no numbers on the sign; the captions only, a rally stage without the voice;
+// the voice on a rally stage as before. The calls themselves (and none on a circuit): tests/sovoznik.test.js.
 //   node tests/browser/sovoznik.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -62,6 +62,14 @@ try {
     T.check(`${tag} Vršič: the caption over nothing of the HUD, inside the screen; the corner sign where it was, with the bend's grade on it`,
       !r.hits.length && !r.out.length && keep && r.pos.free.length > 0 && r.nums.length > 0 && r.nums.every(x => /^[1-6]$/.test(x)),
       `over ${r.hits.join(' ') || 'nothing'}${r.out.length ? ', outside: ' + r.out.join(', ') : ''}; the sign at ${r.pos.free.join(' ')}, with a caption ${r.pos.cap.join(' ') || '-'}; numbers ${r.nums.join(' ')}`);
+    if (lang === 'sl') {
+      // a wider phone lying (915×412), the same run on: the caption again over nothing (under the clock's block; a wide one under the sign too)
+      await page.setViewportSize({ width: 915, height: 412 });
+      const r2 = await drive(page, 24);
+      T.check('915×412 (sl) Vršič: the caption over nothing of the HUD, inside the screen',
+        r2.shown.length >= 2 && !r2.wrong.length && !r2.hits.length && !r2.out.length,
+        `${r2.shown.length} shown (${r2.shown.map(x => '"' + x + '"').join(' ')}), over ${r2.hits.join(' ') || 'nothing'}${r2.out.length ? ', outside: ' + r2.out.join(', ') : ''}${r2.wrong.length ? ', wrong: ' + r2.wrong.join(', ') : ''}`);
+    }
     if (errors.length) T.check(`${tag}: no errors on the page`, false, errors.slice(0, 3).join(' | '));
     if (lang === 'en') {
       // the switch: off on a road (no calls, no numbers on the sign), the captions alone on a rally stage, the voice there as before (the
