@@ -129,6 +129,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.0, kv: 1.8, rmin: 9 },   // (as the TITAN CISTERNA's: what its axles hold with the kingpin's push, tlHoldSet)
     csp: { bx: 0.12, coast: -0.07, thr: -0.015, liftP: 0, pwr: 0.03, out: 1.1, turn: 0.7, w: 0.9, tv: 1.25 },   // (the KAMEN's AWD layer)
     stats: { power: 10, grip: 1, weight: 1, drift: 10 },
+    expect: { t100: [13.32, 14.72], vmax: [133, 141], latG: [1.18, 1.31], d100: [42.0, 46.4] },   // (the train: tests/fleet.test.js, its envelope 'vlak')
     price: 90000, pk: 'open', field: ['zrcalni'], fieldN: 3,   // (3 of its own, no others: a 25 m train each, the phone's budget)
     snd: { kind: 'diesel', hz: 0.8, turbo: 0.75, loud: 1.4 },
     partNames: { headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamps', tailR: 'right tail lamps', wiperFront: 'windscreen wipers' },
