@@ -1574,16 +1574,17 @@
   // second on); the best one is kept (lap: 1) and replays on the lap clock during the next flying laps, from the next lap on.
   // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, ch?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
   // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad); a car with a semi-trailer (Core c.tl, ghCh) ch 8:
-  // the 8th its trailer's angle to the tractor (1e-4 rad)
+  // the 8th its trailer's angle to the tractor (1e-4 rad); a road train (c.tl.next) ch 9: the 9th its second tank's angle to the first one
   const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
   const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
   let ghRec = null, ghPlay = null, ghLap = null, ghFr = null;   // (ghFr: a friend's shared ghost of this track { name, t, g })   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
-  const ghCh = (c) => c && c.tl ? GH_CH + 1 : GH_CH;   // (a ghost's channels: a semi-trailer's angle too)
+  const ghCh = (c) => c && c.tl ? (c.tl.next ? GH_CH + 2 : GH_CH + 1) : GH_CH;   // (a ghost's channels: a semi-trailer's angle too; a road train's (c.tl.next, ch 9) its second tank's to the first one, docs/zrcalni-vlak.md)
   function ghPose(P, f, k, a, ch) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k (ch: the ghost's channels, GH_CH if none given)
     const n = ch || GH_CH, o = k * n, lat = clamp(P.w * P.speed, -16, 16);
     f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
     f[o + 4] = P.delta || 0; f[o + 5] = P.air ? Math.atan2(P.vy, Math.max(Math.abs(P.vl), 6)) * 0.8 : Math.atan(P.gradeNow || 0); f[o + 6] = clamp(-lat * 0.0042, -0.06, 0.06);
     if (n > GH_CH) { const T = P.tl, r0 = T ? Core.wrapPi(T.ph - P.ph) : 0; f[o + 7] = T ? r0 + (T.rel - r0) * a : 0; }
+    if (n > GH_CH + 1) { const T = P.tl, T2 = T && T.next, r0 = T2 ? Core.wrapPi(T2.ph - T.ph) : 0; f[o + 8] = T2 ? r0 + (T2.rel - r0) * a : 0; }
   }
   function ghSample(P) {   // after each physics step of a time trial, until the finish
     if (!ghRec || ghRec.done || race.state !== 'racing' || phase !== 'racing') return;
@@ -1617,7 +1618,7 @@
   // a stored ghost ({ v, dt, n, t, car, color, stripe, lap?, q0, d }): checked and unpacked to its poses (null: not a ghost of this game)
   function ghParse(o) {
     if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
-    const ch = o.ch == null ? GH_CH : o.ch; if (ch !== GH_CH && ch !== GH_CH + 1) return null;   // (ch 8: with a semi-trailer's angle)
+    const ch = o.ch == null ? GH_CH : o.ch; if (ch !== GH_CH && ch !== GH_CH + 1 && ch !== GH_CH + 2) return null;   // (ch 8: with a semi-trailer's angle; 9: a road train's two)
     let b; try { b = atob(o.d); } catch (_) { return null; }
     if (b.length !== o.n * ch * 2) return null;
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
@@ -1719,7 +1720,7 @@
     if (t > end + 0.6) return null;   // the run is over (it ends just past the line)
     const f = G.f, ch = G.ch || GH_CH, o = k * ch, n2 = o + ch, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
     g.M = G.M; g.color = G.color; g.stripe = G.stripe;
-    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6); g.tl = ch > GH_CH ? L(7) : 0;   // (tl: a semi-trailer's angle)
+    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6); g.tl = ch > GH_CH ? L(7) : 0; g.tl2 = ch > GH_CH + 1 ? L(8) : 0;   // (tl: a semi-trailer's angle)
     const dd = Math.hypot(g.x - P.x, g.z - P.z);
     g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
     return g;

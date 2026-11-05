@@ -2792,7 +2792,7 @@ const Render = (function () {
   const GV = [null, null], GMAT = [null, null], GCOL = [[0xcfe4ff, 0x2b4a72], [0xffc98a, 0x7a3a08]];
   function ghostDrop(k) { const v = GV[k]; if (!v) return; scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); freeOwn(v.grp, new Set([GMAT[k]])); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); } GV[k] = null; }   // (its semi-trailer's look: shared, tlLooks)
   // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), tl (a semi-trailer's angle to
-  // the tractor: its trailer on the kingpin, see-through as the car), op (opacity 0..1), tag (a name over it) }
+  // the tractor: its trailer on the kingpin, see-through as the car; tl2: a road train's second tank's to the first one), op (opacity 0..1), tag (a name over it) }
   function ghostSet(k, g, drop) {
     let v = GV[k];
     if (!g) { if (drop) ghostDrop(k); else if (v) { v.grp.visible = false; if (v.tlG) v.tlG.visible = false; } return; }
@@ -2816,6 +2816,8 @@ const Render = (function () {
       v.M = g.M; v.color = g.color; v.tagTxt = g.tag || ''; v.spin = 0; v.lx = g.x; v.lz = g.z;
       const R = g.M.trailer && g.M.trailer.look ? tlBuild(g.M) : null;   // (a semi-trailer: its look in the ghost's material, a group of its own on the kingpin)
       if (R) { const b = new THREE.Mesh(R.geo, mat); b.renderOrder = 2; v.tlG = new THREE.Group(); v.tlG.add(b); v.tlG.rotation.order = 'YZX'; scene.add(v.tlG); }
+      const N = R && g.M.trailer.next, R2 = N && N.look ? tlBuild2(g.M) : null;   // (a road train's second tank: a child of the first one's group, on the dolly's fifth wheel, docs/zrcalni-vlak.md)
+      if (R2) { const b = new THREE.Mesh(R2.geo, mat); b.renderOrder = 2; v.tlG2 = new THREE.Group(); v.tlG2.add(b); v.tlG2.rotation.order = 'YZX'; v.tlG2.position.set(N.kp[0], N.kp[1] - g.M.trailer.kp[1], 0); v.tlG.add(v.tlG2); }
       scene.add(v.grp); GV[k] = v;
     }
     const M = g.M;
@@ -2828,7 +2830,7 @@ const Render = (function () {
     for (const w of v.wf) w.rotation.set(0, -(g.d || 0), -v.spin);
     for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
     if (v.tlG) { const D = M.trailer, G = v.tlG; G.visible = v.grp.visible; v.grp.updateMatrixWorld(true);
-      G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld)); G.rotation.set(0, -(g.h + (g.tl || 0)), g.p || 0, 'YZX'); }
+      G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld)); G.rotation.set(0, -(g.h + (g.tl || 0)), g.p || 0, 'YZX'); if (v.tlG2) v.tlG2.rotation.set(0, -(g.tl2 || 0), 0, 'YZX'); }
   }
   const setGhost = (g, drop) => ghostSet(0, g, drop), setGhostF = (g, drop) => ghostSet(1, g, drop);
 
