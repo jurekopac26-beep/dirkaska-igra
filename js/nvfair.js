@@ -82,46 +82,49 @@ const NVFair = (function () {
     // (a frame of the wheel's own: x → world -z, y up, z → world x; the axle along z, the wheel in x, y)
     const frame = () => { const g = new THREE.Group(); g.position.set(T.x, cy, T.z); g.rotation.y = Math.PI / 2; MK.add(g); return g; };
     // the still parts (merged with the park): the axle on two A-frames outside the rims, their feet on the ground either side, a brace across
-    // each, concrete feet; round the plate a concrete edge in the ground
+    // each, concrete feet
     { const g = frame(), stl = L(STEEL), conc = L(CONC), UP = new THREE.Vector3(0, 1, 0);
       const put = (me) => { me.castShadow = true; me.receiveShadow = true; g.add(me); return me; };
-      const rodM = (a, b, r) => { const A = new THREE.Vector3(a[0], a[1], a[2]), B = new THREE.Vector3(b[0], b[1], b[2]), d = B.clone().sub(A), l = d.length(), me = put(new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, 8), stl)); me.position.copy(A).add(B).multiplyScalar(0.5); me.quaternion.setFromUnitVectors(UP, d.normalize()); };
+      const rodM = (a, b, r) => { const A = new THREE.Vector3(a[0], a[1], a[2]), B = new THREE.Vector3(b[0], b[1], b[2]), d = B.clone().sub(A), l = d.length(), me = put(new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, 6), stl)); me.position.copy(A).add(B).multiplyScalar(0.5); me.quaternion.setFromUnitVectors(UP, d.normalize()); };
       rodM([0, 0, -T.legX - 0.45], [0, 0, T.legX + 0.45], 0.32);
       for (const s of [-1, 1]) { const lz = s * T.legX, ft = [-1, 1].map(e => [e * T.legZ, gy(T.x + lz, T.z - e * T.legZ) - cy - 0.15, lz]);
         for (const f of ft) { rodM([0, 0, lz], f, 0.28); const pad = put(new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.6, 1.3), conc)); pad.position.set(f[0], f[1] + 0.3, lz); }
-        const yb = -5.6, k0 = yb / ft[0][1], k1 = yb / ft[1][1]; rodM([ft[0][0] * k0, yb, lz], [ft[1][0] * k1, yb, lz], 0.16);
-        const hub = put(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.5, 12), L(RED))); hub.rotation.x = Math.PI / 2; hub.position.set(0, 0, lz); }
-      const e = new THREE.Group(); MK.add(e); for (const [w, d, x, z] of [[pl.hl * 2 + 0.7, 0.35, 0, pl.hw + 0.17], [pl.hl * 2 + 0.7, 0.35, 0, -pl.hw - 0.17], [0.35, pl.hw * 2, pl.hl + 0.17, 0], [0.35, pl.hw * 2, -pl.hl - 0.17, 0]]) {
-        const me = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, d), conc); me.position.set(pl.x + x, y0 - 0.26, pl.z + z); me.receiveShadow = true; e.add(me); } }
+        const yb = -5.6, k0 = yb / ft[0][1], k1 = yb / ft[1][1]; rodM([ft[0][0] * k0, yb, lz], [ft[1][0] * k1, yb, lz], 0.16); }
+    }
     mats(); const g = frame(), rot = new THREE.Group(); g.add(rot);
-    // the rotor (it turns): two rims with their spokes and an inner ring, a bar across at each gondola, the hub
-    { const k = kit(); for (const s of [-T.half, T.half]) { k.torus(R, 0.2, WHITE, 0, 0, s, 32); k.torus(R * 0.45, 0.12, WHITE, 0, 0, s, 20);
-        for (let q = 0; q < T.n; q++) { const a = -Math.PI / 2 + q / T.n * TAU; k.rod([0, 0, s], [Math.cos(a) * R, Math.sin(a) * R, s], 0.07, WHITE); } }
-      for (let q = 0; q < T.n; q++) { const a = -Math.PI / 2 + q / T.n * TAU; k.rod([Math.cos(a) * R, Math.sin(a) * R, -T.half - 0.15], [Math.cos(a) * R, Math.sin(a) * R, T.half + 0.15], 0.1, STEEL); }
-      k.cyl(0.8, 0.8, T.half * 2 - 0.3, RED, 0, 0, 0, Math.PI / 2, 0, 0, 14); rot.add(dyn(new THREE.Mesh(merge(k.L), VC))); }
+    // the rotor (it turns): two rims with their spokes, a bar across at each gondola, the hub
+    { const k = kit(); for (const s of [-T.half, T.half]) { k.torus(R, 0.2, WHITE, 0, 0, s, 28);
+        for (let q = 0; q < T.n; q++) { const a = -Math.PI / 2 + q / T.n * TAU; k.rod([0, 0, s], [Math.cos(a) * R, Math.sin(a) * R, s], 0.07, WHITE, 3); } }
+      for (let q = 0; q < T.n; q++) { const a = -Math.PI / 2 + q / T.n * TAU; k.rod([Math.cos(a) * R, Math.sin(a) * R, -T.half - 0.15], [Math.cos(a) * R, Math.sin(a) * R, T.half + 0.15], 0.1, STEEL, 4); }
+      k.cyl(0.8, 0.8, T.half * 2 - 0.3, RED, 0, 0, 0, Math.PI / 2, 0, 0, 10); rot.add(dyn(new THREE.Mesh(merge(k.L), VC))); }
     // what hangs from the bars (level as the wheel turns): the basket for the car (a dark floor, a red cage open at its ends for the car to
     // glide in along the axle, yellow rails at its sides) and eleven gondolas, one mesh
     const parts = [];
     { const k = kit(), h = T.hang, x1 = T.bw / 2, z1 = T.bl / 2 - 0.05; k.box(T.bw, 0.14, T.bl, DARK, 0, -h - 0.07, 0);
-      for (const sx of [-x1, x1]) { for (const sz of [-z1, z1]) k.rod([sx, -h, sz], [sx, 0.07, sz], 0.07, RED); k.rod([sx, 0.07, -z1], [sx, 0.07, z1], 0.07, RED); k.rod([sx, -h + 0.55, -z1], [sx, -h + 0.55, z1], 0.05, YEL); }
-      for (const sz of [-z1, z1]) k.rod([-x1, 0.07, sz], [x1, 0.07, sz], 0.07, RED); parts.push(merge(k.L)); }
-    for (let q = 1; q < T.n; q++) { const k = kit(); for (const sz of [-0.8, 0.8]) k.rod([0, 0, sz], [0, -0.74, sz], 0.05, STEEL);
+      for (const sx of [-x1, x1]) { for (const sz of [-z1, z1]) k.rod([sx, -h, sz], [sx, 0.07, sz], 0.07, RED, 4); k.rod([sx, 0.07, -z1], [sx, 0.07, z1], 0.07, RED, 4); k.rod([sx, -h + 0.55, -z1], [sx, -h + 0.55, z1], 0.05, YEL, 4); }
+      for (const sz of [-z1, z1]) k.rod([-x1, 0.07, sz], [x1, 0.07, sz], 0.07, RED, 4); parts.push(merge(k.L)); }
+    for (let q = 1; q < T.n; q++) { const k = kit(); k.rod([0, 0, 0], [0, -0.74, 0], 0.06, STEEL, 3);
       k.box(1.5, 0.12, 2.5, WHITE, 0, -0.78, 0); k.box(1.3, 1.15, 2.3, CC[q % CC.length], 0, -1.42, 0); parts.push(merge(k.L)); }
-    const HP = join(parts), hm = dyn(new THREE.Mesh(HP.G, VC)); HP.G.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), R + 4); g.add(hm);
-    // the plate (a lift in the ground: up, it takes the car to the basket's floor): steel, a yellow frame and a chevron towards the wheel, its rams
-    const pg = new THREE.Group(); pg.position.set(pl.x, y0, pl.z); MK.add(pg);
-    { const k = kit(); k.box(pl.hl * 2, 0.3, pl.hw * 2, PLATE, 0, -0.15, 0); for (const sx of [-1.6, 1.6]) k.cyl(0.22, 0.22, 3.4, 0xc9ccd0, sx, -1.9, 0, 0, 0, 0, 10, true);
-      frameParts((w, t, d, x, z, ry) => k.box(w, t, d, YEL, x, t / 2 - 0.01, z, 0, ry || 0, 0), pl.hl - 0.12, pl.hw - 0.12, 0); pg.add(dyn(new THREE.Mesh(merge(k.L), VC))); }
-    const B = { g, rot, hm, HP, pg, pl, cy, yF, y0, fpW: fogOf(g, T.x, cy, T.z, R + 4), fpP: fogOf(pg, pl.x, y0 + 1.5, pl.z, 5) };
+    // in the same mesh (no draw call of its own): the plate (a lift in the ground: up, it takes the car to the basket's floor), steel with a
+    // yellow frame and a chevron towards the wheel, its rams under it; then the concrete edge round it (it stays); built along x, turned into
+    // the wheel's frame
+    const toW = new THREE.Matrix4().makeRotationY(-Math.PI / 2).setPosition(0, y0 - cy, T.pdx);
+    { const k = kit(); k.box(pl.hl * 2, 0.3, pl.hw * 2, PLATE, 0, -0.15, 0); for (const sx of [-1.6, 1.6]) k.cyl(0.22, 0.22, 3.4, 0xc9ccd0, sx, -1.9, 0, 0, 0, 0, 6, true);
+      frameParts((w, t, d, x, z, ry) => k.box(w, t, d, YEL, x, t / 2 - 0.01, z, 0, ry || 0, 0), pl.hl - 0.12, pl.hw - 0.12, 0); const G = merge(k.L); G.applyMatrix4(toW); parts.push(G); }
+    { const k = kit(); for (const [w, d, x, z] of [[pl.hl * 2 + 0.7, 0.35, 0, pl.hw + 0.17], [pl.hl * 2 + 0.7, 0.35, 0, -pl.hw - 0.17], [0.35, pl.hw * 2, pl.hl + 0.17, 0], [0.35, pl.hw * 2, -pl.hl - 0.17, 0]]) k.box(w, 0.5, d, CONC, x, -0.26, z);
+      const G = merge(k.L); G.applyMatrix4(toW); parts.push(G); }
+    const HP = join(parts), hm = dyn(new THREE.Mesh(HP.G, VC)), bs = new THREE.Vector3(0, -3, -2); HP.G.boundingSphere = new THREE.Sphere(bs, R + 9); g.add(hm);
+    const B = { g, rot, hm, HP, pl, cy, yF, y0, fpW: fogOf(g, T.x - 2, cy - 3, T.z, R + 9) };
     B.S = wheelFresh(0); return B;
   }
   function wheelFresh(phi) { return { mode: 'free', t: 0, phi, prevPhi: phi, phi0: 0, w: 0, k: 0, prevK: 0, still: 0, arm: true, carry: false, from: null, dh: 0, prev: null, rides: 0 }; }
   function wheelPose(a) {
     const B = WB; if (!B) return; const S = B.S, T = WH;
-    const phi = lerp(S.prevPhi, S.phi, a), k = lerp(S.prevK, S.k, a); B.rot.rotation.z = phi; B.pg.position.y = lerp(B.y0, B.yF, k);
+    const phi = lerp(S.prevPhi, S.phi, a), k = lerp(S.prevK, S.k, a); B.rot.rotation.z = phi;
     const P = B.HP.G.attributes.position, A = P.array, base = B.HP.base;
     for (let q = 0; q < T.n; q++) { const b = -Math.PI / 2 + q / T.n * TAU + phi, ox = Math.cos(b) * T.R, oy = Math.sin(b) * T.R, [o, m] = B.HP.parts[q];
       for (let i = o; i < o + m; i += 3) { A[i] = base[i] + ox; A[i + 1] = base[i + 1] + oy; A[i + 2] = base[i + 2]; } }
+    { const dy = (B.yF - B.y0) * k, [o, m] = B.HP.parts[T.n]; for (let i = o + 1; i < o + m; i += 3) A[i] = base[i] + dy; }   // (the plate)
     P.needsUpdate = true;
   }
   // the basket's floor and its middle along z (the car in it), at the wheel's turn phi (0: at the bottom)
@@ -255,7 +258,7 @@ const NVFair = (function () {
   const clear = () => [[WH.x + WH.pdx, WH.z], [WH.x + WH.pdx - 6, WH.z], [CA.x + CA.bdx, CA.z], [CA.x + CA.bdx + 6, CA.z]];
   let trk = null;
   function init(h3, track) {
-    if (!WB || !CB || !track) return false; trk = track; fogIn(WB.fpW); fogIn(WB.fpP); fogIn(CB.fp); reset();
+    if (!WB || !CB || !track) return false; trk = track; fogIn(WB.fpW); fogIn(CB.fp); reset();
     if (!trk.nvFair) { const g0 = trk.ground2, w0 = trk.wall2; trk.nvFair = true;
       trk.ground2 = (x, z, y) => { let d = wheelGround(x, z, y); if (d == null) d = caroGround(x, z, y); return d != null ? d : g0(x, z, y); };
       trk.wall2 = (x, z, y, out) => wheelWall(x, z, y, out) || caroWall(x, z, y, out) || (w0 ? w0(x, z, y, out) : false); }
