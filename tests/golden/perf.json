@@ -14,18 +14,18 @@
   "jsMs": 1.37
  },
  "ouninpohja": {
-  "calls": 169,
-  "maxCalls": 185,
-  "kverts": 400,
-  "maxKverts": 467,
-  "jsMs": 1.24
+  "calls": 167,
+  "maxCalls": 186,
+  "kverts": 398,
+  "maxKverts": 473,
+  "jsMs": 2.04
  },
  "vrsic": {
   "calls": 163,
   "maxCalls": 193,
   "kverts": 263,
   "maxKverts": 325,
-  "jsMs": 2.39
+  "jsMs": 3.48
  },
  "nring": {
   "calls": 153,
@@ -170,9 +170,9 @@
  "cpalace": {
   "calls": 193,
   "maxCalls": 223,
-  "kverts": 521,
-  "maxKverts": 608,
-  "jsMs": 1.42
+  "kverts": 522,
+  "maxKverts": 607,
+  "jsMs": 4.02
  },
  "riverside": {
   "calls": 163,
@@ -193,7 +193,7 @@
   "maxCalls": 205,
   "kverts": 414,
   "maxKverts": 460,
-  "jsMs": 1.25
+  "jsMs": 1.96
  },
  "newcastle": {
   "calls": 230,
@@ -217,11 +217,11 @@
   "jsMs": 1.02
  },
  "medvode": {
-  "calls": 129,
-  "maxCalls": 151,
-  "kverts": 369,
-  "maxKverts": 535,
-  "jsMs": 1.25
+  "calls": 130,
+  "maxCalls": 154,
+  "kverts": 372,
+  "maxKverts": 537,
+  "jsMs": 1.54
  },
  "montreal": {
   "calls": 209,
@@ -232,10 +232,10 @@
  },
  "greatalpine": {
   "calls": 156,
-  "maxCalls": 174,
-  "kverts": 505,
-  "maxKverts": 643,
-  "jsMs": 2.29
+  "maxCalls": 173,
+  "kverts": 507,
+  "maxKverts": 649,
+  "jsMs": 1.98
  },
  "detroit": {
   "calls": 220,
