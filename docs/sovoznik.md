@@ -1,10 +1,10 @@
 # Sovoznik na cestah
 
-Novost, ki jo je uporabnik izbral 5. 11. 2026 (koordinacija VSE SEJE 2): na pravih odprtih cestah glas in znak napovedujeta ovinke kot na reliju (»levo 4, dolgo«, »pozor, skok«). Napovedi se izračunajo iz oblike ceste in veljajo za vse prave ceste. Na telefonu so zgoraj kratki napisi. Ta datoteka je načrt. Koda se začne šele, ko uporabnik odgovori na vprašanji na strani Odločitve 3 (`sovoznik-glas`, `sovoznik-kje`; razdelek Odločitve). Tema je v `docs/vrsta.md` (Načrtovano, račun 3, po vrsti, pred novimi progami).
+Novost, ki jo je uporabnik izbral 5. 11. 2026 (koordinacija VSE SEJE 2): na pravih odprtih cestah glas in znak napovedujeta ovinke kot na reliju (»levo 4, dolgo«, »pozor, skok«). Napovedi se izračunajo iz oblike ceste in veljajo za vse prave ceste. Na telefonu so zgoraj kratki napisi. Sovoznik govori samo angleško, napis je v jeziku igre (odločitev uporabnika 5. 11., razdelek Odločitve). Ta datoteka je načrt. Koda se začne šele, ko uporabnik odgovori na vprašanji na strani Odločitve 3 (`sovoznik-glas`, `sovoznik-kje`; razdelek Odločitve). Tema je v `docs/vrsta.md` (Načrtovano, račun 3, po vrsti, pred novimi progami).
 
 ## Kaj že obstaja (preverjeno 5. 11. 2026)
 
-Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že obstaja, na vse prave odprte ceste in vse načine, doda slovenščino, napis in številko na znaku. Noben odprt pull request ne dela sovoznika ali napovedi ovinkov.
+Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že obstaja, na vse prave odprte ceste in vse načine, doda napis v jeziku igre in številko na znaku. Noben odprt pull request ne dela sovoznika ali napovedi ovinkov.
 
 - **Relijski sovoznik** (`Track.paceNotes()` v `js/core.js`):
   - Ovinke razvrsti po najmanjšem polmeru od 1 do 6. Pozna še »flat«, »hairpin« in »square« ter dodatke »long«, »tightens« in »opens«.
@@ -27,7 +27,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 Številka pove ostrino ovinka po najmanjšem polmeru, enako za vse avte, kot pri pravih relijskih opombah. Meje so iste kot pri relijskem sovozniku, zato Harju, Ouninpohja in Katu-Jaryk ostanejo enaki. Hitrost v tabeli je samo za občutek: oprijem ~1 g, v = √(g·R).
 
-| Številka | Najmanjši polmer | ~hitrost | Slovensko | Angleško |
+| Številka | Najmanjši polmer | ~hitrost | Napis v slovenski igri | Glas (in napis v angleški igri) |
 |---|---|---|---|---|
 | 1 | pod 16 m | 45 km/h | levo 1 / desno 1 | left one / right one |
 | 2 | 16–26 m | 55 km/h | levo 2 | left two |
@@ -67,7 +67,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **Krožišča** (`def.rings`, npr. Medvode): »krožišče naravnost / desno / levo« po smeri izvoza.
 - **Šikane** (`def.notes`, `hudSigns`): »šikana levo« ali »šikana desno« po prvi smeri.
 - **Podlaga**: »na makadam«, »na asfalt«, »na tlakovce« (»onto gravel« …).
-- **Izvedba**: `paceNotes()` vrne opombe kot jezikovno neodvisne žetone (npr. `['L', 4, 'long', 'into', 'R', 3, 'tightens', 'd150']`) in ob njih angleško besedilo `text`, enako kot zdaj, da stari testi ostanejo. Besede za glas in napis v jeziku igre sestavi nova funkcija `Sovoznik.words(žetoni, jezik)`.
+- **Izvedba**: `paceNotes()` vrne opombe kot jezikovno neodvisne žetone (npr. `['L', 4, 'long', 'into', 'R', 3, 'tightens', 'd150']`) in ob njih angleško besedilo `text`, enako kot zdaj, da stari testi ostanejo. Angleške besede za glas in napis v jeziku igre sestavi nova funkcija `Sovoznik.words(žetoni, jezik)`.
 
 ## Kdaj govori
 
@@ -81,24 +81,21 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - Policijski radio ima prednost: sovoznik takrat molči, napis pa dela.
   - Na cesti, prevoženi v obratni smeri, sovoznik molči.
 
-## Glas (slovensko in angleško, brez povezave)
+## Glas (angleško, brez povezave)
 
-- **Jezik** je jezik igre (`S.lang`): slovenščina ali angleščina. Komentator ostane angleški.
-- **Besedišče**: ~40 besed na jezik, ker se klici sestavijo iz kratkih besed (tako so delale tudi navigacije v avtih):
-  - Slovensko: levo, desno, ena–šest, polno, lasnica, devetdeset, dolgo, zapira, odpira, pozor, skok, velik, grbina, čez, v, takoj, sto, petdeset, dvesto, tristo, štiristo, petsto, do cilja, na, makadam, asfalt, tlakovce, krožišče, naravnost, šikana.
-  - Angleško: besede, ki jih relijski sovoznik uporablja že zdaj.
-  - Uporabnik lahko besedo zamenja z odgovorom ali opombo.
+- **Jezik**: sovoznik govori samo angleško, tudi ko je igra v slovenščini, kot komentator (odločitev uporabnika 5. 11.: »Vse zvoke delaj v angleščini«). Napis je v jeziku igre.
+- **Besedišče glasu**: ~40 angleških besed, iz katerih se sestavijo klici, kot jih relijski sovoznik uporablja že zdaj: left, right, one–six, flat, hairpin, square, long, tightens, opens, caution, jump, big, crest, over, into, and, one hundred … five hundred, to finish, onto, gravel, tarmac, cobbles, roundabout, straight, chicane.
+- **Besede napisa v slovenski igri**: levo, desno, številka, polno, lasnica, devetdeset, dolgo, zapira, odpira, pozor, skok, velik, grbina, v, takoj, razdalja v metrih, do cilja, na makadam, na asfalt, na tlakovce, krožišče, naravnost, šikana. Uporabnik lahko besedo zamenja.
 - **Izvedba po odgovoru `sovoznik-glas`**:
-  - **Posneti zvoki** (možnosti 1 in 2):
-    - Vse besede jezika so v enem zvočnem listu, MP3 v base64 z odmiki (`js/data/sovoznik-sl.js`, `-en.js`, ~100–150 KB na jezik).
+  - **Glas telefona** (možnost 1, priporočena):
+    - `Comm.note()` kot zdaj, z angleškim glasom telefona (drug glas kot komentator).
+    - Nič prenosa. Angleški glas je na skoraj vseh telefonih in dela brez interneta.
+  - **Posneti zvoki** (možnosti 2 in 3):
+    - Vse besede so v enem zvočnem listu, MP3 v base64 z odmiki (`js/data/sovoznik-en.js`, ~100–150 KB).
     - List je povezan iz `index.html`, zato ga service worker (`sw.js`) shrani skupaj z igro in sovoznik dela brez povezave.
-    - Igra predvaja besedo za besedo prek Web Audio s ~60 ms premora. Dekodiran je samo jezik igre (~3–5 MB pomnilnika).
-    - Možnost 1: seja posnetke pripravi z odprtim sintetizatorjem govora, katerega licenca dovoljuje igro na Google Play. Pred izdelavo pošlje vzorce na stran Odločitve. Če noben slovenski glas ne zveni dobro, vpraša znova.
-    - Možnost 2: posnetke s svojim glasom pripravi uporabnik. Seja pripravi seznam besed, navodila in orodje `tools/sovoznik-glas.mjs` (rezanje, enaka glasnost).
-  - **Glas telefona** (možnosti 3 in 4):
-    - `Comm.note()` kot zdaj, z jezikom glasu. Nič dodatnega prenosa.
-    - Slovenski glas ima malo telefonov (Android večinoma ne). Brez njega sovoznik govori angleško, napis je slovenski.
-    - Pri možnosti 4 sovoznik govori angleško v obeh jezikih, kot zdaj na reliju.
+    - Igra predvaja besedo za besedo prek Web Audio s ~60 ms premora (~3–5 MB pomnilnika).
+    - Možnost 2: seja posnetke pripravi z angleškim odprtim sintetizatorjem govora, katerega licenca dovoljuje igro na Google Play, in pred izdelavo pošlje vzorce na stran Odločitve.
+    - Možnost 3: posnetke pripravi uporabnik s svojim glasom. Seja pripravi seznam besed, navodila in orodje `tools/sovoznik-glas.mjs` (rezanje, enaka glasnost).
 - **Licenca**: vir glasu gre v `README.md` pod »Zasluge«. Brez glasov z licenco »samo za nekomercialno rabo«, brez posnetkov resničnih sovoznikov in posnetkov iz drugih iger.
 
 ## Napis in znak (telefon pokonci in ležeče)
@@ -116,7 +113,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - Vrstica »Sovoznik na reliju (angleščina)« (`S.codrv`) postane **»Sovoznik«** z izbiro **Izklop · Napis · Glas in napis**.
   - Vrednosti so 0, 2 in 1. Privzeto je »Glas in napis«: shranjena 1 pomeni »Glas in napis«, 0 »Izklop«, zato se igralcem nič ne preklopi samo od sebe.
   - Angleško: »Co-driver« · Off · Captions · Voice and captions.
-- Gumb ▶ ob vrstici prebere vzorčni klic (»levo 4, dolgo, v desno 2«), kot »▶ Preizkusi glas« pri komentatorju.
+- Gumb ▶ ob vrstici prebere vzorčni klic (»left four long into right two«), kot »▶ Preizkusi glas« pri komentatorju.
 - »Opozorila za ovinke« (`S.notes`, znak) ostanejo posebej.
 
 ## Kje velja
@@ -140,7 +137,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 - Ni novih klicev risanja in oglišč (napis je DOM, številka na znaku je SVG), zato se `tests/golden/perf.json` ne spremeni.
 - Napovedi se izračunajo enkrat ob začetku dirke: pod 20 ms na progo, meri Node test.
-- Posneti zvoki: ~100–150 KB prenosa na jezik, ~3–5 MB pomnilnika samo za jezik igre (preveri `memory`). Glas telefona: nič.
+- Glas telefona: nič. Posneti zvoki: ~100–150 KB prenosa, ~3–5 MB pomnilnika (preveri `memory`).
 - Sovoznik bere samo za igralca, zato število tekmecev ne vpliva nanj.
 
 ## Testi
@@ -150,14 +147,14 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - vsako lasnico, prebrano kot lasnica, in vsak skok iz `def.bumps`;
   - da na ravnini ni »skoka«;
   - meje lestvice (polmer → številka);
-  - da ima vsaka beseda v obeh jezikih posnetek ali prevod in da je napis največ 24 znakov;
+  - da ima vsaka beseda napisa prevod v obeh jezikih, vsaka beseda glasu posnetek (pri posnetih zvokih) in da je napis največ 24 znakov;
   - čas izračuna.
 - **`tests/rally.test.js` in `tests/katu.test.js`**: angleško besedilo relijskih preizkušenj ostane enako. Namerne spremembe (npr. »caution«) se zapišejo v test.
 - **`tests/browser/sovoznik.test.mjs`** (brskalnik, nov), na Vršiču in Ouninpohji preveri:
   - da klic pride pred ovinkom na razdalji glede na hitrost;
   - da se napis pokaže, ugasne in ne prekrije ure (360 × 640 in 640 × 360);
   - stikalo Izklop, Napis, Glas in napis;
-  - slovenščino in angleščino;
+  - slovenski in angleški napis ob angleškem glasu;
   - dirkališče brez sovoznika ali po izbiri uporabnika.
 - **`smoke.test.mjs`, `tests/lang.test.js` in `perf.test.mjs`** ostanejo zeleni.
 
@@ -166,13 +163,13 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 | Korak | Kaj | Ure |
 |---|---|---|
 | 1 | Jedro v `js/core.js`: žetoni namesto besedila, skoki in grbine iz višin, »pozor«, krožišča; `Sovoznik.words`; Node test, relijski klici ostanejo | 3–4 |
-| 2 | Glas: posnetki in predvajanje ali sinteza z jezikom (po odgovoru); prednost pred komentatorjem | 2–4 |
+| 2 | Glas: angleški glas telefona ali posnetki in predvajanje (po odgovoru); prednost pred komentatorjem | 1–3 |
 | 3 | Napis in številka na znaku, pokonci in ležeče | 2–3 |
 | 4 | Kje velja, stikalo, prevodi v `js/lang.js`, `docs/igra.md`, `README.md` (Zasluge), `docs/kazalo.md` | 1–2 |
 | 5 | Brskalniški test, slike, pull request, vpis v vrsto | 2–3 |
 
-- **Skupaj ~10–16 h**: ena seja (Opus, napor max), ena veja `sovoznik/cesta`, en pull request. Odpre ga ob začetku kode kot osnutek in takrat izbriše vrstico v Načrtovano.
-- Pri možnosti 2 vprašanja o glasu pride še čas uporabnika za snemanje (~20 min).
+- **Skupaj ~9–15 h**: ena seja (Opus, napor max), ena veja `sovoznik/cesta`, en pull request. Odpre ga ob začetku kode kot osnutek in takrat izbriše vrstico v Načrtovano.
+- Pri možnosti 3 vprašanja o glasu pride še čas uporabnika za snemanje (~15 min).
 
 ## Odločitve
 
@@ -183,10 +180,11 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - stikalo Izklop · Napis · Glas in napis, privzeto vklop;
   - napis zgoraj pod uro, številka na znaku;
   - komentator ostane angleški.
+- **5. 11. 2026 ob 16.06, uporabnik** (sporočilo koordinaciji VSE SEJE 2): »Vse zvoke delaj v angleščini«. Sovoznik govori samo angleško, tudi v slovenski igri. Napis na znaku in zgoraj sledi jeziku igre. Slovenski glas in Hugging Face nista več potrebna.
 - **Vprašanji na strani Odločitve 3** (5. 11. 2026); odgovora se zapišeta sem:
-  - `sovoznik-glas`: kako sovoznik govori (posneti zvoki iz sintetizatorja, tvoj glas, glas telefona, angleški glas telefona);
+  - `sovoznik-glas`: kateri angleški glas (prilagojeno po odločitvi o angleščini): angleški glas telefona (priporočeno), posneti zvoki iz angleškega sintetizatorja, tvoj glas v angleščini;
   - `sovoznik-kje`: samo odprte ceste ali tudi dirkališča (v prvem krogu ali v vsakem).
 
 ## Stanje
 
-- 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki, vprašanji na strani Odločitve 3. Koda čaka na odgovor.
+- 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki (#340), vprašanji na strani Odločitve 3; `sovoznik-glas` prilagojeno na angleški glas. Koda čaka na odgovor.
