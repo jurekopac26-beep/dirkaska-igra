@@ -183,10 +183,12 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - komentator ostane angleški.
 - **5. 11. 2026, uporabnik** (sporočilo koordinaciji VSE SEJE 2, »ena proga na državo«): proge ZDA razen Pikes Peaka postanejo testne in zamrznjene. Sovoznik velja na 15 progah namesto 23 (razdelek Kje velja), vprašanje `sovoznik-kje` je popravljeno.
 - **5. 11. 2026 ob 16.06, uporabnik** (sporočilo koordinaciji VSE SEJE 2): »Vse zvoke delaj v angleščini«. Sovoznik govori samo angleško, tudi v slovenski igri. Napis na znaku in zgoraj sledi jeziku igre. Slovenski glas in Hugging Face nista več potrebna.
+- **5. 11. 2026 ob 17.34, uporabnik** (izbira na vprašanje koordinacije VSE SEJE 2, katere novosti začeti takoj): »Sovoznik: opombe na cestah«. Koda za opombe (`Track.paceNotes`) in napise na odprtih cestah se začne takoj, brez prog ZDA razen Pikes Peaka. Glas na cestah pride po odgovoru `sovoznik-glas`; do takrat sovoznik govori samo na relijskih kronometrih, kot doslej.
 - **Vprašanji na strani Odločitve 3** (5. 11. 2026); odgovora se zapišeta sem:
   - `sovoznik-glas`: kateri angleški glas (prilagojeno po odločitvi o angleščini): angleški glas telefona (priporočeno), posneti zvoki iz angleškega sintetizatorja, tvoj glas v angleščini;
   - `sovoznik-kje`: samo odprte ceste ali tudi dirkališča (v prvem krogu ali v vsakem).
 
 ## Stanje
 
-- 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki (#340), vprašanji na strani Odločitve 3; `sovoznik-glas` prilagojeno na angleški glas. Koda čaka na odgovor.
+- 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki (#340), vprašanji na strani Odločitve 3; `sovoznik-glas` prilagojeno na angleški glas.
+- 5. 11. 2026: koda v delu (veja `sovoznik/cesta`): opombe in napisi na odprtih cestah, številka na znaku, stikalo; glas na cestah po odgovoru `sovoznik-glas`.
