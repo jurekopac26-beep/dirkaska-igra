@@ -709,16 +709,16 @@
   }
  },
  "monterey": {
-  "meshes": 466,
-  "verts": 590842,
+  "meshes": 463,
+  "verts": 589546,
   "instances": 9816,
   "props": 162,
   "crowd": 357,
-  "world": "caed8c5a",
+  "world": "200ad269",
   "propsHash": "b5551806",
   "floor": "72a7b31b/7196",
   "groups": {
-   "-:MeshLambertMaterial": "4d6d4bb6",
+   "-:MeshLambertMaterial": "91999c17",
    "-:MeshBasicMaterial": "f087841d",
    "-:MeshPhongMaterial": "620177c4",
    "crowd:MeshLambertMaterial": "ecb3a0b1",
