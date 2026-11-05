@@ -3685,7 +3685,7 @@
   const NEED_TXT = { fuel: 'Gorivo ne bo zdržalo do cilja.', tyres: 'Gume ne bodo zdržale do cilja.', wet: 'Proga je mokra, potrebuješ dežne gume.', dry: 'Idealna linija je suha, potrebuješ suhe gume.', tyre: 'Imaš predrto gumo.', worn: 'Gume so izrabljene.', damage: 'Avto je močno poškodovan.' };
   const CMP_WORD = { S: 'mehke', M: 'srednje', H: 'trde' };
   const needTxt = (why, P) => tr(why === 'fuel' && P && P.m.ev ? 'Baterija ne bo zdržala do cilja.' : NEED_TXT[why]);   // (why a stop: an electric car's battery)
-  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, log: [], vo: null, voT: 0, voOn: false }; $('h-teamradio').classList.remove('on', 'wait'); }   // (vo: the engineer's line said, teamRadioVoice)
+  function teamRadioReset() { trd = { lap: 0, q: [], cur: null, t: 0, win: '', box: -1, urg: {}, rain: false, sc: false, pit: false, ahead: new Set(), log: [], vo: null, voT: 0, voOn: false }; $('h-teamradio').classList.remove('on', 'wait'); }   // (vo: the engineer's line said, teamRadioVoice)
   function teamRadioSay(text, prio, voice, vars) {
     if (!trd || !text) return;
     const m = { text, prio, voice, vars };
@@ -3749,6 +3749,28 @@
       teamRadioSay(tr('Dober postanek.') + ' ' + (A ? (ga != null ? tr('Si {0}., {1} je {2} s pred tabo.', P.pos, A.name, fmtS(ga)) : tr('Si {0}.', P.pos)) : tr('Vodiš.')), 2, 'radioGood', { pos: P.pos }); }
     // at the line: once a lap (from the second)
     if (P.lap !== trd.lap) { const first = !trd.lap; trd.lap = P.lap; if (!first && P.lap >= 2 && P.lap <= race.laps) teamRadioLap(P, pl); }
+    if (!(SC && SC.state === 'out') && !red && P.lap >= 2) aheadRadio(P, pl);   // (the car ahead in for its stop, 104; as the gaps, from the second lap)
+  }
+  // the car right ahead in for its stop (104; its plan, Core Race.pitNext: it has asked for the pits, or its strategy has the stop on this
+  // lap) and close enough to fight for the place (AHEAD.gap s at most): from the second lap, once for each car and lap (trd.ahead), while
+  // it is still AHEAD.to m or more short of its way in, »Car ahead boxing this lap.« (on the screen with its name). With a stop still to
+  // make (the plan's window, pl.from), the hint from the tyres and the gap (Core Race.pitDuel): staying out a lap longer than it gains the
+  // place (the overcut: more than the gap and AHEAD.m on top); its strategy's stop a lap on and the undercut gaining the place, with the
+  // player's window open this lap: »boxing next lap, box this lap for the undercut« (only then: nothing to say otherwise)
+  const AHEAD = { to: 150, m: 0.3, gap: 6 };
+  function aheadRadio(P, pl) {
+    const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null;
+    if (!A || P.inPit || P.pitG || P.pitWant || P.finished) return;
+    const q = race.pitNext(A), ga = q && race.gap(A, P); if (!q || q.to < AHEAD.to || ga == null || ga > AHEAD.gap) return;
+    const due = !!(pl && pl.from != null && !pl.box), D = due ? race.pitDuel(P, A) : null;
+    if (q.now) {
+      const key = A.name + ':' + q.n; if (trd.ahead.has(key)) return; trd.ahead.add(key);
+      const over = !!D && D.over > ga + AHEAD.m;
+      teamRadioSay(tr('Avto pred tabo ({0}) gre v tem krogu v bokse.', A.name) + (over ? ' ' + tr('Ostani zunaj še en krog: overcut bi ti moral prinesti mesto.') : ''), 1, over ? 'radioAheadOver' : 'radioAhead');
+    } else if (q.next && D && D.under > ga + AHEAD.m && pl.from <= pl.cur && pl.to >= pl.cur) {
+      const key = A.name + ':u' + q.n; if (trd.ahead.has(key)) return; trd.ahead.add(key);
+      teamRadioSay(tr('Avto pred tabo ({0}) gre v naslednjem krogu v bokse. Pridi v bokse v tem krogu za undercut.', A.name), 2, 'radioAheadUnder');
+    }
   }
   function teamRadioLap(P, pl) {
     if (P.inPit || (race.fl && race.fl.red)) return;   // (over the line in the pit lane: on the way out; the red flag: the race stopped)

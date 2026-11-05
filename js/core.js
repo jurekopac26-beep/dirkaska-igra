@@ -6596,6 +6596,28 @@ const Core = (function () {
       if (K.v !== V) { let t = 0; for (let i = 0; i < T.N; i++) t += T.ds / Math.max(5, V[i]); K.v = V; K.t = t * 1.1; }
       return K.t;
     }
+    // a rival's next stop as its plan has it (104, the team radio: the car ahead of the player): n, the lap whose way in comes next (as
+    // _stratStep counts it), to, the metres to that way in; now: it comes in there (it has asked for the pits, pitWant, or its strategy has
+    // a stop on that lap: STRAT, c.st.at), next: its strategy has one a lap later. Null without pits, for the player, a friend's car, one at
+    // the line or retired, one in the lane already
+    pitNext(c) {
+      const T = this.track, L = T.len, P = T.def.pit; if (!P || T.open || c.isPlayer || c.net || c.finished || dnf(c) || c.inPit || c.pitG) return null;
+      const n = Math.floor((c.dist + 30 - P[1]) / L) + 1, S = c.st, at = S && S.at && S.at.length ? S.at[0] : null, last = this.laps - 1;
+      return { n, to: n * L + P[1] - c.dist, now: n <= last && (!!c.pitWant || (at != null && n >= at)), next: at != null && at === n + 1 && n + 1 <= last };
+    }
+    // a duel by the stops (104): the time (s) c gains on a, the car ahead, over the two laps round a's stop, by stopping a lap before it
+    // (under: the undercut) or a lap after it (over: the overcut). Each lap's time from c's (_lapT) by the grip of the tyres on it (the lap
+    // time as 1 / sqrt of the grip; a compound's own and what its wear takes, the cliff: tyreCliff4); the new sets fresh, each the
+    // compound its next stop gives (a's strategy, c's choice or the race's own, autoCmp); the cold of a new set (TCOLD) costs both the same
+    // on its first lap, so it falls out. Null without tyres or the race's clock
+    pitDuel(c, a) {
+      if (!c.ty || !a.ty || !this.mk) return null;
+      const L = this.track.len, left = this.laps * L - c.dist, g = (ty) => { const K = tyreK(ty), w = Math.min(1, ty.wear || 0); return (K ? K.g * (1 - K.loss * w) : 1 - 0.1 * w) * tyreCliff4(ty); };
+      const nw = (k) => (k && TYRE_CMP[k] ? TYRE_CMP[k].g : 1), wet = (ty) => ty.k === 'wet';
+      const cN = wet(c.ty) ? 1 : nw(c.ty.c ? (TYRE_CMP[c.pitCmp] ? c.pitCmp : this.autoCmp(left)) : null), aS = a.st, aN = wet(a.ty) ? 1 : nw(a.ty.c ? (aS && aS.seq && aS.seq[aS.hist.length]) || a.ty.c : null);
+      const gc = g(c.ty), T0 = this._lapT(c), t = (x) => T0 * Math.sqrt(gc / Math.max(0.3, x)), cO = t(gc), aO = t(g(a.ty)), cNt = t(cN), aNt = t(aN);
+      return { under: aO + aNt - 2 * cNt, over: 2 * aNt - cO - cNt };
+    }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut or a burst one; 'worn', worn out (TYRE_WORN) and over the cliff
     // before the line; 'damage', badly damaged), the laps it can be made in
