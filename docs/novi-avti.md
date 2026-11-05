@@ -83,3 +83,10 @@ Skupaj **~34 h** dela sej (brez čakanja na teste).
 - 5. 11. ob 17.35 (pri koordinaciji VSE SEJE 2): OSA R začni takoj, Opus, napor max; nove datoteke, skupni seznami samo na konec; ne spreminjaj `js/cars/kolibri.js` in `js/deli/*` (dogovor z računom 2); v testih in slikah ne uporabljaj prog ZDA razen Pikes Peaka (postanejo testne, #355).
 - Izbor vozil (`novi-avti-izbor`): čaka na odgovor.
 - Videz LOS V8 in NOSOROG E (`novi-avti-videz`): čaka na odgovor.
+
+## Predaja (5. 11. 2026, seja načrta in OSA R)
+- **Stanje:** OSA R je narejen v #361 (zbirna veja `novi-avti/vozila`, 26. v vrsti, osnutek do vrste; povezani testi lokalno zeleni na ef62fd2). Seja session_01WbgGzuwVYnMe1PqsfUDJyt je ustavljena (kontekst ~290 tisoč).
+- **Odgovori:** vprašanji `novi-avti-izbor` in `novi-avti-videz` (stran Odločitve 3) prebere koordinacija VSE SEJE 2 (`seja_id` preusmerjen nanjo) in nato zažene nove seje.
+- **Naslednja vozila:** vsako vozilo nova seja (Opus, napor max), največ 2 hkrati, vsaka v svoji veji iz `novi-avti/vozila` (npr. `novi-avti/los`), nato spoj v zbirno vejo; pull request ostane en (#361).
+- **Postopek (kot OSA R, ~4–6 h):** (1) `js/cars/<id>.js` po vzoru `js/cars/osa.js` (kompakten KIT, deli s tečaji, `mounts` krilo, luči, platišča), oblika iz `tools/novi-avti/prototipi.js` (izbrani videz). (2) Fizika: meritev kot `tests/lib/handling.js` (t100, vmax, latG, d100), cilji v mejah `ENVELOPE` iz `tests/fleet.test.js`, `expect` okoli meritve. (3) Skupni seznami samo na konec: `index.html`, `garaza.html`, `ROSTER`, `js/lang.js` (opis do 90 znakov, brez kW in kg), `docs/igra.md` (tabela kategorije, število vozil), `README.md` (število). (4) Pozor: `tests/browser/lang.test.mjs` šteje male avte (»Small cars · 2/7«); del, katerega središče je več kot 0,35 m od tabele delov, dobi `over` v `parts` (brskalniški fleet z `FLEET_ONLY=<id>`). (5) Testi: `npm run test:related`; slika s kamere za avtom na Bathurstu (`tools/carshots.mjs <id>`).
+- V testih in slikah ne uporabljaj prog ZDA razen Pikes Peaka (#355). Ne spreminjaj `js/cars/kolibri.js`, `js/deli/*` in drugih vozil. Zadnja seja izbriše `tools/novi-avti/`.
