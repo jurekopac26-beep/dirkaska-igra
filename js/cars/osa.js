@@ -60,7 +60,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },
       wheels: { style: 'std', spokes: 10, w: 0.235, rim: [0.18, 0.18, 0.2], cap: [0.1, 0.1, 0.11], gap: 0.04 },
       build(K) {
-        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1], RED = [0.62, 0.04, 0.06];
+        const P = K.paint, B = K.black, G = K.GLASS, D = [0.09, 0.09, 0.1];
         // the shell: the paint; the glass (windscreen, side windows along the roof, the tailgate's glass); the roof's top black; the sills
         // black between the arches, dark under the bumpers' corners
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
@@ -90,24 +90,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperF', () => {
           K.grille(1.955, 0.38, 0, 1.24, 0.22, { slats: 4 });
           for (const sd of [-1, 1]) K.rect(1.952, 0.4, sd * 0.74, 0.07, 0.2, B);
-          K.box(1.93, 0.17, 0, 0.12, 0.03, 1.66, 0, B);
+          K.box(1.9, 0.235, 0, 0.16, 0.03, 1.66, 0, B);   // (the splitter: under the nose's foot, 3 cm ahead of it)
         }, { hinge: [[1.9, 0.3, -0.7], [1.9, 0.3, 0.7]] });
-        // the tail: the lamps in black surrounds on the corners (each a part of its own), the red strip right across the tailgate between
-        // them, the badge
+        // the tail: the lamps in black surrounds on the corners (each a part of its own), the lit strip right across the tailgate between
+        // them (on the tailgate: it goes with it), the badge
         for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';
           K.rect(-2.185, 0.84, sd * 0.56, 0.38, 0.1, B, { dir: '-x', part: tp }); K.tailLamp(-2.19, 0.84, sd * 0.56, 0.34, 0.06, { host: tp }); }
-        K.part('trunk', () => {
-          K.rect(-2.19, 0.84, 0, 0.74, 0.025, RED, { dir: '-x' });
-          K.rect(-2.19, 0.74, 0, 0.12, 0.04, [0.6, 0.62, 0.66], { dir: '-x' });
-        });
+        K.rect(-2.186, 0.84, 0, 0.78, 0.05, B, { dir: '-x', part: 'trunk' });
+        K.tailLamp(-2.19, 0.84, 0, 0.74, 0.03, { host: 'trunk' });
+        K.rect(-2.19, 0.74, 0, 0.12, 0.04, [0.6, 0.62, 0.66], { dir: '-x', part: 'trunk' });
         // the roof spoiler: black, from the roof's rear edge out over the tailgate's glass (a part of its own, on the tailgate; the
         // garage's wing in its place: K.deli, mounts.krilo)
         K.part('spoiler', () => K.deli('krilo', () => K.wingPlank(-1.76, 1.37, -2.1, 1.31, 0.03, -0.66, 0.66, B)),
           { noCrush: true, noDent: true, hinge: [[-1.8, 1.34, -0.5], [-1.8, 1.34, 0.5]] });
         // the rear bumper: the black diffuser, two pipes either side
         K.part('bumperR', () => {
-          K.box(-2.12, 0.16, 0, 0.14, 0.14, 1.3, 0, B);
-          for (const z of [-0.5, -0.36, 0.36, 0.5]) K.exhaust(-2.2, 0.27, z, 0.042, 0.18);
+          K.box(-2.12, 0.2, 0, 0.14, 0.18, 1.3, 0, B);   // (up to the tail's foot)
+          for (const z of [-0.5, -0.36, 0.36, 0.5]) K.exhaust(-2.2, 0.2, z, 0.042, 0.18);
         }, { hinge: [[-2.15, 0.3, -0.7], [-2.15, 0.3, 0.7]] });
         // the black door mirrors, the wipers on the cowl
         for (const sd of [-1, 1]) K.mirror(0.62, 1.0, sd * 0.94, { col: B });
