@@ -15,7 +15,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 - **Orodje za napake:** `js/napake.js`, `css/napake.css` (»Orodje za napake«, imena v poročilih: »Imena v poročilih o napakah«); posnetek `.rrp`: `tools/posnetek.mjs`.
 - **Testi:** `tests/run.js` (`npm run test:related`), »Testi po temah«, opisi v `tests/README.md`, reference `tests/golden/`.
 - **Orodja:** `tools/stamp.js` (žigi), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`.
-- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/vrsta.md` (skupna vrsta za `main` vseh treh računov), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/table-pred-ograjo.md` (table pred ograjo na pravih progah), `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
+- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/vrsta.md` (skupna vrsta za `main` vseh treh računov), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/dez-sneg.md` (dež in sneg: oprijem in zavore, načrtovano), `docs/table-pred-ograjo.md` (table pred ograjo na pravih progah), `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
 
 ## Datoteke
 
@@ -164,7 +164,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) se po `CLAUDE.md` ne urejajo.
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
@@ -226,6 +226,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Ponovljive dirke** (seme, testni način): `tests/repro.test.js` (jedro), `tests/browser/repro.test.mjs` (igra s hitrim vstopom)
 - **Posnetki pred/po:** `tools/shot.mjs` (možnosti: `tests/shot.test.js`), na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
+- **Testne proge zamrznjene** (do izbrisa pred Google Play): `tests/testne-proge.test.js`, odtisi datotek `tests/golden/testne-proge.json`; testi čez vse proge jih preskočijo (`trackIds` v `tests/lib/sim.js`, `tests/browser/lib.mjs`)
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`
 - **Orodje za napake:** `tests/browser/napake-samodejno.test.mjs` (prikaz za razvijalca O, dnevnik: napaka, obljuba, zatikanje; v krogu: tekmec, cesta, kraj; samodejne zastavice: `zaznaj` na umetnem posnetku, Potrdi / Zavrzi, poročilo), `tests/browser/napake.test.mjs` (Označi: paleta ležeče in pokonci, krogi in beležka po barvah, razveljavi, radirka, zbirka in zastavice; Zgodovina napak: stanje, ohranjanje po deljenju, meja 100/20), `napake-slika.test.mjs` (zbirna slika, besedilo, izbira, deljenje, shranjene napake, nastavitve), `napake-zastavice.test.mjs` (gumb, F, Select, način Zastavice, nastavitve)
