@@ -35,7 +35,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 3 | #367 | popravek: main rdeč, `browser/shramba.test.mjs` (avtopilot na Trois-Rivièresu obtiči ob ograji: `g.race.rescue`) | 3 | Ready (seja session_01WbgGztTqNStyLT9BjAp1ez), lokalno 2/2; pred #319, ker popravlja rdeč main |
 | 4 | #319 | razdelitev skupnih datotek prog po progah (nastavitve v `js/tracks/<id>.js`, `World.keep`, `world-rbring.js` razdeljen; orodje `tools/razdeli-proge.mjs` za spajanje) | 3 | pripravljen (seja session_01WbgGzvapct4nquxyUD7zK3); popravki po pregledu kode, povezani testi lokalno zeleni (70/70), Ready, testi na GitHubu tečejo; prednost, ker zmanjša spore med vejami (CLAUDE.md); veje izpred razdelitve spajajo po `docs/razdelitev-prog.md` |
 | 5 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
 | 6 | #259 | tribune iz OSM | 3 | čaka |
