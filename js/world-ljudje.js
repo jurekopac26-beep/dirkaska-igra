@@ -2277,7 +2277,7 @@
       let nv = 0; for (const P of all) for (const pt of P.parts) { pt.o = nv * 3; nv += pt.P.length / 3; }
       const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), col = new Float32Array(nv * 3);
       for (const P of all) for (const pt of P.parts) col.set(pt.C, pt.o);
-      const [cx, cz] = box ? [box[0], box[2]] : F.w(0, 6), cy = box ? box[1] : F.y(0, 6) + 2, r = box ? box[3] : d.r || 24;
+      const cb = C.cb != null ? C.cb : 6, [cx, cz] = box ? [box[0], box[2]] : F.w(0, cb), cy = box ? box[1] : F.y(0, cb) + 2, r = box ? box[3] : d.r || 24;   // (C.cb: its middle farther from the road)
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.attributes.color.noSeason = true;
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(cx, cy, cz), r);
@@ -2290,7 +2290,7 @@
       Object.assign(Sc, { grp, ppl, pos, nor, cx, cy, cz, r });
       if (Sc.stand) { const G = C.groups.st; Sc.sgn = Math.sign(G.m.elements[0] * F.tx + G.m.elements[2] * F.tz) || 1; Sc.len = C.len || 20; }
       for (const e of C.smoke) { e.i = nPuff; e.ph = rnd(); nPuff += e.n; Sc.smoke.push(e); }
-      for (const [a, b, rr] of d.clear || []) { const [x, z] = F.w(a, b); circles.push([x, z, rr]); }
+      for (const [a, b, rr] of C.clear || d.clear || []) { const [x, z] = F.w(a, b); circles.push([x, z, rr]); }   // (C.clear: a build's own, where its place moves its things: the anglers at a lake's real shore)
       W.scenes.push(Sc);
       stats.scenes.push({ name, at, side: sd, s: Math.round(s), people: Sc.people.length, pets: Sc.pets.length, verts: nv, propVerts: pv });
       stats.people += Sc.people.length; stats.verts += nv; stats.propVerts += pv;

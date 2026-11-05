@@ -121,6 +121,12 @@
     S.ribici = { seed: 307, clear: [[PA, 9.6, 8.6], [9.4, 8.6, 4.2]],
       build(C, F, K) {
         const fw = fwOf(F), wob = rnd() * TAU, wob2 = rnd() * TAU, rf = (t) => 1 + 0.07 * Math.sin(3 * t + wob) + 0.04 * Math.sin(5 * t + wob2);
+        // K.lake: at a real lake (the user, 4. 11. 2026: »postavi samo tam, kjer je tudi v resnici«): its shore that many metres beyond the
+        // barrier, along the road; no pond of their own, they sit and stand on that shore (its trees cleared, a way for the eye from the road),
+        // and stay at their places as the car comes (the fence is far): they wave from there
+        const lake = K.lake != null, S0 = lake ? K.lake : 0;
+        const at = lake ? { jb: S0 - 1.5, cast: S0 - 1.1, kid: S0 - 0.35, ub: S0 - 1.55, car: S0 - 5.5 } : { jb: 7.4, cast: 7.75, kid: 8.05, ub: 8.55, car: 8.6 };
+        if (!lake) {
         // the pond: its water in two rings (the far side lighter: the sky in it), the muddy shore round it
         const O = oval(PA, PB, RA, RB, 20, rf), I = O.map(([a, b]) => [PA + (a - PA) * 0.55, PB + (b - PB) * 0.55]), Ou = O.map(([a, b]) => [PA + (a - PA) * 1.12, PB + (b - PB) * 1.12]);
         const water = [], light = [], mud = [];
@@ -136,26 +142,30 @@
           const pad = grp(cyl(0.24, 0.24, 0.012, 7, 0x4f7a34, 0, 0.075, 0), cyl(0.17, 0.17, 0.014, 6, 0x5f8a3e, 0.25, 0.076, 0.12));
           if (fl) pad.add(sph(0.06, 6, 3, fl && da < 0 ? 0xf2f0f4 : 0xf0a8c8, 0.04, 0.1, 0.02, { half: true }));
           C.prop(pad, PA + da, PB + db, rnd() * TAU); }
+        } else {   // the lake's shore: clumps of reeds along its edge either side of them
+          for (const da of [-9.5, -7.6, -6.1, -4.3, 1.9, 7.6, 8.9, 10.8]) C.prop(reeds(8 + Math.floor(rnd() * 5)), da + (rnd() - 0.5) * 0.4, S0 + 0.15 + rnd() * 0.35, rnd() * TAU);
+          C.clear = [[PA, S0, 8.6], [9.4, at.car, 4.2]]; for (let b = S0 - 9; b > 2; b -= 7) C.clear.push([1.5, b, 6]);   // (their place, their car, a way for the eye from the road)
+          C.cb = S0 - 2; }
         // the jetty (its foot on the shore, its end over the water) and the angler on it
-        const JA = -1.5, JB = 7.4, JL = 3.0, ccol = pick([0x2f5a3a, 0x31406e, 0x5a4a3a]);
+        const JA = -1.5, JB = at.jb, JL = 3.0, ccol = pick([0x2f5a3a, 0x31406e, 0x5a4a3a]);
         C.prop(jetty(JL, ccol), JA, JB, [0, 1], 'jt');
         const sit = { on: 'jt', a: 0, b: JL - 0.45, y: 0.32 };
         C.man({ shirt: 0x5a6a3a, pants: 0x3a3f33, long: true, hat: 'bucket', hatCol: 0x7a7a52 }, { act: Object.assign({ pose: 'ribic_sit', hold: [['ribic_rod', 1, { line: 2.9 }]] }, sit),
           bliza: { look: 'car' }, run: false, fence: Object.assign({ pose: 'ribic_sitWave', hold: [['ribic_rod', 1, { line: 2.9 }]], look: 'car' }, sit) });
         // the one on the shore, the kid with the net and his bucket
-        C.man({ shirt: pick([0x7c4a2e, 0x2f63c9, 0x8a3b8c]), pants: 0x2f3f63, hat: 'cap', hatCol: pick([0x2f5a3a, 0x15171c, 0xd8262a]) }, { act: { a: 3.8, b: 7.75, pose: 'ribic_cast', face: [0.2, 1], hold: [['ribic_rod', 1]] },
-          run: { f: 0.62, pose: 'walk', hold: [['ribic_rodC', 0]] }, fence: { a: 3.2, b: 0.9, pose: 'wave', hold: [['ribic_rodC', 0]], look: 'car' } });
-        C.prop(grp(cyl(0.14, 0.12, 0.28, 7, 0x2f63c9, 0, 0.14, 0), bar([-0.13, 0.28, 0], [0.13, 0.28, 0], 0.012, 0x9ea3aa)), 0.15, 7.75);
-        C.man({ kid: true, shirt: pick([0xf0c22e, 0xd8262a, 0x22848f]), pants: 0x2f3f63, shorts: true, hat: 'cap', hatCol: pick([0xd8262a, 0x2f63c9]) }, { act: { a: 0.85, b: 8.05, pose: 'ribic_net', face: [0, 1], hold: [['ribic_net', 1]] },
-          run: { f: 0.42 }, fence: { a: 0.9, b: 0.9, pose: 'jump', hold: [['ribic_net', 1]], look: 'car' }, kid: true });
+        C.man({ shirt: pick([0x7c4a2e, 0x2f63c9, 0x8a3b8c]), pants: 0x2f3f63, hat: 'cap', hatCol: pick([0x2f5a3a, 0x15171c, 0xd8262a]) }, { act: { a: 3.8, b: at.cast, pose: 'ribic_cast', face: [0.2, 1], hold: [['ribic_rod', 1]] },
+          run: lake ? false : { f: 0.62, pose: 'walk', hold: [['ribic_rodC', 0]] }, fence: lake ? { a: 3.8, b: at.cast, pose: 'wave', hold: [['ribic_rodC', 0]], look: 'car' } : { a: 3.2, b: 0.9, pose: 'wave', hold: [['ribic_rodC', 0]], look: 'car' } });
+        C.prop(grp(cyl(0.14, 0.12, 0.28, 7, 0x2f63c9, 0, 0.14, 0), bar([-0.13, 0.28, 0], [0.13, 0.28, 0], 0.012, 0x9ea3aa)), 0.15, at.cast);
+        C.man({ kid: true, shirt: pick([0xf0c22e, 0xd8262a, 0x22848f]), pants: 0x2f3f63, shorts: true, hat: 'cap', hatCol: pick([0xd8262a, 0x2f63c9]) }, { act: { a: 0.85, b: at.kid, pose: 'ribic_net', face: [0, 1], hold: [['ribic_net', 1]] },
+          run: lake ? false : { f: 0.42 }, fence: lake ? { a: 0.85, b: at.kid - 0.3, pose: 'jump', hold: [['ribic_net', 1]], look: 'car' } : { a: 0.9, b: 0.9, pose: 'jump', hold: [['ribic_net', 1]], look: 'car' }, kid: true });
         // under the umbrella: the old angler, his chair, his rods on their rest, his cooler and his dog
-        const UA = 5.5, UB = 8.55;
+        const UA = 5.5, UB = at.ub;
         C.prop(brolly(0x3d5a2e), UA - 0.35, UB - 0.15, fw(1, 0)); C.prop(L.chair(0x2a2c31), UA, UB, [0.25, 1]); C.prop(rodPod(), UA + 0.15, UB + 1.05, [0.2, 1]);
         C.prop(L.cooler(pick([0x2f63c9, 0xd8262a, 0xf2f2f2])), UA - 0.85, UB + 0.15, [1, 0.2]);
         C.man({ shirt: 0x2f5a3a, pants: 0x47494f, long: true, hair: 'bald', hairCol: 0x9a9a98, scale: 0.94 }, { act: { a: UA, b: UB, pose: 'sitDrink', face: [0.25, 1], hold: [['cup', 1, { c: 0x2a2c31 }]] },
           bliza: { look: 'car' }, run: false, fence: { a: UA, b: UB, pose: 'l3_sitWave', face: [0.25, 1], hold: [['cup', 1, { c: 0x2a2c31 }]], look: 'car' } });
-        C.pet(L.dog(pick([0x5c3a22, 0xc8a878, 0x2a221c])), { act: { a: UA + 0.85, b: UB - 0.35, face: [-0.6, -1] }, fence: { a: UA - 0.6, b: 1.0, face: [-1, -0.2] }, run: { f: 1.05 } });
-        C.prop(L.car(pick(CARS)), 9.4, 8.6, fw(-1, 0.15));
+        C.pet(L.dog(pick([0x5c3a22, 0xc8a878, 0x2a221c])), { act: { a: UA + 0.85, b: UB - 0.35, face: [-0.6, -1] }, fence: lake ? { a: UA + 0.85, b: UB - 0.35, face: [-1, -0.4] } : { a: UA - 0.6, b: 1.0, face: [-1, -0.2] }, run: lake ? false : { f: 1.05 } });
+        C.prop(L.car(pick(CARS)), 9.4, at.car, fw(-1, 0.15));
       } };
   }
 
@@ -450,7 +460,8 @@
      jumping in it; a table with a pink cloth, the cake and its candles, plates, cups, juice, presents beside it; bunches of balloons, a line
      of bunting from the castle to a pole; the father at the grill, the mother filming the castle, the grandfather in a chair with his coffee;
      two more children in party hats, balloons on strings. As the car comes the two run to the fence with their balloons and wave; the ones in
-     the castle go on jumping and look; the father waves his tongs, the grandfather from his chair */
+     the castle go on jumping and look; the father waves his tongs, the grandfather from his chair. The other parents: three at their own
+     table under a gazebo (drinks by it), two by the castle with a pram, their cars at the back */
   {
     const BAL = [0xd8262a, 0xf0c22e, 0x2f63c9, 0x2f9a48, 0xe85a9a, 0xf07a1c, 0x8a3b8c, 0x5ab0e8];
     // a balloon on its string: held in a hanging hand (th 0.2: the string up); running with it (th 1.45)
@@ -475,7 +486,15 @@
       g.add(bar([0, 0, 0], [x, y - 0.17, z], 0.006, 0xe8e8e8)); g.add(sph(0.17, 7, 5, c, x, y, z, { s: [1, 1.18, 1] })); } return g; }
     function present(c, rib) { return grp(box(0.32, 0.26, 0.32, c, 0, 0.13, 0), box(0.33, 0.27, 0.05, rib, 0, 0.13, 0), box(0.05, 0.27, 0.33, rib, 0, 0.13, 0), box(0.12, 0.06, 0.04, rib, 0.04, 0.29, 0, { rz: 0.5 }), box(0.12, 0.06, 0.04, rib, -0.04, 0.29, 0, { rz: -0.5 })); }
 
-    S.rojstnidan = { seed: 419, clear: [[0.4, 7.4, 8.5], [-5.6, 7.6, 3.5]],
+    // a pram: its body and hood, the handle, four wheels (its handle +x)
+    function pram(col) { const g = grp(), DK = 0x2a2c31;
+      g.add(box(0.72, 0.3, 0.44, col, 0, 0.56, 0)); g.add(sph(0.26, 7, 4, shade(col, 0.82), -0.2, 0.68, 0, { half: true, s: [0.95, 1, 0.85], rz: 0.35 }));
+      for (const z of [0.2, -0.2]) { g.add(bar([0.32, 0.62, z], [0.6, 1.02, z], 0.025, DK)); g.add(bar([-0.28, 0.13, z], [0.3, 0.45, z], 0.02, DK)); g.add(bar([0.28, 0.13, z], [-0.25, 0.45, z], 0.02, DK)); }
+      g.add(bar([0.6, 1.02, 0.22], [0.6, 1.02, -0.22], 0.03, DK));
+      for (const x of [0.28, -0.28]) for (const z of [0.22, -0.22]) g.add(cyl(0.12, 0.12, 0.04, 8, DK, x, 0.12, z, { rx: PI2 }));
+      return g; }
+
+    S.rojstnidan = { seed: 419, clear: [[0.4, 7.4, 8.5], [-5.6, 7.6, 3.5], [-9.1, 9.6, 4.2], [7.8, 7.4, 3.2], [-6.2, 13.3, 3], [10.2, 12.7, 3]],
       build(C, F, K) {
         const fw = fwOf(F), CA = 3.9, CB = 9.1;
         C.prop(castle(), CA, CB, null, 'bc');
@@ -508,6 +527,25 @@
         C.prop(L.chair(pick([0x2f9a48, 0xd8262a, 0x2f63c9])), -4.1, 7.0, [0.4, -1]);
         C.man({ shirt: pick([0xb8bcc4, 0x7c8a99, 0xefefea]), pants: 0x47494f, long: true, hair: 'short', hairCol: 0xc8c8c4, scale: 0.93 }, { act: { a: -4.1, b: 7.0, pose: 'sitDrink', face: [0.4, -1], hold: [['cup', 1]] },
           bliza: { look: 'car' }, run: false, fence: { a: -4.1, b: 7.0, pose: 'l3_sitWave', face: [0.4, -1], hold: [['cup', 1]], look: 'car' } });
+        // the other parents (the user, 4. 11. 2026: »če je otroški rojstni dan, potem je tukaj tudi veliko staršev in še ostali elementi za starše«):
+        // three at their own table under a white gazebo, its bottles and plates, a cooler and crates of drinks by it; two by the castle with their
+        // cups watching their children, a pram by them; their cars parked at the back. As the car comes those at the table wave from their
+        // chairs; one by the castle walks after the children to the fence and stands there with her arms crossed, the other one waves
+        const GA = -9.1, GB = 9.6;
+        C.prop(L.gazebo(0xefefea, 3.2), GA, GB, [0, -1]);
+        C.prop(L.table(1.6, 0.8), GA, GB, [0, -1]);
+        C.prop(L.cooler(pick([0x2f63c9, 0xd8262a])), GA + 2.3, GB - 1.4, [1, -0.3]); C.prop(L.crates(4), GA - 2.0, GB - 1.2, [0.3, -1]);
+        const look = () => ({ shirt: pick([0xefefea, 0x2f63c9, 0x7c8a99, 0x2f9a48, 0xb8bcc4, 0x8a3b8c, 0xf0c22e]), pants: pick([0x2f3f63, 0x47494f, 0x5b5040, 0xd8d2c0]) });
+        for (const [a, b, fa, fb, wo] of [[GA - 0.45, GB + 0.62, 0, -1, 1], [GA + 0.45, GB + 0.62, 0, -1, 0], [GA - 1.12, GB, 1, -0.15, 1]]) {
+          C.prop(L.chair(pick([0x2a2c31, 0x2f9a48, 0xd8262a])), a, b, [fa, fb]);
+          C.man(Object.assign(look(), wo ? { hair: pick(['long', 'pony', 'long']) } : { hair: pick(['short', 'bald']) }), { act: { a, b, pose: wo ? 'sitDrink' : 'sit', face: [fa, fb], hold: wo ? [['cup', 1]] : [] },
+            bliza: { look: 'car' }, run: false, fence: { a, b, pose: 'l3_sitWave', face: [fa, fb], hold: wo ? [['cup', 1]] : [], look: 'car' } }); }
+        C.prop(pram(pick([0x2f3f63, 0x5a6a3a, 0x8a3b8c])), 8.6, 6.4, [1, 0.2]);
+        C.man(Object.assign(look(), { hair: pick(['long', 'pony']) }), { act: { a: 7.3, b: 7.0, pose: 'talk', face: [-0.85, 0.5], hold: [['cup', 1]] },
+          run: { f: 0.3, pose: 'walk', hold: [['cup', 1]] }, fence: { a: 1.5, b: 1.5, pose: 'arms', look: 'car' } });
+        C.man(look(), { act: { a: 7.9, b: 8.1, pose: 'talk', face: [-1, -0.2], hold: [['cup', 1]] }, bliza: { look: 'car' }, run: false, fence: { a: 7.9, b: 8.1, pose: 'wave', hold: [['cup', 1]], look: 'car' } });
+        const CARS = [0xb8bcc4, 0x2f3f63, 0x7c8a99, 0xd8d8d2, 0x8a2a24, 0x2f5a3a, 0x1d1f25];
+        C.prop(L.car(pick(CARS)), -6.2, 13.3, fw(1, 0.05)); C.prop(L.car(pick(CARS)), 10.2, 12.7, fw(-1, 0.1));
         // the two in party hats with their balloons
         const k1 = pick(BAL), k2 = pick(BAL);
         C.man({ kid: true, shirt: pick(BAL), pants: 0x2f3f63, shorts: true, hat: 'party', hatCol: pick(BAL) }, { act: { a: -0.4, b: 5.0, pose: 'wave', face: [0.4, 1], hold: [['rojstni_balloon', 0, { c: k1 }]] },
@@ -517,12 +555,14 @@
       } };
   }
 
-  // their places (tools/ljudje/mesta.mjs --plan: flat, seen from the chase camera, 260 m from the other groups; the pond, the court and the
-  // chessboard on the flattest)
-  site('ouninpohja', [['ribici', 7672, -1], ['seno', 8024, 1]]);
-  site('medvode', [['cebelarji', 2144, -1], ['ribici', 3472, 1], ['balinanje', 4016, 1]]);
-  site('vrsic', [['seno', 312, -1]]);
-  site('livorno', [['balinanje', 15944, -1], ['sah', 18656, -1]]);
+  // their places: where they are in reality (the user, 4. 11. 2026: »postavi samo tam, kjer je tudi v resnici«; OSM): the anglers on the
+  // shores of Zbiljsko jezero (Medvode) and of the lake by Ouni (Ouninpohja: the track's own lake, def.lakes), lake: its shore's metres beyond
+  // the barrier; the hay on a mown meadow (Vršič: OSM's meadow by the road; Ouninpohja: a field, def.fields); the bocce and the chess have
+  // no place: no court or board by any of the tracks (Medvode, Livorno: none within 200 m of the road); the beekeepers and the birthdays
+  // where they were (tools/ljudje/mesta.mjs: flat, seen from the chase camera, 250 m from the other groups)
+  site('ouninpohja', [['ribici', 5640, 1, { lake: 18.5 }], ['seno', 1900, -1]]);
+  site('medvode', [['cebelarji', 2144, -1], ['ribici', 3604, 1, { lake: 28.0 }]]);
+  site('vrsic', [['seno', 3464, 1]]);
   site('longford', [['rojstnidan', 5128, 1]]);
   site('bigsur', [['rojstnidan', 792, 1]]);
   for (const n of ['ribici', 'seno', 'cebelarji', 'balinanje', 'sah', 'rojstnidan']) { SUMMER.add(n); BUSY_HANDS.add(n); }   // (a summer's day's; their hands full: no umbrellas)

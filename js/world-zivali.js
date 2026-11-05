@@ -478,7 +478,7 @@
       p[o] = sd * 0.14 + dx * c - dy * s; p[o + 1] = 0.05 + dx * s + dy * c; q[o] = nx * c - ny * s; q[o + 1] = nx * s + ny * c; }
     G.geo.attributes.position.needsUpdate = true; G.geo.attributes.normal.needsUpdate = true;
   }
-  // the flyer each frame: on its nest until the car comes within 55 m, then up and away from it (away from the road too), climbing, its wings
+  // the flyer each frame: on its nest until the car comes within 55 m, then up and away from it (away from the road too), climbing slowly, its wings
   // beating hard at first, then gliding with slower beats; out of sight after 16 s. Back on its nest when the time goes back (a replay) or
   // long after, the car far away; without a car on its nest
   function flyStep(F, t, car, cp, far2) {
@@ -490,8 +490,8 @@
     F.sit.visible = !F.st && (F.x - cp.x) ** 2 + (F.z - cp.z) ** 2 < far2;
     const u = F.st ? Math.max(0, t - F.t0) : 0; F.fly.visible = !!F.st && u < 16; if (!F.fly.visible) return;
     const d = 11 * (u - 1.5 * (1 - Math.exp(-u / 1.5))), th = F.th + F.k * d, w = SM(2.5, 5, u);
-    F.fly.position.set(F.x + (Math.cos(F.th) - Math.cos(th)) / F.k, F.y + 0.45 + 14 * (1 - Math.exp(-u / 6)) + 0.3 * u, F.z + (Math.sin(th) - Math.sin(F.th)) / F.k);
-    F.fly.rotation.set(-(0.35 * Math.exp(-u / 2) + 0.05), th, -Math.sign(F.k) * 0.18 * w, 'YXZ');
+    F.fly.position.set(F.x + (Math.cos(F.th) - Math.cos(th)) / F.k, F.y + 0.45 + 2.5 * (1 - Math.exp(-u / 2)) + 0.35 * u, F.z + (Math.sin(th) - Math.sin(F.th)) / F.k);   // (low over the meadow at first: the chase camera looks down, it stays in sight)
+    F.fly.rotation.set(-(0.3 * Math.exp(-u / 1.5) + 0.04), th, -Math.sign(F.k) * 0.18 * w, 'YXZ');
     flyPose(F.G, 0.08 + (0.75 - 0.45 * w) * Math.sin(TAU * (2.2 - 0.6 * w) * u));
   }
   const LIVE_VS_HEAD = 'attribute vec4 aJ;\nuniform vec3 uA;\nuniform vec3 uN0;\nvec3 zvRx( vec3 p, float a ) { float c = cos( a ), s = sin( a ); return vec3( p.x, p.y * c - p.z * s, p.y * s + p.z * c ); }';
