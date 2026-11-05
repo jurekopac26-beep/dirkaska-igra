@@ -2,9 +2,10 @@
 // then 915×412) and upright (in English): the calls of the road (Track.paceNotes), each one's caption (#h-codrv) in the game's language as
 // Core.codrvCap writes it, shown ahead of the bend (game.js cdLead: 55-170 m) and gone after it, over nothing of the HUD (the clock's
 // block, the map, the corner sign, the buttons, the controls) and inside the screen, the corner sign where it was without the caption, with
-// the bend's grade (1-6) on it; no voice on a road (the voice: after the user's answer, sovoznik-glas). The switch in the settings
-// (Sovoznik: Izklop, Napis, Glas in napis): off, no calls and no numbers on the sign; the captions only, a rally stage without the voice;
-// the voice on a rally stage as before. The calls themselves (and none on a circuit): tests/sovoznik.test.js.
+// the bend's grade (1-6) on it; the longest caption a call has (every note: upright in two or three lines) the same; no voice on a road
+// (the voice: after the user's answer, sovoznik-glas). The switch in the settings (Sovoznik: Izklop, Napis, Glas in napis): off, no calls
+// and no numbers on the sign; switched on during the race, the calls from there on; the captions only, a rally stage without the voice; the
+// voice on a rally stage as before. The calls themselves (and none on a circuit): tests/sovoznik.test.js.
 //   node tests/browser/sovoznik.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -15,15 +16,19 @@ const OTHERS = ['h-time', 'h-best', 'h-sec', 'h-split', 'h-gap', 'h-map', 'h-pro
   'btn-pause', 'btn-rescue', 'h-main', 'h-pos', 'h-tot', 'h-speed', 'h-lap', 'h-tyre', 'h-tags', 'h-alt', 'h-turn', 'h-fuel', 'h-flt', 'h-flag', 'c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas'];
 
 // the run on the autopilot for `sec` seconds of game time, a frame drawn after every 0.2 s (a caption stays 1.5 s at least): what the
-// co-driver showed, frame by frame
-const drive = (page, sec) => page.evaluate(async ([OTHERS, sec]) => {
+// co-driver showed, frame by frame (o.long: the words of the next two calls for this run, Track.paceNotes' own, as the game reads them;
+// o.stop: done once no caption is on after so many shown, so many grades on the sign, a caption so long)
+const LONG = ['caution', 'hairpin', 'L', 'and', 'hairpin', 'R', 'and', 'hairpin', 'L', 'd150'];   // ('CAUTION · HAIRPIN L › HAIRPIN R › HAIRPIN L')
+const drive = (page, sec, opt = {}) => page.evaluate(async ([OTHERS, sec, long, st]) => {
   const g = window.__game, $ = (id) => document.getElementById(id), fr = () => new Promise(r => requestAnimationFrame(() => r()));
   const box = (e) => { const b = e.getBoundingClientRect(), cs = getComputedStyle(e); return cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity <= 0.05 || !b.width || !b.height ? null : b; };
   const ov = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
   await document.fonts.load('italic 700 16px ApexMenu', 'AZ09ČŠŽ›·');
   for (let i = 0; i < 200 && g.phase !== 'racing'; i++) { g.sim(0.2, true); await fr(); }
   const N = g.race.track.paceNotes(), lang = g.S.lang, el = $('h-codrv'), note = $('h-note'), num = $('h-note-num');
-  const o = { calls: g.codrv.calls, voice: g.codrv.voice, shown: [], wrong: [], hits: new Set(), out: [], gone: 0, nums: new Set(), pos: { cap: new Set(), free: new Set() } };
+  const o = { calls: g.codrv.calls, voice: g.codrv.voice, shown: [], wrong: [], hits: new Set(), out: [], gone: 0, nums: new Set(), pos: { cap: new Set(), free: new Set() }, lines: 0 };
+  const keep = long ? N.slice(g.codrv.k, g.codrv.k + 2).map(c => [c, c.toks]) : [];
+  for (const [c] of keep) c.toks = long.slice();
   let was = '';
   for (let i = 0; i < sec * 5 && g.phase === 'racing'; i++) {
     g.sim(0.2, true); await fr();
@@ -32,15 +37,18 @@ const drive = (page, sec) => page.evaluate(async ([OTHERS, sec]) => {
       const L = g.codrv.log, last = L[L.length - 1], want = Core.codrvCap(N[last.k].toks, lang);
       if (cap !== was) { o.shown.push(cap); if (cap !== want || last.cap !== cap || el.textContent !== cap || !/\bshow\b/.test(el.className)) o.wrong.push(`"${cap}" not "${want}"`); }
       if (b) {
+        o.lines = Math.max(o.lines, Math.round((b.height - 3) / parseFloat(getComputedStyle(el).lineHeight)));
         for (const id of OTHERS) { const e = $(id), x = e && box(e); if (x && ov(b, x)) o.hits.add(id); }
         if (b.left < 0 || b.right > innerWidth || b.top < 0) o.out.push(cap);
       }
     } else if (was) o.gone++;
     if (/\bshow\b/.test(note.className)) { if (num.textContent) o.nums.add(num.textContent); o.pos[cap ? 'cap' : 'free'].add(note.offsetLeft + ',' + note.offsetTop); }
     was = cap;
+    if (st && !cap && o.shown.length >= (st.shown || 0) && o.nums.size >= (st.nums || 0) && (!st.long || o.shown.some(x => x.length >= st.long))) break;
   }
+  for (const [c, t] of keep) c.toks = t;
   return Object.assign(o, { hits: [...o.hits], nums: [...o.nums], pos: { cap: [...o.pos.cap], free: [...o.pos.free] }, d: g.codrv.log.map(x => x.d), s: Math.round(g.race.player.q.s - g.race.track.startS) });
-}, [OTHERS, sec]);
+}, [OTHERS, sec, opt.long || null, opt.stop || null]);
 
 const seg = (page, v) => page.evaluate((v) => { document.querySelector(`[data-set="codrv"] [data-v="${v}"]`).click(); return window.__game.S.codrv; }, v);
 const now = (page) => page.evaluate(async () => { const g = window.__game; for (let i = 0; i < 200 && g.phase !== 'racing'; i++) { g.sim(0.2, true); await new Promise(r => requestAnimationFrame(r)); } return { calls: g.codrv.calls, voice: g.codrv.voice }; });
@@ -62,6 +70,11 @@ try {
     T.check(`${tag} Vršič: the caption over nothing of the HUD, inside the screen; the corner sign where it was, with the bend's grade on it`,
       !r.hits.length && !r.out.length && keep && r.pos.free.length > 0 && r.nums.length > 0 && r.nums.every(x => /^[1-6]$/.test(x)),
       `over ${r.hits.join(' ') || 'nothing'}${r.out.length ? ', outside: ' + r.out.join(', ') : ''}; the sign at ${r.pos.free.join(' ')}, with a caption ${r.pos.cap.join(' ') || '-'}; numbers ${r.nums.join(' ')}`);
+    // the longest caption a call has (every note of it; Core.codrvCap, tests/sovoznik.test.js: CD_MAX2): the next two calls with its words
+    const rl = await drive(page, 30, { long: LONG, stop: { long: 40 } }), big = rl.shown.filter(x => x.length >= 40);
+    T.check(`${tag} Vršič: the longest caption (every note of the call; upright in more lines) over nothing of the HUD, inside the screen`,
+      big.length > 0 && !rl.wrong.length && !rl.hits.length && !rl.out.length,
+      `${big.map(x => '"' + x + '"').join(' ') || 'none of ' + rl.shown.length + ' shown'} in ${rl.lines} line(s), over ${rl.hits.join(' ') || 'nothing'}${rl.out.length ? ', outside: ' + rl.out.join(', ') : ''}${rl.wrong.length ? ', wrong: ' + rl.wrong.join(', ') : ''}`);
     if (lang === 'sl') {
       // a wider phone lying (915×412), the same run on: the caption again over nothing (under the clock's block; a wide one under the sign too)
       await page.setViewportSize({ width: 915, height: 412 });
@@ -78,6 +91,10 @@ try {
       const off = await drive(page, 12);
       T.check('Sovoznik off: no calls on a road, no caption, no number on the corner sign',
         v0 === 0 && off.calls === 0 && !off.shown.length && !off.nums.length && off.pos.free.length > 0, `S.codrv ${v0}, ${off.calls} calls, ${off.shown.length} captions, numbers "${off.nums.join(' ')}", the sign shown ${off.pos.free.length}×`);
+      const vm = await seg(page, '2'), mid = await drive(page, 30, { stop: { shown: 1, nums: 1 } });   // (switched on during the race: the settings in the pause)
+      T.check('Sovoznik switched on during the race (Napis): the calls from there on, their captions and the grades on the sign',
+        vm === 2 && mid.calls > 20 && !mid.voice && mid.shown.length >= 1 && !mid.wrong.length && mid.nums.length > 0,
+        `S.codrv ${vm}, ${mid.calls} calls, voice ${mid.voice}, ${mid.shown.length} shown (${mid.shown.map(x => '"' + x + '"').join(' ')}), numbers ${mid.nums.join(' ') || '-'}${mid.wrong.length ? ', wrong: ' + mid.wrong.join(', ') : ''}`);
       const v2 = await seg(page, '2'); await startTrack(page, 'ouninpohja'); const cap = await now(page);
       const v1 = await seg(page, '1'), r0 = await page.evaluate(() => { const g = window.__game, r = g.race; g.onAction('restart'); return r !== g.race; }), voice = await now(page);
       T.check('Sovoznik Napis: a rally stage\'s calls without the voice; Glas in napis: with it, as before',

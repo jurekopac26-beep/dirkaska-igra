@@ -30,7 +30,7 @@ const SECS = {
   'browser/world.test.mjs': 970, 'browser/gfx.test.mjs': 950, 'browser/menu.test.mjs': 759, 'browser/covers.test.mjs': 558,
   'browser/garage.test.mjs': 527, 'browser/online.test.mjs': 335, 'browser/marks.test.mjs': 319, 'browser/kolibri.test.mjs': 308,
   'browser/hudcol.test.mjs': 296, 'browser/online4.test.mjs': 286, 'browser/kerb.test.mjs': 269, 'browser/notes.test.mjs': 247,
-  'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 275, 'browser/carlow.test.mjs': 225, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
+  'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 310, 'browser/carlow.test.mjs': 225, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
   'browser/school.test.mjs': 190, 'browser/onchamp.test.mjs': 189, 'browser/radio.test.mjs': 185, 'browser/look.test.mjs': 182,
   'browser/share.test.mjs': 177, 'browser/ljudje.test.mjs': 176, 'browser/sledi.test.mjs': 164, 'browser/look2.test.mjs': 163,
   'browser/prvi.test.mjs': 160, 'browser/wheels.test.mjs': 150, 'browser/roadside.test.mjs': 146, 'browser/app.test.mjs': 142,
@@ -79,7 +79,8 @@ const RELATED = [
   [/^js\/(world[\w-]*|render|tex)\.js$/, ['browser/world.test.mjs', 'browser/gfx.test.mjs']],
   [/^js\/world-ljudje2?\.js$|^js\/tracks\/|^tools\/ljudje\/|^tests\/lib\/ulice\.js$/, ['ljudje-mesta.test.js', 'browser/ljudje.test.mjs']],   // (the people's scenes and their places: the side roads, the streets, the pit lanes)
   [/^js\/core\.js$/, ['ljudje-mesta.test.js']],   // (the places on Core's track: its side roads, its barriers)
-  [/^js\/core\.js$/, ['sovoznik.test.js']],   // (the co-driver's notes of every real open road: Track.paceNotes, docs/sovoznik.md)
+  [/^js\/core\.js$/, ['sovoznik.test.js', 'rally.test.js', 'katu.test.js']],   // (the co-driver's notes of every real open road, a rally stage's and a gravel descent's: Track.paceNotes, docs/sovoznik.md)
+  [/^js\/game\.js$|^css\/style\.css$|^index\.html$/, ['browser/sovoznik.test.mjs']],   // (the co-driver's caption on the roads, the bend's grade on the corner sign, the switch in the settings)
   [/^js\/input\.js$/, ['browser/ctrl.test.mjs', 'browser/pad.test.mjs']],
   [/^js\/(render|game)\.js$|^css\/style\.css$/, ['browser/startcam.test.mjs']],   // (the camera before the start: its flights, its six start lights)
   [/^js\/render\.js$/, ['browser/ostrenje.test.mjs']],   // (the sharpening in the post pass: casK)

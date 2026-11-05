@@ -100,11 +100,11 @@ Na vseh dirkališčih (krožne proge, ki niso testne; ne na odprtih cestah in re
 
 Na pravih odprtih cestah in relijskih preizkušnjah sovoznik napove ovinke pred njimi, kot pravi relijski sovoznik (načrt in odločitve: `docs/sovoznik.md`).
 
-- **Kje**: na vseh pravih odprtih cestah, tudi na relijskih preizkušnjah Ouninpohja, Harju in Katu-Jaryk (`Core.codrvRoad`: odprta cesta, ne testna; brez prog ZDA razen Pikes Peaka), v vseh načinih razen nove mape in avtošole. Na dirkališčih ga ni.
-- **Klici** (`Track.paceNotes`): ostrina ovinka 1–6 po najmanjšem polmeru (1 pod 16 m … 6 pod 120 m), lasnica, pravi kot, »dolgo«, »zapira«, »odpira«, grbine in skoki (iz `def.bumps` ali iz višin ceste), krožišča po izvozu, šikane, menjava podlage, razdalja do naslednjega klica in »do cilja«. Opombe, bližje od 30 m, se povežejo z »into«, do 70 m z »and«, največ tri v klicu; »caution« pred velikim skokom, pred skokom v ovinek 1–3, pred ovinkom, ki se zapre, in pred ostrim ovinkom za dolgo ravnino.
-- **Napis** (`#h-codrv`): klic v jeziku igre (»LEVO 4 · DOLGO«, »L3 GRBINA › D4«, angleško »LEFT 4 · LONG«), ležeče pod uro, pokonci pod znakom ovinka; pokaže se 55–170 m pred ovinkom (2,4 s pri trenutni hitrosti in 30 m) in ugasne, ko avto pride do ovinka (najmanj 1,5 s). Znak ovinka (`#h-note`) dobi številko ostrine.
+- **Kje**: na vseh pravih odprtih cestah, tudi na relijskih preizkušnjah Ouninpohja, Harju in Katu-Jaryk (`Core.codrvRoad`: odprta cesta, ne testna; brez prog ZDA razen Pikes Peaka), v vseh načinih razen nove mape, misij in avtošole. Na dirkališčih ga ni.
+- **Klici** (`Track.paceNotes`): ostrina ovinka 1–6 po najmanjšem polmeru (1 pod 16 m … 6 pod 120 m), lasnica, pravi kot, »dolgo«, »zapira«, »odpira«, grbine in skoki (iz `def.bumps` ali iz višin ceste), krožišča po izvozu, šikane, menjava podlage, razdalja do naslednjega klica in »do cilja«. Opombe, bližje od 30 m, se povežejo z »into«, do 70 m z »and«, največ tri v klicu; »caution« pred velikim skokom, pred skokom v ovinek 1–3, pred ovinkom tik za grbino ali skokom, pred ovinkom, ki se zapre, in pred ostrim ovinkom za dolgo ravnino. Lastne opombe proge (`def.notes`) samo s sovoznikovimi besedami.
+- **Napis** (`#h-codrv`): klic v jeziku igre (»LEVO 4 · DOLGO«, »L3 GRBINA › D4«, angleško »LEFT 4 · LONG«), ležeče pod uro, pokonci pod znakom ovinka; pokaže se 55–170 m pred ovinkom (2,4 s pri trenutni hitrosti in 30 m) in ugasne, ko avto pride do ovinka (najmanj 1,5 s). Napis obdrži vse opombe klica: daljši od 24 znakov izpusti razdaljo in dodatke, pokonci je lahko v dveh vrsticah. Znak ovinka (`#h-note`) dobi številko ostrine.
 - **Glas**: angleško v obeh jezikih igre, za zdaj samo na relijskih preizkušnjah v kronometru (kot doslej); na cestah pride po odgovoru na vprašanje `sovoznik-glas`.
-- **Nastavitve · Sovoznik**: Izklop, Napis, Glas in napis (privzeto; `S.codrv` 0, 2, 1).
+- **Nastavitve · Sovoznik**: Izklop, Napis, Glas in napis (privzeto; `S.codrv` 0, 2, 1). Sprememba med dirko (nastavitve v pavzi) velja od naslednjega klica.
 
 ## Kje na progi si (proge po resničnih krajih)
 

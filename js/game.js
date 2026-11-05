@@ -591,6 +591,7 @@
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
+    if (key === 'codrv' && race && race.player) codrvInit();   // (the co-driver switched during a race: off, the captions, the voice; from the next call on)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
@@ -3929,12 +3930,17 @@
     const B = $('h-times'), hc = $('hud').className, k = innerWidth + 'x' + innerHeight + '|' + hc + '|' + B.offsetWidth + 'x' + B.offsetHeight;   // (again only when the block or the screen changes)
     if (k === noteAt0) return; noteAt0 = k;
     el.style.right = el.style.top = '';
-    if (/\bschool\b/.test(hc)) return; let l = Infinity, t = Infinity, b = -Infinity;
-    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
-    if (!(l < Infinity)) return;
+    const T = /\bschool\b/.test(hc) ? null : timesBox(); if (!T) return;
     const O = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth }, x0 = O.left + el.offsetLeft, y0 = O.top + el.offsetTop, w = el.offsetWidth, h = el.offsetHeight;   // (its box without the show's scale)
-    if (innerWidth > innerHeight) { if (x0 + w > l - 4 && y0 < b && y0 + h > t) el.style.right = Math.ceil(O.right - l + 6) + 'px'; }
-    else if (y0 < b + 4 && y0 + h > t) el.style.top = Math.ceil(b + 6 - O.top) + 'px';
+    if (innerWidth > innerHeight) { if (x0 + w > T.l - 4 && y0 < T.b && y0 + h > T.t) el.style.right = Math.ceil(O.right - T.l + 6) + 'px'; }
+    else if (y0 < T.b + 4 && y0 + h > T.t) el.style.top = Math.ceil(T.b + 6 - O.top) + 'px';
+  }
+  // the block at the top in the middle on the screen (#h-times with what hangs under it: the line under the clock, the duel's gap, the
+  // police's panel): the left, the top and the bottom of its shown parts, null with none shown (placeNote, placeCap)
+  function timesBox() {
+    const B = $('h-times'); let l = Infinity, t = Infinity, b = -Infinity;
+    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
+    return l < Infinity ? { l, t, b } : null;
   }
   const hudCache = {};
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
@@ -4165,13 +4171,14 @@
     st.log.push({ k, n: track.names[k].n, lap, t: race.time, r: r || 'say', item }); if (st.log.length > 300) st.log.shift();
   }
   /* ---------------- the co-driver (S.codrv: 0 off, 2 the captions, 1 voice and captions; docs/sovoznik.md): the pace notes (Track.paceNotes)
-     ahead of the car. On every real open road (not a test track; not the new map with its missions, nor the driving school) the call's
+     ahead of the car. On every real open road (not a test track; not a mission, nor the new map, nor the driving school) the call's
      caption (#h-codrv, in the game's language: Core.codrvCap; lying under the clock's block, upright under the corner sign: placeCap) and the
      bends' grade on the corner sign; the voice (English, Comm.note) on a rally stage's time trial, as before (on the roads after the answer
      to the question sovoznik-glas). A call is due when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a
-     rescue, a spin) is skipped. Its caption stays until the car is at that first note, 1.5 s at least, or the next call's takes its place. */
+     rescue, a spin) is skipped. Its caption stays until the car is at that first note, 1.5 s at least, or the next call's takes its place.
+     The setting switched during a race (the pause's settings): codrvInit again, from the next call on (setOption). */
   let cdN = null, cdK = 0, cdLog = [], cdVoice = false, cdCap = null;
-  const codrvRoad = () => Core.codrvRoad(track.def) && !race.nv && !school;   // (the real open roads: Core's list)
+  const codrvRoad = () => Core.codrvRoad(track.def) && !race.nv && !school && !MS.cur;   // (the real open roads: Core's list; not in a mission)
   function codrvInit() {
     const rally = race.timeTrial && (isRally(track.def) || isDesc(track.def));   // (a rally stage, a gravel descent: the voice too)
     cdN = +S.codrv && (rally || codrvRoad()) ? track.paceNotes() : null; cdK = 0; cdLog = []; cdVoice = !!cdN && rally && +S.codrv === 1; capOff();
@@ -4206,7 +4213,7 @@
     const O = el.offsetParent.getBoundingClientRect(), nb = N.offsetTop + N.offsetHeight;
     let y = nb + 6;
     if (land) {
-      y = -Infinity; for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) y = Math.max(y, r.bottom - O.top + 4); }
+      const T = timesBox(); y = T ? T.b - O.top + 4 : -Infinity;
       const h = el.offsetWidth / 2, c = O.width / 2;   // (the caption centred on the HUD)
       if (y > -Infinity && y < nb + 4 && c - h < N.offsetLeft + N.offsetWidth + 4 && c + h > N.offsetLeft - 4) y = nb + 4;
     }
