@@ -1070,8 +1070,8 @@ const Render = (function () {
        black smoke)); --cat <category>
        (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
-       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
-       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
+       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look, deli, hi) (a look
+       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out; with the garage's parts, Visoki). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
        entry (parts.over / extra) to the range's centroid when the look puts the part elsewhere (a cab-over's doors, a hatch's tailgate).
        Render.carShot(o) a picture of the showroom car (a canvas): o { id, color, num, view (side front rear top: near-orthographic, with
        the grid, o.box [L, W, H] and the hubs; 34f 34r), w, h, span, at, cut (part ids off: the inside), grid, floor (false: no turntable),
@@ -2309,10 +2309,11 @@ const Render = (function () {
     return grp;
   }
   // (tests, trying a look out) a look built on vehicle id's model as the build would (not cached, not registered: its status, the colour-
-  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs)
-  function kitTry(id, look) {
+  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs); look null: the model's own; deli:
+  // the garage's parts fitted (car.deli: its geo.userData.deli, tests/deli-pregled.test.js), hi: Visoki
+  function kitTry(id, look, deli, hi) {
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
-    try { const r = kitBuild(M, look, false); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std }; }
+    try { const r = kitBuild(M, look || M.def.look, false, !!hi, deli && typeof DELI !== 'undefined' ? DELI.clean(deli, M) : undefined); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std, wheels: r.wheels }; }
     catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
   }
   // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)

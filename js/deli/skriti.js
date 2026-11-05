@@ -18,28 +18,31 @@
 
   // ================================================================ filter_zraka: in its box, a cone on a pipe, a carbon airbox
   function filter_zraka(K, n, m) {
-    const { x, y, z } = m, P = [WHT, RED, GRN, BLU][n - 1];
-    if (n <= 4) { box(K, x, y, z, 0.24, 0.07, 0.2, DK); box(K, x, y + 0.07, z, 0.2, 0.012, 0.16, P); return; }   // (a panel in the stock box)
+    const { x, y } = m, P = [WHT, RED, GRN, BLU][n - 1];
+    // a box w wide: its outer side where the stock drum's is (r 0.085: on the inner wing, not through it into the wheel well)
+    const zb = (w) => Math.sign(m.z) * (Math.abs(m.z) + 0.08 - w / 2), z = m.z;
+    if (n <= 4) { box(K, x, y, zb(0.2), 0.24, 0.07, 0.2, DK); box(K, x, y + 0.07, zb(0.2), 0.2, 0.012, 0.16, P); return; }   // (a panel in the stock box)
     const cone = (cx, cz, col, s) => { cyl(K, [cx + 0.04 * s, y + 0.1, cz], [cx - 0.1 * s, y + 0.1, cz], 0.075 * s, col, { r2: 0.055 * s, capB: CHR }); cyl(K, [cx + 0.04 * s, y + 0.1, cz], [cx + 0.14, y + 0.1, cz], 0.04, AL); };
+    const duct = (cz, col, r) => cyl(K, [x + 0.12, y + 0.1, cz], [x + 0.32, y + 0.12, z * 0.4], r || 0.035, col);   // (the intake: from the filter to the engine's top)
     switch (n) {
-      case 5: cone(x, z, ORA, 1); break;
-      case 6: cone(x, z, RED, 1); break;
-      case 7: cone(x, z - 0.06, RED, 0.8); cone(x, z + 0.08, RED, 0.8); break;
-      case 8: cone(x, z, BLU, 1); K.box(x - 0.03, y, z + 0.11, 0.24, 0.2, 0.01, 0, AL, AL, false, IN); break;
-      case 9: case 10: cone(n === 10 ? x + 0.3 : x, z, n === 10 ? BLU : RED, 1); cyl(K, [x + 0.12, y + 0.1, z], [x + 0.32, y + 0.12, z * 0.4], 0.035, n === 10 ? BLK : AL); break;
-      case 11: box(K, x, y, z, 0.26, 0.12, 0.2, AL); cyl(K, [x + 0.13, y + 0.06, z], [x + 0.3, y + 0.08, z * 0.4], 0.035, AL); break;
-      case 12: box(K, x, y, z, 0.32, 0.15, 0.24, BLK); cyl(K, [x + 0.16, y + 0.08, z], [x + 0.32, y + 0.08, z * 0.4], 0.04, BLK); break;
-      case 13: cone(x, z, RED, 1); cyl(K, [x + 0.12, y + 0.1, z], [x + 0.32, y + 0.12, z * 0.4], 0.04, CF); break;
-      case 14: case 15: case 16: box(K, x, y, z, 0.3 + (n - 14) * 0.02, 0.14, 0.22, CF, [0.13, 0.13, 0.14]); cyl(K, [x + 0.15, y + 0.07, z], [x + 0.32, y + 0.08, z * 0.4], 0.04, CF);
-        if (n >= 15) K.box(x + 0.08, y + 0.14, z, 0.1, 0.04, 0.12, 0, CF, BLK, false, IN);   // (its scoop)
-        if (n === 16) box(K, x - 0.05, y + 0.14, z, 0.08, 0.008, 0.18, RED); break;
+      case 5: cone(x, z, ORA, 1); duct(z, AL); break;
+      case 6: cone(x, z, RED, 1); duct(z, AL); break;
+      case 7: cone(x, z - 0.06, RED, 0.8); cone(x, z + 0.08, RED, 0.8); box(K, x + 0.14, y + 0.055, z + 0.01, 0.05, 0.09, 0.26, AL); duct(z + 0.01, AL); break;   // (both into one plenum)
+      case 8: cone(x, z, BLU, 1); K.box(x - 0.03, y, z + 0.11, 0.24, 0.2, 0.01, 0, AL, AL, false, IN); duct(z, AL); break;
+      case 9: case 10: cone(n === 10 ? x + 0.3 : x, z, n === 10 ? BLU : RED, 1); duct(z, n === 10 ? BLK : AL); break;
+      case 11: box(K, x, y, zb(0.2), 0.26, 0.12, 0.2, AL); cyl(K, [x + 0.13, y + 0.06, zb(0.2)], [x + 0.3, y + 0.08, z * 0.4], 0.035, AL); break;
+      case 12: box(K, x, y, zb(0.24), 0.32, 0.15, 0.24, BLK); cyl(K, [x + 0.16, y + 0.08, zb(0.24)], [x + 0.32, y + 0.08, z * 0.4], 0.04, BLK); break;
+      case 13: cone(x, z, RED, 1); duct(z, CF, 0.04); break;
+      case 14: case 15: case 16: { const zc = zb(0.22); box(K, x, y, zc, 0.3 + (n - 14) * 0.02, 0.14, 0.22, CF, [0.13, 0.13, 0.14]); cyl(K, [x + 0.15, y + 0.07, zc], [x + 0.32, y + 0.08, z * 0.4], 0.04, CF);
+        if (n >= 15) K.box(x + 0.08, y + 0.14, zc, 0.1, 0.04, 0.12, 0, CF, BLK, false, IN);   // (its scoop)
+        if (n === 16) box(K, x - 0.05, y + 0.14, zc, 0.08, 0.008, 0.18, RED); break; }
     }
   }
   // ================================================================ cip: the engine's control box on the bulkhead
   function cip(K, n, m) {
     const { x, y, z } = m, big = n >= 5, col = n <= 4 ? BLK : n <= 12 ? AL : n === 13 ? RED : n === 16 ? GOLD : DK;
     box(K, x, y, z, big ? 0.16 : 0.08, big ? 0.04 : 0.03, big ? 0.12 : 0.06, col, n === 16 ? GOLD : null);
-    if (n === 3) box(K, x, y, z + 0.08, 0.08, 0.03, 0.06, BLK);
+    if (n === 3) box(K, x, y, z + 0.06, 0.08, 0.03, 0.06, BLK);   // (a piggyback box against it)
     if (n === 2 || n === 4) box(K, x - 0.02, y + 0.03, z, 0.012, 0.006, 0.012, n === 2 ? BLU : RED);   // (its light, its knob)
     if (n >= 10 && n <= 12) box(K, x, y + 0.04, z, 0.05, 0.006, 0.03, n === 11 ? GRN : BLU);
     cyl(K, [x + (big ? 0.08 : 0.04), y + 0.015, z], [x + 0.2, y + 0.04, z - 0.1], 0.01, BLK, { n: 4 });   // (its lead to the engine)
@@ -56,7 +59,8 @@
   }
   // ================================================================ akumulator: the battery, smaller and lighter
   function akumulator(K, n, m) {
-    const { x, y, z } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const { x, y } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const z = m.z + Math.sign(m.z) * 0.07 * (1 - k);   // (its outer side where the stock one's is: against the inner wing)
     box(K, x, y, z, 0.2 * k, 0.17 * k, 0.14 * k, col, n === 15 ? [0.13, 0.13, 0.14] : BLK);
     for (const dz of [-0.04, 0.04]) cyl(K, [x, y + 0.17 * k, z + dz * k], [x, y + 0.17 * k + 0.02, z + dz * k], 0.012, dz < 0 ? RED : BLK, { n: 4 });   // (its terminals)
   }
@@ -74,7 +78,7 @@
       cyl(K, [x, y0, z], [x, y0 + (top - y0) * 0.6, z], 0.032, col, { capA: null });
       cyl(K, [x, y0 + (top - y0) * 0.6, z], [x, top + 0.02, z], 0.012, CHR, { n: 4, capA: null, capB: null });
       if (n >= 6) box(K, x, top - 0.02, z, 0.06, 0.03, 0.06, n >= 13 ? GOLD : AL);   // (its top mount, adjustable)
-      if (n === 10 || n >= 15) cyl(K, [x + 0.05, y0 + 0.08, z - sd * 0.05], [x + 0.05, y0 + 0.2, z - sd * 0.05], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir)
+      if (n === 10 || n >= 15) cyl(K, [x + 0.038, y0 + 0.08, z - sd * 0.038], [x + 0.038, y0 + 0.2, z - sd * 0.038], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir, against the body)
   }
   function stabilizatorji(K, n, m) {
     const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06, y = K.rw - 0.02;

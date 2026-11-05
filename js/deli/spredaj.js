@@ -264,7 +264,7 @@
     switch (n) {
       case 1: case 2: case 3: case 4: {   // dve luči na odbijaču: halogen, brighter (chrome), LED (cool, black rim), yellow LED
         const lens = n === 4 ? YEL : n === 3 ? LED : WARM, rim = n === 1 ? DK : n === 2 ? CH : BP, r = n >= 3 ? 0.07 : 0.078;
-        for (const sd of [-1, 1]) front(bx + 0.07, by, sd * bz, r, lens, rim, null, by - 0.075); break; }
+        for (const sd of [-1, 1]) front(bx + 0.056, by, sd * bz, r, lens, rim, null, by - 0.075); break; }   // (the housing's back on the bumper's face)
       case 5: case 6: case 7: case 8: {   // štiri pred masko na cevi (LED, yellow, covers)
         const lens = n === 7 ? YEL : n === 6 ? LED : WARM, rim = n === 5 ? CH : BP, y = ny, x = nx + 0.11, r = 0.08;
         K.cyl([x - 0.06, y - r - 0.03, -0.52], [x - 0.06, y - r - 0.03, 0.52], 0.014, CH, Object.assign({ n: 6 }, o));   // (the bar across the nose)

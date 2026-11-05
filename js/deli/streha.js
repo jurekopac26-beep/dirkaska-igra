@@ -181,9 +181,9 @@
       face(K, [q(a, -W), q(a, W), q(b, W), q(b, -W)], c, [-uy * 0.4 + ox, 1, 0]);                                    // (its top)
       face(K, [q(b, -W), q(b, W), [b[0] - ux * th, b[1] - uy * th, W], [b[0] - ux * th, b[1] - uy * th, -W]], c, [ox, oy, 0]);   // (its edge)
       if (K.hi) face(K, [[a[0] - ux * th, a[1] - uy * th, -W], [a[0] - ux * th, a[1] - uy * th, W], [b[0] - ux * th, b[1] - uy * th, W], [b[0] - ux * th, b[1] - uy * th, -W]], c, [0, -1, 0]); }
-    // the frame: a rail up each side, a bar across the top and the foot
-    for (const sd of [-1, 1]) K.bar(at(s0 - 0.03, 0.02, sd * (W + 0.008)), at(s1 + 0.02, 0.02, sd * (W + 0.008)), 0.011, frame, { n: 4 });
-    for (const s of [s0 - 0.03, s1 + 0.02]) K.bar(at(s, 0.02, -W - 0.008), at(s, 0.02, W + 0.008), 0.009, frame, { n: 4 });
+    // the frame: a rail up each side, a bar across the top and the foot, on the glass (the slats on the rails)
+    for (const sd of [-1, 1]) K.bar(at(s0 - 0.03, 0.011, sd * (W + 0.008)), at(s1 + 0.02, 0.011, sd * (W + 0.008)), 0.011, frame, { n: 4 });
+    for (const s of [s0 - 0.03, s1 + 0.02]) K.bar(at(s, 0.009, -W - 0.008), at(s, 0.009, W + 0.008), 0.009, frame, { n: 4 });
     if (cat >= 2 && k >= 2) K.bar(at(s0 - 0.03, 0.035, 0), at(s1 + 0.02, 0.035, 0), 0.008, frame, { n: 4 });   // (the dearer carbon ones: a spine up the middle)
     if (n === 12 || n === 16) {   // (with the spoiler: a blade along the top, kicked up and back out under the roof's)
       const a = at(s1 + 0.01, 0.025, 0), b = at(s1 + 0.09, n === 16 ? 0.13 : 0.11, 0), c = n === 16 ? CF2 : RF, Z = W + 0.012, e = [b[0] - ux * 0.012, b[1] - uy * 0.012];
