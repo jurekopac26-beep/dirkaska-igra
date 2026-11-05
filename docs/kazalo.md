@@ -14,7 +14,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 - **Nova mapa in misije:** `js/newmap.js`, `js/nv*.js`; `js/missions.js`, `js/missions/` (`docs/misije.md`).
 - **Orodje za napake:** `js/napake.js`, `css/napake.css` (»Orodje za napake«, imena v poročilih: »Imena v poročilih o napakah«); posnetek `.rrp`: `tools/posnetek.mjs`.
 - **Testi:** `tests/run.js` (`npm run test:related`), »Testi po temah«, opisi v `tests/README.md`, reference `tests/golden/`.
-- **Orodja:** `tools/stamp.js` (žigi), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`.
+- **Orodja:** `tools/stamp.js` (žigi), `tools/spoji-main.mjs` (spoj z mehanskimi spori), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`.
 - **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/vrsta.md` (skupna vrsta za `main` vseh treh računov), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
 
 ## Datoteke
@@ -61,6 +61,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `css/style.css` | slog igre (posnetek: `#replay-ui`, `.rp-…`; gumbi v eni vrsti: pod 960 px ★ in Označi brez besede, pod 820 px tesneje) |
 | `sw.js`, `manifest.webmanifest` | igra kot aplikacija (predpomnilnik) |
 | `tools/stamp.js` | žigi `?v=` na povezavah v `index.html` in `garaza.html`: v repozitoriju jih ni (`--check`: vsaka povezava na obstoječo datoteko, brez žiga; `--strip` jih odstrani, `--merge` razreši spor v straneh ob spajanju), doda jih objava (`tools/predogled.mjs`: `GAME_ROOT=<drevo>`, nato `--check-stamped` v `stran.yml`); `--find <žig>` commit vsebine `js/game.js` (različica iz poročila o napaki ali posnetka) |
+| `tools/spoji-main.mjs` | spoj svežega `main` ali druge veje: sam reši mehanske spore v besedilih in seznamih (kazalo, `tests/run.js`, `README.md`, `js/lang.js`: vrstice ob spremenjeni vrstici ali na istem mestu na obeh straneh, seznami testov z vsakim novim testom na njegovem mestu; strani `index.html` in `garaza.html` prepusti `stamp.js --merge`), žige starejših vej odstrani (`stamp.js --strip`) in preveri povezave (`--check`), ostale spore izpiše z namigom; test `spoji-main.test.js` |
 | `tools/menu-lens.js` | dolžine prog za seznam v meniju (`MENU.lens` v `js/menu-data.js`) in višine za graf višine prog brez poti v `js/routes.js` (`MENU.profs`, višina starta nad morjem iz tabele `BASE`); po novi progi; test `tests/menu-lens.test.js` |
 | `tools/menu-corner.mjs`, `tools/menu-corner-page.js`, `tools/menu-corners.json` | video zavoja za kamero 3 v meniju: igra v brskalniku brez zaslona (navidezni čas), dirka 21 avtov AI, mirujoča kamera na zavoju (`MC.search`: žarki, zapolnitev kadra), zanka 6–8 s z gladkim šivom (`MC.timeline`), VP9 `assets/maps/corner-<id>.webm` in plakat `.webp`, `MENU.corners`; `--preview` samo slike treh najboljših kamer; zavoji in kamere v `menu-corners.json` (`s`, `cam`, `pick`); test `tests/menu-corner.test.js` |
 | `tools/menu-globe.mjs` | globus v glavi menija: kar manjka v `js/geo.js` (`MENU.globe`: kraji pravih prog `PLACES`, kratkih prog iz oznake uvoza v datoteki proge, obrisi držav iz Natural Earth, tudi del države ob progi, npr. Havaji); `--earth` naredi majhno Zemljo `assets/geo/earth-s.webp`; po progi v novi državi; test `tests/menu-globe.test.js` |
@@ -227,6 +228,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Ponovljive dirke** (seme, testni način): `tests/repro.test.js` (jedro), `tests/browser/repro.test.mjs` (igra s hitrim vstopom)
 - **Posnetki pred/po:** `tools/shot.mjs` (možnosti: `tests/shot.test.js`), na GitHubu `posnetki.yml`; predogled vej `stran.yml`, `tools/predogled.mjs`
 - **Poganjanje testov** (`--shard`, `--related`, `--quiet`): `shards.test.js`
+- **Spoj z mehanskimi spori:** `tools/spoji-main.mjs`, test `spoji-main.test.js` (začasni repozitorij brez mreže)
 - **Testne proge zamrznjene** (do izbrisa pred Google Play): `tests/testne-proge.test.js`, odtisi datotek `tests/golden/testne-proge.json`; testi čez vse proge jih preskočijo (`trackIds` v `tests/lib/sim.js`, `tests/browser/lib.mjs`)
 - **Občasni padci brskalniških testov** (vzroki in popravki: `share`, `radio`, `carlow`, `weather`, `pits`): `docs/orodje-za-napake.md`, sklop 3b
 - **Posnetek:** `tests/browser/replay.test.mjs` (tudi časovnica, sličice, ±5 s, Posnetek do sem in vračanje stanja avtov na Bathurstu, 12 gumbov v vrstah), video trenutka `hlvid.test.mjs`

@@ -40,6 +40,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 
 ## Postopek
 - Žigov (`?v=…`) v repozitoriju ni (odločitev uporabnika 3. 11. 2026): povezave v `index.html` in `garaza.html` so brez njih, doda jih objava strani (`.github/workflows/stran.yml`: `tools/predogled.mjs` vsako drevo označi s `tools/stamp.js`). Po spremembi zaženi `node tools/stamp.js --check` (vsaka povezava kaže na obstoječo datoteko in nima žiga); brez `--check` orodja ne poganjaj (izjeme: `--merge` in `--strip` spodaj, `--find` pri poročilih o napakah). Spor v `index.html` ali `garaza.html` ob spajanju razreši `node tools/stamp.js --merge`: strani spoji brez žigov, kjer sta obe strani na istem mestu dodali skripte (npr. dve novi progi), obdrži obe, in ju doda v spoj; kar ostane označeno, je pravi spor (obe strani sta spremenili isto vrstico). Žige, ki jih starejša veja prinese brez spora, odstrani `node tools/stamp.js --strip`. Za nove reference `npm run golden:update`.
+- Spoj svežega `main` ali druge veje: `node tools/spoji-main.mjs [veja]` sam reši mehanske spore (kazalo, seznami testov, vrstice, ki sta jih obe strani dodali; `index.html` in `garaza.html` prepusti `stamp.js --merge`; žige starejših vej odstrani s `stamp.js --strip`) in ostale izpiše z namigom.
 - Dodaj angleške prevode v `js/lang.js` in test za progo po vzoru obstoječih.
 - Testi: pred pushem morajo biti lokalno zeleni testi, ki se nanašajo na spremembo (Node in brskalniški; `npm run test:related` jih izbere iz `git diff` proti `main`, hiter vstop v igro `index.html?proga=<id>` je opisan v `tests/README.md`); celotni nabori (Node, brskalniški, vozila) tečejo na GitHubu v pull requestu. Celoten Node nabor lokalno traja okoli 1 h (`races.test.js` presega privzetih 15 min: `TEST_TIMEOUT_MIN=40`).
 - Na `main` gre sprememba, ko so ti testi zeleni: seja jo **združi sama, brez vprašanja** (uporabnik 2. 11. 2026: »Združuj vedno sam in ne sprašuj, dokler ne spremeniva tega pravila«; velja za vse seje).
@@ -64,11 +65,11 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Odločitve zapiši enkrat v docs (načrt teme), drugje se samo skliči nanje.
 - Podatke nove prave proge pripravi z `tools/proga-podatki.py` (nastavitve v `tools/<id>/config.json`, navodila na vrhu orodja).
 - Slike samo, ko so potrebne: za vprašanja in ob koncu dela, obrezane na bistveno, do ~300 KB; pri preverjanju grafike 1–2 ključna pogleda namesto serij.
-- Kratki izpisi: pri testih beri samo vrstice OK/FAIL (`grep`, `tail`); velike izpise shrani v datoteko in v njej išči; opis pull requesta do ~20 vrstic.
+- Kratki izpisi: pri testih beri samo vrstice OK/FAIL (`grep`, `tail`); pri orodjih za sezname in branje omeji izpis (`fields`, `minimal_output`, `limit`, `kinds`); velike izpise shrani v datoteko (`out_dir`, preusmeritev) in v njej išči; opis pull requesta do ~20 vrstic.
 
 ## Kje je kaj (manj iskanja)
 - V `docs/kazalo.md` preberi samo razdelek »Na kratko« (prvih 25 vrstic), nato ime poišči z grepom in preberi samo tisti del. Velikih datotek (`js/world.js`, `js/world-pikes.js`, `docs/igra.md`, `tests/README.md`, `README.md`, `docs/kazalo.md`) ne beri v celoti.
-- Dokumenti imajo dolge vrstice (do ~4.600 znakov): išči z omejeno okolico, `grep -noE '.{0,150}ime.{0,150}' datoteka`.
+- Dokumenti imajo dolge vrstice (do ~4.600 znakov): išči z omejeno okolico, `grep -noE '.{0,150}ime.{0,150}' datoteka`. Generirani podatki z ogromnimi vrsticami (`js/routes.js` ena vrstica s 0,4 MB, `assets/maps/`, `maketa-menija/assets/` …) so v `.ignore` (Grep in Glob jih ne vidita, beri jih po poti) in imajo `-diff` (git diff jih ne izpisuje).
 - Ko dodaš ali premakneš kaj, kar je v kazalu, ga posodobi.
 - Vprašanja o progah v igri (dolžina, zavitost, kaj je do 60 m ob cesti): najprej `docs/proge-pregled.md` (odločitev uporabnika 3. 11. 2026), šele nato opis proge. Po novi progi zaženi `node tools/proge-pregled.js` in v datoteko dopiši njeno vrstico »Do 60 m ob cesti«.
 
