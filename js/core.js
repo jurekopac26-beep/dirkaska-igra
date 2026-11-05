@@ -75,6 +75,10 @@ const Core = (function () {
   // r0 m, all of it from r1 m. n: the car-laps that lay most of it (1 - 1/e of the thickest), wash: the s at full water for the rubber laid
   // to fall to 1/e; g: the grip a car loses on the thickest of it
   const MARB = { gap: 1.3, wd: 3.2, edge: 0.3, r0: 350, r1: 70, n: 20, wash: 25, g: 0.06 };
+  // the rubbered-in racing line (84, Race mb.rb, with the marbles: the same rubber laid, a slower build): the line darkens with it over the
+  // race (RUB.n car-laps for most of it; the rain washes it as the marbles). A car on it grips a little more (RUB.g on the darkest, its
+  // middle within RUB.in m of the line, none from RUB.out m: beside it the marbles' band takes over, MARB.gap, so nothing is counted twice)
+  const RUB = { n: 60, g: 0.02, in: 0.6, out: 1.2 };
 
   class Track {
     constructor(def) {
@@ -1012,6 +1016,8 @@ const Core = (function () {
     // how much of the band is under a car at sample i, d m from the centre line (0..1 of its thickest there): from a wheel on its edge (the
     // car's middle 0.8 m outside it) to all of it with the car's middle 0.4 m inside
     marbleAt(i, d) { const M = this._mb || this.marbles(), k = i >= 0 && i < this.N ? M.k[i] : 0; return k ? k * clamp((M.h[i] + 0.8 - Math.abs(d - M.c[i])) / 1.2, 0, 1) : 0; }
+    // how much of the rubbered-in line (RUB) is under a car at sample i, d m from the centre line: 1 within RUB.in m of the racing line, 0 from RUB.out m
+    rubberAt(i, d) { return i >= 0 && i < this.N && this.rl ? clamp((RUB.out - Math.abs(d - this.rl[i])) / (RUB.out - RUB.in), 0, 1) : 0; }
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
     // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend);
@@ -5637,7 +5643,7 @@ const Core = (function () {
       if (this.slip) for (const c of this.cars) c.tow = 0;
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
-      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0 } : null;
+      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;   // (rb: the rubbered-in line, RUB)
       // failures (opts.faults, not in a time trial): every car's brakes and engine with a temperature, a tyre that a hard knock may cut (Car.flt,
       // see Car._heat and puncture; in an object: the golden references digest only the plain fields). The friends' cars: on their own phones
       if (opts.faults && !this.timeTrial) for (const c of this.cars) if (!c.net) c.flt = { pw: -1, pk: 0, brT: 20, enT: 85, brH: false, enH: false, ev: '' };
@@ -5673,13 +5679,14 @@ const Core = (function () {
     get lineWater() { return this.wst ? this.wst.line : this.rain; }    // ... on the racing line (it dries first)
     // the marbles (mb, from _weather after every car's grip): the cars on the track lay the rubber (the metres they drive, twice as much
     // in a full slide, none on a wet road), the band grows with it (MARB.n car-laps for most of it) and the water washes it away (MARB.wash
-    // s at full water for the rubber laid to fall to 1/e). A car on it grips a little less (MARB.g of its grip on the thickest, Track.marbleAt)
+    // s at full water for the rubber laid to fall to 1/e). A car on it grips a little less (MARB.g of its grip on the thickest, Track.marbleAt);
+    // on the rubbered-in line itself (mb.rb, slower) a little more (RUB.g, Track.rubberAt)
     _marbles(dt) {
       const M = this.mb, W = this.wst, T = this.track;
       if (this.state === 'racing') for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.speed > 1) M.d += c.speed * dt * (1 + Math.min(1, Math.abs(c.beta || 0) / 0.35)) * (1 - W.water);
       if (W.water > 0) M.d *= Math.exp(-dt * W.water / MARB.wash);
-      M.lv = 1 - Math.exp(-M.d / (MARB.n * T.len));
-      if (M.lv > 0.001) for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.q && c.q.i >= 0 && !(c.q.k >= 0)) { const m = T.marbleAt(c.q.i, c.q.d); if (m > 0) c.wet *= 1 - MARB.g * M.lv * m; }   // (not on the pit road: the autopilot's, swept clean)
+      M.lv = 1 - Math.exp(-M.d / (MARB.n * T.len)); M.rb = 1 - Math.exp(-M.d / (RUB.n * T.len));
+      if (M.lv > 0.001) for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.q && c.q.i >= 0 && !(c.q.k >= 0)) { const m = T.marbleAt(c.q.i, c.q.d), u = T.rubberAt(c.q.i, c.q.d); if (m > 0) c.wet *= 1 - MARB.g * M.lv * m; if (u > 0) c.wet *= 1 + RUB.g * M.rb * u; }   // (not on the pit road: the autopilot's, swept clean)
     }
     // the rain on its schedule, the water on the road, every car's grip (with tyres); the AI's speed profile follows the grip on the line
     _weather(dt) {
@@ -7292,7 +7299,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
 })();
