@@ -4,7 +4,8 @@
 const crypto = require('crypto');
 
 const DT = 1 / 120;
-const trackIds = (C) => C.TRACKS.map(d => d.id);   // every track the game has (a new track file is tested automatically)
+const trackIds = (C) => C.TRACKS.filter(d => !d.test).map(d => d.id);   // every real track the game has (a new track file is tested
+// automatically); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
 const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
