@@ -453,11 +453,13 @@ svg { display: block; }
 .yard .car .mono { width: 72px; height: 72px; margin: 0 0 6px 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .35); font: 900 italic 34px/1 var(--f-ui); }
 .yard .car:active { transform: translateY(2px); }
 /* the car's name in a small box over it (stran Odločitve m6): over the car's top at its left (js/menu-car.js sets --car-top/--car-left
-   as it fits the car; its picture: the top of the yard), never above the yard; with a 3D car still on its way: shown with it */
-.yard .cname { position: absolute; z-index: 4; top: max(3px, calc(var(--car-top, 12%) - 25px)); left: calc(var(--car-left, 2%) + 10px); max-width: 56%; padding: 4px 8px 4px 7px; border-radius: 6px;
+   as it fits the car; its picture: the top of the yard), never above the yard; with a 3D car still on its way: shown with it; a button
+   (the tap: the garage, as on the car) */
+.yard .cname { position: absolute; z-index: 4; display: block; margin: 0; text-align: left; top: max(3px, calc(var(--car-top, 12%) - 25px)); left: calc(var(--car-left, 2%) + 10px); max-width: 56%; padding: 4px 8px 4px 7px; border-radius: 6px;
   background: rgba(8, 15, 27, .86); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); color: #f4f7fb; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .04em;
   text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .3s ease; }
 .yard.c3d-wait:not(.c3d-on) .cname { opacity: 0; }
+.yard .cname:active { transform: translateY(1px); }
 /* the two neighbouring tracks: the flag at its hoist, its last column stretched to the far edge (js/menu.js flagFill), a double arrow */
 .nbrs { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 14px 0; }
 .nb { position: relative; height: 54px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; background: #3b4352 center / 100% 100% no-repeat; border: 2px solid rgba(255, 255, 255, .85);
@@ -518,17 +520,6 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .dio.topmap { display: block; background: #1a2634; }
 .topmap .mapbg { position: absolute; inset: 0; background-position: center; background-size: cover; filter: blur(16px) brightness(.5) saturate(.85); transform: scale(1.18); }
 .topmap .mapsvg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.topmap .plane { position: absolute; inset: 0; }
-/* the map tilted back (js/menu.js TILT, tiltFit; stran Odločitve m11: 70°): the plane in perspective (--pd) towards the stage's top
-   middle, its far edge (--far) in a haze, the sky over it; the names and the switch over all of it */
-.dio.topmap.tilt { perspective: var(--pd, 520px); perspective-origin: 50% 0; background: linear-gradient(180deg, #4d6784 0, #8da5bb calc(var(--far, 38px) - 6px), #b9c9d6 var(--far, 38px), #1a2634 calc(var(--far, 38px) + 40px)); }
-.topmap.tilt .plane { inset: auto; transform-origin: 50% 100%; overflow: hidden; }
-.topmap.tilt .mapbg { filter: blur(16px) brightness(.85) saturate(.85); }   /* (only in the far corners of a long road, in the haze) */
-.topmap.tilt::before { content: ''; position: absolute; left: 0; right: 0; top: calc(var(--far, 38px) - 30px); height: 74px; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(196, 211, 224, 0) 0, rgba(204, 217, 229, .66) 40%, rgba(196, 211, 224, .34) 64%, rgba(196, 211, 224, 0) 100%); }
-.topmap.tilt::after { z-index: 1; background: linear-gradient(180deg, transparent 0, transparent 66%, rgba(7, 12, 20, .5) 100%); }
-.stage.rainy .dio.topmap.tilt { background: linear-gradient(180deg, #2f3c4b 0, #5d6c7c calc(var(--far, 38px) - 6px), #7d8b98 var(--far, 38px), #1a2634 calc(var(--far, 38px) + 40px)); }
-.stage.rainy .topmap.tilt::before { background: linear-gradient(180deg, rgba(120, 134, 148, 0) 0, rgba(130, 143, 156, .7) 40%, rgba(120, 134, 148, .36) 64%, rgba(120, 134, 148, 0) 100%); }
 .topmap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(7, 12, 20, .45) 0, transparent 22%, transparent 62%, rgba(7, 12, 20, .55) 100%); }
 /* (the switch and the notes read on any land) */
 .topmap image.wet { opacity: 0; transition: opacity .7s ease; }

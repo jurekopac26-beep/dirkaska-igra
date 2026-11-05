@@ -288,13 +288,9 @@
     const T = R.top, pts = T.route, rally = t.group === 'rally', turn = turnOf(t, R), L = mapLayers(t, T);
     // a soft, blurred copy of the map fills the stage behind the fitted map (beyond even the wide map), so nothing is ever left empty;
     // everything on the map is in g.rot, which fitMaps turns (an open road) about the middle of the map
-    return '<div class="dio topmap' + (TILT ? ' tilt' : '') + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="plane"><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
-      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg></div><div class="mlab" aria-hidden="true"></div></div>';
+    return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
+      L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg><div class="mlab" aria-hidden="true"></div></div>';
   }
-  // the map tilted back, as seen from an aeroplane: the near land bigger, the far smaller, the sky over it (stran Odločitve m11, 6 · 70°;
-  // 0: from above). The map and its blurred backdrop lie on a plane (.plane) turned back about its near edge on the stage's foot, seen in
-  // perspective towards the stage's top middle (css/menu.css .topmap.tilt; fitMaps: tiltFit)
-  const TILT = 70;
   // the cameras' icons: 1 a frame with a road in it, 2 an arrow along a curve, 3 a video camera
   const CAM_ICON = [null,
     '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20.5c0-4 8-5 8-9s-3-4-3-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
@@ -327,7 +323,6 @@
       const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight;
       if (!W || !H) continue;
       const turn = +box.dataset.turn || 0, a = turn && W / H < 1.3 ? turn : 0, rg = $('g.rot', svg), bg = $('.mapbg', box);
-      if (box.classList.contains('tilt')) { tiltFit(box, T, a, W, H); continue; }
       if (rg) { if (a) rg.setAttribute('transform', 'rotate(' + a + ' ' + T.W / 2 + ' ' + T.H / 2 + ')'); else rg.removeAttribute('transform'); }
       if (bg) bg.style.transform = a ? 'rotate(' + a + 'deg) scale(' + (Math.max(W / H, H / W) * 1.06).toFixed(3) + ')' : '';   // (the blurred backdrop turns with the map)
       // the route is centred, with room at the top for the cameras and the finish's name; the blurred backdrop fills whatever falls outside
@@ -344,53 +339,6 @@
       for (const g of svg.querySelectorAll('.dz')) g.setAttribute('transform', 'scale(' + k.toFixed(3) + ')');
       mapLabels(box, svg);
     }
-  }
-  // the tilted map (TILT): the plane reaches back to just over the route's room at the top (its far edge in the haze, the sky over it) and
-  // is wide enough there to fill the frame; the perspective as in the pictures the player chose from (520 px for a stage 430 px tall).
-  // The route as big as it fits: its middle across the frame, its nearest point on the foot's padding, every point inside the frame's
-  // paddings (a search on the zoom: the perspective is not a scale). The flags and the split times stand up as on the map from above (each
-  // scaled back for the plane's slant and distance at its place), the point running along the route as at the route's middle; the names
-  // over the flags as on the map from above (mapLabels: where the flags are seen)
-  function tiltFit(box, T, a, W, H) {
-    const svg = $('svg', box), pl = $('.plane', box), rg = $('g.rot', svg), bg = $('.mapbg', box);
-    const A = TILT * Math.PI / 180, ca = Math.cos(A), sa = Math.sin(A), d = Math.round(H * 520 / 430);
-    const padX = 10, padTop = 62, padBot = 10;
-    // (a point y px back from the plane's near edge, x across from its middle: where it is seen, and how much a step across (f) and back
-    // (g) is there on the screen)
-    const seen = (x, y) => { const f = d / (d - y * sa); return [W / 2 + x * f, (H + y * ca) * f, f, ca * f + (H + y * ca) * f * f * sa / d]; };
-    const backTo = (Y) => d * (Y - H) / (ca * d + Y * sa);   // (how far back on the plane a point is seen at Y on the screen)
-    const rot = (p) => { const r = a * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r), mx = T.W / 2, my = T.H / 2; return [mx + (p[0] - mx) * c - (p[1] - my) * sn, my + (p[0] - mx) * sn + (p[1] - my) * c]; };
-    const key = 'rp' + a; if (!T[key]) T[key] = T.route.map(rot);
-    const P = T[key], [x0, , x1, y1] = routeBox(T, a), cx = (x0 + x1) / 2, yN = backTo(H - padBot);
-    // (the zoom s: px on the plane for a unit of the map; the route's middle across the plane's, its nearest point seen on the foot's padding)
-    const fits = (s) => { for (const p of P) { const q = seen((p[0] - cx) * s, (p[1] - y1) * s + yN); if (q[0] < padX || q[0] > W - padX || q[1] < padTop) return false; } return true; };
-    let hi = 4 * Math.min(W / Math.max(1, x1 - x0), H / Math.max(1, y1 - routeBox(T, a)[1])), lo = hi / 1e3;
-    for (let i = 0; i < 26; i++) { const m = (lo + hi) / 2; if (fits(m)) lo = m; else hi = m; }
-    const s = lo;
-    // the plane's far edge: where the painted land ends (the wide map round it, else the map), or just over the route's room if that is
-    // nearer; as wide there as the frame. Where the land is narrower than the plane (a long road up the frame), the far edge comes as near
-    // as the land is still as wide as the frame there (yC), but not over the route's far end and its flag (yR); what is left uncovered in
-    // the far corners lies under the haze. The haze along the far edge, the sky over it
-    const E = (D.wideMaps || {})[box.dataset.map] || 0, land = [[-E, -E], [T.W + E, -E], [-E, T.H + E], [T.W + E, T.H + E]].map(rot), lx = land.map(p => p[0]);
-    const half = Math.min(cx - Math.min(...lx), Math.max(...lx) - cx) * s, yC = d * (1 - 2 * half / W) / sa;
-    const yR = backTo(seen(0, Math.min(...P.map(p => (p[1] - y1) * s + yN)))[1] - 18);
-    const yF = Math.max(backTo(padTop - 24), (Math.min(...land.map(p => p[1])) - y1) * s + yN, Math.min(yC, yR)), ph = Math.ceil(-yF), pw = Math.ceil(W * (d - yF * sa) / d);
-    const vx = cx - pw / 2 / s, vy = y1 - (ph + yN) / s, at = (p) => seen((p[0] - vx) * s - pw / 2, (p[1] - vy) * s - ph);
-    box.style.setProperty('--pd', d + 'px'); box.style.setProperty('--far', Math.round(seen(0, -ph)[1]) + 'px');
-    Object.assign(pl.style, { left: ((W - pw) / 2).toFixed(1) + 'px', top: (H - ph) + 'px', width: pw + 'px', height: ph + 'px', transform: 'rotateX(' + TILT + 'deg)' });
-    svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + (pw / s).toFixed(1) + ' ' + (ph / s).toFixed(1));
-    if (rg) { if (a) rg.setAttribute('transform', 'rotate(' + a + ' ' + T.W / 2 + ' ' + T.H / 2 + ')'); else rg.removeAttribute('transform'); }
-    if (bg) bg.style.transform = a ? 'rotate(' + a + 'deg) scale(' + (Math.max(pw / ph, ph / pw) * 1.06).toFixed(3) + ')' : '';
-    // the lines as wide as on the map from above at the route's middle; the flags and the splits upright, as big as there
-    const qm = at(P[P.length >> 1]), k = 0.5 / (s * qm[2]), up = a ? ' rotate(' + (-a) + ')' : '';
-    svg.style.setProperty('--k', k.toFixed(3));
-    for (const g of svg.querySelectorAll('.mk, .sp')) {
-      if (!g.dataset.at) g.dataset.at = g.getAttribute('transform');
-      const m = /translate\(([-\d.e]+)[ ,]+([-\d.e]+)\)/.exec(g.dataset.at), q = at(rot(m ? [+m[1], +m[2]] : [T.W / 2, T.H / 2]));
-      g.setAttribute('transform', g.dataset.at + up + ' scale(' + (0.5 / (s * q[2])).toFixed(3) + ' ' + (0.5 / (s * q[3])).toFixed(3) + ')');
-    }
-    for (const g of svg.querySelectorAll('.dz')) g.setAttribute('transform', 'scale(' + k.toFixed(3) + ' ' + (0.5 / (s * qm[3])).toFixed(3) + ')');
-    mapLabels(box, svg);
   }
   // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
   // right (the player's choice, 2. 11.); over the flag, a start's from its pole to the right and a finish's to the left, the other way
@@ -679,12 +627,14 @@
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
     // the yard: the car before the road sign with the country (a test track: its name and TEST); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
-    // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage
+    // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,
+    // out of the keys' way and hidden from readers, the car's button says it: a phone's touch adjustment takes it for a target, not so a
+    // plain span with the menu's listener far up)
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
     h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
       '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
-      '<span class="cname" data-act="garage" aria-hidden="true">' + esc(car.name) + '</span></div>';
+      '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)
     const nb = (k) => {
       const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';
