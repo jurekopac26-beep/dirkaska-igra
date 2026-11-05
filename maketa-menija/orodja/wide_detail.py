@@ -6,6 +6,8 @@
 # js/menu-data.js; the user: not the others, which are still to be chosen), not the test tracks.
 #   assets/maps/wide-<id>.webp, wide-<id>-rain.webp   written again at 0.8 of the map's scale (SCALE: the map and its margin; wide_map.py's
 #   half was blurred on a phone, the full scale twice the bytes for little more to see; the menu loads both, the rain's for its fade)
+#   assets/maps/isle-<id>.webp, isle-<id>-rain.webp   the island's own bare rim (the game's smooth ground round the trees to the tile's
+#   edge, bare_rim) given the same detail, from the island's land away from the rim; the rest of the island and its alpha as they were
 # The detail of a patch is the island over its own blur (a ratio: the painted land keeps its colours, the trees their light and shade);
 # the patches are blended with their neighbours keeping the texture's contrast (Heitz & Neyret's variance-preserving blend); the rain's
 # painted land gets the same patches of the rain's island. The road and what is by it (kerbs, people, the pits) and what people built
@@ -13,7 +15,8 @@
 # land is made sharper first: its fine detail, and the edges of its forests, meadows and fields steeper (with no rim; not in towns or rock).
 # Usage: python3 wide_detail.py rbring[,vrsic,...]|all [--write] [--debug <folder>]
 #   without --write nothing is saved in assets/ (--debug: the map as the menu lays it, before and after, as pictures).
-#   It runs on wide_map.py's output (half the pixels): a wide map already done is left as it is (wide_map.py --write first, then this).
+#   It runs on wide_map.py's output (half the pixels): a wide map already done, and its island, are left as they are (wide_map.py --write
+#   first, then this).
 #   The detail is made at the map's scale, then the whole made smaller to SCALE.
 import json, os, sys, zlib
 import numpy as np
@@ -40,7 +43,12 @@ FAR = (7.0, 15.0)   # the difference of the descriptors (per point of the grid) 
 EPS = 0.03      # the ratio's floor (the darkest shadows)
 STRAIGHT = (25, 0.22, 0.16)   # what people built: a line this many pixels long, the light's step across it and a thin line's (0..1)
 SCALE = 0.8     # the file's pixels per map pixel
+RIM = (300.0, 0.05, 0.09)   # the island's own bare ground by its edge (bare_rim): within this many metres of it; smooth (smoothness)
+    # with its detail's strength (the root of its mean square round it) up to RIM[1], not smooth from RIM[2]
 MIN_LAND = 0.2  # an island with less of its land fit for patches is a town (its parks' paths, gardens' fences): the painted land only made sharper
+ROCK = ('maunakea', 'caracoles')   # but these are rock (grey as asphalt, so little of it fit): their land's patches as any other island's
+MIN_RIM = (300, 0.02)   # the island's bare rim takes the detail from at least this many patches (fewer: the same few side by side) and
+    # when it is at least this much of the island (less: a new file for nothing to see), else the island is left as it is
 
 
 def js_obj(name, var):
@@ -149,10 +157,10 @@ def grid_desc(F, ys, xs, b):
     return np.concatenate([P[:, :, 0], P[:, :, 1], P[:, :, 2] - lm, lm * 0.35], axis=1)
 
 
-def lay(tid, L, det, A, ys, xs, b, tree, E, W, H, Wf, Hf):
-    """The island's detail laid over the painted land L (dry, rain) where it shows (not under the island's opaque land), patch by patch."""
-    st = b // 2
-    show = np.ones((Hf, Wf)); show[E:E + H, E:E + W] = 1 - A
+def lay(tid, L, det, show, ys, xs, b, tree, rim=False):
+    """The island's detail laid over L (dry, rain) patch by patch where show (0..1) says it shows: the painted land (not under the island's
+    opaque land) or the island's own bare rim (rim: the detail as much as show, the rest of the island as it is)."""
+    st = b // 2; Hf, Wf = show.shape
     pad = b
     LmW = feat(blur(np.pad(L[''], ((pad, pad), (pad, pad), (0, 0)), mode='edge'), SIG_M))
     gy, gx = np.arange(-b // 2, Hf - b // 2 + st, st), np.arange(-b // 2, Wf - b // 2 + st, st)
@@ -199,12 +207,28 @@ def lay(tid, L, det, A, ys, xs, b, tree, E, W, H, Wf, Hf):
     calm = still(L[''])
     out = {}
     for k in det:
-        D = num[k][pad:-pad, pad:-pad] / den * (1 - calm)[..., None]
+        D = num[k][pad:-pad, pad:-pad] / den * ((1 - calm) * (show if rim else 1))[..., None]
         out[k] = np.clip((L[k] + EPS) * np.exp(D) - EPS, 0, 1)
-    print(tid + ': ' + str(len(ys)) + ' patches of ' + str(b) + ' px from the island, ' + str(used) + ' laid; their colours\' difference ' +
+    print(tid + (' (the island\'s bare rim)' if rim else '') + ': ' + str(len(ys)) + ' patches of ' + str(b) + ' px from the island, ' + str(used) + ' laid; their colours\' difference ' +
           '(10/50/90/99 %) ' + str(np.percentile(d1, [10, 50, 90, 99]).round(1).tolist()) + ', full detail ' + str(round(float((amp > 0.99).mean()) * 100)) + ' %, none ' +
           str(round(float((amp < 0.01).mean()) * 100)) + ' %')
     return out
+
+
+def smoothness(I):
+    """0..1 per pixel of the island: how smooth it is drawn, by the strength of its detail round it, from RIM[1] (1) to RIM[2] (0)."""
+    l = I @ LUM; d = np.log(l + EPS) - np.log(ndimage.gaussian_filter(l, SIG_D) + EPS)
+    return np.clip((RIM[2] - np.sqrt(ndimage.gaussian_filter(d * d, 6))) / (RIM[2] - RIM[1]), 0, 1)
+
+
+def bare_rim(I, A, route, mpp):
+    """0..1 per pixel of the island: its own bare ground by its edge (the game's ground cells round the trees, drawn smooth, within RIM[0]
+    metres of the edge), which takes the detail as the painted land does, as much as it is smooth; not the road or what is no land."""
+    H, W = A.shape
+    dist = ndimage.distance_transform_edt(np.pad(A > 0.5, 1))[1:-1, 1:-1]   # (the tile's own edge an edge too)
+    near = np.clip((RIM[0] / mpp - dist) / 20 + 1, 0, 1)
+    keep = ~(route_mask(route, W, H, ROAD_M / 2 / mpp) | ndimage.binary_dilation(unnatural(I), iterations=3))
+    return ndimage.gaussian_filter(near * smoothness(I) * keep * (A > 0.02), 2.0)
 
 
 def detail(tid, write=False, debug=None):
@@ -234,8 +258,9 @@ def detail(tid, write=False, debug=None):
     ys, xs = ys[ok], xs[ok]
     det = {}
     land = good.sum() / max(1, (A > 0.98).sum())
-    if len(ys) >= 40 and land >= MIN_LAND:
-        tree = cKDTree(grid_desc(feat(blur(I, SIG_M, goodf)), ys, xs, b))
+    if len(ys) >= 40 and (land >= MIN_LAND or tid in ROCK):
+        desc = grid_desc(feat(blur(I, SIG_M, goodf)), ys, xs, b)
+        tree = cKDTree(desc)
         for k in ('', '-rain'):
             Ik = isle[k][..., :3]
             det[k] = (np.log(Ik + EPS) - np.log(blur(Ik, SIG_D, goodf) + EPS)) * goodf[..., None]
@@ -255,19 +280,36 @@ def detail(tid, write=False, debug=None):
     if not det:   # (a town's island all streets and roofs, Detroit, Toronto, Newcastle, Harju: the painted land only sharper)
         print(tid + ': too little of the island\'s land for patches (' + str(len(ys)) + ', ' + str(round(land * 100)) + ' % of its land): the painted land only made sharper')
         out = L
+        isle_out = None
     else:
-        out = lay(tid, L, det, A, ys, xs, b, tree, E, W, H, Wf, Hf)
+        show = np.ones((Hf, Wf)); show[E:E + H, E:E + W] = 1 - A
+        out = lay(tid, L, det, show, ys, xs, b, tree)
+        # the island's bare rim: its patches from the island's land away from the rim (its own smooth ground, the nearest in colour, would
+        # lay no detail on it); with too few of them (a town's lawns between its streets) or too little rim the island is left as it is
+        rimw = bare_rim(I, A, T['route'], mpp)
+        away = ndimage.uniform_filter((rimw > 0.5).astype(np.float64), b, mode='constant')[ys + b // 2, xs + b // 2] < 0.1
+        share = (rimw > 0.5).sum() / max(1, (A > 0.5).sum())
+        if away.sum() >= MIN_RIM[0] and share >= MIN_RIM[1]:
+            isle_out = lay(tid, {k: isle[k][..., :3] for k in isle}, det, rimw, ys[away], xs[away], b, cKDTree(desc[away]), rim=True)
+        else:
+            isle_out = None
+        print('  the island\'s bare rim: ' + str(round(float(share) * 100, 1)) + ' % of it, patches for it from ' + str(int(away.sum())) + ' of the ' +
+              str(len(ys)) + ' (not the rim\'s)' + ('' if isle_out is not None else ': too few or too little, the island left as it is'))
     if debug:
         os.makedirs(debug, exist_ok=True)
-        for name, land in (('before', L0), ('after', out[''])):
+        for name, land, il in (('before', L0, isle[''][..., :3]), ('after', out[''], isle[''][..., :3] if isle_out is None else isle_out[''])):
             c = Image.fromarray((land * 255).round().astype(np.uint8))
-            isl = Image.fromarray((isle[''] * 255).round().astype(np.uint8), 'RGBA')
+            isl = Image.fromarray((np.dstack([il, isle[''][..., 3]]) * 255).round().astype(np.uint8), 'RGBA')
             c.paste(isl, (E, E), isl); c.save(os.path.join(debug, tid + '-' + name + '.jpg'), quality=90)
     if write:
         for k in ('', '-rain'):
             p = os.path.join(MAPS, 'wide-' + tid + k + '.webp')
             Image.fromarray((out[k] * 255).round().astype(np.uint8)).resize((round(Wf * SCALE), round(Hf * SCALE)), Image.LANCZOS).save(p, 'WEBP', quality=72, method=6)
             print('  ' + os.path.relpath(p, ROOT) + ': ' + str(os.path.getsize(p) // 1024) + ' KB')
+            if isle_out is not None:   # (the island as wide_map.py saves it: its alpha as it was)
+                p = os.path.join(MAPS, 'isle-' + tid + k + '.webp')
+                Image.fromarray((np.dstack([isle_out[k], isle[k][..., 3]]) * 255).round().astype(np.uint8), 'RGBA').save(p, 'WEBP', quality=82, alpha_quality=92, method=6)
+                print('  ' + os.path.relpath(p, ROOT) + ': ' + str(os.path.getsize(p) // 1024) + ' KB')
     return out
 
 
