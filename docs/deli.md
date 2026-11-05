@@ -92,7 +92,7 @@ Načrt je na veji garaže (`git fetch origin claude/3d-garage-cars-sum9uk`, nato
 | 1 | dogovor; `krilo`, `platisca`, `zarometi` na KOLIBRIJU; poskus na PANTERJU, JASTREBU, TITANU | narejeno, pull request #192 (luč JASTREBA v enem kosu po izbiri uporabnika) |
 | 2 | ostalih 18 vidnih delov. Spredaj: `aero`, `hauba`, `maska`, `zmigavci`, `relijske_luci`. Zadaj: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`. Streha: `streha`, `stresna_zajemalka`, `antena`, `zaluzije`. Bok in kolesa: `ogledala`, `vrata`, `zavore`, `matice` | vzporedno v 4 sejah (razdelek »Vzporedne seje«); spredaj potrjeno 30. 10. 2026 (razdelek »Sklop 2 · spredaj«) |
 | 3 | barve in nalepke (`barva`, `crte`, `nalepke`, `gume`, `soncni_pas`, `zatemnitev`, `luc_pod_avtom`, `celjusti`, `zamasek`), skriti deli (načrt 2.6; učinki `lower`, `tint`, `tyre`), razbijanje novih delov | barve in skriti deli narejeni na veji `deli/sklop3-barve` (razdelek »Sklop 3 · barve in skriti deli«), uporabnik jih je potrdil 31. 10. 2026; razbijanje po sklopu 2 |
-| 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | čaka |
+| 4 | pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi | v delu (veja `deli/sklop4`) |
 
 Odločitve uporabnika (29. 10. 2026, po sklopu 1):
 - Deli ostanejo na PANTERJU, JASTREBU in TITANU. Drugi avti se delajo vzporedno, po kategorijah (razdelek »Drugi avti po kategorijah« spodaj).
