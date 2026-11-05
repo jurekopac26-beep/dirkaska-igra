@@ -4,7 +4,7 @@
 //   - floating: a group of the option's that touches nothing of the car (the rest of its body, its wheels) by more than EPS
 //   - through: how deep the option's corners go into the body (inside: the shell all round them, six rays; depth: to the nearest of it)
 //   - the glass: an option's corners behind a pane (the windows), the wheels: its corners in a tyre's room (steered, sprung)
-// Used by tests/deli-pregled.test.js and tools/deli-pregled.mjs (the report of every option).
+// Used by tests/deli-pregled.test.js (every option of a vehicle's: node tests/deli-pregled.test.js [vehicle id]).
 'use strict';
 const fs = require('fs');
 const path = require('path');

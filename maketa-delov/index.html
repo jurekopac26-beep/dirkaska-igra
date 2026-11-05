@@ -100,7 +100,7 @@
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id), M = Core.MODELS.find(m => m.id === 'kolibri'), MO = M.def.mounts || {};
-  const E = DELI_DATA.elementi.filter(e => e.id !== 'servis' && (MO[e.id] || ['gume', 'platisca', 'barva', 'zatemnitev', 'stevilke', 'luc_pod_avtom', 'dim_gum'].includes(e.id)));
+  const E = DELI_DATA.elementi.filter(e => MO[e.id]);   // (the elements KOLIBRI has a mount for: the garage offers only those)
   const HID = ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum'];
   const GROUPS = [['Vidni deli', (e) => !HID.includes(e.id) && !['barva', 'crte', 'stevilke', 'nalepke', 'gume', 'soncni_pas', 'zatemnitev', 'luc_pod_avtom', 'celjusti'].includes(e.id)],
     ['Barve, nalepke, gume', (e) => ['barva', 'crte', 'stevilke', 'nalepke', 'gume', 'soncni_pas', 'zatemnitev', 'luc_pod_avtom', 'celjusti'].includes(e.id)], ['Skriti deli (le učinek)', (e) => HID.includes(e.id)]];
