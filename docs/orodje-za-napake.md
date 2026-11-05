@@ -30,6 +30,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 18 | Zgodovina napak | končano |
 | 19 | Zadnji posnetki | končano |
 | 20 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
+| 21 | Seznama posnetkov in napak: avto, čas, večja slika, odpiranje starih zapisov | v delu (veja `orodje-za-napake/sklop-21-seznama`; uporabnik 5. 11. 2026) |
 
 **Pospešitev** (27. 10. 2026: veriga in vzporedni sklopi) je končana; opis je v `docs/arhiv/orodje-za-napake-sklopi.md`. Pravilo za svež `main` pred združitvijo je v `CLAUDE.md` (Postopek).
 
