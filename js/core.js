@@ -3666,6 +3666,9 @@ const Core = (function () {
   const TF_ROW = 0.95, TF_COL = 0.6, TF_PACE = 2.6;   // m: a group on foot, the rows (two abreast) and the two side by side; a group of cyclists, one behind the other
   const TF_DOGS = [0x3a2414, 0x8a5a2b, 0xd8b070, 0x1a1a1a, 0xe8e4dc, 0x6b6b6b, 0xb04a1c];   // a dog's coat (the game draws it)
   const tfSide = (T) => (T.def.leftHand ? -1 : 1);   // the side the traffic keeps to: 1 the right (uphill on the right half), -1 the left
+  // a race car in the patrol car's look, in the chase (online, beg s prijatelji, docs/novosti-e.md): its lights and siren (the game:
+  // polGear, roadSound), the traffic pulls over for it (Traffic._siren); driven by its player, not by the Police
+  function patrolCar(c) { c.police = true; c.pol = { mode: 'chase', kind: 'car', t: 0 }; return c; }
   const tfHash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };   // (0..1 by an id: no draw of the traffic's random numbers)
   class Traffic {
     constructor(race, dens) {
@@ -5311,10 +5314,12 @@ const Core = (function () {
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
+          if (opts.playerPolice) patrolCar(c);   // (online, beg s prijatelji: I drive the patrol car)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
           c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
+          if (RM.police) patrolCar(c);   // (online, beg s prijatelji: the friend drives the patrol car)
         } else {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
@@ -5387,8 +5392,10 @@ const Core = (function () {
       this.mk = opts.radio && !track.open && !this.timeTrial && this.laps >= 2 && total > 1 ? { d: 25, t: new Map(this.cars.map(c => [c, []])), lane: null } : null;
       if (track.sectors) this.secBest = [Infinity, Infinity, Infinity];   // (the best time in each sector of the race so far)
       this._prof();
-      // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police)
-      if (track.open && (opts.traffic || opts.police) && !opts.noPlayer && !this.timeTrial) this.tf = new Traffic(this, opts.police ? 0.85 : 1);
+      // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police;
+      // opts.netTf: online, beg s prijatelji, the same traffic on every phone from the host's opts.seed, no duel and no time penalties)
+      const netTf = !!(opts.netTf && RMS.length);
+      if (track.open && (opts.traffic || opts.police || netTf) && !opts.noPlayer && !this.timeTrial) this.tf = new Traffic(this, opts.police || netTf ? 0.85 : 1);
       if (track.open && opts.police && !opts.noPlayer && !this.timeTrial) this.pol = new Police(this);   // (the run from the police: race.pol)
     }
 

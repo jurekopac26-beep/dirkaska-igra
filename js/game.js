@@ -153,7 +153,7 @@
   const hasTT = (d) => !!(d && (d.timeTrial || (d.modes && d.modes.indexOf('tt') >= 0)));
   // modeOf: the way a track with def.modes is driven ('race', 'tt', 'traffic': the duel with one rival on the open road, 'police': the run from the
   // police): while a race on it is on, that race's; else the setting
-  const modeOf = (d) => !d || !d.modes ? 'race' : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf ? 'traffic' : 'race') : d.modes.indexOf(S.mode) >= 0 ? S.mode : d.modes[0];   // (a road with no race up it, Sani Pass: its first way)
+  const modeOf = (d) => !d || !d.modes ? 'race' : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf && !race.opts.remote ? 'traffic' : 'race') : d.modes.indexOf(S.mode) >= 0 ? S.mode : d.modes[0];   // (a road with no race up it, Sani Pass: its first way)
   const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial));   // (Pikes Peak, a time trial with def.modes: as its way)
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };   // (tr() at use)
   const upRace = (d) => !!(d && d.open && !isTT(d));   // a race against the rivals up an open road (Vršič)
@@ -2041,8 +2041,9 @@
     if (on) {   // online: the players on the grid in the host's order (in turn from race to race), no AI; the host's physics and damage for all
       const nums = netNums(on), rs = on.roster;
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: on.grid.indexOf(mp.me) + 1, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: nums[mp.me], slip: true, faults: !!on.faults,
+        netTf: !!on.tf, seed: on.tf ? on.seed || 7 : undefined, playerPolice: !!on.tf && on.pol === mp.me,   // (beg s prijatelji: the traffic from the host's seed, the patrol car)
         remote: on.grid.filter(id => id !== mp.me).map(id => { const F = rs.find(p => p.id === id) || { name: tr('Prijatelj'), car: M.id, color: 0 };
-          return { id, model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: nums[id], name: F.name, grid: on.grid.indexOf(id) + 1 }; }) }));
+          return { id, model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: nums[id], name: F.name, grid: on.grid.indexOf(id) + 1, police: !!on.tf && on.pol === id }; }) }));
     } else if (school) {   // the driving school: alone, the lesson's car, dry; the braking lesson from the start of the straight
       school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
       race = new Core.Race(track, schoolOpts(school.L));
@@ -2090,7 +2091,7 @@
     $('hud').classList.toggle('drs', !!race.drsLast); $('h-drs').className = '';   // (a circuit with DRS zones)
     $('hud').classList.toggle('sec', !!race.secBest);   // (a circuit with TV sectors)
     $('hud').classList.toggle('tt', race.timeTrial); $('hud').classList.toggle('up', track.open && !race.timeTrial); $('pause-restart').textContent = restartTxt();
-    $('hud').classList.toggle('pol', !!race.pol); $('hud').classList.toggle('duel', !!race.tf && !race.pol);   // (the open road: the police's panel, the rival's gap)
+    $('hud').classList.toggle('pol', !!race.pol); $('hud').classList.toggle('duel', !!race.tf && !race.pol && !on);   // (the open road: the police's panel, the rival's gap)
     tfSeen = race.tf ? race.tf.ev : 0; polSeen = race.pol ? race.pol.ev : 0; tfHits = { ped: 0, bike: 0 }; Sfx.siren(0, 0); rdOn = !!race.pol && rdKnows(track.def); radioReset(); polRun = { why: '', docs: false, park: false };
     if (mm.img && mm.open && mm.pol !== !!race.pol) mm.img = null;   // (the open road's map: the building at the top in the run from the police, else the finish)
     $('pause-skip').classList.toggle('off', !quali);
@@ -2109,7 +2110,7 @@
     else {
       if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
       else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
-      else if (race.tf) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
+      else if (race.tf && !on) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
         else if (!(race.opts.flying > 0)) Comm.say(race.cars.length < 2 ? 'introAlone' : track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, run: race.laps === 1 ? 'one lap' : Comm.words(race.laps) + ' laps', grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
@@ -3021,7 +3022,7 @@
   let tfSeen = 0, polSeen = 0, tfHits = { ped: 0, bike: 0 }, polRun = { why: '', docs: false, park: false };   // (polRun: how the checkpoint went: fled how, asked for the documents, told to park)
   function roadEvent(k, c, P) {
     if (phase !== 'racing' || P.finished) return;
-    const pen = race.pol ? '' : ' +5 s';
+    const pen = race.pol || race.opts.remote ? '' : ' +5 s';   // (online, beg s prijatelji: no time penalties)
     if (c === P) {
       if (k === 'ped') { tfHits.ped++; showMsg(tr('POVOZIL SI PEŠCA!') + pen, 'slow', 2); Sfx.thud(0.8); vibrate(70); Comm.say('pedHit', null, 3); }
       else if (k === 'bike') { tfHits.bike++; showMsg(tr('POVOZIL SI KOLESARJA!') + pen, 'slow', 2); Sfx.thud(0.9); vibrate(70); Comm.say('bikeHit', null, 3); }
@@ -3430,7 +3431,9 @@
   function roadSound(P) {
     let best = 1e9, pan = 0;
     if (race.pol) for (const c of race.pol.cars) if ((c.pol.mode === 'chase' || (c.pol.mode === 'park' && !c.pol.chk)) && c.pol.kind !== 'van') { const dx = c.x - P.x, dz = c.z - P.z, d = Math.hypot(dx, dz); if (d < best) { best = d; pan = (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d); } }   // (the checkpoint's car parked there: its lights on, no siren)
-    Sfx.siren(race.pol && phase === 'racing' && !P.finished ? Math.pow(clamp(1 - best / 260, 0, 1), 1.4) : 0, pan);
+    const pat = !race.pol && race.opts.remote ? race.cars.find(c => c.police) : null;   // (online, beg s prijatelji: the patrol car, a friend's or mine)
+    if (pat && pat !== P) { const dx = pat.x - P.x, dz = pat.z - P.z, d = Math.hypot(dx, dz); best = d; pan = (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d); }
+    Sfx.siren((race.pol || pat) && phase === 'racing' && !P.finished ? (pat === P ? 0.55 : Math.pow(clamp(1 - best / 260, 0, 1), 1.4)) : 0, pan);
     for (const v of race.tf.veh) {
       if (v.horn > 0 && !v.hornOn && !v.off) { v.hornOn = true; const dx = v.x - P.x, dz = v.z - P.z, d = Math.hypot(dx, dz); if (d < 90) Sfx.carHorn(clamp(1 - d / 90, 0.1, 1), (dx * -Math.sin(P.h) + dz * Math.cos(P.h)) / Math.max(12, d), v.kind === 2); }
       else if (!(v.horn > 0)) v.hornOn = false;
@@ -4365,7 +4368,7 @@
       $('h-hidebar').style.width = (pol.hide * 100).toFixed(0) + '%'; setText('h-hidel', P.finished || !ch ? '' : tr(pol.lost ? 'IZGUBILI SO SLED' : hid ? 'SKRIVANJE' : pol.heli && pol.heli.st === 'track' ? 'HELIKOPTER NAD TABO' : ''));
       chkHUD(P, pol); tailHUD(P, pol);
       if (pol.hold && phase === 'racing') $('touch').classList.add('off');   // (parked at the checkpoint: the brakes held, the arrest on the screen)
-    } else if (race.tf) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now)
+    } else if (race.tf && !race.opts.remote) {   // the duel: how far the rival is ahead or behind (in seconds at the speed now)
       const o = race.cars.find(c => c !== P);
       if (o) { const g = (o.finished ? L : o.dist) - (P.finished ? L : P.dist), t = Math.abs(g) / Math.max(12, P.speed, o.speed), f = Lang.dec(t.toFixed(1));
         setText('h-gap', o.finished && P.finished ? '' : !o.finished && race.isOut(o) ? tr('TEKMEC JE ODSTOPIL') : tr(g >= 0 ? 'TEKMEC {0} s PRED TABO' : 'TEKMEC {0} s ZA TABO', f)); $('h-gap').classList.toggle('behind', g < 0); }   // (a rival out of the race: so)
@@ -4936,6 +4939,14 @@
     if (d && d.open) mp.laps = 1;
     Net.send({ t: 'lobby', track: mp.track, laps: mp.laps }); buildRoom();
   }
+  // Beg s prijatelji (docs/novosti-e.md, Novost 2): on an open road with traffic one player drives the patrol car, the others run from it.
+  // The host's choice (mp.beg: { pol }, set in the room; window.__netBeg in the tests) goes out with the setup: tf 1 (the traffic, the
+  // same on every phone: seed), pol (the patrol car's player; one who is not on the grid: the last on it). A private room only
+  function netBeg(s) {
+    const B = mp.beg || window.__netBeg || null, d = Core.TRACKS.find(x => x.id === s.track);
+    if (!B || mp.quick || !d || !d.open || !d.modes || d.modes.indexOf('traffic') < 0) return { tf: 0, seed: 0, pol: '' };
+    return { tf: 1, seed: 1 + Math.floor(Math.random() * 2147483646), pol: s.grid.includes(B.pol) ? B.pol : s.grid[s.grid.length - 1] };
+  }
   // host: start. Everyone in the room loads the track (a phone may not answer meanwhile: no "gone" for a while); when all report ready,
   // the start is set 1.2 s ahead on the host's clock. The grid: the players in turn from race to race (the first on the left of the front row)
   function netGo() {
@@ -4948,7 +4959,8 @@
     const no = ++mp.no, k = (no - 1) % ins.length, grid = ins.slice(k).concat(ins.slice(0, k));
     const s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, faults: S.faults ? 1 : 0, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), grid, roster: mp.players.filter(p => grid.includes(p.id)).map(p => ({ id: p.id, name: p.name, car: p.car, color: p.color, num: p.num })), ready: new Set() };
     s.rain = S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for everyone)
-    for (const id of grid) if (id !== 'h') Net.sendTo(id, { t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, hold: s.hold, grid, roster: s.roster });
+    Object.assign(s, netBeg(s));   // (beg s prijatelji: the traffic and the patrol car)
+    for (const id of grid) if (id !== 'h') Net.sendTo(id, { t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, hold: s.hold, grid, roster: s.roster, tf: s.tf, seed: s.seed, pol: s.pol });
     Net.hold(30000); buildRoom();
     ensureTrack(s.track, () => { s.ready.add('h'); netMaybeGo(); });
     setTimeout(() => {
@@ -4988,7 +5000,8 @@
   function netPrepare(m) {
     const grid = Array.isArray(m.grid) ? m.grid.map(String).slice(0, Net.room) : [], rs = Array.isArray(m.roster) ? m.roster : [];
     mp.setup = { no: m.no, track: m.track, laps: Core.clamp(m.laps | 0, 1, 5), phys: m.phys === 'nova' ? 'nova' : 'cs', damage: Core.clamp(m.damage | 0, 0, 2), faults: m.faults === 1 ? 1 : 0, rain: m.rain === 1 ? 1 : 0, hold: Core.clamp(+m.hold || 1, 0.5, 1.4),
-      grid, roster: rs.filter(p => p && grid.includes(p.id)).map(p => Object.assign(peerOf(p), { id: String(p.id) })) };
+      grid, roster: rs.filter(p => p && grid.includes(p.id)).map(p => Object.assign(peerOf(p), { id: String(p.id) })),
+      tf: m.tf === 1 ? 1 : 0, seed: m.tf === 1 ? (m.seed >>> 0) || 7 : 0, pol: m.tf === 1 && grid.includes(String(m.pol)) ? String(m.pol) : '' };   // (beg s prijatelji: the traffic and the patrol car)
     mp.track = m.track; mp.laps = mp.setup.laps;
     Net.hold(30000); buildRoom();
     ensureTrack(m.track, () => {
@@ -5001,7 +5014,7 @@
     if (mp.role === 'host') for (const p of mp.players) if (s.grid.includes(p.id)) p.in = false;   // (back in the room when they say so)
     const cars = new Map(); for (const id of s.grid) if (id !== mp.me) cars.set(id, { buf: [], fin: null, left: false, off: false });
     const big = s.grid.length > NET_BIG;   // (a big grid: 10 states a second, 200 ms in the past, the host passes them on in batches)
-    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, grid: s.grid, roster: s.roster || mp.players.filter(p => s.grid.includes(p.id)), cars, sendT: -1e9, late: null, mine: null,
+    mp.race = { no: s.no, at, hold: s.hold, goAt: at + 1300 + 4000 + s.hold * 1000, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, rain: s.rain, grid: s.grid, tf: s.tf || 0, seed: s.seed || 0, pol: s.pol || '', roster: s.roster || mp.players.filter(p => s.grid.includes(p.id)), cars, sendT: -1e9, late: null, mine: null,
       big, iv: big ? 100 : 50, lag: big ? 200 : 100, fwd: [], fwdT: -1e9, sent: new Map() };
     Net.fixClock(true);   // (the clock as it was at the start, until the race is over. The watchdog keeps its patience from the setup for a while: a phone that was frozen just before the start, e.g. switched away, still joins late)
     newRace();

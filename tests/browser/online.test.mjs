@@ -122,15 +122,23 @@ try {
   T.check('back to the room: the host can start only once the friend is back; the car that left is off the track', hideB.title === qB.title && waitA.go && /vrne v sobo/.test(waitA.status) && /v sobi/.test(inA),
     `friend's results: ${hideB.title}, host's car off the track | host waiting: "${waitA.status}", start disabled ${waitA.go} | then: "${inA}"`);
 
-  // 6. a second race (the friend on the left of the front row this time), in the rain the host chose (the friend's own setting is dry);
-  //    the friend leaves in the middle of it
-  await A.page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
+  // 6. a second race (the friend on the left of the front row this time), in the rain the host chose (the friend's own setting is dry),
+  //    up Vršič with the friend in the patrol car (beg s prijatelji, docs/novosti-e.md B1, B2: the traffic the same on both phones from
+  //    the host's seed, the patrol car's look on both, no police of the game); the friend leaves in the middle of it
+  await A.page.evaluate(() => { document.querySelector('[data-set="weather"] button[data-v="rain"]').click(); window.__netBeg = { pol: 'g1' };
+    const t = document.getElementById('on-track'); t.value = 'vrsic'; t.dispatchEvent(new Event('change')); });
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await until(B.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing'); }, null, 60000);
   const gA = await A.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]), gB = await B.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]);
   T.check('second race: the sides of the front row change', gA.join() === '2,1' && gB.join() === '1,2', `host ${gA}, friend ${gB}`);
   const wx = await Promise.all([A.page, B.page].map(p => p.evaluate(() => ({ rain: window.__game.race.rain, wet: window.__game.race.player.wet, own: window.__game.S.weather }))));
   T.check("second race: the host's weather (rain) on both phones", wx.every(w => w.rain === 1 && w.wet < 1) && wx[1].own === 'dry', JSON.stringify(wx));
+  const tf = await Promise.all([A.page, B.page].map(p => p.evaluate(() => { const r = window.__game.race;
+    return { track: r.track.def.id, n: r.tf ? r.tf.veh.length : 0, sig: r.tf ? r.tf.veh.map(v => v.id + ':' + v.kind + ':' + v.dir + ':' + v.v0.toFixed(4) + ':' + v.col.toFixed(4)).join(' ') : '', pol: !!r.pol, me: !!r.player.police, it: !!r.remote.police }; })));
+  await A.page.evaluate(() => { window.__netBeg = null; });
+  T.check('second race, beg s prijatelji: the same traffic on both phones (the host\'s seed), the friend in the patrol car on both, no police of the game',
+    tf.every(x => x.track === 'vrsic' && x.n > 5 && !x.pol) && tf[0].sig === tf[1].sig && !tf[0].me && tf[0].it && tf[1].me && !tf[1].it,
+    tf.map(x => `${x.track}: ${x.n} vehicles, patrol me ${x.me} / friend ${x.it}, game police ${x.pol}`).join(' | ') + ` | the same vehicles: ${tf[0].sig === tf[1].sig}`);
   await wait(3000);
   await B.ctx.close();
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);

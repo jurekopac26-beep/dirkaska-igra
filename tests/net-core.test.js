@@ -97,5 +97,46 @@ check('finish: my time on the shared clock replaces the local one, the order fol
   check('22: on every track the player and 21 friends behind the line, none on top of another (an open road: all below the line)', !bad22.length, bad22.slice(0, 4).join(' | '));
 }
 
+// beg s prijatelji (docs/novosti-e.md, B1 and B2): online on an open road with traffic (Vršič). The traffic on both phones from the
+// host's seed, the same while the race cars are far from it; the patrol car (the friend's on my phone, mine on its) in the police look,
+// the traffic pulls over for it. An online race without it: no traffic, no patrol car, as before
+{
+  const TV = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+  const phone = (me, it, o) => new C.Race(TV, { numAI: 0, playerGrid: me === 'h' ? 1 : 2, laps: 1, phys: 'cs', playerModel: C.MODELS[0],
+    netTf: o.tf, seed: o.seed, playerPolice: !!o.tf && o.pol === me,
+    remote: [{ id: it, model: C.MODELS[2], color: 0x1c5fd6, num: 5, name: it === 'h' ? 'Ana' : 'Bor', grid: it === 'h' ? 1 : 2, police: !!o.tf && o.pol === it }] });
+  const beg = { tf: true, seed: 12345, pol: 'g1' };
+  const A = phone('h', 'g1', beg), B = phone('g1', 'h', beg);
+  const sig = (r) => r.tf ? r.tf.veh.map(v => v.kind + ':' + v.dir + ':' + v.s.toFixed(3)).join(' ') : '';
+  check('beg B1: the traffic online, on both phones the same from the host\'s seed (no police of the game)', !!A.tf && !!B.tf && A.tf.veh.length > 5 && sig(A) === sig(B) && !A.pol && !B.pol,
+    `${A.tf ? A.tf.veh.length : 0} / ${B.tf ? B.tf.veh.length : 0} vehicles`);
+  check('beg B1: another seed, other traffic', sig(phone('h', 'g1', { tf: true, seed: 999, pol: 'g1' })) !== sig(A));
+  const N = phone('h', 'g1', { tf: false, pol: 'g1' });
+  check('beg B1: an online race without it: no traffic and no patrol car, as before', !N.tf && !N.pol && !N.cars.some(c => c.police));
+  check('beg B2: the patrol car: the friend\'s on my phone, mine on its phone, in the chase', A.remote.police && A.remote.pol.mode === 'chase' && A.remote.pol.kind === 'car' && !A.player.police && B.player.police && !B.remote.police);
+  // the two phones for 40 s: each drives its own car (the AI's hands), the other's car follows what its phone sends (here at once, a step
+  // later). Each phone works out the traffic near the cars itself (who pulls over, a knock): the vehicles that never came within 300 m of
+  // a race car (nor went round from the top to the bottom) are the same on both
+  const keys = ['x', 'z', 'y', 'h', 'vx', 'vz', 'vy', 'w', 'vl', 'dist'];
+  const copy = (from, to) => { for (const k of keys) to[k] = from[k]; to.px = to.x; to.pz = to.z; to.py = to.y; to.ph = to.h; };
+  A.start(); B.start();
+  const near = new Set(), lastS = new Map();
+  const mark = (r) => { for (const v of r.tf.veh) { if (Math.abs(v.s - (lastS.has(r.tf) && lastS.get(r.tf).get(v.id) != null ? lastS.get(r.tf).get(v.id) : v.s)) > 500 || r.cars.some(c => Math.hypot(c.x - v.x, c.z - v.z) < 300)) near.add(v.id); }
+    lastS.set(r.tf, new Map(r.tf.veh.map(v => [v.id, v.s]))); };
+  let worst = 0, cmp = 0, siren = null;
+  for (let k = 0; k < 40 / DT; k++) {
+    C.aiControl(A.player, A, DT); C.aiControl(B.player, B, DT);
+    A.step(DT); B.step(DT);
+    copy(A.player, B.remote); copy(B.player, A.remote);
+    mark(A); mark(B);
+    if (siren == null && !A.remote.locked && !B.player.locked) siren = A.tf._siren(A.remote) && !A.tf._siren(A.player) && B.tf._siren(B.player) && !B.tf._siren(B.remote);
+    if (k % 60 === 59) { const byId = new Map(B.tf.veh.map(v => [v.id, v]));
+      for (const a of A.tf.veh) { const b = byId.get(a.id); if (!b || near.has(a.id)) continue; cmp++; worst = Math.max(worst, Math.hypot(a.x - b.x, a.z - b.z)); } }
+  }
+  check('beg B2: the traffic pulls over for the patrol car, not for the one running from it', siren === true);
+  check('beg B1: 40 s on two phones: the traffic away from the cars the same on both (within 0.1 m)', cmp > 500 && worst < 0.1 && A.tf.veh.length === B.tf.veh.length,
+    `${cmp} positions of ${A.tf.veh.length - near.size} vehicles away from the cars compared (${near.size} came near), the worst ${worst.toFixed(3)} m apart; the cars at ${A.player.dist.toFixed(0)} / ${B.player.dist.toFixed(0)} m`);
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);
