@@ -15,7 +15,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
 | Deli iz garaže: sklop 4 | 3 | ko se izprazni vrsta; na `main` pred ned. 8. 11. 10:00 |
-| Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
