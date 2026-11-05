@@ -15,12 +15,20 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
-| Grafika: 05 večerne dirke | 3 | po vrsti |
+| Grafika 03: velik zaslon ob glavni tribuni (#332, osnutek) | 3 | v delu (5. 11.) |
+| Grafika 05: večerne dirke, reflektorji ob progi in na tribunah (#334, osnutek) | 3 | v delu (5. 11.) |
+| Pregled kode z več agenti za #289 in #319 (najdbe popravita lastnika PR) | 3 | v delu (5. 11.) |
+| Lestvica prijateljev: časi prijateljev po progah prek povezave, brez strežnika (izbira uporabnika 5. 11.) | 3 | načrt v delu, koda po potrditvi; pred novimi progami |
+| Novi avti: 5 sodobnih vozil, izmišljenih, v novih datotekah `js/cars/` (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #315 in po dogovoru z računom 2 (garaža, `js/cars/*`) |
+| Barve in nalepke avta v garaži (barva, vzorec, številka, platišča; vidno v dirki, posnetku in pri prijateljih) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po dogovoru z #297 (garaža, račun 1) |
+| Beg pred policijo: na odprti cesti s prometom bežiš pred policijo (obratno od »Ti loviš« iz #250) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #250 |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
 | Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
 | Nova mapa: vožnja po vodi (vodni skuter s pomola pri HOME in na progi za skuterje, kanal do morja; avto v vodi ne razpade takoj; gradniki iz misije 35 v `js/missions/kit.js`) | 2 | ned. 8. 11. po 10.00, ko je prosto mesto za sejo (odločitev uporabnika 5. 11.) |
+| Sovoznik na cestah: glas in znak napovedujeta ovinke kot na reliju (»levo 4, dolgo«, »pozor, skok«) na vseh pravih odprtih cestah, na telefonu kratki napisi zgoraj (izbira uporabnika 5. 11.; najprej načrt `docs/sovoznik.md` in vprašanja na strani Odločitve 3, koda šele po potrditvi uporabnika; seja session_01WbgGzskQ1Ti5o2wRq17RUn, koordinacija VSE SEJE 2) | 3 | po vrsti, pred novimi progami |
+| Neskončna vožnja v prometu: odprta cesta s prometom, ki je vse gostejši; točke za hitrost in tesna prehitevanja, konec ob trku, rekord se shrani (izbira uporabnika 5. 11.; najprej načrt `docs/neskoncna-voznja.md` in vprašanja na strani Odločitve 3, koda šele po potrditvi uporabnika; seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija VSE SEJE 2) | 3 | pred novimi progami, po potrditvi načrta |
+| Zvoki okolja: ob progi tiho ptice v gozdu, voda, zvonovi v vasi, veter na prelazu, brez dodatne obremenitve telefona (izbira uporabnika 5. 11.; načrt `docs/zvoki-okolja.md`, seja session_01WbgGztWoUK4NRECTrwWMu3) | 3 | pred novimi progami, po potrditvi načrta (odgovori na strani Odločitve 3) |
 | Lestvica prijateljev: časi prijateljev po progah prek podpisane povezave, brez strežnika, tabela ob izbiri proge (načrt `docs/lestvica-prijateljev.md`; seja načrta session_01WbgGztpv919FLrFJ1tPuh5) | 3 | pred novimi progami, po potrditvi načrta (vprašanja `lp-meni`, `lp-povezava`, `lp-obseg` na strani Odločitve 3) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) in je #202 (fizika, račun 2) na `main` ali zaprt |
