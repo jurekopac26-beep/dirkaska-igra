@@ -943,6 +943,7 @@ const Render = (function () {
      K (inside build(K)):
        K.M, K.def, K.look, K.body (look.body completed), K.wheels (look.wheels completed), K.parts (the table's part ids, wheels left out)
        K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
+       K.fitted                the garage's parts fitted (car.deli, {} for none): a part makes room for another (js/deli/*.js)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
        K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
                                units), the circle's radius and middle height (metres): place flares and decals round them
@@ -1070,8 +1071,8 @@ const Render = (function () {
        black smoke)); --cat <category>
        (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
-       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
-       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
+       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look, deli, hi) (a look
+       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out; with the garage's parts, Visoki). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
        entry (parts.over / extra) to the range's centroid when the look puts the part elsewhere (a cab-over's doors, a hatch's tailgate).
        Render.carShot(o) a picture of the showroom car (a canvas): o { id, color, num, view (side front rear top: near-orthographic, with
        the grid, o.box [L, W, H] and the hubs; 34f 34r), w, h, span, at, cut (part ids off: the inside), grid, floor (false: no turntable),
@@ -2045,7 +2046,7 @@ const Render = (function () {
     if (hi && kx.spare.segHi) kx.spare.seg = kx.spare.segHi;   // (the spare's: its stock rim's, as on the stock car)
     const wd = deli && typeof DELI !== 'undefined' ? KIT_WHEEL_DELI.filter(id => deli[id] && DELI.has(id) && M.def.mounts && M.def.mounts[id]) : [];
     if (wd.length) kx.wheels.deliW = wd.map(id => [id, deli[id], M.def.mounts[id], M, !!hi, deli]);   // (the wheel parts: drawn on the player's wheels, kitWheelGeo)
-    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
+    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi; K.fitted = kx.deli || {};
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');
@@ -2309,10 +2310,11 @@ const Render = (function () {
     return grp;
   }
   // (tests, trying a look out) a look built on vehicle id's model as the build would (not cached, not registered: its status, the colour-
-  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs)
-  function kitTry(id, look) {
+  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs); look null: the model's own; deli:
+  // the garage's parts fitted (car.deli: its geo.userData.deli, tests/deli-pregled.test.js), hi: Visoki
+  function kitTry(id, look, deli, hi) {
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
-    try { const r = kitBuild(M, look, false); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std }; }
+    try { const r = kitBuild(M, look || M.def.look, false, !!hi, deli && typeof DELI !== 'undefined' ? DELI.clean(deli, M) : undefined); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std, wheels: r.wheels }; }
     catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
   }
   // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)
@@ -9757,11 +9759,17 @@ const Render = (function () {
     const ring = Math.max(4.2, model.len / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
+  // (maketa-delov/index.html) the showroom's picture moved and zoomed for a page of its own: { cx, cy, x, y, s }: the point (cx, cy) of the
+  // garage's framing (CSS pixels, Render.showRect) drawn at (x, y), s times as big (the camera's view offset); null: the garage's own framing
+  let showView = null;
+  function setShowView(v) { showView = v || null; }
   function showCamSet() {   // the showroom's camera for the screen's shape (landscape: the car left of the panel; portrait: above it), framed by the car's size
     const aspect = Math.max(1, window.innerWidth) / Math.max(1, window.innerHeight), portraitS = aspect < 1;
     const d = portraitS ? 19 : aspect < 1.2 ? 13 : 10.5, k = showFr.k, dy = showFr.dy;
     showCam.aspect = aspect; showCam.updateProjectionMatrix();
     showCam.position.set(2.2 * k, (portraitS ? 4.4 : 3.1) * k + dy, d * k); showCam.lookAt((aspect > 1.2 ? 3.1 : 0) * k, (portraitS ? -2.6 : 0.55) * k + dy, 0);
+    if (showView) { const W = Math.max(1, window.innerWidth), H = Math.max(1, window.innerHeight), v = showView; showCam.setViewOffset(W * v.s, H * v.s, v.cx * v.s - v.x, v.cy * v.s - v.y, W, H); }
+    else if (showCam.view && showCam.view.enabled) showCam.clearViewOffset();
   }
   function renderShowroom(dt) {
     if (!showScene) return;
@@ -9818,7 +9826,7 @@ const Render = (function () {
     if (!showScene) initShowroom();
     setShowCar(M, o.color != null ? o.color : 0xc0392b, o.num || 7, o.deli);   // (o.deli: the garage's parts on it, car.deli)
     const W = o.w || 800, H = o.h || 450, v = o.view || 'side', ortho = ['side', 'front', 'rear', 'top'].indexOf(v) >= 0, car = showCar, hh = car.h;
-    renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H;
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H; if (showCam.view) showCam.view.enabled = false;   // (a still frames itself: no setShowView offset)
     const fov0 = showCam.fov, up0 = showCam.up.clone(); showFloor.visible = o.floor !== false;
     car.grp.rotation.y = 0;
     let geo0 = null;   // o.cut: [parts]: those parts taken off (their ranges collapsed on a copy of its own) and the whole buffer drawn: the lining, the floor, the cabin, the engine bay
@@ -9906,6 +9914,6 @@ const Render = (function () {
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
   function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
