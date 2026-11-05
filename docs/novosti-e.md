@@ -19,7 +19,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 | V posnetku | posnetek po dirki: avti iz dirke. Posnetek iz datoteke (`.rrp`, `rrpOf` / `rrpOpen`) ima samo barvo in številko | `js/game.js` |
 | Prijatelji | vidijo samo tvojo barvo (indeks) in številko (`meInfo`, `opts.remote`) | `js/game.js`, `js/core.js` `Race` |
 
-**Beg pred policijo: cel način že obstaja.** To je *Police chase* v *Single race* (`modes: [… 'police']`) na 17 odprtih cestah s prometom. Ima kontrolno točko, pregon s 4–6 patruljami in motoristi, ježke, zapore, helikopter, zasede, civilni avto, hlode, vročino (zvezdice), policijski radio in seznam prekrškov. V karieri da »Nagrado za pobeg«, ima dosežek *Neulovljiv* in rekorde po cesti (`js/core.js` `Police`, `js/game.js` `finishPolice`, test `tests/police.test.js`). Konča se z aretacijo, s skrivališčem v stavbi na vrhu (Vršič) ali čez cilj. Na novi mapi so še policijske misije (`js/nvmenu.js`). Novo bi bilo samo dvoje: **časovna omejitev 3:00** s pregonom od štarta (zrcalno kot »Ti loviš« iz #250) ter Moki in Sani, ki promet imata, pregona pa ne.
+**Beg pred policijo: cel način že obstaja.** To je *Police chase* v *Single race* (`modes: [… 'police']`) na 17 odprtih cestah s prometom; 7 ameriških (`baldy`, `beartooth`, `bigsur`, `maunakea`, `mulholland`, `palomar`, `uncompahgre`) po odločitvi uporabnika 5. 11. 2026 postane testnih in zamrznjenih (#293, #355), pravih ostane 10. Ima kontrolno točko, pregon s 4–6 patruljami in motoristi, ježke, zapore, helikopter, zasede, civilni avto, hlode, vročino (zvezdice), policijski radio in seznam prekrškov. V karieri da »Nagrado za pobeg«, ima dosežek *Neulovljiv* in rekorde po cesti (`js/core.js` `Police`, `js/game.js` `finishPolice`, test `tests/police.test.js`). Konča se z aretacijo, s skrivališčem v stavbi na vrhu (Vršič) ali čez cilj. Na novi mapi so še policijske misije (`js/nvmenu.js`). Novo bi bilo samo dvoje: **časovna omejitev 3:00** s pregonom od štarta (zrcalno kot »Ti loviš« iz #250) ter Sani, ki promet ima, pregona pa ne (Moki postane testna proga in ostane brez).
 
 ## Česa ne delamo in zakaj
 - **Nov način bega od začetka:** že obstaja (zgoraj). Dodamo samo kratko različico, če jo uporabnik izbere (`beg-1`).
@@ -94,13 +94,13 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 - Pri *3 min* se pregon začne takoj, brez kontrolne točke. Prva patrulja štarta 150 m za tabo (zrcalno kot begunec v »Ti loviš«). Vse drugo je obstoječa policija (ježki, zapore, helikopter … po težavnosti).
 - Pobegneš, ko zdržiš 3:00 ali prideš do cilja. Ujamejo te po zdajšnjem pravilu: skoraj stojiš, patrulja pa je ob tebi 1,6–3 s (`POL_DIFF.bust`).
 - Odštevanje je pod ploščo **POLICIJA**.
-- Ceste: vse odprte ceste s prometom, torej zdajšnjih 17 ter Moki in Sani. Moki in Sani dobita pregon le, če policija tam vozi dobro; sicer ostaneta brez.
+- Ceste: prave odprte ceste s prometom, torej 10 s policijo (`caracoles`, `chapman`, `greatalpine`, `hotham`, `iroha`, `medvode`, `mountbuller`, `rastro`, `tianmen`, `vrsic`) in Sani. Sani dobi pregon le, če policija tam vozi dobro; sicer ostane brez. Ameriške ceste razen Pikes Peaka so testne in zamrznjene (odločitev uporabnika 5. 11. 2026): izbira 3:00 je tam le prek skupne kode, njihovih datotek ne spreminjamo in testi jih preskočijo.
 
 **Priklop:**
 - `js/beg.js` (nova datoteka): izbira dolžine, odštevanje, konec pri 3:00, rezultat in rekord. Narejeno je kot novost `Zabava.add` iz #250, ki je takrat že na `main`.
 - `js/core.js` `Police`: `opts.police.limit` (sekunde) in `opts.police.hot` (pregon od štarta, brez `_check`), nekaj vrstic.
 - `js/game.js`: `finishPolice` (razlog konca »3:00«) in nastavitev `S.polLen`.
-- `js/tracks/moki.js`, `js/tracks/sani.js`: v `modes` se doda `'police'`.
+- `js/tracks/sani.js`: v `modes` se doda `'police'`. Datotek testnih prog (tudi `moki.js`) ne spreminjamo.
 
 **Meni:** v `js/menu.js` celica *Police · On you* v vrstici načina *Police chase* postane izbira *Whole road* / *3 min*, kot gumb *Opponents* pri dirki. Podnaslov igre (`title-sub`) dobi »· 3 min«. Po spremembi: `node tests/browser/menu.test.mjs`.
 
@@ -114,7 +114,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 **Testi:**
 - `tests/police.test.js`: z `limit: 180` je pri 3:00 konec s pobegom, aretacija pred tem še velja, pregon se začne od štarta (brez kontrolne točke).
 - `tests/browser/menu.test.mjs`: izbira dolžine, pokonci in ležeče.
-- `races.test.js`: beg na Mokiju in Saniju.
+- `races.test.js`: beg na Saniju.
 - Golden: beg na Vršiču ostane enak.
 
 **Obremenitev:** nove grafike ni (iste patrulje). Pri 3:00 so patrulje že od štarta blizu, zato meritev obremenitve v begu na Vršiču (`maxCalls`, `maxKverts` pod mejo `tests/golden/perf.json`).
@@ -125,9 +125,9 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 |---|---|---|
 | B1 | pravila in priklop | 3 |
 | B2 | meni in rezultat | 1,5 |
-| B3 | Moki in Sani | 1 |
+| B3 | Sani | 0,5 |
 | B4 | testi in dokumenti | 1,5 |
-| | skupaj | ~7 |
+| | skupaj | ~6,5 |
 
 Če uporabnik izbere `beg-1` = 3 (beg s prijatelji: en prijatelj vozi patruljo, drugi bežijo, pravilo ulova iz »Ti loviš«), je to ~14 h. Dela se po #250, skupaj z »Ti loviš s prijatelji«.
 
