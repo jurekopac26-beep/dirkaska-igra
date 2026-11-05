@@ -9,6 +9,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // under ODbL 1.0. One card, four ways to drive it (def.modes), as Vršič: a race against the rivals over the closed road, a time trial, a duel in
   // the traffic and a run from the police. They drive on the left here (def.leftHand).
   TRACK_DEFS.push({
+    // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
+    say: 'Mount Buller',
     id: 'mountbuller', test: true, name: 'Mount Buller, Avstralija', theme: 'mountbuller', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5, leftHand: true,
     maxRivals: 70,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~158 m of road past the line: a bigger field's parking would stand car on car (73 already)
     desc: 'Mount Buller v Viktorijskih Alpah (Avstralija) sredi smučarske sezone: od smučarske vasi na 1.611 m po zasneženi cesti okoli vrha med kočami, čez smučišča in pod štirimi sedežnicami, zadnji kilometer in pol po steptanem snegu do 1.731 m pod vrhom. Vozi se po levi. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
