@@ -13,6 +13,9 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  // a tag's place for MisKit.tags: one farther than half the camera's reach pulled in along the line of sight (the same spot on the
+  // screen; past the far plane a tag is not shown, and the reach is shorter on a slow phone)
+  const reach = (C, x, y, z) => { if (!C) return { x, y, z }; const dx = x - C.position.x, dy = y - C.position.y, dz = z - C.position.z, d = Math.hypot(dx, dy, dz), m = 0.5 * (C.far || 400); if (d <= m) return { x, y, z }; const k = m / d; return { x: C.position.x + dx * k, y: C.position.y + dy * k, z: C.position.z + dz * k }; };
   const K = { N: 12, NEED: 8, T0: 8, EVERY: 17, AHEAD: [200, 480], WARN: 6, COOL: 10, HOT: 900, PICK: 4.5, VSTOP: 2.5, R: 3, RS: [700, 1450, 2200], RV: 60, RCAP: 0.7, RPICK: 6, MAXS: 12 };
   const has3 = () => typeof THREE !== 'undefined' && typeof Render !== 'undefined' && !!Render.scene;
   const COLS = [0x3d6e3a, 0x8a5a2b, 0x2f4f7a];
@@ -164,9 +167,10 @@
       // the radar: a tag over each ring and each stone on the ground (pinned to the screen's edge when out of sight)
       if (r.tags) r.tags.set(list.map(o => {
         const dd = Math.round(Math.hypot((P.x || 0) - o.x, (P.z || 0) - o.z));
-        return o.state === 'ring' ? { x: o.x, y: o.y + 4, z: o.z, html: '<b>' + tr('UDAR') + '</b>' + Missions.clock(Math.ceil(Math.max(0, o.land - r.t) - 1e-9)) + ' · ' + dd + ' m', cls: '' }
-          : o.state === 'hot' ? { x: o.x, y: o.y + 4, z: o.z, html: '<b>' + tr('METEORIT') + '</b>' + Math.round(40 + (K.HOT - 40) * o.heat) + ' °C · ' + dd + ' m', cls: 'hot' }
-          : { x: o.x, y: o.y + 4, z: o.z, html: '<b>' + tr('METEORIT') + '</b>' + dd + ' m', cls: 'go' };
+        const at = reach(C, o.x, o.y + 4, o.z);
+        return o.state === 'ring' ? Object.assign(at, { html: '<b>' + tr('UDAR') + '</b>' + Missions.clock(Math.ceil(Math.max(0, o.land - r.t) - 1e-9)) + ' · ' + dd + ' m', cls: '' })
+          : o.state === 'hot' ? Object.assign(at, { html: '<b>' + tr('METEORIT') + '</b>' + Math.round(40 + (K.HOT - 40) * o.heat) + ' °C · ' + dd + ' m', cls: 'hot' })
+          : Object.assign(at, { html: '<b>' + tr('METEORIT') + '</b>' + dd + ' m', cls: 'go' });
       }));
     },
   });

@@ -15,6 +15,9 @@
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' && Lang.dec ? Lang.dec(s) : String(s).replace('.', ','));
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  // a tag's place for MisKit.tags: one farther than half the camera's reach pulled in along the line of sight (the same spot on the
+  // screen; past the far plane a tag is not shown, and the reach is shorter on a slow phone)
+  const reach = (C, x, y, z) => { if (!C) return { x, y, z }; const dx = x - C.position.x, dy = y - C.position.y, dz = z - C.position.z, d = Math.hypot(dx, dy, dz), m = 0.5 * (C.far || 400); if (d <= m) return { x, y, z }; const k = m / d; return { x: C.position.x + dx * k, y: C.position.y + dy * k, z: C.position.z + dz * k }; };
   const K = { TOP: 30, END: 0, D: [2500, 3800, 5000], SIDE: [1, -1, 1], C: [200, 285, 370], FLOW: 90, PRE: 40, LEN: 18, GAP: 2.6, HALF: 1.0,
     BURN: 0.45, DRAG: 1.6, R0: 12, EVERY: [3.2, 5.5], WARN: 2.2, RHIT: 2.5, SPREAD: 3, NEAR: 16, CLEAR: 45, ROCK: 0.2, LIE: 5, MAXR: 4, ASH: 360, FAR: 45 };
   const has3 = () => typeof THREE !== 'undefined' && typeof Render !== 'undefined' && !!Render.scene;
@@ -220,7 +223,8 @@
         fx.ash.geometry.attributes.position.needsUpdate = true; fx.ash.material.opacity = 0.15 + 0.7 * r.ash;
       }
       // the tags over the flows ahead: their time left
-      if (r.tags) r.tags.set(r.cx.filter(c => !c.passed && P.q && P.q.s - c.s < 1500).map(c => { const p = KIT.at(T, c.s, 0); return { x: p.x, y: p.ty + 6, z: p.z, html: '<b>' + tr('LAVA') + '</b>' + Missions.clock(Math.max(0, c.c - r.t)), cls: 'hot' }; }));
+      // (a flow past the camera's far plane: its tag pulled nearer along the same line of sight, else it would not be shown)
+      if (r.tags) r.tags.set(r.cx.filter(c => !c.passed && P.q && P.q.s - c.s < 1500).map(c => { const p = KIT.at(T, c.s, 0); return Object.assign(reach(C, p.x, p.ty + 6, p.z), { html: '<b>' + tr('LAVA') + '</b>' + Missions.clock(Math.max(0, c.c - r.t)), cls: 'hot' }); }));
     },
   });
 })();
