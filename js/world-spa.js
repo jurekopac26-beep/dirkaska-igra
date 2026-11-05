@@ -756,5 +756,6 @@
     return out;
   }
 
+  World.keep('NR', 'spa');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.spa = (scene, tex, opts) => buildSpa(scene, tex, opts);
 })();

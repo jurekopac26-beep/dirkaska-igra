@@ -939,5 +939,7 @@
 
   Object.assign(API, { lfFxUpdate, lfNear, lfSegs });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { LFQ: { get: () => LFQ, set: (v) => { LFQ = v; } } });
+  World.keep('NR', 'longford');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
+  World.keep('LFQ', 'longford');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.longford = (scene, tex, opts) => buildLongford(scene, tex, opts);
 })();

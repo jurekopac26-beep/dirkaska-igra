@@ -965,6 +965,7 @@ const Render = (function () {
      K (inside build(K)):
        K.M, K.def, K.look, K.body (look.body completed), K.wheels (look.wheels completed), K.parts (the table's part ids, wheels left out)
        K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
+       K.fitted                the garage's parts fitted (car.deli, {} for none): a part makes room for another (js/deli/*.js)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
        K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
                                units), the circle's radius and middle height (metres): place flares and decals round them
@@ -1092,8 +1093,8 @@ const Render = (function () {
        black smoke)); --cat <category>
        (the category side by side). Render.kitStatus(id),
        Render.kitInfo(id) (ranges with their centroids, budgets, regions, wheels, tubs (the wheel tubs, metres), openings (an open top's,
-       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look) (a look
-       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
+       seen from above: { x: [x0, x1], z (half width), y (the rim) }, metres); no id: the caches' sizes); Render.kitTry(id, look, deli, hi) (a look
+       built on vehicle id's model, not cached: { status, geo (the caller disposes it), body, tris, openings, tubs }: try one out; with the garage's parts, Visoki). A part's range should lie where the core throws it from (its debris spawns at the part table's lx, lz, y): move the table's
        entry (parts.over / extra) to the range's centroid when the look puts the part elsewhere (a cab-over's doors, a hatch's tailgate).
        Render.carShot(o) a picture of the showroom car (a canvas): o { id, color, num, view (side front rear top: near-orthographic, with
        the grid, o.box [L, W, H] and the hubs; 34f 34r), w, h, span, at, cut (part ids off: the inside), grid, floor (false: no turntable),
@@ -2070,7 +2071,7 @@ const Render = (function () {
     if (hi && kx.spare.segHi) kx.spare.seg = kx.spare.segHi;   // (the spare's: its stock rim's, as on the stock car)
     const wd = deli && typeof DELI !== 'undefined' ? KIT_WHEEL_DELI.filter(id => deli[id] && DELI.has(id) && M.def.mounts && M.def.mounts[id]) : [];
     if (wd.length) kx.wheels.deliW = wd.map(id => [id, deli[id], M.def.mounts[id], M, !!hi, deli]);   // (the wheel parts: drawn on the player's wheels, kitWheelGeo)
-    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi;
+    kx.hi = !!hi; const K = kitMakeK(kx); K.hi = kx.hi; K.fitted = kx.deli || {};
     kx.regions = look.regions != null ? (typeof look.regions === 'string' ? (K.regions(look.regions), kx.regions) : typeof look.regions === 'function' ? (K.regions(look.regions), kx.regions) : kitRegionsIn(kx, look.regions)) : kitStdRegions(kx);
     if (!kx.std) kitStdRegions(kx);   // (the bumper heights and the like, for the loft's ends)
     if (typeof look.build !== 'function') kitFail('look.build(K) missing');
@@ -2334,10 +2335,11 @@ const Render = (function () {
     return grp;
   }
   // (tests, trying a look out) a look built on vehicle id's model as the build would (not cached, not registered: its status, the colour-
-  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs)
-  function kitTry(id, look) {
+  // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs); look null: the model's own; deli:
+  // the garage's parts fitted (car.deli: its geo.userData.deli, tests/deli-pregled.test.js), hi: Visoki
+  function kitTry(id, look, deli, hi) {
     const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
-    try { const r = kitBuild(M, look, false); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std }; }
+    try { const r = kitBuild(M, look || M.def.look, false, !!hi, deli && typeof DELI !== 'undefined' ? DELI.clean(deli, M) : undefined); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std, wheels: r.wheels }; }
     catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
   }
   // (kitInfo) a burning engine's seat (body.engine, metres) and the top of the shell over it the car whole (null: none: the flames from the seat)
@@ -3714,66 +3716,14 @@ const Render = (function () {
     kamp:     { fog: 0xa4a8d0, sun: 0xff9468, sunI: 1.33, sky: 0xc6ceff, gnd: 0x7a7338, hemiI: 1.0, tint: [1.0, 0.96, 1.03], sat: 1.06, sunOff: [-100, 80, 30] },   // Gromski rt: sun in the west-south-west, a warm bright ambient: softer shadows, as in the reference
     monaco:   { fog: 0xcfe2f1, sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.14 },
     mountain: { fog: 0xb4cadf, sun: 0xfff2e0, sunI: 1.0, sky: 0xc8dcff, gnd: 0x4d5c33, hemiI: 0.6, tint: [0.98, 1.0, 1.03], sat: 1.12 },
-    ouni:     { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
-    vrsic:    { fog: 0xc6d4e0, sun: 0xffe8c4, sunI: 1.16, sky: 0xcfe0f4, gnd: 0x55603a, hemiI: 0.58, tint: [1.02, 1.0, 0.96], sat: 1.12, sunOff: [-84, 70, 56] },   // Vršič: a clear afternoon in the Julian Alps, a lower sun (long shadows across the hairpins), a crisp blue haze (in autumn the season's warmer light)
-    katu:     { fog: 0xc9d5dd, sun: 0xfff0d4, sunI: 1.2, sky: 0xc9dcf3, gnd: 0x6b6040, hemiI: 0.58, tint: [1.03, 1.0, 0.96], sat: 1.12, sunOff: [96, 76, 18] },   // Katu-Jaryk: a clear Altai summer morning, the sun in the east over the canyon (the hairpins' shadows falling down the slope), a light blue haze
-    pikes:    { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, tint: [1.05, 1.0, 0.925], sat: 1.13, haze: 0.25, hazeCol: [1, 0.77, 0.48], sunOff: [104, 48, -60] },   // early morning on race day: a low golden sun from the east-north-east (long shadows down the slopes, its warm glow at the edge of the view when it is ahead), cool blue shade from the clear sky, a light warm haze over the valleys
-    nring:    { fog: 0xb7c7cc, sun: 0xfff0d8, sunI: 1.1, sky: 0xcadcf0, gnd: 0x3e4a2a, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.04, sunOff: [-80, 76, 70] },   // the Eifel: a summer afternoon over the 'green hell' (a lower sun: longer shadows)
-    spa:      { fog: 0xc3ced7, sun: 0xfff1de, sunI: 0.98, sky: 0xd0dde9, gnd: 0x43522f, hemiI: 0.64, tint: [0.99, 1.0, 1.01], sat: 1.1 },   // the Ardennes: a little greyer, softer daylight (Spa's changeable weather)
-    rbring:   { fog: 0xc6daea, sun: 0xfff1d8, sunI: 1.12, sky: 0xcfe3fb, gnd: 0x46602c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-86, 78, 52] },   // Styria in early summer, an afternoon sun (longer shadows): clear alpine air, fresh meadows, dark spruce woods
-    harju:    { fog: 0xcdd5dc, sun: 0xffcf96, sunI: 1.65, sky: 0xbad0ee, gnd: 0x58553f, hemiI: 0.58, tint: [1.02, 1.0, 0.97], sat: 1.1, haze: 0.16, hazeCol: [1, 0.82, 0.6], sunOff: [-100, 33, -8], skyTop: 0x3d74c4, skyK: 0.72, skyWarm: 0xf3dcb2, skyWarmK: 0.7, sunDist: 190 },   // Harju at 19:05 on a late-July evening: the sun 18 degrees up just north of west (as on 31 July), shadows three times as long as the pines and the blocks across the streets, a warm sun and cool shade, the clear blue sky of a Finnish summer evening with a warm glow towards the sun
-    suzuka:   { fog: 0xc8d9e6, sun: 0xfff1dc, sunI: 1.06, sky: 0xd5e7fa, gnd: 0x4f5c34, hemiI: 0.62, tint: [1.01, 1.0, 0.99], sat: 1.12 },   // Suzuka: a clear spring day in Mie
-    caracoles: { fog: 0xc2d3e8, sun: 0xfff3de, sunI: 1.32, sky: 0xb4cdf2, gnd: 0x6e5e4c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.07, sunOff: [-72, 98, -62] },   // Los Caracoles: a clear afternoon of the Andean summer, the thin air's strong sun from the north-west (the southern hemisphere), a cool blue haze
-    bathurst: { fog: 0xafc7e2, fogK: 1.4, sun: 0xfff4e0, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.0, sunOff: [-74, 86, -56] },   // Bathurst: a clear spring afternoon in New South Wales, the sun from the north-west (the southern hemisphere), green pastures in a clean light, the haze blue over the gum woods and the view long (fogK)
-    rio:      { fog: 0xd3dfe6, sun: 0xfff3dc, sunI: 1.3, sky: 0xbfd8f4, gnd: 0x5d6a3a, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 0.98, sunOff: [-30, 120, -40] },   // Rio in March: a strong tropical sun high in the north (the southern hemisphere: short shadows), a humid, pale haze
-    chapman:  { fog: 0xc9dbe8, sun: 0xfff0d6, sunI: 1.24, sky: 0xbcd6f4, gnd: 0x5e5a40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-92, 74, -40] },   // Chapman's Peak: a clear late-summer afternoon at the Cape, the sun low over the Atlantic in the west-north-west, a soft sea haze
-    bigsur:   { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-86, 74, 58] },   // Big Sur: a clear afternoon on the coast, the sun over the Pacific in the south-west, a soft sea haze
-    tianmen:  { fog: 0xc9d2d4, sun: 0xfff0dc, sunI: 1.02, sky: 0xd4dfe6, gnd: 0x4a5636, hemiI: 0.68, tint: [1.0, 1.0, 0.99], sat: 1.04, haze: 0.12, hazeCol: [0.92, 0.95, 1.0], sunOff: [-70, 92, 60] },   // Tianmen: a humid subtropical day, the sun veiled by the mist, a pale grey-green haze over the cliffs
-    sani:     { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-70, 92, -58] },   // Sani Pass: a clear afternoon in the Drakensberg, the high sun in the north (the southern hemisphere)
-    iroha:    { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.12, sunOff: [-80, 74, 60] },   // Irohazaka: a clear afternoon above Nikko, a lower sun through the woods (long shadows across the hairpins), a soft blue haze over the valley
-    mulholland: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // the Santa Monica Mountains road: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
-    beartooth: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
-    rastro:   { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
-    moki:     { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
-    maunakea: { fog: 0xcad9ec, sun: 0xfff6e8, sunI: 1.42, sky: 0x7aa6e8, gnd: 0x5a4a40, hemiI: 0.58, tint: [1.0, 1.0, 1.01], sat: 1.07, sunOff: [-62, 118, 44], skyTop: 0x1d4da6, skyK: 0.82 },   // Mauna Kea: a clear afternoon above the clouds at 4,000 m, the thin, dry air: a deep blue sky, a strong high sun from the west-south-west, hardly any haze
-    greatalpine: { fog: 0xc4d2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0xaecbec, gnd: 0x5a5638, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.04, sunOff: [-74, 92, -56] },   // the Great Alpine Road: a warm, clear afternoon in the Gippsland bush, the sun from the north-west (the southern hemisphere), a blue-grey eucalypt haze
-    cpalace:  { fog: 0xc9d3db, sun: 0xfff0d8, sunI: 1.08, sky: 0xcddcec, gnd: 0x4c5a32, hemiI: 0.62, tint: [1.02, 1.0, 0.96], sat: 1.02, sunOff: [-60, 74, 66] },   // Crystal Palace: a spring afternoon in south London, a soft English light with a little haze, the sun from the south-west
-    riverside: { fog: 0xd9dfe3, sun: 0xffecc8, sunI: 1.3, sky: 0xc3d8f2, gnd: 0x8a7650, hemiI: 0.62, tint: [1.04, 1.0, 0.93], sat: 1.04, haze: 0.12, hazeCol: [1, 0.86, 0.66], sunOff: [-70, 74, 78] },   // Riverside: a clear, dry afternoon in southern California, the sun from the south-west, a little dust in the warm haze
-    monterey: { fog: 0xd8dfe4, sun: 0xfff0d2, sunI: 1.24, sky: 0xc6dbf0, gnd: 0x84724e, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.04, haze: 0.14, hazeCol: [0.94, 0.9, 0.84], sunOff: [-66, 74, 70] },   // Monterey: a clear afternoon in the coastal hills, the sun from the south-west, a little sea haze in the light
-    longford: { fog: 0xcbd8e2, sun: 0xffe9c6, sunI: 1.24, sky: 0xc2d8f0, gnd: 0x56603a, hemiI: 0.56, tint: [1.03, 1.0, 0.95], sat: 1.06, sunOff: [-70, 76, -66] },   // Longford: a clear late-summer afternoon in northern Tasmania, the sun from the north-west (the southern hemisphere), soft light over the river flats
-    medvode: { fog: 0xc9d7e3, sun: 0xfff0d8, sunI: 1.18, sky: 0xc6dcf4, gnd: 0x58653a, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-80, 84, 58] },   // Medvode: a clear summer afternoon in Gorenjska, the sun from the south-west over the Sava plain, a light haze towards the Alps
-    palomar:  { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.07, sunOff: [-74, 98, 52] },   // Palomar Mountain: a hot, clear afternoon over the south face, the sun from the south-west across the hairpins, a light warm haze over Pauma Valley
   };
   // each track's own grade on top (high quality, the post pass): its shadows and its highlights tinted apart, a little (split toning:
-  // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light, Spa's greyer air
+  // [shadows], [highlights]); cool shade and a warm sun mostly, the Riviera's teal and gold, Toskana's golden light (the real tracks': look.split in js/tracks/<id>.js)
   const SPLIT = {
     lake: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]], city: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], forest: [[0.98, 1.0, 1.03], [1.02, 1.0, 0.98]],
     italia: [[1.0, 0.98, 1.02], [1.05, 1.01, 0.92]], kamp: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]], monaco: [[0.95, 1.0, 1.05], [1.05, 1.0, 0.93]], mountain: [[0.95, 0.99, 1.06], [1.02, 1.0, 0.97]],
-    ouni: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]], vrsic: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.94]], pikes: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]], nring: [[0.97, 1.01, 1.02], [1.02, 1.0, 0.97]],
-    spa: [[0.97, 1.0, 1.04], [1.01, 1.0, 0.99]], rbring: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], suzuka: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.97]], caracoles: [[0.95, 0.99, 1.07], [1.04, 1.0, 0.95]], bathurst: [[0.96, 1.0, 1.05], [1.03, 1.0, 0.96]], rio: [[0.96, 1.0, 1.04], [1.05, 1.01, 0.93]],
-    chapman: [[0.96, 1.0, 1.06], [1.04, 1.0, 0.95]],
-    tianmen: [[0.97, 1.0, 1.03], [1.02, 1.0, 0.98]],
-    sani: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]],
-    moki: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]], cpalace: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.95]],
-    riverside: [[0.96, 0.99, 1.05], [1.06, 1.01, 0.92]], monterey: [[0.96, 0.99, 1.05], [1.05, 1.01, 0.93]],
-    longford: [[0.97, 1.0, 1.04], [1.04, 1.0, 0.95]],
-    medvode: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] };
-  THEMES.toronto = { fog: 0xc9d8e6, sun: 0xfff0d8, sunI: 1.14, sky: 0xc8ddf4, gnd: 0x5d6448, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-60, 88, 70] };   // Toronto: a clear July afternoon by Lake Ontario, the sun from the south-west over the lake
-  SPLIT.toronto = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
-  THEMES.montreal = { fog: 0xc9d9e6, sun: 0xfff0d6, sunI: 1.16, sky: 0xcde1f6, gnd: 0x56603a, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-82, 88, 60] };   // Montréal: a clear June afternoon on the St. Lawrence, the sun from the south-west, a light haze over the river
-  SPLIT.montreal = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
-  THEMES.uncompahgre = { fog: 0xbfcfe0, sun: 0xfff0d8, sunI: 1.24, sky: 0xb8d0f0, gnd: 0x4c5236, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-70, 92, 62] };   // the Uncompahgre Gorge: a clear afternoon in the San Juans, the sun from the south-west over the cliffs, a crisp blue haze
-  SPLIT.uncompahgre = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
-  THEMES.newcastle = { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66] };   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
-  SPLIT.newcastle = [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]];
-  SPLIT.iroha = [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (Irohazaka: cool shade under the maples, a warm autumn sun)
-  THEMES.baldy = { fog: 0xcbd6df, sun: 0xfff0d4, sunI: 1.24, sky: 0xb4cff0, gnd: 0x5c5a3c, hemiI: 0.6, tint: [1.03, 1.0, 0.95], sat: 1.08, sunOff: [-78, 96, 50] };   // Mount Baldy: a clear, warm summer afternoon in the San Gabriels, a strong sun from the south-west (the pines' shadows across the hairpins), a light blue haze over the canyon
-  SPLIT.baldy = [[0.96, 0.99, 1.05], [1.05, 1.0, 0.94]];
-  THEMES.hotham = { fog: 0xc4d4e4, sun: 0xfff2dc, sunI: 1.3, sky: 0xb2cdf0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.06, sunOff: [-64, 96, -58] };   // Mount Hotham: a clear summer afternoon in the Victorian Alps, the high sun from the north-west (the southern hemisphere), a thin blue haze over the ranges
-  SPLIT.hotham = [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]];
-  THEMES.townsville = { fog: 0xcfdde8, sun: 0xfff2da, sunI: 1.34, sky: 0xb4d2f4, gnd: 0x6f6a48, hemiI: 0.64, tint: [1.03, 1.0, 0.95], sat: 1.1, sunOff: [-62, 96, -66] };   // Townsville: a clear dry-season afternoon in the tropics, a strong high sun from the north-west
-  SPLIT.townsville = [[0.96, 1.0, 1.05], [1.05, 1.01, 0.93]];
-  SPLIT.greatalpine = [[0.95, 0.99, 1.05], [1.04, 1.0, 0.95]];   // (the Great Alpine Road: blue shade under the gums, a warm sun)
+  };
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.look && d.theme && !THEMES[d.theme]) { THEMES[d.theme] = d.look; if (d.look.split) SPLIT[d.theme] = d.look.split; }   // (the real tracks' own: def.look in js/tracks/<id>.js, tools/razdeli-proge.mjs; and at the build, below, as before)
   const _c1 = new THREE.Color(), _c2 = new THREE.Color();
   // The time of day as one number, todK: 0 day, 0.5 dusk, 1 night (setAtmos sets it from the setting; an endurance race moves it with its
   // clock: setTodK). The light, the fog and the grade are blended between the day's (the theme's), the dusk's and the night's; dawn (the
@@ -10325,11 +10275,17 @@ const Render = (function () {
     const ring = Math.max(4.2, model.len / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
+  // (maketa-delov/index.html) the showroom's picture moved and zoomed for a page of its own: { cx, cy, x, y, s }: the point (cx, cy) of the
+  // garage's framing (CSS pixels, Render.showRect) drawn at (x, y), s times as big (the camera's view offset); null: the garage's own framing
+  let showView = null;
+  function setShowView(v) { showView = v || null; }
   function showCamSet() {   // the showroom's camera for the screen's shape (landscape: the car left of the panel; portrait: above it), framed by the car's size
     const aspect = Math.max(1, window.innerWidth) / Math.max(1, window.innerHeight), portraitS = aspect < 1;
     const d = portraitS ? 19 : aspect < 1.2 ? 13 : 10.5, k = showFr.k, dy = showFr.dy;
     showCam.aspect = aspect; showCam.updateProjectionMatrix();
     showCam.position.set(2.2 * k, (portraitS ? 4.4 : 3.1) * k + dy, d * k); showCam.lookAt((aspect > 1.2 ? 3.1 : 0) * k, (portraitS ? -2.6 : 0.55) * k + dy, 0);
+    if (showView) { const W = Math.max(1, window.innerWidth), H = Math.max(1, window.innerHeight), v = showView; showCam.setViewOffset(W * v.s, H * v.s, v.cx * v.s - v.x, v.cy * v.s - v.y, W, H); }
+    else if (showCam.view && showCam.view.enabled) showCam.clearViewOffset();
   }
   function renderShowroom(dt) {
     if (!showScene) return;
@@ -10386,7 +10342,7 @@ const Render = (function () {
     if (!showScene) initShowroom();
     setShowCar(M, o.color != null ? o.color : 0xc0392b, o.num || 7, o.deli);   // (o.deli: the garage's parts on it, car.deli)
     const W = o.w || 800, H = o.h || 450, v = o.view || 'side', ortho = ['side', 'front', 'rear', 'top'].indexOf(v) >= 0, car = showCar, hh = car.h;
-    renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H;
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H; if (showCam.view) showCam.view.enabled = false;   // (a still frames itself: no setShowView offset)
     const fov0 = showCam.fov, up0 = showCam.up.clone(); showFloor.visible = o.floor !== false;
     car.grp.rotation.y = 0;
     let geo0 = null;   // o.cut: [parts]: those parts taken off (their ranges collapsed on a copy of its own) and the whole buffer drawn: the lining, the floor, the cabin, the engine bay
@@ -10475,6 +10431,6 @@ const Render = (function () {
   function pitWet() { const T = curTrack; if (!T || !T.def.pit || !world || !world.pitBoxes || !world.pitBoxes.length) return null; const pos = [], uv = [], pw = [], idx = []; pitPuddles(T, pos, uv, pw, idx); return { pos, pw, idx, ap: pitLook(T).ap, asph: !!pitLook(T).asph }; }   // (tests: the pits' wet parts of this world)
   function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 
