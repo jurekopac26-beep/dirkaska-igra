@@ -7,7 +7,7 @@
    odvisno katere živali«, »nekatere živali pa naj bodo same ter se sprehajajo ali pa jejo travo«, »12 prizorov različnih živali na različnih
    progah«: how they keep company is the species' own (SOC: alone, a male and a female, or a herd of 3-10 with their young: a red deer stag with
    his hinds, a sow with her piglets, a mob of kangaroos ...); one alone walks to and fro or grazes (LIVE: its own mesh, legs and head moved in
-   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and sixteen tracks have eighteen scenes
+   the vertex shader, World.lifeStep from World.update; from SREDNJA up, as the worlds' other animals), and fifteen tracks have seventeen scenes
    of their own (SCENE: deer at a feeder in the Eifel, chamois on Vršič, a mob of kangaroos at Bathurst, moose at a pond in Finland, koalas in
    the gum trees ...; the farm's animals, the ducks and the stork where they really are, from OSM: pigs at the farm in Zbilje, horses at a farm
    in Ouninpohja, ducks and swans on the lake at Crystal Palace, one stork on its pole in Medvode that flies off as the car comes, flyStep).
@@ -181,7 +181,7 @@
     wombat: () => wombat(), cockatoo: () => bird(0xf2f2ee, { crest: 0xf2d21a }), galah: () => bird(0xe88aa0, { headCol: 0xf2c8d0, wing: 0x9aa0a8 }), magpie: () => bird(0x15171c, { wing: 0xf2f2ee }),
     stork: () => bird(0xf2f2ee, { s: 2.2, legs: 0.6, neck: 0.25, wing: 0x15171c, beak: 0.2, beakCol: 0xd8262a }), egret: () => bird(0xf8f8f2, { s: 1.8, legs: 0.5, neck: 0.35, beak: 0.16, beakCol: 0xe0b020, legCol: 0x15171c }),
     goose: () => bird(0x8a7a64, { s: 1.6, neck: 0.18, headCol: 0x15171c, beak: 0.08, legs: 0.12, legCol: 0x15171c }),
-    bear: () => bear(), blackbear: () => bear(0x1d1a18), blackbearC: () => bear(0x7a4a2a), macaque: () => monkey(0x8a7a6a, 0xd86a5a), baboon: () => monkey(0x7a6a4a, 0x3a2e24), caiman: croc,
+    bear: () => bear(), blackbear: () => bear(0x1d1a18), macaque: () => monkey(0x8a7a6a, 0xd86a5a), baboon: () => monkey(0x7a6a4a, 0x3a2e24), caiman: croc,
     // the farm's and the park's (the user, 3. 11. 2026: »6 slik različnih živali z različnimi elementi«): pigs and their piglets, hens, ducks and
     // swans on a pond, koalas in the gum trees
     pig: B({ L: 1.15, H: 0.36, W: 0.5, bh: 0.5, col: 0xe8b4a4, legs: 0xd89c8c, neck: 0.08, nk: 0.1, hs: 0.34, snout: 0.7, snoutCol: 0xe89e8e, ears: 0.45, earCol: 0xe0a494, tail: 'curly', graze: true }),
@@ -232,8 +232,8 @@
   function shrine() { const g = new THREE.Group(); g.add(box(0.12, 1.3, 0.12, 0xb9bdc4, 0, 0.65, 0)); g.add(box(0.9, 0.7, 0.7, 0xf2e6c8, 0, 1.6, 0)); g.add(cyl(0.0, 0.75, 0.45, 4, 0xd8432a, 0, 2.18, 0, { ry: Math.PI / 4 })); g.add(box(0.3, 0.3, 0.04, 0xd8262a, 0, 1.6, 0.36)); return g; }   // a spirit house on its post
   function palmHut() { const g = new THREE.Group(); for (const [x, z] of [[1.2, 1.2], [-1.2, 1.2], [1.2, -1.2], [-1.2, -1.2]]) g.add(box(0.12, 2.0, 0.12, 0x7a5a3a, x, 1.0, z)); g.add(cyl(0.05, 2.1, 1.0, 6, 0xb89a5a, 0, 2.45, 0)); g.add(picnic()); return g; }
   function trough() { const g = new THREE.Group(), wd = 0x6b5034; g.add(box(2.6, 0.5, 0.7, wd, 0, 0.4, 0)); g.add(box(2.4, 0.04, 0.52, 0x4a6a78, 0, 0.62, 0)); for (const x of [-1.1, 1.1]) g.add(box(0.12, 0.2, 0.8, 0x4a3828, x, 0.1, 0)); return g; }   // (a water trough on a pasture)
-  // the six scenes' own things (SCENE: things): a stork's nest on its pole (the nest's rim 6.62 m up), a duck house floating on its raft, a gum
-  // tree (its fork 2.6 m up: a koala sits in it), two bear-proof bins, a pig pen with its shed, a horses' paddock (its rails round 16 x 11 m)
+  // the new scenes' own things (SCENE: things): a stork's nest on its pole (the nest's rim 6.62 m up), a duck house floating on its raft, a gum
+  // tree (its fork 2.6 m up: a koala sits in it), a pig pen with its shed, a horses' paddock (its rails round 16 x 11 m)
   // and their stable
   function storkNest() { const g = new THREE.Group(), tw = 0x7a6248;
     g.add(cyl(0.12, 0.16, 6.2, 6, 0x6b5a48, 0, 3.1, 0)); g.add(cyl(0.62, 0.62, 0.06, 8, 0x5a4632, 0, 6.18, 0)); g.add(cyl(0.74, 0.56, 0.44, 9, tw, 0, 6.4, 0)); g.add(cyl(0.5, 0.5, 0.05, 8, 0x4a3a28, 0, 6.6, 0));
@@ -245,9 +245,6 @@
     g.add(cyl(0.2, 0.3, 2.6, 7, bk, 0, 1.3, 0)); for (const [y, r] of [[0.6, 0.4], [1.3, 2.1], [2.1, 4.0]]) g.add(box(0.2, 0.42, 0.06, bk2, Math.cos(r) * 0.24, y, Math.sin(r) * 0.24, { ry: -r }));
     for (const [x, y, z, t] of [[-1.1, 5.7, -0.3, 0.2], [0.95, 6.0, 0.2, 0.19], [0.1, 6.3, -0.9, 0.15]]) g.add(bar([0, 2.5, 0], [x, y, z], t, bk));
     for (const [x, y, z, r, k] of [[-1.3, 6.2, -0.3, 1.25, 0], [1.1, 6.5, 0.25, 1.15, 1], [0.1, 6.9, -1.0, 1.0, 2], [-0.3, 7.1, 0.5, 0.85, 0], [0.6, 5.6, -0.6, 0.8, 2]]) g.add(sph(r, 7, 4, lf[k], x, y, z, { s: [1, 0.62, 1] }));
-    return g; }
-  function bearBin() { const g = new THREE.Group(); g.add(box(2.2, 0.12, 0.9, 0x9a968e, 0, 0.06, 0));
-    for (const x of [-0.5, 0.5]) { g.add(box(0.85, 1.12, 0.66, 0x8a7a5a, x, 0.68, 0)); g.add(box(0.88, 0.06, 0.7, 0x5e5240, x, 1.27, -0.03, { rx: -0.08 })); g.add(box(0.5, 0.06, 0.06, 0xc8ccd2, x, 1.05, 0.35)); g.add(box(0.86, 0.1, 0.67, 0x5e5240, x, 0.4, 0)); }
     return g; }
   function pigsty() { const g = new THREE.Group(), wd = 0x7a5a3a, W = 7.0, D = 5.5;
     const side = (x0, z0, x1, z1, gap) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 1.75)), ry = Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2;
@@ -268,9 +265,9 @@
     for (const x of [-1.5, 0, 1.5]) { g.add(box(1.1, 1.3, 0.05, 0x6a2a1a, x, 0.9, 1.52)); g.add(box(1.15, 0.06, 0.06, wh, x, 1.57, 1.53)); g.add(bar([x - 0.5, 0.3, 1.54], [x + 0.5, 1.5, 1.54], 0.05, wh)); }
     g.add(box(0.8, 0.5, 0.05, 0x2a3440, -1.5, 2.0, 1.52)); g.add(box(0.8, 0.5, 0.05, 0x2a3440, 1.5, 2.0, 1.52)); return g; }
   const THINGS = { huntStand, feedRack, logPile, fallenTree, stumps, cabin: () => cabin(), cabinR: () => cabin(0x9b2c22, 0x2b2d31), beehive, hayrack, waterTank, windpump, vending, torii, lantern, cactus, mushrooms, signPost, picnic, shrine, palmHut, trough,
-    storkNest, duckHouse, eucalyptus, bearBin, pigsty, paddock, stable };
+    storkNest, duckHouse, eucalyptus, pigsty, paddock, stable };
   // the footprint of a thing (the glade's radius: the trees within it go)
-  const ROOM = { huntStand: 3.6, feedRack: 3.2, logPile: 4.0, fallenTree: 4.6, stumps: 2.8, cabin: 5.2, cabinR: 5.2, beehive: 3.4, hayrack: 5.0, waterTank: 2.8, windpump: 3.0, vending: 2.0, torii: 3.2, lantern: 1.6, cactus: 1.8, mushrooms: 1.8, signPost: 1.6, picnic: 2.6, shrine: 1.8, palmHut: 3.0, storkNest: 1.6, duckHouse: 1.2, eucalyptus: 2.4, bearBin: 1.6, pigsty: 4.6, paddock: 9.5, stable: 3.4, trough: 2.6 };
+  const ROOM = { huntStand: 3.6, feedRack: 3.2, logPile: 4.0, fallenTree: 4.6, stumps: 2.8, cabin: 5.2, cabinR: 5.2, beehive: 3.4, hayrack: 5.0, waterTank: 2.8, windpump: 3.0, vending: 2.0, torii: 3.2, lantern: 1.6, cactus: 1.8, mushrooms: 1.8, signPost: 1.6, picnic: 2.6, shrine: 1.8, palmHut: 3.0, storkNest: 1.6, duckHouse: 1.2, eucalyptus: 2.4, pigsty: 4.6, paddock: 9.5, stable: 3.4, trough: 2.6 };
 
   /* ---------------- which life where: the species and the things of each track's country and region ----------------
      a: the animals (each in the company its kind keeps: SOC), t: the things in the woods, open: animals also out on open ground
@@ -298,7 +295,7 @@
     kangaroo: { one: 0.15, pair: 0.15, herd: [3, 10], F: 'kangarooF', y: 'joey', yp: 0.3 },   // (a mob: a big male, the females, their joeys)
     emu: { one: 0.2, pair: 0.5, herd: [3, 6], ys: 0.45, yp: 0.5 },   // (a father with his chicks)
     cockatoo: { one: 0.1, herd: [4, 10] }, galah: { one: 0.1, herd: [4, 10] }, magpie: { one: 0.3, pair: 0.6, herd: [3, 5] }, stork: { one: 0.4, pair: 0.6 }, egret: { one: 0.4, herd: [3, 8] },
-    goose: { pair: 0.3, herd: [3, 10], ys: 0.55, yp: 0.3 }, bear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbearC: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 },   // (a she-bear with two cubs)
+    goose: { pair: 0.3, herd: [3, 10], ys: 0.55, yp: 0.3 }, bear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 }, blackbear: { one: 0.7, herd: [3, 3], ys: 0.45, yp: 1 },
     macaque: { one: 0.1, herd: [4, 10], ys: 0.6, yp: 0.3 }, baboon: { herd: [4, 10], ys: 0.6, yp: 0.3 }, caiman: { one: 0.5, herd: [2, 4], ys: 0.7, yp: 0.3 },
     pig: { herd: [4, 9], rest: ['pig', 'pig', 'pigB'], y: 'pigletP', yp: 0.5 }, hen: { herd: [4, 8], rest: ['hen', 'henW', 'hen'] }, duck: { pair: 0.4, herd: [4, 9], F: 'duckF', rest: ['duck', 'duckF', 'duckF'] },
     swan: { pair: 1 }, koala: { one: 1 },
@@ -752,7 +749,7 @@
     return n;
   }
 
-  /* ---------------- the eighteen scenes (the user: »12 prizorov različnih živali na različnih progah«, later six more): on each of these tracks one larger
+  /* ---------------- the seventeen scenes (the user: »12 prizorov različnih živali na različnih progah«, later six more, less the bear at Uncompahgre): on each of these tracks one larger
      company of its own near the road, where the chase camera sees it (a flat open spot after a straight, nothing built there): kind and its
      herd's size n; with: a second company [kind, 'one' | 'pair' | 'herd', n]; thing: a thing of the place among them; pond: a pool;
      live: how many of the herd walk or graze ---------------- */
@@ -770,7 +767,8 @@
     sani: { kind: 'eland', n: 8, with: ['baboon', 'herd', 5], live: 1 },   // (elands, a troop of baboons)
     beartooth: { kind: 'bison', n: 10, live: 2 },   // (a herd of bison)
     rio: { kind: 'capybara', n: 8, with: ['caiman', 'herd', 2], pond: true },   // (capybaras and caimans at the water)
-    // six more (the user, 3. 11. 2026: »6 slik različnih živali z različnimi elementi«), each with things of its own: things [{ t: the thing, a, b
+    // six more (the user, 3. 11. 2026: »6 slik različnih živali z različnimi elementi«; the black bear with her cubs at Uncompahgre went when the
+    // US tracks but Pikes Peak became test tracks, the user, 5. 11. 2026), each with things of its own: things [{ t: the thing, a, b
     // (from the spot: along the road, away from it), ry (its turn from facing the road), on: animals perched on it [kind, its x, y, z, scale,
     // turn] (in a nest, in a tree's fork, on a table: they stay there) }]; pond { a, b, r, mud }; at: the herd's middle; tight: its spacing;
     // withAt: the second company's place; room: the spot's radius kept clear of anything built (7 m)
@@ -781,7 +779,6 @@
       { kind: 'stork', n: 0, things: [{ t: 'storkNest', a: 2.6, b: 3.2, fly: ['stork', 0.18, 6.62, 0.05, 1, 0.5] }, { t: 'logPile', a: -4.6, b: 3.6, ry: 1.3 }], room: 8 }],   // (one stork on its nest on its pole; a pile of logs)
     cpalace: { kind: 'duck', n: 7, m: 1990, side: 1, b: 4, float: 11.7, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on the park's lake by the road, their duck house: the user, »race postavi v že narejeno vodo«; float: the water's level, they float on it)
     greatalpine: { kind: 'koala', n: 1, at: [-1.2, -0.6], things: [{ t: 'eucalyptus', a: 0.5, b: 1.6, on: [['koala', 0, 2.56, 0.07, 1.4, 0]] }, { t: 'eucalyptus', a: 4.6, b: 3.6, ry: 2.2, on: [['koala', 0, 2.56, 0.07, 1.3, 2.4]] }, { t: 'waterTank', a: -7.0, b: 5.0 }], with: ['emu', 'pair'], withAt: [-4.5, 1.5] },   // (koalas: two in the gum trees' forks, one come down to the ground; two emus)
-    uncompahgre: { kind: 'blackbearC', n: 3, at: [0.5, 0.5], things: [{ t: 'bearBin', a: 2.6, b: 3.2, ry: 0.2 }, { t: 'picnic', a: -2.6, b: 2.6, ry: 0.35, on: [['blackbearC', 0.35, 0.78, 0.05, 0.42, 1.2]] }, { t: 'signPost', a: -5.5, b: 0.5 }] },   // (a cinnamon black bear and two of her cubs at the bear-proof bins, the third up on the picnic table)
   };
   function pond(g, gH, x, z, r, R, mud) {   // a pool on the ground (it follows it: the scene's spot is near flat), a muddy rim round it; mud: a wallow
     const n = 14, rim = mud ? [0.42, 0.35, 0.25] : [0.36, 0.3, 0.22], wat = mud ? [0.3, 0.23, 0.15] : [0.16, 0.27, 0.3], pts = [];

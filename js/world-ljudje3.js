@@ -457,7 +457,7 @@
       } };
   }
 
-  /* 6 · Rojstni dan (Longford, Big Sur): a child's birthday on the lawn: a bouncy castle (towers, net walls), three children
+  /* 6 · Rojstni dan (Longford): a child's birthday on the lawn: a bouncy castle (towers, net walls), three children
      jumping in it; a table with a pink cloth, the cake and its candles, plates, cups, juice, presents beside it; bunches of balloons, a line
      of bunting from the castle to a pole; the father at the grill, the mother filming the castle, the grandfather in a chair with his coffee;
      two more children in party hats, balloons on strings. As the car comes the two run to the fence with their balloons and wave; the ones in
@@ -565,6 +565,5 @@
   site('medvode', [['cebelarji', 2144, -1], ['ribici', 3604, 1, { lake: 28.0 }]]);
   site('vrsic', [['seno', 3464, 1]]);
   site('longford', [['rojstnidan', 5128, 1]]);
-  site('bigsur', [['rojstnidan', 792, 1]]);
   for (const n of ['ribici', 'seno', 'cebelarji', 'balinanje', 'sah', 'rojstnidan']) { SUMMER.add(n); BUSY_HANDS.add(n); }   // (a summer's day's; their hands full: no umbrellas)
 })();

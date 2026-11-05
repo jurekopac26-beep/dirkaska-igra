@@ -24,7 +24,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Bang Saen, Tajska | 6 | tribuna z valom 528, fotografi in TV kamera 1864, varnostniki s psom 2080, gasilci in reševalci 2296, maršali 2440, gasilci in reševalci 2728 |
 | Bathurst, Avstralija | 10 | mehaniki pri zidu boksov 70, žar pred avtodomom 640, delavci na progi 744, gasilci in reševalci 1104, vhod 1976, maršali 2784, fotografi in TV kamera 4456, oder iz gradbenih odrov 4984, reševalna postaja 5296, tribuna z valom 5790 |
 | Beartooth, ZDA | 1 | piknik 1696 |
-| Big Sur, ZDA | 5 | piknik 56, ležalniki in senčniki 392, otroški rojstni dan s starši 792, fotografi na bregu 1984, kolesarji 3664 |
+| Big Sur, ZDA | 4 | piknik 56, ležalniki in senčniki 392, fotografi na bregu 1984, kolesarji 3664 |
 | Los Caracoles, Čile | 4 | kamp s prikolico 40, piknik 6152, navijaški klub 9936, fotografi na bregu 10488 |
 | Crystal Palace, Anglija | 6 | maršali 96, sodniki s časomerom 248, gasilci in reševalci 600, fotografi na bregu 1064, piknik 1424, vhod 2912 |
 | Detroit, ZDA | 1 | maršali 1944 |
@@ -115,7 +115,7 @@ Prizori stojijo na mestih, kjer je ograja blizu ceste in je pred njimi ravnina: 
 
 ## Želje po slikah 1–12 (3. 11. 2026) in kaj je narejeno (5. 11. 2026)
 
-Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so. Mesta so iz OSM (API `api.openstreetmap.org/api/0.6/map?bbox=…`, nikoli Google), preverjena z `tools/ljudje/mesta.mjs --preveri` in `tests/ljudje-mesta.test.js`.
+Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so. Ko so proge ZDA razen Pikes Peaka postale testne in zamrznjene (odločitev uporabnika 5. 11. 2026), sta odpadla baribalka z mladiči (10, Uncompahgre) in rojstni dan na Big Suru; rojstni dan je v Longfordu. Mesta so iz OSM (API `api.openstreetmap.org/api/0.6/map?bbox=…`, nikoli Google), preverjena z `tools/ljudje/mesta.mjs --preveri` in `tests/ljudje-mesta.test.js`.
 
 - **1, 2, 4 in 5** (»postavi samo tam kjer je tudi v resnici«):
   - Ribiči na bregu pravega jezera, brez lastnega ribnika (`K.lake`: breg toliko metrov za ograjo; trstičje ob bregu, pomol v vodo; do ograje je daleč, zato ostanejo na mestu in mahajo): Medvode, Zbiljsko jezero, 3604 desno (breg 28 m za ograjo); Ouninpohja, jezero ob vasi Ouni (`def.lakes`), 5640 desno (breg 18,5 m).

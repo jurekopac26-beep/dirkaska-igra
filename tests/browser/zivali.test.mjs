@@ -11,7 +11,7 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'uncompahgre', 'medvode'];   // (Uncompahgre: a scene with things of its own, one of its animals up on one; Ouninpohja, Medvode: scenes at their real places, Medvode's stork that flies off)
+const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off)
 const T = checker('life in the woods, the parked car');
 const srv = await serve();
 const browser = await launch();

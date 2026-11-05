@@ -91,11 +91,11 @@
   "jsMs": 2.17
  },
  "bigsur": {
-  "calls": 139,
+  "calls": 138,
   "maxCalls": 153,
-  "kverts": 329,
-  "maxKverts": 411,
-  "jsMs": 2.13
+  "kverts": 323,
+  "maxKverts": 379,
+  "jsMs": 1.91
  },
  "tianmen": {
   "calls": 153,
@@ -108,8 +108,8 @@
   "calls": 161,
   "maxCalls": 195,
   "kverts": 361,
-  "maxKverts": 466,
-  "jsMs": 1.79
+  "maxKverts": 468,
+  "jsMs": 1.26
  },
  "sani": {
   "calls": 107,
