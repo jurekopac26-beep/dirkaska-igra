@@ -51,9 +51,11 @@ try {
     const dk = await page.evaluate(() => {
       const V = Render.ext.vecer, mk = () => ({ sunI: 1, hemiI: 1, off: [10, 30, 10], sunC: new THREE.Color(0xff8a40), fog: new THREE.Color(0xeea070), sky: new THREE.Color(0xc49ab8), gnd: new THREE.Color(0x6a4430), bloom: 0.5 });
       const a = mk(), b = mk(), c = mk(); V.dusk(a, { id: 'x' }, 0); V.dusk(b, { id: 'y', test: true }, 0); V.dusk(c, { id: 'x' }, 1);
-      return { real: { sunI: a.sunI, hemiI: a.hemiI, sky: a.sky.getHex(), blue: a.sky.b - a.sky.r }, test: { sunI: b.sunI, hemiI: b.hemiI, sky: b.sky.getHex(), bloom: b.bloom }, rain: c.sunI };
+      return { D: V.DUSK, real: { sunI: a.sunI, hemiI: a.hemiI, sky: a.sky.getHex(), blue: a.sky.b - a.sky.r }, test: { sunI: b.sunI, hemiI: b.hemiI, sky: b.sky.getHex(), bloom: b.bloom }, rain: c.sunI };
     });
-    T.check('the dusk\'s light on a real track: the sun and the sky\'s light dimmer, the sky bluer; a test track\'s as it was; in the rain less', dk.real.sunI < 0.8 && dk.real.hemiI < 0.85 && dk.real.blue > 0 && dk.test.sunI === 1 && dk.test.hemiI === 1 && dk.test.sky === 0xc49ab8 && dk.test.bloom === 0.5 && dk.rain > dk.real.sunI && dk.rain < 1,
+    // (DUSK: how much later a real track's evening is, the user's choice grafika-05-mrak; 0: the light as it was)
+    const D = dk.D, near = (x, y) => Math.abs(x - y) < 1e-6;
+    T.check('the dusk\'s light on a real track: the sun and the sky\'s light dimmer, the sky bluer (by DUSK); a test track\'s as it was; in the rain less', near(dk.real.sunI, 1 - 0.6 * D) && near(dk.real.hemiI, 1 - 0.45 * D) && (D === 0 || (dk.real.blue > 0 && dk.rain > dk.real.sunI && dk.rain < 1)) && dk.test.sunI === 1 && dk.test.hemiI === 1 && dk.test.sky === 0xc49ab8 && dk.test.bloom === 0.5,
       JSON.stringify(dk));
     const wd = await wetLamps(page);
     // night, as before: the floodlights at their full strength
