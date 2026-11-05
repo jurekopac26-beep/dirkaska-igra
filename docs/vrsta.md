@@ -18,6 +18,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Razdelitev skupnih datotek prog po progah | 3 | po sklopu 4 |
 | Grafika: 02 zastavice, 03 zaslon ob tribuni, 05 večerne dirke | 3 | po vrsti |
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) |
+| Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 
 ## Vrsta (stanje 4. 11. 2026)
@@ -27,9 +28,10 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 1 | #315 | Deli iz garaže, sklop 4 (pregled 608 možnosti KOLIBRIJA, stran za ogled, testi) | 3 | pripravljen (seja session_01WbgGzuLb5rcyQy259XTWg8); povezani testi lokalno zeleni, Ready; rok ned. 8. 11. 10.00 (pred račun 2 ureja `js/cars/*`) |
-| 2 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
-| 3 | #259 | tribune iz OSM | 3 | čaka |
-| 4 | #250 | 7 novosti | 3 | čaka |
+| 2 | #321 | krajši krog testov na GitHubu: brskalniški testi v 6 delih (~112 → ~76 min), krog iste kode ~5 min (krogi samo z dokumenti odpadejo) | 3 | pripravljen (seja session_01WbgGztTqNStyLT9BjAp1ez); osnutek do vrste; prednost, ker skrajša vse naslednje kroge (odločitev uporabnika 5. 11.: hitrejši testi) |
+| 3 | #289 | 6 skupin ljudi, 6 prizorov z živalmi | 3 | v delu |
+| 4 | #259 | tribune iz OSM | 3 | čaka |
+| 5 | #250 | 7 novosti | 3 | čaka |
 | 6 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 7 | #226 | Bâlea | 3 | čaka |
 | 8 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
