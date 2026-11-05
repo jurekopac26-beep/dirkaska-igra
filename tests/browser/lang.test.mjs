@@ -41,8 +41,8 @@ try {
   const c2 = await page.evaluate(() => ({ desc: document.getElementById('car-desc').textContent, stats: document.getElementById('car-stats').innerText, next: document.getElementById('car-next').textContent,
     cat: document.getElementById('car-cat').textContent, chips: [...document.querySelectorAll('#car-cats .cat-chip')].map(b => b.textContent).join('/'), strip: document.getElementById('car-strip').getAttribute('aria-label') }));
   const s2 = await slovene();
-  T.check('cars in English: "Four-wheel drive. An 80s rally car ... hp", Power / Grip, Next; the categories (Small cars … Specials), "Rally · 2/3" under the name (the BURJA R7)', /^(Rear-wheel drive|Four-wheel drive|Front-wheel drive|Mid-engined)\. [A-Z][a-z].*\. \d+ hp, \d+ kg\.$/.test(c2.desc) && /Power/.test(c2.stats) && /Grip/.test(c2.stats) && c2.next === 'Next' &&
-    c2.chips === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && c2.cat === 'Rally · 2/3' && c2.strip === 'Vehicles in the category' && !s2.length, JSON.stringify({ c2, s2 }));
+  T.check('cars in English: "Four-wheel drive. An 80s rally car ... hp", Power / Grip, Next; the categories (Small cars … Specials), "Rally · 2/4" under the name (the BURJA R7)', /^(Rear-wheel drive|Four-wheel drive|Front-wheel drive|Mid-engined)\. [A-Z][a-z].*\. \d+ hp, \d+ kg\.$/.test(c2.desc) && /Power/.test(c2.stats) && /Grip/.test(c2.stats) && c2.next === 'Next' &&
+    c2.chips === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && c2.cat === 'Rally · 2/4' && c2.strip === 'Vehicles in the category' && !s2.length, JSON.stringify({ c2, s2 }));
   await act('to-upg'); await page.waitForTimeout(250);
   const u2 = await page.evaluate(() => [...document.querySelectorAll('#upg-list .upg-row')].map(r => r.querySelector('.rlbl').textContent + ': ' + [...r.querySelectorAll('button')].map(b => b.textContent).join('/')).join(' | '));
   const su = await slovene();

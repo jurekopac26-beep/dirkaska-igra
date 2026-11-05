@@ -31,7 +31,7 @@ Videz (vprašanje `novi-avti-videz`): LOS V8 kot **karavan** (priporočeno, dolg
 - **NOSOROG E**: `ev` (brez menjalnika), t100 ~2,7–3,1, vmax omejen (`vLim` ~200 km/h); visoko težišče (`sway` ~2), na makadamu kot MEDVED 4x4, dobro prenese skoke (`landV`, `landK`), robusten (`dmgK` ~0,8); `len` 5,45 m, `wid` 2,06 m.
 - **ŠAKAL D**: zasuk koles (`steerMax`) ~40 % večji od SOKOL R, zadnja kolesa se lažje zavrtijo v prazno (`spinK` > 1), t100 ~3,0–3,4 (omejen z oprijemom), vmax ~250–260; najboljši rezultat v avtošoli Drift.
 - **OREL GT3**: veliko aerodinamike (`aero` ~0,00045, meja 0,0005), zavore `brakeK` ~1,4, t100 ~2,7–3,1, vmax ~265–280; motor v sredini: bolj živ pri zavijanju kot TIGER GT. **Izenačitev razreda**: krog z OREL in s TIGER GT na Bathurstu in Spa se razlikuje za največ 1 % (meritev v testu).
-- **GAMS RH**: kot LEV R, a močnejši in lažji na izhodu iz ovinka; t100 ~2,3–2,7, na makadamu najboljši v igri.
+- **GAMS RH** (narejeno): izmerjeno 0–100 2,41 s, 242 km/h, 2,40 g, 22,9 m; štirikolesni pogon LEV R z več moči in oprijema na izhodu iz ovinka (`tracK` 1,2, hibrid), na makadamu najboljši v igri (`loose` 1,12: 0–100 2,92 s in 2,12 g, SAMUM 4x4 2,97 s in 2,06 g), mehkejši doskoki (`landV` 15, `landK` 0,6). Samodejna vožnja: Ouninpohja, Finska 221,7 s (ZMAJ 85 222,2), Sani Pass, Južna Afrika 180,3 s (najhitrejši v igri).
 
 ## Model za kamero za avtom
 Kamera za avtom je visoko in daleč (vozilo je na zaslonu majhno), zato štejejo obris, streha, zadek, luči in kolesa, ne drobni detajli. Proračun KIT: avto 1400 / 800 trikotnikov (zunanja lupina / notranji del), kolesa po obstoječih pravilih; notranjost samo preprost sedež in voznik.
@@ -40,7 +40,7 @@ Kamera za avtom je visoko in daleč (vozilo je na zaslonu majhno), zato štejejo
 - **NOSOROG E**: keson s tovorom in rezervnim kolesom (pickup) ali visoka streha s košaro (SUV); vrstica luči na strehi, velika kolesa, visoko podvozje, pas luči spredaj in zadaj.
 - **ŠAKAL D**: širok paket blatnikov, veliko zadnje krilo, nizek prednji odbijač, nalepke s številko; dim gum je že v igri.
 - **OREL GT3**: nizek, dolg, kabina spredaj, zračnik na strehi (viden od zgoraj), veliko krilo s stranicama, številka na strehi in vratih.
-- **GAMS RH**: kratek, širok, veliko krilo, blatniki z odprtinami, strešni zračnik, blatni zavesici.
+- **GAMS RH** (narejeno): kratek, širok hečbek na škatlastih blatnikih z rešetkami na prednjih, veliko krilo na robu strehe s stranicama po C-stebrih, strešni zračnik z zeleno lučko hibrida, odprt zadek (mreža, difuzor, en izpuh desno), blatni zavesici za vsakim kolesom; streha v barvi črte, ob straneh greben gorskih vrhov.
 Deli, ki odpadejo (krilo, odbijač, pokrov), dobijo tečaje kot pri obstoječih vozilih. Videz se preveri s `node tools/carshots.mjs <id>` in s kamere za avtom na Bathurstu in Vršiču.
 
 ## Zvok
@@ -90,3 +90,4 @@ Skupaj **~34 h** dela sej (brez čakanja na teste).
 - **Naslednja vozila:** vsako vozilo nova seja (Opus, napor max), največ 2 hkrati, vsaka v svoji veji iz `novi-avti/vozila` (npr. `novi-avti/los`), nato spoj v zbirno vejo; pull request ostane en (#361).
 - **Postopek (kot OSA R, ~4–6 h):** (1) `js/cars/<id>.js` po vzoru `js/cars/osa.js` (kompakten KIT, deli s tečaji, `mounts` krilo, luči, platišča), oblika iz `tools/novi-avti/prototipi.js` (izbrani videz). (2) Fizika: meritev kot `tests/lib/handling.js` (t100, vmax, latG, d100), cilji v mejah `ENVELOPE` iz `tests/fleet.test.js`, `expect` okoli meritve. (3) Skupni seznami samo na konec: `index.html`, `garaza.html`, `ROSTER`, `js/lang.js` (opis do 90 znakov, brez kW in kg), `docs/igra.md` (tabela kategorije, število vozil), `README.md` (število). (4) Pozor: `tests/browser/lang.test.mjs` šteje male avte (»Small cars · 2/7«); del, katerega središče je več kot 0,35 m od tabele delov, dobi `over` v `parts` (brskalniški fleet z `FLEET_ONLY=<id>`). (5) Testi: `npm run test:related`; slika s kamere za avtom na Bathurstu (`tools/carshots.mjs <id>`).
 - V testih in slikah ne uporabljaj prog ZDA razen Pikes Peaka (#355). Ne spreminjaj `js/cars/kolibri.js`, `js/deli/*` in drugih vozil. Zadnja seja izbriše `tools/novi-avti/`.
+- **GAMS RH:** narejen v veji `novi-avti/gams` (spojena v `novi-avti/vozila`, #361); `tools/novi-avti/` ostane za NOSOROG E (pozneje).
