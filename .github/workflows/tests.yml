@@ -1,18 +1,29 @@
 # Samodejni testi ob vsakem pull requestu in ob vsaki spremembi veje main (glej tests/README.md).
 # Osnutek (draft) pull requesta težkih poslov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem
 # potisku (odločitev uporabnika 31. 10. 2026: manj čakanja v vrsti, GitHub hkrati izvaja le ~20 poslov).
+# Ista koda se ne testira dvakrat (5. 11. 2026): posel Koda izračuna prstni odtis kode (tests/run.js --koda: vse datoteke razen .md, ki jih
+# bere samo test dokumentov); če je ista koda že prestala vse posle (artefakt koda-<odtis>, ki ga zapiše posel Zapis), težki posli odpadejo
+# (preskočen posel šteje kot uspešen) in tečejo samo testi, ki berejo .md (tests/run.js --dokumenti: imena znamk, zamrznjene testne proge). Tako odpadeta krog na main po
+# združitvi pull requesta, katerega koda je že prestala vse teste, in krog po potisku samo dokumentov (docs/vrsta.md, načrt teme, README.md).
+# Ročni zagon (workflow_dispatch) teče v celoti, razen z vhodom preskoci.
 name: Testi
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preskoci:
+        description: 'Preskoči težke posle, če je ista koda že prestala vse teste (privzeto teče vse)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
-# Pull request: nov zagon na isti veji prekine starega (ki bi preverjal staro stanje).
+# Pull request: nov zagon na isti veji prekine starega (ki bi preverjal staro stanje); zaprtje ali združitev pull requesta prekine njegov
+# tekoči krog (po združitvi isto kodo preveri krog na main, zaprt pull request rezultata ne potrebuje) in sam ne požene ničesar.
 # main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026);
 # prej je vsaka združitev prekinila krog na main, zato se noben ni končal in varovalka po združitvi ni delovala.
 concurrency:
@@ -20,9 +31,45 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # prstni odtis kode in ali je ista koda že prestala vse posle (artefakt koda-<odtis> iz teka tega repozitorija, ne iz forka);
+  # ob napaki pri iskanju tečejo vsi posli
+  koda:
+    name: Koda
+    if: ${{ !(github.event_name == 'pull_request' && (github.event.pull_request.draft || github.event.action == 'closed')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read   # (seznam artefaktov)
+    outputs:
+      odtis: ${{ steps.k.outputs.odtis }}
+      preverjeno: ${{ steps.k.outputs.preverjeno }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: k
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SME: ${{ github.event_name != 'workflow_dispatch' || inputs.preskoci }}
+        run: |
+          odtis=$(node tests/run.js --koda) || odtis=
+          tek=
+          if [ -n "$odtis" ] && [ "$SME" = true ]; then
+            tek=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=koda-$odtis&per_page=30" \
+              --jq '[.artifacts[] | select(.expired | not) | select(.workflow_run.head_repository_id == .workflow_run.repository_id) | .workflow_run.id] | first // empty') || tek=
+          fi
+          if [ -n "$tek" ]; then preverjeno=true; else preverjeno=false; fi
+          echo "odtis=$odtis" >> "$GITHUB_OUTPUT"
+          echo "preverjeno=$preverjeno" >> "$GITHUB_OUTPUT"
+          if [ "$preverjeno" = true ]; then
+            echo "Ista koda (tests/run.js --koda: $odtis) je že prestala vse teste v teku $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$tek: težki posli odpadejo, tečejo samo testi dokumentov (tests/run.js --dokumenti)." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Koda $odtis: tečejo vsi posli$([ "$SME" = true ] || echo ' (ročni zagon brez preskoka)')." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
   node:
     name: Fizika, AI in dirke
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
+    needs: koda
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
     runs-on: ubuntu-24.04
     # (nabor traja na CI 19–21, 27–33 ali 37–42 min, odvisno od stroja, ki ga dodeli GitHub (3. 11. 2026: počasni stroji več kot polovica
     # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min)
@@ -38,17 +85,19 @@ jobs:
         env:
           TEST_TIMEOUT_MIN: 25   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min in raste z vsako progo)
 
-  # Brskalniški testi na štirih strojih hkrati: tests/run.js --shard k/4 razdeli teste po tem, koliko časa traja vsak (SECS v
-  # tests/run.js, časi iz povzetkov teka main 4. 11. 2026: ~99 min na del). Celoten nabor na enem stroju bi trajal ~6,5 h in se z vsako novo progo podaljša.
+  # Brskalniški testi na šestih strojih hkrati: tests/run.js --shard k/6 razdeli teste po tem, koliko časa traja vsak (SECS v
+  # tests/run.js, mediane 6 krogov 5. 11. 2026: ~61 min na del na stroju srednje hitrosti, memory sam v svojem delu; GitHubovi stroji so
+  # 0,5- do 1,35-krat tako hitri). Celoten nabor na enem stroju bi trajal ~6 h in se z vsako novo progo podaljša.
   browser:
-    name: Igra v brskalniku (${{ matrix.shard }}/4)
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
+    name: Igra v brskalniku (${{ matrix.shard }}/6)
+    needs: koda
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 160   # (en del ~99 min; več kot omejitev testa memory (2 × SECS = 120 min) in ostalih testov v njegovem delu (~40 min), da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
+    timeout-minutes: 160   # (en del ~61 min, na počasnem stroju ~85 min; več kot omejitev testa memory (2 × SECS = 122 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
     strategy:
       fail-fast: false   # (vsak del do konca: napaka v enem ne ustavi drugih)
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -56,27 +105,28 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser -- --shard ${{ matrix.shard }}/4
+      - run: npx playwright install --with-deps --only-shell chromium   # (testi tečejo v Chromium headless shell: celotnega Chromiuma ne rabijo)
+      - run: npm run test:browser -- --shard ${{ matrix.shard }}/6
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
           TEST_SLOW: 2   # (ali dvakratni čas testa iz SECS, če je daljši; privzeto 4 za počasnejši stroj oblačne seje)
 
-  # en rezultat za vse štiri dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli)
+  # en rezultat za vse dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli ali je ista koda že prestala vse teste)
   browser-all:
     name: Igra v brskalniku
-    needs: browser
-    if: ${{ !cancelled() && !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
+    needs: [koda, browser]
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - run: |
-          echo "deli brskalniških testov: ${{ needs.browser.result }}"
-          test "${{ needs.browser.result }}" = success
+          echo "deli brskalniških testov: ${{ needs.browser.result }} (ista koda že preverjena: ${{ needs.koda.outputs.preverjeno }})"
+          test "${{ needs.browser.result }}" = success || test "${{ needs.koda.outputs.preverjeno }}" = true
 
   fleet:
     name: Vozila
-    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.draft) }}
+    needs: koda
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:
@@ -86,5 +136,36 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:fleet
+
+  # ista koda je že prestala vse teste: spremenjeni so lahko samo dokumenti (.md), zato samo testi, ki jih berejo (tests/run.js --dokumenti:
+  # imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi docs/proge/<id>.md)
+  dokumenti:
+    name: Dokumenti
+    needs: koda
+    if: ${{ needs.koda.outputs.preverjeno == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node tests/run.js --dokumenti
+
+  # vsi težki posli so uspeli: prstni odtis te kode kot artefakt, da je naslednji tek iste kode ne testira znova
+  zapis:
+    name: Zapis
+    needs: [koda, node, browser, fleet]
+    if: ${{ needs.koda.outputs.odtis != '' }}   # (in privzeti success(): koda, node, vsi deli browser in fleet uspešni)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: printf 'koda %s\ntek %s\ndogodek %s\ncommit %s\n' "${{ needs.koda.outputs.odtis }}" "${{ github.run_id }}" "${{ github.event_name }}" "${{ github.sha }}" > koda.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: koda-${{ needs.koda.outputs.odtis }}
+          path: koda.txt
+          retention-days: 30
+          overwrite: true   # (ponovljen tek iste kode)
