@@ -20,7 +20,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Redčenje gozda na pravih progah (en pull request na progo) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
 | Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
-| Nova mapa: vožnja po vodi (vodni skuter s pomola pri HOME in na progi za skuterje, kanal do morja; avto v vodi ne razpade takoj; gradniki iz misije 35 v `js/missions/kit.js`) | 2 | ned. 8. 11. po 10.00, ko je prosto mesto za sejo (odločitev uporabnika 5. 11.) |
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) in je #202 (fizika, račun 2) na `main` ali zaprt |
 
