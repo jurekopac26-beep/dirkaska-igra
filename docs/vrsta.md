@@ -18,8 +18,6 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Pregled kode z več agenti za #289 in #319 (najdbe popravita lastnika PR) | 3 | v delu (5. 11.) |
 | Lestvica prijateljev: časi prijateljev po progah prek povezave, brez strežnika (izbira uporabnika 5. 11.) | 3 | načrt v delu, koda po potrditvi; pred novimi progami |
 | Novi avti: 5 sodobnih vozil, izmišljenih, v novih datotekah `js/cars/` (izbira uporabnika 5. 11.; načrt `docs/novi-avti.md`, vprašanji `novi-avti-izbor` in `novi-avti-videz` na strani Odločitve 3; seja načrta session_01WbgGzuwVYnMe1PqsfUDJyt, koordinacija VSE SEJE 2) | 3 | pred novimi progami, po potrditvi načrta; koda po #315 in po dogovoru z računom 2 (garaža, `js/cars/*`) in #297 |
-| Barve in nalepke avta v garaži (barva, vzorec, številka, platišča; vidno v dirki, posnetku in pri prijateljih) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po dogovoru z #297 (garaža, račun 1) |
-| Beg pred policijo: na odprti cesti s prometom bežiš pred policijo (obratno od »Ti loviš« iz #250) (izbira uporabnika 5. 11.) | 3 | načrt v delu; koda po #250 |
 | Redčenje gozda na pravih progah (en pull request na progo; proge ZDA razen Pikes Peaka odpadejo, ker postanejo testne, odločitev uporabnika 5. 11.) | 1 | po Hakoneju (#261) in po razdelitvi datotek prog (#319, račun 3), ker oba spreminjata svet vsake prave proge |
 | Boksi: 84 (različica B5-6), 104 radio »tekmec gre v bokse«, 105 hladne gume po postanku, 107 statistika postankov (seja BOKSI session_014ber3FYMuScsadL4xwRzmy, ~12–17 h) | 1 | ko uporabnik reče »začni« (vprašanje `boksi-zacni` na strani Odločitve 1); nadaljuje boksov iz #284 + #296, zato jih račun 2 ne dela; preverjanje na Bathurstu ali Spa, ne na Montereyju (postane testna) |
 | Misije, skupina 8 (11, 23, 29, 40, 45; 6 garaž po poklicu, ploščica MISSIONS; `docs/misije.md`) | 2 | ned. 8. 11. po 10.00 (odločitev uporabnika 5. 11.) |
@@ -31,7 +29,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (brez Aulija), Zavite proge korak 1 Ouro Preto, Furka 2A, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) (#202 je zaprt 5. 11. po odločitvi uporabnika: nova fizika in trki ostanejo, kot so na `main`; na #202 ne čaka več) |
 | Videz avta povsod: barva, izvedba laka, črte z barvo, nalepke, senčni pas, svoja številka in platišča v vsaki dirki, v posnetku in pri prijateljih (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanji `videz-1` in `videz-2` na strani Odločitve 3) in po #297 (garaža, račun 1) |
-| Beg pred policijo: kratka različica 3:00 (pregon od štarta, tudi Moki in Sani); cel način bega že obstaja (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanje `beg-1` na strani Odločitve 3) in po #250 (Zabava) |
+| Beg pred policijo: kratka različica 3:00 (pregon od štarta, tudi Sani; Moki je testna); cel način bega že obstaja (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanje `beg-1` na strani Odločitve 3) in po #250 (Zabava) |
 
 ## Vrsta (stanje 4. 11. 2026)
 
