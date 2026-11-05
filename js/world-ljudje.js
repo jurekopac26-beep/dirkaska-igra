@@ -1399,11 +1399,8 @@
   // (the 12 proposals' places from the pictures; the others found by tools/ljudje/mesta.mjs --plan: a straight before, the barrier near, flat ground,
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
-    baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
     bangsaen: [['tribuna', 528, 1], ['foto', 1864, -1], ['gasilci', 2296, 1], ['marsali', 2440, 1], ['gasilci', 2728, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
-    beartooth: [['piknik', 1696, -1]],
-    bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
     cpalace: [['marsali', 96, -1], ['gasilci', 600, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
     detroit: [['marsali', 1944, -1]],
@@ -1416,13 +1413,11 @@
     maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
     medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
     moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
-    monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
     mulholland: [['piknik', 328, 1], ['foto2', 2264, -1]],
     newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['foto', 1072, 1], ['gasilci', 1608, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
-    palomar: [['foto2', 152, 1], ['kolesarji', 1576, -1], ['piknik', 4720, -1]],
     pikes: [['foto2', 4672, 1]],
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
@@ -1435,7 +1430,6 @@
     toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
     troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1456, -1], ['vhod', 1960, -1]],
-    uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
     vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland

@@ -23,8 +23,12 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Tianmen, Kitajska](docs/proge/tianmen.md)
 - [Sani Pass, Južna Afrika](docs/proge/sani.md)
 - [Irohazaka, Japonska](docs/proge/iroha.md)
+- [Santa Monica Mountains, ZDA](docs/proge/mulholland.md)
 - [Rio do Rastro, Brazilija](docs/proge/rastro.md)
+- [Moki Dugway, ZDA](docs/proge/moki.md)
+- [Mauna Kea, ZDA](docs/proge/maunakea.md)
 - [Crystal Palace, Anglija](docs/proge/cpalace.md)
+- [Riverside, ZDA](docs/proge/riverside.md)
 - [Longford, Avstralija](docs/proge/longford.md)
 - [Newcastle, Avstralija](docs/proge/newcastle.md)
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md)
@@ -32,6 +36,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
+- [Detroit, ZDA](docs/proge/detroit.md)
 - [Bang Saen, Tajska](docs/proge/bangsaen.md)
 - [Mount Hotham, Avstralija](docs/proge/hotham.md)
 - [Townsville, Avstralija](docs/proge/townsville.md)
@@ -49,20 +54,12 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - Bakreni gozd (opis še ni napisan)
 - [Toskana, Italija](docs/proge/toskana.md)
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
-
-Od 5. 11. 2026 (odločitev uporabnika: ena proga na državo; ZDA ostane Pikes Peak, misije na teh progah ostanejo):
-
-- [Beartooth, ZDA](docs/proge/beartooth.md)
-- [Big Sur, ZDA](docs/proge/bigsur.md)
-- [Detroit, ZDA](docs/proge/detroit.md)
-- [Mauna Kea, ZDA](docs/proge/maunakea.md)
-- [Moki Dugway, ZDA](docs/proge/moki.md)
-- [Monterey, ZDA](docs/proge/monterey.md)
-- [Mount Baldy, ZDA](docs/proge/baldy.md)
-- [Palomar Mountain, ZDA](docs/proge/palomar.md)
-- [Riverside, ZDA](docs/proge/riverside.md)
-- [Santa Monica Mountains, ZDA](docs/proge/mulholland.md)
-- [Uncompahgre, ZDA](docs/proge/uncompahgre.md)
+- [Big Sur, ZDA](docs/proge/bigsur.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Uncompahgre, ZDA](docs/proge/uncompahgre.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Beartooth, ZDA](docs/proge/beartooth.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Mount Baldy, ZDA](docs/proge/baldy.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Monterey, ZDA](docs/proge/monterey.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Palomar Mountain, ZDA](docs/proge/palomar.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

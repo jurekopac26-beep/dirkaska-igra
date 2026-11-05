@@ -12,7 +12,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
-| ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit in Palomar Mountain so testne (`test: true`, za izbris) | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
+| ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
 | Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |

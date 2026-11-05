@@ -1305,7 +1305,6 @@
   site('hotham', [['karte', 3160, 1], ['selfie', 6448, 1], ['badminton', 7872, -1]]);
   site('maunakea', [['zmaj', 3776, -1], ['glasba', 4488, 1]]);
   site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
-  site('bigsur', [['plaza', 392, 1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);
   site('katu', [['lestve', 64, 1], ['navijaci', 392, -1, { club: [0x1c3f94, 0xf2f2f2] }]]);

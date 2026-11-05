@@ -10,8 +10,6 @@
 // layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
 //   node tests/browser/menu.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
-import { createRequire } from 'module';
-const { ZDA } = createRequire(import.meta.url)('../lib/zda.js');   // (the roads of the USA, test tracks since 5. 11. 2026: they keep their corners and wide maps)
 
 const T = checker('menu');
 const srv = await serve();
@@ -76,7 +74,7 @@ try {
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
       T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too)`, roads.race === roads.trial && roads.race >= 10, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too; Mount Baldy, Beartooth, Big Sur, Palomar Mountain and Uncompahgre test tracks since 5. 11. 2026)`, roads.race === roads.trial && roads.race >= 12, JSON.stringify(roads));
       const first = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       let seen = 0; const bad = [], urls = new Set();
       for (let k = 0; k < exp.ids.length; k++) {
@@ -111,7 +109,7 @@ try {
     const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id) }));
     const cbad = Object.entries(cams).filter(([id, c]) => c.c1.kind !== (cx.routes.includes(id) ? 'map' : 'model') || c.c3.kind !== (cx.corners.includes(id) ? 'corner' : 'model') || (c.c3.kind === 'corner' && !(c.c3.loop && c.c3.files[0] === 'assets/maps/corner-' + id + '.webp' && c.c3.files[1] === 'assets/maps/corner-' + id + '.webm'))).map(([id, c]) => id + ':' + c.c1.kind + '/' + c.c3.kind);
     const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
-    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || ZDA.includes(id)), JSON.stringify({ cbad, nocorner }));
+    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id)), JSON.stringify({ cbad, nocorner }));
     // every track of every mode: its height graph across the stage's foot in camera 2 (the flyover, or the model where a track has none), a
     // real track's with its lowest and highest heights and the kilometres under it; its country gold on the head's globe
     const tests = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), H = Object.values(heads);
@@ -131,9 +129,11 @@ try {
       }
       return out;
     });
+    // (a track made a test track after its wide map was detailed, the roads of the USA on 4. and 5. 11. 2026, keeps its map as it was: 0.8)
+    const at = (d, k) => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2;
     const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
-      Math.abs(d.w[0] - (d.W + 2 * d.E) * (d.test && !ZDA.includes(d.id) ? 0.5 : 0.8)) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * (d.test && !ZDA.includes(d.id) ? 0.5 : 0.8)) <= 2)).map(d => d.id);
-    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half, the roads of the USA's as they were)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
+      (at(d, 0.8) || (d.test && at(d, 0.5))))).map(d => d.id);
+    T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half or, made a test track later, as it was)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
     T.check('no page errors in the title, the modes and the track list', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

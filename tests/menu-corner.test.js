@@ -13,8 +13,7 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 global.window = global;
 require(path.join(ROOT, 'js', 'menu-data.js'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'menu-corners.json'), 'utf8')), LIST = global.MENU.corners || [];
-const { ZDA } = require('./lib/zda.js');   // (the roads of the USA, test tracks since 5. 11. 2026: they keep their corners, frozen as they were)
-const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test), tests = defs.filter(d => d.test && !ZDA.includes(d.id)).map(d => d.id);
+const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test), tests = defs.filter(d => d.test).map(d => d.id);
 const MAPS = path.join(ROOT, 'assets', 'maps');
 
 // the corners: every real track, inside its race's run (an open road between its start and finish), the camera off the corner's middle
@@ -27,7 +26,7 @@ for (const d of real) {
 }
 check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 30 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
 const testcfg = Object.keys(CFG).filter(id => tests.includes(id) || !defs.find(d => d.id === id));
-check('no test track (but the roads of the USA, which keep theirs: tests/lib/zda.js; and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
+check('no test track (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
 
 // the videos: WebM (EBML) with VP9, 6 to 8 s long (the segment's Duration, in the TimecodeScale's ms), 0.1 to 1.3 MB; the posters
 function webmInfo(b) {
@@ -57,7 +56,7 @@ check(`every real track's corner video (VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).
 
 // the menu's list: exactly the tracks with a video, sorted, no test track
 const have = fs.readdirSync(MAPS).map(f => /^corner-(.+)\.webm$/.exec(f)).filter(Boolean).map(m => m[1]).sort();
-check(`MENU.corners (js/menu-data.js) lists exactly the tracks with a corner video (${LIST.length}), no test track (but the roads of the USA)`, JSON.stringify(LIST) === JSON.stringify(have) && !LIST.some(id => tests.includes(id)), JSON.stringify({ LIST, have }));
+check(`MENU.corners (js/menu-data.js) lists exactly the tracks with a corner video (${LIST.length}), no test track`, JSON.stringify(LIST) === JSON.stringify(have) && !LIST.some(id => tests.includes(id)), JSON.stringify({ LIST, have }));
 
 console.log(`\n${n - bad}/${n} passed`);
 process.exit(bad ? 1 : 0);

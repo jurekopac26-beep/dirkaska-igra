@@ -166,7 +166,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`, v ležeči pisavi; proge iz ZDA razen Pikes Peaka od 5. 11. 2026) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`).
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
@@ -178,7 +178,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | caracoles | Los Caracoles, Čile | caracoles | `js/world-caracoles.js` (`buildCaracoles`) |
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`, `cpPark`) |
-| *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
+| detroit | Detroit, ZDA | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | hotham | Mount Hotham, Avstralija | hotham | `js/world-hotham.js` (`buildHotham`) |
@@ -187,14 +187,14 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | longford | Longford, Avstralija | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
-| *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
+| maunakea | Mauna Kea, ZDA | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
-| *moki* | *Moki Dugway, ZDA (test)* | moki | `js/world-moki.js` (`buildMoki`) |
+| moki | Moki Dugway, ZDA | moki | `js/world-moki.js` (`buildMoki`) |
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
 | *monterey* | *Monterey, ZDA (test)* | monterey | `js/world-monterey.js` (`buildMonterey`; boksi levo ob ciljni ravnini po `def.pit`: šotori ekip `CAN0`–`CAN1`, ravna tla pod njimi `pitW` prek `P.pad`, `out.pitBoxes`; pas ob progi in šopi trave v barvi suhe trave: `colMod`, `out.lawn` za `verge` v `js/world.js`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mountbuller | Mount Buller, Avstralija | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
-| *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
+| mulholland | Santa Monica Mountains, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
@@ -203,7 +203,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
 | rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
 | rio | Rio de Janeiro, Brazilija | rio | `js/world-rbring.js` (`buildRbring`, `RB_LOOK`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
-| *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
+| riverside | Riverside, ZDA | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
