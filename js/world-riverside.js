@@ -411,7 +411,7 @@
       if (excluded(x, z) || (side < 0 && pitAt(i))) continue;
       box(g, x, y - 0.2, z, 2.2, 2.3, 2.0, T.hd[i], [0.66, 0.55, 0.4], [0.7, 0.72, 0.74], true);
       box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.4, 0.6, 2.05, T.hd[i], [0.2, 0.24, 0.28], null, true);
-      const fx = x + T.tx[i] * 1.7, fz = z + T.tz[i] * 1.7; cyl(g, fx, y, fz, 0.05, 3.6, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 2.9, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      const fx = x + T.tx[i] * 1.7, fz = z + T.tz[i] * 1.7; cyl(g, fx, y, fz, 0.05, 3.6, 5, [0.85, 0.85, 0.87]); API.flags.add(fx, y + 3.5, fz, T.hd[i], [[0.98, 0.84, 0.1]], 0.9, 0.6);   // (waving: js/world-zastave.js)
       exclPush(x, z, 5); CR.avoid(x, z, 2.5);
     }
     let nBill = 0;

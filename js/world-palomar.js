@@ -306,9 +306,8 @@
     const person = (x, z, ro, col) => crowdPut(CR, x, caGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const flagUS = (g, x, y, z, rot, h) => {   // a pole with the stars and stripes (as the Santa Monica Mountains road's)
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.92, 0.92, 0.9], [0.85, 0.75, 0.3]);
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.9, fh = 1.0, y0 = y + h - fh - 0.15, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)];
-      for (let k = 0; k < 7; k++) { const [fx, fz] = at(fw / 2); box(g, fx, y0 + k * fh / 7, fz, fw, fh / 7, 0.04, rot, k % 2 ? [0.95, 0.95, 0.93] : [0.75, 0.12, 0.16]); }
-      const [cx, cz] = at(fw * 0.2); box(g, cx, y0 + fh * 0.46, cz, fw * 0.4 + 0.004, fh * 0.54, 0.05, rot, [0.12, 0.17, 0.42]);
+      const c = Math.cos(rot), s = Math.sin(rot), r = [0.75, 0.12, 0.16], w = [0.95, 0.95, 0.93];   // (the cloth waves: js/world-zastave.js)
+      API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, API.flags.canton([r, w, r, w, r, w, r], 0.4, 0.54, [0.12, 0.17, 0.42]), 1.9, 1);
     };
     const car = (g, x, y, z, rot, col) => {   // a parked car
       const c = Math.cos(rot), s = Math.sin(rot);
@@ -368,7 +367,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4); if (excluded(px, pz) || vrStubAt(px, pz, 1)) continue; const py = caGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1); }   // (the chequered cloth waves: js/world-zastave.js)
       const sdP = padF.sd, [sx, sz, si] = onSide(sFin + 22, -sdP, 1.6), sy = caGround(sx, sz), gs = scen.get(sx, sz);   // the brown board on two posts
       for (const o of [-2.6, 2.6]) box(gs, sx + T.nx[si] * o, sy - 0.2, sz + T.nz[si] * o, 0.16, 3.9, 0.16, T.hd[si], [0.6, 0.61, 0.63]);
       { const [v0, v1] = row(6); bannerQ(sx, sy + 2.3, sz, -T.tx[si], -T.tz[si], 6.4, 0.8, v0, v1); } exclPush(sx, sz, 4);

@@ -817,8 +817,8 @@
       parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const flagSI = (g, x, y, z, rot, h) => {   // a flag pole with the Slovenian flag: white, blue, red (no coat of arms at this size), both faces
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 0.9, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)], [fx, fz] = at(fw / 2), y0 = y + h - fh - 0.15;
-      box(g, fx, y0 + fh * 2 / 3, fz, fw, fh / 3, 0.04, rot, [0.96, 0.96, 0.95]); box(g, fx, y0 + fh / 3, fz, fw, fh / 3, 0.04, rot, [0.1, 0.24, 0.62]); box(g, fx, y0, fz, fw, fh / 3, 0.04, rot, [0.84, 0.12, 0.1]); };
+      const c = Math.cos(rot), s = Math.sin(rot);   // (the cloth waves: js/world-zastave.js)
+      API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, [[0.96, 0.96, 0.95], [0.1, 0.24, 0.62], [0.84, 0.12, 0.1]], 1.8, 0.9); };
 
     /* ---- the buildings: the alpine houses and hotels of Kranjska Gora (plastered storeys with windows and green shutters, timber gables, wide low
        roofs), sheds and garages, the church's tower, the mountain huts with their name boards, the Russian Chapel, the lookout tower at Jasna ---- */
@@ -914,7 +914,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12], finS, finB);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = vrGround(px, pz), gg = finS;
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1, finG); }   // (the chequered cloth waves: js/world-zastave.js; with the finish: finG)
       const [sx, sz, si] = onSide(sFin + 18, sdP, 3.2), sy = vrGround(sx, sz), gs = scen.get(sx, sz), tl = 0.9, W2 = 7, H2 = W2 / 8;   // the pass sign: a board on posts leaning back, facing the arriving cars
       for (const o of [-2.9, 2.9]) { const px = sx + T.nx[si] * o, pz = sz + T.nz[si] * o; box(gs, px, sy, pz, 0.26, 1.3, 0.26, T.hd[si], [0.36, 0.24, 0.14]); box(gs, px + T.tx[si] * H2 * Math.sin(tl), sy, pz + T.tz[si] * H2 * Math.sin(tl), 0.26, 1.25 + H2 * Math.cos(tl), 0.26, T.hd[si], [0.36, 0.24, 0.14]); }
       box(gs, sx + T.tx[si] * 0.35, sy - 0.3, sz + T.tz[si] * 0.35, 1.5, 0.65, W2 + 1.1, T.hd[si], [0.62, 0.6, 0.56], [0.7, 0.68, 0.64]);
