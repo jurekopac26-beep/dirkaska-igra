@@ -9,6 +9,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Trki med avti](#trki-med-avti)
 - [Preizkus: tekmeci in trki](#preizkus-tekmeci-in-trki)
 - [Zelo veliko polje (avti daleč od tebe)](#zelo-veliko-polje-avti-daleč-od-tebe)
+- [Število tekmecev (meni: Opponents)](#število-tekmecev-meni-opponents)
 - [Reakcija na štartu](#reakcija-na-štartu)
 - [Leteči start (odprte ceste in Nürburg)](#leteči-start-odprte-ceste-in-nürburg)
 - [Zavetrje](#zavetrje)
@@ -18,6 +19,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Radio ekipe in strategija](#radio-ekipe-in-strategija)
 - [Prvenstvo](#prvenstvo)
 - [Kariera](#kariera)
+- [Prvič na cesti (prvi zagon)](#prvič-na-cesti-prvi-zagon)
 - [Šola vožnje](#šola-vožnje)
 - [Idealna linija za začetnike](#idealna-linija-za-začetnike)
 - [Tekmeci z značajem](#tekmeci-z-značajem)
@@ -37,6 +39,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Duh najboljše vožnje](#duh-najboljše-vožnje)
 - [Sledi zadnjih voženj (kronometer)](#sledi-zadnjih-voženj-kronometer)
 - [Deljenje duha in profila](#deljenje-duha-in-profila)
+- [Shranjevanje napredka](#shranjevanje-napredka)
 - [Izziv s povezavo](#izziv-s-povezavo)
 - [Igralni plošček](#igralni-plošček)
 - [Kontrole po meri in volan s pedali](#kontrole-po-meri-in-volan-s-pedali)
@@ -168,7 +171,19 @@ Nastavitev »Razbijanje: odboji in vrtenje ob trku« velja le še pri različici
 
 ## Zelo veliko polje (avti daleč od tebe)
 
-V dirki z več kot 30 avti (Nürburg s 100 avti) igra avte daleč od tebe računa redkeje, da telefon zmore celo polje: do 60 m pred tabo, 30 m za tabo ali 60 m od tebe vsak korak (120-krat na sekundo), do 300 m od tebe 30-krat na sekundo, dlje 15-krat na sekundo (odločitve voznika, vožnja, ograje, zavetrje, deli na cesti, napredek po progi). Avti, ki se dotaknejo, se srečajo tam, kjer sta oba v tistem trenutku; vsak je narisan in v posnetku dirke gladko, ne v sunkih. Časi krogov, sektorjev in cilja so vzeti tam, kjer je avto prečkal črto (na 1/120 s, kot pri vseh drugih), vrstni red v cilju je po času. Sam na progi je krog s 30 Hz 0,2–0,3 % počasnejši, s 15 Hz približno 0,7 %. V boksih, v zraku in na štartni vrsti so avti računani vsak korak. Ko je varnostni avto na progi, so vsak korak računani tudi vsi do 60 m od njega; kolona za njim dlje od tebe je računana kot drugi oddaljeni avti (enako dotikov kot pri polni hitrosti, v manj kot pol časa). Kvalifikacijske kroge tekmecev v takem polju igra izračuna s 30 Hz (četrtina dela, v krajših kosih med slikami) in jim čas skrajša za to razliko (0,26 %). Za rezultati se dirka ne računa več, ko so vsi avti v cilju ali odstopili (in še 3 s); posnetek dirke se ustavi takrat, v zelo velikem polju ima 10 posnetkov na sekundo in največ 32 MB. Dirke z 22 avti ali manj so take kot prej.
+V dirki z več kot 30 avti (Nürburg s 100 avti) igra avte daleč od tebe računa redkeje, da telefon zmore celo polje: do 60 m pred tabo, 30 m za tabo ali 60 m od tebe vsak korak (120-krat na sekundo), do 300 m od tebe 30-krat na sekundo, dlje 15-krat na sekundo (odločitve voznika, vožnja, ograje, zavetrje, deli na cesti, napredek po progi). Avti, ki se dotaknejo, se srečajo tam, kjer sta oba v tistem trenutku; vsak je narisan in v posnetku dirke gladko, ne v sunkih. Časi krogov, sektorjev in cilja so vzeti tam, kjer je avto prečkal črto (na 1/120 s, kot pri vseh drugih), vrstni red v cilju je po času. Sam na progi je krog s 30 Hz 0,2–0,3 % počasnejši, s 15 Hz približno 0,7 %. V boksih, v zraku in na štartni vrsti so avti računani vsak korak. Vsak korak je računan tudi avto, ki je bil v zadnje pol sekunde blizu drugemu (1 m od njegovega odbijača ali 0,6 m od boka, več, če se hitro približujeta; `LOD.nr`): trk se izračuna na pravem mestu, dva oddaljena avta pa ne gresta drug skozi drugega. V takem polju tekmeci sledijo avtu pred sabo 1 m od odbijača (`LOD.fol`; drugače z različicami trkov 0,4 m, s staro 3 m med sredinama). Z obema je trdih trkov (nad 3,5 m/s) v polju 100 avtov s privzetim trkom Simulacija 0,05 na avto na minuto namesto 0,13 (prehitevanj enako), daleč pred tabo 0–0,12 namesto 0,07–0,24; fizika ~ tretjino več dela. Pri štartu z mesta s 100 tekmeci se zato prvi ovinki ne zaprejo več (Spa: prej 12–19 tekmecev, ki so jih prestavili redarji, zdaj nobeden; na Trois-Rivières, najkrajši progi, se polje v prvem ovinku včasih še zagozdi). Za primerjavo na telefonu: `index.html?proga=nring&tekmeci=21` (22 avtov), `&tekmeci=0` (sam) in `&lod=0` (vsi vsak korak). Ko je varnostni avto na progi, so vsak korak računani tudi vsi do 60 m od njega; kolona za njim dlje od tebe je računana kot drugi oddaljeni avti (enako dotikov kot pri polni hitrosti, v manj kot pol časa). Kvalifikacijske kroge tekmecev v takem polju igra izračuna s 30 Hz (četrtina dela, v krajših kosih med slikami) in jim čas skrajša za to razliko (0,26 %). Za rezultati se dirka ne računa več, ko so vsi avti v cilju ali odstopili (in še 3 s); posnetek dirke se ustavi takrat, v zelo velikem polju ima 10 posnetkov na sekundo in največ 32 MB. Dirke z 22 avti ali manj so take kot prej.
+
+## Število tekmecev (meni: Opponents)
+
+V meniju (izbira proge, način *Circuit race*) je prva številka vrstice podatkov število tekmecev; dotik odpre izbiro od 0 do 100 (hitre izbire 0 *Trial*, 1, 5, 12, 25, 50, 100 in drsnik). Izbira je nastavitev igre `S.rivals` in velja za vse dirke, dokler je ne spremeniš; do prve izbire (`-1`) ima vsaka proga svoje polje (21 tekmecev, Nürburg 99). `rivN` / `rivSet` v `js/game.js`, `numSet` v `Core.Race` (izbrano število ostane, tudi manj kot proga sama zahteva z `def.rivals`, npr. Nürburg 20).
+
+- **Največ na progi:** `def.maxRivals` v datoteki proge, kjer štart ali parkiranje za ciljem ne sprejme 100 avtov (Pikes Peak 28: vrh ima ~85 m ceste za ciljem, dve vrsti na vsaki strani tudi za najdaljša vozila, 6,3 m; Medvode 45, Uncompahgre 55, Rio do Rastro 60, Sani Pass 75: druga vrsta parkiranih avtov bi stala ob ograji; Mount Buller 70: za ciljem je ~158 m ceste, pri večjem polju bi parkirani avti stali drug na drugem). Druge proge vzamejo 100: krožne proge s štartno vrsto do ~760 m za črto, odprte ceste z letečim štartom. Polje velikih vozil je mešano (`fill` v datoteki vozila, `Core.aiModel`): goljat, širok 3,2 m, stoji na štartu in v koloni letečega starta 0,3 m od roba asfalta (`Race._inside`), pri parkiranju za ciljem ima vozilo, širše od 1,9 m, v zunanji vrsti bok tam kot avto, širok 1,9 m, notranja vrsta pa je odmaknjena od najširšega. Test `tests/rivals-n.test.js` preveri vse prave proge z največ tekmeci in polji vseh vozil.
+- **Kje velja:** dirka, ki jo začneš sam (meni ali star meni). Ne v karieri (nagrada je po mestu, polje proge ostane), prvenstvu, dvoboju v prometu, izzivu, misijah in dirki s prijatelji.
+- **Brez tekmecev (0):** vožnja proti uri po krogih dirke; komentator in napis v cilju to povesta (*CILJ!*, ne *ZMAGA!*), rezultat je *Cilj* s kljukico; šteje kot dirka in vožnja proge (dosežka *Prvi cilj*, *Vse proge*), ne kot zmaga, stopničke, najhitrejši krog dirke ali najboljše mesto; čas dirke in krogi se zapišejo kot rekordi.
+- **Štart velikega polja:** polje, večje od igrinega (več kot 21 tekmecev), na krožni progi začne z letečim startom kot Nürburg s 100 avti (kolona za varnostnim avtom, igralec na koncu, prevzame na črti; `flyGo` v `newRace`, `Race._flyColumn`). Štart z mesta se je z novimi trki med avti (Simulacija) v prvih ovinkih zapletel: na Trois-Rivières s 50 ali 100 tekmeci in na Spa s 100 so avti po 40 s še stali, igralec tudi. Vzrok je bil večinoma LOD (avti daleč pred igralcem s 15 Hz, glej spodaj): z `LOD.nr` se Spa s 100 ne zagozdi več, Trois-Rivières še v približno vsaki četrti dirki, zato leteči start ostaja (izbira uporabnika, vprašanje m12). Enako velja za hiter vstop `tekmeci=`. Po kvalifikacijah ostane štart z mesta (kot na Nürburgu), ker bi kolona igralca postavila na konec.
+- **100 tekmecev:** 101 avto, vsak s svojim imenom (100 izmišljenih voznikov) in številko 1–101.
+- **Obremenitev telefona** (meritev 2. 11. 2026, 844 × 390, NIZKA): 100 tekmecev ni dražjih od 50 (avti se razpotegnejo, daljni so skriti ali poenostavljeni); najdražji so trenutki, ko je pred kamero gneča (paket v ovinku, uvodni posnetek letal nad štartno vrsto na Bathurstu in Red Bull Ringu). V polju z več kot 22 avti (izbira menija, Nürburg) je zato v polni podrobnosti le 10 najbližjih tekmecev (nikoli ne avto bližje od 30 m), drugi v dosegu so poenostavljeni (`crowdCut` v `js/render.js`, en klic risanja na avto; tudi v posnetku letal, `shot.crowd`); polja do 22 avtov so kot prej. Fizika daljnih avtov je redkejša kot pri Nürburgu (zgoraj).
+- **Meni prekrije zaslon:** na telefonu (pokonci in ležeče) igra pod izbiro proge (meni ima tam svoje ozadje) ne poganja in ne riše demo dirke (le en okvir na sekundo, da ostanejo slike proge na grafični kartici; `Menu.covers`). Naslovnica je prosojna, za njo je živa scena igre, zato se tam demo riše kot prej; prav tako na tablici pokonci, kjer je meni stolpec in je demo viden ob straneh.
 
 ## Reakcija na štartu
 
@@ -205,7 +220,7 @@ Med dirko je zgoraj levo prikaz (dizajn »rahla senca«): za njim je mehka temna
 
 - **Mesto in hitrost:** mesto z velikimi številkami, za njim enako veliko in rumeno število avtov (**21/22**, na Nürburgu **22/100**, oboje malo manjše), pod tem hitrost in **KM/H**. Hitrost ima vedno prostor za tri števke, zato se pri 10 in 100 km/h nič ne premakne.
 - **Vrstica pod hitrostjo:** levo gume (štiri pike v barvi obrabe in beseda zmesi v svoji barvi, glej Gume in postanki v boksih; brez dirke s prijateljem ima vsak avto pike na vseh progah, vsaka svojo gumo, glej Gume vsaka zase), desno krog (**KROG** z majhnimi črkami, **1/2** večje). V kvalifikacijah tam piše **KVALIFIKACIJE**, **LETEČI KROG** ali **CILJ**, na kronometru **CP 2/4**, na odprti cesti prevoženi kilometri (**4,2/12,3 KM**), na dolgem krogu (Nürburg) še kilometri kroga. Kjer gum ni (proge brez boksov, dirka s prijatelji, kronometer), je v tej vrstici samo krog, levo; v šoli vožnje druge vrstice ni (samo hitrost).
-- **Mrzle gume:** takoj po postanku z novimi gumami so pike in beseda svetlo modre; v enem krogu od izvoza iz boksov dobijo svoje barve (samo na zaslonu, oprijem je enak). Gume na štartu niso mrzle.
+- **Mrzle gume:** takoj po postanku z novimi gumami so pike in beseda svetlo modre; v enem krogu od izvoza iz boksov dobijo svoje barve (samo na zaslonu, oprijem je enak; edina izjema je KOLIBRI, glej Gume vsaka zase). Gume na štartu niso mrzle.
 - Pod vrsticama je po potrebi majhna oznaka **DRS** (na progah z DRS: siva, bela, ko ga imaš za naslednjo cono, zelena, ko je odprt), pod njo gorivo, okvare in zastave. V begu pred policijo je nad številko napis **POLICIJA**: številka pove, koliko patrulj te lovi.
 - Prikaz uporablja pisavo igre (Roboto, kot meni) in se veča z zaslonom (pokonci po širini, ležeče po višini). Pike so 4 px od besede, beseda 10 px od kroga (pri širini 390 px; sorazmerno z vrsticama).
 - **Pod uro** je prazno, dokler ni časa (ni več **NAJ --:--.---**); po 1. krogu je tam najhitrejši krog dirke (**NAJ**), v kronometru in kvalifikacijah rekord, ko obstaja.
@@ -244,12 +259,23 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Kariera
 
-Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 € in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 €«).
+Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 kovančkov in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 🪙«). Denar v igri so **kovančki** (🪙), evrov ni.
 
-- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 €, zadnji 300 €; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 € … in od 13. mesta naprej 300 €). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 €, za prvo štartno mesto v kvalifikacijah 1.000 €. Naslov prvaka prinese 20.000 €, 2. mesto v prvenstvu 10.000 € in 3. mesto 6.000 € (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 €, 3.000 € ali 1.500 € za zlato, srebrno ali bronasto medaljo, 2.000 € za osebni rekord, sicer 500 €. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 € za kart MRAVLJA do 150.000 € za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 €, RAKETA 16V 14.000 €, LEV S 20.000 €, KAZE RS 30.000 €, VIHAR V8 40.000 €, TITAN 60.000 €, FORMULA ORKAN 90.000 €, TAIFUN LM 110.000 €; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
-- **Nadgradnje:** za vozila do 50.000 € stane vsaka stopnja 4.000 €, 7.000 € ali 12.000 €, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 € naprej; zaokroženo na 100 €). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
+- **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 kovančkov, zadnji 300 kovančkov; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 kovančkov … in od 13. mesta naprej 300 kovančkov). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 kovančkov, za prvo štartno mesto v kvalifikacijah 1.000 kovančkov. Naslov prvaka prinese 20.000 kovančkov, 2. mesto v prvenstvu 10.000 kovančkov in 3. mesto 6.000 kovančkov (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 kovančkov, 3.000 kovančkov ali 1.500 kovančkov za zlato, srebrno ali bronasto medaljo, 2.000 kovančkov za osebni rekord, sicer 500 kovančkov. Nagrada piše na zaslonu z rezultati.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 kovančkov za kart MRAVLJA do 150.000 kovančkov za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 kovančkov, RAKETA 16V 14.000 kovančkov, LEV S 20.000 kovančkov, KAZE RS 30.000 kovančkov, VIHAR V8 40.000 kovančkov, TITAN 60.000 kovančkov, FORMULA ORKAN 90.000 kovančkov, TAIFUN LM 110.000 kovančkov; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Nadgradnje:** za vozila do 50.000 kovančkov stane vsaka stopnja 4.000 kovančkov, 7.000 kovančkov ali 12.000 kovančkov, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 kovančkov naprej; zaokroženo na 100 kovančkov). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
+- **Garaža ima isto denarnico** (odločitev uporabnika, 2. 11. 2026): pravi profil garaže (`garaza.html`, privzet, v vrstici MOCKUP »Kariera«) so kovančki, avti in nadgradnje kariere. Avto ali del, kupljen v garaži, plača kariera in ga imaš v karieri; stopnje nadgradenj (motor, gume, zavore, aerodinamika) se izračunajo iz delov na avtu. Nadgradnja, kupljena v igri, se v garaži pokaže z deli te stopnje (npr. motor 2: čip in športni turbo, aero 2: paket SPORT). Deli, barva in obraba vsakega avta iz garaže so shranjeni v karieri, zato jih **Nova kariera** pobriše. To velja tudi, ko kariera ni vklopljena: kariera, ki še ni začeta, ima v garaži 10.000 kovančkov in PICO TURBO. Preizkusni profili v vrstici MOCKUP (brezplačna igra, polna igra, veteran) imajo svoj preizkusni denar in se kariere ne dotaknejo.
+
+## Prvič na cesti (prvi zagon)
+
+Nov igralec ob prvem zagonu igre (brskalnik, ki od igre še nima shranjenega ničesar, tudi profila garaže ne; navaden naslov brez dodatkov, kot je hitri vstop ali povezava z izzivom) najprej vidi zaslon **Prvič na cesti**:
+
+- **Upravljanje:** tri velike izbire, **Tipke** (izbrane), **Volan** in **Nagib**, vsaka s kratkim opisom; če je povezan igralni plošček, piše, da se vozi tudi z njim. Izbira je nastavitev Upravljanje (pozneje v Nastavitvah). **Preskoči** gre na naslovnico.
+- **Poskusna vožnja:** 45 sekund sam na progi Štajerska, Avstrija (široka proga z izletnimi conami) v svojem avtu, brez poškodb, na suhem, z idealno linijo; zgoraj piše POSKUSNA VOŽNJA · še N s, ob štartu sporočilo RDEČE NA CESTI: ZAVIRAJ. Nato **Kako je šlo?** (prevoženi km, najvišja hitrost, upravljanje) z gumbi **Drugo upravljanje**, **Še enkrat** in **Prva dirka**.
+- **Prva dirka:** Štajerska, dva kroga, pet tekmecev na težavnosti Lahka, ti s 4. mesta, na suhem, z idealno linijo, brez goriva in okvar. Od tu naprej se prvi zagon ne pokaže več sam (`tdgp-prvi` `1`; enako po Preskoči). Če igro zapreš na zaslonu Prvič na cesti ali med poskusno vožnjo, se ob naslednjem zagonu pokaže znova (`tdgp-prvi` `0`). Rezultati prve dirke imajo vrstico **Prva dirka je za tabo. Kaj zdaj?** z gumbi **Šola vožnje**, **Proge** (naslovnica) in **Kariera**.
+
+V **Nastavitvah** je pod Upravljanjem vrstica **Prvič na cesti** z gumbom **Pokaži znova**.
 
 ## Šola vožnje
 
@@ -310,10 +336,10 @@ Nastavitev se shrani za izbrano progo in velja za vse dirke na njej (tudi v prve
 
 ## Gume vsaka zase
 
-Vsak avto (igralčev, brez dirke s prijateljem) ima na vseh progah in v vseh načinih vsako gumo zase (`Car.kt`, `KT`, `ktWear`, `ktHit` v `js/core.js`; možnost dirke `tyreRule`, seznam `TYRE_RULE` v `js/game.js`: vsa vozila). Do 1. 11. 2026 jih je imel samo KOLIBRI; uporabnik je izbral, da veljajo za vsa vozila, skupaj s pravilom koles (glej Razbijanje) in z isto obrabo kot pri KOLIBRIJU (na dirki na krog 4-krat hitrejša kot komplet gum, zato inženir prej kliče v bokse; stran Odločitve, »deli-gume-vsa« in »deli-gume-obraba«). Deset starejših avtov brez delov, ki odpadejo (PICO TURBO, KAZE RS …), pravila koles nima: gume se jim obrabljajo in pike kažejo trke, a guma ne zagori in kolo ne odpade. Tekmeci gum vsake zase nimajo.
+Vsak avto (igralčev, brez dirke s prijateljem) ima na vseh progah in v vseh načinih vsako gumo zase (`Car.kt`, `KT`, `ktWear`, `ktHit` v `js/core.js`; možnost dirke `tyreRule`, seznam `TYRE_RULE` v `js/game.js`: vsa vozila). Do 1. 11. 2026 jih je imel samo KOLIBRI; uporabnik je izbral, da veljajo za vsa vozila, skupaj s pravilom koles (glej Razbijanje) in z isto obrabo kot pri KOLIBRIJU (na dirki na krog 4-krat hitrejša kot komplet gum, zato inženir prej kliče v bokse; stran Odločitve, »deli-gume-vsa« in »deli-gume-obraba«). Deset starejših avtov brez delov, ki odpadejo (PICO TURBO, KAZE RS …), pravila koles nima: gume se jim obrabljajo in pike kažejo trke, a guma ne zagori in kolo ne odpade. Tekmeci gum vsake zase nimajo. V posebnih misijah gum vsake zase ni, torej tudi njihove obrabe ne (izbira uporabnika 3. 11. 2026; `js/missions.js`: brez `tyreRule`); misije na progah z boksi imajo kot prej komplet običajnih gum z njegovo običajno, počasnejšo obrabo.
 
-- **Pike zgoraj levo:** štiri pike, zgoraj sprednji gumi, spodaj zadnji, vsaka v svoji barvi. Barva je mešanica obrabe in poškodbe te gume (rdečina 0 = nova, 1 = gori; obraba prispeva največ 0,7): odtenek HSL (78 %, 52 %) po lestvici 0 → 120°, 0,15 → 88°, 0,35 → 55°, 0,55 → 32°, 0,75 → 14°, 0,9 → 0°. Nove gume so zelene. Po boksih so svetlo modre in v enem krogu postopoma spet zelene; dokler so modre, primejo slabše (12 %), kot neogrete gume.
-- **Obraba (vsaka guma posebej):** na eni poti (gorska cesta, reli) je na cilju cele poti brez trkov in trave obraba ≈ 0,24 (rumeno-zelena), ne glede na dolžino poti. Na dirki na krog je obraba približno 4-krat hitrejša kot pri običajnih gumah; obrabljene gume primejo slabše (do 10 %, mehke kot njihova zmes), zato se boksi splačajo. Pri drsenju se gume obrabljajo hitreje. Na travi, pesku ali mivki se hitreje (3-krat) obrablja samo guma, ki je zunaj ceste; na makadamski cesti, kjer je makadam cesta sama, ne. Obraba sama nikoli ne pripelje do gorenja.
+- **Pike zgoraj levo:** štiri pike, zgoraj sprednji gumi, spodaj zadnji, vsaka v svoji barvi. Barva je mešanica obrabe in poškodbe te gume (rdečina 0 = nova, 1 = gori; obraba prispeva največ 0,7): odtenek HSL (78 %, 52 %) po lestvici 0 → 120°, 0,15 → 88°, 0,35 → 55°, 0,55 → 32°, 0,75 → 14°, 0,9 → 0°. Nove gume so zelene. Po boksih so svetlo modre in v enem krogu postopoma spet zelene. Samo pri KOLIBRIJU primejo, dokler so modre, slabše (12 %), kot neogrete gume; pri vseh drugih avtih je modra barva samo na zaslonu in oprijem je enak (izbira uporabnika 3. 11. 2026; `opts.tyreCold`, seznam `TYRE_COLD` v `js/game.js`).
+- **Obraba (vsaka guma posebej):** na eni poti (gorska cesta, reli) je na cilju cele poti brez trkov in trave obraba ≈ 0,24 (rumeno-zelena), ne glede na dolžino poti. Na dirki na krog je obraba približno 4-krat hitrejša kot pri običajnih gumah; obrabljene gume primejo slabše (do 10 %, mehke kot njihova zmes), zato se boksi splačajo. Pri drsenju se gume obrabljajo hitreje; dežne gume na sušeči se cesti (idealna linija suha) 2,5-krat hitreje (`KT.wet`). Obraba velja tudi v kronometru in na progah brez boksov, zato so stari rekordi lahko malo hitrejši od novih (izbira uporabnika 3. 11. 2026). Na travi, pesku ali mivki se hitreje (3-krat) obrablja samo guma, ki je zunaj ceste; na makadamski cesti, kjer je makadam cesta sama, ne. Obraba sama nikoli ne pripelje do gorenja.
 - **Trki** (s poškodbami Samo videz ali Vklop) se na gumah samo vidijo (uporabnikova odločitev: avto se zaradi njih ne poškoduje): guma na mestu trka postane bolj rdeča, sosednja malo, diagonalna nič. Povprečen trk (1 % poškodbe KOLIBRIJA) doda ~1/6, močan ~1/3, rahel dotik skoraj nič, največ do 0,75 (oranžno rdeča pika). Trki sami gume nikoli ne zažgejo in kolo ne odpade.
 - **Guma gori** šele tam, kjer je v prejšnji različici avto zagorel (pravilo koles: skupna poškodba avta doseže 80 % ali močan trk od 2 % naprej pri 70 % ali več; po zamenjavi kolesa nad 80 % šele ob takem močnem trku ali ko poškodba znova preseže 80 %; `ktFire`). Zagori guma z največ trki; vedno gori le ena. Samo na dirki s pravilom koles (v kronometru, kvalifikacijah in izzivu guma ne zagori). Pika je svetlo rdeča s sijem in tankim svetlo rdečim krogom in utripa približno enkrat na sekundo. Na avtu je tisto kolo le rahlo rdeče (temno rdeča barva, rahel emissive ~0,45, brez sija in brez luči na cesti). Dokler guma gori, avto občutno bolj drsi (38 % manj bočnega oprijema); hitrost, pospešek, moč in zaviranje ostanejo enaki.
 - **Kolo odpade** šele, ko guma že gori: ob naslednjem pravem trku v ograjo ali vozilo (kjerkoli na avtu, od ~0,6 % poškodbe po `knockK`, tipičen trk KOLIBRIJA je ~1 %); trava, robniki in rahel dotik ga ne snamejo. Pika tega kolesa je prazna (samo obroč).
@@ -327,9 +353,9 @@ Vsak avto (igralčev, brez dirke s prijateljem) ima na vseh progah in v vseh na�
 
 ## Gume in postanki v boksih
 
-Na progah z boksi (Gozd, Toskana, Gromski rt, Spa, Štajerska, Longford) imajo avti **suhe gume** (slick) ali **dežne gume**. Suhe na suhem najbolje primejo, na mokrem pa izgubijo skoraj dve petini oprijema. Dežne primejo na mokrem kot doslej, na suhem pa manj in se tam hitro obrabijo. Gume se med vožnjo obrabljajo (v drsenju hitreje), obrabljene primejo do desetino slabše.
+Na progah z boksi (Gozd, Toskana, Gromski rt, Spa, Štajerska, Longford) imajo avti **suhe gume** (slick) ali **dežne gume**. Suhe na suhem najbolje primejo, na mokrem pa izgubijo skoraj dve petini oprijema. Dežne primejo na mokrem kot doslej, na suhem pa manj in se tam 2,5-krat hitreje obrabijo (ko je idealna linija suha; velja za vsak avto, tudi z gumami vsaka zase). Gume se med vožnjo obrabljajo (v drsenju hitreje), obrabljene primejo do desetino slabše.
 
-- Na zaslonu so gume zgoraj levo, v drugi vrstici pred krogom: štiri pike (2 × 2) v barvi tega, koliko gum je še ostalo (zelene nove, rumene in oranžne vse bolj obrabljene, rdeče pri 40 % ali manj; vse štiri enake, ker igra pozna eno obrabo za vse štiri gume), in beseda **MEHKE**, **SREDNJE**, **TRDE** ali **DEŽNE** v barvi zmesi. Odstotka ni. Ko so gume napačne za to, kako mokra je proga, je beseda bela na rdeči podlagi. Takoj po postanku so nove gume mrzle: pike in beseda so svetlo modre, v enem krogu od izvoza iz boksov pa dobijo svoje barve (samo na zaslonu, oprijem je enak). Gume na štartu niso nikoli mrzle.
+- Na zaslonu so gume zgoraj levo, v drugi vrstici pred krogom: štiri pike (2 × 2) v barvi tega, koliko gum je še ostalo (zelene nove, rumene in oranžne vse bolj obrabljene, rdeče pri 40 % ali manj; vse štiri enake, ker igra pozna eno obrabo za vse štiri gume), in beseda **MEHKE**, **SREDNJE**, **TRDE** ali **DEŽNE** v barvi zmesi. Odstotka ni. Ko so gume napačne za to, kako mokra je proga, je beseda bela na rdeči podlagi. Takoj po postanku so nove gume mrzle: pike in beseda so svetlo modre, v enem krogu od izvoza iz boksov pa dobijo svoje barve (samo na zaslonu, oprijem je enak; edina izjema je KOLIBRI, glej Gume vsaka zase). Gume na štartu niso nikoli mrzle.
 - V boksih mehaniki poleg popravila vedno zamenjajo gume za tiste, ki so prave za to, kako mokra je idealna linija (postanek traja vsaj 2,6 s).
 - **Vožnja skozi bokse:** ko prečkaš črto zidu boksov, avto prevzame avtopilot (sporočilo **BOKSI · AVTOPILOT** in napis »Sedaj lahko spustiš plin, vse bo naredil sam.«, ki ga po prevzemu ni več). Sam daje plin in zavira, pelje po sredini pasu z omejeno hitrostjo (80 km/h), zavije v svoj boks in po postanku odpelje ven. Plina ni treba držati in zavijati ne moreš; zavora ga upočasni (nikoli v vzvratno), ko jo spustiš, pelje naprej. Pred svojim boksom avto zavije na ploščad pred garažo in obstane naravnost pred garažo, kjer ga čakajo mehaniki (nobeden ne stoji na pasu). Po postanku se sam vrne na sredino pasu in pelje proti izvozu; približno 1 sekundo preden izvoz doseže glavno cesto (še v pasu) ob **VOZIŠ TI!** avto spet vodiš sam (brez odštevanja). Ves čas, ko vozi avtopilot, je pod zemljevidom okvirček **AVTOPILOT · spusti plin** s tem, kar se dogaja (**Vstop**, **Boks**, **Popravilo 45 %**, **Izvoz**), in enim trakom napredka čez ves postanek: od 0 % ob vstopu do 25 % do boksa, do 30 % ob zaviranju vanj, do 85 % med delom mehanikov, do 95 % na izvozu in do 100 % ob prevzemu (nikoli nazaj); ob **VOZIŠ TI!**, gumbu Na progo ali koncu dirke izgine. Če čez črto zidu zapelješ le na izvozu (brez postanka, sporočilo **BOKSI**), ga spet vodiš sam takoj, ko jo prečkaš nazaj.
 - **Filmska kamera v boksih:** ko avto prevzame avtopilot, se kamera izza avta dvigne in preleti bokse (visoko nad pasom pred avtom, pogled nazaj vzdolž garaž), pred boksom se spusti nizko pred avto, med delom mehanikov počasi kroži okoli njegovega prednjega dela, po postanku pa se med izvozom počasi vrne za avto; ob prevzemu (**VOZIŠ TI!**) je spet na svojem mestu za avtom. Ves čas se rahlo premika, brez rezov.
@@ -424,19 +450,28 @@ Prosojen avto (Nastavitve → Duh najboljše vožnje) vozi tvojo najboljšo vož
 
 ## Sledi zadnjih voženj (kronometer)
 
-Na kronometru se ob cilju shranijo sledi gum tvoje vožnje: črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: starejša kot je vožnja, manj se vidi, sledi izpred 10 voženj so komaj še vidne. Izven ceste so sledi zadnje vožnje take, kot so bile, na asfaltu so prosojnejše že od začetka, stara guma pa je vse bolj siva (sveže sledi trenutne vožnje so črne). Kjer se vožnje prekrivajo (zaviranje, vrh ovinka), se guma nabira in cesta temni. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja.
+Na kronometru se ob koncu vsake vožnje shranijo sledi gum tvoje vožnje, ne glede na to, ali si prišel do cilja ali vožnjo prej prekinil (**Ponovi**, nova vožnja ali izhod v meni; vožnja brez ene same sledi se ne šteje): črna guma na asfaltu, kjer avto drsi, zavira ali spodrsava, in kolesnice v travi, gramozu in blatu. Izven ceste pusti kolesnice vsak izlet s ceste, ne le drsenje (te so malo bolj blede). Vsaka proga hrani sledi svojih **zadnjih 10 voženj** (enajsta izrine najstarejšo; če 7-krat štartaš, od tega 2-krat prideš do cilja in 5-krat pritisneš Ponovi, se shrani vseh 7), samo za kronometer in samo v tem brskalniku oz. telefonu (IndexedDB, ena vožnja nekaj kB do nekaj deset kB; ni v izvozu profila). Ko naslednjič voziš kronometer na tej progi, so sledi prejšnjih voženj na cesti pod tvojimi svežimi: starejša kot je vožnja, manj se vidi, sledi izpred 10 voženj so komaj še vidne. Izven ceste so sledi zadnje vožnje take, kot so bile, na asfaltu so prosojnejše že od začetka, stara guma pa je vse bolj siva (sveže sledi trenutne vožnje so črne). Kjer se vožnje prekrivajo (zaviranje, vrh ovinka), se guma nabira in cesta temni. Na dirki, v prometu in pri begu pred policijo na isti cesti jih ni. Vse stare sledi so en sam klic risanja. **Prijateljeve sledi** (prišle z duhom ali izzivom, spodaj) so na cesti oranžne kot njegov duh; kadar so na progi tudi tvoje, dobijo največ polovico prostora za stare sledi.
 
 ## Deljenje duha in profila
 
-Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh; z **Izbriši prijateljevega** ga odstraniš.
+Na **Lestvici** je pri vsaki progi okvirček **Duh**. Svojega najboljšega duha proge (kronometer ali leteči krog) lahko deliš kot **povezavo** (na telefonu se odpre meni za deljenje, na računalniku se povezava kopira) ali ga **shraniš v datoteko** (npr. `duh-spa-2-18-440.json`). Duh kronometra s seboj nese tudi **sledi gum tvojih zadnjih 10 voženj** na tej progi: datoteka vse, povezava le toliko, kolikor jih gre vanjo (povezava ima prostora za okoli 16.000 znakov in duh kronometra ga večino zasede, zato v povezavo sledi navadno ne gredo; za vse sledi pošlji datoteko). Prijatelj povezavo odpre (igra se odpre z izbrano progo in tvojim duhom) ali datoteko uvozi z **Uvozi duha**; v kronometru na tej progi potem vidi tvoj čas, tvojega duha in tvoje sledi. Prijateljev duh je oranžen, nad njim sta prijateljevo ime in čas, vozi pa skupaj s tvojim v kronometru ali na letečih krogih. Na vsaki progi je lahko en prijateljev duh (nov duh zamenja tudi prijateljeve sledi); z **Izbriši prijateljevega** odstraniš njegovega duha in njegove sledi.
 
-V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke in duhove), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+V **Nastavitvah** je vrstica **Profil**: **Izvozi v datoteko** shrani vse, kar igra hrani (nastavitve, rekorde, lestvice, kariero, prvenstvo, dosežke, duhove in rekorde posebnih misij), v eno datoteko (npr. `real-roads-atlas-profil-20260930.json`), **Uvozi iz datoteke** pa jo naloži na drugem telefonu ali računalniku: igra najprej vpraša, nato se znova zažene s tem profilom (dosedanji se zamenja).
+
+## Shranjevanje napredka
+
+Igra hrani vse v brskalniku telefona (`localStorage`, za igro okoli 5,2 milijona znakov). Največ prostora vzamejo duhovi (vožnja ali krog do 600.000 znakov, vsaka proga ima svojega za vsako fiziko, vreme in način). Kar varuje napredek, je v `js/shramba.js`:
+
+- **Polna shramba:** ko shranjevanje kariere, rekordov, statistike, prvenstva, šole vožnje, nastavitev, kontrol ali novega duha ne gre več v shrambo, igra naredi prostor z brisanjem duhov, enega za drugim, dokler shranjevanje ne uspe: najprej legende Pikes Peaka (igra jih sama naredi znova), nato duhove prijateljev, nato tvoje duhove druge fizike, nato ostale, v vsaki skupini največjega najprej. Napredka samega ne briše nikoli. Ob prvem takem brisanju na obisk pove, koliko duhov je izbrisala (npr. »Shramba je bila polna: da se napredek shrani, je bil izbrisan 1 duh.«). Prej se je v polni shrambi vse tiho nehalo shranjevati.
+- **Trajna shramba:** ob rezultatih dirke igra enkrat na obisk prosi brskalnik, naj njene shrambe ne izprazni, ko telefonu zmanjka prostora (Chrome odgovori sam, Firefox vpraša). V **Nastavitvah** pod vrstico Profil piše, ali je shramba trajna, kdaj je bil profil nazadnje izvožen v datoteko in koliko prostora je zasedenega.
+- **Ponudba za izvoz profila:** od pete dirke ali kronometra naprej rezultati ponudijo **Shrani profil** (datoteka profila; na telefonu meni za deljenje, od koder jo shraniš v oblak ali pošlješ na računalnik) in **Ne zdaj**. Ne zdaj jo skrije za teden; po izvozu (tudi iz Nastavitev) se spet pokaže čez 30 dni. Ni je v dirki s prijateljem.
+- **Samodejne kopije napredka** (Nastavitve, pod Profil): igra sama shrani kopijo napredka (vse razen duhov, z rekordi misij) ob prvem zagonu dneva, pred uvozom profila in pred obnovo kopije; hrani zadnjih pet (IndexedDB `rra-shramba`). Vsaka kopija ima čas, razlog (ob zagonu, pred uvozom profila, pred obnovo), število dirk in denar kariere ter gumb **Obnovi**: igra vpraša, shrani kopijo trenutnega stanja, vrne napredek iz kopije (duhovi ostanejo, kot so) in se znova zažene. Kopije so v istem brskalniku kot igra: pomagajo, če se napredek pokvari (napačen uvoz, napaka v novi različici, preizkus vej na isti strani), ne pa, če telefon izbriše podatke brskalnika; za to je datoteka profila.
 
 ## Izziv s povezavo
 
 Prijatelja lahko izzoveš, naj premaga tvoj najboljši čas proge. Gumb **Izzovi prijatelja** je na rezultatih kronometra, kvalifikacij in dirke, ko imaš na progi svojega duha. Gumb **Pošlji izziv** je tudi na **Lestvici** v okvirčku **Duh**. Na telefonu se odpre meni za deljenje, na računalniku se povezava kopira.
 
-Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
+Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči krog ali kronometer), avto z barvo, nadgradnjami in nastavitvijo, vreme, letni čas in čas dneva. Priloži tudi tvojega duha, če gre v povezavo, pri kronometru pa še sledi gum tvojih zadnjih voženj, kolikor jih gre vanjo (prijatelj jih vidi oranžne na cesti); tudi **Pošlji odgovor** vrne tvoje sledi. Dolga vožnja v kronometru vanjo ne gre, zato izziv potuje brez duha.
 
 Ko prijatelj odpre povezavo, igra pokaže zaslon **Izziv**: kdo ga izziva, čas, ki ga mora premagati, in vse pogoje. Izziv počaka tudi na naslovnem zaslonu (gumb **Izziv: ime · čas**). **Sprejmi izziv** začne isto vožnjo: sam na progi, z avtom in v pogojih izzivalca, njegov duh pa vozi zraven. Pri letečem krogu se čas meri od črte, kot v kvalifikacijah. Na cilju se oba časa pokažeta drug ob drugem (**Izziv premagan!** ali **Izziv ni premagan**). Tvoji rekordi, duh in kariera ostanejo nespremenjeni. **Poskusi znova** požene isto vožnjo, **Pošlji odgovor** pa pošlje tvojo vožnjo z istimi pogoji nazaj izzivalcu. Kdor premaga izziv, dobi dosežek **Izziv sprejet**.
 
@@ -476,6 +511,7 @@ Na vseh progah čez pokrajino počasi drsijo sence oblakov (v dežju jih ni, ker
 - **Nebo:** pri kakovosti »Visoka« po nebu plujejo oblaki, isti, ki mečejo sence na tla (oblak na nebu je tam, kjer je njegova senca, gledano proti soncu). Podnevi so beli in kopasti, ob soncu z žarečim robom, zvečer in zjutraj rožnato in oranžno obsijani, ponoči temni s svetlejšimi robovi, med njimi zvezde, v dežju je nebo zaprto in sivo; v vzdržljivostni dirki se barve spreminjajo s časom dneva. Vidijo se s TV kamer, v posnetkih in na štartu proge Štajerska, ko kamera snema prelet letal.
 - **Sonce:** pri kakovosti »Visoka« na vseh progah z gozdom (ne le na Pikes Peaku) podnevi in zvečer med drevesi padajo poševni sončni žarki (nikoli nad cesto), s TV kamer pa se ob soncu v sliki pokaže odsev v objektivu. Poleti podnevi nad oddaljenim asfaltom tik pod obzorjem trepeta vroč zrak.
 - **Občutek hitrosti:** pri kakovosti »Visoka« se pri več kot ~110 km/h slika proti robovom zabriše v smeri vožnje (avto ostane oster; s kamero za avtom), na robnikih kamera rahlo zadrhti.
+- **Ostrenje slike** (odločitev uporabnika 3. 11. 2026: »rahlo prilagodljivo ostrenje (AMD CAS), samo na »Visoka« in samo, ko je ločljivost znižana«, nato »ali lahko ostrenje še izboljšaš«): ko igra pri kakovosti »Visoka« riše sliko z manj piksli, kot jih ima zaslon, jo rahlo izostri, preden jo brskalnik raztegne čez zaslon. To je takrat, ko igra teče počasi in samodejno zniža ločljivost (do 55 %), pri varčevanju z baterijo (70 %) in na telefonih z zaslonom, gostejšim od 2× (večina telefonov ima 2,6–3,5×), kjer Visoka riše največ 2× in brskalnik sliko vedno raztegne. Ostrenje je narejeno po zgledu AMD FidelityFX CAS in RCAS iz FSR 1: vsak piksel primerja s štirimi sosedi (zgoraj, spodaj, levo, desno) in ga od njih odmakne; osamljeno svetlo ali temno piko (šum, iskrico) ostri pol manj, rezultat pa nikoli ne preseže najsvetlejšega ali najtemnejšega soseda, zato ob robovih ni svetlih ali temnih obrob (haloja). CAS-ovo dodatno zmanjšanje ostrenja ob kontrastnih robovih je izpuščeno: omejitev na soseda že prepreči prestrel, robovi (črte na cesti, ograje, table) pa so tako ostrejši; v primerjavi s sliko pri polni ločljivosti (PSNR, SSIM in sprememba slike med vožnjo; Bathurst, Spa in Vršič pri 55 % ter zaslon 3× pri Visoki) je bila ta različica najbližje polni ločljivosti povsod. Jakost: tik pod ločljivostjo zaslona polovična, z nižjo ločljivostjo raste do polne pri 55 % (utež 0,15, izbira uporabnika 4. 11. 2026 na strani Odločitve, `ostrenje-jakost`: »2 · Srednje«, samodejno znižanje ločljivosti do 55 % ostane; na zaslonu 3× pri polni Visoki 0,13). Ostrenje je v zaključnem prehodu takoj za glajenjem robov in bere iste štiri sosede, zato nima svojega prehoda, ne doda klicev risanja in ne gradi senčilnika znova (vklop je le utež); pri ločljivosti zaslona, pri kakovosti »Normalno« in »Retro« ter v sliki iz foto načina ga ni. Koda: `cas`, `casK` in `casR` v `js/render.js`; slike pred/po `tools/ostrenje-slike.mjs`; test `tests/browser/ostrenje.test.mjs`.
 - **Življenje v gozdu:** na vseh pravih progah so ob cesti v gozdu jase z elementi kraja ali z živalmi, izbranimi po državi in pokrajini proge (`js/world-zivali.js`, tabela `ZIV`): Nürburg srne, jeleni s košutami, divje svinje z mladiči, lisice in zajci med prežami, krmišči, kupi hlodov, podrtimi drevesi, štori in gobami; Spa srne, divje svinje, lisice in krave; Štajerska srne, gamsi in krave ob koči in kozolcu; Vršič gamsi, kozorogi, srne, ovce in medved ob čebelnjaku, kozolcu, preži in krmišču; Medvode srne, divje svinje, lisice, medved in štorklje; Ouninpohja losi z mladiči, zajci in lisice ob rdeči koči; Crystal Palace in Harju lisice, srake, gosi in zajci; proge v ZDA wapitiji, jeleni mulci, muflonci in snežne koze, kojoti, črni medvedi in bizoni ob kočah, mizah za piknik in vetrnih črpalkah; Kanada gosi in lisice; Brazilija koatiji, kapibare, kajmani in čaplje; Čile gvanaki in konji; Južna Afrika paviani, skalni jazbeci in elandi; Maroko kamele, osli in štorklje; Japonska makaki, sika jeleni in seroji ob toriijih, kamnitih svetilkah in avtomatih za pijačo; Kitajska makaki; Rusija jaki, konji, kozorogi in marali; Tajska makaki, bivoli in čaplje ob hišicah duhov; Avstralija kenguruji z mladiči, valabiji, vombati, emuji, kakaduji, rožnati kakaduji in tasmanski vražički ob rezervoarjih za vodo in vetrnih črpalkah. Jase so blizu ceste (3–20 m za ograjo, samo na vidnih mestih: želja uporabnika »samo na vidnih mestih«) in imajo v drevju »okno« poševno nazaj proti cesti (kamera za avtom gleda od zadaj in zgoraj), da se vidijo; drevesa na jasi izginejo. Na odprtih progah (puščava, visokogorje, Los Caracoles, Sani, Katu-Jaryk) so živali tudi zunaj gozda, daleč od ceste. Živali so nekoliko večje od pravih (vidiš jih od visoko). Na nižjih stopnjah podrobnosti jih je manj (Harju, ki je že na meji proračuna telefona, pri Nizki nima nobene); kar ni živo, je zlito v en model na 256 m kos (en klic risanja), črede v njem pa premika senčilnik (spodaj). Testne proge jih nimajo.
   - **Družba po vrsti** (želja uporabnika: »na progi naj bo več živali, živali niso vse vedno v skupini, lahko sta po 2 moški in ženska, 3–10 odvisno katere živali«, nato »živali naj bodo bolj razporejene, … samo nekatere naj bodo skupaj, ostale pa različno po mapi«; tabela `SOC`, črede so 40 % tako pogoste kot pri vrsti sami, ostale živali so same ali v parih, v čredi je med živalmi telo ali več razmika): vsaka vrsta se druži po svoje – sama, v paru samec in samica (srnjak in srna, jelen in košuta, los in losica, kozorog in koza, wapiti, sika, kenguru …) ali v čredi 3–10 z mladiči (jelen s košutami in teleti, svinja s pujski, krave, ovce, gamsi, gvanaki, bizoni, krdelo kengurujev z mladiči, medvedka z dvema mladičema …). Mest z živalmi je več kot prej (poskus na ~36 m ceste namesto na 64 m), živali so senčene od tal navzgor (temnejše noge in trebuh), imajo mehko senco pod sabo (spodaj), tanjše noge, vsaka svoj odtenek, v čredi se pasejo, dvigujejo glave in prestopajo (spodaj), na odprtih pašnikih (Spa, Štajerska, Vršič, Medvode, Bathurst, Longford, Great Alpine Road, Mount Hotham) so živali tudi zunaj gozda. Nobena se ne postavi med zgradbe, parkirane avte, šotore, gledalce ali v vodo (mreža zasedenosti 4 m: kar stoji nad tlemi v zlitem okolju, instance gledalcev, potoki in jezera).
   - **Žive živali** (»nekatere živali pa naj bodo same ter se sprehajajo ali pa jejo travo«): žival, ki je sama, se sprehaja sem ter tja (pot 3–8 m, na koncu se pase in obrne) ali se pase na mestu (glava dol, občasno pogleda, naredi korak ali dva). Ima svoj model, noge in vrat premika senčilnik (`aJ`: noge 1–4, vrat 5, glava 7), postavi jo `World.lifeStep` vsako sličico; kenguruji poskakujejo, medved in vombat hodita v enem kosu. Dlje od 150 m je skrita (en klic risanja manj); od Srednje stopnje naprej, kot druge živali svetov (pri Nizki jih ni, črede pa se premikajo tudi tam).
@@ -510,7 +546,7 @@ Da igra teče gladko tudi na starejših in cenejših telefonih, se količina okr
   - Bang Saen: fasade so v dvakrat širših kosih (287 → 280 klicev). Preostanek ob štartu je polje 20 avtov tik pred kamero.
   Novi predmeti, ki jih ima samo Nizka, se ustvarijo z `World.api.ownRnd` (brez porabe `Math.random`), zato dirka s semenom teče enako. Razčlenitev po predmetih: `tools/obremenitev.mjs`.
 - **Srednja** je vmes: krajši doseg prikaza in nekoliko manj okrasja.
-- **Samodejno** izbere začetno stopnjo iz naprave (bere ime grafične kartice prek `WEBGL_debug_renderer_info` ter število jeder in pomnilnik): znane šibke mobilne kartice začnejo na Nizki, zmogljive na Visoki, ostale po zmogljivosti naprave. Med vožnjo sistem meri čas sličice in, če igra teče počasi, najprej zniža ločljivost, nato (ob naslednjem premoru) sence, na koncu pa še skrajša doseg prikaza daljnega okrasja, da sličice ostanejo tekoče; ko se hitrost povrne, okrasje spet pokaže.
+- **Samodejno** izbere začetno stopnjo iz naprave (bere ime grafične kartice prek `WEBGL_debug_renderer_info` ter število jeder in pomnilnik): znane šibke mobilne kartice začnejo na Nizki, zmogljive na Visoki, ostale po zmogljivosti naprave. Med vožnjo sistem meri čas sličice in, če igra teče počasi, najprej zniža ločljivost (pri kakovosti »Visoka« sliko nato rahlo izostri, glej **Ostrenje slike** zgoraj), nato (ob naslednjem premoru) sence, na koncu pa še skrajša doseg prikaza daljnega okrasja, da sličice ostanejo tekoče; ko se hitrost povrne, okrasje spet pokaže.
 
 Sledi gum na cesti se rišejo samo, kolikor jih je (prej vedno vseh 8000), pri vseh stopnjah.
 
@@ -552,7 +588,7 @@ Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik L
 
 V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
-- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega) odpre garažo, njena puščica nazaj pa zaslon za izbiro avta; **Nazaj** ali **Naprej** te od tam vrne na isto progo. **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
+- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
 - **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5. Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
@@ -562,93 +598,93 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
 | **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
-| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 € | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
-| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 € | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
-| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 € | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
-| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 € | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
-| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 € | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 kovančkov | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
+| **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 kovančkov | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
+| **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
+| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
 
 ### Športni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 € | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
-| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 € | Rad obrne rep, rojen za drift. |
-| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 € | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
-| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 € | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
-| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 € | Veliko oprijema, stabilen tudi na robu. |
-| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 € | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **LISICA** | zadnji | 163 KM | 980 kg | 18.000 kovančkov | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
+| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 kovančkov | Rad obrne rep, rojen za drift. |
+| **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 kovančkov | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
+| **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
+| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
+| **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
 
 ### Superšportni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 € | Oster in živahen, hitro zavrti. |
-| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 € | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
-| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 € | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
-| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 € | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
+| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 kovančkov | Oster in živahen, hitro zavrti. |
+| **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 kovančkov | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
+| **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 kovančkov | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
+| **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 kovančkov | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
 
 ### Klasika
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 € | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
-| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 € | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
-| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 € | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
-| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 € | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
+| **BLISK 30** | zadnji | 136 KM | 750 kg | 30.000 kovančkov | Dirkalnik za veliko nagrado iz 30-ih: ovalna maska, žična kolesa in čolnast rep. |
+| **JASTREB 6** | zadnji | 272 KM | 1250 kg | 40.000 kovančkov | Britanski GT iz 60-ih: dolg pokrov motorja, ovalna maska in žična platišča. |
+| **VIHAR V8** | zadnji | 517 KM | 1540 kg | 40.000 kovančkov | Ameriški »muscle car« iz 70-ih z velikim V8 (glej spodaj). |
+| **GAD 7L** | zadnji | 408 KM | 1100 kg | 55.000 kovančkov | Ameriški roadster iz 60-ih z velikim V8, stranskimi izpuhi in razširjenimi blatniki. |
 
 ### Reli
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 € | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
-| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 € | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
-| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 € | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+| **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 kovančkov | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
+| **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 kovančkov | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
+| **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 kovančkov | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
 
 ### Terenski
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 € | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
-| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 € | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
-| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 € | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
-| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 € | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
-| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 € | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **SKAKAČ 1600** | zadnji, motor zadaj | 150 KM | 850 kg | 16.000 kovančkov | Puščavski skakač z motorjem zadaj: dolg hod vzmetenja, zunanja kletka in luči na strehi. |
+| **GOZDAR** | zadnji | 517 KM | 1360 kg | 50.000 kovančkov | Dirkalni poltovornjak za kratke terenske steze z velikim krilom na kesonu. |
+| **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
+| **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
+| **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
 
 ### Dirkalni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 € | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
-| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 € | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
-| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 € | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
-| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 € | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
-| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 € | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
-| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 € | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
-| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 € | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
-| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 € | Prototip za vzdržljivostne dirke (glej spodaj). |
+| **MRAVLJA** | zadnji, motor zadaj | 30 KM | 165 kg | 5.000 kovančkov | Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler. |
+| **KOZOROG TC** | prednji | 354 KM | 1180 kg | 55.000 kovančkov | Turistični dirkalnik: široki blatniki, spojler spredaj in krilo zadaj. |
+| **TORNADO V8** | zadnji | 762 KM | 1550 kg | 65.000 kovančkov | Ameriški dirkalnik za ovale z velikimi številkami in mrežami na oknih. |
+| **STRELICA 61** | zadnji, motor na sredini | 190 KM | 460 kg | 70.000 kovančkov | Cigarast dirkalnik formule iz zgodnjih 60-ih: odprta kolesa in izpušne cevi. |
+| **TIGER GT** | zadnji | 551 KM | 1300 kg | 85.000 kovančkov | Dirkalnik GT z dolgim pokrovom motorja, velikim krilom in difuzorjem. |
+| **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 kovančkov | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
+| **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 kovančkov | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
+| **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 kovančkov | Prototip za vzdržljivostne dirke (glej spodaj). |
 
 ### Tovornjaki
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 € | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
-| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 € | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+| **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 kovančkov | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
+| **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
 
 ### Električni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 € | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
-| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 € | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
+| **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
 
 ### Posebni
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 € | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
-| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 € | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
-| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 € | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+| **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 kovančkov | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
+| **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 kovančkov | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
+| **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 kovančkov | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
 
 ### Dirkalni tovornjak TITAN
 
@@ -663,9 +699,9 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 Trije izmišljeni avti z isto karoserijo kompaktnega trivratnega hatchbacka z velikimi mandljastimi žarometi:
 
-- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 € v karieri.
-- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 €.
-- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 €.
+- **LEV S** (Mali avti): cestni hot hatch s prednjim pogonom, lahek in živahen v ovinkih, 20.000 kovančkov v karieri.
+- **LEV KABRIO** (Mali avti): kabriolet s kovinsko streho, zloženo v prtljažnik, dvema sedežema in roll barom; malo težji in počasnejši od LEV S, 24.000 kovančkov.
+- **LEV R** (Reli): relijski dirkač s pogonom na vsa kolesa, širokimi blatniki, velikim krilom in zajemalko na strehi, 45.000 kovančkov.
 
 ## Razpadanje vozil
 
@@ -752,7 +788,7 @@ Telefoni so povezani neposredno (WebRTC) s knjižnico [PeerJS](https://peerjs.co
 
 ## Jezik (angleščina)
 
-V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, €12,300, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
+V **Nastavitvah** je prva vrstica **Jezik · Language**: **Slovenščina** ali **English**. Izbira velja takoj (tudi med premorom dirke) in se shrani. V angleščini so vsi meniji, HUD, sporočila med dirko, rezultati, prvenstvo, kariera, lestvica in dirka s prijateljem, imena in opisi prog ter prvenstev (npr. Gorski reli je Mountain Rally, Bakreni gozd Copper Forest), kategorije in opisi vozil (Mali avti so Small cars; imena vozil ostanejo), številke in denar po angleško (1.9 km, 3,048 m, 12,300 🪙, 3rd). Imena pravih krajev ostanejo (Vršič, Eau Rouge, Fuchsröhre), oštevilčeni ovinki in serpentine pa se prevedejo (Turn 3, Hairpin 8). Komentator in sovoznik govorita angleško v obeh jezikih. Privzeto ime voznika se ob zamenjavi jezika zamenja (Igralec, Player).
 
 ## Dosežki in statistika
 
@@ -760,7 +796,7 @@ Gumb **Dosežki** na naslovnem zaslonu odpre statistiko voznika: prevoženi kilo
 
 ## Varčevanje z baterijo in hitrejše nalaganje
 
-V **Nastavitvah** je **Varčevanje z baterijo**: **Vklop** riše največ 30 sličic na sekundo pri 70 % ločljivosti (manj dela za telefon, baterija zdrži dlje), **Samodejno** pa ga vklopi le, kadar je baterije 20 % ali manj in se telefon ne polni (pokaže se sporočilo). Proge se nalagajo hitreje: igra ob nalaganju ne pripravlja več dirke za naslovni zaslon (ta se pripravi šele, ko se vrneš v meni), senčilniki pa se prevedejo, dokler je na zaslonu napis o nalaganju, zato se dirka na začetku ne zatika. Nastavitve, ki ne spremenijo slike (zvok, jezik, tresenje), senčilnikov ne prevajajo znova.
+V **Nastavitvah** je **Varčevanje z baterijo**: **Vklop** riše največ 30 sličic na sekundo pri 70 % ločljivosti, pri kakovosti »Visoka« z ostrenjem slike (manj dela za telefon, baterija zdrži dlje), **Samodejno** pa ga vklopi le, kadar je baterije 20 % ali manj in se telefon ne polni (pokaže se sporočilo). Proge se nalagajo hitreje: igra ob nalaganju ne pripravlja več dirke za naslovni zaslon (ta se pripravi šele, ko se vrneš v meni), senčilniki pa se prevedejo, dokler je na zaslonu napis o nalaganju, zato se dirka na začetku ne zatika. Nastavitve, ki ne spremenijo slike (zvok, jezik, tresenje), senčilnikov ne prevajajo znova.
 
 ## Igra kot aplikacija
 

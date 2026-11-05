@@ -1,10 +1,10 @@
 // tools/spoji-main.mjs on a small repository of its own (a temp folder, no network), the way a branch from before #271 merges main: main's
 // pages carry no stamps any more, the branch's still do. A merge whose conflicts are only in content stamps (index.html), rows both
 // sides added (a table in a .md), a test list both sides extended (tests/run.js; each new test where its side put it) and one real
-// conflict (the same line of a .md changed on both sides). The tool resolves the mechanical ones, takes the stamps off and leaves only
-// the real conflict (exit 1); without it the merge is committed (exit 0) and no page carries a stamp. Also: a merge without conflicts
-// that brings a stamp (into the merge commit, without it), a link to a deleted file (printed), a fast-forward, an up-to-date branch and
-// uncommitted changes (exit 2).
+// conflict (the same line of a .md changed on both sides). The tool resolves the mechanical ones (the page by node tools/stamp.js --merge,
+// the rest by itself) and leaves only the real conflict (exit 1); without it the merge is committed (exit 0) and no page carries a stamp.
+// Also: a real conflict in a page (left marked, without stamps, exit 1), a merge without conflicts that brings a stamp (taken off into
+// the merge commit), a link to a deleted file (printed), a fast-forward, an up-to-date branch and uncommitted changes (exit 2).
 'use strict';
 const { spawnSync } = require('child_process');
 const fs = require('fs'), os = require('os'), path = require('path'), assert = require('assert');
@@ -70,7 +70,7 @@ try {
   assert.strictEqual(r.status, 1, r.stdout + r.stderr);
   assert.deepStrictEqual(conflicted(), ['docs/x.md'], r.stdout);
   assert.match(r.stdout, /docs\/x\.md \(1 del, vrstica 2\)/);
-  assert.match(r.stdout, /Žigi odstranjeni iz index\.html/);
+  assert.match(r.stdout, /Samodejno rešeno: .*index\.html/);
   assert.match(r.stdout, /Nato: node tools\/stamp\.js --strip in --check/);
   assert.ok(!/<<<<<<<|>>>>>>>/.test(read('index.html') + read('docs/kazalo.md') + read('tests/run.js')));
   assert.deepStrictEqual(stamps(), []);
@@ -91,7 +91,7 @@ try {
   assert.match(read('tests/run.js'), /node: \['a\.test\.js', 'main\.test\.js', 'b\.test\.js', 'veja\.test\.js'\],/);   // (main's test where main put it)
   assert.strictEqual(read('index.html'), '<!doctype html>\n<script src="js/v.js"></script>\n<script src="js/m.js"></script>\n' +
     '<script src="js/a.js"></script>\n<script src="js/b.js"></script>\n<script src="js/c.js"></script>\n');
-  assert.match(r.stdout, /samodejno rešeni spori: .*index\.html.*; žigi odstranjeni iz index\.html/);
+  assert.match(r.stdout, /samodejno rešeni spori: .*index\.html/);
   assert.ok(!/Pozor/.test(r.stdout), r.stdout);
 
   // 3. again: up to date
@@ -128,6 +128,22 @@ try {
   assert.strictEqual(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /Pozor, node tools\/stamp\.js --check:\nFAIL missing file: index\.html: js\/b\.js/);
 
+  // 4c. a real conflict in the page (the same link changed differently on both sides): left marked without stamps, nothing else
+  git('checkout', '-q', '-b', 'p1', 'brez');
+  write('index.html', read('index.html').replace('<script src="js/c.js"></script>', '<script src="js/c.js" defer></script>'));
+  commit('p1: defer', '--strip');
+  git('checkout', '-q', '-b', 'p2', 'brez');
+  write('index.html', read('index.html').replace('<script src="js/c.js"></script>', '<script src="js/c.js" async></script>'));
+  commit('p2: async', '--strip');
+  git('checkout', '-q', 'p1');
+  r = tool('p2');
+  assert.strictEqual(r.status, 1, r.stdout + r.stderr);
+  assert.deepStrictEqual(conflicted(), ['index.html']);
+  assert.match(r.stdout, /index\.html \(1 del, vrstica \d+\)/);
+  assert.match(read('index.html'), /<<<<<<< this branch\n[^]*defer[^]*\n=======\n[^]*async[^]*\n>>>>>>> merged in/);
+  assert.deepStrictEqual(stamps(), []);
+  git('merge', '--abort');
+
   // 5. a fast-forward: main's commits stay as they are
   git('checkout', '-q', 'ff');
   r = tool('main');
@@ -139,7 +155,7 @@ try {
   r = tool('main');
   assert.strictEqual(r.status, 2, r.stdout + r.stderr);
   assert.match(r.stderr, /neshranjene spremembe/);
-  console.log('OK: spoji-main reši spore v žigih, dodanih vrsticah in seznamih testov, odstrani žige starejše veje, pravi spor pusti');
+  console.log('OK: spoji-main reši spore v straneh (stamp.js --merge), dodanih vrsticah in seznamih testov, odstrani žige starejše veje, pravi spor pusti');
 } finally {
   fs.rmSync(dir, { recursive: true, force: true });
 }

@@ -253,7 +253,7 @@ Seje avtov ne spreminjajo dogovora (`car.deli`, `mounts`, `K.deli`, `DELI`) in n
 Pravila, da se seje ne motijo:
 - `js/deli.js` in dogovor ostaneta, kot sta. Sprememba dogovora gre v »Spremembe dogovora« in jo povej uporabniku.
 - V `js/cars/kolibri.js` vsaka seja sklopa 2 doda svoja mesta pod svojo vrstico v `mounts` (»sklop 2, … js/deli/<skupina>.js«) in ovoje `K.deli` okrog svojih serijskih delov.
-- V skupnih datotekah (`docs/deli.md`, `docs/kazalo.md`, `tests/README.md`, `index.html`) vsaka seja ureja samo svoj del. Spore ob spajanju razreši; `index.html` ostane brez žigov (žige iz starejše veje odstrani `node tools/stamp.js --strip`, preveri z `--check`).
+- V skupnih datotekah (`docs/deli.md`, `docs/kazalo.md`, `tests/README.md`, `index.html`) vsaka seja ureja samo svoj del. Spore ob spajanju razreši; spor v `index.html` razreši `node tools/stamp.js --merge`, stran ostane brez žigov (žige iz starejše veje brez spora odstrani `--strip`, preveri z `--check`).
 - Uporabniku pošlji eno ploščo za svojo skupino (`tools/deli-plosca.mjs`) in počakaj na potrditev. Vprašanja mu postavljaš v slikah, v slovenščini, kratko.
 - Pred pull requestom spoji `main` (ko je #192 tam). Na `main` gre, ko so testi zeleni in uporabnik potrdi.
 - Razbijanje novih delov (sklop 3) pride po sklopu 2; sklop 4 (pregled vseh 624 možnosti, stran za ogled) pride na koncu.
@@ -261,7 +261,7 @@ Pravila, da se seje ne motijo:
 ## Sklop 2 · zadaj (KOLIBRI)
 
 - `js/deli/zadaj.js`: `zadnje_luci`, `auspuh`, `prtljaznik`, `vlecne_kljuke`, `lovilci_blata`, vsak 16 možnosti; mesta in ovoji `K.deli` v `js/cars/kolibri.js` (serijski avto enak).
-- Odločitve uporabnika (30. 10. 2026): vse možnosti zadnjih luči so v obliki črnine za lučjo (poševen vrh in dno; serijska luč ostane enaka); pokrov prtljažnika in vlečne kljuke so med seboj vidno različni (pokrov: železen, račji rep, kromiran okvir, lesen »woodie«, valovit aluminij, žaluzije, karbon, okno prekrito s karbonom, rdeča črta, dirkalni z zaponkami; kljuke: trakovi v barvah, J-kljuke, plošče, trikotna, zložljive, obroči); možnost 4 pokrova je »Lesen« namesto »Iz steklenih vlaken« (450 €, −3 kg).
+- Odločitve uporabnika (30. 10. 2026): vse možnosti zadnjih luči so v obliki črnine za lučjo (poševen vrh in dno; serijska luč ostane enaka); pokrov prtljažnika in vlečne kljuke so med seboj vidno različni (pokrov: železen, račji rep, kromiran okvir, lesen »woodie«, valovit aluminij, žaluzije, karbon, okno prekrito s karbonom, rdeča črta, dirkalni z zaponkami; kljuke: trakovi v barvah, J-kljuke, plošče, trikotna, zložljive, obroči); možnost 4 pokrova je »Lesen« namesto »Iz steklenih vlaken« (450 kovančkov, −3 kg).
 - Zadnje luči: svetleči del je repna mreža (`K.tailLamp`, temno rdeča, ob zaviranju svetla), steklo in podrobnosti so telo v delih `tailL`, `tailR`. LED-trak čez prtljažnik (8, 12, 16) je telo v delu `trunk` in ne zasveti (svetita luči ob straneh). Za svetlečo ploskvijo je do telesa le 5 mm, zato globine ni (3D LED: trije obroči svetlobe).
 - Vlečne kljuke: 1, 2, 4 samo zadaj, 6–13 samo spredaj, ostale spredaj in zadaj. Lovilci blata: 1–10 za zadnjimi kolesi, 11–16 za vsemi štirimi, 15 in 16 še ščitnika pragov.
 - Plošča: `node tools/deli-plosca.mjs zadnje_luci,auspuh,prtljaznik,vlecne_kljuke,lovilci_blata` (luči: levo ugasnjene, desno ob zaviranju; kljuke: levo spredaj, desno zadaj).
