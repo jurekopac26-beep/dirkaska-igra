@@ -115,7 +115,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/cars/<id>.js` | ena datoteka na vozilo (33 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
+| `js/cars/<id>.js` | ena datoteka na vozilo (37 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
 | `js/lang.js` | besedila v angleščini (slovar: slovensko besedilo → angleško), številke, denar in mesta po jeziku, prevod strani (`index.html`) ob zamenjavi jezika |
 | `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki in enosmerne ceste; po levi na progah z `leftHand`) in pešci na odprti cesti, galerije proti plazovom, prepadi brez ograj (avto zgrmi čez rob), policija, vozni park (vozila in kategorije, deli, ki odpadejo, izgubljena kolesa, odstop) (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
