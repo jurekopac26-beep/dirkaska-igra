@@ -133,3 +133,4 @@ Primeri vseh zvokov (prototip v brskalniku, z motorjem za primerjavo glasnosti):
 
 - 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338). Ob 16.10 odločitev uporabnika: govor v zvokih okolja v angleščini (načrt in vprašanji prilagojena). Isti dan: proge ZDA razen Pikes Peaka so testne (#355), zato so iz načrta in primerov zvokov odstranjene.
 - 6. 11. 2026: odgovori uporabnika zapisani (vir 1, nabor 3, glasnost 1; ocena ~20 h). Vršič (#394) ter Mount Buller, Toronto, Trois-Rivières, Sani Pass in Bang Saen (#379) gredo med testne proge, zato so primeri, testi in uglaševanje na drugih pravih progah. Koda še ni začeta.
+- 6. 11. 2026: koda začeta (seja session_01WbgGzrjE2xYA6b87o2SYHz, koraki 1–3; veja `zvoki-okolja/koda`, osnutek PR »Zvoki okolja«; uporabnik je rekel »začni«, zato se začne pred #284, koda je v svoji datoteki s kratkim priklopom; na `main` gre po #284).
