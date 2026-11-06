@@ -762,5 +762,6 @@
   }
 
   Object.assign(API, { CAN, CA_SNC, caCar, caCondorGeo, caCondors, caGCol, caGH, caGround, caH, caNear, caPlantGeo, caProps, caSlope, caTileGeo, caTileOn });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'caracoles');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.caracoles = (scene, tex, opts) => buildCaracoles(scene, tex, opts);
 })();
