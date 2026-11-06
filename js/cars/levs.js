@@ -75,7 +75,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // the roof; the sun strip on the windscreen's top; the calipers; the fuel cap on the right rear quarter (none stock)
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.24, 0.38] },
-      nalepke: { side: [[-0.55, 0.68], [0.88, 1.15], [-1.1, -0.65]], y: [0.64, 0.8], hood: { x: [1.0, 1.6], z: [0.26, 0.46] }, roof: { x: [-1.1, 0.1] } },
+      nalepke: { side: [[-0.55, 0.16], [0.88, 1.15], [-1.1, -0.65]], y: [0.64, 0.8], hood: { x: [1.0, 1.6], z: [0.26, 0.46] }, roof: { x: [-1.1, 0.1] } },
       soncni_pas: { x: [0.19, 0.33] }, zamasek: { x: -1.2, y: 0.72, z: 0.854, r: 0.045 },
       celjusti: { r: [0.089, 0.166], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) round the transverse four in the bay (the battery on its floor ahead of the front
