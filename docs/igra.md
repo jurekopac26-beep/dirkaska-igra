@@ -691,7 +691,7 @@ V igri je **49 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 kovančkov | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
 | **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 kovančkov | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
 | **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 kovančkov | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
-| **VRAN 01** | 4WD | 558 KM | 1750 kg | 75.000 kovančkov | Izvenserijski odprt terenec 4x4 z varnostno kletko, vitlom in rezervnim kolesom zadaj. |
+| **VRAN 01** | 4WD | 680 KM | 2150 kg | 75.000 kovančkov | Izvenserijski velik terenec 4x4 s trdo streho, vitlom in rezervnim kolesom zadaj. |
 
 ### Dirkalni tovornjak TITAN
 

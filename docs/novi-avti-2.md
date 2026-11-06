@@ -11,7 +11,7 @@ Izbira uporabnika 6. 11. 2026 (naloga koordinacije VSE SEJE 2, partyslo, session
 | `kuna` | KUNA S | mali | FF | `i4`, turbo | 4,28 × 1,86 × 1,42 m, 2,60 m | vroči hečbek s prednjim pogonom: bela streha, temen pokrov s črtama, visoko krilo, okrogli zadnji luči, zlata platišča, vlečni trak |
 | `merjasec` | MERJASEC V8 | sportni | FR | `v8` | 4,95 × 2,04 × 1,38 m, 2,90 m | limuzina z V8 za drift: nizka, globoka platišča, kratek rep, štirje izpuhi |
 | `tur` | TUR 6x6 | teren | AWD, vseh 6 koles | `v8` | 6,00 × 2,20 × 2,15 m, osi +2,00 / −1,05 / −2,30 m | pickup s tremi osmi: odbijač, snorkel, svetlobni pas, lok in rezervno kolo v kesonu |
-| `vran` | VRAN 01 | posebni | AWD | `v8` | 4,12 × 2,12 × 1,88 m, 2,45 m | izvenserijski odprt terenec 4x4: varnostna kletka s svetlobnim pasom nad pokončnim vetrobranskim steklom, zajemalka na ravnem pokrovu, ozka maska med vitkimi lučmi, velike gume na bronastih platiščih pod širokimi črnimi blatniki, ploščat odbijač z vitlom in rdečimi okovi, rezervno kolo na zadnjih vratih, polvrata, zadnji del pod platneno prevleko. Odgovor uporabnika na `novi-avti-2-unikat` (6. 11. 2026): »Vseh 5. Edino vran zamenjaj avto za 4x4 džipa izvenserijskega.« (namesto prvotnega hot roda) |
+| `vran` | VRAN 01 | posebni | AWD | `v8` | 4,8 × 2,2 × 2,0 m, 2,95 m | izvenserijski velik terenec 4x4 s trdo streho: štiri vrata, streha v barvi črte (dvobarvna), svetlobni pas na sprednjem robu strehe nad pokončnim vetrobranskim steklom, zajemalka na ravnem pokrovu, ozka maska med vitkimi lučmi, velike gume na bronastih platiščih pod širokimi črnimi blatniki, ploščat odbijač z vitlom in rdečimi okovi, rezervno kolo nizko na zadnjih vratih pod zadnjim steklom, pragovi. Odgovor uporabnika na `novi-avti-2-unikat` (6. 11. 2026): »Vseh 5. Edino vran zamenjaj avto za 4x4 džipa izvenserijskega.« (namesto prvotnega hot roda); nato v seji: »Vran1 spremeni da ima pokrito streho in da je vecji dzep« (namesto odprtega dvovratnega) |
 
 Številke (moč, masa, cena, izmerjene vrednosti) so v razdelku Stanje, ko je avto narejen.
 
@@ -51,4 +51,4 @@ Obe veji dodajata vozila v iste sezname: `index.html`, `garaza.html`, `js/lang.j
 | KUNA S | narejen (`js/cars/kuna.js`) | 255 kW / 1190 kg (214 W/kg) | 3,28 s / 228 km/h / 2,23 g / 23,9 m | 2251 / 461 / 716 |
 | MERJASEC V8 | narejen (`js/cars/merjasec.js`) | 470 kW / 1680 kg (280 W/kg) | 3,25 s / 243 km/h / 2,20 g / 22,8 m | 2208 / 502 / 858 |
 | TUR 6x6 | narejen (`js/cars/tur.js`) | 640 kW / 3300 kg (194 W/kg) | 3,47 s / 188 km/h / 2,02 g / 27,1 m | 1985 / 489 / 717 |
-| VRAN 01 | narejen (`js/cars/vran.js`), terenec 4x4 namesto hot roda | 410 kW / 1750 kg (234 W/kg) | 2,92 s / 207 km/h / 2,14 g / 24,7 m | 2288 / 560 / 765 |
+| VRAN 01 | narejen (`js/cars/vran.js`), velik zaprt terenec 4x4 namesto hot roda | 500 kW / 2150 kg (233 W/kg) | 2,93 s / 200 km/h / 2,10 g / 24,6 m | 2304 / 696 / 794 |
