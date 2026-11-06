@@ -31,7 +31,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 12 | #404 | Popravek treh nezanesljivih testov po #250 (analiza na tabli #382): `browser/pits` šteje predajo šele po prikazani progresni vrstici, `browser/smoke` po »Suho« čaka, da dež ugasne (do 5 s), gorivo v igri: ocena porabe `c.fuelPm` šele po krogu na rezervoarju, metri od mesta na štartni mreži (opozorilo »Malo goriva« ne pride več v 1. krogu pri 85 %; `js/core.js`, 3 vrstice; `docs/igra.md`) | partyslo | pripravljen (seja session_01WbgGzrvK2Nia13SDcjgBWb); povezani testi lokalno zeleni na 19d71e4 (Node 13/13 ter fuel, pits, radio, bathurst; brskalnik fuel, pits, smoke, repro, radio), osnutek do vrste; s svežim `main` (po #293) brez sporov; ob vrsti: spoj svežega `main`, povezani testi, Ready; za zbirno vejo A po pravilu »hitri popravki rdečega `main` na začetek« (main po #250 dvakrat naključno rdeč; koordinacija VSE SEJE 2, 6. 11.) |
 | 13 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 14 | #226 | Bâlea | 3 | čaka |
 | 15 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
