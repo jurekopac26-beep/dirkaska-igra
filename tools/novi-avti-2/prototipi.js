@@ -192,7 +192,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   });
 
   /* 5 · TUR 6x6: terenski poltovornjak na šestih kolesih (vseh šest gnanih), dvojna kabina, odprt keson, L 6.00 W 2.20 H 2.15, osi pri
-     +2.00 / -1.05 / -2.30 (prednja, srednja in zadnja); srednjo os tu nariše K.tyre (v igri: kolesa, ki se vrtijo, kot zadnja) */
+     +2.00 / -1.05 / -2.30 (prednja, srednja in zadnja); srednja os je look.wheels.mid (js/render.js: dve kolesi, ki se vrtita z zadnjima) */
   const TUR_MID = -1.05;
   car({ id: 'pntur', name: 'TUR 6x6', cat: 'teren', len: 6.0, wid: 2.2, a: 2.0, b: 2.3, rw: 0.47, ht: 2.15, mass: 3300, snd: 'v8',
     budget: { outer: 2400, inner: 1200 },
@@ -205,19 +205,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       [2.8, 1.05, 0.72, 1.3, 0.98, 1.46, 0.03, 'b', 0.12],
       [2.92, 1.0, 0.76, 1.22, 0.94, 1.38, 0.02, 'b', 0.12],
       [2.95, 0.96, 0.8, 1.14, 0.9, 1.3, 0.01, 'b', 0.1]],
-    wheels: { style: 'knob', w: 0.36, rim: [0.16, 0.16, 0.17], cap: [0.2, 0.2, 0.21], gap: 0.08 },
+    wheels: { style: 'knob', w: 0.36, rim: [0.16, 0.16, 0.17], cap: [0.2, 0.2, 0.21], gap: 0.08, mid: TUR_MID },
     build(K) {
-      const P = K.paint, B = K.black, hw = K.hw;
-      // the shell with three arches (the middle one over the tandem's front axle), the bed open on top, the cab's back wall painted
-      const L = shell(K, (k, e, kind) => k === 1 && e >= 3 && e <= 5 ? null : kind === 'gr' && (e === 2 || e === 6) ? P : undefined,
-        { arches: [{ x: 2.0 }, { x: TUR_MID }, { x: -2.3 }] });
+      const P = K.paint, B = K.black;
+      // the shell with three arches (the loft's default: the middle one is wheels.mid's), the bed open on top, the cab's back wall painted
+      const L = shell(K, (k, e, kind) => k === 1 && e >= 3 && e <= 5 ? null : kind === 'gr' && (e === 2 || e === 6) ? P : undefined);
       const DC = L.decal;
       DC.band([[0.02, 0], [0.14, 0], [0.14, 1], [0.02, 1]], B, null, 0.01);                                  // the B-pillar
       DC.side([[-0.6, 0.76], [1.42, 0.76], [1.42, 0.92], [-0.6, 0.92]], DARK, null, 0.006);                  // the dark cladding under the doors
-      // the middle axle's wheels (here drawn into the body: in the game they turn with the rear ones)
-      pair(sd => K.tyre(TUR_MID, K.rw, sd * hw, { axis: 'z', face: sd, hi: true }));
       // the dark flares over all six wheels, the mud flaps behind the last ones, the steps under the doors
-      for (const x of [2.0, TUR_MID, -2.3]) pair(sd => K.flare(x, 0.56, 0.64, sd * 1.0, sd * 1.1, DARK));
+      for (const A of K.arches) pair(sd => K.flare(A.x, 0.56, 0.64, sd * 1.0, sd * 1.1, DARK));
       pair(sd => K.box(-2.82, 0.12, sd * 0.98, 0.02, 0.46, 0.3, 0, DARK));
       pair(sd => K.box(0.4, 0.58, sd * 1.02, 1.4, 0.05, 0.16, 0, DARK));
       // the front: the steel bumper with the bull bar, the big grille, round lamps, the winch
