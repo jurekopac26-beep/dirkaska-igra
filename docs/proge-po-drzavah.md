@@ -52,16 +52,18 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 
 Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država>` na strani Odločitve): »dodaj samo tiste, ki si jih priporočal, ter Québec«. Iz teh držav se naredi samo izbrana proga; proge v stolpcu »Odpadejo« se ne delajo (seja jih v svoji skupini ali koraku preskoči).
 
+Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro.« Rio de Janeiro je odtlej testna (PR #365), izbrana nova proga Ouro Preto odpade; Brazilija nove proge nima.
+
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
-| ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
-| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241) | stara veja: Phillip Island |
+| ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
+| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik, ostale gredo v test) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
-| Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1) — **ne začni** (brez izletne cone, 5. 11. 2026) | Corvo Branco (kratke, B); stara veja: São Paulo |
+| Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
 | Finska | Ouninpohja, Harju | – | – |
-| Slovenija | Vršič, Medvode | – | – |
+| Slovenija | Medvode; Vršič je od 6. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #394) | – | – |
 | Kitajska | Tianmen | Hongkong (zavite, 3) — **ne začni** (brez izletne cone, 5. 11. 2026) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
 | Čile | Los Caracoles | Valparaíso (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | stara veja: Santiago |
 | Italija | Livorno | Stelvio (stara veja `ccr-b30cfdb0-ej1gzj`, v verigi Nove proge) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
@@ -104,6 +106,6 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 ## Kaj to pomeni za verige
 
 - **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Mount Buller, Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero. Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
-- **Zavite proge** (`docs/zavite-proge.md`): odpade Macao (3). Ostanejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
+- **Zavite proge** (`docs/zavite-proge.md`): odpadeta Macao (3) in Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak). Ostanejo Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.

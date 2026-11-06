@@ -10,14 +10,14 @@
 // again): one at a time, each once, in the stop's order: at the takeover 'Računalnik zdaj vozi skozi bokse.' before the way in's own toast,
 // at the box 'Mehaniki popravljajo avto.', a few seconds before the hand-back 'Pripravi se: kmalu voziš ti.' (gone with VOZIŠ TI!); each
 // remembered (tdgp-tips) once seen.
-// Then Bathurst and Monterey, their lanes on the left: one stop each seen from behind the car, the car pulls over to the left onto the apron,
-// the crew on the garages' side, nobody on the lane; the camera sees the whole car during the stop (Bathurst's pit building's roof, Monterey's
-// canopies do not hide it).
+// Then Bathurst, its lane on the left: one stop seen from behind the car, the car pulls over to the left onto the apron, the crew on the
+// garages' side, nobody on the lane; the camera sees the whole car during the stop (Bathurst's pit building's roof does not hide it).
+// (Monterey, whose lane is on the left too, became a test track on 6. 11. 2026 and is frozen: it is not tried here any more.)
 // At Bathurst the hints seen there are not shown again; one forgotten (the box's) is, in English, the way in's own toast at once.
 //   node tests/browser/pits.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
-const T = checker('pits (gozd, bathurst, monterey)');
+const T = checker('pits (gozd, bathurst)');
 const srv = await serve();
 const browser = await launch();
 try {
@@ -132,9 +132,9 @@ try {
     JSON.stringify({ n: pbr.n, first: pbr.first, back: pbr.back, hand: pbr.hand, after: pbr.after }));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 
-  // Bathurst and Monterey: the pit lane on the LEFT of the straight (def.pit's offset negative, every offset measured to that side, sd -1);
-  // Bathurst's pit building (two floors, the roof over the apron) south of the lane, Monterey's teams' canopies behind the apron. One stop
-  // each on the autopilot (the wheel held at full right lock, towards the track), drawn from the camera behind the car: the car turns in to
+  // Bathurst: the pit lane on the LEFT of the straight (def.pit's offset negative, every offset measured to that side, sd -1);
+  // Bathurst's pit building (two floors, the roof over the apron) south of the lane. One stop
+  // on the autopilot (the wheel held at full right lock, towards the track), drawn from the camera behind the car: the car turns in to
   // the left, into its box on the apron, the crew round it on the garages' side, nobody on the lane, and nothing of the world stands between
   // the camera and the car. (Toronto's and Montréal's lanes are on the left too: tests/pits.test.js stops on every track with pits)
   const leftLane = async (id, NM, forget) => {   // (forget: the box's hint forgotten, Bathurst)
@@ -198,7 +198,6 @@ try {
     T.check('no page errors (' + NM + ')', !errors.length, errors.slice(0, 5).join(' | '));
   };
   await leftLane('bathurst', 'Bathurst', true);
-  await leftLane('monterey', 'Monterey');
 } finally {
   await browser.close(); await srv.close();
 }

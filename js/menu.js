@@ -91,8 +91,10 @@
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
   let TR = [];
-  // every track in one list: the real ones from the shortest to the longest, then the test tracks the same way (equal lengths: by id). The
-  // lengths are the menu's table (MENU.lens, tools/menu-lens.js): building every track to measure it would take seconds on a phone
+  // every track in one list: the real ones from the shortest to the longest, then the ones awaiting the user's choice (pending: true, one of
+  // them stays a real track, the others become test tracks; until then real ones in the game, only the menu shows them apart), then the
+  // test tracks, each group the same way (equal lengths: by id). The lengths are the menu's table (MENU.lens, tools/menu-lens.js): building
+  // every track to measure it would take seconds on a phone
   const lenOf = (d) => (D.lens || {})[d.id] || 0;
   function buildTracks() {
     const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
@@ -108,7 +110,8 @@
       });
       return t;
     });
-    TR.sort((a, b) => (a.test - b.test) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const rank = (t) => t.test ? 2 : t.def.pending ? 1 : 0;
+    TR.sort((a, b) => (rank(a) - rank(b)) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
   const trackById = (id) => TR.find(t => t.id === id);
   // the track the game stands on. Its built-in first choice is a test track (Jezero), which a player who has never raced should not meet first
@@ -627,14 +630,14 @@
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
-    // the yard: the car before the road sign with the country (a test track: its name and TEST); the car in 3D with the wind round it
+    // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
     // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,
     // out of the keys' way and hidden from readers, the car's button says it: a phone's touch adjustment takes it for a target, not so a
     // plain span with the menu's listener far up)
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
-    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
       '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
       '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)

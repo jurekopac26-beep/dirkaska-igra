@@ -170,15 +170,15 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`).
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: šest avstralskih, ostane ena) so prave; drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
-| baldy | Mount Baldy, ZDA | baldy | `js/world-baldy.js` (`buildBaldy`) |
+| *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | bangsaen | Bang Saen, Tajska | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
 | bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`) in `js/world-bathurst.js` (lastni deli: evkalipti `btGumGeo`, kenguruji `auRoos`; videz v `RB_LOOK` prek `API.rbLook`: tekstura pašnika `btGrassTex`, obrabljen rob ob asfaltu `edge`, usek pri 4. zavoju `cut` in breg nad njim `cutBank`) |
-| beartooth | Beartooth, ZDA | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
-| bigsur | Big Sur, ZDA | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
+| *beartooth* | *Beartooth, ZDA (test)* | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
+| *bigsur* | *Big Sur, ZDA (test)* | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
 | caracoles | Los Caracoles, Čile | caracoles | `js/world-caracoles.js` (`buildCaracoles`) |
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`) in `js/world-cpalace.js` (lastni deli: `cpPrep`, `cpPark`, `cpTrees`, videz v `RB_LOOK` prek `API.rbLook`) |
@@ -195,18 +195,18 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
 | moki | Moki Dugway, ZDA | moki | `js/world-moki.js` (`buildMoki`) |
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
-| monterey | Monterey, ZDA | monterey | `js/world-monterey.js` (`buildMonterey`; boksi levo ob ciljni ravnini po `def.pit`: šotori ekip `CAN0`–`CAN1`, ravna tla pod njimi `pitW` prek `P.pad`, `out.pitBoxes`; pas ob progi in šopi trave v barvi suhe trave: `colMod`, `out.lawn` za `verge` v `js/world.js`) |
+| *monterey* | *Monterey, ZDA (test)* | monterey | `js/world-monterey.js` (`buildMonterey`; boksi levo ob ciljni ravnini po `def.pit`: šotori ekip `CAN0`–`CAN1`, ravna tla pod njimi `pitW` prek `P.pad`, `out.pitBoxes`; pas ob progi in šopi trave v barvi suhe trave: `colMod`, `out.lawn` za `verge` v `js/world.js`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mountbuller | Mount Buller, Avstralija | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | mulholland | Santa Monica Mountains, ZDA | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
-| palomar | Palomar Mountain, ZDA | palomar | `js/world-palomar.js` (`buildPalomar`) |
+| *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `js/world-pikes.js` (`buildPikes`) |
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
 | rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
-| rio | Rio de Janeiro, Brazilija | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
+| *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | riverside | Riverside, ZDA | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
@@ -215,8 +215,8 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
 | troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
-| uncompahgre | Uncompahgre, ZDA | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
-| vrsic | Vršič, Slovenija | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
+| *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
+| *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
 | *gozd* | *Bakreni gozd (test)* | forest | splošni `build()` |
 | *grom* | *Gromski rt (test)* | kamp | splošni `build()` |
