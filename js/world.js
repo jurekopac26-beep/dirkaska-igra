@@ -4240,8 +4240,56 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
+  /* ---- between the grandstands and the road (def.yard, from OpenStreetMap: the ways in front of the game's stands, outside the barriers; the
+     user's wish 1. 11. 2026, on the real tracks): the service roads (4 m of asphalt) and footways on the ground, the spectators' fences
+     (chain link on posts, 2 m), concrete walls and guard rails. Rows [kind, x, z, x, z, ...]: 0 a service road, 1 a footway, 2 a fence,
+     3 a wall, 4 a guard rail. Their own chunks and materials, made under World's own random numbers (the meshes' ids: a seeded race draws
+     as before) ---- */
+  function yardWorld(o, tex) {
+    const Y = T.def.yard; if (!Y || T.def.test) return;
+    const gH = o.groundH || groundH, ya = new Chunks(128, true), yf = new Chunks(256, true), ys = new Chunks(256), W1 = [1, 1, 1];
+    const ROADC = [[0.9, 0.9, 0.92], [1.16, 1.14, 1.1]], conc = [0.8, 0.8, 0.78], concT = [0.9, 0.9, 0.88], steel = [0.78, 0.8, 0.83], postC = [0.55, 0.56, 0.6];
+    const uv8 = (p) => [p[0] / 8, -p[2] / 8];
+    for (const row of Y) {
+      const kind = row[0], q = [];
+      for (let k = 1; k + 3 < row.length; k += 2) {   // the line resampled every 3 m at most
+        const ax = row[k], az = row[k + 1], bx = row[k + 2], bz = row[k + 3], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 3));
+        for (let m = k === 1 ? 0 : 1; m <= n; m++) q.push([ax + (bx - ax) * m / n, az + (bz - az) * m / n]);
+      }
+      if (kind <= 1) {   // a service road or a footway: a ribbon over the ground
+        const hw = kind === 0 ? 2.0 : 1.0, col = ROADC[kind];
+        const rows = q.map((p, m) => { const a = q[Math.max(0, m - 1)], b = q[Math.min(q.length - 1, m + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, ox = -(b[1] - a[1]) / l * hw, oz = (b[0] - a[0]) / l * hw;
+          return [[p[0] - ox, p[1] - oz], [p[0] + ox, p[1] + oz]].map(([x, z]) => [x, gH(x, z) + 0.1, z]); });
+        for (let m = 0; m + 1 < rows.length; m++) { const [a0, a1] = rows[m], [b0, b1] = rows[m + 1];
+          ya.get(a0[0], a0[2]).quadUp(a0, a1, b1, b0, [col, col, col, col], [uv8(a0), uv8(a1), uv8(b1), uv8(b0)]); }
+        continue;
+      }
+      let acc = 0;   // a fence, a wall or a guard rail
+      for (let m = 0; m + 1 < q.length; m++) {
+        const [ax, az] = q[m], [bx, bz] = q[m + 1], l = Math.hypot(bx - ax, bz - az), ang = Math.atan2(bz - az, bx - ax);
+        const ga = gH(ax, az), gb = gH(bx, bz), y0 = Math.min(ga, gb), cx = (ax + bx) / 2, cz = (az + bz) / 2;
+        if (kind === 2) {   // chain link on posts (its face to the road: the inside point lies away from it)
+          const n = nearest(cx, cz), sd = n.i >= 0 && n.lat > 0 ? 1 : -1, i = Math.max(0, n.i);
+          const ins = [cx + T.nx[i] * sd * 3, y0 + 1, cz + T.nz[i] * sd * 3], u0 = acc / 2.5, u1 = (acc + l) / 2.5;
+          yf.get(ax, az).quadO([ax, ga + 0.05, az], [bx, gb + 0.05, bz], [bx, gb + 2.05, bz], [ax, ga + 2.05, az], W1, ins, [[u0, 0], [u1, 0], [u1, 0.8], [u0, 0.8]]);
+          box(ys.get(ax, az), ax, ga - 0.2, az, 0.07, 2.3, 0.07, ang, postC);
+        } else if (kind === 3) box(ys.get(cx, cz), cx, y0 - 0.3, cz, l + 0.05, Math.max(ga, gb) - y0 + 1.3, 0.3, ang, conc, concT);   // a concrete wall
+        else {   // a guard rail on posts
+          box(ys.get(cx, cz), cx, (ga + gb) / 2 + 0.42, cz, l + 0.05, 0.32, 0.06, ang, steel);
+          box(ys.get(ax, az), ax, ga - 0.2, az, 0.1, 0.95, 0.1, ang, postC);
+        }
+        acc += l;
+      }
+    }
+    ownRnd(() => {
+      ya.addTo(o.root, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true);
+      yf.addTo(o.root, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), false, false);
+      ys.addTo(o.root, new THREE.MeshLambertMaterial({ vertexColors: true }), true, true);
+    });
+    o.yard = Y.length;
+  }
   function finish(o, tex) { if (o.props && T.def.pit) o.props = o.props.filter(p => !pitRoadAt(p.x, p.z, 0.6));   // (no knockable prop on the pit road's junctions)
-     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
+     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
