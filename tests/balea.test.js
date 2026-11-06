@@ -61,7 +61,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   const pyl = (def.pylons || []).length / 3, line = (def.cables || [])[0];
   check('data: the cable car up the valley (its line, pylons and stations)', line && line.p.length >= 8 && pyl >= 5, `${line ? line.p.length / 2 : 0} points, ${pyl} pylons and stations`);
   const F = def.farDem, nf = F.nx * F.nz, wet = F.lake.reduce((s, v, k) => s + (k % 2 ? v : 0), 0);
-  check('data: the far view (~9 km round on a 250 m grid, heights 2 bytes a node, the lakes as runs)', Buffer.from(F.b64, 'base64').length === 2 * nf && F.lake.reduce((a, b) => a + b, 0) === nf && F.cell === 250 && wet >= 0,
+  check('data: the far view (~9 km round on a 250 m grid, heights 2 bytes a node, the lakes as runs)', Buffer.from(F.b64, 'base64').length === 2 * nf && F.lake.reduce((a, b) => a + b, 0) === nf && F.cell === 250 && wet > 0,
     `${F.nx}x${F.nz}, lowest ${F.lo} m, ${wet} wet nodes`);
 }
 

@@ -92,8 +92,9 @@
     const lo = F.lo != null ? F.lo : 400;   // (the lowest height of the grid: 400 m unless the data says otherwise, tools/proga)
     for (let k = 0; k < n; k++) H[k] = lo + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
     for (let k = 0, p = 0, v = 0; k < F.lake.length; k++) { if (v) wet.fill(1, p, p + F.lake[k]); p += F.lake[k]; v ^= 1; }
-    const lakeH = T.def.far && T.def.far.lake ? T.def.far.lake[2] - base : 0;
-    for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH;
+    // the lake's level where def.far.lake gives one (Irohazaka's Chūzenji, the whole lake flat at it); else each wet node keeps its own height
+    // from the model (the cirques' tarns, Bâlea's: each at its own level, high on the ridges; never sunk to the start's height)
+    if (T.def.far && T.def.far.lake) { const lakeH = T.def.far.lake[2] - base; for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH; }
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell; let m = 1e18;
       for (let q = 0; q < T.N; q += 5) { const dx = x - T.px[q], dz = z - T.pz[q], d = dx * dx + dz * dz; if (d < m) m = d; } dr[j * nx + i] = Math.sqrt(m); }
     const P0 = [], C = [], I = [], su = API.VRS === 'summer';
