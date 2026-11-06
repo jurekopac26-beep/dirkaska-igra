@@ -50,6 +50,13 @@ const mustOf = (id) => { const m = MO[id] || {}, own = [].concat(m.hosts || [], 
 
 // ---- 1. every option alone ----
 const I0 = R.kitInfo(VID), HW = I0.body.hw, RW = KO.rw, TW = 0.185;   // (the tyre's room: its radius, 18.5 cm wide)
+// (another car: KOLIBRI's parts it has none of in their places: the spoiler's the wing's (mounts.krilo.part), an aerial's the body; and
+// every part an element's mount names (part, partF, partR, host, hosts, parts: where the car calls K.deli, its lamps, flaps ...))
+{ const sub = (q) => q === 'spoiler' && MO.krilo && MO.krilo.part ? MO.krilo.part : q in I0.ranges ? q : 'body';
+  const named = (v, out) => { if (Array.isArray(v)) v.forEach(x => named(x, out)); else if (v && typeof v === 'object') for (const k in v) {
+    if (/^(part|partF|partR|host|hosts|parts)$/.test(k)) [].concat(v[k]).forEach(q => { if (typeof q === 'string') out.push(q); }); else named(v[k], out); } return out; };
+  for (const T of [PARTS, MUST]) for (const id in T) T[id] = [...new Set(T[id].map(sub))];
+  for (const id in PARTS) if (MO[id]) PARTS[id] = [...new Set(PARTS[id].concat(named(MO[id], [])))]; }
 const hubs = [[KO.a, HW, true], [KO.a, -HW, true], [-KO.b, HW, false], [-KO.b, -HW, false]];
 const inTyre = (p) => { let best = 0; for (const [hx, hz, front] of hubs) for (const a of front ? [-0.66, -0.44, -0.22, 0, 0.22, 0.44, 0.66] : [0]) for (const dy of [-0.03, 0, 0.03]) {
   const dx = p[0] - hx, dz = p[2] - hz, lx = dx * Math.cos(a) - dz * Math.sin(a), lz = dx * Math.sin(a) + dz * Math.cos(a), q = Math.hypot(lx, p[1] - RW - dy);

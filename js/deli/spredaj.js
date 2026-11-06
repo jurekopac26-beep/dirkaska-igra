@@ -2,7 +2,7 @@
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars. The mounts (look units):
      aero: { xf, xr: the bumpers' faces (front, rear), w: their half width, yf, yr: their foot's height, sill: [x0, x1] between the arches,
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
-             without a piece of its own there keeps them), partF, partR (the bumpers' parts), exh: [z, r] the exhaust (no piece over it) }
+             without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the exhaust (no piece over it) }
      hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines) }: in the bonnet's part
      maska: { x, y0, lean: the face between the lamps (x at y0, leaning back lean per metre up), yc: the grille's middle, w, h: its room }
      zmigavci: { front: { x, y, z, w, h, part }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
@@ -73,7 +73,7 @@
     const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) {
       K.flare(A.x, A.r - 0.012, A.r + 0.07, sd * (ws - 0.004), sd * (ws + out), col, { n: 5, y: A.y, part: 'body' });
       if (K.hi) for (let i = 0; i < 5; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 4, r = A.r + 0.035; K.rect(A.x + Math.cos(a) * r / K.sx, A.y + Math.sin(a) * r, sd * (ws + out + 0.001), 0.012, 0.012, [0.8, 0.81, 0.84], { dir: sd < 0 ? '-z' : 'z', part: 'body' }); } } };
-    const keepF = () => stock(m.lipF, oF), keepR = () => stock(m.lipR, oR);
+    const keepF = () => m.lipF && stock(m.lipF, oF), keepR = () => m.lipR && stock(m.lipR, oR);   // (a car without a stock lip there: none)
     const D2 = K.shade(P, 0.5);
     switch (n) {
       case 1: lip(BP, 0.035, 0.035); keepR(); break;                                   // sprednji spojler
