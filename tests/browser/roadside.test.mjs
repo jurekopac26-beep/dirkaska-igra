@@ -1,6 +1,7 @@
-// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Vršič, Medvode and Ouninpohja:
+// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Medvode and Ouninpohja (Vršič's, a test
+// track since 6. 11. 2026, is not built):
 // 1. place-name boards only at the settlements whose real name the track's data knows (def.names, the track's description), the board struck
-//    through where the road leaves the settlement; the speed limit after them (50 in; out: 90 on Vršič, 70 at Medvode); chevron
+//    through where the road leaves the settlement; the speed limit after them (50 in; out: 70 at Medvode); chevron
 //    boards on the outside of every sharpest bend (radius 17 m or under, or more than 150 degrees round; not round a roundabout) and nowhere else;
 //    the signs on the ground beside the road, not on the asphalt, facing the cars coming
 // 2. what a car can reach is knockable (Core's rssign, rschev, rsboard; the white delineators the heavier dpost): driven into one at 90 km/h the
@@ -13,7 +14,6 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('roadside equipment of the open roads');
 const WANT = {   // the boards each road must have (the real names), the limits in and out (none: no settlement on the road), dark: no lamps at night
-  vrsic: { boards: ['KRANJSKA GORA (konec)'], lim: [50, 90] },
   medvode: { boards: ['MEDVODE (konec)', 'ZBILJE', 'ZBILJE (konec)', 'VALBURGA', 'VALBURGA (konec)', 'SMLEDNIK', 'SMLEDNIK (konec)'], lim: [50, 70], fixed: true },
   ouninpohja: { boards: ['OUNI', 'KAKARISTO'], lim: null, dark: true },   // (the hamlets: the name only; the added section's village has no name that could be checked)
 };

@@ -1518,8 +1518,9 @@
   function buildTrackScreen() {
     const list = $('track-list'), sd = Core.TRACKS.find(d => d.id === S.track);
     $('cmp-row').classList.toggle('off', !(sd && sd.pit && !isTT(sd)));   // (tyres: the circuits with pits)
-    let sepDone = false;
-    list.innerHTML = Core.TRACKS.filter(d => !d.variantOf).sort((a, b) => !!a.test - !!b.test).map(d0 => { const d = pkRoadDef(d0), T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
+    let sepDone = false, pendDone = false;
+    const rank = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real tracks, the ones awaiting the user's choice (pending: one of them stays), the test tracks)
+    list.innerHTML = Core.TRACKS.filter(d => !d.variantOf).sort((a, b) => rank(a) - rank(b)).map(d0 => { const d = pkRoadDef(d0), T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
       const climb = (d.realKm ? tr(' (pravih {0} km)', Lang.dec(d.realKm)) : '') + (d.alt ? (d.alt[1] < d.alt[0] ? tr(' · spust {0} m', numDot(d.alt[0] - d.alt[1])) : tr(' · vzpon {0} m', numDot(d.alt[1] - d.alt[0]))) : '');
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dvoboj z enim tekmecem v prometu') + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') :
@@ -1529,7 +1530,8 @@
       if (wetRec(d)) meta = meta.replace(tr(' · kronometer'), tr(' · kronometer v dežju'));
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
       const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) && isTT(d) ? pkTrackTag(r, d) : '') + '<div class="tdesc">' + (Lang.of(d, 'desc') || '').replace(/\b(\d{1,3})(\d{3}) m\b/g, (m, a, b) => numDot(+(a + b)) + '\u00a0m') + '</div>';   // 2862 m -> 2.862 m (as on the HUD)
-      const sep = d0.test && !sepDone ? (sepDone = true, '<div class="track-sep">' + tr('Za izbris · samo za testiranje') + '</div>') : '';   // (the made-up tracks kept for testing: after the real ones, under their own heading)
+      const sep = d0.test && !sepDone ? (sepDone = true, '<div class="track-sep">' + tr('Za izbris · samo za testiranje') + '</div>') :
+        d0.pending && !pendDone ? (pendDone = true, '<div class="track-sep">' + tr('Na odločanju · ostane ena') + '</div>') : '';   // (the made-up tracks kept for testing: after the real ones, under their own heading)
       const modeSeg = d.modes ? '<div class="seg tc-mode" data-set="mode" role="group" aria-label="' + tr('Način vožnje') + '">' + d.modes.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + tr(MODE_NAME[k]) + '</button>').join('') + '</div>' : '';
       if (pkRoads(d0).length) return sep + pkRoadCard(d0, d, sel, desc, modeSeg);   // (Pikes Peak: the road, asphalt or the historic gravel, and the way to drive it)
       if (d.modes) return sep + '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d, 'name') + '</h3>' + modeSeg + '</div>' + desc + '</div>';
