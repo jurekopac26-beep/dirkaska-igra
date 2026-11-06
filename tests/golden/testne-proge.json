@@ -105,7 +105,6 @@
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
   "js/tracks/vrsic.js": "0f6c56cd951a3c80",
-  "js/world-vrsic.js": "c026c69714c62b69",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -177,7 +176,7 @@
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
   "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
-  "tests/vrsic.test.js": "acb479ddf93d9618"
+  "tests/vrsic.test.js": "9ed891c9c406a133"
  },
  "dovoljenja": [
   {
@@ -188,7 +187,7 @@
   {
    "datum": "2026-11-06",
    "proga": "vrsic",
-   "razlog": "Uporabnik 6. 11. 2026: »Vršič, daj v test.«"
+   "razlog": "Uporabnik 6. 11. 2026: »Vršič, daj v test.« (js/world-vrsic.js skupna: pomočniki gorskih cest)"
   }
  ]
 }

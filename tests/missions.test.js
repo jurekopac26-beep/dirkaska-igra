@@ -16,6 +16,9 @@ for (const f of fs.readdirSync(path.join(ROOT, 'js', 'missions')).filter(f => /\
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
+// (Vršič became a test track on 6. 11. 2026, the user's decision (CLAUDE.md »Testne proge«); the mission on it stays there until the user
+// moves it, later, when it is known which tracks stay (docs/misije.md): these exceptions only, no other mission may run on a test track)
+const ON_TEST_TRACK = { '01': 'vrsic' };
 
 // the list
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
@@ -23,7 +26,7 @@ check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join()
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
-  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test));
+  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));
   const miss = [d.title, d.story, d.goal, d.hint].concat(d.rows.map(r => r.label)).filter(s => s && !has(s));
   check(`mission ${d.id}: its texts in English`, !miss.length, miss.join(' | '));
   check(`mission ${d.id}: the track's name ("Kraj, Država")`, /, /.test(M.placeOf(d)), M.placeOf(d));

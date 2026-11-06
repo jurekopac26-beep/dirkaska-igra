@@ -214,7 +214,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
 | troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | uncompahgre | Uncompahgre, ZDA | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
-| vrsic | Vršič, Slovenija | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
+| *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
 | *gozd* | *Bakreni gozd (test)* | forest | splošni `build()` |
 | *grom* | *Gromski rt (test)* | kamp | splošni `build()` |

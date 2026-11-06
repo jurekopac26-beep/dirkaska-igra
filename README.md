@@ -10,7 +10,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 
 - [Pikes Peak, ZDA (asfalt: `pikes`)](docs/proge/pikes.md) in [Pikes Peak (makadam), ZDA (`pikesg`)](docs/proge/pikesg.md)
 - [Ouninpohja, Finska](docs/proge/ouninpohja.md)
-- [Vršič, Slovenija](docs/proge/vrsic.md)
 - [Nürburg, Nemčija](docs/proge/nring.md)
 - [Spa, Belgija](docs/proge/spa.md)
 - [Štajerska, Avstrija](docs/proge/rbring.md)
@@ -60,6 +59,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - Bakreni gozd (opis še ni napisan)
 - [Toskana, Italija](docs/proge/toskana.md)
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
+- [Vršič, Slovenija](docs/proge/vrsic.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 
