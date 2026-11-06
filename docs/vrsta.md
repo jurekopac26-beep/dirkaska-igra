@@ -31,7 +31,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 13 | #284 | boksi (kamera v boksih, postanek po meri, pavza, garaže …) (+#296 rdeča zastava) | 2 | pripravljen (seja session_01Ck3D3U86PNGpBxVfE3GhDs); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 14 | #226 | Bâlea | 3 | čaka |
 | 15 | #283 | nova proga Killar, Indija | 2 | pripravljen; ob vrsti nova seja po predaji (koordinacija računa 2); prevzame biketraveler, dokler račun stoji (osnutek, predaja v opisu PR) |
 | 16 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ); zelen na GitHubu (glava c41c3b3), osnutek do vrste; predogled: oznaka `predogled`, `beta/297/` |
