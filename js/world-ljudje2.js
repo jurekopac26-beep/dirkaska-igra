@@ -1303,7 +1303,6 @@
   site('harju', [['plaza', 1856, -1]]);
   site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6992, -1]]);
   site('hotham', [['karte', 3160, 1], ['selfie', 6448, 1], ['badminton', 7872, -1]]);
-  site('maunakea', [['zmaj', 3776, -1], ['glasba', 4488, 1]]);
   site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
   site('bigsur', [['plaza', 392, 1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);

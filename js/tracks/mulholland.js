@@ -22,7 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xd8d4c8, sun: 0xfff0d2, sunI: 1.4, sky: 0xb8d2f0, gnd: 0x7a6a48, hemiI: 0.62, tint: [1.04, 1.0, 0.94], sat: 1.06, sunOff: [-70, 104, 48] },   // the Santa Monica Mountains road: a hot, clear Californian summer afternoon, a strong high sun from the south-west, a warm dusty haze over the canyons
     say: 'the Santa Monica Mountains road',
     zivali: { a: ['coyote', 'muleDeer'], t: ['picnic', 'signPost'] },
-    id: 'mulholland', name: 'Santa Monica Mountains, ZDA', theme: 'mulholland', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 6,
+    id: 'mulholland', test: true, name: 'Santa Monica Mountains, ZDA', theme: 'mulholland', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 6,
     desc: 'Ovinkasta dvopasovna cesta v gorovju Santa Monica nad Malibujem v Kaliforniji (ZDA): od Cornella na 256 m po zaporedju tesnih ovinkov, ki mu motoristi pravijo »The Snake«, mimo skale Elephant Rock in nad kanjonom La Sierra do vrha vzpona pri Brewster Road na 544 m. Chaparral, hrasti in zlata trava pod močnim soncem. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Santa Monica Mountains, USA', desc: 'A twisting two-lane road in the Santa Monica Mountains above Malibu, California (USA): from Cornell at 256 m up the run of tight bends the riders call "The Snake", past Elephant Rock and above La Sierra Canyon to the top of the climb at Brewster Road, 544 m. Chaparral, oaks and golden grass under a strong sun. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the top' },   // (the English page: Jezik · Language)
     realKm: 4.17, alt: [256,544],

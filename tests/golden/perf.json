@@ -210,11 +210,11 @@
   "jsMs": 1.26
  },
  "toronto": {
-  "calls": 193,
-  "maxCalls": 229,
-  "kverts": 699,
-  "maxKverts": 808,
-  "jsMs": 1.02
+  "calls": 206,
+  "maxCalls": 262,
+  "kverts": 711,
+  "maxKverts": 807,
+  "jsMs": 1.98
  },
  "medvode": {
   "calls": 130,

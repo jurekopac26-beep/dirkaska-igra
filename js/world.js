@@ -5038,9 +5038,9 @@ const World = (function () {
     sync: { value: SYNC }
   });
 
-  function update(out, t, car, cam) {
+  function update(out, t, car, cam, rp) {
     if (!out) return;
-    const d = out.dyn;
+    const d = out.dyn, tw = rp ? rp.t : t;   // (a replay, rp: the spectators on its timeline, back, paused or slower as it goes (js/game.js replayFrame); the rest on the clock)
     if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
       const f = d.fade, p = cam.position, P = f.poly; let inside = p.y < f.yTop, sg = 0;
       for (let k = 0; k < 4 && inside; k++) {   // (inside the footprint: on the same side of all four edges)
@@ -5050,8 +5050,8 @@ const World = (function () {
       f.op += ((inside ? 0 : 1) - f.op) * Math.min(1, dt * 6); if (Math.abs(f.op - (inside ? 0 : 1)) < 0.02) f.op = inside ? 0 : 1;
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
-    if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
-    if (d.people) d.people(t, car, cam);   // the scenes with people (js/world-ljudje.js): what they do, their run to the fence as the followed car comes
+    if (d.crowd) { d.crowd.uTime.value = tw % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.people) d.people(tw, car, cam, rp);   // the scenes with people (js/world-ljudje.js): what they do, their run to the fence as the followed car comes
     if (d.air) API.rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.cpMast && (cam || !car)) API.cpMastStep(d.cpMast, car ? cam : null, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar (no car: on its own place, the world test's pose)

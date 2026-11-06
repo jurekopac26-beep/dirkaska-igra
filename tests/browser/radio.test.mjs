@@ -93,7 +93,11 @@ try {
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="fuel"] button[data-v="1"]').click(); document.querySelector('[data-set="length"] button[data-v="long"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'toskana');
   await setUp();
-  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 80);
+  // (the first lap's burn depends on the traffic in it: a lap of 56 s burns 0.30 of the tank, one of 61 s or more 0.34, and from 0.34 the plan
+  // has no window left at the second lap's line, the engineer calls the stop at once; the weaker slipstream of 4. 11. 2026 made such a lap
+  // one in ten. So the burn is capped at 0.28 of the tank a lap up to the line: the window is the same in every run, and the call to box is
+  // checked on its own lap just below)
+  await until((g) => { const P = g.race.player; if (P.lap < 2 && P.fuel != null) P.fuel = Math.max(P.fuel, Math.min(1, 1 - 0.28 * (P.dist - P.fuelD) / g.race.track.len)); return P.lap >= 2 && g.teamRadio.log.length > 0; }, 80);
   await shown();
   const w = await radio();
   T.check('a race with fuel (6 laps): at the line the window for the stop the fuel needs', w.laps === 6 && /^Gorivo ne bo zdržalo do cilja\. (Okno za postanek: od \d\. do \d\. kroga\.|Postanek bo v \d\. krogu\.)$/.test(w.log[0]), JSON.stringify(w));
