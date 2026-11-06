@@ -491,6 +491,10 @@ window.MENU = {
  },
  "credits": [
   [
+   "Roads",
+   "© OpenStreetMap contributors. The roads of the tracks and much of what lies along them are made from OpenStreetMap data, available under the Open Database License 1.0 (openstreetmap.org/copyright)."
+  ],
+  [
    "The Earth",
    "NASA Blue Marble, NASA Earth Observatory. Public domain."
   ],
