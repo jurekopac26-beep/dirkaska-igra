@@ -21,6 +21,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'livorno', name: 'Livorno, Italija', theme: 'livorno', laps: 1, halfWidth: 5.0,
     desc: "Stara cestna proga ob Livornu (1922–1930) po današnjih cestah: od morja v Ardenzi skozi Montenero in Savolano na greben pri Castellacciu (287 m), skozi borov gozd navzdol do morja pri Romitu in ob pečinah skozi Calafurio in Antignano nazaj. En krog, 19,1 km, 100 avtov z letečim štartom.",
     en: { name: 'Livorno, Italy', desc: "The old road course by Livorno (1922-1930) on today's roads: from the sea at Ardenza through Montenero and Savolano up to the ridge at Castellaccio (287 m), down through the pines to the sea at Romito and back along the cliffs through Calafuria and Antignano. One lap, 19.1 km, 100 cars from a flying start." },
+    say: 'Livorno',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     start: [0, 0], runoff: 0.42, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, gradeForce: true, elevSmooth: 16, realKm: 19.09,   // (an old road: no kerbs, no gravel traps)
     rivals: 20,   // a full field (Core: 20 rivals at least, the tests' races)
     raceRivals: 99, flyStart: true,   // the game's Circuit race here: 99 rivals (100 cars) from a flying start along the seafront, as at Nürburg (game.js newRace)
