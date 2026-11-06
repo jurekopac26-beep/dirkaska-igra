@@ -149,6 +149,7 @@
   // narrow pyramid), 1 a Moreton Bay fig (a buttressed trunk, a huge dark dome), 2 a Canary Island date palm (a thick trunk, a round crown of
   // arching fronds), 3 a slim cocos palm, 4 a street tree (a brush box or a plane: a round light crown), 5 a coastal banksia / tea tree (low,
   // grey-green, windswept)
+  const { AB, aStar, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
   function ncTreeGeo(kind, lo) {
     const g = new GB(), R = rng(2310 + kind), frond = (c, a, el, len, wid, droop, col, col2) => {
       const ca = Math.cos(a), sa = Math.sin(a), m = [c[0] + ca * len * 0.5, c[1] + Math.sin(el) * len * 0.5, c[2] + sa * len * 0.5], t = [c[0] + ca * len, c[1] + Math.sin(el) * len * 0.6 - droop, c[2] + sa * len];
@@ -160,11 +161,12 @@
       if (kind === 0) { cyl(g, 0, -0.2, 0, 0.32, 6, 4, tr); cone(g, 0, 4.5, 0, 4.4, 19, 6, [0.17, 0.31, 0.18], [0.24, 0.4, 0.22], 0); }
       else if (kind === 2 || kind === 3) { const H = kind === 2 ? 10 : 13; cyl(g, 0, -0.2, 0, kind === 2 ? 0.5 : 0.2, H, 4, [0.5, 0.42, 0.3]); ico(g, 0, H + 0.4, 0, kind === 2 ? 3.6 : 2.8, 0.45, [0.24, 0.42, 0.18], R, 0.2); }
       else { const H = kind === 1 ? 9.5 : kind === 4 ? 6.6 : 2.4, r = kind === 1 ? 9 : kind === 4 ? 3.6 : 2; cyl(g, 0, -0.2, 0, r * 0.08, H * 0.5, 4, tr); ico(g, 0, H, 0, r, kind === 1 ? 0.55 : 0.8, kind === 5 ? [0.33, 0.41, 0.28] : [0.16, 0.3, 0.15], R, 0.25); }
-    } else if (kind === 0) {   // Norfolk Island pine, 24 m
-      const H = 24; cyl(g, 0, -0.2, 0, 0.32, H, 5, [0.42, 0.34, 0.27], null, 0.08);
+    } else if (kind === 0) {   // Norfolk Island pine, 24 m (its tiers soft, in the kit A)
+      const H = 24, b = new AB(); aTrunk(b, 0, -0.2, 0, 0.32, H, 5, [0.42, 0.34, 0.27], 0.08);
       for (let k = 0; k < 5; k++) { const y = 5 + k * 3.7, r = (1 - k / 7) * 4.6 + 0.5, col = k % 2 ? [0.16, 0.3, 0.17] : [0.19, 0.34, 0.19];
-        starCone(g, 0, y, 0, r, 2.0, 5, col, [0.24, 0.4, 0.22], k * 0.6, 0.6); }
-      cone(g, 0, H - 2.6, 0, 1.0, 3.4, 5, [0.2, 0.36, 0.2], [0.26, 0.42, 0.24], 0);
+        aStar(b, 0, y, 0, r, 2.0, 5, col, [0.24, 0.4, 0.22], k * 0.6, 0.6); }
+      aTier(b, 0, H - 2.6, 0, 1.0, 3.4, 5, [0.2, 0.36, 0.2], [0.26, 0.42, 0.24], 0);
+      API.ROCK_SMOOTH = rs; return b.geometry();
     } else if (kind === 1) {   // Moreton Bay fig, 15 m, 22 m across
       cyl(g, 0, -0.2, 0, 1.0, 4.5, 6, [0.5, 0.47, 0.42], null, 0.7);
       for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + 0.3; box(g, Math.cos(a) * 0.8, -0.2, Math.sin(a) * 0.8, 1.6, 1.4, 0.3, a, [0.46, 0.43, 0.38], null, true); }

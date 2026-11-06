@@ -58,16 +58,12 @@ const World = (function () {
   let SHLO = [];
   // a coarser copy of a unit plant or rock for its shadow: its vertices merged on a 3 x 4 x 3 grid over its box (each cell's vertices at
   // their average), the triangles that are left (no repeats); null where it would not save a third of them (small ones)
-  const SHLO_GEO = new WeakMap(), SHLO_SRC = new WeakMap();   // (by the unit shape: a world built again lets the old ones go; SRC: AB's stand-ins)
+  const SHLO_GEO = new WeakMap();   // (by the unit shape: a world built again lets the old ones go)
   let SHLO_MAT = null;
   const shloMat = () => SHLO_MAT || (SHLO_MAT = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));   // (a copy's shadow from both its sides: a merged shape may have lost its back)
   function shadowLo(base) {
     if (SHLO_GEO.has(base)) return SHLO_GEO.get(base);
-    const src = SHLO_SRC.get(base);
-    if (src) {   // (a tree of the kit A brings its own few faces: made under World's own random numbers, for NIZKA alone)
-      const s = ownRnd(() => new THREE.BufferGeometry()); s.setAttribute('position', new THREE.Float32BufferAttribute(src[0], 3)); s.setIndex(src[1]);
-      SHLO_GEO.set(base, s); return s;
-    }
+    if (base.userData.treeH > 0 && (base.index || base.attributes.position).count > 24) { const s = treeShadow(base); SHLO_GEO.set(base, s); return s; }   // (a tree's: a few faces over its crown; a smaller one casts its own)
     const P = base.attributes.position, I = base.index, n = I ? I.count : P.count;
     let out = null;
     if (n >= 120) {
@@ -91,6 +87,44 @@ const World = (function () {
       }
     }
     SHLO_GEO.set(base, out); return out;
+  }
+  // a tree's shadow (NIZKA; Drevesa A, docs/drevesa-a.md): instead of its coarse copy an octahedron over its green crown, from the crown's
+  // foot to its top with its waist where the crown is widest (a spruce's near its foot: almost a cone; a beech's in its middle; a hedge's
+  // long and thin), 8 faces; the trunk's thin shadow is left out. Made under World's own random numbers (for NIZKA alone)
+  function treeShadow(base) {
+    const P = base.attributes.position, C = base.attributes.color, NB = 5, G = [];
+    for (let i = 0; i < P.count; i++) if (C.getY(i) > C.getX(i) * 1.08 && C.getY(i) > C.getZ(i) * 1.08) G.push(i);
+    if (!G.length) for (let i = 0; i < P.count; i++) G.push(i);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const i of G) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, h = (y1 - y0) || 1, ax = new Float32Array(NB), az = new Float32Array(NB);
+    for (const i of G) { const b = Math.min(NB - 1, Math.floor((P.getY(i) - y0) / h * NB)); ax[b] = Math.max(ax[b], Math.abs(P.getX(i) - cx)); az[b] = Math.max(az[b], Math.abs(P.getZ(i) - cz)); }
+    let w = 0; for (let b = 1; b < NB; b++) if (ax[b] + az[b] > ax[w] + az[w]) w = b;
+    const rx = ax[w] * 1.2, rz = az[w] * 1.2, yw = y0 + (w + 0.5) / NB * h;   // (1.2: the diamond's waist as wide as the round crown's shadow)
+    const out = ownRnd(() => new THREE.BufferGeometry()), idx = [];
+    out.setAttribute('position', new THREE.Float32BufferAttribute([cx, y1, cz, cx, y0, cz, cx + rx, yw, cz, cx, yw, cz + rz, cx - rx, yw, cz, cx, yw, cz - rz], 3));
+    for (let k = 0; k < 4; k++) idx.push(2 + k, 2 + (k + 1) % 4, 0, 2 + (k + 1) % 4, 2 + k, 1);
+    out.setIndex(idx); return out;
+  }
+  // a tree's unit shape (IChunks, green: treeGeo) indexed (Drevesa A): the corners its faces share (the same position, normal, colour …)
+  // made one vertex, so a phone transforms each once; the same faces drawn, its look as it was. Made under World's own random numbers (its
+  // name: the seeded race's draws as ever); null where it would not save a fifth of its vertices (flat faces share none)
+  const WELD = new WeakMap();
+  function weldGeo(g) {
+    if (WELD.has(g)) return WELD.get(g);
+    const names = Object.keys(g.attributes), A = names.map(k => g.attributes[k]), n = g.attributes.position.count, map = new Map(), idx = new (n > 65535 ? Uint32Array : Uint16Array)(n), keep = [];
+    for (let i = 0; i < n; i++) {
+      let key = ''; for (const a of A) for (let q = 0; q < a.itemSize; q++) key += a.array[i * a.itemSize + q] + ',';
+      let v = map.get(key); if (v === undefined) { v = keep.length; map.set(key, v); keep.push(i); } idx[i] = v;
+    }
+    let out = null;
+    if (keep.length <= n * 0.8) {
+      out = ownRnd(() => new THREE.BufferGeometry());
+      names.forEach((k, j) => { const a = A[j], s = a.itemSize, arr = new a.array.constructor(keep.length * s); keep.forEach((i, t) => { for (let q = 0; q < s; q++) arr[t * s + q] = a.array[i * s + q]; }); out.setAttribute(k, new THREE.BufferAttribute(arr, s, a.normalized)); });
+      out.setIndex(new THREE.BufferAttribute(idx, 1)); out.userData.treeH = g.userData.treeH;
+      out.boundingSphere = (g.boundingSphere || (g.computeBoundingSphere(), g.boundingSphere)).clone();
+    }
+    WELD.set(g, out); return out;
   }
 
   /* ---------------- geometry builder (non-indexed, flat normals) -------- */
@@ -455,23 +489,20 @@ const World = (function () {
   }
   /* ---------------- Drevesa A (docs/drevesa-a.md): the trees' soft crowns, as the user picked them (»A · mehke krogle«, 5. 11. 2026), built
      indexed: the faces of a crown share its vertices, so a phone transforms each vertex once, not once for each face it is in. AB is the
-     builder of a unit plant (height 1, the instances scale it): aPuff a soft clump of leaves, aTier a conifer's tier, aTrunk a trunk; its
-     shadow's stand-in (NIZKA: the shadow pass draws a few faces instead of the plant: aShCone, aShBlob) goes with the geometry (AB.geometry;
-     shadowLo makes it). Shading as the prototype's: dark underneath, warm and sunlit on top, the normals tipped up (the sun over the top) ---------------- */
+     builder of a unit plant (height 1, the instances scale it): aPuff a soft clump of leaves, aTier a conifer's tier, aTrunk a trunk (their
+     shadow on NIZKA: treeShadow, as every tree's). Shading as the prototype's: dark underneath, warm and sunlit on top, the normals tipped up (the sun over the top) ---------------- */
   class AB {
-    constructor() { this.P = []; this.N = []; this.C = []; this.I = []; this.SP = []; this.SI = []; }
+    constructor() { this.P = []; this.N = []; this.C = []; this.I = []; }
     v(x, y, z, nx, ny, nz, c) { this.P.push(x, y, z); this.N.push(nx, ny, nz); this.C.push(c[0], c[1], c[2]); return this.P.length / 3 - 1; }
     t(a, b, c, inn) {   // a face, turned to face away from inn
       const P = this.P, a3 = a * 3, b3 = b * 3, c3 = c * 3, ux = P[b3] - P[a3], uy = P[b3 + 1] - P[a3 + 1], uz = P[b3 + 2] - P[a3 + 2], vx = P[c3] - P[a3], vy = P[c3 + 1] - P[a3 + 1], vz = P[c3 + 2] - P[a3 + 2];
       const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, ox = (P[a3] + P[b3] + P[c3]) / 3 - inn[0], oy = (P[a3 + 1] + P[b3 + 1] + P[c3 + 1]) / 3 - inn[1], oz = (P[a3 + 2] + P[b3 + 2] + P[c3 + 2]) / 3 - inn[2];
       if (nx * ox + ny * oy + nz * oz < 0) this.I.push(a, c, b); else this.I.push(a, b, c);
     }
-    sv(x, y, z) { this.SP.push(x, y, z); return this.SP.length / 3 - 1; }
     geometry() {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3));
       g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, 3)); g.setIndex(this.I); g.computeBoundingSphere();
-      if (this.SI.length) SHLO_SRC.set(g, [this.SP, this.SI]);   // (its shadow's stand-in: shadowLo makes it when NIZKA asks)
       return g;
     }
   }
@@ -493,18 +524,18 @@ const World = (function () {
     for (let k = 0; k < n; k++) { const a = rot + k / n * TAU, c = Math.cos(a), s = Math.sin(a); id.push(b.v(x + c * r, y0, z + s * r, c * nh / l, ny / l, s * nh / l, cb)); }
     for (let k = 0; k < n; k++) b.t(id[k], id[(k + 1) % n], tip, inn);
   }
-  // a trunk (n faces, n + 1 vertices): a slim cone from below the ground (radius r) to y0 + h, darker at its foot; or (r2) a tube to radius r2
-  // at the top (2n faces, 2n vertices), where its top shows (a birch's)
+  // a starCone tier (its arguments) in the look A: a soft tier (aTier, n faces instead of 2n) over the same reach, from the drooping tips'
+  // height to the top and a little narrower (the star's notches), its rim darker and its tip lighter
+  function aStar(b, x, y0, z, r, h, n, col, tip, rot, droop) {
+    const d = droop || 0; aTier(b, x, y0 - d, z, r * 0.85, h + d, n, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], [tip[0] * 1.15, tip[1] * 1.15, tip[2] * 1.15], rot);
+  }
+  // a trunk (n faces, n + 1 vertices): a slim cone from its foot (radius r at y0, a little under the ground) to y0 + h, darker at its foot;
+  // or (r2) a tube to radius r2 at the top (2n faces, 2n vertices), where its top shows (a birch's); its arguments as cyl's
   function aTrunk(b, x, y0, z, r, h, n, col, r2) {
     const inn = [x, y0 + h * (r2 ? 0.5 : 0.3), z], lo = [col[0] * 0.78, col[1] * 0.78, col[2] * 0.78], top = r2 ? [] : null, bot = [];
     const tip = r2 ? -1 : b.v(x, y0 + h, z, 0, 1, 0, col);
-    for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.3, c = Math.cos(a), s = Math.sin(a); bot.push(b.v(x + c * r, y0 - 0.02, z + s * r, c, 0, s, lo)); if (top) top.push(b.v(x + c * r2, y0 + h, z + s * r2, c, 0, s, col)); }
+    for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.3, c = Math.cos(a), s = Math.sin(a); bot.push(b.v(x + c * r, y0, z + s * r, c, 0, s, lo)); if (top) top.push(b.v(x + c * r2, y0 + h, z + s * r2, c, 0, s, col)); }
     for (let k = 0; k < n; k++) { const j = (k + 1) % n; if (top) { b.t(bot[k], bot[j], top[j], inn); b.t(bot[k], top[j], top[k], inn); } else b.t(bot[k], bot[j], tip, inn); }
-  }
-  function aShCone(b, x, y0, z, r, h, n) { const tip = b.sv(x, y0 + h, z), id = []; for (let k = 0; k < n; k++) { const a = k / n * TAU; id.push(b.sv(x + Math.cos(a) * r, y0, z + Math.sin(a) * r)); } for (let k = 0; k < n; k++) b.SI.push(id[k], id[(k + 1) % n], tip); }   // (a cone's shadow: n faces)
-  function aShBlob(b, cx, cy, cz, r, sy) {   // (a crown's shadow: an octahedron, 8 faces)
-    const id = [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], [0, -1, 0]].map(v => b.sv(cx + v[0] * r, cy + v[1] * r * sy, cz + v[2] * r));
-    for (let k = 0; k < 4; k++) b.SI.push(id[k], id[(k + 1) % 4], id[4], id[(k + 1) % 4], id[k], id[5]);
   }
   function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat) {   // chunky boulder (33 faces): 7-sided, bulging middle, chamfered flat top (cy = centre height)
     const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = 7;
@@ -4595,7 +4626,8 @@ const World = (function () {
     for (let k = 0; k < ca.count; k++) { r += ca.getX(k); gg += ca.getY(k); b += ca.getZ(k); } for (let k = 0; k < pa.count; k++) { y0 = Math.min(y0, pa.getY(k)); y1 = Math.max(y1, pa.getY(k)); }
     return (g.userData.treeH = gg > r * 1.08 && gg > b * 1.08 ? y1 - y0 : 0); };   // (its height if it is green: a tree's crown, a bush; else 0)
   class IChunks {
-    constructor(base, mat, size) { this.base = base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? treeGeo(base) : 0; this.gone = null; }
+    constructor(base, mat, size) { const th = treeGeo(base), w = th > 0 && !base.index ? weldGeo(base) : null;   // (a tree's shape indexed: weldGeo)
+      this.base = w || base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? th : 0; this.gone = null; }
     add(x, y, z, rot, sxz, sy, col) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size);
       if (this.th && this.th * sy >= THIN.h) { const c = clearance(x, z); if (c < THIN.far && crH(x, z, 7.7) >= (c < THIN.near ? THIN.keepNear : THIN.keepFar)) { THIN.n++; THIN.gx = x; THIN.gz = z; (this.gone || (this.gone = new Set())).add(k); return; } }   // (THIN.gx/gz: nrShade leaves its crown's shade out)
       let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); }
@@ -4948,13 +4980,12 @@ const World = (function () {
   function nrTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 spruce, 1 beech (also the bushes: sunk into the ground); 2, 3 the cheaper spruce and beech far from the road
     const b = new AB(), R = rng(610 + kind), sp = [0.1, 0.22, 0.14], spT = [0.17, 0.33, 0.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], be = [0.2, 0.35, 0.13];
     if (kind === 0) {   // spruce: thin trunk, three tiers of branches, dark blue-green, the tips lighter (22 faces)
-      aTrunk(b, 0, 0, 0, 0.035, 0.3, 4, [0.3, 0.22, 0.15]);
+      aTrunk(b, 0, -0.02, 0, 0.035, 0.32, 4, [0.3, 0.22, 0.15]);
       aTier(b, 0, 0.1, 0, 0.3, 0.46, 6, sh(sp, 0.62), sh(spT, 1.2), 0.2); aTier(b, 0, 0.36, 0, 0.22, 0.4, 6, sh(sp, 0.72), sh(spT, 1.25), 0.75);
-      aTier(b, 0, 0.6, 0, 0.13, 0.4, 6, sh(sp, 0.84), sh(spT, 1.3), 1.3); aShCone(b, 0, 0.1, 0, 0.27, 0.9, 5);
+      aTier(b, 0, 0.6, 0, 0.13, 0.4, 6, sh(sp, 0.84), sh(spT, 1.3), 1.3);
     } else if (kind === 1) {   // beech: grey trunk, a broad crown of two soft lumps (38 faces)
-      aTrunk(b, 0, 0, 0, 0.04, 0.85, 4, [0.42, 0.4, 0.36]);
+      aTrunk(b, 0, -0.02, 0, 0.04, 0.87, 4, [0.42, 0.4, 0.36]);
       aPuff(b, -0.04, 0.63, -0.02, 0.3, 0.9, be, R, 0.22, 0.55, 1.35); aPuff(b, 0.13, 0.57, 0.07, 0.21, 0.9, sh(be, 1.06), R, 0.2, 0.55, 1.35, -0.4);
-      aShBlob(b, 0, 0.62, 0, 0.32, 0.85);
     } else if (kind === 2) {   // far spruce: two tiers, no trunk (10 faces)
       aTier(b, 0, 0.12, 0, 0.29, 0.54, 5, sh(sp, 0.66), sh(spT, 1.2), 0.2); aTier(b, 0, 0.5, 0, 0.17, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 0.9);
     } else {   // far beech: one lump
@@ -5094,7 +5125,7 @@ const World = (function () {
     hash: { get: () => hash },
     sync: { value: SYNC }
   });
-  Object.assign(API, { AB, aPuff, aShBlob, aShCone, aTier, aTrunk });   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
+  Object.assign(API, { AB, aPuff, aStar, aTier, aTrunk });   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
 
   function update(out, t, car, cam, rp) {
     if (!out) return;

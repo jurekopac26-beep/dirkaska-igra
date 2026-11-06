@@ -12,5 +12,10 @@ Načrt, odločitve in stanje teme (pravilo v `CLAUDE.md`, Postopek). Vsaka odlo�
 - Klici RNG sveta ostanejo enaki (drevesa imajo svoj `rng`), da se poznejši predmeti ne premaknejo.
 - Samo kamera za avtom; slike na Spa, telefon pokonci in ležeče.
 
+## Zasnova
+- **Skupno za vse proge** (`js/world.js`): oblika drevesa v `IChunks` (zelena enotska rastlina, ista kot pri `THIN`) se indeksira (`weldGeo`: enaka oglišča ploskev postanejo eno; slika ostane ista, telefon vsako oglišče preračuna enkrat). Na NIZKI senco drevesa riše osmerec čez krošnjo (`treeShadow`, 8 ploskev) namesto grobe kopije. Novi predmeti nastanejo pod lastnim RNG sveta (`ownRnd`), da dirka s semenom teče enako.
+- **Gradniki A** (`AB`, `aPuff` krošnja, `aTier` stopnja iglavca, `aStar` stopnja namesto `starCone`, `aTrunk` deblo): indeksirani; krošnja temna spodaj in topla zgoraj, stopnje iglavcev mehke z `n` ploskvami namesto `2n`.
+- **Proge z obliko A:** Spa (`spaTreeGeo`), Nordschleife in vse proge z `nrTreeGeo` (Red Bull Ring), Ouninpohja (smreke), Katu (macesen), Harju (smreka), Newcastle (norfolška araukarija). Krošnje iz `ico` na drugih progah so že mehke in ostanejo (indeksirane skupno).
+
 ## Stanje
 - 6. 11.: začetek, meritev Spa pred spremembo (`tools/obremenitev.mjs spa`): drevesa v najbolj gozdnatih vzorcih ~175–210 tisoč od ~420–520 tisoč oglišč na sličico (z njihovimi sencami), ~25 klicev.
