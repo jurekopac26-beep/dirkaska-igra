@@ -59,7 +59,14 @@ try {
     h1.ap && h1.box === 'Gremo, gremo, gremo!' && h1.log.includes('Gremo, gremo, gremo!') && h1.said.length === 1 && !!go && go.voice === 'Serena' && go.lang === 'en-GB', JSON.stringify(h1));
   T.check('... the radio\'s squelch opens as he starts (not the click), the engines ducked under him', h1.n.open === h1.n0.open + 1 && h1.n.click === h1.n0.click && h1.talking, JSON.stringify({ n0: h1.n0, n: h1.n, talking: h1.talking }));
   await wait(600);
-  const c1 = await page.evaluate(() => { window.__game.hud(0.05); return Object.assign({}, window.__n); });
+  // (the fake speech ends 0.3 s after it began, by a timer of the page: on a busy machine the page runs this evaluate before that timer has
+  // fired, and the radio is not closed yet; so the HUD frame is asked for again every 0.3 s, up to 6 s, until the roger beep has sounded)
+  let c1;
+  for (let k = 0; k < 20; k++) {
+    c1 = await page.evaluate(() => { window.__game.hud(0.05); return Object.assign({}, window.__n); });
+    if (c1.close > h1.n.close) break;
+    await wait(300);
+  }
   T.check('... said: the roger beep closes the radio; meanwhile the game\'s frames ducked the engines', c1.close === h1.n.close + 1 && c1.duck > h1.n0.duck, JSON.stringify(c1));
   // out of the pit lane: "Dober postanek." in the box (after the shout's time), "Good stop ..." said with the place
   const g1 = await page.evaluate(async () => {
