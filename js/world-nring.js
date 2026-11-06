@@ -508,5 +508,6 @@
     return out;
   }
 
+  World.keep('NR', 'nring');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.nring = (scene, tex, opts) => buildNring(scene, tex, opts);
 })();

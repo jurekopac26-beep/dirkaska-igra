@@ -1271,6 +1271,7 @@ const World = (function () {
      world as the builders here do (out: root, groundH, props, ...); api: the shared helpers and the track being built. The worlds moved out
      of this file as they were (every world but the default builder's) take what they use of it from World.api instead (API, below) ---- */
   const EXT = {};
+  const KEEP = {};   // the grids each world keeps between its own builds: key (NR or API.<key>) -> its themes (World.keep(key, theme) in the world files; build() frees the others')
   function extAPI() {
     return { T, THEME, GB, RB, Chunks, IChunks, box, cyl, cone, ico, puff, gable, roofKit, hex, vary, rng, clamp, lerp, sstep, TAU, atS, atSf, wrapS, crAt, inPoly, polyDist,
       valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump };
@@ -1284,18 +1285,7 @@ const World = (function () {
     CROWDS = [];   // (the crowds of this build: their sound, see crowdPoints)
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     for (const f of SYNC) f();   // (the worlds in files of their own: the track being built, its theme, the detail tier)
-    if (THEME !== 'nring' && THEME !== 'spa' && THEME !== 'rbring' && THEME !== 'bathurst' && THEME !== 'cpalace' && THEME !== 'longford' && THEME !== 'rio' && THEME !== 'bangsaen') NR = null;   // free the last corridor build's grids (the Nordschleife's, Spa's, the Red Bull Ring's, Bathurst's, Crystal Palace's, Longford's)
-    if (THEME !== 'longford') API.LFQ = null;                          // (and Longford's rivers and railway)
-    if (THEME !== 'suzuka') API.SZ = null;                             // (and Suzuka's)
-    if (THEME !== 'newcastle') API.NC = null;                          // (and Newcastle's)
-    if (THEME !== 'troisrivieres') API.TRW = null;                     // (and Trois-Rivières')
-    if (THEME !== 'ouni') API.OU = null;                               // (and the last Ouninpohja build's)
-    if (THEME !== 'harju') API.HJ = null;                              // (and Harju's)
-    if (THEME !== 'vrsic' && THEME !== 'caracoles' && THEME !== 'uncompahgre' && THEME !== 'sani' && THEME !== 'iroha' && THEME !== 'beartooth' && THEME !== 'rastro' && THEME !== 'moki' && THEME !== 'medvode' && THEME !== 'palomar') API.VR = null;     // (and the last Vršič, Los Caracoles or Uncompahgre build's: the same corridor helpers)
-    if (THEME !== 'katu') API.KT = null;                               // (and the last Katu-Jaryk build's)
-    if (THEME !== 'detroit') API.DT = null;                            // (and Detroit's)
-    if (THEME !== 'marrakesh') API.MR = null;                          // (and Marrakesh's)
-    if (THEME !== 'pikes') API.PK = null;                              // free the last Pikes build's grids (only that world's groundH used them)
+    for (const k in KEEP) if (!KEEP[k].includes(THEME)) { if (k === 'NR') NR = null; else API[k] = null; }   // free the last build's grids this world does not keep (World.keep(key, theme) in the world files: tools/razdeli-proge.mjs)
     if (EXT[THEME]) return finish(EXT[THEME](scene, tex, opts, extAPI()), tex);   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
@@ -3508,7 +3498,8 @@ const World = (function () {
      under the rain's overcast). The uniforms are shared by every build (one world at a time) ---- */
   const CLOUD_S = 110, CLOUD_NP = 64;   // noise cell (m) and its period in cells (the drift offset wraps without a seam)
   const CLOUD_O = { value: new THREE.Vector2() }, CLOUD_K = { value: 0.16 };
-  const CLOUD_TH = { pikes: 0.18, ouni: 0.18, vrsic: 0.16, caracoles: 0.15, katu: 0.18, nring: 0.22, spa: 0.22, forest: 0.14, italia: 0.14, kamp: 0.14, maunakea: 0 };   // how much a cloud darkens, per theme (else 0.2; Mauna Kea: above the clouds, none overhead)
+  const CLOUD_TH = { forest: 0.14, italia: 0.14, kamp: 0.14 };   // how much a cloud darkens, per theme (else 0.2; the real tracks' own: cloudTh in js/tracks/<id>.js)
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.cloudTh != null && d.theme != null && CLOUD_TH[d.theme] == null) CLOUD_TH[d.theme] = d.cloudTh;   // (the real tracks' own: def.cloudTh in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   const CLOUD_VH = '#include <common>\nuniform vec2 clO;\nuniform float clK;\nvarying float vCloud;\n' +
     'float clHash(vec2 i, float n) { i = mod(i, n); return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }\n' +
     'float clVN(vec2 p, float n) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(clHash(i, n), clHash(i + vec2(1.0, 0.0), n), f.x), mix(clHash(i + vec2(0.0, 1.0), n), clHash(i + 1.0, n), f.x), f.y); }';
@@ -3595,7 +3586,8 @@ const World = (function () {
   //   multiplied over whatever lies under them) < 2 the live tyre marks (Render's Skids; a road surface over the track's height lifts them:
   //   world.markLift, Detroit) < 4 and up: smoke, dust, particles (Longford's puffs, Spa's smoke, Render's particles), over the road and the
   //   marks behind them. Anything transparent that does not write depth and can stand in front of the road belongs above 2, never at 0.
-  const ROAD_WEAR = { nring: 1, vrsic: 1, caracoles: 0.8, monaco: 0.75, city: 0.75, harju: 1 };   // per theme (else a modern circuit's: 0.3, an open road's: 0.8, as Los Caracoles; Harju's old town streets as worn as the Nordschleife, and twice as often again: roadWear's sp)
+  const ROAD_WEAR = { monaco: 0.75, city: 0.75 };   // how worn the road is, per theme (else a modern circuit's: 0.3, an open road's: 0.8; the real tracks' own: roadWear in js/tracks/<id>.js)
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.roadWear != null && d.theme != null && ROAD_WEAR[d.theme] == null) ROAD_WEAR[d.theme] = d.roadWear;   // (the real tracks' own: def.roadWear in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   function roadWear(o, tex) {
     if ((T.def.roadSurface === 'makadam' && !(T.def.wearPaved && T.pavedAt)) || THEME === 'pikes' || !T.rl || !tex.wear) return;   // (Pikes Peak's road has its own cracks and patches; a gravel road with def.wearPaved: only its asphalt worn)
     const N = T.N, ds = T.ds, w = T.w, len = T.len, open = T.open, R = rng(4242), bk = { dy: 0, sl: 0 }, cells = new Map(), lim = w - 0.6;
@@ -3719,7 +3711,8 @@ const World = (function () {
     m.customProgramCacheKey = () => 'grassLook' + (sd ? 'S' : '') + (nat ? 'N' : '');
     m.needsUpdate = true;
   }
-  const GRASS_NAT = { spa: 0.85, suzuka: 0.9, lake: 0.75, nring: 0.6, rbring: 0.45, bathurst: 0.7, cpalace: 0.6, riverside: 1, rio: 0.75, monterey: 1 };   // how much of the loud green to tone down, per theme
+  const GRASS_NAT = { lake: 0.75 };   // how much of the loud green to tone down, per theme
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.grassNat != null && d.theme != null && GRASS_NAT[d.theme] == null) GRASS_NAT[d.theme] = d.grassNat;   // (the real tracks' own: def.grassNat in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   function grassWorld(o, tex) {
     const lawn = !T.open && ['lake', 'forest', 'kamp', 'italia', 'rbring'].includes(THEME);   // (the circuits whose lawns are mown in stripes; Spa and Suzuka lay their own; not Crystal Palace's park: its builder mows only the verges)
     let sd = null; if (lawn) { const i = T.idx(T.startS); sd = [-T.tz[i], T.tx[i]]; }   // (the stripes run along the start straight)
@@ -3820,7 +3813,8 @@ const World = (function () {
     return (t && t.avgCol) || [0.35, 0.53, 0.23];
   }
   function pixAvg(d) { const s = [0, 0, 0]; for (let o = 0; o < d.length; o += 4) { s[0] += d[o]; s[1] += d[o + 1]; s[2] += d[o + 2]; } const n = d.length / 4 * 255; return [s[0] / n, s[1] / n, s[2] / n]; }   // (of an ImageData's pixels)
-  const LAWN = { nring: [0.92, 0.95, 0.82], spa: [0.95, 1.0, 0.95], rbring: [0.96, 1.0, 0.9], suzuka: [0.95, 1.0, 0.92], bathurst: [1.0, 1.0, 0.86], cpalace: [0.96, 1.0, 0.88], rio: [0.93, 1.0, 0.86] };   // (the corridor builders' lawns: their vertex colours, roughly; a world may give its own by the season, o.lawn: Monterey)
+  const LAWN = {};   // (the corridor builders' lawns: their vertex colours, roughly; a world may give its own by the season, o.lawn: Monterey)
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.lawn != null && d.theme != null && LAWN[d.theme] == null) LAWN[d.theme] = d.lawn;   // (the real tracks' own: def.lawn in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   function tuftWindMat(W) {   // the clumps' material (the verges' tufts, Los Caracoles' bunch grass): vertex colours, the blades bent by the wind (W: World's dyn.wind)
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     mat.onBeforeCompile = (sh) => {
@@ -3970,7 +3964,8 @@ const World = (function () {
      stack in a board's way goes. A board on the verge is itself knockable (Core 'bboard'): hit, it tips over and lies in the grass, still
      drawn in this mesh (Render moves its vertices). ---- */
   let BB_ATL = null;
-  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { cpalace: 1, longford: 1, riverside: 1, monaco: 1 }, BB_BACK = [0.6, 0.62, 0.64];
+  const BB_NUM = [300, 200, 100, 150, 50], BB_CLASSIC = { monaco: 1 }, BB_BACK = [0.6, 0.62, 0.64];
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) if (d.bbClassic != null && d.theme != null && BB_CLASSIC[d.theme] == null) BB_CLASSIC[d.theme] = d.bbClassic;   // (the real tracks' own: def.bbClassic in js/tracks/<id>.js, tools/razdeli-proge.mjs)
   function bbAtlas() {   // 512 x 256: the plates 96 x 72 (row 0 blue with white numbers, row 1 white with black: 300, 200, 100, 150, 50); a white patch
     if (BB_ATL) return BB_ATL;
     const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
@@ -4185,7 +4180,55 @@ const World = (function () {
       m.castShadow = false; m.receiveShadow = true; m.matrixAutoUpdate = false; m.name = 'rsSigns'; o.root.add(m); o.rsMesh = m;
     }
   }
-  function finish(o, tex) { o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
+  /* ---- between the grandstands and the road (def.yard, from OpenStreetMap: the ways in front of the game's stands, outside the barriers; the
+     user's wish 1. 11. 2026, on the real tracks): the service roads (4 m of asphalt) and footways on the ground, the spectators' fences
+     (chain link on posts, 2 m), concrete walls and guard rails. Rows [kind, x, z, x, z, ...]: 0 a service road, 1 a footway, 2 a fence,
+     3 a wall, 4 a guard rail. Their own chunks and materials, made under World's own random numbers (the meshes' ids: a seeded race draws
+     as before) ---- */
+  function yardWorld(o, tex) {
+    const Y = T.def.yard; if (!Y || T.def.test) return;
+    const gH = o.groundH || groundH, ya = new Chunks(128, true), yf = new Chunks(256, true), ys = new Chunks(256), W1 = [1, 1, 1];
+    const ROADC = [[0.9, 0.9, 0.92], [1.16, 1.14, 1.1]], conc = [0.8, 0.8, 0.78], concT = [0.9, 0.9, 0.88], steel = [0.78, 0.8, 0.83], postC = [0.55, 0.56, 0.6];
+    const uv8 = (p) => [p[0] / 8, -p[2] / 8];
+    for (const row of Y) {
+      const kind = row[0], q = [];
+      for (let k = 1; k + 3 < row.length; k += 2) {   // the line resampled every 3 m at most
+        const ax = row[k], az = row[k + 1], bx = row[k + 2], bz = row[k + 3], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 3));
+        for (let m = k === 1 ? 0 : 1; m <= n; m++) q.push([ax + (bx - ax) * m / n, az + (bz - az) * m / n]);
+      }
+      if (kind <= 1) {   // a service road or a footway: a ribbon over the ground
+        const hw = kind === 0 ? 2.0 : 1.0, col = ROADC[kind];
+        const rows = q.map((p, m) => { const a = q[Math.max(0, m - 1)], b = q[Math.min(q.length - 1, m + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, ox = -(b[1] - a[1]) / l * hw, oz = (b[0] - a[0]) / l * hw;
+          return [[p[0] - ox, p[1] - oz], [p[0] + ox, p[1] + oz]].map(([x, z]) => [x, gH(x, z) + 0.1, z]); });
+        for (let m = 0; m + 1 < rows.length; m++) { const [a0, a1] = rows[m], [b0, b1] = rows[m + 1];
+          ya.get(a0[0], a0[2]).quadUp(a0, a1, b1, b0, [col, col, col, col], [uv8(a0), uv8(a1), uv8(b1), uv8(b0)]); }
+        continue;
+      }
+      let acc = 0;   // a fence, a wall or a guard rail
+      for (let m = 0; m + 1 < q.length; m++) {
+        const [ax, az] = q[m], [bx, bz] = q[m + 1], l = Math.hypot(bx - ax, bz - az), ang = Math.atan2(bz - az, bx - ax);
+        const ga = gH(ax, az), gb = gH(bx, bz), y0 = Math.min(ga, gb), cx = (ax + bx) / 2, cz = (az + bz) / 2;
+        if (kind === 2) {   // chain link on posts (its face to the road: the inside point lies away from it)
+          const n = nearest(cx, cz), sd = n.i >= 0 && n.lat > 0 ? 1 : -1, i = Math.max(0, n.i);
+          const ins = [cx + T.nx[i] * sd * 3, y0 + 1, cz + T.nz[i] * sd * 3], u0 = acc / 2.5, u1 = (acc + l) / 2.5;
+          yf.get(ax, az).quadO([ax, ga + 0.05, az], [bx, gb + 0.05, bz], [bx, gb + 2.05, bz], [ax, ga + 2.05, az], W1, ins, [[u0, 0], [u1, 0], [u1, 0.8], [u0, 0.8]]);
+          box(ys.get(ax, az), ax, ga - 0.2, az, 0.07, 2.3, 0.07, ang, postC);
+        } else if (kind === 3) box(ys.get(cx, cz), cx, y0 - 0.3, cz, l + 0.05, Math.max(ga, gb) - y0 + 1.3, 0.3, ang, conc, concT);   // a concrete wall
+        else {   // a guard rail on posts
+          box(ys.get(cx, cz), cx, (ga + gb) / 2 + 0.42, cz, l + 0.05, 0.32, 0.06, ang, steel);
+          box(ys.get(ax, az), ax, ga - 0.2, az, 0.1, 0.95, 0.1, ang, postC);
+        }
+        acc += l;
+      }
+    }
+    ownRnd(() => {
+      ya.addTo(o.root, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true);
+      yf.addTo(o.root, new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), false, false);
+      ys.addTo(o.root, new THREE.MeshLambertMaterial({ vertexColors: true }), true, true);
+    });
+    o.yard = Y.length;
+  }
+  function finish(o, tex) { o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4995,9 +5038,9 @@ const World = (function () {
     sync: { value: SYNC }
   });
 
-  function update(out, t, car, cam) {
+  function update(out, t, car, cam, rp) {
     if (!out) return;
-    const d = out.dyn;
+    const d = out.dyn, tw = rp ? rp.t : t;   // (a replay, rp: the spectators on its timeline, back, paused or slower as it goes (js/game.js replayFrame); the rest on the clock)
     if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
       const f = d.fade, p = cam.position, P = f.poly; let inside = p.y < f.yTop, sg = 0;
       for (let k = 0; k < 4 && inside; k++) {   // (inside the footprint: on the same side of all four edges)
@@ -5007,8 +5050,8 @@ const World = (function () {
       f.op += ((inside ? 0 : 1) - f.op) * Math.min(1, dt * 6); if (Math.abs(f.op - (inside ? 0 : 1)) < 0.02) f.op = inside ? 0 : 1;
       for (const e of f.list) { e.mat.opacity = f.op; e.mesh.visible = f.op > 0.02; e.mat.depthWrite = f.op > 0.98; }
     }
-    if (d.crowd) { d.crowd.uTime.value = t % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
-    if (d.people) d.people(t, car, cam);   // the scenes with people (js/world-ljudje.js): what they do, their run to the fence as the followed car comes
+    if (d.crowd) { d.crowd.uTime.value = tw % 1000; if (car) d.crowd.uCar.value.set(car.x, car.roadY || 0, car.z); }   // spectators: arm waving, cheering near the followed car
+    if (d.people) d.people(tw, car, cam, rp);   // the scenes with people (js/world-ljudje.js): what they do, their run to the fence as the followed car comes
     if (d.air) API.rbAirStep(d.air, t, car);   // Red Bull Ring: the TV helicopter's pass, the jets and their smoke
     if (d.podium) d.podium.step(t);   // Red Bull Ring: the podium after the race
     if (d.cpMast && (cam || !car)) API.cpMastStep(d.cpMast, car ? cam : null, out.root.parent && out.root.parent.fog);   // Crystal Palace: the mast on the hill, seen from afar (no car: on its own place, the world test's pose)
@@ -5070,6 +5113,6 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, api: API, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT, nrDecalTex };   // (nrDecalTex: the Nordschleife's paint on the asphalt, also the new map's ring road's, js/newmap.js nordRoad)   // (heli: the TV helicopter's model, also the police's on Vršič)
+  return { build, update, view, api: API, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT, keep: (k, th) => { (KEEP[k] = KEEP[k] || []).push(th); }, nrDecalTex };   // (nrDecalTex: the Nordschleife's paint on the asphalt, also the new map's ring road's, js/newmap.js nordRoad)   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 
