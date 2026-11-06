@@ -16,7 +16,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('46'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'uncompahgre'));
-check('46: on Uncompahgre, a real track', D.track === 'uncompahgre' && !Core.TRACKS.find(t => t.id === 'uncompahgre').test);
+check('46: on Uncompahgre (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'uncompahgre' && !!Core.TRACKS.find(t => t.id === 'uncompahgre'));
 const o = D.opts(D);
 check('its race: alone, the fire engine (slower), no damage', o.tt && o.damage === 0 && o.playerModel.id === 'titan' && o.playerModel.vLim < 120);
 const s0 = T.startS + K.AT;
