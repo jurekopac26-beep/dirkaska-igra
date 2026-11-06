@@ -205,7 +205,7 @@ Dirka po odprti cesti (*Circuit race* → *Open roads*, vseh 19 cest, tudi v kar
 
 ## Zavetrje
 
-Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 40 m za njim in največ 2,4 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Napisa **ZAVETRJE** na zaslonu ni več (uporabnikova odločitev), zavetrje pa deluje kot prej.
+Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu za avtom pred sabo manj zračnega upora: do 25 m za njim in največ 1,2 m vstran od njegove linije, oba v hitrosti in ne v boksarski stezi. Bližje in bolj natanko za njim je, manj je upora (največ za četrtino). Zavetrje se nabira postopoma (v približno sekundi) in enako počasi izgine, ko avto zapelje iz njega (uporabnik 4. 11. 2026: v gneči je avto dobival preveč pospeška; prej je bilo zavetrje 2,4 m široko in 40 m dolgo ter takojšnje: v gneči +7,9 % končne hitrosti v povprečju, zdaj +1,6 %, za enim avtom na ravnini enako kot prej). Na ravnini zato hitreje pridobiva hitrost in doseže večjo končno hitrost, v polnem zavetrju približno 10 % večjo. Napisa **ZAVETRJE** na zaslonu ni več (uporabnikova odločitev), zavetrje pa deluje kot prej.
 
 Tekmeci z AI zavetrje izkoristijo: na ravnini ostanejo za avtom in se mu približujejo, vstran zapeljejo šele, ko so blizu ali ko se bliža zaviranje, in prehitijo. Pred zaviranjem za avtom pred sabo pustijo nekaj več prostora, ker jih zavetrje pripelje hitreje. Zavetrje velja tudi v dirki s prijatelji.
 
