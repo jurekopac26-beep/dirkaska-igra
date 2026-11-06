@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Longford',
     bbClassic: 1,
     zivali: { a: ['wallaby', 'wombat', 'devil', 'kangaroo', 'sheep'], t: ['waterTank', 'windpump', 'fallenTree'], open: true },
-    id: 'longford', pending: true, name: 'Longford, Avstralija', theme: 'longford', laps: 2, halfWidth: 5,
+    id: 'longford', test: true, name: 'Longford, Avstralija', theme: 'longford', laps: 2, halfWidth: 5,
     desc: 'Proga po javnih cestah pri mestecu Longford na Tasmaniji, kot je bila v 1960-ih, v pravem merilu (7.0 km): pod opečnim železniškim viaduktom, čez dva lesena mostova na reki South Esk, ostri desni v mestu, skok čez nivojski prehod, ravnina pri strojarni, lasnica Newry s strmim klancem in leteča milja do ovinka Mountford, kjer so boksi (zapelji vanje in mehaniki ti popravijo avto). Pašniki z ovcami, žive meje, topoli in vrbe ob reki, bale slame in gledalci na brežinah. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover (CC BY 4.0).',
     en: { name: 'Longford, Australia', desc: 'A circuit on the public roads by the small town of Longford in Tasmania, as it was in the 1960s, at full scale (7.0 km): under the brick railway viaduct, over two wooden bridges across the South Esk river, a hard right in the town, a jump over the level crossing, the Tannery Straight, the Newry hairpin with its steep climb and the Flying Mile down to Mountford, where the pits are (drive in and the mechanics repair your car). Sheep pastures, hedges, poplars and willows by the river, straw bales and spectators on the banks. Data: \u00a9 OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover (CC BY 4.0).' },
     start: [0, 0], runoff: 0.5, inner: 4, side: 5, gradeForce: true, elevSmooth: 12, realKm: 7.242, noCurbs: true, noGravel: true,

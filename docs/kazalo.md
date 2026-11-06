@@ -168,7 +168,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: šest avstralskih, ostane ena) so prave; drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: Bathurst in Great Alpine Road, ostane ena) so prave; drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
@@ -183,11 +183,11 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
-| hotham | Mount Hotham, Avstralija | hotham | `js/world-hotham.js` (`buildHotham`) |
+| *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
-| longford | Longford, Avstralija | longford | `js/world-longford.js` (`buildLongford`) |
+| *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
@@ -197,7 +197,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
 | mountbuller | Mount Buller, Avstralija | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
-| newcastle | Newcastle, Avstralija | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
+| *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |
@@ -211,7 +211,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
-| townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
+| *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |
 | troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
 | *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
