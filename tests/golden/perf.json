@@ -198,9 +198,9 @@
  "newcastle": {
   "calls": 225,
   "maxCalls": 265,
-  "kverts": 721,
-  "maxKverts": 845,
-  "jsMs": 1.77
+  "kverts": 723,
+  "maxKverts": 848,
+  "jsMs": 2.2
  },
  "rio": {
   "calls": 205,

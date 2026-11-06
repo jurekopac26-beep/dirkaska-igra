@@ -739,11 +739,11 @@
  },
  "newcastle": {
   "meshes": 300,
-  "verts": 807658,
+  "verts": 807784,
   "instances": 2510,
   "props": 481,
   "crowd": 87,
-  "world": "9b1e04a",
+  "world": "23eb4752",
   "propsHash": "aecaec2c",
   "floor": "b8043731/5292",
   "groups": {
@@ -755,7 +755,7 @@
    "pave:MeshLambertMaterial": "f4968301",
    "kerbs:MeshLambertMaterial": "6dd208e2",
    "kerbface:MeshLambertMaterial": "4a453c07",
-   "-:MeshLambertMaterial": "743727f",
+   "-:MeshLambertMaterial": "e7cc41db",
    "walls:MeshLambertMaterial": "f4245326",
    "tyrew:MeshLambertMaterial": "ad729db9",
    "fence:MeshLambertMaterial": "42827c01",
