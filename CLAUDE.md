@@ -18,6 +18,7 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - V prihodnje naredimo iz vsake države samo **eno novo progo**. Proge na čakanju po državah in izbire uporabnika: `docs/proge-po-drzavah.md`; seja jo preveri, preden začne novo progo.
 - Država, ki že ima progo v igri: nova proga iz nje se dela samo, če jo je uporabnik izbral (vprašanja `ena-proga-<država>` na strani Odločitve). Dokler izbire ni, je ne začni; druge proge iste skupine ali koraka naredi.
 - Iz Slovenije ostane v igri samo **Medvode**; Vršič je testna (odločitev uporabnika 6. 11. 2026: »Vršič, daj v test.«).
+- Iz Avstralije ostane ena proga, ki jo izbere uporabnik (odločitev uporabnika 6. 11. 2026; Mount Buller gre v test s PR #379). Do izbire so Bathurst, Great Alpine Road, Longford, Mount Hotham, Newcastle in Townsville **na odločanju** (`pending: true` v datoteki proge): meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING; v igri in testih so prave proge, niso zamrznjene. Po izbiri dobijo ostale `test: true`.
 - Država brez proge: proge gredo v delo, ko pridejo na vrsto. Prva iz države se naredi, druge iz iste države potem odpadejo.
 - Nov načrt prog predlaga največ eno progo na državo in izpusti države, ki progo že imajo.
 - **Nove proge so vedno zadnje** (odločitev uporabnika 4. 11. 2026): izdelava novih prog je zadnje delo pred pripravo na Google Play; vsako novo delo, ki pride, gre na vrsto pred njo (proga, ki je že v izdelavi, se dokonča). Vrstni red: `docs/proge-po-drzavah.md`.

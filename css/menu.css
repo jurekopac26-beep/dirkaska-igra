@@ -442,6 +442,7 @@ svg { display: block; }
   background: linear-gradient(180deg, #2a5fae, #1e4a8e); border: 3px solid #e9eef6; border-radius: 6px; box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 0 0 2px #1e4a8e; filter: brightness(.88); z-index: 1; }
 .sign b { min-width: 0; font: 800 clamp(20px, 7.4vw, 34px)/1 Roboto, Arial, sans-serif; letter-spacing: .02em; color: #f4f7fb; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sign i { flex: 0 0 auto; font: 900 italic 12px/1 var(--f-ui); padding: 4px 6px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); }
+.sign.pending i { background: var(--cyan); color: #0b1626; }   /* (a track awaiting the user's choice: one of them stays) */
 .post { position: absolute; top: 48%; bottom: 30%; width: 7px; background: linear-gradient(90deg, #6d7684, #c9d0da 45%, #7a8392); border-radius: 2px; filter: brightness(.88); }
 .post.a { left: 52%; } .post.b { right: 12%; }
 /* the car in 3D with the wind round it (js/menu-car.js): a canvas over the whole yard, over the sign; the car's button (the tap: the garage) over it */
