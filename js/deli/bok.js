@@ -93,7 +93,8 @@
   // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise from the rear foot: the second point the bottom's front
   // end (the net's rod to it), the last but one the top's front end (the frame's top to it), more between them where the glass curves, JASTREB's;
   // null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
-  // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar }. The door's panel a decal on the loft's side (lift 3.5 mm: the
+  // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar; rub: the rubbing strip's middle height (0.595; a high door,
+  // GOZDAR's: its own), crease: [y, y] the pressed lines' heights (0.6, 0.72) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
   // latch) or the light glass (lexan: clearer, its black printed border, a sliding hatch or a vent)
@@ -137,11 +138,12 @@
       if (O.sheen && K.hi) for (let i = 0; i < 3; i++) { const u = xa + 0.16 + i * 0.36;   // (the weave catching the light: three bands across, slanting)
         side([[u, ya], [u + 0.07, ya], [u + 0.21, yb], [u + 0.14, yb]].map(([px, py]) => [Math.max(xa, Math.min(xb, px)), py]), O.sheen, 0.004); }
       if (O.brush && K.hi) for (let i = 0; i < 6; i++) { const y = ya + 0.06 + i * (yb - ya - 0.1) / 5; side([[xa, y], [xb, y], [xb, y + 0.004], [xa, y + 0.004]], AL2, 0.004); }
-      if (O.crease) for (const y of [0.6, 0.72]) { side([[xa, y], [xb, y], [xb, y + 0.01], [xa, y + 0.01]], K.shade(P, 0.5), 0.0045); side([[xa, y - 0.006], [xb, y - 0.006], [xb, y], [xa, y]], K.shade(P, 1.3), 0.0045); }   // (pressed lines: their shadow, their light edge under them)
+      if (O.crease) for (const y of m.crease || [0.6, 0.72]) { side([[xa, y], [xb, y], [xb, y + 0.01], [xa, y + 0.01]], K.shade(P, 0.5), 0.0045); side([[xa, y - 0.006], [xb, y - 0.006], [xb, y], [xa, y]], K.shade(P, 1.3), 0.0045); }   // (pressed lines: their shadow, their light edge under them)
       if (O.trim) side([[xa, yb - 0.02], [xb, yb - 0.02], [xb, yb - 0.004], [xa, yb - 0.004]], O.trim, 0.0045);
-      if (O.mould) { side([[xa + 0.02, 0.56], [xb - 0.02, 0.56], [xb - 0.02, 0.63], [xa + 0.02, 0.63]], O.mould, 0.008);
-        side([[xa + 0.02, 0.589], [xb - 0.02, 0.589], [xb - 0.02, 0.601], [xa + 0.02, 0.601]], [0.16, 0.16, 0.17], 0.0095);
-        if (K.hi) for (let i = 0; i < 4; i++) K.discX(xa + 0.08 + i * (xb - xa - 0.16) / 3, 0.595, sd * (hz + 0.01), 0.009, 6, AL2, 1, o); }
+      if (O.mould) { const [r0, r1, r2, r3, rm] = m.rub != null ? [m.rub - 0.035, m.rub - 0.006, m.rub + 0.006, m.rub + 0.035, m.rub] : [0.56, 0.589, 0.601, 0.63, 0.595];   // (rub: its middle's height)
+        side([[xa + 0.02, r0], [xb - 0.02, r0], [xb - 0.02, r3], [xa + 0.02, r3]], O.mould, 0.008);
+        side([[xa + 0.02, r1], [xb - 0.02, r1], [xb - 0.02, r2], [xa + 0.02, r2]], [0.16, 0.16, 0.17], 0.0095);
+        if (K.hi) for (let i = 0; i < 4; i++) K.discX(xa + 0.08 + i * (xb - xa - 0.16) / 3, rm, sd * (hz + 0.01), 0.009, 6, AL2, 1, o); }
       if (O.seal) { side([[xa, ya], [xb, ya], [xb, ya + 0.012], [xa, ya + 0.012]], BLK, 0.0045); side([[xa, ya], [xa + 0.012, ya], [xa + 0.012, yb], [xa, yb]], BLK, 0.0045); side([[xb - 0.012, ya], [xb, ya], [xb, yb], [xb - 0.012, yb]], BLK, 0.0045); }
       if (O.rivets && K.hi) for (const ry of [ya + 0.05, yb - 0.04]) for (let i = 0; i < 9; i++) { const rx = xa + 0.04 + i * (xb - xa - 0.08) / 8;
         side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, 0.0045); }
