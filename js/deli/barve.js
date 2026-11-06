@@ -8,7 +8,8 @@
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
                    mounts.soncni_pas { x: [top, foot], lift: more over a windscreen whose glass panels bulge over the top's line; pane:
-                   [top inner, top corner, base inner, base corner], a windscreen that is a pane of its own (its right half), part: its part }
+                   [top inner, top corner, base inner, base corner], a windscreen that is a pane of its own (its right half), part: its part,
+                   w: its half width (none: out to the top's crease, wt; a pane in a frame narrower than the loft's top, GAD's) }
        zamasek     the fuel cap on the side, in place of the stock one (flaps, aluminium, racing, carbon caps); mounts.zamasek { x, y, z, r }
        celjusti    the brake calipers behind the rims' spokes (in the body: they never spin; a steered wheel turns past them a little);
                    with a brake kit (zavore) none of their own: the kit's caliper in their colour (DELI.calColour(n), js/deli/bok.js);
@@ -229,7 +230,7 @@
     // (the band from the windscreen's top edge down, over its whole width to the A-pillars: at each x out to the top's crease, wt)
     const o = SUN[n]; if (!o) return; const ly = m.pane ? paneLayer(K, m.pane, m.part) : layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
     const up = m.lift || 0;   // (lift: over a windscreen whose glass panels bulge over the top's line, MIŠKA's one panel from the roof to the cowl)
-    const W = (x) => LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, (lift || 0.006) + up), Wm = W(x0);
+    const W = (x) => m.w != null ? m.w : LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, (lift || 0.006) + up), Wm = W(x0);
     if (o.rainbow) { const RB = [[0.85, 0.12, 0.1], [0.95, 0.55, 0.08], [0.95, 0.85, 0.1], [0.15, 0.6, 0.25], [0.15, 0.35, 0.85]]; RB.forEach((col, i) => band(x0 + d * i / 5, x0 + d * (i + 1) / 5, col)); return; }
     if (o.fade) { band(x0, x0 + d * 0.55, c(o.c)); band(x0 + d * 0.55, x0 + d * 0.78, K.shade(c(o.c), 0.7)); band(x0 + d * 0.78, x1, K.shade(c(o.c), 0.45)); return; }
     if (o.perf) { band(x0, x0 + d * 0.4, c(o.c)); const k = K.hi ? 22 : 14; for (let r = 0; r < 3; r++) for (let i = 0; i < k; i++) { const xs = x0 + d * (0.45 + r * 0.19), z = -Wm + (i + 0.5 + (r % 2) * 0.5) * 2 * Wm / (k + 0.5);

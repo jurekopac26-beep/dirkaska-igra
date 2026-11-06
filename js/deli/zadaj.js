@@ -14,7 +14,9 @@
                   y0 up to y1; x0 then unused, x1 the window's foot: RAKETA's, whose loft ends in an upright cap)
      vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR); underLamps: true, the front
        arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow;
-       underPod: true, the front point behind a lamp pod over the bumper's face (relijske_luci 13-16, RAKETA's): with one fitted, none in front
+       underPod: true, the front point behind a lamp pod over the bumper's face (relijske_luci 13-16, RAKETA's): with one fitted, none in front;
+       behindLamps: true, the front point behind any rally lamps in front of the nose (relijske_luci 1-8 and 13-16, DELI.noseLamps; GAD's,
+       its small nose): with them fitted, none in front
      lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part, parts }   the flaps behind the wheels (x), across (|z|), up;
                   parts [front left, front right, rear left, rear right]: each flap in its own (a car's stock flaps' parts), else all in part */
 (function () {
@@ -221,7 +223,7 @@
     // the tip stays (MIŠKA's, on an overrider beside its tips near the middle)
     const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) && Math.abs(m.r[2]) <= Math.abs(ma.z) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
     // at a tow point (end: 1 the front, -1 the rear; dir: the way out of the face), in the bumper's part
-    const podF = m.underPod && K.fitted && DELI.podLamps && DELI.podLamps(K.fitted.relijske_luci);   // (underPod: none in front behind a pod)
+    const lamp = K.fitted && K.fitted.relijske_luci, podF = lamp && ((m.underPod && DELI.podLamps && DELI.podLamps(lamp)) || (m.behindLamps && DELI.noseLamps && DELI.noseLamps(lamp)));   // (underPod: none in front behind a pod; behindLamps: behind any lamps in front of the nose)
     const at = (end, fn) => { const p = end > 0 ? (podF ? null : m.f) : r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
     const strap = (x, y, z, d, w, col) => { K.box(x + d * 0.009, y - 0.1, z, 0.012, 0.12, w, 0, col, col);
