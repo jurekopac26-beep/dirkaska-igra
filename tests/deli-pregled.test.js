@@ -84,7 +84,9 @@ for (const id of ELS) { alone[id] = [];
     const seen = new Set(); let dIn = 0, dOut = 0, ty = 0;
     for (const p of L.corners(O.P, O.part)) { const key = p.map(v => Math.round(v * 2e4)).join(); if (seen.has(key)) continue; seen.add(key);
       const enc = DIRS.every(d => G.ray(p, d, 4) < Infinity), d = G.dist(p, 0.5).d;
-      if (enc && d > dIn) dIn = d; if (!enc && d > dOut) dOut = d; if (!HID.includes(id)) ty = Math.max(ty, inTyre(p)); }
+      // (the bay's hidden parts are drawn with the inner block: inside the shell with it, a car whose floor pan is in it (LEV R, ZMAJ 85 ...))
+      const encB = enc || (BAY.includes(id) && DIRS.every(q => GA.ray(p, q, 4) < Infinity));
+      if (enc && d > dIn) dIn = d; if (!encB && d > dOut) dOut = d; if (!HID.includes(id)) ty = Math.max(ty, inTyre(p)); }
     if (!HID.includes(id) && dIn > DEEP) deep.push(tag + ' ' + mm(dIn));
     if (BAY.includes(id) && dOut > 0) bay.push(tag + ' ' + mm(dOut) + ' out');
     if (ty > 0) tyres.push(tag + ' ' + mm(ty));
