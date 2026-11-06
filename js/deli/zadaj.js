@@ -5,12 +5,14 @@
      zadnje_luci: { x, zc, yc, w, h, hosts, bar }   the tail lamps' room on each side: the stock lamp's x (its lit face 2.3 cm behind it), its
                   middle (zc out from the car's middle, yc), w x h the room (KOLIBRI: the lamp strip, 0.14 x 0.30 m); hosts [left, right] the
                   lamps' parts; bar { x, y, w, h, part }: the band across the tail between them (KOLIBRI: the tailgate's garnish, half width w)
-     auspuh:      { x, y, z, r, len, part }   the stock tip's end (x), height, |z| (the stock pipe on the left), radius, length; part: the pipes'
+     auspuh:      { x, y, z, r, len, part }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
+                  radius, length; part: the pipes'
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
                   w its half width; part: the lid's
      vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR)
-     lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part }   the flaps behind the wheels (x), across (|z|), up */
+     lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part, parts }   the flaps behind the wheels (x), across (|z|), up;
+                  parts [front left, front right, rear left, rear right]: each flap in its own (a car's stock flaps' parts), else all in part */
 (function () {
   'use strict';
   if (typeof DELI === 'undefined') return;
@@ -253,9 +255,11 @@
   function lovilciBlata(K, n, m, M) {
     const all = n >= 11, P = K.paint, S = K.strp, ma = M && M.def.mounts && M.def.mounts.aero;
     const xF = DELI.skirts && DELI.skirts(K.fitted.aero) && ma && ma.sill ? Math.max(m.x[0], ma.sill[1] + 0.02) : m.x[0];   // (the front ones ahead of the aero kit's skirts)
+    // (parts: [front left, front right, rear left, rear right], each flap in a part of its own as the car's stock ones, rubber: no dents)
+    const fp = (ax, sd, fn) => m.parts ? K.part(m.parts[ax * 2 + (sd > 0 ? 1 : 0)], fn, { noDent: true }) : fn();
     K.part(m.part || 'body', () => {
       for (const [ax, x] of [[0, xF], [1, m.x[1]]]) { if (ax === 0 && !all) continue;
-        for (const sd of [-1, 1]) {
+        for (const sd of [-1, 1]) fp(ax, sd, () => {
           const z0 = m.z[0], z1 = m.z[1], top = m.y[0], foot = m.y[1], zc = sd * (z0 + z1) / 2, wz = z1 - z0, F = x - 0.006, o = { dir: '-x' };
           // the flap: a slab th thick, its foot at f (the rally ones lower), across wd; a band on its back (v0..v1 up from its foot)
           const flap = (col, th, f, wd) => K.box(x, f, zc, th, top - f, wd || wz, 0, col, col, false);
@@ -282,7 +286,7 @@
             case 15: flap(BLK, 0.008, foot - 0.035); band(WHT, 0.02, 0.06, foot - 0.035); bracket(); break;   // s ščitniki (the sills' guards below)
             case 16: flap(S, 0.01, foot - 0.035); band(WHT, 0.02, 0.07, foot - 0.035, 0.01); band(P, 0.08, 0.1, foot - 0.035, 0.01); bracket(); break;   // tovarniški relijski
           }
-        }
+        });
       }
       if (n >= 15 && m.sill) for (const sd of [-1, 1]) { const [xa, xb, y, z] = m.sill;   // (the sills' guards: a black plate along each, between the flaps)
         K.box((xa + xb) / 2, y, sd * z, xb - xa, 0.07, 0.012, 0, n === 16 ? [0.12, 0.12, 0.13] : BLK); }
