@@ -87,7 +87,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **Jezik**: sovoznik govori samo angleško, tudi ko je igra v slovenščini, kot komentator (odločitev uporabnika 5. 11.: »Vse zvoke delaj v angleščini«). Napis je v jeziku igre.
 - **Besedišče glasu**: ~40 angleških besed, iz katerih se sestavijo klici, kot jih relijski sovoznik uporablja že zdaj: left, right, one–six, flat, hairpin, square, long, tightens, opens, caution, jump, big, crest, over, into, and, one hundred … five hundred, to finish, onto, gravel, tarmac, cobbles, roundabout, straight, chicane.
 - **Besede napisa v slovenski igri**: levo, desno, številka, polno, lasnica, devetdeset, dolgo, zapira, odpira, pozor, skok, velik, grbina, v, takoj, razdalja v metrih, do cilja, na makadam, na asfalt, na tlakovce, krožišče, naravnost, šikana. Uporabnik lahko besedo zamenja.
-- **Izvedba po odgovoru `sovoznik-glas`**:
+- **Izvedba po odgovoru `sovoznik-glas`** (odgovor 6. 11.: posneti zvoki, kot v relijskih igrah; razdelka Odločitve in »Predaja: glas«):
   - **Glas telefona** (možnost 1, priporočena):
     - `Comm.note()` kot zdaj, z angleškim glasom telefona (drug glas kot komentator).
     - Nič prenosa. Angleški glas je na skoraj vseh telefonih in dela brez interneta.
@@ -119,15 +119,14 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 ## Kje velja
 
-- **Privzeto** (možnost 1 vprašanja `sovoznik-kje`): na vseh pravih odprtih cestah. To so ceste z `track.open` brez `test`, 15 prog: 11 cest (Tianmen, Irohazaka, Sani Pass, Rio do Rastro, Vršič, Mount Buller, Los Caracoles, Medvode, Chapman's Peak, Mount Hotham, Great Alpine Road) in 4 kronometri (Harju, Ouninpohja, Katu-Jaryk, Pikes Peak na asfaltu in makadamu, `pikes` in `pikesg`). Nove ceste ga dobijo same.
+- **Ceste** (odgovor `sovoznik-kje` 6. 11.: možnost 1, samo odprte ceste in kronometri): na vseh pravih odprtih cestah. To so ceste z `track.open` brez `test`, 5. 11. 15 prog: 11 cest (Tianmen, Irohazaka, Sani Pass, Rio do Rastro, Vršič, Mount Buller, Los Caracoles, Medvode, Chapman's Peak, Mount Hotham, Great Alpine Road) in 4 kronometri (Harju, Ouninpohja, Katu-Jaryk, Pikes Peak na asfaltu in makadamu, `pikes` in `pikesg`). Nove ceste ga dobijo same, nove testne proge ga izgubijo same: ko gredo Vršič (#394), Mount Buller in Sani Pass (#379) med testne, ostane 12 prog.
 - **Proge ZDA razen Pikes Peaka** (Mount Baldy, Beartooth, Big Sur, Mauna Kea, Moki Dugway, Santa Monica Mountains, Palomar Mountain, Uncompahgre ter dirkališča Detroit, Monterey in Riverside) postanejo testne in zamrznjene (odločitev uporabnika 5. 11., PR računa 2, veja `proge/zda-v-test`). Sovoznika ne dobijo: izloči jih pravilo »brez `test`«, njihovih datotek seja ne spreminja, slik in meritev na njih ne dela. Do tedaj jih izključi seznam `CD_SKIP` v `js/core.js` (`codrvRoad`); ko so testne, seznam ni več potreben.
 - **Načini**: dirka, kronometer, kariera, prvenstvo, promet, policija (radio ima prednost), dirka s prijatelji (vsak telefon ima svojega sovoznika).
 - **Ne velja**:
-  - na dirkališčih, razen če uporabnik izbere drugače; tam ostanejo table pred zaviranjem;
+  - na dirkališčih (odgovor `sovoznik-kje`); tam ostanejo table pred zaviranjem;
   - na testnih progah (zamrznjene);
   - na novi mapi in v misijah (svoje opombe);
   - v avtošoli (tudi »Prvič na cesti«), posnetku dirke in foto načinu.
-- **Druge izbire**: pri možnosti 2 govori tudi na dirkališčih v prvem krogu, pri možnosti 3 v vsakem krogu.
 
 ## Pravna varnost
 
@@ -152,7 +151,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - da ima vsaka beseda napisa prevod v obeh jezikih, vsaka beseda glasu posnetek (pri posnetih zvokih) in da je napis največ 24 znakov;
   - čas izračuna.
 - **`tests/rally.test.js` in `tests/katu.test.js`**: angleško besedilo relijskih preizkušenj ostane enako. Namerne spremembe (npr. »caution«) se zapišejo v test.
-- **`tests/browser/sovoznik.test.mjs`** (brskalnik, nov), na Vršiču in Ouninpohji preveri:
+- **`tests/browser/sovoznik.test.mjs`** (brskalnik, nov), na Rio do Rastro (prej na Vršiču) in Ouninpohji preveri:
   - da klic pride pred ovinkom na razdalji glede na hitrost;
   - da se napis pokaže, ugasne in ne prekrije ure (360 × 640 in 640 × 360);
   - stikalo Izklop, Napis, Glas in napis;
@@ -172,7 +171,31 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 | 5 | Brskalniški test, slike, pull request, vpis v vrsto | 2–3 |
 
 - **Skupaj ~9–15 h**: ena seja (Opus, napor max), ena veja `sovoznik/cesta`, en pull request. Odpre ga ob začetku kode kot osnutek in takrat izbriše vrstico v Načrtovano.
-- Pri možnosti 3 vprašanja o glasu pride še čas uporabnika za snemanje (~15 min).
+- **6. 11.**: koraki 1 in 3–5 so v PR #359. Korak 2 (posnet glas) naredi nova seja po razdelku »Predaja: glas«.
+
+## Predaja: glas (korak 2)
+
+Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odločitve). Opombe, napisi in stikalo so v PR #359 (veja `sovoznik/cesta`).
+
+- **Kaj**: posnet angleški glas sovoznika, kot v relijskih igrah. Klic se sestavi iz posnetih besed: `Track.paceNotes()` da žetone (`toks`), besede glasu so v `Core.CD_EN`. Igra jih predvaja prek Web Audio s ~60 ms premora.
+- **Kje**: na cestah pri »Glas in napis« (`S.codrv === 1`; zdaj ostane `__game.codrv.voice` `false`) in na relijskih kronometrih namesto glasu telefona (`Comm.note()`), da je sovoznik povsod isti. Glas telefona ostane rezerva, dokler list ni naložen.
+- **Zvočni list**: vse besede v enem listu, MP3 v base64 z odmiki (`js/data/sovoznik-en.js`, ~100–150 KB). List je povezan iz `index.html`, zato ga service worker shrani z igro. Dekodira se ob prvem klicu (~3–5 MB).
+- **Vir glasu**: odprt angleški sintetizator, katerega licenca dovoljuje komercialno rabo (Google Play); zasluge v `README.md`.
+  - Kandidata: Kokoro-82M (Apache 2.0) in glas Piper `en_US-joe-medium` (po opisu paketa CC0, preveri v opisu modela).
+  - Hugging Face iz tega okolja ne deluje (posrednik zavrne povezavo, 6. 11.); npm in PyPI delujeta. Uteži Kokora so na npm razrezane v pakete (`kokoro-q8-shards`, `kokoro-fp16-shards`), glas Piper je na PyPI (`joe-us-piper-voice`).
+  - To so ponovne objave tretjih oseb: iz njih vzemi samo podatke (model, glasove), kodo iz uradnih paketov (`kokoro-js`, `piper-tts`); preveri licenco in velikost datotek. Druga pot: dovoljenje okolja za Hugging Face (`update_environment`, uporabnik potrdi).
+  - Brez glasov z licenco »samo nekomercialno«, brez posnetkov resničnih sovoznikov in posnetkov iz drugih iger.
+- **Zvok**: kratke, jasne besede v relijskem ritmu, enaka glasnost; po želji rahel zvok čelade ali radia (filter v Web Audio, ne v posnetku).
+- **Vzorci**: seja glasu ne sliši. Razumljivost preveri z razpoznavo govora, če je dosegljiva, in s trajanjem besed.
+  - Pred izdelavo pošlji na stran Odločitve 3 vprašanje z zvoki: isti klic v 2–3 glasovih, priporočeni prvi; brez odgovora velja priporočeni.
+  - Uporabnik ne želi znova izbirati vrste glasu (»to sem že odgovoril«), zato vprašanje izbira samo med posnetimi glasovi.
+- **Kdaj govori**: po razdelku Kdaj govori; prednost pred komentatorjem kot zdaj (`Comm`).
+- **Testi**:
+  - Node: vsaka beseda iz `Core.CD_EN` in vsaka razdalja ima posnetek, odmiki so znotraj lista, velikost lista;
+  - brskalniški `tests/browser/sovoznik.test.mjs`: na Rio do Rastro pri »Glas in napis« klici iz lista, ne prek `speechSynthesis`; na Ouninpohji enako;
+  - `perf` in `memory` brez rasti na drugih progah.
+- **Dokumenti**: ta datoteka (Glas, Stanje), `docs/igra.md` (Sovoznik, Glas), `README.md` (Zasluge), `docs/kazalo.md`, `tests/README.md`.
+- **Veja**: nova (`sovoznik/glas`) iz `main` po združitvi #359. Če #359 še čaka v vrsti, se seja s koordinacijo dogovori, ali gre glas v #359.
 
 ## Odločitve
 
@@ -198,12 +221,18 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - dve krožišči blizu skupaj: obe; `def.notes` samo s sovoznikovimi besedami;
   - »caution« tudi pred ovinkom za grbino, prebrano z ovinkom, in za skokom z menjavo podlage pred ostrim ovinkom;
   - povezani testi v `tests/run.js`, skupno merjenje bloka ure (`timesBox`) za znak in napis.
-- **Vprašanji na strani Odločitve 3** (5. 11. 2026); odgovora se zapišeta sem:
+- **Vprašanji na strani Odločitve 3** (5. 11. 2026):
   - `sovoznik-glas`: kateri angleški glas (prilagojeno po odločitvi o angleščini): angleški glas telefona (priporočeno), posneti zvoki iz angleškega sintetizatorja, tvoj glas v angleščini;
   - `sovoznik-kje`: samo odprte ceste ali tudi dirkališča (v prvem krogu ali v vsakem).
+- **6. 11. 2026, uporabnik** (stran Odločitve 3, prebrano; sporočilo koordinacije VSE SEJE 2):
+  - `sovoznik-kje` = 1 · »Samo odprte ceste in kronometri, na dirkališčih ne.« Tako je že v kodi (`Core.codrvRoad`), sprememba ni potrebna.
+  - `sovoznik-glas` = drugo · »naredi glas kot v drugih igricah, to sem že odgovoril«. O glasu je prej zapisano samo »Vse zvoke delaj v angleščini« (5. 11.).
+  - Razlaga seje: kot v relijskih igrah, posnet glas sovoznika, na vseh telefonih enak, ki bere v relijskem ritmu beseda za besedo iz zvočnega lista (pot možnosti 2: odprt angleški sintetizator z licenco za Google Play). Ne glas telefona (možnost 1) in ne uporabnikov glas (možnost 3). Isti glas tudi na relijskih kronometrih. Izvedba: razdelek »Predaja: glas«.
+- **6. 11. 2026**: Vršič (#394; iz Slovenije ostane Medvode), Mount Buller in Sani Pass (#379) gredo med testne proge (odločitve uporabnika »ena proga na državo«). Sovoznik jih izgubi sam (pravilo »brez `test`«). Testi sovoznika so zato na cestah, ki ostanejo: Rio do Rastro (grbine iz višin, brskalniški test), Medvode, Harju, Ouninpohja in Pikes Peak (»caution«).
 
 ## Stanje
 
 - 5. 11. 2026: tema je v `docs/vrsta.md` (#337), načrt v tej datoteki (#340), vprašanji na strani Odločitve 3; `sovoznik-glas` prilagojeno na angleški glas.
 - 5. 11. 2026: koda opomb in napisov končana (PR #359, veja `sovoznik/cesta`): klici vseh 15 cest, napis pokonci in ležeče, številka na znaku, stikalo Izklop · Napis · Glas in napis, testi. Naslednje: glas na cestah po odgovoru `sovoznik-glas` (korak 2), dirkališča po odgovoru `sovoznik-kje`.
 - 5. 11. 2026: popravki po pregledu PR #359 (10 ugotovitev, razdelek Odločitve) v istem PR-ju; povezani testi zeleni.
+- 6. 11. 2026: odgovora zapisana (razdelek Odločitve), testi z Vršiča na Rio do Rastro in Pikes Peak. Naslednje: posnet glas v novi seji (razdelek »Predaja: glas«); PR #359 čaka v vrsti kot osnutek.

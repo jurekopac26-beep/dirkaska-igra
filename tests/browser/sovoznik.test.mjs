@@ -1,4 +1,4 @@
-// The co-driver on the real open roads (docs/sovoznik.md): Vršič's run on the autopilot, on a phone lying (the game in Slovenian; 640×360,
+// The co-driver on the real open roads (docs/sovoznik.md): Rio do Rastro's run on the autopilot, on a phone lying (the game in Slovenian; 640×360,
 // then 915×412) and upright (in English): the calls of the road (Track.paceNotes), each one's caption (#h-codrv) in the game's language as
 // Core.codrvCap writes it, shown ahead of the bend (game.js cdLead: 55-170 m) and gone after it, over nothing of the HUD (the clock's
 // block, the map, the corner sign, the buttons, the controls) and inside the screen, the corner sign where it was without the caption, with
@@ -61,25 +61,25 @@ try {
       const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="codrv"] button')].map(b => b.dataset.v + ':' + b.textContent).join(' | '));
       T.check('the switch in the settings: Sovoznik off, the captions, the voice and the captions', row === '0:Izklop | 2:Napis | 1:Glas in napis', row);
     }
-    await startTrack(page, 'vrsic', 'tt');
-    const r = await drive(page, lang === 'sl' ? 40 : 30);
+    await startTrack(page, 'rastro', 'tt');
+    const r = await drive(page, lang === 'sl' ? 40 : 30, { stop: { shown: 4, nums: 2 } });
     const lead = r.d.slice(1).every(d => d >= 40 && d <= 175), keep = r.pos.cap.every(p => r.pos.free.includes(p));
-    T.check(`${tag} Vršič: the road's calls, captions in the game's language ahead of the bends and gone after them, no voice yet`,
-      r.calls > 20 && !r.voice && r.shown.length >= 3 && !r.wrong.length && r.gone >= 2 && lead,
+    T.check(`${tag} Rio do Rastro: the road's calls, captions in the game's language ahead of the bends and gone after them, no voice yet`,
+      r.calls > 10 && !r.voice && r.shown.length >= 3 && !r.wrong.length && r.gone >= 2 && lead,
       `${r.calls} calls, voice ${r.voice}, ${r.shown.length} shown to ${r.s} m (${r.shown.slice(0, 4).map(x => '"' + x + '"').join(' ')}), ${r.gone} gone, ahead ${r.d.join(' ')} m${r.wrong.length ? ', wrong: ' + r.wrong.join(', ') : ''}`);
-    T.check(`${tag} Vršič: the caption over nothing of the HUD, inside the screen; the corner sign where it was, with the bend's grade on it`,
+    T.check(`${tag} Rio do Rastro: the caption over nothing of the HUD, inside the screen; the corner sign where it was, with the bend's grade on it`,
       !r.hits.length && !r.out.length && keep && r.pos.free.length > 0 && r.nums.length > 0 && r.nums.every(x => /^[1-6]$/.test(x)),
       `over ${r.hits.join(' ') || 'nothing'}${r.out.length ? ', outside: ' + r.out.join(', ') : ''}; the sign at ${r.pos.free.join(' ')}, with a caption ${r.pos.cap.join(' ') || '-'}; numbers ${r.nums.join(' ')}`);
     // the longest caption a call has (every note of it; Core.codrvCap, tests/sovoznik.test.js: CD_MAX2): the next two calls with its words
     const rl = await drive(page, 30, { long: LONG, stop: { long: 40 } }), big = rl.shown.filter(x => x.length >= 40);
-    T.check(`${tag} Vršič: the longest caption (every note of the call; upright in more lines) over nothing of the HUD, inside the screen`,
+    T.check(`${tag} Rio do Rastro: the longest caption (every note of the call; upright in more lines) over nothing of the HUD, inside the screen`,
       big.length > 0 && !rl.wrong.length && !rl.hits.length && !rl.out.length,
       `${big.map(x => '"' + x + '"').join(' ') || 'none of ' + rl.shown.length + ' shown'} in ${rl.lines} line(s), over ${rl.hits.join(' ') || 'nothing'}${rl.out.length ? ', outside: ' + rl.out.join(', ') : ''}${rl.wrong.length ? ', wrong: ' + rl.wrong.join(', ') : ''}`);
     if (lang === 'sl') {
       // a wider phone lying (915×412), the same run on: the caption again over nothing (under the clock's block; a wide one under the sign too)
       await page.setViewportSize({ width: 915, height: 412 });
-      const r2 = await drive(page, 24);
-      T.check('915×412 (sl) Vršič: the caption over nothing of the HUD, inside the screen',
+      const r2 = await drive(page, 24, { stop: { shown: 2 } });
+      T.check('915×412 (sl) Rio do Rastro: the caption over nothing of the HUD, inside the screen',
         r2.shown.length >= 2 && !r2.wrong.length && !r2.hits.length && !r2.out.length,
         `${r2.shown.length} shown (${r2.shown.map(x => '"' + x + '"').join(' ')}), over ${r2.hits.join(' ') || 'nothing'}${r2.out.length ? ', outside: ' + r2.out.join(', ') : ''}${r2.wrong.length ? ', wrong: ' + r2.wrong.join(', ') : ''}`);
     }
@@ -87,13 +87,13 @@ try {
     if (lang === 'en') {
       // the switch: off on a road (no calls, no numbers on the sign), the captions alone on a rally stage, the voice there as before (the
       // stage again: Ponovi; a circuit has no co-driver: Core.codrvRoad, tests/sovoznik.test.js)
-      const v0 = await seg(page, '0'); await startTrack(page, 'vrsic', 'tt');
+      const v0 = await seg(page, '0'); await startTrack(page, 'rastro', 'tt');
       const off = await drive(page, 12);
       T.check('Sovoznik off: no calls on a road, no caption, no number on the corner sign',
         v0 === 0 && off.calls === 0 && !off.shown.length && !off.nums.length && off.pos.free.length > 0, `S.codrv ${v0}, ${off.calls} calls, ${off.shown.length} captions, numbers "${off.nums.join(' ')}", the sign shown ${off.pos.free.length}×`);
       const vm = await seg(page, '2'), mid = await drive(page, 30, { stop: { shown: 1, nums: 1 } });   // (switched on during the race: the settings in the pause)
       T.check('Sovoznik switched on during the race (Napis): the calls from there on, their captions and the grades on the sign',
-        vm === 2 && mid.calls > 20 && !mid.voice && mid.shown.length >= 1 && !mid.wrong.length && mid.nums.length > 0,
+        vm === 2 && mid.calls > 10 && !mid.voice && mid.shown.length >= 1 && !mid.wrong.length && mid.nums.length > 0,
         `S.codrv ${vm}, ${mid.calls} calls, voice ${mid.voice}, ${mid.shown.length} shown (${mid.shown.map(x => '"' + x + '"').join(' ')}), numbers ${mid.nums.join(' ') || '-'}${mid.wrong.length ? ', wrong: ' + mid.wrong.join(', ') : ''}`);
       const v2 = await seg(page, '2'); await startTrack(page, 'ouninpohja'); const cap = await now(page);
       const v1 = await seg(page, '1'), r0 = await page.evaluate(() => { const g = window.__game, r = g.race; g.onAction('restart'); return r !== g.race; }), voice = await now(page);

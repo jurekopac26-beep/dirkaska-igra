@@ -3,8 +3,9 @@
 // (Track.paceNotes: in order along the run, apart, as many as a co-driver reads, every slow corner in a slow note, only the co-driver's own
 // words), the English the voice says (Core.codrvSay) and the captions in both languages with every note of the call, short enough for a
 // phone (Core.codrvCap: one line, a long one two), the road's own crests from its heights (none on a flat road; a crest, a jump, a big jump
-// as the hump grows), the roundabouts by their exit (two close by: both), a stage's own notes (def.notes: only in the co-driver's words),
-// the caution (a crest read with the bend behind it, a jump with a change of surface before a hairpin) and the time to work the notes out.
+// as the hump grows: Rio do Rastro), the roundabouts by their exit (two close by: both; Medvode), a stage's own notes (def.notes: only in
+// the co-driver's words; Harju), the caution (a crest read with the bend behind it, a jump with a change of surface before a hairpin; Pikes
+// Peak) and the time to work the notes out (all on roads that stay: one track a country, docs/proge-po-drzavah.md).
 // The rally stages' words: rally.test.js, katu.test.js; the HUD: browser/sovoznik.test.mjs.
 //   node tests/sovoznik.test.js
 'use strict';
@@ -14,15 +15,18 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 
-// 1. the roads: the 15 of the plan (Pikes Peak twice: tarmac and gravel), a new road on its own; no test track, no road of the USA but Pikes Peak
-const ROADS = ['tianmen', 'iroha', 'sani', 'rastro', 'vrsic', 'mountbuller', 'caracoles', 'medvode', 'chapman', 'hotham', 'greatalpine', 'harju', 'ouninpohja', 'katu', 'pikes', 'pikesg'];
+// 1. the roads: the 15 of the plan (Pikes Peak twice: tarmac and gravel) but those since moved to the test tracks (one track a country,
+// the user's choices of 5 and 6. 11. 2026: Vršič #394, Mount Buller and Sani #379; frozen until deleted), a new road on its own; no test
+// track, no road of the USA but Pikes Peak
+const PLAN = ['tianmen', 'iroha', 'sani', 'rastro', 'vrsic', 'mountbuller', 'caracoles', 'medvode', 'chapman', 'hotham', 'greatalpine', 'harju', 'ouninpohja', 'katu', 'pikes', 'pikesg'];
+const ROADS = PLAN.filter(id => { const d = C.TRACKS.find(x => x.id === id); return d && !d.test; });
 const US = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
 const roads = C.TRACKS.filter(d => C.codrvRoad(d));
 {
   const ids = roads.map(d => d.id);
   check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, no circuit',
-    ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
-    `${ids.length}: ${ids.join(' ')}`);
+    ROADS.length >= 10 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
+    `${ids.length}: ${ids.join(' ')}${ROADS.length < PLAN.length ? ' (of the plan now test tracks: ' + PLAN.filter(id => !ROADS.includes(id)).join(' ') + ')' : ''}`);
 }
 
 // 2. the grades: by the tightest radius, 1 under 16 m ... 6 under 120 m, flat from 120 m
@@ -80,17 +84,19 @@ console.log('     ' + rows.join(' | '));
 console.log(`     captions over ${C.CD_MAX} characters (two lines on a phone upright): ${long.sl} in Slovenian, ${long.en} in English, of ${long.of}`);
 check('time: the notes of a road worked out in under 60 ms (once at the start of a race)', worst < 60, `the slowest ${worst.toFixed(1)} ms`);
 
-// 5. the road's own crests (no def.bumps): none on a flat road; a hump on Vršič's straight 900 m after the start read as a crest (3 m),
-// a jump (8 m), a big jump with a caution (12 m), at its top
+// 5. the road's own crests (no def.bumps): none on a flat road; a hump on a straight of Rio do Rastro (100 m after the first call after
+// 300 m that has 200 m of straight behind it; 160 m long) read as a crest (5 m), a jump (8.5 m), a big jump with a caution (12 m), at its top
 {
-  const def = C.TRACKS.find(d => d.id === 'vrsic'), T0 = new C.Track(def), at = T0.startS + 900, f = at / T0.len, dw = 40 / T0.len;
-  const bumps = (elev) => new C.Track(Object.assign({}, def, { elev })).paceNotes().filter(c => c.toks.some(w => w === 'crest' || w === 'jump' || w === 'bigjump'));
+  const def = C.TRACKS.find(d => d.id === 'rastro'), elev = (P) => new C.Track(Object.assign({}, def, { elev: P }));
+  const T0 = elev([[0, 0], [1, 0]]), N0 = T0.paceNotes(), k = N0.findIndex((c, i) => c.e > T0.startS + 300 && i + 1 < N0.length && N0[i + 1].s - c.e >= 200);
+  const at = N0[k].e + 100, f = at / T0.len, dw = 80 / T0.len;
+  const bumps = (P) => elev(P).paceNotes().filter(c => c.toks.some(w => w === 'crest' || w === 'jump' || w === 'bigjump'));
   const flat = bumps([[0, 0], [1, 0]]), hump = (h) => bumps([[0, 0], [f - dw, 0], [f, h], [f + dw, 0], [1, 0]]);
   const one = (L, w, caution) => L.length === 1 && L[0].toks.includes(w) && Math.abs(L[0].s + 10 - at) < 15 && (!caution || L[0].toks[0] === 'caution');
-  const h3 = hump(3), h8 = hump(8), h12 = hump(12);
-  check('crests from the heights: none on a flat road; a hump 3 m high a crest, 8 m a jump, 12 m a big jump with a caution, at its top',
-    !flat.length && one(h3, 'crest') && one(h8, 'jump') && one(h12, 'bigjump', true),
-    `flat ${flat.length}; 3 m ${h3.map(c => Math.round(c.s - T0.startS) + ' "' + c.text + '"')}; 8 m ${h8.map(c => '"' + c.text + '"')}; 12 m ${h12.map(c => '"' + c.text + '"')}`);
+  const h5 = hump(5), h8 = hump(8.5), h12 = hump(12);
+  check(`crests from the heights (Rio do Rastro, a hump ${Math.round(at - T0.startS)} m after the start): none on a flat road; a hump 160 m long and 5 m high a crest, 8.5 m a jump, 12 m a big jump with a caution, at its top`,
+    !flat.length && one(h5, 'crest') && one(h8, 'jump') && one(h12, 'bigjump', true),
+    `flat ${flat.length}; 5 m ${h5.map(c => Math.round(c.s - T0.startS) + ' "' + c.text + '"')}; 8.5 m ${h8.map(c => '"' + c.text + '"')}; 12 m ${h12.map(c => '"' + c.text + '"')}`);
 }
 
 // 6. the roundabouts (def.rings, Medvode): each one in the run read once, by its exit
@@ -121,16 +127,16 @@ check('time: the notes of a road worked out in under 60 ms (once at the start of
     !!hp && same.length === 3 && read.every(x => x.ok), `the hairpin at ${a} m; the same calls with ${same.map(t => '"' + t + '"').join(' ') || '-'}; read: ${read.map(x => `"${x.t}" ${x.ok ? 'as' : 'NOT as'} "${x.say}"`).join(', ')}`);
 }
 
-// 8. the caution (Vršič, its first hairpin after 150-250 m of straight): a crest 8 m before it, read with it ('hairpin right over crest');
-// a jump 45 m before it with a change of surface between (onto gravel 25 m before it); without the jump, none
+// 8. the caution (Pikes Peak, its first hairpin after 150-250 m of straight): a crest 8 m before it, read with it ('hairpin left over
+// crest'); a jump 45 m before it with a change of surface between (onto gravel 25 m before it); without the jump, none
 {
-  const def = C.TRACKS.find(d => d.id === 'vrsic'), far = { at: 0.9999, h: 0.5 };   // (def.bumps: no crests of the road's own heights)
+  const def = C.TRACKS.find(d => d.id === 'pikes'), far = { at: 0.9999, h: 0.5 };   // (def.bumps: no crests of the road's own heights)
   const T = new C.Track(Object.assign({}, def, { bumps: [far] })), N0 = T.paceNotes(), d0 = T.startS;
   const hp = N0.find((c, k) => k > 0 && c.toks[0] === 'hairpin' && c.s - N0[k - 1].e >= 150 && c.s - N0[k - 1].e < 250);
   const call = (o) => { const N = new C.Track(Object.assign({}, def, o)).paceNotes(); return N.find(c => c.s <= hp.s + 1 && hp.s <= c.e) || { toks: [], text: '-' }; };
   const surf = [[hp.s - d0 - 25, T.finishS - d0, 'makadam']];
   const crest = call({ bumps: [far, { at: (hp.s - 8) / T.len, h: 0.5, w: 8 }] }), jump = call({ bumps: [far, { at: (hp.s - 45) / T.len, h: 1, w: 8 }], surf }), none = call({ bumps: [far], surf });
-  check('Vršič: caution for a hairpin right behind a crest read with it, and behind a jump with a change of surface between; none without the jump',
+  check('Pikes Peak: caution for a hairpin right behind a crest read with it, and behind a jump with a change of surface between; none without the jump',
     !!hp && hp.toks[0] !== 'caution' && crest.toks[0] === 'caution' && crest.toks.includes('crest') && jump.toks[0] === 'caution' && jump.toks.includes('jump') && jump.toks.includes('onto') && none.toks.includes('onto') && none.toks[0] !== 'caution',
     `the hairpin at ${hp ? Math.round(hp.s - d0) : '-'} m "${hp ? hp.text : '-'}"; with the crest "${crest.text}"; with the jump "${jump.text}"; without it "${none.text}"`);
 }
