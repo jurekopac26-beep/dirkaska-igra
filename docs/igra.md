@@ -654,6 +654,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
 | **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
 | **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **TUR 6x6** | 6WD | 870 KM | 3300 kg | 80.000 kovančkov | Terenski poltovornjak na šestih gnanih kolesih: snorkel, svetlobni pas, dolg keson. |
 
 ### Dirkalni
 

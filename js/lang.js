@@ -478,6 +478,7 @@
     'Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča.': 'A front-drive hot hatch made for drifting: a white roof, a tall wing, gold rims.',
     'Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi.': 'A wide 4x4 gymkhana coupe: a big wing, wide arches and a scoop on the roof.',
     'Električni fastback z dvema motorjema za drift: steklena streha, svetlobna pasova.': 'An electric fastback with two motors, made for drifting: a glass roof, two light bars.',
+    'Terenski poltovornjak na šestih gnanih kolesih: snorkel, svetlobni pas, dolg keson.': 'An off-road pickup on six driven wheels: a snorkel, a light bar, a long bed.',
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',

@@ -17,7 +17,7 @@ Izbira uporabnika 6. 11. 2026 (naloga koordinacije VSE SEJE 2, partyslo, session
 
 ## Šest koles (TUR 6x6)
 
-Fizika ima dve osi (enoslednji model: prednja os na `+a`, zadnja na `−b`; kolesa, sledi gum, odpadla kolesa in pesto so štirje). TUR zato v fiziki vozi z dvema osema: `b` je zadnja os, pogon `AWD` (moč na obe osi, srednja os vozi z zadnjo), srednja os je samo videz: nov neobvezni ključ izgleda `look.wheels.mid` (x srednje osi) v `js/render.js` doda lok v karoseriji, dve kolesi, ki se vrtita z zadnjima, in sledi gum. Drugi avti se ne spremenijo. Vseh šest koles je gnanih v smislu igre (4x4 z dodatno osjo zadaj, kot pri pravih 6x6 pickupih z gnanima zadnjima osema).
+Fizika ima dve osi (enoslednji model: prednja os na `+a`, zadnja na `−b`; kolesa, sledi gum, odpadla kolesa in pesto so štirje). TUR zato v fiziki vozi z dvema osema: `b` je zadnja os, pogon `AWD` (moč na obe osi, srednja os vozi z zadnjo), srednja os je samo videz: nov neobvezni ključ izgleda `look.wheels.mid` (x srednje osi) v `js/render.js` doda lok v karoseriji, dve kolesi, ki se vrtita z zadnjima, in sledi gum. Drugi avti se ne spremenijo. Vseh šest koles je gnanih v smislu igre (4x4 z dodatno osjo zadaj, kot pri pravih 6x6 pickupih z gnanima zadnjima osema). Srednji kolesi se ne obračata in ne odpadeta (ob trku se premakneta z zadnjima), karoserija se ob izgubljenem zadnjem kolesu nasloni nanju; preizkus `tests/kit.test.js` (gradnja, slabe vrednosti) in `tests/browser/kit.test.mjs` (srednja os v pravi dirki).
 
 ## Merilo za drift
 
@@ -50,5 +50,5 @@ Obe veji dodajata vozila v iste sezname: `index.html`, `garaza.html`, `js/lang.j
 | VIDRA E | narejen (`js/cars/vidra.js`) | 480 kW / 2050 kg (234 W/kg) | 2,87 s / 245 km/h / 2,35 g / 24,0 m | 2207 / 449 / 839 |
 | KUNA S | narejen (`js/cars/kuna.js`) | 255 kW / 1190 kg (214 W/kg) | 3,28 s / 228 km/h / 2,23 g / 23,9 m | 2251 / 461 / 716 |
 | MERJASEC V8 | narejen (`js/cars/merjasec.js`) | 470 kW / 1680 kg (280 W/kg) | 3,25 s / 243 km/h / 2,20 g / 22,8 m | 2208 / 502 / 858 |
-| TUR 6x6 | prototip | | | |
+| TUR 6x6 | narejen (`js/cars/tur.js`) | 640 kW / 3300 kg (194 W/kg) | 3,47 s / 188 km/h / 2,02 g / 27,1 m | 1985 / 489 / 717 |
 | VRAN 01 | samo slika, čaka potrditev | | | |
