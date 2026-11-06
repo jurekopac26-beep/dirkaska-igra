@@ -24,7 +24,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // there), each head lamp and each pair of tail lamps a part of its own
     parts: { set: 'car', ht: 1.38, y0: 0.2,
       extra: {
-        spoiler: { z: 1, th: 0.6, m: 2, r: 0.45, h: 0.12, lx: -1.0, lz: 0, y: 1.15, on: 'trunk' },
+        spoiler: { z: 1, th: 0.6, m: 2, r: 0.45, h: 0.12, lx: -0.95, lz: 0, y: 1.15, on: 'trunk' },
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.2, h: 0.06, lx: 0.93, lz: -0.6, y: 0.55 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.2, h: 0.06, lx: 0.93, lz: 0.6, y: 0.55 },
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.2, h: 0.06, lx: -1.06, lz: -0.55, y: 0.8 },
@@ -34,7 +34,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // where the garage's parts go (js/deli.js, look units): the wing over the tailgate, in the wing's part (in place of the tall wing);
     // the head lamps where the slim lamps are, in the lamps' parts; the rims on its wheels
     mounts: {
-      krilo: { x: -2.14, w: 0.86, part: 'spoiler' },
+      krilo: { x: -2.04, w: 0.82, part: 'spoiler' },
       zarometi: { x: 2.0, y0: 0.55, lean: 0, zc: 0.56, yc: 0.55, s: 0.32, hosts: ['headL', 'headR'], depth: 0.04 },
       platisca: {},
     },
@@ -89,10 +89,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { hinge: [[1.9, 0.3, -0.7], [1.9, 0.3, 0.7]] });
         // the tall wing on two uprights over the tailgate's foot, its endplates (the garage's wing in its place: K.deli, mounts.krilo)
         K.part('spoiler', () => K.deli('krilo', () => {
-          K.wingPlank(-1.96, 1.18, -2.32, 1.21, 0.03, -0.86, 0.86, B);
+          K.wingPlank(-1.86, 1.18, -2.22, 1.21, 0.03, -0.82, 0.82, B);
           for (const sd of [-1, 1]) {
-            K.endplate([[-1.92, 1.1], [-2.36, 1.1], [-2.36, 1.28], [-1.92, 1.25]], sd * 0.87, 0.012, B);
-            K.endplate([[-2.12, 0.92], [-2.22, 0.92], [-2.26, 1.19], [-2.16, 1.19]], sd * 0.36, 0.016, DK);
+            K.endplate([[-1.82, 1.1], [-2.26, 1.1], [-2.26, 1.28], [-1.82, 1.25]], sd * 0.83, 0.012, B);
+            K.endplate([[-2.02, 0.92], [-2.12, 0.92], [-2.16, 1.19], [-2.06, 1.19]], sd * 0.36, 0.016, DK);
           }
         }));
         // the tail: the black band across it, the twin round lamps each side (each pair a part of its own)
