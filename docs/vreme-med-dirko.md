@@ -101,4 +101,4 @@ Odgovore prebere koordinacija VSE SEJE 2 (`seja_id` vprašanj) in jih zapiše se
 - `vreme-videz` (slike Spa, kamera za avtom): 1 · cesta v lisah in kapljice na zaslonu ob nalivu (priporočeno); 2 · lise brez kapljic; 3 · enakomerno kot zdaj, le počasneje.
 
 ## Stanje
-- 6. 11. 2026: načrt, tri vprašanja s slikami, osnutek pull requesta samo z dokumenti; tema v `docs/vrsta.md` (Načrtovano). Koda po »Dež in sneg« in odgovorih.
+- 6. 11. 2026: načrt, tri vprašanja s slikami (`vreme-pogostost`, `vreme-obseg`, `vreme-videz`), osnutek #397 samo z dokumenti; tema v `docs/vrsta.md` (Načrtovano, dogovor v Usklajevanje med računi, točka 6). Koda po »Dež in sneg« in odgovorih.
