@@ -5,8 +5,8 @@
 # the game puts them together, for the question on the page Odločitve.
 #
 #   pip install onnxruntime numpy           (and ffmpeg with libmp3lame)
-#   python3 tools/sovoznik-glas.py                                        # writes js/data/sovoznik-en.js (voice am_michael)
-#   python3 tools/sovoznik-glas.py --voice bm_george --samples DIR --no-sheet
+#   python3 tools/sovoznik-glas.py                                        # writes js/data/sovoznik-en.js (voice bm_george: the user's choice, 6 Nov 2026)
+#   python3 tools/sovoznik-glas.py --voice am_michael --samples DIR --no-sheet   # sample calls of another voice (the first sheet was am_michael)
 #
 # The model and the voices come from npm (`npm pack`, into --cache; Hugging Face is not reachable from the sessions' environment):
 #   kokoro-js@1.2.1 (the official package, Apache 2.0: its voices/*.bin, 510 x 256 float32 each)
@@ -127,7 +127,7 @@ def call(clips, toks):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--voice', default='am_michael')
+    ap.add_argument('--voice', default='bm_george')   # (the shipped voice: a run without --voice must not swap it)
     ap.add_argument('--lex', choices=['us', 'gb'], help='the phonemes (default: by the voice, b*_ British)')
     ap.add_argument('--speed', type=float, default=1.3)   # (the model's own pace: isolated words ~0.4 s; faster, they slur)
     ap.add_argument('--tempo', type=float, default=1.15)   # (then faster still, the pitch kept: quick; 1.25 and more: the speech recognition misses words)
