@@ -815,7 +815,7 @@
     'NESKONČNA VOŽNJA!': 'ENDLESS TRAFFIC!', 'TOČKE': 'POINTS', 'NIZ ×{0}': 'COMBO ×{0}', 'PROMET ×{0}': 'TRAFFIC ×{0}',
     'TESNO!': 'CLOSE!', 'ZELO TESNO!': 'VERY CLOSE!', 'NIZ PREKINJEN': 'COMBO BROKEN', 'TRK! KONEC VOŽNJE': 'CRASH! THE RUN IS OVER',
     'DOTIK! KONEC VOŽNJE': 'CONTACT! THE RUN IS OVER', 'ČAS JE POTEKEL!': 'OUT OF TIME!', 'ČAS SE IZTEKA!': 'TIME IS RUNNING OUT!',
-    'Čas je potekel.': 'The clock ran out.', 'Dotik vozila.': 'Touched a vehicle.', 'Dodan čas': 'Time added',
+    'Dotik vozila.': 'Touched a vehicle.', 'Dodan čas': 'Time added',
     'Trk z vozilom.': 'Crashed into a vehicle.', 'Trk v ograjo.': 'Crashed into the barrier.', 'Avto se je prevrnil.': 'The car rolled over.',
     'Avto je zgrmel v prepad.': 'The car went over the edge.', 'Avto je izgubil kolesi.': 'The car lost two wheels.',
     'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
