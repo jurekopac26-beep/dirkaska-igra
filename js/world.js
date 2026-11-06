@@ -4671,11 +4671,11 @@ const World = (function () {
     };
     // bones: 0 body, 1 left arm, 2 right arm, 3 legs, 4 flag pole (in the right hand), 5 flag cloth; colour groups: 0 as modelled, 1 shirt,
     // 2 skin, 3 trousers, 4 hair / cap, 5 sleeve (shirt or bare arm), 6 / 7 the flag's two stripes. The proportions of the scenes' people
-    // (docs/ljudje-grafika.md): broad shoulders sloping up to the neck, a rounder head, two legs; 165 index vertices, as many as the boxes had less 3
+    // (docs/ljudje-grafika.md): broad shoulders sloping up to the neck, a rounder head, two legs; 165 index vertices and 115 corners (the boxes: 168, 112)
     { const zf = (y) => 0.098 + 0.03 * (1 - y / 0.86), zb = (y) => -0.094 + 0.024 * (1 - y / 0.86), xo = (y) => 0.125 + 0.042 * y / 0.86;   // (front, back, the outer side at height y)
       const A = [-xo(0), 0, zf(0)], Bq = [-0.03, 0, zf(0)], Cq = [0, 0.4, zf(0.4)], D = [0.03, 0, zf(0)], E = [xo(0), 0, zf(0)], F = [xo(0.86), 0.86, zf(0.86)], G = [-xo(0.86), 0.86, zf(0.86)];
       const A1 = [-xo(0), 0, zb(0)], E1 = [xo(0), 0, zb(0)], F1 = [xo(0.86), 0.86, zb(0.86)], G1 = [-xo(0.86), 0.86, zb(0.86)], ins = [0, 0.43, 0];
-      for (const [p, q] of [[Bq, A], [A, G], [G, F], [F, E], [E, D]]) poly([Cq, p, q], ins, 33, W1);   // legs (bone 3): the front a fan from the crotch (the gap between the legs)
+      poly([Cq, Bq, A, G, F, E, D], ins, 33, W1);   // legs (bone 3): the front one fan from the crotch round the gap between the legs (one plane: shared corners)
       poly([A, G, G1, A1], ins, 33, W1); poly([E, F, F1, E1], ins, 33, W1); poly([A1, G1, F1, E1], ins, 33, W1);   // (the outer sides, the back)
       poly([A, E, E1, A1], [0, 0.3, 0], 30, [0.12, 0.1, 0.09]); }   // (dark soles, seen when sitting)
     { const w0 = [0.176, 0.8, 0.108, -0.104], w1 = [0.272, 1.36, 0.124, -0.114];   // torso (bone 0, shirt): from the hips out to the shoulders, up to the neck (a low pyramid, its top inside the head)
