@@ -178,7 +178,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 | 5 | Brskalniški test, slike, pull request, vpis v vrsto | 2–3 |
 
 - **Skupaj ~9–15 h**: ena seja (Opus, napor max), ena veja `sovoznik/cesta`, en pull request. Odpre ga ob začetku kode kot osnutek in takrat izbriše vrstico v Načrtovano.
-- **6. 11.**: koraki 1 in 3–5 so v PR #359. Korak 2 (posnet glas) naredi nova seja po razdelku »Predaja: glas«. Korak 2 je v PR #PRNUM (veja `sovoznik/glas` iz #359, gre na `main` za #359).
+- **6. 11.**: koraki 1 in 3–5 so v PR #359. Korak 2 (posnet glas) naredi nova seja po razdelku »Predaja: glas«. Korak 2 je v PR #402 (veja `sovoznik/glas` iz #359, gre na `main` za #359).
 
 ## Predaja: glas (korak 2)
 
@@ -203,7 +203,7 @@ Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odl
   - `perf` in `memory` brez rasti na drugih progah.
 - **Dokumenti**: ta datoteka (Glas, Stanje), `docs/igra.md` (Sovoznik, Glas), `README.md` (Zasluge), `docs/kazalo.md`, `tests/README.md`.
 - **Veja**: nova (`sovoznik/glas`) iz `main` po združitvi #359. Če #359 še čaka v vrsti, se seja s koordinacijo dogovori, ali gre glas v #359.
-- **Izvedeno 6. 11. 2026**: PR #PRNUM, veja `sovoznik/glas` iz veje #359 (navodilo koordinacije VSE SEJE 2), gre na `main` za #359.
+- **Izvedeno 6. 11. 2026**: PR #402, veja `sovoznik/glas` iz veje #359 (navodilo koordinacije VSE SEJE 2), gre na `main` za #359.
 
 ## Odločitve
 
@@ -248,4 +248,4 @@ Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odl
 - 5. 11. 2026: koda opomb in napisov končana (PR #359, veja `sovoznik/cesta`): klici vseh 15 cest, napis pokonci in ležeče, številka na znaku, stikalo Izklop · Napis · Glas in napis, testi. Naslednje: glas na cestah po odgovoru `sovoznik-glas` (korak 2), dirkališča po odgovoru `sovoznik-kje`.
 - 5. 11. 2026: popravki po pregledu PR #359 (10 ugotovitev, razdelek Odločitve) v istem PR-ju; povezani testi zeleni.
 - 6. 11. 2026: odgovora zapisana (razdelek Odločitve), testi z Vršiča na Rio do Rastro in Pikes Peak. Naslednje: posnet glas v novi seji (razdelek »Predaja: glas«); PR #359 čaka v vrsti kot osnutek.
-- 6. 11. 2026: posnet glas (korak 2) končan v PR #PRNUM (veja `sovoznik/glas`): zvočni list, orodje, predvajanje, pravila »Kdaj govori«, testi; povezani testi lokalno zeleni, osnutek do vrste, na `main` za #359. Če uporabnik pri `sovoznik-glas-izbor` izbere drug glas: `tools/sovoznik-glas.py --voice <ime>` in povezani testi.
+- 6. 11. 2026: posnet glas (korak 2) končan v PR #402 (veja `sovoznik/glas`): zvočni list, orodje, predvajanje, pravila »Kdaj govori«, testi; povezani testi lokalno zeleni, osnutek do vrste, na `main` za #359. Če uporabnik pri `sovoznik-glas-izbor` izbere drug glas: `tools/sovoznik-glas.py --voice <ime>` in povezani testi.
