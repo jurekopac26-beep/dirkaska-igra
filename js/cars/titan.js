@@ -42,11 +42,19 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     look: {
       body: { len: 5.9, wid: 2.5, roofY: 2.69, wz: 0.2,
         //       x     w     yb    ybelt  wt    yt    cr    kind  tuck
-        secs: [[0.66, 1.2, 1.16, 1.96, 1.12, 2.6, 0.05, 'r', 0.06],     // the cab's rear wall
-          [0.8, 1.23, 1.16, 1.96, 1.15, 2.62, 0.06, 'r', 0.06],
-          [2.6, 1.24, 1.16, 1.97, 1.17, 2.63, 0.06, 'gf', 0.06],       // the roof's front edge: the windscreen, raked
-          [2.72, 1.24, 1.16, 1.96, 1.18, 2.24, 0.04, 'gf', 0.06],
-          [2.8, 1.19, 1.16, 1.95, 1.16, 1.99, 0.02, 'b', 0.06]],       // its base: the front face below it is the grille (the cap)
+        // (soft edges, the user's: the cab's four upright corners round from the roof down (in plan, r 0.18 at the rear, 0.24 at the
+        // front: the windscreen wraps round them), the roof's front edge round into the windscreen (r 0.16), the rear wall's top edge too)
+        secs: [[0.66, 1.06, 1.16, 1.96, 0.99, 2.55, 0.05, 'r', 0.06],    // the cab's rear wall
+          [0.684, 1.15, 1.16, 1.96, 1.08, 2.59, 0.055, 'r', 0.06],
+          [0.75, 1.216, 1.16, 1.96, 1.146, 2.612, 0.06, 'r', 0.06],
+          [0.84, 1.24, 1.16, 1.96, 1.17, 2.62, 0.06, 'r', 0.06],
+          [2.44, 1.24, 1.16, 1.97, 1.17, 2.63, 0.06, 'r', 0.06],        // the roof's front edge, rounding down
+          [2.505, 1.24, 1.16, 1.97, 1.17, 2.616, 0.06, 'r', 0.06],
+          [2.559, 1.24, 1.16, 1.97, 1.17, 2.577, 0.058, 'r', 0.06],
+          [2.591, 1.238, 1.16, 1.97, 1.168, 2.523, 0.055, 'gf', 0.06],   // the windscreen, raked, its sides round the corners
+          [2.68, 1.208, 1.16, 1.96, 1.138, 2.296, 0.045, 'gf', 0.06],
+          [2.768, 1.12, 1.16, 1.955, 1.05, 2.072, 0.03, 'gf', 0.06],
+          [2.8, 1.0, 1.16, 1.95, 0.93, 1.99, 0.02, 'b', 0.06]],          // its base: the front face below it is the grille (the cap)
         eye: { x: 2.12, y: 2.27, near: 0.25, tilt: 0.1, style: 'closed' },   // (high up behind the windscreen)
         decalX: 1.5, decalY: 2.895, decalRz: -0.14, decalS: 1.25, decalPart: 'deflector',   // (the start number on the deflector's flat top)
         engine: [2.05, 1.2], crush: { x0: 0.72, x1: 2.58, z: 1.12 }, cage: true },     // (the engine under the cab; only the cab's roof crushes)
@@ -86,7 +94,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.rect(2.806, 1.98, 0, 1.9, 0.03, CH);                                              // (the chrome line along the windscreen's base)
         }, { hinge: [[2.8, 1.95, -1.1], [2.8, 1.95, 1.1]] });
         // ---- the low front module: the bumper (the module's nose: its sides, top and front face), the arch over the front wheel, the steps ----
-        K.loft(K.secs([[0.7, 1.2, 0.42, 1.12, 1.19, 1.2, 0, 'b', 0.1], [2.72, 1.24, 0.36, 1.12, 1.23, 1.2, 0, 'b', 0.1], [2.95, 1.17, 0.36, 1.06, 1.15, 1.14, 0, 'b', 0.12]]),
+        K.loft(K.secs([[0.7, 1.2, 0.42, 1.12, 1.19, 1.2, 0, 'b', 0.1], [2.72, 1.24, 0.36, 1.12, 1.23, 1.2, 0, 'b', 0.1], [2.81, 1.24, 0.36, 1.11, 1.23, 1.19, 0, 'b', 0.1],   // (its front corners round too, r 0.14)
+          [2.88, 1.221, 0.36, 1.09, 1.207, 1.17, 0, 'b', 0.11], [2.931, 1.17, 0.36, 1.07, 1.155, 1.15, 0, 'b', 0.12], [2.95, 1.1, 0.36, 1.06, 1.085, 1.14, 0, 'b', 0.12]]),
           (k, e, kind, at) => { if (at.end) return S; if (e === 0 || e === 8) return at.arch ? B : D; if (e >= 2 && e <= 6) return D; return at.x > 2.3 ? S : at.x < 1.0 ? D : P; },
           { caps: { front: { col: S, low: 'bumperF', high: 'bumperF' }, rear: { col: D, low: 'body', high: 'body' } }, arches: [{ x: K.fx }], floor: false,
             regions: [{ part: 'bumperF', x: [2.4, 3.2], bands: ['tuck', 'side', 'window', 'edge', 'crown'] }] });

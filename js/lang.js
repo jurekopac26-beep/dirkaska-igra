@@ -499,6 +499,8 @@
     'Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler.': 'A racing kart: the driver in plain view, side pods and a front spoiler.',
     'Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih.': 'An open sports racer from 1970 with a big engine and a high wing on struts.',
     'Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h.': 'A racing truck: the cab over the engine, a roof deflector and a limiter at 160 km/h.',
+    'TITAN s cisterno: prikolica se v ovinku lomi, pri zaviranju potiska in je težka.': 'The TITAN with a tanker: the trailer folds in bends, pushes on the brakes and is heavy.',
+    'Cestni vlak: črna kabina, dve zrcalni cisterni in dolly; dva zgiba, 28 metrov.': 'A road train: a black cab, two mirror tanks and a dolly; two joints, 28 metres long.',
     'Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi.': 'A desert rally truck with the cab behind the engine, big wheels and spare wheels.',
     'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.': 'A racing van from the 80s and 90s with a race engine in the middle.',
     'Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma.': 'A stretched limousine with two flags on the front wings and plenty of chrome.',
