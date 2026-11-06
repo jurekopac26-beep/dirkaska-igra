@@ -1,6 +1,6 @@
-// The slipstream (Race opts.slip) and DRS at Suzuka (Core only, no browser). In the wake of a car ahead (3-40 m behind it along the road,
-// within 2.4 m of its line, both at speed, not in the pit lane) a car has less air drag (c.tow 0..1, up to a quarter less), so it is quicker
-// down a straight than one alone. The AI holds the wake on a straight and pulls out of it in time for the braking: with the slipstream
+// The slipstream (Race opts.slip) and DRS at Suzuka (Core only, no browser). In the wake of a car ahead (3-25 m behind it along the road,
+// within 1.2 m of its line, both at speed, not in the pit lane) a car has less air drag (c.tow 0..1, up to a quarter less, built up and died
+// away over a second), so it is quicker down a straight than one alone. The AI holds the wake on a straight and pulls out of it in time for the braking: with the slipstream
 // the rivals pass each other more often (the Red Bull Ring, its long climbs). Off (the default), in a time trial: no tow on any car, the
 // race as before (the golden references). Suzuka: one DRS zone, down the start / finish straight (its corners by their names).
 //   node tests/slip.test.js
@@ -24,8 +24,9 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
     !off.slip && off.cars.every(c => !('tow' in c)) && !tt.slip && tt.cars.every(c => !('tow' in c)) && !!on.slip && on.cars.length === 4 && on.cars.every(c => c.tow === 0), '');
 }
 
-// 2. the wake: 12 m behind a car on a straight, in its line, both at 150 km/h: a strong tow; 3 m to the side, 60 m behind, slow, in the pit
-// lane: none; the car ahead itself: none
+// 2. the wake: 8 m behind a car on a straight, in its line, both at 150 km/h: a strong tow; 2 m to the side, 30 m behind, slow, in the pit
+// lane: none; the car ahead itself: none (the user, 4. 11. 2026: »avto dobi pospešek, ko je med gužvo avtomobilov«: the wake was 2.4 m wide and
+// 40 m long, at once). It builds up over a second as the car gets into it and dies away the same way out of it
 {
   const T = track('rbring');
   Math.random = seeded(3);
@@ -35,10 +36,19 @@ const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : String(x));
   const P = r.player, A = r.cars.find(c => !c.isPlayer), s0 = T.startS + 400;
   const put = (c, s, d, v) => { const i = T.idx(s); c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i]); c.vx = Math.cos(T.hd[i]) * v; c.vz = Math.sin(T.hd[i]) * v; c.q = T.query(c.x, c.z, i, c.q); };
   const tow = (sP, dP, vP, pit) => { put(A, s0, 0, 42); put(P, sP, dP, vP); P.inPit = !!pit; r._tow(); const t = { me: P.tow, ahead: A.tow }; P.inPit = false; return t; };
-  const near = tow(s0 - 12, 0, 42), side = tow(s0 - 12, 3, 42), far = tow(s0 - 60, 0, 42), slow = tow(s0 - 12, 0, 12), pit = tow(s0 - 12, 0, 42, true);
-  check('the wake: 12 m behind in its line a strong tow, the car ahead none; 3 m aside, 60 m back, slow or in the pit lane: none',
+  const near = tow(s0 - 8, 0, 42), side = tow(s0 - 8, 2, 42), far = tow(s0 - 30, 0, 42), slow = tow(s0 - 8, 0, 12), pit = tow(s0 - 8, 0, 42, true);
+  check('the wake: 8 m behind in its line a strong tow, the car ahead none; 2 m aside, 30 m back, slow or in the pit lane: none',
     near.me > 0.6 && near.ahead === 0 && side.me === 0 && far.me === 0 && slow.me === 0 && pit.me === 0,
-    `12 m behind ${f2(near.me)} (ahead ${f2(near.ahead)}), aside ${f2(side.me)}, 60 m ${f2(far.me)}, slow ${f2(slow.me)}, pit lane ${f2(pit.me)}`);
+    `8 m behind ${f2(near.me)} (ahead ${f2(near.ahead)}), aside ${f2(side.me)}, 30 m ${f2(far.me)}, slow ${f2(slow.me)}, pit lane ${f2(pit.me)}`);
+  // step by step (r._tow(DT)): into the wake from none, then 3 m aside out of it
+  put(A, s0, 0, 42); put(P, s0 - 8, 0, 42); P.tow = 0;
+  const up = [], at = [0.25, 1, 2].map(t => Math.round(t / DT));
+  for (let k = 1; k <= at[2]; k++) { r._tow(DT); if (at.includes(k)) up.push(P.tow / near.me); }
+  put(P, s0 - 8, 3, 42); for (let k = 0; k < Math.round(1 / DT); k++) r._tow(DT);
+  const down = P.tow / near.me;
+  check('the wake builds up over a second (a quarter of it after 0.25 s, most of it after 2 s) and dies away the same way out of it',
+    up[0] > 0.1 && up[0] < 0.4 && up[1] > 0.5 && up[1] < 0.8 && up[2] > 0.8 && up[2] <= 1 + 1e-9 && down > 0 && down < 0.5 * up[2],
+    `of the full wake: ${up.map(f2).join(', ')} after 0.25, 1 and 2 s; a second out of it ${f2(down)}`);
 }
 
 // 3. down a straight (a flat plane, flat out from 150 km/h for 12 s): in a full tow the car is quicker, by the air drag it saves
