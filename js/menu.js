@@ -291,17 +291,30 @@
     return '<div class="dio topmap' + (rally ? ' rally' : '') + (lockd ? ' lock' : '') + '" data-map="' + t.id + '"' + (turn ? ' data-turn="' + turn + '"' : '') + '><div class="mapbg" style="background-image:url(' + L.bg + ')"></div><svg class="mapsvg" viewBox="0 0 ' + T.W + ' ' + T.H + '" preserveAspectRatio="xMidYMid slice" aria-label="Map of ' + esc(t.name) + '"><g class="rot">' +
       L.html + routeLines(t.id, pts, rally) + (t.group !== 'road' ? splitMarks(pts) : '') + marks(R, M, pts, rally) + '</g></svg><div class="mlab" aria-hidden="true"></div></div>';
   }
-  // the cameras' icons: 1 a frame with a road in it, 2 an arrow along a curve, 3 a video camera
+  // the cameras' icons: 1 a frame with a road in it, 2 an arrow along a curve, 3 a video camera, 4 two people (the friends' times)
   const CAM_ICON = [null,
     '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20.5c0-4 8-5 8-9s-3-4-3-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 19C7 19 7.5 7 13 7h4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M15.5 3l5 4-5 4z" fill="currentColor"/></svg>',
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="13.5" height="10.5" rx="2.2" fill="currentColor"/><path d="M17 11.2l4.5-2.7v7.5L17 13.3z" fill="currentColor"/></svg>'];
-  const camButtons = () => '<div class="cams" role="group" aria-label="Camera">' + D.cams.map(x => '<button aria-pressed="' + (cam === x.n) + '" data-act="cam:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + CAM_ICON[x.n] + '</button>').join('') + '</div>';
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="13.5" height="10.5" rx="2.2" fill="currentColor"/><path d="M17 11.2l4.5-2.7v7.5L17 13.3z" fill="currentColor"/></svg>',
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><path d="M2.5 20c.6-4 3.2-6 6.5-6s5.9 2 6.5 6z" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M15.6 13.4c3 .1 5.2 2 5.9 5.6h-4.6" fill="currentColor" opacity=".7"/></svg>'];
+  // (camera 4, Friends: only where the game has the friends' leaderboard, G.friends; vTrack's fr)
+  const camButtons = () => '<div class="cams" role="group" aria-label="Camera">' + D.cams.filter(x => x.n !== 4 || fr).map(x => '<button aria-pressed="' + (cam === x.n) + '" data-act="cam:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + CAM_ICON[x.n] + '</button>').join('') + '</div>';
   // the stage: the sky, the chosen camera's picture (or the model), the cameras
   function stageView(t, lockd) {
     const R = RT[t.id], M = D.routeMaps[t.id] || {};
-    const pic = cam === 1 && R ? topView(t, R, M, lockd) : cam === 2 && R && R.fly ? flyView(t, lockd) : cam === 3 && hasCorner(t) ? cornerView(t, lockd) : dio(t);
+    const pic = cam === 4 && fr ? friendsView(t) : cam === 1 && R ? topView(t, R, M, lockd) : cam === 2 && R && R.fly ? flyView(t, lockd) : cam === 3 && hasCorner(t) ? cornerView(t, lockd) : dio(t);
     return '<div class="sky" aria-hidden="true"><i class="sun"></i><i class="cloud"></i></div>' + pic + camButtons();
+  }
+  // camera 4, Friends (Lestvica prijateljev, docs/lestvica-prijateljev.md): the friends' times on the track in the way it is driven now
+  // (G.friends: the place, the nickname, the car, the time, the gap; the player's row lit), Send my times under them; none yet: a line
+  // that says so. It stays chosen while the tracks are leafed through (cam), track by track
+  let fr = null;   // the friends' times of the track shown (vTrack: G.friends), null where the game has none
+  function friendsView(t) {
+    const F = fr, rows = F.rows || [];
+    const tab = F.n ? '<div class="ftab"><table aria-label="Friends\' times on ' + esc(t.name) + '"><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Time</th><th>Gap</th></tr></thead><tbody>' +
+      rows.map(r => '<tr' + (r.me ? ' class="me"' : '') + '><td>' + r.at + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(r.car || '–') + '</td><td>' + esc(r.time) + '</td><td>' + esc(r.gap) + '</td></tr>').join('') + '</tbody></table></div>'
+      : '<div class="fnone"><b>No friends\' times on ' + esc(t.name) + ' yet</b>' + (F.friends ? '' : '<small>Send your times to friends. When they send theirs back, they show up here.</small>') + '</div>';
+    return '<div class="dio friends" data-friends="' + t.id + '">' + tab + '<button class="fsend" data-act="send-times">Send my times</button></div>';
   }
   // the box (x0, y0, x1, y1) of a route in the map's pixels, with the map turned by a degrees about its middle (0: as drawn)
   function routeBox(T, a) {
@@ -606,6 +619,8 @@
     if (!list.length) return h + '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button></div><div class="stage"><p class="empty">No tracks for this mode.</p></div>' + foot('') + '</section>';
     trackIdx = Math.min(trackIdx, list.length - 1);
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), hi = heightOf(t), fl = flagUrl(ctry);
+    fr = G.friends ? G.friends(t.def, cam === 4) : null;   // (the friends' times: the Friends view builds the track for the check of its times, the place's badge waits for it)
+    if (cam === 4 && !fr) cam = 1;   // (a game without the friends' leaderboard: the map)
     // the head: the house (the main menu), the country and the place and its height on one line, the globe (its country gold: globe.on)
     h += '<div class="thead"><button class="sq home" data-act="home" aria-label="Main menu">' + HOUSE + '</button><h2 class="where"><span class="w1">' + (ctry ? esc(ctry) + ', ' : '') + '<span class="w2">' + esc(t.name) + '</span></span>' +
       (hi != null ? ' <em>' + num(Math.round(hi)) + ' m</em>' : '') + '</h2><div class="globe" aria-hidden="true" data-globe="' + t.id + '">' + I.globe + '</div></div>';
@@ -622,7 +637,9 @@
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
     else if (mode === 'race' && rivOf(d)) { const n = G.rivals(d); first = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + n + '. Choose how many"><small>Opponents</small><b>' + n + '</b></button></div>'; }   // (a tap: the sheet with 0..100, rivSheet)
     else first = cell('Opponents', String(mode === 'duel' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
-    h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
+    // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
+    const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
+    h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
     // the yard: the car before the road sign with the country (a test track: its name and TEST); the car in 3D with the wind round it
@@ -1183,6 +1200,7 @@
       case 'mode': mode = v; enterTrack(); screen = 'track'; cam = CAM_OPEN || G.S.menuCam; render(); break;   // (a tap on a mode goes straight to its tracks)
       case 'home': sheet = null; screen = 'title'; titleSub = null; render(); break;
       case 'cam': cam = +v; G.setOption('menuCam', cam); render(true); break;
+      case 'send-times': if (G.sendTimes) G.sendTimes(); break;   // (the Friends view: the player's times to friends as a link, the game's Lestvica prijateljev)
       case 'track': { const n = TRACKS().length; if (n) { trackIdx = (trackIdx + +v + n) % n; select(); render(); } break; }
       case 'weather': G.setOption('weather', v); render(true); break;
       case 'more-options': sheet = optionsSheet; render(true); break;

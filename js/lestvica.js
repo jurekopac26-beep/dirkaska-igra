@@ -158,10 +158,11 @@ const Lestvica = (function () {
   // opts: me (the player's id, or null), now (ms), mine ({ key: ms }: the player's times, to count the friend's better ones), bound
   // ((key) => s: the fastest the key's run can be, 0 when not known yet), unhide (a hidden sender's own link: the player said yes).
   // -> { from: { id, name, n, news, better, isNew, renamed, hidden }, others: [the same, of the friends with something new], own (the
-  // player's own link), hidden: [names left out], evicted: [names], impossible (times dropped), last (the key of the newest new time) }
+  // player's own link), hidden: [names left out], evicted: [names], impossible (times dropped), last (the key of the newest new time), keys
+  // (every key with a new time: the sender's first, each's newest first) }
   function merge(S, packets, opts) {
     opts = opts || {}; const now = opts.now || Date.now(), mineT = opts.mine || {}, bound = opts.bound || (() => 0);
-    const R = { from: null, others: [], own: false, hidden: [], evicted: [], impossible: 0, last: null }, seen = new Set();
+    const R = { from: null, others: [], own: false, hidden: [], evicted: [], impossible: 0, last: null, keys: [] }, seen = new Set(), nk = [];
     let lastO = null;
     packets.forEach((P, i) => {
       const first = i === 0; if (seen.has(P.id)) return; seen.add(P.id);
@@ -175,7 +176,7 @@ const Lestvica = (function () {
         const e = P.t[k], b = bound(k);
         if (b > 0 && e[0] < b * 1000) { R.impossible++; continue; }
         n++; if (mineT[k] > 0 && e[0] < mineT[k]) better++;
-        const o = F.t[k]; if (!o || e[0] < o[0]) { F.t[k] = e; news++; if (!last || e[1] > last.day) last = { key: k, day: e[1] }; }
+        const o = F.t[k]; if (!o || e[0] < o[0]) { F.t[k] = e; news++; nk.push({ k, day: e[1], first }); if (!last || e[1] > last.day) last = { key: k, day: e[1] }; }
       }
       const renamed = !!old && P.sent > F.sent && P.name !== F.name;
       if (P.sent > F.sent) { F.name = P.name; F.sent = P.sent; F.pk = P.pk; }   // (the newest packet: its nickname, and it is the one sent on)
@@ -184,6 +185,7 @@ const Lestvica = (function () {
       if (first) { R.from = r; if (last) R.last = last.key; } else { if (news || !old || renamed) R.others.push(r); if (last && (!lastO || last.day > lastO.day)) lastO = last; }
     });
     if (!R.last && lastO) R.last = lastO.key;
+    R.keys = nk.sort((a, b) => b.first - a.first || b.day - a.day).map(x => x.k).filter((k, i, a) => a.indexOf(k) === i);
     // the 41st friend: the one heard from longest ago goes (one of this link's only when all the others are of it)
     for (let ids = Object.keys(S.friends); ids.length > MAX_FRIENDS; ids = Object.keys(S.friends)) {
       const pool = ids.filter(id => !seen.has(id)), from = R.from && R.from.id, c = (pool.length ? pool : ids.filter(id => id !== from)).sort((a, b) => S.friends[a].got - S.friends[b].got || S.friends[a].since - S.friends[b].since)[0];
