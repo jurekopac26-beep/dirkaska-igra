@@ -267,14 +267,16 @@ try {
     T.check('the bridges hold the car: HOME\'s rails and the ring road bridge\'s walls solid; driven at a rail at 60 km/h or at a wall at 100 km/h the car stays on the deck (its middle within 2.5 m of HOME\'s line, 6 m of the ring road\'s) and is never thrown up (0.5 m over HOME\'s deck at most, 1 m over the hump)',
       q7.rails >= 20 && q7.walls >= 20 && q7.home.length === 2 && q7.home.every(r => r.across && r.side <= 2.5 && r.up <= 0.5) && q7.ring.length === 2 && q7.ring.every(r => r.across && r.side <= 6 && r.up <= 1), JSON.stringify(q7));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
-    const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
+    // (the waits below for the game's frames are 120 s, the one for the page's reload 180 s, not the 30 s and 60 s they were: in a browser without a GPU
+    // a frame of the new map takes seconds and the reload some 30 s even alone on an idle machine, and more with other tests running beside it)
+    const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 120000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });
     // a tap on a button of the menu, made in the page (the click event itself: the menu's handler is a plain click listener on #nvm, js/nvmenu.js
     // onClick, and the menu has no animation). page.click waits first for the button to hold still over animation frames, then checks what is
     // under the pointer, and a frame of the new map in a browser without a GPU takes seconds: on GitHub it ran out its 30 s (run 1591). The
-    // button is looked for on a timer, up to 30 s, as page.click would wait for it
+    // button is looked for on a timer, up to 120 s (the clock's, not a count of rounds: a round can wait for a frame), as page.click would wait for it
     const tap = (sel) => page.evaluate(async (sel) => {
-      for (let k = 0; k < 600; k++) { const b = document.querySelector(sel); if (b && !b.disabled) { b.click(); return; } await new Promise(r => setTimeout(r, 50)); }
+      for (const t0 = Date.now(); Date.now() - t0 < 120000;) { const b = document.querySelector(sel); if (b && !b.disabled) { b.click(); return; } await new Promise(r => setTimeout(r, 50)); }
       throw new Error('no button to tap: ' + sel); }, sel);
     const fl = await page.evaluate(() => NVMenu.floors().map(f => f.key));
     T.check('the garages with a menu: 12 by the road (the school, the licences, the races, the missions, multiplayer, motocross) and HOME\'s box', fl.length === 13 && ['school', 'car', 'truck', 'rally', 'circuit', 'street', 'cross', 'mx', 'multi', 'police', 'kamikaze', 'president', 'home'].every(k => fl.includes(k)), JSON.stringify(fl));
@@ -311,11 +313,11 @@ try {
     const c0 = await page.evaluate(() => NVMenu.state());
     T.check('a tap anywhere else: the menu closes, and stays closed while the car stays on the floor', !c0.open && c0.at === 'home', JSON.stringify(c0));
     await page.evaluate(() => { const P = __game.race.player, h = window.__H3.home; P.place(h.x, h.z, h.h); P.vx = P.vz = 0; });   // (HOME, on the dirt road: no garage)
-    await page.waitForFunction(() => !NVMenu.state().at, null, { timeout: 30000 });
+    await page.waitForFunction(() => !NVMenu.state().at, null, { timeout: 120000 });
     T.check('off the floor and back: the menu again', await go('home'));
     T.check('no errors on the way', !errors.length, errors.slice(0, 3).join(' | '));
     // back to the title: the page again (the new map changed the track's world)
-    await Promise.all([page.waitForEvent('load', { timeout: 60000 }), page.evaluate(() => __game.onAction('to-title'))]);
+    await Promise.all([page.waitForEvent('load', { timeout: 180000 }), page.evaluate(() => __game.onAction('to-title'))]);
     await ready(page);
     T.check('back to the title: the page loads again, the menu on show', await page.evaluate(() => !!document.getElementById('menu-host').shadowRoot.querySelector('#s-title')));
     await ctx.close();
