@@ -12,9 +12,10 @@
      zmigavci: { front: { x, y, z, w, h, part, parts: [left, right] }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
              indicators on the front bumper, the repeaters on the fenders (z out from the middle), the rear's on the rear bumper, the
              mirrors' housings' front faces
-     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w], pod: [x, y0, y1, w], foot, part }: the bumper's face
-             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge, the pod over the nose; foot:
-             the bumper's top the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
+     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w, y], pod: [x, y0, y1, w], foot, part }: the bumper's face
+             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge (y: the bar's feet on that
+             height instead of the roof's top: an open car's windscreen header, LEV KABRIO's), the pod over the nose; foot: the bumper's top
+             the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
    Every option is a few primitives in the body's material; the details (bulbs, rivets, the weave's finer cells) only on Visoki (K.hi). */
 (function () {
   'use strict';
@@ -265,7 +266,7 @@
   function relijske(K, n, m) {
     const P = K.paint, o = { part: m.part || 'bumperF' }, ob = { part: 'body' }, fw = [1, 0, 0], CH = K.chrome;
     const WARM = [1, 0.96, 0.82], COOL = [0.9, 0.95, 1], YEL = [1, 0.82, 0.2], LED = [0.86, 0.92, 1];
-    const [bx, by, bz] = m.bumper, [nx, ny] = m.nose, [ix, iy, iw, ih] = m.intake, [rx, rw] = m.roof, [px, py0, py1, pw] = m.pod;
+    const [bx, by, bz] = m.bumper, [nx, ny] = m.nose, [ix, iy, iw, ih] = m.intake, [rx, rw, ry] = m.roof, [px, py0, py1, pw] = m.pod;
     // a lamp facing forward on a bracket down to the bumper (or the bar's tube): y0 the bracket's foot
     const front = (x, y, z, r, lens, rim, house, y0, q) => { lamp(K, [x, y, z], fw, r, house || BP, lens, rim, o, q);
       if (y0 != null) K.box(x - 0.03, y0, z, 0.03, y - r * 0.6 - y0, 0.025, 0, DK, null, false, o); };
@@ -273,8 +274,9 @@
     const bar = (x, y, w, h, k, cell, oo) => { K.box(x - 0.035, y, 0, 0.07, h, w * 2, 0, BP, [0.12, 0.12, 0.13], false, oo);
       for (let i = 0; i < k; i++) K.rect(x + 0.0008, y + h / 2, -w + 0.02 + (2 * w - 0.04) * (i + 0.5) / k, (2 * w - 0.04) / k * 0.82, h * 0.6, cell, Object.assign({ dir: 'x' }, oo));
       if (K.hi) K.rect(x + 0.0012, y + h * 0.88, 0, w * 2 - 0.03, 0.006, CH, Object.assign({ dir: 'x' }, oo)); };
-    const roofBar = (w, k, cell) => { const y = K.topY(rx, 0) + 0.035;
-      for (const sd of [-1, 1]) { const z = sd * w * 0.6; K.box(rx - 0.04, K.topY(rx - 0.04, z) - 0.006, z, 0.05, y - K.topY(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
+    const topR = (x, z) => ry != null ? ry : K.topY(x, z);   // (ry: the header the bar's feet stand on, an open car's)
+    const roofBar = (w, k, cell) => { const y = topR(rx, 0) + 0.035;
+      for (const sd of [-1, 1]) { const z = sd * w * 0.6; K.box(rx - 0.04, topR(rx - 0.04, z) - 0.006, z, 0.05, y - topR(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
       bar(rx + 0.03, y, w, 0.065, k, cell, ob); return y; };
     // the pod over the nose: a plate leaning back with the face, k lamps across it (rows: 1 or 2)
     const pod = (col, lamps, r, lens, rim, heat) => { const xa = px + 0.025, xb = px + 0.025 - (py1 - py0) * 0.067;
