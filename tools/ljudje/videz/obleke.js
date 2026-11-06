@@ -318,8 +318,8 @@ window.LJV = {
       const side = (p) => p[1] > 1.6 ? 4 : p[2] > 0 ? 2 : 2.5;   // (the head's sides: hair above, the face's skin below; long hair down the back)
       cub(-0.11, 0.11, 1.44, 1.7, -0.12, 0.12, { px: [side, W1], nx: [side, W1], pz: [2, W1], nz: [(p) => p[1] > 1.6 ? 4 : 4.5, W1], py: [4, W1] });   // head
       quad([-0.09, 1.655, 0.12], [0.09, 1.655, 0.12], [0.085, 1.64, 0.215], [-0.085, 1.64, 0.215], [0, 1.5, 0.15], 8, W1);   // a cap's brim (folded away without a cap)
-      for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22, arm = (p) => p[1] > 1.1 ? b + 5 : b + 5.5;   // arms: the sleeve above, the forearm below
-        const f = { pz: [arm, W1], nz: [arm, W1], ny: [b + 2, W1] }; f[sd < 0 ? 'nx' : 'px'] = [arm, W1];   // (the inner face, against the body, left out)
+      for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22;   // arms (the sleeve's edge drawn by the fragment shader), the hand at the end
+        const f = { pz: [b + 5, W1], nz: [b + 5, W1], ny: [b + 2, W1] }; f[sd < 0 ? 'nx' : 'px'] = [b + 5, W1];   // (the inner face, against the body, left out)
         cub(x0, x0 + 0.1, 0.8, 1.4, -0.06, 0.06, f); }
       quad([0.26, 0.82, 0.09], [0.3, 0.82, 0.09], [0.3, -0.68, 0.09], [0.26, -0.68, 0.09], [0.28, 0, 0], 40, [0.84, 0.84, 0.86]);   // flag pole, as the game's
       for (const [y0, y1, cg] of [[-0.955, -0.68, 56], [-1.23, -0.955, 57]]) quad([0.3, y1, 0.09], [1.2, y1, 0.09], [1.2, y0, 0.09], [0.3, y0, 0.09], [0.75, y0, 0], cg, W1);
@@ -329,7 +329,9 @@ window.LJV = {
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0), 2.4);
       return g;
     }
-    // who wears what (the variant's bits as the game's: skin, trousers, hair or cap, sleeves, flag; and three hashes of the phase and variant)
+    // who wears what (the variant's bits as the game's: skin, trousers, hair or cap, sleeves, flag; and four hashes of the phase and variant). Two
+    // colours a vertex: vColor and vCrB.rgb, the fragment taking the second where vCrB.a > 0.5 (vCrB.a linear in the part's height: a sharp edge
+    // across a face without more vertices): the sleeve's edge, the shoes or bare legs under shorts, the hair line at the head's sides and back
     const COLOR = [
       'float crBone = floor(aPart * 0.1 + 0.01), crCf = aPart - crBone * 10.0, crCg = floor(crCf + 0.01), crSub = crCf - crCg;',
       'float crPose = floor(aCrowd.x), crPh = fract(aCrowd.x) * 6.2832, crV = aCrowd.y;',
@@ -339,25 +341,31 @@ window.LJV = {
       'float crU1 = fract(crPh * 1.917 + crV * 0.01237), crU2 = fract(crPh * 3.141 + crV * 0.00731), crU3 = fract(crPh * 0.731 + crV * 0.02113), crU4 = fract(crPh * 2.371 + crV * 0.02917);',
       'float crHV = ((crShirt.r > 0.75 && crShirt.g > 0.3 * crShirt.r && crShirt.g < 0.75 * crShirt.r && crShirt.b < 0.25 * crShirt.r) || (crShirt.g > 0.66 && crShirt.r > 0.55 && crShirt.b < 0.3 * crShirt.g)) ? 1.0 : 0.0;',   // (hi-vis: the marshals)
       'float crCap = crHa > 3.5 ? 1.0 : 0.0, crCapBk = crCap * step(0.8, crU4);',   // (a cap; a fifth of them turned back)
-      'float crJk = crHV < 0.5 && crU1 < 0.34 ? 1.0 : 0.0, crSt = crHV < 0.5 && crU1 > 0.82 ? 1.0 : 0.0;',   // (an open jacket over a shirt; a band across the chest)
+      'float crJk = crHV < 0.5 && crU1 < 0.34 ? 1.0 : 0.0, crSt = crHV < 0.5 && crU1 > 0.93 ? 1.0 : 0.0;',   // (an open jacket over a shirt; a band across the chest)
       'float crLH = crCap < 0.5 && crU3 < 0.3 ? 1.0 : 0.0, crBald = crHa > 2.5 && crHa < 3.5 && crLH < 0.5 && crU3 > 0.5 ? 1.0 : 0.0;',   // (long hair; grey: a bald top for some)
       'float crSl = crHV > 0.5 || crJk > 0.5 || mod(floor(crV / 128.0), 2.0) > 0.5 ? 2.0 : crU2 < 0.22 ? 0.0 : 1.0;',   // (sleeves: long, short, none)
+      'float crSho = crHV < 0.5 && crJk < 0.5 && fract(crU3 * 7.31 + crU1 * 3.7) < 0.38 ? 1.0 : 0.0;',   // (shorts)
       'float crSitC = abs(crPose - 6.0) < 0.5 ? 1.0 : 0.0;',
       'vec3 crHairC = crP4(crHa < 3.5 ? crHa : mod(floor(crU2 * 7.0), 3.0), vec3(0.1, 0.08, 0.06), vec3(0.3, 0.19, 0.11), vec3(0.68, 0.52, 0.28), vec3(0.56, 0.55, 0.53));',
       'vec3 crCapC = crHa < 4.5 ? vec3(0.05) : crHa < 5.5 ? crShirt : crHa < 6.5 ? vec3(0.94) : vec3(0.08, 0.1, 0.18);',
+      'vec3 crTop = crCap > 0.5 ? crCapC : crHairC;',
       'float crSL = dot(crShirt, vec3(0.299, 0.587, 0.114));',
       'vec3 crIn = crSL > 0.45 ? (crU4 < 0.5 ? vec3(0.1, 0.1, 0.12) : vec3(0.12, 0.15, 0.3)) : crU4 < 0.45 ? vec3(0.93, 0.93, 0.9) : crU4 < 0.75 ? vec3(0.62, 0.72, 0.86) : vec3(0.72, 0.73, 0.76);',
       'vec3 crShoe = crU2 < 0.5 ? vec3(0.93, 0.93, 0.91) : crU2 < 0.75 ? vec3(0.1, 0.1, 0.11) : crU2 < 0.9 ? vec3(0.36, 0.23, 0.14) : vec3(0.55, 0.56, 0.6);',
-      'vec3 crTint = vec3(1.0);',
+      'vec3 crTint = vec3(1.0), crT2 = vec3(1.0); float crA = 0.0;',
       'if (crCg > 0.5 && crCg < 1.5) crTint = crShirt;',
-      'else if (crCg > 1.5 && crCg < 2.5) crTint = crSub > 0.25 && crLH > 0.5 ? crHairC : crSkin;',
-      'else if (crCg > 2.5 && crCg < 3.5) crTint = crP4(mod(floor(crV / 4.0), 4.0), vec3(0.19, 0.27, 0.44), vec3(0.1, 0.1, 0.12), vec3(0.5, 0.44, 0.33), vec3(0.33, 0.34, 0.37));',
-      'else if (crCg > 3.5 && crCg < 4.5) crTint = crSub > 0.25 ? crHairC : crCap > 0.5 ? crCapC : crBald > 0.5 && normal.y > 0.5 ? crSkin * 0.96 : crHairC;',
-      'else if (crCg > 4.5 && crCg < 5.5) crTint = (crSub > 0.25 ? crSl > 1.5 : crSl > 0.5) ? crShirt : crSkin;',
+      'else if (crCg > 1.5 && crCg < 2.5) { crTint = crSkin;',   // the face; the sides: hair (or the cap) on their top 38 %, all hair when long
+      '  if (abs(normal.x) > 0.5) { if (crLH > 0.5) crTint = crHairC; else { crT2 = crTop; crA = (position.y - 1.44) * 3.1; } } }',
+      'else if (crCg > 2.5 && crCg < 3.5) { crTint = crP4(mod(floor(crV / 4.0), 4.0), vec3(0.19, 0.27, 0.44), vec3(0.1, 0.1, 0.12), vec3(0.5, 0.44, 0.33), vec3(0.33, 0.34, 0.37));',
+      '  if (crSho > 0.5) { crT2 = crSkin; crA = (0.84 - position.y) * 1.32; } else { crT2 = crShoe; crA = (0.84 - position.y) * 0.66; } }',   // (bare below the knee; or shoes, the bottom 9 %)
+      'else if (crCg > 3.5 && crCg < 4.5) {',   // the head's top (hair, a cap, a bald crown) and back (hair, the cap's back above it)
+      '  if (normal.y > 0.5) crTint = crCap > 0.5 ? crCapC : crBald > 0.5 ? crSkin * 0.96 : crHairC;',
+      '  else { crTint = crHairC; if (crCap > 0.5) { crT2 = crCapC; crA = (position.y - 1.44) * 3.1; } } }',
+      'else if (crCg > 4.5 && crCg < 5.5) { crTint = crSl > 0.5 ? crShirt : crSkin; crT2 = crSl > 1.5 ? crShirt : crSkin; crA = (1.4 - position.y) * 2.5; }',   // (the sleeve's edge a third down)
       'else if (crCg > 5.5 && crCg < 7.5) crTint = crCg < 6.5 ? crP4(crFl, vec3(0.95), vec3(0.84, 0.1, 0.12), vec3(0.1, 0.33, 0.78), vec3(0.1, 0.5, 0.22)) : crP4(crFl, vec3(0.84, 0.1, 0.12), vec3(0.95), vec3(0.98, 0.8, 0.1), vec3(0.95));',
       'else if (crCg > 7.5 && crCg < 8.5) crTint = crBone > 2.5 ? crShoe * (crSitC > 0.5 ? 0.72 : 1.0) : crCapC * 0.88;',
       'else if (crCg > 8.5) crTint = crHV > 0.5 ? vec3(0.86, 0.87, 0.9) : crSt > 0.5 ? (crSL > 0.45 ? vec3(0.1, 0.1, 0.12) : vec3(0.93, 0.93, 0.9)) : crIn;',
-      'vColor = color * crTint;'].join('\n');
+      'vColor = color * crTint; vCrB = vec4(color * crT2, crA);'].join('\n');
     // where: the brim (none without a cap, at the back for some), the front's second colour (an open jacket's shirt, a band), long hair, the toes
     const POS = [
       'if (crBone < 0.5) {',
@@ -372,7 +380,8 @@ window.LJV = {
     function shader(S) {
       const at = 'if (crBone < 4.5) objectNormal = crM * objectNormal;', b0 = 'vec3 transformed = vec3(position);';
       if (S.CR_VS_NORMAL.indexOf(at) < 0 || S.CR_VS_POS.indexOf(b0) < 0) return S;   // (the game's chunks changed: keep them)
-      return { CR_VS_HEAD: S.CR_VS_HEAD, CR_VS_COLOR: COLOR, CR_VS_NORMAL: S.CR_VS_NORMAL.replace(at, NORM + '\n' + at), CR_VS_POS: S.CR_VS_POS.replace(b0, b0 + '\n' + POS) };
+      return { CR_VS_HEAD: S.CR_VS_HEAD + '\nvarying vec4 vCrB;', CR_VS_COLOR: COLOR, CR_VS_NORMAL: S.CR_VS_NORMAL.replace(at, NORM + '\n' + at), CR_VS_POS: S.CR_VS_POS.replace(b0, b0 + '\n' + POS),
+        frag: (f) => f.indexOf('#include <color_fragment>') < 0 ? f : f.replace('#include <common>', '#include <common>\nvarying vec4 vCrB;').replace('#include <color_fragment>', 'diffuseColor.rgb *= vCrB.a > 0.5 ? vCrB.rgb : vColor;') };
     }
     return { geo, shader };
   },

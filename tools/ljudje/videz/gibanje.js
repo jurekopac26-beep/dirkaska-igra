@@ -86,9 +86,9 @@ window.LJV = {
     function gait(name, t) {
       const s = Math.sin(t), c = Math.cos(t);
       if (name === 'run') {
-        const kL = Math.max(0, -Math.sin(t - 1.25)), kR = Math.max(0, Math.sin(t - 1.25));
-        return { hp: [0.15 + 0.62 * s, 0.15 - 0.62 * s], kn: [0.5 + 1.3 * kL, 0.5 + 1.3 * kR], shx: [0.12 - 0.72 * s, 0.12 + 0.72 * s], shz: [0.14, 0.14], shy: [0, 0],
-          el: [1.25 + 0.35 * Math.max(0, -s), 1.25 + 0.35 * Math.max(0, s)], lean: 0.3, hy: 0.885 - 0.03 * Math.cos(2 * t), hx: -0.012 * c, hry: -0.14 * s, hrz: -0.03 * c, tw: 0.24 * s, tz: 0.03 * c, look: -0.1 * s, nod: -0.12, dy: 0.02 };
+        const kL = Math.max(0, -Math.sin(t - 1.2)), kR = Math.max(0, Math.sin(t - 1.2));
+        return { hp: [0.12 + 0.82 * s, 0.12 - 0.82 * s], kn: [0.32 + 1.5 * kL, 0.32 + 1.5 * kR], shx: [0.12 - 0.8 * s, 0.12 + 0.8 * s], shz: [0.14, 0.14], shy: [0, 0],
+          el: [1.3 + 0.3 * Math.max(0, -s), 1.3 + 0.3 * Math.max(0, s)], lean: 0.32, hy: 0.875 - 0.035 * Math.cos(2 * t), hx: -0.012 * c, hry: -0.15 * s, hrz: -0.03 * c, tw: 0.26 * s, tz: 0.03 * c, look: -0.11 * s, nod: -0.12, dy: 0.025 };
       }
       const kL = Math.max(0, -Math.sin(t - 0.89)), kR = Math.max(0, Math.sin(t - 0.89)), carry = name === 'carryWalk';
       const J = { hp: [0.4 * s, -0.4 * s], kn: [0.08 + 0.85 * kL, 0.08 + 0.85 * kR], lean: carry ? -0.03 : 0.05, hy: 0.89 + 0.026 * Math.cos(2 * t), hx: -0.018 * c, hry: -0.11 * s, hrz: -0.035 * c, tz: 0.03 * c };
@@ -97,6 +97,8 @@ window.LJV = {
       return J;
     }
     function poseJ(name, t, poseJ0) { return name === 'walk' || name === 'run' || name === 'carryWalk' ? gait(name, t || 0) : poseJ0(name, t); }
+    // the head after the car (and the shoulders a little), away from the fence: as much as the car draws its eye
+    function glance(D, fence, gC, dC, lv) { if (!fence && gC > 0) { const g = gC * lv.gl; D.look += (clamp(dC * 0.85, -1.1, 1.1) - D.look) * g; D.tw += clamp(dC * 0.3, -0.35, 0.35) * g; } }
     // the last word on the joints, every posed frame: its own stance, breath, look and gesture
     function alive(J, c) {
       const P = c.P, p = c.p, sg = c.sg, s = sg && sg.s;
@@ -120,16 +122,15 @@ window.LJV = {
       }
       const br = Math.sin(t * TAU / lv.br + lv.bP);   // the breath
       D.lean += 0.014 * br;
-      const glance = () => { if (!c.fence && gC > 0) { const g = gC * lv.gl; D.look += (clamp(dC * 0.85, -1.1, 1.1) - D.look) * g; D.tw += clamp(dC * 0.3, -0.35, 0.35) * g; } };
       if (sitting(pose, J)) {   // sitting: its knees apart or together, a leg out (on the ground: a knee up), leaning, the head its own way
         D.hpz[0] += 0.14 * (lv.cross - 0.35); D.hpz[1] += 0.14 * (lv.cross - 0.35);
         if (lv.fa < 0.35) { const i = lv.fa < 0.17 ? 0 : 1; if (D.hy > 0.3) D.kn[i] = Math.max(0.6, D.kn[i] - 0.5); else { D.kn[i] += 1.0; D.hp[i] += 0.3; } }
         D.lean += lv.ln; D.tz += lv.tilt * 0.4; D.htz += lv.tilt;
         if (pose === 'sit' && !handsOf(s && s.hold) && lv.arms > 0.6) { arm(D, 0, 0.22, 0.55, -0.75, 1.95); arm(D, 1, 0.24, 0.6, -0.75, 1.9); }   // (its arms folded)
-        glance();
+        glance(D, c.fence, gC, dC, lv);
         return D;
       }
-      if (!standing(pose, J)) { D.htz += lv.tilt * 0.5; glance(); return D; }   // (at its work: the head after the car)
+      if (!standing(pose, J)) { D.htz += lv.tilt * 0.5; glance(D, c.fence, gC, dC, lv); return D; }   // (at its work: the head after the car)
       const w = wOf(lv, t), mask = handsOf(s && s.hold) | (s && s.head && s.head.length ? 3 : 0);
       let cross = false, a = lv.cp;
       if (c.fence) {   // at the fence as the car comes and passes
@@ -154,7 +155,7 @@ window.LJV = {
       contra(D, w, a, cross);
       if (c.fence && gC > 0 && pose !== 'fence' && pose !== 'boardOut') { D.lean += 0.12 * gC; D.tz -= (dC > 0 ? 1 : -1) * Math.min(1, Math.abs(dC)) * 0.1 * gC; }   // (leaning out to see it come)
       D.hx += 0.01 * Math.sin(t * 0.83 + lv.bP); D.htz += lv.tilt;
-      glance();
+      glance(D, c.fence, gC, dC, lv);
       return D;
     }
     // the joints on the figure: the game's, then the hips sideways, tipped and turned, the head tilted; the grandstand's people (posed only

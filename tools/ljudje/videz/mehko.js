@@ -2,15 +2,21 @@
    The same shapes as today, shaded soft and lit. Nothing is added: no vertex, no mesh, no material; only the normals and the colours the bake made.
    - Normals: every part's (box, cylinder, half sphere) normals are bent outwards from its own middle, per vertex: the arms, legs and the torso shade
      like rounded limbs (cylinders: their sides one soft round tone instead of three flat ones, their tops a little domed), the head, the hair and
-     the hats like a ball. The people are Lambert (lit per vertex), so a box's face goes smoothly from one corner's light to the next.
+     the hats like a ball. The people are Lambert (lit per vertex), so a box's face goes smoothly from one corner's light to the next. The side
+     faces' normals also lean to the sky the higher they are (the scene's own sky light then brightens the shoulders: it follows the weather and
+     the time of day).
    - Light baked into the vertex colours in the body's frame (the rest pose): the sky's light from above (the feet and shins darker, the shoulders
      and the top of the head brighter: the figures stand out of the grass seen from above), shade where the parts meet (the inner sides of the arms
      and the legs, under the chin, the neck, the hem of the shirt, the top of the legs), warm skin with darker hands, a lighter top of the hair or
      the hat, the soles darker (standing on the ground), and each person a small tone of its own on its clothes (a group is no row of clones; the
      colours the scene asked for, the staff's vests and shirts, stay within a few percent). Held things stay as they are.
    - The instanced spectators: the same 112 vertices and 168 indices (bones, colour groups, the flag as the game's), bent normals and the same
-     light in the vertex colours (the shader multiplies them by the tint, so it works for every shirt, skin and trousers).
-   shade(P) runs once per figure while the world is built; nothing per frame. */
+     light in the vertex colours (the shader multiplies them by the tint, so it works for every shirt, skin and trousers), and in the shader a soft
+     rim (the figure's edges as the camera sees them a little lighter: they stand out of the grass), a few operations per vertex.
+   - No shadow disc under the feet: shade(P) can only recolour the vertices there are, and in the one opaque vertex-coloured mesh a disc has one
+     colour of its own (a grey mat on the grass, a dark patch on the asphalt) that would also rise with a jump; the sun's shadow map already
+     puts their shadows on the ground, the darker soles and shins stand them on it.
+   shade(P) runs once per figure while the world is built (~0.3 ms a figure here); nothing per frame. */
 (function () {
   const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const cl01 = (x) => Math.min(1, Math.max(0, x));
@@ -29,7 +35,7 @@
     for (let t = 0; t < nt; t++) par[t] = t;
     const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
     for (let t = 0; t < nt; t++) for (let c = 0; c < 3; c++) {
-      const i = t * 9 + c * 3, key = Math.round(Pa[i] * 2e4) + ',' + Math.round(Pa[i + 1] * 2e4) + ',' + Math.round(Pa[i + 2] * 2e4), o = map.get(key);
+      const i = t * 9 + c * 3, key = ((Math.round(Pa[i] * 1e4) + 65536) * 131072 + Math.round(Pa[i + 1] * 1e4) + 65536) * 131072 + Math.round(Pa[i + 2] * 1e4) + 65536, o = map.get(key);   // (0.1 mm, ±6.5 m)
       if (o === undefined) map.set(key, t); else { const ra = find(o), rb = find(t); if (ra !== rb) par[rb] = ra; }
     }
     const id = new Int32Array(nt); for (let t = 0; t < nt; t++) id[t] = find(t);
@@ -66,6 +72,9 @@
       // the joints (P.J): 0 root, 1 hips, 2 torso, 3 head, 4/7 shoulder (left, right), 5/8 elbow, 6/9 hand, 10/12 hip joint, 11/13 knee, 14.. more
       const ARM = new Set([4, 5, 7, 8]), LEG = new Set([10, 11, 12, 13]);
       function shade(P) {
+        const t0 = performance.now(); shade0(P); window.LJV.ms = (window.LJV.ms || 0) + performance.now() - t0;   // (the time it takes, for the tools)
+      }
+      function shade0(P) {
         const J = P.J, parts = P.parts; if (!J || !parts || !parts.length) return;
         const me = ++who;
         inv.copy(J[0].matrixWorld).invert();
@@ -106,7 +115,7 @@
               else if (b === 2) f *= (1 - 0.2 * ss(1.08, 0.96, y)) * (1 - 0.12 * Math.abs(n.x) * ss(1.08, 1.36, y));   // (the shirt's hem; the sides under the arms)
               else if (b === 1) f *= 1 - 0.18 * ss(0.95, 0.84, y);   // (the hips under the torso)
               f *= 1 + 0.16 * cl01(n.y) * ss(1.15, 1.5, y);   // (the shoulders and the head's top catch the sky)
-              if (R.r === 'skin' || R.r === 'face' || R.r === 'neck' || R.r === 'hand') { cr = 1.03; cb = 0.95; }   // (warm skin)
+              if (R.r === 'skin' || R.r === 'face' || R.r === 'neck' || R.r === 'hand') { cr = 1.025; cb = 0.96; }   // (warm skin)
               if (R.r === 'hand') f *= 0.88;
               else if (R.r === 'neck') f *= 0.76;
               else if (R.r === 'face') f *= 1 - 0.16 * ss(R.lo + 0.07, R.lo, Pa[i + 1]);   // (under the chin)
