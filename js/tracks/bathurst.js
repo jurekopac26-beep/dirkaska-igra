@@ -23,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Bathurst',
     grassNat: 0.7, lawn: [1.0, 1.0, 0.86],
     zivali: { a: ['kangaroo', 'cockatoo', 'galah', 'wombat'], t: ['waterTank', 'windpump', 'logPile', 'fallenTree'], open: true },
-    id: 'bathurst', name: 'Bathurst, Avstralija', theme: 'bathurst', laps: 2, halfWidth: 5.5,
+    id: 'bathurst', name: 'Bathurst, Avstralija', theme: 'bathurst', laps: 2, halfWidth: 5.5, leftHand: true,   // (leftHand: Australia keeps left, the endless drive's traffic, js/core.js Traffic)
     desc: 'Proga po javnih cestah na hribu nad mestom Bathurst v Avstraliji, v pravem merilu: 6,2 km in 172 m višinske razlike. Ostri levi na koncu ciljne ravnine, strm vzpon (do 16 %) na greben, zavoji med betonskimi zidovi na vrhu hriba, strm spust skozi esse, dolga ravnina navzdol z grbino in šikana pred zadnjim zavojem. Evkaliptusovi gozdovi in navijači s šotori na hribu. Podatki: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.',
     en: { name: 'Bathurst, Australia', desc: 'A circuit on the public roads round the hill above the town of Bathurst in Australia, at full scale: 6.2 km and 172 m of height difference. A tight left at the end of the main straight, a steep climb (up to 16 %) to the ridge, corners between concrete walls along the top of the hill, a steep drop through the esses, a long straight downhill over a hump and a chicane before the last corner. Eucalyptus woods and fans camping on the hill. Data: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.8, inner: 3.5, side: 4, gradeForce: true, elevSmooth: 12, realKm: 6.213, runoffTarmac: true,

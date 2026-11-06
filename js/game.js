@@ -105,7 +105,8 @@
   // more ways to drive it (def.modes: Vršič) keeps the records of each apart from the race's (id-tt, id-tt-wet, id-traffic, id-police); a time
   // trial that can also be raced (def.timeTrial with def.modes: Pikes Peak) keeps the time trial's under its own key, as before, the race's apart (id-race)
   const wetRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!race.rain : S.weather === 'rain' || S.weather === 'storm');
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov)$/.test(modeOf(d))) && modeOf(d) !== (d.timeTrial ? 'tt' : 'race') ? '-' + modeOf(d) : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
+  // (the endless drive, js/neskoncna.js: its records by the level too, id-endless-1: the race's own while it is on, else the setting)
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -156,7 +157,7 @@
   // modesOf: the ways a track is driven (def.modes, else its own: a race or a time trial) and the novelties' own on top (Zabava, js/zabava.js:
   // the elimination race wherever there is a race, the pursuit wherever the duel in the traffic is); modeSet: the one the settings choose
   const modesOf = (d) => { const L = d.modes ? d.modes.slice() : [d.timeTrial ? 'tt' : 'race']; if (typeof Zabava !== 'undefined') for (const m of Zabava.modes(d, L)) if (L.indexOf(m) < 0) L.push(m); return L; };
-  const modeSet = (d) => !d.modes ? ((S.mode === 'elim' || S.mode === 'lov') && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
+  const modeSet = (d) => !d.modes ? (/^(elim|lov|endless)$/.test(S.mode) && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
   const modeOf = (d) => !d ? 'race' : race && race.track.def.id === d.id && race.zbMode ? race.zbMode : !d.modes ? (race && race.track.def.id === d.id ? 'race' : modeSet(d)) : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf ? 'traffic' : 'race') : modeSet(d);   // (a road with no race up it, Sani Pass: its first way)
   const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial));   // (Pikes Peak, a time trial with def.modes: as its way)
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };   // (tr() at use)
@@ -1620,7 +1621,7 @@
     return ghParse(o);
   }
   function ghStart() {   // newRace: record every time trial and every flying lap on a circuit (never online); replay the best one when there is one
-    const on = mp && mp.race, tt = race.timeTrial && !on, circ = !race.timeTrial && !on;
+    const on = mp && mp.race, tt = race.timeTrial && !on, circ = !race.timeTrial && !on && !race.en;   // (the endless drive: no laps to beat, no ghost in the traffic)
     ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), done: false } : null;
     ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), t0: 0, lap: -1, on: false } : null;
     const R0 = tt ? rec(track.def.id) : null;
@@ -1954,7 +1955,7 @@
   // make the grid: the fastest on pole, the rivals in the order of their times (Race opts playerGrid, aiOrder). "Preskoči kvalifikacije"
   // (pause menu) goes straight to the race: the usual grid, the player at the back of it (PLAYER_GRID).
   let qual = null;   // { id, cr (a championship round, or -1), seed, rain, nAI, back, diff, phys, sims: { k, r, t, times }, lap, lapShown, newRec, wait, res: { grid, order, rows } }
-  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race) && !/^(elim|lov)$/.test(modeSet(d));   // (Zabava: no lap to fly before the elimination race either)   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
+  const qualiOn = (d) => !!S.quali && !isTT(d) && !d.open && !(mp && mp.race) && !/^(elim|lov|endless)$/.test(modeSet(d));   // (Zabava: no lap to fly before the elimination race either, nor before the endless drive)   // (a race up an open road, Vršič: no lap to fly, straight to the grid)
   function startRace() { qual = null; pkF.fresh = true; newRace(qualiOn(track.def) && !nv ? 'quali' : undefined); }   // the menus' Start: a new qualifying first, when it is on
   // a very big field (more than Q_BIG rivals, Nürburg's hundred): the rivals' laps worked out at Q_DT (a quarter of the work), in shorter turns
   // between the frames (the time looked at more often: a phone's frame keeps its budget); a lap at 30 Hz is Q_K slower than at the full rate,
@@ -4251,7 +4252,7 @@
     drawMinimap();
     updateNote(P);
     // lap events (a time trial has its own checkpoint / finish popups)
-    if (!race.timeTrial && !race.quali && P.lapTimes.length > lastLapCount) {
+    if (!race.timeTrial && !race.quali && !race.en && P.lapTimes.length > lastLapCount) {   // (the endless drive: its laps its own, js/neskoncna.js)
       lastLapCount = P.lapTimes.length;
       const t = P.lapTimes[lastLapCount - 1];
       const isBest = t <= Math.min(...P.lapTimes) + 1e-6 && lastLapCount > 1;
@@ -4553,7 +4554,7 @@
       }
     } else cs.posHold = 0;
     // laps: final lap, fastest lap / track record, lap count
-    if (!tt && P.lapTimes.length > cs.laps) {
+    if (!tt && !race.en && P.lapTimes.length > cs.laps) {
       cs.laps = P.lapTimes.length;
       const lt = P.lapTimes[cs.laps - 1];
       if (P.lap === n && n > 1 && !cs.finalSaid) { cs.finalSaid = true; Comm.say('final', null, 3); }
