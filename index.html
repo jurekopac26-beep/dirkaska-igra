@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/napake.css">
 <link rel="stylesheet" href="css/missions.css">
+<link rel="stylesheet" href="css/zabava.css">
 <link rel="stylesheet" id="menu-css" href="css/menu.css" media="not all">
 </head>
 <body>
@@ -274,6 +275,9 @@
         <div class="row" title="Zmečkan sprednji vogal vleče avto na svojo stran (le pri vklopljenih poškodbah)"><span class="rlbl">Razbijanje: poškodbe vplivajo na vožnjo</span><div class="seg" data-set="xHandle"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Radar, odsek na čas, drift cona, skok in skriti zlati smerniki ob progi, s tremi zvezdicami in rekordom"><span class="rlbl">Izzivi ob cesti</span><div class="seg" data-set="zbIzz"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor"><span class="rlbl">Živa cesta</span><div class="seg" data-set="zbCesta"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Tekmec, ki ga zadeneš, se ti brani ostreje in te ne čaka; kdor vozi čisto, mu tekmeci puščajo prostor"><span class="rlbl">Tekmeci si zapomnijo</span><div class="seg" data-set="zbSpomin"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row" title="Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone."><span class="rlbl">Podrobnosti</span><div class="seg" data-set="detail"><button data-v="low">Nizka</button><button data-v="med">Srednja</button><button data-v="high">Visoka</button><button data-v="auto">Samodejno</button></div></div>
@@ -722,6 +726,14 @@
 <script src="js/missions/m08.js"></script>
 <script src="js/missions/m17.js"></script>
 <script src="js/missions/m26.js"></script>
+<script src="js/zabava.js"></script>
+<script src="js/zabava/cilji.js"></script>
+<script src="js/zabava/elim.js"></script>
+<script src="js/zabava/spomin.js"></script>
+<script src="js/zabava/trener.js"></script>
+<script src="js/zabava/izzivi.js"></script>
+<script src="js/zabava/lov.js"></script>
+<script src="js/zabava/cesta.js"></script>
 <script src="js/shramba.js"></script>
 <script src="js/game.js"></script>
 </body>
