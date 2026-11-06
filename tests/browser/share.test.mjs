@@ -6,7 +6,7 @@
 // the second phone (asked first): after the game starts again it has the first one's records, stats, career and ghost.
 //   node tests/browser/share.test.mjs
 import fs from 'node:fs';
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('share');
 const srv = await serve();
@@ -18,8 +18,7 @@ try {
 
   // 1. a race to the line: the numbers, the first achievement
   await startTrack(pa, 'jezero');
-  await pa.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
-  await pa.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  await driveToResults(pa);   // (on autopilot; stuck against the barrier, put back on the road: lib.mjs)
   const s1 = await pa.evaluate(() => ({ st: window.__game.stats, sub: document.getElementById('res-sub').textContent }));
   T.check('a race counted: 1 race, the km (a 5.3 km race), the time, the track; "Prvi cilj" unlocked, on the results', s1.st.races === 1 && s1.st.km > 4.5 && s1.st.km < 8 && s1.st.time > 60 && s1.st.tracks.jezero === 1 && s1.st.ach.first > 0 && /Novi dosežki: .*Prvi cilj/.test(s1.sub),
     JSON.stringify({ races: s1.st.races, km: s1.st.km, time: s1.st.time, ach: Object.keys(s1.st.ach), sub: s1.sub }));
