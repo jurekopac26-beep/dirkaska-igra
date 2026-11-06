@@ -4588,8 +4588,11 @@ const World = (function () {
   function crNoise(u) { const i = Math.floor(u), f = u - i, a = crH(i, 0, 99), b = crH(i + 1, 0, 99); return a + (b - a) * f * f * (3 - 2 * f); }   // smooth 1D value noise (clumps along a run)
   const CR_SHIRTS = [[0.88, 0.16, 0.13], [0.95, 0.8, 0.18], [0.16, 0.4, 0.86], [0.94, 0.94, 0.92], [0.18, 0.62, 0.28], [0.98, 0.52, 0.1], [0.12, 0.13, 0.16], [0.6, 0.18, 0.5], [0.14, 0.5, 0.58], [0.82, 0.82, 0.84], [0.5, 0.32, 0.22], [0.2, 0.24, 0.42]];
   let crGeoC = null;
+  // (tools/ljudje/videz: a look of the figures tried out for pictures, injected by the tool as window.LJV; never set in the game)
+  let CR_V; const crV = () => { if (CR_V === undefined) CR_V = typeof window !== 'undefined' && window.LJV && window.LJV.crowd ? window.LJV.crowd({ THREE, CR_SHIRTS }) || null : null; return CR_V; };
   function crowdGeo() {   // the figure (1.72 m, facing local +z), built once and shared by every world
     if (crGeoC) return crGeoC;
+    { const V = crV(); if (V && V.geo) return (crGeoC = V.geo()); }
     const P = [], Nm = [], Cl = [], Pa = [], Ix = [], W1 = [1, 1, 1];
     const quad = (a, b, c, d, ins, part, col) => {   // flat quad facing away from 'ins'
       const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
@@ -4682,12 +4685,14 @@ const World = (function () {
     'else transformed.y += crEx * max(0.0, sin(uTime * 8.0 + crPh)) * 0.16;'].join('\n');
   function crowdMat(U) {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true }), calm = fewFans();   // (calm: the real tracks' people neither jump nor wave, CR_CALM)
+    const V = crV(), SH = V && V.shader ? V.shader({ CR_VS_HEAD, CR_VS_COLOR, CR_VS_NORMAL, CR_VS_POS }) : { CR_VS_HEAD, CR_VS_COLOR, CR_VS_NORMAL, CR_VS_POS };
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uTime = U.uTime; sh.uniforms.uCar = U.uCar; sh.uniforms.uHype = U.uHype;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + (calm ? '#define CR_CALM\n' : '') + CR_VS_HEAD).replace('#include <color_vertex>', CR_VS_COLOR)
-        .replace('#include <beginnormal_vertex>', CR_VS_NORMAL).replace('#include <begin_vertex>', CR_VS_POS);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\n' + (calm ? '#define CR_CALM\n' : '') + SH.CR_VS_HEAD).replace('#include <color_vertex>', SH.CR_VS_COLOR)
+        .replace('#include <beginnormal_vertex>', SH.CR_VS_NORMAL).replace('#include <begin_vertex>', SH.CR_VS_POS);
+      if (SH.frag) sh.fragmentShader = SH.frag(sh.fragmentShader);
     };
-    m.customProgramCacheKey = () => calm ? 'crowd2calm' : 'crowd2';
+    m.customProgramCacheKey = () => (calm ? 'crowd2calm' : 'crowd2') + (V ? 'v' : '');
     return m;
   }
   // who a figure is (fewFans): CRD inside crowdRun / crowdAt (a crowd's rows: spectators); CRP inside crowdPut, CRS its figure staff (a marshal, a

@@ -42,6 +42,8 @@
   const pick = (a) => a[Math.floor(rnd() * a.length)];
   // where smoke rises (a grill, a campfire, a chimney): a marker, its puffs drawn by the scene's smoke (smokeStep)
   function smoke(n, h, col, op, spread) { const o = new THREE.Object3D(); o.userData.smoke = { n: Math.min(6, n), h, col, op, spread: spread || 2.2 }; return o; }
+  // (tools/ljudje/videz: a look of the people tried out for pictures, injected by the tool as window.LJV; never set in the game)
+  let LJ_V; const ljv = () => { if (LJ_V === undefined) LJ_V = typeof window !== 'undefined' && window.LJV && window.LJV.people ? window.LJV.people(ljKit()) || null : null; return LJ_V; };
 
   /* ---------------- baking: a model's triangles into arrays ---------------- */
   // L: the lit triangles (P positions, N normals, C colours), U: the unlit ones (MeshBasic parts: flames, lamps, screens; P, C), each in the frame of
@@ -78,7 +80,8 @@
   const SHIRT = [0xd23a2c, 0x2f63c9, 0xf0c22e, 0xefefea, 0x2f9a48, 0xf07a1c, 0x262a33, 0x8a3b8c, 0x22848f, 0xb8bcc4, 0x7c4a2e, 0x31406e];
   const PANTS = [0x2f3f63, 0x1d1f25, 0x5b5040, 0x47494f, 0x6a6f78, 0x3a4a3a];
   const HATX = {};   // (more hats, World.peopleKit: name -> (its colour, the look) -> a group on the head, its frame the head's: the top at 0.235)
-  function person(o) {
+  function person(o) { const V = ljv(); return V && V.person ? V.person(o || {}) : person0(o); }
+  function person0(o) {
     o = o || {};
     const skin = o.skin != null ? o.skin : pick(SKIN), shirt = o.shirt != null ? o.shirt : pick(SHIRT), pants = o.pants != null ? o.pants : pick(PANTS);
     const hair = o.hairCol != null ? o.hairCol : pick(HAIR), shoes = o.shoes != null ? o.shoes : 0x24262b, long = !!o.long, hands = o.gloves != null ? o.gloves : skin;
@@ -172,7 +175,7 @@
   // the figure baked per joint, at rest (every joint at 0): parts { b: the joint's index in P.J, P, N, C (Float32Array, in the joint's frame), k: a held
   // thing's key ('L:' / 'R:' hand, 'H:' head + its kind and options; shown only while held) or null }
   function rig(P, items) {
-    const J = P.J = [P.root, P.hips, P.torso, P.head, P.sh[0], P.el[0], P.hand[0], P.sh[1], P.el[1], P.hand[1], P.hp[0], P.kn[0], P.hp[1], P.kn[1]];
+    const J = P.J = [P.root, P.hips, P.torso, P.head, P.sh[0], P.el[0], P.hand[0], P.sh[1], P.el[1], P.hand[1], P.hp[0], P.kn[0], P.hp[1], P.kn[1]].concat(P.xJ || []);
     for (const key of items) {   // the things it ever holds: each on its hand (or head)
       const i1 = key.indexOf(':'), i2 = key.indexOf(':', i1 + 1), w = key.slice(0, i1), kind = i2 < 0 ? key.slice(i1 + 1) : key.slice(i1 + 1, i2), oj = i2 < 0 ? null : key.slice(i2 + 1);
       const it = item(kind, oj ? JSON.parse(oj) : null); it.userData.item = key;
@@ -188,6 +191,7 @@
       for (const it of its) { const D = { P: [], N: [], C: [] }; bake(it, j.matrixWorld, D, D); add(D, it.userData.item); }
       for (const ch of j.children.slice()) if (!J.includes(ch)) j.remove(ch);   // (only the joints stay)
     });
+    const V = ljv(); if (V && V.shade) V.shade(P);
     return P;
   }
   const keyOf = (h, w) => (w || (h[1] === 0 ? 'L' : 'R')) + ':' + h[0] + (h[2] ? ':' + JSON.stringify(h[2]) : '');   // [kind, hand (0 left, 1 right), options]
@@ -196,7 +200,8 @@
      shz: shoulder [out to the side], shx: [forwards], shy: twist, el: elbow (+ bent forwards), hp: hip (+ leg forwards), hpz: leg out, kn: knee (+
      bent back), hy: the hips' height, hz: the hips forwards, hrx: the hips tipped, lean: the torso forwards, tw: the torso turned, tz: tilted sideways,
      look / nod: the head, dy: the whole figure up. t: the motion's phase (radians) */
-  function poseJ(name, t) {
+  function poseJ(name, t) { const V = ljv(); return V && V.poseJ ? V.poseJ(name, t, poseJ0) : poseJ0(name, t); }
+  function poseJ0(name, t) {
     const s = Math.sin(t || 0);
     switch (name) {
       case 'stand': return { shz: [0.07, 0.09] };
@@ -274,7 +279,8 @@
     for (const k of ['hy', 'hz', 'hrx', 'lean', 'tw', 'tz', 'look', 'nod', 'dy']) J[k] = jv(A, k) + (jv(B, k) - jv(A, k)) * f;
     return J;
   }
-  function setJ(P, J) {
+  function setJ(P, J) { const V = ljv(); if (V && V.setJ) V.setJ(P, J, setJ0); else setJ0(P, J); }
+  function setJ0(P, J) {
     for (let i = 0; i < 2; i++) {
       const sd = i === 0 ? 1 : -1, sh = P.sh[i];
       sh.rotation.z = sd * jv(J, 'shz', i); sh.rotation.x = -jv(J, 'shx', i); sh.rotation.y = sd * jv(J, 'shy', i);
@@ -1162,6 +1168,7 @@
         const d = wrapA(Math.atan2(car.x - _w.x, car.z - _w.z) - yaw); yaw += clamp(d * 0.3, -0.45, 0.45);
       }
     }
+    { const V = ljv(); if (V && V.alive) J = V.alive(J, { p, P, pose, t, sg, car, moving: !!sg.mv, fence: !!sg.fence, act: !!sg.act, yaw }) || J; }
     J = umbrella(p, J, show, pose);
     P.root.position.set(_w.x, _w.y + (J.dy || 0) * P.sc, _w.z); P.root.rotation.set(rx, yaw, 0, 'YXZ'); P.root.scale.setScalar(P.sc);
     setJ(P, J);
@@ -2370,5 +2377,9 @@
   };
   // the kit for more scene types in files of their own (js/world-ljudje2.js, js/world-ljudje3.js): the scenes, the props, more hand things, hats and poses, the motions, the
   // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
+  function ljKit() {   // (what a tried look gets: tools/ljudje/videz)
+    return { THREE, TAU, mesh, M, lam, bas, gBox, gTBox, gCyl, gSph, box, tbox, cyl, sph, grp, bar, bake, rnd, pick, seed, SKIN, HAIR, SHIRT, PANTS, HATX, ITEMX, POSEX, MOTION, RATE, DEF,
+      item, person0, poseJ0, setJ0, jv, mixJ, kit: World.peopleKit };
+  }
   World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, HATX, SUMMER, BUSY_HANDS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
 })();
