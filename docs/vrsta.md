@@ -34,7 +34,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 6 | #259 | tribune iz OSM | 3 | čaka |
 | 7 | #250 | 7 novosti | 3 | čaka |
 | 8 | #293 | rezultati testiranja: 5 testnih prog, orodje za napake, posnetek dirke, zavetrje, mostova na novi mapi | 1 | pripravljen (seja session_01UuPU9CJbCFThzptDfhjjXN); glava 1f9c97eb spojena z `main` (ab2f4e9), osnutek do vrste; ob vrsti: spoj `main`, spor v `CLAUDE.md` z #285, `--dovoli` za 5 testnih prog, povezani testi, Ready; prednost: prestavitev prog v test (odločitev uporabnika 6. 11.) |
 | 9 | #355 | proge ZDA v test, šest prog: Mount Baldy, Beartooth, Big Sur, Monterey, Palomar Mountain in Uncompahgre dobijo `test: true` (ostalih pet ima #293), po vzoru #293 brez krajev ljudi in kotnega videa v meniju; misije 30, 39, 46, 52 in 55 ostanejo | 2 | pripravljen (seja session_01Ck3D3SXtougo2tChsfbCND); povezani testi lokalno zeleni na 7bdc9b6, osnutek do vrste; ob vrsti: spoj svežega `main` (po #293 pri seznamih obdrži oboje in znova `--dovoli` za proge druge strani), povezani testi, Ready; #284 po njem svoje spremembe Montereyja izpusti ali jih obdrži z `--dovoli monterey` samo po besedi uporabnika (predaja v opisu PR); pred progami (nove proge vedno zadnje); prevzame biketraveler, dokler račun 2 stoji; prednost: prestavitev prog v test (odločitev uporabnika 6. 11.) |
