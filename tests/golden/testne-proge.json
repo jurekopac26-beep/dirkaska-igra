@@ -322,19 +322,19 @@
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/hotham.js": "8d4e4d250070d835",
   "js/tracks/jezero.js": "16733742a2d9e030",
-  "js/tracks/longford.js": "ecb515e7853a7ee1",
+  "js/tracks/longford.js": "1d8b13cec3558571",
   "js/tracks/maunakea.js": "1efc11e1b529b6be",
   "js/tracks/moki.js": "6b10a3b806ac37df",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
   "js/tracks/monterey.js": "51552c2fbf034f2d",
   "js/tracks/mulholland.js": "96340639914040a2",
-  "js/tracks/newcastle.js": "8821cca94a4eb030",
+  "js/tracks/newcastle.js": "b4367fc990837455",
   "js/tracks/palomar.js": "fec43682e3ce89dc",
   "js/tracks/rio.js": "c77e45db790ffa2f",
   "js/tracks/riverside.js": "7b39f1f22035bd1e",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
-  "js/tracks/townsville.js": "d2d4aeb9a60cd552",
+  "js/tracks/townsville.js": "848ac1595c8328e9",
   "js/tracks/uncompahgre.js": "7c420bf7f946b634",
   "js/tracks/vrsic.js": "0f6c56cd951a3c80",
   "js/world-baldy.js": "0faf0d854cb74d0e",
@@ -342,16 +342,16 @@
   "js/world-bigsur.js": "49682e51531c9d25",
   "js/world-detroit.js": "d4a96a4d07a0bc5b",
   "js/world-hotham.js": "c053ec888780a564",
-  "js/world-longford.js": "1ac1e4b9ff1adb61",
+  "js/world-longford.js": "a172c6b86f144a2b",
   "js/world-maunakea.js": "5998d618684893c7",
   "js/world-moki.js": "9d0b27c9a65a8ebf",
   "js/world-monterey.js": "daeac3332ff8a5bd",
   "js/world-mulholland.js": "f7a5900740bccc8b",
-  "js/world-newcastle.js": "1ef0b71eb065ac83",
+  "js/world-newcastle.js": "11ebf321abf1a0ba",
   "js/world-palomar.js": "2765f57b8c68fe5b",
   "js/world-rio.js": "07e265f0f1cb919e",
   "js/world-riverside.js": "247f7779ca7cbc5a",
-  "js/world-townsville.js": "9831dacd6c9d25fd",
+  "js/world-townsville.js": "0d3a368a3a89bed7",
   "js/world-uncompahgre.js": "c1d4a5b575ab145b",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
@@ -594,6 +594,21 @@
    "datum": "2026-11-06",
    "proga": "townsville",
    "razlog": "uporabnik 6. 11. 2026: »Bathurst in great alpine road prestavi v test na izbiro, kjer se se odlocam med eno izmed teh dveh. Vse ostale daj v test« (tabla #382, komentar 6682384470)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "longford",
+   "razlog": "uporabnik 6. 11. 2026: »Bathurst in great alpine road prestavi v test na izbiro, kjer se se odlocam med eno izmed teh dveh. Vse ostale daj v test« (tabla #382, komentar 6682384470); boksne spremembe iz #284 (c3632fd8) so prišle na main pred prestavitvijo, spoj v zbirni veji B"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "newcastle",
+   "razlog": "uporabnik 6. 11. 2026: »Bathurst in great alpine road prestavi v test na izbiro, kjer se se odlocam med eno izmed teh dveh. Vse ostale daj v test« (tabla #382, komentar 6682384470); boksne spremembe iz #284 (c3632fd8) so prišle na main pred prestavitvijo, spoj v zbirni veji B"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "townsville",
+   "razlog": "uporabnik 6. 11. 2026: »Bathurst in great alpine road prestavi v test na izbiro, kjer se se odlocam med eno izmed teh dveh. Vse ostale daj v test« (tabla #382, komentar 6682384470); boksne spremembe iz #284 (c3632fd8) so prišle na main pred prestavitvijo, spoj v zbirni veji B"
   }
  ]
 }
