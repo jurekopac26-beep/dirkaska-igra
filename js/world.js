@@ -61,9 +61,10 @@ const World = (function () {
   const SHLO_GEO = new WeakMap();   // (by the unit shape: a world built again lets the old ones go)
   let SHLO_MAT = null;
   const shloMat = () => SHLO_MAT || (SHLO_MAT = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));   // (a copy's shadow from both its sides: a merged shape may have lost its back)
+  let SHLO_OWN = null;   // (the same for a tree's copies of their own, treeShadow: made under World's own numbers, so the shared one is named where it was)
+  const shloMatOwn = () => SHLO_OWN || (SHLO_OWN = ownRnd(() => new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })));
   function shadowLo(base) {
     if (SHLO_GEO.has(base)) return SHLO_GEO.get(base);
-    if (base.userData.treeH > 0 && (base.index || base.attributes.position).count > 24) { const s = treeShadow(base); SHLO_GEO.set(base, s); return s; }   // (a tree's: a few faces over its crown; a smaller one casts its own)
     const P = base.attributes.position, I = base.index, n = I ? I.count : P.count;
     let out = null;
     if (n >= 120) {
@@ -86,12 +87,14 @@ const World = (function () {
         out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setIndex(idx);
       }
     }
+    if (base.userData.treeH > 0 && n > 24) out = treeShadow(base, out);   // (a tree's: a few faces over its crown, in its coarse copy's place; a smaller one casts its own)
     SHLO_GEO.set(base, out); return out;
   }
   // a tree's shadow (NIZKA; Drevesa A, docs/drevesa-a.md): instead of its coarse copy an octahedron over its green crown, from the crown's
   // foot to its top with its waist where the crown is widest (a spruce's near its foot: almost a cone; a beech's in its middle; a hedge's
-  // long and thin), 8 faces; the trunk's thin shadow is left out. Made under World's own random numbers (for NIZKA alone)
-  function treeShadow(base) {
+  // long and thin), 8 faces; the trunk's thin shadow is left out. In the coarse copy (lo) where there is one, so a seeded race draws the
+  // names it drew; else a copy of its own, its chunks' copies too made under World's own random numbers (userData.own; NIZKA alone)
+  function treeShadow(base, lo) {
     const P = base.attributes.position, C = base.attributes.color, NB = 5, G = [];
     for (let i = 0; i < P.count; i++) if (C.getY(i) > C.getX(i) * 1.08 && C.getY(i) > C.getZ(i) * 1.08) G.push(i);
     if (!G.length) for (let i = 0; i < P.count; i++) G.push(i);
@@ -101,7 +104,7 @@ const World = (function () {
     for (const i of G) { const b = Math.min(NB - 1, Math.floor((P.getY(i) - y0) / h * NB)); ax[b] = Math.max(ax[b], Math.abs(P.getX(i) - cx)); az[b] = Math.max(az[b], Math.abs(P.getZ(i) - cz)); }
     let w = 0; for (let b = 1; b < NB; b++) if (ax[b] + az[b] > ax[w] + az[w]) w = b;
     const rx = ax[w] * 1.2, rz = az[w] * 1.2, yw = y0 + (w + 0.5) / NB * h;   // (1.2: the diamond's waist as wide as the round crown's shadow)
-    const out = ownRnd(() => new THREE.BufferGeometry()), idx = [];
+    const out = lo || ownRnd(() => new THREE.BufferGeometry()), idx = []; if (!lo) out.userData.own = true;
     out.setAttribute('position', new THREE.Float32BufferAttribute([cx, y1, cz, cx, y0, cz, cx + rx, yw, cz, cx, yw, cz + rz, cx - rx, yw, cz, cx, yw, cz - rz], 3));
     for (let k = 0; k < 4; k++) idx.push(2 + k, 2 + (k + 1) % 4, 0, 2 + (k + 1) % 4, 2 + k, 1);
     out.setIndex(idx); return out;
@@ -4638,7 +4641,8 @@ const World = (function () {
       for (let k = 0; k < pa.length; k += 3) { rh = Math.max(rh, Math.hypot(pa[k], pa[k + 2])); by0 = Math.min(by0, pa[k + 1]); by1 = Math.max(by1, pa[k + 1]); }
       const ext = [rh + 0.16 * Math.max(by0 * by0, by1 * by1), by0, by1];
       const lo = cast && LOD.tier === 0 && !this.mat.alphaTest && !this.mat.transparent ? shadowLo(this.base) : null;
-      if (this.gone) for (const k of this.gone) if (!this.map.has(k)) for (let u = 0; u < (lo ? 4 : 2); u++) THREE.MathUtils.generateUUID();   // (a chunk thinned to nothing: its geometry's and mesh's names, NIZKA's shadow copy's)
+      const own = !!(lo && lo.userData.own);   // (a tree's shadow copy of its own: its chunks' copies under World's own numbers, treeShadow)
+      if (this.gone) for (const k of this.gone) if (!this.map.has(k)) for (let u = 0; u < (lo && !own ? 4 : 2); u++) THREE.MathUtils.generateUUID();   // (a chunk thinned to nothing: its geometry's and mesh's names, NIZKA's shadow copy's)
       for (const L of this.map.values()) {
         const cnt = L.length / 9; let cx = 0, cz = 0, y0 = 1e9, y1 = -1e9, smax = 0;
         for (let k = 0; k < L.length; k += 9) { cx += L[k]; cz += L[k + 2]; y0 = Math.min(y0, L[k + 1]); y1 = Math.max(y1, L[k + 1]); smax = Math.max(smax, L[k + 4], L[k + 5]); }
@@ -4654,8 +4658,8 @@ const World = (function () {
         im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.vb = chunkBoxes(L, cx, cz, ext);
         group.add(im); cullAdd(im, cx, cz, g.boundingSphere.radius); n += cnt;   // vegetation/rocks: distance-cullable on the lower tiers
         if (lo) {   // NIZKA: its shadow from the coarser copy (the same instances), in the shadow pass alone
-          const sg = new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
-          const sm = new THREE.InstancedMesh(sg, shloMat(), cnt); sm.instanceMatrix = im.instanceMatrix; sm.position.copy(im.position); sm.updateMatrix(); sm.matrixAutoUpdate = false;
+          const sg = own ? ownRnd(() => new THREE.BufferGeometry()) : new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
+          const sm = own ? ownRnd(() => new THREE.InstancedMesh(sg, shloMatOwn(), cnt)) : new THREE.InstancedMesh(sg, shloMat(), cnt); sm.instanceMatrix = im.instanceMatrix; sm.position.copy(im.position); sm.updateMatrix(); sm.matrixAutoUpdate = false;
           sm.frustumCulled = true; sm.castShadow = true; sm.receiveShadow = false; sm.visible = false; im.castShadow = false; group.add(sm); SHLO.push([sm, im]);
         }
       }

@@ -13,7 +13,7 @@ Načrt, odločitve in stanje teme (pravilo v `CLAUDE.md`, Postopek). Vsaka odlo�
 - Samo kamera za avtom; slike na Spa, telefon pokonci in ležeče.
 
 ## Zasnova
-- **Skupno za vse proge** (`js/world.js`): oblika drevesa v `IChunks` (zelena enotska rastlina, ista kot pri `THIN`) se indeksira (`weldGeo`: enaka oglišča ploskev postanejo eno; slika ostane ista, telefon vsako oglišče preračuna enkrat). Na NIZKI senco drevesa riše osmerec čez krošnjo (`treeShadow`, 8 ploskev) namesto grobe kopije. Novi predmeti nastanejo pod lastnim RNG sveta (`ownRnd`), da dirka s semenom teče enako.
+- **Skupno za vse proge** (`js/world.js`): oblika drevesa v `IChunks` (zelena enotska rastlina, ista kot pri `THIN`) se indeksira (`weldGeo`: enaka oglišča ploskev postanejo eno; slika ostane ista, telefon vsako oglišče preračuna enkrat). Na NIZKI senco drevesa riše osmerec čez krošnjo (`treeShadow`, 8 ploskev) namesto grobe kopije; drevo z do 24 oglišči meče svojo senco. Osmerec zasede mesto grobe kopije, kjer jo je igra že delala; kjer je ni, nastane z lastnim RNG sveta (`ownRnd`, `userData.own`), da dirka s semenom na NIZKI vleče ista naključna števila kot prej (na progah z obliko A je oblika drevesa nova).
 - **Gradniki A** (`AB`, `aPuff` krošnja, `aTier` stopnja iglavca, `aStar` stopnja namesto `starCone`, `aTrunk` deblo): indeksirani; krošnja temna spodaj in topla zgoraj, stopnje iglavcev mehke z `n` ploskvami namesto `2n`.
 - **Proge z obliko A:** Spa (`spaTreeGeo`), Nordschleife in vse proge z `nrTreeGeo` (Red Bull Ring), Ouninpohja (smreke), Katu (macesen), Harju (smreka), Newcastle (norfolška araukarija). Krošnje iz `ico` na drugih progah so že mehke in ostanejo (indeksirane skupno).
 
