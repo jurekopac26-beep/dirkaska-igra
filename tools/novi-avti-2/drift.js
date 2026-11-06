@@ -1,19 +1,18 @@
 // Drift points of a vehicle as the driving school's Drift lesson counts them (js/game.js schoolRef / driftTick): 40 s from the grid on the
 // autopilot, no rivals, dry, stock car, standard set-up, points for the slip angle times the speed, a chain banked when the slide ends,
 // lost at a knock. The lesson itself is at the Jezero Ring; the same run on other tracks compares cars there (docs/novi-avti-2.md).
-//   node tools/novi-avti-2/drift.js [--proge jezero,spa,bathurst] [--t 40] [--proto] sakal skorpijon kaze …
-//   --proto: the prototypes of tools/novi-avti-2/prototipi.js too (their physics are stubs: only to check the tool runs)
+//   node tools/novi-avti-2/drift.js [--proge jezero,spa,bathurst] [--t 40] sakal skorpijon kaze …
 //   --mer: also the fleet test's measurements (tests/fleet.test.js: 0-100, top speed, steady lateral g at 100 km/h, 100-0) against the
 //   category's envelope and the car's own expect
 //   --set 'csp.tv=1.3,phys.kw=480,arc.amax=1.8': try other values on the listed cars without editing their files (tuning)
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { loadCore, coreSource, ROOT } = require('../../tests/lib/core.js');
+const { loadCore, ROOT } = require('../../tests/lib/core.js');
 const { seeded } = require('../../tests/lib/sim.js');
 
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : d; };
-const TRACKS = flag('--proge', 'jezero,spa,bathurst').split(','), T_RUN = +flag('--t', '40'), PROTO = args.includes('--proto');
+const TRACKS = flag('--proge', 'jezero,spa,bathurst').split(','), T_RUN = +flag('--t', '40');
 const SET = flag('--set', ''), MER = args.includes('--mer'), ids = args.filter(a => !a.startsWith('--'));
 // the category envelopes of tests/fleet.test.js (ENVELOPE), read from the test so they stay the same
 const ENV = (() => { const t = fs.readFileSync(path.join(ROOT, 'tests', 'fleet.test.js'), 'utf8'), o = {};
@@ -21,11 +20,7 @@ const ENV = (() => { const t = fs.readFileSync(path.join(ROOT, 'tests', 'fleet.t
     o[m[1]] = { t100: [+m[2], +m[3]], vmax: [+m[4], +m[5]], latG: [+m[6], +m[7]], d100: [+m[8], +m[9]] };
   return o; })();
 
-let C;
-if (PROTO) {   // Core with the prototypes' file after the page's vehicle files (it pushes to VEHICLE_DEFS like them)
-  const code = coreSource().replace(/(\n;\n)(?=[^]*?const Core = \(function)/, '$1' + fs.readFileSync(path.join(__dirname, 'prototipi.js'), 'utf8') + '\n;\n');
-  const m = { exports: {} }; C = new Function('module', 'exports', 'require', code + '\n;return Core;')(m, m.exports, require);
-} else C = loadCore();
+const C = loadCore();
 
 const STEP = 1 / 120;   // (Core's own step: the lesson's reference uses the game's STEP)
 function driftRun(id, tid) {

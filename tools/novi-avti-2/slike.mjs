@@ -1,7 +1,6 @@
-// Slike prototipov novih avtov za drift (tools/novi-avti-2/prototipi.js, docs/novi-avti-2.md): za vsak avto kamera za avtom na pravi
-// progi (hiter vstop, avtopilot, t sekund dirke) in stranski pogled iz salona; na koncu zbirna slika vseh. Prototipe naloži začasna kopija
-// index.html z dodano skripto (izbriše se ob koncu).
-//   node tools/novi-avti-2/slike.mjs [--proga bathurst] [--t 9] [--out <mapa>] [pnris pnvidra …]
+// Slike novih avtov za drift (docs/novi-avti-2.md) za vprašanja na strani Odločitve: za vsak avto kamera za avtom na pravi progi (hiter
+// vstop, avtopilot, t sekund dirke, avto povečan v kotu) in stranski pogled iz salona; na koncu zbirni sliki vseh (vsi.jpg, vsi-zadaj.jpg).
+//   node tools/novi-avti-2/slike.mjs [--proga bathurst] [--t 9] [--out <mapa>] [ris vidra …]
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -12,14 +11,10 @@ const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf(k)
 const TRACK = flag('--proga', 'bathurst'), T = +flag('--t', '9'), OUT = path.resolve(flag('--out', path.join(ROOT, 'test-results', 'novi-avti-2')));
 // id, the paint (PLAYER_COLORS index in the race, the same colour in the showroom), the name on the picture
 const PAL = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
-const ALL = [['pnris', 6], ['pnvidra', 1], ['pnkuna', 3], ['pnmer', 0], ['pntur', 5], ['pnvran', 4]];
+const ALL = [['ris', 6], ['vidra', 1], ['kuna', 3], ['merjasec', 0], ['tur', 5], ['vran', 4]];
 const pick = args.filter(a => !a.startsWith('--')), CARS = pick.length ? ALL.filter(c => pick.includes(c[0])) : ALL;
 fs.mkdirSync(OUT, { recursive: true });
 
-const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), tag = '<script src="js/cars/levk.js"></script>';
-if (!html.includes(tag)) throw new Error('index.html: no ' + tag);
-const TMP = path.join(ROOT, '_proto-novi-avti-2.html');
-fs.writeFileSync(TMP, html.replace(tag, tag + '\n<script src="tools/novi-avti-2/prototipi.js"></script>'));
 const png = (file, dataUrl) => fs.writeFileSync(file, Buffer.from(dataUrl.split(',')[1], 'base64'));
 
 const srv = await serve(ROOT);
@@ -28,7 +23,7 @@ const tiles = [];
 try {
   for (const [id, ci] of CARS) {
     const q = new URLSearchParams({ proga: TRACK, avto: id, tekmeci: '0', t: String(T) });
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/' + path.basename(TMP) + '?' + q, { quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', color: ci, carV: 3, zoom: 1.2 }, { width: 960, height: 540 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?' + q, { quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', color: ci, carV: 3, zoom: 1.2 }, { width: 960, height: 540 });
     const warns = []; page.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });
     await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
     const r = await page.evaluate(async ([id, col]) => {
@@ -36,7 +31,7 @@ try {
       g.pause(); Render.resize(); Render.resetCam();
       for (let k = 0; k < 8; k++) { Render.frame(1 / 60, 1, P, 'chase', {}); await raf(); }
       // the chase camera's whole frame as a phone sees it, the car magnified x2.6 in the top right corner (as tools/carshots.mjs)
-      // (no start number disc and no spare wheel of the race's wheel rule, Render spareRoof, on the prototypes' roofs)
+      // (no start number disc and no spare wheel of the race's wheel rule, Render spareRoof, on the roof: the car as the showroom has it)
       const vw = Render.viewOf(P); if (vw && vw.dec) vw.dec.visible = false; if (vw && vw.spareM && vw.spareM.parent) vw.spareM.parent.remove(vw.spareM);
       const c = Render.snapshot(P, 'chase', 1920), p = new THREE.Vector3(P.x, (P.y || 0) + 0.7, P.z).project(Render.camera), cx = (p.x * 0.5 + 0.5) * c.width, cy = (0.5 - p.y * 0.5) * c.height, w = c.width * 0.13, h = w * 9 / 16;
       const k1 = document.createElement('canvas'); k1.width = 960; k1.height = 540; const x = k1.getContext('2d'); x.drawImage(c, 0, 0, 960, 540);
@@ -82,5 +77,5 @@ try {
   }
   console.log('wrote ' + path.relative(ROOT, OUT));
 } finally {
-  await browser.close(); srv.close(); fs.rmSync(TMP, { force: true });
+  await browser.close(); srv.close();
 }
