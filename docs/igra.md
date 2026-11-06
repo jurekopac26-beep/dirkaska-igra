@@ -604,6 +604,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **KUNA S** | prednji | 347 KM | 1190 kg | 30.000 kovančkov | Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča. |
 
 ### Športni
 
@@ -615,6 +616,8 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
 | **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **RIS G** | 4WD | 544 KM | 1360 kg | 85.000 kovančkov | Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi. |
+| **MERJASEC V8** | zadnji | 639 KM | 1680 kg | 95.000 kovančkov | Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi. |
 
 ### Superšportni
 
@@ -651,6 +654,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
 | **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
 | **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **TUR 6x6** | 6WD | 870 KM | 3300 kg | 80.000 kovančkov | Terenski poltovornjak na šestih gnanih kolesih: snorkel, svetlobni pas, dolg keson. |
 
 ### Dirkalni
 
@@ -678,6 +682,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 |---|---|---|---|---|---|
 | **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
 | **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **VIDRA E** | 4WD | 653 KM | 2050 kg | 90.000 kovančkov | Električni fastback z dvema motorjema za drift: steklena streha, svetlobna pasova. |
 
 ### Posebni
 
