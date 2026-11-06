@@ -90,7 +90,9 @@
 
   // ================================================================ vrata: both doors of option n
   // m: { x: [rear, front] the door's skin (on its shut lines), y: [sill, belt], handle: [x, y, z (out), w, h], win: [[x, t] ...] the door's
-  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise; null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
+  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise from the rear foot: the second point the bottom's front
+  // end (the net's rod to it), the last but one the top's front end (the frame's top to it), more between them where the glass curves, JASTREB's;
+  // null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
   // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
@@ -130,7 +132,7 @@
       if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
       // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
       if (F) { const fc = O.frame || O.skin || P;
-        band([[F[0], 0], [F[1], 0], [F[1], F[3]], [F[0], F[3]]], fc, 0.011); band([[F[0], F[2]], [W[2][0] + 0.01, F[2]], [W[2][0] - 0.02, F[3]], [F[0], F[3]]], fc, 0.011);
+        band([[F[0], 0], [F[1], 0], [F[1], F[3]], [F[0], F[3]]], fc, 0.011); band([[F[0], F[2]], [W[W.length - 2][0] + 0.01, F[2]], [W[W.length - 2][0] - 0.02, F[3]], [F[0], F[3]]], fc, 0.011);
         band([[xa - 0.006, 0], [xa + 0.006, 0], [xa + 0.006, 1], [xa - 0.006, 1]], D, 0.013); }
       if (O.sheen && K.hi) for (let i = 0; i < 3; i++) { const u = xa + 0.16 + i * 0.36;   // (the weave catching the light: three bands across, slanting)
         side([[u, ya], [u + 0.07, ya], [u + 0.21, yb], [u + 0.14, yb]].map(([px, py]) => [Math.max(xa, Math.min(xb, px)), py]), O.sheen, 0.004); }

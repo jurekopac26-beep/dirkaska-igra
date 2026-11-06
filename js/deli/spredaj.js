@@ -4,7 +4,10 @@
              (none: the sills taken, GAD's side pipes: no skirts, options 2 and 3 the tail's corner lips in their place; the flares on ws),
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
              without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips),
-             archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0) }
+             archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0), wsF: the side's half width at the
+             front arch where it is narrower than ws (the front flares on it: JASTREB's long nose narrowing over its wheel), valY: the
+             diffuser's valance one across with its foot on that height over the tips, its fins beside them (JASTREB's twin pipes under
+             the middle; else the valance split round the tips) }
      hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines), bulge: the power bulge's length
        (options 5, 6; 0.7, a short bonnet's less: it stops before the cowl), rel: true (the louvres, bulges and stripe where KOLIBRI's are from
        its front edge, across as wide for its half width), cells: a curved top's (the louvres' panels, their frames and the stripe in that
@@ -16,7 +19,7 @@
      relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w, y], pod: [x, y0, y1, w], foot, part }: the bumper's face
              with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge (y: the bar's feet on that
              height instead of the roof's top: an open car's windscreen header, LEV KABRIO's), the pod over the nose; foot: the bumper's top
-             the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
+             the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle), feet: their feet's |z| (0.5; a narrow nose's: JASTREB's beside its mouth)
    Every option is a few primitives in the body's material; the details (bulbs, rivets, the weave's finer cells) only on Visoki (K.hi). */
 (function () {
   'use strict';
@@ -50,8 +53,9 @@
     const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill ? m.sill[0] : 0, s1 = m.sill ? m.sill[1] : 0, ws = m.ws, ys = m.ys;
     // the exhaust's tips (the fitted one's, else the stock one: exh): a centre exit's cut-out (cx, its half width: the diffuser's gap), the side ones
     const ex = K.fitted && K.fitted.auspuh, ma = M && M.def.mounts && M.def.mounts.auspuh, TP = ex && ma && DELI.tips ? DELI.tips(ex, ma) : m.exh ? [[m.exh[0], m.exh[1]]] : [];
-    const cx = ex && ma && DELI.centreCut ? DELI.centreCut(ex) : 0, sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
-    const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of the exhaust)
+    // (tips near the middle, |z| under 0.15: a centre exit, the diffuser's gap round them; JASTREB's twin pipes under the plate, stock or fitted there)
+    const cx = Math.max(ex && ma && DELI.centreCut ? DELI.centreCut(ex) : 0, ...TP.filter(t => Math.abs(t[0]) < 0.15).map(t => Math.abs(t[0]) + t[1] + 0.01)), sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
+    const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh && Math.abs(m.exh[0]) >= 0.15 ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of a side exhaust)
     const stock = (b, o) => K.box(b[0], b[1], 0, b[2], b[3], b[4], 0, BP, null, false, o);
     // the front lip under the bumper's face: d out in front of it, h under its foot (ends drawn back and thinner)
     const lip = (col, d, h, o2) => { o2 = o2 || {}; const ring = (z, k) => [[xf - 0.12, yf + 0.004], [xf + 0.004, yf + 0.03], [xf + d * k, yf - h * 0.35], [xf + d * k - 0.006, yf - h * k], [xf - 0.12, yf - h * k + 0.008]].map(([x, y]) => [x, y, z]);
@@ -83,14 +87,16 @@
       const fin_ = (z) => K.endplate([[xr + 0.17, y - 0.002], [xr + 0.04, y - 0.03], [xr - 0.026, y - 0.03], [xr - 0.02, y + 0.072]], z, 0.008, fin || col, oR);
       if (!g) { K.box(xr + 0.06, y + 0.035, 0, 0.13, 0.045, 2 * V, 0, BP, null, false, oR);   // (the valance: the diffuser's channel set into it)
         plate(-D, D); for (let i = 0; i < k; i++) fin_(-D * 0.82 + 2 * D * 0.82 * i / (k - 1)); return; }
+      if (m.valY != null) { K.box(xr + 0.06, m.valY, 0, 0.13, 0.045, 2 * V, 0, BP, null, false, oR);   // (valY: the valance's foot over the tips, one across: JASTREB's twin pipes under the middle)
+        plate(-D, -g); plate(g, D); for (let i = 0; i < k; i++) { const z = -D * 0.82 + 2 * D * 0.82 * i / (k - 1); if (Math.abs(z) > g + 0.04) fin_(z); } return; }
       for (const sd of [-1, 1]) K.box(xr + 0.06, y + 0.035, sd * (V + g) / 2, 0.13, 0.045, V - g, 0, BP, null, false, oR);
       plate(-D, -g); plate(g, D);
       for (let i = 0; i < k; i++) { const z = -D * 0.82 + 2 * D * 0.82 * i / (k - 1); if (Math.abs(z) > g + 0.04) fin_(z); }
       fin_(-g - 0.004); fin_(g + 0.004); };
     // the arches' flares (bolt-on, rivets on Visoki)
-    const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) {
-      K.flare(A.x, A.r - (m.archIn != null ? m.archIn : 0.012), A.r + 0.07, sd * (ws - 0.004), sd * (ws + out), col, { n: 5, y: A.y, part: 'body' });   // (archIn: its inner edge into the arch; a small arch round its tyre: less)
-      if (K.hi) for (let i = 0; i < 5; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 4, r = A.r + 0.035; K.rect(A.x + Math.cos(a) * r / K.sx, A.y + Math.sin(a) * r, sd * (ws + out + 0.001), 0.012, 0.012, [0.8, 0.81, 0.84], { dir: sd < 0 ? '-z' : 'z', part: 'body' }); } } };
+    const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) { const wa = A.x > 0 && m.wsF != null ? m.wsF : ws;   // (wsF: the front arch's side)
+      K.flare(A.x, A.r - (m.archIn != null ? m.archIn : 0.012), A.r + 0.07, sd * (wa - 0.004), sd * (wa + out), col, { n: 5, y: A.y, part: 'body' });   // (archIn: its inner edge into the arch; a small arch round its tyre: less)
+      if (K.hi) for (let i = 0; i < 5; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 4, r = A.r + 0.035; K.rect(A.x + Math.cos(a) * r / K.sx, A.y + Math.sin(a) * r, sd * (wa + out + 0.001), 0.012, 0.012, [0.8, 0.81, 0.84], { dir: sd < 0 ? '-z' : 'z', part: 'body' }); } } };
     const keepF = () => m.lipF && stock(m.lipF, oF), keepR = () => m.lipR && stock(m.lipR, oR);   // (a car without a stock lip there: none)
     const D2 = K.shade(P, 0.5);
     switch (n) {
@@ -294,7 +300,7 @@
         const lens = n === 7 ? YEL : n === 6 ? LED : WARM, rim = n === 5 ? CH : BP, y = ny, x = nx + 0.11, r = 0.08;
         K.cyl([x - 0.06, y - r - 0.03, -0.52], [x - 0.06, y - r - 0.03, 0.52], 0.014, CH, Object.assign({ n: 6 }, o));   // (the bar across the nose)
         const fb = m.foot != null ? m.foot - 0.13 : m.bumper[1];   // (foot: the bumper's top they stand on; else 13 cm over the bumper lamps' middle, KOLIBRI's)
-        for (const sd of [-1, 1]) K.box(x - 0.08, fb + 0.13, sd * 0.5, 0.03, y - r - 0.03 - fb - 0.13, 0.03, 0, DK, null, false, o);   // (its feet on the bumper)
+        for (const sd of [-1, 1]) K.box(x - 0.08, fb + 0.13, sd * (m.feet || 0.5), 0.03, y - r - 0.03 - fb - 0.13, 0.03, 0, DK, null, false, o);   // (its feet on the bumper)
         for (const z of [-0.39, -0.13, 0.13, 0.39]) front(x, y, z, r, lens, rim, null, y - r - 0.03, n === 8 ? { cover: BP } : null);
         break; }
       case 9: roofBar(0.42, K.hi ? 10 : 6, LED); break;                                          // letev na strehi
