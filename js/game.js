@@ -1092,7 +1092,7 @@
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
     const H = Object.assign(rpMeta(), { w: REC_W, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {})),
+      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
@@ -1128,6 +1128,7 @@
     span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
     shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max),
     rrp: rrpOf, open: rrpOpen,
+    carName: (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M).name : ''; },   // (the lists of recordings and collections: the player's car; a retired model's heir; a car the game does not have: none)
     view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); },   // (tools/posnetek.mjs: the car followed, the camera)
     // Zadnji posnetki: the race whose recording may be kept (not with a friend, not the new map's free driving, not the driving school's
     // lesson, which has no replay, not a file opened) and whether it is done: its player over the finish (caught by the police: no), or a

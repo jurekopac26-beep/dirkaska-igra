@@ -7,7 +7,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { Chunks, GB, ICO1, IChunks, NRC, NRT, TAU, addShore, box, clamp, cone, crH, cyl, gable, inPoly, lerp, mergeBands, nrDem, nrDist, nrGCol, nrGround, nrLC, nrLCf, nrNear, nrShade, polyDist, puff, rng, rock, shoreBand, sstep, vary, waterMat } = API;
+  const { Chunks, GB, ICO1, IChunks, NRC, NRT, TAU, addShore, box, clamp, cone, crH, cyl, gable, inPoly, lerp, mergeBands, nrDem, nrDist, nrGCol, nrGH, nrGround, nrLC, nrLCf, nrNear, nrShade, polyDist, puff, rng, rock, shoreBand, sstep, vary, waterMat, waterline } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
   // Crystal Palace (theme 'cpalace', below): the banners (places only), the cells after them, the crowd of the 1930s
@@ -23,9 +23,11 @@
      concrete or tyres), period hoardings, a row of timber pits on the Stadium Straight instead of the pit building and the paddock, a flag
      start (no gantry, no lights), the park's own trees; no TV towers, video walls, number or braking boards, jets, farms, camps or car parks.
      cpPrep reads def.cp before the terrain is built: the lakes are dug into the ground and the two terrace walls of the old palace cut into it
-     (NR.pad: the lawn below a wall at its foot, above it level with its top). cpPark builds the park: the lakes' water, the sculptures of 1854
-     on the islands and the shore of the lake (simplified figures), the terrace walls with their balustrades, the central steps, the sphinxes,
-     a lattice mast on the hill (generic), the houses round the park; cpTrees the old trees (planes, oaks, horse chestnuts). */
+     (NR.pad: the lawn below a wall at its foot, above it level with its top); a lake by the road is lowered under the road and the ground
+     the road pulls down beside it, and its bed is not dug under the verge (the water never over the road or the grass by it). cpPark builds
+     the park: the lakes' water, the sculptures of 1854 on the islands and the shore of the lake (simplified figures), the terrace walls with
+     their balustrades, the central steps, the sphinxes, a lattice mast on the hill (generic), the houses round the park; cpTrees the old
+     trees (planes, oaks, horse chestnuts). */
   let CPK = null;   // per build: the lakes and the terrace walls (cpPrep)
   function cpPrep(P) {
     const C = T.def.cp, pr = (a) => { const o = []; for (let k = 0; k < a.length; k += 2) o.push([a[k], a[k + 1]]); return o; };
@@ -51,13 +53,35 @@
         for (let k = 0; k < L.W.length; k++) { const p = L.W[k], dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); if (d < bd) { bd = d; best = [p, dx * p.nx + dz * p.nz, k === 0 || k === L.W.length - 1 ? Math.abs(dx * p.tx + dz * p.tz) : 0]; } } }
       return best;
     };
+    // the road beside each lake (L.rd: its samples) and how far past the road's barrier a point is (bey: 1e9 with none)
+    for (const L of lakes) { const b = L.b; L.rd = []; for (let i = 0; i < T.N; i++) if (T.px[i] > b[0] - 70 && T.px[i] < b[1] + 70 && T.pz[i] > b[2] - 70 && T.pz[i] < b[3] + 70) L.rd.push(i); }
+    const bey = (L, x, z) => { let e = 1e9; for (const i of L.rd) { const dx = x - T.px[i], dz = z - T.pz[i]; e = Math.min(e, Math.hypot(dx, dz) - (dx * T.nx[i] + dz * T.nz[i] > 0 ? T.br[i] : T.bl[i])); } return Math.max(0, e); };
     const p0 = P.pad;
     P.pad = (x, z, h) => {
       h = p0(x, z, h);
-      const L = lakeAt(x, z); if (L) return Math.min(h, L.lvl - 0.25 - Math.min(1.8, shore(L, x, z) * 0.3));   // the lake's bed: shallow at the shore
+      const L = lakeAt(x, z); if (L) { const e = bey(L, x, z);   // the lake's bed: shallow at the shore; by the road the land kept under the verge (rbVerge: to 3.2 m past the barrier), all of the bed from 6.5 m
+        return Math.min(h, lerp(h, L.lvl - 0.25 - Math.min(1.8, Math.min(shore(L, x, z), Math.max(0, e - 3.2)) * 0.3), sstep(3.2, 6.5, e))); }
       const w = wallAt(x, z); if (w) { const [p, d, past] = w, lo = d < 9, f = (lo ? sstep(-20, -10, d) : sstep(26, 18, d)) * sstep(8, 0, past); if (f > 0) h = lerp(h, lo ? p.lo : p.hi, f); }   // the lower lawn up to the wall, the upper one from 9 m behind it (the terrain's 8 m cells slope across there, under the upper lawn's edge cpPark lays)
       return h;
     };
+    // the water never above the road or the ground the road pulls down beside it (nrH: the terrain follows the road out to ~40 m): a lake by the
+    // road lowered 0.55 m under the edges of the road near it (the verge's outer end is 0.4 m under them: rbVerge) and 0.15 m under that ground
+    // within reach of its shore band (~9 m onto the land: shoreBand; cpPark's band follows the true waterline) or left undug in it
+    const G = P.G, NB = 14;
+    for (const L of lakes) {
+      let lv = L.lvl;
+      for (const i of L.rd) { const x = T.px[i], z = T.pz[i];
+        if (lakeAt(x, z) !== L && shore(L, x, z) > Math.max(T.br[i], T.bl[i]) + 3.2 + NB) continue;
+        for (const o of [T.br[i], -T.bl[i]]) lv = Math.min(lv, nrNear(x + T.nx[i] * o, z + T.nz[i] * o).hn - 0.55); }
+      const [x0, x1, z0, z1] = L.b;
+      for (let j = Math.max(0, Math.floor((z0 - NB - G.z0) / NRC)); j <= Math.min(G.nz - 1, Math.ceil((z1 + NB - G.z0) / NRC)); j++)
+        for (let i = Math.max(0, Math.floor((x0 - NB - G.x0) / NRC)); i <= Math.min(G.nx - 1, Math.ceil((x1 + NB - G.x0) / NRC)); i++) {
+          const x = G.x0 + i * NRC, z = G.z0 + j * NRC, M = lakeAt(x, z);
+          if ((M && bey(M, x, z) > 3.2) || (M !== L && shore(L, x, z) > NB)) continue;   // (a dug bed: its height follows the level; the land out of reach)
+          const h = nrGH(i, j); if (G.dd[j * G.nx + i] < 40) lv = Math.min(lv, h - 0.15);
+        }
+      L.lvl = lv;
+    }
     return (CPK = { lakes, lakeAt, walls });
   }
   // a soft blob (an icosahedron with radii rx along its yaw, ry up, rz across; smooth normals), the sculptures' and the sphinxes' bodies
@@ -117,7 +141,9 @@
       }
       const WO = { len: 0.9, amp: 0.6, refl: 0.5, land: 0.75, shal: 0.5, lap: 0.5, surf: 0 }, wm = new THREE.Mesh(gw.geometry(), waterMat(tex, Object.assign({ color: 0x4f6b58 }, WO)));
       wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); root.add(wm); out.dyn.water = tex.water;
-      const bands = P.lakes.map(L => { const b = L.b, sd = (x, z) => { let d = polyDist(L.poly, x, z); for (const h of L.holes) d = Math.min(d, polyDist(h, x, z)); return inPoly(L.poly, x, z) && !L.holes.some(h => inPoly(h, x, z)) ? d : -d; };
+      const G = API.NR.G, bands = P.lakes.map(L => { const b = L.b, gi = (v, o, n) => clamp(Math.floor((v - o) / NRC), 0, n - 1);
+        const wl = waterline(nrGH, G.x0, G.z0, NRC, gi(b[0] - 14, G.x0, G.nx), gi(b[1] + 22, G.x0, G.nx), gi(b[2] - 14, G.z0, G.nz), gi(b[3] + 22, G.z0, G.nz), L.lvl);   // (where the terrain meets the water)
+        const sd = (x, z) => { let d = polyDist(L.poly, x, z); for (const h of L.holes) d = Math.min(d, polyDist(h, x, z)); return Math.min(inPoly(L.poly, x, z) && !L.holes.some(h => inPoly(h, x, z)) ? d : -d, wl(x, z)); };
         return shoreBand(b[0] - 6, b[2] - 6, b[1] + 6, b[3] + 6, L.lvl + 0.015, sd, 16); });
       addShore(root, mergeBands(bands), wm.material, WO); }   // (the shore band round every lake and the islands: the shallows, the foam at the waterline)
     // the sculptures (1854): painted stone, each facing the open water (the lake's middle)
@@ -217,7 +243,7 @@
     const put = (x, z, sp, hgt, wid) => {
       const rd = nrDist(x, z); if (rd > 300) return;
       if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.0) return; if (nn.i >= 0 && nn.dd < 7 && crH(x, z, 9) < 0.35) return; }
-      if (excluded(x, z) || P.pad(x, z, 0) !== 0 || terr(x, z)) return;
+      if (excluded(x, z) || CPK.lakeAt(x, z) || P.pad(x, z, 0) !== 0 || terr(x, z)) return;
       const far = rd > 80, cv = 0.86 + crH(x, z, 2) * 0.28; (far ? tf : tk)[sp].add(x, nrGround(x, z) - 0.1, z, crH(x, z, 3) * TAU, wid, hgt, [cv * (0.95 + crH(x, z, 4) * 0.1), cv, cv * (0.94 + crH(x, z, 5) * 0.1)]);
       nrShade(x, z, wid * 0.33, 1); n++;
     };

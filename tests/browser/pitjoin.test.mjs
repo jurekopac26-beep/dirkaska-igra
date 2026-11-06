@@ -10,7 +10,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('Pit road junctions: nothing standing on their asphalt');
 const srv = await serve();
 const browser = await launch();
-const ALL = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'bangsaen', 'townsville', 'troisrivieres'];
+const ALL = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal', 'toronto', 'bangsaen', 'troisrivieres'];   // (8: Longford, Newcastle and Townsville are test tracks since 6. 11. 2026)
 const IDS = process.env.PITJOIN_ONLY ? process.env.PITJOIN_ONLY.split(',') : ALL;
 
 // measured in the page: every world vertex (and prop) on the junctions' asphalt, grouped by mesh
