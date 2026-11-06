@@ -1,12 +1,10 @@
 // Meritev ljudi na progi: prizori (oglišča na osebo), instancirani gledalci in osebje (crowd: oglišča figure, število, kje stojijo).
-//   node tools/ljudje/videz/meri.mjs <proga> [--videz X]
-import path from 'node:path';
+//   node tools/ljudje/videz/meri.mjs <proga>
 import { serve, launch, openGame, REPO } from '../../../tests/browser/lib.mjs';
-const args = process.argv.slice(2), id = args[0], vi = args.indexOf('--videz'), videz = vi >= 0 ? args[vi + 1] : '';
+const id = process.argv[2];
 const srv = await serve(REPO), browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', detail: 'high' }, { width: 844, height: 390 }, { seed: 11 });
-  if (videz) await page.addInitScript({ path: path.join(REPO, 'tools', 'ljudje', 'videz', videz + '.js') });   // a tried look (window.LJV), as slike.mjs
   await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
   await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
   const r = await page.evaluate(() => {

@@ -1,28 +1,25 @@
-// Videz ljudi (poskus, docs/ljudje-predlogi.md): ista mesta na progi s kamero za avtom za sedanje ljudi (prej) in za različico videza (potem).
-// Različica je datoteka tools/ljudje/videz/<ime>.js (window.LJV = { people(K), crowd(K) }, kljuke v js/world-ljudje.js in js/world.js), ki jo
-// orodje vstavi v stran, preden se svet zgradi; v igri je ni. Za vsak posnetek: sličica s kamere za avtom (1280 px), lupa (povečava iz iste
-// kamere), klici risanja in oglišča v tej sličici (vse podaje, kot perf.test.mjs), oglišča ljudi. Izid: test-results/ljudje/videz/<ime>/.
-//   node tools/ljudje/videz/slike.mjs <proga> <prej|ime> [--prizori zar,boksi@70] [--pri 45,15] [--gneca 950:1,6450:-1] [--film 0.25]
+// Videz ljudi (docs/ljudje-grafika.md): ista mesta na progi s kamero za avtom, za slike prej/potem. Orodje riše kodo iz delovne mape: za »prej«
+// ga poženi na main (npr. v git worktree), za »potem« na veji, obakrat z istimi možnostmi (isti vrstni red posnetkov: pot avta spremeni klice
+// risanja gneče za 1-3). Za vsak posnetek: sličica s kamere za avtom (1280 px), lupa (povečava iz iste kamere), klici risanja in oglišča v tej
+// sličici (vse podaje, kot perf.test.mjs), oglišča ljudi. Izid: test-results/ljudje/videz/<oznaka>/ (sestavi.py iz dveh oznak naredi sliko).
+//   node tools/ljudje/videz/slike.mjs <proga> <oznaka> [--prizori zar,boksi@70] [--pri 45,15] [--gneca 950:1,6450:-1] [--film 0.25]
 //   --film k: pri vsaki razdalji še dve lupi k in 2k sekund pozneje (gibanje v treh sličicah)
 import fs from 'node:fs';
 import path from 'node:path';
 import { serve, launch, openGame, REPO } from '../../../tests/browser/lib.mjs';
 
 const args = process.argv.slice(2), id = args[0], videz = args[1];
-if (!id || !videz) { console.log('node tools/ljudje/videz/slike.mjs <proga> <prej|ime> [--prizori a,b@m] [--pri 45,15] [--gneca s:stran,…] [--film 0.25]'); process.exit(2); }
+if (!id || !videz) { console.log('node tools/ljudje/videz/slike.mjs <proga> <oznaka> [--prizori a,b@m] [--pri 45,15] [--gneca s:stran,…] [--film 0.25]'); process.exit(2); }
 const flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const prizori = (flag('--prizori') || '').split(',').filter(Boolean), marks = (flag('--pri') || '45,15').split(',').map(Number);
 const gneca = (flag('--gneca') || '').split(',').filter(Boolean).map(x => x.split(':').map(Number)), film = +(flag('--film') || 0);
 const OUT = path.join(REPO, 'test-results', 'ljudje', 'videz', videz); fs.mkdirSync(OUT, { recursive: true });
 const png = (file, src) => fs.writeFileSync(file, Buffer.from(src.split(',')[1], 'base64'));
-const vfile = path.join(REPO, 'tools', 'ljudje', 'videz', videz + '.js');
-if (videz !== 'prej' && !fs.existsSync(vfile)) { console.log('ni datoteke', vfile); process.exit(2); }
 
 const srv = await serve(REPO);
 const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', detail: 'high' }, { width: 844, height: 390 }, { seed: 11 });
-  if (videz !== 'prej') await page.addInitScript({ path: vfile });
   await page.addInitScript(() => {   // the draw calls and vertices of every pass (as tests/browser/perf.test.mjs)
     window.__gl = { calls: 0, verts: 0 };
     const hook = () => { const c = document.querySelector('canvas'); if (!c) return false; const gl = c.getContext('webgl2') || c.getContext('webgl'); if (!gl) return false;

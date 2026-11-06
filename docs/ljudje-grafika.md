@@ -1,31 +1,27 @@
 # Grafika ljudi ob progi
 
-Tema računa partyslo (uporabnik 6. 11. 2026: »Izboljšaj grafiko ljudi«), veja `ljudje/grafika`. Cilj: lepši ljudje s kamere za avtom na vseh pravih progah (prizori `World.peopleKit`, tribune, redarji, snemalci, mehaniki, redki gledalci), brez večje obremenitve telefona.
+Tema računa partyslo (uporabnik 6. 11. 2026: »Izboljšaj grafiko ljudi«), veja `ljudje/grafika`, osnutek #432. Cilj: lepši ljudje s kamere za avtom na vseh pravih progah (prizori `World.peopleKit`, tribune, redarji, snemalci, mehaniki, redki gledalci), brez večje obremenitve telefona.
 
-## Stanje
+## Odločitev in stanje
 
-- 6. 11.: štiri različice v slikah, vprašanje `ljudje-grafika-1` na strani Odločitve računa partyslo (izbira ene ali več, priporočeno 5 = vse štiri skupaj). Po odgovoru: koda izbranih različic v `js/world-ljudje.js` in `js/world.js`, osnutek PR, vnos v `docs/vrsta.md`.
-- Na to kodo čakajo novi prizori (psi v jezeru, oranje z galebi, delavci na vrveh, rolkarji) in popravki predlogov 2, 8, 9, 10 iz `docs/ljudje-predlogi.md`; model iz igre mora ujemati tudi `tools/ljudje/ljudje3d.js`.
+- Uporabnik je 6. 11. izbral **samo izboljšavo 1 · Postava in razmerja** (vprašanje `ljudje-grafika-1` na strani Odločitve, tabla #382, komentar 6688514078). Izboljšav 2 (mehke oblike in svetloba), 3 (oblačila, lasje, pokrivala) in 4 (živahna drža in gibanje) ne delamo; njihove poskusne datoteke so samo v zgodovini veje (commit d75be46: `tools/ljudje/videz/mehko.js`, `obleke.js`, `gibanje.js`).
+- 6. 11.: postava je v igri in v maketah (spodaj), reference sveta posodobljene; PR #432 gre v vrsto (`docs/vrsta.md`).
+- Na to kodo čakajo novi prizori (psi v jezeru, oranje z galebi, delavci na vrveh, rolkarji) in popravki predlogov 2, 8, 9, 10 iz `docs/ljudje-predlogi.md`.
+
+## Postava v igri
+
+- **Ljudje v prizorih in na tribunah** (`person` v `js/world-ljudje.js`): telo iz obročev s šestimi ali štirimi stranicami (`ring`, `loft`, `band64`, trikotniki po barvah `Tri`): široka ramena, ki se spustijo do vratu, ožji pas, boki, okroglejša glava (vrh pri ~0,235, kjer sedejo vsa pokrivala), nadlaket debelejša od podlakti in stegno od goleni, dlani, stopala naprej. Ploskev, ki jih nihče ne vidi (v drugih delih, podplati, konci udov v sklepih), ni.
+- Sklepi, dolžine udov, roke za predmete in vrstni red naključnih izbir (barve, pričeska, pokrivalo) so kot pri prejšnjem telesu iz škatel, zato so prizori enaki. Postave (`BUILDS`: povprečna, vitka, čokata, široka, drobna, z ožjim pasom in širšimi boki, otroška) spremenijo samo širine in globine. Postava se izbere z `hash32` in števcem `NB`, ki ga vsak `seed` postavi na 0, ne z naključnimi števili prizora; ob vsaki gradnji sveta so ljudje enaki.
+- **Pokrivala:** pod pokrivali iz `COVER` glava nima temena, `HATY` pove, kje je spodnji rob pokrivala, če je višje od 0,19. Novo pokrivalo v `HATX`, ki pokrije teme, potrebuje svoje ime v `COVER`.
+- **Gledalci in osebje** (instancirani, `crowdGeo` v `js/world.js`): enaka razmerja v 165 indeksnih ogliščih (prej 168), isti sklepi (kosti, vrtišča v senčilniku) in barvne skupine. Noge imajo hrbet (vidne tudi od zadaj), roke so odprte na obeh koncih.
+- **Makete** (`person` v `tools/ljudje/ljudje3d.js`): isto telo, z normalami in sencami za slike predlogov. Ob spremembi telesa v igri popravi tudi maketo.
+- **Meritve** (Bathurst, prej → potem): oglišča na osebo cela 689 → 676, otrok 600 → 564, tribuna 362 → 352; gledalec 168 → 165; klici risanja enaki (npr. gneča pri 950 m: 140 pri 40 m, 137 pri 18 m).
 
 ## Orodje za slike prej/potem (`tools/ljudje/videz/`)
 
-- Različica je datoteka `tools/ljudje/videz/<ime>.js`, ki nastavi `window.LJV = { people(K), crowd(K) }`; orodje jo vstavi v stran pred gradnjo sveta. Kljuke so v igri neaktivne: `person`, `rig` (`shade`), `poseJ`, `setJ` in `alive` (v `poseOne`) v `js/world-ljudje.js`, `crowdGeo` in `crowdMat` (`geo`, `shader`) v `js/world.js`.
-- `node tools/ljudje/videz/slike.mjs <proga> <prej|ime> --prizori zar,marsali,boksi --pri 40,18 --gneca 950:1 [--film 0.25]`: sličica s kamere za avtom, lupa, klici risanja in oglišča (vse podaje) v `test-results/ljudje/videz/<ime>/`. Za primerjavo isti ukaz (isti vrstni red posnetkov) za `prej` in različico: pot avta pred posnetkom gneče spremeni klice risanja za 1–3.
-- `node tools/ljudje/videz/meri.mjs <proga> [--videz ime]`: oglišča na osebo, instancirani gledalci, napake strani.
-- `python3 tools/ljudje/videz/sestavi.py <ime> <proga> "<naslov>" "<podnaslov>" bathurst-zar-40@1.25 bathurst-marsali-18 bathurst-gneca950D-18 --izrez 1.5` (Medvode: `medvode-kolesarji-18@1.15 medvode-piknik-18 medvode-gneca250D-18@1.3`): slika za stran Odločitve, do 300 KB.
-
-## Različice (izmerjeno v igri, prej → potem)
-
-| Različica | Datoteka | Oglišča na osebo: cela / otrok / tribuna (Bathurst) | Instanciran | Klici risanja |
-|---|---|---|---|---|
-| 1 Postava in razmerja | `silhueta.js` | 689 → 676 / 600 → 564 / 362 → 352 | 168 → 165 | enako |
-| 2 Mehke oblike in svetloba | `mehko.js` | enako | 168 | enako |
-| 3 Oblačila, lasje in pokrivala | `obleke.js` | 689 → 622 / 600 → 498 / 362 → 325 | 168 | enako |
-| 4 Živahna drža in gibanje | `gibanje.js` | enako (malo več računanja na postavljeno osebo) | 168 | enako |
-
-## Opombe za kodo
-
-- **1:** novo telo namesto `person0` (sklepi, dolžine udov in roke za predmete ostanejo); da glava ne gleda skozi kapo, sta v datoteki tabeli `COVER` in `HATY` (nova kapa potrebuje svojo vrstico). Z različico 3 en sam graditelj.
-- **2:** senčenje po peki (upognjene normale, svetloba in senca v barvah oglišč); ton oblačil sejan iz semena prizora in indeksa osebe (kot dežniki, `hash32`), sicer se prstni odtisi sveta v testih spremenijo; gradnja ~0,17 s na Bathurstu (če je na telefonu počasno: predloga na vrsto osebe). Gneča: upognjene normale v `crowdGeo`, rob v `CR_VS_POS`. Reference: `npm run golden:update`.
-- **3:** `person(o)` ne pozna prizora, vloge ne letnega časa: igra naj doda `o.scene`, `o.staff`, `o.season`; gneča potrebuje bit za osebje v podatkih primerka (zdaj po barvi majice); krila z dodatnim sklepom bokov (`P.xJ`); senčilnik gneče loči dve barvi v eni skupini.
-- **4:** tribuna, sprehajalci in snemalci ne gredo skozi `alive` (zdaj samo stalna raznolikost drže); ob ograji igra po `setJ` sama obrne trup in glavo proti avtu (zastavica, da to prevzame `alive`); `ctx` naj dobi trenutni položaj osebe; gibanje gneče samo na pravih progah (`CR_CALM`), brez skakanja in dvigovanja zastav; zrcaljenje zastav (`crMir`) z obrnjeno smerjo.
+- `node tools/ljudje/videz/slike.mjs <proga> <oznaka> --prizori zar,marsali,boksi --pri 40,18 --gneca 950:1 [--film 0.25]` riše kodo iz delovne mape. Rezultati so v `test-results/ljudje/videz/<oznaka>/`: sličica s kamere za avtom, lupa, klici risanja in oglišča (vse podaje).
+- Za primerjavo poženi orodje dvakrat z istimi možnostmi in v istem vrstnem redu posnetkov (pot avta pred posnetkom gneče spremeni klice risanja za 1–3):
+  - `prej`: na `main` (npr. v `git worktree`), nato mapo `prej` prenesi v `test-results/ljudje/videz/` te delovne mape;
+  - druga oznaka: na veji.
+- `node tools/ljudje/videz/meri.mjs <proga>`: oglišča na osebo, instancirani gledalci, napake strani.
+- `python3 tools/ljudje/videz/sestavi.py <oznaka> <proga> "<naslov>" "<podnaslov>" bathurst-zar-40@1.25 bathurst-marsali-18 bathurst-gneca950D-18 --izrez 1.5` sestavi sliko prej | potem za stran Odločitve, do 300 KB. Za Medvode so posnetki `medvode-kolesarji-18@1.15 medvode-piknik-18 medvode-gneca250D-18@1.3`.
