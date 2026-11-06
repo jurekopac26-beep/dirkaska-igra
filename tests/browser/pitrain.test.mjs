@@ -44,7 +44,7 @@ try {
     }, id));
   }
   const none = res.filter(r => r.none);
-  T.check('all 14 tracks with pits: their pits\' wet parts', !none.length, none.map(r => r.id).join(','));
+  T.check('all 12 tracks with pits: their pits\' wet parts', !none.length, none.map(r => r.id).join(','));
   const ok = res.filter(r => !r.none);
   const film = ok.filter(r => (r.asph ? r.film !== 0 : r.film < 60) || r.pud < 16 || r.lane < 8 || (r.ap > 4.5 && r.apron < 4));
   T.check('a film of water over the apron (none over Bathurst\'s asphalt apron), puddles along the lane\'s edges and on the apron', !film.length,
