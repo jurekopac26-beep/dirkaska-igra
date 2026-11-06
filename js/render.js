@@ -5770,8 +5770,13 @@ const Render = (function () {
     const grp = new THREE.Group(), matP = rdMaterial(), mat = crewMaterial(false), matS = crewMaterial(true), matL = new THREE.MeshLambertMaterial({ vertexColors: true }), meshes = [];
     const mk = (geo, n, mt, cast) => { const im = new THREE.InstancedMesh(geo, mt, n); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.castShadow = !!cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } im.instanceColor.setUsage(THREE.DynamicDrawUsage); im.count = 0; grp.add(im); meshes.push(im); return im; };   // (the colours before the count goes to 0: three sizes them by it)
-    const V = { car: [mk(rdCarGeo('hatch', 'pico'), 40, matP, true), mk(rdCarGeo('sedan', 'vortex'), 40, matP, true), mk(rdCarGeo('coupe', 'kaze'), 24, matP, true)],
-      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), truck: mk(rdTruckGeo(), 20, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
+    // (the endless drive: in each mesh as many places as the window's pool has vehicles for it, never fewer than a race has; at x4 the
+    // window can put more of a kind round the camera than a race's road, Tianmen up to 12 buses within 90 m and 13 beyond, and a vehicle
+    // over its mesh's places is not drawn, updateRoad's put. The keys as updateRoad picks the mesh: a car by its colour, a truck on its own)
+    const pc = {}; if (race.en) for (const v of race.tf.veh) { const k = v.kind === 0 ? 'c' + Math.floor(v.col * 7.3) % 3 : v.kind === 2 && v.p === 5 ? 't' : v.kind; pc[k] = (pc[k] || 0) + 1; }
+    const nf = (k, n) => Math.max(n, pc[k] || 0);
+    const V = { car: [mk(rdCarGeo('hatch', 'pico'), nf('c0', 40), matP, true), mk(rdCarGeo('sedan', 'vortex'), nf('c1', 40), matP, true), mk(rdCarGeo('coupe', 'kaze'), nf('c2', 24), matP, true)],
+      van: mk(rdVanGeo(), nf(1, 24), matP, true), bus: mk(rdBusGeo(), nf(2, 8), matP, true), truck: mk(rdTruckGeo(), nf('t', 20), matP, true), moto: mk(rdMotoGeo(), nf(3, 12), matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
     const NP = 140, PG = pedGeos();
     PG.trunk.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3)); PG.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3));
@@ -5807,8 +5812,8 @@ const Render = (function () {
     // (updateRoad): with its frustum culling off a mesh draws all its vehicles into the shadow map, at the densest traffic on the hairpin
     // roads tens of them for nothing (Tianmen, Rio do Rastro: 50-70k vertices a frame). The same geometry (disposed with the first)
     const tw = new Map(); if (race.en) for (const im of [...V.car, V.van, V.bus, V.truck, V.moto]) { const t = mk(im.geometry, im.instanceMatrix.count, matP, false); t.visible = false; tw.set(im, t); }
-    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), 40, matP, false), mk(rdFarGeo('car', 'vortex'), 40, matP, false), mk(rdFarGeo('car', 'kaze'), 24, matP, false)],
-      van: mk(rdFarGeo('van'), 24, matP, false), bus: mk(rdFarGeo('bus'), 8, matP, false), truck: mk(rdFarGeo('truck'), 20, matP, false), moto: mk(rdFarGeo('moto'), 12, matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
+    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), nf('c0', 40), matP, false), mk(rdFarGeo('car', 'vortex'), nf('c1', 40), matP, false), mk(rdFarGeo('car', 'kaze'), nf('c2', 24), matP, false)],
+      van: mk(rdFarGeo('van'), nf(1, 24), matP, false), bus: mk(rdFarGeo('bus'), nf(2, 8), matP, false), truck: mk(rdFarGeo('truck'), nf('t', 20), matP, false), moto: mk(rdFarGeo('moto'), nf(3, 12), matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
     if (far) for (const im of [...far.car, far.van, far.bus, far.truck, far.moto]) im.visible = false;
     scene.add(grp);
     road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, tw, far, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };

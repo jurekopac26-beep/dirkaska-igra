@@ -94,18 +94,29 @@ try {
       const race = g.race, E = race.en, tf = race.tf, P = race.player;
       const st = E.step.bind(E); E.step = (dt) => { P.hitWall = 0; for (const v of tf.veh) v.nc = 1e9; return st(dt); };
       E.dist = 15000; g.sim(0.1, true);
-      const s = [], near = [];
+      const s = [], near = [], miss = [];
       for (let k = 0; k < 6; k++) {
         for (let i = 0; i < 15 && !E.over; i++) g.sim(1, true);
         Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});   // (the camera settles)
         const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, g.S.camera, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
         near.push(tf.veh.filter(v => !v.off && !tf._dead(v) && Math.hypot(v.x - P.x, v.z - P.z) < 250).length);
+        const cx = Render.cam.vcx, cz = Render.cam.vcz;   // (every vehicle within 250 m of the view's centre drawn, as updateRoad picks them: none over its mesh's places)
+        miss.push(tf.veh.filter(v => !v.off && !v.hid && (v.x - cx) ** 2 + (v.z - cz) ** 2 <= 250 * 250).length - Render.roadInfo().veh);
+      }
+      // (and the whole pool at once, all of it within 90 m of the view's centre and then all 110-240 m off, the far stand-ins: every vehicle
+      // drawn, as many places in each mesh as the pool has vehicles for it; Tianmen's buses are more than a race's mesh has places for)
+      const cx = Render.cam.vcx, cz = Render.cam.vcz, all = [];
+      for (const [r0, r1] of [[10, 80], [110, 240]]) {
+        tf.veh.forEach((u, k) => { const a = k * 2.4, d = r0 + (r1 - r0) * ((k * 0.618) % 1); u.off = false; u.hid = false; u.x = cx + Math.cos(a) * d; u.z = cz + Math.sin(a) * d; });
+        Render.frame(1 / 60, 1, P, g.S.camera, {}); all.push(tf.veh.length - Render.roadInfo().veh);
       }
       const c = s.map(x => x[0]), v = s.map(x => x[1]);
-      return { mode: race.zbMode, dens: tf.win.dens, over: E.over && E.over.why, calls: Math.round(c.reduce((a, b) => a + b) / 6), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / 6 / 1000), maxKverts: Math.round(Math.max(...v) / 1000), near: Math.max(...near) };
+      return { pool: tf.veh.length, all, mode: race.zbMode, dens: tf.win.dens, over: E.over && E.over.why, calls: Math.round(c.reduce((a, b) => a + b) / 6), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / 6 / 1000), maxKverts: Math.round(Math.max(...v) / 1000), near: Math.max(...near), miss: Math.max(...miss) };
     });
     T.check(`${id}: x4 traffic (vehicles within 250 m) within the phone budget (300 draw calls, 900k vertices; on average and at the busiest)`,
       r.mode === 'endless' && r.dens === 4 && !r.over && r.near >= 10 && r.calls <= 300 && r.maxCalls <= 300 && r.kverts <= 900 && r.maxKverts <= 900, JSON.stringify(r));
+    T.check(`${id}: x4, every vehicle within 250 m drawn (the meshes' places from the window's pool)`, r.miss === 0, 'not drawn: ' + r.miss);
+    T.check(`${id}: the whole pool (${r.pool}) drawn at once, near and far (none over its mesh's places)`, r.all.every(n => n === 0), 'not drawn near, far: ' + r.all.join(', '));
     T.check(`no errors on the page (${id}, x4)`, !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
