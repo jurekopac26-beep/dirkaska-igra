@@ -262,7 +262,7 @@
 
   // ================================================================ relijske_luci: the extra lamps (none stock): two on the bumper, four
   // in front of the grille, a light bar on the roof or in the lower intake, a pod over the nose
-  DELI.noseLamps = (n) => !!n && (n <= 8 || n >= 13);   // (the rally lamps in front of the nose, on the bumper or over it: vlecne_kljuke's underLamps)
+  DELI.noseLamps = (n) => !!n && (n <= 8 || n >= 13);   // (the rally lamps in front of the nose, on the bumper or over it: vlecne_kljuke's underLamps, behindLamps)
   DELI.podLamps = (n) => !!n && n >= 13;   // (the pods over the bumper's face: vlecne_kljuke's underPod)
   function relijske(K, n, m) {
     const P = K.paint, o = { part: m.part || 'bumperF' }, ob = { part: 'body' }, fw = [1, 0, 0], CH = K.chrome;

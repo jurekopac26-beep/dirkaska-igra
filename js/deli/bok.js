@@ -261,8 +261,9 @@
   DELI.add('zavore', zavore);
 
   // ================================================================ matice: the wheel nuts of option n
-  // m: { k: the nuts on a wheel (KOLIBRI 4), r: their circle (rim radii, 0.2) }. Each a prism standing on the hub, over the rims' own nuts
-  // (at their angles: 45 degrees on), from 1 cm over the dish to 3.4 cm; a centre-lock rim (platisca 12, 14, 16): one big nut in the middle
+  // m: { k: the nuts on a wheel (KOLIBRI 4), r: their circle (rim radii, 0.2), lock: true: the car's own rims a centre lock (wire wheels'
+  // knock-off: BLISK), on them one big nut over its spinner }. Each a prism standing on the hub, over the rims' own nuts (at their angles:
+  // 45 degrees on), from 1 cm over the dish to 3.4 cm; a centre-lock rim (platisca 12, 14, 16; the car's own with lock): one big nut in the middle
   function matice(h, n, m) {
     if (!h.full) return;
     const RB = [[0.2, 0.32, 0.85], [0.55, 0.2, 0.62], [0.85, 0.62, 0.2]], TI = [0.6, 0.58, 0.54];   // (burnt titanium: blue, purple, gold)
@@ -287,7 +288,7 @@
       { col: TI, sides: 12, r: 0.05, flange: true, open: true, burnt: true },  // 16 titanove, dirkalne (spline, open)
     ][n];
     if (!O) return;
-    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl), PL = pl ? DELI.wheel(pl) || {} : {};
+    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl ? LOCK.includes(pl) : !!(m && m.lock), PL = pl ? DELI.wheel(pl) || {} : {};
     if (PL.cover) return;   // (under a hubcap: unseen)
     const seat = PL.seat || 0.01;   // (their foot over the dish: on the rim's hub, over its cap's edge)
     const V = h.vis, fan = (c, pts, z, col, apex) => { for (let i = 0; i < pts.length; i++) G.triO([c[0], c[1], z + (apex || 0)], [pts[i][0], pts[i][1], z], [pts[(i + 1) % pts.length][0], pts[(i + 1) % pts.length][1], z], col, [c[0], c[1], z - 1]); };

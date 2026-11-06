@@ -1,7 +1,8 @@
 // The garage's parts on KOLIBRI, sklop 4 (docs/deli.md, »Sklop 4 · pregled«): every one of its 608 options (38 elements with a mount,
 // 16 each) built in Visoki and looked at as a solid would be (tests/lib/deli-geo.js):
 //  - nothing floats: every group of an option's islands touches the car (its shell, its inner block: within 6 mm, or crossing it) or lies
-//    on it as a layer (every corner within 13 mm of it); the body's calipers (celjusti) are behind the wheels' faces instead (below)
+//    on it as a layer (every corner within 13 mm of it); the body's calipers (celjusti) are behind the wheels' faces instead (below);
+//    the tyre smoke's band (dim_gum) may lie on a rear tyre's inner wall instead (open wheels: no arch round it)
 //  - nothing through the body: a visible part at most 10 cm into the shell (where it is fixed: a pipe into the floor, a lamp into its
 //    housing); the hidden parts under the bonnet (filter_zraka, cip, turbo, akumulator) wholly inside it (six rays from every corner; the one down may meet the floor in the inner block)
 //  - the glass: only the roof spoilers (krilo), the mirrors and the rear window's louvres meet the windows (on them: the glass is opaque)
@@ -55,6 +56,9 @@ const I0 = R.kitInfo(VID), HW = I0.body.hw, RW = KO.rw, TW = 0.185;   // (the ty
   for (const T of [PARTS, MUST]) for (const id in T) T[id] = [...new Set(T[id].map(sub))];
   for (const id in PARTS) if (MO[id]) PARTS[id] = [...new Set(PARTS[id].concat(named(MO[id], [])))]; }
 const hubs = [[KO.a, HW, true], [KO.a, -HW, true], [-KO.b, HW, false], [-KO.b, -HW, false]];
+// (a rear tyre's inner wall: within its radius, from its face to 12 mm + a layer inboard; its width the look's, wR the rear's)
+const LW = (KO.def.look && KO.def.look.wheels) || {}, TWR = LW.wR || LW.w || Math.min(0.42, Math.max(0.12, 0.68 * RW));
+const onWall = (p) => [-1, 1].some(sd => { const dz = sd * p[2] - (HW - TWR / 2); return Math.hypot(p[0] + KO.b, p[1] - RW) <= RW + EPS && dz >= -0.012 - LAYER && dz <= 0.003; });
 const inTyre = (p) => { let best = 0; for (const [hx, hz, front] of hubs) for (const a of front ? [-0.66, -0.44, -0.22, 0, 0.22, 0.44, 0.66] : [0]) for (const dy of [-0.03, 0, 0.03]) {
   const dx = p[0] - hx, dz = p[2] - hz, lx = dx * Math.cos(a) - dz * Math.sin(a), lz = dx * Math.sin(a) + dz * Math.cos(a), q = Math.hypot(lx, p[1] - RW - dy);
   if (Math.abs(lz) <= TW / 2 && q <= RW && RW - q > best) best = RW - q; } return best; };
@@ -82,7 +86,7 @@ for (const id of ELS) { alone[id] = [];
     for (let i = 0; i < isl.length; i++) for (let j = i + 1; j < isl.length; j++)
       if (find(i) !== find(j) && ov(bx[i], bx[j]) && (L.touches(O.P, isl[i], IG[j], EPS) || L.touches(O.P, isl[j], IG[i], EPS))) par[find(i)] = find(j);
     const grp = new Map(); isl.forEach((a, i) => { const r = find(i); if (!grp.has(r)) grp.set(r, []); grp.get(r).push(i); });
-    const on = isl.map(a => Math.max(...L.corners(O.P, a).map(p => GA.dist(p, 0.05).d)) <= LAYER || L.touches(O.P, a, GA, EPS));
+    const on = isl.map(a => Math.max(...L.corners(O.P, a).map(p => GA.dist(p, 0.05).d)) <= LAYER || L.touches(O.P, a, GA, EPS) || (id === 'dim_gum' && L.corners(O.P, a).every(onWall)));
     for (const mem of grp.values()) if (!mem.some(i => on[i])) { const tris = [].concat(...mem.map(i => isl[i])), b = L.boxOf(L.corners(O.P, tris));
       floats.push(`${tag} (${tris.length} triangles ${mm(L.gap(O.P, tris, GA, 0.3))} off, at ${b[0].map((v, j) => ((v + b[1][j]) / 2).toFixed(2)).join(',')})`); }
     // its corners: how deep inside the shell (all six rays hit it), outside it (the bonnet's hidden parts), in a tyre's room
