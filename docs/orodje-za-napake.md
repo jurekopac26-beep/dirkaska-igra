@@ -73,8 +73,8 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 ### Označevanje
 
 - **Označi** ustavi posnetek. Ležeče je paleta navpično ob levem robu, pokonci vrstica nad časovnico. V paleti so svinčnik, 6 barv, razveljavi in radirka.
-- Ko je krog sklenjen, se tik ob njem odpre **oblaček** v isti barvi in vanj se piše. Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblaček se da premakniti.
-- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 20).
+- Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblačkov ob krogih od 4. 11. 2026 ni več (uporabnik: »zbriši rdeči okvirček … imamo tukaj beležko«): zapis barve se piše v beležko.
+- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 20). Beležka je v barvi svinčnika (privzeto rdeča): z rumeno barvo se obarva rumeno in zapis gre v rumeni zapis, posebej od rdečega (uporabnik 4. 11. 2026: »beležka naj bo rdeča, če uporabnik vzame rumeno barvo, se beležka obarva rumeno in posebi shrani, kaj je bilo obkroženo z rumeno«). Pike v glavi beležke pokažejo druge barve z zapisom; tap na piko odpre njen zapis. Sklenjen krog beležko na kratko osvetli.
 - **Dodaj k zbirki** shrani trenutek (sličico, oznake, zapise) in na časovnici postavi zastavico.
 
 ### Slika in pošiljanje
@@ -83,7 +83,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - ležeče mreža 2 × 2 (do 3 trenutki in polje s podatki ter zemljevidom), pri več trenutkih več slik;
   - pokonci 3 trenutki v vrsti, podatki in zemljevid spodaj.
 - **Vsak trenutek:**
-  - sličica z oznakami in oblački;
+  - sličica z oznakami in beležko (zapisi po barvah, eden nad drugim);
   - vrstica »#n · čas · krog · metri od štarta«;
   - 4 sličice gibanja (−0,6 s, −0,3 s, 0, +0,3 s).
 - **Podatki (B):** proga, način, vreme, različica (žig `js/game.js`, ki ga objava doda s `tools/stamp.js`; lokalno brez žigov `lokalno`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
@@ -113,7 +113,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 #2 00:41.327 K2 s=1284m rdeča »Sledi gum sredi ravnine« v_krogu=[sledi_gum, cesta:412-431]
 ```
 
-`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 20) je vrstica pred barvami, brez `v_krogu`: `#1 00:18.2 K1 s=412m beležka »Ves zaslon utripa / Predlog: manj megle«` (vrstice zapisa so združene z » / «).
+`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 20) je od 4. 11. 2026 zapis svoje barve, z `v_krogu` (prazen, če te barve ni kroga): `#1 00:18.2 K1 s=412m rdeča »Ves zaslon utripa / Predlog: manj megle« v_krogu=[]` (vrstice zapisa so združene z » / «). Trenutki, shranjeni prej, imajo še vrstico `beležka »…«` pred barvami.
 
 ### Zastavica med dirko
 

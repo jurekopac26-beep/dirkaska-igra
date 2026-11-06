@@ -20,7 +20,7 @@ const OUT = path.join(REPO, 'test-results', 'napake-zadnji'); fs.rmSync(OUT, { r
 const SUM = `(F) => { let h = 2166136261; for (const f of F) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return (h >>> 0).toString(16); }`;
 // a moment kept: Označi, a loop (an ellipse round cx, cy) in colour c with its note, Dodaj k zbirki
 async function moment(Q, c, cx, cy, r, note, bel) {
-  await Q.click('#nk-on'); if (bel) await Q.keyboard.type(bel);   // (Beležka: the keyboard in it at once)
+  await Q.click('#nk-on'); if (bel) { await Q.click('#nk-pal [data-c="2"]'); await Q.keyboard.type(bel); }   // (Beležka: the keyboard in it at once; this note in yellow, a colour of its own)
   await Q.click(`#nk-pal [data-c="${c}"]`);
   await Q.mouse.move(cx + r, cy); await Q.mouse.down(); for (let a = 0.2; a <= 2 * Math.PI + 0.25; a += 0.2) await Q.mouse.move(cx + r * Math.cos(a), cy + 0.7 * r * Math.sin(a)); await Q.mouse.up();
   if (note) await Q.keyboard.type(note);
@@ -87,7 +87,7 @@ try {
   T.check('a second moment (blue) on the opened recording: number 2, kept with its record (the same id, the same file, 2 moments in order, still not over the finish)',
     k2.length === 1 && o3.id === o1.id && o3.blob === o1.blob && o3.fin === 0 && o3.zb && o3.zb.id === o1.zb.id && o3.zb.items.map(it => it.n).join() === '1,2' && o3.zb.items[1].zapisi[0] === 'modra: Tekmec zavije v travo' && o3.zb.items[1].img === 'image/jpeg', JSON.stringify(k2));
   const rep = await Q.evaluate(() => Napake.porocilo().split('\n'));
-  T.check('the report: the recording\'s name on the first line, the notes (#1 the notebook\'s kept with the record, #1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* beležka »Ves zaslon utripa«$/.test(l)) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
+  T.check('the report: the recording\'s name on the first line, the notes (#1 the yellow note with no loop kept with the record, #1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* rumena »Ves zaslon utripa« v_krogu=\[\]$/.test(l)) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
 
   // 5. Končaj: the choice (the collection changed) over the list again; Zgodovina napak: one collection of 2 moments
   await Q.click('[data-act="rp-exit"]'); await Q.waitForTimeout(600);
