@@ -11,7 +11,8 @@
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
                   w its half width; part: the lid's
-     vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR)
+     vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR); underLamps: true, the front
+       arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow
      lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part, parts }   the flaps behind the wheels (x), across (|z|), up;
                   parts [front left, front right, rear left, rear right]: each flap in its own (a car's stock flaps' parts), else all in part */
 (function () {
@@ -212,8 +213,9 @@
   // ================================================================ vlecne_kljuke: the tow points, front and / or rear
   function vlecneKljuke(K, n, m, M) {
     const q = seg(K, 10), ma = M && M.def.mounts && M.def.mounts.auspuh;
-    // the rear one in from a twin exhaust's tip on its side (between it and the middle: auspuh's mount z less 0.17)
-    const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
+    // the rear one in from a twin exhaust's tip on its side (between it and the middle: auspuh's mount z less 0.17); one already out past
+    // the tip stays (MIŠKA's, on an overrider beside its tips near the middle)
+    const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) && Math.abs(m.r[2]) <= Math.abs(ma.z) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
     // at a tow point (end: 1 the front, -1 the rear; dir: the way out of the face), in the bumper's part
     const at = (end, fn) => { const p = end > 0 ? m.f : r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
@@ -236,7 +238,8 @@
       K.endplate(P, z, 0.012, col);
       for (const sd of [-1, 1]) faceOut(K, Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2; return [x + d * (l - 0.012) + Math.cos(a) * 0.01, y + Math.sin(a) * 0.01, z + sd * 0.0065]; }), HOLE, [0, 0, sd]); };
     // the racing rules' arrow: a yellow triangle on the face over the tow point, pointing down; a white sticker behind it (sticker)
-    const arrow = (x, y, z, d, sticker) => { if (sticker) K.rect(x + d * 0.002, y + 0.075, z, 0.1, 0.065, WHT, { dir: d > 0 ? 'x' : '-x' });
+    const lampsF = m.underLamps && K.fitted && DELI.noseLamps && DELI.noseLamps(K.fitted.relijske_luci);   // (underLamps: none in front with them)
+    const arrow = (x, y, z, d, sticker) => { if (d > 0 && lampsF) return; if (sticker) K.rect(x + d * 0.002, y + 0.075, z, 0.1, 0.065, WHT, { dir: d > 0 ? 'x' : '-x' });
       faceOut(K, [[x + d * 0.003, y + 0.05, z], [x + d * 0.003, y + 0.1, z - 0.035], [x + d * 0.003, y + 0.1, z + 0.035]], YEL, [d, 0, 0]); };
     const ORA = [0.95, 0.4, 0.06], BLU = [0.12, 0.3, 0.85], ANO = [0.85, 0.12, 0.1];
     switch (n) {
