@@ -1,6 +1,6 @@
 # Neskončna vožnja v prometu (načrt)
 
-Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtocesti, promet je vse gostejši; točke dobiš za hitrost in tesna prehitevanja; vožnja se konča ob trku; rekord se shrani. Ta dokument je načrt (seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija »VSE SEJE 2«, račun 3). Uporabnik je izbral prave odprte ceste (`neskoncna-1` = 1); **koda je v delu v #372** (osnutek, veja `neskoncna-voznja/koda` na #250), za `neskoncna-2` in `neskoncna-3` do odgovora veljata priporočeni možnosti (razdelek Odločitve spodaj).
+Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtocesti, promet je vse gostejši; točke dobiš za hitrost in tesna prehitevanja; vožnja se konča ob trku; rekord se shrani. Ta dokument je načrt (seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija »VSE SEJE 2«, račun 3). Uporabnik je izbral prave odprte ceste (`neskoncna-1` = 1); **koda je v delu v #372** (osnutek, veja `neskoncna-voznja/koda` na #250), **6. 11. je uporabnik način prestavil na krožne proge** (zaenkrat samo Bathurst, ura, ki jo polniš, težavnost po stopnjah): predelava čaka na novo sejo (razdelek »Predelava na krožne proge«); spodnji opis odprtih cest velja za kodo, kakršna je zdaj v #372.
 
 ## Na kratko
 
@@ -91,6 +91,8 @@ Napisi med vožnjo gredo skozi `tr()` s slovenskim ključem in angleškim prevod
 
 ## Odločitve
 
+**Nova odločitev uporabnika 6. 11. 2026 (v seji #372) nadomesti `neskoncna-1`–`3`:** neskončna vožnja je samo na **krožnih progah**, kjer ni konca in je zares neskončna; **zaenkrat samo Bathurst, Avstralija**. Pritisk je **ura, ki jo polniš** (na začetku 30 s, tesna prehitevanja in hitrost dodajajo čas, prazna ura je konec). **Težavnost po stopnjah** igre: privzeta srednja je zelo težka (začetnik zdrži ~1 minuto), lahka ~2–3 minute, težka in super težka še hitrejši; rekordi ločeno po stopnji. Odprte ceste način izgubijo. Na strani Odločitve je uporabnik malo prej odgovoril `neskoncna-2` = 3 (konec ceste je cilj) in `neskoncna-3` = 1 (dvojne točke na nasprotnem pasu); odgovora sta prebrana, a ju nadomesti odločitev v seji (na krožni progi ni konca ceste ne nasprotnega pasu). Izvedba: razdelek »Predelava na krožne proge«.
+
 Vprašanja na strani Odločitve 3 (https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV), odgovore prebere ta seja (`docs/vprasanja.md`, razdelek Odgovor):
 
 - `neskoncna-1` **Cesta**: 1 prave odprte ceste (priporočeno) · 2 izmišljena neskončna avtocesta · 3 oboje (najprej prave ceste). **Izbrano: 1** (uporabnik 5. 11. v pogovoru s koordinacijo VSE SEJE 2; 11 cest zunaj ZDA).
@@ -111,9 +113,30 @@ Privzeto brez vprašanja (pove načrt; uporabnik lahko spremeni): brez kolesarje
 - **Rezultati**: zaslon rezultatov igre z devetimi vrsticami in lestvico 10 najboljših; gumb *Vozi znova* (ista cesta in avto); kartica proge v meniju pokaže *Best score*. Slika ploščice `assets/menu/mode-endless.webp` je v slogu drugih ploščic (izrezi avtov), ne posnetek s kamere za avtom.
 - **Obremenitev** se meri v `tests/browser/neskoncna.test.mjs` (ne v `perf.test.mjs`, ki meri dirke vseh prog): nastavitve meritve `perf.test.mjs`, 4-kratna gostota, šest mest. Meritev vseh 11 cest 5. 11. pri 4-kratni gostoti: Tianmen in Rio do Rastro sta v najbolj obremenjenem trenutku potrebovala do 878 tisoč oglišč (meja 900 tisoč; 40–47 vozil v 250 m na serpentinah), zato se v tem načinu (`js/render.js`, samo pri `race.en`) vozila zunaj senčnega okvira rišejo brez sence (dvojčki mrež, zunaj okvira senca ni vidna) in vozila dlje od 90 m kot nekaj kvadrov (`rdFarGeo`: oblika, barva, okna, temen pas koles; ~100 oglišč namesto 1.500–7.500). Mreže vozil imajo v tem načinu toliko mest, kolikor ima bazen okna vozil zanje (`nf` v `setupRoad`, najmanj kot v dirki): s stalnimi mesti dirke (npr. 8 avtobusov) na Tianmenu pri ×4 do 5 vozil v 250 m ni bilo narisanih (do 12 avtobusov v 90 m in 13 dlje), na Great Alpine Roadu bi lahko manjkal kak nadomestek (pregled kode #372, popravljeno 6. 11.). Zdaj, z vsemi vozili narisanimi: Tianmen 828–834 tisoč (povprečje šestih mest 717–735 tisoč), druge ceste do 776 tisoč (Medvode), klicev risanja največ 216 (Irohazaka). Test meri Vršič, Great Alpine Road in Tianmen in preveri, da so narisana vsa vozila do 250 m in ves bazen hkrati.
 
+## Predelava na krožne proge (odločitev 6. 11.; predaja za novo sejo)
+
+Seja #372 je ob ~250 tisoč žetonih predala delo (CLAUDE.md, predaja velike seje); nova seja (Opus, max) nadaljuje na veji `neskoncna-voznja/koda` (#372, osnutek). Kar ostane iz izvedbe na odprtih cestah: okno prometa (`Traffic._winPool`, `_winStep`, `_winSpawn`, `_winFill`), točke, niz, tesna prehitevanja (razdalja ob cesti), zaznavanje trka, zaslon, rezultati, rekordi, ploščica v meniju, prevodi in izris (`render.js`: dvojčki brez sence `tw`, nadomestki `rdFarGeo`, mesta mrež po bazenu `nf`).
+
+Pravila:
+- Način samo na Bathurstu: `modes` v `js/neskoncna.js` (zdaj `L.indexOf('traffic') >= 0 && !d.test`) postane `d.id === 'bathurst'`; druge krožne proge pozneje po izbiri uporabnika (prave krožne proge: Bathurst, Spa, Nürburg, Suzuka, Štajerska, Montréal, Crystal Palace, Longford, Newcastle, Townsville, Marrakesh, Livorno).
+- Zares neskončna: krog za krogom, brez nove etape in brez skoka (`Endless._wrap` se na krožni progi ne kliče). Na krožni progi `Track.idx(s)` računa po modulu, zato lahko okno in promet uporabljata neprekinjen s (s igralca + krogi × dolžina kroga): promet gre čez ciljno črto brez skoka; v `_winSpawn` meji `s0`/`s1` na krožni progi odpadeta.
+- Promet v smeri dirke: `Traffic.ow` (zdaj `T.def.oneWay`) je pri `race.en` na krožni progi vedno enosmeren; cestna hitrost 60–110 km/h, pasovi po širini proge (Bathurst `halfWidth` 5,5 m: 2 pasova, kjer je širše 3); vozila menjajo pasove in nenadoma zavirajo, s časom pogosteje. Nasprotnega pasu ni (dvojne točke odpadejo).
+- Ura (`over.why` `'time'`): odšteva od začetka; tesna prehitevanja (TESNO, ZELO TESNO, z nizom) dodajo sekunde, hitrost nad mejo upočasni odtekanje; konec tudi ob trku in dotiku vozila (ne le ob trku). Gostota raste s časom (vsakih 30 s) namesto s km.
+- Stopnje po `race.opts.difficulty` (`S.difficulty` 0–3: lahka, srednja, težka, super težka). Začetne vrednosti za uglasitev (lahka / srednja / težka / super težka): ura na začetku 45 / 30 / 25 / 20 s; TESNO +3 / +2 / +1,5 / +1 s; ZELO TESNO +5 / +4 / +3 / +2 s; meja hitrosti za počasnejše odtekanje 100 / 110 / 120 / 130 km/h (pri 50 km/h nad mejo ura odteka pol počasneje); gostota na začetku ×1 / ×1,5 / ×2 / ×2,5, vsakih 30 s +0,25 / +0,5 / +0,5 / +0,75 do ×4. Cilj na srednji: začetnik (brez tesnih prehitevanj, ~100 km/h) zdrži okoli minuto.
+- Rekordi in lestvica po stopnji (ključ `bathurst-endless-<stopnja>@<fizika>`).
+- Zaslon: velika ura z dodatki (+2 s), KROG namesto ETAPA, PROMET ×; rezultati povedo, zakaj je konec (ura, trk); komentator ob skoraj prazni uri; prevodi v `js/lang.js` (opis načina: krožna proga, ura).
+
+Koraki (ocena 8–12 h):
+1. `js/core.js`: `Endless` na krožni progi (neprekinjen s, brez `_wrap`, ura po stopnjah, gostota po času, konec `'time'`, dotik vozila je konec); `Traffic` pri `race.en`: enosmeren, pasovi po širini, menjava pasov, nenadno zaviranje; okno po neprekinjenem s.
+2. `js/neskoncna.js`, `css/neskoncna.css`, `js/lang.js`: način samo na Bathurstu, ura na zaslonu, KROG, rezultati in rekordi po stopnji.
+3. Obremenitev na Bathurstu pri največji gostoti (nastavitve `perf.test.mjs`; meja 300 klicev in 900 tisoč oglišč; Bathurst ima tribune in gledalce, tekmecev v tem načinu ni).
+4. Testi: `tests/neskoncna.test.js` na Bathurstu (enosmerno okno, promet čez ciljno črto brez skoka, ura: začetek, odtekanje, dodatki, konec, stopnje, gostota po času, rekordi po stopnji; odprte ceste brez načina); `tests/browser/neskoncna.test.mjs` na Bathurstu (ura na zaslonu, rezultati, rekord, obremenitev, vsa vozila narisana); `tests/browser/menu.test.mjs` (ploščica samo na Bathurstu).
+5. Dokumenti: ta načrt (Izvedba), `docs/igra.md` (razdelek), `README.md` (načini), `tests/README.md`, `docs/kazalo.md`; vrstica #372 v `docs/vrsta.md` je do konca predelave »v delu«.
+
 ## Stanje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
 - 5. 11. 2026 popoldne: ceste ZDA razen Pikes Peaka postanejo testne (odločitev uporabnika, #355; sporočilo koordinacije VSE SEJE 2). Seznam cest je zdaj 11 cest zunaj ZDA; vprašanji `neskoncna-1` in `neskoncna-3` imata nove slike (Great Alpine Road, Vršič, Medvode) in besedilo brez cest ZDA. Komentator samo angleško.
 - 5. 11. 2026 zvečer: `neskoncna-1` = 1 (prave odprte ceste). Koda se začne v #372 (koordinacija: začni zdaj, Opus, max); do odgovorov na `neskoncna-2` in `neskoncna-3` veljata priporočeni možnosti, ki se ju po odgovoru prilagodi. Vrstica v Načrtovano (`docs/vrsta.md`) je izbrisana, ker je odprt osnutek.
 - 5. 11. 2026 ob 22h: koda pripravljena v osnutku #372, povezani testi lokalno zeleni (Node 16, brskalnik 16), v vrsti na 30. mestu (#381). Mount Buller in Sani Pass gresta v test (zgoraj), način ostane na 9 cestah; koda brez sprememb.
+- 6. 11. 2026 ponoči: popravljena mesta v mrežah vozil (pregled kode #372, 89750a1). Uporabnik v seji: način samo na krožnih progah, zaenkrat samo Bathurst, ura, ki jo polniš, težavnost po stopnjah (zgoraj). `neskoncna-2` (= 3) in `-3` (= 1) prebrana, nadomesti ju odločitev v seji. Predelava čaka na novo sejo (razdelek Predelava na krožne proge).
