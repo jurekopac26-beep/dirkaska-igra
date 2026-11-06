@@ -604,6 +604,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **KUNA S** | prednji | 347 KM | 1190 kg | 30.000 kovančkov | Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča. |
 
 ### Športni
 

@@ -48,7 +48,7 @@ Obe veji dodajata vozila v iste sezname: `index.html`, `garaza.html`, `js/lang.j
 |---|---|---|---|---|
 | RIS G | prototip | | | |
 | VIDRA E | prototip | | | |
-| KUNA S | prototip | | | |
+| KUNA S | narejen (`js/cars/kuna.js`) | 255 kW / 1190 kg (214 W/kg) | 3,28 s / 228 km/h / 2,23 g / 23,9 m | 2251 / 461 / 716 |
 | MERJASEC V8 | narejen (`js/cars/merjasec.js`) | 470 kW / 1680 kg (280 W/kg) | 3,25 s / 243 km/h / 2,20 g / 22,8 m | 2208 / 502 / 858 |
 | TUR 6x6 | prototip | | | |
 | VRAN 01 | samo slika, čaka potrditev | | | |
