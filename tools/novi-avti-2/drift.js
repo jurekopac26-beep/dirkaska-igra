@@ -3,6 +3,9 @@
 // lost at a knock. The lesson itself is at the Jezero Ring; the same run on other tracks compares cars there (docs/novi-avti-2.md).
 //   node tools/novi-avti-2/drift.js [--proge jezero,spa,bathurst] [--t 40] [--proto] sakal skorpijon kaze …
 //   --proto: the prototypes of tools/novi-avti-2/prototipi.js too (their physics are stubs: only to check the tool runs)
+//   --mer: also the fleet test's measurements (tests/fleet.test.js: 0-100, top speed, steady lateral g at 100 km/h, 100-0) against the
+//   category's envelope and the car's own expect
+//   --set 'csp.tv=1.3,phys.kw=480,arc.amax=1.8': try other values on the listed cars without editing their files (tuning)
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +14,12 @@ const { seeded } = require('../../tests/lib/sim.js');
 
 const args = process.argv.slice(2), flag = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : d; };
 const TRACKS = flag('--proge', 'jezero,spa,bathurst').split(','), T_RUN = +flag('--t', '40'), PROTO = args.includes('--proto');
-const ids = args.filter(a => !a.startsWith('--'));
+const SET = flag('--set', ''), MER = args.includes('--mer'), ids = args.filter(a => !a.startsWith('--'));
+// the category envelopes of tests/fleet.test.js (ENVELOPE), read from the test so they stay the same
+const ENV = (() => { const t = fs.readFileSync(path.join(ROOT, 'tests', 'fleet.test.js'), 'utf8'), o = {};
+  for (const m of t.matchAll(/^\s+(\w+): \{ t100: \[([\d.]+), ([\d.]+)\], vmax: \[([\d.]+), ([\d.]+)\], latG: \[([\d.]+), ([\d.]+)\], d100: \[([\d.]+), ([\d.]+)\] \}/gm))
+    o[m[1]] = { t100: [+m[2], +m[3]], vmax: [+m[4], +m[5]], latG: [+m[6], +m[7]], d100: [+m[8], +m[9]] };
+  return o; })();
 
 let C;
 if (PROTO) {   // Core with the prototypes' file after the page's vehicle files (it pushes to VEHICLE_DEFS like them)
@@ -44,9 +52,27 @@ function driftRun(id, tid) {
   } finally { Math.random = orig; }
 }
 
+// --set: phys.<k> on the model itself, arc.<k> / csp.<k> in Core's tables (what the vehicle's file would give)
+function applySet(id) {
+  if (!SET) return; const M = C.MODELS.find(m => m.id === id);
+  for (const kv of SET.split(',')) { const [k, v] = kv.split('='), [grp, key] = k.split('.'), val = /^\[/.test(v) ? JSON.parse(v) : +v;
+    if (grp === 'phys') M[key] = val; else if (grp === 'arc') C.ARC[id][key] = val; else if (grp === 'csp') C.CSP[id][key] = val; else throw new Error('--set ' + k); }
+}
+
+let H = null;
+function measure(id) {   // as tests/fleet.test.js: MEAS
+  if (!H) H = require('../../tests/lib/handling.js')(C);
+  const M = C.MODELS.find(m => m.id === id), lo = H.longi(id), st = H.steady(id, 100, 1.0), m = { t100: lo.t100, vmax: H.topOf(id, 90)._v * 3.6, latG: st.ay, d100: lo.d100 };
+  const E = ENV[M.cat], X = M.def && M.def.expect, f = { t100: 2, vmax: 0, latG: 2, d100: 1 };
+  return Object.keys(f).map(k => { const v = m[k], inE = !E || (v >= E[k][0] && v <= E[k][1]), inX = !X || !X[k] || (v >= X[k][0] && v <= X[k][1]);
+    return `${k} ${v.toFixed(f[k])}${inE ? '' : ' ZUNAJ ' + M.cat + ' ' + E[k].join('-')}${inX ? '' : ' (expect ' + X[k].join('-') + ')'}`; }).join(', ') + `, ${Math.round(M.kw * 1000 / M.mass)} W/kg`;
+}
+
 const rows = [];
 for (const id of ids.length ? ids : ['sakal', 'skorpijon', 'kaze']) {
   if (!C.MODELS.find(m => m.id === id)) { console.log(id + ': not in this Core (a vehicle of another branch?)'); continue; }
+  applySet(id);
   const r = { id }; for (const tid of TRACKS) r[tid] = driftRun(id, tid); rows.push(r);
+  if (MER) console.log(id.padEnd(12) + measure(id));
   console.log(id.padEnd(12) + TRACKS.map(tid => `${tid} ${String(r[tid].pts).padStart(5)} (drsi ${r[tid].slide} s, kot do ${r[tid].bMax}°, ${r[tid].v} km/h, ${r[tid].s} m${r[tid].lost ? ', izgubljenih ' + r[tid].lost : ''})`).join(' · '));
 }

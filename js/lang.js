@@ -474,6 +474,7 @@
     'Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi.': 'A desert rally truck with the cab behind the engine, big wheels and spare wheels.',
     'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.': 'A racing van from the 80s and 90s with a race engine in the middle.',
     'Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma.': 'A stretched limousine with two flags on the front wings and plenty of chrome.',
+    'Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi.': 'A V8 saloon made for drifting: four doors, wide arches, a ducktail and four pipes.',
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
