@@ -5,7 +5,8 @@
                    the stock side stripe kept (the car's around); mounts.crte { z: [in, out] the band they lie in across, beside a
                    bonnet's scoop, x: [[x0, x1] ...] only these stretches of the top (not over an open bay or a canvas roof), w: the
                    top's half width, every band cut to it (a narrow bonnet: none past its edge; none: as drawn), fit: true, each band cut to
-                   the top's own half width along the car, less 1.2 cm (JASTREB's nose narrowing to its mouth, the tail to its end) }
+                   the top's own half width along the car, less 1.2 cm (JASTREB's nose narrowing to its mouth, the tail to its end), slash:
+                   the doors' diagonal slashes' (8) top, as steep (none: 0.84, clipped at the belt; PANTER's door glass a pane from the belt) }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
@@ -148,7 +149,8 @@
       case 5: band(-zi + 0.02, -zo, S, { one: true }); break;                                   // folija: one stripe off-centre, on the left
       case 6: band(-0.025, 0.025, S, { one: true }); band(0.07, 0.1, S); band(0.14, 0.155, S); break;   // folija z robom: three in the middle, the outer thinner
       case 7: side(0.6, 0.66, S); side(0.68, 0.7, S); break;                                    // kovinska folija: two bands along the sides
-      case 8: for (const [x0, w] of [[0.55, 0.12], [0.3, 0.06]]) ly.side([[x0, 0.55], [x0 + w, 0.55], [x0 + w - 0.35, 0.84], [x0 - 0.35, 0.84]], S, 0.006); band(0.07, 0.15, S, { x: [0.82, 9] }); break;   // odsevna: diagonal slashes on the doors
+      case 8: { const y1 = m.slash || 0.84, dx = m.slash ? 0.35 * (y1 - 0.55) / 0.29 : 0.35;   // (slash: their top lower, as steep: under a door's glass that starts at the belt)
+        for (const [x0, w] of [[0.55, 0.12], [0.3, 0.06]]) ly.side([[x0, 0.55], [x0 + w, 0.55], [x0 + w - dx, y1], [x0 - dx, y1]], S, 0.006); band(0.07, 0.15, S, { x: [0.82, 9] }); break; }   // odsevna: diagonal slashes on the doors
       case 9: taper(0.2, 0.2, 0.04, S); break;                                                  // lakirani črti: a pair narrowing from the nose to the tail
       case 10: band(0.04, 0.15, S, { x: [0.82, 9] }); band(0.15, 0.165, BLK, { x: [0.82, 9] }); band(0.04, 0.15, S, { x: [-9, -1.6] }); break;   // lakirane z robom: on the bonnet and the tailgate only
       case 11: band(-0.3, 0.3, S, { one: true }); break;                                        // kovinski lak: one band the width of the roof's middle
