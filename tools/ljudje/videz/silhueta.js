@@ -4,7 +4,7 @@
 // samo tam, kjer se vidi obris; skrite ploskve (v drugih delih, podplati, stiki) izpuščene, zato je oglišč največ toliko kot prej.
 // Postave (vitka, čokata, široka, drobna, z ožjim pasom in širšimi boki): samo širina in globina, nikoli zglobi ali dolžine udov.
 // Barve, ki jih prizor zahteva (majica, hlače, jopič, pokrivalo), ostanejo; naključne izbire v istem vrstnem redu kot person0 (isti prizori).
-// Gledalci (instancirani): ista razmerja v 168 ogliščih (ramena, ožji vrat, okroglejša glava, dve nogi). Samo za slike (tools/ljudje/videz).
+// Gledalci (instancirani): ista razmerja v največ 168 ogliščih (ramena, ožji vrat, okroglejša glava, dve nogi). Samo za slike (tools/ljudje/videz).
 (function () {
   // ---- the build types: multipliers of widths and depths only (sw shoulders, ww waist, hw hips, cd chest depth, bd belly depth, lt legs, ar arms)
   const BUILDS = {
@@ -54,7 +54,7 @@
         return [[cx + w, y, cz], [cx + a * w, y, cz + d], [cx - a * w, y, cz + d], [cx - w, y, cz], [cx - a * w, y, cz - db], [cx + a * w, y, cz - db]];
       }
       // bands between rings (col(band, side) -> colour or null: left out), o.apex [x, y, z] + o.apexCol(side): a fan up from the last ring,
-      // o.cap: a flat lid on the last ring (colour), o.chin [x, y, z] + o.chinCol(side): a fan down from the first ring
+      // o.cap: a flat lid on the last ring (colour)
       function loft(B, rings, n, col, o) {
         o = o || {};
         const R = rings.map(r => ring(r, n)), C = rings.map(r => [r.x || 0, r.y, r.z || 0]);
@@ -65,7 +65,6 @@
         const L = R[R.length - 1], cl = C[C.length - 1];
         if (o.apex) for (let j = 0; j < n; j++) B.tri(o.apexCol(j), L[j], L[(j + 1) % n], o.apex, cl);
         if (o.cap != null) for (let j = 1; j + 1 < n; j++) B.tri(o.cap, L[0], L[j], L[j + 1], [cl[0], cl[1] - 0.05, cl[2]]);
-        if (o.chin) for (let j = 0; j < n; j++) B.tri(o.chinCol(j), R[0][j], R[0][(j + 1) % n], o.chin, C[0]);
         return B;
       }
       // a band from a six-sided ring (below) to a four-sided one (above): ten triangles (the shoulders' slope up to the neck)
@@ -78,7 +77,8 @@
         return B;
       }
       const all = (c) => () => c;
-      const COVER = new Set(['cap', 'beanie', 'helmet', 'hard', 'fire', 'scarf', 'veil']);   // (hats that hide the head's crown: no crown under them)
+      const COVER = new Set(['cap', 'beanie', 'helmet', 'hard', 'fire', 'scarf', 'veil', 'bucket', 'straw', 'flat', 'police']);   // (hats that hide the head's crown: no crown under them)
+      const HATY = { cap: 0.218, bucket: 0.21, straw: 0.229, flat: 0.232 };   // (where a hat's lower edge is above 0.19: the skull's band goes up to it)
       const BACK6 = (j) => j >= 3, SIDE6 = (j) => j === 0 || j === 2;
 
       function person(o) {
@@ -107,7 +107,7 @@
         // neck's base (six sides to four), the neck (skin; lite: a collar in the shirt's colour up into the head)
         const W = { y: lite ? -0.09 : -0.035, w: 0.148 * Bd.ww, d: 0.098 * Bd.bd, z: 0.008 };
         const S = { y: 0.445, w: 0.214 * Bd.sw, d: 0.112 * Bd.cd, db: 0.1 * Math.max(1, Bd.cd * 0.96), z: 0.0, a: 0.56 };
-        const N = { y: 0.54, w: 0.058, d: 0.056, z: -0.012 }, Nt = { y: 0.625, w: 0.05, d: 0.05, z: -0.006 };
+        const N = { y: 0.53, w: 0.058, d: 0.056, z: -0.012 }, Nt = { y: 0.625, w: 0.05, d: 0.05, z: -0.006 };
         const vest = o.vest != null;
         loft(B, [W, S], 6, all(vest ? o.vest : shirt));   // (a vest: this band in its colour, the shirt on the shoulders and the sleeves)
         if (lite) band64(B, S, { y: 0.6, w: 0.052, d: 0.05, z: -0.01 }, shirt).to(torso);
@@ -121,14 +121,17 @@
           if (o.belt) { const rr = (y, k) => ({ y, w: W.w * k + 0.004, d: W.d * k + 0.004, z: W.z }); loft(B, [rr(-0.04, 1.06), rr(0.02, 1.07)], 6, all(o.belt)).to(torso); }
         }
 
-        // ---- the head (head frame): a jaw fan, the skull's band, a crown fan; hair on the top and at the back (long: also round the face)
+        // ---- the head (head frame): the skull's band from the jaw up, a crown fan; hair on the top and at the back (long: also round the face)
         { if (kid) head.scale.setScalar(1.26);
           const nw = o.hat === 'scarf' ? 0.93 : 1;   // (the scarf's sides hug the head)
-          const capLite = lite && o.hat === 'cap', cover = !capLite && COVER.has(o.hat), capY = cover && o.hat === 'cap' ? 0.218 : 0.19;   // (under a cap: up to its rim)
-          const Hb = { y: lite ? 0.03 : 0.085, w: 0.103 * nw, d: 0.113, z: 0.004, a: 0.58 }, Hc = { y: capY, w: (capY > 0.2 ? 0.096 : 0.1) * nw, d: capY > 0.2 ? 0.106 : 0.11, db: capY > 0.2 ? 0.106 : 0.112, z: -0.006, a: 0.6 };
+          const capLite = lite && o.hat === 'cap', cover = !capLite && COVER.has(o.hat), hy = cover && HATY[o.hat] || 0.19;
+          const Hb = lite ? { y: 0.03, w: 0.103 * nw, d: 0.113, z: 0.004, a: 0.58 } : { y: 0.015, w: 0.094 * nw, d: 0.106, z: 0.01, a: 0.62 };   // (the jaw a little narrower than the skull)
+          const Hc = !cover ? { y: 0.19, w: 0.105, d: 0.113, db: 0.117, z: -0.006, a: 0.6 }   // (bare: the skull a touch bigger; under a hat it fits inside the hat)
+            : o.hat === 'police' ? { y: 0.217, w: 0.092, d: 0.09, z: 0, a: 0.6 }   // (inside the cap's eight-sided band)
+            : { y: hy, w: (hy > 0.2 ? 0.096 : 0.1) * nw, d: hy > 0.2 ? 0.106 : 0.11, db: hy > 0.2 ? 0.106 : 0.112, z: -0.006, a: 0.6 };
           const hcol = hs && hs !== 'bald' ? hair : skin;
           const band = (b, j) => hs === 'long' && (BACK6(j) || SIDE6(j)) ? hcol : BACK6(j) ? hcol : skin;
-          loft(B, [Hb, Hc], 6, band, { apex: cover ? null : [0, 0.248, -0.012], apexCol: () => capLite ? hc : hcol, chin: lite ? null : [0, -0.03, 0.035], chinCol: (j) => BACK6(j) ? null : skin }).to(head);   // (the jaw; its back half is under the skull, over the neck)
+          loft(B, [Hb, Hc], 6, band, { apex: cover ? null : [0, 0.25, -0.012], apexCol: () => capLite ? hc : hcol }).to(head);   // (no underside: the camera is above, and a chin that faces down reads as a dark beard)
           if (hs === 'long' && !lite) {   // hair down the back to the shoulders
             loft(B, [{ y: -0.13, w: 0.105, d: 0.03, z: -0.098 }, { y: 0.17, w: 0.094, d: 0.035, z: -0.082 }], 4, (b, j) => j === 0 ? null : hair).to(head);
           }
@@ -156,7 +159,7 @@
         for (const sd of [1, -1]) {
           const sh = new THREE.Group(); sh.position.set(sd * 0.245, 0.45, 0); torso.add(sh); sh.rotation.order = 'ZXY';
           const Rd = { y: -0.03, w: 0.062 * ar, d: 0.064 * ar, x: sd * 0.004 }, Re = { y: -0.295, w: 0.045 * ar, d: 0.047 * ar };
-          const top = lite ? { cap: long ? shirt : skin } : { apex: [sd * 0.006, 0.022, 0], apexCol: () => shirt };   // (rings from the bottom up: the fan on the last; lite: a flat lid)
+          const top = lite ? { cap: long ? shirt : skin } : { apex: [sd * 0.006, 0.016, 0], apexCol: () => shirt };   // (rings from the bottom up: the fan on the last; lite: a flat lid)
           if (long) loft(B, [Re, Rd], 4, all(shirt), top);
           else if (lite) loft(B, [Re, Rd], 4, all(skin), top);
           else { const Rs = { y: -0.135, w: 0.06 * ar, d: 0.062 * ar }; loft(B, [Rs, Rd], 4, all(shirt), top);
@@ -222,20 +225,20 @@
             quad(A, G, [-xo(0.86), 0.86, zb(0.86)], [-xo(0), 0, zb(0)], ins, 33, W1); quad(E, F, [xo(0.86), 0.86, zb(0.86)], [xo(0), 0, zb(0)], ins, 33, W1);
             quad(A, E, [xo(0), 0, zb(0)], [-xo(0), 0, zb(0)], [0, 0.3, 0], 30, [0.12, 0.1, 0.09]); }   // (dark soles, seen when sitting)
           // torso (bone 0, shirt): from the hips to broad shoulders, sloping up to the neck (a low pyramid, its top inside the head)
-          { const w0 = [0.163, 0.8, 0.1, -0.098], w1 = [0.275, 1.355, 0.118, -0.108];
+          { const w0 = [0.176, 0.8, 0.108, -0.104], w1 = [0.272, 1.36, 0.124, -0.114];
             const r = (w) => [[w[0], w[1], w[2]], [-w[0], w[1], w[2]], [-w[0], w[1], w[3]], [w[0], w[1], w[3]]], R0 = r(w0), R1 = r(w1), ins = [0, 1.1, 0];
             for (let j = 0; j < 4; j++) quad(R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j], ins, 1, W1);
-            const ap = [0, 1.505, -0.004]; for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], ap], [0, 1.3, 0], 1, W1); }
+            const ap = [0, 1.5, -0.004]; for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], ap], [0, 1.3, 0], 1, W1); }
           // head (bone 0): narrower at the jaw, wider at the crown, a low pyramid on top; the face and sides skin, the back and the top hair (or a cap)
           { const r = (y, w, d, z) => [[w, y, z + d], [-w, y, z + d], [-w, y, z - d], [w, y, z - d]];
-            const R0 = r(1.445, 0.072, 0.082, 0.012), R1 = r(1.645, 0.114, 0.124, -0.004), ins = [0, 1.55, 0];
+            const R0 = r(1.45, 0.086, 0.096, 0.01), R1 = r(1.638, 0.116, 0.126, -0.004), ins = [0, 1.55, 0];
             for (let j = 0; j < 4; j++) quad(R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j], ins, j === 2 ? 4 : 2, W1);
-            const ap = [0, 1.738, -0.012]; for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], ap], [0, 1.6, 0], 4, W1); }
+            const ap = [0, 1.708, -0.012]; for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], ap], [0, 1.6, 0], 4, W1); }
           // arms (bone 1 at x<0, bone 2 at x>0; the sleeve): three-sided, thick at the shoulder (a lid on top), thin at the hand; the top a scaled copy
           // of the bottom, so every side is flat (the hand's end open: it looks down unless the arm is up)
           for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, X = (x) => sd * x, cz = -0.004;
             const tri3 = (y, k) => [[X(0.27 - 0.026 * k), y, cz + 0.036 * k], [X(0.27 + 0.026 * k), y, cz + 0.036 * k], [X(0.27), y, cz - 0.042 * k]];
-            const [FIb, FOb, Bb] = tri3(0.83, 1), [FIt, FOt, Bt] = tri3(1.372, 1.75), ins = [X(0.27), 1.1, cz];
+            const [FIb, FOb, Bb] = tri3(0.83, 1.25), [FIt, FOt, Bt] = tri3(1.375, 1.85), ins = [X(0.27), 1.1, cz];
             quad(FIb, FOb, FOt, FIt, ins, b + 5, W1); quad(FOb, Bb, Bt, FOt, ins, b + 5, W1); quad(Bb, FIb, FIt, Bt, ins, b + 5, W1);
             poly([FIt, FOt, Bt], [X(0.27), 1.2, cz], b + 5, W1); }
           // the flag pole and its cloth, as in js/world.js

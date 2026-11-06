@@ -273,9 +273,7 @@ window.LJV = {
       for (const sd of [1, -1]) {
         const hp = new THREE.Group(); hp.position.set(sd * 0.09, -0.05, 0); hips.add(hp);
         const kn = new THREE.Group(); kn.position.y = -0.41; hp.add(kn);
-        if (bottom === 'trousers') add(hp, cube(-0.075, 0.075, -0.415, 0.015, -0.085, 0.085), SIDES, pants);
-        else { const xi = -sd * 0.09, xb = sd * 0.115, xt = sd * 0.08;   // (the skirt's half: from the middle out, flared, to the knee)
-          add(hp, [[xi, -0.41, -0.122], [xb, -0.41, -0.122], [xi, 0.015, -0.104], [xt, 0.015, -0.104], [xi, -0.41, 0.122], [xb, -0.41, 0.122], [xi, 0.015, 0.104], [xt, 0.015, 0.104]], (sd > 0 ? PX : NX) | PZ | NZ, lower); }
+        add(hp, cube(-0.075, 0.075, -0.415, 0.015, -0.085, 0.085), SIDES, bottom === 'trousers' ? pants : skin);   // (the thigh: bare under a skirt)
         add(kn, cube(-0.0625, 0.0625, -0.38, 0, -0.0675, 0.0675), SIDES, shins);
         if (!lite) add(kn, cube(-0.0575, 0.0575, -0.46, staff ? -0.33 : -0.37, -0.09, 0.18), BOX5, shoes);
         if ((hiOverall || o.hat === 'fire') && !lite) add(kn, cube(-0.066, 0.066, -0.25, -0.205, -0.0715, 0.0715), SIDES, o.hat === 'fire' ? (o.stripes || 0xe8d84a) : 0xd9dde2);
@@ -283,9 +281,14 @@ window.LJV = {
           const x2 = sd * 0.065; addQ(kn, [x2, -0.36, -0.012], [x2, -0.36, 0.012], [x2, 0.0, 0.012], [x2, 0.0, -0.012], [sd, 0, 0], 0xeeeeea); }   // (white stripes down the overall's legs)
         P.hp.push(hp); P.kn.push(kn);
       }
+      if (bottom !== 'trousers') {   // the skirt (or the dress's): its own joint on the hips, turned as the two legs on average (down when walking, forward when sitting)
+        const sk = P.skirt = new THREE.Group(); sk.position.y = -0.05; hips.add(sk); P.xJ = [sk];
+        add(sk, frust(0.212, -0.148, 0.148, -0.375, -0.375, 0.17, -0.106, 0.106, 0.045, 0.045), SIDES, lower);
+      }
       return P;
     }
-    return { person };
+    function setJ(P, J, setJ0) { setJ0(P, J); const s = P.skirt; if (s) s.rotation.x = (P.hp[0].rotation.x + P.hp[1].rotation.x) * 0.5; }
+    return { person, setJ };
   },
 
   /* ---------- the instanced crowd: the same 28 quads (168 index vertices), bones and colour groups; new groups 8 (the shoes' toes on the legs,

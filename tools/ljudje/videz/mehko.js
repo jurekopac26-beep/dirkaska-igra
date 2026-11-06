@@ -176,7 +176,16 @@
         g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 1.4, 0), 2.4);
         return g;
       }
-      return { geo };
+      // a soft rim: the figure's edges as the camera sees them a little lighter (the sky behind the light), per vertex, a few operations
+      function shader(S) {
+        return Object.assign({}, S, { CR_VS_POS: S.CR_VS_POS + '\n' + [
+          '{ vec4 crMv = vec4(transformed, 1.0);',
+          '#ifdef USE_INSTANCING', 'crMv = instanceMatrix * crMv;', '#endif',
+          'crMv = modelViewMatrix * crMv;',
+          'float crRim = 1.0 - max(0.0, dot(normalize(transformedNormal), normalize(-crMv.xyz)));',
+          'vColor *= 1.0 + 0.3 * crRim * crRim * crRim; }'].join('\n') });
+      }
+      return { geo, shader };
     },
   };
 })();
