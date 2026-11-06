@@ -7,7 +7,8 @@
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
-                   mounts.soncni_pas { x: [top, foot], lift: more over a windscreen whose glass panels bulge over the top's line }
+                   mounts.soncni_pas { x: [top, foot], lift: more over a windscreen whose glass panels bulge over the top's line; pane:
+                   [top inner, top corner, base inner, base corner], a windscreen that is a pane of its own (its right half), part: its part }
        zamasek     the fuel cap on the side, in place of the stock one (flaps, aluminium, racing, carbon caps); mounts.zamasek { x, y, z, r }
        celjusti    the brake calipers behind the rims' spokes (in the body: they never spin; a steered wheel turns past them a little);
                    with a brake kit (zavore) none of their own: the kit's caliper in their colour (DELI.calColour(n), js/deli/bok.js);
@@ -76,6 +77,31 @@
       top: (poly, col, lift) => { for (const t of fine(tris(poly))) LD.top(t, col, lift || 0.008); },
       topZ: (poly, col, lift) => { for (const t of fine(tris(poly))) { LD.top(t, col, lift || 0.008); LD.top(t.map(([u, v]) => [u, -v]).reverse(), col, lift || 0.008); } },   // (mirrored across)
     };
+  }
+  // a windscreen that is a pane of its own, not the loft's band (LEV KABRIO's): pane [top inner, top corner, base inner, base corner] of its
+  // right half (mirrored), a facet flat across the middle and one each side from the inner edge out to the corner, each side facet two
+  // triangles split from its top corner to the base's inner point (as the car's K.face splits its quad). A point (x from the top's to the
+  // base's, z) on the plane under it, lifted along that plane's normal; pieces cut at the folds and the side facets' diagonals, each on
+  // one plane
+  function paneLayer(K, pane, part) {
+    const [TI, TC, BI, BC] = pane, mix = (a, b, t) => [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * t), tOf = (x) => (x - TI[0]) / (BI[0] - TI[0]);
+    const I = (x) => mix(TI, BI, tOf(x)), C = (x) => mix(TC, BC, tOf(x)), fold = (x) => I(x)[2];
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], crs = (u, v) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const plane = (A, B, D) => { const n = crs(sub(B, A), sub(D, A)), l = Math.hypot(...n) * (n[1] < 0 ? -1 : 1), u = n.map(q => q / l);   // (its normal up / out)
+      return { n: u, y: (x, z) => A[1] - (u[0] * (x - A[0]) + u[2] * (z - A[2])) / u[1] }; };
+    const PL = [plane(TI, BI, [TI[0], TI[1], -TI[2]]), plane(TC, BC, BI), plane(TC, BI, TI)];   // (the middle; the right side's outer triangle, its inner one)
+    const g = (x, a) => (BI[0] - TC[0]) * (a - TC[2]) - (BI[2] - TC[2]) * (x - TC[0]), gOut = Math.sign(g(BC[0], BC[2])) || 1;   // (which side of the diagonal: > 0 the outer triangle)
+    const cut = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a);
+      if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out; };
+    const o = { part: part || 'body' };
+    const top = (poly, col, lift) => { const l = lift || 0.008, pcs = [[cut(cut(poly, (p) => p[1] + fold(p[0])), (p) => fold(p[0]) - p[1]), 0, 1]];
+      for (const sd of [-1, 1]) { const S = cut(poly, (p) => sd * p[1] - fold(p[0])), G = (p) => gOut * g(p[0], sd * p[1]);
+        pcs.push([cut(S, G), 1, sd], [cut(S, (p) => -G(p)), 2, sd]); }
+      for (const [P, f, sd] of pcs) { if (P.length < 3) continue; const n = [PL[f].n[0], PL[f].n[1], PL[f].n[2] * sd];
+        const Q = P.map(([x, z]) => [x + n[0] * l, PL[f].y(x, sd * z) + n[1] * l, z + n[2] * l]);
+        const N = [0, 0, 0]; for (let i = 0; i < Q.length; i++) { const a = Q[i], b = Q[(i + 1) % Q.length]; N[0] += (a[1] - b[1]) * (a[2] + b[2]); N[1] += (a[2] - b[2]) * (a[0] + b[0]); N[2] += (a[0] - b[0]) * (a[1] + b[1]); }
+        K.face(N[0] * n[0] + N[1] * n[1] + N[2] * n[2] < 0 ? Q.slice().reverse() : Q, col, o); } };
+    return { LD: { prop: (x) => C(x)[2] - 0.016 }, top };   // (the band out to 1.2 cm inside the pane's edge, under its frame)
   }
   // the top's painted runs along x (the main loft's segments that are not glass: the windscreen 'gf', the rear window 'gr')
   function paintRuns(K, x0, x1) {
@@ -201,7 +227,7 @@
     13: { c: WHT, refl: true }, 14: { c: 's', print: true }, 15: { c: [0.16, 0.16, 0.17], perf: true }, 16: { c: 's', print: true, refl: true } };
   function soncni_pas(K, n, m) {
     // (the band from the windscreen's top edge down, over its whole width to the A-pillars: at each x out to the top's crease, wt)
-    const o = SUN[n]; if (!o) return; const ly = layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
+    const o = SUN[n]; if (!o) return; const ly = m.pane ? paneLayer(K, m.pane, m.part) : layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
     const up = m.lift || 0;   // (lift: over a windscreen whose glass panels bulge over the top's line, MIŠKA's one panel from the roof to the cowl)
     const W = (x) => LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, (lift || 0.006) + up), Wm = W(x0);
     if (o.rainbow) { const RB = [[0.85, 0.12, 0.1], [0.95, 0.55, 0.08], [0.95, 0.85, 0.1], [0.15, 0.6, 0.25], [0.15, 0.35, 0.85]]; RB.forEach((col, i) => band(x0 + d * i / 5, x0 + d * (i + 1) / 5, col)); return; }
