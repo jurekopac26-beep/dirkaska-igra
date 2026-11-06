@@ -28,16 +28,16 @@
   "jsMs": 3.48
  },
  "nring": {
-  "calls": 151,
-  "maxCalls": 167,
+  "calls": 153,
+  "maxCalls": 173,
   "kverts": 304,
-  "maxKverts": 344,
-  "jsMs": 3.59
+  "maxKverts": 330,
+  "jsMs": 4.14
  },
  "spa": {
-  "calls": 180,
+  "calls": 181,
   "maxCalls": 228,
-  "kverts": 468,
+  "kverts": 471,
   "maxKverts": 623,
   "jsMs": 1.6
  },
@@ -49,10 +49,10 @@
   "jsMs": 1.36
  },
  "suzuka": {
-  "calls": 194,
-  "maxCalls": 241,
-  "kverts": 480,
-  "maxKverts": 605,
+  "calls": 196,
+  "maxCalls": 244,
+  "kverts": 481,
+  "maxKverts": 606,
   "jsMs": 1.52
  },
  "caracoles": {
@@ -126,11 +126,11 @@
   "jsMs": 1.36
  },
  "mulholland": {
-  "calls": 149,
-  "maxCalls": 171,
-  "kverts": 490,
-  "maxKverts": 730,
-  "jsMs": 2.3
+  "calls": 146,
+  "maxCalls": 168,
+  "kverts": 472,
+  "maxKverts": 669,
+  "jsMs": 1.58
  },
  "beartooth": {
   "calls": 168,
@@ -147,18 +147,18 @@
   "jsMs": 1.27
  },
  "moki": {
-  "calls": 146,
-  "maxCalls": 202,
-  "kverts": 228,
-  "maxKverts": 313,
-  "jsMs": 1.42
+  "calls": 129,
+  "maxCalls": 161,
+  "kverts": 205,
+  "maxKverts": 265,
+  "jsMs": 1.15
  },
  "maunakea": {
-  "calls": 112,
-  "maxCalls": 130,
-  "kverts": 196,
-  "maxKverts": 269,
-  "jsMs": 2.01
+  "calls": 114,
+  "maxCalls": 131,
+  "kverts": 201,
+  "maxKverts": 273,
+  "jsMs": 1.55
  },
  "baldy": {
   "calls": 154,
@@ -175,11 +175,11 @@
   "jsMs": 4.02
  },
  "riverside": {
-  "calls": 159,
-  "maxCalls": 204,
-  "kverts": 292,
-  "maxKverts": 414,
-  "jsMs": 1.59
+  "calls": 163,
+  "maxCalls": 203,
+  "kverts": 283,
+  "maxKverts": 345,
+  "jsMs": 0.9
  },
  "monterey": {
   "calls": 199,
@@ -210,11 +210,11 @@
   "jsMs": 1.26
  },
  "toronto": {
-  "calls": 206,
-  "maxCalls": 262,
-  "kverts": 711,
-  "maxKverts": 807,
-  "jsMs": 1.99
+  "calls": 193,
+  "maxCalls": 229,
+  "kverts": 699,
+  "maxKverts": 808,
+  "jsMs": 1.02
  },
  "medvode": {
   "calls": 130,
@@ -238,11 +238,11 @@
   "jsMs": 1.98
  },
  "detroit": {
-  "calls": 218,
-  "maxCalls": 235,
-  "kverts": 702,
-  "maxKverts": 826,
-  "jsMs": 1.72
+  "calls": 220,
+  "maxCalls": 245,
+  "kverts": 670,
+  "maxKverts": 786,
+  "jsMs": 1.19
  },
  "palomar": {
   "calls": 148,

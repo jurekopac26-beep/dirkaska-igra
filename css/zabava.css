@@ -1,0 +1,32 @@
+/* Zabava (js/zabava.js, js/zabava/): the card before the start, the block in the results, the HUD's extra lines and rows */
+
+/* the card before the start (the team's goals): over the game, the choices as big buttons, upright and on its side */
+.zb-card { position: fixed; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 7, 12, 0.55); font-family: var(--f-ui, Roboto, sans-serif); }
+.zb-cbox { width: min(420px, 100%); max-height: 100%; overflow: auto; padding: 16px 16px 12px; border-radius: 16px; background: rgba(10, 14, 22, 0.94); border-top: 4px solid #ffd34d; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); color: #fff; }
+.zb-ct { display: block; font: 800 13px/1.2 var(--f-ui, Roboto, sans-serif); letter-spacing: 1.6px; color: #ffd34d; }
+.zb-cs { margin: 6px 0 10px; font: 400 13px/1.35 var(--f-ui, Roboto, sans-serif); color: #c9d2de; }
+.zb-ci { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 8px; padding: 12px 14px; min-height: 48px; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; background: rgba(255, 255, 255, 0.07); color: #fff; font: 600 15px/1.25 var(--f-ui, Roboto, sans-serif); text-align: left; cursor: pointer; }
+.zb-ci em { flex: none; font: 800 13px/1 var(--f-ui, Roboto, sans-serif); font-style: normal; color: #9fe07a; }
+.zb-ci:focus, .zb-ci:hover { outline: none; border-color: #ffd34d; background: rgba(255, 211, 77, 0.14); }
+.zb-ci.ghost { background: transparent; color: #c9d2de; font-weight: 500; }
+@media (orientation: landscape) and (max-height: 480px) { .zb-cbox { width: min(560px, 100%); padding: 10px 14px 6px; } .zb-ci { min-height: 40px; padding: 8px 12px; margin-bottom: 6px; } .zb-cs { margin: 4px 0 8px; } }
+
+/* the block in the results (#res-zb): the coach, the challenges by the road, ... one section each */
+.zb-res { margin: 8px 0 4px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); font: 400 13px/1.4 var(--f-ui, Roboto, sans-serif); color: #dfe6ef; }
+.zb-res.off { display: none; }
+.zb-res .zb-sec + .zb-sec { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.zb-res .zb-h { display: block; margin-bottom: 3px; font: 800 11px/1.2 var(--f-ui, Roboto, sans-serif); letter-spacing: 1.2px; color: #ffd34d; }
+.zb-res ul { margin: 0; padding: 0 0 0 16px; }
+.zb-res li { margin: 2px 0; }
+.zb-res .zb-st { color: #ffd34d; letter-spacing: 1px; }
+.zb-res .zb-new { color: #9fe07a; font-weight: 700; }
+
+/* the timing tower: the elimination's danger rows, a rival's grudge, a rival's respect */
+#h-tower .tw-r.zb-out, #tw-strip .c.zb-out { background: rgba(214, 48, 48, 0.55); }
+#h-tower .tw-r.zb-mad b, #tw-strip .c.zb-mad b { color: #ff9a3c; }
+#h-tower .tw-r.zb-mad, #tw-strip .c.zb-mad { box-shadow: inset 3px 0 0 #ff9a3c; }
+
+/* the HUD's line under the time (#h-gap): the elimination's countdown, the pursuit's distance */
+#hud.zb-line #h-gap { display: block; margin-top: 3px; font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui, Roboto, sans-serif); color: #ffd34d; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#hud.zb-line #h-gap.zb-red { color: #ff6b6b; }
+#hud.zb-line #h-gap.zb-ok { color: #9fe07a; }
