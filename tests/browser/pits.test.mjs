@@ -53,7 +53,7 @@ try {
         if (on) { B.n++; if (B.first == null) B.first = f; if (f < B.prev - 1e-9) B.back++; B.prev = f; const k = l.replace(/^Prevzem čez \d+,\d s$/, 'Prevzem čez n s'); if (B.seq[B.seq.length - 1] !== k) B.seq.push(k);
           const m = /^Prevzem čez (\d+,\d) s$/.exec(l); if (m && +m[1].replace(',', '.') !== B.pct[B.pct.length - 1]) B.pct.push(+m[1].replace(',', '.'));
           if (!B.rect && P.pitState === 'repair') { const r = pb.getBoundingClientRect(), M = document.getElementById('h-map').getBoundingClientRect(); B.rect = { l: r.left - M.left, r: r.right - M.right, gap: r.top - M.bottom, title: pb.firstElementChild.textContent }; } }
-        if (s0 && !s1) B.hand = { on, f }; else if (B.hand && on) B.after++; };
+        if (s0 && !s1) { if (B.n) B.hand = { on, f }; } else if (B.hand && on) B.after++; };   // (the hand-back only once the bar was up: the autopilot that runs over the way out's line for a moment on the lap before the stop is none)
       const one = (dt, s, b) => { const s0 = g.pitAuto.st, d1 = P.dmg; g.sim(dt, false, s, 0, b || 0); const s1 = g.pitAuto.st; bar(s0, s1);
         if (P.inPit && P.speed > 1 && P.pitState !== 'repair') { o.ln++; if (P.inThr > 0.05) o.lthr++; o.vmax = Math.max(o.vmax, P.speed * 3.6); }
         if (s0 === 'merge' && s1 === 'merge') { o.mN++; if (P.inSteer !== -1) o.mSteer++; if (P.inThr > 0.05) o.mThr++; if (P.pitWant || !P.noReverse || !P.pitAP) o.mBad++; o.mDmg += Math.max(0, P.dmg - d1); }
