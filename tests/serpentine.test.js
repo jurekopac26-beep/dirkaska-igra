@@ -11,7 +11,7 @@
 //   node tests/serpentine.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
-const { DT } = require('./lib/sim.js');
+const { DT, trackIds } = require('./lib/sim.js');
 
 const C = loadCore();
 let bad = 0, n = 0;
@@ -46,9 +46,8 @@ function own(T, i, sd) {
 // 1. every real track: no barrier past the middle between the legs of a hairpin
 {
   const over = [], nT = [];
-  for (const def of C.TRACKS) {
-    if (def.test) continue;   // (the test tracks: for deletion before Google Play, ignored)
-    const T = new C.Track(def); nT.push(def.id); let w = null;
+  for (const id of trackIds(C)) {   // (the real tracks only: the test tracks are for deletion before Google Play, CLAUDE.md »Testne proge«)
+    const def = C.TRACKS.find(d => d.id === id), T = new C.Track(def); nT.push(def.id); let w = null;
     for (let i = 0; i < T.N; i++) { const p = pastMiddle(T, i); if (p && !own(T, i, p[2]) && (!w || p[0] > w[0])) w = p; }
     if (w && w[0] > 0.05) over.push(`${def.id} ${w[0].toFixed(2)} m at s ${sOf(T, w[1])} ${w[2] > 0 ? 'R' : 'L'} (the other leg at s ${sOf(T, w[3])}, middle ${w[4].toFixed(1)} m)`);
   }
