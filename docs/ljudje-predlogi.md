@@ -126,3 +126,18 @@ Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni d
 - **8** (»… race postavi v že narejeno vodo«): race, labodi in račja hišica na pravem jezeru ob cesti v Crystal Palace, 1990 desno, na gladini (`float: 11.7`); brez umetnega ribnika.
 - **11 in 12** (»… postavi jih tam, kjer so v resnici«): prašiči in kokoši pri kmetiji v Zbiljah (Medvode 2940 desno, kmetijska poslopja 30 m od ceste), konji v ogradi ob skednju kmetije v Ouninpohji (1690 desno, `def.farms`; hlev je pravi skedenj). Na Štajerskem in Rio do Rastro ob cesti ni kmetije (OSM: najbližja 370–700 m od dirkališča, ob Rio do Rastro samo razgledišča), zato tam ni več prizora živali.
 - Slike: `node tools/ljudje/igra.mjs <proga> ribici,seno --pri 60,32,14`, `node tools/ljudje/zivali.mjs medvode --let 1,2.5,4` (štorklja po vzletu).
+
+## Novi predlogi v slikah (6. 11. 2026)
+
+Po želji uporabnika (prek #289, 5. 11. 2026) je seja partyslo (session_01WbgGzvUd4EBXhqUmqgnWco) naredila 10 novih prizorov, samo v slikah, brez kode (vprašanje `ljudje-predlogi-2` na strani Odločitve partyslo): 1 veslači (Montréal 3560 levo), 2 kasači z vozički (Trois-Rivières 330 desno), 3 tek po stopnicah (Harju 740 levo), 4 obiranje jabolk (Medvode 2610 desno), 5 planinci pri koči (Vršič 6515 desno), 6 reševalci iz vode (Newcastle 1010 desno), 7 pelikani (Townsville 1200 levo), 8 koati na razgledišču (Rio do Rastro 3975 levo), 9 trgatev (Bathurst 1190 levo), 10 otroški bejzbol (Trois-Rivières 1884 desno).
+
+**Odločitev uporabnika (6. 11. 2026):** 1, 3, 5, 6 in 7 so v redu; 4 ne (tam ni jabolk); 2, 9 in 10 »naj bo točno tam, kjer je v resnici«; 8 samo dva koata. Ker gre veliko teh prog v test (Trois-Rivières #379, Vršič #394, od šestih avstralskih ostane ena), naj bo vse pripravljeno splošno za vse proge; zaenkrat samo v slikah.
+
+**Splošno pravilo za kodo (pozneje):** prizor stoji na vsaki pravi progi, kjer OSM tak kraj pozna do ~60 m od ceste in ga kamera za avtom vidi. Obliko vzame iz OSM (pot ali mnogokotnik, preračunan v svet igre kot podatki proge), ne iz roke:
+- **Kasači:** `leisure=track` s `sport=horse_racing`. Zaprta črta brez `area=yes` je sredina steze (Trois-Rivières: 861 m, to je pol milje, merjeno ~1 m od notranje ograje), steza je ±9 m okrog nje. Igra na Trois-Rivièresu zdaj riše ograji od črte navznoter (`js/world-troisrivieres.js`, raba tal 2: 0,6 in 18 m), torej 9 m preveč v notranjost; ob izdelavi ju premakni na prava robova.
+- **Bejzbol:** `leisure=pitch` s `sport=baseball`. Domača baza je v kotu med ravnima stranicama ograje (17 m od njunega presečišča), zunanji lok nasproti. Če je domača baza dlje kot ~60 m od ceste (Trois-Rivières: ~100 m), otroci trenirajo na zunanjem polju ob cesti: v parih si podajajo žogo ob črti, trener odbija visoke žoge.
+- **Trgatev:** `landuse=vineyard`. Vrste so vzporedne z bližnjim robom, 2,8 m narazen, odrezane točno na robu vinograda; obiralci pred prvo vrsto (vidni s ceste), traktor s prikolico na robu.
+- **Koati:** samo dva, na razgledišču ali postajališču ob cesti (`tourism=viewpoint|attraction`, `amenity=cafe|parking`), na progah, kjer koati živijo (Južna in Srednja Amerika).
+- **Drugi:** veslači na vodi s `sport=rowing`, tek po stopnicah ob stopnicah za trening (`sport=fitness`) v breg, planinci pri `tourism=alpine_hut`, reševalci na `natural=beach` ob morju, pelikani na vodi ob cesti v Avstraliji.
+
+**Naslednji krog (6. 11. 2026), vse na strani Odločitve partyslo:** popravljeni 2, 8, 9 in 10 (vprašanje `ljudje-popravki`), 5 novih prizorov (`ljudje-predlogi-3`) in 5 grafičnih elementov, ki popestrijo grafiko (`grafika-predlogi-1`). Vsak nov predlog je naredil svoj agent, vsak na svoj način. Kodo izbranih naredi nova seja po odgovorih, z isto zahtevo: splošno za vse prave proge.
