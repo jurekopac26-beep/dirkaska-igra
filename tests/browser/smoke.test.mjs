@@ -59,10 +59,11 @@ try {
     await ctx.close();
   }
 
-  // 3. every track: race 20 s on autopilot with full graphics
+  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«)
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
-  const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
-  T.check('track menu lists every track of the game', [...ids].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, ids.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  const menu = await trackIds(page, true), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
+  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), ids = menu.filter(id => !test.includes(id));
+  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
   // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
   // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
   // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
@@ -87,7 +88,7 @@ try {
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
-    const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
+    const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
@@ -99,6 +100,11 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
+      // (measured right after a frame the game drew: the line under the clock (#h-split) is emptied in a timer 350 ms after it fades, the
+      // block shorter from then, and placeNote moves the sign up under it only in the game's next frame; measured in between, after the
+      // timer above, the sign stood under the block as it had been (on GitHub 95 px under a block to 76.5 px). The game's frames counted,
+      // not the page's: the battery saver draws only every other one)
+      const f0 = g.fr.drawn; for (let k = 0; k < 600 && g.fr.drawn < f0 + 2; k++) await new Promise(r => requestAnimationFrame(r));
       // (the clock's block as game.js placeNote sees it: its bottom moves with the fonts, a line under the clock (a place's name, a corner's
       // number) a pixel more or less tall from one browser's font to another's)
       const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); }

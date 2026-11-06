@@ -679,5 +679,6 @@
   }
 
   Object.defineProperties(API, { TRW: { get: () => TRW, set: (v) => { TRW = v; } } });
+  World.keep('TRW', 'troisrivieres');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.troisrivieres = (scene, tex, opts) => buildTroisRivieres(scene, tex, opts);
 })();

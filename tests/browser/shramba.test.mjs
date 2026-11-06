@@ -35,8 +35,13 @@ try {
     JSON.stringify(c1));
 
   // 2. a race to the line: the browser asked to keep the storage, the offer on the results
+  // (on autopilot; stuck or the wrong way round the car is put back on the road after each 2 s, like a player tapping Na progo: the
+  // autopilot has no reverse gear and the race rescues only the rivals. A knock can leave the player's car against the barrier: in CI
+  // (main, 5. 11. 2026) the results did not come in 800 s and the 180 s after; as in hlvid, lang and pits)
   await startTrack(pa, 'troisrivieres');
-  await pa.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 400 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
+  await pa.evaluate(() => { const g = window.__game; g.pause();
+    for (let k = 0; k < 400 && g.phase !== 'done'; k++) { g.sim(2, true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); }
+    if (g.phase !== 'done') g.resume(); });
   await pa.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
   await pa.waitForTimeout(300);
   const r1 = await pa.evaluate(() => ({ asked: window.__persist.asked, kept: Shramba.state.persisted, races: window.__game.stats.races, off: document.getElementById('res-save').classList.contains('off'), txt: document.getElementById('res-save').innerText.replace(/\s+/g, ' '),
