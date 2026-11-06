@@ -19,3 +19,7 @@ Načrt, odločitve in stanje teme (pravilo v `CLAUDE.md`, Postopek). Vsaka odlo�
 
 ## Stanje
 - 6. 11.: začetek, meritev Spa pred spremembo (`tools/obremenitev.mjs spa`): drevesa v najbolj gozdnatih vzorcih ~175–210 tisoč od ~420–520 tisoč oglišč na sličico (z njihovimi sencami), ~25 klicev.
+- 6. 11. popoldne (#419): skupna koda za vse proge; oblika A na Spa, Nordschleife, Red Bull Ringu, Ouninpohji, Katu in Harju. Število dreves je enako kot prej (`THIN`). Pri polni grafiki je Spa skoraj enaka (do 0,3 % slike), iglavci na Ouninpohji, Katu in Harju so mehki kot v prototipu A.
+- Obremenitev na NIZKI (`perf.test.mjs`, `main` in veja v istem zaporedju prog, 6. 11.; povprečje / največ v tisoč ogliščih): Ouninpohja 398 → 259 / 473 → 298, Tianmen 592 → 394 / 701 → 556, Iroha 494 → 380 / 581 → 482, Katu 531 → 429 / 613 → 542, Rio do Rastro 396 → 342 / 539 → 472, Spa 462 → 403 / 552 → 550, Nordschleife 312 → 266 / 339 → 283, Suzuka 483 → 450 / 618 → 568, Livorno 318 → 288 / 407 → 351. Klici risanja enaki ali manj (Ouninpohja 167 → 145, Tianmen 154 → 146, Iroha 189 → 183). Druge prave proge enako ali manj.
+- Reference `world` in `perf` so znova ustvarjene samo za prave proge; vnosi testnih prog ostanejo, kot so (celoten `--update` bi jih izbrisal, zato so vrnjeni).
+- Naprej (ni del te teme): več dreves ob cesti, ko uporabnik reče (redčenje gozda je prestavljeno).
