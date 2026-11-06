@@ -5377,7 +5377,8 @@ const Core = (function () {
       // fuel (opts.fuel, a circuit with pits): every car starts full (c.fuel 1, a share of the tank); a full tank lasts about 1.3 times the track's
       // usual race at an average throttle (a long race stops for it once, an endurance race more), more on the throttle, less off it; its weight
       // on the car (c.fuelKg of c.tankKg); refilled at a pit stop (0.9 s a tenth of the tank, with the repair and the tyres); empty: the last
-      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up); c.fuelK: how many laps before the
+      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up, from its place on the grid, c.fuelD,
+      // once it has done a lap on it; before: the usual burn at the start, the last tank's after a stop); c.fuelK: how many laps before the
       // last one it could make a rival comes in when that costs it no extra stop (0 to 1.5: the stops spread over the laps)
       if (opts.fuel && track.def.pit && !track.open && !this.timeTrial) {
         this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
@@ -5596,6 +5597,7 @@ const Core = (function () {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
       // a flying start (opts.flying: a race up an open road or the Nordschleife's Circuit race, the seconds the column holds): the race already under way, see _flyColumn
       if (this.opts.flying > 0 && !this.timeTrial && this.player) this._flyColumn();
+      if (this.fuelRate) for (const c of this.cars) c.fuelD = c.dist;   // (fuel: the metres on the tank counted from where the car sets off, behind the line on the grid)
       if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
@@ -5706,7 +5708,7 @@ const Core = (function () {
         if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
           if (this.state === 'racing' && !c.finished && !c.inPit) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * cdt);
           c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
-          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = (1 - c.fuel) / used;
+          const used = c.dist - c.fuelD; if (used > T.len) c.fuelPm = (1 - c.fuel) / used;   // (its own burn once it has done a lap on the tank: the first metres, away from the grid flat out or out of the pit lane, take more a metre than a lap)
         }
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
