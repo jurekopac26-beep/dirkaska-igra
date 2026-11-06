@@ -55,7 +55,8 @@
   function turbo(K, n, m) {
     const { x, y, z } = m, s = 0.8 + n * 0.022, col = n <= 2 ? DK : n <= 6 ? AL : n <= 12 ? [0.55, 0.56, 0.6] : CHR, hot = [0.42, 0.24, 0.16];
     const snail = (cz, k) => { cyl(K, [x, y + 0.08 * k, cz - 0.05 * k], [x, y + 0.08 * k, cz], 0.07 * k, col, { capA: col, capB: DK }); cyl(K, [x, y + 0.08 * k, cz], [x, y + 0.08 * k, cz + 0.05 * k], 0.06 * k, hot); };
-    if (n >= 13) { snail(z - 0.1, s * 0.85); snail(z + 0.12, s * 0.85); } else snail(z, s);
+    const tw = m.twin || [-0.1, 0.12];   // (twin: the two snails' places across, from z: MIŠKA's side by side, in its narrow bay)
+    if (n >= 13) { snail(z + tw[0], s * 0.85); snail(z + tw[1], s * 0.85); } else snail(z, s);
     cyl(K, [x, y + 0.08 * s, z - 0.06], [x - 0.15, y + 0.22, z - 0.2], 0.03, n >= 9 ? BLU : AL, { n: 6 });   // (to the intercooler)
     if (n === 8 || n === 10 || n === 15) box(K, x + 0.06, y - 0.05, z, 0.04, 0.16, 0.42, AL);   // (a bigger intercooler in front of it)
   }

@@ -120,12 +120,12 @@
       { skin: CF, handle: null, sheen: CF2, net: true, pins: true },                   // 16 motošport
     ][n];
     if (!O) return;
-    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = m.frame;
+    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = m.frame, ni = m.netIn || 0;   // (netIn: the window net that much nearer the band, over a glass set in behind it: MIŠKA's)
     const u0 = Math.min(...W.map(q => q[0])), u1 = Math.max(...W.map(q => q[0])), t0 = Math.min(...W.map(q => q[1])), t1 = Math.max(...W.map(q => q[1]));
     const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
-      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); };
+      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, nwin = (pts, col, l) => win(pts, col, l - ni);
       if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
       // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
       if (F) { const fc = O.frame || O.skin || P;
@@ -150,12 +150,12 @@
       if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, o);   // (the quick-release pins at its rear edge)
       // a window net: black webbing in squares (8 up, 5 across) inside its border, hung on a rod along the belt, its latch at the top front (red)
       if (O.net) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
-        win([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); win([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); win([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
-        for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; win([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
-        for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; win([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
-        const r0 = pt(a, c + 0.01, 0.022, sd), r1 = pt(W[1][0] - 0.06, c + 0.01, 0.022, sd); K.bar(r0, r1, 0.006, AL2, { n: 4, host });   // (its rod)
+        nwin([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); nwin([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); nwin([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
+        for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; nwin([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
+        for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; nwin([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
+        const r0 = pt(a, c + 0.01, 0.022 - ni, sd), r1 = pt(W[1][0] - 0.06, c + 0.01, 0.022 - ni, sd); K.bar(r0, r1, 0.006, AL2, { n: 4, host });   // (its rod)
         const q = clip([[a, e - 0.06], [b, e - 0.06], [b, e], [a, e]], W), qx = Math.max(...q.map(v => v[0])) - 0.05;
-        win([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
+        nwin([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
       // the light glass (lexan): clearer than glass, its black printed border, a sliding hatch (open: dark inside, rails over and under
       // it, a finger pull) or a round vent
       if (O.lexan) { const LX = [0.46, 0.52, 0.6];
