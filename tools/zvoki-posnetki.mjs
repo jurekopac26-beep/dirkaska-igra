@@ -64,7 +64,8 @@ try {
       const rem = () => T.open ? C.m - P.q.s : ((C.m - P.q.s) % len + len) % len;
       if (C.m > 0) for (let k = 0; k < 600 && rem() > 2 && (T.open || rem() < len - 100); k++) g.sim(0.25, true);
       window.__hold = !!C.stoji; g.resume();
-      await wait(400); SfxOkolje.prep(); await wait((C.stoji ? 4000 : 1500) + (C.m > 0 ? 4000 : 0));   // (the voices at once; the car stopped, the beds faded in; after a jump the world drawn)
+      await wait(400); SfxOkolje.prep(); await wait(C.m > 0 ? 4000 : 1500);   // (the voices at once; after a jump the world drawn)
+      if (C.stoji) { const t0 = performance.now(); while (Math.abs(P.speed) > 0.3 && performance.now() - t0 < 20000) await wait(100); await wait(3000); }   // (the car stopped, the beds faded in)
       return { s: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6) };
     }, Object.assign({ O0 }, C));
     const n0 = await page.evaluate(() => SfxOkolje.levels().n);
@@ -78,7 +79,7 @@ try {
     if (ffmpeg) { file = path.join(out, ime + '.mp3'); execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', webm, '-ac', '2', '-b:a', '128k', file]); fs.unlinkSync(webm); }
     const d = {}; for (const k in L.L.n) if (L.L.n[k] - (n0[k] || 0)) d[k] = L.L.n[k] - (n0[k] || 0);
     const beds = Object.entries(L.L.beds).filter(([, v]) => v > 0.005).map(([b, v]) => b + ' ' + v.toFixed(2)).join(', ');
-    console.log(`${ime}: ${path.relative(process.cwd(), file)} (${Math.round(fs.statSync(file).size / 1024)} KB) · s ${at.s}–${L.s} m, ${at.kmh}–${L.kmh} km/h · ${fps} sličic/s · podlage: ${beds || 'nič'} · ${JSON.stringify(d)}`);
+    console.log(`${ime}: ${path.relative(process.cwd(), file)} (${Math.round(fs.statSync(file).size / 1024)} KB) · s ${at.s}–${L.s} m, ${at.kmh}–${L.kmh} km/h · ${fps} sličic/s · okolje ${L.L.master}/${L.L.full} · podlage: ${beds || 'nič'} · ${JSON.stringify(d)}`);
   }
   if (errors.length) console.log('NAPAKE V STRANI:\n' + errors.slice(0, 5).join('\n'));
 } finally { await browser.close(); await srv.close(); }
