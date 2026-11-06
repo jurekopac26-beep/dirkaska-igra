@@ -234,6 +234,7 @@ try {
     await click(page, 'credits');
     let c = await ev(page, 'const s = root.querySelector(".sheet.credits"); return s ? s.textContent : "";');
     T.check('Credits: the sheet names the data the pictures of the Earth are made from, and closes', /WorldCover/.test(c) && /Natural Earth/.test(c));
+    T.check('Credits: OpenStreetMap (the roads of the tracks; the ODbL asks for it)', /© OpenStreetMap contributors/.test(c) && /Open Database License/.test(c), c.slice(0, 200));
     await done(page);
     T.check('the credits sheet is closed again', !(await ev(page, 'return !!root.querySelector(".sheet");')));
 
