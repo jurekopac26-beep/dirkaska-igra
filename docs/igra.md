@@ -681,6 +681,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 |---|---|---|---|---|---|
 | **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
 | **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **VIDRA E** | 4WD | 653 KM | 2050 kg | 90.000 kovančkov | Električni fastback z dvema motorjema za drift: steklena streha, svetlobna pasova. |
 
 ### Posebni
 
