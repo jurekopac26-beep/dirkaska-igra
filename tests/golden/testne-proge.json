@@ -164,25 +164,25 @@
   "docs/proge/palomar.md": "730cf722e931f108",
   "docs/proge/toskana.md": "48f9e7e8dd76e500",
   "docs/proge/uncompahgre.md": "17834aed39b874c4",
-  "js/tracks/baldy.js": "5b0d346d890a8487",
-  "js/tracks/beartooth.js": "7737523723806246",
-  "js/tracks/bigsur.js": "39982e9189f610bb",
+  "js/tracks/baldy.js": "44ba2ee7cd00870c",
+  "js/tracks/beartooth.js": "98aecd81b32c1336",
+  "js/tracks/bigsur.js": "55cbdafa82942628",
   "js/tracks/gora.js": "2f20b716c43be01a",
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/jezero.js": "16733742a2d9e030",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
-  "js/tracks/monterey.js": "39545db4e8d61898",
-  "js/tracks/palomar.js": "3f509bca6942aed3",
+  "js/tracks/monterey.js": "51552c2fbf034f2d",
+  "js/tracks/palomar.js": "fec43682e3ce89dc",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
-  "js/tracks/uncompahgre.js": "7e86df1efd190353",
+  "js/tracks/uncompahgre.js": "7c420bf7f946b634",
   "js/world-baldy.js": "0faf0d854cb74d0e",
-  "js/world-beartooth.js": "45cdb8e5112e871c",
+  "js/world-beartooth.js": "fa99abb2a0d310db",
   "js/world-bigsur.js": "49682e51531c9d25",
   "js/world-monterey.js": "daeac3332ff8a5bd",
-  "js/world-palomar.js": "c4f363005e2d6ce8",
-  "js/world-uncompahgre.js": "44e4d11d2c1dde2f",
+  "js/world-palomar.js": "2765f57b8c68fe5b",
+  "js/world-uncompahgre.js": "c1d4a5b575ab145b",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -285,6 +285,36 @@
    "datum": "2026-11-05",
    "proga": "uncompahgre",
    "razlog": "uporabnik 5. 11. 2026: proge ZDA v test (razen Pikes Peaka), ena proga na državo; to progo ta pull request, Santa Monica Mountains, Detroit, Moki Dugway, Riverside in Mauna Kea #293"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "baldy",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "beartooth",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "bigsur",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "monterey",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "palomar",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "uncompahgre",
+   "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
   }
  ]
 }

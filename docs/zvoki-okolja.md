@@ -41,7 +41,7 @@ Možnost 3 vprašanja doda še živali ob progi (kravji zvonci na pašnikih, ovc
 
 **Govor v angleščini** (odločitev uporabnika 5. 11. 2026 ob 16.10: »Vse zvoke delaj v angleščini.«): šest priporočenih zvokov je brez govora. Kjer je v zvokih okolja govor (razglas po zvočniku, napovedovalec, vzkliki ljudi), je vedno v angleščini, tudi ko je igra v slovenščini, in brez imen resničnih oseb in podjetij (`CLAUDE.md`, Pravna varnost).
 
-Pričakovano po progah (potrdi orodje v koraku 1): gozd in ptice Vršič, Nürburg, Spa, Ouninpohja, Pikes Peak (pod gozdno mejo), Beartooth, Irohazaka, Great Alpine Road, Uncompahgre, Palomar; voda Sani Pass (potoki, slapovi), Uncompahgre (slap), Great Alpine Road in Longford (reka), Medvode (Sava, jezero v Zbiljah), Vršič (jezero Jasna); vas Vršič (Kranjska Gora), Medvode (Medvode, Zbilje, Valburga, Smlednik), Ouninpohja, Livorno, Nürburg; veter Vršič (prelaz), Beartooth, Mauna Kea, Sani Pass, Mount Hotham, Mount Buller, Uncompahgre, Los Caracoles, Katu-Jaryk, Tianmen, Rio do Rastro, Moki Dugway; morje Big Sur, Chapman's Peak, Livorno, Bang Saen, Newcastle; žuželke Livorno, Marrakesh, Bang Saen, Townsville, Suzuka, Irohazaka, kalifornijske ceste, brazilski in avstralski kraji.
+Pričakovano po progah (potrdi orodje v koraku 1): gozd in ptice Vršič, Nürburg, Spa, Ouninpohja, Pikes Peak (pod gozdno mejo), Irohazaka, Great Alpine Road; voda Sani Pass (potoki, slapovi), Great Alpine Road in Longford (reka), Medvode (Sava, jezero v Zbiljah), Vršič (jezero Jasna); vas Vršič (Kranjska Gora), Medvode (Medvode, Zbilje, Valburga, Smlednik), Ouninpohja, Livorno, Nürburg; veter Vršič (prelaz), Sani Pass, Mount Hotham, Mount Buller, Los Caracoles, Katu-Jaryk, Tianmen, Rio do Rastro; morje Chapman's Peak, Livorno, Bang Saen, Newcastle; žuželke Livorno, Marrakesh, Bang Saen, Townsville, Suzuka, Irohazaka, brazilski in avstralski kraji.
 
 ## Kje je kateri zvok: zvočni pasovi iz podatkov proge
 
@@ -54,7 +54,7 @@ Zvoki se ravnajo po tem, kar je ob cesti res zgrajeno (svet proge) in kar o kraj
 5. **Veter**: višina ceste v razponu proge (zgornji del in vrh = prelaz) krat odprtost (malo dreves) krat nadmorska višina (`GEO.tracks[id].offset` + višina ceste); ob morju dodatek.
 6. **Podnebje**: zemljepisna širina iz `GEO.tracks[id].lat0` (za Bathurst, Crystal Palace, Livorno, Mount Buller in Rio, ki jih v `GEO` ni, kratka tabela v modulu; Pikes Peak makadam kot Pikes Peak), nadmorska višina, izbrani letni čas, del dneva in vreme.
 7. **Med vožnjo** je pas vzorec po `s` avta (en indeks na sličico, brez iskanja). Posamezni zvoki (ptica, zvonjenje, galeb) se postavijo na pravo stran in razdaljo (glasnost in nizkoprepustni filter po razdalji, levo-desno po kameri, kot navijači na Pikes Peaku).
-8. **Testne proge** (`def.test`) in nova mapa ostanejo brez zvokov okolja (zamrznjene, `CLAUDE.md`).
+8. **Testne proge** (`def.test`) in nova mapa ostanejo brez zvokov okolja (zamrznjene, `CLAUDE.md`). Po odločitvi uporabnika 5. 11. 2026 so med njimi tudi proge ZDA razen Pikes Peaka: `baldy`, `beartooth`, `bigsur`, `detroit`, `maunakea`, `moki`, `monterey`, `mulholland`, `palomar`, `riverside`, `uncompahgre` (#355).
 
 Orodje `tools/zvoki-pasovi.mjs` izpiše pasove vsake prave proge (kratka tabela: od–do, zvok, stran) za pregled in teste; po novi progi ga zaženemo, kot `tools/proge-pregled.js`.
 
@@ -84,7 +84,7 @@ Cilj: telefon ni bolj obremenjen. Grafika se ne spremeni (nič klicev risanja, n
 
 Test se razširi (zagon `node tests/browser/sound.test.mjs`; `npm run test:related` ga izbere ob spremembi `js/sfx*.js`):
 
-1. **Pasovi** vseh pravih prog (svet proge zgrajen kot v prvem delu testa): vsaka ima vsaj en zvok; Vršič gozd, vas Kranjska Gora (0–2,4 km) in veter na prelazu močnejši kot v dolini; Big Sur in Chapman's Peak morje; Sani Pass voda; Great Alpine Road gozd in reka; Detroit brez gozda in vasi; testne proge brez pasov; na Pikes Peaku en sam veter (njegovo ozračje nespremenjeno).
+1. **Pasovi** vseh pravih prog (svet proge zgrajen kot v prvem delu testa): vsaka ima vsaj en zvok; Vršič gozd, vas Kranjska Gora (0–2,4 km) in veter na prelazu močnejši kot v dolini; Chapman's Peak morje; Sani Pass voda; Great Alpine Road gozd in reka; ulična proga (npr. Newcastle) brez gozda in vasi; testne proge (tudi proge ZDA razen Pikes Peaka) brez pasov; na Pikes Peaku en sam veter (njegovo ozračje nespremenjeno).
 2. **Dirka na Vršiču** (avtopilot, zvok vklopljen, določeno seme): v gozdu se predvajajo ptice in podlaga gozda je nad 0; v Kranjski Gori zazvoni (testni klic `Sfx.levels().okolje`); na prelazu je veter glasnejši kot v dolini.
 3. **Mešanje**: pri 160 km/h ≤ 50 % glasnosti stoječega avta; Izklop: 0 in nobenega vozlišča; Glasneje = 2 × Tiho; ponoči brez ptic (poleti črički); v dežju brez ptic in žuželk; pozimi brez žuželk.
 4. **Obremenitev**: ≤ 25 vozlišč okolja hkrati, medpomnilniki ≤ 1,5 MB, `Sfx.update` z okoljem v povprečju ≤ 0,05 ms dlje kot brez njega (600 sličic), izris 20 s v `OfflineAudioContext` z okoljem ≤ 15 % dlje kot brez njega.
@@ -108,7 +108,7 @@ Ostali povezani testi: `lang.test.js` (angleška vrstica), `perf.test.mjs` (nesp
 | 2 | Glasovi: ptice, šelestenje, potok, reka, slap, jezero, morje, galebi, zvonovi, veter, črički, škržati; medpomnilniki v kosih | 5 |
 | 3 | Mešalnik: pasovi × del dneva, letni čas, vreme; maskiranje, stran, ustavljanje tihih glasov; stikalo, angleščina, varčevanje | 3 |
 | 4 | Testi in meritve obremenitve | 2,5 |
-| 5 | Uglaševanje na Vršiču, Ouninpohji, Big Suru, Sani Passu in v Livornu; dokumenti; kratki posnetki iz igre za uporabnika | 2 |
+| 5 | Uglaševanje na Vršiču, Ouninpohji, Chapman's Peaku, Sani Passu in v Livornu; dokumenti; kratki posnetki iz igre za uporabnika | 2 |
 
 Skupaj ~15 h (±3 h): seja 1 koraki 1–3 (~11 h), seja 2 koraka 4–5 (~4,5 h); Opus, napor max. Posnetki CC0 ali lastni: +2–3 h. Nabor z živalmi, mestom in razglasi v angleščini: +5 h.
 
@@ -122,8 +122,10 @@ Pogoj za začetek: odgovori na vprašanja; #319 (razdelitev datotek prog) in #28
 
 Odločitev uporabnika 5. 11. 2026 ob 16.10 (sporočila koordinacija »VSE SEJE 2«): »Vse zvoke delaj v angleščini.« Govor v zvokih okolja je v angleščini (razdelek Zvoki in kdaj se slišijo); vprašanji `zvoki-okolja-nabor` in `zvoki-okolja-vir` sta prilagojeni.
 
+Odločitev uporabnika 5. 11. 2026 (sporočila koordinacija »VSE SEJE 2«): proge ZDA razen Pikes Peaka postanejo testne in zamrznjene (#355). Zvoki okolja zanje niso načrtovani (razdelek Kje je kateri zvok, točka 8); pričakovani pasovi, testi in primeri zvokov so brez njih.
+
 Primeri vseh zvokov (prototip v brskalniku, z motorjem za primerjavo glasnosti): https://claude.ai/artifact/RAKVe7d2UNWUAStf16xv2h, povezani tudi pri vprašanjih. Seja odgovore prebere ob 23.20 (`docs/vprasanja.md`, razdelek Odgovor).
 
 ## Stanje
 
-- 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338). Ob 16.10 odločitev uporabnika: govor v zvokih okolja v angleščini (načrt in vprašanji prilagojena).
+- 5. 11. 2026: načrt napisan (#341); primeri zvokov objavljeni; vprašanja zapisana na stran Odločitve 3; tema v `docs/vrsta.md`, Načrtovano (#338). Ob 16.10 odločitev uporabnika: govor v zvokih okolja v angleščini (načrt in vprašanji prilagojena). Isti dan: proge ZDA razen Pikes Peaka so testne (#355), zato so iz načrta in primerov zvokov odstranjene.

@@ -471,5 +471,6 @@
   }
 
   Object.assign(API, { irFar, irFarUpdate });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'iroha');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.iroha = (scene, tex, opts) => buildIroha(scene, tex, opts);
 })();

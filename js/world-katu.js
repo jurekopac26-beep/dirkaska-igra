@@ -936,5 +936,6 @@
   }
 
   Object.defineProperties(API, { KT: { get: () => KT, set: (v) => { KT = v; } } });
+  World.keep('KT', 'katu');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.katu = (scene, tex, opts) => buildKatu(scene, tex, opts);
 })();
