@@ -16,18 +16,15 @@ for (const f of fs.readdirSync(path.join(ROOT, 'js', 'missions')).filter(f => /\
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
-// (Vršič became a test track on 6. 11. 2026, the user's decision (CLAUDE.md »Testne proge«); the mission on it stays there until the user
-// moves it, later, when it is known which tracks stay (docs/misije.md): these exceptions only, no other mission may run on a test track)
-const ON_TEST_TRACK = { '01': 'vrsic' };
 
 // the list
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
 check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === M.DEFS.filter(d => !d.test).map(d => d.id).sort().join() + ',vaja' && M.DEFS.map(d => d.id).indexOf('99') === M.DEFS.length - 2, M.DEFS.map(d => d.id).join());
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
-// (the roads of the USA but Pikes Peak became test tracks on 5. 11. 2026, the user's decision (one track a country, CLAUDE.md »Testne proge«); the
-// missions on them stay there until the user moves them, later, when it is known which tracks stay (docs/misije.md): these exceptions only, no other
+// (Vršič became a test track on 6. 11. 2026 and the roads of the USA but Pikes Peak on 5. 11. 2026, the user's decisions (one track a country, CLAUDE.md »Testne proge«);
+// the missions on them stay there until the user moves them, later, when it is known which tracks stay (docs/misije.md): these exceptions only, no other
 // mission may run on a test track)
-const ON_TEST_TRACK = { '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth' };
+const ON_TEST_TRACK = { '01': 'vrsic', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth' };
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
   check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));
