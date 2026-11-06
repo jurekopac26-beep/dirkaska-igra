@@ -383,6 +383,7 @@ svg { display: block; }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
 /* the stage's three cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner; the chosen one gold */
 .cams { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
+.cams.four { gap: 2px; }   /* (four buttons with Friends: no wider than needed, the map's names keep their room beside it) */
 .cams button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--lbl); }
 .cams button svg { width: 15px; height: 15px; }
 .cams button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }

@@ -298,7 +298,7 @@
     '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="13.5" height="10.5" rx="2.2" fill="currentColor"/><path d="M17 11.2l4.5-2.7v7.5L17 13.3z" fill="currentColor"/></svg>',
     '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.4" fill="currentColor"/><path d="M2.5 20c.6-4 3.2-6 6.5-6s5.9 2 6.5 6z" fill="currentColor"/><circle cx="17" cy="9" r="2.6" fill="currentColor" opacity=".7"/><path d="M15.6 13.4c3 .1 5.2 2 5.9 5.6h-4.6" fill="currentColor" opacity=".7"/></svg>'];
   // (camera 4, Friends: only where the game has the friends' leaderboard, G.friends; vTrack's fr)
-  const camButtons = () => '<div class="cams" role="group" aria-label="Camera">' + D.cams.filter(x => x.n !== 4 || fr).map(x => '<button aria-pressed="' + (cam === x.n) + '" data-act="cam:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + CAM_ICON[x.n] + '</button>').join('') + '</div>';
+  const camButtons = () => '<div class="cams' + (fr ? ' four' : '') + '" role="group" aria-label="Camera">' + D.cams.filter(x => x.n !== 4 || fr).map(x => '<button aria-pressed="' + (cam === x.n) + '" data-act="cam:' + x.n + '" aria-label="' + esc(x.name) + '" title="' + esc(x.name) + '">' + CAM_ICON[x.n] + '</button>').join('') + '</div>';
   // the stage: the sky, the chosen camera's picture (or the model), the cameras
   function stageView(t, lockd) {
     const R = RT[t.id], M = D.routeMaps[t.id] || {};
