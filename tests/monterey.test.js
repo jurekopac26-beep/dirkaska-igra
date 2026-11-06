@@ -21,8 +21,8 @@ const at = (d) => T.idx(T.startS + d);
 // 1. the track: a closed circuit of 4 laps, 3.602 km within 1 %, anticlockwise (one full turn to the left), in the big championship
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
-  check('track: Monterey, ZDA (Monterey, USA), a closed circuit of 4 laps, not a test track, in the big championship',
-    def.name === 'Monterey, ZDA' && def.en && def.en.name === 'Monterey, USA' && !def.open && !def.timeTrial && !def.test && def.laps === 4 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('monterey'),
+  check('track: Monterey, ZDA (Monterey, USA), a closed circuit of 4 laps, a test track since 5. 11. 2026 (one track a country: the USA keep Pikes Peak), in the big championship',
+    def.name === 'Monterey, ZDA' && def.en && def.en.name === 'Monterey, USA' && !def.open && !def.timeTrial && def.test === true && def.laps === 4 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('monterey'),
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 3.602 km (2.238 miles) within 1 %, the menu\'s real length 3.602 km, anticlockwise (one full turn to the left)',
     Math.abs(T.len / 3602 - 1) < 0.01 && def.realKm === 3.602 && Math.abs(turn + 2 * Math.PI) < 0.05,

@@ -236,8 +236,11 @@
   }
   const K2 = (c) => [c[0] * 0.7, c[1] * 0.7, c[2] * 0.7];
   function caliper(h, O, rd, rr) {
-    const G = h.still, ac = Math.PI * 0.78, half = O.span / 2 * Math.PI / 180, ro = Math.min(rd + 0.035 * rr, 0.9 * rr), ri = rd - O.deep * rr, z0 = h.zd + 0.003, z1 = h.zd + 0.017, q = h.vis ? 6 : 4;
-    const C = O.cal, side = K2(C), at = (a, r, z) => [Math.cos(a) * r, Math.sin(a) * r, z], mid = at(ac, (ri + ro) / 2, (z0 + z1) / 2);
+    // (its face 14.5 mm over the dish: behind the spokes of every rim, the stock ones too (they rise from 1 cm over it at a fifth of the rim);
+    // painted calipers (celjusti, js/deli/barve.js) colour it, no calipers of their own beside it; in the car's paint (celjusti 4, 8) it keeps its own)
+    const G = h.still, ac = Math.PI * 0.78, half = O.span / 2 * Math.PI / 180, ro = Math.min(rd + 0.035 * rr, 0.9 * rr), ri = rd - O.deep * rr, z0 = h.zd + 0.003, z1 = h.zd + 0.0145, q = h.vis ? 6 : 4;
+    const cj = h.fitted && h.fitted.celjusti && DELI.calColour ? DELI.calColour(h.fitted.celjusti) : null;
+    const C = cj || O.cal, side = K2(C), at = (a, r, z) => [Math.cos(a) * r, Math.sin(a) * r, z], mid = at(ac, (ri + ro) / 2, (z0 + z1) / 2);
     const a0 = ac - half, a1 = ac + half, A = (i) => a0 + (a1 - a0) * i / q;
     for (let i = 0; i < q; i++) { const b0 = A(i), b1 = A(i + 1), e = 0.08 * (a1 - a0) / q;   // (its face rounded at its ends: the outer corners pulled in)
       const r0 = (b) => ri + (b - a0 < e * 2 || a1 - b < e * 2 ? 0.01 * rr : 0), r1 = (b) => ro - (b - a0 < e * 2 || a1 - b < e * 2 ? 0.02 * rr : 0);
@@ -283,14 +286,16 @@
       { col: TI, sides: 12, r: 0.05, flange: true, open: true, burnt: true },  // 16 titanove, dirkalne (spline, open)
     ][n];
     if (!O) return;
-    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl);
+    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl), PL = pl ? DELI.wheel(pl) || {} : {};
+    if (PL.cover) return;   // (under a hubcap: unseen)
+    const seat = PL.seat || 0.01;   // (their foot over the dish: on the rim's hub, over its cap's edge)
     const V = h.vis, fan = (c, pts, z, col, apex) => { for (let i = 0; i < pts.length; i++) G.triO([c[0], c[1], z + (apex || 0)], [pts[i][0], pts[i][1], z], [pts[(i + 1) % pts.length][0], pts[(i + 1) % pts.length][1], z], col, [c[0], c[1], z - 1]); };
     const nut = (cx, cy, R, z0, z1, lock) => {   // (Normalni: a hex prism and its top; Visoki: the spline, the washer, the chamfered top)
       const col = lock || O.col, top = O.top || lerp(col, [1, 1, 1], 0.15), sides = lock ? (V ? 10 : 6) : O.sides === 12 && V ? 8 : 6, c = [cx, cy];
       const pts = O.sides === 12 && V && !lock ? poly(cx, cy, R, 8, 0, R * 0.84) : poly(cx, cy, R, sides, Math.PI / 6);
       if (O.flange && V) { const F = poly(cx, cy, R * 1.24, 6, Math.PI / 6), I = poly(cx, cy, R * 0.98, 6, Math.PI / 6), zf = z0 + 0.003;   // (the washer: its top round the nut)
         for (let i = 0; i < 6; i++) G.quadO([F[i][0], F[i][1], zf], [F[(i + 1) % 6][0], F[(i + 1) % 6][1], zf], [I[(i + 1) % 6][0], I[(i + 1) % 6][1], zf], [I[i][0], I[i][1], zf], lerp(col, [0, 0, 0], 0.15), [cx, cy, zf - 1]); }
-      const dome = O.dome || (O.chamf && V), zt = O.dome ? z1 - 0.007 : dome ? z1 - 0.003 : z1, burnt = O.burnt && !lock;
+      const dome = O.dome || (O.chamf && V), zt = O.dome ? z1 - 0.004 : dome ? z1 - 0.003 : z1, burnt = O.burnt && !lock;   // (an acorn's dome low: its foot clear of the mesh rims' spokes)
       prism(G, h, pts, z0, zt, col, null, burnt ? [RB[2], RB[0]] : null);
       if (O.open) { fan(c, pts, zt, burnt ? RB[0] : [0.05, 0.05, 0.055]);   // (open-ended: dark inside, the stud's end standing in it, steel)
         fan(c, poly(cx, cy, R * 0.42, 6), zt + 0.003, [0.7, 0.7, 0.72]); }
@@ -300,7 +305,7 @@
     if (lockR) { nut(0, 0, rr * 0.17, h.zd + 0.05, h.zd + 0.07, null); return; }   // (a centre lock: one big nut over the rim's own)
     const k = (m && m.k) || 4, pr = rr * ((m && m.r) || 0.2), R = rr * (O.r || 0.062), tall = O.tall || 1;
     for (let i = 0; i < k; i++) { const a = i / k * Math.PI * 2 + Math.PI / 4;
-      nut(Math.cos(a) * pr, Math.sin(a) * pr, R, h.zd + 0.01, h.zd + 0.01 + 0.024 * tall, O.lock && i === 0 ? O.lock : null); }
+      nut(Math.cos(a) * pr, Math.sin(a) * pr, R, h.zd + seat, h.zd + seat + 0.024 * tall, O.lock && i === 0 ? O.lock : null); }
   }
   DELI.add('matice', matice);
 })();

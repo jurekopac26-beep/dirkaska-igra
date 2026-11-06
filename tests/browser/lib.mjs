@@ -108,13 +108,15 @@ export function startTrack(page, id, mode) {
   }, [id, mode]);
 }
 
-// the list of tracks shown in the track menu
-export function trackIds(page) {
-  return page.evaluate(async () => {
+// the list of tracks shown in the track menu, without the test tracks (test: true: frozen until they are deleted before Google Play,
+// nothing is checked on them: CLAUDE.md »Testne proge«); all: every card of the menu, the test tracks too
+export function trackIds(page, all = false) {
+  return page.evaluate(async (all) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(350);
-    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))];
-  });
+    const test = new Set(Core.TRACKS.filter(d => d.test).map(d => d.id));
+    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))].filter(id => all || !test.has(id));
+  }, all);
 }
 
 // run the race for `sec` seconds of game time on autopilot, rendering a frame after every simulated second

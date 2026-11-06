@@ -19,8 +19,8 @@ const at = (d) => T.idx(T.startS + d);
 // 1. the track: a closed circuit, 2 laps, its length the record books' 5.271 km within 0.5 %, clockwise, in the big championship
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
-  check('track: Riverside, ZDA (Riverside, USA), a closed circuit of 2 laps, not a test track, in the big championship',
-    def.name === 'Riverside, ZDA' && def.en && def.en.name === 'Riverside, USA' && !def.open && !def.timeTrial && !def.test && def.laps === 2 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('riverside'),
+  check('track: Riverside, ZDA (Riverside, USA), a closed circuit of 2 laps, a test track (the user, 4. 11. 2026: »riverside ocena 3, prestavi v kategorijo test«), in the big championship',
+    def.name === 'Riverside, ZDA' && def.en && def.en.name === 'Riverside, USA' && !def.open && !def.timeTrial && def.test === true && def.laps === 2 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('riverside'),
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 5.271 km (3.275 miles) within 0.5 %, the menu\'s real length 5.271 km, clockwise (one full turn to the right)',
     Math.abs(T.len / 5271 - 1) < 0.005 && def.realKm === 5.271 && Math.abs(turn - 2 * Math.PI) < 0.05,
