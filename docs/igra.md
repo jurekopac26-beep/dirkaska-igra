@@ -2,6 +2,10 @@
 
 Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so v [`docs/proge/`](proge/), seznam prog v [`README.md`](../README.md#proge). Datoteka je velika: poišči naslov razdelka z grepom.
 
+Testne proge (`test: true`, od 5. 11. 2026 tudi Mount Baldy, Beartooth, Big Sur, Monterey, Palomar Mountain in Uncompahgre; `CLAUDE.md`, »Testne proge«) igra gradi kot prej: brez tabel pred zaviranjem, prizorov ljudi in živali (njihovi kraji v `SITES` in `site()` so zbrisani), kotnega videa v meniju, tabel in smernikov ob odprtih cestah in podrobnejših gledalcev na tribunah, gledalcev ob cesti ne redči. Kjer spodaj piše katera od njih, opis velja za čas, ko je bila prava proga.
+Rio de Janeiro je od 5. 11. 2026 testna proga (`test: true`; odločitev uporabnika: iz Brazilije ostane samo Rio do Rastro; `CLAUDE.md`, »Testne proge«): igra jo gradi kot druge testne proge, brez tabel pred zaviranjem, prizorov ljudi in živali (njeni kraji v `SITES` so zbrisani), kotnega videa v meniju in podrobnejših gledalcev na tribunah, gledalcev ob cesti ne redči. Kjer spodaj piše Rio de Janeiro, opis velja za čas, ko je bila prava proga.
+Vršič, Slovenija je od 6. 11. 2026 testna proga (`test: true`; odločitev uporabnika: iz Slovenije ostane samo Medvode; `CLAUDE.md`, »Testne proge«): igra ga gradi kot druge testne proge, brez tabel in smernikov ob odprti cesti (`roadside` v `js/world.js`), prizorov ljudi (njegovi kraji v `SITES` in `site()` so zbrisani) in živali (`js/world-zivali.js`), gledalcev ob cesti ne redči. Kotni video v meniju obdrži, ker nima makete za kamero 3 (izjema v `tests/menu-corner.test.js`). Načini (dirka, kronometer, promet, policija), policijski radio in misija 01 ostanejo. Kjer spodaj piše o Vršiču, opis velja za čas, ko je bil prava proga.
+
 - [Križišča in stranske ceste](#križišča-in-stranske-ceste)
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
 - [Kje na progi si (proge po resničnih krajih)](#kje-na-progi-si-proge-po-resničnih-krajih)
