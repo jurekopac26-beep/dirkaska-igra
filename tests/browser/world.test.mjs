@@ -5,7 +5,7 @@
 // braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
-//   WORLD_ONLY=vrsic,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
+//   WORLD_ONLY=medvode,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, pwNote } from './lib.mjs';
