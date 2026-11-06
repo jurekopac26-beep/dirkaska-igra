@@ -617,7 +617,9 @@
       u.onend = u.onerror = () => { if (SPK.u === u) SPK.u = null; };
       SPK.u = u; SPK.until = now + 3 + 0.12 * text.length / rate; SPK.kind = kind; SPK.last = text; sy.speak(u); return true; } catch (_) { SPK.u = null; return false; }
   }
-  function hush() { if (!SPK.u) return; SPK.u = null; SPK.cut++; const sy = synthOf(); if (sy) { try { sy.cancel(); } catch (_) { } } }   // (js/comm.js: before each of its lines)
+  // js/comm.js before each of its lines (the commentator's, the co-driver's): ours stops, and he has spoken (a line begun and ended between
+  // two frames, the frames slow, still counts: the breath after it from the first frame he is quiet)
+  function hush() { SPK.held = true; if (!SPK.u) return; SPK.u = null; SPK.cut++; const sy = synthOf(); if (sy) { try { sy.cancel(); } catch (_) { } } }
   const pick = (L) => { let t = L[A.R() * L.length | 0]; if (t === SPK.last) t = L[(L.indexOf(t) + 1) % L.length]; return t; };
   function speechTick(race, player, lv, kmh, dt) {
     if (!A.Z.pa || typeof Comm === 'undefined' || !Comm.state || !synthOf() || Comm.radioMode) return;

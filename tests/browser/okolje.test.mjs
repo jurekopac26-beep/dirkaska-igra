@@ -50,7 +50,7 @@ async function speech() {
   // (the car to the stands with the most people (Render.world.crowdPts), on the autopilot, then braked to a stop there and held: the
   // autopilot's steering, its brake on)
   const at = await page.evaluate(() => {
-    const ai = Core.aiControl; Core.aiControl = function (P, race) { const r = ai.apply(this, arguments); if (window.__hold && race && P === race.player) { P.inThr = 0; P.inBrk = 1; } return r; };
+    const ai = Core.aiControl; Core.aiControl = function (P, race) { const r = ai.apply(this, arguments); if (window.__hold && race && P === race.player) { P.inThr = 0; const mv = Math.abs(P.speed) > 1; P.inBrk = mv ? 1 : 0; P.inHand = mv ? 0 : 1; } return r; };
     const g = window.__game, T = g.race.track, P = g.race.player, C = Render.world.crowdPts, N = T.px.length; let w = 0, bx = 0, bz = 0, bi = 0, bd = 1e18;
     for (let k = 0; k < C.length; k += 3) if (C[k + 2] > w) { w = C[k + 2]; bx = C[k]; bz = C[k + 1]; }
     for (let i = 0; i < N; i++) { const d = (T.px[i] - bx) ** 2 + (T.pz[i] - bz) ** 2; if (d < bd) { bd = d; bi = i; } }
