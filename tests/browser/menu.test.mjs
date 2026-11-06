@@ -68,13 +68,14 @@ try {
       await click(page, 'mode:' + mode); await click(page, 'cam:2');
       const exp = await page.evaluate((gm) => {
         const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm));
-        ds.sort((a, b) => (!!a.test - !!b.test) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
+        const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
+        ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
         return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent).length, lens: ds.every(d => L[d.id] > 0) };
       }, gm);
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
-      T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
+      T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the ones awaiting the choice (pending), then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too; the Santa Monica Mountains, the Moki Dugway and Mauna Kea test tracks since 4. 11. 2026)`, roads.race === roads.trial && roads.race >= 16, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too; the open roads that became test tracks on 4., 5. and 6. 11. 2026 are left out: the USA's but Pikes Peak, Vršič)`, roads.race === roads.trial && roads.race >= 9, JSON.stringify(roads));
       const first = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       let seen = 0; const bad = [], urls = new Set();
       for (let k = 0; k < exp.ids.length; k++) {
@@ -85,7 +86,7 @@ try {
           // the head's globe (drawn once the Earth has come: every track with a country) and the height graph at the stage's foot
           const w1 = root.querySelector('.where .w1').firstChild, ctry = w1 && w1.nodeType === 3 ? w1.textContent.replace(/,\s*$/, '') : '', gl = root.querySelector('.thead .globe canvas'), gr = st.querySelector('.hgraph svg');
           if (ctry && !gl) return null;
-          const head = { id: Menu.debug().list[Menu.debug().trackIdx], ctry, globe: gl ? gl.dataset.country : '', graph: gr ? [...gr.querySelectorAll('text.lo, text.hi')].map(e => e.textContent) : null, km: gr ? [...gr.querySelectorAll('text.km')].map(e => e.textContent).pop() : '' };
+          const head = { id: Menu.debug().list[Menu.debug().trackIdx], ctry, sign: (root.querySelector('.yard .sign') || {}).textContent || '', globe: gl ? gl.dataset.country : '', graph: gr ? [...gr.querySelectorAll('text.lo, text.hi')].map(e => e.textContent) : null, km: gr ? [...gr.querySelectorAll('text.km')].map(e => e.textContent).pop() : '' };
           if (fly) return { name, kind: 'flyover', files: [fly.getAttribute('poster'), fly.getAttribute('src')].filter(Boolean), head };   // (camera 2 on a track with a flyover: its video, with its poster)
           if (map) return { name, kind: 'map', files, head };
           if (imgs.length && imgs.every(i => i.complete && i.naturalWidth > 0)) return { name, kind: 'model', files, head };
@@ -105,11 +106,12 @@ try {
       await page.click('.foot [data-act="back"]');   // (back to the modes)
     }
     // every track's pictures in cameras 1 and 3: the map from above where the track has a route (routes.js), else its model; the corner's
-    // video in a loop, muted, where MENU.corners has it (every real track), else (a test track) its model
+    // video in a loop, muted, where MENU.corners has it (every real track, and Vršič: a test track since 6. 11. 2026 without a model), else (a
+    // test track) its model
     const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id) }));
     const cbad = Object.entries(cams).filter(([id, c]) => c.c1.kind !== (cx.routes.includes(id) ? 'map' : 'model') || c.c3.kind !== (cx.corners.includes(id) ? 'corner' : 'model') || (c.c3.kind === 'corner' && !(c.c3.loop && c.c3.files[0] === 'assets/maps/corner-' + id + '.webp' && c.c3.files[1] === 'assets/maps/corner-' + id + '.webm'))).map(([id, c]) => id + ':' + c.c1.kind + '/' + c.c3.kind);
     const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
-    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id)), JSON.stringify({ cbad, nocorner }));
+    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
     // every track of every mode: its height graph across the stage's foot in camera 2 (the flyover, or the model where a track has none), a
     // real track's with its lowest and highest heights and the kilometres under it; its country gold on the head's globe
     const tests = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), H = Object.values(heads);
@@ -117,6 +119,11 @@ try {
     T.check(`every track of every mode (${H.length}) has its height graph; a real one's with its lowest and highest heights and the kilometres`, H.length >= 90 && !nograph.length, nograph.join(', '));
     const withC = H.filter(x => x.ctry), noglobe = withC.filter(x => x.globe !== x.ctry).map(x => x.id + ':' + x.ctry + '/' + x.globe);
     T.check(`every track with a country (${withC.length} of ${H.length}: the test tracks Copper Forest and Thunder Cape have none) has its globe in the head, that country gold on it`, withC.length >= 90 && withC.length >= H.length - 4 && !noglobe.length, noglobe.join(', '));
+    // the yard's road sign: TEST on a test track, PENDING on one awaiting the user's choice (pending: Australia's, one of them stays), neither
+    // on a real one
+    const pend = await page.evaluate(() => Core.TRACKS.filter(d => d.pending).map(d => d.id));
+    const badSign = H.filter(x => pend.includes(x.id) ? !/PENDING$/.test(x.sign) : tests.includes(x.id) ? !/TEST$/.test(x.sign) : /(PENDING|TEST)$/.test(x.sign)).map(x => x.id + ':' + x.sign);
+    T.check(`the yard's sign: TEST on every test track, PENDING on every track awaiting the choice (${pend.length}), neither on a real one`, pend.length >= 1 && H.some(x => pend.includes(x.id)) && !badSign.length, JSON.stringify(badSign));
     // the wide maps: for every track in MENU.wideMaps the painted land (dry, rain) is the map and a margin all round it (the margin in the map's
     // pixels; the file at 0.8 of the map's scale with the island's detail, wide_detail.py: a test track's as wide_map.py left it, half as
     // many pixels, or at 0.8 where it was a real track when it moved to the test tracks and the freeze keeps its files), and the isle (dry,
@@ -130,6 +137,8 @@ try {
       }
       return out;
     });
+    // (a track made a test track after its wide map was detailed, the roads of the USA on 4. and 5. 11. 2026, keeps its map as it was: 0.8)
+    const at = (d, k) => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2;
     const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
       (d.test ? [0.5, 0.8] : [0.8]).some(k => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2))).map(d => d.id);
     T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half or at 0.8)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
@@ -512,7 +521,7 @@ try {
 
   // 6. the layouts: upright (360 x 640 and 412 x 915), on its side (915 x 412 and 640 x 360)
   for (const [w, h] of [[360, 640], [412, 915], [915, 412], [640, 360]]) {
-    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, a few tracks before Nürburg in the list, has no model for the title's tile)
+    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, the last track of the list (a test track since 6. 11. 2026), has no model for the title's tile)
     await page.emulateMedia({ reducedMotion: 'reduce' });   // (the slide-in of a screen is off: it would still be on its way, and the screen 8 px low, when measured)
     await ready(page);
     const title = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const b = [...root.querySelectorAll(".title-panel button")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, w: innerWidth, h: innerHeight, over: b.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length };');
@@ -521,7 +530,8 @@ try {
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
     T.check(`${w}x${h}: the six modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 6, JSON.stringify(modes));
     await click(page, 'mode:race');
-    for (let k = 0; k < 8 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, 'track:-1');   // (back to Vršič: the tracks between it and Nürburg, e.g. Livorno)
+    const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('vrsic') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 60 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, way);   // (to Vršič, a test track since 6. 11. 2026 and the longest of them, the list's last: past the tracks awaiting the choice and the test tracks after Nürburg, the last real one)
     await click(page, 'cam:2');   // (the flyover: the height graph at the stage's foot)
     await page.waitForTimeout(500);
     // the track step: upright the head, the stage (about half the screen), the row, the yard, the neighbours and the foot one under the
@@ -543,8 +553,8 @@ try {
     T.check(`${w}x${h}: the height graph across the stage's whole width at its foot, 72 px tall, under the weather`,
       g.gr && Math.abs(g.gr.l - g.st.l) < 0.5 && Math.abs(g.gr.r - g.st.r) < 0.5 && Math.abs(g.gr.b - g.st.b) < 0.5 && Math.abs(g.gr.h - 72) < 0.5 && Math.abs(g.grw - g.st.w) < 1 && g.wx.b <= g.gr.t + 1, JSON.stringify({ gr: g.gr, st: g.st, grw: g.grw, wx: g.wx }));
 
-    // an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it lies; the
-    // whole route and the names of its flags inside the picture; the neighbours at the same place on the next track
+    // the whole route and the names of its flags inside the picture; the neighbours at the same place on the next track. (An open road's map
+    // turned to run up the frame: on Pikes Peak, below. Vršič, a test track since 6. 11. 2026, is drawn as the test tracks are, not turned)
     const MEASURE = `
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
@@ -558,9 +568,6 @@ try {
     const same = (a, b) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
     T.check(`${w}x${h}: the neighbours' buttons at the same place on Vršič and on the next track`, v1.name === 'Vršič' && v2.name !== 'Vršič' && v1.nb.length === 2 && v2.nb.length === 2 && same(v1.nb[0], v2.nb[0]) && same(v1.nb[1], v2.nb[1]), JSON.stringify({ v1: v1.nb, v2: v2.nb }));
     if (w === 412) T.check('Vršič\'s head: "Slovenia, Vršič 1,388 m" (the height chosen for it: MENU.heads)', v1.head === 'Slovenia, Vršič 1,388 m', v1.head);
-    const tall = v1.pic.w / v1.pic.h < 1.3, turned = /^rotate\(-90 /.test(v1.rot);
-    const upright = tall ? v1.f && v1.s.y > v1.f.y + v1.pic.h * 0.4 && Math.abs(v1.s.x - v1.f.x) < v1.pic.w * 0.35 : v1.f && v1.f.x > v1.s.x + v1.pic.w * 0.4;
-    T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame: Kranjska Gora (the start) below, Vršič (the finish) above' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, turned === tall && !!upright, JSON.stringify({ rot: v1.rot, pic: v1.pic, s: v1.s, f: v1.f }));
     const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
     T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
     T.check(`${w}x${h}: the flags' names in boxes as the flyover's (the start's white, the finish's dark), the height in a small box under the name at its right`,
@@ -569,18 +576,23 @@ try {
     const covers = (l, p) => !!l && l.l <= p.l + 1 && l.r >= p.r - 1 && l.t <= p.t + 1 && l.b >= p.b - 1;
     T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture (the wide map reaches every edge of the frame)`, covers(v1.land, v1.pic), JSON.stringify({ land: v1.land, pic: v1.pic }));
     // every other real track with a map: the route and its names inside the picture, the painted land over all of it
-    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = []; let maps = 0;
+    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = []; let maps = 0, pk = null;
     const over = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
     for (let k = 0; k < ids.length; k++) {
       const id = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       if (await page.evaluate((id) => !!(window.ROUTES || {})[id] && !Core.TRACKS.find(d => d.id === id).test, id)) {   // (the test tracks aside)
         await page.waitForTimeout(300);
         const m = await ev(page, MEASURE);
+        if (id === 'pikes') pk = m;
         if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); }
       }
       await click(page, 'track:1');
     }
     T.check(`${w}x${h}: on every real track's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
+    // an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it lies
+    const tall = !!pk && pk.pic.w / pk.pic.h < 1.3, turned = !!pk && /^rotate\(-90 /.test(pk.rot || '');
+    const upright = !!pk && !!pk.f && (tall ? pk.s.y > pk.f.y + pk.pic.h * 0.4 && Math.abs(pk.s.x - pk.f.x) < pk.pic.w * 0.35 : pk.f.x > pk.s.x + pk.pic.w * 0.4);
+    T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame (Pikes Peak: Crystal Reservoir, the start, below; the Summit, the finish, above)' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, !!pk && turned === tall && upright, JSON.stringify(pk && { name: pk.name, rot: pk.rot, pic: pk.pic, s: pk.s, f: pk.f }));
     T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: on every map the names of the flags are not under the cameras' buttons or the weather`, maps >= 5 && !under.length, JSON.stringify(under));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));

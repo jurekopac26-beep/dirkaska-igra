@@ -27,7 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Rio de Janeiro', rainP: 0.45,
     grassNat: 0.75, lawn: [0.93, 1.0, 0.86],
     zivali: { a: ['capybara', 'caiman', 'egret'], t: ['palmHut'], city: true },
-    id: 'rio', name: 'Rio de Janeiro, Brazilija', theme: 'rio', laps: 2, halfWidth: 6.5,
+    id: 'rio', test: true, name: 'Rio de Janeiro, Brazilija', theme: 'rio', laps: 2, halfWidth: 6.5,
     desc: 'Dirkališče v četrti Jacarepaguá v Riu de Janeiru, ob laguni, v postavitvi iz 1980-ih (5,0 km, 11 zavojev, v nasprotni smeri urinega kazalca): dolga ciljna ravnina z boksi, desna lasnica 1. zavoja, hitri levi zavoji po notranjem delu, ostra lasnica 5. zavoja, še daljša zadnja ravnina mimo tribun in zavoji ob laguni. Ravna proga na nekdanjem močvirju, palme, mangrove ob vodi in strme granitne gore v ozadju. Podatki: © OpenStreetMap (ODbL), SRTM, ESA WorldCover.',
     en: { name: 'Rio de Janeiro, Brazil', desc: 'The circuit in the Jacarepaguá district of Rio de Janeiro, beside the lagoon, in its layout of the 1980s (5.0 km, 11 turns, anticlockwise): a long pit straight, the right-hand hairpin of Turn 1, fast lefts through the infield, the tight hairpin of Turn 5, an even longer back straight past the grandstands and the corners by the lagoon. A flat track on a former marsh, palm trees, mangroves by the water and steep granite mountains behind. Data: © OpenStreetMap (ODbL), SRTM, ESA WorldCover.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 20, realKm: 5.031,

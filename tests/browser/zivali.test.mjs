@@ -11,7 +11,7 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off)
+const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026)
 const T = checker('life in the woods, the parked car');
 const srv = await serve();
 const browser = await launch();
