@@ -25,7 +25,6 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hong Kong ob pristanišču, Kitajska | stara veja (odpade), Načrtovano | 74 %, obe 24 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
 | Stelvio, Italija | stara veja, Načrtovano | 99 %, obe 99 % (stara veja, v igri: ograja 0,8 m od asfalta) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): zidovi in ograje ob ozki cesti |
 | Kapelmuur, Belgija | stara veja, Načrtovano | 59 %, obe 19 % (stara veja, v igri); OSM vzpon 68 % | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše ob tlakovanih ulicah |
-| Québec, Kanada | zavite 2 | OSM 56 %, obe 21 % | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): obzidje, hiše in skala ob ozkih ulicah |
 | Ouro Preto, Brazilija | zavite 1, Načrtovano | OSM 18 % (hiše vrisane le ob 41 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozke tlakovane ulice, hiše ob pločniku |
 | Valparaíso, Čile | zavite 2 | OSM 34 % (hiše vrisane ob 65 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozke ulice na gričih, hiše ob pločniku |
 | Quito, Ekvador | zavite 2 | OSM 24 % (hiše vrisane ob 53 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): kolonialne ulice in hiše na pobočju |
@@ -50,13 +49,13 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 
 ## Države s progo v igri: izbira uporabnika
 
-Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država>` na strani Odločitve): »dodaj samo tiste, ki si jih priporočal, ter Québec«. Iz teh držav se naredi samo izbrana proga; proge v stolpcu »Odpadejo« se ne delajo (seja jih v svoji skupini ali koraku preskoči).
+Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država>` na strani Odločitve): »dodaj samo tiste, ki si jih priporočal, ter Québec« (Québec je 5. 11. 2026 odpadel, glej Kanada). Iz teh držav se naredi samo izbrana proga; proge v stolpcu »Odpadejo« se ne delajo (seja jih v svoji skupini ali koraku preskoči).
 
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam), Big Sur, Uncompahgre, Santa Monica Mountains, Beartooth, Moki Dugway, Mauna Kea, Mount Baldy, Riverside, Monterey, Detroit, Palomar Mountain | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
 | Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville; Mount Buller (narejena, PR #241) je od 5. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #379) | nobena (Mount Buller gre v test) | stara veja: Phillip Island |
-| Kanada | Montréal; od 5. 11. 2026 samo ta (odločitev uporabnika), Toronto in Trois-Rivières gresta med testne (`test: true`, za izbris) | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026); odprto: ali ostane, ko je Montréal edina predstavnica Kanade (odloči uporabnik) | – |
+| Kanada | Montréal; od 5. 11. 2026 samo ta (odločitev uporabnika), Toronto in Trois-Rivières gresta med testne (`test: true`, za izbris) | nobena: Québec (zavite, 2) odpade (odločitev uporabnika 5. 11. 2026: Kanado zastopa samo Montréal; tudi brez izletne cone) | Québec |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro, Rio de Janeiro | Ouro Preto (zavite, 1) — **ne začni** (brez izletne cone, 5. 11. 2026) | Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak; Sani Pass je od 5. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #379), država ima še Chapman's Peak | nobena (Sani Pass gre v test) | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
@@ -104,6 +103,6 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 ## Kaj to pomeni za verige
 
 - **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero; Mount Buller je narejena (PR #241), od 5. 11. 2026 testna (odločitev uporabnika). Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
-- **Zavite proge** (`docs/zavite-proge.md`): odpade Macao (3). Ostanejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Ouro Preto, Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
+- **Zavite proge** (`docs/zavite-proge.md`): odpadeta Macao (3) in Québec (2; odločitev uporabnika 5. 11. 2026: Kanado zastopa samo Montréal). Ostanejo Ouro Preto, Valparaíso, Quito, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Ouro Preto, Valparaíso, Quito, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
