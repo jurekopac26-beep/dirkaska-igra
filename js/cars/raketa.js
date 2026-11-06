@@ -73,8 +73,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet, the roof and the tailgate; the decals above the skirts, on the
       // bonnet and the roof; the sun strip on the windscreen's top; the calipers; the fuel cap on the right rear quarter (stock)
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
-      crte: { z: [0.24, 0.38] },
-      nalepke: { side: [[-0.55, 0.36], [0.52, 0.72], [-0.9, -0.76]], y: [0.5, 0.72], hood: { x: [0.9, 1.6], z: [0.26, 0.5] }, roof: { x: [-1.4, -0.2] } },
+      crte: { z: [0.25, 0.38], x: [[-1.64, -0.12], [0.5, 1.86]] },
+      nalepke: { side: [[-0.55, 0.36], [0.52, 0.72], [-0.9, -0.76]], y: [0.5, 0.72], hood: { x: [1.05, 1.6], z: [0.26, 0.5] }, roof: { x: [-1.4, -0.2] } },
       soncni_pas: { x: [-0.11, 0.03] }, zamasek: { x: -1.38, y: 0.74, z: 0.806, r: 0.05 },
       celjusti: { r: [0.081, 0.15], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) round the transverse four in the bay (the battery on its floor ahead of the front
