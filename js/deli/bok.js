@@ -90,7 +90,7 @@
 
   // ================================================================ vrata: both doors of option n
   // m: { x: [rear, front] the door's skin (on its shut lines), y: [sill, belt], handle: [x, y, z (out), w, h], win: [[x, t] ...] the door's
-  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise), frame: [x0, x1, t0, t1] its frame's rear upright from
+  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise; null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
   // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
@@ -120,8 +120,9 @@
       { skin: CF, handle: null, sheen: CF2, net: true, pins: true },                   // 16 motošport
     ][n];
     if (!O) return;
-    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = m.frame, ni = m.netIn || 0;   // (netIn: the window net that much nearer the band, over a glass set in behind it: MIŠKA's)
-    const u0 = Math.min(...W.map(q => q[0])), u1 = Math.max(...W.map(q => q[0])), t0 = Math.min(...W.map(q => q[1])), t1 = Math.max(...W.map(q => q[1]));
+    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = W && m.frame, ni = m.netIn || 0;   // (netIn: the window net that much nearer the band, over a glass set in behind it: MIŠKA's)
+    // (win null: an open car's doors, their tops at the belt, the windows down: no frame, net or light glass; LEV KABRIO's)
+    const u0 = W ? Math.min(...W.map(q => q[0])) : 0, u1 = W ? Math.max(...W.map(q => q[0])) : 0, t0 = W ? Math.min(...W.map(q => q[1])) : 0, t1 = W ? Math.max(...W.map(q => q[1])) : 0;
     const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
@@ -149,7 +150,7 @@
       else K.rect(hx + 0.02, hy - 0.01, sd * (hz + 0.002), 0.09, 0.022, RED, Object.assign({ dir }, o));   // (a strap pull, red)
       if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, o);   // (the quick-release pins at its rear edge)
       // a window net: black webbing in squares (8 up, 5 across) inside its border, hung on a rod along the belt, its latch at the top front (red)
-      if (O.net) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
+      if (O.net && W) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
         nwin([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); nwin([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); nwin([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
         for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; nwin([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
         for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; nwin([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
@@ -158,7 +159,7 @@
         nwin([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
       // the light glass (lexan): clearer than glass, its black printed border, a sliding hatch (open: dark inside, rails over and under
       // it, a finger pull) or a round vent
-      if (O.lexan) { const LX = [0.46, 0.52, 0.6];
+      if (O.lexan && W) { const LX = [0.46, 0.52, 0.6];
         win([[u0, t0], [u1, t0], [u1, t1], [u0, t1]], LX, 0.012);
         win([[u0, t0], [u1, t0], [u1, t0 + 0.035], [u0, t0 + 0.035]], BLK, 0.014); win([[u0, t1 - 0.035], [u1, t1 - 0.035], [u1, t1], [u0, t1]], BLK, 0.014); win([[u0, t0], [u0 + 0.03, t0], [u0 + 0.03, t1], [u0, t1]], BLK, 0.014);
         if (O.lexan === 'slide') { const a = u0 + 0.06, b = a + 0.28, c = t0 + 0.08, e = c + 0.32;

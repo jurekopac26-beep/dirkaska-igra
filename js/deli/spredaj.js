@@ -1,6 +1,7 @@
 /* Deli iz garaže, sklop 2 · spredaj: aero, hauba, maska, zmigavci, relijske_luci. Each element registers its 16 options with DELI.add(id,
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars. The mounts (look units):
-     aero: { xf, xr: the bumpers' faces (front, rear), w: their half width, yf, yr: their foot's height, sill: [x0, x1] between the arches,
+     aero: { xf, xr: the bumpers' faces (front, rear), w: their half width, yf, yr: their foot's height, sill: [x0, x1] between the arches
+             (none: the sills taken, GAD's side pipes: no skirts, options 2 and 3 the tail's corner lips in their place; the flares on ws),
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
              without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips),
              archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0) }
@@ -12,9 +13,10 @@
      zmigavci: { front: { x, y, z, w, h, part, parts: [left, right] }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
              indicators on the front bumper, the repeaters on the fenders (z out from the middle), the rear's on the rear bumper, the
              mirrors' housings' front faces
-     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w], pod: [x, y0, y1, w], foot, part }: the bumper's face
-             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge, the pod over the nose; foot:
-             the bumper's top the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
+     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w, y], pod: [x, y0, y1, w], foot, part }: the bumper's face
+             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge (y: the bar's feet on that
+             height instead of the roof's top: an open car's windscreen header, LEV KABRIO's), the pod over the nose; foot: the bumper's top
+             the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
    Every option is a few primitives in the body's material; the details (bulbs, rivets, the weave's finer cells) only on Visoki (K.hi). */
 (function () {
   'use strict';
@@ -45,7 +47,7 @@
   // diffuser, the arches' flares), in place of the stock lips under the bumpers
   DELI.skirts = (n) => !!n && n !== 1 && n !== 4;   // (the aero options with skirts along the sills: lovilci_blata's front flaps ahead of them)
   function aero(K, n, m, M) {
-    const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill[0], s1 = m.sill[1], ws = m.ws, ys = m.ys;
+    const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill ? m.sill[0] : 0, s1 = m.sill ? m.sill[1] : 0, ws = m.ws, ys = m.ys;
     // the exhaust's tips (the fitted one's, else the stock one: exh): a centre exit's cut-out (cx, its half width: the diffuser's gap), the side ones
     const ex = K.fitted && K.fitted.auspuh, ma = M && M.def.mounts && M.def.mounts.auspuh, TP = ex && ma && DELI.tips ? DELI.tips(ex, ma) : m.exh ? [[m.exh[0], m.exh[1]]] : [];
     const cx = ex && ma && DELI.centreCut ? DELI.centreCut(ex) : 0, sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
@@ -65,7 +67,7 @@
     const canards = (col, k) => { for (const sd of [-1, 1]) for (let i = 0; i < k; i++) { const y = 0.3 + i * 0.075;
       K.plate([[xf + 0.004, y, sd * (W - 0.05)], [xf + 0.004, y, sd * (W + 0.035)], [xf - 0.13, y + 0.045, sd * (W + 0.01)]], 0.008, col, oF); } };
     // the skirts along the sills between the arches: out past the side, h under the sill's foot
-    const skirts = (col, out, h, line) => { for (const sd of [-1, 1]) { const pr = (x, k) => [[ws - 0.012, ys + 0.115], [ws + out * k, ys + 0.1], [ws + out * k + 0.004, ys + 0.012], [ws + out * k - 0.012, ys - h * k], [ws - 0.07, ys - h * k + 0.006]].map(([z, y]) => [x, y, sd * z]);
+    const skirts = (col, out, h, line) => { if (!m.sill) return; for (const sd of [-1, 1]) { const pr = (x, k) => [[ws - 0.012, ys + 0.115], [ws + out * k, ys + 0.1], [ws + out * k + 0.004, ys + 0.012], [ws + out * k - 0.012, ys - h * k], [ws - 0.07, ys - h * k + 0.006]].map(([z, y]) => [x, y, sd * z]);
       const xs = K.hi ? [s0, s0 + 0.05, s1 - 0.05, s1] : [s0, s1], ks = K.hi ? [0.4, 1, 1, 0.4] : [1, 1];
       K.skin(xs.map((x, i) => pr(x, ks[i])), col, col, col, oS);
       if (line) { const z = sd * (ws + out + 0.0045), xa = s0 + 0.05, xb = s1 - 0.05; fc(K, [[xa, ys + 0.028, z], [xb, ys + 0.028, z], [xb, ys + 0.042, z], [xa, ys + 0.042, z]], line, [0, 0, sd], oS); } } };
@@ -93,8 +95,8 @@
     const D2 = K.shade(P, 0.5);
     switch (n) {
       case 1: lip(BP, 0.035, 0.035); keepR(); break;                                   // sprednji spojler
-      case 2: keepF(); skirts(BP, 0.022, 0.012); keepR(); break;                       // pragovi
-      case 3: lip(BP, 0.035, 0.035); skirts(BP, 0.022, 0.012); keepR(); break;         // spojler in pragovi
+      case 2: keepF(); if (m.sill) skirts(BP, 0.022, 0.012); else rearLips(BP); keepR(); break;   // pragovi (a car without sills: the tail's corner lips)
+      case 3: lip(BP, 0.035, 0.035); if (m.sill) skirts(BP, 0.022, 0.012); else rearLips(BP); keepR(); break;   // spojler in pragovi
       case 4: keepF(); diffuser(BP, 4, GR); break;                                      // difuzor
       case 5: case 6: { const c = n === 6 ? P : GR;                                    // cestni (lakiran: in the body's paint)
         lip(c, 0.045, 0.045); skirts(c, 0.03, 0.02); rearLips(c); keepR(); break; }
@@ -265,7 +267,7 @@
   function relijske(K, n, m) {
     const P = K.paint, o = { part: m.part || 'bumperF' }, ob = { part: 'body' }, fw = [1, 0, 0], CH = K.chrome;
     const WARM = [1, 0.96, 0.82], COOL = [0.9, 0.95, 1], YEL = [1, 0.82, 0.2], LED = [0.86, 0.92, 1];
-    const [bx, by, bz] = m.bumper, [nx, ny] = m.nose, [ix, iy, iw, ih] = m.intake, [rx, rw] = m.roof, [px, py0, py1, pw] = m.pod;
+    const [bx, by, bz] = m.bumper, [nx, ny] = m.nose, [ix, iy, iw, ih] = m.intake, [rx, rw, ry] = m.roof, [px, py0, py1, pw] = m.pod;
     // a lamp facing forward on a bracket down to the bumper (or the bar's tube): y0 the bracket's foot
     const front = (x, y, z, r, lens, rim, house, y0, q) => { lamp(K, [x, y, z], fw, r, house || BP, lens, rim, o, q);
       if (y0 != null) K.box(x - 0.03, y0, z, 0.03, y - r * 0.6 - y0, 0.025, 0, DK, null, false, o); };
@@ -273,8 +275,9 @@
     const bar = (x, y, w, h, k, cell, oo) => { K.box(x - 0.035, y, 0, 0.07, h, w * 2, 0, BP, [0.12, 0.12, 0.13], false, oo);
       for (let i = 0; i < k; i++) K.rect(x + 0.0008, y + h / 2, -w + 0.02 + (2 * w - 0.04) * (i + 0.5) / k, (2 * w - 0.04) / k * 0.82, h * 0.6, cell, Object.assign({ dir: 'x' }, oo));
       if (K.hi) K.rect(x + 0.0012, y + h * 0.88, 0, w * 2 - 0.03, 0.006, CH, Object.assign({ dir: 'x' }, oo)); };
-    const roofBar = (w, k, cell) => { const y = K.topY(rx, 0) + 0.035;
-      for (const sd of [-1, 1]) { const z = sd * w * 0.6; K.box(rx - 0.04, K.topY(rx - 0.04, z) - 0.006, z, 0.05, y - K.topY(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
+    const topR = (x, z) => ry != null ? ry : K.topY(x, z);   // (ry: the header the bar's feet stand on, an open car's)
+    const roofBar = (w, k, cell) => { const y = topR(rx, 0) + 0.035;
+      for (const sd of [-1, 1]) { const z = sd * w * 0.6; K.box(rx - 0.04, topR(rx - 0.04, z) - 0.006, z, 0.05, y - topR(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
       bar(rx + 0.03, y, w, 0.065, k, cell, ob); return y; };
     // the pod over the nose: a plate leaning back with the face, k lamps across it (rows: 1 or 2)
     const pod = (col, lamps, r, lens, rim, heat) => { const xa = px + 0.025, xb = px + 0.025 - (py1 - py0) * 0.067;
