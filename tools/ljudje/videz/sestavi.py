@@ -1,14 +1,18 @@
 # Sestavi sliko primerjave videza ljudi (prej / potem) za stran Odločitve: glavni posnetek s kamere za avtom z rumeno lupo (povečava iz iste
 # kamere) za prej in za potem, pod njima lupe drugih mest drug ob drugem (prej | potem), spodaj številke. WebP do ~300 KB.
-#   python3 tools/ljudje/videz/sestavi.py <ime> <proga> <naslov> <podnaslov> <glavni posnetek> [vrstica posnetek ...] [--film]
+#   python3 tools/ljudje/videz/sestavi.py <ime> <proga> <naslov> <podnaslov> <glavni posnetek> [vrstica posnetek ...] [--film] [--izrez K]
 #   posnetek: ime iz stats.json (npr. bathurst-zar-45); --film: vrstice so tri zaporedne lupe (gibanje), samo za potem
-import json, os, sys
+#   --izrez K: kamera za avtom samo enkrat (potem, rumen okvir), pod njo pari lup prej | potem, izrezani K-krat ožje okoli ljudi (tudi glavni);
+#   vrstica posnetek@K ima svoj izrez, film:posnetek je vrstica treh zaporednih lup
+import json, math, os, sys
 from PIL import Image, ImageDraw, ImageFont
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 BASE = os.path.join(REPO, 'test-results', 'ljudje', 'videz')
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
-FILM = '--film' in sys.argv
+argv = sys.argv[1:]; IZ = None
+if '--izrez' in argv: i = argv.index('--izrez'); IZ = float(argv[i + 1]); del argv[i:i + 2]
+args = [a for a in argv if not a.startswith('--')]
+FILM = '--film' in argv
 ime, proga, naslov, podnaslov, glavni, vrstice = args[0], args[1], args[2], args[3], args[4], args[5:]
 W = 1080
 F = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
@@ -32,7 +36,6 @@ def panel(v, f, label):
     S = SP if v == 'prej' else SV; s = shot(S, f)
     main = img(v, f).resize((W, round(W * 591 / 1280)), Image.LANCZOS); H = main.size[1]
     ov = Image.new('RGBA', main.size, (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
-    import math
     k = math.tan(math.radians(s['fov'] / 2)) / math.tan(math.radians(s['fovMain'] / 2))
     rw, rh = W * k, H * k; fx, fy = s['at'][0] * W, s['at'][1] * H
     cx, cy = max(rw / 2, min(W - rw / 2, fx)), max(rh / 2, min(H - rh / 2, fy))
@@ -54,21 +57,38 @@ def panel(v, f, label):
     chip(d, (lx, H - 60 if iy < H / 2 else 14), label, 28)
     return out.convert('RGB')
 
-def pair(f, label):   # the loupes of one place: prej | potem
+def crop(im, k):   # the middle of a loupe, k times narrower (a bit above the middle: the people stand up from their feet)
+    if not k or k <= 1: return im
+    w, h = im.size; cw, ch = w / k, h / k; x0, y0 = (w - cw) / 2, (h - ch) * 0.4
+    return im.crop((round(x0), round(y0), round(x0 + cw), round(y0 + ch)))
+
+def context(f, k, label):   # (--izrez) the chase camera once (potem), the yellow frame = the part of it in the loupes below
+    s = shot(SV, f)
+    main = img(ime, f).resize((W, round(W * 591 / 1280)), Image.LANCZOS); H = main.size[1]
+    kk = math.tan(math.radians(s['fov'] / 2)) / math.tan(math.radians(s['fovMain'] / 2))
+    rw, rh = W * kk, H * kk; fx, fy = s['at'][0] * W, s['at'][1] * H
+    cx, cy = max(rw / 2, min(W - rw / 2, fx)), max(rh / 2, min(H - rh / 2, fy))
+    cw, ch = rw / (k or 1), rh / (k or 1); x0, y0 = cx - rw / 2 + (rw - cw) / 2, cy - rh / 2 + (rh - ch) * 0.4
+    out = main.convert('RGBA'); d = ImageDraw.Draw(out)
+    d.rounded_rectangle([x0 - 3, y0 - 3, x0 + cw + 3, y0 + ch + 3], 6, outline=YEL, width=4)
+    chip(d, (14, H - 60 if cy < H / 2 else 14), label, 28)
+    return out.convert('RGB')
+
+def pair(f, label, kz=None):   # the loupes of one place: prej | potem
     w = (W - 6) // 2; h = round(w * 415 / 900)
     row = Image.new('RGB', (W, h + 44), (14, 19, 25)); d = ImageDraw.Draw(row)
     d.text((14, 8), label, font=font(24, True), fill=(238, 242, 246))
     for k, v in enumerate(['prej', ime]):
-        z = img(v, f, '_zoom').resize((w, h), Image.LANCZOS); x = k * (w + 6); row.paste(z, (x, 44)); dd = ImageDraw.Draw(row)
+        z = crop(img(v, f, '_zoom'), kz).resize((w, h), Image.LANCZOS); x = k * (w + 6); row.paste(z, (x, 44)); dd = ImageDraw.Draw(row)
         chip(dd, (x + 10, 54), 'PREJ' if v == 'prej' else 'POTEM', 22, fill=((40, 46, 56, 255) if v == 'prej' else YEL + (255,)), col=((255, 255, 255) if v == 'prej' else (17, 17, 17)))
     return row
 
-def film(f, label):   # three loupes one after another (the motion), potem only
+def film(f, label, kz=None):   # three loupes one after another (the motion), potem only
     w = (W - 12) // 3; h = round(w * 415 / 900)
     row = Image.new('RGB', (W, h + 44), (14, 19, 25)); d = ImageDraw.Draw(row)
     d.text((14, 8), label, font=font(24, True), fill=(238, 242, 246))
     for k, suf in enumerate(['_zoom', '_film1', '_film2']):
-        z = img(ime, f, suf).resize((w, h), Image.LANCZOS); row.paste(z, (k * (w + 6), 44))
+        z = crop(img(ime, f, suf), kz).resize((w, h), Image.LANCZOS); row.paste(z, (k * (w + 6), 44))
     return row
 
 def what(f):
@@ -84,10 +104,21 @@ parts = []
 head = Image.new('RGB', (W, 118), (23, 58, 94)); d = ImageDraw.Draw(head)
 d.text((24, 16), naslov, font=font(40, True), fill=(255, 255, 255)); d.text((24, 70), podnaslov, font=font(25), fill=(185, 200, 216))
 parts.append(head)
-parts.append(panel('prej', glavni, 'PREJ · ' + what(glavni)))
-parts.append(Image.new('RGB', (W, 6), (14, 19, 25)))
-parts.append(panel(ime, glavni, 'POTEM · ' + what(glavni)))
-for f in vrstice: parts.append(film(f, 'Potem, gibanje (tri lupe v ~0,3 s): ' + what(f)) if FILM else pair(f, what(f)))
+def spec(r):   # posnetek[@K] or film:posnetek[@K]
+    fm = r.startswith('film:'); r = r[5:] if fm else r; k = IZ
+    if '@' in r: r, k = r.split('@'); k = float(k)
+    return r, k, fm or FILM
+if IZ:
+    g, kg, _ = spec(glavni); glavni = g
+    parts.append(context(g, kg, 'Kamera za avtom · ' + what(g)))
+    parts.append(pair(g, 'Povečava: ' + what(g), kg))
+    for r in vrstice:
+        f, k, fm = spec(r); parts.append(film(f, 'Potem, gibanje (tri lupe v ~0,5 s): ' + what(f), k) if fm else pair(f, what(f), k))
+else:
+    parts.append(panel('prej', glavni, 'PREJ · ' + what(glavni)))
+    parts.append(Image.new('RGB', (W, 6), (14, 19, 25)))
+    parts.append(panel(ime, glavni, 'POTEM · ' + what(glavni)))
+    for f in vrstice: parts.append(film(f, 'Potem, gibanje (tri lupe v ~0,3 s): ' + what(f)) if FILM else pair(f, what(f)))
 # the numbers
 pp, pv = SP.get('perPerson', {}), SV.get('perPerson', {})
 def avg(P, k): return P.get(k, {}).get('avg')

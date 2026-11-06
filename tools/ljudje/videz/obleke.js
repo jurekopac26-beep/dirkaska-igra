@@ -3,13 +3,14 @@
 // face once baked), so the savings on hidden faces pay for: hair with shapes readable from above (crop, side part, buzz, curls, bob, long, bun,
 // ponytail with its band, a bald patch for some older men), caps with a brim forward or backward, sun hats, cheaper police caps and helmets;
 // garment colour blocks (an open jacket over a shirt, a hoodie with its hood on the back, a polo collar, raglan sleeves, a tank top with bare
-// shoulders, a skirt or a dress for some 'long' / 'pony' looks), belts, white sneakers or dark boots, backpacks and bum bags, sunglasses; the
-// staff stay what the scene asked (its shirt, trousers, vest and hat colours) and get clearer: hi-vis vests with two bands and braces over the
-// shoulders, overalls with a collar and a zip, reflective bands on the marshals' and firefighters' arms and legs, mechanics' two-tone overalls.
+// shoulders, a skirt or a dress for some 'long' / 'pony' looks: its own joint, P.xJ, turned as the legs on average), shorts on a summer's
+// day, cyclists' jerseys with a band, belts, white sneakers or dark boots, backpacks and bum bags, sunglasses; the staff stay what the scene
+// asked (its shirt, trousers, vest and hat colours) and get clearer: hi-vis vests with two bands and braces over the shoulders, overalls with a
+// collar and a zip, reflective bands on the marshals' and firefighters' arms and legs, mechanics' two-tone overalls.
 // The scene's random stream is left exactly as person0 leaves it (the same draws in the same order; its next value is read and put back), so
 // every scene keeps its layout and colours; this look's own choices come from that value. Instanced crowd (crowdGeo): the same 28 quads (168
-// index vertices), the arms' inner faces (against the body or turned away) traded for a cap's brim and a second colour on the shirt's front.
-// No writing, no logos, no brands.
+// index vertices), the arms' inner faces (against the body or turned away) traded for a cap's brim and a second colour on the shirt's front;
+// a second colour per vertex split sharply in the fragment shader (sleeves, shoes or shorts, the hair line). No writing, no logos, no brands.
 window.LJV = {
   people(K) {
     const THREE = K.THREE;
@@ -194,7 +195,7 @@ window.LJV = {
       const lower = bottom === 'dress' ? shirt : pants, shins = shorts || bottom !== 'trousers' ? skin : pants;
       // the head: the hair's shape by its kind (short: crop, side part, buzz, curls, a bald patch for some older men), a cap or a sun hat for some
       let hk = o.hat || null;
-      if (!hk && o.hair == null && !staff && !bare) { const u = R(); hk = u < (kid ? 0.2 : 0.2) ? 'cap' : !kid && u < (summer ? 0.32 : 0.27) ? 'sun' : null; }
+      if (!hk && o.hair == null && !staff && !bare) { const u = R(); hk = u < 0.2 ? 'cap' : !kid && u < (summer ? 0.32 : 0.27) ? 'sun' : null; }
       if (hk === 'cap' && !staff && !kid && R() < 0.28) o = Object.assign({}, o, { _capBack: true });
       else if (hk === 'cap' && kid && R() < 0.4) o = Object.assign({}, o, { _capBack: true });
       let hstyle = null;

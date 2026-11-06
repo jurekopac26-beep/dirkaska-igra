@@ -22,12 +22,12 @@
   const cl01 = (x) => Math.min(1, Math.max(0, x));
   const hash = (a, b) => { let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b | 0) + 0x632be5ab, 0xc2b2ae35); h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; h = Math.imul(h, 0x297a2d39); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
   // the sky's light by height (body frame, m): the feet in the grass's shade, the shoulders and the head's top in the open sky
-  const sky = (y) => 1.05 * (0.9 + 0.1 * ss(0.03, 1.42, y) + 0.08 * ss(1.38, 1.8, y));
+  const sky = (y) => 1.02 * (0.84 + 0.2 * ss(0.03, 1.45, y));
   // the side faces' normals tilted to the sky by height (the scene's sky light then brightens the shoulders, the grass's light the shins)
   const lift = (y) => 0.3 * ss(0.4, 1.5, y);
   // how a part's normals are bent: side faces n = face * aS + (dx, dy * vy, dz); caps (tops) n = face * aC + (dx, 0, dz) * hC; d = the vertex's place in
   // its part's box (-1 .. 1 on each axis; a thin axis 0)
-  const BEND = { ball: { aS: 0.3, vy: 0.85, aC: 1, hC: 0.75 }, torso: { aS: 0.35, vy: 0.5, aC: 1, hC: 0.55 }, limb: { aS: 0.6, vy: 0.25, aC: 1, hC: 0.5 } };
+  const BEND = { ball: { aS: 0.3, vy: 0.85, aC: 1, hC: 0.75 }, torso: { aS: 0.25, vy: 0.5, aC: 1, hC: 0.55 }, limb: { aS: 0.6, vy: 0.25, aC: 1, hC: 0.5 } };
 
   // the triangles of a part joined into its pieces (a box, a cylinder: triangles sharing corners) -> a piece index per triangle
   function pieces(Pa) {
@@ -114,12 +114,12 @@
               else if (LEG.has(b)) f *= (1 - 0.25 * inward * (0.5 + 0.5 * ss(0.45, 0.86, y))) * (1 - 0.12 * ss(0.74, 0.88, y));   // (between the legs; the top of the legs under the hips)
               else if (b === 2) f *= (1 - 0.2 * ss(1.08, 0.96, y)) * (1 - 0.12 * Math.abs(n.x) * ss(1.08, 1.36, y));   // (the shirt's hem; the sides under the arms)
               else if (b === 1) f *= 1 - 0.18 * ss(0.95, 0.84, y);   // (the hips under the torso)
-              f *= 1 + 0.16 * cl01(n.y) * ss(1.15, 1.5, y);   // (the shoulders and the head's top catch the sky)
+              f *= 1 + 0.28 * cl01(n.y) * ss(1.15, 1.5, y);   // (the shoulders and the head's top catch the sky)
               if (R.r === 'skin' || R.r === 'face' || R.r === 'neck' || R.r === 'hand') { cr = 1.025; cb = 0.96; }   // (warm skin)
               if (R.r === 'hand') f *= 0.88;
               else if (R.r === 'neck') f *= 0.76;
               else if (R.r === 'face') f *= 1 - 0.16 * ss(R.lo + 0.07, R.lo, Pa[i + 1]);   // (under the chin)
-              else if (R.r === 'hair') { const up = cl01(n.y); f *= 1 + 0.12 * up; add = 0.035 * up; }   // (the top of the hair or the hat catches the sky)
+              else if (R.r === 'hair') { const up = cl01(n.y); f *= 1 + 0.18 * up; add = 0.05 * up; }   // (the top of the hair or the hat catches the sky)
               else if (R.r === 'shoe') f *= 0.92 - 0.14 * ss(R.lo + 0.04, R.lo, Pa[i + 1]);   // (the soles darker: standing on the ground)
               else if (R.r === 'cloth') { f *= R.tone; cr = 1 + R.warm; cb = 1 - R.warm; }
               C[i] = C[i] * f * cr + add; C[i + 1] = C[i + 1] * f * cg + add; C[i + 2] = C[i + 2] * f * cb + add;
@@ -169,10 +169,10 @@
           (p) => skyC(p[1]) * (p[1] < 0.01 ? 0.78 : 1) * (1 - 0.1 * ss(0.7, 0.84, p[1])));
         // torso: the hem darker, the shoulders in the sky's light
         cub(-0.22, 0.22, 0.84, 1.42, -0.13, 0.13, { px: [1, W1], nx: [1, W1], pz: [1, W1], nz: [1, W1], py: [1, W1] }, 'torso',
-          (p, x, y) => skyC(p[1]) * (1 - 0.14 * ss(0.95, 0.84, p[1])) * (1 + 0.06 * Math.max(0, y)));
+          (p, x, y) => skyC(p[1]) * (1 - 0.14 * ss(0.95, 0.84, p[1])) * (1 + 0.25 * Math.max(0, y) * ss(1.1, 1.42, p[1])));
         // head: the chin darker, the hair's (or the cap's) top lighter
         cub(-0.11, 0.11, 1.44, 1.7, -0.12, 0.12, { px: [2, W1], nx: [2, W1], pz: [2, W1], nz: [4, W1], py: [4, W1] }, 'ball',
-          (p, x, y, z, part) => skyC(p[1]) * (part === 2 ? 1 - 0.14 * ss(1.5, 1.44, p[1]) : 1 + 0.1 * Math.max(0, y)));
+          (p, x, y, z, part) => skyC(p[1]) * (part === 2 ? 1 - 0.14 * ss(1.5, 1.44, p[1]) : 1 + 0.22 * Math.max(0, y)));
         // arms: the inner side darker (at the armpit most), the hand a little darker
         for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22;
           cub(x0, x0 + 0.1, 0.8, 1.4, -0.06, 0.06, { px: [b + 5, W1], nx: [b + 5, W1], pz: [b + 5, W1], nz: [b + 5, W1], ny: [b + 2, W1] }, 'limb',
@@ -192,7 +192,7 @@
           '#ifdef USE_INSTANCING', 'crMv = instanceMatrix * crMv;', '#endif',
           'crMv = modelViewMatrix * crMv;',
           'float crRim = 1.0 - max(0.0, dot(normalize(transformedNormal), normalize(-crMv.xyz)));',
-          'vColor *= 1.0 + 0.3 * crRim * crRim * crRim; }'].join('\n') });
+          'vColor *= 1.0 + 0.4 * crRim * crRim * crRim; }'].join('\n') });
       }
       return { geo, shader };
     },
