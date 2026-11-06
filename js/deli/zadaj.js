@@ -5,14 +5,16 @@
      zadnje_luci: { x, zc, yc, w, h, hosts, bar }   the tail lamps' room on each side: the stock lamp's x (its lit face 2.3 cm behind it), its
                   middle (zc out from the car's middle, yc), w x h the room (KOLIBRI: the lamp strip, 0.14 x 0.30 m); hosts [left, right] the
                   lamps' parts; bar { x, y, w, h, part }: the band across the tail between them (KOLIBRI: the tailgate's garnish, half width w)
-     auspuh:      { x, y, z, r, len, part, drum }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
-                  radius, length; part: the pipes'; drum: the silencer's middle height (y - 0.065; a car whose floor is higher: up against it); valve: true, the flap
-                  valves on the tips (KOLIBRI's beside them, against the body; on a car with the tips far out they'd hang in the air)
+     auspuh:      { x, y, z, r, len, part, drum, pipe }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
+                  radius, length; part: the pipes'; drum: the silencer's middle height (y - 0.065; a car whose floor is higher: up against it); pipe: the pipes' front ends' height (y - 0.07; a car whose floor is higher:
+                  up under it); valve: true, the flap valves on the tips (KOLIBRI's beside them, against the body; on a car with the tips far out they'd hang in the air)
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
-                  w its half width; part: the lid's
+                  w its half width; part: the lid's; face: [x, y0, y1], the lid on the tail's upright panel instead of the loft's top (its x, from
+                  y0 up to y1; x0 then unused, x1 the window's foot: RAKETA's, whose loft ends in an upright cap)
      vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR); underLamps: true, the front
-       arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow
+       arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow;
+       underPod: true, the front point behind a lamp pod over the bumper's face (relijske_luci 13-16, RAKETA's): with one fitted, none in front
      lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part, parts }   the flaps behind the wheels (x), across (|z|), up;
                   parts [front left, front right, rear left, rear right]: each flap in its own (a car's stock flaps' parts), else all in part */
 (function () {
@@ -119,8 +121,8 @@
         K.skin([ring(X + (o.len || L), 1), ring(X, 1)], col, null, HOLE);
         faceOut(K, ring(X - 0.0015, 0.8), [0.2, 0.2, 0.22], [-1, 0, 0]); faceOut(K, ring(X - 0.002, 0.66), HOLE, [-1, 0, 0]); };   // (its rim, dark inside)
       // the silencer: a drum across under the tail (rear silencer), along under the floor (forward: a pipe to it)
-      const DY = m.drum != null ? m.drum : Y - 0.065, drum = (col, z0, z1) => K.cyl([X + 0.27, DY, -Z * (z0 == null ? 1.15 : z0)], [X + 0.27, DY, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });   // (DY: its middle, up against the floor)
-      const pipe = (z, col, x1) => K.cyl([X + L - 0.01, Y, z], [x1 || 0.6, Y - 0.07, z * 0.4], 0.024, col, { n: 5 });
+      const DY = m.drum != null ? m.drum : Y - 0.065, PY = m.pipe != null ? m.pipe : Y - 0.07, drum = (col, z0, z1) => K.cyl([X + 0.27, DY, -Z * (z0 == null ? 1.15 : z0)], [X + 0.27, DY, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });   // (DY: its middle, up against the floor)
+      const pipe = (z, col, x1) => K.cyl([X + L - 0.01, Y, z], [x1 || 0.6, PY, z * 0.4], 0.024, col, { n: 5 });   // (PY: its front end's height, up under the floor)
       const valve = (z) => K.box(X + L * 0.6, Y + 0.025, z, 0.06, 0.045, 0.05, 0, BLK);
       const cut = (w) => K.rect(m.x + 0.03, Y, 0, w, 0.09, HOLE, { dir: '-x' });   // (a centre exit: the valance's cut-out round it)
       const L_ = -Z, R_ = Z, VZ = m.valve ? 1 : 0.8;   // (VZ: the flap valves' place across, a share of z: beside the tips, or on them)
@@ -149,11 +151,13 @@
   // The lid's skin laid on the main loft's top a few mm out (K.topY): from its rear edge x0 to x1, across its width; the window above it (a
   // hatch's: glass) framed, edged, its lexan's border; the lid's own lip spoiler at x1; quick-release pins; the garnish (the stock's dark band)
   function prtljaznik(K, n, m) {
-    const X0 = m.x[0], X1 = m.x[1], XG = m.glass, W = m.w, P = K.paint;
-    // a point of the top at t (0: X0 .. 1: X1; 1 .. 2 the window up to XG) and z, lifted along the surface's normal
+    const X0 = m.x[0], X1 = m.x[1], XG = m.glass, W = m.w, P = K.paint, F = m.face;
+    // a point of the top at t (0: X0 .. 1: X1; 1 .. 2 the window up to XG) and z, lifted along the surface's normal (face: t 0 .. 1 up the
+    // upright panel, facing back; its 'up' along the surface, as the top's, toward t 0)
     const xs = (t) => t <= 1 ? X0 + (X1 - X0) * t : X1 + ((XG || X1) - X1) * (t - 1);
-    const nrm = (t) => { const a = xs(Math.max(0, t - 0.02)), b = xs(Math.min(XG ? 2 : 1, t + 0.02)), dx = b - a, dy = K.topY(b, 0) - K.topY(a, 0), l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
-    const pt = (t, z, lift) => { const x = xs(t), nn = nrm(t), k = lift || 0.004; return [x + nn[0] * k, K.topY(x, z) + nn[1] * k, z]; };
+    const nrm = (t) => { if (F && t <= 1) return [-1, 0]; const a = xs(Math.max(F ? 1 : 0, t - 0.02)), b = xs(Math.min(XG ? 2 : 1, t + 0.02)), dx = b - a, dy = K.topY(b, 0) - K.topY(a, 0), l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
+    const pt = (t, z, lift) => { const k = lift || 0.004; if (F && t <= 1) return [F[0] - k, F[1] + (F[2] - F[1]) * t, z];
+      const x = xs(t), nn = nrm(t); return [x + nn[0] * k, K.topY(x, z) + nn[1] * k, z]; };
     // a patch of the top (t0..t1, z0..z1), in pieces across where the crown bends; out: the side it faces (up the normal)
     const patch = (t0, t1, z0, z1, col, lift) => { const zs = [z0]; for (const z of [-0.38 * W, 0.38 * W]) if (z > z0 + 0.01 && z < z1 - 0.01) zs.push(z); zs.push(z1);
       for (let i = 0; i < zs.length - 1; i++) { const a = pt(t0, zs[i], lift), b = pt(t0, zs[i + 1], lift), c = pt(t1, zs[i + 1], lift), d = pt(t1, zs[i], lift), nn = nrm((t0 + t1) / 2);
@@ -176,8 +180,8 @@
       return [[b[0] + up[0] * 0.02, b[1] + up[1] * 0.02], [b[0] + nn[0] * 0.05 * k * e, b[1] + nn[1] * 0.05 * k * e + 0.012 * k], [b[0] + nn[0] * 0.044 * k * e + up[0] * 0.03 * k, b[1] + nn[1] * 0.044 * k * e + up[1] * 0.03 * k], [b[0] + up[0] * 0.045, b[1] + up[1] * 0.045]].map(([x, y]) => [x, y, z]); });
       K.skin(rings, col, col, col); };
     // the quick-release pins: a disc and its clip at the lid's lower corners (and the window's upper ones)
-    const pins = () => { for (const t of XG ? [0.12, 1.86] : [0.12, 0.88]) for (const sd of [-1, 1]) { const p = pt(t, sd * (W - 0.07), 0.006);
-      K.discX(p[0], p[1], p[2], 0.016, seg(K, 8), CHR, -1); K.rect(p[0] - 0.002, p[1] - 0.01, p[2], 0.006, 0.026, RED, { dir: '-x' }); } };
+    const pins = () => { for (const t of XG && !F ? [0.12, 1.86] : [0.12, 0.88]) for (const sd of [-1, 1]) { const p = pt(t, sd * (W - 0.07), 0.006);
+      K.discX(p[0], p[1], p[2], 0.016, seg(K, 8), CHR, -1); K.rect(p[0] - 0.002, p[1] - 0.01, p[2], 0.006, 0.026, RED, { dir: '-x' }); } };   // (face: all four on the panel)
     const lines = (col) => { for (const t of [0.3, 0.55, 0.8]) patch(t - 0.01, t + 0.01, -W + 0.03, W - 0.03, col, 0.0055); };   // (brushed: the grain's lines across)
     // raised ribs across (corrugated), louvres (dark slots, a slat over each), the window blanked off (a race car's: a slot of glass left),
     // a pinstripe round the lid, the woodie's planks up and down in a wooden frame round the window
@@ -217,7 +221,8 @@
     // the tip stays (MIŠKA's, on an overrider beside its tips near the middle)
     const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) && Math.abs(m.r[2]) <= Math.abs(ma.z) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
     // at a tow point (end: 1 the front, -1 the rear; dir: the way out of the face), in the bumper's part
-    const at = (end, fn) => { const p = end > 0 ? m.f : r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
+    const podF = m.underPod && K.fitted && DELI.podLamps && DELI.podLamps(K.fitted.relijske_luci);   // (underPod: none in front behind a pod)
+    const at = (end, fn) => { const p = end > 0 ? (podF ? null : m.f) : r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
     const strap = (x, y, z, d, w, col) => { K.box(x + d * 0.009, y - 0.1, z, 0.012, 0.12, w, 0, col, col);
       K.rect(x + d * 0.0156, y - 0.005, z, w + 0.004, 0.012, WHT, { dir: d > 0 ? 'x' : '-x' }); K.box(x + d * 0.004, y - 0.012, z, 0.012, 0.03, w + 0.02, 0, BLK); };
