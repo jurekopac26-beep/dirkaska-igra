@@ -616,6 +616,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
 | **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **RIS G** | 4WD | 544 KM | 1360 kg | 85.000 kovančkov | Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi. |
 | **MERJASEC V8** | zadnji | 639 KM | 1680 kg | 95.000 kovančkov | Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi. |
 
 ### Superšportni

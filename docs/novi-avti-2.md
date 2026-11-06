@@ -46,7 +46,7 @@ Obe veji dodajata vozila v iste sezname: `index.html`, `garaza.html`, `js/lang.j
 
 | Avto | Stanje | Moč / masa | 0–100 / končna / bočno / zaviranje 100–0 | Drift Jezero / Spa / Bathurst |
 |---|---|---|---|---|
-| RIS G | prototip | | | |
+| RIS G | narejen (`js/cars/ris.js`) | 400 kW / 1360 kg (294 W/kg) | 2,88 s / 244 km/h / 2,28 g / 22,8 m | 2213 / 467 / 835 |
 | VIDRA E | prototip | | | |
 | KUNA S | narejen (`js/cars/kuna.js`) | 255 kW / 1190 kg (214 W/kg) | 3,28 s / 228 km/h / 2,23 g / 23,9 m | 2251 / 461 / 716 |
 | MERJASEC V8 | narejen (`js/cars/merjasec.js`) | 470 kW / 1680 kg (280 W/kg) | 3,25 s / 243 km/h / 2,20 g / 22,8 m | 2208 / 502 / 858 |

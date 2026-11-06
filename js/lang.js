@@ -476,6 +476,7 @@
     'Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma.': 'A stretched limousine with two flags on the front wings and plenty of chrome.',
     'Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi.': 'A V8 saloon made for drifting: four doors, wide arches, a ducktail and four pipes.',
     'Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča.': 'A front-drive hot hatch made for drifting: a white roof, a tall wing, gold rims.',
+    'Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi.': 'A wide 4x4 gymkhana coupe: a big wing, wide arches and a scoop on the roof.',
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
