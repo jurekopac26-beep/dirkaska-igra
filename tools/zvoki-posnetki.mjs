@@ -4,7 +4,8 @@
 //   node tools/zvoki-posnetki.mjs <id> [--m 0] [--t 15] [--amb 1] [--stoji] [--zvon] [--tod day|dawn|dusk|night] [--season summer|autumn|winter]
 //       [--rain 0..1] [--ime ime] [--out mapa]
 //   node tools/zvoki-posnetki.mjs --seznam posnetki.json [--out mapa]   več posnetkov v enem brskalniku: [{ id, m, t, amb, stoji, zvon, tod,
-//       season, rain, ime }, …]
+//       season, rain, ime, opts }, …]; opts: različica mešalnika za primerjavo po ušesu (SfxOkolje.opts, npr. { "birdP": 2 }: ptice 2-krat
+//       pogosteje), vsak posnetek začne s privzetimi
 // --amb: Zvoki okolja 0 Izklop, 1 Tiho (privzeto), 2 Glasneje; --zvon: zvonovi cerkve gotovo (SfxOkolje.opts.bellP 1). Izpiše, kaj je bilo
 // slišati (podlage, ptice, zvonovi, črede, golobi, hitrost). Posnetkov ne commitaj (privzeta mapa je začasna).
 import { serve, launch, openGame, startTrack } from '../tests/browser/lib.mjs';
@@ -44,22 +45,24 @@ try {
     const ai = Core.aiControl; Core.aiControl = function (P, race) { const r = ai.apply(this, arguments); if (window.__hold && race && P === race.player) { P.inThr = 0; P.inBrk = 1; } return r; };
   });
   await page.evaluate(() => Sfx.resume());
+  let O0 = null;   // (the mixer's own options, before any clip's)
   for (const c of clips) {
     const C = Object.assign({ m: 0, t: 15, amb: 1, tod: 'day', season: 'summer', rain: 0, stoji: false, zvon: false }, c);
     const ime = C.ime || `${C.id}-${C.m}m${C.stoji ? '-stoji' : ''}-amb${C.amb}`;
     await startTrack(page, C.id);
+    if (!O0) O0 = await page.evaluate(() => Object.assign({}, SfxOkolje.opts));
     const at = await page.evaluate(async (C) => {
       const g = window.__game, P = g.race.player, T = g.race.track, len = T.len, wait = (ms) => new Promise(r => setTimeout(r, ms));
       document.querySelector('.seg[data-set="amb"] button[data-v="' + C.amb + '"]').click();
       Render.setAtmos({ season: C.season, tod: C.tod }); g.race.setRain(C.rain);
-      SfxOkolje.opts.bellP = C.zvon ? 1 : 0.6; SfxOkolje.opts.bellGap = C.zvon ? 20 : 180;
+      Object.assign(SfxOkolje.opts, C.O0, C.zvon ? { bellP: 1, bellGap: 20 } : {}, C.opts || {});
       g.pause(); g.autoDrive = true; window.__hold = false;
       const rem = () => T.open ? C.m - P.q.s : ((C.m - P.q.s) % len + len) % len;
       if (C.m > 0) for (let k = 0; k < 600 && rem() > 2 && (T.open || rem() < len - 100); k++) g.sim(0.25, true);
       window.__hold = !!C.stoji; g.resume();
       await wait(400); SfxOkolje.prep(); await wait(C.stoji ? 4000 : 1500);   // (the voices at once; the car stopped, the beds faded in)
       return { s: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6) };
-    }, C);
+    }, Object.assign({ O0 }, C));
     const n0 = await page.evaluate(() => SfxOkolje.levels().n);
     const b64 = await page.evaluate((ms) => window.__record(ms), Math.round(C.t * 1000));
     const L = await page.evaluate(() => { const g = window.__game, P = g.race.player; g.pause(); window.__hold = false; return { s: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6), L: SfxOkolje.levels() }; });

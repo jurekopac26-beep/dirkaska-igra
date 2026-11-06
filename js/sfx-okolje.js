@@ -601,7 +601,8 @@
   const PA_END = ['The chequered flag is out. Thank you for joining us today.', 'That is the end of the race. Please drive home safely.',
     'The race is over. Please stay in your seats until the cars have returned to the pit lane.'];
   const SHOUTS = ['Go on!', 'Come on!', 'Go, go, go!', 'Yes!', 'Faster!', 'Woo!', "Let's go!", 'Brilliant!', 'Push!', 'Look at that!'];
-  const SPK = { u: null, until: 0, kind: '', quiet: -1e9, tPA: -1e9, tSh: -1e9, fin: false, race: null, nPA: 0, nSh: 0, last: '', cut: 0 };
+  const SPK = { u: null, until: 0, kind: '', quiet: -1e9, held: false, tPA: -1e9, tSh: -1e9, fin: false, race: null, nPA: 0, nSh: 0, last: '', cut: 0 };
+  const wall = () => (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) / 1000;   // (seconds as the browser speaks, not the sound's clock)
   const synthOf = () => (typeof window !== 'undefined' && window.speechSynthesis) || null;
   function voiceFor(kind) {   // (an English voice other than the commentator's and the co-driver's, where there is one; the announcer's a woman's if any)
     let V = []; try { V = synthOf().getVoices() || []; } catch (_) { }
@@ -618,11 +619,13 @@
   }
   function hush() { if (!SPK.u) return; SPK.u = null; SPK.cut++; const sy = synthOf(); if (sy) { try { sy.cancel(); } catch (_) { } } }   // (js/comm.js: before each of its lines)
   const pick = (L) => { let t = L[A.R() * L.length | 0]; if (t === SPK.last) t = L[(L.indexOf(t) + 1) % L.length]; return t; };
-  function speechTick(race, player, lv, kmh, now, dt) {
+  function speechTick(race, player, lv, kmh, dt) {
     if (!A.Z.pa || typeof Comm === 'undefined' || !Comm.state || !synthOf() || Comm.radioMode) return;
+    const now = wall();
     if (SPK.race !== race) { SPK.race = race; SPK.fin = false; SPK.tPA = SPK.tSh = now - 20; }   // (a new race: not at once)
     const cs = Comm.state();
-    if (cs.busy || cs.queued >= 0 || (Comm.talking && Comm.talking())) { SPK.quiet = now; return; }   // (the commentator's turn, and a breath after it)
+    if (cs.busy || cs.queued >= 0 || (Comm.talking && Comm.talking())) { SPK.held = true; return; }   // (the commentator's turn)
+    if (SPK.held) { SPK.held = false; SPK.quiet = now; }   // (and a breath after it, from the first frame he is quiet: however slow the frames)
     if (SPK.u && now > SPK.until) SPK.u = null;
     if (SPK.u || now - SPK.quiet < 3) return;
     const R = A.R, vol = [0, 0.3, 0.6][S.lvl] * (1 - 0.4 * sstep(30, 160, kmh)), st = lv.stands || 0;
@@ -674,7 +677,7 @@
     if (bl > 0 && A.R() < opts.birdP * 0.5 * bl * dt) bird(fl, fr, cs, now);
     if (tg.sea > 0.15 && tod !== 'night' && rain < 0.1 && A.R() < 0.1 * tg.sea * dt) gulls(WR[5] >= WL[5] ? cs : -cs, now);
     if (A.coos && tod !== 'night' && rain < 0.1 && A.R() < opts.cooP * dt) coo(cs, now);
-    speechTick(race, player, lv, kmh, now, dt);
+    speechTick(race, player, lv, kmh, dt);
   }
   function stopAll() {   // (every node let go; the zones and the voices kept)
     if (!A) return;

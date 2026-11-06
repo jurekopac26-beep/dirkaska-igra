@@ -34,7 +34,7 @@ const SECS = {
   'browser/school.test.mjs': 190, 'browser/onchamp.test.mjs': 189, 'browser/radio.test.mjs': 185, 'browser/look.test.mjs': 182,
   'browser/share.test.mjs': 177, 'browser/ljudje.test.mjs': 176, 'browser/sledi.test.mjs': 164, 'browser/look2.test.mjs': 163,
   'browser/prvi.test.mjs': 160, 'browser/wheels.test.mjs': 150, 'browser/roadside.test.mjs': 146, 'browser/app.test.mjs': 142,
-  'browser/quali.test.mjs': 141, 'browser/sound.test.mjs': 134, 'browser/okolje.test.mjs': 180, 'browser/chal.test.mjs': 134, 'browser/flystart.test.mjs': 132,
+  'browser/quali.test.mjs': 141, 'browser/sound.test.mjs': 134, 'browser/okolje.test.mjs': 560, 'browser/chal.test.mjs': 134, 'browser/flystart.test.mjs': 132,
   'browser/sky.test.mjs': 128, 'browser/napake-zadnji.test.mjs': 125, 'browser/replay.test.mjs': 122, 'browser/medvode-fence.test.mjs': 121,
   'browser/newver.test.mjs': 120, 'browser/pad.test.mjs': 119, 'browser/repair.test.mjs': 113, 'browser/nvschool.test.mjs': 111,
   'browser/fuel.test.mjs': 111, 'browser/napake-slika.test.mjs': 107, 'browser/slip.test.mjs': 98, 'browser/rio.test.mjs': 98,
