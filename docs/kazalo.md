@@ -244,7 +244,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Shranjena igra na varnem** (polna shramba, trajna shramba, opomnik za izvoz, kopije napredka): `tests/shramba.test.js` (Node), `browser/shramba.test.mjs`
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Garaža, sledi, izvoz, umazanija:** `pitkit.test.mjs` (garažna vrata, zastava, stare gume, sledi gum, luč in modra zastava ob izvozu, umazanija); obraba vsake gume `wear.test.js`, pike na HUD-u `hud.test.mjs`, `wear.test.mjs`; dež v postanku `pits.test.js`
-- **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 11 prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
+- **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 8 pravih prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
 - **Rdeča zastava:** `tests/redflag.test.js` (jedro: sprožilec, vrsta v pasu boksov (Bathurst, Avstralija) in na mreži (Marrakesh, Maroko), brez prehitevanja, zaostali za krog, avto v postanku, ponovni štart, kdaj je ni), `tests/browser/redflag.test.mjs` (HUD, radio, komentator, avtopilot, luč izvoza, Posnetek do sem v vrsti)
 - **Pavza (vreme po krogih nad gumbi, postanki, obvestila med pavzo):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
 - **Kamera:** položaj avta `carlow.test.mjs`, nagib `camtilt.test.mjs`, tresenje kamere `camshake.test.mjs` (nastavitve `camShake`, `camLand`, `camKerb`, `camMis`; `Render.shake(a, vrsta)`, `Render.cam.shOn`)
