@@ -1,6 +1,6 @@
 # Avti na raven KOLIBRIJA (načrt)
 
-Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11. 2026, tabla #382, komentar 6684777565): 32 avtov poleg KOLIBRIJA dobi, kar ima KOLIBRI, ki ga je uporabnik potrdil. Tema je biketravelerjeva do konca; jure.kopac26 od ned. 8. 11. naredi dirkalne, super in tovornjake. Odločitve uporabnika (q10–q12): začni; najprej mali avti; strešni prtljažnik z rezervnim kolesom in kanistri (brez napisov): da. Zbirna veja `avti-kolibri/zbirna`, en osnutek PR (kot deli iz garaže, #247).
+Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11. 2026, tabla #382, komentar 6684777565): 32 avtov poleg KOLIBRIJA dobi, kar ima KOLIBRI, ki ga je uporabnik potrdil. Tema je biketravelerjeva do konca; jure.kopac26 od ned. 8. 11. naredi dirkalne, super in tovornjake. Odločitve uporabnika (q10–q12): začni; najprej mali avti; strešni prtljažnik z rezervnim kolesom in kanistri (brez napisov): da. Zbirna veja `avti-kolibri/zbirna`, en osnutek PR #423 (kot deli iz garaže, #247).
 
 ## Vzor: KOLIBRI (`js/cars/kolibri.js`, `docs/deli.md`)
 
@@ -21,7 +21,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 - Samo to, kar se vidi s kamere za avtom in v garaži. Brez znamk, logotipov in napisov (tudi na kanistrih).
 - **Serijski avto ostane trikotnik za trikotnikom enak** (`tests/kit.test.js`, `tests/fleet.test.js`, `tests/browser/fleet.test.mjs`), razen strešnega prtljažnika spodaj. Meje dogovora (točka 6): del do +300 trikotnikov telesa, kolo do 600 (Visoki 850), vsi trije deli na kolesu do 800 (1150); scena v mejah `tests/golden/perf.json`. Deli ima samo igralčev avto, zato se obremenitev drugih prog ne spremeni.
 - **Strešni prtljažnik z rezervnim kolesom in dvema kanistroma** (serijski, brez napisov, svoj del `roofRack`, odpade kot MEDVEDOV): MIŠKA (mali, prvi) in SKAKAČ (teren); MEDVED ga že ima (nosilec z ročkami in kanistroma), PEŠČENJAK ima rezervni kolesi za kabino. Avto s prtljažnikom nima `streha` in `stresna_zajemalka`; obremenitev: lasten `look.budget.outer` največ +200 trikotnikov in perf v mejah. Slike gredo uporabniku s prvo skupino (stran Odločitve), da potrdi ali izbere drug avto.
-- Dogovor (`car.deli`, `mounts`, `K.deli`, `DELI`, `js/deli/*.js`) se spremeni samo, ko drugače ne gre: zapis v »Spremembe dogovora« v `docs/deli.md`, sprememba najprej v zbirno vejo in sporočilo drugi seji. Enako za skupna orodja in teste (`tests/deli-pregled.test.js`, `tests/run.js`, `tools/`). KOLIBRIJA ta tema ne spreminja.
+- Dogovor (`car.deli`, `mounts`, `K.deli`, `DELI`, `js/deli/*.js`) se spremeni samo, ko drugače ne gre: zapis v »Spremembe dogovora« v `docs/deli.md`, sprememba najprej v zbirno vejo in sporočilo drugi seji. Enako za skupna orodja in teste (`tests/deli-pregled.test.js`, `tests/run.js`, `tools/`). KOLIBRIJA ta tema ne spreminja; izjema so popravki skupnih graditeljev, ki jih pokaže pregled drugega avta (seznam spodaj v »Predaja«).
 
 ## Kdo dela kaj
 
@@ -66,3 +66,7 @@ Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `
 | teren | čaka | nova seja po klasiki |
 | reli, električni | v delu (Seja 2, 6. 11.) | nato športni, posebni |
 | dirkalni, super, tovornjaki | čaka (jure.kopac26 od ned. 8. 11.) | TITAN po #304 |
+
+Skupne spremembe v zbirni veji (Seja 1, 6. 11.):
+- `tests/deli-pregled.test.js <id>` za vsak avto: dovoljeni deli za razbijanje so KOLIBRIJEVI in tisti, ki jih imenujejo avtovi `mounts` (`part`, `parts`, `hosts`, `partF`, `partR`); obvezni so iz `mounts`, če jih ima (sicer KOLIBRIJEVI); pari, ki se križajo, so obvezni samo na KOLIBRIJU; avto brez `look.hi` nima Visokih. Stanje s sklopom 1 (6. 11.): zeleni vsi avti Seje 1 in Seje 2 razen SKAKAČA (krilo 3 in 4 lebdita 5 cm nad avtom: skupina teren).
+- `js/deli.js`, krilo 2 (račji rep): zavorna lučka na ploskvi repa (prej na vrhu izbočene strehe, na LEV S in MIŠKI 2 cm nad repom); na KOLIBRIJU 9 mm nižje, v celoti na ploskvi.

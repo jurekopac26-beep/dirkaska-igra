@@ -17,7 +17,8 @@
 //  - all at once: every element's heaviest option on one car builds (no fallback, all 38 on it): its shell within stock + 6000 triangles
 //    (Visoki + 8000: what an intact car draws), its inner block (drawn once panels come off) + 300 for each hidden part
 //  - nothing warned (no part fell back)
-// Another vehicle with mounts (the same measures; the part ids for breaking and the accepted cases are KOLIBRI's, docs/deli.md):
+// Another vehicle with mounts (the same measures and accepted cases; the part ids for breaking KOLIBRI's and those its mounts name: krilo.part,
+// zarometi.hosts, zadnje_luci.hosts and bar.part, aero's partF / partR, zmigavci's, a part: / parts: of its own; docs/avti-kolibri.md):
 //   node tests/deli-pregled.test.js [vehicle id]
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -39,6 +40,13 @@ const PARTS = { krilo: ['spoiler'], zarometi: ['headL', 'headR', 'body'], aero: 
 const MUST = { krilo: ['spoiler'], zarometi: ['headL', 'headR'], hauba: ['hood'], zadnje_luci: ['tailL', 'tailR'], prtljaznik: ['trunk'], antena: ['aerial'],
   ogledala: ['mirrorL', 'mirrorR'], vrata: ['doorL', 'doorR'] };
 const PAINT = ['crte', 'nalepke'];   // (over the whole shell: any part, as the paint under them)
+// on another vehicle: the part ids its mounts name too (krilo.part, zarometi.hosts, ...); must: the mount's own (its part for krilo, hauba,
+// prtljaznik, antena; its hosts; its parts for ogledala, vrata) in place of KOLIBRI's
+const NAMED = /^(part|parts|host|hosts|partF|partR)$/;
+const named = (v, k, o = []) => { if (typeof v === 'string') { if (NAMED.test(k)) o.push(v); } else if (Array.isArray(v)) v.forEach(x => named(x, k, o)); else if (v && typeof v === 'object') for (const q in v) named(v[q], q, o); return o; };
+const partsOf = (id) => PARTS[id] && PARTS[id].concat(named(MO[id], ''));
+const mustOf = (id) => { const m = MO[id] || {}, own = [].concat(m.hosts || [], ['krilo', 'hauba', 'prtljaznik', 'antena'].includes(id) && m.part ? [m.part] : [], ['ogledala', 'vrata'].includes(id) && m.parts ? m.parts : []);
+  return own.length ? own : (MUST[id] || []); };
 
 // ---- 1. every option alone ----
 const I0 = R.kitInfo(VID), HW = I0.body.hw, RW = KO.rw, TW = 0.185;   // (the tyre's room: its radius, 18.5 cm wide)
@@ -60,8 +68,8 @@ for (const id of ELS) { alone[id] = [];
     for (const t of O.part) { const v = t * 3; let nm = t >= O.outerN ? '(inner)' : 'BODY';
       if (t < O.outerN) for (const q in rg) { const r = rg[q]; if ((v >= r.o[0] && v < r.o[1]) || (v >= r.i[0] && v < r.i[1])) { nm = q; break; } }
       inPart[nm] = (inPart[nm] || 0) + 1; }
-    const names = Object.keys(inPart), want = HID.includes(id) ? ['(inner)'] : PARTS[id];
-    if (!PAINT.includes(id) && (!want || names.some(q => !want.includes(q)) || (MUST[id] || []).some(q => !inPart[q]))) parts.push(tag + ' ' + names.map(q => q + ':' + inPart[q]).join(' '));
+    const names = Object.keys(inPart), want = HID.includes(id) ? ['(inner)'] : partsOf(id);
+    if (!PAINT.includes(id) && (!want || names.some(q => !want.includes(q)) || mustOf(id).some(q => !inPart[q]))) parts.push(tag + ' ' + names.map(q => q + ':' + inPart[q]).join(' '));
     if (id === 'celjusti') continue;   // (the body's calipers: in the wheels, behind their faces: 4. below)
     const G = L.Grid(O.P, O.rest), GA = L.Grid(O.P, O.rest.concat(O.inner)), GG = L.Grid(O.P, O.glass), isl = L.islands(O.P, O.part);
     // floating: groups of touching islands, none of them touching the car or lying on it
@@ -121,7 +129,7 @@ for (let i = 0; i < VIS.length; i++) for (let j = i + 1; j < VIS.length; j++) { 
     if (!SA.box || !SB.box || !ovB(SA.box, SB.box)) continue;
     const h = Math.max(cross(SA, SB), cross(SB, SA)); if (h > lim) pairBad.push(`${A}${a} + ${B}${b} ${mm(h)}`); } }
 check('two parts at once: the pairs that cross by over 2 cm built alone, fitted together, within 2 cm over the shell (the diffuser\'s cut-outs 3 cm)',
-  !pairBad.length && tried > 0, pairBad.slice(0, 4).join(', ') || `${tried} pairs of options (${pairSeen.join(', ')})`);
+  !pairBad.length && (tried > 0 || VID !== 'kolibri'), pairBad.slice(0, 4).join(', ') || `${tried} pairs of options (${pairSeen.join(', ')})`);
 
 // ---- 3. the wheels as drawn: kitWheelGeo's helper h at DELI.build (the face: the wheel's triangles before the first wheel part) ----
 let cap = null; const build0 = D.build;
@@ -175,10 +183,10 @@ if (MO.celjusti && MO.zavore) { const cel = (deli) => { const O = L.optionGeo(R,
   ALL.platisca = 11; ALL.zavore = 15; ALL.matice = 16;   // (the wheels' heaviest: tests/deli.test.js)
   const I = R.kitInfo(VID, ALL), S0 = I0;
   // (the shell: what an intact car draws, ~4 stock shells; the inner block, drawn once panels come off: + 300 for each hidden part, as one alone)
-  const ok = I.status === 'ok' && I.deli.split('.').length === ELS.length && I.hi && I.hi.status === 'ok' && I.tris.outer <= S0.tris.outer + 6000 && I.hi.tris.outer <= S0.hi.tris.outer + 8000 &&
-    I.tris.inner <= S0.tris.inner + 300 * HID.length && I.hi.tris.inner <= S0.hi.tris.inner + 300 * HID.length;
+  const hiOk = !S0.hi || (I.hi && I.hi.status === 'ok' && I.hi.tris.outer <= S0.hi.tris.outer + 8000 && I.hi.tris.inner <= S0.hi.tris.inner + 300 * HID.length);   // (no look.hi: no Visoki build)
+  const ok = I.status === 'ok' && I.deli.split('.').length === ELS.length && hiOk && I.tris.outer <= S0.tris.outer + 6000 && I.tris.inner <= S0.tris.inner + 300 * HID.length;
   check('all at once (every element\'s heaviest option): builds, the shell within stock + 6000 triangles (Visoki + 8000), the inner block + 300 a hidden part', ok,
-    `${I.status} ${I.deli.split('.').length} parts: outer ${S0.tris.outer} -> ${I.tris.outer}, inner ${S0.tris.inner} -> ${I.tris.inner}; Visoki ${S0.hi.tris.outer} -> ${I.hi.tris.outer}, inner ${S0.hi.tris.inner} -> ${I.hi.tris.inner}`); }
+    `${I.status} ${I.deli.split('.').length} parts: outer ${S0.tris.outer} -> ${I.tris.outer}, inner ${S0.tris.inner} -> ${I.tris.inner}` + (S0.hi && I.hi ? `; Visoki ${S0.hi.tris.outer} -> ${I.hi.tris.outer}, inner ${S0.hi.tris.inner} -> ${I.hi.tris.inner}` : '; no Visoki')); }
 
 console.warn = warn;
 check('none of them warned (no part fell back)', !warns.length, warns.slice(0, 2).join(' | ') || 'none');

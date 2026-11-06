@@ -70,7 +70,8 @@ var DELI = (function () {
             [xt - 0.006 * k, y(X0) + kick * q - 0.022 * k], [X(-0.025), y(X0) - 0.012 * k], [X(0.05), y(X(0.05)) - 0.008 * k]].map(([x, yy]) => [x, yy, z]); };
         const zs = big ? [-W, -W + 0.06 * kz, -0.3 * kz, 0.3 * kz, W - 0.06 * kz, W] : [-W, -W + 0.04 * kz, 0, W - 0.04 * kz, W], ks = big ? [0.45, 1, 1, 1, 1, 0.45] : [0.5, 1, 1, 1, 0.5];
         K.skin(zs.map((z, i) => prof(z, ks[i])), (q, e) => e === 4 ? K.shade(P, 0.55) : e === 5 ? DK : P, P, P);
-        if (big) K.rect(xt - 0.007 * k, RY(X0) + kick - 0.012 * k, 0, 0.32 * kz, 0.014 * k, K.rgb(0xb0100c), { dir: '-x' });
+        // (the brake lamp on the tail's face: its middle flat across at the rings' 0.3 kz, under a crowned roof's top)
+        if (big) K.rect(xt - 0.007 * k, RY(X0, 0.3 * kz) + kick - 0.012 * k, 0, 0.32 * kz, 0.014 * k, K.rgb(0xb0100c), { dir: '-x' });
         break; }
       case 3: case 4: {   // lok: a bow-shaped blade over the roof's edge on two swept legs (karbonski: in carbon, a red line on its legs)
         const col = n === 4 ? CF : P, zl = W - 0.03 * kz, yb = Yo(0.07), f = foil(X(0.03), yb, 0.2 * k, 7, 0.026 * k);
