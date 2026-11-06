@@ -79,6 +79,7 @@ window.LJV = {
     /* ---------- which scene is being built (a staff scene's people keep their work clothes): the kinds' builds wrapped; this look is made at
        the first person of the first scene, so that one is found from the track's places (a hook would be cleaner: the scene's name in o) ---------- */
     let CUR = null; const KIT = K.kit || {}, STAFFS = KIT.STAFF_SCENES || new Set();
+    const SUMMERS = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the summer's scenes: shorts for some)
     if (KIT.S) {
       for (const name of Object.keys(KIT.S)) { const d = KIT.S[name]; if (!d || typeof d.build !== 'function' || d.build.ljv) continue;
         const b = d.build, w = function (...a) { CUR = name; try { return b.apply(this, a); } finally { CUR = null; } }; w.ljv = true; d.build = w; }
@@ -174,22 +175,26 @@ window.LJV = {
       const overall = long && o.shirt != null && o.shirt === o.pants, uniHat = o.hat === 'police' || o.hat === 'fire' || o.hat === 'hard';
       const staff = !kid && (hiVest || overall || uniHat || (o.gloves != null && long) || (CUR != null && STAFFS.has(CUR)));
       const bare = o.shirt != null && o.shirt === skin;   // (a bare chest: the swimmers)
+      const rider = !kid && o.hat === 'helmet' && !!o.shorts && !long, summer = CUR != null && SUMMERS.has(CUR);   // (a cyclist: a jersey)
       const greyHair = lum(hairC) > 0.45 && sat(hairC) < 0.12;
       // the top: tee / polo / raglan / tank (short sleeves), long / jacket / hoodie / zip (long sleeves)
       let top = long ? 'long' : 'tee';
       const longish = long || (lite && R() < 0.16);
-      if (!staff && !bare && !plainVest) top = longish ? wpick(R, [['long', 3], ['jacket', 3], ['hoodie', 2], ['zip', 1.5]]) : wpick(R, kid ? [['tee', 5], ['raglan', 3], ['tank', 1]] : [['tee', 5], ['polo', 2], ['raglan', 2.5], ['tank', lite ? 1 : 1.6]]);
+      if (rider) top = 'jersey';
+      else if (!staff && !bare && !plainVest) top = longish ? wpick(R, [['long', 3], ['jacket', 3], ['hoodie', 2], ['zip', 1.5]]) : wpick(R, kid ? [['tee', 5], ['raglan', 3], ['tank', 1]] : [['tee', 5], ['polo', 2], ['raglan', 2.5], ['tank', lite ? 1 : 1.6]]);
       else if (staff && !vest && !overall && !bare) top = long ? 'long' : 'polo';   // (an official's or an engineer's shirt: a collar)
       if (bare) top = 'bare';
-      const sleeve = top === 'raglan' ? away(shirt, [WHITE, BLACK, GREY, NAVY], R) : shirt;
+      const band = top === 'jersey' ? away(shirt, [WHITE, BLACK, NAVY, 0xd23a2c, 0xf0c22e, 0x2f63c9, 0x2f9a48], R) : null;   // (the jersey's band and sleeves)
+      const sleeve = top === 'raglan' ? away(shirt, [WHITE, BLACK, GREY, NAVY], R) : band != null ? band : shirt;
       const inner = top === 'jacket' || top === 'zip' ? away(shirt, INNER, R) : null;
       // the bottom: trousers (or shorts), a skirt (in the trousers' colour) or a dress (the shirt's) for some long-haired and pony-tailed
       let bottom = 'trousers';
       if (!staff && !bare && !lite && (hs0 === 'long' || hs0 === 'pony') && R() < (kid ? 0.3 : 0.42)) bottom = R() < 0.55 || long ? 'skirt' : 'dress';
-      const lower = bottom === 'dress' ? shirt : pants, shins = o.shorts || bottom !== 'trousers' ? skin : pants;
+      const shorts = !!o.shorts || (summer && !staff && !bare && !kid && !lite && bottom === 'trousers' && R() < 0.4);   // (a summer's day: shorts for some)
+      const lower = bottom === 'dress' ? shirt : pants, shins = shorts || bottom !== 'trousers' ? skin : pants;
       // the head: the hair's shape by its kind (short: crop, side part, buzz, curls, a bald patch for some older men), a cap or a sun hat for some
       let hk = o.hat || null;
-      if (!hk && o.hair == null && !staff && !bare) { const u = R(); hk = u < (kid ? 0.16 : 0.14) ? 'cap' : u < (kid ? 0.16 : 0.2) && !kid ? 'sun' : null; }
+      if (!hk && o.hair == null && !staff && !bare) { const u = R(); hk = u < (kid ? 0.2 : 0.2) ? 'cap' : !kid && u < (summer ? 0.32 : 0.27) ? 'sun' : null; }
       if (hk === 'cap' && !staff && !kid && R() < 0.28) o = Object.assign({}, o, { _capBack: true });
       else if (hk === 'cap' && kid && R() < 0.4) o = Object.assign({}, o, { _capBack: true });
       let hstyle = null;
@@ -205,7 +210,7 @@ window.LJV = {
       const hands = o.gloves != null ? o.gloves : skin;
       const extra = !staff && !bare && !kid && !lite ? R() : 1, pack = extra < 0.09 ? 'pack' : extra < 0.16 ? 'bum' : null;
       const shades = !staff && !bare && !kid && R() < (hk === 'helmet' ? 0.6 : 0.2);
-      const belt = o.belt != null ? o.belt : !staff && !bare && !lite && bottom === 'trousers' && !o.shorts && R() < 0.22 ? (R() < 0.6 ? 0x3a2a1c : 0x15171c) : null;
+      const belt = o.belt != null ? o.belt : !staff && !bare && !lite && bottom === 'trousers' && !shorts && R() < 0.22 ? (R() < 0.6 ? 0x3a2a1c : 0x15171c) : null;
 
       /* hips */
       if (!lite) add(hips, cube(-0.165, 0.165, -0.09, 0.09, -0.1, 0.1), BOX5, lower);
@@ -241,6 +246,7 @@ window.LJV = {
         else { const C = ring(TY0, 0.45, 0.01); add(torso, C, PX | NX | NZ, o.vest); for (const s of [1, -1]) front(torso, s * 0.05, s * (tw(TY0) + 0.01), s * 0.09, s * (tw(0.45) + 0.01), TY0, 0.45, o.vest, 0.01); }   // (a waistcoat, open)
       }
       if (belt != null) add(torso, ring(-0.025, 0.025, 0.004), SIDES, belt);
+      if (band != null) add(torso, ring(0.2, 0.3, 0.005), SIDES, band);   // (the jersey's band across the chest)
       if (pack === 'pack') { const pc = PACK[Math.floor(R() * PACK.length)], st = 0x2a2c31;
         add(torso, frust(0.12, -0.215, -0.1, 0.1, 0.1, 0.11, -0.2, -0.105, 0.4, 0.425), PX | NX | PY | NZ, pc);
         for (const s of [1, -1]) { const a = s * 0.07, b = s * 0.105; front(torso, a, b, a, b, 0.2, 0.475, st, 0.005);
