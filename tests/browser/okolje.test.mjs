@@ -57,8 +57,12 @@ async function speech() {
     const s = bi * T.len / N, rest = () => ((s - P.q.s) % T.len + T.len) % T.len;
     g.pause(); g.autoDrive = true;
     for (let k = 0; k < 600 && rest() > 500; k++) g.sim(0.25, true);
-    for (let k = 0; k < 400 && rest() > 3 && rest() < T.len - 200; k++) { const v = P.speed, stop = v * v / 14 + 15; g.drive(0.1, () => rest() > stop ? { thr: 1 } : { brk: 1 }); }
-    g.drive(3, () => ({ brk: 1 })); window.__hold = true; g.resume();
+    // (the last 500 m by the test's own throttle and brake: drive() takes them only without the autopilot; the brake only while it moves, no
+    // reverse; then the autopilot back, its control held by the wrapper above)
+    g.autoDrive = false;
+    for (let k = 0; k < 400 && rest() > 3 && rest() < T.len - 200; k++) { const v = Math.abs(P.speed), stop = v * v / 14 + 15; if (v < 1 && rest() < 20) break;
+      g.drive(0.1, () => rest() > stop ? { thr: 1 } : v > 1 ? { brk: 1 } : {}); }
+    g.drive(3, (Q) => Math.abs(Q.speed) > 1 ? { brk: 1 } : {}); g.autoDrive = true; window.__hold = true; g.resume();
     return { s: Math.round(s), off: Math.round(Math.sqrt(bd)), w: +w.toFixed(2), at: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6) };
   });
   const sp = await page.evaluate(async () => {
