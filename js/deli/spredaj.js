@@ -2,8 +2,9 @@
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars. The mounts (look units):
      aero: { xf, xr: the bumpers' faces (front, rear), w: their half width, yf, yr: their foot's height, sill: [x0, x1] between the arches,
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
-             without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the exhaust (no piece over it) }
-     hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines) }: in the bonnet's part
+             without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips) }
+     hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines), bulge: the power bulge's length
+       (options 5, 6; 0.7, a short bonnet's less: it stops before the cowl) }: in the bonnet's part
      maska: { x, y0, lean: the face between the lamps (x at y0, leaning back lean per metre up), yc: the grille's middle, w, h: its room }
      zmigavci: { front: { x, y, z, w, h, part }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
              indicators on the front bumper, the repeaters on the fenders (z out from the middle), the rear's on the rear bumper, the
@@ -39,8 +40,11 @@
   // ================================================================ aero: the kit round the car's foot (the bumpers' lips, the skirts, the
   // diffuser, the arches' flares), in place of the stock lips under the bumpers
   DELI.skirts = (n) => !!n && n !== 1 && n !== 4;   // (the aero options with skirts along the sills: lovilci_blata's front flaps ahead of them)
-  function aero(K, n, m) {
+  function aero(K, n, m, M) {
     const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill[0], s1 = m.sill[1], ws = m.ws, ys = m.ys;
+    // the exhaust's tips (the fitted one's, else the stock one: exh): a centre exit's cut-out (cx, its half width: the diffuser's gap), the side ones
+    const ex = K.fitted && K.fitted.auspuh, ma = M && M.def.mounts && M.def.mounts.auspuh, TP = ex && ma && DELI.tips ? DELI.tips(ex, ma) : m.exh ? [[m.exh[0], m.exh[1]]] : [];
+    const cx = ex && ma && DELI.centreCut ? DELI.centreCut(ex) : 0, sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
     const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of the exhaust)
     const stock = (b, o) => K.box(b[0], b[1], 0, b[2], b[3], b[4], 0, BP, null, false, o);
     // the front lip under the bumper's face: d out in front of it, h under its foot (ends drawn back and thinner)
@@ -62,13 +66,21 @@
       K.skin(xs.map((x, i) => pr(x, ks[i])), col, col, col, oS);
       if (line) { const z = sd * (ws + out + 0.0045), xa = s0 + 0.05, xb = s1 - 0.05; fc(K, [[xa, ys + 0.028, z], [xb, ys + 0.028, z], [xb, ys + 0.042, z], [xa, ys + 0.042, z]], line, [0, 0, sd], oS); } } };
     // the rear: the lips at its corners (clear of the exhaust), a diffuser in its middle with k fins
-    const rearLips = (col) => { for (const sd of [-1, 1]) { const za = sd < 0 && m.exh && m.exh[0] < 0 ? ez + 0.02 : 0.36, ring = (z) => [[xr + 0.12, yr + 0.004], [xr - 0.004, yr + 0.03], [xr - 0.028, yr - 0.02], [xr - 0.02, yr - 0.045], [xr + 0.12, yr - 0.04]].map(([x, y]) => [x, y, sd * z]);
-      K.skin([ring(za), ring(W * 0.985)], col, col, col, oR); } };
-    const diffuser = (col, k, fin) => { const D = Math.min(0.36, ez), y = yr - 0.05;
-      K.box(xr + 0.06, y + 0.035, 0, 0.13, 0.045, 2 * W - 0.15, 0, BP, null, false, oR);   // (the valance: the diffuser's channel set into it)
-      K.plate([[xr + 0.2, y, -D], [xr + 0.2, y, D], [xr - 0.02, y + 0.075, D], [xr - 0.02, y + 0.075, -D]], 0.01, col, oR);
-      for (let i = 0; i < k; i++) { const z = -D * 0.82 + 2 * D * 0.82 * i / (k - 1);
-        K.endplate([[xr + 0.17, y - 0.002], [xr + 0.04, y - 0.03], [xr - 0.026, y - 0.03], [xr - 0.02, y + 0.072]], z, 0.008, fin || col, oR); } };
+    // (the lip on the stock exhaust's side from just in of it (KOLIBRI's: the tip through it); a tip at its end: the lip short of it)
+    const rearLips = (col) => { for (const sd of [-1, 1]) { let zb = W * 0.985;
+      for (const [z, r] of sideT) if (Math.sign(z) === sd && Math.abs(z) - r - 0.01 < zb && Math.abs(z) + r + 0.01 > zb) zb = Math.abs(z) - r - 0.01;
+      const za = sd < 0 && m.exh && m.exh[0] < 0 && ez + 0.05 < zb ? ez + 0.02 : 0.36, ring = (z) => [[xr + 0.12, yr + 0.004], [xr - 0.004, yr + 0.03], [xr - 0.028, yr - 0.02], [xr - 0.02, yr - 0.045], [xr + 0.12, yr - 0.04]].map(([x, y]) => [x, y, sd * z]);
+      if (zb - za >= 0.03) K.skin([ring(za), ring(zb)], col, col, col, oR); } };
+    // (round a centre exit a gap g in the valance, the plate and the fins: its tips and cut-out between them, fins along its edges)
+    const diffuser = (col, k, fin) => { const D = Math.min(0.36, ez), y = yr - 0.05, g = cx && cx + 0.006 < D - 0.05 ? cx + 0.006 : 0, V = W - 0.075;
+      const plate = (z0, z1) => K.plate([[xr + 0.2, y, z0], [xr + 0.2, y, z1], [xr - 0.02, y + 0.075, z1], [xr - 0.02, y + 0.075, z0]], 0.01, col, oR);
+      const fin_ = (z) => K.endplate([[xr + 0.17, y - 0.002], [xr + 0.04, y - 0.03], [xr - 0.026, y - 0.03], [xr - 0.02, y + 0.072]], z, 0.008, fin || col, oR);
+      if (!g) { K.box(xr + 0.06, y + 0.035, 0, 0.13, 0.045, 2 * V, 0, BP, null, false, oR);   // (the valance: the diffuser's channel set into it)
+        plate(-D, D); for (let i = 0; i < k; i++) fin_(-D * 0.82 + 2 * D * 0.82 * i / (k - 1)); return; }
+      for (const sd of [-1, 1]) K.box(xr + 0.06, y + 0.035, sd * (V + g) / 2, 0.13, 0.045, V - g, 0, BP, null, false, oR);
+      plate(-D, -g); plate(g, D);
+      for (let i = 0; i < k; i++) { const z = -D * 0.82 + 2 * D * 0.82 * i / (k - 1); if (Math.abs(z) > g + 0.04) fin_(z); }
+      fin_(-g - 0.004); fin_(g + 0.004); };
     // the arches' flares (bolt-on, rivets on Visoki)
     const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) {
       K.flare(A.x, A.r - 0.012, A.r + 0.07, sd * (ws - 0.004), sd * (ws + out), col, { n: 5, y: A.y, part: 'body' });
@@ -131,8 +143,8 @@
       case 2: vents(1.4, 0.22, 0.42, 0.18, 5, P); break;                                                              // jeklena z režami
       case 3: panel(ALB); break;                                                                                      // aluminijasta (bare)
       case 4: panel(ALB); vents(1.4, 0.22, 0.42, 0.18, 5, ALB); break;                                                 // aluminijasta z režami
-      case 5: scoop(X1 - 0.1, 0.7, 0.045, 0.27, P, false); break;                                                    // iz steklenih vlaken: a power bulge
-      case 6: scoop(X1 - 0.1, 0.7, 0.045, 0.27, P, false); vents(1.38, 0.24, 0.47, 0.12, 6, P); break;                // z režami
+      case 5: scoop(X1 - 0.1, m.bulge || 0.7, 0.045, 0.27, P, false); break;                                                    // iz steklenih vlaken: a power bulge
+      case 6: scoop(X1 - 0.1, m.bulge || 0.7, 0.045, 0.27, P, false); vents(1.38, 0.24, 0.47, 0.12, 6, P); break;                // z režami
       case 7: scoop(X1 - 0.13, 0.5, 0.1, 0.25, P, true); break;                                                       // z zajemalko (a tall one)
       case 8: scoop(X1 - 0.13, 0.5, 0.1, 0.25, P, true); vents(1.32, 0.24, 0.47, 0.12, 6, P); break;                  // z režami in zajemalko
       case 9: panel(CF, CFW); break;                                                                                 // karbonska

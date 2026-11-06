@@ -3,7 +3,7 @@
 //  - nothing floats: every group of an option's islands touches the car (its shell, its inner block: within 6 mm, or crossing it) or lies
 //    on it as a layer (every corner within 13 mm of it); the body's calipers (celjusti) are behind the wheels' faces instead (below)
 //  - nothing through the body: a visible part at most 10 cm into the shell (where it is fixed: a pipe into the floor, a lamp into its
-//    housing); the hidden parts under the bonnet (filter_zraka, cip, turbo, akumulator) wholly inside it (six rays from every corner)
+//    housing); the hidden parts under the bonnet (filter_zraka, cip, turbo, akumulator) wholly inside it (six rays from every corner; the one down may meet the floor in the inner block)
 //  - the glass: only the roof spoilers (krilo), the mirrors and the rear window's louvres meet the windows (on them: the glass is opaque)
 //  - the tyres: no visible part's corner in a tyre's room (the front ones steered +-0.66 rad, all sprung +-3 cm)
 //  - breaking: each part's triangles in the stock part ids that break off or stay (the wing in 'spoiler', the lamps in headL and headR,
@@ -40,11 +40,8 @@ const PARTS = { krilo: ['spoiler'], zarometi: ['headL', 'headR', 'body'], aero: 
 const MUST = { krilo: ['spoiler'], zarometi: ['headL', 'headR'], hauba: ['hood'], zadnje_luci: ['tailL', 'tailR'], prtljaznik: ['trunk'], antena: ['aerial'],
   ogledala: ['mirrorL', 'mirrorR'], vrata: ['doorL', 'doorR'] };
 const PAINT = ['crte', 'nalepke'];   // (over the whole shell: any part, as the paint under them)
-// on another vehicle: the part ids its mounts name too (krilo.part, zarometi.hosts, ...); must: the mount's own (its part for krilo, hauba,
-// prtljaznik, antena; its hosts; its parts for ogledala, vrata) in place of KOLIBRI's
-const NAMED = /^(part|parts|host|hosts|partF|partR)$/;
-const named = (v, k, o = []) => { if (typeof v === 'string') { if (NAMED.test(k)) o.push(v); } else if (Array.isArray(v)) v.forEach(x => named(x, k, o)); else if (v && typeof v === 'object') for (const q in v) named(v[q], q, o); return o; };
-const partsOf = (id) => PARTS[id] && PARTS[id].concat(named(MO[id], ''));
+// on another vehicle: must is the mount's own (its part for krilo, hauba, prtljaznik, antena; its hosts; its parts for ogledala, vrata) in
+// place of KOLIBRI's (the parts it may be in: below, from the car's mounts)
 const mustOf = (id) => { const m = MO[id] || {}, own = [].concat(m.hosts || [], ['krilo', 'hauba', 'prtljaznik', 'antena'].includes(id) && m.part ? [m.part] : [], ['ogledala', 'vrata'].includes(id) && m.parts ? m.parts : []);
   return own.length ? own : (MUST[id] || []); };
 
@@ -75,7 +72,7 @@ for (const id of ELS) { alone[id] = [];
     for (const t of O.part) { const v = t * 3; let nm = t >= O.outerN ? '(inner)' : 'BODY';
       if (t < O.outerN) for (const q in rg) { const r = rg[q]; if ((v >= r.o[0] && v < r.o[1]) || (v >= r.i[0] && v < r.i[1])) { nm = q; break; } }
       inPart[nm] = (inPart[nm] || 0) + 1; }
-    const names = Object.keys(inPart), want = HID.includes(id) ? ['(inner)'] : partsOf(id);
+    const names = Object.keys(inPart), want = HID.includes(id) ? ['(inner)'] : PARTS[id];
     if (!PAINT.includes(id) && (!want || names.some(q => !want.includes(q)) || mustOf(id).some(q => !inPart[q]))) parts.push(tag + ' ' + names.map(q => q + ':' + inPart[q]).join(' '));
     if (id === 'celjusti') continue;   // (the body's calipers: in the wheels, behind their faces: 4. below)
     const G = L.Grid(O.P, O.rest), GA = L.Grid(O.P, O.rest.concat(O.inner)), GG = L.Grid(O.P, O.glass), isl = L.islands(O.P, O.part);
@@ -92,7 +89,8 @@ for (const id of ELS) { alone[id] = [];
     const seen = new Set(); let dIn = 0, dOut = 0, ty = 0;
     for (const p of L.corners(O.P, O.part)) { const key = p.map(v => Math.round(v * 2e4)).join(); if (seen.has(key)) continue; seen.add(key);
       const enc = DIRS.every(d => G.ray(p, d, 4) < Infinity), d = G.dist(p, 0.5).d;
-      if (enc && d > dIn) dIn = d; if (!enc && d > dOut) dOut = d; if (!HID.includes(id)) ty = Math.max(ty, inTyre(p)); }
+      const encB = enc || (BAY.includes(id) && DIRS.every(d => G.ray(p, d, 4) < Infinity || GA.ray(p, d, 4) < Infinity));   // (a hidden part: the inner block's surfaces count too, on a car whose bay has no lining: its floor, the engine)
+      if (enc && d > dIn) dIn = d; if (!encB && d > dOut) dOut = d; if (!HID.includes(id)) ty = Math.max(ty, inTyre(p)); }
     if (!HID.includes(id) && dIn > DEEP) deep.push(tag + ' ' + mm(dIn));
     if (BAY.includes(id) && dOut > 0) bay.push(tag + ' ' + mm(dOut) + ' out');
     if (ty > 0) tyres.push(tag + ' ' + mm(ty));

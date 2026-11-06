@@ -5,8 +5,9 @@
      zadnje_luci: { x, zc, yc, w, h, hosts, bar }   the tail lamps' room on each side: the stock lamp's x (its lit face 2.3 cm behind it), its
                   middle (zc out from the car's middle, yc), w x h the room (KOLIBRI: the lamp strip, 0.14 x 0.30 m); hosts [left, right] the
                   lamps' parts; bar { x, y, w, h, part }: the band across the tail between them (KOLIBRI: the tailgate's garnish, half width w)
-     auspuh:      { x, y, z, r, len, part }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
-                  radius, length; part: the pipes'
+     auspuh:      { x, y, z, r, len, part, drum }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
+                  radius, length; part: the pipes'; drum: the silencer's middle height (y - 0.065; a car whose floor is higher: up against it); valve: true, the flap
+                  valves on the tips (KOLIBRI's beside them, against the body; on a car with the tips far out they'd hang in the air)
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
                   w its half width; part: the lid's
@@ -98,6 +99,13 @@
 
   // ================================================================ auspuh: the exhaust's tips under the tail (and what of the system shows)
   DELI.twinExhaust = (n) => [3, 4, 10, 11, 13, 14, 16].includes(n);   // (the exhausts with a tip on each side: vlecne_kljuke's rear one in from them)
+  // option n's tips (0: the stock one) on a car's mount m: [[z, r]] (z across, its sign the side, the centre exits' near 0; r: its radius,
+  // an oval's half width) for the kit round them (aero's diffuser and rear lips clear of them); as the switch below draws them: keep in step
+  DELI.tips = (n, m) => { const L_ = -m.z, R_ = m.z, T = { 0: [[L_, m.r]], 1: [[L_, m.r * 0.95]], 2: [[L_, 0.042]], 3: [[L_, 0.036], [R_, 0.036]], 4: [[L_, 0.05], [R_, 0.05]],
+    5: [[L_, 0.055]], 6: [[L_, 0.046]], 7: [[L_, 0.065]], 8: [[L_, 0.046]], 9: [[L_, 0.05]], 10: [[L_, 0.042], [R_, 0.042]], 11: [[L_, 0.058], [R_, 0.058]],
+    12: [[-0.08, 0.045], [0.08, 0.045]], 13: [[L_, 0.045], [R_, 0.045]], 14: [[L_ * 0.86, 0.032], [L_ * 1.14, 0.032], [R_ * 0.86, 0.032], [R_ * 1.14, 0.032]],
+    15: [[0, 0.068]], 16: [[L_, 0.054], [R_, 0.054]] }; return T[n || 0] || []; };
+  DELI.centreCut = (n) => n === 12 ? 0.16 : n === 15 ? 0.12 : 0;   // (a centre exit's cut-out round its tips: its half width; aero's diffuser parts beside it)
   function auspuh(K, n, m) {
     const X = m.x, Y = m.y, Z = m.z, r0 = m.r, L = m.len, q = seg(K, 14);
     K.part(m.part || 'body', () => {
@@ -110,27 +118,27 @@
         K.skin([ring(X + (o.len || L), 1), ring(X, 1)], col, null, HOLE);
         faceOut(K, ring(X - 0.0015, 0.8), [0.2, 0.2, 0.22], [-1, 0, 0]); faceOut(K, ring(X - 0.002, 0.66), HOLE, [-1, 0, 0]); };   // (its rim, dark inside)
       // the silencer: a drum across under the tail (rear silencer), along under the floor (forward: a pipe to it)
-      const drum = (col, z0, z1) => K.cyl([X + 0.27, Y - 0.065, -Z * (z0 == null ? 1.15 : z0)], [X + 0.27, Y - 0.065, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });
+      const DY = m.drum != null ? m.drum : Y - 0.065, drum = (col, z0, z1) => K.cyl([X + 0.27, DY, -Z * (z0 == null ? 1.15 : z0)], [X + 0.27, DY, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });   // (DY: its middle, up against the floor)
       const pipe = (z, col, x1) => K.cyl([X + L - 0.01, Y, z], [x1 || 0.6, Y - 0.07, z * 0.4], 0.024, col, { n: 5 });
       const valve = (z) => K.box(X + L * 0.6, Y + 0.025, z, 0.06, 0.045, 0.05, 0, BLK);
       const cut = (w) => K.rect(m.x + 0.03, Y, 0, w, 0.09, HOLE, { dir: '-x' });   // (a centre exit: the valance's cut-out round it)
-      const L_ = -Z, R_ = Z;
+      const L_ = -Z, R_ = Z, VZ = m.valve ? 1 : 0.8;   // (VZ: the flap valves' place across, a share of z: beside the tips, or on them)
       switch (n) {
         case 1: drum(STEEL); tip(L_, r0 * 0.95, STEEL); break;                                             // zadnji lonec
         case 2: drum(DK); tip(L_, 0.042, CHR, { inner: DK, rim: CHR }); break;                             // športni
         case 3: drum(DK, 1.15, 1.15); tip(L_, 0.036, CHR); tip(R_, 0.036, CHR); break;                    // dvojni
-        case 4: drum(DK, 1.15, 1.15); oval(L_, 0.05, 0.03, CHR); oval(R_, 0.05, 0.03, CHR); valve(L_ * 0.8); break;   // z loputo
+        case 4: drum(DK, 1.15, 1.15); oval(L_, 0.05, 0.03, CHR); oval(R_, 0.05, 0.03, CHR); valve(L_ * VZ); break;   // z loputo
         case 5: drum(DK); tip(L_, 0.055, [0.14, 0.14, 0.15], { inner: CHR, rim: [0.25, 0.25, 0.27] }); break;   // dirkalni
         case 6: pipe(L_, STEEL, -0.2); tip(L_, 0.046, STEEL, { len: 0.3, out: 0.02 }); break;             // ravni
         case 7: drum(DK); oval(L_, 0.065, 0.045, CF, { len: 0.22 }); tip(L_, 0.026, TI, { out: 0.006, len: 0.06 }); break;   // karbonski
         case 8: drum(TI); tip(L_, 0.046, TIB, { len: 0.06 }); K.exhaust(X + 0.06, Y, L_, 0.046, 0.06, { col: TIP, n: q }); K.exhaust(X + 0.12, Y, L_, 0.046, 0.1, { col: TIG, n: q }); break;   // titanov
         case 9: drum(DK); pipe(L_, STEEL); tip(L_, 0.05, CHR, { inner: DK, rim: CHR }); break;           // kolektor in lonec
         case 10: drum(DK, 1.15, 1.15); pipe(L_, STEEL); pipe(R_, STEEL); tip(L_, 0.042, CHR, { inner: DK, rim: CHR }); tip(R_, 0.042, CHR, { inner: DK, rim: CHR }); break;   // cel sistem
-        case 11: drum(DK, 1.15, 1.15); pipe(L_, STEEL); pipe(R_, STEEL); oval(L_, 0.058, 0.034, CHR); oval(R_, 0.058, 0.034, CHR); valve(L_ * 0.8); valve(R_ * 0.8); break;   // z loputo
-        case 12: drum(DK, 0.5, 0.5); pipe(-0.09, STEEL); pipe(0.09, STEEL); cut(0.32); tip(-0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); tip(0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); break;   // dirkalni, sredinski
+        case 11: drum(DK, 1.15, 1.15); pipe(L_, STEEL); pipe(R_, STEEL); oval(L_, 0.058, 0.034, CHR); oval(R_, 0.058, 0.034, CHR); valve(L_ * VZ); valve(R_ * VZ); break;   // z loputo
+        case 12: drum(DK, 0.5, 0.5); pipe(-0.09, STEEL); pipe(0.09, STEEL); cut(DELI.centreCut(12) * 2); tip(-0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); tip(0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); break;   // dirkalni, sredinski
         case 13: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); tip(L_, 0.045, TIB, { inner: TIP, rim: TIG }); tip(R_, 0.045, TIB, { inner: TIP, rim: TIG }); break;   // titanov cel sistem
-        case 14: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); for (const z of [L_ * 0.86, L_ * 1.14, R_ * 0.86, R_ * 1.14]) tip(z, 0.032, TIB, { rim: TIG, inner: TIP }); valve(L_ * 0.6); valve(R_ * 0.6); break;   // titanov z loputo
-        case 15: drum(TI, 0.5, 0.5); pipe(0, TI); cut(0.24); tip(0, 0.068, TIB, { inner: TIG, rim: TIP, out: 0.025 }); break;   // titanov, dirkalni
+        case 14: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); for (const z of [L_ * 0.86, L_ * 1.14, R_ * 0.86, R_ * 1.14]) tip(z, 0.032, TIB, { rim: TIG, inner: TIP }); valve(L_ * (m.valve ? 0.86 : 0.6)); valve(R_ * (m.valve ? 0.86 : 0.6)); break;   // titanov z loputo
+        case 15: drum(TI, 0.5, 0.5); pipe(0, TI); cut(DELI.centreCut(15) * 2); tip(0, 0.068, TIB, { inner: TIG, rim: TIP, out: 0.025 }); break;   // titanov, dirkalni
         case 16: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); for (const z of [L_, R_]) { tip(z, 0.054, CF, { inner: TIB, rim: CF2, len: 0.16 }); K.exhaust(X + 0.16, Y, z, 0.04, 0.08, { col: TI, n: q }); } break;   // titanov s karbonskimi konci
       }
     });

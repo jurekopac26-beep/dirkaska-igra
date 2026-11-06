@@ -5,7 +5,8 @@
    see-through bonnet or in a wheel arch. On the car only what it does shows: the power, the mass, the grip (js/deli.js DELI.effect,
    core.js applyDeli), the body lower on its springs (vzmeti: DELI.dress, js/deli/barve.js), the
    tyre smoke's colour (DELI.dim: render.js, the drift's smoke).
-   mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle); vzmeti, amortizerji,
+   mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle;
+   akumulator back: true, x its foot's rear edge); vzmeti, amortizerji,
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
    stabilizatorji floor: the height of the floor under the bars, K.rw - 0.06 if not given) */
 (function () {
@@ -60,7 +61,8 @@
   }
   // ================================================================ akumulator: the battery, smaller and lighter
   function akumulator(K, n, m) {
-    const { x, y } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const { y } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const x = m.back ? m.x + 0.1 * k : m.x;   // (back: its rear face at x, the battery ahead of it: on a floor falling forward its rear edge stays on it)
     const z = m.z + Math.sign(m.z) * 0.07 * (1 - k);   // (its outer side where the stock one's is: against the inner wing)
     box(K, x, y, z, 0.2 * k, 0.17 * k, 0.14 * k, col, n === 15 ? [0.13, 0.13, 0.14] : BLK);
     for (const dz of [-0.04, 0.04]) cyl(K, [x, y + 0.17 * k, z + dz * k], [x, y + 0.17 * k + 0.02, z + dz * k], 0.012, dz < 0 ? RED : BLK, { n: 4 });   // (its terminals)

@@ -1,10 +1,10 @@
 /* Deli iz garaže, sklop 2 · streha: streha, stresna_zajemalka, antena, zaluzije. Each element registers its 16 options with DELI.add(id,
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
      streha             m: { x0, x1 (the roof from the spoiler's leading edge to the windscreen's top, look units), xf (the front edge of a
-                        window over the front seats), xr (the rear bench's middle) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
-     stresna_zajemalka  m: { x (the mouth, at the roof's front), z }: a scoop on the roof, its mouth forward (the stock: none)
+                        window over the front seats), xr (the rear bench's middle), part (the roof's: 'body') }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
+     stresna_zajemalka  m: { x (the mouth, at the roof's front), z, part (the roof's: 'body') }: a scoop on the roof, its mouth forward (the stock: none)
      antena             m: { x, z (the rod's foot: the stock aerial's), fin: [x, z] (a shark fin's rear end), front: [x, z] (a stub at
-                        the roof's front) } in the aerial's part
+                        the roof's front), whip: x (the racing whip's foot mid-roof, -0.6: its 0.6 m raked back over the roof, ahead of a wing) } in the aerial's part
      zaluzije           m: { x0, y0, x1, y1 (the rear window's foot and top, middle), w (its half width) } in the tailgate's part:
                         slats over the glass (the stock: none; the rear wiper goes with them: the car's around) */
 (function () {
@@ -60,7 +60,7 @@
       pane(xm - back, zm, len, half, { dark, lift: 0.02 });
       for (const sd of [-1, 1]) { const z = zm + sd * (half + 0.008), y = (x) => K.topY(x, z); face(K, [[xa, y(xa) + 0.003, z], [xb - back, y(xb - back) + 0.003, z], [xb - back, y(xb - back) + 0.022, z], [xa - back, y(xa - back) + 0.022, z]], RUB, [0, 0, sd]); } };
     const F = m.xf, at = (len) => F - len / 2, X0 = m.x0, X1 = m.x1;   // (a window's front edge over the front seats: its middle at(len); the roof from the spoiler's leading edge to the windscreen's top)
-    switch (n) {
+    K.part(m.part || 'body', () => { switch (n) {   // (in the roof's part: the body's, never a door's, where a door's region reaches over the roof's edge)
       case 1: band(F, F - 0.2); break;
       case 2: band(F, F - 0.36); break;
       case 3: band(F, F - 0.6); break;
@@ -80,7 +80,7 @@
         sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, 0.5, 0.0015, CW(0, 0)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, -0.47, 0.0025, CW(0, 1)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, 0.47, 0.5, 0.0025, CW(0, 1));
         pane(xm, 0, len, 0.44, { frame: CF });
         sheet(xm + 0.03, xm - 0.03, -0.46, 0.46, 0.006, CW(1, 0)); break; }
-    }
+    } });
   }
 
   // ================================================================ stresna_zajemalka: scoops on the roof's front, their mouths forward
@@ -103,7 +103,7 @@
         face(K, [[x0 + 0.004, y - 0.004, z + 0.012], [x0 + 0.004 + f * o.h, y + o.h - 0.004, z + 0.012], [x0 - 0.06, y + o.h - 0.004, z + 0.012], [x0 - 0.06, y - 0.004, z + 0.012]], wc, [0, 0, -1]);
         face(K, [[x0 + 0.005, y - 0.004, z], [x0 + 0.005, y - 0.004, z + 0.012], [x0 + 0.005 + f * o.h, y + o.h - 0.004, z + 0.012], [x0 + 0.005 + f * o.h, y + o.h - 0.004, z]], wc, [1, 0, 0]); } };
     const LONG = { t: [0, 0.07, 0.3, 0.6, 1], hh: [1, 1, 0.8, 0.42, 0.02], ww: [1, 1, 1.02, 0.92, 0.6] };   // (sculpted: a long fairing into the roof)
-    switch (n) {
+    K.part(m.part || 'body', () => { switch (n) {   // (the roof's part, as the sunroof's)
       case 1: scoop({ len: 0.34, h: 0.03, w: 0.17, col: MAT, cap: DK, ww: [1, 1, 0.9, 0.75] }); break;                                       // (stick-on: a low black wedge)
       case 2: for (const z of [-0.12, 0.12]) scoop({ z, len: 0.24, h: 0.03, w: 0.075, col: P, cap: DK }); break;                              // (two small ones, body colour)
       case 3: scoop({ len: 0.42, h: 0.04, w: 0.1, col: W, cap: DK, t: [0, 0.12, 0.55, 1], hh: [1, 1, 0.75, 0.15], ww: [1, 1, 0.7, 0.18] }); break;   // (a carbon-look teardrop)
@@ -121,7 +121,7 @@
       case 14: scoop(Object.assign({ len: 0.95, h: 0.07, w: 0.21, col: P, rake: 0.25 }, LONG)); break;
       case 15: scoop(Object.assign({ len: 0.95, h: 0.07, w: 0.24, col: P, rake: 0.25, mesh: true, split: 2 }, LONG)); break;
       case 16: scoop(Object.assign({ len: 1.0, h: 0.075, w: 0.26, col: W, rake: 0.3, split: 3 }, LONG)); break;
-    }
+    } });
   }
 
   // ================================================================ antena: rods, fins, a puck, a whip (the user's: sixteen that differ in
@@ -150,7 +150,7 @@
       case 1: rod(m.x, m.z, 0.4, wg ? 25 : 72, 0.0065, 0.0045, BLK, BLK); break;                                        // (rubber: thick, black, raked back)
       case 2: rod(F[0], F[1], 0.11, 20, 0.006, 0.005, BLK, K.chrome, K.chrome); break;                       // (short, at the roof's front right, a chrome tip)
       case 3: rod(FX + 0.05, FZ, 0.16, 50, 0.007, 0.006, CF2, CF); break;                                    // (short, carbon, on the roof's rear middle)
-      case 4: rod(-0.6, F[1], 0.62, 80, 0.0028, 0.002, [0.55, 0.56, 0.6], BLK, RED); break;                 // (racing: a thin steel whip mid-roof on the right, its red tip)
+      case 4: rod(m.whip || -0.6, F[1], 0.62, 80, 0.0028, 0.002, [0.55, 0.56, 0.6], BLK, RED); break;                 // (racing: a thin steel whip mid-roof on the right, its red tip)
       case 5: fin(FX, FZ, 0.17, 0.058, 0.032, BLK); break;                                                   // (the classic fin)
       case 6: fin(FX + 0.02, FZ, 0.13, 0.042, 0.03, P); break;                                               // (small, in the body's colour)
       case 7: fin(FX, FZ, 0.15, 0.075, 0.022, K.chrome, { sharp: true }); break;                             // (tall and slim, chrome)
