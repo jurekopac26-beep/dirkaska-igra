@@ -2119,7 +2119,7 @@
     else {
       if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
       else if (race.pol) { Comm.say(ownLine(track.def, 'introPolice'), { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg(tr('POLICIJA TE LOVI!') + wetTxt, 'slow', 1.8); }   // (a road without the checkpoint, Los Caracoles: the chase from the start)
-      else if (race.tf && race.zbLov) { }   // (Zabava: the pursuit says its own, js/zabava/lov.js)
+      else if (race.tf && (race.zbLov || race.zbBeg)) { }   // (Zabava: the pursuit says its own, js/zabava/lov.js; online with friends, js/zabava/beg.js)
       else if (race.tf && !on) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
@@ -4964,10 +4964,10 @@
     Net.send({ t: 'lobby', track: mp.track, laps: mp.laps }); buildRoom();
   }
   // Beg s prijatelji (docs/novosti-e.md, Novost 2): on an open road with traffic one player drives the patrol car, the others run from it.
-  // The host's choice (mp.beg: { pol }, set in the room; window.__netBeg in the tests) goes out with the setup: tf 1 (the traffic, the
+  // The host's choice (mp.beg: { pol }, set in the room: js/zabava/beg.js netSetup) goes out with the setup: tf 1 (the traffic, the
   // same on every phone: seed), pol (the patrol car's player; one who is not on the grid: the last on it). A private room only
   function netBeg(s) {
-    const B = mp.beg || window.__netBeg || null, d = Core.TRACKS.find(x => x.id === s.track);
+    const B = mp.beg || null, d = Core.TRACKS.find(x => x.id === s.track);
     if (!B || mp.quick || !d || !d.open || !d.modes || d.modes.indexOf('traffic') < 0) return { tf: 0, seed: 0, pol: '' };
     return { tf: 1, seed: 1 + Math.floor(Math.random() * 2147483646), pol: s.grid.includes(B.pol) ? B.pol : s.grid[s.grid.length - 1] };
   }
@@ -4981,7 +4981,7 @@
     if (ins.length < 2) return;
     if (mp.quick) Net.lock();   // (a quick match: nobody new comes into a room whose race starts; its place is free for the next room)
     const no = ++mp.no, k = (no - 1) % ins.length, grid = ins.slice(k).concat(ins.slice(0, k));
-    ZB.netSetup();   // (Zabava: the elimination race's switch to every phone, before the setup)
+    ZB.netSetup(grid);   // (Zabava: the elimination race's switch to every phone, the pursuit's patrol car for this grid (mp.beg), before the setup)
     const s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, faults: S.faults ? 1 : 0, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), grid, roster: mp.players.filter(p => grid.includes(p.id)).map(p => ({ id: p.id, name: p.name, car: p.car, color: p.color, num: p.num })), ready: new Set() };
     s.rain = S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for everyone)
     Object.assign(s, netBeg(s));   // (beg s prijatelji: the traffic and the patrol car)
@@ -5127,9 +5127,10 @@
     const rows = [{ me: true, name: S.name || tr('Igralec'), car: M.name, col: S.color, t: R.mine, best: P.lapTimes.length ? Math.min(...P.lapTimes) : NaN }];
     for (const c of race.remotes) { const C = R.cars.get(c.netOf.id) || {}; rows.push({ me: false, name: c.name, car: c.m.name, color: c.color, t: C.fin, left: C.left && C.fin == null }); }
     rows.sort((a, b) => (a.t == null) - (b.t == null) || a.t - b.t);
-    const myPos = rows.findIndex(r => r.me) + 1, waiting = rows.some(r => !r.me && r.t == null && !r.left), two = rows.length === 2, other = rows.find(r => !r.me);
+    const zr = ZB.netRes();   // (Zabava: a mode with results of its own, the pursuit with friends: who won, whether it is still on, its table)
+    const myPos = rows.findIndex(r => r.me) + 1, waiting = zr ? zr.waiting : rows.some(r => !r.me && r.t == null && !r.left), two = rows.length === 2, other = rows.find(r => !r.me);
     if (!stRun.done && R.mine != null) { stRun.done = true; st.online++; st.races++; achGet('online'); stSave(); }
-    if (!stRun.onWin && !waiting && R.mine != null) { stRun.onWin = true; if (myPos === 1) { st.wins++; stSave(); } }   // (the win once the friends are in too)
+    if (!stRun.onWin && !waiting && R.mine != null) { stRun.onWin = true; if (zr ? zr.win : myPos === 1) { st.wins++; stSave(); } }   // (the win once the friends are in too)
     $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); $('res-table').querySelector('thead').innerHTML = resHead();
     $('res-pos').textContent = waiting && rows.slice(0, myPos - 1).every(r => r.t != null) && myPos === 1 ? '…' : Lang.ord(myPos);
     $('res-title').textContent = tr(waiting && myPos === 1 ? 'Cilj!' : PLACE_W[myPos - 1] || 'Cilj!');
@@ -5137,6 +5138,7 @@
       : myPos > 1 && rows[0].t != null ? tr(' Zaostanek za zmagovalcem {0}.', fmt(R.mine - rows[0].t, true)) : '');
     $('res-table').querySelector('tbody').innerHTML = rows.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (r.t == null ? '–' : i + 1) + '</td><td><span class="dot" style="background:' + hexCss(r.me ? PLAYER_COLORS[r.col] : r.color) + '"></span>' + esc(r.name) + (r.me ? tr(' (ti)') : '') + '</td><td>' + esc(r.car) + '</td><td>' +
       (r.t != null ? (r.t >= ZB_OUT ? tr('Izpadel') : fmt(r.t, true)) : tr(r.left ? 'odšel' : 'vozi …')) + '</td><td>' + (r.me ? fmt(r.best, true) : '') + '</td></tr>').join('');
+    if (zr) zr.draw();   // (its own head and table over the race's)
     const back = $('res-restart'); back.textContent = tr(!mp.err && !mp.gone && (mp.role === 'host' || Net.open) ? 'Nazaj v sobo' : 'Dirka s prijateljem'); back.dataset.act = 'net-room';
     if (mp.role === 'host' && !waiting && R.mine != null) chAward();   // (a championship: the points once everyone is in)
     chResults();
@@ -5797,7 +5799,7 @@
 
   // the special missions (js/missions.js): a mission's race on its track (no menu, no qualifying), the game's actions for its buttons
   const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
-  const ZB = typeof Zabava !== 'undefined' ? Zabava : { init() {}, modes: () => [], opts: () => null, made() {}, begin() {}, hold: () => false, step() {}, over: () => null, cls: () => '', rows: () => [], outWord: () => '', noPodium: () => false, finish: () => false, net() {}, room() {}, netSetup() {}, resBase() {}, resPay: () => '', resEnd() {}, stop() {} };   // (Zabava: the novelties, js/zabava.js)
+  const ZB = typeof Zabava !== 'undefined' ? Zabava : { init() {}, modes: () => [], opts: () => null, made() {}, begin() {}, hold: () => false, step() {}, over: () => null, cls: () => '', rows: () => [], outWord: () => '', noPodium: () => false, finish: () => false, net() {}, room() {}, netSetup() {}, netRes: () => null, resBase() {}, resPay: () => '', resEnd() {}, stop() {} };   // (Zabava: the novelties, js/zabava.js)
   const MisBridge = {
     start(id) { nv = null; if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null; ensureTrack(id, () => newRace()); },
     act: (a) => onAction(a), fmt: (t) => fmt(t, true), msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms) => toast(t, ms), click: () => { Sfx.resume(); Sfx.click(); },
@@ -5811,6 +5813,7 @@
     placeAt: (c, s) => placeAt(c, track, s), rec: (id) => rec(id), saveRecords: () => saveRecords(), showScreen: (n) => showScreen(n),   // (the pursuit: the fugitive up the road, its record, its results)
     ghost: () => ({ play: ghPlay, rec: ghRec, lap: ghLap, fr: ghFr }), setGhostF: (o) => { ghFr = o; }, gold: () => { const M = medalSet(track.def); return M ? M[0] : 0; },   // (the ghosts: the best run, this run, a circuit's lap, the second ghost; the gold time)
     finishOf: (id, t) => finishOf(id, t), netClock: () => (Net.now() - acc * 1000 - mp.race.goAt) / 1000,   // (online: a friend's finish, my time on the shared clock)
+    netResults: () => { if (screen === 'results' && mp && mp.race && race) netResults(); },   // (online: the results on the screen drawn again, the pursuit's fates as they come)
   };
 
   function bindUI() {

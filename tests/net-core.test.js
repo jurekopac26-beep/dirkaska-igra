@@ -97,13 +97,13 @@ check('finish: my time on the shared clock replaces the local one, the order fol
   check('22: on every track the player and 21 friends behind the line, none on top of another (an open road: all below the line)', !bad22.length, bad22.slice(0, 4).join(' | '));
 }
 
-// beg s prijatelji (docs/novosti-e.md, B1 and B2): online on an open road with traffic (Vršič). The traffic on both phones from the
+// beg s prijatelji (docs/novosti-e.md, B1 and B2): online on an open road with traffic (Rio do Rastro). The traffic on both phones from the
 // host's seed, the same while the race cars are far from it; the patrol car (the friend's on my phone, mine on its) in the police look.
 // The traffic on each phone reacts to the friend's car as to its own: pulls over for the friend's patrol car (its siren), brakes for the
 // friend's car in its lane, a knock moves only the vehicle (the friend's phone moves its car). An online race without it: no traffic, no
 // patrol car, as before
 {
-  const TV = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+  const TV = new C.Track(C.TRACKS.find(d => d.id === 'rastro'));
   const phone = (me, it, o) => new C.Race(TV, { numAI: 0, playerGrid: me === 'h' ? 1 : 2, laps: 1, phys: 'cs', playerModel: C.MODELS[0],
     netTf: o.tf, seed: o.seed, playerPolice: !!o.tf && o.pol === me,
     remote: [{ id: it, model: C.MODELS[2], color: 0x1c5fd6, num: 5, name: it === 'h' ? 'Ana' : 'Bor', grid: it === 'h' ? 1 : 2, police: !!o.tf && o.pol === it }] });
@@ -146,6 +146,8 @@ check('finish: my time on the shared clock replaces the local one, the order fol
   // knocked, the friend's car where it was, as fast (its phone moves it)
   const put = (r, c, s, d, dir, sp) => { const TT = r.track, i = TT.idx(s), tx = TT.tx[i] * dir, tz = TT.tz[i] * dir;
     c.x = c.px = TT.px[i] + TT.nx[i] * d; c.z = c.pz = TT.pz[i] + TT.nz[i] * d; c.h = c.ph = Math.atan2(tz, tx); c.vx = tx * sp; c.vz = tz * sp; c.w = 0; TT.query(c.x, c.z, -1, c.q); };
+  const behind = (r, c, v, gap, sp) => { const TT = r.track, i = TT.idx(v.s), tx = TT.tx[i] * v.dir, tz = TT.tz[i] * v.dir;   // (gap m behind the vehicle where it is, along the road)
+    c.x = c.px = v.x - tx * gap; c.z = c.pz = v.z - tz * gap; c.h = c.ph = Math.atan2(tz, tx); c.vx = tx * sp; c.vz = tz * sp; c.w = 0; TT.query(c.x, c.z, -1, c.q); };
   const pick = (r) => r.tf.veh.find(v => !v.off && v.st === 0 && !v.alt && !v.grp && v.kind < 3 && v.v > 6 && v.gap > 1e8 && !v.yl && r.cars.every(c => Math.hypot(c.x - v.x, c.z - v.z) > 400));
   const go = (r) => { r.start(); for (let k = 0; k < 12 / DT && (r.player.locked || r.remote.locked || !pick(r)); k++) { C.aiControl(r.player, r, DT); r.step(DT); } return pick(r); };
   { const A2 = phone('h', 'g1', beg), v = go(A2), P = A2.remote, v0 = v ? v.v : 0, e0 = v ? Math.abs(v.d - A2.tf._edge(v)) : 0;
@@ -154,7 +156,7 @@ check('finish: my time on the shared clock replaces the local one, the order fol
     check('beg B2: on my phone the traffic pulls over for the friend\'s patrol car: over to its edge, braking', !!v && y1 && v.yl === 1 && v.v < v0 - 2 && Math.abs(v.d - A2.tf._edge(v)) < e0 - 0.2,
       v ? `pulling over from the first step ${y1}, ${(v0 * 3.6).toFixed(0)} -> ${(v.v * 3.6).toFixed(0)} km/h in 2 s, ${e0.toFixed(2)} -> ${Math.abs(v.d - A2.tf._edge(v)).toFixed(2)} m from its edge` : 'no vehicle');
     const w = v && pick(A2);
-    if (w) { const wv = w.v; put(A2, P, w.s - w.dir * ((w.len + P.m.len) / 2 - 0.5), w.d, w.dir, w.v + 8); const sx = P.x, sz = P.z, svx = P.vx, svz = P.vz;
+    if (w) { const wv = w.v; behind(A2, P, w, (w.len + P.m.len) / 2 - 0.5, w.v + 8); const sx = P.x, sz = P.z, svx = P.vx, svz = P.vz;
       A2.step(DT);
       check('beg B2: the friend\'s patrol car into a vehicle\'s back: the vehicle knocked, the friend\'s car not moved by it', (w.st === 1 || w.v < wv - 3) && P.x === sx && P.z === sz && P.vx === svx && P.vz === svz,
         `vehicle ${w.st === 1 ? 'knocked loose' : 'on its way'} at ${(Math.hypot(w.vx, w.vz) * 3.6).toFixed(0)} km/h (was ${(wv * 3.6).toFixed(0)}), the friend's car moved ${Math.hypot(P.x - sx, P.z - sz).toFixed(3)} m`); }
