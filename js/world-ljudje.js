@@ -1432,7 +1432,6 @@
     toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
     townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
     troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1456, -1], ['vhod', 1960, -1]],
-    vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland
   const vert = (a) => Object.assign(a, { vert: true });

@@ -57,13 +57,13 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
-| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville | Mount Buller (narejena, PR #241) | stara veja: Phillip Island |
+| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik, ostale gredo v test) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
 | Finska | Ouninpohja, Harju | – | – |
-| Slovenija | Vršič, Medvode | – | – |
+| Slovenija | Medvode; Vršič je od 6. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #394) | – | – |
 | Kitajska | Tianmen | Hongkong (zavite, 3) — **ne začni** (brez izletne cone, 5. 11. 2026) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
 | Čile | Los Caracoles | Valparaíso (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | stara veja: Santiago |
 | Italija | Livorno | Stelvio (stara veja `ccr-b30cfdb0-ej1gzj`, v verigi Nove proge) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |

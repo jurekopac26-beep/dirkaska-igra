@@ -169,7 +169,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`).
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: šest avstralskih, ostane ena) so prave; drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
@@ -215,7 +215,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | townsville | Townsville, Avstralija | townsville | `js/world-townsville.js` |
 | troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
-| vrsic | Vršič, Slovenija | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
+| *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
 | *gozd* | *Bakreni gozd (test)* | forest | splošni `build()` |
 | *grom* | *Gromski rt (test)* | kamp | splošni `build()` |
