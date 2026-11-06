@@ -22,7 +22,7 @@ async function moment(Q, c, cx, cy, r, note) {
   await Q.click('#nk-on');
   await Q.click(`#nk-pal [data-c="${c}"]`);
   await Q.mouse.move(cx + r, cy); await Q.mouse.down(); for (let a = 0.2; a <= 2 * Math.PI + 0.25; a += 0.2) await Q.mouse.move(cx + r * Math.cos(a), cy + 0.7 * r * Math.sin(a)); await Q.mouse.up();
-  if (note) await Q.keyboard.type(note);
+  if (note) { await Q.focus('#nk-note textarea'); await Q.keyboard.type(note); }   // (the note under the loop: on a touch screen the keyboard is not in it until it is tapped; main, Beležka v barvi svinčnika)
   await Q.click('#nk-bar .nk-add');
 }
 try {
