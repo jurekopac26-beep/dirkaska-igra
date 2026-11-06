@@ -121,7 +121,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 
 **Testi:**
 - B1, Node (`tests/net-core.test.js`): dva telefona z istim semenom imata enak promet. Po 40 s je enak tudi promet stran od avtov, torej vozila, ki se nobenemu avtu niso približala na 300 m (razlika 0,000 m). Vozila blizu avtov vsak telefon računa sam: v testu se jih je 19 od 109 razlikovalo, za do ~140 m. Če bo to v igri moteče, gostitelj v B6 pošilja popravke za vozila blizu avtov. Spletna dirka brez bega ostane brez prometa.
-- B2, Node: patrulja prijatelja ima podobo in promet se ji umika. Brskalnik (`tests/browser/online.test.mjs`, druga dirka): na Vršiču sta promet in patrulja enaka na obeh telefonih.
+- B2, Node: patrulja prijatelja ima podobo in sireno; promet na telefonu begunca se ji umakne (k robu, zavira), na telefonu patrulje pred beguncem na svojem pasu zavira, ob trku z avtom prijatelja se premakne samo vozilo (avto prijatelja premika njegov telefon). Brskalnik (`tests/browser/online.test.mjs`, druga dirka): na Vršiču sta promet in patrulja enaka na obeh telefonih.
 - `tests/zabava.test.js`: ulov in pobeg z oddaljenim avtom, vrstni red patrulje, rezultati.
 - `tests/browser/online.test.mjs`: dva telefona (lokalni strežnik PeerJS), patrulja in begunec, ulov in konec na obeh.
 - Golden in obstoječe spletne dirke ostanejo enake.
@@ -156,4 +156,4 @@ Seja načrta odgovora `videz-1` in `videz-2` prebere ob 23.20 (`send_later`), ju
 |---|---|
 | Načrt, vprašanja, vpis v Načrtovano | narejeno 5. 11. 2026 |
 | Novost 1 (V1–V5) | čaka na odgovore in na #297 |
-| Novost 2 (B1–B6) | B1–B2 narejeno 5. 11. (veja `novosti-e/beg-prijatelji`, osnutek pull requesta): `js/core.js` `patrolCar`, `opts.netTf`, `opts.playerPolice`, `remote[].police`; `js/game.js` `netBeg` (`mp.beg`, v testih `window.__netBeg`), `setup` s `tf`, `seed`, `pol`, sirena prijateljeve patrulje v `roadSound`. B3–B6 po #250 |
+| Novost 2 (B1–B6) | B1–B2 narejeno 5. 11. (veja `novosti-e/beg-prijatelji`, osnutek pull requesta): `js/core.js` `patrolCar`, `opts.netTf`, `opts.playerPolice`, `remote[].police`, `Traffic.net` (promet upošteva tudi avte prijateljev, trk jih ne premika); `js/game.js` `netBeg` (`mp.beg`, v testih `window.__netBeg`), `setup` s `tf`, `seed`, `pol`, sirena prijateljeve patrulje v `roadSound`. B3–B6 po #250 v novi seji (Opus, max; ta seja je predala 6. 11.). Ob spoju s #372 in #250 obdrži pogoje obeh strani: `js/core.js` pogoj za promet v `Race`, `js/game.js` `modeOf`, razred `duel`, uvod in plošča dvoboja |
