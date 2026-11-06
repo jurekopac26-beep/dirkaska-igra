@@ -26,6 +26,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (Medeu, brez Aulija), Furka 2A; brez izletne cone se ne začnejo (odločitev uporabnika 5. 11., `docs/proge-po-drzavah.md`, razdelek »Izletna cona«): Zavite proge korak 1 Ouro Preto, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) (#202 je zaprt 5. 11. po odločitvi uporabnika: nova fizika in trki ostanejo, kot so na `main`; na #202 ne čaka več) |
 | Videz avta povsod: barva, izvedba laka, črte z barvo, nalepke, senčni pas, svoja številka in platišča v vsaki dirki, v posnetku in pri prijateljih (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanji `videz-1` in `videz-2` na strani Odločitve 3) in po #297 (garaža, račun 1) |
+| Popravek treh nezanesljivih testov po #250 (`pits` predaja šele po prikazani vrstici, `smoke` čaka, da dež ugasne, `fuel`: ocena porabe v igri ne napihne opozorila »Malo goriva« v 1. krogu; analiza na tabli #382; veja `popravek/nezanesljivi-testi`, osnutek PR; seja session_01WbgGzrvK2Nia13SDcjgBWb) | partyslo | v delu (6. 11.) |
 
 ## Vrsta (stanje 4. 11. 2026)
 
