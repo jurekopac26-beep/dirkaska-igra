@@ -128,3 +128,4 @@ Izvedba po odločitvah (seja kode, 6. 11. 2026):
 ## Stanje
 
 - 5. 11. 2026: načrt in vprašanja (seja »Lestvica prijateljev: načrt«, `session_01WbgGztpv919FLrFJ1tPuh5`); koda po odgovorih.
+- 6. 11. 2026: odgovori uporabnika (`lp-meni` 1, `lp-povezava` 2, `lp-obseg` 1); koda v delu (seja `session_01WbgGzvYDMqQqpGN1uARfq5`, PR #392, veja `lestvica-prijateljev/koda`).
