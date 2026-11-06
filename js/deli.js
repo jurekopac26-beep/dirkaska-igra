@@ -38,7 +38,8 @@ var DELI = (function () {
 
   // ================================================================ krilo: the rear spoiler or wing, in place of the stock one
   // m: { x: the roof's rear edge, w: the roof's half width there, part: the spoiler's part id, s: its size (1: KOLIBRI's; chords,
-  // heights, thicknesses), top: [[x, y] ...] the top it stands on along x, flat across (a truck's roof deflector; default: the roof, K.topY) }
+  // heights, thicknesses), top: [[x, y] ...] the top it stands on along x, flat across (a truck's roof deflector; default: the roof, K.topY),
+  // front: as far forward as the prototype's fin (16) may reach (a roof rack ahead of it: MIŠKA's) }
   function krilo(K, n, m) {
     const P = K.paint, X0 = m.x, W = m.w, k = m.s || 1, kz = W / 0.565, X = (a) => X0 + a * k, Yo = (b) => Y0 + b * k;   // (k: sizes along and up, kz: across)
     const TOP = m.top, RY = (x, z) => { if (!TOP) return K.topY(x, z || 0); if (x <= TOP[0][0]) return TOP[0][1]; for (let i = 1; i < TOP.length; i++) if (x <= TOP[i][0]) { const a = TOP[i - 1], b = TOP[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); } return TOP[TOP.length - 1][1]; };
@@ -124,7 +125,7 @@ var DELI = (function () {
         const f = foil(X(0.1), Y0 + h, (n >= 15 ? 0.27 : 0.23) * k, 7, 0.028 * k), te = f[4];
         const g2 = foil(te[0] + 0.035 * k, te[1] + 0.028 * k, (n >= 15 ? 0.14 : 0.12) * k, n === 13 ? 24 : n === 14 ? 34 : 30, 0.02 * k), te2 = g2[4];
         wing(f, span, col); wing(g2, span, col);
-        if (proto) { const xf = X(0.635);   // (a fin along the roof's middle carries it)
+        if (proto) { const xf = m.front != null ? Math.min(X(0.635), m.front) : X(0.635);   // (a fin along the roof's middle carries it; front: as far forward as it may reach)
           K.endplate([[xf, RY(xf, 0) - 0.004], [X(0.04), RY(X(0.04), 0) - 0.004], [X(-0.06), lowerAt(f, X(-0.06)) + 0.006 * k], [X(0.095), lowerAt(f, X(0.095)) + 0.006 * k]], 0, 0.014 * k, P);
           K.box(X(0.18), RY(X(0.18), 0) - 0.004 * k, 0, 0.12 * k, 0.014 * k, 0.05 * k, 0, DK); }
         else for (const sd of [-1, 1]) pylon(sd * 0.28 * kz, X(0.28), X(0.1), X(0.09), X(-0.08), f, n === 13 ? DK : AL, 0.016 * k);
