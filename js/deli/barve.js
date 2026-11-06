@@ -4,7 +4,8 @@
        crte        racing stripes over the bonnet, the roof and the tailgate (K.strp: the stripes' colour, car.stripeCol or the game's),
                    the stock side stripe kept (the car's around); mounts.crte { z: [in, out] the band they lie in across, beside a
                    bonnet's scoop, x: [[x0, x1] ...] only these stretches of the top (not over an open bay or a canvas roof), w: the
-                   top's half width, every band cut to it (a narrow bonnet: none past its edge; none: as drawn) }
+                   top's half width, every band cut to it (a narrow bonnet: none past its edge; none: as drawn), fit: true, each band cut to
+                   the top's own half width along the car, less 1.2 cm (JASTREB's nose narrowing to its mouth, the tail to its end) }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
@@ -121,11 +122,22 @@
     // diagonal; mounts.crte.z the outboard band beside the bonnet's scoop, the centre ones run over it)
     const Z = m.z || [0.27, 0.47], S = K.strp, ly = layer(K), runs = m.x ? [].concat(...m.x.map(([a, b]) => paintRuns(K, a, b))) : paintRuns(K), X0 = runs.length ? runs[0][0] : -1.7, X1 = runs.length ? runs[runs.length - 1][1] : 1.7;
     const W = m.w, cz = (z) => W == null ? z : Math.max(-W, Math.min(W, z));   // (w: the top's half width, the bands cut to it)
+    // fit: a piece (x, z) cut to |z| <= the top's half width less 1.2 cm, in pieces between the loft's sections (the width straight between them)
+    const half = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a);
+      if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out; };
+    // (the stretches it lies within whole: one piece, as drawn without fit)
+    const KN = K.body.secs.map(r => r[0]), fit = (P) => { if (!m.fit) return [P]; const out = [], push = (Q) => { if (Q.length >= 3 && Math.abs(area(Q)) > 1e-6) out.push(Q); }; let r0 = null;
+      const span = (a, b) => half(half(P, (p) => p[0] - a), (p) => b - p[0]), flush = (b) => { if (r0 != null) push(span(r0, b)); r0 = null; };
+      for (let k = 0; k < KN.length - 1; k++) { const x0 = KN[k], x1 = KN[k + 1], h0 = ly.LD.prop(x0, 'wt') - 0.012, h1 = ly.LD.prop(x1, 'wt') - 0.012, h = (x) => h0 + (h1 - h0) * (x - x0) / (x1 - x0);
+        const Q = span(x0, x1); if (Q.length < 3) { flush(x0); continue; }
+        if (Q.every((p) => Math.abs(p[1]) <= h(p[0]) + 1e-9)) { if (r0 == null) r0 = x0; continue; }
+        flush(x0); push(half(half(Q, (p) => h(p[0]) - p[1]), (p) => h(p[0]) + p[1])); }
+      flush(KN[KN.length - 1]); return out; };
     const band = (z0, z1, col, o) => { o = o || {}; if (W != null) { z0 = cz(z0); z1 = cz(z1); if (z1 - z0 < 0.004) return; } for (const [xa, xb] of runs) { if (o.x && (xb < o.x[0] || xa > o.x[1])) continue; const a = Math.max(xa, o.x ? o.x[0] : -9), b = Math.min(xb, o.x ? o.x[1] : 9);
-      const P = rect(a, z0, b, z1); if (o.one) ly.top(P, col, 0.007); else ly.topZ(P, col, 0.007); } };
+      for (const P of fit(rect(a, z0, b, z1))) { if (o.one) ly.top(P, col, 0.007); else ly.topZ(P, col, 0.007); } } };
     const taper = (zc, w0, w1, col) => { for (const [xa, xb] of runs) { const w = (x) => w1 + (w0 - w1) * (x - X0) / ((X1 - X0) || 1);   // (wide at the nose, narrow at the tail)
       if (W != null && cz(zc + w(xa) / 2) - cz(zc - w(xa) / 2) < 0.004 && cz(zc + w(xb) / 2) - cz(zc - w(xb) / 2) < 0.004) continue;
-      ly.topZ([[xa, cz(zc - w(xa) / 2)], [xb, cz(zc - w(xb) / 2)], [xb, cz(zc + w(xb) / 2)], [xa, cz(zc + w(xa) / 2)]], col, 0.007); } };
+      for (const P of fit([[xa, cz(zc - w(xa) / 2)], [xb, cz(zc - w(xb) / 2)], [xb, cz(zc + w(xb) / 2)], [xa, cz(zc + w(xa) / 2)]])) ly.topZ(P, col, 0.007); } };
     const side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? -1.48 : x0, y0, x1 == null ? 1.45 : x1, y1), col, 0.006);
     const zo = Z[0], zi = Z[1];
     switch (n) {
