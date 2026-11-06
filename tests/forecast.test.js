@@ -25,7 +25,7 @@ const show = (f) => f && (f.k + (f.n != null ? ` n ${f2(f.n)} ${f.lo}-${f.hi} ${
 
 // 1. none in a steady weather, on the open road; for a car out of the race none either
 {
-  const dry = mk({}), wet = mk({ rain: 1 }), road = new C.Race(track('vrsic'), { numAI: 1, playerGrid: 2, laps: 1, phys: 'cs', seed: 3, weather: { at: 30, dur: 20, to: 1 } });
+  const dry = mk({}), wet = mk({ rain: 1 }), road = new C.Race(track('caracoles'), { numAI: 1, playerGrid: 2, laps: 1, phys: 'cs', seed: 3, weather: { at: 30, dur: 20, to: 1 } });
   const r = mk({ weather: { at: 400, dur: 30, to: 1 } }), P = r.player; P.finished = true; const fin = r.forecast(P); P.finished = false;
   check('none in a steady weather (dry or wet), on the open road, for a car that has finished', dry.forecast(dry.player) === null && wet.forecast(wet.player) === null && road.forecast(road.player) === null && fin === null && !!r.forecast(P), '');
 }

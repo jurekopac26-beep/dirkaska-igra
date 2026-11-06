@@ -35,7 +35,7 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 3, playerMo
   }
   const badT = out.filter(o => o.share < 0.05 || o.share > 0.5 || o.wrong || o.offRoad || o.nearLine || o.straight);
   check('the band on every real circuit with pits: on the outside of the bends, 1.3 m or more off the racing line, on the asphalt, none on the straights, 5-50 % of the lap',
-    out.length >= 13 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
+    out.length >= 11 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
   const T = track('cpalace'), a = T.marbles(), b = new C.Track(T.def).marbles();
   check('the band: the same every time it is found', a.k.every((v, i) => v === b.k[i] && a.c[i] === b.c[i] && a.h[i] === b.h[i]), '');
 }
@@ -105,7 +105,7 @@ const A = race({ laps: 6 }, 420, 280, 290);
   const T = track('cpalace'), r = new C.Race(T, opts({ tyres: false, compounds: false }));
   r.start(); for (let k = 0; k < 120 * 40; k++) { Math.random = seeded(900 + k); C.aiControl(r.player, r, DT); r.step(DT); }
   check('a race without tyres: no marbles, the grip as ever', r.mb === null && !r.wst.on && r.cars.every(c => c.wet === 1), '');
-  const O = new C.Race(track('vrsic'), opts({ numAI: 0, playerGrid: 1, laps: 1 }));
+  const O = new C.Race(track('caracoles'), opts({ numAI: 0, playerGrid: 1, laps: 1 }));
   check('an open road, even with tyres: no marbles', O.mb === null, '');
   const tst = C.TRACKS.filter(d => d.pit && d.test).map(d => d.id), X = tst.filter(id => new C.Race(track(id), opts({ numAI: 0, playerGrid: 1, laps: 1 })).mb !== null);
   check('a circuit kept for testing only (test: true), even with tyres: no marbles (CLAUDE.md: no new graphics there)', tst.length >= 3 && !X.length, tst.join(', ') + (X.length ? ' — WITH: ' + X.join(', ') : ''));

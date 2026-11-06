@@ -4436,9 +4436,9 @@ const Render = (function () {
   // lift: the world's ground over the apron in places (Newcastle's, Toronto's terrain): the film on it
   const PIT_LOOK = {
     def: { gf: 9, h: 3.3, w: 8.2, d: 6.9, bz: -0.17, kind: 'in', ap: 9 },   // (pitLaneScenery: Spa, Newcastle; the Red Bull Ring's building)
-    spa: { eave: [-0.9, 8.6] }, newcastle: { lift: true }, rbring: { eave: [-2.4, 14.7] }, rio: { w: 9.5, d: 7.85 }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25, lift: true },
+    spa: { eave: [-0.9, 8.6] }, newcastle: { lift: true }, rbring: { eave: [-2.4, 14.7] }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25, lift: true },
     townsville: { gf: 9.7, h: 3.7, w: 11.4, d: 11.1, eave: [-1.2, 4.6] }, bathurst: { h: 3.4, w: 9.4, kind: 'door', dz: 0.26, eave: [-0.8, 7.8], asph: true }, bangsaen: { gf: 8, h: 2.45, w: 8.6, kind: 'door', dz: -0.03, ap: 8 },
-    detroit: { gf: 9.4, h: 2.6, w: 9.2, d: 5.97, kind: 'tent' }, troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' }, monterey: { h: 3.5, w: 9.4, d: 6.3, kind: 'tent' },
+    troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' },
     cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb', ap: 8.6 }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },
   };
   const PIT_IC = [0.82, 0.9, 1.0], PIT_NC = [1.0, 0.95, 0.84], PIT_WC = [1.0, 0.7, 0.4];   // (inside: cool LED; the lamps: white; the old bulbs: warm)
@@ -10200,7 +10200,7 @@ const Render = (function () {
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
-    World.update(world, time, target, camera);
+    World.update(world, time, target, camera, opt && opt.rp);   // (a replay: its time for the spectators)
     if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)

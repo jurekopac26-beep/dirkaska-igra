@@ -110,7 +110,7 @@ try {
 
   // 4. the radio off; on until it rains: the cloud gone; the next stop: "Rain to the finish." in the panel only, the default tyres by the line
   await page.evaluate(() => { window.__game.S.radio = 0; });
-  await page.evaluate((at) => { const g = window.__game; for (let k = 0; k < 400 && g.race.time < at + 2; k++) g.sim(0.5, true); g.hud(0.05); }, RAIN_AT);
+  await page.evaluate((at) => { const g = window.__game; for (let k = 0; k < 1000 && g.race.time < at + 2; k++) g.sim(0.5, true); g.hud(0.05); }, RAIN_AT);   // (up to 500 s: the second stop may end at 185 s as well as at 230 s)
   const c2 = await cloud();
   T.check('it rains: the cloud gone (the forecast: rain to the finish)', !c2.on && c2.rain > 0 && c2.f.k === 'wet', JSON.stringify(c2));
   const n2 = (await page.evaluate(() => window.__game.teamRadio.log.length)), s3 = await toPanel();

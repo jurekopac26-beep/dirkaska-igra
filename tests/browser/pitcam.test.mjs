@@ -165,7 +165,7 @@ try {
 
   // every circuit with pits
   let ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
-  T.check('14 circuits with pits (the test tracks left out)', ids.length === 14, ids.join(', '));
+  T.check('11 circuits with pits (the test tracks left out)', ids.length === 11, ids.join(', '));
   if (ONLY) ids = ids.filter(id => ONLY.includes(id));
   for (const id of ids) {
     if (id === 'bathurst') continue;

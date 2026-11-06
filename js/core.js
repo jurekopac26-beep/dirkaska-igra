@@ -1958,6 +1958,10 @@ const Core = (function () {
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // power boost and drag (fit to SWGP2 acceleration curves)
   const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const TOW_DRAG = 0.25;   // the most of the air drag the wake of a car ahead takes away (Car.tow 0..1, set by Race._tow)
+  // the wake (Race._tow): TOW_LAT m to either side of the car ahead's line, 3 to TOW_RNG m behind it; it builds up and dies away over TOW_T s
+  // (the user, 4. 11. 2026, Great Alpine Road: »avto dobi pospešek, ko je med gužvo avtomobilov«: with 2.4 m and 40 m, at once, the car in a
+  // pack was in some wake 90 % of the time, +7.9 % top speed on average; with these +1.6 %, behind one car on a straight as before)
+  const TOW_LAT = 1.2, TOW_RNG = 25, TOW_T = 1;
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (snappy, a bit above real g)
   // Razbijanje · nov način: prevračanje (Nastavitve xRoll; off by default: nothing here runs, no car ever has rl). A hard knock on a car's
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
@@ -2050,8 +2054,16 @@ const Core = (function () {
     const c2 = Math.cos(c.h), s2 = Math.sin(c.h), yR = c.y, g0 = trk.ground2(c.x, c.z, yR); c.mxSl = 0;
     if (trk.rough2 && trk.rough2(c.x, c.z)) { const L = Math.max(1, c.m.len * 0.3), W = Math.max(0.7, c.m.wid * 0.42), gF = trk.ground2(c.x + c2 * L, c.z + s2 * L, yR), gB = trk.ground2(c.x - c2 * L, c.z - s2 * L, yR), gl = trk.ground2(c.x + s2 * W, c.z - c2 * W, yR), gr = trk.ground2(c.x - s2 * W, c.z + c2 * W, yR);
       c.roadY += Math.max(g0, (gF + gB) / 2); c.gradeNow += (gF - gB) / (2 * L); c.curvNow += (gF - 2 * g0 + gB) / (L * L); const sl = (gl - gr) / (2 * W); if (Math.abs(sl) > 0.03) { c.mxSl = sl; c.mxBx = s2; c.mxBz = -c2; } return; }
-    const g1 = trk.ground2(c.x + c2, c.z + s2, yR), g2 = trk.ground2(c.x - c2, c.z - s2, yR); c.roadY += g0; c.gradeNow += (g1 - g2) / 2; c.curvNow += g1 - 2 * g0 + g2;
+    const g1 = trk.ground2(c.x + c2, c.z + s2, yR), g2 = trk.ground2(c.x - c2, c.z - s2, yR); let dF = g1 - g0, dB = g0 - g2; c.roadY += g0;
+    // (a step: the ground up or down by more than NV_STEP in the metre, steeper than any of the map's ways (its jumps' drops 0.7 m at most), so the
+    // edge of a deck, a bridge or a platform; not a slope. Climbed, or the car right before it, neither its slope nor a crest of it: it never
+    // throws the car up (the user, 4. 11. 2026, »skoči tam, kjer smo naredili most«: up the edge of HOME's bridge 6-14 m into the air). An edge
+    // ahead of a car on the level: off it with the slope it is on, then falling (not slammed down with half the step's slope))
+    if (dF < -NV_STEP && Math.abs(dB) <= NV_STEP) { c.gradeNow += dB; c.curvNow += dF - dB; return; }
+    const sF = Math.abs(dF) > NV_STEP, sB = Math.abs(dB) > NV_STEP; if (sB) dB = sF ? 0 : dF; if (sF) dF = sB ? 0 : dB;
+    c.gradeNow += (dF + dB) / 2; c.curvNow += dF - dB;
   }   // (Track.bankAt output; _bk2: the new map's banked bend, track.bank2)
+  const NV_STEP = 0.9;   // (m in the metre each way: nvGround's step)
 
   /* ---------------------------------------------------------------------
      CAR
@@ -3501,6 +3513,15 @@ const Core = (function () {
     _rb.pen = R - d; _rb.nx = snx / nl; _rb.nz = snz / nl; _rb.px = sx / W; _rb.pz = sz / W;
     return _rb;
   }
+  // Zabava · Tekmeci si zapomnijo (js/zabava/spomin.js): a knock the player caused (the player's nose into the AI car's tail or side) makes
+  // that driver angry with the player for the rest of the race (chr.zbMad up to 1; zbR, its respect for clean racing, back to 0); only for
+  // a car the game switched it on for (chr.zbG), never in a race without the game (the tests' races stay as they were)
+  function grudgeHit(a, b, imp, bpx, bpz) {
+    const P = a.isPlayer ? a : b.isPlayer ? b : null, o = P === a ? b : a; if (!P || !o.chr || !o.chr.zbG || !(imp >= 1.5)) return;
+    const lx = (bpx - o.x) * Math.cos(o.h) + (bpz - o.z) * Math.sin(o.h), px = (bpx - P.x) * Math.cos(P.h) + (bpz - P.z) * Math.sin(P.h);   // (the contact along each car)
+    if (!(px > P.m.len * 0.15) || !(lx < o.m.len * 0.35)) return;   // (the player's nose into its tail or its side; side by side, or its nose into the player: not the player's doing)
+    o.chr.zbMad = Math.min(1, (o.chr.zbMad || 0) + clamp(imp / 10, 0.3, 0.7)); o.chr.zbR = 0; o.chr.zbN = (o.chr.zbN || 0) + 1;
+  }
   // a knock's consequences (carCollide, kCollide): imp the closing speed, J the push, rna / rnb its levers on a and b, Ia / Ib their turning masses,
   // nv the new physics, (bpx, bpz) the contact, old: the old knock (Stara, and the pit lane in every version). Returns imp
   function carKnockFx(a, b, imp, J, rna, rnb, Ia, Ib, nv, bpx, bpz, old) {
@@ -3508,7 +3529,7 @@ const Core = (function () {
       if (!nv) c.w += sg * rn * J / (c === a ? Ia : Ib) * 0.9;   // (nova: turned in full above)
       const dx = bpx - c.x, dz = bpz - c.z, lx = dx * Math.cos(c.h) + dz * Math.sin(c.h), behind = lx < 0 ? Math.min(1, -lx / (c.m.len * 0.5)) : 0;
       c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
-    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
+    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
     a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     if (KC && !KC.fx) a.fxQ = b.fxQ = 1;   // (Trki med avti: Iskre izklop: the renderer throws no sparks and no dust for it; the scrape marks stay)
@@ -3587,7 +3608,7 @@ const Core = (function () {
     const P = Math.hypot(Px, Pz), dva = P * ia, dvb = P * ib;
     crashLoss(a, dva, dwa, Px, Pz, ma, bpx, bpz); crashLoss(b, dvb, dwb, -Px, -Pz, mb, bpx, bpz);
     const imp = -vrel;
-    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp);
+    a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
     const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
@@ -3618,6 +3639,7 @@ const Core = (function () {
   // behind it before a braking zone, covers the inside of the corner (once, held through the braking, not again for a few seconds)
   const aiAgg = (c) => { const ch = c.chr; return Math.min(1, ch.agg + (ch.duelOn ? 0.2 : 0) + (ch.rival ? 0.15 : 0)); };
   function aiWaits(c, o, race, v) {
+    if (o.isPlayer && c.chr.zbMad > 0.3) return false;   // (Zabava: angry with the player: never waits behind it)
     const a = aiAgg(c); if (a >= 0.6) return false;
     const T = race.track, vp = c.vprof || race.vprof, room = vp[T.idx(c.q.s + 50)] >= v - 3 && vp[T.idx(c.q.s + 100)] >= v - 3;
     return !room && v - Math.max(0, o.vl) < 4 + 8 * (0.6 - a);
@@ -3625,15 +3647,17 @@ const Core = (function () {
   function aiDefend(c, race, v) {
     const ch = c.chr, T = race.track, dt = 0.15; ch.defCool = Math.max(0, ch.defCool - dt);
     if (ch.defT > 0) { ch.defT -= dt; return ch.defSide; }
-    if (ch.agg + (ch.rival ? 0.15 : 0) < 0.5 || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing' || race.flyOn || (race.fl && race._noPass(c))) return null;   // (a careful one never; nobody under a flag)
+    const mad = ch.zbMad > 0.3, bold = ch.agg + (ch.rival ? 0.15 : 0) >= 0.5;   // (Zabava: angry with the player: covers the inside against it whatever the character)
+    if ((!bold && !mad) || ch.defCool > 0 || v < 15 || c.inPit || c.pitWant || race.state !== 'racing' || race.flyOn || (race.fl && race._noPass(c))) return null;   // (a careful one never; nobody under a flag)
     let chaser = null; const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L = BD || race.cars;
     for (let k = BD ? distFrom(BD, c.dist - 14.5) : 0; k < L.length; k++) { const o = L[k]; if (BD && o.dist > c.dist - 1.5) break; if (o === c || o.finished || o.inPit) continue; const g = c.dist - o.dist; if (g > 2 && g < 14 && o.vl > v - 1 && Math.abs(o.q.d - c.q.d) < 1.6) { chaser = o; break; } }   // (right behind, not yet alongside; only whether there is one counts)
     if (!chaser) return null;
+    if (chaser.isPlayer ? !mad && ch.zbR >= 20 : !bold) return null;   // (Zabava: respect for the player's clean racing: no cover against it; the grudge only against the player)
     const vp = c.vprof || race.vprof; let ai = -1, lo = 1e9;
     for (let d = 30; d <= 110; d += 10) { const i = T.idx(c.q.s + d), w = vp[i]; if (w < lo) { lo = w; ai = i; } }
     if (!(lo < v - 6) || ai < 0) return null;   // (no braking zone ahead)
     const inside = Math.sign(T.rl[ai]) * (T.w - 1.6); if (!inside) return null;
-    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = 6;
+    ch.defSide = clamp(inside - T.rl[c.q.i], -2 * T.w, 2 * T.w); ch.defT = 2.4; ch.defCool = mad && chaser.isPlayer ? 2.5 : 6;
     return ch.defSide;
   }
   // a car in the lane an AI car would pass in (w: m across the road): alongside it, or up to beside the car ahead (thr, g m ahead)
@@ -3716,7 +3740,7 @@ const Core = (function () {
         else {
           // choose side with more room
           const wq = T.wa ? T.wa[q.i] : T.w, roomL = oPos - (-wq + 1.2), roomR = (wq - 1.2) - oPos;   // (a road of several widths: its width here)
-          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * aiAgg(c) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
+          const pw = (M.aiPass || 3.3) * (c.chr ? 1.08 - 0.16 * Math.min(1, aiAgg(c) + (threat.isPlayer && c.chr.zbMad > 0.3 ? 0.3 : 0)) : 1), room = (s) => s > 0 ? roomR : roomL, dl = q.d - oPos;   // (aiPass: the formula passes wider; an aggressive driver a little closer)
           let side = Math.abs(dl) > 0.8 && room(Math.sign(dl)) > pw - 1 && !c.pol ? Math.sign(dl) : roomR > roomL ? 1 : -1;   // (already out on one side of it, with room there: that side, not across behind it)
           if (aiLaneBusy(c, race, threat, oPos + side * pw, tgap)) side = room(-side) > pw - 1 && !aiLaneBusy(c, race, threat, oPos - side * pw, tgap) ? -side : 0;   // (a car in that lane, alongside or beside the car ahead: the other side, or behind it in its wake)
           target = clamp(oPos + side * pw - rlHere, -2 * wq, 2 * wq);
@@ -3748,7 +3772,8 @@ const Core = (function () {
     let off = clamp(rlv + c.aiOff, -lim, lim);
     if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
       const a = c.alU, b = c.alD, gs = txv('aiSide', 0.6, NVK.aiSide, c), w2 = KC && !race.pol ? (o) => aiReach(c) + aiReach(o) : (o) => (M.wid + o.m.wid) * 0.5;   // (Trki: ravni odbijači: the boxes' corners, turned to the road, reach further out)
-      const hi = a ? a.q.d - w2(a) - gs : 1e9, lo = b ? b.q.d + w2(b) + gs : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
+      const gp = (o) => gs + (o.isPlayer && c.chr && c.chr.zbR >= 20 && !(c.chr.zbMad > 0.3) ? 0.5 : 0);   // (Zabava: the player's clean racing respected: more room alongside it)
+      const hi = a ? a.q.d - w2(a) - gp(a) : 1e9, lo = b ? b.q.d + w2(b) + gp(b) : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
       if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
       const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
       c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
@@ -5633,7 +5658,8 @@ const Core = (function () {
       // fuel (opts.fuel, a circuit with pits): every car starts full (c.fuel 1, a share of the tank); a full tank lasts about 1.3 times the track's
       // usual race at an average throttle (a long race stops for it once, an endurance race more), more on the throttle, less off it; its weight
       // on the car (c.fuelKg of c.tankKg); refilled at a pit stop (0.9 s a tenth of the tank, with the repair and the tyres); empty: the last
-      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up); c.fuelK: how many laps before the
+      // drops, a crawl to the pits. c.fuelPm: what the car burns a metre (its own since it was filled up, from its place on the grid, c.fuelD,
+      // once it has done a lap on it; before: the usual burn at the start, the last tank's after a stop); c.fuelK: how many laps before the
       // last one it could make a rival comes in when that costs it no extra stop (0 to 1.5: the stops spread over the laps)
       if (opts.fuel && track.def.pit && !track.open && !this.timeTrial) {
         this.fuelRate = 1 / (1.3 * track.len * (track.def.laps || 3) / 38);
@@ -5965,6 +5991,7 @@ const Core = (function () {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
       // a flying start (opts.flying: a race up an open road or the Nordschleife's Circuit race, the seconds the column holds): the race already under way, see _flyColumn
       if (this.opts.flying > 0 && !this.timeTrial && this.player) this._flyColumn();
+      if (this.fuelRate) for (const c of this.cars) c.fuelD = c.dist;   // (fuel: the metres on the tank counted from where the car sets off, behind the line on the grid)
       if (this.lch) for (const c of this.cars) if (c.lch && !c.isPlayer) { c.relT = c.lch.re; c.locked = true; }   // the AI: on the grid until its reaction (as the demo's staggered start)
       // open-road demo: the grid is packed tight between the bottom end and the start line, so the cars set off one by one, 0.5 s apart
       if (this.track.open && this.opts.noPlayer) for (const c of this.cars) { c.relT = (c.grid - 1) * 0.5; if (c.relT > 0) c.locked = true; }
@@ -6070,7 +6097,7 @@ const Core = (function () {
       }
       if (this.lch) this._launch(dt);
       for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (c.wreck && !c.net && !(ST && !ST[ci])) this._wreckStep(c, SD ? SD[ci] : dt); }   // kit vehicles: a wreck sheds its parts, a destroyed one retires (see _wreckStep)
-      if (this.slip) this._tow();
+      if (this.slip) this._tow(dt);
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci];
         if (c.net || (ST && !ST[ci])) continue;   // (the friend's car: placed from the network, see game.js; a far car between its steps)
@@ -6078,7 +6105,7 @@ const Core = (function () {
         if (c.fuel != null && this.fuelRate) {   // the fuel burnt (a share of the tank a second), the car lighter; empty: the last drops (a crawl, 40 km/h at most)
           if (this.state === 'racing' && !c.finished && !c.inPit && !(c.fl && c.fl.rh)) c.fuel = Math.max(0, c.fuel - this.fuelRate * (0.3 + 0.9 * clamp(c.inThr, 0, 1)) / 0.975 * cdt);
           c.fuelKg = c.tankKg * c.fuel; if (c.fuel <= 0) c.inThr = c.speed > 11 ? 0 : Math.min(c.inThr, 0.4);
-          const used = c.dist - c.fuelD; if (used > 300) c.fuelPm = ((c.fuelF != null ? c.fuelF : 1) - c.fuel) / used;   // (fuelF: what a stop filled it up to, when not to the brim: the player's choice)
+          const used = c.dist - c.fuelD; if (used > T.len) c.fuelPm = ((c.fuelF != null ? c.fuelF : 1) - c.fuel) / used;   // (its own burn once it has done a lap on the tank: the first metres, away from the grid flat out or out of the pit lane, take more a metre than a lap; fuelF: what a stop filled it up to, when not to the brim: the player's choice)
         }
         if (c.pitState === 'repair') { c.inThr = 0; c.inBrk = 0; c.inSteer = 0; c.inHand = 0; }   // on the jacks: the mechanics are working (held in place below; no brake, so the gearbox stays in first)
         // steering smoothing
@@ -6548,9 +6575,9 @@ const Core = (function () {
     // in that zone (from the second lap on, not in the pit lane): open from the activation line (c.drs = zone + 1, less air drag, see Car)
     // to the end of the zone, closed at once when the driver brakes. c.drsA: the zones it may open in (bits); the player's c.drsEv 'open'
     // for the HUD. (These fields appear only on a circuit with DRS, so every other circuit's race state stays as it was.)
-    // the slipstream (opts.slip): a car at speed in the wake of another (3-40 m behind it along the road, within 2.4 m of its line; not in the
-    // pit lane, not in the air) gets less air drag: c.tow 0..1, the closer and the straighter behind it the more (the drag down by up to
-    // TOW_DRAG, see Car). It carries a car up to the one ahead on a straight, and past it when it pulls out (the AI does, see aiControl).
+    // the slipstream (opts.slip): a car at speed in the wake of another (3-TOW_RNG m behind it along the road, within TOW_LAT m of its line;
+    // not in the pit lane, not in the air) gets less air drag: c.tow 0..1, the closer and the straighter behind it the more (the drag down by
+    // up to TOW_DRAG, see Car), built up and died away over TOW_T s. It carries a car up to the one ahead on a straight, and past it when it pulls out (the AI does, see aiControl).
     // On a figure of eight a car on the other road (more than 3 m above or below) leaves no wake
     // ---- strategy and the team radio (opts.radio) ----
     // the race time a car first got to each 25 m of its race (not after its finish)
@@ -6798,24 +6825,25 @@ const Core = (function () {
       for (const [o, was] of S.at.m) { if (dnf(o)) continue; const now = o.pos < P.pos; if (was && !now) gain.push(o); else if (!was && now) lose.push(o); }
       S.out = -1; S.res = { d: gain.length - lose.length, pos0: S.at.pos, pos1: P.pos, gain, lose, t: this.time }; S.n++;
     }
-    _tow() {
+    _tow(dt) {   // (dt: the step; none, at once: the tests' look at the wake itself)
       const cars = this.cars, T = this.track, L = T.len, lv = T.cross.length > 0, racing = this.state === 'racing' || this.state === 'done';
-      // (a big field: the cars that can give a tow sorted by q.s, each car looks only 3-40 m ahead of it, over the line on a circuit)
+      // (a big field: the cars that can give a tow sorted by q.s, each car looks only 3-TOW_RNG m ahead of it, over the line on a circuit)
       let W = null;
       if (cars.length > BIG_FIELD && racing) { W = this._bpO().tw; W.length = 0; for (const o of cars) if (!o.inPit && o.x !== 1e5 && !(o.speed < 10)) W.push(o); W.sort((a, b) => a.q.s - b.q.s); }
-      const ST = this._lod && this._lod.on ? this._lod.st : null;
+      const ST = this._lod && this._lod.on ? this._lod.st : null, SD = ST ? this._lod.dt : null;
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci]; if (ST && !ST[ci]) continue;   // (LOD: a far car between its steps, its tow as it was)
         let f = 0;
         if (racing && !c.net && !c.inPit && !c.air && c.speed > 15) for (let k = 0, k0 = W ? distFromS(W, c.q.s + 2.5) : 0, nk = W ? W.length : cars.length; k < nk; k++) {
           let o;
-          if (W) { const j = k0 + k; if (j >= nk && T.open) break; o = W[j < nk ? j : j - nk]; if ((j < nk ? 0 : L) + o.q.s - c.q.s > 40.5) break; } else o = cars[k];
+          if (W) { const j = k0 + k; if (j >= nk && T.open) break; o = W[j < nk ? j : j - nk]; if ((j < nk ? 0 : L) + o.q.s - c.q.s > TOW_RNG + 0.5) break; } else o = cars[k];
           if (o === c || o.inPit || o.x === 1e5 || o.speed < 10) continue;
           let g = o.q.s - c.q.s; if (!T.open) g = ((g % L) + L) % L;
-          if (g < 3 || g > 40) continue;
-          const lat = Math.abs(o.q.d - c.q.d); if (lat > 2.4 || (lv && Math.abs((o.y || 0) - (c.y || 0)) > 3)) continue;
-          f = Math.max(f, (1 - (g - 3) / 37) * (1 - 0.6 * lat / 2.4));
+          if (g < 3 || g > TOW_RNG) continue;
+          const lat = Math.abs(o.q.d - c.q.d); if (lat > TOW_LAT || (lv && Math.abs((o.y || 0) - (c.y || 0)) > 3)) continue;
+          f = Math.max(f, (1 - (g - 3) / (TOW_RNG - 3)) * (1 - 0.6 * lat / TOW_LAT));
         }
+        if (dt != null) { f = (c.tow || 0) + (f - (c.tow || 0)) * Math.min(1, (SD ? SD[ci] : dt) / TOW_T); if (f < 1e-4) f = 0; }   // (built up and died away over TOW_T s)
         c.tow = f;
       }
     }
@@ -7326,7 +7354,7 @@ const Core = (function () {
   // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
   // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
   // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
-  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police' };
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov' };   // (elim, lov: the novelties' modes, js/zabava/)
   const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
@@ -7335,7 +7363,7 @@ const Core = (function () {
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
-      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']);
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is)
       if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)

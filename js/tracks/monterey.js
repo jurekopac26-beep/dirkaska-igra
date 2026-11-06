@@ -32,7 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Monterey',
     grassNat: 1,
     zivali: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost'] },
-    id: 'monterey', name: 'Monterey, ZDA', theme: 'monterey', laps: 4, halfWidth: 6.25,
+    id: 'monterey', test: true, name: 'Monterey, ZDA', theme: 'monterey', laps: 4, halfWidth: 6.25,
     desc: 'Dirkališče v suhih hribih nad Montereyjem v Kaliforniji, v pravem merilu (3,6 km, 11 ovinkov, v nasprotni smeri urinega kazalca): slepi vrh v 1. ovinku, dolga lasnica, ravnice ob jezercu, vzpon po hribu do vrha in strm spust skozi spiralo levo-desno v 8. ovinku. Zlate trave, hrasti, tribune na brežinah in kampi. Podatki: © OpenStreetMap (ODbL), USGS 3DEP, ESA WorldCover.',
     en: { name: 'Monterey, USA', desc: 'A circuit in the dry hills above Monterey in California, at full scale (3.6 km, 11 turns, anticlockwise): the blind crest of Turn 1, the long hairpin, the flat infield by the little lake, the climb to the top of the hill and the steep plunge through the left-right spiral of Turn 8. Golden grass, oaks, grandstands on the banks and campers. Data: © OpenStreetMap (ODbL), USGS 3DEP, ESA WorldCover.' },
     start: [0, 0], runoff: 1.1, inner: 4.5, side: 4.5, gradeForce: true, elevSmooth: 10, realKm: 3.602,
@@ -59,7 +59,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // runs down the inside of Turns 1 and 2 and joins at the exit of Turn 2; the hairpins are too tight for the game's lane (an offset from the
     // centre line), so here the lane leaves at the exit of Turn 11 and joins before Turn 2 (an approximation, as at Montréal)
     pit: [-13.65, -262, 392, -45, 70],
-    pitLanes: [15, 15],   // the way in right after Turn 11, the way out just before Turn 2: no room for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-110, 10],            // the first and the last of the 13 crews' boxes (10 m apart, the player's at -45 among them: Track.crewBoxes), in front of the teams' canopies
     ga: [[330,470,1],[560,720,-1],[1420,1540,1],[1640,1880,-1],[2050,2330,1],[2400,2480,1],[2520,2640,-1],[2660,2820,1],[2880,3060,-1]],   // the crowds on the banks
     sectors: [1250,2400],

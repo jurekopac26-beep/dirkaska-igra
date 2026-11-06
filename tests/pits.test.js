@@ -119,11 +119,11 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
     out.map(x => `${x.id} ${x.inLane == null ? '-' : x.inLane.toFixed(1)} m in, ${Math.round(x.accel * 100)} % in the lane out${x.back ? '' : ' NOT BACK'}${x.wall ? ' WALL ' + x.wall : ''}`).join(', '));
 }
 
-// 3. a long race with fuel and tyres (Toskana, Rio and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
+// 3. a long race with fuel and tyres (Toskana, Spa and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
 // own box on the apron parked straight; on the pit road nobody touches anybody and nobody is damaged, the ghosts keep out of each other; everybody to
 // the line, no ghost left
 const ov = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, ch = Math.cos(a.h), sh = Math.sin(a.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch; return Math.abs(lx) < (a.m.len + b.m.len) * 0.5 - 0.3 && Math.abs(lz) < (a.m.wid + b.m.wid) * 0.5 - 0.2; };   // (two cars in each other)
-for (const [tid, laps, sd] of [['toskana', 6, 7], ['rio', 5, 2], ['toronto', 11, 5]]) {
+for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['toronto', 11, 5]]) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid)), orig = Math.random; Math.random = seeded(7);
   try {
     // (every car off the line at once, as before the start's reaction, Core LAUNCH: the reactions reshuffle the field and with it who meets
@@ -136,7 +136,10 @@ for (const [tid, laps, sd] of [['toskana', 6, 7], ['rio', 5, 2], ['toronto', 11,
     // With the knocks of the versions (Trki med avti, kCollide) again: of Toskana's seeds 1-70 4, 14, 16, 58, 63 and 65 pass (the others a box at 4.5-4.7° or two
     // ghosts in each other a little longer), so Toskana 4; Rio 2 and Toronto 5 still pass. With the rivals among themselves losing half the grip a
     // knock costs (KV glR) and the grip back sooner (glT): of Toskana's seeds 1-31 (4 aside) 7, 17, 20, 24 and 31 pass, so Toskana 7; with the lanes of junction B (pitLanes) and the follow rule gT also for a ghost off the lane onto the apron on its way into another box
-    // (aiDrive, apronBound): Rio 2 and Toronto 5 still pass
+    // (aiDrive, apronBound): Toronto 5 still passes (Rio, which passed with 2, is a test track since 5. 11. 2026, see below)
+    // Rio de Janeiro became a test track on 5. 11. 2026 (the user: of Brazil only Rio do Rastro stays; CLAUDE.md »Testne proge«), so Spa, its lane
+    // on the right as Rio's, runs here instead: 4 laps (28 km, every car in for fuel); of its seeds 1-8 all but 5 pass (5: two ghosts 2.1 s in each
+    // other), so Spa 4
     const r = new C.Race(T, { numAI: 12, playerGrid: 13, laps, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: sd, difficulty: 1, damage: 2, tyres: true, fuel: true, launch: false }); r.start();
     const P = r.player; let t = 0, k = 0, hits = 0, dmg = 0, stops = 0, ghost = 0, wasHit = 0, inBay = 0, ovT = 0, ovMax = 0, yMax = 0;
     const was = new Map(), dm = new Map(), run = new Map();

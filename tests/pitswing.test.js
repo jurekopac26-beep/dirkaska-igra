@@ -88,7 +88,7 @@ const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : String(x));
 // references' digest: tests/lib/sim.js stateLine) without it
 {
   const run = (id, o, sec) => { const orig = Math.random; Math.random = seeded(3); try { const r = new C.Race(track(id), Object.assign({ phys: 'cs', seed: 3, assist: 2 }, o)); r.start(); for (let t = 0; t < sec; t += DT) { if (r.player) C.aiControl(r.player, r, DT); r.step(DT); } return r; } finally { Math.random = orig; } };
-  const demo = run('rbring', { numAI: 3, noPlayer: true, laps: 2 }, 20), tt = run('pikes', { numAI: 0, playerGrid: 1, laps: 1 }, 5), road = run('vrsic', { numAI: 2, playerGrid: 3, laps: 1 }, 10), on = run('rbring', { numAI: 3, playerGrid: 2, laps: 2 }, 20);
+  const demo = run('rbring', { numAI: 3, noPlayer: true, laps: 2 }, 20), tt = run('pikes', { numAI: 0, playerGrid: 1, laps: 1 }, 5), road = run('caracoles', { numAI: 2, playerGrid: 3, laps: 1 }, 10), on = run('rbring', { numAI: 3, playerGrid: 2, laps: 2 }, 20);
   check('none without the player, in a time trial, on a track without pits; in a race on one with pits kept out of the race\'s plain fields',
     !demo.psw && !tt.psw && !road.psw && !!on.psw && !Object.keys(on).includes('psw') && on.psw.n === 0, JSON.stringify({ demo: !!demo.psw, tt: !!tt.psw, road: !!road.psw, on: !!on.psw, keys: Object.keys(on).includes('psw') }));
 }
