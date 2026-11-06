@@ -34,7 +34,7 @@ try {
     }, id));
   }
   const bad = res.filter(r => r.none || r.boxes !== r.nB || r.nB < (r.id === 'townsville' ? 10 : 13) || r.n !== 1 || !r.add || r.cast || r.k !== 1 || r.lamps !== r.nB * (r.kind === 'bulb' ? 3 : 2) || r.quads < 2 * r.nB);
-  T.check('at night on all 12 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
+  T.check('at night on all 11 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
     (bad.length ? 'bad: ' + JSON.stringify(bad) + ' ' : '') + res.map(r => `${r.id} ${r.kind} ${r.quads}q ${r.lamps}l`).join(', '));
   const side = res.filter(r => !r.none && (r.wMin < -7 || r.wMax > 23 || r.hMin < -0.3 || r.hMax > 6));
   T.check('the lights on the garages\' side of the lane only (nothing past the lane towards the circuit), on the floor and the garages (up to 6 m)', !side.length,
