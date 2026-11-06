@@ -11,7 +11,8 @@
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
                   w its half width; part: the lid's; face: [x, y0, y1], the lid on the tail's upright panel instead of the loft's top (its x, from
-                  y0 up to y1; x0 then unused, x1 the window's foot: RAKETA's, whose loft ends in an upright cap)
+                  y0 up to y1; x0 then unused, x1 the window's foot: RAKETA's, whose loft ends in an upright cap); cells: a curved lid's pieces
+                  along it, per unit of t (none: one; JASTREB's deck, 6: no chord under its crown)
      vlecne_kljuke: { f: [x, y, z], r: [x, y, z] }   the tow points on the bumpers' faces (front: bumperF, rear: bumperR); underLamps: true, the front
        arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow;
        underPod: true, the front point behind a lamp pod over the bumper's face (relijske_luci 13-16, RAKETA's): with one fitted, none in front;
@@ -161,7 +162,9 @@
     const pt = (t, z, lift) => { const k = lift || 0.004; if (F && t <= 1) return [F[0] - k, F[1] + (F[2] - F[1]) * t, z];
       const x = xs(t), nn = nrm(t); return [x + nn[0] * k, K.topY(x, z) + nn[1] * k, z]; };
     // a patch of the top (t0..t1, z0..z1), in pieces across where the crown bends; out: the side it faces (up the normal)
-    const patch = (t0, t1, z0, z1, col, lift) => { const zs = [z0]; for (const z of [-0.38 * W, 0.38 * W]) if (z > z0 + 0.01 && z < z1 - 0.01) zs.push(z); zs.push(z1);
+    const patch = (t0, t1, z0, z1, col, lift) => { const nc = m.cells ? Math.max(1, Math.round((t1 - t0) * m.cells)) : 1;   // (cells: a curved lid in pieces along it)
+      if (nc > 1) { for (let j = 0; j < nc; j++) patch1(t0 + (t1 - t0) * j / nc, t0 + (t1 - t0) * (j + 1) / nc, z0, z1, col, lift); return; } patch1(t0, t1, z0, z1, col, lift); };
+    const patch1 = (t0, t1, z0, z1, col, lift) => { const zs = [z0]; for (const z of [-0.38 * W, 0.38 * W]) if (z > z0 + 0.01 && z < z1 - 0.01) zs.push(z); zs.push(z1);
       for (let i = 0; i < zs.length - 1; i++) { const a = pt(t0, zs[i], lift), b = pt(t0, zs[i + 1], lift), c = pt(t1, zs[i + 1], lift), d = pt(t1, zs[i], lift), nn = nrm((t0 + t1) / 2);
         const q = [a, b, c, d], u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]], cx = u[1] * v[2] - u[2] * v[1], cy = u[2] * v[0] - u[0] * v[2];
         K.face(cx * nn[0] + cy * nn[1] < 0 ? q.reverse() : q, typeof col === 'function' ? col(i) : col); } };
