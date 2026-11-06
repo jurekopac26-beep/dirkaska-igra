@@ -24,6 +24,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Nove proge (zadnje, odločitev uporabnika 4. 11.): gorske skupina A (Medeu, brez Aulija), Furka 2A; brez izletne cone se ne začnejo (odločitev uporabnika 5. 11., `docs/proge-po-drzavah.md`, razdelek »Izletna cona«): Zavite proge korak 1 Ouro Preto, Kapelmuur, Stelvio, Diriyah, Puerto Madero, Hong Kong | 3 | po vsem drugem delu, pred pripravo na Google Play |
 | Dež in sneg: bolj drsi, zavore po oprijemu (odločitev uporabnika 5. 11., izbira 3; načrt `docs/dez-sneg.md`); fizika za vse proge, svoja seja | 1 | ko se izprazni vrsta (znak »VSE SEJE«) (#202 je zaprt 5. 11. po odločitvi uporabnika: nova fizika in trki ostanejo, kot so na `main`; na #202 ne čaka več) |
 | Videz avta povsod: barva, izvedba laka, črte z barvo, nalepke, senčni pas, svoja številka in platišča v vsaki dirki, v posnetku in pri prijateljih (novost, ki jo je uporabnik izbral 5. 11.; načrt `docs/novosti-e.md`) | 3 | pred novimi progami, po potrditvi načrta (vprašanji `videz-1` in `videz-2` na strani Odločitve 3) in po #297 (garaža, račun 1) |
+| Avti na raven KOLIBRIJA: mesta za vse dele iz garaže na 32 avtih poleg KOLIBRIJA, serijski avti enaki, strešni prtljažnik na MIŠKI in SKAKAČU (odločitev uporabnika 6. 11., tabla #382; načrt `docs/avti-kolibri.md`, zbirna veja `avti-kolibri/zbirna`, osnutek #423). biketraveler: Seja 1 session_01UuPU9Ah6jMAt55UHLu6o45 mali, klasika, teren; Seja 2 session_01UuPU9BzYzRY2FoegAHepub reli, električni, športni, posebni. jure.kopac26: dirkalni, super, tovornjaki (TITAN po #304) | biketraveler, jure.kopac26 | biketraveler v delu od 6. 11.; jure.kopac26 od ned. 8. 11.; zbirni PR v vrsto za #297, #304, #322, #361 in #396 (spori v `docs/avti-kolibri.md`) |
 
 ## Vrsta (stanje 4. 11. 2026)
 
@@ -68,5 +69,6 @@ Usklajevanje med računi (5. 11. 2026, da ne delamo dvojno): pred začetkom teme
 Računi so oštevilčeni po strani Odločitve vsakega računa (račun 1 = stran Odločitve 1 …).
 - Račun 1: tema redčenje gozda na pravih progah, prestavljeno za kasneje (uporabnik 5. 11.).
 - Račun 1: #390 boksi 84, 104, 105 in 107 (končan, osnutek proti veji #284 `boksi/vse-na-main`); ko je #284 na `main`, ga seja BOKSI prestavi na `main` in vpiše v vrsto za #284 (odločitev uporabnika `boksi-pr`, 5. 11.).
+- biketraveler: #423 avti na raven KOLIBRIJA (zbirna veja `avti-kolibri/zbirna`, osnutek; Seja 1 in Seja 2, vrstica v Načrtovano); jure.kopac26 se pridruži od ned. 8. 11.
 
 Vsi so osnutki (4. 11. 2026, pravilo »Osnutek do vrste«). Ko je kateri od njih pripravljen za `main`, se vpiše v vrsto zgoraj in ostane osnutek, dokler ne pride med prva dva.
