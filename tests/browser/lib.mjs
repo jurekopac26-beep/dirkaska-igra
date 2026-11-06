@@ -77,9 +77,12 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer;
   // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top)
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2 }, settings));
-  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
+  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself; tdgp-tips:
+  // the hints of the first pit stops all seen, so a test's stop shows only the stop's own toast, as on a phone that has stopped before;
+  // opts.tips: none seen, as on a new phone (tests/browser/pits.test.mjs). A new hint's id goes in here too)
   // (tdgp-nostartcam: no camera before the start, the race's chase view and its 1.3 s intro as the tests were written for; opts.startCam: on)
-  await page.addInitScript(([raw, adapt, sc]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive, !!opts.startCam]);
+  await page.addInitScript(([raw, adapt, sc, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
+    if (!tips) localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1 })); }, [raw, !!opts.adaptive, !!opts.startCam, !!opts.tips]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
@@ -108,13 +111,15 @@ export function startTrack(page, id, mode) {
   }, [id, mode]);
 }
 
-// the list of tracks shown in the track menu
-export function trackIds(page) {
-  return page.evaluate(async () => {
+// the list of tracks shown in the track menu, without the test tracks (test: true: frozen until they are deleted before Google Play,
+// nothing is checked on them: CLAUDE.md »Testne proge«); all: every card of the menu, the test tracks too
+export function trackIds(page, all = false) {
+  return page.evaluate(async (all) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(350);
-    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))];
-  });
+    const test = new Set(Core.TRACKS.filter(d => d.test).map(d => d.id));
+    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))].filter(id => all || !test.has(id));
+  }, all);
 }
 
 // run the race for `sec` seconds of game time on autopilot, rendering a frame after every simulated second

@@ -95,6 +95,7 @@
   }
 
   // ================================================================ auspuh: the exhaust's tips under the tail (and what of the system shows)
+  DELI.twinExhaust = (n) => [3, 4, 10, 11, 13, 14, 16].includes(n);   // (the exhausts with a tip on each side: vlecne_kljuke's rear one in from them)
   function auspuh(K, n, m) {
     const X = m.x, Y = m.y, Z = m.z, r0 = m.r, L = m.len, q = seg(K, 14);
     K.part(m.part || 'body', () => {
@@ -199,10 +200,12 @@
   }
 
   // ================================================================ vlecne_kljuke: the tow points, front and / or rear
-  function vlecneKljuke(K, n, m) {
-    const q = seg(K, 10);
+  function vlecneKljuke(K, n, m, M) {
+    const q = seg(K, 10), ma = M && M.def.mounts && M.def.mounts.auspuh;
+    // the rear one in from a twin exhaust's tip on its side (between it and the middle: auspuh's mount z less 0.17)
+    const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
     // at a tow point (end: 1 the front, -1 the rear; dir: the way out of the face), in the bumper's part
-    const at = (end, fn) => { const p = end > 0 ? m.f : m.r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
+    const at = (end, fn) => { const p = end > 0 ? m.f : r; if (p) K.part(end > 0 ? 'bumperF' : 'bumperR', () => fn(p[0], p[1], p[2], end)); };
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
     const strap = (x, y, z, d, w, col) => { K.box(x + d * 0.009, y - 0.1, z, 0.012, 0.12, w, 0, col, col);
       K.rect(x + d * 0.0156, y - 0.005, z, w + 0.004, 0.012, WHT, { dir: d > 0 ? 'x' : '-x' }); K.box(x + d * 0.004, y - 0.012, z, 0.012, 0.03, w + 0.02, 0, BLK); };
@@ -247,10 +250,11 @@
   }
 
   // ================================================================ lovilci_blata: the flaps behind the wheels (the rear ones; 11 .. 16 all four)
-  function lovilciBlata(K, n, m) {
-    const all = n >= 11, P = K.paint, S = K.strp;
+  function lovilciBlata(K, n, m, M) {
+    const all = n >= 11, P = K.paint, S = K.strp, ma = M && M.def.mounts && M.def.mounts.aero;
+    const xF = DELI.skirts && DELI.skirts(K.fitted.aero) && ma && ma.sill ? Math.max(m.x[0], ma.sill[1] + 0.02) : m.x[0];   // (the front ones ahead of the aero kit's skirts)
     K.part(m.part || 'body', () => {
-      for (const [ax, x] of [[0, m.x[0]], [1, m.x[1]]]) { if (ax === 0 && !all) continue;
+      for (const [ax, x] of [[0, xF], [1, m.x[1]]]) { if (ax === 0 && !all) continue;
         for (const sd of [-1, 1]) {
           const z0 = m.z[0], z1 = m.z[1], top = m.y[0], foot = m.y[1], zc = sd * (z0 + z1) / 2, wz = z1 - z0, F = x - 0.006, o = { dir: '-x' };
           // the flap: a slab th thick, its foot at f (the rally ones lower), across wd; a band on its back (v0..v1 up from its foot)

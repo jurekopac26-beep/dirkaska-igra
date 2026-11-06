@@ -11,6 +11,10 @@ const T = checker('repair');
 const srv = await serve();
 const browser = await launch();
 const US = [0, 0.1, 0.3, 0.5, 0.65, 0.8, 0.95];
+// (the steps' rows go out as text, each made into text as soon as it is made: once on GitHub (4. 11. 2026, KAZE RS) the rows of u 0, 0.1,
+// 0.65 and 0.8 came back with the last row's fractional numbers (u 0.95, d, char, scr) and their own whole ones (the panels, the cracks,
+// the meshes of their u): the objects changed after they were made, by nothing in the test or the game (nothing else holds them), so
+// below the page's code (the browser's engine or the transfer of the result))
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2 }, undefined, { seed: 777 });
   const ru = await page.evaluate(() => [Core.repairU({ pitState: 'stop', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 1, pitDur: 2 }), Core.repairU({ pitState: 'repair', pitT: 3, pitDur: 2 }), Core.repairU({ pitState: 'done', pitT: 2, pitDur: 2 })]);
@@ -35,13 +39,13 @@ try {
       const wreck = { off: off(v0), cracks: v0.crack.filter(Boolean).length, lamps: v0.lightBroken.reduce((s, q) => s + q, 0), wheelsOff: v0.wheelOff.reduce((s, q) => s + q, 0), char: v0.charU ? v0.charU.value.w : 0, meshes: meshes(v0), dmg: P.dmg };
       P.pitState = 'repair'; P.pitDur = 4;
       const steps = [];
-      for (const u of US) { P.pitT = u * P.pitDur; fr(); steps.push(st(u)); }
+      for (const u of US) { P.pitT = u * P.pitDur; fr(); steps.push(JSON.stringify(st(u))); }   // (each row taken as text when it is made: see below)
       g.race.repairCar(P); P.pitState = 'done'; fr();
       const v1 = Render.viewOf(P); P.pitState = null; fr();
       const after = { fresh: v1 !== v0, rep: !!v1.rep, off: off(v1), cracks: v1.crack.filter(Boolean).length, lamps: v1.lightBroken.reduce((s, q) => s + q, 0), wheelsOff: v1.wheelOff.reduce((s, q) => s + q, 0), meshes: meshes(v1),
         ownGone: !v0.grp.parent };
       g.resume();
-      return { kit, wreck, steps, after };
+      return { kit, wreck, steps: steps.map(q => JSON.parse(q)), after };
     }, US);
     await page.evaluate((s) => { window.__game.S.car = s; }, S0);
     const S = r.steps, at = (u) => S.find(q => q.u === u), name = id === 'raketa' ? 'RAKETA' : 'KAZE RS';
@@ -78,10 +82,10 @@ try {
       const nan = () => { const a = Render.viewOf(P).body.geometry.attributes; let n = 0; for (const k of ['position', 'normal']) for (const q of a[k].array) if (!Number.isFinite(q)) n++; return n; };
       const pre = { id: P.m.id, xOn: !!I.xOn, xd: I.xd, xt: !!I.xt, cut: !!v0.xtCut, overlay: !!(v0.xtO && v0.xtO.mesh.visible), nan: nan() };
       P.pitState = 'repair'; P.pitDur = 4; const steps = [];
-      for (const u of US) { P.pitT = u * P.pitDur; fr(); const v = Render.viewOf(P); steps.push({ u, same: v === v0, rep: !!v.rep, P: !!(v.rep && v.rep.P), nan: nan(), cut: !!v.xtCut, overlay: !!(v.xtO && v.xtO.mesh.visible) }); }
+      for (const u of US) { P.pitT = u * P.pitDur; fr(); const v = Render.viewOf(P); steps.push(JSON.stringify({ u, same: v === v0, rep: !!v.rep, P: !!(v.rep && v.rep.P), nan: nan(), cut: !!v.xtCut, overlay: !!(v.xtO && v.xtO.mesh.visible) })); }
       g.race.repairCar(P); P.pitState = 'done'; fr(); P.pitState = null; fr();
       g.resume();
-      return { pre, steps, after: nan() };
+      return { pre, steps: steps.map(q => JSON.parse(q)), after: nan() };
     }, US);
     await ctx.close();
     console.log(`KOLIBRI (nov način): ${JSON.stringify(x.pre)}`); for (const q of x.steps) console.log(`  u ${q.u}: ${JSON.stringify(q)}`);
