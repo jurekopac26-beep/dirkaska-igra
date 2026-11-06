@@ -357,10 +357,10 @@
   "jsMs": 2.82
  },
  "killar": {
-  "calls": 145,
-  "maxCalls": 202,
-  "kverts": 308,
-  "maxKverts": 352,
-  "jsMs": 2.56
+  "calls": 151,
+  "maxCalls": 190,
+  "kverts": 304,
+  "maxKverts": 420,
+  "jsMs": 4.65
  }
 }
