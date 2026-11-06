@@ -190,6 +190,7 @@ window.LJV = {
       'float lvBy = clamp(lvA * 0.35, -0.5, 0.5) * lvSee * (1.0 - crSit);',   // the body turned a little to the car, the shoulders more, the head the rest
       'float lvTy = clamp((lvA - lvBy) * 0.45, -0.45, 0.45) * lvSee + 0.12 * lvIdle * (1.0 - lvSee);',
       'float lvHy = mix(lvIdle, clamp(lvA - lvBy - lvTy, -1.05, 1.05), lvSee);',
+      'crMir = dot(cameraPosition - crW, sin(lvBy + lvTy) * lvRt + cos(lvBy + lvTy) * crFw) < 0.0 ? 1.0 : 0.0;',   // (its flag faces the camera as it turns, as the game does)
       'float lvW = clamp(1.7 * sin(uTime * (0.42 + 0.3 * lvH) + lvH2 * 6.2832), -1.0, 1.0); lvW = lvW * (1.5 - 0.5 * lvW * lvW);',   // its weight, from leg to leg
       'float lvHx = 0.065 * lvW * (1.0 - crSit);',
       'float lvRoll = -lvHx * 1.5 + 0.02 * sin(uTime * (0.8 + 0.4 * lvH3) + lvH * 6.2832);',
