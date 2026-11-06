@@ -11,7 +11,7 @@ Izbira uporabnika 6. 11. 2026 (naloga koordinacije VSE SEJE 2, partyslo, session
 | `kuna` | KUNA S | mali | FF | `i4`, turbo | 4,28 × 1,86 × 1,42 m, 2,60 m | vroči hečbek s prednjim pogonom: bela streha, temen pokrov s črtama, visoko krilo, okrogli zadnji luči, zlata platišča, vlečni trak |
 | `merjasec` | MERJASEC V8 | sportni | FR | `v8` | 4,95 × 2,04 × 1,38 m, 2,90 m | limuzina z V8 za drift: nizka, globoka platišča, kratek rep, štirje izpuhi |
 | `tur` | TUR 6x6 | teren | AWD, vseh 6 koles | `v8` | 6,00 × 2,20 × 2,15 m, osi +2,00 / −1,05 / −2,30 m | pickup s tremi osmi: odbijač, snorkel, svetlobni pas, lok in rezervno kolo v kesonu |
-| `vran` | VRAN 01 | posebni | FR | `v8s` | 4,20 × 2,00 m | izvenserijski unikat (hot rod): kompresor nad motorjem, kolesa zunaj karoserije s kromiranimi pokrovi, izpušne cevi ob boku. **Samo slika; koda šele po potrditvi uporabnika** (vprašanje `novi-avti-2-unikat`) |
+| `vran` | VRAN 01 | posebni | AWD | `v8` | 4,12 × 2,12 × 1,88 m, 2,45 m | izvenserijski odprt terenec 4x4: varnostna kletka s svetlobnim pasom nad pokončnim vetrobranskim steklom, zajemalka na ravnem pokrovu, ozka maska med vitkimi lučmi, velike gume na bronastih platiščih pod širokimi črnimi blatniki, ploščat odbijač z vitlom in rdečimi okovi, rezervno kolo na zadnjih vratih, polvrata, zadnji del pod platneno prevleko. Odgovor uporabnika na `novi-avti-2-unikat` (6. 11. 2026): »Vseh 5. Edino vran zamenjaj avto za 4x4 džipa izvenserijskega.« (namesto prvotnega hot roda) |
 
 Številke (moč, masa, cena, izmerjene vrednosti) so v razdelku Stanje, ko je avto narejen.
 
@@ -34,9 +34,9 @@ Cilj: vsak novi avto na Jezeru blizu vrha (okoli 1900–2100), na Spa in Bathurs
 
 ## Postopek
 
-1. Prototipi videza (`tools/novi-avti-2/prototipi.js`, slike `node tools/novi-avti-2/slike.mjs` → `test-results/novi-avti-2/`): kamera za avtom na Bathurstu s povečanim avtom, stranski in zadnji pogled. Vprašanje `novi-avti-2-videz` (vsi tako / popravki) in `novi-avti-2-unikat` (VRAN 01 v igro ali ne) na strani Odločitve partyslo; delo teče naprej s priporočeno možnostjo, popravki pridejo pozneje.
+1. Prototipi videza (začasna datoteka, izbrisana, ko so bili avti v igri), slike `node tools/novi-avti-2/slike.mjs [id …]` → `test-results/novi-avti-2/` (zdaj pravi avti): kamera za avtom na Bathurstu s povečanim avtom, stranski in zadnji pogled. Vprašanje `novi-avti-2-videz` (vsi tako / popravki) in `novi-avti-2-unikat` (VRAN 01 v igro ali ne) na strani Odločitve partyslo; delo teče naprej s priporočeno možnostjo, popravki pridejo pozneje.
 2. Avti eden za drugim, vsak svoj commit: definicija, seznami (`index.html`, `garaza.html`, `ROSTER` v `tests/fleet.test.js`, opis v `js/lang.js`, števci kategorij v brskalniških testih, `docs/igra.md`, `README.md`), meritve v mejah kategorije, drift.
-3. Na koncu: `tools/novi-avti-2/` se izbriše (prototipi so v avtih), vrstica na koncu `docs/vrsta.md`, sporočilo VSE SEJE 2 z drift točkami po avtih.
+3. Na koncu: prototipi se izbrišejo (so v avtih; v `tools/novi-avti-2/` ostaneta orodje za drift točke `drift.js` in slike `slike.mjs`), vrstica na koncu `docs/vrsta.md`, sporočilo VSE SEJE 2 z drift točkami po avtih.
 
 ## Spori z #361 (`novi-avti/vozila`, ni na `main`)
 
@@ -51,4 +51,4 @@ Obe veji dodajata vozila v iste sezname: `index.html`, `garaza.html`, `js/lang.j
 | KUNA S | narejen (`js/cars/kuna.js`) | 255 kW / 1190 kg (214 W/kg) | 3,28 s / 228 km/h / 2,23 g / 23,9 m | 2251 / 461 / 716 |
 | MERJASEC V8 | narejen (`js/cars/merjasec.js`) | 470 kW / 1680 kg (280 W/kg) | 3,25 s / 243 km/h / 2,20 g / 22,8 m | 2208 / 502 / 858 |
 | TUR 6x6 | narejen (`js/cars/tur.js`) | 640 kW / 3300 kg (194 W/kg) | 3,47 s / 188 km/h / 2,02 g / 27,1 m | 1985 / 489 / 717 |
-| VRAN 01 | samo slika, čaka potrditev | | | |
+| VRAN 01 | narejen (`js/cars/vran.js`), terenec 4x4 namesto hot roda | 410 kW / 1750 kg (234 W/kg) | 2,92 s / 207 km/h / 2,14 g / 24,7 m | 2288 / 560 / 765 |
