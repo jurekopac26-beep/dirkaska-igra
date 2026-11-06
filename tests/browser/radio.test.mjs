@@ -92,6 +92,7 @@ try {
   // gives; the stop made as told: after it the place
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="fuel"] button[data-v="1"]').click(); document.querySelector('[data-set="length"] button[data-v="long"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'toskana');
+  await page.evaluate(() => { window.__game.race.player.kt = null; });   // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt, on a circuit worn four times as fast: the stop for the fuel checked on a car without them, as in a race with a friend, as tests/browser/hud.test.mjs does)
   await setUp();
   // (the first lap's burn depends on the traffic in it: a lap of 56 s burns 0.30 of the tank, one of 61 s or more 0.34, and from 0.34 the plan
   // has no window left at the second lap's line, the engineer calls the stop at once; the weaker slipstream of 4. 11. 2026 made such a lap
