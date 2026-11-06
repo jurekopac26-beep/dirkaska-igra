@@ -11,6 +11,7 @@
   "monaco",
   "monterey",
   "palomar",
+  "rio",
   "riviera",
   "toskana",
   "uncompahgre"
@@ -248,7 +249,14 @@
   "tests/bigsur.test.js": "4068fc7d414012dd",
   "tests/monterey.test.js": "138fd6ad199a9504",
   "tests/palomar.test.js": "96b3fa88730f8c2a",
-  "tests/uncompahgre.test.js": "a1e989ab82919ac6"
+  "tests/uncompahgre.test.js": "a1e989ab82919ac6",
+  "assets/tracks/rio-rain.webp": "dfe1cbe53fad171d",
+  "assets/tracks/rio.webp": "d1b40b2212910718",
+  "docs/proge/rio.md": "d844e8cdd75182bc",
+  "js/tracks/rio.js": "c77e45db790ffa2f",
+  "js/world-rio.js": "07e265f0f1cb919e",
+  "tests/browser/rio.test.mjs": "f83193ae2e3cf134",
+  "tests/rio.test.js": "83d4197a56a332e9"
  },
  "dovoljenja": [
   {
@@ -315,6 +323,16 @@
    "datum": "2026-11-06",
    "proga": "uncompahgre",
    "razlog": "ponovno 6. 11. 2026 ob spoju maina v #355: razdelitev prog #319 je pred zamrznitvijo vnesla nastavitve v datoteko proge in World.keep v graditelja (uporabnik 5. 11. 2026: proge ZDA v test, razen Pikes Peaka)"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "rio",
+   "razlog": "uporabnik 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro (rastro). Vse ostale brazilske proge prestavi v test.« Rio de Janeiro v test (PR #365), ena proga na državo"
+  },
+  {
+   "datum": "2026-11-05",
+   "proga": "rio",
+   "razlog": "uporabnik 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro (rastro). Vse ostale brazilske proge prestavi v test.« Rio de Janeiro v test (PR #365), ena proga na državo; znova po spoju main z #319 (js/world-rio.js)"
   }
  ]
 }

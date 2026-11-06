@@ -31,7 +31,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Riverside, ZDA](docs/proge/riverside.md)
 - [Longford, Avstralija](docs/proge/longford.md)
 - [Newcastle, Avstralija](docs/proge/newcastle.md)
-- [Rio de Janeiro, Brazilija](docs/proge/rio.md)
+- [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
 - [Toronto, Kanada](docs/proge/toronto.md)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
