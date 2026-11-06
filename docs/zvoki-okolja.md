@@ -37,7 +37,13 @@ Nabor je vprašanje `zvoki-okolja-nabor`; priporočenih je šest zvokov:
 | **Morje** | valovanje (šum, val vsakih 7–11 s, pršenje ob lomu) in galebi (klici v skupinah po 2–4) | proge ob morju (`def.sea` ali velika voda ob cesti) | vedno; galebi ne ponoči in ne v dežju |
 | **Žuželke** | črički (pulzi 4–5 kHz) zvečer in ponoči, škržati (brenčanje 5–7 kHz, valovi po 5–10 s) podnevi v toplih krajih | podnebje proge: zemljepisna širina in nadmorska višina (`GEO`), drevesa ali grmovje ob cesti | samo poleti; ne v dežju, ne na snegu |
 
-Možnost 3 vprašanja doda še živali ob progi (kravji zvonci na pašnikih, ovce; po živalih iz `World.life`, ki so res tam), mestno ozadje na uličnih progah (oddaljen promet, golobi) ter na dirkališčih razglas po zvočniku in vzklike ljudi v angleščini (posneti kratki stavki; glas po izbiri pri sovozniku, `docs/sovoznik.md`), ~5 h več.
+Možnost 3 vprašanja (izbrana 6. 11. 2026, narejena v koraku 6) doda še:
+
+| Zvok | Kako (sinteza) | Kje | Kdaj |
+|---|---|---|---|
+| **Krave in ovce** | kravji zvonci (pločevina: delni toni narazen, kratek zvok in udarec kembelja) v kratkih izbruhih, ko krava dvigne glavo, tu in tam mukanje; ovce blejajo | črede iz `World.life`, ki so res ob cesti (`o.lifeStats.at`: metri od štarta, stran, oddaljenost za ograjo): najbližja do 170 m; krave na Spa, Red Bull Ringu in Rio do Rastru, ovce ima samo Longford (na odločanju, brez zvokov okolja) | vedno; ne v varčevanju |
+| **Mesto** | oddaljen promet (nizko bobnenje in pas šuma, podlaga), golobi (gruljenje) 5–35 m od ceste | proge z mestom (`def.zivali.city`): Harju, Crystal Palace, Montréal, Marrakesh | promet vedno, ponoči tišje; golobi ne ponoči in ne v dežju |
+| **Razglas in vzkliki** | sinteza govora brskalnika v angleškem glasu, ki ni komentatorjev ali sovoznikov (razglas ženski, če ga brskalnik ima); splošna obvestila brez imen (ograje, prehodi, izgubljeni otroci, prva pomoč, v cilju zaključni stavek), vzkliki »Go on!«, »Come on!« … | krožne proge s tribunami (`o.crowdPts`): razglas ob tribunah (glasnost tribun nad 0,2), vzkliki ob glasnih (nad 0,45) | med dirko, razglas največ na ~75 s, vzklik na ~25 s; tiho (0,3 pri Tiho, 0,6 pri Glasneje, s hitrostjo do 40 % manj); samo, ko komentator molči že 3 s; ko komentator ali sovoznik začne, se stavek prekine (`js/comm.js` pokliče `SfxOkolje.hush()`); ne v načinu radia |
 
 **Govor v angleščini** (odločitev uporabnika 5. 11. 2026 ob 16.10: »Vse zvoke delaj v angleščini.«): šest priporočenih zvokov je brez govora. Kjer je v zvokih okolja govor (razglas po zvočniku, napovedovalec, vzkliki ljudi), je vedno v angleščini, tudi ko je igra v slovenščini, in brez imen resničnih oseb in podjetij (`CLAUDE.md`, Pravna varnost).
 
@@ -80,14 +86,16 @@ Cilj: telefon ni bolj obremenjen. Grafika se ne spremeni (nič klicev risanja, n
 - **Glavna nit**: na sličico en indeks v pasove; parametri se spremenijo največ 10-krat na sekundo in samo ob spremembi nad 1 %. Cilj ≤ 0,05 ms na sličico v povprečju.
 - **Varčevanje z baterijo** (Vklop ali ko Samodejno vklopi): samo podlage, brez posameznih ptic, zvonov in galebov, posodobitev 5-krat na sekundo. Zvok izklopljen ali Zvoki okolja Izklop: modul ne naredi ničesar (nobenega vozlišča, nobenega medpomnilnika).
 
-## Testi (`tests/browser/sound.test.mjs`)
+## Testi (`tests/browser/okolje.test.mjs`)
 
-Test se razširi (zagon `node tests/browser/sound.test.mjs`; `npm run test:related` ga izbere ob spremembi `js/sfx*.js`):
+Svoj test (zagon `node tests/browser/okolje.test.mjs`, ~10 min; `npm run test:related` ga izbere ob spremembi `js/sfx*.js`, `js/comm.js`, `js/world-zivali.js` ali `tools/zvoki-pasovi.mjs`):
 
-1. **Pasovi** vseh pravih prog (svet proge zgrajen kot v prvem delu testa): vsaka ima vsaj en zvok; Medvode vas in voda (Sava, jezero v Zbiljah); Ouninpohja gozd in vas; Katu-Jaryk veter zgoraj močnejši kot spodaj; Chapman's Peak morje; ulična proga (npr. Marrakesh) brez gozda in vasi; testne proge brez pasov; na Pikes Peaku en sam veter (njegovo ozračje nespremenjeno).
-2. **Dirki v Medvodah in na Ouninpohji** (avtopilot, zvok vklopljen, določeno seme): v Medvodah se ob Savi sliši voda in v vasi zazvoni (testni klic `Sfx.levels().okolje`); na Ouninpohji se v gozdu predvajajo ptice in podlaga gozda je nad 0.
-3. **Mešanje**: pri 160 km/h ≤ 50 % glasnosti stoječega avta; Izklop: 0 in nobenega vozlišča; Glasneje = 2 × Tiho; ponoči brez ptic (poleti črički); v dežju brez ptic in žuželk; pozimi brez žuželk.
-4. **Obremenitev**: ≤ 25 vozlišč okolja hkrati, medpomnilniki ≤ 1,5 MB, `Sfx.update` z okoljem v povprečju ≤ 0,05 ms dlje kot brez njega (600 sličic), izris 20 s v `OfflineAudioContext` z okoljem ≤ 15 % dlje kot brez njega.
+1. **Pasovi** vseh pravih prog (svet proge zgrajen kot v igri): vsaka ima vsaj en zvok; Medvode vas in voda (Sava, jezero v Zbiljah); Ouninpohja gozd in vas; Katu-Jaryk veter zgoraj močnejši kot spodaj; Chapman's Peak morje; Marrakesh brez gozda in vasi; testne proge brez pasov; Pikes Peak brez vetra okolja (njegovo ozračje nespremenjeno). Nabor 3: krave na Spa, Red Bull Ringu in Rio do Rastru, mesto na Harjuju, Crystal Palaceu, v Montréalu in Marrakeshu, razglas na dirkališčih (ne na Ouninpohji; Bathurst brez mesta).
+2. **Dirka v Medvodah** (avtopilot, zvok vklopljen): priprava glasov ≤ 1,5 MB v kosih; ob Savi se sliši reka, ob cerkvi zazvoni; pri 160 km/h ≤ 50 % glasnosti stoječega avta; ≤ 25 vozlišč; Glasneje = 2 × Tiho, Izklop: nič in nobenega vozlišča. Glasnost pod motorjem pri srednjih vrtljajih (`SfxOkolje.probe`): podlage 20–30 dB, ptica, galeb in zvon vsaj 15 dB.
+3. **Ozračje** (`Render.setAtmos`, `setRain`): ponoči brez ptic, s črički; v mraku z dežjem brez ptic in žuželk; pozimi brez žuželk.
+4. **Obremenitev**: glavna nit `SfxOkolje.step` ≤ 0,05 ms na sličico pri 60 sličicah na sekundo (do 600 sličic dirke); zvočna nit brskalnika (`AudioOutputDevice`, čas niti iz `/proc`, samo Linux) z okoljem ≤ 15 % več kot brez (4-krat izmenično brez in z okoljem po 4 s, avto stoji na štartu v Medvodah). Izmerjeno +3–10 %. Namesto izrisa v `OfflineAudioContext` iz načrta: ta je ob igri, ki riše, preveč nemiren, in okolje primerja z enim motorjem, ne z vsem zvokom igre (motorji tekmecev, navijači, kolesa, veter vožnje), ki ga zvočna nit res dela.
+5. **Ouninpohja** ptice in gozd; **Pikes Peak** brez vetra okolja, ptice pod gozdno mejo.
+6. **Nabor 3** (Spa brez tekmecev, avto stoji ob najglasnejši tribuni; sinteza govora brskalnika nadomeščena s testno, ki beleži stavke): razglas in vzkliki se slišijo, tiho (≤ 0,31) in v angleškem glasu, ki ni komentatorjev; nikoli med komentatorjem ali 3 s za njim; ko začne komentator, se naš stavek prekine. Krave (zvonci, mukanje) ob čredi pred avtom; Marrakesh oddaljen promet in golobi; glasnost kravjega zvonca, mukanja, blejanja, goloba in prometa pod motorjem (`probe`).
 
 Ostali povezani testi: `lang.test.js` (angleška vrstica), `perf.test.mjs` (nespremenjen), `tools/stamp.js --check` (nova skripta v `index.html`).
 
@@ -98,7 +106,9 @@ Ostali povezani testi: `lang.test.js` (angleška vrstica), `perf.test.mjs` (nesp
 - `js/world-zivali.js`: `World.woods(o)` izvožen in predpomnjen.
 - `index.html` (vrstica v Nastavitvah, skripta), `js/game.js` (`amb` v `DEF`, nastavitev), `js/lang.js`.
 - `js/tracks/<id>.js`: nič (vasi in cerkve so v `VAS` in `BELLS` v modulu).
+- `js/comm.js`: ena vrstica v `speakNow()`: pred vsakim stavkom komentatorja ali sovoznika pokliče `SfxOkolje.hush()` (razglas in vzkliki utihnejo).
 - `tests/browser/okolje.test.mjs` (novo; v `tests/run.js`), ne razširitev `sound.test.mjs`: manj sporov s #284 in krajši test.
+- `tools/zvoki-posnetki.mjs` (novo): kratki posnetki zvoka igre za uglaševanje po ušesu (dirka na pravi progi v brskalniku, avto na avtopilotu ali stoji na izbranem mestu, ves zvok dirke v mp3); `node tools/zvoki-posnetki.mjs medvode --m 1300 --zvon`, več posnetkov z `--seznam f.json`. Posnetki ne gredo v repozitorij.
 - Dokumenti: `docs/igra.md` (nov razdelek »Zvoki okolja« za »Zvok navijačev in predori«), `README.md` (Nastavitve; »Zasluge« samo pri posnetkih), `docs/kazalo.md`, `tests/README.md`.
 
 ## Koraki in ocena ur

@@ -1,7 +1,9 @@
 /* Zvoki okolja: the sounds by the road (docs/zvoki-okolja.md). Birds in the woods and the leaves in the gusts, the water (a brook, a
    river, a waterfall, a lake, the sea with its gulls), the church bells in a village, the wind on a pass, the crickets and the cicadas.
    All made here (Web Audio synthesis, nothing downloaded), quiet under the engine; on the real tracks only (not the test tracks, not the
-   tracks moved to them: NO, not the new map).
+   tracks moved to them: NO, not the new map). And where the game has them: the cows' bells and their moos, the sheep's bleats (the herds
+   of World.life), a town's far traffic and its pigeons (def.zivali.city), and at a circuit with its stands the announcer and the people's
+   shouts, in English (the browser's speech as the commentator's, js/comm.js: quiet, never with the commentator or the co-driver).
    - the zones: along the road every 20 m, on each side, what the track's own world has there: the trees (World.woods: the instanced
      trees), the water (the world's water meshes, each piece's kind by its shape), the villages (the open roads' lamp zones, VAS), the
      church bells (BELLS, from OpenStreetMap), the wind (the road's height in its range, the altitude, the openness), the climate (GEO's
@@ -20,11 +22,12 @@
   /* ---------------- which tracks ---------------- */
   // the tracks the user moved to the test tracks whose pull requests are not on main yet (the US roads but Pikes Peak, Rio de Janeiro,
   // Vršič, Mount Buller, Toronto, Trois-Rivières, Sani Pass, Bang Saen): frozen, no sounds by the road; once def.test is theirs, def.test
-  const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen']);
+  // (and Longford, Mount Hotham, Newcastle and Townsville: the user, 6. 11. 2026, the bundle B)
+  const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
   const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5] };
-  const SEA = new Set(['livorno', 'newcastle']);   // (by the sea, without def.sea: their big water is the sea)
+  const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
     if (g && Number.isFinite(g.lat0)) return [g.lat0, Number.isFinite(g.offset) ? g.offset : 0];
@@ -45,10 +48,7 @@
     livorno: [[730, -1, 26], [1230, 1, 26], [3230, 1, 56], [4210, 1, 558], [6730, 1, 19], [17070, 1, 15], [17330, 1, 49], [17890, 1, 440]],   // (Livorno, Montenero, Antignano)
     nring: [[20380, 1, 236]],   // (Nürburg)
     harju: [[50, 1, 239], [1430, 1, 452]],   // (Jyväskylä)
-    newcastle: [[710, 1, 301]],
-    townsville: [[1090, -1, 277]],
     chapman: [[-140, 1, 385]],   // (Hout Bay)
-    longford: [[1930, -1, 555]],
   };
 
   /* ---------------- the zones ---------------- */
@@ -69,17 +69,18 @@
     const m = 1 << b, K = new Float64Array(m).fill(-1), V = new Int32Array(m), sh = 32 - b, mk = m - 1;
     return (TABS[i] = { b, K, V, m, at: (k) => { let h = Math.imul(((k / 4294967296) | 0) ^ (k | 0), -1640531535) >>> sh; while (K[h] !== -1 && K[h] !== k) h = (h + 1) & mk; return h; } });
   }
-  let DL = Infinity;   // (the slice's end: performance.now(); zones() runs it whole)
+  let DL = Infinity, stage = '';   // (the slice's end: performance.now(); zones() runs it whole. stage: where the prep is, levels().prep.at)
   const late = () => performance.now() > DL;
 
   function* zonesGen(o, T, dbg) {
     const t0 = performance.now(), def = T.def, id = def.id, len = T.len, n = Math.max(2, Math.ceil(len / ZDS)), loop = !T.open;
     const Z = { id, n, len, open: !loop, s0: T.startS || 0, s1: loop ? (T.startS || 0) + len : T.finishS, fL: new Float32Array(n), fR: new Float32Array(n), wL: new Float32Array(n), wR: new Float32Array(n),
-      kL: new Uint8Array(n), kR: new Uint8Array(n), vas: new Float32Array(n), wind: new Float32Array(n), bells: [], ring: [], clim: null, st: { trees: 0, water: [0, 0, 0, 0, 0, 0], cells: 0, ms: 0, slices: 0 }, dbg: dbg ? [] : null };
+      kL: new Uint8Array(n), kR: new Uint8Array(n), vas: new Float32Array(n), wind: new Float32Array(n), bells: [], ring: [], herds: [], city: false, pa: false, clim: null, st: { trees: 0, water: [0, 0, 0, 0, 0, 0], cells: 0, ms: 0, slices: 0 }, dbg: dbg ? [] : null };
     const P = new Float32Array(n * 5);   // (each sample: x, z, the normal (+: the right), the road's height)
     for (let k = 0; k < n; k++) { const i = T.idx(Math.min(len - 0.01, (k + 0.5) * ZDS)); P[k * 5] = T.px[i]; P[k * 5 + 1] = T.pz[i]; P[k * 5 + 2] = T.nx[i]; P[k * 5 + 3] = T.nz[i]; P[k * 5 + 4] = T.hy ? T.hy[i] : 0; }
     const smooth = (A) => { const B = A.slice(); for (let k = 0; k < n; k++) { const a = loop ? (k + n - 1) % n : Math.max(0, k - 1), b = loop ? (k + 1) % n : Math.min(n - 1, k + 1); A[k] = 0.25 * B[a] + 0.5 * B[k] + 0.25 * B[b]; } };
     // the woods: the trees within FR on each side (nearer ones count more), by the world's detail (fewer trees on a lower one)
+    stage = 'woods';
     if (def.theme === 'pikes') { for (let k = 0; k < n; k++) Z.fL[k] = Z.fR[k] = 0.75 * (1 - sstep(170, 200, P[k * 5 + 4])); }   // (Pikes Peak: its forest merged into the scenery; up to the treeline, js/sfx.js's echo)
     else if (typeof World !== 'undefined' && World.woods && o.root) {
       const Wd = o.woods || (World.woodsGen ? yield* World.woodsGen(o, late) : World.woods(o)), C = Wd.cell || 12, LOD = World.api && World.api.LOD, cap = FCAP * (LOD && LOD.dens > 0 ? LOD.dens : 1); Z.st.trees = Wd.n;
@@ -98,7 +99,7 @@
       }
       smooth(Z.fL); smooth(Z.fR);
     }
-    yield* waterGen(o, T, Z, P);
+    stage = 'water'; yield* waterGen(o, T, Z, P); stage = 'zones';
     // the villages: the open roads' lamp zones (js/world.js OB), VAS; 60 m in and out
     const sOf = (d) => loop ? (((Z.s0 + d) % len) + len) % len : Z.s0 + d;
     const span = (a, b, v) => {   // (from a to b metres from the start: v, and 60 m in and out)
@@ -113,6 +114,13 @@
     for (const b of B) Z.ring.push([sOf(b[0] - 250), sOf(b[0]), b[1], b[2]]);
     for (const z of spans) if (z[2] >= 0.75 && !B.some(b => b[0] > z[0] - 300 && b[0] < z[1] + 300)) Z.ring.push([sOf(z[0]), sOf(z[0] + 150), R0() < 0.5 ? -1 : 1, 150]);
     for (const r of Z.ring) Z.bells.push([r[1], r[2], r[3]]);
+    // the herds by the road (World.life's glades and scenes, o.lifeStats.at: metres after the start, the side, metres beyond the barrier,
+    // the kind): the cows (their bells, now and then a moo), the sheep (their bleats); each [s, side, off the road (m), 'cow' | 'sheep']
+    const LS = o.lifeStats;
+    if (LS && LS.at) for (const a of LS.at) { const kd = /^cow/.test(a[3]) ? 'cow' : a[3] === 'sheep' ? 'sheep' : null; if (!kd) continue;
+      const s = sOf(a[0]), i = T.idx(clamp(s, 0, len - 0.01)), bar = (a[1] > 0 ? T.br : T.bl) || null; Z.herds.push([s, a[1], (bar ? bar[i] : 5) + a[2] + 3, kd]); }
+    Z.city = !!(def.zivali && def.zivali.city);   // (a town round the road: its far traffic, its pigeons)
+    Z.pa = loop && !!(o.crowdPts && o.crowdPts.length);   // (a circuit with its stands: the announcer, the people's shouts)
     // the climate; the wind: up a real climb the higher the more, the altitude, the open land (trees shelter), by the sea a breeze
     const g = geoOf(id), H = T.hy; let h0 = 0, h1 = 0;
     if (H) { h0 = Infinity; h1 = -Infinity; for (let i = 0; i < H.length; i++) { if (H[i] < h0) h0 = H[i]; if (H[i] > h1) h1 = H[i]; } }
@@ -140,7 +148,7 @@
     const near = (cx, cz) => { const a = cx - gx0, b = cz - gz0; return a >= 0 && b >= 0 && a < gw && b < gh && NG[b * gw + a] === 1; };
     for (let k = 0, lc = NaN; k < n; k++) { const cx = Math.floor(P[k * 5] / CC) - gx0, cz = Math.floor(P[k * 5 + 1] / CC) - gz0, c = cz * gw + cx; if (c === lc) continue; lc = c;
       for (let b = -RB; b <= RB; b++) NG.fill(1, (cz + b) * gw + cx - RB, (cz + b) * gw + cx + RB + 1); }
-    const meshes = [], all = [];
+    const meshes = [], all = []; stage = 'water: the meshes';
     if (o.root) o.root.traverse(m => { if (m.isMesh && !m.isInstancedMesh && m.geometry && m.material) all.push(m); });
     yield;
     for (let i = 0; i < all.length; i++) { const m = all[i], mt = Array.isArray(m.material) ? m.material[0] : m.material, key = mt && typeof mt.customProgramCacheKey === 'function' ? String(mt.customProgramCacheKey()) : '';
@@ -156,6 +164,7 @@
       else if (PRI[kind] > PRI[cKind[s]]) { cKind[s] = kind; cY[s] = y; } };
     const cellAt = (fx, fz) => { const cx = Math.floor(fx / 4), cz = Math.floor(fz / 4), E = coarse.get(ck(cx, cz)); return E ? E.f[(fx - cx * 4) + 4 * (fz - cz * 4)] : -1; };
     const pieces = [], bands = [];   // (each piece: its mesh's world corners, its triangles, its numbers; the bands' to be laid last)
+    stage = 'water: the pieces';
     for (const [m, key] of meshes) {
       const g = m.geometry, pa = g.attributes.position; if (!pa || pa.isInterleavedBufferAttribute || pa.itemSize !== 3 || pa.count < 3) continue;
       const A = pa.array, e = m.matrixWorld.elements, I = g.index ? g.index.array : null, nv = pa.count, nt = Math.floor((I ? I.length : nv) / 3);
@@ -194,7 +203,7 @@
       (band ? bands : pieces).push(piece);
       yield;
     }
-    TABS.length = 0;
+    TABS.length = 0; stage = 'water: the cells';
     // the kinds
     let yLow = Infinity; for (const p of pieces) for (const C of p.comps) if (C.area > 50 && C.y < yLow) yLow = C.y;
     const openK = seaT ? SEAK : LAKE;
@@ -238,7 +247,7 @@
     Z.st.cells = cKind.length;
     yield;
     // each sample: the loudest water on each side
-    const R = Math.ceil(WB / CC) + 1, any = coarse.size > 0;
+    stage = 'water: the samples'; const R = Math.ceil(WB / CC) + 1, any = coarse.size > 0;
     for (let k = 0; any && k < n; k++) {
       const x = P[k * 5], z = P[k * 5 + 1], nx = P[k * 5 + 2], nz = P[k * 5 + 3], y = P[k * 5 + 4], cx = Math.floor(x / CC), cz = Math.floor(z / CC);
       let l = 0, r = 0, kl = 0, kr = 0;
@@ -267,6 +276,10 @@
     runs('vas', k => Z.vas[k] >= 0.45 ? 3 : 0);
     runs('veter', k => Z.wind[k] >= 0.3 ? 3 : 0);
     for (const b of Z.bells) { let d = b[0] - Z.s0; if (!Z.open) d = ((d % Z.len) + Z.len) % Z.len; rows.push([Math.round(d), Math.round(d), 'zvon', b[1] < 0 ? 'L' : 'D']); }
+    for (const h of Z.herds) { let d = h[0] - Z.s0; if (!Z.open) d = ((d % Z.len) + Z.len) % Z.len; rows.push([Math.round(d), Math.round(d), h[3] === 'cow' ? 'krave' : 'ovce', h[1] < 0 ? 'L' : 'D']); }
+    const all = Z.open ? Math.round(Z.s1 - Z.s0) : Math.round(Z.len);
+    if (Z.city) rows.push([0, all, 'mesto', 'LD']);
+    if (Z.pa) rows.push([0, all, 'razglas', 'LD']);
     return rows.sort((a, b) => a[0] - b[0] || (a[2] < b[2] ? -1 : 1));
   }
 
@@ -352,12 +365,56 @@
   function* bellGen(f, R) {
     const N = Math.round(3.4 * SR2), d = new Float32Array(N);
     for (const [m, a, tau] of BELL) { const w1 = 2 * Math.PI * f * m / SR2, w2 = 2 * Math.PI * (f * m + 0.2 + R() * 0.4) / SR2, k = Math.min(N, Math.round(tau * 7 * SR2));
-      for (let i = 0; i < k; i++) d[i] += a * Math.exp(-i / (tau * SR2)) * (Math.sin(w1 * i) + 0.5 * Math.sin(w2 * i + 1.3));
+      for (let i = 0; i < k; i++) { d[i] += a * Math.exp(-i / (tau * SR2)) * (Math.sin(w1 * i) + 0.5 * Math.sin(w2 * i + 1.3)); if ((i & 4095) === 4095 && late()) yield; }
       if (late()) yield; }
     const kn = Math.round(0.012 * SR2); for (let i = 0; i < kn; i++) d[i] += (R() * 2 - 1) * 0.6 * (1 - i / kn);
     const e = d.slice(), e1 = Math.round(0.17 * SR2), e2 = Math.round(0.39 * SR2), fo = Math.round(0.4 * SR2);
     for (let i = 0; i < N; i++) d[i] = e[i] + (i >= e1 ? 0.22 * e[i - e1] : 0) + (i >= e2 ? 0.11 * e[i - e2] : 0);
     for (let i = 0; i < fo; i++) d[N - 1 - i] *= i / fo;
+    return peakTo(d, 0.9);
+  }
+  // a cow's bell (sheet metal: its partials apart, not a church bell's; a short clank and the clapper's knock)
+  function* cowbellGen(f, R) {
+    const N = Math.round(0.7 * SR2), d = new Float32Array(N);
+    for (const [m, a, tau] of [[1, 1, 0.3], [1.48, 0.7, 0.2], [2.1, 0.5, 0.14], [2.69, 0.35, 0.1], [3.42, 0.22, 0.07]]) { if (f * m > 0.45 * SR2) continue;
+      const w = 2 * Math.PI * f * m * (1 + (R() - 0.5) * 0.03) / SR2, k = Math.min(N, Math.round(tau * 7 * SR2)); for (let i = 0; i < k; i++) d[i] += a * Math.exp(-i / (tau * SR2)) * Math.sin(w * i);
+      if (late()) yield; }
+    const kn = Math.round(0.005 * SR2); for (let i = 0; i < kn; i++) d[i] += (R() * 2 - 1) * 0.6 * (1 - i / kn);
+    return peakTo(d, 0.6);
+  }
+  // a voiced call (a cow's moo, a sheep's bleat): its pitch f0(u) over the call (u 0..1), its harmonics through the mouth's two formants
+  // f1(u), f2(u), its loudness env(u); q: the sheep's quaver [Hz, depth] (the pitch and the loudness shaking together)
+  function* voiced(dur, f0, f1, f2, env, q) {
+    const N = Math.round(dur * SR2), d = new Float32Array(N), ph = new Float64Array(N), F0 = new Float32Array(N), A1 = new Float32Array(N), A2 = new Float32Array(N); let p = 0;
+    for (let i = 0; i < N; i++) { const u = i / N, f = f0(u) * (q ? 1 + 0.04 * q[1] * Math.sin(2 * Math.PI * q[0] * i / SR2) : 1); p += 2 * Math.PI * f / SR2; ph[i] = p; F0[i] = f; A1[i] = f1(u); A2[i] = f2(u); }
+    for (let k = 1; k <= 40; k++) { let any = false;
+      for (let i = 0; i < N; i++) { const fk = k * F0[i]; if (fk > 0.45 * SR2) continue; any = true;
+        const x1 = (fk - A1[i]) / 170, x2 = (fk - A2[i]) / 280; d[i] += (0.03 + 1 / (1 + x1 * x1) + 0.5 / (1 + x2 * x2)) * Math.sin(k * ph[i]) / Math.sqrt(k); }
+      if (!any) break; if (late()) yield; }
+    for (let i = 0; i < N; i++) { const u = i / N; d[i] *= env(u) * (q ? 1 - q[1] * (0.5 + 0.5 * Math.sin(2 * Math.PI * q[0] * i / SR2)) : 1); }
+    return d;
+  }
+  function* mooGen(R) {   // (~1.2-1.7 s: up and down, the mouth closed, open, closing: mm-oo-oh)
+    const fb = 100 + 30 * R(), g = yield* voiced(1.2 + 0.5 * R(), u => fb * (1 + 0.22 * Math.sin(Math.PI * Math.min(1, 1.25 * u)) - 0.12 * u), u => 260 + 420 * sstep(0.08, 0.45, u) - 120 * sstep(0.7, 1, u),
+      u => 850 + 150 * sstep(0.08, 0.45, u), u => sstep(0, 0.15, u) * (1 - sstep(0.72, 1, u)), null);
+    return peakTo(g, 0.65);
+  }
+  function* baaGen(R) {   // (~0.6-0.85 s: baa-aa-aa, its quaver ~17-20 times a second)
+    const fb = 270 + 60 * R(), g = yield* voiced(0.6 + 0.25 * R(), u => fb * (1 + 0.05 * sstep(0, 0.2, u) - 0.08 * u), u => 650 + 250 * sstep(0.05, 0.25, u), () => 1500,
+      u => sstep(0, 0.06, u) * (1 - sstep(0.6, 1, u)), [17 + 3 * R(), 0.55]);
+    return peakTo(g, 0.8);
+  }
+  // a pigeon's coo: soft low notes [start s, length s, from, to (× its pitch), rolled], a sine and its 2nd and 3rd faintly; the long middle
+  // one of the town's pigeon rolled (rrroo: its loudness at ~28 Hz)
+  const COOS = [[[0, 0.26, 1, 0.95, 0], [0.36, 0.56, 1.06, 0.82, 1], [1.02, 0.24, 0.9, 0.86, 0]],   // (in the streets: oo-rroo-oo)
+    [[0, 0.22, 1, 0.97, 0], [0.34, 0.42, 1.08, 0.94, 0], [0.86, 0.22, 1, 0.96, 0], [1.22, 0.22, 1, 0.95, 0], [1.56, 0.28, 0.98, 0.9, 0]]];   // (in a park: coo-COO-coo, coo-coo)
+  function* cooGen(notes, f) {
+    let len = 0; for (const n of notes) len = Math.max(len, n[0] + n[1]);
+    const N = Math.ceil((len + 0.05) * SR2), d = new Float32Array(N);
+    for (const [t0, dur, a, b, roll] of notes) { const i0 = Math.round(t0 * SR2), m = Math.round(dur * SR2); let ph = 0;
+      for (let j = 0; j < m && i0 + j < N; j++) { const u = j / m, e = sstep(0, 0.3, u) * (1 - sstep(0.6, 1, u)) * (roll ? 1 - 0.7 * (0.5 + 0.5 * Math.sin(2 * Math.PI * 28 * j / SR2)) : 1);
+        ph += 2 * Math.PI * f * (a + (b - a) * u) / SR2; d[i0 + j] += e * (Math.sin(ph) + 0.25 * Math.sin(2 * ph) + 0.08 * Math.sin(3 * ph)); }
+      if (late()) yield; }
     return peakTo(d, 0.9);
   }
 
@@ -368,13 +425,17 @@
   const LV = [0, 1, 2], BASE = 0.09, MAXN = 25, PREP_GRID = 1.5, PREP_RACE = 0.75;   // (prep: on the grid; a slow phone's rest after the start)
   // each bed at a full zone (with the water's KG at its nearest: ~24 dB under a car's engine at mid revs on Tiho, tuned with probe); the
   // one-shots at their nearest and loudest (up to ~18 dB under it)
-  const BG = { rustle: 0.37, brook: 0.52, river: 0.5, fall: 0.32, lake: 2.6, sea: 0.58, wind: 1.17, crickets: 0.5, cicadas: 0.55 };
-  const SP = { bird: 0.73, gull: 0.85, bell: 0.65 };
-  const TC = { rustle: 0.7, wind: 0.7, cicadas: 1 }, BUFB = new Set(['brook', 'river', 'crickets', 'cicadas']);
+  const BG = { rustle: 0.37, brook: 0.52, river: 0.5, fall: 0.32, lake: 2.6, sea: 0.58, wind: 1.17, crickets: 0.5, cicadas: 0.55, traffic: 1 };
+  const SP = { bird: 0.73, gull: 0.85, bell: 0.65, herd: 0.8, coo: 0.28 };
+  const TC = { rustle: 0.7, wind: 0.7, cicadas: 1, traffic: 0.8 }, BUFB = new Set(['brook', 'river', 'crickets', 'cicadas']);
   const TOD_B = { dawn: 1.4, day: 1, dusk: 0.4, night: 0 }, SEASON_B = { summer: 1, autumn: 0.5, winter: 0.15 };
-  const opts = { bellP: 0.6, bellGap: 180 };   // (a peal's chance by a church, the seconds between two; the tests set them)
+  // (a peal's chance by a church, the seconds between two; the announcer's and the shouts' least seconds apart, their chance a second by
+  // the stands; a pigeon's chance a second in a town; the birds' rate (× the forest's); all: every voice made, whatever the track has (the
+  // tests and the tuning: the sheep no real track has now); the tests set them)
+  const opts = { bellP: 0.6, bellGap: 180, paGap: 75, paP: 0.25, shoutGap: 25, shoutP: 0.4, cooP: 0.12, birdP: 1, all: false };
   const S = { lvl: 1, sound: true, saver: () => false };
   let A = null;   // (the sounds now, of one audio context; null: nothing made)
+  const N0 = () => ({ birds: 0, bells: 0, gulls: 0, coos: 0, herds: 0, strikes: 0, moos: 0, bleats: 0 });   // (how many of each so far: the tests)
   const atmosOf = () => (typeof Render !== 'undefined' && Render.atmos) || { season: 'summer', tod: 'day' };
   const climate = (Z) => { const lat = Math.abs(Z.clim.lat), alt = Z.clim.alt; return { cr: sstep(64, 50, lat) * (1 - sstep(1800, 2600, alt)), ci: sstep(47, 38, lat) * (1 - sstep(800, 1600, alt)) }; };
   function tgt(p, v, o, key, tc, at) {   // (a param to v, only when it moves more than 1 %)
@@ -382,21 +443,25 @@
     o[key] = v; p.setTargetAtTime(v, at == null ? A.ctx.currentTime : at, tc);
   }
   const drop = (n) => { try { if (n.stop) n.stop(); } catch (_) { } try { n.disconnect(); } catch (_) { } };
+  // (a param that only moves slowly: worked out once per block of 128 samples, not at each one, less work for the sound's own thread)
+  const kr = (p) => { try { p.automationRate = 'k-rate'; } catch (_) { } return p; };
   function begin(ctx, bus) {
-    A = { ctx, bus, out: ctx.createGain(), o: null, key: '', Z: null, gen: null, err: null, buf: {}, songs: [], bells: null, bytes: 0, beds: {}, spots: [], peal: null, noise: null, nodes: 1, tg: {}, mlev: 0,
-      tU: 0, tL: 0, k: -1, lastS: null, tBell: -1e9, R: Math.random, n: { birds: 0, bells: 0, gulls: 0 }, prep: { slices: 0, ms: 0, max: 0 } };
-    A.out.gain.value = 0; A.out.connect(bus);
+    A = { ctx, bus, out: ctx.createGain(), o: null, key: '', Z: null, gen: null, err: null, buf: {}, songs: [], bells: null, bytes: 0, beds: {}, spots: [], peal: null, herd: null, cowb: null, coos: null, noise: null, nodes: 1, tg: {}, mlev: 0,
+      tU: 0, tL: 0, k: -1, lastS: null, tBell: -1e9, R: Math.random, n: N0(), prep: { slices: 0, ms: 0, max: 0, at: '', top: [] } };
+    kr(A.out.gain); A.out.gain.value = 0; A.out.connect(bus);
   }
   function needs(Z, at) {
+    if (opts.all) return { birds: true, brook: true, river: true, bells: true, crickets: true, cicadas: true, cows: true, sheep: true, coos: true };
     let F = 0; const kinds = new Set();
     for (let k = 0; k < Z.n; k++) { F = Math.max(F, Z.fL[k], Z.fR[k]); if (Z.wL[k] > 0.02) kinds.add(Z.kL[k]); if (Z.wR[k] > 0.02) kinds.add(Z.kR[k]); }
     const cl = climate(Z), summer = at.season === 'summer';
     return { birds: F > 0.1 && (TOD_B[at.tod] ?? 1) > 0, brook: kinds.has(BROOK), river: kinds.has(RIVER), bells: Z.ring.length > 0 && at.tod !== 'night',
-      crickets: summer && cl.cr > 0.05 && at.tod !== 'day', cicadas: summer && cl.ci > 0.05 && at.tod === 'day' };
+      crickets: summer && cl.cr > 0.05 && at.tod !== 'day', cicadas: summer && cl.ci > 0.05 && at.tod === 'day',
+      cows: Z.herds.some(h => h[3] === 'cow'), sheep: Z.herds.some(h => h[3] === 'sheep'), coos: Z.city && at.tod !== 'night' };
   }
   function* prepGen(o, T, at) {   // the zones (once per world), then the voices the race needs
     let Z = cache.get(o); if (!Z) { Z = yield* zonesGen(o, T, false); cache.set(o, Z); }
-    yield;
+    stage = 'voices'; yield;
     const c = A.ctx, R = rngOf(hashOf(T.def.id) ^ 0x5bd1e995), need = needs(Z, at);
     const mk = (d, rate) => { const b = c.createBuffer(1, d.length, rate); if (b.copyToChannel) b.copyToChannel(d, 0); else b.getChannelData(0).set(d); A.bytes += d.length * 4; return b; };
     const nz = new Float32Array(2 * SR); for (let i = 0; i < nz.length; i++) nz[i] = R() * 2 - 1;
@@ -408,15 +473,18 @@
     if (need.crickets) A.buf.crickets = mk(yield* cricketLoop(R), SR);
     if (need.cicadas) A.buf.cicadas = mk(yield* cicadaLoop(R), SR);
     if (need.bells) A.bells = [mk(yield* bellGen(392, R), SR2), mk(yield* bellGen(330, R), SR2)];
+    if (need.cows) { A.cowb = []; for (const f of [480, 600, 730]) A.cowb.push(mk(yield* cowbellGen(f * (0.95 + 0.1 * R()), R), SR2)); A.buf.moo = mk(yield* mooGen(R), SR2); }
+    if (need.sheep) A.buf.baa = mk(yield* baaGen(R), SR2);
+    if (need.coos) { A.coos = []; for (const n of COOS) A.coos.push(mk(yield* cooGen(n, 380 + 80 * R()), SR2)); }
     A.Z = Z;
   }
   function noiseOn() { if (!A.noise) { const s = A.ctx.createBufferSource(); s.buffer = A.buf.noise; s.loop = true; s.start(); A.noise = { src: s, users: 0 }; A.nodes++; } A.noise.users++; return A.noise.src; }
   function noiseOff() { if (A.noise && --A.noise.users <= 0) { drop(A.noise.src); A.noise = null; A.nodes--; } }
   function bedOn(name) {
     const c = A.ctx, out = c.createGain(), pan = c.createStereoPanner ? c.createStereoPanner() : null, B = { name, out, pan, nodes: [out], cur: 0, pn: 0, quiet: 0, noise: false, p: { next: 0, g: 0.5, st: 3 } };
-    out.gain.value = 0; if (pan) { B.nodes.push(pan); out.connect(pan); pan.connect(A.out); } else out.connect(A.out);
-    const flt = (type, f, q) => { const n = c.createBiquadFilter(); n.type = type; n.frequency.value = f; n.Q.value = q; B.nodes.push(n); return n; };
-    const gn = (v) => { const g = c.createGain(); g.gain.value = v; B.nodes.push(g); return g; };
+    kr(out.gain).value = 0; if (pan) { kr(pan.pan); B.nodes.push(pan); out.connect(pan); pan.connect(A.out); } else out.connect(A.out);
+    const flt = (type, f, q) => { const n = c.createBiquadFilter(); n.type = type; kr(n.frequency).value = f; n.Q.value = q; B.nodes.push(n); return n; };
+    const gn = (v) => { const g = c.createGain(); kr(g.gain).value = v; B.nodes.push(g); return g; };
     const nz = () => { if (!B.noise) { B.noise = true; noiseOn(); } return A.noise.src; };
     if (BUFB.has(name)) { const s = c.createBufferSource(); s.buffer = A.buf[name]; s.loop = true; s.connect(out); s.start(c.currentTime, A.R() * s.buffer.duration); B.nodes.push(s); }
     else if (name === 'rustle') { const f = flt('bandpass', 2600, 0.55); nz().connect(f); f.connect(out); }
@@ -424,6 +492,7 @@
     else if (name === 'lake') { const f = flt('lowpass', 520, 0.6), e = gn(0.2); nz().connect(f); f.connect(e); e.connect(out); B.p.env = e; }
     else if (name === 'sea') { const f = flt('lowpass', 450, 0.5), e = gn(0.3); nz().connect(f); f.connect(e); e.connect(out); B.p.env = e; B.p.flt = f; }
     else if (name === 'wind') { const a = flt('lowpass', 420, 0.5), b = flt('bandpass', 800, 6), g = gn(0); nz().connect(a); nz().connect(b); b.connect(g); a.connect(out); g.connect(out); B.p.wg = g; B.p.bp = b; }
+    else if (name === 'traffic') { const a = flt('lowpass', 240, 0.6), b = flt('bandpass', 750, 0.9), g = gn(0.12); nz().connect(a); nz().connect(b); b.connect(g); a.connect(out); g.connect(out); B.p.tg = g; B.p.bp = b; }   // (a town's far rumble, a car passing far now and then)
     A.nodes += B.nodes.length; A.beds[name] = B; return B;
   }
   function bedOff(B) { for (const n of B.nodes) drop(n); A.nodes -= B.nodes.length; if (B.noise) noiseOff(); delete A.beds[B.name]; }
@@ -435,13 +504,15 @@
     else if (B.name === 'lake') { if (c > p.next) { const e = p.env.gain; e.setTargetAtTime(0.45 + 0.55 * R(), c, 0.06); e.setTargetAtTime(0.15, c + 0.18, 0.4); p.next = c + 1.2 + 1.6 * R(); } }
     else if (B.name === 'sea') { if (c > p.next) { const e = p.env.gain, f = p.flt.frequency, t = c + 2.2 + 0.6 * R();   // (a wave: it rises, breaks with a hiss, washes back)
       e.setTargetAtTime(0.85, c, 0.8); f.setTargetAtTime(800, c, 0.8); e.setTargetAtTime(1.3, t, 0.05); f.setTargetAtTime(2600, t, 0.05); e.setTargetAtTime(0.28, t + 0.3, 1.1); f.setTargetAtTime(420, t + 0.3, 1.1); p.next = c + 7 + 4 * R(); } }
+    else if (B.name === 'traffic') { if (c > p.next) { const up = 1.2 + R(); p.tg.gain.setTargetAtTime(0.3 + 0.7 * R(), c, up / 3); p.bp.frequency.setTargetAtTime(850 + 200 * R(), c, 0.3);
+      p.tg.gain.setTargetAtTime(0.12, c + up, 0.8); p.bp.frequency.setTargetAtTime(560, c + up, 0.8); p.next = c + up + 1 + 4 * R(); } }
     else if (B.name === 'cicadas') { if (c > p.next) { p.st = (p.st + 1) % 4; p.next = c + [2.5 + R(), 3 + 3 * R(), 2, 2 + 3 * R()][p.st]; } v *= p.st < 2 ? 1 : 0; }
     tgt(B.out.gain, v, B, 'cur', TC[B.name] || 0.3, c);
     if (B.pan && Math.abs(pan - B.pn) > 0.01) { B.pn = pan; B.pan.pan.setTargetAtTime(pan, c, 0.3); }
   }
   function spotChain(lp) {   // (a call's way out: its distance's low-pass, its gain, its side)
     const c = A.ctx, f = c.createBiquadFilter(), g = c.createGain(), pn = c.createStereoPanner ? c.createStereoPanner() : null;
-    f.type = 'lowpass'; f.frequency.value = lp; f.connect(g); if (pn) { g.connect(pn); pn.connect(A.out); } else g.connect(A.out);
+    f.type = 'lowpass'; kr(f.frequency).value = lp; kr(g.gain); f.connect(g); if (pn) { kr(pn.pan); g.connect(pn); pn.connect(A.out); } else g.connect(A.out);
     return { f, g, pn, nodes: [f, g].concat(pn ? [pn] : []) };
   }
   function spotEnd(sp) { if (!A) return; const i = A.spots.indexOf(sp); if (i < 0) return; A.spots.splice(i, 1); for (const n of sp.nodes) drop(n); A.nodes -= sp.nodes.length; }
@@ -483,6 +554,83 @@
     }
     if (P.left <= 0 && !P.live.length) { for (const n of P.ch.nodes) drop(n); A.nodes -= P.ch.nodes.length; A.peal = null; }
   }
+  // the herd nearest the car within 170 m (along the road and off it): the cows' bells in little bursts (a cow lifts her head), now and
+  // then a moo; the sheep's bleats. One way out for the herd (its distance's low-pass, its gain, its side); quiet: nothing new, the last
+  // ones ring out
+  function herdTick(Z, s, cs, now, quiet) {
+    const wrap = (al) => Z.open ? al : ((al % Z.len) + Z.len * 1.5) % Z.len - Z.len / 2;
+    let best = null, bd = 170;
+    if (!quiet) for (const h of Z.herds) { const al = wrap(h[0] - s), d = Math.sqrt(al * al + h[2] * h[2]); if (d < bd) { bd = d; best = h; } }
+    let H = A.herd;
+    if (H && H.h !== best) H.left = true;
+    if (H && H.left && !H.live.length) { for (const n of H.ch.nodes) drop(n); A.nodes -= H.ch.nodes.length; A.herd = H = null; }
+    if (!H && best) { if (A.nodes + 4 > MAXN) return; const ch = spotChain(5000); A.nodes += ch.nodes.length; A.n.herds++;
+      A.herd = H = { h: best, ch, live: [], next: now + 0.3 + A.R(), call: now + 2 + 8 * A.R(), burst: 0, g: null, left: false }; }
+    if (!H) return;
+    const h = H.h, al = wrap(h[0] - s), d = Math.max(1, Math.sqrt(al * al + h[2] * h[2])), gv = SP.herd * Math.min(1, Math.pow(20 / d, 0.9)), fv = Math.max(1200, 8000 - 25 * d);
+    if (H.g == null) { H.g = gv; H.f = fv; H.ch.g.gain.value = gv; H.ch.f.frequency.value = fv; } else { tgt(H.ch.g.gain, gv, H, 'g', 0.3); tgt(H.ch.f.frequency, fv, H, 'f', 0.3); }
+    if (H.ch.pn) { const pn = clamp(h[1] * cs * (0.2 + 0.7 * h[2] / d), -0.9, 0.9); if (Math.abs(pn - (H.pn || 0)) > 0.01) { H.pn = pn; H.ch.pn.pan.setTargetAtTime(pn, now, 0.3); } }
+    if (H.left) return;
+    const R = A.R, cow = h[3] === 'cow', play = (buf, at, rate) => { const b = A.ctx.createBufferSource(); b.buffer = buf; b.playbackRate.value = rate; b.connect(H.ch.f);
+      b.onended = () => { const i = H.live.indexOf(b); if (i < 0) return; H.live.splice(i, 1); drop(b); if (A && A.herd === H) A.nodes--; };
+      b.start(Math.max(now, at)); H.live.push(b); A.nodes++; };
+    if (H.next < now) H.next = now + 0.02;
+    while (cow && A.cowb && H.next < now + 0.3 && H.live.length < 3 && A.nodes < MAXN) {
+      play(A.cowb[R() * A.cowb.length | 0], H.next, 0.97 + 0.06 * R()); A.n.strikes++;
+      if (H.burst > 0) { H.burst--; H.next += 0.12 + 0.18 * R(); } else { H.burst = R() < 0.5 ? 0 : 1 + (R() * 2 | 0); H.next += 0.35 + 1.8 * R(); }
+    }
+    if (now > H.call && H.live.length < 3 && A.nodes < MAXN) { const b = cow ? A.buf.moo : A.buf.baa;
+      if (b) { play(b, now + 0.05, cow ? 0.92 + 0.16 * R() : 0.9 + 0.2 * R()); if (cow) A.n.moos++; else A.n.bleats++; }
+      H.call = now + (cow ? 12 + 22 * R() : 1.5 + 3.5 * R()); }
+  }
+  function coo(cs, now) {   // a pigeon 5-35 m off the road, either side
+    if (!A.coos || !A.coos.length || A.nodes + 4 > MAXN) return;
+    const R = A.R, side = R() < 0.5 ? -1 : 1, d = 5 + 30 * R() * R(), ch = spotChain(Math.max(1500, 6000 - 80 * d)), s = A.ctx.createBufferSource();
+    s.buffer = A.coos[R() * A.coos.length | 0]; s.playbackRate.value = 0.94 + 0.12 * R(); ch.g.gain.value = SP.coo * Math.min(1, Math.pow(8 / d, 0.9)) * (1 - 0.4 * R());
+    if (ch.pn) ch.pn.pan.value = clamp(side * cs * (0.3 + 0.5 * R()), -0.9, 0.9);
+    const sp = { nodes: [s].concat(ch.nodes) }; s.connect(ch.f); s.onended = () => spotEnd(sp); s.start(now + 0.01);
+    A.spots.push(sp); A.nodes += sp.nodes.length; A.n.coos++;
+  }
+  /* the announcer and the people's shouts (a circuit with its stands, Z.pa): the browser's speech in English as the commentator's, quiet;
+     only once the commentator (and the co-driver) has been silent 3 s, and the commentator cuts it off: js/comm.js calls hush() before each of
+     its lines. Generic notices of a circuit, no names (CLAUDE.md, Pravna varnost) */
+  const PA_LINES = ['Ladies and gentlemen, please stay behind the fences at all times.', 'Spectators are reminded to keep the gangways clear.',
+    'Lost children can be collected from the information point behind the main grandstand.', 'Food and drinks are available behind the grandstands.',
+    'Please do not climb the fences or the catch nets.', 'Will the owner of a blue estate car in the east car park please return to the vehicle.',
+    'First aid is available at the medical centre next to the paddock.', 'The next session will begin in thirty minutes.', 'Please take your litter home with you. Thank you.'];
+  const PA_END = ['The chequered flag is out. Thank you for joining us today.', 'That is the end of the race. Please drive home safely.',
+    'The race is over. Please stay in your seats until the cars have returned to the pit lane.'];
+  const SHOUTS = ['Go on!', 'Come on!', 'Go, go, go!', 'Yes!', 'Faster!', 'Woo!', "Let's go!", 'Brilliant!', 'Push!', 'Look at that!'];
+  const SPK = { u: null, until: 0, kind: '', quiet: -1e9, tPA: -1e9, tSh: -1e9, fin: false, race: null, nPA: 0, nSh: 0, last: '', cut: 0 };
+  const synthOf = () => (typeof window !== 'undefined' && window.speechSynthesis) || null;
+  function voiceFor(kind) {   // (an English voice other than the commentator's and the co-driver's, where there is one; the announcer's a woman's if any)
+    let V = []; try { V = synthOf().getVoices() || []; } catch (_) { }
+    const ci = typeof Comm !== 'undefined' && Comm.voiceInfo ? Comm.voiceInfo() : {}, en = V.filter(v => /^en([-_]|$)/i.test(v.lang || '')), other = en.filter(v => v.name !== ci.name && v.name !== ci.codrv), pool = other.length ? other : en;
+    if (!pool.length) return null;
+    if (kind === 'pa') return pool.find(v => /female|woman|zira|susan|hazel|libby|sonia|karen|moira|tessa|samantha|serena|kate/i.test(v.name)) || pool[0];
+    return pool[A.R() * pool.length | 0];
+  }
+  function speak(text, kind, vol, rate, pitch, now) {   // (until: a line whose end the browser never reports let go after a while)
+    const sy = synthOf(); if (!sy || typeof SpeechSynthesisUtterance === 'undefined') return false;
+    try { const u = new SpeechSynthesisUtterance(text), v = voiceFor(kind); if (v) u.voice = v; u.lang = v ? v.lang : 'en-GB'; u.volume = vol; u.rate = rate; u.pitch = pitch;
+      u.onend = u.onerror = () => { if (SPK.u === u) SPK.u = null; };
+      SPK.u = u; SPK.until = now + 3 + 0.12 * text.length / rate; SPK.kind = kind; SPK.last = text; sy.speak(u); return true; } catch (_) { SPK.u = null; return false; }
+  }
+  function hush() { if (!SPK.u) return; SPK.u = null; SPK.cut++; const sy = synthOf(); if (sy) { try { sy.cancel(); } catch (_) { } } }   // (js/comm.js: before each of its lines)
+  const pick = (L) => { let t = L[A.R() * L.length | 0]; if (t === SPK.last) t = L[(L.indexOf(t) + 1) % L.length]; return t; };
+  function speechTick(race, player, lv, kmh, now, dt) {
+    if (!A.Z.pa || typeof Comm === 'undefined' || !Comm.state || !synthOf() || Comm.radioMode) return;
+    if (SPK.race !== race) { SPK.race = race; SPK.fin = false; SPK.tPA = SPK.tSh = now - 20; }   // (a new race: not at once)
+    const cs = Comm.state();
+    if (cs.busy || cs.queued >= 0 || (Comm.talking && Comm.talking())) { SPK.quiet = now; return; }   // (the commentator's turn, and a breath after it)
+    if (SPK.u && now > SPK.until) SPK.u = null;
+    if (SPK.u || now - SPK.quiet < 3) return;
+    const R = A.R, vol = [0, 0.3, 0.6][S.lvl] * (1 - 0.4 * sstep(30, 160, kmh)), st = lv.stands || 0;
+    if (player.finished) { if (!SPK.fin && speak(pick(PA_END), 'pa', vol, 0.95, 1, now)) { SPK.fin = true; SPK.tPA = now; SPK.nPA++; } return; }
+    if (race.state !== 'racing') return;
+    if (st > 0.2 && now - SPK.tPA > opts.paGap && R() < opts.paP * dt) { if (speak(pick(PA_LINES), 'pa', vol, 0.95, 1, now)) { SPK.tPA = now; SPK.nPA++; } }
+    else if (st > 0.45 && now - SPK.tSh > opts.shoutGap && R() < opts.shoutP * dt) { if (speak(pick(SHOUTS), 'shout', vol * 0.9, 1.1 + 0.3 * R(), 1.1 + 0.5 * R(), now)) { SPK.tSh = now; SPK.nSh++; } }
+  }
   function crossed(Z, a, b, x) {   // (has the car gone past x, from a to b, forward and not by a jump?)
     if (Z.open) return a < x && b >= x && b - a < 150;
     const h = Z.len / 2, w = (v) => ((v % Z.len) + Z.len + h) % Z.len - h, da = w(a - x), db = w(b - x);
@@ -506,10 +654,11 @@
     tg.wind = lv.pikes ? 0 : Math.min(1.2, L(Z.wind) * (win ? 1.4 : 1));   // (Pikes Peak: its own, js/sfx.js atmo)
     tg.crickets = sum && A.buf.crickets ? cl.cr * (tod === 'night' || tod === 'dusk' ? 1 : tod === 'dawn' ? 0.3 : 0) * (1 - rain) * (0.6 + 0.4 * F) : 0;
     tg.cicadas = sum && A.buf.cicadas && tod === 'day' ? cl.ci * (1 - rain) * (0.3 + 0.7 * F) : 0;
+    tg.traffic = Z.city ? (tod === 'night' ? 0.55 : tod === 'dawn' ? 0.75 : 1) * (1 - 0.3 * F) : 0;   // (a town: quieter at night, among trees)
     const lev = (b) => tg[b] * BG[b] * (A.beds[b] ? 1.25 : 1);   // (one that plays keeps its place a little longer)
     const top = Object.keys(tg).filter(b => tg[b] * BG[b] > 0.004 && (!BUFB.has(b) || A.buf[b])).sort((a, b) => lev(b) - lev(a)).slice(0, 3);
     if (G > 1e-4) for (const b of top) if (!A.beds[b]) bedOn(b);
-    const pans = { rustle: pan2(fl, fr), brook: pan2(WL[1], WR[1]), river: pan2(WL[2], WR[2]), fall: pan2(WL[3], WR[3]), lake: pan2(WL[4], WR[4]), sea: pan2(WL[5], WR[5]), wind: 0, crickets: 0.4 * pan2(fl, fr), cicadas: 0.5 * pan2(fl, fr) };
+    const pans = { rustle: pan2(fl, fr), brook: pan2(WL[1], WR[1]), river: pan2(WL[2], WR[2]), fall: pan2(WL[3], WR[3]), lake: pan2(WL[4], WR[4]), sea: pan2(WL[5], WR[5]), wind: 0, crickets: 0.4 * pan2(fl, fr), cicadas: 0.5 * pan2(fl, fr), traffic: 0 };
     const dt = clamp(now - (A.tL || now), 0, 0.5); A.tL = now;
     for (const b in A.beds) { const B = A.beds[b], v = top.includes(b) ? tg[b] * BG[b] : 0; bedTick(B, v, pans[b], now);
       if (v * G < 1e-3) { B.quiet += dt; if (B.quiet > 2) bedOff(B); } else B.quiet = 0; }
@@ -518,18 +667,23 @@
     if (A.lastS != null && A.bells && !sv && lv.run) for (const r of Z.ring) if (crossed(Z, A.lastS, s, r[0]) && now - A.tBell > opts.bellGap && A.R() < opts.bellP) ring(r, now);
     A.lastS = s;
     if (A.peal) pealTick(A.peal, s, cs, now);
+    if (A.herd || (Z.herds.length && (A.cowb || A.buf.baa))) herdTick(Z, s, cs, now, sv || !lv.run || G < 1e-3);
     A.run = !!lv.run;
     if (sv || !lv.run || G < 1e-3) return;   // (the battery saver: the beds only)
     const bl = Math.sqrt(F) * (TOD_B[tod] ?? 1) * (SEASON_B[at.season] ?? 1) * (1 - sstep(0.05, 0.3, rain));
-    if (bl > 0 && A.R() < 0.5 * bl * dt) bird(fl, fr, cs, now);
+    if (bl > 0 && A.R() < opts.birdP * 0.5 * bl * dt) bird(fl, fr, cs, now);
     if (tg.sea > 0.15 && tod !== 'night' && rain < 0.1 && A.R() < 0.1 * tg.sea * dt) gulls(WR[5] >= WL[5] ? cs : -cs, now);
+    if (A.coos && tod !== 'night' && rain < 0.1 && A.R() < opts.cooP * dt) coo(cs, now);
+    speechTick(race, player, lv, kmh, now, dt);
   }
   function stopAll() {   // (every node let go; the zones and the voices kept)
     if (!A) return;
     for (const b in A.beds) bedOff(A.beds[b]);
     for (const sp of A.spots.slice()) spotEnd(sp);
     if (A.peal) { for (const b of A.peal.live) drop(b); for (const n of A.peal.ch.nodes) drop(n); A.peal = null; }
+    if (A.herd) { for (const b of A.herd.live) drop(b); for (const n of A.herd.ch.nodes) drop(n); A.herd = null; }
     if (A.noise) { drop(A.noise.src); A.noise = null; }
+    hush();
     A.nodes = 1; A.mlev = 0; A.out.gain.cancelScheduledValues(0); A.out.gain.value = 0; A.lastS = null;
   }
   function free() { if (!A) return; stopAll(); try { A.out.disconnect(); } catch (_) { } A = null; }   // (and the voices: nothing left)
@@ -542,12 +696,13 @@
     if (!ctx || !bus || !player || !o || !def || race.nv || !eligible(def)) { if (A && A.nodes > 1) stopAll(); return; }
     if (!A || A.ctx !== ctx || A.bus !== bus) { free(); begin(ctx, bus); }
     const at = atmosOf(), key = at.season + '|' + at.tod;
-    if (A.o !== o || A.key !== key) { stopAll(); A.o = o; A.key = key; A.Z = null; A.buf = {}; A.songs = []; A.bells = null; A.bytes = 0; A.err = null; A.tBell = -1e9; A.gen = prepGen(o, T, at); }
+    if (A.o !== o || A.key !== key) { stopAll(); A.o = o; A.key = key; A.Z = null; A.buf = {}; A.songs = []; A.bells = null; A.cowb = null; A.coos = null; A.bytes = 0; A.err = null; A.tBell = -1e9; A.prep = { slices: 0, ms: 0, max: 0, at: '', top: [] }; A.T = T; A.gen = prepGen(o, T, at); }
     if (A.gen) {
       const t0 = performance.now(); let r = { done: false };
       DL = t0 + (race.state === 'racing' && lv.run ? PREP_RACE : PREP_GRID);
       try { do r = A.gen.next(); while (!r.done && !late()); } catch (e) { r = { done: true }; A.err = String(e && e.message || e); A.Z = null; } finally { DL = Infinity; }
-      const t = performance.now() - t0; A.prep.slices++; A.prep.ms += t; if (t > A.prep.max) A.prep.max = t;
+      const t = performance.now() - t0; A.prep.slices++; A.prep.ms += t; if (t > A.prep.max) { A.prep.max = t; A.prep.at = stage; }
+      if (t > 3 && A.prep.top.length < 6) A.prep.top.push(+t.toFixed(1) + ' ' + stage);   // (the long slices: the tests, the tuning)
       if (!r.done) return;
       A.gen = null;
     }
@@ -562,17 +717,36 @@
     try { let r; do r = A.gen.next(); while (!r.done); } catch (e) { A.err = String(e && e.message || e); A.Z = null; } finally { DL = dl; }
     A.gen = null; return !!A.Z;
   }
+  function profile() {   // (the tests and the tuning: the prep made again whole, each piece between two yields timed: the longest [ms, stage])
+    if (!A || !A.o || !A.T) return null;
+    const o = A.o, at = atmosOf(); stopAll(); cache.delete(o); Object.assign(A, { Z: null, buf: {}, songs: [], bells: null, cowb: null, coos: null, bytes: 0, gen: null });
+    const g = prepGen(o, A.T, at), L = [], dl = DL; DL = -Infinity; let r, tot = 0;
+    try { do { const t0 = performance.now(); r = g.next(); const t = performance.now() - t0; tot += t; L.push([+t.toFixed(2), stage]); } while (!r.done); } finally { DL = dl; }
+    L.sort((a, b) => b[0] - a[0]); return { pieces: L.length, ms: +tot.toFixed(1), top: L.slice(0, 8) };
+  }
   const KGB = { brook: KG[BROOK], river: KG[RIVER], fall: KG[FALL], lake: KG[LAKE], sea: KG[SEAK] };   // (the water at its nearest)
   function probe(o) {   // (the tests and the tuning: one bed o.bed as it plays at a full zone (× o.v; the water at its nearest) on Tiho (o.lvl), rendered offline: its samples)
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     // (or one call o.spot: 'bird' (song o.k), 'gull', 'bell' (the church o.d m off the road), each at its nearest and loudest: A.R() 0)
-    if (!A || !A.Z || !OAC || (o.spot ? (o.spot === 'bird' && !A.songs.length) || (o.spot === 'bell' && !A.bells) : !A.buf.noise || !BG[o.bed] || (BUFB.has(o.bed) && !A.buf[o.bed]))) return Promise.resolve(null);
+    if (!A || !A.Z || !OAC) return Promise.resolve(null);
+    const sp0 = o.spot, miss = o.mix ? !A.buf.noise
+      : sp0 ? (sp0 === 'bird' && !A.songs.length) || (sp0 === 'bell' && !A.bells) || (sp0 === 'cow' && !A.cowb) || (sp0 === 'coo' && !A.coos) || ((sp0 === 'moo' || sp0 === 'baa') && !A.buf[sp0])
+      : !A.buf.noise || !BG[o.bed] || (BUFB.has(o.bed) && !A.buf[o.bed]);
+    if (miss) return Promise.resolve(null);
     const sr = o.sr || 44100, dur = o.dur || 3, ac = new OAC(1, Math.round(dur * sr), sr), keep = A;
-    A = Object.assign({}, keep, { ctx: ac, out: ac.createGain(), beds: {}, spots: [], peal: null, noise: null, nodes: 1, tg: {}, mlev: 0, R: o.spot ? () => 0 : rngOf(7), n: { birds: 0, bells: 0, gulls: 0 } });
+    A = Object.assign({}, keep, { ctx: ac, out: ac.createGain(), beds: {}, spots: [], peal: null, herd: null, noise: null, nodes: 1, tg: {}, mlev: 0, R: o.spot ? () => 0 : rngOf(7), n: N0() });
     try { A.out.gain.value = BASE * LV[o.lvl == null ? 1 : o.lvl]; A.out.connect(ac.destination);
       if (o.spot === 'bird') { A.songs = [keep.songs[(o.k || 0) % keep.songs.length]]; bird(0, 1, 1, 0); }
       else if (o.spot === 'gull') gulls(1, 0);
+      else if (o.spot === 'coo') coo(1, 0);
+      else if (o.spot === 'cow' || o.spot === 'moo' || o.spot === 'baa') {   // (a herd 20 m away: a cow's bell three times, a moo, a bleat)
+        const ch = spotChain(8000); ch.g.gain.value = SP.herd;
+        for (let k = 0; k < (o.spot === 'cow' ? 3 : 1); k++) { const b = ac.createBufferSource(); b.buffer = o.spot === 'cow' ? keep.cowb[k % keep.cowb.length] : keep.buf[o.spot]; b.connect(ch.f); b.start(k * 0.22); } }
       else if (o.spot === 'bell') { ring([0, 0, 1, o.d || 15], 0); for (let t = 0; t < dur && A.peal; t += 0.1) pealTick(A.peal, 0, 1, t); }
+      else if (o.mix) {   // (the load: o.mix's beds at once, a bird every 1.5 s, a peal of bells, a herd's bells: the most the mixer plays together)
+        const Bs = o.mix.map(b => bedOn(b)), HZ = { herds: [[0, 1, 25, 'cow']], open: true, len: 1e4 }; let pl = false;
+        for (let k = 0, t = 0; t < dur; t = ++k / 10) { Bs.forEach(B => bedTick(B, BG[B.name] * (KGB[B.name] || 1), 0, t)); if (k % 15 === 0 && A.songs.length) bird(0.5, 0.5, 1, t);
+          if (!pl && t > 1 && A.bells) { pl = true; ring([0, 0, 1, 40], t); } if (A.peal) pealTick(A.peal, 0, 1, t); if (A.cowb) herdTick(HZ, 0, 1, t, false); } }
       else { const B = bedOn(o.bed), v = BG[o.bed] * (o.v == null ? KGB[o.bed] || 1 : o.v); for (let t = 0; t < dur; t += 0.1) bedTick(B, v, 0, t); } }
     finally { A = keep; }
     return ac.startRendering().then(b => b.getChannelData(0));
@@ -585,12 +759,13 @@
     if (!S.lvl || !S.sound) free();
   }
   function levels() {   // (the tests, Sfx.levels' twin: what plays now)
-    if (!A) return { on: false, ready: false, nodes: 0, bytes: 0, master: 0, full: BASE * LV[S.lvl] * (S.sound ? 1 : 0), beds: {}, tg: {}, spots: 0, peal: false, n: { birds: 0, bells: 0, gulls: 0 } };
+    const sp = { pa: SPK.nPA, shouts: SPK.nSh, on: !!SPK.u, kind: SPK.kind, last: SPK.last, cut: SPK.cut };
+    if (!A) return { on: false, ready: false, nodes: 0, bytes: 0, master: 0, full: BASE * LV[S.lvl] * (S.sound ? 1 : 0), beds: {}, tg: {}, spots: 0, peal: false, herd: false, n: N0(), speech: sp };
     const beds = {}, tg = {}; for (const b in A.beds) beds[b] = +A.beds[b].cur.toFixed(4); for (const b in A.tg) tg[b] = +A.tg[b].toFixed(4);
-    return { on: true, ready: !A.gen && !!A.Z, err: A.err, nodes: A.nodes, bytes: A.bytes, master: +A.mlev.toFixed(4), full: BASE * LV[S.lvl], kmh: Math.round(A.kmh || 0), beds, tg, spots: A.spots.length, peal: !!A.peal, n: Object.assign({}, A.n), k: A.k,
-      songs: A.songs.length, saver: !!S.saver(), run: !!A.run, voices: Object.keys(A.buf).concat(A.bells ? ['bells'] : []), prep: { slices: A.prep.slices, ms: +A.prep.ms.toFixed(1), max: +A.prep.max.toFixed(2) } };
+    return { on: true, ready: !A.gen && !!A.Z, err: A.err, nodes: A.nodes, bytes: A.bytes, master: +A.mlev.toFixed(4), full: BASE * LV[S.lvl], kmh: Math.round(A.kmh || 0), beds, tg, spots: A.spots.length, peal: !!A.peal, herd: !!A.herd, n: Object.assign({}, A.n), k: A.k, speech: sp,
+      songs: A.songs.length, saver: !!S.saver(), run: !!A.run, voices: Object.keys(A.buf).concat(A.bells ? ['bells'] : [], A.cowb ? ['cowbells'] : [], A.coos ? ['coos'] : []), prep: { slices: A.prep.slices, ms: +A.prep.ms.toFixed(1), max: +A.prep.max.toFixed(2), at: A.prep.at, top: A.prep.top.slice() } };
   }
 
-  const api = { zones, table, eligible, KN, step, silence, set: setOpts, levels, prep: prepNow, probe, opts, get NO() { return [...NO]; } };
+  const api = { zones, table, eligible, KN, step, silence, set: setOpts, levels, prep: prepNow, profile, probe, opts, hush, lines: { pa: PA_LINES, end: PA_END, shouts: SHOUTS }, get NO() { return [...NO]; } };
   window.SfxOkolje = api;
 })();

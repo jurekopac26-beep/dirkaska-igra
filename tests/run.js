@@ -87,7 +87,7 @@ const RELATED = [
   [/^temni-nacin\.html$/, ['browser/darktip.test.mjs']],
   [/^js\/net\.js$/, ['net-core.test.js', 'browser/online.test.mjs']],
   [/^js\/sfx\.js$/, ['browser/sound.test.mjs', 'browser/okolje.test.mjs']],
-  [/^js\/world-zivali\.js$|^tools\/zvoki-pasovi\.mjs$/, ['browser/okolje.test.mjs']],   // (the sounds by the road: their zones from the woods, js/sfx-okolje.js)
+  [/^js\/world-zivali\.js$|^tools\/zvoki-pasovi\.mjs$|^js\/comm\.js$/, ['browser/okolje.test.mjs']],   // (the sounds by the road: their zones from the woods and the herds, js/sfx-okolje.js; the commentator cuts the announcer)
   [/^js\/lang\.js$|^js\/tracks\//, ['lang.test.js']],   // (a track's English name and description)
   [/^js\/tracks\/|^js\/core\.js$|^js\/routes\.js$|^tools\/menu-lens\.js$/, ['menu-lens.test.js']],
   [/^js\/tracks\/|^js\/core\.js$/, ['rivals-n.test.js', 'grid.test.js']],   // (the menu's Opponents: the most rivals each track's start and finish take, def.maxRivals)   // (the menu's tables of the tracks' lengths and heights)
