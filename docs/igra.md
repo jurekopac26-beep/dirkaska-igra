@@ -475,6 +475,18 @@ Povezava prenese tvoj čas in to, kako je bil odpeljan: progo, način (leteči k
 
 Ko prijatelj odpre povezavo, igra pokaže zaslon **Izziv**: kdo ga izziva, čas, ki ga mora premagati, in vse pogoje. Izziv počaka tudi na naslovnem zaslonu (gumb **Izziv: ime · čas**). **Sprejmi izziv** začne isto vožnjo: sam na progi, z avtom in v pogojih izzivalca, njegov duh pa vozi zraven. Pri letečem krogu se čas meri od črte, kot v kvalifikacijah. Na cilju se oba časa pokažeta drug ob drugem (**Izziv premagan!** ali **Izziv ni premagan**). Tvoji rekordi, duh in kariera ostanejo nespremenjeni. **Poskusi znova** požene isto vožnjo, **Pošlji odgovor** pa pošlje tvojo vožnjo z istimi pogoji nazaj izzivalcu. Kdor premaga izziv, dobi dosežek **Izziv sprejet**.
 
+## Lestvica prijateljev
+
+Najboljše čase si lahko izmenjaš s prijatelji brez strežnika in brez računa: vsak pošlje povezavo s svojimi časi, igra pa iz povezav, ki jih dobi, sestavi lestvico prijateljev za vsako progo in način (načrt v `docs/lestvica-prijateljev.md`, koda v `js/lestvica.js`, priklopi v `js/game.js` in `js/menu.js`).
+
+**Pošiljanje:** *Send my times* v pogledu *Friends* na izbiri proge, **Pošlji svoje čase** na **Lestvici** in **Pošlji prijateljem** na rezultatih po novem rekordu. Ob prvem pošiljanju igra vpraša za vzdevek (pod njim te prijatelji vidijo na lestvici; ne pravo ime). Na telefonu se odpre meni za deljenje, na računalniku se povezava kopira. Povezava (`#lestvica=…`, do 16.000 znakov) nosi tvoje najboljše čase vseh prog in načinov (krog, kronometer, vzpon, policijska in prometna dirka; suho in dež, po fiziki) z dnem in avtom, za njimi pa čase prijateljev z tvoje lestvice, kolikor jih gre vanjo, vsakega podpisanega od lastnika. Kdor odpre tvojo povezavo, tako dobi tudi čase skupnih prijateljev.
+
+**Odprtje povezave** (tudi v že odprti igri; med dirko počaka do menija): igra preveri podpis vsakega paketa (ECDSA P-256; spremenjen čas se zavrže), izpusti čase, hitrejše od meje proge (najvišja hitrost v ovinkih in na ravnini), in shrani nove in boljše čase. Zaslon **Lestvica prijateljev** pove, kdo je poslal povezavo, koliko časov je prinesla in koliko jih je boljših od tvojih, ter ponudi **Pošlji svoje** (odgovor nazaj) ali **Pozneje**. Nato se odpre izbira proge z najnovejšim novim časom v pogledu *Friends* (stari meni: **Lestvica** te proge). Tvoja lastna povezava ne doda ničesar.
+
+**Kje so časi:** na izbiri proge četrti gumb kamere *Friends* pokaže tabelo (mesto, voznik, avto, čas, zaostanek, tvoja vrstica zlata) namesto zemljevida; ostane izbran pri listanju prog, ob *Best lap* pa je značka tvojega mesta (npr. `2/5`), ki odpre ta pogled. Na **Lestvici** je pod rekordi proge okvirček **Prijatelji** (z datumom časa), gumb **Prijatelji (n)** pa odpre seznam prijateljev z gumbom **Odstrani**: časi odstranjenega igralca izginejo, njegova nova povezava jih prinese nazaj samo, če to potrdiš. Na rezultatih (ne v šoli vožnje, izzivu in dirki s prijateljem prek spleta) vrstica pove tvoje mesto, npr. »Med prijatelji: 2. od 5 (Lisica 0,77 s pred tabo).«
+
+Lestvica sprejme do 40 prijateljev; prostor naredi tisti, od katerega povezave ni bilo najdlje. Ključ za podpis nastane ob prvem pošiljanju in je del profila: izvoz in uvoz profila (Nastavitve) ga preneseta na drug telefon, kjer si za prijatelje isti igralec. Lestvica potrebuje brskalnik s spletno kriptografijo in stiskanjem (`crypto.subtle`, `CompressionStream`); drugje gumba *Friends* ni.
+
 ## Igralni plošček
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).

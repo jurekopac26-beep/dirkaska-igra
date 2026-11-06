@@ -43,6 +43,10 @@ window.MENU = {
   {
    "n": 3,
    "name": "Corner camera"
+  },
+  {
+   "n": 4,
+   "name": "Friends"
   }
  ],
  "wideMaps": {
