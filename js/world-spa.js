@@ -40,20 +40,21 @@
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
-  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
-    const g = new GB(), R = rng(640 + kind), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
-    const sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
-    if (kind === 0) {
-      cone(g, 0, -0.02, 0, 0.022, 0.22, 4, [0.26, 0.19, 0.14], null, 0);
-      for (let t = 0; t < 4; t++) nrFir(g, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 5, sh(sp, 0.86 + t * 0.07), spT, t * 1.1, 0.04);
-    } else if (kind === 1) {
-      nrFir(g, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.9), spT, 0.3, 0.03); nrFir(g, 0, 0.5, 0, 0.11, 0.5, 5, sp, spT, 1.1, 0.02);
-    } else {
-      cyl(g, 0, -0.02, 0, 0.022, 0.64, 4, [0.9, 0.9, 0.86], null, 0.016);
-      const be = [0.36, 0.52, 0.2]; ico(g, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3); nrLump(g, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25);
+  const { AB, aPuff, aShBlob, aShCone, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
+  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 a plantation spruce (tall and narrow, four tiers, dark blue-green, the tips lighter), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
+    const b = new AB(), R = rng(640 + kind), sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    if (kind === 0) {   // (28 faces)
+      aTrunk(b, 0, 0, 0, 0.022, 0.3, 4, [0.26, 0.19, 0.14]);
+      for (let t = 0; t < 4; t++) aTier(b, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 6, sh(sp, 0.62 + t * 0.08), sh(spT, 1.2 + t * 0.05), t * 1.1);
+      aShCone(b, 0, 0.14, 0, 0.18, 0.86, 5);
+    } else if (kind === 1) {   // (10 faces)
+      aTier(b, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.66), sh(spT, 1.2), 0.3); aTier(b, 0, 0.5, 0, 0.11, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 1.1);
+    } else {   // (40 faces)
+      aTrunk(b, 0, 0, 0, 0.022, 0.64, 3, [0.9, 0.9, 0.86], 0.016);
+      const be = [0.36, 0.52, 0.2]; aPuff(b, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3, 0.6, 1.3); aPuff(b, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25, 0.6, 1.3, -0.4);
+      aShBlob(b, 0.02, 0.64, 0.01, 0.2, 1.3);
     }
-    API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return b.geometry();
   }
   let spaATex = null;
   function spaAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the braking boards 300-100 m, DRS, the corner names, banners, the game's sponsors (boards on the rails)

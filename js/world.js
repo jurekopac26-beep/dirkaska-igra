@@ -58,11 +58,16 @@ const World = (function () {
   let SHLO = [];
   // a coarser copy of a unit plant or rock for its shadow: its vertices merged on a 3 x 4 x 3 grid over its box (each cell's vertices at
   // their average), the triangles that are left (no repeats); null where it would not save a third of them (small ones)
-  const SHLO_GEO = new Map();
+  const SHLO_GEO = new WeakMap(), SHLO_SRC = new WeakMap();   // (by the unit shape: a world built again lets the old ones go; SRC: AB's stand-ins)
   let SHLO_MAT = null;
   const shloMat = () => SHLO_MAT || (SHLO_MAT = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));   // (a copy's shadow from both its sides: a merged shape may have lost its back)
   function shadowLo(base) {
     if (SHLO_GEO.has(base)) return SHLO_GEO.get(base);
+    const src = SHLO_SRC.get(base);
+    if (src) {   // (a tree of the kit A brings its own few faces: made under World's own random numbers, for NIZKA alone)
+      const s = ownRnd(() => new THREE.BufferGeometry()); s.setAttribute('position', new THREE.Float32BufferAttribute(src[0], 3)); s.setIndex(src[1]);
+      SHLO_GEO.set(base, s); return s;
+    }
     const P = base.attributes.position, I = base.index, n = I ? I.count : P.count;
     let out = null;
     if (n >= 120) {
@@ -447,6 +452,59 @@ const World = (function () {
     const nn = (v) => { const x = v[0], y = v[1] / sy + 0.25, z = v[2], l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };   // (normals tipped up a little: the sun reaches over the top)
     const C = M.V.map((v, k) => sc(V[k], v)), Nn = M.V.map(nn);
     for (const [a, b, c] of M.F) g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]);
+  }
+  /* ---------------- Drevesa A (docs/drevesa-a.md): the trees' soft crowns, as the user picked them (»A · mehke krogle«, 5. 11. 2026), built
+     indexed: the faces of a crown share its vertices, so a phone transforms each vertex once, not once for each face it is in. AB is the
+     builder of a unit plant (height 1, the instances scale it): aPuff a soft clump of leaves, aTier a conifer's tier, aTrunk a trunk; its
+     shadow's stand-in (NIZKA: the shadow pass draws a few faces instead of the plant: aShCone, aShBlob) goes with the geometry (AB.geometry;
+     shadowLo makes it). Shading as the prototype's: dark underneath, warm and sunlit on top, the normals tipped up (the sun over the top) ---------------- */
+  class AB {
+    constructor() { this.P = []; this.N = []; this.C = []; this.I = []; this.SP = []; this.SI = []; }
+    v(x, y, z, nx, ny, nz, c) { this.P.push(x, y, z); this.N.push(nx, ny, nz); this.C.push(c[0], c[1], c[2]); return this.P.length / 3 - 1; }
+    t(a, b, c, inn) {   // a face, turned to face away from inn
+      const P = this.P, a3 = a * 3, b3 = b * 3, c3 = c * 3, ux = P[b3] - P[a3], uy = P[b3 + 1] - P[a3 + 1], uz = P[b3 + 2] - P[a3 + 2], vx = P[c3] - P[a3], vy = P[c3 + 1] - P[a3 + 1], vz = P[c3 + 2] - P[a3 + 2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, ox = (P[a3] + P[b3] + P[c3]) / 3 - inn[0], oy = (P[a3 + 1] + P[b3 + 1] + P[c3 + 1]) / 3 - inn[1], oz = (P[a3 + 2] + P[b3 + 2] + P[c3 + 2]) / 3 - inn[2];
+      if (nx * ox + ny * oy + nz * oz < 0) this.I.push(a, c, b); else this.I.push(a, b, c);
+    }
+    sv(x, y, z) { this.SP.push(x, y, z); return this.SP.length / 3 - 1; }
+    geometry() {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, 3)); g.setIndex(this.I); g.computeBoundingSphere();
+      if (this.SI.length) SHLO_SRC.set(g, [this.SP, this.SI]);   // (its shadow's stand-in: shadowLo makes it when NIZKA asks)
+      return g;
+    }
+  }
+  const aTint = (col, k, t) => [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.18 * t)];   // (lit by k; t 0 underneath .. 1 on top: warmer)
+  // a soft round clump of leaves (20 faces, 12 vertices; 12 draws of R, as puff with ICO0): an icosahedron stretched by sy, its shade from lo
+  // underneath to hi on top; cut: its faces lower than that (the middle of the unit sphere's face) left out, where the crown hides them
+  function aPuff(b, cx, cy, cz, r, sy, col, R, jit, lo, hi, cut) {
+    const id = [], inn = [cx, cy, cz];
+    for (const v of ICO_V) {
+      const k = 1 + (R() - 0.5) * jit, t = v[1] * 0.5 + 0.5, nx = v[0], ny = v[1] / sy + 0.25, nz = v[2], l = Math.hypot(nx, ny, nz) || 1;
+      id.push(b.v(cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k, nx / l, ny / l, nz / l, aTint(col, lo + (hi - lo) * t * t, t)));
+    }
+    for (const f of ICO_F) if (cut == null || ICO_V[f[0]][1] + ICO_V[f[1]][1] + ICO_V[f[2]][1] >= cut * 3) b.t(id[f[0]], id[f[1]], id[f[2]], inn);
+  }
+  // a conifer's tier (n faces, n + 1 vertices): a cone without its floor from its rim (radius r at y0, colour cb) to its tip (y0 + h, ct); the
+  // rim's normals lean out along the slope and up, the tip's straight up, so the tier is shaded round (soft), not in facets
+  function aTier(b, x, y0, z, r, h, n, cb, ct, rot) {
+    const L = Math.hypot(r, h) || 1, nh = h / L, ny = r / L + 0.35, l = Math.hypot(nh, ny), tip = b.v(x, y0 + h, z, 0, 1, 0, ct), inn = [x, y0 + h * 0.3, z], id = [];
+    for (let k = 0; k < n; k++) { const a = rot + k / n * TAU, c = Math.cos(a), s = Math.sin(a); id.push(b.v(x + c * r, y0, z + s * r, c * nh / l, ny / l, s * nh / l, cb)); }
+    for (let k = 0; k < n; k++) b.t(id[k], id[(k + 1) % n], tip, inn);
+  }
+  // a trunk (n faces, n + 1 vertices): a slim cone from below the ground (radius r) to y0 + h, darker at its foot; or (r2) a tube to radius r2
+  // at the top (2n faces, 2n vertices), where its top shows (a birch's)
+  function aTrunk(b, x, y0, z, r, h, n, col, r2) {
+    const inn = [x, y0 + h * (r2 ? 0.5 : 0.3), z], lo = [col[0] * 0.78, col[1] * 0.78, col[2] * 0.78], top = r2 ? [] : null, bot = [];
+    const tip = r2 ? -1 : b.v(x, y0 + h, z, 0, 1, 0, col);
+    for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.3, c = Math.cos(a), s = Math.sin(a); bot.push(b.v(x + c * r, y0 - 0.02, z + s * r, c, 0, s, lo)); if (top) top.push(b.v(x + c * r2, y0 + h, z + s * r2, c, 0, s, col)); }
+    for (let k = 0; k < n; k++) { const j = (k + 1) % n; if (top) { b.t(bot[k], bot[j], top[j], inn); b.t(bot[k], top[j], top[k], inn); } else b.t(bot[k], bot[j], tip, inn); }
+  }
+  function aShCone(b, x, y0, z, r, h, n) { const tip = b.sv(x, y0 + h, z), id = []; for (let k = 0; k < n; k++) { const a = k / n * TAU; id.push(b.sv(x + Math.cos(a) * r, y0, z + Math.sin(a) * r)); } for (let k = 0; k < n; k++) b.SI.push(id[k], id[(k + 1) % n], tip); }   // (a cone's shadow: n faces)
+  function aShBlob(b, cx, cy, cz, r, sy) {   // (a crown's shadow: an octahedron, 8 faces)
+    const id = [[1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], [0, -1, 0]].map(v => b.sv(cx + v[0] * r, cy + v[1] * r * sy, cz + v[2] * r));
+    for (let k = 0; k < 4; k++) b.SI.push(id[k], id[(k + 1) % 4], id[4], id[(k + 1) % 4], id[k], id[5]);
   }
   function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat) {   // chunky boulder (33 faces): 7-sided, bulging middle, chamfered flat top (cy = centre height)
     const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = 7;
@@ -4887,23 +4945,22 @@ const World = (function () {
     for (let k = 0; k < 2 * n; k++) { const a = rot + k / (2 * n) * TAU, tip = k % 2 === 0, rr = tip ? r : r * 0.78; P.push([cx + Math.cos(a) * rr, cy + (tip ? -droop : h * 0.07), cz + Math.sin(a) * rr]); Nm.push([Math.cos(a) * nh, ny, Math.sin(a) * nh]); }
     for (let k = 0; k < 2 * n; k++) { const j = (k + 1) % (2 * n); g.triON(P[k], P[j], apex, Nm[k], Nm[j], up, inn, k % 2 ? dk : col, j % 2 ? dk : col, colTip); }
   }
-  function nrTreeGeo(kind) {   // unit trees (height 1, instances scale them), soft shaded: 0 spruce, 1 beech (also the bushes: sunk into the ground); 2, 3 the cheaper spruce and beech far from the road
-    const g = new GB(), R = rng(610 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals from cone / starCone / ico; the flag is the theme's, restored below)
-    const sp = [0.1, 0.22, 0.14], spT = [0.17, 0.33, 0.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], be = [0.2, 0.35, 0.13];
-    if (kind === 0) {   // spruce: thin trunk, three tiers of branches, dark blue-green
-      cone(g, 0, -0.02, 0, 0.035, 0.3, 4, [0.3, 0.22, 0.15], null, 0);
-      nrFir(g, 0, 0.1, 0, 0.3, 0.46, 7, sh(sp, 0.9), spT, 0.2, 0.04); nrFir(g, 0, 0.36, 0, 0.22, 0.4, 6, sp, spT, 0.75, 0.03);
-      nrFir(g, 0, 0.6, 0, 0.13, 0.4, 5, sh(sp, 1.08), spT, 1.3, 0.02);
-    } else if (kind === 1) {   // beech: grey trunk, a broad crown of two soft lumps
-      cyl(g, 0, -0.02, 0, 0.04, 0.42, 4, [0.42, 0.4, 0.36], null, 0.03);
-      ico(g, -0.04, 0.63, -0.02, 0.3, 0.9, be, R, 0.22); nrLump(g, 0.13, 0.57, 0.07, 0.21, 0.9, sh(be, 1.06), R, 0.2);
-    } else if (kind === 2) {   // far spruce: two tiers, no trunk
-      nrFir(g, 0, 0.12, 0, 0.29, 0.54, 6, sh(sp, 0.92), spT, 0.2, 0.04); nrFir(g, 0, 0.5, 0, 0.17, 0.5, 5, sp, spT, 0.9, 0.03);
+  function nrTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 spruce, 1 beech (also the bushes: sunk into the ground); 2, 3 the cheaper spruce and beech far from the road
+    const b = new AB(), R = rng(610 + kind), sp = [0.1, 0.22, 0.14], spT = [0.17, 0.33, 0.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], be = [0.2, 0.35, 0.13];
+    if (kind === 0) {   // spruce: thin trunk, three tiers of branches, dark blue-green, the tips lighter (22 faces)
+      aTrunk(b, 0, 0, 0, 0.035, 0.3, 4, [0.3, 0.22, 0.15]);
+      aTier(b, 0, 0.1, 0, 0.3, 0.46, 6, sh(sp, 0.62), sh(spT, 1.2), 0.2); aTier(b, 0, 0.36, 0, 0.22, 0.4, 6, sh(sp, 0.72), sh(spT, 1.25), 0.75);
+      aTier(b, 0, 0.6, 0, 0.13, 0.4, 6, sh(sp, 0.84), sh(spT, 1.3), 1.3); aShCone(b, 0, 0.1, 0, 0.27, 0.9, 5);
+    } else if (kind === 1) {   // beech: grey trunk, a broad crown of two soft lumps (38 faces)
+      aTrunk(b, 0, 0, 0, 0.04, 0.85, 4, [0.42, 0.4, 0.36]);
+      aPuff(b, -0.04, 0.63, -0.02, 0.3, 0.9, be, R, 0.22, 0.55, 1.35); aPuff(b, 0.13, 0.57, 0.07, 0.21, 0.9, sh(be, 1.06), R, 0.2, 0.55, 1.35, -0.4);
+      aShBlob(b, 0, 0.62, 0, 0.32, 0.85);
+    } else if (kind === 2) {   // far spruce: two tiers, no trunk (10 faces)
+      aTier(b, 0, 0.12, 0, 0.29, 0.54, 5, sh(sp, 0.66), sh(spT, 1.2), 0.2); aTier(b, 0, 0.5, 0, 0.17, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 0.9);
     } else {   // far beech: one lump
-      ico(g, 0, 0.6, 0, 0.33, 0.95, be, R, 0.25);
+      aPuff(b, 0, 0.6, 0, 0.33, 0.95, be, R, 0.25, 0.55, 1.35);
     }
-    ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return b.geometry();
   }
   let nrATex = null;
   function nrAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): km 1-20, the corner names, banners
@@ -5037,6 +5094,7 @@ const World = (function () {
     hash: { get: () => hash },
     sync: { value: SYNC }
   });
+  Object.assign(API, { AB, aPuff, aShBlob, aShCone, aTier, aTrunk });   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
 
   function update(out, t, car, cam, rp) {
     if (!out) return;
