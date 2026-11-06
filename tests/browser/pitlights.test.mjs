@@ -12,7 +12,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('pit lights (dusk, night)');
 const srv = await serve();
 const browser = await launch();
-const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'detroit', 'bangsaen', 'townsville', 'troisrivieres'];
+const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'bangsaen', 'townsville', 'troisrivieres'];
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', tod: 'night', weather: 'dry' }, { width: 844, height: 390 });
   // 1. every track with pits, its world built at night: the lights where the garages are

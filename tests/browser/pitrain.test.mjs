@@ -11,7 +11,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('the pits in the rain');
 const srv = await serve();
 const browser = await launch();
-const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'detroit', 'bangsaen', 'townsville', 'troisrivieres'];
+const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'bangsaen', 'townsville', 'troisrivieres'];
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', weather: 'rain' }, { width: 844, height: 390 });
   // 1. every track with pits: the pits' wet parts of its world

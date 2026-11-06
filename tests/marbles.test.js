@@ -103,7 +103,7 @@ const A = race({ laps: 6 }, 420, 280, 290);
   const T = track('cpalace'), r = new C.Race(T, opts({ tyres: false, compounds: false }));
   r.start(); for (let k = 0; k < 120 * 40; k++) { Math.random = seeded(900 + k); C.aiControl(r.player, r, DT); r.step(DT); }
   check('a race without tyres: no marbles, the grip as ever', r.mb === null && !r.wst.on && r.cars.every(c => c.wet === 1), '');
-  const O = new C.Race(track('vrsic'), opts({ numAI: 0, playerGrid: 1, laps: 1 }));
+  const O = new C.Race(track('caracoles'), opts({ numAI: 0, playerGrid: 1, laps: 1 }));
   check('an open road, even with tyres: no marbles', O.mb === null, '');
   const tst = C.TRACKS.filter(d => d.pit && d.test).map(d => d.id), X = tst.filter(id => new C.Race(track(id), opts({ numAI: 0, playerGrid: 1, laps: 1 })).mb !== null);
   check('a circuit kept for testing only (test: true), even with tyres: no marbles (CLAUDE.md: no new graphics there)', tst.length >= 3 && !X.length, tst.join(', ') + (X.length ? ' — WITH: ' + X.join(', ') : ''));
