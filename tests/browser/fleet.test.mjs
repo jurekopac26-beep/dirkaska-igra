@@ -263,14 +263,16 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1, tl: !!(M.trailer && M.trailer.look) };
     }, m.id);
     R4.push(r);
   }
   const lim = (f, n) => R4.filter(f).map(r => r.id).slice(0, n || 6).join(', ');
   const fmtC = (r) => `${r.id} ${r.pc.calls}/${r.ac.calls}`;
-  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9', R4.length === kits.length && R4.every(r => r.pc.calls <= 14 && r.ac.calls <= 9),
-    R4.filter(r => r.pc.calls > 14 || r.ac.calls > 9).concat(R4).slice(0, 8).map(fmtC).join(', '));
+  // (a semi-trailer's rig, docs/titan-cisterna.md: its trailer 4 more, its body, its lamps, its blob, its shadow; drawn with the tractor, tlDraw)
+  const tlC = (r) => r.tl ? 4 : 0;
+  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9 (a semi-trailer\'s rig 4 more each)', R4.length === kits.length && R4.every(r => r.pc.calls <= 14 + tlC(r) && r.ac.calls <= 9 + tlC(r)),
+    R4.filter(r => r.pc.calls > 14 + tlC(r) || r.ac.calls > 9 + tlC(r)).concat(R4).slice(0, 8).map(fmtC).join(', '));
   T.check('the four wheels exactly on the physics\' hubs (M.a / -M.b, rw, +-hw; the left ones mirrored), one mesh for each wheel part; the player\'s cast shadows, a rival\'s none and <= 160 triangles',
     R4.every(r => !r.why.length && r.aiW), R4.filter(r => r.why.length || !r.aiW).slice(0, 3).map(r => r.id + ': ' + r.why.slice(0, 2).join('; ') + (r.aiW ? '' : ' rival wheels')).join(' | '));
   T.check('the pit crew\'s hubs (crDims) on the wheel meshes (within 1 cm)', R4.every(r => r.crew && r.crew.every(d => Math.abs(d) <= 0.01)),
@@ -427,6 +429,7 @@ try {
       let seed = 5150; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, S = Render.scene, world = S.children.filter(o => !o.isLight && !o.isPoints && !R.cars.some(c => Render.viewOf(c) && Render.viewOf(c).grp === o));
+      const tl0 = P.tl; P.tl = null;   // (a semi-trailer's rig: its trailer off for the pictures (Render's tlDraw hides it): from behind its tank hides the tractor's fire, docs/titan-cisterna.md)
       const vis0 = world.map(o => o.visible); for (const o of world) o.visible = false;   // (the world hidden throughout; the cars, their pieces, the effects (points) drawn)
       const run = (n, mode, fx) => { for (let i = 0; i < n; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, mode, fx ? {} : { noFx: true }); } };
       const keep = window.__pics ? {} : null, pic = (mode, name) => { const c = Render.snapshot(P, mode, 844); if (keep) keep[name] = c.toDataURL('image/png'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
@@ -467,7 +470,7 @@ try {
       const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), cracks = v.crack.filter(q => q && q.visible).length;
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
-      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
+      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; }); P.tl = tl0;
       return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)
