@@ -2,15 +2,19 @@
    build(K, n, m, M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars. The mounts (look units):
      aero: { xf, xr: the bumpers' faces (front, rear), w: their half width, yf, yr: their foot's height, sill: [x0, x1] between the arches,
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
-             without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips) }
+             without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips),
+             archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0) }
      hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines), bulge: the power bulge's length
-       (options 5, 6; 0.7, a short bonnet's less: it stops before the cowl) }: in the bonnet's part
+       (options 5, 6; 0.7, a short bonnet's less: it stops before the cowl), rel: true (the louvres, bulges and stripe where KOLIBRI's are from
+       its front edge, across as wide for its half width), cells: a curved top's (the louvres' panels, their frames and the stripe in that
+       many times the cells along it: they follow it; 1) }: in the bonnet's part
      maska: { x, y0, lean: the face between the lamps (x at y0, leaning back lean per metre up), yc: the grille's middle, w, h: its room }
-     zmigavci: { front: { x, y, z, w, h, part }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
+     zmigavci: { front: { x, y, z, w, h, part, parts: [left, right] }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
              indicators on the front bumper, the repeaters on the fenders (z out from the middle), the rear's on the rear bumper, the
              mirrors' housings' front faces
-     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w], pod: [x, y0, y1, w], part }: the bumper's face
-             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge, the pod over the nose
+     relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w], pod: [x, y0, y1, w], foot, part }: the bumper's face
+             with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge, the pod over the nose; foot:
+             the bumper's top the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle)
    Every option is a few primitives in the body's material; the details (bulbs, rivets, the weave's finer cells) only on Visoki (K.hi). */
 (function () {
   'use strict';
@@ -83,7 +87,7 @@
       fin_(-g - 0.004); fin_(g + 0.004); };
     // the arches' flares (bolt-on, rivets on Visoki)
     const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) {
-      K.flare(A.x, A.r - 0.012, A.r + 0.07, sd * (ws - 0.004), sd * (ws + out), col, { n: 5, y: A.y, part: 'body' });
+      K.flare(A.x, A.r - (m.archIn != null ? m.archIn : 0.012), A.r + 0.07, sd * (ws - 0.004), sd * (ws + out), col, { n: 5, y: A.y, part: 'body' });   // (archIn: its inner edge into the arch; a small arch round its tyre: less)
       if (K.hi) for (let i = 0; i < 5; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 4, r = A.r + 0.035; K.rect(A.x + Math.cos(a) * r / K.sx, A.y + Math.sin(a) * r, sd * (ws + out + 0.001), 0.012, 0.012, [0.8, 0.81, 0.84], { dir: sd < 0 ? '-z' : 'z', part: 'body' }); } } };
     const keepF = () => m.lipF && stock(m.lipF, oF), keepR = () => m.lipR && stock(m.lipR, oR);   // (a car without a stock lip there: none)
     const D2 = K.shade(P, 0.5);
@@ -111,6 +115,8 @@
   // (in place of the stock scoop; in the bonnet's part, it opens and flies off with it)
   function hauba(K, n, m) {
     const P = K.paint, X0 = m.x0, X1 = m.x1, W = m.w, T = (x, z) => K.topY(x, z), up = [0, 1, 0];
+    const rx = (x) => m.rel ? X1 - 1.63 + x : x, rz = (z) => m.rel ? z * W / 0.645 : z;   // (rel: the louvres where KOLIBRI's are from its bonnet's front edge, across as wide for its width)
+    const NC = m.cells || 1;   // (cells: a curved top's: the louvres' panels, their frames and the stripe in NC times as many cells along it, to follow it)
     const pt = (x, z, l) => [x, T(x, z) + l, z];
     // a skin of the bonnet's top over [xa, xb] x [za, zb] (nx by nz cells, col(i, j)), lift off the paint
     // (c2: each cell's two triangles in two shades, alternating: carbon's twill)
@@ -122,13 +128,13 @@
     // the whole bonnet: carbon's weave (finer on Visoki), a bare metal's in one shade
     const panel = (c1, c2) => top(X0, X1, -W, W, c1, 0.005, K.hi ? 10 : 5, K.hi ? 8 : 4, c2);
     // louvres: a dark panel, k slats across it stepping up towards the back (xc its middle, len along x, wid across, at z +-zc or 0)
-    const vents = (xc, len, zc, wid, k, col, slat) => { for (const sd of zc ? [-1, 1] : [0]) { const z = sd * zc;
-      top(xc - len / 2, xc + len / 2, z - wid / 2, z + wid / 2, [0.02, 0.02, 0.022], 0.008, 1, 1);
+    const vents = (xc, len, zc, wid, k, col, slat) => { xc = rx(xc); zc = rz(zc); wid = rz(wid); for (const sd of zc ? [-1, 1] : [0]) { const z = sd * zc;
+      top(xc - len / 2, xc + len / 2, z - wid / 2, z + wid / 2, [0.02, 0.02, 0.022], 0.008, NC, 1);
       for (let i = 0; i < k; i++) { const x = xc - len / 2 + len * (i + 0.5) / k, d = len / k * 0.22;   // (each slat leaning back over its gap)
         fc(K, [pt(x + d, z - wid / 2 + 0.008, 0.009), pt(x - d, z - wid / 2 + 0.008, 0.02), pt(x - d, z + wid / 2 - 0.008, 0.02), pt(x + d, z + wid / 2 - 0.008, 0.009)], slat || col, up); }
-      if (K.hi) for (const e of [-1, 1]) top(xc - len / 2, xc + len / 2, z + e * wid / 2 - 0.006, z + e * wid / 2 + 0.006, slat || col, 0.011, 1, 1); } };   // (its frame's sides)
+      if (K.hi) for (const e of [-1, 1]) top(xc - len / 2, xc + len / 2, z + e * wid / 2 - 0.006, z + e * wid / 2 + 0.006, slat || col, 0.011, NC, 1); } };   // (its frame's sides)
     // a scoop (its black mouth forward, as the stock one) or a closed bulge: xf its front, len back from there, h tall, w its half width
-    const scoop = (xf, len, h, w, col, mouth) => { const ring = (x, hh, ww) => { const y = T(x, 0); return [[x, y - 0.012, -ww], [x, y + hh * 0.72, -ww + 0.012], [x, y + hh, -ww + 0.05], [x, y + hh, ww - 0.05], [x, y + hh * 0.72, ww - 0.012], [x, y - 0.012, ww]]; };
+    const scoop = (xf, len, h, w, col, mouth) => { w = rz(w); const ring = (x, hh, ww) => { const y = T(x, 0); return [[x, y - 0.012, -ww], [x, y + hh * 0.72, -ww + 0.012], [x, y + hh, -ww + 0.05], [x, y + hh, ww - 0.05], [x, y + hh * 0.72, ww - 0.012], [x, y - 0.012, ww]]; };
       const xs = [xf, xf - len * 0.07, xf - len * 0.35, xf - len], hs = mouth ? [h, h * 1.05, h * 0.9, 0.006] : [0.004, h * 0.75, h, 0.006], wk = [1, 0.99, 0.96, 0.85];
       K.skin(xs.map((x, i) => ring(x, hs[i], w * wk[i])), col, mouth ? BP : col, col);
       if (mouth) K.grille(xf + 0.002, T(xf, 0) + h * 0.46, 0, (w - 0.04) * 2, h * 0.62, { slats: K.hi ? 3 : 2, col: BP, slatCol: DK }); };
@@ -137,7 +143,7 @@
       disc(K, c, up, 0.022, 8, K.chrome); disc(K, add3(c, up, 0.002), up, 0.009, 6, DK);
       K.bar(add3(c, up, 0.003), [x - 0.05, T(x - 0.05, z + sd * 0.03) + 0.012, z + sd * 0.03], 0.0035, clip, { n: 3 }); } };
     // a stripe along the middle
-    const stripe = (w, col) => top(X0 + 0.02, X1 - 0.01, -w, w, col, 0.007, 2, 1);
+    const stripe = (w, col) => top(X0 + 0.02, X1 - 0.01, -rz(w), rz(w), col, 0.007, 2 * NC, 1);
     switch (n) {
       case 1: scoop(X1 - 0.12, 0.55, 0.02, 0.24, P, false); break;                                                   // jeklena, nadomestna: a low flat bulge
       case 2: vents(1.4, 0.22, 0.42, 0.18, 5, P); break;                                                              // jeklena z režami
@@ -238,8 +244,9 @@
     const L = looks[n - 1]; if (!L) return;
     const seqLike = L.seq || L.leds, fw = seqLike ? F.w * 1.12 : F.w, fh = L.drl ? F.h * 1.2 : seqLike ? F.h * 0.8 : F.h;
     for (const sd of [-1, 1]) {
-      lamp(F.x, F.y, sd * F.z, fw, fh, 'x', { part: F.part }, L);
-      if (L.rib && K.hi) for (const v of [-0.3, 0.3]) pane(F.x, F.y + v * fh, sd * F.z, fw * 0.96, 0.004, AMB2, 'x', { part: F.part }, 0.002);
+      const fo = { part: F.parts ? F.parts[sd < 0 ? 0 : 1] : F.part };   // (front.parts [left, right]: each in its own, as on MIŠKA's wings)
+      lamp(F.x, F.y, sd * F.z, fw, fh, 'x', fo, L);
+      if (L.rib && K.hi) for (const v of [-0.3, 0.3]) pane(F.x, F.y + v * fh, sd * F.z, fw * 0.96, 0.004, AMB2, 'x', fo, 0.002);
       // the repeater: an amber lens as stock on the first four, a slim LED or sequential strip after them; on the mirrors instead (7, 16)
       const sz = sd * S.z, sdir = sd < 0 ? '-z' : 'z', so = { host: S.host };
       if (L.mirror && MI) { const mp = MI.parts ? { part: MI.parts[sd < 0 ? 0 : 1] } : {}, k = L.seq ? 4 : 3, w = MI.w || 0.11;
@@ -281,7 +288,8 @@
       case 5: case 6: case 7: case 8: {   // štiri pred masko na cevi (LED, yellow, covers)
         const lens = n === 7 ? YEL : n === 6 ? LED : WARM, rim = n === 5 ? CH : BP, y = ny, x = nx + 0.11, r = 0.08;
         K.cyl([x - 0.06, y - r - 0.03, -0.52], [x - 0.06, y - r - 0.03, 0.52], 0.014, CH, Object.assign({ n: 6 }, o));   // (the bar across the nose)
-        for (const sd of [-1, 1]) K.box(x - 0.08, m.bumper[1] + 0.13, sd * 0.5, 0.03, y - r - 0.03 - m.bumper[1] - 0.13, 0.03, 0, DK, null, false, o);   // (its feet on the bumper)
+        const fb = m.foot != null ? m.foot - 0.13 : m.bumper[1];   // (foot: the bumper's top they stand on; else 13 cm over the bumper lamps' middle, KOLIBRI's)
+        for (const sd of [-1, 1]) K.box(x - 0.08, fb + 0.13, sd * 0.5, 0.03, y - r - 0.03 - fb - 0.13, 0.03, 0, DK, null, false, o);   // (its feet on the bumper)
         for (const z of [-0.39, -0.13, 0.13, 0.39]) front(x, y, z, r, lens, rim, null, y - r - 0.03, n === 8 ? { cover: BP } : null);
         break; }
       case 9: roofBar(0.42, K.hi ? 10 : 6, LED); break;                                          // letev na strehi

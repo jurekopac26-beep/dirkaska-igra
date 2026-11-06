@@ -10,7 +10,7 @@
 //    the bonnet's in 'hood', the aerial's in 'aerial' ...), a hidden part's in the inner block only
 //  - two parts at once (K.fitted: a part makes room for another): every pair of options of two elements that cross each other by more
 //    than 2 cm over the stock shell when each is built alone, fitted together: within 2 cm (the exhaust and the tow eye through the
-//    diffuser: within 3 cm, cut-outs)
+//    diffuser: within 3 cm, cut-outs; one under the car as fitted, its shell above and nothing below, doesn't show: an open tail)
 //  - the wheels as drawn (kitWheelGeo's helper captured at DELI.build): on every rim (stock and 1-16) every brake kit's caliper (zavore)
 //    behind the face's spokes, every nut's top (matice) clear of the face; none behind a steel wheel or a cover; the body's calipers
 //    (celjusti) behind the spokes, none behind a steel wheel, none beside a brake kit (its caliper in their colour)
@@ -116,25 +116,31 @@ check('breaking: each part in the stock part ids (spoiler, headL / headR, hood, 
 // ---- 2. two parts at once (K.fitted): pairs that cross built alone, fitted together ----
 const ST = L.optionGeo(R, VID, {}, '__', true), GB = L.Grid(ST.P, ST.rest);   // (the stock shell: how far over it two parts meet)
 const ovB = (a, b) => [0, 1, 2].every(j => a[0][j] <= b[1][j] && b[0][j] <= a[1][j]);
-const cross = (A, B) => {   // A's edges through B's triangles: the highest crossing over the stock shell
+const cross = (A, B, under) => {   // A's edges through B's triangles: the highest crossing over the stock shell (under: one that doesn't count)
   if (!B.G) B.G = L.Grid(B.P, B.tris); let h = 0;
   for (const t of A.tris) { const o = t * 9, V = [0, 1, 2].map(v => [A.P[o + v * 3], A.P[o + v * 3 + 1], A.P[o + v * 3 + 2]]);
     for (let e = 0; e < 3; e++) { const p = V[e], q = V[(e + 1) % 3], [lo, hi] = L.boxOf([p, q]); if (!ovB([lo, hi], B.box)) continue;
       for (const u of B.G.near(lo, hi)) { const T = B.G.tri(u), s = L.segTri(p, q, T[0], T[1], T[2]);
-        if (s > 1e-4 && s < 1 - 1e-4) { const x = [p[0] + (q[0] - p[0]) * s, p[1] + (q[1] - p[1]) * s, p[2] + (q[2] - p[2]) * s], d = GB.dist(x, 0.25).d; if (d > h) h = d; break; } } } }
+        if (s > 1e-4 && s < 1 - 1e-4) { const x = [p[0] + (q[0] - p[0]) * s, p[1] + (q[1] - p[1]) * s, p[2] + (q[2] - p[2]) * s], d = GB.dist(x, 0.25).d; if (d > h && !(under && under(x))) h = d; break; } } } }
   return h; };
 const sub = (P, ranges) => { const ts = []; for (const [a, b] of ranges || []) for (let v = a; v < b; v += 3) ts.push(v / 3);
   const Q = new Float32Array(ts.length * 9); ts.forEach((t, i) => Q.set(P.subarray(t * 9, t * 9 + 9), i * 9)); const tris = ts.map((_, i) => i); return { P: Q, tris, box: tris.length ? L.boxOf(L.corners(Q, tris)) : null }; };
 const VIS = ELS.filter(id => !HID.includes(id) && alone[id].some(Boolean)), CUT = { 'aero|auspuh': 0.03, 'aero|vlecne_kljuke': 0.03 };   // (through the diffuser: cut-outs)
+const underOf = (P, U, ids) => {   // a cut-out under the car as fitted: its shell (without the two parts) above the point, nothing below
+  const mine = new Uint8Array(P.length / 9); for (const k of ids) for (const [a, b] of U.deli[k] || []) for (let v = a; v < b; v += 3) mine[v / 3] = 1;
+  const runs = []; let a0 = -1; for (let t = 0; t <= U.outerN / 3; t++) { const off = t === U.outerN / 3 || mine[t]; if (!off && a0 < 0) a0 = t; if (off && a0 >= 0) { runs.push([a0 * 3, t * 3]); a0 = -1; } }
+  const S = sub(P, runs);
+  let G = null; return (x) => { if (!G) G = L.Grid(S.P, S.tris); return G.ray(x, [0, 1, 0], 4) < Infinity && G.ray(x, [0, -1, 0], 4) === Infinity; }; };
 const pairBad = [], pairSeen = []; let tried = 0;
 for (let i = 0; i < VIS.length; i++) for (let j = i + 1; j < VIS.length; j++) { const A = VIS[i], B = VIS[j], lim = CUT[A + '|' + B] || CUT[B + '|' + A] || 0.02;
   for (let a = 1; a <= 16; a++) for (let b = 1; b <= 16; b++) { const oa = alone[A][a], ob = alone[B][b]; if (!oa || !ob || !ovB(oa.box, ob.box)) continue;
     if (Math.max(cross(oa, ob), cross(ob, oa)) <= 0.02) continue;
     tried++; if (!pairSeen.includes(A + ' x ' + B)) pairSeen.push(A + ' x ' + B);
     const T = R.kitTry(VID, null, { [A]: a, [B]: b }, true); if (!T || T.status !== 'ok') { pairBad.push(`${A}${a} + ${B}${b} ${T ? T.status : 'none'}`); continue; }
-    const U = T.geo.userData, P = T.geo.attributes.position.array, SA = sub(P, U.deli[A]), SB = sub(P, U.deli[B]); T.geo.dispose();
+    const U = T.geo.userData, P = T.geo.attributes.position.array, SA = sub(P, U.deli[A]), SB = sub(P, U.deli[B]);
+    const under = lim > 0.02 ? underOf(P, U, [A, A + '+', B, B + '+']) : null; T.geo.dispose();
     if (!SA.box || !SB.box || !ovB(SA.box, SB.box)) continue;
-    const h = Math.max(cross(SA, SB), cross(SB, SA)); if (h > lim) pairBad.push(`${A}${a} + ${B}${b} ${mm(h)}`); } }
+    const h = Math.max(cross(SA, SB, under), cross(SB, SA, under)); if (h > lim) pairBad.push(`${A}${a} + ${B}${b} ${mm(h)}`); } }
 check('two parts at once: the pairs that cross by over 2 cm built alone, fitted together, within 2 cm over the shell (the diffuser\'s cut-outs 3 cm)',
   !pairBad.length && (tried > 0 || VID !== 'kolibri'), pairBad.slice(0, 4).join(', ') || `${tried} pairs of options (${pairSeen.join(', ')})`);
 
