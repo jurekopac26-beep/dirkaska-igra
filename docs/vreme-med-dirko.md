@@ -102,4 +102,4 @@ Odgovore prebere koordinacija VSE SEJE 2 (`seja_id` vprašanj) in jih zapiše se
 
 ## Stanje
 - 6. 11. 2026: načrt, tri vprašanja s slikami (`vreme-pogostost`, `vreme-obseg`, `vreme-videz`), osnutek #397 samo z dokumenti; tema v `docs/vrsta.md` (Načrtovano, dogovor v Usklajevanje med računi, točka 6). Koda po »Dež in sneg« in odgovorih.
-- 6. 11. 2026, 9.58: odgovora uporabnika: `vreme-obseg` **1** (cel cikel v eni dirki, postopno močenje, dežuje povsod hkrati; 17–24 h), `vreme-videz` **1** (cesta v lisah, ob nalivu kapljice na zaslonu, samo kakovost Visoka). `vreme-pogostost` še brez odgovora.
+- 6. 11. 2026, 9.58: odgovora uporabnika: `vreme-obseg` **1** (cel cikel v eni dirki, postopno močenje, dežuje povsod hkrati; 17–24 h), `vreme-videz` **1** (cesta v lisah, ob nalivu kapljice na zaslonu, samo kakovost Visoka). `vreme-pogostost` **1** (10.10: Changing kot četrta ikona v stolpcu Weather, Random včasih). Vsi trije odgovori so tu; koda po »Dež in sneg« (biketraveler) in #284/#296/#390.
