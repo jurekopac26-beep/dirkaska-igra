@@ -1,6 +1,6 @@
 # Lestvica prijateljev (načrt)
 
-Novost, ki jo je uporabnik izbral 5. 11. 2026: časi prijateljev po progah, ki si jih pošljete s povezavo, so v tabeli ob izbiri proge. Deluje brez strežnika in brez računa. To je načrt; koda se začne po odgovorih uporabnika na strani Odločitve 3 (vprašanja `lp-meni`, `lp-povezava`, `lp-obseg`, razdelek »Odločitve uporabnika«). Tema je v `docs/vrsta.md` (Načrtovano, račun 3, pred novimi progami).
+Novost, ki jo je uporabnik izbral 5. 11. 2026: časi prijateljev po progah, ki si jih pošljete s povezavo, so v tabeli ob izbiri proge. Deluje brez strežnika in brez računa. Uporabnik je 6. 11. 2026 odgovoril na vprašanja `lp-meni`, `lp-povezava` in `lp-obseg` (razdelek »Odločitve uporabnika«); koda je v delu (veja `lestvica-prijateljev/koda`).
 
 ## Na kratko
 
@@ -114,9 +114,16 @@ Skupaj ~17 h pri priporočenih izbirah; `lp-povezava` 2: +2 h; `lp-obseg` 2: +3 
 
 ## Odločitve uporabnika (stran Odločitve 3)
 
-- `lp-meni`: kje je tabela na koraku izbire proge (1 pogled Friends na sliki proge in značka mesta · 2 vrstica pod številkami · 3 samo gumb in okno). Priporočeno 1.
-- `lp-povezava`: kaj nosi povezava (1 samo tvoje čase · 2 tvoje in časi prijateljev, ki jih imaš, vsak podpisan od svojega lastnika; ena povezava prinese vso skupino, a je do nekaj tisoč znakov večja). Priporočeno 1.
-- `lp-obseg`: kaj poleg tabele (1 mesto med prijatelji na rezultatih in *Pošlji prijateljem* po novem rekordu · 2 kot 1 in v kronometru razlika do prijatelja pred tabo na vsaki kontrolni točki, povezava nosi še njegove vmesne čase · 3 samo tabela). Priporočeno 1.
+Odgovori uporabnika 6. 11. 2026 (stran Odločitve, račun partyslo):
+
+- `lp-meni` = **1**: pogled **Friends** na sliki proge. 4. gumb ob kamerah (zemljevid, prelet, ovinek) pokaže tabelo namesto slike (mesto, vzdevek, avto, čas, zaostanek; spodaj *Send my times*); pogled ostane izbran pri listanju prog; ob *Best lap* (oz. *Best time* …) v vrstici številk značka mesta »2/5«, dotik odpre pogled.
+- `lp-povezava` = **2**: povezava nosi tvoje čase **in čase prijateljev**, vsak podpisan od svojega lastnika (ena povezava prinese vso skupino).
+- `lp-obseg` = **1**: na rezultatih tvoje mesto med prijatelji (»2. od 5, Lisica 0,77 s pred tabo«), po novem osebnem rekordu gumb *Pošlji prijateljem*.
+
+Izvedba po odločitvah (seja kode, 6. 11. 2026):
+
+- **Povezava (`lp-povezava` 2)**: `#lestvica=<Z>`, Z = `packStr` od `{ app, kind: 'friends', v: 1, p: [[paket, podpis], …] }`. Paket je niz JSON enega igralca (`{ app, kind: 'times', v, pub, name, sent, t }`, kot zgoraj), podpisan z njegovim ključem (podpis niza, ne stisnjene oblike, da ga je mogoče posredovati nespremenjenega). Prvi paket je pošiljateljev (svež), za njim najnovejši paket vsakega prijatelja, ki ga ima (najnovejša zadnja povezava prej), toliko, kolikor jih gre v 16.000 znakov. Paket s pokvarjenim podpisom se izpusti; brez veljavnega prvega paketa povezava ni veljavna. Skriti prijatelji in tvoj lastni paket se v prejeti povezavi izpustijo.
+- **Meja nemogočih časov**: hitrost na vsakem delu idealne linije največ √(3 g · polmer) in največ 1,15 × največja hitrost vozil igre (prestave, vrtljaji), brez zaviranja in pospeševanja; najhitrejši AI (formula, prototip) v `tests/golden/races.json` je na vseh pravih progah 1,49–2,68 × počasnejši od meje. Spodnja meja 0,7 × zlati čas odpade: AI v formuli je na Big Suru in Uncompahgreju že 0,85 × zlati čas, človek z izboljšavami bi jo lahko prehitel. Meja se izračuna, ko je proga zgrajena (meni, rezultati, Lestvica): ob odpiranju povezave se preverijo proge, ki so že zgrajene, drugi časi pa se ne pokažejo, dokler jih meja ne potrdi.
 
 ## Stanje
 
