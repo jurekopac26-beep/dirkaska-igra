@@ -13,15 +13,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the FR layer turned up for sliding: a big slide for the same turn (tv), held long (out), swung round by the power (pwr) and by a
     // lift (liftP); a tight lock (rmin, w; steerMax: the wheels' angle, 40 % over the SOKOL R's). spinK at the roster's 0.3 (above 300
     // W/kg: else the rear wheels would spin all the time; the slide comes from pwr). The best of the fleet in the driving school's
-    // drift. Short gears: the top speed at the limiter in sixth
-    phys: { mass: 1350, a: 1.26, b: 1.32, kI: 1.15, kw: 560, redline: 8200, idle: 950, gears: [2.9, 2.05, 1.58, 1.28, 1.07, 0.92], final: 4.45, rw: 0.34, cDrag: 0.4, len: 4.5, wid: 2.0, steerMax: 0.87,
-      tracK: 1.1, brakeK: 1.08, spinK: 0.3, vLim: 256 },
+    // drift. Short gears: the redline in sixth is at 257 km/h. No speed limiter: the drag alone (cDrag 0.56, the wide body and the big
+    // wing) holds the top speed there, so the engine's upgrades take it on (263 / 270 / 277 km/h)
+    phys: { mass: 1350, a: 1.26, b: 1.32, kI: 1.15, kw: 560, redline: 8200, idle: 950, gears: [2.9, 2.05, 1.58, 1.28, 1.07, 0.92], final: 4.45, rw: 0.34, cDrag: 0.56, len: 4.5, wid: 2.0, steerMax: 0.87,
+      tracK: 1.1, brakeK: 1.08, spinK: 0.3 },
     arc: { amax: 1.76, kv: 2.0, rmin: 3.9 },
     csp: { bx: 0.18, coast: -0.035, thr: 0.04, liftP: 0.18, pwr: 0.16, out: 1.5, turn: 1.08, w: 1.04, tv: 1.25 },
     stats: { power: 10, grip: 7, weight: 6, drift: 10 },
     price: 180000, pk: 'unl', field: ['sakal'],
     snd: { kind: 'i6', hz: 1.1, turbo: 1, loud: 1.15 },
-    expect: { t100: [3.05, 3.45], vmax: [246, 262], latG: [2.25, 2.35], d100: [21.6, 23.4] },   // (measured 3.24 / 254 / 2.30 / 22.3)
+    expect: { t100: [3.05, 3.45], vmax: [246, 262], latG: [2.2, 2.3], d100: [21.6, 23.4] },   // (measured 3.27 / 257 / 2.25 / 22.1)
     partNames: { splitter: 'front splitter', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
     // the race set (the wing a part of its own) and its own: the splitter under the nose, each head lamp and each tail lamp a part of its own
     parts: { set: 'race', ht: 1.28, y0: 0.2,

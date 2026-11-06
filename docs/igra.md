@@ -615,7 +615,7 @@ V igri je **47 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
 | **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
-| **ŠAKAL D** | zadnji | 761 KM | 1350 kg | 180.000 kovančkov | Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles. Največ točk za drift od vseh vozil (meritev kot v avtošoli Drift), končna hitrost omejena. |
+| **ŠAKAL D** | zadnji | 761 KM | 1350 kg | 180.000 kovančkov | Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles. Največ točk za drift od vseh vozil (meritev kot v avtošoli Drift). |
 
 ### Superšportni
 
