@@ -48,6 +48,7 @@ Opis delov igre, ki niso vezani na eno progo (prej v `README.md`). Opisi prog so
 - [Vreme](#vreme)
 - [Letni čas in čas dneva](#letni-čas-in-čas-dneva)
 - [Zvok navijačev in predori](#zvok-navijačev-in-predori)
+- [Zvoki okolja](#zvoki-okolja)
 - [Zvok motorjev](#zvok-motorjev)
 - [Vozni park](#vozni-park)
 - [Razpadanje vozil](#razpadanje-vozil)
@@ -580,6 +581,10 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 ## Zvok navijačev in predori
 
 Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji in Katu-Jaryku imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+
+## Zvoki okolja
+
+Na pravih progah se ob cesti tiho slišijo zvoki okolja, izračunani iz sveta proge (drevesa, voda, vasi, višina in odprtost ceste, cerkve iz OpenStreetMap): v gozdu šelestenje listja in ptice (poleti največ, jeseni manj, pozimi skoraj nič, ponoči brez ptic), ob vodi potok, reka, slap, jezero ali morje (z galebi), na odprtih in visokih delih veter (pozimi močnejši), v vaseh ob cesti zvonovi cerkve, ko pelješ mimo, poleti ponoči črički, v toplih krajih podnevi škržati. Vsak zvok se sliši s tiste strani ceste, kjer je. Zvoki so pod motorjem: jasno se slišijo na štartu, v počasnih ovinkih in v cilju, pri polnem plinu komaj; ob tribunah in navijačih se stišajo, v predoru utihnejo, v dežju ni ptic in žuželk. Nastavitve: **Zvoki okolja** Izklop / Tiho (privzeto) / Glasneje; delujejo samo pri vklopljenem zvoku, pri varčevanju z baterijo ostanejo samo podlage (brez ptic, zvonov in galebov). Testne proge so brez zvokov okolja. Vsi zvoki so narejeni v igri (sinteza), nič se ne prenaša.
 
 ## Zvok motorjev
 
