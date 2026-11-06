@@ -29,7 +29,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 |---|---|---|
 | Seja 1 (biketraveler, session_01UuPU9Ah6jMAt55UHLu6o45) | `mali` | `levk` LEV KABRIO, `levs` LEV S, `miska` MIŠKA, `raketa` RAKETA 16V |
 | Seja 1, nato nova seja po predaji | `klasika` | `blisk` BLISK 30, `gad` GAD 7L, `jastreb` JASTREB 6 (+ razbijanje) |
-| Seja 1, nato nova seja po predaji | `teren` | `gozdar` GOZDAR, `hrosc` SKAKAČ 1600, `medved` MEDVED 4x4, `pescenjak` PEŠČENJAK |
+| Seja 1, nato seja session_01UuPU9Bgs7jWWjvVwhtBXtS (6. 11.; obvestila o skupnih spremembah in izbiro `avti-kolibri-1` pošlji njej) | `teren` | `gozdar` GOZDAR, `hrosc` SKAKAČ 1600, `medved` MEDVED 4x4, `pescenjak` PEŠČENJAK |
 | Seja 2 (biketraveler) | `reli`, `elektricni` | `lev` LEV R, `zmaj` ZMAJ 85, `jezek` JEŽEK E |
 | Seja 2, nato nove seje | `sportni`, `posebni` | `jelen`, `lisica`, `panter` (+ razbijanje), `sokol`; `goljat`, `predsednik`, `superkombi` |
 | jure.kopac26 od ned. 8. 11. | `dirkalni`, `super`, `tovornjaki` | `bizon`, `kozorog`, `mravlja`, `strelica`, `tiger`, `tornado`; `modras`, `perun`, `skorpijon`; `kamen`, `titan` (TITAN šele po #304, + razbijanje) |
