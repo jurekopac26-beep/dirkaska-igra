@@ -656,6 +656,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + (b.name ? 9 : 2.5));   // (a clearing round the huts and the chapel)
+    if (World.peopleGround) for (const [x, z, r] of World.peopleGround(T)) exclPush(x, z, r);   // (the people's scenes: no shrub, tree or rock in the mown meadow, the camp …)
     out.marks = {};   // (where the landmarks stand: the tests look for them)
     for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     exclPush(padP.x, padP.z, padP.r + 4);
@@ -1113,5 +1114,6 @@
 
   Object.assign(API, { VRC, VRHC, VRSP, VRSQ, VRT, stubExcl, stubGeo, stubProps, stubRails, stubVerge, vrCol, vrDem, vrDist, vrFar, vrGCol, vrGH, vrGritTex, vrGround, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubH, vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrWater, vrsicProps });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { STG: { get: () => STG, set: (v) => { STG = v; } }, VR: { get: () => VR, set: (v) => { VR = v; } }, VRS: { get: () => VRS, set: (v) => { VRS = v; } } });
+  World.keep('VR', 'vrsic');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.vrsic = (scene, tex, opts) => buildVrsic(scene, tex, opts);
 })();
