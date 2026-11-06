@@ -34,6 +34,7 @@ Stran 1: vprašanja so kartice z oštevilčenimi gumbi (številka kot tabla s š
 | `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje |
 | `moznosti` | 2–5 možnosti `[{k: "1", opis}]`, oštevilčene od 1; vsaka je cela odločitev (ne samo »da« ali »ne«) |
 | `priporoceno` | `k` priporočene možnosti, kadar jo seja ima |
+| `vec` | `true`: izbira več možnosti hkrati (stran pokaže »Pošlji izbiro«; `odgovor` so izbrani `k`, ločeni z vejico, npr. `1,3,5`); stran Odločitve partyslo od 6. 11. 2026, drugi dve, ko ju lastnik objavi z isto kodo |
 | `graficno` | `true` pri vprašanju o videzu |
 | `slike` | `[{url, opis}]`, pri grafičnem vprašanju obvezno |
 | `povezave` | `[{opis, url}]`: pull request, predogled veje, primerjava |
