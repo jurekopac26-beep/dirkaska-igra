@@ -833,5 +833,6 @@
   }
 
   Object.defineProperties(API, { NC: { get: () => NC, set: (v) => { NC = v; } } });
+  World.keep('NC', 'newcastle');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.newcastle = (scene, tex, opts) => buildNewcastle(scene, tex, opts);
 })();

@@ -11,6 +11,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Two ways to drive it (def.modes): the time trial first (def.timeTrial: its records, ghosts, boards, medals and lines are the hill climb's,
   // as before), and the race up it against 21 rivals (Race: opts.tt false; ~40 m of road below the start line: the grid in rows four abreast, Race _gridWide).
   TRACK_DEFS.push({
+    // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
+    look: { fog: 0xdfd0cc, sun: 0xffcc8f, sunI: 1.58, sky: 0x9fbbf1, gnd: 0x70604e, hemiI: 0.75, tint: [1.05, 1.0, 0.925], sat: 1.13, haze: 0.25, hazeCol: [1, 0.77, 0.48], sunOff: [104, 48, -60], split: [[0.96, 0.99, 1.06], [1.03, 1.0, 0.95]] },   // early morning on race day: a low golden sun from the east-north-east (long shadows down the slopes, its warm glow at the edge of the view when it is ahead), cool blue shade from the clear sky, a light warm haze over the valleys
+    say: 'Pikes Peak',
+    cloudTh: 0.18,
+    zivali: { a: ['elk', 'bighorn', 'muleDeer'], t: ['cabin', 'logPile', 'signPost', 'picnic'] },
     id: 'pikes', name: 'Pikes Peak, ZDA', theme: 'pikes', open: true, timeTrial: true, modes: ['tt', 'race'], laps: 1, halfWidth: 7,
     maxRivals: 28,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the summit's ~85 m of road past the line: two rows a side of 28 cars at most, the longest vehicles' (6.3 m) clear of each other
     desc: 'Vzpon na Pikes Peak od starta na 2862 m do vrha na 4301 m: kronometer proti uri ali dirka z 21 tekmeci. Gozdni zavoji, lasnice \u201eW\u201c, hiter greben in serpentine pod zasneženim vrhom.',

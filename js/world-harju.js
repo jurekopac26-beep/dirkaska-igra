@@ -1044,5 +1044,6 @@
 
   Object.assign(API, { hjB64, hjFV, hjFacadeTex, hjI16, hjTreeGeo });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { HJ: { get: () => HJ, set: (v) => { HJ = v; } } });
+  World.keep('HJ', 'harju');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.harju = (scene, tex, opts) => buildHarju(scene, tex, opts);
 })();

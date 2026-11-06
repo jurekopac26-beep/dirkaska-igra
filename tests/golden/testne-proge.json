@@ -150,21 +150,21 @@
   "docs/proge/mulholland.md": "72f18c4ce9b13795",
   "docs/proge/riverside.md": "44aa59965dd246a8",
   "docs/proge/toskana.md": "48f9e7e8dd76e500",
-  "js/tracks/detroit.js": "9e78207895135b82",
+  "js/tracks/detroit.js": "2aa46ca018100985",
   "js/tracks/gora.js": "2f20b716c43be01a",
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/grom.js": "ff4ef504543ec79d",
   "js/tracks/jezero.js": "16733742a2d9e030",
-  "js/tracks/maunakea.js": "1d487a3a1e84841a",
-  "js/tracks/moki.js": "55f8c750f0b902e4",
+  "js/tracks/maunakea.js": "1efc11e1b529b6be",
+  "js/tracks/moki.js": "6b10a3b806ac37df",
   "js/tracks/monaco.js": "987e6ee4ef6d0aa1",
-  "js/tracks/mulholland.js": "85eebb7243d207c9",
-  "js/tracks/riverside.js": "a349f11ee05ec388",
+  "js/tracks/mulholland.js": "96340639914040a2",
+  "js/tracks/riverside.js": "7b39f1f22035bd1e",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
-  "js/world-detroit.js": "667efd87ad2b6c89",
+  "js/world-detroit.js": "d4a96a4d07a0bc5b",
   "js/world-maunakea.js": "5998d618684893c7",
-  "js/world-moki.js": "4e8090ffffa83fd2",
+  "js/world-moki.js": "9d0b27c9a65a8ebf",
   "js/world-mulholland.js": "f7a5900740bccc8b",
   "js/world-riverside.js": "247f7779ca7cbc5a",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
@@ -261,6 +261,31 @@
   },
   {
    "datum": "2026-11-05",
+   "proga": "maunakea",
+   "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "mulholland",
+   "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "detroit",
+   "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "moki",
+   "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
+  },
+  {
+   "datum": "2026-11-06",
+   "proga": "riverside",
+   "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
+  },
+  {
+   "datum": "2026-11-06",
    "proga": "maunakea",
    "razlog": "uporabnik 4. 11. 2026: »to progo prestavi v kategorijo test«, »na tej progi ne urejaj ničesar več«"
   }
