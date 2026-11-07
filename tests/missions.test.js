@@ -24,7 +24,7 @@ M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
 // (Santa Monica Mountains became a test track on 4. 11. 2026, Vršič and Australia's Longford, Newcastle and Townsville on 6. 11. 2026 and the roads of the USA but Pikes Peak on 5. 11. 2026, the user's decisions
 // (one track a country, CLAUDE.md »Testne proge«); the missions on them stay there until the user moves them, later, when it is known which tracks stay
 // (docs/misije.md): these exceptions only, no other mission may run on a test track)
-const ON_TEST_TRACK = { '01': 'vrsic', '02': 'newcastle', '06': 'mulholland', '19': 'townsville', '35': 'newcastle', '48': 'longford', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth' };
+const ON_TEST_TRACK = { '01': 'vrsic', '02': 'newcastle', '06': 'mulholland', '19': 'townsville', '35': 'newcastle', '48': 'longford', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth', '11': 'maunakea' };   // (the missions that sit on a test track until the user decides: 11 Mauna Kea went to the test tracks with the US ones, 5. 11. 2026; 02, 19, 35 and 48 with the Australian ones, 6. 11. 2026)
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
   check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));
@@ -32,6 +32,16 @@ for (const d of M.DEFS) {
   check(`mission ${d.id}: its texts in English`, !miss.length, miss.join(' | '));
   check(`mission ${d.id}: the track's name ("Kraj, Država")`, /, /.test(M.placeOf(d)), M.placeOf(d));
 }
+
+// the six garages by trade (docs/misije.md, Odločitve 1): 33 missions, each in one garage, in the user's order (easiest first)
+const GAR = { gasilci: '01,49,46,47', resevalci: '06,02,35,19,48,37', tovor: '50,39,07,43,51,52,54,09', zima: '29,33,17,53,30', cesta: '26,34,04,45,40', divjina: '10,55,08,23,11' };
+check('garages: the six by trade, in the user\'s order', M.GARAGES.map(g => g.id + ':' + g.ids.join()).join(' ') === Object.keys(GAR).map(k => k + ':' + GAR[k]).join(' '), M.GARAGES.map(g => g.id).join());
+const allG = M.GARAGES.flatMap(g => g.ids);
+check('garages: 33 missions, none twice', allG.length === 33 && new Set(allG).size === 33, String(allG.length));
+const noG = M.DEFS.filter(d => !d.test && !M.garageOf(d.id)).map(d => d.id);
+check('garages: every mission in the game is in a garage', !noG.length, noG.join());
+const gEn = M.GARAGES.map(g => g.name).concat(['Druge misije']).filter(s => !has(s));
+check('garages: their names in English', !gEn.length, gEn.join());
 
 // the run
 const race = () => ({ player: { finished: false, dist: 0, dmg: 0 }, track: { len: 5000, raceLen: 4000 } });

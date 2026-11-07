@@ -49,8 +49,8 @@ try {
 
   // the results: every driver's laps
   await driveToResults(page);   // (on autopilot; stuck against the barrier, put back on the road: lib.mjs)
-  const lt = await page.evaluate(() => { const E = document.getElementById('res-laps'), rows = [...E.querySelectorAll('tbody tr')];
-    return { shown: !E.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
+  const lt = await page.evaluate(() => { const R = document.getElementById('res-laps'), E = R.querySelector('table.laps') || R, rows = [...E.querySelectorAll('tbody tr')];   // (the laps table: the pit stops' own table below it)
+    return { shown: !R.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
       purple: E.querySelectorAll('td.ob').length, green: E.querySelectorAll('td.pb').length, me: !!E.querySelector('tr.me'), stops: rows.map(tr => tr.lastElementChild.textContent) }; });
   T.check('the results: every driver\'s laps (K1-K3), the fastest of the race once in purple, each best in green, the pit stops', lt.shown && lt.head.join() === '#,Voznik,K1,K2,K3,Postanki' && lt.rows === 22 && lt.laps.filter(n => n === 3).length >= 1 && lt.purple === 1 && lt.green >= 5 && lt.me && lt.stops.every(s => /^\d+$/.test(s)), JSON.stringify(lt));
 

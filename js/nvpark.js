@@ -103,7 +103,9 @@ const NVPark = (function () {
     const SC = new Map(), STR = (c1, c2, n = 12) => SC.get(c1 + c2 + n) || SC.set(c1 + c2 + n, STR0(c1, c2, n)).get(c1 + c2 + n);
     const STR0 = (c1, c2, n) => { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 8; const x = cv.getContext('2d'); for (let k = 0; k < n; k++) { x.fillStyle = k % 2 ? c1 : c2; x.fillRect(k * 128 / n, 0, 128 / n, 8); } return new THREE.CanvasTexture(cv); };
     // the big wheel: two rims with their spokes (they turn), twelve gondolas (they hang level as they go round: one instanced mesh), the legs
-    { const [cx, cz, r] = J.KOLO, g = new THREE.Group(), rot = new THREE.Group(); g.add(rot); for (const s of [-0.9, 0.9]) { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.2, 4, 28), L(0xf4f4f0)); t.position.z = s; rot.add(t);
+    // (FAIR, js/nvfair.js: the big wheel and the big carousel the car rides, instead of these)
+    const FAIR = typeof NVFair !== 'undefined' && NVFair.build ? NVFair : null;
+    if (!FAIR) { const [cx, cz, r] = J.KOLO, g = new THREE.Group(), rot = new THREE.Group(); g.add(rot); for (const s of [-0.9, 0.9]) { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.2, 4, 28), L(0xf4f4f0)); t.position.z = s; rot.add(t);
         for (let k = 0; k < 12; k++) { const a = k / 12 * 6.283, sp = new THREE.Mesh(new THREE.BoxGeometry(0.1, r, 0.1), L(0xf4f4f0)); sp.position.set(Math.cos(a) * r / 2, Math.sin(a) * r / 2, s); sp.rotation.z = a - Math.PI / 2; rot.add(sp); } }
       const CC = [0xe8452c, 0x2a7ad8, 0xf2c12e, 0x3fbf6a, 0xc86bff, 0xff8a2a], cabs = dynInst(new THREE.BoxGeometry(1.3, 1.3, 1.4), Array.from({ length: 12 }, (_, k) => CC[k % 6]), r + 1.2, -0.8); g.add(cabs);
       for (const s of [-1, 1]) { const lg = new THREE.Mesh(new THREE.BoxGeometry(0.4, r + 2.5, 0.4), L(0x9aa0a8)); lg.position.set(s * 4, -(r + 2.5) / 2 + 0.4, 0); lg.rotation.z = s * 0.35; g.add(lg); }
@@ -117,7 +119,7 @@ const NVPark = (function () {
       const G = at(g, x, z, 0.25); dynOf(spin, false); horses.castShadow = false;
       anim(x, z, gy(x, z) + 2.5, r + 1, [spin, horses], (t) => { const ph = -t * 0.55; spin.rotation.y = ph; for (let k = 0; k < 10; k++) { const a = k / 10 * 6.283 - ph; _e.set(0, -a, 0); _q.setFromEuler(_e); _v.set(Math.cos(a) * (r - 1), 1.4 + 0.3 * Math.sin(t * 2.4 + k * 1.3), Math.sin(a) * (r - 1)); horses.setMatrixAt(k, _m4.compose(_v, _q, _s1)); } horses.instanceMatrix.needsUpdate = true; }).f(0);
       return G; };
-    carousel(J.VRT_O[0], J.VRT_O[1], 4.3, '#3fbf6a', '#f4f4f0'); carousel(J.VRT[0], J.VRT[1], 7.2, '#e8452c', '#f4f4f0');
+    carousel(J.VRT_O[0], J.VRT_O[1], 4.3, '#3fbf6a', '#f4f4f0'); if (FAIR) FAIR.build(MK, { J, L, STR }); else carousel(J.VRT[0], J.VRT[1], 7.2, '#e8452c', '#f4f4f0');
     // the cups on their disc
     { const g = new THREE.Group(), spin = new THREE.Group(); g.add(spin); for (let k = 0; k < 6; k++) { const a = k / 6 * 6.283, c = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.0, 1.1, 10), L([0xff6aa8, 0x6ab8ff, 0xffd34d, 0x8ae06a, 0xc86bff, 0xff8a2a][k])); c.position.set(Math.cos(a) * 3.6, 0.8, Math.sin(a) * 3.6); spin.add(c); }
       g.add(new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.6, 0.3, 16), L(0xd8d4f0))); at(g, J.SKOD[0], J.SKOD[1], 0.15); dynOf(spin, false);
@@ -396,7 +398,7 @@ const NVPark = (function () {
       volc.anim(0); }
     // trees and people (on the plazas and the lanes; at the big plaza round the drift ring, just past its outer edge), clear of the lanes, the rides and the volcano's ash
     { let sd = 21; const r3 = () => (sd = (sd * 16807) % 2147483647) / 2147483647, nearLane = (x, z) => LP.some(P => P.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 36));
-      const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD], nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
+      const RIDES = [J.KOLO, J.VRT, J.VRT_O, J.SKOD, J.VER, J.LET, J.PAD_T, J.NIH, J.HISA, J.LAD].concat(FAIR ? FAIR.clear() : []), nearRide = (x, z) => RIDES.some(p => (p[0] - x) ** 2 + (p[1] - z) ** 2 < 120) || ((x - VC.x) / (VC.rx * 2.1)) ** 2 + ((z - VC.z) / (VC.rz * 2.1)) ** 2 < 1 || Object.values(J.PL).some(([px, pz, R]) => (px - x) ** 2 + (pz - z) ** 2 < (R + 3) ** 2) || plot(x, z);
       const TC = [0x4f8a34, 0x5f9a3a, 0x3f7a2e, 0x6aa040]; let nt = 0; for (let t = 0; t < 2500 && nt < 70; t++) {   // (as many as in the pictures' park)
         const x = -20 + r3() * 140, z = -240 + r3() * 270, h = 1.5 + r3(), s = 1.6 + r3() * 1.2; if (!inPark(x, z) || nearLane(x, z) || nearRide(x, z) || rd(x, z) < 1.5 || wayGap(x, z, true) < s + 0.3) continue;   // (its crown not over any way)   // (the trees also past the circuit's west side, on the meadow there)
        

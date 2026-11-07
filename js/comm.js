@@ -145,6 +145,9 @@ const Comm = (() => {
     radioRedGrid: ['Red flag, red flag. Slowly to the grid, stay behind the car ahead.', 'Red flag. Back to the start straight, no overtaking, line up behind the car ahead.'],
     radioRedGo: ['Restart behind the safety car. Get some heat in those tyres.', 'We are restarting behind the safety car. Warm the tyres up.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioAhead: ['Car ahead boxing this lap.', 'The car ahead is boxing this lap.'],   // (the car right ahead in for its stop, game.js aheadRadio)
+    radioAheadOver: ['Car ahead boxing this lap. Stay out, the overcut should work.', 'Car ahead is boxing. Stay out one more lap for the overcut.'],
+    radioAheadUnder: ['Car ahead boxing next lap. Box this lap for the undercut.', 'They are boxing next lap. Box now, we go for the undercut.'],
     radioGo: ['Go, go, go!', 'Go, go, go! All yours.', 'Go, go, go! Push now!'],   // (the hand-back after a stop: VOZIŠ TI!, game.js pitFree)
     radioGain: ['Great stop, you gained {n} {pl}. P{pos} now.', 'The stop worked, up {n} {pl} to P{pos}.'],   // (the places a stop gained or lost, game.js swingRadio)
     radioLose: ['We lost {n} {pl} in the stop. P{pos} now.', 'Down {n} {pl} after the stop, P{pos}. Keep pushing.'],

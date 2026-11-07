@@ -40,6 +40,7 @@ const fake = (page, d, pos, pre) => page.evaluate(async ([d, pos, pre]) => {
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', damage: 0, radio: 1, fuel: 0, length: 'normal', weather: 'dry', tod: 'day', tower: 1 }, { width: 640, height: 360 }, { touch: true, seed: 5 });
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
   await toRacing(page);
 
   // 1. a stop: told to come in half way round the first lap; on until a little after its result's message (paused, a quarter of a second at a
@@ -51,6 +52,9 @@ try {
     for (let k = 0; k < 1600; k++) {
       if (P.lap === 1 && P.dist > L * 0.4 && !P.repairN && !P.inPit) P.pitWant = true;
       g.sim(0.25, true); g.hud(0.25); await null;
+      // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd can
+      // turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+      if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P);
       if (P.inPit && !was) out.in = { t: +R.time.toFixed(2), pos: P.pos };
       if (!P.inPit && was) { out.out = { t: +R.time.toFixed(2), pos: P.pos }; P.pitWant = false; }
       was = P.inPit;

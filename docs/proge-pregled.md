@@ -1,6 +1,6 @@
 # Pregled prog v igri
 
-Ena datoteka za vprašanja o progah, ki so že v igri: dolžina, zavitost in kaj je do ~60 m ob cesti (to vidi kamera za avtom). Seja jo prebere namesto 37 opisov pravih prog v `docs/proge/`; podrobnosti so v opisu posamezne proge. Pregled s slikami kamere 1 iz menija: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
+Ena datoteka za vprašanja o progah, ki so že v igri: dolžina, zavitost in kaj je do ~60 m ob cesti (to vidi kamera za avtom). Seja jo prebere namesto 38 opisov pravih prog v `docs/proge/`; podrobnosti so v opisu posamezne proge. Pregled s slikami kamere 1 iz menija: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
 ## Meritve
 
@@ -17,6 +17,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
 | Sani Pass, Južna Afrika | `sani` | odprta cesta | 5,0 km | 906 | 33 % | 7 | +643 m |
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
+| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Mount Buller, Avstralija | `mountbuller` | odprta cesta | 2,5 km | 575 | 40 % | 1 | +120 m |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
@@ -44,6 +45,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 
 Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, ko je opis proge narejen.
 
+- **Bâlea, Romunija** (`balea`, asfalt): Jeklene varnostne ograje, kjer teren pada, in na zunanji strani ovinkov, beli smerni stebrički; opozorilni trikotniki 90 m pred vsako serpentino in rdeče table z belimi puščicami; Pod zgornjim krakom ob serpentinah visok kamnit podporni zid iz skrilavca (rahlo nagnjen), drugod nizki zidovi; Alpski pašniki s šopi trave in nizkim cvetjem, v zaplatah ruševje in brin; sivo-rjavi skrilavec v ploščah in balvanih, melišča pod stenami, staro snežišče v žlebovih nad ~2.120 m; Trije tropi ovc s pastirjem na pašnikih ob cesti, redki gledalci ob startu, cilju in serpentinah; Žičnica z jeklenimi stebri in kabino ob zgornjem delu; ob jezeru koče in stojnice (kamnito pritličje, strma pločevinasta streha), parkirišče z avtomobili in ljudmi; za ciljem betonski portal predora pod skalo. Dlje: Greben Făgăraș s krnicami, dolina proti severu; jezero Bâlea (modrozeleno, ~4,9 ha) pri cilju.
 - **Bang Saen, Tajska** (`bangsaen`, asfalt): Betonske ograje z mrežo ob progi; v ustjih križišč zebre in stop črte; Tajski semaforji z odštevalniki, znaki, stebrički, hidranti, omarice, svetilke: vse podirljivo; Vrste tajskih trgovskih hiš (2–4 nadstropja) z roloji in nadstreški ob cesti; Električni drogovi z gostimi snopi žic, oltarčki duhov, vrste parkiranih motorjev; Ravnina ob plaži: kazuarine, kokosove palme, senčniki z ležalniki, vozički s hrano; Tribune ob ravnini in Laem Thaenu; boksi na strani morja z belimi šotori ekip. Dlje: Morje do obzorja; za mestom griči s Khao Sam Mukom.
 - **Bathurst, Avstralija** (`bathurst`, asfalt): Zidovi z lovilnimi ograjami blizu ceste; na grebenu betonski, 1,5 m od roba; Asfaltni izletni pas na koncu 1. zavoja, šikane in zadnjega zavoja; Skalni usek pri 4. zavoju: plasti skrilavca, peščenjaka in rdeče-rjave zemlje; Evkalipti in akacije, pašniki s travo v šopih; kenguruji odskačejo pred avtom; Pokrita tribuna in stavba boksov ob ciljni ravnini, 13 odprtih garaž z mehaniki; Kampi navijačev s šotori in avtodomi, domačije s pločevinastimi strehami, parkirišča. Dlje: Hiše mesta dlje od proge, modrikasta meglica nad evkaliptovimi gozdovi.
 - **Chapman's Peak, Južna Afrika** (`chapman`, asfalt): Nizki zidovi iz peščenjaka na strani morja, pod cesto strm padec; Lovilne mreže nad cesto, opozorila za padajoče kamenje, odpadlo kamenje na bankini; Vsek v granit in peščenjak z lišaji; balvani ob cesti, previsni pomoli nad brežino; Fynbos: nizko grmičevje, protee, erike in šopi restij, tudi na široki bankini; Cestninska postaja z nadstreškom čez cesto, mostiček čez grapo, 14 izogibališč z nizkim zidom; Paviani ob cesti, kolesarji; pri startu plaža s kopalci in bele hiše Hout Baya. Dlje: Ocean z ladjicami spodaj, zaliv Hout Bay, v megli gora The Sentinel.
