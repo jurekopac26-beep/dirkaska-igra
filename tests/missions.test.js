@@ -80,5 +80,15 @@ check('no mission: no options', M.opts() === null && !M.on());
 M.init({ start() { } }); M.start('vaja'); const mo = M.opts(); M.stop();
 check('a mission: its options turn the four tyres (tyreRule) and the wheel rule off, over the game\'s own', !!mo && 'tyreRule' in mo && mo.tyreRule === undefined && 'wheelRule' in mo && mo.wheelRule === undefined && mo.tt === true && M.opts() === null, JSON.stringify(mo));
 
+// the mission's own vehicle is stock (the user's decision 7. 11. 2026, tabla #382): its options take the garage's parts off it, over the game's own
+// (newRace: Object.assign(mine, ..., MS.opts())); a mission in the player's own car keeps them
+const GAR_DELI = { aero: 3, krilo: 2 }, withDeli = (o) => Object.assign({ playerDeli: GAR_DELI }, o).playerDeli;
+const ownV = M.DEFS.filter(d => { M.start(d.id); const o = M.opts(); M.stop(); return o && o.playerModel; });
+check('mission vehicles: some missions give their own (car or playerModel)', ownV.length >= 10, String(ownV.length));
+const kept = ownV.filter(d => { M.start(d.id); const o = M.opts(); M.stop(); return withDeli(o) !== undefined; });
+check('mission vehicles: each mission\'s own vehicle without the garage\'s parts', !kept.length, kept.map(d => d.id).join());
+const mine2 = M.DEFS.filter(d => { M.start(d.id); const o = M.opts(); M.stop(); return o && !o.playerModel; });
+check('mission vehicles: a mission in the player\'s own car keeps its parts', mine2.every(d => { M.start(d.id); const o = M.opts(); M.stop(); return withDeli(o) === GAR_DELI; }), mine2.map(d => d.id).join());
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);
