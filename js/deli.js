@@ -39,10 +39,12 @@ var DELI = (function () {
   // ================================================================ krilo: the rear spoiler or wing, in place of the stock one
   // m: { x: the roof's rear edge, w: the roof's half width there, part: the spoiler's part id, s: its size (1: KOLIBRI's; chords,
   // heights, thicknesses), top: [[x, y] ...] the top it stands on along x, flat across (a truck's roof deflector; default: the roof, K.topY),
+  // or [[x, wt, yt, cr] ...] crowned across as a loft's sections (a lid that is a skin of its own, SKAKAČ's),
   // front: as far forward as the prototype's fin (16) may reach (a roof rack ahead of it: MIŠKA's) }
   function krilo(K, n, m) {
     const P = K.paint, X0 = m.x, W = m.w, k = m.s || 1, kz = W / 0.565, X = (a) => X0 + a * k, Yo = (b) => Y0 + b * k;   // (k: sizes along and up, kz: across)
-    const TOP = m.top, RY = (x, z) => { if (!TOP) return K.topY(x, z || 0); if (x <= TOP[0][0]) return TOP[0][1]; for (let i = 1; i < TOP.length; i++) if (x <= TOP[i][0]) { const a = TOP[i - 1], b = TOP[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); } return TOP[TOP.length - 1][1]; };
+    const TOP = m.top, at = (q, z) => q.length > 2 ? q[2] + q[3] * Math.min(1, Math.max(0, (q[1] - Math.abs(z || 0)) / (q[1] * 0.62))) : q[1];   // ([x, wt, yt, cr]: crowned across as a loft's section)
+    const RY = (x, z) => { if (!TOP) return K.topY(x, z || 0); if (x <= TOP[0][0]) return at(TOP[0], z); for (let i = 1; i < TOP.length; i++) if (x <= TOP[i][0]) { const a = TOP[i - 1], b = TOP[i], ya = at(a, z); return ya + (at(b, z) - ya) * (x - a[0]) / (b[0] - a[0]); } return at(TOP[TOP.length - 1], z); };
     const Y0 = RY(X(0.04), 0);
     // an inverted airfoil (downforce): its leading edge (xl, yl), the chord c back (towards -x), its trailing edge a degrees up, t thick
     const foil = (xl, yl, c, a, t) => { const ca = Math.cos(rad(a)), sa = Math.sin(rad(a)), at = (s, nn) => [xl - ca * c * s + sa * nn * t, yl + sa * c * s + ca * nn * t];
