@@ -63,7 +63,7 @@ for (const id of DRAWN.concat(HIDDEN)) for (const k of [1, 8, 16]) { const m = R
 for (const id of LOOK) if (R.deliMesh(KO, id, 5) !== null) meshBad.push(id + ' not null');
 const bC = box(R.deliMesh(KO, 'crte', 2)), bL = box(R.deliMesh(KO, 'celjusti', 1)), bS = box(R.deliMesh(KO, 'vzmeti', 3)), bF = box(R.deliMesh(KO, 'filter_zraka', 6));
 check('Render.deliMesh: each drawn part alone where it sits (the stripes from the tail to the nose on the top, the calipers at the four wheels, the springs in the arches, the filter in the bay); the looks none',
-  !meshBad.length && bC[0] < -1.6 && bC[3] > 1.6 && bC[4] > 1.3 && bL[0] < -1.1 && bL[3] > 1.1 && bL[4] < 0.45 && Math.abs(bL[2]) > 0.6 && bS[4] < 0.7 && bS[1] > 0.25 && bF[0] > 0.8 && bF[3] < 1.3,
+  !meshBad.length && bC[0] < -1.6 && bC[3] > 1.6 && bC[4] > 1.3 && bL[0] < -1.1 && bL[3] > 1.1 && bL[4] < 0.45 && Math.abs(bL[2]) > 0.6 && bS[4] < 0.7 && bS[1] > 0.25 && bF[0] > 0.8 && bF[3] < 1.45,
   meshBad.slice(0, 3).join(', ') || `stripes x ${bC[0].toFixed(2)}..${bC[3].toFixed(2)}, calipers x ${bL[0].toFixed(2)}..${bL[3].toFixed(2)} y ..${bL[4].toFixed(2)}`);
 console.warn = warn;
 

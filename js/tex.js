@@ -677,6 +677,31 @@ const Tex = (function () {
     return mk(c, false);
   }
 
+  // the marbles (Render's band of them, a race with tyres): the bits of rubber the tyres shed, black specks of a pixel or three on a faint
+  // dark film of rubber dust, the rest clear; tiles both ways (2 m of road). Made when a race first lays them, not with the others
+  function marbles() {
+    const S = 128, c = cv(S, S), x = c.getContext('2d'), r = Core.rng(83), n1 = makeNoise(8, 84), img = x.createImageData(S, S), d = img.data;
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4; d[o] = 26; d[o + 1] = 25; d[o + 2] = 24; d[o + 3] = 62 + 74 * n1(i / 16, j / 16); }
+    x.putImageData(img, 0, 0);
+    for (let k = 0; k < 850; k++) {
+      const px = r() * S, py = r() * S, rad = 0.6 + r() * r() * 1.8, g = (8 + r() * 20) | 0;
+      x.fillStyle = `rgba(${g},${g},${g + 2},${(0.75 + r() * 0.25).toFixed(2)})`;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const X = px + ox, Y = py + oy; if (X < -3 || X > S + 3 || Y < -3 || Y > S + 3) continue; x.beginPath(); x.arc(X, Y, rad, 0, Math.PI * 2); x.fill(); }   // (over the edges: the tile wraps)
+    }
+    return mk(c, true);
+  }
+
+  // the rubbered-in line (84, Render's layer of it, a race with tyres): light grey, streaked along the road (the tyres' tracks, a little
+  // lighter and darker by the noise), the colour itself from the layer's vertices; tiles both ways (4 m across, 8 m along the road)
+  function rubber() {
+    const S = 128, c = cv(S, S), x = c.getContext('2d'), r = Core.rng(84), n1 = makeNoise(8, 85), img = x.createImageData(S, S), d = img.data, st = new Float32Array(S);
+    for (let i = 0; i < S; i++) st[i] = r();
+    for (let i = 0; i < S; i++) st[i] = (st[i] + st[(i + 1) % S] + st[(i + S - 1) % S]) / 3;   // (the streaks across: a few pixels wide)
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4, v = Math.round(255 * (0.8 + 0.12 * st[i] + 0.08 * n1(i / 16, j / 16))); d[o] = d[o + 1] = d[o + 2] = Math.min(255, v); d[o + 3] = 255; }
+    x.putImageData(img, 0, 0);
+    return mk(c, true);
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -689,6 +714,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS };
+  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS, marbles, rubber };
 })();
 

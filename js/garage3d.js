@@ -4445,13 +4445,14 @@ const Garage3D = (function () {
   // (the dirt's last line (the clear coat's dullness there, cgD, as render.js has it: its own expression kept): the stages'
   // stretches (the front ragged by the dirt's own noise), the foam blanket over the paint (dirty till scrubbed, runs down the sides), wet
   // paint darker with beads of water (tiny bright dots the bloom catches), dry and fresh glossier)
-  const DIRT_OLD = /diffuseColor\.rgb = mix\(diffuseColor\.rgb, vec3\(0\.5, 0\.4, 0\.29\), d\); cgD = ([^;{}]+); \}/, DIRT_NEW = ['float svF = 0.0, svD0 = d, svS = 0.0, svWt = 0.0;',
+  const DIRT_OLD = /diffuseColor\.rgb = mix\(diffuseColor\.rgb, (.+?), d\); cgD = ([^;{}]+); \}/,   // (the dirt's colour as render.js has it: dry, or darker wet, uDirtW)
+    DIRT_NEW = ['float svF = 0.0, svD0 = d, svS = 0.0, svWt = 0.0;',
     'if (uSvZ.w > 0.5) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, vLp.y), x = vLp.x + (n - 0.5) * 0.18, svO = SV_OUT;',
     '  float s0 = svIn(uSvW0, x, tb), sR = svIn(uSvW3, x, tb), sD = svIn(uSvW4, x, tb);',
     '  svS = svIn(uSvW2, x, tb) * tb * (1.0 - smoothstep(0.37, 0.45, abs(vLp.z - uSvZ.y)));',
     '  d *= (1.0 - 0.45 * s0) * (1.0 - max(svS, sR));',
     '  svF = svIn(uSvW1, x, tb) * (1.0 - sR) * svO; svWt = max(s0, sR) * (1.0 - sD) * uSvB.y * svO; }',
-    'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = $1;',
+    'diffuseColor.rgb = mix(diffuseColor.rgb, $1, d); cgD = $2;',
     'if (uSvZ.w > 0.5) {',
     '  if (svF > 0.001) { float tb = smoothstep(uSvB.x - 0.08, uSvB.x + 0.08, vLp.y), b = svN(vLp * 16.0) * 0.6 + svN(vLp * 41.0) * 0.4, cl = svN(vLp * 4.5 + 3.0);',
     '    float run = smoothstep(0.55, 0.95, fract(vLp.x * 6.0 + svH(vec3(floor(vLp.x * 6.0), 1.0, 2.0)) * 3.0)) * (1.0 - tb);',

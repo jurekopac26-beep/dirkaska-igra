@@ -76,15 +76,15 @@ try {
 
   // four moments: two pictures; 2400 px
   await Q.evaluate(() => window.__game.onAction('rp-b5')); await moment(Q, 1, 300, 120, 30, 'Tri');
-  // (the fourth with no mark: only its picture and the notebook's note, typed with no click)
+  // (the fourth with no mark: only its picture and the notebook's note, typed with no click: the red note, as the pencil is red)
   await Q.evaluate(() => window.__game.onAction('rp-b5')); await Q.click('#nk-on'); await Q.keyboard.type('Štiri: ves zaslon utripa'); await Q.click('#nk-bar .nk-add');
   const R4 = await Q.evaluate(async () => { const r = await Napake.pripravi(); return r.files.map(f => [f.name, f.w, f.h]); });
-  const z4 = await Q.evaluate(() => { const it = Napake.zbirka[3]; return { n: Napake.zbirka.length, strokes: it.strokes.length, zapisi: it.zapisi.length, bel: it.belezka, w: it.w, h: it.h, L: Napake.porocilo().split('\n').filter(l => /^#4 /.test(l)) }; });
+  const z4 = await Q.evaluate(() => { const it = Napake.zbirka[3]; return { n: Napake.zbirka.length, strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), bel: it.belezka, w: it.w, h: it.h, L: Napake.porocilo().split('\n').filter(l => /^#4 /.test(l)) }; });
   // its notebook drawn on its picture (the second sheet's one moment, 776 px wide from 16, 16): dark by its bottom right corner as on the screen
   const k4 = 776 / z4.w, ks = R4[1] ? R4[1][1] / 1600 : 1, nr = z4.bel ? [16 + (z4.bel.r[0] + z4.bel.r[2]) * z4.w * k4, 16 + (z4.bel.r[1] + z4.bel.r[3]) * z4.h * k4] : [0, 0];   // (ks: a sheet made smaller, a long log under it)
   const [p4] = await pix(Q, 1, [[(nr[0] - 10) * ks, (nr[1] - 5) * ks]]);
-  T.check('a moment with no mark: kept with the notebook\'s note (#4 time K1 s=…m beležka »…«, not "(brez zapisa)"), drawn on its picture bottom right',
-    z4.n === 4 && z4.strokes === 0 && z4.zapisi === 0 && !!z4.bel && z4.bel.text === 'Štiri: ves zaslon utripa' && z4.L.length === 1 && /^#4 \d\d:\d\d\.\d{3} K1 s=\d+m beležka »Štiri: ves zaslon utripa«$/.test(z4.L[0]) && p4.every(v => v < 45),
+  T.check('a moment with no mark: kept with the notebook\'s red note (#4 time K1 s=…m rdeča »…« v_krogu=[], not "(brez zapisa)"), drawn on its picture bottom right',
+    z4.n === 4 && z4.strokes === 0 && z4.zapisi.join() === 'rdeča: Štiri: ves zaslon utripa' && !!z4.bel && z4.bel.barvna && !z4.bel.text && z4.L.length === 1 && /^#4 \d\d:\d\d\.\d{3} K1 s=\d+m rdeča »Štiri: ves zaslon utripa« v_krogu=\[\]$/.test(z4.L[0]) && p4.every(v => v < 45),
     JSON.stringify({ z4, p4 }));
   await Q.evaluate(() => { localStorage.setItem('tdgp-napake', JSON.stringify(Object.assign(Napake.nast, { size: 2400 }))); });
   await Q.evaluate(() => { window.__game.onAction('rp-race'); });
