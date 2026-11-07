@@ -176,9 +176,9 @@
     let nBld = 0, nMark = 0;
 
     /* ---- the quays: stone walls along the Limmat and the lake within ~90 m of the road, a paved strip behind them over the terrain's slope ---- */
-    let nQuay = 0;
+    let nQuay = 0; const quayStrips = [];   // (the paving behind the quay walls: built with the terrain tiles, in their colours)
     {
-      const st = [0.7, 0.67, 0.6], stD = [0.56, 0.53, 0.48], cop = [0.8, 0.78, 0.74], pave = [0.8, 0.78, 0.74], gq = new Chunks(256);
+      const st = [0.7, 0.67, 0.6], stD = [0.56, 0.53, 0.48], cop = [0.8, 0.78, 0.74], gq = new Chunks(256);
       for (const [ax, az, bx, bz, ls] of ED) {
         const mx = (ax + bx) / 2, mz = (az + bz) / 2; if (nrDist(mx, mz) > 90) continue;
         const nm = nrNear(mx, mz); if (underBridge(nm) && nm.dd < 2) continue;
@@ -188,7 +188,8 @@
         const ia = [ax - nx * 0.4, az - nz * 0.4], ib = [bx - nx * 0.4, bz - nz * 0.4], inside = [mx + nx * 4, -5, mz + nz * 4];
         g.quadO([ia[0], -2.2, ia[1]], [ib[0], -2.2, ib[1]], [ib[0], yb, ib[1]], [ia[0], ya, ia[1]], vary(stD, R, 0.04), inside, null, [stD, stD, st, st]);
         const nA = nrNear(ax, az), nB = nrNear(bx, bz), wA = clamp(Math.min(9, nA.dd - 0.8), 0, 9), wB = clamp(Math.min(9, nB.dd - 0.8), 0, 9);
-        if (wA > 0.5 || wB > 0.5) g.quadUp([ia[0], ya, ia[1]], [ia[0] + nx * wA, ya, ia[1] + nz * wA], [ib[0] + nx * wB, yb, ib[1] + nz * wB], [ib[0], yb, ib[1]], [pave, pave, pave, pave]);
+        if (wA > 0.5 || wB > 0.5) { const q4 = [[ia[0], ya, ia[1]], [ia[0] + nx * wA, ya, ia[1] + nz * wA], [ib[0] + nx * wB, yb, ib[1] + nz * wB], [ib[0], yb, ib[1]]];   // (in the ground's own paving and colour)
+          quayStrips.push(q4); }
         box(g, mx - nx * 0.2, Math.min(ya, yb) - 0.05, mz - nz * 0.2, len + 0.1, 0.75 + Math.abs(ya - yb), 0.5, Math.atan2(bz - az, bx - ax), stD, cop);   // (a low parapet)
         nQuay++;
       }
@@ -280,14 +281,27 @@
     ZD.bld.forEach(([bx, bz, Lb, Wb, ang, Hb, kind], n) => {
       if (inMark(bx, bz) || isWater(bx, bz)) return;
       const ca = Math.cos(ang), sa = Math.sin(ang);
-      const pts = outOf.get(n) || [[Lb / 2, Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9; for (const [cx, cz] of pts.concat([[bx, bz]])) { const nn = nrNear(cx, cz); if (nn.i >= 0 && nn.dd < 0.6) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); }
-      if (clash || Lb < 2.5 || Wb < 2.5) return;
+      let pts = outOf.get(n) || [[Lb / 2, Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
+      // a house that reaches over the race's barriers (the street race is wider than the street): cut back along the road, 1 m behind the barrier
+      let cut = false;
+      for (let it = 0; it < 4 && pts.length > 2; it++) {
+        let worst = null;
+        for (let k = 0; k < pts.length; k++) { const a = pts[k], b = pts[(k + 1) % pts.length], len = Math.hypot(b[0] - a[0], b[1] - a[1]), m = Math.max(1, Math.ceil(len / 3));
+          for (let q = 0; q < m; q++) { const x = a[0] + (b[0] - a[0]) * q / m, z = a[1] + (b[1] - a[1]) * q / m, nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 1 && (!worst || nn.dd < worst.dd)) worst = nn; } }
+        if (!worst) break;
+        const i = worst.i, sd = worst.lat >= 0 ? 1 : -1, keep = (sd > 0 ? T.br[i] : T.bl[i]) + 1.2, f = (p) => ((p[0] - T.px[i]) * T.nx[i] + (p[1] - T.pz[i]) * T.nz[i]) * sd - keep, o2 = [];
+        for (let k = 0; k < pts.length; k++) { const a = pts[k], b = pts[(k + 1) % pts.length], fa = f(a), fb = f(b);
+          if (fa >= 0) o2.push(a); if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); o2.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } }
+        pts = o2; cut = true;
+      }
+      let ar = 0; for (let k = 0; k < pts.length; k++) { const a = pts[k], b = pts[(k + 1) % pts.length]; ar += a[0] * b[1] - b[0] * a[1]; }
+      if (pts.length < 3 || Math.abs(ar) / 2 < 20 || Lb < 2.5 || Wb < 2.5) return;
+      let y0 = 1e9; for (const [cx, cz] of pts) y0 = Math.min(y0, nrGround(cx, cz));
       const hk = crH(bx, bz, 11), area = Lb * Wb, small = kind === 4 || area < 30;
       const H = Hb > 3 ? Hb : small ? 3.5 + hk * 2 : kind === 5 ? 18 + hk * 6 : kind === 6 ? 16 + hk * 6 : kind === 1 ? 14 : 13 + hk * 6;
       const col = vary(PAL[Math.floor(crH(bx, bz, 12) * PAL.length)], R, 0.04), shop = !small && (kind === 5 || nrDist(bx, bz) < 30);
       y0 -= 0.2; wallsOf(facC.get(bx, bz), pts, y0, H, col, kind === 5 ? 4.2 : 3.4, shop);
-      const o = outOf.has(n) ? obb(pts) : { x: bx, z: bz, L: Lb, W: Wb, ang };
+      const o = outOf.has(n) || cut ? obb(pts) : { x: bx, z: bz, L: Lb, W: Wb, ang };
       const big = area > 900 || kind === 5 && area > 500, rg = roofs.get(bx, bz);
       if (big) { const rc = [0.5, 0.5, 0.5]; box(rg, o.x, y0 + H - 0.2, o.z, o.L * 0.98, 0.8, o.W * 0.98, o.ang, col.map(v => v * 0.9), rc); box(rg, o.x, y0 + H + 0.6, o.z, o.L * 0.7, 2.6, o.W * 0.7, o.ang, [0.44, 0.45, 0.46], [0.4, 0.4, 0.42]); }
       else { const rc = RF[Math.floor(crH(bx, bz, 14) * (crH(bx, bz, 15) < 0.85 ? 4 : RF.length))]; gable(rg, o.x, y0 + H, o.z, o.L + 0.5, o.W + 0.5, Math.min(8, o.W * (0.38 + hk * 0.12)), o.ang, rc, col); }
@@ -425,6 +439,9 @@
         }
         addM(gv, gMat);
       }
+      const gp = new Chunks(256, true);
+      for (const q4 of quayStrips) gp.get(q4[0][0], q4[0][2]).quadUp(q4[0], q4[1], q4[2], q4[3], q4.map(p => API.nrGCol(p[0], p[2]).slice()), q4.map(p => [p[0] / 14, -p[2] / 14]));
+      gp.addTo(root, gMat, false, true);
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
