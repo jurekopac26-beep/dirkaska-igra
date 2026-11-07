@@ -31,7 +31,6 @@ Vrstni red 1–10 je določil uporabnik 4. 11. 2026 zvečer (#295, #240, #246, #
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 13 | #390 | Boksi: 84 proga se zgumira (B5-6), 104 radio »avto pred tabo gre v bokse« (undercut/overcut), 105 hladne gume po postanku, 107 statistika postankov in najhitrejši postanek dirke | 1 | pripravljen (seja session_014ber3FYMuScsadL4xwRzmy); spojen `main` po #284 (c9f50aa5, merge), testi node in povezani brskalniški testi lokalno zeleni; na mestu #284 (odločitev uporabnika `boksi-pr`, 5. 11.) |
 | 14 | #226 | Bâlea | 3 | čaka |
 | 15 | #297 | Garaža, sklopi 6–8: nagrade po vrednosti avta, najem, škoda, predali, gume in deli z rokama obroča | 1 | pripravljen (seja session_01UuPU9CyosAkcV4tk8zMLhZ); zelen na GitHubu (glava c41c3b3), osnutek do vrste; predogled: oznaka `predogled`, `beta/297/` |
 | 16 | #325 | misije, skupina 8: misije 11, 23, 29, 40, 45, 6 garaž po poklicu, ploščica MISSIONS | 2 | pripravljen (osnutek do vrste; predaja v docs/misije.md »Po skupini 8, del 2«); ob vrsti nova seja koordinacije računa 2 ali prevzemni račun; pred progami (nove proge vedno zadnje); prevzame biketraveler, dokler račun 2 stoji |
