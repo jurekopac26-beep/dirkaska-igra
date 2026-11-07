@@ -14,6 +14,14 @@ Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (k
 - **Prvih 11 prog:** 4 dirkališča, 3 gorske, 2 zelo kratki za tovornjake, 1 izvenserijska in 1 po izbiri seje; za kratki progi za tovornjake in za izvenserijsko po 2–3 predlogi.
 - **Merili izbire:** ovinkasta cesta z veliko zavoji in malo ravnimi odseki, tudi pri dirkališčih (uporabnik: »da je veliko zavojev, da cesta ni ravna ampak ovinkasta«; »če je preveč ravnine, je vožnja dolgočasna«), in čim več zanimivega do 60 m ob cesti (vidno polje kamere za avtom). Meri se kot v `docs/proge-pregled.md` (zavitost, »Do 60 m ob cesti«).
 - **Za vsako progo** seja preveri resnično pot in dolžino v OpenStreetMap, državo (ena proga na državo), izletno cono, imena brez oseb, znamk in lokalov ter oceno obremenitve telefona; na seznamu napiše ime »Kraj, Država«, vrsto, dolžino, kaj je do 60 m ob progi in zavitost.
+- **Potrjen seznam 11 prog** (odločitev uporabnika 7. 11. 2026 ob ~21.20, prek Mateja, komentar 6712589851):
+  - dirkališča: Silkeborg, Danska; Kågeröd, Švedska; Biķernieki, Latvija; Zandvoort, Nizozemska;
+  - gorske: Izoard, Francija; Sa Calobra, Španija; **Kotor, Črna gora** (namesto Hehuanshana, Tajvan);
+  - za tovornjake: Sosnová, Češka; Pembrey, Wales;
+  - izvenserijska: Kildare, Irska (reli kros);
+  - mestna: **London, Anglija** (namesto Budimpešte).
+  - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel.
+  - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`. Seznam 50 prog (vprašanje `nove-proge-1-0-50`) še čaka.
 - **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
 - **Mestne proge po središču velikih mest:** velika mesta (npr. London) dobijo kratko dirko po središču, v spodnjem delu razpona 1–5 km, po širokih glavnih ulicah, nabrežjih in trgih, z ograjami kot na uličnih dirkah; stavbe so generične, brez pravno spornih imen in podob (kot pri Monte Carlu). **Zanje pravilo izletne cone ne velja** (razdelek »Izletna cona«).
 
