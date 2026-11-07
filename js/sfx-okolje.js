@@ -11,7 +11,7 @@
      prints them.
    - the voices and the mixer: below. js/sfx.js calls SfxOkolje.step() from its update (its context, the race's bus, the crowds' and the
      tunnel's levels) and SfxOkolje.silence() from its silence; js/game.js SfxOkolje.set() with the settings (Zvoki okolja: Izklop / Tiho /
-     Glasneje). With the sound off or Izklop nothing is made: no node, no buffer. */
+     Normalno / Glasno). With the sound off or Izklop nothing is made: no node, no buffer. */
 (function () {
   'use strict';
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -420,9 +420,9 @@
 
   /* ---------------- the mixer ---------------- */
   // Per update (10 a second, 5 on the battery saver; a param only when it moves more than 1 %): the zones where the car is (between two
-  // samples), the beds' levels (the 3 loudest play: a bed under -60 dB for 2 s is stopped and let go), the master (Tiho ×1, Glasneje ×2;
+  // samples), the beds' levels (the 3 loudest play: a bed under -60 dB for 2 s is stopped and let go), the master (× the setting: Tiho 0.5, Normalno 1, Glasno 2;
   // under the speed, the crowds, in a tunnel), the calls (birds, gulls, a peal of bells; not on the battery saver; <= 25 nodes in all)
-  const LV = [0, 1, 2], BASE = 0.09, MAXN = 25, PREP_GRID = 1.5, PREP_RACE = 0.75;   // (prep: on the grid; a slow phone's rest after the start)
+  const BASE = 0.09, MAXN = 25, PREP_GRID = 1.5, PREP_RACE = 0.75;   // (prep: on the grid; a slow phone's rest after the start)
   // each bed at a full zone (with the water's KG at its nearest: ~24 dB under a car's engine at mid revs on Tiho, tuned with probe); the
   // one-shots at their nearest and loudest (up to ~18 dB under it)
   const BG = { rustle: 0.37, brook: 0.52, river: 0.5, fall: 0.32, lake: 2.6, sea: 0.58, wind: 1.17, crickets: 0.5, cicadas: 0.55, traffic: 1 };
@@ -630,7 +630,7 @@
     if (SPK.held) { SPK.held = false; SPK.quiet = now; }   // (and a breath after it, from the first frame he is quiet: however slow the frames)
     if (SPK.u && now > SPK.until) SPK.u = null;
     if (SPK.u || now - SPK.quiet < 3) return;
-    const R = A.R, vol = [0, 0.3, 0.6][S.lvl] * (1 - 0.4 * sstep(30, 160, kmh)), st = lv.stands || 0;
+    const R = A.R, vol = 0.3 * S.lvl * (1 - 0.4 * sstep(30, 160, kmh)), st = lv.stands || 0;
     if (player.finished) { if (!SPK.fin && speak(pick(PA_END), 'pa', vol, 0.95, 1, now)) { SPK.fin = true; SPK.tPA = now; SPK.nPA++; } return; }
     if (race.state !== 'racing') return;
     if (st > 0.2 && now - SPK.tPA > opts.paGap && R() < opts.paP * dt) { if (speak(pick(PA_LINES), 'pa', vol, 0.95, 1, now)) { SPK.tPA = now; SPK.nPA++; } }
@@ -649,7 +649,7 @@
     let cs = 1;   // (the camera's right against the road's right: the sides as heard)
     if (cam && cam.matrixWorld && T.nx) { const e = cam.matrixWorld.elements, i = T.idx(s); cs = clamp((e[0] * T.nx[i] + e[2] * T.nz[i]) * 1.5, -1, 1); }
     const pan2 = (l, r) => clamp((r - l) / (r + l + 1e-6) * 0.6 * cs, -0.8, 0.8);
-    const kmh = Math.abs(player.speed || 0) * 3.6, G = BASE * LV[S.lvl] * (1 - 0.6 * sstep(30, 160, kmh)) * (1 - 0.8 * clamp(Math.max(lv.stands || 0, lv.crowd || 0), 0, 1)) * (1 - clamp((lv.tunnel || 0) / 0.85, 0, 1));
+    const kmh = Math.abs(player.speed || 0) * 3.6, G = BASE * S.lvl * (1 - 0.6 * sstep(30, 160, kmh)) * (1 - 0.8 * clamp(Math.max(lv.stands || 0, lv.crowd || 0), 0, 1)) * (1 - clamp((lv.tunnel || 0) / 0.85, 0, 1));
     tgt(A.out.gain, G, A, 'mlev', 0.25); A.kmh = kmh;
     const WL = [0, 0, 0, 0, 0, 0], WR = [0, 0, 0, 0, 0, 0], W = [0, 0, 0, 0, 0, 0];
     WL[Z.kL[k0]] += Z.wL[k0] * (1 - f); WL[Z.kL[k1]] += Z.wL[k1] * f; WR[Z.kR[k0]] += Z.wR[k0] * (1 - f); WR[Z.kR[k1]] += Z.wR[k1] * f;
@@ -730,7 +730,7 @@
     L.sort((a, b) => b[0] - a[0]); return { pieces: L.length, ms: +tot.toFixed(1), top: L.slice(0, 8) };
   }
   const KGB = { brook: KG[BROOK], river: KG[RIVER], fall: KG[FALL], lake: KG[LAKE], sea: KG[SEAK] };   // (the water at its nearest)
-  function probe(o) {   // (the tests and the tuning: one bed o.bed as it plays at a full zone (× o.v; the water at its nearest) on Tiho (o.lvl), rendered offline: its samples)
+  function probe(o) {   // (the tests and the tuning: one bed o.bed as it plays at a full zone (× o.v; the water at its nearest) on Normalno (o.lvl: × the setting), rendered offline: its samples)
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     // (or one call o.spot: 'bird' (song o.k), 'gull', 'bell' (the church o.d m off the road), each at its nearest and loudest: A.R() 0)
     if (!A || !A.Z || !OAC) return Promise.resolve(null);
@@ -740,7 +740,7 @@
     if (miss) return Promise.resolve(null);
     const sr = o.sr || 44100, dur = o.dur || 3, ac = new OAC(1, Math.round(dur * sr), sr), keep = A;
     A = Object.assign({}, keep, { ctx: ac, out: ac.createGain(), beds: {}, spots: [], peal: null, herd: null, noise: null, nodes: 1, tg: {}, mlev: 0, R: o.spot ? () => 0 : rngOf(7), n: N0() });
-    try { A.out.gain.value = BASE * LV[o.lvl == null ? 1 : o.lvl]; A.out.connect(ac.destination);
+    try { A.out.gain.value = BASE * (o.lvl == null ? 1 : o.lvl); A.out.connect(ac.destination);
       if (o.spot === 'bird') { A.songs = [keep.songs[(o.k || 0) % keep.songs.length]]; bird(0, 1, 1, 0); }
       else if (o.spot === 'gull') gulls(1, 0);
       else if (o.spot === 'coo') coo(1, 0);
@@ -757,17 +757,17 @@
     return ac.startRendering().then(b => b.getChannelData(0));
   }
   function silence() { stopAll(); }   // (js/sfx.js silence: the race left or paused for good)
-  // js/game.js: the setting (0 Izklop, 1 Tiho, 2 Glasneje), the sound on, the battery saver (a function: on now?)
+  // js/game.js: the setting (× the loudness: 0 Izklop, 0.5 Tiho, 1 Normalno, 2 Glasno), the sound on, the battery saver (a function: on now?)
   function setOpts(lvl, sound, saver) {
-    S.lvl = clamp(Math.round(+lvl) || 0, 0, 2); S.sound = !!sound;
+    S.lvl = clamp(+lvl || 0, 0, 2); S.sound = !!sound;
     if (typeof saver === 'function') S.saver = saver; else if (saver != null) { const v = !!saver; S.saver = () => v; }
     if (!S.lvl || !S.sound) free();
   }
   function levels() {   // (the tests, Sfx.levels' twin: what plays now)
     const sp = { pa: SPK.nPA, shouts: SPK.nSh, on: !!SPK.u, kind: SPK.kind, last: SPK.last, cut: SPK.cut };
-    if (!A) return { on: false, ready: false, nodes: 0, bytes: 0, master: 0, full: BASE * LV[S.lvl] * (S.sound ? 1 : 0), beds: {}, tg: {}, spots: 0, peal: false, herd: false, n: N0(), speech: sp };
+    if (!A) return { on: false, ready: false, nodes: 0, bytes: 0, master: 0, full: BASE * S.lvl * (S.sound ? 1 : 0), beds: {}, tg: {}, spots: 0, peal: false, herd: false, n: N0(), speech: sp };
     const beds = {}, tg = {}; for (const b in A.beds) beds[b] = +A.beds[b].cur.toFixed(4); for (const b in A.tg) tg[b] = +A.tg[b].toFixed(4);
-    return { on: true, ready: !A.gen && !!A.Z, err: A.err, nodes: A.nodes, bytes: A.bytes, master: +A.mlev.toFixed(4), full: BASE * LV[S.lvl], kmh: Math.round(A.kmh || 0), beds, tg, spots: A.spots.length, peal: !!A.peal, herd: !!A.herd, n: Object.assign({}, A.n), k: A.k, speech: sp,
+    return { on: true, ready: !A.gen && !!A.Z, err: A.err, nodes: A.nodes, bytes: A.bytes, master: +A.mlev.toFixed(4), full: BASE * S.lvl, kmh: Math.round(A.kmh || 0), beds, tg, spots: A.spots.length, peal: !!A.peal, herd: !!A.herd, n: Object.assign({}, A.n), k: A.k, speech: sp,
       songs: A.songs.length, saver: !!S.saver(), run: !!A.run, voices: Object.keys(A.buf).concat(A.bells ? ['bells'] : [], A.cowb ? ['cowbells'] : [], A.coos ? ['coos'] : []), prep: { slices: A.prep.slices, ms: +A.prep.ms.toFixed(1), max: +A.prep.max.toFixed(2), at: A.prep.at, top: A.prep.top.slice() } };
   }
 

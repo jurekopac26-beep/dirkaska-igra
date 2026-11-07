@@ -6,7 +6,7 @@
 //   node tools/zvoki-posnetki.mjs --seznam posnetki.json [--out mapa]   več posnetkov v enem brskalniku: [{ id, m, t, amb, stoji, zvon, tod,
 //       season, rain, ime, opts }, …]; opts: različica mešalnika za primerjavo po ušesu (SfxOkolje.opts, npr. { "birdP": 2 }: ptice 2-krat
 //       pogosteje), vsak posnetek začne s privzetimi
-// --amb: Zvoki okolja 0 Izklop, 1 Tiho (privzeto), 2 Glasneje; --zvon: zvonovi cerkve gotovo (SfxOkolje.opts.bellP 1). Izpiše, kaj je bilo
+// --amb: Zvoki okolja 0 Izklop, 0.5 Tiho, 1 Normalno (privzeto), 2 Glasno; --zvon: zvonovi cerkve gotovo (SfxOkolje.opts.bellP 1). Izpiše, kaj je bilo
 // slišati (podlage, ptice, zvonovi, črede, golobi, hitrost). Posnetkov ne commitaj (privzeta mapa je začasna).
 import { serve, launch, openGame, startTrack } from '../tests/browser/lib.mjs';
 import fs from 'node:fs';

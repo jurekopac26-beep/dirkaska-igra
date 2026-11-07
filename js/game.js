@@ -83,7 +83,7 @@
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
   let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
-  S.amb = [0, 1, 2].includes(+S.amb) ? +S.amb : 1;   // (Zvoki okolja: Izklop, Tiho, Glasneje; js/sfx-okolje.js)
+  S.amb = [0, 0.5, 1, 2].includes(+S.amb) ? +S.amb : 1;   // (Zvoki okolja, × their loudness: 0 Izklop, 0.5 Tiho, 1 Normalno (the default), 2 Glasno; js/sfx-okolje.js)
   if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';
   if (!['normal', 'high'].includes(S.carDet)) S.carDet = DEF.carDet;   // (Detajli avtov: Normalni / Visoki)   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
@@ -544,7 +544,7 @@
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: !!S.vibrate });
     Sfx.setEnabled(!!S.sound);
-    if (window.SfxOkolje) SfxOkolje.set(S.amb, !!+S.sound, saverOn);   // (the sounds by the road: Izklop / Tiho / Glasneje, the battery saver)
+    if (window.SfxOkolje) SfxOkolje.set(S.amb, !!+S.sound, saverOn);   // (the sounds by the road: Izklop / Tiho / Normalno / Glasno, the battery saver)
     if (race && race.player) race.player.assist = Core.ASSISTS[S.assist];
     refreshSegs();
   }

@@ -1,8 +1,8 @@
 // The sounds by the road (js/sfx-okolje.js, docs/zvoki-okolja.md): every real track's zones from its world (the woods, the water, the
 // villages, the wind, the churches, the herds, the towns, the circuits' announcer; tools/zvoki-pasovi.mjs prints them), the test tracks
 // none; a race at Medvode with the sound on (the Sava heard, a church's bells as the car passes it, quieter with the speed, at most 25 nodes
-// and 1.5 MB of buffers); the beds and the calls under the engine (rendered offline: SfxOkolje.probe against Sfx.probe); the setting (Tiho
-// by default, Glasneje twice Tiho, Izklop nothing); the night, the rain and the winter (no birds, no insects); the load (a frame's share,
+// and 1.5 MB of buffers); the beds and the calls under the engine (rendered offline: SfxOkolje.probe against Sfx.probe); the setting (Normalno
+// by default, Tiho half of it, Glasno twice, Izklop nothing; kept between launches); the night, the rain and the winter (no birds, no insects); the load (a frame's share,
 // an offline render); Ouninpohja's birds and forest; Pikes Peak without our wind; on a second page with the browser's speech stubbed, Spa's
 // announcer and shouts (never over the commentator, cut off by him), its cows' bells, Marrakesh's traffic and pigeons.
 //   node tests/browser/okolje.test.mjs
@@ -107,7 +107,7 @@ async function speech() {
     JSON.stringify({ voices: m0[1].voices, traffic: M.map(x => x.L.beds.traffic || 0), coos: M[M.length - 1].L.n.coos - m0[1].n.coos }));
   await page.evaluate(() => { SfxOkolje.opts.cooP = 0.12; });
 
-  // the new calls under the engine (offline, Tiho; every voice made: SfxOkolje.opts.all, the setting off and on): a cow's bell, a moo, a
+  // the new calls under the engine (offline, Normalno; every voice made: SfxOkolje.opts.all, the setting off and on): a cow's bell, a moo, a
   // sheep's bleat, a pigeon at their nearest 15 to 32 dB under a car's engine at mid revs, the town's traffic 20 to 30
   await page.evaluate(() => { SfxOkolje.opts.all = true; const pick = (v) => document.querySelector('.seg[data-set="amb"] button[data-v="' + v + '"]').click(); pick(0); pick(1); });
   await frame(0.2);
@@ -121,7 +121,7 @@ async function speech() {
     return out;
   });
   const cv = Object.values(lo.calls);
-  T.check('nabor 3 under the engine: the calls 15 to 32 dB, the traffic 20 to 30 dB under it (Tiho)', cv.length === 4 && cv.every(v => v <= -15 && v >= -32) && lo.traffic <= -20 && lo.traffic >= -30, JSON.stringify(lo));
+  T.check('nabor 3 under the engine: the calls 15 to 32 dB, the traffic 20 to 30 dB under it (Normalno)', cv.length === 4 && cv.every(v => v <= -15 && v >= -32) && lo.traffic <= -20 && lo.traffic >= -30, JSON.stringify(lo));
   T.check('no page errors (the second page)', errors.length === 0, errors.slice(0, 5).join(' | '));
   await page.close();
 }
@@ -168,7 +168,7 @@ try {
     const frame = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); if (t) g.sim(t, true); g.resume();
       requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); setTimeout(() => { const P = g.race.player; res({ s: Math.round(P.q.s), kmh: Math.round(P.speed * 3.6), L: SfxOkolje.levels() }); }, 150); })); }), t);
     const f0 = await frame(0), prep = await page.evaluate(() => [SfxOkolje.prep(), SfxOkolje.levels(), window.__game.S.amb]);
-    T.check('the voices made ahead for Medvode (the river, the bells, the birds; at most 1.5 MB), Tiho by default', prep[0] && prep[1].ready && !prep[1].err && prep[1].voices.includes('river') && prep[1].voices.includes('bells') && prep[1].songs >= 3 && prep[1].bytes > 0 && prep[1].bytes <= 1.5e6 && prep[2] === 1,
+    T.check('the voices made ahead for Medvode (the river, the bells, the birds; at most 1.5 MB), Normalno by default', prep[0] && prep[1].ready && !prep[1].err && prep[1].voices.includes('river') && prep[1].voices.includes('bells') && prep[1].songs >= 3 && prep[1].bytes > 0 && prep[1].bytes <= 1.5e6 && prep[2] === 1,
       JSON.stringify({ voices: prep[1].voices, songs: prep[1].songs, KB: Math.round(prep[1].bytes / 1024), err: prep[1].err, amb: prep[2], prep: prep[1].prep, s: f0.s }));
     const S = [];
     for (let k = 0; k < 4; k++) S.push(await frame(0.6));   // (by the Sava after the start)
@@ -180,7 +180,7 @@ try {
     T.check('quieter with the speed: at 160 km/h and more at most half of a car that stands', fast.length > 0 && fast.every(x => x.L.master <= 0.5 * full + 1e-4), JSON.stringify(S.map(x => [x.L.kmh, x.L.master])) + ' full ' + full);
     T.check('at most 25 nodes and 1.5 MB at any time', S.every(x => x.L.nodes <= 25 && x.L.bytes <= 1.5e6), 'nodes up to ' + Math.max(...S.map(x => x.L.nodes)));
 
-    // 3. under the engine (offline, Tiho): the beds at a full zone ~24 dB under a car's engine at mid revs, the calls at their nearest ~18
+    // 3. under the engine (offline, Normalno): the beds at a full zone ~24 dB under a car's engine at mid revs, the calls at their nearest ~18
     const lo = await page.evaluate(async () => {
       const rms = (d, a = 0) => { let s = 0; for (let i = a; i < d.length; i++) s += d[i] * d[i]; return Math.sqrt(s / (d.length - a)); }, db = (x) => 20 * Math.log10(Math.max(x, 1e-9));
       const pk = (d) => { let m = 0; for (let a = 0; a + 4410 <= d.length; a += 2205) { let q = 0; for (let i = a; i < a + 4410; i++) q += d[i] * d[i]; m = Math.max(m, Math.sqrt(q / 4410)); } return m; };
@@ -191,17 +191,23 @@ try {
       return out;
     });
     const bv = Object.values(lo.beds), cv = Object.values(lo.calls);
-    T.check('the beds at a full zone 20 to 30 dB under the engine at mid revs (Tiho)', bv.length >= 6 && bv.every(v => v <= -20 && v >= -30), JSON.stringify(lo));
+    T.check('the beds at a full zone 20 to 30 dB under the engine at mid revs (Normalno)', bv.length >= 6 && bv.every(v => v <= -20 && v >= -30), JSON.stringify(lo));
     T.check('the calls (a bird, a gull, a bell) at their nearest at least 15 dB under it', cv.length === 5 && cv.every(v => v <= -15 && v >= -32), JSON.stringify(lo.calls));
 
-    // 4. the setting (Nastavitve, Zvoki okolja): Glasneje twice Tiho, Izklop nothing at all (no node, no buffer), back on again
-    const st = await page.evaluate(() => { const pick = (v) => document.querySelector('.seg[data-set="amb"] button[data-v="' + v + '"]').click();   // (the buttons in Nastavitve)
-      const t = SfxOkolje.levels().full; pick(2); const l = SfxOkolje.levels().full; pick(0); const off = SfxOkolje.levels(); pick(1); return { t, l, off }; });
+    // 4. the setting (Nastavitve, Zvoki okolja; its value × the loudness): Tiho half of Normalno, Glasno twice it, Izklop nothing at all
+    // (no node, no buffer), Normalno again: on; each choice kept with the other settings (tdgp-settings), its button marked
+    const st = await page.evaluate(() => { const seg = document.querySelector('.seg[data-set="amb"]'), out = { def: SfxOkolje.levels().full };
+      for (const v of ['0.5', '2', '0', '1']) { seg.querySelector('button[data-v="' + v + '"]').click();   // (the buttons in Nastavitve)
+        let saved = null; try { saved = JSON.parse(localStorage.getItem('tdgp-settings')).amb; } catch (_) { /* no storage */ }
+        const L = SfxOkolje.levels(), b = seg.querySelector('button.sel'); out[v] = { full: L.full, on: L.on, nodes: L.nodes, bytes: L.bytes, saved, sel: b && b.dataset.v }; }
+      return out; });
     const back = await frame(0.3);
-    T.check('Glasneje twice Tiho, Izklop: nothing at all, Tiho again: on', Math.abs(st.l - 2 * st.t) < 1e-9 && st.t > 0 && !st.off.on && st.off.nodes === 0 && st.off.bytes === 0 && back.L.on,
-      JSON.stringify({ tiho: st.t, glasneje: st.l, izklop: [st.off.on, st.off.nodes, st.off.bytes], back: back.L.on }));
+    const nor = st['1'].full, near = (a, b) => Math.abs(a - b) < 1e-9;
+    T.check('Zvoki okolja in four steps: Tiho half of Normalno (the default), Glasno twice, Izklop: nothing at all, Normalno again: on; each kept with the settings, its button marked',
+      nor > 0 && near(st.def, nor) && near(st['0.5'].full, 0.5 * nor) && near(st['2'].full, 2 * nor) && !st['0'].on && st['0'].nodes === 0 && st['0'].bytes === 0 && back.L.on &&
+      ['0.5', '2', '0', '1'].every(v => String(st[v].saved) === v && st[v].sel === v), JSON.stringify(st) + ' back: ' + back.L.on);
 
-    // 5. the time of day, the weather, the season (Medvode, Tiho; the birds ten times as often, SfxOkolje.opts.birdP, so that none is no
+    // 5. the time of day, the weather, the season (Medvode, Normalno; the birds ten times as often, SfxOkolje.opts.birdP, so that none is no
     // chance): at night no bird, the crickets; at dusk in the rain both made, neither heard; in winter no insect at all
     const atm = async (a, rain, n) => {
       await page.evaluate(([a, rain]) => { Render.setAtmos(a); window.__game.race.setRain(rain); SfxOkolje.opts.birdP = 10; }, [a, rain]);
@@ -266,6 +272,11 @@ try {
     T.check('Pikes Peak: no wind of ours, its birds', pk.ok && pk.wind.every(v => v === 0) && pk.songs >= 3, JSON.stringify(pk));
     await page.evaluate(() => { SfxOkolje.opts.birdP = 1; });
   }
+  // the setting kept between launches: a game opened with Tiho saved starts on Tiho (not reset by the start-up's check), its button marked
+  { const g2 = await openGame(browser, srv.base + '/index.html', { amb: 0.5 });
+    const k = await g2.page.evaluate(() => { const b = document.querySelector('.seg[data-set="amb"] button.sel'); return [window.__game.S.amb, b && b.dataset.v]; });
+    T.check('Zvoki okolja kept between launches (Tiho saved: Tiho at the start, its button marked)', k[0] === 0.5 && k[1] === '0.5' && g2.errors.length === 0, JSON.stringify(k) + ' ' + g2.errors.slice(0, 3).join(' | '));
+    await g2.ctx.close(); }
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
   if (ready) await speech();
 } catch (e) {
