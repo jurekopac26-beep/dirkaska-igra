@@ -419,8 +419,8 @@ async function placeFlag(T) {
 function mapGraph(host, T) {
   if (T.mg.hide) return;
   if (T.mg.box && !T.mg._in) {
-    const vw = document.querySelector('.views');
-    const B = T.mg.box, vr = vw.getBoundingClientRect(), hr = host.getBoundingClientRect(), w = Math.round(vr.width), h = Math.round(w * B.ratio) + (B.join ? Math.round(vr.height) : 0), d = document.createElement('div');
+    const B = T.mg.box, vw = document.querySelector(B.under || '.views');   // (B.under: the box under another button and as wide as it, e.g. the back button #homeBtn)
+    const vr = vw.getBoundingClientRect(), hr = host.getBoundingClientRect(), w = Math.round(vr.width), h = Math.round(w * B.ratio) + (B.join ? Math.round(vr.height) : 0), d = document.createElement('div');
     d.className = 'mgbox'; Object.assign(d.style, { position: 'absolute', zIndex: 6, left: (B.right != null ? hr.width - w - B.right : B.left != null ? B.left : vr.left - hr.left) + 'px', top: (B.top != null ? B.top : B.join ? vr.top - hr.top : vr.bottom - hr.top + (B.gap || 6)) + 'px', width: w + 'px', height: h + 'px', overflow: 'hidden', boxSizing: 'border-box' });
     d.style.cssText += ';' + B.css; host.appendChild(d);
     const ib = d.clientWidth, ih = d.clientHeight, pad = B.pad || 0;
