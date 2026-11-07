@@ -15,7 +15,7 @@ window.GLOBE = (() => {
   async function load() {
     if (tex) return;
     const img = new Image(); img.src = 'maketa-menija/izbira-proge/mk/earth2k.webp'; await img.decode();   // (assets/geo/earth.webp at half size: quicker to open)
-    const c = document.createElement('canvas'); c.width = TW; c.height = TH; const g = c.getContext('2d'); g.drawImage(img, 0, 0, TW, TH); tex = g.getImageData(0, 0, TW, TH).data;
+    const c = document.createElement('canvas'); c.width = TW; c.height = TH; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, TW, TH); tex = g.getImageData(0, 0, TW, TH).data;
   }
   function sample(lam, phi, o) {   // the texture at (longitude, latitude) in radians, bilinear
     const fx = ((lam / D + 180) / 360 % 1 + 1) % 1 * TW - 0.5, fy = Math.min(TH - 1.001, Math.max(0, (90 - phi / D) / 180 * TH - 0.5));

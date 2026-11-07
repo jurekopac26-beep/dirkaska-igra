@@ -73,7 +73,7 @@ window.WXFX = (() => {
   // the car's top line (for the snow on it): the first opaque pixel in each column of its picture, and how flat it is there
   function carContour(img, w, h) {
     const c = document.createElement('canvas'); c.width = Math.round(w); c.height = Math.round(h);
-    const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0, c.width, c.height);
     const a = g.getImageData(0, 0, c.width, c.height).data, top = [];
     for (let x = 0; x < c.width; x++) { let y = 0; while (y < c.height && a[(y * c.width + x) * 4 + 3] < 140) y++; top.push(y < c.height ? y : null); }
     // the slope over a few pixels either side (the picture's top line steps a pixel at a time), then smoothed, so the snow's
@@ -97,7 +97,7 @@ window.WXFX = (() => {
   // their branches, the road packed snow keeping its marks, coloured things (cars) kept but cooler, the distance in a pale haze
   function buildSnowStage(slow) {
     const Wm = R.map.w, Hm = R.map.h, cw = Math.round(Wm * dpr), ch = Math.round(Hm * dpr), c = document.createElement('canvas'); c.width = cw; c.height = ch;
-    const g = c.getContext('2d'), img = E.img, cs = getComputedStyle(img), bw = img.offsetWidth, bh = img.offsetHeight, nw = img.naturalWidth, nh = img.naturalHeight;
+    const g = c.getContext('2d', { willReadFrequently: true }), img = E.img, cs = getComputedStyle(img), bw = img.offsetWidth, bh = img.offsetHeight, nw = img.naturalWidth, nh = img.naturalHeight;
     const sc = Math.max(bw / nw, bh / nh), m = cs.transform && cs.transform !== 'none' ? new DOMMatrix(cs.transform) : new DOMMatrix(), [ox, oy] = cs.transformOrigin.split(' ').map(parseFloat);
     g.scale(dpr, dpr); g.translate(img.offsetLeft + ox, img.offsetTop + oy); g.transform(m.a, m.b, m.c, m.d, m.e, m.f); g.translate(-ox, -oy);
     g.drawImage(img, (bw - nw * sc) / 2, (bh - nh * sc) / 2, nw * sc, nh * sc); g.setTransform(1, 0, 0, 1, 0, 0);
@@ -130,7 +130,7 @@ window.WXFX = (() => {
   // frost on the car's windows (grey-blue glass in its upper part) and snow packed on its lower body, thickest round the wheels
   function buildCarFrost() {
     const c = R.car, cw = Math.round(c.w * dpr), ch = Math.round(c.h * dpr), o = document.createElement('canvas'); o.width = cw; o.height = ch;
-    const g = o.getContext('2d'); g.drawImage(E.car, 0, 0, cw, ch);
+    const g = o.getContext('2d', { willReadFrequently: true }); g.drawImage(E.car, 0, 0, cw, ch);
     const d = g.getImageData(0, 0, cw, ch).data, out = g.createImageData(cw, ch), q = out.data, k = 1 / dpr;
     for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
       const i = (y * cw + x) * 4; if (d[i + 3] < 200) continue;
@@ -192,7 +192,7 @@ window.WXFX = (() => {
   // the tyres are found in its picture: the columns whose lowest opaque pixel is (nearly) the lowest of all
   function carFeet() {
     const c = R.car, cw = Math.round(c.w * dpr), ch = Math.round(c.h * dpr), o = document.createElement('canvas'); o.width = cw; o.height = ch;
-    const g = o.getContext('2d'); g.drawImage(E.car, 0, 0, cw, ch); const a = g.getImageData(0, 0, cw, ch).data, bot = [];
+    const g = o.getContext('2d', { willReadFrequently: true }); g.drawImage(E.car, 0, 0, cw, ch); const a = g.getImageData(0, 0, cw, ch).data, bot = [];
     for (let x = 0; x < cw; x++) { let y = ch - 1; while (y >= 0 && a[(y * cw + x) * 4 + 3] < 140) y--; bot.push(y); }
     const maxB = Math.max(...bot), tol = ch * 0.025, cols = bot.map((y, x) => y >= maxB - tol ? x : -1).filter(x => x >= 0), wheels = [];
     for (const x of cols) { const w = wheels[wheels.length - 1]; if (w && x - w.x1 <= 3 * dpr) w.x1 = x; else wheels.push({ x0: x, x1: x }); }

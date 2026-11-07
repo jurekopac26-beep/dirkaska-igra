@@ -8,7 +8,7 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 
 - `#t=<proga>&cam=<1-3>&wx=<vreme>` izbere progo (`id` iz igre: z ročno maketo `vrsic`, `nring`, `spa`, `pikes`, `suzuka`, `rbring`, `ouninpohja`, ostale prave proge iz `vse-proge.js`), kamero in vreme (`dry`, `rain`, `change`, `storm`, `snow`); `&open=izbor` ali `&open=zemlja` ob nalaganju odpre hitro izbiro ali 3D Zemljo.
 - Dotik ikone vremena spremeni cel zaslon (dež, strela, mavrica, sneg na gumbih, tabli in avtu, moker pod z odsevom).
-- Gumbi kamer in zastavi sosednjih prog odprejo drugo sliko ali progo; zastava v vrstici odpre hitro izbiro države in proge, globus v glavi 3D Zemljo (vrtenje, približanje, izbira države in proge); Race! in puščica nazaj le pokažeta obvestilo.
+- Gumbi kamer in zastavi sosednjih prog zamenjajo sliko ali progo na mestu, brez ponovnega nalaganja strani (`window.MOCK(T)` zgradi nov zaslon, star se pod njim umakne): globus v glavi se zavrti do nove proge, tabla in avto prideta v sliko s strani, vreme in kamera ostaneta, naslov (`#t=…`) se zamenja s `history.replaceState`. Poteg po sliki levo odpre naslednjo progo, desno prejšnjo; slike sosed se naložijo vnaprej. Zastava v vrstici odpre hitro izbiro države in proge, globus v glavi 3D Zemljo (vrtenje, približanje, izbira države in proge); Race! in puščica nazaj le pokažeta obvestilo.
 - `?static` naloži samo zaslon (za orodja v `orodja/`).
 - `T.signMode: 'flagname'`: spodnja tabla v barvah zastave brez napisa (zastava v delu, ki ga avto ne zakrije), nad njo desno manjša tabla z imenom države v njenem slogu (primer `orodja/proge/suzuka-tovornjak.json`).
 - `table.html` nariše tablo izbrane države brez zastave in na 6 načinov z zastavo (glej `orodja/table.mjs`).

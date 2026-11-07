@@ -25,7 +25,8 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 .hflag { flex: 0 0 auto; width: 52px; height: 34px; border-radius: 3px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
 .hflag svg { width: 100%; height: 100%; display: block; }
 /* the map */
-.map { left: 0; right: 0; top: 74px; height: 370px; overflow: hidden; }
+.map { left: 0; right: 0; top: 74px; height: 370px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.map img { -webkit-user-drag: none; }
 .map img { width: 100%; display: block; }
 .map img.zoom { width: 110%; margin-left: -5%; margin-top: 0; }
 .views { left: 10px; top: 10px; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px dashed rgba(255,198,41,.6); }
@@ -276,7 +277,7 @@ window.MOCK = async (T) => {
   }
   if (T.titleHtml) { const h = document.querySelector('.htitle'); h.innerHTML = T.titleHtml; }
   if (T.viewsCss) { const vw = document.querySelector('.views'); vw.style.cssText += ';' + T.viewsCss; vw.style.zIndex = 7; }
-  if (T.css) document.head.insertAdjacentHTML('beforeend', '<style>' + T.css + '</style>');
+  if (T.css) document.head.insertAdjacentHTML('beforeend', '<style class="t-css">' + T.css + '</style>');
   if (T.signShadow) {   // a soft shadow of the car on the country sign behind it
     const S = T.signShadow, car = $('car'), sg = document.querySelector('#boards .bd.b'), cr = car.getBoundingClientRect(), sr = sg.getBoundingClientRect();
     sg.style.overflow = 'hidden'; const im = new Image(); im.src = car.src;
@@ -323,7 +324,7 @@ async function flowLines3d(cv, img, cx, cy, cw, ch, T) {
   const fw = nrm(sub(C.t, C.p)), rt = nrm(crs(fw, [0, 1, 0])), up = crs(rt, fw), tf = Math.tan(C.fov * Math.PI / 360), [SW, SH] = F.shot, asp = SW / SH, k = cw / (F.crop[2] - F.crop[0]);
   const proj = (P) => { const v = sub(P, C.p), zc = dot(v, fw), X = dot(v, rt) / (zc * tf * asp), Y = dot(v, up) / (zc * tf); const px = (X + 1) / 2 * SW, py = (1 - Y) / 2 * SH; return [cx + (px - F.crop[0]) * k, cy + (py - F.crop[1]) * k - top]; };
   // the car's picture: where it covers the screen
-  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d'); tx.drawImage(img, 0, 0); const D = tx.getImageData(0, 0, tc.width, tc.height).data;
+  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d', { willReadFrequently: true }); tx.drawImage(img, 0, 0); const D = tx.getImageData(0, 0, tc.width, tc.height).data;
   const onCar = (q) => { const ix = Math.round((q[0] - cx) / k), iy = Math.round((q[1] + top - cy) / k); return ix >= 0 && iy >= 0 && ix < tc.width && iy < tc.height && D[(iy * tc.width + ix) * 4 + 3] > 120; };
   const L = [[1.3, .3], [1.1, .6], [.9, .9], [.7, .2], [.5, 1.12], [.3, .45], [.12, 1.32], [0, .1], [-.2, .78], [-.4, 1.5], [-.55, .35], [-.7, 1.08]];
   const cols = ['#6fe3ff', '#3fd0ff', '#5be3a8', '#3fa0ff', '#8cf0d0', '#2f7dff', '#4fc6ff', '#7af0b8', '#3d8cff', '#5fd8ff', '#2fb6ff', '#6ee6c4', '#4fb0ff', '#7fe0ff'];
@@ -345,7 +346,7 @@ async function flowLines3d(cv, img, cx, cy, cw, ch, T) {
 function flowLines(cv, img, cx, cy, cw, ch, T) {
   const W = 412, top = cy - 40, H = ch + 60, s = 2; cv.width = W * s; cv.height = H * s; Object.assign(cv.style, { left: '0px', top: top + 'px', width: W + 'px', height: H + 'px' });
   const g = cv.getContext('2d'); g.scale(s, s);
-  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d'); tx.drawImage(img, 0, 0);
+  const tc = document.createElement('canvas'); tc.width = img.naturalWidth; tc.height = img.naturalHeight; const tx = tc.getContext('2d', { willReadFrequently: true }); tx.drawImage(img, 0, 0);
   const D = tx.getImageData(0, 0, tc.width, tc.height).data, k = cw / tc.width;
   const prof = new Array(W).fill(null);   // the body's top, in this canvas's pixels, per column
   for (let X = 0; X < W; X++) { const ix = Math.floor((X - cx) / k); if (ix < 0 || ix >= tc.width) continue; for (let iy = 0; iy < tc.height; iy++) if (D[(iy * tc.width + ix) * 4 + 3] > 140) { prof[X] = cy - top + iy * k; break; } }
@@ -535,9 +536,12 @@ function drawGraph(cv, T) {
 async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   // (globe.js)
 </script>
 <script>
-// the live mockup (not the game): #t=<track>&cam=<1-3>&wx=<weather>. A tap on a weather icon changes the whole screen (wxfx.js);
-// the camera buttons and the neighbours' flags open another picture or track; a tap on the flag in the row opens the quick list of every
-// track (izbor.js), a tap on the globe the Earth (zemlja.js); the page is scaled to fit the window.
+// the live mockup (not the game): #t=<track>&cam=<1-3>&wx=<weather>. A tap on a weather icon changes the whole screen (wxfx.js); the
+// camera buttons, the neighbours' flags and a swipe over the picture (left: the next track, right: the previous) show another picture or
+// track in place, without loading the page again: the old screen is put aside over the new one as it was (a shadow root: its ids do not
+// meet the new ones), the new one is built under it from the page's own markup (MOCK), then the old one fades as its sign and car go and the
+// new ones come into the picture; the globe turns to the new country, the weather and the camera stay. A tap on the flag in the row opens
+// the quick list of every track (izbor.js), a tap on the globe the Earth (zemlja.js); the page is scaled to fit the window.
 // Every real track of the game can be shown (vse-proge.js): the seven with a hand-made mockup (proge.js) as made, the others with the same
 // look and their own name, country, flag, sign, numbers, graph and pictures (the game's: assets/tracks, assets/maps)
 (async () => {
@@ -554,8 +558,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     ALL[i] = { id: i, name: t.title, country: t.countryKey, flag: t.countryKey.toLowerCase().replace(/\s+/g, '-'), lat: t.lat, lon: t.lon, km: parseFloat(len), open: true, test: true,
       cams: { 1: 'assets/tracks/' + i + '.webp', 2: P.tracks[i].cams[2].map, 3: P.tracks[i].cams[3].map } };
   }
-  const q = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : saved), id = ALL[q.get('t')] ? q.get('t') : 'vrsic';
-  const cam = [1, 2, 3].includes(+q.get('cam')) ? +q.get('cam') : 1, wx0 = WXFX.KEYS.includes(q.get('wx')) ? q.get('wx') : 'dry';
+  const q = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : saved);
+  let id = ALL[q.get('t')] ? q.get('t') : 'vrsic', cam = [1, 2, 3].includes(+q.get('cam')) ? +q.get('cam') : 1, cur = WXFX.KEYS.includes(q.get('wx')) ? q.get('wx') : 'dry';
   // a flag from the game's file (inline, its own viewBox), drawn into the mockup's 30 x 20 box; its width / height
   const flagSvg = (cc) => { const f = V.flags[cc]; return f ? '<svg x="0" y="0" width="30" height="20" viewBox="' + f.vb + '" preserveAspectRatio="none">' + f.svg + '</svg>' : '<rect width="30" height="20" fill="#3b4557"/>'; };
   const flagAr = (cc) => { const f = V.flags[cc], v = f ? f.vb.split(/\s+/).map(Number) : null; return v ? v[2] / v[3] : 1.5; };
@@ -573,46 +577,100 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     else T.mg.hide = true;
     return T;
   }
-  const T = P.tracks[id] ? clone(P.tracks[id].T) : generic(id), c = P.tracks[id] ? P.tracks[id].cams[cam] : { map: ALL[id].cams[cam] };
-  // the neighbours: from the whole list, each with its country's flag
-  const k = ORDER.indexOf(id), n = ORDER.length, pv = ORDER[(k - 1 + n) % n], nx = ORDER[(k + 1) % n];
-  Object.assign(T, { prev: flagSvg(ALL[pv].flag), next: flagSvg(ALL[nx].flag), prevAr: flagAr(ALL[pv].flag), nextAr: flagAr(ALL[nx].flag), flagFix: true });
-  Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(wx0) });
-  await window.MOCK(T);
-  const o = { flash: null, hz: T.hz, carFloor: T.carFloor, snowStyle: 'blizzard', live: true }, t0 = performance.now(), now = () => (performance.now() - t0) / 1000;
-  WXFX.setTimeline([{ t: -30, k: wx0 }]); WXFX.frame(0, o);
-  const fit = () => { if (document.activeElement && document.activeElement.matches('input')) return;   // (the keyboard of the quick list's search: the page keeps its size)
-    const s = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * s) / 2) + 'px) scale(' + s + ')'; };
-  document.body.style.transformOrigin = '0 0'; document.documentElement.style.width = '100%'; document.documentElement.style.height = '100%'; fit(); addEventListener('resize', fit);
-  let cur = wx0;
-  let gfrom = null; try { gfrom = JSON.parse(sessionStorage.getItem('izbira-globus') || 'null'); } catch (e) {}
-  if (gfrom && (gfrom[0] !== T.lat || gfrom[1] !== T.lon)) GLOBE.travel(gfrom, 0.25);
-  try { sessionStorage.setItem('izbira-globus', JSON.stringify([T.lat, T.lon])); } catch (e) {}
-  // (while the Earth covers the screen, the screen under it rests)
-  const loop = () => { const t = now(); if (!window.ZEMLJA || !ZEMLJA.covers()) { WXFX.frame(t); GLOBE.frame(t); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  // the screen's own markup, before MOCK fills it: each new screen starts from it
+  const STATIC = [...document.body.children].filter(e => e.tagName !== 'SCRIPT').map(e => e.outerHTML).join('');
+  const t0 = performance.now(), now = () => (performance.now() - t0) / 1000, o = { flash: null, snowStyle: 'blizzard', live: true };
+  let T = null, building = false, changing = false, SC = 1;   // (building: the loop waits; changing: the taps wait)
+  const nbOf = (i) => { const k = ORDER.indexOf(i), n = ORDER.length; return [ORDER[(k - 1 + n) % n], ORDER[(k + 1) % n]]; };
+  const picOf = (i) => P.tracks[i] ? P.tracks[i].cams[cam].map : ALL[i].cams[cam];
+  const carOf = (i) => P.tracks[i] ? P.tracks[i].T.car : 'maketa-menija/izbira-proge/mk/' + CARS[ORDER.indexOf(i) % CARS.length][0] + '.webp';
+  const seen = new Set(), preload = (src) => { if (!src || seen.has(src)) return; seen.add(src); const im = new Image(); im.src = src; };
+  function makeT(i) {
+    const T = P.tracks[i] ? clone(P.tracks[i].T) : generic(i), c = P.tracks[i] ? P.tracks[i].cams[cam] : { map: ALL[i].cams[cam] }, [pv, nx] = nbOf(i);
+    Object.assign(T, { prev: flagSvg(ALL[pv].flag), next: flagSvg(ALL[nx].flag), prevAr: flagAr(ALL[pv].flag), nextAr: flagAr(ALL[nx].flag), flagFix: true });
+    return Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(cur) });
+  }
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
-  const here = location.pathname + location.search, hash = (p) => { const n = new URLSearchParams({ t: id, cam, wx: cur }); for (const k in p) n.set(k, p[k]); return here + '#' + n; };
-  const go = (p) => NAZAJ.clear(() => { const h = hash(p); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h); location.reload(); });   // (the open layers' steps out of the history first)
-  document.querySelector('.wxc').addEventListener('click', (e) => {
-    const i = e.target.closest('i'); if (!i) return;
-    const k = WXFX.KEYS[[...i.parentNode.children].indexOf(i)]; if (!k || k === cur) return;
-    cur = k; WXFX.tap(k, now()); const h = hash({}); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h);
-  });
-  document.querySelectorAll('.views i').forEach((el, i) => el.addEventListener('click', () => { if (i + 1 !== cam) go({ cam: i + 1 }); }));
-  const nb = document.querySelectorAll('.nb');
-  nb[0].addEventListener('click', () => go({ t: pv }));
-  nb[1].addEventListener('click', () => go({ t: nx }));
+  const here = location.pathname + location.search, hash = () => here + '#' + new URLSearchParams({ t: id, cam, wx: cur });
+  const keep = () => { const h = hash(); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); sessionStorage.setItem('izbira-globus', JSON.stringify([T.lat, T.lon])); } catch (e) {} history.replaceState(history.state, '', h); };
+  // a screen: the old one (if any) aside over it, the new one built under it, then the change (dir: 1 the next track, -1 the previous, 0 the same)
+  async function show(i, dir) {
+    building = changing = true;
+    const from = T && [T.lat, T.lon], oE = T && WXFX._E(), oldCar = oE && oE.gCar && oE.gCar.canvas;
+    let old = null;
+    if (T) {
+      if (window.IZBOR && IZBOR.isOpen()) IZBOR.close();
+      if (window.ZEMLJA && ZEMLJA.covers()) ZEMLJA.close();
+      old = document.createElement('div'); old.style.cssText = 'position:absolute;left:0;top:0;width:412px;height:892px;z-index:60;pointer-events:none';
+      const sh = old.attachShadow({ mode: 'open' });
+      for (const st of document.head.querySelectorAll('style')) sh.appendChild(st.cloneNode(true));
+      for (const e of [...document.body.children]) if (e.tagName !== 'SCRIPT') sh.appendChild(e);
+      document.body.appendChild(old);
+      document.head.querySelectorAll('style.t-css').forEach(e => e.remove());
+      document.body.insertAdjacentHTML('afterbegin', STATIC);
+    }
+    id = i; T = makeT(i);
+    await window.MOCK(T);
+    Object.assign(o, { hz: T.hz, carFloor: T.carFloor });
+    WXFX.setTimeline([{ t: -30, k: cur }]); WXFX.frame(now(), o);
+    if (from && (from[0] !== T.lat || from[1] !== T.lon)) GLOBE.travel(from, now() + 0.05);
+    for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
+    keep(); building = false;
+    if (old) await change(old, dir, oldCar);
+    changing = false;
+    for (const x of nbOf(i)) { preload(picOf(x)); preload(carOf(x)); }
+  }
+  // the change: the old screen fades; on a new track its sign and car go out to one side and the new ones come in from the other, the floor's
+  // weather (the car's shadow, wet or snow) a moment after the car stands
+  function change(old, dir, oldCar) {
+    const sh = old.shadowRoot, E = WXFX._E(), yard = (r) => ['#boards', '#flags', '#car', '#flow', '.graph'].map(q => r.querySelector(q)).filter(Boolean);
+    if (dir) {
+      yard(sh).concat(oldCar ? [oldCar] : []).forEach(e => e.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(' + (-dir * 250) + 'px)', opacity: 0 }], { duration: 260, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }));
+      yard(document).concat(E.gCar ? [E.gCar.canvas] : []).forEach((e, k) => e.animate([{ transform: 'translateX(' + (dir * 412) + 'px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
+        { duration: 540, delay: 140 + (k ? 60 : 0), easing: 'cubic-bezier(.2, .8, .25, 1)', fill: 'backwards' }));
+      if (E.gRoom) E.gRoom.canvas.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 560, fill: 'backwards' });
+    }
+    old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 340, delay: dir ? 90 : 0, easing: 'ease-out', fill: 'forwards' });
+    return new Promise(res => setTimeout(() => { old.remove(); res(); }, dir ? 840 : 380));
+  }
+  const go = (t, dir) => NAZAJ.clear(() => { if (t !== id) show(t, dir != null ? dir : ORDER.indexOf(t) > ORDER.indexOf(id) ? 1 : -1); });   // (the open layers' steps out of the history first)
+  await show(id, 0);
+  const fit = () => { if (document.activeElement && document.activeElement.matches('input')) return;   // (the keyboard of the quick list's search: the page keeps its size)
+    SC = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * SC) / 2) + 'px) scale(' + SC + ')'; };
+  document.body.style.transformOrigin = '0 0'; document.documentElement.style.width = '100%'; document.documentElement.style.height = '100%'; fit(); addEventListener('resize', fit);
+  let gfrom = null; try { gfrom = JSON.parse(q.get('t') === id && sessionStorage.getItem('izbira-globus') || 'null'); } catch (e) {}
+  if (gfrom && (gfrom[0] !== T.lat || gfrom[1] !== T.lon)) GLOBE.travel(gfrom, 0.25);
+  // (while the Earth covers the screen, the screen under it rests)
+  const loop = () => { const t = now(); if (!building && (!window.ZEMLJA || !ZEMLJA.covers())) { WXFX.frame(t); GLOBE.frame(t); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
   // the quick list (the flag) and the Earth (the globe): both show every track and take you to the one picked
-  const pick = (t) => { if (t !== id) go({ t }); };
-  const W = { cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick };
-  const fl = document.getElementById('rowflag'); if (fl && window.IZBOR) fl.addEventListener('click', () => IZBOR.open(W));
-  const gl = document.getElementById('hflag'); if (gl && window.ZEMLJA) gl.addEventListener('click', () => ZEMLJA.open(W));
-  if (q.get('open') === 'izbor' && window.IZBOR) IZBOR.open(W);
-  if (q.get('open') === 'zemlja' && window.ZEMLJA) ZEMLJA.open(W);
+  const W = () => ({ cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick: (t) => go(t) });
   const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:50%;top:420px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
-  document.querySelector('.go').addEventListener('click', () => toast('Race! (in the game the race starts)'));
-  document.querySelector('#homeBtn').addEventListener('click', () => toast('Back to the main menu'));
-  for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
+  // the taps: one listener for every screen (each new screen has new buttons)
+  document.body.addEventListener('click', (e) => {
+    if (changing) return;
+    const w = e.target.closest('.wxc i');
+    if (w) { const k = WXFX.KEYS[[...w.parentNode.children].indexOf(w)]; if (k && k !== cur) { cur = k; WXFX.tap(k, now()); keep(); } return; }
+    const v = e.target.closest('.views i'); if (v) { const c = [...v.parentNode.children].indexOf(v) + 1; if (c !== cam) { cam = c; show(id, 0); } return; }
+    const nb = e.target.closest('.nb'); if (nb) { const k = [...document.querySelectorAll('.nb')].indexOf(nb); go(nbOf(id)[k], k ? 1 : -1); return; }
+    if (e.target.closest('#rowflag') && window.IZBOR) return IZBOR.open(W());
+    if (e.target.closest('#hflag') && window.ZEMLJA) return ZEMLJA.open(W());
+    if (e.target.closest('.go')) return toast('Race! (in the game the race starts)');
+    if (e.target.closest('#homeBtn')) return toast('Back to the main menu');
+  });
+  // a swipe over the picture: the picture follows the finger a little; far enough sideways, the neighbour (left: the next, right: the previous)
+  let sw = null;
+  document.body.addEventListener('dragstart', (e) => { if (e.target.closest('#map')) e.preventDefault(); });   // (a dragged picture would cancel the swipe)
+  document.body.addEventListener('pointerdown', (e) => { if (changing || !e.target.closest('#map') || e.target.closest('.views, .wxc')) return; sw = { x: e.clientX, y: e.clientY, id: e.pointerId, img: document.getElementById('mapimg') }; });
+  addEventListener('pointermove', (e) => { if (!sw || e.pointerId !== sw.id) return; const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC; if (Math.abs(dx) > Math.abs(dy)) sw.img.style.transform = 'translateX(' + (dx * 0.35).toFixed(1) + 'px)'; });
+  const swEnd = (e) => {
+    if (!sw || e.pointerId !== sw.id) return;
+    const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC, img = sw.img; sw = null;
+    if (e.type === 'pointerup' && Math.abs(dx) > 56 && Math.abs(dx) > 1.4 * Math.abs(dy)) { const [pv, nx] = nbOf(id); return go(dx < 0 ? nx : pv, dx < 0 ? 1 : -1); }
+    const tr = img.style.transform; img.style.transform = ''; if (tr) img.animate([{ transform: tr }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
+  };
+  addEventListener('pointerup', swEnd); addEventListener('pointercancel', swEnd);
+  if (q.get('open') === 'izbor' && window.IZBOR) IZBOR.open(W());
+  if (q.get('open') === 'zemlja' && window.ZEMLJA) ZEMLJA.open(W());
 })();
 </script>
 </body></html>
