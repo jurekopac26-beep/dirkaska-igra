@@ -120,7 +120,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'miska'); g.onAction('to-car'); }); await page.waitForTimeout(300);
   const f6 = await page.evaluate(() => ({ cat: document.getElementById('car-cat').textContent, desc: document.getElementById('car-desc').textContent, strip: [...document.querySelectorAll('#car-strip .car-chip b')].map(b => b.textContent).join('/') }));
   const sF = await slovene();
-  T.check('a vehicle of the fleet in English: "Small cars · 3/7", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 3/7' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
+  T.check('a vehicle of the fleet in English: "Small cars · 3/8", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 3/8' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
   await page.evaluate(() => { window.__game.S.car = 0; });   // (the KAZE RS, as the title below expects too)
   await startTrack(page, 'jezero');
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));
