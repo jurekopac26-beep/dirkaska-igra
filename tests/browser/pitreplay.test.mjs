@@ -47,6 +47,9 @@ try {
     const o = { ap: null, rep: null, dur: 0, done: null, back: null, out: null };
     for (let k = 0; k < 40000 && g.phase !== 'done'; k++) {
       const ap0 = P.pitAP, st0 = P.pitState, in0 = P.inPit; g.sim(P.pitWant || P.inPit || P.pitAP ? 0.05 : 0.5, true); const t = g.race.time;
+      // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd can
+      // turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals: the race would never end)
+      if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P);
       if (!ap0 && P.pitAP && o.ap == null) o.ap = t;
       if (st0 !== 'repair' && P.pitState === 'repair') { o.rep = t; o.dur = P.pitDur; }
       if (st0 === 'repair' && P.pitState === 'done') o.done = t;
