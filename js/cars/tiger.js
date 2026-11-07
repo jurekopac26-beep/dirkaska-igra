@@ -54,7 +54,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // mirrors: their stalks' housings too small); the rally lamps on the fascia, in the grille, at the roof's front edge, a pod on the nose
       aero: { xf: 2.33, xr: -2.35, w: 0.8, yf: 0.15, yr: 0.34, sill: [-1.0, 0.9], ws: 0.91, ys: 0.13, lipF: [2.155, 0.145, 0.41, 0.012, 1.96], exh: [0.84, 0.045], partF: 'splitter', partR: 'diffuser' },
       hauba: { x0: 0.12, x1: 2.0, w: 0.6, rel: true },
-      maska: { x: 2.334, y0: 0.31, lean: 0, yc: 0.31, w: 0.9, h: 0.2, part: 'bumperF' },
+      maska: { x: 2.334, y0: 0.31, lean: 0, yc: 0.31, w: 0.9, h: 0.2, comb: 1.25, part: 'bumperF' },
       zmigavci: { front: { x: 2.334, y: 0.41, z: 0.66, w: 0.1, h: 0.025, part: 'bumperF' }, side: { x: 0.38, y: 0.62, z: 0.925, host: 'body' },
         rear: { x: -2.352, y: 0.62, z: 0.6, part: 'bumperR' } },
       relijske_luci: { bumper: [2.33, 0.3, 0.3], nose: [2.32, 0.56], intake: [2.334, 0.31, 0.9, 0.2], roof: [-0.62, 0.6], pod: [2.28, 0.58, 0.68, 0.62], foot: 0.34, part: 'bumperF' },
@@ -78,7 +78,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // stock one; the calipers
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.29, 0.47], x: [[-2.28, -1.92], [-1.12, -0.66], [0.12, 2.2]], fit: true },
-      nalepke: { side: [[-0.92, 0.2], [0.27, 0.54], [-2.3, -2.08]], y: [0.62, 0.84], hood: { x: [0.3, 1.45], z: [0.3, 0.6] }, roof: { x: [-1.1, -0.68] } },
+      nalepke: { side: [[-0.6, -0.21], [0.27, 0.54], [-2.3, -2.08]], y: [0.62, 0.84], hood: { x: [0.45, 1.45], z: [0.3, 0.6] }, roof: { x: [-1.1, -0.68] } },
       soncni_pas: { x: [-0.62, -0.52] },
       celjusti: { r: [0.075, 0.14], a: [70, 125] },
       // (sklop 3 · skriti deli) on the V8 behind the front axle: the filter on its left bank, the turbo on its front, the control box on
