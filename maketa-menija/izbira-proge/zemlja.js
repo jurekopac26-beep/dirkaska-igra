@@ -7,8 +7,8 @@
 // The battery: it draws only while something moves (a flight, a drag, the glide, the zoom easing, a name fading, the card); a weak phone
 // (navigator.deviceMemory <= 4 or a texture limit under 4096) gets the half-size picture (mk/earth2k.webp); at most 2 pixels per point.
 window.ZEMLJA = (() => {
-  const D = Math.PI / 180, W = 412, H = 892, FOV = 60, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, DCLOSE = 2.3, TRACKS_AT = 2.75, TOP = 80;
-  const PX = (H / 2) / Math.tan(FOV / 2 * D);   // (px per unit at distance 1)
+  const D = Math.PI / 180, FOV = 60, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, DCLOSE = 2.3, TRACKS_AT = 2.75, TOP = 80;
+  let W = 412, H = 892, SIDE = false, PX = 0;   // (the screen, at each opening: lying, the whole screen and the card at the side; PX: px per unit at distance 1)
   const CSS = `
   .zem { position: absolute; inset: 0; z-index: 45; overflow: hidden; font-family: var(--f-ui); color: #fff; touch-action: none; user-select: none; -webkit-user-select: none;
     background: radial-gradient(120% 70% at 50% 46%, #11234a 0, #0a1630 34%, #050a16 70%, #03060d 100%);
@@ -54,6 +54,10 @@ window.ZEMLJA = (() => {
     background: linear-gradient(180deg, rgba(26, 39, 66, .97) 0, rgba(13, 22, 38, .98) 100%); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
     transform: translateY(105%); transition: transform .3s cubic-bezier(.2, .8, .25, 1); }
   .zem-card.on { transform: none; }
+  .zem.side .zem-card { left: auto; top: 0; width: 412px; max-height: none; border-radius: 18px 0 0 18px; transform: translateX(105%); box-shadow: -10px 0 30px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 255, 255, .14); }
+  .zem.side .zem-card.on { transform: none; }
+  .zem.side .zem-zoom { right: auto; left: 14px; }
+  .zem.side:has(.zem-card.on) .zem-title { right: 426px; }   /* (lying: the title over the free part, left of the card) */
   .zem-card .izb-body { padding-bottom: 18px; }
   .zem-hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); padding: 9px 14px; border-radius: 20px; background: rgba(8, 13, 24, .72); border: 1px solid rgba(255, 255, 255, .16);
     font: 600 13px/1 var(--f-ui); color: #dfe7f6; white-space: nowrap; pointer-events: none; transition: opacity .3s; }
@@ -214,8 +218,8 @@ window.ZEMLJA = (() => {
       const want = m.id ? showT : !showT;   // (far: the countries, close: the tracks)
       const q = at(m);
       if (!m.w) { m.w = m.e.offsetWidth; m.h = m.e.offsetHeight; }
-      const x = clamp(q.x - m.w / 2, 4, W - m.w - 4), y = q.y - m.h - 12, r = [x, y, x + m.w, y + m.h];   // (a name at the screen's edge stays whole)
-      let ok = want && q.a > 0.15 && q.x > 2 && q.x < W - 2 && y > TOP - 6 && y + m.h < H - R.off - 4;   // (only a name whose pin is on the screen)
+      const x = clamp(q.x - m.w / 2, 4, W - (SIDE ? R.off : 0) - m.w - 4), y = q.y - m.h - 12, r = [x, y, x + m.w, y + m.h];   // (a name at the screen's edge stays whole)
+      let ok = want && q.a > 0.15 && q.x > 2 && q.x < W - (SIDE ? R.off : 0) - 2 && y > TOP - 6 && y + m.h < H - (SIDE ? 0 : R.off) - 4;   // (only a name whose pin is on the screen)
       if (ok) for (const b of boxes) if (r[0] < b[2] + 4 && r[2] > b[0] - 4 && r[1] < b[3] + 2 && r[3] > b[1] - 2) { ok = false; break; }
       if (ok) boxes.push(r);
       m.e.classList.toggle('off', !ok);
@@ -250,9 +254,9 @@ window.ZEMLJA = (() => {
     if (Math.abs(R.offT - R.off) < 0.3) R.off = R.offT; else { R.off += (R.offT - R.off) * (1 - Math.exp(-dt * 9)); busy = true; }
     R.group.rotation.set(R.lat * D, -Math.PI / 2 - R.lon * D, 0);
     R.cam.position.set(0, 0, R.d); R.cam.lookAt(0, 0, 0);
-    // the Earth in the middle of the free part of the screen (between the header and the card)
-    const yc = (TOP + H - R.off) / 2;
-    R.cam.setViewOffset(W, H, 0, -(yc - H / 2), W, H); R.cam.updateProjectionMatrix();
+    // the Earth in the middle of the free part of the screen (between the header and the card; lying, left of the card)
+    const yc = SIDE ? (TOP + H) / 2 : (TOP + H - R.off) / 2, xc = SIDE ? (W - R.off) / 2 : W / 2;
+    R.cam.setViewOffset(W, H, -(xc - W / 2), -(yc - H / 2), W, H); R.cam.updateProjectionMatrix();
     R.group.updateMatrixWorld();
     if (window.GLOBE && GLOBE.sun) R.U.sunL.value.copy(vec(...GLOBE.sun()));
     R.r.render(R.scene, R.cam); R.n++;
@@ -274,7 +278,7 @@ window.ZEMLJA = (() => {
       k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><button class="izb-btn" data-tback aria-label="' + esc(c.name) + '">' + I.back + '</button><span class="izb-hf">' + fl + '</span><div class="t"><b>' + esc(t.name) + '</b><small>' + esc(t.country) + '</small></div>' +
         '<button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' + IZBOR.trackCard(tc, o);
       k.classList.add('on');
-      requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
+      requestAnimationFrame(() => { if (R) { R.offT = SIDE ? k.offsetWidth : Math.min(400, k.offsetHeight); kick(); } });
       return;
     }
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
@@ -282,7 +286,7 @@ window.ZEMLJA = (() => {
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
       '<div class="izb-body"><div class="izb-list">' + c.ids.map(id => IZBOR.trow(id, o, 'data-pick', id === o.cur || id === hi)).join('') + '</div></div>';
     k.classList.add('on');
-    requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
+    requestAnimationFrame(() => { if (R) { R.offT = SIDE ? k.offsetWidth : Math.min(400, k.offsetHeight); kick(); } });
   }
   function select(name, id, tc) {   // (tc: the track's card)
     const was = R.sel; R.sel = name || null;
@@ -377,6 +381,8 @@ window.ZEMLJA = (() => {
     if (window.IZBOR && IZBOR.isOpen()) IZBOR.close();
     if (el) close(true);
     el = document.createElement('div'); el.className = 'zem';
+    const L = window.LY || {}; SIDE = !!L.land; W = SIDE ? L.pw : 412; H = SIDE ? L.ph : 892; PX = (H / 2) / Math.tan(FOV / 2 * D);
+    if (SIDE) { el.classList.add('side'); Object.assign(el.style, { right: 'auto', bottom: 'auto', width: W + 'px', height: H + 'px' }); }
     el.innerHTML = '<canvas></canvas><div class="zem-pins"></div><div class="zem-ui">' +
       '<button class="zem-sq zem-back" data-close aria-label="Back">' + I.back + '</button>' +
       '<div class="zem-title"><b>WORLD</b><small>' + o.order.length + ' tracks</small></div>' +

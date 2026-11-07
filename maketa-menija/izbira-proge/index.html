@@ -177,6 +177,16 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 .wxc.c6 { position: absolute; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
 .wxc.c6 .thumb { position: absolute; left: 4px; right: 4px; top: 4px; height: 40px; border-radius: 999px; background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); box-shadow: 0 0 10px rgba(255,198,41,.55); }
 .wxc.c6 i { width: 40px; height: 40px; position: relative; } .wxc.c6 i svg { width: 24px; height: 24px; }
+/* lying (a landscape screen, LY.land): the picture left, the room right of it; the room's things moved by --lx/--ly (the row by --rowy, to
+   the top), the room itself from the picture's edge to the screen's; also in an old screen's shadow root while it fades (:host(.land)) */
+html.land { overflow: hidden; }
+body.land { overflow: visible; }
+body.land #boards > *, body.land #flags > *, body.land #nbs > *, body.land #car, body.land #flow, body.land .back, body.land .go { translate: var(--lx) var(--ly); }
+body.land .row { translate: var(--lx) var(--rowy); }
+body.land #room { translate: 412px var(--ly); box-shadow: none !important; }
+:host(.land) #boards > *, :host(.land) #flags > *, :host(.land) #nbs > *, :host(.land) #car, :host(.land) #flow, :host(.land) .back, :host(.land) .go { translate: var(--lx) var(--ly); }
+:host(.land) .row { translate: var(--lx) var(--rowy); }
+:host(.land) #room { translate: 412px var(--ly); box-shadow: none !important; }
 </style></head>
 <body>
 <div class="abs head">
@@ -208,6 +218,16 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 <script src="maketa-menija/izbira-proge/izbor.js"></script>
 <script src="maketa-menija/izbira-proge/zemlja.js"></script>
 <script>
+// the layout: upright (412 × 892, scaled to the screen) or lying (a screen at least 1.3 times wider than high: the picture left, the room
+// right, together at least 824 × 440); sc: the scale, pw × ph: the screen in the page's pixels, lx/ly: lying, the room's things moved
+window.LAYOUT = () => {
+  const w = innerWidth, h = innerHeight;
+  if (w < h * 1.3) { const sc = Math.min(w / 412, h / 892); return { land: false, sc, tx: Math.max(0, (w - 412 * sc) / 2), pw: 412, ph: 892, lx: 0, ly: 0 }; }
+  const sc = Math.min(w / 824, h / 440), pw = w / sc, ph = h / sc;
+  return { land: true, sc, tx: 0, pw, ph, lx: 412 + (pw - 824) / 2, ly: ph - 892 };
+};
+window.LY = LAYOUT();
+window.BSC = () => { const b = document.body.getBoundingClientRect(); return b.width / (document.body.offsetWidth || b.width) || 1; };   // (the page's scale now)
 window.MOCK = async (T) => {
   const $ = (id) => document.getElementById(id);
   // the header
@@ -222,9 +242,17 @@ window.MOCK = async (T) => {
     '<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.4" fill="#ffd23a"/>' + ico.cloud(1) + rain + '</svg>', '<svg viewBox="0 0 24 24">' + ico.cloud(0) + '<path d="M12.5 16.5l-2.4 4h2.4l-1.2 3.5 4-5h-2.5l1.4-2.5z" fill="#ffd23a"/></svg>'].map((s, i) => '<i class="' + (i ? '' : 'on') + '">' + s + '</i>').join('');
   const mapTop = T.mapTop || 74, mapH = T.mapH || 370, roomTop = mapTop + mapH; $('map').style.top = mapTop + 'px';
   $('map').style.height = mapH + 'px'; $('room').style.top = roomTop + 'px'; document.querySelector('.row').style.top = (roomTop + 10) + 'px';
+  // lying (the picture cut at the screen's bottom, below): the room from the picture's edge to the screen's, its top at the
+  // screen's top (rt before the move: the wall taller), the row at the top, the rest standing on the screen's bottom (the CSS: --lx, --ly, --rowy)
+  const L = window.LY, land = L.land, rt = land ? -L.ly : roomTop;
+  document.documentElement.classList.toggle('land', land); document.body.classList.toggle('land', land);
+  if (land) {
+    for (const [k, v] of [['--lx', L.lx], ['--ly', L.ly], ['--rowy', -roomTop], ['--pw', L.pw], ['--ph', L.ph]]) document.body.style.setProperty(k, v + 'px');
+    for (const [k, v] of [['top', rt + 'px'], ['right', 'auto'], ['width', (L.pw - 412) + 'px']]) $('room').style.setProperty(k, v, 'important');
+  }
   // the room: a wall down to the car's waist, then the floor
   const hz = T.hz;
-  $('room').style.background = 'radial-gradient(56% 26px at 28% ' + (T.carFloor - roomTop - 4) + 'px, rgba(120,160,230,.16), transparent 100%), linear-gradient(180deg, #14223b 0, #0f1b2f ' + (hz - roomTop) + 'px, #1d2d4a ' + (hz - roomTop) + 'px, #152239 ' + (hz - roomTop + 38) + 'px, #0b1320 100%)';
+  $('room').style.background = 'radial-gradient(' + (land ? '231px 26px at ' + (L.lx - 412 + 115) + 'px ' : '56% 26px at 28% ') + (T.carFloor - rt - 4) + 'px, rgba(120,160,230,.16), transparent 100%), linear-gradient(180deg, #14223b 0, #0f1b2f ' + (hz - rt) + 'px, #1d2d4a ' + (hz - rt) + 'px, #152239 ' + (hz - rt + 38) + 'px, #0b1320 100%)';
   $('room').style.boxShadow = '0 -8px 18px rgba(0,0,0,.45)';
   // the boards: the place and the length (green), the country (blue), on two posts standing on the floor behind the car
   const B = T.board, bx0 = B.x0, bx1 = 412 - 12, by = B.y, bh = 58, tagY = by - 36;
@@ -282,9 +310,9 @@ window.MOCK = async (T) => {
   if (T.viewsCss) { const vw = document.querySelector('.views'); vw.style.cssText += ';' + T.viewsCss; vw.style.zIndex = 7; }
   if (T.css) document.head.insertAdjacentHTML('beforeend', '<style class="t-css">' + T.css + '</style>');
   if (T.signShadow) {   // a soft shadow of the car on the country sign behind it
-    const S = T.signShadow, car = $('car'), sg = document.querySelector('#boards .bd.b'), cr = car.getBoundingClientRect(), sr = sg.getBoundingClientRect();
+    const S = T.signShadow, car = $('car'), sg = document.querySelector('#boards .bd.b'), cr = car.getBoundingClientRect(), sr = sg.getBoundingClientRect(), k = BSC();
     sg.style.overflow = 'hidden'; const im = new Image(); im.src = car.src;
-    Object.assign(im.style, { position: 'absolute', left: (cr.left - sr.left - sg.clientLeft + S.dx) + 'px', top: (cr.top - sr.top - sg.clientTop + S.dy) + 'px', width: cr.width + 'px', filter: 'brightness(0) blur(' + S.blur + 'px)', opacity: S.a, pointerEvents: 'none' });
+    Object.assign(im.style, { position: 'absolute', left: ((cr.left - sr.left) / k - sg.clientLeft + S.dx) + 'px', top: ((cr.top - sr.top) / k - sg.clientTop + S.dy) + 'px', width: cr.width / k + 'px', filter: 'brightness(0) blur(' + S.blur + 'px)', opacity: S.a, pointerEvents: 'none' });
     sg.appendChild(im); await im.decode();
   }
   if (T.counter === 'buttons') document.querySelectorAll('.nb').forEach((e, i) => e.insertAdjacentHTML('beforeend', '<span style="position:absolute;' + (i ? 'left' : 'right') + ':12px;bottom:6px;font:900 italic 14px/1 var(--f-ui);color:#fff;text-shadow:0 0 2px #000,0 1px 3px #000">' + (i ? T.idx + 1 : T.idx - 1) + ' / ' + T.total + '</span>'));
@@ -303,6 +331,9 @@ window.MOCK = async (T) => {
     const c = document.createElement('canvas'); c.width = W * sc; c.height = H * sc; c.className = 'f'; Object.assign(c.style, { position: 'absolute', inset: '0', width: W + 'px', height: H + 'px' });
     const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.drawImage(img, fw * sc - 2, 0, 1, H * sc, fw * sc - 1, 0, (W - fw) * sc + 2, H * sc); old.replaceWith(c);
   }
+  // lying, the picture higher than the screen: cut at the screen's bottom, the things on its lower half (the camera buttons) up with it
+  if (land) { const mp = $('map'), mh = mp.offsetHeight; if (L.ph < mh) { mp.style.setProperty('height', L.ph + 'px', 'important');
+    for (const e of mp.children) if (e.offsetTop > L.ph / 2 && e.offsetTop + e.offsetHeight > L.ph - 4) e.style.setProperty('top', (e.offsetTop - (mh - L.ph)) + 'px', 'important'); } }
   await globe($('globe'), T);
   await document.fonts.ready;
   if (T.wxfx && window.WXFX) await WXFX.init(T);
@@ -427,7 +458,7 @@ function mapGraph(host, T) {
   if (T.mg.hide) return;
   if (T.mg.box && !T.mg._in) {
     const B = T.mg.box, vw = document.querySelector(B.under || '.views');   // (B.under: the box under another button and as wide as it, e.g. the back button #homeBtn)
-    const vr = vw.getBoundingClientRect(), hr = host.getBoundingClientRect(), w = Math.round(vr.width), h = Math.round(w * B.ratio) + (B.join ? Math.round(vr.height) : 0), d = document.createElement('div');
+    const k = BSC(), pg = (r) => ({ left: r.left / k, top: r.top / k, right: r.right / k, bottom: r.bottom / k, width: r.width / k, height: r.height / k }), vr = pg(vw.getBoundingClientRect()), hr = pg(host.getBoundingClientRect()), w = Math.round(vr.width), h = Math.round(w * B.ratio) + (B.join ? Math.round(vr.height) : 0), d = document.createElement('div');
     d.className = 'mgbox'; Object.assign(d.style, { position: 'absolute', zIndex: 6, left: (B.right != null ? hr.width - w - B.right : B.left != null ? B.left : vr.left - hr.left) + 'px', top: (B.top != null ? B.top : B.join ? vr.top - hr.top : vr.bottom - hr.top + (B.gap || 6)) + 'px', width: w + 'px', height: h + 'px', overflow: 'hidden', boxSizing: 'border-box' });
     d.style.cssText += ';' + B.css; host.appendChild(d);
     const ib = d.clientWidth, ih = d.clientHeight, pad = B.pad || 0;
@@ -607,6 +638,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
       if (window.IZBOR && IZBOR.isOpen()) IZBOR.close();
       if (window.ZEMLJA && ZEMLJA.covers()) ZEMLJA.close();
       old = document.createElement('div'); old.style.cssText = 'position:absolute;left:0;top:0;width:412px;height:892px;z-index:60;pointer-events:none';
+      if (document.body.classList.contains('land')) { old.classList.add('land'); for (const k of ['--lx', '--ly', '--rowy']) old.style.setProperty(k, document.body.style.getPropertyValue(k)); }   // (it keeps its place)
       const sh = old.attachShadow({ mode: 'open' });
       for (const st of document.head.querySelectorAll('style')) sh.appendChild(st.cloneNode(true));
       for (const e of [...document.body.children]) if (e.tagName !== 'SCRIPT') sh.appendChild(e);
@@ -616,7 +648,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     }
     id = i; T = makeT(i);
     await window.MOCK(T);
-    Object.assign(o, { hz: T.hz, carFloor: T.carFloor });
+    Object.assign(o, { hz: T.hz + LY.ly, carFloor: T.carFloor + LY.ly });   // (lying: where they show)
     WXFX.setTimeline([{ t: -30, k: cur }]); WXFX.frame(now(), o);
     if (from && (from[0] !== T.lat || from[1] !== T.lon)) GLOBE.travel(from, now() + 0.05);
     for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
@@ -641,8 +673,13 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   }
   const go = (t, dir) => NAZAJ.clear(() => { if (t !== id) show(t, dir != null ? dir : ORDER.indexOf(t) > ORDER.indexOf(id) ? 1 : -1); });   // (the open layers' steps out of the history first)
   await show(id, 0);
+  // the page scaled to the screen; turned (upright and lying) or lying at a new size, the screen is built again in its place
+  let refit = null;
   const fit = () => { if (document.activeElement && document.activeElement.matches('input')) return;   // (the keyboard of the quick list's search: the page keeps its size)
-    SC = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * SC) / 2) + 'px) scale(' + SC + ')'; };
+    const L = LAYOUT(), again = L.land !== LY.land || (L.land && (Math.abs(L.pw - LY.pw) > 1 || Math.abs(L.ph - LY.ph) > 1));
+    if (again) { clearTimeout(refit); refit = setTimeout(() => { if (changing) return fit(); const N = LAYOUT(); window.LY = N; SC = N.sc; place(); show(id, 0); }, 250); return; }
+    Object.assign(LY, { sc: L.sc, tx: L.tx }); SC = L.sc; place(); };
+  const place = () => { document.body.style.transform = 'translateX(' + LY.tx + 'px) scale(' + LY.sc + ')'; };
   document.body.style.transformOrigin = '0 0'; document.documentElement.style.width = '100%'; document.documentElement.style.height = '100%'; fit(); addEventListener('resize', fit);
   let gfrom = null; try { gfrom = JSON.parse(q.get('t') === id && sessionStorage.getItem('izbira-globus') || 'null'); } catch (e) {}
   if (gfrom && (gfrom[0] !== T.lat || gfrom[1] !== T.lon)) GLOBE.travel(gfrom, 0.25);
@@ -652,7 +689,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   const RACE = 'Race! (in the game the race starts)';
   const W = () => ({ cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick: (t) => go(t),
     race: (t) => { if (t !== id) { pend = RACE; return go(t); } if (window.IZBOR) IZBOR.close(); if (window.ZEMLJA) ZEMLJA.close(); toast(RACE); } });   // (the track's card: Race!)
-  const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:50%;top:420px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
+  const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:' + LY.pw / 2 + 'px;top:' + (LY.land ? LY.ph / 2 - 20 : 420) + 'px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
   // the taps: one listener for every screen (each new screen has new buttons)
   document.body.addEventListener('click', (e) => {
     if (changing) return;

@@ -27,7 +27,10 @@ window.WXFX = (() => {
   const n2 = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), u = smooth(x - xi), v = smooth(y - yi), h = (a, b) => hash(a * 7919 + b * 104729);
     return (h(xi, yi) * (1 - u) + h(xi + 1, yi) * u) * (1 - v) + (h(xi, yi + 1) * (1 - u) + h(xi + 1, yi + 1) * u) * v; };
   const noise = (x) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return hash(i) * (1 - u) + hash(i + 1) * u; };
-  const rect = (el) => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, r: r.right, b: r.bottom }; };
+  // a place on the page in the page's own pixels (the page is scaled to the screen, and lying its room's things are moved: as they show)
+  const bsc = () => { const b = document.body.getBoundingClientRect(); return b.width / (document.body.offsetWidth || b.width) || 1; };
+  const rect = (el) => { const r = el.getBoundingClientRect(), b = document.body.getBoundingClientRect(), k = bsc(), x = (r.left - b.left) / k, y = (r.top - b.top) / k, w = r.width / k, h = r.height / k;
+    return { x, y, w, h, r: x + w, b: y + h }; };
   const canvas = (parent, css, w, h, before) => {
     const c = document.createElement('canvas'); c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
     c.style.cssText = 'position:absolute;pointer-events:none;width:' + w + 'px;height:' + h + 'px;' + css;
@@ -343,7 +346,7 @@ window.WXFX = (() => {
     }
     for (const k of ['map', 'room', 'car', 'sign', 'row', 'back', 'go', 'home', 'globe', 'views', 'mg', 'plate']) if (E[k] && E[k].offsetWidth) R[k] = rect(E[k]);
     R.nb = E.nb.map(rect);
-    const W = document.body.clientWidth || 412, H = document.body.clientHeight || 892; R.W = W; R.H = H;
+    const L = window.LY || {}, W = L.pw || document.body.clientWidth || 412, H = L.ph || document.body.clientHeight || 892; R.W = W; R.H = H;   // (lying: the whole screen)
     // the picture's layers (under the camera buttons, the graph and the weather icons)
     E.tint = div(E.map, 'z-index:1;background:#283c60;mix-blend-mode:multiply;opacity:0');
     E.white = div(E.map, 'z-index:1;background:#e6efff;mix-blend-mode:screen;opacity:0');
@@ -351,7 +354,7 @@ window.WXFX = (() => {
     E.warm = div(E.map, 'z-index:1;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at 90% 16%,rgba(255,206,120,.62),rgba(255,170,80,.2) 28%,rgba(255,150,60,0) 62%)');
     E.gStage = canvas(E.map, 'left:0;top:0;z-index:1', R.map.w, R.map.h);
     // the room: the floor (wet or snowy) just over the room's own picture, under the posts, the car and the wind
-    E.gRoom = canvas(document.body, 'left:0;top:' + R.room.y + 'px', W, H - R.room.y, E.room.nextSibling);
+    E.gRoom = canvas(document.body, 'left:' + R.room.x + 'px;top:' + R.room.y + 'px', R.room.w, H - R.room.y, E.room.nextSibling);
     // the car: snow on its top
     E.gCar = canvas(document.body, 'left:' + R.car.x + 'px;top:' + (R.car.y - 14) + 'px;z-index:3', R.car.w, R.car.h + 14, E.car.nextSibling);
     carCont = carContour(E.car, R.car.w * dpr, R.car.h * dpr);
@@ -369,8 +372,8 @@ window.WXFX = (() => {
     E.stageFrost = frostCorners(R.map.w, R.map.h, [[0, R.map.h, -Math.PI / 2], [R.map.w, R.map.h, Math.PI]], 77, 46);
     E.feet = carFeet(); if (T.signStyle !== false) await styleSign(SIGNS[T.signStyle] ? T.signStyle : T.countryKey, T.signFlag || false, T.signMode); E.gSign.canvas.style.left = '0px'; E.gSign.canvas.style.top = '0px'; E.gSign.canvas.style.borderRadius = 'inherit';
     // a long place name fits between the back button and the globe
-    { const h = document.querySelector('.htitle'), b = document.querySelector('#homeBtn').getBoundingClientRect(), gl = document.querySelector('#hflag').getBoundingClientRect();
-      if (h) { const avail = (document.body.clientWidth || 412) - 14 - gl.width - b.right - 22; h.style.minWidth = '0'; const rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width; }; let fs = parseFloat(getComputedStyle(h).fontSize); while (tw() > avail && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; } } }
+    { const h = document.querySelector('.htitle'), b = rect(document.querySelector('#homeBtn')), gl = rect(document.querySelector('#hflag')), k = bsc();
+      if (h) { const avail = (document.body.clientWidth || 412) - 14 - gl.w - b.r - 22; h.style.minWidth = '0'; const rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width / k; }; let fs = parseFloat(getComputedStyle(h).fontSize); while (tw() > avail && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; } } }
     E.signFrost = frostCorners(R.sign.w, R.sign.h, [[R.sign.w, 0, Math.PI / 2], [R.sign.w, R.sign.h, Math.PI]], 79, 22);
     return true;
   }
@@ -451,7 +454,7 @@ window.WXFX = (() => {
 
   // --- the room: a wet floor with the car's reflection and ripples, or snow on the ground ---
   function drawRoom(t, w, ws) {
-    const g = E.gRoom, W = R.W, top = R.room.y, H = R.H - top; g.clearRect(0, 0, W, H);
+    const g = E.gRoom, W = R.room.w, top = R.room.y, H = R.H - top, X = R.room.x, ox = ((window.LY && LY.lx) || 0) - X; g.clearRect(0, 0, W, H);   // (X: the room's left edge; ox: where its things start)
     const hz = (opt.hz || 668) - top, floor = (opt.carFloor || 734) - top;
     g.save(); g.beginPath(); g.roundRect(0, 0, W, H + 20, [13, 13, 0, 0]); g.clip();   // (the room's top corners are round)
     const dark = 0.35 * w.storm + 0.18 * w.rain + 0.08 * w.change;
@@ -464,7 +467,7 @@ window.WXFX = (() => {
       const c = R.car, o = document.createElement('canvas'); o.width = Math.round(c.w * dpr); o.height = Math.round(c.h * 0.6 * dpr);
       const og = o.getContext('2d'); og.scale(1, -1); og.drawImage(E.car, 0, -c.h * dpr, o.width, c.h * dpr); og.setTransform(1, 0, 0, 1, 0, 0);
       og.globalCompositeOperation = 'destination-in'; const fd = og.createLinearGradient(0, 0, 0, o.height); fd.addColorStop(0, 'rgba(0,0,0,.42)'); fd.addColorStop(1, 'rgba(0,0,0,0)'); og.fillStyle = fd; og.fillRect(0, 0, o.width, o.height);
-      g.globalAlpha = wet; g.drawImage(o, c.x, floor - 6, c.w, c.h * 0.6); g.globalAlpha = 1;
+      g.globalAlpha = wet; g.drawImage(o, c.x - X, floor - 6, c.w, c.h * 0.6); g.globalAlpha = 1;
       const rainy = ws.rain + ws.storm * 1.5 + ws.change * 0.4, r = rng(23);
       for (let i = 0; i < 26; i++) {
         const x = r() * W, y = hz + 8 + r() * (H - hz - 20), per = 0.7 + r() * 0.9, off = r() * per, thr = r();
@@ -482,7 +485,7 @@ window.WXFX = (() => {
       g.fillStyle = gs; g.beginPath(); g.moveTo(0, hz + 4);
       for (let x = 0; x <= W; x += 6) g.lineTo(x, hz - 4 * sn - 5 * noise(x / 40) * sn);
       g.lineTo(W, H); g.lineTo(0, H); g.closePath(); g.fill();
-      for (const [x, y, rw, rh] of [[40, floor + 4, 90, 14], [230, floor + 2, 110, 12], [R.sign.x + 50, hz + 2, 40, 9], [R.sign.r - 56, hz + 2, 40, 9]]) {
+      for (const [x, y, rw, rh] of [[ox + 40, floor + 4, 90, 14], [ox + 230, floor + 2, 110, 12], [R.sign.x - X + 50, hz + 2, 40, 9], [R.sign.r - X - 56, hz + 2, 40, 9]]) {
         const gd = g.createRadialGradient(x, y - rh * 0.4, 2, x, y, rw); gd.addColorStop(0, 'rgba(255,255,255,' + 0.9 * sn + ')'); gd.addColorStop(1, 'rgba(255,255,255,0)');
         g.fillStyle = gd; g.beginPath(); g.ellipse(x, y, rw, rh, 0, 0, 7); g.fill();
       }
@@ -490,7 +493,7 @@ window.WXFX = (() => {
       if (SN().drift) { const r2 = rng(37); for (let i = 0; i < 70; i++) { const y = hz + r2() * (H - hz), x0 = r2() * (W + 80) + DIR * 260 * t, x = ((x0 % (W + 80)) + W + 80) % (W + 80) - 40, l = 14 + r2() * 30; g.strokeStyle = 'rgba(255,255,255,' + (0.18 + 0.3 * r2()) * sn + ')'; g.lineWidth = 0.8 + r2(); g.beginPath(); g.moveTo(x, y); g.lineTo(x - DIR * l, y + 1); g.stroke(); } }
       const r = rng(31); for (let i = 0; i < 90 * SN().glint; i++) { const x = r() * W, y = hz + r() * (H - hz), tw = 0.5 + 0.5 * Math.sin(t * 3 + i); g.fillStyle = 'rgba(255,255,255,' + 0.7 * sn * tw * r() + ')'; g.fillRect(x, y, 1.2, 1.2); }
     }
-    drawShadow(g, w, ws, top);
+    g.save(); g.translate(-X, 0); drawShadow(g, w, ws, top); g.restore();   // (the car's shadow: placed by the page)
     g.restore();
   }
 

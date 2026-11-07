@@ -84,6 +84,10 @@ window.IZBOR = (() => {
     background: linear-gradient(180deg, #1a2742 0, #111c31 120px, #0b1424 100%); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
     transform: translateY(100%); transition: transform .32s cubic-bezier(.2, .8, .25, 1); }
   .izb.on .izb-sheet { transform: none; }
+  body.land .izb { right: auto; bottom: auto; width: var(--pw); height: var(--ph); }   /* (lying: a panel on the right) */
+  body.land .izb-sheet { left: auto; top: 0; width: 412px; max-height: none; border-radius: 18px 0 0 18px; transform: translateX(100%); box-shadow: -10px 0 30px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 255, 255, .14); }
+  body.land .izb.on .izb-sheet { transform: none; }
+  body.land .izb-grab { visibility: hidden; height: 0; margin: 0; }
   .izb-grab { display: block; width: 44px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .28); margin: 9px auto 0; }
   .izb-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px 12px; }
   .izb-head .t { flex: 1 1 auto; min-width: 0; }
