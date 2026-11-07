@@ -33,6 +33,9 @@ const run = (page, fn, max, opt = {}) => page.evaluate(async ([src, max, opt]) =
   for (let k = 0; k < max; k++) {
     if (opt.pit) P.pitWant = !P.repairN;   // (the player comes in: at the next way in)
     g.sim(0.25, true); g.hud(0.25);
+    // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd, in a
+    // slow corner or at the way in, can turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+    if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P);
     if (P.lap !== lap) { lap = P.lap; const pl = g.race.plan(P); out.lines.push({ lap, box: !!pl && pl.box, need: pl ? pl.need.join() : '', mk: !!g.race.mk }); }
     const s = st(), dE = dEOf(), pit = !!(P.inPit || P.pitG);
     // (dE floored, not rounded: the warning goes the moment dE is under 0; a dE of -0.2 must not read as 0)
@@ -127,6 +130,7 @@ try {
 
   // 1. the Red Bull Ring: to the lap the stop is due, on to 300 m before its way in
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
   await page.evaluate(() => { window.__game.race.player.kt = null; });   // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt, on a circuit worn four times as fast: the stop for the fuel checked on a car without them, as in a race with a friend, as tests/browser/hud.test.mjs does)
   await toRacing(page);
   const a = await run(page, (g, P, dE) => P.lap >= 2 && /near/.test(document.getElementById('h-box').className) && dE < 300, 3000);
@@ -156,6 +160,7 @@ try {
   // burn measured: it would not reach the third lap's way in), not made
   await page.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="lang"] button[data-v="en"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'troisrivieres');
+  await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
   await page.evaluate(() => { window.__game.race.player.kt = null; });   // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt, on a circuit worn four times as fast: the stop for the fuel checked on a car without them, as in a race with a friend, as tests/browser/hud.test.mjs does)
   await toRacing(page);
   await run(page, (g, P) => P.lap === 1 && P.dist > g.race.track.len - 40, 3000);
