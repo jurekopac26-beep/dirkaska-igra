@@ -18,7 +18,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('11'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'maunakea'), T = new Core.Track(TD);
-check('11: on Mauna Kea, a real track, the 4x4 (MEDVED 4x4)', D.track === 'maunakea' && !TD.test && D.car === 'medved' && !!Core.MODELS.find(m => m.id === 'medved'));
+check('11: on Mauna Kea (a test track since the US ones went to the test tracks; the mission stays on it until the user decides), the 4x4 (MEDVED 4x4)', D.track === 'maunakea' && D.car === 'medved' && !!Core.MODELS.find(m => m.id === 'medved'));
 check('its race: alone', D.opts(D).tt === true);
 const M = Core.MODELS.find(m => m.id === 'medved');
 const race = (seed) => { const R = new Core.Race(T, Object.assign({ phys: 'cs', seed }, D.opts(D), { numAI: 0, laps: 1, playerModel: M })); D.made(R); R.start(); return R; };
