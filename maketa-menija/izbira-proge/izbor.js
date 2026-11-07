@@ -33,6 +33,48 @@ window.NAZAJ = (() => {
   return { push, drop, clear, buzz, depth: (who) => st.filter(l => !who || l.who === who).length };
 })();
 
+// Progress (NAPREDEK): the best race, a medal for the best place (1, 2, 3), NEW (not driven yet), a tick (driven, no medal); on the
+// quick list's flags and rows, on the Earth's pins and cards and in the screen's row (Best race). The game's records where the mockup
+// runs on the game's own address (js/game.js: localStorage 'tdgp-records', tracks[id] = { bestRace, bestPos, ... }), else a sample.
+window.NAPREDEK = (() => {
+  const SAMPLE = { rbring: [91.452, 1], suzuka: [125.316, 2], pikes: [245.917, 1], spa: [148.73, 3], ouninpohja: [291.664, 5], nring: [451.208, 4],
+    troisrivieres: [58.906, 2], medvode: [262.54, 1], bathurst: [141.882, 6] };
+  let REC = null, src = 'sample';
+  function load() {
+    if (REC) return REC;
+    try { const j = JSON.parse(localStorage.getItem('tdgp-records') || 'null'); if (j && j.tracks && typeof j.tracks === 'object' && Object.keys(j.tracks).length) { src = 'game'; return (REC = j.tracks); } } catch (e) {}
+    REC = {}; for (const k in SAMPLE) REC[k] = { bestRace: SAMPLE[k][0], bestPos: SAMPLE[k][1] };
+    return REC;
+  }
+  const num = (v) => typeof v === 'number' && isFinite(v) && v > 0 ? v : null;
+  function of(id) {
+    const r = load()[id] || {}, time = num(r.bestRace) || num(r.bestTime), pos = num(r.bestPos);
+    if (!time && !pos) return { k: 'new' };
+    return { k: pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : 'done', time, pos };
+  }
+  const fmt = (s) => { const m = Math.floor(s / 60); return String(m).padStart(2, '0') + ':' + (s - m * 60).toFixed(3).padStart(6, '0'); };
+  const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  const TICK = '<svg viewBox="0 0 16 16"><path d="M3.6 8.4l2.9 2.9 5.9-6.6" fill="none" stroke="#062a14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const NAME = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze', done: 'Finished', new: 'New' };
+  // the mark: a medal with its place, a tick or NEW (p: of(id), or a country's best)
+  function mark(id, p) { p = p || of(id); return p.k === 'new' ? '<i class="pr new" title="Not driven yet">NEW</i>' : '<i class="pr ' + p.k + '" title="' + NAME[p.k] + '">' + (p.k === 'done' ? TICK : p.pos) + '</i>'; }
+  // a country: its best medal, else a tick when one of its tracks is driven, else NEW
+  function best(ids) { const R = ['gold', 'silver', 'bronze', 'done']; let b = null; for (const id of ids) { const p = of(id); if (p.k !== 'new' && (!b || R.indexOf(p.k) < R.indexOf(b.k))) b = p; } return b || { k: 'new' }; }
+  const CSS = `
+  .pr { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; box-sizing: border-box; width: 18px; height: 18px; border-radius: 50%; font: 900 11px/1 var(--f-ui, Arial);
+    font-style: normal; color: #2a1b02; text-shadow: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .55), inset 0 0 0 1.5px rgba(255, 255, 255, .6); vertical-align: middle; }
+  .pr.gold { background: radial-gradient(circle at 35% 30%, #fff4b8, #ffc629 48%, #c48600); }
+  .pr.silver { background: radial-gradient(circle at 35% 30%, #ffffff, #d3d9e2 48%, #8b96a6); color: #1c2430; }
+  .pr.bronze { background: radial-gradient(circle at 35% 30%, #ffdcb8, #d98b47 48%, #8d4c1a); color: #2a1404; }
+  .pr.done { background: radial-gradient(circle at 35% 30%, #cbffdc, #45d27e 50%, #1b8a46); }
+  .pr.done svg { width: 12px; height: 12px; display: block; }
+  .pr.new { width: auto; height: 16px; padding: 0 5px; border-radius: 4px; background: linear-gradient(180deg, #7fe8ff, #2fa8e6); color: #03202d; font: 900 italic 10px/1 var(--f-ui, Arial); letter-spacing: .4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
+  `;
+  if (!document.getElementById('pr-css')) { const st = document.createElement('style'); st.id = 'pr-css'; st.textContent = CSS; document.head.appendChild(st); }
+  return { of, fmt, ord, mark, best, src: () => (load(), src) };
+})();
+
 window.IZBOR = (() => {
   const CSS = `
   .izb { position: absolute; inset: 0; z-index: 40; font-family: var(--f-ui); }
@@ -106,6 +148,21 @@ window.IZBOR = (() => {
   .izb-none { margin: 30px 0; text-align: center; font: 700 italic 15px/1.4 var(--f-ui); color: var(--lbl, #9fb3d6); }
   .izb-body.in { animation: izbIn .22s ease-out; }
   @keyframes izbIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+  .izb-im { position: relative; flex: 0 0 auto; display: block; }
+  .izb-im img { display: block; }
+  .izb-im .pr { position: absolute; left: -6px; top: -6px; }
+  .izb-im .pr.new { left: -5px; top: -5px; }
+  .izb-t .bt { display: flex; align-items: center; gap: 6px; font: 800 italic 12.5px/1 var(--f-ui); color: #ffc629; }
+  .izb-t .bt small { font: 700 11px/1 var(--f-ui); color: var(--lbl, #9fb3d6); }
+  .izb-c .izb-pm { position: absolute; left: 4px; bottom: 4px; z-index: 1; display: flex; }
+  .izb-best { display: flex; align-items: center; gap: 9px; flex: 0 0 auto; height: 40px; padding: 0 12px; border-radius: 12px; background: rgba(255, 198, 41, .08); border: 1.5px solid rgba(255, 198, 41, .28); }
+  .izb-best .pr { width: 22px; height: 22px; font-size: 12.5px; }
+  .izb-best .pr.new { width: auto; height: 18px; font-size: 11px; }
+  .izb-best small { font: 800 10.5px/1 var(--f-ui); letter-spacing: 1.1px; text-transform: uppercase; color: var(--lbl, #9fb3d6); }
+  .izb-best b { margin-left: auto; font: 900 italic 18px/1 var(--f-ui); color: #ffc629; }
+  .izb-best b span { margin-left: 8px; font: 700 12px/1 var(--f-ui); color: #dfe8f6; }
+  .izb-best.new { background: rgba(63, 192, 255, .08); border-color: rgba(111, 227, 255, .3); }
+  .izb-best.new b { color: #bfefff; font-size: 14px; }
   .izb-tc { display: flex; flex-direction: column; gap: 12px; }
   .izb-tcr { display: flex; gap: 12px; }
   .izb-shape { flex: 0 0 156px; height: 136px; border-radius: 12px; background: radial-gradient(130% 110% at 30% 15%, #2b3b55, #121a28 75%); border: 1.5px solid rgba(255, 255, 255, .12); overflow: hidden; }
@@ -172,10 +229,13 @@ window.IZBOR = (() => {
     return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (NAMES[groupOf(t)] || (t.open ? 'Open road' : 'Circuit'));
   };
   // a track's row (its model, name, facts, tag); wf: its country's flag before the name (the search's answers)
-  function row(id, wf) {
-    const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
-    return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'"><span class="tx"><b>' +
-      (wf ? '<span class="izb-mf">' + flag(t.flag) + '</span>' : '') + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + GO + '</span></button>';
+  function row(id, wf) { return trow(id, o, 'data-t', id === o.cur, wf); }
+  // (oo: the opener's options; on: lit; wf: its country's flag before the name; the progress: a mark on the model, the best race under the facts)
+  function trow(id, oo, attr, on, wf) {
+    const t = oo.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '', P = window.NAPREDEK, p = P ? P.of(id) : null;
+    const fl = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + oo.flag(t.flag) + '</svg>';
+    return '<button class="izb-t' + (on ? ' on' : '') + '" ' + attr + '="' + id + '"><span class="izb-im"><img src="assets/tracks/' + id + '.webp" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' + (p ? P.mark(id, p) : '') + '</span><span class="tx"><b>' +
+      (wf ? '<span class="izb-mf">' + fl + '</span>' : '') + esc(t.name) + '</b><small>' + facts(t) + '</small>' + (p && p.time ? '<span class="bt">' + P.fmt(p.time) + (p.pos ? '<small>' + P.ord(p.pos) + '</small>' : '') + '</span>' : '') + tag + '</span><span class="izb-go">' + GO + '</span></button>';
   }
   // a track's card (a tap on its row here, or on its pin or row on the Earth): its shape from above (the game's road, simplified:
   // vse-proge.js shape; the start gold, an open road's finish white), its heights (as the screen's graph: js/routes.js or MENU.profs),
@@ -201,7 +261,10 @@ window.IZBOR = (() => {
         '<svg viewBox="0 0 300 100" preserveAspectRatio="none"><path class="a" d="M0 100L' + pts + 'L300 100Z"/><path class="l" d="M' + pts + '"/></svg>' +
         '<span class="k0">0</span><span class="k1">' + t.km.toFixed(1) + ' km</span></div>';
     }
-    return '<div class="izb-body in izb-tc"><div class="izb-tcr">' + shape + facts + '</div>' + hg +
+    const p = window.NAPREDEK ? NAPREDEK.of(id) : null;
+    const pr = !p ? '' : p.k === 'new' ? '<div class="izb-best new">' + NAPREDEK.mark(id, p) + '<small>Best race</small><b>Not driven yet</b></div>'
+      : '<div class="izb-best">' + NAPREDEK.mark(id, p) + '<small>Best race</small><b>' + (p.time ? NAPREDEK.fmt(p.time) : '—') + (p.pos ? '<span>' + NAPREDEK.ord(p.pos) + ' place</span>' : '') + '</b></div>';
+    return '<div class="izb-body in izb-tc"><div class="izb-tcr">' + shape + facts + '</div>' + pr + hg +
       '<div class="izb-btns"><button class="izb-sel" data-sel="' + id + '">Select</button><button class="izb-race" data-race="' + id + '">Race!</button></div></div>';
   }
   function cardView(id) {
@@ -231,7 +294,8 @@ window.IZBOR = (() => {
     for (const c of C) by[contOf(c)].push(c);
     return by.map((cs, k) => !cs.length ? '' : '<div class="izb-ct">' + CONT[k] + '<small>' + cs.reduce((a, c) => a + c.ids.length, 0) + '</small></div><div class="izb-grid">' + cs.map(c => {
       const one = c.ids.length === 1, t = o.all[c.ids[0]];
-      return '<button class="izb-c' + (c.name === curC ? ' on' : '') + '" data-c="' + esc(c.name) + '" aria-label="' + esc(c.name) + '"><span class="f">' + flag(c.flag) + (one ? '' : '<span class="n">' + c.ids.length + '</span>') + '</span>' +
+      return '<button class="izb-c' + (c.name === curC ? ' on' : '') + '" data-c="' + esc(c.name) + '" aria-label="' + esc(c.name) + '"><span class="f">' + flag(c.flag) + (one ? '' : '<span class="n">' + c.ids.length + '</span>') +
+        (window.NAPREDEK ? '<span class="izb-pm">' + NAPREDEK.mark(null, NAPREDEK.best(c.ids)) + '</span>' : '') + '</span>' +
         '<b>' + esc(c.name) + '</b><small>' + esc(one ? t.name : c.ids.length + ' tracks') + '</small></button>';
     }).join('') + '</div>').join('');
   }
@@ -277,5 +341,5 @@ window.IZBOR = (() => {
     setTimeout(() => { if (id === o.cur) close(); else o.pick(id); }, 160);
   }
   function close() { if (!el) return; NAZAJ.drop('izbor'); const e = el; el = null; e.classList.remove('on'); setTimeout(() => e.remove(), 330); }
-  return { open, close, style, facts, trackCard, isOpen: () => !!el };
+  return { open, close, style, facts, trackCard, trow, isOpen: () => !!el };
 })();

@@ -82,6 +82,9 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 .row.v2 .c:first-of-type { border-left: 0; }
 .row.v2 .c small { font: 600 11px/1 var(--f-ui); color: var(--lbl); white-space: nowrap; } .row.v2 .c b { font: 800 italic 15px/1 var(--f-ui); white-space: nowrap; }
 .row.v2 .c.best small, .row.v2 .c.best b { color: var(--gold); }
+.row.v2 .c small .pr { width: 14px; height: 14px; margin: -3px 4px -2px 0; font-size: 8.5px; box-shadow: 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.6); }
+.row.v2 .c small .pr.done svg { width: 10px; height: 10px; }
+.row.v2 .c b .pr.new { height: 17px; font-size: 11px; }
 .row.v2 .opp { padding-left: 10px; }
 .row.v2.v3 { padding: 0 8px; } .row.v2.v3 .c b { font-size: 14px; } .row.v2.v3 .c small { font-size: 10.5px; } .row.v2.v3 canvas { width: 36px; height: 36px; } .row.v2.v3 .c { padding: 0 2px; } .row.v2 .opp b { font-size: 21px; } .row.v2.bigopp .opp b { font-size: 30px; font-weight: 900; }
 .views.bl { top: auto !important; bottom: 10px; }
@@ -588,6 +591,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   function makeT(i) {
     const T = P.tracks[i] ? clone(P.tracks[i].T) : generic(i), c = P.tracks[i] ? P.tracks[i].cams[cam] : { map: ALL[i].cams[cam] }, [pv, nx] = nbOf(i);
     Object.assign(T, { prev: flagSvg(ALL[pv].flag), next: flagSvg(ALL[nx].flag), prevAr: flagAr(ALL[pv].flag), nextAr: flagAr(ALL[nx].flag), flagFix: true });
+    const pr = NAPREDEK.of(i);   // (Best race: the progress, NAPREDEK in izbor.js)
+    T.stats = [pr.k === 'new' ? ['Best race', NAPREDEK.mark(i, pr)] : [NAPREDEK.mark(i, pr) + 'Best race', pr.time ? NAPREDEK.fmt(pr.time) : '—']].concat(T.stats.slice(1));   // (a medal or a tick before the label, NEW for the time)
     return Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(cur) });
   }
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)

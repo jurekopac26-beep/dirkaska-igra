@@ -35,6 +35,10 @@ window.ZEMLJA = (() => {
     box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 10px rgba(255, 198, 41, .85); }
   .zp.cur i { left: -8px; top: -8px; width: 16px; height: 16px; background: #fff; border-color: #ffc629; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 14px rgba(255, 255, 255, .9); }
   .zp.cur::after { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffc629; opacity: 0; animation: zpPulse 1.6s ease-out 3; }   /* (three pulses, then still: the battery) */
+  .zp.silver i { background: #d3d9e2; }
+  .zp.bronze i { background: #d98b47; }
+  .zp.done i { background: #45d27e; }
+  .zp.new i { background: #1d2a40; border-color: #7fe8ff; }
   .zp.sel i { background: #fff; }
   @keyframes zpPulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
   .zl { pointer-events: auto; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 4px 9px 4px 5px; border-radius: 8px;
@@ -169,7 +173,7 @@ window.ZEMLJA = (() => {
     let h = '';
     for (const id of o.order) {
       const t = o.all[id]; if (t.lat == null) continue;
-      h += '<div class="zp' + (id === o.cur ? ' cur' : '') + '" data-t="' + id + '"><i></i></div>';
+      h += '<div class="zp' + (id === o.cur ? ' cur' : '') + (window.NAPREDEK ? ' ' + NAPREDEK.of(id).k : '') + '" data-t="' + id + '"><i></i></div>';   // (its progress: the pin's colour)
       h += '<div class="zl t' + (id === o.cur ? ' cur' : '') + '" data-t="' + id + '"><span>' + esc(t.name) + '</span><small>' + t.km.toFixed(1) + ' km</small></div>';
     }
     for (const c of R.C.values()) h += '<div class="zl c' + (c.name === o.all[o.cur].country ? ' cur' : '') + '" data-c="' + esc(c.name) + '">' + flag(c.flag) + '<span>' + esc(c.name) + '</span>' + (c.ids.length > 1 ? '<small>' + c.ids.length + '</small>' : '') + '</div>';
@@ -266,8 +270,7 @@ window.ZEMLJA = (() => {
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
     const facts = IZBOR.facts;   // (the quick list's: length, climb or corners, group)
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
-      '<div class="izb-body"><div class="izb-list">' + c.ids.map(id => { const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
-        return '<button class="izb-t' + (id === o.cur || id === hi ? ' on' : '') + '" data-pick="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" onerror="this.style.visibility=\'hidden\'"><span class="tx"><b>' + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + I.go + '</span></button>'; }).join('') + '</div></div>';
+      '<div class="izb-body"><div class="izb-list">' + c.ids.map(id => IZBOR.trow(id, o, 'data-pick', id === o.cur || id === hi)).join('') + '</div></div>';
     k.classList.add('on');
     requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
   }
