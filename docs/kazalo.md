@@ -109,6 +109,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
 | `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
 | `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge; nove proge za 1.0 (7. 11. 2026: 1–5 km, prvih 11, potrditev seznama, mestne proge po središču brez izletne cone) |
+| `docs/nove-proge-1-0.md` | prvih 11 novih prog za 1.0 (potrjene 7. 11. 2026): meritve, posebnosti, podatki poti v `tools/<id>/config.json` za `tools/proga-podatki.py`, liniji A in B, skupine po 3–4 za vrsto, predaja med sejami |
 | `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
