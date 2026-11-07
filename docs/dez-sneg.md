@@ -29,6 +29,7 @@ Načrt teme: fizika za vse proge, svoja seja (Opus, napor max; `CLAUDE.md`, Seje
 - **Kocke in luže:** kocke v dežju (`settMu`) in luže (`CSSURF`) naj ostanejo pod suho podlago in nad snegom.
 - **AI po tvoji liniji (#305):** profili so po vremenu (zdaj samo suh Tianmen), sprememba jih ne zadene; za dež bi ga bilo treba izmeriti znova.
 - **Reference:** `tests/golden/sim.json` (scenariji v dežju), `tests/golden/races.json`; `npm run golden:update`. Testi vozil na GitHubu.
+- **Vreme med dirko** (`docs/vreme-med-dirko.md`, partyslo): gre na `main` za to temo. Ta tema spremeni oprijem pri dani mokroti (`WET`, `TYRE_GRIP`, zavore, profil tekmecev), vreme med dirko pa urnik dežja in mokroto ceste po času (`Race._weather`), videz, zvok in posnetek.
 
 ## Postopek
 1. Pred spremembo izmeri z istim avtom na pravi progi (npr. Bathurst): zavorno pot 100→0 km/h in največji bočni pospešek na suhem, v dežju, na zimskem asfaltu in na makadamu s snegom.
