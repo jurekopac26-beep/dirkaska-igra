@@ -3788,7 +3788,7 @@
   function aheadRadio(P, pl) {
     const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null;
     if (!A || P.inPit || P.pitG || P.pitWant || P.finished) return;
-    const q = race.pitNext(A), ga = q && race.gap(A, P); if (!q || q.to < AHEAD.to || ga == null || ga > AHEAD.gap) return;
+    const q = race.pitNext(A), ga = q && race.gap(A, P); if (!q || q.to < AHEAD.to || q.to > race.track.len || ga == null || ga > AHEAD.gap) return;   // (over a lap to go: the last 30 m before a way in, where pitNext counts the next lap's already but the car may still turn in)
     const due = !!(pl && pl.from != null && !pl.box), D = due ? race.pitDuel(P, A) : null;
     if (q.now) {
       const key = A.name + ':' + q.n; if (trd.ahead.has(key)) return; trd.ahead.add(key);
