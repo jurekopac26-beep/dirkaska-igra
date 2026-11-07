@@ -317,7 +317,7 @@
     const DR = rng(9331);   // (the camp props' own random stream)
     const BE = [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]];   // the Belgian flag (upright stripes)
     const flagPole = (g, x, y, z, rot, cols) => { const c = Math.cos(rot), s = Math.sin(rot); cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
-      for (let n = 0; n < 3; n++) { const a = 0.3 + n * 0.5; box(g, x + c * a, y + 5.2, z + s * a, 0.5, 0.95, 0.04, rot, cols[n], null, true); } };
+      API.flags.add(x + c * 0.05, y + 6.15, z + s * 0.05, rot, { up: cols }, 1.5, 0.95); };   // (the cloth waves: js/world-zastave.js)
     const tent = (x, z, rot, col) => {   // the fans' camp, by hash: a dome tent, a ridge tent, a gazebo or a camper van; now and then a Belgian flag beside it
       const g = scen.get(x, z), y = nrGround(x, z), h = crH(x, z, 31), c = Math.cos(rot), s = Math.sin(rot), dk = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72], dark = [0.16, 0.2, 0.26];
       if (h < 0.34) nrLump(g, x, y + 0.05, z, 1.5, 0.78, col, DR, 0.05);
@@ -357,7 +357,7 @@
       for (let d = -300; d < 210; d += 14) {   // flag poles behind the wall on the grandstand side: the Belgian flag, the circuit's, the sponsors'
         const [px, pz, ii] = onSide(sAt(d), -1, 2.2), py = nrGround(px, pz), gg = scen.get(px, pz), k = Math.floor(crH(d, 3, 57) * 4); CR.avoid(px, pz, 0.45);
         if (k < 2) flagPole(gg, px, py, pz, T.hd[ii], BE);
-        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); box(gg, px + T.tx[ii] * 0.6, py + 4.8, pz + T.tz[ii] * 0.6, 1.2, 0.8, 0.05, T.hd[ii], k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)], null, true); }
+        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)]], 1.2, 0.8); }
       }
       for (let d = -210, n = 0; d < 150; d += 30, n++) for (const side of [-1, 1]) {   // banners on the walls of the straight: EAU ROUGE, BELGIQUE · BELGIË, DÉPART · ARRIVÉE
         const s0 = sAt(d), a0 = T.idx(s0), b0 = T.idx(s0 + 3.6), [u0, v0, u1, v1] = nrAUV(BAN + 1 + (n + (side > 0 ? 1 : 0)) % 3);

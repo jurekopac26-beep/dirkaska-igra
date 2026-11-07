@@ -622,9 +622,8 @@
         const y = water ? SEA - 0.25 : nrGround(x, z) - 0.1; boats.add(x, y, z, RB2() * TAU, 1, 1, HC[Math.floor(RB2() * HC.length)]); nBoat++; }
       boats.addTo(root, true); out.stats.boats = nBoat;
       // Thai flags (red, white, blue, white, red) on poles along the beach road behind the wall and at the big junctions
-      const flag = (x, z, rot) => { const y = nrGround(x, z), g = scen.get(x, z), cs = Math.cos(rot), sn = Math.sin(rot); cyl(g, x, y, z, 0.05, 6.5, 5, [0.88, 0.88, 0.9]);
-        const st = [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.12, 0.18, 0.5], [0.12, 0.18, 0.5], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]];
-        for (let k = 0; k < 6; k++) { const y0 = y + 6.3 - (k + 1) * 0.2, y1 = y0 + 0.2, A = [x, y0, z], B2 = [x + cs * 1.8, y0, z + sn * 1.8]; g.quadO(A, B2, [B2[0], y1, B2[2]], [x, y1, z], st[k], [x - sn, y0, z + cs]); g.quadO(A, B2, [B2[0], y1, B2[2]], [x, y1, z], st[k], [x + sn, y0, z - cs]); } };
+      const TH = [[0.8, 0.1, 0.14], [0.95, 0.95, 0.94], [0.12, 0.18, 0.5], [0.12, 0.18, 0.5], [0.95, 0.95, 0.94], [0.8, 0.1, 0.14]];   // (stripes, top to bottom)
+      const flag = (x, z, rot) => { const y = nrGround(x, z); cyl(scen.get(x, z), x, y, z, 0.05, 6.5, 5, [0.88, 0.88, 0.9]); API.flags.add(x, y + 6.3, z, rot, TH, 1.8, 1.2); };   // (the cloth waves: js/world-zastave.js)
       for (let d = -140; d < 340; d += 30) { const s = sAt(d), i = T.idx(s), [x, z] = atSf(s, -(T.bl[i] + 1.4)); if (!inTrack(x, z) && ocGet(x, z) !== 2) flag(x, z, T.hd[i] + 0.4); }
       for (const [d, side, , , kind] of BSD.jn) if (kind === 2) { const s = sAt(d + 12), i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i]; if (wide(i, side)) continue; const [x, z] = atSf(s, side * (bar + 1.2)); if (!inTrack(x, z)) flag(x, z, T.hd[i] + 0.4); }
       // songthaews (a pick-up with a roofed bench bed) and tuk-tuks parked along the side streets behind their closures

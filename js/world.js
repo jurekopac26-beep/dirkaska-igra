@@ -392,7 +392,7 @@ const World = (function () {
     else if (what === 'high') { box(g, x, y + 1.05, z, 0.7, 0.04, 0.7, rot, col, col, true); clPost(g, P, 0, 0, 1.05, CL_POLE); }
     else if (what === 'loo') { box(g, x, y, z, 1.15, 2.25, 1.15, rot, col, CL_WHITE, true); g.quadO(P(0.581, 0.1, -0.4), P(0.581, 0.1, 0.4), P(0.581, 2.0, 0.4), P(0.581, 2.0, -0.4), CL_WHITE, P(0, 1, 0)); }
     else if (what === 'parasol') { clPost(g, P, 0, 0, 2.2, CL_POLE); cone(g, x, y + 1.85, z, 1.4, 0.55, 8, col, CL_WHITE, rot); }
-    else if (what === 'flag') { clPost(g, P, 0, 0, 5.5, CL_POLE); clQuadBoth(g, P(0.05, 4.4, 0), P(1.5, 4.4, 0), P(1.5, 5.4, 0), P(0.05, 5.4, 0), col); }
+    else if (what === 'flag') { clPost(g, P, 0, 0, 5.5, CL_POLE); const a = P(0.05, 5.4, 0); if (!(API.flags && API.flags.add(a[0], a[1], a[2], rot, [col], 1.45, 1))) clQuadBoth(g, P(0.05, 4.4, 0), P(1.5, 4.4, 0), P(1.5, 5.4, 0), P(0.05, 5.4, 0), col); }   // (the cloth waves: js/world-zastave.js)
     else if (what === 'grill') { box(g, x, y + 0.55, z, 0.6, 0.3, 0.45, rot, CL_DARK, CL_DARK, true); clPost(g, P, 0, 0, 0.55, CL_DARK); }
   }
   function campLot(g, gH, x, z, rot, kind, h) {
@@ -1438,7 +1438,7 @@ const World = (function () {
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     for (const f of SYNC) f();   // (the worlds in files of their own: the track being built, its theme, the detail tier)
     for (const k in KEEP) if (!KEEP[k].includes(THEME)) { if (k === 'NR') NR = null; else API[k] = null; }   // free the last build's grids this world does not keep (World.keep(key, theme) in the world files: tools/razdeli-proge.mjs)
-    if (EXT[THEME]) return finish(EXT[THEME](scene, tex, opts, extAPI()), tex);   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI)
+    if (EXT[THEME]) { const F = API.flags; if (F) F.begin(); const o = EXT[THEME](scene, tex, opts, extAPI()); if (F) F.done(o); return finish(o, tex); }   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI); its flags waving in one mesh (js/world-zastave.js)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);

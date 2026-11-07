@@ -26,7 +26,6 @@
     montreal: { d: -182, side: 1, off: 14.2, turn: 50, W: 10, H: 5, y: 2.4 },
     newcastle: { d: -177, side: -1, off: 15, turn: 50, W: 10, H: 5, y: 2.4 },
     rbring: { d: 147, side: -1, off: 16.5, turn: 50, W: 10, H: 5, y: 2.4 },
-    rio: { d: -254, side: -1, off: 17.5, turn: 50, W: 10, H: 5, y: 2.4 },
     toronto: { d: 4, side: 1, off: 22, turn: 50, W: 10, H: 5, y: 2.4 },
     spa: { d: -21, side: -1, off: 15.7, turn: 50, W: 10, H: 5, y: 2.4 },
     townsville: { d: -220, side: -1, off: 15, turn: 50, W: 10, H: 5, y: 2.4 },
