@@ -1,6 +1,6 @@
 {
  "id": "zurich",
- "about": "Zürich, Švica (id zurich): city race through the centre of Zürich, along the Limmat and the lake",
+ "about": "Zürich, Švica (id zurich): city race through the centre of Zürich, one lap anticlockwise from Bellevue: Limmatquai along the Limmat, the middle bridge, Uraniastrasse, Bahnhofstrasse, the square by the lake, Quaibrücke (route A; routeB: the longer variant)",
  "box": [
   47.355,
   8.515,
@@ -14,10 +14,10 @@
  ],
  "route": [
   [
-   47.3676,
-   8.5449,
+   47.369,
+   8.5437,
    "Limmatquai",
-   "start: Limmatquai by Bellevue, northbound along the Limmat"
+   "start: Limmatquai, northbound along the Limmat (about 200 m north of Bellevue)"
   ],
   [
    47.3717,
@@ -78,6 +78,12 @@
    8.5442,
    "Quaibrücke",
    ""
+  ],
+  [
+   47.36778,
+   8.54486,
+   "Limmatquai",
+   "Bellevue"
   ]
  ],
  "prefer": [
@@ -94,15 +100,185 @@
   "Rudolf-Brun-Brücke",
   "Bahnhofstrasse"
  ],
- "geoRoads": [],
+ "geoRoads": [
+  "Limmatquai",
+  "Uraniastrasse",
+  "Bahnhofstrasse",
+  "Quaibrücke",
+  "Bahnhofquai",
+  "Bahnhofbrücke",
+  "Talstrasse",
+  "Bellevueplatz",
+  "Rämistrasse",
+  "Utoquai",
+  "Paradeplatz",
+  "Münsterbrücke",
+  "Rathausbrücke",
+  "Stadthausquai",
+  "Sonnenquai",
+  "Seefeldstrasse",
+  "Theaterstrasse",
+  "Münsterhof",
+  "Weinplatz",
+  "Schipfe",
+  "Rennweg",
+  "Augustinergasse",
+  "Strehlgasse",
+  "In Gassen",
+  "Poststrasse",
+  "Bärengasse",
+  "Talacker",
+  "Börsenstrasse",
+  "Fraumünsterstrasse",
+  "Kappelergasse",
+  "Stockerstrasse",
+  "Seilergraben",
+  "Mühlegasse",
+  "Zähringerstrasse",
+  "Niederdorfstrasse",
+  "Marktgasse",
+  "Rindermarkt",
+  "Münstergasse",
+  "Oberdorfstrasse",
+  "Kirchgasse",
+  "Torgasse",
+  "Rathausquai",
+  "Schifflände",
+  "Sechseläutenplatz",
+  "Falkenstrasse",
+  "Kreuzstrasse",
+  "Löwenstrasse",
+  "Sihlstrasse",
+  "Lintheschergasse",
+  "Werdmühleplatz",
+  "Werdmühlestrasse",
+  "Füsslistrasse",
+  "Seidengasse",
+  "Pelikanstrasse",
+  "Schanzengraben",
+  "Bleicherweg",
+  "Central",
+  "Neumühlequai",
+  "Walchebrücke",
+  "Sihlquai",
+  "Museumstrasse",
+  "Bahnhofplatz",
+  "Gessnerallee",
+  "Badenerstrasse",
+  "Selnaustrasse",
+  "Sihlporte",
+  "Hirschengraben",
+  "Predigerplatz",
+  "Zähringerplatz",
+  "Stüssihofstatt",
+  "Limmatplatz"
+ ],
  "geoWater": [
   "Limmat",
   "Zürichsee",
   "Schanzengraben",
   "Sihl"
  ],
- "marks": [],
- "places": [],
+ "marks": [
+  [
+   "Stolnica z dvema stolpoma",
+   "Twin-towered minster",
+   "church",
+   [
+    "w36916418"
+   ]
+  ],
+  [
+   "Cerkev z vitkim zvonikom",
+   "Slender-spired church",
+   "church",
+   [
+    "w89967877"
+   ]
+  ],
+  [
+   "Cerkev z veliko uro",
+   "Church with the great clock",
+   "church",
+   [
+    "w24701951"
+   ]
+  ],
+  [
+   "Cerkev ob reki",
+   "Riverside church",
+   "church",
+   [
+    "w112795856"
+   ]
+  ],
+  [
+   "Mestna hiša na reki",
+   "Town hall on the river",
+   "townhall",
+   [
+    "w30067765"
+   ]
+  ],
+  [
+   "Lindenhof",
+   "Lindenhof",
+   "park",
+   [
+    "w10594810"
+   ]
+  ],
+  [
+   "Operna hiša",
+   "Opera house",
+   "theatre",
+   [
+    "w31966519"
+   ]
+  ]
+ ],
+ "places": [
+  [
+   "Limmatquai",
+   null,
+   0
+  ],
+  [
+   "srednji most",
+   null,
+   600
+  ],
+  [
+   "Uraniastrasse",
+   null,
+   720
+  ],
+  [
+   "Bahnhofstrasse",
+   null,
+   930
+  ],
+  [
+   "Paradeplatz",
+   null,
+   1460
+  ],
+  [
+   "trg ob jezeru",
+   null,
+   1860
+  ],
+  [
+   "Quaibrücke",
+   null,
+   2000
+  ],
+  [
+   "Bellevue",
+   null,
+   2271
+  ]
+ ],
  "driveExtra": [
   "pedestrian"
  ],
@@ -191,5 +367,10 @@
    "Quaibrücke",
    ""
   ]
- ]
+ ],
+ "dist": {
+  "bld": 80,
+  "grid": 300,
+  "water": 250
+ }
 }

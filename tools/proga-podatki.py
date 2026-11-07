@@ -676,8 +676,22 @@ def build_vectors(F, line, L, R, D, bridges):
             for ring in rel_rings(D, mem):
                 x, z = F.xz([p[0] for p in ring], [p[1] for p in ring]); P = np.stack([x, z], 1); s_, d_ = A.query(P)
                 if np.abs(d_).min() <= DS['shore']: areas.append([t['natural'], flat(P)])
-    out['coast'] = coast; out['cliffs'] = cliffs; out['shore'] = areas; out['water'] = water
-    print('coast %d pieces, cliffs %d, beaches / rocks %d, streams %d' % (len(coast), len(cliffs), len(areas), len(water)), flush=True)
+    # lakes and rivers as areas (natural=water ways and multipolygons) with any point within DS['water'] m: whole outlines (a lake's ring only
+    # partly in the box stays open: closed 0, its ends where OSM's data stops)
+    lakes = []
+    cand = [(t, [refs]) for k, (refs, t) in W.items() if t.get('natural') == 'water' and len(refs) > 3]
+    cand += [(t, None, mem) for k, (mem, t) in D['rels'].items() if t.get('type') == 'multipolygon' and t.get('natural') == 'water']
+    for c_ in cand:
+        t = c_[0]
+        rings = [[N[r] for r in c_[1][0] if r in N]] if c_[1] is not None else rel_rings(D, c_[2])
+        for ring in rings:
+            if len(ring) < 4: continue
+            x, z = F.xz([p[0] for p in ring], [p[1] for p in ring]); P = np.stack([x, z], 1); s_, d_ = A.query(P)
+            if np.abs(d_).min() > DS['water']: continue
+            closed = 1 if np.hypot(*(P[0] - P[-1])) < 0.5 else 0
+            lakes.append([t.get('water', '') or 'water', t.get('name', '') if t.get('name', '') in C['geoWater'] else '', closed, flat(P)])
+    out['coast'] = coast; out['cliffs'] = cliffs; out['shore'] = areas; out['water'] = water; out['lakes'] = lakes
+    print('coast %d pieces, cliffs %d, beaches / rocks %d, streams %d, lakes / rivers %d' % (len(coast), len(cliffs), len(areas), len(water), len(lakes)), flush=True)
     # the railway (and the funicular), within 200 m
     rail = []
     for k, (refs, t) in W.items():
@@ -843,6 +857,7 @@ def step_data(raw):
         'trees': '[x, z, kind]: single trees (OSM) within %d m; kind p pine, c cypress, o olive, m palm, b broadleaved, \'\' unknown' % C['dist']['trees'], 'treeRows': '[kind, [x, z, ...]]',
         'walls': '[barrier (OSM: wall, retaining_wall, fence, guard_rail, hedge ...), height (0 = untagged), wall / material, [x, z, ...]]: within %d m' % C['dist']['walls'],
         'coast': '[x, z, ...]: the coastline within %d m (OSM: the land on the left of the way\'s direction, the sea on the right)' % C['dist']['coast'], 'cliffs': '[x, z, ...]: cliffs within %d m (OSM: the lower side on the right)' % C['dist']['cliffs'],
+        'lakes': '[water (OSM water=: lake, river, pond ...), name (geographic), closed (0: a ring cut off where the data ends), [x, z, ...]]: lakes and rivers as areas within %d m' % C['dist']['water'],
         'shore': '[natural (beach, bare_rock ...), [x, z, ...] outline]: within %d m' % C['dist']['shore'], 'water': '[waterway, name (geographic), culvert / tunnel, [x, z, ...]]: streams within %d m' % C['dist']['water'],
         'rail': '[railway (rail, funicular ...), bridge, tunnel, [x, z, ...]]: within %d m' % C['dist']['rail'],
         'roads': '[highway, lanes, width, 1 bridge / 2 tunnel, layer, surface, name (geographic), par (1: a carriageway alongside the route), [x, z, ...]]: other roads and paths within %d m (clipped to %d m)' % (C['dist']['roads'], C['dist']['roads'] + 20),
