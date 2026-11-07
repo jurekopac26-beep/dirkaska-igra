@@ -1340,5 +1340,25 @@
    "tyremarks:MeshBasicMaterial": "a4ad60c7",
    "roadwear:MeshLambertMaterial": "cab91f8"
   }
+ },
+ "balea": {
+  "meshes": 1300,
+  "verts": 716020,
+  "instances": 31942,
+  "props": 59,
+  "crowd": 177,
+  "world": "51102f2b",
+  "propsHash": "4ecba816",
+  "floor": "44e8fdb6/8792",
+  "groups": {
+   "-:MeshLambertMaterial": "12f4f7ee",
+   "-:MeshPhongMaterial": "fd4c9d",
+   "-:MeshBasicMaterial": "59ac609e",
+   "irFar:MeshLambertMaterial": "558fca68",
+   "crowd:MeshLambertMaterial": "65a61a12",
+   "ao:MeshBasicMaterial": "608d5c9c",
+   "tyremarks:MeshBasicMaterial": "6d7d8dcd",
+   "roadwear:MeshLambertMaterial": "ad759754"
+  }
  }
 }
