@@ -8,7 +8,7 @@
      auspuh:      { x, y, z, r, len, part, drum, pipe }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
                   radius, length; part: the pipes'; drum: the silencer's middle height (y - 0.065; a car whose floor is higher: up against it); pipe: the pipes' front ends' height (y - 0.07; a car whose floor is higher:
                   up under it); valve: true, the flap valves on the tips (KOLIBRI's beside them, against the body; on a car with the tips far out they'd hang in the air);
-                  hang: the floor's height over tips hung well under it (GOZDAR's: each tip on a rubber hanger up to it; none: the tips against the body);
+                  hang: the floor's height over tips hung well under it (GOZDAR's: each tip on a rubber hanger up to it, a flat strap seen from behind; none: the tips against the body);
                   drumX, pipeX: the silencer's x (x + 0.27) and the pipes' front ends' x (0.6: forward under the floor; an engine behind the
                   rear axle, SKAKAČ's: the silencer behind it, the pipes from its heads)
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
@@ -121,7 +121,7 @@
     const X = m.x, Y = m.y, Z = m.z, r0 = m.r, L = m.len, q = seg(K, 14);
     K.part(m.part || 'body', () => {
       // a tip at z: radius r, its outer colour, the rim (its end) and, inside, a second wall (inner: its colour) a little out of it
-      const hang = (x, y, z, r) => { if (m.hang != null) K.cyl([x, y + r * 0.5, z], [x, m.hang + 0.004, z], 0.01, BLK, { n: 3, capA: null, capB: null }); };   // (hang: its rubber hanger up to a high floor)
+      const hang = (x, y, z, r) => { if (m.hang != null) { const y0 = y + r * 0.5, y1 = m.hang + 0.004; K.rect(x, (y0 + y1) / 2, z, 0.02, y1 - y0, BLK, { dir: '-x' }); } };   // (hang: its rubber hanger up to a high floor: a flat strap, seen from behind)
       const tip = (z, r, col, o) => { o = o || {}; const x = X - (o.out || 0), y = Y + (o.dy || 0);
         K.exhaust(x, y, z, r, o.len || L, { col, hole: o.inner ? (o.rim || col) : HOLE, n: q }); hang(x + (o.len || L) * 0.6, y, z, r);
         if (o.inner) K.exhaust(x - 0.005, y, z, r * 0.74, 0.04, { col: o.inner, hole: HOLE, n: q }); };
