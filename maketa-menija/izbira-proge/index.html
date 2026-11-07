@@ -591,7 +591,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   const loop = () => { const t = now(); if (!window.ZEMLJA || !ZEMLJA.covers()) { WXFX.frame(t); GLOBE.frame(t); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
   const here = location.pathname + location.search, hash = (p) => { const n = new URLSearchParams({ t: id, cam, wx: cur }); for (const k in p) n.set(k, p[k]); return here + '#' + n; };
-  const go = (p) => { const h = hash(p); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h); location.reload(); };
+  const go = (p) => NAZAJ.clear(() => { const h = hash(p); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h); location.reload(); });   // (the open layers' steps out of the history first)
   document.querySelector('.wxc').addEventListener('click', (e) => {
     const i = e.target.closest('i'); if (!i) return;
     const k = WXFX.KEYS[[...i.parentNode.children].indexOf(i)]; if (!k || k === cur) return;

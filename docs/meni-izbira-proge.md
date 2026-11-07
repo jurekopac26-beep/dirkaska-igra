@@ -92,6 +92,7 @@ Osem predlogov iz pogovora 7. 11. (ne: 7 – preleti za kamero 2, 10 – naklju�
 
 Stanje (seja 7. 11. 2026 zvečer; predaja, če kontekst preseže ~300 tisoč žetonov):
 - 1 narejeno: `zemlja.js` riše samo, ko se kaj premika (`kick()`; mirujoča Zemlja ne riše nič, števec risanj `ZEMLJA._R().n`), utrip bucike trikrat; šibek telefon dobi `mk/earth2k.webp` in platno 2048 (`R.weak`); gostota največ 2.
+- 2 narejeno: `NAZAJ` v `izbor.js` (zgodovina plasti: hitra izbira, seznam države, Zemlja, kartica; `popstate` zapre zgornjo, gumb plasti vrne svoj korak z `history.go`, izbira proge najprej počisti korake `NAZAJ.clear`); tresljaj `NAZAJ.buzz()` ob izbiri države in proge.
 
 ## Sklopi
 

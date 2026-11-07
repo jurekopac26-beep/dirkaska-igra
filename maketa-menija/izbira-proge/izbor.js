@@ -5,6 +5,34 @@
 // svg for a 30 x 20 box, pick(id) to go to a track.
 window.IZBOR = (() => {
   const CSS = `
+
+// The phone's Back (NAZAJ): every layer opened over the screen (the quick list, a country's tracks in it, the Earth, its card) is one step
+// in the history (history.pushState); Back closes the top one (popstate). A layer closed by its own button takes its step back out
+// (history.go), and nothing new is written while such a step back is under way. NAZAJ.push(who, close) when a layer opens (close: the
+// layer's own closing, without the history), NAZAJ.drop(who, n) when it closes by itself (n of who's layers, all if left out),
+// NAZAJ.clear(then) to take every step back out before going to another track; NAZAJ.buzz(): a short tremble (choosing a country or a track).
+window.NAZAJ = (() => {
+  const st = []; let skip = 0, popping = false, after = [], waiting = [];
+  const write = (n) => { try { history.pushState({ nazaj: n }, '', location.href); return true; } catch (e) { return false; } };
+  const back = (k, then) => { if (then) after.push(then); if (!k) { if (!skip) run(); return; } skip++; history.go(-k); };
+  const run = () => { const a = after; after = []; for (const l of waiting) l.h = write(st.length); waiting = []; a.forEach(f => f()); };
+  addEventListener('popstate', () => {
+    if (skip) { if (--skip === 0) run(); return; }
+    const l = st.pop(); if (!l) return;
+    popping = true; try { l.f(); } finally { popping = false; }
+  });
+  function push(who, f) { const l = { who, f, h: false }; st.push(l); if (skip) waiting.push(l); else l.h = write(st.length); }
+  function drop(who, n) {
+    if (popping) return;   // (Back itself is closing it: its step is already gone)
+    let k = 0, i = 0;
+    while (st.length && st[st.length - 1].who === who && (n == null || i < n)) { const l = st.pop(); i++; if (l.h) k++; const w = waiting.indexOf(l); if (w >= 0) waiting.splice(w, 1); }
+    if (k) back(k);
+  }
+  function clear(then) { let k = 0; for (const l of st) if (l.h) k++; st.length = 0; waiting = []; back(k, then); }
+  const buzz = () => { try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} };
+  return { push, drop, clear, buzz, depth: (who) => st.filter(l => !who || l.who === who).length };
+})();
+
   .izb { position: absolute; inset: 0; z-index: 40; font-family: var(--f-ui); }
   .izb-dim { position: absolute; inset: 0; background: rgba(4, 8, 16, .58); opacity: 0; transition: opacity .25s; }
   .izb.on .izb-dim { opacity: 1; }
@@ -99,10 +127,10 @@ window.IZBOR = (() => {
     document.body.appendChild(el); show(grid());
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-x]') || e.target.classList.contains('izb-dim')) return close();
-      if (e.target.closest('[data-back]')) return show(grid());
+      if (e.target.closest('[data-back]')) { NAZAJ.drop('izbor', 1); return show(grid()); }
       const c = e.target.closest('[data-c]');
-      if (c) { const k = countries().find(x => x.name === c.dataset.c); if (k.ids.length === 1) return choose(k.ids[0], c); return show(country(k.name)); }
-      const t = e.target.closest('[data-t]'); if (t) choose(t.dataset.t, t);
+      if (c) { NAZAJ.buzz(); const k = countries().find(x => x.name === c.dataset.c); if (k.ids.length === 1) return choose(k.ids[0], c); show(country(k.name)); NAZAJ.push('izbor', () => el && show(grid())); return; }
+      const t = e.target.closest('[data-t]'); if (t) { NAZAJ.buzz(); choose(t.dataset.t, t); }
     });
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
   }
@@ -110,6 +138,7 @@ window.IZBOR = (() => {
     el.querySelectorAll('.on').forEach(x => x !== el && x.classList.remove('on')); b.classList.add('on');
     setTimeout(() => { if (id === o.cur) close(); else o.pick(id); }, 160);
   }
-  function close() { if (!el) return; const e = el; el = null; e.classList.remove('on'); setTimeout(() => e.remove(), 330); }
-  return { open, close, style, isOpen: () => !!el };
+  function close() { if (!el) return; NAZAJ.drop('izbor'); const e = el; el = null; e.classList.remove('on'); setTimeout(() => e.remove(), 330); }
+  return { open, close, style, facts, isOpen: () => !!el };
 })();
+    NAZAJ.push('izbor', () => close());

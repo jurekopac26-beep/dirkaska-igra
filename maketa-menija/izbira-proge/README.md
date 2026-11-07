@@ -22,8 +22,8 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 | `globe.js` | globus v glavi: osvetljen, odsev na morju, ozračje, oblaki, država zlata, pika na progi; ob menjavi proge se zavrti do nove države |
 | `proge.js` | 7 prog z ročno maketo: nastavitve zaslona in slike treh kamer |
 | `vse-proge.js` | vse prave proge iz igre (vrstni red menija, kraj, država, kraj na Zemlji, dolžina, vzpon ali ovinki, graf, slike kamer) in njihove zastave; naredi ga `orodja/vse-proge.js`, ne urejaj ročno |
-| `izbor.js` | hitra izbira ob zastavi v vrstici: zastave držav, seznam prog države |
-| `zemlja.js` | 3D Zemlja ob globusu: vrtenje, približanje, zlate države, bucike prog, kartica s progami države |
+| `izbor.js` | hitra izbira ob zastavi v vrstici: zastave držav, seznam prog države; `NAZAJ`: tipka nazaj na telefonu zapre zgornje okno (zgodovina), tresljaj ob izbiri |
+| `zemlja.js` | 3D Zemlja ob globusu: vrtenje, približanje, zlate države, bucike prog, kartica s progami države; riše samo med gibanjem, šibek telefon dobi `mk/earth2k.webp` |
 | `table.html` | list tabel ene države z zastavo na 6 načinov |
 | `table-drzav.json` | raziskava tabel 20 držav (vrsta table, barve, okvir, pisava, viri) |
 | `mk/` | `earth2k.webp` (tekstura Zemlje na pol velikosti), slike avtov iz igre (prozorno ozadje), zemljevid, prelet in zavoj Vršiča, črte vetra za BURJO |

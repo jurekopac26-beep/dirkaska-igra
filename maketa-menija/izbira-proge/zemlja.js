@@ -249,7 +249,8 @@ window.ZEMLJA = (() => {
   // the card at the bottom: a country's tracks
   function card(name, hi) {
     const c = R.C.get(name), k = el.querySelector('.zem-card');
-    if (!c) { k.classList.remove('on'); R.offT = 0; kick(); return; }
+    if (!c) { k.classList.remove('on'); R.offT = 0; kick(); if (R.card) { R.card = false; NAZAJ.drop('zemlja', 1); } return; }
+    if (!R.card) { R.card = true; NAZAJ.push('zemlja', () => R && select(null)); }   // (Back closes the card first, then the Earth)
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
     const facts = (t) => { const third = t.alt ? (t.alt[1] < t.alt[0] ? '−' : '+') + Math.round(Math.abs(t.alt[1] - t.alt[0])).toLocaleString('en-US') + ' m' : t.corners ? t.corners + ' corners' : ''; return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (t.open ? 'Open road' : 'Circuit'); };
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
@@ -261,6 +262,7 @@ window.ZEMLJA = (() => {
   function select(name, id) {
     const was = R.sel; R.sel = name || null;
     if (was !== R.sel) { paint(); kick(); }
+    if (name) NAZAJ.buzz();
     card(R.sel, id);
     if (!R.sel) return;
     const c = R.C.get(R.sel), t = id ? o.all[id] : null, to = t ? [t.lat, t.lon] : [c.lat, c.lon];
@@ -359,6 +361,7 @@ window.ZEMLJA = (() => {
       '<div class="zem-hint">Drag to turn · pinch to zoom · tap a country</div>' +
       '<div class="zem-card"></div></div><div class="zem-load">Loading the Earth…</div>';
     document.body.appendChild(el);
+    NAZAJ.push('zemlja', () => close());
     requestAnimationFrame(() => requestAnimationFrame(() => el && el.classList.add('on')));
     const mine = el;
     await ready();
@@ -374,12 +377,13 @@ window.ZEMLJA = (() => {
       const z = e.target.closest('[data-zoom]'); if (z) { R.fly = null; R.dT = clamp(R.dT * (+z.dataset.zoom > 0 ? 1.45 : 1 / 1.45), DMIN, DMAX); hideHint(); kick(); return; }
       if (e.target.closest('[data-home]')) { const t = o.all[o.cur]; select(t.country, o.cur); return; }
       if (e.target.closest('[data-cx]')) return select(null);
-      const p = e.target.closest('[data-pick]'); if (p) { p.classList.add('on'); setTimeout(() => { if (p.dataset.pick === o.cur) close(); else o.pick(p.dataset.pick); }, 160); }
+      const p = e.target.closest('[data-pick]'); if (p) { NAZAJ.buzz(); p.classList.add('on'); setTimeout(() => { if (p.dataset.pick === o.cur) close(); else o.pick(p.dataset.pick); }, 160); }
     });
     start();
   }
   function close(now) {
     if (!el) return;
+    NAZAJ.drop('zemlja');
     const e = el, r = R; el = null; R = null;
     if (r) { cancelAnimationFrame(r.raf); removeEventListener('pointermove', r.onMove); removeEventListener('pointerup', r.onUp); removeEventListener('pointercancel', r.onUp); }
     const end = () => { if (r) { r.r.dispose(); r.map.dispose(); r.r.forceContextLoss(); } e.remove(); };
