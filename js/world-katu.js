@@ -318,16 +318,17 @@
     { const cols = ['#f6f6f2', '#2d6fd0', '#f6f6f2', '#f2c63a', '#f6f6f2', '#3a9a4c', '#f6f6f2', '#2d6fd0']; cols.forEach((cl, k) => { x.fillStyle = cl; x.fillRect(512 + k * 16, 128, 16, 128); }); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (ktA2Tex = t);
   }
+  const { AB, aStar, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
   function ktTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Siberian larch (light, open tiers of soft needles), 1 Siberian stone pine (the
     // 'cedar': dark, dense, a broad rounded crown), 2 birch, 3 poplar or willow of the valley floor, 4 a shrub (caragana, spiraea, dwarf birch: a low mound),
     // 5 a juniper mat on the rocks
-    const g = new GB(), R = rng(740 + kind), rs = API.ROCK_SMOOTH;
-    API.ROCK_SMOOTH = kind >= 1;   // (soft, rounded crowns; the larch's tiers stay crisp)
+    const g = new GB(), b = new AB(), R = rng(740 + kind), rs = API.ROCK_SMOOTH;
+    API.ROCK_SMOOTH = kind >= 1;   // (soft, rounded crowns; the larch's tiers soft in the kit A)
     if (kind === 0) {   // larch: a slim reddish trunk, five light tiers of drooping branches and a thin spire
       const col = [0.42, 0.57, 0.26], tip = [0.6, 0.72, 0.36];
-      cyl(g, 0, -0.02, 0, 0.022, 0.62, 3, [0.42, 0.27, 0.18], null, 0.008);
-      [[0.2, 0.22, 0.17], [0.36, 0.18, 0.16], [0.51, 0.145, 0.15], [0.65, 0.105, 0.14], [0.77, 0.07, 0.13]].forEach(([y, r, h], k) => starCone(g, 0, y, 0, r, h, 4, vary(col, R, 0.12), tip, k * 1.1 + 0.3, 0.07));
-      cone(g, 0, 0.88, 0, 0.03, 0.12, 3, col, tip, 0.2);
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.62, 3, [0.42, 0.27, 0.18], 0.008);
+      [[0.2, 0.22, 0.17], [0.36, 0.18, 0.16], [0.51, 0.145, 0.15], [0.65, 0.105, 0.14], [0.77, 0.07, 0.13]].forEach(([y, r, h], k) => aStar(b, 0, y, 0, r, h, 4, vary(col, R, 0.12), tip, k * 1.1 + 0.3, 0.07));
+      aTier(b, 0, 0.88, 0, 0.03, 0.12, 3, col, tip, 0.2);
     } else if (kind === 1) {   // stone pine: a short trunk, dark needle clumps stacked into a broad, rounded cone
       const col = [0.11, 0.24, 0.13];
       cyl(g, 0, -0.02, 0, 0.035, 0.3, 4, [0.34, 0.24, 0.18], null, 0.025);
@@ -347,7 +348,7 @@
       for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.3 - d * 0.3, Math.sin(a) * d, 0.28, 0.55, vary(col, R, 0.2), R, 0.35); }
     }
     API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    const geo = kind === 0 ? b.geometry() : g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   // a yurt of the camps (white felt over a lattice: walls, a low cone of a roof, the smoke ring at its top; a painted wooden door, a band of ornament)
   function ktYurt(g, x, y, z, rot, r) {
