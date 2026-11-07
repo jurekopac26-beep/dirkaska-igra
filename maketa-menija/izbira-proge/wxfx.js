@@ -238,6 +238,7 @@ window.WXFX = (() => {
     Australia:      { bg: '#005a3c', fg: '#ffffff', frame: ['edge', '#ffffff', 2.6], r: 6, font: [600, 0.8], wear: { fade: 0.16, dust: '175,85,45', bolts: 2 } },
     'South Africa': { bg: '#00683f', fg: '#ffffff', frame: ['edge', '#ffffff', 2.6], r: 4, font: [600, 0.4], cond: 1, wear: { fade: 0.18, dust: '165,90,55', bolts: 2 } },
     Morocco:        { bg: '#ffffff', fg: '#000000', frame: ['band', '#cc0605', 5, 1.5], r: 7, font: [800, 1], two: ['المغرب', null], wear: { fade: 0.12, dust: '190,160,120', bolts: 2 } },
+    Romania:        { bg: '#0b4ea2', fg: '#ffffff', frame: ['line', '#ffffff', 2.2, 2.6], r: 5, font: [700, 0.6], two: ['ROMÂNIA', null], wear: { fade: 0.1, grime: 0.18, bolts: 2 } },   // (not in the research: a blue place-name sign, white letters, its own name)
     Japan:          { bg: '#005898', fg: '#ffffff', frame: ['line', '#ffffff', 2.2, 2.2], r: 5, font: [600, 0.4], two: ['日本', 'Japan'], wear: { bolts: 4, sheen: 0.24 } },
     China:          { bg: '#1450a0', fg: '#ffffff', frame: ['line', '#ffffff', 2, 2.4], r: 4, font: [600, 0.4], two: ['中国', 'China'], wear: { bolts: 4, sheen: 0.2 } },
     Thailand:       { bg: '#006a3a', fg: '#ffffff', frame: ['edge', '#ffffff', 2.6], r: 4, font: [600, 0.3], two: ['ประเทศไทย', 'Thailand'], wear: { fade: 0.12, streaks: 1, bolts: 2 } },

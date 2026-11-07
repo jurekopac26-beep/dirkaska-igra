@@ -6,9 +6,9 @@ Interaktivna maketa novega zaslona za izbiro proge (načrt v `docs/meni-izbira-p
 
 Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 
-- `#t=<proga>&cam=<1-3>&wx=<vreme>` izbere progo (`vrsic`, `nring`, `spa`, `pikes`, `suzuka`, `rbring`, `ouninpohja`), kamero in vreme (`dry`, `rain`, `change`, `storm`, `snow`).
+- `#t=<proga>&cam=<1-3>&wx=<vreme>` izbere progo (`id` iz igre: z ročno maketo `vrsic`, `nring`, `spa`, `pikes`, `suzuka`, `rbring`, `ouninpohja`, ostale prave proge iz `vse-proge.js`), kamero in vreme (`dry`, `rain`, `change`, `storm`, `snow`); `&open=izbor` ali `&open=zemlja` ob nalaganju odpre hitro izbiro ali 3D Zemljo.
 - Dotik ikone vremena spremeni cel zaslon (dež, strela, mavrica, sneg na gumbih, tabli in avtu, moker pod z odsevom).
-- Gumbi kamer in zastavi sosednjih prog odprejo drugo sliko ali progo; Race! in puščica nazaj le pokažeta obvestilo.
+- Gumbi kamer in zastavi sosednjih prog odprejo drugo sliko ali progo; zastava v vrstici odpre hitro izbiro države in proge, globus v glavi 3D Zemljo (vrtenje, približanje, izbira države in proge); Race! in puščica nazaj le pokažeta obvestilo.
 - `?static` naloži samo zaslon (za orodja v `orodja/`).
 - `T.signMode: 'flagname'`: spodnja tabla v barvah zastave brez napisa (zastava v delu, ki ga avto ne zakrije), nad njo desno manjša tabla z imenom države v njenem slogu (primer `orodja/proge/suzuka-tovornjak.json`).
 - `table.html` nariše tablo izbrane države brez zastave in na 6 načinov z zastavo (glej `orodja/table.mjs`).
@@ -20,11 +20,14 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 | `index.html` | zaslon (`window.MOCK(T)` iz nastavitev proge) in zagon žive makete |
 | `wxfx.js` | vreme čez cel zaslon, senca avta, table 20 držav (`SIGNS`, `signLook`) |
 | `globe.js` | globus v glavi: osvetljen, odsev na morju, ozračje, oblaki, država zlata, pika na progi; ob menjavi proge se zavrti do nove države |
-| `proge.js` | 7 prog: nastavitve zaslona in slike treh kamer |
+| `proge.js` | 7 prog z ročno maketo: nastavitve zaslona in slike treh kamer |
+| `vse-proge.js` | vse prave proge iz igre (vrstni red menija, kraj, država, kraj na Zemlji, dolžina, vzpon ali ovinki, graf, slike kamer) in njihove zastave; naredi ga `orodja/vse-proge.js`, ne urejaj ročno |
+| `izbor.js` | hitra izbira ob zastavi v vrstici: zastave držav, seznam prog države |
+| `zemlja.js` | 3D Zemlja ob globusu: vrtenje, približanje, zlate države, bucike prog, kartica s progami države |
 | `table.html` | list tabel ene države z zastavo na 6 načinov |
 | `table-drzav.json` | raziskava tabel 20 držav (vrsta table, barve, okvir, pisava, viri) |
 | `mk/` | `earth2k.webp` (tekstura Zemlje na pol velikosti), slike avtov iz igre (prozorno ozadje), zemljevid, prelet in zavoj Vršiča, črte vetra za BURJO |
-| `orodja/` | `vreme.mjs` (slike vremen), `video.mjs` (video prehodov), `table.mjs` (listi tabel), `avto.mjs` + `alfa.py` (slika avta iz igre), `proge/*.json` (nastavitve za orodja) |
+| `orodja/` | `vse-proge.js` (podatki vseh prog iz igre, zaženi po novi ali spremenjeni progi), `vreme.mjs` (slike vremen), `video.mjs` (video prehodov), `table.mjs` (listi tabel), `avto.mjs` + `alfa.py` (slika avta iz igre), `proge/*.json` (nastavitve za orodja) |
 
 Orodja potrebujejo Playwright iz `npm install` in `ffmpeg` (video); slike gredo v začasno mapo ali v `OUT`.
 

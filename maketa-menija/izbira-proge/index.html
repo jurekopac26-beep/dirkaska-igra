@@ -200,6 +200,9 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 <script src="maketa-menija/izbira-proge/wxfx.js"></script>
 <script src="maketa-menija/izbira-proge/proge.js"></script>
 <script src="maketa-menija/izbira-proge/globe.js"></script>
+<script src="maketa-menija/izbira-proge/vse-proge.js"></script>
+<script src="maketa-menija/izbira-proge/izbor.js"></script>
+<script src="maketa-menija/izbira-proge/zemlja.js"></script>
 <script>
 window.MOCK = async (T) => {
   const $ = (id) => document.getElementById(id);
@@ -247,7 +250,7 @@ window.MOCK = async (T) => {
     const row = document.querySelector('.row'), opp = row.querySelector('.opp'), g = row.querySelector('canvas'), cells = [...row.querySelectorAll('.c')];
     opp.style.cssText = 'border-left:0;padding-left:4px;padding-right:10px;border-right:1px solid rgba(255,255,255,.12)';
     row.classList.add('v3'); row.innerHTML = ''; row.appendChild(opp); cells.forEach(c => row.appendChild(c)); g.style.marginLeft = '6px'; if (T.globeTop) { const hf = $('hflag'); hf.innerHTML = ''; hf.style.cssText = 'visibility:visible;width:52px;height:52px;box-shadow:none;overflow:visible'; g.style.cssText = 'width:52px;height:52px;margin:0'; hf.appendChild(g); } else row.appendChild(g);
-    const fl = document.createElement('div'); fl.style.cssText = 'flex:0 0 auto;width:36px;height:24px;margin-left:6px;border-radius:3px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.5)'; fl.innerHTML = '<svg viewBox="0 0 30 20" preserveAspectRatio="none" style="width:100%;height:100%;display:block">' + T.flag + '</svg>'; row.appendChild(fl);
+    const fl = document.createElement('div'); fl.id = 'rowflag'; fl.style.cssText = 'flex:0 0 auto;width:36px;height:24px;margin-left:6px;border-radius:3px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.5)'; fl.innerHTML = '<svg viewBox="0 0 30 20" preserveAspectRatio="none" style="width:100%;height:100%;display:block">' + T.flag + '</svg>'; row.appendChild(fl);
     if (!T.globeTop) $('hflag').style.visibility = 'hidden';
   }
   if (T.home) $('homeBtn').innerHTML = '<svg viewBox="0 0 24 24"><path d="M3.5 11.2L12 4l8.5 7.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9.5h4.5v-5.5h3v5.5H18V10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>';
@@ -291,8 +294,8 @@ window.MOCK = async (T) => {
   $('nbs').innerHTML = '<div class="nb" style="left:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.prev + '</svg>' + A(-1).replace('class="ar"', 'class="ar" style="left:12px"') + '</div>' +
     '<div class="nb" style="right:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.next + '</svg>' + A(1).replace('class="ar"', 'class="ar" style="right:12px"') + '</div>';
   if (T.flagFix) for (const [i, svg] of [[0, T.prev], [1, T.next]]) {
-    const nb = document.querySelectorAll('.nb')[i], old = nb.querySelector('svg.f'), W = nb.clientWidth, H = nb.clientHeight, sc = 2, fw = Math.round(H * 1.5);
-    const img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="' + fw * sc + '" height="' + H * sc + '" preserveAspectRatio="none">' + svg + '</svg>'); await img.decode();
+    const nb = document.querySelectorAll('.nb')[i], old = nb.querySelector('svg.f'), W = nb.clientWidth, H = nb.clientHeight, sc = 2, fw = Math.round(H * Math.min(2.2, (i ? T.nextAr : T.prevAr) || 1.5));
+    const img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 30 20" width="' + fw * sc + '" height="' + H * sc + '" preserveAspectRatio="none">' + svg + '</svg>'); await img.decode();
     const c = document.createElement('canvas'); c.width = W * sc; c.height = H * sc; c.className = 'f'; Object.assign(c.style, { position: 'absolute', inset: '0', width: W + 'px', height: H + 'px' });
     const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.drawImage(img, fw * sc - 2, 0, 1, H * sc, fw * sc - 1, 0, (W - fw) * sc + 2, H * sc); old.replaceWith(c);
   }
@@ -450,7 +453,7 @@ function mapGraph(host, T) {
     : G.panel === 'fade' ? '<defs><radialGradient id="mgf" cx=".5" cy=".55" r=".62"><stop offset="0" stop-color="#08101c" stop-opacity=".62"/><stop offset="1" stop-color="#08101c" stop-opacity="0"/></radialGradient></defs><rect x="-40" y="-26" width="' + (W + 70) + '" height="' + (Hh + 46) + '" fill="url(#mgf)"/>' : '';
   const svg = '<svg class="mg" style="' + (G.l != null ? 'left:' + G.l : 'right:' + G.r) + 'px;top:' + G.t + 'px" viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '">' + back +
     '<defs><linearGradient id="mgg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity="' + op + '"/><stop offset="1" stop-color="#ffd23a" stop-opacity="' + (G._in ? op * .5 : 0) + '"/></linearGradient></defs>' +
-    (G.full ? '<text class="lo" x="' + (G.pb ? 4 : 2) + '" y="' + (G.pb && !G.loTop ? PB - 4 : y(lo) - (G.loUp || 6)).toFixed(1) + '"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(lo) + ' m</text><text class="hi" x="' + (W - (G.pb ? 4 : 2)) + '" y="' + (y(hi) - 6).toFixed(1) + '" text-anchor="end"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(hi) + ' m</text>' : yl(hi, 'hi') + yl(lo, 'lo')) + (G.split ? '<defs><clipPath id="mgA"><rect x="0" y="0" width="' + px.toFixed(1) + '" height="' + Hh + '"/></clipPath><clipPath id="mgB"><rect x="' + px.toFixed(1) + '" y="0" width="' + (PX - px + 1).toFixed(1) + '" height="' + Hh + '"/></clipPath><linearGradient id="mgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".82"/><stop offset="1" stop-color="#ffc21a" stop-opacity=".62"/></linearGradient></defs><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgS)" clip-path="url(#mgA)"/><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)" clip-path="url(#mgB)"/>' : '<path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)"/>') + (G.bare ? '' : '<path class="base" d="M0 ' + PB + 'H' + PX + '"/>' + axis) +
+    (G.nolab ? '' : G.full ? '<text class="lo" x="' + (G.pb ? 4 : 2) + '" y="' + (G.pb && !G.loTop ? PB - 4 : y(lo) - (G.loUp || 6)).toFixed(1) + '"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(lo) + ' m</text><text class="hi" x="' + (W - (G.pb ? 4 : 2)) + '" y="' + (y(hi) - 6).toFixed(1) + '" text-anchor="end"' + (G.fs ? ' style="font-size:' + G.fs + 'px"' : '') + '>' + num(hi) + ' m</text>' : yl(hi, 'hi') + yl(lo, 'lo')) + (G.split ? '<defs><clipPath id="mgA"><rect x="0" y="0" width="' + px.toFixed(1) + '" height="' + Hh + '"/></clipPath><clipPath id="mgB"><rect x="' + px.toFixed(1) + '" y="0" width="' + (PX - px + 1).toFixed(1) + '" height="' + Hh + '"/></clipPath><linearGradient id="mgS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".82"/><stop offset="1" stop-color="#ffc21a" stop-opacity=".62"/></linearGradient></defs><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgS)" clip-path="url(#mgA)"/><path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)" clip-path="url(#mgB)"/>' : '<path d="' + line + 'L' + PX + ' ' + PB + 'L0 ' + PB + 'z" fill="url(#mgg)"/>') + (G.bare ? '' : '<path class="base" d="M0 ' + PB + 'H' + PX + '"/>' + axis) +
     '<path class="ln" d="' + line + '"' + (G.trail ? ' style="stroke:rgba(255,255,255,.55);stroke-width:1.8"' : '') + '/>' + trail + '<g class="pt" transform="translate(' + px.toFixed(1) + ' ' + py.toFixed(1) + ')"><circle r="7.5" class="halo"/><circle r="3.8"/></g></svg>';
   host.insertAdjacentHTML('beforeend', svg);
 }
@@ -533,14 +536,47 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
 </script>
 <script>
 // the live mockup (not the game): #t=<track>&cam=<1-3>&wx=<weather>. A tap on a weather icon changes the whole screen (wxfx.js);
-// the camera buttons and the neighbours' flags open another picture or track; the page is scaled to fit the window
+// the camera buttons and the neighbours' flags open another picture or track; a tap on the flag in the row opens the quick list of every
+// track (izbor.js), a tap on the globe the Earth (zemlja.js); the page is scaled to fit the window.
+// Every real track of the game can be shown (vse-proge.js): the seven with a hand-made mockup (proge.js) as made, the others with the same
+// look and their own name, country, flag, sign, numbers, graph and pictures (the game's: assets/tracks, assets/maps)
 (async () => {
   if (!window.PROGE || location.search.includes('static')) return;
   // (the choice also kept for the tab: some viewers keep only a plain #name in the address)
   let saved = ''; try { saved = sessionStorage.getItem('izbira-proge') || ''; } catch (e) {}
-  const P = window.PROGE, q = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : saved), id = P.tracks[q.get('t')] ? q.get('t') : 'vrsic';
+  const P = window.PROGE, V = window.VSE || { order: [], tracks: {}, flags: {} }, clone = (o) => JSON.parse(JSON.stringify(o));
+  // the list: the game's real tracks in the menu's order, then the hand-made ones the game has among its test tracks (Vršič)
+  const ORDER = V.order.concat(P.order.filter(i => !V.tracks[i]));
+  const ALL = {};
+  for (const i of ORDER) {
+    if (V.tracks[i]) { ALL[i] = Object.assign({ id: i }, V.tracks[i]); continue; }
+    const t = P.tracks[i].T, len = (t.stats.find(s => s[0] === 'Length') || [0, '0'])[1];
+    ALL[i] = { id: i, name: t.title, country: t.countryKey, flag: t.countryKey.toLowerCase().replace(/\s+/g, '-'), lat: t.lat, lon: t.lon, km: parseFloat(len), open: true, test: true,
+      cams: { 1: 'assets/tracks/' + i + '.webp', 2: P.tracks[i].cams[2].map, 3: P.tracks[i].cams[3].map } };
+  }
+  const q = new URLSearchParams(location.hash.includes('=') ? location.hash.slice(1) : saved), id = ALL[q.get('t')] ? q.get('t') : 'vrsic';
   const cam = [1, 2, 3].includes(+q.get('cam')) ? +q.get('cam') : 1, wx0 = WXFX.KEYS.includes(q.get('wx')) ? q.get('wx') : 'dry';
-  const tr = P.tracks[id], c = tr.cams[cam], T = JSON.parse(JSON.stringify(tr.T));
+  // a flag from the game's file (inline, its own viewBox), drawn into the mockup's 30 x 20 box; its width / height
+  const flagSvg = (cc) => { const f = V.flags[cc]; return f ? '<svg x="0" y="0" width="30" height="20" viewBox="' + f.vb + '" preserveAspectRatio="none">' + f.svg + '</svg>' : '<rect width="30" height="20" fill="#3b4557"/>'; };
+  const flagAr = (cc) => { const f = V.flags[cc], v = f ? f.vb.split(/\s+/).map(Number) : null; return v ? v[2] / v[3] : 1.5; };
+  // a track without a hand-made mockup: the look of one that has (Spa), its own facts
+  const CARS = [['car_ev', 285], ['car_muscle', 289], ['car_kaze', 268], ['car_lm', 311], ['car_vortex', 279], ['car_truck', 320], ['burja', 250]];
+  function generic(i) {
+    const v = ALL[i], T = clone(P.tracks.spa.T), num = (x) => Math.round(x).toLocaleString('en-US'), car = CARS[ORDER.indexOf(i) % CARS.length];
+    const third = v.alt ? [v.alt[1] < v.alt[0] ? 'Descent' : 'Climb', (v.alt[1] < v.alt[0] ? '−' : '+') + num(Math.abs(v.alt[1] - v.alt[0])) + ' m'] : ['Corners', String(v.corners)];
+    Object.assign(T, { id: i, title: v.name, stats: [['Best race', '—'], ['Length', v.km.toFixed(2) + ' km'], third], countryKey: v.country, rowName: v.country, country: v.country.toUpperCase(),
+      signStyle: undefined, lat: v.lat, lon: v.lon, glat: v.lat, glon: v.lon, flag: flagSvg(v.flag), car: 'maketa-menija/izbira-proge/mk/' + car[0] + '.webp', carW: car[1] });
+    // the graph: the route's heights (js/routes.js) or the menu's profile (MENU.profs); none: no graph
+    const M = ((window.MENU || {}).routeMaps || {})[i] || {};
+    if (v.graph === 'profs') { window.ROUTES[i] = { len: v.profs.len, prof: v.profs.prof }; T.altBase = v.profs.base || 0; if (v.profs.base == null) T.mg.nolab = true; }
+    else if (v.graph === 'routes') { T.altBase = M.base != null ? M.base : 0; if (!M.alt && M.base == null) T.mg.nolab = true; }
+    else T.mg.hide = true;
+    return T;
+  }
+  const T = P.tracks[id] ? clone(P.tracks[id].T) : generic(id), c = P.tracks[id] ? P.tracks[id].cams[cam] : { map: ALL[id].cams[cam] };
+  // the neighbours: from the whole list, each with its country's flag
+  const k = ORDER.indexOf(id), n = ORDER.length, pv = ORDER[(k - 1 + n) % n], nx = ORDER[(k + 1) % n];
+  Object.assign(T, { prev: flagSvg(ALL[pv].flag), next: flagSvg(ALL[nx].flag), prevAr: flagAr(ALL[pv].flag), nextAr: flagAr(ALL[nx].flag), flagFix: true });
   Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(wx0) });
   await window.MOCK(T);
   const o = { flash: null, hz: T.hz, carFloor: T.carFloor, snowStyle: 'blizzard', live: true }, t0 = performance.now(), now = () => (performance.now() - t0) / 1000;
@@ -551,7 +587,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   let gfrom = null; try { gfrom = JSON.parse(sessionStorage.getItem('izbira-globus') || 'null'); } catch (e) {}
   if (gfrom && (gfrom[0] !== T.lat || gfrom[1] !== T.lon)) GLOBE.travel(gfrom, 0.25);
   try { sessionStorage.setItem('izbira-globus', JSON.stringify([T.lat, T.lon])); } catch (e) {}
-  const loop = () => { const t = now(); WXFX.frame(t); GLOBE.frame(t); requestAnimationFrame(loop); }; requestAnimationFrame(loop);
+  // (while the Earth covers the screen, the screen under it rests)
+  const loop = () => { const t = now(); if (!window.ZEMLJA || !ZEMLJA.covers()) { WXFX.frame(t); GLOBE.frame(t); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
   const here = location.pathname + location.search, hash = (p) => { const n = new URLSearchParams({ t: id, cam, wx: cur }); for (const k in p) n.set(k, p[k]); return here + '#' + n; };
   const go = (p) => { const h = hash(p); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h); location.reload(); };
@@ -561,13 +598,20 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     cur = k; WXFX.tap(k, now()); const h = hash({}); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); } catch (e) {} history.replaceState(null, '', h);
   });
   document.querySelectorAll('.views i').forEach((el, i) => el.addEventListener('click', () => { if (i + 1 !== cam) go({ cam: i + 1 }); }));
-  const k = P.order.indexOf(id), n = P.order.length, nb = document.querySelectorAll('.nb');
-  nb[0].addEventListener('click', () => go({ t: P.order[(k - 1 + n) % n] }));
-  nb[1].addEventListener('click', () => go({ t: P.order[(k + 1) % n] }));
+  const nb = document.querySelectorAll('.nb');
+  nb[0].addEventListener('click', () => go({ t: pv }));
+  nb[1].addEventListener('click', () => go({ t: nx }));
+  // the quick list (the flag) and the Earth (the globe): both show every track and take you to the one picked
+  const pick = (t) => { if (t !== id) go({ t }); };
+  const W = { cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick };
+  const fl = document.getElementById('rowflag'); if (fl && window.IZBOR) fl.addEventListener('click', () => IZBOR.open(W));
+  const gl = document.getElementById('hflag'); if (gl && window.ZEMLJA) gl.addEventListener('click', () => ZEMLJA.open(W));
+  if (q.get('open') === 'izbor' && window.IZBOR) IZBOR.open(W);
+  if (q.get('open') === 'zemlja' && window.ZEMLJA) ZEMLJA.open(W);
   const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:50%;top:420px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
   document.querySelector('.go').addEventListener('click', () => toast('Race! (in the game the race starts)'));
   document.querySelector('#homeBtn').addEventListener('click', () => toast('Back to the main menu'));
-  for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn')]) el.style.cursor = 'pointer';
+  for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
 })();
 </script>
 </body></html>

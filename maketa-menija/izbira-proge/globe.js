@@ -99,7 +99,7 @@ window.GLOBE = (() => {
     for (let lo = -180; lo < 180; lo += 30) line(Array.from({ length: 37 }, (_, i) => [lo, i * 5 - 90]));
     x.restore();
     // the country: gold, glowing, its border bright
-    const rings = (window.GEO && window.GEO.outlines[T.countryKey]) || [];
+    const rings = [].concat((window.GEO && window.GEO.outlines[T.countryKey]) || [], (window.MENU && window.MENU.globe && window.MENU.globe.outlines[T.countryKey]) || []);   // (the menu's own: a country geo.js has not)
     const path = () => { x.beginPath(); for (const ring of rings) { let on = false; for (let i = 0; i < ring.length; i += 2) { const [a, b, cz] = P(ring[i], ring[i + 1]); if (cz > 0) { on ? x.lineTo(a, b) : x.moveTo(a, b); on = true; } } x.closePath(); } };
     x.save(); x.shadowColor = 'rgba(255,200,60,.95)'; x.shadowBlur = S / 14; path(); x.fillStyle = 'rgba(255,206,58,.78)'; x.fill(); x.restore();
     path(); x.strokeStyle = '#fff1b8'; x.lineWidth = S / 150; x.lineJoin = 'round'; x.stroke();
