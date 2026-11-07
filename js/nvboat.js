@@ -6,6 +6,8 @@
 // its east end under the ring road (a humped bridge, the road 2.4 m up) to the sea; HOME's way over the water on a wooden bridge
 // (1.7 m up, ramps of 8 m) and HOME's pier with two jet skis. The ground there is folded away and drawn anew as one height field (the
 // beach, the banks, the bed under the water; the meadow round it the one meadow), the water one surface at the sea's level.
+// HOME's rails and the ring road bridge's walls are solid for the car (solidAlong: H3.solids, js/nvwalls.js; the user, 4. 11. 2026,
+// »skoči tam, kjer smo naredili most«: through the rails it fell off the deck's edge and was thrown up, see js/core.js nvGround).
 // js/newmap.js hub4G (H3.BOAT): plan() where the go-kart track was planned (no go-kart track, no practice lot, no big lot: they lay
 // where the water and the beaches are now), lifts() before the roads are built (the two bridges are ground: H3.crests, so the ring road,
 // HOME's way and the car follow them), build() after the rest of the map, before the still meshes are merged (js/nvbake.js).
@@ -198,6 +200,12 @@ const NVBoat = (function () {
       const m = new THREE.Mesh(g, o.mat); m.renderOrder = 2; m.receiveShadow = true; MK.add(m); nv += pos.length / 3; np++; }
     return { verts: nv, pieces: np }; }
 
+  // a bridge's side as solid lines for the car (H3.solids, js/nvwalls.js): at off m each side of its line from s0 to s1, a piece every 2 m
+  function solidAlong(H3, at, s0, s1, off, r, e) {
+    const S = H3.solids || (H3.solids = []), n0 = S.length, n = Math.max(1, Math.ceil((s1 - s0) / 2));
+    for (const sg of [-1, 1]) { let q0 = null; for (let k = 0; k <= n; k++) { const p = at(s0 + (s1 - s0) * k / n), q = [p.x + p.nx * sg * off, p.z + p.nz * sg * off];
+      if (q0) S.push(e != null ? { ax: q0[0], az: q0[1], bx: q[0], bz: q[1], r, e } : { ax: q0[0], az: q0[1], bx: q[0], bz: q[1], r }); q0 = q; } }
+    return S.length - n0; }
   // ---- HOME's wooden bridge: the deck of planks along the way (its surface where the car drives: H3.ground), the beams' ends, posts down
   // to the bed, a rail on both sides; HOME's pier beside its north end with two jet skis
   function homeBridge(c) {
@@ -226,7 +234,10 @@ const NVBoat = (function () {
         for (let i = 0; i <= 4; i++) for (const sg of [-1, 1]) { const pp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.6, 0.22), lam(0x5a4430)); pp.position.set(-L / 2 + 0.2 + i * (L - 0.4) / 4, -0.7, sg * 1.08); g2.add(pp); }
         const nx2 = -dz, nz2 = dx; for (const [f, sg, col] of [[0.35, 1, 0x2a5ab8], [0.75, 1, 0x3fbf6a]]) { const x = x0 + dx * L * f + nx2 * sg * 2.1, z = z0 + dz * L * f + nz2 * sg * 2.1; P.skis.push({ g: jetski(c, x, z, hd, col, false), x, z, h: hd, col, at: 'pier' }); }   // (P.skis: js/nvwater.js)
         pier = [Math.round(cx), Math.round(cz)]; } }
-    return { from: Math.round(H.sa), to: Math.round(H.sb), posts: posts.length, pier }; }
+    // (its rails hold the car on the deck: solid for it, js/nvwalls.js; the user, 4. 11. 2026: »skoči tam, kjer smo naredili most«, the car
+    // over the deck's edge, off it and back up it thrown 6-14 m into the air)
+    const rails = solidAlong(c.H3, dk, H.sa + 0.6, H.sb - 0.5, HWH - 0.1, 0.08, 0.15);
+    return { from: Math.round(H.sa), to: Math.round(H.sb), posts: posts.length, pier, rails }; }
 
   // ---- the ring road's humped bridge: walls on both sides over the canal (down into the bed), a white coping, rails; the deck's underside
   function ringBridge(c) {
@@ -244,7 +255,9 @@ const NVBoat = (function () {
     // (the deck's underside, seen from the water under it)
     { const up = [], ui = []; let k = 0; for (let s = sc - RS - 1; s <= sc + RS + 1.01; s += 1) { const p = at(s), y = deckY(p) - 0.45; up.push(p.x - p.nx * RWALL, y, p.z - p.nz * RWALL, p.x + p.nx * RWALL, y, p.z + p.nz * RWALL); if (k) ui.push((k - 1) * 2, k * 2, (k - 1) * 2 + 1, (k - 1) * 2 + 1, k * 2, k * 2 + 1); k++; }
       const ug = new THREE.BufferGeometry(); ug.setAttribute('position', new THREE.Float32BufferAttribute(up, 3)); ug.setIndex(ui); ug.computeVertexNormals(); const um = new THREE.Mesh(ug, conc); um.material.side = THREE.DoubleSide; ROOT.add(um); }
-    const p = at(sc); return { at: [Math.round(p.x), Math.round(p.z)], top: +(deckY(p)).toFixed(2) }; }
+    // (the walls and the rails beyond them are solid for the car: it is not over the edge into the canal, nor back up from the water's side)
+    const walls = solidAlong(c.H3, at, sc - RS - 6, sc + RS + 6, RWALL + 0.22, 0.24);
+    const p = at(sc); return { at: [Math.round(p.x), Math.round(p.z)], top: +(deckY(p)).toFixed(2), walls }; }
 
   // ---- the course's things (the user's choice: the wide course with beaches, look F, a family beach)
   function dress(c) {

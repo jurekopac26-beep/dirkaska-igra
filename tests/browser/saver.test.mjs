@@ -1,8 +1,8 @@
 // The battery saver and faster loading: with Varčevanje z baterijo on, the game draws at most 30 frames a second (fewer than the browser
 // offers) at 0.7 of the resolution; 'Samodejno' (auto) turns it on only while the battery is low (not charging, 20 % or less), with a
-// message; off again: every frame, the full resolution. A settings switch that does not change the picture (sound, language) does not
-// build the shaders again. A track loads without the title demo (made only when a menu shows it: after the race, on the title, it runs on
-// the new track), its shaders compiled while the loading screen is up.
+// message; off again: every frame, the full resolution. A settings switch that does not change the picture (sound, language, each of
+// Vibracija's three) does not build the shaders again. A track loads without the title demo (made only when a menu shows it: after the
+// race, on the title, it runs on the new track), its shaders compiled while the loading screen is up.
 //   node tests/browser/saver.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -37,11 +37,11 @@ try {
 
   // 4. a switch that does not change the picture does not build the shaders again; shadows do
   await page.evaluate(() => { window.__rs = 0; const f = Render.applySettings; Render.applySettings = (s) => { window.__rs++; return f(s); }; });
-  await click('sound', '1'); await click('sound', '0'); await click('lang', 'en'); await click('lang', 'sl'); await click('vibrate', '0');
+  await click('sound', '1'); await click('sound', '0'); await click('lang', 'en'); await click('lang', 'sl'); await click('vibrate', '1'); await click('vibrate', '0'); await click('vibrate', '2');
   const n0 = await page.evaluate(() => window.__rs);
   await click('shadows', '1'); await page.waitForTimeout(200);
   const n1 = await page.evaluate(() => window.__rs);
-  T.check('sound, language, vibration: the shaders are not built again; shadows on: they are', n0 === 0 && n1 === 1, JSON.stringify({ n0, n1 }));
+  T.check('sound, language, vibration (Osnovno, Izklop, Vse): the shaders are not built again; shadows on: they are', n0 === 0 && n1 === 1, JSON.stringify({ n0, n1 }));
   await click('shadows', '0');
   await page.evaluate(() => window.__game.onAction('settings-done')); await page.waitForTimeout(200);
 
