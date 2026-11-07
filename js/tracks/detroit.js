@@ -28,7 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     zivali: { a: ['goose'], t: [], city: true },
-    id: 'detroit', name: 'Detroit, ZDA', theme: 'detroit', laps: 5, halfWidth: 6.0,
+    id: 'detroit', test: true, name: 'Detroit, ZDA', theme: 'detroit', laps: 5, halfWidth: 6.0,
     desc: 'Ulična proga v središču Detroita ob reki Detroit v ZDA, v pravem merilu (postavitev iz leta 2023): 2,6 km in devet zavojev. Kratka štartna ravnina, ozek vzpon v 1. zavoju, dolga ravnina po široki aveniji mimo nebotičnikov, lasnica skozi presledek v sredinskem pasu, spust k reki in esse pod okroglimi steklenimi stolpnicami ob nabrežju. Na drugi strani reke kanadsko mesto Windsor. Podatki: © OpenStreetMap (ODbL), višine USGS 3DEP.',
     en: { name: 'Detroit, USA', desc: 'A street circuit in the centre of Detroit by the Detroit River in the USA, at full scale (the 2023 layout): 2.6 km and nine turns. A short start straight, a narrow climb into Turn 1, a long straight down a wide avenue past the skyscrapers, a hairpin through the gap in the median, the drop to the river and the S under the round glass towers on the riverfront. The Canadian city of Windsor across the river. Data: © OpenStreetMap (ODbL), heights USGS 3DEP.' },
     start: [0, 0], runoff: 0.3, inner: 1.0, side: 1.0, gradeForce: true, elevSmooth: 8, realKm: 2.647, offSurface: 'paving', runoffTarmac: true,

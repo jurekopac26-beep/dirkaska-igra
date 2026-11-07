@@ -1,7 +1,7 @@
 /* =========================================================================
    GARAGE SHOP — what the garage sells (the menus of the parts tapped in garaza.html), read from the game's list of parts
    (js/data/deli.js, DELI_DATA: the same list the cars draw their parts from, docs/deli.md): for the elements the garage shows (on the
-   regal, the cabinet, the circles) their short names, the game's upgrade each counts toward (k: motor, gume, zavore, aero; none: looks and
+   regal, the cabinet and in its drawers, the circles) their short names, the game's upgrade each counts toward (k: motor, gume, zavore, aero; none: looks and
    small things), four categories (the menu's tabs) of four options each, from the cheapest to the dearest. Each option: [Slovenian,
    English] name, its price in euros, what it gives ([sl, en]), its number (the power, grip or braking it adds in %: from what it
    gives; the tyres none, their tab says it), 1 if it stands in the garage (the regal). An option's number in the list (docs/deli.md:
@@ -13,7 +13,10 @@
   const SHOWN = { gume: [['Gume', 'Tyres'], 'gume'], platisca: [['Platišča', 'Rims'], ''], auspuh: [['Auspuh', 'Exhaust'], 'motor'], krilo: [['Zadnje krilo', 'Rear wing'], 'aero'],
     aero: [['Aero paket', 'Aero kit'], 'aero'], filter_zraka: [['Filter zraka', 'Air filter'], 'motor'], cip: [['Čip', 'ECU chip'], 'motor'], turbo: [['Turbo', 'Turbo'], 'motor'],
     akumulator: [['Lahek akumulator', 'Light battery'], ''], vzmeti: [['Vzmeti', 'Springs'], ''], amortizerji: [['Amortizerji', 'Dampers'], ''], stabilizatorji: [['Stabilizatorji', 'Anti-roll bars'], ''],
-    zavore: [['Zavore', 'Brakes'], 'zavore'], zamasek: [['Zamašek', 'Fuel cap'], ''], dim_gum: [['Dim gum', 'Tyre smoke'], ''], barva: [['Barva', 'Paint'], ''] };
+    zavore: [['Zavore', 'Brakes'], 'zavore'], zamasek: [['Zamašek', 'Fuel cap'], ''], dim_gum: [['Dim gum', 'Tyre smoke'], ''], barva: [['Barva', 'Paint'], ''],
+    // (the cabinet's drawers, sklop 6d: looks only)
+    zarometi: [['Žarometi', 'Headlamps'], ''], zadnje_luci: [['Zadnje luči', 'Tail lamps'], ''], luc_pod_avtom: [['Luč pod avtom', 'Underglow'], ''], zmigavci: [['Žmigavci', 'Indicators'], ''],
+    maska: [['Maska', 'Grille'], ''], nalepke: [['Nalepke', 'Decals'], ''], celjusti: [['Zavorne čeljusti', 'Brake calipers'], ''] };
   // (an option's number: the first per cent of power, grip or braking in what it gives)
   const pct = (s) => { const m = /(?:moč|oprijem(?: v ovinku)?)\s*\+([0-9]+(?:,[0-9]+)?)\s*%|\+([0-9]+(?:,[0-9]+)?)\s*% zavorne/.exec(s || ''); return m ? +(m[1] || m[2]).replace(',', '.') : 0; };
   const EL = {}, DATA = typeof DELI_DATA !== 'undefined' ? DELI_DATA : { elementi: [] };

@@ -31,6 +31,7 @@ check('track: an open road with four ways to drive it (def.modes: race, time tri
 check('track: 24 numbered hairpins, the cobbled stretches marked on the samples', def.hairpins.length === 24 && T.settAt && T.settAt.reduce((a, b) => a + b, 0) > 300,
   `${def.hairpins.length} hairpins, ${def.setts.length} cobbled stretches, ${T.settAt ? T.settAt.reduce((a, b) => a + b, 0) : 0} samples`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('vrsic'));
+check('track: a test track since 6. 11. 2026 (the user\'s decision: one track a country, Slovenia keeps Medvode)', def.test === true);
 
 // 2. the surface: cobbles (7) on the setts, cobbles in the rain (8), asphalt (0) on the road between; less grip on them, the rain less still
 {

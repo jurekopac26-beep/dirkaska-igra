@@ -251,6 +251,38 @@ try {
         !q6.kart && !q6.lots && c.floor && c.floor.verts > 10000 && c.water.verts > 1000 && d.floats > 500 && d.umbrellas >= 10 && d.nets >= 2 && d.cabins >= 2 && d.rings >= 10 && d.buoys >= 5 && c.home && c.home.pier &&
         q6.home && q6.home[0] > 1.6 && q6.home[0] < 1.8 && q6.home[1] < 0.4 && q6.drive.across && q6.drive.top > 1.5 && q6.drive.under < 0.35 && q6.ring > 2.2 && q6.ring < 2.9 && q6.wet[0] < -5 && q6.wet[1] < -2 && q6.wet[2] > 0,
         JSON.stringify({ kart: q6.kart, lots: q6.lots, floor: c.floor, water: c.water, dress: d, home: c.home, h: q6.home, drive: q6.drive, ring: q6.ring, wet: q6.wet })); }
+    // the two bridges hold the car (js/nvboat.js solidAlong: HOME's rails and the ring road bridge's walls solid, js/nvwalls.js) and the step of
+    // their edges never throws it up (js/core.js nvGround, NV_STEP; the user, 4. 11. 2026: »skoči tam, kjer smo naredili most«, before it 6-14 m
+    // into the air): driven fast at a rail (60 km/h) or a wall (100 km/h), the car stays on the deck and is never much over the ground under it
+    const q7 = await page.evaluate(() => { const g = __game, P = g.race.player, T = g.race.track, H = __H3, B = H.waterCourse, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+      const at = (S, s) => { const A = S.A; let i = 0, j = A.length - 1; s = Math.max(A[0], Math.min(A[j], s)); while (j - i > 1) { const m = (i + j) >> 1; if (A[m] <= s) i = m; else j = m; } const u = (s - A[i]) / ((A[j] - A[i]) || 1), p = S.P[i], q = S.P[j]; return [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, Math.atan2(q[1] - p[1], q[0] - p[0])]; };
+      const drive = (S, near, s0, s1, off, kmh, lo, hi) => { const v0 = kmh / 3.6, [x0, z0, h0] = at(S, s0); P.place(x0, z0, h0); P.y = P.py = P.roadY = T.ground2(x0, z0); P.vx = Math.cos(h0) * v0; P.vz = Math.sin(h0) * v0; let s = s0, side = 0, up = 0;
+        for (let t = 0; t < 9 && s < s1; t += 1 / 30) { const [x, z, h] = at(S, s + 7), d = wrap(Math.atan2(z + Math.cos(h) * off - P.z, x - Math.sin(h) * off - P.x) - P.h), v = Math.hypot(P.vx, P.vz);
+          g.sim(1 / 30, false, Math.max(-1, Math.min(1, d * 2.5)), v < v0 ? 1 : 0, 0); const q = near(P.x, P.z); s = q.s; if (s > lo && s < hi) side = Math.max(side, q.d); up = Math.max(up, P.y - T.ground2(P.x, P.z, P.y)); }
+        return { across: s >= s1 - 1, side: +side.toFixed(2), up: +up.toFixed(2) }; };
+      const C = H.boatC || {}, out = { rails: C.home && C.home.rails, walls: C.ring && C.ring.walls, home: [], ring: [] }, Hb = B && B.home, R = B && B.ring;
+      if (Hb) for (const off of [3, -3]) out.home.push(drive(Hb.S, Hb.near, Hb.sa - 10, Hb.sb + 3, off, 60, Hb.sa + 1, Hb.sb - 1));
+      if (R) for (const off of [5.5, -5.5]) out.ring.push(drive(R.L2, R.near, R.sc - 30, R.sc + 26, off, 100, R.sc - 8, R.sc + 8));
+      P.vx = P.vz = 0; return out; });
+    T.check('the bridges hold the car: HOME\'s rails and the ring road bridge\'s walls solid; driven at a rail at 60 km/h or at a wall at 100 km/h the car stays on the deck (its middle within 2.5 m of HOME\'s line, 6 m of the ring road\'s) and is never thrown up (0.5 m over HOME\'s deck at most, 1 m over the hump)',
+      q7.rails >= 20 && q7.walls >= 44 && q7.home.length === 2 && q7.home.every(r => r.across && r.side <= 2.5 && r.up <= 0.5) && q7.ring.length === 2 && q7.ring.every(r => r.across && r.side <= 6 && r.up <= 1), JSON.stringify(q7));
+    // the ring road's humped bridge, long and round (the user, 4. 11. 2026, Odločitve: »položnejši most«, 45 m each way, 2.4 m up): its deck
+    // still about a metre up 30 m from the canal, down on the ground 45 m from it; a car held on a lane (the middle, 3 m and 5.5 m to each
+    // side) over it both ways at 100, 140 and 180 km/h stays on the ground: never off it, its wheels never over the road (before, 16 m flat
+    // on top and ramps of 22 m: 0.1, 0.9 and 3.2 m in the air, js/core.js: a crest throws the car up when v² × its bend is over 0.85 g)
+    const q8 = await page.evaluate(() => { const g = __game, P = g.race.player, T = g.race.track, H = __H3, B = H.waterCourse, R = B && B.ring; if (!R) return null;
+      const at = (s) => { const S = R.L2, A = S.A; let i = 0, j = A.length - 1; s = Math.max(A[0], Math.min(A[j], s)); while (j - i > 1) { const m = (i + j) >> 1; if (A[m] <= s) i = m; else j = m; } const u = (s - A[i]) / ((A[j] - A[i]) || 1), p = S.P[i], q = S.P[j]; return [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, Math.atan2(q[1] - p[1], q[0] - p[0])]; };
+      const over = (u) => { const [x, z] = at(R.sc + u); B.off = true; const y0 = H.ground(x, z); B.off = false; return +(T.ground2(x, z) - y0).toFixed(2); };
+      const out = { feet: [-45, -30, 30, 45].map(over), drives: [] };
+      for (const kmh of [100, 140, 180]) for (const dir of [1, -1]) for (const off of [0, 3, -3, 5.5, -5.5]) { const v0 = kmh / 3.6; let u = -dir * 49; const [x0, z0, h0] = at(R.sc + u);
+        P.place(x0 - Math.sin(h0) * off, z0 + Math.cos(h0) * off, dir > 0 ? h0 : h0 + Math.PI); P.y = P.py = P.roadY = T.ground2(P.x, P.z); P.vy = 0; P.air = 0; let fly = 0, air = 0, land = 0, lt = P.landT || 0;
+        // (on the lane each step at the speed, its height its own: the physics' 1/120 s steps)
+        while (dir > 0 ? u < 49 : u > -49) { const [x, z, h] = at(R.sc + u), hd = dir > 0 ? h : h + Math.PI; P.x = x - Math.sin(h) * off; P.z = z + Math.cos(h) * off; P.h = hd; P.vx = Math.cos(hd) * v0; P.vz = Math.sin(hd) * v0; P.w = 0;
+          g.sim(1 / 120, false, 0, 0.3, 0); fly = Math.max(fly, P.y - P.roadY); if (P.air) air++; if ((P.landT || 0) > lt + 1e-6) land++; lt = P.landT || 0; u += dir * v0 / 120; }
+        out.drives.push([kmh, off, dir, +fly.toFixed(3), air, land]); }
+      P.vx = P.vz = 0; return out; });
+    T.check('the ring road\'s humped bridge 45 m each way: its deck 0.8 m up or more 30 m from the canal, on the ground 45 m from it; a car held on a lane over it both ways at 100, 140 and 180 km/h never leaves the ground (its wheels never over the road)',
+      q8 && q8.feet[1] > 0.8 && q8.feet[2] > 0.8 && Math.abs(q8.feet[0]) < 0.05 && Math.abs(q8.feet[3]) < 0.05 && q8.drives.length === 30 && q8.drives.every(d => d[3] < 0.005 && !d[4] && !d[5]), JSON.stringify(q8));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
     const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });

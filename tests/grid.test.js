@@ -109,13 +109,21 @@ function grid(T, opts) {
   check('open roads: the finish parking has a slot for each of 22 cars, none past the end of the road, none on another (the field\'s longest car along the road, its widest across), none by the barrier', !fails.length, fails.join(' | ') || rows.join(', '));
 }
 
-// 6. the career's prize: a field of 13 or fewer as ever (the table spread over the places); more: by the place (13th and later 300 EUR)
+// 6. the career's prize: a field of 13 or fewer as ever (the table spread over the places); more: by the place (13th and later 750 coins)
 {
   const d = 8000, P = C.CAREER.place, own = [1, 2, 3, 12, 13, 14, 22].map(p => C.careerPrize(p, 22, d, 1)), big = [1, 5, 13, 50, 100].map(p => C.careerPrize(p, 100, d, 1));
-  check('career prize: 22 or 100 cars pay by the place (6000, 4500, 3500 … from the 13th 300 EUR), 13 cars as the table, 7 cars spread over it',
+  check('career prize: 22 or 100 cars pay by the place (15000, 11250, 8750 … from the 13th 750 coins), 13 cars as the table, 7 cars spread over it',
     own.join() === [P[0], P[1], P[2], P[11], P[12], P[12], P[12]].join() && big.join() === [P[0], P[4], P[12], P[12], P[12]].join() &&
     Array.from({ length: 13 }, (_, i) => C.careerPrize(i + 1, 13, d, 1)).join() === P.join() && C.careerPrize(7, 7, d, 1) === P[12] && C.careerPrize(2, 7, d, 1) === P[2],
     `22 cars: ${own.join(' ')} · 100 cars: ${big.join(' ')}`);
+}
+// 6b. the prize grows with the value of the car raced (sklop 6 of the garage): x the square root of its price over 50.000, 1 to 5 times
+{
+  const d = 8000, P = C.CAREER.place, k = (id) => C.careerCarK(id);
+  check('career prize: by the car\'s value (a PICO or anything under 50.000 as the table, a FORMULA x' + k('formula').toFixed(2) + ', never over 5x)',
+    C.careerPrize(1, 13, d, 1, 'pico') === P[0] && C.careerPrize(1, 13, d, 1, 'mravlja') === P[0] && Math.abs(k('formula') - Math.sqrt(C.CAREER.car.formula / 50000)) < 1e-9 &&
+    C.careerPrize(1, 13, d, 1, 'formula') === Math.round(P[0] * k('formula') / 50) * 50 && C.MODELS.every(M => k(M.id) >= 1 && k(M.id) <= 5),
+    `formula ${C.careerPrize(1, 13, d, 1, 'formula')} · truck ${C.careerPrize(1, 13, d, 1, 'truck')}`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
