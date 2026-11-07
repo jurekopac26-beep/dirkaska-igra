@@ -95,6 +95,7 @@ const Missions = (function () {
     if (!cur) return null;
     const o = Object.assign({ numAI: 0, laps: 1, tt: true, flying: 0, rain: 0, weather: null, fuel: false, flags: false, chars: false, slip: false, faults: false, radio: false, traffic: false, police: false, tyreRule: undefined, wheelRule: undefined }, cur.opts ? cur.opts(cur) : null);
     if (cur.car && typeof Core !== 'undefined') { const M = Core.MODELS.find(m => m.id === cur.car); if (M) o.playerModel = M; }
+    if (o.playerModel) o.playerDeli = undefined;   // (the mission's own vehicle is stock, as it has its own paint: no parts from the garage, seen or felt; the user's decision 7. 11. 2026)
     return o;
   }
   // the run's own things out of the scene, their geometry and paint freed
