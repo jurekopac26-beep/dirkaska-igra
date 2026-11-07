@@ -90,7 +90,8 @@ Osem predlogov iz pogovora 7. 11. (ne: 7 – preleti za kamero 2, 10 – naklju�
 7. **Dan in noč (8):** na 3D Zemlji in globusu v glavi nočna senca po trenutnem času (lega Sonca iz UTC), mehak prehod, luči mest na nočni strani iz NASA Black Marble (javna last; gostitelj `eoimages.gsfc.nasa.gov` dovoljuje okolje »dirkaska-igra«), pomanjšane v `mk/` (webp, do ~300 KB); vir v »Zasluge« (`README.md`) in v README makete.
 8. **Ležeči zaslon (1):** od 640 × 360 do ~915 × 412: slika levo (glava, graf, vreme, kamere), desno vrstica, tabla z avtom, zastavi in Race!; hitra izbira kot panel desno, kartica Zemlje ob strani; pokončni zaslon ostane, kot je. Preveri 640 × 360, 740 × 360, 915 × 412 ter pokonci 360 × 640 in 412 × 892.
 
-Stanje: (seja dopiše, kaj je narejeno, in predajo, če kontekst preseže ~300 tisoč žetonov.)
+Stanje (seja 7. 11. 2026 zvečer; predaja, če kontekst preseže ~300 tisoč žetonov):
+- 1 narejeno: `zemlja.js` riše samo, ko se kaj premika (`kick()`; mirujoča Zemlja ne riše nič, števec risanj `ZEMLJA._R().n`), utrip bucike trikrat; šibek telefon dobi `mk/earth2k.webp` in platno 2048 (`R.weak`); gostota največ 2.
 
 ## Sklopi
 

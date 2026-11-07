@@ -4,6 +4,8 @@
 // are gold (their outlines: GEO.outlines, MENU.globe.outlines), each track a pin; from afar the countries are named (flag and name), close in
 // the tracks. A tap on a country or a pin opens its card at the bottom with its tracks; a tap on a track there takes you to it.
 // ZEMLJA.open({ cur, order, all, flag, pick }) as IZBOR.open; ZEMLJA.covers(): the Earth covers the screen (the screen under it rests).
+// The battery: it draws only while something moves (a flight, a drag, the glide, the zoom easing, a name fading, the card); a weak phone
+// (navigator.deviceMemory <= 4 or a texture limit under 4096) gets the half-size picture (mk/earth2k.webp); at most 2 pixels per point.
 window.ZEMLJA = (() => {
   const D = Math.PI / 180, W = 412, H = 892, FOV = 60, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, DCLOSE = 2.3, TRACKS_AT = 2.75, TOP = 80;
   const PX = (H / 2) / Math.tan(FOV / 2 * D);   // (px per unit at distance 1)
@@ -32,7 +34,7 @@ window.ZEMLJA = (() => {
   .zp i { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: #ffc629; border: 2px solid #fff;
     box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 10px rgba(255, 198, 41, .85); }
   .zp.cur i { left: -8px; top: -8px; width: 16px; height: 16px; background: #fff; border-color: #ffc629; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 14px rgba(255, 255, 255, .9); }
-  .zp.cur::after { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffc629; animation: zpPulse 1.6s ease-out infinite; }
+  .zp.cur::after { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffc629; opacity: 0; animation: zpPulse 1.6s ease-out 3; }   /* (three pulses, then still: the battery) */
   .zp.sel i { background: #fff; }
   @keyframes zpPulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
   .zl { pointer-events: auto; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 4px 9px 4px 5px; border-radius: 8px;
@@ -66,11 +68,14 @@ window.ZEMLJA = (() => {
   const wrap = (a) => ((a + 180) % 360 + 360) % 360 - 180;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   let img = null, el = null, o = null, R = null;
+  const IMGS = {};   // (the Earth's pictures, each loaded once: the whole one and the half-size one for a weak phone)
 
   const script = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
-  async function ready() {
-    if (!window.THREE) await script('js/vendor/three.r128.min.js');
-    if (!img) { const im = new Image(); im.src = 'assets/geo/earth.webp'; await im.decode(); img = im; }
+  async function ready() { if (!window.THREE) await script('js/vendor/three.r128.min.js'); }
+  async function picture(weak) {
+    const src = weak ? 'maketa-menija/izbira-proge/mk/earth2k.webp' : 'assets/geo/earth.webp';
+    if (!IMGS[src]) { const im = new Image(); im.src = src; IMGS[src] = im.decode().then(() => im); }
+    return IMGS[src];
   }
   // a place on the sphere (three's own sphere: u from 180° W, v from the north) and back
   const vec = (lat, lon) => { const p = (lon + 180) * D, t = (90 - lat) * D; return new THREE.Vector3(-Math.cos(p) * Math.sin(t), Math.cos(t), Math.sin(p) * Math.sin(t)); };
@@ -121,7 +126,7 @@ window.ZEMLJA = (() => {
     const r = new T3.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance' });
     r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.setSize(W, H, false);
     const scene = new T3.Scene(), cam = new T3.PerspectiveCamera(FOV, W / H, 0.01, 300);
-    const big = r.capabilities.maxTextureSize >= 4096, tc = document.createElement('canvas'); tc.width = big ? 4096 : 2048; tc.height = tc.width / 2;
+    const weak = (navigator.deviceMemory || 8) <= 4 || r.capabilities.maxTextureSize < 4096, tc = document.createElement('canvas'); tc.width = weak ? 2048 : 4096; tc.height = tc.width / 2;
     const map = new T3.CanvasTexture(tc); map.anisotropy = Math.min(8, r.capabilities.getMaxAnisotropy()); map.encoding = T3.sRGBEncoding;
     r.outputEncoding = T3.sRGBEncoding;
     const earth = new T3.Mesh(new T3.SphereGeometry(1, 128, 64), new T3.MeshPhongMaterial({ map, specular: new T3.Color(0x10161f), shininess: 30 }));
@@ -152,12 +157,11 @@ window.ZEMLJA = (() => {
     scene.add(new T3.AmbientLight(0xffffff, 0.74));
     const sun = new T3.DirectionalLight(0xffffff, 0.6); sun.position.set(-1.2, 1.1, 1.6); scene.add(sun);
     const cur = o.all[o.cur];
-    R = { r, scene, cam, group, earth, map, cv: tc, C: null, sel: null, lat: cur.lat, lon: cur.lon, d: 7.5, dT: DFAR, off: 0, offT: 0,
-      vlat: 0, vlon: 0, fly: null, drag: null, pts: new Map(), last: performance.now(), t0: performance.now(), hint: true };
+    R = { r, scene, cam, group, earth, map, cv: tc, C: null, sel: null, lat: cur.lat, lon: cur.lon, d: 7.5, dT: DFAR, off: 0, offT: 0, weak,
+      vlat: 0, vlon: 0, fly: null, drag: null, pts: new Map(), last: performance.now(), t0: performance.now(), hint: true, raf: 0, n: 0 };
     R.C = countries();
-    paint();
-    R.fly = { from: [R.lat, R.lon, 7.5], to: [cur.lat, cur.lon, DFAR], t0: performance.now(), dur: 1100 };
   }
+  function start() { const cur = o.all[o.cur]; R.fly = { from: [R.lat, R.lon, 7.5], to: [cur.lat, cur.lon, DFAR], t0: performance.now(), dur: 1100 }; kick(); }
 
   // the pins and the names
   function marks() {
@@ -177,7 +181,7 @@ window.ZEMLJA = (() => {
   }
   const tmp = () => new THREE.Vector3();
   function place(dt) {
-    const w = tmp(), cz = R.d, showT = R.d < TRACKS_AT, boxes = [];
+    const w = tmp(), cz = R.d, showT = R.d < TRACKS_AT, boxes = []; let fading = false;
     // the names in order: the track shown, the chosen country's, then the rest; one that would cover a name already placed waits
     const L = R.els.filter(m => !m.pin), P = R.els.filter(m => m.pin);
     const rank = (m) => (m.cur ? 0 : 2) + (m.id && o.all[m.id].country === R.sel ? -1 : 0) + (m.c === R.sel ? -1 : 0);
@@ -205,49 +209,58 @@ window.ZEMLJA = (() => {
       m.e.classList.toggle('sel', !!m.c && m.c === R.sel);
       const to = ok ? q.a : 0;   // (a name fades in and out in a sixth of a second)
       m.o = m.o == null ? to : Math.abs(to - m.o) < 0.02 ? to : m.o + (to - m.o) * Math.min(1, dt * 12);
+      if (m.o !== to) fading = true;
       m.e.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; m.e.style.opacity = m.o.toFixed(2); m.e.style.visibility = m.o > 0.01 ? '' : 'hidden';
     }
+    return fading;
   }
 
+  // one more frame (and the next ones while something moves); nothing moving: no frames at all
+  function kick() { if (R && !R.raf) { R.last = performance.now(); R.raf = requestAnimationFrame(frame); } }
   function frame(now) {
     if (!el || !R) return;
-    const dt = Math.min(0.05, (now - R.last) / 1000); R.last = now;
+    R.raf = 0;
+    const dt = clamp((now - R.last) / 1000, 0, 0.05); R.last = Math.max(R.last, now);
+    let busy = false;
     if (R.fly) {
       const f = R.fly, k = clamp((now - f.t0) / f.dur, 0, 1), e = ease(k);
       R.lat = f.from[0] + (f.to[0] - f.from[0]) * e; R.lon = wrap(f.from[1] + wrap(f.to[1] - f.from[1]) * e); R.d = f.from[2] + (f.to[2] - f.from[2]) * e; R.dT = R.d;
-      if (k >= 1) R.fly = null;
+      if (k >= 1) R.fly = null; busy = true;
     } else {
-      if (!R.drag) { R.lon = wrap(R.lon + R.vlon * dt); R.lat += R.vlat * dt; const k = Math.exp(-dt * 3.2); R.vlon *= k; R.vlat *= k; }
-      R.d += (R.dT - R.d) * (1 - Math.exp(-dt * 9));
+      if (!R.drag) {   // (the glide, until it is too slow to see)
+        R.lon = wrap(R.lon + R.vlon * dt); R.lat += R.vlat * dt; const k = Math.exp(-dt * 3.2); R.vlon *= k; R.vlat *= k;
+        if (Math.abs(R.vlon) + Math.abs(R.vlat) < 0.03) R.vlon = R.vlat = 0; else busy = true;
+      }
+      if (Math.abs(R.dT - R.d) < 2e-4) R.d = R.dT; else { R.d += (R.dT - R.d) * (1 - Math.exp(-dt * 9)); busy = true; }
     }
     R.lat = clamp(R.lat, -72, 72);
-    R.off += (R.offT - R.off) * (1 - Math.exp(-dt * 9));
+    if (Math.abs(R.offT - R.off) < 0.3) R.off = R.offT; else { R.off += (R.offT - R.off) * (1 - Math.exp(-dt * 9)); busy = true; }
     R.group.rotation.set(R.lat * D, -Math.PI / 2 - R.lon * D, 0);
     R.cam.position.set(0, 0, R.d); R.cam.lookAt(0, 0, 0);
     // the Earth in the middle of the free part of the screen (between the header and the card)
     const yc = (TOP + H - R.off) / 2;
     R.cam.setViewOffset(W, H, 0, -(yc - H / 2), W, H); R.cam.updateProjectionMatrix();
     R.group.updateMatrixWorld();
-    R.r.render(R.scene, R.cam);
-    place(dt);
-    requestAnimationFrame(frame);
+    R.r.render(R.scene, R.cam); R.n++;
+    if (place(dt)) busy = true;
+    if (busy) R.raf = requestAnimationFrame(frame);
   }
 
   // the card at the bottom: a country's tracks
   function card(name, hi) {
     const c = R.C.get(name), k = el.querySelector('.zem-card');
-    if (!c) { k.classList.remove('on'); R.offT = 0; return; }
+    if (!c) { k.classList.remove('on'); R.offT = 0; kick(); return; }
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
     const facts = (t) => { const third = t.alt ? (t.alt[1] < t.alt[0] ? '−' : '+') + Math.round(Math.abs(t.alt[1] - t.alt[0])).toLocaleString('en-US') + ' m' : t.corners ? t.corners + ' corners' : ''; return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (t.open ? 'Open road' : 'Circuit'); };
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
       '<div class="izb-body"><div class="izb-list">' + c.ids.map(id => { const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
         return '<button class="izb-t' + (id === o.cur || id === hi ? ' on' : '') + '" data-pick="' + id + '"><img src="assets/tracks/' + id + '.webp" alt=""><span class="tx"><b>' + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + I.go + '</span></button>'; }).join('') + '</div></div>';
     k.classList.add('on');
-    requestAnimationFrame(() => { R.offT = Math.min(400, k.offsetHeight); });
+    requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
   }
   function select(name, id) {
     const was = R.sel; R.sel = name || null;
-    if (was !== R.sel) paint();
+    if (was !== R.sel) { paint(); kick(); }
     card(R.sel, id);
     if (!R.sel) return;
     const c = R.C.get(R.sel), t = id ? o.all[id] : null, to = t ? [t.lat, t.lon] : [c.lat, c.lon];
@@ -255,7 +268,7 @@ window.ZEMLJA = (() => {
     const mid = vec(to[0], to[1]); let spread = 0; for (const a of c.ids) spread = Math.max(spread, mid.angleTo(vec(o.all[a].lat, o.all[a].lon)));
     const d = clamp(Math.min(R.d, 1.15 + spread / 0.22), 2.0, DFAR);   // (one track: its country round it, not only the place)
     R.vlat = R.vlon = 0; R.fly = { from: [R.lat, R.lon, R.d], to: [to[0], to[1], d], t0: performance.now(), dur: 750 };
-    hideHint();
+    hideHint(); kick();
   }
   function hideHint() { if (!R.hint) return; R.hint = false; const h = el.querySelector('.zem-hint'); if (h) h.style.opacity = '0'; }
   // a tap on the Earth: the country under it (its outline), else the pin nearest to it
@@ -300,13 +313,14 @@ window.ZEMLJA = (() => {
     addEventListener('pointermove', R.onMove = (e) => {
       if (!R || !R.pts.has(e.pointerId)) return;
       const p = pos(e), q = R.pts.get(e.pointerId); R.pts.set(e.pointerId, p);
-      if (R.pts.size >= 2 && R.pinch) { const [a, b] = [...R.pts.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); R.d = R.dT = clamp(R.pinch.z0 * R.pinch.d0 / Math.max(20, d), DMIN, DMAX); return; }
+      if (R.pts.size >= 2 && R.pinch) { const [a, b] = [...R.pts.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); R.d = R.dT = clamp(R.pinch.z0 * R.pinch.d0 / Math.max(20, d), DMIN, DMAX); kick(); return; }
       if (!R.drag) return;
       const dx = p[0] - q[0], dy = p[1] - q[1], k = (R.d - 1) / PX / D, now = performance.now(), dt = Math.max(1, now - R.drag.last) / 1000;
       R.drag.moved += Math.hypot(dx, dy); R.drag.last = now;
       const dl = -dx * k / Math.max(0.45, Math.cos(R.lat * D)), da = dy * k;
       R.lon = wrap(R.lon + dl); R.lat = clamp(R.lat + da, -72, 72);
       R.vlon = R.vlon * 0.6 + dl / dt * 0.4; R.vlat = R.vlat * 0.6 + da / dt * 0.4;
+      kick();
     });
     const up = R.onUp = (e) => {
       if (!R || !R.pts.has(e.pointerId)) return;
@@ -315,6 +329,7 @@ window.ZEMLJA = (() => {
       if (R.pts.size === 0 && R.drag) {
         const g = R.drag; R.drag = null;
         if (performance.now() - g.last > 80) R.vlat = R.vlon = 0;   // (held still before letting go: no glide)
+        kick();
         if (g.moved < 8 && performance.now() - g.t < 400) {
           R.vlat = R.vlon = 0;
           const m = g.target.closest && g.target.closest('[data-t], [data-c]');
@@ -325,7 +340,7 @@ window.ZEMLJA = (() => {
       }
     };
     addEventListener('pointerup', up); addEventListener('pointercancel', up);
-    stage.addEventListener('wheel', (e) => { e.preventDefault(); R.fly = null; R.dT = clamp(R.dT * Math.exp(e.deltaY * 0.0012), DMIN, DMAX); hideHint(); }, { passive: false });
+    stage.addEventListener('wheel', (e) => { e.preventDefault(); R.fly = null; R.dT = clamp(R.dT * Math.exp(e.deltaY * 0.0012), DMIN, DMAX); hideHint(); kick(); }, { passive: false });
   }
 
   async function open(opts) {
@@ -348,22 +363,25 @@ window.ZEMLJA = (() => {
     const mine = el;
     await ready();
     if (el !== mine) return;
+    build();
+    img = await picture(R.weak);
+    if (el !== mine) return;
     el.querySelector('.zem-load').remove();
-    build(); marks(); input(el);
+    paint(); marks(); input(el);
     el.querySelector('.zem-title small').textContent = o.order.length + ' tracks · ' + R.C.size + ' countries';
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-close]')) return close();
-      const z = e.target.closest('[data-zoom]'); if (z) { R.fly = null; R.dT = clamp(R.dT * (+z.dataset.zoom > 0 ? 1.45 : 1 / 1.45), DMIN, DMAX); hideHint(); return; }
+      const z = e.target.closest('[data-zoom]'); if (z) { R.fly = null; R.dT = clamp(R.dT * (+z.dataset.zoom > 0 ? 1.45 : 1 / 1.45), DMIN, DMAX); hideHint(); kick(); return; }
       if (e.target.closest('[data-home]')) { const t = o.all[o.cur]; select(t.country, o.cur); return; }
       if (e.target.closest('[data-cx]')) return select(null);
       const p = e.target.closest('[data-pick]'); if (p) { p.classList.add('on'); setTimeout(() => { if (p.dataset.pick === o.cur) close(); else o.pick(p.dataset.pick); }, 160); }
     });
-    R.last = performance.now(); requestAnimationFrame(frame);
+    start();
   }
   function close(now) {
     if (!el) return;
     const e = el, r = R; el = null; R = null;
-    if (r) { removeEventListener('pointermove', r.onMove); removeEventListener('pointerup', r.onUp); removeEventListener('pointercancel', r.onUp); }
+    if (r) { cancelAnimationFrame(r.raf); removeEventListener('pointermove', r.onMove); removeEventListener('pointerup', r.onUp); removeEventListener('pointercancel', r.onUp); }
     const end = () => { if (r) { r.r.dispose(); r.map.dispose(); r.r.forceContextLoss(); } e.remove(); };
     if (now) return end();
     e.classList.remove('on'); setTimeout(end, 480);
