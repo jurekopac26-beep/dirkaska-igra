@@ -33,6 +33,9 @@ const run = (page, fn, max, opt = {}) => page.evaluate(async ([src, max, opt]) =
   for (let k = 0; k < max; k++) {
     if (opt.pit) P.pitWant = !P.repairN;   // (the player comes in: at the next way in)
     g.sim(0.25, true); g.hud(0.25);
+    // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd, in a
+    // slow corner or at the way in, can turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+    if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P);
     if (P.lap !== lap) { lap = P.lap; const pl = g.race.plan(P); out.lines.push({ lap, box: !!pl && pl.box, need: pl ? pl.need.join() : '', mk: !!g.race.mk }); }
     const s = st(), dE = dEOf(), pit = !!(P.inPit || P.pitG);
     // (dE floored, not rounded: the warning goes the moment dE is under 0; a dE of -0.2 must not read as 0)
