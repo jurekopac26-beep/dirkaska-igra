@@ -10,7 +10,8 @@
    the bigger intercooler's (8, 10, 15) foot's middle, none: in front of the turbo); vzmeti, amortizerji,
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
    vzmeti seat: the coils' foot, a number or [front, rear] (K.rw + 0.04 if not given; a high body over low arms, GOZDAR's: on the arm, on the axle);
-   stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given) */
+   stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given;
+   dim_gum w: the rear tyre's width, its inner wall the band's place (none: look.wheels.w; MRAVLJA's wider rear tyres)) */
 (function () {
   'use strict';
   if (typeof DELI === 'undefined') return;
@@ -97,7 +98,7 @@
   }
   function dim_gum(K, n, m) {
     const S = DIM[n] || DIM[1];
-    for (const sd of [-1, 1]) { const A = K.arches[1], z = sd * (K.hw - (K.wheels && K.wheels.w ? K.wheels.w / 2 : 0.09) - 0.012), c = S.c[sd < 0 || S.c.length < 2 ? 0 : 1];
+    for (const sd of [-1, 1]) { const A = K.arches[1], z = sd * (K.hw - (m.w ? m.w / 2 : K.wheels && K.wheels.w ? K.wheels.w / 2 : 0.09) - 0.012), c = S.c[sd < 0 || S.c.length < 2 ? 0 : 1];
       K.at(A.x, K.rw, z, () => { for (let i = 0; i < 12; i++) { const a0 = i / 12 * Math.PI * 2, a1 = (i + 1) / 12 * Math.PI * 2, r0 = K.rw * 0.72, r1 = K.rw * 0.9, P = (a, rr) => [A.x + Math.cos(a) * rr / K.sx, K.rw + Math.sin(a) * rr, z];
         const f = [P(a0, r0), P(a1, r0), P(a1, r1), P(a0, r1)]; K.face(sd < 0 ? f : f.slice().reverse(), S.c.length > 2 ? S.c[i % S.c.length] : c); } }, IN); }   // (the tyre's inner wall: its band in the smoke's colour)
   }
