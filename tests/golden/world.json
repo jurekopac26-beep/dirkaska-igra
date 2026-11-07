@@ -1362,17 +1362,17 @@
   }
  },
  "zurich": {
-  "meshes": 437,
-  "verts": 520554,
+  "meshes": 441,
+  "verts": 524602,
   "instances": 1225,
   "props": 0,
   "crowd": 7,
-  "world": "2a1de8f0",
+  "world": "a62c3187",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "b6618e1b",
-   "-:MeshPhongMaterial": "e85fc7e0",
+   "-:MeshPhongMaterial": "f0838fbe",
    "crowd:MeshLambertMaterial": "a6c5f6c6",
    "ao:MeshBasicMaterial": "33c5ffbd",
    "tyremarks:MeshBasicMaterial": "8122b4ab",
