@@ -1351,5 +1351,6 @@
     return out;
   }
 
+  World.keep('VR', 'medvode');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.medvode = (scene, tex, opts) => buildMedvode(scene, tex, opts);
 })();
