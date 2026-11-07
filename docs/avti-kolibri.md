@@ -32,7 +32,9 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 | Seja 1, nato seja teren (6.–7. 11., končano) | `teren` | `gozdar` GOZDAR, `hrosc` SKAKAČ 1600, `medved` MEDVED 4x4, `pescenjak` PEŠČENJAK |
 | Seja 2 (biketraveler) | `reli`, `elektricni` | `lev` LEV R, `zmaj` ZMAJ 85, `jezek` JEŽEK E |
 | Seja 2, nato nove seje | `sportni`, `posebni` | `jelen`, `lisica`, `panter` (+ razbijanje), `sokol`; `goljat`, `predsednik`, `superkombi` |
-| jure.kopac26 od ned. 8. 11. | `dirkalni`, `super`, `tovornjaki` | `bizon`, `kozorog`, `mravlja`, `strelica`, `tiger`, `tornado`; `modras`, `perun`, `skorpijon`; `kamen`, `titan` (TITAN šele po #304, + razbijanje) |
+| Seja A (biketraveler, prevzem od jure.kopac26 7. 11., tabla #382, komentar 6706751504) | `dirkalni`, `tovornjaki` brez TITANA | `bizon`, `kozorog`, `mravlja`, `strelica`, `tiger`, `tornado`; `kamen` |
+| Seja B (biketraveler, prevzem 7. 11.) | `super` | `modras`, `perun`, `skorpijon` |
+| (TITAN po #304) | `tovornjaki` | `titan` (+ razbijanje) |
 
 Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `main`); na raven KOLIBRIJA jih pripelje njihov lastnik po dogovoru, ko so na `main`. Veja skupine se spoji v zbirno vejo (fetch, merge, push; nikoli force push), ko so povezani testi lokalno zeleni. Po vsaki skupini nova seja s predajo spodaj (izjema dveh sej z avti poleg Dreves A velja do pon. 9. 11. ob 0.00, nato največ 2 seji s kodo).
 
