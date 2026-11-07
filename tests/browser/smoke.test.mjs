@@ -149,7 +149,8 @@ try {
     T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
     const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
-    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
+    // (the streaks go with the next frame drawn, Render.frame: on a slow machine later than 600 ms; up to 5 s)
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForFunction(() => !Render.raining, null, { timeout: 5000 }).catch(() => {});
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
     const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
@@ -333,10 +334,10 @@ try {
     T.check('Vršič Policija, the heat up: the helicopter drawn over the player, the radio hears of it (Bober)',
       P.heli && !!P.bober, `helicopter ${P.heli} (${P.heli2}), Bober: "${P.bober}"`);
     const pl = r.places;
-    T.check('the police radio names the real places: Jasna, Mihov dom, the hairpins by number (said in words), the pass, the streets of Kranjska Gora',
-      pl[0][0] === 'pri Jasni' && pl[1][0] === 'pri Mihovem domu' && pl[2][0] === 'pri 8. serpentini, Ruska kapelica' && pl[2][2] === 'pri osmi serpentini, Ruska kapelica' && pl[3][0] === 'med 8. in 9. serpentino' && pl[3][2] === 'med osmo in deveto serpentino' &&
-      pl[4][0] === 'na Vršiču' && /^na Vršiški cesti/.test(pl[5][0]) && pl.every(p => p[1] && !/[čšž]/.test(p[1])),
-      JSON.stringify(pl.map(p => p[0])));
+    T.check('the police radio names the real places: Jasna, Mihov dom, the hairpins by number, the pass, the streets of Kranjska Gora (the caption in Slovenian); the voice reads the English twin, the places spelt for an English voice (every voice speaks English)',
+      pl[0][0] === 'pri Jasni' && pl[1][0] === 'pri Mihovem domu' && pl[2][0] === 'pri 8. serpentini, Ruska kapelica' && pl[2][2] === 'at hairpin 8, the Russian Chapel' && pl[3][0] === 'med 8. in 9. serpentino' && pl[3][2] === 'between hairpins 8 and 9' &&
+      pl[4][0] === 'na Vršiču' && /^na Vršiški cesti/.test(pl[5][0]) && pl.every(p => p[1] && p[2] === p[1] && !/[čšž]/.test(p[2])),
+      JSON.stringify(pl.map(p => p[0] + ' / ' + p[2])));
     T.check('Vršič Policija, the mission: below the building at the top (the way to it on the HUD), the autopilot drives into it: MISIJA OPRAVLJENA!, the results, the rap sheet with the checkpoint, the commentator back after the run',
       M.escaped && !M.busted && /^SKRIVALIŠČE · \d+ m/.test(M.goal) && M.msgs.includes('MISIJA OPRAVLJENA!') && M.screen === 'results' && M.title === 'Misija opravljena!' && /garažo/.test(M.sub) &&
       M.rows.includes('Kontrola prometa: nisi ustavil, pobegnil') && M.rows.some(r => /^Prevožena pot: 12,3 \/ 12,3 km$/.test(r)) && r.radioOff,

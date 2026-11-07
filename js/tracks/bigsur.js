@@ -24,7 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xc8d6e2, sun: 0xfff0d8, sunI: 1.14, sky: 0xc6dcf2, gnd: 0x5c6040, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-86, 74, 58] },   // Big Sur: a clear afternoon on the coast, the sun over the Pacific in the south-west, a soft sea haze
     say: 'Big Sur', rainP: 0.2,
     zivali: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost', 'fallenTree'] },
-    id: 'bigsur', name: 'Big Sur, ZDA', theme: 'bigsur', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.6,
+    id: 'bigsur', test: true, name: 'Big Sur, ZDA', theme: 'bigsur', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.6,
     desc: 'Obalna cesta Highway 1 v Kaliforniji nad Tihim oceanom: čez most Rocky Creek, mimo pečin in razgledišč, čez 80 m visoki betonski ločni most Bixby Creek iz leta 1932 in po vzponu do Hurricane Pointa (171 m). Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { desc: 'Highway 1 in California, the coast road above the Pacific: over the Rocky Creek Bridge, along the cliffs past the viewpoints, over the 1932 concrete arch of the Bixby Creek Bridge, 80 m above the creek, and up the climb to Hurricane Point (171 m). A race against rivals, a run against the clock, a duel in the traffic or an escape from the police.', name: 'Big Sur, USA', escTo: 'To Hurricane Point' },
     realKm: 4.0, alt: [71,171],
