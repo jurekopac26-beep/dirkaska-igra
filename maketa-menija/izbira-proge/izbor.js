@@ -106,6 +106,35 @@ window.IZBOR = (() => {
   .izb-none { margin: 30px 0; text-align: center; font: 700 italic 15px/1.4 var(--f-ui); color: var(--lbl, #9fb3d6); }
   .izb-body.in { animation: izbIn .22s ease-out; }
   @keyframes izbIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+  .izb-tc { display: flex; flex-direction: column; gap: 12px; }
+  .izb-tcr { display: flex; gap: 12px; }
+  .izb-shape { flex: 0 0 156px; height: 136px; border-radius: 12px; background: radial-gradient(130% 110% at 30% 15%, #2b3b55, #121a28 75%); border: 1.5px solid rgba(255, 255, 255, .12); overflow: hidden; }
+  .izb-shape svg { display: block; width: 100%; height: 100%; }
+  .izb-shape path { fill: none; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .izb-shape .o { stroke: rgba(0, 0, 0, .6); stroke-width: 7px; }
+  .izb-shape .r { stroke: #f4f7fc; stroke-width: 3px; }
+  .izb-shape circle { stroke: #10151f; stroke-width: 2px; vector-effect: non-scaling-stroke; }
+  .izb-shape .s { fill: #ffc629; }
+  .izb-shape .f { fill: #fff; }
+  .izb-facts { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 11px; }
+  .izb-facts div { display: flex; flex-direction: column; gap: 4px; }
+  .izb-facts b { font: 900 italic 21px/1 var(--f-ui); color: #fff; white-space: nowrap; }
+  .izb-facts small { font: 800 10.5px/1 var(--f-ui); letter-spacing: 1.1px; text-transform: uppercase; color: var(--lbl, #9fb3d6); }
+  .izb-hg { position: relative; flex: 0 0 auto; height: 76px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .1); }
+  .izb-hg svg { position: absolute; left: 10px; top: 22px; width: calc(100% - 20px); height: 34px; overflow: visible; }
+  .izb-hg .a { fill: rgba(255, 198, 41, .16); }
+  .izb-hg .l { fill: none; stroke: #ffc629; stroke-width: 2px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .izb-hg span { position: absolute; font: 700 10.5px/1 var(--f-ui); color: var(--lbl, #9fb3d6); }
+  .izb-hg .ttl { left: 10px; top: 7px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; }
+  .izb-hg .top { right: 10px; top: 6px; color: #fff; font: 800 italic 12px/1 var(--f-ui); }
+  .izb-hg .k0 { left: 10px; bottom: 6px; }
+  .izb-hg .k1 { right: 10px; bottom: 6px; }
+  .izb-btns { flex: 0 0 auto; display: flex; gap: 10px; padding-bottom: 5px; }
+  .izb-btns button { height: 52px; border-radius: 13px; color: #fff; cursor: pointer; }
+  .izb-btns button:active { transform: translateY(2px); }
+  .izb-sel { flex: 0 0 36%; border: 1.5px solid rgba(255, 255, 255, .35); background: linear-gradient(180deg, #666d7b, #3b414d); font: 900 italic 17px/1 var(--f-ui); }
+  .izb-race { flex: 1 1 auto; border: 1px solid rgba(255, 140, 120, .55); background: linear-gradient(180deg, var(--curb-hi, #ff5145), #e0231f 55%, var(--curb-lo, #c9191a));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 var(--curb-sh, #7d0f0f); font: 900 italic 24px/1 var(--f-ui); text-shadow: 0 2px 0 rgba(120, 0, 0, .45); }
   `;
   const X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/></svg>';
   const BACK = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -129,7 +158,7 @@ window.IZBOR = (() => {
     Morocco: 3, 'South Africa': 3, China: 4, Japan: 4, Thailand: 4, Australia: 5 };
   const contOf = (c) => IN[c.name] != null ? IN[c.name] : c.lon < -30 ? (c.lat > 12 ? 1 : 2) : c.lon > 110 && c.lat < -10 ? 5 : c.lat < 35 && c.lon > -20 && c.lon < 52 ? 3 : c.lon > 60 ? 4 : 0;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  let el = null, o = null;
+  let el = null, o = null, view = null, prevs = [];   // (view: what the sheet shows; prevs: the views under it, Back returns to them)
   const flag = (cc) => '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(cc) + '</svg>';
   // the countries A to Z, each with its tracks in the list's order and where they are (their middle)
   function countries() {
@@ -147,6 +176,37 @@ window.IZBOR = (() => {
     const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
     return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'"><span class="tx"><b>' +
       (wf ? '<span class="izb-mf">' + flag(t.flag) + '</span>' : '') + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + GO + '</span></button>';
+  }
+  // a track's card (a tap on its row here, or on its pin or row on the Earth): its shape from above (the game's road, simplified:
+  // vse-proge.js shape; the start gold, an open road's finish white), its heights (as the screen's graph: js/routes.js or MENU.profs),
+  // Select (the screen goes to it) and Race! (in the game the race starts)
+  function trackCard(id, oo) {
+    const t = oo.all[id], S = t.shape || [], n = S.length;
+    let w = 1, h = 1, d = '';
+    for (let i = 0; i < n; i += 2) { w = Math.max(w, S[i]); h = Math.max(h, S[i + 1]); d += (i ? 'L' : 'M') + S[i] + ' ' + S[i + 1]; }
+    if (d && !t.open) d += 'Z';
+    const dot = (i, c) => n ? '<circle class="' + c + '" cx="' + S[i] + '" cy="' + S[i + 1] + '" r="7"/>' : '';
+    const shape = '<div class="izb-shape"><svg viewBox="-16 -16 ' + (w + 32) + ' ' + (h + 32) + '"><path class="o" d="' + d + '"/><path class="r" d="' + d + '"/>' +
+      (t.open ? dot(n - 2, 'f') : '') + dot(0, 's') + '</svg></div>';
+    const third = t.alt ? [(t.alt[1] < t.alt[0] ? '−' : '+') + Math.round(Math.abs(t.alt[1] - t.alt[0])).toLocaleString('en-US') + ' m', 'Climb'] : t.corners ? [t.corners, 'Corners'] : null;
+    const fact = (v, k) => '<div><b>' + v + '</b><small>' + k + '</small></div>';
+    const facts = '<div class="izb-facts">' + fact(t.km.toFixed(2) + ' km', 'Length') + (third ? fact(third[0], third[1]) : '') + fact(NAMES[groupOf(t)] || 'Circuit', 'Type') + '</div>';
+    const P = t.profs ? t.profs.prof : window.ROUTES && window.ROUTES[id] ? window.ROUTES[id].prof : null;
+    let hg = '';
+    if (P && P.length > 1) {
+      let lo = Infinity, hi = -Infinity; for (const v of P) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+      const span = hi - lo, m = P.length - 1, y = (v) => span < 1 ? 50 : 96 - (v - lo) / span * 88;
+      const pts = P.map((v, i) => (i * 300 / m).toFixed(1) + ' ' + y(v).toFixed(1)).join('L');
+      hg = '<div class="izb-hg"><span class="ttl">Height</span>' + (t.top != null ? '<span class="top">▲ ' + t.top.toLocaleString('en-US') + ' m</span>' : '') +
+        '<svg viewBox="0 0 300 100" preserveAspectRatio="none"><path class="a" d="M0 100L' + pts + 'L300 100Z"/><path class="l" d="M' + pts + '"/></svg>' +
+        '<span class="k0">0</span><span class="k1">' + t.km.toFixed(1) + ' km</span></div>';
+    }
+    return '<div class="izb-body in izb-tc"><div class="izb-tcr">' + shape + facts + '</div>' + hg +
+      '<div class="izb-btns"><button class="izb-sel" data-sel="' + id + '">Select</button><button class="izb-race" data-race="' + id + '">Race!</button></div></div>';
+  }
+  function cardView(id) {
+    const t = o.all[id];
+    return head(t.name, t.country, '<button class="izb-btn" data-back aria-label="Back">' + BACK + '</button><span class="izb-hf">' + flag(t.flag) + '</span>') + trackCard(id, o);
   }
   function head(title, sub, left) {
     return '<div class="izb-head">' + (left || '') + '<div class="t"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div><button class="izb-btn" data-x aria-label="Close">' + X + '</button></div>';
@@ -186,22 +246,27 @@ window.IZBOR = (() => {
   }
   function style() { if (!document.getElementById('izb-css')) { const st = document.createElement('style'); st.id = 'izb-css'; st.textContent = CSS; document.head.appendChild(st); } }   // (the Earth's card uses it too)
   function show(html) { const sh = el.querySelector('.izb-sheet'); sh.style.height = ''; sh.innerHTML = '<i class="izb-grab"></i>' + html; }
+  function go2(f) { view = f; show(f()); }
+  function toView(f) { prevs.push(view); go2(f); NAZAJ.push('izbor', () => el && go2(prevs.pop() || grid)); }   // (a layer: Back returns to the view under it)
+  const toCard = (id) => toView(() => cardView(id));
   function open(opts) {
     o = opts;
     style();
     if (el) el.remove();
     el = document.createElement('div'); el.className = 'izb'; el.innerHTML = '<div class="izb-dim"></div><div class="izb-sheet" role="dialog" aria-label="Choose a track"></div>';
-    document.body.appendChild(el); show(grid());
+    document.body.appendChild(el); prevs = []; go2(grid);
     NAZAJ.push('izbor', () => close());
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-x]') || e.target.classList.contains('izb-dim')) return close();
-      if (e.target.closest('[data-back]')) { NAZAJ.drop('izbor', 1); return show(grid()); }
+      if (e.target.closest('[data-back]')) { NAZAJ.drop('izbor', 1); return go2(prevs.pop() || grid); }
       const f = e.target.closest('[data-f], [data-l]');
       if (f) { const S = f.dataset.f ? F.type : F.len, k = f.dataset.f || f.dataset.l; if (S.has(k)) S.delete(k); else S.add(k); f.classList.toggle('on', S.has(k)); return refresh(); }
       if (e.target.closest('[data-qx]')) { e.preventDefault(); const i = el.querySelector('.izb-q input'); i.value = F.q = ''; i.parentNode.classList.remove('has'); refresh(); return; }
       const c = e.target.closest('[data-c]');
-      if (c) { NAZAJ.buzz(); const k = countries().find(x => x.name === c.dataset.c); if (k.ids.length === 1) return choose(k.ids[0], c); show(country(k.name)); NAZAJ.push('izbor', () => el && show(grid())); return; }
-      const t = e.target.closest('[data-t]'); if (t) { NAZAJ.buzz(); choose(t.dataset.t, t); }
+      if (c) { NAZAJ.buzz(); const k = countries().find(x => x.name === c.dataset.c); if (k.ids.length === 1) return toCard(k.ids[0]); return toView(() => country(k.name)); }
+      const t = e.target.closest('[data-t]'); if (t) { NAZAJ.buzz(); return toCard(t.dataset.t); }
+      const sl = e.target.closest('[data-sel]'); if (sl) return choose(sl.dataset.sel, sl);
+      const r = e.target.closest('[data-race]'); if (r) { NAZAJ.buzz(); r.classList.add('on'); setTimeout(() => (o.race || o.pick)(r.dataset.race), 160); }
     });
     el.addEventListener('input', (e) => { if (!e.target.matches('.izb-q input')) return; F.q = e.target.value; e.target.parentNode.classList.toggle('has', !!F.q); refresh(); });
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('.izb-q input')) e.target.blur(); });   // (Search on the keyboard: the keyboard goes, the answers stay)
@@ -212,5 +277,5 @@ window.IZBOR = (() => {
     setTimeout(() => { if (id === o.cur) close(); else o.pick(id); }, 160);
   }
   function close() { if (!el) return; NAZAJ.drop('izbor'); const e = el; el = null; e.classList.remove('on'); setTimeout(() => e.remove(), 330); }
-  return { open, close, style, facts, isOpen: () => !!el };
+  return { open, close, style, facts, trackCard, isOpen: () => !!el };
 })();

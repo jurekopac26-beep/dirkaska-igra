@@ -247,10 +247,22 @@ window.ZEMLJA = (() => {
   }
 
   // the card at the bottom: a country's tracks
-  function card(name, hi) {
+  // the country's card (its tracks), or with tc a track's card (IZBOR.trackCard: its shape, heights, Select, Race!) over it
+  function card(name, hi, tc) {
     const c = R.C.get(name), k = el.querySelector('.zem-card');
-    if (!c) { k.classList.remove('on'); R.offT = 0; kick(); if (R.card) { R.card = false; NAZAJ.drop('zemlja', 1); } return; }
-    if (!R.card) { R.card = true; NAZAJ.push('zemlja', () => R && select(null)); }   // (Back closes the card first, then the Earth)
+    if (!c) { k.classList.remove('on'); R.offT = 0; kick(); const n = (R.card ? 1 : 0) + (R.tc ? 1 : 0); R.card = false; R.tc = null; if (n) NAZAJ.drop('zemlja', n); return; }
+    if (!R.card) { R.card = true; NAZAJ.push('zemlja', () => R && select(null)); }   // (Back closes the track's card, then the country's, then the Earth)
+    if (tc && !R.tc) NAZAJ.push('zemlja', () => R && card(R.sel));
+    else if (!tc && R.tc) NAZAJ.drop('zemlja', 1);
+    R.tc = tc || null;
+    if (tc) {
+      const t = o.all[tc], fl = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(t.flag) + '</svg>';
+      k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><button class="izb-btn" data-tback aria-label="' + esc(c.name) + '">' + I.back + '</button><span class="izb-hf">' + fl + '</span><div class="t"><b>' + esc(t.name) + '</b><small>' + esc(t.country) + '</small></div>' +
+        '<button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' + IZBOR.trackCard(tc, o);
+      k.classList.add('on');
+      requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
+      return;
+    }
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
     const facts = IZBOR.facts;   // (the quick list's: length, climb or corners, group)
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
@@ -259,11 +271,11 @@ window.ZEMLJA = (() => {
     k.classList.add('on');
     requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
   }
-  function select(name, id) {
+  function select(name, id, tc) {   // (tc: the track's card)
     const was = R.sel; R.sel = name || null;
     if (was !== R.sel) { paint(); kick(); }
     if (name) NAZAJ.buzz();
-    card(R.sel, id);
+    card(R.sel, id, tc ? id : null);
     if (!R.sel) return;
     const c = R.C.get(R.sel), t = id ? o.all[id] : null, to = t ? [t.lat, t.lon] : [c.lat, c.lon];
     // as close as the country's tracks all stay in the free part of the screen (round the place it turns to), never farther than now
@@ -284,7 +296,7 @@ window.ZEMLJA = (() => {
     }
     let best = null, bd = 26;
     for (const m of R.els) if (m.pin && m.q && m.q.a > 0.3) { const d = Math.hypot(m.q.x - x, m.q.y - y); if (d < bd) { bd = d; best = m; } }
-    if (best) return select(o.all[best.id].country, best.id);
+    if (best) return select(o.all[best.id].country, best.id, true);   // (a pin: its track's card)
     if (hit) select(null);
   }
   function inside(rings, lat, lon) {   // (even-odd over all its rings; the place also a turn east and west: the rings run on past ±180°)
@@ -335,7 +347,7 @@ window.ZEMLJA = (() => {
         if (g.moved < 8 && performance.now() - g.t < 400) {
           R.vlat = R.vlon = 0;
           const m = g.target.closest && g.target.closest('[data-t], [data-c]');
-          if (m && m.dataset.t) select(o.all[m.dataset.t].country, m.dataset.t);
+          if (m && m.dataset.t) select(o.all[m.dataset.t].country, m.dataset.t, true);   // (a pin: its track's card)
           else if (m && m.dataset.c) select(m.dataset.c);
           else tapAt(g.x, g.y);
         }
@@ -377,7 +389,10 @@ window.ZEMLJA = (() => {
       const z = e.target.closest('[data-zoom]'); if (z) { R.fly = null; R.dT = clamp(R.dT * (+z.dataset.zoom > 0 ? 1.45 : 1 / 1.45), DMIN, DMAX); hideHint(); kick(); return; }
       if (e.target.closest('[data-home]')) { const t = o.all[o.cur]; select(t.country, o.cur); return; }
       if (e.target.closest('[data-cx]')) return select(null);
-      const p = e.target.closest('[data-pick]'); if (p) { NAZAJ.buzz(); p.classList.add('on'); setTimeout(() => { if (p.dataset.pick === o.cur) close(); else o.pick(p.dataset.pick); }, 160); }
+      if (e.target.closest('[data-tback]')) return card(R.sel);
+      const p = e.target.closest('[data-pick]'); if (p) return select(R.sel, p.dataset.pick, true);   // (a row: its track's card)
+      const sl = e.target.closest('[data-sel]'); if (sl) { NAZAJ.buzz(); sl.classList.add('on'); setTimeout(() => { if (sl.dataset.sel === o.cur) close(); else o.pick(sl.dataset.sel); }, 160); return; }
+      const r = e.target.closest('[data-race]'); if (r) { NAZAJ.buzz(); r.classList.add('on'); setTimeout(() => (o.race || o.pick)(r.dataset.race), 160); }
     });
     start();
   }

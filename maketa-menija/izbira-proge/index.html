@@ -580,7 +580,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   // the screen's own markup, before MOCK fills it: each new screen starts from it
   const STATIC = [...document.body.children].filter(e => e.tagName !== 'SCRIPT').map(e => e.outerHTML).join('');
   const t0 = performance.now(), now = () => (performance.now() - t0) / 1000, o = { flash: null, snowStyle: 'blizzard', live: true };
-  let T = null, building = false, changing = false, SC = 1;   // (building: the loop waits; changing: the taps wait)
+  let T = null, building = false, changing = false, SC = 1, pend = null;   // (building: the loop waits; changing: the taps wait; pend: a toast for the new screen)
   const nbOf = (i) => { const k = ORDER.indexOf(i), n = ORDER.length; return [ORDER[(k - 1 + n) % n], ORDER[(k + 1) % n]]; };
   const picOf = (i) => P.tracks[i] ? P.tracks[i].cams[cam].map : ALL[i].cams[cam];
   const carOf = (i) => P.tracks[i] ? P.tracks[i].T.car : 'maketa-menija/izbira-proge/mk/' + CARS[ORDER.indexOf(i) % CARS.length][0] + '.webp';
@@ -616,6 +616,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     if (from && (from[0] !== T.lat || from[1] !== T.lon)) GLOBE.travel(from, now() + 0.05);
     for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
     keep(); building = false;
+    if (pend) { toast(pend); pend = null; }
     if (old) await change(old, dir, oldCar);
     changing = false;
     for (const x of nbOf(i)) { preload(picOf(x)); preload(carOf(x)); }
@@ -643,7 +644,9 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   // (while the Earth covers the screen, the screen under it rests)
   const loop = () => { const t = now(); if (!building && (!window.ZEMLJA || !ZEMLJA.covers())) { WXFX.frame(t); GLOBE.frame(t); } requestAnimationFrame(loop); }; requestAnimationFrame(loop);
   // the quick list (the flag) and the Earth (the globe): both show every track and take you to the one picked
-  const W = () => ({ cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick: (t) => go(t) });
+  const RACE = 'Race! (in the game the race starts)';
+  const W = () => ({ cur: id, order: ORDER, all: ALL, flag: flagSvg, flagAr, pick: (t) => go(t),
+    race: (t) => { if (t !== id) { pend = RACE; return go(t); } if (window.IZBOR) IZBOR.close(); if (window.ZEMLJA) ZEMLJA.close(); toast(RACE); } });   // (the track's card: Race!)
   const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:50%;top:420px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
   // the taps: one listener for every screen (each new screen has new buttons)
   document.body.addEventListener('click', (e) => {
@@ -654,7 +657,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     const nb = e.target.closest('.nb'); if (nb) { const k = [...document.querySelectorAll('.nb')].indexOf(nb); go(nbOf(id)[k], k ? 1 : -1); return; }
     if (e.target.closest('#rowflag') && window.IZBOR) return IZBOR.open(W());
     if (e.target.closest('#hflag') && window.ZEMLJA) return ZEMLJA.open(W());
-    if (e.target.closest('.go')) return toast('Race! (in the game the race starts)');
+    if (e.target.closest('.go')) return toast(RACE);
     if (e.target.closest('#homeBtn')) return toast('Back to the main menu');
   });
   // a swipe over the picture: the picture follows the finger a little; far enough sideways, the neighbour (left: the next, right: the previous)

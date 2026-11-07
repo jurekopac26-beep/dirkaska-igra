@@ -4,7 +4,8 @@
 //   tracks  per track: its place and country (its English name »Place, Country«), its group (circuit, road, rally: the menu's filters), the
 //           flag's file (assets/flags), where it is (MENU.globe.places,
 //           else GEO.tracks: lat, lon), length, climb (def.alt) or corners (the game's Track), its highest point, the heights for the graph
-//           (ROUTES, else MENU.profs) and the pictures for the three cameras (assets/tracks, assets/maps: flyover, corner, helicopter)
+//           (ROUTES, else MENU.profs), the pictures for the three cameras (assets/tracks, assets/maps: flyover, corner, helicopter) and the
+//           track's shape from above for its card (the game's Track, simplified: shapeOf)
 //   flags   the flags themselves (assets/flags/<country>.svg, inline: the mockup draws them into canvases, where a file cannot be loaded)
 // Test tracks are left out (CLAUDE.md »Testne proge«: frozen until they are deleted).
 // Run from the repository: node maketa-menija/izbira-proge/orodja/vse-proge.js
@@ -26,6 +27,24 @@ const lenOf = (d) => (MENU.lens || {})[d.id] || 0;
 const rank = (d) => d.pending ? 1 : 0;
 const defs = C.TRACKS.filter(d => !d.variantOf && !d.test)
   .sort((a, b) => (rank(a) - rank(b)) || (lenOf(a) - lenOf(b)) || (a.id < b.id ? -1 : 1));
+
+// the shape for the track's card: the race's part of the road from above (the game's x east, z south: north up; a circuit from the
+// start round to it again), simplified (Douglas-Peucker, 0.4 % of its size), as x, y pairs in a box whose longer side is 200
+function shapeOf(T) {
+  const N = T.N, a = T.startIdx, b = T.open ? T.finishIdx : T.startIdx + N, P = [];
+  for (let i = a; i <= b; i++) { const k = i % N; P.push([T.px[k], T.pz[k]]); }
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [x, y] of P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const k = 200 / Math.max(x1 - x0, y1 - y0), Q = P.map(([x, y]) => [(x - x0) * k, (y - y0) * k]), keep = new Uint8Array(Q.length), st = [[0, Q.length - 1]];
+  keep[0] = keep[Q.length - 1] = 1;
+  while (st.length) {
+    const [i, j] = st.pop(), [ax, ay] = Q[i], [bx, by] = Q[j], L = Math.hypot(bx - ax, by - ay); let m = -1, md = 0.8;
+    for (let n = i + 1; n < j; n++) { const d = L > 1e-6 ? Math.abs((bx - ax) * (ay - Q[n][1]) - (ax - Q[n][0]) * (by - ay)) / L : Math.hypot(Q[n][0] - ax, Q[n][1] - ay); if (d > md) { md = d; m = n; } }
+    if (m >= 0) { keep[m] = 1; st.push([i, m], [m, j]); }
+  }
+  const out = []; Q.forEach((q, i) => { if (keep[i]) out.push(Math.round(q[0]), Math.round(q[1])); });
+  return out;
+}
 
 const tracks = {}, used = new Set();
 for (const d of defs) {
@@ -52,6 +71,7 @@ for (const d of defs) {
     graph: R ? 'routes' : P ? 'profs' : null, profs: !R && P ? { len: P.len, base: P.base, prof: P.prof } : undefined,
     pending: !!d.pending, group: (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit',   // (the game's group, js/menu.js; no test tracks here)
     cams: { 1: model || fly || heli, 2: fly || heli || model, 3: corner || heli || fly || model },
+    shape: shapeOf(T),
   };
 }
 
