@@ -8,7 +8,10 @@
      auspuh:      { x, y, z, r, len, part, drum, pipe }   the stock tip's end (x), height, |z| (the stock pipe on the left; z < 0: on the right, all mirrored),
                   radius, length; part: the pipes'; drum: the silencer's middle height (y - 0.065; a car whose floor is higher: up against it); pipe: the pipes' front ends' height (y - 0.07; a car whose floor is higher:
                   up under it); valve: true, the flap valves on the tips (KOLIBRI's beside them, against the body; on a car with the tips far out they'd hang in the air);
-                  hang: the floor's height over tips hung well under it (GOZDAR's: each tip on a rubber hanger up to it; none: the tips against the body)
+                  hang: the floor's height over tips hung well under it (GOZDAR's: each tip on a rubber hanger up to it, a flat strap seen from behind; none: the tips against the body);
+                  drumX, pipeX: the silencer's x (x + 0.27) and the pipes' front ends' x (0.6: forward under the floor; an engine behind the
+                  rear axle, SKAKAČ's: the silencer behind it, the pipes from its heads); mid: the centre exits' (12, 15) middle, |z| off the
+                  car's middle on the left (the number plate there: PEŠČENJAK's; none: in the middle, the valance's cut-out round them)
      prtljaznik:  { x: [x0, x1], glass, w, part }   the lid: the main loft's top from x0 (its rear edge) to x1 (its front edge; a hatch: the
                   tailgate's panel under its window), glass: where the window above it ends (a hatch's: its frame, the lexan; none: a boot lid),
                   w its half width; part: the lid's; face: [x, y0, y1], the lid on the tail's upright panel instead of the loft's top (its x, from
@@ -18,8 +21,9 @@
        arrow's place under the rally lamps in front of the nose (MIŠKA's, its tow point on an overrider): with them fitted, no front arrow;
        underPod: true, the front point behind a lamp pod over the bumper's face (relijske_luci 13-16, RAKETA's): with one fitted, none in front;
        behindLamps: true, the front point behind any rally lamps in front of the nose (relijske_luci 1-8 and 13-16, DELI.noseLamps; GAD's,
-       its small nose): with them fitted, none in front; tube: [xf, xr], the tow points on tube bumpers clear of the body (GOZDAR's): the
-       racing arrows on the body's faces behind them at those x, the triangular plate no taller than the tube; partF, partR: the
+       its small nose): with them fitted, none in front; behindLip: true, the front point at the nose's foot where the kit's lip goes
+       (aero with a lip or a splitter in front, DELI.frontLip; PEŠČENJAK's, a strap or a hook down through it): with one fitted, none in front; tube: [xf, xr], the tow points on tube bumpers clear of the body (GOZDAR's): the
+       racing arrows on the body's faces behind them at those x (null: no face behind it, no arrow), the triangular plate no taller than the tube; partF, partR: the
        tow points' parts (bumperF, bumperR; a cage's tube bumpers in the body, SKAKAČ's: body)
      lovilci_blata: { x: [front, rear], z: [in, out], y: [top, foot], part, parts }   the flaps behind the wheels (x), across (|z|), up;
                   parts [front left, front right, rear left, rear right]: each flap in its own (a car's stock flaps' parts), else all in part */
@@ -110,16 +114,16 @@
   DELI.twinExhaust = (n) => [3, 4, 10, 11, 13, 14, 16].includes(n);   // (the exhausts with a tip on each side: vlecne_kljuke's rear one in from them)
   // option n's tips (0: the stock one) on a car's mount m: [[z, r]] (z across, its sign the side, the centre exits' near 0; r: its radius,
   // an oval's half width) for the kit round them (aero's diffuser and rear lips clear of them); as the switch below draws them: keep in step
-  DELI.tips = (n, m) => { const L_ = -m.z, R_ = m.z, T = { 0: [[L_, m.r]], 1: [[L_, m.r * 0.95]], 2: [[L_, 0.042]], 3: [[L_, 0.036], [R_, 0.036]], 4: [[L_, 0.05], [R_, 0.05]],
+  DELI.tips = (n, m) => { const L_ = -m.z, R_ = m.z, C = m.mid ? -m.mid : 0, T = { 0: [[L_, m.r]], 1: [[L_, m.r * 0.95]], 2: [[L_, 0.042]], 3: [[L_, 0.036], [R_, 0.036]], 4: [[L_, 0.05], [R_, 0.05]],
     5: [[L_, 0.055]], 6: [[L_, 0.046]], 7: [[L_, 0.065]], 8: [[L_, 0.046]], 9: [[L_, 0.05]], 10: [[L_, 0.042], [R_, 0.042]], 11: [[L_, 0.058], [R_, 0.058]],
-    12: [[-0.08, 0.045], [0.08, 0.045]], 13: [[L_, 0.045], [R_, 0.045]], 14: [[L_ * 0.86, 0.032], [L_ * 1.14, 0.032], [R_ * 0.86, 0.032], [R_ * 1.14, 0.032]],
-    15: [[0, 0.068]], 16: [[L_, 0.054], [R_, 0.054]] }; return T[n || 0] || []; };
-  DELI.centreCut = (n) => n === 12 ? 0.16 : n === 15 ? 0.12 : 0;   // (a centre exit's cut-out round its tips: its half width; aero's diffuser parts beside it)
+    12: [[C - 0.08, 0.045], [C + 0.08, 0.045]], 13: [[L_, 0.045], [R_, 0.045]], 14: [[L_ * 0.86, 0.032], [L_ * 1.14, 0.032], [R_ * 0.86, 0.032], [R_ * 1.14, 0.032]],
+    15: [[C, 0.068]], 16: [[L_, 0.054], [R_, 0.054]] }; return T[n || 0] || []; };
+  DELI.centreCut = (n) => n === 12 ? 0.16 : n === 15 ? 0.12 : 0;   // (a centre exit's cut-out round its tips: its half width; aero's diffuser parts beside it; none off the middle, mid)
   function auspuh(K, n, m) {
     const X = m.x, Y = m.y, Z = m.z, r0 = m.r, L = m.len, q = seg(K, 14);
     K.part(m.part || 'body', () => {
       // a tip at z: radius r, its outer colour, the rim (its end) and, inside, a second wall (inner: its colour) a little out of it
-      const hang = (x, y, z, r) => { if (m.hang != null) K.cyl([x, y + r * 0.5, z], [x, m.hang + 0.004, z], 0.01, BLK, { n: 3, capA: null, capB: null }); };   // (hang: its rubber hanger up to a high floor)
+      const hang = (x, y, z, r) => { if (m.hang != null) { const y0 = y + r * 0.5, y1 = m.hang + 0.004; K.rect(x, (y0 + y1) / 2, z, 0.02, y1 - y0, BLK, { dir: '-x' }); } };   // (hang: its rubber hanger up to a high floor: a flat strap, seen from behind)
       const tip = (z, r, col, o) => { o = o || {}; const x = X - (o.out || 0), y = Y + (o.dy || 0);
         K.exhaust(x, y, z, r, o.len || L, { col, hole: o.inner ? (o.rim || col) : HOLE, n: q }); hang(x + (o.len || L) * 0.6, y, z, r);
         if (o.inner) K.exhaust(x - 0.005, y, z, r * 0.74, 0.04, { col: o.inner, hole: HOLE, n: q }); };
@@ -128,11 +132,12 @@
         K.skin([ring(X + (o.len || L), 1), ring(X, 1)], col, null, HOLE); hang(X + (o.len || L) * 0.6, Y, z, ry);
         faceOut(K, ring(X - 0.0015, 0.8), [0.2, 0.2, 0.22], [-1, 0, 0]); faceOut(K, ring(X - 0.002, 0.66), HOLE, [-1, 0, 0]); };   // (its rim, dark inside)
       // the silencer: a drum across under the tail (rear silencer), along under the floor (forward: a pipe to it)
-      const DY = m.drum != null ? m.drum : Y - 0.065, PY = m.pipe != null ? m.pipe : Y - 0.07, drum = (col, z0, z1) => K.cyl([X + 0.27, DY, -Z * (z0 == null ? 1.15 : z0)], [X + 0.27, DY, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });   // (DY: its middle, up against the floor)
-      const pipe = (z, col, x1) => K.cyl([X + L - 0.01, Y, z], [x1 || 0.6, PY, z * 0.4], 0.024, col, { n: 5 });   // (PY: its front end's height, up under the floor)
+      const DY = m.drum != null ? m.drum : Y - 0.065, PY = m.pipe != null ? m.pipe : Y - 0.07, DX = m.drumX != null ? m.drumX : X + 0.27, PX = m.pipeX != null ? m.pipeX : 0.6;
+      const drum = (col, z0, z1) => K.cyl([DX, DY, -Z * (z0 == null ? 1.15 : z0)], [DX, DY, Z * (z1 == null ? 0.3 : z1)], 0.055, col, { n: q });   // (DY: its middle, up against the floor)
+      const pipe = (z, col, x1) => K.cyl([X + L - 0.01, Y, z], [x1 || PX, PY, z * 0.4], 0.024, col, { n: 5 });   // (PY: its front end's height, up under the floor)
       const valve = (z) => K.box(X + L * 0.6, Y + 0.025, z, 0.06, 0.045, 0.05, 0, BLK);
       const cut = (w) => K.rect(m.x + 0.03, Y, 0, w, 0.09, HOLE, { dir: '-x' });   // (a centre exit: the valance's cut-out round it)
-      const L_ = -Z, R_ = Z, VZ = m.valve ? 1 : 0.8;   // (VZ: the flap valves' place across, a share of z: beside the tips, or on them)
+      const L_ = -Z, R_ = Z, VZ = m.valve ? 1 : 0.8, C = m.mid ? -m.mid : 0;   // (VZ: the flap valves' place across, a share of z: beside the tips, or on them; C: the centre exits' middle, mid)
       switch (n) {
         case 1: drum(STEEL); tip(L_, r0 * 0.95, STEEL); break;                                             // zadnji lonec
         case 2: drum(DK); tip(L_, 0.042, CHR, { inner: DK, rim: CHR }); break;                             // športni
@@ -145,10 +150,10 @@
         case 9: drum(DK); pipe(L_, STEEL); tip(L_, 0.05, CHR, { inner: DK, rim: CHR }); break;           // kolektor in lonec
         case 10: drum(DK, 1.15, 1.15); pipe(L_, STEEL); pipe(R_, STEEL); tip(L_, 0.042, CHR, { inner: DK, rim: CHR }); tip(R_, 0.042, CHR, { inner: DK, rim: CHR }); break;   // cel sistem
         case 11: drum(DK, 1.15, 1.15); pipe(L_, STEEL); pipe(R_, STEEL); oval(L_, 0.058, 0.034, CHR); oval(R_, 0.058, 0.034, CHR); valve(L_ * VZ); valve(R_ * VZ); break;   // z loputo
-        case 12: drum(DK, 0.5, 0.5); pipe(-0.09, STEEL); pipe(0.09, STEEL); cut(DELI.centreCut(12) * 2); tip(-0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); tip(0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); break;   // dirkalni, sredinski
+        case 12: drum(DK, 0.5 - C / Z, 0.5 + C / Z); pipe(C - 0.09, STEEL); pipe(C + 0.09, STEEL); if (!C) cut(DELI.centreCut(12) * 2); tip(C - 0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); tip(C + 0.08, 0.045, [0.16, 0.16, 0.17], { inner: CHR, rim: [0.3, 0.3, 0.32], out: 0.02 }); break;   // dirkalni, sredinski
         case 13: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); tip(L_, 0.045, TIB, { inner: TIP, rim: TIG }); tip(R_, 0.045, TIB, { inner: TIP, rim: TIG }); break;   // titanov cel sistem
         case 14: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); for (const z of [L_ * 0.86, L_ * 1.14, R_ * 0.86, R_ * 1.14]) tip(z, 0.032, TIB, { rim: TIG, inner: TIP }); valve(L_ * (m.valve ? 0.86 : 0.6)); valve(R_ * (m.valve ? 0.86 : 0.6)); break;   // titanov z loputo
-        case 15: drum(TI, 0.5, 0.5); pipe(0, TI); cut(DELI.centreCut(15) * 2); tip(0, 0.068, TIB, { inner: TIG, rim: TIP, out: 0.025 }); break;   // titanov, dirkalni
+        case 15: drum(TI, 0.5 - C / Z, 0.5 + C / Z); pipe(C, TI); if (!C) cut(DELI.centreCut(15) * 2); tip(C, 0.068, TIB, { inner: TIG, rim: TIP, out: 0.025 }); break;   // titanov, dirkalni
         case 16: drum(TI, 1.15, 1.15); pipe(L_, TI); pipe(R_, TI); for (const z of [L_, R_]) { tip(z, 0.054, CF, { inner: TIB, rim: CF2, len: 0.16 }); K.exhaust(X + 0.16, Y, z, 0.04, 0.08, { col: TI, n: q }); } break;   // titanov s karbonskimi konci
       }
     });
@@ -231,7 +236,8 @@
     const r = m.r && ma && DELI.twinExhaust(K.fitted.auspuh) && Math.abs(m.r[2]) <= Math.abs(ma.z) ? [m.r[0], m.r[1], Math.sign(m.r[2]) * Math.min(Math.abs(m.r[2]), Math.abs(ma.z) - 0.17)] : m.r;
     // at a tow point (end: 1 the front, -1 the rear; dir: the way out of the face), in the bumper's part
     const lamp = K.fitted && K.fitted.relijske_luci, podF = lamp && ((m.underPod && DELI.podLamps && DELI.podLamps(lamp)) || (m.behindLamps && DELI.noseLamps && DELI.noseLamps(lamp)));   // (underPod: none in front behind a pod; behindLamps: behind any lamps in front of the nose)
-    const at = (end, fn) => { const p = end > 0 ? (podF ? null : m.f) : r; if (p) K.part(end > 0 ? m.partF || 'bumperF' : m.partR || 'bumperR', () => fn(p[0], p[1], p[2], end)); };   // (partF, partR: a car without bumpers' parts)
+    const lipF = m.behindLip && DELI.frontLip && DELI.frontLip(K.fitted && K.fitted.aero);   // (behindLip: none in front behind the kit's lip)
+    const at = (end, fn) => { const p = end > 0 ? (podF || lipF ? null : m.f) : r; if (p) K.part(end > 0 ? m.partF || 'bumperF' : m.partR || 'bumperR', () => fn(p[0], p[1], p[2], end)); };   // (partF, partR: a car without bumpers' parts)
     // a strap: a loop of webbing out of the bumper, folded flat, down from the tow point; its stitching; its plate
     const strap = (x, y, z, d, w, col) => { K.box(x + d * 0.009, y - 0.1, z, 0.012, 0.12, w, 0, col, col);
       K.rect(x + d * 0.0156, y - 0.005, z, w + 0.004, 0.012, WHT, { dir: d > 0 ? 'x' : '-x' }); K.box(x + d * 0.004, y - 0.012, z, 0.012, 0.03, w + 0.02, 0, BLK); };
@@ -253,7 +259,7 @@
       for (const sd of [-1, 1]) faceOut(K, Array.from({ length: q }, (_, i) => { const a = i / q * Math.PI * 2; return [x + d * (l - 0.012) + Math.cos(a) * 0.01, y + Math.sin(a) * 0.01, z + sd * 0.0065]; }), HOLE, [0, 0, sd]); };
     // the racing rules' arrow: a yellow triangle on the face over the tow point, pointing down; a white sticker behind it (sticker)
     const lampsF = m.underLamps && K.fitted && DELI.noseLamps && DELI.noseLamps(K.fitted.relijske_luci);   // (underLamps: none in front with them)
-    const arrow = (x0, y, z, d, sticker) => { if (d > 0 && lampsF) return; const x = m.tube ? m.tube[d > 0 ? 0 : 1] : x0; if (sticker) K.rect(x + d * 0.002, y + 0.075, z, 0.1, 0.065, WHT, { dir: d > 0 ? 'x' : '-x' });
+    const arrow = (x0, y, z, d, sticker) => { if (d > 0 && lampsF) return; const x = m.tube ? m.tube[d > 0 ? 0 : 1] : x0; if (x == null) return; if (sticker) K.rect(x + d * 0.002, y + 0.075, z, 0.1, 0.065, WHT, { dir: d > 0 ? 'x' : '-x' });
       faceOut(K, [[x + d * 0.003, y + 0.05, z], [x + d * 0.003, y + 0.1, z - 0.035], [x + d * 0.003, y + 0.1, z + 0.035]], YEL, [d, 0, 0]); };
     const ORA = [0.95, 0.4, 0.06], BLU = [0.12, 0.3, 0.85], ANO = [0.85, 0.12, 0.1];
     switch (n) {
