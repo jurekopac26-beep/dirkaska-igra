@@ -4,6 +4,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
+import { createRequire } from 'node:module';
 
 // the game folder under test: the repo itself, or another copy given in GAME_ROOT (e.g. an older version)
 export const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
@@ -44,7 +45,19 @@ export function serve(root = ROOT) {
   });
 }
 
+// the Playwright (and so the Chromium) the references were made with: package.json's. Another one (e.g. a global install linked into
+// node_modules) builds the worlds a little differently: V8's Math.sin, cos, atan2, exp, pow ... differ in the last bit between Chromium
+// versions, and world.test.mjs then finds props and meshes changed though nothing did
+export function pwNote() {
+  try {
+    const want = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8')).devDependencies.playwright;
+    const have = JSON.parse(fs.readFileSync(createRequire(import.meta.url).resolve('playwright/package.json'), 'utf8')).version;
+    return have === want ? '' : `Playwright ${have} is not the repo's ${want} (package.json; npm ci installs it): the references were made with its Chromium, whose Math differs in the last bit`;
+  } catch (_) { return ''; }
+}
+let noted = false;
 export function launch(extraArgs = []) {
+  if (!noted && (noted = true) && pwNote()) console.log('NOTE ' + pwNote());
   return chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', ...extraArgs] });
 }
 
@@ -56,21 +69,27 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
+  // (net::ERR_ABORTED is the browser's own cancel, no failure of the game or the server: a page reloaded while a script was still on its
+  // way, a video read in pieces; a missing file is a 404 answer, not a failed request)
+  page.on('requestfailed', r => { const why = (r.failure() || {}).errorText || ''; if (why !== 'net::ERR_ABORTED') errors.push('request failed: ' + r.url() + (why ? ' (' + why + ')' : '')); });
   // (the failures off unless a test asks for them: a cut tyre after a knock would change what the other tests see; the best moment's video
   // after a race too: it would play before the results)
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer;
   // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top)
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2 }, settings));
-  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
-  await page.addInitScript(([raw, adapt]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive]);
+  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself; tdgp-tips:
+  // the hints of the first pit stops all seen, so a test's stop shows only the stop's own toast, as on a phone that has stopped before;
+  // opts.tips: none seen, as on a new phone (tests/browser/pits.test.mjs). A new hint's id goes in here too)
+  // (tdgp-nostartcam: no camera before the start, the race's chase view and its 1.3 s intro as the tests were written for; opts.startCam: on)
+  await page.addInitScript(([raw, adapt, sc, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
+    if (!tips) localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1 })); }, [raw, !!opts.adaptive, !!opts.startCam, !!opts.tips]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
   // (the old title and track screens, which most tests click through: the new menu, js/menu.js, has its own test, menu.test.mjs: opts.menu)
   if (!opts.menu) await page.addInitScript(() => { try { localStorage.setItem('tdgp-menu', 'old'); } catch (_) { /* no storage */ } });
   if (opts.init) await page.addInitScript(opts.init);   // (a test's own set-up, run before the game's scripts)
-  await page.goto(address);
+  await page.goto(address, { timeout: 180000 });   // (as long as the wait for the game below: Playwright's own 30 s are too short on a slow machine)
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   return { ctx, page, errors };
 }
@@ -92,13 +111,15 @@ export function startTrack(page, id, mode) {
   }, [id, mode]);
 }
 
-// the list of tracks shown in the track menu
-export function trackIds(page) {
-  return page.evaluate(async () => {
+// the list of tracks shown in the track menu, without the test tracks (test: true: frozen until they are deleted before Google Play,
+// nothing is checked on them: CLAUDE.md »Testne proge«); all: every card of the menu, the test tracks too
+export function trackIds(page, all = false) {
+  return page.evaluate(async (all) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(350);
-    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))];
-  });
+    const test = new Set(Core.TRACKS.filter(d => d.test).map(d => d.id));
+    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))].filter(id => all || !test.has(id));
+  }, all);
 }
 
 // run the race for `sec` seconds of game time on autopilot, rendering a frame after every simulated second

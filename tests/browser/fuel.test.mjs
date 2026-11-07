@@ -18,6 +18,12 @@ try {
   // (every text set, from the records: a stretch simulated in one go gives a single callback, by then a later message may have replaced it)
   await page.evaluate(() => { window.__msgs = []; const log = (id) => new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__msgs.push(t); } }).observe(document.getElementById(id), { childList: true, subtree: true }); log('h-msg'); log('toast'); });
   const frames = (n) => page.evaluate((n) => new Promise(res => { let k = 0; const f = () => (++k >= n ? res() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
+  // the autopilot's stretches (g.sim(sec, true)) 2 s at a time; the player stuck or the wrong way out on the circuit put back on the road
+  // after each, like a player tapping Na progo (Trki med avti, Simulacija: a rival's knock in the first lap's crowd can turn the player round
+  // into the tyre wall after the chicane; the autopilot has no reverse and the race rescues only the rivals; never in the pit lane, where it
+  // would undo the stop, nor past the line)
+  await page.evaluate(() => { window.__simA = (sec) => { const g = window.__game;
+    for (let t = 0; t < sec - 1e-9 && g.race; t += 2) { g.sim(Math.min(2, sec - t), true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); } }; });
 
   // 1. the settings on the title's line
   const t0 = await sub();
@@ -30,22 +36,22 @@ try {
   // 2. a race of the usual length with fuel: the gauge full, the tick at what it takes to the line
   await click('length', 'normal');
   await startTrack(page, 'toskana');
-  await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.hud(); });
+  await page.evaluate(() => { const g = window.__game; g.pause(); __simA(12); g.hud(); });
   const f1 = await page.evaluate(() => { const E = document.getElementById('h-fuel'), b = E.querySelector('b'), P = window.__game.race.player;
-    return { shown: getComputedStyle(E).display !== 'none', text: E.textContent, tick: b ? parseFloat(b.style.left) : null, fuel: P.fuel, laps: window.__game.race.laps, tank: P.tankKg }; });
-  T.check('a race with fuel: the gauge on the HUD (GORIVO 9x %), a tick at what it takes to the line (about three quarters of the tank)', f1.shown && /^GORIVO 9\d%$/.test(f1.text) && f1.tick > 55 && f1.tick < 90 && f1.laps === 3 && f1.tank > 0, JSON.stringify(f1));
+    return { shown: getComputedStyle(E).display !== 'none', text: E.textContent, tick: b ? parseFloat(b.style.left) : null, fuel: P.fuel, laps: window.__game.race.laps, tank: P.tankKg, strat: !!window.__game.race.strat }; });
+  T.check('a race with fuel: the gauge on the HUD (GORIVO 9x %), a tick at what it takes to the line (about three quarters of the tank); no strategies in a race of the usual length', f1.shown && /^GORIVO 9\d%$/.test(f1.text) && f1.tick > 55 && f1.tick < 90 && f1.laps === 3 && f1.tank > 0 && !f1.strat, JSON.stringify(f1));
 
   // 3. a long race: no tick at first (it will not reach the line on one tank); the warning; in the pits (on autopilot): filled up
   await page.evaluate(() => window.__game.onAction('to-title')); await click('length', 'long');
   await startTrack(page, 'toskana');
-  await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.hud(); });
+  await page.evaluate(() => { const g = window.__game; g.pause(); __simA(12); g.hud(); });
   const f2 = await page.evaluate(() => ({ laps: window.__game.race.laps, tick: !!document.querySelector('#h-fuel b') }));
   const w = await page.evaluate(async () => { const g = window.__game, P = g.race.player; g.pause();
-    for (let k = 0; k < 60 && !window.__msgs.some(m => /Malo goriva/.test(m)); k++) { g.sim(4, true); g.hud(); await null; }   // (await: the message log's observer is told)
+    for (let k = 0; k < 60 && !window.__msgs.some(m => /Malo goriva/.test(m)); k++) { __simA(4); g.hud(); await null; }   // (await: the message log's observer is told)
     return { fuel: P.fuel, lap: P.lap, warned: window.__msgs.some(m => /Malo goriva/.test(m)) }; });
   const pit = await page.evaluate(async () => { const g = window.__game, P = g.race.player; let done = false, low = 1;
     // (most of the field comes in on the same lap: a car knocked across the crowded lane is pushed straight by the marshals, the player's too)
-    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.5; }
+    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; __simA(0.25); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.5; }
     P.pitWant = false; g.hud(); await null;
     return { done, fuel: P.fuel, low, gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /POLNO/.test(m)),
       at: done ? undefined : { lap: P.lap, fin: P.finished, inPit: P.inPit, pit: P.pitState, v: +P.speed.toFixed(1), stuck: +(P.stuckT || 0).toFixed(1), wrong: +(P.wrongT || 0).toFixed(1), state: g.race.state, phase: g.phase, sc: g.race.fl && g.race.fl.sc ? g.race.fl.sc.state : null } }; });   // (where it stands, when it did not get the stop)
@@ -56,9 +62,11 @@ try {
   // 4. the endurance race: from the afternoon into the night with the leader's progress; to the line
   await click('fuel', '0'); await click('length', 'endurance');
   const rec0 = await page.evaluate(() => { const r = JSON.parse(localStorage.getItem('tdgp-records') || '{}'); return (r.tracks || {})['toskana@cs'] || null; });
+  await page.evaluate(() => { window.__msgs.length = 0; });
   await startTrack(page, 'toskana');
+  const st0 = await page.evaluate(() => { const r = window.__game.race; return { strat: !!r.strat, plans: r.cars.filter(c => !c.isPlayer).map(c => c.st && c.st.p ? c.st.p.seq + '@' + c.st.p.at.join(',') : null), told: window.__msgs.filter(m => /^Dolga dirka: /.test(m)) }; });
   const e = await page.evaluate(async () => { const g = window.__game, out = []; window.__msgs.length = 0; g.pause();
-    for (let k = 0; k < 400; k++) { g.sim(10, true); if (g.phase === 'done') break;   // (the results up: no resume, it would close them)
+    for (let k = 0; k < 400; k++) { __simA(10); if (g.phase === 'done') break;   // (the results up: no resume, it would close them)
       g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); g.pause();
       const L = g.race.order[0]; out.push({ p: +(L.dist / (g.race.laps * g.race.track.len)).toFixed(3), k: Render.show.todK, flood: Render.show.flood }); }
     if (g.phase !== 'done') g.resume(); return { laps: g.race.laps, endu: g.race.endu, out, msgs: window.__msgs.slice() }; });
@@ -67,6 +75,13 @@ try {
   T.check('the endurance race: 9 laps; the light from the afternoon (0) to the night (1 at nine tenths of the race), step by step', e.laps === 9 && e.endu && o[0].k < 0.1 && o.every((x, i) => !i || x.k >= o[i - 1].k - 1e-6) && Math.abs(at(0.5).k - 0.56) < 0.08 && at(0.92).k === 1 && o[o.length - 1].k === 1,
     JSON.stringify(o.filter((x, i) => i % 4 === 0)));
   T.check('the evening and the night told (VEČER, PADA NOČ), the floodlights on at night and not in the afternoon', e.msgs.includes('VEČER') && e.msgs.includes('PADA NOČ') && e.msgs.indexOf('VEČER') < e.msgs.indexOf('PADA NOČ') && !o[0].flood && o[o.length - 1].flood, JSON.stringify(e.msgs));
+  // (the rivals' strategies: told at the start; on the results every car's stops and the sets it ran, 'S → M → H', with the key)
+  const lt = await page.evaluate(() => { const R = document.getElementById('res-laps'), E = R.querySelector('table.laps') || R, rows = [...E.querySelectorAll('tbody tr')];   // (the laps table: the pit stops' own table below it)
+    return { head: [...E.querySelectorAll('thead th')].map(t => t.textContent).pop(), cells: rows.map(tr => tr.lastElementChild.textContent), chips: rows.map(tr => [...tr.lastElementChild.querySelectorAll('b.tset')].map(b => b.className)), key: (R.querySelector('.ltab-k') || {}).textContent }; });
+  const okCell = (t, ch) => { const m = /^(\d+) · ([SMHW](?: → [SMHW])*)$/.exec(t); return !!m && m[2].split(' → ').length === +m[1] + 1 && ch.length === +m[1] + 1 && ch.every((k, i) => k === 'tset t' + m[2].split(' → ')[i]); };
+  T.check('a strategy race (endurance): every rival with a plan of 1 or 2 stops, told at the start (Dolga dirka: …); on the results every car\'s stops and sets (e.g. 2 · M → H → S, chips in the compounds\' colours) under Postanki · gume, the key below',
+    st0.strat && st0.plans.every(p => /^[SMH]{2,3}@\d+(,\d+)?$/.test(p)) && st0.told.length === 1 && lt.head === 'Postanki · gume' && lt.cells.length === st0.plans.length + 1 && lt.cells.every((t, i) => okCell(t, lt.chips[i])) && lt.cells.some(t => /^[12] · /.test(t)) && lt.key === 'Gume: S mehke, M srednje, H trde, W dežne.',
+    JSON.stringify({ st0, cells: lt.cells, head: lt.head, key: lt.key }));
   const rec1 = await page.evaluate(() => (JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {})['toskana@cs'] || null);
   T.check('to the line: the lap record counts, the best race time and place only for a race of the usual length', rec1 && rec1.bestLap > 0 && (rec0 ? rec1.bestRace === rec0.bestRace : !rec1.bestRace) && (rec0 ? rec1.bestPos === rec0.bestPos : !rec1.bestPos), JSON.stringify({ rec0, rec1 }));
 
@@ -79,10 +94,10 @@ try {
   await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'jezek'); window.__msgs.length = 0; });
   await click('fuel', '1'); await click('length', 'normal');
   await startTrack(page, 'toskana');
-  await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(12, true); g.hud(); });
+  await page.evaluate(() => { const g = window.__game; g.pause(); __simA(12); g.hud(); });
   const e1 = await page.evaluate(() => { const P = window.__game.race.player; return { car: P.m.id, text: document.getElementById('h-fuel').textContent, fuel: +P.fuel.toFixed(3), tank: P.tankKg, kg: P.fuelKg }; });
   const e2 = await page.evaluate(async () => { const g = window.__game, P = g.race.player; let done = false, low = 1; g.pause();
-    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; g.sim(0.25, true); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.97; }
+    for (let k = 0; k < 2400 && !done; k++) { P.pitWant = true; __simA(0.25); low = Math.min(low, P.fuel); done = P.fuel > 0.99 && !P.inPit && low < 0.97; }
     P.pitWant = false; g.hud(); await null;
     const out = { done, fuel: +P.fuel.toFixed(3), low: +low.toFixed(3), gauge: document.getElementById('h-fuel').textContent, msg: window.__msgs.filter(m => /BATERIJA POLNA|POLNO/.test(m)), kg: P.fuelKg };
     g.resume(); return out; });

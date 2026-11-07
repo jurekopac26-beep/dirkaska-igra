@@ -8,9 +8,9 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, brookMat, clamp, cone, crH, crowdAt, crowdCtx, crowdFinish, crowdRun, crowdUV,
+    Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, parkedCar, brookMat, clamp, cone, crH, crowdAt, crowdCtx, crowdFinish, crowdRun, crowdUV,
     cyl, gable, ico, lerp, nrAUV, nrDist, nrEdge, nrFir, nrGCol, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade,
-    nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pitLaneScenery, pixAvg, propFloorTable, rng, roadsideProps, spaScreenTex, sstep, vary
+    nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pitLaneScenery, pixAvg, propFloorTable, rng, roadsideProps, spaScreenTex, sstep, vary, pitExcl, pitKerbs, pitOpen
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -99,10 +99,10 @@
     // road's height; lane centre + 3.5 lane + 9 apron + 7.2 garages + 2.3), easing into the landscape beyond; the same behind the walls the track
     // sets itself (def.walls: the support pit lane and its garages, out to 30 m from the centre line). (nrH calls it right after its nrNear: NRN
     // holds the nearest sample, the lateral offset and the road's height there)
-    { const PP = def.pit, WL = def.walls || [];
+    { const PP = def.pit, WL = def.walls || [], PJ = PP ? T.pitJ() : null;
       P.pad = (x, z, h) => { const i = NRN.i; if (i < 0) return h;
         const lat = NRN.lat, hn = NRN.hn; let d = i * ds - sStart; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
-        if (PP && lat > 0 && d >= PP[1] - 12 && d <= PP[2] + 12) { const p = T.pitAt(i * ds), reach = (p ? p.o : w + 3.6) + 22;
+        if (PJ && lat > 0 && d >= PJ.a - 12 && d <= PJ.b + 12) { const p = T.pitAt(i * ds), reach = (p ? p.o : w + 3.6) + 22;   // (PJ: with the deceleration and acceleration lanes)
           return lat < reach ? hn - 0.06 : lat < reach + 14 ? lerp(hn - 0.06, h, sstep(reach, reach + 14, lat)) : h; }
         for (const [a, b, sd] of WL) { if (lat * sd <= 0) continue;
           const f = Math.min(sstep(a - 30, a - 10, d), sstep(b + 50, b + 30, d)) * (1 - sstep(30, 44, lat * sd));
@@ -155,6 +155,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side2(side)][i] = 1; } }
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
@@ -256,7 +257,7 @@
     for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 10; k <= i1c + 14; k++) { const ii = ((k % N) + N) % N; if ((si ? T.gravR : T.gravL)[ii]) tyreOn[si][ii] = 1; } }
     const kindAt = (i, side) => {   // -1 none (where the pit lane leaves and joins the circuit), 0 armco, 1 concrete wall, 2 tyre wall
-      if (side > 0 && def.pit) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }
+      if (side > 0 && def.pit) { if (pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }   // (pitOpen: the deceleration and acceleration lanes too)
       if (tyreOn[side2(side)][i]) return 2;
       return t13(i) || wallOn[side2(side)][i] ? 1 : 0;
     };
@@ -313,8 +314,7 @@
     const fans = [[0.9, 0.2, 0.15], [0.96, 0.82, 0.2], [0.2, 0.45, 0.9], [0.95, 0.95, 0.95], [0.2, 0.7, 0.3], [1, 0.55, 0.1], [0.15, 0.5, 0.55], [0.7, 0.2, 0.5], [0.12, 0.14, 0.2]];
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.8 });   // spectators (instanced)
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const DR = rng(9331);   // (the camp props' own random stream)
     const BE = [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]];   // the Belgian flag (upright stripes)
     const flagPole = (g, x, y, z, rot, cols) => { const c = Math.cos(rot), s = Math.sin(rot); cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
@@ -386,8 +386,8 @@
         const tiers = Math.max(6, Math.min(12, Math.round(Wb / 1.6))), dep = Wb / tiers, seat = SEATS[Math.floor(crH(bx, bz, 61) * SEATS.length)];
         for (let t = 0; t < tiers; t++) { const b = fa * (Wb / 2 - (t + 0.5) * dep), cx = bx - sa * b, cz = bz + ca * b, hgt = 0.9 + t * 0.8;
           box(g, cx, y0, cz, Lb, hgt, dep, ang, [0.6, 0.61, 0.64], seat);
-          const b0 = b - fa * dep * 0.45, b1 = b + fa * dep * 0.1, yy = y0 + hgt + 0.02, A = [bx - ca * Lb / 2 - sa * b0, yy, bz - sa * Lb / 2 + ca * b0], B = [bx + ca * Lb / 2 - sa * b0, yy, bz + sa * Lb / 2 + ca * b0], C = [bx + ca * Lb / 2 - sa * b1, yy, bz + sa * Lb / 2 + ca * b1], D = [bx - ca * Lb / 2 - sa * b1, yy, bz - sa * Lb / 2 + ca * b1];
-          if (crH(bx + t, bz, 62) < 0.9) crowdG.quadUp(A, B, C, D, [W1, W1, W1, W1], [[0, t * 0.11], [Lb / 12, t * 0.11], [Lb / 12, t * 0.11 + 0.1], [0, t * 0.11 + 0.1]]); }
+          const b0 = b - fa * dep * 0.5, b1 = b + fa * dep * 0.5, yy = y0 + hgt + 0.02, A = [bx - ca * Lb / 2 - sa * b0, yy, bz - sa * Lb / 2 + ca * b0], B = [bx + ca * Lb / 2 - sa * b0, yy, bz + sa * Lb / 2 + ca * b0], C = [bx + ca * Lb / 2 - sa * b1, yy, bz + sa * Lb / 2 + ca * b1], D = [bx - ca * Lb / 2 - sa * b1, yy, bz - sa * Lb / 2 + ca * b1];
+          crowdG.quadUp(A, B, C, D, [W1, W1, W1, W1], [[0, t * 0.11], [Lb / 12, t * 0.11], [Lb / 12, t * 0.11 + 0.1], [0, t * 0.11 + 0.1]]); }
         const top = 0.9 + tiers * 0.8, bb = -fa * (Wb / 2 + 0.3); box(g, bx - sa * bb, y0, bz + ca * bb, Lb, top + 0.6, 0.5, ang, [0.52, 0.53, 0.57]);   // the back wall
         const rb = -fa * (Wb / 2 - Wb * 0.32), rW = Wb * 0.7, ry = y0 + top + 3.2;
         for (let a = -Lb / 2; a <= Lb / 2 + 0.1; a += Lb / Math.max(2, Math.round(Lb / 14))) { const px = bx + ca * a - sa * bb * 0.98, pz = bz + sa * a + ca * bb * 0.98; box(g, px, y0, pz, 0.4, ry - y0, 0.4, ang, [0.84, 0.85, 0.88]); }
@@ -419,7 +419,8 @@
     /* ---- the pit lane right of the pit straight, the crews' boxes and the pit building's garages (on the road's height) ---- */
     if (def.pit) { pitLaneScenery({ R, scen, prop: (kind, x, z, yaw, col) => out.props.push({ kind, x, z, yaw: yaw || 0, col: col || 0 }), excl: exclPush, root, out, ownTex, Y: (s) => T.elevAt(s).y, spa: true });
       for (let d = def.pit[1]; d <= def.pit[2]; d += 6) { const s = sAt(d), p = T.pitAt(s); if (!p) continue;   // no trees, no crowd from the rail to behind the garages
-        const r = (p.o + 20 - p.wall) / 2, [x, z] = onSide(s, 1, r); exclPush(x, z, r + 2); } }
+        const r = (p.o + 20 - p.wall) / 2, [x, z] = onSide(s, 1, r); exclPush(x, z, r + 2); }
+      pitExcl(exclPush); }   // (nor anything on the deceleration and acceleration lanes)
     /* ---- the support pit lane (the endurance series' pits on the way down to Eau Rouge: scenery, behind the pit wall): asphalt from the wall to the
        garages of the pit buildings off the pit straight, a white line along it; the strip between the road and the wall in concrete ---- */
     {
@@ -755,5 +756,6 @@
     return out;
   }
 
+  World.keep('NR', 'spa');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.spa = (scene, tex, opts) => buildSpa(scene, tex, opts);
 })();

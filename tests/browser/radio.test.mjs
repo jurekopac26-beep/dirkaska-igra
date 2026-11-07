@@ -1,4 +1,5 @@
-// The team radio and the strategy in the game (Nastavitve · Radio ekipe, on by default; Toskana, the player on autopilot): at the line the
+// The team radio and the strategy in the game (Nastavitve · Radio ekipe, on by default; Toskana, the player on autopilot): every car's own
+// tyres (Car.kt) do not last three laps there, the engineer calls the stop; on the car's set (as in a race with a friend) at the line the
 // engineer's message in the box at the top of the HUD with the radio's click: the gaps to the cars ahead and behind, on the last lap
 // "Zadnji krog!"; in a race with fuel (6 laps) the window for the stop, on the lap it must be made BOKSI V TEM KROGU with the place the stop
 // gives, after the stop the place; the pause menu's strategy (fuel, what a stop costs, the place after it); the tyres for the next stop
@@ -16,9 +17,11 @@ try {
   const setUp = () => page.evaluate(() => { window.__clicks = 0; if (!Sfx.radio.__t) { const o = Sfx.radio; Sfx.radio = function () { window.__clicks++; return o.apply(this, arguments); }; Sfx.radio.__t = 1; }
     window.__msgs = []; if (!window.__mo) { window.__mo = new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) window.__msgs.push(t); } }); window.__mo.observe(document.getElementById('h-msg'), { childList: true, subtree: true }); } });
   // on, two seconds at a time (paused, on autopilot), two drawn frames after each (the radio speaks from the HUD's frames), until fn (it may
-  // also steer the test: the player's way into the pits)
+  // also steer the test: the player's way into the pits). Stuck or the wrong way out on the circuit: back on the road, like a player tapping
+  // Na progo (Trki med avti, Simulacija: a rival's knock in the first laps' crowd can turn the player round into the tyre wall after the
+  // chicane; the autopilot has no reverse and the race rescues only the rivals; never in the pit lane: that would undo the stop)
   const until = (fn, max) => page.evaluate(async ([src, max]) => { const g = window.__game, f = new Function('g', 'return (' + src + ')(g)');
-    for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
+    for (let k = 0; k < max; k++) { if (f(g)) return true; g.pause(); g.sim(2, true); const P = g.race.player; if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); }
     return !!f(g); }, [fn.toString(), max || 200]);
   const radio = () => page.evaluate(() => { const g = window.__game, el = document.getElementById('h-teamradio'); return { log: g.teamRadio.log, on: el.classList.contains('on'), text: el.lastElementChild.textContent, clicks: window.__clicks, lap: g.race.player.lap, laps: g.race.laps }; });
   // a message said in a HUD frame shows in the next one: wait for the box (a few drawn frames; on a slow machine the say can fall on the
@@ -26,9 +29,20 @@ try {
   const shown = () => page.waitForFunction(() => document.getElementById('h-teamradio').classList.contains('on'), null, { timeout: 10000, polling: 'raf' }).catch(() => {});
   const lang = (l) => page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, l);
 
-  // 1. three laps: at the second lap's line the gaps (the box at the top, its click)
+  // 1. three laps. Every car with its own tyres (Car.kt, worn as the KOLIBRI's since 1. 11. 2026): on Toskana they do not last three laps,
+  // at the second lap's line the engineer calls the stop. Then the race again on the car's set (Car.kt off, as in a race with a friend: the
+  // usual wear, no stop): at the second lap's line the gaps (the box at the top, its click)
   await startTrack(page, 'toskana');
   await setUp();
+  const kt0 = await page.evaluate(() => !!window.__game.race.player.kt);
+  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
+  const r0 = await radio();
+  T.check('every car with its own tyres (Car.kt): on Toskana they do not last three laps, at the second lap\'s line "Gume ne bodo zdržale do cilja. Boksi v tem krogu!" with the place the stop gives',
+    kt0 && /^Gume ne bodo zdržale do cilja\. Boksi v tem krogu! Po postanku boš (\d+\., .+ bo \d+,\d s pred tabo|še vedno prvi)\. Dobiš (mehke|srednje|trde) gume\.$/.test(r0.log[0]), JSON.stringify({ kt0, r0 }));
+  await page.evaluate(() => window.__game.onAction('to-title'));
+  await startTrack(page, 'toskana');
+  await setUp();
+  await page.evaluate(() => { window.__game.race.player.kt = null; });   // (the set: the usual wear)
   await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 60);
   await shown();
   const r1 = await radio(), gapRe = /^(.+ je \d+,\d s pred tabo(, .+ \d+,\d s za tabo)?\.|Vodiš(, .+ je \d+,\d s za tabo)?\.)$/;
@@ -78,8 +92,13 @@ try {
   // gives; the stop made as told: after it the place
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="fuel"] button[data-v="1"]').click(); document.querySelector('[data-set="length"] button[data-v="long"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'toskana');
+  await page.evaluate(() => { window.__game.race.player.kt = null; });   // (every car offline has a tyre each of its own since 1. 11. 2026, Car.kt, on a circuit worn four times as fast: the stop for the fuel checked on a car without them, as in a race with a friend, as tests/browser/hud.test.mjs does)
   await setUp();
-  await until((g) => g.race.player.lap >= 2 && g.teamRadio.log.length > 0, 80);
+  // (the first lap's burn depends on the traffic in it: a lap of 56 s burns 0.30 of the tank, one of 61 s or more 0.34, and from 0.34 the plan
+  // has no window left at the second lap's line, the engineer calls the stop at once; the weaker slipstream of 4. 11. 2026 made such a lap
+  // one in ten. So the burn is capped at 0.28 of the tank a lap up to the line: the window is the same in every run, and the call to box is
+  // checked on its own lap just below)
+  await until((g) => { const P = g.race.player; if (P.lap < 2 && P.fuel != null) P.fuel = Math.max(P.fuel, Math.min(1, 1 - 0.28 * (P.dist - P.fuelD) / g.race.track.len)); return P.lap >= 2 && g.teamRadio.log.length > 0; }, 80);
   await shown();
   const w = await radio();
   T.check('a race with fuel (6 laps): at the line the window for the stop the fuel needs', w.laps === 6 && /^Gorivo ne bo zdržalo do cilja\. (Okno za postanek: od \d\. do \d\. kroga\.|Postanek bo v \d\. krogu\.)$/.test(w.log[0]), JSON.stringify(w));

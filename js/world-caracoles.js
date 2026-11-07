@@ -8,8 +8,8 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, propFloorTable, rng,
-    roadsideProps, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary
+    Chunks, GB, IChunks, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, gable, ico, lerp, propFloorTable, rng,
+    roadsideProps, rock, rpHash, sstep, tuftWindMat, valueNoise2, vary, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -57,6 +57,7 @@
       if (al < b.half + 14 && lat < 60) h = Math.min(h, lerp(h, b.y, sstep(60, 22, lat)) + Math.max(0, al - b.bw / 2) * 1.2);
     }
     if (i >= 0) h = Math.min(h, n.env);
+    const B = API.caBank; if (B && B.T === T) h = B.f(x, z, h);   // (the shared world of the passes: the ground kept under its banks between the hairpins' legs, js/world-prelaz.js)
     if (API.STG) h = API.vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
   }
@@ -210,8 +211,7 @@
   // the parked cars of the car parks (as Vršič's)
   function caCar(g, x, y, z, rot, col) {
     const c = Math.cos(rot), s = Math.sin(rot);
-    box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-    for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true);
+    parkedCar(g, x, y, z, rot, col);   // (the car: parkedCar in js/world.js)
   }
   // the knockable roadside posts: white with a black top, the tall orange snow poles from Portillo's height on (col 1)
   function caProps(out, spots, prof) {
@@ -332,7 +332,7 @@
     const onBr = new Uint8Array(N), sw = 0.6;
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
     const altAt = (i) => T.hy[i] + base;
-    const SB = API.stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.7, 0.62, 0.52], shC: [0.66, 0.6, 0.52], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)
+    const SB = API.stubGeo({ gCol: caGCol, paveC: [0.8, 0.8, 0.81], gravC: [0.82, 0.77, 0.7], shC: [0.82, 0.77, 0.7], line: 'solid' });   // the side roads (their mouths; their surfaces in the road's chunks below)   // (the side roads' gravel the colour of the road's own shoulder: gc below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const ms = API.stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
@@ -470,7 +470,7 @@
         bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2931);   // the trucks in the lay-by, side by side
       for (let k = 0; k < 3; k++) { const b = (k - 1) * 4.2, px = padS.x - sn * b, pz = padS.z + c * b; if (API.vrNear(px, pz).dd < 1.5) continue;
-        caTruck(scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
+        parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
       for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 16, pz = padS.z + (R() - 0.5) * 16; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
     }
 
@@ -495,14 +495,14 @@
         exclPush(bx, bz, 2.5); }
       const hh = T.hd[padF.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2941);
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -5 : 5) * sdP, px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (API.vrNear(px, pz).dd < 1.5) continue;
-        if (k === 4 || k === 9) caTruck(scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]);
-        else if (k < 4 || k > 5) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(fans[(k * 3) % fans.length], R, 0.2)); }
+        if (k === 4 || k === 9) parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]);
+        else if (k < 4 || k > 5) parkOn(caCar, caGround, 4.4, scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(fans[(k * 3) % fans.length], R, 0.2)); }
       for (let k = 0; k < 20; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (API.vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road towards the border: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       { const RT2 = rng(2951);   // and the queue of trucks waiting behind the blocks on the shoulder, nose to tail
         for (let k = 0; k < 4; k++) { const s = T.len - 24 - k * 19, i = T.idx(s), o = (T.br[i] + 3.2), px = T.px[i] + T.nx[i] * o, pz = T.pz[i] + T.nz[i] * o; if (API.vrNear(px, pz).dd < 1.2 || excluded(px, pz)) continue;
-          caTruck(scen.get(px, pz), px, caGround(px, pz), pz, T.hd[i] + PI, truckCols[Math.floor(RT2() * truckCols.length)], trailerCols[Math.floor(RT2() * trailerCols.length)]); exclPush(px, pz, 9); } }
+          parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, T.hd[i] + PI, truckCols[Math.floor(RT2() * truckCols.length)], trailerCols[Math.floor(RT2() * trailerCols.length)]); exclPush(px, pz, 9); } }
     }
 
     /* ---- the two avalanche galleries over the road: a concrete wall against the mountain, the roof on a row of pillars on the valley side with a low
@@ -762,5 +762,6 @@
   }
 
   Object.assign(API, { CAN, CA_SNC, caCar, caCondorGeo, caCondors, caGCol, caGH, caGround, caH, caNear, caPlantGeo, caProps, caSlope, caTileGeo, caTileOn });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'caracoles');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.caracoles = (scene, tex, opts) => buildCaracoles(scene, tex, opts);
 })();

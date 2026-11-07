@@ -1,10 +1,11 @@
 // Orodje za napake · Slika in pošiljanje (sklop 6 of docs/orodje-za-napake.md; js/napake.js): Bathurst at 30 s by the quick entry.
 // A flag in the race (F), then Posnetek do sem and two moments kept (a red loop with its note, a blue one with its note). The picture of the
 // collection: napake_bathurst_LLLLMMDD-UUMM.png, 1600 px wide at most 1600 tall, the moments with their marks (the red loop where it was
-// drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp> proga način naprava size, a line
+// drawn), each moment's 3 pictures of its motion; the text for the chat (RRA-NAPAKE v=<game.js's stamp; lokalno without one> proga način naprava size, a line
 // for each note, the flag not marked with its lap and metres). Deli in the replay: the choice (a computer: Kopiraj sliko first, Samo
 // shrani sliko, Kopiraj besedilo, Obdrži tudi slike v igri); Kopiraj besedilo copies the text; Samo shrani sliko downloads the picture; kept in
-// the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments: two pictures (_1, _2); 2400 px in the settings. The
+// the game (IndexedDB) as neposlano, Kopiraj sliko makes it poslano. Four moments (the fourth with no mark, only Beležka's note: in the
+// text and on its picture): two pictures (_1, _2); 2400 px in the settings. The
 // end of the replay with Ob koncu Shrani: the picture to the downloads at once. Nastavitve: the tool's row (not in English), its panel with
 // Zgodovina napak (a tap, Izbriši). A phone (a touch screen): Deli zdaj first, the share sheet gets the picture and the text, then poslano.
 //   node tests/browser/napake-slika.test.mjs
@@ -35,18 +36,19 @@ try {
   await Q.evaluate(() => window.__game.onAction('rp-b5'));
   await moment(Q, 0, 250, 150, 40, 'Sledi gum sredi ravnine');
   await Q.evaluate(() => window.__game.onAction('rp-f5'));
-  await moment(Q, 3, 420, 200, 30, 'Tekmeci v koloni');
+  await moment(Q, 3, 420, 110, 30, 'Tekmeci v koloni');   // (above Beležka, the notebook bottom right)
   const st = await Q.evaluate(() => Napake.stanje);
   T.check('two moments kept, each with its 3 pictures of the motion (400 px); Deli (2) in the replay (none before)', deli0 && st.zbirka.length === 2 && st.zbirka.every(z => z.gib.length === 4 && z.gib[2] === null && [0, 1, 3].every(i => z.gib[i] && Math.max(...z.gib[i]) === 400)) &&
     (await Q.evaluate(() => { const d = document.getElementById('nk-deli'); return !d.classList.contains('off') && d.textContent; })) === '⇧ Deli (2)', JSON.stringify(st.zbirka.map(z => z.gib)));
 
   // the picture and the text
   const R = await Q.evaluate(async () => { const r = await Napake.pripravi(); return { name: r.name, files: r.files.map(f => ({ name: f.name, w: f.w, h: f.h, type: f.blob.type, bytes: f.blob.size })), text: r.text, status: r.status, n: r.n, flags: r.flags }; });
-  const ver = await Q.evaluate(() => /[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src'))[1]);
+  // (js/game.js's stamp on the published game; a page without stamps, as the repository's: lokalno)
+  const ver = await Q.evaluate(() => (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [0, 'lokalno'])[1]);
   const f0 = R.files[0], L = R.text.split('\n').filter(l => !/^D /.test(l)), it = st.zbirka;   // (D: the log's lines, Dnevnik napak: a slow machine's hitches; napake-samodejno.test.mjs)
   T.check('the picture: napake_bathurst_LLLLMMDD-UUMM.png, a PNG 1600 px wide, at most 1600 tall', R.files.length === 1 && /^napake_bathurst_\d{8}-\d{4}\.png$/.test(f0.name) && f0.type === 'image/png' && f0.w === 1600 && f0.h <= 1600 && f0.h > 600 && f0.bytes > 50000, JSON.stringify(R.files));
   const clk = (t) => { const u = Math.round(t * 1000), m = Math.floor(u / 60000); return String(m).padStart(2, '0') + ':' + ((u % 60000) / 1000).toFixed(3).padStart(6, '0'); };
-  T.check('the text: the first line (the version is game.js\'s stamp, the track, the mode and the weather, the device, the screen), a line for each note (with v_krogu=[...]), the flag not marked',
+  T.check('the text: the first line (the version is game.js\'s stamp, lokalno on a page without stamps, the track, the mode and the weather, the device, the screen), a line for each note (with v_krogu=[...]), the flag not marked',
     L.length === 4 && L[0].startsWith('RRA-NAPAKE v=' + ver + ' proga=bathurst način=race/suho naprava=') && L[0].endsWith(' 640x360') &&
     L[1].startsWith(`#1 ${clk(it[0].t)} K1 s=${it[0].s}m rdeča »Sledi gum sredi ravnine« v_krogu=[`) && L[2].startsWith(`#2 ${clk(it[1].t)} K1 s=${it[1].s}m modra »Tekmeci v koloni« v_krogu=[`) && L.slice(1, 3).every(l => l.endsWith(']')) &&
     /^⚑1 00:\d\d\.\d{3} K1 s=\d+m \(zastavica med dirko, ni označena\)$/.test(L[3]) && R.flags === 1, R.text);
@@ -74,8 +76,16 @@ try {
 
   // four moments: two pictures; 2400 px
   await Q.evaluate(() => window.__game.onAction('rp-b5')); await moment(Q, 1, 300, 120, 30, 'Tri');
-  await Q.evaluate(() => window.__game.onAction('rp-b5')); await moment(Q, 4, 330, 220, 30, 'Štiri');
+  // (the fourth with no mark: only its picture and the notebook's note, typed with no click: the red note, as the pencil is red)
+  await Q.evaluate(() => window.__game.onAction('rp-b5')); await Q.click('#nk-on'); await Q.keyboard.type('Štiri: ves zaslon utripa'); await Q.click('#nk-bar .nk-add');
   const R4 = await Q.evaluate(async () => { const r = await Napake.pripravi(); return r.files.map(f => [f.name, f.w, f.h]); });
+  const z4 = await Q.evaluate(() => { const it = Napake.zbirka[3]; return { n: Napake.zbirka.length, strokes: it.strokes.length, zapisi: it.zapisi.map(z => z.barva + ': ' + z.text), bel: it.belezka, w: it.w, h: it.h, L: Napake.porocilo().split('\n').filter(l => /^#4 /.test(l)) }; });
+  // its notebook drawn on its picture (the second sheet's one moment, 776 px wide from 16, 16): dark by its bottom right corner as on the screen
+  const k4 = 776 / z4.w, ks = R4[1] ? R4[1][1] / 1600 : 1, nr = z4.bel ? [16 + (z4.bel.r[0] + z4.bel.r[2]) * z4.w * k4, 16 + (z4.bel.r[1] + z4.bel.r[3]) * z4.h * k4] : [0, 0];   // (ks: a sheet made smaller, a long log under it)
+  const [p4] = await pix(Q, 1, [[(nr[0] - 10) * ks, (nr[1] - 5) * ks]]);
+  T.check('a moment with no mark: kept with the notebook\'s red note (#4 time K1 s=…m rdeča »…« v_krogu=[], not "(brez zapisa)"), drawn on its picture bottom right',
+    z4.n === 4 && z4.strokes === 0 && z4.zapisi.join() === 'rdeča: Štiri: ves zaslon utripa' && !!z4.bel && z4.bel.barvna && !z4.bel.text && z4.L.length === 1 && /^#4 \d\d:\d\d\.\d{3} K1 s=\d+m rdeča »Štiri: ves zaslon utripa« v_krogu=\[\]$/.test(z4.L[0]) && p4.every(v => v < 45),
+    JSON.stringify({ z4, p4 }));
   await Q.evaluate(() => { localStorage.setItem('tdgp-napake', JSON.stringify(Object.assign(Napake.nast, { size: 2400 }))); });
   await Q.evaluate(() => { window.__game.onAction('rp-race'); });
   await Q.waitForFunction(() => !window.__game.paused && window.__game.rpCount === 0, null, { timeout: 90000, polling: 100 });

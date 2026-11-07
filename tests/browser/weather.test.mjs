@@ -1,7 +1,8 @@
 // Sector times, the set-up, tyres and a changing weather in the game (the Red Bull Ring, the player on autopilot): the track screen's
 // set-up rows (wing and gears, kept per track, given to the race) and the "Menljivo" weather; a race where the rain starts at 20 s: the
-// message, the hint to come in for rain tyres, the tyres on the HUD (the compound's word, no %; on a red chip: the wrong ones), a pit stop
-// for rain tyres (the message, the new set on the HUD cold: the word and the dots light blue); the sector times on the HUD (S1-S3); a race
+// message, the hint to come in for rain tyres, the tyres on the HUD (each its own since 1. 11. 2026, Car.kt: the four dots, class kt; the
+// compound's word, no %; on a red chip: the wrong ones), a pit stop for rain tyres (the message, the new set on the HUD cold: the word and
+// the dots light blue); the sector times on the HUD (S1-S3); a race
 // where the rain stops: the message, the drying road and the dry racing line.
 //   node tests/browser/weather.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -46,7 +47,7 @@ try {
   await startTrack(page, 'rbring');
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
-  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
+  T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on kt dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
   await msgs(); await simTo(22);
   const h1 = await hud(), m1 = await msgs();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
@@ -54,9 +55,9 @@ try {
   let h2 = null, hb = null; await msgs();
   for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane)
   const h2b = await hud(), m2 = await msgs();
-  T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
+  T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on kt dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();
-  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD and cold: the word and the four dots light blue', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on wet cold:DEŽNE$/.test(h3.tyre) && h3.tyC === COLD && h3.dotC.length === 4 && h3.dotC.every(c => c === COLD), JSON.stringify({ h2, h3, m2 }));
+  T.check('pit stop: rain tyres fitted ("DEŽNE GUME"), new on the HUD and cold: the word and the four dots light blue', h2.ty.k === 'wet' && m2.some(m => /DEŽNE GUME/.test(m)) && /^on kt wet cold:DEŽNE$/.test(h3.tyre) && h3.tyC === COLD && h3.dotC.length === 4 && h3.dotC.every(c => c === COLD), JSON.stringify({ h2, h3, m2 }));
   T.check('sector times on the HUD: S1 with a time', /^(ob|pb|sl):S1 \d+\.\d+$/.test(h2b.sec[0]), h2b.sec.join(' | '));
   await page.evaluate(() => window.__game.resume());
 
@@ -73,6 +74,17 @@ try {
   T.check('the rain stops: rain tyres at the start, "DEŽ JE PONEHAL", the road still wet', d0.ty.k === 'wet' && d0.rain === 1 && d1.rain === 0 && m3.includes('DEŽ JE PONEHAL') && d1.water > 0.8, JSON.stringify({ d0: d0.ty, d1, m3 }));
   T.check('the road dries, the racing line first: the dry line drawn along it', d2.line < d2.water - 0.1 && line && line.vis && line.op > 0.3, JSON.stringify({ water: d2.water, line: d2.line, mesh: line }));
   T.check('the puddles drawn over the dry line, gone on it as much as it has dried', !!line && !!line.pud && line.pud.vis && line.pud.ro > line.ro && line.pud.dry === line.op, JSON.stringify(line));
+  await page.evaluate(() => window.__game.resume());
+
+  // 4. the start of a changing day, rolled when the menu shows it (rollWet), is for one start only: a start that does not use it (another
+  // weather) does not leave it for a later one
+  await act('to-title'); await page.waitForTimeout(200);
+  await page.evaluate(() => { const g = window.__game; g.wxNext = null; g.S.weather = 'change'; });
+  const wx1 = await page.evaluate(() => { const g = window.__game, wet = g.rollWet(); return { wet, held: g.wxWet }; });
+  await page.evaluate(() => window.__game.S.weather = 'dry');
+  await startTrack(page, 'rbring');
+  const wx2 = await page.evaluate(() => window.__game.wxWet);
+  T.check('a changing day\'s wet or dry start, rolled in the menu, is gone once a race has started (not kept for a later one)', typeof wx1.wet === 'boolean' && wx1.held === wx1.wet && wx2 === null, JSON.stringify({ wx1, wx2 }));
   await page.evaluate(() => window.__game.resume());
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));

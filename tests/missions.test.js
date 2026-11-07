@@ -21,9 +21,13 @@ const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
 check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === M.DEFS.filter(d => !d.test).map(d => d.id).sort().join() + ',vaja' && M.DEFS.map(d => d.id).indexOf('99') === M.DEFS.length - 2, M.DEFS.map(d => d.id).join());
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
+// (Santa Monica Mountains became a test track on 4. 11. 2026, Vršič on 6. 11. 2026 and the roads of the USA but Pikes Peak on 5. 11. 2026, the user's decisions
+// (one track a country, CLAUDE.md »Testne proge«); the missions on them stay there until the user moves them, later, when it is known which tracks stay
+// (docs/misije.md): these exceptions only, no other mission may run on a test track)
+const ON_TEST_TRACK = { '01': 'vrsic', '06': 'mulholland', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth' };
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
-  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test));
+  check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));
   const miss = [d.title, d.story, d.goal, d.hint].concat(d.rows.map(r => r.label)).filter(s => s && !has(s));
   check(`mission ${d.id}: its texts in English`, !miss.length, miss.join(' | '));
   check(`mission ${d.id}: the track's name ("Kraj, Država")`, /, /.test(M.placeOf(d)), M.placeOf(d));
@@ -62,6 +66,9 @@ check('practice: at half damage, failed', r.end === 'fail');
 let o = M.recOf('t9'); check('no record yet', o.stars === 0 && o.best === 0 && o.runs === 0);
 // the race's options
 check('no mission: no options', M.opts() === null && !M.on());
+// a mission has no tyres of its own to wear (the user's choice 3. 11. 2026): its options turn the game's tyreRule and wheelRule off
+M.init({ start() { } }); M.start('vaja'); const mo = M.opts(); M.stop();
+check('a mission: its options turn the four tyres (tyreRule) and the wheel rule off, over the game\'s own', !!mo && 'tyreRule' in mo && mo.tyreRule === undefined && 'wheelRule' in mo && mo.wheelRule === undefined && mo.tt === true && M.opts() === null, JSON.stringify(mo));
 
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

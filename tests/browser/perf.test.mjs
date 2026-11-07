@@ -1,10 +1,11 @@
 // Phone budget: on a phone-size screen (844x390, quality 'normal', graphics detail 'low' = NIZKA, shadows on, chase
-// camera) every track is driven on autopilot and the WebGL work per frame is counted (draw calls and vertices of all
+// camera, its shake on: SHAKE) every track is driven on autopilot and the WebGL work per frame is counted (draw calls and vertices of all
 // passes: shadows and scene) at six places around the lap. The NIZKA tier is the one the weakest phones run, so this is
 // the budget from CLAUDE.md (up to ~300 draw calls and ~900k vertices per track); the higher tiers may exceed it.
 // Fails when the busiest of them needs more than tests/golden/perf.json allows (+10 % +5 draw
 // calls, +10 % +20k vertices), e.g. a change that makes a track or car too heavy for phones; and when a real track (not one
-// marked test: true, kept for testing only) averages more than the budget itself, 300 draw calls or 900k vertices. The JavaScript time of
+// marked test: true, kept for testing only) needs more than the budget itself, 300 draw calls or 900k vertices, on average or at the
+// busiest of the six places (maxCalls, maxKverts; the new map not: it has only its reference's margin). The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
 // twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
@@ -17,10 +18,18 @@ import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
+// the camera's shake on (Nastavitve · Tresenje kamere, off by default since 2. 11. 2026), as when the references were recorded: its jitter
+// draws from Math.random, which the seeded run shares with the race, so with it off the race goes otherwise and the six samples fall
+// elsewhere on the lap (the jitter itself adds no draw call); tools/obremenitev.mjs the same. And the knocks between cars as when the
+// references were recorded (Trki med avti: Stara, crV 4; the default since 2. 11. 2026 is Simulacija): the knock moves the cars otherwise,
+// so where the six samples fall and how many rivals are in view there goes with it (the cost of a car is the same in every version; on the
+// Nordschleife the busiest sample took 361k vertices against 354k, the fleet's heaviest one-make fields 430k against 402k: where the cars
+// were, not what they cost). tests/browser/fleet.test.mjs, which measures its fields against these references, the same
+const SHAKE = { camShake: 1, camLand: 1, camKerb: 1, camMis: 1, crV: 4 };
 // the new map (NEW VERSION · TEST 1, the title's button in the new menu): built and merged, the game stood still, the car put at each
 // place, the camera behind it; the busiest frame is checked as a track's is
 async function newMap() {
-  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345, menu: true });
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345, menu: true });
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };
     const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -65,7 +74,7 @@ const srv = await serve();
 const browser = await launch();
 const out = {};
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 844, height: 390 }, { seed: 12345 });
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
   await page.evaluate(() => {   // count every WebGL draw (all render passes)
     window.__gl = { calls: 0, verts: 0 };
     const gl = Render.info && document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
@@ -82,6 +91,7 @@ try {
       const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.onAction('restart'); g.pause();
       g.race.lch = null; for (const c of g.race.cars) c.lch = null;   // (the start's reaction off: the samples measure what is drawn, at the same spots on the lap as ever)
+      g.race.player.kt = null;   // (the player's own tyres too, Car.kt, every vehicle's since 1. 11. 2026: their wear changes the grip and so the car's way round the lap)
       const P = g.race.player, s = [];
       let tPhys = 0, tRend = 0;
       for (let k = 0; k < 6; k++) {
@@ -102,10 +112,14 @@ try {
     const why = [];
     if (r.maxCalls > g.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(g.maxCalls * 1.1 + 5)}`);
     if (r.maxKverts > g.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(g.maxKverts * 1.1 + 20)}k`);
-    if ((r.calls > 300 || r.kverts > 900) && !(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id))) why.push('over the budget of CLAUDE.md (300 draw calls, 900k vertices on average)');
+    if (!(await page.evaluate((id) => !!(Core.TRACKS.find(d => d.id === id) || {}).test, id))) {   // (the budget of CLAUDE.md, on a real track: on average and at its busiest place)
+      if (r.calls > 300 || r.kverts > 900) why.push('over the budget of CLAUDE.md (300 draw calls, 900k vertices on average)');
+      if (r.maxCalls > 300 || r.maxKverts > 900) why.push('over the budget of CLAUDE.md at the busiest place (300 draw calls, 900k vertices)');
+    }
     T.check(`${id}: within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await ctx.close();   // (the tracks' game closed first: still running beside the new map's, it slowed that one's loading past page.goto's limit)
   if (!only || only.includes('newmap')) await newMap();
 } finally {
   await browser.close(); await srv.close();

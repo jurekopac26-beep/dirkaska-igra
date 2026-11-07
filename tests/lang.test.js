@@ -2,7 +2,8 @@
 // Checked: the first argument of every tr(...) in the scripts (each string in it: tr(a ? 'x' : 'y')), the tables the game reads through
 // tr() (DRIVE_TXT, NET_ERR, ...), the texts and labels of index.html, the garage (js/garage.js, js/garage3d.js, its tables, garaza.html), the upgrades and the car credit (Core), the English of every track,
 // championship and famous jump (def.en), the place names on the HUD, the helpers for numbers, money and places, and the fleet: the
-// categories (Core.CATS) and the description of every vehicle (def.desc), both shown through tr().
+// categories (Core.CATS) and the description of every vehicle (def.desc), both shown through tr(). Every voice speaks English in both
+// languages (the engineer's row in the settings, the police radio given the English twin of its lines).
 //   node tests/lang.test.js
 'use strict';
 const fs = require('fs');
@@ -41,7 +42,8 @@ const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map(l =
 
 // 1. every tr(...) in the game's scripts: each string of its first argument is in the dictionary
 const missing = [], keysUsed = new Set();
-for (const f of ['js/game.js', 'js/nvmenu.js', 'js/missions.js', 'js/garage.js', 'js/garage3d.js']) {
+const ZB_FILES = ['js/zabava.js'].concat(fs.existsSync(path.join(ROOT, 'js', 'zabava')) ? fs.readdirSync(path.join(ROOT, 'js', 'zabava')).filter(f => f.endsWith('.js')).sort().map(f => 'js/zabava/' + f) : []);   // (Zabava: the novelties, docs/zabava.md)
+for (const f of ['js/game.js', 'js/nvmenu.js', 'js/nvheli.js', 'js/nvschool.js', 'js/missions.js', 'js/garage.js', 'js/garage3d.js'].concat(ZB_FILES)) {
   const src = noComments(read(f));
   for (const m of src.matchAll(/\btr\(/g)) for (const s of literals(firstArg(src, m.index + 3))) { if (s === '') continue; keysUsed.add(s); if (!has(s)) missing.push(s); }
 }
@@ -70,7 +72,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
 {
   const html = read('index.html'), body = html.slice(html.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<!--[\s\S]*?-->/g, '');
   const dec = (t) => t.replace(/&#(\d+);/g, (m, c) => String.fromCodePoint(+c)).replace(/&times;/g, '×').replace(/&middot;/g, '·').replace(/&minus;/g, '−').replace(/&amp;/g, '&');
-  const PLACEHOLDER = new Set(['KROG 1/3', 'Jezero Ring · 3 krogi · 21 nasprotnikov', 'KAZE RS', 'FR', '10.000 €', '1×', '−', '+']);   // (written over by the game at once)
+  const PLACEHOLDER = new Set(['KROG 1/3', 'Jezero Ring · 3 krogi · 21 nasprotnikov', 'KAZE RS', 'FR', '10.000 🪙', '1×', '−', '+']);   // (written over by the game at once)
   const miss = [];
   for (const m of body.matchAll(/>([^<>]+)</g)) { const t = dec(m[1]).replace(/\s+/g, ' ').trim(); if (t && /[A-Za-zČŠŽčšž]/.test(t) && !has(t) && !Lang.SAME.has(t) && !PLACEHOLDER.has(t)) miss.push(t); }
   for (const m of body.matchAll(/\b(aria-label|placeholder|title)="([^"]+)"/g)) { const t = dec(m[2]); if (!has(t) && !Lang.SAME.has(t)) miss.push('@' + m[1] + ' ' + t); }
@@ -90,7 +92,7 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const src = noComments(read('js/garage.js'));
   const tableSrc = (name) => { const m = new RegExp('\\b' + name + ' = (?=[\\[{])').exec(src); if (!m) return null; let i = m.index + m[0].length, d = 0, j = i;
     for (; j < src.length; j++) { const ch = src[j]; if (ch === "'" || ch === '"') { j = strAt(src, j)[1] - 1; continue; } if ('([{'.includes(ch)) d++; else if (')]}'.includes(ch) && --d === 0) break; } return src.slice(i, j + 1); };
-  for (const k of ['COLORS', 'BODY', 'SRV', 'UPG_FX', 'METER', 'DONE_NAME']) {
+  for (const k of ['COLORS', 'GUIDE']) {
     const t = tableSrc(k); if (!t) { miss.push('(no table ' + k + ')'); continue; }
     for (const s of literals(t)) if (/[a-zčšž]{2}/.test(s) && !/^(power|grip|weight|drift|clean|body|engine|motor|gume|zavore|aero|paint)$/.test(s) && !has(s) && !Lang.SAME.has(s)) miss.push(k + ': ' + s);
   }
@@ -133,8 +135,8 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const ords = [1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101, 111].map(Lang.ord).join(' ');
   const pl = ['Ruski križ', 'Zavoj 3', 'Serpentina 8 · Ruska kapelica', 'Eau Rouge', 'Velika lasnica'].map(Lang.place).join(', ');
   Lang.set('sl');
-  check('Slovenian: the texts as written, 3.048, 1,9, 12.300 €, 3., the place names as they are', sl === 'Proga: X|Gorski reli|3.048|1,9|12.300 €|3.|Serpentina 4 · 1.060 m|neznano', sl);
-  check('English: Track: X, Mountain Rally, 3,048, 1.9, €12,300, 3rd, Hairpin 4 · 1,060 m, an unknown text as it is', en === 'Track: X|Mountain Rally|3,048|1.9|€12,300|3rd|Hairpin 4 · 1,060 m|neznano', en);
+  check('Slovenian: the texts as written, 3.048, 1,9, 12.300 🪙 (the money in coins, no €), 3., the place names as they are', sl === 'Proga: X|Gorski reli|3.048|1,9|12.300\u00a0🪙|3.|Serpentina 4 · 1.060 m|neznano', sl);
+  check('English: Track: X, Mountain Rally, 3,048, 1.9, 12,300 🪙, 3rd, Hairpin 4 · 1,060 m, an unknown text as it is', en === 'Track: X|Mountain Rally|3,048|1.9|12,300\u00a0🪙|3rd|Hairpin 4 · 1,060 m|neznano', en);
   check('English places: 1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords === '1st 2nd 3rd 4th 11th 12th 13th 21st 22nd 23rd 101st 111th', ords);
   check('English place names on the HUD: Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Grand Hairpin', pl === 'Russian Cross, Turn 3, Hairpin 8 · Russian Chapel, Eau Rouge, Grand Hairpin', pl);
   check('Vršič: "Vršič, Slovenija" in Slovenian, "Vršič, Slovenia" in English; its description is English', Lang.of(v, 'name') === 'Vršič, Slovenija' && v.en.name === 'Vršič, Slovenia' && /^The road over the Vršič pass/.test(v.en.desc));
@@ -154,6 +156,19 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   const k = C.MODELS.find(M => M.id === 'miska'), line = [Lang.tr(C.CATS.find(c => c.id === k.cat).name), Lang.tr(k.def.desc)].join(' | ');
   Lang.set('sl');
   check('the fleet in English: Small cars | A tiny Italian city car ... (the MIŠKA)', /^Small cars \| A tiny Italian city car/.test(line), line);
+}
+
+// 8. every voice speaks English whatever the page's language (only what is written follows it): the engineer's row in the settings (Glas
+// inženirja), his shout at the hand-back and the settings' line about the voices in English; the police radio's voice given the line's
+// English twin (game.js rdSay: its English call sign and line), never the Slovenian caption
+{
+  const src = noComments(read('js/game.js')), html = read('index.html');
+  const row = /<span class="rlbl">Glas inženirja<\/span><div class="seg" data-set="engV">/.test(html), def = /\bengV: 1\b/.test(src);
+  const words = EN['Glas inženirja'] === 'Engineer voice' && EN['Gremo, gremo, gremo!'] === 'Go, go, go!' && /every voice speaks English/.test(EN[' · vsi glasovi govorijo angleško (tudi policijski radio)'] || '');
+  const say = /const rdSay = \(C\) => C\.cen \? C\.cen \+ ', ' \+ C\.en : C\.en;/.test(src) && /\bsay = rdSay\(C\);/.test(src) && /C\.item = Comm\.radio\(say, \{ who: C\.who, u: C\.u \}\);/.test(src);
+  const slSaid = /rdSpeech|enOnly|C\.csl/.test(src);
+  check('the voices in English in both languages: the settings\' row Glas inženirja (Engineer voice, on by default), "Go, go, go!", "every voice speaks English"; the police radio says the English twin (rdSay), no Slovenian speech',
+    row && def && words && say && !slSaid, JSON.stringify({ row, def, words, say, slSaid }));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

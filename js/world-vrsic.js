@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico,
+    Chunks, GB, IChunks, NR_A64, TAU, atSf, box, parkedCar, clamp, cone, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico,
     inPoly, lerp, nrChamfer, polyDist, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, starCone, valueNoise2, vary
   } = API;
   let LOD, T;   // (World's, for the build under way)
@@ -410,27 +410,33 @@
       for (let i = Math.max(0, Math.floor((a - 0.6) / T.ds)); i <= Math.min(N - 1, Math.ceil((b + 0.6) / T.ds)); i++) { mouthE[si][i] = 1; mouthV[si][i] = 1; }
       if (T.gap) for (let i = Math.max(0, S.i0 - 80); i <= Math.min(N - 1, S.i0 + 80); i++) if (T.gap[si][i]) mouthV[si][i] = 1; });
     const edgeOn = (si, i, j) => !(mouthE[si][i] || mouthE[si][j]) || (dash && i % 2 === 0);
-    // the surfaces of side road n into the chunk's builders (G.a asphalt, G.s gravel and the shoulders, G.l lines)
+    // the surfaces of side road n into the chunk's builders (G.a asphalt, G.s gravel and the shoulders, G.l lines; G.v the verge's, with K.gravV). The gravel
+    // (a gravel road, the shoulders) is the road's own shoulder's (the user's wish, 2. 11. 2026: »barva makadama ceste za izvoz naj bo enake barve kot makadam
+    // za belo črto«): K.gravC and K.shC its colour; K.gravV: drawn into the verge's mesh as the road's shoulder is (Vršič), coloured by K.gravCol(x, z), its
+    // texture laid in world metres (K.vUV)
+    const GVc = K.gravCol, vUV = K.vUV || ((x, z) => [x / 10, -z / 10]);
     const draw = (S, n, G) => {
       const k = S.k, paved = !S.grav, tEnd = S.end === 2 ? S.L + 0.5 : S.Lend, hw = S.hw, gC = K.gCol, pC = K.paveC || [0.84, 0.84, 0.86], vC = K.gravC || [0.66, 0.58, 0.48], sC = K.shC || vC;
-      const sh = RS() * 0.08 + 0.92, pc = paved ? [pC[0] * sh, pC[1] * sh, pC[2] * sh] : vC, GS = paved ? G.a : G.s, uvS = paved ? (u, t) => [(u + 4) / 8, t / 8] : (u, t) => [u / 4, t / 6];
+      const GV = K.gravV && G.v ? G.v : null, gcol = (x, z, c) => (GV && GVc ? GVc(x, z) : c);
+      const sh = RS() * 0.08 + 0.92, pc = paved ? [pC[0] * sh, pC[1] * sh, pC[2] * sh] : vC, GS = paved ? G.a : GV || G.s, uvS = paved ? (u, t) => [(u + 4) / 8, t / 8] : (u, t) => [u / 4, t / 6];
       const tA = Math.max(0, Math.min(S.tv[0], S.tv[1], S.te) - 1.5), tC = Math.max(S.tv[0] + S.lt[0], S.tv[1] + S.lt[1]) + 2, secs = [];
       for (let t = tA; ; t += t < tC ? 1 : 2) { const tt = Math.min(t, tEnd), p = T.stubPt(k, tt, F), nx = -p.tz, nz = p.tx;
         const shL = 0.6 * sstep(0, 1.5, tt - S.tv[0] - S.lt[0]), shR = 0.6 * sstep(0, 1.5, tt - S.tv[1] - S.lt[1]), us = [-hw - shL, -hw, -hw / 2, 0, hw / 2, hw, hw + shR];
         const fade = tEnd > S.L + 10 ? sstep(S.L + 6, tEnd, tt) : 0, sink = tEnd > S.L + 10 ? sstep(tEnd - 6, tEnd, tt) * 0.12 : 0;   // (the road on past the rail fades into the ground; one ending at a building does not)
         secs.push({ t: tt, pts: us.map((u, j) => { let x = p.x + nx * u, z = p.z + nz * u;
           for (let it = 0; it < 3; it++) { const q = T.query(x, z, S.i0, Q); if (q.deep) break; const e = w + 0.02 - Math.abs(q.d); if (e <= 0) break; const sa = Math.max(0.3, Math.abs(p.tx * q.nx + p.tz * q.nz)); x += p.tx * e / sa; z += p.tz * e / sa; }   // (onto the road's edge, along the side road)
-          const out = j === 0 || j === 6, y = yAt(x, z, S, tt) + (out ? 0.035 : 0.055) - sink, gc = gC(x, z), c = out ? [lerp(sC[0], gc[0], 0.6), lerp(sC[1], gc[1], 0.6), lerp(sC[2], gc[2], 0.6)] : pc;
+          const out = j === 0 || j === 6, y = yAt(x, z, S, tt) + (out ? 0.035 : 0.055) - sink, gc = gC(x, z), s0 = gcol(x, z, sC), c = out ? [lerp(s0[0], gc[0], 0.6), lerp(s0[1], gc[1], 0.6), lerp(s0[2], gc[2], 0.6)] : paved ? pc : gcol(x, z, pc);
           return [x, y, z, [lerp(c[0], gc[0], fade), lerp(c[1], gc[1], fade), lerp(c[2], gc[2], fade)], u, tt]; }) });
         if (tt >= tEnd) break; }
       for (let a = 0; a + 1 < secs.length; a++) { const A = secs[a].pts, B = secs[a + 1].pts;
         for (let j = 0; j < 6; j++) { const p = A[j], q = A[j + 1], r = B[j + 1], s = B[j]; if (Math.hypot(p[0] - q[0], p[2] - q[2]) + Math.hypot(s[0] - r[0], s[2] - r[2]) < 0.05) continue;
-          const g = j === 0 || j === 5 ? G.s : GS, uv = j === 0 || j === 5 ? (P) => [P[4] / 4, P[5] / 6] : (P) => uvS(P[4], P[5]);
+          const edg = j === 0 || j === 5, g = edg ? GV || G.s : GS, uv = GV && (edg || !paved) ? (P) => vUV(P[0], P[2]) : edg ? (P) => [P[4] / 4, P[5] / 6] : (P) => uvS(P[4], P[5]);
           g.quadUp([p[0], p[1], p[2]], [q[0], q[1], q[2]], [r[0], r[1], r[2]], [s[0], s[1], s[2]], [p[3], q[3], r[3], s[3]], [uv(p), uv(q), uv(r), uv(s)]); } }
       // the two kerb returns: a fan from the corner's apex to its arc
-      for (const C of cor[n]) { const P = [C.V, ...C.A].map(([x, z]) => [x, yAt(x, z, S, S.te) + 0.055, z]), uv = C.UT.map(([t, u]) => uvS(u, t));
+      for (const C of cor[n]) { const P = [C.V, ...C.A].map(([x, z]) => [x, yAt(x, z, S, S.te) + 0.055, z]), wv = GV && !paved, uv = wv ? P.map(p => vUV(p[0], p[2])) : C.UT.map(([t, u]) => uvS(u, t));
+        const cl = P.map(p => (paved ? pc : gcol(p[0], p[2], pc)));
         for (let m = 1; m + 1 < P.length; m++) { const a = P[0], b = P[m], c = P[m + 1]; if (Math.abs((b[0] - a[0]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[0] - a[0])) < 1e-3) continue;
-          GS.triUp(a, b, c, [pc, pc, pc], [uv[0], uv[m], uv[m + 1]]); } }
+          GS.triUp(a, b, c, [cl[0], cl[m], cl[m + 1]], [uv[0], uv[m], uv[m + 1]]); } }
       // across its lane out at the road's edge (paved streets and service roads, not the narrow driveways): the stop line (solid) or the give-way line (dashes)
       if (paved && hw >= 2.2 && K.line !== 'none') { const u0 = lh ? 0.15 : -hw + 0.2, u1 = lh ? hw - 0.2 : -0.15, wht = [0.95, 0.95, 0.92];
         let tl = 0; for (const u of [u0, (u0 + u1) / 2, u1]) for (let t = Math.max(0, S.te - 6); t < S.te + 30; t += 0.25) { const p = T.stubPt(k, t, F), q = T.query(p.x - p.tz * u, p.z + p.tx * u, S.i0, Q); if (q.deep || Math.abs(q.d) >= w) { tl = Math.max(tl, t); break; } }
@@ -441,7 +447,7 @@
     };
     return { mouthE, mouthV, edgeOn, n: list.length,
       edges: (i, j, L) => L.filter((e, si) => edgeOn(si, i, j)),   // (the road's two edge lines [[left], [right]] where they are drawn between samples i and j)
-      emit: (c0, c1, a, s, l) => { list.forEach((S, n) => { if (S.i0 >= c0 && S.i0 < c1) draw(S, n, { a, s: s || a, l }); }); } };
+      emit: (c0, c1, a, s, l, v) => { list.forEach((S, n) => { if (S.i0 >= c0 && S.i0 < c1) draw(S, n, { a, s: s || a, l, v }); }); } };
   }
   // the verge's cross-section on sample i, side (as the builders' vProf: [offset, height above the road] x 5) across a side road's mouth (null elsewhere): from
   // the shoulder's edge e0 at the side road's surface, no ditch
@@ -650,6 +656,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + (b.name ? 9 : 2.5));   // (a clearing round the huts and the chapel)
+    if (World.peopleGround) for (const [x, z, r] of World.peopleGround(T)) exclPush(x, z, r);   // (the people's scenes: no shrub, tree or rock in the mown meadow, the camp …)
     out.marks = {};   // (where the landmarks stand: the tests look for them)
     for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     exclPush(padP.x, padP.z, padP.r + 4);
@@ -698,18 +705,18 @@
     // whose mission ends in the building past it instead (vrHideout; Render.attachRace shows the one or the other)
     const finG = new THREE.Group(); finG.name = 'vrFin'; root.add(finG); out.dyn.vrFin = finG;
     const sett = T.settAt || new Uint8Array(N), onBr = new Uint8Array(N), sw = 0.6;
-    const SB = stubGeo({ gCol: vrGCol, edge: 'dash', line: 'dash', paveC: [0.83, 0.83, 0.85], shC: [0.84, 0.79, 0.72] });   // the side roads: their mouths, their surfaces (in the road's chunks below)
+    // (V2 makadamski rob: a gravel shoulder of irregular width (0.3-1.2 m, deterministic noise along the road), light grey-brown, thinning out softly into the grass)
+    const eN1 = valueNoise2(9701, 9), eN2 = valueNoise2(9702, 3.1), eN3 = valueNoise2(9703, 1.3);
+    const GRV = (x, z) => { const n = (0.9 + 0.2 * eN2(x * 1.7, z * 1.7)) * (0.93 + 0.14 * eN3(x, z)); return [0.7 * n, 0.64 * n, 0.54 * n]; };   // light grey-brown gravel (times the grit map)
+    const SB = stubGeo({ gCol: vrGCol, edge: 'dash', line: 'dash', paveC: [0.83, 0.83, 0.85], shC: [0.84, 0.79, 0.72], gravV: true, gravCol: GRV });   // the side roads: their mouths, their surfaces (in the road's chunks below; their gravel the shoulder's, in the verge's mesh)
     const WK = T.walk, wE = (si, i) => w + (WK ? WK[si][i] : 0);   // the edge of the road on a side (0 left, 1 right): past its sidewalk (Kranjska Gora, Jasna)
     for (const [a, b] of def.bridges || []) for (let s = sStart + a - 3; s <= sStart + b + 3; s += T.ds / 2) onBr[T.idx(s)] = 1;
     const altAt = (i) => T.hy[i] + base;
 
-    // (V2 makadamski rob: a gravel shoulder of irregular width (0.3-1.2 m, deterministic noise along the road), light grey-brown, thinning out softly into the grass)
-    const eN1 = valueNoise2(9701, 9), eN2 = valueNoise2(9702, 3.1), eN3 = valueNoise2(9703, 1.3);
     const SWA = [0, 1].map(si => { const side = si ? 1 : -1, A = new Float32Array(N);
       for (let i = 0; i < N; i++) { const x = T.px[i] + T.nx[i] * side * w, z = T.pz[i] + T.nz[i] * side * w, n = 0.68 * eN1(x, z) + 0.32 * eN2(x, z) + 0.18 * (rpHash(i, 41 + si) - 0.5);
         A[i] = 0.3 + 0.9 * sstep(0.36, 0.64, n); }
       return A; });
-    const GRV = (x, z) => { const n = (0.9 + 0.2 * eN2(x * 1.7, z * 1.7)) * (0.93 + 0.14 * eN3(x, z)); return [0.7 * n, 0.64 * n, 0.54 * n]; };   // light grey-brown gravel (times the grit map)
     const EDGE = {
       sw: (i, side) => SWA[side > 0 ? 1 : 0][i],
       prof: (i, side, p) => { const e = wE(side > 0 ? 1 : 0, i), s = SWA[side > 0 ? 1 : 0][i], A = p[0], B = p[1], fo = Math.min(A[0] + 0.4, (A[0] + B[0]) / 2), t = (fo - A[0]) / Math.max(1e-3, B[0] - A[0]);
@@ -771,7 +778,7 @@
               gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
-        SB.emit(c0, c0 + 60, gr, gs, gl);   // (the side roads' surfaces, their junctions in this chunk)
+        SB.emit(c0, c0 + 60, gr, gs, gl, gv);   // (the side roads' surfaces, their junctions in this chunk; their gravel in the verge's mesh, as the shoulder)
         addM(gr, aMat); addM(gp, cMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
       }
       // chequered start and finish lines (the finish's in its group), a white line at each checkpoint
@@ -808,8 +815,7 @@
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, vrGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = vrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const flagSI = (g, x, y, z, rot, h) => {   // a flag pole with the Slovenian flag: white, blue, red (no coat of arms at this size), both faces
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
       const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 0.9, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)], [fx, fz] = at(fw / 2), y0 = y + h - fh - 0.15;
@@ -1108,5 +1114,6 @@
 
   Object.assign(API, { VRC, VRHC, VRSP, VRSQ, VRT, stubExcl, stubGeo, stubProps, stubRails, stubVerge, vrCol, vrDem, vrDist, vrFar, vrGCol, vrGH, vrGritTex, vrGround, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubH, vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrWater, vrsicProps });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { STG: { get: () => STG, set: (v) => { STG = v; } }, VR: { get: () => VR, set: (v) => { VR = v; } }, VRS: { get: () => VRS, set: (v) => { VRS = v; } } });
+  World.keep('VR', 'vrsic');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.vrsic = (scene, tex, opts) => buildVrsic(scene, tex, opts);
 })();

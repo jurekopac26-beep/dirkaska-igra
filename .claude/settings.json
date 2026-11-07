@@ -1,3 +1,7 @@
 {
-  "effortLevel": "high"
+  "effortLevel": "xhigh",
+  "env": {
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000"
+  }
 }

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- the same declarations as the game's index.html: in such a browser they are ignored here exactly as there -->
+<meta name="theme-color" content="#161b23">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<meta name="darkreader-lock">
+<title>Real Roads Atlas · preizkus barv</title>
+<!--
+  Preizkus barv za brskalnik, ki stran temni na silo (temni način Samsung Interneta). Stran ne potrebuje ničesar drugega iz igre.
+  Zgoraj je zaznava, ki jo uporablja meni (js/menu.js forcedDark: sistemska barva Canvas v svetlem elementu je bela, razen če brskalnik
+  temni na silo), spodaj ista štiri polja menija (bela tabla, zlata značka, rdeča tablica, rdeče-beli robnik), vsaka vrstica narisana
+  na drug način. Prva vrstica je canvas, ki ga brskalnik ne prebarva: vrstica, ki je v takem brskalniku enaka prvi, pomeni način, ki deluje.
+-->
+<style>
+  :root, html, body { color-scheme: dark; forced-color-adjust: none; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #161b23; color: #f6f6f1; font: 15px/1.45 system-ui, Roboto, 'Segoe UI', Arial, sans-serif;
+    padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { margin: 4px 0 12px; font: 900 italic 24px/1.1 system-ui, Roboto, sans-serif; }
+  h2 { margin: 22px 0 8px; font: 800 italic 17px/1.2 system-ui, Roboto, sans-serif; color: #aeb5f7; }
+  p, ol { margin: 0 0 10px; color: #d6dcea; }
+  ol { padding-left: 20px; }
+  b { color: #fff; }
+  .verdict { margin: 0 0 12px; padding: 12px 14px; border: 2px solid #3a4558; border-radius: 12px; background: #0b192b; font: 800 18px/1.3 system-ui, Roboto, sans-serif; }
+  .verdict.yes { border-color: #ff8a3d; color: #ffb27a; }
+  .verdict.no { border-color: #5fd38a; color: #8ff0b0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td { padding: 5px 0; border-top: 1px solid #2a3344; vertical-align: top; overflow-wrap: anywhere; }
+  td:first-child { width: 46%; padding-right: 10px; color: #9fb0c3; }
+  .ua { font-size: 11px; color: #9fb0c3; }
+  button { font: 700 15px/1 system-ui, Roboto, sans-serif; color: #fff; background: #26324a; border: 1.5px solid #5d6b82; border-radius: 10px; padding: 12px 16px; margin: 10px 0 0; }
+  #copied { margin-left: 10px; color: #8ff0b0; font-size: 13px; }
+  /* the grid: a label, then the four fields of the menu */
+  .grid { display: grid; grid-template-columns: 88px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; }
+  .hd { font: 700 11px/1.2 system-ui, Roboto, sans-serif; color: #9fb0c3; text-align: center; text-transform: uppercase; letter-spacing: .04em; }
+  .lb { font: 600 11.5px/1.25 system-ui, Roboto, sans-serif; color: #d6dcea; }
+  .lb i { font-style: normal; color: #ffc629; font-weight: 800; }
+  .c { position: relative; height: 44px; border-radius: 7px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+    font: 900 italic 13px/1 system-ui, Roboto, sans-serif; letter-spacing: -.2px; }
+  .c > span { position: relative; }
+  .c canvas, .c img, .c svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .na { color: #5d6b82; font-style: normal; font-weight: 600; }
+  .wide { grid-column: 1 / -1; }
+  .wide img { display: block; width: 100%; height: 200px; border-radius: 7px; }
+  /* 4: the fill is the shadow of a black block 2000 px to the left (filter colours are never darkened), the text its own text-shadow */
+  .ds::before, .ds.st::after { content: ''; position: absolute; top: 0; bottom: 0; left: -2000px; width: 100%; background: #000; filter: drop-shadow(2000px 0 0 var(--f)); }
+  .ds.st::after { background: repeating-linear-gradient(180deg, transparent 0 10px, #000 10px 20px); filter: drop-shadow(2000px 0 0 #f6f6f1); }
+  .ds > span, .fl ~ span { color: transparent; text-shadow: 0 0 0 var(--ink); }
+  /* 5: a black block flooded with the colour by an SVG filter (feFlood), the stripes a black-and-clear mask flooded white */
+  .fl { position: absolute; inset: 0; background: #000; }
+  .fl.mask { background: repeating-linear-gradient(180deg, transparent 0 10px, #000 10px 20px); }
+  /* 6: every colour as its opposite, turned back by filter: invert(1) */
+  .inv { filter: invert(1); }
+  .note { font-size: 12.5px; color: #9fb0c3; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs id="floods"></defs>
+</svg>
+<main>
+  <h1>Preizkus barv: temni način brskalnika</h1>
+  <div id="verdict" class="verdict">Preverjam …</div>
+  <table id="diag"></table>
+  <button type="button" id="copy">Kopiraj podatke</button><span id="copied"></span>
+
+  <h2>Kaj narediti</h2>
+  <ol>
+    <li>To stran odpri s povezavo v Claudu (tako se odpre v istem brskalniku kot igra) in naredi posnetek zaslona, po potrebi dva, da se vidi vsa stran.</li>
+    <li>Isto stran odpri še v Chromu in naredi posnetek.</li>
+    <li>Posnetke pošlji Claudu (ali tapni <b>Kopiraj podatke</b> in jih prilepi).</li>
+  </ol>
+  <p class="note">V vsaki vrstici so ista štiri polja kot v meniju igre. Vrstica 0 je narisana v canvas, ki ga brskalnik ne prebarva. Vrstica, ki je enaka vrstici 0, pomeni način risanja, ki v tem brskalniku deluje. V Chromu so vse vrstice enake.</p>
+
+  <h2>Polja</h2>
+  <div class="grid" id="grid"></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  // the four fields of the menu: the white label, the gold badge, the red plate, the red and white kerb
+  const K = [
+    { id: 'bela', name: 'Bela', bg: '#ffffff', ink: '#111111', text: 'GORA' },
+    { id: 'zlata', name: 'Zlata', bg: '#ffc629', ink: '#1b1b1b', text: 'NEW' },
+    { id: 'rdeca', name: 'Rdeča', bg: '#e63b2e', ink: '#ffffff', text: 'RACING' },
+    { id: 'robnik', name: 'Robnik', bg: '#e63b2e', ink: null, text: '', stripe: '#f6f6f1' },
+  ];
+  const comp = (hex) => '#' + hex.slice(1).match(/../g).map(h => (255 - parseInt(h, 16)).toString(16).padStart(2, '0')).join('');
+  const stripes = (a, b) => 'repeating-linear-gradient(180deg, ' + a + ' 0 10px, ' + b + ' 10px 20px)';
+  const FONT = '900 italic 13px system-ui, Roboto, sans-serif';
+
+  // a field drawn in a 2D canvas (w × h CSS px): the reference, and the pictures of rows 8 and 9
+  function draw(ctx, k, x, y, w, h) {
+    ctx.fillStyle = k.bg; ctx.fillRect(x, y, w, h);
+    if (k.stripe) { ctx.fillStyle = k.stripe; for (let s = 10; s < h; s += 20) ctx.fillRect(x, y + s, w, Math.min(10, h - s)); }
+    if (k.text) { ctx.fillStyle = k.ink; ctx.font = FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k.text, x + w / 2, y + h / 2 + 1); }
+  }
+  function canvasOf(w, h, paint) {
+    const dpr = Math.min(3, window.devicePixelRatio || 1), cv = document.createElement('canvas');
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext('2d', { alpha: false }); ctx.scale(dpr, dpr); paint(ctx); return cv;
+  }
+
+  // the SVG filters of row 5: a flood of each colour kept where the element is (SourceAlpha)
+  const floods = document.getElementById('floods'), fl = {};
+  for (const c of new Set(K.map(k => k.bg).concat(['#f6f6f1']))) {
+    const id = 'fl' + c.slice(1); fl[c] = 'url(#' + id + ')';
+    floods.insertAdjacentHTML('beforeend', '<filter id="' + id + '" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood flood-color="' + c + '"/><feComposite in2="SourceAlpha" operator="in"/></filter>');
+  }
+
+  const span = (k, style) => k.text ? '<span' + (style ? ' style="' + style + '"' : '') + '>' + k.text + '</span>' : '';
+  const ROWS = [
+    ['Canvas (referenca)', () => '<div class="c ref"></div>'],
+    ['Navaden CSS (kot zdaj v igri)', (k) => '<div class="c" style="background:' + (k.stripe ? stripes(k.bg, k.stripe) : k.bg) + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
+    ['Gradient', (k) => '<div class="c" style="background:' + (k.stripe ? stripes(k.bg, k.stripe) : 'linear-gradient(' + k.bg + ',' + k.bg + ')') + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
+    ['Senca box-shadow', (k) => k.stripe ? '<div class="c na">—</div>' : '<div class="c" style="box-shadow:inset 0 0 0 999px ' + k.bg + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
+    ['Filter drop-shadow, besedilo text-shadow', (k) => '<div class="c ds' + (k.stripe ? ' st' : '') + '" style="--f:' + k.bg + ';--ink:' + k.ink + '">' + span(k) + '</div>'],
+    ['Filter SVG feFlood, besedilo text-shadow', (k) => '<div class="c"><i class="fl" style="filter:' + fl[k.bg] + '"></i>' + (k.stripe ? '<i class="fl mask" style="filter:' + fl[k.stripe] + '"></i>' : '') + span(k, '--ink:' + k.ink) + '</div>'],
+    ['Obrnjene barve + invert(1)', (k) => '<div class="c inv" style="background:' + (k.stripe ? stripes(comp(k.bg), comp(k.stripe)) : comp(k.bg)) + ';color:' + (k.ink ? comp(k.ink) : '#000') + '">' + span(k) + '</div>'],
+    ['SVG v strani', (k) => '<div class="c"><svg aria-hidden="true"><rect width="100%" height="100%" fill="' + k.bg + '"/>' + (k.stripe ? [10, 30].map(y => '<rect y="' + y + '" width="100%" height="10" fill="' + k.stripe + '"/>').join('') : '') + (k.text ? '<text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" fill="' + k.ink + '" style="font:' + FONT + '">' + k.text + '</text>' : '') + '</svg></div>'],
+    ['Majhna slika (PNG)', () => '<div class="c small"></div>'],
+  ];
+
+  const grid = document.getElementById('grid');
+  let h = '<div></div>' + K.map(k => '<div class="hd">' + k.name + '</div>').join('');
+  ROWS.forEach((r, i) => { h += '<div class="lb"><i>' + i + '</i> ' + r[0] + '</div>' + K.map(k => r[1](k)).join(''); });
+  h += '<div class="lb wide"><i>9</i> Velika slika (PNG, cela širina: brskalnik jo šteje za fotografijo)</div><div class="wide" id="big"></div>';
+  grid.innerHTML = h;
+
+  // the canvas fields, the small pictures (row 8) and the big one (row 9), drawn at their size on the screen
+  function paint() {
+    const refs = grid.querySelectorAll('.c.ref'), smalls = grid.querySelectorAll('.c.small');
+    K.forEach((k, j) => {
+      for (const [box, asImg] of [[refs[j], false], [smalls[j], true]]) {
+        const w = box.clientWidth, hh = box.clientHeight, cv = canvasOf(w, hh, (ctx) => draw(ctx, k, 0, 0, w, hh));
+        box.textContent = '';
+        if (asImg) { const im = new Image(); im.alt = ''; im.src = cv.toDataURL('image/png'); box.appendChild(im); } else box.appendChild(cv);
+      }
+    });
+    const big = document.getElementById('big'), W = big.clientWidth, H = 200, gap = 6, cw = (W - 3 * gap) / 4;
+    const cv = canvasOf(W, H, (ctx) => { ctx.fillStyle = '#161b23'; ctx.fillRect(0, 0, W, H); K.forEach((k, j) => draw(ctx, k, j * (cw + gap), 0, cw, H)); });
+    big.innerHTML = '<img alt="" src="' + cv.toDataURL('image/png') + '">';
+  }
+
+  // the diagnosis: the same probe as the menu's (js/menu.js forcedDark), and what it reads
+  function probe(scheme) {
+    const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:' + scheme;
+    document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c;
+  }
+  function forcedDark() {
+    try {
+      if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
+      const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(probe('light'));
+      return !!m && (m[4] == null || +m[4] > 0.5) && (299 * m[1] + 587 * m[2] + 114 * m[3]) / 1000 < 128;
+    } catch (_) { return false; }
+  }
+  const ua = navigator.userAgent, ver = (re) => { const m = re.exec(ua); return m ? m[1] : null; };
+  const browser = ver(/SamsungBrowser\/([\d.]+)/) ? 'Samsung Internet ' + ver(/SamsungBrowser\/([\d.]+)/) : ver(/Firefox\/([\d.]+)/) ? 'Firefox ' + ver(/Firefox\/([\d.]+)/) : ver(/Chrome\/([\d.]+)/) ? 'Chrome/Chromium ' + ver(/Chrome\/([\d.]+)/) : 'drug';
+  const fd = forcedDark();
+  const D = [
+    ['Brskalnik', browser],
+    ['Ali brskalnik temni na silo (zaznava igre)', fd ? 'DA' : 'NE'],
+    ['prefers-color-scheme: dark', matchMedia('(prefers-color-scheme: dark)').matches ? 'da' : 'ne'],
+    ['Sonda Canvas, color-scheme: light', probe('light')],
+    ['Sonda Canvas, color-scheme: only light', probe('only light')],
+    ['Ključna beseda canvas podprta', String(!!(window.CSS && CSS.supports && CSS.supports('background-color', 'canvas')))],
+    ['Zaslon', screen.width + ' × ' + screen.height + ' · okno ' + innerWidth + ' × ' + innerHeight + ' · DPR ' + (window.devicePixelRatio || 1)],
+    ['Čas', new Date().toLocaleString('sl-SI')],
+  ];
+  document.getElementById('diag').innerHTML = D.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '<tr><td>User agent</td><td class="ua"></td></tr>';
+  document.querySelector('#diag .ua').textContent = ua;
+  const v = document.getElementById('verdict');
+  v.className = 'verdict ' + (fd ? 'yes' : 'no');
+  v.textContent = fd ? 'Ta brskalnik temni stran na silo. Igra bi pokazala obvestilo »Colours too dark?«.' : 'Ta brskalnik strani ne temni na silo (ali tega ni mogoče zaznati). Igra obvestila ne pokaže.';
+
+  document.getElementById('copy').addEventListener('click', () => {
+    const txt = 'Preizkus barv (temni-nacin.html)\n' + D.map(r => r[0] + ': ' + r[1]).join('\n') + '\nUser agent: ' + ua;
+    const done = (ok) => { document.getElementById('copied').textContent = ok ? 'Kopirano.' : 'Kopiranje ni uspelo: naredi posnetek zaslona.'; };
+    const old = () => { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (_) { } t.remove(); done(ok); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => done(true), old); else old();
+  });
+
+  paint();
+  let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(paint, 150); });
+})();
+</script>
+</body>
+</html>

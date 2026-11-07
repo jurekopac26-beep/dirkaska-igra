@@ -1,8 +1,9 @@
 // Monterey, California: the circuit in the hills of the county park above Monterey, in its layout of 1988 (2.238 miles = 3.602 km, 11 turns,
 // anticlockwise), from OpenStreetMap. The track (a closed circuit at full scale, the length within 1 % of the record books', anticlockwise), its
 // heights (USGS 3DEP: the blind crest of Turn 1, the flat infield, the climb, the plunge through the spiral of Turn 8, 55 m in all), its eleven
-// turns in order and each its way, the places along the lap, the pits where they are (the long lane on the left, from between Turns 10 and 11
-// to the exit of Turn 2: scenery, the cars do not stop there), a whole race of 12 AI cars and the player on the autopilot in the dry and in the
+// turns in order and each its way, the places along the lap, the pits where they are (the lane on the left of the front straight, def.pit:
+// from the exit of Turn 11 to before Turn 2, within 3 m of OSM's line, the 13 crews' boxes around the start line), a whole race of 12 AI cars
+// and the player on the autopilot in the dry and in the
 // rain, every car to the finish, and the junctions' street furniture (Core PROPK: stop and other signs, lamps, hydrants, bins, bollards,
 // cabinets): a car knocks it over and drives on.
 //   node tests/monterey.test.js
@@ -20,8 +21,8 @@ const at = (d) => T.idx(T.startS + d);
 // 1. the track: a closed circuit of 4 laps, 3.602 km within 1 %, anticlockwise (one full turn to the left), in the big championship
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
-  check('track: Monterey, ZDA (Monterey, USA), a closed circuit of 4 laps, not a test track, in the big championship',
-    def.name === 'Monterey, ZDA' && def.en && def.en.name === 'Monterey, USA' && !def.open && !def.timeTrial && !def.test && def.laps === 4 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('monterey'),
+  check('track: Monterey, ZDA (Monterey, USA), a closed circuit of 4 laps, a test track since 5. 11. 2026 (one track a country: the USA keep Pikes Peak), in the big championship',
+    def.name === 'Monterey, ZDA' && def.en && def.en.name === 'Monterey, USA' && !def.open && !def.timeTrial && def.test === true && def.laps === 4 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('monterey'),
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 3.602 km (2.238 miles) within 1 %, the menu\'s real length 3.602 km, anticlockwise (one full turn to the left)',
     Math.abs(T.len / 3602 - 1) < 0.01 && def.realKm === 3.602 && Math.abs(turn + 2 * Math.PI) < 0.05,
@@ -76,15 +77,22 @@ const at = (d) => T.idx(T.startS + d);
   const txt = JSON.stringify([def.names, def.desc, def.en]);
   check('places: no names of people, sponsors or the circuit\'s sponsor in the track\'s texts', !/Andretti|Rahal|Rainey|Corkscrew|WeatherTech|Laguna Seca|Mazda/i.test(txt), '');
 }
-// 5. the pits: the lane (OSM) on the left, from between Turns 10 and 11 to the exit of Turn 2, 10-15 m off the centre line along the front
-// straight, the circuit's left limit at its pit wall; scenery (the game's pit stops are on the right): no def.pit
+// 5. the pits: the lane on the left of the front straight (the inside; def.pit, its offset negative), from the exit of Turn 11 to before Turn 2
+// (the real one, OSM's, leaves before Turn 11 and joins at the exit of Turn 2: the hairpins are too tight for the game's lane), within 3 m
+// of OSM's line where it runs full width, its own bends easy at pit speed (no tighter than 80 m); the 13 crews' boxes along the straight around
+// the start line, the player's among them; the circuit's left limit at the pit wall (within 4 m of the road's edge), the grandstands across
 {
-  const PL = def.mt.pl, [a, b] = def.mt.pit, lat0 = PL.find(p => p[0] >= 0)[1];
-  const lefts = PL.every(p => p[1] < 0);
-  check('pits: the lane on the left, from between Turns 10 and 11 (-560..-450 m) to the exit of Turn 2 (+540..+620 m), 10-15 m out at the start line; scenery only',
-    lefts && a > -560 && a < -450 && b > 540 && b < 620 && lat0 < -10 && lat0 > -15 && !def.pit, `lane ${a} .. ${b} m, ${lat0} m to the side at the line, def.pit ${def.pit ? 'set' : 'none'}`);
+  const P = def.pit, B = T.crewBoxes(), PL = def.mt.pl, osm = (d) => { for (let k = 0; k + 1 < PL.length; k++) if (d >= PL[k][0] && d <= PL[k + 1][0]) return PL[k][1] + (PL[k + 1][1] - PL[k][1]) * (d - PL[k][0]) / (PL[k + 1][0] - PL[k][0]); return null; };
+  let dev = 0, rMin = 1e9;
+  for (let d = P[1] + (P[4] || 60); d <= P[2] - 30; d += 2) { const p = T.pitAt(T.startS + d), o = osm(d), k = T.k[at(d)]; dev = Math.max(dev, Math.abs(p.o - Math.abs(o)));
+    rMin = Math.min(rMin, Math.abs(1 / k) + (k < 0 ? -p.o : p.o)); }
+  check('pits: the lane on the left, from the exit of Turn 11 (-300..-240 m) to before Turn 2 (+360..+420 m), within 3 m of OSM\'s line, its bends no tighter than 80 m (pit speed: under 0.65 g)',
+    P[0] < 0 && P[1] > -300 && P[1] < -240 && P[2] > 360 && P[2] < 420 && !T.pitAt(T.startS - 320) && !T.pitAt(T.startS + 460) && dev < 3 && rMin > 80,
+    `lane ${P[1]} .. ${P[2]} m, ${Math.abs(P[0])} m to the left, at most ${dev.toFixed(1)} m off OSM's line, its tightest bend ${rMin.toFixed(0)} m`);
+  check('pits: the 13 crews\' boxes 10 m apart along the straight around the start line (-120..+30 m), the player\'s among them',
+    B.length === 13 && B[0] > -120 && B[12] < 30 && B.includes(P[3]), `boxes ${B[0]} .. ${B[12]} m, the player's at ${P[3]} m`);
   const i = at(0);
-  check('pits: the circuit\'s left limit by the pit wall at the start line (within 4 m of the road edge), the grandstands across on the right',
+  check('pits: the circuit\'s left limit at the pit wall at the start line (within 4 m of the road edge), the grandstands across on the right',
     T.bl[i] - T.w < 4 && def.mt.bld.filter(r => r[1] === 2).length >= 4, `left limit ${(T.bl[i] - T.w).toFixed(1)} m past the edge, ${def.mt.bld.filter(r => r[1] === 2).length} grandstands`);
 }
 // 6. a whole race: 12 AI cars and the player on the autopilot, 4 laps, every car to the finish without a rescue; in the rain slower (2-20 %)

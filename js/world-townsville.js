@@ -14,7 +14,7 @@
   if (typeof World === 'undefined' || !World.ext) return;
   World.ext.townsville = function (scene, tex, opts, W) {
     const { T, GB, RB, Chunks, IChunks, box, cyl, cone, puff, vary, rng, clamp, lerp, sstep, TAU, atSf, crAt, inPoly, polyDist, crowdCtx, crowdRun, crowdFinish, crowdUV,
-      waterMat, shoreBand, waterline, addShore } = W;
+      waterMat, shoreBand, waterline, addShore, pitOpen, pitJunction } = W;
     const R = rng(4810), N = T.N, ds = T.ds, def = T.def, D = def.tsv, L = T.len, sStart = T.startS, w = T.w, WA = T.wa || new Float64Array(N).fill(w);
     const season = opts && opts.season ? opts.season : 'summer', WET = season === 'summer' || season === 'autumn';   // (the wet season greens the town; the dry season browns it)
     const root = new THREE.Group(); scene.add(root);
@@ -197,7 +197,7 @@
       for (let c0 = 0; c0 < N; c0 += CH) { const i0 = c0 % N, gs = stG(T.px[i0], T.pz[i0], 'w'); const ps = [-1, -1];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) { const i = ii % N, wi = WA[i];
           for (const sd of [-1, 1]) { const si = sd > 0 ? 1 : 0, b = barO(i, sd), o0 = wi + CURB, o2 = Math.min(b + 0.3, o0 + 3.4);
-            if (b - wi <= 3.2 || !JP[si][i] || (sd > 0 && pitAtI(i))) { ps[si] = -1; continue; }
+            if (b - wi <= 3.2 || !JP[si][i] || (sd > 0 && (pitAtI(i) || pitOpen(i)))) { ps[si] = -1; continue; }
             const mid = Pt(i, sd * (o0 + 0.9), 0);
             const far2 = Pt(i, sd * (o2 - 0.3), 0); if ((onRoad(mid[0], mid[2], -1, 0.1) && !(near(mid[0], mid[2], 10).dd < CURB - 0.1)) || onRoad(far2[0], far2[2], -1, 0.1)) { ps[si] = -1; continue; }
             let pp = [Pt(i, sd * o0, 0.0), Pt(i, sd * o0, 0.15), Pt(i, sd * (o0 + 0.3), 0.15), Pt(i, sd * o2, 0.15)], cc = [concK, conc, conc, conc];
@@ -242,7 +242,7 @@
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.09, 1, 0.09, 0, [0.5, 0.51, 0.53], null, true); return g.geometry(); })();
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
-    const gapAt = (i, sd) => { if (sd < 0 || !def.pit) return false; const p = pitAtI(i); return !!p && p.gap; };
+    const gapAt = (i, sd) => { if (sd < 0 || !def.pit) return false; if (pitOpen(i)) return true; const p = pitAtI(i); return !!p && p.gap; };   // (pitOpen: the deceleration and acceleration lanes too)
     const wallRow = (g, i, sd, bar) => {
       const shade = 0.93 + 0.07 * Math.sin(Math.floor(i * ds / 3.8) * 2.1), c0 = [0.62 * shade, 0.62 * shade, 0.6 * shade], c1 = [0.82 * shade, 0.82 * shade, 0.8 * shade], c2 = [0.88, 0.88, 0.86];
       let p = [Pt(i, sd * (bar - 0.02), -0.05), Pt(i, sd * (bar + 0.06), 0.28), Pt(i, sd * (bar + 0.2), 0.84), Pt(i, sd * (bar + 0.42), 0.84), Pt(i, sd * (bar + 0.62), -0.05)], c = [c0, c1, c1, c2, c0];
@@ -287,6 +287,7 @@
         if (!p.gap && p.t > 0.999) { const j = T.idx(sStart + q + 2); gp.quadUp(at(i, p.lout, 0.03), at(i, p.lout + 9, 0.03), at(j, p.lout + 9, 0.03), at(j, p.lout, 0.03), [apron, apron, apron, apron]);
           if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(i, p.lin + 0.15, 0.035), at(i, p.lin + 0.3, 0.035), at(j, p.lin + 0.3, 0.035), at(j, p.lin + 0.15, 0.035), [wl, wl, wl, wl]); }
       }
+      pitJunction(gl, gp);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; on the samples' heights, as the lane)
       addM(gl, aMat);
       const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
       const WH = [0.9, 0.9, 0.88], CON = [0.78, 0.77, 0.74], FR = [0.62, 0.63, 0.66];
@@ -307,6 +308,7 @@
         if (mine && !out.pitBox) { const sb = s0 + 6;
           out.pitBox = { s: sb, x: oc[0] + nx * (base + 4.2), z: oc[1] + nz * (base + 4.2), hd, tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * p.o), y: T.hy[i] }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 6, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd, base, lane: p.o, wall: p.wall, team: tc, mine: mine && out.pitBox && out.pitBox.s === s0 + 6, y: T.hy[i] });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 9.7, 3.85, 4.45, 5.7], wall: [base + 20.8, 0.03, 4.55, 5.73], jamb: [base + 9.7, 5.9, 0.3, 3.85] };   // (its bay above, for the renderer's team colours: the band on the rolled-up door, the back wall over the team's panel, the side walls' fronts)
       }
       const pbs = out.pitBoxes; T.pitStands = null;
       if (pbs && pbs.length) T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
@@ -549,8 +551,9 @@
     }
 
     /* ---- the far view: Castle Hill (a granite dome over the town), the ranges to the south and west and Magnetic Island in the bay as a coarse
-       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything and pulled in onto a
-       sphere just inside the camera's far plane (farUpdate), faded into the haze ---- */
+       terrain of the DEM, the sea round them, and the town's taller buildings beyond the area, drawn behind everything (where they stand, their
+       depth put just inside the far plane by the shader: the far plane does not cut them and whatever is nearer covers them), faded into the
+       haze by the distance from the camera (farUpdate) ---- */
     let FAR = null;
     {
       const P0 = [], C = [], I = [], HZ = [];
@@ -583,22 +586,22 @@
       g.setIndex(I); g.computeVertexNormals();
       const Uh = { uHz: { value: new THREE.Color(0xc9d8e6) } }, m = new THREE.MeshLambertMaterial({ vertexColors: true, fog: false });
       m.onBeforeCompile = (sh) => { sh.uniforms.uHz = Uh.uHz;
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;');
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aHz;\nvarying float vHz;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHz = aHz;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\ngl_Position.z = gl_Position.w - 60.0 * ( - projectionMatrix[ 2 ][ 2 ] - 1.0 );');   // (its depth 1 - k / distance: behind all that is nearer than 60 m inside the far plane, over what is beyond, in its own order)
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uHz;\nvarying float vHz;').replace('#include <dithering_fragment>', '#include <dithering_fragment>\ngl_FragColor.rgb = mix( gl_FragColor.rgb, uHz, vHz );'); };
       m.customProgramCacheKey = () => 'tsvFar';
       const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'tsvFar';
       mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) Uh.uHz.value.copy(sc.fog.color); };
-      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0, cf: 0 };
+      root.add(mesh); FAR = { mesh, P0: Float32Array.from(P0), HZ0: Float32Array.from(HZ), cx: 1e9, cy: 0, cz: 0 };
     }
-    const farUpdate = (cam) => {   // (no camera: the far view in its own places, the world test's pose)
-      const F = FAR, g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0;
-      if (!cam) { if (F.cx !== 1e9) { p.set(P0); hz.set(F.HZ0); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
-      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9 && cam.far === F.cf) return;
-      F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
-      const R0 = cam.far - 60, R1 = cam.far - 6;
-      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, Dd = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, Dd - 400) / 3000)), f = r / Dd;
-        p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
-      g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
+    const farUpdate = (cam) => {   // the haze by the distance from the camera (no camera: the far view's own haze, the world test's pose). (Its points stay
+      // where they are: pulled in onto a sphere round the camera, a cell the camera stood in became a plane just under it that hid the road.)
+      const F = FAR, g = F.mesh.geometry, hz = g.attributes.aHz.array, P0 = F.P0;
+      if (!cam) { if (F.cx !== 1e9) { hz.set(F.HZ0); g.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
+      const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < 9) return;
+      F.cx = c.x; F.cy = c.y; F.cz = c.z;
+      for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const Dd = Math.hypot(P0[k] - c.x, P0[k + 1] - c.y, P0[k + 2] - c.z); hz[v] = F.HZ0[v] + 0.32 + 0.3 * (1 - Math.exp(-Math.max(0, Dd - 1500) / 5000)); }
+      g.attributes.aHz.needsUpdate = true;
     };
     farUpdate(null);
 

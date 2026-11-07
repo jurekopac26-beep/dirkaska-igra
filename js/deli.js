@@ -167,7 +167,7 @@ var DELI = (function () {
       { rim: [0.1, 0.1, 0.11], dish: 'rim', face: (h) => { ring(h, 0.5, 0.58, 16, [0.15, 0.15, 0.16], h.zd + 0.006); for (let i = 0; i < 8; i++) slot(h, i / 8 * Math.PI * 2 + 0.2, 0.66, 0.82, 0.075, HOLE, h.zd + 0.004);
         disc(h, 0.34, 12, [0.13, 0.13, 0.14], h.zd + 0.012, 0.006); lugs(h, 4, 0.22, [0.55, 0.55, 0.57]); disc(h, 0.09, 8, HOLE, h.zd + 0.03); } },
       // 2 jeklena s pokrovi: a domed silver hubcap over the whole face, turbine slots
-      { rim: [0.45, 0.46, 0.5], dish: 'rim', face: (h) => { disc(h, 0.97, 24, [0.74, 0.75, 0.79], h.zd + 0.018, 0.022); ring(h, 0.86, 0.95, 24, [0.62, 0.63, 0.67], h.zd + 0.024);
+      { rim: [0.45, 0.46, 0.5], dish: 'rim', cover: true, face: (h) => { disc(h, 0.97, 24, [0.74, 0.75, 0.79], h.zd + 0.018, 0.022); ring(h, 0.86, 0.95, 24, [0.62, 0.63, 0.67], h.zd + 0.024);
         for (let i = 0; i < 12; i++) slot(h, i / 12 * Math.PI * 2, 0.5, 0.82, 0.05, [0.16, 0.16, 0.18], h.zd + 0.036); disc(h, 0.22, 12, [0.84, 0.85, 0.89], h.zd + 0.04, 0.01); } },
       // 3 jeklena, reli: white steel, six round holes, black nuts
       { rim: [0.93, 0.93, 0.91], dish: 'rim', face: (h) => { for (let i = 0; i < 6; i++) hole(h, i / 6 * Math.PI * 2 + 0.26, 0.64, 0.14, HOLE, h.zd + 0.004, 10);
@@ -177,16 +177,16 @@ var DELI = (function () {
         for (let i = 0; i < 5; i++) spoke(h, i / 5 * Math.PI * 2 + 0.3, 0.07, 0.11, 0.44, 0.66, HOLE, { zA: h.zd + 0.004, zB: h.zd + 0.004, ridge: 0 });
         disc(h, 0.36, 12, [0.44, 0.45, 0.48], h.zd + 0.01, 0.006); lugs(h, 4, 0.22, CHR); disc(h, 0.1, 10, CHR, h.zd + 0.03, 0.01); } },
       // 5 kromirana, 3 kraki: three broad chrome blades
-      { rim: CHR, dishC: [0.1, 0.1, 0.11], face: (h) => { for (let i = 0; i < 3; i++) spoke(h, i / 3 * Math.PI * 2 + 0.5, 0.26, 0.36, 0.2, 0.9, CHR, { c2: [0.7, 0.71, 0.74] }); disc(h, 0.3, 12, CHR, h.zd + 0.026, 0.02); } },
+      { rim: CHR, dishC: [0.1, 0.1, 0.11], seat: 0.03, face: (h) => { for (let i = 0; i < 3; i++) spoke(h, i / 3 * Math.PI * 2 + 0.5, 0.26, 0.36, 0.2, 0.9, CHR, { c2: [0.7, 0.71, 0.74] }); disc(h, 0.3, 12, CHR, h.zd + 0.026, 0.02); } },
       // 6 lita, 5 krakov: silver, tapered spokes
       { rim: [0.76, 0.77, 0.8], dishC: [0.12, 0.12, 0.13], face: (h) => { for (let i = 0; i < 5; i++) spoke(h, i / 5 * Math.PI * 2 + 0.3, 0.17, 0.1, 0.22, 0.91, [0.78, 0.79, 0.82], { c2: [0.6, 0.61, 0.64] });
         disc(h, 0.26, 10, [0.7, 0.71, 0.74], h.zd + 0.02, 0.01); lugs(h, 4, 0.2, [0.86, 0.87, 0.9], 0.04); disc(h, 0.1, 8, [0.2, 0.2, 0.22], h.zd + 0.034, 0.006); } },
       // 7 oranžna, 10 krakov
-      { rim: [0.97, 0.46, 0.06], dishC: [0.08, 0.08, 0.09], face: (h) => { for (let i = 0; i < 10; i++) spoke(h, i / 10 * Math.PI * 2, 0.065, 0.05, 0.24, 0.92, [0.98, 0.48, 0.07], { c2: [0.82, 0.36, 0.04] });
+      { rim: [0.97, 0.46, 0.06], dishC: [0.08, 0.08, 0.09], seat: 0.014, face: (h) => { for (let i = 0; i < 10; i++) spoke(h, i / 10 * Math.PI * 2, 0.065, 0.05, 0.24, 0.92, [0.98, 0.48, 0.07], { c2: [0.82, 0.36, 0.04] });
         disc(h, 0.27, 12, [0.97, 0.46, 0.06], h.zd + 0.02, 0.01); disc(h, 0.15, 10, BLK, h.zd + 0.034, 0.01); } },
       // 8 črna mreža: a black cross-spoke mesh, a polished lip, its bolts
-      { rim: BLK, lip: [0.82, 0.83, 0.87], dishC: [0.03, 0.03, 0.035], face: (h) => { mesh(h, 10, [0.11, 0.11, 0.12], 0.032); ring(h, 0.86, 0.94, 24, [0.12, 0.12, 0.13], h.zd + 0.01);
-        for (let i = 0; i < 16; i++) hole(h, i / 16 * Math.PI * 2, 0.9, 0.022, [0.7, 0.71, 0.74], h.zd + 0.014, 6); disc(h, 0.28, 12, [0.12, 0.12, 0.13], h.zd + 0.022, 0.012); disc(h, 0.12, 8, [0.5, 0.51, 0.54], h.zd + 0.036, 0.006); } },
+      { rim: BLK, lip: [0.82, 0.83, 0.87], dishC: [0.03, 0.03, 0.035], face: (h) => { mesh(h, 10, [0.11, 0.11, 0.12], 0.032); ring(h, 0.86, 0.94, 24, [0.12, 0.12, 0.13], h.zd + 0.019);
+        for (let i = 0; i < 16; i++) hole(h, i / 16 * Math.PI * 2, 0.9, 0.022, [0.7, 0.71, 0.74], h.zd + 0.023, 6); disc(h, 0.28, 12, [0.12, 0.12, 0.13], h.zd + 0.022, 0.012); disc(h, 0.12, 8, [0.5, 0.51, 0.54], h.zd + 0.036, 0.006); } },
       // 9 kovana, 5 krakov: graphite, each spoke split in two towards the rim, a polished lip
       { rim: [0.3, 0.31, 0.34], lip: [0.84, 0.85, 0.89], dishC: [0.06, 0.06, 0.07], face: (h) => { const C = [0.33, 0.34, 0.37], C2 = [0.22, 0.23, 0.25];
         for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; spoke(h, a, 0.14, 0.11, 0.22, 0.56, C, { c2: C2, zB: h.zd + 0.03 });
@@ -196,8 +196,8 @@ var DELI = (function () {
       { rim: [0.86, 0.68, 0.22], dishC: [0.07, 0.07, 0.08], face: (h) => { for (let i = 0; i < 5; i++) spoke(h, i / 5 * Math.PI * 2 + 0.3, 0.2, 0.17, 0.22, 0.92, [0.9, 0.72, 0.25], { c2: [0.7, 0.53, 0.15] });
         disc(h, 0.27, 12, [0.86, 0.68, 0.22], h.zd + 0.022, 0.012); disc(h, 0.12, 8, [0.12, 0.12, 0.13], h.zd + 0.036, 0.006); } },
       // 11 kovana, mreža: a silver mesh, a polished lip with its bolts
-      { rim: [0.68, 0.69, 0.72], lip: [0.93, 0.94, 0.97], dishC: [0.08, 0.08, 0.09], face: (h) => { mesh(h, 12, [0.74, 0.75, 0.78], 0.028, 0.13); ring(h, 0.86, 0.94, 24, [0.6, 0.61, 0.64], h.zd + 0.01);
-        for (let i = 0; i < 18; i++) hole(h, i / 18 * Math.PI * 2, 0.9, 0.022, [0.95, 0.95, 0.98], h.zd + 0.014, 6); disc(h, 0.28, 12, [0.7, 0.71, 0.74], h.zd + 0.024, 0.012); disc(h, 0.12, 8, [0.15, 0.15, 0.17], h.zd + 0.038, 0.006); } },
+      { rim: [0.68, 0.69, 0.72], lip: [0.93, 0.94, 0.97], dishC: [0.08, 0.08, 0.09], face: (h) => { mesh(h, 12, [0.74, 0.75, 0.78], 0.028, 0.13); ring(h, 0.86, 0.94, 24, [0.6, 0.61, 0.64], h.zd + 0.019);
+        for (let i = 0; i < 18; i++) hole(h, i / 18 * Math.PI * 2, 0.9, 0.022, [0.95, 0.95, 0.98], h.zd + 0.023, 6); disc(h, 0.28, 12, [0.7, 0.71, 0.74], h.zd + 0.024, 0.012); disc(h, 0.12, 8, [0.15, 0.15, 0.17], h.zd + 0.038, 0.006); } },
       // 12 kovana, centralna matica: six spokes, a big centre-lock nut with its red safety clip
       { rim: [0.5, 0.51, 0.55], dishC: [0.07, 0.07, 0.08], face: (h) => { for (let i = 0; i < 6; i++) spoke(h, i / 6 * Math.PI * 2, 0.12, 0.08, 0.22, 0.92, [0.52, 0.53, 0.57], { c2: [0.38, 0.39, 0.42] });
         disc(h, 0.27, 6, [0.8, 0.81, 0.85], h.zd + 0.03, 0.016); disc(h, 0.12, 12, [0.3, 0.3, 0.32], h.zd + 0.05, 0.006); slot(h, 0.4, 0.05, 0.24, 0.035, RED, h.zd + 0.058); } },
@@ -208,13 +208,14 @@ var DELI = (function () {
       { rim: [0.74, 0.6, 0.28], dishC: [0.06, 0.05, 0.04], face: (h) => { for (let i = 0; i < 6; i++) spoke(h, i / 6 * Math.PI * 2 + 0.52, 0.15, 0.13, 0.22, 0.92, [0.78, 0.63, 0.3], { c2: [0.6, 0.47, 0.2] });
         disc(h, 0.26, 6, [0.86, 0.87, 0.9], h.zd + 0.03, 0.016); disc(h, 0.11, 12, [0.2, 0.2, 0.22], h.zd + 0.05, 0.006); slot(h, 1.2, 0.05, 0.24, 0.035, RED, h.zd + 0.058); } },
       // 15 karbonska: carbon twin spokes, a polished lip
-      { rim: [0.07, 0.07, 0.08], lip: [0.78, 0.79, 0.83], dishC: [0.03, 0.03, 0.035], face: (h) => { for (let i = 0; i < 5; i++) for (const s of [-0.11, 0.11]) spoke(h, i / 5 * Math.PI * 2 + 0.3 + s, 0.065, 0.052, 0.24, 0.92, [0.2, 0.205, 0.22], { c2: [0.1, 0.1, 0.11], side: [0.05, 0.05, 0.055] });
+      { rim: [0.07, 0.07, 0.08], lip: [0.78, 0.79, 0.83], dishC: [0.03, 0.03, 0.035], seat: 0.016, face: (h) => { for (let i = 0; i < 5; i++) for (const s of [-0.11, 0.11]) spoke(h, i / 5 * Math.PI * 2 + 0.3 + s, 0.065, 0.052, 0.24, 0.92, [0.2, 0.205, 0.22], { c2: [0.1, 0.1, 0.11], side: [0.05, 0.05, 0.055] });
         disc(h, 0.27, 12, CF, h.zd + 0.022, 0.012); ring(h, 0.2, 0.25, 12, [0.62, 0.63, 0.67], h.zd + 0.034); disc(h, 0.1, 8, [0.6, 0.61, 0.65], h.zd + 0.04, 0.006); } },
       // 16 karbonska, aero: a flat carbon aero cover, curved slots, an orange ring, a centre lock
       { rim: [0.07, 0.07, 0.08], lip: [0.2, 0.2, 0.22], dishC: [0.03, 0.03, 0.035], face: (h) => { disc(h, 0.93, 24, CF2, h.zd + 0.03, 0.004);
         for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) slot(h, i / 6 * Math.PI * 2 + j * 0.13, 0.48 + j * 0.12, 0.6 + j * 0.12, 0.05, HOLE, h.zd + 0.036);
         ring(h, 0.86, 0.9, 24, [0.98, 0.45, 0.06], h.zd + 0.036); disc(h, 0.22, 6, [0.84, 0.85, 0.89], h.zd + 0.04, 0.014); disc(h, 0.09, 10, [0.98, 0.45, 0.06], h.zd + 0.06, 0.004); } },
     ];
+    // (seat: the nuts' foot over the dish, matice (default 0.01: a raised hub, a cap's edge or a ring round them: higher); cover: a hubcap over them)
     return T[n - 1] ? Object.assign({}, T[n - 1]) : null;   // (the tyre stays the vehicle's: its style (knobbly, a truck's, white walls) is not the rim's)
   }
 
@@ -224,7 +225,7 @@ var DELI = (function () {
   // how far the lamp's ring reaches back (default 0.014, flush in a flat face; a housing standing out of a curved wing: more), socket: the
   // part of the dark socket behind each lamp ('body', seen once a lamp that is a part of its own is knocked out; 'host': its lamp's part),
   // shape: the car's own lamp outline (metres round zc, yc; every option takes it, s then sizes its details), bulge: that lens' dome,
-  // ringW: its ring's width }.
+  // ringW: its ring's width, tilt: the lens and its details lie on the leaning face (a steep nose: MODRAS; else they stand upright) }.
   // Each lamp: its lens (the sub-range that lights up at night) of its own outline, a ring round it, the details in front of the lens
   function zarometi(K, n, m) {
     const s = m.s || 1, hosts = m.hosts || [undefined, undefined];
@@ -244,7 +245,8 @@ var DELI = (function () {
     const at0 = (cz, cy) => { if (!SH) C = [m.zc + cz * s, m.yc + cy * s]; };
     // a point of the lamp's plane (u out, v up, in the reference size): off >= 0 in front of the lens' (upright) front by off (on its dome),
     // off < 0 on the body's face round the lamp (a panel, a frame)
-    const at = (u, v, off) => [off >= 0 ? xAt(C[1]) + 0.01 + off + dome(u * s, v * s) : xAt(C[1] + v * s) - off * 0.5, C[1] + v * s, sd * (C[0] + u * s)];
+    const TL = m.tilt ? 1 : 0;   // (m.tilt: the lens and its details lie on the leaning face too, a lamp on a steep nose; else upright)
+    const at = (u, v, off) => [off >= 0 ? xAt(C[1] + TL * v * s) + 0.01 + off + dome(u * s, v * s) : xAt(C[1] + v * s) - off * 0.5, C[1] + v * s, sd * (C[0] + u * s)];
     const fwd = (P) => { const a = P[0], b = P[1], c = P[2], nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]); K.face(nx < 0 ? P.slice().reverse() : P, col0, o); };
     let col0 = null;
     const face = (pts, col, off) => {
@@ -270,7 +272,7 @@ var DELI = (function () {
         const tri = (Q) => { const a = Q[0], b = Q[1], c = Q[2]; K.face(((b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1])) < 0 ? Q.slice().reverse() : Q, [0.05, 0.05, 0.055], so); };
         if (SH) { const M = P.reduce((a, q) => [a[0] + q[0] / P.length, a[1] + q[1] / P.length, a[2] + q[2] / P.length], [0, 0, 0]); for (let i = 0; i < P.length; i++) tri([M, P[i], P[(i + 1) % P.length]]); }
         else tri(P); }   // (the socket; the car's own outline: a fan from its middle, it may have a notch)
-      K.headLamp(xAt(C[1]) + 0.006, C[1], sd * C[0], 0.08 * s, { polys: PS, col, ring, ringW: SH ? m.ringW || 0.008 : (ringW || 0.012) * s, ringD: m.depth, bulge: BG, host, d: 0.024 }); };
+      K.headLamp(xAt(C[1]) + 0.006, C[1], sd * C[0], 0.08 * s, { polys: PS, col, ring, ringW: SH ? m.ringW || 0.008 : (ringW || 0.012) * s, ringD: m.depth, bulge: BG, host, d: 0.024, lean: TL * m.lean }); };
     const L = 0.0015;   // (the details: just in front of the lens)
     switch (n) {
       case 1: {   // halogenski: a rounded rectangle, fluted glass, a chrome ring
@@ -284,10 +286,12 @@ var DELI = (function () {
       case 3: {   // črn okvir: a wide hexagon in a thick black frame, one big reflector
         at0(0, 0); lamp([[[-0.15, 0], [-0.105, -0.078], [0.105, -0.078], [0.15, 0], [0.105, 0.078], [-0.105, 0.078]]], WARM, K.black, 0.024);
         ann(0.01, 0, 0.035, 0.065, [0.86, 0.87, 0.9], L, 16); disc(0.01, 0, 0.035, [0.7, 0.72, 0.75], L, 12); disc(0.01, 0, 0.014, [1, 0.97, 0.88], L + 0.003, 8); break; }
-      case 4: {   // okrogli, klasični: two round lamps a side in a black panel, chrome rings, ringed glass
-        at0(0, 0); lamp([circ(-0.072, 0, 0.067, 16), circ(0.075, 0, 0.067, 16)], WARM, K.chrome, 0.012);
+      case 4: {   // okrogli, klasični: two round lamps a side in a black panel, chrome rings, ringed glass (Normalni: eight sides, the
+        // four round lamps within the room for one car with parts on a car whose stock lamp is small: MIŠKA's, the user's choice 30. 10.)
+        const q = K.hi ? 16 : 13;
+        at0(0, 0); lamp([circ(-0.072, 0, 0.067, q), circ(0.075, 0, 0.067, q)], WARM, K.chrome, 0.012);
         face(rrect(0, 0, 0.3, 0.16, 0.03, 2), [0.06, 0.06, 0.065], -0.006);
-        for (const u of [-0.072, 0.075]) { ann(u, 0, 0.042, 0.047, [0.82, 0.8, 0.72], L, 16); disc(u, 0, 0.018, [0.86, 0.87, 0.9], L + 0.002, 10); }
+        for (const u of [-0.072, 0.075]) { ann(u, 0, 0.042, 0.047, [0.82, 0.8, 0.72], L, q); disc(u, 0, 0.018, [0.86, 0.87, 0.9], L + 0.002, 10); }
         break; }
       case 5: {   // LED: a slim wedge high on the face, a row of LED cubes, a line of light along its top
         at0(0.005, 0.06); lamp([[[-0.165, -0.022], [0.17, -0.04], [0.172, 0.036], [-0.165, 0.016]]], DARK, K.black, 0.01);

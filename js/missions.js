@@ -100,7 +100,7 @@ const Missions = (function () {
   // the run's own things out of the scene, their geometry and paint freed
   function unprops() {
     if (!run || !run.props) return;
-    for (const o of run.props) { if (o.parent) o.parent.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); for (const x of [].concat(m.material || [])) { if (x.map) x.map.dispose(); x.dispose(); } }); }
+    for (const o of run.props) { if (o.userData.misUndo) o.userData.misUndo(); if (o.parent) o.parent.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); for (const x of [].concat(m.material || [])) { if (x.map) x.map.dispose(); x.dispose(); } }); }
     run.props = null;
   }
   // the race is made, not drawn yet: the mission's own cars (made(race), e.g. the escort)

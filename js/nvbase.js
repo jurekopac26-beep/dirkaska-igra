@@ -27,7 +27,10 @@ const NVBase = (function () {
       for (let i = 0; i < SPo.length; i++) { const a = SPo[i], b = SPo[(i + 1) % SPo.length], sa = sd(a), sb = sd(b); if (sa < 0) apron.push([a[0], a[1], 0]);
         if ((sa < 0) !== (sb < 0)) { let lo = 0, hi = 1; for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2, p = [a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m]; if ((sd(p) < 0) === (sa < 0)) lo = m; else hi = m; } const q = [a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo, 1];
           if (sa < 0) { apron.push(q); exitZ = q[1]; } else { if (exitZ !== null) { const n = Math.ceil(Math.abs(q[1] - exitZ)); for (let k = 1; k < n; k++) { const z = exitZ + (q[1] - exitZ) * k / n; apron.push([westEdge(z), z, 1]); } } apron.push(q); exitZ = null; } } } }
-    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z);
+    // (not in the banked bend's bowl, the ground there lowered: the lot and the apron end at its rim, the lawn in it; they lay over it at the
+    // ground's height, their edge a cliff over the bowl, the 15 pictures of the whole map, sheet 10)
+    const inBowl = (x, z) => !!H3.bank0 && !!H3.bankDy && H3.bankDy(x, z) < -0.04;
+    const AP = apron.map(p => [p[0], p[1]]), inApron = (x, z) => inPoly(AP, x, z) && !inBowl(x, z);
     // the lot: either side of the way but not on the base's apron (everything there paved, the pictures), south of road 2 (under its kerb and strip,
     // which hide the lot's edge, js/nvedge.js), inside the circuit short of its edge, up to the garages along the start straight, not on the driving
     // school's practice area nor the HOME lot (they are drawn by their own)
@@ -36,10 +39,10 @@ const NVBase = (function () {
     const PAD = H3.PAD, inPad = (x, z, m = 0.4) => x > PAD[0] - m && x < PAD[1] + m && z > PAD[2] - m && z < PAD[3] + m;
     const southJ = (x, z) => { for (let i = 1; i < JP.length; i++) { const [ax, az] = JP[i - 1], [bx, bz] = JP[i]; if ((ax - x) * (bx - x) <= 0 && ax !== bx) return z > az + (bz - az) * (x - ax) / (bx - ax); } return true; };   // (south of road 2: north of it the park)
     const lotIn = (x, z) => z > 40 && z < 143 && southJ(x, z) && Math.abs(x - laneX(z)) > RW - 0.05 && !inApron(x, z) && TL.inLoop(x, z) && TL.dist(x, z, 30) > w + 3.2 && segD(JP, x, z) > JHW + 1.0 && !GAR.some(gx => Math.abs(x - gx) < 11.5 && z > 131.5)
-      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z));   // (the HOME lot's lane: its own)
+      && !inPad(x, z, -0.1) && !(x > 23.3 && x < 52 && z > 122 && z < 131) && !(typeof NVPark !== 'undefined' && NVPark.inPark(x, z)) && !inBowl(x, z);   // (the HOME lot's lane: its own)
     let lb = [1e9, -1e9, 1e9, -1e9]; for (let x = -200; x <= 175; x += 2) for (let z = 40; z <= 140; z += 2) if (lotIn(x, z)) lb = [Math.min(lb[0], x - 2), Math.max(lb[1], x + 2), Math.min(lb[2], z - 2), Math.max(lb[3], z + 2)];
     let ab = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of AP) ab = [Math.min(ab[0], x), Math.max(ab[1], x), Math.min(ab[2], z), Math.max(ab[3], z)];
-    R = { RP, laneX, westEdge, apron, AP, inApron, lotIn, inPad, lotBB: lb, apBB: ab };
+    R = { RP, laneX, westEdge, apron, AP, inApron, inBowl, lotIn, inPad, lotBB: lb, apBB: ab };
     // the cars' asphalt: the way as a paved way of the net, the apron and the lot as paved areas
     MK.netAdd('route0', ROUTE, RW, 'asph'); (H3.paveFns = H3.paveFns || []).push({ bb: ab, inside: inApron }, { bb: lb, inside: lotIn });
     return R;
@@ -91,6 +94,8 @@ const NVBase = (function () {
     const AP = R.apron, y0 = (() => { const v = R.AP.map(([x, z]) => gy(x, z)).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
     { const sh = new THREE.Shape(R.AP.map(([x, z]) => new THREE.Vector2(x, z))), g = new THREE.ShapeGeometry(sh, 4), pa = g.attributes.position, uvA = new Float32Array(pa.count * 2);
       for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), z = pa.getY(i); pa.setXYZ(i, x, y0 + 0.08, z); uvA[2 * i] = x / 7; uvA[2 * i + 1] = z / 7; } g.setAttribute('uv', new THREE.BufferAttribute(uvA, 2)); g.computeVertexNormals();
+      // (none of it over the banked bend's bowl: it lay flat at the apron's level over the lowered lawn there, sheet 10)
+      { const I = g.index, keep = []; for (let i = 0; i < I.count; i += 3) { const a = I.getX(i), b = I.getX(i + 1), c = I.getX(i + 2), cx = (pa.getX(a) + pa.getX(b) + pa.getX(c)) / 3, cz = (pa.getZ(a) + pa.getZ(b) + pa.getZ(c)) / 3; if (!R.inBowl(cx, cz)) keep.push(a, b, c); } g.setIndex(keep); }
       if (g.attributes.normal.getY(0) < 0) { const I = g.index; for (let i = 0; i < I.count; i += 3) { const t = I.getX(i + 1); I.setX(i + 1, I.getX(i + 2)); I.setX(i + 2, t); } g.computeVertexNormals(); } flat(g, ASPH, 2); }
     // the H painted in the asphalt (a white ring, a big H, a yellow dashed ring), old drift marks round it, a yellow dashed line to it from the way
     const HY = y0 + 0.08;
@@ -110,8 +115,9 @@ const NVBase = (function () {
         for (const [x, z] of [[1.3, 0.85], [1.3, -0.85], [-1.3, 0.85], [-1.3, -0.85]]) C(a, 0.38, 0.38, 0.3, L(0x26262a), x, 0.38, z, 10).rotation.x = Math.PI / 2; put(a); }
       const STEEL = PH(0x9aa0a8); { const ws = new THREE.Group(); ws.position.set(-132, gy(-132, 112), 112); C(ws, 0.07, 0.09, 6, STEEL, 0, 3, 0, 6); const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.18, 2.6, 10, 1, true), L(0xffffff, { side: THREE.DoubleSide, map: tex(128, 32, (c, w, h) => { for (let k = 0; k < 5; k++) { c.fillStyle = k % 2 ? '#f4f4f0' : '#ff6a10'; c.fillRect(k * w / 5, 0, w / 5 + 1, h); } }) })); sock.rotation.z = Math.PI / 2 - 0.25; sock.position.set(1.35, 5.75, 0); ws.add(sock); ws.rotation.y = 0.8; put(ws); }
       for (const [x, z] of [[-122, 70], [-40, 118], [-150, 118], [-100, 120]]) { const lp = new THREE.Group(); lp.position.set(x, gy(x, z), z); C(lp, 0.09, 0.12, 8, STEEL, 0, 4, 0, 6); B(lp, 1.2, 0.4, 0.6, L(0x26262a), 0, 8.1, 0); put(lp); } }
-    // the helicopter on the H: one big rotor and a tail, red with a white cross, its back ramp down (drive in at the back), the nose shut
-    const heli = helicopter(); heli.G.position.set(HP.x, HY, HP.z); heli.G.rotation.set(0, -Math.PI, 0); put(heli.G);
+    // the helicopter on the H: one big rotor and a tail, red with a white cross, its back ramp down (drive in at the back), the nose shut;
+    // not merged with the base (it flies: js/nvheli.js takes it into the scene, its parts merged on their own)
+    const heli = helicopter(); heli.G.position.set(HP.x, HY, HP.z); heli.G.rotation.set(0, -Math.PI, 0); heli.y = HY;
 
     // ---- the lot: its asphalt up to the roads, bays (2.5 by 5 m) in pairs of rows back to back, 6.5 m aisles, a line between the pairs, lamps on it
     const LB = R.lotBB; sheet(R.lotIn, LB, 3, 0.05, ASPH);
@@ -143,10 +149,10 @@ const NVBase = (function () {
 
   // the helicopter (the pictures' heli4/heli8, version 2): a rounded shell with the cargo bay through it, the cockpit on the roof's front, sponsons
   // with wheels, a ramp at each end (the back one down, the front one shut), one big eight-bladed rotor, the tail boom high over the back ramp with
-  // its fin and the tail rotor. Red with a dark band, a white cross and REŠEVANJE on its sides. Its nose along +x, the bay's floor 1.25 m up
+  // its fin and the tail rotor. Red with a dark band and a white cross on its sides (no small writing: not read from behind the car). Its nose along +x, the bay's floor 1.25 m up
   function helicopter(sc = { base: 0xd42a2a, band: 0x2a2e34, band2: 0xf2c12e, cross: 0xf4f4f0 }) {
     const v = { x0: -6.0, x1: 5.4, W: 4.3, H: 3.7, r: 1.0, bayW: 3.4, bayH: 2.8, ck: { x0: 1.2, x1: 4.6, w: 3.1, h: 1.5 } }, G = new THREE.Group();
-    const L = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o)), PHm = L;   // (Lambert: merged with the rest while it stands still)
+    const L = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o)), PHm = L;   // (Lambert: its one-colour parts merged into vertex colours, js/nvheli.js)
     const BODY = PHm(sc.base), BAND = PHm(sc.band), BAND2 = PHm(sc.band2), DARK = L(0x26262a), GREY = PHm(0x8a9098), GLS = L(0x182634), FLOOR = L(0x4a4e54), TIP = PHm(0xf2c12e), WH = L(0xf4f4f0);
     const Mh = (g, m, x, y, z, par = G) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); par.add(o); return o; };
     const B = (par, w, h, d, m, x = 0, y = 0, z = 0) => Mh(new THREE.BoxGeometry(w, h, d), m, x, y, z, par);
@@ -157,12 +163,10 @@ const NVBase = (function () {
     const ext = (shape, x0, len, m, y) => { const g = new THREE.ExtrudeGeometry(shape, { depth: len, bevelEnabled: false, curveSegments: 6 }); g.rotateY(Math.PI / 2); g.translate(x0, y, 0); g.computeVertexNormals(); return Mh(g, m, 0, 0, 0); };
     const belly = 0.85, fl = 0.4, len = v.x1 - v.x0, xm = (v.x0 + v.x1) / 2, hw = v.W / 2, ytop = belly + v.H, yfl = belly + fl;
     { const s = rr(v.W, v.H, v.r); s.holes.push(bay(v.bayW, v.bayH, fl)); ext(s, v.x0, len, BODY, belly); }
-    B(G, len - 0.08, 0.06, v.bayW - 0.06, FLOOR, xm, yfl + 0.03, 0); for (const s of [-1, 1]) B(G, len - 0.05, v.bayH - 0.5, 0.03, L(0xb8bcc2), xm, yfl + v.bayH / 2 - 0.05, s * (v.bayW / 2 - 0.03));
+    const floor = B(G, len - 0.08, 0.06, v.bayW - 0.06, FLOOR, xm, yfl + 0.03, 0), lin = [-1, 1].map(s => B(G, len - 0.05, v.bayH - 0.5, 0.03, L(0xb8bcc2), xm, yfl + v.bayH / 2 - 0.05, s * (v.bayW / 2 - 0.03)));
     for (const s of [-1, 1]) { const zs = s * (hw + 0.006); B(G, len - 0.15, 0.42, 0.02, BAND, xm, belly + 1.55, zs); B(G, len - 0.15, 0.08, 0.02, BAND2, xm, belly + 1.84, zs);
       for (let x = v.x0 + 1.5; x < v.x1 - 0.9; x += 1.5) B(G, 0.66, 0.52, 0.03, GLS, x, belly + 2.35, s * (hw + 0.015));
       B(G, 1.62, 0.47, 0.02, WH, v.x0 + 0.75, belly + 2.35, s * (hw + 0.02)); B(G, 0.47, 1.62, 0.02, WH, v.x0 + 0.75, belly + 2.35, s * (hw + 0.02)); }
-    { const t = (() => { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 70; const c = cv.getContext('2d'); c.fillStyle = '#2a2e34'; c.fillRect(0, 0, 512, 70); c.fillStyle = '#ffffff'; c.font = 'bold 46px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('REŠEVANJE', 256, 37); return new THREE.CanvasTexture(cv); })();
-      for (const s of [-1, 1]) { const p = Mh(new THREE.PlaneGeometry(3.4, 0.46), L(0xffffff, { map: t }), v.x0 + 3.0, belly + 1.05, s * (hw + 0.02)); p.rotation.y = s > 0 ? 0 : Math.PI; } }
     for (const s of [-1, 1]) { const zs = s * (hw + 0.32), sl = len - 2.0; B(G, sl, 0.8, 0.66, BODY, xm, belly + 0.32, zs); B(G, sl, 0.1, 0.67, BAND, xm, belly + 0.6, zs);
       for (const x of [v.x0 + 1.6, v.x1 - 1.6]) { C(G, 0.48, 0.48, 0.34, L(0x151515), x, 0.48, zs, 12).rotation.x = Math.PI / 2; ROD(G, [x, 0.48, zs], [x, belly + 0.15, zs], 0.09, GREY); } }
     { const c = v.ck, yc = ytop - 0.22; ext(rr(c.w, c.h, 0.5), c.x0, c.x1 - c.x0, BODY, yc); const n = Mh(new THREE.SphereGeometry(1, 14, 10, Math.PI / 2, Math.PI), BODY, c.x1, yc + c.h / 2, 0); n.scale.set(1.25, c.h / 2, c.w / 2);
@@ -173,8 +177,9 @@ const NVBase = (function () {
       B(g, Lr, 0.16, v.bayW - 0.12, GREY, dir * Lr / 2, -0.08, 0); for (const s of [-1, 1]) B(g, Lr, 0.28, 0.08, BODY, dir * Lr / 2, 0.06, s * (v.bayW / 2 - 0.1)); B(g, 0.32, 0.17, v.bayW - 0.12, TIP, dir * (Lr - 0.16), -0.07, 0);
       g.rotation.z = down ? (dir < 0 ? A : -A) : dir * Math.PI / 2; g.userData = { A, Lr, dir }; return g; };
     const RR = ramp(v.x0, -1, true), RF = ramp(v.x1, 1, false);
-    // the nose: two doors (shut)
-    for (const s of [-1, 1]) { const q = Mh(new THREE.SphereGeometry(1, 12, 10, s > 0 ? Math.PI / 2 : Math.PI, Math.PI / 2), BODY, v.x1, belly + v.H / 2, 0); q.scale.set(1.9, v.H / 2 - 0.02, hw - 0.02); }
+    // the nose: two doors (shut), each on its hinge at the side (swung aside, rotation.y = -side x 1.75, the front ramp goes down between them)
+    const DR = [-1, 1].map(s => { const h = new THREE.Group(); h.position.set(v.x1, 0, s * hw); h.userData.s = s; G.add(h);
+      const q = Mh(new THREE.SphereGeometry(1, 12, 10, s > 0 ? Math.PI / 2 : Math.PI, Math.PI / 2), BODY, 0, belly + v.H / 2, -s * hw, h); q.scale.set(1.9, v.H / 2 - 0.02, hw - 0.02); return h; });
     // the rotor head, eight blades with painted tips; the engines over the roof
     B(G, 5.4, 0.95, 2.7, BODY, -0.7, ytop + 0.45, 0); for (const s of [-1, 1]) { const e = C(G, 0.44, 0.5, 4.4, GREY, -0.4, ytop + 0.85, s * 1.0, 10); e.rotation.z = Math.PI / 2; } C(G, 0.3, 0.4, 1.6, GREY, -0.6, ytop + 1.5, 0, 10);
     const RO = new THREE.Group(); RO.position.set(-0.6, ytop + 2.35, 0); G.add(RO); C(RO, 0.36, 0.42, 0.5, GREY, 0, 0, 0, 10);
@@ -186,7 +191,7 @@ const NVBase = (function () {
     B(G, 1.5, 0.12, 3.4, BODY, e[0] + 0.6, e[1] - 0.1, 0);
     const TR = new THREE.Group(); TR.position.set(e[0] - 0.55, e[1] + 1.9, -0.32); TR.rotation.x = Math.PI / 2; G.add(TR); C(TR, 0.16, 0.16, 0.3, GREY, 0, 0, 0, 8); for (let k = 0; k < 5; k++) { const p = new THREE.Group(); p.rotation.y = k * 2 * Math.PI / 5; TR.add(p); B(p, 2.1, 0.05, 0.28, DARK, 1.15, 0, 0); }
     G.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    return { G, RR, RF, RO, TR, v };
+    return { G, RR, RF, RO, TR, DR, v, inner: [floor, ...lin], lin };
   }
   return { ROUTE, RW, HP, ST, plan, build, helicopter, get R() { return R; }, get built() { return built; } };
 })();

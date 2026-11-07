@@ -22,6 +22,10 @@ try {
   // 2. a race at Monaco with the sound on: the crowd's level, the tunnel's ring inside the tunnel only
   await page.evaluate(() => Sfx.resume());
   await startTrack(page, 'monaco');
+  // (the autopilot also in the frames drawn between the steps, as in flags.test: without it the car had no one at the wheel there, on a
+  // slow machine up to a fifth of a second a step; into the wall at the hairpin before the tunnel, it stayed there: the player's car is
+  // never put back on the road)
+  await page.evaluate(() => { window.__game.autoDrive = true; });
   const ready = await page.evaluate(() => Sfx.ready);
   if (!ready) T.check('sound running in this browser (skipped: no audio here)', true, 'AudioContext not running');
   else {
@@ -113,7 +117,7 @@ try {
     // 6. a race in a registered vehicle (ZMAJ 85, a one-make field: i5, turbo 1): its preset and its rivals'; the nearest rival wrecked on
     //    the grid (Core.wreckCar with damage on: every part, the glass, its wheels): the clang of its panels, the glass, a wheel off and the
     //    crunch heard, then its fire crackling
-    await page.evaluate(() => { const g = window.__game; g.pause(); g.S.car = Core.MODELS.findIndex(m => m.id === 'zmaj'); });
+    await page.evaluate(() => { const g = window.__game; g.pause(); g.autoDrive = false; g.S.car = Core.MODELS.findIndex(m => m.id === 'zmaj'); });   // (the car on the grid as before: no autopilot in the frames)
     await startTrack(page, 'jezero');
     // (1.5 s from the race's first frame: on the track already loaded (the formula's, above) no loading screen compiles the new race's
     // materials ahead, so its first frame does it, which can take seconds in software WebGL)
@@ -187,6 +191,9 @@ try {
     //    beep), quiet between the lines
     await page.evaluate(() => { window.__game.S.mode = 'police'; });
     await startTrack(page, 'vrsic');
+    // (the radio speaks once the race is on: first its intro, in the game's time; on a slow machine the new world's first frames take a while
+    // and the intro with them, so the race racing first, up to two minutes, then the radio's lines in real time)
+    await page.waitForFunction(() => window.__game.phase === 'racing', null, { timeout: 120000, polling: 200 }).catch(() => {});
     const rad = await page.evaluate(async () => {
       const g = window.__game, out = { on: [], off: [], caps: [] };
       for (let k = 0; k < 150 && (out.on.length < 3 || out.off.length < 3); k++) {   // (real time: the radio speaks at its own pace)

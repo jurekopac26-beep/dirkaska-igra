@@ -17,6 +17,7 @@ const browser = await launch();
 // a loop (an ellipse round cx, cy, rx by ry) drawn with the mouse in colour c, its note typed, kept (Dodaj k zbirki)
 async function moment(Q, c, cx, cy, rx, ry, note) {
   await Q.click('#nk-on'); await Q.click(`#nk-pal [data-c="${c}"]`);
+  if (typeof cx === 'function') [cx, cy] = await cx();   // (the loop's middle found once Označi holds the picture: the replay stands from then on)
   await Q.mouse.move(cx + rx, cy); await Q.mouse.down(); for (let a = 0.2; a <= 2 * Math.PI + 0.25; a += 0.2) await Q.mouse.move(cx + rx * Math.cos(a), cy + ry * Math.sin(a)); await Q.mouse.up();
   if (note) await Q.keyboard.type(note);
   await Q.click('#nk-bar .nk-add'); await Q.waitForTimeout(300);
@@ -105,7 +106,11 @@ try {
     return v.z > -1 && v.z < 1 && Math.abs(v.x) < 0.8 && Math.abs(v.y) < 0.8 ? { n: q1.n, p: [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight], f: hit } : null;
   });
   if (scr.place) {
-    await moment(Q, 0, scr.place.p[0], scr.place.p[1], 30, 22, '');
+    // (the place on the screen again in the picture Označi holds, at the road's height as G.inLoops takes it: the replay went on playing
+    // after the search, more or less far on a slower machine)
+    const at = () => Q.evaluate((n) => { const T = window.__game.race.track, q = T.names.find(x => x.n === n), i = T.idx(T.startS + q.d), v = new THREE.Vector3(T.px[i], T.hy[i] + 0.1, T.pz[i]).project(Render.camera);
+      return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; }, scr.place.n);
+    await moment(Q, 0, at, null, 30, 22, '');
     const z2 = await Q.evaluate(() => Napake.stanje.zbirka[Napake.stanje.zbirka.length - 1]);
     T.check(`V krogu: a loop round a named place of the track: kraj:${scr.place.n}`, z2.v[0].includes('kraj:' + scr.place.n), JSON.stringify({ v: z2.v, place: scr.place }));
   } else T.check('a named place of Bathurst (Zavoj 1) on the screen for the loop', false, JSON.stringify(scr));

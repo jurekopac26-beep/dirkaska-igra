@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, clamp, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico, lerp,
+    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, parkedCar, clamp, crowdCtx, crowdFinish, crowdLayer, crowdPut, crowdRun, crowdSub, cyl, gable, ico, lerp,
     ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, vary, vrCol, vrDist, vrFar, vrGCol, vrGritTex, vrGround, vrLC, vrNear, vrPrep, vrSlope,
     vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrsicProps
   } = API;
@@ -80,6 +80,7 @@
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
+  const IR_LO_D = 90, IR_LO_W = 1.25, IR_LO_H = 1.07;   // (NIZKA: the far maples as beeches from LOD.radius(IR_LO_D) from the road out, their width and height x IR_LO_W, IR_LO_H)
   // the view beyond the corridor (def.farDem, the real terrain on a 200 m grid; the lake; the Kegon falls at def.far.kegon): one mesh, its
   // nodes kept in world coordinates (P0) and drawn on the camera's lines of sight at a distance of their own between 70 m and 6 m inside the
   // camera's far plane (nearer ones nearer: the ridges cover what lies behind them), so the distant mountains show above the haze of the near
@@ -88,10 +89,12 @@
   function irFar(colFn) {   // (colFn(A, slope, q): a road's own colours of the land, Mount Hotham's; else Nikko's)
     const F = T.def.farDem; if (!F) return null;
     const nx = F.nx, nz = F.nz, n = nx * nz, b = atob(F.b64), base = API.VR.D.base, H = new Float32Array(n), wet = new Uint8Array(n), dr = new Float32Array(n);
-    for (let k = 0; k < n; k++) H[k] = 400 + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
+    const lo = F.lo != null ? F.lo : 400;   // (the lowest height of the grid: 400 m unless the data says otherwise, tools/proga)
+    for (let k = 0; k < n; k++) H[k] = lo + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
     for (let k = 0, p = 0, v = 0; k < F.lake.length; k++) { if (v) wet.fill(1, p, p + F.lake[k]); p += F.lake[k]; v ^= 1; }
-    const lakeH = T.def.far && T.def.far.lake ? T.def.far.lake[2] - base : 0;
-    for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH;
+    // the lake's level where def.far.lake gives one (Irohazaka's Chūzenji, the whole lake flat at it); else each wet node keeps its own height
+    // from the model (the cirques' tarns, Bâlea's: each at its own level, high on the ridges; never sunk to the start's height)
+    if (T.def.far && T.def.far.lake) { const lakeH = T.def.far.lake[2] - base; for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH; }
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell; let m = 1e18;
       for (let q = 0; q < T.N; q += 5) { const dx = x - T.px[q], dz = z - T.pz[q], d = dx * dx + dz * dz; if (d < m) m = d; } dr[j * nx + i] = Math.sqrt(m); }
     const P0 = [], C = [], I = [], su = API.VRS === 'summer';
@@ -110,7 +113,7 @@
     for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) { const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1;
       if (Math.min(dr[a], dr[b2], dr[c], dr[d]) < 470) continue; I.push(a, c, b2, b2, c, d); }
     // the Kegon falls: a white ribbon down the cliff below the lake's outlet (97 m), a little out from the model's face, towards the road
-    const K = T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
+    const K = T.def.far && T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
       const v0 = P0.length / 3; for (const [u, y] of [[-hw, y0], [hw, y0], [hw * 1.4, y0 - 97], [-hw * 1.4, y0 - 97]]) { P0.push(K[0] + ux * o + px * u, y, K[1] + uz * o + pz * u); C.push(0.93, 0.95, 0.98); }
       I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3, v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); }
     const g = new THREE.BufferGeometry(), nv = P0.length / 3;
@@ -248,8 +251,7 @@
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, vrGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = vrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);   // parked car
-      box(g, x, y + 0.25, z, 4.3, 0.8, 1.85, rot, col, null, true); box(g, x - c * 0.35, y + 1.05, z - s * 0.35, 2.3, 0.62, 1.62, rot, [0.16, 0.2, 0.26], col, true);
-      for (const [a, b] of [[1.35, 0.8], [1.35, -0.8], [-1.35, 0.8], [-1.35, -0.8]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.66, 0.66, 0.24, rot, [0.08, 0.08, 0.09], null, true); };
+      parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
     const cpAlt = T.cpS.map(s => fmtAlt(T.altAt(T.hy[T.idx(s)]))), lkAlt = fmtAlt(T.altAt(padL ? T.hy[padL.i] : T.hy[T.finishIdx]));
 
@@ -382,6 +384,7 @@
        the beeches gold ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const tk = [0, 1, 2, 3, 4].map(k => new IChunks(irTreeGeo(k), tMatT, 96));
+    const loD = LOD.tier === 0 ? LOD.radius(IR_LO_D) : Infinity, farM = [];   // (NIZKA: the maples farther from the road, drawn lighter: below)
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(110000 * dens), RT = rng(8641), SP = 5.4 / Math.sqrt(dens), su = API.VRS === 'summer';
@@ -406,9 +409,19 @@
           else if (sp === 2) { hgt = 15 + r4 * 9; wid = hgt * (0.8 + r2 * 0.25); col = su ? [1, 1, 1] : (r2 < 0.4 ? [1.08, 1.2, 0.95] : r2 < 0.8 ? [1, 1, 1] : [0.86, 0.74, 0.66]); }
           else if (sp === 3) { const cedar = r2 < 0.3; hgt = (cedar ? 24 : 18) + r4 * 10; wid = hgt * (cedar ? 0.3 : 0.45 + r2 * 0.1); col = [0.88 + r3 * 0.2, 0.92 + r4 * 0.14, 0.9]; }
           else { hgt = 10 + r4 * 6; wid = hgt * (0.6 + r2 * 0.2); col = [1, 1, 1]; }
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
+          if (sp === 0 && hd > loD) farM.push([x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col]); else tk[sp].add(x, y - 0.15, z, r1 * 70, wid * far, hgt * far, col);
           if (++nTrees >= maxT) break grid;
         }
+      }
+    }
+    if (farM.length) {   // NIZKA: a maple farther from the road than LOD.radius(IR_LO_D) in its chunk's beeches (or oaks): their crown of three clumps
+      // (half the maple's vertices), widened and raised to the maple's outline and tinted to its colour. No chunk more or less than before (each
+      // chunk of maples keeps its first; one with no beech or oak keeps them all): the same meshes, Math.random's draws as before (three.js's names)
+      const su = API.VRS === 'summer', mc = su ? [0.24, 0.42, 0.13] : [0.84, 0.15, 0.07], hc = [null, su ? [0.2, 0.34, 0.12] : [0.6, 0.38, 0.13], su ? [0.2, 0.36, 0.12] : [0.82, 0.44, 0.13]];
+      const has = (t, a) => t.map.has(Math.floor(a[0] / t.size) + ',' + Math.floor(a[2] / t.size));
+      for (const a of farM) {
+        const h = !has(tk[0], a) ? 0 : has(tk[2], a) ? 2 : has(tk[1], a) ? 1 : 0, c = a[6], k = hc[h];
+        if (h) tk[h].add(a[0], a[1], a[2], a[3], a[4] * IR_LO_W, a[5] * IR_LO_H, [c[0] * mc[0] / k[0], c[1] * mc[1] / k[1], c[2] * mc[2] / k[2]]); else tk[0].add(...a);
       }
     }
     for (const t of tk) t.addTo(root, true);
@@ -460,5 +473,6 @@
   }
 
   Object.assign(API, { irFar, irFarUpdate });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'iroha');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.iroha = (scene, tex, opts) => buildIroha(scene, tex, opts);
 })();
