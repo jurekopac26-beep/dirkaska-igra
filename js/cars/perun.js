@@ -48,7 +48,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // markers go with them), on the front wings behind the arches, on the tail's valance, the mirrors' noses; the rally lamps on the face's
       // corners, on a bar before the nose, in the slot, at the roof's front edge, a pod over the nose
       aero: { xf: 2.08, xr: -2.07, w: 0.62, yf: 0.215, yr: 0.27, sill: [-0.82, 0.9], ws: 0.86, ys: 0.17, lipF: [1.98, 0.15, 0.2, 0.072, 1.5],
-        lipR: [-1.99, 0.22, 0.16, 0.05, 1.5], exh: [0.09, 0.038], wsF: 0.955, wsR: 1.0, archIn: 0 },
+        lipR: [-1.99, 0.22, 0.16, 0.05, 1.5], exh: [0.09, 0.038], valY: 0.3, wsF: 0.955, wsR: 1.0, archIn: 0 },
       hauba: { x0: 0.46, x1: 1.96, w: 0.33, cells: 3 },
       maska: { x: 2.073, y0: 0.305, lean: 0, yc: 0.305, w: 0.8, h: 0.05, part: 'bumperF' },
       zmigavci: { front: { x: 2.075, y: 0.44, z: 0.33, w: 0.13, h: 0.065, part: 'bumperF' }, side: { x: 1.78, y: 0.485, z: 0.8959, hosts: ['fenderL', 'fenderR'] },

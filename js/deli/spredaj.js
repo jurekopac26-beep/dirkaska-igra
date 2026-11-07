@@ -21,7 +21,8 @@
              mirrors' housings' front faces
      relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w, y], pod: [x, y0, y1, w], foot, part }: the bumper's face
              with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge (y: the bar's feet on that
-             height instead of the roof's top: an open car's windscreen header, LEV KABRIO's), the pod over the nose; foot: the bumper's top
+             height instead of the roof's top: an open car's windscreen header, LEV KABRIO's; roofFeet: the bar's feet's |z| at most that, a narrow
+             flat roof's with the canopy's glass beside it, ŠKORPIJON's), the pod over the nose; foot: the bumper's top
              the lamps 5-8 stand on (else 13 cm over the bumper's lamps' middle), feet: their feet's |z| (0.5; a narrow nose's: JASTREB's beside its mouth)
    Every option is a few primitives in the body's material; the details (bulbs, rivets, the weave's finer cells) only on Visoki (K.hi). */
 (function () {
@@ -287,7 +288,7 @@
       if (K.hi) K.rect(x + 0.0012, y + h * 0.88, 0, w * 2 - 0.03, 0.006, CH, Object.assign({ dir: 'x' }, oo)); };
     const topR = (x, z) => ry != null ? ry : K.topY(x, z);   // (ry: the header the bar's feet stand on, an open car's)
     const roofBar = (w, k, cell) => { const y = topR(rx, 0) + 0.035;
-      for (const sd of [-1, 1]) { const z = sd * w * 0.6; K.box(rx - 0.04, topR(rx - 0.04, z) - 0.006, z, 0.05, y - topR(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
+      for (const sd of [-1, 1]) { const z = sd * (m.roofFeet != null ? Math.min(w * 0.6, m.roofFeet) : w * 0.6); K.box(rx - 0.04, topR(rx - 0.04, z) - 0.006, z, 0.05, y - topR(rx - 0.04, z) + 0.006, 0.03, 0, BP, null, false, ob); }
       bar(rx + 0.03, y, w, 0.065, k, cell, ob); return y; };
     // the pod over the nose: a plate leaning back with the face, k lamps across it (rows: 1 or 2)
     const pod = (col, lamps, r, lens, rim, heat) => { const xa = px + 0.025, xb = px + 0.025 - (py1 - py0) * 0.067;

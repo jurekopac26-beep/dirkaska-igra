@@ -3,9 +3,11 @@
      streha             m: { x0, x1 (the roof from the spoiler's leading edge to the windscreen's top, look units), xf (the front edge of a
                         window over the front seats), xr (the rear bench's middle), part (the roof's: 'body'), back (the roof's rear end on a short
                         roof, JASTREB's: no window past it, the panoramic band back to it; a fin fitted on the roof's rear, antena 3, 5-16: the
-                        windows end ahead of it) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
+                        windows end ahead of it), wr (the flat roof's half width where it is narrower than the loft's top, the canopy's glass
+                        beside it: ŠKORPIJON's carbon roof; the band to it, the panes narrowed with it) }: a sunroof, from a small round pane to the whole roof in glass (the stock: none)
      stresna_zajemalka  m: { x (the mouth, at the roof's front), z, part (the roof's: 'body'), back (the roof's rear end: the scoops no longer than
-                        to it, nor than to a fin fitted on the roof's rear; JASTREB's short roof, its fastback's glass behind) }: a scoop on the roof, its mouth forward (the stock: none)
+                        to it, nor than to a fin fitted on the roof's rear; JASTREB's short roof, its fastback's glass behind), wr (as the sunroof's:
+                        the scoops no wider than the flat roof, a pair drawn in onto it) }: a scoop on the roof, its mouth forward (the stock: none)
      antena             m: { x, z (the rod's foot: the stock aerial's), fin: [x, z] (a shark fin's rear end), front: [x, z] (a stub at
                         the roof's front), whip: x (the racing whip's foot mid-roof, -0.6: its 0.6 m raked back over the roof, ahead of a wing), y (the roof's
                         height they stand on instead of the main loft's top: an open car's roof panel over its cage, PEŠČENJAK's) } in the aerial's part
@@ -41,6 +43,7 @@
     const XB = roofBack(K, m, M);   // (back: no window past it; -9: none such)
     const sc = !!K.fitted.stresna_zajemalka;   // (a scoop over it: the window shut (not tilted, not slid back), its deflector off)
     const knots = K.body.secs.map(r => r[0]);
+    const q = m.wr ? Math.min(1, m.wr / 0.56) : 1, RW = (x) => m.wr ? Math.min(m.wr, prop(K, x, 4)) : prop(K, x, 4);   // (wr: a narrow flat roof, the panes across it narrowed)
     // a sheet over the roof from xb (rear) to xa (front), across z0 .. z1, lift(t) over the paint (t 0 at the front, 1 at the rear): its
     // cells bend where the roof does (a section, the crown's knee), so it lies on it
     const sheet = (xa, xb, z0, z1, lift, col) => { const L = typeof lift === 'number' ? () => lift : lift;
@@ -51,7 +54,7 @@
         for (let j = 0; j < A.length - 1; j++) face(K, [A[j], B[j], B[j + 1], A[j + 1]], col, [0, 1, 0]); }
       return P; };
     // a pane: its seal round it, the glass, a glint across it; tilt: its rear edge raised (the sides closed, dark); dark: tinted
-    const pane = (xm, zm, len, half, o) => { o = o || {}; if (xm - len / 2 < XB) { const a = xm + len / 2; len = a - XB; xm = (a + XB) / 2; if (len < 0.06) return; }
+    const pane = (xm, zm, len, half, o) => { o = o || {}; zm *= q; half *= q; if (xm - len / 2 < XB) { const a = xm + len / 2; len = a - XB; xm = (a + XB) / 2; if (len < 0.06) return; }
       const xa = xm + len / 2, xb = xm - len / 2, up = sc ? 0 : o.tilt || 0, b0 = o.lift || 0.004, lf = (t) => b0 + up * t, g = o.dark ? GT : GL;
       sheet(xa + 0.016, xb - 0.016, zm - half - 0.016, zm + half + 0.016, b0 - 0.002, o.frame || RUB);
       sheet(xa, xb, zm - half, zm + half, lf, g);
@@ -61,16 +64,16 @@
         face(K, [[xb, y(xb) + 0.002, zm - half], [xb, y(xb) + 0.002, zm + half], [xb, y(xb) + 0.004 + up, zm + half], [xb, y(xb) + 0.004 + up, zm - half]], HOLE, [-1, 0, 0]); } };
     // a band of glass across the whole roof from xa back to xb, out to its edges as the roof narrows (the user's: the window in the car's
     // own shape, edge to edge; the edge beads frame it)
-    const band = (xa, xb, o) => { o = o || {}; xb = Math.max(xb, XB); if (xa - xb < 0.06) return; const in0 = 0.03, side = (d) => [(x) => d - prop(K, x, 4), (x) => prop(K, x, 4) - d], L = xa - xb;
+    const band = (xa, xb, o) => { o = o || {}; xb = Math.max(xb, XB); if (xa - xb < 0.06) return; const in0 = 0.03, side = (d) => [(x) => d - RW(x), (x) => RW(x) - d], L = xa - xb;
       sheet(xa + 0.014, xb - 0.014, ...side(in0 - 0.012), 0.002, o.frame || RUB);
       sheet(xa, xb, ...side(in0), 0.004, o.dark ? GT : GL);
       sheet(xa - L * 0.14, xa - L * 0.22, ...side(in0 + 0.07), 0.0048, o.dark ? [0.14, 0.16, 0.2] : GH); };   // (the glint)
     // sliding: the hole in front, the glass slid back over the roof on its rails
-    const slide = (xm, zm, len, half, dark) => { if (sc) return pane(xm, zm, len, half, { dark }); if (xm - len / 2 < XB) { const a = xm + len / 2; len = a - XB; xm = (a + XB) / 2; if (len < 0.06) return; }
+    const slide = (xm, zm, len, half, dark) => { if (sc) return pane(xm, zm, len, half, { dark }); zm *= q; half *= q; if (xm - len / 2 < XB) { const a = xm + len / 2; len = a - XB; xm = (a + XB) / 2; if (len < 0.06) return; }
       const xa = xm + len / 2, xb = xm - len / 2, back = Math.min(len * 0.62, xb - (m.back != null ? XB : m.x0));   // (slid back no further than the roof: JASTREB's short one)
       sheet(xa + 0.016, xb - 0.016, zm - half - 0.016, zm + half + 0.016, 0.002, RUB);
       sheet(xa, xb, zm - half, zm + half, 0.004, HOLE);
-      pane(xm - back, zm, len, half, { dark, lift: 0.02 });
+      pane(xm - back, zm / q, len, half / q, { dark, lift: 0.02 });
       for (const sd of [-1, 1]) { const z = zm + sd * (half + 0.008), y = (x) => K.topY(x, z); face(K, [[xa, y(xa) + 0.003, z], [xb - back, y(xb - back) + 0.003, z], [xb - back, y(xb - back) + 0.022, z], [xa - back, y(xa - back) + 0.022, z]], RUB, [0, 0, sd]); } };
     const F = m.xf, at = (len) => F - len / 2, X0 = m.x0, X1 = m.x1;   // (a window's front edge over the front seats: its middle at(len); the roof from the spoiler's leading edge to the windscreen's top)
     K.part(m.part || 'body', () => { switch (n) {   // (in the roof's part: the body's, never a door's, where a door's region reaches over the roof's edge)
@@ -80,7 +83,7 @@
       case 4: band(F, F - 0.32); band(m.xr + 0.16, m.xr - 0.16); break;   // (over the front seats and over the rear bench)
       case 5: pane(at(0.34), 0, 0.34, 0.17, { tilt: 0.03 }); break;
       case 6: pane(at(0.38), 0, 0.38, 0.22, { tilt: 0.035 }); if (!sc) { const xa = F + 0.02, y = (z) => K.topY(xa, z);   // (the wind deflector: a black lip ahead of it)
-        face(K, [[xa, y(-0.25) + 0.002, -0.25], [xa, y(0.25) + 0.002, 0.25], [xa + 0.012, y(0.25) + 0.03, 0.25], [xa + 0.012, y(-0.25) + 0.03, -0.25]], RUB, [1, 0.3, 0]); } break;
+        const d = 0.25 * q; face(K, [[xa, y(-d) + 0.002, -d], [xa, y(d) + 0.002, d], [xa + 0.012, y(d) + 0.03, d], [xa + 0.012, y(-d) + 0.03, -d]], RUB, [1, 0.3, 0]); } break;
       case 7: pane(at(0.38), 0, 0.38, 0.22, { tilt: 0.035, dark: true }); break;
       case 8: pane(at(0.5), 0, 0.5, 0.32, { tilt: 0.045 }); break;
       case 9: slide(at(0.36), 0, 0.36, 0.2); break;
@@ -90,9 +93,10 @@
       case 13: case 14: band(X1 - 0.03, m.back != null ? XB : X0 + 0.42, { dark: n === 14 }); break;
       case 15: pane((X1 - 0.02 + X0 + 0.06) / 2, 0, X1 - 0.02 - (X0 + 0.06), 0.53); break;
       case 16: { const r0 = Math.max(X0 + 0.25, XB + 0.035), xm = (X1 - 0.04 + r0) / 2, len = X1 - 0.04 - r0, CW = weave(CF, RF); if (len < 0.06) break;   // (a carbon frame, a carbon bow across its middle)
-        sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, 0.5, 0.0015, CW(0, 0)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -0.5, -0.47, 0.0025, CW(0, 1)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, 0.47, 0.5, 0.0025, CW(0, 1));
+        const a = 0.5 * q, b = 0.47 * q, c = 0.46 * q;
+        sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -a, a, 0.0015, CW(0, 0)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, -a, -b, 0.0025, CW(0, 1)); sheet(xm + len / 2 + 0.035, xm - len / 2 - 0.035, b, a, 0.0025, CW(0, 1));
         pane(xm, 0, len, 0.44, { frame: CF });
-        sheet(xm + 0.03, xm - 0.03, -0.46, 0.46, 0.006, CW(1, 0)); break; }
+        sheet(xm + 0.03, xm - 0.03, -c, c, 0.006, CW(1, 0)); break; }
     } });
   }
 
@@ -105,7 +109,9 @@
     // one scoop: its mouth at x0 (default the mount's), len back, h tall, w its half width; t / hh / ww its rings back (fractions);
     // rake: the mouth's top forward of its foot (m per m up); col its shell, cap its mouth; mesh, flap in the mouth; split: the mouth
     // parted into that many inlets by thin walls
-    const scoop = (o) => { if (o.len > LB) o = Object.assign({}, o, { len: LB }); const z0 = o.z || 0, x0 = o.x0 != null ? o.x0 : MX, T = o.t || [0, 0.14, 0.5, 1], H = o.hh || [1, 1, 0.82, 0.1], Wd = o.ww || [1, 1, 0.94, 0.8];
+    const scoop = (o) => { if (o.len > LB) o = Object.assign({}, o, { len: LB });
+      if (m.wr) { const w = Math.min(o.w, m.wr - 0.025), z = Math.sign(o.z || 0) * Math.min(Math.abs(o.z || 0), m.wr - 0.025 - w); o = Object.assign({}, o, { w, z }); }   // (wr: a narrow flat roof, the scoop on it)
+      const z0 = o.z || 0, x0 = o.x0 != null ? o.x0 : MX, T = o.t || [0, 0.14, 0.5, 1], H = o.hh || [1, 1, 0.82, 0.1], Wd = o.ww || [1, 1, 0.94, 0.8];
       const ring = (t, i) => { const x = x0 - t * o.len, y = K.topY(x, z0), h = o.h * H[i], w = o.w * Wd[i], cw = Math.min(0.045, w * 0.32), f = i === 0 ? (o.rake || 0) : 0;
         return [[x, y - 0.012, z0 - w], [x + f * h * 0.72, y + h * 0.72, z0 - w + 0.012], [x + f * h, y + h, z0 - w + cw], [x + f * h, y + h, z0 + w - cw], [x + f * h * 0.72, y + h * 0.72, z0 + w - 0.012], [x, y - 0.012, z0 + w]]; };
       K.skin(T.map(ring), o.col, o.cap || BLK, o.col === W ? CF : o.col);
