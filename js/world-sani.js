@@ -442,5 +442,6 @@
     return out;
   }
 
+  World.keep('VR', 'sani');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.sani = (scene, tex, opts) => buildSani(scene, tex, opts);
 })();

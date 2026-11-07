@@ -83,21 +83,25 @@
   });
 
   /* ---------------- the game's tracks as the menu shows them ---------------- */
-  const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' }]);
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel' };
-  const W_SET = ['dry', 'rain', 'random'];   // (the rain over the picture: none, falling, coming and going)
+  const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
+    { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
+    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' }]);   // (Zabava: docs/zabava.md)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit' };
+  const W_SET = ['dry', 'rain', 'random', 'change'];   // (the rain over the picture: none, falling, coming and going; Changing the same, slower)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
   let TR = [];
-  // every track in one list: the real ones from the shortest to the longest, then the test tracks the same way (equal lengths: by id). The
-  // lengths are the menu's table (MENU.lens, tools/menu-lens.js): building every track to measure it would take seconds on a phone
+  // every track in one list: the real ones from the shortest to the longest, then the ones awaiting the user's choice (pending: true, one of
+  // them stays a real track, the others become test tracks; until then real ones in the game, only the menu shows them apart), then the
+  // test tracks, each group the same way (equal lengths: by id). The lengths are the menu's table (MENU.lens, tools/menu-lens.js): building
+  // every track to measure it would take seconds on a phone
   const lenOf = (d) => (D.lens || {})[d.id] || 0;
   function buildTracks() {
     const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
       const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d), test: !!d.test,
-        modes: d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
+        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
       Object.defineProperties(t, {
         km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { return G.track(d.id).corners.length; } },
@@ -106,7 +110,8 @@
       });
       return t;
     });
-    TR.sort((a, b) => (a.test - b.test) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const rank = (t) => t.test ? 2 : t.def.pending ? 1 : 0;
+    TR.sort((a, b) => (rank(a) - rank(b)) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
   const trackById = (id) => TR.find(t => t.id === id);
   // the track the game stands on. Its built-in first choice is a test track (Jezero), which a player who has never raced should not meet first
@@ -117,7 +122,7 @@
   const trackImg = (t, wet) => 'assets/tracks/' + shownId(t) + (wet ? '-rain' : '') + '.webp';
   const dio = (t) => '<div class="dio"><div class="isl" style="animation-delay:-' + Math.round(performance.now() % 5000) + 'ms">' +
     '<img src="' + trackImg(t) + '" alt="3D model of the ' + esc(t.name) + ' track"><img class="wet" src="' + trackImg(t, true) + '" alt=""></div></div>';
-  const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' || w === 'change' ? 2 : 0; };
+  const weatherIdx = () => { const w = G.S.weather; return w === 'rain' || w === 'storm' ? 1 : w === 'random' ? 2 : w === 'change' ? 3 : 0; };
   const modeOf = (id) => MODES.find(m => m.id === id) || MODES[0];
   const money = () => G.career() ? G.career().money : null;
 
@@ -131,7 +136,7 @@
   const curTrack = () => TRACKS()[trackIdx] || null;
   const wxMode = () => W_SET[weatherIdx()];
 
-  /* ---------------- the weather on the track model: the wet model fades in and rain falls; Random swaps between the two ---------------- */
+  /* ---------------- the weather on the track model: the wet model fades in and rain falls; Random swaps between the two, Changing too, slower ---------------- */
   const wx = (function () {
     const cv = document.createElement('canvas'); cv.className = 'rainfx'; cv.setAttribute('aria-hidden', 'true');
     const ctx = cv.getContext('2d'), calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -164,13 +169,13 @@
       if (!raf && (want || a)) raf = requestAnimationFrame(frame);
     }
     return {
-      // after a render of the track screen (mode 'dry' | 'rain' | 'random'): the new stage starts in the weather shown before, so a
+      // after a render of the track screen (mode 'dry' | 'rain' | 'random' | 'change'): the new stage starts in the weather shown before, so a
       // change fades over; on entering the screen it starts in its own weather
       attach(stage, m, entering) {
         if (entering) { wet = m === 'rain'; a = wet && !calm ? 1 : 0; }
         stage.classList.toggle('rainy', wet);   // (before anything measures the new stage, so the weather already shown does not fade in again)
         (stage.querySelector('.dio') || stage.querySelector('video')).after(cv); fit();   // (over the picture, under the names: the track screen's diorama or map, the intro's video)
-        if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random') timer = setInterval(() => show(!wet), 2600); }
+        if (m !== mode || entering) { clearInterval(timer); timer = 0; mode = m; if (m === 'random' || m === 'change') timer = setInterval(() => show(!wet), m === 'change' ? 4200 : 2600); }
         void stage.offsetWidth;
         show(m === 'rain' ? true : m === 'dry' ? false : wet);
       },
@@ -194,7 +199,7 @@
     const subHead = (title, sub) => '<div class="t-subhead"><button class="sq" data-act="tsub:" aria-label="Back to the main menu">' + I.back + '</button><div><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div></div>';
     const card = (cls, act, cur, name, sub, chip, im) => '<button class="mode ' + cls + '" aria-current="' + cur + '" data-act="' + act + '"><span class="tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small>' + (chip ? '<em class="chip">' + esc(chip) + '</em>' : '') + '</span><span class="im">' + im + '</span><i class="tick" aria-hidden="true">' + I.check + '</i></button>';
     if (titleSub === 'single') {
-      h += subHead('Single race', 'Choose a mode') + '<div class="t-sub">' + MODES.map(m => card('m-' + m.id, 'mode:' + m.id, mode === m.id, m.name, m.sub, m.chip, '<img src="' + m.img + '" alt="">')).join('') + '</div>';
+      h += subHead('Single race', 'Choose a mode') + '<div class="t-sub' + (MODES.length > 4 ? ' many' : '') + '">' + MODES.map(m => card('m-' + m.id, 'mode:' + m.id, mode === m.id, m.name, m.sub, m.chip, '<img src="' + m.img + '" alt="">')).join('') + '</div>';
     } else if (titleSub === 'career') {
       const c = G.career(), ch = G.champ();
       const four = [
@@ -622,18 +627,18 @@
     if (mode === 'chase') first = cell('Police', 'On you', 'opp');
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
     else if (mode === 'race' && rivOf(d)) { const n = G.rivals(d); first = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + n + '. Choose how many"><small>Opponents</small><b>' + n + '</b></button></div>'; }   // (a tap: the sheet with 0..100, rivSheet)
-    else first = cell('Opponents', String(mode === 'duel' ? 1 : G.rivals ? G.rivals(d) : 21), 'opp');
+    else first = cell('Opponents', String(mode === 'duel' || mode === 'pursuit' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21), 'opp');   // (Elimination: at least 5, js/zabava/elim.js E.min)
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best') + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
-    // the yard: the car before the road sign with the country (a test track: its name and TEST); the car in 3D with the wind round it
+    // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
     // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,
     // out of the keys' way and hidden from readers, the car's button says it: a phone's touch adjustment takes it for a target, not so a
     // plain span with the menu's listener far up)
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
-    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
       '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
       '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)
@@ -674,6 +679,7 @@
       ['cmp', 'Tyres', [['auto', 'Auto'], ['S', 'Soft'], ['M', 'Medium'], ['H', 'Hard']], S.cmp, circuit && !!d.pit],
       ['pkRoad', 'Road', [['pikes', 'Asphalt'], ['pikesg', 'Gravel']], S.pkRoad, pk],
       ['pkGhost', 'Ghost', [['best', 'My best'], ['legend', 'Legend'], ['off', 'None']], S.pkGhost, pk && mode === 'trial'],
+      ['zbGold', 'Gold ghost', [['0', 'Off'], ['1', 'On']], String(S.zbGold ? 1 : 0), !pk && mode === 'trial' && !!(G.medals && G.medals(d))],   // (Zabava: the gold ghost, js/zabava/trener.js)
       ['wing', 'Wing', [['0', 'Small'], ['1', 'Medium'], ['2', 'Large']], String(su.wing), true],
       ['gear', 'Gears', [['0', 'Short'], ['1', 'Medium'], ['2', 'Long']], String(su.gear), true],
     ];
@@ -876,14 +882,16 @@
   const WK_TIME = { dawn: '07:00', day: '14:00', dusk: '19:30', night: '22:00' };
   const wkMin = (sec) => sec >= 5400 ? '~' + Math.round(sec / 3600) + ' h' : '~' + Math.max(1, Math.round(sec / 60)) + ' min';
   // the two days' weather, [Saturday, Sunday], each { k: the sky (D.weekend.sky), t: °C, wind: km/h }: wet, both wet (qualifying is driven
-  // in the race's weather); dry, one sunny and one mostly sunny (clear at night), a few degrees apart; the same each time for a track
+  // in the race's weather); dry, one sunny and one mostly sunny (clear at night), a few degrees apart; the same each time for a track.
+  // Changing: Sunday changeable, Saturday as the race starts (wet: the rain stops during it; G.rollWet)
   function weekendSky(t, wet) {
     const S = G.S, h = [...t.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7), sat = h % 2;
     const t0 = ({ summer: 23, autumn: 13, winter: 2 }[S.season] ?? 20) + ({ dawn: -6, dusk: -3, night: -7 }[S.tod] || 0) + (h >>> 3) % 5 - 2, dT = 2 + (h >>> 9) % 4;
     const day = (i, k, dt) => ({ k, t: Math.round(t0 + dt), wind: 3 + (h >>> (5 + i * 4)) % 12 });
-    if (wet) { const k = S.weather === 'storm' ? 'storm' : 'rain'; return [day(0, k, -3), day(1, k, -4)]; }
     const fine = S.tod === 'night' ? ['clear', 'clear'] : sat ? ['sun', 'part'] : ['part', 'sun'];
-    return [day(0, fine[0], sat ? -dT : 0), day(1, S.weather === 'change' ? 'change' : fine[1], sat ? 0 : -dT)];
+    if (S.weather === 'change') return [wet ? day(0, 'rain', -3) : day(0, fine[0], sat ? -dT : 0), day(1, 'change', wet ? -4 : sat ? 0 : -dT)];
+    if (wet) { const k = S.weather === 'storm' ? 'storm' : 'rain'; return [day(0, k, -3), day(1, k, -4)]; }
+    return [day(0, fine[0], sat ? -dT : 0), day(1, fine[1], sat ? 0 : -dT)];
   }
   // a day's weather drawn for the page (the paper is light: the sun gold, a cloud white, rain under a dark one)
   function skyIcon(k, w) {
@@ -908,7 +916,7 @@
         (q ? '<div class="wk-ft"><button class="wk-sw" data-wk="q" role="switch" aria-checked="' + !!S.quali + '" aria-label="' + esc(X.switch) + '"><i></i></button></div><span class="wk-stamp" data-off>' + esc(X.skipped.toUpperCase()) + '</span>'
           : '<div class="wk-ft"><span class="wk-gl">' + esc(X.grid.toUpperCase()) + '</span><span class="wk-pos" data-off>P' + n + '<u>/' + n + '</u></span><span class="wk-pos" data-on>P1–' + n + '</span></div>') + '</div>';
     };
-    const sun = sky[1], wet = R.wet || sun.k === 'storm';
+    const sun = sky[1], wet = (R.wet && sun.k !== 'change') || sun.k === 'storm';   // (Changing: its own sky, may change, wet at the start or not)
     el.innerHTML = '<div class="wk-bg" aria-hidden="true"><div class="wk-pic"><img src="' + (fly ? 'assets/maps/heli-' + t.id + '.webp' : trackImg(t, R.wet)) + '" alt=""><div class="wk-pin"></div></div></div>' +
       '<div class="wk-head"><button class="sq" data-wk="back" aria-label="' + esc(X.back) + '">' + I.back + '</button><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div></div>' +
       '<span class="wk-wx' + (wet ? ' wet' : '') + '">' + (wet ? I.rain : skyIcon(sun.k === 'change' ? 'part' : sun.k, 20)) + esc(X.sky[sun.k].toUpperCase()) + '<small>· ' + esc(wet ? X.track.wet : sun.k === 'change' ? X.track.change : X.track.dry) + '</small></span>' +
@@ -966,7 +974,7 @@
     const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, from = G.S.lastTrack && G.S.lastTrack !== t.id && XI[G.S.lastTrack] && XI[G.S.lastTrack].top && trackById(G.S.lastTrack) ? G.S.lastTrack : null;
     const globe = setting('intro') === 0 && G.S.lastTrack !== t.id && !calm && window.Journey && window.GEO && GEO.tracks[t.id] && Journey.supported();
     const country = countryOf(t), car = G.car();
-    const what = [modeOf(R.mode).name, car && car.name, R.mode === 'race' && !t.def.open ? laps(t.laps) : null, R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
+    const what = [modeOf(R.mode).name, car && car.name, R.mode === 'race' && !t.def.open ? laps(t.laps) : null, G.S.weather === 'change' && !R.trial ? 'Changing' : R.wet ? 'Rain' : 'Dry'].filter(Boolean).join(' · ');
     const cr = cardRect(rect), side = cr.x >= rect.x + rect.w - 2;   // (on its side: the title and the buttons over the card, the stage the whole height at the left)
     el.innerHTML = '<div class="ix-head2" style="' + (side ? 'left:' + Math.round(cr.x) + 'px;height:' + Math.round(cr.y) + 'px' : 'height:' + Math.round(rect.y) + 'px') + '"><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div>' +
       '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button><button class="ix-skip" data-ix="skip">' + esc(D.intro.skip) + I.chev + '</button></div></div>' +
