@@ -7,14 +7,16 @@
              archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0), wsF: the side's half width at the
              front arch where it is narrower than ws (the front flares on it: JASTREB's long nose narrowing over its wheel), valY: the
              diffuser's valance one across with its foot on that height over the tips, its fins beside them (JASTREB's twin pipes under
-             the middle; else the valance split round the tips) }
+             the middle; else the valance split round the tips), lipIn: how far the front lip reaches in under the bumper (0.12; a nose
+             with no floor behind its face, GOZDAR's: less), canY: the lower canard's height on the bumper's corners (0.3; a high nose's) }
      hauba: { x0, x1: the bonnet's top from the cowl to its front edge, w: its half width (its shut lines), bulge: the power bulge's length
        (options 5, 6; 0.7, a short bonnet's less: it stops before the cowl), rel: true (the louvres, bulges and stripe where KOLIBRI's are from
        its front edge, across as wide for its half width), cells: a curved top's (the louvres' panels, their frames and the stripe in that
        many times the cells along it: they follow it; 1) }: in the bonnet's part
-     maska: { x, y0, lean: the face between the lamps (x at y0, leaning back lean per metre up), yc: the grille's middle, w, h: its room }
-     zmigavci: { front: { x, y, z, w, h, part, parts: [left, right] }, side: { x, y, z, host }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
-             indicators on the front bumper, the repeaters on the fenders (z out from the middle), the rear's on the rear bumper, the
+     maska: { x, y0, lean: the face between the lamps (x at y0, leaning back lean per metre up), yc: the grille's middle, w, h: its room,
+       comb: the honeycomb's cells this many times bigger (1; a wide grille, GOZDAR's, within the room for one car with parts) }
+     zmigavci: { front: { x, y, z, w, h, part, parts: [left, right] }, side: { x, y, z, host, hosts: [left, right] }, rear: { x, y, z, part }, mirror: { x, y, z, w, parts } }: the
+             indicators on the front bumper, the repeaters on the fenders (z out from the middle; hosts: each on its own fender), the rear's on the rear bumper, the
              mirrors' housings' front faces
      relijske_luci: { bumper: [x, y, z], nose: [x, y], intake: [x, y, w, h], roof: [x, w, y], pod: [x, y0, y1, w], foot, part }: the bumper's face
              with the lamps' middle, the face between the head lamps, the lower intake, the roof's front edge (y: the bar's feet on that
@@ -58,7 +60,7 @@
     const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh && Math.abs(m.exh[0]) >= 0.15 ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of a side exhaust)
     const stock = (b, o) => K.box(b[0], b[1], 0, b[2], b[3], b[4], 0, BP, null, false, o);
     // the front lip under the bumper's face: d out in front of it, h under its foot (ends drawn back and thinner)
-    const lip = (col, d, h, o2) => { o2 = o2 || {}; const ring = (z, k) => [[xf - 0.12, yf + 0.004], [xf + 0.004, yf + 0.03], [xf + d * k, yf - h * 0.35], [xf + d * k - 0.006, yf - h * k], [xf - 0.12, yf - h * k + 0.008]].map(([x, y]) => [x, y, z]);
+    const LI = m.lipIn != null ? m.lipIn : 0.12, lip = (col, d, h, o2) => { o2 = o2 || {}; const ring = (z, k) => [[xf - LI, yf + 0.004], [xf + 0.004, yf + 0.03], [xf + d * k, yf - h * 0.35], [xf + d * k - 0.006, yf - h * k], [xf - LI, yf - h * k + 0.008]].map(([x, y]) => [x, y, z]);   // (LI: how far in under the bumper, lipIn)
       const zs = K.hi ? [-W, -W * 0.9, -W * 0.5, W * 0.5, W * 0.9, W] : [-W, -W * 0.88, W * 0.88, W], ks = K.hi ? [0.45, 1, 1, 1, 1, 0.45] : [0.45, 1, 1, 0.45];
       K.skin(zs.map((z, i) => ring(z * 0.985, ks[i])), (k, e) => e === 2 && o2.edge ? o2.edge : col, col, col, oF); };
     // a flat splitter blade under the bumper, d out in front, with the face down to it; endplates
@@ -68,7 +70,7 @@
       if (edge) K.rect(xf + d + 0.0005, y, 0, 2 * (Wz - 0.05), 0.012, edge, oF);
       if (ep) for (const sd of [-1, 1]) K.endplate([[xf - 0.08, y + 0.006], [xf + d - 0.005, y + 0.006], [xf + d - 0.03, y + 0.06], [xf - 0.08, y + 0.1]], sd * (Wz - 0.012), 0.01, ep, oF); };
     // canards on the bumper's corners (k a side, the lower one first)
-    const canards = (col, k) => { for (const sd of [-1, 1]) for (let i = 0; i < k; i++) { const y = 0.3 + i * 0.075;
+    const canards = (col, k) => { for (const sd of [-1, 1]) for (let i = 0; i < k; i++) { const y = (m.canY != null ? m.canY : 0.3) + i * 0.075;   // (canY: the lower one's height on a high nose, GOZDAR's)
       K.plate([[xf + 0.004, y, sd * (W - 0.05)], [xf + 0.004, y, sd * (W + 0.035)], [xf - 0.13, y + 0.045, sd * (W + 0.01)]], 0.008, col, oF); } };
     // the skirts along the sills between the arches: out past the side, h under the sill's foot
     const skirts = (col, out, h, line) => { if (!m.sill) return; for (const sd of [-1, 1]) { const pr = (x, k) => [[ws - 0.012, ys + 0.115], [ws + out * k, ys + 0.1], [ws + out * k + 0.004, ys + 0.012], [ws + out * k - 0.012, ys - h * k], [ws - 0.07, ys - h * k + 0.006]].map(([z, y]) => [x, y, sd * z]);
@@ -200,10 +202,10 @@
     const comb = (r, col) => { const dz = r * 1.75, dy = r * 1.52;   // (hexagons, their flat sides up; rows staggered)
       for (let y = G.y0 + r; y <= G.y1 - r * 0.85; y += dy) { const odd = Math.round((y - G.y0 - r) / dy) % 2;
         for (let z = G.z0 + r + (odd ? dz / 2 : 0); z <= G.z1 - r; z += dz) f(Array.from({ length: 6 }, (_, i) => { const a = i / 6 * Math.PI * 2 + Math.PI / 6; return [z + Math.cos(a) * r, y + Math.sin(a) * r]; }), col, 0.005); } };
-    const W0 = m.w, H0 = m.h, Hs = 0.075, HOLE = [0.03, 0.03, 0.035], CFD = [0.12, 0.125, 0.135];   // (the full room; a slim grille as the stock one)
+    const W0 = m.w, H0 = m.h, Hs = 0.075, HOLE = [0.03, 0.03, 0.035], CFD = [0.12, 0.125, 0.135], CR = (K.hi ? 0.017 : 0.022) * (m.comb || 1);   // (the full room; a slim grille as the stock one; CR: the honeycomb's cells)
     switch (n) {
       case 1: open(W0 * 0.98, Hs, null, BP, 0.01); diamond(0.05, 0.006, [0.13, 0.13, 0.14]); break;                       // črna mreža (slim)
-      case 2: open(W0 * 0.96, H0 * 0.8, [0.14, 0.14, 0.15], BP, 0.012); comb(K.hi ? 0.017 : 0.022, HOLE); break;         // satasta
+      case 2: open(W0 * 0.96, H0 * 0.8, [0.14, 0.14, 0.15], BP, 0.012); comb(CR, HOLE); break;         // satasta
       case 3: open(W0 * 0.96, H0 * 0.8, null, BP, 0.012); square(K.hi ? 12 : 8, K.hi ? 5 : 4, 0.005, [0.2, 0.2, 0.21]); break;   // mrežasta
       case 4: open(W0 * 0.98, H0 * 0.7, null, [0.02, 0.02, 0.022], 0.012); slats(3, 0.018, [0.035, 0.035, 0.04], [0.32, 0.33, 0.36]); break;   // sijajno črna
       case 5: open(W0 * 0.96, H0 * 0.8, null, AL, 0.012); diamond(0.045, 0.007, AL); break;                               // aluminijasta mreža
@@ -214,10 +216,10 @@
       case 10: open(W0 * 0.98, H0 * 0.8, CF, CF2, 0.012); slots(K.hi ? 9 : 6, 0.022, [0.15, 0.155, 0.165]); slats(2, 0.014, [0.15, 0.155, 0.165]); break;   // karbonska (the weave's ribs)
       case 11: open(W0 * 0.96, H0 * 0.8, null, CF, 0.02); square(K.hi ? 12 : 8, K.hi ? 5 : 4, 0.005, [0.6, 0.61, 0.64]); break;   // karbonska z mrežo
       case 12: open(W0 * 0.98, H0 * 0.8, null, CF2, 0.012); slots(K.hi ? 11 : 7, 0.026, CF); break;                          // karbonska z režami
-      case 13: open(W0 * 0.96, H0 * 0.8, CFD, CFD, 0.016); comb(K.hi ? 0.017 : 0.022, HOLE); break;   // suhi karbon
+      case 13: open(W0 * 0.96, H0 * 0.8, CFD, CFD, 0.016); comb(CR, HOLE); break;   // suhi karbon
       case 14: open(W0 * 0.98, Hs, null, ICE, 0.006); diamond(0.05, 0.006, [0.13, 0.13, 0.14]); break;                    // s svetlečim robom (a slim one, its edge lit)
       case 15: open(W0, H0, null, CFD, 0.012); square(K.hi ? 8 : 6, 3, 0.008, CFD); break;   // suhi karbon, dirkalna (the widest opening)
-      case 16: open(W0 * 0.96, H0 * 0.8, CFD, CFD, 0.016); comb(K.hi ? 0.017 : 0.022, HOLE);   // suhi karbon s svetlobo
+      case 16: open(W0 * 0.96, H0 * 0.8, CFD, CFD, 0.016); comb(CR, HOLE);   // suhi karbon s svetlobo
         rect(G.z0, G.y0 - 0.004, G.z1, G.y0, ICE, 0.0095); break;
     }
   }
@@ -256,7 +258,7 @@
       lamp(F.x, F.y, sd * F.z, fw, fh, 'x', fo, L);
       if (L.rib && K.hi) for (const v of [-0.3, 0.3]) pane(F.x, F.y + v * fh, sd * F.z, fw * 0.96, 0.004, AMB2, 'x', fo, 0.002);
       // the repeater: an amber lens as stock on the first four, a slim LED or sequential strip after them; on the mirrors instead (7, 16)
-      const sz = sd * S.z, sdir = sd < 0 ? '-z' : 'z', so = { host: S.host };
+      const sz = sd * S.z, sdir = sd < 0 ? '-z' : 'z', so = { host: S.hosts ? S.hosts[sd < 0 ? 0 : 1] : S.host };   // (side.hosts [left, right]: each repeater on its own fender, GOZDAR's)
       if (L.mirror && MI) { const mp = MI.parts ? { part: MI.parts[sd < 0 ? 0 : 1] } : {}, k = L.seq ? 4 : 3, w = MI.w || 0.11;
         pane(MI.x, MI.y, sd * MI.z, w, 0.016, [0.14, 0.14, 0.15], 'x', mp, 0);
         for (let i = 0; i < k; i++) pane(MI.x, MI.y, sd * (MI.z - w / 2 + w * (i + 0.5) / k), w / k * 0.8, 0.01, i === k - 1 ? AMB : AMB2, 'x', mp, 0.0015); }

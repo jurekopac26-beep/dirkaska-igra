@@ -9,7 +9,8 @@
    akumulator back: true, x its foot's rear edge; turbo twin: [dz1, dz2] the twin snails' (13-16) places across, from z, ic: [x, y, z]
    the bigger intercooler's (8, 10, 15) foot's middle, none: in front of the turbo); vzmeti, amortizerji,
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
-   stabilizatorji floor: the height of the floor under the bars, K.rw - 0.06 if not given) */
+   vzmeti seat: the coils' foot, a number or [front, rear] (K.rw + 0.04 if not given; a high body over low arms, GOZDAR's: on the arm, on the axle);
+   stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given) */
 (function () {
   'use strict';
   if (typeof DELI === 'undefined') return;
@@ -73,7 +74,7 @@
   const wheels = (K, fn) => { for (const A of K.arches) for (const sd of [-1, 1]) fn(A.x, sd, A === K.arches[0]); };
   function vzmeti(K, n, m) {
     const low = DELI.effect('vzmeti', n).lower || 0, k = 3, col = [AL, RED, AL, AL, YEL, YEL, RED, PUR, BLU, BLU, BLU, GRN, RED, ORA, YEL, GOLD][n - 1], ti = m.in || 0.13, top = (m.top || 0.66) - low;
-    wheels(K, (x, sd) => { const z = sd * (K.hw - ti), y0 = K.rw + 0.04, h = (top - y0) / (k * 2 - 1);
+    wheels(K, (x, sd, front) => { const z = sd * (K.hw - ti), y0 = m.seat == null ? K.rw + 0.04 : [].concat(m.seat)[front ? 0 : [].concat(m.seat).length - 1], h = (top - y0) / (k * 2 - 1);   // (seat: the coils' foot on a low arm)
       for (let i = 0; i < k; i++) cyl(K, [x, y0 + i * 2 * h, z], [x, y0 + (i * 2 + 1) * h, z], 0.06, col, { capA: null, capB: null });   // (its coils: bands with gaps)
       cyl(K, [x, y0 - 0.01, z], [x, top, z], 0.036, DK, { n: 4, capA: null, capB: null }); });   // (the strut inside)
   }
@@ -87,8 +88,8 @@
   }
   function stabilizatorji(K, n, m) {
     const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06;
-    const fl = m.floor != null ? m.floor : K.rw - 0.06, y = fl + 0.035;   // (the floor under it: the bar 3.5 cm above, in two clamps)
-    const axle = (A, front) => { const x = A.x + (front ? -0.12 : 0.12); K.bar([x, y, -(K.hw - ti)], [x, y, K.hw - ti], r, col, Object.assign({ n: K.hi ? 6 : 5 }, IN));
+    const F = m.floor != null ? [].concat(m.floor) : [K.rw - 0.06];   // (the floor under it: the bar 3.5 cm above, in two clamps)
+    const axle = (A, front) => { const fl = F[front ? 0 : F.length - 1], y = fl + 0.035, x = A.x + (front ? -0.12 : 0.12); K.bar([x, y, -(K.hw - ti)], [x, y, K.hw - ti], r, col, Object.assign({ n: K.hi ? 6 : 5 }, IN));
       for (const sd of [-1, 1]) { K.bar([x, y, sd * (K.hw - ti)], [A.x, y + 0.08, sd * (K.hw - ti)], r * 0.8, col, Object.assign({ n: 4 }, IN));   // (its arms forward to the wheel)
         box(K, x, fl - 0.006, sd * (K.hw - ti) * 0.55, 0.05, y - fl + r + 0.012, 0.035, DK); } };   // (a clamp on the floor)
     if (n !== 2) axle(K.arches[1], false);
