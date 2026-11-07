@@ -47,13 +47,16 @@ const helpers = (page) => page.evaluate(() => {
     for (let k = 0; k < 6000; k++) {
       if ((p.repairN || 0) < n && !p.inPit && p.dist > H.from + L * 0.4) p.pitWant = true;
       if (p.pitDone && g.pitAuto.st) { const t0 = R().time; g.sim(1 / 120, false, 0, 0); if (!g.pitAuto.st) { H.from = p.dist; return { hb: t0, at: g.pitExit.hb, inPit: p.inPit, v: +(p.speed * 3.6).toFixed(1), stop: p.repairN }; } }
-      else g.sim(0.25, true);
+      else { g.sim(0.25, true); H.unstick(p); }
       if (k % 40 === 0) await null;
     }
     return null;
   };
   // the reaction's clock started on the circuit (as at a hand-back), on a straight part of the lap, the message before it gone
-  H.open = () => { for (let k = 0; k < 120 && P().speed < 30; k++) g.sim(0.25, true); g.hud(3); g.pitExitOpen(); return R().time; };
+  H.open = () => { for (let k = 0; k < 120 && P().speed < 30; k++) { g.sim(0.25, true); H.unstick(P()); } g.hud(3); g.pitExitOpen(); return R().time; };
+  // stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo (a rival's knock in a crowd can turn the
+  // autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+  H.unstick = (p) => { if (!p.inPit && !p.finished && (p.stuckT > 3 || p.wrongT > 3)) R().rescue(p); };
 });
 
 try {

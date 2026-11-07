@@ -214,10 +214,11 @@
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
       h += '<button class="tile t-multi" data-act="game:to-online"><span class="tx"><b>MULTIPLAYER</b><small>Race friends online</small></span><span class="im"><img src="assets/menu/multiplayer.webp" alt=""></span></button>';
       h += '<button class="tile t-career" data-act="career"><span class="tx"><b>CAREER</b><small>' + (G.career() ? coins(G.career().money) + ' · ' : '') + 'Garage, championships, school</small></span><span class="im">' + I.bigcup + '<img src="assets/menu/career.webp" alt=""></span></button>';
-      h += '<div class="t-row"><button class="tsmall" data-act="game:to-settings">' + I.cog + '<span>Settings</span></button><button class="tsmall" data-act="game:to-board">' + I.podium + '<span>Leaderboard</span></button></div>';
-      if (G.chal()) h += '<button class="mbtn gold buy" data-act="game:to-chal"><span>Challenge from a friend</span><small>Beat their time on the same track</small></button>';
+      // the small buttons in one grid: the MISSIONS tile (the list of the missions by garage, js/missions.js openList) the grid's width
+      // upright, on its side one cell of it (no row more on a low screen); Settings, Leaderboard, then Full screen and Install
       const ex = []; if (G.fsAvailable()) ex.push('<button class="tsmall" data-act="game:fullscreen">' + I.expand + '<span>Full screen</span></button>'); if (G.installAvailable()) ex.push('<button class="tsmall" data-act="game:install">' + I.plus + '<span>Install the game</span></button>');
-      if (ex.length) h += '<div class="t-row">' + ex.join('') + '</div>';
+      h += '<div class="t-row"><button class="tsmall t-mis" data-act="game:to-missions">' + I.starBig + '<span>MISSIONS</span><small>Special missions in six garages</small></button><button class="tsmall" data-act="game:to-settings">' + I.cog + '<span>Settings</span></button><button class="tsmall" data-act="game:to-board">' + I.podium + '<span>Leaderboard</span></button>' + ex.join('') + '</div>';
+      if (G.chal()) h += '<button class="mbtn gold buy" data-act="game:to-chal"><span>Challenge from a friend</span><small>Beat their time on the same track</small></button>';
       h += forcedDark() ? '<div class="t-links"><button class="tlink" data-act="credits">Credits</button><button class="tlink" data-act="dark-tip">Colours too dark?</button></div>' : '<button class="tlink" data-act="credits">Credits</button>';
     }
     h += '</div></section>';
