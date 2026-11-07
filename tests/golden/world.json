@@ -1343,20 +1343,20 @@
  },
  "balea": {
   "meshes": 1300,
-  "verts": 716020,
-  "instances": 31942,
+  "verts": 715932,
+  "instances": 31948,
   "props": 59,
   "crowd": 177,
-  "world": "51102f2b",
+  "world": "8efbdaa1",
   "propsHash": "4ecba816",
-  "floor": "44e8fdb6/8792",
+  "floor": "6872273c/8792",
   "groups": {
-   "-:MeshLambertMaterial": "12f4f7ee",
+   "-:MeshLambertMaterial": "954e0b80",
    "-:MeshPhongMaterial": "fd4c9d",
    "-:MeshBasicMaterial": "59ac609e",
    "irFar:MeshLambertMaterial": "558fca68",
-   "crowd:MeshLambertMaterial": "65a61a12",
-   "ao:MeshBasicMaterial": "608d5c9c",
+   "crowd:MeshLambertMaterial": "ecadc2c0",
+   "ao:MeshBasicMaterial": "a9a1f40",
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
