@@ -496,28 +496,31 @@ try {
     await ready(page);
     const press = async (i) => {
       const seen = await page.evaluate((i) => window.__press(i), i); await page.waitForTimeout(700);
-      const s = await ev(page, 'const f = root.querySelector(".pad-focus"), h = root.querySelector(".where .w2"); return { screen: Menu.debug().screen, sub: Menu.debug().titleSub, focus: f ? (f.dataset.act || "") : "", name: h ? h.textContent : "" };');
+      const s = await ev(page, 'const f = root.querySelector(".pad-focus"), h = root.querySelector(".where .w2"), D = Menu.debug(); return { screen: D.screen, sub: D.titleSub, focus: f ? (f.dataset.act || "") : "", name: h ? h.textContent : "", id: (D.list || [])[D.trackIdx] || "" };');
       s.seen = seen; return s;
     };
+    // (the first real track of Circuit race's list, the shortest: from the game, not named here, so a new shorter track does not break it)
+    const first = await page.evaluate(() => { const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && !d.test && !d.pending && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes('race'));
+      ds.sort((a, b) => (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1)); return ds[0].id; });
     let g = await press(9);
     T.check('pad, Start on the title: Single race opens, the highlight on the chosen mode', g.seen && g.screen === 'title' && g.sub === 'single' && g.focus === 'mode:race', JSON.stringify(g));
     g = await press(13);
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest: Trois-Rivières; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Trois-Rivières', JSON.stringify(g));
+    T.check(`pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest: ${first}; the highlight on Race!)`, g.screen === 'track' && g.focus === 'race-single' && g.id === first && g.name !== '', JSON.stringify(g));
     g = await press(5);
-    const next = g.name;
+    const next = g.id;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Trois-Rivières' && next !== '' && g.name === 'Trois-Rivières', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== first && next !== '' && g.id === first, JSON.stringify({ next, g }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'troisrivieres').catch(() => null);
+    await raceOn(page, first).catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'troisrivieres', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === first, JSON.stringify(r));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
