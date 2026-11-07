@@ -20,7 +20,8 @@ try {
   // the replay's frames counted and logged (each: the replay's time, its camera, the crew's mode, the film camera's weight, the jacks' lift,
   // the camera's distance from the player's car on the ground and its height over it, the camera and the car, the lens; with the crew at
   // work under the film camera: how many of the car's corners and of the crew at their places (the wheel guns, the new wheels, the jacks)
-  // are out of the picture)
+  // are out of the picture; the jacks' men while they hold the car up: once they let it down (render.js crewLogic: 'jackR') they step
+  // out of the way with the jack, the rear one 0.4 m back, to the picture's edge on a long stop)
   const INSTALL = () => { window.__rf = 0; window.__fr = []; const o = Render.frame; Render.frame = function (dt, a, target, mode, opt) { const r = o.apply(this, arguments); window.__rf++;
     const g = window.__game, P = g.replay, c = Render.crew, pc = g.race && g.race.player, cm = Render.camera;
     if (!(P && opt && opt.rdt != null && c && pc)) return r;
@@ -29,7 +30,7 @@ try {
       cm.updateMatrixWorld(); const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cm.projectionMatrix, cm.matrixWorldInverse)), v = new THREE.Vector3();
       const D = c.dim, R = c.roles, ch = Math.cos(pc.h), sh = Math.sin(pc.h), y = pc.y || 0, pts = [];
       for (const f of [D.nose, D.tail]) for (const s of [-1, 1]) pts.push([pc.x + ch * f - sh * s * D.wid / 2, y + 0.5, pc.z + sh * f + ch * s * D.wid / 2]);
-      for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2) pts.push([m.x, (m.y || 0) + 1, m.z]);
+      for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2 && m.act !== 'jackR') pts.push([m.x, (m.y || 0) + 1, m.z]);
       fit = { n: pts.length, out: pts.filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length };
     }
     window.__fr.push({ t: P.t, cam: P.cam, mode: c.mode, w: Render.pitCam, lift: c.lift, stk: c.gar && c.gar.stack ? c.gar.stack.shown : null, st: pc.rpPit ? pc.rpPit.pitState : 'none', d: Math.hypot(cm.position.x - pc.x, cm.position.z - pc.z), h: cm.position.y - (pc.y || 0),
