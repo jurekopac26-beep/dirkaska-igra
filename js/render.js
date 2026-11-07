@@ -3862,6 +3862,46 @@ const Render = (function () {
     }
     if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
   }
+  // the rubbered-in line (84, Race mb.rb; chosen B5-6, early in the race barely to be seen): a glossy dark layer of rubber on the racing line
+  // and beside it, in the same mesh, the dust of it in its own colour, lighter, fading softly outward over a short way (fewer cars drive
+  // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
+  // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
+  // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
+  // again for its track. Its picture: Tex.rubber
+  const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  let rbLn = null, rbTex = null;
+  function rubberLine(R) {
+    if (rbLn && rbLn.userData.w !== world) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
+    const T = R && R.track, rb = R && R.mb && T === curTrack && T.rl ? R.mb.rb || 0 : 0;
+    if (rb > 0.005 && !rbLn && world) {
+      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
+      for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
+      for (let i = 0, j = 0; i <= N; j++) {
+        const ii = i % N, kb = 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
+        for (let v = 0; v < nc; v++) {
+          const o = T.rl[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
+          if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
+          pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
+          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
+        }
+        if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+        if (i === N) break;
+        let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
+        i = Math.min(N, i + st);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      if (!rbTex) rbTex = Tex.rubber();
+      const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
+      rbLn = new THREE.Mesh(g, m); rbLn.name = 'rubberline'; rbLn.receiveShadow = true; rbLn.renderOrder = 1; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1 }; scene.add(rbLn);
+    }
+    if (rbLn) {
+      rbLn.visible = rb > 0.005;
+      const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
+      if (k !== rbLn.userData.k) { rbLn.userData.k = k; rbLn.material.opacity = 0.22 + 0.5 * k; rbLn.material.specular.setRGB(0.05 + 0.13 * k, 0.06 + 0.15 * k, 0.08 + 0.2 * k); }
+    }
+  }
 
   // the rain's splashes (Splashes) on the road round the view's centre: so many drops a second as it rains, where they fall on the road
   // and in the pits (the track's own height there); not in the snow. Their places from a generator of their own (Math.random is left to the race)
@@ -10170,7 +10210,7 @@ const Render = (function () {
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
-      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); }
+      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); rubberLine(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);

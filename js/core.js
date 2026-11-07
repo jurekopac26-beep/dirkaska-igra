@@ -75,6 +75,14 @@ const Core = (function () {
   // r0 m, all of it from r1 m. n: the car-laps that lay most of it (1 - 1/e of the thickest), wash: the s at full water for the rubber laid
   // to fall to 1/e; g: the grip a car loses on the thickest of it
   const MARB = { gap: 1.3, wd: 3.2, edge: 0.3, r0: 350, r1: 70, n: 20, wash: 25, g: 0.06 };
+  // the rubbered-in racing line (84, Race mb.rb, with the marbles: the same rubber laid, a slower build): the line darkens with it over the
+  // race (RUB.n car-laps for most of it; the rain washes it as the marbles). A car on it grips a little more (RUB.g on the darkest, its
+  // middle within RUB.in m of the line, none from RUB.out m: beside it the marbles' band takes over, MARB.gap, so nothing is counted twice)
+  const RUB = { n: 60, g: 0.02, in: 0.6, out: 1.2 };
+  // cold tyres after a stop (105, every car with tyres, the rivals as the player): a new set from the pits grips TCOLD.g less while cold
+  // (ty.cold 1 from the fitting to the way out of the lane, ty.co the distance there), warming up smoothly over the first TCOLD.d of a lap
+  // after it (ty.cold to 0, Race._weather). The KOLIBRI keeps its own (KT.cold, Car.kt). A set kept on at a stop, the start's: never cold
+  const TCOLD = { g: 0.1, d: 0.5 };
 
   class Track {
     constructor(def) {
@@ -1012,6 +1020,8 @@ const Core = (function () {
     // how much of the band is under a car at sample i, d m from the centre line (0..1 of its thickest there): from a wheel on its edge (the
     // car's middle 0.8 m outside it) to all of it with the car's middle 0.4 m inside
     marbleAt(i, d) { const M = this._mb || this.marbles(), k = i >= 0 && i < this.N ? M.k[i] : 0; return k ? k * clamp((M.h[i] + 0.8 - Math.abs(d - M.c[i])) / 1.2, 0, 1) : 0; }
+    // how much of the rubbered-in line (RUB) is under a car at sample i, d m from the centre line: 1 within RUB.in m of the racing line, 0 from RUB.out m
+    rubberAt(i, d) { return i >= 0 && i < this.N && this.rl ? clamp((RUB.out - Math.abs(d - this.rl[i])) / (RUB.out - RUB.in), 0, 1) : 0; }
 
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
     // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend);
@@ -2732,8 +2742,8 @@ const Core = (function () {
   // knock (1 % of the Kolibri's damage) ~1/6, a hard one ~1/3, a touch next to none, up to KT.dMax. A tyre burns (kt.hot, never more than
   // one: ktFire) only where the car caught fire before, the wheel rule's first wheel (the car's damage at 80 %, a hard hit from 70 %): the
   // most knocked one; less side grip for the whole car (KT.burn), the speed, the drive and the brakes as ever. The wear never sets one on
-  // fire. New ones from a stop are cold on every car (kt.cold 1, 0 a lap after the stop: the dots light blue), but only the cars of
-  // opts.tyreCold (the Kolibri: kt.cg) grip KT.cold less meanwhile; the others' cold tyres are only to be seen. A burning tyre's wheel comes
+  // fire. New ones from a stop are cold (kt.cold 1, 0 a lap after the stop: the dots light blue); the cars of opts.tyreCold (the
+  // Kolibri: kt.cg) grip KT.cold less meanwhile (every other car's new set: TCOLD, on its c.ty). A burning tyre's wheel comes
   // off at the next real knock (KT.real, a wall or a car: the wheel rule, rule.kt). No mission has them (js/missions.js: no tyreRule)
   const KT = { run: 0.24, lap: 0.000032, slide: 2.5, off: 3, wet: 2.5, loss: 0.1, cold: 0.12, burn: 0.62, real: 0.006, big: 0.025, avg: 0.01, t2: 4, dMax: 0.75 };
   const ktNew = (c, cold) => { const K = c.kt; for (let k = 0; k < 4; k++) { K.w[k] = 0; K.d[k] = 0; } K.hot = -1; K.cold = cold ? 1 : 0; K.d0 = c.dist; };
@@ -5663,7 +5673,12 @@ const Core = (function () {
       if (this.slip) for (const c of this.cars) c.tow = 0;
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
-      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0 } : null;
+      this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;
+      // every stop made in the pits (107: the results' table, the fastest stop; in an object: the golden references digest only the plain
+      // fields): log, each { c: the car, lap: the lap whose way in it took (_stratLap), t: the time standing in the box (s), lane: the time
+      // in the pit lane, from its line in to its line out (s; null until out: _pitLane), ty: the new set ('S', 'M', 'H', 'W' the rain tyres,
+      // 'D' slicks without compounds; '' none: the set kept on), at: the race time it was done }; inT: each car's time over the line in
+      this.pst = { log: [], inT: new Map() };   // (rb: the rubbered-in line, RUB)
       // failures (opts.faults, not in a time trial): every car's brakes and engine with a temperature, a tyre that a hard knock may cut (Car.flt,
       // see Car._heat and puncture; in an object: the golden references digest only the plain fields). The friends' cars: on their own phones
       if (opts.faults && !this.timeTrial) for (const c of this.cars) if (!c.net) c.flt = { pw: -1, pk: 0, brT: 20, enT: 85, brH: false, enH: false, ev: '' };
@@ -5699,13 +5714,14 @@ const Core = (function () {
     get lineWater() { return this.wst ? this.wst.line : this.rain; }    // ... on the racing line (it dries first)
     // the marbles (mb, from _weather after every car's grip): the cars on the track lay the rubber (the metres they drive, twice as much
     // in a full slide, none on a wet road), the band grows with it (MARB.n car-laps for most of it) and the water washes it away (MARB.wash
-    // s at full water for the rubber laid to fall to 1/e). A car on it grips a little less (MARB.g of its grip on the thickest, Track.marbleAt)
+    // s at full water for the rubber laid to fall to 1/e). A car on it grips a little less (MARB.g of its grip on the thickest, Track.marbleAt);
+    // on the rubbered-in line itself (mb.rb, slower) a little more (RUB.g, Track.rubberAt)
     _marbles(dt) {
       const M = this.mb, W = this.wst, T = this.track;
       if (this.state === 'racing') for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.speed > 1) M.d += c.speed * dt * (1 + Math.min(1, Math.abs(c.beta || 0) / 0.35)) * (1 - W.water);
       if (W.water > 0) M.d *= Math.exp(-dt * W.water / MARB.wash);
-      M.lv = 1 - Math.exp(-M.d / (MARB.n * T.len));
-      if (M.lv > 0.001) for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.q && c.q.i >= 0 && !(c.q.k >= 0)) { const m = T.marbleAt(c.q.i, c.q.d); if (m > 0) c.wet *= 1 - MARB.g * M.lv * m; }   // (not on the pit road: the autopilot's, swept clean)
+      M.lv = 1 - Math.exp(-M.d / (MARB.n * T.len)); M.rb = 1 - Math.exp(-M.d / (RUB.n * T.len));
+      if (M.lv > 0.001) for (const c of this.cars) if (!c.net && !c.pitG && !c.inPit && c.q && c.q.i >= 0 && !(c.q.k >= 0)) { const m = T.marbleAt(c.q.i, c.q.d), u = T.rubberAt(c.q.i, c.q.d); if (m > 0) c.wet *= 1 - MARB.g * M.lv * m; if (u > 0) c.wet *= 1 + RUB.g * M.rb * u; }   // (not on the pit road: the autopilot's, swept clean)
     }
     // the rain on its schedule, the water on the road, every car's grip (with tyres); the AI's speed profile follows the grip on the line
     _weather(dt) {
@@ -5719,10 +5735,12 @@ const Core = (function () {
       if (W.water < r) { W.water = Math.min(r, W.water + dt / 45 * (0.3 + r)); W.line = W.water; }
       else { W.water = Math.max(r, W.water - dt / 240); W.line = Math.min(W.water, Math.max(r, W.line - dt / 120)); }
       for (const c of this.cars) { if (c.net) continue;   // (the water where it drives: the racing line dries first)
+        const ty = c.ty; let cg = 1;   // (cold tyres after a stop: TCOLD)
+        if (ty && ty.cold > 0) { if (c.inPit) ty.co = c.dist; ty.cold = 1 - sstep(0, TCOLD.d * T.len, c.dist - ty.co); if (!c.kt && W.tyres) cg = 1 - TCOLD.g * ty.cold; }
         const w = c.q && c.q.i >= 0 && T.rl && Math.abs(c.q.d - T.rl[c.q.i]) < 2.2 ? W.line : W.water;
         const K = W.tyres && c.ty ? tyreK(c.ty) : null;   // (a compound: its grip, and what wear takes from it)
         const wl = W.tyres && c.ty && !c.kt ? Math.min(1, c.ty.wear) : 0;   // (the compound's own loss up to a wear of 1; past 0.8 the cliff on top)
-        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w) * this.cold.gk; }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
+        c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w) * this.cold.gk * cg; }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line) : 1 - (1 - WET) * W.water) * this.cold.gk;
       if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; this._prof(); }
       if (this.mb) this._marbles(dt);
@@ -5782,6 +5800,16 @@ const Core = (function () {
     autoCmp(left) {
       const G = this.strat; if (!G) return cmpFor(left);
       const n = left / this.track.len; return n <= STRAT.w * G.life.S ? 'S' : n <= STRAT.w * G.life.M ? 'M' : 'H';
+    }
+    // the fastest stop of the race so far (107: Race pst.log, by the time in the pit lane: the stop, the release, the lane's limit; the
+    // earliest of equal ones), or null
+    fastestStop() { let b = null; for (const e of this.pst.log) if (e.lane != null && (!b || e.lane < b.lane)) b = e; return b; }
+    // a car over the pit lane's line in or out (107, from pitStep's first part): the time in, and a stop's lane time once out
+    _pitLane(c) {
+      const S = this.pst;
+      if (c.inPit) { S.inT.set(c, this.time); return; }
+      const t0 = S.inT.get(c); if (t0 == null) return;
+      for (let i = S.log.length - 1; i >= 0; i--) { const e = S.log[i]; if (e.c !== c) continue; if (e.lane == null && e.at >= t0) e.lane = this.time - t0; break; }
     }
     _stratLap(c) { const P = this.track.def.pit; return clamp(Math.floor((c.dist - P[1]) / this.track.len), 0, this.laps); }   // (a stop's lap: the one whose way in it took)
     // a rival's planned stop (Race step, a strategy race): in at the way in on the lap of its next one (or a lap later when it missed the way
@@ -6106,7 +6134,7 @@ const Core = (function () {
           let g; if (c.netPG != null) g = !!c.netPG; else { const q = c.q, pz = q && q.i >= 0 ? T.pitAt(q.s) : null; g = !!pz && q.d * pz.sd > (pz.gap && c.pitG ? (T.wa ? T.wa[q.i] : T.w) : pz.wall); }
           if (g !== !!c.pitG) c.pitG = g;
         }
-        else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) this.pitStep(c, dt, true);
+        else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) { const was = !!c.inPit; this.pitStep(c, dt, true); if (!!c.inPit !== was) this._pitLane(c); }   // (107: the time in the pit lane)
       }
       for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true); }
       if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
@@ -6298,13 +6326,14 @@ const Core = (function () {
           const pl = c.pitPlan, t = pl && pl.ty, keep = keepTyres(c, pl);   // (the player's own choice, game.js: its tyres, dry or wet against the water too, the fuel and the repairs it asked for; then gone. keep: its set stays on, unless one is cut or a wheel is off)
           if (!pl || pl.fix === 'all') this.repairCar(c); else this._mend(c, pl.fix === 'need');
           if (c.kt) ktNew(c, true);   // (the Kolibri: four new tyres, cold)
-          if (c.ty && !keep) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
+          if (c.ty && !keep) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; c.ty.cold = 1; c.ty.co = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
             if (c.st) { c.st.hist.push(c.ty.k === 'wet' ? 'W' : c.ty.c); c.st.laps.push(this._stratLap(c)); } }   // (a strategy race: a rival's plan from here, every car's sets and stops for the results; a stop that keeps its set is no new one)
           if (c.fuel != null && this.fuelRate) {
             if (!pl) { c.fuel = 1; c.fuelKg = c.tankKg; c.fuelD = c.dist; if (c.fuelF != null) c.fuelF = 1; }   // (fuel: a full tank)
             else if (pl.fuel > c.fuel) { c.fuel = Math.min(1, pl.fuel); c.fuelKg = c.tankKg * c.fuel; c.fuelD = c.dist; c.fuelF = c.fuel; }   // (up to the share asked for; more in it already: nothing)
           }
           if (pl) c.pitPlan = null;
+          this.pst.log.push({ c, lap: Math.max(1, this._stratLap(c)), t: c.pitDur, lane: null, ty: !c.ty || keep ? '' : c.ty.k === 'wet' ? 'W' : c.ty.c || 'D', at: this.time });   // (107)
           c.pitState = 'done'; c.pitDone = true; c.pitEv = 'done';
         }
         return;
@@ -6563,11 +6592,15 @@ const Core = (function () {
       return k < 0 ? null : tb[k] - ta[k];
     }
     // what a stop now would cost c (s): the pit lane at 80 km/h against the road beside it at the race's pace, the braking into the lane
-    // and the speeding up out of it (LANE_K), and the stop itself; behind the safety car the field is slow, the lane costs less (SC_K)
+    // and the speeding up out of it (LANE_K), and the stop itself; behind the safety car the field is slow, the lane costs less (SC_K); a
+    // new set of tyres the warming up of it too (105, TCOLD: the speed as the square root of the grip over the first TCOLD.d of a lap past
+    // the way out, at the race's pace)
     pitLoss(c) {
       const T = this.track, P = T.def.pit, M = this.mk; if (!P || !M) return null;
       if (M.lane == null) { let tr = 0; for (let d = P[1]; d < P[2]; d += T.ds) tr += T.ds / Math.max(PIT_V, this.vprof[T.idx(T.startS + d)]); M.lane = (P[2] - P[1]) / PIT_V - tr + LANE_K; }
-      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this, c.pitPlan) + BAY.k;   // (the S onto the apron to the box and back; the player's own choice, once it made one)
+      if (M.cold == null) { let t = 0; const D = TCOLD.d * T.len; for (let d = 0; d < D; d += T.ds) t += T.ds / Math.max(5, this.vprof[T.idx(T.startS + P[2] + d)]) * (1 / Math.sqrt(1 - TCOLD.g * (1 - sstep(0, D, d))) - 1); M.cold = t; }
+      const cold = this.wst && this.wst.tyres && c.ty && !c.kt && !keepTyres(c, c.pitPlan) ? M.cold : 0;
+      return M.lane * (this.fl && this.fl.sc && this.fl.sc.state === 'out' ? SC_K : 1) + stopDur(c, this, c.pitPlan) + BAY.k + cold;   // (the S onto the apron to the box and back; the player's own choice, once it made one)
     }
     // the time (s) the autopilot takes in the pit lane as it drives it (aiControl, pitStep), for the player's pit stop panel (game.js): box,
     // from where c is to its box (0 once it stands there): the lane's limit (15 m/s through the S of the way in and out), the turn onto the
@@ -6609,6 +6642,28 @@ const Core = (function () {
       const T = this.track, V = this.vprof, K = this._fcK || (this._fcK = {});
       if (K.v !== V) { let t = 0; for (let i = 0; i < T.N; i++) t += T.ds / Math.max(5, V[i]); K.v = V; K.t = t * 1.1; }
       return K.t;
+    }
+    // a rival's next stop as its plan has it (104, the team radio: the car ahead of the player): n, the lap whose way in comes next (as
+    // _stratStep counts it), to, the metres to that way in; now: it comes in there (it has asked for the pits, pitWant, or its strategy has
+    // a stop on that lap: STRAT, c.st.at), next: its strategy has one a lap later. Null without pits, for the player, a friend's car, one at
+    // the line or retired, one in the lane already
+    pitNext(c) {
+      const T = this.track, L = T.len, P = T.def.pit; if (!P || T.open || c.isPlayer || c.net || c.finished || dnf(c) || c.inPit || c.pitG) return null;
+      const n = Math.floor((c.dist + 30 - P[1]) / L) + 1, S = c.st, at = S && S.at && S.at.length ? S.at[0] : null, last = this.laps - 1;
+      return { n, to: n * L + P[1] - c.dist, now: n <= last && (!!c.pitWant || (at != null && n >= at)), next: at != null && at === n + 1 && n + 1 <= last };
+    }
+    // a duel by the stops (104): the time (s) c gains on a, the car ahead, over the two laps round a's stop, by stopping a lap before it
+    // (under: the undercut) or a lap after it (over: the overcut). Each lap's time from c's (_lapT) by the grip of the tyres on it (the lap
+    // time as 1 / sqrt of the grip; a compound's own and what its wear takes, the cliff: tyreCliff4); the new sets fresh, each the
+    // compound its next stop gives (a's strategy, c's choice or the race's own, autoCmp); the cold of a new set (TCOLD) costs both the same
+    // on its first lap, so it falls out. Null without tyres or the race's clock
+    pitDuel(c, a) {
+      if (!c.ty || !a.ty || !this.mk) return null;
+      const L = this.track.len, left = this.laps * L - c.dist, g = (ty) => { const K = tyreK(ty), w = Math.min(1, ty.wear || 0); return (K ? K.g * (1 - K.loss * w) : 1 - 0.1 * w) * tyreCliff4(ty); };
+      const nw = (k) => (k && TYRE_CMP[k] ? TYRE_CMP[k].g : 1), wet = (ty) => ty.k === 'wet';
+      const cN = wet(c.ty) ? 1 : nw(c.ty.c ? (TYRE_CMP[c.pitCmp] ? c.pitCmp : this.autoCmp(left)) : null), aS = a.st, aN = wet(a.ty) ? 1 : nw(a.ty.c ? (aS && aS.seq && aS.seq[aS.hist.length]) || a.ty.c : null);
+      const gc = g(c.ty), T0 = this._lapT(c), t = (x) => T0 * Math.sqrt(gc / Math.max(0.3, x)), cO = t(gc), aO = t(g(a.ty)), cNt = t(cN), aNt = t(aN);
+      return { under: aO + aNt - 2 * cNt, over: 2 * aNt - cO - cNt };
     }
     // the plan for a stop (the team radio): why one is needed (need: 'fuel', not enough to the line; 'tyres', worn out before it; 'wet' /
     // 'dry', the wrong tyres for the water on the racing line; 'tyre', a cut or a burst one; 'worn', worn out (TYRE_WORN) and over the cliff
@@ -7320,7 +7375,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
 })();
