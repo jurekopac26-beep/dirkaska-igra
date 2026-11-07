@@ -13,9 +13,9 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NRC, RB, TAU, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, cyl, gable, hjCutMat,
-    ico, inPoly, lerp, nrDem, nrDist, nrGround, nrLC, nrLCf, nrNear, nrPrep, nrShade, nrTileGeo, nrTileOn, rng,
-    sstep, valueNoise2, vary, waterMat
+    Chunks, GB, IChunks, NRC, RB, TAU, addShore, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, cyl, gable, hjCutMat,
+    ico, inPoly, lerp, nrDem, nrDist, nrGH, nrGround, nrLC, nrLCf, nrNear, nrPrep, nrShade, nrTileGeo, nrTileOn, rng, shoreBand,
+    sstep, valueNoise2, vary, waterMat, waterline
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -427,6 +427,15 @@
       const WO = { len: 2.2, amp: 0.7, refl: 0.5, shal: 0.5, lap: 0.5, surf: 0.4 }, g = new THREE.PlaneGeometry(40000, 40000, 1, 1).rotateX(-Math.PI / 2);
       const sea = new THREE.Mesh(g, waterMat(tex, Object.assign({ color: 0x4f8a9e }, WO))); sea.position.set(0, LAKE, 6000); sea.receiveShadow = true; sea.matrixAutoUpdate = false; sea.updateMatrix(); root.add(sea);
       out.dyn.water = tex.water; out.sea = sea;
+      // the band along the quay walls where the lake comes within 250 m of the road (the water lapping at the stone: little foam)
+      const WB = Object.assign({}, WO, { surf: 0.15, lap: 0.35 });
+      for (let z = G.z0; z < G.z0 + (G.nz - 1) * NRC; z += 512) for (let x = G.x0; x < G.x0 + (G.nx - 1) * NRC; x += 512) {
+        let near = false; for (const e of ED) if (e[0] >= x - 40 && e[0] < x + 552 && e[1] >= z - 40 && e[1] < z + 552 && nrDist(e[0], e[1]) < 250) { near = true; break; }
+        if (!near) continue;
+        const i0 = Math.max(1, Math.floor((x - G.x0) / NRC)), j0 = Math.max(1, Math.floor((z - G.z0) / NRC)), i1 = Math.min(G.nx - 2, i0 + 64), j1 = Math.min(G.nz - 2, j0 + 64);
+        const band = shoreBand(G.x0 + i0 * NRC, G.z0 + j0 * NRC, G.x0 + i1 * NRC, G.z0 + j1 * NRC, LAKE + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, LAKE), 18, { F: 4 });
+        if (band && band.attributes.shore.array.some(v => v <= -1.99)) addShore(root, band, sea.material, WB);
+      }
     }
 
     /* ---- the far land beyond the corridor (200 m cells, ±12 km): the town on the hills round the lake ---- */
