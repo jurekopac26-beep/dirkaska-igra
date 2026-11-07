@@ -355,5 +355,12 @@
   "kverts": 311,
   "maxKverts": 373,
   "jsMs": 2.82
+ },
+ "balea": {
+  "calls": 156,
+  "maxCalls": 181,
+  "kverts": 374,
+  "maxKverts": 488,
+  "jsMs": 1.69
  }
 }
