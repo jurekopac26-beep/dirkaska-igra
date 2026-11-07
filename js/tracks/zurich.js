@@ -18,7 +18,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xcfdbe6, sun: 0xfff1da, sunI: 1.16, sky: 0xbcd5f0, gnd: 0x6d6c64, hemiI: 0.64, tint: [1.0, 1.0, 1.01], sat: 1.04, sunOff: [70, 86, 60], split: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]] },   // Zürich: a clear late-summer afternoon, the sun from the south-west over the lake
     say: 'Zurich',
     zivali: { a: ['swan', 'duck'], t: [], city: true },
-    id: 'zurich', name: 'Zürich, Švica', theme: 'zurich', laps: 3, halfWidth: 6.0,
+    // test: the user's decision 7. 11. 2026 (the buildings and streets not like Zürich's): a test track, frozen until deleted (CLAUDE.md)
+    id: 'zurich', test: true, name: 'Zürich, Švica', theme: 'zurich', laps: 3, halfWidth: 6.0,
     desc: "Mestna proga od jezera na hrib: start na nabrežju Utoquai ob Züriškem jezeru, levo po Feldeggstrasse do Kreuzplatza, nato navzgor po Klosbachstrasse in Bergstrasse skoraj 80 m nad jezero, navzdol po Dolderstrasse, Hottingerstrasse in Rämistrasse in okoli Bellevueja nazaj k jezeru. Ograje ulične dirke, 4,7 km.",
     en: { name: 'Zürich, Switzerland', desc: "A city race from the lake up the hill: the start on the Utoquai by the lake of Z\u00fcrich, left along Feldeggstrasse to Kreuzplatz, then up Klosbachstrasse and Bergstrasse almost 80 m above the lake, down Dolderstrasse, Hottingerstrasse and R\u00e4mistrasse and round Bellevue back to the lake. Street-race barriers, 4.7 km." },
     start: [0, 0], runoff: 0.32, inner: 1.6, side: 1.6, offSurface: 'paving', noGravel: true, runoffTarmac: true, gradeForce: true, elevSmooth: 14, noBirds: true, realKm: 4.55,

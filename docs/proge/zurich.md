@@ -2,6 +2,8 @@
 
 [← Vse proge](../../README.md#proge) · proga `zurich` (`js/tracks/zurich.js`, okolica `js/world-zurich.js`, podatki `js/data/zurich.js`; orodji `tools/proga-podatki.py` z nastavitvami `tools/zurich/config.json` in `tools/zurich/build.py`)
 
+**Testna proga** od 7. 11. 2026 (odločitev uporabnika: »Proga je dobra ampak zgradbe in ceste niso take kot v zurichu. Prestavi progo v test«): v menuju je pod »Za izbris · samo za testiranje«, zamrznjena do izbrisa (`CLAUDE.md`).
+
 Mestna dirka v Zürichu od jezera na hrib, po ulicah v pravem merilu: krog **4,55 km**, 3 krogi proti 11 tekmecem, v nasprotni smeri urinega kazalca. Mestna proga po velikem mestu (odločitev uporabnika 7. 11. 2026): široke ulice, nabrežje in trgi, ograje kot na ulični dirki; pravilo izletne cone zanjo ne velja. Prva različica (krog 2,43 km po starem mestu: Limmatquai, srednji most, Bahnhofstrasse, Quaibrücke) je bila preveč ravninska, zato gre proga po želji uporabnika (7. 11. 2026 zvečer: »naj gre ob jezeru in nato po hribu navzgor«) najprej ob jezeru in nato na hrib nad mestom. Potek je iz OpenStreetMap, višine iz Copernicus DEM GLO-30 brez stavb, zglajene (strmine do 12 %), nabrežje vsaj 2,4 m nad jezerom.
 
 - **Krog:** start na nabrežju **Utoquai** ob jezeru (proti jugu, jezero na desni), levo po **Feldeggstrasse** do **Kreuzplatza**, nato navzgor po **Klosbachstrasse** do **Römerhofa** in ostro levo navzgor po **Bergstrasse** na vrh, **~78 m nad jezerom**, navzdol po **Dolderstrasse** skozi Hottingen, po **Hottingerstrasse** do **Heimplatza** in levo po **Rämistrasse** do **Bellevueja** in nazaj na nabrežje.

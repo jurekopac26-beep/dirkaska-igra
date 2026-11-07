@@ -39,7 +39,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Mount Buller, Avstralija](docs/proge/mountbuller.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
-- [Zürich, Švica](docs/proge/zurich.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik, ostale gredo v test. Do izbire so Bathurst, Great Alpine Road, Longford, Mount Hotham, Newcastle in Townsville (zgoraj) prave proge v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -64,6 +63,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Monterey, ZDA](docs/proge/monterey.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Palomar Mountain, ZDA](docs/proge/palomar.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Vršič, Slovenija](docs/proge/vrsic.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Zürich, Švica](docs/proge/zurich.md) (mestna proga po pravih ulicah; od 7. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

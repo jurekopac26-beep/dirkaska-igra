@@ -16,8 +16,8 @@ const d = C.TRACKS.find(t => t.id === 'zurich'), T = new C.Track(d), N = T.N;
 const dOf = (label) => { const p = T.names.find(q => q.n === label); return p ? p.d : -1; };
 
 // ---- 1. the track ----
-check('track: a closed circuit named after the place (Zürich, Švica / Zürich, Switzerland), 3 laps, its own world, a real track (not a test one)',
-  d && d.name === 'Zürich, Švica' && d.en && d.en.name === 'Zürich, Switzerland' && !d.open && d.laps === 3 && d.theme === 'zurich' && !d.test && !d.pending,
+check('track: a closed circuit named after the place (Zürich, Švica / Zürich, Switzerland), 3 laps, its own world, a test track (the user\'s decision 7. 11. 2026)',
+  d && d.name === 'Zürich, Švica' && d.en && d.en.name === 'Zürich, Switzerland' && !d.open && d.laps === 3 && d.theme === 'zurich' && d.test === true && !d.pending,
   d ? `${d.name} / ${d.en && d.en.name}, ${d.laps} laps, theme ${d.theme}` : 'no track');
 check('track: the lap 4.55 km within 1 % (within the 1-5 km of a new track)', Math.abs(T.len / 4549 - 1) < 0.01, `${T.len.toFixed(1)} m`);
 let crossings = 0; for (const c of T.cross || []) crossings++;
