@@ -1,11 +1,11 @@
 {
  "id": "zurich",
- "about": "Zürich, Švica (id zurich): city race through the centre of Zürich, one lap anticlockwise from Bellevue: Limmatquai along the Limmat, the middle bridge, Uraniastrasse, Bahnhofstrasse, the square by the lake, Quaibrücke (route A; routeB: the longer variant)",
+ "about": "Zürich, Švica (id zurich): city race from the lake up the hill, one lap anticlockwise: Utoquai along the lake, Feldeggstrasse to Kreuzplatz, up Klosbachstrasse and Bergstrasse, down Dolderstrasse, Hottingerstrasse and Rämistrasse back to the lake at Bellevue (the user's choice 7. 11. 2026: along the lake, then up the hill)",
  "box": [
   47.355,
   8.515,
-  47.39,
-  8.565
+  47.385,
+  8.585
  ],
  "closed": true,
  "osmStep": [
@@ -14,164 +14,192 @@
  ],
  "route": [
   [
+   47.3655,
+   8.5462,
+   "Utoquai",
+   "start: Utoquai, southbound along the lake"
+  ],
+  [
+   47.3625,
+   8.5474,
+   "Utoquai",
+   ""
+  ],
+  [
+   47.3615,
+   8.55,
+   "Feldeggstrasse",
+   "east, away from the lake"
+  ],
+  [
+   47.364,
+   8.5546,
+   "Feldeggstrasse",
+   "Kreuzplatz"
+  ],
+  [
+   47.3662,
+   8.557,
+   "Klosbachstrasse",
+   "north-east, uphill"
+  ],
+  [
    47.369,
-   8.5437,
-   "Limmatquai",
-   "start: Limmatquai, northbound along the Limmat (about 200 m north of Bellevue)"
-  ],
-  [
-   47.3717,
-   8.5434,
-   "Limmatquai",
+   8.5628,
+   "Klosbachstrasse",
    ""
   ],
   [
-   47.3737,
-   8.5436,
-   "Limmatquai",
-   ""
+   47.3703,
+   8.5637,
+   "Bergstrasse",
+   "Römerhof"
   ],
   [
-   47.3742,
-   8.5422,
-   "Rudolf-Brun-Brücke",
-   "over the Limmat"
+   47.3714,
+   8.5626,
+   "Bergstrasse",
+   "up"
   ],
   [
-   47.3743,
-   8.54,
-   "Uraniastrasse",
+   47.3709,
+   8.56,
+   "Dolderstrasse",
+   "west, downhill"
+  ],
+  [
+   47.3703,
+   8.5573,
+   "Dolderstrasse",
+   "Hottingen"
+  ],
+  [
+   47.3698,
+   8.553,
+   "Hottingerstrasse",
    "west"
   ],
   [
-   47.3738,
-   8.5385,
-   "Bahnhofstrasse",
-   "south"
-  ],
-  [
-   47.37,
-   8.539,
-   "Bahnhofstrasse",
-   "Paradeplatz"
-  ],
-  [
-   47.3672,
-   8.5405,
-   "Bahnhofstrasse",
-   "to the lake"
-  ],
-  [
-   47.3664,
-   8.5412,
-   "Bürkliplatz",
+   47.3695,
+   8.55,
+   "Hottingerstrasse",
    ""
   ],
   [
-   47.3666,
-   8.5421,
-   "Quaibrücke",
-   "over the outflow of the lake (eastbound carriageway)"
-  ],
-  [
-   47.3669,
-   8.5442,
-   "Quaibrücke",
-   ""
-  ],
-  [
-   47.36778,
-   8.54486,
-   "Limmatquai",
-   "Bellevue"
+   47.368,
+   8.5455,
+   "Rämistrasse",
+   "down to the lake"
   ]
  ],
  "prefer": [
-  "Limmatquai",
-  "Central",
-  "Bahnhofbrücke",
-  "Bahnhofquai",
-  "Uraniastrasse",
-  "Talstrasse",
-  "General-Guisan-Quai",
-  "Bürkliplatz",
-  "Quaibrücke",
-  "Bellevueplatz",
-  "Rudolf-Brun-Brücke",
-  "Bahnhofstrasse"
+  "Bergstrasse",
+  "Dolderstrasse",
+  "Feldeggstrasse",
+  "Hottingerstrasse",
+  "Klosbachstrasse",
+  "Rämistrasse",
+  "Utoquai"
  ],
  "geoRoads": [
-  "Limmatquai",
-  "Uraniastrasse",
-  "Bahnhofstrasse",
-  "Quaibrücke",
-  "Bahnhofquai",
-  "Bahnhofbrücke",
-  "Talstrasse",
-  "Bellevueplatz",
-  "Rämistrasse",
-  "Utoquai",
-  "Paradeplatz",
-  "Münsterbrücke",
-  "Rathausbrücke",
-  "Stadthausquai",
-  "Sonnenquai",
-  "Seefeldstrasse",
-  "Theaterstrasse",
-  "Münsterhof",
-  "Weinplatz",
-  "Schipfe",
-  "Rennweg",
+  "Asylstrasse",
   "Augustinergasse",
-  "Strehlgasse",
-  "In Gassen",
-  "Poststrasse",
-  "Bärengasse",
-  "Talacker",
-  "Börsenstrasse",
-  "Fraumünsterstrasse",
-  "Kappelergasse",
-  "Stockerstrasse",
-  "Seilergraben",
-  "Mühlegasse",
-  "Zähringerstrasse",
-  "Niederdorfstrasse",
-  "Marktgasse",
-  "Rindermarkt",
-  "Münstergasse",
-  "Oberdorfstrasse",
-  "Kirchgasse",
-  "Torgasse",
-  "Rathausquai",
-  "Schifflände",
-  "Sechseläutenplatz",
-  "Falkenstrasse",
-  "Kreuzstrasse",
-  "Löwenstrasse",
-  "Sihlstrasse",
-  "Lintheschergasse",
-  "Werdmühleplatz",
-  "Werdmühlestrasse",
-  "Füsslistrasse",
-  "Seidengasse",
-  "Pelikanstrasse",
-  "Schanzengraben",
-  "Bleicherweg",
-  "Central",
-  "Neumühlequai",
-  "Walchebrücke",
-  "Sihlquai",
-  "Museumstrasse",
-  "Bahnhofplatz",
-  "Gessnerallee",
   "Badenerstrasse",
+  "Bahnhofbrücke",
+  "Bahnhofplatz",
+  "Bahnhofquai",
+  "Bahnhofstrasse",
+  "Bellevueplatz",
+  "Bergstrasse",
+  "Bleicherweg",
+  "Bärengasse",
+  "Börsenstrasse",
+  "Central",
+  "Dolderstrasse",
+  "Falkenstrasse",
+  "Feldeggstrasse",
+  "Forchstrasse",
+  "Fraumünsterstrasse",
+  "Freiestrasse",
+  "Färberstrasse",
+  "Füsslistrasse",
+  "Gemeindestrasse",
+  "Gessnerallee",
+  "Gloriastrasse",
+  "Heimplatz",
+  "Hirschengraben",
+  "Hofstrasse",
+  "Hottingerstrasse",
+  "In Gassen",
+  "Kappelergasse",
+  "Kirchgasse",
+  "Klosbachstrasse",
+  "Kreuzbühlstrasse",
+  "Kreuzplatz",
+  "Kreuzstrasse",
+  "Kurhausstrasse",
+  "Limmatplatz",
+  "Limmatquai",
+  "Lintheschergasse",
+  "Löwenstrasse",
+  "Marktgasse",
+  "Merkurstrasse",
+  "Minervastrasse",
+  "Museumstrasse",
+  "Mühlebachstrasse",
+  "Mühlegasse",
+  "Münsterbrücke",
+  "Münstergasse",
+  "Münsterhof",
+  "Neumühlequai",
+  "Niederdorfstrasse",
+  "Oberdorfstrasse",
+  "Paradeplatz",
+  "Pelikanstrasse",
+  "Pilgerweg",
+  "Plattenstrasse",
+  "Poststrasse",
+  "Predigerplatz",
+  "Quaibrücke",
+  "Rathausbrücke",
+  "Rathausquai",
+  "Rennweg",
+  "Rindermarkt",
+  "Rämistrasse",
+  "Römerhofplatz",
+  "Schanzengraben",
+  "Schifflände",
+  "Schillerstrasse",
+  "Schipfe",
+  "Sechseläutenplatz",
+  "Seefeldquai",
+  "Seefeldstrasse",
+  "Seidengasse",
+  "Seilergraben",
   "Selnaustrasse",
   "Sihlporte",
-  "Hirschengraben",
-  "Predigerplatz",
-  "Zähringerplatz",
+  "Sihlquai",
+  "Sihlstrasse",
+  "Sonnenquai",
+  "Stadthausquai",
+  "Steinwiesstrasse",
+  "Stockerstrasse",
+  "Strehlgasse",
   "Stüssihofstatt",
-  "Limmatplatz"
+  "Talacker",
+  "Talstrasse",
+  "Theaterstrasse",
+  "Torgasse",
+  "Uraniastrasse",
+  "Utoquai",
+  "Walchebrücke",
+  "Weinplatz",
+  "Werdmühleplatz",
+  "Werdmühlestrasse",
+  "Wolfbachstrasse",
+  "Zeltweg",
+  "Zähringerplatz",
+  "Zähringerstrasse"
  ],
  "geoWater": [
   "Limmat",
@@ -181,11 +209,11 @@
  ],
  "marks": [
   [
-   "Stolnica z dvema stolpoma",
-   "Twin-towered minster",
-   "church",
+   "Operna hiša",
+   "Opera house",
+   "theatre",
    [
-    "w36916418"
+    "w31966519"
    ]
   ],
   [
@@ -193,180 +221,88 @@
    "Slender-spired church",
    "church",
    [
-    "w89967877"
+    "w61412467"
    ]
   ],
   [
-   "Cerkev z veliko uro",
-   "Church with the great clock",
+   "Majhna cerkev",
+   "Small church",
    "church",
    [
-    "w24701951"
+    "w39517539"
    ]
   ],
   [
-   "Cerkev ob reki",
-   "Riverside church",
-   "church",
+   "Umetnostni muzej",
+   "Art museum",
+   "museum",
    [
-    "w112795856"
+    "r3768127"
    ]
   ],
   [
-   "Mestna hiša na reki",
-   "Town hall on the river",
-   "townhall",
-   [
-    "w30067765"
-   ]
-  ],
-  [
-   "Lindenhof",
-   "Lindenhof",
-   "park",
-   [
-    "w10594810"
-   ]
-  ],
-  [
-   "Operna hiša",
-   "Opera house",
+   "Gledališče",
+   "Theatre",
    "theatre",
    [
-    "w31966519"
+    "w276558284"
    ]
   ]
  ],
  "places": [
   [
-   "Limmatquai",
+   "Utoquai",
    null,
    0
   ],
   [
-   "srednji most",
+   "Feldeggstrasse",
    null,
-   600
+   670
   ],
   [
-   "Uraniastrasse",
+   "Kreuzplatz",
    null,
-   720
+   1360
   ],
   [
-   "Bahnhofstrasse",
+   "Klosbachstrasse",
    null,
-   930
+   1500
   ],
   [
-   "Paradeplatz",
+   "Römerhof",
    null,
-   1460
+   2430
   ],
   [
-   "trg ob jezeru",
+   "Dolderstrasse",
    null,
-   1860
+   2650
   ],
   [
-   "Quaibrücke",
+   "Hottingerstrasse",
    null,
-   2000
+   3230
+  ],
+  [
+   "Heimplatz",
+   null,
+   3840
+  ],
+  [
+   "Rämistrasse",
+   null,
+   3870
   ],
   [
    "Bellevue",
    null,
-   2271
+   4380
   ]
  ],
  "driveExtra": [
   "pedestrian"
- ],
- "routeB": [
-  [
-   47.3676,
-   8.5449,
-   "Limmatquai",
-   "start: Limmatquai by Bellevue, northbound along the Limmat"
-  ],
-  [
-   47.3717,
-   8.5434,
-   "Limmatquai",
-   ""
-  ],
-  [
-   47.3758,
-   8.544,
-   "Limmatquai",
-   ""
-  ],
-  [
-   47.377,
-   8.544,
-   "Central",
-   "Central"
-  ],
-  [
-   47.3773,
-   8.5418,
-   "Bahnhofbrücke",
-   "over the Limmat"
-  ],
-  [
-   47.3756,
-   8.5412,
-   "Bahnhofquai",
-   "south along the west bank"
-  ],
-  [
-   47.3742,
-   8.5395,
-   "Uraniastrasse",
-   "west"
-  ],
-  [
-   47.3738,
-   8.535,
-   "Uraniastrasse",
-   ""
-  ],
-  [
-   47.373,
-   8.5345,
-   "Talstrasse",
-   "south"
-  ],
-  [
-   47.369,
-   8.5375,
-   "Talstrasse",
-   ""
-  ],
-  [
-   47.3665,
-   8.5405,
-   "General-Guisan-Quai",
-   "lake"
-  ],
-  [
-   47.3664,
-   8.5412,
-   "Bürkliplatz",
-   ""
-  ],
-  [
-   47.3666,
-   8.5421,
-   "Quaibrücke",
-   "over the outflow of the lake (eastbound carriageway)"
-  ],
-  [
-   47.3669,
-   8.5442,
-   "Quaibrücke",
-   ""
-  ]
  ],
  "dist": {
   "bld": 140,

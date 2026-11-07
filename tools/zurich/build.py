@@ -35,31 +35,32 @@ def game_line():
     Q = np.stack([np.interp(u, cs, np.append(P[:, 0], P[0, 0])), np.interp(u, cs, np.append(P[:, 1], P[0, 1]))], 1)
     return Q, tot
 
-# ---- heights: Copernicus is a surface model and the town's streets lie between tall houses, so its profile is too hilly here (18 m on a
-#      street that rises ~5 m); the shape kept, squeezed to the town's real relief: the quays and the bridges just above the lake, Bahnhofstrasse
-#      up to ~6 m above them by Lindenhof ----
+# ---- heights: the road's profile from the tool (Copernicus DEM GLO-30 less the buildings, smoothed, grades up to 12 %%) as it is, the real
+#      climb from the lake up the hill (~78 m); only the lakeside quay kept at least 2.4 m above the lake (the surface model dips into the water there) ----
+BRIDGES = [[a, b] for a, b in J['bridges'] if b - a > 20]   # (the short ones are culverts: no parapets)
 def game_heights(Pn):
     s0 = np.arange(NP) * STEP
-    hs = ndimage.gaussian_filter1d(H, 10, mode='wrap')
-    br = np.zeros(NP, bool)
-    for a, b in J['bridges']: br |= (s0 > a - 25) & (s0 < b + 25)
-    low = np.percentile(hs, 5)
-    h = LAKE + 2.4 + np.clip(hs - low, 0, None) * 0.33
-    h[br] = LAKE + 2.6
-    h = ndimage.gaussian_filter1d(h, 6, mode='wrap')
+    hs = ndimage.gaussian_filter1d(H, 6, mode='wrap')
+    h = np.maximum(hs, LAKE + 2.4)
+    for a, b in BRIDGES: h[(s0 > a - 25) & (s0 < b + 25)] = LAKE + 2.6
+    h = ndimage.gaussian_filter1d(h, 4, mode='wrap')
     # onto the game line's points (by the share of the lap)
     u = np.arange(len(Pn)) / len(Pn)
     return np.interp(u, np.arange(NP) / NP, h, period=1)
 
+# ---- the tram's spans (s on the tool's line, m): where OSM's tram tracks (railway=tram, which the tool does not export) run within 5 m of the
+#      line, measured once from the OSM download of 7. 11. 2026: Klosbachstrasse up to Römerhof, Hottingerstrasse and Rämistrasse to Bellevue ----
+TRAM = [[1475, 2075], [3215, 4335]]
+
 # ---- half widths by road (metres after the start line): the streets as wide as a race needs, the quays narrower, Bahnhofstrasse widest ----
 WIDTHS = [  # [from, to, half width]
-    (0, 600, 5.6),         # Limmatquai, along the Limmat
-    (600, 720, 5.6),       # the middle bridge
-    (720, 930, 6.0),       # Uraniastrasse
-    (930, 1850, 6.4),      # Bahnhofstrasse
-    (1850, 2180, 6.4),     # the square by the lake, Quaibrücke
-    (2180, 2300, 6.0),     # Bellevue
-    (2300, 1e9, 5.6),      # Limmatquai to the line
+    (0, 660, 6.0),         # Utoquai, along the lake
+    (660, 1480, 5.6),      # Feldeggstrasse, Kreuzplatz
+    (1480, 2430, 5.6),     # Klosbachstrasse, up the hill
+    (2430, 3220, 5.4),     # Bergstrasse and Dolderstrasse (the narrowest, up on the hill)
+    (3220, 3840, 5.6),     # Hottingerstrasse
+    (3840, 4400, 6.0),     # Heimplatz, Rämistrasse, Bellevue
+    (4400, 1e9, 6.0),      # Utoquai to the line
 ]
 def widths(Ln):
     K = []
@@ -68,27 +69,26 @@ def widths(Ln):
         K.append([round(a + (12 if a > 0 else 0), 1), hw]); K.append([round(b - (12 if b < Ln else 0), 1), hw])
     return K
 
-# ---- names on the HUD ([label, s, the commentator's lines]): places and plain descriptions only (no people: two bridges and the square by the
-#      lake are named after people, so they get plain names) ----
+# ---- names on the HUD ([label, s, the commentator's lines]): streets, squares and plain descriptions only (no people) ----
 NAMES = [
-    ('Limmatquai', 40, ['Along the Limmat, the old town on the right!', 'Down the quay by the river!']),
-    ('Mestna hiša', 280, ['Past the town hall standing in the river!', 'By the town hall on the water!']),
-    ('Srednji most', 610, ['Hard left onto the middle bridge!', 'Across the Limmat on the middle bridge!']),
-    ('Uraniastrasse', 735, ['Up Uraniastrasse, under the old town on the hill!', 'Into Uraniastrasse!']),
-    ('Bahnhofstrasse', 935, ['Left into Bahnhofstrasse, the lime trees on both sides!', 'Down the great street of the town!']),
-    ('Paradeplatz', 1460, ['Through Paradeplatz, the square at the kink!', 'Paradeplatz, keep it flat!']),
-    ('Lasnica ob jezeru', 1880, ['The hairpin by the lake, hard on the brakes!', 'Round the hairpin at the lakeside square!']),
-    ('Quaibrücke', 2000, ['Over the bridge at the end of the lake, the mountains ahead!', 'Quaibrücke, the lake on the right!']),
-    ('Bellevue', 2175, ['Bellevue, the tight one onto the quay!', 'Round Bellevue and back to the river!']),
+    ('Utoquai', 40, ['Along the lake, the water on the right!', 'Down the quay by the lake!']),
+    ('Feldeggstrasse', 665, ['Left, away from the lake!', 'Into Feldeggstrasse!']),
+    ('Kreuzplatz', 1365, ['Through Kreuzplatz!', 'Kreuzplatz, the climb starts here!']),
+    ('Klosbachstrasse', 1500, ['Up Klosbachstrasse, the hill ahead!', 'Climbing up Klosbachstrasse!']),
+    ('Römerhof', 2425, ['Römerhof, hard left and up!', 'Left at Römerhof, still climbing!']),
+    ('Dolderstrasse', 2660, ['Over the top, down Dolderstrasse!', 'The top of the hill, now downhill!']),
+    ('Hottingerstrasse', 3235, ['Down Hottingerstrasse, the town below!', 'Downhill through Hottingen!']),
+    ('Heimplatz', 3845, ['Heimplatz, left down Rämistrasse!', 'Round Heimplatz and down to the lake!']),
+    ('Bellevue', 4385, ['Bellevue, left onto the lake!', 'Round Bellevue, back to the water!']),
 ]
-EN_NAMES = {'Mestna hiša': 'Town Hall', 'Srednji most': 'Middle Bridge', 'Lasnica ob jezeru': 'Lakeside Hairpin'}
+EN_NAMES = {}
 
-DESC = ('Mestna proga po središču Züricha: start ob reki Limmat na nabrežju Limmatquai, mimo starega mesta in mestne hiše na reki, ostro levo čez srednji most, '
-        'po Uraniastrasse in široki Bahnhofstrasse z lipami skozi Paradeplatz do jezera, lasnica na trgu ob jezeru, čez Quaibrücke z razgledom na jezero '
-        'in okoli Bellevueja nazaj k reki. Ograje ulične dirke, 2,5 km.')
-DESC_EN = ('A city race through the centre of Zürich: the start by the Limmat on the Limmatquai, past the old town and the town hall standing in the river, '
-           'a hard left over the middle bridge, along Uraniastrasse and the wide, lime-lined Bahnhofstrasse through Paradeplatz to the lake, a hairpin at the '
-           'lakeside square, over Quaibrücke with the lake on the right and round Bellevue back to the river. Street-race barriers, 2.5 km.')
+DESC = ('Mestna proga od jezera na hrib: start na nabrežju Utoquai ob Züriškem jezeru, levo po Feldeggstrasse do Kreuzplatza, nato navzgor po '
+        'Klosbachstrasse in Bergstrasse skoraj 80 m nad jezero, navzdol po Dolderstrasse, Hottingerstrasse in Rämistrasse in okoli Bellevueja nazaj '
+        'k jezeru. Ograje ulične dirke, 4,7 km.')
+DESC_EN = ('A city race from the lake up the hill: the start on the Utoquai by the lake of Zürich, left along Feldeggstrasse to Kreuzplatz, then up '
+           'Klosbachstrasse and Bergstrasse almost 80 m above the lake, down Dolderstrasse, Hottingerstrasse and Rämistrasse and round Bellevue back '
+           'to the lake. Street-race barriers, 4.7 km.')
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
@@ -105,17 +105,15 @@ def build_track():
     src = '''/* Track definition 'zurich'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Zürich, Switzerland: a city race through the centre of Zürich (docs/proge/zurich.md), one lap anticlockwise: the start on the Limmatquai by
-  // the Limmat (northbound), past the old town and the town hall standing in the river, a hard left over the middle bridge, Uraniastrasse west
-  // under the hill of Lindenhof, left into Bahnhofstrasse and down it through Paradeplatz to the lake, the hairpin at the square by the lake,
-  // over Quaibrücke at the end of the lake, round Bellevue and back onto the Limmatquai: %(km)s km. The streets are closed for the race and
+  // Zürich, Switzerland: a city race from the lake up the hill (docs/proge/zurich.md), one lap anticlockwise: the start on the Utoquai by the
+  // lake (southbound), left along Feldeggstrasse to Kreuzplatz, up Klosbachstrasse to Römerhof and up Bergstrasse, down Dolderstrasse through
+  // Hottingen, Hottingerstrasse to Heimplatz, down Rämistrasse to Bellevue and back onto the Utoquai: %(km)s km. The streets are closed for the race and
   // lined with the barriers of a street race (concrete blocks and catch fences); the buildings generic (no names, signs or brands).
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/zurich/config.json), the corners of the
   // streets rounded to at least %(rmin)s m; metres, origin = the start line, x east, z south. GENERATED by tools/zurich/build.py (edit the names,
   // widths and text there).
-  // Heights (ZH_H): Copernicus DEM GLO-30 less the buildings (OSM) along the line, smoothed and squeezed to the town's real relief (the surface
-  // model is too hilly between tall houses): the quays and bridges 2.4-2.6 m above the lake (405.9 m), Bahnhofstrasse ~6 m higher by
-  // Lindenhof; every 10 m from the start line, decimetres above the lake.
+  // Heights (ZH_H): Copernicus DEM GLO-30 less the buildings (OSM) along the line, smoothed, grades up to 12 %%: the quay at least 2.4 m above
+  // the lake (405.9 m), the top of the hill on Bergstrasse ~80 m above it; every 10 m from the start line, decimetres above the lake.
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
   const ZH_H = [%(zh)s];
@@ -131,7 +129,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     rivals: 11,
     elev: ZH_H.map((h, i) => [i / ZH_H.length, h / 10]),
     widths: %(widths)s,
-    // the bridges over the Limmat and the end of the lake (s from the start line, m): parapets instead of the barriers' blocks, the deck under the road
+    // the bridges (s from the start line, m): parapets instead of the barriers' blocks, the deck under the road
     bridgesS: %(br)s,
     // places and corners on the HUD ([label, x, z, the commentator's lines]; the descriptive labels have their English in js/lang.js)
     names: [
@@ -141,7 +139,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   });
 })();
 ''' % dict(km='%.2f' % (Ln / 1000), rmin=f1(RMIN), zh=zh, desc=json.dumps(DESC, ensure_ascii=False), desc_en=json.dumps(DESC_EN), widths=json.dumps(widths(Ln)),
-           br=json.dumps([[round(a * sc, 1), round(b * sc, 1)] for a, b in J['bridges']]), names='\n'.join(names), pts=pts)
+           br=json.dumps([[round(a * sc, 1), round(b * sc, 1)] for a, b in BRIDGES]), names='\n'.join(names), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'zurich.js'); open(path, 'w').write(src)
     print('wrote', path, len(src) // 1024, 'KB; heights %.1f-%.1f m above the lake' % (hk.min() - LAKE, hk.max() - LAKE))
 
@@ -201,13 +199,13 @@ def water_rings(x0, z0, x1, z1):
 
 HEAD = """/* Zürich (theme 'zurich'): the scenery data for js/world-zurich.js (metres, origin = the start line, x east, z south). GENERATED by
    tools/zurich/build.py world from tools/zurich/zurich.json (tools/proga-podatki.py; docs/proge/zurich.md).
-   dem: the ground (Copernicus DEM GLO-30 less the buildings, squeezed to the town's relief as the road's heights are; 32 m cells, bytes: lo + v * step m
+   dem: the ground (Copernicus DEM GLO-30 less the buildings, the shore at least 2.4 m above the lake; 32 m cells, bytes: lo + v * step m
    above the lake, World.nrPrep's form); lc: the land cover (16 m cells, run-length coded: 0 open, 1 trees, 2 park, 3 town); far: the surface (200 m
    cells, +-12 km, bytes of 2 m above the lake, 0 = the lake); bld: OSM buildings within 140 m [x, z, length, width, angle, height (0 unknown), kind: 0
    house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats, s, d]; out: outlines [index into bld, [x, z, ...]];
    water: the Limmat and the lake [name, [x, z, ...] closed ring]; walls [0 wall, 1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]];
    roads: the other streets and bridges within 60 m [highway, lanes, width, 1 bridge, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind];
-   lamps [x, z]; bridges [s0, s1] (the road on a bridge). Data: © OpenStreetMap contributors (ODbL 1.0: the derived data here under the ODbL 1.0);
+   lamps [x, z]; bridges [s0, s1] (the road on a bridge); tram [s0, s1] (the tram's rails in the road). Data: © OpenStreetMap contributors (ODbL 1.0: the derived data here under the ODbL 1.0);
    Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under
    COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and World Resources Institute, High
    Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
@@ -220,10 +218,9 @@ def build_world():
     gd, ad = grid('dem'); c = 32; nx = int(math.ceil((x1 - x0) / c)) + 1; nz = int(math.ceil((z1 - z0) / c)) + 1
     X, Z = np.meshgrid(x0 + np.arange(nx) * c, z0 + np.arange(nz) * c); hv = sample(gd, ad, X, Z, True)
     hv = ndimage.gaussian_filter(hv, 1.2)
-    low = np.percentile(hv[hv > LAKE + 0.5], 3)
-    rel = LAKE + 2.4 + np.clip(hv - low, 0, None) * 0.33   # (squeezed as the road's heights; the hills beyond the corridor are the far land's)
+    rel = np.maximum(hv, LAKE + 2.4)   # (the real relief, as the road's heights; the shore at least 2.4 m above the lake)
     rel = np.where(hv < LAKE + 0.3, LAKE - 1.0, rel)
-    lo, step = -3.0, 0.25; dem = np.clip(np.round((rel - LAKE - lo) / step), 0, 255)
+    lo, step = -3.0, 0.75; dem = np.clip(np.round((rel - LAKE - lo) / step), 0, 255)
     D = dict(x0=x0, z0=z0, nx=nx, nz=nz, cell=c, lo=lo, step=step, base=0, noise=0.05, b64=b64bytes(dem))
     g1, a1 = grid('lc'); g2, a2 = grid('lu'); g3, a3 = grid('chm'); c = 16
     lnx = int(math.ceil((x1 - x0) / c)); lnz = int(math.ceil((z1 - z0) / c))
@@ -256,7 +253,8 @@ def build_world():
         'marks': [[m[0], m[2], round(m[3] * sc), m[4], pl(m[5])] for m in J['landmarks']],
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'lamps': J['lamps'],
-        'bridges': [[round(a_ * sc, 1), round(b_ * sc, 1)] for a_, b_ in J['bridges']],
+        'bridges': [[round(a_ * sc, 1), round(b_ * sc, 1)] for a_, b_ in BRIDGES],
+        'tram': [[round(a_ * sc, 1), round(b_ * sc, 1)] for a_, b_ in TRAM],
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'zurich.js'); open(path, 'w').write(src)

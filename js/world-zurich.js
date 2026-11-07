@@ -1,11 +1,11 @@
 /* =========================================================================
-   WORLD — Zürich (theme 'zurich'): a city race through the centre of Zürich (docs/proge/zurich.md). Its own builder (World.ext.zurich) in a
+   WORLD — Zürich (theme 'zurich'): a city race from the lake of Zürich up the hill (docs/proge/zurich.md). Its own builder (World.ext.zurich) in a
    file of its own, on World's shared corridor helpers (World.api: nrPrep's terrain from the track's dem and land cover, as Livorno) and the
    scenery data of js/data/zurich.js (OpenStreetMap, Copernicus DEM, ESA WorldCover, Meta / WRI canopy).
-   The 60 m rule: the detailed things only within ~60 m of the road, as far as the chase camera sees them: the old town's tall houses in their OSM
-   footprints (pastel plaster, window rows, steep brown roofs), the twin-towered minster, the churches with the slim green spire and the big clock,
-   the church by the river and the town hall standing in it, the stone quays of the Limmat and the lake, the bridges, the lime trees, the lamps,
-   the tram rails in the asphalt, the concrete blocks and catch fences of a street race. Farther out only the terrain, the lake to the horizon and
+   The 60 m rule: the detailed things only within ~60 m of the road, as far as the chase camera sees them: the town's tall houses in their OSM
+   footprints (pastel plaster, window rows, steep brown roofs) from the lake up the hill, the church with the slim spire, a small church, the
+   opera house, the art museum and the theatre, the stone quay of the lake, the lime trees, the lamps, the tram's rails and overhead line where
+   OSM's trams run, the concrete blocks and catch fences of a street race, boats along the quay. Farther out only the terrain, the lake to the horizon and
    the far hills. Only geographic and plain names (no people, events, firms or brands).
    ========================================================================= */
 (function () {
@@ -63,7 +63,6 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const W1 = [1, 1, 1];
-    const dOf = (lab) => { const q = T.names.find(q => q.n === lab); return q ? q.d : -1; };   // (a name's distance from the start line)
     const eh = new Map(), EHC = 32;   // what keeps the trees off (the buildings, the start, the landmarks), hashed circles
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
@@ -92,7 +91,7 @@
         for (const k of Lc) { const [ax, az, bx, bz] = ED[k], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1), d = Math.hypot(x - ax - vx * t, z - az - vz * t); if (d < bd) bd = d; } }
       return Math.min(bd, 120); };
     const seaD = (x, z) => edgeD(x, z) * (isWater(x, z) ? 1 : -1);
-    // the road on its bridges (the middle bridge over the Limmat, the lake bridge): the ground under them the water's floor
+    // the road on its bridges (none on this lap: kept for the data's bridges): the ground under them the water's floor
     const BR = (ZD.bridges || []).filter(([a, b]) => b - a > 20).map(([a, b]) => [sAt(a), sAt(b)]);
     const BRC = BR.map(([a, b]) => { const i = T.idx((a + b) / 2); return [T.px[i], T.pz[i], ((b - a) / 2 + 40) ** 2]; });
     const onBridgeS = (s) => { for (const [a, b] of BR) if (s > a - 6 && s < b + 6) return true; return false; };
@@ -121,6 +120,7 @@
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 30 + Math.floor(crH(k, 3, 41) * 50), t = 0.9 + crH(k, 5, 41) * 0.14; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.8 - 0.1 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
     const RAIL = [-2.32, -0.88, 0.88, 2.32];   // (two tracks of 1 m gauge, their centres 3.2 m apart)
+    const tramI = new Uint8Array(N); for (const [a, b] of (ZD.tram || [])) for (let d = a; d <= b; d += ds * 0.5) tramI[T.idx(sAt(d))] = 1;   // (the samples with the tram's rails: OSM's tram tracks)
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pt = -1;
       for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
@@ -128,12 +128,12 @@
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
         const wl = [0.9, 0.9, 0.86], l = gl.row([Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.36, 0.034), Pt(i, w - 0.36, 0.034), Pt(i, w - 0.22, 0.034)], [wl, wl, wl, wl]);
         if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
-        const rc = [0.5, 0.49, 0.47], rp = [], rcs = []; for (const o of RAIL) { rp.push(Pt(i, o - 0.05, 0.03), Pt(i, o + 0.05, 0.03)); rcs.push(rc, rc); }
-        const t = gl.row(rp, rcs); if (pt >= 0) for (let k = 0; k < 8; k += 2) gl.link(pt, t, k, k + 1); pt = t;
+        const rc = [0.5, 0.49, 0.47], rp = [], rcs = []; if (tramI[i]) for (const o of RAIL) { rp.push(Pt(i, o - 0.05, 0.03), Pt(i, o + 0.05, 0.03)); rcs.push(rc, rc); }
+        if (tramI[i]) { const t = gl.row(rp, rcs); if (pt >= 0) for (let k = 0; k < 8; k += 2) gl.link(pt, t, k, k + 1); pt = t; } else pt = -1;
       }
       addM(gr, aMat); addM(gl, lMat);
     }
-    {   // the chequered line on the Limmatquai
+    {   // the chequered line on the Utoquai
       const gq = new GB(true), i = T.startIdx, w = T.wAt(i), uM = Math.round(w * 2 / 0.8) / 16, HYp = (p) => T.hy[p[3]];
       const a = atSf(sStart - 0.8, -w), b = atSf(sStart - 0.8, w), c = atSf(sStart + 0.8, w), d = atSf(sStart + 0.8, -w);
       gq.quadUp([a[0], HYp(a) + 0.04, a[1]], [b[0], HYp(b) + 0.04, b[1]], [c[0], HYp(c) + 0.04, c[1]], [d[0], HYp(d) + 0.04, d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]);
@@ -228,44 +228,28 @@
     /* ---- the landmarks: built from their OSM outlines (the town's own houses inside them left out) ---- */
     const marks = ZD.marks.map(([lab, kind, s, d, fl]) => ({ lab, kind, s, d, pts: flat2(fl) })).filter(m => m.pts.length > 2);
     const inMark = (x, z) => marks.some(m => m.kind !== 'park' && inPoly(m.pts, x, z));
-    const SAND = [0.82, 0.76, 0.64], SANDD = [0.68, 0.62, 0.52], COPPER = [0.38, 0.6, 0.5], TILEB = [0.5, 0.3, 0.22], SLATE = [0.32, 0.33, 0.36];
+    const COPPER = [0.38, 0.6, 0.5], TILEB = [0.5, 0.3, 0.22], SLATE = [0.32, 0.33, 0.36];
     const tower = (g, x, y, z, sz, h, ang, col) => box(g, x, y - 1, z, sz, h + 1, sz, ang, col, null, true);
     for (const m of marks) {
       if (m.kind === 'park') continue;
       const o = obb(m.pts), g = scen.get(o.x, o.z), y = Math.min(...m.pts.map(([x, z]) => isWater(x, z) ? -2 : nrGround(x, z))) - 0.3, lab = m.lab;
       const end = (t) => [o.x + o.c * o.L / 2 * t, o.z + o.s * o.L / 2 * t];   // (t = ±1: either end along the long axis)
-      // the towers stand at the end nearer the road (the minster's two face the Limmat; the others' by the street)
+      // the tower stands at the end nearer the road
       const nE = nrDist(...end(1)) < nrDist(...end(-1)) ? 1 : -1;
       nMark++; exclPush(o.x, o.z, Math.max(o.L, o.W) / 2 + 3);
-      if (/dvema stolpoma/.test(lab)) {   // the minster: a sandstone nave under a steep roof, two square towers with octagonal tops and domed caps
-        box(g, o.x, y, o.z, o.L, 19, o.W, o.ang, SAND, null, true); gable(g, o.x, y + 19, o.z, o.L + 0.4, o.W + 0.4, Math.min(9, o.W * 0.42), o.ang, SLATE, SAND);
-        const [ex, ez] = end(nE * 0.82);
-        for (const sd of [-1, 1]) { const tx = ex - o.s * sd * (o.W / 2 - 3.6), tz = ez + o.c * sd * (o.W / 2 - 3.6);
-          tower(g, tx, y, tz, 7.2, 40, o.ang, SAND); cyl(g, tx, y + 40, tz, 3.4, 8, 8, SANDD, SANDD); cone(g, tx, y + 48, tz, 3.6, 6.5, 8, [0.3, 0.3, 0.32], [0.3, 0.3, 0.32], 0); cyl(g, tx, y + 54, tz, 0.25, 2.5, 4, [0.75, 0.62, 0.3]); }
-      } else if (/vitkim zvonikom/.test(lab)) {   // the church with the slim spire: a pale nave, a tall square tower, a green copper spire
+      if (/vitkim zvonikom/.test(lab)) {   // the church with the slim spire: a pale nave, a tall square tower, a green copper spire
         box(g, o.x, y, o.z, o.L, 17, o.W, o.ang, [0.88, 0.86, 0.8], null, true); gable(g, o.x, y + 17, o.z, o.L + 0.4, o.W + 0.4, Math.min(8, o.W * 0.4), o.ang, SLATE, [0.88, 0.86, 0.8]);
         const [tx, tz] = end(nE * 0.86); tower(g, tx, y, tz, 6.5, 38, o.ang, [0.86, 0.84, 0.78]); cone(g, tx, y + 38, tz, 4.4, 24, 4, COPPER, COPPER, o.ang + Math.PI / 4);
-      } else if (/veliko uro/.test(lab)) {   // the church with the big clock: a square tower with a large dial on each face, a green spire
-        box(g, o.x, y, o.z, o.L, 15, o.W, o.ang, [0.92, 0.9, 0.84], null, true); gable(g, o.x, y + 15, o.z, o.L + 0.4, o.W + 0.4, Math.min(7, o.W * 0.4), o.ang, TILEB, [0.92, 0.9, 0.84]);
-        const [tx, tz] = end(nE * 0.84), S = 9; tower(g, tx, y, tz, S, 44, o.ang, [0.9, 0.88, 0.82]);
-        for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ux = o.c * dx - o.s * dz, uz = o.s * dx + o.c * dz, rot = o.ang + (dz ? Math.PI / 2 : 0);
-          box(g, tx + ux * (S / 2 + 0.06), y + 33, tz + uz * (S / 2 + 0.06), 0.12, 7.6, 7.6, rot, [0.85, 0.66, 0.24]);
-          box(g, tx + ux * (S / 2 + 0.14), y + 33.5, tz + uz * (S / 2 + 0.14), 0.12, 6.6, 6.6, rot, [0.12, 0.12, 0.14]); }
-        cone(g, tx, y + 44, tz, 5.6, 20, 4, COPPER, COPPER, o.ang + Math.PI / 4);
-      } else if (/ob reki/.test(lab)) {   // the church by the river: a small late-Gothic hall, a ridge turret
+      } else if (/ob reki|Majhna cerkev/.test(lab)) {   // a small church: a late-Gothic hall, a ridge turret
         box(g, o.x, y, o.z, o.L, 12, o.W, o.ang, [0.86, 0.82, 0.74], null, true); gable(g, o.x, y + 12, o.z, o.L + 0.4, o.W + 0.4, Math.min(7, o.W * 0.5), o.ang, TILEB, [0.86, 0.82, 0.74]);
         cone(g, o.x, y + 12 + Math.min(7, o.W * 0.5) - 0.5, o.z, 1.2, 7, 6, COPPER, COPPER, 0);
-      } else if (m.kind === 'townhall') {   // the town hall standing in the river: three floors of stone over the water, a hipped roof
-        const fac = facC.get(o.x, o.z), pts = m.pts, H = 15;
-        wallsOf(fac, pts, y, H, [0.84, 0.78, 0.66], 4.2, false);
-        gable(g, o.x, y + H, o.z, o.L + 0.6, o.W + 0.6, 6, o.ang, TILEB, [0.84, 0.78, 0.66]);
-      } else {   // the opera house and the rest: a pale block with a shallow roof
+      } else {   // the opera house, the art museum, the theatre: a pale block with a shallow roof
         const fac = facC.get(o.x, o.z); wallsOf(fac, m.pts, y, 20, [0.94, 0.92, 0.86], 4.6, false);
         box(g, o.x, y + 20, o.z, o.L * 0.96, 2.5, o.W * 0.96, o.ang, [0.5, 0.56, 0.54], [0.45, 0.52, 0.5]);
       }
     }
 
-    /* ---- the buildings (OSM within 140 m): the old town's tall houses and the shops of the main street, plaster in pastels with rows of windows
+    /* ---- the buildings (OSM within 140 m): the town's tall houses and the shops, plaster in pastels with rows of windows
        (tex.facade), a stone-coloured ground floor, steep brown tile roofs (copper or slate now and then); the big blocks flat roofed ---- */
     function wallsOf(g, pts, y0, H, col, bay, shop) {
       const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cz = pts.reduce((a, p) => a + p[1], 0) / pts.length, inside = [cx, y0 + H / 2, cz], G0 = shop ? 4.2 : 0;
@@ -364,7 +348,7 @@
     {
       const pc = [0.42, 0.44, 0.45], wc = [0.16, 0.16, 0.17], HP = 7.2, HW = 6.3, poles = [];
       for (let d = 14; d < L - 10; d += 34) {
-        const s0 = sAt(d), i = T.idx(s0); if (onBridgeS(s0) || bend[i]) { poles.push(null); continue; }
+        const s0 = sAt(d), i = T.idx(s0); if (onBridgeS(s0) || bend[i] || !tramI[i]) { poles.push(null); continue; }
         const pp = []; for (const side of [-1, 1]) { const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1.3), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; pp.push(freeAt(x, z, 0.6) ? [x, z, o] : null); }
         if (!pp[0] || !pp[1]) { poles.push(null); continue; }
         const g = scen.get(T.px[i], T.pz[i]), y = T.hy[i];
@@ -377,7 +361,7 @@
           box(scen.get(a[0], a[2]), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, len, 0.04, 0.04, Math.atan2(b[2] - a[2], b[0] - a[0]), wc, wc); } }
     }
 
-    /* ---- the trees: OSM's (the limes of the main street and the quays), the parks and Lindenhof's limes from the land cover, within 60 m ---- */
+    /* ---- the trees: OSM's (the street trees and the quay's), the parks' and the gardens' from the land cover, within 60 m ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const WIND = { value: 0 }; out.dyn.wind = WIND;
     tMat.onBeforeCompile = (sh) => {
@@ -395,15 +379,6 @@
     for (const [x, z] of ZD.trees) {
       if (nrDist(x, z) > 70 || isWater(x, z) || inMark(x, z)) continue; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 1.5) continue;
       const hq = crH(x, z, 28), hgt = 9 + hq * 6; plant(0, x, z, hgt, hgt * 0.62, [0.95, 1, 0.95]); exclPush(x, z, 3);
-    }
-    // the limes along Bahnhofstrasse (from the corner by Uraniastrasse to the lake), a row each side on the pavement behind the fence
-    {
-      const a = dOf('Bahnhofstrasse'), b = dOf('Lasnica ob jezeru');
-      if (a >= 0 && b > a) for (let d = a + 25; d < b - 40; d += 11) for (const side of [-1, 1]) {
-        const i = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 3.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
-        if (!freeAt(x, z, 2.5) || nearTree(x, z)) continue;
-        const hq = crH(x, z, 51), hgt = 10 + hq * 3; plant(0, x, z, hgt, hgt * 0.55, [0.95, 1, 0.95]); exclPush(x, z, 3); CR.avoid(x, z, 1);
-      }
     }
     {
       const Lt = NRC * 32;

@@ -1,8 +1,7 @@
-// Zürich, Švica (track 'zurich', docs/proge/zurich.md): a city race through the centre of Zürich (OpenStreetMap, tools/proga-podatki.py,
-// tools/zurich/build.py), no browser. The track: a closed circuit named after the place, one lap of 2.43 km (in the lower part of the 1-5 km of a
-// city race), the heights of the quays and of Bahnhofstrasse, the places in the order of the lap, the descriptive names with their English, the
-// widths, the two bridges, the bends rounded to at least 13 m; then the game's race here: the field of 12 over 3 laps on the autopilot, no NaN,
-// every car to the flag.
+// Zürich, Švica (track 'zurich', docs/proge/zurich.md): a city race from the lake up the hill (OpenStreetMap, tools/proga-podatki.py,
+// tools/zurich/build.py), no browser. The track: a closed circuit named after the place, one lap of 4.55 km (within the 1-5 km of a new track),
+// the quay by the lake and the climb of ~78 m up the hill, the places in the order of the lap, no names of people, the widths, no bridges, the
+// bends rounded to at least 13 m; then the game's race here: the field of 12 over 3 laps on the autopilot, no NaN, every car to the flag.
 //   node tests/zurich.test.js
 'use strict';
 const fs = require('fs');
@@ -20,23 +19,24 @@ const dOf = (label) => { const p = T.names.find(q => q.n === label); return p ? 
 check('track: a closed circuit named after the place (Zürich, Švica / Zürich, Switzerland), 3 laps, its own world, a real track (not a test one)',
   d && d.name === 'Zürich, Švica' && d.en && d.en.name === 'Zürich, Switzerland' && !d.open && d.laps === 3 && d.theme === 'zurich' && !d.test && !d.pending,
   d ? `${d.name} / ${d.en && d.en.name}, ${d.laps} laps, theme ${d.theme}` : 'no track');
-check('track: the lap 2.43 km within 1 % (a city race in the lower part of 1-5 km)', Math.abs(T.len / 2435 - 1) < 0.01, `${T.len.toFixed(1)} m`);
+check('track: the lap 4.55 km within 1 % (within the 1-5 km of a new track)', Math.abs(T.len / 4549 - 1) < 0.01, `${T.len.toFixed(1)} m`);
 let crossings = 0; for (const c of T.cross || []) crossings++;
 check('track: the centre line does not cross itself', crossings === 0, `${crossings}`);
 {
   let lo = 1e9, hi = -1e9, g = 0;
   for (let i = 0; i < N; i++) { lo = Math.min(lo, T.hy[i]); hi = Math.max(hi, T.hy[i]); g = Math.max(g, Math.abs(T.grade[i])); }
-  check('heights: the quays and the bridges 2-3.5 m above the lake, Bahnhofstrasse by Lindenhof at most ~8 m, the grades at most 6 %',
-    lo > 1.8 && lo < 3.5 && hi > 4 && hi < 9 && g < 0.06, `lowest ${lo.toFixed(1)} m, highest ${hi.toFixed(1)} m, steepest ${(g * 100).toFixed(1)} %`);
+  const hq = T.hy[0], hTop = T.hy[T.idx(T.startS + dOf('Dolderstrasse'))];
+  check('heights: the quay by the lake 2-3.5 m above it, the top of the hill 65-85 m above the lake (by Römerhof and Dolderstrasse), the grades at most 13 %',
+    lo > 1.8 && lo < 3.5 && hq < 3.5 && hi > 65 && hi < 85 && hTop > 60 && g < 0.13, `lowest ${lo.toFixed(1)} m, highest ${hi.toFixed(1)} m, steepest ${(g * 100).toFixed(1)} %`);
 }
 {
-  const order = ['Limmatquai', 'Mestna hiša', 'Srednji most', 'Uraniastrasse', 'Bahnhofstrasse', 'Paradeplatz', 'Lasnica ob jezeru', 'Quaibrücke', 'Bellevue'], D = order.map(dOf);
-  check('places in the order of the lap: Limmatquai, the town hall, the middle bridge, Uraniastrasse, Bahnhofstrasse, Paradeplatz, the lakeside hairpin, Quaibrücke, Bellevue',
+  const order = ['Utoquai', 'Feldeggstrasse', 'Kreuzplatz', 'Klosbachstrasse', 'Römerhof', 'Dolderstrasse', 'Hottingerstrasse', 'Heimplatz', 'Bellevue'], D = order.map(dOf);
+  check('places in the order of the lap: Utoquai, Feldeggstrasse, Kreuzplatz, Klosbachstrasse, Römerhof, Dolderstrasse, Hottingerstrasse, Heimplatz, Bellevue',
     D.every((v, k) => v >= 0 && (!k || v > D[k - 1])), order.map((p, k) => p + ' ' + Math.round(D[k])).join(', '));
 }
 {
-  // the HUD's names: the places as they are, the descriptive ones (Slovenian words) with their English in js/lang.js; no names of people
-  const PLACES = new Set(['Limmatquai', 'Uraniastrasse', 'Bahnhofstrasse', 'Paradeplatz', 'Quaibrücke', 'Bellevue']);
+  // the HUD's names: the places as they are, any descriptive ones (Slovenian words) with their English in js/lang.js; no names of people
+  const PLACES = new Set(['Utoquai', 'Feldeggstrasse', 'Kreuzplatz', 'Klosbachstrasse', 'Römerhof', 'Dolderstrasse', 'Hottingerstrasse', 'Heimplatz', 'Bellevue']);
   const lang = fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), miss = [];
   for (const p of T.names) if (!PLACES.has(p.n) && !lang.includes(`'${p.n}':`)) miss.push(p.n);
   const people = /Brun|Guisan|Bürkli|Escher|Zwingli|Pestalozzi/;
@@ -46,14 +46,12 @@ check('track: the centre line does not cross itself', crossings === 0, `${crossi
 }
 {
   let wmin = 1e9, wmax = 0; for (let i = 0; i < N; i++) { wmin = Math.min(wmin, T.wAt(i)); wmax = Math.max(wmax, T.wAt(i)); }
-  check('widths: the city streets 11.2-12.8 m (Limmatquai the narrowest, Bahnhofstrasse, the square by the lake and Quaibrücke the widest)',
-    wmin > 5.5 && wmin < 5.7 && wmax > 6.3 && wmax < 6.5, `${(2 * wmin).toFixed(1)}-${(2 * wmax).toFixed(1)} m`);
+  check('widths: the streets 10.8-12 m (Bergstrasse and Dolderstrasse up on the hill the narrowest, the quay and Rämistrasse the widest)',
+    wmin > 5.3 && wmin < 5.5 && wmax > 5.9 && wmax < 6.1, `${(2 * wmin).toFixed(1)}-${(2 * wmax).toFixed(1)} m`);
 }
 {
   const br = d.bridgesS || [];
-  check('bridges: the middle bridge over the Limmat (~70 m) and Quaibrücke at the end of the lake (~120 m)',
-    br.length === 2 && br[0][1] - br[0][0] > 50 && br[0][1] - br[0][0] < 90 && br[1][1] - br[1][0] > 100 && br[1][1] - br[1][0] < 140 && br[0][0] < dOf('Uraniastrasse') && br[1][0] > dOf('Lasnica ob jezeru'),
-    br.map(([a, b]) => `${a.toFixed(0)}-${b.toFixed(0)} m`).join(', '));
+  check('bridges: none on the lap (the culvert on Bergstrasse is no bridge)', br.length === 0, br.map(([a, b]) => `${a.toFixed(0)}-${b.toFixed(0)} m`).join(', ') || 'none');
   let kmax = 0; for (let i = 0; i < N; i++) kmax = Math.max(kmax, Math.abs(T.k[i]));
   check('bends: the tightest radius at least ~12 m (the street corners rounded for the race)', 1 / kmax > 11.5, `${(1 / kmax).toFixed(1)} m`);
 }

@@ -4998,25 +4998,25 @@
   }
  },
  "zurich/race/cs": {
-  "digest": "7243092f5553a959ba58d701",
-  "lead": 2304.1,
+  "digest": "74ededba420d3c537219cda1",
+  "lead": 2429.7,
   "car0": [
-   107.37,
-   172.12
+   1375.01,
+   -521.19
   ],
   "cover": {
-   "dmg": 0,
+   "dmg": 0.01,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "zurich/demo/cs": {
-  "digest": "a303034f706a2f34cc81a7ac",
-  "lead": 2432.7,
+  "digest": "e2c6f99d0c84a4cb8a845764",
+  "lead": 2525.9,
   "car0": [
-   2.81,
-   1.25
+   1304.76,
+   -608.36
   ],
   "cover": {
    "dmg": 0,
@@ -5026,11 +5026,11 @@
   }
  },
  "zurich/upg/cs": {
-  "digest": "91afa2eb66eb3b4ed92bdd93",
-  "lead": 2444.3,
+  "digest": "8672124716059e22007db614",
+  "lead": 2558.7,
   "car0": [
-   -3.69,
-   -9.67
+   1285.32,
+   -633.14
   ],
   "cover": {
    "dmg": 0,
@@ -5040,58 +5040,58 @@
   }
  },
  "zurich/crash/cs": {
-  "digest": "e2ba805369a9c05ee2529743",
-  "lead": 2295,
+  "digest": "edbce8fdb6711986c7900c77",
+  "lead": 2416.2,
   "car0": [
-   -62.04,
-   250.08
+   1300.94,
+   -439.07
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 4,
+   "dmg": 0.48,
+   "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "zurich/formula/cs": {
-  "digest": "d13df09ac9791bd5bdadde06",
-  "lead": 2667.2,
+  "digest": "2895069a90dee46281ed65db",
+  "lead": 2709.8,
   "car0": [
-   -16.8,
-   -66.55
+   1241.67,
+   -676.15
   ],
   "cover": {
-   "dmg": 0.41,
+   "dmg": 0.34,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "zurich/lm/cs": {
-  "digest": "5cf0d399e1818f1482d5fa1e",
-  "lead": 2598.6,
+  "digest": "eb23a7b02e7cfb1f1a7e8d4a",
+  "lead": 2682.8,
   "car0": [
-   3.56,
-   -1.85
+   1250.18,
+   -675.53
   ],
   "cover": {
-   "dmg": 0.72,
-   "loose": 2,
+   "dmg": 0.27,
+   "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
  "zurich/car/cs": {
-  "digest": "301a5a06d4691a102d85626b",
-  "lead": 2295,
+  "digest": "30a63fc43b13f94c954f4d7b",
+  "lead": 2416.6,
   "car0": [
-   -46.44,
-   245.74
+   1309.73,
+   -441.84
   ],
   "cover": {
-   "dmg": 0.69,
-   "loose": 3,
-   "rescues": 1,
+   "dmg": 0.61,
+   "loose": 1,
+   "rescues": 0,
    "repairs": 0
   }
  }
