@@ -2548,5 +2548,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "silkeborg/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 146.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fff2fe94db802a6f15ea6f92"
+ },
+ "silkeborg/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 157.62,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "61fb5eb644db60aeaaed3b4e"
+ },
+ "silkeborg/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 132.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "304487445363b502e0f9c787"
+ },
+ "silkeborg/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 134.35,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5fdf1193c0e4c27516df1399"
+ },
+ "silkeborg/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 147.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b9840d7cdeb6e99246f07fc8"
  }
 }

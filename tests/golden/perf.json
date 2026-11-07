@@ -362,5 +362,12 @@
   "kverts": 374,
   "maxKverts": 488,
   "jsMs": 1.69
+ },
+ "silkeborg": {
+  "calls": 240,
+  "maxCalls": 283,
+  "kverts": 580,
+  "maxKverts": 697,
+  "jsMs": 1.82
  }
 }

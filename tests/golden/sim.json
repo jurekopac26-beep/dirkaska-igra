@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "silkeborg/race/cs": {
+  "digest": "f051e55e7f289c8eedd061c8",
+  "lead": 1703.1,
+  "car0": [
+   285.81,
+   420.02
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "silkeborg/demo/cs": {
+  "digest": "c7f8e047c00652bcf664a8ca",
+  "lead": 1807.8,
+  "car0": [
+   171.33,
+   289.66
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "silkeborg/upg/cs": {
+  "digest": "28b8792b4e7b092956cae36b",
+  "lead": 1799.1,
+  "car0": [
+   205.65,
+   329.41
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "silkeborg/crash/cs": {
+  "digest": "a5d75668d605f5a036afd357",
+  "lead": 2936.6,
+  "car0": [
+   -114.88,
+   -67.16
+  ],
+  "cover": {
+   "dmg": 0.66,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "silkeborg/formula/cs": {
+  "digest": "dedb78b5aa752b84f51db582",
+  "lead": 3422.1,
+  "car0": [
+   -199.65,
+   19.02
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "silkeborg/lm/cs": {
+  "digest": "157b9601331eef9d51936f46",
+  "lead": 3362.1,
+  "car0": [
+   -229.76,
+   -29.56
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 1,
+   "repairs": 1
+  }
+ },
+ "silkeborg/car/cs": {
+  "digest": "5eb346b58e0d42c0b1bf68f8",
+  "lead": 3143.7,
+  "car0": [
+   -89.15,
+   -55.59
+  ],
+  "cover": {
+   "dmg": 0.54,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

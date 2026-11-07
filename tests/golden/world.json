@@ -1360,5 +1360,33 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "silkeborg": {
+  "meshes": 335,
+  "verts": 316756,
+  "instances": 5035,
+  "props": 39,
+  "crowd": 8,
+  "world": "4de543c8",
+  "propsHash": "f9f3905d",
+  "floor": "5fceb756/4536",
+  "groups": {
+   "-:MeshLambertMaterial": "6aadc1d5",
+   "-:MeshBasicMaterial": "238cf015",
+   "fences:MeshLambertMaterial": "f3c5c6ce",
+   "crowd:MeshLambertMaterial": "6f025347",
+   "flags:MeshLambertMaterial": "5d0db148",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "8470103f",
+   "roadwear:MeshLambertMaterial": "905b11af",
+   "worn:MeshLambertMaterial": "4aab0fc4",
+   "brakeBoards:MeshLambertMaterial": "799ddc77",
+   "life:MeshLambertMaterial": "ea37f646",
+   "lifeShadow:MeshBasicMaterial": "7693b429",
+   "life:MeshBasicMaterial": "4ca48b23",
+   "people:MeshLambertMaterial": "d55b38de",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "faa1f9da"
+  }
  }
 }
