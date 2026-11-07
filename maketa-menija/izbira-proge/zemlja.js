@@ -37,13 +37,13 @@ window.ZEMLJA = (() => {
   @keyframes zpPulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
   .zl { pointer-events: auto; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 4px 9px 4px 5px; border-radius: 8px;
     background: rgba(8, 13, 24, .8); border: 1px solid rgba(255, 255, 255, .2); box-shadow: 0 3px 10px rgba(0, 0, 0, .45);
-    font: 800 italic 12px/1 var(--f-ui); text-transform: uppercase; letter-spacing: .2px; transition: opacity .2s; }
+    font: 800 italic 12px/1 var(--f-ui); text-transform: uppercase; letter-spacing: .2px; }
   .zl svg { width: 21px; height: 14px; border-radius: 2px; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); }
   .zl small { font: 600 10.5px/1 var(--f-ui); color: var(--lbl, #9fb3d6); text-transform: none; }
   .zl.t { padding: 4px 8px; }
   .zl.cur, .zl.sel { border-color: #ffc629; }
   .zl.cur { background: rgba(60, 44, 6, .88); }
-  .zl.off { opacity: 0 !important; pointer-events: none; }
+  .zl.off { pointer-events: none; }   /* (the fade itself in place(): a CSS transition restarted every frame can leave a hidden name showing) */
   .zem-card { position: absolute; left: 0; right: 0; bottom: 0; max-height: 400px; display: flex; flex-direction: column; border-radius: 18px 18px 0 0;
     background: linear-gradient(180deg, rgba(26, 39, 66, .97) 0, rgba(13, 22, 38, .98) 100%); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
     transform: translateY(105%); transition: transform .3s cubic-bezier(.2, .8, .25, 1); }
@@ -176,7 +176,7 @@ window.ZEMLJA = (() => {
     });
   }
   const tmp = () => new THREE.Vector3();
-  function place() {
+  function place(dt) {
     const w = tmp(), cz = R.d, showT = R.d < TRACKS_AT, boxes = [];
     // the names in order: the track shown, the chosen country's, then the rest; one that would cover a name already placed waits
     const L = R.els.filter(m => !m.pin), P = R.els.filter(m => m.pin);
@@ -203,7 +203,9 @@ window.ZEMLJA = (() => {
       if (ok) boxes.push(r);
       m.e.classList.toggle('off', !ok);
       m.e.classList.toggle('sel', !!m.c && m.c === R.sel);
-      m.e.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; m.e.style.opacity = ok ? q.a.toFixed(2) : '0';
+      const to = ok ? q.a : 0;   // (a name fades in and out in a sixth of a second)
+      m.o = m.o == null ? to : Math.abs(to - m.o) < 0.02 ? to : m.o + (to - m.o) * Math.min(1, dt * 12);
+      m.e.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; m.e.style.opacity = m.o.toFixed(2); m.e.style.visibility = m.o > 0.01 ? '' : 'hidden';
     }
   }
 
@@ -227,7 +229,7 @@ window.ZEMLJA = (() => {
     R.cam.setViewOffset(W, H, 0, -(yc - H / 2), W, H); R.cam.updateProjectionMatrix();
     R.group.updateMatrixWorld();
     R.r.render(R.scene, R.cam);
-    place();
+    place(dt);
     requestAnimationFrame(frame);
   }
 
