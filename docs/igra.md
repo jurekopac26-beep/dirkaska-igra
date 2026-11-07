@@ -629,9 +629,9 @@ Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik L
 
 ## Vozni park
 
-V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
+V igri je **47 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
-- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
+- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/7«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
 - **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5. Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
@@ -646,6 +646,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **OSA R** | 4WD | 422 KM | 1450 kg | 55.000 kovančkov | Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler. Najhitrejši mali avto (0–100 hitreje od LEV S). |
 
 ### Športni
 
@@ -657,6 +658,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
 | **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **ŠAKAL D** | zadnji | 761 KM | 1350 kg | 180.000 kovančkov | Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles. Največ točk za drift od vseh vozil (meritev kot v avtošoli Drift). |
 
 ### Superšportni
 
@@ -683,6 +685,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 kovančkov | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
 | **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 kovančkov | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
 | **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 kovančkov | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+| **GAMS RH** | 4WD | 449 KM | 1260 kg | 1.000.000 kovančkov | Sodoben relijski hibrid: veliko krilo, odprtine na blatnikih, zračnik na strehi. Hibrid ga potiska iz ovinkov; na makadamu je najboljši v igri. |
 
 ### Terenski
 
@@ -706,6 +709,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 kovančkov | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
 | **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 kovančkov | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
 | **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 kovančkov | Prototip za vzdržljivostne dirke (glej spodaj). |
+| **OREL GT3** | zadnji, motor na sredini | 558 KM | 1280 kg | 550.000 kovančkov | Dirkalnik GT3: kabina naprej, zračnik na strehi, veliko krilo s stranicama in difuzor. Tekmeci so izmenoma OREL GT3 in TIGER GT (mešano polje razreda GT3, krog enako hiter): OREL je hitrejši na ravninah in pri zaviranju, TIGER GT v ovinkih. |
 
 ### Tovornjaki
 

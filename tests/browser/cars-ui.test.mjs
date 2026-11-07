@@ -73,11 +73,11 @@ try {
       Math.abs(L.cats.l - 12) <= 1 && Math.abs(L.cats.t - 8) <= 1 && L.cats.h === 34 && Math.abs(L.strip.b - (L.vh - 8)) <= 1 && L.strip.h === 44 && Math.abs(L.cats.r - (L.panel.l - 12)) <= 1 && Math.abs(L.strip.r - (L.panel.l - 12)) <= 1,
       JSON.stringify({ cats: L.cats, strip: L.strip, panel: L.panel }));
     T.check('844×390: nothing off the screen, the rows clear of the panel and the arrows; the panel as it was (its parts all in it, Nazaj / Naprej on the screen), the category under the name',
-      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/6$/.test(L.cat),
+      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/7$/.test(L.cat),
       JSON.stringify({ overflow: L.overflow, arrows: L.arrows, next: L.next, cat: L.cat }));
     T.check('844×390: the car is the garage\'s button (over its place, left of the panel, between the categories and the strip), its hint under it "Tapni avto za garažo"', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, txt: L.hintTxt, on: L.garOn }));
     T.check('844×390: 10 category chips, the car\'s chosen and in view; its category\'s cars in the strip (cheapest first), the chosen one in view; no chip with an arrow\'s data-act',
-      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,panter,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
+      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,panter,jelen,sakal' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
       JSON.stringify({ nCats: L.nCats, catSel: L.catSel, catIn: L.catIn, strip: L.stripIds, carIn: L.carIn, acts: L.acts }));
 
     // 2. switching by touch: a category (its first car, later the one last looked at there), a car of the strip
@@ -169,7 +169,7 @@ try {
       L.cats.t === 8 && L.cats.b === 42 && L.strip.t === 48 && L.strip.b === 92 && L.cats.l === 10 && L.cats.r === L.vw - 10 && L.strip.l === 10 && L.strip.r === L.vw - 10, JSON.stringify({ cats: L.cats, strip: L.strip }));
     T.check('390×844: nothing off the screen, the rows clear of the panel and the arrows, the panel as it was, the chosen chips in view (Dirkalni, TIGER GT)',
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
-      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,tiger,lm,formula' && /^Dirkalni · 6\/8$/.test(L.cat),
+      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,tiger,lm,formula,orel' && /^Dirkalni · 6\/9$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
     T.check('390×844: the car is the garage\'s button (over its place, under the strip, over the panel), its hint under it', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, panel: L.panel, on: L.garOn }));
     // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
