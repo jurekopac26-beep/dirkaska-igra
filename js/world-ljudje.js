@@ -1680,6 +1680,9 @@
         const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance);
         if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = rc.intersectObjects(near, false)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
       offs.sort((a, b) => a - b); (f.at || (f.at = {})).wall = [offs.length, hi, Math.min(8, B.length)]; const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05, clad = wall != null && hi >= 2 && hi >= offs.length * 0.6;
+      // its floodlights, lit in the evening and at night (js/render-vecer.js): under a roof's front edge (below), where it has none on masts along its back
+      const lampAt = (x, y, z, ax, az, roof) => (o.standLamps || (o.standLamps = [])).push(x, y, z, ax, az, roof);
+      for (const e of B) lampAt(e.p[0] - e.f[0] * wo, e.p[1], e.p[2] - e.f[1] * wo, nx, nz, 0);
       // the concourse: along the back (the wall's face out to AR.apron), on past the ends; the ends' strips from the front to the back
       // (a small stand, a street circuit's few rows of 20 m: its front, its ends' signs and its roof only, not a concourse of its own)
       let blen = 0; for (let k = 1; k < B.length; k++) if (!B[k].gap) blen += Math.hypot(B[k].p[0] - B[k - 1].p[0], B[k].p[2] - B[k - 1].p[2]);   // (not across a gap between its pieces)
@@ -1810,7 +1813,8 @@
         let d = 0;
         for (let k = 1; k < L2.length; k++) { const a = L2[k - 1].fr, b = L2[k].fr, l = Math.hypot(b[0] - a[0], b[2] - a[2]); if (l > 4 || l < 0.05) continue; d += l;
           const at = (p, y) => [p[0] + nx * 0.09, y, p[2] + nz * 0.09];
-          sbAt(a[0], a[2]).quad(at(a, a[1] - 0.72), at(b, b[1] - 0.72), at(b, b[1] + 0.04), at(a, a[1] + 0.04), [nx, 0, nz], AR_COL.dark, AR_COL.warm, kq(KIT.fascia, (d - l) / 4, d / 4, 1, 0)); }
+          sbAt(a[0], a[2]).quad(at(a, a[1] - 0.72), at(b, b[1] - 0.72), at(b, b[1] + 0.04), at(a, a[1] + 0.04), [nx, 0, nz], AR_COL.dark, AR_COL.warm, kq(KIT.fascia, (d - l) / 4, d / 4, 1, 0));
+          lampAt(a[0] + nx * 0.3, a[1] - 0.55, a[2] + nz * 0.3, nx, nz, 1); }
         if (tier > 0) for (let k = 2; k < L2.length - 1; k += 5) { const e = L2[k], pf = e.fr, pb = e.bk; if (e.fn - e.bn < 3) continue;
           const gb = sbAt(pf[0], pf[2]), lift = (p, h) => [p[0], p[1] + h, p[2]], mixP = (w, h0, h1) => [pb[0] + (pf[0] - pb[0]) * w, pb[1] + (pf[1] - pb[1]) * w + h0 + (h1 - h0) * w, pb[2] + (pf[2] - pb[2]) * w];
           gb.bar(lift(pb, 1.7), lift(pf, 0.28), 0.14, 0.12, AR_COL.white); gb.bar(lift(pb, 0.12), lift(pf, 0.12), 0.12, 0.1, AR_COL.white);
