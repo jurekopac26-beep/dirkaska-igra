@@ -13,7 +13,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, NRC, RB, TAU, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, cyl, gable,
+    Chunks, GB, IChunks, NRC, RB, TAU, atS, atSf, box, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, cyl, gable, hjCutMat,
     ico, inPoly, lerp, nrDem, nrDist, nrGround, nrLC, nrLCf, nrNear, nrPrep, nrShade, nrTileGeo, nrTileOn, rng,
     sstep, valueNoise2, vary, waterMat
   } = API;
@@ -59,9 +59,11 @@
     const P = API.NR, G = P.G;
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
+    const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uA: { value: new THREE.Vector4(0, 0, -1e6, 1) }, uB: { value: new THREE.Vector4(0, 0, -1e6, 1) } };   // (hjCutMat: what of a building hides the car or the road just ahead of it on the screen fades)
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const W1 = [1, 1, 1];
+    const dOf = (lab) => { const q = T.names.find(q => q.n === lab); return q ? q.d : -1; };   // (a name's distance from the start line)
     const eh = new Map(), EHC = 32;   // what keeps the trees off (the buildings, the start, the landmarks), hashed circles
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
@@ -263,7 +265,7 @@
       }
     }
 
-    /* ---- the buildings (OSM within 80 m): the old town's tall houses and the shops of the main street, plaster in pastels with rows of windows
+    /* ---- the buildings (OSM within 140 m): the old town's tall houses and the shops of the main street, plaster in pastels with rows of windows
        (tex.facade), a stone-coloured ground floor, steep brown tile roofs (copper or slate now and then); the big blocks flat roofed ---- */
     function wallsOf(g, pts, y0, H, col, bay, shop) {
       const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cz = pts.reduce((a, p) => a + p[1], 0) / pts.length, inside = [cx, y0 + H / 2, cz], G0 = shop ? 4.2 : 0;
@@ -278,6 +280,11 @@
     const PAL = [[0.96, 0.92, 0.84], [0.94, 0.88, 0.76], [0.92, 0.84, 0.74], [0.9, 0.9, 0.86], [0.86, 0.88, 0.84], [0.96, 0.86, 0.8], [0.88, 0.84, 0.8], [0.95, 0.94, 0.9], [0.84, 0.86, 0.9], [0.92, 0.8, 0.66]];
     const RF = [[0.48, 0.27, 0.2], [0.42, 0.24, 0.19], [0.54, 0.32, 0.24], [0.46, 0.3, 0.26], [0.35, 0.36, 0.38], [0.38, 0.56, 0.48]];
     const outOf = new Map(ZD.out.map(([k, fl]) => [k, flat2(fl)]));
+    const BH = new Map(), BHC = 24;   // the footprints built, hashed (where the street trees and the poles may not stand)
+    const bhPush = (pts) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      for (let a = Math.floor(x0 / BHC); a <= Math.floor(x1 / BHC); a++) for (let b = Math.floor(z0 / BHC); b <= Math.floor(z1 / BHC); b++) { const k = a + ',' + b; let Lc = BH.get(k); if (!Lc) BH.set(k, Lc = []); Lc.push(pts); } };
+    const inBld = (x, z) => { const Lc = BH.get(Math.floor(x / BHC) + ',' + Math.floor(z / BHC)); if (!Lc) return false; for (const p of Lc) if (inPoly(p, x, z)) return true; return false; };
+    const freeAt = (x, z, r) => !inBld(x, z) && !inBld(x + r, z) && !inBld(x - r, z) && !inBld(x, z + r) && !inBld(x, z - r) && !isWater(x, z);
     ZD.bld.forEach(([bx, bz, Lb, Wb, ang, Hb, kind], n) => {
       if (inMark(bx, bz) || isWater(bx, bz)) return;
       const ca = Math.cos(ang), sa = Math.sin(ang);
@@ -305,10 +312,10 @@
       const big = area > 900 || kind === 5 && area > 500, rg = roofs.get(bx, bz);
       if (big) { const rc = [0.5, 0.5, 0.5]; box(rg, o.x, y0 + H - 0.2, o.z, o.L * 0.98, 0.8, o.W * 0.98, o.ang, col.map(v => v * 0.9), rc); box(rg, o.x, y0 + H + 0.6, o.z, o.L * 0.7, 2.6, o.W * 0.7, o.ang, [0.44, 0.45, 0.46], [0.4, 0.4, 0.42]); }
       else { const rc = RF[Math.floor(crH(bx, bz, 14) * (crH(bx, bz, 15) < 0.85 ? 4 : RF.length))]; gable(rg, o.x, y0 + H, o.z, o.L + 0.5, o.W + 0.5, Math.min(8, o.W * (0.38 + hk * 0.12)), o.ang, rc, col); }
-      CR.block(o.x, o.z, o.L, o.W, o.ang); exclPush(o.x, o.z, Math.max(o.L, o.W) / 2 + 1.5); nBld++;
+      bhPush(pts); CR.block(o.x, o.z, o.L, o.W, o.ang); exclPush(o.x, o.z, Math.max(o.L, o.W) / 2 + 1.5); nBld++;
     });
-    const facMat = new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true });
-    facC.addTo(root, facMat, true, true); gplain.addTo(root, matV, true, true); roofs.addTo(root, matV, true, true);
+    const facMat = hjCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), matB = hjCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
+    facC.addTo(root, facMat, true, true); gplain.addTo(root, matB, true, true); roofs.addTo(root, matB, true, true);
 
     /* ---- the other streets within 60 m: asphalt ribbons on the paving (cut away inside the race's barriers) ---- */
     {
@@ -351,6 +358,25 @@
     for (const [x, z] of ZD.lamps) { if (nrDist(x, z) > 60 || isWater(x, z)) continue; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 0.8) continue;
       const y = nrGround(x, z), g = scen.get(x, z); cyl(g, x, y, z, 0.09, 5, 5, [0.2, 0.26, 0.22]); box(g, x, y + 5, z, 0.4, 0.6, 0.4, 0, [0.9, 0.88, 0.76], [0.2, 0.26, 0.22]); CR.avoid(x, z, 0.4); }
 
+    /* ---- the trams' overhead line: a pair of grey poles every ~34 m behind the fences, the span wire across the road and the two contact wires
+       along it (thin: seen against the sky from the chase camera) ---- */
+    let nPole = 0;
+    {
+      const pc = [0.42, 0.44, 0.45], wc = [0.16, 0.16, 0.17], HP = 7.2, HW = 6.3, poles = [];
+      for (let d = 14; d < L - 10; d += 34) {
+        const s0 = sAt(d), i = T.idx(s0); if (onBridgeS(s0) || bend[i]) { poles.push(null); continue; }
+        const pp = []; for (const side of [-1, 1]) { const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1.3), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; pp.push(freeAt(x, z, 0.6) ? [x, z, o] : null); }
+        if (!pp[0] || !pp[1]) { poles.push(null); continue; }
+        const g = scen.get(T.px[i], T.pz[i]), y = T.hy[i];
+        for (const [x, z] of pp) { cyl(g, x, nrGround(x, z) - 0.2, z, 0.14, HP + 0.2, 6, pc, pc); CR.avoid(x, z, 0.5); exclPush(x, z, 1.2); nPole++; }
+        box(g, T.px[i] + T.nx[i] * (pp[0][2] + pp[1][2]) / 2, y + HW + 0.25, T.pz[i] + T.nz[i] * (pp[0][2] + pp[1][2]) / 2, 0.05, 0.05, pp[1][2] - pp[0][2], T.hd[i], wc, wc);
+        poles.push([i, d]);
+      }
+      for (let k = 0; k + 1 < poles.length; k++) { const A = poles[k], B = poles[k + 1]; if (!A || !B) continue;   // (the contact wires over the two tracks, between spans)
+        for (const o of [-1.6, 1.6]) { const a = Pt(A[0], o, HW), b = Pt(B[0], o, HW), len = Math.hypot(b[0] - a[0], b[2] - a[2]);
+          box(scen.get(a[0], a[2]), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, len, 0.04, 0.04, Math.atan2(b[2] - a[2], b[0] - a[0]), wc, wc); } }
+    }
+
     /* ---- the trees: OSM's (the limes of the main street and the quays), the parks and Lindenhof's limes from the land cover, within 60 m ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const WIND = { value: 0 }; out.dyn.wind = WIND;
@@ -363,10 +389,21 @@
     tMat.customProgramCacheKey = () => 'zhTreeWind';
     const TK = [new IChunks(zhTreeGeo(0), tMat, 256), new IChunks(zhTreeGeo(1), tMat, 256)];
     let nTrees = 0;
-    const plant = (sp, x, z, hgt, wid, c) => { const y = nrGround(x, z) - 0.1; TK[sp].add(x, y, z, crH(x, z, 21) * TAU, wid, hgt, c); nrShade(x, z, wid * 0.42, 1); nTrees++; };
+    const TG = new Set(), tgK = (x, z) => Math.floor(x / 5) + ',' + Math.floor(z / 5);
+    const nearTree = (x, z) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (TG.has(tgK(x + a * 5, z + b * 5))) return true; return false; };
+    const plant = (sp, x, z, hgt, wid, c) => { TG.add(tgK(x, z)); const y = nrGround(x, z) - 0.1; TK[sp].add(x, y, z, crH(x, z, 21) * TAU, wid, hgt, c); nrShade(x, z, wid * 0.42, 1); nTrees++; };
     for (const [x, z] of ZD.trees) {
       if (nrDist(x, z) > 70 || isWater(x, z) || inMark(x, z)) continue; const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 1.5) continue;
       const hq = crH(x, z, 28), hgt = 9 + hq * 6; plant(0, x, z, hgt, hgt * 0.62, [0.95, 1, 0.95]); exclPush(x, z, 3);
+    }
+    // the limes along Bahnhofstrasse (from the corner by Uraniastrasse to the lake), a row each side on the pavement behind the fence
+    {
+      const a = dOf('Bahnhofstrasse'), b = dOf('Lasnica ob jezeru');
+      if (a >= 0 && b > a) for (let d = a + 25; d < b - 40; d += 11) for (const side of [-1, 1]) {
+        const i = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 3.2), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        if (!freeAt(x, z, 2.5) || nearTree(x, z)) continue;
+        const hq = crH(x, z, 51), hgt = 10 + hq * 3; plant(0, x, z, hgt, hgt * 0.55, [0.95, 1, 0.95]); exclPush(x, z, 3); CR.avoid(x, z, 1);
+      }
     }
     {
       const Lt = NRC * 32;
@@ -396,6 +433,18 @@
         else if (k === 3) box(g, mx, y, mz, len + 0.1, 1.1, 0.08, ang, [0.24, 0.26, 0.26], null, true);
         else box(g, mx, y - 0.4, mz, len + 0.2, 1.4, 0.45, ang, [0.7, 0.67, 0.6], [0.78, 0.76, 0.72], true);
       }
+    }
+
+    /* ---- boats moored along the quays (the lake and the river, within ~70 m of the road): white hulls, a small cabin on some ---- */
+    let nBoat = 0;
+    for (let z = Math.ceil(P.z0 / 9) * 9; z < P.z1; z += 9) for (let x = Math.ceil(P.x0 / 9) * 9; x < P.x1; x += 9) {
+      if (crH(x, z, 41) > 0.16) continue; const bx = x + (crH(x, z, 42) - 0.5) * 6, bz = z + (crH(x, z, 43) - 0.5) * 6;
+      const rd = nrDist(bx, bz); if (rd < 22 || rd > 70 || !isWater(bx, bz)) continue; const ed = edgeD(bx, bz); if (ed < 4 || ed > 16) continue;
+      const nn = nrNear(bx, bz); if (underBridge(nn) || nn.dd < 6) continue;
+      const g = scen.get(bx, bz), L0 = 5 + crH(x, z, 44) * 4, rot = crH(x, z, 45) * TAU, hull = crH(x, z, 46) < 0.8 ? [0.94, 0.94, 0.92] : [0.3, 0.4, 0.55];
+      box(g, bx, -0.35, bz, L0, 0.75, L0 * 0.36, rot, hull, [0.72, 0.6, 0.44]);
+      if (crH(x, z, 47) < 0.55) box(g, bx - Math.cos(rot) * L0 * 0.08, 0.4, bz - Math.sin(rot) * L0 * 0.08, L0 * 0.36, 0.8, L0 * 0.26, rot, [0.92, 0.92, 0.9], [0.86, 0.86, 0.84]);
+      nBoat++;
     }
 
     /* ---- the lake and the river to the horizon ---- */
@@ -448,7 +497,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, quays: nQuay, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, landmarks: nMark, quays: nQuay, boats: nBoat, poles: nPole, fans: nFans };   // (read by the tests)
     return out;
   }
 

@@ -203,7 +203,7 @@ HEAD = """/* Zürich (theme 'zurich'): the scenery data for js/world-zurich.js (
    tools/zurich/build.py world from tools/zurich/zurich.json (tools/proga-podatki.py; docs/proge/zurich.md).
    dem: the ground (Copernicus DEM GLO-30 less the buildings, squeezed to the town's relief as the road's heights are; 32 m cells, bytes: lo + v * step m
    above the lake, World.nrPrep's form); lc: the land cover (16 m cells, run-length coded: 0 open, 1 trees, 2 park, 3 town); far: the surface (200 m
-   cells, +-12 km, bytes of 2 m above the lake, 0 = the lake); bld: OSM buildings within 80 m [x, z, length, width, angle, height (0 unknown), kind: 0
+   cells, +-12 km, bytes of 2 m above the lake, 0 = the lake); bld: OSM buildings within 140 m [x, z, length, width, angle, height (0 unknown), kind: 0
    house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats, s, d]; out: outlines [index into bld, [x, z, ...]];
    water: the Limmat and the lake [name, [x, z, ...] closed ring]; walls [0 wall, 1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]];
    roads: the other streets and bridges within 60 m [highway, lanes, width, 1 bridge, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind];
