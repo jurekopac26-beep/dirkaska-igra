@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "izoard/race/cs": {
+  "digest": "296b5ebf8c300a90ea94f2de",
+  "lead": 1362.3,
+  "car0": [
+   -17.53,
+   369.58
+  ],
+  "cover": {
+   "dmg": 0.04,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/demo/cs": {
+  "digest": "e22a5330837d5b9dd12d22c2",
+  "lead": 1455.7,
+  "car0": [
+   157.06,
+   516.18
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/upg/cs": {
+  "digest": "25b7f9110d1ed863b278db31",
+  "lead": 1444.5,
+  "car0": [
+   97.87,
+   524.83
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/crash/cs": {
+  "digest": "bf64facd50101badded30f95",
+  "lead": 1367.3,
+  "car0": [
+   24.34,
+   424.3
+  ],
+  "cover": {
+   "dmg": 0.51,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/formula/cs": {
+  "digest": "07adae394d4020116079eac8",
+  "lead": 1442,
+  "car0": [
+   33.76,
+   454.68
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/lm/cs": {
+  "digest": "1583f58c7b1b64337a569864",
+  "lead": 1420.9,
+  "car0": [
+   20.52,
+   417.16
+  ],
+  "cover": {
+   "dmg": 0.91,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "izoard/car/cs": {
+  "digest": "808a53261ce056efd59d8588",
+  "lead": 1356.3,
+  "car0": [
+   -12.04,
+   341.35
+  ],
+  "cover": {
+   "dmg": 0.57,
+   "loose": 2,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }

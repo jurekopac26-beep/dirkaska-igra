@@ -15,5 +15,23 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "izoard": {
+    "ime": "Izoard, Francija",
+    "okvir": [44.807, 6.702, 44.851, 6.755],
+    "pot": [[44.8395148, 6.7234205], [44.81724, 6.73399]],
+    "start": [44.836835, 6.7221912],
+    "cilj": [44.8196595, 6.734975],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 5.0,
+    "gauss": 2.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18 },
+    "s2": "S2A_32TLQ_20250709_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "IZOARD_H",
+    "vrh": 2360
   }
 }

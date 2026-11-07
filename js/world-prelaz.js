@@ -1,5 +1,6 @@
 /* =========================================================================
-   WORLD — the shared world of the mountain passes (docs/nove-proge.md: Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas): one builder
+   WORLD — the shared world of the mountain passes (docs/nove-proge.md: Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas; docs/nove-proge-1-0.md:
+   Izoard): one builder
    (buildPrelaz) for every pass, read from the track file's data (made by tools/proga/proga.py: def.dem, def.lc, def.col, def.bld, def.lakes,
    def.streams, def.cables, def.pylons, def.pulls, def.farDem, def.trees) and a look of each road's own (PL_LOOK[theme]: the colours of its
    ground and rock, the snow line, the plants, the signs and markings of its country, its landmarks). A new pass: its data from the tool, a
@@ -35,6 +36,25 @@
       cars: [[0.85, 0.85, 0.83], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.5, 0.52, 0.55], [0.72, 0.7, 0.66]],
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
+    },
+    // Izoard (the Hautes-Alpes, France): the north side of the col above Le Laus: an open forest of larch with Swiss stone pine on a grassy floor,
+    // the trees lower and sparser towards the treeline (~2250 m); above it dry alpine pasture with juniper and rhododendron, pale grey and ochre
+    // limestone and dolomite in crags and in wide scree slopes under the col, hardly any snow left in summer; the refuge by the road, the stalls at
+    // the col, the power line along the road (def.power), the col's stone obelisk (def.obelisk); the French signs: white chevrons on blue in the
+    // hairpins, the centre line in short dashes; the shrubs drawn only within 120 m of the road (shrubR: the phone's load, the forest has many)
+    izoard: {
+      seed: 4300, board: "COL D'IZOARD", sub: 'HAUTES-ALPES', banner: ["ROUTE DU COL D'IZOARD", '18 LACETS · HAUTES-ALPES'],
+      grass: [0.46, 0.5, 0.27], grassDry: [0.62, 0.58, 0.36], grassLush: [0.37, 0.49, 0.22], shrub: [0.22, 0.3, 0.16],
+      rock: [0.62, 0.6, 0.56], rockWarm: [0.68, 0.6, 0.48], lichen: [0.45, 0.44, 0.39], scree: [0.71, 0.68, 0.61],
+      sat: 0.5, satV: 1.35, snowLine: 2700, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.62, 0.6, 0.57], [0.68, 0.66, 0.61], [0.55, 0.54, 0.52], [0.7, 0.62, 0.5], [0.61, 0.57, 0.51], [0.66, 0.64, 0.6]],   // (the limestone and the dolomite: pale grey, a little ochre)
+      centre: [0.95, 0.95, 0.92], dash: [3, 10], solidNear: 40,   // (the French centre line: 3 m dashes, 10 m gaps; solid through the hairpins)
+      chev: ['#1f4f9e', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.55, 0.51],
+      fans: [[0.12, 0.26, 0.62], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+      cars: [[0.85, 0.85, 0.83], [0.2, 0.22, 0.25], [0.6, 0.62, 0.64], [0.14, 0.24, 0.46], [0.62, 0.14, 0.12], [0.74, 0.72, 0.66]],
+      roofs: [[0.3, 0.32, 0.34], [0.42, 0.26, 0.17], [0.24, 0.26, 0.28], [0.5, 0.48, 0.44]],   // (grey slate and metal, old larch shingles)
+      sheep: 0, portal: 0, forest: 'larch', treeline: 2250, power: 1, shrubR: 120,
+      far: { lo: [0.42, 0.47, 0.28], hi: [0.6, 0.58, 0.54], dw: [0.24, 0.31, 0.18], snow: 2950, tree: [2250, 2050], fc: [0.16, 0.25, 0.13], rk: [2400, 2750], dwb: [2150, 2300, 2650, 2450] },
     },
   };
 
@@ -166,7 +186,7 @@
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (plATex.a = t);
   }
   function plAtlas2() {   // the small signs (8 x 8 cells of 128): 0-1 the bend warning (a red-bordered triangle with the bent arrow, right and left), 2-3 the
-    // chevrons (white on red, right and left), 4 the speed limit (40), 5 the end of the limit; 8-15 the hairpins' numbers on a small white plate
+    // chevrons (the look's colours, right and left), 4 the speed limit (40), 5 the end of the limit; 8-31 the hairpins' numbers (1-24) on a small white plate
     if (plATex.b && plATex.bk === L.seed) return plATex.b;
     if (plATex.b) plATex.b.dispose(); plATex.bk = L.seed;
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
@@ -182,13 +202,25 @@
     { const x0 = 512; x.fillStyle = '#c8201a'; x.beginPath(); x.arc(x0 + 64, 64, 60, 0, TAU); x.fill(); x.fillStyle = '#f6f6f2'; x.beginPath(); x.arc(x0 + 64, 64, 46, 0, TAU); x.fill(); txt('40', x0 + 64, 68, 56, '#16181c', 80); }
     { const x0 = 640; x.fillStyle = '#f6f6f2'; x.beginPath(); x.arc(x0 + 64, 64, 60, 0, TAU); x.fill(); x.strokeStyle = '#16181c'; x.lineWidth = 3; x.stroke(); txt('40', x0 + 64, 68, 54, '#8a8a8a', 80);
       x.strokeStyle = '#16181c'; x.lineWidth = 7; x.beginPath(); x.moveTo(x0 + 24, 104); x.lineTo(x0 + 104, 24); x.stroke(); }
-    for (let k = 0; k < 8; k++) { const x0 = k * 128, y0 = 128; x.fillStyle = '#16181c'; x.fillRect(x0, y0, 128, 128); x.fillStyle = '#f6f6f2'; x.fillRect(x0 + 6, y0 + 6, 116, 116); txt(String(k + 1), x0 + 64, y0 + 68, 84, '#16181c', 110); }
+    for (let k = 0; k < 24; k++) { const x0 = (k % 8) * 128, y0 = 128 * (1 + (k >> 3)); x.fillStyle = '#16181c'; x.fillRect(x0, y0, 128, 128); x.fillStyle = '#f6f6f2'; x.fillRect(x0 + 6, y0 + 6, 116, 116); txt(String(k + 1), x0 + 64, y0 + 68, 84, '#16181c', 110); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (plATex.b = t);
   }
   function plTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Norway spruce (a narrow dark spire), 1 dwarf pine (a low mat of
-    // crooked branches with dark tufts), 2 juniper (a smaller, flatter, grey-green mat)
+    // crooked branches with dark tufts), 2 juniper (a smaller, flatter, grey-green mat), 3 European larch (an airy cone of soft light-green tiers,
+    // drooping, the trunk showing under them), 4 Swiss stone pine (a dense dark blue-green crown, rounded, in clumps on a short trunk)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
-    if (kind === 0) {
+    if (kind === 3) {
+      const col = [0.3, 0.42, 0.18], tip = [0.46, 0.58, 0.27], bark = [0.34, 0.24, 0.17];
+      cyl(g, 0, 0, 0, 0.032, 0.42, 5, bark, null, 0.02);
+      [[0.16, 0.27, 0.2, 0.07], [0.31, 0.24, 0.19, 0.065], [0.45, 0.2, 0.18, 0.055], [0.58, 0.155, 0.17, 0.045], [0.7, 0.11, 0.16, 0.035]].forEach(([y, r, h, dr], k) => {
+        const kk = k % 2 ? 1.12 : 0.94; starCone(g, 0, y, 0, r, h, 5, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 1.1, dr); });
+      cone(g, 0, 0.82, 0, 0.05, 0.18, 4, col, tip, 0.3);
+    } else if (kind === 4) {
+      const col = [0.11, 0.2, 0.13], bark = [0.3, 0.23, 0.18];
+      cyl(g, 0, 0, 0, 0.05, 0.3, 5, bark, null, 0.035);
+      API.ROCK_SMOOTH = true;
+      for (const [x, y, z, r, sy] of [[0, 0.38, 0, 0.32, 0.85], [0.07, 0.62, 0.04, 0.24, 0.9], [-0.04, 0.82, -0.03, 0.15, 0.9]]) ico(g, x, y, z, r, sy, vary(col, R, 0.12), R, 0.3);
+    } else if (kind === 0) {
       const col = [0.08, 0.15, 0.1], tip = [0.14, 0.25, 0.17];
       [[0.0, 0.24, 0.3, 0.05], [0.18, 0.2, 0.27, 0.045], [0.36, 0.17, 0.24, 0.04], [0.52, 0.13, 0.22, 0.035], [0.67, 0.09, 0.2, 0.03]].forEach(([y, r, h, dr], k) => {
         const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 6, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.7, dr); });
@@ -208,10 +240,12 @@
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function plFarCol(A, sl, q) {   // the land beyond the corridor (irFar): the pasture green low down, grey-brown rock higher up and on the steep faces, the dwarf pine darker
-    // on the lower slopes, snow in the high gullies
-    const F = L.far, dw = sstep(1500, 1700, A) * sstep(2100, 1850, A) * 0.6, rk = Math.min(1, sstep(2050, 2350, A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
+    // on the lower slopes, snow in the high gullies (the look's bands: far.tree the forest's upper edge [top, full], far.dwb the dwarf pine's
+    // [from, full, to, full], far.rk the rock's [from, full]; far.fc the forest's colour)
+    const F = L.far, B = F.dwb || [1500, 1700, 2100, 1850], Rk = F.rk || [2050, 2350], Tl = F.tree || [1650, 1450], fc = F.fc || [0.12, 0.2, 0.12];
+    const dw = sstep(B[0], B[1], A) * sstep(B[2], B[3], A) * 0.6, rk = Math.min(1, sstep(Rk[0], Rk[1], A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
     let c = [F.lo[0] + q * 0.04, F.lo[1] + q * 0.05, F.lo[2] + q * 0.03];
-    const fo = sstep(1650, 1450, A); c = [lerp(c[0], 0.12, fo), lerp(c[1], 0.2, fo), lerp(c[2], 0.12, fo)];   // the spruce forest below the treeline
+    const fo = sstep(Tl[0], Tl[1], A); c = [lerp(c[0], fc[0], fo), lerp(c[1], fc[1], fo), lerp(c[2], fc[2], fo)];   // the forest below the treeline
     c = [lerp(c[0], F.dw[0], dw), lerp(c[1], F.dw[1], dw), lerp(c[2], F.dw[2], dw)];
     c = [lerp(c[0], F.hi[0], rk), lerp(c[1], F.hi[1], rk), lerp(c[2], F.hi[2], rk)];
     const sn = sstep(F.snow, F.snow + 150, A) * sstep(0.9, 0.5, sl) * (0.5 + q); return [lerp(c[0], 0.95, sn), lerp(c[1], 0.96, sn), lerp(c[2], 0.98, sn)];
@@ -513,7 +547,7 @@
     }
     (def.curves || []).forEach(([d, , turn], k) => {
       const r = signPost(sStart + d - 90, 1, 0.9, turn > 0 ? 0 : 1, 0.95, 0.85, 2.3);
-      if (r && k < 8) { const [px, py, pz, ii] = r, c2 = cell(8 + k); bannerQ(px, py + 0.2, pz, -T.tx[ii], -T.tz[ii], 0.5, 0.5, c2[0], c2[1], c2[2], c2[3], ban2); }
+      if (r && k < 24) { const [px, py, pz, ii] = r, c2 = cell(8 + k); bannerQ(px, py + 0.2, pz, -T.tx[ii], -T.tz[ii], 0.5, 0.5, c2[0], c2[1], c2[2], c2[3], ban2); }
       const c = T.corners.find(q => sStart + d >= q.i0 * T.ds - 6 && sStart + d <= q.i1 * T.ds + 6); if (!c || c.sev < 2) return;
       const out_ = -turn, cc = cell(turn > 0 ? 2 : 3);
       for (const o of [-14, 0, 14]) { const [cx, cz, ci] = onSide(sStart + d + o, out_, 0.7); if (excluded(cx, cz)) continue;
@@ -555,6 +589,61 @@
       out.marks.cable = pyl.length ? [pyl[0][0], pyl[0][1]] : null;
     }
 
+    /* ---- the power line along the road (def.power: OpenStreetMap's line, a pole at each of its points; def.poles: which are steel towers): wooden
+       poles with a steel cross-arm and three insulators, the three wires sagging between them, high over the road where the line crosses it; a pole
+       that would stand on the road or its verge moved out past the barrier (or left out: the wires span its place) ---- */
+    let nPole = 0, wireD = null;   // (wireD(x, z): the distance to the line on the ground, for the trees: its cleared strip through the forest)
+    if (L.power && (def.power || []).length) {
+      const WC = 40, wh = new Map(), segs = [];
+      for (const ln of def.power) for (let k = 0; k + 3 < ln.p.length; k += 2) { const s = [ln.p[k], ln.p[k + 1], ln.p[k + 2], ln.p[k + 3]], q = segs.push(s) - 1;
+        for (let a = Math.floor((Math.min(s[0], s[2]) - 8) / WC); a <= Math.floor((Math.max(s[0], s[2]) + 8) / WC); a++) for (let b = Math.floor((Math.min(s[1], s[3]) - 8) / WC); b <= Math.floor((Math.max(s[1], s[3]) + 8) / WC); b++) {
+          const key = a * 65536 + b; let Lq = wh.get(key); if (!Lq) wh.set(key, Lq = []); Lq.push(q); } }
+      wireD = (x, z) => { const Lq = wh.get(Math.floor(x / WC) * 65536 + Math.floor(z / WC)); let d = 1e9; if (!Lq) return d;
+        for (const q of Lq) { const [ax, az, bx, bz] = segs[q], ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez || 1, t = clamp(((x - ax) * ex + (z - az) * ez) / l2, 0, 1); d = Math.min(d, Math.hypot(x - ax - ex * t, z - az - ez * t)); }
+        return d; };
+      const gw = new GB(), wood = [0.4, 0.3, 0.21], steel = [0.5, 0.52, 0.54], ins = [0.74, 0.77, 0.8], wire = [0.13, 0.13, 0.14], RW = rng(L.seed + 51);
+      const tow = new Set(); for (let k = 0; k + 2 < (def.poles || []).length; k += 3) if (def.poles[k + 2]) tow.add(Math.round(def.poles[k]) + ',' + Math.round(def.poles[k + 1]));
+      for (const ln of def.power) {
+        const p = ln.p, n = p.length / 2, top = [];
+        for (let k = 0; k < n; k++) {
+          let x = p[2 * k], z = p[2 * k + 1];
+          const a = [p[2 * Math.max(0, k - 1)], p[2 * Math.max(0, k - 1) + 1]], b = [p[2 * Math.min(n - 1, k + 1)], p[2 * Math.min(n - 1, k + 1) + 1]], dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, dx = (b[0] - a[0]) / dl, dz = (b[1] - a[1]) / dl;
+          let nn = vrNear(x, z), ok = true;
+          if (nn.i >= 0 && nn.dd < 2) { const i = nn.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1, o = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + 3.5);
+            x = T.px[i] + T.nx[i] * o; z = T.pz[i] + T.nz[i] * o; nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2) ok = false; }
+          const big = tow.has(Math.round(p[2 * k]) + ',' + Math.round(p[2 * k + 1])), H = big ? 16 : 9.5 + RW() * 1.5, y = caGround(x, z);
+          top.push([x, y + H - 0.3, z, dx, dz]);
+          if (!ok || vrDist(x, z) > 420 || excluded(x, z)) continue;
+          const g = scen.get(x, z), ang = Math.atan2(dz, dx);
+          if (big) { for (let q = 0; q < 3; q++) box(g, x, y + H * q / 3 - (q ? 0 : 0.5), z, 1.4 - q * 0.35, H / 3 + (q ? 0 : 0.5), 1.4 - q * 0.35, ang, steel, null, true); }
+          else cyl(g, x, y - 0.4, z, 0.14, H + 0.4, 5, wood, wood, 0.1);
+          box(g, x, y + H - 0.62, z, 0.1, 0.12, 2.1, ang, steel, null, true);   // the cross-arm, across the line
+          for (const o of [-0.85, 0, 0.85]) cyl(g, x - dz * o, y + H - 0.5, z + dx * o, 0.06, 0.3, 4, ins, ins, 0.045);   // the insulators
+          exclPush(x, z, 1.6); CR.avoid(x, z, 0.8); if (!nPole) out.marks.power = [x, z]; nPole++;
+        }
+        for (const o of [-0.85, 0, 0.85]) for (let k = 0; k + 1 < top.length; k++) {   // the wires: ~10 segments a span, sagging (less over a hump of the ground)
+          const A = top[k], B = top[k + 1], ax = A[0] - A[4] * o, az = A[2] + A[3] * o, bx = B[0] - B[4] * o, bz = B[2] + B[3] * o, span = Math.hypot(bx - ax, bz - az);
+          if (Math.min(vrDist(ax, az), vrDist(bx, bz)) > 600) continue;
+          let sag = span * 0.025; const mid = caGround((ax + bx) / 2, (az + bz) / 2), cl = (A[1] + B[1]) / 2 - sag - mid; if (cl < 6) sag = Math.max(0, sag - (6 - cl));
+          let px = ax, py = A[1], pz = az;
+          for (let q = 1; q <= 10; q++) { const t = q / 10, x = lerp(ax, bx, t), z = lerp(az, bz, t), y = lerp(A[1], B[1], t) - sag * 4 * t * (1 - t);
+            ouRod(gw, [px, py, pz], [x, y, z], 0.03, wire, 3); px = x; py = y; pz = z; }
+        }
+      }
+      addM(gw, lMat, false);
+    }
+
+    /* ---- the col's obelisk (def.obelisk: OpenStreetMap's memorial at the top): a plain stone obelisk on a stepped plinth, no inscription ---- */
+    if (def.obelisk) {
+      const [x, z] = def.obelisk, y = caGround(x, z), g = scen.get(x, z), rot = PI / 4, st = [0.68, 0.65, 0.6], st2 = [0.6, 0.57, 0.52];   // (rot: the plinth's faces square with the shaft's four)
+      box(g, x, y - 0.6, z, 3.4, 1.0, 3.4, rot, st2, [0.64, 0.61, 0.56]);   // the steps
+      box(g, x, y + 0.35, z, 2.5, 0.55, 2.5, rot, st2, st);
+      box(g, x, y + 0.9, z, 1.5, 1.2, 1.5, rot, st, st);   // the pedestal
+      cyl(g, x, y + 2.1, z, 0.6, 5.2, 4, st, null, 0.36);   // the shaft, tapering (four faces)
+      cone(g, x, y + 7.3, z, 0.36, 0.6, 4, st, [0.74, 0.72, 0.68], 0);   // the pyramidion
+      exclPush(x, z, 4); CR.block(x, z, 3.6, 3.6, rot); out.marks.obelisk = [x, z];
+    }
+
     /* ---- spectators: the start and the finish, the checkpoints, both sides of every hairpin, a few groups along the road ---- */
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return inLake(x, z); };
@@ -570,7 +659,7 @@
     /* ---- the trees and shrubs (instanced per 96 m chunk): spruce in the forest (lc 1), dwarf pine and juniper in mats (lc 2), a few dwarf pines on the
        pasture; none on the rock, the scree, the snow or the cliffs ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
-    const tk = [0, 1, 2].map(k => new IChunks(plTreeGeo(k), tMatT, 96));
+    const larch = L.forest === 'larch', tk = (larch ? [3, 1, 2, 4] : [0, 1, 2]).map(k => new IChunks(plTreeGeo(k), tMatT, 96));   // (the forest's tall trees first: the spruce, or the larch and then the stone pine in tk[3])
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(L.seed + 61), SP = 3.6 / Math.sqrt(dens);
@@ -587,11 +676,20 @@
           if (excluded(x, z) || inLake(x, z)) continue;
           const sl = caSlope(x, z); if (sl > 1.1) continue;
           const y = caGround(x, z); if (plSnow(x, z, y + base, 1 / Math.sqrt(1 + sl * sl), 0, 0) > 0.4) continue;
-          const sp = c === 1 && r3 < 0.7 ? 0 : r3 < 0.75 ? 1 : 2;
+          let sp = c === 1 && r3 < 0.7 ? 0 : r3 < 0.75 ? 1 : 2;
+          if (larch && c === 0 && r3 < 0.3 && y + base < L.treeline + 60) sp = 0;   // (the larch forest: lone larches and stone pines on the pasture up to the treeline)
+          if (larch && sp === 0 && P.n2(x * 0.8 + 70, z * 0.8 - 40) + (r4 - 0.5) * 0.3 > 0.6) sp = 3;   // (the stone pine: in clumps, about a third of the trees)
+          if ((sp === 0 || sp === 3) && wireD && wireD(x, z) < 7) continue;   // (none under the power line: its strip is kept clear)
+          if (L.shrubR && (sp === 1 || sp === 2) && hd > LOD.radius(L.shrubR)) continue;   // (shrubR: the dwarf pine and the juniper only so far from the road, beyond it the ground's own shrub colour; the phone's load where they are many)
           let hgt, wid, col;
           if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
+          if (larch && (sp === 0 || sp === 3)) {   // the larch and the stone pine: broader than the spruce, lower and stunted towards the treeline
+            const tl = sstep(L.treeline + 100, L.treeline - 150, y + base);
+            if (sp === 0) { hgt = (9 + r4 * 11) * (0.5 + 0.5 * tl); wid = hgt * (0.36 + r2 * 0.1); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.14, 0.86 + r3 * 0.14]; }
+            else { hgt = (6 + r4 * 7) * (0.55 + 0.45 * tl); wid = hgt * (0.52 + r2 * 0.12); col = [0.9 + r3 * 0.16, 0.94 + r4 * 0.12, 0.94 + r2 * 0.12]; }
+          }
           tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
           if (++nTrees >= maxT) break grid;
         }
@@ -711,7 +809,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: plAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: plAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), snow: nSnow, sheep: nSheep, pylons: nPyl, lakes: P.lakes.length, pulls: pulls.length, sat: !!SAT };   // (read by the tests)
+    out.stats = { trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), snow: nSnow, sheep: nSheep, pylons: nPyl, poles: nPole, lakes: P.lakes.length, pulls: pulls.length, sat: !!SAT };   // (read by the tests)
     return out;
   }
 
