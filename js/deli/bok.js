@@ -1,7 +1,8 @@
 /* Deli iz garaže, sklop 2 · bok: ogledala, vrata, zavore, matice. Each element registers its 16 options with DELI.add(id, build(K, n, m,
    M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
      ogledala  the door mirrors, in place of the stock ones (K.deli round the car's K.mirror): K.mirror for the glass (it cracks, the mirror
-               folds: Razbijanje), the option's housing a shell round it, in the mirror's part (mirrorL / mirrorR)
+               folds: Razbijanje), the option's housing a shell round it, in the mirror's part (mirrorL / mirrorR; a car without them: where the stock ones are,
+               PEŠČENJAK's on its cage, the glass whole)
      vrata     the doors' outer skins: a panel over the door (paint, primer, aluminium, fibreglass, carbon) laid on the loft's side (a decal
                on the door: it goes with it), the handles, the window net or the light glass with its slider (K.deli round the handles)
      zavore    the brakes, seen through the rims: the disc over the rim's dish (it turns with the wheel), the caliper in h.still (it does
@@ -53,10 +54,10 @@
     ][n];
     if (!O) return;
     for (const sd of [-1, 1]) {
-      const part = sd < 0 ? 'mirrorL' : 'mirrorR', o = { part }, w = m.w * (O.w || 1), h = m.h * (O.h || 1), d = m.d * (O.d || 1);
+      const nm = sd < 0 ? 'mirrorL' : 'mirrorR', part = K.parts.includes(nm) ? nm : undefined, o = { part }, w = m.w * (O.w || 1), h = m.h * (O.h || 1), d = m.d * (O.d || 1);
       const x = m.x + (m.fwd || 0) + (O.dx || 0), y = m.y + (m.up || 0) + (O.dy || 0), zm = m.z + (O.dz || 0), z = sd * zm, bx = x - w / 2;   // (bx: the glass's plane, its back)
       const z0 = sd * (m.z0 != null ? m.z0 : m.z - m.d / 2 - 0.05);
-      K.mirror(bx + 0.011, y, z, { col: O.rim || BLK, w: 0.022, h, d, crack: 1, arm: O.stalk || BLK, z0 });   // (the glass, its rim, the arm; its fold about the housing's inner rear corner)
+      K.mirror(bx + 0.011, y, z, { col: O.rim || BLK, w: 0.022, h, d, crack: part ? 1 : 0, arm: O.stalk || BLK, z0 });   // (the glass, its rim, the arm; its fold about the housing's inner rear corner)
       // the housing's profile (along x from the back, up from the middle): k points round, the back's two by the glass
       const prof = O.shape === 'round' ? [[0.003, 0.5], [0.3, 0.56], [0.72, 0.48], [0.98, 0.18], [0.98, -0.2], [0.72, -0.48], [0.3, -0.54], [0.003, -0.5]]
         : O.shape === 'tear' ? [[0.003, 0.5], [0.35, 0.52], [0.75, 0.32], [1, 0.02], [0.8, -0.3], [0.4, -0.48], [0.003, -0.5]]
