@@ -107,3 +107,8 @@ Veljajo za vsako progo, ki jo dodamo v igro ali izboljšamo (glej tudi razdelek 
 - Odločitve uporabnika (31. 10. in 1. 11. 2026): vse proge so en sklop; pull request gre na `main` **brez vprašanja**, ko so na GitHubu zeleni vsi testi (združi ga koordinacijska seja), nato se brez vprašanja zažene naslednja proga. Proga 1 z naporom max, proge 2–16 xhigh (izvedba v načrtu). Uporabnik verigo ustavi z »stop«.
 - Kamera vidi le ~60 m ob cesti: zanimivosti in detajli samo v tem pasu (merilo v načrtu).
 - Skupni gradniki (žičnice, sneg, živali) so v `js/world-gore.js`, uvoz OSM in višin v `tools/proga-uvoz.mjs` (naredi ju prva seja). OSM prek glavnega API-ja (`api.openstreetmap.org/api/0.6/map?bbox=…`), ker `overpass-api.de` iz okolja ne deluje.
+
+## Nove proge (`docs/nove-proge.md`)
+- Načrt, viri, pravila, Recept in stanje za 8 novih prog (Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas, Pau, Ngorongoro) so v `docs/nove-proge.md`. Ostalih prog iz predstavitve »60 kratkih prog« ne delamo (odločitev uporabnika 31. 10. 2026; Ngorongoro, z veliko živalmi, je dodal isti dan).
+- Odločitev uporabnika (31. 10. 2026): proga naj bo čim bolj podobna pravi in grafično čim boljša, v mejah obremenitve telefona in pravne varnosti; viri samo odprti.
+- Odločitev uporabnika (31. 10. 2026): seje gredo ena za drugo (»Naredi sejo <N><A|B> po docs/nove-proge.md«, model `claude-opus-5-5`), dve seji na progo na veji `nove-proge/<id>`. Seja A odpre pull request, seja B ga združi sama, ko so zeleni vsi testi na GitHubu, brez čakanja na preizkus uporabnika na telefonu; nato zažene naslednjo sejo (sama ali prek koordinacijske seje, `docs/nove-proge.md`). Ustavi verigo, če uporabnik reče »stop«.
