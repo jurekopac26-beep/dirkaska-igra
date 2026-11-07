@@ -7,7 +7,8 @@
      stresna_zajemalka  m: { x (the mouth, at the roof's front), z, part (the roof's: 'body'), back (the roof's rear end: the scoops no longer than
                         to it, nor than to a fin fitted on the roof's rear; JASTREB's short roof, its fastback's glass behind) }: a scoop on the roof, its mouth forward (the stock: none)
      antena             m: { x, z (the rod's foot: the stock aerial's), fin: [x, z] (a shark fin's rear end), front: [x, z] (a stub at
-                        the roof's front), whip: x (the racing whip's foot mid-roof, -0.6: its 0.6 m raked back over the roof, ahead of a wing) } in the aerial's part
+                        the roof's front), whip: x (the racing whip's foot mid-roof, -0.6: its 0.6 m raked back over the roof, ahead of a wing), y (the roof's
+                        height they stand on instead of the main loft's top: an open car's roof panel over its cage, PEŠČENJAK's) } in the aerial's part
      zaluzije           m: { x0, y0, x1, y1 (the rear window's foot and top, middle), w (its half width) } in the tailgate's part:
                         slats over the glass (the stock: none; the rear wiper goes with them: the car's around) */
 (function () {
@@ -140,22 +141,22 @@
   // ================================================================ antena: rods, fins, a puck, a whip (the user's: sixteen that differ in
   // shape, length, place and colour)
   function antena(K, n, m) {
-    const P = K.paint, W = (k, e) => (k + e) % 2 ? CF : CF2;
+    const P = K.paint, W = (k, e) => (k + e) % 2 ? CF : CF2, TY = (x, z) => m.y != null ? m.y : K.topY(x, z);   // (y: the roof's height instead of the main loft's top: an open car's roof panel)
     // a rod from its foot at (x, z), len long, raked back a degrees, r thick (r2 at its tip); base: its foot's colour; tip: a ball on it
-    const rod = (x, z, len, a, r, r2, col, base, tip) => { const y = K.topY(x, z), ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180);
+    const rod = (x, z, len, a, r, r2, col, base, tip) => { const y = TY(x, z), ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180);
       K.cyl([x, y - 0.004, z], [x, y + 0.02, z], 0.018, base, { n: 8, r2: 0.012, capA: null, capB: base });
       const b = [x - sa * len, y + 0.02 + ca * len, z]; K.bar([x, y + 0.02, z], b, r, col, { n: K.hi ? 6 : 4, r2 });
       if (tip) K.cyl([b[0] + sa * 0.008, b[1] - ca * 0.008, z], [b[0] - sa * 0.012, b[1] + ca * 0.012, z], 0.007, tip, { n: 6, capB: tip }); };
     // a shark fin, its rear end at (xr, z): len long, h tall, w its half width; rings from the nose back, its rear face raked; sharp: a
     // blade (a thin ridge)
     const fin = (xr, z, len, h, w, col, o) => { o = o || {}; const T = [0, 0.25, 0.55, 0.82, 1], H = [0.06, 0.48, 0.83, 1, 0.82], Wd = [0.25, 0.75, 1, 0.92, 0.7], ridge = o.sharp ? 0.05 : 0.22;
-      const rings = T.map((t, i) => { const x = xr + (1 - t) * len, y = K.topY(x, z) - 0.003, hh = h * H[i], ww = w * Wd[i], back = i === T.length - 1 ? 0.35 * hh : 0;
+      const rings = T.map((t, i) => { const x = xr + (1 - t) * len, y = TY(x, z) - 0.003, hh = h * H[i], ww = w * Wd[i], back = i === T.length - 1 ? 0.35 * hh : 0;
         return [[x, y, z - ww], [x + back * 0.4, y + hh * 0.62, z - ww * 0.82], [x + back, y + hh, z - ww * ridge], [x + back, y + hh, z + ww * ridge], [x + back * 0.4, y + hh * 0.62, z + ww * 0.82], [x, y, z + ww]]; });
       K.skin(rings, col, col === W ? CF : col, col === W ? CF : o.cap || col);
-      if (o.base) { const x0 = xr - 0.01, x1 = xr + len + 0.012, y = (x) => K.topY(x, z) + 0.002;   // (a pad under it)
+      if (o.base) { const x0 = xr - 0.01, x1 = xr + len + 0.012, y = (x) => TY(x, z) + 0.002;   // (a pad under it)
         face(K, [[x0, y(x0), z - w - 0.008], [x1, y(x1), z - w * 0.3], [x1, y(x1), z + w * 0.3], [x0, y(x0), z + w + 0.008]], o.base, [0, 1, 0]); } };
     // a round puck (a GPS aerial): a low drum, its top domed
-    const puck = (x, z, r, h, col) => { const y = K.topY(x, z), q = DELI.seg(K, 12);
+    const puck = (x, z, r, h, col) => { const y = TY(x, z), q = DELI.seg(K, 12);
       K.cyl([x, y - 0.003, z], [x, y + h * 0.6, z], r, col, { n: q, r2: r * 0.92, capA: null, capB: null });
       K.cyl([x, y + h * 0.6, z], [x, y + h, z], r * 0.92, col, { n: q, r2: r * 0.55, capA: null, capB: col }); };
     const wg = K.fitted.krilo, FX = m.fin[0], FZ = m.fin[1] + (wg === 16 ? 0.2 : 0), F = m.front || [0.02, 0.44];   // (a wing behind: the long rods stand up clear of it; the prototype's fin along the roof's middle: the rear ones off it, to the side)
@@ -174,7 +175,7 @@
       case 12: puck(FX + 0.12, FZ, 0.055, 0.03, [0.13, 0.13, 0.14]); break;                                 // (GPS: a round puck)
       case 13: case 14: { const c = n === 13 ? DK : P; fin(FX, FZ, 0.24, 0.062, 0.03, c); puck(FX + 0.36, FZ, 0.045, 0.024, c); break; }   // (factory: a long fin, the phone's puck ahead of it)
       case 15: fin(FX, FZ, 0.2, 0.095, 0.028, W, { sharp: true, base: CF }); break;                          // (dry carbon: a tall blade)
-      case 16: { const x = FX + 0.1, z = FZ, y = K.topY(x, z);                                               // (team radio: a whip on a sprung base, raked back)
+      case 16: { const x = FX + 0.1, z = FZ, y = TY(x, z);                                               // (team radio: a whip on a sprung base, raked back)
         K.cyl([x, y - 0.004, z], [x, y + 0.012, z], 0.03, DK, { n: 8, capA: null, capB: DK });
         K.cyl([x, y + 0.012, z], [x - 0.012, y + 0.07, z], 0.011, [0.3, 0.3, 0.32], { n: 6, capB: BLK });
         K.bar([x - 0.012, y + 0.07, z], wg ? [x - 0.16, y + 0.52, z] : [x - 0.5, y + 0.14, z], 0.003, BLK, { n: 4, r2: 0.002 }); break; }

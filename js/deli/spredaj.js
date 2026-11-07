@@ -4,8 +4,9 @@
              (none: the sills taken, GAD's side pipes: no skirts, options 2 and 3 the tail's corner lips in their place; the flares on ws),
              ws: the side's half width there, ys: the sill's foot, lipF, lipR: the stock lips under the bumpers [cx, cy, sx, sy, sz] (an option
              without a piece of its own there keeps them; a car without one there leaves it out), partF, partR (the bumpers' parts), exh: [z, r] the stock exhaust (no piece over it; a fitted one's tips: DELI.tips),
-             archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0), wsF: the side's half width at the
-             front arch where it is narrower than ws (the front flares on it: JASTREB's long nose narrowing over its wheel), valY: the
+             archIn: the flares' inner edge into the arch (0.012; a small arch round its tyre, MIŠKA's: 0), wsF, wsR: the side's half width at
+             the front, the rear arch where it is not ws (the flares on it: JASTREB's long nose narrowing over its front wheel, PEŠČENJAK's
+             fenders out past its sills), valY: the
              diffuser's valance one across with its foot on that height over the tips, its fins beside them (JASTREB's twin pipes under
              the middle; else the valance split round the tips), lipIn: how far the front lip reaches in under the bumper (0.12; a nose
              with no floor behind its face, GOZDAR's: less), canY: the lower canard's height on the bumper's corners (0.3; a high nose's) }
@@ -51,12 +52,13 @@
   // ================================================================ aero: the kit round the car's foot (the bumpers' lips, the skirts, the
   // diffuser, the arches' flares), in place of the stock lips under the bumpers
   DELI.skirts = (n) => !!n && n !== 1 && n !== 4;   // (the aero options with skirts along the sills: lovilci_blata's front flaps ahead of them)
+  DELI.frontLip = (n) => !!n && n !== 2 && n !== 4;   // (the aero options with a lip or a splitter under the front: vlecne_kljuke's behindLip)
   function aero(K, n, m, M) {
     const P = K.paint, xf = m.xf, xr = m.xr, W = m.w, yf = m.yf, yr = m.yr, s0 = m.sill ? m.sill[0] : 0, s1 = m.sill ? m.sill[1] : 0, ws = m.ws, ys = m.ys;
     // the exhaust's tips (the fitted one's, else the stock one: exh): a centre exit's cut-out (cx, its half width: the diffuser's gap), the side ones
     const ex = K.fitted && K.fitted.auspuh, ma = M && M.def.mounts && M.def.mounts.auspuh, TP = ex && ma && DELI.tips ? DELI.tips(ex, ma) : m.exh ? [[m.exh[0], m.exh[1]]] : [];
     // (tips near the middle, |z| under 0.15: a centre exit, the diffuser's gap round them; JASTREB's twin pipes under the plate, stock or fitted there)
-    const cx = Math.max(ex && ma && DELI.centreCut ? DELI.centreCut(ex) : 0, ...TP.filter(t => Math.abs(t[0]) < 0.15).map(t => Math.abs(t[0]) + t[1] + 0.01)), sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
+    const cx = Math.max(ex && ma && !ma.mid && DELI.centreCut ? DELI.centreCut(ex) : 0, ...TP.filter(t => Math.abs(t[0]) < 0.15).map(t => Math.abs(t[0]) + t[1] + 0.01)), sideT = TP.filter(t => Math.abs(t[0]) >= 0.15);
     const oF = { part: m.partF || 'bumperF' }, oR = { part: m.partR || 'bumperR' }, oS = { part: 'body' }, ez = m.exh && Math.abs(m.exh[0]) >= 0.15 ? Math.abs(m.exh[0]) - m.exh[1] - 0.03 : W;   // (ez: the rear's middle pieces end short of a side exhaust)
     const stock = (b, o) => K.box(b[0], b[1], 0, b[2], b[3], b[4], 0, BP, null, false, o);
     // the front lip under the bumper's face: d out in front of it, h under its foot (ends drawn back and thinner)
@@ -96,7 +98,7 @@
       for (let i = 0; i < k; i++) { const z = -D * 0.82 + 2 * D * 0.82 * i / (k - 1); if (Math.abs(z) > g + 0.04) fin_(z); }
       fin_(-g - 0.004); fin_(g + 0.004); };
     // the arches' flares (bolt-on, rivets on Visoki)
-    const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) { const wa = A.x > 0 && m.wsF != null ? m.wsF : ws;   // (wsF: the front arch's side)
+    const flares = (col, out) => { for (const A of K.arches) for (const sd of [-1, 1]) { const wa = A.x > 0 ? (m.wsF != null ? m.wsF : ws) : (m.wsR != null ? m.wsR : ws);   // (wsF, wsR: the front, the rear arch's side)
       K.flare(A.x, A.r - (m.archIn != null ? m.archIn : 0.012), A.r + 0.07, sd * (wa - 0.004), sd * (wa + out), col, { n: 5, y: A.y, part: 'body' });   // (archIn: its inner edge into the arch; a small arch round its tyre: less)
       if (K.hi) for (let i = 0; i < 5; i++) { const a = 0.35 + (Math.PI - 0.7) * i / 4, r = A.r + 0.035; K.rect(A.x + Math.cos(a) * r / K.sx, A.y + Math.sin(a) * r, sd * (wa + out + 0.001), 0.012, 0.012, [0.8, 0.81, 0.84], { dir: sd < 0 ? '-z' : 'z', part: 'body' }); } } };
     const keepF = () => m.lipF && stock(m.lipF, oF), keepR = () => m.lipR && stock(m.lipR, oR);   // (a car without a stock lip there: none)
