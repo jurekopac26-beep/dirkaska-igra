@@ -158,7 +158,7 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 
 | Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026) |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026); od 5. 11. 2026 testna proga (`test: true`, odločitev uporabnika, #379), gradniki ostanejo |
 | A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | čaka na znak VSE SEJE 2 (prej Deli sklop 4 in delitev skupnih datotek prog) |
 | B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | čaka |
 | C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | čaka |
