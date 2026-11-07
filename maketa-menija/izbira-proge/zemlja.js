@@ -134,6 +134,15 @@ window.ZEMLJA = (() => {
     const map = new T3.CanvasTexture(tc); map.anisotropy = Math.min(8, r.capabilities.getMaxAnisotropy()); map.encoding = T3.sRGBEncoding;
     r.outputEncoding = T3.sRGBEncoding;
     const earth = new T3.Mesh(new T3.SphereGeometry(1, 128, 64), new T3.MeshPhongMaterial({ map, specular: new T3.Color(0x10161f), shininess: 30 }));
+    // day and night (GLOBE.sun: where the Sun is overhead now): the night side darker and bluer, a soft edge between (in linear light:
+    // after the sRGB output about the header globe's 0.2, 0.24, 0.38)
+    const U = { sunL: { value: new T3.Vector3(0, 0, 1) } };
+    earth.material.onBeforeCompile = (sh) => {
+      sh.uniforms.sunL = U.sunL;
+      sh.vertexShader = 'varying vec3 vLocalN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vLocalN = position;');
+      sh.fragmentShader = 'uniform vec3 sunL;\nvarying vec3 vLocalN;\n' + sh.fragmentShader.replace('#include <tonemapping_fragment>',
+        '{ float day = smoothstep(-0.16, 0.1, dot(normalize(vLocalN), sunL)); gl_FragColor.rgb *= mix(vec3(0.045, 0.06, 0.13), vec3(1.0), day); }\n#include <tonemapping_fragment>');
+    };
     const group = new T3.Group(); group.add(earth); scene.add(group);
     // the air round it: brighter towards its edge
     const air = new T3.Mesh(new T3.SphereGeometry(1.06, 96, 48), new T3.ShaderMaterial({
@@ -161,7 +170,7 @@ window.ZEMLJA = (() => {
     scene.add(new T3.AmbientLight(0xffffff, 0.74));
     const sun = new T3.DirectionalLight(0xffffff, 0.6); sun.position.set(-1.2, 1.1, 1.6); scene.add(sun);
     const cur = o.all[o.cur];
-    R = { r, scene, cam, group, earth, map, cv: tc, C: null, sel: null, lat: cur.lat, lon: cur.lon, d: 7.5, dT: DFAR, off: 0, offT: 0, weak,
+    R = { r, scene, cam, group, earth, map, U, cv: tc, C: null, sel: null, lat: cur.lat, lon: cur.lon, d: 7.5, dT: DFAR, off: 0, offT: 0, weak,
       vlat: 0, vlon: 0, fly: null, drag: null, pts: new Map(), last: performance.now(), t0: performance.now(), hint: true, raf: 0, n: 0 };
     R.C = countries();
   }
@@ -245,6 +254,7 @@ window.ZEMLJA = (() => {
     const yc = (TOP + H - R.off) / 2;
     R.cam.setViewOffset(W, H, 0, -(yc - H / 2), W, H); R.cam.updateProjectionMatrix();
     R.group.updateMatrixWorld();
+    if (window.GLOBE && GLOBE.sun) R.U.sunL.value.copy(vec(...GLOBE.sun()));
     R.r.render(R.scene, R.cam); R.n++;
     if (place(dt)) busy = true;
     if (busy) R.raf = requestAnimationFrame(frame);

@@ -1,6 +1,7 @@
 // The globe in the header (mockup): the Earth from its texture (assets/geo/earth.webp, mk/earth2k.webp), lit from the upper left (a soft terminator, the
 // sun's glint on the sea), thin clouds drifting (none over the track's country), an atmosphere round its edge; the country in gold with a
 // glow, a pulsing pin where the track is. On the live page it turns from the last track's country to this one's (GLOBE.travel).
+// Day and night: the night side (the Sun overhead where GLOBE.sun() says, from the time now in UTC) darker and bluer, a soft edge between.
 window.GLOBE = (() => {
   const D = Math.PI / 180, TW = 2048, TH = 1024;
   let tex = null;
@@ -10,6 +11,14 @@ window.GLOBE = (() => {
     const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), u = x - xi, v = y - yi, w = z - zi, su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v), sw = w * w * (3 - 2 * w);
     const l = (a, b, t) => a + (b - a) * t, c = (i, j, k) => h3(xi + i, yi + j, zi + k);
     return l(l(l(c(0, 0, 0), c(1, 0, 0), su), l(c(0, 1, 0), c(1, 1, 0), su), sv), l(l(c(0, 0, 1), c(1, 0, 1), su), l(c(0, 1, 1), c(1, 1, 1), su), sv), sw);
+  }
+  // where the Sun is overhead now: its declination and the time of day in UTC with the equation of time (NOAA's approximation, ~0.5°)
+  function sun(t = new Date()) {
+    const h = t.getUTCHours() + t.getUTCMinutes() / 60 + t.getUTCSeconds() / 3600, doy = (t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 | 0;
+    const g = 2 * Math.PI / 365 * (doy + (h - 12) / 24), c1 = Math.cos(g), s1 = Math.sin(g), c2 = Math.cos(2 * g), s2 = Math.sin(2 * g);
+    const dec = 0.006918 - 0.399912 * c1 + 0.070257 * s1 - 0.006758 * c2 + 0.000907 * s2 - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+    const eq = 229.18 * (0.000075 + 0.001868 * c1 - 0.032077 * s1 - 0.014615 * c2 - 0.040849 * s2);   // (minutes)
+    return [dec / D, ((-15 * (h - 12 + eq / 60)) % 360 + 540) % 360 - 180];
   }
   const fbm = (x, y, z) => noise3(x, y, z) * 0.55 + noise3(x * 2.1, y * 2.1, z * 2.1) * 0.3 + noise3(x * 4.3, y * 4.3, z * 4.3) * 0.15;
   async function load() {
@@ -48,7 +57,7 @@ window.GLOBE = (() => {
   function sphere(t, cen) {
     const { S, img } = G, d = img.data, r = S / 2 * 0.86, lat0 = cen[0] * D, lon0 = cen[1] * D, sp = Math.sin(lat0), cp = Math.cos(lat0), c = [0, 0, 0];
     const L = [-0.5, 0.52, 0.69], Hh = [L[0], L[1], L[2] + 1], hn = Math.hypot(...Hh); for (let k = 0; k < 3; k++) Hh[k] /= hn;
-    const drift = t * 0.012, home = G.home;
+    const drift = t * 0.012, home = G.home, sv = vec(...sun());   // (the Sun: day and night)
     d.fill(0);
     for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
       const u = (px + 0.5 - S / 2) / r, v = -(py + 0.5 - S / 2) / r, rr = u * u + v * v; if (rr > 1.0) continue;
@@ -64,7 +73,9 @@ window.GLOBE = (() => {
       R = R * 1.08; Gc = Gc * 1.06; B = B * 1.1;   // (a little more colour than the texture)
       R += (236 - R) * cl; Gc += (241 - Gc) * cl; B += (250 - B) * cl;
       R *= lit; Gc *= lit; B *= lit;
-      if (sea && cl < 0.3) { const sp2 = Math.pow(Math.max(0, u * Hh[0] + v * Hh[1] + z * Hh[2]), 70) * 0.75; R += 255 * sp2; Gc += 245 * sp2; B += 225 * sp2; }
+      const cph = Math.cos(phi), day = smooth(-0.16, 0.1, cph * Math.cos(lam) * sv[0] + cph * Math.sin(lam) * sv[1] + Math.sin(phi) * sv[2]), nk = 1 - day;
+      R *= day + nk * 0.2; Gc *= day + nk * 0.24; B *= day + nk * 0.38;   // (the night: darker and bluer)
+      if (sea && cl < 0.3 && day > 0) { const sp2 = day * Math.pow(Math.max(0, u * Hh[0] + v * Hh[1] + z * Hh[2]), 70) * 0.75; R += 255 * sp2; Gc += 245 * sp2; B += 225 * sp2; }
       const rim = Math.pow(1 - z, 2.4); R += 40 * rim; Gc += 110 * rim; B += 255 * rim * 0.9;
       const a = Math.min(1, (1 - Math.sqrt(rr)) * r * 1.2);   // (a soft edge, a pixel wide)
       const o = (py * S + px) * 4; d[o] = Math.min(255, R); d[o + 1] = Math.min(255, Gc); d[o + 2] = Math.min(255, B); d[o + 3] = 255 * a;
@@ -116,5 +127,5 @@ window.GLOBE = (() => {
     const hl = x.createRadialGradient(c0 - r * 0.42, c0 - r * 0.48, 0, c0 - r * 0.42, c0 - r * 0.48, r * 0.75); hl.addColorStop(0, 'rgba(255,255,255,.22)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
     x.fillStyle = hl; x.beginPath(); x.arc(c0, c0, r, 0, 7); x.fill();
   }
-  return { attach, travel, frame, center: () => G && [G.T.lat, G.T.lon] };
+  return { attach, travel, frame, sun, center: () => G && [G.T.lat, G.T.lon] };
 })();

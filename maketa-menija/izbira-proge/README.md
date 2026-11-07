@@ -19,11 +19,11 @@ Strežnik iz korena repozitorija, nato `maketa-menija/izbira-proge/index.html`:
 |---|---|
 | `index.html` | zaslon (`window.MOCK(T)` iz nastavitev proge) in zagon žive makete |
 | `wxfx.js` | vreme čez cel zaslon, senca avta, table 20 držav (`SIGNS`, `signLook`) |
-| `globe.js` | globus v glavi: osvetljen, odsev na morju, ozračje, oblaki, država zlata, pika na progi; ob menjavi proge se zavrti do nove države |
+| `globe.js` | globus v glavi: osvetljen, odsev na morju, ozračje, oblaki, država zlata, pika na progi; ob menjavi proge se zavrti do nove države; dan in noč (`GLOBE.sun()`: kje je Sonce v nadglavišču zdaj, po UTC), nočna stran temnejša in bolj modra, mehak prehod |
 | `proge.js` | 7 prog z ročno maketo: nastavitve zaslona in slike treh kamer |
 | `vse-proge.js` | vse prave proge iz igre (vrstni red menija, kraj, država, skupina (`group`: circuit, road, rally), kraj na Zemlji, dolžina, vzpon ali ovinki, graf, slike kamer, oblika proge od zgoraj za kartico: `shape`, poenostavljen `Track` igre) in njihove zastave; naredi ga `orodja/vse-proge.js`, ne urejaj ročno |
 | `izbor.js` | hitra izbira ob zastavi v vrstici: iskanje (kraj, država), filtri (vrsta, dolžina), zastave držav po celinah, seznam prog države; dotik vrstice odpre kartico proge (`trackCard`: oblika od zgoraj, start zlat, cilj odprte ceste bel; višine kot graf zaslona; *Select* in *Race!*, ki izbere progo in pokaže obvestilo), ki jo uporablja tudi Zemlja; `NAPREDEK`: napredek (najboljša dirka, medalja za najboljše mesto 1–3, kljukica za vožene brez medalje, NEW za nevožene) na zastavah, vrsticah, kartici, buckah Zemlje in v vrstici zaslona (*Best race*); podatki igre (`localStorage` `tdgp-records`, kot `js/game.js`), če maketa teče na naslovu igre, sicer primer (9 prog z rezultati); `NAZAJ`: tipka nazaj na telefonu zapre zgornje okno (zgodovina), tresljaj ob izbiri |
-| `zemlja.js` | 3D Zemlja ob globusu: vrtenje, približanje, zlate države, bucike prog, kartica s progami države (dotik bucike ali vrstice: kartica proge, nazaj spet kartica države); riše samo med gibanjem, šibek telefon dobi `mk/earth2k.webp` |
+| `zemlja.js` | 3D Zemlja ob globusu: vrtenje, približanje, zlate države, bucike prog, kartica s progami države (dotik bucike ali vrstice: kartica proge, nazaj spet kartica države); riše samo med gibanjem, šibek telefon dobi `mk/earth2k.webp`; dan in noč kot v glavi (`GLOBE.sun()`, senčilnik v `onBeforeCompile`) |
 | `table.html` | list tabel ene države z zastavo na 6 načinov |
 | `table-drzav.json` | raziskava tabel 20 držav (vrsta table, barve, okvir, pisava, viri) |
 | `mk/` | `earth2k.webp` (tekstura Zemlje na pol velikosti), slike avtov iz igre (prozorno ozadje), zemljevid, prelet in zavoj Vršiča, črte vetra za BURJO |
