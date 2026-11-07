@@ -6208,6 +6208,7 @@
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
+      case 'to-missions': if (MS.openList) MS.openList(); break;   // (the title's MISSIONS tile: the missions by garage, js/missions.js)
       case 'to-stats': buildStatsScreen(); showScreen('stats'); break;
       case 'to-school': if (race) toTitle(); buildSchoolScreen(); showScreen('school'); break;
       case 'school-go': schoolGo(el && el.dataset.lesson); break;
