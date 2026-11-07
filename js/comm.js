@@ -380,6 +380,7 @@ const Comm = (() => {
       else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
       u.onend = u.onerror = () => { item.done = true; if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      if (typeof SfxOkolje !== 'undefined') SfxOkolje.hush();   // (the announcer and the shouts by the road give way: js/sfx-okolje.js)
       speaking = true; synth.speak(u); item.spoken = true;
     } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
   }

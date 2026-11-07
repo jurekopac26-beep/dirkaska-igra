@@ -1432,6 +1432,7 @@ const Sfx = (function () {
     standsStep(race, player, W, cam);
     sambaStep(race, player, W, cam);   // (Rio: the samba group by the main stand)
     if (race) pitStep(race, player, cam);   // (the player's pit stop: the guns, the jacks, the release, the hose, the limiter)
+    if (typeof SfxOkolje !== 'undefined') SfxOkolje.step(ctx, bus, race, player, cam, { crowd: cl, stands: stands.lev || 0, tunnel: tun.send.gain.value, pikes, en: enabled, run: running });   // (the sounds by the road: js/sfx-okolje.js)
     // the Red Bull Ring's jets before the start: a roar by the distance to the nearest one
     let jv = 0; const A = W && W.dyn && W.dyn.air;
     if (A && A.t0 >= 0) for (const m of A.jets) if (m.visible) { const q = m.position, lx = cam ? cam.position.x : player.x, ly = cam ? cam.position.y : 0, lz = cam ? cam.position.z : player.z; jv = Math.max(jv, clamp(1 - Math.hypot(q.x - lx, q.y - ly, q.z - lz) / 420, 0, 1) ** 2); }
@@ -1763,6 +1764,7 @@ const Sfx = (function () {
     for (const v of [squeal, rumble, wind, curbV, rainV, hiss, heli, gravel, spray, crowd, stands, jet, sirenV, radioV]) set(v.out.gain, 0, 0.02);
     set(echo.send.gain, 0, 0.02); set(tun.send.gain, 0, 0.02);
     if (samba) { set(samba.out.gain, 0, 0.02); samba.next = 0; }
+    if (typeof SfxOkolje !== 'undefined') SfxOkolje.silence();
     if (atmo) atmoOff(0.02);
     for (const V of [kitPl, ...kitAI]) if (V) kitOff(V, 0.02);   // (the fleet's: the engines with a preset, the fires and the hubs)
     for (const v of [...dFireV, ...dScrV]) if (v) { set(v.g.gain, 0, 0.02); if (v.amg) set(v.amg.gain, 0, 0.02); v.car = null; }
