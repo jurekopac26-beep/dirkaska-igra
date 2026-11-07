@@ -25,6 +25,8 @@ const NVBoat = (function () {
   const sst = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const mix = (a, b, t) => a + (b - a) * t;
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
+  // the bed's depth u m out from the water's edge (kc: the canal's share): the course's shallow shelf, then 2.2 m; the canal's 1.8 m
+  const bedDepth = (u, kc) => mix(0.22 * sst(0, 0.8, u) + 2.0 * sst(3, 6.5, u), 0.4 * sst(0, 0.6, u) + 1.4 * sst(1, 3.5, u), kc);
   let P = null;   // (the plan: the course's and the canal's lines, the water's edge; the bridges)
 
   // a CatmullRom line through pts (as js/newmap.js draws its roads: centripetal) every ~step m: { P: [[x, z]], A: arc lengths, L }
@@ -53,7 +55,7 @@ const NVBoat = (function () {
     // the water's edge, signed (negative on the water): the course and the canal joined smoothly; kc: how much of it is the canal's
     const parts = (x, z, out) => { const a = nK(x, z), s = a.s, da = a.d - HW, db = nC(x, z).d - cw(x); out.d = smin(da, db, 4); out.kc = sst(-2, 2, da - db); out.s = s; return out; };
     const tmp = { d: 0, kc: 0, s: 0 }, dW = (x, z) => parts(x, z, tmp).d;
-    P = { K, C, nK, nC, cw, parts, dW, off: false };
+    P = { K, C, nK, nC, cw, parts, dW, off: false, depth: (x, z) => { parts(x, z, tmp); return tmp.d < 0 ? bedDepth(-tmp.d, tmp.kc) : 0; } };   // (depth: js/nvwater.js)
     return (H3.waterCourse = P); }
 
   // ---- the two bridges as ground (before the roads are built: the ring road and HOME's way are drawn on H3.ground, the car drives on it)
@@ -114,7 +116,7 @@ const NVBoat = (function () {
       // (under the ring road's deck a little lower than it: the road is drawn on H3.ground)
       const land = G[q] + 0.01 + EM[q] - (RD[q] < RWALL ? 0.08 : 0), slope = mix(0.05, 0.4, kc); let h;
       if (d >= 0) h = smin(Math.max(land, WL + 0.03 + 0.05 * Math.min(d, 3)), WL + 0.07 * sst(0, 0.8, d) + slope * d, 0.3);
-      else { const u = -d, dk = 0.22 * sst(0, 0.8, u) + 2.0 * sst(3, 6.5, u), dc = 0.4 * sst(0, 0.6, u) + 1.4 * sst(1, 3.5, u); h = WL - mix(dk, dc, kc); }
+      else h = WL - bedDepth(-d, kc);
       if (d < 0) { pal(WL - h); if (SD[q] < 12 && W && W.bedAt) { const b = W.bedAt(x, z, cb), f = 1 - sst(0, 12, SD[q]); h = mix(h, Math.min(h, b.y), f); cc.lerp(cb, f); } MW[q] = 0; }
       else { const hA = h - WL, bw = mix(BEACH, CBEACH, kc); cc.copy(wetS).lerp(dryS, sst(0, 0.1, hA)); MW[q] = sst(bw - 1.2, bw + 1.2, d); if (EM[q] > 0.05 && d > 1.5) MW[q] = 1; }
       HT[q] = h; COL[q * 3] = cc.r; COL[q * 3 + 1] = cc.g; COL[q * 3 + 2] = cc.b; }
@@ -130,7 +132,7 @@ const NVBoat = (function () {
     Object.assign(WM, { polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 6 });
     out.water = waterPieces(MK, { X0, Z0, NX, NZ, N1, D, SD, WL, mat: WM, piece: 48 });
     // ---- the rest: the bridges, the pier, the course's things
-    const ROOT = new THREE.Group(); ROOT.userData.nvboat = true; MK.add(ROOT); P.root = ROOT;
+    const ROOT = new THREE.Group(); ROOT.userData.nvboat = true; MK.add(ROOT); P.root = ROOT; P.skis = [];
     const gy = (x, z) => { const q = idx(x, z); return q >= 0 && inFloor(q) ? bil(HT, x, z) : H3.ground(x, z); };
     const bil = (A, x, z) => { const fx = Math.max(0, Math.min(NX - 0.001, x - X0)), fz = Math.max(0, Math.min(NZ - 0.001, z - Z0)), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, q = i * N1 + j; return (A[q] * (1 - v) + A[q + 1] * v) * (1 - u) + (A[q + N1] * (1 - v) + A[q + N1 + 1] * v) * u; };
     const ctx = { MK, H3, WL, ROOT, gy, Dq: (x, z) => { const q = idx(x, z); return q < 0 ? 1e9 : D[q]; }, ours: (x, z) => Mq(x, z) > 1e8 && z > NFOLD + 2 };
@@ -230,7 +232,7 @@ const NVBoat = (function () {
       if (c.Dq(x0 + dx * L, z0 + dz * L) < -1) { const cx = x0 + dx * L / 2, cz = z0 + dz * L / 2, g2 = new THREE.Group(); g2.position.set(cx, WL + 0.45, cz); g2.rotation.y = -hd; ROOT.add(g2);
         const d2 = new THREE.Mesh(new THREE.BoxGeometry(L, 0.18, 2.4), wood); d2.receiveShadow = true; d2.castShadow = true; g2.add(d2);
         for (let i = 0; i <= 4; i++) for (const sg of [-1, 1]) { const pp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.6, 0.22), lam(0x5a4430)); pp.position.set(-L / 2 + 0.2 + i * (L - 0.4) / 4, -0.7, sg * 1.08); g2.add(pp); }
-        const nx2 = -dz, nz2 = dx; for (const [f, sg, col] of [[0.35, 1, 0x2a5ab8], [0.75, 1, 0x3fbf6a]]) jetski(c, x0 + dx * L * f + nx2 * sg * 2.1, z0 + dz * L * f + nz2 * sg * 2.1, hd, col, false);
+        const nx2 = -dz, nz2 = dx; for (const [f, sg, col] of [[0.35, 1, 0x2a5ab8], [0.75, 1, 0x3fbf6a]]) { const x = x0 + dx * L * f + nx2 * sg * 2.1, z = z0 + dz * L * f + nz2 * sg * 2.1; P.skis.push({ g: jetski(c, x, z, hd, col, false), x, z, h: hd, col, at: 'pier' }); }   // (P.skis: js/nvwater.js)
         pier = [Math.round(cx), Math.round(cz)]; } }
     // (its rails hold the car on the deck: solid for it, js/nvwalls.js; the user, 4. 11. 2026: »skoči tam, kjer smo naredili most«, the car
     // over the deck's edge, off it and back up it thrown 6-14 m into the air)
