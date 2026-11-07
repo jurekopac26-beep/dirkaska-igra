@@ -71,7 +71,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 ## Kdaj govori
 
-- **Zdaj** (napisi na cestah, glas na reliju): klic se pokaže 2,4 s pri trenutni hitrosti in 30 m pred prvo opombo (55–170 m), kot doslej pri relijskem sovozniku. Spodnja pravila pridejo z glasom na cestah (korak 2).
+- **Izvedeno 6. 11. 2026** (korak 2, `js/game.js` `cdLead`): spodnja pravila veljajo, ko se glas sliši (»Glas in napis«, zvok vklopljen). Samo napis (ali brez zvoka): klic se pokaže 2,4 s pri trenutni hitrosti in 30 m pred prvo opombo (55–170 m), kot doslej. T je vsota dolžin posnetih besed in premorov (`Comm.noteLen`).
 - **Začetek klica**: klic se začne, ko je avto `d = v · (T + 1,2 s) + 25 m` pred prvo opombo, najmanj 60 m in največ 260 m. T je trajanje klica: vsota dolžin posnetkov ali ~0,3 s na besedo. Zdaj je 2,4 s oziroma 55–170 m, kar je pri hitri vožnji in dolgem klicu prepozno.
   - Pri 25 m/s (90 km/h) in klicu 2 s: 105 m.
   - Pri 50 m/s (180 km/h) in klicu 2,5 s: 210 m.
@@ -98,6 +98,12 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
     - Možnost 2: seja posnetke pripravi z angleškim odprtim sintetizatorjem govora, katerega licenca dovoljuje igro na Google Play, in pred izdelavo pošlje vzorce na stran Odločitve.
     - Možnost 3: posnetke pripravi uporabnik s svojim glasom. Seja pripravi seznam besed, navodila in orodje `tools/sovoznik-glas.mjs` (rezanje, enaka glasnost).
 - **Licenca**: vir glasu gre v `README.md` pod »Zasluge«. Brez glasov z licenco »samo za nekomercialno rabo«, brez posnetkov resničnih sovoznikov in posnetkov iz drugih iger.
+- **Izvedeno 6. 11. 2026** (korak 2, posneti zvoki, možnost 2):
+  - **Vir**: odprt govorni model Kokoro-82M (Apache 2.0), glas `bm_george` (britanski moški; uporabnik ga je izbral 6. 11. pri vprašanju `sovoznik-glas-izbor`, razdelek Odločitve; prvi list je imel `am_michael`). Model q8 ONNX je z npm (`kokoro-q8-shards` 1.0.0, ponovna objava modela onnx-community, sha256 preverjen v orodju), glasovi iz uradnega `kokoro-js` 1.2.1, izgovorjava besed po slovarjih misaki (Apache 2.0; britanski za glasove `b*`). Hugging Face ni potreben. Zasluge v `README.md`.
+  - **Orodje** `tools/sovoznik-glas.py` (Python z onnxruntime in numpy, ffmpeg): vsako besedo izgovori posebej (hitrost modela 1,3, nato 1,15-krat hitreje z ohranjeno višino), odreže tišino, izenači glasnost in besede zloži v list z 0,12 s tišine vmes; MP3 LAME -V7, 24 kHz mono, brez oznak ID3. Privzeti glas orodja je `bm_george` (zagon brez `--voice` glasu ne zamenja). Drug glas: `--voice <ime>` (npr. `am_michael`), vzorci za vprašanje: `--samples <mapa> --no-sheet`. Nova beseda: njena izgovorjava v `WORDS`, nato orodje znova.
+  - **List** `js/data/sovoznik-en.js`: 38 besed (vse iz `Core.CD_EN` in razdalje 100–500 m), 25,9 s, 150 KB (z `am_michael`: 22,7 s, 137 KB). Povezan je iz `index.html` kot `<link rel="x-lazy-script">`, zato ga service worker shrani z igro, naloži pa se šele na dirki s sovoznikom.
+  - **Predvajanje** (`js/comm.js`): `Comm.recLoad()` ob začetku dirke (`codrvInit`), dekodiranje z `OfflineAudioContext` pri 24 kHz (~2,5 MB), začetek in konec vsake besede igra poišče sama po glasnosti (neodvisno od zamika dekoderja MP3). `Comm.note(text, toks)` klic sestavi iz besed (`AudioBufferSourceNode`, 60 ms premora, po »caution« 170 ms, pred razdaljo 130 ms) skozi rahel zvok čelade (150 Hz visokopasovni, +3 dB pri 3 kHz), mimo stišanja zvokov igre. Dokler list ni dekodiran ali zvok ne teče, govori glas telefona (rezerva).
+  - **Dolžina klicev** (z `bm_george`, ki govori ~17 % počasneje kot `am_michael`): polovica klicev vseh cest traja do ~3,4 s, najdaljši (tri opombe, 14 besed) ~7,9 s (Mount Buller; 373 klicev na 16 cestah te veje). Brez Vršiča, Sani Passa in Mount Bullerja, ki gredo med testne proge: ~2,9 s in ~6,9 s (Chapman). Z `am_michael`: 2,9 s in 6,6 s oziroma 2,5 s in 5,9 s.
 
 ## Napis in znak (telefon pokonci in ležeče)
 
@@ -138,7 +144,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 
 - Ni novih klicev risanja in oglišč (napis je DOM, številka na znaku je SVG), zato se `tests/golden/perf.json` ne spremeni.
 - Napovedi se izračunajo enkrat ob začetku dirke: pod 20 ms na progo, meri Node test.
-- Glas telefona: nič. Posneti zvoki: ~100–150 KB prenosa, ~3–5 MB pomnilnika (preveri `memory`).
+- Glas telefona: nič. Posneti zvoki: 150 KB prenosa (enkrat, nato iz service workerja) in ~2,5 MB pomnilnika, samo na dirki s sovoznikom (ceste, reli); dirkališča in druge proge se ne spremenijo.
 - Sovoznik bere samo za igralca, zato število tekmecev ne vpliva nanj.
 
 ## Testi
@@ -159,6 +165,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - dirkališče brez sovoznika ali po izbiri uporabnika.
 - **`smoke.test.mjs`, `tests/lang.test.js` in `perf.test.mjs`** ostanejo zeleni.
 - Izvedeno 5. 11. 2026: opis obeh testov je v `tests/README.md`. Dirkališče brez sovoznika preveri Node test (`codrvRoad`); posnetke besed preveri test, ko pride glas.
+- Izvedeno 6. 11. 2026 (korak 2): `tests/sovoznik-glas.test.js` (Node: vsaka beseda in razdalja ima posnetek in nič drugega, odmiki znotraj lista, MP3 cel, velikost do 160 KB, vsak klic vseh cest iz lista do 8,5 s, polovica do 3,7 s (z `am_michael` 7 s in 3,2 s, razdelek Odločitve), zasluge v `README.md`); `tests/browser/sovoznik.test.mjs`: na Rio do Rastro (ležeče, z zvokom) in Ouninpohji vsi klici iz lista, nobeden prek `speechSynthesis`, z glasom 20–260 m pred ovinkom.
 
 ## Koraki izvedbe in ocena
 
@@ -171,7 +178,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 | 5 | Brskalniški test, slike, pull request, vpis v vrsto | 2–3 |
 
 - **Skupaj ~9–15 h**: ena seja (Opus, napor max), ena veja `sovoznik/cesta`, en pull request. Odpre ga ob začetku kode kot osnutek in takrat izbriše vrstico v Načrtovano.
-- **6. 11.**: koraki 1 in 3–5 so v PR #359. Korak 2 (posnet glas) naredi nova seja po razdelku »Predaja: glas«.
+- **6. 11.**: koraki 1 in 3–5 so v PR #359. Korak 2 (posnet glas) naredi nova seja po razdelku »Predaja: glas«. Korak 2 je v PR #402 (veja `sovoznik/glas` iz #359, gre na `main` za #359).
 
 ## Predaja: glas (korak 2)
 
@@ -196,6 +203,7 @@ Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odl
   - `perf` in `memory` brez rasti na drugih progah.
 - **Dokumenti**: ta datoteka (Glas, Stanje), `docs/igra.md` (Sovoznik, Glas), `README.md` (Zasluge), `docs/kazalo.md`, `tests/README.md`.
 - **Veja**: nova (`sovoznik/glas`) iz `main` po združitvi #359. Če #359 še čaka v vrsti, se seja s koordinacijo dogovori, ali gre glas v #359.
+- **Izvedeno 6. 11. 2026**: PR #402, veja `sovoznik/glas` iz veje #359 (navodilo koordinacije VSE SEJE 2), gre na `main` za #359.
 
 ## Odločitve
 
@@ -228,6 +236,14 @@ Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odl
   - `sovoznik-kje` = 1 · »Samo odprte ceste in kronometri, na dirkališčih ne.« Tako je že v kodi (`Core.codrvRoad`), sprememba ni potrebna.
   - `sovoznik-glas` = drugo · »naredi glas kot v drugih igricah, to sem že odgovoril«. O glasu je prej zapisano samo »Vse zvoke delaj v angleščini« (5. 11.).
   - Razlaga seje: kot v relijskih igrah, posnet glas sovoznika, na vseh telefonih enak, ki bere v relijskem ritmu beseda za besedo iz zvočnega lista (pot možnosti 2: odprt angleški sintetizator z licenco za Google Play). Ne glas telefona (možnost 1) in ne uporabnikov glas (možnost 3). Isti glas tudi na relijskih kronometrih. Izvedba: razdelek »Predaja: glas«.
+- **6. 11. 2026, seja koraka 2** (privzete izbire, brez vprašanja; vprašanje `sovoznik-glas-izbor` z vzorci treh glasov, am_michael, bm_george in af_heart, je na strani Odločitve 3, odgovor prebere koordinacija VSE SEJE 2; do odgovora velja priporočeni):
+  - glas `am_michael` (razpoznava govora whisper-tiny je njegove klice prepoznala najbolje); drug glas je en ukaz orodja (`--voice`); **zamenjan 6. 11. po izbiri uporabnika (naslednja točka)**;
+  - hitrost modela 1,3 in pospešek 1,15 (pri 1,25 in več razpoznava zgreši besede); MP3 LAME -V7 (137 KB);
+  - zvok čelade v igri, ne v posnetku; posnet glas tudi na relijskih preizkušnjah, glas telefona samo kot rezerva.
+- **6. 11. 2026, uporabnik** (vprašanje `sovoznik-glas-izbor` na strani Odločitve 3: odgovor 2 · »Britanski moški glas«, v pogovoru s sejo VSE SEJE 2; priporočena je bila možnost 1, `am_michael`): glas sovoznika je `bm_george`.
+  - Seja je list izdelala znova z `python3 tools/sovoznik-glas.py --voice bm_george` (britanska izgovorjava besed, privzeta hitrost modela 1,3 in pospešek 1,15, enako kot v vzorcih, ki jih je uporabnik slišal: vzorec je trajal 17 s, z `am_michael` 15 s). Privzeti glas orodja je zdaj `bm_george`, da ga zagon brez `--voice` ne zamenja.
+  - List: 25,9 s, 150 KB (meja testa 160 KB), v pomnilniku ~2,5 MB. Klici so ~17 % daljši (razdelek Glas, Dolžina klicev), zato je meja testa `sovoznik-glas.test.js` 8,5 s in 3,7 s (prej 7 s in 3,2 s). Vodilni čas pred ovinkom (`cdLead`) daljšemu klicu sledi, a ima zgornjo mejo 260 m: najdaljši klici (~8 s) se pri hitrosti nad ~33 m/s (120 km/h) končajo za ovinkom (z `am_michael` ~6,6 s: nad ~39 m/s).
+  - Razpoznave govora za nov list seja ni poganjala (uporabnik je glas izbral po poslušanju vzorcev). Hitreje: `--tempo` (pri `am_michael` je razpoznava pri 1,25 in več zgrešila besede, za `bm_george` ni preverjeno).
 - **6. 11. 2026**: Vršič (#394; iz Slovenije ostane Medvode), Mount Buller in Sani Pass (#379) gredo med testne proge (odločitve uporabnika »ena proga na državo«). Sovoznik jih izgubi sam (pravilo »brez `test`«). Testi sovoznika so zato na cestah, ki ostanejo: Rio do Rastro (grbine iz višin, brskalniški test), Medvode, Harju, Ouninpohja in Pikes Peak (»caution«).
 
 ## Stanje
@@ -236,3 +252,5 @@ Za novo sejo (Opus, napor max), po odgovoru `sovoznik-glas` 6. 11. (razdelek Odl
 - 5. 11. 2026: koda opomb in napisov končana (PR #359, veja `sovoznik/cesta`): klici vseh 15 cest, napis pokonci in ležeče, številka na znaku, stikalo Izklop · Napis · Glas in napis, testi. Naslednje: glas na cestah po odgovoru `sovoznik-glas` (korak 2), dirkališča po odgovoru `sovoznik-kje`.
 - 5. 11. 2026: popravki po pregledu PR #359 (10 ugotovitev, razdelek Odločitve) v istem PR-ju; povezani testi zeleni.
 - 6. 11. 2026: odgovora zapisana (razdelek Odločitve), testi z Vršiča na Rio do Rastro in Pikes Peak. Naslednje: posnet glas v novi seji (razdelek »Predaja: glas«); PR #359 čaka v vrsti kot osnutek.
+- 6. 11. 2026: posnet glas (korak 2) končan v PR #402 (veja `sovoznik/glas`): zvočni list, orodje, predvajanje, pravila »Kdaj govori«, testi; povezani testi lokalno zeleni, osnutek do vrste, na `main` za #359. Prvi list je imel glas `am_michael`; uporabnik je pri `sovoznik-glas-izbor` izbral drugega (spodaj).
+- 6. 11. 2026: uporabnik je pri `sovoznik-glas-izbor` izbral 2 · britanski moški glas; list v PR #402 je zamenjan z `bm_george` (150 KB, klici ~17 % daljši, meji testa dolžine klicev 8,5 s in 3,7 s, razdelek Odločitve); povezani testi lokalno zeleni, osnutek do vrste, na `main` za #359. Drug glas ali hitrost: `tools/sovoznik-glas.py --voice <ime> [--tempo <x>]` in povezani testi.

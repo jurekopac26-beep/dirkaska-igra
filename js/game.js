@@ -563,7 +563,7 @@
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(+S.codrv === 1); Comm.setEngineer(!!+S.engV);   // (codrv 2: the co-driver's captions only)
     // (the voices: the commentator's, the co-driver's (the engineer's too), every one English whatever the page's language)
-    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik in inženir: {0}', v.codrv) : '') + tr(' · vsi glasovi govorijo angleško (tudi policijski radio)'); });
+    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.rec ? tr(' · sovoznik: posnet glas') : v.codrv ? tr(' · sovoznik in inženir: {0}', v.codrv) : '') + tr(' · vsi glasovi govorijo angleško (tudi policijski radio)'); });
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: +S.vibrate || 0 });   // (vibrate: the level, Osnovno Core.HAPTIC's basic patterns and the single pulses, Vse all of them)
     Sfx.setEnabled(!!S.sound);
@@ -4843,36 +4843,42 @@
     st.log.push({ k, n: track.names[k].n, lap, t: race.time, r: r || 'say', item }); if (st.log.length > 300) st.log.shift();
   }
   /* ---------------- the co-driver (S.codrv: 0 off, 2 the captions, 1 voice and captions; docs/sovoznik.md): the pace notes (Track.paceNotes)
-     ahead of the car. On every real open road (not a test track; not a mission, nor the new map, nor the driving school) the call's
-     caption (#h-codrv, in the game's language: Core.codrvCap; lying under the clock's block, upright under the corner sign: placeCap) and the
-     bends' grade on the corner sign; the voice (English, Comm.note) on a rally stage's time trial, as before (on the roads after the answer
-     to the question sovoznik-glas). A call is due when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a
-     rescue, a spin) is skipped. Its caption stays until the car is at that first note, 1.5 s at least, or the next call's takes its place.
-     The setting switched during a race (the pause's settings): codrvInit again, from the next call on (setOption). */
+     ahead of the car. On every real open road (not a test track; not a mission, nor the new map, nor the driving school) and a rally stage's
+     time trial the call's caption (#h-codrv, in the game's language: Core.codrvCap; lying under the clock's block, upright under the corner
+     sign: placeCap) and the bends' grade on the corner sign; with Glas in napis his recorded English voice too (Comm.note: word by word from
+     its sheet, js/data/sovoznik-en.js; the browser's voice until it is loaded). The captions alone: a call is due when the car is ~2.4 s
+     (55 to 170 m) before its first note. With the voice (docs/sovoznik.md, Kdaj govori): when the car is v * (its length + 1.2 s) + 25 m
+     before it (60 to 260 m: the call over ~1.2 s before the bend), not before the last call is over (0.2 s after it: Comm.noteFree) and not
+     while the car stands (under 5 m/s); its caption with it. One already driven past (a rescue, a spin; 10 m) is skipped. The police radio's
+     run: the captions alone. Driven back the way it came, no call is ahead. A caption stays until the car is at the call's first note, 1.5 s
+     at least, or the next call's takes its place. The setting switched during a race (the pause's settings): codrvInit again, from the next
+     call on (setOption). */
   let cdN = null, cdK = 0, cdLog = [], cdVoice = false, cdCap = null;
   const codrvRoad = () => Core.codrvRoad(track.def) && !race.nv && !school && !MS.cur;   // (the real open roads: Core's list; not in a mission)
   function codrvInit() {
     const rally = race.timeTrial && (isRally(track.def) || isDesc(track.def));   // (a rally stage, a gravel descent: the voice too)
-    cdN = +S.codrv && (rally || codrvRoad()) ? track.paceNotes() : null; cdK = 0; cdLog = []; cdVoice = !!cdN && rally && +S.codrv === 1; capOff();
+    cdN = +S.codrv && (rally || codrvRoad()) ? track.paceNotes() : null; cdK = 0; cdLog = []; cdVoice = !!cdN && +S.codrv === 1; capOff();
+    if (cdVoice) Comm.recLoad();   // (his sheet, loaded once and decoded while the race starts; with the sound on)
     const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, voice: cdVoice, cap: cdCap ? cdCap.text : '', log: cdLog.slice() }) });   // (tests)
   }
   function capOff() { const el = $('h-codrv'); if (cdCap || el.className) { cdCap = null; el.className = ''; el.textContent = ''; } }
-  const cdLead = (P) => clamp(P.speed * 2.4 + 30, 55, 170);
+  const cdTalk = () => cdVoice && Comm.noteCan();   // (his voice heard now: the sound on, not the police radio's run)
+  const cdLead = (P, c) => cdTalk() ? clamp(P.speed * (Comm.noteLen(c.toks) + 1.2) + 25, 60, 260) : clamp(P.speed * 2.4 + 30, 55, 170);
   function updateCodrv(P) {
     if (!cdN) return;
     if (phase !== 'racing' || P.finished) { if (cdCap) capOff(); return; }
     const s = P.q.s;
     if (cdCap && s >= cdCap.s && race.time - cdCap.t >= 1.5) capOff();   // (the car at its first note)
     while (cdK < cdN.length && cdN[cdK].s < s - 10) cdK++;   // (driven past without it)
-    const c = cdN[cdK];
-    if (c && c.s - s <= cdLead(P)) {
-      const it = cdVoice ? Comm.note(c.text) : null, el = $('h-codrv');
+    const c = cdN[cdK], talk = cdTalk();
+    if (c && c.s - s <= cdLead(P, c) && !(talk && (!Comm.noteFree() || P.speed < 5))) {   // (with the voice: his last call over, the car moving)
+      const it = talk ? Comm.note(c.text, c.toks) : null, el = $('h-codrv');
       cdCap = { text: Core.codrvCap(c.toks, S.lang), s: c.s, t: race.time }; el.textContent = cdCap.text; el.className = 'show'; capAt0 = '';
-      cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, cap: cdCap.text, item: !!it }); if (cdLog.length > 200) cdLog.shift(); cdK++;
+      cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, cap: cdCap.text, item: !!it, rec: !!(it && it.rec) }); if (cdLog.length > 200) cdLog.shift(); cdK++;
     }
     if (cdCap) placeCap();
   }
-  const codrvSoon = (P, sec) => { const c = cdVoice && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed; the captions alone keep no one quiet)
+  const codrvSoon = (P, sec) => { const c = cdVoice && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P, c) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed; the captions alone keep no one quiet)
   // the caption's place: on its side under the clock's block (with whatever is under the clock: the line under it, the duel's gap, the
   // police's panel) and, where a wide caption would reach under the corner sign beside the block, under the sign too; upright under the
   // sign's place (its box as css and placeNote have it, shown or not); centred. Measured again with each new caption (capAt0 cleared:
