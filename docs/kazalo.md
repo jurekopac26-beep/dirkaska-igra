@@ -105,7 +105,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/nove-proge.md` | načrt 8 novih prog (Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas, Pau, Ngorongoro): pravila in odločitve uporabnika, odprti viri, seje A in B, zagon naslednje seje, seznam pravil, Recept, stanje |
 | `docs/meni-izbira-proge.md` | načrt novega zaslona za izbiro proge (odločitve uporabnika, sklopi 1–6, opombe iz kode, odprta vprašanja); zastave držav v `assets/flags/<država>.svg` |
 | `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
-| `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge |
+| `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge; nove proge za 1.0 (7. 11. 2026: 1–5 km, prvih 11, potrditev seznama, mestne proge po središču brez izletne cone) |
 | `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
