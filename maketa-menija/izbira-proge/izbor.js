@@ -1,10 +1,10 @@
-// The quick list of every track (mockup): a tap on the flag in the row opens it from the bottom. The countries as their flags, A to Z
-// (the country shown gold); a country with one track takes you to it at once, one with more opens its tracks (their model, length, climb or
-// corners, PENDING for the ones being decided, TEST for a test track). Tap outside the sheet, the cross or Back to close it.
+// The quick list of every track (mockup): a tap on the flag in the row opens it from the bottom. The countries as their flags, by continent
+// and A to Z in each (the country shown gold); a country with one track takes you to it at once, one with more opens its tracks (their model,
+// length, climb or corners, PENDING for the ones being decided, TEST for a test track). Over the flags a search (a place or a country: the
+// answer is the tracks) and filters (Circuit, Open road, Rally: the game's groups; the length): with any of them on, the tracks found instead
+// of the flags. Tap outside the sheet, the cross or Back to close it.
 // IZBOR.open({ cur, order, all, flag, pick }): cur the track shown, order the list, all its facts by id (vse-proge.js), flag(cc) a flag's
 // svg for a 30 x 20 box, pick(id) to go to a track.
-window.IZBOR = (() => {
-  const CSS = `
 
 // The phone's Back (NAZAJ): every layer opened over the screen (the quick list, a country's tracks in it, the Earth, its card) is one step
 // in the history (history.pushState); Back closes the top one (popstate). A layer closed by its own button takes its step back out
@@ -33,6 +33,8 @@ window.NAZAJ = (() => {
   return { push, drop, clear, buzz, depth: (who) => st.filter(l => !who || l.who === who).length };
 })();
 
+window.IZBOR = (() => {
+  const CSS = `
   .izb { position: absolute; inset: 0; z-index: 40; font-family: var(--f-ui); }
   .izb-dim { position: absolute; inset: 0; background: rgba(4, 8, 16, .58); opacity: 0; transition: opacity .25s; }
   .izb.on .izb-dim { opacity: 1; }
@@ -79,59 +81,130 @@ window.NAZAJ = (() => {
   .izb-t.on .izb-go { background: #ffc629; }
   .izb-t.on .izb-go path { stroke: #1b1404; }
   .izb-t:active { transform: scale(.98); }
+  .izb-t .izb-mf { display: inline-block; width: 21px; height: 14px; margin-right: 7px; vertical-align: 0; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); }
+  .izb-mf svg { width: 100%; height: 100%; display: block; }
+  .izb-tools { flex: 0 0 auto; display: flex; flex-direction: column; gap: 9px; padding: 0 14px 12px; }
+  .izb-q { position: relative; display: flex; align-items: center; height: 42px; padding: 0 6px 0 38px; border-radius: 12px; background: rgba(255, 255, 255, .07); border: 1.5px solid rgba(255, 255, 255, .15); }
+  .izb-q:focus-within { border-color: #ffc629; box-shadow: 0 0 0 3px rgba(255, 198, 41, .18); }
+  .izb-q > svg { position: absolute; left: 11px; top: 10.5px; width: 18px; height: 18px; }
+  .izb-q input { flex: 1 1 auto; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: #fff; font: 700 15px/1 var(--f-ui); -webkit-appearance: none; appearance: none; }
+  .izb-q input::placeholder { color: rgba(214, 226, 246, .5); font-weight: 600; }
+  .izb-q input::-webkit-search-cancel-button { display: none; }
+  .izb-qx { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; border: 0; padding: 0; background: rgba(255, 255, 255, .12); display: none; align-items: center; justify-content: center; cursor: pointer; }
+  .izb-qx svg { width: 14px; height: 14px; }
+  .izb-q.has .izb-qx { display: flex; }
+  .izb-chips { display: flex; gap: 6px; }
+  .izb-chips button { flex: 1 1 auto; height: 30px; padding: 0 4px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .05); color: #dfe8f6;
+    font: 800 italic 12px/1 var(--f-ui); white-space: nowrap; cursor: pointer; }
+  .izb-chips button.on { background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); border-color: #fff0b0; color: #1b1404; box-shadow: 0 0 8px rgba(255, 198, 41, .35); }
+  .izb-chips i { flex: 0 0 1.5px; margin: 5px 2px; border-radius: 1px; background: rgba(255, 255, 255, .2); }
+  .izb-ct { display: flex; align-items: center; gap: 8px; margin: 16px 0 10px; font: 800 italic 12.5px/1 var(--f-ui); letter-spacing: 1.2px; color: var(--lbl, #9fb3d6); text-transform: uppercase; }
+  .izb-ct:first-child { margin-top: 4px; }
+  .izb-ct small { font: 700 11px/1 var(--f-ui); letter-spacing: 0; color: rgba(159, 179, 214, .65); }
+  .izb-ct::after { content: ''; flex: 1 1 auto; height: 1px; background: rgba(255, 255, 255, .1); }
+  .izb-sub { margin: 4px 0 10px; font: 800 italic 12.5px/1 var(--f-ui); letter-spacing: 1.2px; color: var(--lbl, #9fb3d6); text-transform: uppercase; }
+  .izb-none { margin: 30px 0; text-align: center; font: 700 italic 15px/1.4 var(--f-ui); color: var(--lbl, #9fb3d6); }
   .izb-body.in { animation: izbIn .22s ease-out; }
   @keyframes izbIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
   `;
   const X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/></svg>';
   const BACK = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const GO = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const LOUPE = '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#c9d6ec" stroke-width="2.6"/><path d="M15.5 15.5l5 5" stroke="#c9d6ec" stroke-width="2.8" stroke-linecap="round"/></svg>';
+  // the filters (kept while the page lives): the game's groups (js/menu.js: test, rally or descent, open road, circuit) and the length
+  const F = { q: '', type: new Set(), len: new Set() };
+  const TYPES = [['circuit', 'Circuit'], ['road', 'Open road'], ['rally', 'Rally']], LENS = [['s', '< 3 km', 0, 3], ['m', '3–6 km', 3, 6.0001], ['l', '> 6 km', 6.0001, 1e9]];
+  const groupOf = (t) => t.group || (t.test ? 'test' : t.open ? 'road' : 'circuit');
+  const NAMES = { circuit: 'Circuit', road: 'Open road', rally: 'Rally' };
+  const norm = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const on = () => !!(F.q.trim() || F.type.size || F.len.size);
+  function match(t) {
+    const hay = norm(t.name + ' ' + t.country);
+    return norm(F.q).split(/\s+/).filter(Boolean).every(w => hay.includes(w)) && (!F.type.size || F.type.has(groupOf(t))) &&
+      (!F.len.size || LENS.some(L => F.len.has(L[0]) && t.km >= L[2] && t.km < L[3]));
+  }
+  // the continents (the grid's sections): the game's countries by name, a new one by where its tracks are
+  const CONT = ['Europe', 'North America', 'South America', 'Africa', 'Asia', 'Oceania'];
+  const IN = { Austria: 0, Belgium: 0, England: 0, Finland: 0, Germany: 0, Italy: 0, Romania: 0, Russia: 0, Slovenia: 0, Canada: 1, USA: 1, Brazil: 2, Chile: 2,
+    Morocco: 3, 'South Africa': 3, China: 4, Japan: 4, Thailand: 4, Australia: 5 };
+  const contOf = (c) => IN[c.name] != null ? IN[c.name] : c.lon < -30 ? (c.lat > 12 ? 1 : 2) : c.lon > 110 && c.lat < -10 ? 5 : c.lat < 35 && c.lon > -20 && c.lon < 52 ? 3 : c.lon > 60 ? 4 : 0;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   let el = null, o = null;
   const flag = (cc) => '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(cc) + '</svg>';
-  // the countries A to Z, each with its tracks in the list's order
+  // the countries A to Z, each with its tracks in the list's order and where they are (their middle)
   function countries() {
     const by = new Map();
-    for (const id of o.order) { const t = o.all[id]; if (!by.has(t.country)) by.set(t.country, { name: t.country, flag: t.flag, ids: [] }); by.get(t.country).ids.push(id); }
+    for (const id of o.order) { const t = o.all[id]; if (!by.has(t.country)) by.set(t.country, { name: t.country, flag: t.flag, ids: [], lat: 0, lon: 0 }); const c = by.get(t.country); c.ids.push(id); c.lat += (t.lat || 0) / 1; c.lon += (t.lon || 0) / 1; }
+    for (const c of by.values()) { c.lat /= c.ids.length; c.lon /= c.ids.length; }
     return [...by.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
   const facts = (t) => {
     const third = t.alt ? (t.alt[1] < t.alt[0] ? '−' : '+') + Math.round(Math.abs(t.alt[1] - t.alt[0])).toLocaleString('en-US') + ' m' : t.corners ? t.corners + ' corners' : '';
-    return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (t.open ? 'Open road' : 'Circuit');
+    return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (NAMES[groupOf(t)] || (t.open ? 'Open road' : 'Circuit'));
   };
+  // a track's row (its model, name, facts, tag); wf: its country's flag before the name (the search's answers)
+  function row(id, wf) {
+    const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
+    return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'"><span class="tx"><b>' +
+      (wf ? '<span class="izb-mf">' + flag(t.flag) + '</span>' : '') + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + GO + '</span></button>';
+  }
   function head(title, sub, left) {
     return '<div class="izb-head">' + (left || '') + '<div class="t"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div><button class="izb-btn" data-x aria-label="Close">' + X + '</button></div>';
   }
   function grid() {
-    const C = countries(), curC = o.all[o.cur].country, n = o.order.length;
-    return head('Choose a country', C.length + ' countries · ' + n + ' tracks') + '<div class="izb-body in"><div class="izb-grid">' + C.map(c => {
+    const C = countries(), n = o.order.length;
+    return head('Choose a country', C.length + ' countries · ' + n + ' tracks') +
+      '<div class="izb-tools"><label class="izb-q' + (F.q ? ' has' : '') + '">' + LOUPE + '<input type="search" placeholder="Search a place or a country" value="' + esc(F.q) + '" autocomplete="off" enterkeyhint="search" aria-label="Search">' +
+      '<button class="izb-qx" data-qx aria-label="Clear">' + X + '</button></label><div class="izb-chips">' +
+      TYPES.map(([k, s]) => '<button class="' + (F.type.has(k) ? 'on' : '') + '" data-f="' + k + '">' + s + '</button>').join('') + '<i></i>' +
+      LENS.map(([k, s]) => '<button class="' + (F.len.has(k) ? 'on' : '') + '" data-l="' + k + '">' + s + '</button>').join('') + '</div></div>' +
+      '<div class="izb-body in">' + gridBody() + '</div>';
+  }
+  // the flags by continent, or (a search or a filter on) the tracks found
+  function gridBody() {
+    if (on()) {
+      const ids = o.order.filter(id => match(o.all[id]));
+      return ids.length ? '<div class="izb-sub">' + ids.length + (ids.length === 1 ? ' track' : ' tracks') + '</div><div class="izb-list">' + ids.map(id => row(id, true)).join('') + '</div>'
+        : '<p class="izb-none">No track found.<br>Try another place or filter.</p>';
+    }
+    const C = countries(), curC = o.all[o.cur].country, by = CONT.map(() => []);
+    for (const c of C) by[contOf(c)].push(c);
+    return by.map((cs, k) => !cs.length ? '' : '<div class="izb-ct">' + CONT[k] + '<small>' + cs.reduce((a, c) => a + c.ids.length, 0) + '</small></div><div class="izb-grid">' + cs.map(c => {
       const one = c.ids.length === 1, t = o.all[c.ids[0]];
       return '<button class="izb-c' + (c.name === curC ? ' on' : '') + '" data-c="' + esc(c.name) + '" aria-label="' + esc(c.name) + '"><span class="f">' + flag(c.flag) + (one ? '' : '<span class="n">' + c.ids.length + '</span>') + '</span>' +
         '<b>' + esc(c.name) + '</b><small>' + esc(one ? t.name : c.ids.length + ' tracks') + '</small></button>';
-    }).join('') + '</div></div>';
+    }).join('') + '</div>').join('');
+  }
+  function refresh() {   // (the sheet keeps its height while the answers change: it does not jump under the finger)
+    const sh = el.querySelector('.izb-sheet'), b = el.querySelector('.izb-body'); if (!sh.style.height) sh.style.height = sh.offsetHeight + 'px';
+    b.classList.remove('in'); b.innerHTML = gridBody(); b.scrollTop = 0;
   }
   function country(name) {
     const c = countries().find(k => k.name === name);
     return head(c.name, c.ids.length + ' tracks', '<button class="izb-btn" data-back aria-label="All countries">' + BACK + '</button><span class="izb-hf">' + flag(c.flag) + '</span>') +
-      '<div class="izb-body in"><div class="izb-list">' + c.ids.map(id => {
-        const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
-        return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" loading="lazy"><span class="tx"><b>' + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + GO + '</span></button>';
-      }).join('') + '</div></div>';
+      '<div class="izb-body in"><div class="izb-list">' + c.ids.map(id => row(id)).join('') + '</div></div>';
   }
   function style() { if (!document.getElementById('izb-css')) { const st = document.createElement('style'); st.id = 'izb-css'; st.textContent = CSS; document.head.appendChild(st); } }   // (the Earth's card uses it too)
-  function show(html) { el.querySelector('.izb-sheet').innerHTML = '<i class="izb-grab"></i>' + html; }
+  function show(html) { const sh = el.querySelector('.izb-sheet'); sh.style.height = ''; sh.innerHTML = '<i class="izb-grab"></i>' + html; }
   function open(opts) {
     o = opts;
     style();
     if (el) el.remove();
     el = document.createElement('div'); el.className = 'izb'; el.innerHTML = '<div class="izb-dim"></div><div class="izb-sheet" role="dialog" aria-label="Choose a track"></div>';
     document.body.appendChild(el); show(grid());
+    NAZAJ.push('izbor', () => close());
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-x]') || e.target.classList.contains('izb-dim')) return close();
       if (e.target.closest('[data-back]')) { NAZAJ.drop('izbor', 1); return show(grid()); }
+      const f = e.target.closest('[data-f], [data-l]');
+      if (f) { const S = f.dataset.f ? F.type : F.len, k = f.dataset.f || f.dataset.l; if (S.has(k)) S.delete(k); else S.add(k); f.classList.toggle('on', S.has(k)); return refresh(); }
+      if (e.target.closest('[data-qx]')) { e.preventDefault(); const i = el.querySelector('.izb-q input'); i.value = F.q = ''; i.parentNode.classList.remove('has'); refresh(); return; }
       const c = e.target.closest('[data-c]');
       if (c) { NAZAJ.buzz(); const k = countries().find(x => x.name === c.dataset.c); if (k.ids.length === 1) return choose(k.ids[0], c); show(country(k.name)); NAZAJ.push('izbor', () => el && show(grid())); return; }
       const t = e.target.closest('[data-t]'); if (t) { NAZAJ.buzz(); choose(t.dataset.t, t); }
     });
+    el.addEventListener('input', (e) => { if (!e.target.matches('.izb-q input')) return; F.q = e.target.value; e.target.parentNode.classList.toggle('has', !!F.q); refresh(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('.izb-q input')) e.target.blur(); });   // (Search on the keyboard: the keyboard goes, the answers stay)
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('on')));
   }
   function choose(id, b) {   // (the choice lights up a moment, then the screen goes to it)
@@ -141,4 +214,3 @@ window.NAZAJ = (() => {
   function close() { if (!el) return; NAZAJ.drop('izbor'); const e = el; el = null; e.classList.remove('on'); setTimeout(() => e.remove(), 330); }
   return { open, close, style, facts, isOpen: () => !!el };
 })();
-    NAZAJ.push('izbor', () => close());

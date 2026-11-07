@@ -252,10 +252,10 @@ window.ZEMLJA = (() => {
     if (!c) { k.classList.remove('on'); R.offT = 0; kick(); if (R.card) { R.card = false; NAZAJ.drop('zemlja', 1); } return; }
     if (!R.card) { R.card = true; NAZAJ.push('zemlja', () => R && select(null)); }   // (Back closes the card first, then the Earth)
     const flag = '<svg viewBox="0 0 30 20" preserveAspectRatio="none">' + o.flag(c.flag) + '</svg>';
-    const facts = (t) => { const third = t.alt ? (t.alt[1] < t.alt[0] ? '−' : '+') + Math.round(Math.abs(t.alt[1] - t.alt[0])).toLocaleString('en-US') + ' m' : t.corners ? t.corners + ' corners' : ''; return t.km.toFixed(2) + ' km' + (third ? ' · ' + third : '') + ' · ' + (t.open ? 'Open road' : 'Circuit'); };
+    const facts = IZBOR.facts;   // (the quick list's: length, climb or corners, group)
     k.innerHTML = '<i class="izb-grab"></i><div class="izb-head"><span class="izb-hf">' + flag + '</span><div class="t"><b>' + esc(c.name) + '</b><small>' + (c.ids.length === 1 ? '1 track' : c.ids.length + ' tracks') + '</small></div><button class="izb-btn" data-cx aria-label="Close">' + I.x + '</button></div>' +
       '<div class="izb-body"><div class="izb-list">' + c.ids.map(id => { const t = o.all[id], tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
-        return '<button class="izb-t' + (id === o.cur || id === hi ? ' on' : '') + '" data-pick="' + id + '"><img src="assets/tracks/' + id + '.webp" alt=""><span class="tx"><b>' + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + I.go + '</span></button>'; }).join('') + '</div></div>';
+        return '<button class="izb-t' + (id === o.cur || id === hi ? ' on' : '') + '" data-pick="' + id + '"><img src="assets/tracks/' + id + '.webp" alt="" onerror="this.style.visibility=\'hidden\'"><span class="tx"><b>' + esc(t.name) + '</b><small>' + facts(t) + '</small>' + tag + '</span><span class="izb-go">' + I.go + '</span></button>'; }).join('') + '</div></div>';
     k.classList.add('on');
     requestAnimationFrame(() => { if (R) { R.offT = Math.min(400, k.offsetHeight); kick(); } });
   }

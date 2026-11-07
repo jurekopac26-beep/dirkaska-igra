@@ -1,7 +1,8 @@
 // Every real track of the game for the mockup: maketa-menija/izbira-proge/vse-proge.js (window.VSE). The quick list under the flag, the
 // Earth under the globe and the screen of a track without a hand-made mockup (proge.js) read it.
 //   order   the menu's order (js/menu.js): the real tracks from the shortest to the longest, then the ones being decided (pending: true)
-//   tracks  per track: its place and country (its English name »Place, Country«), the flag's file (assets/flags), where it is (MENU.globe.places,
+//   tracks  per track: its place and country (its English name »Place, Country«), its group (circuit, road, rally: the menu's filters), the
+//           flag's file (assets/flags), where it is (MENU.globe.places,
 //           else GEO.tracks: lat, lon), length, climb (def.alt) or corners (the game's Track), its highest point, the heights for the graph
 //           (ROUTES, else MENU.profs) and the pictures for the three cameras (assets/tracks, assets/maps: flyover, corner, helicopter)
 //   flags   the flags themselves (assets/flags/<country>.svg, inline: the mockup draws them into canvases, where a file cannot be loaded)
@@ -49,7 +50,7 @@ for (const d of defs) {
     name, country, flag, lat: at ? r(at[0], 5) : null, lon: at ? r(at[1], 5) : null, km: r(km, 2), open: !!d.open,
     alt: d.alt ? d.alt.slice() : null, corners: T.corners.length, top: top != null ? Math.round(top) : null,
     graph: R ? 'routes' : P ? 'profs' : null, profs: !R && P ? { len: P.len, base: P.base, prof: P.prof } : undefined,
-    pending: !!d.pending,
+    pending: !!d.pending, group: (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit',   // (the game's group, js/menu.js; no test tracks here)
     cams: { 1: model || fly || heli, 2: fly || heli || model, 3: corner || heli || fly || model },
   };
 }

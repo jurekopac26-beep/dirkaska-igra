@@ -581,7 +581,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   await window.MOCK(T);
   const o = { flash: null, hz: T.hz, carFloor: T.carFloor, snowStyle: 'blizzard', live: true }, t0 = performance.now(), now = () => (performance.now() - t0) / 1000;
   WXFX.setTimeline([{ t: -30, k: wx0 }]); WXFX.frame(0, o);
-  const fit = () => { const s = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * s) / 2) + 'px) scale(' + s + ')'; };
+  const fit = () => { if (document.activeElement && document.activeElement.matches('input')) return;   // (the keyboard of the quick list's search: the page keeps its size)
+    const s = Math.min(innerWidth / 412, innerHeight / 892); document.body.style.transform = 'translateX(' + Math.max(0, (innerWidth - 412 * s) / 2) + 'px) scale(' + s + ')'; };
   document.body.style.transformOrigin = '0 0'; document.documentElement.style.width = '100%'; document.documentElement.style.height = '100%'; fit(); addEventListener('resize', fit);
   let cur = wx0;
   let gfrom = null; try { gfrom = JSON.parse(sessionStorage.getItem('izbira-globus') || 'null'); } catch (e) {}
