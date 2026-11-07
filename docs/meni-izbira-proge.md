@@ -77,6 +77,21 @@ Makete: `VRŠIČ` v vseh vremenih in 6 prog s 6 avti (seja 30. 10. 2026).
 
 **Pravna opomba:** posnetek preleta `assets/maps/fly-rbring.webm` in `.webp` (5. 10. 2026) na stavbi ob progi kaže napis z imenom znamke (starejša različica sveta; zdajšnji transparenti v `js/world-rbring.js` so zemljepisni: MURTAL, SPIELBERG, STEIERMARK). Pred objavo ga posnemi znova (sklop 4, kamere).
 
+## Izboljšave makete (uporabnik 7. 11. 2026: »Začni vse razen 7 in 10«)
+
+Osem predlogov iz pogovora 7. 11. (ne: 7 – preleti za kamero 2, 10 – naključna proga ali dnevni izziv). Samo v maketi `maketa-menija/izbira-proge/`, igre se ne dotika. Veja `ccr-f828f1e1-3zvur4`, brez pull requesta (uporabnik ga ni zahteval). Po vsakem delu: commit, `npm run test:related` (varovalo testnih prog: nobene nove datoteke z `vrsic` v imenu), `node tools/stamp.js --check`, push, nova različica žive makete https://claude.ai/artifact/TGZVx8E1vcpzp3b4gYE2Fq (nova seja jo najprej prebere; stran je `index.html` brez prvih 4 vrstic, `</style></head>` + `<body>` → `</style>`, brez zadnjega `</body></html>`; datoteke z istimi potmi kot v repozitoriju, objavljene datoteke najprej preberi) in posnetek 412 × 892 (`tests/browser/lib.mjs`: `serve`, `launch`). Ocena skupaj ≈ 10–12 h. Vrstni red:
+
+1. **Baterija (9):** `zemlja.js` riše samo, ko se kaj premika (let, vlečenje, vztrajnost, približevanje, bledenje napisov, kartica); na šibkem telefonu (`navigator.deviceMemory <= 4` ali `maxTextureSize < 4096`) tekstura `mk/earth2k.webp`; gostota slikovnih pik največ 2.
+2. **Tipka nazaj (2):** hitra izbira, seznam države in Zemlja dodajo vnos v zgodovino (`history.pushState`), `popstate` zapre zgornje okno (seznam države → mreža → zaprto, kartica → Zemlja → zaprto); ob izbiri države in proge kratek tresljaj (`navigator.vibrate`, če obstaja).
+3. **Iskanje in filtri (3):** v hitri izbiri polje za iskanje (kraj, država; rezultat so proge), filtri Circuit, Open road, Rally (skupina kot v igri, `js/menu.js`: `d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit'`; `group` dodaj v `orodja/vse-proge.js`) in dolžina (do 3 km, 3–6 km, nad 6 km); države po celinah namesto po abecedi.
+4. **Gladka menjava proge (6):** `go()` zdaj stran naloži znova (`location.reload()`). Namesto tega zaslon zgradi znova na mestu (`window.MOCK(T)`), globus se zavrti do nove države (`GLOBE.travel`), tabla in avto prideta v sliko, vreme in kamera ostaneta, naslov strani `#t=…` z `history.replaceState`. Poteg s prstom levo ali desno po sliki = sosednja proga; sliki sosednjih prog se naložita vnaprej.
+5. **Kartica proge (5):** pot proge na sami Zemlji bi bila premajhna (5 km je pri najbližjem pogledu 1–2 px), zato jo pokaže kartica: dotik bucike ali vrstice odpre kartico proge z obliko proge (poenostavljene točke iz `Track`, dodaj v `orodja/vse-proge.js`), malim grafom višin in gumbom **Race!** (izbere progo in pokaže obvestilo kot Race! na zaslonu).
+6. **Napredek (4):** najboljši čas, medalja (zlata, srebrna, bronasta), NEW za še nevožene, kljukica za končane: na zastavah hitre izbire, v seznamih, na buckah in kartici Zemlje ter v vrstici (Best race). V maketi primer podatkov (nekaj prog z rezultati, ostale NEW); če so na istem izvoru podatki igre (`localStorage`, ključ poišči v `js/menu.js` pri Best race), uporabi te.
+7. **Dan in noč (8):** na 3D Zemlji in globusu v glavi nočna senca po trenutnem času (lega Sonca iz UTC), mehak prehod, luči mest na nočni strani iz NASA Black Marble (javna last; gostitelj `eoimages.gsfc.nasa.gov` dovoljuje okolje »dirkaska-igra«), pomanjšane v `mk/` (webp, do ~300 KB); vir v »Zasluge« (`README.md`) in v README makete.
+8. **Ležeči zaslon (1):** od 640 × 360 do ~915 × 412: slika levo (glava, graf, vreme, kamere), desno vrstica, tabla z avtom, zastavi in Race!; hitra izbira kot panel desno, kartica Zemlje ob strani; pokončni zaslon ostane, kot je. Preveri 640 × 360, 740 × 360, 915 × 412 ter pokonci 360 × 640 in 412 × 892.
+
+Stanje: (seja dopiše, kaj je narejeno, in predajo, če kontekst preseže ~300 tisoč žetonov.)
+
 ## Sklopi
 
 | Sklop | Vsebina | Čas | Stanje |
