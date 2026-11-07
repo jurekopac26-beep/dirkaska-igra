@@ -59,6 +59,11 @@ Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `
 - #361 in #396 (novi avti, partyslo): nove datoteke v `js/cars/`, `js/render.js`, `js/deli/barve.js` (luč pod avtom ob srednji osi), `tests/kit.test.js`, `tests/fleet.test.js`: v seznamih obdrži vrstice obeh.
 - Kdor gre na `main` drugi, spor razreši; dogovor gre na tablo #382 in v `docs/vrsta.md` (Usklajevanje med računi). Zbirni PR je bil v vrsti za temi PR; po odločitvi uporabnika 7. 11. ob 14.15 gre na `main` takoj za #392 (vrstica 18), pred #304, #322, #361 in #396. Poskusni spoj 7. 11. (seja teren, `git merge-tree`): zbirna veja se v svež `main` spoji brez sporov, štirim PR pa ne doda novih (njihovi spori z `main` so z njo ali brez nje isti); kdor gre na `main` za njo, po spoju poženi `npm run test:related`.
 
+## Odprto: skupina `starejsi`
+- Deset starejših avtov dobi posodobitev na raven KOLIBRIJA: KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV in SAMUM 4x4 (prošnja na tabli #382, komentar 6707802738, točka 2).
+- Njihovi modeli so v `js/core.js`, ne v `js/cars/`. STRELA EV in SAMUM 4x4 vozita v treh misijah, zato po spremembi poženi še teste misij.
+- Račun in termin določijo v tedenskem načrtu v ponedeljek 9. 11.; do takrat skupine ne začni.
+
 ## Predaja
 
 | Skupina | Stanje | Kaj sledi |
