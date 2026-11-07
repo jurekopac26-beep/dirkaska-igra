@@ -213,6 +213,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperR', () => {
           for (const sd of [-1, 1]) K.sweep([[0, -0.022], [0.012, 0], [0, 0.022], [-0.012, 0]], [[-1.99, 0.44, sd * 0.81], [-2.17, 0.44, sd * 0.67], [-2.24, 0.44, sd * 0.42], [-2.245, 0.44, sd * 0.18]], CH, { capA: CH, capB: CH });
           K.rect(-2.228, 0.465, 0, 0.28, 0.1, [0.93, 0.93, 0.9], { dir: '-x', part: 'plate' });
+          K.rect(-2.224, 0.515, 0, 0.008, 0.28, [0.93, 0.93, 0.9], { dir: 'y', part: 'plate' });   // (its top edge, 8 mm deep: the plate a piece with a volume on the road; two faces, the shell is at its triangle budget)
         });
         K.deli('auspuh', () => { for (const sd of [-1, 1]) K.exhaust(-2.25, 0.25, sd * 0.07, 0.028, 0.3, { part: 'body' }); });   // (the garage's: mounts.auspuh)
         // ---- the windscreen's chrome frame (its top and its base, on the glass), the cowl's three wipers ----
