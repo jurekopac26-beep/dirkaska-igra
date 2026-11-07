@@ -1362,22 +1362,22 @@
   }
  },
  "zurich": {
-  "meshes": 256,
-  "verts": 358582,
-  "instances": 308,
+  "meshes": 437,
+  "verts": 520554,
+  "instances": 1225,
   "props": 0,
-  "crowd": 17,
-  "world": "8aad5d7e",
+  "crowd": 7,
+  "world": "2a1de8f0",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "ed93201b",
+   "-:MeshLambertMaterial": "b6618e1b",
    "-:MeshPhongMaterial": "e85fc7e0",
-   "crowd:MeshLambertMaterial": "58eadf5a",
-   "ao:MeshBasicMaterial": "66170093",
-   "tyremarks:MeshBasicMaterial": "46c06bf6",
-   "roadwear:MeshLambertMaterial": "5856ac42",
-   "brakeBoards:MeshLambertMaterial": "e746ea8f"
+   "crowd:MeshLambertMaterial": "a6c5f6c6",
+   "ao:MeshBasicMaterial": "33c5ffbd",
+   "tyremarks:MeshBasicMaterial": "8122b4ab",
+   "roadwear:MeshLambertMaterial": "c14fe668",
+   "brakeBoards:MeshLambertMaterial": "5b9b7f43"
   }
  }
 }
