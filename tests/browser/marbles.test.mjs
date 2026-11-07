@@ -1,7 +1,8 @@
 // The marbles in the game (Crystal Palace, a race with tyres, the player on autopilot, the camera behind the car, 844 × 390): none at the
 // start; after two laps the band is drawn (one mesh, one draw call more, only where there is a band, as dark as the race has laid it), and
 // from the camera behind the car, before the corner with the most of it, the road beside the racing line is darker there than without it;
-// the rain washes it away (the band fades out).
+// the rain washes it away (the band fades out). The rubbered-in racing line (84) the same way: drawn after two laps, one draw call more,
+// the line darker with it; the rain washes it away too.
 //   node tests/browser/marbles.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -60,10 +61,36 @@ try {
   T.check('from the camera behind the car: the band in sight before the corner, one draw call more than without it', on.vis && !off.vis && on.n >= 2 && on.calls === off.calls + 1, JSON.stringify({ spot, calls: [on.calls, off.calls], pts: on.n }));
   T.check('... and the road there darker with the band than without it', on.lum > 0 && on.lum < off.lum - 4, `luminance ${on.lum.toFixed(1)} with the band, ${off.lum.toFixed(1)} without`);
 
+  // the rubbered-in line (84): after two laps its layer drawn on the racing line (one mesh over the lap, a row every 4 m), faint and
+  // darkening as the race lays it (rb), a row every 4 m in the bends, every 8 m on the straights; from the same spot one draw call more with it than without, the racing line darker with it
+  const rub = await page.evaluate(() => { const m = Render.scene.getObjectByName('rubberline'), R = window.__game.race;
+    return { rb: +R.mb.rb.toFixed(3), lv: +R.mb.lv.toFixed(3), mesh: m ? { vis: m.visible, op: +m.material.opacity.toFixed(3), rows: m.geometry.attributes.position.count / 5, N: R.track.N } : null }; });
+  T.check('the rubbered-in line after two laps: drawn over the whole lap (a row every 4-8 m), fainter than the marbles laid (rb < lv), opacity as dark as rb', !!rub.mesh && rub.mesh.vis && rub.rb > 0.2 && rub.rb < rub.lv &&
+    Math.abs(rub.mesh.op - (0.22 + 0.5 * Math.round(rub.rb * 100) / 100)) < 0.006 && rub.mesh.rows > rub.mesh.N / 4 && rub.mesh.rows <= Math.ceil(rub.mesh.N / 2) + 1, JSON.stringify(rub));
+  const shotR = (on) => page.evaluate(([on, bi]) => {
+    const g = window.__game, R = g.race, Tk = R.track, N = Tk.N, P = R.player, gl = document.getElementById('gl').getContext('webgl2') || document.getElementById('gl').getContext('webgl');
+    if (window.__rb == null) window.__rb = R.mb.rb;
+    R.mb.rb = on ? window.__rb : 0;
+    Render.resetCam(); for (let i = 0; i < 30; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+    const c0 = window.__gl.calls; Render.frame(1 / 60, 1, P, 'chase', {}); const calls = window.__gl.calls - c0;
+    const C = Render.camera, W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, px = new Uint8Array(8 * 4 * 4); let lum = 0, n = 0;
+    for (let o = -14; o <= 14; o += 4) { const i = (bi + o + N) % N, y = (Tk.hasElev && Tk.hy ? Tk.hy[i] : 0) + 0.03;
+      const v = new THREE.Vector3(Tk.px[i] + Tk.nx[i] * Tk.rl[i], y, Tk.pz[i] + Tk.nz[i] * Tk.rl[i]).project(C);
+      if (!(v.z < 1 && Math.abs(v.x) < 0.9 && Math.abs(v.y) < 0.9)) continue;
+      gl.readPixels(Math.round((v.x + 1) / 2 * W) - 4, Math.round((v.y + 1) / 2 * H) - 2, 8, 4, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      let t = 0; for (let k = 0; k < px.length; k += 4) t += 0.299 * px[k] + 0.587 * px[k + 1] + 0.114 * px[k + 2]; lum += t / 32; n++; }
+    return { calls, n, lum: n ? lum / n : -1, vis: Render.scene.getObjectByName('rubberline').visible };
+  }, [on, spot.bi]);
+  const rOn = await shotR(true), rOff = await shotR(false); await shotR(true);
+  T.check('the rubbered-in line from the camera behind the car: one draw call more than without it, the racing line darker with it', rOn.vis && !rOff.vis && rOn.n >= 2 && rOn.calls === rOff.calls + 1 && rOn.lum < rOff.lum - 2,
+    `calls ${rOn.calls} / ${rOff.calls}, luminance ${rOn.lum.toFixed(1)} with it, ${rOff.lum.toFixed(1)} without (${rOn.n} points)`);
+
   // the rain: the water on the road at once, a minute and a half of it washes the band away
   await page.evaluate(() => { const g = window.__game; g.race.setRain(1); Render.scene.visible = false; g.sim(90, true); Render.scene.visible = true; for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, g.race.player, 'chase', {}); });
   const b2 = await band();
   T.check('the rain washes it away: the band faded out', b2.lv < 0.1 && b2.lv < b1.lv / 5 && b2.mesh && (b2.mesh.op < 0.1 || !b2.mesh.vis), JSON.stringify(b2));
+  const r2 = await page.evaluate(() => { const m = Render.scene.getObjectByName('rubberline'), R = window.__game.race; return { rb: +R.mb.rb.toFixed(3), vis: m.visible, op: +m.material.opacity.toFixed(3) }; });
+  T.check('... and the rubbered-in line with it', r2.rb < 0.05 && (r2.op < 0.25 || !r2.vis), JSON.stringify(r2));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
