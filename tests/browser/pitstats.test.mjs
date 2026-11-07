@@ -22,10 +22,13 @@ try {
         if (P.lap >= 1 && !P.repairN && !P.pitDone) { P.pitWant = true; if (!asked && faster) R.pst.log.push({ c: R.cars.find(c => c !== P), lap: 1, t: 0.8, lane: 5, ty: 'M', at: R.time }); asked = true; }   // (in at the end of the first lap, as tests/browser/hud.test.mjs; a faster stop before it: made up)
         if (P.repairN && !P.inPit) P.pitWant = false;
         if (P.inPit || g.pitAuto.st) g.sim(1 / 30, false, 0, 0); else g.sim(done ? 1 : 0.25, true);
+        // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in the first
+        // lap's crowd can turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+        if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P);
         if (P.pitDone) done = true;
         if (P.inPit || g.pitAuto.st || (done && toasts.length < 1)) await frame();
       }
-      for (let k = 0; k < 400 && g.screen !== 'results'; k++) { g.sim(1, true); await frame(); }
+      for (let k = 0; k < 400 && g.screen !== 'results'; k++) { g.sim(1, true); if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P); await frame(); }
       await new Promise(r => setTimeout(r, 600));
       const el = document.getElementById('res-laps'), rows = [...el.querySelectorAll('.ltab.stops tbody tr')];
       const L = R.pst.log, f = R.fastestStop();
