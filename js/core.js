@@ -1787,11 +1787,15 @@ const Core = (function () {
   // moment of inertia), power its power (kw, Tmax), grip its lateral limit (arc.amax; the autopilot's corner speed as an upgrade's,
   // upgGrip), kmh its top speed (the drag that moves the speed its power holds against the air by that much: Car.stepCS's Kp / v =
   // kD v^2; no faster than its top gear's revs), brake its brakes (brakeG). Returns the sums (null: no part known)
-  function applyDeli(car, deli) {
+  // lv: the game's four upgrade levels given too (Car opts.upg; the career's are the garage's parts', js/garage.js levels): the parts that
+  // count toward one of them (DELI_UPG, js/garage-shop.js: k) give the level's effect, not their own as well; of them only the tyres'
+  // grip on each surface (tyre) stays theirs
+  const DELI_UPG = { gume: 1, auspuh: 1, filter_zraka: 1, cip: 1, turbo: 1, krilo: 1, aero: 1, zavore: 1 };
+  function applyDeli(car, deli, lv) {
     if (typeof DELI === 'undefined') return null;
     const D = DELI.clean(deli || car.deli, null), ids = Object.keys(D); if (!ids.length) return null;
     const e = { kg: 0, power: 0, grip: 0, kmh: 0, brake: 0, lower: 0, tint: 0, tyre: null };
-    for (const id of ids) { const f = DELI.effect(id, D[id]); if (f) for (const k in e) { if (k === 'tyre') { if (f.tyre) e.tyre = f.tyre; } else if (k === 'tint') e.tint = Math.max(e.tint, f.tint || 0); else e[k] += f[k] || 0; } }
+    for (const id of ids) { const f = DELI.effect(id, D[id]); if (f && lv && DELI_UPG[id]) { if (f.tyre) e.tyre = f.tyre; continue; } if (f) for (const k in e) { if (k === 'tyre') { if (f.tyre) e.tyre = f.tyre; } else if (k === 'tint') e.tint = Math.max(e.tint, f.tint || 0); else e[k] += f[k] || 0; } }
     // (sklop 3: lower the body's drop on its springs (m; the renderer's, DELI.dress), tint the glass's (the renderer's), tyre the tyres' grip
     // on each surface: its points (the garage's, 0 the stock road tyre's) DELI_TYRE_K of a per cent each, deliTyre)
     if (e.lower) car.dLower = e.lower;
@@ -1813,6 +1817,21 @@ const Core = (function () {
   // gravel packed with snow (trk.snowK); gravel: the loose ground (grass, gravel, makadam); else the road, dry to wet by the rain's water
   // (read off the car's wet grip: 1 dry, WET soaked)
   const DELI_TYRE_K = 0.4;
+  // the career's wear on the player's own car, carried over from its last races till the garage's service (the garage's cond: clean,
+  // body, engine 0..1, 1 as new; js/game.js careerCond): the body's knocks as damage spread over the car (at most half: it still drives)
+  // with a few old dents (old: drawn, no glass, chips or parts off), the engine's wear as power (down to 88 %), the dirt the renderer's
+  // to start with (c.dirt0)
+  function careerWear(c, cond) {
+    if (!c || !cond) return;
+    const v = (x) => Number.isFinite(x) ? clamp(1 - x, 0, 1) : 0, b = Math.min(0.5, v(cond.body)), e = v(cond.engine);
+    if (b > 0.01 && c.dmgMode) {
+      applyDamage(c, b / ((c.dmgK || 1) * (c.m.dmgK || 1)));
+      const L = c.m.len * 0.5, W = c.m.wid * 0.5;
+      for (const [x, z, k] of [[0.85, -0.7, 0.45], [-0.8, 0.6, 0.35], [0.1, 1, 0.25]]) c.dents.push({ lx: L * x, lz: W * z, amt: b * k, old: true });
+    }
+    if (e > 0.01) { const M = Object.assign({}, c.m, { kw: c.m.kw * (1 - 0.12 * e) }); M.Tmax = M.kw * 1000 / (M.redline * TAU / 60 * tqShape(1.0)); c.m = M; }
+    c.dirt0 = v(cond.clean);
+  }
   function deliTyre(T, sf, trk, wet) {
     if (T.winter || (trk.snowK && (sf === 5 || sf === 6))) return T.snow;
     if (LOOSE[sf]) return T.gravel;
@@ -2150,7 +2169,7 @@ const Core = (function () {
       // knocked back onto the asphalt: the marshals move it after 8; fin: [x, z] where the marshals left it for want of a better spot, null
       // otherwise), hold: s left waiting for the marshals to refit its wheels, lt: s since a wheel came off
       if (kitParts(b)) this.wreck = wreck0({});
-      if (opts.deli) applyDeli(this, opts.deli);   // (the garage's parts: their effects; this.deli, the renderer draws them)
+      if (opts.deli) applyDeli(this, opts.deli, !!opts.upg);   // (the garage's parts: their effects (with the upgrade levels given: the levels' for those parts); this.deli, the renderer draws them)
     }
 
     get speed() { return Math.hypot(this.vx, this.vz); }
@@ -7162,25 +7181,34 @@ const Core = (function () {
   const champKeys = (nAI) => [PLAYER_KEY].concat(Array.from({ length: nAI }, (_, k) => aiDriver(k).name));
 
   /* ---------------------------------------------------------------------
-     CAREER (kariera): prize money from races buys cars and upgrades. Start with 10 000 EUR and the PICO TURBO; the prize by the finishing
-     place (the winner 6000 EUR, the last of 13 300 EUR; in a bigger field the 13th and later 300 EUR), more for a longer race (by the distance: a 2 km race 0.6x, 8 km 1x, up to 2.5x)
-     and a harder field (0.7x easy, 1.4x hard); the fastest lap of the race 500 EUR more, pole in qualifying 1000 EUR; the championship:
-     20 000 EUR for the title, 10 000 / 6000 EUR for second / third (x the difficulty); a time trial: a medal (gold 5000, silver 3000,
-     bronze 1500 EUR) or a personal best (2000 EUR), else 500 EUR for getting there. Prices: the cars below, an upgrade level 4000,
-     7000 or 12 000 EUR (the level after the one bought; the stock parts are free)
+     CAREER (kariera): prize money from races buys cars and upgrades. Start with 10 000 coins and the PICO TURBO. The prices are real ones
+     (1 coin = 1 EUR; the user's choice 3. 11. 2026, nacrti/odlocitve.md): a car what such a car costs new (a classic: one kept well; a
+     vehicle not in the table: its def's price). The prize by the finishing place (the winner 15 000, the last of 13 750; in a bigger
+     field the 13th and later 750), more for a longer race (by the distance: a 2 km race 0.6x, 8 km 1x, up to 2.5x) and a harder field
+     (0.7x easy, 1.4x hard); the fastest lap of the race 1250 more, pole in qualifying 2500; the championship: 50 000 for the title,
+     25 000 / 15 000 for second / third (x the difficulty); a time trial: a medal (gold 12 500, silver 7500, bronze 3750) or a personal
+     best (5000), else 1250 for getting there. Every prize grows with the value of the car it is won in (careerCarK: x the root of its
+     price / 50 000, 1x to 5x). Prices: the cars below, an upgrade level 4000, 7000 or 12 000 (the level after the one bought; the stock
+     parts are free)
      --------------------------------------------------------------------- */
   const CAREER = {
     start: 10000, car0: 'pico',
-    car: { pico: 0, p206: 20000, kaze: 30000, muscle: 40000, strega: 45000, vortex: 50000, truck: 55000, rally: 60000, ev: 75000, formula: 90000, lm: 110000 },
+    car: { pico: 48000, p206: 36000, kaze: 62000, muscle: 68000, strega: 95000, vortex: 78000, truck: 350000, rally: 400000, ev: 160000, formula: 650000, lm: 600000,
+      miska: 35000, kolibri: 12000, raketa: 22000, levs: 36000, levk: 40000, lisica: 18000, sokol: 65000, panter: 125000, jelen: 280000, modras: 260000, perun: 500000,
+      skorpijon: 1400000, jastreb: 130000, gad: 190000, blisk: 450000, lev: 800000, zmaj: 1200000, hrosc: 28000, medved: 190000, gozdar: 300000, pescenjak: 500000,
+      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, jezek: 35000, predsednik: 150000,
+      goljat: 300000, superkombi: 450000 },
     upg: [0, 4000, 7000, 12000],
-    place: [6000, 4500, 3500, 2800, 2300, 1900, 1600, 1300, 1100, 900, 700, 500, 300],
-    diff: [0.7, 1, 1.4, 1.8], champ: [20000, 10000, 6000], medal: { gold: 5000, silver: 3000, bronze: 1500 }, pb: 2000, finishTT: 500, fastest: 500, pole: 1000,
+    place: [15000, 11250, 8750, 7000, 5750, 4750, 4000, 3250, 2750, 2250, 1750, 1250, 750],
+    diff: [0.7, 1, 1.4, 1.8], champ: [50000, 25000, 15000], medal: { gold: 12500, silver: 7500, bronze: 3750 }, pb: 5000, finishTT: 1250, fastest: 1250, pole: 2500,
   };
-  // prize money for a race: pos (1 = the winner), n cars (up to 13: the places spread over the table, the last 300 EUR; more: the table by the
-  // place, from the 13th on 300 EUR), the race distance in m, the difficulty (0..3: super težka pays most, the police run's hardest; a race
-  // itself drives it as težka); rounded to 50 EUR
-  function careerPrize(pos, n, dist, diff) {
-    const k = clamp(dist / 8000, 0.6, 2.5) * (CAREER.diff[diff] || 1), P = CAREER.place, i = n > P.length ? pos - 1 : Math.round((pos - 1) * (P.length - 1) / Math.max(1, n - 1));   // (a field of more than 13: by the place itself, the 13th and later 300 EUR)
+  // a prize's factor for the car it is won in: the root of its price / 50 000, from 1x (a 50 000 car and cheaper) to 5x (1 250 000 and dearer)
+  const careerCarK = (id) => clamp(Math.sqrt((CAREER.car[id] || 0) / 50000), 1, 5);
+  // prize money for a race: pos (1 = the winner), n cars (up to 13: the places spread over the table, the last 750; more: the table by the
+  // place, from the 13th on 750), the race distance in m, the difficulty (0..3: super težka pays most, the police run's hardest; a race
+  // itself drives it as težka), the car it is won in (its id: careerCarK; none: 1x); rounded to 50
+  function careerPrize(pos, n, dist, diff, car) {
+    const k = clamp(dist / 8000, 0.6, 2.5) * (CAREER.diff[diff] || 1) * (car ? careerCarK(car) : 1), P = CAREER.place, i = n > P.length ? pos - 1 : Math.round((pos - 1) * (P.length - 1) / Math.max(1, n - 1));   // (a field of more than 13: by the place itself, the 13th and later the last)
     return Math.round(P[clamp(i, 0, P.length - 1)] * k / 50) * 50;
   }
   // the price of an upgrade from level `from` to level `to` (the levels in between too)
@@ -7327,7 +7355,7 @@ const Core = (function () {
       M.Tmax = M.kw * 1000 / (wr * tqShape(1.0));
       ARC[M.id] = { amax: d.arc.amax, kv: d.arc.kv, bscale: d.arc.bscale != null ? d.arc.bscale : 1, rmin: d.arc.rmin };
       CSP[M.id] = Object.assign({}, d.csp);
-      CAREER.car[M.id] = d.price;
+      if (CAREER.car[M.id] == null) CAREER.car[M.id] = d.price;   // (the table's real price first: CAREER)
       MODELS.push(M);
     }
     // patch defs, in order: onto a vehicle registered by now
@@ -7376,8 +7404,8 @@ const Core = (function () {
   }
 
   return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
-    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
+    aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
 })();
 
 
