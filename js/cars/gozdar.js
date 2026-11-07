@@ -79,10 +79,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       matice: { k: 6, r: 0.2 },
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet beside its scoop and over the cab's roof (not over the open bed);
       // the decals behind the doors' number panels and on the bed's sides behind the rear wheels (under the livery's band), on the
-      // bonnet and the roof; the sun strip where the stock one is; the fuel cap on the right bed side behind the cab; the calipers
+      // bonnet (back from 0.3 m behind its nose: the loft's sections close there, the flames cut at each, over the room) and the roof;
+      // the sun strip where the stock one is; the fuel cap on the right bed side behind the cab; the calipers
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.26, 0.5], x: [[0.8, 2.3], [-0.64, 0.34]] },
-      nalepke: { side: [[-0.3, 0.0], [-2.36, -2.0]], y: [0.66, 0.86], hood: { x: [0.9, 2.1], z: [0.3, 0.7] }, roof: { x: [-0.55, 0.04] } },
+      nalepke: { side: [[-0.3, 0.0], [-2.36, -2.0]], y: [0.66, 0.86], hood: { x: [0.9, 1.95], z: [0.3, 0.7] }, roof: { x: [-0.55, 0.04] } },
       soncni_pas: { x: [0.34, 0.43] }, zamasek: { x: -0.74, y: 0.88, z: 1.08, r: 0.045 },
       celjusti: { r: [0.1, 0.18], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) the V8's bay under the long bonnet: the filter beside the block's left, the turbo

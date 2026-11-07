@@ -6,7 +6,8 @@
                    bonnet's scoop, x: [[x0, x1] ...] only these stretches of the top (not over an open bay or a canvas roof), w: the
                    top's half width, every band cut to it (a narrow bonnet: none past its edge; none: as drawn), fit: true, each band cut to
                    the top's own half width along the car, less 1.2 cm (JASTREB's nose narrowing to its mouth, the tail to its end), slash:
-                   the doors' diagonal slashes' (8) top, as steep (none: 0.84, clipped at the belt; PANTER's door glass a pane from the belt) }
+                   the doors' diagonal slashes' (8) top, as steep (none: 0.84, clipped at the belt; PANTER's door glass a pane from the belt), sx:
+                   [x0, x1] the bands along the sides (7, 13) only that far (none: -1.48 to 1.45; SKAKAČ's sides under its wings) }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
@@ -139,7 +140,7 @@
     const taper = (zc, w0, w1, col) => { for (const [xa, xb] of runs) { const w = (x) => w1 + (w0 - w1) * (x - X0) / ((X1 - X0) || 1);   // (wide at the nose, narrow at the tail)
       if (W != null && cz(zc + w(xa) / 2) - cz(zc - w(xa) / 2) < 0.004 && cz(zc + w(xb) / 2) - cz(zc - w(xb) / 2) < 0.004) continue;
       for (const P of fit([[xa, cz(zc - w(xa) / 2)], [xb, cz(zc - w(xb) / 2)], [xb, cz(zc + w(xb) / 2)], [xa, cz(zc + w(xa) / 2)]])) ly.topZ(P, col, 0.007); } };
-    const side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? -1.48 : x0, y0, x1 == null ? 1.45 : x1, y1), col, 0.006);
+    const SX = m.sx || [-1.48, 1.45], side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? SX[0] : x0, y0, x1 == null ? SX[1] : x1, y1), col, 0.006);   // (sx: the bands along the sides only that far)
     const zo = Z[0], zi = Z[1];
     switch (n) {
       case 1: band(0.07, 0.11, S); break;                                                       // ozki črti: a narrow pair in the middle

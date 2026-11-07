@@ -94,7 +94,9 @@
   // end (the net's rod to it), the last but one the top's front end (the frame's top to it), more between them where the glass curves, JASTREB's;
   // null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
   // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar; rub: the rubbing strip's middle height (0.595; a high door,
-  // GOZDAR's: its own), crease: [y, y] the pressed lines' heights (0.6, 0.72) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
+  // GOZDAR's: its own), crease: [y, y] the pressed lines' heights (0.6, 0.72), lexOut: the light glass (11, 15) that much further out
+  // (0; a window band whose skin's triangles bulge past its line, SKAKAČ's), rubSide: true, the rubbing strip's bolts (3, Visoki) each on
+  // the side's own line (none: at the handle's; a door whose side narrows towards the front, SKAKAČ's) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
   // latch) or the light glass (lexan: clearer, its black printed border, a sliding hatch or a vent)
@@ -129,7 +131,7 @@
     const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
-      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, nwin = (pts, col, l) => win(pts, col, l - ni);
+      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win0 = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, win = win0, nwin = (pts, col, l) => win(pts, col, l - ni);
       if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
       // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
       if (F) { const fc = O.frame || O.skin || P;
@@ -143,7 +145,7 @@
       if (O.mould) { const [r0, r1, r2, r3, rm] = m.rub != null ? [m.rub - 0.035, m.rub - 0.006, m.rub + 0.006, m.rub + 0.035, m.rub] : [0.56, 0.589, 0.601, 0.63, 0.595];   // (rub: its middle's height)
         side([[xa + 0.02, r0], [xb - 0.02, r0], [xb - 0.02, r3], [xa + 0.02, r3]], O.mould, 0.008);
         side([[xa + 0.02, r1], [xb - 0.02, r1], [xb - 0.02, r2], [xa + 0.02, r2]], [0.16, 0.16, 0.17], 0.0095);
-        if (K.hi) for (let i = 0; i < 4; i++) K.discX(xa + 0.08 + i * (xb - xa - 0.16) / 3, rm, sd * (hz + 0.01), 0.009, 6, AL2, 1, o); }
+        if (K.hi) for (let i = 0; i < 4; i++) { const bx = xa + 0.08 + i * (xb - xa - 0.16) / 3; K.discX(bx, rm, sd * (m.rubSide ? LD.prop(bx, 'w') + 0.0105 : hz + 0.01), 0.009, 6, AL2, 1, o); } }   // (rubSide: each bolt on the side's own line)
       if (O.seal) { side([[xa, ya], [xb, ya], [xb, ya + 0.012], [xa, ya + 0.012]], BLK, 0.0045); side([[xa, ya], [xa + 0.012, ya], [xa + 0.012, yb], [xa, yb]], BLK, 0.0045); side([[xb - 0.012, ya], [xb, ya], [xb, yb], [xb - 0.012, yb]], BLK, 0.0045); }
       if (O.rivets && K.hi) for (const ry of [ya + 0.05, yb - 0.04]) for (let i = 0; i < 9; i++) { const rx = xa + 0.04 + i * (xb - xa - 0.08) / 8;
         side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, 0.0045); }
@@ -163,7 +165,7 @@
         nwin([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
       // the light glass (lexan): clearer than glass, its black printed border, a sliding hatch (open: dark inside, rails over and under
       // it, a finger pull) or a round vent
-      if (O.lexan && W) { const LX = [0.46, 0.52, 0.6];
+      if (O.lexan && W) { const LX = [0.46, 0.52, 0.6], lo = m.lexOut || 0, win = (pts, col, l) => win0(pts, col, l + lo);   // (lexOut: the light glass that much further out)
         win([[u0, t0], [u1, t0], [u1, t1], [u0, t1]], LX, 0.012);
         win([[u0, t0], [u1, t0], [u1, t0 + 0.035], [u0, t0 + 0.035]], BLK, 0.014); win([[u0, t1 - 0.035], [u1, t1 - 0.035], [u1, t1], [u0, t1]], BLK, 0.014); win([[u0, t0], [u0 + 0.03, t0], [u0 + 0.03, t1], [u0, t1]], BLK, 0.014);
         if (O.lexan === 'slide') { const a = u0 + 0.06, b = a + 0.28, c = t0 + 0.08, e = c + 0.32;
