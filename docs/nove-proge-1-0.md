@@ -20,7 +20,7 @@ Meritve so iz seje seznama (OSM, točke na 5 m, kot `tools/proge-pregled.js`). O
 | B4 | `zandvoort` | Zandvoort, Nizozemska | dirkališče v sipinah, 4,3 km | 367 °/km, 56 %, 9 ovinkov | sipine z grmovjem, ograje, voda, tribune, stavbe | dva nagnjena ovinka; ovinki po osebah dobijo opisna imena |
 | B5 | `london` | London, Anglija | mestna, 1,9 km: Whitehall, Trafalgarski trg, nabrežje Temze, Westminster | 338 °/km | stavbe, trgi, nabrežje, mostova | izjema od pravila ena proga na državo (spodaj) |
 
-**London** (uporabnik 7. 11. ob ~21.20): znane stavbe samo kot generične oblike, brez napisov, logotipov, kipov in imen resničnih oseb, tudi steber na Trafalgarskem trgu; obremenitev v mejah, zato preprosto. Izletna cona zanj ne velja (mestne proge, `CLAUDE.md`).
+**London** (uporabnik 7. 11. ob ~21.20): znane stavbe samo kot generične oblike, brez napisov, logotipov, kipov in imen resničnih oseb, tudi steber na Trafalgarskem trgu; obremenitev v mejah, zato preprosto. Izletna cona zanj ne velja (mestne proge, `CLAUDE.md`). Vzor je mestna proga Zürich, Švica (PR #465, biketraveler: nabrežja, mostova, generične stavbe po OSM v `js/world-zurich.js`); ko je na `main`, London uporabi njene gradnike.
 
 ## Podatki poti: `tools/<id>/config.json`
 
