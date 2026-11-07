@@ -1,0 +1,195 @@
+{
+ "id": "zurich",
+ "about": "Zürich, Švica (id zurich): city race through the centre of Zürich, along the Limmat and the lake",
+ "box": [
+  47.355,
+  8.515,
+  47.39,
+  8.565
+ ],
+ "closed": true,
+ "osmStep": [
+  0.01,
+  0.01
+ ],
+ "route": [
+  [
+   47.3676,
+   8.5449,
+   "Limmatquai",
+   "start: Limmatquai by Bellevue, northbound along the Limmat"
+  ],
+  [
+   47.3717,
+   8.5434,
+   "Limmatquai",
+   ""
+  ],
+  [
+   47.3737,
+   8.5436,
+   "Limmatquai",
+   ""
+  ],
+  [
+   47.3742,
+   8.5422,
+   "Rudolf-Brun-Brücke",
+   "over the Limmat"
+  ],
+  [
+   47.3743,
+   8.54,
+   "Uraniastrasse",
+   "west"
+  ],
+  [
+   47.3738,
+   8.5385,
+   "Bahnhofstrasse",
+   "south"
+  ],
+  [
+   47.37,
+   8.539,
+   "Bahnhofstrasse",
+   "Paradeplatz"
+  ],
+  [
+   47.3672,
+   8.5405,
+   "Bahnhofstrasse",
+   "to the lake"
+  ],
+  [
+   47.3664,
+   8.5412,
+   "Bürkliplatz",
+   ""
+  ],
+  [
+   47.3666,
+   8.5421,
+   "Quaibrücke",
+   "over the outflow of the lake (eastbound carriageway)"
+  ],
+  [
+   47.3669,
+   8.5442,
+   "Quaibrücke",
+   ""
+  ]
+ ],
+ "prefer": [
+  "Limmatquai",
+  "Central",
+  "Bahnhofbrücke",
+  "Bahnhofquai",
+  "Uraniastrasse",
+  "Talstrasse",
+  "General-Guisan-Quai",
+  "Bürkliplatz",
+  "Quaibrücke",
+  "Bellevueplatz",
+  "Rudolf-Brun-Brücke",
+  "Bahnhofstrasse"
+ ],
+ "geoRoads": [],
+ "geoWater": [
+  "Limmat",
+  "Zürichsee",
+  "Schanzengraben",
+  "Sihl"
+ ],
+ "marks": [],
+ "places": [],
+ "driveExtra": [
+  "pedestrian"
+ ],
+ "routeB": [
+  [
+   47.3676,
+   8.5449,
+   "Limmatquai",
+   "start: Limmatquai by Bellevue, northbound along the Limmat"
+  ],
+  [
+   47.3717,
+   8.5434,
+   "Limmatquai",
+   ""
+  ],
+  [
+   47.3758,
+   8.544,
+   "Limmatquai",
+   ""
+  ],
+  [
+   47.377,
+   8.544,
+   "Central",
+   "Central"
+  ],
+  [
+   47.3773,
+   8.5418,
+   "Bahnhofbrücke",
+   "over the Limmat"
+  ],
+  [
+   47.3756,
+   8.5412,
+   "Bahnhofquai",
+   "south along the west bank"
+  ],
+  [
+   47.3742,
+   8.5395,
+   "Uraniastrasse",
+   "west"
+  ],
+  [
+   47.3738,
+   8.535,
+   "Uraniastrasse",
+   ""
+  ],
+  [
+   47.373,
+   8.5345,
+   "Talstrasse",
+   "south"
+  ],
+  [
+   47.369,
+   8.5375,
+   "Talstrasse",
+   ""
+  ],
+  [
+   47.3665,
+   8.5405,
+   "General-Guisan-Quai",
+   "lake"
+  ],
+  [
+   47.3664,
+   8.5412,
+   "Bürkliplatz",
+   ""
+  ],
+  [
+   47.3666,
+   8.5421,
+   "Quaibrücke",
+   "over the outflow of the lake (eastbound carriageway)"
+  ],
+  [
+   47.3669,
+   8.5442,
+   "Quaibrücke",
+   ""
+  ]
+ ]
+}
