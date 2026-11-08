@@ -2743,10 +2743,10 @@
   "finished": 13,
   "cars": 13,
   "winner": 194.36,
-  "spins": 0,
+  "spins": 1,
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "d7047e5119d9e6edfc2ca37a"
+  "digest": "6c9d0ec3b81262aa3523d0f9"
  }
 }

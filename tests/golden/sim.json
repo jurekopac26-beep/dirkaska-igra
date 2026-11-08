@@ -5236,7 +5236,7 @@
   }
  },
  "sosnova/crash/cs": {
-  "digest": "066cfc84256f2675bfccfadf",
+  "digest": "059c565eeebea9ba940c4615",
   "lead": 1611.7,
   "car0": [
    116.37,
@@ -5250,15 +5250,15 @@
   }
  },
  "sosnova/formula/cs": {
-  "digest": "2222abfde460ee27a61be83c",
+  "digest": "64538d314abb3a8fb1b44780",
   "lead": 1763.4,
   "car0": [
-   149.88,
-   -10.85
+   141.96,
+   -26.42
   ],
   "cover": {
    "dmg": 1,
-   "loose": 8,
+   "loose": 9,
    "rescues": 0,
    "repairs": 0
   }
