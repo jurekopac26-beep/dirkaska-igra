@@ -1982,7 +1982,7 @@ const Core = (function () {
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // power boost and drag (fit to SWGP2 acceleration curves)
   // the manual gearbox (car.man, only the drag race sets it: js/zabava/drag.js; a car without it shifts by itself as ever): no automatic
   // shift, the gear goes up only when asked (man.up: the presses not taken yet, one per shift, MAN.t s each, as the automatic one's 0.1 s);
-  // on the rev limiter (MAN.lim x the redline) no drive; under the revs a shift at MAN.ok x the redline lands at in this gear (that x its
+  // on the rev limiter (MAN.lim x the redline; not in the top gear) no drive; under the revs a shift at MAN.ok x the redline lands at in this gear (that x its
   // ratio over the one below's) less of it, down to MAN.lug at MAN.span under them (the engine bogging until it revs up). A shift at MAN.ok
   // or later, off the limiter at once, is as quick as the automatic gearbox. man.log: each shift { g: the new gear, u: the revs it was
   // made at (x the redline), t: the time on the limiter before it }
@@ -1990,7 +1990,7 @@ const Core = (function () {
   const manRev = (c, M, vl) => (c.gear > 0 ? Math.max(0, vl) / M.rw * M.gears[c.gear - 1] * M.final * 9.5493 / M.redline : 0);   // (the revs in this gear, x the redline)
   function manShift(c, M, vl, dt) {
     const G = c.man, u = manRev(c, M, vl);
-    if (u >= MAN.lim - 0.01) G.limT = (G.limT || 0) + dt;   // (on the limiter: the drive cut, the revs bouncing just under it)
+    if (u >= MAN.lim - 0.01 && c.gear < M.gears.length) G.limT = (G.limT || 0) + dt;   // (on the limiter: the drive cut, the revs bouncing just under it)
     if (c.shiftT > 0 || !(G.up > 0)) return;
     G.up--;
     if (c.gear < 1 || c.gear >= M.gears.length) return;
@@ -1999,7 +1999,7 @@ const Core = (function () {
   }
   function manK(c, M, vl) {   // the share of the engine's drive in this gear at these revs
     const u = manRev(c, M, vl);
-    if (u >= MAN.lim) return 0;
+    if (u >= MAN.lim && c.gear < M.gears.length) return 0;   // (the top gear: no limiter, as the automatic gearbox's, nothing to shift to)
     if (c.gear <= 1) return 1;
     const uI = MAN.ok * M.gears[c.gear - 1] / M.gears[c.gear - 2];
     return u >= uI ? 1 : Math.max(MAN.lug, 1 - (uI - u) / MAN.span * (1 - MAN.lug));
@@ -6141,7 +6141,7 @@ const Core = (function () {
           c.rubber += (target - c.rubber) * cdt * 0.5;
         }
         if (!c.locked) {
-          if (!dnf(c)) aiControl(c, this, cdt);
+          if (!dnf(c)) (c.ctl || aiControl)(c, this, cdt);   // (c.ctl: a car driven by a mode of its own, the drag race's rival up to its finish, js/zabava/drag.js)
           if (c.finished) { c.inThr *= 0.5; }
         } else { c.inThr = 0; c.inBrk = c.parkQ ? 1 : 0; c.inSteer = 0; }
       }
@@ -7411,9 +7411,10 @@ const Core = (function () {
   registerVehicles();
 
   // the drag race's straights (js/zabava/drag.js, docs/drag-dirka.md): per real track, where the start line is (s, m along the lap) and
-  // how far each lane is from the centre line (lane, m: the player's car on the right, the rival's on the left). Montréal: the straight
-  // past the hairpin, 692 m without a rise (402 m to the finish, the rest to brake before the last chicane)
-  const DRAG = { montreal: { s: 3415, lane: 2.4 } };
+  // how far each lane is from the centre line (lane, m: the player's car on the right, the rival's on the left); the lanes run along the
+  // chord from there to past the finish (the samples' own headings wander a little). Montréal: the straight past the hairpin, 692 m
+  // without a rise (402 m to the finish, ~250 m more to brake before the last chicane; the chord within 0.2 m of the centre line)
+  const DRAG = { montreal: { s: 3440, lane: 2.4 } };
   // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
   // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
   // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
