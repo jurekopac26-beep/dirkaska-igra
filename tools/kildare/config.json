@@ -4,7 +4,7 @@
   "box": [53.243, -6.773, 53.273, -6.722],
   "closed": true,
   "route": [
-    [53.2570015, -6.7450997, "Start/Finish", "start line on the finish straight (OSM raceway \"Start/Finish\", w893740858, node 1013803582), the lap clockwise as OSM maps it (the raceways' oneway, Rallycross 1 among them); tools/kildare/build.py moves the line ~50 m up the straight"],
+    [53.2570015, -6.7450997, "Start/Finish", "start line on the finish straight (OSM raceway \"Start/Finish\", w893740858, node 1013803582), the lap clockwise as OSM maps it (the raceways' oneway, Rallycross 1 among them); the game's start line stays on this node"],
     [53.2567, -6.74488, null, "service, w88611296, s 40 m"],
     [53.25618, -6.74509, null, "raceway, w1238714135, s 105 m"],
     [53.25618, -6.74593, null, "raceway, w88611299, s 170 m"],

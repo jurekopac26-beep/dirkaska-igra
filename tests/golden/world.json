@@ -1488,5 +1488,33 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "86bc7302"
   }
+ },
+ "kildare": {
+  "meshes": 183,
+  "verts": 233857,
+  "instances": 1341,
+  "props": 61,
+  "crowd": 4,
+  "world": "b3c2973a",
+  "propsHash": "f99bc922",
+  "floor": "ddcb77c9/2296",
+  "groups": {
+   "-:MeshLambertMaterial": "592e343e",
+   "-:MeshPhongMaterial": "4656b0ee",
+   "-:MeshBasicMaterial": "f488fa01",
+   "rsFar:MeshBasicMaterial": "633e48c1",
+   "crowd:MeshLambertMaterial": "524f67de",
+   "flags:MeshLambertMaterial": "9e0bd145",
+   "ao:MeshBasicMaterial": "ef089569",
+   "roadwear:MeshLambertMaterial": "98083025",
+   "worn:MeshLambertMaterial": "e85afd72",
+   "brakeBoards:MeshLambertMaterial": "943d3023",
+   "life:MeshLambertMaterial": "609435f2",
+   "lifeShadow:MeshBasicMaterial": "c5fe7b09",
+   "life:MeshBasicMaterial": "29b77737",
+   "people:MeshLambertMaterial": "ae609523",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "7fa349d6"
+  }
  }
 }
