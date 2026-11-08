@@ -20,7 +20,10 @@ try {
       const o = Comm.teamRadio; Comm.teamRadio = function (k, v) { keys.push(k); return o.call(this, k, v); };
       let A = null, q0 = null, said = null, lapIn = null, n0 = 0, k0 = 0, nA = null, kA = null;
       for (let k = 0; k < 900; k++) {
-        g.pause(); g.sim(0.5, true); if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P); g.resume();
+        // (paused throughout, the HUD and its team radio run on the piece's time, two frames drawn: resumed for them, the race ran on
+        // real frames with the player's own empty inputs, no gas and no steering, the car falling back from the one ahead: CI runs
+        // 1665-1815, docs/nestabilni-testi.md)
+        g.pause(); g.sim(0.5, true); if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P); g.hud(0.5);
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
         const O = R.order, i = O.indexOf(P), B = i > 0 ? O[i - 1] : null
         if (!A && B && P.lap >= 2 && P.lap < R.laps && (!R.mk || (R.gap(B, P) != null && R.gap(B, P) < 5))) { const q = R.pitNext(B); if (q && q.to > 900 && q.to < Tk.len - 900 && !q.now) { A = B; A.pitWant = true; n0 = g.teamRadio.log.filter(x => /^Avto pred tabo/.test(x)).length; k0 = keys.length; q0 = { n: q.n, lap: A.lap, to: Math.round(q.to), at: q.n * Tk.len + Tk.def.pit[1] }; } }   // (asked in, as its strategy would)

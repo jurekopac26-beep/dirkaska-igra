@@ -9,9 +9,11 @@ const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'rbring' }, { width: 390, height: 844 }, { seed: 7 });
   await startTrack(page, 'rbring');
-  // (stepped in 0.4 s pieces; the tag ZAVETRJE is gone from the screen, the user's decision: the slipstream itself works as before)
+  // (stepped in 0.4 s pieces; the tag ZAVETRJE is gone from the screen, the user's decision: the slipstream itself works as before. The
+  // race paused throughout, two frames drawn after each piece: resumed for them, the race ran on real frames with the player's own empty
+  // inputs, no gas and no steering, 14-15 s of the 53 with the CPU busy, the car last and out of every wake: inWake 0 in CI, docs/nestabilni-testi.md)
   const s = await page.evaluate(async () => { const g = window.__game, P = g.race.player, out = [];
-    for (let k = 0; k < 120; k++) { g.pause(); g.sim(0.4, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); out.push(+(P.tow || 0).toFixed(2)); }
+    for (let k = 0; k < 120; k++) { g.pause(); g.sim(0.4, true); g.hud(0.4); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); out.push(+(P.tow || 0).toFixed(2)); }
     g.pause(); return { slip: !!g.race.slip, tag: !!document.getElementById('h-tow'), out }; });
   const inWake = s.out.filter(x => x > 0.35).length;
   T.check('a race with rivals: the slipstream works (in the wake of a car ahead, out of it not), no ZAVETRJE tag on the screen', s.slip && !s.tag && inWake >= 2 && inWake < s.out.length,

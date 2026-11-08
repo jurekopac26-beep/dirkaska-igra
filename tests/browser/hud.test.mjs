@@ -106,13 +106,17 @@ try {
   // fitting and at the way out, about half way a quarter of a lap on, their own colours half a lap on (Core TCOLD: the grip with them)
   const cold = await page.evaluate((src) => {
     const g = window.__game, P = g.race.player, L = g.race.track.len, f = (0, eval)(src), out = {}; P.pitCmp = 'M';
-    for (let k = 0; k < 6000 && !P.pitDone; k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
+    // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo, never in the pit lane, as
+    // driveToResults. The autopilot has no reverse gear and the race rescues only the rivals: against the barrier where Spa's pit lane
+    // begins, the car stood there for good, dist 6756-6759 in CI runs 1739, 1777 and 1832, docs/nestabilni-testi.md)
+    const un = () => { if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); };
+    for (let k = 0; k < 6000 && !P.pitDone; k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else { g.sim(0.1, true); un(); } }
     out.done = f(); out.done.pit = P.pitState;
     for (let k = 0; k < 6000 && P.pitDone; k++) g.sim(1 / 60, false, 0, 0);
     out.exit = f(); out.exit.inPit = P.inPit; const x0 = P.dist;
-    for (let k = 0; k < 9000 && P.dist < x0 + 0.25 * L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.25 * L; k++) { g.sim(0.05, true); un(); }
     out.half = f(); out.half.k = +((P.dist - x0) / L).toFixed(3);
-    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) { g.sim(0.05, true); un(); }
     out.lap = f(); out.lap.k = +((P.dist - x0) / L).toFixed(3); out.laps = g.race.laps; out.phase = g.phase;
     return out; }, TYRES.toString());
   const isCold = (o) => !!o && / cold/.test(o.cls) && o.word === COLD && o.dots.length === 4 && o.dots.every(c => c === COLD);
