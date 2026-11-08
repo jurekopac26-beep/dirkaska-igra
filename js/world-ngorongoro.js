@@ -495,7 +495,7 @@
       gr.a1 = A.length; if (gr.a1 > gr.a0) groups.push(gr);
     }
     const meshes = {}; for (const sp in cnt) meshes[sp] = ngMesh(root, NG_SP[sp].build(), cnt[sp], 'ng_' + sp);
-    const L = { t: 0, r: rng(7419), A, groups, meshes, n: {}, carS: [], list: [], crossings: 0 };
+    const L = { t: 0, r: rng(7419), A, groups, meshes, n: {}, carS: [], list: [], crossings: 0, fled: 0, hurried: 0 };   // (crossings, fled, hurried: counted for the tests)
     return { animals: A.length, groups: groups.length, species: Object.keys(cnt).length, crossers: groups.filter(g => g.kind === 'cross').length, L };
   }
   const _ngW = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -541,7 +541,7 @@
             const n = vrNear(a.x, a.z), lat = n.i >= 0 ? n.lat : 99, onRoad = n.i >= 0 && n.d < w + 2.5, started = t - gr.t0 > a.dl;
             if (a.st === 6 && danger) {
               if (!started && !onRoad) { a.st = 0; a.tx = a.x; a.tz = a.z; continue; }   // (not yet started: it stays)
-              if (onRoad || Math.abs(lat) < w + 4) { const back = Math.hypot(a.x - a.hx, a.z - a.hz) < Math.hypot(a.x - a.bx, a.z - a.bz); a.st = 7; a.spd = Math.max(8, NG_SP[a.sp].run); a.tx = back ? a.hx : a.bx; a.tz = back ? a.hz : a.bz; a.back = back; }
+              if (onRoad || Math.abs(lat) < w + 4) { const back = Math.hypot(a.x - a.hx, a.z - a.hz) < Math.hypot(a.x - a.bx, a.z - a.bz); a.st = 7; L.hurried++; a.spd = Math.max(8, NG_SP[a.sp].run); a.tx = back ? a.hx : a.bx; a.tz = back ? a.hz : a.bz; a.back = back; }
             }
             busy++; }
           if (!busy) { gr.cs = 0; gr.ct = t + 25 + r() * 20; for (let k = gr.a0; k < gr.a1; k++) { const a = A[k]; if (Math.hypot(a.x - a.bx, a.z - a.bz) < Math.hypot(a.x - a.hx, a.z - a.hz)) { const tx = a.hx, tz = a.hz; a.hx = a.bx; a.hz = a.bz; a.bx = tx; a.bz = tz; } } }
@@ -557,7 +557,7 @@
         if (a.st <= 3 && S.flee && near < S.flee) {   // flight: away from the road, a little away from the car too
           const cl = Math.hypot(ndx, ndz) || 1, n = vrNear(a.x, a.z), sg = n.i >= 0 ? Math.sign(n.lat) || 1 : 1, ox = n.i >= 0 ? T.nx[n.i] * sg : -ndx / cl, oz = n.i >= 0 ? T.nz[n.i] * sg : -ndz / cl;
           const fx = ox * 0.8 - ndx / cl * 0.45, fz = oz * 0.8 - ndz / cl * 0.45, fl = Math.hypot(fx, fz) || 1, D = 12 + r() * 14;
-          a.st = 4; a.tS = 0; a.spd = S.run * (0.85 + r() * 0.3); a.tx = a.x + fx / fl * D; a.tz = a.z + fz / fl * D;
+          a.st = 4; a.tS = 0; a.spd = S.run * (0.85 + r() * 0.3); a.tx = a.x + fx / fl * D; a.tz = a.z + fz / fl * D; L.fled++;
         }
         if (a.st === 0 || a.st === 1) {   // grazing; looking up
           if (near < S.alert) { a.st = 3; a.tS = 0; }
