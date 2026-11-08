@@ -117,7 +117,7 @@ Meritve so iz OSM (8. 11. 2026), točke na 5 m kot `tools/proge-pregled.js`, v s
 
 ## Del 3: osem dirkališč izven Evrope
 
-Uporabnik je 8. 11. 2026 po predstavitvi dirkališč odločil »Ok vse proge so v redu, začni vse« (ob 20.45, prek Mateja, tabla #382, komentar 6726246790; zapis v `docs/proge-po-drzavah.md`, »Nove proge za 1.0«); ob 20.05 je izbral še Novo Zelandijo: »Nova Zelandija ok naredi tudi«, to je Cromwell (Wellington, Crown Range in Coronet Peak odpadejo). Vseh osem je iz držav brez prave proge v igri. Pravila in postopek so kot v delih 1 in 2 (»Podatki poti«, »Kako narediti progo«), razen spodaj.
+Uporabnik je 8. 11. 2026 po predstavitvi dirkališč odločil »Ok vse proge so v redu, začni vse« (ob 20.45, prek Mateja, tabla #382, komentar 6726246790; zapis v `docs/proge-po-drzavah.md`, »Nove proge za 1.0«); ob 20.05 je izbral še Novo Zelandijo: »Nova Zelandija ok naredi tudi«, to je Cromwell (Wellington, Crown Range in Coronet Peak odpadejo). Vseh osem je iz držav brez prave proge v igri (Tajska po #379). Pravila in postopek so kot v delih 1 in 2 (»Podatki poti«, »Kako narediti progo«), razen spodaj.
 
 ### Proge
 
