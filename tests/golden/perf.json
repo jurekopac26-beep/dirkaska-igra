@@ -378,10 +378,10 @@
   "jsMs": 1.94
  },
  "zandvoort": {
-  "calls": 189,
-  "maxCalls": 227,
-  "kverts": 638,
-  "maxKverts": 835,
-  "jsMs": 1.61
+  "calls": 190,
+  "maxCalls": 228,
+  "kverts": 650,
+  "maxKverts": 848,
+  "jsMs": 1.49
  }
 }

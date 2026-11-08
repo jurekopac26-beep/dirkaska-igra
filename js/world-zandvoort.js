@@ -15,7 +15,8 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { GB, IChunks, NR_A64, TAU, box, clamp, lerp, nrDist, nrGround, nrLC, nrLCf, nrNear, rng, sstep, tuftGeo, tuftWindMat, waterMat } = API;
+  const { GB, IChunks, NRC, NR_A64, TAU, addShore, box, clamp, lerp, mergeBands, nrDist, nrGH, nrGround, nrLC, nrLCf, nrNear, rng, shoreBand, sstep, tuftGeo, tuftWindMat,
+    waterMat, waterline } = API;
   // the text boards: place names (the town, the province, the country, the region of the dunes, the sea, the villages and the town inland),
   // the grandstands' names (def.stands) and the start line's
   const ZV_BAN = [['ZANDVOORT', '#e8641a', '#fff', '#fff'], ['NOORD-HOLLAND', '#1d3f6e', '#fff', '#f7a600'], ['START · FINISH', '#16181c', '#fff', '#f36c21'], ['NEDERLAND', '#f36c21', '#fff', '#fff'],
@@ -110,8 +111,12 @@
         for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const I = i + a, J = j + b; if (I < 0 || J < 0 || I >= nx || J >= nz) continue; const k = J * nx + I; if (M[k] && lab[k] < 0) { lab[k] = id; cells.push(k); } } }
       comps.push(cells);
     }
-    const gw = new GB(true), wc = [1, 1, 1], RR = rng(5641), near = new Uint8Array(n);
-    for (const cells of comps) {
+    const gw = new GB(true), wc = [1, 1, 1], RR = rng(5641), near = new Uint8Array(n), own = new Int32Array(n).fill(-1), inR = new Uint8Array(n), bands = [], G = API.NR.G;
+    const NX = nx + 1, CH = new Float32Array(NX * (nz + 1)).fill(NaN), gC = (K) => { let v = CH[K]; if (v !== v) { const I = K % NX; v = CH[K] = nrGround(x0 + I * C, z0 + (K - I) / NX * C); } return v; };   // (the ground at the cells' corners)
+    const inner = (K) => { const I = K % NX, J = (K - I) / NX; return I >= 1 && J >= 1 && I < nx && J < nz && inR[(J - 1) * nx + I - 1] && inR[(J - 1) * nx + I] && inR[J * nx + I - 1] && inR[J * nx + I]; };
+    const hp = [], hpPush = (e) => { hp.push(e); for (let i = hp.length - 1; i > 0;) { const p = (i - 1) >> 1; if (hp[p][0] <= hp[i][0]) break; [hp[p], hp[i]] = [hp[i], hp[p]]; i = p; } },
+      hpPop = () => { const t = hp[0], e = hp.pop(); if (hp.length) { hp[0] = e; for (let i = 0; ;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < hp.length && hp[l][0] < hp[m][0]) m = l; if (r < hp.length && hp[r][0] < hp[m][0]) m = r; if (m === i) break; [hp[m], hp[i]] = [hp[i], hp[m]]; i = m; } } return t; };
+    comps.forEach((cells, pid) => {
       const D = new Map();   // (the cells round the pond, 1..3 out of it: their distance, the Chebyshev one)
       for (const c of cells) { const i = c % nx, j = (c - i) / nx;
         for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) { const I = i + a, J = j + b; if (I < 0 || J < 0 || I >= nx || J >= nz) continue; const k = J * nx + I; if (M[k]) continue;
@@ -119,19 +124,43 @@
       let lo = 1e9, bed = 1e9;
       for (const [k, d] of D) if (d === 3) { const i = k % nx, j = (k - i) / nx; lo = Math.min(lo, nrGround(X(i), Z(j))); }
       for (const c of cells) { const i = c % nx, j = (c - i) / nx; bed = Math.min(bed, nrGround(X(i), Z(j))); }
-      if (!(lo < 1e8)) continue;
-      const lv = Math.max(lo - 0.15, bed + 0.3);   // (its level: under the ground round it, over its bed)
-      const wet = [...cells, ...[...D].filter(([, d]) => d <= 2).map(([k]) => k)];
+      if (!(lo < 1e8)) return;
+      // its level: under the ground round it, over its bed, and under the lowest pass out of R (its cells and two round them: a minimax
+      // flood over their corners from the lowest corner of its bed), so its water never ends over lower ground at the edge of what is drawn
+      // (a pond on the slope of a deeper one's hollow, the ridge between them carved by the pad: lower, or dry if its bed lies over the
+      // pass); under water the corners the flood reaches below its level, its water over the cells round them (one pond's only)
+      const R = [...cells, ...[...D].filter(([, d]) => d <= 2).map(([k]) => k)];
+      for (const k of R) inR[k] = 1;
+      let s0 = -1;
+      for (const c of cells) { const i = c % nx, j = (c - i) / nx; for (const K of [j * NX + i, j * NX + i + 1, (j + 1) * NX + i, (j + 1) * NX + i + 1]) if (s0 < 0 || gC(K) < gC(s0)) s0 = K; }
+      const cost = new Map([[s0, gC(s0)]]); let pass = 1e9; hp.length = 0; hpPush([gC(s0), s0]);
+      while (hp.length) {
+        const [cv, K] = hpPop(); if (cv > cost.get(K)) continue;
+        if (!inner(K)) { pass = cv; break; }
+        for (const N of [K - 1, K + 1, K - NX, K + NX]) { const nc = Math.max(cv, gC(N)), e = cost.get(N); if (e == null || nc < e) { cost.set(N, nc); hpPush([nc, N]); } }
+      }
+      for (const k of R) inR[k] = 0;
+      const lv = Math.min(Math.max(lo - 0.15, bed + 0.3), pass - 0.03), wet = [];
+      for (const [K, cv] of cost) if (cv <= lv) { const I = K % NX, J = (K - I) / NX; for (let b = -1; b <= 0; b++) for (let a = -1; a <= 0; a++) { const k = (J + b) * nx + I + a; if (!near[k]) { near[k] = 1; own[k] = pid; wet.push(k); } } }
+      if (!wet.length) return;   // (dry: a hollow)
       for (const k of wet) {
         const i = k % nx, j = (k - i) / nx, xa = x0 + i * C, za = z0 + j * C, xb = xa + C, zb = za + C;
-        const g = [nrGround(xa, za), nrGround(xb, za), nrGround(xb, zb), nrGround(xa, zb)];
-        if (Math.min(...g) > lv + 0.05) continue;   // (dry: the bank all round)
         const Q = (x, z) => [x, lv, z], uv = (x, z) => [x / 16, -z / 16];
         gw.quadUp(Q(xa, zb), Q(xb, zb), Q(xb, za), Q(xa, za), [wc, wc, wc, wc], [uv(xa, zb), uv(xb, zb), uv(xb, za), uv(xa, za)]);
-        near[k] = 1; st.water += C * C;
+        st.water += C * C;
         if (nrDist(X(i), Z(j)) < 60) CR.avoid(X(i), Z(j), C * 0.75);   // (nobody standing in it: only by the road are there any)
       }
-      for (const k of wet) {   // reeds along the shore: where the ground is within 0.3 m of the water, a clump or two in a cell, in stands with gaps
+      { // its shore band (the shallows, a little foam lapping at the waterline: js/world.js's shoreBand over the terrain's own triangles at its
+        // level), only over the cells of its water: none past it, none over a neighbour's
+        let ia = 1e9, ib = -1e9, ja = 1e9, jb = -1e9;
+        for (const k of wet) { const i = k % nx, j = (k - i) / nx; ia = Math.min(ia, i); ib = Math.max(ib, i); ja = Math.min(ja, j); jb = Math.max(jb, j); }
+        const gi0 = clamp(Math.floor((x0 + (ia - 1) * C - G.x0) / NRC), 2, G.nx - 3), gi1 = clamp(Math.ceil((x0 + (ib + 2) * C - G.x0) / NRC), 2, G.nx - 3),
+          gj0 = clamp(Math.floor((z0 + (ja - 1) * C - G.z0) / NRC), 2, G.nz - 3), gj1 = clamp(Math.ceil((z0 + (jb + 2) * C - G.z0) / NRC), 2, G.nz - 3);
+        const wl = waterline(nrGH, G.x0, G.z0, NRC, gi0 - 2, gi1 + 2, gj0 - 2, gj1 + 2, lv);
+        const sd = (x, z) => { const i = Math.floor((x - x0) / C), j = Math.floor((z - z0) / C); return i >= 0 && j >= 0 && i < nx && j < nz && own[j * nx + i] === pid ? wl(x, z) : -10; };
+        if (gi1 > gi0 && gj1 > gj0) bands.push(shoreBand(G.x0 + gi0 * NRC, G.z0 + gj0 * NRC, G.x0 + gi1 * NRC, G.z0 + gj1 * NRC, lv + 0.015, sd, 16));
+      }
+      for (const k of R) {   // reeds along the shore: where the ground is within 0.3 m of the water, a clump or two in a cell, in stands with gaps
         const i = k % nx, j = (k - i) / nx;
         for (let q = 0; q < 2; q++) {
           const x = x0 + (i + RR()) * C, z = z0 + (j + RR()) * C, y = nrGround(x, z);
@@ -142,10 +171,11 @@
         }
       }
       st.ponds++;
-    }
+    });
     if (!gw.empty) {
-      const WO = { len: 0.7, amp: 0.35, refl: 0.4, land: 0.8, shal: 0.45, lap: 0.5, surf: 0 }, wm = new THREE.Mesh(gw.geometry(), waterMat(tex, Object.assign({ color: 0x3f5a52 }, WO)));   // (dark, the dunes and the reeds mirrored low round it)
+      const WO = { len: 0.7, amp: 0.35, refl: 0.4, land: 0.8, shal: 0.45, lap: 0.3, surf: 0 }, wm = new THREE.Mesh(gw.geometry(), waterMat(tex, Object.assign({ color: 0x3f5a52 }, WO)));   // (dark, the dunes and the reeds mirrored low round it)
       wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); wm.name = 'ponds'; root.add(wm); out.dyn.water = tex.water;   // (World.update: the ripples)
+      const sh = addShore(root, mergeBands(bands), wm.material, WO); if (sh) sh.name = 'pondShores';   // (all the ponds' bands in one draw)
     }
     st.water = Math.round(st.water);
     for (let k = 0; k < n; k += 3) if (near[k]) { const i = k % nx, j = (k - i) / nx; exclPush(X(i), Z(j), C); }   // (no bush in the water)
