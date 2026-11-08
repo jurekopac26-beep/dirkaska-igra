@@ -890,5 +890,7 @@
   }
 
   const _fd = new THREE.Vector3();
+  Object.defineProperties(World.api, { MG: { get: () => MG, set: (v) => { MG = v; } } });
+  World.keep('MG', 'montreal');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.montreal = (scene, tex, opts, api) => { K = api; return buildMontreal(scene, tex, opts); };
 })();
