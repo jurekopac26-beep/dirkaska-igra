@@ -2449,6 +2449,56 @@
   "nan": false,
   "digest": "3cc5040097ace0a705facbfd"
  },
+ "medeu/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 144.77,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3997408ed6103487a28241fc"
+ },
+ "medeu/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 155.87,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "882dfa893dc31da6be8bb3ea"
+ },
+ "medeu/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 128.34,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a16a3217d7846ad8531553b2"
+ },
+ "medeu/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 128.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ed8425fdffbc65edb065c446"
+ },
+ "medeu/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 146.36,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d1be87b13b2f7286469d6c4c"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,

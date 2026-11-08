@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "medeu": {
+  "calls": 158,
+  "maxCalls": 175,
+  "kverts": 401,
+  "maxKverts": 479,
+  "jsMs": 1.77
  }
 }
