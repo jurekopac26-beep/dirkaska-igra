@@ -1461,5 +1461,33 @@
    "tyremarks:MeshBasicMaterial": "5e30bf4",
    "roadwear:MeshLambertMaterial": "3df010ca"
   }
+ },
+ "bikernieki": {
+  "meshes": 643,
+  "verts": 632638,
+  "instances": 17189,
+  "props": 56,
+  "crowd": 7,
+  "world": "7b6e9453",
+  "propsHash": "1c5c9d8",
+  "floor": "71243260/7308",
+  "groups": {
+   "-:MeshLambertMaterial": "20c77556",
+   "-:MeshBasicMaterial": "40b47310",
+   "-:MeshPhongMaterial": "bec99e5",
+   "crowd:MeshLambertMaterial": "b6aa6628",
+   "flags:MeshLambertMaterial": "ea798dec",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "4c08bac9",
+   "roadwear:MeshLambertMaterial": "b8fa26e5",
+   "worn:MeshLambertMaterial": "bdb7ad24",
+   "brakeBoards:MeshLambertMaterial": "4682b06c",
+   "life:MeshLambertMaterial": "dc882bcc",
+   "lifeShadow:MeshBasicMaterial": "be39b8f9",
+   "life:MeshBasicMaterial": "3fb07456",
+   "people:MeshLambertMaterial": "f613741",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "f9cd11c"
+  }
  }
 }

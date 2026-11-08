@@ -390,5 +390,12 @@
   "kverts": 545,
   "maxKverts": 754,
   "jsMs": 1.49
+ },
+ "bikernieki": {
+  "calls": 186,
+  "maxCalls": 238,
+  "kverts": 431,
+  "maxKverts": 496,
+  "jsMs": 2.95
  }
 }

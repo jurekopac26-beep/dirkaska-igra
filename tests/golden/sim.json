@@ -5388,5 +5388,103 @@
    "rescues": 1,
    "repairs": 0
   }
+ },
+ "bikernieki/race/cs": {
+  "digest": "1e7dbbdc65851a1a7ad93e0a",
+  "lead": 2384.2,
+  "car0": [
+   -574.41,
+   -878.33
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "bikernieki/demo/cs": {
+  "digest": "81856f0f45a76c49242d60c7",
+  "lead": 2500.9,
+  "car0": [
+   -446.69,
+   -914.88
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "bikernieki/upg/cs": {
+  "digest": "9dfd8b0becfb29c1ea68c07e",
+  "lead": 2540.6,
+  "car0": [
+   -413.91,
+   -894.68
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "bikernieki/crash/cs": {
+  "digest": "14604c95d771716f8f28f80d",
+  "lead": 5692.2,
+  "car0": [
+   -245.44,
+   64.44
+  ],
+  "cover": {
+   "dmg": 0.54,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bikernieki/formula/cs": {
+  "digest": "5fe429a50ae16abecfafe0d5",
+  "lead": 7275.8,
+  "car0": [
+   -512.61,
+   -929.31
+  ],
+  "cover": {
+   "dmg": 0.98,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bikernieki/lm/cs": {
+  "digest": "15a8860865151c431521ac0a",
+  "lead": 7169.2,
+  "car0": [
+   -510.13,
+   -929.57
+  ],
+  "cover": {
+   "dmg": 0.79,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "bikernieki/car/cs": {
+  "digest": "12f857e15fd5c4923bb3736c",
+  "lead": 6130,
+  "car0": [
+   -402.88,
+   -284.63
+  ],
+  "cover": {
+   "dmg": 0.81,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }
