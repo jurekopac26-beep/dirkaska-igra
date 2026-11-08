@@ -1,7 +1,7 @@
 // The flags that wave (js/world-zastave.js; Grafika 02, the user's choice of 3. 11. 2026: »Zastave, ki plapolajo v vetru«). On the real
 // tracks a world's cloths are one mesh, waved in the vertex shader by the world's wind (out.dyn.wind, World.update: t % 1000): Spa's flags by
 // the grandstands and on the straight, a few thousand vertices in one draw call, casting no shadow; a flag's picture changes with the wind's
-// time (the rest of the world hidden; the same time twice the same picture); Vršič's finish flags a mesh of their own in the finish's group
+// time (the rest of the world hidden; the same time twice the same picture); Irohazaka's finish flags a mesh of their own in the finish's group
 // (out.dyn.vrFin: hidden with it); Newcastle's flags from its texture, the pit straight's too (before, its cloth was never drawn); the
 // Red Bull Ring's builder's own mesh (rbFlags) with the marshals' flags in it; on NIZKA only the cloths within 70 m of the camera wave
 // (uFar); no errors (the program compiles).
@@ -45,10 +45,10 @@ try {
   T.check('Spa: the cloth on screen, and it moves with the wind (its picture at two times differs; the same time twice the same picture)',
     pic.cloth > pic.px * 0.02 && pic.same <= pic.px * 0.001 && pic.moved - pic.without > pic.px * 0.003, JSON.stringify(pic));
 
-  await startTrack(page, 'vrsic');
+  await startTrack(page, 'iroha');   // (Vršič, a test track, stays as it was: frozen)
   ({ M } = await meshes(page));
   const fin = M.find(q => q.in === 'vrFin'), st = M.find(q => q.in === 'root');
-  T.check('Vršič: the start\'s flags in the world\'s mesh, the finish\'s chequered ones a mesh of their own in the finish\'s group (hidden with it)',
+  T.check('Irohazaka: the nobori in the world\'s mesh, the finish\'s chequered ones a mesh of their own in the finish\'s group (hidden with it)',
     M.length === 2 && st && st.n >= 6 && fin && fin.n >= 10 && fin.wind, JSON.stringify(M));
 
   await startTrack(page, 'newcastle');
