@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Latvia</title>
+  <!-- Ratio 1:2. Carmine red with a white band across the middle, the bands' widths 2 : 1 : 2 (Law on the National Flag of Latvia).
+       Red: Pantone 7623 C (#9E3039), white. -->
+  <rect width="1000" height="500" fill="#9E3039"/>
+  <rect x="0" y="200" width="1000" height="100" fill="#FFFFFF"/>
+</svg>
