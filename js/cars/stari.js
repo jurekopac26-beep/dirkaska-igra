@@ -71,7 +71,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   function mounts(key) {
     const b = B[key], G = geo(b), S = G.S, F = G.F, R = G.R, [fa, fb] = AX[key], at = (x, k) => ip(S, x, k);
     const gi = S.findIndex(s => s.k === 'gf'), ri = S.findIndex(s => s.k === 'r'), gri = S.findIndex(s => s.k === 'gr');
-    const wsTop = S[gi].x, wsBase = S[gi + 1].x, roofR = S[ri].x, grFoot = S[gri].x, d0 = wsBase, d1 = wsBase - 1.15, mid = (roofR + wsTop) / 2;
+    const wsTop = S[gi].x, wsBase = S[gi + 1].x, roofR = S[ri].x, grFoot = gri < 0 ? roofR : S[gri].x, d0 = wsBase, d1 = wsBase - 1.15, mid = (roofR + wsTop) / 2;
     const deck = !b.spoiler ? null : S[1];   // (a boot's deck: the wing on it; the hatch's on the roof's rear edge)
     const H = G.head, T = G.tail, Mi = G.mirror, eng = b.engRear ? -fb - 0.15 : fa + 0.15;
     const kx = deck ? R.x + 0.5 : roofR + 0.05;
@@ -187,7 +187,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       body: { len: RA.len, wid: RA.wid, secs: RA.secs, wz: 0.1, engRear: false },
       wheels: { style: 'std', spokes: 5, w: 0.26, rim: [0.93, 0.93, 0.9], tyre: RK },
       build(K) {
-        const p = K.paint, Lv = p[0] * 0.3 + p[1] * 0.59 + p[2] * 0.11 > 0.78 ? [0.1, 0.26, 0.74] : p;   // (the livery: the car's colour, a light one blue)
+        const Lv = K.paint;   // (the livery: the car's colour; the builder's turns a very light one blue, the kit's paint is recoloured per car)
         const sk = WH.map(v => v * 0.85);
         // the builder's loft: white paint, the glass, the rear glass' black louvred cover (its crown black, its edges dark grey)
         const L = K.loft(K.body.secs, (k, e, kind) => { const top = e >= 3 && e <= 5, up = e === 2 || e === 6;
@@ -240,8 +240,79 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     m.vzmeti = { in: 0.15, top: 0.68, seat: [at(AX.rally[0], 'yb'), at(-AX.rally[1], 'yb')] };
     return m;
   }
+  // ---- SAMUM 4x4 (MODELS 'truck'): render.js truckGeometry's pieces on BODIES.truck's sections (the model's own size); its flares and
+  // coil-overs at the kit's wheels (the model's a / b), the rest where the builder puts it
+  const TR = { len: 5.2, wid: 2.15, spoiler: false, engRear: false, secs: [
+    [-2.60, 0.98, 0.64, 1.10, 0.97, 1.20, 0.0, 'b'], [-2.54, 1.00, 0.62, 1.14, 0.99, 1.24, 0.0, 'b'], [-0.88, 1.00, 0.62, 1.14, 0.99, 1.24, 0.0, 'b'],
+    [-0.80, 1.00, 0.62, 1.18, 0.86, 1.74, 0.02, 'r'], [0.34, 1.00, 0.62, 1.20, 0.84, 1.76, 0.03, 'gf'], [1.02, 1.01, 0.62, 1.20, 0.95, 1.30, 0.03, 'b'],
+    [2.06, 1.01, 0.64, 1.16, 0.95, 1.20, 0.03, 'b'], [2.60, 0.95, 0.70, 1.04, 0.89, 1.08, 0.02, 'b']] };
+  B.truck = TR; AX.truck = [1.6, 1.5];
+  function lookTruck() {
+    const S = TR.secs.map(row), F = S[S.length - 1], R = S[0], TK = [0.06, 0.06, 0.065], K2 = [0.13, 0.13, 0.14], LN = [0.17, 0.17, 0.18], hz = TR.wid / 2 - 0.16;
+    return {
+      body: { len: TR.len, wid: TR.wid, secs: TR.secs, wz: 0.16, engRear: false },
+      wheels: { style: 'knob', w: 0.36, rimK: 0.56, rim: [0.74, 0.75, 0.78], gap: 0.07 },
+      build(K) {
+        const P = K.paint, St = K.strp;   // (the livery and the springs: the stripe's colour; the builder's paint at 70 % when the car has none)
+        // the builder's loft: the black tucks, the bed liner, the windscreen and the side windows glass, the rest paint
+        const L = K.loft(K.body.secs, (k, e, kind) => e === 0 || e === 8 ? TK : k <= 1 && e >= 3 && e <= 5 ? LN : (kind === 'gf' && e >= 3 && e <= 5) || ((kind === 'gf' || kind === 'r') && (e === 2 || e === 6)) ? K.GLASS : P,
+          { caps: { front: { col: P }, rear: { col: P } } });
+        const D = L.decal;
+        D.band([[-0.8, 0], [-0.42, 0], [-0.5, 1], [-0.8, 1]], P, null, 0.014); D.band([[0.84, 0], [1.02, 0], [1.02, 1], [0.7, 1]], P, null, 0.014);
+        { const xw = (y) => S[2].x + (y - S[2].yt) / (S[3].yt - S[2].yt) * (S[3].x - S[2].x) - 0.012;   // (the small rear window on the cab's sloping back wall)
+          K.face([[xw(1.3), 1.3, -0.58], [xw(1.3), 1.3, 0.58], [xw(1.62), 1.62, 0.52], [xw(1.62), 1.62, -0.52]], K.GLASS); }
+        D.side([[-2.5, 0.76], [-1.2, 0.76], [0.6, 1.1], [-0.3, 1.1], [-2.5, 0.96]], St); D.side([[0.9, 0.76], [2.55, 0.76], [2.55, 0.9], [1.3, 0.9]], St);
+        for (const sd of [-1, 1]) D.top([[1.2, sd * 0.2], [1.56, sd * 0.2], [1.56, sd * 0.5], [1.2, sd * 0.5]], TK, 0.01);
+        // the grille, the lamps in their dark housings, the skid plate; the tail lamps' black surrounds, the exhaust in front of the rear wheel
+        K.part('bumperF', () => { K.deli('maska', () => K.box(F.x - 0.01, 0.84, 0, 0.04, 0.18, 1.0, 0, TK)); K.box(F.x - 0.18, 0.5, 0, 0.5, 0.05, 1.3, 0, K2); });
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) { K.box(F.x + 0.01, 0.87, sd * 0.62, 0.03, 0.13, 0.28, 0, K2);
+          K.headLamp(F.x + 0.03, 0.935, sd * 0.62, 0.05, { shape: 'rect', w: 0.24, h: 0.1, ring: null, col: [1, 0.97, 0.84] }); } });
+        K.part('bumperR', () => { for (const sd of [-1, 1]) K.box(R.x - 0.012, 0.92, sd * 0.85, 0.03, 0.23, 0.16, 0, TK); });
+        K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(R.x - 0.03, 1.035, sd * 0.85, 0.11, 0.17); });
+        K.deli('auspuh', () => K.tubeX(K.rx + 0.95, K.rx + 0.62, 0.66, TR.wid / 2 - 0.1, 0.055, 8, [0.62, 0.62, 0.64], [0.04, 0.04, 0.045]));
+        // the flares over the wheels, the coil-overs in the arches (the shock, its spring in the stripe's colour)
+        for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, K.rw + 0.07, K.rw + 0.17, sd * 0.86, sd * (TR.wid / 2 + 0.04), TK, { n: 9 });
+        K.deli('amortizerji', () => { for (const A of K.arches) for (const sd of [-1, 1]) K.bar([A.x + 0.08, K.rw + 0.1, sd * (hz - 0.2)], [A.x - 0.1, 1.08, sd * 0.7], 0.035, [0.74, 0.74, 0.77], { n: 4 }); });
+        K.deli('vzmeti', () => { for (const A of K.arches) for (const sd of [-1, 1]) K.bar([A.x + 0.05, K.rw + 0.3, sd * (hz - 0.23)], [A.x - 0.05, 0.86, sd * 0.74], 0.05, St, { n: 4 }); });
+        // the spare in the bed, the cage from the roof down to the tail, the light bar on the roof, the snorkel
+        K.tyre(-1.72, 1.41, 0, { axis: 'y', r: 0.44, w: 0.34 });
+        const cg = [0.1, 0.1, 0.11], bars = [[[-2.2, 1.62, -0.84], [-2.2, 1.62, 0.84]], [[-1.35, 1.68, -0.8], [-1.35, 1.68, 0.8]]];
+        for (const sd of [-1, 1]) bars.push([[-0.78, 1.72, sd * 0.78], [-2.2, 1.62, sd * 0.84]], [[-2.2, 1.62, sd * 0.84], [-2.52, 1.24, sd * 0.9]], [[-2.2, 1.62, sd * 0.84], [-1.45, 1.24, sd * 0.94]]);
+        K.cage(bars, 0.03, cg, { inner: false });
+        K.deli('relijske_luci', () => { K.box(0.26, 1.8, 0, 0.12, 0.11, 1.56, 0, TK); for (let i = 0; i < 6; i++) K.box(0.325, 1.815, (i - 2.5) * 0.25, 0.012, 0.08, 0.19, 0, [1, 0.96, 0.82]);
+          for (const sd of [-1, 1]) K.bar([0.24, 1.75, sd * 0.6], [0.24, 1.8, sd * 0.6], 0.025, TK, { n: 4 }); });
+        K.bar([1.0, 1.22, TR.wid / 2 - 0.1], [0.62, 1.8, TR.wid / 2 - 0.2], 0.05, TK, { n: 4 }); K.box(0.6, 1.76, TR.wid / 2 - 0.2, 0.14, 0.12, 0.12, 0, TK);
+        // black door mirrors (the builder has none; the part table has them, every part needs some geometry): the generic place
+        { const Mi = geo(TR).mirror; K.deli('ogledala', () => { for (const sd of [-1, 1]) K.part(sd < 0 ? 'mirrorL' : 'mirrorR', () => K.box(Mi.x, Mi.y - 0.05, sd * Mi.z, 0.14, 0.1, 0.12, 0, TK)); }); }
+        K.part('trunk', () => K.deli('krilo', () => {}));
+        for (const id of ['aero', 'hauba', 'zmigavci', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'streha', 'stresna_zajemalka', 'antena', 'crte', 'celjusti',
+          'dim_gum', 'nalepke', 'soncni_pas', 'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'stabilizatorji']) K.deli(id, () => {});
+        K.part('trunk', () => K.deli('zaluzije', () => {}));
+        const ws = S.find(s => s.k === 'gf');
+        K.seat(ws.x - 0.75, 0.9, -0.4); K.seat(ws.x - 0.75, 0.9, 0.4); K.engine(AX.truck[0] + 0.15, 0.7, 0);
+        K.inner(() => K.box(1.0, 0.66, 0, 0.03, 0.6, 1.8, 0, [0.1, 0.1, 0.11]));   // (the bulkhead behind the engine: the bay closed from the long cab and bed)
+        return L;
+      },
+    };
+  }
+  function mountsTruck() {   // (the generic ones, measured the same way; the builder's own lamps, grille, tail, bar and coil-overs)
+    const m = mounts('truck'), S = TR.secs.map(row), F = S[S.length - 1], R = S[0], at = (x, k) => ip(S, x, k);
+    m.zarometi = { x: F.x + 0.03, y0: 0.935, lean: 0, zc: 0.62, yc: 0.935, s: 0.62, depth: 0.03, hosts: ['body', 'body'] };
+    m.maska = { x: F.x, y0: 0.93, lean: 0, yc: 0.93, w: 0.4, h: 0.1 };
+    m.zadnje_luci = { x: R.x - 0.012, zc: 0.85, yc: 1.035, w: 0.11, h: 0.17, s: 0.5, shape: [[-0.055, -0.085], [0.055, -0.085], [0.055, 0.085], [-0.055, 0.085]] };
+    m.zarometi.x = F.x;   // (the options' lamps on the nose's face: the stock housings go with the stock lamps)
+    m.zadnje_luci.x = R.x; m.auspuh.x = R.x - 0.03; m.auspuh.y = R.yb + 0.04;   // (on the tail's face; the silencer under the floor touching it)
+    m.crte.dy = 0.25;   // (the side bands on the tall flat side)
+    m.filter_zraka = { x: 1.65, y: 0.95, z: -0.2 }; m.turbo.y = 0.95;   // (on the engine's block; the turbo over the front arches' tops)
+    // (the bed: the spare lying in it; no wing on the rally-raid truck: the cage over the bed; no splitter, sills nor diffuser under the
+    // high body (as GOLJAT); the bonnet's top hardly over the belt: its fenders' part reaches over it, so the stock vents stay)
+    delete m.prtljaznik; delete m.krilo; delete m.aero; delete m.hauba;
+    m.vzmeti = { in: 0.25, top: 1.0, seat: 0.62 }; m.amortizerji = { in: 0.25, top: 1.0 }; m.stabilizatorji = { in: 0.13, floor: 0.62 };   // (inboard of the wide tyres, from the high floor to the tubs' tops)
+    return m;
+  }
   for (const [id, key] of [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']])
     VEHICLE_DEFS.push({ id, patch: true, look: look(key), mounts: mounts(key) });
   VEHICLE_DEFS.push({ id: 'muscle', patch: true, look: lookMuscle(), mounts: mountsMuscle() });
   VEHICLE_DEFS.push({ id: 'rally', patch: true, look: lookRally(), mounts: mountsRally() });
+  VEHICLE_DEFS.push({ id: 'truck', patch: true, look: lookTruck(), mounts: mountsTruck() });
 })();
