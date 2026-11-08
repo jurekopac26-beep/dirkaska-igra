@@ -51,3 +51,7 @@ Seja proge pred korakom `data` preveri:
   - Vodja skupine je seja, ki konča zadnjo progo skupine. Naredi zbirno vejo `zbirna/nove-proge-N<k>` po pravilih vrste.
   - Skupine lahko spremenita uporabnik in Matej.
 - **Stanje** je v odprtih PR (veja `nove-proge/<id>`) in v `docs/vrsta.md`. Ta datoteka se med delom ne spreminja, da se veje ne skregajo; spremeni se samo, če se spremeni načrt.
+
+## Del 2: 11 prog s čakanja (načrt v delu)
+
+Uporabnik je 8. 11. 2026 ob 15.59 (prek Mateja, tabla #382, komentar 6723046786) potrdil 11 prog na seznam 50: Medeu, Kazahstan; Furka, Švica; Gudauri, Gruzija; Llogara, Albanija; Porto Moniz, Portugalska; Ngorongoro, Tanzanija; Ella, Šrilanka; Santo Antão, Zelenortski otoki; Espinazo del Diablo, Mehika; Seul, Južna Koreja; Dadès, Maroko. Načrt (odseki, meritve, podatki poti, liniji in skupine) pripravlja seja »Nove proge 1.0 del 2« (partyslo); dokler ta razdelek ni dokončan, se nobena od teh prog ne začne.
