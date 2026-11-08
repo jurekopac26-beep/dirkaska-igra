@@ -23,6 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc9d6df, sun: 0xffecc8, sunI: 1.12, sky: 0xd0e0f0, gnd: 0x4c5a32, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.12, sunOff: [-80, 74, 60], split: [[0.96, 0.99, 1.05], [1.04, 1.0, 0.95]] },   // Irohazaka: a clear afternoon above Nikko, a lower sun through the woods (long shadows across the hairpins), a soft blue haze over the valley (Irohazaka: cool shade under the maples, a warm autumn sun)
+    say: 'Irohazaka',
     zivali: { a: ['macaque', 'sika', 'serow'], t: ['torii', 'lantern', 'vending', 'logPile'] },
     id: 'iroha', name: 'Irohazaka, Japonska', theme: 'iroha', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,   // (two lanes and their shoulders)
     desc: "Druga Irohazaka nad mestom Nikko na Japonskem, enosmerna gorska cesta z dvema pasovoma: od 918 m po 18 oštevilčenih ovinkih (16 serpentinah), označenih s črkami hiragane (は, に, ほ … ね), skozi gozd javorjev, hrastov in bukev, mimo razgledišča Kurokamidaira do zadnjega ovinka ね na 1.240 m, z goro Nantai v ozadju. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.",

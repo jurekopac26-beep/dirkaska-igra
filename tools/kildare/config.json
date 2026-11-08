@@ -1,0 +1,33 @@
+{
+  "id": "kildare",
+  "about": "Kildare, Irska (id kildare): the 1.2 km rallycross lap on asphalt and gravel in County Kildare, one lap (docs/nove-proge-1-0.md)",
+  "box": [53.243, -6.773, 53.273, -6.722],
+  "closed": true,
+  "route": [
+    [53.25703, -6.7496, null, "start (direction: check the real race direction) | raceway, w88611271, s 0 m"],
+    [53.25651, -6.74986, null, "raceway, w88611271, s 65 m"],
+    [53.25654, -6.74917, null, "raceway, w893740866, s 128 m"],
+    [53.25667, -6.74829, null, "raceway, w893740866, s 188 m"],
+    [53.25678, -6.74741, null, "raceway, w893740865, s 249 m"],
+    [53.25659, -6.7465, null, "raceway, w88611299, s 313 m"],
+    [53.25618, -6.74593, null, "raceway, w88611299, s 373 m"],
+    [53.25618, -6.74509, null, "raceway, w1238714135, s 438 m"],
+    [53.2567, -6.74488, null, "service, w88611296, s 503 m"],
+    [53.2572, -6.74524, null, "raceway, w87185972, s 563 m"],
+    [53.2577, -6.74559, null, "service, w1323583461, s 623 m"],
+    [53.25819, -6.74594, null, "raceway, w893740858, s 684 m"],
+    [53.2587, -6.74625, null, "raceway, w893740858, s 744 m"],
+    [53.25922, -6.74645, null, "raceway, w893740877, s 804 m"],
+    [53.25907, -6.74713, null, "raceway, w893740877, s 868 m"],
+    [53.25868, -6.74781, null, "service, w38715379, s 933 m"],
+    [53.25818, -6.74817, null, "service, w265528122, s 993 m"],
+    [53.25768, -6.7485, null, "service, w265528123, s 1054 m"],
+    [53.25717, -6.74842, null, "raceway, w893740876, s 1118 m"],
+    [53.25707, -6.7493, null, "raceway, w88611271, s 1178 m"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

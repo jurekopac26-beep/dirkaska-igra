@@ -5,9 +5,13 @@
    see-through bonnet or in a wheel arch. On the car only what it does shows: the power, the mass, the grip (js/deli.js DELI.effect,
    core.js applyDeli), the body lower on its springs (vzmeti: DELI.dress, js/deli/barve.js), the
    tyre smoke's colour (DELI.dim: render.js, the drift's smoke).
-   mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle); vzmeti, amortizerji,
+   mounts (look units): filter_zraka, akumulator, turbo, cip { x, y, z } where it sits (its foot's middle;
+   akumulator back: true, x its foot's rear edge; turbo twin: [dz1, dz2] the twin snails' (13-16) places across, from z, ic: [x, y, z]
+   the bigger intercooler's (8, 10, 15) foot's middle, none: in front of the turbo); vzmeti, amortizerji,
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
-   stabilizatorji floor: the height of the floor under the bars, K.rw - 0.06 if not given) */
+   vzmeti seat: the coils' foot, a number or [front, rear] (K.rw + 0.04 if not given; a high body over low arms, GOZDAR's: on the arm, on the axle);
+   stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given;
+   dim_gum w: the rear tyre's width, its inner wall the band's place (none: look.wheels.w; MRAVLJA's wider rear tyres)) */
 (function () {
   'use strict';
   if (typeof DELI === 'undefined') return;
@@ -54,13 +58,15 @@
   function turbo(K, n, m) {
     const { x, y, z } = m, s = 0.8 + n * 0.022, col = n <= 2 ? DK : n <= 6 ? AL : n <= 12 ? [0.55, 0.56, 0.6] : CHR, hot = [0.42, 0.24, 0.16];
     const snail = (cz, k) => { cyl(K, [x, y + 0.08 * k, cz - 0.05 * k], [x, y + 0.08 * k, cz], 0.07 * k, col, { capA: col, capB: DK }); cyl(K, [x, y + 0.08 * k, cz], [x, y + 0.08 * k, cz + 0.05 * k], 0.06 * k, hot); };
-    if (n >= 13) { snail(z - 0.1, s * 0.85); snail(z + 0.12, s * 0.85); } else snail(z, s);
+    const tw = m.twin || [-0.1, 0.12];   // (twin: the two snails' places across, from z: MIŠKA's side by side, in its narrow bay)
+    if (n >= 13) { snail(z + tw[0], s * 0.85); snail(z + tw[1], s * 0.85); } else snail(z, s);
     cyl(K, [x, y + 0.08 * s, z - 0.06], [x - 0.15, y + 0.22, z - 0.2], 0.03, n >= 9 ? BLU : AL, { n: 6 });   // (to the intercooler)
-    if (n === 8 || n === 10 || n === 15) box(K, x + 0.06, y - 0.05, z, 0.04, 0.16, 0.42, AL);   // (a bigger intercooler in front of it)
+    if (n === 8 || n === 10 || n === 15) { const I = m.ic || [x + 0.06, y - 0.05, z]; box(K, I[0], I[1], I[2], 0.04, 0.16, 0.42, AL); }   // (a bigger intercooler in front of it; ic: its own place)
   }
   // ================================================================ akumulator: the battery, smaller and lighter
   function akumulator(K, n, m) {
-    const { x, y } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const { y } = m, k = 1 - (n - 1) * 0.035, col = [BLK, DK, DK, RED, BLU, YEL, YEL, ORA, RED, WHT, BLK, GRN, RED, WHT, CF, GOLD][n - 1];
+    const x = m.back ? m.x + 0.1 * k : m.x;   // (back: its rear face at x, the battery ahead of it: on a floor falling forward its rear edge stays on it)
     const z = m.z + Math.sign(m.z) * 0.07 * (1 - k);   // (its outer side where the stock one's is: against the inner wing)
     box(K, x, y, z, 0.2 * k, 0.17 * k, 0.14 * k, col, n === 15 ? [0.13, 0.13, 0.14] : BLK);
     for (const dz of [-0.04, 0.04]) cyl(K, [x, y + 0.17 * k, z + dz * k], [x, y + 0.17 * k + 0.02, z + dz * k], 0.012, dz < 0 ? RED : BLK, { n: 4 });   // (its terminals)
@@ -69,7 +75,7 @@
   const wheels = (K, fn) => { for (const A of K.arches) for (const sd of [-1, 1]) fn(A.x, sd, A === K.arches[0]); };
   function vzmeti(K, n, m) {
     const low = DELI.effect('vzmeti', n).lower || 0, k = 3, col = [AL, RED, AL, AL, YEL, YEL, RED, PUR, BLU, BLU, BLU, GRN, RED, ORA, YEL, GOLD][n - 1], ti = m.in || 0.13, top = (m.top || 0.66) - low;
-    wheels(K, (x, sd) => { const z = sd * (K.hw - ti), y0 = K.rw + 0.04, h = (top - y0) / (k * 2 - 1);
+    wheels(K, (x, sd, front) => { const z = sd * (K.hw - ti), y0 = m.seat == null ? K.rw + 0.04 : [].concat(m.seat)[front ? 0 : [].concat(m.seat).length - 1], h = (top - y0) / (k * 2 - 1);   // (seat: the coils' foot on a low arm)
       for (let i = 0; i < k; i++) cyl(K, [x, y0 + i * 2 * h, z], [x, y0 + (i * 2 + 1) * h, z], 0.06, col, { capA: null, capB: null });   // (its coils: bands with gaps)
       cyl(K, [x, y0 - 0.01, z], [x, top, z], 0.036, DK, { n: 4, capA: null, capB: null }); });   // (the strut inside)
   }
@@ -83,8 +89,8 @@
   }
   function stabilizatorji(K, n, m) {
     const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06;
-    const fl = m.floor != null ? m.floor : K.rw - 0.06, y = fl + 0.035;   // (the floor under it: the bar 3.5 cm above, in two clamps)
-    const axle = (A, front) => { const x = A.x + (front ? -0.12 : 0.12); K.bar([x, y, -(K.hw - ti)], [x, y, K.hw - ti], r, col, Object.assign({ n: K.hi ? 6 : 5 }, IN));
+    const F = m.floor != null ? [].concat(m.floor) : [K.rw - 0.06];   // (the floor under it: the bar 3.5 cm above, in two clamps)
+    const axle = (A, front) => { const fl = F[front ? 0 : F.length - 1], y = fl + 0.035, x = A.x + (front ? -0.12 : 0.12); K.bar([x, y, -(K.hw - ti)], [x, y, K.hw - ti], r, col, Object.assign({ n: K.hi ? 6 : 5 }, IN));
       for (const sd of [-1, 1]) { K.bar([x, y, sd * (K.hw - ti)], [A.x, y + 0.08, sd * (K.hw - ti)], r * 0.8, col, Object.assign({ n: 4 }, IN));   // (its arms forward to the wheel)
         box(K, x, fl - 0.006, sd * (K.hw - ti) * 0.55, 0.05, y - fl + r + 0.012, 0.035, DK); } };   // (a clamp on the floor)
     if (n !== 2) axle(K.arches[1], false);
@@ -92,7 +98,7 @@
   }
   function dim_gum(K, n, m) {
     const S = DIM[n] || DIM[1];
-    for (const sd of [-1, 1]) { const A = K.arches[1], z = sd * (K.hw - (K.wheels && K.wheels.w ? K.wheels.w / 2 : 0.09) - 0.012), c = S.c[sd < 0 || S.c.length < 2 ? 0 : 1];
+    for (const sd of [-1, 1]) { const A = K.arches[1], z = sd * (K.hw - (m.w ? m.w / 2 : K.wheels && K.wheels.w ? K.wheels.w / 2 : 0.09) - 0.012), c = S.c[sd < 0 || S.c.length < 2 ? 0 : 1];
       K.at(A.x, K.rw, z, () => { for (let i = 0; i < 12; i++) { const a0 = i / 12 * Math.PI * 2, a1 = (i + 1) / 12 * Math.PI * 2, r0 = K.rw * 0.72, r1 = K.rw * 0.9, P = (a, rr) => [A.x + Math.cos(a) * rr / K.sx, K.rw + Math.sin(a) * rr, z];
         const f = [P(a0, r0), P(a1, r0), P(a1, r1), P(a0, r1)]; K.face(sd < 0 ? f : f.slice().reverse(), S.c.length > 2 ? S.c[i % S.c.length] : c); } }, IN); }   // (the tyre's inner wall: its band in the smoke's colour)
   }

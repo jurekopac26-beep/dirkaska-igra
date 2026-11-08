@@ -2,13 +2,32 @@
 
 Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **eno novo progo** (`CLAUDE.md`, razdelek »Ena proga na državo«). Spodnji tabeli naštejeta za vsako državo proge, ki so že v igri, in proge, ki čakajo. Seja pred začetkom nove proge preveri, ali je proga izbrana oziroma ali je njena država še brez proge.
 
-**Vrstni red dela (odločitvi uporabnika 3. in 4. 11. 2026):** izdelava novih prog je **vedno zadnja pred pripravo na Google Play** (izbris testnih prog, sklop 8 orodja za napake). Vsako novo delo, ki pride, gre na vrsto pred izdelavo prog, tudi ko so verige prog že na vrsti; proga, ki je v izdelavi, se dokonča. Pred progami so zdaj **Deli iz garaže, sklop 4** (pregled vseh 624 možnosti na KOLIBRIJU, stran za ogled, testi; `docs/deli.md`; na `main` pred posodobitvijo 33 avtov na drugem računu od nedelje 8. 11. ob 10.00) in **dokončanje Ljudi ob progi** (PR #257). Že narejene proge (PR #226, #241, #261) se smejo združiti na `main`; nove proge iz verig (Nove proge, kratke proge, zavite proge) in Kapelmuur se začnejo šele, ko je vse drugo delo na `main`.
+**Vrstni red dela (odločitve uporabnika 7. 11. 2026, tabla #382):** nove proge so del seznama za različico 1.0 s 50 pravimi progami (`docs/vrsta.md`, »Različica 1.0«). Izdelava novih prog teče naprej (odločitev ob 14.40), **proge so v vrsti za `main` vedno zadnje** (odločitvi ob 16.39 »Proge postavi na zadnja mesta« in ob 16.48, komentar 6709363288): pull request, ki ni proga, se vpiše pred njih, na konec vrste gre samo pull request proge. Narejeni progi Killar (PR #283) in Hakone (PR #261) gresta na `main` v skupini »Proge« (`docs/vrsta.md`), za njo nove proge v skupinah po 3–4. Pravila za nove proge: razdelek »Nove proge za 1.0« spodaj.
 
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
+## Nove proge za 1.0 (odločitve uporabnika 7. 11. 2026)
+
+Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (komentarji 6707680842, 6707700704 in 6707708934):
+
+- **Dolžina:** vsaka nova proga je dolga 1–5 km; daljša cesta se skrajša na najboljši odsek do 5 km.
+- **Prvih 11 prog:** 4 dirkališča, 3 gorske, 2 zelo kratki za tovornjake, 1 izvenserijska in 1 po izbiri seje; za kratki progi za tovornjake in za izvenserijsko po 2–3 predlogi.
+- **Merili izbire:** ovinkasta cesta z veliko zavoji in malo ravnimi odseki, tudi pri dirkališčih (uporabnik: »da je veliko zavojev, da cesta ni ravna ampak ovinkasta«; »če je preveč ravnine, je vožnja dolgočasna«), in čim več zanimivega do 60 m ob cesti (vidno polje kamere za avtom). Meri se kot v `docs/proge-pregled.md` (zavitost, »Do 60 m ob cesti«).
+- **Za vsako progo** seja preveri resnično pot in dolžino v OpenStreetMap, državo (ena proga na državo), izletno cono, imena brez oseb, znamk in lokalov ter oceno obremenitve telefona; na seznamu napiše ime »Kraj, Država«, vrsto, dolžino, kaj je do 60 m ob progi in zavitost.
+- **Potrjen seznam 11 prog** (odločitev uporabnika 7. 11. 2026 ob ~21.20, prek Mateja, komentar 6712589851):
+  - dirkališča: Silkeborg, Danska; Kågeröd, Švedska; Biķernieki, Latvija; Zandvoort, Nizozemska;
+  - gorske: Izoard, Francija; Sa Calobra, Španija; **Kotor, Črna gora** (namesto Hehuanshana, Tajvan);
+  - za tovornjake: Sosnová, Češka; Pembrey, Wales;
+  - izvenserijska: Kildare, Irska (reli kros);
+  - mestna: **London, Anglija** (namesto Budimpešte).
+  - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel.
+  - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`. Seznam 50 prog (vprašanje `nove-proge-1-0-50`) še čaka.
+- **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
+- **Mestne proge po središču velikih mest:** velika mesta (npr. London) dobijo kratko dirko po središču, v spodnjem delu razpona 1–5 km, po širokih glavnih ulicah, nabrežjih in trgih, z ograjami kot na uličnih dirkah; stavbe so generične, brez pravno spornih imen in podob (kot pri Monte Carlu). **Zanje pravilo izletne cone ne velja** (razdelek »Izletna cona«).
+
 ## Izletna cona (odločitev uporabnika 5. 11. 2026)
 
-Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno cono; proga, ki ima pregrado večinoma takoj ob cesti, se ne začne (ne briše se), proga v pull requestu se samo javi. Uporabnik (5. 11. 2026): »Niso mi všeč proge, ki nimajo izletne cone, to pomeni da je ograja večinoma časa takoj ob cesti.«
+Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno cono; proga, ki ima pregrado večinoma takoj ob cesti, se ne začne (ne briše se), proga v pull requestu se samo javi. Uporabnik (5. 11. 2026): »Niso mi všeč proge, ki nimajo izletne cone, to pomeni da je ograja večinoma časa takoj ob cesti.« Izjema (odločitev uporabnika 7. 11. 2026): mestne proge po središču velikih mest (razdelek »Nove proge za 1.0«).
 
 **Merilo:** delež dolžine ceste, kjer je pregrada (ograja, zid, hiša, skalna stena, prepad, most, predor) do 3 m od roba asfalta na vsaj eni strani (v oklepaju: na obeh); »večinoma« je več kot pol dolžine. Narejene proge (pull requesti, stare veje) so izmerjene v igri: meja, ob kateri se avto ustavi (`T.bl`, `T.br` v `js/core.js`), manj polovica širine asfalta (`T.wAt(i)`), na vsakih 5 m. Nenarejene so izmerjene iz OpenStreetMap (pot po cestah OSM, žarek levo in desno do 3 m čez rob asfalta: `barrier=guard_rail`, `wall`, `retaining_wall`, `fence`, stavbe, `natural=cliff`, mostovi, predori); OSM ima ponekod vrisan le del hiš in ograj, zato je to spodnja meja, in kjer je vrisanega očitno premalo, odloča vrsta ceste iz načrta. Ulične proge imajo začasne betonske ograje ob vsem krogu (ulične proge v igri: 71–100 %). Gorske ceste dobijo v igri rob ~3,4 m do ograje (Bâlea, Hakone: 0 %), zato jih ograja ob resnični cesti ne izloči; izločijo jih hiše, zidovi, predori in ozke police v steni.
 
@@ -57,7 +76,7 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
-| Avstralija | Bathurst, Longford, Newcastle, Great Alpine Road, Mount Hotham, Townsville: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik, ostale gredo v test) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
+| Avstralija | Bathurst, Great Alpine Road: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik); Longford, Newcastle, Mount Hotham in Townsville so od 6. 11. 2026 testne (`test: true`, za izbris; odločitev uporabnika: »Vse ostale daj v test«) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
