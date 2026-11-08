@@ -34,7 +34,22 @@ _V delu._
 - **Primer:** dirka s poškodbami, avto s kolesi kot deli (npr. `kolibri` na `spa`): kolo z gorečo gumo odpade (`nL = 1`, `due = 4`), v zadnjih 0,8 s odštevanja se avto rahlo dotakne ograje. Simulacija v Node: `due` 0,25 → −0,15, 20 s pozneje še vedno `nL = 1`, `ask = 1`, brez KONEC IGRE, hitrost 35,8 m/s: avto vozi naprej s tremi kolesi do popravila, gumb ZAMENJAJ KOLO izgine (zahteva `due > 0`).
 - Preverjeno: potrjeno (simulacija).
 
+**J10 · Policijski način: megla postane NaN v posnetku aretacije** · `js/render.js:9688` (kamera, megla posnetka)
+- `dC = shot ? shot.fogD : …` nima privzete vrednosti (za razliko od `near`), `setShot` (9916) pa je ne doda. `bustShot` in `chkShot` (`js/game.js:3682–3693`) podata samo položaj, `fov`, `floor` in `near`, brez `fogD`, zato sta `scene.fog.near` in `scene.fog.far` NaN, dokler posnetek traja; vsi drugi klici `setShot` (foto način, prelet, cilj, misije) `fogD` podajo. Izid je odvisen od grafične kartice: megle ni in daljna ravnina reže ostro, ali pa so zamegljene točke črne.
+- **Primer:** policijski način na pravi progi, ki ga ima (npr. `balea`, `medvode`, `greatalpine`, `tianmen`): policija igralca ujame (ULOVLJEN, `bustShot`) ali ga aretira na kontrolni točki (`chkShot`). Posnetek traja 4,2 s zaključne faze in ostane za zaslonom z rezultati.
+- Preverjeno: potrjeno (branje kode; videz na posamezni kartici ni preverjen).
+
 ### Nizke
+
+**J11 · Posnetek na Pikes Peaku: helikopter po premiku časa gleda proti staremu mestu** · `js/render.js:9657` (TV kamere Pikes Peaka, `pkTv`), `js/render.js:9912` (`resetCam`)
+- Pogled se poravna samo, ko se ključ kadra spremeni (`cam.tvK !== o.key`), helikopter pa ima ključ vedno −1 (9833). `resetCam` `cam.tvK` ne počisti, zato se po skoku v posnetku helikopter premakne (`st.init = false`), točka pogleda (`cam.tx/tz`) pa se z mehčanjem `1 − e^(−9·dt)` pomika s starega mesta, lahko kilometre stran; `fov` je izračunan za napačno razdaljo (do 3°) in avta ~0,3–0,5 s ni v kadru.
+- **Primer:** posnetek na `pikes` ali `pikesg` s TV kamero, ko je v kadru helikopter: premik po časovnem traku, znova od začetka, prejšnji/naslednji krog ali preklop s kamere za avtom nazaj na TV po daljšem odseku.
+- Preverjeno: potrjeno (branje kode).
+
+**J12 · Tresenje kamere v pavzi in foto načinu ne pojenja** · `js/render.js:9685`
+- `cam.shake` pojema samo za `dt * 3`, vsaka sličica pa doda nov naključni odmik do ±0,6 m. V pavzi in pri izrisu z `dt = 0` (`js/game.js:6309`, `snapshot()`) pojemanja ni, zato pogled trese brez konca, tudi v foto načinu (blok teče tudi pod `setShot`), in shranjena fotografija je posneta s stresenega mesta. `resetCam` in `setShot` tresenja ne ponastavita.
+- **Primer:** Nastavitve → tresenje kamere ob trku vklopljeno (privzeto izklopljeno), trk (`Render.shake(…, 'hit')`) in v ~0,4 s pavza ali foto način.
+- Preverjeno: potrjeno (branje kode).
 
 **J2 · Varnostni avto: avta, ustavljena skupaj, se ne štejeta, če sta krog narazen** · `js/core.js:6437` (`Race._flags`)
 - `heavy` primerja razdaljo dirke (`Math.abs(o.dist - c.dist) < 60`), ne mesta na progi; rdeča zastava v isti funkciji (`js/core.js:6431`) primerja mesto (`o.q.s - c.q.s`, ovito na dolžino kroga).
