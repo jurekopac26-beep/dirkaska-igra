@@ -2648,5 +2648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "26e674baa38b2dd2a94bd028"
+ },
+ "zandvoort/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 208.35,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d02e2817f4d0c0f0d26bd20e"
+ },
+ "zandvoort/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 229.07,
+  "spins": 1,
+  "walls": 1,
+  "rescues": 1,
+  "nan": false,
+  "digest": "1ef3ebe8db027dadff6df583"
+ },
+ "zandvoort/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 180.11,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a289952e8a9e85a350f067b9"
+ },
+ "zandvoort/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 180.82,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "86db240edd9655ffbb630387"
+ },
+ "zandvoort/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 214.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1d794297f4d366da98bed95d"
  }
 }
