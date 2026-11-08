@@ -23,7 +23,7 @@ try {
   // (the menu lives in a shadow root: `root` in the code run in the page)
   const SH = 'const root = document.getElementById("menu-host").shadowRoot;';
   const ev = (page, body, arg) => page.evaluate(new Function('arg', SH + body), arg);
-  const click = (page, act) => page.click(`[data-act="${act}"]`);
+  const click = (page, act) => page.click(`[data-act="${act}"] >> visible=true`);   // (the one on show: the carousel's cards and arrows, on its side only, come before the neighbours' buttons, upright only)
   const done = (page) => page.click('.sheet .go[data-act="close-sheet"]');   // (a sheet's Done button)
   const shown = (page) => page.evaluate(() => [...document.querySelectorAll('.screen.show')].map(e => e.id));
   // (a picture still on its way when the next track is stepped to is cancelled by the browser: not an error of the page)
@@ -842,33 +842,39 @@ try {
     await click(page, 'cam:2');   // (the flyover)
     await page.waitForTimeout(500);
     // the track step: upright the picture from the top of the screen (the head over it) to the row, then the row, the yard, the neighbours
-    // and Race! one under the other; on its side the stage the whole height at the left (half the width), the rest (the head first) at the
-    // right; nothing cut, nothing over another
+    // and Race! one under the other; on its side the carousel (sklop 10): the chosen track's card in the middle under the head, the row
+    // under it as wide as it and Race! at its right, the car at the bottom left under the left neighbour's card, the neighbours' cards
+    // (smaller) and the arrows ‹ › at the card's sides, their middles at the height of its middle; nothing cut, nothing over another
     const g = await ev(page, `
       const rc = (s) => { const e = root.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
-      const out = { head: rc(".thead"), hb: rc(".thead .hback"), globe: rc(".thead .globe"), st: rc("#track-stage"), row: rc(".trow"), yard: rc(".yard"), sign: rc(".yard .sign"), nbrs: rc(".nbrs"), foot: rc(".foot"), go: rc(".go"), where: rc(".where .w2"), W: innerWidth, H: innerHeight };
+      const out = { head: rc(".thead"), hb: rc(".thead .hback"), globe: rc(".thead .globe"), st: rc("#track-stage"), row: rc(".trow"), yard: rc(".yard"), car: rc(".yard .car"), sign: rc(".yard .sign"), nbrs: rc(".nbrs"), foot: rc(".foot"), go: rc(".go"), where: rc(".where .w2"), W: innerWidth, H: innerHeight };
+      out.cl = rc(".rcard[data-k='-1']"); out.cr = rc(".rcard[data-k='1']"); out.al = rc(".rarw.l"); out.ar = rc(".rarw.r"); out.k = Menu.debug().ring.k;
       out.cells = [...root.querySelectorAll(".trow > div")].map(e => e.scrollWidth - e.clientWidth); out.nb = [...root.querySelectorAll(".nb")].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.right, r.width]; });
       out.wx = rc(".wxv"); out.cams = rc("#track-stage .cams"); out.cnt = rc("#track-stage .tcount"); out.gr = rc("#track-stage .hgraph"); const sv = root.querySelector("#track-stage .hgraph svg"); out.grw = sv ? sv.getBoundingClientRect().width : 0; return out;`);
     const inside = (r) => r && r.l >= -0.5 && r.r <= g.W + 0.5 && r.t >= -0.5 && r.b <= g.H + 0.5;
-    const side = g.W > g.H, parts = side ? ['head', 'row', 'yard', 'nbrs', 'foot'] : ['row', 'yard', 'nbrs', 'foot'];
-    const order = parts.every((k, i) => !i || g[parts[i - 1]].b <= g[k].t + 1);
-    const lay = side ? g.st.l <= 0.5 && g.st.h >= g.H - 2 && Math.abs(g.st.w - g.W / 2) < g.W * 0.08 && parts.every(k => g[k].l >= g.st.r - 1) && order
+    const side = g.W > g.H, parts = side ? ['head', 'row', 'yard', 'car', 'foot', 'cl', 'cr', 'al', 'ar'] : ['row', 'yard', 'nbrs', 'foot'];
+    const order = side || parts.every((k, i) => !i || g[parts[i - 1]].b <= g[k].t + 1), mx = (r) => (r.l + r.r) / 2, my = (r) => (r.t + r.b) / 2;
+    const lay = side ? Math.abs(mx(g.st) - g.W / 2) < 1 && g.head.b <= g.st.t + 1 && g.row.t >= g.st.b - 1 && Math.abs(g.row.l - g.st.l) < 1 && Math.abs(g.row.r - g.st.r) < 1 &&
+        g.go.l >= g.row.r && g.go.t < g.row.b && g.go.b > g.row.t && g.yard.r <= g.row.l + 1 && g.car.r <= g.row.l + 1 && g.car.t >= g.cl.b - 1 &&
+        g.cl.r <= g.st.l && g.cr.l >= g.st.r && g.cl.h < g.st.h && g.cr.h < g.st.h && [g.cl, g.cr, g.al, g.ar].every(r => Math.abs(my(r) - my(g.st)) < 1) && mx(g.al) < g.st.l && mx(g.ar) > g.st.r && g.al.w >= 32 && g.ar.w >= 32
       : g.st.t <= 0.5 && g.head.t <= 0.5 && g.head.b <= g.st.t + 90 && g.row.t >= g.st.b - 20 && g.row.t <= g.st.b + 1 && g.st.h >= g.H * 0.5 && order;   // (the row in the room, which lies a little over the picture's foot: --ov)
-    T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the head and the rest right)' : ' (the picture from the top, the head over it)'}: the row, the yard, the neighbours and Race!, in order, all inside the screen`,
+    T.check(`${w}x${h}: the track step${side ? ' on its side (the carousel): the card in the middle under the head, the row and Race! under it, the car at the bottom left, the neighbours\' cards and the arrows at its sides' : ' (the picture from the top, the head over it): the row, the yard, the neighbours and Race!, in order'}, all inside the screen`,
       lay && parts.every(k => inside(g[k])) && inside(g.head) && inside(g.go) && inside(g.st) && g.yard.h >= 50, JSON.stringify(g));
-    T.check(`${w}x${h}: the row's numbers are not cut; the two neighbours side by side; the weather inside the stage, over the cameras; the counter and the cameras at the stage's foot, apart; the sign in the yard`,
-      g.cells.every(x => x <= 1) && g.nb.length === 2 && g.nb[0][1] <= g.nb[1][0] && g.nb[0][2] >= 100 && g.wx.r <= g.st.r + 0.5 && g.wx.b <= g.cams.t - 4 && (side || g.wx.t >= g.globe.b + 4) &&
-      g.cnt.l >= g.st.l + 6 && g.cnt.r <= g.cams.l - 8 && g.cams.r <= g.st.r - 6 && Math.abs(g.cnt.b - g.cams.b) < 0.5 && g.cams.b <= (side ? g.st.b : g.row.t) - 6 && g.sign.t >= g.yard.t - 0.5 && g.sign.r <= g.yard.r + 0.5, JSON.stringify({ cells: g.cells, nb: g.nb, wx: g.wx, cams: g.cams, cnt: g.cnt, sign: g.sign }));
+    T.check(`${w}x${h}: the row's numbers are not cut; ${side ? 'the neighbours\' cards apart from the card' : 'the two neighbours side by side'}; the weather inside the stage, over the cameras; the counter and the cameras at the stage's foot, apart${side ? '' : '; the sign in the yard'}`,
+      g.cells.every(x => x <= 1) && (side ? g.cl.r <= g.st.l - 8 && g.cr.l >= g.st.r + 8 : g.nb.length === 2 && g.nb[0][1] <= g.nb[1][0] && g.nb[0][2] >= 100) && g.wx.l >= g.st.l && g.wx.r <= g.st.r + 0.5 && g.wx.t >= g.st.t && g.wx.b <= g.cams.t - 4 && (side || g.wx.t >= g.globe.b + 4) &&
+      g.cnt.l >= g.st.l + 6 && g.cnt.r <= g.cams.l - 8 && g.cams.r <= g.st.r - 6 && Math.abs(g.cnt.b - g.cams.b) < 0.5 && g.cams.b <= (side ? g.st.b : g.row.t) - 6 && (side || (g.sign.t >= g.yard.t - 0.5 && g.sign.r <= g.yard.r + 0.5)),
+      JSON.stringify({ cells: g.cells, nb: side ? [g.cl, g.cr] : g.nb, wx: g.wx, cams: g.cams, cnt: g.cnt, sign: g.sign }));
+    const e8 = Math.max(6, 8 * g.k);   // (on its side the things in the card 8 of the drawing's px in from its edges, no less than 6 px)
     T.check(`${w}x${h}: the height graph in its frame ${side ? 'at the stage\'s top left' : 'under the back arrow, as wide as it'} (0.6 of it high), left of the weather and over the counter`,
       g.gr && Math.abs(g.grw - g.gr.w) < 1 && g.gr.h >= g.gr.w * 0.55 && g.gr.h <= g.gr.w * 0.66 && g.gr.r < g.wx.l - 8 && g.gr.b < g.cnt.t - 8 &&
-      (side ? Math.abs(g.gr.l - g.st.l - 8) < 0.5 && Math.abs(g.gr.t - g.st.t - 8) < 0.5 : Math.abs(g.gr.l - g.hb.l) < 0.5 && Math.abs(g.gr.w - g.hb.w) < 0.5 && g.gr.t >= g.hb.b + 8), JSON.stringify({ gr: g.gr, st: g.st, hb: g.hb, grw: g.grw, wx: g.wx }));
+      (side ? Math.abs(g.gr.l - g.st.l - e8) < 0.6 && Math.abs(g.gr.t - g.st.t - e8) < 0.6 : Math.abs(g.gr.l - g.hb.l) < 0.5 && Math.abs(g.gr.w - g.hb.w) < 0.5 && g.gr.t >= g.hb.b + 8), JSON.stringify({ gr: g.gr, st: g.st, hb: g.hb, grw: g.grw, wx: g.wx }));
 
-    // the whole route and the names of its flags inside the picture; the neighbours at the same place on the next track. (An open road's map
+    // the whole route and the names of its flags inside the picture; the neighbours (on its side their cards) at the same place on the next track. (An open road's map
     // turned to run up the frame: on Pikes Peak, below. Vršič, a test track since 6. 11. 2026, is drawn as the test tracks are, not turned)
     const MEASURE = `
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
-      const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(".nb")].map(c), scr: [innerWidth, innerHeight] };
+      const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(innerWidth > innerHeight ? ".rcard[data-k='-1'], .rcard[data-k='1']" : ".nb")].map(c), scr: [innerWidth, innerHeight] };
       if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount")].concat([...root.querySelector(".thead").children]).map(c); }
       return out;`;
     await click(page, 'cam:1'); await page.waitForTimeout(500);
@@ -876,7 +882,7 @@ try {
     await click(page, 'track:1'); await page.waitForTimeout(500);
     const v2 = await ev(page, MEASURE);
     const same = (a, b) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
-    T.check(`${w}x${h}: the neighbours' buttons at the same place on Vršič and on the next track`, v1.name === 'Vršič' && v2.name !== 'Vršič' && v1.nb.length === 2 && v2.nb.length === 2 && same(v1.nb[0], v2.nb[0]) && same(v1.nb[1], v2.nb[1]), JSON.stringify({ v1: v1.nb, v2: v2.nb }));
+    T.check(`${w}x${h}: the neighbours' ${side ? 'cards' : 'buttons'} at the same place on Vršič and on the next track`, v1.name === 'Vršič' && v2.name !== 'Vršič' && v1.nb.length === 2 && v2.nb.length === 2 && same(v1.nb[0], v2.nb[0]) && same(v1.nb[1], v2.nb[1]), JSON.stringify({ v1: v1.nb, v2: v2.nb }));
     if (w === 412) T.check('Vršič\'s head: the place alone, "VRŠIČ" (no height)', v1.head === 'Vršič', v1.head);
     const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
     T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
@@ -960,6 +966,98 @@ try {
       await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await zem(page, 0);
     }
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 6b. on its side the carousel (docs/meni-izbira-proge.md point 9, sklop 10) and upright the picture's swipe: an arrow (›) turns the cards
+  //     one track on in ~300 ms (on the way the old track still chosen and the card's things fading; then the next track, its screen under
+  //     the old one, which fades and goes; the arrow keeps the focus), a tap on a neighbour's card turns to it, a swipe across the card far
+  //     enough turns on from where it was let go (also begun on a weather button: no weather chosen), a short one or one up the screen goes
+  //     back; the weather chosen slides to the first place of its row; the Earth opened in a turn ends it at once; a track picked in the quick
+  //     list turns in from its side; upright the picture follows the finger, a swipe far enough goes to the next track, a short one slides back
+  {
+    const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, { width: 892, height: 412 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(600);
+    // (every frame for ms: the track, the carousel's state, the chosen card's --ui (its things' opacity), the track screens (2: the old one fading))
+    const watch = (ms) => page.evaluate((ms) => new Promise((res) => {
+      const root = document.getElementById('menu-host').shadowRoot, t0 = performance.now(), out = [];
+      const step = () => {
+        const d = Menu.debug(), st = root.querySelector('#track-stage'), u = st ? st.style.getPropertyValue('--ui') : '';
+        out.push(Object.assign({ t: Math.round(performance.now() - t0), id: d.list[d.trackIdx], ui: u === '' ? 1 : +u, scr: root.querySelectorAll('#s-track').length }, d.ring));
+        if (performance.now() - t0 < ms) requestAnimationFrame(step); else res(out);
+      };
+      requestAnimationFrame(step);
+    }), ms);
+    const now = () => page.evaluate(() => { const d = Menu.debug(); return { id: d.list[d.trackIdx], i: d.trackIdx, list: d.list, ring: d.ring }; });
+    const idle = (s) => !s.turning && !s.held && !s.fading, last = (w) => w[w.length - 1];
+    const a0 = await now(), n = a0.list.length, next = a0.list[(a0.i + 1) % n];
+    await page.click('.rarw.r'); const w1 = await watch(1100);
+    const l1 = w1.findIndex(s => s.id !== 'spa'), foc = await ev(page, 'const a = root.activeElement; return !!a && a.classList.contains("rarw") && a.classList.contains("r");');
+    T.check('on its side an arrow (›) turns the cards one track on in ~300 ms: on the way the old track still chosen and the card\'s things fading, then the next track, the old screen fading over it and gone; the arrow keeps the focus',
+      a0.ring.on && a0.id === 'spa' && w1.some(s => s.turning && s.id === 'spa' && s.p > 0.05 && s.p < 0.95 && s.ui < 0.9) && l1 > 0 && w1[l1].t >= 100 && w1[l1].t <= 800 && w1[l1].id === next &&
+      w1.some(s => s.fading && s.scr === 2) && idle(last(w1)) && last(w1).scr === 1 && foc, JSON.stringify({ a0: a0.id, l1: w1[l1], w1: w1.filter((s, i) => i % 3 === 0).map(s => [s.t, s.id, s.p, +s.turning, +s.fading, s.ui, s.scr]), foc }));
+    await page.click('.rcard[data-k="-1"]'); const w2 = await watch(1000);
+    T.check('a tap on the left neighbour\'s card turns the cards back to it (Spa)', w2.some(s => s.turning) && last(w2).id === 'spa' && idle(last(w2)), JSON.stringify(w2.filter((s, i) => i % 3 === 0).map(s => [s.t, s.id, s.p])));
+    // the finger (the mouse) across the card: far enough to the left, then from a weather button to the right, then a short way, then up
+    const c = await ev(page, 'const r = root.querySelector("#track-stage").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2];');
+    const drag = async (x, y, dx, dy, k) => { await page.mouse.move(x, y); await page.mouse.down(); for (let i = 1; i <= k; i++) { await page.mouse.move(x + dx * i, y + dy * i); await page.waitForTimeout(16); } const h = await now(); await page.mouse.up(); return h; };
+    const h1 = await drag(c[0], c[1], -22, 0.5, 6), w3 = await watch(1100);
+    T.check('a swipe across the card to the left: the cards follow the finger, let go far enough they turn on from there to the next track',
+      h1.ring.held && h1.ring.p > 0.3 && h1.ring.p < 0.6 && h1.id === 'spa' && last(w3).id === next && idle(last(w3)), JSON.stringify({ h1: h1.ring, end: last(w3) }));
+    const wb = await ev(page, 'const b = root.querySelector("#track-stage .wxv > button[aria-pressed=\\"false\\"]"), r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, b.dataset.act];');
+    const wxOn = () => ev(page, 'return root.querySelector("#track-stage .wxv > [aria-pressed=\\"true\\"]").dataset.act;'), wx0 = await wxOn();
+    await drag(wb[0], wb[1], 22, 0, 6); const w4 = await watch(1100), wx1 = await wxOn();
+    T.check('a swipe to the right begun on a weather button: the cards turn back (Spa), no weather chosen', last(w4).id === 'spa' && idle(last(w4)) && wx1 === wx0, JSON.stringify({ end: last(w4), wb, wx0, wx1 }));
+    const h2 = await drag(c[0], c[1], 10, 0, 3), w5 = await watch(700), h3 = await drag(c[0], c[1], 0.75, 10, 4); await page.waitForTimeout(300); const a5 = await now();
+    T.check('a short swipe: the cards follow it, let go they go back (the same track); a move up the screen is no swipe',
+      h2.ring.held && h2.ring.p < 0 && last(w5).id === 'spa' && idle(last(w5)) && last(w5).p === 0 && !h3.ring.held && a5.id === 'spa' && idle(a5.ring), JSON.stringify({ h2: h2.ring, end: last(w5), h3: h3.ring, a5: a5.ring }));
+    // the weather's row on the card: the choice slides to its first place, the others after it in their order
+    await page.waitForTimeout(450);   // (the tap a swipe ends with: not a tap for 400 ms)
+    await page.click('#track-stage .wxv .w-snow');
+    const slid = await ev(page, 'return getComputedStyle(root.querySelector("#track-stage .wxv .w-snow")).transform;');
+    await page.waitForTimeout(450);
+    const wr = await ev(page, 'return [...root.querySelectorAll("#track-stage .wxv > button")].map(b => [b.dataset.act, b.getAttribute("aria-pressed"), b.getBoundingClientRect().left, getComputedStyle(b).transform]);');
+    T.check('the weather chosen (Snow) slides to the first place of its row, the others after it in their order (Dry, Rain, Changing, Storm); then nothing moving',
+      /^matrix/.test(slid) && [...wr].sort((a, b) => a[2] - b[2]).map(b => b[0]).join() === 'weather:snow,weather:dry,weather:rain,weather:change,weather:storm' && wr.find(b => b[0] === 'weather:snow')[1] === 'true' && wr.every(b => b[3] === 'none'), JSON.stringify({ slid, wr }));
+    // the Earth opened in a turn: the turn done at once (the next track), no old screen left over it; the screen rests under the Earth
+    const e1 = await page.evaluate(() => new Promise((res) => {
+      const root = document.getElementById('menu-host').shadowRoot, d0 = Menu.debug();
+      root.querySelector('.rarw.r').click();
+      requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const m = Menu.debug(); root.querySelector('.thead .globe').click(); const d = Menu.debug();
+        res({ from: d0.list[d0.trackIdx], mid: Object.assign({ id: m.list[m.trackIdx] }, m.ring), id: d.list[d.trackIdx], ring: d.ring, scr: root.querySelectorAll('#s-track').length });
+      })));
+    }));
+    const zOk = await zem(page, 1).then(() => true).catch(() => false), zr = zOk && await ev(page, 'return !!root.querySelector("#s-track.rested") && MenuZemlja.isOpen();');
+    T.check('the Earth opened in a turn: the turn done at once (the next track), no old screen left; the screen rests under the Earth',
+      e1.from === 'spa' && e1.mid.turning && e1.mid.id === 'spa' && e1.id === next && idle(e1.ring) && e1.scr === 1 && zr, JSON.stringify({ e1, zOk, zr }));
+    await page.keyboard.press('Escape'); await zem(page, 0).catch(() => null); await page.waitForTimeout(300);
+    // a track picked in the quick list (Japan, Suzuka, Select): its card turns in from its side
+    await page.click('.trow .flag button');
+    await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });
+    await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
+    await page.click('.izb-t[data-t="suzuka"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
+    await page.click('.izb-sel'); const w6 = await watch(1200);
+    const izOff = await page.waitForFunction(() => !MenuIzbor.isOpen(), null, { timeout: 10000 }).then(() => true).catch(() => false);
+    T.check('a track picked in the quick list (Suzuka): its card turns in from its side, then rests; the list closed',
+      w6.some(s => s.turning && s.id === 'suzuka' && Math.abs(s.p) > 0.05) && last(w6).id === 'suzuka' && idle(last(w6)) && izOff, JSON.stringify({ w6: w6.filter((s, i) => i % 3 === 0).map(s => [s.t, s.id, s.p, +s.turning]), izOff }));
+    T.check('no page errors in the carousel', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {
+    const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, { width: 412, height: 892 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(600);
+    const at = () => page.evaluate(() => { const d = Menu.debug(); return { id: d.list[d.trackIdx], next: d.list[(d.trackIdx + 1) % d.list.length], ring: d.ring }; });
+    const tf = () => ev(page, 'return root.querySelector("#track-stage .dio").style.transform;');
+    const c = await ev(page, 'const r = root.querySelector("#track-stage .dio").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2];');
+    const drag = async (dx, k) => { await page.mouse.move(c[0], c[1]); await page.mouse.down(); for (let i = 1; i <= k; i++) { await page.mouse.move(c[0] + dx * i, c[1]); await page.waitForTimeout(16); } const t = await tf(); await page.mouse.up(); return t; };
+    const p0 = await at(), t1 = await drag(-20, 5); await page.waitForTimeout(500); const p1 = await at();
+    const t2 = await drag(10, 3); await page.waitForTimeout(450); const t3 = await tf(), p2 = await at();
+    T.check('upright: no carousel; the picture follows the finger (0.35 of the way), a swipe far enough to the left goes to the next track, a short one slides back (the same track)',
+      !p0.ring.on && t1 === 'translateX(-35.0px)' && p1.id === p0.next && t2 === 'translateX(10.5px)' && t3 === '' && p2.id === p0.next, JSON.stringify({ p0, t1, p1: p1.id, t2, t3, p2: p2.id }));
+    T.check('upright: no page errors with the swipe', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 
