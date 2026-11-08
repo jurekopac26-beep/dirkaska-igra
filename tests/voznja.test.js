@@ -3,7 +3,7 @@
 // angle and bits every 0.05 s; the header as rrpOf; packed by the game's own js/napake.js and gzip): the player on the autopilot with a known
 // offset of its line (Car.laneBias, the line 0.6 m and 1.4 m to the right of the racing line on alternate laps). Bathurst: seven laps in the
 // dry (lap 3 a spin, lap 6 a hit into the wall; on lap 2 another car beside it for 10 s), three in the rain, two in an upgraded car and two
-// in the formula; Mount Buller: three runs up the road (the line 0.5 / 1 / 1.5 m to the right). The tool's profile against what the race
+// in the formula; Bâlea: three runs up the road (the line 0.5 / 1 / 1.5 m to the right). The tool's profile against what the race
 // itself had at the same points (the player's d and speed, the race's speed profile): the line and the speed within bounds, the spin and the
 // hit laps left out with their reasons, the part beside the other car left out of lap 2, the rain a profile of its own (and each car), the
 // share of the pace (vq) the same in every car, an open road's runs each a lap; the corners' braking; a changing weather (wxs) leaves out the
@@ -189,10 +189,10 @@ if (pD && pW) {
     PC.map(p => `${p.razred.join(',')}${p.v_razredu ? '' : ' (not one of them)'}: ${Object.keys(p.avti).join(' + ')}, ${p.krogi.uporabljeni.length} laps`).join(' | ') || rc.text.slice(0, 300));
 }
 
-// 3. Mount Buller, an open road: three runs (each its own recording), the line 0.5 / 1 / 1.5 m right of the racing line
-const rB = [0.5, 1, 1.5].map((b, j) => record('mountbuller', { laps: 1, seed: 3 + j }, (P) => { P.laneBias = b; })), TB = rB[0].T;
-const runs = rB.map((r, j) => save(`posnetek_mountbuller_20261104-12${j}0.rrp`, r));
-const r2 = tool(runs, path.join(OUT, 'buller.json')), pB = r2.prof && r2.prof.proge && r2.prof.proge[0];
+// 3. Bâlea, an open road: three runs (each its own recording), the line 0.5 / 1 / 1.5 m right of the racing line
+const rB = [0.5, 1, 1.5].map((b, j) => record('balea', { laps: 1, seed: 3 + j }, (P) => { P.laneBias = b; })), TB = rB[0].T;
+const runs = rB.map((r, j) => save(`posnetek_balea_20261104-12${j}0.rrp`, r));
+const r2 = tool(runs, path.join(OUT, 'balea.json')), pB = r2.prof && r2.prof.proge && r2.prof.proge[0];
 console.log(r2.text.split('\n').slice(0, 6).map(l => '  | ' + l).join('\n'));
 check('open road: one profile, each run a lap (»vožnja«), all three used, »najmanj« (3-5 runs)', r2.code === 0 && pB && pB.odprta && r2.prof.proge.length === 1 && pB.krogi.uporabljeni.length === 3 && pB.natancnost.ocena === 'najmanj' && /vožnja \d/.test(r2.text),
   pB ? `${pB.krogi.uporabljeni.length} used, ${pB.natancnost.ocena}, ${pB.s.length} points over ${pB.dolzina} m` : r2.text.slice(0, 300));
@@ -200,7 +200,7 @@ if (pB) {
   // (where the 1.5 m line still fits on the road: the autopilot keeps 1.25 m from the edge, Core aiDrive)
   const fr = pB.s.map((s, i) => i).filter(i => pB.d[i] != null && pB.n[i] === 3 && pB.rl[i] < TB.wAt(TB.idx(TB.startS + pB.s[i])) - 1.25 - 1.5 - 0.1), off = mean(fr.map(i => pB.d[i] - pB.rl[i]));
   const s0 = pB.n.findIndex(x => x === 3) * pB.korak;   // (the standing start from the line left out up to the first corner, as a circuit's first lap: the AI's cars are already moving from the grid behind it)
-  check('open road: the whole run from the first corner (the standing start left out) to the finish (2.5 km), the line 1 m right of the racing line on average (±0.25 m)', pB.dolzina > 2400 && pB.dolzina < 2600 && s0 > 0 && s0 <= 500 && pB.krogi.uporabljeni.every(k => k.izpusceno_m && k.izpusceno_m.start > 0) && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
+  check(`open road: the whole run from the first corner (the standing start left out) to the finish (${(TB.raceLen / 1000).toFixed(1)} km), the line 1 m right of the racing line on average (±0.25 m)`, Math.abs(pB.dolzina - TB.raceLen) < 50 && s0 > 0 && s0 <= 500 && pB.krogi.uporabljeni.every(k => k.izpusceno_m && k.izpusceno_m.start > 0) && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
     `${off.toFixed(3)} m over ${fr.length} points, the start left out to ${s0} m`);
 }
 
@@ -261,7 +261,7 @@ if (pB) {
 // line (wider than the racing line at the apexes of the hairpins and tight corners, on it along the straights) and at its pace, all finish,
 // none put back, quicker than the race's own AI but not by more than the player on Tianmen is (cas_q, with some room); Tianmen: the cars of
 // the profile's class by the profile, the others by the style; none of it in the rain, on a track still to be chosen (Bathurst) or a test
-// one, and none of its pace on a makadam road (Sani: the source track was asphalt)
+// one, and none of its pace on a makadam road (Katu-Jaryk: the source track was asphalt)
 {
   const src = path.join(ROOT, 'js', 'data', 'voznja.js'), cp = path.join(OUT, 'voznja-slog.js');
   fs.copyFileSync(src, cp);
@@ -309,12 +309,12 @@ if (pB) {
     check('Tianmen: the rivals of the profile\'s class (Perun) by the player\'s profile, the others by the style',
       !!V && tA.AI.every(c => !V.razred.includes(c.m.id)) && same(tA, tS) && tP.AI.every(c => V.razred.includes(c.m.id)) && same(tP, tV), `${tA.AI.map(c => c.m.id).join('/')} | ${tP.AI.map(c => c.m.id).join('/')}`);
     // none in the rain, on Bathurst (still to be chosen, pending) or Spa as a test track, nor for a semi-trailer (the tankers' race on Spa);
-    // on Sani (makadam) the line but none of the pace
+    // on a makadam road (Katu-Jaryk, a stage without rivals: the style made for it) the line but none of the pace
     const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(C.TRACKS.find(d => d.id === 'bathurst'), { voznja: [S] }), tst = race(Object.assign({}, spa, { test: true }), { voznja: [S] }), tl = race(spa, { voznja: [S], playerModel: C.MODELS.find(m => m.id === 'cisterna') });
-    const sani = race(C.TRACKS.find(d => d.id === 'sani'), { voznja: [S] }), PS = C.voznjaIzSloga(sani.T, sani.r.vprof, S), PR = C.voznjaIzSloga(new C.Track(C.TRACKS.find(d => d.id === 'rastro')), race(C.TRACKS.find(d => d.id === 'rastro'), {}).r.vprof, S);
-    check('none of the style in the rain, on Bathurst (pending), a test track or for a semi-trailer; on Sani (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
-      [wet, bt, tst, tl].every(x => x.AI.every(c => !c.uT)) && tl.AI.every(c => c.tl) && sani.AI.every(c => c.uT) && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
-      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length}, semi-trailers ${tl.AI.filter(c => c.uT).length} of 5; Sani wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
+    const mk = race(C.TRACKS.find(d => d.id === 'katu'), {}), PS = C.voznjaIzSloga(mk.T, mk.r.vprof, S), PR = C.voznjaIzSloga(new C.Track(C.TRACKS.find(d => d.id === 'rastro')), race(C.TRACKS.find(d => d.id === 'rastro'), {}).r.vprof, S);
+    check('none of the style in the rain, on Bathurst (pending), a test track or for a semi-trailer; on Katu-Jaryk (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
+      [wet, bt, tst, tl].every(x => x.AI.every(c => !c.uT)) && tl.AI.every(c => c.tl) && mk.T.def.roadSurface === 'makadam' && !mk.T.def.test && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
+      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length}, semi-trailers ${tl.AI.filter(c => c.uT).length} of 5; Katu-Jaryk wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
   }
 }
 
