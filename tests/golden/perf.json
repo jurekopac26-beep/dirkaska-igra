@@ -371,11 +371,11 @@
   "jsMs": 1.82
  },
  "kagerod": {
-  "calls": 215,
-  "maxCalls": 244,
-  "kverts": 441,
-  "maxKverts": 467,
-  "jsMs": 1.94
+  "calls": 227,
+  "maxCalls": 272,
+  "kverts": 484,
+  "maxKverts": 575,
+  "jsMs": 2.43
  },
  "sosnova": {
   "calls": 187,
