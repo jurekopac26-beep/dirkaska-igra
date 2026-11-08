@@ -216,7 +216,7 @@ try {
     T.check('camera 2: the flyover, only the start and the finish named over it (no places, no box with the place and its height); the camera kept in the settings', fl && fl.src === 'assets/maps/fly-nring.webm' && JSON.stringify(fl.tags) === '["fl-s start","fl-s finish"]' && !fl.hud && fl.cam === 2, JSON.stringify(fl));
     // the globe in the head: the Earth turned to Nürburg, Germany gold in its middle; the height graph: Nürburg's lowest and highest
     // heights, the part flown over coloured as the flyover goes on (121 colours of the climb), in cameras 1 to 3
-    await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas'), null, { timeout: 20000 }).catch(() => null);
+    await page.waitForFunction(() => { const c = document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas'); return c && c.width >= 104 && !Menu.debug().globe.turning; }, null, { timeout: 20000 }).catch(() => null);   // (turned from the last track's place: at rest)
     const gb = await ev(page, 'const c = root.querySelector(".thead .globe canvas"); if (!c) return null; const S = c.width, px = c.getContext("2d").getImageData(S / 2 - 2, S / 2 - 2, 4, 4).data; let r = 0, g = 0, b = 0; for (let i = 0; i < 16; i++) { r += px[i * 4]; g += px[i * 4 + 1]; b += px[i * 4 + 2]; } return { S, country: c.dataset.country, ring: c.dataset.ring, rgb: [r / 16, g / 16, b / 16].map(Math.round), w: c.getBoundingClientRect().width };');
     T.check('the head\'s globe: the Earth turned to the track, Germany gold in its middle, the ring round Nürburg', gb && gb.country === 'Germany' && gb.ring === '1' && gb.S >= 104 && gb.w === 52 && gb.rgb[0] > 150 && gb.rgb[0] - gb.rgb[2] > 60 && gb.rgb[1] > gb.rgb[2], JSON.stringify(gb));
     const gr0 = await ev(page, 'const g = root.querySelector("#track-stage .hgraph svg"); if (!g) return null; return { lo: g.querySelector("text.lo").textContent, hi: g.querySelector("text.hi").textContent, stops: g.querySelectorAll("#hgc stop").length, clip: +g.querySelector("#hgk rect").getAttribute("width"), x0: +g.querySelector("#hgk rect").getAttribute("width") };');
@@ -531,7 +531,8 @@ try {
   //     Back (the phone's: the history; the pad's B; Esc) a layer down; drag, zoom, the arrows and the target; it draws only while something
   //     moves, the screen under it rests; all of it in daylight, the moon shows the night where it is now (the Sun overhead there; the
   //     head's globe too, which turns to the next track's country)
-  const zem = (page, n) => page.waitForFunction((n) => window.MenuZemlja && (n ? MenuZemlja.isOpen() && MenuZemlja.depth() === n && MenuZemlja._R() && MenuZemlja._R().n > 2 && !MenuZemlja._R().moving
+  // (the Earth at rest: loaded, drawn, nothing moving; with the motion reduced two frames may be all)
+  const zem = (page, n) => page.waitForFunction((n) => window.MenuZemlja && (n ? MenuZemlja.isOpen() && MenuZemlja.depth() === n && MenuZemlja._R() && MenuZemlja._R().n > 0 && !MenuZemlja._R().moving && !document.getElementById('menu-host').shadowRoot.querySelector('.zem-load')
     : !MenuZemlja.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.zem')), n, { timeout: 20000 });
   const EARTH = `const z = root.querySelector(".zem"), R = MenuZemlja._R(), tx = (e) => e ? e.textContent.replace(/\\s+/g, " ").trim() : null, rc = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
     const k = z && z.querySelector(".zem-card.on"), pr = (e) => { const m = e && e.querySelector(".pr"); return m ? m.className.replace("pr ", "") + ":" + m.textContent : ""; };
