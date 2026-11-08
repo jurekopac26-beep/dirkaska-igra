@@ -184,6 +184,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     grassNat: 0.35, lawn: [0.96, 1.02, 0.94],
     zivali: { a: ['roe', 'boar', 'fox', 'hare'], t: ['huntStand', 'logPile', 'fallenTree'], open: true },
     id: 'kagerod', name: 'Kågeröd, Švedska', theme: 'kagerod', laps: 6, halfWidth: 5.5,
+    maxRivals: 80,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit, its flying start's column (4/5 of a lap at most) would stand car on car with more (85 already do, the formula cars)
     desc: %(desc)s,
     en: { name: 'Kågeröd, Sweden', desc: %(desc_en)s },
     start: [0, 0], runoff: 0.9, inner: 3.5, side: 5.5, gradeForce: true, elevSmooth: 10, realKm: %(real)s,   // (the run-offs narrower than at Silkeborg: a tight circuit in the woods)
