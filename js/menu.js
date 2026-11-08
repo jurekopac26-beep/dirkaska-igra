@@ -593,7 +593,7 @@
   const globe = (function () {
     const R = Math.PI / 180, made = {}, GB = D.globe || { places: {}, outlines: {} };
     let px = null, TW = 0, TH = 0, wait = null, at0 = null, turnRaf = 0;   // (at0: the middle the globe shows now; a new track's globe turns from it)
-    const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const calmQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
     const smooth = (a, b, x) => { const k = Math.max(0, Math.min(1, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
     function earth() {   // the Earth's pixels (once)
       return wait || (wait = new Promise((res) => {
@@ -660,7 +660,7 @@
       const w = cv.__w, from = at0, to = [w.lat, w.lon]; at0 = to;
       const v3 = (p) => [Math.cos(p[0] * R) * Math.cos(p[1] * R), Math.cos(p[0] * R) * Math.sin(p[1] * R), Math.sin(p[0] * R)];
       const A = from && v3(from), B = v3(to), om = A ? Math.acos(Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2]))) : 0;
-      if (calm || om < 2 * R) { if (cv.parentNode !== el) el.replaceChildren(cv); return; }
+      if ((calmQ && calmQ.matches) || om < 2 * R) { if (cv.parentNode !== el) el.replaceChildren(cv); return; }
       // the turn: along the great circle, eased, at half the size (the canvas grown to the slot); the screen gone: it stops where it was
       const tv = document.createElement('canvas'), s2 = Math.round(cv.width / 2), t0 = performance.now(), dur = 600 + 400 * om / Math.PI;
       Object.assign(tv.dataset, cv.dataset); el.replaceChildren(tv);
@@ -678,7 +678,7 @@
     }
     // another screen of the game came: its next globe shows its place at once
     function reset() { cancelAnimationFrame(turnRaf); turnRaf = 0; at0 = null; }
-    return { on, reset, whereOf };
+    return { on, reset, whereOf, state: () => ({ turning: !!turnRaf, at: at0 && at0.map(v => +v.toFixed(2)) }) };
   })();
   // the player's car in the yard: in 3D with the wind round it (js/menu-car.js), else (no WebGL for it) its picture (assets/cars/img), else
   // the game's own showroom drawn once per car and colour
@@ -1513,5 +1513,5 @@
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
   const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the garage was opened from the track step (game.js garageOpen keeps it for the way back: garageBack, straight to this step)
-  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl() }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state() }) };
 })();

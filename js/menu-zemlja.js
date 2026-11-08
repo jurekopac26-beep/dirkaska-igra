@@ -22,7 +22,7 @@ window.MenuZemlja = (function () {
   const D = Math.PI / 180, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, TRACKS_AT = 2.75;
   // the camera's angle: standing 60° (from afar the Earth as wide as the screen), lying narrower (from afar as high as nine tenths of it)
   const FOV_UP = 60, FOV_SIDE = 2 * Math.atan(0.5 / (0.45 * Math.sqrt(DFAR * DFAR - 1))) / (Math.PI / 180);
-  const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const calmQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null, calm = () => !!(calmQ && calmQ.matches);   // (asked each time: the setting may change)
   const I = {
     back: '<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
@@ -150,7 +150,7 @@ window.MenuZemlja = (function () {
   }
   // the track shown: its place (a test track too, if it has one), else the middle of Europe (most of the tracks)
   function home() { const t = byId(o.cur); return t && t.lat != null && t.lon != null ? [t.lat, t.lon] : [47, 10]; }
-  function start() { const h = home(); R.fly = { from: [R.lat, R.lon, 7.5], to: [h[0], h[1], DFAR], t0: performance.now(), dur: calm ? 1 : 1100 }; kick(); }
+  function start() { const h = home(); R.fly = { from: [R.lat, R.lon, 7.5], to: [h[0], h[1], DFAR], t0: performance.now(), dur: calm() ? 1 : 1100 }; kick(); }
 
   // the pins and the names (the names buttons: the gamepad and the keys reach them; a finger's tap is the pointer's, input())
   function marks() {
@@ -186,7 +186,7 @@ window.MenuZemlja = (function () {
       const q = at(m); m.q = q;
       m.e.style.transform = 'translate(' + q.x.toFixed(1) + 'px,' + q.y.toFixed(1) + 'px)'; m.e.style.opacity = q.a.toFixed(2); m.e.style.pointerEvents = q.a > 0.3 ? 'auto' : 'none';
       m.e.classList.toggle('sel', !!R.sel && (byId(m.id).country || '') === R.sel);
-      if (q.a > 0.3) boxes.push([q.x - 7, q.y - 7, q.x + 7, q.y + 7, 1]);   // (no name over a pin: it stays to be tapped; the track shown's name may be)
+      if (q.a > 0.3) boxes.push([q.x - 7, q.y - 7, q.x + 7, q.y + 7, m.cur ? 2 : 1]);   // (close in no name over a pin: it stays to be tapped; from afar none over the track shown's)
     }
     for (const m of L) {
       const want = m.id ? showT : !showT;   // (far: the countries, close: the tracks)
@@ -194,7 +194,7 @@ window.MenuZemlja = (function () {
       if (!m.w) { m.w = m.e.offsetWidth; m.h = m.e.offsetHeight; }
       const x = clamp(q.x - m.w / 2, 4, wide - m.w - 4), y = q.y - m.h - 12, r = [x, y, x + m.w, y + m.h];   // (a name at the screen's edge stays whole)
       let ok = want && q.a > 0.15 && q.x > 2 && q.x < wide - 2 && y > TOP - 6 && y + m.h < low - 4;   // (only a name whose pin is on the screen)
-      if (ok) for (const b of boxes) if (r[0] < b[2] + 4 && r[2] > b[0] - 4 && r[1] < b[3] + 2 && r[3] > b[1] - 2 && !(b[4] && m.cur)) { ok = false; break; }
+      if (ok) for (const b of boxes) if (r[0] < b[2] + 4 && r[2] > b[0] - 4 && r[1] < b[3] + 2 && r[3] > b[1] - 2 && !(b[4] && (m.cur || (m.c && b[4] === 1)))) { ok = false; break; }
       if (ok) boxes.push(r);
       m.e.classList.toggle('off', !ok);
       m.e.classList.toggle('sel', !!m.c && m.c === R.sel);
@@ -266,7 +266,7 @@ window.MenuZemlja = (function () {
     // as close as the country's tracks all stay in the free part of the screen (round the place it turns to), never farther than now
     const mid = vec(to[0], to[1]); let spread = 0; for (const a of c.ids) { const u = byId(a); spread = Math.max(spread, mid.angleTo(vec(u.lat, u.lon))); }
     const d = clamp(Math.min(R.d, 1.15 + spread / 0.22), 2.0, DFAR);   // (one track: its country round it, not only the place)
-    R.vlat = R.vlon = 0; R.fly = { from: [R.lat, R.lon, R.d], to: [to[0], to[1], d], t0: performance.now(), dur: calm ? 1 : 750 };
+    R.vlat = R.vlon = 0; R.fly = { from: [R.lat, R.lon, R.d], to: [to[0], to[1], d], t0: performance.now(), dur: calm() ? 1 : 750 };
     hideHint(); kick();
   }
   function hideHint() { if (!R.hint) return; R.hint = false; const h = el.querySelector('.zem-hint'); if (h) h.classList.add('gone'); }
@@ -304,12 +304,12 @@ window.MenuZemlja = (function () {
     return false;
   }
   const zoom = (k) => { R.fly = null; R.dT = clamp(R.dT * (k < 0 ? 1 / 1.45 : 1.45), DMIN, DMAX); hideHint(); kick(); };
-  function turn(dlat, dlon) { R.vlat = R.vlon = 0; R.fly = { from: [R.lat, R.lon, R.d], to: [clamp(R.lat + dlat, -72, 72), R.lon + dlon, R.d], t0: performance.now(), dur: calm ? 1 : 320 }; hideHint(); kick(); }
+  function turn(dlat, dlon) { R.vlat = R.vlon = 0; R.fly = { from: [R.lat, R.lon, R.d], to: [clamp(R.lat + dlat, -72, 72), R.lon + dlon, R.d], t0: performance.now(), dur: calm() ? 1 : 320 }; hideHint(); kick(); }
   function goHome() {   // the target: the track shown (its country's card), a test track's place
     const t = byId(o.cur);
     if (onEarth(t) && R.C.has(t.country || t.name)) return select(t.country || t.name, t.id);
     if (R.sel) select(null);
-    const h = home(); R.fly = { from: [R.lat, R.lon, R.d], to: [h[0], h[1], DFAR], t0: performance.now(), dur: calm ? 1 : 750 }; hideHint(); kick();
+    const h = home(); R.fly = { from: [R.lat, R.lon, R.d], to: [h[0], h[1], DFAR], t0: performance.now(), dur: calm() ? 1 : 750 }; hideHint(); kick();
   }
 
   // the finger: drag to turn, two to pinch; a short touch is a tap
@@ -395,7 +395,7 @@ window.MenuZemlja = (function () {
     // the screen under it rests once the Earth covers it (the circle grown: half a second)
     const covered = () => { if (el === mine && !el.__rest) { el.__rest = true; if (o.rest) o.rest(); } };
     el.addEventListener('transitionend', (e) => { if (e.target === el && el.classList.contains('on')) covered(); });
-    setTimeout(covered, calm ? 50 : 650);
+    setTimeout(covered, calm() ? 50 : 650);
     requestAnimationFrame(() => requestAnimationFrame(() => { if (el === mine) el.classList.add('on'); }));
     try { build(); } catch (e) {   // (no WebGL for it: the quick list instead)
       try { console.error('the Earth:', e && e.message ? e.message : e); } catch (_) { /* no console */ }
@@ -451,7 +451,7 @@ window.MenuZemlja = (function () {
       e.remove();
     };
     if (!now && e.__rest && oo && oo.wake) oo.wake();   // (the screen under it moves again as the Earth goes back into the globe)
-    if (now || calm) return end();
+    if (now || calm()) return end();
     aim(e, oo); e.classList.remove('on'); e.style.pointerEvents = 'none'; setTimeout(end, 520);
   }
   function back() {
