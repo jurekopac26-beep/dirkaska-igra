@@ -13,7 +13,8 @@
    test, pending, open, lat, lon }),
    o.shape(id) (x, y pairs or null), o.heights(id) ({ L, H, real } or null), o.prog(id) (the game's progress: js/game.js MenuBridge.progress),
    o.pick(id), o.race(id), o.buzz(), o.click(). MenuIzbor.close(now), back() (Esc, the pad's B: the layer under it, else closed), isOpen(),
-   sheet() (the gamepad's part of the screen), mark(p) (a progress mark: the screen's row). */
+   sheet() (the gamepad's part of the screen), mark(p) (a progress mark: the screen's row); use(o) (the Earth's cards: the rows and the
+   track's card, js/menu-zemlja.js) and nazaj (the history of the layers, the Earth's too). */
 window.MenuIzbor = (function () {
   'use strict';
   /* The phone's Back (NAZAJ): every layer opened over the screen (the quick list, a country's tracks in it, a card) is one step in the
@@ -280,5 +281,11 @@ window.MenuIzbor = (function () {
     e.classList.remove('on'); e.style.pointerEvents = 'none'; setTimeout(() => e.remove(), 330);
   }
   function back() { if (!el) return; if (prevs.length) { NAZAJ.drop('izbor', 1); up(); } else close(); }
-  return { open, close, back, mark, isOpen: () => !!el, sheet: () => sheetEl(), depth: () => NAZAJ.depth('izbor') };
+  // the Earth's cards (js/menu-zemlja.js) are the quick list's: its rows and its track's card with o as open's (the quick list closed)
+  function use(opts) {
+    if (el) close(true);
+    o = opts; P = {};
+    return { head, row, cardView, flag, tracks, kind: (id) => kindOf(prog(id)) };
+  }
+  return { open, close, back, mark, use, nazaj: NAZAJ, isOpen: () => !!el, sheet: () => sheetEl(), depth: () => NAZAJ.depth('izbor') };
 })();

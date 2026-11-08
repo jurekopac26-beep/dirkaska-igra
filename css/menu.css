@@ -1151,3 +1151,84 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .izb-hg { height: 60px; } .izb-hg svg { top: 19px; height: 24px; } .izb-btns button { height: 44px; } .izb-race { font-size: 21px; }
 }
 @media (prefers-reduced-motion: reduce) { .izb-sheet, .izb-dim { transition: none; } .izb-body.in { animation: none; } }
+/* The Earth (js/menu-zemlja.js): out of the head's globe over the whole screen (a circle from its middle: --zx, --zy, --zr; --zR the
+   screen's diagonal), the Earth on its canvas, the pins and the names over it, the buttons and the card over them. Standing: the back
+   arrow where the head's is, the zoom at the right under it, the card from the bottom; lying (.side): the zoom at the left, the card at
+   the right */
+.globe { cursor: pointer; transition: transform .12s; }
+.globe:active { transform: scale(.93); }
+#s-track.rested { visibility: hidden; }   /* (the Earth over it: not drawn, js/menu.js rest) */
+.zem { position: absolute; inset: 0; z-index: 45; overflow: hidden; font-family: var(--f-ui); color: #fff; touch-action: none; -webkit-user-select: none; user-select: none;
+  background: radial-gradient(120% 70% at 50% 46%, #11234a 0, #0a1630 34%, #050a16 70%, #03060d 100%);
+  clip-path: circle(var(--zr, 26px) at var(--zx, calc(100% - 40px)) var(--zy, 40px)); transition: clip-path .5s cubic-bezier(.3, .7, .2, 1); }
+.zem.on { clip-path: circle(var(--zR, 2000px) at var(--zx, calc(100% - 40px)) var(--zy, 40px)); }
+.zem canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.zem-pins { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.zem-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.zem-ui > * { pointer-events: auto; }
+.zem-sq { position: absolute; width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid rgba(255, 255, 255, .38); background: linear-gradient(180deg, var(--steel1), var(--steel2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 3px 0 var(--steel-sh); display: flex; align-items: center; justify-content: center; }
+.zem-sq svg { width: 22px; height: 22px; }
+.zem-sq:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 1px 0 var(--steel-sh); }
+.zem-back { left: calc(14px + var(--sl)); top: calc(14px + var(--st)); width: 78px; height: 52px; border-radius: 11px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 var(--steel-sh); }
+.zem-back svg { width: 24px; height: 24px; }
+.zem-title { position: absolute; left: calc(100px + var(--sl)); right: calc(70px + var(--sr)); top: calc(14px + var(--st)); height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.zem-title b { font: 900 italic 38px/1 var(--f-ui); letter-spacing: -.3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 16px rgba(0, 0, 0, .55); }
+.zem-title small { margin-top: 4px; font: 600 12px/1 var(--f-ui); color: #dbe6f7; white-space: nowrap; text-shadow: 0 1px 0 rgba(0, 0, 0, .7), 0 0 8px rgba(0, 0, 0, .8), 0 0 14px rgba(0, 0, 0, .55); }   /* (legible over bright land too) */
+.zem-zoom { right: calc(14px + var(--sr)); }
+.zem-in { top: calc(88px + var(--st)); } .zem-out { top: calc(142px + var(--st)); } .zem-home { top: calc(196px + var(--st)); }
+.zp, .zl { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.zp { width: 0; height: 0; pointer-events: auto; cursor: pointer; }
+.zp::before { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; }   /* (a finger's target) */
+.zp i { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 10px rgba(255, 198, 41, .85); }
+.zp.silver i { background: #d3d9e2; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 9px rgba(220, 228, 240, .7); }
+.zp.bronze i { background: #d98b47; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 9px rgba(217, 139, 71, .7); }
+.zp.done i { background: #45d27e; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 9px rgba(69, 210, 126, .7); }
+.zp.new i { background: #1d2a40; border-color: #7fe8ff; box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 9px rgba(127, 232, 255, .6); }
+.zp.sel i { border-color: #fff6d6; }
+.zp.cur i { left: -8px; top: -8px; width: 16px; height: 16px; background: #fff; border-color: var(--gold); box-shadow: 0 0 0 1.5px rgba(0, 0, 0, .45), 0 0 14px rgba(255, 255, 255, .9); }
+.zp.cur::after { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--gold); opacity: 0; animation: zpPulse 1.6s ease-out 3; }   /* (three pulses, then still: the battery) */
+@keyframes zpPulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+.zl { pointer-events: auto; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 4px 9px 4px 5px; border-radius: 8px; color: #fff; text-align: left;
+  background: rgba(8, 13, 24, .8); border: 1px solid rgba(255, 255, 255, .2); box-shadow: 0 3px 10px rgba(0, 0, 0, .45);
+  font: 800 italic 12px/1 var(--f-ui); text-transform: uppercase; letter-spacing: .2px; }
+.zl > svg, .zl > .nf { width: 21px; height: 14px; border-radius: 2px; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); }
+.zl small { font: 600 10.5px/1 var(--f-ui); color: var(--lbl); text-transform: none; }
+.zl.t { padding: 4px 8px; }
+.zl.cur, .zl.sel { border-color: var(--gold); }
+.zl.cur { background: rgba(60, 44, 6, .88); }
+.zl.off { pointer-events: none; }   /* (the fade itself in place(): a CSS transition restarted every frame can leave a hidden name showing) */
+.zem .nf { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #3b4557; font: 800 11px/1 var(--f-ui); color: #dfe8f6; }
+.zl > .nf { font-size: 7px; }
+.zem-card { position: absolute; left: 0; right: 0; bottom: 0; max-height: min(460px, calc(100% - 150px - var(--st))); display: flex; flex-direction: column; border-radius: 18px 18px 0 0;
+  background: linear-gradient(180deg, rgba(26, 39, 66, .97) 0, rgba(17, 28, 49, .98) 120px, rgba(11, 20, 36, .98) 100%); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
+  transform: translateY(105%); visibility: hidden; transition: transform .3s cubic-bezier(.2, .8, .25, 1), visibility 0s .3s; }
+.zem-card.on { transform: none; visibility: visible; transition: transform .3s cubic-bezier(.2, .8, .25, 1); }
+.zem-card .izb-body { padding-bottom: calc(18px + var(--sb)); }
+.zem-hint { position: absolute; left: 50%; bottom: calc(26px + var(--sb)); transform: translateX(-50%); max-width: calc(100% - 28px); padding: 9px 14px; border-radius: 20px; background: rgba(8, 13, 24, .72);
+  border: 1px solid rgba(255, 255, 255, .16); font: 600 13px/1.2 var(--f-ui); color: #dfe7f6; text-align: center; pointer-events: none; transition: opacity .3s; }
+.zem-hint.gone { opacity: 0; }
+.zem-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 700 italic 15px/1 var(--f-ui); color: var(--lbl); pointer-events: none; }
+@media (max-height: 700px) and (orientation: portrait) {
+  .zem-back { top: calc(10px + var(--st)); width: 64px; height: 44px; } .zem-title { left: calc(86px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .zem-title b { font-size: 32px; }
+  .zem-in { top: calc(70px + var(--st)); } .zem-out { top: calc(122px + var(--st)); } .zem-home { top: calc(174px + var(--st)); }
+  .zem-card { max-height: min(460px, calc(100% - 120px - var(--st))); }
+}
+/* lying: the zoom at the left under the arrow, the card at the right the whole height (the title over the free part, left of it) */
+.zem.side .zem-back { top: calc(10px + var(--st)); width: 64px; height: 44px; }
+.zem.side .zem-title { left: calc(86px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .zem.side .zem-title b { font-size: 32px; }
+.zem.side .zem-zoom { right: auto; left: calc(14px + var(--sl)); }
+.zem.side .zem-in { top: calc(66px + var(--st)); } .zem.side .zem-out { top: calc(118px + var(--st)); } .zem.side .zem-home { top: calc(170px + var(--st)); }
+.zem.side .zem-card { left: auto; top: 0; width: min(412px, 60%); max-height: none; padding-right: var(--sr); border-radius: 18px 0 0 18px; transform: translateX(105%);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 255, 255, .14); }
+.zem.side .zem-card.on { transform: none; }
+.zem.side .zem-card .izb-body { padding-bottom: calc(16px + var(--sb)); }
+.zem.side.carded .zem-title { right: calc(min(412px, 60%) + 14px); }
+.zem.side.carded .zem-hint { left: calc((100% - min(412px, 60%)) / 2); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .zem.side .zem-back { width: 56px; height: 38px; } .zem.side .zem-title { left: calc(78px + var(--sl)); height: 38px; } .zem.side .zem-title b { font-size: 26px; } .zem.side .zem-title small { margin-top: 3px; font-size: 11px; }
+  .zem.side .zem-in { top: calc(58px + var(--st)); } .zem.side .zem-out { top: calc(108px + var(--st)); } .zem.side .zem-home { top: calc(158px + var(--st)); }
+  .zem-hint { bottom: calc(14px + var(--sb)); font-size: 12px; padding: 7px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .zem, .zem-card, .zem-card.on, .zem-hint, .globe { transition: none; } .zp.cur::after { animation: none; } }

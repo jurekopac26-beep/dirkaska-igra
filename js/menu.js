@@ -584,13 +584,17 @@
   }
   /* the globe in the head: the Earth turned to the track's place (an orthographic globe of the Blue Marble, assets/geo/earth-s.webp), its
      country gold (its outline from GEO.outlines and MENU.globe.outlines: tools/menu-globe.mjs), a white ring round the place (GEO.tracks,
-     else MENU.globe.places; a track without one: its country's middle, no ring). Drawn once per track on a canvas of its own, which every
-     new picture of the screen gets back (globe.on); until the Earth has loaded, the globe icon. The look (LOOKS): 1 the whole Earth, 2 closer,
-     3 closer with the country glowing (the player's choice: 1 until then) */
+     else MENU.globe.places; a track without one: its country's middle, no ring), its night side darker and bluer (where the Sun is overhead
+     now: MenuZemlja.sun(); the country stays gold). Drawn once per track on a canvas of its own (again after 10 minutes: the night moves on),
+     which every new picture of the screen gets back (globe.on); until the Earth has loaded, the globe icon. Another track: the globe turns
+     from the last one's place to its (along the great circle, under a second; drawn at half the size on the way). Its tap: the Earth
+     (js/menu-zemlja.js). The look (LOOKS): 1 the whole Earth, 2 closer, 3 closer with the country glowing (the player's choice: 1 until then) */
   const LOOKS = [null, { zoom: 1 }, { zoom: 2.3 }, { zoom: 1.5, glow: true }], GLOBE_LOOK = 1;
   const globe = (function () {
     const R = Math.PI / 180, made = {}, GB = D.globe || { places: {}, outlines: {} };
-    let px = null, TW = 0, TH = 0, wait = null;
+    let px = null, TW = 0, TH = 0, wait = null, at0 = null, turnRaf = 0;   // (at0: the middle the globe shows now; a new track's globe turns from it)
+    const calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const smooth = (a, b, x) => { const k = Math.max(0, Math.min(1, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
     function earth() {   // the Earth's pixels (once)
       return wait || (wait = new Promise((res) => {
         const im = new Image();
@@ -606,24 +610,28 @@
       const mid = !place && g && c ? g.countries.find(k => k[0] === c) : null;   // (Natural Earth's place for the country's name)
       return place || mid ? { lat: place ? place[0] : mid[2], lon: place ? place[1] : mid[1], ring: !!place, rings } : null;
     }
-    function draw(w, S, o) {
-      const cv = document.createElement('canvas'); cv.width = cv.height = S;
-      const g = cv.getContext('2d'), im = g.createImageData(S, S), d = im.data, r = S / 2 * o.zoom, c0 = S / 2;
-      const sp = Math.sin(w.lat * R), cp = Math.cos(w.lat * R), l0 = w.lon * R, Lx = -0.47, Ly = 0.57, Lz = 0.67;   // (the light from the upper left)
+    // the globe of the place w (its middle: cen, on the way from another place) on a canvas S × S (cv: drawn again on that one)
+    function draw(w, S, o, cen, cv) {
+      if (!cv) cv = document.createElement('canvas');
+      if (cv.width !== S) cv.width = cv.height = S;
+      const g = cv.getContext('2d'), im = g.createImageData(S, S), d = im.data, r = S / 2 * o.zoom, c0 = S / 2, m = cen || [w.lat, w.lon];
+      const sp = Math.sin(m[0] * R), cp = Math.cos(m[0] * R), l0 = m[1] * R, Lx = -0.47, Ly = 0.57, Lz = 0.67;   // (the light from the upper left)
+      const sn = window.MenuZemlja ? MenuZemlja.sun() : null, ss = sn ? Math.sin(sn[0] * R) : 0, cs = sn ? Math.cos(sn[0] * R) : 0, sl = sn ? sn[1] * R : 0, NIGHT = [0.2, 0.24, 0.38];
       for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
         const x = (i + 0.5 - c0) / r, y = (c0 - j - 0.5) / r, q = x * x + y * y, k = (j * S + i) * 4;
         if (q >= 1) continue;
-        const z = Math.sqrt(1 - q), la = Math.asin(Math.max(-1, Math.min(1, z * sp + y * cp))), lo = l0 + Math.atan2(x, z * cp - y * sp);
+        const z = Math.sqrt(1 - q), sla = Math.max(-1, Math.min(1, z * sp + y * cp)), la = Math.asin(sla), lo = l0 + Math.atan2(x, z * cp - y * sp);
         const u = ((lo / R + 180) / 360 % 1 + 1) % 1 * TW - 0.5, v = Math.max(0, Math.min(TH - 1.001, (90 - la / R) / 180 * TH - 0.5));
         const u0 = Math.floor(u), v0 = Math.floor(v), fu = u - u0, fv = v - v0, a = (u0 + TW) % TW, b = (a + 1) % TW;
         const i00 = (v0 * TW + a) * 4, i10 = (v0 * TW + b) * 4, i01 = i00 + TW * 4, i11 = i10 + TW * 4, sh = (0.62 + 0.5 * Math.max(0, x * Lx + y * Ly + z * Lz)) * (0.75 + 0.25 * z);
-        for (let ch = 0; ch < 3; ch++) d[k + ch] = ((px[i00 + ch] * (1 - fu) + px[i10 + ch] * fu) * (1 - fv) + (px[i01 + ch] * (1 - fu) + px[i11 + ch] * fu) * fv) * sh;
+        const day = sn ? smooth(-0.16, 0.1, sla * ss + Math.sqrt(1 - sla * sla) * cs * Math.cos(lo - sl)) : 1;   // (the night: darker and bluer, a soft edge)
+        for (let ch = 0; ch < 3; ch++) d[k + ch] = ((px[i00 + ch] * (1 - fu) + px[i10 + ch] * fu) * (1 - fv) + (px[i01 + ch] * (1 - fu) + px[i11 + ch] * fu) * fv) * sh * (day + (1 - day) * NIGHT[ch]);
         d[k + 3] = 255;
       }
       g.putImageData(im, 0, 0);
       // a point of the Earth on the globe (one behind it: onto its edge)
       const at = (la, lo) => { const f = la * R, dl = lo * R - l0, cf = Math.cos(f); let x = cf * Math.sin(dl), y = cp * Math.sin(f) - sp * cf * Math.cos(dl);
-        if (sp * Math.sin(f) + cp * cf * Math.cos(dl) < 0) { const n = Math.hypot(x, y) || 1; x /= n; y /= n; } return [c0 + x * r, c0 - y * r]; };
+        const back = sp * Math.sin(f) + cp * cf * Math.cos(dl) < 0; if (back) { const n = Math.hypot(x, y) || 1; x /= n; y /= n; } return [c0 + x * r, c0 - y * r, back]; };
       if (w.rings) {
         g.beginPath();
         for (const ring of w.rings) for (let n = 0; n < ring.length; n += 2) { const p = at(ring[n + 1], ring[n]); if (n) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }
@@ -631,24 +639,46 @@
         if (o.glow) { g.save(); g.shadowColor = '#ffd23a'; g.shadowBlur = S * 0.08; g.fill('evenodd'); g.restore(); }
         g.fill('evenodd'); g.lineWidth = Math.max(1, S / 90); g.lineJoin = 'round'; g.strokeStyle = '#ffd23a'; g.stroke();
       }
-      if (w.ring) { const p = at(w.lat, w.lon); g.beginPath(); g.arc(p[0], p[1], S * 0.075, 0, 2 * Math.PI); g.lineWidth = S / 40; g.strokeStyle = 'rgba(0, 0, 0, .55)'; g.stroke(); g.lineWidth = S / 70; g.strokeStyle = '#fff'; g.stroke(); }
+      const p = at(w.lat, w.lon);
+      if (w.ring && !p[2]) { g.beginPath(); g.arc(p[0], p[1], S * 0.075, 0, 2 * Math.PI); g.lineWidth = S / 40; g.strokeStyle = 'rgba(0, 0, 0, .55)'; g.stroke(); g.lineWidth = S / 70; g.strokeStyle = '#fff'; g.stroke(); }
       const air = g.createRadialGradient(c0, c0, S * 0.38, c0, c0, S * 0.5); air.addColorStop(0, 'rgba(120, 180, 255, 0)'); air.addColorStop(1, 'rgba(150, 200, 255, .45)');   // (the air at the edge)
       g.globalCompositeOperation = 'source-atop'; g.fillStyle = air; g.fillRect(0, 0, S, S);
       return cv;
     }
-    // the head's globe of the track shown: its canvas, made now if the Earth is there (else once it is)
+    // the head's globe of the track shown: its canvas, made now if the Earth is there (else once it is), turning to it from the last place
     function on() {
       const el = app && $('.globe[data-globe]', app); if (!el) return;
       const id = el.dataset.globe, t = trackById(id); if (!t) return;
-      if (!(id in made)) {
+      if (!(id in made) || (made[id] && Date.now() - made[id].__t > 6e5)) {
         if (!px) { earth().then(p => { if (p) on(); }); return; }
         const w = whereOf(t, countryOf(t)), S = Math.round(52 * Math.min(3, Math.max(2, window.devicePixelRatio || 1)));
         made[id] = w ? draw(w, S, LOOKS[GLOBE_LOOK]) : null;
-        if (made[id]) { made[id].dataset.country = countryOf(t); made[id].dataset.ring = w.ring ? 1 : 0; }
+        if (made[id]) { Object.assign(made[id].dataset, { country: countryOf(t), ring: w.ring ? 1 : 0 }); made[id].__w = w; made[id].__t = Date.now(); }
       }
-      if (made[id] && made[id].parentNode !== el) el.replaceChildren(made[id]);
+      const cv = made[id]; if (!cv) return;
+      cancelAnimationFrame(turnRaf); turnRaf = 0;
+      const w = cv.__w, from = at0, to = [w.lat, w.lon]; at0 = to;
+      const v3 = (p) => [Math.cos(p[0] * R) * Math.cos(p[1] * R), Math.cos(p[0] * R) * Math.sin(p[1] * R), Math.sin(p[0] * R)];
+      const A = from && v3(from), B = v3(to), om = A ? Math.acos(Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2]))) : 0;
+      if (calm || om < 2 * R) { if (cv.parentNode !== el) el.replaceChildren(cv); return; }
+      // the turn: along the great circle, eased, at half the size (the canvas grown to the slot); the screen gone: it stops where it was
+      const tv = document.createElement('canvas'), s2 = Math.round(cv.width / 2), t0 = performance.now(), dur = 600 + 400 * om / Math.PI;
+      Object.assign(tv.dataset, cv.dataset); el.replaceChildren(tv);
+      const step = (now) => {
+        turnRaf = 0;
+        if (!tv.isConnected) return;
+        const k = Math.min(1, (now - t0) / dur), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        if (k >= 1) { at0 = to; tv.replaceWith(cv); return; }
+        const s0 = Math.sin((1 - e) * om) / Math.sin(om), s1 = Math.sin(e * om) / Math.sin(om), q = [A[0] * s0 + B[0] * s1, A[1] * s0 + B[1] * s1, A[2] * s0 + B[2] * s1];
+        at0 = [Math.asin(Math.max(-1, Math.min(1, q[2]))) / R, Math.atan2(q[1], q[0]) / R];
+        draw(w, s2, LOOKS[GLOBE_LOOK], at0, tv);
+        turnRaf = requestAnimationFrame(step);
+      };
+      draw(w, s2, LOOKS[GLOBE_LOOK], from, tv); turnRaf = requestAnimationFrame(step);
     }
-    return { on, whereOf };
+    // another screen of the game came: its next globe shows its place at once
+    function reset() { cancelAnimationFrame(turnRaf); turnRaf = 0; at0 = null; }
+    return { on, reset, whereOf };
   })();
   // the player's car in the yard: in 3D with the wind round it (js/menu-car.js), else (no WebGL for it) its picture (assets/cars/img), else
   // the game's own showroom drawn once per car and colour
@@ -671,8 +701,12 @@
   const izOpen = () => !!(IZ() && IZ().isOpen());
   function izbor() {
     const M = IZ(); if (!M || screen !== 'track' || !app) return;
+    if (zemOpen()) ZE().close(true);
+    M.open(izOpts());
+  }
+  function izOpts() {   // (the mode's tracks with their places, flags, pictures, shapes, heights and the progress; the quick list's and the Earth's)
     const cur = curTrack(), PL = (D.globe || {}).places || {}, NC = D.ncorners || {};
-    M.open({
+    return {
       root: app, cur: cur ? cur.id : '',
       list: TRACKS().map(t => {
         const c = countryOf(t), gt = window.GEO && GEO.tracks[t.id], pl = PL[t.id] || (gt ? [gt.lat0, gt.lon0] : null);
@@ -686,7 +720,34 @@
       race: (id) => { if (izGo(id)) act('race-single'); },   // (in the tap: the intro's sounds may start, warmFor)
       buzz: () => { if (G.buzz) G.buzz(); },
       click: () => G.click(),
-    });
+    };
+  }
+  /* the Earth (js/menu-zemlja.js): the globe in the head opens it over the track step, with the quick list's tracks and cards (no WebGL for
+     it: the quick list instead). While it covers the screen, the screen rests: the weather, the flyover's names, the graph's point, the car
+     and the videos stop, the screen is not drawn (.rested); they go on again as the Earth goes back into the globe (a track chosen on it:
+     the new screen moves already) */
+  const ZE = () => window.MenuZemlja || null;
+  const zemOpen = () => !!(ZE() && ZE().isOpen());
+  let rested = null;   // (the videos that were playing, while the screen rests)
+  function zemlja() {
+    const Z = ZE(); if (!Z || screen !== 'track' || !app) return;
+    if (izOpen()) IZ().close(true);
+    Z.open(Object.assign(izOpts(), { from: () => $('#s-track .globe', app), rest, wake, fail: () => izbor() }));
+  }
+  function rest() {
+    const s = screen === 'track' && app && $('#s-track', app); if (!s || rested) return;
+    rested = [...app.querySelectorAll('video')].filter(v => !v.paused);
+    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
+    for (const v of rested) v.pause();
+    s.classList.add('rested');
+  }
+  function wake() {
+    const vs = rested; if (!vs) return;
+    rested = null;
+    const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
+    s.classList.remove('rested');
+    wx.attach($('#track-stage', app), wxMode(), false); flyLabels(); graphOn(); carOn();
+    for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
@@ -704,7 +765,8 @@
     if (cam === 4 && !fr) cam = 1;   // (a game without the friends' leaderboard: the map)
     // the head: the back arrow (to the modes), the place (fitWhere: smaller where a long one would reach the globe; the country for the
     // readers), the globe (its country gold: globe.on)
-    h += head('<h2 class="where" aria-label="' + esc(t.name + (ctry ? ', ' + ctry : '')) + '"><span class="w2">' + esc(t.name) + '</span></h2><div class="globe" aria-hidden="true" data-globe="' + t.id + '">' + I.globe + '</div>');
+    h += head('<h2 class="where" aria-label="' + esc(t.name + (ctry ? ', ' + ctry : '')) + '"><span class="w2">' + esc(t.name) + '</span></h2>' + (ZE() ? '<button class="globe" data-act="zemlja" data-globe="' + t.id + '" aria-haspopup="dialog" aria-label="The world: choose a track on the Earth">' + I.globe + '</button>'
+      : '<div class="globe" aria-hidden="true" data-globe="' + t.id + '">' + I.globe + '</div>'));
     // the stage: the picture with the cameras (stageView), the graph, the track's place among the real tracks (a test track: TEST), the
     // weather (the chosen one bigger, in its colours, named) with the more options under it
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
@@ -834,7 +896,8 @@
   function render(keepScroll) {
     if (!app) return;
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
-    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb')) n.remove();   // (the intro, if there is one, stays over everything; the quick list over the screen)
+    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb') && !n.classList.contains('zem')) n.remove();   // (the intro, if there is one, stays over everything; the quick list and the Earth over the screen)
+    rested = null;
     app.classList.toggle('on-title', screen === 'title');
     app.insertAdjacentHTML('afterbegin', VIEWS[screen]());
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
@@ -1290,6 +1353,7 @@
   }
 
   function back() {
+    if (zemOpen()) { ZE().back(); return; }
     if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
     if (screen === 'track') { screen = 'title'; titleSub = 'single'; render(); return; }
@@ -1312,7 +1376,8 @@
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
         render(true); break;
       }
-      case 'izbor': izbor(); break;   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
+      case 'izbor': izbor(); break;
+      case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
       case 'riv': sheet = rivSheet; render(true); break;   // (the row's Opponents: how many, 0..100)
@@ -1338,14 +1403,14 @@
   // the game's gamepad on the menu (game.js padFrame: the highlight and A are the game's, over the buttons of this shadow root): where it looks
   // (the intro, else an open sheet, else the screen), and the keys that are the menu's own: B back, Start on, LB and RB the track; in the
   // intro any of A, B and Start skips it
-  const padRoot = () => app ? $('.intro', app) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
+  const padRoot = () => app ? $('.intro', app) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
     if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
-    if (izOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list: A and the d-pad in it)
+    if (izOpen() || zemOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
     if (sheet) return false;
     if (screen === 'track' && (k === 'lb' || k === 'rb')) { G.click(); act('track:' + (k === 'lb' ? -1 : 1)); return true; }
     if (k === 'start') {
@@ -1367,8 +1432,8 @@
       if (!G || !G.visible()) return;
       const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
-      if (e.key === 'Escape') { if (izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
-      if (screen === 'track' && !sheet && !izOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
+      if (e.key === 'Escape') { if (zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
+      if (screen === 'track' && !sheet && !izOpen() && !zemOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
     // the opponents' slider: the number follows it, the setting when it is let go (and on Done: rivSheet)
@@ -1394,6 +1459,7 @@
   function showNow(name) {
     if (!ready) { want = name; return; }
     if (izOpen()) IZ().close(true);
+    if (zemOpen()) ZE().close(true);
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
@@ -1413,6 +1479,8 @@
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
+    if (zemOpen()) ZE().close(true);   // (the Earth too)
+    rested = null; globe.reset();
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
@@ -1438,7 +1506,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitWhere());   // (the place's name measured again in its own font)
     } catch (e) { fail(e); }
   }
-  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet && !izOpen()) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
+  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet && !izOpen() && !zemOpen()) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // the menu hides the whole screen (game.js frame(): the demo behind it unseen, not drawn): the track step (its own background; the title
   // is see-through, the game's scene behind it, css/menu.css #s-title) on a phone either way up; a tablet held upright has the menu as a
   // column in the middle (#mn, 432 px), the game's demo seen at its sides
