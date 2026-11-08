@@ -10,7 +10,7 @@ Predlog I17, odločitev uporabnika 7. 11. 2026 ob 16.05 in 8. 11. ob ~17.40 (tab
 ## Na kratko
 
 - Igra ob zagonu prenese **vse**: 210 skript, 16,2 MB (5,97 MB gzip), od tega so proge in njihovi svetovi 3,5 MB gzip (58 %), samo testne proge 1,25 MB. Igra se začne šele, ko pride zadnja (`window` `load`).
-- Prvi obisk na počasnem 4G (1,47 Mbit/s) in CPU 4×: zadnja skripta pride pri **35,6 s**, meni je pripravljen pri **44 s**, vožnja (hiter vstop, `bathurst`) pri **51 s**. Prvi izris (zaslon z nalaganjem) šele pri 16–20 s, ker CSS tekmuje z 210 skriptami po HTTP/2 (s HTTP/1.1 pri 1,7 s).
+- Prvi obisk na počasnem 4G (1,47 Mbit/s) in CPU 4×: zadnja skripta pride pri **35,6 s**, meni je pripravljen pri **44 s**, vožnja (hiter vstop, `bathurst`) pri **51 s**. Prvi izris (zaslon z nalaganjem) šele pri 16–20 s, ker CSS tekmuje z 210 skriptami po HTTP/2 (s HTTP/1.1 pri 1,7 s; strežnik orodja prednosti tokov ne upošteva, GitHub Pages morda bolje: preveri na objavljeni strani).
 - Ponovni obisk (service worker in V8 imata vse): skripte so izvedene v ~1 s, a meni je pripravljen šele pri **6,9–12,2 s**, ker zagon pred menijem zgradi cel 3D svet zadnje proge (1,9 s `jezero`, 5,8 s `bathurst`), odpelje 6 s predstavitvene dirke in nariše prve slike 3D (2,5–3,5 s). Vožnja na `bathurst`: 9,2–12,8 s.
 - Gradnja sveta proge iz menija s CPU 4×: 2–41 s (`medvode` 40,7 s, `caracoles` 38,5, `bangsaen` 23,7, `livorno` 19,9, `ouninpohja` 19,8, `pikes` 14,6); to je delo procesorja, ne prenos.
 - Cilj ~15 s je dosegljiv: **ponovni obisk** s »menijem najprej« (korak 3) in hitrejšo gradnjo najtežjih svetov (korak 9); **prvi obisk na počasnem 4G** šele, ko se ob zagonu prenese ≤ ~1,5 MB gzip: glave prog, leni graditelji, moduli kasneje, pomanjšanje in izbris testnih prog (koraki 4–8 in 10).
@@ -18,7 +18,7 @@ Predlog I17, odločitev uporabnika 7. 11. 2026 ob 16.05 in 8. 11. ob ~17.40 (tab
 
 ## Meritve (povzetek)
 
-Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/stamp.js`, HTTP/2 s TLS, gzip, `max-age=600`, service worker) in jo odpre v Chromiumu (Playwright, zaslon telefona 412 × 915, dotik) z upočasnjenim procesorjem (CDP `Emulation.setCPUThrottlingRate`) in omrežjem (Lighthouse: počasno 4G 1,47 Mbit/s in 562,5 ms, hitro 4G 9 Mbit/s in 170 ms). Igre ne spreminja: časi klicev (`Render.init`, `buildWorld`, `precompile`, `World.build`, korak dirke, `Menu.init`) so ovite ob nalaganju skript. Omejitve: grafika je SwiftShader (čas prevajanja senčilnikov ni tak kot na telefonu; primerjaj število programov), indeks hitrosti tega stroja niha (1478–2675; s CPU 4× ~370–670, 6× ~250–440), pomnilnik in segrevanje telefona nista posnemana.
+Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/stamp.js`, HTTP/2 s TLS, gzip, `max-age=600`, service worker) in jo odpre v Chromiumu (Playwright, zaslon telefona 412 × 915, dotik) z upočasnjenim procesorjem (CDP `Emulation.setCPUThrottlingRate`) in omrežjem (Lighthouse: počasno 4G 1,47 Mbit/s in 562,5 ms, hitro 4G 9 Mbit/s in 170 ms). Igre ne spreminja: časi klicev (`Render.init`, `buildWorld`, `precompile`, `World.build`, korak dirke, `Menu.init`) so ovite ob nalaganju skript. Omejitve: grafika je SwiftShader (čas prevajanja senčilnikov ni tak kot na telefonu in med zavihki ostane v predpomnilniku; primerjaj število programov), indeks hitrosti tega stroja niha (1478–2675; s CPU 4× ~370–670, 6× ~250–440), strežnik orodja (Node `http2`) ne upošteva prednosti tokov HTTP/2, pomnilnik in segrevanje telefona nista posnemana.
 
 | zagon (CPU 4×, HTTP/2) | prvi izris | zadnja skripta | meni pripravljen | vožnja (`?proga=bathurst`) |
 |---|---|---|---|---|
@@ -27,10 +27,10 @@ Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/
 | prvi obisk, počasno 4G, HTTP/1.1 | 1,7 s | 41,4 s | 49,8 s | – |
 | prvi obisk, hitro 4G | 3,0–3,8 s | 6,0 s | 13,6 s | 22,3 s |
 | prvi obisk, brez omejitve omrežja | 0,3–1,1 s | 1,0 s | 10,2 s | 17,3 s |
-| ponovni obisk (toplo) | 0,9–1,1 s | 0,3 s | 6,9 s (`jezero`), 12,2 s (`bathurst`) | 9,2–12,8 s |
+| ponovni obisk (toplo) | 0,9–1,1 s* | 0,3 s | 6,9 s (`jezero`), 12,2 s (`bathurst`) | 9,2–12,8 s |
 | ponovni obisk, CPU 6× | 0,9–1,1 s | 0,3 s | 10,6–19,2 s | 17,0–20,9 s |
 
-\* Pri CPU 4× in počasnem 4G prvi izris v tem krogu ni bil zapisan; številka je iz kroga s CPU 6× (prenos je enak).
+\* Krog s CPU 4× in počasnim 4G prvega izrisa ni zapisal; številki sta iz kroga s CPU 6× in istim omrežjem.
 
 - **Prenos ob zagonu po skupinah** (gzip, MB): graditelji svetov 1,42 (44 datotek) · proge prave 1,10 (27) · proge testne 0,94 (24) · svet skupno 0,41 (9) · izris 0,37 · avti 0,29 (33) · meni 0,28 (7, od tega zemljevid in prelet `routes.js` + `geo.js` 0,20) · jedro 0,25 · igra 0,24 · misije 0,19 (35) · three.js 0,14 · deli avtov 0,11 · zvok 0,07 · jezik 0,06 · napake 0,04 · zabava 0,03 · peerjs 0,02. Nova mapa (0,43) se že nalaga leno.
 - **Izvajanje skript** je poceni: vse skupine skupaj ~1 s (toplo, CPU 4×); čas je v prenosu (prvi obisk) in v gradnji svetov (vedno).
@@ -82,7 +82,7 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 ### Korak 4 · Glave prog, prave proge šele ob potrebi (glavni korak)
 - Orodje (razširitev `tools/menu-lens.js` ali novo `tools/glave-prog.mjs`) zapiše `js/tracks/glave.js`: za vsako pravo progo polja do ~2 kB (id, ime, tema, zastavice, `look`, `rainP`, `say`, `cloudTh`, `roadWear`, `grassNat`, `lawn`, `bbClassic`, `zivali` …) in izračunane podatke (dolžina, število ovinkov, krogi); ~110 kB, ~40 kB gzip. Test preveri, da se glave ujemajo s celimi datotekami (kot golden).
 - Cele datoteke pravih prog kot `<link rel="x-lazy-script" data-lazy="proga-<id>" href="js/tracks/<id>.js">` (isti mehanizem kot nova mapa: `load(k, next)` v `js/game.js`; `stamp.js` žiga in spaja `<link>` že zdaj, `sw.js` `linked()` jih shrani).
-- `Core.loadTrack(id)` (Promise): naloži datoteko in jo prepiše čez glavo (isti predmet v `Core.TRACKS`). `ensureTrack`, šola, `sim`, lestvica (`LPX.bound`), Pikesovi odseki čakajo nanj; seznami, ki rabijo samo dolžino in ovinke (pokali `km`, rekordi, `MENU.lens`, meni `corners`), vzamejo glavo. Bralci `TRACK_DEFS` ob nalaganju (`render.js` THEMES, `game.js` RAIN_P in EN_NAME, `world.js` CLOUD_TH … BB_CLASSIC, `world-zivali.js` ZIV) dobijo polja iz glav.
+- `Core.loadTrack(id)` (Promise): naloži datoteko in jo prepiše čez glavo (isti predmet v `Core.TRACKS`; `TRACK_DEFS.push` v datoteki proge ostane, `core.js` združi vnosa z istim `id`, da Node, ki naloži vse, nima proge dvakrat). Vrstni red `Core.TRACKS` ostane kot zdaj (testne in prave proge so v `index.html` prepletene): glave nosijo mesto, `core.js` uredi po njem. `ensureTrack`, šola, `sim`, lestvica (`LPX.bound`), Pikesovi odseki čakajo nanj; seznami, ki rabijo samo dolžino in ovinke (pokali `km`, rekordi, `MENU.lens`, meni `corners`), vzamejo glavo. Bralci `TRACK_DEFS` ob nalaganju (`render.js` THEMES, `game.js` RAIN_P in EN_NAME, `world.js` CLOUD_TH … BB_CLASSIC, `world-zivali.js` ZIV) dobijo polja iz glav.
 - Testne proge ostanejo, kot so (zamrznjene, `CLAUDE.md`): njihove vrstice v `index.html` in datoteke se ne spreminjajo.
 - Učinek: −1,05 MB gzip (−6 s na počasnem 4G).
 - Tveganja: 12 klicev `getTrack` (sinhrono; seznam v `js/game.js`), stari meni (`tdgp-menu=old`, testi) gradi vse proge za kartice → v njem naloži vse; Node nalagalnik (`tests/lib/core.js` `pageScripts` bere samo `<script src>`) mora naložiti tudi lene proge; `tools/nova-proga.mjs` in `tools/razdeli-proge.mjs` pišeta `<script>` za novo progo → zapišeta leno povezavo in glavo; multiplayer: gost naloži progo gostitelja pred dirko; posnetki (`tools/posnetek.mjs`) in poročila o napakah naložijo progo po `id`; brez povezave: proga, ki je service worker še nima, javi napako namesto zamrznitve.
@@ -91,6 +91,7 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 - Orodje `tools/svet-odvisnosti.mjs` iz kode izpiše, katere datoteke rabi svet vsake prave proge (imena, ki jih vzame iz `World.api` ob nalaganju ali ob gradnji; analiza v meritvah) in jih zapiše v manifest; test zgradi vsako pravo progo v svežem zavihku samo z njenim manifestom.
 - Leno: 20 datotek (`nring`, `toronto`, `montreal` s podatki, `harju`, `spa`, `bangsaen`, `suzuka`, `medvode`, `katu`, `chapman`, `sani`, `greatalpine`, `rastro`, `tianmen`, `troisrivieres`, `livorno` s podatki, `gore`, `mountbuller`). Do izbrisa testnih prog ostane ob zagonu 9 pravih graditeljev, ki jih testni rabijo že ob nalaganju (`pikes`, `ouni`, `caracoles`, `bathurst`, `cpalace`, `rbring`, `iroha`, `marrakesh`, `prelaz`; 0,38 MB).
 - Učinek: −0,65 MB gzip (−3,6 s).
+- `World.build` za pravo progo brez naloženega graditelja (`World.ext[theme]`) javi napako, ne zgradi splošnega sveta (danes bi tiho zgradil napačnega).
 - Tveganja: vrstni red nalaganja (odvisnosti pred datoteko; ena datoteka ne postavi imena, ki ga postavi druga: preverjeno, dvojna so samo zastavica `ROCK_SMOOTH`, `VRS` in združeni `rbLook`), golden sveta in obremenitve (`world.test.mjs`, `perf.test.mjs`: isti svet, drugačen vrstni red datotek ne sme spremeniti odtisa), `tests/browser` (`world`, `gfx`, `perf` gradijo svetove neposredno: najprej naložijo).
 
 ### Korak 6 · Ostali moduli kasneje
@@ -136,7 +137,7 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 | 9 hitrejša gradnja | Opus, max (svet) | – | težke proge ≤ ~5 s |
 | 10 po izbrisu testnih prog | Opus | izbris testnih prog | ob zagonu 1,27 MB |
 
-Koraki 2, 3, 7 in 9 so neodvisni od 4–6 in lahko tečejo prej; 4–6 se dotikajo istih mest (`index.html`, `game.js` `ensureTrack`, `tests/lib/core.js`), zato drug za drugim. Vsak korak je svoj pull request in v vrsti ni med progami (`CLAUDE.md`: proge v vrsti zadnje).
+Koraki 2, 3, 7 in 9 so neodvisni od 4–6 in lahko tečejo prej; 4–6 se dotikajo istih mest (`index.html`, `game.js` `ensureTrack`, `tests/lib/core.js`), zato drug za drugim. Koraka 3 in 4 spreminjata meni (`js/menu.js`: naslovnica, `Menu.init`, ovinki na karticah) kot vgradnja nove izbire proge (#516, jure.kopac26, Načrtovano 8. 11.): začneta po njej ali po dogovoru na tabli #382. Vsak korak je svoj pull request in v vrsti ni med progami (`CLAUDE.md`: proge v vrsti zadnje).
 
 ## Odločitve uporabnika
 
