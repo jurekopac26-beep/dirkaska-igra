@@ -1298,7 +1298,6 @@
   // else there and no side road (a car may drive into one, the police waits in it), at least 260 m from the other fans' scenes (the staff's
   // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
-  site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
   site('harju', [['plaza', 1856, -1]]);
   site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6992, -1]]);
   site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);

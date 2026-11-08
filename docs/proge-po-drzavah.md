@@ -2,7 +2,7 @@
 
 Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **eno novo progo** (`CLAUDE.md`, razdelek »Ena proga na državo«). Spodnji tabeli naštejeta za vsako državo proge, ki so že v igri, in proge, ki čakajo. Seja pred začetkom nove proge preveri, ali je proga izbrana oziroma ali je njena država še brez proge.
 
-**Vrstni red dela (odločitve uporabnika 7. 11. 2026, tabla #382):** nove proge so del seznama za različico 1.0 s 50 pravimi progami (`docs/vrsta.md`, »Različica 1.0«). Izdelava novih prog teče naprej (odločitev ob 14.40), **proge so v vrsti za `main` vedno zadnje** (odločitvi ob 16.39 »Proge postavi na zadnja mesta« in ob 16.48, komentar 6709363288): pull request, ki ni proga, se vpiše pred njih, na konec vrste gre samo pull request proge. Narejeni progi Killar (PR #283) in Hakone (PR #261) gresta na `main` v skupini »Proge« (`docs/vrsta.md`), za njo nove proge v skupinah po 3–4. Pravila za nove proge: razdelek »Nove proge za 1.0« spodaj.
+**Vrstni red dela (odločitve uporabnika 7. 11. 2026, tabla #382):** nove proge so del seznama za različico 1.0 s 50 pravimi progami (`docs/vrsta.md`, »Različica 1.0«). Izdelava novih prog teče naprej (odločitev ob 14.40), **proge so v vrsti za `main` vedno zadnje** (odločitvi ob 16.39 »Proge postavi na zadnja mesta« in ob 16.48, komentar 6709363288): pull request, ki ni proga, se vpiše pred njih, na konec vrste gre samo pull request proge; za njimi je še nova mapa z misijami (odločitev uporabnika 8. 11. 2026 ob 21.25, komentar 6726766597: kar je narejeno, je na `main`, novo delo gre na zadnje mesto, tudi za proge; `CLAUDE.md`, »Posebne misije«). Narejeni progi Killar (PR #283) in Hakone (PR #261) gresta na `main` v skupini »Proge« (`docs/vrsta.md`), za njo nove proge v skupinah po 3–4. Pravila za nove proge: razdelek »Nove proge za 1.0« spodaj.
 
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
@@ -81,10 +81,10 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
 | Avstralija | Bathurst, Great Alpine Road: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik); zamrznjeni kot testni (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostaneta do izbire; Longford, Newcastle, Mount Hotham in Townsville so od 6. 11. 2026 testne (`test: true`, za izbris; odločitev uporabnika: »Vse ostale daj v test«) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
-| Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
+| Japonska | Suzuka (prava proga); Irohazaka je od 8. 11. 2026 na odločanju (`pending: true`, zamrznjena kot testna; odločitev uporabnika 8. 11. 2026: »suzuka gre na main ostali dve progi v pending«) | Hakone (narejena, PR #261 v #494): tudi na odločanju, `pending: true` pred združitvijo #494 | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak, Sani Pass | nobena | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
-| Finska | Ouninpohja, Harju | – | – |
+| Finska | Harju (gre v test, ko je nova proga na `main`); Ouninpohja je od 8. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika 8. 11. 2026: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«) | nova proga v snegu (kandidate s slikami pripravi seja računa jure.kopac26, izbere uporabnik na strani Odločitve jure.kopac26; razdelka »Proge z ledom« in »Sever v snegu«) | – |
 | Slovenija | Medvode; Vršič je od 6. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #394) | – | – |
 | Kitajska | Tianmen | Hongkong (zavite, 3) — **ne začni** (brez izletne cone, 5. 11. 2026) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
 | Čile | Los Caracoles | Valparaíso (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | stara veja: Santiago |
@@ -106,10 +106,10 @@ Uporabnik 4. 11. 2026: »prosim shrani si ocene, da izberem samo 1 progo na drž
 | ZDA | Pikes Peak (asfalt in makadam) **5** (4. 11. 2026), Big Sur –, Uncompahgre –, Beartooth –, Moki Dugway **4** (4. 11. 2026; med testne istega dne), Mauna Kea **4** (4. 11. 2026; med testne istega dne), Mount Baldy –, Riverside **3** (4. 11. 2026; med testne istega dne), Monterey –, Palomar Mountain **4,5** (4. 11. 2026) | – |
 | Avstralija | Bathurst **4,5** (4. 11. 2026), Longford **3** (4. 11. 2026), Newcastle –, Great Alpine Road **5** (4. 11. 2026), Mount Hotham –, Townsville – | – |
 | Kanada | Toronto –, Montréal –, Trois-Rivières – | – |
-| Japonska | Suzuka –, Irohazaka **5** (4. 11. 2026) | – |
+| Japonska | Suzuka –, Irohazaka **5** (4. 11. 2026) | Suzuka (prava proga); Irohazaka in Hakone na odločanju (8. 11. 2026) |
 | Brazilija | Rio do Rastro **5** (4. 11. 2026), Rio de Janeiro – | – |
 | Južna Afrika | Chapman's Peak **5** (4. 11. 2026), Sani Pass **4** (4. 11. 2026) | – |
-| Finska | Ouninpohja –, Harju – | – |
+| Finska | Ouninpohja –, Harju – | – (Ouninpohja v test 8. 11. 2026; nova proga v snegu, Harju gre v test ob njenem prihodu) |
 | Slovenija | Vršič –, Medvode – | – |
 
 Ocene prog iz držav z eno progo v igri (za primerjavo): Spa, Belgija **5** (4. 11. 2026); Los Caracoles, Čile **5** (4. 11. 2026); Livorno, Italija **3** (4. 11. 2026).
@@ -139,10 +139,11 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
-| Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«) |
+| Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti; potrebuje led kot podlago (razdelek »Proge z ledom«) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
-| Švedska | stara veja: Höljes (ni v načrtu) | ne pride na vrsto |
+| Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 
@@ -150,9 +151,19 @@ Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #
 
 - **Longyearbyen, Norveška** (Svalbard): ceste OSM `ref` 600 (od letališča), 500 (mesto) in 100 (do Nybyena), skupaj 7,6 km; pozimi steptan sneg. Do 60 m je 163 stavb (ob 57 % dolžine), 27 cevovodov na stebričkih (34 %), 17 lesenih stolpov stare tovorne žičnice (20 %), fjord (31 %) in skalne stene (22 %), skupaj 41,8 predmeta na km.
 - **Envalira, Andora**: krog na ledu, OSM `highway=raceway`, glavni krog je way 330829785 (0,73 km, ~2.370 m, tik pod prelazom Port d'Envalira, 2.408 m). Ime športnega centra ob krogu je blagovna znamka, zato ga v igri ni. Do 60 m so stavbe (ob 51 % dolžine), glavna cesta (95 %), 2 bencinski črpalki, parkirišče in smučišča (16 %), skupaj 21,8 predmeta na km.
-- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh dveh prog; oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`).
+- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh prog (Longyearbyen, Envalira, nova finska proga); oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`).
+- **Nova finska proga v snegu** (odločitev uporabnika 8. 11. 2026, razdelek »Sever v snegu«) gre v isti zimski sklop: nova podlaga zbit sneg in led je skupna z Longyearbyenom in Envaliro.
 - **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).
 - **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0).
+
+## Sever v snegu (odločitev uporabnika 8. 11. 2026)
+
+Odločitev uporabnika 8. 11. 2026 ob ~21.20 v pogovoru z Matejem (izbire s klikom; tabla #382, komentar 6726783939), dobesedno: »skandinavske države naj imajo proge v snegu«; izbrane vse štiri države.
+
+- **Norveška, Švedska, Danska in Finska:** zima je privzeta. Zasnežena pokrajina in snežni zameti ob cesti; na cestah zbit sneg, na dirkališčih zimski asfalt. Poletje ostane kot izbira vremena. Velja za vsako progo teh držav.
+- **Longyearbyen** (Norveška) je že zimska (razdelek »Proge z ledom«).
+- **Silkeborg, Danska** (#469) in **Kågeröd, Švedska** (#478) v N1 (#485) dobita zimo v ločenem PR »Zima na severu«, ko je N1 na `main`; N1 gre na `main` brez sprememb. Kateri račun PR naredi, predlaga ponedeljkov načrt (`docs/vrsta.md`, »Načrtovano«).
+- **Finska:** Ouninpohja je od 8. 11. 2026 testna (uporabnik: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«). Finska dobi eno novo progo v snegu: kandidate s slikami (zavita cesta, 1–5 km, izletna cona, samo odprti podatki) pripravi seja računa jure.kopac26, izbira je na strani Odločitve jure.kopac26. Izdelava gre med nove proge (vedno zadnje), v zimski sklop z Longyearbyenom in Envaliro. Harju ostane v igri, dokler nova finska proga ni na `main`, potem gre v test.
 
 ## Kaj to pomeni za verige
 

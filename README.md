@@ -9,7 +9,6 @@ Notranje oznake so ostale od prejšnjega imena (APEX Racing): `app: 'apex-racing
 Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, okolica, približki) je v svoji datoteki v [`docs/proge/`](docs/proge/); opis delov igre, ki niso vezani na eno progo (fizika, dirka, boksi, vreme, grafika, vozni park …), je v [`docs/igra.md`](docs/igra.md). Viri in licence so spodaj pod »Zasluge«.
 
 - [Pikes Peak, ZDA (asfalt: `pikes`)](docs/proge/pikes.md) in [Pikes Peak (makadam), ZDA (`pikesg`)](docs/proge/pikesg.md)
-- [Ouninpohja, Finska](docs/proge/ouninpohja.md)
 - [Nürburg, Nemčija](docs/proge/nring.md)
 - [Spa, Belgija](docs/proge/spa.md)
 - [Štajerska, Avstrija](docs/proge/rbring.md)
@@ -36,7 +35,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
-Na odločanju (`pending: true`): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road (odločitev uporabnika 6. 11. 2026), ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville); iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`). Do izbire so Bathurst, Great Alpine Road in Crystal Palace (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road (odločitev uporabnika 6. 11. 2026), ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville); iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Suzuka, Irohazaka in Hakone sta od 8. 11. 2026 na odločanju. Do izbire so Bathurst, Great Alpine Road, Crystal Palace in Irohazaka (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -59,6 +58,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Monterey, ZDA](docs/proge/monterey.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Palomar Mountain, ZDA](docs/proge/palomar.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Vršič, Slovenija](docs/proge/vrsic.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Ouninpohja, Finska](docs/proge/ouninpohja.md) (resnična pot; od 8. 11. 2026 testna, se ne posodablja več)
 - [Longford, Avstralija](docs/proge/longford.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Mount Hotham, Avstralija](docs/proge/hotham.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Newcastle, Avstralija](docs/proge/newcastle.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)

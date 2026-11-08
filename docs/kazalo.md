@@ -184,7 +184,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 ## Proge in graditelji sveta
 
-`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: Bathurst in Great Alpine Road, ostane ena; Crystal Palace do izbire med njo in Londonom, od 8. 11. 2026) so prave (v igri in testih), a od 8. 11. 2026 zamrznjene kot testne (`CLAUDE.md`, »Ena proga na državo«; varovalo jih ne preverja); drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
+`build()` v `js/world.js` izbere graditelja po `theme` iz `js/tracks/<id>.js`. Testne proge (`test: true`) so zamrznjene do izbrisa pred Google Play (`CLAUDE.md`, »Testne proge«; varovalo `tests/testne-proge.test.js`). Proge na odločanju (`pending: true`: Bathurst in Great Alpine Road, ostane ena; Crystal Palace do izbire med njo in Londonom, od 8. 11. 2026; Irohazaka in Hakone v Japonski, od 8. 11. 2026, Suzuka ostane prava) so prave (v igri in testih), a od 8. 11. 2026 zamrznjene kot testne (`CLAUDE.md`, »Ena proga na državo«; varovalo jih ne preverja); drugače jih razvrsti in označi samo meni (`rank` v `buildTracks`, `js/menu.js`; stari seznam `buildTrackScreen`, `js/game.js`).
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
@@ -216,7 +216,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
-| ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
+| *ouninpohja* | *Ouninpohja, Finska (test)* | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `js/world-pikes.js` (`buildPikes`) |
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
