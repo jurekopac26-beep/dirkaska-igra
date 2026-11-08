@@ -7,7 +7,8 @@
 // itself had at the same points (the player's d and speed, the race's speed profile): the line and the speed within bounds, the spin and the
 // hit laps left out with their reasons, the part beside the other car left out of lap 2, the rain a profile of its own (and each car), the
 // share of the pace (vq) the same in every car, an open road's runs each a lap; the corners' braking; a changing weather (wxs) leaves out the
-// laps while the road gets wet.
+// laps while the road gets wet. Korak 2: the game's data from the recordings and a race on it; Korak 3: the player's style (VOZNJA_SLOG) on
+// the tracks without their profile (Spa, Rio do Rastro), where it does not go (the rain, Bathurst still to be chosen, a test track, makadam).
 //   node tests/voznja.test.js
 'use strict';
 const fs = require('fs');
@@ -252,6 +253,68 @@ if (pB) {
   const r4 = tool([f], path.join(OUT, 'nic.json')), r5 = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs')], { encoding: 'utf8' });
   check('not a recording: left out with the reason (»to ni posnetek igre«), exit 1; no file given: usage, exit 2', r4.code === 1 && /posnetek_nic\.rrp: posnetka ni mogoče prebrati: to ni posnetek igre/.test(r4.text) && r5.status === 2 && /usage/.test(r5.stdout),
     `exit ${r4.code} / ${r5.status}`);
+}
+
+// 7. Korak 3: the player's style for the tracks without their profile (VOZNJA_SLOG in js/data/voznja.js, tools/voznja.mjs --slog, Race._voznja
+// with Core.voznjaIzSloga): the tool makes the file's style anew from its own profiles as it is (the data are the tool's), the profiles left
+// as they were; on Spa (a circuit with pits) and Rio do Rastro (an open road of hairpins), five AI cars in a race on it: each on the style's
+// line (wider than the racing line at the apexes of the hairpins and tight corners, on it along the straights) and at its pace, all finish,
+// none put back, quicker than the race's own AI but not by more than the player on Tianmen is (cas_q, with some room); Tianmen: the cars of
+// the profile's class by the profile, the others by the style; none of it in the rain, on a track still to be chosen (Bathurst) or a test
+// one, and none of its pace on a makadam road (Sani: the source track was asphalt)
+{
+  const src = path.join(ROOT, 'js', 'data', 'voznja.js'), cp = path.join(OUT, 'voznja-slog.js');
+  fs.copyFileSync(src, cp);
+  const r7 = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'voznja.mjs'), '--slog', cp], { encoding: 'utf8', timeout: 600000 });
+  const read = (f) => { const cx = vm.createContext({}); try { vm.runInContext(fs.readFileSync(f, 'utf8') + '\n;this.L = VOZNJA_PROFILI; this.S = VOZNJA_SLOG;', cx); } catch (e) { return {}; } return cx; };
+  const G = read(src), G2 = read(cp), S = G.S, K = S && S.razredi;
+  const shape = !!K && K.length >= 1 && K.every((c, j) => c.vq.length === S.fe.length && c.pl.length === S.fe.length && c.ql.length === S.fe.length && c.qh.length === S.fe.length && c.dd.length === S.m.length && (!j || c.r > K[j - 1].r) && !('rob' in c));
+  check('the style: from Tianmen\'s dry profile, its classes by the apex\'s radius (each table one value per node), no verge, previdno 0-1; the tool makes it anew as it is, the profiles left as they were',
+    r7.status === 0 && shape && S.iz.includes('tianmen') && S.previdno > 0 && S.previdno <= 1 && JSON.stringify(G2.S) === JSON.stringify(S) && JSON.stringify(G2.L) === JSON.stringify(G.L),
+    K ? K.map(c => `r ${c.r} m: ${c.ovinkov} corners, apex vq ${c.vq[c.vq.length - 1]}`).join('; ') + `, previdno ${S.previdno}` : `exit ${r7.status}`);
+  if (S) {
+    const orig = Math.random;
+    const race = (def, opts, sim) => {
+      const T = new C.Track(def);
+      Math.random = seeded(5);
+      try {
+        const r = new C.Race(T, Object.assign({ numAI: 5, playerGrid: 6, assist: 2, laps: 1, seed: 5, difficulty: 1, damage: 0 }, opts)), AI = r.cars.filter(c => !c.isPlayer);
+        if (!sim) return { T, r, AI };
+        r.start(); const P = r.player; let resc = 0;
+        for (let k = 1; k < 400 / DT && !AI.every(c => c.finished); k++) {
+          Math.random = seeded(9000 + k);
+          const pre = AI.map(c => r.putT && r.putT.get(c));
+          if (!P.finished) { C.aiControl(P, r, DT); if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+          r.step(DT); AI.forEach((c, j) => { if (r.putT && r.putT.get(c) !== pre[j]) resc++; });
+        }
+        return { T, r, AI, resc, t: AI.map(c => c.finished ? c.finishTime : NaN) };
+      } finally { Math.random = orig; }
+    };
+    const cq = (G.L.find(p => p.proga === 'tianmen' && p.vreme === 'suho') || {}).cas_q || 0.95;
+    for (const id of ['spa', 'rastro']) {
+      const def = C.TRACKS.find(d => d.id === id), a = race(def, { voznja: [S] }, true), b = race(def, {}, true), T = a.T;
+      const F = C.voznjaFaze(T, a.r.vprof), N = T.N, tight = F.C.filter(c => c.R < 30);
+      // the line: at the apexes of the hairpins and tight corners wider than the racing line (toward the outside), along the straights on it
+      const wide = (c) => tight.filter(A => (c.uRl[A.i] - T.rl[A.i]) * A.dir < -0.3).length;
+      let flat = true; for (let i = 0; i < N; i++) if (F.lk[i] >= 0 && Math.abs(F.lm[i]) > 95) for (const c of a.AI) if (Math.abs(c.uRl[i] - T.rl[i]) > 1e-4) flat = false;
+      const mA = mean(a.t), mB = mean(b.t), q = mA / mB;
+      check(`${def.name}: five AI cars on the style (its line: wider at the apexes of the ${tight.length} hairpins and tight corners, on the racing line along the straights), all finish, none put back, quicker than the race's own AI by no more than the player on Tianmen (${cq})`,
+        tight.length >= 2 && a.AI.every(c => c.uT && c.uRl && wide(c) >= 0.8 * tight.length) && flat && a.t.every(Number.isFinite) && b.t.every(Number.isFinite) && a.resc === 0 && q < 1 && q > cq - 0.05,
+        `style ${a.t.map(x => x.toFixed(1)).join(' / ')} s, own AI ${b.t.map(x => x.toFixed(1)).join(' / ')} s (${q.toFixed(3)}), wider at ${a.AI.map(wide).join('/')} of ${tight.length} apexes, put back ${a.resc}`);
+    }
+    // Tianmen: the cars of the profile's class (Perun) by the profile, the others (the default field) by the style; the uT arrays as a race on that source alone
+    const tdef = C.TRACKS.find(d => d.id === 'tianmen'), V = G.L.find(p => p.proga === 'tianmen' && p.vreme === 'suho'), perun = C.MODELS.find(m => m.id === 'perun');
+    const same = (x, y) => x.AI.every((c, j) => c.uT && y.AI[j].uT && c.uT.length === y.AI[j].uT.length && c.uT.every((u, i) => u === y.AI[j].uT[i] || (u !== u && y.AI[j].uT[i] !== y.AI[j].uT[i])));
+    const tA = race(tdef, { voznja: [V, S] }), tS = race(tdef, { voznja: [S] }), tP = race(tdef, { voznja: [V, S], playerModel: perun }), tV = race(tdef, { voznja: [V], playerModel: perun });
+    check('Tianmen: the rivals of the profile\'s class (Perun) by the player\'s profile, the others by the style',
+      !!V && tA.AI.every(c => !V.razred.includes(c.m.id)) && same(tA, tS) && tP.AI.every(c => V.razred.includes(c.m.id)) && same(tP, tV), `${tA.AI.map(c => c.m.id).join('/')} | ${tP.AI.map(c => c.m.id).join('/')}`);
+    // none in the rain, on Bathurst (still to be chosen, pending) or Spa as a test track; on Sani (makadam) the line but none of the pace
+    const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(C.TRACKS.find(d => d.id === 'bathurst'), { voznja: [S] }), tst = race(Object.assign({}, spa, { test: true }), { voznja: [S] });
+    const sani = race(C.TRACKS.find(d => d.id === 'sani'), { voznja: [S] }), PS = C.voznjaIzSloga(sani.T, sani.r.vprof, S), PR = C.voznjaIzSloga(new C.Track(C.TRACKS.find(d => d.id === 'rastro')), race(C.TRACKS.find(d => d.id === 'rastro'), {}).r.vprof, S);
+    check('none of the style in the rain, on Bathurst (pending) or a test track; on Sani (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
+      [wet, bt, tst].every(x => x.AI.every(c => !c.uT)) && sani.AI.every(c => c.uT) && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
+      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length} of 5; Sani wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
+  }
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

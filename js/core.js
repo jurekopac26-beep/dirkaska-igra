@@ -5986,7 +5986,8 @@ const Core = (function () {
   // speed; wv: the weight of that pace against the car's own (aiDrive's): 1 − pl (on the throttle the engine decides: the player's exits
   // were the autopilot's), less from the radius rr[0] on and none from rr[1] (the faster corners the source tracks did not have: the race's
   // own AI), none off the asphalt (a makadam road, cobbles: the source tracks were asphalt). The line by the metres from the nearest apex
-  // (dd toward its inside; on a road narrower than the source's, sirina, by as much less). Never over the verge (where the player went
+  // (dd toward its inside; on a road narrower than the source's, sirina, by as much less; faded out between the table's last two nodes,
+  // where the next corner's line is in its mean as much as this one's). Never over the verge (where the player went
   // over it is the track's own: on the others, in trials, it only put the cars off the road and spun them)
   function voznjaIzSloga(T, vp, S, F) {
     F = F || voznjaFaze(T, vp);
@@ -6009,7 +6010,7 @@ const Core = (function () {
       }
       if (cl < 0) continue;
       const A = F.C[cl], x = F.lm[i], w0 = wR(A.R), e = T.wa ? T.wa[i] : T.w;
-      if (w0 > 0 && x >= M0 && x <= M1) dd[j] = A.dir * get(cls(A.R), 'dd', S.m, x) * w0 * clamp((e - 1.7) / sir, 0, 1);
+      if (w0 > 0 && x >= M0 && x <= M1) dd[j] = A.dir * get(cls(A.R), 'dd', S.m, x) * w0 * clamp((e - 1.7) / sir, 0, 1) * (1 - sstep(x < 0 ? -S.m[1] : S.m[S.m.length - 2], x < 0 ? -M0 : M1, Math.abs(x)));
     }
     const sm = new Float32Array(n);   // (the line smoothed over ±10 m: no kink where one corner's zone meets the next one's)
     for (let j = 0; j < n; j++) { let s = 0, m = 0; for (let d = -2; d <= 2; d++) { let q = j + d; if (T.open) { if (q < 0 || q >= n) continue; } else q = (q + n) % n; s += dd[q]; m++; } sm[j] = s / m; }
@@ -6361,10 +6362,11 @@ const Core = (function () {
     // player was; VZ_PL over it where the player is on the throttle (pl: there its engine decides), NaN where the profile has no
     // measurement (its own pace). By difficulty (the car's skill, lamOf): on easy as the player's slower laps, on medium between them and
     // their average, on hard (and super hard, raced as hard) from the average toward their quicker laps (ql, qh); over the verge only
-    // where the player went (tr, dt; not a semi-trailer). A track without a profile, or a car not of its class: the player's style
-    // (Korak 3; opts.voznja's VOZNJA_SLOG, razredi: a profile of it for this track, voznjaIzSloga), the same, its target blended with the
-    // car's own (wv: 0 its own, as aiDrive's, read where aiDrive reads its profile), never over the verge. Again after every change of the
-    // profiles (the weather): a profile of the weather the road has now (the style: the dry), or none (the race's own AI)
+    // where the player went (tr, dt; not a semi-trailer). A real track (not def.test, not def.pending) without a profile, or a car not of
+    // its class: the player's style (Korak 3; opts.voznja's VOZNJA_SLOG, razredi: a profile of it for this track, voznjaIzSloga), the same,
+    // its target blended with the car's own (wv: 0 its own, as aiDrive's, read where aiDrive reads its profile), never over the verge.
+    // Again after every change of the profiles (the weather): a profile of the weather the road has now (the style: the dry), or none (the
+    // race's own AI)
     _voznja() {
       const T = this.track, all = this.opts.voznja ? [].concat(this.opts.voznja) : [];
       for (const c of this.cars) c.uRl = c.uT = c.uLim = null;
@@ -6372,7 +6374,7 @@ const Core = (function () {
       if (!all.length) return;
       const wet = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0.05, win = !!this.opts.winter;
       const ok = (p) => p && /^mokro/.test(p.vreme || '') === wet && /zima/.test(p.vreme || '') === win;
-      const V = all.find(p => ok(p) && !p.razredi && p.proga === T.def.id && p.vq && p.vq.length > 1) || null, S = all.find(p => ok(p) && p.razredi && p.razredi.length) || null;
+      const V = all.find(p => ok(p) && !p.razredi && p.proga === T.def.id && p.vq && p.vq.length > 1) || null, S = T.def.test || T.def.pending ? null : all.find(p => ok(p) && p.razredi && p.razredi.length) || null;   // (the style: a real track only, not a test one nor one still to be chosen)
       let VS = null;   // (the style's profile of this track: once for each speed profile of the race)
       if (S) { const z = this._vzS; VS = z && z.vp === this.vprof && z.S === S ? z.P : voznjaIzSloga(T, this.vprof, S); this._vzS = { vp: this.vprof, S, P: VS }; }
       this.voznja = V || VS;
@@ -6387,7 +6389,7 @@ const Core = (function () {
       for (let i = 0; i < N; i++) sp0[i] = T.open ? i * ds - T.startS : (((i * ds - T.startS) % L) + L) % L;
       const seed = this.opts.seed || 7, draw = (c, j) => { const x = Math.sin(seed * 12.9898 + (c.id || 0) * 78.233 + j * 37.719) * 43758.5453; return x - Math.floor(x); };
       // (a profile read on this track: its values at sp m from the start line, between its points (a circuit's last one to its first; an
-      // open road: held at its ends), its stretches over the verge, its class)
+      // open road: none outside them, z), its stretches over the verge, its class)
       const prep = (P) => {
         const k = P.korak || 5, n = P.vq.length;
         const at = (A, sp) => {
@@ -6395,9 +6397,10 @@ const Core = (function () {
           sp = ((sp % L) + L) % L; const j = Math.min(n - 1, Math.floor(sp / k)), s1 = j < n - 1 ? (j + 1) * k : L;
           return [A[j], A[j < n - 1 ? j + 1 : 0], clamp((sp - j * k) / Math.max(1e-6, s1 - j * k), 0, 1)];
         };
-        const val = (A, sp) => { const [a, b, f] = at(A, sp); return a + (b - a) * f; };
-        const vqAt = (sp) => { const [a, b, f] = at(P.vq, sp); return a > 0 && b > 0 ? a + (b - a) * f : NaN; };   // (0: no measurement)
-        const plAt = (sp) => { const [a, b, f] = at(P.pl, sp); return (f < 0.5 ? a : b) === 1; };
+        const out = (sp) => T.open && (sp < 0 || sp > (n - 1) * k);   // (an open road: none of it on the grid behind the start line or past its last point)
+        const val = (A, sp, z) => { if (out(sp)) return z; const [a, b, f] = at(A, sp); return a + (b - a) * f; };
+        const vqAt = (sp) => { if (out(sp)) return NaN; const [a, b, f] = at(P.vq, sp); return a > 0 && b > 0 ? a + (b - a) * f : NaN; };   // (0: no measurement)
+        const plAt = (sp) => { if (out(sp)) return false; const [a, b, f] = at(P.pl, sp); return (f < 0.5 ? a : b) === 1; };
         // the stretches over the verge (tr: the share of the player's laps over it there): a car goes over one when its draw (a hash of
         // the race's seed, the car and the stretch) is under the stretch's highest share; there it steers by the line of those laps (dt),
         // its limit out past the asphalt (not nearer the barrier than half the car and 0.6 m), eased in and out over 15 m
@@ -6426,9 +6429,9 @@ const Core = (function () {
         // (the style: the car's own share of its profile, as aiDrive's: its skill to its cap, the track's own pace for the rivals)
         const sk0 = Math.min(c.skill || 1, cap) * (T.def.aiPace ? (T.def.aiPace[c.phys] || T.def.aiPace.cs || 1) : 1), so = (vc) => sk0 <= 1 ? sk0 : 1 + (sk0 - 1) * sstep(11, 24, vc);
         for (let i = 0; i < N; i++) {
-          const sp = sp0[i], dd = R.val(P.dd, sp), j = R.gOf[i];
+          const sp = sp0[i], dd = R.val(P.dd, sp, 0), j = R.gOf[i];
           if (uLim && j >= 0 && goes[j]) {   // (over the verge here, as the player)
-            const g = R.gW[i], d = T.rl[i] + dd + (R.val(P.dt, sp) - dd) * g, bar = d > 0 ? (T.br ? T.br[i] : T.w + 2) : (T.bl ? T.bl[i] : T.w + 2);
+            const g = R.gW[i], d = T.rl[i] + dd + (R.val(P.dt, sp, dd) - dd) * g, bar = d > 0 ? (T.br ? T.br[i] : T.w + 2) : (T.bl ? T.bl[i] : T.w + 2);
             uRl[i] = d; uLim[i] = Math.min(Math.abs(d) + 0.3, bar - c.m.wid * 0.5 - 0.6) * (g > 0 ? 1 : 0);
           } else uRl[i] = T.rl[i] + dd;
           // the player's speed here (their slower or quicker laps by difficulty; without ql, qh its skill over theirs), NaN where not
@@ -6437,9 +6440,9 @@ const Core = (function () {
           // The style: not under the car's own pace where its weight is low (the brakes below: not for a pace it does not drive)
           const q = R.vqAt(sp), vc = vp[i];
           if (!(q > 0)) { w[i] = NaN; continue; }
-          const f = R.QQ ? (lam >= 0 ? (R.k0 + (1 - R.k0) * lam) * (1 + lam * clamp(R.val(P.qh, sp) - 1, -0.1, 0.3)) : R.k0 * Math.max(0.75, 1 + lam * R.ks * clamp(1 - R.val(P.ql, sp), -0.1, 0.3))) : kc;   // (a slower lap's mistake: not more than a quarter off the pace)
+          const f = R.QQ ? (lam >= 0 ? (R.k0 + (1 - R.k0) * lam) * (1 + lam * clamp(R.val(P.qh, sp, 1) - 1, -0.1, 0.3)) : R.k0 * Math.max(0.75, 1 + lam * R.ks * clamp(1 - R.val(P.ql, sp, 1), -0.1, 0.3))) : kc;   // (a slower lap's mistake: not more than a quarter off the pace)
           let e = q * f; if (f > 1) e = Math.min(e, Math.max(q, 1 + (cap - 1) * sstep(11, 24, vc)));
-          if (wv) { const o = so(vc); if (e < o) e += (o - e) * (1 - R.val(wv, sp)); }
+          if (wv) { const o = so(vc); if (e < o) e += (o - e) * (1 - R.val(wv, sp, 0)); }
           w[i] = Math.min(e, VZ_CAP) * vc;
         }
         // its brakes: the speed it can be down to by each sample from the one before, on its own profile's braking (aB): the player who
@@ -6453,7 +6456,7 @@ const Core = (function () {
           const s = i * ds; let u = NaN, sc = s;
           for (let it = 0; it < 3; it++) { u = w[T.idx(sc)]; if (!(u === u)) break; if (it < 2) sc = s - 3 - 0.22 * u; }
           let x = u + (u === u && R.plAt(sc - T.startS) ? VZ_PL : R.mg);   // (mg: aiDrive holds a car a little under its target, the player's speed is what the car had)
-          if (wv && x === x) { const g = R.val(wv, sc - T.startS), o = so(vp[i]) * vp[i]; x = o + (x - o) * g; }   // (the style: blended with its own pace at sample i, where aiDrive reads its profile)
+          if (wv && x === x) { const g = R.val(wv, sc - T.startS, 0), o = so(vp[i]) * vp[i]; x = o + (x - o) * g; }   // (the style: blended with its own pace at sample i, where aiDrive reads its profile)
           uT[i] = x;
         }
         c.uRl = uRl; c.uT = uT; c.uLim = uLim;

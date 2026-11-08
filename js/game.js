@@ -771,7 +771,7 @@
   const voznjaOf = (def) => {
     if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
     const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
-    if (!def.test && !def.pending && typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);
+    if (typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);   // (Race._voznja: only on a real track)
     return L.length ? L : undefined;
   };
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the

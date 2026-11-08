@@ -6,7 +6,8 @@
 
 1. **Orodje** `tools/voznja.mjs` (narejeno v #300, ki gre na `main` skupaj s korakom 2 v #305): iz uporabnikovih posnetkov dirk (`.rrp`) za vsako progo in vreme izmeri povprečno linijo, hitrost in zaviranje. Test `tests/voznja.test.js`.
 2. **AI v `js/core.js`** vozi po profilu (`Race._voznja`, `aiDrive`), vsak tekmovalec po svoji težavnosti: poskus na eni progi (Tianmen, veja `ai-linija/korak-2`, vklop `index.html?voznja=1`; razdelek »Korak 2« spodaj).
-3. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga (začetek v `tests/voznja.test.js`: podatki za igro in dirka na njih).
+3. **Slog na vseh pravih progah** (odločitev uporabnika 8. 11. 2026): kjer posnetkov ni, tekmeci vozijo po splošnem pravilu iz posnetkov Tianmna (razdelek »Korak 3« spodaj; v #305).
+4. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga (`tests/voznja.test.js`: podatki za igro in dirka na njih, razdelek 5; slog, razdelek 7).
 
 ## Posnetki in zasebnost
 
@@ -43,7 +44,7 @@
 
 - Uporabnik: »ali lahko danes sprobava samo na eni progi nastimat« (Tianmen, 5 posnetkov) in »v kategoriji lazje vozijo bolj podobno kot jaz v pocasnih voznjah in super teska tako kot jaz v hitrih voznjah. ampak se vedno pa nekje vsi vozijo po liniji mojega povprecja in bremzajo tudi tam kot jaz, prav tako kdaj zavijajo in kdaj dajo gas, tudi ai naj gre kdaj cez travo in to naj ge na tistih delih kjer sem sel jaz«.
 - **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj je v datoteki en profil: Tianmen, suho, avto Perun, 5 voženj.
-- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa in na progah brez profila je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake).
+- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake); z vklopom tekmeci na pravih progah brez profila vozijo po slogu (korak 3).
 - **Linija** (enaka za vse težavnosti): idealna linija in igralčev odmik od linije avtopilota v istem avtu (`dd`, `c.uRl`). Rezanje ovinkov z volanom je v obeh, zato ni šteto dvakrat. Prehitevanje in obramba ostaneta.
 - **Hitrost** (`c.uT`) je igralčev delež tempa po tleh (`vq`) krat lastni profil tekmeca (njegov avto, vreme in zavore).
   - Orodje vzdolžno hitrost posnetka popravi z razmerjem `kg` (0,9–1,3): to je hitrost igralca po tleh proti hitrosti avtopilota po tleh. Popravek je potreben, ker avto, ki drsi, vzdolžno kaže manj.
@@ -65,9 +66,9 @@
   - Polje 6 tekmecev z avtopilotom igralca zadaj: vsi so prišli do cilja, nobenega ni bilo treba vrniti na cesto.
   - Povprečja v polju: lahka 3:31,7 (brez profila 3:52,9), srednja 3:26,2 (3:38,5), težka 3:20,4 (3:26,2). Polje je počasnejše od tekmeca samega, ker ga gumijasta vrv drži ob počasnem avtopilotu (3:24,6) in ker je na cesti promet.
 - **Omejitev**: težka ne doseže igralčevih najhitrejših voženj. Igralec skozi ovinke drsi hitreje, kot jih AI zna peljati po povprečni liniji.
-- **Proge brez uporabnikovih posnetkov**: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve. Možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje (kako zgodaj zavira, koliko reže ovinke). **Odgovor uporabnika (5. 11. 2026, »Drugo«):** »Za ostale proge ti se poslem posnetke«. Za druge proge bodo prišli posnetki, zato splošno pravilo zdaj ni potrebno; do takrat so proge brez posnetkov kot doslej. Če bo pravilo potrebno prej, vprašaj znova.
-- **Stikalo do objave**: **odgovor uporabnika (5. 11. 2026, `ai-linija-privzeto`, »Drugo«):** »Zaenkrat naj imajo vse proge stikalo, kjer je to ze mozno. Kasneje ga bomo izbrisali ko bomo dali igro na google play«. Stikalo `?voznja=1` ostane in velja na vseh progah s profilom (`voznjaOf` vzame vse profile proge, `Race._voznja` tistega za vreme na cesti), nove proge pridejo s posnetki. Izbriše se tik pred objavo na Google Play, skupaj s testnimi progami in sklopom 8 orodja za napake (`docs/orodje-za-napake.md`). Ali bodo tedaj tekmeci po profilu vklopljeni za vse ali ne, uporabnik še ni povedal: seja, ki stikalo briše, ga vpraša.
-- **Naprej**: po odzivu uporabnika na poskus pridejo nove proge s posnetki in test proti igralčevemu času (korak 3).
+- **Proge brez uporabnikovih posnetkov**: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve. Možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje (kako zgodaj zavira, koliko reže ovinke). **Odgovor uporabnika (5. 11. 2026, »Drugo«):** »Za ostale proge ti se poslem posnetke«. **Odločitev uporabnika (8. 11. 2026 ~23.00, možnost 2):** »naredi da vse proge ki so zbrane (1 proga na 1 drzavo) vozijo po mojih ai sledeh zaenkrat dokler nimas videoposnetkov mojih vozenj predvidevaj kako bi vozili tukaj iz mojih posnetkov z druge proge kjer moje posnetke ze imas«. Do posnetkov drugih prog tekmeci na vseh pravih progah vozijo po splošnem pravilu iz posnetkov Tianmna (razdelek »Korak 3«); proga s posnetki dobi svoj izmerjeni profil.
+- **Stikalo do objave**: **odgovor uporabnika (5. 11. 2026, `ai-linija-privzeto`, »Drugo«):** »Zaenkrat naj imajo vse proge stikalo, kjer je to ze mozno. Kasneje ga bomo izbrisali ko bomo dali igro na google play«. Stikalo `?voznja=1` ostane in velja na vseh progah s profilom (`voznjaOf` vzame vse profile proge, `Race._voznja` tistega za vreme na cesti) in na vseh pravih progah s slogom (korak 3). Izbriše se tik pred objavo na Google Play, skupaj s testnimi progami in sklopom 8 orodja za napake (`docs/orodje-za-napake.md`). Ali bodo tedaj tekmeci po profilu vklopljeni za vse ali ne, uporabnik še ni povedal: seja, ki stikalo briše, ga vpraša.
+- **Naprej**: proge s posnetki dobijo svoj izmerjeni profil (namesto sloga), slog se ob novih suhih profilih izpelje znova (`--slog`).
 
 ## Stanje
 
