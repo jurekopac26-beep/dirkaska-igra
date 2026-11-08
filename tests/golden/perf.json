@@ -397,5 +397,12 @@
   "kverts": 522,
   "maxKverts": 691,
   "jsMs": 1.6
+ },
+ "kildare": {
+  "calls": 205,
+  "maxCalls": 231,
+  "kverts": 439,
+  "maxKverts": 511,
+  "jsMs": 1.95
  }
 }

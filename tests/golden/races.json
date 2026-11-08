@@ -2798,5 +2798,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "ee5ea57de387f0cde679baf2"
+ },
+ "kildare/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 80.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6e9832c9cc9efdaeaa103f4f"
+ },
+ "kildare/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 87.35,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7fb9887479599f3f9f98f4fd"
+ },
+ "kildare/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 76.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2673c4f4e95db9cd1ef1f312"
+ },
+ "kildare/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 77.57,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d6b72a39de8ba16cecf1e29e"
+ },
+ "kildare/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 80.97,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "07a22b6d96d41b7ad1d8e1df"
  }
 }

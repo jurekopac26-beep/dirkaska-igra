@@ -454,6 +454,7 @@
     'Levi za ciljem': 'Left after the Line', 'Spodnja lasnica': 'Lower Hairpin', 'Zahodna ravnina': 'West Straight', 'Zahodna lasnica': 'West Hairpin', 'Desni čez potok': 'Right over the Brook',
     'Severna ravnina': 'North Straight', 'Esovka': 'The Esses', 'Zadnja lasnica': 'Last Hairpin',   // (Sosnová: its corners by plain descriptions, the brook by them)
     'Severna lasnica': 'North Hairpin', 'Levi pri depoju': 'Paddock Left', 'Desni na vzhodu': 'East Right', 'Dolga ravnina': 'Long Straight', 'Desni ob gozdu': 'Woods Right',   // (Pembrey: its corners by plain descriptions)
+    'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)

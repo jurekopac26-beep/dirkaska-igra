@@ -959,6 +959,7 @@ const Core = (function () {
       for (let i = 0; i < N; i++) { let m = 0; for (let d = -5; d <= 5; d++) m |= cb[W(i + d)]; curb[i] = m; }
       if (this.def.roadSurface === 'makadam') curb.fill(0); // rally roads: no curbs
       if (this.def.roadSurface === 'makadam') curb.fill(0);   // dirt rally road: no kerbs
+      if (this.sf) for (let i = 0; i < N; i++) if (this.sf[i] === 5) curb[i] = 0;   // (a road of tarmac and gravel, def.surf: none on its gravel, Kildare's rallycross; the others with def.surf have def.noCurbs)
       this.curb = curb;
       this.curbW = 1.5;
       // gravel: side where barrier far away

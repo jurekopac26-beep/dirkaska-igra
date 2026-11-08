@@ -158,6 +158,15 @@
         }
         continue;
       }
+      if (cols.vert) {   // (vertical stripes, the first at the pole: cols.vert true; Ireland's green, white and orange)
+        for (let b = 0; b < ns; b++) {
+          for (let k = 0; k <= 2; k++) { const u = (b + k / 2) / ns;
+            for (const f of [0, 1]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < 2; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += 6;
+        }
+        continue;
+      }
       if (cols.tri) {   // (a triangle at the pole: cols.tri = [its colour, how far along the flag its point reaches (0 at the pole)]; the field cols[0] above it, cols[1] below: Czechia's)
         const [tc, a] = cols.tri, up = (u) => (u < a ? 0.5 * u / a : 0.5);
         for (const [col, f0, f1, u1] of [[cols[0], () => 0, up, 1], [tc, up, (u) => 1 - up(u), a], [cols[1], (u) => 1 - up(u), () => 1, 1]]) {
@@ -519,6 +528,12 @@
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side > 0 ? 1 : 0][i] = 1; } }
     pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
+    // a road of tarmac and gravel (def.surf: Kildare's rallycross): its gravel (Core's sf 5) drawn as gravel (js/world.js's makadam: the
+    // driven line darker and browner, the loose stones paler, a berm at the edges), no lines on it, no kerbs (Core) and no marks (below)
+    const SFG = T.sf ? T.sf.map(v => (v === 5 ? 1 : 0)) : null;
+    const gvMat = SFG ? new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.045, shininess: 7, specular: 0x1c1813, vertexColors: true }) : null;
+    const shadeG = (i, o) => { const rl = T.rl[i], rut = Math.exp(-((o - rl) * (o - rl)) / 7.5), pat = 0.94 + 0.08 * Math.sin(i * 0.071 + o * 0.35) * Math.sin(i * 0.023 + 1.3) + 0.05 * Math.sin(i * 0.53 + o * 1.1);
+      const k = pat * (1.05 - 0.3 * rut) * (1 + 0.07 * sstep(w - 1.6, w, Math.abs(o))); return [k * (1 + 0.05 * rut), k * (1 - 0.015 * rut), k * (1 - 0.08 * rut)]; };
     const CH = 128 * CKF, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
     // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
@@ -530,12 +545,15 @@
     const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gr = new RB(true), gl = new RB(), gk = new RB(true);
-      let pr = -1, pl = -1; const pk = [-1, -1];
-      for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
+      const gr = new RB(true), gl = new RB(), gk = new RB(true), gg = SFG ? new RB(true) : null;
+      let pr = -1, pl = -1, pg = -1; const pk = [-1, -1];
+      for (let ii = c0, ie = Math.min(c0 + CH, N); ii <= ie; ii++) {
         const i = ii % N, v = ii * ds / tileL;
-        const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
-        if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
+        const gP = SFG && ii > c0 ? SFG[(ii - 1) % N] : -1, gN = SFG && ii < ie ? SFG[i] : -1, asp = !SFG || gP === 0 || gN === 0;   // (def.surf: the segments before and after this row, 1 on gravel; a row of asphalt for either on asphalt)
+        if (asp) { const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
+          if (pr >= 0 && (!SFG || gP === 0)) gr.link(pr, r, 0, offs.length - 1); pr = r; } else pr = -1;
+        if (gP === 1 || gN === 1) { const r = gg.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shadeG(i, o)), offs.map(o => [(o + w) / 6, ii * ds / 6]));
+          if (pg >= 0 && gP === 1) gg.link(pg, r, 0, offs.length - 1); pg = r; } else pg = -1;
         if (PER) {   // the 1930s: along each edge a strip of dust and loose grit over the road's edge and the verge, its grass edge ragged
           const ed = (sd) => { const q = ii * ds, j = 0.5 + 0.28 * Math.sin(q * 0.23 + sd * 2.1) + 0.14 * Math.sin(q * 0.71 + sd * 0.4) + (crH(i, sd, 41) - 0.5) * 0.22, v = 0.92 + crH(i, sd, 43) * 0.16;   // (j: how far the grit reaches, 0..1)
             const o0 = w - 0.1, o1 = w + 0.08, o2 = w + 0.2 + 0.25 * j, o3 = w + 0.32 + 0.45 * j, hv = (o) => -0.04 * Math.max(0, o - w) / 1.2 + 0.03;
@@ -544,9 +562,9 @@
           const L = ed(-1), R = ed(1), wl = [0.94, 0.94, 0.9], W = [Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)];   // (the white edge lines inside it, as on the other circuits: the user's choice)
           const l = gl.row([...L.p.slice().reverse(), ...W, ...R.p], [...L.c.slice().reverse(), wl, wl, wl, wl, ...R.c]);
           if (pl >= 0) { gl.link(pl, l, 0, 3); gl.link(pl, l, 4, 5); gl.link(pl, l, 6, 7); gl.link(pl, l, 8, 11); } pl = l;
-        } else {
+        } else if (asp) {
         const wl = [0.94, 0.94, 0.9], l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l; }
+        if (pl >= 0 && (!SFG || gP === 0)) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l; } else pl = -1;
         for (const side of [-1, 1]) {
           const si = side > 0 ? 1 : 0;
           if (kerb[si][i]) {   // red/white kerb in 1 m blocks: a sloped inner edge, a flat top, a low outer lip
@@ -557,7 +575,7 @@
           } else pk[si] = -1;
         }
       }
-      addM(gr, aMat); addM(gl, lMat); addM(gk, cMat);
+      addM(gr, aMat); addM(gl, lMat); addM(gk, cMat); if (gg) addM(gg, gvMat);
     }
     /* ---- run-offs: pale asphalt from the kerb (or the edge) to just before the barrier where the barrier stands far out (Core: T.gravL /
        gravR; with def.runoffTarmac the cars drive on asphalt there), tapering in and out; a green band along the track limit ---- */
@@ -608,7 +626,7 @@
     {
       const dTex = ownTex(nrDecalTex()); dTex.anisotropy = tex.asphalt.anisotropy || 4;
       const dMat = new THREE.MeshLambertMaterial({ map: dTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4 });
-      const RD = rng(4320), dcs = [], put = (i0, n, c, hw, cell, a, lay, fol) => dcs.push([i0, n, c, hw, cell, a, lay, fol]);   // (their own random stream: R() is not drawn from)
+      const RD = rng(4320), dcs = [], put = (i0, n, c, hw, cell, a, lay, fol) => { if (SFG) for (let k = -1; k <= n + 1; k++) if (SFG[((i0 + k) % N + N) % N]) return; dcs.push([i0, n, c, hw, cell, a, lay, fol]); };   // (their own random stream: R() is not drawn from)
       for (let d = 60; d < L - 60; d += 30) {   // (not on the grid)
         const i = T.idx(sAt(d)), wk = LK.wear && d > LK.wear[0] && d < LK.wear[1] ? LK.wear[2] : 1;   // (Bathurst: more of them on the narrow road over the hill)
         if (RD() < 0.04 * wk) put(i, 5 + Math.floor(RD() * 4), (RD() - 0.5) * 6, 1.2 + RD() * 0.6, 24 + Math.floor(RD() * 2), 0.75, 1);   // sealed cracks
