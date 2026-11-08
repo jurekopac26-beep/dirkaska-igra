@@ -67,6 +67,8 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Ngorongoro, Tanzanija | Nove proge 8 | travnata pobočja brez hiš in ograj (načrt) | izletna cona je |
 | Seul, Južna Koreja | zavite 3 | OSM 2 % (cesta skozi park) | izletna cona je |
 | Wellington, Nova Zelandija | zavite 4 | OSM 4 % (hiše vrisane, odmaknjene od ceste) | izletna cona je |
+| Longyearbyen, Norveška | proge z ledom | OSM 2 %, obe 0 % (hiše odmaknjene od ceste) | izletna cona je |
+| Envalira, Andora | proge z ledom | OSM 0 % (krog na ledu, okoli sneg) | izletna cona je |
 
 ## Države s progo v igri: izbira uporabnika
 
@@ -137,12 +139,25 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
+| Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«) |
+| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti; potrebuje led kot podlago (razdelek »Proge z ledom«) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | stara veja: Höljes (ni v načrtu) | ne pride na vrsto |
+
+## Proge z ledom (izbira uporabnika 6. 11. 2026)
+
+Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #382, komentar 6688514078) je uporabnik izbral **Longyearbyen, Norveška** in **Envalira, Andora**. Odločil je samo vpis na čakanje; progi se delata zadnji, kot vse nove proge. Izbrani sta po pasu 60 m ob cesti, ki ga vidi kamera za avtom. Merilo je število predmetov iz OpenStreetMap do 60 m od ceste na kilometer, brez cest.
+
+- **Longyearbyen, Norveška** (Svalbard): ceste OSM `ref` 600 (od letališča), 500 (mesto) in 100 (do Nybyena), skupaj 7,6 km; pozimi steptan sneg. Do 60 m je 163 stavb (ob 57 % dolžine), 27 cevovodov na stebričkih (34 %), 17 lesenih stolpov stare tovorne žičnice (20 %), fjord (31 %) in skalne stene (22 %), skupaj 41,8 predmeta na km.
+- **Envalira, Andora**: krog na ledu, OSM `highway=raceway`, glavni krog je way 330829785 (0,73 km, ~2.370 m, tik pod prelazom Port d'Envalira, 2.408 m). Ime športnega centra ob krogu je blagovna znamka, zato ga v igri ni. Do 60 m so stavbe (ob 51 % dolžine), glavna cesta (95 %), 2 bencinski črpalki, parkirišče in smučišča (16 %), skupaj 21,8 predmeta na km.
+- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh dveh prog; oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`).
+- **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).
+- **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0).
 
 ## Kaj to pomeni za verige
 
 - **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Mount Buller, Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero. Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
 - **Zavite proge** (`docs/zavite-proge.md`): odpadeta Macao (3) in Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak). Ostanejo Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
+- **Proge z ledom** (razdelek zgoraj): Longyearbyen in Envalira, po vrsti z drugimi novimi progami; prva doda led kot podlago.
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
