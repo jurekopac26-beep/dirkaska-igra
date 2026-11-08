@@ -62,7 +62,8 @@ Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `
 ## Odprto: skupina `starejsi`
 - Deset starejših avtov dobi posodobitev na raven KOLIBRIJA: KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV in SAMUM 4x4 (prošnja na tabli #382, komentar 6707802738, točka 2).
 - Njihovi modeli so v `js/core.js`, ne v `js/cars/`. STRELA EV in SAMUM 4x4 vozita v treh misijah, zato po spremembi poženi še teste misij.
-- Račun in termin določijo v tedenskem načrtu v ponedeljek 9. 11.; do takrat skupine ne začni.
+- Začetek: Matejeva odločitev za biketravelerja (tabla #382, komentar 6712588789, 7. 11. ob 21.30): seja `starejsi` (biketraveler, session_01UuPU9…YJQYpM, 8. 11. od 3.15), veja `avti-kolibri/starejsi`, en osnutek PR; predaja najpozneje 8. 11. ob 18.00.
+- **Ugotovitev (8. 11.):** teh 10 avtov ne riše komplet (`kitBuild`, `js/cars/`), ampak stari graditelji v `js/render.js` (`carGeometry` z `BODIES.coupe|sedan|hatch|wedge`, `rallyGeometry`, `formulaGeometry`, `lmGeometry`, `muscleGeometry`, `evGeometry`, `truckGeometry`): ena mreža karoserije brez delov kompleta, zato `K.deli` in `mounts` na njih ne delujeta (zato tudi sklopa 1 nimajo, `docs/deli.md`: »Stari avti … delov nimajo«). Pot (vprašanje `starejsi-1` na strani Odločitve biketravelerja): avto prerisan v komplet (popravek `patch: true` z `look`, `parts`, `mounts`; id, ime in fizika ostanejo) ali deli brez mest na karoseriji.
 
 ## Predaja
 
