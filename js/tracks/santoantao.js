@@ -44,10 +44,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the sea beyond the corridor (irFar: the far model's wet nodes, all flat at its level, 0 m)
     far: { lake: [0, 0, 0] },
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [200, 210, 226], wet: { cs: [216, 227, 244] } },
+    medals: { cs: [180, 190, 203], wet: { cs: [194, 205, 219] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // island's road: cars and pick-ups, the shared minibuses between the villages and the port, a few motorbikes and lorries, rare cyclists on the cobbles
-    traffic: { mix: [0.42, 0.2, 0.24, 0.06, 0.08], bike: 6000 },
+    traffic: { mix: [0.44, 0.22, 0.2, 0.09, 0.05], bike: 6000 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): generic, no agency's name or badge
     police: { label: 'POLÍCIA', band: '#20408a', text: '#f4f6f0' }, escTo: 'Do Ribeire Grande',   // (and the results of an escape: 'Do Ribeire Grande v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
@@ -60,7 +60,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n": "Serpentina 4 · 462 m", "d": 3694.0, "say": ["Hairpin four, the sea in sight!", "Hairpin four! Halfway down the spur!"]},
       {"n": "Serpentina 5 · 405 m", "d": 4279.0, "say": ["Hairpin five, the last ladder of the road!", "Hairpin five! Two more to go!"]},
       {"n": "Serpentina 6 · 374 m", "d": 4616.0, "say": ["Hairpin six, the last one!", "The sixth and last hairpin! The finish is close!"]},
-      {"n": "Ribeira Grande · 336 m", "d": 4900.0, "say": ["Down above Ribeira Grande, and the line is just ahead!", "The valley of Ribeira Grande below, and the finish in sight!"]},
+      {"n": "Ribeira Grande · 343 m", "d": 4900.0, "say": ["Down above Ribeira Grande, and the line is just ahead!", "The valley of Ribeira Grande below, and the finish in sight!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's; a road over a top and down, as Dadès: introPass ... summit)
     comm: {
