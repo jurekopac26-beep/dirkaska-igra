@@ -1980,6 +1980,30 @@ const Core = (function () {
   const nvCurve = (al, pk) => al <= pk ? Math.sin(al / pk * Math.PI * 0.5) : NVK.fall + (1 - NVK.fall) * Math.exp(-(al - pk) / NVK.aW);
   const nvSlip = (f, pk) => Math.asin(clamp(f, 0, 1)) * 2 / Math.PI * pk;
   const PWR_MULT = 1.75, SW_DRAG = 0.0013; // power boost and drag (fit to SWGP2 acceleration curves)
+  // the manual gearbox (car.man, only the drag race sets it: js/zabava/drag.js; a car without it shifts by itself as ever): no automatic
+  // shift, the gear goes up only when asked (man.up: the presses not taken yet, one per shift, MAN.t s each, as the automatic one's 0.1 s);
+  // on the rev limiter (MAN.lim x the redline) no drive; under the revs a shift at MAN.ok x the redline lands at in this gear (that x its
+  // ratio over the one below's) less of it, down to MAN.lug at MAN.span under them (the engine bogging until it revs up). A shift at MAN.ok
+  // or later, off the limiter at once, is as quick as the automatic gearbox. man.log: each shift { g: the new gear, u: the revs it was
+  // made at (x the redline), t: the time on the limiter before it }
+  const MAN = { lim: 1.0, ok: 0.92, lug: 0.45, span: 0.3, t: 0.1 };
+  const manRev = (c, M, vl) => (c.gear > 0 ? Math.max(0, vl) / M.rw * M.gears[c.gear - 1] * M.final * 9.5493 / M.redline : 0);   // (the revs in this gear, x the redline)
+  function manShift(c, M, vl, dt) {
+    const G = c.man, u = manRev(c, M, vl);
+    if (u >= MAN.lim - 0.01) G.limT = (G.limT || 0) + dt;   // (on the limiter: the drive cut, the revs bouncing just under it)
+    if (c.shiftT > 0 || !(G.up > 0)) return;
+    G.up--;
+    if (c.gear < 1 || c.gear >= M.gears.length) return;
+    (G.log || (G.log = [])).push({ g: c.gear + 1, u: Math.min(u, MAN.lim), t: G.limT || 0 });
+    c.gear++; c.shiftT = MAN.t; G.limT = 0;
+  }
+  function manK(c, M, vl) {   // the share of the engine's drive in this gear at these revs
+    const u = manRev(c, M, vl);
+    if (u >= MAN.lim) return 0;
+    if (c.gear <= 1) return 1;
+    const uI = MAN.ok * M.gears[c.gear - 1] / M.gears[c.gear - 2];
+    return u >= uI ? 1 : Math.max(MAN.lug, 1 - (uI - u) / MAN.span * (1 - MAN.lug));
+  }
   const DRS_DRAG = 0.8;   // the air drag with the rear wing's flap open (Car.drs, set by Race._drs)
   const TOW_DRAG = 0.25;   // the most of the air drag the wake of a car ahead takes away (Car.tow 0..1, set by Race._tow)
   // the wake (Race._tow): TOW_LAT m to either side of the car ahead's line, 3 to TOW_RNG m behind it; it builds up and dies away over TOW_T s
@@ -2280,7 +2304,8 @@ const Core = (function () {
       if (this.gear > 0) {
         const gr = M.gears[this.gear - 1] * M.final;
         const wr = Math.max(0, vl) / M.rw * gr * 9.5493;
-        if (this.shiftT <= 0) {
+        if (this.man) manShift(this, M, vl, dt);   // (the manual gearbox, the drag race: only the shifts asked for)
+        else if (this.shiftT <= 0) {
           if (wr > M.redline * 0.95 && this.gear < M.gears.length) { this.gear++; this.shiftT = 0.1; }
           else if (this.gear > 1) {
             const wrLow = Math.max(0, vl) / M.rw * M.gears[this.gear - 2] * M.final * 9.5493;
@@ -2291,7 +2316,7 @@ const Core = (function () {
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);   // (an electric motor turns with the wheels only)
         const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);   // (a hot engine: less power)
-        let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr;
+        let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);   // (the manual gearbox: the limiter, a bogging engine)
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * K.engBrk * sstep(2, 20, vl);
         F = Fsw;
@@ -2518,7 +2543,8 @@ const Core = (function () {
       if (this.gear > 0) {
         const gr = M.gears[this.gear - 1] * M.final;
         const wr = Math.max(0, vl) / M.rw * gr * 9.5493;
-        if (this.shiftT <= 0) {
+        if (this.man) manShift(this, M, vl, dt);   // (the manual gearbox, the drag race: only the shifts asked for)
+        else if (this.shiftT <= 0) {
           if (wr > M.redline * 0.95 && this.gear < M.gears.length) { this.gear++; this.shiftT = 0.1; }
           else if (this.gear > 1) {
             const wrLow = Math.max(0, vl) / M.rw * M.gears[this.gear - 2] * M.final * 9.5493;
@@ -2529,7 +2555,7 @@ const Core = (function () {
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);
         const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);
-        let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr;
+        let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * KC.engBrk * sstep(2, 20, vl);
         F = Fsw;
@@ -5614,7 +5640,7 @@ const Core = (function () {
       const spr = TX.aiSpr != null ? TX.aiSpr : opts.phys === 'nova' ? NVK.aiSpr : 1, sLo = spr === 1 ? diff[0] : diff[1] - (diff[1] - diff[0]) * spr;   // (the new physics, or the setting Tekmeci: razpon hitrosti: the field's paces closer together, NVK.aiSpr)
       for (let k = 0; k < nAI; k++) {
         const skill = lerp(diff[1], sLo, k / Math.max(1, nAI - 1)) + (R() - 0.5) * 0.012;
-        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null, nAI), oneMake ? { model: oneMake } : null));   // (a formula race: the same drivers, in formulas)
+        aiSpecs.push(Object.assign({ skill, rk: k }, aiDriver(k, field ? FM : null, nAI), oneMake ? { model: oneMake } : null, opts.duelModel ? { model: opts.duelModel } : null));   // (a formula race: the same drivers, in formulas; the drag race: its rival's vehicle, opts.duelModel)
       }
       // the start's reaction (LAUNCH, opts.launch): by default in a race from the grid, not in a time trial, on a flying lap (qualifying, a
       // challenge's lap), in the run from the police or the title demo. The AI's reactions from the race's seed (their own numbers: the
@@ -7384,10 +7410,14 @@ const Core = (function () {
   }
   registerVehicles();
 
+  // the drag race's straights (js/zabava/drag.js, docs/drag-dirka.md): per real track, where the start line is (s, m along the lap) and
+  // how far each lane is from the centre line (lane, m: the player's car on the right, the rival's on the left). Montréal: the straight
+  // past the hairpin, 692 m without a rise (402 m to the finish, the rest to brake before the last chicane)
+  const DRAG = { montreal: { s: 3415, lane: 2.4 } };
   // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
   // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
   // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
-  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov' };   // (elim, lov: the novelties' modes, js/zabava/)
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov', drag: 'drag' };   // (elim, lov, drag: the novelties' modes, js/zabava/)
   const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
@@ -7396,7 +7426,7 @@ const Core = (function () {
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
-      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is)
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : [], d && DRAG[d.id] ? ['drag'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is, the drag race on its straights)
       if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
@@ -7410,7 +7440,8 @@ const Core = (function () {
 
   return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG,
+    MAN, manRev, DRAG, PWR_MULT };
 })();
 
 
