@@ -82,6 +82,7 @@
   - Na **makadamu in kocki** hitrosti iz sloga ni (`wv` 0): Tianmen je asfalt, na Saniju so tekmeci s polno hitrostjo 42-krat zleteli s ceste.
   - **Linija**: `dd` razreda, pomnožen z w(R) in s širino ceste (`(w − 1,7) / 2,8`, največ 1). Ugasne med 60 in 80 m od temena in je glajena na ±10 m.
   - **Odprta cesta**: pred štartno črto (na mreži) in za zadnjo točko profila tekmec vozi nevtralno (svoj tempo, brez odmika).
+  - **Obremenitev**: profil se naredi ob začetku dirke in ko se mokra cesta posuši: ~8 ms za progo in ~0,8 ms za tekmeca na računalniku (Livorno in Nürburgring z 99 tekmeci ~85 ms; prej 170–190 ms, rezultat enak bit za bitom).
 - **Previdno 0,3**: tekmec vzame samo 0,3 igralčevega presežka tempa nad 1. Umerjeno na Tianmnu (polje Perun, srednja težavnost, 3 semena): slog 205,4 s, izmerjeni profil 205,6 s. S polnim presežkom je bil čas 200,5 s, a tekmeci so na drugih progah zletali (Crystal Palace, Nürburgring, Mount Buller).
 - **Brez roba**: po slogu tekmeci ne gredo čez rob ceste. Rob iz Tianmna je drugje povzročal izlete in vrtenja: na Rio do Rastro 27 izletov in 38 vrtenj (brez roba 0 in 0), na Tianmnu po slogu 51 in 11 (brez roba 1 in 0). Polpriklopniki (`c.tl`) ne gredo čez rob nikoli, tudi po profilu ne.
 - **Posnetki z 8. 11. 2026** (reli, električni avto) so v drugih razredih avtov kot tekmeci, zato profil Peruna ostane. Obliko sloga potrjujejo: igralec zavira pozno in okoli 2,3-krat močneje od avtopilota, v temenu je 3 % (Perun) oz. 13 % (reli) hitrejši od njega, krog 3:15,7 proti 3:24,6 (`cas_q` 0,949; reli 0,889).
