@@ -318,7 +318,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`). Pre
 
 | Korak | Veja / PR | Stanje |
 |---|---|---|
-| Načrt in odločitve | `docs/realizem-paketi` | potrjen 8. 11. 2026; ta dokument |
+| Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
 | S0–S2, E0–E4, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); P po #460, #480 in #516 |
 
 ## Viri
