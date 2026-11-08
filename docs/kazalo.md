@@ -198,6 +198,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`) in `js/world-cpalace.js` (lastni deli: `cpPrep`, `cpPark`, `cpTrees`, videz v `RB_LOOK` prek `API.rbLook`) |
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
+| furka | Furka, Švica | furka | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.furka`: zaprt hotel v peti serpentini `def.hotel` (ograji ob njem stisne `def.narrow` v `js/core.js`), miljnik `def.milestone`, razgledišče `def.lookout`, ledeniki na obzorju `plFarIce` iz `farDem.ice` (`led` v `tools/proga/proge.json`), ovce) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |

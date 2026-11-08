@@ -449,6 +449,7 @@
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
+    'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
