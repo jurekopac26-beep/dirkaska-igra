@@ -72,7 +72,7 @@ PIT_BOX = [0, 186, 1]   # (the garages: World's RB_LOOK.zandvoort.pitBox)
 WALLS = [[-240, 255, 1, 2.5]]
 # grandstands [from, to, side, rows, roof, sections, orange, name]: the main stand opposite the pits (OSM building=grandstand), the stands on the
 # dunes outside the hairpin, outside the banked left and outside the banked last corner (the orange crowds of a home race)
-STANDS = [[-45, 40, -1, 12, 1, 4, 1, 'ZANDVOORT'], [330, 420, -1, 12, 0, 3, 1, 'NOORD-HOLLAND'], [790, 860, 1, 10, 0, 2, 1, 'KENNEMERLAND'], [3700, 3800, -1, 10, 0, 3, 1, 'NEDERLAND']]
+STANDS = [[-45, 40, -1, 10, 1, 4, 1, 'ZANDVOORT'], [330, 420, -1, 9, 0, 3, 1, 'NOORD-HOLLAND'], [790, 860, 1, 8, 0, 2, 1, 'KENNEMERLAND'], [3710, 3790, -1, 8, 0, 3, 1, 'NEDERLAND']]
 SECTORS = [1450, 2900]
 REAL_KM = 4.259
 

@@ -151,7 +151,7 @@
     for (let k = 0; k < n; k += 3) if (near[k]) { const i = k % nx, j = (k - i) / nx; exclPush(X(i), Z(j), C); }   // (no bush in the water)
   }
 
-  // the dunes by the road: clumps of marram grass on them, from 3 m past the barriers to 40 m out (in drifts: the noise; not on the bare sand
+  // the dunes by the road: clumps of marram grass on them, from 3 m past the barriers to 30 m out (in drifts: the noise; not on the bare sand
   // of a blow-out, nor in the ponds); the sea buckthorn's bushes (js/world.js's beech, sunk into the ground, wider than tall, grey-green) in
   // the dune valleys, in thickets with gaps, from 12 m past the barriers to 140 m out; the trees and the crowds keep clear of them
   function zvDunes({ root, exclPush, excluded, CR }, st, tu) {
@@ -168,10 +168,10 @@
       exclPush(bx, bz, w * 0.4); CR.avoid(bx, bz, w * 0.5); st.bushes++;
     }
     bush.addTo(root, false);
-    for (let z = z0 - 50; z < z1 + 50; z += 3.6) for (let x = x0 - 50; x < x1 + 50; x += 3.6) {   // the marram grass
-      const tx = x + (R() - 0.5) * 3.4, tz = z + (R() - 0.5) * 3.4, dr = P.n2(tx * 0.35 - 80, tz * 0.35 + 210);
-      if (dr < 0.4 || R() > sstep(0.4, 0.62, dr) * 0.75) continue;
-      const q = nrNear(tx, tz); if (q.i < 0 || q.dd < 3 || q.dd > 40 || !dune(tx, tz) || excluded(tx, tz) || P.pad(tx, tz, 0) !== 0) continue;
+    for (let z = z0 - 40; z < z1 + 40; z += 5) for (let x = x0 - 40; x < x1 + 40; x += 5) {   // the marram grass
+      const tx = x + (R() - 0.5) * 4.6, tz = z + (R() - 0.5) * 4.6, dr = P.n2(tx * 0.35 - 80, tz * 0.35 + 210);
+      if (dr < 0.42 || R() > sstep(0.42, 0.64, dr) * 0.7) continue;
+      const q = nrNear(tx, tz); if (q.i < 0 || q.dd < 3 || q.dd > 30 || !dune(tx, tz) || excluded(tx, tz) || P.pad(tx, tz, 0) !== 0) continue;
       const s = 0.8 + R() * 0.5, dry = P.n3(tx * 0.6 + 40, tz * 0.6), cv = 0.92 + R() * 0.16;
       tu.add(tx, nrGround(tx, tz) - 0.05, tz, R() * TAU, s * (1 + R() * 0.3), s * (0.85 + R() * 0.25), [lerp(0.66, 0.84, dry) * cv, lerp(0.72, 0.78, dry) * cv, lerp(0.5, 0.52, dry) * cv]); st.marram++;
     }

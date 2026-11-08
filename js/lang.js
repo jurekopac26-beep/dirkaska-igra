@@ -451,6 +451,9 @@
     'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)
     'Hitri levi': 'Fast Left', 'Levi pod klancem': 'Left Below the Hill', 'Klanec': 'The Climb', 'Lasnica na vrhu': 'Hilltop Hairpin', 'Levi na spustu': 'Downhill Left', 'Desni nad reko': 'Right over the River',
     'Levi ob reki': 'River Left',   // (Kågeröd: its corners by plain descriptions, the river by them)
+    'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
+    'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Ostri desni': 'Sharp Right', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
+    'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
