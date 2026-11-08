@@ -5,7 +5,7 @@
 // (Network.emulateNetworkConditions: Lighthouse's slow 4G, request-level: 562.5 ms, 1.47 Mbit/s down). Nothing of the game is changed:
 // an init script only wraps a few calls (Render.init, buildWorld, precompile; World.build; Core.Race step; Menu.init) to time them.
 //   node tools/zagon.mjs [--cpu 4] [--net slow4g|fast4g|none] [--proga bathurst] [--runs 1] [--warm] [--h1] [--tracks [--fresh] [--samo a,b]]
-//                        [--menu-only] [--profil id] [--from file.json] [--out file.json]
+//                        [--menu-only] [--profil id] [--platno-cpu] [--from file.json] [--out file.json]
 //     --cpu        CPU slowdown (1 = this machine; 4–6 a mid-range phone, see the benchmark index printed)
 //     --net        slow4g (default), fast4g (9 Mbit/s, 170 ms) or none
 //     --proga      the track of the drive (default bathurst); --menu-only: only the menu
@@ -15,6 +15,8 @@
 //     --tracks     also each real track's build from the menu (World build + shaders, Render.buildWorld + precompile), warm;
 //                  --fresh: each track in a fresh page (no shader programs of the tracks before it); --samo a,b: only these tracks
 //     --profil id  a CPU profile of one track's build from the menu (warm): the functions that take the time (self and with callees)
+//     --platno-cpu 2D canvases drawn on the CPU (--disable-accelerated-2d-canvas): without it they are drawn in the GPU process by
+//                  SwiftShader (not slowed by --cpu), and a world's getImageData waits there; shows how much of a build is that wait
 //     --from f     the summary again from a saved --out file (nothing measured)
 //     --out        the raw results (JSON); the summary goes to stdout
 import fs from 'node:fs';
@@ -248,8 +250,9 @@ const main = async () => {
     return;
   }
   const root = stampedCopy(), srv = await serve(root, has('--h1'));
-  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-certificate-errors'] });
-  const out = { when: new Date().toISOString(), cpu: CPU, net: NET, proga: PROGA, h1: has('--h1'), node: process.version, chromium: browser.version(), cores: os.cpus().length, runs: [] };
+  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-certificate-errors',
+    ...(has('--platno-cpu') ? ['--disable-accelerated-2d-canvas'] : [])] });
+  const out = { when: new Date().toISOString(), cpu: CPU, net: NET, proga: PROGA, h1: has('--h1'), platnoCpu: has('--platno-cpu'), node: process.version, chromium: browser.version(), cores: os.cpus().length, runs: [] };
   { const ctx = await browser.newContext({ ignoreHTTPSErrors: true }), p = await ctx.newPage(); await p.goto('about:blank'); out.benchmark = await benchmark(p); await ctx.close(); }
   console.log(`CPU ${CPU}× (indeks tega stroja ${out.benchmark}, s CPU ${CPU}× ~${Math.round(out.benchmark / CPU)}), omrežje ${NET}${has('--h1') ? ', HTTP/1.1' : ', HTTP/2'}, ${out.chromium}`);
   if (opt('--profil', null)) { out.profile = await profileBuild(browser, srv.base, opt('--profil')); await browser.close(); await srv.close(); if (OUT) fs.writeFileSync(OUT, JSON.stringify(out)); fs.rmSync(root, { recursive: true, force: true }); return; }
