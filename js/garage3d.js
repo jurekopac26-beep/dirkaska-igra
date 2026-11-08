@@ -6492,7 +6492,7 @@ const Garage3D = (function () {
   }
   function resize(w, h, pr) {
     W = Math.max(2, w); H = Math.max(2, h);
-    { const v = W / H > AWIDE ? WIDE : FIRST; if (v !== HV) { const at = !busy && ['yaw', 'pitch', 'dist', 'tx', 'ty', 'tz', 'fov'].every(k => Math.abs(rig[k] - HV[k]) < 1e-6); HV = v; if (at) Object.assign(rig, HV); } }   // (the home view of this screen; the camera there if it stood at the other's)
+    { const v = W / H > AWIDE ? WIDE : FIRST; if (v !== HV) { const dy = rig.yaw - HV.yaw, at = !busy && Math.abs(Math.atan2(Math.sin(dy), Math.cos(dy))) < 1e-6 && ['pitch', 'dist', 'tx', 'ty', 'tz', 'fov'].every(k => Math.abs(rig[k] - HV[k]) < 1e-6); HV = v; if (at) Object.assign(rig, HV); } }   // (the home view of this screen; the camera there if it stood at the other's (its yaw by the angle: turned round whole times, as camTo leaves it, it is there too))
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     const rw = Math.max(2, Math.round(W * pr * REF.size)), rh = Math.max(2, Math.round(H * pr * REF.size));
     REF.rt.setSize(rw, rh); if (REF.gt) REF.gt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
