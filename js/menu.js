@@ -348,6 +348,7 @@
   // size on the screen however far the map is zoomed. An open road is turned to run up the frame (start at the bottom, finish at the top)
   // when the frame is not much wider than it is tall; in a wide, short frame it would shrink to a sliver, so there it lies along the frame
   const NAME_ROOM = 66;   // (px over the route's top: its flag (13 px over the point) and the name over it (43 px with its height under it))
+  const NAME_ROOM_LAND = 40;   // (on its side: the carousel's card is small, the name may go beside its flag: mapLabels)
   function fitMaps() {
     if (!app) return;   // (the old menu is on: the menu is not built, and a window that changes its size must not stumble on it)
     for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
@@ -362,7 +363,7 @@
       // least as big as that takes, the view kept inside the land (the route a little off the middle, or a little bigger, where it must be);
       // otherwise the blurred backdrop fills whatever falls outside the map tile, so nothing is cropped or left empty
       const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0), K = keepOut(box), E = (D.wideMaps || {})[box.dataset.map] || 0;
-      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + NAME_ROOM, padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
+      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + (isLand() ? NAME_ROOM_LAND : NAME_ROOM), padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
       const q = Math.abs(a) === 90, LW = (q ? T.H : T.W) + 2 * E, LH = (q ? T.W : T.H) + 2 * E;   // (the land turned with the map: a quarter turn swaps its sides)
       const s = Math.max(Math.min(availW / rw, availH / rh), E ? Math.max(W / LW, H / LH) : 0), k = 0.5 / s;
       const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
@@ -382,7 +383,7 @@
     const b = box.getBoundingClientRect(), st = box.parentNode, hd = app && $('#s-track .thead', app), K = { top: 0, right: 0, bottom: 0 };
     const hit = (r) => !!r && r.width > 0 && r.bottom > b.top + 1 && r.top < b.bottom - 1 && r.right > b.left + 1 && r.left < b.right - 1;
     const hr = hd && hd.getBoundingClientRect(); if (hit(hr)) K.top = hr.bottom - b.top;
-    const w = $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;
+    const w = !isLand() && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side: a row at the card's top, the route goes under it)
     for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
     return K;
   }
@@ -418,6 +419,7 @@
       el.style.left = at1[1].toFixed(1) + 'px'; el.style.top = at1[2].toFixed(1) + 'px';
     });
   }
+  window.addEventListener('resize', ringFit);   // (on its side: the carousel's scale first, the maps fitted to it after)
   window.addEventListener('resize', fitMaps);
   // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop
   let flyRaf = 0;
@@ -703,6 +705,7 @@
   const izOpen = () => !!(IZ() && IZ().isOpen());
   function izbor() {
     const M = IZ(); if (!M || screen !== 'track' || !app) return;
+    ringStop();   // (a turn of the carousel done at once: the list opens on the track it went to)
     if (zemOpen()) ZE().close(true);
     M.open(izOpts());
   }
@@ -733,10 +736,12 @@
   let rested = null;   // (the videos that were playing, while the screen rests)
   function zemlja() {
     const Z = ZE(); if (!Z || screen !== 'track' || !app) return;
+    ringStop();
     if (izOpen()) IZ().close(true);
     Z.open(Object.assign(izOpts(), { from: () => $('#s-track .globe', app), rest, wake, fail: () => izbor() }));
   }
   function rest() {
+    if (screen === 'track' && app && !rested) ringStop();   // (the carousel: a turn done at once, a finger's let go)
     const s = screen === 'track' && app && $('#s-track', app); if (!s || rested) return;
     rested = [...app.querySelectorAll('video')].filter(v => !v.paused);
     wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
@@ -753,8 +758,145 @@
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
-    if (i !== trackIdx) { trackIdx = i; select(); render(); }
+    if (i !== trackIdx) {
+      // on its side the new track's card turns in from the side it lies on in the list (the shorter way round); not under the Earth
+      const n = L.length, d = ((i - trackIdx) % n + n) % n, dir = d <= n / 2 ? 1 : -1;
+      ringStop(); trackIdx = i; select();
+      if (ringOn() && !zemOpen()) { render(true); ringIn(-dir); } else render();
+    }
     return true;
+  }
+  /* ---------------- the track step on its side: the carousel ----------------
+     (the user's choice 5.1 of 7. 11. 2026, docs/meni-izbira-proge.md point 9; the mockup maketa-menija/izbira-proge, RING and ringPlace.)
+     The screen is drawn for 892 × 412 and scaled into the safe area (ringFit: --k, --ox, --oy; css/menu.css): the chosen camera's picture
+     blurred over the whole screen, the chosen track's card (the stage: its camera's picture with the graph, the weather in a row, the counter
+     and the cameras) in the middle, its neighbours at its sides (four each way, the far ones half out of the screen), the head over them,
+     the row and Race! under the card, the car at the bottom left. A swipe, a tap on a neighbour or on an arrow (‹ ›), the keys and LB/RB
+     turn it (~300 ms): the cards go to their new places, the chosen card's things fade and come back on the new one, the old screen fades
+     over the new (ringLand). Upright: none of it (display: none) */
+  const LANDQ = window.matchMedia ? matchMedia('(orientation: landscape)') : null, CALMQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const isLand = () => !!(LANDQ && LANDQ.matches);
+  const ringOn = () => isLand() && !(CALMQ && CALMQ.matches) && screen === 'track';   // (reduced motion: the track changes at once)
+  // a card's place k (0 the chosen card, ±1 the neighbours, ±2 the far ones half out of the screen, further on out of it; between: on the
+  // way): [x, y, w, h, brightness, corner] in the drawing's px, the left side the right one's mirror
+  const RING_S = [[254, 70, 384, 236, 1, 16], [656, 96, 184, 196, .78, 14], [854, 118, 150, 150, .45, 12]];
+  const ringSlot = (j) => j <= 2 ? RING_S[j] : [854 + 190 * (j - 2), 118, 150, 150, .45, 12];
+  function RING(k) {
+    const a = Math.abs(k), j = Math.floor(a), f = a - j, p = ringSlot(j), q = ringSlot(j + 1), v = p.map((x, i) => x + (q[i] - x) * f);
+    if (k < 0) v[0] = 892 - v[0] - v[2];
+    return v;
+  }
+  const RING_N = 4;   // (the cards each way)
+  let ringK = 1;   // (the drawing's scale now: ringFit)
+  // the drawing as big as fits the safe area (the probe .rsafe: the notch, the rounded corners, the gesture bar), no bigger than 1.5 times,
+  // in its middle
+  function ringFit() {
+    const s = app && screen === 'track' && $('#s-track', app), pr = s && $('.rsafe', s); if (!pr || !isLand()) return;
+    const a = s.getBoundingClientRect(), r = pr.getBoundingClientRect(); if (!r.width || !r.height) return;   // (from the screen's own box: it may be sliding in)
+    const k = Math.min(r.width / 892, r.height / 412, 1.5);
+    ringK = k;
+    app.style.setProperty('--k', k.toFixed(4));
+    app.style.setProperty('--ox', (r.left - a.left + (r.width - 892 * k) / 2).toFixed(1) + 'px');
+    app.style.setProperty('--oy', (r.top - a.top + (r.height - 412 * k) / 2).toFixed(1) + 'px');
+  }
+  // the still of the chosen camera's picture (the carousel's backdrop, blurred): the map, the flyover's or the corner's first frame, else
+  // the track's model (as stageView chooses)
+  function stillOf(t) {
+    const R = RT[t.id];
+    if (cam === 1 && R) return mapLayers(t, R.top).bg;
+    if (cam === 2 && R && R.fly) return 'assets/maps/fly-' + t.id + '.webp';
+    if (cam === 3 && hasCorner(t)) return 'assets/maps/corner-' + t.id + '.webp';
+    return trackImg(t);
+  }
+  // the carousel's parts in the track screen (its backdrop, the neighbours' cards: the flyover's first frame, else the model on the sky; the
+  // flag, the name, the country and the length under it, the arrows); a short list: as many cards as there are other tracks, more of them
+  // at the right
+  function ringView(list, t) {
+    const n = list.length, m = Math.min(RING_N, Math.floor((n - 1) / 2)), mr = Math.min(RING_N, n - 1 - m);
+    const at = (k) => list[((trackIdx + k) % n + n) % n];
+    const card = (k) => {
+      const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
+      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+        '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
+    };
+    const arw = (k) => {
+      const u = at(k), c = countryOf(u);
+      return '<button class="rarw ' + (k < 0 ? 'l' : 'r') + '" data-act="track:' + k + '" aria-label="' + (k < 0 ? 'Previous' : 'Next') + ' track: ' + esc(u.name + (c ? ', ' + c : '')) + '"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="' +
+        (k < 0 ? 'M11 3.5L5.5 9l5.5 5.5' : 'M7 3.5L12.5 9 7 14.5') + '" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+    };
+    let h = '<i class="rsafe" aria-hidden="true"></i><div class="rbg" aria-hidden="true" style="--pic:url(' + stillOf(t) + ')"><i></i><b></b></div>';
+    for (let k = -m; k <= mr; k++) if (k) h += card(k);
+    return h + (m ? arw(-1) : '') + (mr ? arw(1) : '');
+  }
+  // the cards turning: each at its place less p (p from 0 to d: d places on), the chosen card's things fading as it leaves the middle, a
+  // neighbour's name shown only beside the middle; the places as the card's own --x … (css/menu.css), so a turned phone keeps them
+  let rg = null, ringGone = null, ringGoneT = 0;   // (rg: the carousel turning { d, p, raf, done } or held by a finger { drag, p }; the old screen fading)
+  function ringPlace(e, k) {
+    const [x, y, w, h, b, r] = RING(k), a = Math.abs(k), s = e.style;
+    for (const [n, v] of [['--x', x], ['--y', y], ['--w', w], ['--h', h], ['--r', r], ['--g', Math.max(0, 1 - a)], ['--t', Math.min(1, a)], ['--lo', Math.max(0, 1 - Math.abs(a - 1))], ['--ui', Math.max(0, 1 - 3 * a)]]) s.setProperty(n, +v.toFixed(3));
+    s.filter = b < .999 ? 'brightness(' + b.toFixed(3) + ')' : 'none';
+    s.zIndex = a < .5 ? 4 : 3;
+  }
+  function ringEls() {
+    const s = app && $('#s-track', app); if (!s) return [];
+    const st = $('#track-stage', s), out = [...s.querySelectorAll('.rcard')].map(e => [e, +e.dataset.k]);
+    if (st) out.push([st, 0]);
+    return out;
+  }
+  function ringTo(p) { for (const [e, k] of ringEls()) ringPlace(e, k - p); }
+  // from p0 (where a finger let go, or a picked track's side) to d, eased (the mockup's: 300 ms a place), then done()
+  function ringTurn(d, p0, done) {
+    if (rg && rg.raf) cancelAnimationFrame(rg.raf);
+    const ms = 300 * (0.6 + 0.4 * Math.abs(d - p0)), t0 = performance.now(), me = { d, p: p0, raf: 0, done };
+    rg = me;
+    const step = (now) => {
+      if (rg !== me) return;
+      const x = Math.min(1, (now - t0) / ms), p = p0 + (d - p0) * (1 - Math.pow(1 - x, 3));
+      me.p = p; ringTo(p);
+      if (x < 1) { me.raf = requestAnimationFrame(step); return; }
+      rg = null; if (done) done();
+    };
+    me.raf = requestAnimationFrame(step);
+  }
+  // a turn by d tracks (from p0); none while one is turning (the mockup's: a second tap in it is lost, a held key does not pile up)
+  function ringSpin(d, p0) {
+    const n = TRACKS().length; if (!d || n < 2 || (rg && !rg.drag)) return;
+    rg = null; ringTurn(d, p0 || 0, () => ringLand(d));
+  }
+  // the turn done: the new track, its screen drawn under the old one, which fades in 300 ms (the old one's ids stay for its style: it comes
+  // after the new one, every query finds the new one first); an arrow that had the focus: the new one has it
+  function ringLand(d) {
+    const n = TRACKS().length, old = app && $('#s-track', app), fa = app && app.getRootNode().activeElement, arw = fa && fa.classList && fa.classList.contains('rarw') ? (fa.classList.contains('l') ? 'l' : 'r') : '';
+    trackIdx = ((trackIdx + d) % n + n) % n; select();
+    if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }
+    if (old) { old.remove(); for (const v of old.querySelectorAll('video')) v.pause(); }
+    render(true);
+    const now = $('#s-track', app);
+    if (old && now) {
+      old.classList.add('rgone'); old.setAttribute('aria-hidden', 'true'); old.inert = true; now.after(old); ringGone = old;
+      ringGoneT = setTimeout(() => { old.remove(); if (ringGone === old) ringGone = null; }, 320);
+    }
+    if (arw) { const b = $('#s-track .rarw.' + arw, app); if (b) b.focus({ preventScroll: true }); }
+  }
+  // a track picked in the quick list (on its side): its screen turns in from the side (p0: -1 from the right, 1 from the left)
+  function ringIn(p0) { if (!ringOn()) return; ringTo(p0); ringTurn(0, p0, null); }
+  // the carousel at rest at once (another layer over the screen, a sheet, another action): a turn done, a finger's let go, the fade gone
+  function ringStop() {
+    if (rg) { const me = rg; rg = null; cancelAnimationFrame(me.raf); if (me.done) me.done(); else ringTo(0); }
+    if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }
+  }
+  // the weather's row on the card (on its side): the new choice slides to the first place, the others to theirs (the screen is drawn
+  // again: each button from where it was)
+  function wxRects() { const m = {}; for (const b of app.querySelectorAll('#track-stage .wxv > button')) m[b.dataset.act] = b.getBoundingClientRect(); return m; }
+  function wxSlide(at) {
+    const bs = [...app.querySelectorAll('#track-stage .wxv > button')].filter(b => {
+      const o = at[b.dataset.act], r = b.getBoundingClientRect(); if (!o) return false;
+      const dx = o.left - r.left, dy = o.top - r.top; if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return false;
+      b.style.transition = 'none'; b.style.transform = 'translate(' + dx.toFixed(1) + 'px, ' + dy.toFixed(1) + 'px)'; return true;
+    });
+    if (!bs.length) return;
+    void app.offsetWidth;
+    for (const b of bs) { b.style.transition = 'transform .3s cubic-bezier(.2, .8, .25, 1)'; b.style.transform = ''; b.addEventListener('transitionend', () => { b.style.transition = ''; }, { once: true }); }
   }
   function vTrack() {
     const list = TRACKS();
@@ -765,6 +907,7 @@
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), fl = flagUrl(ctry);
     fr = G.friends ? G.friends(t.def, cam === 4) : null;   // (the friends' times: the Friends view builds the track for the check of its times, the place's badge waits for it)
     if (cam === 4 && !fr) cam = 1;   // (a game without the friends' leaderboard: the map)
+    h += ringView(list, t);   // (on its side: the carousel's backdrop, the neighbours' cards and the arrows)
     // the head: the back arrow (to the modes), the place (fitWhere: smaller where a long one would reach the globe; the country for the
     // readers), the globe (its country gold: globe.on)
     h += head('<h2 class="where" aria-label="' + esc(t.name + (ctry ? ', ' + ctry : '')) + '"><span class="w2">' + esc(t.name) + '</span></h2>' + (ZE() ? '<button class="globe" data-act="zemlja" data-globe="' + t.id + '" aria-haspopup="dialog" aria-label="The world: choose a track on the Earth">' + I.globe + '</button>'
@@ -772,9 +915,11 @@
     // the stage: the picture with the cameras (stageView), the graph, the track's place among the real tracks (a test track: TEST), the
     // weather (the chosen one bigger, in its colours, named) with the more options under it
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
+    // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
+    const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
     h += '<div class="stage' + (isRoute(t) ? ' route' : '') + ' cam' + cam + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' +
-      '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
+      '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!
     h += '<div class="room">';
@@ -911,6 +1056,7 @@
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
+    if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
     fitWhere(); flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
@@ -1363,6 +1509,7 @@
   }
   function act(a, el) {
     const [k, v, w] = a.split(':');
+    if (rg && k !== 'track') ringStop();   // (another action in a turn: on the track it was going to)
     switch (k) {
       case 'back': back(); break;
       case 'single': titleSub = 'single'; render(true); break;   // (the modes open in the main menu's own frame)
@@ -1371,8 +1518,12 @@
       case 'mode': mode = v; enterTrack(); screen = 'track'; cam = CAM_OPEN || G.S.menuCam; render(); break;   // (a tap on a mode goes straight to its tracks)
       case 'cam': cam = +v; G.setOption('menuCam', cam); render(true); break;
       case 'send-times': if (G.sendTimes) G.sendTimes(); break;   // (the Friends view: the player's times to friends as a link, the game's Lestvica prijateljev)
-      case 'track': { const n = TRACKS().length; if (n) { trackIdx = (trackIdx + +v + n) % n; select(); render(); } break; }
-      case 'weather': setWeather(v); render(true); break;   // (Snow: the winter, js/menu.js setWeather)
+      case 'track': {   // (on its side the carousel turns, then the screen is the new track's: ringLand)
+        const n = TRACKS().length; if (!n) break;
+        if (ringOn()) { ringSpin(+v); break; }
+        ringStop(); trackIdx = ((trackIdx + +v) % n + n) % n; select(); render(); break;
+      }
+      case 'weather': { const at = ringOn() ? wxRects() : null; setWeather(v); render(true); if (at) wxSlide(at); break; }   // (Snow: the winter, js/menu.js setWeather)
       case 'more-options': sheet = optionsSheet; render(true); break;
       case 'opt': {
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
@@ -1425,6 +1576,7 @@
   function bind() {
     app.addEventListener('click', (e) => {
       const el = e.target.closest('[data-act]'); if (!el || !app.contains(el)) return;
+      if (performance.now() - noTap < 400) return;   // (the end of a swipe)
       if ($('.intro', app) && !el.closest('.intro')) return;   // (nothing under the intro: a key on a button behind it)
       if (el.classList.contains('sheet-bg') && e.target !== el) return;   // clicks inside the sheet do not close it
       if (!el.dataset.act.startsWith('game:')) G.click();   // (the game clicks for its own actions)
@@ -1444,15 +1596,42 @@
     // its own keys (the arrows, Home, End, Page Up and Down) stay with it: the game takes the arrows on the window for driving (js/input.js),
     // where an element of this shadow root is not an input
     app.addEventListener('keydown', (e) => { if (e.target.classList && e.target.classList.contains('rslide') && /^(Arrow|Home$|End$|Page)/.test(e.key)) e.stopPropagation(); });
-    // swipe the track model to change the track
+    // a finger across the picture changes the track: on its side the carousel's cards follow it (302 of the drawing's px a place) and a long
+    // enough swipe turns it on from there, else they go back; upright the picture follows it a little (0.35 of the way) and a long enough
+    // swipe goes to the next track, else it slides back (200 ms). The tap a swipe ends with is not a tap (400 ms)
     let sw = null;
-    app.addEventListener('pointerdown', (e) => { if (screen === 'track' && e.target.closest('.dio')) sw = { x: e.clientX, y: e.clientY }; });
-    app.addEventListener('pointerup', (e) => {
-      if (!sw) return; const dx = e.clientX - sw.x, dy = e.clientY - sw.y; sw = null;
-      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.6 && !sheet) act('track:' + (dx < 0 ? 1 : -1));
+    app.addEventListener('pointerdown', (e) => {
+      if (sw || screen !== 'track' || sheet || e.button > 0 || $('.intro', app) || izOpen() || zemOpen() || rg) return;
+      const land = isLand(), on = land ? e.target.closest('#s-track .rcard, #track-stage') : e.target.closest('#track-stage .dio');
+      if (on && TRACKS().length > 1) sw = { x: e.clientX, y: e.clientY, id: e.pointerId, land, on, moved: false, p: 0 };
     });
-    app.addEventListener('pointercancel', () => { sw = null; });
+    const swEnd = (e, up) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const s = sw, dx = e.clientX - s.x, dy = e.clientY - s.y, far = up && Math.abs(dx) > (s.land ? Math.max(40, 56 * ringK) : 56) && Math.abs(dx) > Math.abs(dy) * 1.4;
+      sw = null; if (!s.moved) return;
+      noTap = performance.now();
+      if (s.land) { if (!rg || !rg.drag) return; if (far) ringSpin(dx < 0 ? 1 : -1, s.p); else ringTurn(0, s.p, null); return; }
+      const d = s.on;
+      if (far && d.isConnected) { act('track:' + (dx < 0 ? 1 : -1)); return; }
+      d.style.transition = 'transform .2s ease-out'; d.style.transform = '';
+      d.addEventListener('transitionend', () => { d.style.transition = ''; }, { once: true });
+    };
+    window.addEventListener('pointermove', (e) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+      if (!sw.moved) {
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) { if (Math.abs(dy) > 12) sw = null; return; }   // (up or down: not a swipe)
+        if (sw.land && rg) { sw = null; return; }
+        sw.moved = true; if (sw.land) rg = { drag: true, p: 0, raf: 0 };
+        try { sw.on.setPointerCapture(e.pointerId); } catch (_) { /* (the pointer gone already) */ }
+      }
+      if (sw.land) { if (!rg || !rg.drag) { sw = null; return; } sw.p = rg.p = Math.max(-1.2, Math.min(1.2, -dx / (302 * ringK))) || 1e-6; ringTo(sw.p); }
+      else sw.on.style.transform = 'translateX(' + (dx * 0.35).toFixed(1) + 'px)';
+    });
+    window.addEventListener('pointerup', (e) => swEnd(e, true));
+    window.addEventListener('pointercancel', (e) => swEnd(e, false));
   }
+  let noTap = 0;   // (when a swipe let go: the click it ends with is not a tap)
 
   /* ---------------- the game's side ---------------- */
   let ready = false, want = null, carFrom = false;
@@ -1480,6 +1659,7 @@
     want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
+    if (rg) { cancelAnimationFrame(rg.raf); rg = null; } if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }   // (the carousel: drawn anew when the menu is up again)
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (zemOpen()) ZE().close(true);   // (the Earth too)
     rested = null; globe.reset();
@@ -1515,5 +1695,5 @@
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
   const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the garage was opened from the track step (game.js garageOpen keeps it for the way back: garageBack, straight to this step)
-  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state() }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone } }) };
 })();
