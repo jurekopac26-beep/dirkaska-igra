@@ -14,7 +14,8 @@
    MenuCar.attach(yard, { id, color, num }, onFail): the canvas into the yard (one canvas, moved into each new yard the menu draws), the
    car built when it changed, drawing on; true when that car is drawn already. onFail(): no WebGL for it after all (the menu shows the
    car's picture then). detach(): the drawing stops (another screen). rest(): before a race: stopped, the canvas 1 x 1 (its buffers
-   freed; the context, the car and the shaders kept for the way back). supported(): WebGL there and not lost. info(): for the tests.
+   freed; the context, the car and the shaders kept for the way back). supported(): WebGL there and not lost. placed(): where the car
+   stands in the yard, as a style attribute for the menu's next yard (the car's name over it: --car-top, --car-left). info(): for the tests.
    ========================================================================= */
 window.MenuCar = (function () {
   'use strict';
@@ -60,7 +61,7 @@ window.MenuCar = (function () {
     const out = [], p = new THREE.Vector3();
     v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, 0); v.grp.updateMatrixWorld(true);
     v.grp.traverse(m => {
-      if (!m.isMesh || m === v.blob || !m.geometry || !m.geometry.attributes.position) return;
+      if (!m.isMesh || m === v.blob || m === v.rigS || !m.geometry || !m.geometry.attributes.position) return;   // (v.rigS: a semi-trailer's blob)
       for (let q = m; q && q !== v.grp; q = q.parent) if (!q.visible) return;
       const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count), st = Math.max(1, Math.floor(n / 5000));
       for (let i = 0; i < n; i += st) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); out.push(p.x, p.y, p.z); }
@@ -122,12 +123,13 @@ window.MenuCar = (function () {
     drop();
     const v = Render.garageCar(M, spec.color, spec.num || 0, true);
     if (!spec.num && v.dec) v.dec.visible = false;
+    const rig = Render.garageTrailer ? Render.garageTrailer(v, M) : null;   // (a semi-trailer straight behind it, the TITAN CISTERNA's tank: the rig in the button, docs/titan-cisterna.md)
     const P = pointsOf(v), S = shapeOf(P);
     v.grp.rotation.y = ROT; v.grp.updateMatrixWorld(true); scene.add(v.grp);
     // (its points as the camera sees them: turned as the car)
     const c = Math.cos(ROT), s = Math.sin(ROT), Pw = new Float32Array(P.length);
     for (let i = 0; i < P.length; i += 3) { Pw[i] = P[i] * c + P[i + 2] * s; Pw[i + 1] = P[i + 1]; Pw[i + 2] = -P[i] * s + P[i + 2] * c; }
-    car = { v, M, S, Pw, h: Math.max(0.5, S.y1) };
+    car = { v, M, S, Pw, h: Math.max(0.5, S.y1), rig };
     dirty = true; drawn = false;
     return true;
   }
@@ -138,7 +140,7 @@ window.MenuCar = (function () {
 
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
   function frameCar() {
-    const M = car.M, h = car.h, k = clamp(Math.max(M.len / 4.4, h / 1.45, M.wid / 1.9), 0.75, 1.55), dy = h / 2 - 0.7 * k;
+    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
     // the car's box as seen, in the canvas's -1..1
@@ -152,7 +154,13 @@ window.MenuCar = (function () {
     cam.projectionMatrix.premultiply(new THREE.Matrix4().set(sc, 0, 0, ox, 0, sc, 0, oy, 0, 0, 1, 0, 0, 0, 0, 1));
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     car.fit = { sc, box: [bx0 * sc + ox, by0 * sc + oy, bx1 * sc + ox, by1 * sc + oy] };
+    pos = [Math.round((1 - car.fit.box[3]) * H / 2), Math.round((car.fit.box[0] + 1) * W / 2)]; place(yard);
   }
+  // where the car stands in the yard (CSS px from its top left: the car's top and left), for the menu's name over it (css/menu.css .cname):
+  // on the yard now, on a new drawing's yard at once (attach; placed(): in its markup, so the name is never seen elsewhere first)
+  let pos = null;
+  function place(el) { if (el && pos) { el.style.setProperty('--car-top', pos[0] + 'px'); el.style.setProperty('--car-left', pos[1] + 'px'); } }
+  const placed = () => pos ? ' style="--car-top:' + pos[0] + 'px;--car-left:' + pos[1] + 'px"' : '';
 
   /* ---------------- the wind ---------------- */
   // the lines: over the top (across the width, close over the body and further up), along the near side (low to high), two on the far
@@ -325,6 +333,7 @@ window.MenuCar = (function () {
       dirty = true;
     }
     if (canvas.parentNode !== el) el.insertBefore(canvas, el.firstChild);
+    place(el);
     const k = spec.id + '|' + spec.color + '|' + (spec.num || 0);
     if (k !== key || !car) { key = k; try { if (!build(spec)) { key = ''; return false; } } catch (e) { try { console.error('menu car:', e && e.message ? e.message : e); } catch (_) { } fail(); return false; } }
     if (drawn) el.classList.add('c3d-on');
@@ -340,7 +349,7 @@ window.MenuCar = (function () {
   function info() {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
-      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected) };
+      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected), rig: car && car.rig ? +car.rig.len.toFixed(2) : 0 };   // (rig: a semi-trailer's rig, its length, m)
   }
   // (tests) a frame drawn now (t: at that time of the wind, s) and read at once (its buffer is not kept once it is shown): how much of the
   // yard right of the car's box (only the wind there) and of the car's box is drawn, the wind's colour there (0..1), and where its lines
@@ -358,5 +367,5 @@ window.MenuCar = (function () {
     }
     return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height] };
   }
-  return { supported, attach, detach, rest, live, info, sample };
+  return { supported, attach, detach, rest, live, placed, info, sample };
 })();

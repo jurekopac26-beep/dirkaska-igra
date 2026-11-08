@@ -8,8 +8,8 @@
 //   node tests/browser/ljudje.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'spa', 'bathurst', 'ouninpohja', 'vrsic', 'rbring'];
-const CROWD_MAX = { nring: 600, spa: 1500, bathurst: 1500, ouninpohja: 1500, vrsic: 1500, rbring: 2500 };   // (before #225: 11.706, 5.617, 4.198, 6.902, …; Nürburg hardly any: CR_KEEPT)
+const TRACKS = ['nring', 'spa', 'bathurst', 'ouninpohja', 'caracoles', 'rbring'];   // (Los Caracoles in Vršič's place: Vršič a test track since 6. 11. 2026)
+const CROWD_MAX = { nring: 600, spa: 1500, bathurst: 1500, ouninpohja: 1500, caracoles: 1500, rbring: 2500 };   // (before #225: 11.706, 5.617, 4.198, 6.902, …; Nürburg hardly any: CR_KEEPT)
 const STANDS = ['spa', 'rbring'];   // (tracks with the world's own grandstands)
 const T = checker('people by the track');
 const srv = await serve();

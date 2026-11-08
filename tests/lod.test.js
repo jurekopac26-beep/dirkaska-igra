@@ -13,6 +13,14 @@
 //      safety car and the leader on the way (the queue further back stops behind a stopped car or in a pack two abreast and is rescued
 //      as often at the full rate: not checked here)
 //   4. A 22-car race: no LOD at all
+//   5. Nürburg, 100 cars as the game has them (the flying start, the player at the back), 90 s, with the default knock (Simulacija) and
+//      the old one (Trki med avti: Stara): a car close to another (LOD.nr) worked out every step; few hard knocks far ahead of the player (a
+//      touch on an extrapolated place, or two far cars running through each other, as before: 0.16 and 0.24 a car-minute in these races)
+//   6. LOD.off (the quick entry's lod=0): a 100-car race at the full rate
+//   7. Spa, 100 cars from the grid (the lights, as the race after qualifying), the player last, 40 s: no
+//      pile-up in the first corners (no rival standing 3 s on end, none rescued, the player over the line). Without LOD.nr the far cars
+//      at 15 Hz touched on extrapolated places, spun and closed the corners: 23-30 rivals stood 3 s or more, 12-19 rescued, the player
+//      still 235-280 m behind the line after 40 s (four seeds; on Trois-Rivières, the shortest circuit, a pile-up stays in some races)
 //   node tests/lod.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -152,6 +160,51 @@ const tLin = (t, x, d0, d1, m) => t - DT * m * (d1 - x) / (d1 - d0);
   const r = race('spa', 21, {}); r.start();
   drive(r, 240, () => {});
   check('a 22-car race (Spa): no LOD (every car every step, as the golden references)', !r._lod, r._lod ? 'LOD on' : '');
+}
+
+// ---- 5. Nürburg, 100 cars as the game has them (the flying start, the player at the back): a car close to another at the full rate ----
+for (const [name, tx, lim, seed] of [['the default knock (Simulacija)', {}, 0.1, 33], ['Trki med avti: Stara (the old knock)', { cv: 5 }, 0.12, 21]]) {   // (one race each: 0-0.12 and 0.035-0.05 over three seeds, before 0.07-0.24 and 0.22-0.6)
+  C.setTest(tx);
+  let far = 0, hard = 0, nrN = 0, nrBad = 0;
+  {
+    const r = race('nring', 99, { flying: 3, playerGrid: 999, seed }), P = r.player, N = r.cars.length, nr0 = new Uint8Array(N);
+    r.start();
+    drive(r, Math.round(90 / DT), (k) => {
+      const D = r._lod;
+      for (let i = 0; i < N; i++) {
+        const c = r.cars[i];
+        if (D && D.on && r.state === 'racing' && nr0[i] && !c.finished) { nrN++; if (D.kk[i] !== 1 || !D.st[i]) nrBad++; }
+        nr0[i] = D && D.nr ? D.nr[i] : 0;
+        if (k > 600 && c !== P && c.speed > 3 && c.dist - P.dist > L.r2) { far += DT / 60; if (c.hitCar > 3.5) hard++; }
+        c.hitCar = 0;
+      }
+    });
+  }
+  C.setTest({});
+  check(`${name}: a car within 1 m of another's bumper or 0.6 m of its side (Race._pairs, LOD.nr) worked out every step`, nrN > 1000 && nrBad === 0, `${nrBad} of ${nrN} car-steps`);
+  check(`${name}: hard knocks (over 3.5 m/s) more than ${L.r2} m ahead of the player under ${lim} a car-minute (touches on extrapolated places: 0.16 and 0.24 in these races)`,
+    far > 100 && hard / far < lim, `${hard} in ${far.toFixed(0)} car-minutes: ${(hard / far).toFixed(3)}`);
+}
+
+// ---- 6. LOD off for the visit (the quick entry's lod=0): a 100-car race at the full rate ----
+{
+  L.off = true; const r = race('nring', 99, { flying: 3, playerGrid: 999 }); r.start();
+  drive(r, 600, () => {});
+  L.off = false;
+  check('LOD.off (the quick entry\'s lod=0): Nürburg\'s 100 cars every one every step', !r._lod || !r._lod.on, r._lod && r._lod.on ? 'LOD on' : '');
+}
+
+// ---- 7. Spa, 100 cars from the grid (the lights), the player last: no pile-up in the first corners ----
+for (const seed of [9, 7]) {   // (the longest a rival stood: 0.7 and 0.6 s; 0.0-1.5 s over four seeds, before LOD.nr 5.7-9.1 s)
+  const r = race('spa', 100, { flying: 0, playerGrid: 999, laps: 3, seed }), P = r.player, st = new Float64Array(r.cars.length);
+  let worst = 0, resc = 0; const orig = r.rescue; r.rescue = function (c) { if (c !== P) resc++; return orig.call(this, c); };
+  r.start();
+  drive(r, Math.round(40 / DT), (k) => {
+    if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+    if (k * DT >= 4) r.cars.forEach((c, i) => { if (c !== P) { st[i] = Math.hypot(c.vx, c.vz) < 3 ? st[i] + DT : 0; worst = Math.max(worst, st[i]); } });   // (stood: under 3 m/s on end, from 4 s on)
+  });
+  check(`Spa, 100 cars from the grid (the lights), seed ${seed}, 40 s: no pile-up in the first corners (no rival standing 3 s on end, none rescued, the player over the line)`,
+    r.cars.length === 101 && worst < 3 && resc === 0 && P.dist > 0, `the longest a rival stood ${worst.toFixed(1)} s, ${resc} rivals rescued, the player at ${P.dist.toFixed(0)} m`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);

@@ -89,10 +89,12 @@
   function irFar(colFn) {   // (colFn(A, slope, q): a road's own colours of the land, Mount Hotham's; else Nikko's)
     const F = T.def.farDem; if (!F) return null;
     const nx = F.nx, nz = F.nz, n = nx * nz, b = atob(F.b64), base = API.VR.D.base, H = new Float32Array(n), wet = new Uint8Array(n), dr = new Float32Array(n);
-    for (let k = 0; k < n; k++) H[k] = 400 + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
+    const lo = F.lo != null ? F.lo : 400;   // (the lowest height of the grid: 400 m unless the data says otherwise, tools/proga)
+    for (let k = 0; k < n; k++) H[k] = lo + (b.charCodeAt(2 * k) * 256 + b.charCodeAt(2 * k + 1)) / 2 - base;
     for (let k = 0, p = 0, v = 0; k < F.lake.length; k++) { if (v) wet.fill(1, p, p + F.lake[k]); p += F.lake[k]; v ^= 1; }
-    const lakeH = T.def.far && T.def.far.lake ? T.def.far.lake[2] - base : 0;
-    for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH;
+    // the lake's level where def.far.lake gives one (Irohazaka's Chūzenji, the whole lake flat at it); else each wet node keeps its own height
+    // from the model (the cirques' tarns, Bâlea's: each at its own level, high on the ridges; never sunk to the start's height)
+    if (T.def.far && T.def.far.lake) { const lakeH = T.def.far.lake[2] - base; for (let k = 0; k < n; k++) if (wet[k]) H[k] = lakeH; }
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = F.x0 + i * F.cell, z = F.z0 + j * F.cell; let m = 1e18;
       for (let q = 0; q < T.N; q += 5) { const dx = x - T.px[q], dz = z - T.pz[q], d = dx * dx + dz * dz; if (d < m) m = d; } dr[j * nx + i] = Math.sqrt(m); }
     const P0 = [], C = [], I = [], su = API.VRS === 'summer';
@@ -111,7 +113,7 @@
     for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) { const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1;
       if (Math.min(dr[a], dr[b2], dr[c], dr[d]) < 470) continue; I.push(a, c, b2, b2, c, d); }
     // the Kegon falls: a white ribbon down the cliff below the lake's outlet (97 m), a little out from the model's face, towards the road
-    const K = T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
+    const K = T.def.far && T.def.far.kegon; if (K) { const cx = (API.VR.bx0 + API.VR.bx1) / 2, cz = (API.VR.bz0 + API.VR.bz1) / 2, dx = cx - K[0], dz = cz - K[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, px = -uz, pz = ux, o = 24, hw = 9, y0 = K[2] - base;
       const v0 = P0.length / 3; for (const [u, y] of [[-hw, y0], [hw, y0], [hw * 1.4, y0 - 97], [-hw * 1.4, y0 - 97]]) { P0.push(K[0] + ux * o + px * u, y, K[1] + uz * o + pz * u); C.push(0.93, 0.95, 0.98); }
       I.push(v0, v0 + 1, v0 + 2, v0, v0 + 2, v0 + 3, v0, v0 + 2, v0 + 1, v0, v0 + 3, v0 + 2); }
     const g = new THREE.BufferGeometry(), nv = P0.length / 3;
@@ -266,8 +268,8 @@
       box(gh, hx, hy, hz, 2.4, 0.8, 0.7, T.hd[i], [0.3, 0.3, 0.32]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3.2, T.hd[i]);
       for (let s = sStart - 60; s < sStart + 50; s += 10) for (const side of [-1, 1]) { const [px, pz] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue;   // pennants on poles
-        const gp = scen.get(px, pz), py = vrGround(px, pz), col = fans[Math.floor(rpHash(Math.round(s), side + 3) * fans.length)]; cyl(gp, px, py - 0.2, pz, 0.05, 5.2, 4, [0.9, 0.9, 0.92]);
-        const ii = T.idx(s); box(gp, px + T.tx[ii] * 0.45, py + 4.2, pz + T.tz[ii] * 0.45, 0.9, 1.6, 0.04, T.hd[ii], col); }
+        const gp = scen.get(px, pz), py = vrGround(px, pz), col = fans[Math.floor(rpHash(Math.round(s), side + 3) * fans.length)]; cyl(gp, px, py - 0.2, pz, 0.05, 6, 4, [0.9, 0.9, 0.92]);
+        const ii = T.idx(s); API.flags.add(px, py + 5.8, pz, T.hd[ii], [col], 0.9, 1.6, 0.5); }   // (the nobori, held by the pole and a rod at its top, waves a little: js/world-zastave.js)
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road behind: concrete blocks across it
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
       { const [bx, bz, bi] = onSide(sStart + 16, -1, 1.6), by = vrGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
@@ -302,7 +304,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12], finS, finB);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = vrGround(px, pz), gg = finS;
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1, finG); }   // (the chequered cloth waves: js/world-zastave.js; with the finish: finG)
       signAt(sFin + 18, -sdP, 0.5, 1); park(padP, iF, sdP, false, 18);
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;   // the end of the road drawn: concrete blocks across it
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
@@ -471,5 +473,6 @@
   }
 
   Object.assign(API, { irFar, irFarUpdate });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'iroha');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.iroha = (scene, tex, opts) => buildIroha(scene, tex, opts);
 })();

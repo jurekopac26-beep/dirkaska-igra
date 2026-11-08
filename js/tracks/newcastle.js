@@ -23,7 +23,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // domain), produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under
   // COPERNICUS by the European Union and ESA; all rights reserved; land cover: © ESA WorldCover project 2021 (CC BY 4.0).
   TRACK_DEFS.push({
-    id: 'newcastle', name: 'Newcastle, Avstralija', theme: 'newcastle', laps: 5, halfWidth: 6,
+    // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
+    look: { fog: 0xc8d9e6, sun: 0xfff1d6, sunI: 1.2, sky: 0xc4dbf4, gnd: 0x6b6a52, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-58, 86, -66], split: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] },   // Newcastle: a clear late-spring afternoon on the coast, the sun from the north-west (the southern hemisphere), a light sea haze
+    say: 'Newcastle',
+    zivali: { a: ['magpie', 'galah'], t: [], city: true },
+    id: 'newcastle', test: true, name: 'Newcastle, Avstralija', theme: 'newcastle', laps: 5, halfWidth: 6,
     desc: 'Ulična proga v vzhodnem delu obalnega mesta Newcastle v Avstraliji, v pravem merilu (postavitev iz leta 2019): 2,6 km in 14 ovinkov. Ciljna ravnina ob pristanišču, vzpon po ulici do ostrega levega ovinka, spust nad plažo Newcastle, ovinki med starimi ulicami, hiter spust mimo stare obalne utrdbe in lasnica na parkirišču med plažama. Semaforji, znaki in druga oprema v križiščih se dajo zbiti. Podatki: © OpenStreetMap (ODbL), SRTM, Copernicus DEM, ESA WorldCover.',
     en: { name: 'Newcastle, Australia', desc: 'A street circuit in the East End of the coastal city of Newcastle in Australia, at full scale (its layout of 2019): 2.6 km and 14 turns. The pit straight along the harbour, a climb up a city street to a tight left, the run down above Newcastle Beach, corners between old streets, a fast drop past an old coastal fort and a hairpin in the car park between two beaches. The traffic lights, signs and the rest of the street furniture at the junctions can be knocked over. Data: © OpenStreetMap (ODbL), SRTM, Copernicus DEM, ESA WorldCover.' },   // (the English page: Jezik · Language)
     realKm: 2.641,
@@ -52,6 +56,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     turns: [[-223.1,115.4],[-369.1,595.7],[-300.1,604.8],[-226.0,559.5],[-178.4,553.6],[-91.5,463.7],[16.7,451.0],[57.9,340.5],[154.0,365.7],[214.3,246.3],[328.6,-258.8],[300.0,-235.0],[284.0,-100.0],[282.6,-71.1]],   // the apexes of Turns 1-14 (their number boards)
     pit: [17, -245, 190, 10, 60],   // the pits on the harbour side of Wharf Road: [centre offset to the right, from, to, the player's box, the way in] (metres from the start line)
+    pitLanes: [15, 15],   // the street circuit: no room beside the road for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-95, 105],            // the first and the last of the 13 crews' boxes
     stands: [[-170,60,-1,10,0],[700,735,1,8,0],[1215,1290,1,7,0],[2060,2120,-1,8,0]],
     sectors: [760, 1560],

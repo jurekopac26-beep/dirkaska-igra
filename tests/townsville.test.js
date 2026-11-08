@@ -22,8 +22,8 @@ const wrapPi = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 // 1. the track: Townsville, Australia, a closed circuit of 5 laps in the big championship, 2.860 km within 1 %, clockwise, flat
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
-  check('track: Townsville, Avstralija (Townsville, Australia), a closed circuit of 5 laps, not a test track, in the big championship, no birds, tropical',
-    def.name === 'Townsville, Avstralija' && def.en && def.en.name === 'Townsville, Australia' && !def.open && !def.timeTrial && !def.test && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('townsville') && def.noBirds && def.tropical,
+  check('track: Townsville, Avstralija (Townsville, Australia), a closed circuit of 5 laps, a test track since 6. 11. 2026 (one track a country: Australia keeps Bathurst or Great Alpine Road), in the big championship, no birds, tropical',
+    def.name === 'Townsville, Avstralija' && def.en && def.en.name === 'Townsville, Australia' && !def.open && !def.timeTrial && def.test === true && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('townsville') && def.noBirds && def.tropical,
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 2.860 km within 1 %, the menu\'s real length 2.86 km, clockwise (one full turn to the right)',
     Math.abs(T.len / 2860 - 1) < 0.01 && def.realKm === 2.86 && Math.abs(turn - 2 * Math.PI) < 0.05,

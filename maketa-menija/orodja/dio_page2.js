@@ -1,7 +1,7 @@
 // Runs inside the game page (headless mockup capture only). Builds a track's real world with the game's own
 // World.build, cuts it into a diorama and renders it on a copy of the showroom turntable.
 window.DIO = (function () {
-  const THEMES = {   // copied from render.js (race lighting per theme)
+  const THEMES = {   // copied from the game (race lighting per theme: render.js THEMES, a real track's look in js/tracks/<id>.js)
     lake:     { sun: 0xfff0d6, sunI: 0.98, sky: 0xd3e7ff, gnd: 0x5d6b35, hemiI: 0.62 },
     city:     { sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6 },
     monaco:   { sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6 },

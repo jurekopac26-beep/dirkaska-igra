@@ -82,6 +82,10 @@ svg { display: block; }
 /* (a flag, no words: the selected track's country) */
 .g-track.flag { position: relative; overflow: hidden; padding: 0; background: #fff; border-color: rgba(255, 255, 255, .85); box-shadow: 0 5px 0 rgba(0, 0, 0, .35), 0 8px 20px rgba(0, 0, 0, .3); }
 .g-track .fl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+/* (a car not the player's: grey, words in place of the flag: buy or rent it first) */
+.g-track.not { padding: 0 10px; font-size: clamp(13px, 3.9vw, 18px); line-height: 1.05; white-space: normal; color: #c9d2e0; text-shadow: none; background: linear-gradient(180deg, #59627a, #424a5e);
+  border-color: #79839a; box-shadow: 0 5px 0 #262b37; cursor: default; }
+.g-track.not:active { transform: none; }
 /* (the coins: a third of the top, wider when the number needs it: the career's coins never cut off on a narrow phone) */
 .g-cr { flex: 0 0 auto; height: 54px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; border-radius: 15px; min-width: 33%; max-width: 46%;
   background: linear-gradient(180deg, #5d636d, #454a53); border: 2px solid #8d939d; box-shadow: 0 5px 0 #262a31; transition: transform .2s; }
@@ -130,6 +134,14 @@ svg { display: block; }
 .g-btn-go:active { box-shadow: 0 2px 0 #8e1a14; }
 .g-btn-go.buy { background: linear-gradient(180deg, #ffd25a, #e8a91e); border-color: #ffe7a0; color: #2a1a00; text-shadow: none; box-shadow: 0 5px 0 #97690e, 0 8px 22px rgba(245, 200, 76, .3); font-size: clamp(19px, 5.6vw, 25px); }
 .g-btn-go.lock { background: linear-gradient(180deg, #3a4456, #2a3242); border-color: #56627a; box-shadow: 0 5px 0 #161b25; color: #b9c4d8; font-size: clamp(16px, 4.6vw, 21px); }
+.g-btn-rent { flex: 1 1 auto; min-width: 0; padding: 0 8px; font-size: clamp(15px, 4.4vw, 21px); background: linear-gradient(180deg, #4f8ef0, #1c4fb3); border: 2px solid #9cc0ff; box-shadow: 0 5px 0 #12357a, 0 8px 22px rgba(28, 79, 179, .35); }
+.g-btn-rent[hidden] { display: none; }
+/* (the RENT A CAR maquette's car: rent and buy side by side, each its word over its price; the back button narrower) */
+.g-foot.two { gap: 10px; }
+.g-foot.two .g-btn-back { width: 58px; }
+.g-foot.two .g-btn-rent, .g-foot.two .g-btn-go { font-size: clamp(18px, 5.2vw, 24px); line-height: 1; align-content: center; gap: 4px; }
+.g-foot.two .g-btn small { display: block; font: 800 clamp(12px, 3.5vw, 15px)/1 var(--f); font-style: normal; letter-spacing: .01em; }
+.g-btn-rent:active { box-shadow: 0 2px 0 #12357a; }
 .g-btn-go.done { background: linear-gradient(180deg, #38b56a, #23894a); border-color: #7fe0a4; box-shadow: 0 5px 0 #15562e; }
 
 /* ---- a tapped part's menu (white, at the top under the buttons there, or at the bottom when it would cover what was tapped): four
@@ -155,6 +167,9 @@ svg { display: block; }
 .g-tl.sel { background: #e9f6ff; border-color: #36aef2; box-shadow: 0 0 0 3px rgba(54, 174, 242, .25), 0 3px 8px rgba(20, 32, 51, .14); }
 .g-tl.fit::after { content: '✓'; position: absolute; right: 6px; top: 4px; font: 900 13px/1 var(--f); color: #23894a; }
 .g-tl.lock { opacity: .62; }
+/* the paint's eight colours (one price): four a row, the colour alone */
+.g-mg.g-mc { grid-template-columns: repeat(4, 1fr); }
+.g-mc .g-tl { justify-content: center; min-height: 58px; padding: 6px 4px; }
 .g-tl .pi { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; filter: drop-shadow(0 2px 2px rgba(20, 32, 51, .3)); }
 .g-tl .pi svg { width: 44px; height: 44px; }
 .g-tl > div { min-width: 0; }
@@ -163,6 +178,7 @@ svg { display: block; }
 .g-tl i { display: block; margin-top: 2px; font: 800 13px/1.1 var(--f); font-style: normal; color: #142033; }
 .g-tl i s { margin-right: 5px; font-weight: 600; color: #8b95a7; }
 .g-tl i em { font-style: normal; color: #d8261d; }
+.g-tl i em.own { color: #23894a; text-transform: uppercase; letter-spacing: .03em; }
 .g-mb { display: flex; gap: 8px; margin-top: 10px; }
 .g-mb .back { flex: 0 0 33%; height: 52px; border-radius: 13px; font: italic 900 clamp(15px, 4.6vw, 20px)/1 var(--f); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .3);
   background: linear-gradient(180deg, #5d636d, #454a53); border: 2px solid #8d939d; box-shadow: 0 4px 0 #262a31; white-space: nowrap; }

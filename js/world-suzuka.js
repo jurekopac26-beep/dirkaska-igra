@@ -516,7 +516,7 @@
         const door = (Math.floor(d / 6.5) & 1) ? dark : door2, cc = [door, wallC, wallC, wallC, wallC, glass, wallC, roofC, wallC];
         if (prev) { const inn = P2(front + 8, 6); for (let m = 0; m + 1 < cs.length; m++) gb.quadO(prev[m], prev[m + 1], cs[m + 1], cs[m], cc[m], inn); }
         prev = cs;
-        if (k % 3 === 0) { const fx = q.px + q.nx * (bar + 0.7), fz = q.pz + q.nz * (bar + 0.7), gg = scen.get(fx, fz); cyl(gg, fx, y, fz, 0.05, 5, 5, [0.86, 0.86, 0.88]); box(gg, fx + q.tx * 0.55, y + 3.9, fz + q.tz * 0.55, 1.1, 1.0, 0.05, Math.atan2(q.tz, q.tx), TEAM[(k / 3 | 0) % TEAM.length], null, true); }
+        if (k % 3 === 0) { const fx = q.px + q.nx * (bar + 0.7), fz = q.pz + q.nz * (bar + 0.7), gg = scen.get(fx, fz); cyl(gg, fx, y, fz, 0.05, 5, 5, [0.86, 0.86, 0.88]); API.flags.add(fx, y + 4.9, fz, Math.atan2(q.tz, q.tx), [TEAM[(k / 3 | 0) % TEAM.length]], 1.1, 1); }   // (waving: js/world-zastave.js)
         if (k % 4 === 0) CR.block(q.px + q.nx * (front + 8), q.pz + q.nz * (front + 8), 14, 18, Math.atan2(q.tz, q.tx));
         exclPush(q.px + q.nx * (front + 6), q.pz + q.nz * (front + 6), 14);
         if (k === 0 || k === rows.length - 1) { const inn = P2(front + 8, 6), q2 = crAt(s + (k === 0 ? 3 : -3)), inn2 = q2 ? [q2.px + q2.nx * (front + 8), y + 6, q2.pz + q2.nz * (front + 8)] : inn;   // the gable ends
@@ -647,7 +647,7 @@
       if (excluded(x, z)) continue;
       box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, T.hd[i], [0.94, 0.94, 0.92], [0.95, 0.45, 0.12], true);
       box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.6, 0.6, 2.25, T.hd[i], [0.2, 0.28, 0.36], null, true);
-      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 3.4, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); API.flags.add(fx, y + 4, fz, T.hd[i], [[0.98, 0.84, 0.1]], 0.9, 0.6);
       exclPush(x, z, 5); CR.avoid(x, z, 2.5);
     }
     T.names.forEach((q, k) => { const s = sAt(q.d - 60), i = T.idx(s); if (nearX(i, 50)) return; signPost(s, roomSide(s), 1.6, k, 3.4, 0.85, 1.2); });
@@ -753,5 +753,6 @@
 
   Object.assign(API, { szWheel });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { SZ: { get: () => SZ, set: (v) => { SZ = v; } } });
+  World.keep('SZ', 'suzuka');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.suzuka = (scene, tex, opts) => buildSuzuka(scene, tex, opts);
 })();

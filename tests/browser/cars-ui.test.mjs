@@ -77,7 +77,7 @@ try {
       JSON.stringify({ overflow: L.overflow, arrows: L.arrows, next: L.next, cat: L.cat }));
     T.check('844×390: the car is the garage\'s button (over its place, left of the panel, between the categories and the strip), its hint under it "Tapni avto za garažo"', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, txt: L.hintTxt, on: L.garOn }));
     T.check('844×390: 10 category chips, the car\'s chosen and in view; its category\'s cars in the strip (cheapest first), the chosen one in view; no chip with an arrow\'s data-act',
-      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,panter,vortex,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
+      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,panter,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
       JSON.stringify({ nCats: L.nCats, catSel: L.catSel, catIn: L.catIn, strip: L.stripIds, carIn: L.carIn, acts: L.acts }));
 
     // 2. switching by touch: a category (its first car, later the one last looked at there), a car of the strip
@@ -87,8 +87,8 @@ try {
     await tap('#car-strip [data-car="' + await page.evaluate(() => Core.MODELS.findIndex(m => m.id === 'kamen')) + '"]'); await wait(150); const t2 = await now();
     await tap('#car-cats [data-cat="mali"]'); await wait(150); const t3 = await now();
     await tap('#car-cats [data-cat="tovornjaki"]'); await wait(150); const t4 = await now();
-    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN), a tap on KAMEN PUŠČAVA picks it, Mali avti the PICO TURBO, Tovornjaki again the KAMEN (the one last looked at)',
-      t1.id === 'titan' && t1.strip === 'titan,kamen' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/2$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'pico' && t3.sel === 'mali' && t4.id === 'kamen',
+    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN, TITAN CISTERNA, ZRCALNI VLAK: by the career price), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
+      t1.id === 'titan' && t1.strip === 'titan,kamen,cisterna,zrcalni' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/4$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
       JSON.stringify({ t1, t2, t3, t4 }));
 
     // 3. the gamepad: Start on "Naprej" (as ever), X / Y the categories, LB / RB the cars in the display order
@@ -154,8 +154,8 @@ try {
       for (let k = 0; k < 3; k++) { g.onAction('champ-car-next'); ids.push(id()); } g.onAction('champ-car-prev'); ids.push(id());
       return { ids, shown: document.getElementById('ch-mycar').textContent }; });
     await press(3); const chY = await page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, shown: document.getElementById('ch-mycar').textContent }));
-    T.check('the championship\'s picker: the same order (MIŠKA → KOLIBRI → RAKETA 16V, back to KOLIBRI); Y on the pad: the next category\'s car (LISICA)',
-      chp.ids.join() === 'miska,kolibri,raketa,kolibri' && chp.shown === 'KOLIBRI' && chY.id === 'lisica' && chY.shown === 'LISICA', JSON.stringify({ chp, chY }));
+    T.check('the championship\'s picker: the same order (from the PICO TURBO, the dearest small car: LISICA → KAZE RS → SOKOL, back to KAZE RS); Y on the pad: the next category\'s car (STREGA MR)',
+      chp.ids.join() === 'lisica,kaze,sokol,kaze' && chp.shown === 'KAZE RS' && chY.id === 'strega' && chY.shown === 'STREGA MR', JSON.stringify({ chp, chY }));
     T.check('no page errors (844×390)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
   }
@@ -169,7 +169,7 @@ try {
       L.cats.t === 8 && L.cats.b === 42 && L.strip.t === 48 && L.strip.b === 92 && L.cats.l === 10 && L.cats.r === L.vw - 10 && L.strip.l === 10 && L.strip.r === L.vw - 10, JSON.stringify({ cats: L.cats, strip: L.strip }));
     T.check('390×844: nothing off the screen, the rows clear of the panel and the arrows, the panel as it was, the chosen chips in view (Dirkalni, TIGER GT)',
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
-      L.stripIds.join() === 'mravlja,kozorog,tornado,strelica,tiger,bizon,formula,lm' && /^Dirkalni · 5\/8$/.test(L.cat),
+      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,tiger,lm,formula' && /^Dirkalni · 6\/8$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
     T.check('390×844: the car is the garage\'s button (over its place, under the strip, over the panel), its hint under it', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, panel: L.panel, on: L.garOn }));
     // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
@@ -198,10 +198,10 @@ try {
     T.check('the career\'s garage: every car under its category\'s heading (Mali avti … Posebni), in the display order; the retired model not in it (the LEV S once)',
       car.kids.join('|') === wantKids.join('|') && car.kids.length === Core_n + 10 && heads.length === 10 && heads[0] === '#Mali avti' && heads[9] === '#Posebni' && car.kids.filter(k => k === 'mali:LEV S').length === 1,
       JSON.stringify(car.kids.slice(0, 8)));
-    T.check('the career\'s strip: a price on the cars to buy (TIGER GT 85.000 🪙), a tick on the one in the garage',
-      car.chips.some(t => /^TIGER GTFR85\.000/.test(t)) && car.chips.every(t => /🪙|✓/.test(t)), JSON.stringify(car.chips));
-    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 coins, all three levels 23.000 coins), the MRAVLJA (5.000 coins) no cheaper than it (×1), the TITAN ×1.2 (4.800 coins), ŠKORPIJON H ×2 (8.000 coins; all three levels 46.000 coins)',
-      /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /4\.800/.test(car.titan[1]) && /4\.000/.test(car.mravlja[1]) && /23\.000/.test(car.mravlja[3]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
+    T.check('the career\'s strip: a price on the cars to buy (TIGER GT 550.000 🪙), a tick on the one in the garage',
+      car.chips.some(t => /^TIGER GTFR550\.000/.test(t)) && car.chips.every(t => /🪙|✓/.test(t)), JSON.stringify(car.chips));
+    T.check('the career\'s upgrade prices by class: the PICO TURBO as before (4.000 coins, all three levels 23.000 coins), the MRAVLJA (5.000 coins) no cheaper than it (×1), the TITAN ×2 (8.000 coins; its real price over 100.000), ŠKORPIJON H ×2 (8.000 coins; all three levels 46.000 coins)',
+      /4\.000/.test(car.pico[1]) && /23\.000/.test(car.pico[3]) && /8\.000/.test(car.titan[1]) && /4\.000/.test(car.mravlja[1]) && /23\.000/.test(car.mravlja[3]) && /8\.000/.test(car.skorpijon[1]) && /46\.000/.test(car.skorpijon[3]),
       JSON.stringify({ pico: car.pico, titan: car.titan, mravlja: car.mravlja, skorpijon: car.skorpijon }));
     T.check('no page errors (390×844)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
@@ -286,7 +286,7 @@ try {
     // Izberi avto: the car screen (its button "Izberi", Nazaj back to the championship), the PICO TURBO picked, back
     await act('champ-car'); await wait(200);
     const cs = await page.evaluate(() => ({ screen: window.__game.screen, next: document.getElementById('car-next').dataset.act + ':' + document.getElementById('car-next').textContent, back: document.getElementById('car-back').dataset.act }));
-    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); }); await wait(100);
+    await page.evaluate(() => { document.querySelector('#car-cats [data-cat="mali"]').click(); document.querySelector('#car-strip [data-car="' + Core.MODELS.findIndex(m => m.id === 'pico') + '"]').click(); }); await wait(100);
     await page.evaluate(() => document.getElementById('car-next').click()); await wait(300);
     const s2 = await st();
     T.check('"Izberi avto": the car screen with "Izberi" (Nazaj back too), then the championship again with the PICO TURBO; its rivals still the TITAN\'s field (the standings: its TITANs and fill cars, "tekmeci: različni avti")',
@@ -353,7 +353,10 @@ try {
       k1.includes('partLost:left door') && k1.includes('wheelLost:rear left wheel') && k1.includes('threeWheels') && k1.includes('rivalWheel:' + c1.names[0]) && k1.includes('fire:' + c1.names[1]) && k1.includes('rivalWreck:' + c1.names[2]),
       JSON.stringify({ k1, c1 }));
     // a repair (or the marshals' refit) starts the counts afresh: the same part again is said again
-    const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true); Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
+    const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true);
+      // (a knock in those 7 s can cost the car another part, told then: the part's line rests 6 s from that one, game.js cool('part'))
+      for (let k = 0; k < 4; k++) { const pl = window.__said.filter(s => s.k === 'partLost').pop(); if (!pl || r.time - pl.t >= 6.2) break; g.sim(pl.t + 6.2 - r.time, true); }
+      Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
     // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
