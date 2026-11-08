@@ -14,7 +14,7 @@
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
 
-  /* ---- the look: the Ile Alatau in late summer: Schrenk's spruce in dark columns on the shady slopes, meadows going gold on the sunny ones
+  /* ---- the look: the Ile Alatau in late summer: the Tian Shan spruce in dark columns on the shady slopes, meadows going gold on the sunny ones
      with wild apple, hawthorn and juniper scrub, grey granite with a pink cast in crags and boulder fields, snow only on the high ridges far
      up the valley; Kazakhstan's road markings (white, the centre line dashed 3 m / 9 m) and signs (the red chevrons, the warning triangles) ---- */
   const LOOK = API.PL_LOOK.medeu = {
