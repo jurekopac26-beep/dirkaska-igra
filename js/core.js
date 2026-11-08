@@ -2794,7 +2794,7 @@ const Core = (function () {
     const K = c.kt, W = c.wreck, Q = W && W.rule;
     if (!K || W && W.dnf || c.finished) return;
     const real = amt >= KT.real;
-    if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else Q.due -= 0.8 * Math.min(1, amt / KT.real); return; }
+    if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else { Q.due -= 0.8 * Math.min(1, amt / KT.real); if (Q.due <= 0) Q.due = 0.001; } return; }   // (a light touch near the end: the wheel at the next step, _wreckStep, not under 1 s; before, below nothing it never came off, J4 in docs/pregled-jedra.md)
     if (Q && Q.kt && K.hot >= 0 && !W.nL && real) {
       const k = K.hot; K.hot = -1; detachPart(c, WHEELS[k]);
       if (amt >= KT.big) { ruleDrop(c, 1); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); }
@@ -6003,7 +6003,11 @@ const Core = (function () {
         const i = T.idx(s), lat = this._inside(c, i, T.rl[i]), x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
-        if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t; }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
+        if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t;
+          if (this.secBest && T.sectors) {   // (TV sectors: the lines already behind it passed, the next sector timed from when it would have crossed the last of them at its pace, as the lap; before, it waited for the first line all race, J1 in docs/pregled-jedra.md)
+            c.secN = 0; c.secS = c.lapStart; c.secT = [NaN, NaN, NaN]; c.secPB = [Infinity, Infinity, Infinity];
+            for (let j = 1; j < 3 && T.sectors[j] <= c.dist; j++) { let tj = 0; for (let x = T.startS; x < T.startS + T.sectors[j]; x += DS) tj += DS / Math.max(5, at(PC, x)); c.secN = j; c.secS = c.lapStart + tj; }
+          } }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
         while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }   // (a long column: a split point already behind its first cars)
         let v = at(paceOf(c), s); if (c === Pl) v = vP;
         else if (k === kp - 1) { v = Math.min(FLY_PL * v, vP + 1); c.flyP = true; c.flyG0 = pos[k] - pos[kp]; }   // (the car right ahead of the player: as fast as it, the gap to keep)

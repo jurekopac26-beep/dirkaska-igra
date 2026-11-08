@@ -6,6 +6,8 @@
 //   (before, its pit wish hid it from the flags: no yellow until the field drove into it); Bathurst, 12 rivals, 8 laps, flags, seed 9.
 // J3: a pit stop with »Ne menjaj« (the tyres stay on) keeps the KOLIBRI's own tyres too (before, four new ones every stop); a burning
 //   tyre is changed all the same (as a burst one).
+// J1: the flying start's column: a car that starts past the first TV sector's line gets its sector times all race (before, none: it
+//   waited for that line of the first lap); Marrakesh (Maroko), 40 rivals, a lap, seed 9. (J4, the wheel rule: kolibri-tyres.test.js)
 //   node tests/ai-zastave.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -89,6 +91,18 @@ function stopRun(pit) {
   check('J3: »Ne menjaj«: the KOLIBRI keeps its own worn tyres and its set (before: four new ones)', K.stop && K.w.every((x, i) => x >= [0.6, 0.7, 0.8, 0.85][i]) && K.nNew === 0 && K.wear > 0.5, `wear ${f2(K.w)}, sets ${K.nNew}, ty.wear ${K.wear != null ? K.wear.toFixed(2) : '-'}`);
   check('J3: a change of tyres still gives four new ones', N.stop && N.w.every(x => x < 0.1) && N.nNew === 1, `wear ${f2(N.w)}, sets ${N.nNew}`);
   check('J3: a burning tyre is changed with »Ne menjaj« too (as a burst one)', B.stop && B.w.every(x => x < 0.1) && B.hot === -1, `wear ${f2(B.w)}, burning ${B.hot}`);
+}
+
+// --- J1: 40 rivals (more than 21: the flying start on a circuit too, js/game.js), the column's first car starts past the line of sector 1
+{
+  Math.random = seeded(3);
+  const T = track('marrakesh'), r = new C.Race(T, { numAI: 40, playerGrid: 41, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 9, difficulty: 1, flying: 3, damage: 0 });
+  r.start(); const P = r.player, past = r.cars.filter(c => c.dist >= T.sectors[1]);
+  let t = 0, k = 0;
+  while (t < 400 && r.cars.some(c => !c.finished)) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); if (P.stuckT > 3) r.rescue(P); r.step(DT); t += DT; }
+  const fin = r.cars.filter(c => c.finished), all3 = fin.filter(c => c.secN === 3 && (past.includes(c) ? c.secT[1] > 0 && c.secT[2] > 0 : c.secT.every(x => x > 0)));
+  check('J1: a flying start\'s first cars past the line of sector 1: every car with its sector times at the finish, those the times of sectors 2 and 3 (before: none)', past.length >= 1 && fin.length === r.cars.length && all3.length === fin.length,
+    `${past.length} past the line (${past.map(c => c.secT.map(x => x.toFixed(1)).join('/')).join(', ')}), ${all3.length} of ${fin.length} with them; the race's best ${r.secBest.map(x => x.toFixed(2)).join('/')}`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);
