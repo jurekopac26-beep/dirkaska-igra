@@ -35,7 +35,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 | Longford, Avstralija | 9 | piknik 288, fotografi in TV kamera 1368, sodniki s časomerom 1664, maršali 1784, družina pri hiši 2384, otroški rojstni dan s starši 5128, žar pred avtodomom 5488, gasilci in reševalci 5952, fotografi na bregu 6552 |
 | Marrakesh, Maroko | 6 | gasilci in reševalci 80, maršali 480, tribuna z valom 1112, delavci na progi 1424, maršali 1560, fotografi in TV kamera 2320 |
 | Mauna Kea, ZDA | 4 | fotografi na bregu 136, kamp s prikolico 3472, spuščanje zmaja 3776, kitara in ples 4488 |
-| Medvode, Slovenija | 9 | fotografi na bregu 96, golaž v kotlu 1384, piknik 1664, čebelarji in med 2144, badminton in frizbi 2408, družina pri hiši 2896, nogomet na travi 3160, ribiči na bregu Zbiljskega jezera 3604, kolesarji 4336 |
+| Medvode, Slovenija | 9 | fotografi na bregu 96, golaž v kotlu 1384, piknik 1664, čebelarji in med 2144, badminton in frizbi 2456, družina pri hiši 2880, nogomet na travi 3208, ribiči na bregu Zbiljskega jezera 3604, kolesarji 4384 |
 | Moki Dugway, ZDA | 2 | kamp s prikolico 264, fotografi na bregu 4880 |
 | Monterey, ZDA | 6 | fotografi in TV kamera 944, maršali 1440, gasilci in reševalci 1904, oder iz gradbenih odrov 2288, tribuna z valom 3160, žar pred avtodomom 3560 |
 | Montréal, Kanada | 7 | gasilci in reševalci 136, fotografi in TV kamera 1736, maršali 2520, TV ekipa 2656, maršali 3232, odvozna služba 3888, tribuna z valom 4064 |
