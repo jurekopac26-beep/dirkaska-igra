@@ -4,21 +4,21 @@ Predlog I17, odločitev uporabnika 7. 11. 2026 ob 16.05 in 8. 11. ob ~17.40 (tab
 
 ## Stanje
 
-- [x] Korak 1: meritve (skripte po skupinah, čas do menija in do vožnje s CPU 4× in 6×, počasno in hitro 4G, HTTP/1.1, gradnja prog, profili) in ta načrt (8. 11. 2026).
+- [x] Korak 1: meritve (skripte po skupinah, čas do menija in do vožnje s CPU 4× in 6×, počasno in hitro 4G, HTTP/1.1, gradnja vseh pravih prog z 2D platnom na procesorju in v procesu GPU, profili) in ta načrt (8. 11. 2026).
 - [ ] Koraki 2–10 (spodaj, »Vrstni red«): vsak svoja seja in svoj pull request; vsak izmeri učinek z `tools/zagon.mjs` in dopiše številke v tabelo »Učinek po korakih«.
 
 ## Na kratko
 
 - Igra ob zagonu prenese **vse**: 210 skript, 16,2 MB (5,97 MB gzip), od tega so proge in njihovi svetovi 3,5 MB gzip (58 %), samo testne proge 1,25 MB. Igra se začne šele, ko pride zadnja (`window` `load`).
 - Prvi obisk na počasnem 4G (1,47 Mbit/s) in CPU 4×: zadnja skripta pride pri **35,6 s**, meni je pripravljen pri **44 s**, vožnja (hiter vstop, `bathurst`) pri **51 s**. Prvi izris (zaslon z nalaganjem) šele pri 16–20 s, ker CSS tekmuje z 210 skriptami po HTTP/2 (s HTTP/1.1 pri 1,7 s; strežnik orodja prednosti tokov ne upošteva, GitHub Pages morda bolje: preveri na objavljeni strani).
-- Ponovni obisk (service worker in V8 imata vse): skripte so izvedene v ~1 s, a meni je pripravljen šele pri **6,9–12,2 s**, ker zagon pred menijem zgradi cel 3D svet zadnje proge (1,9 s `jezero`, 5,8 s `bathurst`), odpelje 6 s predstavitvene dirke in nariše prve slike 3D (2,5–3,5 s). Vožnja na `bathurst`: 9,2–12,8 s.
-- Gradnja sveta proge iz menija s CPU 4×: 2–41 s (`medvode` 40,7 s, `caracoles` 38,5, `bangsaen` 23,7, `livorno` 19,9, `ouninpohja` 19,8, `pikes` 14,6); to je delo procesorja, ne prenos.
+- Ponovni obisk (service worker in V8 imata vse): skripte so izvedene v ~1 s, a meni je pripravljen šele pri **6,9–12,2 s**, ker zagon pred menijem zgradi cel 3D svet zadnje proge (1,9 s `jezero`, 5,8 s `bathurst`), odpelje 6 s predstavitvene dirke in nariše prve slike 3D (med `Menu.init` in pripravljenim menijem je glavna nit skoraj ves čas zasedena z dolgimi opravili). Vožnja na `bathurst` (hiter vstop): 9,2–14,8 s.
+- Gradnja proge iz menija s CPU 4× (start → vožnja, 2D platno na procesorju): 3,2–24,1 s, mediana 8,7 s, 18 od 27 pravih prog pod 10 s; nad 15 s `medvode` 24,1 s, `bangsaen` 23,9, `ouninpohja` 21,5, `livorno` 18,5, `pikes` 16,6, `nring` 15,1. Skoraj vse je `World.build`, delo procesorja, ne prenos.
 - Cilj ~15 s je dosegljiv: **ponovni obisk** s »menijem najprej« (korak 3) in hitrejšo gradnjo najtežjih svetov (korak 9); **prvi obisk na počasnem 4G** šele, ko se ob zagonu prenese ≤ ~1,5 MB gzip: glave prog, leni graditelji, moduli kasneje, pomanjšanje in izbris testnih prog (koraki 4–8 in 10).
 - Predlagani vrstni red: 2 prvi izris → 3 meni najprej (odločitev uporabnika) → 4 glave prog → 5 leni graditelji → 6 moduli kasneje → 7 pomanjšanje ob objavi → 8 predpomnjenje → 9 hitrejša gradnja → 10 po izbrisu testnih prog.
 
 ## Meritve (povzetek)
 
-Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/stamp.js`, HTTP/2 s TLS, gzip, `max-age=600`, service worker) in jo odpre v Chromiumu (Playwright, zaslon telefona 412 × 915, dotik) z upočasnjenim procesorjem (CDP `Emulation.setCPUThrottlingRate`) in omrežjem (Lighthouse: počasno 4G 1,47 Mbit/s in 562,5 ms, hitro 4G 9 Mbit/s in 170 ms). Igre ne spreminja: časi klicev (`Render.init`, `buildWorld`, `precompile`, `World.build`, korak dirke, `Menu.init`) so ovite ob nalaganju skript. Omejitve: grafika je SwiftShader (čas prevajanja senčilnikov ni tak kot na telefonu in med zavihki ostane v predpomnilniku; primerjaj število programov), indeks hitrosti tega stroja niha (1478–2675; s CPU 4× ~370–670, 6× ~250–440), strežnik orodja (Node `http2`) ne upošteva prednosti tokov HTTP/2, pomnilnik in segrevanje telefona nista posnemana.
+Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/stamp.js`, HTTP/2 s TLS, gzip, `max-age=600`, service worker) in jo odpre v Chromiumu (Playwright, zaslon telefona 412 × 915, dotik) z upočasnjenim procesorjem (CDP `Emulation.setCPUThrottlingRate`) in omrežjem (Lighthouse: počasno 4G 1,47 Mbit/s in 562,5 ms, hitro 4G 9 Mbit/s in 170 ms). Igre ne spreminja: časi klicev (`Render.init`, `buildWorld`, `precompile`, `World.build`, korak dirke, `Menu.init`) so ovite ob nalaganju skript. Omejitve: grafika je SwiftShader v procesu GPU, ki ga CDP ne upočasni (čas prevajanja senčilnikov ni tak kot na telefonu in med zavihki ostane v predpomnilniku, primerjaj število programov; 2D platna riše tam in `getImageData` ter preverjanje senčilnikov čakata nanj, zato je gradnja prog izmerjena tudi s platnom na procesorju, `--platno-cpu`, kar je bližje telefonu), indeks hitrosti tega stroja niha (1478–2675; s CPU 4× ~370–670, 6× ~250–440), strežnik orodja (Node `http2`) ne upošteva prednosti tokov HTTP/2, pomnilnik in segrevanje telefona nista posnemana.
 
 | zagon (CPU 4×, HTTP/2) | prvi izris | zadnja skripta | meni pripravljen | vožnja (`?proga=bathurst`) |
 |---|---|---|---|---|
@@ -35,18 +35,19 @@ Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/
 - **Prenos ob zagonu po skupinah** (gzip, MB): graditelji svetov 1,42 (44 datotek) · proge prave 1,10 (27) · proge testne 0,94 (24) · svet skupno 0,41 (9) · izris 0,37 · avti 0,29 (33) · meni 0,28 (7, od tega zemljevid in prelet `routes.js` + `geo.js` 0,20) · jedro 0,25 · igra 0,24 · misije 0,19 (35) · three.js 0,14 · deli avtov 0,11 · zvok 0,07 · jezik 0,06 · napake 0,04 · zabava 0,03 · peerjs 0,02. Nova mapa (0,43) se že nalaga leno.
 - **Izvajanje skript** je poceni: vse skupine skupaj ~1 s (toplo, CPU 4×); čas je v prenosu (prvi obisk) in v gradnji svetov (vedno).
 - **JS kopica** ob meniju 93–133 MB (naslovnica `jezero`), 228–242 MB z `bathurst`.
-- **Gradnja prog iz menija** (CPU 4×, toplo, start → vožnja): svet (`World.build`) 2,0 s (`tianmen`) do 40,7 s (`medvode`); senčilniki na SwiftShaderju do 28,8 s (`spa`); pri več progah še do 27 s drugega dela med startom in vožnjo (`toronto`, `balea`, `nring`, `ouninpohja`): razčlenitev v profilih (`docs/hitro-nalaganje-meritve.md`).
+- **Gradnja prog iz menija** (CPU 4×, toplo, vsaka proga v svežem zavihku, start → vožnja): z 2D platnom na procesorju 3,2 s (`tianmen`) do 24,1 s (`medvode`), mediana 8,7 s; skoraj vse je `World.build`, senčilniki 0,2–0,5 s (SwiftShader), postavitev dirke in prve slike 0,9–2,1 s, 3–26 novih programov na progo. S platnom v procesu GPU je ista gradnja 26–41 s, ker `getImageData` in preverjanje senčilnikov čakata, da SwiftShader nariše platna (profili: `getShaderInfoLog` 12,7 s pri `bathurst`, `getProgramInfoLog` ob prvi sliki 15,9 s pri `toronto`, `getImageData` 22,8 s pri `caracoles`); to je lastnost merilnega okolja, telefon z grafičnim procesorjem platna nariše hitreje (preveri korak 9).
+- **Medvode** (profil s platnom na procesorju): polni pregled `Track.nearestIdx` (vse točke proge za vsako mesto) 7,4 s, šivi makadama (`gravelSeams`) 3,8 s, postavljanje predmetov (`put`) 2,9 s, ploščice terena 2,4 s.
 
 ## Kje gre čas
 
 1. **Prenos vsega pred zagonom.** `index.html` ima 210 navadnih `<script>` na koncu strani; `boot()` v `js/game.js` teče ob `window` `load`. Na počasnem 4G vse skripte tečejo vzporedno (~180 kB/s), zato tudi prva pride pozno, CSS pa z njimi (prvi izris 16–20 s).
 2. **Naslovni svet pred menijem.** `boot()` zgradi svet `S.track` (zadnja proga; privzeta `jezero`), naredi predstavitveno dirko (`demoMake(6)`), šele nato `Menu.init`; meni je pripravljen, ko pride `css/menu.css` (`fetch` v `Menu.init`), kar čaka na prve slike 3D (2,5–3,7 s tudi brez omejitve omrežja). Hiter vstop (`?proga=`) gradi naslovni svet in nato še ciljnega.
-3. **Gradnja sveta** težkih prog (2–41 s s CPU 4×) in njihovi senčilniki.
+3. **Gradnja sveta** iz menija: 3–24 s s CPU 4× (mediana 8,7 s), šest prog nad 15 s. Prevajanje senčilnikov (3–26 novih programov na progo) na telefonu še ni izmerjeno.
 4. Malenkosti: `css/menu.css` se prenese dvakrat (povezava z `media="not all"` in `fetch`); `css/napake.css`, `missions.css` in `zabava.css` so v glavi strani in zavirajo prvi izris.
 
 ## Cilj ~15 s: kaj pomeni
 
-- **Ponovni obisk** (večina zagonov; service worker ima igro, žigi pri novi različici prenesejo samo spremenjene datoteke): šteje samo procesor. Danes 9,2–12,8 s do vožnje na `bathurst`, 40+ s na `medvode`. Rešitev: meni najprej (korak 3) in hitrejša gradnja težkih svetov (korak 9).
+- **Ponovni obisk** (večina zagonov; service worker ima igro, žigi pri novi različici prenesejo samo spremenjene datoteke): šteje samo procesor. Danes 9,2–14,8 s do vožnje na `bathurst` (hiter vstop), gradnja `medvode` iz menija 24 s. Rešitev: meni najprej (korak 3) in hitrejša gradnja težkih svetov (korak 9).
 - **Prvi obisk na počasnem 4G**: 15 s je ~2,5 s strani + prenos + zagon. Ob zagonu sme biti ≤ ~1,5 MB gzip in proga z graditeljem ≤ ~0,3 MB. Danes 5,97 MB.
 - **Ovoj za Google Play** (`docs/igra.md`: TWA ali spletni pogled) še ni izbran: s TWA velja prvi obisk s strani, s spletnim pogledom (Capacitor) so datoteke v aplikaciji in šteje samo procesor (kot ponovni obisk). Koraki 3 in 9 pomagajo v obeh, koraki 2 in 4–8 predvsem spletni igri in TWA.
 
@@ -108,7 +109,9 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 - Tveganja: posodobitev (žigi) in brisanje starih datotek (`activate`) za lene datoteke; test `sw` (če obstaja) in ročni preizkus brez povezave.
 
 ### Korak 9 · Hitrejša gradnja težkih svetov
-- Po profilih (`docs/hitro-nalaganje-meritve.md`, »Profili«): najprej `medvode`, `caracoles`, `bangsaen`, `livorno`, `ouninpohja`, `pikes`; ena seja na progo ali skupino. Ideje: vnaprej izračunani podatki (višine, postavitev dreves) v datoteki proge, manj ponovljenega dela, gradnja v kosih z `await` (zaslon z nalaganjem se premika, meni ne zamrzne), senčilniki: manj različnih materialov.
+- Najprej meritev na pravem telefonu (Chrome z oddaljenim razhroščevanjem, plošča Performance): gradnja, senčilniki, prve slike. SwiftShader in upočasnitev CDP tega ne posnemata natančno (platno v procesu GPU 26–41 s, na procesorju 3–24 s).
+- Proge nad 15 s (glavna tabela v `docs/hitro-nalaganje-meritve.md`), profil vsake z `--profil <id> --platno-cpu`: `medvode` (polni pregled `Track.nearestIdx` 7,4 s → iskanje od prejšnjega indeksa ali mreža z enakim izidom; šivi makadama 3,8 s; šele po #494, ki prinese novo Medvode), `ouninpohja`, `livorno`, `pikes`, `nring`; `bangsaen` odpade (po #379 testna). Ena seja na progo ali skupino.
+- Skupno: teksture, ki jih svet nariše na 2D platno in nato bere (`getImageData`: `vrGritTex`, `gravelTone`), naj nastanejo kot `ImageData` ali na platnu z `willReadFrequently`, enkrat za vse proge; `renderer.debug.checkShaderErrors = false` v objavljeni igri (brez sinhronega branja dnevnikov senčilnikov); `precompile` po `attachRace` (avti, senčni prehod), da prva slika ne prevaja več; vnaprej izračunani podatki (višine, postavitev dreves) v datoteki proge; gradnja v kosih z `await` (zaslon z nalaganjem se premika, gradnja v ozadju za korak 3, možnost 2).
 - Merilo: `World.build` ≤ ~5 s s CPU 4× za vsako pravo progo; `perf.test.mjs` brez slabše obremenitve; golden sveta se spremeni samo, če se svet res spremeni.
 
 ### Korak 10 · Po izbrisu testnih prog (pred Google Play)
@@ -134,7 +137,7 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 | 6 moduli kasneje | Opus ali Sonnet | 4 (nalagalnik) | −0,5 MB |
 | 7 pomanjšanje ob objavi | Opus | – | −22 % |
 | 8 predpomnjenje | Opus | 4–6 | prvi obisk brez tekmovanja s shranjevanjem |
-| 9 hitrejša gradnja | Opus, max (svet) | – | težke proge ≤ ~5 s |
+| 9 hitrejša gradnja | Opus, max (svet) | meritev na telefonu | težke proge ≤ ~5 s |
 | 10 po izbrisu testnih prog | Opus | izbris testnih prog | ob zagonu 1,27 MB |
 
 Koraki 2, 3, 7 in 9 so neodvisni od 4–6 in lahko tečejo prej; 4–6 se dotikajo istih mest (`index.html`, `game.js` `ensureTrack`, `tests/lib/core.js`), zato drug za drugim. Koraka 3 in 4 spreminjata meni (`js/menu.js`: naslovnica, `Menu.init`, ovinki na karticah) kot vgradnja nove izbire proge (#516, jure.kopac26, Načrtovano 8. 11.): začneta po njej ali po dogovoru na tabli #382. Vsak korak je svoj pull request in v vrsti ni med progami (`CLAUDE.md`: proge v vrsti zadnje).
@@ -150,9 +153,9 @@ Vsak korak dopiše vrstico (CPU 4×, `node tools/zagon.mjs --cpu 4 --net slow4g 
 
 | po koraku | prvi obisk: prvi izris / meni / vožnja | ponovni obisk: meni / vožnja | ob zagonu (gzip) |
 |---|---|---|---|
-| 1 (8. 11. 2026, izhodišče) | 16,5–20,5 / 43,2–44,4 / 50,8 s | 6,9–12,2 / 9,2–12,8 s | 5,97 MB |
+| 1 (8. 11. 2026, izhodišče) | 16,5–20,5 / 43,2–44,4 / 50,8 s | 6,9–12,2 / 9,2–12,8 s (platno na procesorju 6,7–13,2 / 11,8–14,8 s) | 5,97 MB |
 
 ## Ponovitev meritev
 
-- `node tools/zagon.mjs --cpu 4 --net slow4g --proga bathurst --warm --out <datoteka.json>`: prvi in ponovni obisk; `--tracks [--fresh] [--samo a,b]`: gradnja prog iz menija; `--profil <id>`: profil gradnje; `--from <datoteka.json>`: povzetek znova. Opis na vrhu orodja.
+- `node tools/zagon.mjs --cpu 4 --net slow4g --proga bathurst --warm --out <datoteka.json>`: prvi in ponovni obisk; `--tracks [--fresh] [--samo a,b]`: gradnja prog iz menija (glavna tabela: `--menu-only --tracks --fresh --platno-cpu`, ~20 min); `--platno-cpu`: 2D platna na procesorju; `--profil <id>`: profil gradnje; `--from <datoteka.json>`: povzetek znova. Opis na vrhu orodja.
 - Krog traja ~10 min (s `--tracks` ~25 min). Primerjaj s CPU 4× in istim omrežjem; indeks hitrosti stroja izpiše orodje (niha med krogi, zato isto meritev ponovi in vzemi razpon).
