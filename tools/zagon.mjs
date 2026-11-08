@@ -12,6 +12,8 @@
 //     --warm       also the next visit in the same profile (HTTP cache, the service worker's saved game, V8's code cache)
 //     --h1         HTTP/1.1 instead of HTTP/2 (6 connections per host: as a server without HTTP/2)
 //     --tracks     also each real track's build from the menu (World build + shaders, Render.buildWorld + precompile), warm
+//     --profil id  a CPU profile of one track's build from the menu (warm): the functions that take the time (self and with callees)
+//     --from f     the summary again from a saved --out file (nothing measured)
 //     --out        the raw results (JSON); the summary goes to stdout
 import fs from 'node:fs';
 import path from 'node:path';
@@ -102,7 +104,7 @@ const HOOKS = () => {
       if (src === 'js/render.js') wrap(eval('Render'), 'Render', ['init', 'buildWorld', 'precompile']);
       if (src === 'js/world.js') wrap(eval('World'), 'World', ['build']);
       if (src === 'js/core.js') wrap(eval('Core').Race.prototype, 'Race', ['step']);
-      if (src === 'js/menu.js') wrap(window.Menu, 'Menu', ['init']);
+      if (src === 'js/menu.js') wrap(window.Menu, 'Menu', ['init', 'show']);
     } catch (_) { }
   }, true);
   document.addEventListener('DOMContentLoaded', () => mark('dcl'));
@@ -145,6 +147,14 @@ function groupOf(f) {
   return 'drugo';
 }
 
+// the test tracks (test: true) and the themes of their worlds (js/world-<theme>.js)
+function testTracks() {
+  for (const f of fs.readdirSync(path.join(REPO, 'js/tracks'))) {
+    const src = fs.readFileSync(path.join(REPO, 'js/tracks', f), 'utf8'), t = /\btheme:\s*'([a-z0-9]+)'/.exec(src);
+    if (/\btest:\s*true/.test(src)) { TEST.add(f.replace(/\.js$/, '')); if (t) TEST.add(t[1]); }
+  }
+}
+
 async function run(browser, base, kind, cdpOpts, ctx) {
   const own = !ctx;
   if (!ctx) ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 1, hasTouch: true, isMobile: false, ignoreHTTPSErrors: true });
@@ -167,6 +177,7 @@ async function run(browser, base, kind, cdpOpts, ctx) {
   const res = await page.evaluate(() => ({
     nav: (() => { const n = performance.getEntriesByType('navigation')[0]; return n && { responseStart: Math.round(n.responseStart), responseEnd: Math.round(n.responseEnd), dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd), proto: n.nextHopProtocol }; })(),
     res: performance.getEntriesByType('resource').map(r => ({ u: r.name.replace(/^https?:\/\/[^/]+\//, '').replace(/\?.*$/, ''), t: r.initiatorType, s: Math.round(r.startTime), e: Math.round(r.responseEnd), tb: r.transferSize, eb: r.encodedBodySize, db: r.decodedBodySize, p: r.nextHopProtocol })),
+    paint: Object.fromEntries(performance.getEntriesByType('paint').map(p => [p.name, Math.round(p.startTime)])),
     zt: window.__zt, loadMs: window.__game ? window.__game.loadMs : null, sw: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
     mem: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null,
   }));
@@ -188,43 +199,54 @@ function sum(r) {
   let prev = r.nav ? r.nav.responseEnd : 0; const exec = {};
   for (const [u, t] of r.zt.scripts) { const st = Math.max(prev, arrive[u] || 0); const g = groupOf(u); exec[g] = (exec[g] || 0) + Math.max(0, t - st); prev = t; }
   const callMs = (n, from = 0, to = Infinity) => Math.round(C.filter(c => c.n === n && c.t0 >= from && c.t0 < to).reduce((a, c) => a + c.ms, 0));
-  const firstAfter = (n, t) => C.find(c => c.n === n && c.t0 >= t);
-  const bootFrom = M.load || 0, bootTo = (r.zt.marks.find(([n, t]) => n === 'loadingOff' && t >= bootFrom) || [0, 0])[1];
+  const bootFrom = M.load || 0, offs = r.zt.marks.filter(([n, t]) => n === 'loadingOff' && t >= bootFrom).map(([, t]) => t);
+  // (the worlds built after the scripts, in order: the title's at the boot, then the quick entry's track; the shaders compiled for it)
+  const worlds = C.filter(c => c.n === 'Render.buildWorld' && c.t0 >= bootFrom), shaders = C.filter(c => c.n === 'Render.precompile' && c.t0 >= bootFrom);
+  const titleEnd = worlds.length ? worlds[0].t1 : 0, demo = C.filter(c => c.n === 'Race.step' && c.t0 >= titleEnd && c.t0 < titleEnd + 20000)[0];
+  const bootTo = r.kind === 'proga' ? Math.round(demo ? demo.t1 : titleEnd) : (offs[0] || 0);
   const out = {
     kind: r.kind, wall: r.wall, sw: r.sw, mem: r.mem, errors: r.errors.length,
     html: r.nav && r.nav.responseEnd, dcl: M.dcl, load: M.load, lastScript: Math.max(0, ...scripts.map(x => x.e)),
     bytes: { all: r.res.reduce((a, x) => a + x.tb, 0), scripts: scripts.reduce((a, x) => a + x.tb, 0), n: scripts.length },
-    boot: { from: bootFrom, to: bootTo, renderInit: callMs('Render.init', bootFrom, bootTo), buildWorld: callMs('Render.buildWorld', bootFrom, bootTo), demo: callMs('Race.step', bootFrom, bootTo) },
+    paint: r.paint && r.paint['first-contentful-paint'],
+    boot: { from: bootFrom, to: bootTo, renderInit: callMs('Render.init', bootFrom, bootTo + 1), buildWorld: worlds.length ? Math.round(worlds[0].ms) : 0, demo: demo ? Math.round(demo.ms) : 0 },
+    menuInit: (C.find(c => c.n === 'Menu.init') || {}).t0, menuShow: Math.round(C.filter(c => c.n === 'Menu.show').reduce((a, c) => a + c.ms, 0)),
     menuReady: M.menuReady, raceAt: (r.zt.marks.find(([n]) => n.startsWith('race:')) || [])[1],
     groups: by, exec,
   };
   if (r.kind === 'proga') {
-    const bw = C.filter(c => c.n === 'Render.buildWorld' && c.t0 >= bootTo), pc = C.filter(c => c.n === 'Render.precompile' && c.t0 >= bootTo);
-    out.track = { buildWorld: Math.round(bw.reduce((a, c) => a + c.ms, 0)), precompile: Math.round(pc.reduce((a, c) => a + c.ms, 0)), loadMs: r.loadMs && Math.round(r.loadMs) };
-    out.drive = Math.max(...r.zt.marks.filter(([n]) => n === 'loadingOff').map(([, t]) => t));
+    const bw = worlds.length > 1 ? worlds[worlds.length - 1] : null, pc = shaders[shaders.length - 1];
+    out.track = { buildWorld: bw ? Math.round(bw.ms) : 0, precompile: pc ? Math.round(pc.ms) : 0, loadMs: r.loadMs && Math.round(r.loadMs), worlds: worlds.length };
+    out.drive = Math.max(...offs);
   }
-  void firstAfter;
   return out;
 }
 const s = (ms) => ms == null ? '–' : (ms / 1000).toFixed(1) + ' s';
 const mb = (b) => (b / 1048576).toFixed(2) + ' MB';
 function print(o, label) {
-  console.log(`${label}: HTML ${s(o.html)} · zadnja skripta prispela ${s(o.lastScript)} (${o.bytes.n} skript, ${mb(o.bytes.scripts)} prenosa, vse ${mb(o.bytes.all)}) · skripte izvedene (load) ${s(o.load)}`);
-  console.log(`   zagon ${s(o.boot.from)}–${s(o.boot.to)}: Render.init ${s(o.boot.renderInit)}, svet za naslovnico ${s(o.boot.buildWorld)}, predstavitvena dirka ${s(o.boot.demo)} · meni pripravljen ${s(o.menuReady)}${o.sw ? ' · service worker' : ''}${o.errors ? ' · NAPAKE ' + o.errors : ''}`);
+  console.log(`${label}: HTML ${s(o.html)} · prvi izris ${s(o.paint)} · zadnja skripta prispela ${s(o.lastScript)} (${o.bytes.n} skript, ${mb(o.bytes.scripts)} prenosa, vse ${mb(o.bytes.all)}) · skripte izvedene (load) ${s(o.load)}`);
+  console.log(`   zagon ${s(o.boot.from)}–${s(o.boot.to)}: Render.init ${s(o.boot.renderInit)}, svet za naslovnico ${s(o.boot.buildWorld)}, predstavitvena dirka ${s(o.boot.demo)} · Menu.init ${s(o.menuInit)}, izris menija ${s(o.menuShow)} · meni pripravljen ${s(o.menuReady)}${o.sw ? ' · service worker' : ''}${o.errors ? ' · NAPAKE ' + o.errors : ''}`);
   if (o.track) console.log(`   proga ${PROGA}: svet ${s(o.track.buildWorld)}, senčilniki ${s(o.track.precompile)} · do vožnje ${s(o.drive)}`);
   const ex = Object.entries(o.exec).sort((a, b) => b[1] - a[1]).map(([g, ms]) => g + ' ' + s(ms)).join(', ');
   console.log(`   izvajanje skript po skupinah: ${ex}`);
 }
 
 const main = async () => {
-  for (const f of fs.readdirSync(path.join(REPO, 'js/tracks'))) if (/\btest:\s*true/.test(fs.readFileSync(path.join(REPO, 'js/tracks', f), 'utf8'))) TEST.add(f.replace(/\.js$/, ''));
-  // (the world files of the test tracks by their theme: js/world-<theme>.js)
-  for (const f of fs.readdirSync(path.join(REPO, 'js/tracks'))) { const t = /\btheme:\s*'([a-z0-9]+)'/.exec(fs.readFileSync(path.join(REPO, 'js/tracks', f), 'utf8')); if (t && TEST.has(f.replace(/\.js$/, ''))) TEST.add(t[1]); }
+  testTracks();
+  if (opt('--from', null)) {   // (the summary again from a saved run: --from file.json)
+    const o = JSON.parse(fs.readFileSync(opt('--from'), 'utf8'));
+    console.log(`CPU ${o.cpu}× (indeks ${o.benchmark}), omrežje ${o.net}${o.h1 ? ', HTTP/1.1' : ', HTTP/2'}, ${o.chromium}, ${o.when}`);
+    const firstWarm = o.runs.findIndex(r => r.warm === false && o.runs.indexOf(r) > 0 && o.runs[o.runs.indexOf(r) + 1] && o.runs[o.runs.indexOf(r) + 1].warm);
+    o.runs.forEach((r, i) => print(sum(r.raw), (r.warm ? 'toplo ' : i === firstWarm ? 'prvi obisk ' : 'hladno ') + r.raw.kind));
+    for (const t of o.tracks || []) console.log(`   ${t.id.padEnd(14)} start→dirka ${s(t.total)} · svet ${s(t.buildWorld)} (World.build ${s(t.worldBuild)}) · senčilniki ${s(t.precompile)}`);
+    return;
+  }
   const root = stampedCopy(), srv = await serve(root, has('--h1'));
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-certificate-errors'] });
   const out = { when: new Date().toISOString(), cpu: CPU, net: NET, proga: PROGA, h1: has('--h1'), node: process.version, chromium: browser.version(), cores: os.cpus().length, runs: [] };
   { const ctx = await browser.newContext({ ignoreHTTPSErrors: true }), p = await ctx.newPage(); await p.goto('about:blank'); out.benchmark = await benchmark(p); await ctx.close(); }
   console.log(`CPU ${CPU}× (indeks tega stroja ${out.benchmark}, s CPU ${CPU}× ~${Math.round(out.benchmark / CPU)}), omrežje ${NET}${has('--h1') ? ', HTTP/1.1' : ', HTTP/2'}, ${out.chromium}`);
+  if (opt('--profil', null)) { out.profile = await profileBuild(browser, srv.base, opt('--profil')); await browser.close(); await srv.close(); if (OUT) fs.writeFileSync(OUT, JSON.stringify(out)); fs.rmSync(root, { recursive: true, force: true }); return; }
   const kinds = has('--menu-only') ? ['menu'] : ['menu', 'proga'];
   for (let k = 0; k < RUNS; k++) for (const kind of kinds) {
     const r = await run(browser, srv.base, kind); const o = sum(r); out.runs.push({ raw: r, sum: o }); print(o, `hladno ${kind} #${k + 1}`);
@@ -269,6 +291,41 @@ async function trackBuilds(ctx, base) {
   }
   await page.close();
   return rows;
+}
+
+// one track's build from the menu under the CPU profiler (sampling every 0.5 ms), warm: the time by function, self and with its callees
+async function profileBuild(browser, base, id) {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 1, hasTouch: true, ignoreHTTPSErrors: true });
+  const page = await ctx.newPage(), cdp = await ctx.newCDPSession(page);
+  await page.addInitScript(() => { try { localStorage.setItem('tdgp-menu', 'old'); } catch (_) { } });
+  for (let k = 0; k < 2; k++) { await page.goto(base + '/', { timeout: 600000 }); await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('off'), null, { timeout: 600000 }); }
+  if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
+  await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 500 });
+  await page.evaluate(async () => { const g = window.__game, w = (ms) => new Promise(r => setTimeout(r, ms)); g.onAction('to-title'); await w(250); g.onAction('to-track'); await w(250); });
+  await page.evaluate((id) => { document.querySelector(`[data-track="${id}"]`).click(); }, id);
+  await page.waitForTimeout(200);
+  await cdp.send('Profiler.start');
+  const t0 = Date.now();
+  await page.evaluate(() => window.__game.onAction('start'));
+  await page.waitForFunction((id) => window.__game.race && window.__game.race.track.def.id === id && document.getElementById('loading').classList.contains('off'), id, { timeout: 600000, polling: 100 });
+  const wall = Date.now() - t0, { profile } = await cdp.send('Profiler.stop');
+  await ctx.close();
+  // self time of each node, then by function (name + file + line); with callees: each sample counts once for every function on its stack
+  const byId = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();
+  for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
+  const selfMs = new Map(); profile.samples.forEach((sid, i) => selfMs.set(sid, (selfMs.get(sid) || 0) + (profile.timeDeltas[i] || 0) / 1000));
+  const key = (n) => { const f = n.callFrame; return (f.functionName || '(anonym)') + ' ' + (f.url ? f.url.replace(/^https?:\/\/[^/]+\//, '').replace(/\?.*$/, '') + ':' + (f.lineNumber + 1) : ''); };
+  const self = new Map(), total = new Map();
+  for (const [sid, ms] of selfMs) {
+    const n = byId.get(sid); self.set(key(n), (self.get(key(n)) || 0) + ms);
+    const seen = new Set(); for (let x = sid; x != null; x = parent.get(x)) { const k = key(byId.get(x)); if (!seen.has(k)) { seen.add(k); total.set(k, (total.get(k) || 0) + ms); } }
+  }
+  const top = (m, n) => [...m].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, ms]) => [k, Math.round(ms)]);
+  const res = { id, wall, self: top(self, 40), total: top(total, 60) };
+  console.log(`profil ${id} (CPU ${CPU}×): start→dirka ${s(wall)}`);
+  console.log('   največ s klici:'); for (const [k, ms] of res.total.slice(0, 30)) console.log('     ' + s(ms).padStart(7) + '  ' + k);
+  console.log('   največ samo zase:'); for (const [k, ms] of res.self.slice(0, 20)) console.log('     ' + s(ms).padStart(7) + '  ' + k);
+  return res;
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
