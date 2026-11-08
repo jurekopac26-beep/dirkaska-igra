@@ -1826,7 +1826,7 @@
   function anSample(P) {   // after each physics step
     const A = an; if (!A || race.state === 'grid') return;
     if (P.lap !== A.lap) {   // the line
-      if (A.tr && !track.open && P.lapTimes.length) anEnd(A, P.lapTimes[P.lapTimes.length - 1]);
+      if (A.tr && !track.open && P.lap === A.lap + 1 && P.lapTimes.length) anEnd(A, P.lapTimes[P.lapTimes.length - 1]);   // (only over the line: Posnetek do sem can take the car back a lap)
       A.lap = P.lap; A.tr = P.lap >= 1 && !P.finished ? Analiza.start(A.L) : null;
       if (A.tr) A.tr.standing = !track.open && P.lap === 1 && !race.quali;   // (a race's first lap: from the grid)
     }

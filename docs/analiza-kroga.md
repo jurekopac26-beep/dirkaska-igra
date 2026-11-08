@@ -15,3 +15,4 @@ Po vsakem krogu zemljevid proge, ki pokaže, kje si izgubil (rdeče) ali pridobi
 
 ## Stanje
 - 8. 11. 2026: začetek dela (seja biketraveler).
+- 8. 11. 2026: narejeno; testi `tests/analiza.test.js` (16) in `tests/browser/analiza.test.mjs` (9), povezani testi lokalno zeleni (14/14); v vrsti za `main` (#511, osnutek do vrste).
