@@ -761,13 +761,19 @@
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
-  // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2): index.html?voznja=1 turns it on, ?voznja=0 off (kept
-  // in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by it
-  // (Race opts.voznja, Race._voznja)
+  // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
+  // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
+  // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
+  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja)
   const VZ_KEY = 'rr_voznja';
   let vzOn = false;
   try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
-  const voznjaOf = (def) => { if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined; const L = VOZNJA_PROFILI.filter(p => p.proga === def.id); return L.length ? L : undefined; };
+  const voznjaOf = (def) => {
+    if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
+    const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
+    if (!def.test && !def.pending && typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);
+    return L.length ? L : undefined;
+  };
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
   // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
   // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)

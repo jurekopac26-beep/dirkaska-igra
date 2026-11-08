@@ -10,6 +10,8 @@
 // (Napake.rrp.unpack) and finds the car on the track (Core.Track.query: s and d; tests/lib/core.js).
 //   node tools/voznja.mjs posnetek_bathurst_20261105-1432.rrp posnetek_bathurst_20261105-1510.rrp
 //   node tools/voznja.mjs mapa/*.rrp --out profil.json [--korak 5]
+//   node tools/voznja.mjs mapa/*.rrp --js js/data/voznja.js [--k0 0.95] [--ks 1.4]   (the game's data: the profiles and the style, Korak 2 and 3)
+//   node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]   (the style anew from the file's own profiles, slogOf; no recordings)
 // Out: test-results/voznja/profil.json and povzetek.txt (--out <file>.json: the summary beside it as <file>.txt; --out <folder>: both in it).
 // The user's recordings and profiles stay out of the repository (CLAUDE.md, Orodje za napake). tests/voznja.test.js: a recording made by Core.
 import fs from 'node:fs';
@@ -554,21 +556,92 @@ export function gameData(profil, kal) {
   }
   return out;
 }
-export function gameDataJs(list, date) {
-  return '/* Profili vožnje igralca za tekmece (docs/ai-po-tvoji-liniji.md, korak 2): samo povprečja, ki jih je iz posnetkov dirk izmeril\n' +
+/* ---------------- the player's style (--slog, VOZNJA_SLOG; docs/ai-po-tvoji-liniji.md, Korak 3): what the game's dry profiles say about
+   each kind of corner, for the AI on every track without a profile of its own (Race._voznja, Core.voznjaIzSloga). A profile's points by
+   the corner they are in (Core.voznjaFaze on the speed profile of a race in the profile's car: the corners Race._voznja finds), the corners
+   in classes by their apex's radius (SLOG.meje: the hairpins, the tight corners; the quicker ones none: there the AI is its own), each class
+   at the median radius of its corners (r). Per class at each SLOG.fe node (−1: the top speed before the corner .. 0: its apex) the means of
+   vq (measured points only), pl, ql, qh (a triangle hF wide), at each SLOG.m node (m from the apex, − before it) the mean of dd toward the
+   inside (hM wide); k0, ks the profiles' own. A class with fewer than najmanj corners is left out. previdno (--previdno): the share of the
+   player's pace over the profile the AI takes (Core.voznjaIzSloga): 0.3 makes a race of the style on Tianmen as quick as one on the
+   player's own profile there (5 Perun rivals, medium, three seeds: 205.4 s against 205.6 s; the whole share 200.5 s, and on the other real
+   tracks more of the cars off the road). No verge (the profiles' tr, dt): where the player went over it is the track's own; the style
+   over it (at every hairpin as often as the player at theirs) put the cars off the road and spun them, on Tianmen too ---------------- */
+export const SLOG = { fe: [-1, -0.8, -0.6, -0.4, -0.25, -0.12, 0], m: [-80, -60, -45, -30, -20, -10, 0, 10, 20, 30, 45, 60, 80], meje: [12, 30], rr: [30, 70], izhod: 0.3, sirina: 2.8,
+  previdno: 0.3, hF: 0.12, hM: 8, najmanj: 3 };
+export function slogOf(list, C, opts = {}) {
+  C = C || loadCore();
+  const dry = (list || []).filter(p => p && !/^mokro|zima/.test(p.vreme || '') && p.vq && p.vq.length > 1), tc = new Map(), K = SLOG.meje.length;
+  if (!dry.length) return null;
+  const B = Array.from({ length: K }, () => ({ R: [], pts: [] }));   // (per class: its corners' radii, the points)
+  let wk = 0, k0 = 0, ks = 0;
+  for (const V of dry) {
+    const t = trackOf(C, tc, V.proga); if (!t) continue;
+    const T = t.T, M = C.MODELS.find(m => m.id === V.avto) || C.MODELS[0], orig = Math.random;
+    let vp; try { Math.random = seeded(7); vp = new C.Race(T, { numAI: 0, playerModel: M, laps: 1, seed: 7, damage: 0 }).vprof; } finally { Math.random = orig; }
+    const F = C.voznjaFaze(T, vp), k = V.korak || 5, n = V.vq.length, cOf = (R) => { for (let q = 0; q < K; q++) if (R < SLOG.meje[q]) return q; return -1; }, seen = new Set();
+    for (let j = 0; j < n; j++) {
+      const i = T.idx(T.open ? T.startS + j * k : (T.startS + j * k) % T.len), c = F.k[i], cl = F.lk[i];
+      if (c >= 0) { const q = cOf(F.C[c].R), fe = F.fe[i]; if (q >= 0 && fe <= 0) B[q].pts.push({ f: 'fe', x: fe, vq: V.vq[j], pl: V.pl[j], ql: V.ql ? V.ql[j] : 1, qh: V.qh ? V.qh[j] : 1 }); }
+      if (cl < 0) continue;
+      const A = F.C[cl], q = cOf(A.R); if (q < 0) continue;
+      if (!seen.has(cl)) { seen.add(cl); B[q].R.push(A.R); }
+      B[q].pts.push({ f: 'm', x: F.lm[i], dd: V.dd[j] * A.dir });
+    }
+    if (V.k0 > 0 && V.ks > 0) { wk += n; k0 += V.k0 * n; ks += V.ks * n; }
+  }
+  const kern = (X, h, key, use) => (pts) => X.map(x => { let sw = 0, s = 0; for (const p of pts) { if (!use(p)) continue; const w = Math.max(0, 1 - Math.abs(p.x - x) / h); sw += w; s += w * p[key]; } return sw > 0.5 ? s / sw : NaN; });
+  const fillN = (A, dflt) => { const ok = A.map(Number.isFinite); if (!ok.some(Boolean)) return A.map(() => dflt); return A.map((x, i) => { if (ok[i]) return x; let a = i, b = i; while (a >= 0 && !ok[a]) a--; while (b < A.length && !ok[b]) b++; return a < 0 ? A[b] : b >= A.length ? A[a] : A[a] + (A[b] - A[a]) * (i - a) / (b - a); }); };
+  const med = (a) => { const s = a.slice().sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const r3x = (x) => Math.round(x * 1000) / 1000, r2x = (x) => Math.round(x * 100) / 100, out = [];
+  for (const b of B) {
+    if (b.R.length < SLOG.najmanj) continue;
+    const pf = b.pts.filter(p => p.f === 'fe'), pm = b.pts.filter(p => p.f === 'm'), fe = (key, use) => fillN(kern(SLOG.fe, SLOG.hF, key, use || (() => true))(pf), 1);
+    const vq = fe('vq', p => p.vq > 0), ql = fe('ql', p => p.vq > 0), qh = fe('qh', p => p.vq > 0), pl = fe('pl'), dd = fillN(kern(SLOG.m, SLOG.hM, 'dd', () => true)(pm), 0);
+    out.push({ r: r2x(med(b.R)), ovinkov: b.R.length, vq: vq.map(r3x), pl: pl.map(r3x), ql: ql.map(r3x), qh: qh.map(r3x), dd: dd.map(r2x) });
+  }
+  if (!out.length) return null;
+  const S = { vreme: 'suho', korak: dry[0].korak || 5, iz: [...new Set(dry.map(p => p.proga))], fe: SLOG.fe, m: SLOG.m, rr: SLOG.rr, izhod: SLOG.izhod, sirina: SLOG.sirina,
+    previdno: opts.previdno != null ? opts.previdno : SLOG.previdno, razredi: out };
+  if (wk) { S.k0 = r3x(k0 / wk); S.ks = r3x(ks / wk); }
+  return S;
+}
+export function gameDataJs(list, date, slog) {
+  return '/* Profili vožnje igralca za tekmece (docs/ai-po-tvoji-liniji.md, koraka 2 in 3): samo povprečja, ki jih je iz posnetkov dirk izmeril\n' +
     '   tools/voznja.mjs (--js); posnetkov v repozitoriju ni. Vsak profil: proga, vreme, razred (avti tekmecev), korak (m od štartne črte), dd (odmik\n' +
     '   od linije avtopilota v istem avtu, m, + desno), vq (delež tempa čez tla, 0: ni meritve), pl (1: na plinu), ql, qh (počasnejši, hitrejši\n' +
-    '   krogi), k0, ks (umeritev tempa tekmecev), tr, dt (čez rob ceste). Bere Race._voznja (js/core.js) prek\n' +
-    '   opts.voznja (js/game.js, vklop index.html?voznja=1). Samo podatki' + (date ? '; ' + date : '') + '. */\n' +
-    'var VOZNJA_PROFILI = ' + (list.length ? '[\n' + list.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]' : '[]') + ';\n';
+    '   krogi), k0, ks (umeritev tempa tekmecev), tr, dt (čez rob ceste). VOZNJA_SLOG (--slog): slog igralca iz suhih profilov za proge brez\n' +
+    '   svojega profila, po vrstah ovinkov (razredi po polmeru temena r: vq, pl, ql, qh po fazi fe od največje hitrosti pred ovinkom do temena,\n' +
+    '   dd po metrih m od temena proti notranji strani; previdno: delež hitrosti nad profilom; čez rob ceste nikoli). Bere Race._voznja\n' +
+    '   (js/core.js) prek opts.voznja (js/game.js,' +
+    ' vklop index.html?voznja=1). Samo podatki' + (date ? '; ' + date : '') + '. */\n' +
+    'var VOZNJA_PROFILI = ' + (list.length ? '[\n' + list.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]' : '[]') + ';\n' +
+    'var VOZNJA_SLOG = ' + (slog ? '{\n' + Object.keys(slog).map(k => '  ' + JSON.stringify(k) + ': ' + (k === 'razredi' ? '[\n' + slog.razredi.map(c => '    ' + JSON.stringify(c)).join(',\n') + '\n  ]' : JSON.stringify(slog[k]))).join(',\n') + '\n}' : 'null') + ';\n';
+}
+// the profiles of a game data file (VOZNJA_PROFILI of js/data/voznja.js; --slog without recordings)
+export function readGameData(file) {
+  const cx = vm.createContext({}); vm.runInContext(fs.readFileSync(file, 'utf8') + '\n;this.L = typeof VOZNJA_PROFILI === "undefined" ? null : VOZNJA_PROFILI;', cx);
+  if (!Array.isArray(cx.L)) throw new Error(file + ': ni VOZNJA_PROFILI');
+  return cx.L;
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; };
-  const outArg = flag('--out'), korak = flag('--korak'), jsArg = flag('--js'), k0 = flag('--k0'), ks = flag('--ks'), files = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
-  const kOk = (x, a, b) => x == null || (+x >= a && +x <= b);
-  if (!files.length || bad.length || (korak != null && !(+korak >= 1 && +korak <= 50)) || !kOk(k0, 0.8, 1.1) || !kOk(ks, 0.5, 3)) {
-    console.log('usage: node tools/voznja.mjs <posnetek.rrp> [...] [--out <profil.json>|<mapa>] [--korak <m>] [--js js/data/voznja.js [--k0 0.8-1.1] [--ks 0.5-3]]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
+  const outArg = flag('--out'), korak = flag('--korak'), jsArg = flag('--js'), k0 = flag('--k0'), ks = flag('--ks'), slogArg = flag('--slog'), pvArg = flag('--previdno'), files = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
+  const kOk = (x, a, b) => x == null || (+x >= a && +x <= b), today = new Date().toISOString().slice(0, 10);
+  const rel = (f) => { const p = path.relative(process.cwd(), f); return p.startsWith('..') ? f : p; };
+  const pv = pvArg != null ? +pvArg : undefined;
+  if (pvArg != null && !(pv >= 0 && pv <= 1)) { console.log('--previdno: 0-1'); process.exit(2); }
+  if (slogArg && !files.length && !bad.length && !jsArg) {   // (the style anew from a game data file's own profiles: written back into it)
+    const f = path.resolve(slogArg); if (!fs.existsSync(f)) { console.log('no such file: ' + slogArg); process.exit(2); }
+    let L; try { L = readGameData(f); } catch (e) { console.log(String(e.message || e)); process.exit(2); }
+    const S = slogOf(L, null, { previdno: pv }); fs.writeFileSync(f, gameDataJs(L, today, S));
+    console.log(S ? `→ ${rel(f)}: VOZNJA_SLOG iz ${S.iz.join(', ')} (${S.razredi.map(c => 'r ' + c.r + ' m, ' + c.ovinkov + ' ovinkov' + '').join('; ')})` : `→ ${rel(f)}: ni suhega profila, VOZNJA_SLOG null`);
+    process.exit(S ? 0 : 1);
+  }
+  if (!files.length || bad.length || slogArg || (korak != null && !(+korak >= 1 && +korak <= 50)) || !kOk(k0, 0.8, 1.1) || !kOk(ks, 0.5, 3)) {
+    console.log('usage: node tools/voznja.mjs <posnetek.rrp> [...] [--out <profil.json>|<mapa>] [--korak <m>] [--js js/data/voznja.js [--k0 0.8-1.1] [--ks 0.5-3] [--previdno 0-1]]\n' +
+      '       node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0-1]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
     process.exit(2);
   }
   const miss = files.filter(f => !fs.existsSync(f)); if (miss.length) { console.log('no such file: ' + miss.join(', ')); process.exit(2); }
@@ -577,9 +650,8 @@ if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const r = measure(files.map(f => path.resolve(f)), { korak: korak ? +korak : 5 });
   const sumFile = path.basename(json) === 'profil.json' ? path.join(path.dirname(json), 'povzetek.txt') : json.replace(/\.json$/i, '.txt');
   fs.writeFileSync(json, JSON.stringify(r.profil)); fs.writeFileSync(sumFile, r.text + '\n');
-  const rel = (f) => { const p = path.relative(process.cwd(), f); return p.startsWith('..') ? f : p; };
   let jsNote = '';
-  if (jsArg) { const L = gameData(r.profil, { k0: k0 != null ? +k0 : 0, ks: ks != null ? +ks : 0 }); fs.writeFileSync(path.resolve(jsArg), gameDataJs(L, new Date().toISOString().slice(0, 10))); jsNote = ', ' + rel(path.resolve(jsArg)) + ' (' + L.map(p => p.proga + ' ' + p.vreme + ' ' + p.krogov).join('; ') + ')'; }
+  if (jsArg) { const L = gameData(r.profil, { k0: k0 != null ? +k0 : 0, ks: ks != null ? +ks : 0 }), S = slogOf(L, null, { previdno: pv }); fs.writeFileSync(path.resolve(jsArg), gameDataJs(L, today, S)); jsNote = ', ' + rel(path.resolve(jsArg)) + ' (' + L.map(p => p.proga + ' ' + p.vreme + ' ' + p.krogov).join('; ') + (S ? '; slog iz ' + S.iz.join(', ') : '') + ')'; }
   console.log(r.text + '\n\n→ ' + rel(json) + ', ' + rel(sumFile) + jsNote);
   process.exit(r.profil.proge.some(p => p.krogi.uporabljeni.length) ? 0 : 1);
 }
