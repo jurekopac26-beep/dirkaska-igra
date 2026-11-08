@@ -1489,5 +1489,24 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "f9cd11c"
   }
+ },
+ "london": {
+  "meshes": 204,
+  "verts": 270413,
+  "instances": 142,
+  "props": 0,
+  "crowd": 14,
+  "world": "1f08e446",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "eaaeb803",
+   "-:MeshPhongMaterial": "e2af48fe",
+   "crowd:MeshLambertMaterial": "1b0b1e75",
+   "ao:MeshBasicMaterial": "66c7a3f2",
+   "tyremarks:MeshBasicMaterial": "cb8f2bc1",
+   "roadwear:MeshLambertMaterial": "5f3968e8",
+   "brakeBoards:MeshLambertMaterial": "93c129ef"
+  }
  }
 }

@@ -453,6 +453,8 @@
     'Levi ob reki': 'River Left',   // (Kågeröd: its corners by plain descriptions, the river by them)
     'Levi za ciljem': 'Left after the Line', 'Spodnja lasnica': 'Lower Hairpin', 'Zahodna ravnina': 'West Straight', 'Zahodna lasnica': 'West Hairpin', 'Desni čez potok': 'Right over the Brook',
     'Severna ravnina': 'North Straight', 'Esovka': 'The Esses', 'Zadnja lasnica': 'Last Hairpin',   // (Sosnová: its corners by plain descriptions, the brook by them)
+    'Trafalgarski trg': 'Trafalgar Square', 'Proti reki': 'Down to the River', 'Nabrežje Temze': 'Thames Embankment', 'Westminstrski most': 'Westminster Bridge',
+    'Urni stolp': 'Clock Tower', 'Parlamentarni trg': 'Parliament Square',   // (London: Whitehall stays as it is)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Desni pregib': 'Right Kink', 'Levi za lasnico': 'Left after the Hairpin', 'Vzpon skozi gozd': 'Climb through the Woods', 'Desni v gozdu': 'Right in the Woods',
     'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',

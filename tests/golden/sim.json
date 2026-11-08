@@ -5486,5 +5486,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "london/race/cs": {
+  "digest": "c60124c85affc855ab80ac69",
+  "lead": 2310.5,
+  "car0": [
+   -67.69,
+   -439.2
+  ],
+  "cover": {
+   "dmg": 0.08,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/demo/cs": {
+  "digest": "9ecaea49731d9c4bb01fcfd7",
+  "lead": 2407,
+  "car0": [
+   59.71,
+   -410.39
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/upg/cs": {
+  "digest": "cd68edb728b149644f143ca4",
+  "lead": 2401,
+  "car0": [
+   53.05,
+   -412.34
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/crash/cs": {
+  "digest": "89d20f7e1d9bff6f5b4f19a7",
+  "lead": 2301.2,
+  "car0": [
+   -79.84,
+   -427.09
+  ],
+  "cover": {
+   "dmg": 0.32,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/formula/cs": {
+  "digest": "2a3fa30b18de995795c7e1e4",
+  "lead": 2648.9,
+  "car0": [
+   56.16,
+   -411.36
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/lm/cs": {
+  "digest": "b7e64a84ba37ccb8b5bbb3ef",
+  "lead": 2635.8,
+  "car0": [
+   179.04,
+   -379.03
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "london/car/cs": {
+  "digest": "87eabd6970e03b07ef6f0d85",
+  "lead": 2298.9,
+  "car0": [
+   -77.87,
+   -419.58
+  ],
+  "cover": {
+   "dmg": 0.61,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
