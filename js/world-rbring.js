@@ -476,6 +476,7 @@
         const f = Math.min(sstep(-30, 0, al), sstep(Lp + 30, Lp, al), sstep(10.5, 13, lat), sstep(70, 52, lat)); if (!(f > 0)) return h;
         return lerp(h, hyS(sa + clamp(al, 0, Lp)) - 0.14, f); };
     }
+    if (LK.pad) P.pad = LK.pad(P.pad);   // (a world's own shaping of the ground round the circuit: Kågeröd's river bed)
     const PARK = LK.park && def.cp ? cpPrep(P) : null;   // (Crystal Palace: the lakes and the terrace walls cut into the ground)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
@@ -793,7 +794,7 @@
       for (let q = q0 - 20; q < q1 + 20; q += 2) { const s0 = sAt(q), s1 = sAt(q + 2); strip(gq, s0, s1, bw(s0) + 0.45, bw(s0) + F, bw(s1) + 0.45, bw(s1) + F, 0.03, one, true); }   // the apron
       if (PD) for (let q = PD[1]; q < PD[2]; q += 2) {   // the lane: its asphalt where it leaves and joins the circuit, a solid line on its outer edge, a dashed one on the inner
         const s0 = sAt(q), s1 = sAt(q + 2), pi = T.pitAt(s0), pj = T.pitAt(s1); if (!pi || !pj) continue;
-        if (pi.t < 0.999 || pj.t < 0.999) strip(gq, s0, s1, pi.o - 3.5, pi.o + 3.5, pj.o - 3.5, pj.o + 3.5, 0.025, one, true);
+        if (pi.t < 0.999 || pj.t < 0.999 || (LK.lane && (q < q0 - 20 || q >= q1 + 20))) strip(gq, s0, s1, pi.o - 3.5, pi.o + 3.5, pj.o - 3.5, pj.o + 3.5, 0.025, one, true);   // (LK.lane: past the apron too, Kågeröd)
         strip(gl, s0, s1, pi.o + 3.18, pi.o + 3.36, pj.o + 3.18, pj.o + 3.36, 0.04, wl);
         if (((q / 2) | 0) % 2 === 0) strip(gl, s0, s1, pi.o - 3.36, pi.o - 3.18, pj.o - 3.36, pj.o - 3.18, 0.04, wl);
       } else for (let q = q0; q < q1; q += 2) { const s0 = sAt(q), s1 = sAt(q + 2); strip(gl, s0, s1, bw(s0) + 7.8, bw(s0) + 8, bw(s1) + 7.8, bw(s1) + 8, 0.04, wl); }   // (no pits: the lane's line only)

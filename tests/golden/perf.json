@@ -369,5 +369,12 @@
   "kverts": 580,
   "maxKverts": 697,
   "jsMs": 1.82
+ },
+ "kagerod": {
+  "calls": 217,
+  "maxCalls": 243,
+  "kverts": 446,
+  "maxKverts": 477,
+  "jsMs": 1.99
  }
 }

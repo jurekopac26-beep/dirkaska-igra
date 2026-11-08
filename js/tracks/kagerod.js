@@ -29,7 +29,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'kagerod', name: 'Kågeröd, Švedska', theme: 'kagerod', laps: 6, halfWidth: 5.5,
     desc: "Kratko dirkališče v gozdu ob reki Vege å pri Kågerödu v Skåniji: 2,1 km v smeri urinega kazalca, z vzponi in spusti. Ciljna ravnina ob reki, dvojni desni na njenem koncu, dolgi desni okoli depoja, ostri levi pod klancem, vzpon do lasnice na vrhu in spust, nato dvakrat čez reko skozi gozdni ovinek in zadnji ovinek nazaj na ravnino. Ob progi bukov in smrekov gozd, reka, travniki in polja, boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).",
     en: { name: 'Kågeröd, Sweden', desc: "A short circuit in the woods by the Vege å river at Kågeröd in Skåne: 2.1 km, clockwise, up and down a hillside. The finish straight along the river, the double right at its end, the long right round the paddock, the tight left below the hill, the climb to the hairpin at the top and the run back down, then twice over the river through the forest corner and the last corner onto the straight. Beech and spruce woods, the river, meadows and fields by the track, the pits along the finish straight (drive in and the mechanics fix your car)." },
-    start: [0, 0], runoff: 1.1, inner: 4, side: 7, gradeForce: true, elevSmooth: 10, realKm: 2.1,
+    start: [0, 0], runoff: 0.9, inner: 3.5, side: 5.5, gradeForce: true, elevSmooth: 10, realKm: 2.1,   // (the run-offs narrower than at Silkeborg: a tight circuit in the woods)
     elev: KG_H.map((h, i) => [i / KG_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
@@ -49,7 +49,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[-290,-195.6],[-299.3,-242.7],[16,-139.8],[63,-31.9],[206.6,36],[234.1,-108.8],[253.5,4.2],[376.4,60.5],[325.3,196.3],[280.1,185.2],[255.2,86.2],[152.6,87.9]],   // the corners' apexes: the double right (2), the long right, the fast left, the left below the hill, the hilltop hairpin, the downhill left, the right over the river, the forest corner (2), the river left, the last corner
     pit: [14, -165, 300, 15],   // pit lane on the right of the finish straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
     pitRow: [-55, 65],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.kagerod.pitBox)
-    walls: [[-165, 300, 1, 2.5]],   // the pit wall 2.5 m past the road's edge along the lane
+    walls: [[-165, 300, 1, 2.5], [290, 380, -1, 12, 20], [1478, 1512, -1, 8, 15], [1745, 1790, 1, 7, 15], [1810, 1960, -1, 4, 20]],   // the pit wall 2.5 m past the road's edge along the lane; the barriers this side of the river where it runs by the circuit
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: on the grass above the long right and outside the hilltop hairpin
     stands: [[640, 690, -1, 6, 0, 2, 0, "KÅGERÖD"], [1150, 1185, -1, 6, 0, 2, 0, "SKÅNE"]],
     sectors: [700, 1400],   // the three sectors of the timing screens: to the long right, the hill, the river loop and the straight

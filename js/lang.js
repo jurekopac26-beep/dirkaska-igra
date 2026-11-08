@@ -449,6 +449,8 @@
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)
+    'Hitri levi': 'Fast Left', 'Levi pod klancem': 'Left Below the Hill', 'Klanec': 'The Climb', 'Lasnica na vrhu': 'Hilltop Hairpin', 'Levi na spustu': 'Downhill Left', 'Desni nad reko': 'Right over the River',
+    'Levi ob reki': 'River Left',   // (Kågeröd: its corners by plain descriptions, the river by them)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
