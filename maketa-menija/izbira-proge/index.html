@@ -190,15 +190,22 @@ body.land #bg, :host(.land) #bg { display: block; left: -20px; top: -20px; width
 #bg i { position: absolute; left: 0; right: 0; top: calc(var(--oy) + 270px); bottom: 20px; background: linear-gradient(rgba(11,20,36,0), rgba(11,20,36,.9)); }
 #bg b { position: absolute; inset: 0; background: #03070f; opacity: 0; }
 body.land .head, :host(.land) .head { left: var(--ox) !important; top: var(--oy) !important; right: auto !important; width: 892px; height: 66px !important; padding: 0 !important; display: block !important; pointer-events: none; }
-body.land .head > *, :host(.land) .head > * { pointer-events: auto; }   /* (the weather's row under the header's free middle takes its own taps) */
+body.land .head > *, :host(.land) .head > * { pointer-events: auto; }   /* (the header's free middle lets taps through) */
 body.land #homeBtn, :host(.land) #homeBtn { position: absolute; left: 14px; top: 14px; }
 body.land #hflag, :host(.land) #hflag { position: absolute; left: 826px; top: 14px; }
 body.land .htitle, :host(.land) .htitle { position: absolute; left: 446px; top: 14px; translate: -50% 0; white-space: nowrap; font-size: 44px; }
-body.land .wxc, :host(.land) .wxc { left: calc(var(--ox) + 590px) !important; top: calc(var(--oy) + 11px) !important; right: auto !important; display: block !important; width: 260px; height: 76px; transform: scale(.85); transform-origin: 0 0; }
-body.land .wxc i, :host(.land) .wxc i { position: absolute; left: 0; top: 8px; transition: left .3s cubic-bezier(.2, .8, .25, 1), top .3s cubic-bezier(.2, .8, .25, 1); }
-body.land .wxc i.on, :host(.land) .wxc i.on { top: 0; }
-body.land .wxc.c1.big i.on svg, :host(.land) .wxc.c1.big i.on svg { width: 48px; height: 48px; }
-body.land .wxc i svg, :host(.land) .wxc i svg { transition: width .3s cubic-bezier(.2, .8, .25, 1), height .3s cubic-bezier(.2, .8, .25, 1); }
+/* the weather in the chosen card over its picture (the user's choice of 8. 11. 2026): a row at its top right, scaled to 0.8 (wxColumn()
+   puts it into #map, so it goes with the card and fades with its graph and camera buttons as the carousel turns) */
+body.land #map .wxc, :host(.land) #map .wxc { left: auto !important; right: 8px !important; top: 8px !important; display: block !important; width: 257px; height: 70px; transform: scale(.8); transform-origin: 100% 0; }
+body.land #map .wxc i, :host(.land) #map .wxc i { position: absolute; left: 0; top: 6px; width: 52px; transition: left .3s cubic-bezier(.2, .8, .25, 1), top .3s cubic-bezier(.2, .8, .25, 1); }
+body.land #map .wxc i.on, :host(.land) #map .wxc i.on { top: 0; }
+body.land #map .wxc.c1 em, :host(.land) #map .wxc.c1 em { font-size: 15px !important; }
+body.land #map .wxc i svg, :host(.land) #map .wxc i svg { transition: width .3s cubic-bezier(.2, .8, .25, 1), height .3s cubic-bezier(.2, .8, .25, 1); }
+/* the counter: the chosen track's place among the tracks that are not test tracks (TEST on a test track), at the picture's bottom left beside
+   the camera buttons (the user's choice of 8. 11. 2026); lying at the chosen card's bottom left, level with its camera buttons */
+.cnt { z-index: 6; left: 10px; top: 456px; height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10,14,20,.45);
+  color: #fff; font: 800 italic 16px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .2px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.5); pointer-events: none; }
+body.land #map .cnt, :host(.land) #map .cnt { left: 8px !important; top: auto !important; bottom: 8px !important; }
 body.land #map, :host(.land) #map { left: calc(var(--ox) + 254px) !important; top: calc(var(--oy) + 70px) !important; right: auto !important; width: 384px !important; height: 236px !important; border-radius: 16px; box-shadow: 0 0 0 3px #ffc629, 0 12px 30px rgba(0,0,0,.6); z-index: 4; }
 body.land #mapimg, :host(.land) #mapimg { width: 100% !important; height: 100% !important; object-fit: cover; margin: 0 !important; }
 body.land .mgbox, :host(.land) .mgbox { left: 8px !important; top: 8px !important; }
@@ -280,7 +287,7 @@ window.ringPlace = (el, k) => {
     ['filter', b < .999 ? 'brightness(' + b.toFixed(3) + ')' : 'none'],
     ['box-shadow', '0 0 0 ' + (3 * gold).toFixed(2) + 'px rgba(255,198,41,' + gold.toFixed(3) + '), 0 ' + (12 - 4 * thin).toFixed(1) + 'px ' + (30 - 10 * thin).toFixed(1) + 'px rgba(0,0,0,' + (.6 - .1 * thin).toFixed(3) + '), inset 0 0 0 1px rgba(255,255,255,' + (.2 * thin).toFixed(3) + ')']]) s.setProperty(p, v, 'important');
   const lab = el.querySelector('.crl'); if (lab) lab.style.opacity = Math.max(0, 1 - Math.abs(a - 1)).toFixed(3);
-  for (const e of el.querySelectorAll('.mgbox, .views')) e.style.opacity = gold > .999 ? '' : Math.max(0, 1 - 3 * a).toFixed(3);   // (the chosen card's graph and camera buttons)
+  for (const e of el.querySelectorAll('.mgbox, .views, .wxc, .cnt')) e.style.opacity = gold > .999 ? '' : Math.max(0, 1 - 3 * a).toFixed(3);   // (the chosen card's graph, camera buttons, weather and counter)
   s.zIndex = a < .5 ? 4 : 3;
 };
 window.LY = LAYOUT();
@@ -355,6 +362,7 @@ window.MOCK = async (T) => {
     if (T.icon2) ic[0] = T.icon2;   // the flyover's icon (camera 2)
     const ord = T.camOrder || [0, 1, 2]; vw.querySelectorAll('i').forEach((e, i) => e.innerHTML = '<svg viewBox="0 0 24 24">' + ic[ord[i]] + '</svg>'); }
   if (T.view) document.querySelectorAll('.views i').forEach((e, i) => e.classList.toggle('on', i === T.view - 1));
+  if (T.count) $('map').insertAdjacentHTML('beforeend', '<div class="abs cnt">' + T.count + '</div>');   // the counter (makeT: e.g. 2 / 26, or TEST)
   if (T.oppTag) {   // no "Opponents" over the number: a short word in small letters beside it
     const o = document.querySelector('.row .opp'), sm = o.querySelector('small'); o.style.flexDirection = 'row'; o.style.alignItems = 'baseline'; o.style.gap = '3px';
     if (T.oppBefore) o.insertBefore(sm, o.firstChild); else o.appendChild(sm); if (T.oppHtml) sm.innerHTML = T.oppHtml; else sm.textContent = T.oppTag; sm.style.cssText = 'font:700 14px/1 var(--f-ui);color:var(--lbl);text-transform:lowercase';
@@ -403,10 +411,10 @@ window.MOCK = async (T) => {
   }
   await globe($('globe'), T);
   await document.fonts.ready;
-  // lying: the place's name in the middle of the screen (44 px), moved left only as far as it must not to reach the weather, smaller if still too long
+  // lying: the place's name in the middle of the header (44 px), between the back button and the globe; smaller if too long for it
   if (land) { const h = document.querySelector('.htitle'); if (h) { const k = BSC(), rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width / k; };
-    let fs = 44; h.style.fontSize = fs + 'px'; while (tw() > 470 && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; }
-    const w = tw(); h.style.translate = 'none'; h.style.left = Math.max(106, Math.min(446 - w / 2, 578 - w)).toFixed(1) + 'px'; } }
+    let fs = 44; h.style.fontSize = fs + 'px'; while (tw() > 680 && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; }
+    const w = tw(); h.style.translate = 'none'; h.style.left = Math.max(106, 446 - w / 2).toFixed(1) + 'px'; } }
   if (T.wxfx && window.WXFX) await WXFX.init(T);
   return true;
 };
@@ -480,14 +488,15 @@ function wxColumn(T, icons, names, wx) {
   if (v === 4) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '<em>' + names[k] + '</em></i>').join('');
   if (v === 5) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('') + '<em class="lab">' + names[0] + '</em>';
   if (v === 6) box.innerHTML = '<span class="thumb"></span>' + ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('');
-  // lying: in a row, the chosen one with its name first, the others after it in their order (their places in the row, which is scaled
-  // to 0.85: x 590, 638, 680, 722, 764 on the screen); a new choice slides into the first place (wxfx.js: WXFX setSel)
-  if (v === 1 && window.LY && LY.land) {
-    const X = [0, 48, 90, 132, 174].map(x => x / 0.85);
+  // lying: in a row in the chosen card (#map), the chosen one with its name first, the others after it in their order (their places in the
+  // row, which is scaled to 0.8: 0, 44, 84, 124, 164 px from its left); a new choice slides into the first place (wxfx.js: WXFX setSel)
+  const inCard = v === 1 && window.LY && LY.land;
+  if (inCard) {
+    const X = [0, 44, 84, 124, 164].map(x => x / 0.8);
     WXC.row = (k) => { let j = 1; [...box.children].forEach((e, i) => { e.style.left = (i === k ? 0 : X[j++]).toFixed(2) + 'px'; }); };
     WXC.row(sel);
   }
-  document.body.appendChild(box);
+  (inCard ? document.getElementById('map') : document.body).appendChild(box);
 }
 function layoutV2(T) {
   const $ = (id) => document.getElementById(id);
@@ -706,6 +715,10 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     // lying: the carousel's neighbours, four each way (k; the fourth off the screen, ready for a turn by two): the picture of their camera 2
     // (else 1), flag, name, country and length
     T.ring = [-4, -3, -2, -1, 1, 2, 3, 4].map(k => { const t = ringAt(i, k), v = ALL[t]; return { k, id: t, pic: v.cams[2] || v.cams[1], flag: flagSvg(v.flag), name: v.name, country: v.country, km: v.km }; });
+    // the counter: the track's place in the list among the tracks that are not test tracks, and their number (from the list, so it follows
+    // a track that comes or goes into the test tracks); TEST on a test track
+    const reals = ORDER.filter(t => !ALL[t].test);
+    T.count = ALL[i].test ? 'TEST' : (reals.indexOf(i) + 1) + '\u2009/\u2009' + reals.length;
     return Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(cur) });
   }
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
