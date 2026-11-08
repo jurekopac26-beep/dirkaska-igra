@@ -48,7 +48,7 @@ _V delu._
 
 **J6 · Pikes Peak: mehkejše sence se po spremembi nastavitev ne vrnejo** · `js/render.js:4037` (`pkLight`), `js/render.js:3696` (`applySettings`)
 - `pkLight` nastavi polmer senc 2,5 (kakovost, ki ni »high«) samo, ko se stanje Pikes vklopi (`on !== pkL.on`); `applySettings` polmer vedno postavi na `SOFT_SHADOW.normal` (1,6). Po vsakem `applySettings` med obiskom Pikes Peaka ostanejo sence trše do odhoda s proge.
-- **Primer:** `pikes` ali `pikesg`, kakovost »normal«, sence vklopljene: samodejna obremenitev (`adaptBreak`, `js/game.js:6341–6342`) sence ob pavzi izklopi in pozneje spet vklopi, ali igralec v pavzi preklopi sence → polmer 1,6 namesto 2,5.
+- **Primer:** `pikes` ali `pikesg`, kakovost »normal«, sence vklopljene: samodejna obremenitev (`adaptBreak`, `js/game.js:6341–6343`) sence ob pavzi izklopi in pozneje spet vklopi, ali igralec v pavzi preklopi sence → polmer 1,6 namesto 2,5.
 - Preverjeno: potrjeno (branje kode).
 
 **J7 · Luči ob progi in podrti predmeti: materiali in medpomnilniki ob menjavi sveta niso sproščeni** · `js/render.js:4375` (`floodlights`), `js/render.js:3592` (`clearPropMeshes`) in `js/render.js:3639` (`setupProps`)
@@ -56,7 +56,7 @@ _V delu._
 - **Primer:** dirke ob mraku ali ponoči (npr. `spa` ali `bathurst`, čas dneva noč), vsaka nova gradnja sveta in vsak preklop časa dneva (`todLights(true)`); menjava prog s podrtimi predmeti (`bathurst` → `spa` → `bathurst`). Rast je omejena z zbiralnikom smeti, zato nizka.
 - Preverjeno: verjetno (branje kode in three.js r128).
 
-**J8 · Odblesk sonca ugaša hitreje pri višji hitrosti sličic in tudi v pavzi** · `js/render.js:4176` (`pkFlare` / `sunFx`)
-- `pkF.vis += (goal - pkF.vis) * Math.min(1, dt * 5 + 0,05)` pri ugašanju prišteje stalnih 0,05 na sličico, neodvisno od `dt`.
+**J8 · Odblesk sonca ugaša hitreje pri višji hitrosti sličic in tudi v pavzi** · `js/render.js:4176` (`pkFlare`, klicana iz `pkLight` in `sunFx`)
+- `Math.min(1, (dt || 0) * 5 + (goal < pkF.vis ? 0.05 : 0))` pri ugašanju prišteje stalnih 0,05 na sličico, neodvisno od `dt`.
 - **Primer:** posnetek s TV kamerami na `pikes` ali drugi progi s soncem v kadru, sonce gre za greben: ugasne v ~0,125 s pri 60 sličicah na sekundo in ~0,155 s pri 30; v ustavljenem posnetku ali foto načinu (`dt = 0`) ugaša za 5 % na sličico.
 - Preverjeno: potrjeno (branje kode).
