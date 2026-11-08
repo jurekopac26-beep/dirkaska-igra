@@ -33,5 +33,25 @@
     "drevesa": 0,
     "ime_h": "IZOARD_H",
     "vrh": 2360
+  },
+  "sacalobra": {
+    "ime": "Sa Calobra, Španija",
+    "okvir": [39.812, 2.785, 39.852, 2.834],
+    "pot": [[39.829126, 2.817212], [39.832268, 2.815723], [39.832151, 2.816091], [39.837344, 2.806614]],
+    "start": [39.83166, 2.81636],
+    "cilj": [39.83452, 2.80678],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4.5,
+    "gauss": 2.5,
+    "razmik": 13,
+    "polmer": 6.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18, "dol": true },
+    "kriz": { "dy": 7.8, "zgoraj": "prvi" },
+    "s2": "S2C_31TDE_20250630_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "SACALOBRA_H"
   }
 }

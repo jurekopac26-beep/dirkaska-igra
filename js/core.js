@@ -4018,7 +4018,8 @@ const Core = (function () {
       for (let i = 1; i < N; i++) dn[i] = Math.min(dn[i], Math.sqrt(dn[i - 1] * dn[i - 1] + 3 * ds));
       this.vp = [dn, up];
     }
-    _vpAt(v) { return Math.min(TF_VMAX, this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.1)) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
+    _dn(dir) { return this.T.def.descent ? dir > 0 : dir < 0; }   // a cyclist riding downhill: against the road's way, or along it on a descent (def.descent: Sa Calobra)
+    _vpAt(v) { return Math.min(TF_VMAX, this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.1)) * (v.kind === 4 && this._dn(v.dir) ? 0.8 : 1); }
     _lane(v) { const w = this.T.wS(v.s), sd = v.ln || v.dir * this.sd; return v.kind === 4 ? sd * (w - 0.7) : sd * w * TFK[v.p].lane; }
     _edge(v) { const sg = v.ln || v.dir * this.sd, T = this.T; let e = T.wS(v.s) - (v.kind === 4 ? 0.35 : v.wid / 2 + 0.3);   // (pulled over: the asphalt's edge of its side, less half its width and 0.3 m; a bicycle right at the edge)
       const po = T.def.pullOff; if (po && v.kind !== 4) { const i = T.idx(v.s), bar = (sg > 0 ? T.br[i] : T.bl[i]) - v.wid / 2 - 0.4; e = Math.max(e, Math.min(e + po, bar)); }   // (def.pullOff: a narrow road's, onto the shoulder that far, short of the barrier)
@@ -4070,7 +4071,7 @@ const Core = (function () {
     _veh(dir, kind, s, p) {   // p: the figures of the vehicle (TFK; its kind's own unless a truck)
       if (p == null) p = kind;
       const K = TFK[p], R = this.R;
-      const v = { id: ++this.nid, kind, p, dir, s, d: 0, dT: 0, v: 0, v0: lerp(K.v0[0], K.v0[1], R()) * (kind === 4 && dir < 0 ? 2.1 : 1), len: K.len, wid: K.wid, mass: K.mass,
+      const v = { id: ++this.nid, kind, p, dir, s, d: 0, dT: 0, v: 0, v0: lerp(K.v0[0], K.v0[1], R()) * (kind === 4 && this._dn(dir) ? 2.1 : 1), len: K.len, wid: K.wid, mass: K.mass,
         col: R(), st: 0, t: 0, x: 0, y: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, i: 0, k: 0, brake: false, horn: 0, off: false, q: { i: -1 }, stopT: 0, stopS: -1, wait: 0, pass: null, rider: null, lean: 0,
         sv: 0, acc: 0, gap: 1e9, sdT: 0, sdD: 0, yl: 0, yS: 0, yT: 0, ind: 0, nc: 0, grp: null, gi: 0 };   // (sv: its sideways speed; sdT, sdD: moving over from one alongside; yl: pulling over for the police (1), back into the lane (2), yS the stop, yT the wait; ind: the indicator, -1 / 1 across the road; nc: no contact for a moment after a knock)
       if (this.ow) v.ln = kind === 4 || kind === 2 || R() < 0.75 ? this.sd : -this.sd;
@@ -4198,7 +4199,7 @@ const Core = (function () {
       // cyclists: a paceline, ~1 m behind the wheel ahead
       let vDes = Math.max(0.5, Math.min(a.v0, this._vpAt(a)));
       if (pace) { vDes = Math.max(vDes, Math.min(a.v0 * 1.2, lead.v)); vDes = Math.min(vDes * 1.25, vDes + Math.max(0, gap - 0.4 - 0.15 * a.v) * 0.25); }   // (one of a group: on the wheel ahead, as quick as it (not the bend's own pace); dropped back a little: a little quicker, up to it again)
-      const KA = K.acc * (a.kind === 4 && dir < 0 ? 2 : 1) * (pace && gap > 0.6 + 0.15 * a.v ? 1.5 : 1);   // (a bicycle downhill: the slope pulls it; one of a group dropped back: pedalling harder)
+      const KA = K.acc * (a.kind === 4 && this._dn(dir) ? 2 : 1) * (pace && gap > 0.6 + 0.15 * a.v ? 1.5 : 1);   // (a bicycle downhill: the slope pulls it; one of a group dropped back: pedalling harder)
       let acc = KA * (1 - Math.pow(a.v / vDes, 4)), lim = K.dec;
       if (gap < 1e8) { const dv = a.v - lv, ss = (pace ? 0.4 : still ? 6 : 2.5) + Math.max(0, a.v * (pace ? 0.15 : 1.1) + a.v * dv / (2 * Math.sqrt(K.acc * K.dec)));
         acc -= K.acc * (ss / Math.max(0.3, gap)) ** 2;

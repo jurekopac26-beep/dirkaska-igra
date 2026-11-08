@@ -404,5 +404,12 @@
   "kverts": 439,
   "maxKverts": 511,
   "jsMs": 1.95
+ },
+ "sacalobra": {
+  "calls": 222,
+  "maxCalls": 262,
+  "kverts": 578,
+  "maxKverts": 708,
+  "jsMs": 1.5
  }
 }

@@ -1516,5 +1516,25 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "7fa349d6"
   }
+ },
+ "sacalobra": {
+  "meshes": 1712,
+  "verts": 857412,
+  "instances": 37009,
+  "props": 68,
+  "crowd": 281,
+  "world": "c5979d7",
+  "propsHash": "75dcf3ee",
+  "floor": "30ae9824/10556",
+  "groups": {
+   "-:MeshLambertMaterial": "b0b60f99",
+   "-:MeshPhongMaterial": "af2e2690",
+   "-:MeshBasicMaterial": "4f1c46cb",
+   "irFar:MeshLambertMaterial": "e555884",
+   "crowd:MeshLambertMaterial": "1487e4a6",
+   "ao:MeshBasicMaterial": "7531feb0",
+   "tyremarks:MeshBasicMaterial": "55d8f570",
+   "roadwear:MeshLambertMaterial": "8464b172"
+  }
  }
 }

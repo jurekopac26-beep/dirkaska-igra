@@ -2848,5 +2848,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "07a22b6d96d41b7ad1d8e1df"
+ },
+ "sacalobra/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 183.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9db6e37dedfe12796476753c"
+ },
+ "sacalobra/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 197.14,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b83682739bcbc9e065b69d52"
+ },
+ "sacalobra/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 170.67,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "471262df3823c26bba46dce3"
+ },
+ "sacalobra/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 172.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "765b2e05e3e77c6bc429ca48"
+ },
+ "sacalobra/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.27,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b0b4e854778fbfca1ffcfd41"
  }
 }
