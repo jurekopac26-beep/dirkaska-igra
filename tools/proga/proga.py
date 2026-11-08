@@ -100,6 +100,26 @@ def separate(x, z, gap, adj, it=60):
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
 
+def open_bends(x, z, R, it=300):
+    """Open the bends tighter than the radius R (metres): every two points a metres apart along the line at least the chord of a circle of
+    radius R apart (2R once a > pi R; as tools/proga-uvoz.mjs openHairpins), a little each step, the push smoothed: returns the line and
+    how far it moved (mean, max)."""
+    from scipy.spatial import cKDTree
+    x0, z0 = x.copy(), z.copy()
+    for _ in range(it):
+        P = np.stack([x, z], 1); pr = cKDTree(P).query_pairs(2 * R, output_type='ndarray')
+        if not len(pr): break
+        s = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(z)))])
+        a = np.abs(s[pr[:, 0]] - s[pr[:, 1]]); need = 2 * R * np.sin(np.minimum(a, math.pi * R) / (2 * R))
+        dx = P[pr[:, 0]] - P[pr[:, 1]]; d = np.maximum(np.hypot(dx[:, 0], dx[:, 1]), 1e-6); bad = d < need - 0.02
+        if not bad.any(): break
+        pr, dx, d, need = pr[bad], dx[bad], d[bad], need[bad]
+        push = ((need - d) / 2 * 0.35)[:, None] * dx / d[:, None]
+        F = np.zeros_like(P); np.add.at(F, pr[:, 0], push); np.add.at(F, pr[:, 1], -push)
+        F[:, 0] = gaussian_filter1d(F[:, 0], 6); F[:, 1] = gaussian_filter1d(F[:, 1], 6); x = x + F[:, 0]; z = z + F[:, 1]
+    m = np.hypot(x - x0, z - z0)
+    return x, z, float(m.mean()), float(m.max())
+
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
     hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
@@ -119,7 +139,10 @@ def turns(x, z, s, lim=1 / 60.0):
 # ---------------- heights along the road ----------------
 def profile(h, s, C, bends):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
-    grade limited and lowered through the hairpins (as built)."""
+    grade limited and lowered through the hairpins (as built). With `tesno` (a road that also goes down, `gor` false: over a dam into
+    the basin behind it, down to a river) the grade is limited only where it is over the limit, the profile kept near the model's
+    (halfway between the highest and the lowest line within the limit round it), not the whole climb rescaled (that lifts it all along
+    the road when a short bit is steeper); the hairpins' share is then their own limit."""
     V = C.get('visine', {}); step = s[1] - s[0]
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
     if V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
@@ -127,7 +150,12 @@ def profile(h, s, C, bends):
     # the grade: lower through the hairpins (a share of it), more on the legs, the total climb kept
     g = np.gradient(sm, s); w = np.ones_like(s)
     for sa, tot, r in bends:
-        if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+        if abs(tot) > math.radians(C.get('lasnica', 150)): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+    if V.get('tesno'):
+        lim = V.get('naklon', 0.12) * w * step; up = sm.copy(); dn = sm.copy()
+        for i in range(1, len(s)): up[i] = max(up[i], up[i - 1] - lim[i]); dn[i] = min(dn[i], dn[i - 1] + lim[i])
+        for i in range(len(s) - 2, -1, -1): up[i] = max(up[i], up[i + 1] - lim[i]); dn[i] = min(dn[i], dn[i + 1] + lim[i])
+        return gaussian_filter1d((up + dn) / 2, 6 / step, mode='nearest')   # (rounded where the limit starts and ends)
     g2 = g * w; gmax = V.get('naklon', 0.12)
     for _ in range(40):
         g2 = np.clip(g2 * (np.sum(g * step) / max(1e-9, np.sum(g2 * step))), -gmax, gmax)
@@ -343,13 +371,15 @@ def main():
     S0, F0 = (x[i0], z[i0]), (x[i1], z[i1])
     hw = C['polsirina']; gap = C.get('razmik', 2 * hw + 10)
     x, z, mm, mx = separate(x, z, gap, int(gap * 2.6))
+    if C.get('polmer'):   # (the tightest bends opened to this radius: as Vršič's hairpins, ~10.5 m)
+        x, z, m2, M2 = open_bends(x, z, C['polmer']); log('bends opened to %.1f m: moved %.2f m on average, %.1f at most' % (C['polmer'], m2, M2))
     x, z, s = resample(x, z, 1.0)
     i0 = int(np.argmin(np.hypot(x - S0[0], z - S0[1]))); i1 = int(np.argmin(np.hypot(x - F0[0], z - F0[1])))
     # the game's origin: the start line
     ox, oz = x[i0], z[i0]; la_s, lo_s = G0.to_ll(ox, oz); G = Geo(float(la_s), float(lo_s))
     x, z = x - ox, z - oz
     bends, k = turns(x, z, s)
-    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(150) and s[i0] < sa < s[i1]]
+    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(C.get('lasnica', 150)) and s[i0] < sa < s[i1]]   # (the hairpins: over 150 degrees, or `lasnica`)
     log('line: %.0f m (run-up %.0f, race %.0f, past the finish %.0f); moved %.1f m on average, %.1f at most; %d hairpins, the tightest %.1f m' % (
         s[-1], s[i0], s[i1] - s[i0], s[-1] - s[i1], mm, mx, len(hairs), min([r for _, _, r in hairs] or [0])))
     # heights
