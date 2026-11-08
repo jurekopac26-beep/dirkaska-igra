@@ -1006,6 +1006,25 @@ select.txt:disabled { opacity: .75; }
 .ltab.lp td.nm { max-width: 9em; }
 .res-lpt { margin: 6px 0 0; font: 600 clamp(11px, 3vh, 14px)/1.3 var(--f-ui); color: var(--lcd); }
 .lp-nick { margin: 10px 0 4px; }
+/* Analiza kroga (js/game.js anResShow, js/analiza.js): the lap's map, red where it lost time against the best lap, green where it gained; the tip and the corners */
+.res-an { margin-top: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.ra-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 600 clamp(11px, 3vh, 14px)/1.25 var(--f-ui); }
+.ra-h b { font: 700 italic clamp(12px, 3.4vh, 15px)/1.2 var(--f-ui); color: var(--lcd); }
+.ra-h #res-an-lap { opacity: .85; font-variant-numeric: tabular-nums; }
+.ra-nav { margin-left: auto; display: flex; gap: 4px; }
+.ra-nav .btn.mini { min-width: 34px; padding: 2px 8px; }
+.ra-nav .btn:disabled { opacity: .35; }
+.ra-b { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+#res-an-cv { flex: 0 0 auto; width: min(44vw, 240px); height: min(34vw, 170px); border-radius: 8px; background: rgba(0, 0, 0, .28); }
+.ra-t { flex: 1 1 auto; min-width: 0; }
+#res-an-tip { margin: 0 0 4px; font: 700 clamp(12px, 3.3vh, 15px)/1.3 var(--f-ui); color: #fff; }
+#res-an-z { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 10px; font: 600 clamp(11px, 3vh, 13px)/1.3 var(--f-ui); }
+#res-an-z li.lo b { color: #ff6a5a; } #res-an-z li.gn b { color: #5ee36a; }
+.ra-k { margin: 4px 0 0; color: var(--muted); font: 600 clamp(10px, 2.7vh, 12px)/1.3 var(--f-ui); }
+.ra-k i { display: inline-block; width: 14px; height: 4px; margin: 0 4px 2px 0; border-radius: 2px; vertical-align: middle; }
+.ra-k i.lo { background: #ff4838; } .ra-k i.gn { background: #40e068; margin-left: 6px; }
+@media (orientation: portrait) { .ra-b { flex-direction: column; align-items: stretch; } #res-an-cv { width: 100%; height: 44vw; max-height: 220px; } }
+#h-split.an { height: auto; white-space: normal; max-width: min(46vw, 420px); }
 .lp-nick .txt { width: 100%; box-sizing: border-box; }
 .gh-btns { justify-content: flex-start; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
 /* the fuel gauge (a race with fuel on): under the tyres, the share of the tank left; low: red and blinking */
