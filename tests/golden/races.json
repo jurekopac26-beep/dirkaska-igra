@@ -2892,12 +2892,12 @@
  "sacalobra/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 181.27,
-  "spins": 1,
-  "walls": 2,
+  "winner": 184.09,
+  "spins": 0,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b0b4e854778fbfca1ffcfd41"
+  "digest": "dc4f8bf40a8c7bedea0972db"
  },
  "kotor/cs": {
   "finished": 13,
@@ -2942,11 +2942,11 @@
  "kotor/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 181.9,
+  "winner": 179.17,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "241e9b2cfe6ddebe14bf612c"
+  "digest": "c7b5d9fe5817605c065dad6a"
  }
 }

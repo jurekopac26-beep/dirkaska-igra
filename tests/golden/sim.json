@@ -5600,7 +5600,7 @@
   }
  },
  "sacalobra/demo/cs": {
-  "digest": "211dbcd10d58b7d22cbb83bb",
+  "digest": "07a991f44d8a357760bff505",
   "lead": 1588.5,
   "car0": [
    -362.85,
@@ -5670,14 +5670,14 @@
   }
  },
  "sacalobra/car/cs": {
-  "digest": "fce7b1bfdd077bcc8f2f8ad2",
-  "lead": 1423.1,
+  "digest": "0b8175d31d47c23a795422a8",
+  "lead": 1421.3,
   "car0": [
-   -177.89,
-   76.65
+   -191.07,
+   110.68
   ],
   "cover": {
-   "dmg": 0.78,
+   "dmg": 0.46,
    "loose": 2,
    "rescues": 1,
    "repairs": 0
@@ -5740,43 +5740,43 @@
   }
  },
  "kotor/formula/cs": {
-  "digest": "9238abb91328aaeabe51c663",
-  "lead": 1759.3,
+  "digest": "63a4102e2df493246e252803",
+  "lead": 1755.4,
   "car0": [
-   63.24,
-   181.3
+   62.29,
+   204.2
   ],
   "cover": {
-   "dmg": 0.9,
+   "dmg": 0.75,
    "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "kotor/lm/cs": {
-  "digest": "f5faabf2f676b05e6328975f",
-  "lead": 1704.6,
+  "digest": "8758ad31269861cb6f0acad0",
+  "lead": 1703.7,
   "car0": [
-   45.69,
-   186.83
+   45.84,
+   199.97
   ],
   "cover": {
-   "dmg": 0.87,
+   "dmg": 0.95,
    "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
  },
  "kotor/car/cs": {
-  "digest": "82f397faaf4d0582b21093d3",
-  "lead": 1557,
+  "digest": "56b272270d33e4186454135a",
+  "lead": 1557.7,
   "car0": [
-   42.89,
-   156.4
+   43.27,
+   157.14
   ],
   "cover": {
-   "dmg": 0.5,
-   "loose": 1,
+   "dmg": 0.64,
+   "loose": 3,
    "rescues": 0,
    "repairs": 0
   }
