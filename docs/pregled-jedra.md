@@ -56,6 +56,11 @@ _V delu._
 - **Primer:** dirke ob mraku ali ponoči (npr. `spa` ali `bathurst`, čas dneva noč), vsaka nova gradnja sveta in vsak preklop časa dneva (`todLights(true)`); menjava prog s podrtimi predmeti (`bathurst` → `spa` → `bathurst`). Rast je omejena z zbiralnikom smeti, zato nizka.
 - Preverjeno: verjetno (branje kode in three.js r128).
 
+**J9 · Garaža: geometrija koles za vsako kombinacijo delov ostane v pomnilniku do ponovnega nalaganja strani** · `js/render.js:2161` (`kitWheels`)
+- `kitWheelCache` se samo polni (`get`/`set` v 2161/2164), nikoli ne prazni; ključ vsebuje `E.key`, ta pa za avto z deli celoten ključ delov (`M.id|H|<deli>`, 2133). Telesa z deli hrani `kitDeliCache` samo zadnjih 8 (2139), kolesa izpodrinjenih ostanejo. `sharedCarRes` (4761) vsa kolesa iz predpomnilnika označi kot skupna, zato jih `disposeCarMesh` ne sprosti.
+- **Primer:** `garaza.html` z vozilom s kolesi kot deli: vsak preizkus ali menjava dela (tudi spojler, ki koles ne spremeni) zgradi nov par enakih koles (~400 trikotnikov in ~43 KB vsako pri visoki podrobnosti, plus različice pasov gum in čeljusti). Števec `wheels` v `Render.kitStatus()` (2348) samo raste. V dirki je rast majhna (en komplet na avto in kombinacijo).
+- Preverjeno: potrjeno (branje kode).
+
 **J8 · Odblesk sonca ugaša hitreje pri višji hitrosti sličic in tudi v pavzi** · `js/render.js:4176` (`pkFlare`, klicana iz `pkLight` in `sunFx`)
 - `Math.min(1, (dt || 0) * 5 + (goal < pkF.vis ? 0.05 : 0))` pri ugašanju prišteje stalnih 0,05 na sličico, neodvisno od `dt`.
 - **Primer:** posnetek s TV kamerami na `pikes` ali drugi progi s soncem v kadru, sonce gre za greben: ugasne v ~0,125 s pri 60 sličicah na sekundo in ~0,155 s pri 30; v ustavljenem posnetku ali foto načinu (`dt = 0`) ugaša za 5 % na sličico.
