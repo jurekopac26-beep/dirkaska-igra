@@ -1415,5 +1415,31 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "79e5fc63"
   }
+ },
+ "sosnova": {
+  "meshes": 228,
+  "verts": 371148,
+  "instances": 2288,
+  "props": 38,
+  "crowd": 1,
+  "world": "f0cf8e51",
+  "propsHash": "fd7764d3",
+  "floor": "541b8e53/3388",
+  "groups": {
+   "-:MeshLambertMaterial": "5a0e1c53",
+   "-:MeshBasicMaterial": "430153a3",
+   "crowd:MeshLambertMaterial": "7516439d",
+   "flags:MeshLambertMaterial": "42a25e1e",
+   "ao:MeshBasicMaterial": "72236d62",
+   "roadwear:MeshLambertMaterial": "75d9fd64",
+   "worn:MeshLambertMaterial": "d8a04cdb",
+   "brakeBoards:MeshLambertMaterial": "e5fe8ed9",
+   "life:MeshLambertMaterial": "7679d472",
+   "lifeShadow:MeshBasicMaterial": "5f36e971",
+   "life:MeshBasicMaterial": "2a52391f",
+   "people:MeshLambertMaterial": "874504b8",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "4a4c6d96"
+  }
  }
 }

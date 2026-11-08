@@ -376,5 +376,12 @@
   "kverts": 441,
   "maxKverts": 467,
   "jsMs": 1.94
+ },
+ "sosnova": {
+  "calls": 187,
+  "maxCalls": 224,
+  "kverts": 590,
+  "maxKverts": 745,
+  "jsMs": 1.48
  }
 }

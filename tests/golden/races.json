@@ -2648,5 +2648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "26e674baa38b2dd2a94bd028"
+ },
+ "sosnova/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 120.37,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2e6a2048709f7450f8ed192f"
+ },
+ "sosnova/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 131.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5bfaa1b5f6fc9cca193e9b49"
+ },
+ "sosnova/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 110.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5b36b9aa875779992ee3f029"
+ },
+ "sosnova/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 111.9,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f2a0fc79c5078a9a915eb84b"
+ },
+ "sosnova/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 121.65,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c5698642eb3045924dbe4dab"
  }
 }
