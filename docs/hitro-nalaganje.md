@@ -13,8 +13,8 @@ Predlog I17, odločitev uporabnika 7. 11. 2026 ob 16.05 in 8. 11. ob ~17.40 (tab
 - Prvi obisk na počasnem 4G (1,47 Mbit/s) in CPU 4×: zadnja skripta pride pri **35,6 s**, meni je pripravljen pri **44 s**, vožnja (hiter vstop, `bathurst`) pri **51 s**. Prvi izris (zaslon z nalaganjem) šele pri 16–20 s, ker CSS tekmuje z 210 skriptami po HTTP/2 (s HTTP/1.1 pri 1,7 s; strežnik orodja prednosti tokov ne upošteva, GitHub Pages morda bolje: preveri na objavljeni strani).
 - Ponovni obisk (service worker in V8 imata vse): skripte so izvedene v ~1 s, a meni je pripravljen šele pri **6,9–12,2 s**, ker zagon pred menijem zgradi cel 3D svet zadnje proge (1,9 s `jezero`, 5,8 s `bathurst`), odpelje 6 s predstavitvene dirke in nariše prve slike 3D (med `Menu.init` in pripravljenim menijem je glavna nit skoraj ves čas zasedena z dolgimi opravili). Vožnja na `bathurst` (hiter vstop): 9,2–14,8 s.
 - Gradnja proge iz menija s CPU 4× (start → vožnja, 2D platno na procesorju): 3,2–24,1 s, mediana 8,7 s, 18 od 27 pravih prog pod 10 s; nad 15 s `medvode` 24,1 s, `bangsaen` 23,9, `ouninpohja` 21,5, `livorno` 18,5, `pikes` 16,6, `nring` 15,1. Skoraj vse je `World.build`, delo procesorja, ne prenos.
-- Cilj ~15 s je dosegljiv: **ponovni obisk** s »menijem najprej« (korak 3) in hitrejšo gradnjo najtežjih svetov (korak 9); **prvi obisk na počasnem 4G** šele, ko se ob zagonu prenese ≤ ~1,5 MB gzip: glave prog, leni graditelji, moduli kasneje, pomanjšanje in izbris testnih prog (koraki 4–8 in 10).
-- Predlagani vrstni red: 2 prvi izris → 3 meni najprej (odločitev uporabnika) → 4 glave prog → 5 leni graditelji → 6 moduli kasneje → 7 pomanjšanje ob objavi → 8 predpomnjenje → 9 hitrejša gradnja → 10 po izbrisu testnih prog.
+- Cilj ~15 s je dosegljiv: **ponovni obisk** s hitrejšo gradnjo svetov (korak 9), ker naslovnica ostane 3D svet zadnje proge (odločitev uporabnika 8. 11.: na isti progi vožnja brez druge gradnje, na drugi dve gradnji), in menijem brez drugega prenosa CSS (korak 2); **prvi obisk na počasnem 4G** šele, ko se ob zagonu prenese ≤ ~1,5 MB gzip: glave prog, leni graditelji, moduli kasneje, pomanjšanje in izbris testnih prog (koraki 4–8 in 10).
+- Predlagani vrstni red: 2 prvi izris → 3 hiter vstop brez naslovnega sveta → 4 glave prog → 5 leni graditelji → 6 moduli kasneje → 7 pomanjšanje ob objavi → 8 predpomnjenje → 9 hitrejša gradnja → 10 po izbrisu testnih prog.
 
 ## Meritve (povzetek)
 
@@ -47,7 +47,7 @@ Orodje `tools/zagon.mjs` igro postreže kot GitHub Pages (kopija z žigi `tools/
 
 ## Cilj ~15 s: kaj pomeni
 
-- **Ponovni obisk** (večina zagonov; service worker ima igro, žigi pri novi različici prenesejo samo spremenjene datoteke): šteje samo procesor. Danes 9,2–14,8 s do vožnje na `bathurst` (hiter vstop), gradnja `medvode` iz menija 24 s. Rešitev: meni najprej (korak 3) in hitrejša gradnja težkih svetov (korak 9).
+- **Ponovni obisk** (večina zagonov; service worker ima igro, žigi pri novi različici prenesejo samo spremenjene datoteke): šteje samo procesor. Danes 9,2–14,8 s do vožnje na `bathurst` (hiter vstop), gradnja `medvode` iz menija 24 s. Naslovnica ostane 3D (odločitev uporabnika), zato je glavna rešitev hitrejša gradnja svetov (korak 9); meni brez drugega prenosa CSS (korak 2) se pokaže do 1,7 s prej.
 - **Prvi obisk na počasnem 4G**: 15 s je ~2,5 s strani + prenos + zagon. Ob zagonu sme biti ≤ ~1,5 MB gzip in proga z graditeljem ≤ ~0,3 MB. Danes 5,97 MB.
 - **Ovoj za Google Play** (`docs/igra.md`: TWA ali spletni pogled) še ni izbran: s TWA velja prvi obisk s strani, s spletnim pogledom (Capacitor) so datoteke v aplikaciji in šteje samo procesor (kot ponovni obisk). Koraki 3 in 9 pomagajo v obeh, koraki 2 in 4–8 predvsem spletni igri in TWA.
 
@@ -70,15 +70,14 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 ### Korak 2 · Prvi izris in vrstica nalaganja (majhno tveganje)
 - Nujni CSS zaslona z nalaganjem v `<style>` v `index.html` (ali `fetchpriority="high"` na `css/style.css`), `css/napake.css`, `missions.css` in `zabava.css` z `media="not all"` + vklop ob zagonu ali pozneje; vrstica napredka na `#loading` (npr. »2,1 / 6,0 MB«, iz `PerformanceObserver` `resource`).
 - `Menu.init` CSS menija vzame iz že naložene povezave (`link.sheet` ali `<link rel="preload" as="style">`), ne z drugim `fetch`.
-- Učinek: prvi izris na počasnem 4G iz 16–20 s na ~1–2 s (kot HTTP/1.1); skupni čas se ne spremeni.
+- Učinek: prvi izris na počasnem 4G iz 16–20 s na ~1–2 s (kot HTTP/1.1); meni je pripravljen ob `Menu.init`, ne šele po drugem prenosu CSS med prvimi slikami 3D (zdaj 1–1,7 s pozneje s CPU 4×).
 - Testi: `menu.test.mjs`, `smoke`; `stamp.js --check` (nova povezava `<link>` dobi žig sama).
 
-### Korak 3 · Meni najprej, brez naslovnega sveta (odločitev uporabnika)
-- `boot()`: meni takoj po `Render.init`; za prozorno naslovnico slika proge (`assets/tracks/<id>.webp`, že obstaja za vsako progo) ali po izbiri uporabnika 3D pozneje. Svet se gradi šele, ko igralec izbere progo (ali v ozadju, ko bo gradnja razdeljena na kose, korak 9; zdaj bi zamrznila meni).
-- Hiter vstop (`?proga=`): brez naslovnega sveta in predstavitvene dirke, samo ciljna proga.
-- Učinek: ponovni obisk meni ~2–3 s namesto 6,9–12,2 s (CPU 4×); hiter vstop −2–6 s; prvi obisk −5 s.
-- Tveganja: zaslon naslovnice in njegovi testi (`menu.test.mjs`, »Prvič na cesti«, garaža `garageBack`, izzivi `chalHash`, lestvica `lpHash`: vsi pričakujejo `track` po zagonu), predstavitvena dirka za `MS`/`ZB`.
-- Odločitev uporabnika: videz naslovnice (stran Odločitve, `hitro-nalaganje-1`).
+### Korak 3 · Hiter vstop brez naslovnega sveta (naslovnica ostane)
+- Odločitev uporabnika 8. 11. 2026 (`hitro-nalaganje-1`, možnost 3): naslovnica ostane kot zdaj, 3D svet zadnje proge s predstavitveno dirko pred menijem (ne slika proge). Meni prej samo s korakom 2 (CSS menija iz povezave) in korakom 9 (hitrejša gradnja naslovnega sveta).
+- Hiter vstop (`?proga=`, povezave in testi): brez naslovnega sveta in predstavitvene dirke, samo ciljna proga; po dirki je naslovni svet proga dirke (že zgrajena). Naslovnica ob navadnem zagonu se ne spremeni.
+- Učinek: hiter vstop −2–6 s (CPU 4×).
+- Tveganja: testi s hitrim vstopom (`tests/README.md`) in zasloni, ki po zagonu pričakujejo `track` (garaža `garageBack`, izzivi `chalHash`, lestvica `lpHash`), predstavitvena dirka za `MS`/`ZB`.
 
 ### Korak 4 · Glave prog, prave proge šele ob potrebi (glavni korak)
 - Orodje (razširitev `tools/menu-lens.js` ali novo `tools/glave-prog.mjs`) zapiše `js/tracks/glave.js`: za vsako pravo progo polja do ~2 kB (id, ime, tema, zastavice, `look`, `rainP`, `say`, `cloudTh`, `roadWear`, `grassNat`, `lawn`, `bbClassic`, `zivali` …) in izračunane podatke (dolžina, število ovinkov, krogi); ~110 kB, ~40 kB gzip. Test preveri, da se glave ujemajo s celimi datotekami (kot golden).
@@ -131,7 +130,7 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 | korak | seja (model) | odvisen od | učinek |
 |---|---|---|---|
 | 2 prvi izris | Sonnet ali Opus, kratek | – | prvi izris 16–20 s → ~1–2 s |
-| 3 meni najprej | Opus | odločitev uporabnika | ponovni obisk: meni 6,9–12,2 → ~2–3 s |
+| 3 hiter vstop brez naslovnega sveta | Opus ali Sonnet | – | hiter vstop −2–6 s (naslovnica ostane) |
 | 4 glave prog | Opus, max (jedro) | – | −1,05 MB gzip |
 | 5 leni graditelji | Opus | 4 | −0,65 MB |
 | 6 moduli kasneje | Opus ali Sonnet | 4 (nalagalnik) | −0,5 MB |
@@ -140,11 +139,11 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 | 9 hitrejša gradnja | Opus, max (svet) | meritev na telefonu | težke proge ≤ ~5 s |
 | 10 po izbrisu testnih prog | Opus | izbris testnih prog | ob zagonu 1,27 MB |
 
-Koraki 2, 3, 7 in 9 so neodvisni od 4–6 in lahko tečejo prej; 4–6 se dotikajo istih mest (`index.html`, `game.js` `ensureTrack`, `tests/lib/core.js`), zato drug za drugim. Koraka 3 in 4 spreminjata meni (`js/menu.js`: naslovnica, `Menu.init`, ovinki na karticah) kot vgradnja nove izbire proge (#516, jure.kopac26, Načrtovano 8. 11.): začneta po njej ali po dogovoru na tabli #382. Vsak korak je svoj pull request in v vrsti ni med progami (`CLAUDE.md`: proge v vrsti zadnje).
+Koraki 2, 3, 7 in 9 so neodvisni od 4–6 in lahko tečejo prej; 4–6 se dotikajo istih mest (`index.html`, `game.js` `ensureTrack`, `tests/lib/core.js`), zato drug za drugim. Koraka 2 in 4 se dotikata menija (`js/menu.js`: `Menu.init`, ovinki na karticah) kot vgradnja nove izbire proge (#516, jure.kopac26, Načrtovano 8. 11.): začneta po njej ali po dogovoru na tabli #382. Vsak korak je svoj pull request in v vrsti ni med progami (`CLAUDE.md`: proge v vrsti zadnje).
 
 ## Odločitve uporabnika
 
-- `hitro-nalaganje-1` (stran Odločitve, 8. 11. 2026): videz naslovnice med nalaganjem (korak 3).
+- `hitro-nalaganje-1` (8. 11. 2026 ob 21.40, v pogovoru seje): **možnost 3, kot zdaj**: naslovnica ostane 3D svet zadnje proge s predstavitveno dirko pred menijem (ne slika proge, ne 3D v ozadju). Korak 3 je zato samo hiter vstop.
 - Pozneje: privzeta proga igre po izbrisu testnih prog (korak 10); shranjevanje igre za brez povezave samo na Wi-Fi (korak 8), če bo prenos v ozadju moteč.
 
 ## Učinek po korakih
