@@ -101,7 +101,7 @@
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
       const k = j * nx + i, h = H[k], A = h + base, sl = Math.hypot(H[j * nx + Math.min(nx - 1, i + 1)] - H[j * nx + Math.max(0, i - 1)], H[Math.min(nz - 1, j + 1) * nx + i] - H[Math.max(0, j - 1) * nx + i]) / (2 * F.cell), q = rpHash(i, j) - 0.5;
       let c;
-      if (wet[k]) c = [0.18, 0.27, 0.3];
+      if (wet[k]) c = (colFn && colFn.wet) || [0.18, 0.27, 0.3];   // (the water: a road's own colour of it, Sa Calobra's sea)
       else if (colFn) c = colFn(A, sl, q);
       else {
         c = su ? [0.2 + q * 0.04, 0.33 + q * 0.05, 0.14] : [0.5 + q * 0.12, 0.3 + q * 0.06, 0.14];   // the broadleaf woods (green; autumn's reds and browns)
@@ -127,7 +127,7 @@
     const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'irFar';
     mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); };   // (the haze: the fog's colour, by the time of day and the weather)
     const rim = new Float32Array(nv); for (let k = 0; k < n; k++) rim[k] = sstep(1400, 800, dr[k]);   // (round the corridor's hole: into the haze, no ragged edge)
-    return { mesh, P0: Float32Array.from(P0), rim, cx: 1e9, cy: 0, cz: 0, cf: 0 };
+    return { mesh, P0: Float32Array.from(P0), rim, cx: 1e9, cy: 0, cz: 0, cf: 0, hz: (colFn && colFn.hz) || [0.3, 0.5] };   // (hz: the haze's [floor, rise] with the distance; a road's own, Sa Calobra's clearer sea air seen through more of it)
   }
   function irFarUpdate(F, cam) {   // (no camera: back to the nodes' own places, the world test's pose)
     F.mesh.visible = true;
@@ -136,7 +136,7 @@
     F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
     const g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0, R0 = cam.far - 70, R1 = cam.far - 6;
     for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 400) / 3000)), f = r / D;
-      p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(F.rim[v], 0.3 + 0.5 * (1 - Math.exp(-Math.max(0, D - 500) / 5000))); }
+      p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(F.rim[v], F.hz[0] + F.hz[1] * (1 - Math.exp(-Math.max(0, D - 500) / 5000))); }
     g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
   }
   function buildIroha(scene, tex, opts) {
