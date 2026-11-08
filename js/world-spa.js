@@ -572,7 +572,7 @@
     }
 
     /* ---- spectators on the grass banks at the famous places, fans' tents and cars in the woods behind the bigger crowds, catch fences in front ---- */
-    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
+    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, 'Kratki levi': 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
     for (const q of T.names) {
