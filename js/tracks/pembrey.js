@@ -24,8 +24,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc3cdd4, sun: 0xfff1de, sunI: 0.98, sky: 0xaec6dc, gnd: 0x4d6a34, hemiI: 0.7, tint: [0.98, 1.0, 0.99], sat: 1.0, sunOff: [-60, 66, 74], split: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]] },   // the coast of south Wales in summer: a soft, clean sea light, the sun from the south-west, a little haze off the bay
-    say: 'Pembrey',
-    rainP: 0.45,   // (the west coast of Wales: rain comes in off the sea often)
+    say: 'Pembrey', rainP: 0.45,
     grassNat: 0.4, lawn: [0.96, 1.02, 0.94],
     zivali: { a: ['fox', 'hare', 'roe'], t: ['logPile', 'fallenTree'], open: true },
     id: 'pembrey', name: 'Pembrey, Wales', theme: 'pembrey', laps: 6, halfWidth: 5.5,
