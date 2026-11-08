@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Vietnam</title>
+  <!-- Ratio 2:3. Red field, a yellow five-pointed star in the centre, one point straight up; the star's circumscribed
+       radius one fifth of the flag's length (180 px: the circle round it 3/5 of the height across). Colours: red #DA251D, yellow #FFFF00. -->
+  <rect width="900" height="600" fill="#DA251D"/>
+  <polygon fill="#FFFF00" points="450.00,120.00 490.41,244.38 621.19,244.38 515.39,321.25 555.80,445.62 450.00,368.75 344.20,445.62 384.61,321.25 278.81,244.38 409.59,244.38"/>
+</svg>

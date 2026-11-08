@@ -36,7 +36,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: MAPILENG_H.map((h, i) => [i / (MAPILENG_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.055 (silver), x 1.13 (bronze); the rain x 1.08 (cs: Circuit Superstars physics)
-    medals: { cs: [60, 63, 67], wet: { cs: [65, 68, 73] } },
+    medals: { cs: [37, 38, 41], wet: { cs: [40, 42, 45] } },   // the stock rally car on the autopilot x 1.01, 1.06, 1.14 (36.3 s dry, 39.8 s in the rain; as tools/nova-proga.mjs --medalje)
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // plateau's road: motorbikes above all, cars and vans, the minibuses between the towns, a few lorries, rare cyclists on the climb
     traffic: { mix: [0.26, 0.16, 0.08, 0.44, 0.06], bike: 5000 },
@@ -44,10 +44,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'CẢNH SÁT', band: '#1c3f8c', text: '#f6f2e4' }, escTo: 'Do prelaza Mã Pí Lèng',   // (and the results of an escape: 'Do prelaza Mã Pí Lèng v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Serpentina 1 · 1210 m", "d": 357.0, "say": ["Hairpin one, and the climb bites!", "Into the first hairpin, the limestone right beside you!"]},
-      {"n": "Serpentina 2 · 1216 m", "d": 438.0, "say": ["Hairpin two, straight after the first one!", "Hairpin two! Right back the other way!"]},
-      {"n": "Serpentina 3 · 1243 m", "d": 716.0, "say": ["Hairpin three, the last of them!", "The third hairpin, and the top of the climb is close!"]},
-      {"n": "Spomenik · 1255 m", "d": 855.0, "say": ["Past the memorial to the road's builders, the top of the climb!", "The memorial on the right, and the finish just over the crest!"]},
+      {"n": "Serpentina 1 · 1.210 m", "d": 357.0, "say": ["Hairpin one, and the climb bites!", "Into the first hairpin, the limestone right beside you!"]},
+      {"n": "Serpentina 2 · 1.216 m", "d": 438.0, "say": ["Hairpin two, straight after the first one!", "Hairpin two! Right back the other way!"]},
+      {"n": "Serpentina 3 · 1.243 m", "d": 716.0, "say": ["Hairpin three, the last of them!", "The third hairpin, and the top of the climb is close!"]},
+      {"n": "Spomenik", "d": 855.0, "say": ["Past the memorial to the road's builders, the top of the climb!", "The memorial on the right, and the finish just over the crest!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {

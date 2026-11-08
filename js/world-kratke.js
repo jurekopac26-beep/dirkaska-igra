@@ -34,7 +34,7 @@
       seed: 5311, dust: [0.56, 0.52, 0.45],
       pal: { grass: [0.45, 0.52, 0.28], dry: [0.6, 0.58, 0.4], soil: [0.5, 0.42, 0.32], shrub: [0.3, 0.4, 0.2], tree: [0.22, 0.33, 0.17],
         field: [0.47, 0.56, 0.25], field2: [0.64, 0.6, 0.38], wall: [0.62, 0.62, 0.6], built: [0.6, 0.58, 0.54], bare: [0.6, 0.6, 0.58],
-        rock: [0.64, 0.64, 0.62], rock2: [0.5, 0.51, 0.5], path: [0.56, 0.5, 0.4], verge: [0.5, 0.47, 0.41], karst: 0.6 },
+        rock: [0.64, 0.64, 0.62], rock2: [0.5, 0.51, 0.5], path: [0.56, 0.5, 0.4], verge: [0.5, 0.47, 0.41], karst: 0.75 },
       far: (A, sl, q) => { const rk = Math.min(1, sstep(0.42, 0.85, sl) * 0.75), wood = sstep(1250, 1600, A) * 0.4;
         let c = [0.41 + q * 0.05, 0.48 + q * 0.04, 0.3 + q * 0.03]; c = [lerp(c[0], 0.25, wood), lerp(c[1], 0.34, wood), lerp(c[2], 0.21, wood)];
         return [lerp(c[0], 0.6 + q * 0.06, rk), lerp(c[1], 0.6 + q * 0.05, rk), lerp(c[2], 0.57 + q * 0.04, rk)]; },
@@ -97,7 +97,7 @@
       R = lerp(R, lerp(fr, C.wall[0], wall), fd); G = lerp(G, lerp(fg, C.wall[1], wall), fd); B = lerp(B, lerp(fb, C.wall[2], wall), fd); }
     mix(C.built, vrLCf(x, z, 3) * 0.6);
     mix(C.bare, vrLCf(x, z, 4) * 0.8);
-    if (C.karst) mix(C.rock, sstep(0.6, 0.8, P.c2(x * 2.6 + 311, z * 2.6)) * C.karst * (1 - fd) * (1 - tr * 0.6));   // (the limestone showing through the grass, in patches of ~10-25 m)
+    if (C.karst) mix(C.rock, sstep(0.56, 0.8, P.c2(x * 2.6 + 311, z * 2.6)) * C.karst * (1 - fd) * (1 - tr * 0.6));   // (the limestone showing through the grass, in patches of ~10-25 m)
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
     const st = sstep(0.7, 0.42, ny) * (1 - 0.6 * fd);
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 5.5 + P.c2(x * 0.4, z * 0.4) * 6), alt = sstep(0.6, 0.9, band) * sstep(0.4, 0.7, P.c3(x, z)), k = 0.88 + 0.14 * band;
@@ -464,7 +464,7 @@
     /* ---- the landmarks by the road (def.marks [x, z, kind]; all generic, no names or signs of their own): the memorial (a white obelisk on a
        stepped plinth of grey stone), the shrine (a small altar under a tiled roof, red pillars), the museum (a low hall with a tiled roof), the
        café (a small house with a flat roof and a terrace with a railing); each where the map has it, set back to clear the barrier ---- */
-    let nMarks = 0;
+    let nMarks = 0, nKarst = 0;
     {
       const gm = new GB(), RM = rng(LK.seed + 40);
       for (const [mx, mz, kind] of def.marks || []) {
@@ -598,6 +598,14 @@
         if (vrNear(x, z).dd < sz + 0.8 || excluded(x, z) || vrDist(x, z) > LOD.cap(100)) continue; const c = vrLC(x, z); if (c === 5 || c === 3) continue;
         rock(scen.get(x, z), x, caGround(x, z) + sz * 0.15, z, sz * (1 + RW() * 0.6), sz * (0.8 + RW() * 0.9), sz, RW() * TAU, vary(rockC(), RW, 0.06), RW, 0.4);
       }
+      if (LK.rocks.karst) for (let s = 6; s < T.len - 6; s += 3.4) for (const side of [-1, 1]) {   // the karst's pinnacles: clumps of grey limestone knobs taller than wide, where its patches show through the grass (the ground's own grey, pal.karst)
+        const o = 3 + Math.pow(RW(), 1.15) * 62, [x, z] = onSide(s, side, o), k = sstep(0.56, 0.8, P.c2(x * 2.6 + 311, z * 2.6));
+        if (RW() > k * 0.95 * LK.rocks.karst || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue; const c = vrLC(x, z); if (c === 5 || c === 3 || (c === 6 && RW() < 0.7)) continue;
+        const g = scen.get(x, z), b0 = vary(rockC(), RW, 0.05), m = 2 + Math.floor(RW() * 3);
+        for (let q = 0; q < m; q++) { const r0 = 0.45 + RW() * 0.8, qx = x + (RW() - 0.5) * 5, qz = z + (RW() - 0.5) * 5, hh = r0 * (1.6 + RW() * 1.8);
+          if (vrNear(qx, qz).dd < r0 + 1.2) continue;
+          rock(g, qx, caGround(qx, qz) + hh * 0.35, qz, r0, hh, r0 * (0.7 + RW() * 0.4), RW() * TAU, vary(b0, RW, 0.06), RW, 0.45); nKarst++; }
+      }
       API.ROCK_SMOOTH = false;
       for (let s = 6; s < T.len - 6; s += 4.2) for (const side of [-1, 1]) {   // stones beside the road
         if (RW() > 0.4) continue; const o = 1.8 + Math.pow(RW(), 1.6) * 34, [x, z] = onSide(s, side, o), sz = 0.18 + RW() * 0.45;
@@ -638,7 +646,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: krAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: krAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, marks: nMarks, far: !!FAR };   // (read by the tests)
+    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, marks: nMarks, karst: nKarst, far: !!FAR };   // (read by the tests)
     return out;
   }
 
