@@ -2,7 +2,8 @@
 // Leaderboard, Credits), the six modes (Elimination and Pursuit: Zabava), the tracks of every mode in one list that goes round (the real ones from the shortest to the
 // longest, then the test tracks; each with its pictures in the stage's three cameras: 1 the map from above, 2 the flyover with the height
 // graph, 3 the corner's video, else the model of the land), the track step's head, row of numbers, road sign and neighbours
-// (docs/meni-izbira-proge.md), the weather and the race options, the car in 3D with the wind round it
+// (docs/meni-izbira-proge.md), the quick list (the flag: countries by continent, a country's tracks, a track's card, the search and the
+// filters, the player's marks, Back), the weather and the race options, the car in 3D with the wind round it
 // (js/menu-car.js: in the player's colour, the wind drawn and moving, its picture without WebGL; its name over it; tapped: the garage, whose
 // back and Izberi progo lead straight to the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
@@ -399,6 +400,131 @@ try {
     await ctx.close();
   }
 
+  // 4c. the quick list (js/menu-izbor.js; docs/meni-izbira-proge.md, sklop 8): the flag in the row opens it over the track step: the
+  //     countries by continent A to Z (the shown track's gold), the test tracks in their own tile at the end; a country's tracks, a track's
+  //     card (its shape from above, its facts, the player's best, its heights), Select and Race!; the search (no accents needed) and the
+  //     filters; the player's marks (a race's first three places a medal, a track driven a tick, one not driven NEW: in the row too);
+  //     Back (the phone's: the history; Esc; the pad's B) a layer down, the cross closes it
+  {
+    const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
+    const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, null, { init: 'localStorage.setItem("tdgp-records", ' + JSON.stringify(JSON.stringify({ tracks: recs })) + ');' });
+    const miss = []; page.on('response', (r) => { if (r.status() === 404) miss.push(new URL(r.url()).pathname); });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    const IZ = (n) => page.waitForFunction((n) => window.MenuIzbor && (n ? MenuIzbor.isOpen() && MenuIzbor.depth() === n : !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb')), n, { timeout: 10000 });
+    const VIEW = `const q = (s) => root.querySelector(".izb " + s), all = (s) => [...root.querySelectorAll(".izb " + s)], tx = (e) => e ? e.textContent.replace(/\\s+/g, " ").trim() : null;
+      const pr = (e) => { const m = e && e.querySelector(".pr"); return m ? m.className.replace("pr ", "") + ":" + m.textContent : ""; };
+      return { title: tx(q(".izb-head .t b")), sub: tx(q(".izb-head .t small")), depth: MenuIzbor.depth(), hist: history.state && history.state.nazaj, pad: Menu.padRoot() === q(".izb-sheet"),
+        dlg: q(".izb-sheet") && q(".izb-sheet").getAttribute("role") + "/" + q(".izb-sheet").getAttribute("aria-modal"),
+        cts: all(".izb-ct").map(e => e.firstChild.textContent), secs: all(".izb-ct").map(e => [...e.nextElementSibling.querySelectorAll(".izb-c")].map(c => c.dataset.c != null ? c.dataset.c : "TEST")), tiles: all(".izb-c").map(e => [e.dataset.c != null ? e.dataset.c : "TEST", +(tx(e.querySelector(".n")) || 1), pr(e.querySelector(".izb-pm")), e.classList.contains("on") ? 1 : 0]),
+        rows: all(".izb-t").map(e => [e.dataset.t, pr(e.querySelector(".izb-im")), tx(e.querySelector(".bt")) || "", tx(e.querySelector(".tx small")), !!e.querySelector(".izb-mf"), tx(e.querySelector(".tx em")) || ""]),
+        found: tx(q(".izb-sub")), none: tx(q(".izb-none")), chips: all(".izb-chips button[aria-pressed=true]").map(e => e.dataset.f || e.dataset.l),
+        card: q(".izb-tc") ? { shape: q(".izb-shape svg path.r") ? q(".izb-shape svg path.r").getAttribute("d") : q(".izb-shape.pic img") ? "pic" : "", facts: all(".izb-facts > div").map(e => tx(e.querySelector("small")) + ":" + tx(e.querySelector("b"))),
+          best: pr(q(".izb-best")) + "|" + tx(q(".izb-best small")) + "|" + tx(q(".izb-best b")), graph: !!q(".izb-hg svg path.l"), btns: all(".izb-btns button").map(tx) } : null };`;
+    const view = () => ev(page, VIEW);
+    // the row: Spa won (a gold 1 before Best lap, the time), the flag a button
+    const r0 = await ev(page, 'const b = root.querySelector(".trow .best"), f = root.querySelector(".trow .flag button"); return { mark: b.querySelector("small .pr") ? b.querySelector("small .pr").className + ":" + b.querySelector("small .pr").textContent : "", best: b.querySelector("b").textContent, flag: f ? f.getAttribute("aria-label") + "|" + f.getAttribute("aria-haspopup") : "", sign: root.querySelector(".yard .sign").dataset.act };');
+    T.check('the quick list: the row shows the player\'s best with its mark (Spa won: a gold 1 before Best lap, 02:20.210); the flag and the road sign open the list',
+      r0.mark === 'pr gold:1' && r0.best === '02:20.210' && r0.flag === 'Flag of Belgium. Choose a track by country|dialog' && r0.sign === 'izbor', JSON.stringify(r0));
+    await page.click('.trow .flag button'); await IZ(1);
+    const g = await view();
+    const exp = await page.evaluate(() => { const L = Menu.debug().list.map(id => Core.TRACKS.find(d => d.id === id)); return { real: L.filter(d => !d.test).length, test: L.filter(d => d.test).length }; });
+    const sub = /^(\d+) countries · (\d+) tracks$/.exec(g.sub || ''), countryTiles = g.tiles.filter(t => t[0] !== 'TEST'), tile = (c) => g.tiles.find(t => t[0] === c) || [];
+    T.check('the quick list opened (a dialog; the pad\'s part of the screen; one step in the history): "Choose a country", its countries and the mode\'s real tracks counted',
+      g.title === 'Choose a country' && g.dlg === 'dialog/true' && g.pad && g.depth === 1 && g.hist === 1 && !!sub && +sub[1] === countryTiles.length && +sub[2] === exp.real && countryTiles.reduce((a, t) => a + t[1], 0) === exp.real, JSON.stringify({ g: { title: g.title, sub: g.sub, dlg: g.dlg, pad: g.pad, depth: g.depth, hist: g.hist }, exp }));
+    const conts = ['Europe', 'North America', 'South America', 'Africa', 'Asia', 'Oceania'];
+    const az = g.cts.slice(0, -1).every((c, i, a) => conts.includes(c) && (!i || conts.indexOf(a[i - 1]) < conts.indexOf(c))) && g.secs.slice(0, -1).every(n => n.every((c, i) => !i || n[i - 1].localeCompare(c, 'en') < 0));
+    T.check('the countries by continent (Europe first, as the mockup), A to Z in each, the test tracks in their own tile at the end (For testing, every test track of the mode)',
+      az && g.cts[0] === 'Europe' && g.cts[g.cts.length - 1] === 'For testing' && JSON.stringify(g.secs[g.secs.length - 1]) === '["TEST"]' && g.tiles[g.tiles.length - 1][0] === 'TEST' && g.tiles[g.tiles.length - 1][1] === exp.test && tile('Belgium')[1] === 1 && tile('Japan')[1] >= 2, JSON.stringify({ cts: g.cts, secs: g.secs, tiles: g.tiles.map(t => t[0] + ':' + t[1]) }));
+    T.check('the marks on the flags: the shown track\'s country gold (Belgium), its best a gold 1; Japan (Suzuka 2nd) silver; Germany (Nürburg 5th) a tick; a country not driven NEW; the test tracks NEW',
+      tile('Belgium')[3] === 1 && g.tiles.filter(t => t[3]).length === 1 && tile('Belgium')[2] === 'gold:1' && tile('Japan')[2] === 'silver:2' && tile('Germany')[2] === 'done:' && tile('Canada')[2] === 'new:NEW' && g.tiles[g.tiles.length - 1][2] === 'new:NEW', JSON.stringify(g.tiles));
+    // a country: its tracks (Japan: Iroha, Suzuka), each with its mark, facts and best; then Suzuka's card
+    await page.click('.izb-c[data-c="Japan"]'); await IZ(2);
+    const jp = await view(), suz = jp.rows.find(r => r[0] === 'suzuka') || [], iro = jp.rows.find(r => r[0] === 'iroha') || [];
+    T.check('a country (Japan): its tracks in the list\'s order, each its mark (Suzuka a silver 2 and its best: 02:02.400, 2nd; Iroha NEW) and facts; two steps in the history',
+      jp.title === 'Japan' && jp.sub === jp.rows.length + ' tracks' && jp.rows.length >= 2 && jp.depth === 2 && jp.hist === 2 && suz[1] === 'silver:2' && suz[2] === '02:02.4002nd' && /^\d+\.\d\d km · \d+ corners · Circuit$/.test(suz[3]) && iro[1] === 'new:NEW' && iro[2] === '' && /^\d+\.\d\d km · .+ · Open road$/.test(iro[3]),
+      JSON.stringify(jp.rows));
+    await page.click('.izb-t[data-t="suzuka"]'); await IZ(3);
+    const cd = await view(), km = await page.evaluate(() => (MENU.lens.suzuka / 1000).toFixed(2) + ' km'), nc = await page.evaluate(() => String(MENU.ncorners.suzuka));
+    T.check('the track\'s card (Suzuka): the shape from above (a closed line), Length, Corners and Type, the player\'s best (Best lap 02:02.400, 2nd place, silver), the heights, Select and Race!',
+      cd.title === 'Suzuka' && cd.sub === 'Japan' && cd.depth === 3 && cd.hist === 3 && !!cd.card && /^M[\d ]+(L[\d ]+){6,}Z$/.test(cd.card.shape) && JSON.stringify(cd.card.facts) === JSON.stringify(['Length:' + km, 'Corners:' + nc, 'Type:Circuit']) &&
+      cd.card.best === 'silver:2|Best lap|02:02.4002nd place' && cd.card.graph && JSON.stringify(cd.card.btns) === '["Select","Race!"]', JSON.stringify(cd));
+    // Back: the phone's (the history), the pad's B, Esc: a layer down each, the last closes it; the screen behind as it was
+    await page.evaluate(() => history.back()); await IZ(2);
+    const b1 = await view();
+    await page.evaluate(() => Menu.padKey('b')); await IZ(1);
+    const b2 = await view();
+    await page.keyboard.press('Escape'); await IZ(0);
+    const b3 = await page.evaluate(() => ({ hist: history.state && history.state.nazaj, d: Menu.debug(), track: __game.S.track }));
+    T.check('Back (the phone\'s) from the card: the country\'s list; the pad\'s B: the countries; Esc: closed, no step of it left in the history; the track step as it was (Spa)',
+      b1.title === 'Japan' && b1.rows.length === jp.rows.length && b2.title === 'Choose a country' && b2.tiles.length === g.tiles.length && !b3.hist && b3.d.screen === 'track' && b3.d.list[b3.d.trackIdx] === 'spa' && b3.track === 'spa',
+      JSON.stringify({ b1: b1.title, b2: b2.title, b3 }));
+    // the search: a place without its accents, a country, two words; its keys stay its own (← does not step the track); the cross clears it
+    const at = await ev(page, `const s = root.querySelector(".yard .sign"), r = s.getBoundingClientRect();   // (the sign's part not behind the car)
+      for (let y = r.top + 4; y < r.bottom; y += 4) for (let x = r.left + 4; x < r.right; x += 4) { const e = root.elementFromPoint(x, y); if (e && s.contains(e)) return [x, y]; } return null;`);
+    if (at) await page.mouse.click(at[0], at[1]); else await page.click('.trow .flag button');
+    await IZ(1);
+    await page.fill('.izb-q input', 'nurburg'); const s1 = await view();
+    await page.press('.izb-q input', 'ArrowLeft'); await page.press('.izb-q input', 'ArrowRight');
+    const s1k = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx] + ':' + MenuIzbor.isOpen(); });
+    await page.fill('.izb-q input', 'japan'); const s2 = await view();
+    await page.fill('.izb-q input', 'spa belg'); const s3 = await view();
+    await page.fill('.izb-q input', 'atlantis'); const s4 = await view();
+    await page.click('.izb-qx'); const s5 = await view();
+    const s5q = await ev(page, 'return root.querySelector(".izb-q input").value;');
+    T.check('the search: "nurburg" finds Nürburg (its flag before it), "japan" its tracks, "spa belg" Spa, "atlantis" nothing (No track found); the arrow keys stay the search\'s; the cross clears it, the countries back',
+      JSON.stringify(s1.rows.map(r => r[0])) === '["nring"]' && s1.found === '1 track' && s1.rows[0][4] && s1.rows[0][1] === 'done:' && s1k === 'spa:true' && JSON.stringify(s2.rows.map(r => r[0])) === JSON.stringify(jp.rows.map(r => r[0])) &&
+      JSON.stringify(s3.rows.map(r => r[0])) === '["spa"]' && !s4.rows.length && /^No track found/.test(s4.none || '') && s5.tiles.length === g.tiles.length && s5q === '', JSON.stringify({ s1: s1.rows, s1k, s2: s2.rows.map(r => r[0]), s3: s3.rows.map(r => r[0]), s4: s4.none, s5: s5.tiles.length }));
+    // the filters: a type (Circuit), two types (either), a type and a length (both); off again: the countries
+    const want = (types, lens) => page.evaluate(([types, lens]) => Menu.debug().list.filter(id => {
+      const d = Core.TRACKS.find(x => x.id === id), gr = d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit', km = MENU.lens[id] / 1000;
+      return (!types.length || types.includes(gr)) && (!lens.length || lens.some(l => l === 's' ? km < 3 : l === 'm' ? km >= 3 && km < 6.0001 : km >= 6.0001));
+    }), [types, lens]);
+    await page.click('.izb-chips [data-f="circuit"]'); const f1 = await view(), w1 = await want(['circuit'], []);
+    await page.click('.izb-chips [data-f="road"]'); const f2 = await view(), w2 = await want(['circuit', 'road'], []);
+    await page.click('.izb-chips [data-f="circuit"]'); await page.click('.izb-chips [data-l="s"]'); const f3 = await view(), w3 = await want(['road'], ['s']);
+    await page.click('.izb-chips [data-f="road"]'); await page.click('.izb-chips [data-l="s"]'); const f4 = await view();
+    const ids = (v) => JSON.stringify(v.rows.map(r => r[0]));
+    T.check('the filters: Circuit the circuits (no test track), Circuit and Open road either, Open road and < 3 km both (or No track found), all off the countries again',
+      JSON.stringify(f1.chips) === '["circuit"]' && ids(f1) === JSON.stringify(w1) && w1.length >= 3 && f1.rows.every(r => r[5] !== 'TEST') && ids(f2) === JSON.stringify(w2) && w2.length > w1.length &&
+      JSON.stringify(f3.chips) === '["road","s"]' && (w3.length ? ids(f3) === JSON.stringify(w3) : !f3.rows.length && /^No track found/.test(f3.none || '')) && !f4.chips.length && f4.tiles.length === g.tiles.length,
+      JSON.stringify({ f1: f1.rows.map(r => r[0]), f2: f2.rows.length, f3: f3.rows.map(r => r[0]), f3n: f3.none, f4: f4.tiles.length }));
+    // Select: a country of several tracks (Canada), a track's card, Select: the screen goes to it, the list closed and its steps gone
+    await page.click('.izb-c[data-c="Canada"]'); await IZ(2);
+    const ca = await view(), pickId = ca.rows.map(r => r[0]).find(id => id !== 'spa');
+    await page.click(`.izb-t[data-t="${pickId}"]`); await IZ(3);
+    const pc = await view();
+    await page.click('.izb-sel'); await IZ(0);
+    await page.waitForFunction(() => !(history.state && history.state.nazaj), null, { timeout: 5000 }).catch(() => null);
+    const sel = await ev(page, 'const d = Menu.debug(); return { id: d.list[d.trackIdx], track: __game.S.track, head: root.querySelector(".where .w2").textContent, hist: history.state && history.state.nazaj };');
+    T.check(`Select (Canada, ${pickId}): the track step goes to it (its name in the head, the game's track), the list closed, no step of it left in the history`,
+      ca.title === 'Canada' && ca.rows.length >= 2 && pc.title === sel.head && sel.id === pickId && sel.track === pickId && !sel.hist, JSON.stringify({ ca: ca.rows.map(r => r[0]), pc: pc.title, sel }));
+    // a country of one track (Belgium) opens its card at once; Back: the countries
+    await page.click('.trow .flag button'); await IZ(1);
+    await page.click('.izb-c[data-c="Belgium"]'); await IZ(2);
+    const be = await view();
+    await page.click('.izb-head [data-back]'); await IZ(1);
+    const be2 = await view();
+    T.check('a country of one track (Belgium): its card at once (Spa: a gold 1, Best lap 02:20.210, 1st place); the head\'s back arrow: the countries',
+      be.title === 'Spa' && be.sub === 'Belgium' && !!be.card && be.card.best === 'gold:1|Best lap|02:20.2101st place' && be2.title === 'Choose a country', JSON.stringify({ be: be.title, best: be.card && be.card.best, be2: be2.title }));
+    // the test tracks' tile: their list (TEST on each); a test track's card (its picture, no shape); Race! starts its race at once
+    await page.click('.izb-c[data-test]'); await IZ(2);
+    const tl = await view();
+    await page.click('.izb-t[data-t="jezero"]'); await IZ(3);
+    const jz = await view();
+    T.check('the test tracks\' tile: their list (Test tracks, to be removed; TEST on each), a test track\'s card (Jezero: its picture, no shape; TEST in the head)',
+      tl.title === 'Test tracks' && /^\d+ tracks · to be removed$/.test(tl.sub) && tl.rows.length === exp.test && tl.rows.every(r => r[5] === 'TEST') && / · TEST$/.test(jz.sub) && jz.card && jz.card.shape === 'pic' && JSON.stringify(jz.card.btns) === '["Select","Race!"]',
+      JSON.stringify({ tl: tl.title + ' / ' + tl.sub, n: tl.rows.length, jz: jz.sub, card: jz.card }));
+    await page.click('.izb-race');
+    let raced = true; await raceOn(page, 'jezero').catch(async () => { raced = false; console.log('  (the page:', JSON.stringify(await pageState(page)) + ')'); });
+    const rc = await page.evaluate(() => ({ open: MenuIzbor.isOpen(), covers: Menu.covers(), hist: history.state && history.state.nazaj }));
+    T.check('Race! on the card: the race on that track (Jezero) at once, the quick list gone with its steps in the history', raced && !rc.open && !rc.hist, JSON.stringify(rc));
+    // (Vršič, a test track frozen since 6. 11. 2026, has no model picture: its row shows its flyover's instead; the browser logs the miss)
+    const errs = real(errors).filter(e => !/Failed to load resource: the server responded with a status of 404/.test(e)), n404 = real(errors).length - errs.length;
+    T.check('the quick list: no page errors (the only picture missing Vršič\'s, a frozen test track: its flyover shown)', !errs.length && miss.every(p => p === '/assets/tracks/vrsic.webp') && n404 <= miss.length, errs.concat(miss).join(' | '));
+    await ctx.close();
+  }
+
   // 5. a time trial on a new track (Harju: the model of its land, no map or flight yet), and the short intro with its video and Skip
   {
     const { ctx, page, errors } = await open();
@@ -623,6 +749,30 @@ try {
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame (Pikes Peak: Crystal Reservoir, the start, below; the Summit, the finish, above)' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, !!pk && turned === tall && upright, JSON.stringify(pk && { name: pk.name, rot: pk.rot, pic: pk.pic, s: pk.s, f: pk.f }));
     T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: on every map the names of the flags are not under the head, the graph, the weather, the counter or the cameras' buttons`, maps >= 5 && !under.length, JSON.stringify(under));
+    // the quick list (sklop 8): upright a sheet from the bottom the screen's width, on its side a panel at the right the screen's height;
+    // its buttons big enough for a finger, the flags and the countries' names not cut; a country's tracks and a track's card in it, the
+    // card's Select and Race! in sight without scrolling
+    await page.click('.trow .flag button');
+    await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });   // (on: slid in)
+    const QL = `const rc = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; }, q = (s) => root.querySelector(".izb " + s), qa = (s) => [...root.querySelectorAll(".izb " + s)];
+      return { W: innerWidth, H: innerHeight, sh: rc(q(".izb-sheet")), body: rc(q(".izb-body")), x: rc(q(".izb-head [data-x]")), bk: rc(q(".izb-head [data-back]")), q: rc(q(".izb-q")),
+        cut: qa(".izb-c b, .izb-t .tx b").filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent), tiles: qa(".izb-c").map(rc), chips: qa(".izb-chips button").map(rc), rows: qa(".izb-t").map(rc), btns: qa(".izb-btns button").map(rc) };`;
+    const q1 = await ev(page, QL);
+    const portrait = q1.W < q1.H, within = (r, b) => r.l >= b.l - 0.5 && r.r <= b.r + 0.5;
+    const placed = (s) => portrait ? Math.abs(s.l) < 1 && Math.abs(s.r - q1.W) < 1 && Math.abs(s.b - q1.H) < 1 && s.t >= 39   // (as high as its view needs: the countries most of the screen)
+      : Math.abs(s.r - q1.W) < 1 && Math.abs(s.t) < 1 && Math.abs(s.b - q1.H) < 1 && Math.abs(s.w - Math.min(412, q1.W * 0.64)) < 2;
+    T.check(`${w}x${h}: the quick list ${portrait ? 'a sheet from the bottom, the screen\'s width (the track step seen over it)' : 'a panel at the right, the screen\'s height'}; the cross 44 px or more; the search, the filters and the flags inside it; no country\'s name cut`,
+      placed(q1.sh) && (!portrait || q1.sh.t <= q1.H * 0.2) && q1.x.w >= 44 && q1.x.h >= 44 && within(q1.x, q1.sh) && within(q1.q, q1.sh) && q1.chips.length === 6 && q1.chips.every(c => within(c, q1.sh) && c.h >= 26) && q1.tiles.length >= 10 && q1.tiles.every(t => within(t, q1.sh)) && !q1.cut.length,
+      JSON.stringify({ sh: q1.sh, x: q1.x, q: q1.q, chips: q1.chips.map(c => [Math.round(c.l), Math.round(c.r)]), cut: q1.cut }));
+    await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
+    const q2 = await ev(page, QL);
+    await page.click('.izb-t[data-t="suzuka"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
+    const q3 = await ev(page, QL);
+    T.check(`${w}x${h}: in the quick list a country's tracks (Japan) inside it, their names not cut; a track's card (Suzuka): Select and Race! in sight without scrolling, 44 px or more; the back arrow and the cross 44 px or more`,
+      placed(q2.sh) && q2.rows.length >= 2 && q2.rows.every(r => within(r, q2.sh)) && !q2.cut.length && placed(q3.sh) && q3.btns.length === 2 && q3.btns.every(b => within(b, q3.sh) && b.t >= q3.body.t - 0.5 && b.b <= q3.body.b + 0.5 && b.h >= 44) &&
+      q3.bk && q3.bk.w >= 44 && q3.bk.h >= 44 && q3.x.w >= 44, JSON.stringify({ rows: q2.rows.length, cut: q2.cut, sh: q3.sh, body: q3.body, btns: q3.btns, bk: q3.bk }));
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb'), null, { timeout: 10000 });
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

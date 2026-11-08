@@ -1046,7 +1046,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .izb-c .n { position: absolute; right: 4px; top: 4px; z-index: 1; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: rgba(8, 12, 20, .82);
   font: 800 italic 12px/20px var(--f-ui); color: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .5); }
 .izb-c .izb-pm { position: absolute; left: 4px; bottom: 4px; z-index: 1; display: flex; }
-.izb-c b { font: 800 italic 11.5px/1.1 var(--f-ui); text-transform: uppercase; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.izb-c b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 800 italic 11.5px/1.1 var(--f-ui); text-transform: uppercase; letter-spacing: .2px; overflow-wrap: anywhere; }   /* (a long name, SOUTH AFRICA on a small phone: two lines, not cut) */
 .izb-c small { margin-top: -3px; font: 600 10.5px/1.1 var(--f-ui); color: var(--lbl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .izb-c.on .f { box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(255, 198, 41, .55); }
 .izb-c.on b { color: var(--gold); }
@@ -1144,7 +1144,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 }
 @media (orientation: landscape) and (max-height: 520px) {
   .izb-head { gap: 8px; padding: 8px 12px 8px; } .izb-head b { font-size: 18px; } .izb-head small { margin-top: 3px; font-size: 11px; }
-  .izb-btn { width: 38px; height: 38px; } .izb-hf { width: 42px; height: 28px; }
+  .izb-hf { width: 42px; height: 28px; }   /* (the head's buttons stay 44 px: a finger's) */
   .izb-tools { gap: 7px; padding: 0 12px 8px; } .izb-q { height: 36px; } .izb-q > svg { top: 7.5px; } .izb-chips button { height: 27px; }
   .izb-body { padding-left: 12px; padding-right: 12px; }
   .izb-tc { gap: 9px; } .izb-shape { flex-basis: 132px; height: 104px; } .izb-facts { gap: 8px; } .izb-facts b { font-size: 17px; }
