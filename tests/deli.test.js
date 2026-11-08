@@ -163,7 +163,7 @@ check('a car\'s own lamp shape: every option within it, its lens bulging (PANTER
 // by its builder from BODIES, the car with parts by the kit from the copy: the same shape)
 const RJ = fs.readFileSync(path.join(ROOT, 'js/render.js'), 'utf8'), bodySecs = (k) => { const m = RJ.match(new RegExp('\\n    ' + k + ': \\{[^\\n]*secs: (\\[[\\s\\S]*?\\]\\]) \\}')) || RJ.match(new RegExp('\\n  BODIES\\.' + k + ' = \\{[^\\n]*secs: (\\[[\\s\\S]*?\\]\\]) \\}'));
   return m ? JSON.stringify(vm.runInNewContext(m[1])) : null; };
-const OLD = [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge'], ['muscle', 'muscle'], ['rally', 'rally'], ['truck', 'truck']].filter(([id, k]) => { const M = C.MODELS.find(x => x.id === id), L = M && M.def && M.def.look;
+const OLD = [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge'], ['muscle', 'muscle'], ['rally', 'rally'], ['truck', 'truck'], ['ev', 'ev']].filter(([id, k]) => { const M = C.MODELS.find(x => x.id === id), L = M && M.def && M.def.look;
   return !L || !bodySecs(k) || JSON.stringify(L.body.secs) !== bodySecs(k) || !M.def.mounts || M.kit; });
 check('starejsi: KAZE, VORTEX, PICO, STREGA, VIHAR V8 patched (a look, mounts; still drawn by their builder stock) with BODIES\' sections as in render.js', !OLD.length, OLD.map(o => o[0]).join(', ') || 'all five');
 console.warn = warn;

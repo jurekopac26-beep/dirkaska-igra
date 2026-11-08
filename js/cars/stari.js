@@ -310,9 +310,71 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     m.vzmeti = { in: 0.25, top: 1.0, seat: 0.62 }; m.amortizerji = { in: 0.25, top: 1.0 }; m.stabilizatorji = { in: 0.13, floor: 0.62 };   // (inboard of the wide tyres, from the high floor to the tubs' tops)
     return m;
   }
+  // ---- STRELA EV (MODELS 'ev'): render.js evGeometry's pieces on BODIES.ev's sections (the model's own size). Its top is a glass canopy
+  // from the rear deck to the bonnet (black rails along its edges): what goes on the roof stands on the rails or on the painted deck
+  const EV = { len: 4.62, wid: 2.0, spoiler: false, engRear: false, secs: [
+    [-2.31, 0.90, 0.30, 0.64, 0.86, 0.78, 0.01, 'b'], [-2.20, 0.98, 0.26, 0.70, 0.93, 0.86, 0.02, 'b'], [-1.72, 1.00, 0.25, 0.72, 0.86, 0.84, 0.03, 'b'],
+    [-1.28, 1.00, 0.25, 0.73, 0.64, 0.97, 0.03, 'gr'], [-0.30, 0.97, 0.25, 0.72, 0.58, 1.15, 0.03, 'r'], [0.34, 0.96, 0.25, 0.71, 0.58, 1.13, 0.03, 'gf'],
+    [1.10, 0.97, 0.25, 0.71, 0.88, 0.77, 0.03, 'b'], [1.78, 0.97, 0.26, 0.67, 0.88, 0.715, 0.03, 'b'], [2.31, 0.88, 0.28, 0.50, 0.80, 0.55, 0.01, 'b']] };
+  B.ev = EV; AX.ev = [1.42, 1.38];
+  const CYAN = [0.12, 0.78, 0.95];
+  function lookEv() {
+    const S = EV.secs.map(row), F = S[S.length - 1], R = S[0], EK = [0.05, 0.05, 0.06], CF = [0.1, 0.1, 0.11], W = [0.95, 0.97, 1.0];
+    return {
+      body: { len: EV.len, wid: EV.wid, secs: EV.secs, wz: 0.13, engRear: false, decalX: 1.42, decalY: 0.772, decalRz: -0.08, decalS: 0.72 },   // (the number on the bonnet, as BODIES.ev's)
+      wheels: { style: 'std', spokes: 5, w: 0.3, rim: [0.15, 0.16, 0.18], tyre: [0.07, 0.07, 0.08] },
+      build(K) {
+        const P = K.paint;
+        // the builder's loft: carbon tucks, the canopy's glass (the window bands and the top of every segment but the body's), the rest paint
+        // (the side glass over the rear arch black: the builder's blade behind the side glass there, the arch's flares clear of the glass)
+        const L = K.loft(K.body.secs, (k, e, kind, at) => e === 0 || e === 8 ? CF : kind !== 'b' && e >= 2 && e <= 6 ? ((e === 2 || e === 6) && at && at.x < -0.95 ? EK : K.GLASS) : P,
+          { caps: { front: { col: P }, rear: { col: P } } });
+        const D = L.decal, cx = S.filter(q => q.x >= -1.28 && q.x <= 1.1).map(q => q.x);
+        for (const sd of [-1, 1]) { const edge = cx.map(x => [x, sd * L.prop(x, 'wt')]), inner = cx.map(x => [x, sd * (L.prop(x, 'wt') - 0.07)]).reverse(); D.top(edge.concat(inner), EK, 0.006); }
+        D.band([[0.92, 0], [1.1, 0], [1.1, 1], [0.8, 1]], P, null, 0.012); D.band([[-1.28, 0], [-1.02, 0], [-1.16, 1], [-1.28, 1]], EK, null, 0.012);
+        D.side([[-1.6, 0.39], [1.72, 0.39], [1.72, 0.45], [-1.6, 0.45]], CF); D.side([[-1.6, 0.45], [1.72, 0.45], [1.72, 0.47], [-1.6, 0.47]], CYAN, null, 0.014);
+        D.side([[-1.3, 0.5], [-0.98, 0.5], [-1.04, 0.66], [-1.3, 0.68]], EK, null, 0.014);
+        for (const sd of [-1, 1]) D.top([[1.9, sd * 0.16], [2.14, sd * 0.2], [2.14, sd * 0.46], [1.9, sd * 0.44]], EK, 0.01);
+        D.top([[-2.23, -0.88], [-2.16, -0.88], [-2.16, 0.88], [-2.23, 0.88]], EK, 0.012);
+        // the nose: the light bar right across, the lamp clusters at the corners (the lenses), the black intake, the splitter
+        K.deli('zarometi', () => { K.box(F.x - 0.02, 0.492, 0, 0.05, 0.026, F.w * 1.72, 0, W);
+          for (const sd of [-1, 1]) { K.box(F.x + 0.004, 0.43, sd * 0.62, 0.03, 0.058, 0.3, 0, EK); K.headLamp(F.x + 0.022, 0.465, sd * 0.62, 0.015, { shape: 'rect', w: 0.26, h: 0.03, ring: null, col: W }); } });
+        K.part('bumperF', () => { K.deli('maska', () => K.box(F.x - 0.02, 0.29, 0, 0.05, 0.12, 1.24, 0, EK)); K.box(F.x - 0.1, 0.21, 0, 0.24, 0.03, F.w * 2.0, 0, CF); });
+        // the tail: black under the light bar, the bar (two halves), the diffuser with its fins
+        // (its black panel down to 0.48 m, the builder's from 0.62: the options' lamps on it, under the deck's part)
+        K.part('bumperR', () => { K.box(R.x - 0.01, 0.48, 0, 0.03, 0.28, R.w * 1.84, 0, EK); K.box(R.x + 0.14, 0.19, 0, 0.34, 0.1, 1.5, 0, CF);
+          for (let i = -2; i <= 2; i++) K.box(R.x + 0.12, 0.13, i * 0.3, 0.3, 0.2, 0.025, 0, EK); });
+        K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(R.x - 0.03, 0.712, sd * 0.415, 0.83, 0.034); });
+        { const Mi = geo(EV).mirror; K.deli('ogledala', () => { for (const sd of [-1, 1]) K.part(sd < 0 ? 'mirrorL' : 'mirrorR', () => K.box(Mi.x, Mi.y - 0.05, sd * Mi.z, 0.14, 0.1, 0.12, 0, P)); }); }
+        K.part('trunk', () => K.deli('krilo', () => {}));
+        for (const id of ['aero', 'hauba', 'zmigavci', 'relijske_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'streha', 'stresna_zajemalka', 'antena',
+          'crte', 'celjusti', 'dim_gum', 'nalepke', 'soncni_pas', 'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
+        K.part('trunk', () => K.deli('zaluzije', () => {}));
+        const ws = S.find(s => s.k === 'gf');
+        K.seat(ws.x - 0.75, 0.45, -0.38); K.seat(ws.x - 0.75, 0.45, 0.38); K.engine(AX.ev[0] + 0.15, R.yb + 0.05, 0, { h: 0.3 });
+        K.inner(() => K.box(1.08, 0.3, 0, 0.03, 0.42, 1.7, 0, CF));   // (the bulkhead at the windscreen's foot: the front bay closed from the long cabin)
+        return L;
+      },
+    };
+  }
+  function mountsEv() {   // (the generic ones, measured the same way; the builder's own lamps, grille and tail; the roof's parts on the rails)
+    const m = mounts('ev'), S = EV.secs.map(row), F = S[S.length - 1], R = S[0], at = (x, k) => ip(S, x, k), rail = (x) => at(x, 'wt') - 0.035;
+    m.zarometi = { x: F.x + 0.02, y0: 0.465, lean: 0, zc: 0.62, yc: 0.465, s: 0.62, depth: 0.03, hosts: ['body', 'body'] };
+    m.maska = { x: F.x, y0: 0.35, lean: 0, yc: 0.35, w: 0.5, h: 0.08 };
+    m.zadnje_luci = { x: R.x - 0.01, zc: 0.6, yc: 0.6, w: 0.4, h: 0.06, s: 0.5, shape: [[-0.2, -0.03], [0.2, -0.03], [0.2, 0.03], [-0.2, 0.03]] };   // (on the black panel, under the bar: the deck's part over it)
+    m.krilo = { x: -2.0, w: at(-2.0, 'wt') * 0.9, part: 'trunk' };   // (on the painted deck behind the canopy)
+    m.vzmeti = { in: 0.15, top: 0.78, seat: [at(AX.ev[0], 'yb'), at(-AX.ev[1], 'yb')] }; m.amortizerji = { in: 0.15, top: 0.78 };   // (up into the arches' tubs)
+    m.relijske_luci.feet = 0.4; m.relijske_luci.bumper[0] = F.x - 0.05; m.relijske_luci.nose[0] = F.x - 0.04; m.vlecne_kljuke.f = [F.x, 0.33, 0.78]; m.filter_zraka = { x: 1.45, y: 0.5, z: -0.35 };   // (the bumper's lamps inside the head lamps; the filter on the low block, under the falling bonnet)
+    m.relijske_luci.roof = [1.22, at(1.22, 'wt') * 0.8];   // (the roof's bar on the cowl in front of the windscreen: off the glass)
+    // (no bonnet parts: its top hardly over the belt, the fenders' part reaches over it, as SAMUM's)
+    // (no aerial: the canopy's glass, the bonnet the hood's part, the deck the wing's; no exhaust on the electric car)
+    delete m.hauba; delete m.antena; delete m.auspuh; delete m.streha; delete m.stresna_zajemalka; delete m.zaluzije; delete m.soncni_pas; delete m.prtljaznik;   // (the canopy: no sunroof, scoop, louvres or sun strip on glass; no boot)
+    return m;
+  }
   for (const [id, key] of [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']])
     VEHICLE_DEFS.push({ id, patch: true, look: look(key), mounts: mounts(key) });
   VEHICLE_DEFS.push({ id: 'muscle', patch: true, look: lookMuscle(), mounts: mountsMuscle() });
   VEHICLE_DEFS.push({ id: 'rally', patch: true, look: lookRally(), mounts: mountsRally() });
   VEHICLE_DEFS.push({ id: 'truck', patch: true, look: lookTruck(), mounts: mountsTruck() });
+  VEHICLE_DEFS.push({ id: 'ev', patch: true, look: lookEv(), mounts: mountsEv() });
 })();
