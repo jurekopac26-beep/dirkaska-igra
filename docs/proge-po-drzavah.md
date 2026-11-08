@@ -22,7 +22,7 @@ Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (k
   - mestna: **London, Anglija** (namesto Budimpešte).
   - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel.
   - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`.
-- **Seznam 50 prog, delne odločitve** (uporabnik 8. 11. 2026 ob 14.44, prek Mateja, komentar 6722394383; vprašanje `nove-proge-1-0-50`): **Envalira, Andora** (#430) ostane dolga **0,73 km** (izjema od pravila 1–5 km samo za to progo; uporabnik: »Envalira naj bo dolga 0,73 km.«); rezervi sta **Meteora, Grčija** in **Šipka, Bolgarija**, Buenos Aires odpade; o **12 progah na čakanju** (Medeu … Dadès) se uporabnik odloči po predstavitvi jure.kopac26, do takrat se nobena ne začne.
+- **Seznam 50 prog, delne odločitve** (uporabnik 8. 11. 2026 ob 14.44, prek Mateja, komentar 6722394383; vprašanje `nove-proge-1-0-50`): **Envalira, Andora** (#430) ostane dolga **0,73 km** (izjema od pravila 1–5 km samo za to progo; uporabnik: »Envalira naj bo dolga 0,73 km.«); rezervi sta **Meteora, Grčija** in **Šipka, Bolgarija**, Buenos Aires odpade; o **12 progah na čakanju** se je uporabnik odločil 8. 11. 2026 ob 15.59 po predstavitvi 16 prog (prek Mateja, komentar 6723046786): na seznam 50 gre **11 prog** — Medeu, Kazahstan; Furka, Švica; Gudauri, Gruzija; Llogara, Albanija; Porto Moniz, Portugalska; Ngorongoro, Tanzanija; Ella, Šrilanka; Santo Antão, Zelenortski otoki; Espinazo del Diablo, Mehika; Seul, Južna Koreja; Dadès, Maroko. **Milford Sound, Nova Zelandija ne gre** (tretjina poti je predor); mesto Nove Zelandije ostane odprto do primerjave Wellingtona in dveh gorskih cest (pripravi jure.kopac26), do takrat se iz Nove Zelandije nič ne začne. Opombe za seje prog: Llogara — najbolj zavit odsek do 5 km (na celi poti 55 % ravnin); Ngorongoro — OSM za večino poti navaja kamnito tlakovanje, ne makadama; Seul je edina mestna proga, brez lasnic. Nove proge so v vrsti še naprej zadnje.
 - **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
 - **Mestne proge po središču velikih mest:** velika mesta (npr. London) dobijo kratko dirko po središču, v spodnjem delu razpona 1–5 km, po širokih glavnih ulicah, nabrežjih in trgih, z ograjami kot na uličnih dirkah; stavbe so generične, brez pravno spornih imen in podob (kot pri Monte Carlu). **Zanje pravilo izletne cone ne velja** (razdelek »Izletna cona«).
 
@@ -67,6 +67,8 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Ngorongoro, Tanzanija | Nove proge 8 | travnata pobočja brez hiš in ograj (načrt) | izletna cona je |
 | Seul, Južna Koreja | zavite 3 | OSM 2 % (cesta skozi park) | izletna cona je |
 | Wellington, Nova Zelandija | zavite 4 | OSM 4 % (hiše vrisane, odmaknjene od ceste) | izletna cona je |
+| Longyearbyen, Norveška | proge z ledom | OSM 2 %, obe 0 % (hiše odmaknjene od ceste) | izletna cona je |
+| Envalira, Andora | proge z ledom | OSM 0 % (krog na ledu, okoli sneg) | izletna cona je |
 
 ## Države s progo v igri: izbira uporabnika
 
@@ -137,12 +139,25 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
+| Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«) |
+| Andora | Envalira (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti; potrebuje led kot podlago (razdelek »Proge z ledom«) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | stara veja: Höljes (ni v načrtu) | ne pride na vrsto |
+
+## Proge z ledom (izbira uporabnika 6. 11. 2026)
+
+Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #382, komentar 6688514078) je uporabnik izbral **Longyearbyen, Norveška** in **Envalira, Andora**. Odločil je samo vpis na čakanje; progi se delata zadnji, kot vse nove proge. Izbrani sta po pasu 60 m ob cesti, ki ga vidi kamera za avtom. Merilo je število predmetov iz OpenStreetMap do 60 m od ceste na kilometer, brez cest.
+
+- **Longyearbyen, Norveška** (Svalbard): ceste OSM `ref` 600 (od letališča), 500 (mesto) in 100 (do Nybyena), skupaj 7,6 km; pozimi steptan sneg. Do 60 m je 163 stavb (ob 57 % dolžine), 27 cevovodov na stebričkih (34 %), 17 lesenih stolpov stare tovorne žičnice (20 %), fjord (31 %) in skalne stene (22 %), skupaj 41,8 predmeta na km.
+- **Envalira, Andora**: krog na ledu, OSM `highway=raceway`, glavni krog je way 330829785 (0,73 km, ~2.370 m, tik pod prelazom Port d'Envalira, 2.408 m). Ime športnega centra ob krogu je blagovna znamka, zato ga v igri ni. Do 60 m so stavbe (ob 51 % dolžine), glavna cesta (95 %), 2 bencinski črpalki, parkirišče in smučišča (16 %), skupaj 21,8 predmeta na km.
+- **Led kot podlaga** v igri še ne obstaja in ga izbira v `docs/dez-sneg.md` ne dodaja. Doda ga prva od teh dveh prog; oprijem ledu je 11–23 % oprijema suhega asfalta (`docs/dez-sneg.md`).
+- **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).
+- **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0).
 
 ## Kaj to pomeni za verige
 
 - **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D). Ostanejo Mount Buller, Medeu, Auli, Milford Sound, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero. Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
 - **Zavite proge** (`docs/zavite-proge.md`): odpadeta Macao (3) in Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak). Ostanejo Valparaíso, Quito, Québec, Hongkong in Seul. Wellington, Shimla in Darjeeling (4) odpadejo, če Nova Zelandija in Indija pred njimi dobita progo (Milford Sound, Auli). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostaneta Seul in Wellington.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
+- **Proge z ledom** (razdelek zgoraj): Longyearbyen in Envalira, po vrsti z drugimi novimi progami; prva doda led kot podlago.
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
