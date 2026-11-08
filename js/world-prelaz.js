@@ -33,7 +33,7 @@
       sat: 0.5, satV: 1.35, snowLine: 2500, snowC: [1.0, 1.02, 1.06],
       rockCols: [[0.58, 0.58, 0.57], [0.64, 0.63, 0.61], [0.5, 0.5, 0.5], [0.61, 0.59, 0.55], [0.54, 0.55, 0.53], [0.46, 0.47, 0.46]],   // (the granite and the gneiss: light grey, a little warm, lichened)
       centre: [0.95, 0.95, 0.92], dash: [4, 8], solidNear: 40,   // (the Swiss centre line: 4 m dashes, 8 m gaps; solid through the hairpins)
-      chev: ['#f6f6f2', '#16181c'], warn: 'tri', rail: 'steel', plates: 0, shoulder: [0.52, 0.52, 0.5],
+      chev: ['#f6f6f2', '#16181c'], warn: 'tri', rail: 'steel', shoulder: [0.52, 0.52, 0.5],
       fans: [[0.86, 0.1, 0.12], [0.96, 0.96, 0.96], [0.12, 0.24, 0.62], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
       cars: [[0.88, 0.88, 0.86], [0.2, 0.22, 0.25], [0.6, 0.62, 0.64], [0.14, 0.26, 0.5], [0.66, 0.12, 0.1], [0.74, 0.72, 0.66]],
       roofs: [[0.28, 0.29, 0.31], [0.36, 0.35, 0.34], [0.24, 0.25, 0.27], [0.4, 0.3, 0.22]],   // (grey stone slabs and metal, a few of old larch)
