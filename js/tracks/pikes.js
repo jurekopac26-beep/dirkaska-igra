@@ -44,12 +44,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // W's, Devil's Playground and the Bottomless Pit on the ridge, Boulder Park on the last switchbacks); say = the commentator's lines
     names: [
       { n: 'Crystal Reservoir', d: 150, say: ['Past Crystal Reservoir on the right, the climb begins!', 'Crystal Reservoir down to the right, eyes on the road!', 'Along Crystal Reservoir, still low down in the forest!'] },
-      { n: "Hansen's Corner", d: 240, say: ["Through Hansen's Corner, the climb is on!", "Hansen's Corner, up into the pines!"] },
+      { n: 'Ovinek pri zbiralniku', d: 240, say: ['Round the bend above the reservoir, the climb is on!', 'The reservoir bend, up into the pines!'] },   // (the real name is a person's: the menu's descriptive one, Reservoir Bend; CLAUDE.md, legal safety)
       { n: "Engineer's Corner", d: 578, say: ["Engineer's Corner, past the old surveyor's cairn!", "Into Engineer's Corner, the road builders' benchmark up on the left!", "Engineer's Corner, keep it tidy past the old stone culvert!"] },
       { n: 'Halfway Picnic Grounds', d: 1000, say: ['Halfway Picnic Grounds, the fastest part of the course!', 'Flat out past the Halfway Picnic Grounds!', 'Through the picnic grounds, three thousand metres up!'] },
       { n: 'Brown Bush Corner', d: 1720, say: ['Brown Bush Corner, the first big hairpin, brown scrub all round the inside!', "Hard on the brakes for Brown Bush Corner, don't clip the bushes!", 'Round Brown Bush Corner, tight past the brown thicket!'] },
       { n: 'Ski Area', d: 1964, say: ['The Ski Area hairpin, the old chairlift towers still up the slope!', 'Round the Ski Area, where the old lift used to run!', 'The Ski Area hairpin, climbing through the trees!'] },
-      { n: 'Glen Cove', d: 2688, say: ['Glen Cove, the trees are thinning out!', 'Hard on the brakes by the Glen Cove Inn, about halfway up!', 'Glen Cove, and now the switchbacks!', 'Past the Glen Cove Inn, the TV helicopter right overhead!'] },
+      { n: 'Glen Cove', d: 2688, say: ['Glen Cove, the trees are thinning out!', 'Hard on the brakes by the old inn at Glen Cove, about halfway up!', 'Glen Cove, and now the switchbacks!', 'Past the inn at Glen Cove, the TV helicopter right overhead!'] },
       { n: "The W's", d: 2918, say: ["Into the W's! Hairpin after hairpin!", "The famous W's, left, right, left!", "Climbing the W's above the tree line!"] },
       { n: 'Cove Creek', d: 3564, say: ['Over Cove Creek, the stream rushing through the culvert under the road!', 'Cove Creek, willows along the water, out of the switchbacks!', 'Past Cove Creek, the air is getting thin!'] },
       { n: "Devil's Playground", d: 4050, say: ["Devil's Playground! Granite towers, nothing but rock and sky!", "Out across Devil's Playground, flat out past the rock stacks!", "Devil's Playground, lightning country among the granite tors!"] },
