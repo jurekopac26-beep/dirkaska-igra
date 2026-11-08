@@ -127,16 +127,16 @@
     const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -50; mesh.matrixAutoUpdate = false; mesh.name = 'irFar';
     mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); };   // (the haze: the fog's colour, by the time of day and the weather)
     const rim = new Float32Array(nv); for (let k = 0; k < n; k++) rim[k] = sstep(1400, 800, dr[k]);   // (round the corridor's hole: into the haze, no ragged edge)
-    return { mesh, P0: Float32Array.from(P0), rim, cx: 1e9, cy: 0, cz: 0, cf: 0, hz: (colFn && colFn.hz) || [0.3, 0.5] };   // (hz: the haze's [floor, rise] with the distance; a road's own, Sa Calobra's clearer sea air seen through more of it)
+    return { mesh, P0: Float32Array.from(P0), rim, cx: 1e9, cy: 0, cz: 0, cf: 0, hz: colFn && colFn.hz };   // (hz: the haze's [floor, rise] with the distance, a road's own: Sa Calobra's clearer sea air seen through more of it; irFarUpdate's own without)
   }
   function irFarUpdate(F, cam) {   // (no camera: back to the nodes' own places, the world test's pose)
     F.mesh.visible = true;
     if (!cam) { if (F.cx !== 1e9) { F.mesh.geometry.attributes.position.array.set(F.P0); F.mesh.geometry.attributes.aHz.array.fill(0.5); F.mesh.geometry.attributes.position.needsUpdate = F.mesh.geometry.attributes.aHz.needsUpdate = true; F.cx = 1e9; } return; }
     const c = cam.position; if (Math.abs(c.x - F.cx) + Math.abs(c.y - F.cy) + Math.abs(c.z - F.cz) < (F.th || 0.5) && cam.far === F.cf) return;   // (F.th: a world's own step, Mount Baldy's)
     F.cx = c.x; F.cy = c.y; F.cz = c.z; F.cf = cam.far;
-    const g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0, R0 = cam.far - 70, R1 = cam.far - 6;
+    const g = F.mesh.geometry, p = g.attributes.position.array, hz = g.attributes.aHz.array, P0 = F.P0, R0 = cam.far - 70, R1 = cam.far - 6, H0 = F.hz ? F.hz[0] : 0.3, H1 = F.hz ? F.hz[1] : 0.5;   // (H0, H1: the haze's floor and rise; the far views of the other worlds, built by their own code, have no F.hz)
     for (let v = 0, k = 0; k < P0.length; v++, k += 3) { const dx = P0[k] - c.x, dy = P0[k + 1] - c.y, dz = P0[k + 2] - c.z, D = Math.max(1, Math.hypot(dx, dy, dz)), r = R0 + (R1 - R0) * (1 - Math.exp(-Math.max(0, D - 400) / 3000)), f = r / D;
-      p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(F.rim[v], F.hz[0] + F.hz[1] * (1 - Math.exp(-Math.max(0, D - 500) / 5000))); }
+      p[k] = c.x + dx * f; p[k + 1] = c.y + dy * f; p[k + 2] = c.z + dz * f; hz[v] = Math.max(F.rim[v], H0 + H1 * (1 - Math.exp(-Math.max(0, D - 500) / 5000))); }
     g.attributes.position.needsUpdate = true; g.attributes.aHz.needsUpdate = true;
   }
   function buildIroha(scene, tex, opts) {
