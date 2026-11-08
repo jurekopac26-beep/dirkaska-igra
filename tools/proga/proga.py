@@ -287,7 +287,8 @@ def osm(C, G, box, X, Z, name):
     T = cKDTree(np.stack([X[::2], Z[::2]], 1))
     near = lambda x, z: T.query([x, z])[0]
     bld = []
-    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry'], name):
+    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry', 'sources'], name):
+        if ((r.get('sources') or [{}])[0] or {}).get('dataset') != 'OpenStreetMap': continue   # (only OpenStreetMap's: not the footprints other datasets add to Overture's, machine-made from imagery)
         g = wkb.loads(r['geometry'])
         if g.geom_type == 'MultiPolygon': g = max(g.geoms, key=lambda q: q.area)
         c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1))
@@ -320,6 +321,7 @@ def osm(C, G, box, X, Z, name):
     cables, pyl, pulls = [], [], []
     for r in overture('base', 'infrastructure', box, ['id', 'subtype', 'class', 'geometry'], name):
         g = wkb.loads(r['geometry'])
+        if r.get('subtype') == 'aerialway' and r.get('class') == 'zip_line': continue   # (a zip line: no cabins or pylons of a cable car)
         if r.get('subtype') == 'aerialway' and g.geom_type == 'LineString':
             c = np.array(g.coords); x, z = G.to_xz(c[:, 1], c[:, 0])
             if T.query(np.stack([x, z], 1))[0].min() > 500: continue
