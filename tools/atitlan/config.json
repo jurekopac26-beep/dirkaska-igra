@@ -1,0 +1,26 @@
+{
+  "id": "atitlan",
+  "about": "Atitlán, Gvatemala (id atitlan): 1 km of the RN-1 down from Sololá towards Lake Atitlán, 2 hairpins (docs/nove-proge-1-0.md, Del 4)",
+  "box": [14.745, -91.1919, 14.7785, -91.1614],
+  "closed": false,
+  "route": [
+    [14.76494, -91.17708, "Carretera Sololá - Panajachel", "start | primary, w384557950, s 0 m"],
+    [14.76443, -91.17753, "Carretera Sololá - Panajachel", "primary, w384557950, s 100 m"],
+    [14.7645, -91.178, "Carretera Sololá - Panajachel", "primary, w384557950, s 200 m"],
+    [14.76366, -91.17791, "Carretera Sololá - Panajachel", "primary, w384557950, s 300 m"],
+    [14.76302, -91.17732, "Carretera Sololá - Panajachel", "primary, w384557950, s 400 m"],
+    [14.7622, -91.17768, "Carretera Sololá - Panajachel", "primary, w384557950, s 500 m"],
+    [14.76166, -91.17716, "Carretera Sololá - Panajachel", "primary, w384557950, s 600 m"],
+    [14.76097, -91.17664, "Carretera Sololá - Panajachel", "primary, w384557950, s 700 m"],
+    [14.76015, -91.17627, "Carretera Sololá - Panajachel", "primary, w384557950, s 800 m"],
+    [14.75941, -91.17575, "Carretera Sololá - Panajachel", "primary, w384557950, s 900 m"],
+    [14.75862, -91.17531, "Carretera Sololá - Panajachel", "finish | primary, w384557950, s 1000 m"]
+  ],
+  "prefer": [
+    "Carretera Sololá - Panajachel"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
