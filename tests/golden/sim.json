@@ -5866,16 +5866,16 @@
   }
  },
  "bikernieki/car/cs": {
-  "digest": "12f857e15fd5c4923bb3736c",
-  "lead": 6130,
+  "digest": "2077c628eaf11284e8879ae0",
+  "lead": 6128.7,
   "car0": [
-   -402.88,
-   -284.63
+   -194.38,
+   222.29
   ],
   "cover": {
-   "dmg": 0.81,
-   "loose": 3,
-   "rescues": 0,
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 1,
    "repairs": 1
   }
  },
@@ -5964,15 +5964,15 @@
   }
  },
  "london/car/cs": {
-  "digest": "87eabd6970e03b07ef6f0d85",
-  "lead": 2298.9,
+  "digest": "f84b9a68e8a1628c51182b0f",
+  "lead": 2294.7,
   "car0": [
-   -77.87,
-   -419.58
+   -66.12,
+   -354.32
   ],
   "cover": {
    "dmg": 0.61,
-   "loose": 1,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
@@ -6062,15 +6062,15 @@
   }
  },
  "zandvoort/car/cs": {
-  "digest": "c22f0439addc56c7c8f1ba5c",
-  "lead": 6717.3,
+  "digest": "b9d3a76cc1640a7fbc9c233d",
+  "lead": 6717.5,
   "car0": [
-   194.22,
-   63.63
+   586.38,
+   8.68
   ],
   "cover": {
-   "dmg": 0.91,
-   "loose": 3,
+   "dmg": 0.67,
+   "loose": 4,
    "rescues": 0,
    "repairs": 1
   }

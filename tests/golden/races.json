@@ -2992,12 +2992,12 @@
  "bikernieki/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 169.95,
+  "winner": 179.67,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d16d19465a0a51f6a47e55c5"
+  "digest": "49e0c8bd99a9a3a8be613d0d"
  },
  "london/cs": {
   "finished": 13,
@@ -3042,12 +3042,12 @@
  "london/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 90.64,
+  "winner": 93.02,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "18d37959b55e68365541b55d"
+  "digest": "baf6bb83eb27e41cdc3d14d4"
  },
  "zandvoort/cs": {
   "finished": 13,
@@ -3092,11 +3092,11 @@
  "zandvoort/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 214.45,
+  "winner": 204.82,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1d794297f4d366da98bed95d"
+  "digest": "cc036c52a5356d6b6b712f2a"
  }
 }
