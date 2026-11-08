@@ -967,17 +967,17 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .rlab > span:last-child { min-width: 0; display: flex; flex-direction: column; gap: calc(3 * var(--u)); }
   #s-track .rlab b { font: 800 italic max(11px, calc(15 * var(--u)))/1.1 var(--f-ui); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
   #s-track .rlab small { font: 600 italic max(9.5px, calc(11 * var(--u)))/1.1 var(--f-ui); color: #b6c3da; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #s-track .rarw { --as: max(32px, calc(40 * var(--u))); display: flex; position: absolute; z-index: 7; top: calc(var(--oy) + 188 * var(--u) - var(--as) / 2); width: var(--as); height: var(--as); border-radius: 50%; align-items: center; justify-content: center;
+  #s-track .rarw { --as: max(36px, calc(40 * var(--u))); display: flex; position: absolute; z-index: 7; top: calc(var(--oy) + 188 * var(--u) - var(--as) / 2); width: var(--as); height: var(--as); border-radius: 50%; align-items: center; justify-content: center;
     background: rgba(8, 12, 20, .78); border: 1.5px solid rgba(255, 255, 255, .25); box-shadow: 0 4px 10px rgba(0, 0, 0, .4); }
   #s-track .rarw.l { left: calc(var(--ox) + 234 * var(--u) - var(--as) / 2); } #s-track .rarw.r { left: calc(var(--ox) + 658 * var(--u) - var(--as) / 2); }
   #s-track .rarw svg { width: 40%; height: 40%; }
   #s-track .rarw:active { transform: scale(.92); }
   /* the head over the cards: the back arrow, the place (44 of the drawing's px, smaller where it is wider than 680: fitWhere), the globe */
   #s-track .thead { position: absolute; left: var(--ox); top: var(--oy); right: auto; width: calc(892 * var(--u)); height: calc(66 * var(--u)); padding: 0; display: block; z-index: 6; pointer-events: none; }
-  #s-track .thead .hback { position: absolute; left: calc(14 * var(--u)); top: calc(14 * var(--u)); width: max(52px, calc(78 * var(--u))); height: max(36px, calc(52 * var(--u))); }
+  #s-track .thead .hback { position: absolute; left: calc(14 * var(--u)); top: calc(14 * var(--u)); width: max(56px, calc(78 * var(--u))); height: max(44px, calc(52 * var(--u))); }   /* (a finger: 44 px) */
   #s-track .thead .hback svg { width: max(18px, calc(24 * var(--u))); height: max(18px, calc(24 * var(--u))); }
   #s-track .where { position: absolute; left: calc(106 * var(--u)); top: calc(14 * var(--u)); width: calc(680 * var(--u)); height: calc(52 * var(--u)); font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); }
-  #s-track .globe { position: absolute; left: calc(826 * var(--u)); top: calc(14 * var(--u)); width: max(36px, calc(52 * var(--u))); height: max(36px, calc(52 * var(--u))); }
+  #s-track .globe { position: absolute; left: auto; right: calc(14 * var(--u)); top: calc(14 * var(--u)); width: max(44px, calc(52 * var(--u))); height: max(44px, calc(52 * var(--u))); }
   /* in the chosen card: its things fade as it turns away (--ui) */
   #s-track .stage > :is(.hgraph, .wxv, .tcount, .cams), #s-track .stage :is(.mlab, .flab) { opacity: var(--ui, 1); }
   #s-track .hgraph { left: max(6px, calc(8 * var(--u))); top: max(6px, calc(8 * var(--u))); width: max(60px, calc(78 * var(--u))); height: max(36px, calc(47 * var(--u))); padding-top: calc(6 * var(--u)); }

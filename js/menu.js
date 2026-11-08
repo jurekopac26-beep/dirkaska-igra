@@ -399,22 +399,39 @@
     // the cameras' buttons, the weather, the height graph, the counter and (upright) the head lie over the picture: a name keeps out from under them
     const hd = $('#s-track .thead', app), over = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount')].concat(hd ? [...hd.children] : []);
     const keep = over.map(e => { const r = e.getBoundingClientRect(); return [r.left - fb.left - 4, r.right - fb.left + 4, r.top - fb.top - 4, r.bottom - fb.top + 4]; }).filter(k => k[1] > k[0] + 8 && k[3] > 0);
-    mks.forEach((g, i) => {
-      const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(), x = f.left - fb.left, w0 = el.offsetWidth, h0 = el.offsetHeight, right = g.classList.contains('f');
-      // over the flag from its pole (a start's to the right, a finish's to the left), else the other way, else slid along to the nearest
-      // clear place; with no clear place over it (the head or the graph just over the flag) beside the flag, its top at the flag's; where a
-      // long name has no clear place at all (a narrow picture: between the cameras' buttons and the weather) a little smaller
-      let at1 = null;
+    const M = mks.map((g, i) => { const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(); return { el, f, x: f.left - fb.left, w0: el.offsetWidth, h0: el.offsetHeight, right: g.classList.contains('f') }; });
+    // every clear place of a name, in the order it is wanted: over the flag from its pole (a start's to the right, a finish's to the left),
+    // else the other way, else slid along to the nearest clear place; with no clear place over it (the head or the graph just over the flag)
+    // beside the flag, its top at the flag's; with none there either (on its side the weather's row over the top of the card) under the
+    // flag; where a long name has no clear place at all (a narrow picture: between the cameras' buttons and the weather) a little smaller
+    const places = ({ f, x, w0, h0, right }, K) => {
+      const out = [];
       for (const s of [1, 0.86, 0.74]) {
-        const w = w0 * s, h = h0 * s, y0 = Math.max(h + 2, f.top - fb.top - 3), y1 = Math.max(h + 2, f.top - fb.top + h);   // (its bottom: over the flag, never above the frame; beside it)
-        const at = (r) => r ? x + f.width + 3 - w : x - 3, want = at(right), inside = Math.max(4, Math.min(W - 4 - w, want)), near = (a, b) => Math.abs(a - want) - Math.abs(b - want);
-        const clear = (y) => (l) => l >= 4 && l + w <= W - 4 && !keep.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2]);
-        let y = y0, l = [want, at(!right)].find(clear(y0));
-        if (l == null) l = [inside].concat(...keep.map(k => [k[1], k[0] - w])).filter(clear(y0)).sort(near)[0];
-        if (l == null && (l = [x - 3 - w, x + f.width + 3].filter(clear(y1)).sort(near)[0]) != null) y = y1;
-        at1 = [s, l == null ? inside : l, y];   // (clear nowhere: the smallest, inside the frame, over the flag)
-        if (l != null) break;
+        const w = w0 * s, h = h0 * s, y0 = Math.max(h + 2, f.top - fb.top - 3), y1 = Math.max(h + 2, f.top - fb.top + h), y2 = f.bottom - fb.top + 6 + h;   // (its bottom: over the flag, never above the frame; beside it; under it, clear of its point)
+        const at = (r) => r ? x + f.width + 3 - w : x - 3, want = at(right), near = (a, b) => Math.abs(a - want) - Math.abs(b - want);
+        const by = [Math.max(4, Math.min(W - 4 - w, want))].concat(...K.map(k => [k[1], k[0] - w]));
+        const add = (y, ls) => ls.forEach(l => { if (l >= 4 && l + w <= W - 4 && !K.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2])) out.push([s, l, y, w, h]); });
+        add(y0, [want, at(!right)]); add(y0, by.sort(near)); add(y1, [x - 3 - w, x + f.width + 3].sort(near));
+        if (y2 <= fb.height - 2) add(y2, [want, at(!right)].concat(by).sort(near));
       }
+      return out;
+    };
+    const rect = (a, m) => [a[1] - m, a[1] + a[3] + m, a[2] - a[4] - m, a[2] + m];   // (a place's box, as keep's: left, right, top, bottom)
+    // the names one by one, each clear of what lies over the picture and of the names before it; where that can't be (a small card on its
+    // side, the flags close) the two places clear of what lies over the picture that cover each other least
+    const K = keep.slice();
+    let plan = M.map(m => { const p = places(m, K)[0]; if (p) K.push(rect(p, 3)); return p; });
+    if (plan.some(p => !p)) {
+      const C = M.map(m => places(m, keep)), cover = (a, b) => { const A = rect(a, 2), B = rect(b, 2); return Math.max(0, Math.min(A[1], B[1]) - Math.max(A[0], B[0])) * Math.max(0, Math.min(A[3], B[3]) - Math.max(A[2], B[2])); };
+      plan = C.map(c => c[0]);
+      if (C.length === 2 && C[0].length && C[1].length) {
+        let best = Infinity;
+        C[0].forEach((a, i) => C[1].forEach((b, j) => { const v = cover(a, b) * 1e3 + i + j; if (v < best) { best = v; plan = [a, b]; } }));
+      }
+    }
+    M.forEach(({ el, f, x, w0, h0, right }, i) => {
+      // (clear nowhere: the smallest, inside the frame, over the flag)
+      const s = 0.74, w = w0 * s, h = h0 * s, at1 = plan[i] || [s, Math.max(4, Math.min(W - 4 - w, right ? x + f.width + 3 - w : x - 3)), Math.max(h + 2, f.top - fb.top - 3)];
       el.style.scale = at1[0] < 1 ? at1[0] : '';   // (about its bottom left corner: .mlab .fl-s)
       el.style.left = at1[1].toFixed(1) + 'px'; el.style.top = at1[2].toFixed(1) + 'px';
     });
