@@ -676,7 +676,7 @@
       root: app, cur: cur ? cur.id : '',
       list: TRACKS().map(t => {
         const c = countryOf(t), gt = window.GEO && GEO.tracks[t.id], pl = PL[t.id] || (gt ? [gt.lat0, gt.lon0] : null);
-        return { id: t.id, name: t.name, country: c, flag: flagUrl(c), img: trackImg(t), km: t.km, alt: t.def.alt || null, corners: NC[t.id] != null ? NC[t.id] : null,
+        return { id: t.id, name: t.name, country: c, flag: flagUrl(c), img: trackImg(t), img2: RT[t.id] && RT[t.id].fly ? 'assets/maps/fly-' + t.id + '.webp' : '', km: t.km, alt: t.def.alt || null, corners: NC[t.id] != null ? NC[t.id] : null,
           group: t.group, test: t.test, pending: !!t.def.pending, open: !!t.def.open, lat: pl ? pl[0] : null, lon: pl ? pl[1] : null };
       }),
       shape: (id) => (D.shapes || {})[id] || null,

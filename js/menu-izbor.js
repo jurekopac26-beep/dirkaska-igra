@@ -9,7 +9,8 @@
    for a track driven, NEW for one not driven yet) on the flags, the rows, the card and the screen's row (menu.js). Tap outside the sheet,
    the cross or Back (the phone's too: the history) to close it.
    MenuIzbor.open(o): o.root the menu's element (#mn in its shadow root), o.cur the id of the track shown, o.list the mode's tracks in the
-   list's order ({ id, name, country, flag (the flag's address or ''), img, km, alt, corners, group, test, pending, open, lat, lon }),
+   list's order ({ id, name, country, flag (the flag's address or ''), img, img2 (a picture for a missing img, or ''), km, alt, corners, group,
+   test, pending, open, lat, lon }),
    o.shape(id) (x, y pairs or null), o.heights(id) ({ L, H, real } or null), o.prog(id) (the game's progress: js/game.js MenuBridge.progress),
    o.pick(id), o.race(id), o.buzz(), o.click(). MenuIzbor.close(now), back() (Esc, the pad's B: the layer under it, else closed), isOpen(),
    sheet() (the gamepad's part of the screen), mark(p) (a progress mark: the screen's row). */
@@ -122,7 +123,7 @@ window.MenuIzbor = (function () {
   function row(id, wf) {
     const t = byId(id), p = prog(id), tag = t.test ? '<em>TEST</em>' : t.pending ? '<em class="p">PENDING</em>' : '';
     const best = kindOf(p) !== 'new' && (p.txt || p.pos) ? '<span class="bt">' + esc(p.txt || '') + (p.pos ? '<small>' + ord(p.pos) + '</small>' : '') + '</span>' : '';
-    return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + esc(id) + '"><span class="izb-im"><img src="' + esc(t.img) + '" alt="" loading="lazy" decoding="async">' + mark(p) + '</span>' +
+    return '<button class="izb-t' + (id === o.cur ? ' on' : '') + '" data-t="' + esc(id) + '"><span class="izb-im"><img src="' + esc(t.img) + '"' + (t.img2 ? ' data-alt="' + esc(t.img2) + '"' : '') + ' alt="" loading="lazy" decoding="async">' + mark(p) + '</span>' +
       '<span class="tx"><b>' + (wf && t.flag ? '<span class="izb-mf">' + flag(t.flag, t.country) + '</span>' : '') + esc(t.name) + '</b><small>' + facts(t) + '</small>' + best + tag + '</span><span class="izb-go">' + GO + '</span></button>';
   }
   function head(title, sub, left) {
@@ -180,7 +181,7 @@ window.MenuIzbor = (function () {
       const dot = (i, c) => '<circle class="' + c + '" cx="' + S[i] + '" cy="' + S[i + 1] + '" r="7"/>';
       pic = '<div class="izb-shape" role="img" aria-label="The track from above"><svg viewBox="-16 -16 ' + (w + 32) + ' ' + (h + 32) + '" aria-hidden="true"><path class="o" d="' + d + '"/><path class="r" d="' + d + '"/>' +
         (t.open ? dot(n - 2, 'f') : '') + dot(0, 's') + '</svg></div>';
-    } else pic = '<div class="izb-shape pic"><img src="' + esc(t.img) + '" alt=""></div>';
+    } else pic = '<div class="izb-shape pic"><img src="' + esc(t.img) + '"' + (t.img2 ? ' data-alt="' + esc(t.img2) + '"' : '') + ' alt=""></div>';
     const c = third(t), fact = (v, l) => '<div><b>' + esc(v) + '</b><small>' + l + '</small></div>';
     const facts = '<div class="izb-facts">' + fact(t.km.toFixed(2) + ' km', 'Length') + (c ? fact(c[0], c[1]) : '') + fact(typeOf(t), 'Type') + '</div>';
     const what = esc((p && p.what) || 'Best race');
@@ -238,7 +239,10 @@ window.MenuIzbor = (function () {
       else if (e.key === 'Escape') { e.preventDefault(); if (e.target.value) { e.target.value = F.q = ''; e.target.parentNode.classList.remove('has'); refresh(); } else e.target.blur(); }
     };
     for (const k of ['keydown', 'keyup', 'keypress']) el.addEventListener(k, own);
-    el.addEventListener('error', (e) => { if (e.target.tagName === 'IMG') e.target.style.visibility = 'hidden'; }, true);   // (a picture that is not there: the row's own colour)
+    el.addEventListener('error', (e) => {   // (a picture that is not there: the other one (a route's flyover), else the row's own colour)
+      const im = e.target; if (im.tagName !== 'IMG') return;
+      if (im.dataset.alt) { im.src = im.dataset.alt; im.removeAttribute('data-alt'); } else im.style.visibility = 'hidden';
+    }, true);
     const on = el.querySelector('.izb-c.on'), b = el.querySelector('.izb-body');   // (the shown track's country in sight: the list scrolled, not the menu)
     if (on && b) { const r = on.getBoundingClientRect(), rb = b.getBoundingClientRect(); if (r.bottom > rb.bottom - 8) b.scrollTop += r.bottom - rb.bottom + 16; }
     requestAnimationFrame(() => requestAnimationFrame(() => { if (el) el.classList.add('on'); }));
