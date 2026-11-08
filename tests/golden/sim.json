@@ -5138,11 +5138,11 @@
   }
  },
  "kagerod/crash/cs": {
-  "digest": "e75c46d673cf060019fcd6ce",
+  "digest": "2ef93baaad202be2a54df0f0",
   "lead": 2972.7,
   "car0": [
-   -75.28,
-   -66.94
+   -74.94,
+   -66.73
   ],
   "cover": {
    "dmg": 0.53,
@@ -5152,11 +5152,11 @@
   }
  },
  "kagerod/formula/cs": {
-  "digest": "35b27b470a221fadc338a4cb",
+  "digest": "112d4ecb3ea6b5ddc27b59f6",
   "lead": 3673.9,
   "car0": [
-   -147.64,
-   -232.69
+   -147.96,
+   -232.94
   ],
   "cover": {
    "dmg": 0.97,
@@ -5166,11 +5166,11 @@
   }
  },
  "kagerod/lm/cs": {
-  "digest": "8877ba090022113d4d3b76b9",
+  "digest": "973924bbc2950e16defdee9a",
   "lead": 3633.3,
   "car0": [
-   -297.87,
-   -230.78
+   -297.88,
+   -230.36
   ],
   "cover": {
    "dmg": 1,
@@ -5180,11 +5180,11 @@
   }
  },
  "kagerod/car/cs": {
-  "digest": "d35b0704944778f01b6f5064",
+  "digest": "e10a7f0510d913e26e7150d2",
   "lead": 3289.2,
   "car0": [
-   -292.42,
-   -207.1
+   -292.32,
+   -206.86
   ],
   "cover": {
    "dmg": 0.48,
