@@ -55,6 +55,16 @@ _V delu._
 - **Primer:** `medvode` (edina prava proga z avtobusnimi postajami), promet ali policija, seme 11: igralec pripelje proti človeku na postaji (s ≈ 401 m) z 12 m/s in se ustavi 60 m naprej. Po 15,8 s je človek v `walk` in v naslednjih 14,2 s naredi 1.701 obratov za 180°, `s` ostane 401,22.
 - Preverjeno: potrjeno (simulacija).
 
+**J17 · Razbitine v nagnjenem ovinku lebdijo nad cesto ali so pod njo** · `js/core.js:605` (`Track.yAt`), `js/core.js:3013` (`stepDebris`)
+- `yAt(q)` vrne višino sredine ceste (`elevAt(q.s).y`) brez nagiba (`bankAt`). Avti nagib prištejejo (`roadY`, 2214, 2453), predmeti ob progi imajo `race.propFloor` z nagibom, razbitine pa ne.
+- **Primer:** `nring` (edina prava proga z `def.bank`), razbitine v velikem nagnjenem ovinku (11.962–12.108 m, nagib 0,28) ali malem (16.868–16.954 m): kos 5 m na notranji strani lebdi ~1,4 m nad asfaltom, kos 5 m na zunanji strani je ~1,4 m pod njim in se ne vidi (do 1,54 m pri 8 m od sredine). Meritev v Node: `yAt` 258,31 m, cesta za avte 256,91 m (−5 m) in 259,70 m (+5 m).
+- Preverjeno: potrjeno (meritev v Node).
+
+**J18 · Skrita napaka za nove proge: proga z boksi, ki se ne začne v prvi točki, se lahko ob nalaganju zlomi** · `js/core.js:1314–1315` (`Track.pitJ`), `js/core.js:1293` (`Track.pitAt`)
+- Zanki `ga` in `gb` kličeta `this.pitAt(S0 + gb).gap` brez preverjanja `null`. `pitAt` razdaljo od štartne črte izračuna znova (`d = s - startS`, nato `((d % L) + L) % L`), zaokroževanje pa lahko `d` potisne tik čez `P[2]`: `pitAt` vrne `null` in `.gap` vrže TypeError. `pitJ` kličejo `surface()`, `wallCollide`, `pitLead` in table za zaviranje, zato proge ni mogoče voziti. `crewBoxes` in `bayPose` `null` preverita.
+- **Primer:** krožna proga z `def.pit`, katere štartna črta ni v `points[0]` (`startS ≠ 0`). Ponovljeno v Node s `cpalace`, štart premaknjen na točko 961 (`startS` 1.922,32 m): `d` = 130,00000000000045 > `P[2]` = 130. Od 207 premikov štarta na 8 pravih progah z boksi se je zlomil 1. Danes nobena prava proga s boksi nima `startS ≠ 0`; nove proge za 1.0 v odprtih PR niso preverjene. Napaka se pokaže ob nalaganju, zato bi jo testi ujeli pred objavo.
+- Preverjeno: potrjeno (simulacija s premaknjenim štartom).
+
 **J11 · Posnetek na Pikes Peaku: helikopter po premiku časa gleda proti staremu mestu** · `js/render.js:9657` (TV kamere Pikes Peaka, `pkTv`), `js/render.js:9912` (`resetCam`)
 - Pogled se poravna samo, ko se ključ kadra spremeni (`cam.tvK !== o.key`), helikopter pa ima ključ vedno −1 (9833). `resetCam` `cam.tvK` ne počisti, zato se po skoku v posnetku helikopter premakne (`st.init = false`), točka pogleda (`cam.tx/tz`) pa se z mehčanjem `1 − e^(−9·dt)` pomika s starega mesta, lahko kilometre stran; `fov` je izračunan za napačno razdaljo (do 3°) in avta ~0,3–0,5 s ni v kadru.
 - **Primer:** posnetek na `pikes` ali `pikesg` s TV kamero, ko je v kadru helikopter: premik po časovnem traku, znova od začetka, prejšnji/naslednji krog ali preklop s kamere za avtom nazaj na TV po daljšem odseku.
