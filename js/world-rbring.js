@@ -136,6 +136,17 @@
     const P = [], N = [], C = [], F = [], I = [], r = rng(1966), SEG = 4; let v = 0;
     for (const [x, y, z, rot, cols, W, H] of list) {
       const c = Math.cos(rot), s = Math.sin(rot), ph = r() * TAU, ns = cols.length;
+      if (cols.mid) {   // (a patch across the middle of two bands: cols.mid = [its colour, from, to along the flag (0 at the pole), from, to down it]; cols[0] above the middle, cols[1] below, in twelve cells: Wales's red dragon on white over green)
+        const [mc, u0, u1, f0, f1] = cols.mid, us = [0, u0, u1, 1], fs = [0, f0, 0.5, f1, 1];
+        for (let b = 0; b < 4; b++) for (let q = 0; q < 3; q++) {
+          const col = q === 1 && (b === 1 || b === 2) ? mc : b < 2 ? cols[0] : cols[1], n = Math.max(1, Math.round(SEG * (us[q + 1] - us[q])));
+          for (let k = 0; k <= n; k++) { const u = us[q] + (us[q + 1] - us[q]) * k / n;
+            for (const f of [fs[b], fs[b + 1]]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < n; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += (n + 1) * 2;
+        }
+        continue;
+      }
       if (cols.cross) {   // (a Nordic cross: cols.cross = [its colour, from, to along the flag (0 at the pole), from, to down it]; the field cols[0], in nine cells)
         const [cc, u0, u1, f0, f1] = cols.cross, us = [0, u0, u1, 1], fs = [0, f0, f1, 1];
         for (let b = 0; b < 3; b++) for (let q = 0; q < 3; q++) {

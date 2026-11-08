@@ -2748,5 +2748,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "6c9d0ec3b81262aa3523d0f9"
+ },
+ "pembrey/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 120.93,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1471f9a61cede2db1eda7387"
+ },
+ "pembrey/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 129.3,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1433dc0908fc88c2bc5903f7"
+ },
+ "pembrey/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 104.09,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5570196f768c2e30d389e0ec"
+ },
+ "pembrey/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 105.38,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "20c35656e2d32269655ac40c"
+ },
+ "pembrey/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 118.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ee5ea57de387f0cde679baf2"
  }
 }
