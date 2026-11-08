@@ -85,8 +85,9 @@
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
     { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
-    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' }]);   // (Zabava: docs/zabava.md)
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit' };
+    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' },
+    { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava: docs/zabava.md; the drag race docs/drag-dirka.md)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', drag: 'drag' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', drag: 'drag' };
   const W_SET = ['dry', 'rain', 'random', 'change'];   // (the rain over the picture: none, falling, coming and going; Changing the same, slower)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
@@ -642,7 +643,7 @@
     if (mode === 'chase') first = cell('Police', 'On you', 'opp');
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
     else if (mode === 'race' && rivOf(d)) { const n = G.rivals(d); first = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + n + '. Choose how many"><small>Opponents</small><b>' + n + '</b></button></div>'; }   // (a tap: the sheet with 0..100, rivSheet)
-    else first = cell('Opponents', String(mode === 'duel' || mode === 'pursuit' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21), 'opp');   // (Elimination: at least 5, js/zabava/elim.js E.min)
+    else first = cell('Opponents', String(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21), 'opp');   // (Elimination: at least 5, js/zabava/elim.js E.min)
     // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
     const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>') + cell('Length', t.km.toFixed(2) + ' km') +
@@ -697,6 +698,7 @@
       ['pkRoad', 'Road', [['pikes', 'Asphalt'], ['pikesg', 'Gravel']], S.pkRoad, pk],
       ['pkGhost', 'Ghost', [['best', 'My best'], ['legend', 'Legend'], ['off', 'None']], S.pkGhost, pk && mode === 'trial'],
       ['zbGold', 'Gold ghost', [['0', 'Off'], ['1', 'On']], String(S.zbGold ? 1 : 0), !pk && mode === 'trial' && !!(G.medals && G.medals(d))],   // (Zabava: the gold ghost, js/zabava/trener.js)
+      ['zbDrag', 'Rival', [['0', 'Same car'], ['1', 'Truck']], String(+S.zbDrag === 1 ? 1 : 0), mode === 'drag'],   // (the drag race's rival, js/zabava/drag.js)
       ['wing', 'Wing', [['0', 'Small'], ['1', 'Medium'], ['2', 'Large']], String(su.wing), true],
       ['gear', 'Gears', [['0', 'Short'], ['1', 'Medium'], ['2', 'Long']], String(su.gear), true],
     ];
