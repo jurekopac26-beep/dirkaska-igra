@@ -2548,5 +2548,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "gudauri/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 153.99,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "29ac244fc43093346f2e4bc3"
+ },
+ "gudauri/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 166.51,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c2c8f6058e25d57dcc6dd329"
+ },
+ "gudauri/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 138.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "228dfd7fec5a6e85188ce23f"
+ },
+ "gudauri/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 138.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "538cf8402a62e1ae653200d0"
+ },
+ "gudauri/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 155.24,
+  "spins": 0,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6f50d663caf197b61db84fbc"
  }
 }
