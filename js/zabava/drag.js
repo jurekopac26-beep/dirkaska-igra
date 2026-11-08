@@ -196,7 +196,7 @@
       if (!race || !hud) return;
       const S = this.st, man = !!S.P.man;
       const el = document.createElement('div'); el.id = 'zb-drag'; el.setAttribute('aria-hidden', 'true');
-      el.innerHTML = '<div class="zd-top"><span class="zd-lt"></span><b class="zd-g">1</b><div class="zd-rev"><i></i><em></em></div></div>' +
+      el.innerHTML = '<div class="zd-top"><span class="zd-lt"></span><b class="zd-g">1</b><div class="zd-rev"><i></i><em></em></div><b class="zd-t"></b></div>' +
         '<div class="zd-run"><i class="zd-op"></i><i class="zd-me"></i></div><span class="zd-w"></span>';
       hud.appendChild(el);
       const em = el.querySelector('.zd-rev em'); if (em) { em.style.left = (K.ok * 100) + '%'; em.style.width = ((K.red - K.ok) * 100) + '%'; }
@@ -236,6 +236,9 @@
       const pm = pos(P), po = pos(S.o);
       if (pm !== H.pm) { H.pm = pm; el.querySelector('.zd-me').style.left = pm + '%'; }
       if (po !== H.po) { H.po = po; el.querySelector('.zd-op').style.left = po + '%'; }
+      const rp = S.runs.get(P), ph = Z.G ? Z.G.phase() : 'racing', t = rp.fin != null ? rp.fin : ph === 'racing' || ph === 'finish' ? Math.max(0, race.time) : 0;   // (the run's clock: from the lights, held at the line)
+      const tt = Z.dec(t.toFixed(2)) + ' s';
+      if (tt !== H.t) { H.t = tt; el.querySelector('.zd-t').textContent = tt; }
       const word = H.word && race.time - H.wordT < 1.4 ? H.word : '';
       if (word !== H.shown) {
         H.shown = word; const we = el.querySelector('.zd-w');
@@ -252,9 +255,12 @@
       if (ro.fin == null) { const left = K.len - along(S.G, o); ro.fin = race.time + Math.max(0, left) / Math.max(5, o.speed); ro.est = true; }
       const win = !!E.win, gap = Number.isFinite(rp.fin) && Number.isFinite(ro.fin) ? Math.abs(rp.fin - ro.fin) : NaN;
       const et = (r) => (r.fin != null && Number.isFinite(r.re) ? r.fin - r.re : NaN);
-      const R0 = G.rec(race.track.def.id), etP = et(rp);
+      // the record: the player's own 402 m, from its start to the line, with each vehicle (R0.dragBy: model id -> s; bestRace: the best of
+      // them, the menu's Best run); not with a red light, a run out of time or a head start of the player's own
+      const R0 = G.rec(race.track.def.id), etP = et(rp), by = R0.dragBy && typeof R0.dragBy === 'object' && !Array.isArray(R0.dragBy) ? R0.dragBy : (R0.dragBy = {});
+      const own = Number.isFinite(by[P.m.id]) && by[P.m.id] > 0 ? by[P.m.id] : 0;
       let newRec = false;
-      if (!S.red && !E.out && S.aP === 0 && Number.isFinite(etP) && (!R0.bestRace || etP < R0.bestRace)) { R0.bestRace = etP; newRec = true; G.saveRecords(); }   // (the record: the player's own 402 m, from its start to the line)
+      if (!S.red && !E.out && S.aP === 0 && Number.isFinite(etP) && etP > 0 && (!own || etP < own)) { by[P.m.id] = etP; if (!R0.bestRace || etP < R0.bestRace) R0.bestRace = etP; newRec = true; G.saveRecords(); }
       $('res-pos').textContent = win ? '✓' : '✕';
       $('res-title').textContent = S.red ? tr('Rdeča luč') : E.out ? tr('Čas je potekel') : tr(win ? 'Zmaga!' : 'Poraz');
       const gs = Number.isFinite(gap) ? Z.dec(gap.toFixed(3)) : '–';
@@ -266,7 +272,7 @@
       const rows = [[tr('Reakcija'), S.red ? tr('rdeča luč') : dec3(rp.re), dec3(ro.re)], ['18 m', mark(rp, K.ft60), mark(ro, K.ft60)], ['201 m', mark(rp, K.eighth), mark(ro, K.eighth)],
         [tr('Do cilja'), dec3(etP), ro.est ? '–' : dec3(et(ro))], [tr('Čas od luči'), dec3(rp.fin), (ro.est ? '~' : '') + dec3(ro.fin)], [tr('Hitrost na cilju'), kmh(rp), kmh(ro)]];
       if (S.hs) rows.push([tr('Prednost'), S.aP ? Z.dec(S.aP.toFixed(1)) + ' m' : '–', S.aO ? Z.dec(S.aO.toFixed(1)) + ' m' : '–']);
-      rows.push([tr('Vozilo'), P.m.name, o.m.name], [tr('Rekord'), R0.bestRace ? dec3(R0.bestRace) : '–', '']);
+      rows.push([tr('Vozilo'), P.m.name, o.m.name], [tr('Rekord'), by[P.m.id] ? dec3(by[P.m.id]) : '–', '']);   // (with this vehicle)
       $('res-table').querySelector('tbody').innerHTML = rows.map(([a, b, c], i) => '<tr' + (i === 3 ? ' class="me"' : '') + '><td>' + Z.esc(a) + '</td><td>' + Z.esc(b) + '</td><td>' + Z.esc(c) + '</td></tr>').join('');
       $('res-restart').dataset.act = 'restart'; $('res-restart').textContent = tr('Ponovi dvoboj');
       Z.resEnd('drag');

@@ -61,6 +61,7 @@ const SECS = {
   'browser/pitexit.test.mjs': 100, 'browser/voices.test.mjs': 120, 'browser/redflag.test.mjs': 200,
   // (the pits tests of #284, from its run on 4. 11. 2026)
   'browser/m11.test.mjs': 30, 'browser/m23.test.mjs': 25, 'browser/m29.test.mjs': 25, 'browser/m40.test.mjs': 25, 'browser/m45.test.mjs': 25,
+  'browser/drag.test.mjs': 110,   // (the drag race, docs/drag-dirka.md: 77 s on 8. 11. 2026 here, three pages)
 };
 const DEF_SECS = 60, secs = (f) => SECS[f] || DEF_SECS;
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
