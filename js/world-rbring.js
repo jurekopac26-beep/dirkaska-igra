@@ -147,6 +147,17 @@
         }
         continue;
       }
+      if (cols.tri) {   // (a triangle at the pole: cols.tri = [its colour, how far along the flag its point reaches (0 at the pole)]; the field cols[0] above it, cols[1] below: Czechia's)
+        const [tc, a] = cols.tri, up = (u) => (u < a ? 0.5 * u / a : 0.5);
+        for (const [col, f0, f1, u1] of [[cols[0], () => 0, up, 1], [tc, up, (u) => 1 - up(u), a], [cols[1], (u) => 1 - up(u), () => 1, 1]]) {
+          const n = Math.max(1, Math.round(SEG * u1));
+          for (let k = 0; k <= n; k++) { const u = u1 * k / n;
+            for (const f of [f0(u), f1(u)]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < n; k++) { const q = v + k * 2; I.push(q, q + 2, q + 3, q, q + 3, q + 1); }
+          v += (n + 1) * 2;
+        }
+        continue;
+      }
       for (let b = 0; b < ns; b++) {
         for (let k = 0; k <= SEG; k++) { const u = k / SEG;
           for (const f of [b / ns, (b + 1) / ns]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }
@@ -1498,7 +1509,7 @@
     }
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
-    if (!PER) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
+    if (!PER && LK.air !== false) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s, nor where the look has none (LK.air false: Sosnová's club circuit)
     if (out.air) out.air.finOnly = !!LK.heliFin;   // (Rio: the helicopter only over the finish, after the race)
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, houses: nHouse, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
