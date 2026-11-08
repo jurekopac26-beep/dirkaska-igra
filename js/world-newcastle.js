@@ -809,9 +809,9 @@
           star(u0 + 64, 608, 17); for (const [sx, sy, r] of [[192, 622, 9], [160, 576, 8], [192, 530, 8], [224, 566, 8], [206, 584, 4]]) star(u0 + sx, 512 + sy - 512, r); }
         else { x.beginPath(); x.arc(u0 + 192, 576, 34, 0, TAU); x.fill(); x.fillStyle = '#c8102e'; x.fillRect(u0 + 186, 544, 12, 64); x.fillRect(u0 + 160, 570, 64, 12); x.fillStyle = '#f5c518'; x.beginPath(); x.arc(u0 + 192, 576, 7, 0, TAU); x.fill(); } }
       const atl = ownTex(new THREE.CanvasTexture(c)), gb = new GB(true), W1 = [1, 1, 1];
-      const flagAt = (fx, fy, fz, k, Wd) => { const Hf = Wd * 0.5, u0 = k === 'nsw' ? 0.25 : 0;   // (the cloth flies downwind, the sea breeze from the north-east, and waves: js/world-zastave.js)
+      const flagAt = (fx, fy, fz, k, Wd) => { const a = 0.9, ca = Math.cos(a), sa = Math.sin(a), Hf = Wd * 0.5, u0 = k === 'nsw' ? 0.25 : 0;   // (the cloth flies downwind: the sea breeze from the north-east)
         cyl(scen.get(fx, fz), fx, ncGround(fx, fz), fz, 0.05, fy + Hf - ncGround(fx, fz) + 0.2, 5, [0.9, 0.9, 0.92]);
-        API.flags.add(fx, fy + Hf, fz, 0.9, { uv: [u0, u0 + 0.25, 0.2, 0], tex: atl }, Wd, Hf); };
+        gb.quadO([fx, fy, fz], [fx + ca * Wd, fy - 0.15, fz + sa * Wd], [fx + ca * Wd, fy + Hf - 0.15, fz + sa * Wd], [fx, fy + Hf, fz], W1, [fx - sa, fy + Hf / 2, fz + ca], [[u0, 0], [u0 + 0.25, 0], [u0 + 0.25, 0.2], [u0, 0.2]]); };
       const board = (cx, cy, cz, fx, fz, Wd, H, u0, u1, v0, v1) => { const ux = fz, uz = -fx, A = [cx - ux * Wd / 2, cy, cz - uz * Wd / 2], B = [cx + ux * Wd / 2, cy, cz + uz * Wd / 2];
         gb.quadO(A, B, [B[0], cy + H, B[2]], [A[0], cy + H, A[2]], W1, [cx - fx, cy + H / 2, cz - fz], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); };
       { const [gx, gz, , gi] = atS(sStart, 0), span = Math.max(T.bl[gi], T.br[gi]) + 1.2; for (const sd of [-1, 1]) board(gx + T.tx[gi] * sd * 0.6, T.hy[gi] + 5.75, gz + T.tz[gi] * sd * 0.6, T.tx[gi] * sd, T.tz[gi] * sd, span * 2 - 2, 1.3, 0, 1, 0.8, 1); }

@@ -21,10 +21,10 @@ const has = (k) => Object.prototype.hasOwnProperty.call(Lang.EN, k);
 M.add({ id: '99', title: 'Vaja: na vrh', track: 'vrsic', story: 'x', goal: 'x' });
 check('the list: by number, the practice one last', M.DEFS.map(d => d.id).join() === M.DEFS.filter(d => !d.test).map(d => d.id).sort().join() + ',vaja' && M.DEFS.map(d => d.id).indexOf('99') === M.DEFS.length - 2, M.DEFS.map(d => d.id).join());
 M.DEFS.splice(M.DEFS.findIndex(d => d.id === '99'), 1);
-// (Santa Monica Mountains became a test track on 4. 11. 2026, Vršič on 6. 11. 2026 and the roads of the USA but Pikes Peak on 5. 11. 2026, the user's decisions
+// (Santa Monica Mountains became a test track on 4. 11. 2026, Vršič and Australia's Longford, Newcastle and Townsville on 6. 11. 2026 and the roads of the USA but Pikes Peak on 5. 11. 2026, the user's decisions
 // (one track a country, CLAUDE.md »Testne proge«); the missions on them stay there until the user moves them, later, when it is known which tracks stay
 // (docs/misije.md): these exceptions only, no other mission may run on a test track)
-const ON_TEST_TRACK = { '01': 'vrsic', '06': 'mulholland', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth', '11': 'maunakea' };   // (the missions that sit on a test track until the user decides: 11 Mauna Kea went to the test tracks with the US ones, 5. 11. 2026)
+const ON_TEST_TRACK = { '01': 'vrsic', '02': 'newcastle', '06': 'mulholland', '19': 'townsville', '35': 'newcastle', '48': 'longford', '30': 'baldy', '39': 'monterey', '46': 'uncompahgre', '52': 'bigsur', '55': 'beartooth', '11': 'maunakea' };   // (the missions that sit on a test track until the user decides: 11 Mauna Kea went to the test tracks with the US ones, 5. 11. 2026; 02, 19, 35 and 48 with the Australian ones, 6. 11. 2026)
 for (const d of M.DEFS) {
   const T = Core.TRACKS.find(t => t.id === d.track);
   check(`mission ${d.id}: on a real track (${d.track})`, !!T && (d.test || !T.test || ON_TEST_TRACK[d.id] === d.track));

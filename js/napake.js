@@ -31,7 +31,8 @@ const Napake = (function () {
   // the game's hooks: replay(), rec(), stop(), seek(t), span(), shot(maxSide), info(), toast(text, ms), ui() (the replay's buttons again),
   // where(t) (the player's car at a time: lap, s, x, z), meta() (version, track, mode, weather), map() (the track's line), shotAt(t, maxSide),
   // flag() (a flag in the race now: { t, n } or null), flags() (the race's flags: [{ t }]), inLoops(loops) (the names of what the loops circle),
-  // track(), recW (the numbers a car in a sample of the recording), dev(on) (Prikaz za razvijalca), kje() (the race now: { t, track, rec, lap, s })
+  // track(), recW (the numbers a car in a sample of the recording), dev(on) (Prikaz za razvijalca), kje() (the race now: { t, track, rec, lap, s }),
+  // carName(id) (a car model's name: the lists show the player's car)
   let G = null;
   let M = null;   // the marking under way: { strokes [{ c, p: [[u, v] ...] (0..1 of the screen), loop }], hist, notes {colour: the notebook's note in it}, tool, col, cur, t }
   const Z = { rec: null, items: [], id: '', d0: null, meta: null, map: null, out: null, done: '', st0: '' };   // the collection: the moments kept, for the recording they belong to (out: its picture as made, done: the version last shared or saved, st0: the version as kept with a recording of Zadnji posnetki)
@@ -39,6 +40,10 @@ const Napake = (function () {
 
   function init(hooks) {
     G = hooks; const R = $('replay-ui'); if (!R || cv) return;
+    document.addEventListener('click', (e) => {   // (a picture in a list or a record: larger; the panels stop the clicks, so this one listens first)
+      const t = e.target && e.target.closest ? e.target.closest('[data-nk-vec]') : null; if (!t) return;
+      e.preventDefault(); e.stopPropagation(); vec(t.dataset.nkVec, t.dataset.cap || '');
+    }, true);
     cv = mk('canvas'); cv.id = 'nk-cv'; R.insertBefore(cv, R.firstChild); cx = cv.getContext('2d');
     // the notebook (Beležka): always open in Označi, bottom right over the picture, in the pencil's colour (belCol); the dots in its head: the
     // other colours written in (a tap: that colour)
@@ -472,6 +477,17 @@ const Napake = (function () {
   const p2 = (x) => String(x).padStart(2, '0');
   const datum = (d) => d.getDate() + '. ' + (d.getMonth() + 1) + '. ' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
   const trenutkov = (n) => n + ' ' + (n % 100 === 1 ? 'trenutek' : n % 100 === 2 ? 'trenutka' : n % 100 === 3 || n % 100 === 4 ? 'trenutki' : 'trenutkov');
+  // the player's car and how it did, from a recording's header (js/game.js rrpOf: cars[k] { m, pl, fin, ft, bust }): car: its name ('' where the game does not
+  // know the model), fin: it reached the finish (the police's arrest: not), time: its time there in seconds (a race: the finish time; a time trial: the run;
+  // qualifying: the lap), 0 where the header has none
+  function igralecH(H) {
+    const c = H && Array.isArray(H.cars) ? H.cars.find(x => x && x.pl) : null;
+    if (!c) return { car: '', fin: 0, time: 0 };
+    let car = ''; try { car = (G && G.carName && G.carName(c.m)) || ''; } catch (_) { }
+    const fin = c.fin && !c.bust ? 1 : 0;
+    return { car, fin, time: fin && c.ft > 0 ? +(+c.ft).toFixed(3) : 0 };
+  }
+  const cas = (t) => { const u = Math.max(0, Math.round(t * 1000)); return Math.floor(u / 60000) + ':' + p2(Math.floor(u / 1000) % 60) + '.' + String(u % 1000).padStart(3, '0'); };   // (1:23.456, as the game's clock)
   // everything the report says: the moments, the race's flags not marked (where the player was), the race, the device, the text's lines
   const ena = (t) => String(t).replace(/\s*\n\s*/g, ' / ');   // (a note in one line of the text: its lines joined by " / ")
   function porocilo() {
@@ -491,7 +507,8 @@ const Napake = (function () {
     const avv = av.map(a => '!' + a.n + ' ' + clock(a.f.t, 3) + ' K' + (a.lap || '?') + ' s=' + (a.s != null ? a.s : '?') + 'm ' + a.f.kind + ' ' + avIme(a.f) + ' »' + a.f.opis + '« (samodejna zastavica)');
     const dn = dnevnik().map(dVrstica);
     const stamp = d0.getFullYear() + p2(d0.getMonth() + 1) + p2(d0.getDate()) + '-' + p2(d0.getHours()) + p2(d0.getMinutes());
-    return { items, meta, zast, av, glava, vrstice, zv, avv, dn, w, h, d0, ime: 'napake_' + (meta.track || 'proga') + '_' + stamp,
+    const ig = (() => { try { const r = G && G.rrp && G.rrp(); if (!r) return null; const x = igralecH(r.H), st = PZ.get(G.rec()); if (st && st.fin) x.fin = 1; return x; } catch (_) { return null; } })();   // (the player's car and how it did: kept with the picture, shown in the lists; a recording kept at the finish: over it)
+    return { items, meta, zast, av, glava, vrstice, zv, avv, dn, w, h, d0, ig, ime: 'napake_' + (meta.track || 'proga') + '_' + stamp,
       text: [glava].concat(...vrstice, zv, avv, dn).join('\n') };
   }
 
@@ -641,7 +658,8 @@ const Napake = (function () {
     x.globalAlpha = 1; x.textAlign = 'left';
   }
   const blob = (cv, type, q) => new Promise((res) => { try { cv.toBlob((b) => res(b), type || 'image/png', q); } catch (_) { res(null); } });
-  // the picture made (once for each version of the collection) and kept in the game: { id, name, date, track, n, flags, text, status, files: [{ name, blob, w, h }], thumb }
+  // the picture made (once for each version of the collection) and kept in the game: { id, name, date, track, n, flags, text, status, files: [{ name, blob, w, h }], thumb,
+  // car, fin, time (the player's car; whether it reached the finish; its time there: where the game knew them) }
   let making = null;
   const verOf = () => Z.id + ':' + Z.items.length + ':' + (G ? G.flags().length : 0) + ':' + N.size + ':' + potrjene().length + ':' + D.n;   // (the collection as it is now; D.n: the log's notes so far)
   function pripravi() {
@@ -653,6 +671,7 @@ const Napake = (function () {
       if (bs.some(b => !b)) throw new Error('slika');
       const files = bs.map((b, i) => ({ name: R.ime + (cvs.length > 1 ? '_' + (i + 1) : '') + '.png', blob: b, w: cvs[i].width, h: cvs[i].height }));
       const rec = { id: Z.id || 'nk-' + R.d0.getTime(), name: R.ime, date: R.d0.getTime(), track: R.meta.track || '', n: R.items.length, flags: R.zast.length, text: R.text, status: 'neposlano', tname: R.meta.name || '', files, thumb: await blob(small(cvs[0], 320), 'image/jpeg', 0.8) };
+      if (R.ig && R.ig.car) Object.assign(rec, { car: R.ig.car, fin: R.ig.fin, time: R.ig.time });
       if (Z.st0 && Z.st0 === ver) { const old = (await dbAll().catch(() => [])).find(o => o.id === rec.id); if (old) rec.status = stOf(old); }   // (a collection of Zadnji posnetki as it was kept: its state stays)
       Z.out = { ver, rec }; making = null;
       await dbPut(rec).catch(() => { });
@@ -681,6 +700,7 @@ const Napake = (function () {
     for (const o of l.slice(DB_MAX)) await dbDel(o.id);
   }
   async function dbSet(id, f) { const l = await dbAll(), o = l.find(r => r.id === id); if (!o) return null; Object.assign(o, typeof f === 'function' ? f(o) : f); await dbDo('readwrite', s => s.put(o)); return o; }
+  const dbSetMany = (l) => dbDo('readwrite', s => { for (const [id, f] of l) { const rq = s.get(id); rq.onsuccess = () => { if (rq.result) s.put(Object.assign(rq.result, f)); }; } });   // (l: [[id, fields] ...], in one transaction)
   // shared or copied for the chat: Poslano (a later state, Popravljeno or Zaprto, stays)
   const dbMark = (id) => dbSet(id, o => (stOf(o) === 'neposlano' ? { status: 'poslano' } : {}));
 
@@ -798,6 +818,26 @@ const Napake = (function () {
     if (u[0] === 0x1f && u[1] === 0x8b) { if (typeof DecompressionStream !== 'function') throw new Error('ta brskalnik posnetka ne zna razpakirati'); try { u = await gzip(u, true); } catch (_) { throw new Error('posnetek je poškodovan'); } }
     return rrpUnpack(u);
   }
+  // only the header of a recording (not its samples): the file is unpacked as far as the header goes; null where it cannot be read
+  async function rrpGlavaIz(blob) {
+    let rd = null;
+    try {
+      const b2 = new Uint8Array(await blob.slice(0, 2).arrayBuffer()); let st = blob.stream();
+      if (b2[0] === 0x1f && b2[1] === 0x8b) { if (typeof DecompressionStream !== 'function') return null; st = st.pipeThrough(new DecompressionStream('gzip')); }
+      rd = st.getReader(); let u = new Uint8Array(0);
+      for (; ;) {
+        const { value, done } = await rd.read();
+        if (value && value.length) { const w = new Uint8Array(u.length + value.length); w.set(u); w.set(value, u.length); u = w; }
+        if (u.length >= 8) {
+          if (String.fromCharCode(u[0], u[1], u[2], u[3]) !== RRP.mag) return null;
+          const hl = new DataView(u.buffer, u.byteOffset, u.byteLength).getUint32(4, true); if (hl > 4194304) return null;   // (a header over 4 MB: not one of the game's)
+          if (u.length >= 8 + hl) return JSON.parse(new TextDecoder().decode(u.subarray(8, 8 + hl)));
+        }
+        if (done) return null;
+      }
+    } catch (_) { return null; }
+    finally { if (rd) try { rd.cancel().catch(() => { }); } catch (_) { } }
+  }
   const mb = (n) => vejica(n / 1048576) + ' MB';
   const velikost = (n) => (n < 1048576 ? Math.max(1, Math.round(n / 1024)) + ' KB' : mb(n));   // (Zadnji posnetki: 131 KB, 1,2 MB)
   async function rrpShrani() {
@@ -852,6 +892,7 @@ const Napake = (function () {
   const pzAll = () => pzDo('readonly', s => s.getAll()).then(l => (l || []).sort((a, b) => b.date - a.date));
   const pzGet = (id) => pzDo('readonly', s => s.get(id));
   const pzDel = (id) => pzDo('readwrite', s => s.delete(id));
+  const pzSet = (id, f) => pzDo('readwrite', s => { const rq = s.get(id); rq.onsuccess = () => { if (rq.result) s.put(Object.assign(rq.result, f)); }; });   // (fields of a record changed, in one transaction)
   async function pzPut(o) {   // (the newest PZ_MAX stay; the disk full: the oldest out, then again)
     for (let k = 0; ; k++) {
       try { await pzDo('readwrite', s => s.put(o)); break; }
@@ -904,14 +945,35 @@ const Napake = (function () {
       const raw = await rrpPackKos(H, F); await pocakaj();
       st.blob = new Blob([typeof CompressionStream === 'function' ? await gzip(raw) : raw], { type: 'application/octet-stream' }); st.nF = F.length;
     }
-    if (H) { const pl = H.cars.findIndex(c => c.pl);
-      st.o = Object.assign({}, st.o, { id: st.id, date: st.date, track: H.track, tname: H.name || H.track, mode: H.mode, wx: H.wx, laps: H.laps || 1, n: H.n, ver: H.ver,
+    if (H) { const pl = H.cars.findIndex(c => c.pl), ig = igralecH(H);
+      st.o = Object.assign({}, st.o, { id: st.id, date: st.date, track: H.track, tname: H.name || H.track, mode: H.mode, wx: H.wx, laps: H.laps || 1, n: H.n, ver: H.ver, car: ig.car, time: ig.time,
         dur: +(F[F.length - 1][0] - F[0][0]).toFixed(2), pos: pl >= 0 && H.n > 1 && !H.tt ? (H.fin || []).indexOf(pl) + 1 : 0, name: rrpIme(H.track, new Date(st.date)) }); }
     if (!st.o || !st.blob) return;
     const zb = z ? await zbZapis(z, st.o.zb) : st.o.zb || null;
     st.o = Object.assign({}, st.o, { fin: st.fin, blob: st.blob, bytes: st.blob.size, zb });
     await pzPut(st.o);
     pzOsvezi();
+  }
+  // the lists show the player's car and time: a recording kept before they did gets both from its header (once; kept in its record)
+  async function pzIgralec(o) {
+    if (!o || o.car !== undefined || !o.blob) return o;
+    const H = await rrpGlavaIz(o.blob), ig = H ? igralecH(H) : { car: '', fin: 0, time: 0 };
+    o.car = ig.car; o.time = o.fin ? ig.time : 0;
+    await pzSet(o.id, { car: o.car, time: o.time }).catch(() => { });
+    return o;
+  }
+  const pzVsiI = async () => { const l = await pzAll(); await Promise.all(l.map(pzIgralec)); return l; };   // (all of Zadnji posnetki, newest first, each with its car and time)
+  // the same for the lists of Zgodovina napak: null where the store does not answer in 3 s (the history's list never waits for it longer)
+  function pzZaZg() {
+    let t = 0;
+    return Promise.race([pzVsiI().catch(() => null), new Promise((res) => { t = setTimeout(() => res(null), 3000); })]).then((l) => { clearTimeout(t); return l; });
+  }
+  const pzPoZbirki = (l, id) => (id && l.find(o => o.zb && o.zb.id === id)) || null;   // (the recording a collection was marked on, if it is still among them)
+  // a collection's record: its player's car and result as kept, or (an older record) from its recording among Zadnji posnetki; null: nothing known
+  function igZapisa(r, pz) {
+    if (r.car !== undefined) return { car: r.car || '', fin: r.fin ? 1 : 0, time: r.fin ? r.time || 0 : 0 };
+    const o = pzPoZbirki(pz || [], r.id);
+    return o && o.car !== undefined ? { car: o.car || '', fin: o.fin ? 1 : 0, time: o.fin ? o.time || 0 : 0 } : null;
   }
   // js/game.js finishRace (a special mission over): the player reached the finish, the race's recording kept by itself
   function cilj() {
@@ -973,11 +1035,48 @@ const Napake = (function () {
   const nacinOf = (m) => String(m || '?').split('+').map(w => NACIN[w] || w).join(' · ');
   const minSek = (t) => { const s = Math.max(0, Math.round(t || 0)); return Math.floor(s / 60) + ':' + p2(s % 60); };
   const krogov = (n) => n + ' ' + (n % 100 === 1 ? 'krog' : n % 100 === 2 ? 'kroga' : n % 100 === 3 || n % 100 === 4 ? 'krogi' : 'krogov');
-  let pzUrls = [], pzDelId = '', pzDelT = 0;
+  let pzUrls = [], pzDelId = '', pzDelT = 0, pzCilj = 0;   // (pzCilj: the list shows only the games that reached the finish; kept until the page is reloaded)
+  // one entry of a list: the picture (a tap: larger), the text (a tap: opens the one), the state at the right. o: { a (the text's action), id, u (the picture),
+  // big (the larger one, else u), cap (its caption), cls, lines [html], pill (html) }
+  function vrstica(o) {
+    const th = o.u ? '<button type="button" class="nk-th" data-nk-vec="' + esc(o.big || o.u) + '" data-cap="' + esc(o.cap || '') + '" aria-label="Večja slika"><img src="' + esc(o.u) + '" alt=""></button>' : '<span class="nk-th"><i></i></span>';
+    return '<div class="nk-item' + (o.cls ? ' ' + o.cls : '') + '">' + th + '<button type="button" class="nk-bd" data-nk-d="' + o.a + '" data-id="' + esc(o.id) + '"><span class="nk-it">' + o.lines.join('') + '</span>' + (o.pill || '') + '</button></div>';
+  }
+  // the player's car and how it did, one line: KOLIBRI · 1:23.456 (over the finish: green), KOLIBRI · do cilja (its time not known), KOLIBRI · ni do cilja
+  function avtoVrstica(car, fin, time) {
+    return '<small class="nk-car">' + (car ? '<span>' + esc(car) + '</span> · ' : '') + '<span class="' + (fin ? 'nk-ok' : 'nk-no') + '">' + (fin ? (time > 0 ? cas(time) : 'do cilja') : 'ni do cilja') + '</span></small>';
+  }
+  // a picture larger, over the whole window: a tap on it, Esc, Enter or Zapri close it (every key while it is up is its own, never the game's or the panel's)
+  function vec(src, cap) {
+    vecZapri();
+    const el = mk('div', 'nk-big'); el.id = 'nk-big'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Večja slika');
+    el.innerHTML = '<img alt=""><div class="nk-big-c"></div><button type="button" class="nk-big-x">Zapri</button>';
+    el.querySelector('img').src = src; el.querySelector('.nk-big-c').textContent = cap || '';
+    el._prev = document.activeElement;
+    el._key = (e) => { e.stopImmediatePropagation(); if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!e.repeat) vecZapri(); } };
+    window.addEventListener('keydown', el._key, true);
+    el.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); vecZapri(); });
+    document.body.appendChild(el);
+    try { el.querySelector('.nk-big-x').focus({ preventScroll: true }); } catch (_) { }
+  }
+  function vecZapri() {
+    const el = $('nk-big'); if (!el) return;
+    window.removeEventListener('keydown', el._key, true); el.remove();
+    try { if (el._prev && el._prev.isConnected && el._prev.focus) el._prev.focus({ preventScroll: true }); } catch (_) { }   // (the key goes to the panel below again)
+  }
+  // a recording of the list to the downloads (for Claude: tools/posnetek.mjs)
+  async function pzPrenesi(id) {
+    const o = await pzGet(id).catch(() => null);
+    if (!o || !o.blob) { G.toast('Tega posnetka ni več.', 2400); pzOsvezi(); return false; }
+    prenesi(o.blob, o.name); if (window.__game) window.__game.lastRrp = { name: o.name, bytes: o.blob.size };   // (the tests)
+    G.toast('Posnetek je v Prenosih: ' + o.name + ' (' + mb(o.blob.size) + '). ' + KJE, 4600);
+    return true;
+  }
   function zadnji() {   // the panel over everything: from the tool's settings, Zgodovina napak, after Končaj on one of its recordings
     pzZapri();
     const el = mk('div', 'nk-dlg nk-pz'); el.id = 'nk-pz'; document.body.appendChild(el);
-    el.innerHTML = '<div class="nk-box"><h3>Zadnji posnetki</h3><p class="nk-sub">Zadnjih ' + PZ_MAX + ' iger: dokončane se shranijo same, nedokončane, če ob izhodu izbereš Da. Dotik odpre posnetek: Označi, Dodaj k zbirki, Deli (trenutki, že dodani k zbirki, so tam).</p>' +
+    el.innerHTML = '<div class="nk-box"><h3>Zadnji posnetki</h3><p class="nk-sub">Tu so posnetki dirk za prenos (.rrp): zadnjih ' + PZ_MAX + ' iger. Dokončane (do cilja) se shranijo same, nedokončane, če ob izhodu izbereš Da. Dotik besedila odpre posnetek (Označi, Dodaj k zbirki, Deli), dotik slike jo poveča, .rrp shrani posnetek v Prenose.</p>' +
+      '<div class="nk-pz-h"><span class="nk-pz-hn"></span><button type="button" class="nk-tgl' + (pzCilj ? ' sel' : '') + '" data-nk-d="cilj" aria-pressed="' + (pzCilj ? 'true' : 'false') + '">Samo do cilja</button></div>' +
       '<div class="nk-list"><span class="nk-hint">Nalagam …</span></div><div class="nk-end"><button data-nk-d="zg">Zgodovina napak</button><button data-nk-d="zapri">Zapri</button></div></div>';
     el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') pzZapri(); });
     el.addEventListener('click', async (e) => {
@@ -986,10 +1085,9 @@ const Napake = (function () {
       const a = b.dataset.nkD, id = b.dataset.id || '';
       if (a === 'zapri') pzZapri();
       else if (a === 'zg') zgodovina();
+      else if (a === 'cilj') { pzCilj = pzCilj ? 0 : 1; b.classList.toggle('sel', !!pzCilj); b.setAttribute('aria-pressed', pzCilj ? 'true' : 'false'); pzOsvezi(); }
       else if (a === 'odpri') await pzOdpri(id);
-      else if (a === 'rrp') { const o = await pzGet(id).catch(() => null); if (!o || !o.blob) { pzOsvezi(); return; }
-        prenesi(o.blob, o.name); if (window.__game) window.__game.lastRrp = { name: o.name, bytes: o.blob.size };   // (the tests)
-        G.toast('Posnetek je v Prenosih: ' + o.name + ' (' + mb(o.blob.size) + '). ' + KJE, 4600); }
+      else if (a === 'rrp') await pzPrenesi(id);
       else if (a === 'del') {
         if (pzDelId !== id || performance.now() - pzDelT > 3000) { pzDelId = id; pzDelT = performance.now(); b.textContent = 'Res?'; b.classList.add('warn'); setTimeout(() => { if (b.isConnected) { b.innerHTML = '&#10005;'; b.classList.remove('warn'); } }, 3100); return; }
         pzDelId = ''; await pzDel(id).catch(() => { }); pzOsvezi();
@@ -997,21 +1095,27 @@ const Napake = (function () {
     });
     pzOsvezi();
   }
-  async function pzOsvezi() {   // (the list, if open; the count in the tool's settings, if open)
-    const n = document.querySelector('#nk-set .nk-pz-n'), box = document.querySelector('#nk-pz .nk-list'); if (!n && !box) return;
-    let l = null; try { l = await pzAll(); } catch (_) { }
+  async function pzOsvezi() {   // (the list, if open; the counts in the tool's settings, if open)
+    const n = document.querySelector('#nk-set .nk-pz-n'), c = document.querySelector('#nk-set .nk-pz-c'), box = document.querySelector('#nk-pz .nk-list'); if (!n && !c && !box) return;
+    let l = null; try { l = await pzVsiI(); } catch (_) { }
+    const nc = l ? l.filter(o => o.fin).length : 0;
     if (n) n.textContent = l ? '(' + l.length + '/' + PZ_MAX + ')' : '';
+    if (c) c.textContent = l && l.length ? 'do cilja: ' + nc : '';
     if (!box || !box.isConnected) return;
     for (const u of pzUrls) URL.revokeObjectURL(u); pzUrls = [];
+    const hn = document.querySelector('#nk-pz .nk-pz-hn'); if (hn) hn.textContent = l && l.length ? 'Do cilja: ' + nc + ' od ' + l.length : '';
     if (!l) { box.innerHTML = '<span class="nk-hint">Shranjevanje v igri tu ne deluje.</span>'; return; }
     if (!l.length) { box.innerHTML = '<span class="nk-hint">Ni shranjenih posnetkov. Igra, ki pride do cilja, se shrani sama.</span>'; return; }
-    box.innerHTML = l.map(o => {
+    const kaz = pzCilj ? l.filter(o => o.fin) : l;
+    if (!kaz.length) { box.innerHTML = '<span class="nk-hint">Nobena shranjena igra ni prišla do cilja. Gumb Samo do cilja pokaže vse.</span>'; return; }
+    box.innerHTML = kaz.map(o => {
       const its = (o.zb && o.zb.items) || [], b0 = its.length && its[0].img, u = b0 ? URL.createObjectURL(b0) : 'assets/tracks/' + encodeURIComponent(o.track) + (/dez/.test(o.wx || '') ? '-rain' : '') + '.webp';   // (the first moment's picture, else the track's of the menu)
       if (b0) pzUrls.push(u);
-      const opis = datum(new Date(o.date)) + ' · ' + nacinOf(o.mode) + (o.laps > 1 ? ' · ' + krogov(o.laps) : '') + ' · ' + minSek(o.dur) + (o.pos ? ' · ' + o.pos + '. mesto' : '');
-      return '<div class="nk-pzi"><button class="nk-item" data-nk-d="odpri" data-id="' + esc(o.id) + '"><img src="' + esc(u) + '" alt=""><span class="nk-it"><b>' + esc(o.tname || o.track) + '</b><small>' + esc(opis) + '</small><small>' +
-        esc((its.length ? trenutkov(its.length) + ' · ' : '') + velikost(o.bytes || 0)) + '</small></span><em class="nk-st ' + (o.fin ? 'st-cilj">Do cilja' : 'st-nedok">Nedokončana') + '</em></button>' +
-        '<button class="nk-pzb" data-nk-d="rrp" data-id="' + esc(o.id) + '" aria-label="Shrani posnetek (.rrp)">.rrp</button><button class="nk-pzb nk-delb" data-nk-d="del" data-id="' + esc(o.id) + '" aria-label="Izbriši posnetek">&#10005;</button></div>';
+      const ime = o.tname || o.track, opis = datum(new Date(o.date)) + ' · ' + nacinOf(o.mode) + (o.laps > 1 ? ' · ' + krogov(o.laps) : '') + ' · ' + minSek(o.dur) + (o.pos ? ' · ' + o.pos + '. mesto' : '');
+      return '<div class="nk-pzi">' + vrstica({ a: 'odpri', id: o.id, u, cap: ime + ' · ' + datum(new Date(o.date)) + (o.car ? ' · ' + o.car : '') + (o.fin ? (o.time > 0 ? ' · ' + cas(o.time) : ' · do cilja') : ' · ni do cilja'), cls: o.fin ? 'cilj' : '',
+        lines: ['<b>' + esc(ime) + '</b>', avtoVrstica(o.car, o.fin, o.time), '<small>' + esc(opis) + '</small>', '<small>' + esc((its.length ? trenutkov(its.length) + ' · ' : '') + velikost(o.bytes || 0)) + '</small>'],
+        pill: '<em class="nk-st ' + (o.fin ? 'st-cilj">Do cilja' : 'st-nedok">Nedokončana') + '</em>' }) +
+        '<button type="button" class="nk-pzb" data-nk-d="rrp" data-id="' + esc(o.id) + '" aria-label="Shrani posnetek (.rrp)">.rrp</button><button type="button" class="nk-pzb nk-delb" data-nk-d="del" data-id="' + esc(o.id) + '" aria-label="Izbriši posnetek">&#10005;</button></div>';
     }).join('');
   }
   function pzZapri() { const el = $('nk-pz'); if (el) el.remove(); for (const u of pzUrls) URL.revokeObjectURL(u); pzUrls = []; }
@@ -1089,6 +1193,7 @@ const Napake = (function () {
   const NK_ROWS = [['on', 'Orodje', [[1, 'Vklop'], [0, 'Izklop']]], ['end', 'Ob koncu posnetka', [['ask', 'Vprašaj'], ['share', 'Deli'], ['save', 'Shrani']]],
     ['flag', 'Zastavica med dirko', [['btn', 'Gumb + tipka F'], ['key', 'Samo tipka'], ['off', 'Izklop']]], ['size', 'Velikost slike', [[1600, '1600 px'], [2400, '2400 px']]], ['dev', 'Prikaz za razvijalca', [[1, 'Vklop'], [0, 'Izklop']]]];
   let urls = [], rrpAsk = 0;
+  const POVEZAVA = '<p class="nk-hint nk-pz-hint">Tu so slike napak z besedilom, ne posnetki dirk. Posnetke dirk za prenos (.rrp), tudi samo dokončane, najdeš v <button type="button" class="nk-lnk" data-nk-d="pz">Zadnjih posnetkih</button>.</p>';
   function nastavitve() {
     let el = $('nk-set'); if (el) el.remove();
     el = mk('div', 'nk-dlg nk-set'); el.id = 'nk-set'; document.body.appendChild(el);
@@ -1098,8 +1203,10 @@ const Napake = (function () {
       '<div class="nk-row"><span>Dnevnik napak <small class="nk-dn-n"></small></span><span class="nk-dn-b"><button data-nk-d="dn-kop">Kopiraj</button><button data-nk-d="dn-del">Počisti</button></span></div><pre class="nk-dn"></pre>' +
       '<div class="nk-row"><span>Posnetek dirke <small>(.rrp)</small></span><span class="nk-dn-b"><button data-nk-d="rrp-shrani"' + (G && G.rec() && G.rec().frames.length >= RRP.min ? '' : ' disabled') + '>Shrani</button><button data-nk-d="rrp-odpri">Odpri …</button></span></div>' +
       '<input type="file" class="nk-rrp-in" hidden>' +   // (no accept: a phone's picker greys out a kind it does not know; rrpBeri checks the file)
-      '<div class="nk-row"><span>Zadnji posnetki <small class="nk-pz-n"></small></span><span class="nk-dn-b"><button data-nk-d="pz">Odpri</button></span></div>' +
-      '<div class="nk-row"><span>Zgodovina napak</span><span class="nk-dn-b"><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="zg">Odpri</button></span></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
+      '<div class="nk-row"><span>Zadnji posnetki <small class="nk-pz-n"></small> <small class="nk-pz-c"></small></span><span class="nk-dn-b"><button data-nk-d="pz">Odpri</button></span></div>' +
+      '<p class="nk-hint">Posnetki dirk za prenos (.rrp): zadnjih ' + PZ_MAX + ' iger; dokončane (do cilja) so zelene, z gumbom Samo do cilja ostanejo samo one.</p>' +
+      '<div class="nk-row"><span>Zgodovina napak</span><span class="nk-dn-b"><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="zg">Odpri</button></span></div>' + POVEZAVA +
+      '<div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
       '<div class="nk-end"><button data-nk-d="zapri">Zapri</button></div></div>';
     el.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') nZapri(); });
     el.querySelector('.nk-rrp-in').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) rrpOdpri(f, f.name); });
@@ -1128,13 +1235,22 @@ const Napake = (function () {
   }
   function nZapri() { const el = $('nk-set'); if (el) el.remove(); for (const u of urls) URL.revokeObjectURL(u); urls = []; }
   // the list of Zgodovina napak (in the tool's settings and in its own panel): the newest first, a tap opens the one (data-nk-d="zg")
+  const burl = (b, U) => { try { if (b && typeof b === 'object') { const u = URL.createObjectURL(b); U.push(u); return u; } } catch (_) { } return ''; };   // (a picture of a record as an address, kept to be let go of; '' where it is none)
   async function seznam(box, U) {
     box = box || document.querySelector('#nk-set .nk-list'); U = U || urls; if (!box) return [];
     let l = []; try { l = await dbAll(); } catch (_) { box.innerHTML = '<span class="nk-hint">Shranjevanje v igri tu ne deluje.</span>'; return []; }
+    const pz = l.some(r => r.car === undefined) ? await pzZaZg() : null;   // (older records: their car and time from their recordings, where those are still kept)
+    if (!box.isConnected) return l;
     for (const u of U) URL.revokeObjectURL(u); U.length = 0;
     if (!l.length) { box.innerHTML = '<span class="nk-hint">Ni shranjenih napak.</span>'; return l; }
-    box.innerHTML = l.map(r => { const u = r.thumb ? URL.createObjectURL(r.thumb) : ''; if (u) U.push(u);
-      return '<button class="nk-item" data-nk-d="zg" data-id="' + esc(r.id) + '">' + (u ? '<img src="' + u + '" alt="">' : '<i></i>') + '<span class="nk-it"><b>' + esc(progaOf(r)) + '</b><small>' + opisOf(r) + '</small></span>' + stPill(r) + '</button>'; }).join('');
+    const mig = [];
+    box.innerHTML = l.map(r => {
+      const u = burl(r.thumb, U), big = burl(r.files && r.files[0] && r.files[0].blob, U) || u, ig = igZapisa(r, pz);
+      if (ig && r.car === undefined) mig.push([r.id, { car: ig.car, fin: ig.fin, time: ig.time }]);   // (kept in the record too, in case its recording goes)
+      return vrstica({ a: 'zg', id: r.id, u, big, cap: progaOf(r) + ' · ' + datum(new Date(r.date)), cls: ig && ig.fin ? 'cilj' : '',
+        lines: ['<b>' + esc(progaOf(r)) + '</b>'].concat(ig ? [avtoVrstica(ig.car, ig.fin, ig.time)] : [], ['<small>' + opisOf(r) + '</small>']), pill: stPill(r) });
+    }).join('');
+    if (mig.length) dbSetMany(mig).catch(() => { });
     return l;
   }
 
@@ -1181,6 +1297,8 @@ const Napake = (function () {
       if (a === 'nazaj') { zgSeznam(); return; }
       if (a === 'vse') { await vseNeposlane(); return; }
       if (a === 'vsepos') { await vsePoslane(b); return; }
+      if (a === 'pzodpri') { await pzOdpri(b.dataset.id); return; }
+      if (a === 'pzrrp') { await pzPrenesi(b.dataset.id); return; }
       const r = (await dbAll().catch(() => [])).find(o => o.id === zgId); if (!r) { zgSeznam(); return; }
       if (a === 'st') { await dbSet(r.id, { status: b.dataset.v }).catch(() => { }); zgOsvezi(); return; }
       if (a === 'del') {   // (a second tap within 3 s)
@@ -1194,7 +1312,7 @@ const Napake = (function () {
   const zgIn = () => document.querySelector('#nk-zg .nk-zg-in');
   async function zgSeznam() {
     const box = zgIn(); if (!box) return; zgId = '';
-    box.innerHTML = '<div class="nk-row"><span class="nk-zg-n">Shranjene zbirke</span><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="vsepos" class="nk-delb">' + VSEPOS + '</button></div><div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
+    box.innerHTML = '<div class="nk-row"><span class="nk-zg-n">Shranjene zbirke</span><button data-nk-d="vse">Deli vse neposlane</button><button data-nk-d="vsepos" class="nk-delb">' + VSEPOS + '</button></div>' + POVEZAVA + '<div class="nk-list"><span class="nk-hint">Nalagam …</span></div>' +
       '<p class="nk-hint">Stanje: Neposlano → Poslano (samodejno ob Deli ali Kopiraj sliko; če si sliko poslal drugače, ročno v zapisu ali z »' + VSEPOS + '«) → Popravljeno (ko Claude javi popravek) → Zaprto (po preizkusu). Dotik odpre zapis.</p>';
     const l = await seznam(box.querySelector('.nk-list'), zgUrls), n = box.querySelector('.nk-zg-n');
     if (n) n.textContent = 'Shranjene zbirke (' + l.length + ')';
@@ -1202,19 +1320,31 @@ const Napake = (function () {
   async function zgEna(id) {
     const box = zgIn(); if (!box) return;
     const r = (await dbAll().catch(() => [])).find(o => o.id === id); if (!r) { zgSeznam(); return; }
+    if (!box.isConnected) return;
     zgId = r.id; zgDel = 0; for (const u of zgUrls) URL.revokeObjectURL(u); zgUrls = [];
-    const R = zgRec(r), f = R.files[0], u = f ? URL.createObjectURL(f.blob) : ''; if (u) zgUrls.push(u);
-    const B = [], nf = r.files.length;
+    const R = zgRec(r), nf = Array.isArray(r.files) ? r.files.length : 0, u = burl(R.files[0] && R.files[0].blob, zgUrls), ig = igZapisa(r, null);   // (an older record may lack any of its parts: files, thumb, car)
+    const B = [];
     if (!coarse() && nf) r.files.forEach((x, i) => B.push(['slika', 'Kopiraj sliko' + (nf > 1 ? ' ' + (i + 1) + '/' + nf : ''), i]));
     if (R.files.length && (coarse() || canShare(R.files.map(fileOf)))) B.push(['deli', 'Deli', 0]);
     if (R.files.length) B.push(['shrani', nf ? 'Shrani sliko' : 'Shrani malo sliko', 0]);
     B.push(['besedilo', 'Kopiraj besedilo', 0]);
     box.innerHTML = '<button data-nk-d="nazaj" class="nk-back">&#8592; Vse zbirke</button>' +
-      '<p class="nk-sub"><b>' + esc(progaOf(r)) + '</b> · ' + opisOf(r) + '</p>' +
-      '<div class="nk-prev">' + (u ? '<img alt="Slika napak" src="' + u + '">' : '<span>Slike ni.</span>') + '</div>' +
+      '<p class="nk-sub"><b>' + esc(progaOf(r)) + '</b> · ' + opisOf(r) + '</p><div class="nk-car-l">' + (ig ? avtoVrstica(ig.car, ig.fin, ig.time) : '') + '</div>' +
+      '<div class="nk-prev">' + (u ? '<button type="button" class="nk-prev-b" data-nk-vec="' + esc(u) + '" data-cap="' + esc(progaOf(r) + ' · ' + datum(new Date(r.date)) + (nf > 1 ? ' · slika 1/' + nf : nf ? '' : ' · mala slika')) + '" aria-label="Večja slika"><img alt="Slika napak" src="' + esc(u) + '"></button>' : '<span>Slike ni.</span>') + '</div>' +
+      '<div class="nk-pzl"></div>' +
       '<div class="nk-sts">' + STANJA.map(([v, t]) => '<button data-nk-d="st" data-v="' + v + '" class="st-' + v + (stOf(r) === v ? ' sel' : '') + '">' + t + '</button>').join('') + '</div>' +
       '<pre class="nk-txt"></pre><div class="nk-acts">' + B.map(([a, t, i]) => '<button data-nk-d="' + a + '" data-i="' + i + '">' + t + '</button>').join('') + '<button data-nk-d="del" class="nk-delb">Izbriši</button></div>';
     box.querySelector('.nk-txt').textContent = r.text || '';
+    // its recording, if it is still among Zadnji posnetki (the collection was marked on it): Odpri posnetek marks and edits it again, .rrp to the downloads
+    pzZaZg().then((pz) => {
+      const el = box.querySelector('.nk-pzl'); if (zgId !== r.id || !el || !el.isConnected) return;
+      const po = pz && pzPoZbirki(pz, r.id), ig2 = pz && igZapisa(r, pz), car = box.querySelector('.nk-car-l');
+      if (car && ig2 && !car.innerHTML) car.innerHTML = avtoVrstica(ig2.car, ig2.fin, ig2.time);   // (an older record: its car and time from its recording)
+      if (pz && ig2 && r.car === undefined) dbSetMany([[r.id, { car: ig2.car, fin: ig2.fin, time: ig2.time }]]).catch(() => { });
+      el.className = 'nk-pzl' + (po ? ' ima' : '');
+      el.innerHTML = !pz ? '' : po ? '<span class="nk-pzl-t">Posnetek te dirke je med zadnjimi posnetki:</span><button type="button" data-nk-d="pzodpri" data-id="' + esc(po.id) + '">Odpri posnetek</button><button type="button" data-nk-d="pzrrp" data-id="' + esc(po.id) + '">Shrani .rrp</button>'
+        : '<span class="nk-pzl-t">Posnetka te dirke ni (več) med zadnjimi posnetki.</span>';
+    });
   }
   function zgOsvezi() { if (zgId) zgEna(zgId); else zgSeznam(); seznam(); }   // (and the settings' list, if open)
   function zgZapri() { const el = $('nk-zg'); if (el) el.remove(); for (const u of zgUrls) URL.revokeObjectURL(u); zgUrls = []; zgId = ''; }
@@ -1222,8 +1352,9 @@ const Napake = (function () {
   return { init, open, close, sync, dirka, flag, tocke, konec, izbira, nastavitve, pripravi, zgodovina, shranjene: () => dbAll(),
     okvir, dev, zaznaj, porocilo: () => porocilo().text, zg: { put: dbPut, MAX: DB_MAX, FULL: DB_FULL },   // (zg: the tests, Zgodovina napak's bounds)
     // Zadnji posnetki (js/game.js: cilj at the finish, pusti when a race is left, izhod before the player leaves one, padKey while it asks);
-    // pz: the tests (vsi: the records, newest first; cakaj: the writes asked so far done; put: a record in, the newest MAX kept)
-    cilj, pusti, izhod, padKey, zadnji, pz: { vsi: () => pzAll(), odpri: pzOdpri, put: pzPut, MAX: PZ_MAX, cakaj: () => pzQ },
+    // pz: the tests (vsi: the records, newest first; cakaj: the writes asked so far done; put: a record in, the newest MAX kept; igralec: the player's car and result of a
+    // header; cas: a time as the lists show it)
+    cilj, pusti, izhod, padKey, zadnji, pz: { vsi: () => pzAll(), odpri: pzOdpri, put: pzPut, MAX: PZ_MAX, cakaj: () => pzQ, igralec: igralecH, cas },
     // the recording as a file (the tests, tools/posnetek.mjs): write, read, open; pojdi: the replay to t (k the car followed, cam), slika: its picture
     rrp: { pisi: rrpPisi, beri: rrpBeri, odpri: rrpOdpri, shrani: rrpShrani, pack: rrpPack, unpack: rrpUnpack,
       pojdi: (t, k, cam) => { if (!G || !G.replay()) return false; G.view(k == null ? -1 : k, cam); G.seek(t); return true; },
@@ -1247,7 +1378,9 @@ const Napake = (function () {
         tocke: tocke(), auto: $('nk-auto') ? $('nk-auto').innerText : null, slika: Z.out ? { files: Z.out.rec.files.map(f => ({ name: f.name, w: f.w, h: f.h, bytes: f.blob.size })), text: Z.out.rec.text, status: Z.out.rec.status } : null,
         dlg: (() => { const d = $('nk-dlg'); return d ? [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent) : null; })(),
         zg: (() => { const d = $('nk-zg'); return d ? { id: zgId, items: [...d.querySelectorAll('.nk-item')].map(e => e.innerText.replace(/\s+/g, ' ').trim()), st: (d.querySelector('.nk-sts .sel') || {}).textContent || null,
-          acts: [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent), text: (d.querySelector('.nk-txt') || {}).textContent || null } : null; })(),
+          acts: [...d.querySelectorAll('.nk-acts button')].map(b => b.textContent), text: (d.querySelector('.nk-txt') || {}).textContent || null,
+          car: (d.querySelector('.nk-car-l') || {}).innerText || null, pzl: [...d.querySelectorAll('.nk-pzl button')].map(b => b.textContent) } : null; })(),
+        big: (() => { const d = $('nk-big'); return d ? { src: d.querySelector('img').src, cap: d.querySelector('.nk-big-c').textContent, w: d.getBoundingClientRect().width, h: d.getBoundingClientRect().height } : null; })(),
         vpr: (() => { const d = $('nk-vpr'); return d ? { q: d.querySelector('h3').textContent, b: [...d.querySelectorAll('.nk-yn button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')), fokus: d.contains(document.activeElement) ? document.activeElement.textContent : null } : null; })(),
         pz: (() => { const d = $('nk-pz'); return d ? [...d.querySelectorAll('.nk-pzi .nk-item')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) : null; })() };
     } };

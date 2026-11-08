@@ -700,7 +700,7 @@
         const i = T.idx(sAt(d)), sd = T.k[i] > 0 ? -1 : 1, b = barO(i, sd); if (b - WA[i] > 4 || gapAt(i, sd)) continue;
         const [x, z] = atSf(sAt(d), sd * (b + 2.4)), y = groundH(x, z), h = Math.atan2(T.tz[i], T.tx[i]), gg = g.get(x, z); if (onBld(x, z) || inWater(x, z) || onRoad(x, z, -1, 0.5)) continue;
         box(gg, x, y, z, 2.2, 2.3, 1.6, h, [0.92, 0.92, 0.9], [0.95, 0.45, 0.12]); box(gg, x - T.nx[i] * sd * 1.3, y, z - T.nz[i] * sd * 1.3, 0.45, 1.75, 0.35, h, OR, [0.9, 0.75, 0.6]);
-        box(gg, x + T.tx[i] * 1.4, y, z + T.tz[i] * 1.4, 0.05, 2.6, 0.05, 0, [0.5, 0.5, 0.52]); World.api.flags.add(x + T.tx[i] * 1.4, y + 2.5, z + T.tz[i] * 1.4, h, [[0.95, 0.85, 0.1]], 0.6, 0.45); bldMark(x, z); }   // (the flag waves: js/world-zastave.js)
+        box(gg, x + T.tx[i] * 1.4, y, z + T.tz[i] * 1.4, 0.05, 2.6, 0.05, 0, [0.5, 0.5, 0.52]); box(gg, x + T.tx[i] * 1.7, y + 2.05, z + T.tz[i] * 1.7, 0.6, 0.45, 0.02, h, [0.95, 0.85, 0.1]); bldMark(x, z); }
       for (const d of [700, 1700, 2300]) {   // the TV towers: scaffolding, a platform with a roof, the camera and its operator
         const i = T.idx(sAt(d)), sd = T.k[i] > 0 ? -1 : 1, b = barO(i, sd), [x, z] = atSf(sAt(d), sd * (b + 5)), y = groundH(x, z), h = Math.atan2(T.tz[i], T.tx[i]), gg = g.get(x, z), st = [0.66, 0.67, 0.7];
         if (onBld(x, z) || inWater(x, z)) continue;
