@@ -20,7 +20,7 @@ window.WXFX = (() => {
   };
   const SN = () => SS[opt.snowStyle] || SS.powder;
   const DIR = -1;   // the wind's direction across the screen (the rain's slant, the snow's drift, where snow piles up): -1 mirrors it
-  let dpr = 2, E = {}, R = {}, tl = [{ t: -99, k: 'dry' }], sel = -1, opt = {}, carCont = null, bolt = null;
+  let dpr = 2, E = {}, R = {}, tl = [{ t: -99, k: 'dry' }], sel = -1, opt = {}, carCont = null, bolt = null, uiA = 1;   // (uiA: the buttons' drops and snow faded while the carousel turns)
   const smooth = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
   const rng = (seed) => { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
   const hash = (i) => { let h = (i * 374761393) ^ 0x9e3779b9; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
@@ -123,6 +123,7 @@ window.WXFX = (() => {
     } };
     const finish = () => { g.putImageData(id, 0, 0); soften(c, 0.6); c.ready = true; };
     c.style.cssText = 'position:absolute;left:0;top:0;width:' + Wm + 'px;height:' + Hm + 'px;z-index:1;opacity:0;pointer-events:none';
+    if (R.land) Object.assign(c.style, { width: '100%', height: '100%', objectFit: 'cover' });   // (lying: it shrinks with its card as the carousel turns)
     E.map.insertBefore(c, E.img.nextSibling);
     if (!slow) { rows(0, ch); finish(); return c; }
     // on the live page a few rows at a time, so the screen keeps moving meanwhile
@@ -331,12 +332,13 @@ window.WXFX = (() => {
   }
 
   async function init(T) {
-    dpr = Math.min(2, window.devicePixelRatio || 2); opt = {};
-    const $ = (s) => document.querySelector(s);
-    E = { map: $('#map'), img: $('#mapimg'), room: $('#room'), car: $('#car'), sign: $('#boards .bd.b'), row: $('.row'), nb: [...document.querySelectorAll('.nb')],
-      back: $('.back'), go: $('.go'), home: $('#homeBtn'), globe: $('#hflag'), views: $('.views'), mg: $('.mgbox'), flow: $('#flow') };
+    dpr = Math.min(2, window.devicePixelRatio || 2); opt = {}; uiA = 1;
+    const $ = (s) => document.querySelector(s), land = !!(window.LY && LY.land);   // (lying: the carousel; no sign, no neighbours' flags, no back button)
+    R = { land };
+    E = { map: $('#map'), img: $('#mapimg'), room: $('#room'), car: $('#car'), sign: land ? null : $('#boards .bd.b'), row: $('.row'), nb: land ? [] : [...document.querySelectorAll('.nb')],
+      back: land ? null : $('.back'), go: $('.go'), home: $('#homeBtn'), globe: $('#hflag'), views: $('.views'), mg: $('.mgbox'), flow: $('#flow') };
     E.map.style.overflow = 'hidden';
-    if (T.signMode === 'flagname') {
+    if (T.signMode === 'flagname' && E.sign) {
       const sg = E.sign, top0 = sg.offsetTop, h0 = sg.offsetHeight, nh = 50, ny = top0 + 40, posts = [...document.querySelectorAll('#boards .post')];
       for (const p of posts) { const fl = p.offsetTop + p.offsetHeight; p.style.top = (ny + nh - 4) + 'px'; p.style.height = (fl - ny - nh + 4) + 'px'; }
       Object.assign(sg.style, { top: ny + 'px', height: nh + 'px' });
@@ -347,41 +349,52 @@ window.WXFX = (() => {
     for (const k of ['map', 'room', 'car', 'sign', 'row', 'back', 'go', 'home', 'globe', 'views', 'mg', 'plate']) if (E[k] && E[k].offsetWidth) R[k] = rect(E[k]);
     R.nb = E.nb.map(rect);
     const L = window.LY || {}, W = L.pw || document.body.clientWidth || 412, H = L.ph || document.body.clientHeight || 892; R.W = W; R.H = H;   // (lying: the whole screen)
+    if (land) {   // lying: the neighbours' cards and the arrows (drops and snow on them too), the background darker in the rain, paler in the snow
+      R.cards = [...document.querySelectorAll('#crs .crd')].filter(e => Math.abs(+e.dataset.k) === 1).map(rect); R.arw = [...document.querySelectorAll('#crs .arw')].map(rect);
+      const bg = $('#bg'); E.bgDim = bg && bg.querySelector('b');
+      if (bg) { E.bgSnow = document.createElement('div'); E.bgSnow.style.cssText = 'position:absolute;inset:0;pointer-events:none;background:#dfe9f7;mix-blend-mode:screen;opacity:0'; bg.insertBefore(E.bgSnow, bg.querySelector('i')); }
+    }
     // the picture's layers (under the camera buttons, the graph and the weather icons)
     E.tint = div(E.map, 'z-index:1;background:#283c60;mix-blend-mode:multiply;opacity:0');
     E.white = div(E.map, 'z-index:1;background:#e6efff;mix-blend-mode:screen;opacity:0');
     E.clouds = div(E.map, 'z-index:1;opacity:0;background:linear-gradient(180deg,rgba(12,18,30,.92) 0%,rgba(14,20,34,.55) 38%,rgba(14,20,34,0) 78%)');
     E.warm = div(E.map, 'z-index:1;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at 90% 16%,rgba(255,206,120,.62),rgba(255,170,80,.2) 28%,rgba(255,150,60,0) 62%)');
     E.gStage = canvas(E.map, 'left:0;top:0;z-index:1', R.map.w, R.map.h);
+    if (land) Object.assign(E.gStage.canvas.style, { width: '100%', height: '100%', objectFit: 'cover' });   // (lying: it shrinks with its card as the carousel turns)
     // the room: the floor (wet or snowy) just over the room's own picture, under the posts, the car and the wind
     E.gRoom = canvas(document.body, 'left:' + R.room.x + 'px;top:' + R.room.y + 'px', R.room.w, H - R.room.y, E.room.nextSibling);
     // the car: snow on its top
     E.gCar = canvas(document.body, 'left:' + R.car.x + 'px;top:' + (R.car.y - 14) + 'px;z-index:3', R.car.w, R.car.h + 14, E.car.nextSibling);
     carCont = carContour(E.car, R.car.w * dpr, R.car.h * dpr);
     // the sign: drops and drips on its face, frost in the snow (inside it, so the car still covers its lower left)
-    E.sign.style.overflow = 'hidden';
-    E.gSign = canvas(E.sign, 'left:' + (-E.sign.clientLeft) + 'px;top:' + (-E.sign.clientTop) + 'px', R.sign.w, R.sign.h);
+    E.gSign = null;
+    if (E.sign) { E.sign.style.overflow = 'hidden'; E.gSign = canvas(E.sign, 'left:' + (-E.sign.clientLeft) + 'px;top:' + (-E.sign.clientTop) + 'px', R.sign.w, R.sign.h); }
     // the buttons: drops, splashes and snow on their tops; then the air over everything
     E.gUi = canvas(document.body, 'left:0;top:0;z-index:19', W, H);
     E.gAir = canvas(document.body, 'left:0;top:0;z-index:20', W, H);
     bolt = makeBolt(R.map.w, R.map.h);
     R.wxi = [...document.querySelectorAll('.wxc i')].map(rect); R.wxs = [...document.querySelectorAll('.wxc i svg')].map(rect);
     // where the car's top reaches over the sign's bottom edge (the icicles hang only right of it)
-    R.carRightAtSign = R.car.x + Math.max(0, ...carCont.filter(p => p && R.car.y + p.y / dpr < R.sign.b).map(p => p.x / dpr));
+    R.carRightAtSign = R.sign ? R.car.x + Math.max(0, ...carCont.filter(p => p && R.car.y + p.y / dpr < R.sign.b).map(p => p.x / dpr)) : 0;
     E.snowStage = null; setTimeout(snowReady, 700);   // (the snow's pictures take a moment: made after the screen shows, or at the first snow)
     E.stageFrost = frostCorners(R.map.w, R.map.h, [[0, R.map.h, -Math.PI / 2], [R.map.w, R.map.h, Math.PI]], 77, 46);
-    E.feet = carFeet(); if (T.signStyle !== false) await styleSign(SIGNS[T.signStyle] ? T.signStyle : T.countryKey, T.signFlag || false, T.signMode); E.gSign.canvas.style.left = '0px'; E.gSign.canvas.style.top = '0px'; E.gSign.canvas.style.borderRadius = 'inherit';
-    // a long place name fits between the back button and the globe
-    { const h = document.querySelector('.htitle'), b = rect(document.querySelector('#homeBtn')), gl = rect(document.querySelector('#hflag')), k = bsc();
+    E.feet = carFeet(); E.signWear = null;
+    if (E.sign) { if (T.signStyle !== false) await styleSign(SIGNS[T.signStyle] ? T.signStyle : T.countryKey, T.signFlag || false, T.signMode); E.gSign.canvas.style.left = '0px'; E.gSign.canvas.style.top = '0px'; E.gSign.canvas.style.borderRadius = 'inherit'; }
+    // a long place name fits between the back button and the globe (lying: the page has placed it)
+    if (!land) { const h = document.querySelector('.htitle'), b = rect(document.querySelector('#homeBtn')), gl = rect(document.querySelector('#hflag')), k = bsc();
       if (h) { const avail = (document.body.clientWidth || 412) - 14 - gl.w - b.r - 22; h.style.minWidth = '0'; const rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width / k; }; let fs = parseFloat(getComputedStyle(h).fontSize); while (tw() > avail && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; } } }
-    E.signFrost = frostCorners(R.sign.w, R.sign.h, [[R.sign.w, 0, Math.PI / 2], [R.sign.w, R.sign.h, Math.PI]], 79, 22);
+    E.signFrost = R.sign ? frostCorners(R.sign.w, R.sign.h, [[R.sign.w, 0, Math.PI / 2], [R.sign.w, R.sign.h, Math.PI]], 79, 22) : null;
     return true;
   }
 
-  function snowReady() { if (!E.snowStage) { E.snowStage = buildSnowStage(!!opt.live); E.carFrost = buildCarFrost(); E.signSnow = buildSignSnow(); } }
+  function snowReady() { if (!E.snowStage) { E.snowStage = buildSnowStage(!!opt.live); E.carFrost = buildCarFrost(); E.signSnow = R.sign ? buildSignSnow() : null; } }
 
   function setSel(k) {
     const C = window.WXC; if (!C || k === sel) return; sel = k;
+    if (C.row) {   // lying: in place, so each icon slides to its new place in the row (the chosen one first, with its name)
+      [...C.box.children].forEach((e, i) => { e.classList.toggle('on', i === k); const em = e.querySelector('em'); if (i === k && !em) e.insertAdjacentHTML('beforeend', '<em>' + C.names[i] + '</em>'); if (i !== k && em) em.remove(); });
+      C.row(k); return;
+    }
     C.box.innerHTML = C.ic.map((h, i) => '<i class="' + (i === k ? 'on' : '') + '">' + h + (i === k ? '<em>' + C.names[i] + '</em>' : '') + '</i>').join('');
   }
 
@@ -454,8 +467,9 @@ window.WXFX = (() => {
 
   // --- the room: a wet floor with the car's reflection and ripples, or snow on the ground ---
   function drawRoom(t, w, ws) {
-    const g = E.gRoom, W = R.room.w, top = R.room.y, H = R.H - top, X = R.room.x, ox = ((window.LY && LY.lx) || 0) - X; g.clearRect(0, 0, W, H);   // (X: the room's left edge; ox: where its things start)
+    const g = E.gRoom, W = R.room.w, top = R.room.y, H = R.H - top, X = R.room.x, ox = -X; g.clearRect(0, 0, W, H);   // (X: the room's left edge; ox: where its things start)
     const hz = (opt.hz || 668) - top, floor = (opt.carFloor || 734) - top;
+    if (R.land) return drawGround(g, t, w, ws, X, top, H, floor);
     g.save(); g.beginPath(); g.roundRect(0, 0, W, H + 20, [13, 13, 0, 0]); g.clip();   // (the room's top corners are round)
     const dark = 0.35 * w.storm + 0.18 * w.rain + 0.08 * w.change;
     if (dark > 0.01) { g.fillStyle = 'rgba(4,8,16,' + dark + ')'; g.fillRect(0, 0, W, hz); }
@@ -495,6 +509,34 @@ window.WXFX = (() => {
     }
     g.save(); g.translate(-X, 0); drawShadow(g, w, ws, top); g.restore();   // (the car's shadow: placed by the page)
     g.restore();
+  }
+
+  // lying: no room, only the ground the car stands on at the screen's dark foot: its shadow; in the wet a sheen under it, its reflection and
+  // ripples round it; in the snow a soft bank under it, glinting
+  function drawGround(g, t, w, ws, X, top, H, floor) {
+    const c = R.car, cx = c.x - X + c.w / 2, rx = c.w * 0.62 + 16, oval = (x, y, r, sy, stops) => { g.save(); g.translate(x, y); g.scale(1, sy); const gr = g.createRadialGradient(0, 0, 0, 0, 0, r); stops.forEach(([o, col]) => gr.addColorStop(o, col)); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.restore(); };
+    const wet = mix(ws, 'wet');
+    if (wet > 0.01) {
+      oval(cx, floor + 2, rx, 0.16, [[0, 'rgba(110,150,210,' + 0.24 * wet + ')'], [0.6, 'rgba(70,100,150,' + 0.1 * wet + ')'], [1, 'rgba(70,100,150,0)']]);
+      const o = document.createElement('canvas'); o.width = Math.round(c.w * dpr); o.height = Math.round(c.h * 0.6 * dpr);
+      const og = o.getContext('2d'); og.scale(1, -1); og.drawImage(E.car, 0, -c.h * dpr, o.width, c.h * dpr); og.setTransform(1, 0, 0, 1, 0, 0);
+      og.globalCompositeOperation = 'destination-in'; const fd = og.createLinearGradient(0, 0, 0, o.height); fd.addColorStop(0, 'rgba(0,0,0,.38)'); fd.addColorStop(0.7, 'rgba(0,0,0,0)'); og.fillStyle = fd; og.fillRect(0, 0, o.width, o.height);
+      g.globalAlpha = wet; g.drawImage(o, c.x - X, floor - 6, c.w, c.h * 0.6); g.globalAlpha = 1;
+      const rainy = ws.rain + ws.storm * 1.5 + ws.change * 0.4, r = rng(23);
+      for (let i = 0; i < 16; i++) {
+        const x = cx + (r() * 2 - 1) * rx, y = floor + 3 + (r() * 2 - 1) * 9, per = 0.7 + r() * 0.9, off = r() * per, thr = r();
+        if (rainy < thr) continue;
+        const p = ((t + off) % per) / per; if (p > 0.6) continue;
+        const q = p / 0.6; g.strokeStyle = 'rgba(190,215,255,' + (0.4 * (1 - q) * Math.min(1, rainy)) + ')'; g.lineWidth = 1;
+        g.beginPath(); g.ellipse(x, y, 2 + q * 11, (2 + q * 11) * 0.28, 0, 0, 7); g.stroke();
+      }
+    }
+    const sn = ws.snow;
+    if (sn > 0.01) {
+      oval(cx, floor + 2, rx * 1.15, 0.2, [[0, 'rgba(240,246,253,' + 0.9 * sn + ')'], [0.55, 'rgba(214,226,242,' + 0.6 * sn + ')'], [1, 'rgba(190,206,230,0)']]);
+      const r = rng(31); for (let i = 0; i < 40 * SN().glint; i++) { const x = cx + (r() * 2 - 1) * rx, y = floor + 2 + (r() * 2 - 1) * 7, tw = 0.5 + 0.5 * Math.sin(t * 3 + i); g.fillStyle = 'rgba(255,255,255,' + 0.7 * sn * tw * r() + ')'; g.fillRect(x, y, 1.2, 1.2); }
+    }
+    g.save(); g.translate(-X, 0); drawShadow(g, w, ws, top); g.restore();
   }
 
   // --- the car: snow on its roof, bonnet and wing (a soft lumpy layer), frosted windows, snow packed round the wheels, standing in snow ---
@@ -545,7 +587,7 @@ window.WXFX = (() => {
 
   // --- the sign: drops, drips and a wet sheen; frost on its edges in the snow ---
   function drawSign(t, ws) {
-    const g = E.gSign, s = R.sign; g.clearRect(0, 0, s.w, s.h);
+    const g = E.gSign, s = R.sign; if (!g) return; g.clearRect(0, 0, s.w, s.h);
     if (E.signWear) g.drawImage(E.signWear, 0, 0, s.w, s.h);
     const wet = Math.min(1, ws.rain + ws.storm + 0.6 * ws.change);
     if (wet > 0.01) {
@@ -590,8 +632,8 @@ window.WXFX = (() => {
     glints(g, top.filter((q, i) => i % 11 === 3).map(([x, yy]) => [x, yy + 1.5]), t, sn * S.glint, seed * 13 | 0);
   }
   function drawUi(t, ws, w) {
-    const g = E.gUi; g.clearRect(0, 0, R.W, R.H);
-    const boxes = [R.row, ...R.nb, R.back, R.go, R.home, R.views, R.mg].filter(Boolean);
+    const g = E.gUi; g.clearRect(0, 0, R.W, R.H); if (uiA < 0.001) return;
+    const boxes = [R.row, ...R.nb, R.back, R.go, R.home, R.views, R.mg, ...(R.cards || []), ...(R.arw || [])].filter(Boolean);
     const wet = Math.min(1, ws.rain + ws.storm + 0.6 * ws.change);
     if (wet > 0.01) {
       boxes.forEach((b, bi) => {
@@ -605,7 +647,7 @@ window.WXFX = (() => {
         }
       });
       // splashes on the tops of the sign, the panel and the buttons
-      const rainy = Math.min(1.5, ws.rain + ws.storm * 1.6 + ws.change * 0.4), tops = [R.sign, R.row, ...R.nb, R.back, R.go].filter(Boolean);
+      const rainy = Math.min(1.5, ws.rain + ws.storm * 1.6 + ws.change * 0.4), tops = [R.sign, R.row, ...R.nb, R.back, R.go, ...(R.land ? [R.map, ...R.cards] : [])].filter(Boolean);
       tops.forEach((b, bi) => {
         const r = rng(200 + bi);
         for (let i = 0; i < 9; i++) {
@@ -621,17 +663,20 @@ window.WXFX = (() => {
     const sn = ws.snow;
     if (sn > 0.01) {
       g.save();
-      const caps = [[R.sign, 10], ...(R.plate ? [[R.plate, 7]] : []), [R.row, 8], ...R.nb.map(b => [b, 7.5]), [R.back, 6.5], [R.go, 7.5], [R.home, 6.5], [R.views, 5.5], [R.mg, 5.5]];
+      const caps = [[R.sign, 10], ...(R.plate ? [[R.plate, 7]] : []), [R.row, 8], ...R.nb.map(b => [b, 7.5]), [R.back, 6.5], [R.go, 7.5], [R.home, 6.5], [R.views, 5.5], [R.mg, 5.5],
+        ...(R.land ? [[R.map, 9], ...R.cards.map(b => [b, 8]), ...R.arw.map(b => [b, 5])] : [])];
       caps.forEach(([b, h], i) => { if (b) cap(g, b.x + 2, b.r - 2, b.y + 1, h, i * 7.3 + 1, sn, t); });
       if (R.globe) { const b = R.globe, cx = b.x + b.w / 2, gr = g.createLinearGradient(0, b.y - 4, 0, b.y + 6); gr.addColorStop(0, '#fff'); gr.addColorStop(1, '#cbd8ea'); g.fillStyle = gr; g.beginPath(); g.ellipse(cx, b.y + 5, b.w * 0.32, 6.5 * sn, 0, Math.PI, 0); g.closePath(); g.fill(); }
       // icicles: under the sign (right of the car), the panel, the neighbour buttons and Race!
       const ic = Math.min(1, sn * 1.2);
-      icicles(g, Math.max(R.sign.x + 6, R.carRightAtSign + 6), R.sign.r - 6, R.sign.b - 0.5, 16, 15, 301, ic, t);
+      if (R.sign) icicles(g, Math.max(R.sign.x + 6, R.carRightAtSign + 6), R.sign.r - 6, R.sign.b - 0.5, 16, 15, 301, ic, t);
       icicles(g, R.row.x + 14, R.row.r - 14, R.row.b - 0.5, 16, 9, 302, ic, t);
       R.nb.forEach((b, i) => icicles(g, b.x + 10, b.r - 10, b.b - 0.5, 7, 8, 303 + i, ic, t));
       icicles(g, R.go.x + 12, R.go.r - 12, R.go.b - 0.5, 9, 6, 306, ic, t);
+      if (R.land) { icicles(g, R.map.x + 16, R.map.r - 16, R.map.b + 2, 14, 8, 307, ic, t); R.cards.forEach((b, i) => icicles(g, b.x + 10, b.r - 10, b.b - 0.5, 8, 7, 308 + i, ic, t)); }
       g.restore();
     }
+    if (uiA < 0.999) { g.save(); g.globalCompositeOperation = 'destination-in'; g.fillStyle = 'rgba(0,0,0,' + uiA.toFixed(3) + ')'; g.fillRect(0, 0, R.W, R.H); g.restore(); }   // (faded in the canvas itself: a fading canvas element stalls some browsers)
   }
 
   // --- the air: rain, snow, the lightning's flash, the ripple of a tap on a weather icon ---
@@ -694,7 +739,7 @@ window.WXFX = (() => {
     const C = window.WXC;
     for (const e of tl) {
       const p = (t - e.t) / 0.55; if (p < 0 || p > 1 || !C || e.t < 0) continue;
-      const b = (R.wxs || [])[KEYS.indexOf(e.k)]; if (!b) continue;
+      const b = e.at || (R.wxs || [])[KEYS.indexOf(e.k)]; if (!b) continue;
       const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
       g.strokeStyle = 'rgba(255,214,90,' + (0.85 * (1 - p)) + ')'; g.lineWidth = 3 * (1 - p) + 1; g.beginPath(); g.arc(cx, cy, 12 + p * 34, 0, 7); g.stroke();
       g.fillStyle = 'rgba(255,255,255,' + (0.35 * (1 - p)) + ')'; g.beginPath(); g.arc(cx, cy, 14 * (1 - p * 0.5), 0, 7); g.fill();
@@ -710,6 +755,7 @@ window.WXFX = (() => {
     const f = (key) => mix(w, key);
     if (E.snowStage) E.snowStage.style.filter = 'brightness(' + (1 + (SN().picB - 1) * ws.snow).toFixed(3) + ')';
     E.img.style.filter = 'brightness(' + (f('b') + 0.5 * fl * w.storm).toFixed(3) + ') saturate(' + f('s').toFixed(3) + ') contrast(' + f('c').toFixed(3) + ') grayscale(' + mix(ws, 'g').toFixed(3) + ')';
+    if (E.bgDim) { E.bgDim.style.opacity = Math.min(0.6, 0.42 * w.storm + 0.24 * w.rain + 0.1 * w.change).toFixed(3); E.bgSnow.style.opacity = (0.16 * ws.snow).toFixed(3); }   // (lying: the blurred background)
     E.tint.style.opacity = f('ti'); if (E.snowStage) E.snowStage.style.opacity = E.snowStage.ready ? ws.snow.toFixed(3) : 0; E.clouds.style.opacity = Math.max(0, f('cl') - 0.6 * fl * w.storm); E.warm.style.opacity = Math.max(f('wa'), w.snow * SN().sun); E.white.style.opacity = mix(ws, 'sw') + ws.snow * SN().white;
     E._cb = (f('cb') + 0.35 * fl * w.storm).toFixed(3); E._cs = f('cs').toFixed(3);
     if (E.flow) E.flow.style.filter = 'brightness(' + (1 + 0.6 * w.storm - 0.15 * ws.snow).toFixed(2) + ')';
@@ -717,5 +763,5 @@ window.WXFX = (() => {
     return { k: cur.k, w, fl };
   }
 
-  return { init, frame, setTimeline: (x) => { tl = x; sel = -1; }, tap: (k, t) => { tl.push({ t, k }); }, signLook, SIGNS, KEYS, _E: () => E };
+  return { init, frame, uiFade: (a) => { uiA = a; }, setTimeline: (x) => { tl = x; sel = -1; }, tap: (k, t) => { const s = R.land && document.querySelectorAll('.wxc i svg')[KEYS.indexOf(k)]; tl.push({ t, k, at: s ? rect(s) : null }); }, signLook, SIGNS, KEYS, _E: () => E };
 })();

@@ -177,18 +177,51 @@ html, body { margin: 0; width: 412px; height: 892px; overflow: hidden; backgroun
 .wxc.c6 { position: absolute; gap: 2px; padding: 4px; border-radius: 999px; background: rgba(8,12,20,.82); border: 1.5px solid rgba(255,255,255,.18); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
 .wxc.c6 .thumb { position: absolute; left: 4px; right: 4px; top: 4px; height: 40px; border-radius: 999px; background: linear-gradient(180deg, #ffe07a, #ffc629 55%, #f0ad0c); box-shadow: 0 0 10px rgba(255,198,41,.55); }
 .wxc.c6 i { width: 40px; height: 40px; position: relative; } .wxc.c6 i svg { width: 24px; height: 24px; }
-/* lying (a landscape screen, LY.land): the picture left, the room right of it; the room's things moved by --lx/--ly (the row by --rowy, to
-   the top), the room itself from the picture's edge to the screen's; also in an old screen's shadow root while it fades (:host(.land)) */
+/* lying (a landscape screen, LY.land): a carousel of the tracks (the user's choice 5.1 of 7. 11. 2026, docs/meni-izbira-proge.md point 9):
+   the chosen track's card in the middle over its own picture blurred across the screen, its neighbours at its sides (one more each half
+   out of the screen), the header over them, the row and Race! under the card, the car at the bottom left; no sign and no neighbours' flags.
+   Drawn for 892 × 412 at --ox, --oy (the screen scaled, the drawing in its middle; --pw × --ph the whole screen); the cards are placed by
+   ringPlace(). Each rule also for an old screen's shadow root while it fades (:host(.land)) */
+#bg, #crs, .arw { display: none; }
 html.land { overflow: hidden; }
 body.land { overflow: visible; }
-body.land #boards > *, body.land #flags > *, body.land #nbs > *, body.land #car, body.land #flow, body.land .back, body.land .go { translate: var(--lx) var(--ly); }
-body.land .row { translate: var(--lx) var(--rowy); }
-body.land #room { translate: 412px var(--ly); box-shadow: none !important; }
-:host(.land) #boards > *, :host(.land) #flags > *, :host(.land) #nbs > *, :host(.land) #car, :host(.land) #flow, :host(.land) .back, :host(.land) .go { translate: var(--lx) var(--ly); }
-:host(.land) .row { translate: var(--lx) var(--rowy); }
-:host(.land) #room { translate: 412px var(--ly); box-shadow: none !important; }
+body.land #bg, :host(.land) #bg { display: block; left: -20px; top: -20px; width: calc(var(--pw) + 40px); height: calc(var(--ph) + 40px); overflow: hidden; }
+#bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(10px) brightness(.4) saturate(1.1); }
+#bg i { position: absolute; left: 0; right: 0; top: calc(var(--oy) + 270px); bottom: 20px; background: linear-gradient(rgba(11,20,36,0), rgba(11,20,36,.9)); }
+#bg b { position: absolute; inset: 0; background: #03070f; opacity: 0; }
+body.land .head, :host(.land) .head { left: var(--ox) !important; top: var(--oy) !important; right: auto !important; width: 892px; height: 66px !important; padding: 0 !important; display: block !important; pointer-events: none; }
+body.land .head > *, :host(.land) .head > * { pointer-events: auto; }   /* (the weather's row under the header's free middle takes its own taps) */
+body.land #homeBtn, :host(.land) #homeBtn { position: absolute; left: 14px; top: 14px; }
+body.land #hflag, :host(.land) #hflag { position: absolute; left: 826px; top: 14px; }
+body.land .htitle, :host(.land) .htitle { position: absolute; left: 446px; top: 14px; translate: -50% 0; white-space: nowrap; font-size: 44px; }
+body.land .wxc, :host(.land) .wxc { left: calc(var(--ox) + 590px) !important; top: calc(var(--oy) + 11px) !important; right: auto !important; display: block !important; width: 260px; height: 76px; transform: scale(.85); transform-origin: 0 0; }
+body.land .wxc i, :host(.land) .wxc i { position: absolute; left: 0; top: 8px; transition: left .3s cubic-bezier(.2, .8, .25, 1), top .3s cubic-bezier(.2, .8, .25, 1); }
+body.land .wxc i.on, :host(.land) .wxc i.on { top: 0; }
+body.land .wxc.c1.big i.on svg, :host(.land) .wxc.c1.big i.on svg { width: 48px; height: 48px; }
+body.land .wxc i svg, :host(.land) .wxc i svg { transition: width .3s cubic-bezier(.2, .8, .25, 1), height .3s cubic-bezier(.2, .8, .25, 1); }
+body.land #map, :host(.land) #map { left: calc(var(--ox) + 254px) !important; top: calc(var(--oy) + 70px) !important; right: auto !important; width: 384px !important; height: 236px !important; border-radius: 16px; box-shadow: 0 0 0 3px #ffc629, 0 12px 30px rgba(0,0,0,.6); z-index: 4; }
+body.land #mapimg, :host(.land) #mapimg { width: 100% !important; height: 100% !important; object-fit: cover; margin: 0 !important; }
+body.land .mgbox, :host(.land) .mgbox { left: 8px !important; top: 8px !important; }
+body.land .views, :host(.land) .views { top: auto !important; bottom: 8px !important; left: auto !important; right: 8px !important; }
+body.land #crs, :host(.land) #crs { display: block; }
+.crd { position: absolute; z-index: 3; overflow: hidden; background: rgba(255,255,255,.03) center / cover no-repeat; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+.crl { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 26px 10px 9px; background: linear-gradient(rgba(5,10,20,0), rgba(5,10,20,.85)); pointer-events: none; }
+.crl > span:first-child { flex: 0 0 auto; width: 34px; height: 23px; border-radius: 3px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.45); }
+.crl > span:first-child svg { width: 100%; height: 100%; display: block; }
+.crl > span:last-child { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.crl b { font: 800 italic 15px/1.1 var(--f-ui); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.crl small { font: 600 italic 11px/1.1 var(--f-ui); color: #b6c3da; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arw { position: absolute; z-index: 7; width: 40px; height: 40px; border-radius: 50%; background: rgba(8,12,20,.78); border: 1.5px solid rgba(255,255,255,.25); box-shadow: 0 4px 10px rgba(0,0,0,.4); align-items: center; justify-content: center; cursor: pointer; }
+.arw svg { width: 16px; height: 16px; }
+body.land .arw, :host(.land) .arw { display: flex; }
+body.land .row, :host(.land) .row { left: calc(var(--ox) + 254px) !important; top: calc(var(--oy) + 318px) !important; right: auto !important; width: 384px; }
+body.land .go, :host(.land) .go { left: calc(var(--ox) + 654px) !important; top: calc(var(--oy) + 320px) !important; right: auto !important; width: 224px; }
+body.land #room, :host(.land) #room { left: var(--ox) !important; top: calc(var(--oy) + 250px) !important; right: auto !important; bottom: auto !important; width: 280px !important; height: calc(var(--ph) - var(--oy) - 250px) !important; background: none !important; box-shadow: none !important; }
+body.land #boards, body.land #flags, body.land #nbs, body.land .back, body.land #flow, body.land #graph,
+:host(.land) #boards, :host(.land) #flags, :host(.land) #nbs, :host(.land) .back, :host(.land) #flow, :host(.land) #graph { display: none !important; }
 </style></head>
 <body>
+<div class="abs" id="bg"><img id="bgimg" alt=""><b></b><i></i></div>
 <div class="abs head">
   <div class="sq" id="homeBtn"><svg viewBox="0 0 24 24"><path d="M15 4.5L7.5 12l7.5 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
   <div class="hstats" id="hstats"></div>
@@ -198,6 +231,7 @@ body.land #room { translate: 412px var(--ly); box-shadow: none !important; }
   <div class="abs views"><i>1</i><i class="on">2</i><i>3</i></div>
   <div class="abs wx" id="wx"></div>
 </div>
+<div id="crs"></div>
 <div class="abs room" id="room"></div>
 <div class="abs row"><canvas id="globe" width="92" height="92"></canvas><div class="rname" id="rname"></div><div class="opp"><small>Opponents</small><b>12</b></div></div>
 <div id="boards"></div>
@@ -218,13 +252,36 @@ body.land #room { translate: 412px var(--ly); box-shadow: none !important; }
 <script src="maketa-menija/izbira-proge/izbor.js"></script>
 <script src="maketa-menija/izbira-proge/zemlja.js"></script>
 <script>
-// the layout: upright (412 × 892, scaled to the screen) or lying (a screen at least 1.3 times wider than high: the picture left, the room
-// right, together at least 824 × 440); sc: the scale, pw × ph: the screen in the page's pixels, lx/ly: lying, the room's things moved
+// the layout: upright (412 × 892, scaled to the screen) or lying (a screen at least 1.3 times wider than high: the carousel, drawn for
+// 892 × 412 and scaled to the screen, in its middle); sc: the scale, pw × ph: the screen in the page's pixels, ox, oy: lying, where the
+// 892 × 412 drawing starts
 window.LAYOUT = () => {
   const w = innerWidth, h = innerHeight;
-  if (w < h * 1.3) { const sc = Math.min(w / 412, h / 892); return { land: false, sc, tx: Math.max(0, (w - 412 * sc) / 2), pw: 412, ph: 892, lx: 0, ly: 0 }; }
-  const sc = Math.min(w / 824, h / 440), pw = w / sc, ph = h / sc;
-  return { land: true, sc, tx: 0, pw, ph, lx: 412 + (pw - 824) / 2, ly: ph - 892 };
+  if (w < h * 1.3) { const sc = Math.min(w / 412, h / 892); return { land: false, sc, tx: Math.max(0, (w - 412 * sc) / 2), pw: 412, ph: 892, ox: 0, oy: 0 }; }
+  const sc = Math.min(w / 892, h / 412), pw = w / sc, ph = h / sc;
+  return { land: true, sc, tx: 0, pw, ph, ox: (pw - 892) / 2, oy: (ph - 412) / 2 };
+};
+// lying: the carousel's places (892 × 412; k: 0 the chosen track, 1 and -1 its neighbours, 2 and -2 the ones half out of the screen, further
+// ones beyond its edge; a fraction between two places while the carousel turns): [x, y, w, h, brightness, corner]
+window.RING = (() => {
+  const S = [[254, 70, 384, 236, 1, 16], [656, 96, 184, 196, .78, 14], [854, 118, 150, 150, .45, 12]];
+  const at = (j) => j <= 2 ? S[j] : [854 + 190 * (j - 2), 118, 150, 150, .45, 12];
+  return (k) => {
+    const a = Math.abs(k), j = Math.floor(a), f = a - j, p = at(j), q = at(j + 1), v = p.map((x, i) => x + (q[i] - x) * f);
+    if (k < 0) v[0] = 892 - v[0] - v[2];   // (the left side mirrors the right)
+    return v;
+  };
+})();
+// a card at its place k (lying): its box, brightness and corners; the chosen one's gold edge and deep shadow, the neighbours' thin light edge
+// and their name (shown only next to the middle); inline and important, over the page's own rules (the old screen keeps them while it fades)
+window.ringPlace = (el, k) => {
+  const L = window.LY, [x, y, w, h, b, r] = RING(k), a = Math.abs(k), gold = Math.max(0, 1 - a), thin = Math.min(1, a), s = el.style;
+  for (const [p, v] of [['left', (L.ox + x).toFixed(1) + 'px'], ['top', (L.oy + y).toFixed(1) + 'px'], ['width', w.toFixed(1) + 'px'], ['height', h.toFixed(1) + 'px'], ['border-radius', r.toFixed(1) + 'px'],
+    ['filter', b < .999 ? 'brightness(' + b.toFixed(3) + ')' : 'none'],
+    ['box-shadow', '0 0 0 ' + (3 * gold).toFixed(2) + 'px rgba(255,198,41,' + gold.toFixed(3) + '), 0 ' + (12 - 4 * thin).toFixed(1) + 'px ' + (30 - 10 * thin).toFixed(1) + 'px rgba(0,0,0,' + (.6 - .1 * thin).toFixed(3) + '), inset 0 0 0 1px rgba(255,255,255,' + (.2 * thin).toFixed(3) + ')']]) s.setProperty(p, v, 'important');
+  const lab = el.querySelector('.crl'); if (lab) lab.style.opacity = Math.max(0, 1 - Math.abs(a - 1)).toFixed(3);
+  for (const e of el.querySelectorAll('.mgbox, .views')) e.style.opacity = gold > .999 ? '' : Math.max(0, 1 - 3 * a).toFixed(3);   // (the chosen card's graph and camera buttons)
+  s.zIndex = a < .5 ? 4 : 3;
 };
 window.LY = LAYOUT();
 window.BSC = () => { const b = document.body.getBoundingClientRect(); return b.width / (document.body.offsetWidth || b.width) || 1; };   // (the page's scale now)
@@ -242,18 +299,18 @@ window.MOCK = async (T) => {
     '<svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.4" fill="#ffd23a"/>' + ico.cloud(1) + rain + '</svg>', '<svg viewBox="0 0 24 24">' + ico.cloud(0) + '<path d="M12.5 16.5l-2.4 4h2.4l-1.2 3.5 4-5h-2.5l1.4-2.5z" fill="#ffd23a"/></svg>'].map((s, i) => '<i class="' + (i ? '' : 'on') + '">' + s + '</i>').join('');
   const mapTop = T.mapTop || 74, mapH = T.mapH || 370, roomTop = mapTop + mapH; $('map').style.top = mapTop + 'px';
   $('map').style.height = mapH + 'px'; $('room').style.top = roomTop + 'px'; document.querySelector('.row').style.top = (roomTop + 10) + 'px';
-  // lying (the picture cut at the screen's bottom, below): the room from the picture's edge to the screen's, its top at the
-  // screen's top (rt before the move: the wall taller), the row at the top, the rest standing on the screen's bottom (the CSS: --lx, --ly, --rowy)
-  const L = window.LY, land = L.land, rt = land ? -L.ly : roomTop;
+  // lying: the carousel (the CSS: body.land, --ox, --oy, --pw, --ph); the chosen picture also blurred behind everything
+  const L = window.LY, land = L.land, rt = roomTop;
   document.documentElement.classList.toggle('land', land); document.body.classList.toggle('land', land);
   if (land) {
-    for (const [k, v] of [['--lx', L.lx], ['--ly', L.ly], ['--rowy', -roomTop], ['--pw', L.pw], ['--ph', L.ph]]) document.body.style.setProperty(k, v + 'px');
-    for (const [k, v] of [['top', rt + 'px'], ['right', 'auto'], ['width', (L.pw - 412) + 'px']]) $('room').style.setProperty(k, v, 'important');
+    for (const [k, v] of [['--ox', L.ox], ['--oy', L.oy], ['--pw', L.pw], ['--ph', L.ph]]) document.body.style.setProperty(k, v + 'px');
+    $('bgimg').src = T.map; await $('bgimg').decode().catch(() => {});
+  } else {
+    // the room: a wall down to the car's waist, then the floor
+    const hz = T.hz;
+    $('room').style.background = 'radial-gradient(56% 26px at 28% ' + (T.carFloor - rt - 4) + 'px, rgba(120,160,230,.16), transparent 100%), linear-gradient(180deg, #14223b 0, #0f1b2f ' + (hz - rt) + 'px, #1d2d4a ' + (hz - rt) + 'px, #152239 ' + (hz - rt + 38) + 'px, #0b1320 100%)';
+    $('room').style.boxShadow = '0 -8px 18px rgba(0,0,0,.45)';
   }
-  // the room: a wall down to the car's waist, then the floor
-  const hz = T.hz;
-  $('room').style.background = 'radial-gradient(' + (land ? '231px 26px at ' + (L.lx - 412 + 115) + 'px ' : '56% 26px at 28% ') + (T.carFloor - rt - 4) + 'px, rgba(120,160,230,.16), transparent 100%), linear-gradient(180deg, #14223b 0, #0f1b2f ' + (hz - rt) + 'px, #1d2d4a ' + (hz - rt) + 'px, #152239 ' + (hz - rt + 38) + 'px, #0b1320 100%)';
-  $('room').style.boxShadow = '0 -8px 18px rgba(0,0,0,.45)';
   // the boards: the place and the length (green), the country (blue), on two posts standing on the floor behind the car
   const B = T.board, bx0 = B.x0, bx1 = 412 - 12, by = B.y, bh = 58, tagY = by - 36;
   $('boards').innerHTML = '<i class="post" style="left:' + (bx0 + 50) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><i class="post" style="left:' + (bx1 - 56) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i>' +
@@ -267,7 +324,10 @@ window.MOCK = async (T) => {
   if (T.noTags) $('boards').innerHTML = '<i class="post" style="left:' + (bx0 + 50) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><i class="post" style="left:' + (bx1b - 56) + 'px;top:' + (by + bh - 4) + 'px;height:' + (B.floor - by - bh + 4) + 'px"></i><div class="bd b" style="left:' + bx0 + 'px;width:' + (bx1b - bx0) + 'px;' + txtPad + 'top:' + by + 'px;height:' + bh + 'px">' + (T.alt ? (T.altStyle === 'below' ? '<span style="display:flex;flex-direction:column;align-items:center;gap:3px"><span>' + T.country + '</span><small style="font:800 15px/1 var(--f-ui);letter-spacing:.06em">' + T.alt + '</small></span>' : '<span>' + T.country + '</span><small style="margin-left:' + (T.altGap != null ? T.altGap : 14) + 'px;font:800 20px/1 var(--f-ui);opacity:.92">' + T.alt + '</small>') : T.country) + '</div>';
   // the car and the air over it
   const car = $('car'); car.src = T.car; await car.decode();
-  const cw = T.carW, ch = cw * car.naturalHeight / car.naturalWidth, cx = T.carX, cy = T.carFloor - ch;
+  // (lying: at the bottom left, 0.78 of its size, smaller if it would reach the row or the neighbour's card; standing where the drawing's car stands)
+  const ar = car.naturalHeight / car.naturalWidth, cw = land ? T.carW * Math.min(0.78, 240 / T.carW, 90 / (T.carW * ar)) : T.carW, ch = cw * car.naturalHeight / car.naturalWidth;
+  const floorY = land ? L.oy + 386 : T.carFloor, cx = land ? L.ox + 10 : T.carX, cy = floorY - ch;
+  T.at = land ? { hz: floorY - 52, floor: floorY } : { hz: T.hz, floor: T.carFloor };   // (where the car's waist and its floor show)
   Object.assign(car.style, { left: cx + 'px', top: cy + 'px', width: cw + 'px' });
   T.carBox = { x: cx, y: cy, w: cw, h: ch, ant: [cx + cw * 345 / 712, cy + 1] };
   if (T.flow3d) await flowLines3d($('flow'), car, cx, cy, cw, ch, T); else flowLines($('flow'), car, cx, cy, cw, ch, T);
@@ -309,7 +369,7 @@ window.MOCK = async (T) => {
   if (T.titleHtml) { const h = document.querySelector('.htitle'); h.innerHTML = T.titleHtml; }
   if (T.viewsCss) { const vw = document.querySelector('.views'); vw.style.cssText += ';' + T.viewsCss; vw.style.zIndex = 7; }
   if (T.css) document.head.insertAdjacentHTML('beforeend', '<style class="t-css">' + T.css + '</style>');
-  if (T.signShadow) {   // a soft shadow of the car on the country sign behind it
+  if (T.signShadow && !land) {   // a soft shadow of the car on the country sign behind it
     const S = T.signShadow, car = $('car'), sg = document.querySelector('#boards .bd.b'), cr = car.getBoundingClientRect(), sr = sg.getBoundingClientRect(), k = BSC();
     sg.style.overflow = 'hidden'; const im = new Image(); im.src = car.src;
     Object.assign(im.style, { position: 'absolute', left: ((cr.left - sr.left) / k - sg.clientLeft + S.dx) + 'px', top: ((cr.top - sr.top) / k - sg.clientTop + S.dy) + 'px', width: cr.width / k + 'px', filter: 'brightness(0) blur(' + S.blur + 'px)', opacity: S.a, pointerEvents: 'none' });
@@ -325,17 +385,28 @@ window.MOCK = async (T) => {
   const A = (d) => '<svg class="ar" viewBox="0 0 29 24"><path d="' + (d < 0 ? 'M13 5L6 12l7 7M22 5l-7 7 7 7' : 'M7 5l7 7-7 7M16 5l7 7-7 7') + '"/></svg>';
   $('nbs').innerHTML = '<div class="nb" style="left:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.prev + '</svg>' + A(-1).replace('class="ar"', 'class="ar" style="left:12px"') + '</div>' +
     '<div class="nb" style="right:14px"><svg class="f" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid slice">' + T.next + '</svg>' + A(1).replace('class="ar"', 'class="ar" style="right:12px"') + '</div>';
-  if (T.flagFix) for (const [i, svg] of [[0, T.prev], [1, T.next]]) {
+  if (T.flagFix && !land) for (const [i, svg] of [[0, T.prev], [1, T.next]]) {
     const nb = document.querySelectorAll('.nb')[i], old = nb.querySelector('svg.f'), W = nb.clientWidth, H = nb.clientHeight, sc = 2, fw = Math.round(H * Math.min(2.2, (i ? T.nextAr : T.prevAr) || 1.5));
     const img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 30 20" width="' + fw * sc + '" height="' + H * sc + '" preserveAspectRatio="none">' + svg + '</svg>'); await img.decode();
     const c = document.createElement('canvas'); c.width = W * sc; c.height = H * sc; c.className = 'f'; Object.assign(c.style, { position: 'absolute', inset: '0', width: W + 'px', height: H + 'px' });
     const g = c.getContext('2d'); g.drawImage(img, 0, 0); g.drawImage(img, fw * sc - 2, 0, 1, H * sc, fw * sc - 1, 0, (W - fw) * sc + 2, H * sc); old.replaceWith(c);
   }
-  // lying, the picture higher than the screen: cut at the screen's bottom, the things on its lower half (the camera buttons) up with it
-  if (land) { const mp = $('map'), mh = mp.offsetHeight; if (L.ph < mh) { mp.style.setProperty('height', L.ph + 'px', 'important');
-    for (const e of mp.children) if (e.offsetTop > L.ph / 2 && e.offsetTop + e.offsetHeight > L.ph - 4) e.style.setProperty('top', (e.offsetTop - (mh - L.ph)) + 'px', 'important'); } }
+  // lying: the carousel's cards (T.ring: the neighbours four each way, their pictures, flags, names, countries and lengths; the chosen
+  // track's card is the picture itself) and the two arrows
+  if (land) {
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => '&#' + c.charCodeAt(0) + ';');
+    const arrow = (k, x) => '<div class="arw" data-k="' + k + '" style="left:' + (L.ox + x) + 'px;top:' + (L.oy + 168) + 'px"><svg viewBox="0 0 18 18"><path d="' + (k < 0 ? 'M11 3.5L5.5 9l5.5 5.5' : 'M7 3.5L12.5 9 7 14.5') + '" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    $('crs').innerHTML = (T.ring || []).map(c => '<div class="crd" data-k="' + c.k + '" data-t="' + esc(c.id) + '" style="background-image:url(\'' + esc(c.pic) + '\')"><div class="crl"><span><svg viewBox="0 0 30 20" preserveAspectRatio="none">' + c.flag + '</svg></span>' +
+      '<span><b>' + esc(c.name) + '</b><small>' + esc(c.country) + ' · ' + c.km.toFixed(2) + ' km</small></span></div></div>').join('') + arrow(-1, 214) + arrow(1, 638);
+    for (const e of $('crs').querySelectorAll('.crd')) ringPlace(e, +e.dataset.k);
+    ringPlace($('map'), 0);
+  }
   await globe($('globe'), T);
   await document.fonts.ready;
+  // lying: the place's name in the middle of the screen (44 px), moved left only as far as it must not to reach the weather, smaller if still too long
+  if (land) { const h = document.querySelector('.htitle'); if (h) { const k = BSC(), rg = document.createRange(), tw = () => { rg.selectNodeContents(h); return rg.getBoundingClientRect().width / k; };
+    let fs = 44; h.style.fontSize = fs + 'px'; while (tw() > 470 && fs > 20) { fs -= 1; h.style.fontSize = fs + 'px'; }
+    const w = tw(); h.style.translate = 'none'; h.style.left = Math.max(106, Math.min(446 - w / 2, 578 - w)).toFixed(1) + 'px'; } }
   if (T.wxfx && window.WXFX) await WXFX.init(T);
   return true;
 };
@@ -409,6 +480,13 @@ function wxColumn(T, icons, names, wx) {
   if (v === 4) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '<em>' + names[k] + '</em></i>').join('');
   if (v === 5) box.innerHTML = ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('') + '<em class="lab">' + names[0] + '</em>';
   if (v === 6) box.innerHTML = '<span class="thumb"></span>' + ic.map((h, k) => '<i class="' + (k ? '' : 'on') + '">' + h + '</i>').join('');
+  // lying: in a row, the chosen one with its name first, the others after it in their order (their places in the row, which is scaled
+  // to 0.85: x 590, 638, 680, 722, 764 on the screen); a new choice slides into the first place (wxfx.js: WXFX setSel)
+  if (v === 1 && window.LY && LY.land) {
+    const X = [0, 48, 90, 132, 174].map(x => x / 0.85);
+    WXC.row = (k) => { let j = 1; [...box.children].forEach((e, i) => { e.style.left = (i === k ? 0 : X[j++]).toFixed(2) + 'px'; }); };
+    WXC.row(sel);
+  }
   document.body.appendChild(box);
 }
 function layoutV2(T) {
@@ -615,7 +693,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   const STATIC = [...document.body.children].filter(e => e.tagName !== 'SCRIPT').map(e => e.outerHTML).join('');
   const t0 = performance.now(), now = () => (performance.now() - t0) / 1000, o = { flash: null, snowStyle: 'blizzard', live: true };
   let T = null, building = false, changing = false, SC = 1, pend = null;   // (building: the loop waits; changing: the taps wait; pend: a toast for the new screen)
-  const nbOf = (i) => { const k = ORDER.indexOf(i), n = ORDER.length; return [ORDER[(k - 1 + n) % n], ORDER[(k + 1) % n]]; };
+  const ringAt = (i, d) => { const k = ORDER.indexOf(i), n = ORDER.length; return ORDER[((k + d) % n + n) % n]; };   // (the track d places after i, round the list)
+  const nbOf = (i) => [ringAt(i, -1), ringAt(i, 1)];
   const picOf = (i) => P.tracks[i] ? P.tracks[i].cams[cam].map : ALL[i].cams[cam];
   const carOf = (i) => P.tracks[i] ? P.tracks[i].T.car : 'maketa-menija/izbira-proge/mk/' + CARS[ORDER.indexOf(i) % CARS.length][0] + '.webp';
   const seen = new Set(), preload = (src) => { if (!src || seen.has(src)) return; seen.add(src); const im = new Image(); im.src = src; };
@@ -624,13 +703,16 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     Object.assign(T, { prev: flagSvg(ALL[pv].flag), next: flagSvg(ALL[nx].flag), prevAr: flagAr(ALL[pv].flag), nextAr: flagAr(ALL[nx].flag), flagFix: true });
     const pr = NAPREDEK.of(i);   // (Best race: the progress, NAPREDEK in izbor.js)
     T.stats = [pr.k === 'new' ? ['Best race', NAPREDEK.mark(i, pr)] : [NAPREDEK.mark(i, pr) + 'Best race', pr.time ? NAPREDEK.fmt(pr.time) : '—']].concat(T.stats.slice(1));   // (a medal or a tick before the label, NEW for the time)
+    // lying: the carousel's neighbours, four each way (k; the fourth off the screen, ready for a turn by two): the picture of their camera 2
+    // (else 1), flag, name, country and length
+    T.ring = [-4, -3, -2, -1, 1, 2, 3, 4].map(k => { const t = ringAt(i, k), v = ALL[t]; return { k, id: t, pic: v.cams[2] || v.cams[1], flag: flagSvg(v.flag), name: v.name, country: v.country, km: v.km }; });
     return Object.assign(T, { view: cam, map: c.map, zoom: false, css: (T.css || '') + (c.css || ''), wxSel: WXFX.KEYS.indexOf(cur) });
   }
   // (whole addresses: the page's <base> points at the game's folder, so a bare '#…' would lead to the game)
   const here = location.pathname + location.search, hash = () => here + '#' + new URLSearchParams({ t: id, cam, wx: cur });
   const keep = () => { const h = hash(); try { sessionStorage.setItem('izbira-proge', h.split('#')[1]); sessionStorage.setItem('izbira-globus', JSON.stringify([T.lat, T.lon])); } catch (e) {} history.replaceState(history.state, '', h); };
   // a screen: the old one (if any) aside over it, the new one built under it, then the change (dir: 1 the next track, -1 the previous, 0 the same)
-  async function show(i, dir) {
+  async function show(i, dir, turned) {
     building = changing = true;
     const from = T && [T.lat, T.lon], oE = T && WXFX._E(), oldCar = oE && oE.gCar && oE.gCar.canvas;
     let old = null;
@@ -638,7 +720,7 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
       if (window.IZBOR && IZBOR.isOpen()) IZBOR.close();
       if (window.ZEMLJA && ZEMLJA.covers()) ZEMLJA.close();
       old = document.createElement('div'); old.style.cssText = 'position:absolute;left:0;top:0;width:412px;height:892px;z-index:60;pointer-events:none';
-      if (document.body.classList.contains('land')) { old.classList.add('land'); for (const k of ['--lx', '--ly', '--rowy']) old.style.setProperty(k, document.body.style.getPropertyValue(k)); }   // (it keeps its place)
+      if (document.body.classList.contains('land')) { old.classList.add('land'); for (const k of ['--ox', '--oy', '--pw', '--ph']) old.style.setProperty(k, document.body.style.getPropertyValue(k)); }   // (it keeps its place)
       const sh = old.attachShadow({ mode: 'open' });
       for (const st of document.head.querySelectorAll('style')) sh.appendChild(st.cloneNode(true));
       for (const e of [...document.body.children]) if (e.tagName !== 'SCRIPT') sh.appendChild(e);
@@ -648,20 +730,33 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     }
     id = i; T = makeT(i);
     await window.MOCK(T);
-    Object.assign(o, { hz: T.hz + LY.ly, carFloor: T.carFloor + LY.ly });   // (lying: where they show)
+    Object.assign(o, { hz: T.at.hz, carFloor: T.at.floor });   // (where the car's waist and its floor show)
     WXFX.setTimeline([{ t: -30, k: cur }]); WXFX.frame(now(), o);
     if (from && (from[0] !== T.lat || from[1] !== T.lon)) GLOBE.travel(from, now() + 0.05);
     for (const el of [...document.querySelectorAll('.wxc, .views i, .nb, .go, #homeBtn, #rowflag, #hflag')]) el.style.cursor = 'pointer';
     keep(); building = false;
     if (pend) { toast(pend); pend = null; }
-    if (old) await change(old, dir, oldCar);
+    if (old) await change(old, dir, oldCar, turned);
     changing = false;
     for (const x of nbOf(i)) { preload(picOf(x)); preload(carOf(x)); }
+    if (LY.land) for (const c of T.ring) preload(c.pic);
   }
   // the change: the old screen fades; on a new track its sign and car go out to one side and the new ones come in from the other, the floor's
-  // weather (the car's shadow, wet or snow) a moment after the car stands
-  function change(old, dir, oldCar) {
+  // weather (the car's shadow, wet or snow) a moment after the car stands. Lying: the cards stand where the carousel's turn left them (the
+  // new screen's are in the same places), so only the picture, the name and the background change; the car goes out and the new one comes
+  // in; a new track picked without a turn (the quick list, the Earth) turns the new carousel in by one place
+  function change(old, dir, oldCar, turned) {
     const sh = old.shadowRoot, E = WXFX._E(), yard = (r) => ['#boards', '#flags', '#car', '#flow', '.graph'].map(q => r.querySelector(q)).filter(Boolean);
+    if (LY.land) {
+      if (dir) {
+        [sh.querySelector('#car')].concat(oldCar ? [oldCar] : []).filter(Boolean).forEach(e => e.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(' + (-dir * 120) + 'px)', opacity: 0 }], { duration: 260, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }));
+        [document.getElementById('car')].concat(E.gCar ? [E.gCar.canvas] : []).forEach(e => e.animate([{ transform: 'translateX(' + (dir * 120) + 'px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 460, delay: 160, easing: 'cubic-bezier(.2, .8, .25, 1)', fill: 'backwards' }));
+        if (E.gRoom) E.gRoom.canvas.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240, delay: 520, fill: 'backwards' });
+        if (!turned) spinIn(-dir);
+      }
+      old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+      return new Promise(res => setTimeout(() => { old.remove(); res(); }, dir ? 780 : 340));
+    }
     if (dir) {
       yard(sh).concat(oldCar ? [oldCar] : []).forEach(e => e.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateX(' + (-dir * 250) + 'px)', opacity: 0 }], { duration: 260, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }));
       yard(document).concat(E.gCar ? [E.gCar.canvas] : []).forEach((e, k) => e.animate([{ transform: 'translateX(' + (dir * 412) + 'px)', opacity: 0 }, { transform: 'none', opacity: 1 }],
@@ -672,6 +767,30 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     return new Promise(res => setTimeout(() => { old.remove(); res(); }, dir ? 840 : 380));
   }
   const go = (t, dir) => NAZAJ.clear(() => { if (t !== id) show(t, dir != null ? dir : ORDER.indexOf(t) > ORDER.indexOf(id) ? 1 : -1); });   // (the open layers' steps out of the history first)
+  // lying: the carousel turned by p places (a fraction while it turns: each card at its place k less p, the chosen one at -p); the weather on
+  // the cards' edges (drops, snow) fades while they move
+  let turning = false;
+  function ringTo(p) {
+    for (const e of document.querySelectorAll('#crs .crd')) ringPlace(e, +e.dataset.k - p);
+    ringPlace(document.getElementById('map'), -p);
+    WXFX.uiFade(Math.max(0, 1 - 4 * Math.abs(p)));
+  }
+  // its turn to d places from p0 (where a swipe left it): ~300 ms a place, easing out
+  function turn(d, p0) {
+    turning = true;
+    return new Promise(res => {
+      const t0 = performance.now(), ms = 300 * (0.6 + 0.4 * Math.abs(d - p0));
+      const step = () => { const x = Math.min(1, (performance.now() - t0) / ms); ringTo(p0 + (d - p0) * (1 - Math.pow(1 - x, 3))); if (x < 1) requestAnimationFrame(step); else { turning = false; res(); } };
+      requestAnimationFrame(step);
+    });
+  }
+  // a turn to the track d places away, then its screen (show: the new cards stand where the turn left the old ones)
+  async function spin(d, p0 = 0) {
+    if (changing || !d) return;
+    changing = true; await turn(d, p0);
+    const t = ringAt(id, d); NAZAJ.clear(() => show(t, Math.sign(d), true));
+  }
+  function spinIn(p0) { ringTo(p0); turn(0, p0); }   // (a new screen's carousel turning in from p0)
   await show(id, 0);
   // the page scaled to the screen; turned (upright and lying) or lying at a new size, the screen is built again in its place
   let refit = null;
@@ -692,7 +811,8 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
   const toast = (m) => { const d = document.createElement('div'); d.textContent = m; d.style.cssText = 'position:absolute;left:' + LY.pw / 2 + 'px;top:' + (LY.land ? LY.ph / 2 - 20 : 420) + 'px;transform:translateX(-50%);z-index:30;background:rgba(8,12,20,.9);color:#fff;font:700 15px/1.2 var(--f-ui);padding:10px 16px;border-radius:10px;white-space:nowrap'; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); };
   // the taps: one listener for every screen (each new screen has new buttons)
   document.body.addEventListener('click', (e) => {
-    if (changing) return;
+    if (changing || turning) return;
+    const cr = e.target.closest('#crs .crd, #crs .arw'); if (cr) { if (performance.now() - noTap > 400) spin(+cr.dataset.k); return; }   // (lying: a neighbour's card or an arrow)
     const w = e.target.closest('.wxc i');
     if (w) { const k = WXFX.KEYS[[...w.parentNode.children].indexOf(w)]; if (k && k !== cur) { cur = k; WXFX.tap(k, now()); keep(); } return; }
     const v = e.target.closest('.views i'); if (v) { const c = [...v.parentNode.children].indexOf(v) + 1; if (c !== cam) { cam = c; show(id, 0); } return; }
@@ -702,15 +822,24 @@ async function globe(cv, T) { if (window.GLOBE) await GLOBE.attach(cv, T); }   /
     if (e.target.closest('.go')) return toast(RACE);
     if (e.target.closest('#homeBtn')) return toast('Back to the main menu');
   });
-  // a swipe over the picture: the picture follows the finger a little; far enough sideways, the neighbour (left: the next, right: the previous)
-  let sw = null;
+  // a swipe over the picture: the picture follows the finger a little; far enough sideways, the neighbour (left: the next, right: the previous).
+  // Lying, over the cards: the carousel follows the finger (a place each 302 px, the distance between the cards' middles) and, far enough,
+  // turns on to the neighbour, else back
+  let sw = null, noTap = -1e9;
   document.body.addEventListener('dragstart', (e) => { if (e.target.closest('#map')) e.preventDefault(); });   // (a dragged picture would cancel the swipe)
-  document.body.addEventListener('pointerdown', (e) => { if (changing || !e.target.closest('#map') || e.target.closest('.views, .wxc')) return; sw = { x: e.clientX, y: e.clientY, id: e.pointerId, img: document.getElementById('mapimg') }; });
-  addEventListener('pointermove', (e) => { if (!sw || e.pointerId !== sw.id) return; const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC; if (Math.abs(dx) > Math.abs(dy)) sw.img.style.transform = 'translateX(' + (dx * 0.35).toFixed(1) + 'px)'; });
+  document.body.addEventListener('pointerdown', (e) => { if (changing || turning || !e.target.closest(LY.land ? '#map, #crs .crd' : '#map') || e.target.closest('.views, .wxc')) return; sw = { x: e.clientX, y: e.clientY, id: e.pointerId, img: document.getElementById('mapimg'), p: 0 }; });
+  addEventListener('pointermove', (e) => {
+    if (!sw || e.pointerId !== sw.id) return;
+    const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC;
+    if (LY.land) { if (sw.p || (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy))) { sw.p = Math.max(-1.2, Math.min(1.2, -dx / 302)) || 1e-6; ringTo(sw.p); } return; }
+    if (Math.abs(dx) > Math.abs(dy)) sw.img.style.transform = 'translateX(' + (dx * 0.35).toFixed(1) + 'px)';
+  });
   const swEnd = (e) => {
     if (!sw || e.pointerId !== sw.id) return;
-    const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC, img = sw.img; sw = null;
-    if (e.type === 'pointerup' && Math.abs(dx) > 56 && Math.abs(dx) > 1.4 * Math.abs(dy)) { const [pv, nx] = nbOf(id); return go(dx < 0 ? nx : pv, dx < 0 ? 1 : -1); }
+    const dx = (e.clientX - sw.x) / SC, dy = (e.clientY - sw.y) / SC, img = sw.img, p = sw.p; sw = null;
+    const far = e.type === 'pointerup' && Math.abs(dx) > 56 && Math.abs(dx) > 1.4 * Math.abs(dy);
+    if (LY.land) { if (p) noTap = performance.now(); if (far) return spin(dx < 0 ? 1 : -1, p); if (p) turn(0, p); return; }   // (a swipe's own click is no tap)
+    if (far) { const [pv, nx] = nbOf(id); return go(dx < 0 ? nx : pv, dx < 0 ? 1 : -1); }
     const tr = img.style.transform; img.style.transform = ''; if (tr) img.animate([{ transform: tr }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
   };
   addEventListener('pointerup', swEnd); addEventListener('pointercancel', swEnd);
