@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "ngorongoro": {
+  "calls": 141,
+  "maxCalls": 166,
+  "kverts": 276,
+  "maxKverts": 326,
+  "jsMs": 1.44
  }
 }

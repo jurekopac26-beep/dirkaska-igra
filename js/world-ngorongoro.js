@@ -23,7 +23,7 @@
 
   /* ================= NGORONGORO (theme 'ngorongoro') =================
      The one-way cobbled road down the western wall of the Ngorongoro crater (Tanzania), from the rim at Windy Gap past the ranger post and
-     its barrier, round the one hairpin and down the open grassy wall to the crater's floor, on a bright morning of the short rains. A look of
+     its barrier, round the one hairpin and down the open grassy wall to the crater's floor, on a clear afternoon of the dry season. A look of
      its own: the ground's colours (ngCol: the walls' tawny grass, straw where it is dry and fresher in the hollows, the red-brown volcanic
      soil, the darker shrubs, the rim's forest, the streams' green strips, the steep faces' grey-brown rock, the floor's paler short grass),
      the road of rough grey-brown setts with the red dust in the joints (ngSettTex), the murram of the rim road before the start, the plants
