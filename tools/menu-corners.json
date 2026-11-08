@@ -408,5 +408,18 @@
    302.1,
    58
   ]
+ },
+ "london": {
+  "s": 1388,
+  "o": "Desni pri Westminstrskem mostu, Urni stolp",
+  "cam": [
+   222,
+   42,
+   172,
+   138,
+   22,
+   262,
+   58
+  ]
  }
 }

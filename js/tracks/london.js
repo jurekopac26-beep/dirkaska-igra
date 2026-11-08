@@ -22,6 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'London, England', desc: "A city race through the centre of London: the start on Whitehall, right at Trafalgar Square, down the avenue to the Thames, south along the embankment to Westminster Bridge and past the clock tower, then right at Parliament Square back onto Whitehall. Street-race barriers, 1.8 km." },
     start: [6.6, -0.2], runoff: 0.32, inner: 1.6, side: 1.6, offSurface: 'paving', noGravel: true, runoffTarmac: true, gradeForce: true, elevSmooth: 14, noBirds: true, realKm: 1.81,
     rivals: 11,
+    maxRivals: 30,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the flying start's column keeps its cars ~0.8 s apart, which on the long fast straights is ~45 m a car, and it is 4/5 of a lap at most: with 34 rivals already two formula cars stand on each other
     elev: LN_H.map((h, i) => [i / LN_H.length, h / 10]),
     widths: [[0.0, 7.0], [421.9, 7.0], [445.9, 6.6], [776.9, 6.6], [800.9, 6.6], [1378.4, 6.6], [1402.4, 7.0], [1536.2, 7.0], [1560.2, 7.0], [1810.0, 7.0]],
     // places and corners on the HUD ([label, x, z, the commentator's lines]; the descriptive labels have their English in js/lang.js)

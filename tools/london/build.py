@@ -136,6 +136,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'London, England', desc: %(desc_en)s },
     start: [%(sx)s, %(sz)s], runoff: 0.32, inner: 1.6, side: 1.6, offSurface: 'paving', noGravel: true, runoffTarmac: true, gradeForce: true, elevSmooth: 14, noBirds: true, realKm: %(km)s,
     rivals: 11,
+    maxRivals: 30,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the flying start's column keeps its cars ~0.8 s apart, which on the long fast straights is ~45 m a car, and it is 4/5 of a lap at most: with 34 rivals already two formula cars stand on each other
     elev: LN_H.map((h, i) => [i / LN_H.length, h / 10]),
     widths: %(widths)s,
     // places and corners on the HUD ([label, x, z, the commentator's lines]; the descriptive labels have their English in js/lang.js)

@@ -203,6 +203,9 @@
         for (const sd of [-1, 1]) { const q = off(sd * (Wb / 2 - 0.2)); if (!q) continue; box(g, q[0], top, q[1], 3.05, 1.1, 0.4, ang, [0.27, 0.36, 0.3], [0.32, 0.4, 0.34], true);
           if (Math.floor(t / 3) % 8 === 4) lamp(g, q[0], top + 1.1, q[1], 4.2); }
       }
+      for (let k = 0; k < 4; k++) { const v = (k - 1.5) * Wb / 4;   // (its road on to the lap: from its west end each quarter of its width as far as the barrier, at most 33 m)
+        for (let t = -1.5; t > -33; t -= 3) { const x = A[0] + ux * t - uz * v, z = A[1] + uz * t + ux * v, nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 1.5) break;
+          const y0 = nrGround(x, z); box(scen.get(x, z), x, y0 - 0.4, z, 3.05, Math.max(y0, yA) + 0.15 - (y0 - 0.4), Wb / 4 + 0.02, ang, rd, rd, true); } }
       if (tw0 >= 0) for (let k = 1; k < SP; k++) { const t = tw0 + k * spL, x = A[0] + ux * t, z = A[1] + uz * t;
         box(scen.get(x, z), x, RIVER - 3.6, z, 6.5, 3.6 + 2.0, Wb + 3, ang, [0.66, 0.65, 0.61], [0.7, 0.69, 0.65]); }
       nBridge++;
