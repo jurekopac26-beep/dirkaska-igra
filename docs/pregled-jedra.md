@@ -18,7 +18,7 @@ _V delu._
 
 **J14 · AI ne vidi avta, ki ga prehiteva za krog, in se vanj zaleti s polno hitrostjo** · `js/core.js:3748` (`aiDrive`, izbira nevarnosti), enako `js/core.js:3691` (`aiLaneBusy`)
 - Nevarnost in avte ob sebi AI izbira po `gap = o.dist - c.dist`, kjer je `dist` celotna razdalja dirke. Na krožni progi je avto krog narazen, ki je fizično tik pred njim ali ob njem (počasen, poškodovan, ustavljen, prehitevan za krog), izven okna `gap < -8 || gap > 22` in zato ni nevarnost: AI ostane na idealni liniji in se zaleti. Mesto na progi (ovito na dolžino kroga) upošteva samo, ko sta oba avta v boksih (3749). Modrih zastav ali drugega ravnanja z zaostalimi ni nikjer.
-- **Primer:** `rbring`, 7 tekmecev, 3 krogi, ponovljiva dirka (seme 9): igralec se v 1. krogu ustavi na idealni liniji (s ≈ 1634 m). V naslednjem krogu ga nobeden od 6 tekmecev, ki ga prehitevajo za krog, niti v enem koraku ne vzame za nevarnost (153 in 161 korakov manj kot 22 m za njim), štirje se zaletijo vanj (vodilni s 55 m/s razlike v hitrosti). Tekmec v istem krogu ga je imel za nevarnost 2.923 korakov. Enako vsak počasen ali poškodovan avto, ki ga prehitevajo za krog (npr. začetnik na `toronto`, `troisrivieres`, `marrakesh`).
+- **Primer:** `rbring`, 7 tekmecev, 3 krogi, ponovljiva dirka (seme 9), brez poškodb: igralec se po 30 s ustavi na idealni liniji (s ≈ 1236 m). Nobeden od 7 tekmecev, ki ga nato prehitevajo za krog, ga niti v enem koraku ne vzame za nevarnost (od 100 do 2.216 korakov manj kot 22 m za njim), štirje se zaletijo vanj. Tekmec v istem krogu ga je imel za nevarnost v 453 od 535 korakov. Enako vsak počasen ali poškodovan avto, ki ga prehitevajo za krog (npr. začetnik na `toronto`, `troisrivieres`, `marrakesh`).
 - Preverjeno: potrjeno (simulacija).
 
 ### Srednje
