@@ -2548,5 +2548,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "hakone/cs": {
+  "finished": 21,
+  "cars": 21,
+  "winner": 788.14,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "08a60e2116e33c7990a26b5f"
+ },
+ "hakone/cs/rain": {
+  "finished": 21,
+  "cars": 21,
+  "winner": 869.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e0ddd00ca666d607d8b2481c"
+ },
+ "hakone/cs/formula": {
+  "finished": 21,
+  "cars": 21,
+  "winner": 727.16,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f85b5a602e15e58772ad652d"
+ },
+ "hakone/cs/lm": {
+  "finished": 21,
+  "cars": 21,
+  "winner": 737.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f657736af10f82bec927f935"
+ },
+ "hakone/cs/car": {
+  "finished": 21,
+  "cars": 21,
+  "winner": 773.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "7d539e7323e5d3b83764ecf4"
  }
 }
