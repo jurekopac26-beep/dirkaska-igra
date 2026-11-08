@@ -47,7 +47,7 @@
     "razmik": 13,
     "polmer": 6.5,
     "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18, "dol": true },
-    "kriz": { "dy": 7.5, "zgoraj": "prvi" },
+    "kriz": { "dy": 7.8, "zgoraj": "prvi" },
     "s2": "S2C_31TDE_20250630_0_L2A",
     "dalec": 9000,
     "dalec_celica": 250,

@@ -61,7 +61,8 @@
     // macchia (lc 2: mastic, holm oak and wild olive bushes, dark), tussocks of càrritx on the dry grass (lc 0) and Aleppo pines with holm oaks
     // lower down (lc 1; def.forest 'med'); no snow; the road edged with low stone parapets (rail 'stone'), the knot's stone arch bridge over the
     // road below (Track.cross); the Spanish signs: white chevrons on blue in the hairpins, the centre line in 3.5 m dashes; no hairpin numbers on
-    // the road (plates 0); the sea beyond the mountains to the north (far.wet: the far land's water, deep blue)
+    // the road (plates 0); the sea beyond the mountains to the north (far.wet: the far land's water, deep blue), the far mountains deeper in
+    // the haze than the passes' (far.hz: irFar's [floor, rise]; the near world's own haze before them)
     sacalobra: {
       seed: 4500, board: 'SA CALOBRA', sub: 'SERRA DE TRAMUNTANA', banner: ['CARRETERA DE SA CALOBRA', 'MA-2141 · SERRA DE TRAMUNTANA'],
       grass: [0.5, 0.5, 0.38], grassDry: [0.6, 0.57, 0.45], grassLush: [0.38, 0.44, 0.27], shrub: [0.22, 0.27, 0.16],

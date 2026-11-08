@@ -164,8 +164,8 @@ def profile(h, s, C, bends):
     for sa, tot, r in bends:
         if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
     g2 = g * w; gmax = V.get('naklon', 0.12)
-    for _ in range(40):
-        g2 = np.clip(g2 * (np.sum(g * step) / max(1e-9, np.sum(g2 * step))), -gmax, gmax)
+    for _ in range(40):   # (the total kept: a sum of either sign, a road raced downhill falls)
+        t2 = np.sum(g2 * step); g2 = np.clip(g2 * (np.sum(g * step) / (t2 if abs(t2) > 1e-9 else 1e-9)), -gmax, gmax)
     out = sm[0] + np.concatenate([[0], np.cumsum((g2[1:] + g2[:-1]) / 2 * step)])
     return out
 
