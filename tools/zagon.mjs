@@ -219,7 +219,7 @@ function sum(r) {
     menuReady: M.menuReady, raceAt: (r.zt.marks.find(([n]) => n.startsWith('race:')) || [])[1],
     // (between Menu.init and the menu ready: the main thread's long tasks, which hold back the menu's styles arriving)
     menuLong: (() => { const a = (C.find(c => c.n === 'Menu.init') || {}).t0, b = M.menuReady; if (a == null || b == null || !r.zt.long) return null;
-      const L = r.zt.long.filter(([t, d]) => t + d > a && t < b); return { n: L.length, ms: L.reduce((x, [t, d]) => x + Math.min(t + d, b) - Math.max(t, a), 0), max: Math.max(0, ...L.map(([, d]) => d)) }; })(),
+      const L = r.zt.long.filter(([t, d]) => t + d > a && t < b); return { n: L.length, ms: L.reduce((x, [t, d]) => x + Math.min(t + d, b) - Math.max(t, a), 0), max: Math.max(0, ...L.map(([t, d]) => Math.min(t + d, b) - Math.max(t, a))) }; })(),   // (max: the longest one's part inside the wait)
     groups: by, exec,
   };
   if (r.kind === 'proga') {
