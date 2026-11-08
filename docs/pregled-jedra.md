@@ -51,6 +51,11 @@ _V delu._
 - **Primer:** Nastavitve → tresenje kamere ob trku vklopljeno (privzeto izklopljeno), trk (`Render.shake(…, 'hit')`) in v ~0,4 s pavza ali foto način.
 - Preverjeno: potrjeno (branje kode).
 
+**J13 · Avto na strehi v ustavljenem posnetku še naprej meče prah in iskre** · `js/render.js:8245` (`xRollPose`)
+- Prah (3 delci) in iskre (4) ob drgnjenju strehe gredo ven ob vsaki izrisani sličici; edini pogoj je `dt > 0`, brez `opt.noFx` (ki ga imajo vsi drugi oddajniki, npr. 6719, 6727, 9115) in brez množenja z `dt`. Posnetek kliče `Render.frame(dt, …, { noFx: true, rdt: 0 })` s pravim `dt` tudi, ko stoji (`js/game.js:1247`), in `rpPose` drži avto obrnjenega (`c.rl`).
+- **Primer:** Nastavitve → prevračanje (`xRoll`, privzeto izklopljeno), avto se prevrne na streho; v posnetku ustavi na tem trenutku: prah in iskre letijo brez konca. V počasnem posnetku jih je večkrat več kot v živo, v živo pri 120 Hz dvakrat več kot pri 60 Hz.
+- Preverjeno: potrjeno (branje kode).
+
 **J2 · Varnostni avto: avta, ustavljena skupaj, se ne štejeta, če sta krog narazen** · `js/core.js:6437` (`Race._flags`)
 - `heavy` primerja razdaljo dirke (`Math.abs(o.dist - c.dist) < 60`), ne mesta na progi; rdeča zastava v isti funkciji (`js/core.js:6431`) primerja mesto (`o.q.s - c.q.s`, ovito na dolžino kroga).
 - **Primer:** vodilni trči v zaostalega, ki ga prehiteva za krog; oba stojita drug ob drugem 2,5–6 s z `dmg` ≤ 0,5 in nato odpeljeta: pride samo rumena zastava. Enak trk dveh avtov v istem krogu po 2,5 s pripelje varnostni avto.
