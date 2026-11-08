@@ -20,7 +20,7 @@ Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (k
   - za tovornjake: Sosnová, Češka; Pembrey, Wales;
   - izvenserijska: Kildare, Irska (reli kros);
   - mestna: **London, Anglija** (namesto Budimpešte).
-  - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel.
+  - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel. **Crystal Palace je od 8. 11. 2026 na odločanju** (`pending: true`, ne test; odločitev uporabnika 8. 11. 2026 ob ~18.58, prek Mateja): ko je London v igri, uporabnik izbere, katera od obeh ostane, druga dobi `test: true`; London ob spoju ohrani `pending: true` na Crystal Palace.
   - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`.
 - **Seznam 50 prog, delne odločitve** (uporabnik 8. 11. 2026 ob 14.44, prek Mateja, komentar 6722394383; vprašanje `nove-proge-1-0-50`): **Envalira, Andora** (#430) ostane dolga **0,73 km** (izjema od pravila 1–5 km samo za to progo; uporabnik: »Envalira naj bo dolga 0,73 km.«); rezervi sta **Meteora, Grčija** in **Šipka, Bolgarija**, Buenos Aires odpade; o **12 progah na čakanju** se je uporabnik odločil 8. 11. 2026 ob 15.59 po predstavitvi 16 prog (prek Mateja, komentar 6723046786): na seznam 50 gre **11 prog** — Medeu, Kazahstan; Furka, Švica; Gudauri, Gruzija; Llogara, Albanija; Porto Moniz, Portugalska; Ngorongoro, Tanzanija; Ella, Šrilanka; Santo Antão, Zelenortski otoki; Espinazo del Diablo, Mehika; Seul, Južna Koreja; Dadès, Maroko. **Milford Sound, Nova Zelandija ne gre** (tretjina poti je predor); mesto Nove Zelandije ostane odprto do primerjave Wellingtona in dveh gorskih cest (pripravi jure.kopac26), do takrat se iz Nove Zelandije nič ne začne. Opombe za seje prog: Llogara — najbolj zavit odsek do 5 km (na celi poti 55 % ravnin); Ngorongoro — OSM za večino poti navaja kamnito tlakovanje, ne makadama; Seul je edina mestna proga, brez lasnic. Nove proge so v vrsti še naprej zadnje. Načrt za teh 11 (najbolj zaviti odseki 1–5 km, izletna cona na izbranih odsekih, podatki poti, liniji in skupine N4–N6) je v `docs/nove-proge-1-0.md`, razdelek »Del 2«.
 - **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
@@ -94,7 +94,7 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | Nemčija | Nürburg | – | – |
 | Avstrija | Štajerska | – | – |
 | Rusija | Katu-Jaryk | – | – |
-| Anglija | Crystal Palace | – | – |
+| Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test) | London (mestna proga po središču velikega mesta, izjema od pravila; #492, del N3 #500) | – |
 | Tajska | Bang Saen | – | – |
 
 ## Ocene prog v igri: ena proga na državo
