@@ -12,7 +12,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('pit lights (dusk, night)');
 const srv = await serve();
 const browser = await launch();
-const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'longford', 'montreal', 'newcastle', 'toronto', 'bangsaen', 'townsville', 'troisrivieres'];
+const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal', 'toronto', 'bangsaen', 'troisrivieres'];   // (8: Longford, Newcastle and Townsville are test tracks since 6. 11. 2026)
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', tod: 'night', weather: 'dry' }, { width: 844, height: 390 });
   // 1. every track with pits, its world built at night: the lights where the garages are
@@ -33,8 +33,8 @@ try {
         r: Math.round(bs.radius), off: Math.round(Math.hypot(bs.center.x - mid[0], bs.center.z - mid[1])), add: m.material.blending === THREE.AdditiveBlending, cast: m.castShadow, n: Render.scene.children.filter(o => o.name === 'pitLights').length };
     }, id));
   }
-  const bad = res.filter(r => r.none || r.boxes !== r.nB || r.nB < (r.id === 'townsville' ? 10 : 13) || r.n !== 1 || !r.add || r.cast || r.k !== 1 || r.lamps !== r.nB * (r.kind === 'bulb' ? 3 : 2) || r.quads < 2 * r.nB);
-  T.check('at night on all 11 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
+  const bad = res.filter(r => r.none || r.boxes !== r.nB || r.nB < 13 || r.n !== 1 || !r.add || r.cast || r.k !== 1 || r.lamps !== r.nB * (r.kind === 'bulb' ? 3 : 2) || r.quads < 2 * r.nB);
+  T.check('at night on all 8 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
     (bad.length ? 'bad: ' + JSON.stringify(bad) + ' ' : '') + res.map(r => `${r.id} ${r.kind} ${r.quads}q ${r.lamps}l`).join(', '));
   const side = res.filter(r => !r.none && (r.wMin < -7 || r.wMax > 23 || r.hMin < -0.3 || r.hMax > 6));
   T.check('the lights on the garages\' side of the lane only (nothing past the lane towards the circuit), on the floor and the garages (up to 6 m)', !side.length,

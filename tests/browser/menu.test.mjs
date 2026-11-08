@@ -189,11 +189,11 @@ try {
     await page.click('.nb.r'); const nx = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     await page.click('.nb.l'); const pv = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     T.check('the neighbours tapped: the next track, then back to Nürburg', nx === scr.next && pv === 'nring' && (await page.evaluate(() => __game.S.track)) === 'nring', JSON.stringify({ nx, pv }));
-    // the three cameras at the stage's top left: icons only (1 the map, 2 the flyover, 3 the corner), the map (1) lit when the step opens,
+    // the four cameras at the stage's top left: icons only (1 the map, 2 the flyover, 3 the corner, 4 the friends' times), the map (1) lit when the step opens,
     // its picture the map from above with no height graph; no mode ribbon on the stage
     const stageUI = await ev(page, 'const m = root.querySelector("#track-stage .cams"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"), st = root.querySelector("#track-stage"), r = m && m.getBoundingClientRect(), sr = st.getBoundingClientRect(); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.dataset.act + ":" + b.getAttribute("aria-label") + ":" + !!b.querySelector("svg")) : null, text: m ? m.textContent.trim() : "?", pressed: pr ? pr.dataset.act : "", at: r ? [r.left - sr.left, r.top - sr.top] : null, size: m ? [...m.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().width)) : null, map: !!st.querySelector(".dio.topmap"), graph: !!st.querySelector(".hgraph"), ribbon: !!st.querySelector(".ribbon") };');
-    T.check('the track stage: three camera buttons at its top left, icons only (Map, Flyover, Corner camera), the map (1) lit when the step opens and shown without the height graph, no mode ribbon',
-      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && stageUI.at[0] < 20 && stageUI.at[1] < 20 && stageUI.size.every(x => x === 22) && stageUI.map && !stageUI.graph && !stageUI.ribbon, JSON.stringify(stageUI));
+    T.check('the track stage: four camera buttons at its top left, icons only (Map, Flyover, Corner camera, Friends), the map (1) lit when the step opens and shown without the height graph, no mode ribbon',
+      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true","cam:4:Friends:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && stageUI.at[0] < 20 && stageUI.at[1] < 20 && stageUI.size.every(x => x === 22) && stageUI.map && !stageUI.graph && !stageUI.ribbon, JSON.stringify(stageUI));
     // camera 2, the flyover: its video, only the start and the finish named over it (no places, no box with the place reached)
     await click(page, 'cam:2');
     const fl = await page.waitForFunction(() => { const root = document.getElementById('menu-host').shadowRoot, st = root.querySelector('#track-stage'), v = st.querySelector('.dio.fly video'), lab = st.querySelector('.flab');
@@ -244,6 +244,7 @@ try {
     await click(page, 'credits');
     let c = await ev(page, 'const s = root.querySelector(".sheet.credits"); return s ? s.textContent : "";');
     T.check('Credits: the sheet names the data the pictures of the Earth are made from, and closes', /WorldCover/.test(c) && /Natural Earth/.test(c));
+    T.check('Credits: OpenStreetMap (the roads of the tracks; the ODbL asks for it)', /© OpenStreetMap contributors/.test(c) && /Open Database License/.test(c), c.slice(0, 200));
     await done(page);
     T.check('the credits sheet is closed again', !(await ev(page, 'return !!root.querySelector(".sheet");')));
 
