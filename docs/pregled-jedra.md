@@ -48,7 +48,27 @@ _V delu._
 - **Primer:** `balea`, dvoboj v prometu, seme 11: igralec od zadaj zadene motor pri 4–10 m/s razlike. V 3 od 9 trkov motor ~8,8 s pozneje vozi z 11 m/s brez voznika, voznik pa stoji ~150 m za njim. Enako na vseh pravih progah s prometom, kjer so motorji (npr. `chapman`, `greatalpine`, `iroha`, `rastro`, `medvode`).
 - Preverjeno: potrjeno (simulacija).
 
+**J19 · Table in znaki ob progi po rahlem dotiku postanejo »duhovi«: avti gredo skozi njih do konca dirke** · `js/core.js:3193` (`propCarHit`)
+- Varovalo »en udarec« preskoči vsak dotik avta, dokler je `b.hit1 && b.age < 0.6`. `b.age` raste samo v `propStep` (3240), ta pa za predmet, ki miruje (`b.sleep`, 3286: po 0,35 s mirovanja), ne teče več (6091). Predmet, ki se po udarcu umiri v manj kot 0,6 s, ostane z `age < 0.6` za vedno; `hit1` nič ne ponastavi.
+- **Primer:** avto se table ali znaka (vrste z `K.dmg`: `bboard`, `dpost`, `rssign`, `rschev`, `rsboard`; ulična oprema na `montreal`, `toronto`, `marrakesh`, `bangsaen`) dotakne s 0,5–3 m/s, npr. ob vrnitvi na cesto po vrtenju. Simulacija v Node na `spa`: tabla za zaviranje po udarcu z 1/2/3 m/s zaspi pri `age` 0,41/0,51/0,53 s; avto, ki nato pelje skozi z 25 m/s 0,05 m od nje, jo premakne za 0,000 m. Oplazenje z 20 m/s je v redu (predmet še leti, ko `age` preseže 0,6).
+- Preverjeno: potrjeno (simulacija).
+
+**J20 · Nova mapa (Toskana, NEW VERSION · TEST 1): razbitine in predmeti trčijo v ograje stare ceste** · `js/core.js:3014` (`stepDebris`), `js/core.js:3254–3255` (`propStep`)
+- Na prosti mapi (`track.free`) `wallCollide` ograj ceste ne upošteva (3294–3305, samo rob mape in stene predora `wall2`), `stepDebris` (`T.wall`) in `propStep` (`q.br`/`q.bl`) pa jih. Kos ali predmet daleč od stare ceste Toskane se v enem koraku premakne na črto njene ograje, desetine metrov od trka. `stepDebris` vzame tudi višino tal stare ceste (`T.yAt`, 3013) namesto `track.ground2`. Skupna koda: nova mapa na Toskani mora delovati do izbrisa testnih prog (`CLAUDE.md`).
+- **Primer:** nova mapa s privzetimi poškodbami (1), trk v steno predora z ~15 m/s ali več daleč od stare ceste, odpade del (najprej ogledalo). Simulacija v Node (`toskana`, `T.free` kot v `js/game.js:2392`, avto 40 m od stare ceste): pokrov motorja in stožec v enem koraku skočita 30,6 m, na `q.d` ≈ 9,4–9,5 (stara ograja).
+- Preverjeno: potrjeno (simulacija).
+
 ### Nizke
+
+**J21 · Razbitine v boksih skočijo čez steno boksov na progo** · `js/core.js:3014` (`stepDebris`, `Track.wall`)
+- `Track.wall` pozna samo ograje dirkalne proge (`q.bl`/`q.br`); pas boksov leži za `q.br` (sredina pri `br + 5` ali več, stena pri `br + 0,25`), zato se vsak kos v pasu premakne na stran proge.
+- **Primer:** redko: avto doseže prag razbitja (`dmg ≥ 0,96`, `wreckCheck`) tik pred uvozom v bokse; `applyDamage` v pasu ne teče (`c.pitG`), `_wreckStep` (7078) pa dele odmetava naprej vsakih 0,4 s. Simulacija v Node: kos v pasu na `spa` se premakne z `q.d` 15,7 na 10,3 (stena pri 10,95), na `bathurst` z −15 na −8,42: na travo na strani proge.
+- Preverjeno: potrjeno (simulacija).
+
+**J22 · Varnostni avto se lahko prevrne ali zavrti od učinkov Razbijanja** · `js/core.js:2066` (`xRollStart`), `js/core.js:3550–3555` (`carKnockFx`, `XR.bump`)
+- `kTake` (3503) varnostnemu avtu namenoma ne vzame oprijema (»no marshals, no reverse for it«), `xRollStart` (klicana iz `carKnockFx` in `wallCollide` 3365) in izguba oprijema `XR.bump` pa `c.sc` ne preverita.
+- **Primer:** dirka brez spleta z vklopljenim prevračanjem ali sunki Razbijanja (`xRoll`, `xBump`, privzeto izklopljena), varnostni avto na progi: bočni trk vanj nad 9 m/s ga prevrne; pri različici trkov Stara dotik nad 4 m/s dvigne `xgl` do 0,9 in ga lahko zavrti. Prevrnjen avto je po 1,2–2 s spet na kolesih, varnostni avto pa nima logike za vrnitev.
+- Preverjeno: verjetno (branje kode).
 
 **J16 · Človek na avtobusni postaji po preplahu hodi na mestu brez konca** · `js/core.js:4484` (`Traffic`, ljudje: stanje `back`/`limp`)
 - Ko se prestrašen ali podrt človek vrne na svoj pas, vedno preide v `walk`. Na postaji je njegov odsek dolg nič (`p.a0 = p.a1`, 4050), zato `walk` (4452–4453) v vsakem koraku omeji `s` in obrne smer: človek hodi na mestu s hitrostjo hoje in se obrne za 180° vsakih 1/120 s. `_home` (4528) ta primer reši pravilno (vrne `stop`), a človeka v `walk` nihče ne pošlje tja.
@@ -62,7 +82,7 @@ _V delu._
 
 **J18 · Skrita napaka za nove proge: proga z boksi, ki se ne začne v prvi točki, se lahko ob nalaganju zlomi** · `js/core.js:1314–1315` (`Track.pitJ`), `js/core.js:1293` (`Track.pitAt`)
 - Zanki `ga` in `gb` kličeta `this.pitAt(S0 + gb).gap` brez preverjanja `null`. `pitAt` razdaljo od štartne črte izračuna znova (`d = s - startS`, nato `((d % L) + L) % L`), zaokroževanje pa lahko `d` potisne tik čez `P[2]`: `pitAt` vrne `null` in `.gap` vrže TypeError. `pitJ` kličejo `surface()`, `wallCollide`, `pitLead` in table za zaviranje, zato proge ni mogoče voziti. `crewBoxes` in `bayPose` `null` preverita.
-- **Primer:** krožna proga z `def.pit`, katere štartna črta ni v `points[0]` (`startS ≠ 0`). Ponovljeno v Node s `cpalace`, štart premaknjen na točko 961 (`startS` 1.922,32 m): `d` = 130,00000000000045 > `P[2]` = 130. Od 207 premikov štarta na 8 pravih progah z boksi se je zlomil 1. Danes nobena prava proga s boksi nima `startS ≠ 0`; nove proge za 1.0 v odprtih PR niso preverjene. Napaka se pokaže ob nalaganju, zato bi jo testi ujeli pred objavo.
+- **Primer:** krožna proga z `def.pit`, katere štartna črta ni v `points[0]` (`startS ≠ 0`). Ponovljeno v Node s `cpalace`, štart premaknjen na točko 961 (`startS` 1.922,32 m): `d` = 130,00000000000045 > `P[2]` = 130. Na `cpalace` ima to napako 17 od 3.214 preizkusov (vsako mesto štarta, oba konca boksov). Danes nobena prava proga s boksi nima `startS ≠ 0`; nove proge za 1.0 v odprtih PR niso preverjene. Napaka se pokaže ob nalaganju, zato bi jo testi ujeli pred objavo.
 - Preverjeno: potrjeno (simulacija s premaknjenim štartom).
 
 **J11 · Posnetek na Pikes Peaku: helikopter po premiku časa gleda proti staremu mestu** · `js/render.js:9657` (TV kamere Pikes Peaka, `pkTv`), `js/render.js:9912` (`resetCam`)
