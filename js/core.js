@@ -6364,7 +6364,9 @@ const Core = (function () {
     // their average, on hard (and super hard, raced as hard) from the average toward their quicker laps (ql, qh); over the verge only
     // where the player went (tr, dt; not a semi-trailer). A real track (not def.test, not def.pending) without a profile, or a car not of
     // its class: the player's style (Korak 3; opts.voznja's VOZNJA_SLOG, razredi: a profile of it for this track, voznjaIzSloga), the same,
-    // its target blended with the car's own (wv: 0 its own, as aiDrive's, read where aiDrive reads its profile), never over the verge.
+    // its target blended with the car's own (wv: 0 its own, as aiDrive's, read where aiDrive reads its profile), never over the verge; not
+    // for a semi-trailer (an articulated truck drives nothing like the player's car: on Spa its line and its pace put the tanker back on the
+    // road 5 times in two races, against once by its own).
     // Again after every change of the profiles (the weather): a profile of the weather the road has now (the style: the dry), or none (the
     // race's own AI)
     _voznja() {
@@ -6422,7 +6424,7 @@ const Core = (function () {
       const RV = V ? prep(V) : null, RS = VS ? prep(VS) : null;
       for (const c of this.cars) {
         if (c.isPlayer || c.net || c.sc || c.pol) continue;
-        const R = RV && (!RV.cls || RV.cls.has(c.m.id)) ? RV : RS; if (!R) continue;
+        const R = RV && (!RV.cls || RV.cls.has(c.m.id)) ? RV : c.tl ? null : RS; if (!R) continue;   // (a semi-trailer: its own driving, not the style)
         const P = R.P, wv = P.wv || null, vp = c.vprof || this.vprof, uT = new Float32Array(N), uRl = new Float32Array(N), w = new Float32Array(N), kc = (c.skill || 1) / mid, cap = c.skCap || 1.14, lam = lamOf(c.skill || mid);
         let aB = 0; for (let i = 0; i + 1 < N; i++) { const d = (vp[i] * vp[i] - vp[i + 1] * vp[i + 1]) / (2 * ds); if (d > aB) aB = d; }   // (its profile's braking: its steepest)
         const goes = R.G.map((g, j) => !c.tl && draw(c, j) < g.p), uLim = goes.some(Boolean) ? new Float32Array(N) : null;

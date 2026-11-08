@@ -308,12 +308,13 @@ if (pB) {
     const tA = race(tdef, { voznja: [V, S] }), tS = race(tdef, { voznja: [S] }), tP = race(tdef, { voznja: [V, S], playerModel: perun }), tV = race(tdef, { voznja: [V], playerModel: perun });
     check('Tianmen: the rivals of the profile\'s class (Perun) by the player\'s profile, the others by the style',
       !!V && tA.AI.every(c => !V.razred.includes(c.m.id)) && same(tA, tS) && tP.AI.every(c => V.razred.includes(c.m.id)) && same(tP, tV), `${tA.AI.map(c => c.m.id).join('/')} | ${tP.AI.map(c => c.m.id).join('/')}`);
-    // none in the rain, on Bathurst (still to be chosen, pending) or Spa as a test track; on Sani (makadam) the line but none of the pace
-    const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(C.TRACKS.find(d => d.id === 'bathurst'), { voznja: [S] }), tst = race(Object.assign({}, spa, { test: true }), { voznja: [S] });
+    // none in the rain, on Bathurst (still to be chosen, pending) or Spa as a test track, nor for a semi-trailer (the tankers' race on Spa);
+    // on Sani (makadam) the line but none of the pace
+    const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(C.TRACKS.find(d => d.id === 'bathurst'), { voznja: [S] }), tst = race(Object.assign({}, spa, { test: true }), { voznja: [S] }), tl = race(spa, { voznja: [S], playerModel: C.MODELS.find(m => m.id === 'cisterna') });
     const sani = race(C.TRACKS.find(d => d.id === 'sani'), { voznja: [S] }), PS = C.voznjaIzSloga(sani.T, sani.r.vprof, S), PR = C.voznjaIzSloga(new C.Track(C.TRACKS.find(d => d.id === 'rastro')), race(C.TRACKS.find(d => d.id === 'rastro'), {}).r.vprof, S);
-    check('none of the style in the rain, on Bathurst (pending) or a test track; on Sani (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
-      [wet, bt, tst].every(x => x.AI.every(c => !c.uT)) && sani.AI.every(c => c.uT) && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
-      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length} of 5; Sani wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
+    check('none of the style in the rain, on Bathurst (pending), a test track or for a semi-trailer; on Sani (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
+      [wet, bt, tst, tl].every(x => x.AI.every(c => !c.uT)) && tl.AI.every(c => c.tl) && sani.AI.every(c => c.uT) && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
+      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length}, semi-trailers ${tl.AI.filter(c => c.uT).length} of 5; Sani wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
   }
 }
 
