@@ -75,7 +75,7 @@ try {
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
       T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the ones awaiting the choice (pending), then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak and Sani Pass too; the open roads that became test tracks on 4., 5. and 6. 11. 2026 are left out: the USA's but Pikes Peak, Vršič)`, roads.race === roads.trial && roads.race >= 9, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5. and 6. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass)`, roads.race === roads.trial && roads.race >= 9, JSON.stringify(roads));
       const first = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       let seen = 0; const bad = [], urls = new Set();
       for (let k = 0; k < exp.ids.length; k++) {
@@ -137,8 +137,6 @@ try {
       }
       return out;
     });
-    // (a track made a test track after its wide map was detailed, the roads of the USA on 4. and 5. 11. 2026, keeps its map as it was: 0.8)
-    const at = (d, k) => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2;
     const wbad = dims.filter(d => !(d.w && d.r && d.a && d.b && d.a[0] === d.W && d.a[1] === d.H && d.b[0] === d.W && d.b[1] === d.H && d.r[0] === d.w[0] && d.r[1] === d.w[1] &&
       (d.test ? [0.5, 0.8] : [0.8]).some(k => Math.abs(d.w[0] - (d.W + 2 * d.E) * k) <= 2 && Math.abs(d.w[1] - (d.H + 2 * d.E) * k) <= 2))).map(d => d.id);
     T.check(`the wide maps (${dims.length} tracks): the painted land and the isle, dry and in rain, all there and the size of the map plus its margin (the land at 0.8 of the map's scale, a test track's at half or at 0.8)`, dims.length >= 3 && !wbad.length, JSON.stringify({ wbad, dims }));
@@ -189,11 +187,11 @@ try {
     await page.click('.nb.r'); const nx = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     await page.click('.nb.l'); const pv = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     T.check('the neighbours tapped: the next track, then back to Nürburg', nx === scr.next && pv === 'nring' && (await page.evaluate(() => __game.S.track)) === 'nring', JSON.stringify({ nx, pv }));
-    // the three cameras at the stage's top left: icons only (1 the map, 2 the flyover, 3 the corner), the map (1) lit when the step opens,
+    // the four cameras at the stage's top left: icons only (1 the map, 2 the flyover, 3 the corner, 4 the friends' times), the map (1) lit when the step opens,
     // its picture the map from above with no height graph; no mode ribbon on the stage
     const stageUI = await ev(page, 'const m = root.querySelector("#track-stage .cams"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"), st = root.querySelector("#track-stage"), r = m && m.getBoundingClientRect(), sr = st.getBoundingClientRect(); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.dataset.act + ":" + b.getAttribute("aria-label") + ":" + !!b.querySelector("svg")) : null, text: m ? m.textContent.trim() : "?", pressed: pr ? pr.dataset.act : "", at: r ? [r.left - sr.left, r.top - sr.top] : null, size: m ? [...m.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().width)) : null, map: !!st.querySelector(".dio.topmap"), graph: !!st.querySelector(".hgraph"), ribbon: !!st.querySelector(".ribbon") };');
-    T.check('the track stage: three camera buttons at its top left, icons only (Map, Flyover, Corner camera), the map (1) lit when the step opens and shown without the height graph, no mode ribbon',
-      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && stageUI.at[0] < 20 && stageUI.at[1] < 20 && stageUI.size.every(x => x === 22) && stageUI.map && !stageUI.graph && !stageUI.ribbon, JSON.stringify(stageUI));
+    T.check('the track stage: four camera buttons at its top left, icons only (Map, Flyover, Corner camera, Friends), the map (1) lit when the step opens and shown without the height graph, no mode ribbon',
+      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true","cam:4:Friends:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && stageUI.at[0] < 20 && stageUI.at[1] < 20 && stageUI.size.every(x => x === 22) && stageUI.map && !stageUI.graph && !stageUI.ribbon, JSON.stringify(stageUI));
     // camera 2, the flyover: its video, only the start and the finish named over it (no places, no box with the place reached)
     await click(page, 'cam:2');
     const fl = await page.waitForFunction(() => { const root = document.getElementById('menu-host').shadowRoot, st = root.querySelector('#track-stage'), v = st.querySelector('.dio.fly video'), lab = st.querySelector('.flab');
@@ -244,6 +242,7 @@ try {
     await click(page, 'credits');
     let c = await ev(page, 'const s = root.querySelector(".sheet.credits"); return s ? s.textContent : "";');
     T.check('Credits: the sheet names the data the pictures of the Earth are made from, and closes', /WorldCover/.test(c) && /Natural Earth/.test(c));
+    T.check('Credits: OpenStreetMap (the roads of the tracks; the ODbL asks for it)', /© OpenStreetMap contributors/.test(c) && /Open Database License/.test(c), c.slice(0, 200));
     await done(page);
     T.check('the credits sheet is closed again', !(await ev(page, 'return !!root.querySelector(".sheet");')));
 
@@ -505,19 +504,22 @@ try {
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest: Trois-Rivières; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && g.name === 'Trois-Rivières', JSON.stringify(g));
+    // (the first real track of the list, the shortest: its id and its place's name from the menu's own list, which changes whenever a track becomes a
+    // test track or awaits the choice)
+    const first = await page.evaluate(() => { const id = Menu.debug().list[0], d = Core.TRACKS.find(t => t.id === id); return { id, test: !!d.test, name: ((d.en && d.en.name) || d.name).split(',')[0].trim() }; });
+    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && !first.test && g.name === first.name, JSON.stringify({ g, first }));
     g = await press(5);
     const next = g.name;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== 'Trois-Rivières' && next !== '' && g.name === 'Trois-Rivières', JSON.stringify({ next, g }));
+    T.check('pad, RB and LB: the next track and back', next !== first.name && next !== '' && g.name === first.name, JSON.stringify({ next, g, first }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, 'troisrivieres').catch(() => null);
+    await raceOn(page, first.id).catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === 'troisrivieres', JSON.stringify(r));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === first.id, JSON.stringify({ r, first }));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

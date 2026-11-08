@@ -436,6 +436,7 @@
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
       <div id="res-vid" class="res-vid off" data-act="vid-big"><video id="res-vid-v" muted loop playsinline aria-label="Najboljši trenutek"></video><div class="rv-txt"><b>Najboljši trenutek</b><span id="res-vid-cap"></span></div><button class="btn primary rv-share" data-act="vid-share" id="res-vid-share">Deli</button></div>
       <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
+      <p id="res-lpt" class="res-lpt off"></p>
       <div id="res-prvi" class="res-save res-prvi off"><span>Prva dirka je za tabo. Kaj zdaj?</span><div class="rs-b"><button class="btn mini" data-act="prvi-school">Šola vožnje</button><button class="btn mini" data-act="prvi-tracks">Proge</button><button class="btn mini primary" data-act="prvi-career">Kariera</button></div></div>
       <div id="res-save" class="res-save off"><span id="res-save-t"></span><div class="rs-b"><button class="btn mini" data-act="save-later">Ne zdaj</button><button class="btn mini primary" data-act="save-export">Shrani profil</button></div></div>
       <div class="btns horiz">
@@ -445,6 +446,7 @@
         <button class="btn off" data-act="replay-hl" id="res-hl">Najboljši trenutki</button>
         <button class="btn off" data-act="chal-send" id="res-chal">Izzovi prijatelja</button>
         <button class="btn off" data-act="chal-reply" id="res-reply">Pošlji odgovor</button>
+        <button class="btn off" data-act="lp-send" id="res-lp">Pošlji prijateljem</button>
         <button class="btn" data-act="car-view" id="res-view">Ogled vozila</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
       </div>
@@ -482,6 +484,19 @@
         <button class="btn ghost" data-act="chal-drop">Zavrni</button>
         <button class="btn ghost" data-act="chal-later">Kasneje</button>
         <button class="btn primary" data-act="chal-go">Sprejmi izziv</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-lp" class="screen">
+    <div class="panel small-panel lp-panel">
+      <h2>Lestvica prijateljev</h2>
+      <p id="lp-msg" class="desc"></p>
+      <p id="lp-more" class="desc small off"></p>
+      <div id="lp-nick-w" class="lp-nick off"><input type="text" id="lp-nick" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="send" aria-label="Vzdevek"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="lp-later">Pozneje</button>
+        <button class="btn primary" data-act="lp-send" id="lp-go">Pošlji svoje</button>
       </div>
     </div>
   </section>
@@ -654,9 +669,12 @@
 <script src="js/cars/vidra.js"></script>
 <script src="js/cars/tur.js"></script>
 <script src="js/cars/vran.js"></script>
+<script src="js/cars/cisterna.js"></script>
+<script src="js/cars/zrcalni.js"></script>
 <script src="js/core.js"></script>
 <script src="js/tex.js"></script>
 <script src="js/world.js"></script>
+<script src="js/world-zastave.js"></script>
 <script src="js/world-zivali.js"></script>
 <script src="js/world-ljudje.js"></script>
 <script src="js/world-ljudje2.js"></script>
@@ -707,7 +725,9 @@
 <script src="js/world-livorno.js"></script>
 <script src="js/world-gore.js"></script>
 <script src="js/world-mountbuller.js"></script>
+<script src="js/world-zaslon.js"></script>
 <script src="js/render.js"></script>
+<script src="js/render-vecer.js"></script>
 <script src="js/sfx.js"></script>
 <script src="js/input.js"></script>
 <script src="js/comm.js"></script>
@@ -765,6 +785,7 @@
 <script src="js/zabava/lov.js"></script>
 <script src="js/zabava/cesta.js"></script>
 <script src="js/shramba.js"></script>
+<script src="js/lestvica.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

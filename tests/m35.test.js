@@ -18,7 +18,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('35'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'newcastle'), T = new Core.Track(TD);
-check('35: on Newcastle, a real track', D.track === 'newcastle' && !!TD && !TD.test);
+check('35: on Newcastle (a test track since 6. 11. 2026: the mission stays there until the user moves it)', D.track === 'newcastle' && !!TD);
 const o = D.opts(D);
 check('its race: alone, one run, the quad on the MRAVLJA (75 km/h), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'mravlja' && o.playerModel.vLim === 75, JSON.stringify({ tt: o.tt, m: o.playerModel.id }));
 check('no time limit (the swimmer\'s strength is the clock); the stars in order', !D.limit && D.stars[0] < D.stars[1]);

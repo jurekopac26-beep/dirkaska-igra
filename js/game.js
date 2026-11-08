@@ -77,7 +77,7 @@
   if (!['race', 'tt', 'traffic', 'police', 'elim', 'lov'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
   if (S.lang !== 'en') S.lang = 'sl';
-  S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.menuCam = [1, 2, 3].includes(+S.menuCam) ? +S.menuCam : 1; delete S.mapV;   // (the race intro: Full, Short, Off; the music before the race; the camera of the menu's track step: 1 the map (the default), 2 the flyover, 3 the corner; mapV, its two versions before the three cameras, is gone)
+  S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.menuCam = [1, 2, 3, 4].includes(+S.menuCam) ? +S.menuCam : 1; delete S.mapV;   // (the race intro: Full, Short, Off; the music before the race; the camera of the menu's track step: 1 the map (the default), 2 the flyover, 3 the corner, 4 the friends' times (Lestvica prijateljev); mapV, its two versions before the three cameras, is gone)
   S.rivals = Number.isInteger(+S.rivals) && +S.rivals >= 0 && +S.rivals <= RIV_MAX ? +S.rivals : -1;   // (the menu's Opponents: 0..RIV_MAX rivals in a race, -1 the track's own field: see rivSet)
   // the menu (js/menu.js: the main menu and the single race, in a shadow root) replaces the title and track screens; ?menu=old (or tdgp-menu=old in the
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
@@ -459,8 +459,9 @@
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
     if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
-    if (name === 'results') { resSave(); resPrvi(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
+    if (name === 'results') { resSave(); resPrvi(); lpRes(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
     if (name === 'settings') profNote();
+    if (lpZ && (name === 'title' || name === 'track' || name === 'board')) { const z = lpZ; lpZ = null; setTimeout(() => lpOpen(z), 0); }   // (a friend's link opened in a race: now)
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
     $('touch').classList.toggle('off', !(bg === 'race' && name === 'none' && phase !== 'finish' && phase !== 'done'));
@@ -832,26 +833,29 @@
   /* ---------------- replay: the race recorded (every car 20 times a second, from the start to the results), watched after the finish
      with the camera the player drove with (then the TV cameras beside the track, behind a car, from above); any car followed, played
      faster or slower ---------------- */
-  const REC_DT = 0.05, REC_W = 7, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on, 8 the red flag out (the race stopped, the queue; with or without the safety car), 16 the red flag's restart behind it; 20 min at most)
+  const REC_DT = 0.05, REC_W = 7, REC_TL = 8, REC_TL2 = 9, REC_MAX = 20 * 60 * 20;   // (per car: x, y, z, h, vl, front wheel angle, bits: 1 braking, 2 put back on the road since the last sample (Race.putBack), 4 not racing (in the pit lane, finished, retired); the safety car's: 2 there, 4 its lamps on, 8 the red flag out (the race stopped, the queue; with or without the safety car), 16 the red flag's restart behind it; 20 min at most)
+  // (a race with semi-trailers, Core c.tl (docs/titan-cisterna.md): REC_TL numbers a car, the 8th its trailer's angle to the tractor (rad, c.tl.rel;
+  // none: 0), the replay poses the trailer on the kingpin (Core.tlPose); recd.w the recording's own width, a file's H.w: the older ones 7;
+  // a race with a road train (c.tl.next, docs/zrcalni-vlak.md): REC_TL2, the 9th its second tank's angle to the first one)
   // a very big field (more than REC_BIG cars, Nürburg's hundred): a sample every 2 x REC_DT (the replay goes between them as ever); any field at most
   // REC_BYTES of samples; and none more 3 s after every car has finished or retired (the results: nothing moves for the replay any more)
   const REC_BIG = 30, REC_BYTES = 32e6;
   let recd = null, replay = null;
-  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], pit: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; pit: the player's pit stops, recPit; trk: its track)
+  function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, w: race.cars.some(c => c.tl && c.tl.next) ? REC_TL2 : race.cars.some(c => c.tl) ? REC_TL : REC_W, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], pit: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; pit: the player's pit stops, recPit; trk: its track)
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
   function recStep() {
     const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX || R.bytes >= REC_BYTES) return;
     if (R.out == null && R.cars.every(c => race.isOut(c))) R.out = race.time; if (R.out != null && race.time > R.out + 3) return;   // (every car finished or retired 3 s ago: the recording is over)
     R.next = race.time + (R.n > REC_BIG ? 2 * REC_DT : REC_DT);
-    const n = R.n, f = new Float32Array(1 + (n + 1) * REC_W), LD = race._lod && race._lod.on; f[0] = race.time; R.bytes += f.byteLength;
+    const n = R.n, W = R.w, f = new Float32Array(1 + (n + 1) * W), LD = race._lod && race._lod.on; f[0] = race.time; R.bytes += f.byteLength;
     const put = (c, o, bits) => { const u = LD ? race.lodT(c, 1) : 1;   // (a car worked out at a lower rate, Core LOD: where it is by now, on along its way since its last step)
       if (u !== 1) { f[o] = c.px + (c.x - c.px) * u; f[o + 1] = (c.py || 0) + ((c.y || 0) - (c.py || 0)) * u; f[o + 2] = c.pz + (c.z - c.pz) * u; f[o + 3] = c.ph + Core.wrapPi(c.h - c.ph) * u; }
       else { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; }
-      f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; };
-    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * REC_W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
+      f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; if (W > REC_W) f[o + 7] = c.tl ? c.tl.rel : 0; if (W > REC_TL) f[o + 8] = c.tl && c.tl.next ? c.tl.next.rel : 0; };
+    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
     const S = race.fl && race.fl.sc, Rd = race.fl && race.fl.red, rb = Rd && Rd.st !== 'go' ? 8 : 0;
-    if (S && S.car) put(S.car, 1 + n * REC_W, 2 + (S.state === 'out' ? 4 : 0) + rb + (S.red ? 16 : 0)); else if (rb) f[1 + n * REC_W + 6] = rb;
+    if (S && S.car) put(S.car, 1 + n * W, 2 + (S.state === 'out' ? 4 : 0) + rb + (S.red ? 16 : 0)); else if (rb) f[1 + n * W + 6] = rb;
     R.frames.push(f); recPit(R); R.prev = race.time;
     if (!race.timeTrial && !(mp && mp.race)) recPasses(R);
   }
@@ -963,15 +967,15 @@
     replayStart({ keep: rpKeep(), wait: laps ? tr('Dirka čaka na pavzi · krog {0}/{1}', Core.clamp(P.lap, 1, race.laps), race.laps) : tr('Dirka čaka na pavzi') });
   }
   function rpKeep() {
-    const cars = recd.cars.map(c => ({ o: Object.assign({}, c), q: c.q && Object.assign({}, c.q), ws: c.ws && Array.from(c.ws) }));
+    const cars = recd.cars.map(c => ({ o: Object.assign({}, c), q: c.q && Object.assign({}, c.q), ws: c.ws && Array.from(c.ws), tl: c.tl && Object.assign({}, c.tl), tl2: c.tl && c.tl.next && Object.assign({}, c.tl.next) }));   // (tl: its semi-trailer, which the replay poses: Core.tlPose)
     return { cars, sc: race.fl ? race.fl.sc : null, red: race.fl ? race.fl.red : null };
   }
   function rpBack(K) {
     recd.cars.forEach((c, j) => {
-      const { o, q, ws } = K.cars[j];
+      const { o, q, ws, tl, tl2 } = K.cars[j];
       if (!('rl' in o)) delete c.rl;   // (a roll the replay posed)
       if (!('rpPit' in o)) delete c.rpPit;   // (the pit state the replay posed, rpPit: the race's own again for the crew and the pit camera)
-      Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i];
+      Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i]; if (tl && c.tl) Object.assign(c.tl, tl); if (tl2 && c.tl && c.tl.next) Object.assign(c.tl.next, tl2);
     });
     if (race.fl) { race.fl.sc = K.sc; race.fl.red = K.red; }
   }
@@ -1030,7 +1034,7 @@
   function rpWhere(t, k) {   // a car at time t as recorded (k: the player's when not given, a flag of the race): its lap, metres from the start, where on the map
     const F = recd && recd.frames; if (!F || !F.length) return null;
     if (k == null) k = Math.max(0, recd.cars.indexOf(race.player));
-    const f = F[rpIdx(F, t)], o = 1 + k * REC_W, x = f[o], z = f[o + 2];
+    const f = F[rpIdx(F, t)], o = 1 + k * recd.w, x = f[o], z = f[o + 2];
     return { lap: rpLap(recd.cars[k], t), s: rpS(track.query(x, z, -1, {})), x, z };
   }
   // the version (js/game.js's stamp, which the publish step puts on the page: tools/stamp.js; node tools/stamp.js --find <stamp> finds its
@@ -1100,8 +1104,8 @@
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
-    const H = Object.assign(rpMeta(), { w: REC_W, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? { fin: 1, ft: c.finishTime } : {})),
+    const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
+      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
@@ -1109,7 +1113,8 @@
   function rrpOpen(H, frames) {
     const d = Core.TRACKS.find(x => x.id === H.track); if (!d) return 'proge ' + H.track + ' ta različica igre nima';
     if (mp && mp.race) return 'dirka s prijateljem še teče';
-    if (H.w !== REC_W) frames = frames.map(f => { const g = new Float32Array(1 + (H.n + 1) * REC_W); g[0] = f[0]; for (let k = 0; k <= H.n; k++) for (let j = 0; j < Math.min(H.w, REC_W); j++) g[1 + k * REC_W + j] = f[1 + k * H.w + j]; return g; });   // (another width of a car: what both have)
+    const W = H.w >= REC_TL2 ? REC_TL2 : H.w >= REC_TL ? REC_TL : REC_W;   // (the width kept: with the trailers' angles (a road train's two) or without)
+    if (H.w !== W) frames = frames.map(f => { const g = new Float32Array(1 + (H.n + 1) * W); g[0] = f[0]; for (let k = 0; k <= H.n; k++) for (let j = 0; j < Math.min(H.w, W); j++) g[1 + k * W + j] = f[1 + k * H.w + j]; return g; });   // (another width of a car: what both have)
     if (replay) { Napake.close(); hlOff(); replay = null; }
     if (bg === 'race') toTitle();
     Render.setAtmos({ season: H.season || 'summer', tod: H.tod || 'day' }, true);
@@ -1122,14 +1127,14 @@
       race.fl = !track.open && cars.length > 1 ? { yel: [], ev: 0, evK: '', sc: null, scUsed: false, pev: 0, pevK: '' } : null;   // (the safety car, where it was out)
       Render.setStorm(false); Render.setLine(false); Render.setMarks(null); Render.attachRace(race); Render.resetCam();
       bg = 'race'; phase = 'done'; phaseT = 0; paused = false; school = null; qual = null; champRun = false;
-      recd = { cars, n: cars.length, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
+      recd = { cars, n: cars.length, w: W, frames, next: Infinity, prev: -1, ev: H.ev || [], pos: null, last: new Map(), bytes: 0, out: race.time, flags: H.flags || [], file: H };
       replayStart();
     });
     return '';
   }
   const NK_HOOKS = {
     replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
-    inLoops: rpInLoops, track: () => track, recW: REC_W, dev: (on) => { PH.dev = !!on; },
+    inLoops: rpInLoops, track: () => track, get recW() { return recd ? recd.w : REC_W; }, dev: (on) => { PH.dev = !!on; },
     kje: () => (race && bg === 'race' && !(mp && mp.race) ? { t: race.time, track: track.def.id, rec: recd, lap: rpLap(race.player, race.time), s: rpS(race.player.q) } : null),   // (the race now: a note of the log, js/napake.js)
     where: rpWhere, meta: rpMeta, map: rpMap, shotAt: rpShotAt, flag: rpFlag, flags: () => (recd ? recd.flags : []),
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
@@ -1137,6 +1142,7 @@
     span: () => replay && recd && recd.frames.length ? [recd.frames[0][0], replay.t1] : null,
     shot: (max) => Render.snapshot(recd.cars[replay.k], replay.cam, max),
     rrp: rrpOf, open: rrpOpen,
+    carName: (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M).name : ''; },   // (the lists of recordings and collections: the player's car; a retired model's heir; a car the game does not have: none)
     view: (k, cam) => { const P = replay; if (!P) return; if (k >= 0 && k < recd.n) P.k = k; if (RP_CAM[cam]) P.cam = cam; Render.resetCam(); replayUI(); },   // (tools/posnetek.mjs: the car followed, the camera)
     // Zadnji posnetki: the race whose recording may be kept (not with a friend, not the new map's free driving, not the driving school's
     // lesson, which has no replay, not a file opened) and whether it is done: its player over the finish (caught by the police: no), or a
@@ -1183,8 +1189,8 @@
     const up = (e) => { if (!drag || e.pointerId !== drag.id) return; if (replay) { replay.play = drag.play && replay.t < replay.t1; replayUI(); } drag = null; };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
   }
-  // a car where the recording has it at time t (between two samples)
-  function rpPose(c, A, B, o, u) {
+  // a car where the recording has it at time t (between two samples); W: the recording's width (its semi-trailer's angle, REC_TL)
+  function rpPose(c, A, B, o, u, W) {
     const L = (j) => A[o + j] + (B[o + j] - A[o + j]) * u;
     c.x = c.px = L(0); c.y = c.py = L(1); c.z = c.pz = L(2); c.h = c.ph = A[o + 3] + Core.wrapPi(B[o + 3] - A[o + 3]) * u;
     c.vl = L(4); c.delta = L(5); c.inBrk = A[o + 6] & 1 ? 1 : 0; c.vx = Math.cos(c.h) * c.vl; c.vz = Math.sin(c.h) * c.vl;
@@ -1193,6 +1199,7 @@
     const gv = Math.abs(c.vl) / 14;   // (the gear and the revs as they might have been: a gear every 14 m/s; the cockpit's instruments)
     c.w = 0; c.beta = 0; c.air = 0; c.axF = 0; c.gear = c.vl < -0.5 ? -1 : Math.min(6, 1 + Math.floor(gv)); c.rpm = (c.m.redline || 7000) * (c.gear >= 6 ? Math.min(0.95, 0.5 + 0.08 * (gv - 5)) : 0.5 + 0.42 * (gv % 1)); c.inHand = 0; c.roadY = c.y; c.onCurb = false; if (c.ws) c.ws.fill(0); c.nvY = c.nvR = c.nvP = 0;   // (no kerb under a wheel, as the race left it: the view behind or over the car does not tremble)
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
+    if (c.tl) Core.tlPose(c, W > REC_W ? A[o + 7] + (B[o + 7] - A[o + 7]) * u : 0, track, W > REC_TL ? A[o + 8] + (B[o + 8] - A[o + 8]) * u : 0);   // (its semi-trailer on the kingpin at its angle; an older recording: straight behind)
   }
   // the player's pit state where the recording has it at time t (recPit's log): c.rpPit, what the renderer reads for the crew and the pit
   // stop's film camera in the replay (Render crewLogic, pitCine); the race's own fields stay as the race left them (it goes on after it)
@@ -1208,7 +1215,7 @@
   }
   // every recorded car (and the safety car, where it was out) where the recording has it at time t; i: a sample near it to search from
   function rpAt(k, t, out) {   // where car k was at time t (between the recording's frames): x, z and its speed, for the people by the road
-    const F = recd.frames, i = rpIdx(F, t), A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0, o = 1 + k * REC_W;
+    const F = recd.frames, i = rpIdx(F, t), A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0, o = 1 + k * recd.w;   // (recd.w: the recording's own width, with the trailers' angles 8)
     out.x = A[o] + (B[o] - A[o]) * u; out.z = A[o + 2] + (B[o + 2] - A[o + 2]) * u; out.v = Math.abs(A[o + 4] + (B[o + 4] - A[o + 4]) * u);
     return out;
   }
@@ -1216,9 +1223,9 @@
     const P = replay, R = recd, F = R.frames;
     while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
-    for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * REC_W, u);
+    for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * R.w, u, R.w);
     rpPit(t);   // (the player's pit stop where the recording has it, for the crew and the film camera)
-    const o = 1 + R.n * REC_W, scOn = (A[o + 6] & 2) !== 0;   // (the safety car, where it was out: its own car, posed like the others)
+    const o = 1 + R.n * R.w, scOn = (A[o + 6] & 2) !== 0;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
       if (scOn) { if (!P.sc) P.sc = new Core.Car(Core.MODELS[1], { id: 0, name: 'Varnostni avto', color: 0xdfe3e8, phys: physOf() }); P.sc.sc = true; P.sc.num = 0; rpPose(P.sc, A, B[o + 6] & 2 ? B : A, o, u); race.fl.sc = { car: P.sc, state: A[o + 6] & 4 ? 'out' : 'in', red: !!(A[o + 6] & 16) }; }
       else race.fl.sc = null;
@@ -1367,10 +1374,17 @@
   }
   // from: 'pause', 'replay' or 'results' (the race stands still meanwhile); view (Ogled vozila on the pause and the results): the player's
   // car up close (the wreck seen as it is), else the camera starts where the game's was
+  // the point the photo mode looks at and goes round: the car's middle; a semi-trailer's rig (Core c.tl, docs/titan-cisterna.md) the middle
+  // of all of it, the tractor's nose to the trailer's tail (len: that length, straight; ht, wid: the taller, the wider of the two)
+  function phMid(c) {
+    const T = c.tl; if (!T) return { x: c.x, z: c.z, len: c.m.len, wid: c.m.wid, ht: 0 };
+    const E = T.next || T, hl = c.m.len / 2, tl = E.m.len / 2, nx = c.x + Math.cos(c.h) * hl, nz = c.z + Math.sin(c.h) * hl, ex = E.x - Math.cos(E.h) * tl, ez = E.z - Math.sin(E.h) * tl;   // (E: a road train's second tank, docs/zrcalni-vlak.md)
+    return { x: (nx + ex) / 2, z: (nz + ez) / 2, len: c.m.len + T.back, wid: Math.max(c.m.wid, T.D.wid), ht: T.D.ht };
+  }
   function photoStart(from, view) {
     const car = from === 'replay' && replay ? recd.cars[replay.k] : race && race.player; if (!car) return;
     if (from === 'replay') { replay.play = false; replayUI(); $('replay-ui').classList.add('off'); }
-    const cm = Render.camera, cy = (car.y || 0) + 0.7, dx = cm.position.x - car.x, dz = cm.position.z - car.z, dy = cm.position.y - cy, d = Math.hypot(dx, dy, dz);
+    const cm = Render.camera, cy = (car.y || 0) + 0.7, mid = phMid(car), dx = cm.position.x - mid.x, dz = cm.position.z - mid.z, dy = cm.position.y - cy, d = Math.hypot(dx, dy, dz);
     const inCar = d < 3;   // (from the cockpit: behind the car, a little above it)
     photo = { from, car, yaw: inCar ? car.h + Math.PI + 0.5 : Math.atan2(dz, dx), pitch: inCar ? 0.22 : Core.clamp(Math.asin(dy / Math.max(1, d)), 0.03, 1.4), dist: inCar ? 8 : Core.clamp(d, 4, 40),
       lens: 1, filt: 0, blur: false, hide: false, ptrs: new Map(), pinch: 0, moved: 0, prev: Render.cam.shot || null, shot: { sky: true, floor: true, near: 0.3, blur: 0 }, wasPaused: paused, view: !!view };
@@ -1380,16 +1394,16 @@
       // where no other car stands in between (in a pack, the side with fewer); from behind when the car stands across the road and its
       // front is no better)
       const M = car.m, a = 0.62, pitch = 0.3, up = window.innerWidth < window.innerHeight, lens = up ? 0 : 2, tv = Math.tan(PH_LENS[lens][1] * Math.PI / 360);
-      const ht = (M.def && M.def.parts && M.def.parts.ht) || 1.4, asp = Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
-      photo.pitch = pitch; photo.lens = lens; photo.dist = Core.clamp(viewFit(M.len, M.wid, ht, a, pitch, tv, asp, up ? 0.92 : 0.66, up ? 0.8 : 0.66), 4, 40);
+      const ht = Math.max((M.def && M.def.parts && M.def.parts.ht) || 1.4, mid.ht), asp = Math.max(0.3, window.innerWidth / Math.max(1, window.innerHeight));
+      photo.pitch = pitch; photo.lens = lens; photo.dist = Core.clamp(viewFit(mid.len, mid.wid, ht, a, pitch, tv, asp, up ? 0.92 : 0.66, up ? 0.8 : 0.66), 4, 40);
       const T = race.track, q = {}, r = Math.cos(pitch) * photo.dist; let best = Infinity;
       const inWay = (cx, cz) => {   // (how many other cars stand with their middle in the line of sight, between the camera and the car's nose)
-        const ex = car.x - cx, ez = car.z - cz, e2 = ex * ex + ez * ez, t1 = 1 - M.len * 0.5 / r; let n = 0;
+        const ex = mid.x - cx, ez = mid.z - cz, e2 = ex * ex + ez * ez, t1 = 1 - mid.len * 0.5 / r; let n = 0;
         for (const o of race.cars) { if (o === car) continue; const t = ((o.x - cx) * ex + (o.z - cz) * ez) / e2;
           if (t > 0 && t < t1 && Math.hypot(o.x - cx - t * ex, o.z - cz - t * ez) < o.m.wid * 0.5 + 0.5) n++; }
         return n; };
       for (const [y, pen] of [[car.h + a, 0], [car.h - a, 0], [car.h + Math.PI - a, 3], [car.h + Math.PI + a, 3]]) {
-        const cx = car.x + Math.cos(y) * r, cz = car.z + Math.sin(y) * r; T.query(cx, cz, car.q ? car.q.i : -1, q);
+        const cx = mid.x + Math.cos(y) * r, cz = mid.z + Math.sin(y) * r; T.query(cx, cz, car.q ? car.q.i : -1, q);
         const k = Math.abs(q.d) + pen + 5 * inWay(cx, cz); if (k < best) { best = k; photo.yaw = y; }
       }
     }
@@ -1404,9 +1418,9 @@
     else { paused = P.wasPaused; showScreen(P.from === 'results' ? 'results' : 'pause'); }
   }
   function photoPose() {
-    const P = photo, c = P.car, S0 = P.shot, cy = (c.y || 0) + 0.7, cp = Math.cos(P.pitch);
-    S0.px = c.x + Math.cos(P.yaw) * cp * P.dist; S0.pz = c.z + Math.sin(P.yaw) * cp * P.dist; S0.py = cy + Math.sin(P.pitch) * P.dist;
-    S0.tx = c.x; S0.ty = cy; S0.tz = c.z; S0.fov = PH_LENS[P.lens][1]; S0.fogD = Math.max(70, P.dist * 1.6); S0.blur = P.blur ? 0.9 : 0;
+    const P = photo, c = P.car, S0 = P.shot, cy = (c.y || 0) + 0.7, cp = Math.cos(P.pitch), m = phMid(c);
+    S0.px = m.x + Math.cos(P.yaw) * cp * P.dist; S0.pz = m.z + Math.sin(P.yaw) * cp * P.dist; S0.py = cy + Math.sin(P.pitch) * P.dist;
+    S0.tx = m.x; S0.ty = cy; S0.tz = m.z; S0.fov = PH_LENS[P.lens][1]; S0.fogD = Math.max(70, P.dist * 1.6); S0.blur = P.blur ? 0.9 : 0;
   }
   function photoUI() {
     const P = photo; if (!P) return;
@@ -1649,28 +1663,32 @@
   // replays as a see-through car (Render.setGhost) in the next runs, on the race clock. Only drawn: it never touches the race.
   // On a circuit every flying lap is sampled the same way on the lap clock (from the line: the qualifying lap, a race's laps from the
   // second on); the best one is kept (lap: 1) and replays on the lap clock during the next flying laps, from the next lap on.
-  // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
-  // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad)
+  // Stored: { v, dt, n, t (the run's time), car, color, stripe, lap?, ch?, q0 [x, y, z in cm], d: base64 of Int16 [n x 7] }: per sample the
+  // x, y, z steps from the previous sample (cm), heading, steer, pitch and roll (1e-4 rad); a car with a semi-trailer (Core c.tl, ghCh) ch 8:
+  // the 8th its trailer's angle to the tractor (1e-4 rad); a road train (c.tl.next) ch 9: the 9th its second tank's angle to the first one
   const GH_DT = 0.1, GH_MAX = 12000, GH_CH = 7, GH_V = 1, GH_BYTES = 600000;   // sample interval (s), max samples (20 min), channels, format, max stored size
   const ghKey = (id) => 'tdgp-ghost-' + recKey(id);
   let ghRec = null, ghPlay = null, ghLap = null, ghFr = null;   // (ghFr: a friend's shared ghost of this track { name, t, g })   // the run being recorded { n, f: Float32Array }, the best run being replayed { n, t, M, color, stripe, f, lap }, a circuit's lap being recorded { n, f, t0, lap, on }
-  function ghPose(P, f, k, a) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k
-    const o = k * GH_CH, lat = clamp(P.w * P.speed, -16, 16);
+  const ghCh = (c) => c && c.tl ? (c.tl.next ? GH_CH + 2 : GH_CH + 1) : GH_CH;   // (a ghost's channels: a semi-trailer's angle too; a road train's (c.tl.next, ch 9) its second tank's to the first one, docs/zrcalni-vlak.md)
+  function ghPose(P, f, k, a, ch) {   // the car's pose at a (0 = previous physics step, 1 = this one) into f at sample k (ch: the ghost's channels, GH_CH if none given)
+    const n = ch || GH_CH, o = k * n, lat = clamp(P.w * P.speed, -16, 16);
     f[o] = P.px + (P.x - P.px) * a; f[o + 1] = P.py + (P.y - P.py) * a; f[o + 2] = P.pz + (P.z - P.pz) * a; f[o + 3] = P.ph + Core.wrapPi(P.h - P.ph) * a;
     f[o + 4] = P.delta || 0; f[o + 5] = P.air ? Math.atan2(P.vy, Math.max(Math.abs(P.vl), 6)) * 0.8 : Math.atan(P.gradeNow || 0); f[o + 6] = clamp(-lat * 0.0042, -0.06, 0.06);
+    if (n > GH_CH) { const T = P.tl, r0 = T ? Core.wrapPi(T.ph - P.ph) : 0; f[o + 7] = T ? r0 + (T.rel - r0) * a : 0; }
+    if (n > GH_CH + 1) { const T = P.tl, T2 = T && T.next, r0 = T2 ? Core.wrapPi(T2.ph - T.ph) : 0; f[o + 8] = T2 ? r0 + (T2.rel - r0) * a : 0; }
   }
   function ghSample(P) {   // after each physics step of a time trial, until the finish
     if (!ghRec || ghRec.done || race.state !== 'racing' || phase !== 'racing') return;
     const t1 = race.time, t0 = t1 - STEP;
-    while (ghRec.n < GH_MAX && ghRec.n * GH_DT <= t1 + 1e-9) { ghPose(P, ghRec.f, ghRec.n, clamp((ghRec.n * GH_DT - t0) / STEP, 0, 1)); ghRec.n++; }
-    if (P.finished) { if (ghRec.n < GH_MAX) { ghPose(P, ghRec.f, ghRec.n, 1); ghRec.n++; } ghRec.done = true; }   // (the last sample: just past the line)
+    while (ghRec.n < GH_MAX && ghRec.n * GH_DT <= t1 + 1e-9) { ghPose(P, ghRec.f, ghRec.n, clamp((ghRec.n * GH_DT - t0) / STEP, 0, 1), ghRec.ch); ghRec.n++; }
+    if (P.finished) { if (ghRec.n < GH_MAX) { ghPose(P, ghRec.f, ghRec.n, 1, ghRec.ch); ghRec.n++; } ghRec.done = true; }   // (the last sample: just past the line)
   }
   function ghEncode(G) {
-    const n = G.n, f = G.f, a = new Int16Array(n * GH_CH), q0 = [Math.round(f[0] * 100), Math.round(f[1] * 100), Math.round(f[2] * 100)], q = q0.slice();
+    const n = G.n, f = G.f, ch = G.ch || GH_CH, a = new Int16Array(n * ch), q0 = [Math.round(f[0] * 100), Math.round(f[1] * 100), Math.round(f[2] * 100)], q = q0.slice();
     const i16 = (v) => Math.max(-32767, Math.min(32767, Math.round(v)));
-    for (let k = 0; k < n; k++) { const o = k * GH_CH;
+    for (let k = 0; k < n; k++) { const o = k * ch;
       for (let c = 0; c < 3; c++) { const v = Math.round(f[o + c] * 100), d = v - q[c]; if (Math.abs(d) > 32767) return null; a[o + c] = d; q[c] = v; }   // (a jump of over 327 m: not a drive)
-      a[o + 3] = i16(Core.wrapPi(f[o + 3]) * 1e4); for (let c = 4; c < 7; c++) a[o + c] = i16(f[o + c] * 1e4); }
+      a[o + 3] = i16(Core.wrapPi(f[o + 3]) * 1e4); for (let c = 4; c < ch; c++) a[o + c] = i16(f[o + c] * 1e4); }
     const b = new Uint8Array(a.buffer); let s = '';
     for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
     return { q0, d: btoa(s) };
@@ -1679,7 +1697,7 @@
     try { localStorage.removeItem(ghKey(id)); } catch (_) { }
     if (!G || G.n < 2) return;
     const M = Core.MODELS[S.car], e = ghEncode(G); if (!e) return;
-    const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[colNow()], stripe: race.player.stripe !== false, lap: lap ? 1 : undefined, q0: e.q0, d: e.d,
+    const j = JSON.stringify({ v: GH_V, dt: GH_DT, n: G.n, t: time, car: M.id, color: PLAYER_COLORS[colNow()], stripe: race.player.stripe !== false, lap: lap ? 1 : undefined, ch: G.ch > GH_CH ? G.ch : undefined, q0: e.q0, d: e.d,
       cond: { rain: race.rain ? 1 : 0, tod: race.endu ? 'day' : S.tod, season: S.season, upg: Object.assign({}, upgOf(M.id)), setup: Object.assign({}, setupOf(id)) } });   // (how the run was driven: a challenge takes it along)
     if (j.length > GH_BYTES) return;
     Shramba.keep(ghKey(id), j);   // (a full storage: older ghosts make room for the new best)
@@ -1691,12 +1709,13 @@
   // a stored ghost ({ v, dt, n, t, car, color, stripe, lap?, q0, d }): checked and unpacked to its poses (null: not a ghost of this game)
   function ghParse(o) {
     if (!isObj(o) || o.v !== GH_V || o.dt !== GH_DT || !posNum(o.t) || !(o.n >= 2 && o.n <= GH_MAX) || typeof o.d !== 'string' || !Array.isArray(o.q0) || o.q0.length !== 3) return null;
+    const ch = o.ch == null ? GH_CH : o.ch; if (ch !== GH_CH && ch !== GH_CH + 1 && ch !== GH_CH + 2) return null;   // (ch 8: with a semi-trailer's angle; 9: a road train's two)
     let b; try { b = atob(o.d); } catch (_) { return null; }
-    if (b.length !== o.n * GH_CH * 2) return null;
+    if (b.length !== o.n * ch * 2) return null;
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
-    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * GH_CH), q = o.q0.map(v => +v || 0);
-    for (let k = 0; k < o.n; k++) { const i = k * GH_CH; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < 7; c++) f[i + c] = a[i + c] / 1e4; }
-    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, lap: o.lap === 1 };
+    const a = new Int16Array(u.buffer), f = new Float32Array(o.n * ch), q = o.q0.map(v => +v || 0);
+    for (let k = 0; k < o.n; k++) { const i = k * ch; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < ch; c++) f[i + c] = a[i + c] / 1e4; }
+    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
   }
   function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
     let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
@@ -1705,8 +1724,9 @@
   }
   function ghStart() {   // newRace: record every time trial and every flying lap on a circuit (never online); replay the best one when there is one
     const on = mp && mp.race, tt = race.timeTrial && !on, circ = !race.timeTrial && !on;
-    ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), done: false } : null;
-    ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * GH_CH), t0: 0, lap: -1, on: false } : null;
+    const ch = ghCh(race.player);   // (a semi-trailer: its angle too)
+    ghRec = tt ? { n: 0, f: new Float32Array(GH_MAX * ch), ch, done: false } : null;
+    ghLap = circ ? { n: 0, f: new Float32Array(GH_MAX * ch), ch, t0: 0, lap: -1, on: false } : null;
     const R0 = tt ? rec(track.def.id) : null;
     ghPlay = race.chal ? null : R0 && R0.bestTime ? ghLoad(track.def.id, R0.bestTime) : circ ? ghLoad(track.def.id, 0, true) : null;   // (a challenge: only the friend's)
     const F = tt || circ ? ghFriend(track.def.id) : null, C = race.chal; ghFr = F && F.g.lap === !tt && (!C || (C.ghost && Math.abs(F.t - C.time) < 0.001)) ? F : null;   // (a challenge: its own ghost only, if it came with it)   // (a friend's time trial run in a time trial, a friend's lap on a circuit's flying laps)
@@ -1773,25 +1793,25 @@
     }
     if (!G.on) return;
     const t1 = race.time, tp = t1 - STEP;
-    while (G.n < GH_MAX && G.t0 + G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.t0 + G.n * GH_DT - tp) / STEP, 0, 1)); G.n++; }
+    while (G.n < GH_MAX && G.t0 + G.n * GH_DT <= t1 + 1e-9) { ghPose(P, G.f, G.n, clamp((G.t0 + G.n * GH_DT - tp) / STEP, 0, 1), G.ch); G.n++; }
   }
   function ghLapEnd(G, P, t) {   // a flying lap is over: the best one so far (the first, or faster than the ghost) is stored and replays from the next lap on
-    if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1); G.n++; }   // (the last sample: just past the line)
-    if (race.chal) { if (G.n >= 2) race.chal.mine = { n: G.n, f: G.f.slice(0, G.n * GH_CH), t }; return; }   // (a challenge's lap: for the reply, not the player's own ghost)
+    if (G.n < GH_MAX) { ghPose(P, G.f, G.n, 1, G.ch); G.n++; }   // (the last sample: just past the line)
+    if (race.chal) { if (G.n >= 2) race.chal.mine = { n: G.n, f: G.f.slice(0, G.n * G.ch), ch: G.ch, t }; return; }   // (a challenge's lap: for the reply, not the player's own ghost)
     if (G.n < 2 || (ghPlay && ghPlay.t <= t)) return;
-    const f = G.f.slice(0, G.n * GH_CH);
-    ghPlay = { n: G.n, t, M: Core.MODELS[S.car], color: PLAYER_COLORS[colNow()], stripe: P.stripe !== false, f, lap: true };
-    ghWrite(track.def.id, { n: G.n, f }, t, true);
+    const f = G.f.slice(0, G.n * G.ch);
+    ghPlay = { n: G.n, t, M: Core.MODELS[S.car], color: PLAYER_COLORS[colNow()], stripe: P.stripe !== false, f, ch: G.ch, lap: true };
+    ghWrite(track.def.id, { n: G.n, f, ch: G.ch }, t, true);
   }
-  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
+  const _gp = { M: null, color: 0, stripe: true, x: 0, y: 0, z: 0, h: 0, d: 0, p: 0, r: 0, tl: 0, op: 1 }, _gpF = Object.assign({ tag: '' }, _gp);
   function ghAt(G, alpha, g) {   // the ghost G where its run was at this moment of the race clock (a circuit's lap: of the lap clock), into g; null while it is not on
     const P = race.player;
     if (G.lap && (P.finished || !(P.lap >= (race.quali ? 1 : 2)))) return null;   // (a circuit: only while a flying lap is under way)
     const t = Math.max(0, race.time - (1 - clamp(alpha, 0, 1)) * STEP - (G.lap ? P.lapStart : 0)), u = t / GH_DT, k = Math.min(G.n - 2, Math.floor(u)), a = clamp(u - k, 0, 1), end = (G.n - 1) * GH_DT;
     if (t > end + 0.6) return null;   // the run is over (it ends just past the line)
-    const f = G.f, o = k * GH_CH, n2 = o + GH_CH, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
+    const f = G.f, ch = G.ch || GH_CH, o = k * ch, n2 = o + ch, L = (c) => f[o + c] + (f[n2 + c] - f[o + c]) * a;
     g.M = G.M; g.color = G.color; g.stripe = G.stripe;
-    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6);
+    g.x = L(0); g.y = L(1); g.z = L(2); g.h = f[o + 3] + Core.wrapPi(f[n2 + 3] - f[o + 3]) * a; g.d = L(4); g.p = L(5); g.r = L(6); g.tl = ch > GH_CH ? L(7) : 0; g.tl2 = ch > GH_CH + 1 ? L(8) : 0;   // (tl: a semi-trailer's angle)
     const dd = Math.hypot(g.x - P.x, g.z - P.z);
     g.op = clamp((dd - 1.5) / 5, 0.3, 1) * clamp(t / 0.4, 0, 1) * clamp((end + 0.6 - t) / 0.6, 0, 1);   // fainter right on top of the player; fades in at the start and out past the line
     return g;
@@ -1985,7 +2005,7 @@
   const chalCan = () => !!track && !school && !(mp && mp.race) && !race.chal && (race.timeTrial || (!track.def.open && !race.pol)) && !!ghOwn(track.def.id);
   function chalFinish() {   // the results of a challenge: the two times side by side; again, or the player's run back to the friend
     const C = race.chal, P = race.player, t = chalTime(), d = t - C.time, won = d < 0;
-    if (!C.lap && ghRec && ghRec.done && ghRec.n >= 2) C.mine = { n: ghRec.n, f: ghRec.f.slice(0, ghRec.n * GH_CH), t };   // (a time trial's run: the recording)
+    if (!C.lap && ghRec && ghRec.done && ghRec.n >= 2) C.mine = { n: ghRec.n, f: ghRec.f.slice(0, ghRec.n * ghRec.ch), ch: ghRec.ch, t };   // (a time trial's run: the recording)
     ghRec = null;
     const M = modelById(C.car), rows = [{ name: C.name, time: C.time }, { me: true, name: tr('Ti'), time: t }].sort((a, b) => a.time - b.time), best = rows[0].time;
     $('res-head').classList.add('tt'); $('res-tt').classList.add('off');
@@ -2025,9 +2045,157 @@
   function chalReply() {   // the challenge's run back to the friend: the player's run in the same car and conditions
     const C = race && race.chal; if (!C || !C.mine) return;
     const e = ghEncode(C.mine); if (!e) return;
-    const ghost = { v: GH_V, dt: GH_DT, n: C.mine.n, t: C.mine.t, car: C.car, color: C.color, stripe: true, lap: C.lap ? 1 : undefined, q0: e.q0, d: e.d, cond: C.cond };
+    const ghost = { v: GH_V, dt: GH_DT, n: C.mine.n, t: C.mine.t, car: C.car, color: C.color, stripe: true, lap: C.lap ? 1 : undefined, ch: C.mine.ch > GH_CH ? C.mine.ch : undefined, q0: e.q0, d: e.d, cond: C.cond };
     const title = tr('Izziv · {0} · {1}', Lang.of(track.def, 'name'), fmt(C.mine.t));
     return (C.lap ? Promise.resolve([]) : mkShare(C.track, C.cond.season)).then(marks => chalLink({ app: 'apex-racing', kind: 'challenge', v: 1, track: C.track, name: S.name, time: C.mine.t, lap: C.lap ? 1 : 0, car: C.car, color: C.color, cond: C.cond, ghost, marks }, title));   // (the player's tyre marks back too, as many as fit)
+  }
+
+  /* ---------------- the friends' leaderboard (Lestvica prijateljev: js/lestvica.js, docs/lestvica-prijateljev.md) ----------------
+     The player's best times go to friends as a link (#lestvica=...: the player's signed packet and the friends' newest, as many as fit);
+     a friend's link opened, their times are kept, the best of each per record key (recKey). The menu's track step shows them (its
+     fourth camera, Friends: MenuBridge.friends), the Leaderboard has them by each track (and the list of friends, Odstrani), the results
+     the player's place among them. The player's own times are read from the records as they are (S.mine: the day and the car each was
+     first seen with). A friend's time faster than the track allows (Lestvica.bound) is not shown. Without WebCrypto or the compression
+     streams (an old browser, a page not on https): none of it. */
+  const LPX = typeof Lestvica !== 'undefined' && Lestvica.can() ? Lestvica : null;
+  if (LPX) LPX.set({ keep: (k, v) => Shramba.keep(k, v) });
+  let lp = null, lpTab = null, lpRet = null, lpNext = null, lpList = false, lpZ = null;   // the store; key -> { id, mode, kind, wet, phys }; the screen s-lp goes back to; the key to show after it; the Leaderboard's list of friends; a link opened in a race (lpHash)
+  const lpB = new Map();   // key -> the fastest its run could be (s), once its track is built
+  const lpS = () => lp || (lp = LPX.load());
+  const lpTable = () => lpTab || (lpTab = LPX.keyTable(Core.TRACKS));
+  const lpDefName = (n) => n === 'Igralec' || n === 'Player';
+  const lpCar = (id) => { const M = id ? Core.MODELS.find(m => m.id === id) : null; return M ? Core.heirOf(M).name : ''; };
+  const lpSec = (ms) => ms >= 60000 ? fmt(ms / 1000) : (ms / 1000).toLocaleString(Lang.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' s';
+  const lpDate = (day) => day > 0 ? new Date(LPX.dateOf(day)).toLocaleDateString(Lang.locale, { timeZone: 'UTC' }) : '–';
+  function lpMine(cars) {   // the player's times: key -> [ms, day, car] (cars: key -> the car of a record set just now)
+    const S0 = lpS(), r = LPX.ownTimes(S0, records.tracks, lpTable(), { now: Date.now(), cars });
+    if (r.changed) LPX.save(S0);
+    return r.t;
+  }
+  function lpBound(k, build) {   // the fastest a key's run could be (s); 0 while not known (build: the track built for it, else only one built already)
+    if (lpB.has(k)) return lpB.get(k);
+    const I = lpTable().get(k); if (!I || (!build && !trackCache.has(I.id))) return 0;
+    const b = LPX.bound(getTrack(I.id), I, Core.MODELS); lpB.set(k, b); return b;
+  }
+  function lpRowsOf(k, build) {   // the table of a key: the friends' times and the player's, the fastest first ([{ id, name, ms, day, car, me }]);
+    // build false: a track not built yet is not built for it, its friends' times wait for the check (the rows' wait)
+    const S0 = lpS(), m = lpMine()[k], any = Object.keys(S0.friends).some(id => S0.friends[id].t[k]), me = m ? { name: S.name, ms: m[0], day: m[1], car: m[2] } : null;
+    const b = any ? lpBound(k, build !== false) : 0;
+    if (any && build === false && !lpB.has(k)) return Object.assign(LPX.rows({ friends: {} }, k, me, 0), { wait: true });
+    return LPX.rows(S0, k, me, b);
+  }
+  // the menu's Friends view of a track in the way it is driven now: { n (friends' times), friends, place: { at, n } (the player's, with a
+  // friend's time beside it), rows: [{ at, name, car, time, gap, me }], wait (build false and the track not built yet: the friends'
+  // times not checked, not in it) }; null without the leaderboard
+  function lpFriends(d0, build) {
+    if (!LPX || !d0) return null;
+    const d = pkRoadDef(d0), k = recKey(d.id); if (!lpTable().has(k)) return null;
+    const rs = lpRowsOf(k, build), P = LPX.place(rs), first = rs.length ? rs[0].ms : 0;
+    return { n: rs.filter(r => !r.me).length, friends: Object.keys(lpS().friends).length, place: P && P.n > 1 ? { at: P.at, n: P.n } : null, wait: !!rs.wait,
+      rows: rs.map((r, i) => ({ at: i + 1, name: r.name, car: lpCar(r.car), time: fmt(r.ms / 1000), gap: i ? sgn((r.ms - first) / 1000) : '', me: r.me })) };
+  }
+  function lpRes() {   // the results: the player's place among the friends on this record key; after a new best, Pošlji prijateljem
+    const ln = $('res-lpt'), b = $('res-lp'); ln.classList.add('off'); b.classList.add('off');
+    if (!LPX || !race || !track || school || (mp && mp.race) || race.chal) return;
+    const k = recKey(track.def.id); if (!lpTable().has(k)) return;
+    if (race.lpNew == null) { const was = lpS().mine[k], e = lpMine({ [k]: Core.MODELS[S.car].id })[k]; race.lpNew = !!e && (!was || was[0] !== e[0]); }   // (once a race: the results shown again keep it)
+    const P = LPX.place(lpRowsOf(k));
+    if (P && P.n > 1) { ln.textContent = P.at === 1 ? tr('Med prijatelji: {0} od {1} (najhitrejši čas).', Lang.ord(1), P.n) : tr('Med prijatelji: {0} od {1} ({2} {3} pred tabo).', Lang.ord(P.at), P.n, P.ahead.name, lpSec(P.gap)); ln.classList.remove('off'); }
+    b.classList.toggle('off', !race.lpNew);
+  }
+  function lpBoardHTML(d) {   // the Leaderboard by a track (the way it is driven now): the friends' whole table with the date; Pošlji svoje čase, Prijatelji
+    if (!LPX) return '';
+    const k = recKey(d.id); if (!lpTable().has(k)) return '';
+    const S0 = lpS(), nf = Object.keys(S0.friends).length, rs = lpRowsOf(k), first = rs.length ? rs[0].ms : 0;
+    return '<div class="lp-box"><p class="ltab-h">' + tr('Prijatelji · {0}', esc(Lang.of(d, 'name'))) + (wetRec(d) ? tr(' v dežju') : '') + '</p>' + (rs.some(r => !r.me)
+      ? '<table class="ltab lp"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th><th>' + tr('Avto') + '</th><th>' + tr('Čas') + '</th><th>' + tr('Zaostanek') + '</th><th>' + tr('Datum') + '</th></tr></thead><tbody>' +
+        rs.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(lpCar(r.car) || '–') + '</td><td>' + fmt(r.ms / 1000, true) + '</td><td>' + (i ? sgn((r.ms - first) / 1000) : '') + '</td><td>' + lpDate(r.day) + '</td></tr>').join('') + '</tbody></table>'
+      : '<p class="desc small">' + tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.') + '</p>') +
+      '<div class="btns horiz gh-btns"><button class="btn mini" data-act="lp-send">' + tr('Pošlji svoje čase') + '</button>' + (nf ? '<button class="btn mini" data-act="lp-list">' + tr('Prijatelji ({0})', nf) + '</button>' : '') + '</div></div>';
+  }
+  function lpListHTML() {   // the Leaderboard's Prijatelji: each friend (the nickname, the times, the last link), Odstrani
+    const S0 = lpS(), nm = LPX.names(S0), ids = Object.keys(S0.friends).sort((a, b) => S0.friends[b].got - S0.friends[a].got);
+    return '<p class="ltab-h">' + tr('Prijatelji na lestvici: {0} (največ {1})', ids.length, LPX.MAX_FRIENDS) + '</p>' + (ids.length
+      ? '<table class="ltab lp"><thead><tr><th>' + tr('Voznik') + '</th><th>' + tr('Časi') + '</th><th>' + tr('Zadnja povezava') + '</th><th></th></tr></thead><tbody>' +
+        ids.map(id => { const F = S0.friends[id]; return '<tr><td class="nm">' + esc(nm[id]) + '</td><td>' + Object.keys(F.t).length + '</td><td>' + (F.got ? new Date(F.got).toLocaleDateString(Lang.locale) : '–') + '</td><td><button class="btn mini" data-act="lp-del" data-id="' + id + '">' + tr('Odstrani') + '</button></td></tr>'; }).join('') + '</tbody></table>'
+      : '<p class="desc small">' + tr('Na lestvici še ni prijateljev.') + '</p>') +
+      '<div class="btns horiz gh-btns"><button class="btn mini" data-act="lp-back">' + tr('Nazaj na lestvico') + '</button></div>';
+  }
+  function lpDel(id) {   // a friend off the leaderboard (their next links bring nothing unless the player says so)
+    const S0 = lpS(), F = id && S0.friends[id]; if (!F) return;
+    if (!confirm(tr('Odstranim {0} z lestvice prijateljev? Časi izginejo; nova povezava od tega igralca jih prinese nazaj samo, če to potrdiš.', LPX.names(S0)[id]))) return;
+    LPX.remove(S0, id); if (!LPX.save(S0)) toast(tr('Lestvice ni bilo mogoče shraniti (premalo prostora).'), 3200);
+    buildBoardScreen();
+  }
+  async function lpSend() {   // the player's times as a link (with the friends' newest, as many as fit): the phone's share sheet, else the clipboard (the tests read window.__game.lpLink)
+    if (!LPX) { toast(tr('Lestvica prijateljev v tem brskalniku ne deluje.'), 3600); return 'none'; }
+    if (screen === 'lp' && !$('lp-nick-w').classList.contains('off')) {   // (the nickname first: the default one is no one's)
+      const n = cleanName($('lp-nick').value);
+      if (!n || lpDefName(n)) { toast(tr('Vpiši vzdevek, pod katerim te bodo videli prijatelji.'), 3000); $('lp-nick').focus(); return 'none'; }
+      S.name = n; save(); for (const id of ['set-name', 'on-name']) { const el = $(id); if (el) el.value = n; }
+    } else if (lpDefName(S.name)) { lpAsk('nick'); return 'ask'; }
+    let pk = null; try { pk = await LPX.packet(S.name, lpMine(), Date.now()); } catch (_) { }
+    let L = null; try { L = pk && await LPX.link(pk, LPX.forward(lpS())); } catch (_) { }
+    const url = L ? location.origin + location.pathname + '#lestvica=' + L.z : null;
+    window.__game.lpLink = url;
+    if (screen === 'lp') lpDone();
+    if (!url) { toast(tr('Povezave ni bilo mogoče pripraviti.'), 3200); return 'none'; }
+    if (matchMedia('(pointer: coarse)').matches && navigator.share) { try { await navigator.share({ title: tr('Lestvica prijateljev · {0}', S.name), text: tr('Moji najboljši časi: odpri povezavo in pošlji svoje nazaj.'), url }); return 'share'; } catch (e) { if (e && e.name === 'AbortError') return 'abort'; } }
+    try { await navigator.clipboard.writeText(url); toast(tr('Povezava s tvojimi časi je kopirana: pošlji jo prijateljem.'), 3400); return 'copy'; } catch (_) { }
+    toast(tr('Povezave ni bilo mogoče kopirati.'), 3200); return 'none';
+  }
+  function lpAsk(kind, msg, more) {   // the leaderboard's own screen: a friend's link opened (kind 'link'), or the nickname before the first link ('nick')
+    if (screen !== 'lp') lpRet = screen;
+    $('lp-msg').textContent = msg || tr('Prijatelji te bodo na lestvici videli pod tem imenom. Vpiši vzdevek, ne pravega imena.');
+    $('lp-more').textContent = more || ''; $('lp-more').classList.toggle('off', !more);
+    $('lp-nick-w').classList.toggle('off', kind !== 'nick'); if (kind === 'nick') $('lp-nick').value = '';
+    $('lp-go').textContent = tr(kind === 'nick' ? 'Pošlji' : 'Pošlji svoje');
+    showScreen('lp');
+    if (kind === 'nick') setTimeout(() => { try { $('lp-nick').focus(); } catch (_) { } }, 60);
+  }
+  function lpDone() {   // the leaderboard's screen closed: the track of the friend's newest time (a link opened), else back where it was opened from
+    const r = lpRet && lpRet !== 'lp' ? lpRet : 'title', k = lpNext; lpRet = lpNext = null;
+    if (k && r !== 'prvi') { lpGo(k); return; }   // (a new player's first start: Prvič na cesti first)
+    if (r === 'board') buildBoardScreen();
+    showScreen(r);
+  }
+  function lpGo(k) {   // the track step of a key's track and way, its Friends view (the old menus: the Leaderboard on it)
+    const I = lpTable().get(k), d = I && Core.TRACKS.find(x => x.id === I.id); if (!d) { showScreen('title'); return; }
+    S.track = d.id; if (d.modes && d.modes.indexOf(I.mode) >= 0) S.mode = I.mode; if (d.theme === 'pikes') S.pkRoad = d.id === 'pikesg' ? 'pikesg' : 'pikes';
+    if (menuOn) { S.menuCam = 4; save(); refreshSegs(); showScreen('track'); return; }
+    save(); refreshSegs(); boardId = d.id; lpList = false; buildBoardScreen(); showScreen('board');
+  }
+  async function lpOpen(z) {   // a friend's link: the times checked (each packet signed by its owner) and kept; what came, and the offer to send the player's back
+    const now = Date.now(); let L = null; try { L = await LPX.readLink(z, now); } catch (_) { }
+    if (!L) { toast(tr('Povezava do lestvice prijateljev ni veljavna.'), 3200); return null; }
+    const S0 = lpS(), F = L.packets[0], mine = {}; let M = null; try { M = await LPX.me(false); } catch (_) { }
+    for (const [k, e] of Object.entries(lpMine())) mine[k] = e[0];
+    const unhide = S0.hidden.indexOf(F.id) >= 0 && !(M && M.id === F.id) && confirm(tr('{0}: časi so odstranjeni z lestvice prijateljev. Dodam čase iz te povezave nazaj?', F.name));
+    const R = LPX.merge(S0, L.packets, { me: M && M.id, now, mine, bound: (k) => lpBound(k, false), unhide });
+    const kept = LPX.save(S0);
+    if (R.own) { toast(tr('To je tvoja povezava: pošlji jo prijateljem.'), 3400); return R; }
+    if (R.from.hidden) { toast(tr('Povezava od {0} ni dodana: časi tega igralca so odstranjeni z lestvice.', R.from.name), 3600); return R; }
+    if (!kept) { toast(tr('Lestvice ni bilo mogoče shraniti (premalo prostora).'), 3200); return R; }
+    if (LPX.nothingNew(R)) { toast(tr('Nič novega od {0}.', R.from.name), 3000); return R; }
+    const f = R.from, more = [], wet = S.weather === 'rain' || S.weather === 'storm';
+    if (f.renamed) more.push(tr('Nov vzdevek: {0}.', f.name));
+    const nw = R.others.filter(o => o.isNew).map(o => o.name), up = R.others.filter(o => !o.isNew).map(o => o.name);   // (the friends' friends in the link)
+    if (nw.length) more.push(tr('Novi prijatelji tudi: {0}.', nw.join(', ')));
+    if (up.length) more.push(tr('Novi časi tudi od: {0}.', up.join(', ')));
+    if (R.evicted.length) more.push(tr('Na lestvici je prostora za {0} prijateljev: odstranjeni so časi od {1}.', LPX.MAX_FRIENDS, R.evicted.join(', ')));
+    if (R.impossible) more.push(tr('Nemogoči časi (hitrejši, kot gre proga) so izpuščeni: {0}.', R.impossible));
+    if (L.bad) more.push(tr('Pokvarjeni deli povezave so izpuščeni: {0}.', L.bad));
+    // the track to show after it: the newest new time in the player's physics and weather, else the newest of all
+    lpNext = R.keys.find(k => { const I = lpTable().get(k); return I && I.phys === physOf() && I.wet === (I.kind === 'tt' && wet); }) || R.last || R.keys[0] || null;
+    lpAsk('link', tr(f.isNew ? 'Nov prijatelj na lestvici: {0}.' : 'Novi časi od: {0}.', f.name) + ' ' + tr('Časov: {0}, boljših od tvojih: {1}.', f.n, f.better) + ' ' + tr('Pošlješ svoje nazaj?'), more.join(' '));
+    return R;
+  }
+  async function lpHash() {   // the game opened with a friend's leaderboard link, or the link opened later in the game's own tab (hashchange: an installed game's window)
+    const m = /[#&]lestvica=([\w-]+)/.exec(location.hash); if (!m) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (_) { }
+    if (!LPX) { toast(tr('Lestvica prijateljev v tem brskalniku ne deluje.'), 3600); return; }
+    if (screen === 'none' || screen === 'pause') { lpZ = m[1]; return; }   // (in a race, its pause or a replay: opened at the menus after it, showScreen)
+    return lpOpen(m[1]);
   }
 
   /* ---------------- qualifying (Kvalifikacije) ---------------- */
@@ -2389,6 +2557,8 @@
     if (!Core.TRACKS.some(d => d.id === boardId)) boardId = S.track;
     const d = Core.TRACKS.find(x => x.id === boardId) || Core.TRACKS[0], r = rec(d.id);
     $('board-tabs').innerHTML = Core.TRACKS.filter(isTT).concat(Core.TRACKS.filter(x => !isTT(x))).map(x => '<button data-board="' + x.id + '" class="' + (x.id === d.id ? 'sel' : '') + (isTT(x) ? ' tt' : '') + '">' + esc(Lang.of(x, 'name')) + '</button>').join('');
+    requestAnimationFrame(() => { const tb = $('board-tabs'), se = tb.querySelector('.sel'); if (!se) return; const a = se.getBoundingClientRect(), b = tb.getBoundingClientRect(); if (a.top < b.top || a.bottom > b.bottom) tb.scrollTop += a.top - b.top - 4; });   // (the chosen track's tab in sight in the scrolling strip)
+    if (lpList && LPX) { $('board-body').innerHTML = lpListHTML(); $('board-body').scrollTop = 0; return; }   // (Prijatelji: the friends on the leaderboard)
     let h;
     if (isTT(d)) {
       const board = Array.isArray(r.board) ? r.board : [], T = getTrack(d.id);
@@ -2416,6 +2586,7 @@
         (own ? '<div class="btns horiz gh-btns"><button class="btn mini" data-act="gh-link">' + tr('Deli povezavo') + '</button><button class="btn mini" data-act="gh-file">' + tr('Shrani v datoteko') + '</button><button class="btn mini" data-act="gh-chal">' + tr('Pošlji izziv') + '</button></div>' : '') +
         (F ? '<p class="desc small">' + tr('Duh prijatelja: {0} · {1}', esc(F.name), fmt(F.t, true)) + '</p>' : '') +
         '<div class="btns horiz gh-btns">' + (F ? '<button class="btn mini" data-act="gh-del">' + tr('Izbriši prijateljevega') + '</button>' : '') + '<button class="btn mini" data-act="gh-import">' + tr('Uvozi duha') + '</button></div></div>'; }
+    h += lpBoardHTML(d);   // (the friends' times on it: Lestvica prijateljev)
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
   }
   // Dosežki (from the title): the player's numbers, then every achievement (unlocked: the date; the counting ones: how far)
@@ -4735,7 +4906,7 @@
   // legs of a hairpin ladder), kept rising (after a spin or a moment backwards it counts from the first time the best run got there)
   function hxTable(G) {
     const s = new Float32Array(G.n), q = {}; let hint = track.startIdx, m = -1e9;
-    for (let k = 0; k < G.n; k++) { track.query(G.f[k * GH_CH], G.f[k * GH_CH + 2], hint, q); hint = q.i; if (q.s > m) m = q.s; s[k] = m; }
+    const ch = G.ch || GH_CH; for (let k = 0; k < G.n; k++) { track.query(G.f[k * ch], G.f[k * ch + 2], hint, q); hint = q.i; if (q.s > m) m = q.s; s[k] = m; }
     return s;
   }
   function hxTimeAt(s) {   // the race time at which the best run reached road position s (null past its end)
@@ -5719,7 +5890,7 @@
     const C = R.cars.get(who); if (C && !C.off) { C.buf.push(m); if (C.buf.length > 40) C.buf.shift(); if (m.ft != null) finishOf(who, +m.ft); }
   }
   // a big grid's batch: the states as arrays of their values in this order (a third of the size of the same states with their names)
-  const ST_KEYS = ['id', 'k', 'x', 'z', 'y', 'h', 'vx', 'vz', 'vy', 'w', 'vl', 'a', 'd', 'b', 'hb', 'th', 'g', 'rp', 'ax', 'ry', 'gr', 'bs', 'cb', 'ws', 'lr', 'be', 'sp', 'lk', 'sf', 'di', 'lp', 'ft'];
+  const ST_KEYS = ['id', 'k', 'x', 'z', 'y', 'h', 'vx', 'vz', 'vy', 'w', 'vl', 'a', 'd', 'b', 'hb', 'th', 'g', 'rp', 'ax', 'ry', 'gr', 'bs', 'cb', 'ws', 'lr', 'be', 'sp', 'lk', 'sf', 'di', 'lp', 'ft', 'tl', 'tl2'];   // (tl, tl2 last: an older phone's state is shorter; tl2 a road train's second tank)
   const stPack = (m) => ST_KEYS.map(k => (m[k] === undefined ? null : m[k]));
   const stOpen = (a) => { const o = {}; for (let i = 0; i < ST_KEYS.length; i++) o[ST_KEYS[i]] = a[i]; return o; };
   // host, a big grid: what came in since the last batch (and its own state) on to every friend, in one message each (every 50 ms at
@@ -5752,6 +5923,7 @@
         a: r2(P.air), d: r3(P.delta), b: r2(P.inBrk), hb: r2(P.inHand), th: r2(P.inThr * v), g: P.gear | 0, rp: Math.round(still ? P.m.idle : P.rpm), ax: r2(P.axF), ry: r2(P.roadY), gr: r3(P.gradeNow),
         bs: r3(P.bankSl), cb: P.onCurb ? 1 : 0, ws: P.ws.join(''), lr: r2(P.latR * v), be: r3(P.beta), sp: r2(P.spin * v), lk: P.lock && !still ? 1 : 0, sf: r2(P.slipF * v),
         di: r2(P.dist), lp: P.lap | 0, ft: R.mine, pg: P.pitG ? 1 : 0 };   // (pg: a ghost on the pit road, Race.pitStep: the friend's phone skips the same contacts)
+      if (P.tl) m.tl = r3(P.tl.rel); if (P.tl && P.tl.next) m.tl2 = r3(P.tl.next.rel);   // (a semi-trailer's angle to the tractor: the friend's phone poses it, Core.tlPose; docs/titan-cisterna.md)
       if (mp.role === 'host') { m.id = 'h'; if (R.big) R.fwd.push(m); else for (const id of R.grid) if (id !== 'h') Net.sendTo(id, m); } else Net.send(m);
     }
     if (R.big && mp.role === 'host') netBatch(now);
@@ -5770,6 +5942,7 @@
     c.axF = L('ax'); c.roadY = L('ry'); c.gradeNow = L('gr'); c.bankSl = L('bs'); c.onCurb = n.cb; for (let i = 0; i < 4; i++) c.ws[i] = +(n.ws || '')[i] || 0;
     c.latR = L('lr'); c.beta = L('be'); c.spin = L('sp'); c.lock = n.lk; c.slipF = L('sf');   // (for the smoke, skid marks and dust)
     c.netPG = n.pg == null ? null : n.pg ? 1 : 0;   // (on the pit road its phone's way: Race.step)
+    if (c.tl) Core.tlPose(c, b && b.tl != null && a.tl != null ? L('tl') : n.tl, track, b && b.tl2 != null && a.tl2 != null ? L('tl2') : n.tl2);   // (its semi-trailer at its angle, on the road; never simulated here: the AI and the traffic see its tractor)
     if (!b && t - a.k > lag + 150) { c.vx = c.vz = c.vy = c.w = c.vl = c.latR = c.spin = c.slipF = c.inThr = 0; c.lock = 0; c.rpm = c.m.idle; }   // (no word from it for a while: it stands, also for a bump)
     const z = B[B.length - 1]; c.dist = z.di; c.lap = z.lp;
   }
@@ -6246,7 +6419,7 @@
       case 'menu-garage': carFrom = 'title'; garageOpen(); break;   // (the car in the new menu's track step tapped: the garage with it; its back that step again: garageBack, Menu.fromTrack)
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
-      case 'to-board': boardId = S.track; buildBoardScreen(); showScreen('board'); break;
+      case 'to-board': boardId = S.track; lpList = false; buildBoardScreen(); showScreen('board'); break;
       case 'to-missions': if (MS.openList) MS.openList(); break;   // (the title's MISSIONS tile: the missions by garage, js/missions.js)
       case 'to-stats': buildStatsScreen(); showScreen('stats'); break;
       case 'to-school': if (race) toTitle(); buildSchoolScreen(); showScreen('school'); break;
@@ -6258,6 +6431,11 @@
       case 'to-chal': chalShow(); break;
       case 'chal-go': chalGo(); break;
       case 'chal-later': showScreen('title'); break;
+      case 'lp-send': lpSend(); break;   // (Lestvica prijateljev: the player's times as a link)
+      case 'lp-later': lpDone(); break;
+      case 'lp-list': lpList = true; buildBoardScreen(); break;
+      case 'lp-back': lpList = false; buildBoardScreen(); break;
+      case 'lp-del': lpDel(el && el.dataset.id); break;
       case 'chal-drop': chal = null; try { localStorage.removeItem(CHAL_KEY); } catch (_) { } chalBtn(); showScreen('title'); break;
       case 'gh-import': pickFile(ghImport); break;
       case 'gh-del': { try { localStorage.removeItem('tdgp-fghost-' + boardId); } catch (_) { } const d = Core.TRACKS.find(x => x.id === boardId); if (d) { mkFriendPut(d, null, 'summer'); mkFriendPut(d, null, 'winter'); } buildBoardScreen(); break; }   // (the friend's tyre marks with the ghost)
@@ -6419,6 +6597,8 @@
     schoolChip: () => SCHOOL.filter(L => schoolRec(L).medal >= 0).length + ' OF ' + SCHOOL.length + ' MEDALS',
     statsChip: () => ACH.filter(a => st.ach[a[0]]).length + ' OF ' + ACH.length + ' UNLOCKED',
     chal: () => !!chal,
+    friends: (d, build) => lpFriends(d, build),   // (the Friends view of the track step: the friends' times there, Lestvica prijateljev; null without it)
+    sendTimes: () => { lpSend(); },
     fsAvailable: () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !installedApp(),
     installAvailable: () => !!installEvt && !installedApp(),
     // the track the menu shows is the game's track (and, on a road that has several ways to drive it, the way)
@@ -6493,7 +6673,7 @@
       const ub = e.target.closest('[data-upg] [data-lv]');   // upgrade level (before the generic .seg handler)
       if (ub) { Sfx.resume(); Sfx.click(); upgPick(ub.parentElement.dataset.upg, +ub.dataset.lv); return; }
       const bt = e.target.closest('[data-board]');
-      if (bt) { Sfx.click(); boardId = bt.dataset.board; buildBoardScreen(); return; }
+      if (bt) { Sfx.click(); boardId = bt.dataset.board; lpList = false; buildBoardScreen(); return; }
       const sb = e.target.closest('.seg button');
       if (sb) { Sfx.resume(); Sfx.click(); const tcs = sb.closest('[data-track]'); if (tcs) S.track = tcs.dataset.track;   // (the switch on a track card: that track too)
         setOption(sb.parentElement.dataset.set, sb.dataset.v); if (screen === 'car') buildCarScreen(); return; }
@@ -6522,6 +6702,7 @@
       ctlPadSet(r, B);
     });
     // player name: typing must not reach the game keys (Space and the arrows: preventDefault, P / Escape = pause)
+    { const n = $('lp-nick'); n.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); lpSend(); } }); n.addEventListener('keyup', (e) => e.stopPropagation()); }   // (Lestvica prijateljev's nickname: Enter sends)
     for (const nm of [$('set-name'), $('on-name')]) {
       let nmOld = S.name;
       nm.addEventListener('focus', () => { nmOld = S.name; });
@@ -6644,6 +6825,7 @@
       requestAnimationFrame(frame);
       ghHash();   // (opened with a friend's ghost's link)
       chalLoad(); chalHash();   // (a challenge waiting from before, or one just opened from its link)
+      if (LPX) { try { lpMine(); } catch (_) { } } lpHash(); addEventListener('hashchange', () => { lpHash(); });   // (the friends' leaderboard: the player's times seen now get a day from here on; a friend's link just opened, or opened later in this tab)
       quickGo();   // (opened with a quick entry's address: straight on a race)
       garageBack();   // (back from the garage: its car screen)
       setTimeout(() => { Shramba.daily().catch(() => { }); }, 5000);   // (the day's copy of the progress, once the title stands: js/shramba.js)
@@ -6658,7 +6840,9 @@
           return { role: mp.role, code: mp.code, open: Net.open, synced: Net.synced, peer: mp.peer, me: mp.me, players: mp.players.map(p => ({ id: p.id, name: p.name, car: p.car, in: p.in !== false })), track: mp.track, laps: mp.laps,
             quick: !!mp.quick, locked: Net.locked, setup: mp.setup && { grid: mp.setup.grid.slice() },
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
-        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)), get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
+        now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)),
+        lp: { get on() { return !!LPX; }, get store() { return LPX ? lpS() : null; }, key: (id) => recKey(id), open: (z) => lpOpen(z), send: () => lpSend(), mine: () => LPX ? lpMine() : null, bound: (k) => LPX ? lpBound(k, true) : 0, friends: (id) => lpFriends(Core.TRACKS.find(d => d.id === id)) },   // (tests: Lestvica prijateljev)
+        get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: (recd.pit || []).map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
