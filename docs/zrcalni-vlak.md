@@ -5,7 +5,7 @@ Vozilo »zrcalni cestni vlak«: verzija 1 zrcalne cisterne, ki jo je uporabnik i
 Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verzij«, 18. 10. in 4. 11. 2026).
 
 ## Opis (verzija 1)
-- **Vlačilec**: na osnovi KAMNA PUŠČAVA (`js/cars/kamen.js`: tovornjak 4×4 z nosom pred kabino). Črna kabina, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervne gume, zadaj sedlo. Brez znamke.
+- **Vlačilec**: na osnovi KAMNA PUŠČAVA (`js/cars/kamen.js`: tovornjak 4×4 z nosom pred kabino). Črna kabina, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervna guma, zadaj sedlo. Brez znamke.
 - **Cisterni**: zrcalno polirana nerjavna pločevina, obroči, pohodna pot z ograjo, bočni odbijač, rdeča omarica. Med njima dolly (oje, dve osi, svoje sedlo).
 - **Odsev za telefon**: vnaprej pripravljen odsev neba in okolice v teksturi (gradient neba, obzorje, tla), ne živo zrcalo. Malo klicev risanja.
 - Vlak je dolg ~25 m.
@@ -133,3 +133,7 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
   - Garaža je zdaj v redu (prej je vlak segal čez ploščo). Razbitina in popravilo sta v redu.
   - Strošek polja treh vlakov je bil na Nürburgringu za las nad mejo oglišč 393k. Tekmeci imajo zato lažje obroče (vsak drugi, brez stranic, `B.hoop` `flat`).
   - Zdaj: Nürburgring 163 klicev in 387k oglišč, Jezero 160 klicev in 603k (TITAN 377k in 594k, kot prej).
+
+## Po spoju z mainom (8. 11. 2026, seja računa partyslo): garaža in cena
+- **Garaža** (sklopi 6–8 na `main`, `js/garage3d.js`): na poti iz vrat so spodnja letev dvignjene zavese vrat in svetilke na 3,46 m, zato noben del avta ne sme biti nad 3,3 m (KAMEN 3,28 m). Vlačilec je segal do 3,67 m (dve rezervni gumi na nosilcu, kantice 0,36 m), `laneWay` je javil »garage: no clear way for zrcalni«, `garage.test.mjs` je padel (korak 4/6 na GitHubu). Zdaj: ena rezervna guma (0,22 m široka, leži na strehi), kantice ležeče (0,2 m), izpuha do 3,28 m, trak čez kantice na 3,28 m; najvišji del je 3,29 m. Pogoj za vsako novo vozilo: `node tests/browser/garage.test.mjs` (»no page errors« ne sme javiti »no clear way«).
+- **Cena**: v tabeli `CAREER.car` (`js/core.js`) TITAN CISTERNA 850.000 in ZRCALNI VLAK 1.000.000 kovančkov (TITAN 500.000, KAMEN PUŠČAVA 800.000), da so na zaslonu avta v vrstnem redu `ord` 1–4 (TITAN, KAMEN, CISTERNA, ZRCALNI; zaslon uredi po ceni iz tabele). Cena v datoteki vozila (75.000 in 90.000, stara lestvica) velja le, če vnosa v tabeli ni; takrat sta vozili stali pred TITAN-om in `browser/cars-ui.test.mjs` je padel. Preverja `tests/zrcalni.test.js` (vrstni red cen) in `cars-ui`.

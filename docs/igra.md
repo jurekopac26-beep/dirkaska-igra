@@ -769,7 +769,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 **ZRCALNI VLAK** je cestni vlak: črna kabina s pogonom na vsa kolesa vleče na sedlu prvo cisterno, za njo je dolly (oje z dvema osema in svojim sedlom), na njem pa druga cisterna. Vlak ima dva zgiba in je od nosu kabine do repa druge cisterne dolg 28 m.
 
-- Vlačilec ima 1360 KM in deset prestav: črna kabina z nosom pred kabino, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervne gume. Cisterni sta iz zrcalno polirane nerjavne pločevine (obroči, pohodna pot z ograjo, bočni odbijač, rdeča omarica), vsaka je dolga 11,4 m in polna tehta 11 t; ves vlak tehta 29 t. Odsev neba in okolice je vnaprej narisan v teksturi (ne živo zrcalo), zato vlak telefona ne obremeni bolj kot cisterna TITAN-a.
+- Vlačilec ima 1360 KM in deset prestav: črna kabina z nosom pred kabino, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervna guma. Cisterni sta iz zrcalno polirane nerjavne pločevine (obroči, pohodna pot z ograjo, bočni odbijač, rdeča omarica), vsaka je dolga 11,4 m in polna tehta 11 t; ves vlak tehta 29 t. Odsev neba in okolice je vnaprej narisan v teksturi (ne živo zrcalo), zato vlak telefona ne obremeni bolj kot cisterna TITAN-a.
 - Od 0 do 100 km/h pospeši v ~14 s, najhitreje vozi ~137 km/h, s 100 km/h se ustavi na ~44 m.
 - Prvi zgib (sedlo vlačilca) se zlomi do 83°, drugi (sedlo dollyja) do 57°. Kdor zavira v ovinku, mu cisterni potisneta zadek vlačilca ven; v najostrejših serpentinah (polmer pod ~15 m) sta oba zgiba zložena v isto smer do konca.
 - Cisterni imata prave trke z ograjo, robom ceste, vozili in policijo in lahko padeta čez prepad. Druga cisterna ne trči v lasten vlačilec (pri škarjah gre skozenj).

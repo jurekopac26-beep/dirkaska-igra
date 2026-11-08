@@ -15,6 +15,10 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const ZV = C.MODELS.find(m => m.id === 'zrcalni'), LIM = C.TLK.lim;
 if (!ZV) { console.log('FAIL the model zrcalni is not in the game: ' + (C.DEFS_SKIPPED || []).map(x => x.id + ': ' + x.why).join('; ')); process.exit(1); }
+// the career price table puts the four trucks in the order the car screen shows them (ord 1 to 4): the rigs dearer than the KAMEN (a rig without
+// its own price in the table fell back to its old def price, 75 000 and 90 000, and stood before the TITAN)
+{ const pr = (id) => C.CAREER.car[id];
+  check('the career prices: TITAN < KAMEN PUŠČAVA < TITAN CISTERNA < ZRCALNI VLAK (the car screen\'s strip)', pr('titan') < pr('kamen') && pr('kamen') < pr('cisterna') && pr('cisterna') < pr('zrcalni'), ['titan', 'kamen', 'cisterna', 'zrcalni'].map(pr).join(' < ')); }
 const SEC = 120;
 const TRACKS = ['bathurst', 'vrsic', 'caracoles'].map(id => C.TRACKS.find(d => d.id === id)).filter(Boolean);
 

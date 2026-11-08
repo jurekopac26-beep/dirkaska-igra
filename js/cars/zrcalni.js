@@ -1,11 +1,11 @@
 /* Vehicle 'zrcalni' — ZRCALNI VLAK: a road train (docs/zrcalni-vlak.md). A black bonneted off-road tractor (the KAMEN PUŠČAVA's cab and
-   running gear, its service body off: a fifth wheel over its rear axle, two chrome stacks behind the cab, a roof rack with cans and two
-   spare tyres, the grille guard), a mirror-polished stainless tank semi-trailer on its fifth wheel, a dolly behind that one (a B-dolly:
+   running gear, its service body off: a fifth wheel over its rear axle, two chrome stacks behind the cab, a roof rack with cans and a
+   spare tyre, the grille guard), a mirror-polished stainless tank semi-trailer on its fifth wheel, a dolly behind that one (a B-dolly:
    two drawbars hold it in line with the first tank; its own fifth wheel) and a second mirror tank on the dolly. Two joints: the tractor's
    fifth wheel and the dolly's (Core: tlStep, model.trailer and its next). The tanks' mirror is no live mirror: the picture has the sky,
    the horizon and the ground baked in it (paint), and the renderer mixes in its sky's reflection (trailer.look.mirror: the race's
    environment map, js/render.js tlBuild) only where the picture is the tank's skin; no draw calls more.
-   Tractor L 6.30 W 2.50 H 3.50; each tank trailer L 11.40 W 2.50 H 3.62, its kingpin 0.90 behind its front, two axles 7.4 and 8.7 m
+   Tractor L 6.30 W 2.50 H 3.30 (the garage's clearance: its door's bar and its lamps hang at 3.46 m, no part of a car above 3.3 m); each tank trailer L 11.40 W 2.50 H 3.62, its kingpin 0.90 behind its front, two axles 7.4 and 8.7 m
    behind its kingpin; the dolly's fifth wheel 12.6 m behind the first kingpin, its axles at 12.0 and 13.2 m; the train ~25 m (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
@@ -257,20 +257,20 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- two chrome stacks behind the cab ----
         K.part('body', () => {
           for (const sd of [-1, 1]) {
-            K.cyl([-0.56, 1.1, sd * 0.98], [-0.56, 3.36, sd * 0.98], 0.075, CH, { n: 8, capA: null });
+            K.cyl([-0.56, 1.1, sd * 0.98], [-0.56, 3.28, sd * 0.98], 0.075, CH, { n: 8, capA: null });   // (3.28 m the highest: under the garage's lamps, its door's bar)
             K.cyl([-0.56, 1.95, sd * 0.98], [-0.56, 2.85, sd * 0.98], 0.1, CH, { n: 8 });   // (their heat shields)
             K.box(-0.46, 2.3, sd * 0.98, 0.16, 0.06, 0.06, 0, D);
           }
         }, { noCrush: true });
-        // ---- the roof rack: its rails and posts, two spare tyres lying on it, three cans each side, strapped ----
+        // ---- the roof rack: its rails and posts, a spare tyre lying on it, three cans each side, strapped (nothing above 3.28 m: the garage's
+        // door and lamps hang at 3.46 m, js/garage3d.js; a second tyre on the first stood at 3.66 m: no clear way out of the garage) ----
         K.part('body', () => {
           for (const sd of [-1, 1]) { K.bar([-0.34, 3.12, sd * 1.0], [0.74, 3.12, sd * 1.0], 0.022, D, { n: 4 }); for (const x of [-0.3, 0.7]) K.box(x, 2.99, sd * 1.0, 0.04, 0.13, 0.04, 0, D); }
           for (const x of [-0.32, 0.2, 0.72]) K.bar([x, 3.06, -1.0], [x, 3.06, 1.0], 0.02, D, { n: 4 });
-          K.tyre(0.2, 3.24, 0, { axis: 'y', face: 1, r: 0.58, w: 0.28 });
-          K.tyre(0.2, 3.52, 0, { axis: 'y', face: 1, r: 0.58, w: 0.28 });
+          K.tyre(0.2, 3.16, 0, { axis: 'y', face: 1, r: 0.58, w: 0.22 });
           const CAN = [K.rgb(0xa3281f), K.rgb(0x2e6a33), K.rgb(0xa3281f)];
-          for (const sd of [-1, 1]) CAN.forEach((cc, i) => K.box(-0.18 + i * 0.36, 3.08, sd * 0.86, 0.32, 0.36, 0.15, 0, cc));
-          for (const sd of [-1, 1]) K.box(0.18, 3.43, sd * 0.86, 1.1, 0.02, 0.17, 0, K.rgb(0xe0b21c));
+          for (const sd of [-1, 1]) CAN.forEach((cc, i) => K.box(-0.18 + i * 0.36, 3.08, sd * 0.86, 0.32, 0.2, 0.15, 0, cc));   // (lying on their sides: 0.2 m high, K.box's y is the bottom)
+          for (const sd of [-1, 1]) K.box(0.18, 3.265, sd * 0.86, 1.1, 0.015, 0.17, 0, K.rgb(0xe0b21c));
         }, { noCrush: true });
         // ---- the frame, the axles, the drive shafts, the fuel tanks, the steps, the rear mud guards and flaps ----
         K.part('body', () => {
