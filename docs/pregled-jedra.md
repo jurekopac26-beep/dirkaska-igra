@@ -58,7 +58,7 @@ _V delu._
 
 **J9 · Garaža: geometrija koles za vsako kombinacijo delov ostane v pomnilniku do ponovnega nalaganja strani** · `js/render.js:2161` (`kitWheels`)
 - `kitWheelCache` se samo polni (`get`/`set` v 2161/2164), nikoli ne prazni; ključ vsebuje `E.key`, ta pa za avto z deli celoten ključ delov (`M.id|H|<deli>`, 2133). Telesa z deli hrani `kitDeliCache` samo zadnjih 8 (2139), kolesa izpodrinjenih ostanejo. `sharedCarRes` (4761) vsa kolesa iz predpomnilnika označi kot skupna, zato jih `disposeCarMesh` ne sprosti.
-- **Primer:** `garaza.html` z vozilom s kolesi kot deli: vsak preizkus ali menjava dela (tudi spojler, ki koles ne spremeni) zgradi nov par enakih koles (~400 trikotnikov in ~43 KB vsako pri visoki podrobnosti, plus različice pasov gum in čeljusti). Števec `wheels` v `Render.kitStatus()` (2348) samo raste. V dirki je rast majhna (en komplet na avto in kombinacijo).
+- **Primer:** `garaza.html` z vozilom s kolesi kot deli: vsak preizkus ali menjava dela (tudi spojler, ki koles ne spremeni) zgradi nov par enakih koles (~400 trikotnikov in ~43 KB vsako pri visoki podrobnosti, plus različice pasov gum in čeljusti). Števec `wheels` v `kitInfo()` (2348) samo raste. V dirki je rast majhna (en komplet na avto in kombinacijo).
 - Preverjeno: potrjeno (branje kode).
 
 **J8 · Odblesk sonca ugaša hitreje pri višji hitrosti sličic in tudi v pavzi** · `js/render.js:4176` (`pkFlare`, klicana iz `pkLight` in `sunFx`)
