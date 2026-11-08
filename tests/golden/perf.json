@@ -391,6 +391,34 @@
   "maxKverts": 754,
   "jsMs": 1.49
  },
+ "pembrey": {
+  "calls": 190,
+  "maxCalls": 218,
+  "kverts": 522,
+  "maxKverts": 691,
+  "jsMs": 1.6
+ },
+ "kildare": {
+  "calls": 205,
+  "maxCalls": 231,
+  "kverts": 439,
+  "maxKverts": 511,
+  "jsMs": 1.95
+ },
+ "sacalobra": {
+  "calls": 222,
+  "maxCalls": 262,
+  "kverts": 578,
+  "maxKverts": 708,
+  "jsMs": 1.5
+ },
+ "kotor": {
+  "calls": 204,
+  "maxCalls": 245,
+  "kverts": 618,
+  "maxKverts": 843,
+  "jsMs": 1.39
+ },
  "bikernieki": {
   "calls": 186,
   "maxCalls": 238,

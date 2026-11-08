@@ -164,10 +164,11 @@
   const STEEL = [0.55, 0.57, 0.57], STEEL2 = [0.48, 0.5, 0.5], GLASSI = [0.6, 0.66, 0.62], WIRE = [0.34, 0.35, 0.36];
   // a pylon at (x, y, z), its arms across rot (the line's way + 90°): legs, bracing (none far from the road: lite), arms, insulators; ->
   // its conductors' points in the world (the phases, then the earth wires)
-  function soPylon(g, x, y, z, rot, Q, pole, lite) {
+  function soPylon(g, x, y, z, rot, Q, pole, lite, pc) {
     const rod = API.ouRod, c = Math.cos(rot), s = Math.sin(rot), W = (u, h, v) => [x + c * u - s * v, y + h, z + s * u + c * v];   // (u across, along the arms; v along the line)
-    if (pole) {   // a concrete pole: a slim tapering shaft, a steel crossarm, the insulators on top of it
-      box(g, x, y - 0.3, z, 0.42, Q.h + 1.5, 0.3, rot, [0.68, 0.67, 0.63]); box(g, x, y + Q.h + 1.2, z, 0.26, 0.3, 0.2, rot, [0.68, 0.67, 0.63]);
+    if (pole) {   // a concrete pole: a slim tapering shaft, a steel crossarm, the insulators on top of it (pc: another pole's colour, Kildare's wooden ones)
+      const PC = pc || [0.68, 0.67, 0.63];
+      box(g, x, y - 0.3, z, 0.42, Q.h + 1.5, 0.3, rot, PC); box(g, x, y + Q.h + 1.2, z, 0.26, 0.3, 0.2, rot, PC);
       for (const [hh, A] of Q.arms) rod(g, W(-A - 0.1, hh, 0), W(A + 0.1, hh, 0), 0.07, STEEL2, 3);
     } else {
       const H = Q.h, legs = [[-1, -1], [1, -1], [1, 1], [-1, 1]], at = (f, h) => { const b = lerp(Q.b0, Q.b1, h / H); return W(f[0] * b, h, f[1] * b); };
@@ -209,7 +210,7 @@
   // the east hairpin, a 35 kV line's: left out, the wires carried across from the pole before to the one after them). The near
   // pylons in the scenery's chunks (their shadows), the far ones and the wires in chunks of their own, 1 km, without shadows (in the
   // scenery's they made a draw call of each far one)
-  function soPower({ root, scen, matV, exclPush, CR }, st) {
+  function soPower({ root, scen, matV, exclPush, CR }, st, pc) {   // (pc: the poles' colour, if not concrete)
     const farW = new Chunks(1024);
     for (const [kv, p] of (API.T.def.sk || {}).power || []) {
       const Q = SO_PY[kv] || SO_PY[35], pts = []; for (let k = 0; k + 2 < p.length; k += 3) pts.push([p[k], p[k + 1], p[k + 2]]);
@@ -217,7 +218,7 @@
         const rd = nrDist(x, z), q = nrNear(x, z); if (rd > 700) return null; if (q.i >= 0 && q.dd < 1) return 0;   // (0: a pole in a run-off, left out: the wires go across to the next one)
         const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)], rot = Math.atan2(b[1] - a[1], b[0] - a[0]) + Math.PI / 2;
         let y = 1e9; for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + dx * Q.b0, z + dz * Q.b0));
-        const T = soPylon(rd > 280 ? farW.get(x, z) : scen.get(x, z), x, y, z, rot, Q, kind === 2 && kv <= 35, rd > 280);
+        const T = soPylon(rd > 280 ? farW.get(x, z) : scen.get(x, z), x, y, z, rot, Q, kind === 2 && kv <= 35, rd > 280, pc);
         exclPush(x, z, Q.b0 * 1.5 + 2); CR.avoid(x, z, Q.b0 + 1); st.pylons++;
         return T;
       });
@@ -233,6 +234,7 @@
     }
     farW.addTo(root, matV, false, true);
   }
+  API.soPower = soPower;   // (Kildare's power lines too: js/world-kildare.js)
 
   // LK.extra: the streams, the power lines, the buildings round the paddock and by the circuit (OSM outlines as boxes: plaster
   // in cream, ochre or light grey, red-tiled or dark grey roofs; the paddock's garages in rows, their doors to the straight, flat roofs; its

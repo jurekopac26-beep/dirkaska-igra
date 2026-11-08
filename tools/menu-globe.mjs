@@ -4,7 +4,7 @@
 //   places    the real tracks without a place in geo.js: their start lines (lat, lon), as their track files give them
 //   outlines  the countries of the game's tracks without an outline in geo.js, and the parts of a country geo.js left out where a real
 //             track is (its small islands: Hawaii of the USA): Natural Earth 1:50m map subunits (public domain; England, metropolitan
-//             France with Corsica, Italy with its islands; the subunit round the track), simplified to about 2 km (the globe is 44 px)
+//             France with Corsica, Italy with its islands, Spain with the Balearic Islands, Montenegro; the subunit round the track), simplified to about 2 km (the globe is 44 px)
 // and, with --earth, the small Earth the globe is drawn from: assets/geo/earth-s.webp, the Blue Marble of the intro's globe
 // (assets/geo/earth.webp) at 1024 x 512.
 // Run after a track in a new country, or a real track geo.js has no place for (add its start line to PLACES); tests/menu-globe.test.js
@@ -19,9 +19,9 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 
 // the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
 // from their import marker, fromFile below)
-const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], silkeborg: [56.17629, 9.66046], kagerod: [55.98674, 13.11484], sosnova: [50.65859, 14.54015], izoard: [44.83683, 6.72219], bikernieki: [56.96521, 24.2288], london: [51.5033, -0.12622], zandvoort: [52.38899, 4.54088] };
+const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], silkeborg: [56.17629, 9.66046], kagerod: [55.98674, 13.11484], sosnova: [50.65859, 14.54015], izoard: [44.83683, 6.72219], pembrey: [51.70588, -4.32387], kildare: [53.2570, -6.74510], sacalobra: [39.83166, 2.81636], kotor: [42.40399, 18.77959], bikernieki: [56.96521, 24.2288], london: [51.5033, -0.12622], zandvoort: [52.38899, 4.54088] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
-const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Denmark: ['Denmark'], Sweden: ['Sweden'], Czechia: ['Czechia'], Latvia: ['Latvia'], Netherlands: ['Netherlands'] };
+const SUBUNITS = { England: ['England'], Wales: ['Wales'], Ireland: ['Ireland'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Denmark: ['Denmark'], Sweden: ['Sweden'], Czechia: ['Czechia'], Spain: ['Spain', 'Balearic Islands'], Montenegro: ['Montenegro'], Latvia: ['Latvia'], Netherlands: ['Netherlands'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;

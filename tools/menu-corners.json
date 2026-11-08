@@ -409,6 +409,59 @@
    58
   ]
  },
+ "pembrey": {
+  "s": 374,
+  "o": "Severna lasnica",
+  "cam": [
+   206.4,
+   14,
+   -324.1,
+   197.4,
+   -0.7,
+   -290.3,
+   60.1
+  ]
+ },
+ "kildare": {
+  "s": 100,
+  "o": "Desni na makadamu",
+  "cam": [
+   34.6,
+   41.6,
+   156.2,
+   -12.9,
+   2,
+   73.9,
+   52.7
+  ]
+ },
+ "sacalobra": {
+  "s": 290,
+  "o": "Nus de sa Corbata (most in zanka pod njim)",
+  "cam": [
+   0.2,
+   18.1,
+   -124.5,
+   -34.8,
+   -8.1,
+   -63.9,
+   51.9
+  ]
+ },
+ "kotor": {
+  "s": 1969,
+  "o": "Serpentina 6 (razgledišče nad zalivom)",
+  "pick": 2,
+  "cam": [
+   163.7,
+   126.7,
+   31.8,
+   163.7,
+   89.3,
+   -63.2,
+   40.1
+  ]
+ },
  "bikernieki": {
   "s": 1336,
   "o": "Levi ob jezeru",

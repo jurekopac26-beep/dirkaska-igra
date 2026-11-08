@@ -455,14 +455,18 @@
     'Severna ravnina': 'North Straight', 'Esovka': 'The Esses', 'Zadnja lasnica': 'Last Hairpin',   // (Sosnová: its corners by plain descriptions, the brook by them)
     'Trafalgarski trg': 'Trafalgar Square', 'Proti reki': 'Down to the River', 'Nabrežje Temze': 'Thames Embankment', 'Westminstrski most': 'Westminster Bridge',
     'Urni stolp': 'Clock Tower', 'Parlamentarni trg': 'Parliament Square',   // (London: Whitehall stays as it is)
+    'Severna lasnica': 'North Hairpin', 'Levi pri depoju': 'Paddock Left', 'Desni na vzhodu': 'East Right', 'Dolga ravnina': 'Long Straight', 'Desni ob gozdu': 'Woods Right',   // (Pembrey: its corners by plain descriptions)
+    'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Desni pregib': 'Right Kink', 'Levi za lasnico': 'Left after the Hairpin', 'Vzpon skozi gozd': 'Climb through the Woods', 'Desni v gozdu': 'Right in the Woods',
     'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
     'Severni ovinek': 'North Corner', 'Desni na klancu': 'Right on the Climb', 'Levi na vrhu': 'Left over the Top', 'Spust': 'The Drop', 'Desni pred ravnino': 'Right before the Straight',
     'Levi na ravnino': 'Left onto the Straight',   // (Biķernieki: its corners by plain descriptions, the lake Linezers and the woods by them)
     'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
-    'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Ostri desni': 'Sharp Right', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
+    'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
     'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
+    'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
+    'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)

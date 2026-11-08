@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="500" height="300">
+  <title>Wales</title>
+  <!-- Flag of Wales. Ratio 3:5. A white half over a green one, a red dragon passant across both, facing the hoist (drawn simply: the
+       body, the head and its tongue, the raised fore leg, the wings, the tail curled over the back to its arrow tip).
+       Green: Pantone 354 C (#00B140), red: Pantone 186 C (#C8102E). -->
+  <rect width="500" height="300" fill="#00B140"/>
+  <rect width="500" height="150" fill="#FFFFFF"/>
+  <g fill="#C8102E">
+    <path d="M208 142 L226 50 L254 98 L276 38 L296 94 L330 54 L324 120 L302 134 L280 126 L258 138 L236 130 Z"/>
+    <path d="M150 170 C150 142 158 120 140 106 L118 98 L96 102 L86 92 L104 80 L134 78 L160 92 L180 120 C204 140 252 140 300 142 C336 144 354 158 354 177 C354 197 332 208 300 208 L190 208 C168 208 150 194 150 170 Z"/>
+    <path d="M100 96 L70 95 L58 86 L64 100 L56 110 L72 105 L100 104 Z"/>
+    <path d="M168 188 L140 196 L126 214 L112 210 L118 224 L136 224 L154 212 L178 204 Z"/>
+    <path d="M196 202 L188 248 L170 257 L198 260 L210 251 L216 204 Z"/>
+    <path d="M290 202 L298 247 L282 257 L312 260 L322 249 L314 200 Z"/>
+    <path d="M330 194 L346 241 L330 253 L358 255 L368 245 L350 190 Z"/>
+    <path d="M348 178 C384 188 414 170 418 140 C422 108 400 90 380 98 L372 82 L358 106 L384 112 C400 110 404 128 398 145 C390 164 368 170 344 162 Z"/>
+  </g>
+</svg>

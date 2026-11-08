@@ -5389,6 +5389,398 @@
    "repairs": 0
   }
  },
+ "pembrey/race/cs": {
+  "digest": "7de1aadd1f3f12be48c65e1e",
+  "lead": 2203.7,
+  "car0": [
+   -82.21,
+   156.49
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pembrey/demo/cs": {
+  "digest": "f60658b7bb764ea31793835d",
+  "lead": 2372.4,
+  "car0": [
+   23.12,
+   -35.83
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pembrey/upg/cs": {
+  "digest": "a0414267acf5fbaa001d176c",
+  "lead": 2357.8,
+  "car0": [
+   2.46,
+   0.75
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "pembrey/crash/cs": {
+  "digest": "b2d631a2520b47e98220ec40",
+  "lead": 3609.5,
+  "car0": [
+   155.58,
+   -248.96
+  ],
+  "cover": {
+   "dmg": 0.84,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "pembrey/formula/cs": {
+  "digest": "becbb93b0a4705ee856490f4",
+  "lead": 4807.3,
+  "car0": [
+   484.51,
+   160.64
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "pembrey/lm/cs": {
+  "digest": "c53e6bef3a6c88072ce49e14",
+  "lead": 4712,
+  "car0": [
+   444.11,
+   113.82
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "pembrey/car/cs": {
+  "digest": "8109ea0b45256d88e54a86fa",
+  "lead": 3974.5,
+  "car0": [
+   121.29,
+   -102.19
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "kildare/race/cs": {
+  "digest": "7ab00da29abf2fa47fe6ead5",
+  "lead": 1623.5,
+  "car0": [
+   -287.2,
+   53.44
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kildare/demo/cs": {
+  "digest": "70d68071f930344cf442113e",
+  "lead": 1711.6,
+  "car0": [
+   -232.16,
+   -22.75
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kildare/upg/cs": {
+  "digest": "a76f217681b4e32534794497",
+  "lead": 1706.6,
+  "car0": [
+   -277.35,
+   -5.07
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kildare/crash/cs": {
+  "digest": "fdd98b2b6b15a16457f8bfff",
+  "lead": 1613.8,
+  "car0": [
+   -141.89,
+   33.92
+  ],
+  "cover": {
+   "dmg": 0.55,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kildare/formula/cs": {
+  "digest": "bb1a3d895f83e3eabe42b247",
+  "lead": 1687.5,
+  "car0": [
+   -237.4,
+   43.07
+  ],
+  "cover": {
+   "dmg": 0.77,
+   "loose": 5,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "kildare/lm/cs": {
+  "digest": "92ee7848289296ce4b7689fd",
+  "lead": 1672.2,
+  "car0": [
+   -257,
+   49.14
+  ],
+  "cover": {
+   "dmg": 0.75,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "kildare/car/cs": {
+  "digest": "c3d5069e82e8fde01c4d3cce",
+  "lead": 1613.8,
+  "car0": [
+   -148.66,
+   29.5
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "sacalobra/race/cs": {
+  "digest": "d5d79024d8d9dc2e8c1c9982",
+  "lead": 1458.9,
+  "car0": [
+   -140.19,
+   -14.78
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/demo/cs": {
+  "digest": "07a991f44d8a357760bff505",
+  "lead": 1588.5,
+  "car0": [
+   -362.85,
+   -202.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/upg/cs": {
+  "digest": "79f0957201dabf56b212d8af",
+  "lead": 1568.6,
+  "car0": [
+   -267.32,
+   -165.63
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/crash/cs": {
+  "digest": "7763ac962efaee3cb3c1ee44",
+  "lead": 1429,
+  "car0": [
+   -146.53,
+   39.4
+  ],
+  "cover": {
+   "dmg": 0.55,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/formula/cs": {
+  "digest": "025f57188635e5ee5e602a16",
+  "lead": 1553.1,
+  "car0": [
+   -134.2,
+   29.67
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "sacalobra/lm/cs": {
+  "digest": "3ea7c74b19c0b5a0827b4cc4",
+  "lead": 1530.3,
+  "car0": [
+   -132.71,
+   27.58
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/car/cs": {
+  "digest": "0b8175d31d47c23a795422a8",
+  "lead": 1421.3,
+  "car0": [
+   -191.07,
+   110.68
+  ],
+  "cover": {
+   "dmg": 0.46,
+   "loose": 2,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "kotor/race/cs": {
+  "digest": "3c0fc7da0a73be0006ba06da",
+  "lead": 1564,
+  "car0": [
+   56.32,
+   203.03
+  ],
+  "cover": {
+   "dmg": 0.17,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/demo/cs": {
+  "digest": "8143a59a3cfc5864ea2d890d",
+  "lead": 1699.4,
+  "car0": [
+   130.05,
+   6.9
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/upg/cs": {
+  "digest": "ee4569b7b44c4d0af2818f89",
+  "lead": 1665.9,
+  "car0": [
+   112.71,
+   36.92
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/crash/cs": {
+  "digest": "c4f3661db55b5d498f8347fc",
+  "lead": 1557.1,
+  "car0": [
+   42.83,
+   158.66
+  ],
+  "cover": {
+   "dmg": 0.67,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/formula/cs": {
+  "digest": "63a4102e2df493246e252803",
+  "lead": 1755.4,
+  "car0": [
+   62.29,
+   204.2
+  ],
+  "cover": {
+   "dmg": 0.75,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/lm/cs": {
+  "digest": "8758ad31269861cb6f0acad0",
+  "lead": 1703.7,
+  "car0": [
+   45.84,
+   199.97
+  ],
+  "cover": {
+   "dmg": 0.95,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/car/cs": {
+  "digest": "56b272270d33e4186454135a",
+  "lead": 1557.7,
+  "car0": [
+   43.27,
+   157.14
+  ],
+  "cover": {
+   "dmg": 0.64,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "bikernieki/race/cs": {
   "digest": "1e7dbbdc65851a1a7ad93e0a",
   "lead": 2384.2,

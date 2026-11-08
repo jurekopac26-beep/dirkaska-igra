@@ -81,9 +81,25 @@ def resample(x, z, step):
     d = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(z)))]); s = np.arange(0, d[-1] + 1e-6, step)
     return np.interp(s, d, x), np.interp(s, d, z), s
 
-def separate(x, z, gap, adj, it=60):
+def crossings(x, z, far=60):
+    """Where the line crosses itself (one leg on a bridge over the other: def `kriz`): [(i, j)] the sample indices of the two legs at each
+    crossing (i < j, both on a 1 m line), the legs more than `far` metres apart along it."""
+    out = []; n = len(x)
+    from scipy.spatial import cKDTree
+    T = cKDTree(np.stack([x, z], 1))
+    for i in range(n - 1):
+        for j in T.query_ball_point([x[i], z[i]], 3.0):
+            if j <= i + far or j >= n - 1: continue
+            ax, az, bx, bz = x[i + 1] - x[i], z[i + 1] - z[i], x[j + 1] - x[j], z[j + 1] - z[j]; den = ax * bz - az * bx
+            if abs(den) < 1e-9: continue
+            ex, ez = x[j] - x[i], z[j] - z[i]; t = (ex * bz - ez * bx) / den; u = (ex * az - ez * ax) / den
+            if 0 <= t < 1 and 0 <= u < 1 and not any(abs(i - a) < 20 and abs(j - b) < 20 for a, b in out): out.append((i, j))
+    return out
+
+def separate(x, z, gap, adj, it=60, keep=()):
     """Push apart the parts of the line that come closer than `gap` (metres) while more than `adj` apart along it (the legs of a hairpin),
-    a little each step, then smooth: returns the line and how far it moved (mean, max)."""
+    a little each step, then smooth: returns the line and how far it moved (mean, max). keep: crossings [(i, j)] (crossings()), round which
+    the two legs are left as they are (within 45 m of the crossing on each: a bridge, not a hairpin's legs side by side)."""
     x0, z0 = x.copy(), z.copy(); n = len(x)
     for _ in range(it):
         P = np.stack([x, z], 1); moved = False
@@ -91,6 +107,10 @@ def separate(x, z, gap, adj, it=60):
         T = cKDTree(P); pairs = T.query_pairs(gap, output_type='ndarray')
         if len(pairs):
             pairs = pairs[np.abs(pairs[:, 0] - pairs[:, 1]) > adj]
+        for a, b in keep:
+            if len(pairs):
+                lo, hi = np.minimum(pairs[:, 0], pairs[:, 1]), np.maximum(pairs[:, 0], pairs[:, 1])
+                pairs = pairs[~((np.abs(lo - a) < 45) & (np.abs(hi - b) < 45))]
         if len(pairs):
             dx = P[pairs[:, 0]] - P[pairs[:, 1]]; d = np.maximum(np.hypot(dx[:, 0], dx[:, 1]), 1e-6); push = ((gap - d) / 2 * 0.35)[:, None] * dx / d[:, None]
             F = np.zeros_like(P); np.add.at(F, pairs[:, 0], push); np.add.at(F, pairs[:, 1], -push)
@@ -98,6 +118,21 @@ def separate(x, z, gap, adj, it=60):
         if not moved: break
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
+
+def widen(x, z, rmin, it=20):
+    """The tightest hairpins opened up (def `polmer`: the least radius of the centre line, m): where the line bends tighter, it is blended
+    a step at a time (at most `it` steps, def `polmer_it`) with a 3 m Gaussian of itself round each such apex (+-10 m): the apex moves in
+    and the bend opens (OpenStreetMap's sharp corners at the tips of hairpins far tighter than a road 9-10 m wide can turn). -> x, z, steps"""
+    for n in range(it):
+        x, z, s = resample(x, z, 1.0)
+        hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
+        tight = np.where(np.abs(k) > 1 / rmin)[0]
+        if not len(tight): return x, z, n
+        w = np.zeros_like(s)
+        for t in tight: w = np.maximum(w, np.exp(-((s - s[t]) / 10.0) ** 2))
+        xs = gaussian_filter1d(x, 3, mode='nearest'); zs = gaussian_filter1d(z, 3, mode='nearest')
+        x = x * (1 - w) + xs * w; z = z * (1 - w) + zs * w
+    x, z, s = resample(x, z, 1.0); return x, z, it
 
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
@@ -121,16 +156,35 @@ def profile(h, s, C, bends):
     grade limited and lowered through the hairpins (as built)."""
     V = C.get('visine', {}); step = s[1] - s[0]
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
-    if V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
+    if V.get('dol'): med = np.minimum.accumulate(med)   # (a road raced downhill, def `dol`: it falls all the way, the model's bumps cut)
+    elif V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
     sm = gaussian_filter1d(med, V.get('glajenje', 40) / step, mode='nearest')
     # the grade: lower through the hairpins (a share of it), more on the legs, the total climb kept
     g = np.gradient(sm, s); w = np.ones_like(s)
     for sa, tot, r in bends:
         if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
     g2 = g * w; gmax = V.get('naklon', 0.12)
-    for _ in range(40):
-        g2 = np.clip(g2 * (np.sum(g * step) / max(1e-9, np.sum(g2 * step))), -gmax, gmax)
+    for _ in range(40):   # (the total kept: a sum of either sign, a road raced downhill falls)
+        t2 = np.sum(g2 * step); g2 = np.clip(g2 * (np.sum(g * step) / (t2 if abs(t2) > 1e-9 else 1e-9)), -gmax, gmax)
     out = sm[0] + np.concatenate([[0], np.cumsum((g2[1:] + g2[:-1]) / 2 * step)])
+    return out
+
+def knot(hp, s, cross, K):
+    """The heights through a crossing (def `kriz`: {"dy": the least height between the two legs' road surfaces at the crossing (m),
+    "zgoraj": "prvi" / "drugi", which leg is on the bridge}): the model cannot tell the two levels apart (one 30 m cell), so where the
+    profile leaves less than dy between them, the leg on the bridge is raised by half the shortfall and the other lowered by half, eased
+    out over 200 m beyond each and linear between them (the loop between the two legs takes the extra grade)."""
+    dy = K.get('dy', 7.0); out = hp.copy()
+    for i, j in cross:
+        up, lo = (i, j) if K.get('zgoraj', 'prvi') == 'prvi' else (j, i)
+        e = dy - (out[up] - out[lo])
+        if e <= 0: log('crossing at %.0f / %.0f m: %.1f m between the legs' % (s[i], s[j], out[up] - out[lo])); continue
+        sa, sb = s[i], s[j]; ha = 0.5 * e if up == i else -0.5 * e; T = 200.0
+        c = np.where(s <= sa, ha * np.clip((s - (sa - T)) / T, 0, 1) ** 2 * (3 - 2 * np.clip((s - (sa - T)) / T, 0, 1)),
+            np.where(s >= sb, -ha * np.clip(((sb + T) - s) / T, 0, 1) ** 2 * (3 - 2 * np.clip(((sb + T) - s) / T, 0, 1)),
+                     ha + (-2 * ha) * (s - sa) / (sb - sa)))
+        out = out + gaussian_filter1d(c, 12, mode='nearest')
+        log('crossing at %.0f / %.0f m: the legs %.1f m apart in height, now %.1f (the bridge %s)' % (sa, sb, hp[up] - hp[lo], out[up] - out[lo], 'first' if up == i else 'second'))
     return out
 
 # ---------------- the terrain grids (the forms js/world-vrsic.js vrPrep reads) ----------------
@@ -351,7 +405,11 @@ def main():
     x = gaussian_filter1d(x, C.get('gauss', 3), mode='nearest'); z = gaussian_filter1d(z, C.get('gauss', 3), mode='nearest')
     S0, F0 = (x[i0], z[i0]), (x[i1], z[i1])
     hw = C['polsirina']; gap = C.get('razmik', 2 * hw + 10)
-    x, z, mm, mx = separate(x, z, gap, int(gap * 2.6))
+    X0 = crossings(x, z) if C.get('kriz') else []   # (the crossings on two levels, def kriz: the line is on ~1 m samples here)
+    x, z, mm, mx = separate(x, z, gap, int(gap * 2.6), keep=X0)
+    if C.get('polmer'):   # (the tightest hairpins opened up, then the legs apart again)
+        x, z, nw = widen(x, z, C['polmer'], C.get('polmer_it', 20)); x, z, mm2, mx2 = separate(x, z, gap, int(gap * 2.6), keep=crossings(x, z) if X0 else [])
+        log('hairpins opened to %.1f m in %d steps; the legs moved %.1f m more at most' % (C['polmer'], nw, mx2)); mx = max(mx, mx2)
     x, z, s = resample(x, z, 1.0)
     i0 = int(np.argmin(np.hypot(x - S0[0], z - S0[1]))); i1 = int(np.argmin(np.hypot(x - F0[0], z - F0[1])))
     # the game's origin: the start line
@@ -365,9 +423,11 @@ def main():
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
     h = D.sample(la, lo); hp = profile(h, s, C, bends)
+    X1 = crossings(x, z) if C.get('kriz') else []
+    if X1: hp = knot(hp, s, X1, C['kriz'])
     base = hp[i0]; alt = [int(round(hp[i0])), int(C.get('vrh', round(hp[i1])))]   # (vrh: the top's official height, when the cleaned profile is a metre or two off it)
     g = np.gradient(hp, s)
-    log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))
+    log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], np.abs(g[i0:i1]).max() * 100, np.mean(np.abs(h - hp))))
     nE = int(round(s[-1] / 4)); fr = np.linspace(0, s[-1], nE + 1); HE = np.round((np.interp(fr, s, hp) - base) * 10).astype(int).tolist()
     pts = [[round(float(x[i]), 2), round(float(z[i]), 2)] for i in range(0, len(x), 5)]
     if (len(x) - 1) % 5: pts.append([round(float(x[-1]), 2), round(float(z[-1]), 2)])
