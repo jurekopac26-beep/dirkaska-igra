@@ -510,7 +510,7 @@
   const HOUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.2 12 3.5l9 7.7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.8 10v10h4.6v-5.6h3.2V20h4.6V10" fill="#fff"/></svg>';
   const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
-  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia', 'romania'];
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia', 'romania', 'cape-verde'];
   const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
@@ -533,7 +533,7 @@
   // open road's summit, a circuit's highest point) where the game knows the real heights (heightsOf: routes.js, MENU.profs)
   function heightOf(t) {
     if ((D.heads || {})[t.id]) return D.heads[t.id];
-    const a = t.def.alt; if (a) return Math.max(a[0], a[1]);
+    const a = t.def.alt; if (a) return Math.max(a[0], a[1], t.def.altTop || -Infinity);   // (a road over a top: its highest point, def.altTop)
     const P = heightsOf(t); return P && P.real ? Math.max(...P.H) : null;
   }
   /* the globe in the head: the Earth turned to the track's place (an orthographic globe of the Blue Marble, assets/geo/earth-s.webp), its
@@ -646,7 +646,7 @@
     // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
     const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
     h += '<div class="trow">' + first + cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>') + cell('Length', t.km.toFixed(2) + ' km') +
-      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
+      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round((alt[1] < alt[0] ? alt[1] : d.altTop || alt[1]) - alt[0]))) + ' m') : cell('Corners', String(t.corners))) +
       (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + '</div>';
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran

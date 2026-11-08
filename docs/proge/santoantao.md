@@ -1,0 +1,31 @@
+# Santo Antão, Zelenortski otoki (dirka, kronometer, promet, policija)
+
+[← Vse proge](../../README.md#proge) · proga `santoantao` (`js/tracks/santoantao.js`)
+
+Tlakovana cesta EN1-SA-01 med Porto Novom in Ribeiro Grande na severovzhodu otoka Santo Antão, v pravem merilu: ozek greben Delgadim, kjer pobočji na obeh straneh ceste strmo padata v doline, nato severni odrastek grebena s šestimi serpentinami navzdol proti Ribeiri Grande in Atlantiku. Proga se začne na južnem koncu grebena (672 m, 17,1489° S, 25,0851° Z), gre čez sedlo Delgadim (652 m) na vrh grebena (710 m) in se po šestih serpentinah spusti nad Ribeiro Grande (336 m, 17,1731° S, 25,0737° Z): 4,96 km, 87 m vzpona in 423 m spusta. Za ciljem je ~256 m ceste za mesta avtov po dirki. Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (kot na Dadèsu):
+
+- **Dirka**: 21 tekmecev (v meniju *Opponents* od 0 do največ 60: za ciljem je le ~256 m ozke ceste; `maxRivals`), leteči start kot na vseh odprtih cestah, ena vožnja do cilja. Pod mestom so prevoženi kilometri in nadmorska višina, ki gre na tej progi gor in potem dol (`altTop`: višina v HUD gre do vrha grebena, ne le med višinama starta in cilja); po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).
+- **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica najboljših 10, duh in medalje (zlata 3:00, srebrna 3:10, bronasta 3:23, v dežju 3:14 / 3:25 / 3:39; zlato je čas relijskega avta na avtopilotu, kot na Vršiču).
+- **Promet**: dvoboj z enim tekmecem po odprti cesti: avtomobili in poltovornjaki, minibusi, ki vozijo ljudi med vasmi in pristaniščem, nekaj motoristov in tovornjakov; po kockah redki kolesarji.
+- **Policija**: beg pred policijo (pregon se začne že na štartu, pobegneš čez cilj). Patrulje imajo ob bokih modro progo z generičnim napisom POLÍCIA (brez imena ali znaka katere koli službe), v rezultatih pobega piše »Do Ribeire Grande v …«.
+- **Serpentine**: na pravi cesti niso oštevilčene; igra jih šteje od vrha navzdol (Serpentina 1–6). Pod uro se izpišejo z višino (Serpentina 1 · 680 m … Serpentina 6 · 374 m), še sedlo (Delgadim · 652 m), vrh grebena (Vrh grebena · 710 m) in dolina na cilju (Ribeira Grande · 343 m); komentator ima na tej progi svoje stavke ob startu, ob cilju in ob pobegu.
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap (vsakih 5 m, zglajena), taka, kot je: kraki serpentin so najmanj 26 m narazen, konice imajo polmer 8,8 m in več. Prava cesta je široka ~6 m, v igri 9 m. Višine so iz višinskega modela Copernicus DEM GLO-30, ki ceste na ostrem grebenu ne vidi (30 m celice povprečijo padce na obeh straneh) in ne v usekih niže: profil se mu približa od spodaj, z naklonom največ 12 % in z bolj položnimi konicami serpentin (kot so zgrajene). Četrta serpentina je zadnji ovinek cik-caka treh ovinkov.
+
+Okolica (gradi jo svoj graditelj `buildSantoAntao` v `js/world-santoantao.js`; teren s pomožnimi funkcijami Vršiča in Los Caracoles kot Dadès, zidovi med kraki kot na prelazih, `js/world-prelaz.js` ostane nespremenjen):
+
+- **Otok v pasatu**: svetlo popoldne, sonce z jugozahoda, nad morjem sivkasta meglica pasata. Travnata in grmovnata vulkanska pobočja v olivno zeleni in slamnati barvi, vmes rdečerjava prst; na strmih pobočjih pasovi temnega bazalta in rdečkastega tufa s travnatimi policami; v dolinah pasovi teras s polji, pešpoti po grebenu (raba tal iz ESA WorldCover 2021 in OpenStreetMap, barve po rabi tal in naklonu).
+- **Cesta**: vsa tlakovana s temnimi bazaltnimi kockami, ob robu pas večjih svetlih kamnov, brez črt (`setts`: oprijem in zvok kock po vsej dolžini). V dežju se kocke zmočijo in potemnijo kot asfalt.
+- **Zidovi in robovi**: nizki zidovi iz bazalta na robu, kjer teren pada, v serpentinah v blokih pobeljeni; kamniti podporni zidovi pod robom zgornjega kraka serpentin (kot na prelazih); beli smerni stebrički z rdečim vrhom, table s puščicami v serpentinah.
+- **Sedlo Delgadim**: dve razgledišči, terasi ob cesti na obeh straneh grebena (lega iz OpenStreetMap) z zaobljenim zidom, pobeljenim po vrhu, in ljudmi; na prvi tabla s sliko pokrajine (brez besedila).
+- **Rastline in skale**: ciprese, evkalipti in akacije s ploščatimi krošnjami, kjer so na zemljevidu drevesa, grmičevje, agave in šopi trave (razporejeni po rabi tal); skale iz temnega bazalta in redke iz tufa, skalni pomoli na strmih pobočjih, skalni obrisi in stene iz OpenStreetMap.
+- **Hiše**: majhne hiše z ravnimi strehami, pastelne in sive, raztresene po pobočjih in v dolinah pod cesto (obrisi iz OpenStreetMap; generične, brez imen).
+- **Obzorje**: onstran pasu ob cesti pravi teren ~12 km naokoli (Copernicus DEM, mreža 300 m) in Atlantski ocean (skoraj pol daljnega pogleda je morje).
+- **Dirka**: start z lučmi pod portalom PARTIDA in bela hišica merilcev časa, modri portali kontrolnih točk z višino v rumenem, cilj CHEGADA s tablo RIBEIRA GRANDE, transparent SANTO ANTÃO · DELGADIM · EN1-SA-01 (samo zemljepisna imena in splošne besede), table krajev (Porto Novo, Corda, Ribeira Grande, Delgadim), MIRADOURO, CURVAS PERIGOSAS, DEVAGAR; malo gledalcev (redarji in redke mirne skupine ob startu, cilju, kontrolnih točkah, dveh serpentinah in na sedlu).
+- **Živali**: koze in osli ob cesti (`zivali`).
+- **Fotografije**: videz je narejen po podatkih (OpenStreetMap, ESA WorldCover, višinski model) in splošnem poznavanju kraja, brez Google Maps, Google Earth ali Street View.
+- **Približki**: drevesa, grmičevje, skale in kamni so razporejeni po rabi tal in naklonu, ne po resničnih legah. Hiše so generične; terasi razgledišč stojita ob cesti (v OpenStreetMap sta točki na cesti sami).
+- **Pravno**: samo zemljepisna imena (Santo Antão, Delgadim, Porto Novo, Corda, Ribeira Grande, EN1-SA-01); tabla na razgledišču je brez imena in besedila.
+
+Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 166 klicev risanja in 268 tisoč oglišč, največ 191 klicev in 315 tisoč oglišč.
+
+Podatke proge pripravita orodji `tools/proga-podatki.py` (nastavitve v `tools/santoantao/config.json`) in `tools/santoantao/build.py` (`python3 -I tools/santoantao/build.py`: podatkovni blok in višine `SANTOANTAO_H` v `js/tracks/santoantao.js`; `--png` načrt in profil). Vire glej v `README.md` pod »Zasluge«.
