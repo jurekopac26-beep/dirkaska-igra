@@ -1,0 +1,115 @@
+/* The older road cars (js/core.js MODELS 0..3: KAZE RS coupe, VORTEX 4WD sedan, PICO TURBO hatch, STREGA MR wedge) on the level of the
+   KOLIBRI (docs/avti-kolibri.md, skupina starejsi): patch defs with a look and mounts of their own. The stock car is drawn as ever by its
+   own builder (render.js carGeometry: the same triangles, a rival's and the road traffic's too); only with the garage's parts fitted is the
+   player's car drawn by the kit, through this look: the same loft (BODIES' sections, the same ring), the same lamps, grille, band, mirrors
+   and spoiler where the builder puts them, so the car looks the same with the parts on it. Physics, part table and everything else stay the
+   model's (a patch adds look and mounts only). The sections: render.js BODIES (look units = metres: each body's len / wid is its car's). */
+var VEHICLE_DEFS = VEHICLE_DEFS || [];
+(function () {
+  'use strict';
+  // render.js BODIES' sections (kept in step by tests/deli.test.js: starejsi), [x, w, yb, ybelt, wt, yt, cr, kind]; spoiler: the builder's wing
+  const B = {
+    coupe: { len: 4.35, wid: 1.78, spoiler: true, engRear: false, secs: [
+      [-2.18, 0.84, 0.32, 0.66, 0.74, 0.72, 0.01, 'b'], [-1.98, 0.88, 0.28, 0.70, 0.80, 0.80, 0.02, 'b'], [-1.30, 0.89, 0.27, 0.72, 0.82, 0.83, 0.03, 'b'],
+      [-1.02, 0.89, 0.27, 0.74, 0.76, 0.86, 0.02, 'gr'], [-0.30, 0.89, 0.27, 0.76, 0.64, 1.22, 0.03, 'r'], [0.30, 0.89, 0.27, 0.76, 0.64, 1.24, 0.03, 'gf'],
+      [0.98, 0.89, 0.27, 0.74, 0.80, 0.84, 0.03, 'b'], [1.75, 0.88, 0.28, 0.70, 0.80, 0.76, 0.03, 'b'], [2.18, 0.82, 0.33, 0.58, 0.72, 0.62, 0.01, 'b']] },
+    sedan: { len: 4.55, wid: 1.80, spoiler: true, engRear: false, secs: [
+      [-2.28, 0.84, 0.32, 0.68, 0.76, 0.74, 0.01, 'b'], [-2.05, 0.89, 0.28, 0.72, 0.82, 0.84, 0.02, 'b'], [-1.45, 0.90, 0.27, 0.74, 0.84, 0.87, 0.03, 'b'],
+      [-1.18, 0.90, 0.27, 0.76, 0.78, 0.90, 0.02, 'gr'], [-0.55, 0.90, 0.27, 0.78, 0.66, 1.36, 0.03, 'r'], [0.45, 0.90, 0.27, 0.78, 0.66, 1.38, 0.03, 'gf'],
+      [1.10, 0.90, 0.27, 0.76, 0.82, 0.88, 0.03, 'b'], [1.85, 0.89, 0.28, 0.72, 0.82, 0.80, 0.03, 'b'], [2.28, 0.83, 0.33, 0.60, 0.74, 0.66, 0.01, 'b']] },
+    hatch: { len: 3.95, wid: 1.70, spoiler: false, engRear: false, secs: [
+      [-1.98, 0.82, 0.33, 0.70, 0.72, 0.86, 0.01, 'b'], [-1.88, 0.84, 0.30, 0.74, 0.74, 0.90, 0.02, 'gr'], [-1.55, 0.85, 0.29, 0.76, 0.66, 1.34, 0.03, 'r'],
+      [0.25, 0.85, 0.29, 0.78, 0.66, 1.40, 0.03, 'gf'], [0.85, 0.85, 0.29, 0.76, 0.78, 0.90, 0.03, 'b'], [1.60, 0.84, 0.30, 0.72, 0.78, 0.82, 0.03, 'b'],
+      [1.98, 0.80, 0.34, 0.60, 0.72, 0.68, 0.01, 'b']] },
+    wedge: { len: 4.2, wid: 1.82, spoiler: true, engRear: true, secs: [
+      [-2.10, 0.88, 0.30, 0.66, 0.80, 0.74, 0.01, 'b'], [-1.90, 0.91, 0.27, 0.72, 0.86, 0.84, 0.02, 'b'], [-0.95, 0.91, 0.26, 0.74, 0.80, 0.88, 0.02, 'gr'],
+      [-0.55, 0.91, 0.26, 0.74, 0.62, 1.10, 0.03, 'r'], [0.25, 0.91, 0.26, 0.72, 0.64, 1.12, 0.03, 'gf'], [1.05, 0.90, 0.26, 0.66, 0.80, 0.72, 0.03, 'b'],
+      [1.80, 0.86, 0.27, 0.56, 0.78, 0.60, 0.02, 'b'], [2.10, 0.80, 0.30, 0.48, 0.72, 0.50, 0.01, 'b']] },
+  };
+  const AX = { coupe: [1.2, 1.3], sedan: [1.25, 1.35], hatch: [1.02, 1.4], wedge: [1.34, 1.12] };
+  const LAMP = [1, 0.97, 0.82], DARK = [0.08, 0.08, 0.09], BAND = [0.1, 0.1, 0.11], STRUT = [0.12, 0.12, 0.13];
+  const row = (s) => ({ x: s[0], w: s[1], yb: s[2], ybelt: s[3], wt: s[4], yt: s[5], cr: s[6], k: s[7] });
+  // the builder's pieces, in look units (render.js carGeometry: its headlights and grille, the rear bumper's band, the mirrors, the spoiler)
+  function geo(b) {
+    const S = b.secs.map(row), F = S[S.length - 1], R = S[0], ws = S.find(s => s.k === 'gf'), hly = (F.yb + F.ybelt) / 2 + 0.03;
+    return { S, F, R, ws, hly, head: { x: F.x + 0.02, y: hly + 0.005, z: F.w * 0.6, w: 0.34, h: 0.15 },
+      grille: { x: F.x + 0.02, y: hly - 0.05, w: F.w * 0.7, h: 0.14 }, band: { x: R.x - 0.03, y: R.yb + 0.09, w: R.w * 1.6, h: 0.14 },
+      tail: { x: R.x - 0.06, y: R.ybelt - 0.085, z: R.w * 0.6, w: 0.42, h: 0.15 },
+      mirror: { x: ws.x + 0.45, y: ws.ybelt + 0.05, z: ws.w + 0.07 }, wing: b.spoiler ? { x: R.x + 0.28, y0: S[1].yt - 0.02, y: S[1].yt + 0.28, w: R.w * 0.95 } : null };
+  }
+  function look(key) {
+    const b = B[key], G = geo(b);
+    return {
+      body: { len: b.len, wid: b.wid, secs: b.secs, wz: 0.1, engRear: b.engRear },
+      wheels: { style: 'std', spokes: 5, w: 0.24, rim: [0.62, 0.64, 0.68], tyre: [0.08, 0.08, 0.09] },
+      build(K) {
+        const P = K.paint, sk = K.shade(K.paint, 0.62);
+        // the builder's loft: the skirts the paint at 62 %, the side, the glass bands, the top's edges, the crown in the stripe colour
+        const L = K.loft(K.body.secs, (k, e, kind) => { const gt = kind === 'gf' || kind === 'gr';
+          return e === 0 || e === 8 ? sk : e === 1 || e === 7 ? P : e === 2 || e === 6 ? (kind === 'b' ? P : K.GLASS) : e === 3 || e === 5 ? (gt ? K.GLASS : P) : gt ? K.GLASS : K.strp; },
+          { caps: { front: { col: P }, rear: { col: P } } });
+        const H = G.head, T = G.tail, Mi = G.mirror;
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(H.x, H.y, sd * H.z, 0.07, { shape: 'rect', w: H.w, h: H.h, ring: null, col: LAMP }); });
+        K.part('bumperF', () => K.deli('maska', () => K.box(G.F.x - 0.02, G.hly - 0.12, 0, 0.08, 0.14, G.grille.w, 0, DARK)));
+        K.part('bumperR', () => K.box(G.R.x + 0.02, G.R.yb + 0.02, 0, 0.1, 0.14, G.band.w, 0, BAND));
+        K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(T.x, T.y, sd * T.z, T.w, T.h); });
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.part(sd < 0 ? 'mirrorL' : 'mirrorR', () => K.box(Mi.x, Mi.y - 0.05, sd * Mi.z, 0.14, 0.1, 0.12, 0, P)); });
+        if (G.wing) { const Wg = G.wing; K.part('trunk', () => K.deli('krilo', () => {
+          for (const sd of [-1, 1]) K.box(Wg.x, Wg.y0, sd * G.R.w * 0.62, 0.12, 0.3, 0.06, 0, STRUT);
+          K.box(Wg.x, Wg.y, 0, 0.36, 0.06, G.R.w * 1.9, 0, K.strp); })); }
+        else K.part('trunk', () => K.deli('krilo', () => {}));
+        for (const id of ['aero', 'hauba', 'zmigavci', 'relijske_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'streha', 'stresna_zajemalka',
+          'antena', 'crte', 'celjusti', 'dim_gum', 'nalepke', 'soncni_pas', 'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
+        K.part('trunk', () => K.deli('zaluzije', () => {}));
+        K.seat(G.ws.x - 0.75, 0.5, -0.36); K.seat(G.ws.x - 0.75, 0.5, 0.36); K.engine(b.engRear ? -AX[key][1] - 0.15 : AX[key][0] + 0.15, G.S[0].yb + 0.05, 0);   // (the inner block)
+        return L;
+      },
+    };
+  }
+  // where the garage's parts go (js/deli.js, look units): measured from the same sections and pieces (the axles from the model: a, b)
+  const ip = (S, x, k) => { if (x <= S[0].x) return S[0][k]; for (let i = 1; i < S.length; i++) if (x <= S[i].x) { const a = S[i - 1], b = S[i]; return a[k] + (b[k] - a[k]) * (x - a.x) / (b.x - a.x); } return S[S.length - 1][k]; };
+  function mounts(key) {
+    const b = B[key], G = geo(b), S = G.S, F = G.F, R = G.R, [fa, fb] = AX[key], at = (x, k) => ip(S, x, k);
+    const gi = S.findIndex(s => s.k === 'gf'), ri = S.findIndex(s => s.k === 'r'), gri = S.findIndex(s => s.k === 'gr');
+    const wsTop = S[gi].x, wsBase = S[gi + 1].x, roofR = S[ri].x, grFoot = S[gri].x, d0 = wsBase, d1 = wsBase - 1.15, mid = (roofR + wsTop) / 2;
+    const deck = !b.spoiler ? null : S[1];   // (a boot's deck: the wing on it; the hatch's on the roof's rear edge)
+    const H = G.head, T = G.tail, Mi = G.mirror, eng = b.engRear ? -fb - 0.15 : fa + 0.15;
+    const kx = deck ? R.x + 0.5 : roofR + 0.05;
+    const out = {
+      krilo: { x: kx, w: at(kx, 'wt') * 0.9, part: 'trunk' },
+      zarometi: { x: H.x, y0: H.y, lean: 0, zc: H.z, yc: H.y, s: 0.62, depth: 0.03, hosts: ['body', 'body'] },
+      platisca: {},
+      aero: { xf: F.x, xr: R.x, w: F.w * 0.92, yf: F.yb, yr: R.yb, sill: [-fb + 0.47, fa - 0.47], ws: at(0, 'w') * 0.95, ys: at(0, 'yb') - 0.03, exh: [-0.45, 0.035] },
+      hauba: { x0: wsBase + 0.2, x1: Math.max(S[S.length - 2].x - 0.08, wsBase + 0.72), w: Math.min(at(wsBase, 'wt'), F.wt) * 0.4, bulge: 0.5 },
+      maska: { x: F.x, y0: G.hly - 0.05, lean: 0, yc: G.hly - 0.05, w: G.grille.w * 0.9, h: 0.1 },
+      zmigavci: { front: { x: F.x, y: F.yb + 0.06, z: 0.5 * F.w / 0.82, w: 0.12, h: 0.04, part: 'bumperF' }, side: { x: fa + 0.42, y: at(fa + 0.42, 'ybelt') - 0.1, z: at(fa + 0.42, 'w'), host: 'body' },
+        rear: { x: R.x, y: R.yb + 0.22, z: 0.22, part: 'bumperR' }, mirror: { x: Mi.x + 0.075, y: Mi.y, z: Mi.z, w: 0.1, parts: ['mirrorL', 'mirrorR'] } },
+      relijske_luci: { bumper: [F.x, F.yb + 0.12, 0.3], nose: [F.x, G.hly + 0.1], intake: [F.x, F.yb + 0.05, 0.8, 0.12], roof: [wsTop - 0.08, at(wsTop - 0.08, 'wt') * 0.8], pod: [F.x, G.hly - 0.06, 0.66, 0.5], part: 'bumperF' },
+      zadnje_luci: { x: R.x + 0.02, zc: T.z, yc: T.y, w: 0.42, h: 0.15, s: 0.5, shape: [[-0.21, -0.075], [0.21, -0.075], [0.21, 0.075], [-0.21, 0.075]] },
+      auspuh: { x: R.x, y: R.yb + 0.01, z: 0.45, r: 0.035, len: 0.12, part: 'bumperR' },
+      prtljaznik: { x: [R.x, R.x + 0.01], glass: grFoot, w: R.wt * 0.8, part: 'trunk' },
+      vlecne_kljuke: { f: [F.x, F.yb + 0.1, 0.62], r: [R.x, R.yb + 0.1, 0.3] },
+      lovilci_blata: { x: [fa - 0.45, -fb - (-R.x - fb < 0.7 ? 0.39 : 0.45)], z: [0.6, 0.72], y: [at(fa - 0.37, 'yb') + 0.06, 0.09], sill: [-fb + 0.6, fa - 0.6, at(0, 'yb'), at(0, 'w') - 0.11], part: 'body' },
+      antena: { x: deck ? mid : roofR + 0.55, z: at(deck ? mid : roofR + 0.55, 'wt') * (deck ? 0.68 : 0.55), fin: [deck ? Math.min(roofR + 0.25, wsTop - 0.45) : roofR + 0.45, 0], front: [mid - 0.05, at(mid, 'wt') * (key === 'coupe' ? 0.5 : 0.7)], whip: wsTop - 0.05, part: 'body' },
+      zaluzije: { x0: grFoot + 0.04, y0: at(grFoot + 0.04, 'yt') + 0.01, x1: roofR, y1: at(roofR, 'yt') + 0.01, w: Math.min(at(grFoot, 'wt'), at(roofR, 'wt')) * 0.85 },
+      ogledala: { x: Mi.x, y: Mi.y, z: Mi.z, w: 0.12, h: 0.1, d: 0.14, z0: at(Mi.x, 'w') - 0.05, fwd: 0.04, up: 0.01 },
+      zavore: { s: 1 },
+      matice: { k: 4, r: 0.2 },
+      barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
+      crte: { z: [0.24, 0.38] },
+      nalepke: { side: [[d1 + 0.1, fa - 0.45], [fa + 0.55, F.x - 0.2], [-fb + 0.45, d1 - 0.1]], y: [at(0, 'yb') + 0.2, at(0, 'ybelt') - 0.06], hood: { x: [wsBase + 0.1, F.x - 0.3], z: [0.26, 0.46] }, roof: { x: [roofR + 0.05, wsTop - 0.05] } },
+      soncni_pas: { x: [wsTop, wsTop + 0.14] }, zamasek: { x: -fb + 0.42, y: at(-fb + 0.42, 'ybelt') - 0.08, z: at(-fb + 0.42, 'w'), r: 0.045 },
+      celjusti: { r: [0.085, 0.16], a: [70, 125] },
+      filter_zraka: { x: eng, y: 0.55, z: b.engRear ? -0.3 : -0.35 }, akumulator: b.engRear ? { x: -fb + 0.55, y: at(-fb + 0.65, 'yb') + 0.031, z: 0.12, back: true } : { x: eng + 0.275, y: S[0].yb + 0.05, z: 0.12, back: true }, turbo: { x: eng + (b.engRear ? -0.2 : 0.2), y: 0.45, z: 0.15 }, cip: { x: eng, y: S[0].yb + 0.05 + 0.274, z: 0.2 },
+      vzmeti: key === 'hatch' ? { in: 0.15, top: 0.68, seat: [at(fa, 'yb'), at(-fb, 'yb')] } : { in: 0.15, top: 0.68 }, amortizerji: { in: 0.15, top: 0.68 }, stabilizatorji: { in: 0.13, floor: 0.29 }, dim_gum: {},
+    };
+    if (b.engRear) delete out.hauba;   // (the wedge's front lid: no engine under it, its low nose's top in the fenders' pieces)
+    if (wsTop - roofR > 0.9) {   // (a roof long enough for the sunroof and the scoop: the sedan's, the hatch's; not the coupe's 0.6 m, the wedge's 0.8)
+      out.streha = { x0: roofR + 0.05, x1: wsTop - 0.2, xf: wsTop - 0.23, xr: mid - 0.15, back: roofR + 0.05 };
+      out.stresna_zajemalka = { x: wsTop - 0.05, z: 0, back: roofR + 0.05, wr: at(mid, 'wt') * 0.7 };
+    }
+    return out;
+  }
+  for (const [id, key] of [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']])
+    VEHICLE_DEFS.push({ id, patch: true, look: look(key), mounts: mounts(key) });
+})();
