@@ -20,16 +20,17 @@ CFG = json.load(open(os.path.join(HERE, 'proge.json')))
 
 # ---------------- the road: a route over Overture's road segments (split at their connectors), from waypoint to waypoint ----------------
 ROADS = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'unclassified']
-def route(seg, way, G, classes=None):
+def route(seg, way, G, classes=None, allow=()):
     """The centre line (x, z arrays, metres) of the shortest route over the roads through the waypoints [(lat, lon), ...] (only roads
-    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins)."""
+    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins; and the OpenStreetMap ways in allow,
+    e.g. "w227761246", whatever their class: a road of the route that OSM has under construction)."""
     nodes = {}; adj = {}
     def nid(k):
         if k not in nodes: nodes[k] = len(nodes)
         return nodes[k]
     lines = []
     for r in seg:
-        if r.get('subtype') != 'road' or r.get('class') not in (classes or ROADS): continue
+        if r.get('subtype') != 'road' or (r.get('class') not in (classes or ROADS) and not any((q.get('record_id') or '').split('@')[0] in allow for q in (r.get('sources') or []))): continue
         g = wkb.loads(r['geometry']); c = np.array(g.coords); g = LineString(np.stack(G.to_xz(c[:, 1], c[:, 0]), 1)); cons = sorted([(c['at'], c['connector_id']) for c in (r.get('connectors') or [])])
         if not cons or cons[0][0] > 0: cons = [(0.0, r['id'] + ':a')] + cons
         if cons[-1][0] < 1: cons.append((1.0, r['id'] + ':b'))
@@ -330,8 +331,8 @@ def main():
     tid = sys.argv[1]; C = CFG[tid]; write = '--zapisi' in sys.argv
     box = C['okvir']; name = tid
     G0 = Geo(*C['start'])
-    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry'], name)
-    x, z = route(seg, C['pot'], G0, C.get('razredi'))
+    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry', 'sources'], name)
+    x, z = route(seg, C['pot'], G0, C.get('razredi'), C.get('dovoli', ()))
     x, z, s = resample(x, z, 1.0)
     # the start and the finish snapped onto the line; the run-up before the start and the road past the finish
     sx, sz = G0.to_xz(*C['start']); fx, fz = G0.to_xz(*C['cilj'])
