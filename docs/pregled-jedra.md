@@ -15,7 +15,11 @@ Vsaka najdba ima datoteko in vrstico (na `main` 90e09dac), opis in konkreten pri
 _V delu._
 
 ### Hude
-_V delu._
+
+**J14 · AI ne vidi avta, ki ga prehiteva za krog, in se vanj zaleti s polno hitrostjo** · `js/core.js:3748` (`aiDrive`, izbira nevarnosti), enako `js/core.js:3691` (`aiLaneBusy`)
+- Nevarnost in avte ob sebi AI izbira po `gap = o.dist - c.dist`, kjer je `dist` celotna razdalja dirke. Na krožni progi je avto krog narazen, ki je fizično tik pred njim ali ob njem (počasen, poškodovan, ustavljen, prehitevan za krog), izven okna `gap < -8 || gap > 22` in zato ni nevarnost: AI ostane na idealni liniji in se zaleti. Mesto na progi (ovito na dolžino kroga) upošteva samo, ko sta oba avta v boksih (3749). Modrih zastav ali drugega ravnanja z zaostalimi ni nikjer.
+- **Primer:** `rbring`, 7 tekmecev, 3 krogi, ponovljiva dirka (seme 9): igralec se v 1. krogu ustavi na idealni liniji (s ≈ 1634 m). V naslednjem krogu ga nobeden od 6 tekmecev, ki ga prehitevajo za krog, niti v enem koraku ne vzame za nevarnost (153 in 161 korakov manj kot 22 m za njim), štirje se zaletijo vanj (vodilni s 55 m/s razlike v hitrosti). Tekmec v istem krogu ga je imel za nevarnost 2.923 korakov. Enako vsak počasen ali poškodovan avto, ki ga prehitevajo za krog (npr. začetnik na `toronto`, `troisrivieres`, `marrakesh`).
+- Preverjeno: potrjeno (simulacija).
 
 ### Srednje
 
@@ -39,7 +43,17 @@ _V delu._
 - **Primer:** policijski način na pravi progi, ki ga ima (npr. `balea`, `medvode`, `greatalpine`, `tianmen`): policija igralca ujame (ULOVLJEN, `bustShot`) ali ga aretira na kontrolni točki (`chkShot`). Posnetek traja 4,2 s zaključne faze in ostane za zaslonom z rezultati.
 - Preverjeno: potrjeno (branje kode; videz na posamezni kartici ni preverjen).
 
+**J15 · Promet: motor, s katerega je padel voznik, odpelje brez voznika** · `js/core.js:4269` (`Traffic._loose`)
+- Vozilo, ki po trku 6 s stoji obrnjeno vzdolž ceste, `_loose` vrne v vožnjo; pogoj izvzame samo kolesa (`kind !== 4`) in razbitine policijskega načina (`v.wreck`), ne motorja, s katerega je `_throwRider` vrgel voznika (`v.rider`). Izris (`js/render.js:6440`) na enosledni vozilo z `v.rider` voznika ne nariše, voznik pa ostane ob cesti (`stand2`), dokler motor ne izgine na koncu ceste.
+- **Primer:** `balea`, dvoboj v prometu, seme 11: igralec od zadaj zadene motor pri 4–10 m/s razlike. V 3 od 9 trkov motor ~8,8 s pozneje vozi z 11 m/s brez voznika, voznik pa stoji ~150 m za njim. Enako na vseh pravih progah s prometom, kjer so motorji (npr. `chapman`, `greatalpine`, `iroha`, `rastro`, `medvode`).
+- Preverjeno: potrjeno (simulacija).
+
 ### Nizke
+
+**J16 · Človek na avtobusni postaji po preplahu hodi na mestu brez konca** · `js/core.js:4484` (`Traffic`, ljudje: stanje `back`/`limp`)
+- Ko se prestrašen ali podrt človek vrne na svoj pas, vedno preide v `walk`. Na postaji je njegov odsek dolg nič (`p.a0 = p.a1`, 4050), zato `walk` (4452–4453) v vsakem koraku omeji `s` in obrne smer: človek hodi na mestu s hitrostjo hoje in se obrne za 180° vsakih 1/120 s. `_home` (4528) ta primer reši pravilno (vrne `stop`), a človeka v `walk` nihče ne pošlje tja.
+- **Primer:** `medvode` (edina prava proga z avtobusnimi postajami), promet ali policija, seme 11: igralec pripelje proti človeku na postaji (s ≈ 401 m) z 12 m/s in se ustavi 60 m naprej. Po 15,8 s je človek v `walk` in v naslednjih 14,2 s naredi 1.701 obratov za 180°, `s` ostane 401,22.
+- Preverjeno: potrjeno (simulacija).
 
 **J11 · Posnetek na Pikes Peaku: helikopter po premiku časa gleda proti staremu mestu** · `js/render.js:9657` (TV kamere Pikes Peaka, `pkTv`), `js/render.js:9912` (`resetCam`)
 - Pogled se poravna samo, ko se ključ kadra spremeni (`cam.tvK !== o.key`), helikopter pa ima ključ vedno −1 (9833). `resetCam` `cam.tvK` ne počisti, zato se po skoku v posnetku helikopter premakne (`st.init = false`), točka pogleda (`cam.tx/tz`) pa se z mehčanjem `1 − e^(−9·dt)` pomika s starega mesta, lahko kilometre stran; `fov` je izračunan za napačno razdaljo (do 3°) in avta ~0,3–0,5 s ni v kadru.
