@@ -21,8 +21,9 @@ import { serve, launch, openGame } from '../tests/browser/lib.mjs';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 // the set for the pull requests' workflow (.github/workflows/posnetki.yml): real tracks, a few places each (metres after the start). Not the
-// frozen ones (test: true, and pending: true, which CLAUDE.md keeps still too): Spa and Suzuka, each at the start (pit buildings, grandstands)
-// and in a corner (Eau Rouge; the S curves), and Pikes Peak, a mountain road, in the forest at the W hairpins and in the serpentines under the summit
+// frozen ones (test: true, and pending: true, which CLAUDE.md keeps still too): Spa and Suzuka, each at the start (pit buildings, grandstands;
+// the car stands on the line, so the summary's s reads as the lap's length) and in a corner (Eau Rouge; the S curves), and Pikes Peak, a mountain
+// road, in the forest at the W hairpins and in the serpentines under the summit
 const NABOR = { spa: [0, 900], suzuka: [0, 820], pikes: [2850, 5300] };
 const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } };
 const CHANGED = 0.5;   // (a picture counts as changed from this share of changed pixels, %: below it a sky's drift or a flag's wave)
