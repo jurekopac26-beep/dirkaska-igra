@@ -1,8 +1,8 @@
 # Realizem prog in avtov: paketi S, E, G in P
 
 Ta načrt opisuje, kako proge in avti postanejo bližje resnici. Vsebuje štiri pakete:
+- **E** cesta in predmeti, s stranskimi cestami in črtami (na `main` prvi);
 - **S** stavbe;
-- **E** cesta in predmeti;
 - **G** rastje in teren;
 - **P** poškodbe.
 
@@ -16,15 +16,17 @@ Viri so samo odprti (razdelek »Viri«), nikoli Google Maps, Google Earth ali St
 
 ## Odločitve uporabnika (8. 11. 2026)
 
-Uporabnik je odgovoril v pogovoru z Matejem ob ~23.00. Odgovori so zapisani na strani Odločitve računa jure.kopac26 ob 23.01–23.02.
+Uporabnik je odgovoril v pogovoru z Matejem. Prvih pet odgovorov (~23.00) je zapisanih na strani Odločitve računa jure.kopac26 ob 23.01–23.02. Zadnji dve odločitvi sta objavljeni na tabli #382.
 
-| Vprašanje | Odločitev |
+| Vprašanje ali vir | Odločitev |
 |---|---|
 | `realizem-paketi` | **1 · Vse štiri**: S, E, G in P, ~96 sej |
 | `realizem-proge-najprej` | **1 · Najmanj podobne resnici najprej**, v skupinah po 3–4 (razdelek »Proge in vrstni red«) |
 | `realizem-stavbe` | **1 · Stavbe ob cesti po meri**: stavbe tik ob cesti dobijo balkone, okna po nadstropjih, napušč in pravo streho |
 | `realizem-znamenitosti` | **1 · Po pravni oceni države** (razdelek »Pravna ocena po državah«); kjer ni preverjeno, ostane generično |
 | `poskodbe-vpliv-voznja-2` | **1 · Samo videz** (privzeto): avto je zmečkan, vozi pa kot nepoškodovan. V Nastavitvah je izbira **Izklop / Samo videz / Vklop** |
+| ~23.05, tabla #382 (komentar 6727768260) | **Urejamo samo prave proge**: proge v testu in na odločanju se ne urejajo. »Uredi vse proge« pomeni vse izbrane proge brez `pending` in `test`. Stavek v `CLAUDE.md` doda #519 |
+| ~23.10, tabla #382 (komentar 6727838438) | **Stranske ceste s križišči in črte na cesti** na vseh pravih progah, samo za videz. Gredo v paket E, ki gre zato na `main` **prvi**; sledita S in G, P teče vzporedno |
 
 Isti dan veljajo še te odločitve (pravila v `CLAUDE.md` in `docs/proge-po-drzavah.md` pridejo s #519):
 - **20.25:** proge na odločanju so zamrznjene kot testne.
@@ -99,24 +101,65 @@ En postopek velja za predelavo 15 prog in za vse nove proge. Je nov korak v `too
    - Fasada iz atlasa regije, stavbe tik ob cesti po meri.
    - Ravni podrobnosti: do 60 m podrobno, do 300 m združene škatle, dlje obris na obzorju.
 4. **Predmeti po državah.** Kompleti so ograje, smerniki, ogledala, jarki, svetilke, postajališča in table brez napisov. Postavijo se po podatkih in po pravilih (npr. ogledalo v ostrem ovinku). Rišejo se kot primerki iste mreže.
-5. **Rastje po podnebju.** Drevesa, grmi in trava se razporedijo po razredih WorldCover, v pasu v enakem deležu kot v resnici. Tla ob asfaltu, barve in svetloba so po državi.
-6. **Zima na severu** (pravilo »Sever v snegu«, s #519). Za Norveško, Švedsko, Dansko in Finsko postopek pripravi zasneženo pokrajino, zamete ob cesti in ograjah ter zbit sneg na cesti. Rastje iz WorldCover dobi sneg, barve tal so iz zimskih posnetkov Sentinel-2.
+5. **Stranske ceste in črte** (odločitev uporabnika 8. 11. ob ~23.10).
+   - Iz OSM pride vsak odcep do ~60 m od proge, s pravim križiščem, črtami in znaki.
+   - Za dirko je zaprt (ograja, stožci ali redar), zato avto ne more zaviti nanj.
+   - Črte na cesti so po pravilih države (barva in vrsta sredinske in robne črte), na dirkališčih kot v resnici.
+6. **Rastje po podnebju.** Drevesa, grmi in trava se razporedijo po razredih WorldCover, v pasu v enakem deležu kot v resnici. Tla ob asfaltu, barve in svetloba so po državi.
+7. **Zima na severu** (pravilo »Sever v snegu«, s #519). Za Norveško, Švedsko, Dansko in Finsko postopek pripravi zasneženo pokrajino, zamete ob cesti in ograjah ter zbit sneg na cesti. Rastje iz WorldCover dobi sneg, barve tal so iz zimskih posnetkov Sentinel-2.
    - Silkeborg in Kågeröd dobita zimo s svojo temo v »Načrtovano« (`docs/vrsta.md`).
    - Longyearbyen in Koli jo dobita ob izdelavi.
-7. **Pravni filter.** Brez imen, logotipov in napisov, brez umetnin in kipov. Znamenitosti so po pravni oceni države (spodaj).
-8. **Obremenitev in slike.** `perf.test.mjs` dovoli do ~300 klicev risanja in ~900 tisoč oglišč. Druge proge ne smejo zrasti. Slike pred in po se posnamejo s kamere za avtom.
+8. **Pravni filter.** Brez imen, logotipov in napisov, brez umetnin in kipov. Znamenitosti so po pravni oceni države (spodaj).
+9. **Obremenitev in slike.** `perf.test.mjs` dovoli do ~300 klicev risanja in ~900 tisoč oglišč. Druge proge ne smejo zrasti. Slike pred in po se posnamejo s kamere za avtom.
 
-**Nove proge.** Seja nove proge požene isti korak pri pripravi podatkov, kar doda ~0,5 seje na progo. Postopek bo nared ~17. 11. pri dveh računih oziroma ~23. 11. pri enem. Proge, ki se začnejo prej, se zgradijo po starem in gredo med predelave (vsaka +~1 seja).
+**Nove proge.** Seja nove proge požene isti korak pri pripravi podatkov, kar doda ~0,75 seje na progo (s stranskimi cestami in črtami). Proge, ki se šele začnejo (A12–A19, Koli …), imajo stranske ceste in črte od začetka. Postopek bo nared ~17. 11. pri dveh računih oziroma ~23. 11. pri enem. Proge, ki se začnejo prej, se zgradijo po starem in gredo med predelave (vsaka +~1 seja).
 
 ## Paketi
 
-**S, E in G** spreminjajo svet ob cesti in `js/world.js`. Zato gredo na `main` drug za drugim, v vrstnem redu, v katerem so nared. Vsak naslednji pred združitvijo spoji svež `main` in razreši spore v `js/world.js`.
+**E, S in G** spreminjajo svet ob cesti in `js/world.js`. Zato gredo na `main` drug za drugim: **najprej E** (odločitev uporabnika 8. 11. ob ~23.10), nato S in G. Vsak naslednji pred združitvijo spoji svež `main` in razreši spore v `js/world.js`.
 
 **P** (poškodbe: `js/render.js`, `js/core.js`) teče vzporedno z njimi.
 
-Vsak od S, E in G ima najprej korak z orodjem in graditeljem (S0, E0, G0), nato skupine prog po vrstnem redu zgoraj.
+Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato skupine prog po vrstnem redu zgoraj.
 
-### S · Stavbe (~21 sej)
+### E · Cesta in predmeti (~23 sej, na `main` prvi)
+- **Kaj se spremeni:**
+  - Ograje so takšne vrste kot v resnici: jeklena, betonska, iz gum, mreža.
+  - Robniki dobijo barve in oblike posamezne proge.
+  - Svetilke in table se postavijo, kjer so v OSM.
+  - Kompleti predmetov po državah: ograje, smerniki, ogledala, jarki, drogovi, postajališča, table brez napisov.
+  - Asfalt se nosi: temnejša linija vožnje, zalite razpoke, krpe, prašna robova, madeži olja v zaviralnih conah.
+  - **Stranske ceste s križišči**, samo za videz: odcep do ~60 m od proge iz OSM, s pravim križiščem, črtami in znaki. Za dirko so zaprte (ograja, stožci ali redar), zato avto ne more zaviti nanje.
+  - **Črte na cesti** po pravilih države (barva in vrsta sredinske in robne črte); na dirkališčih kot v resnici.
+- **Izhodišče:**
+  - stranske ceste odprtih cest so v igri že zdaj: `def.sideRoads` v datoteki proge, `_buildStubs` v `js/core.js` in skupni pomočniki `stubGeo`, `stubProps` (stožci in zapore) in `stubRails` v `js/world-vrsic.js`, ki niso zamrznjeni;
+  - imajo jih Katu-Jaryk (`stubStats` v `js/world-katu.js`), Los Caracoles, Chapman's Peak in Medvode;
+  - Montréal ima križišča otoških cest, zaprta z ograjo (`junctions` v `js/world-montreal.js`), kar je zgled za dirkališča;
+  - robna črta je že v teksturi ceste (`edgeLinePaint` v `js/world.js`).
+- **Koraki:**
+  - E0: orodje za robove, asfalt, stranske ceste iz OSM (križišča, zapore) in črte po državah; kompleti po državah.
+  - E1: Nürburg, Pikes Peak, Suzuka, Tianmen. Najprej slike pred in po s kamere za avtom na strani Odločitve; ostale skupine šele po odgovoru.
+  - E2–E4: skupine 2–4.
+  - Nove proge, ki še niso na `main`, dobijo stranske ceste in črte po združitvi, v istem paketu (predelava prog iz PR). Proge, ki se šele začnejo (A12–A19, Koli …), jih imajo od začetka (postopek).
+- **Telefon** (ocena):
+  - predmeti kot primerki: +1–3 klici na progo;
+  - obraba asfalta: 0–2 klica (senčilnik in nalepke na isti mreži);
+  - stranske ceste v isti mreži kot cesta po kosih (kot zdaj `stubGeo`): 0 novih klicev, ~10–30 tisoč oglišč na progo; zapore in znaki kot primerki kompletov;
+  - črte v teksturi ceste: 0 klicev in 0 oglišč.
+- **Seje:** ~9 za orodje in komplete (od tega ~2 za stranske ceste in ~1 za črte), ~1 na progo brez stranskih cest (10 prog), ~0,8 na progo, ki jih že ima (5 prog).
+- **Datoteke:**
+  - `tools/proga-podatki.py` (ograje, zidovi, svetilke in stranske ceste iz OSM);
+  - `js/world.js` (kompleti kot primerki, robniki, črte po državah, stranske ceste na progah brez njih);
+  - `js/world-vrsic.js` (skupni pomočniki stranskih cest), `js/world-montreal.js` in graditelji pravih prog, ki stranske ceste že imajo;
+  - `js/render.js` (obraba asfalta v senčilniku);
+  - podatki v `js/tracks/<id>.js` (`sideRoads`).
+- **Tveganje:**
+  - klici risanja pri predmetih;
+  - robniki dirkališč in stranske ceste ne smejo spremeniti vožnje in AI;
+  - skupne pomočnike uporabljajo tudi testne proge in Great Alpine Road (na odločanju), zanje mora ostati vse enako: nova možnost ali nov graditelj, stara pot nespremenjena;
+  - spori v `js/world.js`.
+
+### S · Stavbe (~21 sej, na `main` za E)
 - **Kaj se spremeni:**
   - Oblika strehe, barve, material in nadstropja pridejo iz OSM (`roof:shape`, `roof:colour`, `building:colour`, `building:material`, `building:levels`).
   - Kjer podatka ni, se uporabi slog kraja iz atlasa fasad po regijah. Atlas je risan po odprtih fotografijah.
@@ -139,29 +182,7 @@ Vsak od S, E in G ima najprej korak z orodjem in graditeljem (S0, E0, G0), nato 
   - pravna presoja znamenitosti;
   - spori v `js/world.js` s pull requesti prog.
 
-### E · Cesta in predmeti (~17 sej)
-- **Kaj se spremeni:**
-  - Ograje so takšne vrste kot v resnici: jeklena, betonska, iz gum, mreža.
-  - Robniki dobijo barve in oblike posamezne proge.
-  - Svetilke in table se postavijo, kjer so v OSM.
-  - Kompleti predmetov po državah: ograje, smerniki, ogledala, jarki, drogovi, postajališča, table brez napisov.
-  - Asfalt se nosi: temnejša linija vožnje, zalite razpoke, krpe, prašna robova, madeži olja v zaviralnih conah.
-- **Koraki:**
-  - E0: orodje za robove in asfalt, kompleti po državah.
-  - E1–E4: skupine 1–4.
-- **Telefon:** predmeti kot primerki (+1–3 klici na progo). Obraba asfalta stane 0–2 klica (senčilnik in nalepke na isti mreži).
-- **Seje:** ~6 za orodje in komplete, ~0,75 na progo.
-- **Datoteke:**
-  - `tools/proga-podatki.py` (ograje, zidovi, svetilke iz OSM);
-  - `js/world.js` (kompleti kot primerki, robniki);
-  - `js/render.js` (obraba asfalta v senčilniku);
-  - podatki v `js/tracks/<id>.js`.
-- **Tveganje:**
-  - klici risanja pri predmetih;
-  - robniki dirkališč ne smejo spremeniti vožnje;
-  - spori v `js/world.js`.
-
-### G · Rastje in teren (~16 sej)
+### G · Rastje in teren (~16 sej, na `main` za S)
 - **Kaj se spremeni:**
   - Gozd, grmovje in golo skalovje so v pasu ob cesti v enakem deležu kot v resnici (WorldCover).
   - Trava je brez pasov košnje, razen kjer jih ima resnična proga.
@@ -194,7 +215,7 @@ Najboljše poškodbe so v igri že zdaj, a izklopljene (Nastavitve, Razbijanje).
 - **Samo videz:** privzeto.
 - **Vklop:** tudi vpliv na vožnjo.
 
-**Začetek:** ko so na `main` #460 in #480 (avti) in deli iz garaže na vseh avtih po meniju #516. #322 je na `main` od 8. 11. Ocena začetka je ~16. 11.
+**Začetek:** ko so na `main` #460 in #480 (avti) in deli iz garaže na vseh avtih po meniju #516. #322 je na `main` od 8. 11. Ocena začetka je ~16. 11. pri dveh računih oziroma ~22. 11. pri enem (linija za E).
 
 **Vrstni red:** P1 → P4 → P2 → P5 → P3 → P6, v 4 pull requestih. Predlog razdelitve: P1, P4 + P2, P5 + P3, P6.
 
@@ -283,13 +304,15 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 | Paket | Obseg | Seje | 1 račun | 2 računa |
 |---|---|---|---|---|
-| S Stavbe | orodje, atlas fasad, 7 prog | 21 | 10.–19. 11. | 10.–14. 11. |
-| E Cesta in predmeti | orodje za robove in asfalt, kompleti po državah, 15 prog | 17 | 19.–26. 11. | 10.–17. 11. |
-| G Rastje in teren | WorldCover in Sentinel-2, kompleti po podnebju, svetloba po državah, 15 prog | 16 | 10.–16. 11. | 10.–16. 11. |
-| P Poškodbe | P1–P6 za vse avte, obremenitev | 16 | 17.–23. 11. | 16.–20. 11. |
-| Predelava prog iz PR | 14 prog, ko pridejo na `main` | 17 | 24.–29. 11. | 17.–21. 11. |
-| Nove proge po novem postopku | +0,5 seje na progo, ~17 prog, sproti z izdelavo | 9 | od 23. 11. | od 17. 11. |
-| Skupaj | do zadnje skupine prog na `main` | ~96 | ~1. 12. | ~23. 11. |
+| E Cesta in predmeti (na `main` prvi) | orodje za robove, asfalt, stranske ceste in črte, kompleti po državah, 15 prog; E1 počaka na odgovor o slikah | 23 | 10.–21. 11. | 10.–16. 11. |
+| S Stavbe | orodje, atlas fasad, 7 prog; na `main` za E | 21 | 10.–19. 11. | 10.–18. 11. |
+| G Rastje in teren | WorldCover in Sentinel-2, kompleti po podnebju, svetloba po državah, 15 prog; na `main` za S | 16 | 20.–26. 11. | 10.–16. 11. |
+| P Poškodbe | P1–P6 za vse avte, obremenitev | 16 | 22.–28. 11. | 16.–20. 11. |
+| Predelava prog iz PR | 14 prog, ko pridejo na `main`, s stranskimi cestami in črtami | 20 | 28. 11.–3. 12. | 19.–23. 11. |
+| Nove proge po novem postopku | +~0,75 seje na progo (s stranskimi cestami in črtami), ~17 prog, sproti z izdelavo | 13 | od 23. 11. | od 17. 11. |
+| Skupaj | do zadnje skupine prog na `main` | ~109 | ~4. 12. | ~25. 11. |
+
+Stranske ceste in črte (odločitev ob ~23.10) dodajo ~13 sej (prej ~96) in premaknejo konec za 2–3 dni.
 
 **Proge iz PR** (stanje 8. 11.):
 - Killar;
@@ -301,16 +324,17 @@ Hakone, London in Dadès so na odločanju in odpadejo. Paketi teh prog ne spremi
 **Poraba** (8. 11.): biketraveler ima od pon. 9. 11. ob 0.00 cel teden. partyslo bo brez porabe od čet. 12. 11. zvečer. Datumi za dva računa veljajo, če drugi račun dela ves čas. Nova mapa in misije so v vrsti za progami in tu niso šteti.
 
 **Vrsta.** Paketi prinesejo ~17 pull requestov:
-- 3 za orodja in graditelje (S0, E0, G0);
+- 3 za orodja in graditelje (E0, S0, G0);
 - 4 za poškodbe;
-- ~10 skupin prog po 3–4 (S1–S2, E1–E4, G1–G4).
+- ~10 skupin prog po 3–4 (E1–E4, S1–S2, G1–G4).
 
-V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`). Predelave prog iz PR pridejo, ko so te proge na `main`.
+V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E prvi. Predelave prog iz PR pridejo, ko so te proge na `main`.
 
 ## Tveganja
 
 - **Obremenitev telefona.** Gozd do ceste in stavbe po meri dodajo oglišča, Razbijanje pa klice risanja (283 od ~300 pri 20 razbitih avtih). Zato so ravni podrobnosti, atlas in polno telo samo za najbližje avte. Vsaka proga gre skozi `perf.test.mjs`.
 - **Spori v `js/world.js`.** Spori so med paketi in pull requesti prog. Zato gredo paketi na `main` drug za drugim, proge v odprtih pull requestih pa se ne spreminjajo.
+- **Stranske ceste.** Ne smejo spremeniti vožnje in AI: so zaprte (ograja, stožci ali redar), avto ne more zaviti s proge. Skupne pomočnike v `js/world-vrsic.js` uporabljajo tudi zamrznjene proge, zanje mora ostati vse enako.
 - **Pravo.** Nepreverjene države ostanejo generične.
 - **Zamrznjene proge.** Če se proga z odločanja vrne, gre med predelave.
 
@@ -319,7 +343,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`). Pre
 | Korak | Veja / PR | Stanje |
 |---|---|---|
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
-| S0–S2, E0–E4, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); P po #460, #480 in #516 |
+| E0–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
 
