@@ -53,7 +53,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hongkong, Kitajska | zavite 3 | OSM 33 % (zidovi 21 %, ograje 8 %) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): podporni zidovi in ograje ob ozki cesti |
 | Shimla, Indija | zavite 4 | OSM 15 % (hiše vrisane ob 65 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše, bazar in zidovi ob cesti |
 | Darjeeling, Indija | zavite 4 | OSM 6 % (hiše vrisane ob 32 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše in železnica tik ob ozki cesti |
-| Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar) |
+| Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar). Od 8. 11. 2026 je Yungas proga za cisterno (izjema, razdelek »Proge za cisterno«); odseka iz verig odpadeta |
 | Medeu, Kazahstan | kratke A, Načrtovano | OSM 12 % (ograje) | izletna cona je |
 | Milford Sound, Nova Zelandija | kratke B | OSM 37 %, obe 37 % (predor 1,2 km je tretjina poti, mostovi) | izletna cona je (razen v predoru); odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | Ella, Šrilanka | kratke C1 | OSM 2 % | izletna cona je |
@@ -128,7 +128,8 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Argentina | Termas de Río Hondo (dirkališče, Nove proge za 1.0, A19); Puerto Madero (kratke, D; narejen tudi na stari veji); stara veja: Siete Lagos (ni v načrtu) | Termas de Río Hondo: po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45; izletno cono najprej preveri njegova seja); Puerto Madero: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Francija | Pau (Nove proge); stara veja: Montvernier (ni v načrtu) | Pau: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Nova Zelandija | Cromwell (dirkališče, Nove proge za 1.0, A17); odpadejo Milford Sound (kratke, B), Wellington (zavite, 4), Crown Range in Coronet Peak | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.05; izletno cono najprej preveri njegova seja) |
-| Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **ne začni** (brez izletne cone, 5. 11. 2026) |
+| Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **v delu kot proga za cisterno** (odločitev uporabnika 8. 11. 2026, `docs/proge-cisterna.md`); odseka iz verig odpadeta |
+| Islandija, Pakistan, Malavi, Papua Nova Gvineja | proge za cisterno: Svalvogar, Fairy Meadows, Manchewe, Tapini | **v delu** (odločitev uporabnika 8. 11. 2026, `docs/proge-cisterna.md`); druge proge iz teh držav odpadejo |
 | Švica | Furka (Nove proge) | po vrsti |
 | Gruzija | Gudauri (Nove proge) | po vrsti |
 | Albanija | Llogara (Nove proge) | po vrsti |
@@ -162,11 +163,16 @@ Pri vprašanju `led-proge` (stran Odločitve 1; odgovor 6. 11. 2026 prek table #
 - **Nista izbrani:** Vormsi, Estonija (ledena cesta Rohuküla–Vormsi, 9,5 km, OSM way 1467883983; 0,6 predmeta na km) in Jökulsárlón, Islandija (cesta 1 z enopasovnim visečim mostom z razponom 108 m; 2,3 predmeta na km, zanimiv le pri mostu).
 - **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0).
 
+## Proge za cisterno (odločitev uporabnika 8. 11. 2026)
+
+Uporabnik je 8. 11. 2026 naročil pet zelo kratkih prog (do 500 m), ozkih, z neravnim podom in prepadom, eno na celino, ki jih vozi samo TITAN CISTERNA na čas: **Svalvogar, Islandija**; **Fairy Meadows, Pakistan**; **Manchewe, Malavi**; **Yungas, Bolivija**; **Tapini, Papua Nova Gvineja**. Za te proge ne veljata pravili 1–5 km in izletne cone. Načrt, odseki in stanje: `docs/proge-cisterna.md`.
+
 ## Kaj to pomeni za verige
 
 - **Kratke proge** (`docs/gorske-proge.md`): odpadejo Nozawa Onsen (A), Guoliang in Corvo Branco (B), Hana (C1) in Green Point (D) ter od 8. 11. 2026 Milford Sound (B: skupina B odpade, Nova Zelandija dobi Cromwell). Ostanejo Mount Buller, Medeu, Auli, Yungas (če ga ne naredijo prej Nove proge), Ella, Santo Antão, Dadès, Espinazo del Diablo, Punta del Este in Puerto Madero. Brez izletne cone (5. 11. 2026) se ne začnejo Yungas, Punta del Este in Puerto Madero: skupina D odpade, v C1 ostane Ella.
 - **Zavite proge** (`docs/zavite-proge.md`): odpadeta Macao (3) in Ouro Preto (1, odločitev uporabnika 5. 11. 2026; skupne gradnike, ki jih načrt daje koraku 1, naredi prvi naslednji korak). Ostanejo Valparaíso, Quito, Québec, Hongkong in Seul. Wellington (4) odpade (8. 11. 2026: Nova Zelandija dobi Cromwell), Shimla in Darjeeling (4) odpadeta, če Indija pred njima dobi progo (Auli ali Killar). Brez izletne cone (5. 11. 2026) se ne začnejo Valparaíso, Quito, Québec, Hongkong, Shimla in Darjeeling: ostane Seul.
 - **Nove proge** (`docs/nove-proge.md`): ostanejo Furka, Gudauri, Llogara, Porto Moniz in Ngorongoro; Pau, Yungas in Stelvio se ne začnejo (brez izletne cone, 5. 11. 2026).
+- **Proge za cisterno** (razdelek zgoraj): Svalvogar, Fairy Meadows, Manchewe, Yungas in Tapini, en pull request, v vrsti za `main` zadnje.
 - **Proge z ledom** (razdelek zgoraj): Longyearbyen in Envalira, po vrsti z drugimi novimi progami; prva doda led kot podlago.
 - **Osem dirkališč izven Evrope** (8. 11. 2026, razdelek »Nove proge za 1.0«): Tuzla, Sepang, Lombok, Buriram, Sakhir, Cromwell, Lusail in Termas de Río Hondo so A12–A19 v `docs/nove-proge-1-0.md` (»Del 3«); Cromwell zamenja Wellington, Milford Sound, Crown Range in Coronet Peak.
 - **Stare veje**: Kapelmuur, Stelvio, Diriyah, Puerto Madero in Hong Kong se ne začnejo (brez izletne cone, 5. 11. 2026). Kapelmuur je izbran, a ni v nobeni verigi: veja je iz 1. 10. 2026, zato jo nova seja (zažene jo koordinacija »VSE SEJE«) spoji s svežim `main`, preveri ime proge (»Kraj, Država«) in umakne imena lokalov, prireditev in kipov. Druge stare veje ostanejo nezdružene.
