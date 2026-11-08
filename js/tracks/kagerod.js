@@ -48,7 +48,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ["Ciljna ravnina", 39.1, 26, ["Down the finish straight past the pits!", "Flat out along the finish straight, the river beside it!", "The finish straight, the lap is nearly done!"]],
     ],
     turns: [[-290,-195.6],[-299.3,-242.7],[16,-139.8],[63,-31.9],[206.6,36],[234.1,-108.8],[253.5,4.2],[376.4,60.5],[325.3,196.3],[280.1,185.2],[255.2,86.2],[152.6,87.9]],   // the corners' apexes: the double right (2), the long right, the fast left, the left below the hill, the hilltop hairpin, the downhill left, the right over the river, the forest corner (2), the river left, the last corner
-    pit: [14, -165, 300, 15],   // pit lane on the right of the finish straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pit: [14, -165, 300, 10],   // pit lane on the right of the finish straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pitLanes: [15, 15],   // the way in right after the last corner, the way out 24 m before the double right: no room for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: [-55, 65],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.kagerod.pitBox)
     walls: [[-165, 300, 1, 2.5], [290, 380, -1, 12, 20], [1478, 1512, -1, 8, 15], [1745, 1790, 1, 7, 15], [1810, 1960, -1, 4, 20]],   // the pit wall 2.5 m past the road's edge along the lane; the barriers this side of the river where it runs by the circuit
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: on the grass above the long right and outside the hilltop hairpin

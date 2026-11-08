@@ -56,7 +56,7 @@ DESC_EN = ('A short circuit in the woods by the Vege å river at Kågeröd in Sk
 # line; here 14 m, as on the other circuits), from the exit of the last corner to before the double right (the real lane leaves the circuit in
 # the last corner and joins it before the double right); the 13 crews' boxes and the garages by the start line; the pit wall 2.5 m past the
 # road's edge ----
-PIT = [14, -165, 300, 15]
+PIT = [14, -165, 300, 10]   # (the player's box: the 7th crew's, in front of the middle garage, 5 .. 15 m: Core's crewBoxes, the box centres pitRow[0] + 5 + 10 k)
 PIT_ROW = [-55, 65]
 PIT_BOX = [-55, 75, 1]   # (the garages: World's RB_LOOK.kagerod.pitBox)
 # the pit wall along the lane; the barriers held this side of the river where it runs by the circuit (def.sk.river): left of the double
@@ -195,6 +195,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     ],
     turns: %(turns)s,   // the corners' apexes: the double right (2), the long right, the fast left, the left below the hill, the hilltop hairpin, the downhill left, the right over the river, the forest corner (2), the river left, the last corner
     pit: %(pit)s,   // pit lane on the right of the finish straight: [centre offset to the right, from, to, the player's box] (metres from the start line)
+    pitLanes: [15, 15],   // the way in right after the last corner, the way out 24 m before the double right: no room for a deceleration or acceleration lane, only the taper (Core.Track.pitJ)
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.kagerod.pitBox)
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane; the barriers this side of the river where it runs by the circuit
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: on the grass above the long right and outside the hilltop hairpin
