@@ -4,14 +4,16 @@
 // published game), in Chromium (Playwright) with a phone's slower CPU (CDP Emulation.setCPUThrottlingRate) and network
 // (Network.emulateNetworkConditions: Lighthouse's slow 4G, request-level: 562.5 ms, 1.47 Mbit/s down). Nothing of the game is changed:
 // an init script only wraps a few calls (Render.init, buildWorld, precompile; World.build; Core.Race step; Menu.init) to time them.
-//   node tools/zagon.mjs [--cpu 4] [--net slow4g|fast4g|none] [--proga bathurst] [--runs 1] [--warm] [--h1] [--tracks] [--out file.json]
+//   node tools/zagon.mjs [--cpu 4] [--net slow4g|fast4g|none] [--proga bathurst] [--runs 1] [--warm] [--h1] [--tracks [--fresh] [--samo a,b]]
+//                        [--menu-only] [--profil id] [--from file.json] [--out file.json]
 //     --cpu        CPU slowdown (1 = this machine; 4–6 a mid-range phone, see the benchmark index printed)
 //     --net        slow4g (default), fast4g (9 Mbit/s, 170 ms) or none
 //     --proga      the track of the drive (default bathurst); --menu-only: only the menu
 //     --runs       cold runs of each (a fresh browser profile each: nothing cached)
 //     --warm       also the next visit in the same profile (HTTP cache, the service worker's saved game, V8's code cache)
 //     --h1         HTTP/1.1 instead of HTTP/2 (6 connections per host: as a server without HTTP/2)
-//     --tracks     also each real track's build from the menu (World build + shaders, Render.buildWorld + precompile), warm
+//     --tracks     also each real track's build from the menu (World build + shaders, Render.buildWorld + precompile), warm;
+//                  --fresh: each track in a fresh page (no shader programs of the tracks before it); --samo a,b: only these tracks
 //     --profil id  a CPU profile of one track's build from the menu (warm): the functions that take the time (self and with callees)
 //     --from f     the summary again from a saved --out file (nothing measured)
 //     --out        the raw results (JSON); the summary goes to stdout
@@ -92,8 +94,9 @@ async function benchmark(page) {
 
 // the timing hooks: put on as each script of the game has run (its load event), nothing changed in what the calls do
 const HOOKS = () => {
-  const Z = window.__zt = { marks: [], calls: [], scripts: [] }, now = () => performance.now();
+  const Z = window.__zt = { marks: [], calls: [], scripts: [], long: [] }, now = () => performance.now();
   const mark = (n) => Z.marks.push([n, Math.round(now())]);
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) Z.long.push([Math.round(e.startTime), Math.round(e.duration)]); }).observe({ type: 'longtask', buffered: true }); } catch (_) { }   // (the main thread's tasks over 50 ms)
   const wrap = (obj, label, names) => { if (!obj) return; for (const n of names) { const f = obj[n]; if (typeof f !== 'function' || f.__zt) continue;
     const w = function () { const t0 = now(); try { return f.apply(this, arguments); } finally { const t1 = now(); const c = Z.calls[Z.calls.length - 1]; if (label === 'Race' && n === 'step' && c && c.n === 'Race.step' && t0 - c.t1 < 5) { c.t1 = t1; c.k++; c.ms += t1 - t0; } else Z.calls.push({ n: label + '.' + n, t0, t1, ms: t1 - t0, k: 1 }); } };
     w.__zt = true; try { obj[n] = w; } catch (_) { } } };
@@ -212,6 +215,9 @@ function sum(r) {
     boot: { from: bootFrom, to: bootTo, renderInit: callMs('Render.init', bootFrom, bootTo + 1), buildWorld: worlds.length ? Math.round(worlds[0].ms) : 0, demo: demo ? Math.round(demo.ms) : 0 },
     menuInit: (C.find(c => c.n === 'Menu.init') || {}).t0, menuShow: Math.round(C.filter(c => c.n === 'Menu.show').reduce((a, c) => a + c.ms, 0)),
     menuReady: M.menuReady, raceAt: (r.zt.marks.find(([n]) => n.startsWith('race:')) || [])[1],
+    // (between Menu.init and the menu ready: the main thread's long tasks, which hold back the menu's styles arriving)
+    menuLong: (() => { const a = (C.find(c => c.n === 'Menu.init') || {}).t0, b = M.menuReady; if (a == null || b == null || !r.zt.long) return null;
+      const L = r.zt.long.filter(([t, d]) => t + d > a && t < b); return { n: L.length, ms: L.reduce((x, [t, d]) => x + Math.min(t + d, b) - Math.max(t, a), 0), max: Math.max(0, ...L.map(([, d]) => d)) }; })(),
     groups: by, exec,
   };
   if (r.kind === 'proga') {
@@ -225,7 +231,7 @@ const s = (ms) => ms == null ? '–' : (ms / 1000).toFixed(1) + ' s';
 const mb = (b) => (b / 1048576).toFixed(2) + ' MB';
 function print(o, label) {
   console.log(`${label}: HTML ${s(o.html)} · prvi izris ${s(o.paint)} · zadnja skripta prispela ${s(o.lastScript)} (${o.bytes.n} skript, ${mb(o.bytes.scripts)} prenosa, vse ${mb(o.bytes.all)}) · skripte izvedene (load) ${s(o.load)}`);
-  console.log(`   zagon ${s(o.boot.from)}–${s(o.boot.to)}: Render.init ${s(o.boot.renderInit)}, svet za naslovnico ${s(o.boot.buildWorld)}, predstavitvena dirka ${s(o.boot.demo)} · Menu.init ${s(o.menuInit)}, izris menija ${s(o.menuShow)} · meni pripravljen ${s(o.menuReady)}${o.sw ? ' · service worker' : ''}${o.errors ? ' · NAPAKE ' + o.errors : ''}`);
+  console.log(`   zagon ${s(o.boot.from)}–${s(o.boot.to)}: Render.init ${s(o.boot.renderInit)}, svet za naslovnico ${s(o.boot.buildWorld)}, predstavitvena dirka ${s(o.boot.demo)} · Menu.init ${s(o.menuInit)}, izris menija ${s(o.menuShow)} · meni pripravljen ${s(o.menuReady)}${o.menuLong ? ` (vmes ${o.menuLong.n} dolgih opravil, ${s(o.menuLong.ms)}, najdaljše ${s(o.menuLong.max)})` : ''}${o.sw ? ' · service worker' : ''}${o.errors ? ' · NAPAKE ' + o.errors : ''}`);
   if (o.track) console.log(`   proga ${PROGA}: svet ${s(o.track.buildWorld)}, senčilniki ${s(o.track.precompile)} · do vožnje ${s(o.drive)}`);
   const ex = Object.entries(o.exec).sort((a, b) => b[1] - a[1]).map(([g, ms]) => g + ' ' + s(ms)).join(', ');
   console.log(`   izvajanje skript po skupinah: ${ex}`);
@@ -238,7 +244,7 @@ const main = async () => {
     console.log(`CPU ${o.cpu}× (indeks ${o.benchmark}), omrežje ${o.net}${o.h1 ? ', HTTP/1.1' : ', HTTP/2'}, ${o.chromium}, ${o.when}`);
     const firstWarm = o.runs.findIndex(r => r.warm === false && o.runs.indexOf(r) > 0 && o.runs[o.runs.indexOf(r) + 1] && o.runs[o.runs.indexOf(r) + 1].warm);
     o.runs.forEach((r, i) => print(sum(r.raw), (r.warm ? 'toplo ' : i === firstWarm ? 'prvi obisk ' : 'hladno ') + r.raw.kind));
-    for (const t of o.tracks || []) console.log(`   ${t.id.padEnd(14)} start→dirka ${s(t.total)} · svet ${s(t.buildWorld)} (World.build ${s(t.worldBuild)}) · senčilniki ${s(t.precompile)}`);
+    for (const t of o.tracks || []) console.log(`   ${t.id.padEnd(14)} start→dirka ${s(t.total)} · svet ${s(t.buildWorld)} (World.build ${s(t.worldBuild)}) · senčilniki ${s(t.precompile)}` + (t.progs != null ? ` (${t.progs} novih programov, vseh ${t.progsAll}) · ${t.geoms} geometrij, ${t.texs} tekstur, ${t.heapMB} MB JS` : ''));
     return;
   }
   const root = stampedCopy(), srv = await serve(root, has('--h1'));
@@ -267,27 +273,37 @@ const main = async () => {
 };
 
 // each real track's world from the menu, built as ensureTrack builds it (warm: the scripts are in), throttled as the runs
+// (--fresh: each track in a page of its own, as a player who opens the game and drives one track: no shaders or textures of the tracks
+// before it; without it one page for all, quicker, but a track after others finds their shader programs compiled)
 async function trackBuilds(ctx, base) {
-  const page = await ctx.newPage(), cdp = await ctx.newCDPSession(page);
-  await page.addInitScript(HOOKS);
-  await page.addInitScript(() => { try { localStorage.setItem('tdgp-menu', 'old'); } catch (_) { } });
-  await page.goto(base + '/', { timeout: 600000 });
-  await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('off'), null, { timeout: 600000 });
-  if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
-  const ids = await page.evaluate(() => Core.TRACKS.filter(d => !d.test).map(d => d.id));
+  let page = null, cdp = null;
+  const open = async () => {
+    if (page) await page.close();
+    page = await ctx.newPage(); cdp = await ctx.newCDPSession(page);
+    await page.addInitScript(HOOKS);
+    await page.addInitScript(() => { try { localStorage.setItem('tdgp-menu', 'old'); } catch (_) { } });
+    await page.goto(base + '/', { timeout: 600000 });
+    await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('off'), null, { timeout: 600000 });
+    if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
+  };
+  await open();
+  const only = opt('--samo', null), ids = only ? only.split(',') : await page.evaluate(() => Core.TRACKS.filter(d => !d.test).map(d => d.id));
   const rows = [];
-  for (const id of ids) {
+  for (const [k, id] of ids.entries()) {
+    if (has('--fresh') && k > 0) await open();
     const r = await page.evaluate(async (id) => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), Z = window.__zt, n0 = Z.calls.length;
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
       const card = document.querySelector(`[data-track="${id}"]`); if (!card) return { id, err: 'no card' };
-      card.click(); await wait(150); const t0 = performance.now(); g.onAction('start');
+      card.click(); await wait(150); const inf = () => { const i = Render.info(); return i ? i.programs.length : 0; }, p0 = inf(), t0 = performance.now(); g.onAction('start');
       for (let k = 0; k < 6000 && !(g.race && g.race.track.def.id === id && document.getElementById('loading').classList.contains('off')); k++) await wait(50);
       const t1 = performance.now(), C = Z.calls.slice(n0);
       const ms = (n) => Math.round(C.filter(c => c.n === n).reduce((a, c) => a + c.ms, 0));
-      return { id, total: Math.round(t1 - t0), buildWorld: ms('Render.buildWorld'), worldBuild: ms('World.build'), precompile: ms('Render.precompile'), loadMs: Math.round(g.loadMs) };
+      const i = Render.info(), mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0;
+      return { id, total: Math.round(t1 - t0), buildWorld: ms('Render.buildWorld'), worldBuild: ms('World.build'), precompile: ms('Render.precompile'), loadMs: Math.round(g.loadMs),
+        progs: inf() - p0, progsAll: inf(), geoms: i ? i.memory.geometries : 0, texs: i ? i.memory.textures : 0, heapMB: mem };
     }, id);
-    rows.push(r); console.log(`   ${id.padEnd(14)} start→dirka ${s(r.total)} · svet ${s(r.buildWorld)} (World.build ${s(r.worldBuild)}) · senčilniki ${s(r.precompile)}`);
+    rows.push(r); console.log(`   ${id.padEnd(14)} start→dirka ${s(r.total)} · svet ${s(r.buildWorld)} (World.build ${s(r.worldBuild)}) · senčilniki ${s(r.precompile)} (${r.progs} novih programov, vseh ${r.progsAll}) · ${r.geoms} geometrij, ${r.texs} tekstur, ${r.heapMB} MB JS`);
   }
   await page.close();
   return rows;
