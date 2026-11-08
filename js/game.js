@@ -453,6 +453,7 @@
     w.scrollTop = 0; const a = w.getBoundingClientRect(), b = me.getBoundingClientRect(), y = b.top - a.top - (w.clientHeight - b.height) / 2; if (y > 0) w.scrollTop = y; }
   function showScreen(name) {
     screen = name;
+    if (name === 'results') anRes();   // (the lap analysis, js/analiza.js)
     if (name === 'results') $('res-view').classList.toggle('off', !(race && race.player) || !!(mp && mp.race));   // (Ogled vozila: the player's car; online the race goes on)
     const sid = menuOn && (name === 'title' || name === 'track') ? 'menu' : name;   // (the menu stands for the title and the track screen)
     for (const s of document.querySelectorAll('.screen')) s.classList.toggle('show', s.id === 's-' + sid);
@@ -1806,6 +1807,121 @@
     Render.setGhostF(fo ? ghAt(ghFr.g, alpha, _gpF) : null);
   }
 
+  /* ---------------- the lap analysis (Analiza kroga, predlog I12; js/analiza.js, docs/analiza-kroga.md) ----------------
+     Every lap of the player (an open road: the run to the finish) is traced every Analiza.B m (the lap clock, the speed, the brake, the
+     throttle) and compared with the best lap of the track (key tdgp-analiza-<record key>, as the records and the ghosts): on a circuit the
+     minimap turns red where the lap lost time and green where it gained for AN_HUD s, the difference and one tip (»Prezgodaj zaviraš pred
+     3. ovinkom«) come under the clock after the lap's time, the tip's corner ringed on the map; the results show every lap of the race on a
+     bigger map (#res-an, ‹ › for the laps). A lap with a pit stop or from a standing start never becomes the best one. Drawn once a lap on
+     2D canvases: the tracks' load is the same. Not in the driving school, the new map or the run from the police. */
+  const AN_HUD = 8, anKey = (id) => 'tdgp-analiza-' + recKey(id);
+  let an = null;   // { tr: the lap under way, lap, L, C: the corners, ref: the best lap, list: [{ lap, lt, cur, res, pit }], hudT, img, imgW, pend: the tip waiting for the lap's time, sel: the lap on the results }
+  function anStart() {
+    an = null; $('res-an').classList.add('off');
+    if (!race || school || race.nv || race.pol || typeof Analiza === 'undefined') return;
+    const L = track.open ? track.raceLen : track.len; let ref = null;
+    try { ref = Analiza.unpack(JSON.parse(localStorage.getItem(anKey(track.def.id)) || 'null'), L); } catch (_) { }
+    an = { tr: null, lap: -1, L, C: Analiza.lapCorners(track), ref, list: [], hudT: 0, img: null, imgW: 0, pend: '', sel: -1 };
+  }
+  function anSample(P) {   // after each physics step
+    const A = an; if (!A || race.state === 'grid') return;
+    if (P.lap !== A.lap) {   // the line
+      if (A.tr && !track.open && P.lapTimes.length) anEnd(A, P.lapTimes[P.lapTimes.length - 1]);
+      A.lap = P.lap; A.tr = P.lap >= 1 && !P.finished ? Analiza.start(A.L) : null;
+      if (A.tr) A.tr.standing = !track.open && P.lap === 1 && !race.quali;   // (a race's first lap: from the grid)
+    }
+    if (!A.tr) return;
+    Analiza.step(A.tr, track.open ? P.dist : P.dist - (P.lap - 1) * track.len, race.time - P.lapStart, P.speed, P.inBrk || 0, P.inThr || 0, !!P.inPit);
+    if (track.open && P.finished && P.finishTime > 0) anEnd(A, P.finishTime - P.lapStart);
+  }
+  function anEnd(A, lt) {
+    const T = A.tr, cur = Analiza.end(T, lt); A.tr = null; if (!cur || !cur.ok) return;
+    const ref = A.ref, r = { lap: track.open ? 1 : race.player.lapTimes.length, lt, cur, pit: cur.pit, res: ref ? Analiza.compare(cur, ref, A.C, T.standing) : null };
+    if (!cur.pit && !T.standing && (!ref || lt < ref.lt - 1e-4)) { A.ref = cur; r.best = true; Shramba.keep(anKey(track.def.id), JSON.stringify(Analiza.pack(cur))); }
+    if (!ref && !r.best) return;   // (no best lap yet and this one is none: nothing to say)
+    A.list.push(r); if (A.list.length > 99) A.list.shift();
+    if (track.open) return;   // (the run is over: its analysis on the results)
+    A.img = null; A.hudT = r.res ? AN_HUD : 0; A.pend = anLine(r); A.last = r;
+  }
+  const anS = (x) => Lang.dec((Math.round(Math.abs(x) * 100) / 100).toFixed(2));
+  function anTip(r) {   // the tip of a lap, in words
+    const t = r.res && r.res.tip;
+    if (!r.res) return tr('Krog je shranjen za primerjavo s prihodnjimi.');
+    if (r.pit) return tr('Krog z obiskom boksov: brez nasveta.');
+    switch (t.kind) {
+      case 'gain': return tr('Nov najboljši krog! Največ pridobiš v {0}. ovinku ({1} s).', t.n, anS(t.s));
+      case 'pb': return tr('Nov najboljši krog!');
+      case 'even': return tr('Skoraj enako kot najboljši krog.');
+      case 'early': return tr('Prezgodaj zaviraš pred {0}. ovinkom (za {1} m).', t.n, t.m);
+      case 'late': return tr('Prepozno zaviraš pred {0}. ovinkom: v ovinku izgubiš hitrost.', t.n);
+      case 'brake': return tr('Pred {0}. ovinkom zaviraš preveč: v najboljšem krogu ga pelješ brez zaviranja.', t.n);
+      case 'slow': return tr('Skozi {0}. ovinek pelji hitreje: {1} km/h namesto {2}.', t.n, t.v, t.vc);
+      case 'exit': return tr('Iz {0}. ovinka prej dodaj plin.', t.n);
+      default: return t.n ? tr('Največ izgubiš v {0}. ovinku ({1} s).', t.n, anS(t.s)) : tr('Izgubiš {0} s.', anS(t.s));
+    }
+  }
+  const anDelta = (r) => r.res ? (r.res.delta < 0 ? '−' : '+') + anS(r.res.delta) + ' s' : '';
+  const anLine = (r) => (r.res ? anDelta(r) + ' · ' : '') + anTip(r);
+  // the lap's colours along the track into g, its points through xy(i) (a track index); w the line's width
+  const anCol = (x) => { const a = clamp((Math.abs(x) - 0.002) / 0.012, 0, 1); return a <= 0 ? null : x > 0 ? 'rgba(255,72,56,' + (0.45 + 0.55 * a).toFixed(2) + ')' : 'rgba(64,224,104,' + (0.45 + 0.55 * a).toFixed(2) + ')'; };
+  function anDraw(g, r, xy, w) {
+    const R = r.res; if (!R) return;
+    const B = Analiza.B, idx = (d) => track.idx(track.startS + d);
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = w;
+    for (let i = 0; i < R.rate.length; i++) {
+      const c = anCol(R.rate[i]); if (!c) continue;
+      const a = xy(idx(i * B)), b = xy(idx(Math.min(r.cur.L, (i + 1) * B)));
+      g.strokeStyle = c; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+    }
+  }
+  function anRing(g, r, xy, rad, w, label) {   // the tip's corner (and on the results the zones listed: numbered)
+    const t = r.res && r.res.tip, z = t && t.n ? r.res.zones[t.n - 1] : null; if (!z || !z.c) return;
+    const p = xy(track.idx(track.startS + (z.c.a0 + z.c.a1) / 2));
+    g.strokeStyle = '#ffd23a'; g.lineWidth = w; g.beginPath(); g.arc(p[0], p[1], rad, 0, 6.2832); g.stroke();
+    if (label) { g.fillStyle = '#ffd23a'; g.font = '700 ' + Math.round(rad * 1.1) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(t.n), p[0], p[1] - rad * 1.9); }
+  }
+  function anHudImg() {   // the minimap's colours (a circuit), drawn once a lap, again when the map is laid out anew
+    const A = an, r = A && A.last; if (!r || !mm.img || mm.open) return null;
+    if (A.img && A.imgW === mm.w) return A.img;
+    const c = document.createElement('canvas'); c.width = mm.w; c.height = mm.h;
+    const g = c.getContext('2d'), xy = (i) => [track.px[i] * mm.sc + mm.ox, track.pz[i] * mm.sc + mm.oz];
+    anDraw(g, r, xy, 3.4 * mm.dpr); anRing(g, r, xy, 5 * mm.dpr, 1.8 * mm.dpr, false);
+    A.img = c; A.imgW = mm.w; return c;
+  }
+  function anHud(dt) {   // the HUD: the colours' time; the tip once the lap's time has had its moment under the clock
+    const A = an; if (!A) return;
+    if (A.hudT > 0) A.hudT -= dt;
+    if (A.pend && splitT <= 0 && phase === 'racing') { const el = $('h-split'); el.textContent = A.pend; el.className = 'show even an'; splitT = 4.5; cornerShow = false; A.pend = ''; }   // (cornerShow false: a place's name waits for it, as for a lap time)
+  }
+  function anRes() {   // the results: the laps' analysis (the last lap first)
+    const el = $('res-an'), A = an;
+    if (!A || !A.list.length) { el.classList.add('off'); return; }
+    A.sel = A.list.length - 1; el.classList.remove('off'); anResShow();
+  }
+  function anResShow() {
+    const A = an, r = A.list[A.sel], cv = $('res-an-cv'); if (!r) return;
+    $('res-an-lap').textContent = track.open ? fmt(r.lt) : tr('Krog {0} · {1}', r.lap, fmt(r.lt)) + (r.res ? ' (' + anDelta(r) + ')' : '');
+    $('res-an-prev').disabled = A.sel <= 0; $('res-an-next').disabled = A.sel >= A.list.length - 1;
+    $('res-an-prev').classList.toggle('off', A.list.length < 2); $('res-an-next').classList.toggle('off', A.list.length < 2);
+    $('res-an-tip').textContent = anTip(r);
+    const Z = r.res ? r.res.zones.filter(z => z.n && Math.abs(z.loss) >= 0.05).sort((a, b) => b.loss - a.loss) : [];
+    const top = Z.filter(z => z.loss > 0).slice(0, 3).concat(Z.filter(z => z.loss < 0).slice(-2).reverse());
+    $('res-an-z').innerHTML = top.map(z => '<li class="' + (z.loss > 0 ? 'lo' : 'gn') + '">' + tr('{0}. ovinek', z.n) + ' <b>' + (z.loss > 0 ? '+' : '−') + anS(z.loss) + ' s</b></li>').join('');
+    // the map: the lap's stretch of the track fitted into the canvas
+    const rc = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.max(60, Math.round((rc.width || 200) * dpr)), H = Math.max(50, Math.round((rc.height || 150) * dpr));
+    cv.width = W; cv.height = H; const g = cv.getContext('2d');
+    const n = Math.ceil(r.cur.L / 5), ids = []; for (let k = 0; k <= n; k++) ids.push(track.idx(track.startS + Math.min(r.cur.L, k * 5)));
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const i of ids) { x0 = Math.min(x0, track.px[i]); x1 = Math.max(x1, track.px[i]); z0 = Math.min(z0, track.pz[i]); z1 = Math.max(z1, track.pz[i]); }
+    const pad = 14 * dpr, sc = Math.min((W - 2 * pad) / Math.max(1, x1 - x0), (H - 2 * pad) / Math.max(1, z1 - z0)), ox = (W - (x1 - x0) * sc) / 2 - x0 * sc, oz = (H - (z1 - z0) * sc) / 2 - z0 * sc;
+    const xy = (i) => [track.px[i] * sc + ox, track.pz[i] * sc + oz], w = Math.max(3, Math.min(7, 4.5 * dpr));
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    const line = (st, lw) => { g.beginPath(); ids.forEach((i, k) => { const p = xy(i); if (k) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.strokeStyle = st; g.lineWidth = lw; g.stroke(); };
+    line('rgba(0,0,0,.6)', w + 3 * dpr); line('rgba(255,255,255,.85)', w);
+    anDraw(g, r, xy, w);
+    const s0 = xy(ids[0]); g.fillStyle = '#e63b2e'; g.fillRect(s0[0] - 3 * dpr, s0[1] - 3 * dpr, 6 * dpr, 6 * dpr);   // (the line)
+    anRing(g, r, xy, 7 * dpr, 2 * dpr, true);
+  }
+  function anPick(d) { if (!an || !an.list.length) return; an.sel = clamp(an.sel + d, 0, an.list.length - 1); anResShow(); }
   /* ---------------- sharing: the profile (all the game keeps: settings, records, career, championship, achievements, ghosts) and a ghost ----------------
      A file (the phone's share sheet, else a download), brought back with the file chooser; a ghost also as a link (#duh=...: the ghost packed
      with deflate, base64url), which opens the game and brings the ghost in. A friend's ghost (one per track, tdgp-fghost-<track>) drives with
@@ -2341,7 +2457,7 @@
     $('pause-skip').classList.toggle('off', !quali);
     $('pause-restart').classList.toggle('off', !!on);   // (online: no restart for one)
     stRun = { drift: 0, lapWall: false, lapAP: false, wall: false, car: false, laps: 0, pole: !!(Q && Q.res.grid === 1), done: false }; achNew = [];
-    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); mkStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
+    cpSeen = race.player.cpEv; ttRes = null; cornerSeen = -1; cornerShow = false; placeInit(); codrvInit(); twStart(); ghStart(); mkStart(); anStart(); secReset(); recStart(); $('res-hl').classList.add('off'); hlvClear(); replay = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto'); $('h-ttsp').className = '';
     hxStart();   // (time trial: turn counter, live difference to the best run, height profile)
     pkStart();   // (Pikes Peak: the class, its splits)
     Input.reset();
@@ -3243,6 +3359,7 @@
     recHits();
     if (ghRec) ghSample(P);
     if (ghLap) ghLapSample(P);
+    if (an) anSample(P);
     if (P.gear !== prevGear && prevGear > 0 && P.gear > 0) Sfx.shift(P.gear > prevGear);   // (up: the clack and a turbo's flutter; down: the clack and a blip)
     prevGear = P.gear;
     // feedback
@@ -4700,6 +4817,7 @@
     const g = mm.ctx, d = mm.dpr; if (!g) return;
     if (mm.open) { drawMinimapOpen(g, d); return; }
     g.clearRect(0, 0, mm.w, mm.h); g.drawImage(mm.img, 0, 0);
+    if (an && an.hudT > 0) { const ai = anHudImg(); if (ai) { g.globalAlpha = clamp(an.hudT, 0, 1); g.drawImage(ai, 0, 0); g.globalAlpha = 1; } }   // (the lap analysis: the last lap's colours)
     const P = race.player;
     for (const c of race.cars) {
       if (c === P) continue;
@@ -5066,6 +5184,7 @@
       if (!P.finished && P.lap === race.laps) { showMsg(tr('ZADNJI KROG!'), 'gold', 2); Sfx.beep(880, 0.12, 0.12); }
     }
     if (splitT > 0) { splitT -= dt; if (splitT <= 0) { const el = $('h-split'); el.className = ''; setTimeout(() => { if (!el.className) el.textContent = ''; }, 350); } }   // (the text once faded: upright a two-line box shrinks only then)
+    anHud(dt);   // (the lap analysis: its tip under the clock)
     updateCorner(P);
     updateCodrv(P);
     // wrong way
@@ -6446,6 +6565,8 @@
       case 'rp-b5': case 'rp-f5': case 'rp-fback': case 'rp-fnext': case 'rp-all': case 'rp-flags': case 'rp-zprev': case 'rp-znext': case 'rp-race': replayAct(act); break;
       case 'rp-here': rpHere(); break;
       case 'replay-hl': replayHL(); break;
+      case 'an-prev': anPick(-1); break;
+      case 'an-next': anPick(1); break;
       case 'vid-share': hlvShare(); break;
       case 'vid-big': $('res-vid').classList.toggle('big'); break;
       case 'rp-photo': photoStart('replay'); break;
@@ -6812,7 +6933,7 @@
       if (prviCan()) { Shramba.keep('tdgp-prvi', '0'); prviShow(); }   // (Prvič na cesti: a new player's first start; shown again at the next start until skipped or the first race is driven)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { get startCam() { return { v: scV, t: Render.startCam.t, lim: Render.startCamLim() }; }, startCamForce: (v) => { scForce = v | 0; }, comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn, demo: fr.demo }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, marksFriendOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(MK_F + mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
+      window.__game = { get startCam() { return { v: scV, t: Render.startCam.t, lim: Render.startCamLim() }; }, startCamForce: (v) => { scForce = v | 0; }, comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get analiza() { return an; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn, demo: fr.demo }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, marksFriendOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(MK_F + mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
         get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, get recFlags() { return recd ? recd.flags.map(f => Object.assign({}, f)) : null; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },
