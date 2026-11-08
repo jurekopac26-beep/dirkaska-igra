@@ -390,5 +390,12 @@
   "kverts": 545,
   "maxKverts": 754,
   "jsMs": 1.49
+ },
+ "london": {
+  "calls": 172,
+  "maxCalls": 210,
+  "kverts": 328,
+  "maxKverts": 369,
+  "jsMs": 0.52
  }
 }

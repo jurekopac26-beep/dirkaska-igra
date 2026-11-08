@@ -91,11 +91,11 @@ NAMES = [
     ('Nabrežje Temze', 815, ['Right onto the embankment!', 'Along the Thames now!']),
     ('Westminstrski most', 1405, ['Right at Westminster Bridge!', 'Hard on the brakes for the bridge corner!']),
     ('Urni stolp', 1470, ['Past the clock tower!', 'Under the clock tower, flat out!']),
-    ('Parliament Square', 1555, ['Right at Parliament Square!', 'Round Parliament Square, onto the straight!']),
+    ('Parlamentarni trg', 1555, ['Right at Parliament Square!', 'Round Parliament Square, onto the straight!']),
 ]
 
 DESC = ('Mestna proga skozi središče Londona: start na Whitehallu, desno pri Trafalgarskem trgu, po aveniji navzdol do Temze, ob nabrežju proti '
-        'jugu do Westminstrskega mostu in mimo urnega stolpa, nato desno pri Parliament Square nazaj na Whitehall. Ograje ulične dirke, 1,8 km.')
+        'jugu do Westminstrskega mostu in mimo urnega stolpa, nato desno pri Parlamentarnem trgu nazaj na Whitehall. Ograje ulične dirke, 1,8 km.')
 DESC_EN = ('A city race through the centre of London: the start on Whitehall, right at Trafalgar Square, down the avenue to the Thames, south '
            'along the embankment to Westminster Bridge and past the clock tower, then right at Parliament Square back onto Whitehall. '
            'Street-race barriers, 1.8 km.')
@@ -202,7 +202,7 @@ HEAD = """/* London (theme 'london'): the scenery data for js/world-london.js (m
    kind: 0 house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats, s, d]; out: outlines [index into bld,
    [x, z, ...]]; water: the Thames [name, [x, z, ...] closed ring]; walls [0 wall, 1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]];
    roads: the other streets and bridges within 60 m [highway, lanes, width, 1 bridge, [x, z, ...]]; rail: the railway's bridge over the river
-   [x, z, ...]; marks [label, kind, s, d, outline]; trees [x, z, kind]; lamps [x, z]. Data: © OpenStreetMap contributors (ODbL 1.0: the derived
+   [x, z, ...]; marks [label, kind, s, d, outline]; trees [x, z, kind]; lamps [x, z]; wb: Westminster Bridge's line [x, z, ...]. Data: © OpenStreetMap contributors (ODbL 1.0: the derived
    data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and
    Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and
    World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
@@ -256,6 +256,8 @@ def build_world():
         'marks': [[m[0], m[2], round(m[3] * sc), m[4], pl(m[5])] for m in J['landmarks']],
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'lamps': J['lamps'],
+        # Westminster Bridge: its longest OSM way (the bridge's whole length, the lap turns off at its west end), for the arches in the world
+        'wb': pl(max((r for r in J['roads'] if r[6] == 'Westminster Bridge' and r[3] == 1), key=lambda r: len(r[8]) and sum(math.hypot(r[8][k + 2] - r[8][k], r[8][k + 3] - r[8][k + 1]) for k in range(0, len(r[8]) - 2, 2)))[8]),
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'london.js'); open(path, 'w').write(src)
