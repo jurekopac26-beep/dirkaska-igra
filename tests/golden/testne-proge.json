@@ -374,7 +374,7 @@
   "docs/proge/uncompahgre.md": "17834aed39b874c4",
   "docs/proge/vrsic.md": "4be7a13fb9b2bc7b",
   "js/tracks/baldy.js": "44ba2ee7cd00870c",
-  "js/tracks/bangsaen.js": "626f753482653742",
+  "js/tracks/bangsaen.js": "93e82ad6820273ce",
   "js/tracks/beartooth.js": "98aecd81b32c1336",
   "js/tracks/bigsur.js": "55cbdafa82942628",
   "js/tracks/detroit.js": "2aa46ca018100985",
@@ -396,14 +396,14 @@
   "js/tracks/riverside.js": "7b39f1f22035bd1e",
   "js/tracks/riviera.js": "21aeba7841f707f9",
   "js/tracks/sani.js": "5bb953b8fc711983",
-  "js/tracks/toronto.js": "0c6d48f26e4a3987",
+  "js/tracks/toronto.js": "eb9de5fa46478591",
   "js/tracks/toskana.js": "b045ae7f1c07312e",
   "js/tracks/townsville.js": "848ac1595c8328e9",
-  "js/tracks/troisrivieres.js": "809690b5d588dbf1",
+  "js/tracks/troisrivieres.js": "8b4d045f3fb87492",
   "js/tracks/uncompahgre.js": "7c420bf7f946b634",
   "js/tracks/vrsic.js": "0f6c56cd951a3c80",
   "js/world-baldy.js": "0faf0d854cb74d0e",
-  "js/world-bangsaen.js": "746700c5b18bfd3c",
+  "js/world-bangsaen.js": "d3047fce8f1fd676",
   "js/world-beartooth.js": "fa99abb2a0d310db",
   "js/world-bigsur.js": "49682e51531c9d25",
   "js/world-detroit.js": "d4a96a4d07a0bc5b",
@@ -419,9 +419,9 @@
   "js/world-rio.js": "07e265f0f1cb919e",
   "js/world-riverside.js": "247f7779ca7cbc5a",
   "js/world-sani.js": "d8562049d7c60750",
-  "js/world-toronto.js": "1abe26eb1a4f04b1",
+  "js/world-toronto.js": "4a042718e40f459e",
   "js/world-townsville.js": "0d3a368a3a89bed7",
-  "js/world-troisrivieres.js": "c7686c249570a83d",
+  "js/world-troisrivieres.js": "9747e40ac9f3dbff",
   "js/world-uncompahgre.js": "c1d4a5b575ab145b",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
@@ -709,6 +709,21 @@
    "datum": "2026-11-05",
    "proga": "bangsaen",
    "razlog": "uporabnik 5. 11. 2026: Bang Saen v test, preveč ravnine (sporoča VSE SEJE 2), PR #379"
+  },
+  {
+   "datum": "2026-11-08",
+   "proga": "toronto",
+   "razlog": "uporabnik 8. 11. 2026: Dovolim --dovoli za toronto, troisrivieres in bangsaen"
+  },
+  {
+   "datum": "2026-11-08",
+   "proga": "troisrivieres",
+   "razlog": "uporabnik 8. 11. 2026: Dovolim --dovoli za toronto, troisrivieres in bangsaen"
+  },
+  {
+   "datum": "2026-11-08",
+   "proga": "bangsaen",
+   "razlog": "uporabnik 8. 11. 2026: Dovolim --dovoli za toronto, troisrivieres in bangsaen"
   }
  ]
 }
