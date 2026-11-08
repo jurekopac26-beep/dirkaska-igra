@@ -43,7 +43,7 @@ in vsi naključni dogodki, ki spremenijo dirko (kolo odpade, razbitine, predrta 
 prepustijo naključju, čakanje luči pred štartom), so iz njega: isti naslov dvakrat da isto dirko in enak posnetek, ne glede na
 `Math.random`. Tudi ponovni začetek dirke v istem obisku je ista dirka. V Node testih to naredi `repro: true` v nastavitvah `Core.Race`.
 Vizualni učinki (dim, iskre, komentar) ostanejo naključni. `window.__game.repro` pove seme, `window.__game.recSum()` povzetek posnetka.
-**Posnetki pred/po** (`tools/shot.mjs`, prek hitrega vstopa): `node tools/shot.mjs bathurst --m 1284` postavi avto na idealno linijo 1284 m po
+**Posnetki pred/po** (`tools/shot.mjs`, prek hitrega vstopa): `node tools/shot.mjs spa --m 600` postavi avto na idealno linijo 600 m po
 štartu (`s` iz poročila o napaki), skrije druge avte in shrani pogled kamere za avtom brez HUD-a, pokonci (360 × 640) in ležeče (640 × 360);
 `--pokonci` ali `--lezece` samo enega, `--m 400,1284` več mest, `--t <s>` mesto, kamor pride avtopilot (s tekmeci), `--vreme dez`,
 `--nizka` grafika NIZKA (kot jo meri `perf.test.mjs`; brez nje visoka kakovost), `--cas jutro|dan|vecer|noc` čas dneva (privzeto dan).

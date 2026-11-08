@@ -32,7 +32,7 @@ Načrt teme: fizika za vse proge, svoja seja (Opus, napor max; `CLAUDE.md`, Seje
 - **Vreme med dirko** (`docs/vreme-med-dirko.md`, partyslo): gre na `main` za to temo. Ta tema spremeni oprijem pri dani mokroti (`WET`, `TYRE_GRIP`, zavore, profil tekmecev), vreme med dirko pa urnik dežja in mokroto ceste po času (`Race._weather`), videz, zvok in posnetek.
 
 ## Postopek
-1. Pred spremembo izmeri z istim avtom na pravi progi (npr. Bathurst): zavorno pot 100→0 km/h in največji bočni pospešek na suhem, v dežju, na zimskem asfaltu in na makadamu s snegom.
+1. Pred spremembo izmeri z istim avtom na pravi progi (npr. Spa): zavorno pot 100→0 km/h in največji bočni pospešek na suhem, v dežju, na zimskem asfaltu in na makadamu s snegom.
 2. Spremeni vrednosti (tabela zgoraj) in znova izmeri; razmerja naj bodo v ±3 % cilja. Test razmerij (`tests/oprijem.test.js`) in povezani testi.
 3. Preizkus uporabnika na telefonu (predogled `beta/<pr>/`): dirka v dežju in zimska dirka.
 

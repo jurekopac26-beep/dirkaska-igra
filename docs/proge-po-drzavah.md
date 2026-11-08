@@ -79,7 +79,7 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
 | ZDA | Pikes Peak (asfalt in makadam); od 5. 11. 2026 samo ta (odločitev uporabnika), druge proge iz ZDA gredo med testne (`test: true`, za izbris): Big Sur, Uncompahgre, Beartooth, Mount Baldy, Monterey in Palomar Mountain ter Santa Monica Mountains, Moki Dugway, Mauna Kea, Riverside in Detroit | nobena | Hana (kratke, C1); stare veje: Mount Lemmon, Mount Rose, Long Beach |
-| Avstralija | Bathurst, Great Alpine Road: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik); Longford, Newcastle, Mount Hotham in Townsville so od 6. 11. 2026 testne (`test: true`, za izbris; odločitev uporabnika: »Vse ostale daj v test«) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
+| Avstralija | Bathurst, Great Alpine Road: na odločanju (`pending: true`; odločitev uporabnika 6. 11. 2026: ostane ena, ki jo izbere uporabnik); zamrznjeni kot testni (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostaneta do izbire; Longford, Newcastle, Mount Hotham in Townsville so od 6. 11. 2026 testne (`test: true`, za izbris; odločitev uporabnika: »Vse ostale daj v test«) | Mount Buller (narejena, PR #241; gre v test s PR #379) | stara veja: Phillip Island |
 | Kanada | Toronto, Montréal, Trois-Rivières | Québec (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | – |
 | Japonska | Suzuka, Irohazaka | Hakone (narejena, PR #261) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
@@ -94,7 +94,7 @@ Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane sam
 | Nemčija | Nürburg | – | – |
 | Avstrija | Štajerska | – | – |
 | Rusija | Katu-Jaryk | – | – |
-| Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test) | London (mestna proga po središču velikega mesta, izjema od pravila; #492, del N3 #500) | – |
+| Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta, izjema od pravila; #492, del N3 #500) | – |
 | Tajska | Bang Saen | – | – |
 
 ## Ocene prog v igri: ena proga na državo
