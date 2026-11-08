@@ -386,15 +386,16 @@ svg { display: block; }
 .res-head.busted .pos { background: linear-gradient(90deg, #d42a33 0 50%, #2a5fd4 50% 100%); color: #fff; border-color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
 .places button.busted { background: linear-gradient(90deg, #c8262f, #2856c8); border-color: rgba(255, 255, 255, .6); }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
-/* the stage's three cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner; the chosen one gold */
-.cams { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
-.cams.four { gap: 2px; }   /* (four buttons with Friends: no wider than needed, the map's names keep their room beside it) */
-.cams button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--lbl); }
-.cams button svg { width: 15px; height: 15px; }
-.cams button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
-/* camera 4, Friends (js/menu.js friendsView): the friends' times on the track instead of its picture, left of the weather and under the
-   cameras; the rows scroll (portrait about 5 in sight, on its side 6); Send my times under them. By the best time: the place's badge */
-.dio.friends { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: 40px 64px 8px 10px; background: radial-gradient(120% 90% at 30% 0%, #1b3156, #0b1424 70%); }
+/* the stage's cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner, 4 the friends' times; at the picture's bottom right,
+   just over the room (the mockup: 456 px from the top, 10 px from the edge); the chosen one gold and wider */
+.cams { position: absolute; right: 10px; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 8px; background: rgba(10, 14, 20, .45); }
+.cams button { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #cfd8ea; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+.cams button svg { width: 20px; height: 20px; }
+.cams button[aria-pressed="true"] { width: 40px; background: var(--gold); color: #1b1b1b; filter: none; }
+/* camera 4, Friends (js/menu.js friendsView): the friends' times on the track instead of its picture, under the head, left of the weather and
+   over the counter and the cameras; the rows scroll (portrait about 5 in sight, on its side 6); Send my times under them. By the best time:
+   the place's badge */
+.dio.friends { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: var(--fpad, calc(76px + var(--st, 0px)) 76px calc(var(--ov, 0px) + 56px) 10px); background: radial-gradient(120% 90% at 30% 0%, #1b3156, #0b1424 70%); }
 .ftab { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-y; border-radius: 10px; background: rgba(7, 12, 20, .62); border: 1px solid rgba(255, 255, 255, .1); }
 .ftab::-webkit-scrollbar { display: none; }
 .ftab table { width: 100%; table-layout: fixed; border-collapse: collapse; font: 700 12px/1 var(--f-ui); font-variant-numeric: tabular-nums; color: #fff; }
@@ -413,54 +414,63 @@ svg { display: block; }
 .trow .best { position: relative; }
 .fbadge { position: absolute; top: -14px; right: -2px; z-index: 1; padding: 3px 6px 2px; border-radius: 999px; background: var(--cyan); color: #04121c; font: 900 italic 11px/1 var(--f-ui); font-variant-numeric: tabular-nums; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
-   From the top: the head (house, country and place and height, globe), the stage (camera top left, weather down the right side), the row of
-   numbers, the yard (the car before the road sign), the two neighbouring tracks, Back and Race!. On its side: the stage the whole height at
-   the left, the rest at the right */
-#s-track { --sg: 10px; }
-.thead { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: calc(10px + var(--st, 0px)) 12px 8px; }
-.thead .sq { width: 44px; height: 44px; }
-.thead .sq svg { width: 22px; height: 22px; }
-.where { flex: 1 1 auto; min-width: 0; margin: 0; display: flex; align-items: baseline; justify-content: center; gap: 8px; font: 900 italic clamp(17px, 5.4vw, 23px)/1.1 var(--f-ui); letter-spacing: -.2px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
-.where .w1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.where em { flex: 0 0 auto; font: 800 italic clamp(13px, 4vw, 16px)/1 var(--f-ui); color: var(--gold); text-transform: none; font-variant-numeric: tabular-nums; }
-.globe { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 34%, #2d6fb0, #0d2a4a 70%); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .35), 0 4px 10px rgba(0, 0, 0, .45); }
-.globe svg { width: 26px; height: 26px; }
+   (docs/meni-izbira-proge.md »Zadnje odločitve«, the mockup maketa-menija/izbira-proge, 412 × 892.) The picture from the top of the screen
+   down to the row, nothing dark over it: the head over its top (the back arrow 78 × 52, the place 44 px with a soft shadow, the globe 52),
+   the graph under the arrow, the weather under the globe, the counter at the bottom left, the cameras at the bottom right. Under it the
+   room, over the picture's foot by --ov with its top corners rounded: the row, the yard, the neighbours, Race!. On its side: the picture the
+   whole height at the left, the head and the rest at the right */
+#s-track { --sg: 10px; --ov: 16px; }
+.thead { position: absolute; left: 0; right: 0; top: 0; z-index: 6; display: flex; align-items: center; gap: 10px; padding: calc(14px + var(--st, 0px)) 14px 0; pointer-events: none; }
+.thead > * { pointer-events: auto; }
+.thead .hback { flex: 0 0 auto; width: 78px; height: 52px; }
+.thead .hback svg { width: 24px; height: 24px; }
+.where { flex: 1 1 auto; min-width: 0; margin: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; color: #fff;
+  font: 900 italic 44px/1.12 var(--f-ui); letter-spacing: -.5px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 16px rgba(0, 0, 0, .55); }
+.globe { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 34%, #2d6fb0, #0d2a4a 70%); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .35), 0 4px 10px rgba(0, 0, 0, .45); }
+.globe svg { width: 28px; height: 28px; }
 .globe canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }   /* (the Earth turned to the track: js/menu.js globe) */
-#s-track .stage { flex: 0 1 48%; min-height: 150px; overflow: hidden; }
-/* the height graph across the stage's foot (js/menu.js graphOf): the part flown over coloured by the climb, the rest a thin white line */
-.hgraph { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; z-index: 3; pointer-events: none; background: linear-gradient(rgba(5, 9, 16, 0), rgba(5, 9, 16, .5) 45%, rgba(5, 9, 16, .72)); }
-.hgraph svg { display: block; overflow: visible; }
-.hgraph .ah { fill: none; stroke: rgba(255, 255, 255, .85); stroke-width: 1.4; stroke-linejoin: round; }
-.hgraph .ar { fill-opacity: .32; }   /* (its colours, the climb's: the gradient #hgc named in the svg) */
-.hgraph .ln { fill: none; stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; }
-.hgraph text { font: 800 italic 11px var(--f-ui); fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .55); stroke-width: 2.4px; }
-.hgraph text.km { font-size: 10px; fill: rgba(255, 255, 255, .82); font-variant-numeric: tabular-nums; }
+#s-track .stage { flex: 0 1 58.3%; min-height: 150px; overflow: hidden; }
+#s-track .stage .empty { position: absolute; left: 0; right: 0; top: 45%; margin: 0; text-align: center; font: 800 italic 16px/1.3 var(--f-ui); color: var(--lbl); }
+/* the height graph in its frame under the back arrow (js/menu.js graphOf): as wide as the arrow, 0.6 of it high; the part driven (to the point)
+   its line coloured by the climb over a strong yellow, the rest a thin white line over a light yellow; the lowest point on the bottom edge */
+.hgraph { position: absolute; left: 14px; top: calc(88px + var(--st, 0px)); width: 78px; height: 47px; padding-top: 6px; z-index: 4; pointer-events: none; overflow: hidden; border-radius: 8px; background: rgba(10, 14, 20, .45); }
+.hgraph svg { display: block; }
+.hgraph .ah { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 1.8; stroke-linejoin: round; }
+.hgraph .ln { fill: none; stroke-width: 3.4; stroke-linejoin: round; stroke-linecap: round; }
+.hgraph text { font: 800 italic 10px var(--f-ui); fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, .55); stroke-width: 2.4px; font-variant-numeric: tabular-nums; }
 .hgraph .pt circle { fill: #fff; stroke: #ffd23a; stroke-width: 1.6; }
 .hgraph .pt .halo { fill: rgba(255, 236, 170, .32); stroke: none; }
-/* the weather: down the stage's right side, the chosen one bigger and in its colours with its name, the others small and grey */
-.wxv { position: absolute; right: 8px; top: 8px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 3px; border-radius: 16px; background: rgba(7, 12, 20, .55); }
-.wxv button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 2px; min-width: 40px; }
-.wxv svg { width: 26px; height: 26px; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.wxv b { display: none; font: 800 italic 11px/1 var(--f-ui); color: var(--gold); text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
-.wxv .w-sun { fill: #8d97a8; } .wxv .w-ray { stroke: #8d97a8; stroke-width: 2.2; } .wxv .w-cl { fill: #8d97a8; } .wxv .w-dr { stroke: #8d97a8; stroke-width: 2; } .wxv .w-bolt { fill: #8d97a8; }
-.wxv [aria-pressed="true"] svg { width: 40px; height: 40px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5)); }
+/* the track's place among the real tracks of the list (17 / 26; a test track: TEST), at the picture's bottom left */
+.tcount { position: absolute; left: 10px; bottom: calc(var(--ov, 0px) + 10px); z-index: 4; height: 38px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; background: rgba(10, 14, 20, .45); pointer-events: none;
+  color: #fff; font: 800 italic 16px/1 var(--f-ui); font-variant-numeric: tabular-nums; letter-spacing: .2px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+/* the weather: down the right side under the globe, no frames; the chosen one 52 px in its colours with its name, the others 40 px grey;
+   the more options (···) under them */
+.wxv { position: absolute; right: 14px; top: calc(84px + var(--st, 0px)); width: 52px; z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.wxv button { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.wxv svg { display: block; width: 40px; height: 40px; opacity: .65; filter: grayscale(1) brightness(1.3) drop-shadow(0 2px 3px rgba(0, 0, 0, .9)); }
+.wxv b { display: none; font: 800 italic 13px/1 var(--f-ui); color: #ffd23a; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.wxv [aria-pressed="true"] svg { width: 52px; height: 52px; opacity: 1; filter: drop-shadow(0 0 5px rgba(255, 190, 50, .8)) drop-shadow(0 3px 3px rgba(0, 0, 0, .6)); }
 .wxv [aria-pressed="true"] b { display: block; }
-.wxv [aria-pressed="true"] .w-sun { fill: #ffc629; } .wxv [aria-pressed="true"] .w-ray { stroke: #ff9a1f; }
-.wxv [aria-pressed="true"] .w-cl { fill: #f2f5fa; } .wxv [aria-pressed="true"] .w-dr { stroke: var(--cyan); } .wxv [aria-pressed="true"] .w-bolt { fill: var(--gold); }
-.wxmore { width: 32px; height: 22px; margin-top: 2px; border-radius: 11px; background: rgba(255, 255, 255, .12); font: 900 14px/22px var(--f-ui); color: #dfe6f1; letter-spacing: 1px; }
+.wxmore { width: 34px; height: 22px; border-radius: 11px; background: rgba(10, 14, 20, .55); font: 900 14px/22px var(--f-ui); color: #dfe6f1; letter-spacing: 1px; }
+/* the room under the picture: its top corners rounded as the row's frame, over the picture's foot, a soft shadow up onto it */
+.room { position: relative; z-index: 5; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-top: calc(-1 * var(--ov)); border-radius: 13px 13px 0 0;
+  background: linear-gradient(180deg, #14223b, #0f1b2f 70px, var(--navy2)); box-shadow: 0 -8px 18px rgba(0, 0, 0, .45); }
+.vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* (for the readers only) */
 /* the row of numbers */
-.trow { flex: 0 0 auto; display: flex; align-items: center; margin: 8px var(--sg) 0; padding: 7px 8px 7px 10px; border-radius: 14px; background: linear-gradient(180deg, var(--card1), var(--card2)); border: 1px solid var(--edge); box-shadow: 0 8px 20px rgba(0, 0, 0, .4); }
+.trow { flex: 0 0 auto; display: flex; align-items: center; min-height: 60px; margin: 10px var(--sg) 0; padding: 6px 8px 6px 10px; border-radius: 13px; background: linear-gradient(180deg, var(--card1), var(--card2)); border: 1px solid var(--edge); box-shadow: 0 8px 20px rgba(0, 0, 0, .4); }
 .trow > div { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 4px; }
 .trow > div + div { border-left: 1px solid var(--line); }
 .trow small { font: 500 11.5px/1 var(--f-ui); color: var(--lbl); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .trow b { font: 800 italic 15px/1 var(--f-ui); color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.trow .opp { flex: 0 0 auto; }
-.trow .opp b { font-size: 30px; font-weight: 900; line-height: .9; }
-.trow .opp > button { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 100%; border-radius: 8px; }   /* (a race's: a tap opens the opponents' sheet) */
+/* the opponents at the row's end: the number big by the start's grid */
+.trow .opp { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 6px; padding: 0 4px 0 12px; }
+.trow .opp b { font-size: 42px; font-weight: 900; line-height: .9; }
+.trow .opp .grid { flex: 0 0 auto; width: 17px; height: 16px; align-self: flex-end; margin-bottom: 4px; overflow: visible; }
+.trow .opp > button { display: flex; flex-direction: row; align-items: center; gap: 6px; max-width: 100%; border-radius: 8px; }   /* (a race's: a tap opens the opponents' sheet) */
 .trow .opp > button:active b { color: var(--gold); }
 .trow .best small, .trow .best b, .trow .gt small, .trow .gt b { color: var(--gold); }
-.trow .flag { flex: 0 0 auto; padding-right: 0; }
-.trow .flag img { display: block; height: 28px; width: auto; max-width: 52px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
+.trow .flag { flex: 0 0 auto; padding: 0 10px 0 4px; }
+.trow .flag img { display: block; height: 24px; width: auto; max-width: 44px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
 /* the yard: a wall and a floor (the horizon at the car's height), the blue road sign with the country on two posts, the car before it */
 .yard { position: relative; flex: 1 1 120px; min-height: 84px; margin-top: 6px; overflow: hidden; background: linear-gradient(180deg, #0f2036 0%, #13263f 58%, #1b3150 58.5%, #101d31 100%); }
 .yard::after { content: ''; position: absolute; left: 0; right: 0; top: 58%; height: 30%; background: radial-gradient(60% 100% at 32% 0%, rgba(120, 170, 255, .12), transparent 70%); pointer-events: none; }
@@ -498,13 +508,19 @@ svg { display: block; }
 .nb.plain { justify-content: center; background: linear-gradient(180deg, #4a5262, #2d3442); }
 .nb.plain span { font: 800 italic 13px/1 var(--f-ui); color: #fff; padding: 0 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nb:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
-#s-track .foot { padding-top: 10px; }
-#s-track .foot .go { flex: 1 1 auto; min-width: 0; }
+#s-track .foot { padding: 12px 14px calc(12px + var(--sb, 0px)); }
+#s-track .foot .go { flex: 1 1 auto; max-width: none; min-width: 0; height: 56px; font-size: 25px; }
 @media (max-height: 700px) {
-  .thead { padding-bottom: 4px; } .thead .sq, .globe { width: 38px; height: 38px; }
-  .trow { margin-top: 6px; padding-top: 5px; padding-bottom: 5px; } .trow .opp b { font-size: 26px; } .trow .flag img { height: 24px; }
+  #s-track { --ov: 14px; }
+  .thead { padding-top: calc(10px + var(--st, 0px)); gap: 8px; } .thead .hback { width: 64px; height: 44px; } .globe { width: 44px; height: 44px; } .where { font-size: 34px; }
+  .hgraph { left: 10px; top: calc(62px + var(--st, 0px)); width: 64px; height: 40px; padding-top: 4px; }
+  .wxv { right: 10px; top: calc(62px + var(--st, 0px)); width: 44px; gap: 4px; }
+  .wxv svg { width: 30px; height: 30px; } .wxv [aria-pressed="true"] svg { width: 40px; height: 40px; } .wxv b { font-size: 11px; } .wxmore { height: 20px; line-height: 20px; }
+  .tcount, .cams { bottom: calc(var(--ov) + 8px); } .tcount { height: 34px; padding: 0 9px; font-size: 14px; } .cams { padding: 3px; gap: 3px; } .cams button { width: 28px; height: 28px; } .cams button[aria-pressed="true"] { width: 36px; } .cams button svg { width: 18px; height: 18px; }
+  .dio.friends { --fpad: calc(64px + var(--st, 0px)) 62px calc(var(--ov) + 50px) 10px; }
+  .trow { min-height: 50px; margin-top: 8px; padding-top: 4px; padding-bottom: 4px; } .trow .opp b { font-size: 32px; } .trow .flag img { height: 22px; }
   .nbrs { padding-top: 6px; } .nb { height: 44px; }
-  #s-track .foot { padding-top: 8px; } #s-track .back { height: 44px; } #s-track .go { height: 48px; }
+  #s-track .foot { padding-top: 8px; } #s-track .foot .go { height: 48px; }
 }
 @media (max-width: 380px), (orientation: landscape) and (max-width: 760px) { .trow small { font-size: 10.5px; } .trow b { font-size: 13.5px; } .trow > div { padding: 0 3px; } }
 /* version 1: the flyover video and the names over it */
@@ -680,6 +696,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .intro.ix2 { display: block; background: radial-gradient(120% 60% at 50% 28%, #16304d 0%, var(--navy1) 55%, var(--navy2) 100%); }
 /* (the menu's own night: the track screen's card and stage stay where they were) */
 .ix-head2 { position: absolute; left: 0; right: 0; top: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 12px 10px 16px; box-sizing: border-box; animation: fade .35s ease-out both; }
+.ix-head2.over { align-items: center; padding: calc(14px + var(--st)) 12px 18px 16px; background: linear-gradient(180deg, rgba(4, 8, 14, .62), rgba(4, 8, 14, .32) 65%, rgba(4, 8, 14, 0)); }   /* (over the picture's top: upright, the stage from the screen's top) */
+.ix-head2.over .ix-name h2 { text-shadow: 0 2px 0 rgba(0, 0, 0, .4), 0 0 12px rgba(0, 0, 0, .5); }
+.ix-head2.over .ix-name h2 small { text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
 .ix-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ix-flag { flex: 0 0 auto; width: auto; height: 20px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .35), 0 2px 6px rgba(0, 0, 0, .5); }
 .ix-name h2 { margin: 0; min-width: 0; font: 900 italic clamp(21px, 6.4vw, 28px)/1 var(--f-ui); letter-spacing: -.3px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -711,6 +730,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .ixpin i::after { content: ''; position: absolute; left: 50%; bottom: -3px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 0 8px 2px rgba(255, 210, 80, .5); }
 .ix-summit { position: absolute; right: 8px; top: 8px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; opacity: 0; transform: translateY(-4px); transition: opacity .45s ease, transform .45s ease; pointer-events: none; }
 .ix-summit.on { opacity: 1; transform: none; }
+.ix-stage.hd .ix-summit { top: calc(66px + var(--st)); }   /* (the head over the picture's top: the summit under it) */
 .ix-summit b { background: #fff; color: #10151d; font: 900 italic 12.5px/1 var(--f-ui); letter-spacing: .02em; padding: 5px 9px 4px; transform: skewX(-10deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, .35); white-space: nowrap; }
 /* (its words in capitals already; the m stays a metre) */
 .ix-summit small { background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 4px 8px 3px; transform: skewX(-10deg); margin-right: 7px; white-space: nowrap; }
@@ -921,9 +941,13 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .t-sub .mode { min-height: 0; max-height: none; }
   .t-sub .mode .tx { padding: 5px 0; }
   /* the track screen: the stage the whole height at the left (half the width), the head, the row, the yard, the neighbours and the buttons at the right */
-  #s-track { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "stage head" "stage row" "stage yard" "stage nbrs" "stage foot"; width: min(100%, 1280px); left: 0; right: 0; margin: 0 auto; }
+  #s-track { --ov: 0px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto auto; grid-template-areas: "stage head" "stage row" "stage yard" "stage nbrs" "stage foot"; width: min(100%, 1280px); left: 0; right: 0; margin: 0 auto; }
+  #s-track .room { display: contents; }   /* (its parts in the screen's grid) */
   #s-track .stage { grid-area: stage; min-height: 0; }
-  #s-track .thead { grid-area: head; padding-top: calc(8px + var(--st, 0px)); padding-bottom: 4px; }
+  #s-track .thead { grid-area: head; position: static; pointer-events: auto; padding: calc(8px + var(--st, 0px)) 12px 4px; }
+  #s-track .thead .hback { width: 64px; height: 44px; } #s-track .globe { width: 44px; height: 44px; } #s-track .where { font-size: 30px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+  #s-track .hgraph { left: 8px; top: 8px; } #s-track .wxv { right: 8px; top: 8px; } #s-track .tcount, #s-track .cams { bottom: 8px; } #s-track .tcount { left: 8px; } #s-track .cams { right: 8px; }
+  #s-track .dio.friends { --fpad: 10px 70px 54px 10px; }
   #s-track .trow { grid-area: row; margin-top: 4px; }
   #s-track .yard { grid-area: yard; min-height: 0; margin-top: 4px; }
   #s-track .nbrs { grid-area: nbrs; padding-top: 6px; }
@@ -935,9 +959,11 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .sheet.opts { max-height: calc(100% - 20px); }
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  #s-track .thead .sq, #s-track .globe { width: 36px; height: 36px; }
+  #s-track .thead .hback { width: 56px; height: 38px; } #s-track .globe { width: 38px; height: 38px; } #s-track .where { font-size: 26px; }
+  #s-track .wxv { gap: 2px; width: 40px; } #s-track .wxv svg { width: 26px; height: 26px; } #s-track .wxv [aria-pressed="true"] svg { width: 34px; height: 34px; } #s-track .wxv b { font-size: 10.5px; }
+  #s-track .hgraph { width: 64px; height: 40px; padding-top: 4px; }
   #s-track .trow { padding-top: 4px; padding-bottom: 4px; } #s-track .trow .opp b { font-size: 24px; } #s-track .trow .flag img { height: 22px; }
-  #s-track .nb { height: 40px; } #s-track .back { height: 42px; width: 64px; } #s-track .go { height: 44px; font-size: 22px; }
+  #s-track .nb { height: 40px; } #s-track .foot .go { height: 44px; font-size: 22px; }
   .t-subhead small, .t-sub .mode .tx small { display: none; }
   .t-subhead b { font-size: 19px; }
   .t-sub .mode .tx b { font-size: 18px; }

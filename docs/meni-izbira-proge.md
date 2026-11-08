@@ -121,7 +121,7 @@ Vse iz »Zadnjih odločitev« in »Izboljšav makete« gre iz makete (`maketa-me
 
 | Sklop | Vsebina | Čas | Stanje |
 |---|---|---|---|
-| 7 | Pokonci: glava (puščica nazaj 78 × 52 namesto hiške, samo kraj 44 px, globus), slika do vrha brez temnega pasu, temni del z zaobljenima zgornjima vogaloma (13 px), vreme pod globusom (5 ikon, *Snow* = letni čas zima; *···* ostane pod njimi), gumbi kamer spodaj desno, graf pod puščico v vseh kamerah (širok kot puščica, rumeno polnilo), števec prog spodaj levo (`17 / 26`, na testni progi TEST), vrstica (zastava levo, *Best race*, *Length*, *Climb* ali *Corners*, desno število tekmecev z ikono štartne mreže), spodaj samo *Race!*; ležeče isti elementi v sedanji postavitvi (do sklopa 10); testi | 5–6 h | v delu (8. 11.) |
+| 7 | Pokonci: glava (puščica nazaj 78 × 52 namesto hiške, samo kraj 44 px, globus), slika do vrha brez temnega pasu, temni del z zaobljenima zgornjima vogaloma (13 px), vreme pod globusom (5 ikon, *Snow* = letni čas zima; *···* ostane pod njimi), gumbi kamer spodaj desno, graf pod puščico v vseh kamerah (širok kot puščica, rumeno polnilo), števec prog spodaj levo (`17 / 26`, na testni progi TEST), vrstica (zastava levo, *Best race*, *Length*, *Climb* ali *Corners*, desno število tekmecev z ikono štartne mreže), spodaj samo *Race!*; ležeče isti elementi v sedanji postavitvi (do sklopa 10); testi | 5–6 h | narejeno (8. 11.) |
 | 8 | Zastava v vrstici → hitra izbira (`izbor.js`: list od spodaj, iskanje po kraju in državi, filtri *Circuit*, *Open road*, *Rally* in dolžina, države po celinah, seznam prog države), kartica proge (oblika od zgoraj, graf, *Select*, *Race!*), napredek (medalja 1–3, kljukica, NEW: na zastavah, v seznamih, na kartici in v vrstici), tipka nazaj (`history`) in tresljaj | 6–7 h | |
 | 9 | Globus v glavi → 3D Zemlja (`zemlja.js`: three.js igre, vrtenje z vztrajnostjo, približanje, zlate države, bucike prog z napredkom, napisi držav in prog, kartica države → kartica proge, gumb na trenutno progo); dan in noč na Zemlji in globusu v glavi (`GLOBE.sun()`); globus se ob menjavi proge zavrti do nove države | 6–7 h | |
 | 10 | Ležeči vrtiljak 5.1 (točka 9: kartica izbrane proge z grafom, vremenom, števcem in gumbi kamer, sosedi, puščici ‹ ›, poteg, ~300 ms; hitra izbira kot panel desno, Zemlja s kartico desno); poteg po sliki tudi pokonci (slika sledi prstu) | 5–6 h | |
@@ -132,7 +132,8 @@ Skupaj ≈ 32–39 ur dela. Sklopi gredo zaporedno brez premorov: 7 do ~9. 11. o
 
 ### Predaja vgradnje
 
-- **Sklop 7** (session_01Ck3D3S9PiimWFjdb4e3tWS, 8. 11.): v delu.
+- **Sklop 7** (session_01Ck3D3S9PiimWFjdb4e3tWS, 8. 11.): narejeno. `vTrack()` v `js/menu.js` pokonci po maketi 412 × 892: glava `.thead` čez sliko (puščica `.hback` `data-act="back"` nazaj na načine, `ARROW`; kraj `.where .w2` 44 px, `fitWhere()` ga zmanjša do 18 px, da ne seže v globus; država samo v `aria-label`; globus 52 px), slika do vrha (`#s-track .stage` 58,3 % višine), temni del `.room` (zgornja vogala 13 px, 16 px čez sliko: `--ov`; ležeče `display: contents`, mreža ostane), graf `.hgraph` pod puščico v kamerah 1–3 (`withGraph`; 78 × 47, brez km), vreme `.wxv` (`WX5`, `wxIcon`; *Snow* = `season: winter` + `weather: rain`, drugo vreme vrne prejšnji letni čas: `setWeather`, `wxOn`, `preSeason`; na sliki sneži: `wx` `snow`, razred `.snowy`), *···* pod vremenom, števec `.tcount` spodaj levo (mesto med pravimi progami seznama, testna TEST), kamere `.cams` spodaj desno, vrstica `.trow` (zastava `.flag`, rekord z značko prijateljev, *Length*, *Climb*/*Descent*/*Corners*, desno tekmeci `oppN` z ikono mreže `GRID`, v lovu *Police*, v kronometru *Gold time*), spodaj samo *Race!*. Ni več: hiške `home` (na naslovnico iz načinov s `tsub:`), višine v glavi (`heightOf`, `MENU.heads` se ne bereta), `foot` z gumbom nazaj. Zemljevid se izogne glavi, vremenu, grafu, števcu in kameram (`keepOut`). Testi: `tests/browser/menu.test.mjs` (razdelki 3, 4, 6, 10: glava, števec, vreme s *Snow*, puščica, postavitve), `lestvica.test.mjs` (pogled prijateljev: `--fpad`). Odprto vprašanje `meni-vreme-cel-meni` na strani Odločitve (kdaj vreme čez cel meni; do odgovora sklop 12).
+- **Za sklop 8:** zastava v vrstici je zdaj `<div class="flag">` s sliko: postane gumb hitre izbire (`izbor.js` makete). Globus v glavi (`<div class="globe">`) ostane za sklop 9. Ležeče (sklop 10) ima vse nove dele v stari mreži (`#s-track` `grid-template-areas`); CSS pokonci je v `css/menu.css` pod `#s-track { --sg … --ov }`, manjši telefon `@media (max-height: 700px)`.
 
 ## Sklopi
 
@@ -144,7 +145,7 @@ Skupaj ≈ 32–39 ur dela. Sklopi gredo zaporedno brez premorov: 7 do ~9. 11. o
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | na main (PR #255, 2. 11. 2026) |
 | 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | na main (PR #267, 4. 11. 2026) |
 | 6 | Uporabnikovi popravki, dokumentacija, celotni testi | 2–3 h | PR #295: na main v zbirni #303, popravki po preizkusu na telefonu za njim (5. 11. 2026) |
-| 7–12 | Vgradnja makete v igro (razdelek »Vgradnja v igro«) | 32–39 h | v delu na veji `meni/vgradnja`, osnutek #516 (od 8. 11. 2026) |
+| 7–12 | Vgradnja makete v igro (razdelek »Vgradnja v igro«) | 32–39 h | v delu na veji `meni/vgradnja`, osnutek #516 (od 8. 11. 2026); sklop 7 narejen 8. 11. |
 
 ### Sklop 1: kaj je narejeno
 

@@ -59,7 +59,7 @@ try {
     //    lengths by id), every track with its picture in camera 2 (the flyover, else its model, and the height graph), the list going
     //    round (after the last track the first again); the first time a track is met, its pictures in cameras 1 (the map, else the model)
     //    and 3 (the corner's video and its poster, else the model) too
-    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {}, heads = {}, cams = {};   // (heads: every track's globe and height graph, of every mode; cams: every track's pictures in cameras 1 and 3)
+    const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {}, heads = {}, cams = {}, lists = {};   // (heads: every track's globe and height graph, of every mode; cams: every track's pictures in cameras 1 and 3)
     // the stage's picture as it is now: its kind and its files (a video's poster and the video)
     const PIC = `const st = root.querySelector('#track-stage'), map = st.querySelector('.dio.topmap'), v = st.querySelector('.dio.fly video, .dio.corner video');
       if (v) return { kind: v.closest('.corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
@@ -83,17 +83,18 @@ try {
         const r = await page.waitForFunction(() => {
           const root = document.getElementById('menu-host').shadowRoot, st = root.querySelector('#track-stage'), name = root.querySelector('.where .w2').textContent;
           const imgs = [...st.querySelectorAll('.dio img')], map = st.querySelector('.dio.topmap'), fly = st.querySelector('.dio.fly video'), files = [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href'));
-          // the head's globe (drawn once the Earth has come: every track with a country) and the height graph at the stage's foot
-          const w1 = root.querySelector('.where .w1').firstChild, ctry = w1 && w1.nodeType === 3 ? w1.textContent.replace(/,\s*$/, '') : '', gl = root.querySelector('.thead .globe canvas'), gr = st.querySelector('.hgraph svg');
+          // the head's globe (drawn once the Earth has come: every track with a country; the country from the place's name for the readers),
+          // the height graph under the back arrow, the counter at the picture's bottom left
+          const lab = root.querySelector('.where').getAttribute('aria-label') || '', kc = lab.lastIndexOf(', '), ctry = kc > 0 ? lab.slice(kc + 2) : '', gl = root.querySelector('.thead .globe canvas'), gr = st.querySelector('.hgraph svg');
           if (ctry && !gl) return null;
-          const head = { id: Menu.debug().list[Menu.debug().trackIdx], ctry, sign: (root.querySelector('.yard .sign') || {}).textContent || '', globe: gl ? gl.dataset.country : '', graph: gr ? [...gr.querySelectorAll('text.lo, text.hi')].map(e => e.textContent) : null, km: gr ? [...gr.querySelectorAll('text.km')].map(e => e.textContent).pop() : '' };
+          const head = { id: Menu.debug().list[Menu.debug().trackIdx], ctry, sign: (root.querySelector('.yard .sign') || {}).textContent || '', globe: gl ? gl.dataset.country : '', graph: gr ? [...gr.querySelectorAll('text.lo, text.hi')].map(e => e.textContent) : null, count: (st.querySelector('.tcount') || {}).textContent || '' };
           if (fly) return { name, kind: 'flyover', files: [fly.getAttribute('poster'), fly.getAttribute('src')].filter(Boolean), head };   // (camera 2 on a track with a flyover: its video, with its poster)
           if (map) return { name, kind: 'map', files, head };
           if (imgs.length && imgs.every(i => i.complete && i.naturalWidth > 0)) return { name, kind: 'model', files, head };
           return null;
         }, null, { timeout: 20000 }).then(h => h.jsonValue()).catch(() => ({ name: '?', kind: 'none' }));
         seen++; if (r.kind === 'none' || r.kind === 'map') bad.push(k); for (const f of r.files || []) urls.add(f);
-        if (r.head) heads[mode + ':' + r.head.id] = r.head;
+        if (r.head) heads[mode + ':' + r.head.id] = Object.assign(r.head, { mode });
         if (r.head && !cams[r.head.id]) {   // (cameras 1 and 3, the first time the track is met)
           await click(page, 'cam:1'); const c1 = await ev(page, PIC); await click(page, 'cam:3'); const c3 = await ev(page, PIC); await click(page, 'cam:2');
           cams[r.head.id] = { c1, c3 }; for (const f of c1.files.concat(c3.files)) urls.add(f);
@@ -103,7 +104,8 @@ try {
       const again = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       const gone = await page.evaluate(async (list) => { const out = []; for (const u of list) { try { if (!(await fetch(u, { method: 'HEAD' })).ok) out.push(u); } catch (_) { out.push(u); } } return out; }, [...urls]);
       T.check(`${mode}: every track shows its picture (${seen} tracks, ${urls.size} picture files, none missing); after the last the first again`, !bad.length && !gone.length && seen === exp.ids.length && again === first, JSON.stringify({ bad, gone, first, again }));
-      await page.click('.foot [data-act="back"]');   // (back to the modes)
+      await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
+      lists[mode] = exp.ids;
     }
     // every track's pictures in cameras 1 and 3: the map from above where the track has a route (routes.js), else its model; the corner's
     // video in a loop, muted, where MENU.corners has it (every real track, and Vršič: a test track since 6. 11. 2026 without a model), else (a
@@ -112,11 +114,14 @@ try {
     const cbad = Object.entries(cams).filter(([id, c]) => c.c1.kind !== (cx.routes.includes(id) ? 'map' : 'model') || c.c3.kind !== (cx.corners.includes(id) ? 'corner' : 'model') || (c.c3.kind === 'corner' && !(c.c3.loop && c.c3.files[0] === 'assets/maps/corner-' + id + '.webp' && c.c3.files[1] === 'assets/maps/corner-' + id + '.webm'))).map(([id, c]) => id + ':' + c.c1.kind + '/' + c.c3.kind);
     const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
     T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
-    // every track of every mode: its height graph across the stage's foot in camera 2 (the flyover, or the model where a track has none), a
-    // real track's with its lowest and highest heights and the kilometres under it; its country gold on the head's globe
+    // every track of every mode: its height graph under the back arrow in camera 2 (the flyover, or the model where a track has none), a
+    // real track's with its lowest and highest heights; its country gold on the head's globe
     const tests = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), H = Object.values(heads);
-    const nograph = H.filter(x => !x.graph || (!tests.includes(x.id) && (x.graph.length !== 2 || !x.graph.every(t => /^-?\d[\d,]* m$/.test(t)) || !/ km$/.test(x.km)))).map(x => x.id + ':' + JSON.stringify(x.graph));
-    T.check(`every track of every mode (${H.length}) has its height graph; a real one's with its lowest and highest heights and the kilometres`, H.length >= 90 && !nograph.length, nograph.join(', '));
+    const nograph = H.filter(x => !x.graph || (!tests.includes(x.id) && (x.graph.length !== 2 || !x.graph.every(t => /^-?\d[\d,]* m$/.test(t))))).map(x => x.id + ':' + JSON.stringify(x.graph));
+    T.check(`every track of every mode (${H.length}) has its height graph; a real one's with its lowest and highest heights`, H.length >= 90 && !nograph.length, nograph.join(', '));
+    // the counter at the picture's bottom left: the track's place among the real tracks of its mode's list (1 / 26 ...), a test track TEST
+    const badCount = H.filter(x => { const real = lists[x.mode].filter(id => !tests.includes(id)); return x.count !== (tests.includes(x.id) ? 'TEST' : (real.indexOf(x.id) + 1) + '\u2009/\u2009' + real.length); }).map(x => x.mode + ':' + x.id + ':' + x.count);
+    T.check(`the counter: every real track its place among the real tracks of the list (1 / ${lists.race.filter(id => !tests.includes(id)).length} in Circuit race), every test track TEST`, H.length >= 90 && !badCount.length, badCount.join(', '));
     const withC = H.filter(x => x.ctry), noglobe = withC.filter(x => x.globe !== x.ctry).map(x => x.id + ':' + x.ctry + '/' + x.globe);
     T.check(`every track with a country (${withC.length} of ${H.length}: the test tracks Copper Forest and Thunder Cape have none) has its globe in the head, that country gold on it`, withC.length >= 90 && withC.length >= H.length - 4 && !noglobe.length, noglobe.join(', '));
     // the yard's road sign: TEST on a test track, PENDING on one awaiting the user's choice (pending: Australia's, one of them stays), neither
@@ -146,7 +151,7 @@ try {
     await ctx.close();
   }
 
-  // 4. the track step (Nürburg): the head, the row of numbers, the road sign, the neighbours, the house; the weather and the race
+  // 4. the track step (Nürburg): the head, the row of numbers, the road sign, the neighbours, the back arrow; the weather and the race
   //    options, the car and its way back, the credits; then a race from the menu
   {
     const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' });
@@ -154,13 +159,16 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     await page.waitForFunction(() => [...document.getElementById('menu-host').shadowRoot.querySelectorAll('.nb')].every(b => /^url\("?data:image\/png/.test(b.style.backgroundImage)), null, { timeout: 15000 }).catch(() => null);
     const scr = await ev(page, `const q = (s) => root.querySelector(s), d = Menu.debug(), n = d.list.length, i = d.trackIdx;
-      return { head: q('.where').textContent.replace(/\\s+/g, ' ').trim(), home: !!q('.thead [data-act="home"]'), globe: !!q('.thead .globe'), old: !!(q('.topbar') || q('.groups') || q('.card') || q('.arrow') || q('.pcount')),
-        row: [...root.querySelectorAll('.trow > div')].map(e => e.className + ':' + e.textContent), flag: q('.trow .flag img') && q('.trow .flag img').getAttribute('src'), sign: q('.yard .sign').textContent, car: !!q('.yard .car[data-act="garage"]'),
+      const hb = q('.thead .hback'), hr = hb && hb.getBoundingClientRect();
+      return { head: q('.where').textContent.replace(/\\s+/g, ' ').trim(), label: q('.where').getAttribute('aria-label'), fs: parseFloat(getComputedStyle(q('.where .w2')).fontSize), back: hb ? hb.dataset.act + ':' + Math.round(hr.width) + 'x' + Math.round(hr.height) : '', home: !!q('[data-act="home"]'), globe: !!q('.thead .globe'),
+        foot: [...root.querySelectorAll('#s-track .foot button')].map(b => b.dataset.act), old: !!(q('.topbar') || q('.groups') || q('.card') || q('.arrow') || q('.pcount')),
+        row: [...root.querySelectorAll('.trow > div')].map(e => e.className + ':' + e.textContent), grid: !!q('.trow .opp svg.grid'), flag: q('.trow .flag img') && q('.trow .flag img').getAttribute('src'), sign: q('.yard .sign').textContent, car: !!q('.yard .car[data-act="garage"]'),
         nb: [...root.querySelectorAll('.nb')].map(b => [b.dataset.act, b.getAttribute('aria-label'), b.dataset.flag || '', /^url\\("?data:image\\/png/.test(b.style.backgroundImage)]), prev: d.list[(i - 1 + n) % n], next: d.list[(i + 1) % n], id: d.list[i],
         wx: [...root.querySelectorAll('.wxv [data-act^="weather:"]')].map(b => b.dataset.act.slice(8) + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')), more: !!q('.wxv [data-act="more-options"]') };`);
     const riv = await page.evaluate(() => { const d = Core.TRACKS.find(x => x.id === 'nring'); const M = Core.MODELS[__game.S.car]; return Core.fieldSize(M.oneMake ? null : M, d.raceRivals || d.rivals || 21); });
-    T.check('the track step\'s head: the house, "GERMANY, NÜRBURG" and the height, the globe; no title bar, groups, card or arrows', scr.id === 'nring' && /^Germany, Nürburg \d[\d,]* m$/.test(scr.head) && scr.home && scr.globe && !scr.old, JSON.stringify(scr));
-    T.check(`the row: Opponents ${riv}, Best lap, Length 20.69 km, Corners, the flag of Germany`, JSON.stringify(scr.row.slice(0, 3)) === JSON.stringify(['opp:Opponents' + riv, 'best:Best lap—', ':Length20.69 km']) && /^:Corners\d+$/.test(scr.row[3]) && scr.flag === 'assets/flags/germany.svg', JSON.stringify(scr.row));
+    T.check('the track step\'s head: the back arrow (78 × 52), the place alone, "NÜRBURG" 44 px (the country for the readers), the globe; no house, no height; Race! alone at the foot; no title bar, groups, card or arrows',
+      scr.id === 'nring' && scr.head === 'Nürburg' && scr.label === 'Nürburg, Germany' && scr.fs === 44 && scr.back === 'back:78x52' && !scr.home && scr.globe && JSON.stringify(scr.foot) === '["race-single"]' && !scr.old, JSON.stringify(scr));
+    T.check(`the row: the flag of Germany, Best lap, Length 20.69 km, Corners, ${riv} opponents by the start's grid`, JSON.stringify(scr.row.slice(0, 3)) === JSON.stringify(['flag:', 'best:Best lap—', ':Length20.69 km']) && /^:Corners\d+$/.test(scr.row[3]) && scr.row[4] === 'opp:Opponents' + riv && scr.grid && scr.flag === 'assets/flags/germany.svg', JSON.stringify(scr.row));
     T.check('the yard: the road sign with the country (GERMANY), the player\'s car before it opens the garage', /^germany$/i.test(scr.sign) && scr.car, JSON.stringify({ sign: scr.sign }));
     // the car in 3D (js/menu-car.js): the race's model in the player's colour, on a canvas over the whole yard, in the car's button's box
     // (left, in front of the sign), no picture; the wind round it: its lines across the yard right of the car too, soft blue, the waves
@@ -185,39 +193,46 @@ try {
     T.check('the screen drawn again (the weather): the car\'s canvas in the new yard at once, the wind kept', rd.on && rd.cv && rd.i.on && rd.i.builds === b0, JSON.stringify({ b0, rd }));
     T.check('the neighbours: the previous and the next track of the list (Livorno before Nürburg: the list from the shortest to the longest), each its flag with its last column stretched',
       scr.prev === 'livorno' && scr.nb[0][0] === 'track:-1' && /^Previous track: Livorno, Italy$/.test(scr.nb[0][1]) && scr.nb[0][2] === 'assets/flags/italy.svg' && scr.nb[0][3] && scr.nb[1][0] === 'track:1' && /^Next track: /.test(scr.nb[1][1]), JSON.stringify(scr.nb));
-    T.check('the weather down the stage: Dry, Rain, Changing, Storm (Dry chosen), and more options under it', JSON.stringify(scr.wx) === '["dry*","rain","change","storm"]' && scr.more, JSON.stringify(scr.wx));
+    T.check('the weather down the stage: Dry, Rain, Changing, Storm, Snow (Dry chosen), and more options under it', JSON.stringify(scr.wx) === '["dry*","rain","change","storm","snow"]' && scr.more, JSON.stringify(scr.wx));
     await page.click('.nb.r'); const nx = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     await page.click('.nb.l'); const pv = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
     T.check('the neighbours tapped: the next track, then back to Nürburg', nx === scr.next && pv === 'nring' && (await page.evaluate(() => __game.S.track)) === 'nring', JSON.stringify({ nx, pv }));
-    // the four cameras at the stage's top left: icons only (1 the map, 2 the flyover, 3 the corner, 4 the friends' times), the map (1) lit when the step opens,
-    // its picture the map from above with no height graph; no mode ribbon on the stage
-    const stageUI = await ev(page, 'const m = root.querySelector("#track-stage .cams"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"), st = root.querySelector("#track-stage"), r = m && m.getBoundingClientRect(), sr = st.getBoundingClientRect(); return { btns: m ? [...m.querySelectorAll("button")].map(b => b.dataset.act + ":" + b.getAttribute("aria-label") + ":" + !!b.querySelector("svg")) : null, text: m ? m.textContent.trim() : "?", pressed: pr ? pr.dataset.act : "", at: r ? [r.left - sr.left, r.top - sr.top] : null, size: m ? [...m.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().width)) : null, map: !!st.querySelector(".dio.topmap"), graph: !!st.querySelector(".hgraph"), ribbon: !!st.querySelector(".ribbon") };');
-    T.check('the track stage: four camera buttons at its top left, icons only (Map, Flyover, Corner camera, Friends), the map (1) lit when the step opens and shown without the height graph, no mode ribbon',
-      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true","cam:4:Friends:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && stageUI.at[0] < 20 && stageUI.at[1] < 20 && stageUI.size.every(x => x === 22) && stageUI.map && !stageUI.graph && !stageUI.ribbon, JSON.stringify(stageUI));
+    // the four cameras at the picture's bottom right, 10 px from its edge and over the room (icons only: 1 the map, 2 the flyover, 3 the
+    // corner, 4 the friends' times), the map (1) lit when the step opens, 40 px wide, the others 30; the counter at the bottom left as high;
+    // the height graph in its frame under the back arrow (as wide, 0.6 of it high, 22 px under it) on the map too; no mode ribbon on the stage
+    const stageUI = await ev(page, `const m = root.querySelector("#track-stage .cams"), pr = m && m.querySelector("button[aria-pressed=\\"true\\"]"), st = root.querySelector("#track-stage"), r = m && m.getBoundingClientRect(), sr = st.getBoundingClientRect(), room = root.querySelector("#s-track .room").getBoundingClientRect();
+      const c = root.querySelector("#track-stage .tcount").getBoundingClientRect(), g = root.querySelector("#track-stage .hgraph"), gr = g && g.getBoundingClientRect(), hb = root.querySelector(".thead .hback").getBoundingClientRect();
+      return { btns: m ? [...m.querySelectorAll("button")].map(b => b.dataset.act + ":" + b.getAttribute("aria-label") + ":" + !!b.querySelector("svg")) : null, text: m ? m.textContent.trim() : "?", pressed: pr ? pr.dataset.act : "", at: r ? [sr.right - r.right, room.top - r.bottom].map(Math.round) : null,
+        size: m ? [...m.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().width) + "x" + Math.round(b.getBoundingClientRect().height)) : null, count: [c.left - sr.left, room.top - c.bottom, c.height, r ? r.height : 0].map(Math.round),
+        graph: gr ? [gr.left - hb.left, gr.top - hb.bottom, gr.width, gr.height].map(Math.round) : null, map: !!st.querySelector(".dio.topmap"), ribbon: !!st.querySelector(".ribbon"), room: [room.top - sr.top, sr.bottom - room.top].map(Math.round), radius: getComputedStyle(root.querySelector("#s-track .room")).borderTopLeftRadius };`);
+    T.check('the track stage: four camera buttons at its bottom right over the room, icons only (Map, Flyover, Corner camera, Friends), the map (1) lit when the step opens; the counter at the bottom left; the height graph under the back arrow on the map too; the room over the picture\'s foot, its corners rounded 13 px; no mode ribbon',
+      JSON.stringify(stageUI.btns) === '["cam:1:Map:true","cam:2:Flyover:true","cam:3:Corner camera:true","cam:4:Friends:true"]' && stageUI.text === '' && stageUI.pressed === 'cam:1' && JSON.stringify(stageUI.at) === '[10,10]' &&
+      JSON.stringify(stageUI.size) === '["40x30","30x30","30x30","30x30"]' && JSON.stringify(stageUI.count) === '[10,10,38,38]' && JSON.stringify(stageUI.graph) === '[0,22,78,47]' && stageUI.map && !stageUI.ribbon && stageUI.room[1] === 16 && stageUI.radius === '13px', JSON.stringify(stageUI));
     // camera 2, the flyover: its video, only the start and the finish named over it (no places, no box with the place reached)
     await click(page, 'cam:2');
     const fl = await page.waitForFunction(() => { const root = document.getElementById('menu-host').shadowRoot, st = root.querySelector('#track-stage'), v = st.querySelector('.dio.fly video'), lab = st.querySelector('.flab');
       return v && lab && lab.children.length ? { src: v.getAttribute('src'), tags: [...lab.children].map(e => e.className), hud: !!st.querySelector('.hud'), cam: __game.S.menuCam } : null; }, null, { timeout: 20000 }).then(h => h.jsonValue()).catch(() => null);
     T.check('camera 2: the flyover, only the start and the finish named over it (no places, no box with the place and its height); the camera kept in the settings', fl && fl.src === 'assets/maps/fly-nring.webm' && JSON.stringify(fl.tags) === '["fl-s start","fl-s finish"]' && !fl.hud && fl.cam === 2, JSON.stringify(fl));
     // the globe in the head: the Earth turned to Nürburg, Germany gold in its middle; the height graph: Nürburg's lowest and highest
-    // heights, the kilometres to 20, the part flown over coloured as the flyover goes on (121 colours of the climb), only in the flyover
+    // heights, the part flown over coloured as the flyover goes on (121 colours of the climb), in cameras 1 to 3
     await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas'), null, { timeout: 20000 }).catch(() => null);
     const gb = await ev(page, 'const c = root.querySelector(".thead .globe canvas"); if (!c) return null; const S = c.width, px = c.getContext("2d").getImageData(S / 2 - 2, S / 2 - 2, 4, 4).data; let r = 0, g = 0, b = 0; for (let i = 0; i < 16; i++) { r += px[i * 4]; g += px[i * 4 + 1]; b += px[i * 4 + 2]; } return { S, country: c.dataset.country, ring: c.dataset.ring, rgb: [r / 16, g / 16, b / 16].map(Math.round), w: c.getBoundingClientRect().width };');
-    T.check('the head\'s globe: the Earth turned to the track, Germany gold in its middle, the ring round Nürburg', gb && gb.country === 'Germany' && gb.ring === '1' && gb.S >= 88 && gb.w >= 34 && gb.rgb[0] > 150 && gb.rgb[0] - gb.rgb[2] > 60 && gb.rgb[1] > gb.rgb[2], JSON.stringify(gb));
-    const gr0 = await ev(page, 'const g = root.querySelector("#track-stage .hgraph svg"); if (!g) return null; return { lo: g.querySelector("text.lo").textContent, hi: g.querySelector("text.hi").textContent, km: [...g.querySelectorAll("text.km")].map(e => e.textContent), stops: g.querySelectorAll("#hgc stop").length, clip: +g.querySelector("#hgk rect").getAttribute("width"), x0: +g.querySelector("#hgk rect").getAttribute("width") };');
+    T.check('the head\'s globe: the Earth turned to the track, Germany gold in its middle, the ring round Nürburg', gb && gb.country === 'Germany' && gb.ring === '1' && gb.S >= 104 && gb.w === 52 && gb.rgb[0] > 150 && gb.rgb[0] - gb.rgb[2] > 60 && gb.rgb[1] > gb.rgb[2], JSON.stringify(gb));
+    const gr0 = await ev(page, 'const g = root.querySelector("#track-stage .hgraph svg"); if (!g) return null; return { lo: g.querySelector("text.lo").textContent, hi: g.querySelector("text.hi").textContent, stops: g.querySelectorAll("#hgc stop").length, clip: +g.querySelector("#hgk rect").getAttribute("width"), x0: +g.querySelector("#hgk rect").getAttribute("width") };');
     const moved = await page.waitForFunction((x0) => { const r = document.getElementById('menu-host').shadowRoot.querySelector('#hgk rect'); return r && +r.getAttribute('width') > x0 + 8; }, gr0 && gr0.x0, { timeout: 40000 }).then(() => true).catch(() => false);
-    T.check('the height graph: Nürburg\'s lowest and highest heights, 0 to 20 km, the climb\'s colours, the part flown over growing with the flyover', gr0 && /^\d{3} m$/.test(gr0.lo) && /^\d{3} m$/.test(gr0.hi) && parseInt(gr0.hi) > parseInt(gr0.lo) + 100 && gr0.km[0] === '0' && gr0.km[gr0.km.length - 1] === '20 km' && gr0.stops === 121 && moved, JSON.stringify({ gr0, moved }));
-    await click(page, 'cam:1'); const g1 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph");');
-    await click(page, 'cam:3'); const g3 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph");');
+    T.check('the height graph: Nürburg\'s lowest and highest heights, the climb\'s colours, the part flown over growing with the flyover', gr0 && /^\d{3} m$/.test(gr0.lo) && /^\d{3} m$/.test(gr0.hi) && parseInt(gr0.hi) > parseInt(gr0.lo) + 100 && gr0.stops === 121 && moved, JSON.stringify({ gr0, moved }));
+    await click(page, 'cam:1'); const g1 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph svg");');
+    await click(page, 'cam:3'); const g3 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph svg");');
+    await click(page, 'cam:4'); const g4 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph");');
     await click(page, 'cam:2'); const g2 = await ev(page, 'return !!root.querySelector("#track-stage .hgraph svg");');
-    T.check('the height graph only in the flyover (2), not on the map (1) nor at the corner (3)', !g1 && !g3 && g2, JSON.stringify({ g1, g2, g3 }));
+    T.check('the height graph on the map (1), in the flyover (2) and at the corner (3); not with the friends\' times (4)', g1 && g2 && g3 && !g4, JSON.stringify({ g1, g2, g3, g4 }));
     // camera 3, the corner: its video (poster first), muted, in a loop, playing (its clock goes on); the step opened again shows the map
     await click(page, 'cam:3');
     const cv0 = await page.waitForFunction(() => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.corner video'); return v && v.readyState >= 2 && !v.paused && v.currentTime > 0.2 ? { t: v.currentTime, poster: v.getAttribute('poster'), src: v.getAttribute('src'), loop: v.loop, muted: v.muted, d: v.duration, w: v.videoWidth } : null; }, null, { timeout: 30000 }).then(h => h.jsonValue()).catch(() => null);
     await page.waitForTimeout(800);
     const cv1 = await ev(page, 'const v = root.querySelector("#track-stage .dio.corner video"); return v ? v.currentTime : -1;');
     T.check('camera 3: the corner\'s video (Nürburg\'s, its poster first), muted, in a loop of 6 to 8 s, playing', cv0 && cv0.poster === 'assets/maps/corner-nring.webp' && cv0.src === 'assets/maps/corner-nring.webm' && cv0.loop && cv0.muted && cv0.d >= 5.9 && cv0.d <= 8.1 && cv0.w >= 640 && cv1 !== cv0.t, JSON.stringify({ cv0, cv1 }));
-    await page.click('.foot [data-act="back"]'); await click(page, 'mode:race');
+    await page.click('.thead [data-act="back"]'); await click(page, 'mode:race');
     const reopen = await ev(page, 'const p = root.querySelector("#track-stage .cams [aria-pressed=\\"true\\"]"); return { cam: p && p.dataset.act, map: !!root.querySelector("#track-stage .dio.topmap"), set: __game.S.menuCam };');
     T.check('the track step opened again: the map (camera 1), whichever camera was chosen before', reopen.cam === 'cam:1' && reopen.map && reopen.set === 3, JSON.stringify(reopen));
     await click(page, 'weather:rain');
@@ -229,18 +244,24 @@ try {
     await click(page, 'weather:storm');
     s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy') }));
     T.check('Storm: the game\'s weather, still wet', s.w === 'storm' && s.rainy, JSON.stringify(s));
+    // Snow: the winter and the rain (falling as snow in the race: js/render.js snowy), Snow the one lit, snow falling over the picture; a
+    // weather after it: the season it had before
+    const wxNow = () => page.evaluate(() => { const st = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage'); return { w: __game.S.weather, season: __game.S.season, snowy: st.classList.contains('snowy'), rainy: st.classList.contains('rainy'), on: st.querySelector('.wxv [aria-pressed="true"]').dataset.act }; });
+    await click(page, 'weather:snow'); s = await wxNow();
+    T.check('Snow: the season winter and the rain (snow in the race), Snow the one lit, the picture under snow (not rain)', s.w === 'rain' && s.season === 'winter' && s.snowy && !s.rainy && s.on === 'weather:snow', JSON.stringify(s));
+    await click(page, 'weather:storm'); s = await wxNow();
+    T.check('Storm after Snow: the season as it was before (summer), the storm, wet again', s.w === 'storm' && s.season === 'summer' && s.rainy && !s.snowy && s.on === 'weather:storm', JSON.stringify(s));
     await click(page, 'more-options'); await click(page, 'opt:season:autumn'); await click(page, 'opt:tod:dusk'); await click(page, 'opt:length:short');
     s = await page.evaluate(() => ({ season: __game.S.season, tod: __game.S.tod, length: __game.S.length }));
     T.check('the race options sheet: Autumn, Dusk and a Short race are the game\'s settings', s.season === 'autumn' && s.tod === 'dusk' && s.length === 'short', JSON.stringify(s));
     await done(page);
     await click(page, 'weather:dry'); await click(page, 'more-options'); await click(page, 'opt:season:summer'); await click(page, 'opt:tod:day'); await click(page, 'opt:length:normal'); await done(page);
-    // the house: the main menu
-    await click(page, 'home'); const hm = await ev(page, 'return { scr: Menu.debug().screen, sub: Menu.debug().titleSub, tile: !!root.querySelector(".t-single") };');
-    T.check('the house: the main menu', hm.scr === 'title' && !hm.sub && hm.tile, JSON.stringify(hm));
-    await click(page, 'single'); await click(page, 'mode:race');
+    // the back arrow: one step back, to the modes (as Escape and the gamepad's B)
+    await page.click('.thead [data-act="back"]'); const hm = await ev(page, 'return { scr: Menu.debug().screen, sub: Menu.debug().titleSub, modes: !!root.querySelector("[data-act=\\"mode:race\\"]") };');
+    T.check('the back arrow: back to the modes', hm.scr === 'title' && hm.sub === 'single' && hm.modes, JSON.stringify(hm));
 
     // the credits on the title
-    await page.click('.foot [data-act="back"]'); await page.click('.t-subhead [data-act="tsub:"]');
+    await page.click('.t-subhead [data-act="tsub:"]');
     await click(page, 'credits');
     let c = await ev(page, 'const s = root.querySelector(".sheet.credits"); return s ? s.textContent : "";');
     T.check('Credits: the sheet names the data the pictures of the Earth are made from, and closes', /WorldCover/.test(c) && /Natural Earth/.test(c));
@@ -263,7 +284,7 @@ try {
     await click(page, 'single'); await click(page, 'mode:race');
     const ag = await page.waitForFunction(() => MenuCar.info().drawn && MenuCar.info().size[0] > 0, null, { timeout: 60000 }).then(() => page.evaluate(() => MenuCar.info())).catch(() => page.evaluate(() => MenuCar.info()));
     T.check('the track step again: the car drawn again', ag.on && ag.drawn && ag.size[0] > 0, JSON.stringify(ag));
-    await click(page, 'home');
+    await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');
 
     // the game's own screens the title links to, and the way back to it
     for (const [act, id] of [['game:to-settings', 's-settings'], ['game:to-board', 's-board'], ['game:to-online', 's-online'], ['career', null]]) {
@@ -536,26 +557,29 @@ try {
     await click(page, 'mode:race');
     const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('vrsic') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
     for (let k = 0; k < 60 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, way);   // (to Vršič, a test track since 6. 11. 2026 and the longest of them, the list's last: past the tracks awaiting the choice and the test tracks after Nürburg, the last real one)
-    await click(page, 'cam:2');   // (the flyover: the height graph at the stage's foot)
+    await click(page, 'cam:2');   // (the flyover)
     await page.waitForTimeout(500);
-    // the track step: upright the head, the stage (about half the screen), the row, the yard, the neighbours and the foot one under the
-    // other; on its side the stage the whole height at the left (half the width), the rest at the right; nothing cut, nothing over another
+    // the track step: upright the picture from the top of the screen (the head over it) to the row, then the row, the yard, the neighbours
+    // and Race! one under the other; on its side the stage the whole height at the left (half the width), the rest (the head first) at the
+    // right; nothing cut, nothing over another
     const g = await ev(page, `
       const rc = (s) => { const e = root.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
-      const out = { head: rc(".thead"), st: rc("#track-stage"), row: rc(".trow"), yard: rc(".yard"), sign: rc(".yard .sign"), nbrs: rc(".nbrs"), foot: rc(".foot"), go: rc(".go"), back: rc(".foot .back"), where: rc(".where .w1"), W: innerWidth, H: innerHeight };
+      const out = { head: rc(".thead"), hb: rc(".thead .hback"), globe: rc(".thead .globe"), st: rc("#track-stage"), row: rc(".trow"), yard: rc(".yard"), sign: rc(".yard .sign"), nbrs: rc(".nbrs"), foot: rc(".foot"), go: rc(".go"), where: rc(".where .w2"), W: innerWidth, H: innerHeight };
       out.cells = [...root.querySelectorAll(".trow > div")].map(e => e.scrollWidth - e.clientWidth); out.nb = [...root.querySelectorAll(".nb")].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.right, r.width]; });
-      out.wx = rc(".wxv"); out.gr = rc("#track-stage .hgraph"); const sv = root.querySelector("#track-stage .hgraph svg"); out.grw = sv ? sv.getBoundingClientRect().width : 0; return out;`);
+      out.wx = rc(".wxv"); out.cams = rc("#track-stage .cams"); out.cnt = rc("#track-stage .tcount"); out.gr = rc("#track-stage .hgraph"); const sv = root.querySelector("#track-stage .hgraph svg"); out.grw = sv ? sv.getBoundingClientRect().width : 0; return out;`);
     const inside = (r) => r && r.l >= -0.5 && r.r <= g.W + 0.5 && r.t >= -0.5 && r.b <= g.H + 0.5;
-    const side = g.W > g.H, parts = ['head', 'row', 'yard', 'nbrs', 'foot'];
+    const side = g.W > g.H, parts = side ? ['head', 'row', 'yard', 'nbrs', 'foot'] : ['row', 'yard', 'nbrs', 'foot'];
     const order = parts.every((k, i) => !i || g[parts[i - 1]].b <= g[k].t + 1);
     const lay = side ? g.st.l <= 0.5 && g.st.h >= g.H - 2 && Math.abs(g.st.w - g.W / 2) < g.W * 0.08 && parts.every(k => g[k].l >= g.st.r - 1) && order
-      : g.st.t >= g.head.b - 1 && g.st.b <= g.row.t + 1 && g.st.h >= g.H * 0.3 && order;
-    T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the rest right)' : ''}: the head, the stage, the row, the yard, the neighbours and Back and Race!, in order, all inside the screen`,
-      lay && parts.every(k => inside(g[k])) && inside(g.go) && inside(g.back) && inside(g.st) && g.yard.h >= 50, JSON.stringify(g));
-    T.check(`${w}x${h}: the row's numbers are not cut; the two neighbours side by side; the weather inside the stage; the sign in the yard`,
-      g.cells.every(x => x <= 1) && g.nb.length === 2 && g.nb[0][1] <= g.nb[1][0] && g.nb[0][2] >= 100 && g.wx.r <= g.st.r + 0.5 && g.wx.b <= g.st.b + 0.5 && g.sign.t >= g.yard.t - 0.5 && g.sign.r <= g.yard.r + 0.5, JSON.stringify({ cells: g.cells, nb: g.nb, wx: g.wx, sign: g.sign }));
-    T.check(`${w}x${h}: the height graph across the stage's whole width at its foot, 72 px tall, under the weather`,
-      g.gr && Math.abs(g.gr.l - g.st.l) < 0.5 && Math.abs(g.gr.r - g.st.r) < 0.5 && Math.abs(g.gr.b - g.st.b) < 0.5 && Math.abs(g.gr.h - 72) < 0.5 && Math.abs(g.grw - g.st.w) < 1 && g.wx.b <= g.gr.t + 1, JSON.stringify({ gr: g.gr, st: g.st, grw: g.grw, wx: g.wx }));
+      : g.st.t <= 0.5 && g.head.t <= 0.5 && g.head.b <= g.st.t + 90 && g.st.b <= g.row.t + 1 && g.st.h >= g.H * 0.5 && order;
+    T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the head and the rest right)' : ' (the picture from the top, the head over it)'}: the row, the yard, the neighbours and Race!, in order, all inside the screen`,
+      lay && parts.every(k => inside(g[k])) && inside(g.head) && inside(g.go) && inside(g.st) && g.yard.h >= 50, JSON.stringify(g));
+    T.check(`${w}x${h}: the row's numbers are not cut; the two neighbours side by side; the weather inside the stage, over the cameras; the counter and the cameras at the stage's foot, apart; the sign in the yard`,
+      g.cells.every(x => x <= 1) && g.nb.length === 2 && g.nb[0][1] <= g.nb[1][0] && g.nb[0][2] >= 100 && g.wx.r <= g.st.r + 0.5 && g.wx.b <= g.cams.t - 4 && (side || g.wx.t >= g.globe.b + 4) &&
+      g.cnt.l >= g.st.l + 6 && g.cnt.r <= g.cams.l - 8 && g.cams.r <= g.st.r - 6 && Math.abs(g.cnt.b - g.cams.b) < 0.5 && g.cams.b <= (side ? g.st.b : g.row.t) - 6 && g.sign.t >= g.yard.t - 0.5 && g.sign.r <= g.yard.r + 0.5, JSON.stringify({ cells: g.cells, nb: g.nb, wx: g.wx, cams: g.cams, cnt: g.cnt, sign: g.sign }));
+    T.check(`${w}x${h}: the height graph in its frame ${side ? 'at the stage\'s top left' : 'under the back arrow, as wide as it'} (0.6 of it high), left of the weather and over the counter`,
+      g.gr && Math.abs(g.grw - g.gr.w) < 1 && g.gr.h >= g.gr.w * 0.55 && g.gr.h <= g.gr.w * 0.66 && g.gr.r < g.wx.l - 8 && g.gr.b < g.cnt.t - 8 &&
+      (side ? Math.abs(g.gr.l - g.st.l - 8) < 0.5 && Math.abs(g.gr.t - g.st.t - 8) < 0.5 : Math.abs(g.gr.l - g.hb.l) < 0.5 && Math.abs(g.gr.w - g.hb.w) < 0.5 && g.gr.t >= g.hb.b + 8), JSON.stringify({ gr: g.gr, st: g.st, hb: g.hb, grw: g.grw, wx: g.wx }));
 
     // the whole route and the names of its flags inside the picture; the neighbours at the same place on the next track. (An open road's map
     // turned to run up the frame: on Pikes Peak, below. Vršič, a test track since 6. 11. 2026, is drawn as the test tracks are, not turned)
@@ -563,7 +587,7 @@ try {
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
       const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(".nb")].map(c), scr: [innerWidth, innerHeight] };
-      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv")].map(c); }
+      if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount")].concat([...root.querySelector(".thead").children]).map(c); }
       return out;`;
     await click(page, 'cam:1'); await page.waitForTimeout(500);
     const v1 = await ev(page, MEASURE);
@@ -571,7 +595,7 @@ try {
     const v2 = await ev(page, MEASURE);
     const same = (a, b) => Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1;
     T.check(`${w}x${h}: the neighbours' buttons at the same place on Vršič and on the next track`, v1.name === 'Vršič' && v2.name !== 'Vršič' && v1.nb.length === 2 && v2.nb.length === 2 && same(v1.nb[0], v2.nb[0]) && same(v1.nb[1], v2.nb[1]), JSON.stringify({ v1: v1.nb, v2: v2.nb }));
-    if (w === 412) T.check('Vršič\'s head: "Slovenia, Vršič 1,388 m" (the height chosen for it: MENU.heads)', v1.head === 'Slovenia, Vršič 1,388 m', v1.head);
+    if (w === 412) T.check('Vršič\'s head: the place alone, "VRŠIČ" (no height)', v1.head === 'Vršič', v1.head);
     const inPic = (r, p, e) => r.l >= p.l - e && r.r <= p.r + e && r.t >= p.t - e && r.b <= p.b + e;
     T.check(`${w}x${h}: the whole route (start to finish) and the names of its flags are inside the picture, the names upright`, inPic(v1.line, v1.pic, 6) && v1.names.length >= 2 && v1.names.every(n => inPic(n, v1.pic, 1) && n.w > n.h), JSON.stringify({ line: v1.line, pic: v1.pic, names: v1.names }));
     T.check(`${w}x${h}: the flags' names in boxes as the flyover's (the start's white, the finish's dark), the height in a small box under the name at its right`,
@@ -598,7 +622,7 @@ try {
     const upright = !!pk && !!pk.f && (tall ? pk.s.y > pk.f.y + pk.pic.h * 0.4 && Math.abs(pk.s.x - pk.f.x) < pk.pic.w * 0.35 : pk.f.x > pk.s.x + pk.pic.w * 0.4);
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame (Pikes Peak: Crystal Reservoir, the start, below; the Summit, the finish, above)' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, !!pk && turned === tall && upright, JSON.stringify(pk && { name: pk.name, rot: pk.rot, pic: pk.pic, s: pk.s, f: pk.f }));
     T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
-    T.check(`${w}x${h}: on every map the names of the flags are not under the cameras' buttons or the weather`, maps >= 5 && !under.length, JSON.stringify(under));
+    T.check(`${w}x${h}: on every map the names of the flags are not under the head, the graph, the weather, the counter or the cameras' buttons`, maps >= 5 && !under.length, JSON.stringify(under));
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -685,7 +709,7 @@ try {
       T.check(`the yard's ${w === 'back' ? 'car' : 'car\'s name'} tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its ${w === 'back' ? 'back' : 'Izberi progo'}: the track step again, the same track, on the garage's car, its name over it (the address plain again)`,
         gar && gar.endsWith('/garaza.html?car=' + car1 + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === want && g.url === '' && g.shown === 's-menu' && back.h1 === was && back.name === wname,
         JSON.stringify({ gar, car0, car1, dz, g, was, back, want, wname }));
-      await click(page, 'home');
+      await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');   // (the main menu: the modes, then their back)
     }
     T.check('the garage and back: no page errors', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
