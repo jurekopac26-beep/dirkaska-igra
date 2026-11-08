@@ -4383,12 +4383,12 @@ const Core = (function () {
 
     // the vehicles (uphill one every ~290 m, downhill one every ~250 m; a one-way road: one every ~200 m, all going up; one in 14 a bus, one in 6 a van, one in 12 a motorbike, or the road's own
     // mix, def.traffic: Los Caracoles' trucks; the cyclists every ~2.4 km each way (def.traffic.bike: a cyclist every so many metres instead of
-    // ~650), a quarter of them alone, the rest training groups of 3-7 in single file; the first 180 m past the start line clear of uphill
-    // traffic) and the people
+    // ~650; 0: none, Ngorongoro's crater), a quarter of them alone, the rest training groups of 3-7 in single file; the first 180 m past the start line
+    // clear of uphill traffic) and the people (def.traffic.foot 0: nobody on foot by the road, Ngorongoro's: the animals')
     _populate(dens) {
       const T = this.T, R = this.R, CO = this.race.opts.tfCars, M = CO ? { mix: CO } : T.def.traffic, PK = [0, 1, 2, 3, 5];   // (opts.tfCars: a special mission's own mix [car, van, bus, motorbike, truck], no bicycles and nobody on foot)
       for (const dir of this.ow ? [1] : [1, -1]) {
-        const a = dir > 0 ? T.startS + 180 : this.s0 + 60, L = this.s1 - 30 - a, n = Math.max(1, Math.round(L / (dir > 0 ? (this.ow ? 200 : 290) : 250) * dens)), nb = Math.max(1, Math.round(L / (2400 * (M && M.bike ? M.bike / 650 : 1)) * dens));
+        const a = dir > 0 ? T.startS + 180 : this.s0 + 60, L = this.s1 - 30 - a, n = Math.max(1, Math.round(L / (dir > 0 ? (this.ow ? 200 : 290) : 250) * dens)), nb = M && M.bike === 0 ? 0 : Math.max(1, Math.round(L / (2400 * (M && M.bike ? M.bike / 650 : 1)) * dens));
         for (let k = 0; k < n; k++) { const u = R();
           if (M) { let q = 0, c = M.mix[0]; while (q < M.mix.length - 1 && u >= c) c += M.mix[++q]; const p = PK[q]; this._veh(dir, p === 5 ? 2 : p, a + (k + 0.15 + 0.7 * R()) * L / n, p); }   // (a truck: kind 2 on its own figures)
           else this._veh(dir, u < 0.07 ? 2 : u < 0.24 ? 1 : u < 0.32 ? 3 : 0, a + (k + 0.15 + 0.7 * R()) * L / n); }
@@ -4398,7 +4398,7 @@ const Core = (function () {
             if (g) { v.grp = g; v.gi = i; if (i) { v.v0 = g.m[0].v0 * 1.08; v.v = g.m[0].v; } g.m.push(v); } }   // (the ones behind a little keener: they keep up)
         }
       }
-      if (CO) return;
+      if (CO || (M && M.foot === 0)) return;
       // walkers on the sidewalks (alone or in groups, one every ~30 m of each side), walking their stretch up and down
       if (T.walk) for (const [a, b, sd] of T.def.walks || []) for (const side of sd ? [sd] : [-1, 1]) {
         const a0 = T.startS + a + 6, a1 = T.startS + b - 6;

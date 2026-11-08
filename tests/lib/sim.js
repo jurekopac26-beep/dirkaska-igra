@@ -54,7 +54,9 @@ const SETUPS = {
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
 // costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+// (Ngorongoro rally 10: up to 8 s the left lock on the rim road of the run-up and past the start line only dents the rally car, no panel off; from
+// 9 s on, further down, a panel comes off every time tried, 9-14 s)
+const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'ngorongoro/rally': 10 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

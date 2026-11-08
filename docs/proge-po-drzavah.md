@@ -65,7 +65,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Gudauri, Gruzija | Nove proge 3 | OSM 0 % | izletna cona je |
 | Llogara, Albanija | Nove proge 4 | OSM 1 % (stara cesta čez prelaz, ne novi predor) | izletna cona je |
 | Porto Moniz, Portugalska | Nove proge 5 | OSM 10 % (hiše) | izletna cona je |
-| Ngorongoro, Tanzanija | Nove proge 8 | travnata pobočja brez hiš in ograj (načrt) | izletna cona je |
+| Ngorongoro, Tanzanija | osnutek PR #533 (veja `nove-proge/ngorongoro`, 8. 11. 2026) | 0 % (v igri, povprečno 5,2 m od asfalta; travnata pobočja brez hiš in ograj) | izletna cona je |
 | Seul, Južna Koreja | zavite 3 | OSM 2 % (cesta skozi park) | izletna cona je |
 | Wellington, Nova Zelandija | zavite 4 | OSM 4 % (hiše vrisane, odmaknjene od ceste) | izletna cona je; odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | Longyearbyen, Norveška | proge z ledom | OSM 2 %, obe 0 % (hiše odmaknjene od ceste) | izletna cona je |
@@ -133,7 +133,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Gruzija | Gudauri (Nove proge) | po vrsti |
 | Albanija | Llogara (Nove proge) | po vrsti |
 | Portugalska | Porto Moniz (Nove proge) | po vrsti |
-| Tanzanija | Ngorongoro (Nove proge) | po vrsti |
+| Tanzanija | Ngorongoro (Nove proge za 1.0, A9; prej Nove proge 8) | narejena: osnutek PR #533 (8. 11. 2026), na `main` s skupino N5 |
 | Saudova Arabija | Diriyah (stara veja `claude/proga-diriyah`, v verigi Nove proge) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Kazahstan | Medeu (kratke, A) | po vrsti |
 | Šrilanka | Ella (kratke, C1) | po vrsti |
