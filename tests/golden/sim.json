@@ -4801,6 +4801,104 @@
    "repairs": 0
   }
  },
+ "santoantao/race/cs": {
+  "digest": "fcc9dfa40139ec3f1209d8c8",
+  "lead": 1586.3,
+  "car0": [
+   561.16,
+   -827.83
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/demo/cs": {
+  "digest": "096cd5b980096c95cd29c153",
+  "lead": 1713.5,
+  "car0": [
+   519.38,
+   -867.89
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/upg/cs": {
+  "digest": "12733b2821276774a4c498a6",
+  "lead": 1693.5,
+  "car0": [
+   587.75,
+   -862.69
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/crash/cs": {
+  "digest": "28f4959131378b5d39471e27",
+  "lead": 1573.5,
+  "car0": [
+   460.76,
+   -824.71
+  ],
+  "cover": {
+   "dmg": 0.75,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/formula/cs": {
+  "digest": "94243f0ba096e6456fc67dd3",
+  "lead": 1718.5,
+  "car0": [
+   604.27,
+   -876.04
+  ],
+  "cover": {
+   "dmg": 0.7,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/lm/cs": {
+  "digest": "0321fce08997aadca77951df",
+  "lead": 1700.5,
+  "car0": [
+   608.07,
+   -874.75
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "santoantao/car/cs": {
+  "digest": "04f4f15e0c95697f2714c116",
+  "lead": 1573.5,
+  "car0": [
+   396.18,
+   -834.14
+  ],
+  "cover": {
+   "dmg": 0.66,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
  "livorno/race/cs": {
   "digest": "5b601641952b407dbb9ec42d",
   "lead": 2185.5,

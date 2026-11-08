@@ -6,7 +6,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // road), up to the top of the ridge (~710 m; the HUD's altitude goes up to it too: def.altTop) and down the ridge's north spur in six
   // hairpins (def.curves, the game's numbering from the top) towards Ribeira Grande and the sea (~336 m at the finish). The whole road paved
   // in basalt setts (def.setts: the cobbles' grip and sound), low walls of basalt on the drops, grassy and shrubby volcanic slopes, agaves,
-  // pines on the ridge, the terraced fields and the hamlets in the valleys below, the Atlantic beyond (generic: no names or signs of any
+  // cypresses and eucalyptus on the ridge, the terraced fields and the hamlets in the valleys below, the Atlantic beyond (generic: no names or signs of any
   // business). One card, four ways to drive it (def.modes), as Dadès: a race against the rivals on the closed road, a time trial, a duel with
   // one rival on the open road (cars, pick-ups, the island's minibuses, a few motorbikes and lorries both ways, rare cyclists: def.traffic)
   // and a run from the police (generic patrol cars: def.police). Only geographic names.
@@ -35,15 +35,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['goatW', 'donkey'], t: [], open: true },
     id: 'santoantao', name: 'Santo Antão, Zelenortski otoki', theme: 'santoantao', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the narrow road past the line (~256 m)
-    desc: 'Tlakovana cesta EN1-SA-01 na otoku Santo Antão na Zelenortskih otokih: 5 km po ozkem grebenu Delgadim, kjer pobočji na obeh straneh ceste strmo padata v doline, nato po šestih serpentinah navzdol proti Ribeiri Grande in morju, od 672 m čez sedlo in vrh grebena na 710 m do 336 m. Bazaltne kocke, nizki kamniti zidovi, travnata in grmovnata vulkanska pobočja, agave in bori, terase v dolinah. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Santo Antão, Cape Verde', desc: 'The cobbled road EN1-SA-01 on the island of Santo Antão in Cape Verde: 5 km along the narrow Delgadim ridge, where the slopes fall away steeply on both sides of the road, then down six hairpins towards Ribeira Grande and the sea, from 672 m over the saddle and the top of the ridge at 710 m down to 336 m. Basalt cobbles, low stone walls, grassy and shrubby volcanic slopes, agaves and pines, terraced fields in the valleys. A race against rivals, a time trial, a duel in traffic and a run from the police.', escTo: 'To Ribeira Grande' },
+    desc: 'Tlakovana cesta EN1-SA-01 na otoku Santo Antão na Zelenortskih otokih: 5 km po ozkem grebenu Delgadim, kjer pobočji na obeh straneh ceste strmo padata v doline, nato po šestih serpentinah navzdol proti Ribeiri Grande in morju, od 672 m čez sedlo in vrh grebena na 710 m do 336 m. Bazaltne kocke, nizki kamniti zidovi, travnata in grmovnata vulkanska pobočja, agave, ciprese in evkalipti, terase v dolinah. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu in beg pred policijo.',
+    en: { name: 'Santo Antão, Cape Verde', desc: 'The cobbled road EN1-SA-01 on the island of Santo Antão in Cape Verde: 5 km along the narrow Delgadim ridge, where the slopes fall away steeply on both sides of the road, then down six hairpins towards Ribeira Grande and the sea, from 672 m over the saddle and the top of the ridge at 710 m down to 336 m. Basalt cobbles, low stone walls, grassy and shrubby volcanic slopes, agaves, cypresses and eucalyptus, terraced fields in the valleys. A race against rivals, a time trial, a duel in traffic and a run from the police.', escTo: 'To Ribeira Grande' },
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: SANTOANTAO_H.map((h, i) => [i / (SANTOANTAO_H.length - 1), h / 10]),
     // the whole road paved in basalt setts (metres after the start line, the run-up and the slots past the finish too): their grip and their sound
     setts: [[-300, 5400]],
     // the sea beyond the corridor (irFar: the far model's wet nodes, all flat at its level, 0 m)
     far: { lake: [0, 0, 0] },
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.055 (silver), x 1.13 (bronze); the rain x 1.08 (cs: Circuit Superstars physics)
     medals: { cs: [180, 190, 203], wet: { cs: [194, 205, 219] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // island's road: cars and pick-ups, the shared minibuses between the villages and the port, a few motorbikes and lorries, rare cyclists on the cobbles
