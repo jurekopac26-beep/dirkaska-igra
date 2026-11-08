@@ -1508,5 +1508,34 @@
    "roadwear:MeshLambertMaterial": "5f3968e8",
    "brakeBoards:MeshLambertMaterial": "93c129ef"
   }
+ },
+ "zandvoort": {
+  "meshes": 492,
+  "verts": 641293,
+  "instances": 6689,
+  "props": 57,
+  "crowd": 18,
+  "world": "c676541b",
+  "propsHash": "52c05ac2",
+  "floor": "86ea5334/8512",
+  "groups": {
+   "-:MeshLambertMaterial": "2baabb0f",
+   "-:MeshBasicMaterial": "41bfff9d",
+   "ponds:MeshPhongMaterial": "222ed19d",
+   "pondShores:MeshPhongMaterial": "ae4f2c13",
+   "crowd:MeshLambertMaterial": "a0aec793",
+   "flags:MeshLambertMaterial": "bb3e5e13",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "e4409fd5",
+   "roadwear:MeshLambertMaterial": "feca6e2d",
+   "worn:MeshLambertMaterial": "dd1a0f38",
+   "brakeBoards:MeshLambertMaterial": "e98578dc",
+   "life:MeshLambertMaterial": "538735a9",
+   "lifeShadow:MeshBasicMaterial": "db6fc916",
+   "life:MeshBasicMaterial": "2034d397",
+   "people:MeshLambertMaterial": "998225f1",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "44ada441"
+  }
  }
 }

@@ -5584,5 +5584,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "zandvoort/race/cs": {
+  "digest": "877db5690c5737ce09f2570a",
+  "lead": 2260.1,
+  "car0": [
+   541.66,
+   328.24
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zandvoort/demo/cs": {
+  "digest": "6aff37f789843b99442cd8e9",
+  "lead": 2400.4,
+  "car0": [
+   618.03,
+   217.89
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zandvoort/upg/cs": {
+  "digest": "3e471993849cee856f21b2e5",
+  "lead": 2386.1,
+  "car0": [
+   603.54,
+   222.11
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zandvoort/crash/cs": {
+  "digest": "58cd4cfea001e1dca2fdba83",
+  "lead": 6365.4,
+  "car0": [
+   50.9,
+   91.91
+  ],
+  "cover": {
+   "dmg": 0.56,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "zandvoort/formula/cs": {
+  "digest": "819d2f831f212456768c0736",
+  "lead": 7790.3,
+  "car0": [
+   557.49,
+   235.18
+  ],
+  "cover": {
+   "dmg": 0.73,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "zandvoort/lm/cs": {
+  "digest": "ea6ae7acb078a7d142398a23",
+  "lead": 7714.1,
+  "car0": [
+   517.68,
+   304.89
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "zandvoort/car/cs": {
+  "digest": "c22f0439addc56c7c8f1ba5c",
+  "lead": 6717.3,
+  "car0": [
+   194.22,
+   63.63
+  ],
+  "cover": {
+   "dmg": 0.91,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

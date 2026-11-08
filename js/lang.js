@@ -460,6 +460,9 @@
     'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
     'Severni ovinek': 'North Corner', 'Desni na klancu': 'Right on the Climb', 'Levi na vrhu': 'Left over the Top', 'Spust': 'The Drop', 'Desni pred ravnino': 'Right before the Straight',
     'Levi na ravnino': 'Left onto the Straight',   // (Biķernieki: its corners by plain descriptions, the lake Linezers and the woods by them)
+    'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
+    'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Ostri desni': 'Sharp Right', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
+    'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
