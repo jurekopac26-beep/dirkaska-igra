@@ -80,12 +80,13 @@ try {
       const cv = document.querySelector('canvas'), c2 = document.createElement('canvas'); c2.width = 211; c2.height = 98; const x2 = c2.getContext('2d');
       const shot = () => { const c0 = __gl.calls, o0 = { ...own }; Render.frame(1 / 60, 1, P, 'chase', {}); const n = __gl.calls - c0; x2.drawImage(cv, 0, 0, 211, 98); const d = x2.getImageData(0, 0, 211, 98).data; let l = 0; for (let k = 0; k < d.length; k += 4) l += d[k] * 0.3 + d[k + 1] * 0.59 + d[k + 2] * 0.11;
         return { calls: n, pit: own.pit - o0.pit, sheen: own.sheen - o0.sheen, lum: +(l / (d.length / 4)).toFixed(2) }; };
+      const dy = Render.world.dyn || {}, zs = dy.zaslon; dy.zaslon = null;   // (the big screen's live picture draws the scene once more: js/world-zaslon.js; only the main picture is measured)
       Render.resetCam(); for (let k = 0; k < 30; k++) Render.frame(1 / 60, 1, P, 'chase', {});
       const on = shot(), lamps = Render.show.pits && Render.show.pits.lamps;
       m.visible = false; const off = shot(); m.visible = true;
       Render.setAtmos({ season: 'summer', tod: 'day' }); for (let k = 0; k < 3; k++) Render.frame(1 / 60, 1, P, 'chase', {});
       const day = shot(); day.mesh = !!Render.scene.getObjectByName('pitLights');
-      Render.setAtmos({ season: 'summer', tod: 'night' });
+      Render.setAtmos({ season: 'summer', tod: 'night' }); dy.zaslon = zs;
       return { on, off, day, lamps };
     });
     T.check(`${id} at night, the camera behind the car in its box: the pits' lights drawn (their mesh once, the lamps' sheen once: at most 2 draw calls), the picture brighter with them`,
