@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <title>Sweden</title>
+  <!-- Ratio 10:16 (Swedish Flag Act 1982:269). Yellow Nordic cross on blue: horizontal units 5 + 2 + 9 = 16, vertical units 4 + 2 + 4 = 10
+       (1 unit = 100). Blue: NCS 4055-R95B (#006AA7), yellow: NCS 0580-Y10R (#FECC02). -->
+  <rect width="1600" height="1000" fill="#006AA7"/>
+  <rect x="500" y="0" width="200" height="1000" fill="#FECC02"/>
+  <rect x="0" y="400" width="1600" height="200" fill="#FECC02"/>
+</svg>

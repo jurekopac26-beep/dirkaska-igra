@@ -2,11 +2,12 @@
    WORLD — Kågeröd, Švedska (theme 'kagerod'): the circuit in the woods by the Vege å river west of Kågeröd (Skåne), its own parts on the
    shared builder of js/world-rbring.js (World.ext.rbring), loaded before it (index.html). Its look (RB_LOOK.kagerod) goes on API.rbLook;
    World.ext.kagerod builds it with World.ext.rbring. Plan: docs/nove-proge-1-0.md (A2), the track: docs/proge/kagerod.md.
-   Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl): the woods of Skåne (beech, blocks of Norway spruce, birch: js/world.js's
-   nrTreeGeo, js/world-harju.js's hjTreeGeo), the farmland round them in summer; the Vege å (def.sk.river: OpenStreetMap), brown with the
-   peat of the bogs upstream, between grassy banks, under the circuit twice in culverts (concrete headwalls at their mouths); the buildings
-   round the paddock (def.sk.bld: OpenStreetMap); the Swedish flag and Skåne's among the fans' flags. Only place names on its boards (no
-   names of the circuit, of the castle by it, its people, races or sponsors).
+   Its own parts (the builder's hooks LK.woods, LK.extra, LK.pad, LK.lane, LK.fl): the woods of Skåne (beech, blocks of Norway spruce,
+   birch: js/world.js's nrTreeGeo, js/world-harju.js's hjTreeGeo), the farmland round them in summer; the Vege å (def.sk.river:
+   OpenStreetMap) in its bed, brown with the peat of the bogs upstream, alders on its banks, under the circuit twice in culverts (concrete
+   headwalls at their mouths); the ground under the whole pit lane level with it, the lane's asphalt all along; the buildings round the
+   paddock (def.sk.bld: OpenStreetMap); the Swedish flag and Skåne's among the fans' flags. Only place names on its boards (no names of
+   the circuit, of the castle by it, its people, races or sponsors).
    ========================================================================= */
 (function () {
   'use strict';

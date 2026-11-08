@@ -371,10 +371,10 @@
   "jsMs": 1.82
  },
  "kagerod": {
-  "calls": 217,
-  "maxCalls": 243,
-  "kverts": 446,
-  "maxKverts": 477,
-  "jsMs": 1.99
+  "calls": 215,
+  "maxCalls": 244,
+  "kverts": 441,
+  "maxKverts": 467,
+  "jsMs": 1.94
  }
 }

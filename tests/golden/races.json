@@ -2598,5 +2598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "b9840d7cdeb6e99246f07fc8"
+ },
+ "kagerod/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 123.16,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8d866c385ba3400504d0c65e"
+ },
+ "kagerod/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 136.06,
+  "spins": 3,
+  "walls": 4,
+  "rescues": 0,
+  "nan": false,
+  "digest": "116d2716858491231a7ca143"
+ },
+ "kagerod/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 108.9,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "96e9727bfda9268acdb553d7"
+ },
+ "kagerod/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 111.06,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bb692fb3173296dcd6dee664"
+ },
+ "kagerod/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 122.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "26e674baa38b2dd2a94bd028"
  }
 }

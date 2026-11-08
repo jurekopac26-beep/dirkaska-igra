@@ -1388,5 +1388,32 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "faa1f9da"
   }
+ },
+ "kagerod": {
+  "meshes": 325,
+  "verts": 230283,
+  "instances": 6638,
+  "props": 54,
+  "crowd": 4,
+  "world": "a1969c3b",
+  "propsHash": "ceab58e2",
+  "floor": "94d03f84/4116",
+  "groups": {
+   "-:MeshLambertMaterial": "d38ca385",
+   "-:MeshBasicMaterial": "f99af5c9",
+   "crowd:MeshLambertMaterial": "5bab076e",
+   "flags:MeshLambertMaterial": "360cf33c",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "14ac926d",
+   "roadwear:MeshLambertMaterial": "179965a9",
+   "worn:MeshLambertMaterial": "db888d00",
+   "brakeBoards:MeshLambertMaterial": "701dd2b5",
+   "life:MeshLambertMaterial": "70da1f40",
+   "lifeShadow:MeshBasicMaterial": "b003ccac",
+   "life:MeshBasicMaterial": "4f3aedba",
+   "people:MeshLambertMaterial": "155762a6",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "79e5fc63"
+  }
  }
 }
