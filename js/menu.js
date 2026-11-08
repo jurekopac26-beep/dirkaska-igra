@@ -104,7 +104,7 @@
         modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
       Object.defineProperties(t, {
         km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
-        corners: { get() { return G.track(d.id).corners.length; } },
+        corners: { get() { const n = (D.ncorners || {})[d.id]; return n != null ? n : G.track(d.id).corners.length; } },   // (the real tracks': MENU.ncorners, tools/menu-lens.js)
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
         rec: { get() { return G.record(d); } },
       });
@@ -665,6 +665,34 @@
     if (!(k in carPics)) { carPics[k] = ''; try { carPics[k] = G.carPic ? G.carPic(640, 360) || '' : ''; } catch (_) { /* (no showroom: the letter) */ } }
     return carPics[k];
   }
+  /* the quick list (js/menu-izbor.js): the flag in the row or the country's sign opens it over the track step, with the mode's tracks; a
+     track chosen there: the screen goes to it (Select) or its race starts (Race!) */
+  const IZ = () => window.MenuIzbor || null;
+  const izOpen = () => !!(IZ() && IZ().isOpen());
+  function izbor() {
+    const M = IZ(); if (!M || screen !== 'track' || !app) return;
+    const cur = curTrack(), PL = (D.globe || {}).places || {}, NC = D.ncorners || {};
+    M.open({
+      root: app, cur: cur ? cur.id : '',
+      list: TRACKS().map(t => {
+        const c = countryOf(t), gt = window.GEO && GEO.tracks[t.id], pl = PL[t.id] || (gt ? [gt.lat0, gt.lon0] : null);
+        return { id: t.id, name: t.name, country: c, flag: flagUrl(c), img: trackImg(t), km: t.km, alt: t.def.alt || null, corners: NC[t.id] != null ? NC[t.id] : null,
+          group: t.group, test: t.test, pending: !!t.def.pending, open: !!t.def.open, lat: pl ? pl[0] : null, lon: pl ? pl[1] : null };
+      }),
+      shape: (id) => (D.shapes || {})[id] || null,
+      heights: (id) => { const t = trackById(id); return t ? heightsOf(t) : null; },
+      prog: (id) => { const t = trackById(id); return t && G.progress ? G.progress(t.def) : null; },
+      pick: (id) => { izGo(id); },
+      race: (id) => { if (izGo(id)) act('race-single'); },   // (in the tap: the intro's sounds may start, warmFor)
+      buzz: () => { if (G.buzz) G.buzz(); },
+      click: () => G.click(),
+    });
+  }
+  function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
+    const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
+    if (i !== trackIdx) { trackIdx = i; select(); render(); }
+    return true;
+  }
   function vTrack() {
     const list = TRACKS();
     let h = '<section class="scr" id="s-track" aria-label="Single race">';
@@ -686,7 +714,7 @@
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!
     h += '<div class="room">';
-    const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', alt = t.def.alt, d = t.def;
+    const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', alt = t.def.alt, d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
     const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
     // the last cell: the opponents' number by the grid (its name for the readers), a race's a button (the sheet with 0..100, rivSheet);
     // a time trial's gold time, the police in a chase
@@ -698,7 +726,12 @@
     else last = '<div class="opp">' + oppN(mode === 'duel' || mode === 'pursuit' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21) + '</div>';   // (Elimination: at least 5, js/zabava/elim.js E.min)
     // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
     const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
-    h += '<div class="trow">' + (fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '') + cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>') + cell('Length', t.km.toFixed(2) + ' km') +
+    // the flag: the quick list (js/menu-izbor.js; a country without a flag: its first letters); the best: its mark before it (a medal, a
+    // tick), NEW instead of the time on a track not driven yet
+    const flagB = IZ() ? '<div class="flag"><button data-act="izbor" aria-haspopup="dialog" aria-label="' + esc((ctry ? 'Flag of ' + ctry + '. ' : '') + 'Choose a track by country') + '">' +
+      (fl ? '<img src="' + fl + '" alt="">' : '<span class="nf">' + esc((ctry || t.name).slice(0, 3).toUpperCase()) + '</span>') + '</button></div>' : fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '';
+    const best = pg ? '<div class="best"><small>' + (pg.done ? IZ().mark(pg) : '') + esc(rec[0]) + '</small><b>' + (pg.done ? esc(my || '—') : IZ().mark(pg)) + '</b>' + fb + '</div>' : cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>');
+    h += '<div class="trow">' + flagB + best + cell('Length', t.km.toFixed(2) + ' km') +
       (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) + last + '</div>';
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
@@ -707,7 +740,7 @@
     // plain span with the menu's listener far up)
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
-    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '"><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '"' + (IZ() ? ' data-act="izbor"' : '') + '><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
       '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
       '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)
@@ -801,7 +834,7 @@
   function render(keepScroll) {
     if (!app) return;
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
-    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro')) n.remove();   // (the intro, if there is one, stays over everything)
+    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb')) n.remove();   // (the intro, if there is one, stays over everything; the quick list over the screen)
     app.classList.toggle('on-title', screen === 'title');
     app.insertAdjacentHTML('afterbegin', VIEWS[screen]());
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
@@ -1257,6 +1290,7 @@
   }
 
   function back() {
+    if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
     if (screen === 'track') { screen = 'title'; titleSub = 'single'; render(); return; }
     if (titleSub) { titleSub = null; render(true); }
@@ -1278,6 +1312,7 @@
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
         render(true); break;
       }
+      case 'izbor': izbor(); break;   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
       case 'riv': sheet = rivSheet; render(true); break;   // (the row's Opponents: how many, 0..100)
@@ -1303,13 +1338,14 @@
   // the game's gamepad on the menu (game.js padFrame: the highlight and A are the game's, over the buttons of this shadow root): where it looks
   // (the intro, else an open sheet, else the screen), and the keys that are the menu's own: B back, Start on, LB and RB the track; in the
   // intro any of A, B and Start skips it
-  const padRoot = () => app ? $('.intro', app) || $('.sheet-bg', app) || app : null;
+  const padRoot = () => app ? $('.intro', app) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
     if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
+    if (izOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list: A and the d-pad in it)
     if (sheet) return false;
     if (screen === 'track' && (k === 'lb' || k === 'rb')) { G.click(); act('track:' + (k === 'lb' ? -1 : 1)); return true; }
     if (k === 'start') {
@@ -1331,8 +1367,8 @@
       if (!G || !G.visible()) return;
       const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
-      if (e.key === 'Escape') { if (sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
-      if (screen === 'track' && !sheet && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
+      if (e.key === 'Escape') { if (izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
+      if (screen === 'track' && !sheet && !izOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
     // the opponents' slider: the number follows it, the setting when it is let go (and on Done: rivSheet)
@@ -1357,6 +1393,7 @@
   function show(name) { try { showNow(name); } catch (e) { fail(e); } }
   function showNow(name) {
     if (!ready) { want = name; return; }
+    if (izOpen()) IZ().close(true);
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
@@ -1375,6 +1412,7 @@
     want = null;
     if (!app) return;
     wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
+    if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) v.pause();
     shown = '';
@@ -1400,7 +1438,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitWhere());   // (the place's name measured again in its own font)
     } catch (e) { fail(e); }
   }
-  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
+  function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet && !izOpen()) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
   // the menu hides the whole screen (game.js frame(): the demo behind it unseen, not drawn): the track step (its own background; the title
   // is see-through, the game's scene behind it, css/menu.css #s-title) on a phone either way up; a tablet held upright has the menu as a
   // column in the middle (#mn, 432 px), the game's demo seen at its sides
