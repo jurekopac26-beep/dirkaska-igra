@@ -1,6 +1,6 @@
 /* =========================================================================
    WORLD — the shared world of the mountain passes (docs/nove-proge.md: Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas; docs/nove-proge-1-0.md:
-   Izoard): one builder
+   Izoard, Sa Calobra, Kotor): one builder
    (buildPrelaz) for every pass, read from the track file's data (made by tools/proga/proga.py: def.dem, def.lc, def.col, def.bld, def.lakes,
    def.streams, def.cables, def.pylons, def.pulls, def.farDem, def.trees) and a look of each road's own (PL_LOOK[theme]: the colours of its
    ground and rock, the snow line, the plants, the signs and markings of its country, its landmarks). A new pass: its data from the tool, a
@@ -77,6 +77,27 @@
       roofs: [[0.62, 0.36, 0.24], [0.56, 0.32, 0.22], [0.52, 0.5, 0.46], [0.68, 0.44, 0.3]],   // (the island's terracotta tiles, the stone)
       sheep: 0, portal: 0, forest: 'med', treeline: 9000, shrubR: 110,
       far: { lo: [0.44, 0.45, 0.36], hi: [0.64, 0.63, 0.6], dw: [0.3, 0.33, 0.23], snow: 9000, tree: [550, 200], fc: [0.21, 0.27, 0.17], rk: [350, 800], dwb: [0, 150, 900, 650], wet: [0.1, 0.3, 0.48], hz: [0.5, 0.35] },
+    },
+    // Kotor (Montenegro, the Bay of Kotor): the steep karst slope over the bay under Krstac: pale grey limestone in ribs, slabs and bare
+    // pavements (lc 7) and in the walls of the gullies (lc 4), the dry karst scrub between them (lc 2: hornbeam, downy oak, juniper and
+    // Christ's thorn, dark), patches of dry grass (lc 0) and the oak and hornbeam woods in the hollows (lc 1; def.forest 'med'); no snow; the
+    // road held up the slope by dry-stone retaining walls and edged with low stone parapets (rail 'stone'); red and white chevrons in the
+    // hairpins, the centre line in 3 m dashes; no hairpin numbers (plates 0: the real road's own run from the bay up, not the game's); the
+    // bay below to the north and west (far.wet: the far land's water, deep green-blue), the mountains round it in the sea haze (far.hz)
+    kotor: {
+      seed: 4700, board: 'KOTORSKE SERPENTINE', sub: 'BOKA KOTORSKA', banner: ['KOTOR · NJEGUŠI · CETINJE', '13 SERPENTINA · BOKA KOTORSKA'],
+      grass: [0.5, 0.5, 0.36], grassDry: [0.6, 0.57, 0.44], grassLush: [0.36, 0.45, 0.25], shrub: [0.2, 0.27, 0.15],
+      rock: [0.63, 0.62, 0.59], rockWarm: [0.67, 0.61, 0.51], lichen: [0.49, 0.49, 0.45], scree: [0.65, 0.64, 0.6],
+      bank: [0.54, 0.42, 0.32], flowers: 0.35,   // (the banks by the road: the karst's red earth; few flowers in the dry summer)
+      sat: 0.4, satV: 1.15, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.6, 0.59, 0.56], [0.67, 0.66, 0.62], [0.54, 0.53, 0.51], [0.66, 0.6, 0.5], [0.6, 0.57, 0.5], [0.64, 0.63, 0.6]],   // (the limestone: pale grey, a little ochre)
+      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 40,   // (the centre line: 3 m dashes, 6 m gaps; solid through the hairpins)
+      chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'stone', plates: 0, shoulder: [0.6, 0.58, 0.54],
+      fans: [[0.8, 0.12, 0.12], [0.95, 0.95, 0.95], [0.92, 0.74, 0.18], [0.12, 0.26, 0.62], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.2, 0.22, 0.25], [0.62, 0.64, 0.66], [0.14, 0.3, 0.55], [0.7, 0.16, 0.12], [0.8, 0.78, 0.72]],
+      roofs: [[0.64, 0.36, 0.24], [0.58, 0.32, 0.21], [0.52, 0.5, 0.46], [0.68, 0.44, 0.3]],   // (the Boka's terracotta tiles, the stone)
+      sheep: 0, portal: 0, forest: 'med', treeline: 9000, shrubR: 110, bkCap: 4, view: 1,   // (bkCap: the walls between the legs at most 4 m, a steep bank of rock and scrub below; view: the viewpoints' wall, cars, people)
+      far: { lo: [0.4, 0.44, 0.31], hi: [0.64, 0.63, 0.6], dw: [0.26, 0.32, 0.2], snow: 9000, tree: [900, 350], fc: [0.19, 0.27, 0.15], rk: [800, 1500], dwb: [0, 150, 1300, 1000], wet: [0.09, 0.27, 0.36], hz: [0.3, 0.4] },
     },
   };
 
@@ -267,6 +288,10 @@
       API.ROCK_SMOOTH = true; const col = kind === 1 ? [0.1, 0.2, 0.11] : kind === 6 ? [0.16, 0.23, 0.12] : [0.2, 0.28, 0.2], n = kind === 1 ? 6 : kind === 6 ? 5 : 4;
       for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.32, 0.7, vary(col, R, 0.18), R, 0.35); }
     }
+    if (kind === 9) {   // a light clump of scrub (two lumps: the banks between Kotor's legs, many of them, L.bkCap)
+      API.ROCK_SMOOTH = true; const col = [0.17, 0.24, 0.12];
+      ico(g, 0, 0.42, 0, 0.38, 0.72, vary(col, R, 0.12), R, 0.3); ico(g, 0.32, 0.34, 0.14, 0.27, 0.75, vary(col, R, 0.16), R, 0.35);
+    }
     API.ROCK_SMOOTH = rs;
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
@@ -305,8 +330,13 @@
       if (ok && vrDist(x, z) < 430) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
-    for (const [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; const i = n.i, s = i * T.ds; if (s < 30 || s > T.len - 20) continue;
-      const pad = { x, z, r: Math.max(5, Math.min(r, 22)), b: 12, h: T.hy[i] - 0.25, i }; P.pads.push(pad); pulls.push(pad); }
+    for (let [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; let i = n.i; const s = i * T.ds; if (s < 30 || s > T.len - 20) continue;
+      if (L.view) {   // (L.view, Kotor's viewpoints at the hairpins' tips: the plot at the tip itself, on its outside, a terrace out over the slope towards
+        // the view; inside the hairpin, where OpenStreetMap has the car park, the game's wider road leaves no room between the walls of its legs)
+        const cv = (def.curves || []).find(c => Math.abs(sStart + c[0] - s) < 60); if (cv) i = T.idx(sStart + cv[0]);
+        r = Math.min(r, 6.5); const a = Math.max(0, i - 4), b = Math.min(N - 1, i + 4), turn = Math.sign(T.tx[a] * T.tz[b] - T.tz[a] * T.tx[b]) || 1, sd = -turn, o = (sd > 0 ? T.br[i] : T.bl[i]) + 3;
+        x = T.px[i] + T.nx[i] * sd * o; z = T.pz[i] + T.nz[i] * sd * o; }
+      const pad = { x, z, r: Math.max(5, Math.min(r, 22)), b: 12, h: T.hy[i] - 0.25, i, view: !!L.view }; P.pads.push(pad); pulls.push(pad); }
     const padBeside = (s, r) => { const i = T.idx(s), gd = (sd) => Math.abs(vrFar(T.px[i] + T.nx[i] * sd * r, T.pz[i] + T.nz[i] * sd * r) - T.hy[i]), sd = gd(1) < gd(-1) ? 1 : -1, o = (sd > 0 ? T.br[i] : T.bl[i]) + r + 1;
       return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 14, h: T.hy[i] - 0.25, sd, i }; };
     const padF = pulls.find(p => Math.abs(p.i * T.ds - sFin) < 160) || padBeside(sFin + 60, 12); if (!padF.sd) { const i = padF.i, sd = (padF.x - T.px[i]) * T.nx[i] + (padF.z - T.pz[i]) * T.nz[i] > 0 ? 1 : -1; padF.sd = sd; }
@@ -329,7 +359,8 @@
        built into the hillside, a masonry wall stands under the upper verge's edge (bar + 0.42), battered 1 in 20, its foot on a level shelf at
        the lower leg's height; from the road alone, before the terrain, and the terrain kept down to the shelf from under the upper verge out
        to the lower leg's barrier (API.caBank in caH), so no tooth of the grid shows in front of it. bk[si][i]: { p: [[offset, height above the
-       road] top, foot], o1: where the level shelf ends, hl: the lower leg's height } or null ---- */
+       road] top, foot], o1: where the level shelf ends, hl: the lower leg's height, bank: the bank under a wall the look keeps low (L.bkCap, Kotor's:
+       the real road's walls a few metres high, the slope between the legs steep rock and scrub), [[offset, height] top, toe] } or null ---- */
     const xPair = (i, j) => { for (const c of T.cross) if (Math.abs(i - c.up) * T.ds < 40 && Math.abs(j - c.lo) * T.ds < 40) return true; return false; };   // (where the road passes under itself: no bank, the bridge below)
     const BKC = 24, BKH = new Map(), bk = [-1, 1].map((side, si) => { const a = new Array(N).fill(null);
       for (let i = 0; i < N; i++) {
@@ -339,7 +370,9 @@
         let oL = -1, hl = 0;
         for (let o = o0; o < o0 + 26; o += 0.5) { const n = other(o); if (n && n.dd < 0.5) { oL = o; hl = T.hy[n.i]; break; } }
         const H = y - hl; if (oL < 0 || H / Math.max(0.5, oL - o0) < 1.2) continue;
-        const ob = Math.max(o0, Math.min(o0 + 0.05 * H, oL - 0.5)); a[i] = { p: [[o0, -0.08], [ob, -H - 0.6]], o1: Math.max(ob + 0.8, oL + 0.4), hl }; }
+        const ob = Math.max(o0, Math.min(o0 + 0.05 * H, oL - 0.5)); a[i] = { p: [[o0, -0.08], [ob, -H - 0.6]], o1: Math.max(ob + 0.8, oL + 0.4), hl };
+        if (L.bkCap && H + 0.6 > L.bkCap + 1.5) { const cw = L.bkCap, of = Math.max(o0, Math.min(o0 + 0.05 * cw, oL - 0.5)), toe = Math.max(of + 0.6, oL - 0.3);   // (L.bkCap: the wall only so high, a steep bank of rock and scrub from its foot down to the lower leg)
+          a[i].p = [[o0, -0.08], [of, -cw]]; a[i].bank = [[of, -cw], [toe, -H - 0.6]]; a[i].o1 = Math.max(toe + 0.8, oL + 0.4); } }
       for (let i = 1; i < N - 1; i++) if (a[i] && !a[i - 1] && !a[i + 1]) a[i] = null;   // (no lone slivers)
       for (let i = 0; i < N; i++) if (a[i]) { const o0 = a[i].p[0][0];   // (hashed by the cells the shelf crosses, for the terrain's look-up)
         for (const o of [o0 - 6, o0, a[i].o1]) { const k = Math.floor((T.px[i] + T.nx[i] * side * o) / BKC) * 65536 + Math.floor((T.pz[i] + T.nz[i] * side * o) / BKC);
@@ -465,6 +498,17 @@
               else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
             const bi = bk[si][i], bj = bk[si][j];
             if (bi || bj) { const pe = (k, d) => { const o = (side > 0 ? T.br[k] : T.bl[k]) + 0.42; return [[o, -0.08], [o - 0.05 * d, d]]; }, pi = bi ? bi.p : pe(i, bj.p[1][1]), pj = bj ? bj.p : pe(j, bi.p[1][1]); wallQ(i, j, pi[0], pi[1], pj[0], pj[1], side); }   // (a wall down to the leg below; at its ends down to that depth too)
+            if ((bi && bi.bank) || (bj && bj.bank)) {   // (the bank under a low wall: rock and scrub, darker at its toe; at its ends the same shape from this barrier)
+              const bOf = (b, k, ob) => { if (b) return b.bank || [b.p[1], b.p[1]]; const o = (side > 0 ? T.br[k] : T.bl[k]) + 0.42, d = o - ob.p[0][0]; return [[ob.bank[0][0] + d, ob.bank[0][1]], [ob.bank[1][0] + d, ob.bank[1][1]]]; };
+              // three rows down the bank (its top, a ledge of rock or a clump of scrub a little out from the straight line, its toe), in patches
+              // of grey limestone and dark scrub along it (~6-12 m), darker towards the toe
+              const ba = bOf(bi, i, bj), bb = bOf(bj, j, bi), rc = L.rockCols, sh = L.shrub, P3 = (k, e) => { const t = e[0], f = e[1], h = 0.45 + 0.12 * (rpHash(k >> 2, 65 + si) - 0.5);
+                return [t, [lerp(t[0], f[0], h) + (0.5 + 1.1 * (P.n2(k * T.ds / 7, si * 9.1) - 0.5)) * 0.6, lerp(t[1], f[1], h)], f]; };
+              const bc = (k, r) => { const z = sstep(0.6, 0.76, P.n2(k * T.ds / 9, 3.3 + si * 5.7)), w = P.n2(k * T.ds / 5, 7.7 + si * 3.1), g = [0, 1, 2].map(c => lerp(rc[0][c], rc[3][c], w)), m = lerp(0.2, 0.92, 1 - z) * (r === 1 ? 1 : 0.85), dk = [0.94, 0.86, 0.7][r] * (0.92 + 0.12 * rpHash(k >> 1, 63 + si));
+                return [lerp(g[0], sh[0], m) * dk, lerp(g[1], sh[1], m) * dk, lerp(g[2], sh[2], m) * dk]; };
+              const pa = P3(i, ba), pb = P3(j, bb), u0 = i * T.ds / 4, u1 = j * T.ds / 4;
+              for (let r = 0; r < 2; r++) { const a = Pt(i, side * pa[r][0], pa[r][1]), b = Pt(i, side * pa[r + 1][0], pa[r + 1][1]), c = Pt(j, side * pb[r + 1][0], pb[r + 1][1]), d = Pt(j, side * pb[r][0], pb[r][1]);
+                gv.quadUp(a, b, c, d, [bc(i, r), bc(i, r + 1), bc(j, r + 1), bc(j, r)], [[u0, a[1] / 4], [u0, b[1] / 4], [u1, c[1] / 4], [u1, d[1] / 4]]); } }
           }
         }
         addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
@@ -606,6 +650,17 @@
       for (let k = 0; k < 10; k++) { const a = -14 + (k % 5) * 7, b = (k < 5 ? -4.5 : 4.5), px = padF.x - sn * b + c * a, pz = padF.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || inLake(px, pz)) continue;
         if (k !== 4) caCar(scen.get(px, pz), px, caGround(px, pz), pz, hh + PI / 2, vary(carCols[Math.floor(RC() * carCols.length)], R, 0.15)); }
       for (let k = 0; k < 16; k++) { const px = padF.x + (R() - 0.5) * 26, pz = padF.z + (R() - 0.5) * 26; if (vrNear(px, pz).dd < 1 || inLake(px, pz)) continue; person(px, pz, R() * TAU); }
+      if (L.view) for (const p of pulls) { if (p === padF) continue;   // the viewpoints (L.view, Kotor's): the low dry-stone wall round the plot's far edge, a few cars
+        // parked nose to it, people at it looking out over the view (the plot's far half: the road's barrier is left open to it)
+        const i = p.i, dx = p.x - T.px[i], dz = p.z - T.pz[i], dl = Math.hypot(dx, dz) || 1, ux = dx / dl, uz = dz / dl, tx = -uz, tz = ux, RV = rng(L.seed + 71 + i);
+        const g = scen.get(p.x, p.z), st = L.rockCols, n = Math.max(10, Math.round(p.r * 3));
+        for (let k = 0; k <= n; k++) { const a = (k / n - 0.5) * 4.1, ca = Math.cos(a), sa = Math.sin(a), wx = ux * ca + tx * sa, wz = uz * ca + tz * sa, r = p.r - 0.3, px = p.x + wx * r, pz = p.z + wz * r;
+          if (vrNear(px, pz).dd < 0.8) continue; const c = st[Math.floor(RV() * st.length)];
+          box(g, px, caGround(px, pz) - 0.1, pz, 0.55, 0.95 + RV() * 0.1, r * 4.1 / n + 0.12, Math.atan2(wz, wx), [c[0] * 0.92, c[1] * 0.92, c[2] * 0.92], [c[0] * 1.05, c[1] * 1.05, c[2] * 1.05]); }
+        for (let k = 0; k < 3; k++) { const a = (k - 1) * 0.42, ca = Math.cos(a), sa = Math.sin(a), wx = ux * ca + tx * sa, wz = uz * ca + tz * sa, px = p.x + wx * (p.r - 3.0), pz = p.z + wz * (p.r - 3.0);
+          if (RV() < 0.25 || vrNear(px, pz).dd < 1.6) continue; caCar(scen.get(px, pz), px, caGround(px, pz), pz, Math.atan2(wz, wx), vary(carCols[Math.floor(RV() * carCols.length)], R, 0.15)); }
+        for (let k = 0; k < 4; k++) { const a = (RV() - 0.5) * 1.8, ca = Math.cos(a), sa = Math.sin(a), wx = ux * ca + tx * sa, wz = uz * ca + tz * sa, px = p.x + wx * (p.r - 1.1), pz = p.z + wz * (p.r - 1.1);
+          if (vrNear(px, pz).dd < 1) continue; person(px, pz, Math.atan2(-wx, wz) + (RV() - 0.5) * 0.6); } }
       const eX = T.px[iE] + T.tx[iE] * 1.0, eZ = T.pz[iE] + T.tz[iE] * 1.0, eY = T.hy[iE];
       if (L.portal) {   // the tunnel's portal: a concrete face across the road's end, the dark mouth of the tunnel in it, the rock of the mountain over it
         const g = scen.get(eX, eZ), hd = T.hd[iE], Wp = w * 2 + 5, Hp = 8.5, tx = T.tx[iE], tz = T.tz[iE], nx = T.nx[iE], nz = T.nz[iE], con = [0.7, 0.69, 0.66], dk = [0.03, 0.03, 0.035];
@@ -639,7 +694,8 @@
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || near(i)) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
-        for (let i = 0; i < N; i++) if (noRail[side > 0 ? 1 : 0][i]) nd[i] = 0;
+        const nearV = (i) => { const o = side * (bar[i] + 0.12), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; for (const p of pulls) if (p.view && Math.hypot(x - p.x, z - p.z) < p.r - 0.3) return true; return false; };
+        for (let i = 0; i < N; i++) if (noRail[side > 0 ? 1 : 0][i] || (L.view && nearV(i))) nd[i] = 0;   // (L.view: the viewpoints' plots open to the road, their gaps not closed)
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         if (stone) {   // a low wall of the limestone's masonry (Sa Calobra's): the inner face, its top, the outer face down to the ground (to the wall or the bridge's face below, where one is)
@@ -671,7 +727,7 @@
         const under = (car, m) => { const s = car && car.q ? car.q.s : -1e9; return KN.some(K => m != null ? s > K.s0 - m && s < K.s1 + m : s > K.s0 - 5 && s < K.s1 + 14); };   // (the fade: from just before the arch until the camera behind is past it; the ring: m, under it)
         out.dyn.tunnel = { mat: mW, mats: [mA, mL, mS, mG, mW], s0: Math.min(...KN.map(K => K.s0)), s1: Math.max(...KN.map(K => K.s1)), test: under };
       }
-      out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => { const si = side > 0 ? 1 : 0, b = bk[si][i], q = vp[si][i]; return b ? [q[0], q[1], q[2], [b.p[1][0] + 0.01, b.p[1][1]], [b.o1, b.hl - T.hy[i] - 0.35]] : q; });   // (at a wall between the legs: down its face to the shelf)
+      out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => { const si = side > 0 ? 1 : 0, b = bk[si][i], q = vp[si][i]; return b ? [q[0], q[1], q[2], [b.p[1][0] + 0.01, b.p[1][1]], ...(b.bank ? [b.bank[1]] : []), [b.o1, b.hl - T.hy[i] - 0.35]] : q; });   // (at a wall between the legs: down its face (and its bank) to the shelf)
       const spots = [];
       for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 25) for (const side of [-1, 1]) if (!need[side > 0 ? 1 : 0][i] && !near(i)) spots.push([i, side]);   // (white delineator posts where there is no rail)
       out.propStats = roadsideProps(out.props, { spots, postEdge: [1.2, 1.6], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
@@ -836,6 +892,17 @@
         }
       }
     }
+    if (L.bkCap && med) {   // the scrub on the banks under the low walls between the legs (L.bkCap, Kotor's): the macchia's bushes every few metres down
+      // the bank, now and then a small holm oak on its lower half (the real slope between the legs is green with them)
+      const RB = rng(L.seed + 67), clump = new IChunks(plTreeGeo(9), tMatT, 96);
+      for (const [si, side] of [[0, -1], [1, 1]]) for (let i = 0; i < N; i++) { const b = bk[si][i]; if (!b || !b.bank) continue;
+        const r1 = RB(), r2 = RB(), r3 = RB(), r4 = RB(); if (r1 < 0.5) continue;
+        const [t, f] = b.bank, oak = r3 < 0.08 && f[1] < -6, u = oak ? 0.55 + 0.25 * r2 : 0.15 + 0.7 * r2, o = lerp(t[0], f[0], u) + 0.35, yy = T.hy[i] + lerp(t[1], f[1], u) - 0.3;
+        const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
+        if (oak) { const hgt = 3.8 + r4 * 3; tk[3].add(x, yy, z, r1 * 70, hgt * (0.75 + r2 * 0.2), hgt, [0.9 + r3 * 0.16, 0.92 + r4 * 0.14, 0.92 + r2 * 0.12]); }
+        else clump.add(x, yy, z, r1 * 70, 3.6 + r2 * 2.8, 2.0 + r4 * 1.8, [0.86 + r3 * 0.26, 0.9 + r4 * 0.18, 0.88 + r2 * 0.14]);
+        nTrees++; }
+      clump.addTo(root, true); }
     for (const t of tk) t.addTo(root, true);
 
     /* ---- the pasture's plants (instanced per 96 m chunk): tufts of grass, cushions of flowers, boulders; stones on the scree and by the road ---- */

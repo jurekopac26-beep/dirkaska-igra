@@ -53,5 +53,24 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "SACALOBRA_H"
+  },
+  "kotor": {
+    "ime": "Kotor, Črna gora",
+    "okvir": [42.38, 18.755, 42.425, 18.81],
+    "pot": [[42.4093917, 18.7806348], [42.40309, 18.7851534]],
+    "start": [42.4039866, 18.7795888],
+    "cilj": [42.39935, 18.78366],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4.5,
+    "gauss": 2.5,
+    "razmik": 13,
+    "polmer": 6.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18 },
+    "s2": "S2C_34TCM_20250722_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "KOTOR_H"
   }
 }
