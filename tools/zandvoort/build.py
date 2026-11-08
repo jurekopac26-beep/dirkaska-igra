@@ -53,8 +53,8 @@ TURNS = [369, 689, 818, 1242, 1422, 1762, 2021, 2251, 2510, 3089, 3192, 3517, 37
 BANK = [[795, 900, 0.32], [3655, 3860, 0.32]]
 
 DESC = ('Dirkališče v sipinah ob Severnem morju pri Zandvoortu: 4,3 km v smeri urinega kazalca, ozko in zavito, s klanci čez sipine. '
-        'Ciljna ravnina ob obali, lasnica na njenem koncu, nagnjeni levi, čez greben sipine v hitra eso in v dolino, zanka okoli sipin in ribnikov, '
-        'po zadnji ravnini v šikano in skozi nagnjeni zadnji ovinek nazaj na ravnino. Ob progi sipine z bilnico in rakitovcem, pesek, '
+        'Ciljna ravnina ob obali, lasnica na njenem koncu, nagnjeni levi, čez greben sipine v hitro eso in v dolino, zanka okoli sipin in ribnikov, '
+        'po zadnji ravnini v šikano in skozi nagnjeni zadnji ovinek nazaj na ravnino. Ob progi sipine s šopi trave in rakitovcem, peščeni žepi, '
         'velike tribune in boksi ob ciljni ravnini (zapelji vanje in mehaniki ti popravijo avto).')
 DESC_EN = ('A circuit in the dunes by the North Sea at Zandvoort: 4.3 km, clockwise, narrow and twisty, up and down over the dunes. '
            'The main straight along the coast, the hairpin at its end, the banked left, over the crest of a dune into the fast esses and down into '
