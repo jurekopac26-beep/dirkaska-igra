@@ -30,15 +30,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'kotor', name: 'Kotor, Črna gora', theme: 'kotor', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
     maxRivals: 90,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the narrow road past the line (~184 m)
     desc: 'Stara cesta iz Kotorja proti Lovćenu: 5 km gostih serpentin nad Kotorskim zalivom v Črni gori. Od 609 m do 862 m po trinajstih lasnicah med kamnitimi podpornimi zidovi, kraškim grmovjem in skalami, mimo dveh razgledišč s pogledom na zaliv in staro mesto. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Kotor, Montenegro', desc: 'The old road from Kotor towards Lovćen: 5 km of tight hairpins above the Bay of Kotor in Montenegro. From 609 m to 862 m through thirteen hairpins between dry-stone retaining walls, karst scrub and rock, past two viewpoints over the bay and the old town. A race against rivals, a time trial, a duel in traffic and a run from the police.' },
+    en: { name: 'Kotor, Montenegro', desc: 'The old road from Kotor towards Lovćen: 5 km of tight hairpins above the Bay of Kotor in Montenegro. From 609 m to 862 m through thirteen hairpins between dry-stone retaining walls, karst scrub and rock, past two viewpoints over the bay and the old town. A race against rivals, a time trial, a duel in traffic and a run from the police.', escTo: 'To the top of the hairpins' },
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: KOTOR_H.map((h, i) => [i / (KOTOR_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [180, 190, 204], wet: { cs: [194, 204, 219] } },
+    medals: { cs: [174, 183, 197], wet: { cs: [189, 199, 213] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
-    // summer road up from the bay: cars (many hired), the vans and the tourists' coaches and minibuses up to Lovćen and back, motorbikes, hardly a
-    // truck, and a few cyclists on the climb
-    traffic: { mix: [0.58, 0.14, 0.08, 0.18, 0.02], bike: 1200 },
+    // summer road up from the bay: cars (many hired), the vans and the tourists' minibuses and coaches up to Lovćen and back, motorbikes, no
+    // lorries on the narrow hairpins, and a few cyclists on the climb
+    traffic: { mix: [0.6, 0.14, 0.06, 0.2, 0], bike: 1200 },
     // the police of the run (their patrol cars: the label on the band along both sides, its colour, the text's): generic, no agency's name or badge
     police: { label: 'POLICIJA', band: '#1d3f8a', text: '#f4f6f0' }, escTo: 'Na vrh serpentin',   // (and the results of an escape: 'Na vrh serpentin v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)

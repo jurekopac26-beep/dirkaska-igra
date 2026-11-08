@@ -5192,5 +5192,103 @@
    "rescues": 1,
    "repairs": 0
   }
+ },
+ "kotor/race/cs": {
+  "digest": "3c0fc7da0a73be0006ba06da",
+  "lead": 1564,
+  "car0": [
+   56.32,
+   203.03
+  ],
+  "cover": {
+   "dmg": 0.17,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/demo/cs": {
+  "digest": "8143a59a3cfc5864ea2d890d",
+  "lead": 1699.4,
+  "car0": [
+   130.05,
+   6.9
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/upg/cs": {
+  "digest": "ee4569b7b44c4d0af2818f89",
+  "lead": 1665.9,
+  "car0": [
+   112.71,
+   36.92
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/crash/cs": {
+  "digest": "c4f3661db55b5d498f8347fc",
+  "lead": 1557.1,
+  "car0": [
+   42.83,
+   158.66
+  ],
+  "cover": {
+   "dmg": 0.67,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/formula/cs": {
+  "digest": "9238abb91328aaeabe51c663",
+  "lead": 1759.3,
+  "car0": [
+   63.24,
+   181.3
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/lm/cs": {
+  "digest": "f5faabf2f676b05e6328975f",
+  "lead": 1704.6,
+  "car0": [
+   45.69,
+   186.83
+  ],
+  "cover": {
+   "dmg": 0.87,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kotor/car/cs": {
+  "digest": "82f397faaf4d0582b21093d3",
+  "lead": 1557,
+  "car0": [
+   42.89,
+   156.4
+  ],
+  "cover": {
+   "dmg": 0.5,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

@@ -2648,5 +2648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "b0b4e854778fbfca1ffcfd41"
+ },
+ "kotor/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 180.85,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "de27027823635340e5af47b7"
+ },
+ "kotor/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 195.64,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "627389c2af703a8718d55e94"
+ },
+ "kotor/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 168.61,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bc6d7fe32b58e9bcb18b461d"
+ },
+ "kotor/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 168.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "15b1497820f834826e2fba14"
+ },
+ "kotor/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.9,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "241e9b2cfe6ddebe14bf612c"
  }
 }
