@@ -5094,5 +5094,103 @@
    "rescues": 1,
    "repairs": 0
   }
+ },
+ "sacalobra/race/cs": {
+  "digest": "d5d79024d8d9dc2e8c1c9982",
+  "lead": 1458.9,
+  "car0": [
+   -140.19,
+   -14.78
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/demo/cs": {
+  "digest": "211dbcd10d58b7d22cbb83bb",
+  "lead": 1588.5,
+  "car0": [
+   -362.85,
+   -202.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/upg/cs": {
+  "digest": "79f0957201dabf56b212d8af",
+  "lead": 1568.6,
+  "car0": [
+   -267.32,
+   -165.63
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/crash/cs": {
+  "digest": "7763ac962efaee3cb3c1ee44",
+  "lead": 1429,
+  "car0": [
+   -146.53,
+   39.4
+  ],
+  "cover": {
+   "dmg": 0.55,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/formula/cs": {
+  "digest": "025f57188635e5ee5e602a16",
+  "lead": 1553.1,
+  "car0": [
+   -134.2,
+   29.67
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "sacalobra/lm/cs": {
+  "digest": "3ea7c74b19c0b5a0827b4cc4",
+  "lead": 1530.3,
+  "car0": [
+   -132.71,
+   27.58
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sacalobra/car/cs": {
+  "digest": "fce7b1bfdd077bcc8f2f8ad2",
+  "lead": 1423.1,
+  "car0": [
+   -177.89,
+   76.65
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 2,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }
