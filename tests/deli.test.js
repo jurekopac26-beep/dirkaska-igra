@@ -161,11 +161,11 @@ for (const M of MOUNTED.filter(m => m.def.mounts.zarometi && m.def.mounts.zarome
 check('a car\'s own lamp shape: every option within it, its lens bulging (PANTER, JASTREB)', !shapeBad.length && MOUNTED.some(m => m.id === 'panter'), shapeBad.slice(0, 3).join(', ') || 'all');
 // starejsi (js/cars/stari.js): the four older road cars' looks carry render.js BODIES' sections, the same numbers (the stock car drawn
 // by its builder from BODIES, the car with parts by the kit from the copy: the same shape)
-const RJ = fs.readFileSync(path.join(ROOT, 'js/render.js'), 'utf8'), bodySecs = (k) => { const m = RJ.match(new RegExp('\\n    ' + k + ': \\{[^\\n]*secs: (\\[[\\s\\S]*?\\]\\]) \\}'));
+const RJ = fs.readFileSync(path.join(ROOT, 'js/render.js'), 'utf8'), bodySecs = (k) => { const m = RJ.match(new RegExp('\\n    ' + k + ': \\{[^\\n]*secs: (\\[[\\s\\S]*?\\]\\]) \\}')) || RJ.match(new RegExp('\\n  BODIES\\.' + k + ' = \\{[^\\n]*secs: (\\[[\\s\\S]*?\\]\\]) \\}'));
   return m ? JSON.stringify(vm.runInNewContext(m[1])) : null; };
-const OLD = [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']].filter(([id, k]) => { const M = C.MODELS.find(x => x.id === id), L = M && M.def && M.def.look;
+const OLD = [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge'], ['muscle', 'muscle']].filter(([id, k]) => { const M = C.MODELS.find(x => x.id === id), L = M && M.def && M.def.look;
   return !L || !bodySecs(k) || JSON.stringify(L.body.secs) !== bodySecs(k) || !M.def.mounts || M.kit; });
-check('starejsi: KAZE, VORTEX, PICO, STREGA patched (a look, mounts; still drawn by their builder stock) with BODIES\' sections as in render.js', !OLD.length, OLD.map(o => o[0]).join(', ') || 'all four');
+check('starejsi: KAZE, VORTEX, PICO, STREGA, VIHAR V8 patched (a look, mounts; still drawn by their builder stock) with BODIES\' sections as in render.js', !OLD.length, OLD.map(o => o[0]).join(', ') || 'all five');
 console.warn = warn;
 
 console.log(`\n${bad ? 'FAIL' : 'OK'}: ${n - bad}/${n} checks (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
