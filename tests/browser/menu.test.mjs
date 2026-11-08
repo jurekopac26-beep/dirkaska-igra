@@ -529,21 +529,23 @@ try {
   //     the track shown, a pin per track in the colour of the player's progress, from afar the countries named, close in the tracks (none
   //     over another, over a pin, the buttons or the card); a country's card (its tracks), a track's card (Select, Race!), also from a pin;
   //     Back (the phone's: the history; the pad's B; Esc) a layer down; drag, zoom, the arrows and the target; it draws only while something
-  //     moves, the screen under it rests; the Sun where it is overhead now (the night side darker, on the head's globe too, which turns to
-  //     the next track's country)
+  //     moves, the screen under it rests; all of it in daylight, the moon shows the night where it is now (the Sun overhead there; the
+  //     head's globe too, which turns to the next track's country)
   const zem = (page, n) => page.waitForFunction((n) => window.MenuZemlja && (n ? MenuZemlja.isOpen() && MenuZemlja.depth() === n && MenuZemlja._R() && MenuZemlja._R().n > 2 && !MenuZemlja._R().moving
     : !MenuZemlja.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.zem')), n, { timeout: 20000 });
   const EARTH = `const z = root.querySelector(".zem"), R = MenuZemlja._R(), tx = (e) => e ? e.textContent.replace(/\\s+/g, " ").trim() : null, rc = (e) => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
     const k = z && z.querySelector(".zem-card.on"), pr = (e) => { const m = e && e.querySelector(".pr"); return m ? m.className.replace("pr ", "") + ":" + m.textContent : ""; };
     return { R, depth: MenuZemlja.depth(), hist: history.state && history.state.nazaj, pad: !!z && Menu.padRoot() === z, dlg: z && z.getAttribute("role") + "/" + z.getAttribute("aria-modal"), title: z && tx(z.querySelector(".zem-title b")) + "|" + tx(z.querySelector(".zem-title small")),
       names: z ? [...z.querySelectorAll(".zl:not(.off)")].filter(e => +e.style.opacity > 0.5).map(e => ({ c: e.dataset.c || "", t: e.dataset.t || "", cur: e.classList.contains("cur"), r: rc(e) })) : [],
-      pins: z ? [...z.querySelectorAll(".zp")].map(e => e.dataset.t + ":" + e.className.replace(/^zp ?/, "")) : [], ui: z ? [...z.querySelectorAll(".zem-sq")].map(rc) : [], W: innerWidth, H: innerHeight,
+      pins: z ? [...z.querySelectorAll(".zp")].map(e => e.dataset.t + ":" + e.className.replace(/^zp ?/, "")) : [], pn: z ? [...z.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.3).map(e => { const r = e.getBoundingClientRect(); return [r.left, r.top, e.classList.contains("cur")]; }) : [], ui: z ? [...z.querySelectorAll(".zem-sq")].map(rc) : [], W: innerWidth, H: innerHeight,
       card: k ? { r: rc(k), title: tx(k.querySelector(".izb-head .t b")), sub: tx(k.querySelector(".izb-head .t small")), rows: [...k.querySelectorAll(".izb-t")].map(e => e.dataset.t + ":" + pr(e.querySelector(".izb-im"))),
         best: k.querySelector(".izb-best") ? pr(k.querySelector(".izb-best")) + "|" + tx(k.querySelector(".izb-best b")) : "", body: k.querySelector(".izb-body") ? rc(k.querySelector(".izb-body")) : null, btns: [...k.querySelectorAll(".izb-btns button")].map(e => [tx(e)].concat(rc(e))) } : null,
-      rested: !!root.querySelector("#s-track.rested"), car: window.MenuCar ? MenuCar.info().on : null };`;
-  // (no name over another, over a pin, a button or the card; all inside the screen)
+      moon: z && z.querySelector(".zem-night") ? z.querySelector(".zem-night").getAttribute("aria-pressed") : null, rested: !!root.querySelector("#s-track.rested"), car: window.MenuCar ? MenuCar.info().on : null };`;
+  // (no name over another, a button or the card; close in no track's name over a pin (the track shown's own aside), from afar no country's
+  // over the track shown's pin; all inside the screen)
   const hit = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
-  const clean = (v) => v.names.every((a, i) => v.names.every((b, j) => i === j || !hit(a.r, b.r)) && v.ui.every(u => !hit(a.r, u)) && !(v.card && hit(a.r, v.card.r)) && a.r[0] >= 0 && a.r[2] <= v.W && a.r[1] >= 0 && a.r[3] <= v.H);
+  const clean = (v) => v.names.every((a, i) => v.names.every((b, j) => i === j || !hit(a.r, b.r)) && v.ui.every(u => !hit(a.r, u)) && !(v.card && hit(a.r, v.card.r)) && a.r[0] >= 0 && a.r[2] <= v.W && a.r[1] >= 0 && a.r[3] <= v.H &&
+    v.pn.every(p => a.cur || (a.c && !p[2]) || !hit(a.r, [p[0] - 7, p[1] - 7, p[0] + 7, p[1] + 7])));
   const wrap = (a) => ((a + 180) % 360 + 360) % 360 - 180;
   {
     const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
@@ -558,11 +560,11 @@ try {
     await page.waitForTimeout(800);   // (grown over the screen: the screen under it rests)
     const e1 = await earth(), spa = await place('spa');
     const nReal = await page.evaluate(() => Menu.debug().list.filter(id => !Core.TRACKS.find(d => d.id === id).test).length);
-    T.check(`the Earth opened (a dialog; the pad's part of the screen; one step in the history): WORLD, the mode's ${nReal} real tracks in their countries, turned to the track shown (Spa) from afar; the whole Earth's picture (4096 × 2048); the screen under it resting (not drawn, the car still)`,
-      e1.dlg === 'dialog/true' && e1.pad && e1.depth === 1 && e1.hist === 1 && e1.title === `WORLD|${nReal} tracks · ${e1.R.countries.length} countries` && e1.R.pins === nReal && ['Belgium', 'Germany', 'Japan'].every(c => e1.R.countries.includes(c)) &&
+    T.check(`the Earth opened (a dialog; the pad's part of the screen; one step in the history): WORLD, the mode's ${nReal} real tracks in their countries, turned to the track shown (Spa) from afar; the whole Earth's picture (4096 × 2048); all of it in daylight (the moon off); the screen under it resting (not drawn, the car still)`,
+      e1.dlg === 'dialog/true' && e1.R.night === false && e1.R.nt === 0 && e1.moon === 'false' && e1.pad && e1.depth === 1 && e1.hist === 1 && e1.title === `WORLD|${nReal} tracks · ${e1.R.countries.length} countries` && e1.R.pins === nReal && ['Belgium', 'Germany', 'Japan'].every(c => e1.R.countries.includes(c)) &&
       Math.abs(e1.R.lat - spa[0]) < 0.3 && Math.abs(wrap(e1.R.lon - spa[1])) < 0.3 && Math.abs(e1.R.d - 3.7) < 0.01 && e1.R.tex === 'assets/geo/earth.webp' && e1.R.size.join() === '4096,2048' && !e1.R.weak && e1.rested && e1.car === false,
       JSON.stringify(Object.assign({}, e1, { names: e1.names.length, pins: e1.pins.length })));
-    T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Suzuka 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another, a pin or a button',
+    T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Suzuka 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another or a button, none over the shown one\'s pin',
       e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 3 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
       JSON.stringify({ pins: e1.pins, names: e1.names.map(n => n.c + (n.cur ? '*' : '')) }));
     const n0 = e1.R.n; await page.waitForTimeout(600); const n1 = await page.evaluate(() => MenuZemlja._R().n);
@@ -626,16 +628,27 @@ try {
     const suz = await place('suzuka');
     T.check('Select on the Earth (Suzuka): the track step goes to it, the Earth gone with its steps in the history; the head\'s globe turned to Japan (from Belgium, along the way)',
       sel.id === 'suzuka' && sel.track === 'suzuka' && sel.head === 'Suzuka' && !sel.hist && turned && !sel.g.turning && Math.abs(sel.g.at[0] - suz[0]) < 0.05 && Math.abs(wrap(sel.g.at[1] - suz[1])) < 0.05 && sel.country === 'Japan' && sel.S >= 104, JSON.stringify({ sel, turned, suz }));
-    // the head's globe at night and by day: the Sun set over the next track's antipode, then over the one after it (their globes not drawn yet)
+    // the head's globe in daylight (the Sun set over the next track's antipode: no night on it); the moon switched on the Earth (the night
+    // there, remembered): the same globe darker at once; then the next track's at night, the one after it by day (their globes not drawn yet)
     await page.evaluate(() => { const s0 = MenuZemlja.sun; MenuZemlja.sun = (t) => { if (t || !window.__sun) return s0(t); const d = Menu.debug(), id = d.list[d.trackIdx], g = GEO.tracks[id], p = (MENU.globe.places || {})[id] || (g ? [g.lat0, g.lon0] : [0, 0]); return window.__sun === 'day' ? p : [-p[0], p[1] > 0 ? p[1] - 180 : p[1] + 180]; }; });
     const DISK = 'const c = root.querySelector(".thead .globe canvas"), S = c.width, d = c.getContext("2d").getImageData(0, 0, S, S).data; let n = 0, r = 0, g = 0, b = 0;' +
       'for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2; if (dx * dx + dy * dy > (S * 0.42) ** 2) continue; const i = (y * S + x) * 4; if (d[i] > 150 && d[i] - d[i + 2] > 60) continue; n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; }' +
       'return { S, n, rgb: [r / n, g / n, b / n].map(Math.round), country: c.dataset.country };';
-    const lit = async (when) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:1'); await page.waitForFunction(() => !Menu.debug().globe.turning && document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas').width >= 104, null, { timeout: 10000 }).catch(() => null); return ev(page, DISK); };
+    const steady = () => page.waitForFunction(() => !Menu.debug().globe.turning && document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas').width >= 104, null, { timeout: 10000 }).catch(() => null);
+    const lit = async (when) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:1'); await steady(); return ev(page, DISK); };
+    const sum = (v) => v.rgb[0] + v.rgb[1] + v.rgb[2];
+    const d0 = await lit('night');
+    await page.click('.thead .globe'); await zem(page, 1);
+    await page.click('.zem-night');
+    await page.waitForFunction(() => MenuZemlja._R().nt === 1 && !MenuZemlja._R().moving, null, { timeout: 10000 }).catch(() => null);
+    const mo = await ev(page, 'const R = MenuZemlja._R(); return { night: R.night, nt: R.nt, pressed: root.querySelector(".zem-night").getAttribute("aria-pressed"), kept: localStorage.getItem("tdgp-zemlja-noc") };');
+    await page.keyboard.press('Escape'); await zem(page, 0); await steady();
+    const d1 = await ev(page, DISK);
+    T.check('all in daylight until the moon is on: the head\'s globe as bright with the Sun over the other side of the Earth; the moon pressed on the Earth: the night there (remembered), the head\'s globe darker as the Earth closes',
+      d0.n > 500 && d1.n > 500 && d1.country === d0.country && sum(d1) < 0.5 * sum(d0) && mo.night === true && mo.nt === 1 && mo.pressed === 'true' && mo.kept === 'on', JSON.stringify({ d0, mo, d1 }));
     const nt = await lit('night'), dy = await lit('day');
     await page.evaluate(() => { window.__sun = null; });
-    const sum = (v) => v.rgb[0] + v.rgb[1] + v.rgb[2];
-    T.check('the head\'s globe: its night side darker and bluer (the Sun over the other side of the Earth) than by day (the Sun over the track)', nt.n > 500 && dy.n > 500 && sum(nt) < 0.5 * sum(dy) && nt.rgb[2] / Math.max(1, nt.rgb[0]) > dy.rgb[2] / Math.max(1, dy.rgb[0]), JSON.stringify({ nt, dy }));
+    T.check('the head\'s globe with the moon on: its night side darker and bluer (the Sun over the other side of the Earth) than by day (the Sun over the track)', nt.n > 500 && dy.n > 500 && sum(nt) < 0.5 * sum(dy) && nt.rgb[2] / Math.max(1, nt.rgb[0]) > dy.rgb[2] / Math.max(1, dy.rgb[0]), JSON.stringify({ nt, dy }));
     // Race! on the Earth's card: the race on that track at once, the Earth gone with its steps in the history
     await page.click('.thead .globe'); await zem(page, 1);
     await ev(page, 'root.querySelector(".zl.c[data-c=\\"Belgium\\"]").click();'); await zem(page, 2);
@@ -812,7 +825,7 @@ try {
     await ctx.close();
   }
 
-  // 6. the layouts: upright (360 x 640 and 412 x 915), on its side (915 x 412 and 640 x 360)
+  // 6. the layouts: upright (360 x 640 and 412 x 915), on its side (915 x 412 and 640 x 360): the menu, the track step, the quick list, the Earth
   for (const [w, h] of [[360, 640], [412, 915], [915, 412], [640, 360]]) {
     const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, the last track of the list (a test track since 6. 11. 2026), has no model for the title's tile)
     await page.emulateMedia({ reducedMotion: 'reduce' });   // (the slide-in of a screen is off: it would still be on its way, and the screen 8 px low, when measured)
@@ -915,6 +928,32 @@ try {
       q3.bk && q3.bk.w >= 44 && q3.bk.h >= 44 && q3.x.w >= 44, JSON.stringify({ rows: q2.rows.length, cut: q2.cut, sh: q3.sh, body: q3.body, btns: q3.btns, bk: q3.bk }));
     await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
     await page.waitForFunction(() => !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb'), null, { timeout: 10000 });
+    // the Earth (sklop 9): the back arrow and the column under it (closer, farther, the track shown, the moon) 44 px or more, inside the
+    // screen, none over another or the title, the column upright at the right, lying at the left; a country's card (Japan) upright from the
+    // bottom the screen's width, lying at the right the screen's height (the title left of it); a track's card (Suzuka): Select and Race!
+    // in sight without scrolling; the names over no button, no card and no other
+    await page.click('.thead .globe'); await zem(page, 1);
+    const ZB = `const z = root.querySelector(".zem"), rc = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; }, q = (s) => rc(z.querySelector(s));
+      const k = z.querySelector(".zem-card.on"), body = k && k.querySelector(".izb-body");
+      return { side: z.classList.contains("side"), back: q(".zem-back"), col: [...z.querySelectorAll(".zem-zoom")].map(rc), tb: q(".zem-title b"), ts: q(".zem-title small"), cv: q("canvas"),
+        x: k && rc(k.querySelector(".izb-head [data-x]")), bk: k && rc(k.querySelector(".izb-head [data-back]")), btns: k ? [...k.querySelectorAll(".izb-btns button")].map(rc) : [], body: body && rc(body), W: innerWidth, H: innerHeight };`;
+    const y1 = await ev(page, EARTH), u1 = await ev(page, ZB);
+    const big = (r) => !!r && r[2] - r[0] >= 43.5 && r[3] - r[1] >= 43.5, scr = (r) => !!r && r[0] >= -0.5 && r[1] >= -0.5 && r[2] <= u1.W + 0.5 && r[3] <= u1.H + 0.5, sqs = [u1.back].concat(u1.col);
+    T.check(`${w}x${h}: the Earth over the whole screen; the back arrow and the column under it (closer, farther, the track shown, the moon) 44 px or more, inside the screen, none over another or the title, the column at the ${side ? 'left' : 'right'}; the title inside the screen; the names over no button and no other`,
+      u1.side === side && u1.cv[0] <= 0.5 && u1.cv[1] <= 0.5 && u1.cv[2] >= u1.W - 0.5 && u1.cv[3] >= u1.H - 0.5 && u1.col.length === 4 && sqs.every(r => big(r) && scr(r)) && sqs.every((a, i) => sqs.every((b, j) => i === j || !hit(a, b))) &&
+      u1.col.every(r => r[1] >= u1.back[3] && (side ? r[2] < u1.W / 2 : r[0] > u1.W / 2)) && scr(u1.tb) && scr(u1.ts) && sqs.every(r => !hit(r, u1.tb) && !hit(r, u1.ts)) && y1.names.length >= 1 && clean(y1),
+      JSON.stringify({ u1, names: y1.names.map(n => n.c) }));
+    await ev(page, 'root.querySelector(".zl.c[data-c=\\"Japan\\"]").click();'); await zem(page, 2);
+    const y2 = await ev(page, EARTH), u2 = await ev(page, ZB);
+    const cardAt = (c) => side ? Math.abs(c[2] - u2.W) < 1 && Math.abs(c[1]) < 1 && Math.abs(c[3] - u2.H) < 1 && Math.abs(c[2] - c[0] - Math.min(412, u2.W * 0.6)) < 2
+      : Math.abs(c[0]) < 1 && Math.abs(c[2] - u2.W) < 1 && Math.abs(c[3] - u2.H) < 1 && c[1] >= Math.max(u2.H - 460, u2.H <= 700 ? 120 : 150) - 0.5;
+    await page.click('.zem-card .izb-t[data-t="suzuka"]'); await zem(page, 3);
+    const y3 = await ev(page, EARTH), u3 = await ev(page, ZB);
+    T.check(`${w}x${h}: on the Earth a country's card (Japan) ${side ? 'at the right, the screen\'s height, the title left of it' : 'from the bottom, the screen\'s width'}, its cross 44 px or more, no name over it; a track's card (Suzuka): Select and Race! in sight without scrolling, 44 px or more; its back arrow and cross 44 px or more`,
+      !!y2.card && cardAt(y2.card.r) && big(u2.x) && clean(y2) && (!side || (u2.tb[2] <= y2.card.r[0] && u2.ts[2] <= y2.card.r[0])) && !!y3.card && cardAt(y3.card.r) && u3.btns.length === 2 &&
+      u3.btns.every(b => b[1] >= u3.body[1] - 0.5 && b[3] <= u3.body[3] + 0.5 && b[3] <= u3.H + 0.5 && b[3] - b[1] >= 43.5) && big(u3.bk) && big(u3.x) && clean(y3),
+      JSON.stringify({ c2: y2.card && y2.card.r, x2: u2.x, tb: u2.tb, ts: u2.ts, c3: y3.card && y3.card.r, body: u3.body, btns: u3.btns, bk: u3.bk, x3: u3.x }));
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await zem(page, 0);
     T.check(`${w}x${h}: no page errors`, !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

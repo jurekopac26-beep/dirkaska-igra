@@ -584,8 +584,9 @@
   }
   /* the globe in the head: the Earth turned to the track's place (an orthographic globe of the Blue Marble, assets/geo/earth-s.webp), its
      country gold (its outline from GEO.outlines and MENU.globe.outlines: tools/menu-globe.mjs), a white ring round the place (GEO.tracks,
-     else MENU.globe.places; a track without one: its country's middle, no ring), its night side darker and bluer (where the Sun is overhead
-     now: MenuZemlja.sun(); the country stays gold). Drawn once per track on a canvas of its own (again after 10 minutes: the night moves on),
+     else MENU.globe.places; a track without one: its country's middle, no ring), all of it in daylight; with the Earth's moon on
+     (MenuZemlja.night()) its night side darker and bluer (where the Sun is overhead now: MenuZemlja.sun(); the country stays gold). Drawn
+     once per track on a canvas of its own (again when the moon is switched, and after 10 minutes of the night: it moves on),
      which every new picture of the screen gets back (globe.on); until the Earth has loaded, the globe icon. Another track: the globe turns
      from the last one's place to its (along the great circle, under a second; drawn at half the size on the way). Its tap: the Earth
      (js/menu-zemlja.js). The look (LOOKS): 1 the whole Earth, 2 closer, 3 closer with the country glowing (the player's choice: 1 until then) */
@@ -616,7 +617,7 @@
       if (cv.width !== S) cv.width = cv.height = S;
       const g = cv.getContext('2d'), im = g.createImageData(S, S), d = im.data, r = S / 2 * o.zoom, c0 = S / 2, m = cen || [w.lat, w.lon];
       const sp = Math.sin(m[0] * R), cp = Math.cos(m[0] * R), l0 = m[1] * R, Lx = -0.47, Ly = 0.57, Lz = 0.67;   // (the light from the upper left)
-      const sn = window.MenuZemlja ? MenuZemlja.sun() : null, ss = sn ? Math.sin(sn[0] * R) : 0, cs = sn ? Math.cos(sn[0] * R) : 0, sl = sn ? sn[1] * R : 0, NIGHT = [0.2, 0.24, 0.38];
+      const sn = window.MenuZemlja && MenuZemlja.night() ? MenuZemlja.sun() : null, ss = sn ? Math.sin(sn[0] * R) : 0, cs = sn ? Math.cos(sn[0] * R) : 0, sl = sn ? sn[1] * R : 0, NIGHT = [0.2, 0.24, 0.38];
       for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
         const x = (i + 0.5 - c0) / r, y = (c0 - j - 0.5) / r, q = x * x + y * y, k = (j * S + i) * 4;
         if (q >= 1) continue;
@@ -649,11 +650,12 @@
     function on() {
       const el = app && $('.globe[data-globe]', app); if (!el) return;
       const id = el.dataset.globe, t = trackById(id); if (!t) return;
-      if (!(id in made) || (made[id] && Date.now() - made[id].__t > 6e5)) {
+      const nt = !!(window.MenuZemlja && MenuZemlja.night());
+      if (!(id in made) || (made[id] && (made[id].__n !== nt || (nt && Date.now() - made[id].__t > 6e5)))) {
         if (!px) { earth().then(p => { if (p) on(); }); return; }
         const w = whereOf(t, countryOf(t)), S = Math.round(52 * Math.min(3, Math.max(2, window.devicePixelRatio || 1)));
         made[id] = w ? draw(w, S, LOOKS[GLOBE_LOOK]) : null;
-        if (made[id]) { Object.assign(made[id].dataset, { country: countryOf(t), ring: w.ring ? 1 : 0 }); made[id].__w = w; made[id].__t = Date.now(); }
+        if (made[id]) { Object.assign(made[id].dataset, { country: countryOf(t), ring: w.ring ? 1 : 0 }); made[id].__w = w; made[id].__t = Date.now(); made[id].__n = nt; }
       }
       const cv = made[id]; if (!cv) return;
       cancelAnimationFrame(turnRaf); turnRaf = 0;
@@ -746,7 +748,7 @@
     rested = null;
     const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
     s.classList.remove('rested');
-    wx.attach($('#track-stage', app), wxMode(), false); flyLabels(); graphOn(); carOn();
+    wx.attach($('#track-stage', app), wxMode(), false); flyLabels(); graphOn(); carOn(); globe.on();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)

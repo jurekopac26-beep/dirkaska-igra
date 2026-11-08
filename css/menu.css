@@ -1154,7 +1154,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* The Earth (js/menu-zemlja.js): out of the head's globe over the whole screen (a circle from its middle: --zx, --zy, --zr; --zR the
    screen's diagonal), the Earth on its canvas, the pins and the names over it, the buttons and the card over them. Standing: the back
    arrow where the head's is, the zoom at the right under it, the card from the bottom; lying (.side): the zoom at the left, the card at
-   the right */
+   the right; the column under the arrow: closer, farther, the track shown, the night (the moon) */
 .globe { cursor: pointer; transition: transform .12s; }
 .globe:active { transform: scale(.93); }
 #s-track.rested { visibility: hidden; }   /* (the Earth over it: not drawn, js/menu.js rest) */
@@ -1176,7 +1176,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .zem-title b { font: 900 italic 38px/1 var(--f-ui); letter-spacing: -.3px; text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 16px rgba(0, 0, 0, .55); }
 .zem-title small { margin-top: 4px; font: 600 12px/1 var(--f-ui); color: #dbe6f7; white-space: nowrap; text-shadow: 0 1px 0 rgba(0, 0, 0, .7), 0 0 8px rgba(0, 0, 0, .8), 0 0 14px rgba(0, 0, 0, .55); }   /* (legible over bright land too) */
 .zem-zoom { right: calc(14px + var(--sr)); }
-.zem-in { top: calc(88px + var(--st)); } .zem-out { top: calc(142px + var(--st)); } .zem-home { top: calc(196px + var(--st)); }
+.zem-in { top: calc(88px + var(--st)); } .zem-out { top: calc(142px + var(--st)); } .zem-home { top: calc(196px + var(--st)); } .zem-night { top: calc(250px + var(--st)); }
+.zem-night[aria-pressed="true"] { border-color: var(--gold); background: linear-gradient(180deg, #27304d, #121a30); }   /* (the moon on: the night shown) */
+.zem-night[aria-pressed="true"] path { fill: var(--gold); stroke: var(--gold); }
 .zp, .zl { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
 .zp { width: 0; height: 0; pointer-events: auto; cursor: pointer; }
 .zp::before { content: ''; position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; }   /* (a finger's target) */
@@ -1212,14 +1214,14 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .zem-load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 700 italic 15px/1 var(--f-ui); color: var(--lbl); pointer-events: none; }
 @media (max-height: 700px) and (orientation: portrait) {
   .zem-back { top: calc(10px + var(--st)); width: 64px; height: 44px; } .zem-title { left: calc(86px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .zem-title b { font-size: 32px; }
-  .zem-in { top: calc(70px + var(--st)); } .zem-out { top: calc(122px + var(--st)); } .zem-home { top: calc(174px + var(--st)); }
+  .zem-in { top: calc(70px + var(--st)); } .zem-out { top: calc(122px + var(--st)); } .zem-home { top: calc(174px + var(--st)); } .zem-night { top: calc(226px + var(--st)); }
   .zem-card { max-height: min(460px, calc(100% - 120px - var(--st))); }
 }
 /* lying: the zoom at the left under the arrow, the card at the right the whole height (the title over the free part, left of it) */
 .zem.side .zem-back { top: calc(10px + var(--st)); width: 64px; height: 44px; }
 .zem.side .zem-title { left: calc(86px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .zem.side .zem-title b { font-size: 32px; }
 .zem.side .zem-zoom { right: auto; left: calc(14px + var(--sl)); }
-.zem.side .zem-in { top: calc(66px + var(--st)); } .zem.side .zem-out { top: calc(118px + var(--st)); } .zem.side .zem-home { top: calc(170px + var(--st)); }
+.zem.side .zem-in { top: calc(66px + var(--st)); } .zem.side .zem-out { top: calc(118px + var(--st)); } .zem.side .zem-home { top: calc(170px + var(--st)); } .zem.side .zem-night { top: calc(222px + var(--st)); }
 .zem.side .zem-card { left: auto; top: 0; width: min(412px, 60%); max-height: none; padding-right: var(--sr); border-radius: 18px 0 0 18px; transform: translateX(105%);
   box-shadow: -10px 0 30px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 255, 255, .14); }
 .zem.side .zem-card.on { transform: none; }
@@ -1227,8 +1229,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .zem.side.carded .zem-title { right: calc(min(412px, 60%) + 14px); }
 .zem.side.carded .zem-hint { left: calc((100% - min(412px, 60%)) / 2); }
 @media (orientation: landscape) and (max-height: 520px) {
-  .zem.side .zem-back { width: 56px; height: 38px; } .zem.side .zem-title { left: calc(78px + var(--sl)); height: 38px; } .zem.side .zem-title b { font-size: 26px; } .zem.side .zem-title small { margin-top: 3px; font-size: 11px; }
-  .zem.side .zem-in { top: calc(58px + var(--st)); } .zem.side .zem-out { top: calc(108px + var(--st)); } .zem.side .zem-home { top: calc(158px + var(--st)); }
+  .zem.side .zem-back { width: 56px; } .zem.side .zem-title { left: calc(78px + var(--sl)); } .zem.side .zem-title b { font-size: 26px; } .zem.side .zem-title small { margin-top: 3px; font-size: 11px; }   /* (the arrow still 44 px high: a finger's) */
+  .zem.side .zem-in { top: calc(62px + var(--st)); } .zem.side .zem-out { top: calc(112px + var(--st)); } .zem.side .zem-home { top: calc(162px + var(--st)); } .zem.side .zem-night { top: calc(212px + var(--st)); }
   .zem-hint { bottom: calc(14px + var(--sb)); font-size: 12px; padding: 7px 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .zem, .zem-card, .zem-card.on, .zem-hint, .globe { transition: none; } .zp.cur::after { animation: none; } }

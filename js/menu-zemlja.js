@@ -1,8 +1,9 @@
 /* The Earth of the track step (js/menu.js: a tap on the globe in the head; the mockup's maketa-menija/izbira-proge/zemlja.js, ported).
    It grows out of the globe over the whole screen: the Earth in 3D (three.js r128, js/vendor/three.r128.min.js; the Blue Marble,
-   assets/geo/earth.webp), turned to the track shown, its night side dark (where the Sun is overhead now: sun()). Drag to turn it (north
-   stays up, it glides on a little when let go), pinch, the wheel or + and − to come closer, the target to go back to the track shown; the
-   arrow keys turn it too. The countries with tracks in the mode (the real ones and those awaiting the choice, as the quick list's flags;
+   assets/geo/earth.webp), turned to the track shown, all of it in daylight; the moon under the zoom shows the night where it is now
+   (sun(): darker and bluer; the head's globe too; remembered: localStorage tdgp-zemlja-noc; the user's wish of 8. 11. 2026). Drag to
+   turn it (north stays up, it glides on a little when let go), pinch, the wheel or + and − to come closer, the target to go back to the
+   track shown; the arrow keys turn it too. The countries with tracks in the mode (the real ones and those awaiting the choice, as the quick list's flags;
    the test tracks are not on it) are gold (their outlines: GEO.outlines, MENU.globe.outlines), each track a pin in the colour of the
    player's progress (gold, silver, bronze, a tick's green, NEW dark with a light rim), the track shown white and pulsing three times; from
    afar the countries are named (flag, name, the number of tracks), close in the tracks (name, length): only those whose pin is on the
@@ -16,7 +17,8 @@
    MenuZemlja.open(o): as MenuIzbor.open (o.root, o.cur, o.list, o.shape, o.heights, o.prog, o.pick, o.race, o.buzz, o.click) and o.from
    (the globe's element, or a function giving it: the Earth grows out of it and goes back into it), o.rest() and o.wake() (the screen under it stops, then moves
    again), o.fail() (no WebGL for it: the quick list instead). close(now), back(), isOpen(), root() (the gamepad's part of the screen),
-   depth() (its steps in the history), sun(t) (where the Sun is overhead: [lat, lon]; the head's globe too), _R() (for the tests) */
+   depth() (its steps in the history), sun(t) (where the Sun is overhead: [lat, lon]; the head's globe too), night() (the night shown:
+   the moon on), _R() (for the tests) */
 window.MenuZemlja = (function () {
   'use strict';
   const D = Math.PI / 180, DMIN = 1.5, DMAX = 5.4, DFAR = 3.7, TRACKS_AT = 2.75;
@@ -27,6 +29,7 @@ window.MenuZemlja = (function () {
     back: '<svg viewBox="0 0 22 22" aria-hidden="true"><path d="M14 4 7 11l7 7" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
     minus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+    night: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></svg>',
     home: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="2.2" fill="#ffc629"/><path d="M12 2.5v3.2M12 18.3v3.2M2.5 12h3.2M18.3 12h3.2" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
   };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -46,6 +49,10 @@ window.MenuZemlja = (function () {
 
   let o = null, el = null, R = null, K = null, img = null, W = 412, H = 892, SIDE = false, FOV = FOV_UP, PX = 0, TOP = 80, UI = [];
   const IMGS = {};   // (the Earth's pictures, each loaded once a visit: the whole one, the half-size one for a weak phone, the small one if neither comes)
+  // the night: off (all of it in daylight) until the moon is switched on; remembered (in memory too: a private window may refuse the storage)
+  const NOC = 'tdgp-zemlja-noc'; let nightM = null;
+  function night() { if (nightM == null) { try { nightM = localStorage.getItem(NOC) === 'on'; } catch (_) { nightM = false; } } return nightM; }
+  function setNight(v) { nightM = !!v; try { if (v) localStorage.setItem(NOC, 'on'); else localStorage.removeItem(NOC); } catch (_) { /* kept in memory */ } }
   const NZ = () => window.MenuIzbor.nazaj;   // (the history of the layers: one with the quick list's)
   function picture(src) {
     if (!IMGS[src]) { const im = new Image(); im.decoding = 'async'; im.src = src; IMGS[src] = im.decode().then(() => im, () => { delete IMGS[src]; return null; }); }
@@ -115,14 +122,14 @@ window.MenuZemlja = (function () {
     const map = new T3.CanvasTexture(tc); map.anisotropy = Math.min(8, r.capabilities.getMaxAnisotropy()); map.encoding = T3.sRGBEncoding;
     r.outputEncoding = T3.sRGBEncoding;
     const earth = new T3.Mesh(new T3.SphereGeometry(1, 128, 64), new T3.MeshPhongMaterial({ map, specular: new T3.Color(0x10161f), shininess: 30 }));
-    // day and night (sun(): where the Sun is overhead now): the night side darker and bluer, a soft edge between (in linear light: after the
-    // sRGB output about the head's globe's 0.2, 0.24, 0.38)
-    const U = { sunL: { value: new T3.Vector3(0, 0, 1) } };
+    // day and night (sun(): where the Sun is overhead now; nt: the moon on, 1): the night side darker and bluer, a soft edge between (in
+    // linear light: after the sRGB output about the head's globe's 0.2, 0.24, 0.38)
+    const U = { sunL: { value: new T3.Vector3(0, 0, 1) }, nt: { value: night() ? 1 : 0 } };
     earth.material.onBeforeCompile = (sh) => {
-      sh.uniforms.sunL = U.sunL;
+      sh.uniforms.sunL = U.sunL; sh.uniforms.nt = U.nt;
       sh.vertexShader = 'varying vec3 vLocalN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vLocalN = position;');
-      sh.fragmentShader = 'uniform vec3 sunL;\nvarying vec3 vLocalN;\n' + sh.fragmentShader.replace('#include <tonemapping_fragment>',
-        '{ float day = smoothstep(-0.16, 0.1, dot(normalize(vLocalN), sunL)); gl_FragColor.rgb *= mix(vec3(0.045, 0.06, 0.13), vec3(1.0), day); }\n#include <tonemapping_fragment>');
+      sh.fragmentShader = 'uniform vec3 sunL;\nuniform float nt;\nvarying vec3 vLocalN;\n' + sh.fragmentShader.replace('#include <tonemapping_fragment>',
+        '{ float day = mix(1.0, smoothstep(-0.16, 0.1, dot(normalize(vLocalN), sunL)), nt); gl_FragColor.rgb *= mix(vec3(0.045, 0.06, 0.13), vec3(1.0), day); }\n#include <tonemapping_fragment>');
     };
     const group = new T3.Group(); group.add(earth); scene.add(group);
     // the air round it: brighter towards its edge, and a thin bright rim on the Earth's edge
@@ -144,7 +151,7 @@ window.MenuZemlja = (function () {
     scene.add(new T3.AmbientLight(0xffffff, 0.74));
     const light = new T3.DirectionalLight(0xffffff, 0.6); light.position.set(-1.2, 1.1, 1.6); scene.add(light);
     const h = home();
-    R = { r, scene, cam, group, earth, map, U, cv: tc, C: null, sel: null, lat: h[0], lon: h[1], d: 7.5, dT: DFAR, off: 0, offT: 0, weak,
+    R = { r, scene, cam, group, earth, map, U, cv: tc, C: null, sel: null, lat: h[0], lon: h[1], d: 7.5, dT: DFAR, off: 0, offT: 0, ntT: U.nt.value, weak,
       vlat: 0, vlon: 0, fly: null, drag: null, pts: new Map(), last: performance.now(), hint: true, raf: 0, n: 0, card: false, tc: null, els: [], tex: '' };
     R.C = countries();
   }
@@ -222,10 +229,11 @@ window.MenuZemlja = (function () {
         R.lon = wrap(R.lon + R.vlon * dt); R.lat += R.vlat * dt; const k = Math.exp(-dt * 3.2); R.vlon *= k; R.vlat *= k;
         if (Math.abs(R.vlon) + Math.abs(R.vlat) < 0.03) R.vlon = R.vlat = 0; else busy = true;
       }
-      if (Math.abs(R.dT - R.d) < 2e-4) R.d = R.dT; else { R.d += (R.dT - R.d) * (1 - Math.exp(-dt * 9)); busy = true; }
+      if (calm() || Math.abs(R.dT - R.d) < 2e-4) R.d = R.dT; else { R.d += (R.dT - R.d) * (1 - Math.exp(-dt * 9)); busy = true; }
     }
     R.lat = clamp(R.lat, -72, 72);
-    if (Math.abs(R.offT - R.off) < 0.3) R.off = R.offT; else { R.off += (R.offT - R.off) * (1 - Math.exp(-dt * 9)); busy = true; }
+    if (calm() || Math.abs(R.offT - R.off) < 0.3) R.off = R.offT; else { R.off += (R.offT - R.off) * (1 - Math.exp(-dt * 9)); busy = true; }
+    const nv = R.U.nt.value; if (calm() || Math.abs(R.ntT - nv) < 0.01) R.U.nt.value = R.ntT; else { R.U.nt.value = nv + (R.ntT - nv) * (1 - Math.exp(-dt * 7)); busy = true; }   // (the night comes and goes in half a second)
     R.group.rotation.set(R.lat * D, -Math.PI / 2 - R.lon * D, 0);
     R.cam.position.set(0, 0, R.d); R.cam.lookAt(0, 0, 0);
     // the Earth in the middle of the free part of the screen (between the head and the card; lying, left of the card)
@@ -386,6 +394,7 @@ window.MenuZemlja = (function () {
       '<button class="zem-sq zem-zoom zem-in" data-zoom="-1" aria-label="Closer">' + I.plus + '</button>' +
       '<button class="zem-sq zem-zoom zem-out" data-zoom="1" aria-label="Farther">' + I.minus + '</button>' +
       '<button class="zem-sq zem-zoom zem-home" data-home aria-label="The track shown">' + I.home + '</button>' +
+      '<button class="zem-sq zem-zoom zem-night" data-night aria-pressed="' + night() + '" aria-label="Night: where it is night now" title="Night">' + I.night + '</button>' +
       '<div class="zem-hint" aria-hidden="true">' + (coarse ? 'Drag to turn · pinch to zoom · tap a country' : 'Drag to turn · scroll to zoom · click a country') + '</div>' +
       '<div class="zem-card" role="region"></div></div><div class="zem-pins"></div><div class="zem-load" aria-hidden="true">Loading the Earth…</div>';
     aim(el, o); o.root.appendChild(el);
@@ -421,6 +430,7 @@ window.MenuZemlja = (function () {
     if (b.hasAttribute('data-close')) { o.click(); return close(); }
     if (b.dataset.zoom) { o.click(); return zoom(+b.dataset.zoom); }
     if (b.hasAttribute('data-home')) { o.click(); return goHome(); }
+    if (b.hasAttribute('data-night')) { o.click(); setNight(!night()); b.setAttribute('aria-pressed', night()); R.ntT = night() ? 1 : 0; return kick(); }
     if (b.classList.contains('zl')) { if (!e.detail) { o.click(); pickMark(b); } return; }   // (a key's or the pad's press; a finger's tap: input())
     // the card: the quick list's buttons
     if (b.hasAttribute('data-x')) { o.click(); return select(null); }
@@ -461,8 +471,8 @@ window.MenuZemlja = (function () {
     close();
   }
   return {
-    open, close, back, sun, isOpen: () => !!el, root: () => el, depth: () => window.MenuIzbor ? NZ().depth('zemlja') : 0,
+    open, close, back, sun, night, isOpen: () => !!el, root: () => el, depth: () => window.MenuIzbor ? NZ().depth('zemlja') : 0,
     _R: () => R && { n: R.n, lat: R.lat, lon: R.lon, d: R.d, sel: R.sel, card: R.card, tc: R.tc, weak: R.weak, tex: R.tex, size: [R.cv.width, R.cv.height], moving: !!R.raf,
-      countries: [...R.C.keys()], pins: R.els.filter(m => m.pin).length, sun: R.U.sunL.value.toArray(), W, H, SIDE, TOP, off: R.off },   // (for the tests)
+      countries: [...R.C.keys()], pins: R.els.filter(m => m.pin).length, sun: R.U.sunL.value.toArray(), night: night(), nt: R.U.nt.value, W, H, SIDE, TOP, off: R.off },   // (for the tests)
   };
 })();
