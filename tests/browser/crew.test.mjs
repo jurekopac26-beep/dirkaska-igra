@@ -21,7 +21,7 @@ const ONLY = process.env.CREW_ONLY ? process.env.CREW_ONLY.split(',') : null;
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 640, height: 360 }, { seed: 34 });
   let ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
-  T.check('11 circuits with pits (the test tracks left out)', ids.length === 11, ids.join(', '));
+  T.check('8 circuits with pits (the test tracks left out)', ids.length === 8, ids.join(', '));
   if (ONLY) ids = ids.filter(id => ONLY.includes(id));
   const res = [];
   for (const id of ids) {

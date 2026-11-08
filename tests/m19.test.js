@@ -18,7 +18,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('19'), K = D.K, TD = Core.TRACKS.find(t => t.id === 'townsville');
 const T = new Core.Track(TD);
-check('19: Townsville, a real track, in the MEDVED', D.track === 'townsville' && !!TD && !TD.test && D.car === 'medved' && !!Core.MODELS.find(m => m.id === 'medved'));
+check('19: Townsville (a test track since 6. 11. 2026: the mission stays there until the user moves it), in the MEDVED', D.track === 'townsville' && !!TD && D.car === 'medved' && !!Core.MODELS.find(m => m.id === 'medved'));
 check('the texts and the panel: MORJE (a bar), OTOK, ZDRAVNIK', D.title === 'Pred plimo' && D.rows.map(r => r.k).join() === 'sea,isl,doc' && D.rows[0].bar);
 const o = D.opts(D);
 check('its race: alone, one lap, no damage, the 4x4 in white', o.tt && o.laps === 1 && o.damage === 0 && o.playerColor === 0xf2f4f6, JSON.stringify(o));

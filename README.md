@@ -24,23 +24,19 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Irohazaka, Japonska](docs/proge/iroha.md)
 - [Rio do Rastro, Brazilija](docs/proge/rastro.md)
 - [Crystal Palace, Anglija](docs/proge/cpalace.md)
-- [Longford, Avstralija](docs/proge/longford.md)
-- [Newcastle, Avstralija](docs/proge/newcastle.md)
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
 - [Toronto, Kanada](docs/proge/toronto.md)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
 - [Bang Saen, Tajska](docs/proge/bangsaen.md)
-- [Mount Hotham, Avstralija](docs/proge/hotham.md)
-- [Townsville, Avstralija](docs/proge/townsville.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
 - [Mount Buller, Avstralija](docs/proge/mountbuller.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
-Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik, ostale gredo v test. Do izbire so Bathurst, Great Alpine Road, Longford, Mount Hotham, Newcastle in Townsville (zgoraj) prave proge v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -63,6 +59,10 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Monterey, ZDA](docs/proge/monterey.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Palomar Mountain, ZDA](docs/proge/palomar.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Vršič, Slovenija](docs/proge/vrsic.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Longford, Avstralija](docs/proge/longford.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Mount Hotham, Avstralija](docs/proge/hotham.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Newcastle, Avstralija](docs/proge/newcastle.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Townsville, Avstralija](docs/proge/townsville.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 
