@@ -3762,7 +3762,7 @@ const Core = (function () {
         else if (Lw && !BD && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);   // (a car laps apart, see Lw)
         see(o, gap);
       }
-      if (Lw && BD) {   // (a big field: the cars laps apart from the list sorted by dist, a window a lap ahead and behind at a time, as far as the field reaches)
+      if (Lw && BD && Number.isFinite(BD[0].dist + BD[BD.length - 1].dist + c.dist)) {   // (a big field: the cars laps apart from the list sorted by dist, a window a lap ahead and behind at a time, as far as the field reaches)
         const lo = BD[0].dist, hi = BD[BD.length - 1].dist;
         for (let j = 1; c.dist + j * Lw - 8.5 <= hi; j++) { const b = c.dist + j * Lw; for (let k = distFrom(BD, b - 8.5); k < BD.length && BD[k].dist - b <= 22.5; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
         for (let j = 1; c.dist - j * Lw + 22.5 >= lo; j++) { const b = c.dist - j * Lw; for (let k = distFrom(BD, b - 8.5); k < BD.length && BD[k].dist - b <= 22.5; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
