@@ -32,5 +32,6 @@ Prenosi gredo v `tools/proga/raw/` (ni v repozitoriju; Bâlea ~150 MB). Vse bere
 - Brez filtra razredov najde pot po pešpoti ali kolovozu čez serpentine (prekratka proga).
 - Karta krošenj (Meta) ni v ploščicah, ampak v vrsticah (65536 vrstic po ~7 KB): branje širokega pasu je drago, branje po celicah rabe tal je v redu.
 - Ob meji pasov MGRS (39,8° S, Mallorca) `s2_scenes` išče napačno ploščico (`31SDE`, v vedru je `31TDE`): posnetek vpiši v `s2` ročno (seznam vedra s predpono `sentinel-s2-l2a-cogs/31/T/DE/`).
+- Posnetek Sentinel-2 ob robu orbite ima lahko nad progo prazne celice (nodata; Kotor: `S2B_34TCM_20250806`): po koraku `data` preveri barve tal ob progi in po potrebi vpiši v `s2` drug posnetek (Kotor: `S2C_34TCM_20250722`).
 - `earth-search` (STAC) ni dosegljiv: posnetke Sentinel-2 najde seznam vedra `sentinel-cogs` (`s2_scenes`).
 - Wikimedia Commons in Mapillary iz ukazne vrstice tega okolja nista dosegljiva (proxy 403); za fotografije (seja B) poskusi podagenta `web-fetch`, sicer se primerjava opre na opise in znanje o kraju.

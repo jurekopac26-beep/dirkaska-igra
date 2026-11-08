@@ -457,6 +457,7 @@
     'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
     'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
+    'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)

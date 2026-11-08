@@ -411,5 +411,12 @@
   "kverts": 578,
   "maxKverts": 708,
   "jsMs": 1.5
+ },
+ "kotor": {
+  "calls": 204,
+  "maxCalls": 245,
+  "kverts": 618,
+  "maxKverts": 843,
+  "jsMs": 1.39
  }
 }

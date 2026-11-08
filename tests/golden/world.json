@@ -1536,5 +1536,25 @@
    "tyremarks:MeshBasicMaterial": "55d8f570",
    "roadwear:MeshLambertMaterial": "8464b172"
   }
+ },
+ "kotor": {
+  "meshes": 959,
+  "verts": 667455,
+  "instances": 15420,
+  "props": 79,
+  "crowd": 125,
+  "world": "e54f73cb",
+  "propsHash": "67c890c8",
+  "floor": "d081f891/10696",
+  "groups": {
+   "-:MeshLambertMaterial": "6ea807d3",
+   "-:MeshPhongMaterial": "b9364527",
+   "-:MeshBasicMaterial": "674336a7",
+   "irFar:MeshLambertMaterial": "15e91440",
+   "crowd:MeshLambertMaterial": "1cc59bae",
+   "ao:MeshBasicMaterial": "6e0ebdd",
+   "tyremarks:MeshBasicMaterial": "b44dc068",
+   "roadwear:MeshLambertMaterial": "475157e4"
+  }
  }
 }
