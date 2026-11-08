@@ -480,12 +480,11 @@
   }
 
   /* ---- a flagpole (height h) with its flag flying along yaw: Canada (red, white, red, the leaf a red square: simplified) or Québec (blue, a white cross) ---- */
-  function mtFlag(g, x, z, h, yaw, qc) {
-    const c = Math.cos(yaw), s = Math.sin(yaw), at = (u) => [x + c * u, z + s * u], F = 1.3, y = h - 1.05 * F, red = [0.82, 0.1, 0.12], wh = [0.95, 0.95, 0.94];
+  function mtFlag(g, x, z, h, yaw, qc) {   // (the cloth waves: js/world-zastave.js; its cells: [u edges from the pole, v edges from the top, colours by row])
+    const c = Math.cos(yaw), s = Math.sin(yaw), F = 1.3, red = [0.82, 0.1, 0.12], wh = [0.95, 0.95, 0.94], bl = [0.05, 0.25, 0.62];
     box(g, x, 0, z, 0.1, h + 0.1, 0.1, yaw, [0.78, 0.8, 0.82]);
-    const bar = (u0, u1, y0, y1, col, t) => { const [cx, cz] = at((u0 + u1) / 2 * F); box(g, cx, y + y0 * F, cz, (u1 - u0) * F, (y1 - y0) * F, t, yaw, col); };
-    if (qc) { bar(0.06, 1.86, 0, 0.9, [0.05, 0.25, 0.62], 0.03); bar(0.06, 1.86, 0.38, 0.52, wh, 0.05); bar(0.86, 1.06, 0, 0.9, wh, 0.05); }
-    else { bar(0.06, 0.51, 0, 0.9, red, 0.03); bar(0.51, 1.41, 0, 0.9, wh, 0.03); bar(1.41, 1.86, 0, 0.9, red, 0.03); bar(0.8, 1.12, 0.22, 0.68, red, 0.05); }
+    World.api.flags.add(x + c * 0.06 * F, h - 0.15 * F, z + s * 0.06 * F, yaw, qc ? { grid: [[0, 0.444, 0.556, 1], [0, 0.422, 0.578, 1], [[bl, wh, bl], [wh, wh, wh], [bl, wh, bl]]] }
+      : { grid: [[0, 0.25, 0.411, 0.589, 0.75, 1], [0, 0.244, 0.756, 1], [[red, wh, wh, wh, red], [red, wh, red, wh, red], [red, wh, wh, wh, red]]] }, 1.8 * F, 0.9 * F);
   }
 
   /* ---- the nearest road sample to (x, z) through a 32 m hash of the samples; its lateral offset and the barrier on that side ---- */

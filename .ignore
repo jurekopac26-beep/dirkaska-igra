@@ -1,0 +1,8 @@
+# Ripgrep (orodji Grep in Glob v sejah Claude Code) teh datotek ne preišče: generirani podatki z ogromnimi vrsticami, kjer bi en sam
+# zadetek izpisal celo vrstico (js/routes.js je ena vrstica s 0,4 MB). Po izrecni poti jih še vedno bereš (Read, grep v Bash).
+# docs/varcevanje.md, E.
+js/routes.js
+assets/maps/
+maketa-menija/assets/
+maketa-menija/outlines.js
+maketa-menija/orodja/proge_igra.json

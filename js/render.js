@@ -3301,6 +3301,7 @@ const Render = (function () {
 
   /* ---------------- module state ---------------- */
   let envTex = null, renderer, scene, camera, sun, hemi, tex, world = null, sparkP = null, glows = null, curTrack = null, curRace = null;
+  const EXT = {};   // (other files' parts of the renderer: EXT.vecer, the evening races' lights, js/render-vecer.js)
   const DUST0 = { rate: 1, life: 1, size: 1, s0: 1, rise: 1, alpha: 1, drag: 1, col: [0.84, 0.69, 0.48] };
   const SNOW_DUST = [0.93, 0.95, 0.99];   // (winter: the powder snow off a gravel road)   // the dust cloud off gravel and dirt (a track's def.dust overrides it)
   let dust = null;
@@ -3405,6 +3406,10 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    if (World.zaslon) { const Z = World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
+      if (Z && tierNow >= 2 && world.root) {   // (its TV director by the straight: the posts checked with the world now, not in the race)
+        const t0 = performance.now(); world.root.updateMatrixWorld(true);
+        World.zaslon.prep(Z, { tvCams: () => tvCams(track), tvPost: (k) => tvPost(track, k), sees: tvSees }); Z.info.prepMs = Math.round(performance.now() - t0); } }
     // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
     // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
     if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
@@ -3762,6 +3767,7 @@ const Render = (function () {
       to(K.fog, 0xeea070, 0.55); to(K.sky, 0xc49ab8, 0.34); to(K.gnd, 0x6a4430, 0.3); to(K.sunC, 0xff8a40, 0.74); K.hemiI = D.hemiI * 0.84; K.sunI = D.sunI;
       K.off = [s0[0] * 1.6, 30, s0[2] * 1.6]; K.tint = [1.1, 0.97, 0.86]; K.uHaze = 0.34 * (1 - r); K.hazeCol = [1, 0.6, 0.32];
       K.shT = [0.97, 0.96, 1.04]; K.hiT = [1.07, 0.99, 0.88]; K.bloom = 0.5; K.lit = [0.97, 0.85, 0.74];
+      if (EXT.vecer && curTrack) EXT.vecer.dusk(K, curTrack.def, r);   // (a real track's evening: a little later, js/render-vecer.js)
     }
     N.fog.setHex(0x070b16); N.sky.setHex(0x26324f); N.gnd.setHex(0x06080b); N.sunC.setHex(0x93aaff); N.hemiI = 0.55; N.sunI = 0.2 * (1 - 0.6 * r);
     N.off = [-40, 110, 60]; N.tint = [0.86, 0.93, 1.12]; N.sat = D.sat * 0.85; N.uHaze = 0; N.postHaze = 0; N.hazeCol = K.hazeCol.slice();   // (no sun glow at night, not even Pikes Peak's)
@@ -3861,6 +3867,46 @@ const Render = (function () {
       mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length }; scene.add(mbLn);
     }
     if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
+  }
+  // the rubbered-in line (84, Race mb.rb; chosen B5-6, early in the race barely to be seen): a glossy dark layer of rubber on the racing line
+  // and beside it, in the same mesh, the dust of it in its own colour, lighter, fading softly outward over a short way (fewer cars drive
+  // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
+  // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
+  // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
+  // again for its track. Its picture: Tex.rubber
+  const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  let rbLn = null, rbTex = null;
+  function rubberLine(R) {
+    if (rbLn && rbLn.userData.w !== world) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
+    const T = R && R.track, rb = R && R.mb && T === curTrack && T.rl ? R.mb.rb || 0 : 0;
+    if (rb > 0.005 && !rbLn && world) {
+      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
+      for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
+      for (let i = 0, j = 0; i <= N; j++) {
+        const ii = i % N, kb = 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
+        for (let v = 0; v < nc; v++) {
+          const o = T.rl[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
+          if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
+          pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
+          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
+        }
+        if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+        if (i === N) break;
+        let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
+        i = Math.min(N, i + st);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      if (!rbTex) rbTex = Tex.rubber();
+      const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
+      rbLn = new THREE.Mesh(g, m); rbLn.name = 'rubberline'; rbLn.receiveShadow = true; rbLn.renderOrder = 1; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1 }; scene.add(rbLn);
+    }
+    if (rbLn) {
+      rbLn.visible = rb > 0.005;
+      const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
+      if (k !== rbLn.userData.k) { rbLn.userData.k = k; rbLn.material.opacity = 0.22 + 0.5 * k; rbLn.material.specular.setRGB(0.05 + 0.13 * k, 0.06 + 0.15 * k, 0.08 + 0.2 * k); }
+    }
   }
 
   // the rain's splashes (Splashes) on the road round the view's centre: so many drops a second as it rains, where they fall on the road
@@ -4188,8 +4234,8 @@ const Render = (function () {
     const was = atmos.tod; todK = k; dawn = false; atmos = { season: atmos.season, tod: k >= 0.75 ? 'night' : k >= 0.25 ? 'dusk' : 'day' };
     applyTheme(themeId); todLights(atmos.tod !== was);
   }
-  // the lights of the time of day: the floodlights (from late dusk), the pits' (from dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights and the pits' again
-  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); rsGlowAll();
+  // the lights of the time of day: the floodlights (from late dusk; a real track's from sunset: lampK), the pits' (from dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights and the pits' again
+  function todLights(build) { if (build || (lampK() > 0) !== !!flood) floodlights(); floodLook(); rsGlowAll();
     if (build || (todK > 0.2) !== !!pitL) pitLights(); if (pitL) pitL.mesh.material.opacity = pitK(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
   function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
@@ -4324,19 +4370,21 @@ const Render = (function () {
   // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them). A real open road (world.lampZones,
   // World's roadside): the street lamps only in its settlements, the road between them dark (the headlights, the delineators' reflectors and the
   // signs: rsGlints, rsGlow); a street lamp of the world's own there (Medvode's) lights the road under it, the poles every 30 m fill the rest
+  const _flQ = new THREE.Quaternion(), _flC = new THREE.Color();
   function floodlights() {
     if (flood) { for (const o of [flood.pools, flood.poles, flood.heads, flood.halo]) { scene.remove(o); o.geometry.dispose(); } flood = null; }
     rsGlowAll();
-    const T = curTrack; if (todK <= 0.6 || !T || !world) return;
+    const T = curTrack; if (lampK() <= 0 || !T || !world) return;
     if (!lampTex) lampTex = radialTex([[0, 1], [0.18, 0.86], [0.42, 0.46], [0.68, 0.16], [1, 0]]);
     const Z = world.lampZones, inZ = (s) => Z.some(z => s - T.startS > z[0] && s - T.startS < z[1]), own = [], spots = [];
+    const SL = EXT.vecer ? EXT.vecer.stands(world, T) : { glow: [], pool: [], mast: [] }, byStand = (i) => SL.pool.some(q => Math.hypot(q[1] - T.px[i], q[2] - T.pz[i]) < 16);   // (the stands' roof lamps, js/render-vecer.js: no pole between a stand and the road)
     if (Z) for (const p of world.props || []) if (p.kind === 'mlamp' && inZ((p.i >= 0 ? p.i : T.nearestIdx(p.x, p.z)) * T.ds)) own.push(p);
-    for (let k = 0, n = Math.floor(T.len / 30); k < n; k++) { const s = k * 30 + 10; if (Z && (!inZ(s) || own.some(p => Math.hypot(p.x - T.px[T.idx(s)], p.z - T.pz[T.idx(s)]) < 18))) continue; spots.push(k); }
-    const n = spots.length + own.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
+    for (let k = 0, n = Math.floor(T.len / 30); k < n; k++) { const s = k * 30 + 10; if (Z && (!inZ(s) || own.some(p => Math.hypot(p.x - T.px[T.idx(s)], p.z - T.pz[T.idx(s)]) < 18))) continue; if (SL.pool.length && byStand(T.idx(s))) continue; spots.push(k); }
+    const n = spots.length + own.length + SL.pool.length, nh = n - SL.pool.length + SL.glow.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
     const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffd9a6, transparent: true, opacity: 0.56, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), Math.max(1, n));
-    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), Math.max(1, spots.length));
-    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), Math.max(1, spots.length));
-    const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n), fp = new Float32Array(n * 3);
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), Math.max(1, spots.length + SL.mast.length));
+    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), Math.max(1, spots.length + SL.mast.length));
+    const hp = new Float32Array(nh * 3), hc = new Float32Array(nh * 4), hs = new Float32Array(nh), fp = new Float32Array(n * 3);
     const pool = (k, i, x, z) => {   // the pool of light on the road at (x, z) (sample i), its place for the wet road's reflections
       const y = T.hasElev && T.hy ? T.hy[i] : 0, gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
       p.set(x, y + 0.07, z); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
@@ -4354,11 +4402,29 @@ const Render = (function () {
       pool(k, i, l.x + ax * 3.2, l.z + az * 3.2);
       hp[k * 3] = l.x + ax * 1.6; hp[k * 3 + 1] = gy + 7.65; hp[k * 3 + 2] = l.z + az * 1.6; hc[k * 4] = 1; hc[k * 4 + 1] = 0.84; hc[k * 4 + 2] = 0.6; hc[k * 4 + 3] = 0.5; hs[k] = 4.5;
     });
-    pools.count = n; poles.count = heads.count = spots.length;
+    const k0 = spots.length + own.length;
+    // the stands' lamps (js/render-vecer.js): their pools on the road in front of the stand, the glows (along a roof's edge, on an open stand's masts), the masts
+    SL.pool.forEach((P, j) => { const k = k0 + j, i = P[0]; pool(k, i, P[1], P[2]); q.setFromUnitVectors(up, rn).multiply(_flQ.setFromAxisAngle(up, Math.atan2(T.tx[i], T.tz[i]))); sc.set(P[4], 1, P[3]); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity(); });   // (stretched along the road: a band of light)
+    if (SL.pool.length) for (let k = 0; k < n; k++) pools.setColorAt(k, _flC.setScalar(k < k0 ? 1 : SL.pool[k - k0][5]));
+    SL.glow.forEach((g, j) => { const k = k0 + j; hp[k * 3] = g[0]; hp[k * 3 + 1] = g[1]; hp[k * 3 + 2] = g[2]; hc[k * 4] = 1; hc[k * 4 + 1] = 0.9; hc[k * 4 + 2] = 0.74; hc[k * 4 + 3] = 0.42; hs[k] = g[3]; });
+    SL.mast.forEach((M, j) => { const k = spots.length + j; p.set(M[0], M[1], M[2]); q.setFromAxisAngle(up, -Math.atan2(M[5], M[4])); sc.set(1, M[3] / 9, 1); m4.compose(p, q, sc); poles.setMatrixAt(k, m4);
+      p.y += M[3]; sc.set(1, 1, 1); m4.compose(p, q, sc); heads.setMatrixAt(k, m4); });
+    pools.count = n; poles.count = heads.count = spots.length + SL.mast.length;
     const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('pcolor', new THREE.BufferAttribute(hc, 4)); hg.setAttribute('psize', new THREE.BufferAttribute(hs, 1));
     const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
-    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
+    pools.name = 'floodPools'; poles.name = 'floodPoles'; heads.name = 'floodHeads'; halo.name = 'floodGlows';   // (tests: browser/vecer.test.mjs)
+    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp, ha: hc.filter((_, j) => j % 4 === 3) }; floodLook();
+  }
+  // the floodlights' strength (lampK: the night's from late dusk; a real track's from sunset) and look (floodLook: the pools', the glows'; a
+  // real track's evening on NIZKA only the pools, no poles, lamps nor glows): js/render-vecer.js, look
+  const lit = () => !!EXT.vecer && !!curTrack && !dawn;   // (the evening's lights: not at dawn, which stays as it was)
+  function lampK() { return lit() ? EXT.vecer.lampK(todK, curTrack.def) : sstep(0.6, 0.9, todK); }
+  function floodLook() {
+    if (!flood) return;
+    const L = lit() ? EXT.vecer.look(todK, curTrack.def, tierNow) : { k: lampK(), bare: false, glow: 1, refl: 1 }, C = flood.halo.geometry.attributes.pcolor;
+    flood.pools.material.opacity = 0.56 * L.k; flood.poles.visible = flood.heads.visible = flood.halo.visible = !L.bare; flood.refl = L.bare ? 0 : L.refl;   // (refl: the wet road's reflections of the lamps, updateCars)
+    if (flood.hk !== L.glow) { flood.hk = L.glow; for (let j = 0; j < flood.ha.length; j++) C.array[j * 4 + 3] = flood.ha[j] * L.glow; C.needsUpdate = true; }   // (the glows: a real track's a little fainter in the evening)
   }
   // the open roads' signs at dusk and at night: their faces shine in the headlights (World's roadside: the static mesh, Render's knockable ones)
   function rsGlowAll() { if (!world) return; rsGlow(world.rsMesh && world.rsMesh.material); for (const k of RS_KINDS) if (propMeshes[k] && propMeshes[k].userData.atlas) rsGlow(propMeshes[k].material); }
@@ -4659,6 +4725,29 @@ const Render = (function () {
     return false;
   }
   function unviewCull() { for (const m of offView) { m.visible = true; m.userData.ov = false; } offView.length = 0; }
+  // the big screen by the main grandstand (js/world-zaslon.js): its live picture (VISOKA) drawn after the frame from a TV post beside the
+  // track, for the next frame's view: the haze for that camera's distance, the sky dome round it, the cars out of the main view (carCull)
+  // near the car it follows put back for it, no names over the cars, the glows sized for its lens; all as it was after
+  const zsX = { race: null, dt: 0, tier: 2, low: false, cam: null, tvCams: () => tvCams(curTrack), tvPost: (k, b) => tvPost(curTrack, k, b) }, zsIn = [], zsTag = [], _zsP = new THREE.Vector3();
+  function zaslonFeed(dt) {
+    const Z = world && world.dyn && world.dyn.zaslon; if (!Z || !World.zaslon || snapping || !curTrack) return;
+    zsX.race = curRace; zsX.dt = dt; zsX.tier = tierNow; zsX.low = saverK < 1; zsX.cam = camera;
+    if (!World.zaslon.step(Z, zsX)) return;
+    const F = scene.fog, fn = F.near, ff = F.far, r = Math.max(0, wet), dC = Math.max(60, Z.dist || 0) * ((THEMES[themeId] || {}).fogK || 1), C = Z.cam;
+    F.near = dC * (1.35 - 0.4 * r); F.far = dC * (5.5 - 1.6 * r);
+    { const fr = Math.min(900, F.far + 40); if (Math.abs(C.far - fr) > 5) { C.far = fr; C.updateProjectionMatrix(); } }   // (nothing past the haze drawn into it)
+    const sk = sky && sky.mesh.visible ? sky.mesh : null, mo = nsky.moon && nsky.moon.visible;
+    const ss = sk ? sk.scale.x : 1; if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.scale.setScalar(C.far * 0.8); sk.updateMatrixWorld(); }   // (the dome round the TV post, inside its far plane)
+    if (mo) nsky.moon.visible = nsky.halo.visible = false;
+    for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
+    for (const g of GV) if (g && g.tag && g.tag.visible) { g.tag.visible = false; zsTag.push(g.tag); }
+    const ps = World.zaslon.RH / (2 * Math.tan(C.fov * Math.PI / 360)); particles.mat.uniforms.uScale.value = ps; if (sparkP) sparkP.mat.uniforms.uScale.value = ps; if (glows) glows.mat.uniforms.uScale.value = ps;
+    try { World.zaslon.draw(Z, renderer, scene); }
+    finally {
+      F.near = fn; F.far = ff; if (sk) { sk.position.copy(_zsP); sk.scale.setScalar(ss); sk.updateMatrixWorld(); } if (mo) nsky.moon.visible = nsky.halo.visible = true;
+      for (const g of zsIn) scene.remove(g); zsIn.length = 0; for (const t of zsTag) t.visible = true; zsTag.length = 0; updatePointScale();
+    }
+  }
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
@@ -4712,6 +4801,7 @@ const Render = (function () {
     else { v.src = v.body.geometry; v.body.geometry = v.body.geometry.clone(); }   // (v.src: the shared body as new (geoCache: never freed), what a pit repair goes back to)
     v.ownGeo = true; v.smokeAcc = 0; v.fresh = true;   // own copy: dents stay on this car (fresh: its first frame to come)
     v.lights0 = v.lights.map(L => L.clone()); v.dec0 = v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null;   // (as built: what a kit part hanging loose turns with it, a pit repair puts back)
+    if (v.dirtU && c.dirt0 > 0) v.dirtU.value = Math.min(1, c.dirt0);   // (the career: a car not washed since its last race starts with that race's dirt, game.js careerCond)
     v.car = c; v.roll = 0; v.pitch = 0; v.gpitch = 0; v.spin = 0; v.sk = [null, null, null, null]; v.acc = [0, 0, 0, 0]; v.repairN = c.repairN || 0; v.wheelFix = c.wreck ? c.wreck.fix : 0;
     v.grp.rotation.order = 'YXZ';   // yaw first, then pitch about the car's own lateral axis (slopes/jumps)
     buildParts(v);
@@ -6640,7 +6730,7 @@ const Render = (function () {
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
@@ -6656,9 +6746,9 @@ const Render = (function () {
     }
     if (pitL) pitGlow(wk);   // (the pits' lamps at dusk and at night)
     glows.end();
-    if (wk && flood && flood.fp) {   // (at night the floodlights too: those round the view)
-      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0;
-      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
+    if (wk && flood && flood.fp && flood.refl > 0) {   // (at night the floodlights too: those round the view; a real track's evening fainter, none where only their pools are drawn: floodLook's refl)
+      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0, a = 0.38 * wk * flood.refl;
+      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, a, 1.8, 12, k * 0.13); }
     }
     streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); U.uRip.value = wk > 0 ? 1 : 0; }   // (dry: only the pits' sheen, no ripples)
     skids.flush(); if (sandRuts) { sandRuts.tick(performance.now() / 1000); sandRuts.flush(); }
@@ -9651,7 +9741,8 @@ const Render = (function () {
   }
   // a post has to see the road where the car comes to it from (trees, stands and buildings, a bank in the way): the first time it films, the
   // place above is checked with rays into the world, else the other side of the track, nearer the barrier, higher up; the first that sees
-  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above)
+  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above). budget (ms): a few rays a frame, null until it is
+  // done (the big screen's live picture, js/world-zaslon.js); none: all at once (the replay)
   let _tvRc = null;
   function tvSees(x, y, z, tx, ty, tz) {
     if (!world || !world.root) return true;
@@ -9661,16 +9752,20 @@ const Render = (function () {
     for (const h of R.rc.intersectObject(world.root, true)) { const m = h.object.material; if (!m || m.transparent || m.alphaTest > 0 || !h.object.visible) continue; return false; }   // (fences and other see-through meshes: seen through)
     return true;
   }
-  function tvPost(T, k) {
-    const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
+  const TV_TRY = [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]];   // [the side (1: the post's own), metres beyond the barrier, up]
+  function tvPost(T, k, budget) {
+    const P = tvCams(T)[k]; if (P.ok) return P;
+    const q = P.q || (P.q = { c: 0, r: 0 }), t0 = budget ? performance.now() : 0;   // (the place and the ray being checked)
     const gy = (i) => (T.hasElev && T.hy ? T.hy[i] : 0), road = [-100, -45, 30].map(d => { const j = T.idx(P.s + d); return [T.px[j], gy(j) + 0.8, T.pz[j]]; });
     const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w, off = side * (Math.max(T.w, bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
       let y = gy(i) + up; if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + up - 4); } return { x, y, z }; };
-    for (const [sd, ex, up] of [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]]) {
-      const c = at(sd * P.side, ex, up);
-      if (road.every(r => tvSees(c.x, c.y, c.z, r[0], r[1], r[2]))) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+    while (q.c < TV_TRY.length) {
+      const [sd, ex, up] = TV_TRY[q.c], c = at(sd * P.side, ex, up), r = road[q.r];
+      if (!tvSees(c.x, c.y, c.z, r[0], r[1], r[2])) { q.c++; q.r = 0; }
+      else if (++q.r === road.length) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+      if (budget && q.c < TV_TRY.length && performance.now() - t0 >= budget) return null;
     }
-    return P;
+    P.ok = true; P.q = null; return P;
   }
   // Pikes Peak's TV cameras (the replay, 'tv'): a helicopter's high tracking shot over the open road (over the lower ground beside the car,
   // a little behind it), fixed cameras at the famous places (Engineer's Corner, the W's seen from high up, Devil's Playground, Bottomless
@@ -10170,7 +10265,7 @@ const Render = (function () {
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
-      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); }
+      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); rubberLine(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
@@ -10218,6 +10313,7 @@ const Render = (function () {
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { casDrawn = 0; renderer.render(scene, camera); }
     unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
+    zaslonFeed(dt);   // (the big screen's live picture, js/world-zaslon.js)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)
@@ -10397,7 +10493,7 @@ const Render = (function () {
 
   /* ---------------- the garage (garaza.html, js/garage3d.js): the race's own car meshes, in a scene of the garage's own ---------------- */
   // a car as the race draws it (body, wheels, lamps, the paint's dirt and scratches: dirtU, scrU), without the player's marker
-  function garageCar(model, color, num, stripe) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true }, { noMarker: true }); }
+  function garageCar(model, color, num, stripe, deli) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true, deli: deli || undefined }, { noMarker: true }); }   // (deli: the garage's parts fitted, car.deli)
   // the paint's sun glint and the tint of the sky in it (as cgSet): the garage's key lamp (direction, colour, strength) and the room's tint
   function garageLight(dir, col, k, env) { CGU.sun.value.set(dir.x, dir.y, dir.z).normalize(); CGU.sunC.value.setHex(col).multiplyScalar(k); CGU.env.value.setHex(env == null ? 0xffffff : env); }
 
@@ -10431,6 +10527,8 @@ const Render = (function () {
   function pitWet() { const T = curTrack; if (!T || !T.def.pit || !world || !world.pitBoxes || !world.pitBoxes.length) return null; const pos = [], uv = [], pw = [], idx = []; pitPuddles(T, pos, uv, pw, idx); return { pos, pw, idx, ap: pitLook(T).ap, asph: !!pitLook(T).asph }; }   // (tests: the pits' wet parts of this world)
   function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  // the dirt on a race car's body now (0..1; null: none drawn), for the career's garage (game.js careerAfter)
+  const dirtOf = (c) => { const v = views && views.find(w => w.car === c); return v && v.dirtU ? v.dirtU.value : null; };
+  return { ext: EXT, dirtOf, garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

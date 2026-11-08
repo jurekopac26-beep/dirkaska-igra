@@ -8,7 +8,7 @@ Odločitev uporabnika 3. 11. 2026 (seja »Dnevna vprašanja za seje«): »Pripra
 - Stalna seja »Zbiranje vprašanj« vsak dan pobere vprašanja vseh sej računa in jih pripravi do **10.30, 14.30 in 23.00** po ljubljanskem času (opravilo po urniku jo zbudi 19 minut prej). Ob 10.29, 14.29 in 22.59 dobi uporabnik eno obvestilo na telefon: koliko vprašanj čaka in povezavo na stran.
 - Uporabnik tapne možnost in stran odgovor shrani. Stran sejam ne more pošiljati sporočil (povezava »Claude Code Remote« tega stranem ne dovoli: `blocked_by_policy`, preizkus 3. 11. 2026), zato **seja, ki je vprašala, odgovor prebere sama** ob 10.50, 14.50 ali 23.20 (razdelek Odgovor). Kar ostane neprebrano, ji sporoči zbiranje.
 - **Grafično vprašanje ima vedno slike** (razdelek Slike).
-- **Uporabnik v pogovoru: vprašanje je vedno klikljiva izbira** (odločitev uporabnika 3. 11. 2026). Ko uporabnik piše v sejo in seja od njega potrebuje odločitev, ga vpraša z `AskUserQuestion` (do 4 vprašanja naenkrat, vsako z 2–4 možnostmi, priporočena prva z oznako »(Recommended)«), ne z vprašanjem v besedilu. Samostojne seje (uporabnik ni v pogovoru) in krogi ob 10.30, 14.30 in 23.00 še naprej pišejo kartice na stran Odločitve. Ko uporabnik seji »Zbiranje vprašanj« napiše »vprašanja«, mu ta vsa odprta vprašanja pokaže kot klikljivo izbiro in odgovore zapiše na stran (`stanje: odgovorjeno`).
+- **Uporabnik v pogovoru: vprašanje je vedno klikljiva izbira** (odločitev uporabnika 3. 11. 2026). Ko uporabnik piše v sejo in seja od njega potrebuje odločitev, ga vpraša z `AskUserQuestion` (do 4 vprašanja naenkrat, vsako z 2–4 možnostmi, priporočena prva z oznako »(Recommended)«), ne z vprašanjem v besedilu. Samostojne seje (uporabnik ni v pogovoru) in krogi ob 10.30, 14.30 in 23.00 še naprej pišejo kartice na stran Odločitve. Ko uporabnik seji »Zbiranje vprašanj« napiše »vprašanja«, mu ta vsa odprta vprašanja pokaže kot klikljivo izbiro in odgovore zapiše na stran (`stanje: odgovorjeno`). Na računu jure.kopac26 pogovor z Matejem ob 10.30 sam pokaže odprta vprašanja brez slik kot klikljivo izbiro (odločitev uporabnika 7. 11. 2026) in odgovore zapiše na stran enako; vprašanja s slikami ostanejo na strani. Seje odgovore preberejo kot običajno (razdelek Odgovor).
 
 ## Stran Odločitve (vsak račun svojo)
 
@@ -34,6 +34,7 @@ Stran 1: vprašanja so kartice z oštevilčenimi gumbi (številka kot tabla s š
 | `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje |
 | `moznosti` | 2–5 možnosti `[{k: "1", opis}]`, oštevilčene od 1; vsaka je cela odločitev (ne samo »da« ali »ne«) |
 | `priporoceno` | `k` priporočene možnosti, kadar jo seja ima |
+| `vec` | `true`: izbira več možnosti hkrati (stran pokaže »Pošlji izbiro«; `odgovor` so izbrani `k`, ločeni z vejico, npr. `1,3,5`); stran Odločitve partyslo od 6. 11. 2026, drugi dve, ko ju lastnik objavi z isto kodo |
 | `graficno` | `true` pri vprašanju o videzu |
 | `slike` | `[{url, opis}]`, pri grafičnem vprašanju obvezno |
 | `povezave` | `[{opis, url}]`: pull request, predogled veje, primerjava |
