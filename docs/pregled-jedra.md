@@ -7,12 +7,47 @@ Pregled kode jedra igre, samo branje (odločitev uporabnika 8. 11. 2026 ob 16.05
 ## Stanje
 - 8. 11. 2026 ob 18.15: začetek pregleda.
 - 18.30: prvi prehod (`/code-review max`, ena seja brez več agentov) je prebral razred `Race`, trke, AI, promet ter v `js/render.js` pogled avtov, varnostni avto, razbitine, popravilo v boksih, kamero boksov in ogenj: dve najdbi (J1, J2), obe preverjeni. Za neprebrane dele (proga, fizika avta, poškodbe, policija, svet v izrisu, kamera, učinki) teče 9 vzporednih pregledov.
+- 19.06: **pregled končan.** 29 najdb: 0 kritičnih, 2 hudi, 8 srednjih, 19 nizkih; 24 potrjenih, 5 verjetnih. Oznake J so po vrstnem redu odkritja in se ne spreminjajo; razvrstitev po resnosti je v povzetku in v razdelkih spodaj. Obseg in zavrnjeni kandidati sta na koncu.
+
+## Povzetek
+
+| Oznaka | Resnost | Kaj | Kje | Preverjeno |
+|---|---|---|---|---|
+| J14 | huda | AI ne vidi avta, ki ga prehiteva za krog | `js/core.js:3748` | potrjeno |
+| J23 | huda | Zastave ne vidijo ustavljenega tekmeca, ki je namenjen v bokse | `js/core.js:6417` | potrjeno |
+| J1 | srednja | Leteči štart: vodilni brez časov TV sektorjev | `js/core.js:6901` | potrjeno |
+| J3 | srednja | »Ne menjaj« gume vseeno da nove gume | `js/core.js:6352` | potrjeno |
+| J4 | srednja | Pravilo koles: drugo kolo ne odpade nikoli | `js/core.js:2797` | potrjeno |
+| J10 | srednja | Policijski način: megla NaN v posnetku aretacije | `js/render.js:9688` | potrjeno |
+| J15 | srednja | Motor odpelje brez voznika | `js/core.js:4269` | potrjeno |
+| J19 | srednja | Table ob progi postanejo »duhovi« | `js/core.js:3193` | potrjeno |
+| J20 | srednja | Nova mapa: razbitine trčijo v ograje stare ceste | `js/core.js:3014` | potrjeno |
+| J24 | srednja | Prehitevanje pod zastavo: kazen samo za prvega | `js/core.js:6474` | potrjeno |
+| J21 | nizka | Razbitine v boksih skočijo na progo | `js/core.js:3014` | potrjeno |
+| J22 | nizka | Varnostni avto se lahko prevrne ali zavrti | `js/core.js:2066` | verjetno |
+| J16 | nizka | Človek na postaji hodi na mestu | `js/core.js:4484` | potrjeno |
+| J17 | nizka | Razbitine v nagnjenem ovinku lebdijo | `js/core.js:605` | potrjeno |
+| J18 | nizka | Skrita napaka: proga z boksi in `startS ≠ 0` | `js/core.js:1314` | potrjeno |
+| J11 | nizka | Pikes Peak: helikopter po premiku časa | `js/render.js:9657` | potrjeno |
+| J12 | nizka | Tresenje kamere v pavzi ne pojenja | `js/render.js:9685` | potrjeno |
+| J13 | nizka | Avto na strehi v ustavljenem posnetku meče prah | `js/render.js:8245` | potrjeno |
+| J2 | nizka | Varnostni avto: ustavljena krog narazen se ne štejeta | `js/core.js:6437` | potrjeno |
+| J5 | nizka | Nova: zdrs telesa se izbriše ob LOD | `js/core.js:2458` | verjetno |
+| J6 | nizka | Pikes Peak: polmer senc po nastavitvah | `js/render.js:4037` | potrjeno |
+| J7 | nizka | Luči ob progi: materiali niso sproščeni | `js/render.js:4375` | verjetno |
+| J9 | nizka | Garaža: predpomnilnik koles raste | `js/render.js:2161` | potrjeno |
+| J8 | nizka | Odblesk sonca ugaša po sličicah | `js/render.js:4176` | potrjeno |
+| J25 | nizka | Prehitevanje pod zastavo tik pred ciljem brez kazni | `js/core.js:6468` | potrjeno |
+| J26 | nizka | Nasvet po radiu: napačna guma tekmeca | `js/core.js:6688` | potrjeno |
+| J27 | nizka | `?vreme=constructor` gre skozi preverjanje | `js/core.js:7403` | potrjeno |
+| J28 | nizka | Cesta: vrstni red na cilju pri velikem polju | `js/core.js:6947` | verjetno |
+| J29 | nizka | Dim gorečega avta zunaj pogleda utihne | `js/render.js:6737` | verjetno |
 
 ## Najdbe po resnosti
 Vsaka najdba ima datoteko in vrstico (na `main` 90e09dac), opis in konkreten primer, ki jo sproži. Preverjeno: **potrjeno** (sled od vhoda do napake ali simulacija) ali **verjetno** (branje kode brez ponovitve).
 
 ### Kritične
-_V delu._
+Ni najdb: nobena od najdb ne ustavi igre na pravi progi, ne izgubi shranjenega napredka in ne odpre varnostne luknje.
 
 ### Hude
 
@@ -20,6 +55,11 @@ _V delu._
 - Nevarnost in avte ob sebi AI izbira po `gap = o.dist - c.dist`, kjer je `dist` celotna razdalja dirke. Na krožni progi je avto krog narazen, ki je fizično tik pred njim ali ob njem (počasen, poškodovan, ustavljen, prehitevan za krog), izven okna `gap < -8 || gap > 22` in zato ni nevarnost: AI ostane na idealni liniji in se zaleti. Mesto na progi (ovito na dolžino kroga) upošteva samo, ko sta oba avta v boksih (3749). Modrih zastav ali drugega ravnanja z zaostalimi ni nikjer.
 - **Primer:** `rbring`, 7 tekmecev, 3 krogi, ponovljiva dirka (seme 9), brez poškodb: igralec se po 30 s ustavi na idealni liniji (s ≈ 1236 m). Nobeden od 7 tekmecev, ki ga nato prehitevajo za krog, ga niti v enem koraku ne vzame za nevarnost (od 100 do 2.216 korakov manj kot 22 m za njim), štirje se zaletijo vanj. Tekmec v istem krogu ga je imel za nevarnost v 453 od 535 korakov. Enako vsak počasen ali poškodovan avto, ki ga prehitevajo za krog (npr. začetnik na `toronto`, `troisrivieres`, `marrakesh`).
 - Preverjeno: potrjeno (simulacija).
+
+**J23 · Zastave ne vidijo ustavljenega tekmeca, ki je namenjen v bokse: brez rumene zastave, nato nalet več avtov in rdeča zastava** · `js/core.js:6417` (`Race._flags`), vzrok v `js/core.js:6238–6243` (AI se po poškodbi odloči za bokse)
+- Avto šteje za ustavljenega samo, če je `onTrack`, ta pa brez rdeče zastave zahteva `!c.pitWant`. Tekmec s poškodbo nad ~0,45 (`AI_FIX.dmg`; privzete poškodbe, `dmgMode = 2`) dobi `pitWant` takoj po trku, še daleč pred uvozom v bokse. Če nato obstane na cesti (po vrtenju, ob ograji, zagozden), mu `f.stopT` ostane 0: ni rumene zastave in ni varnostnega avta, dokler se vanj ne zaletijo drugi.
+- **Primer:** `toronto`, 12 tekmecev, 8 krogov, zastave, seme 9: po 60 s tekmec dobi poškodbo 1,0 in 4 s stoji na idealni liniji (s ≈ 1945 m). Želja po boksih je vklopljena, `stopT` 0,00, zastav ni. Po 6,5 s se vanj zaletijo prvi tekmeci: 7 rumenih zastav, varnostni avto pri 68,4 s, rdeča zastava pri 69,8 s (dirka spet steče šele pri ~230 s). Kontrolni tek, isti avto brez želje po boksih: rumena pri 62,3 s, varnostni avto pri 63,8 s, brez naleta.
+- Preverjeno: potrjeno (simulacija, oba teka ponovljena).
 
 ### Srednje
 
@@ -57,6 +97,11 @@ _V delu._
 - Na prosti mapi (`track.free`) `wallCollide` ograj ceste ne upošteva (3294–3305, samo rob mape in stene predora `wall2`), `stepDebris` (`T.wall`) in `propStep` (`q.br`/`q.bl`) pa jih. Kos ali predmet daleč od stare ceste Toskane se v enem koraku premakne na črto njene ograje, desetine metrov od trka. `stepDebris` vzame tudi višino tal stare ceste (`T.yAt`, 3013) namesto `track.ground2`. Skupna koda: nova mapa na Toskani mora delovati do izbrisa testnih prog (`CLAUDE.md`).
 - **Primer:** nova mapa s privzetimi poškodbami (1), trk v steno predora z ~15 m/s ali več daleč od stare ceste, odpade del (najprej ogledalo). Simulacija v Node (`toskana`, `T.free` kot v `js/game.js:2392`, avto 40 m od stare ceste): pokrov motorja in stožec v enem koraku skočita 30,6 m, na `q.d` ≈ 9,4–9,5 (stara ograja).
 - Preverjeno: potrjeno (simulacija).
+
+**J24 · Prehitevanje pod zastavo: kazen se šteje samo za prvega prehitenega avta** · `js/core.js:6474` (`Race._flags`, igralec)
+- Nov dolg (`f.owe`) nastane samo, ko drugega ni (`!f.owe`), `f.ah.set(o, ahead)` pa stanje »pred/za« posodobi za vse avte. Drugi in naslednji avti, prehiteni v istih 10 s, so odtlej zapisani kot »za igralcem« in pozneje ne sprožijo ničesar.
+- **Primer:** dirka z zastavami, varnostni avto ali rumena zastava (`_noPass`): igralec v 10 s prehiti tri avte. Dolg je samo za prvega: igralec vrne eno mesto (ali dobi +5 s) in obdrži dve.
+- Preverjeno: potrjeno (branje kode in simulacija pregleda).
 
 ### Nizke
 
@@ -129,3 +174,47 @@ _V delu._
 - `Math.min(1, (dt || 0) * 5 + (goal < pkF.vis ? 0.05 : 0))` pri ugašanju prišteje stalnih 0,05 na sličico, neodvisno od `dt`.
 - **Primer:** posnetek s TV kamerami na `pikes` ali drugi progi s soncem v kadru, sonce gre za greben: ugasne v ~0,125 s pri 60 sličicah na sekundo in ~0,155 s pri 30; v ustavljenem posnetku ali foto načinu (`dt = 0`) ugaša za 5 % na sličico.
 - Preverjeno: potrjeno (branje kode).
+
+**J25 · Prehitevanje pod zastavo tik pred ciljem ostane brez kazni** · `js/core.js:6468` (`Race._flags`, igralec)
+- Blok kazni teče samo, dokler igralec ni v cilju (`!P.finished`). Dolg, ki ob prečkanju ciljne črte še teče (10 s za vrnitev mesta), izgine: ni ne vrnjenega mesta ne +5 s.
+- **Primer:** dirka z zastavami, rumena zastava ali varnostni avto v zadnjem krogu: igralec prehiti avto manj kot 10 s pred ciljem in obdrži mesto brez kazni.
+- Preverjeno: potrjeno (branje kode).
+
+**J26 · Nasvet po radiu (spodrez ali prehit s postankom) po prvem postanku tekmeca računa z napačno gumo** · `js/core.js:6688` (`Race.pitDuel`)
+- Naslednjo zmes tekmeca bere kot `aS.seq[aS.hist.length]`. `hist` se ob vsakem postanku podaljša (6354), `_stratStop` (5856–5857) pa `seq` ob vsakem postanku zamakne (`slice(1)`), tako da je `seq[0]` trenutna zmes. Pred prvim postankom je indeks pravilen, po njem za enega predaleč: vzame zmes postanka pozneje ali `undefined`, nato trenutno zmes (`|| a.ty.c`).
+- **Primer:** dirka z zmesmi gum in strategijo, tekmec z dvema postankoma: po njegovem prvem postanku ocena za radio (`under`/`over`) računa z oprijemom napačne zmesi. Simulacija pregleda na `troisrivieres` (14 krogov) je pokazala napačno zmes po prvem postanku.
+- Preverjeno: potrjeno (simulacija pregleda).
+
+**J27 · Hitri vstop: `?vreme=constructor` ali `?vreme=__proto__` gre skozi preverjanje** · `js/core.js:7403` (`quickArgs`)
+- `QUICK_WX[low('vreme')]` bere tudi lastnosti prototipa objekta, zato je `q.weather` funkcija ali prazen objekt, `q.bad` pa ostane prazen (brez opozorila o napačnem parametru).
+- **Primer:** `index.html?proga=spa&vreme=constructor`: v Node `quickArgs` vrne `weather` vrste `function` in `bad: []` (`vreme=__proto__`: objekt, `bad: []`; `vreme=xyz` pravilno `bad: ['vreme=xyz']`). Kaj igra z napačnim vremenom naredi naprej, ni preverjeno. Samo hitri vstop za preizkuse (`tests/README.md`).
+- Preverjeno: potrjeno (Node).
+
+**J28 · Dirka po cesti: vrstni red na cilju pri velikem polju po vrstnem redu korakov, ne po času** · `js/core.js:6947` (`Race._progressOpen`)
+- Na krožni progi cilj pri nivoju podrobnosti (`m > 1`) avto vstavi po času prečkanja (6194); na cesti (`T.open`) ga samo doda na konec (`finishOrder.push`), čeprav je `ft` (`tAt`) preračunan znotraj daljšega koraka LOD.
+- **Primer:** dirka po cesti z več kot 29 tekmeci (npr. `balea`, `harju`, `tianmen`): dva oddaljena avta prečkata cilj v istem daljšem koraku (do 1/15 s); avto, obdelan prej v zanki, dobi boljše mesto, tudi če ima slabši `finishTime`.
+- Preverjeno: verjetno (branje kode).
+
+**J29 · Dim gorečega ali kadečega se avta zunaj pogleda vseeno utihne** · `js/render.js:6737` (`updateCars`), izjema v `js/render.js:6725`
+- 6725 namenoma ne utiša učinkov avta, ki gori ali se kadi (`v.fire`, `dmg > 0.45`), da ima ob prihodu v pogled že zrasel steber dima. Blok odpadljivih delov (`v.parts`) v `finally` nastavi `particles.mute = sparkP.mute = !vis`, zato `engineFx` (6744) zunaj pogleda ne odda dima in plamenov; `glows` ostane neutišan. Komentar v 9123 (»out of the view: its smoke and glow muted«) nasprotuje komentarju v 6725, zato namen ni čisto jasen.
+- **Primer:** dirka s poškodbami, tekmec se kadi ali gori za igralcem (zunaj pogleda kamere za avtom); v posnetku TV kamera preklopi nanj ali ga igralec po vrtenju zagleda: dim začne rasti iz nič, sij ognja pa je že tam.
+- Preverjeno: verjetno (branje kode).
+
+## Obseg pregleda
+- Prvi prehod (ena seja): razred `Race` (zastave, varnostni avto, postanki, sektorji, leteči štart), trki, AI in promet; v `js/render.js` pogled avtov, varnostni avto, razbitine, popravilo v boksih, kamera boksov in ogenj.
+- 9 vzporednih pregledov po vrsticah (`main` 90e09dac): `js/core.js` 32–1446 (proga), 1446–2694 (fizika avta, gume, poškodbe), 2694–3658 (trki, razbitine, predmeti), 3658–5495 (AI, promet, ljudje, policija), 5495–7418 (dirka, drugi prehod); `js/render.js` 1–3430 (avti, kolesa, deli), 3430–6014 (predmeti, luči, priklop dirke), 6014–8523 (izris sličice, poškodbe, prevračanje), 8523–10534 (kamera, nebo, učinki).
+- Samo preleteno: policijski trki (`obbHit`, `crashCollide`, `boxCollide`, `js/core.js:3577–3656`). Zunaj obsega: `js/nvwalls.js`, `js/game.js`, `js/world*.js` (Pregled sveta).
+- Najdbe so preverjene v Node (`tests/lib/core.js`, `tests/lib/sim.js`) ali s sledjo v kodi; v brskalniku ni bilo preizkusov, zato je videz (megla, sence, dim) ocenjen iz kode.
+
+## Zavrnjeni kandidati
+Preverjeni in zavrženi, da jih naslednji pregled ne išče znova:
+- Dirka: druga tretjina (`_thirds`) pri letečem štartu (kolona na nobeni pravi progi ne seže do tretjine kroga); DRS brez preverjanja časa (0 napačnih od 109 na `spa` s 50 tekmeci); podvojene štartne številke; odstop v boksih; zaokroževanje sektorjev; dva igralca v spletu na istem štartnem mestu (`js/game.js` jima vedno da različni); AI ob avtu, ki stoji v pasu boksov (pri izvozu iz boksov pravilno).
+- Fizika avta: prednastavitve pomoči zunaj razpona, prazna nastavitev, menjava modela pri Novi, NaN ob štartu, odvisnost od koraka (stalni 1/120 s, LOD do 1/15 s); obraba gum KOLIBRIJA (namerna izbira).
+- Trki in predmeti: Kaskaderska različica trkov ob ~5 % udarcev pridobi energijo (namerno pretirana); predmeti, ki obmirujejo rahlo nagnjeni, in podrti drogovi, ki trčijo samo v sredini (kozmetika).
+- AI, promet, policija: števci zebre, AI za prometom (dirka ga reši po 3,5 s), patrulje in neoznačen civilni avto, kazen 5 s za podrtega motorista (namerno).
+- Proga: šiv zaprte zanke, ovijanje razdalje na cesti, robovi zgradb, stranske ceste, luže na `sani`: nobena prava proga jih ne sproži; v zelo ozkih ovinkih je fizična ograja nekaj metrov znotraj narisane (približek).
+- Izris: materiali patrulj in geometrija, ki se sprosti, ko je še v rabi (three.js r128 ju zgradi znova: samo ponovno prevajanje oz. nalaganje); barve in delne posodobitve `InstancedMesh`; nebo, zvezde, garaža in posnetki avtov (narejeni enkrat ali pravilno sproščeni); zamik kamere po reševanju s padca (samo testna proga); rez TV kamere na šivu (namerno).
+
+## Opaženo zunaj obsega (nepreverjeno)
+- `js/game.js:6560` (`carPic`) in `js/game.js:739` (`Render.setShowCar`) ne podata delov avta (`deli`): slike avtov v meniju in razstavni prostor morda kažejo tovarniške dele namesto izbranih.
+- `js/garage3d.js:4499` in `thumbCanvas` (`js/garage3d.js:6405`) nastavita prosojnost na material, ki je videti skupen (senca pod avtom).
