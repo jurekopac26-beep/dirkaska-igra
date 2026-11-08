@@ -2698,5 +2698,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "c5698642eb3045924dbe4dab"
+ },
+ "izoard/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 194.45,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "020fab46bf1e1d84c46dbbf5"
+ },
+ "izoard/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 209.24,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "88f18c45e5aae1155b820b98"
+ },
+ "izoard/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 179.22,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ecfd12c94059af8eca8d7e03"
+ },
+ "izoard/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.82,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c4fca4da4aaa37728db7ecbc"
+ },
+ "izoard/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 194.36,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d7047e5119d9e6edfc2ca37a"
  }
 }

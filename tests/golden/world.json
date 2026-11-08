@@ -1441,5 +1441,25 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "4a4c6d96"
   }
+ },
+ "izoard": {
+  "meshes": 1851,
+  "verts": 869424,
+  "instances": 45134,
+  "props": 91,
+  "crowd": 365,
+  "world": "f2ab9350",
+  "propsHash": "314e1f1c",
+  "floor": "123c3d1a/10612",
+  "groups": {
+   "-:MeshLambertMaterial": "e8885f8d",
+   "-:MeshPhongMaterial": "2eceaecb",
+   "-:MeshBasicMaterial": "c2129465",
+   "irFar:MeshLambertMaterial": "8870fc3",
+   "crowd:MeshLambertMaterial": "aa0f3d78",
+   "ao:MeshBasicMaterial": "a30f5106",
+   "tyremarks:MeshBasicMaterial": "5e30bf4",
+   "roadwear:MeshLambertMaterial": "3df010ca"
+  }
  }
 }

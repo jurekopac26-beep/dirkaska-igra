@@ -383,5 +383,12 @@
   "kverts": 590,
   "maxKverts": 745,
   "jsMs": 1.48
+ },
+ "izoard": {
+  "calls": 181,
+  "maxCalls": 231,
+  "kverts": 545,
+  "maxKverts": 754,
+  "jsMs": 1.49
  }
 }

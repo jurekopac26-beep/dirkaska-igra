@@ -42,6 +42,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Silkeborg, Danska](docs/proge/silkeborg.md)
 - [Kågeröd, Švedska](docs/proge/kagerod.md)
 - [Sosnová, Češka](docs/proge/sosnova.md)
+- [Izoard, Francija](docs/proge/izoard.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik, ostale gredo v test. Do izbire so Bathurst, Great Alpine Road, Longford, Mount Hotham, Newcastle in Townsville (zgoraj) prave proge v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -317,3 +318,8 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Sosnove: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Sosnove: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Gozd in višine pod krošnjami na progi Sosnová: High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Izoard (sredinska črta ceste D902, potoki, stavbe, parkirišča, daljnovod z drogovi): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-10-21.0); lega obeliska na prelazu iz glavnega API-ja OpenStreetMap. Iz njih izpeljani podatki v `js/tracks/izoard.js` so na voljo pod ODbL 1.0.
+- Višine in teren Izoarda (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Izoarda: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Barve tal in raba tal Izoarda (gola tla, melišča, trava): Contains modified Copernicus Sentinel data (2025): Sentinel-2 L2A, posnetek 9. 7. 2025 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Drevesa in grmovje Izoarda (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
