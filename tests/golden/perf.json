@@ -369,5 +369,12 @@
   "kverts": 297,
   "maxKverts": 346,
   "jsMs": 4.42
+ },
+ "killar": {
+  "calls": 151,
+  "maxCalls": 190,
+  "kverts": 304,
+  "maxKverts": 420,
+  "jsMs": 4.65
  }
 }

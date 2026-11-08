@@ -1384,5 +1384,25 @@
    "lifeShadow:MeshBasicMaterial": "e85cff5b",
    "life:MeshBasicMaterial": "836cc7d6"
   }
+ },
+ "killar": {
+  "meshes": 1478,
+  "verts": 918634,
+  "instances": 43644,
+  "props": 93,
+  "crowd": 161,
+  "world": "ec388a42",
+  "propsHash": "1ba5bb22",
+  "floor": "b88dd46b/9520",
+  "groups": {
+   "-:MeshLambertMaterial": "cee87615",
+   "-:MeshPhongMaterial": "d86f1c90",
+   "-:MeshBasicMaterial": "80bb9302",
+   "crowd:MeshLambertMaterial": "a1f2d9b3",
+   "ao:MeshBasicMaterial": "d1bcb822",
+   "life:MeshLambertMaterial": "69122a9a",
+   "lifeShadow:MeshBasicMaterial": "e1a7401c",
+   "life:MeshBasicMaterial": "6a3c15a6"
+  }
  }
 }
