@@ -108,6 +108,32 @@ Stanje (seja 7. 11. 2026 zvečer; predaja, če kontekst preseže ~300 tisoč že
 - 9 popravek (8. 11. 2026): vreme iz glave v izbrano kartico zgoraj desno (`wxColumn` ga ležeče doda v `#map`, CSS `body.land #map .wxc`, napis 15 px; `ringPlace` ga zbledi z grafom in gumbi kamer); ime proge na sredini glave (do 680 px). Tapi na vremenu ne začnejo potega (kot prej gumbi kamer).
 - 10 narejeno (8. 11. 2026): števec `.cnt` (`T.count` v `makeT`, `MOCK` ga doda v `#map`): pokonci (10, 456), ležeče (262, 260) v izbrani kartici; 26 prog (`vse-proge.js` znova zgrajen z `orodja/vse-proge.js` po spoju `main`: Newcastle, Townsville, Longford in Mount Hotham so tam testne), Vršič TEST. Pokonci se posnetek spremeni samo v kotu s števcem. Preverjeno 640 × 360, 740 × 360, 892 × 412, 915 × 412, pokonci 360 × 640 in 412 × 892, puščici, poteg, vreme (sneg, nevihta, dež; izbira ostane po vrtenju), konec seznama (26 / 26 → TEST → 1 / 26), obrat telefona. Živa maketa, različica 16.
 
+## Vgradnja v igro (sklopi 7–12; uporabnik 8. 11. 2026 ob ~18.20 prek Mateja: »Začni nocoj«)
+
+Vse iz »Zadnjih odločitev« in »Izboljšav makete« gre iz makete (`maketa-menija/izbira-proge/`, živa maketa v16) v igro: `js/menu.js` (`vTrack`), `css/menu.css`, nove datoteke `js/menu-*.js`. Povod (uporabnik 8. 11.): »garaža in meni nista enaka kot na slikah, po katerih smo delali« in »na meniju se še vedno ne da klikniti na državo ali svet«. Garaža (`garaza.html`) ni del te teme.
+
+- **En pull request:** veja `meni/vgradnja`, osnutek #516; vsi sklopi gredo na isto vejo (en krog testov na `main`). Vsak sklop je svoja seja (»Naredi sklop N po docs/meni-izbira-proge.md«, veja `meni/vgradnja`, Opus, napor max); na koncu zapiše predajo pod »Predaja vgradnje«, z `create_session` zažene naslednji sklop (`source_url` repozitorija, isto okolje) in Mateju (session_01Ck3D3V98RrXZPkrSzp6VxL) pošlje eno vrstico. Ko so narejeni vsi sklopi in so povezani testi zeleni, gre #516 v vrsto (`docs/vrsta.md`) pred proge in ostane osnutek do vrste.
+- **Mere:** maketa je narisana za 412 × 892 (pokonci) in 892 × 412 (ležeče); igra je odzivna (od 360 × 640 in 640 × 360 naprej), zato iz makete veljajo razmerja, odmiki in velikosti pisav, ne absolutne lege. Po vsakem sklopu `node tests/browser/menu.test.mjs`, `node tools/stamp.js --check`, `npm run test:related`; commit in push vsaj vsakih 30 min.
+- **Obremenitev telefona:** meni ne riše nič, kar ne miruje brez razloga; pred dirko vse počiva (kot `MenuCar.rest()`); 3D Zemlja riše samo ob premikanju, šibek telefon (`navigator.deviceMemory <= 4` ali `maxTextureSize < 4096`) dobi manjšo teksturo `assets/geo/earth2k.webp`, gostota slikovnih pik največ 2.
+- **Testne proge** so zamrznjene: meni jih našteva kot zdaj (na koncu, TEST), njihovih datotek ne spreminja; preverjanja na pravih progah (Spa, Bathurst).
+- **Pravno:** viri z licenco v »Zasluge« (`README.md`) in v `creditsSheet` menija; table držav samo z imeni držav v angleščini.
+- **Vprašanja** s slikami na stran Odločitve računa (`docs/vprasanja.md`); do odgovora velja privzeta izbira.
+
+| Sklop | Vsebina | Čas | Stanje |
+|---|---|---|---|
+| 7 | Pokonci: glava (puščica nazaj 78 × 52 namesto hiške, samo kraj 44 px, globus), slika do vrha brez temnega pasu, temni del z zaobljenima zgornjima vogaloma (13 px), vreme pod globusom (5 ikon, *Snow* = letni čas zima; *···* ostane pod njimi), gumbi kamer spodaj desno, graf pod puščico v vseh kamerah (širok kot puščica, rumeno polnilo), števec prog spodaj levo (`17 / 26`, na testni progi TEST), vrstica (zastava levo, *Best race*, *Length*, *Climb* ali *Corners*, desno število tekmecev z ikono štartne mreže), spodaj samo *Race!*; ležeče isti elementi v sedanji postavitvi (do sklopa 10); testi | 5–6 h | v delu (8. 11.) |
+| 8 | Zastava v vrstici → hitra izbira (`izbor.js`: list od spodaj, iskanje po kraju in državi, filtri *Circuit*, *Open road*, *Rally* in dolžina, države po celinah, seznam prog države), kartica proge (oblika od zgoraj, graf, *Select*, *Race!*), napredek (medalja 1–3, kljukica, NEW: na zastavah, v seznamih, na kartici in v vrstici), tipka nazaj (`history`) in tresljaj | 6–7 h | |
+| 9 | Globus v glavi → 3D Zemlja (`zemlja.js`: three.js igre, vrtenje z vztrajnostjo, približanje, zlate države, bucike prog z napredkom, napisi držav in prog, kartica države → kartica proge, gumb na trenutno progo); dan in noč na Zemlji in globusu v glavi (`GLOBE.sun()`); globus se ob menjavi proge zavrti do nove države | 6–7 h | |
+| 10 | Ležeči vrtiljak 5.1 (točka 9: kartica izbrane proge z grafom, vremenom, števcem in gumbi kamer, sosedi, puščici ‹ ›, poteg, ~300 ms; hitra izbira kot panel desno, Zemlja s kartico desno); poteg po sliki tudi pokonci (slika sledi prstu) | 5–6 h | |
+| 11 | Table po državah (`SIGNS` in `signLook` iz `wxfx.js`, `table-drzav.json`: 20 držav in države novih prog; ime države na sredini, obraba), senca avta na tleh (v soncu malo levo, temna pod kolesi), tabla in avto prideta ob menjavi proge s strani | 4–5 h | |
+| 12 | Vreme čez cel meni (`wxfx.js`; odprto vprašanje 2 »kdaj« ni odgovorjeno, zato zadnji): *Dry* sonce, *Rain* dež, kaplje in moker pod z odsevom, *Changing* mavrica, *Storm* strela, *Snow* metež in sneg na gumbih, vrstici, tabli in avtu, prehod ~1 s; nato dokumentacija (`README.md` »Nov meni«, `docs/igra.md`, kazalo), celotni testi in vrsta | 6–8 h | |
+
+Skupaj ≈ 32–39 ur dela. Sklopi gredo zaporedno brez premorov: 7 do ~9. 11. ob 1.00, 8 do ~8.00, 9 do ~15.00, 10 do ~21.00, 11 do ~10. 11. ob 2.00, 12 do ~10.00; nato vrsta za `main` pred progami (pred #516 so v vrsti #379, #322, #305, Novi avti, Zvok in sovoznik, #372 in morda #511, #515): na `main` predvidoma sre. 11. 11.
+
+### Predaja vgradnje
+
+- **Sklop 7** (session_01Ck3D3S9PiimWFjdb4e3tWS, 8. 11.): v delu.
+
 ## Sklopi
 
 | Sklop | Vsebina | Čas | Stanje |
@@ -118,6 +144,7 @@ Stanje (seja 7. 11. 2026 zvečer; predaja, če kontekst preseže ~300 tisoč že
 | 4 | Tri kamere: zemljevid, prelet (samo start in cilj, graf), kamera na zavoju | 5–6 h | na main (PR #255, 2. 11. 2026) |
 | 5 | Tekmeci 0–100 (nova nastavitev, meritev telefona) | 3–4 h | na main (PR #267, 4. 11. 2026) |
 | 6 | Uporabnikovi popravki, dokumentacija, celotni testi | 2–3 h | PR #295: na main v zbirni #303, popravki po preizkusu na telefonu za njim (5. 11. 2026) |
+| 7–12 | Vgradnja makete v igro (razdelek »Vgradnja v igro«) | 32–39 h | v delu na veji `meni/vgradnja`, osnutek #516 (od 8. 11. 2026) |
 
 ### Sklop 1: kaj je narejeno
 
