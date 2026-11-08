@@ -10,7 +10,7 @@
   const {
     Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, campLot, parkedCar, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
     crowdRun, crowdUV, cyl, gable, ico, inPoly, lerp, mergeBands, nrDecalTex, nrDem, nrDist, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf,
-    nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
+    nrBankY, nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
     shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS, pitJunction, pitKerbs, pitOpen
   } = API;
   const { auTreeGeo, auRooGeo, auRoos, btGrassTex, btGumGeo, RIO_TP, rioTreeGeo, rioFlowerGeo, RIO_BLOOM, rioTree, rioWet, rioPits, rioExtra, rioPylon, rioPre, cpPrep, cpPark, cpTrees } = API;   // (the own parts of the worlds on this builder, in js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js, loaded before this file: tools/razdeli-proge.mjs)
@@ -429,14 +429,15 @@
   // the verge's cross-section beyond the road edge ([offset, height above the road]), lifted onto the ground where it rises: the road ribbons
   // and the knocked props' floor (rbringProps) use the same rows
   function rbVerge(i, side) {
-    const w = T.w, bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y)]; };
+    const w = T.w, bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], bk = T.bank ? (q) => nrBankY(i, q) : () => 0, lift = (o, h) => { const q = side * o; return [o, Math.max(h, nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y - bk(q))]; };   // (bk: a banked corner's tilt, Zandvoort: the rows are above the banked surface, Pt adds it)
     return [[w, 0.0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
   }
   // knockable props: posts every 95-130 m and tyre walls at the corner exits, on level verge only; not on the grid and the pit straight, not
   // on the run-offs (their tarmac is drawn above the verge), nor where the pit lane leaves and joins
   function rbringProps(out, skip, per) {
     out.propR = 150;
-    out.propFloor = propFloorTable(null, (i, side) => rbVerge(i, side));
+    out.propFloor = T.bank ? propFloorTable(null, (i, side) => rbVerge(i, side).map(([o, h]) => [o, h + nrBankY(i, side * o)]), { cap: (i, side, o) => 0.3 + Math.max(0, nrBankY(i, side * o)) })   // (a banked corner: the floor rides with it, as the Karussell's)
+      : propFloorTable(null, (i, side) => rbVerge(i, side));
     return out.propStats = roadsideProps(out.props, { post: per ? [150, 200] : [95, 130], postEdge: [1.6, 2.2], exits: per ? 0 : 8, apexes: per ? 0 : 2, wallEdge: [1.6, 2.2], stacks: [5, 7], rows2: 0.3,   // (per: the period look, no tyre stacks)
       floor: out.propFloor, skip: (i, side) => skip(i, side) || !!(side > 0 ? T.gravR[i] : T.gravL[i]) });
   }
@@ -490,7 +491,8 @@
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- road: asphalt, white edge lines, red and white kerbs (256 m chunks, culled; the grass verges out past the barriers at the end) ---- */
-    const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
+    const Pt = T.bank ? (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y + nrBankY(i, o), T.pz[i] + T.nz[i] * o]   // (a banked corner tilts the road, its kerbs, verges and barriers: Zandvoort)
+      : (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
@@ -710,7 +712,7 @@
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
         const j = (i + 1) % N; if (!fc[i] || !fc[j] || (side === PSD && PD && (pitOpen(i) || pitOpen(j)))) { acc += ds; continue; }   // (none where the pit lane joins the circuit)
-        const e = fc[i] === 2 ? 1.25 : 0.55, Q = (ii, y) => { const o = side * (bar[ii] + e); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y, T.pz[ii] + T.nz[ii] * o]; };
+        const e = fc[i] === 2 ? 1.25 : 0.55, Q = (ii, y) => { const o = side * (bar[ii] + e); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y + (T.bank ? nrBankY(ii, o) : 0), T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + ds) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
         fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, 4.2), Q(i, 4.2), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.3], [u0, 1.3]]);
         if (i % 3 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] - 0.2, p[2], 0.1, 4.45, 0.1, T.hd[i], [0.6, 0.61, 0.64]); }
