@@ -347,6 +347,7 @@
   // the map from above: the whole route (start to finish) as big as fits the frame (not blurred), the route's line, flags and point the same
   // size on the screen however far the map is zoomed. An open road is turned to run up the frame (start at the bottom, finish at the top)
   // when the frame is not much wider than it is tall; in a wide, short frame it would shrink to a sliver, so there it lies along the frame
+  const NAME_ROOM = 66;   // (px over the route's top: its flag (13 px over the point) and the name over it (43 px with its height under it))
   function fitMaps() {
     if (!app) return;   // (the old menu is on: the menu is not built, and a window that changes its size must not stumble on it)
     for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
@@ -356,13 +357,17 @@
       if (rg) { if (a) rg.setAttribute('transform', 'rotate(' + a + ' ' + T.W / 2 + ' ' + T.H / 2 + ')'); else rg.removeAttribute('transform'); }
       if (bg) bg.style.transform = a ? 'rotate(' + a + 'deg) scale(' + (Math.max(W / H, H / W) * 1.06).toFixed(3) + ')' : '';   // (the blurred backdrop turns with the map)
       // the route is centred in what the screen's own things leave of the picture (keepOut: the head over it, the weather down its right
-      // side, the counter and the cameras at its foot), with room at the top for the finish's name; the blurred backdrop fills whatever falls
-      // outside the map tile, so nothing is cropped or left empty
-      const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0), K = keepOut(box);
-      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + 40, padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
-      const s = Math.min(availW / rw, availH / rh), k = 0.5 / s;
+      // side, the counter and the cameras at its foot), with room at the top for the finish's name over its flag (NAME_ROOM); where the
+      // track has the real land painted round its map (D.wideMaps: E, the land's margin) it reaches every edge of the picture: the map at
+      // least as big as that takes, the view kept inside the land (the route a little off the middle, or a little bigger, where it must be);
+      // otherwise the blurred backdrop fills whatever falls outside the map tile, so nothing is cropped or left empty
+      const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0), K = keepOut(box), E = (D.wideMaps || {})[box.dataset.map] || 0;
+      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + NAME_ROOM, padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
+      const q = Math.abs(a) === 90, LW = (q ? T.H : T.W) + 2 * E, LH = (q ? T.W : T.H) + 2 * E;   // (the land turned with the map: a quarter turn swaps its sides)
+      const s = Math.max(Math.min(availW / rw, availH / rh), E ? Math.max(W / LW, H / LH) : 0), k = 0.5 / s;
       const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-      const vx = cx - (padL + availW / 2) / s, vy = cy - (padTop + availH / 2) / s;   // (padTop: the finish's name over its flag under the head)
+      let vx = cx - (padL + availW / 2) / s, vy = cy - (padTop + availH / 2) / s;
+      if (E) { const lx = T.W / 2 - LW / 2, ly = T.H / 2 - LH / 2; vx = Math.min(Math.max(vx, lx), lx + LW - vw); vy = Math.min(Math.max(vy, ly), ly + LH - vh); }
       svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + vw.toFixed(1) + ' ' + vh.toFixed(1));
       svg.style.setProperty('--k', k.toFixed(3));
       const up = a ? ' rotate(' + (-a) + ')' : '';   // (the names stay upright on a turned map)
@@ -395,16 +400,18 @@
     const keep = over.map(e => { const r = e.getBoundingClientRect(); return [r.left - fb.left - 4, r.right - fb.left + 4, r.top - fb.top - 4, r.bottom - fb.top + 4]; }).filter(k => k[1] > k[0] + 8 && k[3] > 0);
     mks.forEach((g, i) => {
       const el = lab.children[i], f = $('.fl', g).getBoundingClientRect(), x = f.left - fb.left, w0 = el.offsetWidth, h0 = el.offsetHeight, right = g.classList.contains('f');
-      // from its pole (a start's to the right, a finish's to the left), else the other way, else slid along to the nearest clear place;
-      // where a long name has no clear place (a narrow picture: between the cameras' buttons and the weather) a little smaller
+      // over the flag from its pole (a start's to the right, a finish's to the left), else the other way, else slid along to the nearest
+      // clear place; with no clear place over it (the head or the graph just over the flag) beside the flag, its top at the flag's; where a
+      // long name has no clear place at all (a narrow picture: between the cameras' buttons and the weather) a little smaller
       let at1 = null;
       for (const s of [1, 0.86, 0.74]) {
-        const w = w0 * s, h = h0 * s, y = Math.max(h + 2, f.top - fb.top - 3);   // (its bottom over the flag, never above the frame)
-        const at = (r) => r ? x + f.width + 3 - w : x - 3, want = at(right), inside = Math.max(4, Math.min(W - 4 - w, want));
-        const clear = (l) => l >= 4 && l + w <= W - 4 && !keep.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2]);
-        let l = [want, at(!right)].find(clear);
-        if (l == null) l = [inside].concat(...keep.map(k => [k[1], k[0] - w])).filter(clear).sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0];
-        at1 = [s, l == null ? inside : l, y];   // (clear nowhere: the smallest, inside the frame)
+        const w = w0 * s, h = h0 * s, y0 = Math.max(h + 2, f.top - fb.top - 3), y1 = Math.max(h + 2, f.top - fb.top + h);   // (its bottom: over the flag, never above the frame; beside it)
+        const at = (r) => r ? x + f.width + 3 - w : x - 3, want = at(right), inside = Math.max(4, Math.min(W - 4 - w, want)), near = (a, b) => Math.abs(a - want) - Math.abs(b - want);
+        const clear = (y) => (l) => l >= 4 && l + w <= W - 4 && !keep.some(k => l < k[1] && l + w > k[0] && y - h < k[3] && y > k[2]);
+        let y = y0, l = [want, at(!right)].find(clear(y0));
+        if (l == null) l = [inside].concat(...keep.map(k => [k[1], k[0] - w])).filter(clear(y0)).sort(near)[0];
+        if (l == null && (l = [x - 3 - w, x + f.width + 3].filter(clear(y1)).sort(near)[0]) != null) y = y1;
+        at1 = [s, l == null ? inside : l, y];   // (clear nowhere: the smallest, inside the frame, over the flag)
         if (l != null) break;
       }
       el.style.scale = at1[0] < 1 ? at1[0] : '';   // (about its bottom left corner: .mlab .fl-s)

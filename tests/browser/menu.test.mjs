@@ -571,7 +571,7 @@ try {
     const side = g.W > g.H, parts = side ? ['head', 'row', 'yard', 'nbrs', 'foot'] : ['row', 'yard', 'nbrs', 'foot'];
     const order = parts.every((k, i) => !i || g[parts[i - 1]].b <= g[k].t + 1);
     const lay = side ? g.st.l <= 0.5 && g.st.h >= g.H - 2 && Math.abs(g.st.w - g.W / 2) < g.W * 0.08 && parts.every(k => g[k].l >= g.st.r - 1) && order
-      : g.st.t <= 0.5 && g.head.t <= 0.5 && g.head.b <= g.st.t + 90 && g.st.b <= g.row.t + 1 && g.st.h >= g.H * 0.5 && order;
+      : g.st.t <= 0.5 && g.head.t <= 0.5 && g.head.b <= g.st.t + 90 && g.row.t >= g.st.b - 20 && g.row.t <= g.st.b + 1 && g.st.h >= g.H * 0.5 && order;   // (the row in the room, which lies a little over the picture's foot: --ov)
     T.check(`${w}x${h}: the track step${side ? ' (on its side: the stage left, the head and the rest right)' : ' (the picture from the top, the head over it)'}: the row, the yard, the neighbours and Race!, in order, all inside the screen`,
       lay && parts.every(k => inside(g[k])) && inside(g.head) && inside(g.go) && inside(g.st) && g.yard.h >= 50, JSON.stringify(g));
     T.check(`${w}x${h}: the row's numbers are not cut; the two neighbours side by side; the weather inside the stage, over the cameras; the counter and the cameras at the stage's foot, apart; the sign in the yard`,
