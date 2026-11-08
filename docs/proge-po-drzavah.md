@@ -21,7 +21,8 @@ Odločitve uporabnika 7. 11. 2026 ob 14.40–14.45, prek Mateja na tabli #382 (k
   - izvenserijska: Kildare, Irska (reli kros);
   - mestna: **London, Anglija** (namesto Budimpešte).
   - **London je izjema od pravila ena proga na državo**: Anglija že ima Crystal Palace, uporabnik pa je London izbral, ko je to vedel.
-  - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`. Seznam 50 prog (vprašanje `nove-proge-1-0-50`) še čaka.
+  - Načrt, podatki poti in vrstni red so v `docs/nove-proge-1-0.md`.
+- **Seznam 50 prog, delne odločitve** (uporabnik 8. 11. 2026 ob 14.44, prek Mateja, komentar 6722394383; vprašanje `nove-proge-1-0-50`): **Envalira, Andora** (#430) ostane dolga **0,73 km** (izjema od pravila 1–5 km samo za to progo; uporabnik: »Envalira naj bo dolga 0,73 km.«); rezervi sta **Meteora, Grčija** in **Šipka, Bolgarija**, Buenos Aires odpade; o **12 progah na čakanju** (Medeu … Dadès) se uporabnik odloči po predstavitvi jure.kopac26, do takrat se nobena ne začne.
 - **Potrditev seznama pred delom:** seznam je vprašanje na strani Odločitve partyslo in komentar na tabli #382; nobena proga s seznama ali s čakanja (tudi Medeu) se ne začne pred odgovorom uporabnika. Po potrditvi jih partyslo začne kljub meji 6 odprtih tem (izjema »tema, ki jo uporabnik začne kljub opozorilu«; odločitev uporabnika 7. 11. 2026 ob 15.16, komentar 6708059513), največ 2 seji s kodo hkrati.
 - **Mestne proge po središču velikih mest:** velika mesta (npr. London) dobijo kratko dirko po središču, v spodnjem delu razpona 1–5 km, po širokih glavnih ulicah, nabrežjih in trgih, z ograjami kot na uličnih dirkah; stavbe so generične, brez pravno spornih imen in podob (kot pri Monte Carlu). **Zanje pravilo izletne cone ne velja** (razdelek »Izletna cona«).
 
