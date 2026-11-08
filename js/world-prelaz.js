@@ -20,6 +20,25 @@
   /* ---- the looks of the passes. Land cover classes (def.lc, tools/proga): 0 alpine grass, 1 forest, 2 dwarf pine and shrubs, 3 built-up,
      4 rock faces, 5 water, 6 snow, 7 scree and bare ground ---- */
   const PL_LOOK = {
+    // Furka (Switzerland, the west side of the pass above Gletsch): green alpine pasture on the slope above the Rhône Glacier, mats of alpine rose,
+    // juniper and green alder in the gullies, the light grey granite and gneiss of the Aar massif in ice-worn slabs, crags and boulder fields,
+    // grey scree under the Furkastock, the last snow high in the shady gullies; the glacier's lake below the old hotel, the glacier itself on the
+    // horizon in the north (def.farDem.ice: plFarIce); the closed hotel by the hairpin (def.hotel: its shape, no name or lettering), the old
+    // milestone by the road (def.milestone); the Swiss signs: black chevrons on white in the hairpins, the centre line in 4 m dashes; sheep on
+    // the pasture, no tunnel at the end (the road goes on over the pass)
+    furka: {
+      seed: 4900, board: 'FURKA', sub: 'WALLIS', banner: ['FURKASTRASSE', '7 KEHREN · GLETSCH – FURKA'],
+      grass: [0.41, 0.5, 0.25], grassDry: [0.56, 0.55, 0.34], grassLush: [0.34, 0.48, 0.21], shrub: [0.17, 0.26, 0.14],
+      rock: [0.58, 0.58, 0.56], rockWarm: [0.61, 0.58, 0.53], lichen: [0.4, 0.41, 0.38], scree: [0.62, 0.62, 0.6],
+      sat: 0.5, satV: 1.35, snowLine: 2500, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.58, 0.58, 0.57], [0.64, 0.63, 0.61], [0.5, 0.5, 0.5], [0.61, 0.59, 0.55], [0.54, 0.55, 0.53], [0.46, 0.47, 0.46]],   // (the granite and the gneiss: light grey, a little warm, lichened)
+      centre: [0.95, 0.95, 0.92], dash: [4, 8], solidNear: 40,   // (the Swiss centre line: 4 m dashes, 8 m gaps; solid through the hairpins)
+      chev: ['#f6f6f2', '#16181c'], warn: 'tri', rail: 'steel', plates: 0, shoulder: [0.52, 0.52, 0.5],
+      fans: [[0.86, 0.1, 0.12], [0.96, 0.96, 0.96], [0.12, 0.24, 0.62], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+      cars: [[0.88, 0.88, 0.86], [0.2, 0.22, 0.25], [0.6, 0.62, 0.64], [0.14, 0.26, 0.5], [0.66, 0.12, 0.1], [0.74, 0.72, 0.66]],
+      roofs: [[0.28, 0.29, 0.31], [0.36, 0.35, 0.34], [0.24, 0.25, 0.27], [0.4, 0.3, 0.22]],   // (grey stone slabs and metal, a few of old larch)
+      sheep: 1, portal: 0, far: { lo: [0.38, 0.46, 0.27], hi: [0.52, 0.51, 0.48], dw: [0.18, 0.26, 0.16], snow: 2950 },
+    },
     // Bâlea (the Făgăraș Mountains, Romania): the glacial valley of the Bâlea under the cirque, green alpine pasture on the slopes with mats of
     // dwarf pine and juniper, grey-brown crystalline schist in crags, slabs and scree under the walls, snow lying on into the summer in the shady
     // gullies high up; the lake in the cirque with the huts and the stalls by it, the cable car up the valley, the tunnel's portal at the end
@@ -148,6 +167,19 @@
     for (let d = 0; d < 7; d++) { const sx = r() * S, sw = 4 + r() * 10; x.fillStyle = 'rgba(20,18,14,0.12)'; x.fillRect(sx, 0, sw, S); x.fillRect(sx - S, 0, sw, S); }   // (damp streaks down the face)
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (plWT = t);
   }
+  // the glaciers on the horizon (def.farDem.ice: WorldCover's snow and ice as runs over the far mesh's nodes, tools/proga; Furka's Rhône Glacier
+  // in the north): the nodes are the far mesh's first vertices, in the grid's order (irFar), so they are coloured over here once it is made:
+  // white under the firn high up, grey with the rock flour down the tongue, a cold blue on the steep icefall; a lake's nodes left as they are
+  function plFarIce(F) {
+    const D = T.def.farDem, nx = D.nx, nz = D.nz, n = nx * nz, C = F.mesh.geometry.attributes.color, base = API.VR.D.base, m = [new Uint8Array(n), new Uint8Array(n)];
+    [D.lake || [], D.ice].forEach((runs, r) => { for (let k = 0, p = 0, v = 0; k < runs.length; k++) { if (v) m[r].fill(1, p, p + runs[k]); p += runs[k]; v ^= 1; } });
+    const y = (i, j) => F.P0[3 * (Math.min(nz - 1, Math.max(0, j)) * nx + Math.min(nx - 1, Math.max(0, i))) + 1];
+    for (let k = 0; k < n; k++) { if (!m[1][k] || m[0][k]) continue;
+      const i = k % nx, j = (k - i) / nx, A = F.P0[3 * k + 1] + base, q = rpHash(i, j) - 0.5, sl = Math.hypot(y(i + 1, j) - y(i - 1, j), y(i, j + 1) - y(i, j - 1)) / (2 * D.cell);
+      const hi = sstep(2300, 2800, A), bl = sstep(0.3, 0.6, sl) * 0.6;
+      C.setXYZ(k, lerp(lerp(0.64, 0.92, hi) + q * 0.04, 0.66, bl), lerp(lerp(0.67, 0.95, hi) + q * 0.04, 0.8, bl), lerp(lerp(0.7, 0.98, hi) + q * 0.03, 0.9, bl)); }
+    C.needsUpdate = true;
+  }
   const plATex = {};   // (the board atlases of each look, made once and reused by every build of the road)
   function plAtlas(cps, finA) {   // text boards (8 rows of 1024 x 128): START, FINISH, CP1-CP4 with the altitude, the pass's board, the race's banner
     const key = L.seed + '|' + cps.join('|') + '|' + finA; if (plATex.a && plATex.ak === key) return plATex.a;
@@ -247,6 +279,7 @@
     const excluded = (x, z) => { const Lq = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lq) return false; for (let k = 0; k < Lq.length; k++) { const e = Lq[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     const inLake = (x, z) => { for (const Lk of P.lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && API.vrWater(x, z).e > -2) return true; return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
+    if (def.hotel) { const [x, z, Lh, Wh, a] = def.hotel; for (let u = -Lh / 2; u <= Lh / 2 + 0.01; u += Lh / Math.ceil(Lh / 6)) exclPush(x + Math.cos(a) * u, z + Math.sin(a) * u, Wh / 2 + 3); }   // (the hotel, drawn with the buildings)
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     exclPush(padF.x, padF.z, padF.r + 4);
     out.marks = {};   // (where the landmarks stand: the tests look for them)
@@ -423,6 +456,45 @@
         }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
+      // the closed hotel at a hairpin (def.hotel [x, z, length, width, angle], Furka's: between the legs of the fifth hairpin, the road round
+      // it on three sides; smaller than its footprint in OpenStreetMap, 49 x 11 m, to fit between the game's wider road, whose barriers close
+      // in to its walls there, def.narrow): three storeys of plastered walls on a stone plinth, the windows' frames round closed shutters, a
+      // mansard roof of slate with its dormers and chimneys; its shape only, no name or lettering
+      if (def.hotel) {
+        const [x, z, Lh, Wh, a] = def.hotel, g = scen.get(x, z), c = Math.cos(a), s = Math.sin(a), P = (u, v) => [x + c * u - s * v, z + s * u + c * v], RH = rng(L.seed + 23);
+        let lo = 1e9; for (const [u, v] of [[-Lh / 2, -Wh / 2], [Lh / 2, -Wh / 2], [Lh / 2, Wh / 2], [-Lh / 2, Wh / 2], [0, 0]]) lo = Math.min(lo, caGround(...P(u, v)));
+        const plinth = [0.56, 0.55, 0.52], wall = [0.92, 0.86, 0.7], frame = [0.92, 0.91, 0.87], shut = [0.3, 0.37, 0.31], slate = [0.25, 0.26, 0.29], zinc = [0.42, 0.43, 0.45];
+        const FL = 3.2, H0 = 1.3, top = lo + H0 + 3 * FL, nW = Math.max(2, Math.round((Lh - 4.4) / 3.2)), du = (Lh - 4.4) / nW;
+        box(g, x, lo - 1.5, z, Lh + 0.3, H0 + 1.5, Wh + 0.3, a, plinth, null, true);
+        box(g, x, lo + H0, z, Lh, 3 * FL, Wh, a, wall, null, true);
+        box(g, x, top - 0.1, z, Lh + 0.4, 0.3, Wh + 0.4, a, frame, frame, true);   // (the cornice)
+        for (let f = 0; f < 3; f++) { const wy = lo + H0 + f * FL + 0.75;
+          for (const sd of [-1, 1]) {
+            for (let k = 0; k <= nW; k++) { const u = -Lh / 2 + 2.2 + k * du, [fx, fz] = P(u, sd * (Wh / 2 + 0.03)), [sx, sz] = P(u, sd * (Wh / 2 + 0.07));
+              box(g, fx, wy - 0.12, fz, 1.3, 1.95, 0.06, a, frame, null, true); box(g, sx, wy, sz, 1.0, 1.7, 0.05, a, vary(shut, RH, 0.06), null, true); }
+            for (const v of [-Wh / 4, Wh / 4]) { const [fx, fz] = P(sd * (Lh / 2 + 0.03), v), [sx, sz] = P(sd * (Lh / 2 + 0.07), v);
+              box(g, fx, wy - 0.12, fz, 0.06, 1.95, 1.3, a, frame, null, true); box(g, sx, wy, sz, 0.05, 1.7, 1.0, a, vary(shut, RH, 0.06), null, true); } } }
+        const ring = (yy, e) => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([p, q]) => { const [rx, rz] = P(p * (Lh / 2 + e), q * (Wh / 2 + e)); return [rx, yy, rz]; });
+        const r0 = ring(top + 0.2, 0.35), r1 = ring(top + 2.9, -0.75), inn = [x, top, z];
+        for (let k = 0; k < 4; k++) g.quadO(r0[k], r0[(k + 1) % 4], r1[(k + 1) % 4], r1[k], k % 2 ? vary(slate, RH, 0.04) : slate, inn);   // (the mansard's steep slopes)
+        g.quadO(r1[0], r1[1], r1[2], r1[3], zinc, [x, top, z]);   // (its low top, sheeted)
+        for (const sd of [-1, 1]) for (let k = 0; k < nW; k += 2) { const u = -Lh / 2 + 2.2 + (k + 0.5) * du, [dx, dz] = P(u, sd * (Wh / 2 - 0.45)), [wx, wz] = P(u, sd * (Wh / 2 + 0.17));   // the dormers
+          box(g, dx, top + 0.5, dz, 1.4, 1.5, 1.2, a, wall, null, true); gable(g, dx, top + 2.0, dz, 1.4, 1.7, 0.7, a + Math.PI / 2, slate, wall); box(g, wx, top + 0.75, wz, 0.9, 1.0, 0.05, a, vary(shut, RH, 0.06), null, true); }
+        for (const u of [-Lh * 0.3, 0, Lh * 0.3]) { const [hx, hz] = P(u, (RH() - 0.5) * Wh * 0.3); box(g, hx, top + 2.4, hz, 0.9, 1.7, 0.6, a, [0.62, 0.56, 0.5], [0.16, 0.15, 0.15]); }   // (the chimneys)
+        CR.block(x, z, Lh + 1, Wh + 1, a); nBld++; out.marks.hotel = [x, top + 3, z];
+      }
+      // the old milestone by the road (def.milestone [s after the start, side]: Furka's, of granite from the 19th century): a stone a metre high
+      // with a rounded top, just past the barrier
+      if (def.milestone) { const [mx, mz, mi] = onSide(T.startS + def.milestone[0], def.milestone[1], 0.7), my = caGround(mx, mz), g = scen.get(mx, mz), gr = [0.7, 0.69, 0.66];
+        box(g, mx, my - 0.3, mz, 0.5, 1.2, 0.36, T.hd[mi], gr, [0.76, 0.75, 0.72]); box(g, mx, my + 0.9, mz, 0.4, 0.14, 0.3, T.hd[mi], gr, [0.78, 0.77, 0.74]); exclPush(mx, mz, 1.2); CR.avoid(mx, mz, 0.8); out.marks.milestone = [mx, my, mz]; }
+      // a viewpoint past the barrier (def.lookout [s after the start, side]: Furka's, over the glacier's valley): a bench and a coin telescope on a
+      // gravel plot, facing out from the road
+      if (def.lookout) { const s0 = T.startS + def.lookout[0], sd = def.lookout[1], [bx, bz, bi] = onSide(s0, sd, 1.6), [tx, tz] = onSide(s0 + 3.2, sd, 1.4), by = caGround(bx, bz), ty = caGround(tx, tz), g = scen.get(bx, bz), h = T.hd[bi], nx = T.nx[bi] * sd, nz = T.nz[bi] * sd;
+        box(g, (bx + tx) / 2, Math.min(by, ty) - 0.3, (bz + tz) / 2, 6.0, 0.36, 2.6, h, [0.6, 0.58, 0.53], null, true);   // (the plot)
+        box(g, bx, by + 0.42, bz, 1.8, 0.08, 0.45, h, [0.5, 0.36, 0.22]); box(g, bx - nx * 0.22, by + 0.5, bz - nz * 0.22, 1.8, 0.45, 0.07, h, [0.5, 0.36, 0.22]);   // (the bench: seat and back)
+        for (const o of [-0.75, 0.75]) box(g, bx + T.tx[bi] * o, by, bz + T.tz[bi] * o, 0.08, 0.45, 0.4, h, [0.24, 0.25, 0.27]);
+        cyl(g, tx, ty - 0.1, tz, 0.07, 1.3, 6, [0.24, 0.3, 0.26]); box(g, tx + nx * 0.1, ty + 1.2, tz + nz * 0.1, 0.32, 0.3, 0.62, h, [0.24, 0.3, 0.26]);   // (the telescope)
+        exclPush((bx + tx) / 2, (bz + tz) / 2, 4); CR.avoid(bx, bz, 1.5); out.marks.lookout = [bx, by, bz]; }
     }
 
     /* ---- START: gantry with the start lights, the timing hut, pennants along the grid, the road closed behind it ---- */
@@ -708,6 +780,7 @@
     const FAR = API.irFar ? API.irFar(plFarCol) : null; if (FAR) { FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (FAR && def.farDem.ice) plFarIce(FAR);   // (the glaciers on the horizon)
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: plAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: plAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);

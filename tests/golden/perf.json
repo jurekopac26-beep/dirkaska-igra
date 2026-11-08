@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "furka": {
+  "calls": 155,
+  "maxCalls": 186,
+  "kverts": 300,
+  "maxKverts": 411,
+  "jsMs": 1.5
  }
 }
