@@ -244,16 +244,17 @@ Kategorije po vrsti v eni seji (varčni način, odločitev uporabnika 1. 11. 202
 
 ### Tovornjaki (`kamen`, veja `deli/avti-tovornjaki`)
 
-TITAN ima mesta za dele že od prvega sklopa (luči ostanejo v odbijaču, brez razbijanja).
+TITAN je imel mesta za dele od prvega sklopa (luči v odbijaču, brez razbijanja); razbijanje in vsa mesta je dobil 8. 11. 2026 v #322 (spodaj).
 
 | Avto | Novi deli (razbijanje) | `krilo` | `zarometi` |
 |---|---|---|---|
+| TITAN | `headL` / `headR` (po dve pravokotni luči na stran v odbijaču, `on: 'bumperF'`: gredo z njim), `tailL` / `tailR` (luč v črni plošči na nosilcu luči na koncu okvirja), `wiperFront` (oba brisalca) | na zadnjem robu strešnega deflektorja, v delu `deflector`, `s` 2, `top` (od sklopa 1) | en sklop na stran čez dve serijski luči v odbijaču |
 | KAMEN | `headL` / `headR` (pravokotni luči s črnim okvirjem v čelih blatnikov, `on: 'hood'`: gresta z nagibnim prednjim delom), `tailL` / `tailR` (grozd zadaj: luč, smernik in črna plošča), `wiperFront` (oba brisalca) | na zadnjem robu strehe kabine nad režo do servisnega zaboja, v `body` (serijsko ga ni), `s` 1,5 | v obliki pravokotne luči (`shape`), v črnem okvirju |
 
 - Serijski avto je trikotnik za trikotnikom enak (1810 od 2400 trikotnikov).
 - Možnosti: krilo do +220, žarometi do +172 trikotnikov nad serijskim (meja 300).
 - Sklopa 2 in 3 (7. 11. 2026, Seja A, biketraveler): KAMEN 33 od 38 mest, 15/15, serijski enak do trikotnika. Brez `aero` (jekleni odbijač tovornjaka), `hauba` (nagibni prednji del je svoj loft: `K.topY` glavnega lofta kabine ga ne pozna), `auspuh` in `prtljaznik` (serijsko ju ni, servisni zaboj) in `zaluzije` (zadnja stena kabine je za zabojem). Ogledala iz garaže so avtomobilska, ob steklu vrat (namesto velikih na ročicah: ohišje mora ležati na avtu); smerniki, vlečne kljuke in lovilci blata iz garaže nadomestijo serijske spredaj in zadaj (en `K.deli`, serijski zadaj samo brez nameščenega). `nalepke.hood` je na strehi kabine (glavni loft je kabina), `maska.comb` 2,6.
-- TITAN čaka na #304.
+- TITAN (8. 11. 2026, jure.kopac26, v #322 s cisterno): 28 od 38 mest, 15/15, serijski enak do trikotnika (lupina 1766, notranji blok 662). Brez `aero` (jekleni odbijač), `hauba` (kabina je nad motorjem), `streha`, `stresna_zajemalka` in `antena` (deflektor pokriva streho kabine od vetrobranskega stekla do zadnje stene), `zaluzije` (ni zadnjega stekla), `auspuh` (serijska dimnika za kabino), `prtljaznik` ter `crte` in `nalepke` (brez pokrova motorja nimajo mesta). Skriti deli ležijo na motorju pod kabino (edini zaprti prostor), vzmeti in amortizerji ob nosilcih okvirja nad osmi, zadnja lovilca blata na cevi zadnjega odbijača (zadnji blatnik se konča nad gumo). Cisterna (njen vlačilec je TITAN) ima iste dele in mesta (`tests/cisterna.test.js` preverja enakost); kabina zrcalnega vlaka je svoj model in ohrani mesta iz sklopa 1. Vozilo misije ostane serijsko.
 
 ### Električni (`jezek`, veja `deli/avti-elektricni`)
 

@@ -4,7 +4,8 @@
 // trailer finite; every trailer on its kingpin (the tractor's fifth wheel and the trailer's kingpin within 5 cm) unless it was torn off; its
 // fold within its stop (TLK.lim, 83 deg). After 120 s: every rig has gone on (the player and the field's slowest), few rescues of the player
 // (the game's autopilot: stuck 3 s), few contacts between the rigs. Then the rig on its own (the flat test plane): braking hard in a bend
-// folds it more, never past its stop; straight on it comes back in line.
+// folds it more, never past its stop; straight on it comes back in line. And its tractor is the TITAN (its look K.lookOf('titan')): its
+// breaking parts and the garage's mounts are the TITAN's (js/cars/cisterna.js keeps a copy).
 //   node tests/cisterna.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -21,6 +22,8 @@ const TRACKS = ['bathurst', 'vrsic', 'caracoles', 'killar'].map(id => C.TRACKS.f
 const pinGap = (c) => { const T = c.tl, k = T.D.kp[0]; return Math.hypot(c.x + Math.cos(c.h) * k - (T.x - Math.cos(T.h) * T.cx), c.z + Math.sin(c.h) * k - (T.z - Math.sin(T.h) * T.cx)); };
 const finite = (o, keys) => keys.every(k => Number.isFinite(o[k]));
 const CK = ['x', 'z', 'y', 'h', 'vx', 'vz', 'w'], TK = ['x', 'z', 'y', 'h', 'vx', 'vz', 'w', 'rel', 'yA'];
+{ const TI = C.MODELS.find(m => m.id === 'titan'), K3 = ['partNames', 'parts', 'mounts'], diff = K3.filter(k => JSON.stringify(CI.def[k]) !== JSON.stringify(TI.def[k]));
+  check('the tractor\'s breaking parts and the garage\'s mounts are the TITAN\'s (partNames, parts, mounts)', !diff.length, diff.join(', ') || Object.keys(CI.def.mounts).length + ' mounts'); }
 
 for (const d of TRACKS) for (const phys of ['cs', 'nova']) {
   const T = new C.Track(d), o = { numAI: 5, playerGrid: 99, playerModel: CI, laps: 99, assist: 2, phys, seed: 3, difficulty: 1, damage: 1 };
