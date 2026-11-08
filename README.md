@@ -35,6 +35,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Mount Buller, Avstralija](docs/proge/mountbuller.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
+- [Gudauri, Gruzija](docs/proge/gudauri.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -303,3 +304,8 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Bâlee: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal in raba tal Bâlee (sneg, golo tla, trava): Contains modified Copernicus Sentinel data (2025): Sentinel-2 L2A, posnetek 26. 7. 2025 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Ruševje in drevesa Bâlee (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Gudauri (sredinska črta Gruzijske vojaške ceste, potoki, stavbe, žičnice s stebri in postajami, daljnovod s stebri, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org) (izdaja 2026-10-21.0). Iz njih izpeljani podatki v `js/tracks/gudauri.js` so na voljo pod ODbL 1.0.
+- Višine in teren Gudaurija (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Gudaurija: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Barve tal in raba tal Gudaurija (sneg, golo tla, trava): Contains modified Copernicus Sentinel data (2025): Sentinel-2 L2A, posnetek 31. 8. 2025 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Grmovje in gozd Gudaurija (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

@@ -287,8 +287,9 @@ def osm(C, G, box, X, Z, name):
             p = []
             for u, w in cc: p += [round(float(u), 1), round(float(w), 1)]
             streams.append({'p': p})
-    # the aerialways (cable cars and chairlifts: the lines, their pylons and stations) and the car parks by the road (OpenStreetMap)
-    cables, pyl, pulls = [], [], []
+    # the aerialways (cable cars and chairlifts: the lines, their pylons and stations), the power lines (their poles and towers) and the car
+    # parks by the road (OpenStreetMap)
+    cables, pyl, pulls, power, poles = [], [], [], [], []
     for r in overture('base', 'infrastructure', box, ['id', 'subtype', 'class', 'geometry'], name):
         g = wkb.loads(r['geometry'])
         if r.get('subtype') == 'aerialway' and g.geom_type == 'LineString':
@@ -300,13 +301,22 @@ def osm(C, G, box, X, Z, name):
         elif r.get('subtype') == 'aerialway' and g.geom_type == 'Point':
             x, z = G.to_xz(g.y, g.x)
             if near(x, z) < 700: pyl += [round(float(x), 1), round(float(z), 1), 1 if r.get('class') == 'aerialway_station' else 0]
+        elif r.get('subtype') == 'power' and g.geom_type == 'LineString':
+            c = np.array(g.coords); x, z = G.to_xz(c[:, 1], c[:, 0])
+            if T.query(np.stack([x, z], 1))[0].min() > 400: continue
+            p = []
+            for u, w in zip(x, z): p += [round(float(u), 1), round(float(w), 1)]
+            power.append({'k': r.get('class'), 'p': p})
+        elif r.get('subtype') == 'power' and g.geom_type == 'Point' and r.get('class') in ('power_pole', 'power_tower'):
+            x, z = G.to_xz(g.y, g.x)
+            if near(x, z) < 400: poles += [round(float(x), 1), round(float(z), 1), 1 if r.get('class') == 'power_tower' else 0]
         elif r.get('class') == 'parking' and g.geom_type in ('Polygon', 'Point'):
             if g.geom_type == 'Polygon':
                 c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1)); cx, cz, rr = p.centroid.x, p.centroid.y, math.sqrt(p.area / math.pi)
             else: cx, cz = G.to_xz(g.y, g.x); rr = 8.0
             d = near(cx, cz)
             if d < 40: pulls.append([round(float(cx), 1), round(float(cz), 1), round(float(rr), 1), round(float(d), 1)])
-    return bld, lakes, streams, cables, pyl, pulls
+    return bld, lakes, streams, cables, pyl, pulls, power, poles
 
 def trees(C, G, X, Z):
     """Trees from the canopy height map: the highest point of each 4 m cell over 2.5 m, within `drevesa` metres of the road, as
@@ -369,7 +379,7 @@ def main():
     curves = [[round(float(sa - s[i0]), 1), int(round(float(np.interp(sa, s, hp)))), 1 if tot > 0 else -1] for sa, tot, r in hairs]
     # the corridor's data
     dem, geo = grids(C, G, x, z, D, base)
-    bld, lakes, streams, cables, pyl, pulls = osm(C, G, box, x, z, name)
+    bld, lakes, streams, cables, pyl, pulls, power, poles = osm(C, G, box, x, z, name)
     scene = C.get('s2'); meta = None
     if scene:
         zone = scene.split('_')[1]; y, mo = scene.split('_')[2][:4], int(scene.split('_')[2][4:6])
@@ -381,9 +391,9 @@ def main():
     fard = far(C, G, x, z, D)
     tr = trees(C, G, x, z)
     log('land cover (16 m): ' + ', '.join('%s %d' % (n_, cnt[k_]) for k_, n_ in enumerate(['grass', 'forest', 'shrubs', 'built', 'rock', 'water', 'snow', 'scree'])))
-    log('buildings %d, lakes %d, streams %d, aerialways %d (pylons and stations %d), car parks %d, trees %d, far %dx%d' % (len(bld), len(lakes), len(streams), len(cables), len(pyl) // 3, len(pulls), len(tr) // 3, fard['nx'], fard['nz']))
+    log('buildings %d, lakes %d, streams %d, aerialways %d (pylons and stations %d), power lines %d (poles and towers %d), car parks %d, trees %d, far %dx%d' % (len(bld), len(lakes), len(streams), len(cables), len(pyl) // 3, len(power), len(poles) // 3, len(pulls), len(tr) // 3, fard['nx'], fard['nz']))
     out = {'points': pts, 'H': HE, 'alt': alt, 'realKm': round(race / 1000, 2), 'finish': [round(float(x[i1]), 1), round(float(z[i1]), 1)], 'cps': cps, 'curves': curves,
-           'dem': dem, 'lc': lc, 'col': col, 'bld': bld, 'lakes': lakes, 'streams': streams, 'cables': cables, 'pylons': pyl, 'pulls': pulls, 'farDem': fard, 'trees': tr,
+           'dem': dem, 'lc': lc, 'col': col, 'bld': bld, 'lakes': lakes, 'streams': streams, 'cables': cables, 'pylons': pyl, 'pulls': pulls, 'power': power, 'poles': poles, 'farDem': fard, 'trees': tr,
            'origin': [round(float(la_s), 7), round(float(lo_s), 7)]}
     json.dump(out, open(os.path.join(RAW, tid + '.json'), 'w'))
     log('curves', curves); log('cps', cps, 'finish', out['finish'], 'origin', out['origin'])
@@ -391,7 +401,8 @@ def main():
         p = os.path.join(ROOT, 'js', 'tracks', tid + '.js'); src = open(p).read()
         A, B = '    // ---- podatki (tools/proga) ----\n', '    // ---- konec podatkov ----\n'
         V = C.get('ime_h', tid.upper() + '_H')
-        blk = A + ''.join('    %s: %s,\n' % (k_, jsval(out[k_])) for k_ in ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'col', 'bld', 'lakes', 'streams', 'cables', 'pylons', 'pulls', 'farDem', 'trees', 'points']) + B
+        keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'col', 'bld', 'lakes', 'streams', 'cables', 'pylons', 'pulls'] + (['power', 'poles'] if power else []) + ['farDem', 'trees', 'points']   # (the power lines only where there are any)
+        blk = A + ''.join('    %s: %s,\n' % (k_, jsval(out[k_])) for k_ in keys) + B
         i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]
         hA = '  const %s = [' % V; i = src.index(hA); j = src.index('];', i); src = src[:i] + hA + ','.join(map(str, HE)) + src[j:]
         open(p, 'w').write(src); log('written', p)
