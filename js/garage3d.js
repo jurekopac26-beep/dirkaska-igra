@@ -4326,6 +4326,7 @@ const Garage3D = (function () {
     const y = (p) => (1 - _pk.copy(p).project(c).y) / 2 * H, rt = Math.min(...RGL.bays.map(b => y(_tv.set(b.x, RGL.TOP, b.z)))), lo = y(_tv.set(0, PC.y0 - 11 * PC.P, PC.face + PC.pulls[3]).applyMatrix4(MF));
     const rl = wide ? rt - FIT_WIDE * H : rt - FIT_RGL * W, zm = SHIFT.zm = clamp((lo - rl) / Math.max(1, bottom - top), 1, wide ? 2.2 : 1.8), Y = (v) => H / 2 + (v - H / 2) / zm;
     SHIFT.y = Math.round(Math.max(0, Y(rl) - top, Y(lo) - bottom)); SHIFT.short = Math.max(0, Math.round(Y(lo) - SHIFT.y - bottom)); fxScale();
+    placeCamera(0);   // (the camera at once by the new screen and fit: what is tapped or measured before the next frame (a drawer's menu, the guide's rings) where it is seen)
   }
   // (odlocitve 30. 10.: the camera always as far by default, a lorry's too (the user zooms out for it): no car framed from further off)
   function camFit(cv, now) { CAM.kw = 1; CAM.dyw = 0;
