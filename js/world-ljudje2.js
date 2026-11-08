@@ -1291,7 +1291,6 @@
       C.man(Object.assign({ hair: 'bald' }, SEC), { act: { a: 2.2, b: 2.2, pose: 'walk', face: [-1, 0] }, bliza: { pose: 'radio', face: [0, -1], hold: [['radio', 1]], look: 'car' }, run: false,
         mimo: { pose: 'arms', hold: [], look: 'car' } });   // (where he stopped)
     } };
-  site('toronto', [['varnost', 984, 1]]); site('bangsaen', [['varnost', 2080, 1]]);
 
   // the fans' places: on the open roads only (the user, 3. 11. 2026: »na dirkališčih naj bo čim manj ljudi okoli proge, tam naj bo več
   // zaposlenih«: the circuits have their staff's scenes); two or three each, where the chase camera sees them, the ground level and nothing
