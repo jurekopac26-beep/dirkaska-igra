@@ -19,8 +19,8 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
 | Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
-| Mount Buller, Avstralija | `mountbuller` | odprta cesta | 2,5 km | 575 | 40 % | 1 | +120 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
+| Mount Buller, Avstralija | `mountbuller` | odprta cesta | 2,5 km | 575 | 40 % | 1 | +120 m |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
