@@ -171,7 +171,77 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     delete m.zamasek; delete m.prtljaznik;   // (no boot rack on the fastback's short ducktail)   // (the stock cap is in the tail's middle; the element's caps go on the side)
     return m;
   }
+  // ---- BURJA R7 (MODELS 'rally'): render.js rallyGeometry's pieces on BODIES.rally's sections (look units: BODIES.rally's 3.8 m, the
+  // builder's own x before its scaling to the model's 3.95: K.sx stretches them the same way; the wheels the kit's, at the model's a / b)
+  const RA = { len: 3.8, wid: 1.80, spoiler: false, engRear: false, secs: [
+    [-1.90, 0.84, 0.36, 0.74, 0.76, 0.96, 0.01, 'b'], [-1.84, 0.88, 0.32, 0.80, 0.78, 1.00, 0.02, 'gr'], [-1.60, 0.91, 0.30, 0.82, 0.70, 1.30, 0.02, 'gr'],
+    [-1.45, 0.91, 0.30, 0.82, 0.75, 1.37, 0.03, 'r'], [-0.80, 0.90, 0.30, 0.82, 0.75, 1.39, 0.03, 'r'], [-0.10, 0.89, 0.30, 0.82, 0.75, 1.39, 0.03, 'r'],
+    [0.35, 0.89, 0.30, 0.82, 0.75, 1.37, 0.03, 'gf'], [0.72, 0.90, 0.30, 0.80, 0.78, 0.93, 0.03, 'b'], [1.10, 0.92, 0.30, 0.79, 0.80, 0.90, 0.03, 'b'],
+    [1.55, 0.92, 0.30, 0.75, 0.80, 0.84, 0.02, 'b'], [1.90, 0.86, 0.32, 0.66, 0.76, 0.74, 0.01, 'b']] };
+  const RSX = 3.95 / 3.8;   // (the model's length over the body's: metres -> look units)
+  B.rally = RA; AX.rally = [1.15 / RSX, 1.25 / RSX];
+  const WH = [0.95, 0.95, 0.96], RK = [0.07, 0.07, 0.08];
+  function lookRally() {
+    const S = RA.secs.map(row), F = S[S.length - 1], R = S[0];
+    return {
+      body: { len: RA.len, wid: RA.wid, secs: RA.secs, wz: 0.1, engRear: false },
+      wheels: { style: 'std', spokes: 5, w: 0.26, rim: [0.93, 0.93, 0.9], tyre: RK },
+      build(K) {
+        const p = K.paint, Lv = p[0] * 0.3 + p[1] * 0.59 + p[2] * 0.11 > 0.78 ? [0.1, 0.26, 0.74] : p;   // (the livery: the car's colour, a light one blue)
+        const sk = WH.map(v => v * 0.85);
+        // the builder's loft: white paint, the glass, the rear glass' black louvred cover (its crown black, its edges dark grey)
+        const L = K.loft(K.body.secs, (k, e, kind) => { const top = e >= 3 && e <= 5, up = e === 2 || e === 6;
+          if (kind === 'gf' && (top || up)) return K.GLASS; if (kind === 'r' && up) return K.GLASS;
+          if (kind === 'gr') return top ? (e === 4 ? RK : [0.13, 0.13, 0.15]) : up ? K.GLASS : e === 0 || e === 8 ? sk : WH;
+          return e === 0 || e === 8 ? sk : WH; }, { caps: { front: { col: WH }, rear: { col: WH } } });
+        const D = L.decal;
+        // the livery: two slashes rising to the rear, the sill band, the rear quarter, the black intake; the white pillars on the glass
+        D.side([[1.30, 0.47], [1.62, 0.47], [0.98, 0.79], [0.66, 0.79]], Lv); D.side([[0.10, 0.47], [0.58, 0.47], [-0.30, 0.79], [-0.78, 0.79]], Lv);
+        D.side([[-1.45, 0.47], [1.45, 0.47], [1.45, 0.54], [-1.45, 0.54]], Lv); D.side([[-1.90, 0.52], [-1.52, 0.52], [-1.40, 0.79], [-1.90, 0.79]], Lv);
+        D.side([[-1.34, 0.52], [-1.08, 0.52], [-1.08, 0.74], [-1.34, 0.74]], RK);
+        D.band([[-0.20, 0], [-0.07, 0], [-0.07, 1], [-0.20, 1]], WH, null, 0.014); D.band([[-1.45, 0], [-1.12, 0], [-1.12, 1], [-1.45, 1]], WH, null, 0.014);
+        D.top([[1.86, 0.50], [1.86, 0.74], [0.76, 0.40], [0.76, 0.18]], Lv, 0.014); D.top([[1.86, -0.50], [1.86, -0.74], [0.76, -0.40], [0.76, -0.18]], Lv, 0.014);
+        D.top([[1.28, -0.24], [1.28, 0.24], [1.02, 0.24], [1.02, -0.24]], RK, 0.014);
+        D.top([[-1.44, -0.62], [-1.44, 0.62], [-0.98, 0.62], [-0.98, -0.62]], Lv, 0.014);
+        D.top([[0.30, 0.44], [0.30, 0.62], [-0.30, 0.62], [-0.05, 0.44]], Lv, 0.014); D.top([[0.30, -0.44], [0.30, -0.62], [-0.30, -0.62], [-0.05, -0.44]], Lv, 0.014);
+        // the builder's pieces: the lamps and the amber ones by them, the grille, the lip, the tail's black panel, the two little pipes
+        K.deli('zarometi', () => { for (const sd of [-1, 1]) { K.headLamp(F.x + 0.02, 0.575, sd * 0.5, 0.07, { shape: 'rect', w: 0.32, h: 0.15, ring: null, col: [1, 0.97, 0.84] });
+          K.box(F.x - 0.02, 0.5, sd * 0.74, 0.08, 0.13, 0.12, 0, [1, 0.55, 0.12]); } });
+        K.part('bumperF', () => { K.deli('maska', () => K.box(F.x - 0.02, 0.5, 0, 0.07, 0.12, 0.6, 0, RK)); K.box(F.x - 0.03, 0.37, 0, 0.07, 0.1, 1.0, 0, RK); });
+        K.part('bumperR', () => { K.box(R.x + 0.02, 0.62, 0, 0.08, 0.2, 0.95, 0, RK);
+          K.deli('auspuh', () => { for (const sd of [-1, 1]) K.box(R.x - 0.02, 0.36, sd * 0.36, 0.1, 0.08, 0.12, 0, [0.2, 0.2, 0.22]); }); });
+        K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(R.x - 0.06, R.ybelt - 0.085, sd * R.w * 0.6, 0.42, 0.15); });
+        // the big wing over the hatch on its endplates, the roof scoop, the antenna, the black mirrors, the mud flaps behind the wheels
+        const wx = -1.62;
+        K.part('trunk', () => K.deli('krilo', () => { for (const sd of [-1, 1]) K.box(wx + 0.12, 1.36, sd * 0.62, 0.14, 0.2, 0.05, 0, RK);
+          K.box(wx, 1.56, 0, 0.5, 0.07, 1.84, 0, Lv, Lv); for (const sd of [-1, 1]) K.box(wx + 0.02, 1.48, sd * 0.93, 0.56, 0.24, 0.04, 0, Lv, Lv); }));
+        K.deli('stresna_zajemalka', () => { K.box(-0.62, 1.40, 0, 0.4, 0.1, 0.42, 0, Lv, Lv); K.box(-0.44, 1.43, 0, 0.03, 0.06, 0.34, 0, RK); });
+        K.deli('antena', () => K.box(0.05, 1.40, 0.3, 0.025, 0.55, 0.025, 0, RK));
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.part(sd < 0 ? 'mirrorL' : 'mirrorR', () => K.box(0.66, 0.86, sd * 0.97, 0.12, 0.1, 0.12, 0, RK)); });
+        K.deli('lovilci_blata', () => { for (const sd of [-1, 1]) for (const x of [K.fx, K.rx]) K.box(x - 0.44 / RSX, 0.17, sd * 0.82, 0.03, 0.26, 0.2, 0, RK); });
+        for (const id of ['aero', 'hauba', 'zmigavci', 'relijske_luci', 'prtljaznik', 'vlecne_kljuke', 'streha', 'crte', 'celjusti', 'dim_gum', 'nalepke', 'soncni_pas',
+          'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
+        K.part('trunk', () => K.deli('zaluzije', () => {}));
+        const ws = S.find(s => s.k === 'gf');
+        K.seat(ws.x - 0.75, 0.5, -0.36); K.seat(ws.x - 0.75, 0.5, 0.36); K.engine(AX.rally[0] + 0.15, R.yb + 0.05, 0);
+        return L;
+      },
+    };
+  }
+  function mountsRally() {   // (the generic ones, measured the same way; the builder's own lamps, grille, tail, wing, scoop and flaps)
+    const m = mounts('rally'), S = RA.secs.map(row), F = S[S.length - 1], R = S[0], at = (x, k) => ip(S, x, k);
+    m.zarometi = { x: F.x + 0.02, y0: 0.575, lean: 0, zc: 0.5, yc: 0.575, s: 0.62, depth: 0.03, hosts: ['body', 'body'] };
+    m.maska = { x: F.x, y0: 0.56, lean: 0, yc: 0.56, w: 0.27, h: 0.1 };
+    m.ogledala = { x: 0.66, y: 0.91, z: 0.97, w: 0.12, h: 0.1, d: 0.12, z0: at(0.66, 'w') - 0.05, fwd: 0.04, up: 0.01 };
+    m.zmigavci.mirror = { x: 0.66 + 0.07, y: 0.91, z: 0.97, w: 0.1, parts: ['mirrorL', 'mirrorR'] };
+    m.auspuh = { x: R.x - 0.07, y: 0.40, z: 0.36, r: 0.035, len: 0.12, part: 'bumperR' };
+    m.krilo = { x: -1.45, w: at(-1.45, 'wt') * 0.9, part: 'trunk' };
+    m.relijske_luci.intake = [F.x, 0.42, 0.8, 0.1];   // (in the black lip under the grille: clear of the splitter)
+    m.vzmeti = { in: 0.15, top: 0.68, seat: [at(AX.rally[0], 'yb'), at(-AX.rally[1], 'yb')] };
+    return m;
+  }
   for (const [id, key] of [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']])
     VEHICLE_DEFS.push({ id, patch: true, look: look(key), mounts: mounts(key) });
   VEHICLE_DEFS.push({ id: 'muscle', patch: true, look: lookMuscle(), mounts: mountsMuscle() });
+  VEHICLE_DEFS.push({ id: 'rally', patch: true, look: lookRally(), mounts: mountsRally() });
 })();
