@@ -1299,7 +1299,7 @@
         if (openAt(fx, fz)) flagAt(fx, nrGround(fx, fz), fz, 6, pick(LK.flags.camp), 1.9); }
       exclPush(x, z, 42);
     }
-    for (let tries = 0; !PER && tries < 300 && nFarm < 7; tries++) {   // a farm: in Styria a white house under a dark roof and a timber barn, at Bathurst a homestead under red iron and a shed
+    for (let tries = 0; !PER && tries < 300 && nFarm < (LK.farms == null ? 7 : LK.farms); tries++) {   // (LK.farms: how many, 7 by default; none in a city forest park: Biķernieki) a farm: in Styria a white house under a dark roof and a timber barn, at Bathurst a homestead under red iron and a shed
       const x = P.x0 + 120 + R() * (P.x1 - P.x0 - 240), z = P.z0 + 120 + R() * (P.z1 - P.z0 - 240), rd = nrDist(x, z); if (rd < 150 || rd > 420 || !openAt(x, z)) continue;
       const rot = R() * TAU, g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot), bx2 = x - s * 16, bz2 = z + c * 16;
       if (!openAt(bx2, bz2)) continue;
