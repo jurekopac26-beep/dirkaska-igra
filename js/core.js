@@ -6394,15 +6394,18 @@ const Core = (function () {
       // open road: none outside them, z), its stretches over the verge, its class)
       const prep = (P) => {
         const k = P.korak || 5, n = P.vq.length;
-        const at = (A, sp) => {
-          if (T.open) { const g = clamp(sp / k, 0, n - 1), j = Math.min(n - 2, Math.floor(g)); return [A[j], A[j + 1], g - j]; }
-          sp = ((sp % L) + L) % L; const j = Math.min(n - 1, Math.floor(sp / k)), s1 = j < n - 1 ? (j + 1) * k : L;
-          return [A[j], A[j < n - 1 ? j + 1 : 0], clamp((sp - j * k) / Math.max(1e-6, s1 - j * k), 0, 1)];
+        let j0 = 0, j1 = 0, f0 = 0, o = null;   // (at's reading: the points either side of sp and the fraction between them, kept here: no new array for every read)
+        const at = (sp) => {
+          if (T.open) { const g = clamp(sp / k, 0, n - 1), j = Math.min(n - 2, Math.floor(g)); j0 = j; j1 = j + 1; f0 = g - j; return; }
+          const t = (sp > -L && sp < L ? sp : sp % L) + L; sp = t >= L ? t - L : t;   // (((sp % L) + L) % L without the remainders: t - L is exact here)
+          const j = Math.min(n - 1, Math.floor(sp / k)), s1 = j < n - 1 ? (j + 1) * k : L;
+          j0 = j; j1 = j < n - 1 ? j + 1 : 0; f0 = clamp((sp - j * k) / Math.max(1e-6, s1 - j * k), 0, 1);
         };
         const out = (sp) => T.open && (sp < 0 || sp > (n - 1) * k);   // (an open road: none of it on the grid behind the start line or past its last point)
-        const val = (A, sp, z) => { if (out(sp)) return z; const [a, b, f] = at(A, sp); return a + (b - a) * f; };
-        const vqAt = (sp) => { if (out(sp)) return NaN; const [a, b, f] = at(P.vq, sp); return a > 0 && b > 0 ? a + (b - a) * f : NaN; };   // (0: no measurement)
-        const plAt = (sp) => { if (out(sp)) return false; const [a, b, f] = at(P.pl, sp); return (f < 0.5 ? a : b) === 1; };
+        const val = (A, sp, z) => { if (out(sp)) return z; at(sp); return A[j0] + (A[j1] - A[j0]) * f0; };
+        const vqAt = (sp) => { if (out(sp)) return NaN; at(sp); const a = P.vq[j0], b = P.vq[j1]; return a > 0 && b > 0 ? a + (b - a) * f0 : NaN; };   // (0: no measurement)
+        // (the throttle at sp, and the style's weight there in o.g: one reading for both, the cars' look-ahead below)
+        const plAt = (sp) => { if (out(sp)) { o.g = 0; return false; } at(sp); if (P.wv) o.g = P.wv[j0] + (P.wv[j1] - P.wv[j0]) * f0; return (f0 < 0.5 ? P.pl[j0] : P.pl[j1]) === 1; };
         // the stretches over the verge (tr: the share of the player's laps over it there): a car goes over one when its draw (a hash of
         // the race's seed, the car and the stretch) is under the stretch's highest share; there it steers by the line of those laps (dt),
         // its limit out past the asphalt (not nearer the barrier than half the car and 0.6 m), eased in and out over 15 m
@@ -6418,33 +6421,41 @@ const Core = (function () {
         // (k0: the profile's pace at lam 0 against the player's average, ks: its spread toward the slower laps; both from a race of the AI
         // on the profile against the player's own times, tools/voznja.mjs: a car drives the average without the player's mistakes, and is
         // on full throttle wherever they were, so it needs both to be as quick as their average and as slow as their slower laps)
-        return { P, at, val, vqAt, plAt, G, gOf, gW, QQ: !!(P.ql && P.qh && P.ql.length === n && P.qh.length === n), k0: P.k0 > 0 ? P.k0 : 1, ks: P.ks > 0 ? P.ks : 1,
+        // (its values at every sample of the track, the same for every car: read once, not again for each car of a field of 100)
+        const QQ = !!(P.ql && P.qh && P.ql.length === n && P.qh.length === n), dd = new Float64Array(N), vq = new Float64Array(N);
+        const qh = QQ ? new Float64Array(N) : null, ql = QQ ? new Float64Array(N) : null, wv = P.wv ? new Float64Array(N) : null;
+        for (let i = 0; i < N; i++) { const sp = sp0[i]; dd[i] = val(P.dd, sp, 0); vq[i] = vqAt(sp); if (QQ) { qh[i] = val(P.qh, sp, 1); ql[i] = val(P.ql, sp, 1); } if (wv) wv[i] = val(P.wv, sp, 0); }
+        o = { P, val, plAt, g: 0, G, gOf, gW, QQ, dd, vq, qh, ql, wv, rl: null, k0: P.k0 > 0 ? P.k0 : 1, ks: P.ks > 0 ? P.ks : 1,
           mg: P.m != null ? P.m : VZ_M, cls: P.razred ? new Set(P.razred) : null };
+        return o;
       };
-      const RV = V ? prep(V) : null, RS = VS ? prep(VS) : null;
+      const RV = V ? prep(V) : null, RS = VS ? prep(VS) : null, aBs = new Map(), sss = new Map();   // (each car model's profile: its braking, and its share of the pace up to 11-24 m/s)
       for (const c of this.cars) {
         if (c.isPlayer || c.net || c.sc || c.pol) continue;
         const R = RV && (!RV.cls || RV.cls.has(c.m.id)) ? RV : c.tl ? null : RS; if (!R) continue;   // (a semi-trailer: its own driving, not the style)
-        const P = R.P, wv = P.wv || null, vp = c.vprof || this.vprof, uT = new Float32Array(N), uRl = new Float32Array(N), w = new Float32Array(N), kc = (c.skill || 1) / mid, cap = c.skCap || 1.14, lam = lamOf(c.skill || mid);
-        let aB = 0; for (let i = 0; i + 1 < N; i++) { const d = (vp[i] * vp[i] - vp[i + 1] * vp[i + 1]) / (2 * ds); if (d > aB) aB = d; }   // (its profile's braking: its steepest)
+        const P = R.P, wv = R.wv, vp = c.vprof || this.vprof, uT = new Float32Array(N), w = new Float32Array(N), kc = (c.skill || 1) / mid, cap = c.skCap || 1.14, lam = lamOf(c.skill || mid);
+        let aB = aBs.get(vp); if (aB === undefined) { aB = 0; for (let i = 0; i + 1 < N; i++) { const d = (vp[i] * vp[i] - vp[i + 1] * vp[i + 1]) / (2 * ds); if (d > aB) aB = d; } aBs.set(vp, aB); }   // (its profile's braking: its steepest; once for each car model's profile)
         const goes = R.G.map((g, j) => !c.tl && draw(c, j) < g.p), uLim = goes.some(Boolean) ? new Float32Array(N) : null;
+        if (!uLim && !R.rl) { R.rl = new Float32Array(N); for (let i = 0; i < N; i++) R.rl[i] = T.rl[i] + R.dd[i]; }
+        const uRl = uLim ? new Float32Array(N) : R.rl;   // (a car that keeps to the road: the profile's line, one array for all of them)
         // (the style: the car's own share of its profile, as aiDrive's: its skill to its cap, the track's own pace for the rivals)
-        const sk0 = Math.min(c.skill || 1, cap) * (T.def.aiPace ? (T.def.aiPace[c.phys] || T.def.aiPace.cs || 1) : 1), so = (vc) => sk0 <= 1 ? sk0 : 1 + (sk0 - 1) * sstep(11, 24, vc);
+        let sv = sss.get(vp); if (!sv) { sv = new Float64Array(N); for (let i = 0; i < N; i++) sv[i] = sstep(11, 24, vp[i]); sss.set(vp, sv); }
+        const sk0 = Math.min(c.skill || 1, cap) * (T.def.aiPace ? (T.def.aiPace[c.phys] || T.def.aiPace.cs || 1) : 1), so = (i) => sk0 <= 1 ? sk0 : 1 + (sk0 - 1) * sv[i];   // (at sample i)
         for (let i = 0; i < N; i++) {
-          const sp = sp0[i], dd = R.val(P.dd, sp, 0), j = R.gOf[i];
+          const dd = R.dd[i], j = R.gOf[i];
           if (uLim && j >= 0 && goes[j]) {   // (over the verge here, as the player)
-            const g = R.gW[i], d = T.rl[i] + dd + (R.val(P.dt, sp, dd) - dd) * g, bar = d > 0 ? (T.br ? T.br[i] : T.w + 2) : (T.bl ? T.bl[i] : T.w + 2);
+            const g = R.gW[i], d = T.rl[i] + dd + (R.val(P.dt, sp0[i], dd) - dd) * g, bar = d > 0 ? (T.br ? T.br[i] : T.w + 2) : (T.bl ? T.bl[i] : T.w + 2);
             uRl[i] = d; uLim[i] = Math.min(Math.abs(d) + 0.3, bar - c.m.wid * 0.5 - 0.6) * (g > 0 ? 1 : 0);
-          } else uRl[i] = T.rl[i] + dd;
+          } else if (uLim) uRl[i] = T.rl[i] + dd;
           // the player's speed here (their slower or quicker laps by difficulty; without ql, qh its skill over theirs), NaN where not
           // measured. Quicker than the player's average: up to the car's own limit over its profile (none in the slowest hairpins), or
           // as far as the average itself goes past it (the average's line at a quicker lap's speed through a corner: the car slides wide).
           // The style: not under the car's own pace where its weight is low (the brakes below: not for a pace it does not drive)
-          const q = R.vqAt(sp), vc = vp[i];
+          const q = R.vq[i], vc = vp[i];
           if (!(q > 0)) { w[i] = NaN; continue; }
-          const f = R.QQ ? (lam >= 0 ? (R.k0 + (1 - R.k0) * lam) * (1 + lam * clamp(R.val(P.qh, sp, 1) - 1, -0.1, 0.3)) : R.k0 * Math.max(0.75, 1 + lam * R.ks * clamp(1 - R.val(P.ql, sp, 1), -0.1, 0.3))) : kc;   // (a slower lap's mistake: not more than a quarter off the pace)
-          let e = q * f; if (f > 1) e = Math.min(e, Math.max(q, 1 + (cap - 1) * sstep(11, 24, vc)));
-          if (wv) { const o = so(vc); if (e < o) e += (o - e) * (1 - R.val(wv, sp, 0)); }
+          const f = R.QQ ? (lam >= 0 ? (R.k0 + (1 - R.k0) * lam) * (1 + lam * clamp(R.qh[i] - 1, -0.1, 0.3)) : R.k0 * Math.max(0.75, 1 + lam * R.ks * clamp(1 - R.ql[i], -0.1, 0.3))) : kc;   // (a slower lap's mistake: not more than a quarter off the pace)
+          let e = q * f; if (f > 1) e = Math.min(e, Math.max(q, 1 + (cap - 1) * sv[i]));
+          if (wv) { const o = so(i); if (e < o) e += (o - e) * (1 - wv[i]); }
           w[i] = Math.min(e, VZ_CAP) * vc;
         }
         // its brakes: the speed it can be down to by each sample from the one before, on its own profile's braking (aB): the player who
@@ -6455,10 +6466,10 @@ const Core = (function () {
           const a = w[i], b = w[j]; if (a === a && b === b) { const m = Math.sqrt(b * b + 2 * aB * ds); if (a > m) w[i] = m; }
         }
         for (let i = 0; i < N; i++) {   // (where the car is when it reads sample i: back by as far as it reads ahead at the speed it has there)
-          const s = i * ds; let u = NaN, sc = s;
-          for (let it = 0; it < 3; it++) { u = w[T.idx(sc)]; if (!(u === u)) break; if (it < 2) sc = s - 3 - 0.22 * u; }
+          const s = i * ds; let u = NaN, sc = s, m = 0;
+          for (let it = 0; it < 3; it++) { u = w[T.open ? T.idx(sc) : (m = Math.floor(sc / ds)) < 0 ? m + N : m >= N ? m - N : m]; if (!(u === u)) break; if (it < 2) sc = s - 3 - 0.22 * u; }   // (T.idx; sc within a lap behind s)
           let x = u + (u === u && R.plAt(sc - T.startS) ? VZ_PL : R.mg);   // (mg: aiDrive holds a car a little under its target, the player's speed is what the car had)
-          if (wv && x === x) { const g = R.val(wv, sc - T.startS, 0), o = so(vp[i]) * vp[i]; x = o + (x - o) * g; }   // (the style: blended with its own pace at sample i, where aiDrive reads its profile)
+          if (wv && x === x) { const g = R.g, o = so(i) * vp[i]; x = o + (x - o) * g; }   // (the style: blended with its own pace at sample i, where aiDrive reads its profile; R.g: its weight where plAt read)
           uT[i] = x;
         }
         c.uRl = uRl; c.uT = uT; c.uLim = uLim;
