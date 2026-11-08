@@ -31,6 +31,9 @@ try {
       let pk = 0, ss = 0, fin = true, loud = 0; for (let i = 0; i < d.length; i++) { if (!Number.isFinite(d[i])) fin = false; pk = Math.max(pk, Math.abs(d[i])); ss += d[i] * d[i]; }
       for (let i = 0; i + 2205 < d.length; i += 441) { let s = 0; for (let j = i; j < i + 2205; j++) s += d[j] * d[j]; loud = Math.max(loud, Math.sqrt(s / 2205)); }   // (the loudest 50 ms)
       const o = { fin, pk: +pk.toFixed(3), loud: +loud.toFixed(4), low: low(d) };
+      // (a wheel gun's hammer is noise, random in each render: one render's low share swings ~0.03 to ~0.22 round ~0.09, now and then over
+      // 0.2; its mean over four renders stays well under it)
+      if (k === 'gunOff' || k === 'gunOn') { let sum = o.low; for (let n = 0; n < 3; n++) sum += low(await Sfx.probe({ pit: k, dur: 0.8, sr: SR })); o.low = +(sum / 4).toFixed(2); }
       if (k === 'gunOff') { o.hammer = rate(d, 0.03, 0.21); o.free = rate(d, 0.24, 0.36); }   // (off: the hammer first, then the nut spins free)
       if (k === 'gunOn') { o.free = rate(d, 0.03, 0.15); o.hammer = rate(d, 0.17, 0.42); }   // (on: it spins down the thread first, the hammer tightens it)
       if (k === 'release') { let bf = 0, bv = 0; for (let f = 1000; f <= 6000; f += 25) { const v = gz(d.subarray(Math.round(0.05 * SR), Math.round(0.4 * SR)), f, SR); if (v > bv) { bv = v; bf = f; } } o.f = bf; o.trill = rate(d, 0.06, 0.44); }
@@ -63,14 +66,17 @@ try {
       g.S.sound = sound ? 1 : 0; Sfx.setEnabled(sound); Sfx.setRunning(true);
       const s = { lane: [], laneSlow: 0, repair: [], track: [], after: [], hose: [], hoseAfter: [], fuel0: null, pitDur: 0, rep0: P.repairN || 0, paused: null, cam: [], lift: [0, 0], vh: false, vl: false, off: null };
       let near = false, done = false, t = 0;
+      // (stuck or the wrong way out on the circuit, the way in too: put back on the road, like a player tapping Na progo. A rival's knock
+      // in a crowd can turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
+      const unstick = () => { if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); };
       for (let k = 0; k < 6000 && !done; k++) {
         const pz = Tk.pitAt(P.q.s);
         if (!P.inPit && !P.pitAP && (P.repairN || 0) === s.rep0) { if (!pz && !P.pitG) { P.pitWant = true; } }   // (to the pits this lap)
         near = !!(pz || P.inPit || P.pitG);
-        if (!near && (P.repairN || 0) === s.rep0) { g.sim(0.5, true); Render.scene.visible = false; Render.frame(0.1, 1, P, 'chase', {}); Sfx.update(g.race, P, null, 0); const L = Sfx.levels().pit; s.track.push(L.lim); continue; }
+        if (!near && (P.repairN || 0) === s.rep0) { g.sim(0.5, true); unstick(); Render.scene.visible = false; Render.frame(0.1, 1, P, 'chase', {}); Sfx.update(g.race, P, null, 0); const L = Sfx.levels().pit; s.track.push(L.lim); continue; }
         if (!near) { done = true; break; }
         if (P.pitState === 'repair' && s.fuel0 == null) { s.fuel0 = P.fuel; s.pitDur = P.pitDur; }
-        g.sim(0.05, true); t += 0.05; Render.scene.visible = false; Render.frame(0.05, 1, P, 'chase', {}); Sfx.update(g.race, P, null, 0);
+        g.sim(0.05, true); unstick(); t += 0.05; Render.scene.visible = false; Render.frame(0.05, 1, P, 'chase', {}); Sfx.update(g.race, P, null, 0);
         const L = Sfx.levels().pit, row = [+L.lim.toFixed(4), +(P.speed * 3.6).toFixed(1), P.pitState || '-'];
         if (P.pitAP && P.inPit && P.pitState !== 'repair' && P.speed > 0.95 * 22.2) s.lane.push(row);
         else if (P.pitAP && P.inPit && P.pitState !== 'repair' && P.speed < 8) s.laneSlow = Math.max(s.laneSlow, L.lim);

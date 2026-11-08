@@ -11,7 +11,7 @@
 // frame back and on, the times; the spectators on its timeline (back and on again: as they were, paused: still); the buttons (with Označi, js/napake.js) in one row on a phone on its side, in two upright; the key I back: every car exactly as the race
 // left it, 3 · 2 · 1, then the race goes on; I in the race: the replay at once; the pause in the count: the pause screen.
 //   node tests/browser/replay.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('replay');
 const srv = await serve();
@@ -23,8 +23,7 @@ try {
     const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera, track: 'jezero' }, viewport);
     await page.evaluate(() => { window.__rf = 0; const o = Render.frame; Render.frame = function () { window.__rf++; return o.apply(this, arguments); }; });
     await startTrack(page, 'jezero');
-    await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); });
-    await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
+    await driveToResults(page, { timeout: 120000 });   // (stuck against the barrier, put back on the road: lib.mjs)
     return { page, errors, act: (a) => page.evaluate((a) => window.__game.onAction(a), a),
       frames: (n) => page.evaluate((n) => new Promise(res => { const f0 = window.__rf, chk = () => window.__rf - f0 >= n ? res(window.__rf - f0) : setTimeout(chk, 20); chk(); }), n),
       // the replay as it is drawn now; the camera against the followed car: along its heading (behind: below 0), across it, above it, how
