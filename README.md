@@ -39,13 +39,13 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Kågeröd, Švedska](docs/proge/kagerod.md)
 - [Sosnová, Češka](docs/proge/sosnova.md)
 - [Izoard, Francija](docs/proge/izoard.md)
-- [Biķernieki, Latvija](docs/proge/bikernieki.md)
-- [London, Anglija](docs/proge/london.md)
-- [Zandvoort, Nizozemska](docs/proge/zandvoort.md)
 - [Pembrey, Wales](docs/proge/pembrey.md)
 - [Kildare, Irska](docs/proge/kildare.md)
 - [Sa Calobra, Španija](docs/proge/sacalobra.md)
 - [Kotor, Črna gora](docs/proge/kotor.md)
+- [Biķernieki, Latvija](docs/proge/bikernieki.md)
+- [London, Anglija](docs/proge/london.md)
+- [Zandvoort, Nizozemska](docs/proge/zandvoort.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
