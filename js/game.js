@@ -32,7 +32,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbCesta: 1, zbSpomin: 1, zbGold: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', amb: 1, tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbCesta: 1, zbSpomin: 1, zbGold: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   // Prvič na cesti (the first start): a browser that has never kept the game's settings (read before anything below writes them), nor
@@ -83,6 +83,7 @@
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
   let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
+  S.amb = [0, 0.5, 1, 2].includes(+S.amb) ? +S.amb : 1;   // (Zvoki okolja, × their loudness: 0 Izklop, 0.5 Tiho, 1 Normalno (the default), 2 Glasno; js/sfx-okolje.js)
   if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';
   if (!['normal', 'high'].includes(S.carDet)) S.carDet = DEF.carDet;   // (Detajli avtov: Normalni / Visoki)   // adaptive graphics detail (LOD) level, see detailTier()
   if (!['short', 'normal', 'long', 'endurance'].includes(S.length)) S.length = 'normal';
@@ -562,12 +563,13 @@
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom, kjer zaslon nima prostora, sorazmerno manj: Render updateCamera)
     Render.cam.shOn = { hit: +S.camShake, land: +S.camLand, kerb: +S.camKerb, mis: +S.camMis };   // (Tresenje kamere: ob trku, ob pristanku po skoku, na robnikih, v misijah)
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
-    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(!!+S.codrv); Comm.setEngineer(!!+S.engV);
+    Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(+S.codrv === 1); Comm.setEngineer(!!+S.engV);   // (codrv 2: the co-driver's captions only)
     // (the voices: the commentator's, the co-driver's (the engineer's too), every one English whatever the page's language)
-    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.codrv ? tr(' · sovoznik in inženir: {0}', v.codrv) : '') + tr(' · vsi glasovi govorijo angleško (tudi policijski radio)'); });
+    Comm.setOnVoice(v => { const el = $('comm-voice'); if (el) el.textContent = !v.any ? tr('Ta brskalnik ne podpira govora – komentatorja ne bo slišati.') : tr('Glas: {0} ({1})', v.name || tr('privzeti angleški'), v.lang) + tr(v.male ? ' – moški' : ' – nižji ton') + (v.rec ? tr(' · sovoznik: posnet glas') : v.codrv ? tr(' · sovoznik in inženir: {0}', v.codrv) : '') + tr(' · vsi glasovi govorijo angleško (tudi policijski radio)'); });
     Input.setMode(S.control);
     Input.setOptions({ autoGas: !!S.autoGas, tiltSens: S.tiltSens, tiltInvert: !!S.tiltInvert, vibrate: +S.vibrate || 0 });   // (vibrate: the level, Osnovno Core.HAPTIC's basic patterns and the single pulses, Vse all of them)
     Sfx.setEnabled(!!S.sound);
+    if (window.SfxOkolje) SfxOkolje.set(S.amb, !!+S.sound, saverOn);   // (the sounds by the road: Izklop / Tiho / Normalno / Glasno, the battery saver)
     if (race && race.player) race.player.assist = Core.ASSISTS[S.assist];
     refreshSegs();
   }
@@ -610,7 +612,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['crV', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'engV', 'hlv', 'intro', 'music', 'menuCam', 'rivals', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle', 'zbIzz', 'zbCesta', 'zbSpomin', 'zbGold'];
+    const num = ['crV', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'amb', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'engV', 'hlv', 'intro', 'music', 'menuCam', 'rivals', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle', 'zbIzz', 'zbCesta', 'zbSpomin', 'zbGold'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -622,6 +624,7 @@
     save(); applySettings();
     if (key === 'lang') relang();
     if (key === 'pitCmp' && race && race.player) race.player.pitCmp = S.pitCmp;   // (the slicks for the next pit stop)
+    if (key === 'codrv' && race && race.player) codrvInit();   // (the co-driver switched during a race: off, the captions, the voice; from the next call on)
     if (key === 'weather' && demo) { demo.setRain(demoRain()); if (!race) Render.setStorm(S.weather === 'storm'); }   // (a race keeps its weather; the next one gets the new setting)
     if (key === 'season' || key === 'tod') Render.setAtmos({ season: S.season, tod: S.tod });   // (the season and the time of day: at once, also on the title demo)
     if (key === 'season' && track && Render.worldStale) ensureTrack(track.def.id, () => { });   // (a world painted for the season (Vršič): built again in the new one)
@@ -761,6 +764,19 @@
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
+  // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
+  // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
+  // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
+  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja)
+  const VZ_KEY = 'rr_voznja';
+  let vzOn = false;
+  try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
+  const voznjaOf = (def) => {
+    if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
+    const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
+    if (typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);   // (Race._voznja: only on a real track)
+    return L.length ? L : undefined;
+  };
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
   // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
   // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)
@@ -1101,12 +1117,17 @@
      Odpri posnetek, tools/posnetek.mjs): besides the frames what the replay needs, the cars (model, name, colour, number, grid, the laps for
      rpLap), the race (laps, weather, a time trial, the finish order), its moments (ev, the highlights) and its flags. Opened, a race of its
      own is set up on the track with those cars (never stepped: the replay poses them) and the replay plays it; Končaj: the title */
+  // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts, the field's car and the
+  // assist (as: Core.ASSISTS index at the end of the race);
+  // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
-    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
+    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
+    const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: { upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist } };
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
-      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
+      cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
+      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
+      F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
   // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not
@@ -2315,7 +2336,8 @@
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
     }, MS.opts(), prviOpts(), ZB.opts(zctx)));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race; Zabava: a novelty's mode, js/zabava.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     careerCond(M, !!(on || school || ch));   // (the career: the car's wear from its last races, till the garage's service)
@@ -4754,13 +4776,14 @@
     if (g) {
       const blue = g.kind === 'ring' || g.kind === 'chic', lr = g.dir > 0 ? 'r' : 'l';
       const pk = g.kind === 'ring' ? (track.def.leftHand ? 'ringcw' : 'ring') : g.kind === 'chic' ? 'c' + lr : lr + (g.hair ? '3' : g.kind === 'fast' || !g.sev ? '0' : '1');
-      key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev);
+      const num = cdN && !blue && g.r ? Core.noteGrade(g.r) : 0;   // (the co-driver's grade of the bend, 1-6, while he reads the road)
+      key = pk + '|' + (blue ? 'blue' : 'sev' + g.sev) + (num ? '|' + num : '');
     }
     if (key === lastNote) { if (key) placeNote(el); return; }
     lastNote = key; noteAt0 = '';
     if (!key) { el.className = ''; return; }
-    const [pk, cls] = key.split('|');
-    $('h-note-path').setAttribute('d', NOTE_PATHS[pk]);
+    const [pk, cls, num] = key.split('|'), nt = $('h-note-num');
+    $('h-note-path').setAttribute('d', NOTE_PATHS[pk]); nt.textContent = num || ''; if (num) nt.setAttribute('x', pk[0] === 'r' ? 52 : 12);   // (in the corner the arrow leaves free)
     el.className = 'show ' + cls; placeNote(el);
   }
   // the sign clear of the block at the top in the middle (the clock, the splits, the police's), however wide the phone's fonts make it: css
@@ -4770,12 +4793,17 @@
     const B = $('h-times'), hc = $('hud').className, k = innerWidth + 'x' + innerHeight + '|' + hc + '|' + B.offsetWidth + 'x' + B.offsetHeight;   // (again only when the block or the screen changes)
     if (k === noteAt0) return; noteAt0 = k;
     el.style.right = el.style.top = '';
-    if (/\bschool\b/.test(hc)) return; let l = Infinity, t = Infinity, b = -Infinity;
-    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
-    if (!(l < Infinity)) return;
+    const T = /\bschool\b/.test(hc) ? null : timesBox(); if (!T) return;
     const O = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth }, x0 = O.left + el.offsetLeft, y0 = O.top + el.offsetTop, w = el.offsetWidth, h = el.offsetHeight;   // (its box without the show's scale)
-    if (innerWidth > innerHeight) { if (x0 + w > l - 4 && y0 < b && y0 + h > t) el.style.right = Math.ceil(O.right - l + 6) + 'px'; }
-    else if (y0 < b + 4 && y0 + h > t) el.style.top = Math.ceil(b + 6 - O.top) + 'px';
+    if (innerWidth > innerHeight) { if (x0 + w > T.l - 4 && y0 < T.b && y0 + h > T.t) el.style.right = Math.ceil(O.right - T.l + 6) + 'px'; }
+    else if (y0 < T.b + 4 && y0 + h > T.t) el.style.top = Math.ceil(T.b + 6 - O.top) + 'px';
+  }
+  // the block at the top in the middle on the screen (#h-times with what hangs under it: the line under the clock, the duel's gap, the
+  // police's panel): the left, the top and the bottom of its shown parts, null with none shown (placeNote, placeCap)
+  function timesBox() {
+    const B = $('h-times'); let l = Infinity, t = Infinity, b = -Infinity;
+    for (const e of [B, ...B.children]) { const r = e.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { l = Math.min(l, r.left); t = Math.min(t, r.top); b = Math.max(b, r.bottom); } }
+    return l < Infinity ? { l, t, b } : null;
   }
   const hudCache = {};
   function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
@@ -5006,22 +5034,61 @@
     if (!r) { item = Comm.say(key, null, 0); if (item) { st.said[k] = { lap, item }; st.lastT = race.time; } else r = 'off'; }
     st.log.push({ k, n: track.names[k].n, lap, t: race.time, r: r || 'say', item }); if (st.log.length > 300) st.log.shift();
   }
-  /* ---------------- the co-driver (a rally stage, S.codrv): the pace notes (Track.paceNotes) read out ahead of the car ----------------
-     A call is said when the car is ~2.4 s (55 to 170 m) before its first note; one already driven past (a rescue, a spin) is skipped. */
-  let cdN = null, cdK = 0, cdLog = [];
+  /* ---------------- the co-driver (S.codrv: 0 off, 2 the captions, 1 voice and captions; docs/sovoznik.md): the pace notes (Track.paceNotes)
+     ahead of the car. On every real open road (not a test track; not a mission, nor the new map, nor the driving school) and a rally stage's
+     time trial the call's caption (#h-codrv, in the game's language: Core.codrvCap; lying under the clock's block, upright under the corner
+     sign: placeCap) and the bends' grade on the corner sign; with Glas in napis his recorded English voice too (Comm.note: word by word from
+     its sheet, js/data/sovoznik-en.js; the browser's voice until it is loaded). The captions alone: a call is due when the car is ~2.4 s
+     (55 to 170 m) before its first note. With the voice (docs/sovoznik.md, Kdaj govori): when the car is v * (its length + 1.2 s) + 25 m
+     before it (60 to 260 m: the call over ~1.2 s before the bend), not before the last call is over (0.2 s after it: Comm.noteFree) and not
+     while the car stands (under 5 m/s); its caption with it. One already driven past (a rescue, a spin; 10 m) is skipped. The police radio's
+     run: the captions alone. Driven back the way it came, no call is ahead. A caption stays until the car is at the call's first note, 1.5 s
+     at least, or the next call's takes its place. The setting switched during a race (the pause's settings): codrvInit again, from the next
+     call on (setOption). */
+  let cdN = null, cdK = 0, cdLog = [], cdVoice = false, cdCap = null;
+  const codrvRoad = () => Core.codrvRoad(track.def) && !race.nv && !school && !MS.cur;   // (the real open roads: Core's list; not in a mission)
   function codrvInit() {
-    cdN = race.timeTrial && (isRally(track.def) || isDesc(track.def)) && +S.codrv ? track.paceNotes() : null; cdK = 0; cdLog = [];   // (a rally stage, a gravel descent)
-    const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, log: cdLog.slice() }) });   // (tests)
+    const rally = race.timeTrial && (isRally(track.def) || isDesc(track.def));   // (a rally stage, a gravel descent: the voice too)
+    cdN = +S.codrv && (rally || codrvRoad()) ? track.paceNotes() : null; cdK = 0; cdLog = []; cdVoice = !!cdN && +S.codrv === 1; capOff();
+    if (cdVoice) Comm.recLoad();   // (his sheet, loaded once and decoded while the race starts; with the sound on)
+    const g = window.__game; if (g && !Object.getOwnPropertyDescriptor(g, 'codrv')) Object.defineProperty(g, 'codrv', { configurable: true, get: () => ({ calls: cdN ? cdN.length : 0, k: cdK, voice: cdVoice, cap: cdCap ? cdCap.text : '', log: cdLog.slice() }) });   // (tests)
   }
-  const cdLead = (P) => clamp(P.speed * 2.4 + 30, 55, 170);
+  function capOff() { const el = $('h-codrv'); if (cdCap || el.className) { cdCap = null; el.className = ''; el.textContent = ''; } }
+  const cdTalk = () => cdVoice && Comm.noteCan();   // (his voice heard now: the sound on, not the police radio's run)
+  const cdLead = (P, c) => cdTalk() ? clamp(P.speed * (Comm.noteLen(c.toks) + 1.2) + 25, 60, 260) : clamp(P.speed * 2.4 + 30, 55, 170);
   function updateCodrv(P) {
-    if (!cdN || phase !== 'racing' || P.finished) return;
+    if (!cdN) return;
+    if (phase !== 'racing' || P.finished) { if (cdCap) capOff(); return; }
     const s = P.q.s;
+    if (cdCap && s >= cdCap.s && race.time - cdCap.t >= 1.5) capOff();   // (the car at its first note)
     while (cdK < cdN.length && cdN[cdK].s < s - 10) cdK++;   // (driven past without it)
-    const c = cdN[cdK];
-    if (c && c.s - s <= cdLead(P)) { const it = Comm.note(c.text); cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, item: !!it }); if (cdLog.length > 200) cdLog.shift(); cdK++; }
+    const c = cdN[cdK], talk = cdTalk();
+    if (c && c.s - s <= cdLead(P, c) && !(talk && (!Comm.noteFree() || P.speed < 5))) {   // (with the voice: his last call over, the car moving)
+      const it = talk ? Comm.note(c.text, c.toks) : null, el = $('h-codrv');
+      cdCap = { text: Core.codrvCap(c.toks, S.lang), s: c.s, t: race.time }; el.textContent = cdCap.text; el.className = 'show'; capAt0 = '';
+      cdLog.push({ k: cdK, d: Math.round(c.s - s), t: race.time, text: c.text, cap: cdCap.text, item: !!it, rec: !!(it && it.rec) }); if (cdLog.length > 200) cdLog.shift(); cdK++;
+    }
+    if (cdCap) placeCap();
   }
-  const codrvSoon = (P, sec) => { const c = cdN && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed)
+  const codrvSoon = (P, sec) => { const c = cdVoice && cdN[cdK]; return !!c && c.s - P.q.s - cdLead(P, c) < Math.max(P.speed, 15) * sec; };   // (15 m/s: the car still picking up speed; the captions alone keep no one quiet)
+  // the caption's place: on its side under the clock's block (with whatever is under the clock: the line under it, the duel's gap, the
+  // police's panel) and, where a wide caption would reach under the corner sign beside the block, under the sign too; upright under the
+  // sign's place (its box as css and placeNote have it, shown or not); centred. Measured again with each new caption (capAt0 cleared:
+  // its width) and when the screen, the HUD's state, the block or the sign's place changes
+  let capAt0 = '';
+  function placeCap() {
+    const el = $('h-codrv'), B = $('h-times'), N = $('h-note'), land = innerWidth > innerHeight;
+    const k = innerWidth + 'x' + innerHeight + '|' + $('hud').className + '|' + B.offsetWidth + 'x' + B.offsetHeight + '|' + N.offsetLeft + ',' + N.offsetTop + '|' + N.offsetHeight;
+    if (k === capAt0 || !el.offsetParent) return; capAt0 = k;
+    const O = el.offsetParent.getBoundingClientRect(), nb = N.offsetTop + N.offsetHeight;
+    let y = nb + 6;
+    if (land) {
+      const T = timesBox(); y = T ? T.b - O.top + 4 : -Infinity;
+      const h = el.offsetWidth / 2, c = O.width / 2;   // (the caption centred on the HUD)
+      if (y > -Infinity && y < nb + 4 && c - h < N.offsetLeft + N.offsetWidth + 4 && c + h > N.offsetLeft - 4) y = nb + 4;
+    }
+    if (y > -Infinity) el.style.top = Math.round(y) + 'px';
+  }
 
   // tests: window.__game.places (the names, their commentator keys, what was said and why places were skipped)
   function placeExpose() {
