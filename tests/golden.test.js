@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadCore } = require('./lib/core.js');
-const { trackIds, PHYSICS, SETUPS, runScenario } = require('./lib/sim.js');
+const { trackIds, ownModel, PHYSICS, SETUPS, runScenario } = require('./lib/sim.js');
 
 const FILE = path.join(__dirname, 'golden', 'sim.json');
 const update = process.argv.includes('--update');
@@ -22,12 +22,14 @@ let bad = 0, n = 0;
 const t0 = Date.now();
 for (const tid of trackIds(C)) for (const sn of Object.keys(SETUPS)) for (const phys of PHYSICS) {
   const key = `${tid}/${sn}/${phys}`;
+  if (ownModel(C, tid) && (sn === 'formula' || sn === 'lm' || sn === 'car')) continue;   // (a track with its own vehicle, the tanker's: no other car drives it)
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (golden[key]) out[key] = golden[key]; continue; }
   const r = runScenario(C, tid, sn, phys);
   out[key] = r; n++;
   const g = golden[key], cv = r.cover;
   const ok = g && g.digest === r.digest;
-  const covered = !SETUPS[sn].drive || (cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups)
+  const covered = !SETUPS[sn].drive || (ownModel(C, tid) ? cv.dmg >= 0.05 : cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups;
+  // the tanker on its own roads, docs/proge-cisterna.md: a knock of 5 % or more is enough, at its pace no panel comes off and they have no pits)
   if ((!update && !ok) || !covered) bad++;
   console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${SETUPS[sn].drive ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
     `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits): adjust crashDrive in tests/lib/sim.js ' : ''}` +

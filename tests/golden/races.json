@@ -2548,5 +2548,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "svalvogar/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 48.22,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1d8b3264af972b6c80f09b34"
+ },
+ "svalvogar/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 53.76,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "253d2b9d2a73dad60a1c463e"
+ },
+ "fairymeadows/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 52.7,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "cc649decfd1b6c304b1483fb"
+ },
+ "fairymeadows/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 66.35,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 1,
+  "nan": false,
+  "digest": "ba2d13937cacc1e8444ad734"
+ },
+ "manchewe/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 45.6,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fc12297a2a3e98af84eb4d14"
+ },
+ "manchewe/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 46.93,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0608940b35a80b03dc0c1634"
+ },
+ "yungas/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 44.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a91dabe8ab2b2fdc183c2231"
+ },
+ "yungas/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 46.37,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c8513a33ffd53e1f94b1b745"
+ },
+ "tapini/cs": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 43.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3f17045ea150ecca09ff5f4e"
+ },
+ "tapini/cs/rain": {
+  "finished": 1,
+  "cars": 1,
+  "winner": 44.01,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "77966f1ee853b98cd37a063f"
  }
 }

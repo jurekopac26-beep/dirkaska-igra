@@ -7516,7 +7516,8 @@ const Core = (function () {
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       }
-      const v = fix || (W && W.rule && W.nL >= 2) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      const v = fix || (W && W.rule && W.nL >= 2) || (T.open && T.len - c.q.s < 25) || T.def.vehicle ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall;
+      // a track's own vehicle, def.vehicle: the tanker on its roads, docs/proge-cisterna.md: standing too, the rescue no shortcut past a crawl)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
       if (c.tl) tlPlace(c, T);   // (its semi-trailer on the kingpin again, along the road behind it)
     }

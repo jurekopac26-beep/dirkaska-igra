@@ -1391,5 +1391,95 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "svalvogar": {
+  "meshes": 62,
+  "verts": 64220,
+  "instances": 75,
+  "props": 0,
+  "crowd": 66,
+  "world": "3f2eccf2",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "aa2e3c11",
+   "-:MeshPhongMaterial": "4db4688e",
+   "-:MeshBasicMaterial": "a5b492a1",
+   "crowd:MeshLambertMaterial": "88a1043d",
+   "flags:MeshLambertMaterial": "dd81d06a",
+   "ao:MeshBasicMaterial": "d0f61915"
+  }
+ },
+ "fairymeadows": {
+  "meshes": 48,
+  "verts": 58167,
+  "instances": 39,
+  "props": 0,
+  "crowd": 31,
+  "world": "4eedce8e",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "b57391b8",
+   "-:MeshPhongMaterial": "5370687",
+   "-:MeshBasicMaterial": "3f942b76",
+   "crowd:MeshLambertMaterial": "ee532a61",
+   "flags:MeshLambertMaterial": "3f86e648",
+   "ao:MeshBasicMaterial": "9e8673e1"
+  }
+ },
+ "manchewe": {
+  "meshes": 82,
+  "verts": 55989,
+  "instances": 1532,
+  "props": 0,
+  "crowd": 69,
+  "world": "3dd67a0d",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "c47b5505",
+   "-:MeshPhongMaterial": "b86d5c86",
+   "-:MeshBasicMaterial": "bfcdc789",
+   "crowd:MeshLambertMaterial": "ab87ed7",
+   "flags:MeshLambertMaterial": "ea20fb1f",
+   "ao:MeshBasicMaterial": "fb7c4ef6"
+  }
+ },
+ "yungas": {
+  "meshes": 106,
+  "verts": 60326,
+  "instances": 2247,
+  "props": 0,
+  "crowd": 41,
+  "world": "f6008276",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "b4048944",
+   "-:MeshPhongMaterial": "4e2bf262",
+   "-:MeshBasicMaterial": "75124e0a",
+   "crowd:MeshLambertMaterial": "6793b41d",
+   "flags:MeshLambertMaterial": "17bde658",
+   "ao:MeshBasicMaterial": "d9d63034"
+  }
+ },
+ "tapini": {
+  "meshes": 106,
+  "verts": 59469,
+  "instances": 2788,
+  "props": 0,
+  "crowd": 12,
+  "world": "473d5856",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "19a10d9d",
+   "-:MeshPhongMaterial": "71841734",
+   "-:MeshBasicMaterial": "5e4531fb",
+   "crowd:MeshLambertMaterial": "89be0f65",
+   "flags:MeshLambertMaterial": "ce505ee9",
+   "ao:MeshBasicMaterial": "b830675b"
+  }
  }
 }
