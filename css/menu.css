@@ -474,10 +474,16 @@ svg { display: block; }
 /* the yard: a wall and a floor (the horizon at the car's height), the blue road sign with the country on two posts, the car before it */
 .yard { position: relative; flex: 1 1 120px; min-height: 84px; margin-top: 6px; overflow: hidden; background: linear-gradient(180deg, #0f2036 0%, #13263f 58%, #1b3150 58.5%, #101d31 100%); }
 .yard::after { content: ''; position: absolute; left: 0; right: 0; top: 58%; height: 30%; background: radial-gradient(60% 100% at 32% 0%, rgba(120, 170, 255, .12), transparent 70%); pointer-events: none; }
-.sign { position: absolute; left: 30%; right: 3%; top: 12%; height: 36%; max-height: 76px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 10px 0 calc(8% + 10px);
+.sign { position: absolute; left: 30%; right: 3%; top: 12%; height: 36%; max-height: 76px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px;
   background: linear-gradient(180deg, #2a5fae, #1e4a8e); border: 3px solid #e9eef6; border-radius: 6px; box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 0 0 2px #1e4a8e; filter: brightness(.88); z-index: 1; }
+/* (each country's own sign: js/menu-tabla.js sets its colours, frame and corners, the name's weight and size, and puts its wear over it
+   in a canvas; the name always in the middle, in two lines where the real signs have the country's own script or language over it) */
 .sign b { min-width: 0; font: 800 clamp(20px, 7.4vw, 34px)/1 Roboto, Arial, sans-serif; letter-spacing: .02em; color: #f4f7fb; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sign i { flex: 0 0 auto; font: 900 italic 12px/1 var(--f-ui); padding: 4px 6px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); }
+.sign b.two { display: flex; flex-direction: column; align-items: center; gap: 2px; overflow: visible; }
+.sign b.two .l1 { font-size: .74em; }
+.sign b.two .l2 { font-size: .52em; font-weight: 600; }
+.sign canvas.wear { position: absolute; left: 0; top: 0; pointer-events: none; border-radius: inherit; }
+.sign i { flex: 0 0 auto; position: relative; z-index: 1; font: 900 italic 12px/1 var(--f-ui); padding: 4px 6px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); }
 .sign.pending i { background: var(--cyan); color: #0b1626; }   /* (a track awaiting the user's choice: one of them stays) */
 .post { position: absolute; top: 48%; bottom: 30%; width: 7px; background: linear-gradient(90deg, #6d7684, #c9d0da 45%, #7a8392); border-radius: 2px; filter: brightness(.88); }
 .post.a { left: 52%; } .post.b { right: 12%; }

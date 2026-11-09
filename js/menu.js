@@ -966,7 +966,7 @@
     // plain span with the menu's listener far up)
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
-    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '"' + (IZ() ? ' data-act="izbor"' : '') + '><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
+    h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '" data-country="' + esc(ctry) + '"' + (IZ() ? ' data-act="izbor"' : '') + '><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
       '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
       '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
     // the neighbours of the list: their flags (a track without one: its name)
@@ -977,6 +977,12 @@
     };
     h += '<div class="nbrs">' + nb(-1) + nb(1) + '</div>';
     return h + '<div class="foot solo"><button class="go" data-act="race-single">Race!</button></div></div></section>';
+  }
+  // the road sign behind the car in its country's style (js/menu-tabla.js: colours, frame, the name in its middle, its wear; lying it is not
+  // shown: drawn when the phone is turned upright)
+  function signOn() {
+    const s = screen === 'track' && app && $('#s-track .yard .sign', app);
+    if (s && window.MenuTabla) MenuTabla.on(s, s.dataset.country || '');
   }
   // the place in the head as big as the mockup's (44 px), smaller where it would reach the arrow or the globe (down to 18 px, then cut short)
   function fitWhere() {
@@ -1074,7 +1080,7 @@
       clearTimeout(preT); if (tt && window.Journey && RT[tt.id]) preT = setTimeout(() => { if (screen === 'track') Journey.preload([tt.id]); }, 1200);
     }
     if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
-    fitWhere(); flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
+    fitWhere(); signOn(); flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -1702,7 +1708,7 @@
       if (!r.ok) throw new Error('css/menu.css: ' + r.status);
       const st = document.createElement('style'); st.textContent = await r.text(); root.insertBefore(st, app);
       ready = true; flush();
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitWhere());   // (the place's name measured again in its own font)
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitWhere(); signOn(); });   // (the place's name and the sign's measured again in their own fonts)
     } catch (e) { fail(e); }
   }
   function refresh() { if (ready && G && G.visible() && app && !$('.intro', app) && !sheet && !izOpen() && !zemOpen()) render(true); }   // (a challenge arrived, the install offer came: the title shows it)
