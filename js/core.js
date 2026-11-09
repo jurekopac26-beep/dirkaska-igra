@@ -8252,8 +8252,8 @@ const Core = (function () {
   // a prize's factor for the car it is won in: the root of its price / 50 000, from 1x (a 50 000 car and cheaper) to 5x (1 250 000 and dearer)
   const careerCarK = (id) => clamp(Math.sqrt((CAREER.car[id] || 0) / 50000), 1, 5);
   // prize money for a race: pos (1 = the winner), n cars (up to 13: the places spread over the table, the last 750; more: the table by the
-  // place, from the 13th on 750), the race distance in m, the difficulty (0..3: super težka pays most, the police run's hardest; a race
-  // itself drives it as težka), the car it is won in (its id: careerCarK; none: 1x); rounded to 50
+  // place, from the 13th on 750), the race distance in m, the difficulty (0..3: super težka pays most, the police run's hardest and a
+  // race's own since 9. 11. 2026, DIFF[3]), the car it is won in (its id: careerCarK; none: 1x); rounded to 50
   function careerPrize(pos, n, dist, diff, car) {
     const k = clamp(dist / 8000, 0.6, 2.5) * (CAREER.diff[diff] || 1) * (car ? careerCarK(car) : 1), P = CAREER.place, i = n > P.length ? pos - 1 : Math.round((pos - 1) * (P.length - 1) / Math.max(1, n - 1));   // (a field of more than 13: by the place itself, the 13th and later the last)
     return Math.round(P[clamp(i, 0, P.length - 1)] * k / 50) * 50;
