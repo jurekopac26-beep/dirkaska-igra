@@ -5095,6 +5095,104 @@
    "repairs": 1
   }
  },
+ "lusail/race/cs": {
+  "digest": "0b7b2d39a255cd1e6748efa2",
+  "lead": 2318.4,
+  "car0": [
+   657.34,
+   -639.75
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lusail/demo/cs": {
+  "digest": "28666fd49ae0c76cd9e8aac2",
+  "lead": 2443.7,
+  "car0": [
+   696.3,
+   -533.28
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lusail/upg/cs": {
+  "digest": "7e28662ae33344fb99143117",
+  "lead": 2448.8,
+  "car0": [
+   692.3,
+   -528.61
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "lusail/crash/cs": {
+  "digest": "352451914d1c9742bc91b48c",
+  "lead": 8153.7,
+  "car0": [
+   102.6,
+   -538.8
+  ],
+  "cover": {
+   "dmg": 0.72,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "lusail/formula/cs": {
+  "digest": "0e2e21153854b655c76d4f1a",
+  "lead": 10160.1,
+  "car0": [
+   616.38,
+   -405.49
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "lusail/lm/cs": {
+  "digest": "4f66cf71219ea91f478989c0",
+  "lead": 10067.8,
+  "car0": [
+   609.97,
+   -387.84
+  ],
+  "cover": {
+   "dmg": 0.75,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "lusail/car/cs": {
+  "digest": "0117ed614cfd11eac58edd60",
+  "lead": 8535.6,
+  "car0": [
+   245.28,
+   -760.73
+  ],
+  "cover": {
+   "dmg": 0.77,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
  "lombok/race/cs": {
   "digest": "010ecc06d77316dfd00bbe7b",
   "lead": 2251.9,

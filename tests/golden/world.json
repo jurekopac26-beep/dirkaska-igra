@@ -2028,5 +2028,36 @@
    "lifeShadow:MeshBasicMaterial": "e6cdc8e9",
    "life:MeshBasicMaterial": "779ba707"
   }
+ },
+ "lusail": {
+  "meshes": 622,
+  "verts": 885355,
+  "instances": 3356,
+  "props": 68,
+  "crowd": 44,
+  "world": "249d7a34",
+  "propsHash": "18e857c3",
+  "floor": "27a1ef37/10836",
+  "groups": {
+   "-:MeshLambertMaterial": "596d40fe",
+   "-:MeshBasicMaterial": "978fef2f",
+   "lusail service roads:MeshLambertMaterial": "7fd5639f",
+   "lusail glass fronts:MeshLambertMaterial": "8be6466e",
+   "rsFar:MeshBasicMaterial": "de679eb9",
+   "crowd:MeshLambertMaterial": "62520e6d",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "e6a1e6bf",
+   "ao:MeshBasicMaterial": "a89df11e",
+   "roadwear:MeshLambertMaterial": "a1a133d7",
+   "brakeBoards:MeshLambertMaterial": "83322f10",
+   "life:MeshLambertMaterial": "6d5661c2",
+   "lifeShadow:MeshBasicMaterial": "38698ebc",
+   "life:MeshBasicMaterial": "1607e514",
+   "people:MeshLambertMaterial": "4b72bbf4",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "995a1097",
+   "zaslon-okvir:MeshLambertMaterial": "da805daf",
+   "zaslon-slika:MeshBasicMaterial": "9ac6eedf"
+  }
  }
 }

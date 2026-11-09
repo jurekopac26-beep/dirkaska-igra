@@ -32,6 +32,11 @@
     if (look && look.grid) { const [us, vs, cols] = look.grid, out = []; for (let b = 0; b + 1 < vs.length; b++) for (let a = 0; a + 1 < us.length; a++) out.push([us[a], us[a + 1], vs[b], vs[b + 1], cols[b][a]]); return out; }   // a canton, a cross: [u edges, v edges, colours by row]
     if (look && look.tri) return [[0, 1, 0, 1, look.tri]];   // a pennant: one colour, narrowing to a point
     if (look && look.wedge) { const [top, bot, wc, a] = look.wedge, up = (u) => (u < a ? 0.5 * u / a : 0.5), dn = (u) => 1 - up(u); return [[0, 1, 0, up, top], [0, a, up, dn, wc], [0, 1, dn, 1, bot]]; }   // a wedge at the pole (its cells' v edges as functions of u)
+    if (look && look.serr) {   // a band at the pole serrated into the field: n points of the band's colour from u a to b (Bahrain's, Qatar's)
+      const [band, field, a, b, n] = look.serr, hw = (u) => 0.5 / n * (b - u) / (b - a), out = [[0, a, 0, 1, band], [b, 1, 0, 1, field]];
+      for (let k = 0; k < n; k++) { const c = (k + 0.5) / n, lo = (u) => c - hw(u), hi = (u) => c + hw(u); out.push([a, b, k / n, lo, field], [a, b, lo, hi, band], [a, b, hi, (k + 1) / n, field]); }
+      return out;
+    }
     if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.tex)
     return [[0, 1, 0, 1, [0.92, 0.92, 0.9]]];
   }
