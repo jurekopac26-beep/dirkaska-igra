@@ -2,7 +2,7 @@
    Signature features: 1) the third axle under the long open bed (the tandem: the middle and the rear wheels), 2) the steel bumper with
    the bull bar, the winch and the big grille between round lamps, 3) the snorkel up the right pillar, the light bar over the windscreen,
    the roof rack, 4) the sports bar behind the cab and the spare wheel lying in the bed, 5) the dark flares over all six wheels. L 6.00
-   W 2.20 H 2.15, the axles at +2.00 / -1.05 / -2.30 (m). The physics has two axles (the front one and the rear-most: a, b); the middle
+   W 2.20 H 2.15, the axles at +2.00 / -0.95 / -2.30 (m). The physics has two axles (the front one and the rear-most: a, b); the middle
    one is the look's (look.wheels.mid: its wheels turn with the rear ones), all six driven as the game's AWD (docs/novi-avti-2.md). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
@@ -18,7 +18,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     arc: { amax: 1.66, kv: 1.85, rmin: 6.4 },
     csp: { bx: 0.14, coast: -0.04, thr: 0.02, liftP: 0.1, pwr: 0.14, out: 1.35, turn: 0.85, w: 0.95, tv: 1.55 },
     stats: { power: 10, grip: 5, weight: 1, drift: 10 },
-    price: 80000, pk: 'open', field: ['tur'],
+    price: 80000, pk: 'open', field: ['tur'], fieldN: 9, fill: ['medved', 'pescenjak'],   // (a bigger race: 9 of its own through the field, the rest these two off-roaders of its pace (3.46 s / 190 and 4.08 s / 187 km/h): 99 of its own would not fit the phone's budget)
     snd: { kind: 'v8', hz: 0.8, loud: 1.3 },
     expect: { t100: [3.27, 3.67], vmax: [180, 196], latG: [1.97, 2.07], d100: [26.2, 28.0] },   // (measured 3.47 / 188 / 2.02 / 27.1)
     partNames: { tailgate: 'tailgate', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
@@ -42,7 +42,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       platisca: {},
     },
     // the look (KIT API v1, render.js; look units = metres: the centre of mass at x 0, the front axle at 2.00, the rear-most at -2.30, the
-    // middle one at -1.05): one loft from the tailgate to the nose: the bed (its top open), the cab's back wall with its window, the roof,
+    // middle one at -0.95): one loft from the tailgate to the nose: the bed (its top open), the cab's back wall with its window, the roof,
     // the windscreen, the long hood, the nose; the regions cut it into the front doors (their glass with them), the fenders and the hood;
     // the end caps into the tailgate over the rear valance and the nose over the front bumper
     look: {
@@ -59,7 +59,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.95, 0.96, 0.8, 1.14, 0.9, 1.3, 0.01, 'b', 0.1]],           // the nose: the grille between the round lamps
         eye: { x: 0.2, y: 1.78 },
       },
-      wheels: { style: 'knob', w: 0.36, rim: [0.16, 0.16, 0.17], cap: [0.2, 0.2, 0.21], gap: 0.08, mid: -1.05 },
+      wheels: { style: 'knob', w: 0.36, rim: [0.16, 0.16, 0.17], cap: [0.2, 0.2, 0.21], gap: 0.08, mid: -0.95 },   // (mid: 1.35 m ahead of the rear axle: the garage lift's pad stands 15 cm off the rubber of both tandem axles between them)
       regions: [
         { part: 'doorL', x: [0.08, 1.45], bands: ['side', 'window'], side: 'L' }, { part: 'doorR', x: [0.08, 1.45], bands: ['side', 'window'], side: 'R' },
         { part: 'fenderL', x: [1.55, 2.92], bands: ['tuck', 'side', 'window'], side: 'L' }, { part: 'fenderR', x: [1.55, 2.92], bands: ['tuck', 'side', 'window'], side: 'R' },
