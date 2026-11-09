@@ -15,17 +15,17 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 |---|---|---|---|---|---|---|---|
 | Tianmen, Kitajska | `tianmen` | odprta cesta | 4,8 km | 1347 | 22 % | 16 | +489 m |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
-| Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
+| Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
 | Sani Pass, Južna Afrika | `sani` | odprta cesta | 5,0 km | 906 | 33 % | 7 | +643 m |
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
-| Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
-| Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
+| Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
+| Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
 | Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
@@ -34,8 +34,8 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
-| Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
+| Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 448 | 59 % | 4 | +183 m |
