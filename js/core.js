@@ -312,12 +312,23 @@ const Core = (function () {
       // barriers would stand (the verge's edge: the builder's shoulder and scenery, the room the AI, the parking and the marshals keep the
       // cars in), but wallCollide holds no car there. fallAt: per side ([0] left, [1] right) 1 where a car whose middle passes that line goes over
       // the edge (Race._fall): the drops, and the bridges' sides (no parapets: off the deck into the stream below); elsewhere a car more than reach
-      // metres past it for time seconds is put back on the road (Race._offRoad). unf: [reach, time]
+      // metres from the road's edge (def.halfWidth) for time seconds is put back on the road (Race._offRoad). unf: [reach, time]
       this.unf = null; this.fallAt = null;
       if (def.unfenced && open) {
         this.unf = def.unfenced;
         const F = this.fallAt = this.dropAt ? [this.dropAt[0].slice(), this.dropAt[1].slice()] : [new Uint8Array(N), new Uint8Array(N)];
         for (const [a, b] of def.bridges || []) for (let d = a; d <= b; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) F[0][i] = F[1][i] = 1; }
+      }
+      // a wooden fence along one side of an unfenced road (def.fence = { side, from, to, gaps, P, vBreak }: Killar's left, the user's decision
+      // of 9. 11. 2026 at ~18.30): panels P m long from 'from' to 'to' (metres after the start line), none whose middle is in a gap. A standing
+      // panel holds a car on that side's line (bl / br) as a barrier; a car hitting it at more than vBreak m/s across it breaks it (and the
+      // next one when it hit near a post): the race's own state (Race.fence: the time each broke, kept to the race's end; World draws it),
+      // the car through it and, over a drop, over the edge (Race._offRoad). fence: { side, s0 (track s of panel 0), P, n, on (1 a panel), v }
+      this.fence = null;
+      if (def.fence && this.unf) {
+        const D = def.fence, P = D.P || 3, n = Math.max(0, Math.floor((D.to - D.from) / P)), on = new Uint8Array(n);
+        for (let k = 0; k < n; k++) { const m = D.from + (k + 0.5) * P; on[k] = (D.gaps || []).some(([a, b]) => m >= a && m <= b) ? 0 : 1; }
+        this.fence = { side: D.side < 0 ? -1 : 1, s0: this.startS + D.from, P, n, on, v: D.vBreak || 6.5 };
       }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
@@ -3939,11 +3950,19 @@ const Core = (function () {
 
   // over the edge of a drop (wallCollide, Race._offRoad): (nx, nz) the way back to the road, vo the car's speed the other way, out (at 4.5 m/s
   // at least, clear of the cliff); then it falls (Race._fall), spinning as it went over
+  // a fence panel broken (wallCollide): panel k and, hit within a metre of a post, the one beyond it (a car is wider than that); the time it
+  // broke kept (Race.fence.brk: World throws its planks and leaves the gap, the replay too); the planks take a little of the hit (a tenth of
+  // the car's speed, a small dent where it hit). c.fenceN: the hits that broke panels; c.fenceT: the race's time of its last
+  function fenceBreak(Fn, FS, t, k, s, c, rx, rz) {
+    const u = (s - Fn.s0) / Fn.P - k, j = u < 0.34 ? k - 1 : u > 0.66 ? k + 1 : -1;
+    for (const m of j >= 0 && j < Fn.n ? [k, j] : [k]) if (Fn.on[m] && !FS.brk[m]) { FS.brk[m] = Math.max(1e-3, t); FS.n++; }
+    c.vx *= 0.9; c.vz *= 0.9; applyDamage(c, 0.03, rx, rz); c.fenceN = (c.fenceN || 0) + 1; c.fenceT = t;
+  }
   function overEdge(c, nx, nz, vo) {
     if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }
     c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9);
   }
-  function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
+  function wallCollide(c, trk, canFall, rc) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall; rc: its race, a fence's panels: Track.fence)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
       const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); }
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
@@ -3991,7 +4010,12 @@ const Core = (function () {
         else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
         else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
         if (sd < 0) br = q.br;
-        if (trk.unf) pen = 0;   // (def.unfenced: no barrier at the sides; over the edge of a drop or off the road: Race._offRoad)
+        if (trk.unf) {   // (def.unfenced: no barrier at the sides, over the edge of a drop or off the road: Race._offRoad; only a standing fence panel holds
+          // the car, a corner just across its line (a car behind the fence goes through it), unless the car hits it hard enough to break it)
+          const Fn = trk.fence, FS = rc && rc.fence, kf = Fn && FS && pen > 0 && pen < 1.2 && !(q.k >= 0) && (q.d > 0 ? 1 : -1) === Fn.side ? Math.floor((q.s - Fn.s0) / Fn.P) : -1;
+          if (!(kf >= 0 && kf < Fn.n && Fn.on[kf] && !FS.brk[kf])) pen = 0;
+          else if (canFall) { const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz); if (vo > Fn.v || (vo > 1.5 && c.fenceT != null && rc.time - c.fenceT < 0.5)) { fenceBreak(Fn, FS, rc.time, kf, q.s, c, rx, rz); pen = 0; } }   // (through it: for 0.5 s after it broke one, the car ploughs through the next ones it hits too)
+        }
         let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
         if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2, rr = Math.max(R.zr, R.shut.length ? R.zr + 12 : 0); if (d2 > (rr + 8) * (rr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
           if (dd < R.rs) { pen = R.rs - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }   // (the solid island: a tall one's middle only, R.rs)
@@ -6366,6 +6390,7 @@ const Core = (function () {
       this.laps = opts.laps || 3;
       this.time = 0; this.state = 'grid'; this.countdown = 0;
       this.cars = []; this.debris = []; this.debrisId = 0; this.props = null; this.propBk = null; this.propSlots = null; this.propCap = null;
+      this.fence = track.fence ? { brk: new Float32Array(track.fence.n), n: 0 } : null;   // (a fence's panels, Track.fence: the race's time each broke, 0 standing; n broken)
       this.finishOrder = [];
       // time trial (def.timeTrial, e.g. the Pikes Peak hill climb; a track with both ways to drive it, def.modes, driven as one when
       // opts.tt): the player alone, standing ON the start line; the clock is race.time. A time trial that can also be raced (def.timeTrial
@@ -7147,7 +7172,7 @@ const Core = (function () {
         }
         else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) { const was = !!c.inPit; this.pitStep(c, dt, true); if (!!c.inPit !== was) this._pitLane(c); }   // (107: the time in the pit lane)
       }
-      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true); }
+      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true, this); }
       if (T.unf) for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) this._offRoad(c, SD ? SD[ci] : dt); }   // (def.unfenced: over the edge, or too far off the road: back on it)
       this._tlStep(dt, lv);   // (the semi-trailers: their knocks and walls, on the kingpin again)
       if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
@@ -8007,12 +8032,12 @@ const Core = (function () {
       }
       for (let k = 0; k < A.length; k++) {
         const c = cars[A[k]], R = c.tl; if (c.net || c.fall || R.fall) continue;
-        wallCollide(R, T, true); if (R.rl) R.rl = null;
+        wallCollide(R, T, true, this); if (R.rl) R.rl = null;
         if (R.fall) { R.torn = 1; R.vy = Math.max(0, R.vy || 0); if (c.dmgMode) applyDamage(c, 0.04, -c.m.len * 0.4, 0); if (R.next && !R.next.fall) { R.next.fall = { t: 0 }; R.next.vy = R.vy; } continue; }   // (over the edge: torn off the kingpin, a jerk at the tractor's tail; the second tank with it)
         tlJoin(c, R, dt);
         const R2 = R.next; if (!R2 || R2.fall) continue;   // (the second tank: back on the dolly where the first one is now, its walls, on the dolly again)
         tlSnap(R, R2);
-        wallCollide(R2, T, true); if (R2.rl) R2.rl = null;
+        wallCollide(R2, T, true, this); if (R2.rl) R2.rl = null;
         if (R2.fall) { R2.torn = 1; R2.vy = Math.max(0, R2.vy || 0); continue; }
         tlJoin(R, R2, dt);
       }
@@ -8038,18 +8063,20 @@ const Core = (function () {
       if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); } }   // (its semi-trailer falls with it; a road train's second tank too)
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
     }
-    // a road with no barriers (def.unfenced, Track.unf = [reach, time]; wallCollide holds no car at the sides), every step after the walls: a
+    // a road with no barriers (def.unfenced, Track.unf = [reach, time]; wallCollide holds no car at the sides but at a fence's standing panels,
+    // Track.fence), every step after the walls: a
     // car whose middle is past the edge of a drop or of a bridge's deck (Track.fallAt) goes over it, fast or at a crawl (Race._fall: it falls,
-    // then it is put back on the road where it went over, damaged); one whose middle has been more than reach metres past the line where the
-    // barrier would stand (bl / br: the verge's edge, beyond it the ditch, the slope, the trees and the houses) for time seconds is put back on
-    // the road where it is (rescue: on the line, its nose along the road, no damage). c.offT: how long it has been out there; c.offN: how
-    // many times it was put back (game.js: the player's message)
+    // then it is put back on the road where it went over, damaged); one whose middle has been more than reach metres from the road's edge
+    // (def.halfWidth; Killar: 10 m, the user's decision of 9. 11. 2026 at ~18.30: the verge, the ditch, the slope, the trees and the houses
+    // first) for time seconds is put back on the road where it is (rescue: on the line, its nose along the road, no damage); closer, stuck,
+    // the player's own button puts it back (↺). A fence (Track.fence) holds it on its side (wallCollide) until it breaks. c.offT: how long
+    // it has been out there; c.offN: how many times it was put back (game.js: the player's message)
     _offRoad(c, dt) {
       const T = this.track, q = T.query(c.x, c.z, c.q.i, _oq);
       if (!(q.i >= 0) || q.k >= 0) return;
       const sd = q.d > 0 ? 1 : -1, ex = sd > 0 ? q.d - q.br : -q.d - q.bl;
       if (ex > 0 && T.fallAt[sd > 0 ? 1 : 0][q.i]) { const nx = -sd * q.nx, nz = -sd * q.nz; overEdge(c, nx, nz, -(c.vx * nx + c.vz * nz)); c.offT = 0; return; }
-      if (ex > T.unf[0]) { c.offT = (c.offT || 0) + dt; if (c.offT >= T.unf[1]) { c.offT = 0; c.offN = (c.offN || 0) + 1; this.rescue(c); } }
+      if (Math.abs(q.d) - T.w > T.unf[0]) { c.offT = (c.offT || 0) + dt; if (c.offT >= T.unf[1]) { c.offT = 0; c.offN = (c.offN || 0) + 1; this.rescue(c); } }
       else if (c.offT) c.offT = 0;
     }
     // when a car was last put somewhere else at once (rescue, the marshals' refit beside the road): the replay's recording marks it (game.js

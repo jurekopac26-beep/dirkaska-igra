@@ -1006,6 +1006,78 @@
         return { r, sp, h: hh, ox, oz, ph, bank: 0.42, m: { position: { set: (x, y, z) => pv.set(x, y, z) }, rotation: { set: (a, b, c, o) => { e.set(a, b, c, o); q.setFromEuler(e); m4.compose(pv, q, sv); im.setMatrixAt(k, m4); im.instanceMatrix.needsUpdate = true; } } } }; });
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
+    if (UNK && T.fence) {   // Killar: the wooden fence on the left (Track.fence, the user's decision of 9. 11. 2026 at ~18.30): a post every P m on the verge's
+      // edge (the barrier's line, bl), two rails on the road's side of them. In chunks of 40 panels (culled out of view), each panel its own run of
+      // vertices: a panel the race broke (Race.fence.brk) is folded away and its two rails fly off, over the edge and down (by the race's time:
+      // the replay shows each standing until it broke; World.dyn.fence, from Render.frame)
+      const Fn = T.fence, CH = 40, VP = 52, IP = 78, W0 = new THREE.Color(0x6e5034), W1 = new THREE.Color(0xa0805a), cc = new THREE.Color();
+      const at = (s, o) => {   // the point on the fence's line (bl + o out from the centre, on the left) at track s, the way out, the road's height
+        const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, L = (A) => A[i] + (A[i + 1] - A[i]) * u, nx = L(T.nx), nz = L(T.nz), b = L(T.bl) + o;
+        return { x: L(T.px) - nx * b, z: L(T.pz) - nz * b, y: L(T.hy), ox: -nx, oz: -nz, i }; };
+      const chunks = [], shown = new Uint8Array(Fn.n).fill(1), pl = [];
+      let P = null, Nr = null, Co = null, I = null, v = 0, ii = 0;
+      const quad = (a, b, c, d, wx, wy, wz, col) => {   // a face, its normal turned to (wx, wy, wz)
+        let ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], tx = d[0] - a[0], ty = d[1] - a[1], tz = d[2] - a[2];
+        let nx = uy * tz - uz * ty, ny = uz * tx - ux * tz, nz = ux * ty - uy * tx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+        const fl = nx * wx + ny * wy + nz * wz < 0; if (fl) { nx = -nx; ny = -ny; nz = -nz; }
+        for (const p of fl ? [a, d, c, b] : [a, b, c, d]) { P[v * 3] = p[0]; P[v * 3 + 1] = p[1]; P[v * 3 + 2] = p[2]; Nr[v * 3] = nx; Nr[v * 3 + 1] = ny; Nr[v * 3 + 2] = nz; Co[v * 3] = col.r; Co[v * 3 + 1] = col.g; Co[v * 3 + 2] = col.b; v++; }
+        I[ii++] = v - 4; I[ii++] = v - 3; I[ii++] = v - 2; I[ii++] = v - 4; I[ii++] = v - 2; I[ii++] = v - 1; void ux; };
+      const beam = (A, B, y0, y1, t0, t1, col, post) => {   // from A to B (on the line), t0..t1 out from it, y0..y1 over the road; a post: its ends and top too
+        const p = (Q, t, y) => [Q.x + Q.ox * t, Q.y + y, Q.z + Q.oz * t], dx = B.x - A.x, dz = B.z - A.z, l = Math.hypot(dx, dz) || 1, ax = dx / l, az = dz / l;
+        const a00 = p(A, t0, y0), a01 = p(A, t0, y1), a10 = p(A, t1, y0), a11 = p(A, t1, y1), b00 = p(B, t0, y0), b01 = p(B, t0, y1), b10 = p(B, t1, y0), b11 = p(B, t1, y1);
+        quad(a00, b00, b01, a01, -A.ox, 0, -A.oz, col); quad(a10, b10, b11, a11, A.ox, 0, A.oz, col); quad(a01, b01, b11, a11, 0, 1, 0, col);
+        if (post) { quad(a00, a10, a11, a01, -ax, 0, -az, col); quad(b00, b10, b11, b01, ax, 0, az, col); } else quad(a00, b00, b10, a10, 0, -1, 0, col); };
+      for (let k0 = 0; k0 < Fn.n; k0 += CH) {
+        const k1 = Math.min(Fn.n, k0 + CH), nv = (k1 - k0) * VP; P = new Float32Array(nv * 3); Nr = new Float32Array(nv * 3); Co = new Float32Array(nv * 3); I = new Uint16Array((k1 - k0) * IP); v = 0; ii = 0;
+        for (let k = k0; k < k1; k++) {
+          const sa = Fn.s0 + k * Fn.P, A = at(sa, 0), B = at(sa + Fn.P, 0), h = API.VR.n6(A.x * 0.7, A.z * 0.7), v0 = v;
+          if (Fn.on[k]) {
+            cc.copy(W0).multiplyScalar(0.85 + 0.3 * h); beam(at(sa - 0.06, 0.02), at(sa + 0.06, 0.02), -1.2, 1.0, 0, 0.12, cc, true);   // the post, 12 cm square, from the cliff's lip to 1 m over the road
+            cc.copy(W1).multiplyScalar(0.8 + 0.35 * h); beam(A, B, 0.38, 0.5, -0.04, 0, cc, false); beam(A, B, 0.78, 0.9, -0.04, 0, cc, false);   // the two rails
+            const M = at(sa + Fn.P / 2, 0); pl[k] = { x: M.x, y: M.y, z: M.z, ox: M.ox, oz: M.oz, hd: Math.atan2(B.z - A.z, B.x - A.x), drop: !!(T.dropAt && T.dropAt[0][M.i]) };
+          }
+          while (v < v0 + VP) { P[v * 3] = A.x; P[v * 3 + 1] = A.y; P[v * 3 + 2] = A.z; v++; }   // (a gap, the rest of the run: one point)
+          while (ii < (k - k0 + 1) * IP) I[ii++] = v - 1;
+        }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(Nr, 3)); g.setAttribute('color', new THREE.BufferAttribute(Co, 3)); g.setIndex(new THREE.BufferAttribute(I, 1));
+        g.computeBoundingSphere(); const m = new THREE.Mesh(g, matV); m.matrixAutoUpdate = false; m.receiveShadow = true; root.add(m);
+        chunks.push({ g, k0, k1, orig: P.slice() });
+      }
+      // the rails of the panels broken last (at most 4 panels, two rails each): out over the edge and down, turning (gone below after 3 s); on
+      // flat ground they land and lie
+      const pk = new THREE.InstancedMesh(new THREE.BoxBufferGeometry(Fn.P, 0.12, 0.04), new THREE.MeshLambertMaterial({ color: 0xa0805a }), 8), m4 = new THREE.Matrix4(), qq = new THREE.Quaternion(), eu = new THREE.Euler(), pv = new THREE.Vector3(), sv = new THREE.Vector3(1, 1, 1), z4 = new THREE.Matrix4().makeScale(0, 0, 0);
+      pk.frustumCulled = false; pk.matrixAutoUpdate = false; for (let j = 0; j < 8; j++) pk.setMatrixAt(j, z4); root.add(pk);
+      const rec = []; let hid = 0, flying = false;
+      out.dyn.fence = (race, rp) => {   // every frame (Render.frame): the race's broken panels as they are at its time (a replay: at the replay's)
+        const FS = race && race.fence && race.fence.brk.length === Fn.n ? race.fence : null, now = rp ? rp.t : race ? race.time : 0;
+        if (!(FS && FS.n) && !hid && !flying) return;
+        rec.length = 0;
+        for (const C2 of chunks) {
+          let dirty = false;
+          for (let k = C2.k0; k < C2.k1; k++) {
+            const tb = FS ? FS.brk[k] : 0, br = tb > 0 && tb <= now + 1e-6 ? 1 : 0;
+            if (br && now - tb < 20) rec.push(k);
+            if (!Fn.on[k] || br === 1 - shown[k]) continue;
+            shown[k] = 1 - br; hid += br ? 1 : -1; dirty = true;
+            const a = C2.g.attributes.position.array, o = (k - C2.k0) * VP * 3;
+            if (br) { const x = a[o], y = a[o + 1], z = a[o + 2]; for (let q = 3; q < VP * 3; q += 3) { a[o + q] = x; a[o + q + 1] = y; a[o + q + 2] = z; } }
+            else a.set(C2.orig.subarray(o, o + VP * 3), o);
+          }
+          if (dirty) C2.g.attributes.position.needsUpdate = true;
+        }
+        rec.sort((x, y) => FS.brk[y] - FS.brk[x]); flying = rec.length > 0;
+        for (let j = 0; j < 8; j++) {
+          const k = rec[j >> 1], p = k != null ? pl[k] : null; if (!p) { pk.setMatrixAt(j, z4); continue; }
+          const t = now - FS.brk[k], r1 = API.VR.n6(k * 3.1, j * 7.7), r2 = API.VR.n6(j * 5.3, k * 1.9), y0 = p.y + (j & 1 ? 0.84 : 0.44), vo = 3 + 3 * r1, va = 4 + 4 * r2, vy = 1.5 + 2 * r1;
+          if (p.drop && t > 3) { pk.setMatrixAt(j, z4); continue; }
+          const land = p.y - 0.25, tl = p.drop ? t : Math.min(t, (vy + Math.sqrt(vy * vy + 19.6 * Math.max(0, y0 - land))) / 9.8), lie = !p.drop && t >= tl;   // (tl: when it lands)
+          pv.set(p.x + (p.ox * vo + Math.cos(p.hd) * va) * tl, lie ? land + 0.02 : y0 + vy * tl - 4.9 * tl * tl, p.z + (p.oz * vo + Math.sin(p.hd) * va) * tl);
+          if (lie) eu.set(Math.PI / 2, -p.hd + (1.5 - 3 * r1) * 0.4, 0); else eu.set((2 + 3 * r2) * tl, -p.hd + (1.5 - 3 * r1) * tl, (j & 1 ? 1 : -1) * (1 + 2 * r1) * tl);
+          qq.setFromEuler(eu); m4.compose(pv, qq, sv); pk.setMatrixAt(j, m4);
+        }
+        pk.instanceMatrix.needsUpdate = true;
+      };
+    }
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: unAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: unAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);

@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Killar (India, Himachal Pradesh): the road from Killar, the village at the head of the Pangi Valley, down the Chenab towards Kishtwar,
-  // a single lane of gravel on a shelf cut into the mountainside high above the river, with no guard rails over the drop. From the village
+  // a single lane of gravel on a shelf cut into the mountainside high above the river, with no guard rails over the drop (in the game a wooden fence on the left). From the village
   // (~2.402 m) along the cliff, into the side valley of the Hangrung Nala and over its bridge, out again along the cliff to the finish
   // (~2.412 m): 4.4 km of the real road, the real length, all of it in Himachal Pradesh. The road is narrow (9 m in the game's scale, the
   // widest road cars and a lorry pass on): the grid of thirteen stands in its two columns closer together (Race: a narrow road), and it has
@@ -28,8 +28,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['ibex', 'bighorn', 'sheep', 'blackbear'], t: ['logPile', 'fallenTree'] },   // (the Himalayan ibex, the bharal as the bighorn, the village's sheep, the Himalayan black bear)
     id: 'killar', name: 'Killar, Indija', theme: 'killar', open: true, modes: ['race', 'tt', 'traffic'], laps: 1, halfWidth: 4.5,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the single lane past the line: with more, the longest vehicles' (6.3 m) parking slots would stand on each other
-    desc: 'Cesta iz Killarja v dolini Pangi (Himačal Pradeš, Indija) ob reki Chenab proti Kishtwarju: en sam pas makadama na polici, vklesani v strmo pobočje visoko nad reko, brez ograj. Od vasi na 2.402 m vzdolž pečin, v stransko dolino Hangrung Nale čez most in nazaj nad prepad, 4,4 km. Dirka z 21 tekmeci, vožnja proti uri ali dvoboj z enim tekmecem v prometu.',
-    en: { name: 'Killar, India', desc: 'The road from Killar in the Pangi Valley (Himachal Pradesh, India) along the Chenab towards Kishtwar: a single lane of gravel on a shelf cut into the steep mountainside high above the river, with no guard rails. From the village at 2,402 m along the cliffs, into the side valley of the Hangrung Nala, over its bridge and back above the drop, 4.4 km. A race against 21 rivals, a time trial or a duel with one rival in the traffic.' },
+    desc: 'Cesta iz Killarja v dolini Pangi (Himačal Pradeš, Indija) ob reki Chenab proti Kishtwarju: en sam pas makadama na polici, vklesani v strmo pobočje visoko nad reko, nad prepadom le lesena ograja. Od vasi na 2.402 m vzdolž pečin, v stransko dolino Hangrung Nale čez most in nazaj nad prepad, 4,4 km. Dirka z 21 tekmeci, vožnja proti uri ali dvoboj z enim tekmecem v prometu.',
+    en: { name: 'Killar, India', desc: 'The road from Killar in the Pangi Valley (Himachal Pradesh, India) along the Chenab towards Kishtwar: a single lane of gravel on a shelf cut into the steep mountainside high above the river, with only a wooden fence along the drop. From the village at 2,402 m along the cliffs, into the side valley of the Hangrung Nala, over its bridge and back above the drop, 4.4 km. A race against 21 rivals, a time trial or a duel with one rival in the traffic.' },
     realKm: 4.4, alt: [2402,2412],
     start: [0.0,-0.0], finish: [-403.4,-2421.6], cps: [[-675.7,-457.8],[-1226.2,-1055.7],[-1309.4,-1800.7],[-554.4,-2183.6]],
     roadSurface: 'makadam', runoff: 0.25, inner: 2.0, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
@@ -44,11 +44,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // it 38 m out): [from, to, side], metres after the start line; the edge dropEdge metres past the road, a car that goes over it falls
     // (Track, Race._fall)
     drops: [[20.0,2537.4,-1],[2762.4,3972.4,-1],[4257.4,4382.4,-1]],
-    // no barriers at all, on either side (the user's decision of 9. 11. 2026; the real road has none): [reach, time] (Track.unf). Its middle
-    // over the edge of a drop or off the bridge's deck, the car falls, fast or at a crawl (Race._fall: back on the road where it went over
-    // after 1.6 s, damaged); elsewhere, its middle more than reach metres past the verge's edge (where the barrier stood: the ditch, the slope,
-    // the trees) for time seconds, it is put back on the road there (Race._offRoad, no damage)
-    unfenced: [1.0, 0.3],
+    // no barriers but a wooden fence on the left (the user's decisions of 9. 11. 2026 at ~13.05 and ~18.30): [reach, time] (Track.unf). Its
+    // middle over the edge of a drop or off the bridge's deck, the car falls, fast or at a crawl (Race._fall: back on the road where it went
+    // over after 1.6 s, damaged); elsewhere, its middle more than reach metres from the road's edge (the verge, the ditch, the slope, the
+    // trees) for time seconds, it is put back on the road there (Race._offRoad, no damage)
+    unfenced: [10, 0.3],
+    // the wooden fence along the left, on the verge's edge (Track.fence: posts every P m, two rails; js/world-killar.js draws it): from the
+    // first drop to the road's end, none on the bridge over Hangrung Nala (the deck's bare edge); it holds a car as a barrier, a hit at more
+    // than vBreak m/s across it (~23 km/h) breaks a panel or two (the planks fly, the gap stays to the race's end), the car through it
+    fence: { side: -1, from: 20, to: 4616, gaps: [[4032, 4067]], P: 3, vBreak: 6.5 },
     // the turnouts where the spectators left their cars (metres after the start line; the builder puts them on the mountain's side)
     pulls: [1150, 2642],
     // the traffic of the open road (the duel): the share of each kind of vehicle [car, van, bus, motorbike, truck] and a cyclist every so many

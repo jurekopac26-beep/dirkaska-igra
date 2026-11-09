@@ -10523,6 +10523,7 @@ const Render = (function () {
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
     World.update(world, time, target, camera, opt && opt.rp);   // (a replay: its time for the spectators)
+    if (world && world.dyn && world.dyn.fence) world.dyn.fence(curRace, opt && opt.rp);   // (Killar: the race's broken fence panels, at the replay's time in one: js/world-killar.js)
     if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
