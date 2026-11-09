@@ -8,7 +8,7 @@ Krogi `.github/workflows/tests.yml` na `main` in v pull requestih od 1388 do 183
 
 | Test | Krogi | Vzrok | Stanje |
 |---|---|---|---|
-| `pitahead` | 1665, 1670, 1702, 1777, 1815 | 1, 4, napaka v igri | test popravljen, čaka na odločitev o igri |
+| `pitahead` | 1665, 1670, 1702, 1777, 1815 | 1, 4, napaka v igri | popravljeno (test in igra) |
 | `slip` | 1620, 1632, 1832 | 1 | popravljeno |
 | `hud` | 1739 (`main`), 1777, 1832, 1910 (#305) | 3 | popravljeno |
 | `weather` | 1591, 1832 | 2 | popravljeno |
@@ -29,9 +29,11 @@ Prejšnji popravki nestabilnih testov na `main`: #317, #404, #429, #443, #445.
 3. **Obtičanje brez reševanja** (`hud`). Avtopilot nima vzvratne prestave, dirka rešuje samo tekmece. V vseh treh padcih je avto stal na začetku boksov v Spa (dist 6756–6759) do konca vseh zank (v četrt kroga 0 m). Popravek, kot v `driveToResults`, `boxwarn`, `pitswing` in `pitahead`: zunaj boksov, obtičan ali obrnjen več kot 3 s, »Na progo« (`race.rescue`).
 4. **Dirka ni bila ponovljiva** (`pitahead`). Test je odprl stran s semenom 17 (`Math.random` strani) in dirko začel iz menija. Dirka je naključna števila jemala iz istega `Math.random` kot narisane sličice, njen začetek pa je tekel na pravih sličicah, zato je bila vsakič druga: igralec je iz postanka prišel 15. ali 20., na koncu je bil 1. ali 3. V približno vsaki drugi dirki po igralčevem postanku ni bilo avta tik pred njim, do 5 s pred njim, ki ga boks v tem krogu še ne čaka, in test ni imel koga izbrati (`A: null`). Popravek: test vozi v testnem načinu igre (`?proga=bathurst&seme=17&t=1`, kot `repro.test.mjs`), v katerem dirka jemlje števila iz svojega semena (`Race opts.repro`), začetek pa se odsimulira ustavljen (`quickRun`). Dirka je vsakič ista, z narisanimi sličicami ali brez in z radiem ali brez: izbran avto (D. Zupan) v 2. krogu pri 187 s, 2,7 s pred igralcem; pri semenih 1 in 2 je bilo takih trenutkov prav tako dovolj. Zraven se igralec ustavi enkrat, kot avti okoli njega: brez postanka je od 3. kroga vodil in pred njim ni bilo nobenega avta. V ponovljivi dirki pa test vsakič pade pri »enkrat«: inženir stavek ponovi (spodaj, prva ugotovitev).
 
-## Ugotovitve za kodo igre (tu ne popravljeno)
+## Ugotovitve za kodo igre
 
-- **Radio, avto pred tabo gre v boks** (`aheadRadio` v `js/game.js`). Ko avto pred igralcem zapelje čez svojo točko uvoza (`pit[1]`), a še ni v boksu (`inPit`, pri Bathurstu do ~16 m), `Race.pitNext` že šteje uvoz v naslednjem krogu (`to` malo pod dolžino kroga). S prošnjo za boks (`pitWant` ali strategija `at`) je `now` spet res. Varovalo `q.to > race.track.len` tega ne ujame, zato inženir »Avto pred tabo (…) gre v tem krogu v bokse.« reče drugič (ključ z naslednjim krogom). Radio teče v vsaki sličici, zato se to v igri zgodi skoraj vsakič, ko avto ne zavije na zadnjem možnem uvozu. `pitahead` to preverja (»enkrat«): v ponovljivi dirki pade vsakič (seme 17: D. Zupan pri 187,5 s in 302,5 s), na `main` redko (krog 1670: `n: 2`, `radioAhead` dvakrat), ker tam test avto večinoma izbere v 3. krogu, na zadnjem uvozu.
+- **Radio, avto pred tabo gre v boks** (`aheadRadio` v `js/game.js`; **popravljeno v #537** po odločitvi uporabnika »Kar v #537«, 9. 11. 2026, tabla #382, komentar 6737552977). Ko avto pred igralcem zapelje čez svojo točko uvoza (`pit[1]`), a še ni v boksu (`inPit`, pri Bathurstu do ~16 m), `Race.pitNext` že šteje uvoz v naslednjem krogu (`to` malo pod dolžino kroga). S prošnjo za boks (`pitWant` ali strategija `at`) je `now` spet res. Varovalo `q.to > race.track.len` tega ne ujame, zato inženir »Avto pred tabo (…) gre v tem krogu v bokse.« reče drugič (ključ z naslednjim krogom). Radio teče v vsaki sličici, zato se to v igri zgodi skoraj vsakič, ko avto ne zavije na zadnjem možnem uvozu. `pitahead` to preverja (»enkrat«): v ponovljivi dirki pade vsakič (seme 17: D. Zupan pri 187,5 s in 302,5 s), na `main` redko (krog 1670: `n: 2`, `radioAhead` dvakrat), ker tam test avto večinoma izbere v 3. krogu, na zadnjem uvozu. Popravek: radio molči še prvih `AHEAD.to` (150) m za uvozom (`q.to > race.track.len - AHEAD.to`), kot že 150 m pred njim; ko je avto zunaj asfalta (`pitG`), `pitNext` vrne `null`.
+
+Ostali dve ugotovitvi tu nista popravljeni:
 
 - Red Bull Ring, uvoz v boks: avtopilot prečka črto boksa noter, ven in spet noter v ~0,8 s. Igralcu bi boksni avtopilot za trenutek vrnil volan in ga spet prevzel, tekmec pa ob tem izgubi klic (`Race.pitStep`, »an AI car out of the lane«).
 - Spa, začetek boksov: avtopilot lahko obtiči ob ograji, kjer se boks loči od proge.
