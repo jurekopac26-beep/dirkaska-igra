@@ -4401,6 +4401,21 @@ const World = (function () {
       Ls: [20, 27, 34, 46, 60], maxR: 0.3 };   // (gH: the world's ground; it may stand off farther and higher, and never looks big on the screen)
   }
   function pkUpdate(pk, t, car) { const raw = t - pk.t; pk.t = t; pkFollow(pk, t, car, raw); }
+  // the camera behind the car as pkFollow sees it (PK_V: set every frame from the car, no new arrays; P: the car and the road 7, 14, 21 m ahead on its
+  // screen) and a candidate spot on its screen (PK_H)
+  const PK_V = { k: 1, as: 1, cx: 0, cy: 0, cz: 0, fx: 0, fy: 0, fz: 0, rx: 0, rz: 0, ux: 0, uy: 0, uz: 0, P: new Float64Array(8) }, PK_H = new Float64Array(2);
+  function pkScr(V, x, y, z, o, k) {   // a point on the screen in half screen heights (o[k], o[k + 1]; far off it behind the camera); its depth, 0 behind
+    const d0 = x - V.cx, d1 = y - V.cy, d2 = z - V.cz, w = d0 * V.fx + d1 * V.fy + d2 * V.fz;
+    if (w < 1) { o[k] = o[k + 1] = 1e9; return 0; }
+    o[k] = (d0 * V.rx + d2 * V.rz) / w * V.k; o[k + 1] = (d0 * V.ux + d1 * V.uy + d2 * V.uz) / w * V.k; return w;
+  }
+  function pkClear(pk, x, y, z) {   // in half screen heights: the smallest gap between the helicopter (~7 m wide disc) and the car and the road just ahead (0.35 off the screen), + 0.05 well clear
+    // and whole in the picture (its middle 5.6 m, about the rotor's reach, in from the picture's edge: not cut by it)
+    const V = PK_V, h = PK_H, w = pkScr(V, x, y + 1.5, z, h, 0), rr = w ? 7 * V.k / w : 0;
+    if (!w || Math.abs(h[0]) > V.as + rr || Math.abs(h[1]) > 1 + rr) return 0.35;
+    let mv = 1; for (let q = 0; q < 8; q += 2) mv = Math.min(mv, Math.hypot(V.P[q] - h[0], V.P[q + 1] - h[1]) - rr);
+    return Math.min(0.35, mv) + (mv > 0.35 && Math.abs(h[0]) < V.as - 0.8 * rr && Math.abs(h[1]) < 1 - 0.8 * rr ? 0.05 : 0) - (pk.maxR && rr > pk.maxR ? 3 * (rr - pk.maxR) : 0);   // (a size cap: bigger than that on a screen costs a lot)
+  }
   // Ouninpohja's TV helicopter: with the car the whole run (the start line without one), off to one side and up high, where no camera sees it big
   function pkFollow(pk, t, car, dt) {
     const wrap = (a) => a - TAU * Math.round(a / TAU);
@@ -4414,25 +4429,19 @@ const World = (function () {
     pk.ax += (ax + cvx / 2.5 - pk.ax) * e(2.5); pk.az += (az + cvz / 2.5 - pk.az) * e(2.5); pk.ay += (ay - pk.ay) * e(1.5);
     { const k = e(2.5); pk.fx += (Math.cos(ah) - pk.fx) * k; pk.fz += (Math.sin(ah) - pk.fz) * k; const l = Math.hypot(pk.fx, pk.fz) || 1; pk.fx /= l; pk.fz /= l; }
     const H = 26 + 3 * Math.sin(t * 0.21), fx = pk.fx, fz = pk.fz;
-    // where it may fly: a rough model of the three cameras (chase in portrait and landscape, iso, kino: see Render's updateCamera) projects a candidate spot;
-    // off screen, or clear of the car and the road just ahead on screen, in every view; a bit ahead of the car is nicer, and it does not jump around
-    const sp1 = Math.max(spd, 1e-3), la = sstep(1.5, 16, spd), lvx = cvx / sp1 * la, lvz = cvz / sp1 * la, zc = 1.2 * (1 + 0.25 * clamp(spd / 55, 0, 1)), zi = 1.2 * (1 + 0.1 * clamp(spd / 60, 0, 1));
-    const views = [[fx * 13, fz * 13, -fx, -fz, 46 * zc, 0.98, 58, 0.46], [fx * 8.5, fz * 8.5, -fx, -fz, 30 * zc, 0.9, 46, 2.2], [clamp(lvx * 19, -24, 24), clamp(lvz * 19, -12.6, 18.6), 0, 1, 57 * zi, 0.82, 30, 2.2], [lvx * 11, lvz * 11, 0, 1, 38 * zi, 0.74, 30, 2.2]];
-    const cams = views.map(([ox, oz, bx, bz, D, pt, fov, as]) => { const tx = ax + ox, tz = az + oz, c = [tx + bx * D * Math.cos(pt), ay + D * Math.sin(pt), tz + bz * D * Math.cos(pt)];
-      const f = [tx - c[0], ay - c[1], tz - c[2]], fl = Math.hypot(f[0], f[1], f[2]); f[0] /= fl; f[1] /= fl; f[2] /= fl; const rl = Math.hypot(f[0], f[2]), r = [-f[2] / rl, 0, f[0] / rl];
-      return { c, f, r, u: [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]], k: 1 / Math.tan(fov / 2 * Math.PI / 180), as }; });
-    const prot = [[ax, ay + 0.7, az], [ax + fx * 7, ay, az + fz * 7], [ax + fx * 14, ay, az + fz * 14], [ax + fx * 21, ay, az + fz * 21]];
-    const scr = (C, q) => { const d0 = q[0] - C.c[0], d1 = q[1] - C.c[1], d2 = q[2] - C.c[2], z = d0 * C.f[0] + d1 * C.f[1] + d2 * C.f[2]; return z < 1 ? null : [(d0 * C.r[0] + d1 * C.r[1] + d2 * C.r[2]) / z * C.k, (d0 * C.u[0] + d1 * C.u[1] + d2 * C.u[2]) / z * C.k, z]; };
-    const clear = (x, y, z) => { let m = 1, n = 0, big = 0;   // in half screen heights: the smallest gap between the helicopter (~7 m wide disc) and the protected points, + 0.05 per view that shows it well clear
-      for (const C of cams) { const h = scr(C, [x, y + 1.5, z]); if (!h) continue; const rr = 7 * C.k / h[2]; if (Math.abs(h[0]) > C.as + rr || Math.abs(h[1]) > 1 + rr) continue;
-        if (pk.maxR && rr > pk.maxR) big = Math.max(big, rr - pk.maxR);   // (a size cap: bigger than that on a screen costs a lot)
-        let mv = 1; for (const q of prot) { const s = scr(C, q); if (s) mv = Math.min(mv, Math.hypot(s[0] - h[0], s[1] - h[1]) - rr); } m = Math.min(m, mv); if (mv > 0.35) n++; }
-      return Math.min(0.35, m) + 0.05 * n - 3 * big; };
+    // where it may fly: the camera behind the car (the one camera of a race, upright or on its side as the screen is: Render's chasePose with the player's
+    // Oddaljenost and the view's tilt) projects a candidate spot (pkClear); off screen, or clear of the car and the road just ahead on screen; whole in the picture
+    // is nicer, a bit ahead of the car too, and it does not jump around
+    { const R = typeof Render !== 'undefined' ? Render : null, cm = R && R.camera && R.camera.isCamera ? R.camera : null, uc = R && R.cam, up = !cm || cm.aspect < 1, V = PK_V;
+      const D = (up ? 46 : 30) * (uc ? uc.userZoom || 1 : 1.4) * (1 + 0.25 * clamp(spd / 55, 0, 1)), pt = (up ? 0.98 : 0.9) * (1 - (uc ? uc.userTilt || 0 : 0.3)), cp = Math.cos(pt), sn = Math.sin(pt), b = (up ? 13 : 8.5) - D * cp;
+      V.k = 1 / Math.tan((up ? 29 : 23) * Math.PI / 180); V.as = cm ? cm.aspect : 0.46;   // (looking down the car's heading at the road a0 ahead, D m off)
+      V.cx = ax + fx * b; V.cy = ay + D * sn; V.cz = az + fz * b; V.fx = fx * cp; V.fy = -sn; V.fz = fz * cp; V.rx = -fz; V.rz = fx; V.ux = fx * sn; V.uy = cp; V.uz = fz * sn;
+      for (let q = 0; q < 4; q++) pkScr(V, ax + fx * 7 * q, ay + (q ? 0 : 0.7), az + fz * 7 * q, V.P, 2 * q); }   // (the car and the road ahead: the same for every candidate)
     const lift = (L) => (pk.maxR ? 6 * sstep(34, 46, L) : 0);   // (standing off farther, it flies a little higher too)
     let best = pk.th, bL = pk.L, bs = -1e9;
     for (let j = -12; j < 12; j++) for (const L of pk.Ls) {
       const th = pk.th + j * TAU / 24, x = ax + Math.cos(th) * L, z = az + Math.sin(th) * L, y = Math.max(ay + H + lift(L), pk.gH(x, z) + 20);
-      const sc = clear(x, y, z) + 0.12 * (Math.cos(th) * fx + Math.sin(th) * fz) - 0.1 * Math.abs(j * TAU / 24) - 0.004 * Math.abs(L - pk.L);
+      const sc = pkClear(pk, x, y, z) + 0.12 * (Math.cos(th) * fx + Math.sin(th) * fz) - 0.1 * Math.abs(j * TAU / 24) - 0.004 * Math.abs(L - pk.L);
       if (sc > bs) { bs = sc; best = th; bL = L; }
     }
     pk.th += wrap(best - pk.th) * (snap ? 1 : e(1.2)); pk.L += (bL - pk.L) * (snap ? 1 : e(0.8));
