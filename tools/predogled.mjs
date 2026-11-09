@@ -34,8 +34,11 @@ function stamp(dir) {
 }
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const all = JSON.parse(prsFile ? fs.readFileSync(prsFile, 'utf8')
-  : run('gh', ['pr', 'list', '--repo', process.env.GITHUB_REPOSITORY, '--state', 'open', '--limit', '50', '--json', 'number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels']));
+// the open pull requests: gh pr list gives the newest opened, up to --limit, so with more than 50 open a labelled one opened before them
+// fell out before the sort below (9. 11. 2026: 60 open, #305 and #261 out); those labelled »predogled« come by a list of their own, however old
+const gh = (more) => JSON.parse(run('gh', ['pr', 'list', '--repo', process.env.GITHUB_REPOSITORY, '--state', 'open', ...more, '--json', 'number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels']));
+const all = prsFile ? JSON.parse(fs.readFileSync(prsFile, 'utf8'))
+  : [...new Map(gh(['--label', 'predogled', '--limit', '200']).concat(gh(['--limit', '50'])).map(p => [p.number, p])).values()];
 // (labelled »predogled«: kept however many newer ones there are (odločitev uporabnika 2. 11. 2026); then the newest)
 const pin = (p) => (p.labels || []).some(l => (l && l.name || l) === 'predogled');
 const prs = all.filter(p => !p.isCrossRepository).sort((a, b) => (pin(b) - pin(a)) || String(b.updatedAt).localeCompare(String(a.updatedAt)));

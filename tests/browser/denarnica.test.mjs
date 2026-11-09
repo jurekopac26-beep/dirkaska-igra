@@ -2,7 +2,8 @@
 // profile is the career's (tdgp-career). A career of the game's with 92.000 coins and the PICO TURBO opens the garage on Kariera (marked
 // in the MOCKUP row) with 92.000 and the PICO; a turbo bought on it (2.500): the career has 89.500, the PICO's engine at level 1 and its
 // part kept for the garage, its races and wins as they were; the KAZE RS bought (62.000): the career has it (27.500 left). The mockup's
-// Veteran: its own test money (248.500), the career untouched; Kariera again: 27.500, the KAZE there, the turbo still on the PICO. The
+// Veteran: its own test money (for any car: vetMoney, 9. 11. 2026), the career untouched; a veteran saved before that (248.500) opened
+// again has the new money, one saved since keeps what it has left; Kariera again: 27.500, the KAZE there, the turbo still on the PICO. The
 // game (index.html): the career's 27.500 and both cars, the PICO's engine at level 1 on its upgrade screen; the KAZE's aero level 2
 // bought there (its price taken). In the garage again: the career's coins, the KAZE with the parts of that level (the SPORT kit). An
 // owned car the garage has not saved yet: the game's colour (tdgp-settings) in the garage and in the career.
@@ -52,11 +53,24 @@ try {
 
   // 4. the mockup's Veteran: its own test money, the career untouched; Kariera again: the career's
   await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
-  const v = await S(), c3 = await career();
+  const v = Object.assign(await S(), { vm: await page.evaluate(() => __garage.vetMoney()) }), c3 = await career();
   await page.evaluate(() => document.querySelector('#g-modes [data-mode="game"]').click()); await run();
   const g = await page.evaluate(() => ({ money: __garage.S.money, kaze: __garage.S.cars.kaze.own, turbo: __garage.S.cars.pico.parts.turbo, want: __garage.findOpt('turbo', 'Turbo'), sel: [...document.querySelectorAll('#g-modes button.sel')].map(b => b.dataset.mode) }));
-  T.check('MOCKUP Veteran: its own test money (248.500), the career untouched (27.500); Kariera again: 27.500, the KAZE there, the turbo still on the PICO',
-    v.mode === 'vet' && v.money === 248500 && c3.money === 27500 && c3.cars.join() === 'pico,kaze' && g.money === 27500 && g.kaze && JSON.stringify(g.turbo) === JSON.stringify(g.want) && g.sel.join() === 'game', JSON.stringify({ v, c3, g }));
+  T.check('MOCKUP Veteran: its own test money (for any car, ' + v.vm + '), the career untouched (27.500); Kariera again: 27.500, the KAZE there, the turbo still on the PICO',
+    v.mode === 'vet' && v.money === v.vm && v.vm >= 2000000 && c3.money === 27500 && c3.cars.join() === 'pico,kaze' && g.money === 27500 && g.kaze && JSON.stringify(g.turbo) === JSON.stringify(g.want) && g.sel.join() === 'game', JSON.stringify({ v, c3, g }));
+
+  // 4b. a veteran saved before 9. 11. 2026 (248.500, no vm) opened again: the new test money (the user need not clear the browser's
+  // data); a veteran saved since (vm 2) keeps what it has left; the career untouched both times; then back to Kariera
+  const vet = (money, vm) => page.evaluate(([money, vm]) => { const s = JSON.parse(localStorage.getItem('apex-garage')); s.mode = 'vet'; s.money = money; if (vm) s.vm = vm; else delete s.vm;
+    localStorage.setItem('apex-garage', JSON.stringify(s)); }, [money, vm]);
+  await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
+  await vet(248500, 0); await garage();
+  const o1 = await S(), vm1 = await page.evaluate(() => __garage.vetMoney());
+  await vet(5000, 2); await garage();
+  const o2 = await S(), c3b = await career();
+  await page.evaluate(() => document.querySelector('#g-modes [data-mode="game"]').click()); await run();
+  T.check('a veteran saved before (248.500) opened again: the new test money; one saved since keeps its 5.000; the career untouched (27.500)',
+    o1.mode === 'vet' && o1.money === vm1 && vm1 > 248500 && o2.mode === 'vet' && o2.money === 5000 && c3b.money === 27500 && c3b.cars.join() === 'pico,kaze', JSON.stringify({ o1: [o1.mode, o1.money, vm1], o2: [o2.mode, o2.money], c3b: c3b.money }));
   T.check('no page errors in the garage', !errors.length, errors.slice(0, 5).join(' | '));
 
   // 5. the game: the career's coins and cars; the PICO's engine at level 1; the KAZE's aero level 2 bought there
