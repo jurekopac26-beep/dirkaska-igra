@@ -365,8 +365,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xe2d9c8, sun: 0xffedd0, sunI: 1.2, sky: 0x9fc2e2, gnd: 0xb59c74, hemiI: 0.7, tint: [1.03, 1.0, 0.95], sat: 1.0, sunOff: [-74, 70, 38], split: [[0.97, 1.0, 1.04], [1.05, 1.0, 0.93]] },   // the desert of Bahrain in the afternoon: a low sun from the west, a dry pale haze, the sand's warm light from below
-    say: 'Sakhir',
-    rainP: 0.05,
+    say: 'Sakhir', rainP: 0.05,
     grassNat: 0.55, lawn: [0.96, 1.05, 0.84],
     zivali: { a: ['camel'], t: [], open: true },
     id: 'sakhir', name: 'Sakhir, Bahrajn', theme: 'sakhir', laps: 2, halfWidth: 7,
