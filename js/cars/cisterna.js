@@ -2,7 +2,8 @@
    The tractor is the TITAN as it is (its look drawn by K.lookOf('titan'), only a little rust at its lower edges and steps); the trailer is a
    body of its own on the kingpin (model.trailer, Core: tlStep): it folds in a bend, pushes on the brakes, jackknifes, knocks the walls and
    the cars and falls over a drop's edge, on its own too. Its look (trailer.look, built by the renderer's trailer builder: js/render.js,
-   tlBuild): a sun-faded tank, heavy rust, six grey riveted plates welded on, its hoops and manhole covers, the railing on top, the walkway
+   tlBuild): a sun-faded tank, heavy rust, six grey riveted plates welded on, its hoops (no manhole covers on top: from the chase camera
+   they looked like tyres, the user's decision of 9. 11. 2026), the railing on top, the walkway
    along its side with its rusty railing (two tubes gone), the ladder up to it (a rung gone), the spare tyres on its rear rack
    strapped down, a yellow bumper. Tractor L 5.90 W 2.50 H 3.00; the trailer L 12.40 W 2.50 H 3.56, its kingpin 0.90 behind its front,
    three axles 7.5, 8.8 and 10.1 m behind the kingpin (m). */
@@ -11,9 +12,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   'use strict';
   const titan = () => { const d = VEHICLE_DEFS.find(q => q && q.id === 'titan'); return d && d.look; };   // (the TITAN's look, read when drawn)
 
-  // ---- the tank: its size (m: x from the kingpin, its middle yc above the ground, half its height ry, half its width rz), its hoops and covers ----
+  // ---- the tank: its size (m: x from the kingpin, its middle yc above the ground, half its height ry, half its width rz), its hoops, the spots
+  // on top its rust is heaviest at and runs down from (no covers there) ----
   const TK = { x0: -10.2, x1: 0.55, yc: 2.2, ry: 1.0, rz: 1.12, dome: 0.32 };
-  const HOOPS = [-0.75, -2.65, -4.55, -6.45, -8.35, -9.95], COVERS = [-1.7, -4.2, -6.7, -9.1];
+  const HOOPS = [-0.75, -2.65, -4.55, -6.45, -8.35, -9.95], TOPS = [-1.7, -4.2, -6.7, -9.1];
   const RACK = [-0.87, -0.29, 0.29, 0.87];   // (the rear rack's four spare tyres across (z): the look's, the parts tlSpare1..4)
   // its picture (1024 x 512 px): the skin (x0 to x1 along; around from the bottom up the +z side, over the top, down the -z side), the domed
   // ends (as seen from outside), the walkway's grating (x along, z down), the bumper's label
@@ -42,7 +44,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     [[0, '#74502c'], [0.1, '#a3753f'], [0.25, '#cc9b5c'], [0.4, '#dcb478'], [0.5, '#e7c992'], [0.6, '#dcb478'], [0.75, '#cc9b5c'], [0.9, '#a3753f'], [1, '#74502c']].forEach(([t, c]) => gr.addColorStop(t, c));
     g.globalAlpha = 1; g.fillStyle = gr; g.fillRect(S0, S1, SW, SH);
     // the rust: a noise of its own over the skin (its spots round on the tank: k across), heavy, more of it low down and by the hoops and
-    // the covers; dark and pitted where it is old, orange at its edges; the paint between chalky in places
+    // in four spots on top; dark and pitted where it is old, orange at its edges; the paint between chalky in places
     { const img = g.getImageData(S0, S1, SW, SH), DA = img.data, sm = (t) => t * t * (3 - 2 * t);
       const NG = (sz) => { const nx = Math.ceil(SW / sz) + 2, ny = Math.ceil(SH / (sz * k)) + 2, a = new Float32Array(nx * ny); for (let i = 0; i < a.length; i++) a[i] = rnd(); return { sz, nx, a }; };
       const val = (O, x, y) => { const fx = x / O.sz, fy = y / (O.sz * k), ix = Math.floor(fx), iy = Math.floor(fy), tx = sm(fx - ix), ty = sm(fy - iy), i0 = iy * O.nx + ix;
@@ -54,7 +56,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const lw = Math.abs(y + S1 - MID) / (SH / 2), by = 0.2 * lw * lw + 0.06 * lw, top = Math.max(0, 1 - lw * 4);   // (lw: 0 its top, 0.5 its side, 1 its bottom)
         for (let x = 0; x < SW; x++) {
           let n = 0; for (let o = 0; o < 5; o++) n += WT[o] * val(O[o], x, y);
-          let cb = 0; if (top > 0) for (const c of COVERS) { const dx = (x - PX(c)) / 40; if (dx > -1 && dx < 1) cb = Math.max(cb, (1 - dx * dx) * top); }
+          let cb = 0; if (top > 0) for (const c of TOPS) { const dx = (x - PX(c)) / 40; if (dx > -1 && dx < 1) cb = Math.max(cb, (1 - dx * dx) * top); }
           const e = n + by + colB[x] * 0.1 + cb * 0.12, p = (y * SW + x) * 4, a = e < 0.585 ? 0 : e > 0.615 ? 1 : sm((e - 0.585) / 0.03);
           if (a <= 0) { const f = val(OF, x, y); if (f > 0.62) { const l = Math.min(1, (f - 0.62) * 4) * 0.16; DA[p] += (246 - DA[p]) * l; DA[p + 1] += (236 - DA[p + 1]) * l; DA[p + 2] += (205 - DA[p + 2]) * l; } continue; }
           const t = 0.65 * val(OC[0], x, y) + 0.35 * val(OC[1], x, y), old = e < 0.62 ? 0 : Math.min(1, (e - 0.62) / 0.12);   // (its colour; old: deep in it)
@@ -67,9 +69,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       g.putImageData(img, S0, S1); }
     const sideY = (bias) => { const d = Math.pow(rnd(), bias), s = rnd() < 0.5 ? -1 : 1; return MID + s * (1 - d) * SH / 2; };   // (0 the top, 1 the bottom: low ones more often)
     for (let i = 0; i < 2600; i++) { const y = sideY(0.7); g.globalAlpha = r(0.2, 0.55); g.fillStyle = css(pick(RUST)); g.fillRect(r(S0, S2), y, r(0.7, 1.8), r(0.6, 1.3)); }   // (a fine speckle)
-    // where it ran: from the hoops, from the covers on top, here and there
+    // where it ran: from the hoops, from the spots on top, here and there
     for (const h of HOOPS) for (const s of [-1, 1]) for (let j = 0; j < 7; j++) streak(PX(h) + r(-7, 7), MID + s * r(0.1, 0.6) * SH / 2, r(25, 120), r(1.5, 4.5), pick(RUST), r(0.45, 0.85));
-    for (const c of COVERS) for (const s of [-1, 1]) for (let j = 0; j < 5; j++) streak(PX(c) + r(-22, 22), MID + s * r(1, 8), r(40, 140), r(1.5, 4), pick(RUST), r(0.4, 0.8));
+    for (const c of TOPS) for (const s of [-1, 1]) for (let j = 0; j < 5; j++) streak(PX(c) + r(-22, 22), MID + s * r(1, 8), r(40, 140), r(1.5, 4), pick(RUST), r(0.4, 0.8));
     for (let i = 0; i < 260; i++) streak(r(S0, S2), sideY(1.4), r(10, 80), r(0.7, 2.2), pick(RUST), r(0.25, 0.6));
     // its rivets: the seams along it, the rows by the hoops (a few with their own rust run)
     for (const f of [0.85, 1.95, 4.33, 5.43]) { const y = PY(f); for (let x = S0 + 4; x < S2; x += 8) { rivet(x, y, dn(y)); if (rnd() < 0.09) streak(x, y + dn(y) * 2, r(8, 26), r(1, 2), pick(RUST), 0.55); } }
@@ -145,10 +147,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     B.box(-0.2, 1.02, 0, 2.1, 0.08, 1.9, DK);
     if (full) for (const x of [-1.8, -3.3, -4.8, -6.3, -10.9]) B.box(x, 1.06, 0, 0.1, 0.12, 1.9, DK);
     if (!sh) for (const x of [-0.3, -5.0, -9.7]) B.box(x, 1.3, 0, 0.3, 0.2, 1.7, 0x2a2420);
-    // the tank, its hoops, its manhole covers on top
+    // the tank and its hoops (no manhole covers on top: from the chase camera they looked like tyres, the user's decision of 9. 11. 2026)
     B.tank(TK.x0, TK.x1, TK.yc, TK.ry, TK.rz, { n: [32, 16, 10][lo], uv: PIC.skin, end: PIC.end, dome: TK.dome });
     if (full) for (const x of HOOPS) B.hoop(x, TK.yc, TK.ry, TK.rz, 0.12, 0.035, 0x8b5a33);
-    if (!sh) for (const x of COVERS) { B.cyl([x, 3.06, 0], [x, 3.3, 0], 0.3, 0x5e4330, { n: full ? 12 : 6 }); if (full) { B.cyl([x, 3.3, 0], [x, 3.35, 0], 0.34, 0x4c3324, { n: 12 }); B.box(x + 0.36, 3.31, 0, 0.06, 0.06, 0.2, RUSTD); } }
     // the railing on top: posts both sides, a top and a middle rail
     const TP = [-1.0, -2.3, -3.6, -4.9, -6.2, -7.5, -8.8, -9.8];
     if (!sh) for (const sd of [-1, 1]) { if (full) for (const x of TP) B.box(x, 3.28, sd * 0.6, 0.04, 0.56, 0.04, RAIL); for (const y of [3.55, 3.3]) B.box(-5.4, y, sd * 0.6, 8.84, 0.04, 0.04, RAIL); }
