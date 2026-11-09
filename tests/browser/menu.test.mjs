@@ -1210,15 +1210,15 @@ try {
     const wr = await ev(page, 'return [...root.querySelectorAll("#track-stage .wxv > [data-act^=\\"weather:\\"]")].map(b => [b.dataset.act, b.getAttribute("aria-pressed"), b.getBoundingClientRect().left, getComputedStyle(b).transform]);');
     T.check('the weather chosen (Snow) slides to the first place of its row, the others after it in their order (Dry, Rain, Changing, Storm); then nothing moving',
       /^matrix/.test(slid) && [...wr].sort((a, b) => a[2] - b[2]).map(b => b[0]).join() === 'weather:snow,weather:dry,weather:rain,weather:change,weather:storm' && wr.find(b => b[0] === 'weather:snow')[1] === 'true' && wr.every(b => b[3] === 'none'), JSON.stringify({ slid, wr }));
-    // the Earth opened in a turn: the turn done at once (the next track), no old screen left over it; the screen rests under the Earth
-    const e1 = await page.evaluate(() => new Promise((res) => {
+    // the Earth opened in a turn: the turn done at once (the next track), no old screen left over it; the screen rests under the Earth. (Opened
+    // as the turn begins, before its frames: a machine without a graphics chip, as the tests', can take longer than the turn's 300 ms for a
+    // few of them, a flag's edge read the first time, flagFill, a second or more, and the turn would be over before the Earth came)
+    const e1 = await page.evaluate(() => {
       const root = document.getElementById('menu-host').shadowRoot, d0 = Menu.debug();
       root.querySelector('.rarw.r').click();
-      requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => {
-        const m = Menu.debug(); root.querySelector('.thead .globe').click(); const d = Menu.debug();
-        res({ from: d0.list[d0.trackIdx], mid: Object.assign({ id: m.list[m.trackIdx] }, m.ring), id: d.list[d.trackIdx], ring: d.ring, scr: root.querySelectorAll('#s-track').length });
-      })));
-    }));
+      const m = Menu.debug(); root.querySelector('.thead .globe').click(); const d = Menu.debug();
+      return { from: d0.list[d0.trackIdx], mid: Object.assign({ id: m.list[m.trackIdx] }, m.ring), id: d.list[d.trackIdx], ring: d.ring, scr: root.querySelectorAll('#s-track').length };
+    });
     const zOk = await zem(page, 1).then(() => true).catch(() => false), zr = zOk && await ev(page, 'return !!root.querySelector("#s-track.rested") && MenuZemlja.isOpen();');
     T.check('the Earth opened in a turn: the turn done at once (the next track), no old screen left; the screen rests under the Earth',
       e1.from === 'spa' && e1.mid.turning && e1.mid.id === 'spa' && e1.id === next && idle(e1.ring) && e1.scr === 1 && zr, JSON.stringify({ e1, zOk, zr }));
