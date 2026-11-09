@@ -6,7 +6,7 @@
    estates, young and grown, the wide rain trees and the secondary growth on the circuit's grounds: spTreeGeo), the lawns lush green, the
    service roads round the circuit (def.sk.svc: OpenStreetMap) as plain asphalt on the ground, the buildings by the circuit (def.sk.bld:
    OpenStreetMap), the lone trees (def.sk.tr: OpenStreetMap: palms in the courtyard of the big grandstand, broadleaved trees along the
-   roads), the Malaysian flag among the fans' flags (rbFlags: cols.canton), navy and gold turn numbers, sand-coloured gravel traps
+   roads), the Malaysian flag among the fans' flags (World.flagMesh's grid and emblems), navy and gold turn numbers, sand-coloured gravel traps
    (LK.gravel). Only place names on its boards (no names of the circuit, its people, races or sponsors).
    ========================================================================= */
 (function () {
@@ -22,7 +22,16 @@
   const SP_AT = { num: 0, brake: 15, ban: 18, rbr: 18, spielberg: 19 };   // atlas cells: the 15 turn numbers, the braking boards, the banners
   const SP_SHIRTS = [[0.86, 0.1, 0.12], [0.96, 0.96, 0.94], [0.05, 0.13, 0.45], [0.99, 0.79, 0.06], [0.13, 0.13, 0.15], [0.84, 0.08, 0.12], [0.2, 0.34, 0.66], [0.93, 0.93, 0.9],
     [0.45, 0.47, 0.5], [0.98, 0.55, 0.1], [0.18, 0.5, 0.32], [0.1, 0.55, 0.7]];   // the fans' shirts in the heat: lots of red and white, navy, yellow, black, a few orange, green and teal
-  const MY = Object.assign([[0.8, 0.06, 0.12], [0.96, 0.96, 0.95]], { canton: [[0.03, 0.1, 0.42], [1, 0.8, 0.0]] });   // the Malaysian flag: 14 red and white stripes, the blue canton with the yellow crescent and star (rbFlags: cols.canton)
+  // the Malaysian flag: 14 red and white stripes, the blue canton over the upper 8 and half the length with the yellow crescent and 14-pointed
+  // star (World.flagMesh's grid and emblems, look.sym, as assets/flags/malaysia.svg): in the canton's height C (8/14 of the flag's) and length K
+  // (in the flag's height: half a cloth 1.5 times as long as high), the crescent between the circles of 3/8 C round 0.411 K from the pole and of
+  // 1/3 C 0.0835 C further on, the star 5/16 C out and 1/8 C in round 0.625 K, a point up
+  const MY = ((r, w, b, y) => {
+    const C = 8 / 14, K = 0.75, vs = [], rows = [];
+    for (let k = 0; k <= 14; k++) vs.push(k / 14);
+    for (let k = 0; k < 14; k++) { const st = k % 2 ? w : r; rows.push([k < 8 ? b : st, st]); }
+    return { grid: [[0, 0.5, 1], vs, rows], sym: [['moon', y, 0.411 * K, C / 2, 0.375 * C, 0.0835 * C, C / 3], ['star', y, 0.625 * K, C / 2, 0.3125 * C, 0.125 * C, 14, -Math.PI / 2]] };
+  })([0.8, 0.06, 0.12], [0.96, 0.96, 0.95], [0.03, 0.1, 0.42], [1, 0.8, 0.0]);
 
   // ---- the trees (unit height 1, instanced; LK.woods): 0 an oil palm (a stout trunk, a fountain of long fronds arching out and down, folded
   //      along their ribs, both faces: the crowns are seen from below), 1 a rain tree (a short trunk, a wide umbrella of soft lumps), 2 a tree
