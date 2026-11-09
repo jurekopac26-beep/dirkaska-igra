@@ -21,7 +21,7 @@ Izbran je **Montréal**: ravnina za lasnico, štart pri 3.440 m kroga, cilj po 4
 - `js/game.js`: kratki priklopi (način in rekord, brez kamere pred štartom, `race.zbOver`).
 - `js/menu.js`: ploščica *Drag race* v *Single race*, en tekmec, možnost *Rival*.
 - `js/lang.js`: angleški prevodi; `index.html`: skripta; `css/zabava.css`: plošča, gumb, rezultati.
-- Testi: `tests/drag.test.js` (Node: ravnina na pravi progi, ročni menjalnik, prednost, tekmec, rdeča luč, težavnost), `tests/browser/drag.test.mjs` (meni, dirka proti tovornjaku, rezultati, Proti avtu, tipke in gumb PRESTAVA, rdeča luč, postavitev pokonci in ležeče, električni avto); `tests/browser/menu.test.mjs`: sedem načinov.
+- Testi: `tests/drag.test.js` (Node: ravnina na pravi progi, ročni menjalnik, prednost, tekmec, rdeča luč, težavnost), `tests/browser/drag.test.mjs` (meni, dirka proti tovornjaku, rezultati, Proti avtu, tipke in gumb PRESTAVA, rdeča luč, postavitev pokonci in ležeče, električni avto); `tests/browser/menu.test.mjs`: osem načinov (*Drag race* za *Endless traffic*).
 
 ## Stanje
 | Korak | Kaj | Stanje |

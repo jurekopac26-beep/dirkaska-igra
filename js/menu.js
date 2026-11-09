@@ -85,9 +85,10 @@
   /* ---------------- the game's tracks as the menu shows them ---------------- */
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
     { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
-    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' },
-    { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava: docs/zabava.md; the drag race docs/drag-dirka.md)
-  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', drag: 'drag' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', drag: 'drag' };
+    { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' },   // (Zabava: docs/zabava.md)
+    { id: 'endless', name: 'Endless traffic', sub: 'Lap after lap in ever denser traffic. Close passes add time.', chip: 'ONE TOUCH ENDS IT', img: 'assets/menu/mode-endless.webp' },   // (docs/neskoncna-voznja.md)
+    { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava, the drag race: docs/drag-dirka.md)
+  const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', endless: 'endless', drag: 'drag' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', endless: 'endless', drag: 'drag' };
   const W_SET = ['dry', 'rain', 'random', 'change'];   // (the rain over the picture: none, falling, coming and going; Changing the same, slower)
   // the first sentences of the game's description of a track (the card has room for about two lines)
   const shortDesc = (s) => { s = String(s || '').replace(/\s+/g, ' ').trim(); if (s.length <= 130) return s; const m = /^(.{40,130}?[.!?])(\s|$)/.exec(s); if (m) return m[1]; const c = s.slice(0, 130).search(/[,;:][^,;:]*$/); return c > 50 ? s.slice(0, c) + '.' : s.slice(0, 127).replace(/\s+\S*$/, '') + '…'; };
@@ -642,6 +643,7 @@
     let first;
     if (mode === 'chase') first = cell('Police', 'On you', 'opp');
     else if (mode === 'trial') { const gold = G.medals(d); first = gold ? cell('Gold time', clock(gold[0]), 'gt') : cell('Opponents', '0', 'opp'); }
+    else if (mode === 'endless') { const E = typeof Core !== 'undefined' && Core.EN; first = cell('Clock', (E ? E.clock[Math.max(0, Math.min(3, G.S.difficulty | 0))] : 30) + ' s', 'opp'); }   // (the clock's start at the game's level, js/core.js EN.clock)
     else if (mode === 'race' && rivOf(d)) { const n = G.rivals(d); first = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + n + '. Choose how many"><small>Opponents</small><b>' + n + '</b></button></div>'; }   // (a tap: the sheet with 0..100, rivSheet)
     else first = cell('Opponents', String(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21), 'opp');   // (Elimination: at least 5, js/zabava/elim.js E.min)
     // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)

@@ -4374,7 +4374,7 @@ const Core = (function () {
           if (g > -8 && g < 30 && Math.abs(o.q.d * pz.sd - pz.o) < 2.6) { vT = 0; break; } } } } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5 && (c.aiThreat.vl < 1 || (c.aiThreat.vl < 4 && apronBound(c.aiThreat, c, race, T))));   // (a ghost on the pit road already level with a car standing at its box, or one off the lane onto the apron on its way into another box, at walking pace: on through it, not stopped in it)
     { const o = c.aiThreat, bx = !!KC && !race.pol && !c.inPit, f0 = txv('aiFol', race.cars.length > LOD.min ? LOD.fol : -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs((race._tlX ? tlD(o, q.d) : o.q.d) - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
-    if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
+    if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : race.tf.loop ? race.tf._rs(F.o.s, q.s) : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
       const a = c.flyA, ax = a ? tlX(a) : 0; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - ax - (a.flyP ? (a.m.len + M.len) / 2 + 7 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);   // (ax: its semi-trailer's tail, tlX)
       if (a && a.flyP && c === race.player && race.opts.flying - race.time <= 0.5 && a.dist > c.dist) vT = Math.min(vT, Math.max(0, a.vl) + Math.min(0, (a.dist - c.dist - ax - (a.m.len + M.len) / 2 - 7) * 0.45));   // (the last half second: handed over no faster than the car right ahead, not closing on it)   // (only behind a car really ahead and moving)
@@ -4489,8 +4489,11 @@ const Core = (function () {
       const T = race.track;
       this.race = race; this.T = T; this.sd = tfSide(T); this.R = rng(((race.opts.seed || 7) * 7919 + 101) >>> 0);
       // a one-way road (def.oneWay: Irohazaka): every vehicle goes up the road, on two lanes; the slower lane on the side the country drives on
-      // (this.sd: the left with def.leftHand), a quarter of the cars, vans and motorbikes in the other one (v.ln: its lane's side, else its way's)
-      this.ow = !!T.def.oneWay;
+      // (this.sd: the left with def.leftHand), a quarter of the cars, vans and motorbikes in the other one (v.ln: its lane's side, else its way's).
+      // The endless drive on a circuit (opts.endless, this.loop: Bathurst): every vehicle goes the race's way round and round the loop, s
+      // continuous (laps x the loop's length on: Track.idx wraps it; _rs, _cs), on the lanes the width has room for (v.lane, _laneD)
+      this.loop = !!race.opts.endless && !T.open;
+      this.ow = !!T.def.oneWay || this.loop;
       this.veh = []; this.ped = []; this.grp = []; this.t = 0; this.nid = 0;
       this.zeb = (T.def.zebras || []).map(z => ({ s: T.startS + z, want: 0, busy: 0 }));
       this.stops = (T.def.stops || []).map(([d, side]) => ({ s: T.startS + d, side }));
@@ -4507,24 +4510,34 @@ const Core = (function () {
         for (let k = 1; k < n; k++) cum[k] = cum[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2]);
         const o = A.open || [0, 1], e = ((T.def.altHw || 2.4) + (T.def.edgeBar != null ? T.def.edgeBar : 0.4)) / Math.max(1, cum[n - 1]);   // (in sight on the lane's open part and out to the fence round its end)
         return { a: T.startS + A.a, b: T.startS + A.b, P, n, cum, L: cum[n - 1], fade: A.fade || 0, f0: o[0] > 0 ? o[0] - e : -1, f1: o[1] < 1 ? o[1] + e : 2 }; });
+      this.win = this.loop ? { dens: 1, ps: 0, n: [0, 0], hit: 0 } : null;   // (the endless drive: a window of traffic round the player, see _winStep; hit: the player's touches)
       this._prof(); this._populate(dens || 1);
     }
 
     // the vehicles' speed along the road, both ways (a car's; a kind's own side grip scales it): calm, the bends at 2.1 m/s^2 of side grip (1.7
     // on the cobbles), 50 km/h where there are sidewalks, 70 km/h elsewhere, braking gently (1.5 m/s^2) into every slower bit ahead
     _prof() {
-      const T = this.T, N = T.N, ds = T.ds, up = new Float32Array(N), dn = new Float32Array(N);
+      const T = this.T, N = T.N, ds = T.ds, up = new Float32Array(N), dn = new Float32Array(N), L = this.loop, top = L ? EN.vTop : TF_VMAX, lat = L ? 2.1 * EN.lat : 2.1;   // (the loop: up to 110 km/h, the bends a little brisker)
       for (let i = 0; i < N; i++) {
         const ak = Math.max(Math.abs(T.k[i]), 1e-4), town = T.walk && (T.walk[0][i] > 0.5 || T.walk[1][i] > 0.5);
-        up[i] = dn[i] = Math.min(town ? TF_VTOWN : TF_VMAX, Math.sqrt((T.settAt && T.settAt[i] ? 1.7 : 2.1) / ak));
+        up[i] = dn[i] = Math.min(town ? TF_VTOWN : top, Math.sqrt((T.settAt && T.settAt[i] ? 1.7 : lat) / ak));
         if (T.wa && T.wa[i] < 2.3) up[i] = dn[i] = Math.min(up[i], 8.5);   // (a lane-and-a-half road: ~30 km/h, passing each other with care)
       }
+      if (L) { for (let n = 2 * N - 1; n >= 0; n--) { const i = n % N, j = (i + 1) % N; up[i] = Math.min(up[i], Math.sqrt(up[j] * up[j] + 3 * ds)); } dn.set(up); this.vp = [dn, up]; return; }   // (round the loop twice: over the line too)
       for (let i = N - 2; i >= 0; i--) up[i] = Math.min(up[i], Math.sqrt(up[i + 1] * up[i + 1] + 3 * ds));
       for (let i = 1; i < N; i++) dn[i] = Math.min(dn[i], Math.sqrt(dn[i - 1] * dn[i - 1] + 3 * ds));
       this.vp = [dn, up];
     }
-    _vpAt(v) { return Math.min(TF_VMAX, this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.1)) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
-    _lane(v) { const w = this.T.wS(v.s), sd = v.ln || v.dir * this.sd; return v.kind === 4 ? sd * (w - 0.7) : sd * w * TFK[v.p].lane; }
+    _vpAt(v) { return Math.min(this.loop ? EN.vTop : TF_VMAX, this.vp[v.dir > 0 ? 1 : 0][this.T.idx(v.s)] * Math.sqrt(TFK[v.p].lat / 2.1)) * (v.kind === 4 && v.dir < 0 ? 0.8 : 1); }
+    _lane(v) { if (this.loop) return this._laneD(v.s, v.lane, v.p); const w = this.T.wS(v.s), sd = v.ln || v.dir * this.sd; return v.kind === 4 ? sd * (w - 0.7) : sd * w * TFK[v.p].lane; }
+    // the loop: its lanes there (2; 3 where the asphalt is EN.lane3 m or more from the middle to the edge), lane l's middle across the road for
+    // a vehicle of figures p (0: the one on the side the country drives on, the slower one; the higher ones toward the other side)
+    _nl(s) { return this.T.wS(s) >= EN.lane3 ? 3 : 2; }
+    _laneD(s, l, p) { const w = this.T.wS(s), n = w >= EN.lane3 ? 3 : 2; return this.sd * w * (1 - (2 * Math.min(l, n - 1) + 1) / n) * 2 * TFK[p].lane; }
+    // the loop: s (a race car's, Track.query's: on one lap) the nearest to ref along the loop (the vehicles' continuous s); a race car's s
+    // so, near the player's (the window's ps)
+    _rs(s, ref) { const L = this.T.len; return s + L * Math.round((ref - s) / L); }
+    _cs(c) { return this.loop ? this._rs(c.q.s, this.win.ps) : c.q.s; }
     _edge(v) { const sg = v.ln || v.dir * this.sd, T = this.T; let e = T.wS(v.s) - (v.kind === 4 ? 0.35 : v.wid / 2 + 0.3);   // (pulled over: the asphalt's edge of its side, less half its width and 0.3 m; a bicycle right at the edge)
       const po = T.def.pullOff; if (po && v.kind !== 4) { const i = T.idx(v.s), bar = (sg > 0 ? T.br[i] : T.bl[i]) - v.wid / 2 - 0.4; e = Math.max(e, Math.min(e + po, bar)); }   // (def.pullOff: a narrow road's, onto the shoulder that far, short of the barrier)
       return sg * e; }
@@ -4534,6 +4547,7 @@ const Core = (function () {
     // ~650), a quarter of them alone, the rest training groups of 3-7 in single file; the first 180 m past the start line clear of uphill
     // traffic) and the people
     _populate(dens) {
+      if (this.win) return this._winPool();   // (the endless drive: its own pool, parked until the window needs it)
       const T = this.T, R = this.R, CO = this.race.opts.tfCars, M = CO ? { mix: CO } : T.def.traffic, PK = [0, 1, 2, 3, 5];   // (opts.tfCars: a special mission's own mix [car, van, bus, motorbike, truck], no bicycles and nobody on foot)
       for (const dir of this.ow ? [1] : [1, -1]) {
         const a = dir > 0 ? T.startS + 180 : this.s0 + 60, L = this.s1 - 30 - a, n = Math.max(1, Math.round(L / (dir > 0 ? (this.ow ? 200 : 290) : 250) * dens)), nb = Math.max(1, Math.round(L / (2400 * (M && M.bike ? M.bike / 650 : 1)) * dens));
@@ -4578,7 +4592,8 @@ const Core = (function () {
       const v = { id: ++this.nid, kind, p, dir, s, d: 0, dT: 0, v: 0, v0: lerp(K.v0[0], K.v0[1], R()) * (kind === 4 && dir < 0 ? 2.1 : 1), len: K.len, wid: K.wid, mass: K.mass,
         col: R(), st: 0, t: 0, x: 0, y: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, i: 0, k: 0, brake: false, horn: 0, off: false, q: { i: -1 }, stopT: 0, stopS: -1, wait: 0, pass: null, rider: null, lean: 0,
         sv: 0, acc: 0, gap: 1e9, sdT: 0, sdD: 0, yl: 0, yS: 0, yT: 0, ind: 0, nc: 0, grp: null, gi: 0 };   // (sv: its sideways speed; sdT, sdD: moving over from one alongside; yl: pulling over for the police (1), back into the lane (2), yS the stop, yT the wait; ind: the indicator, -1 / 1 across the road; nc: no contact for a moment after a knock)
-      if (this.ow) v.ln = kind === 4 || kind === 2 || R() < 0.75 ? this.sd : -this.sd;
+      if (this.loop) { const V = EN.v[p]; v.v0 = lerp(V[0], V[1], R()) / 3.6; v.lane = 0; v.lcT = 1 + 2 * R(); v.lcW = 0; v.lcTo = -1; v.sb = 0; v.sbT = 1 + 2 * R(); }   // (the loop: 60-110 km/h by its kind; lcT, sbT: the next look for a lane change, a sudden braking; lcW: indicating before it moves over to lcTo; sb: braking hard that long)
+      else if (this.ow) v.ln = kind === 4 || kind === 2 || R() < 0.75 ? this.sd : -this.sd;
       v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.85; this._pose(v, 0);
       this.veh.push(v); return v;
     }
@@ -4615,7 +4630,8 @@ const Core = (function () {
         return;
       }
       v.alt = 0; v.hid = 0;
-      const T = this.T, N = T.N, f = clamp(v.s / T.ds, 0, N - 1.001), i = Math.floor(f), j = i + 1, t = f - i;
+      const T = this.T, N = T.N; let f = v.s / T.ds; if (this.loop) { f %= N; if (f < 0) f += N; } else f = clamp(f, 0, N - 1.001);   // (the loop: on round it, over the line to the first sample)
+      const i = Math.min(N - 1, Math.floor(f)), j = i + 1 < N ? i + 1 : 0, t = f - i;
       const nx = T.nx[i] + (T.nx[j] - T.nx[i]) * t, nz = T.nz[i] + (T.nz[j] - T.nz[i]) * t, tx = T.tx[i] + (T.tx[j] - T.tx[i]) * t, tz = T.tz[i] + (T.tz[j] - T.tz[i]) * t;
       v.x = T.px[i] + (T.px[j] - T.px[i]) * t + nx * v.d; v.z = T.pz[i] + (T.pz[j] - T.pz[i]) * t + nz * v.d; v.y = T.hy ? T.hy[i] + (T.hy[j] - T.hy[i]) * t : 0;
       v.vx = tx * v.v * v.dir + nx * dd; v.vz = tz * v.v * v.dir + nz * dd; v.i = i;
@@ -4631,6 +4647,7 @@ const Core = (function () {
       for (const c of race.cars) if (!c.net) { cl.push(c); if (c.tl && !c.tl.fall && c.tl.q.i >= 0) cl.push(c.tl); const R2 = c.tl && c.tl.next; if (R2 && !R2.fall && R2.q.i >= 0) cl.push(R2); }   // (a semi-trailer as a race car of its own: followed, run into, kept clear of)
       if (race.pol) for (const c of race.pol.cars) cl.push(c);
       this.t += dt;
+      if (this.win) this._winStep();
       this._order();
       for (const v of this.veh) { if (v.off) this._recycle(v); else if (v.st === 0) this._drive(v, dt); else this._loose(v, dt); if (v.horn > 0) v.horn -= dt; }
       for (const v of this.veh) if (!v.off && v.st === 1) for (const o of this.veh) if (o !== v && !o.off) this._bump(v, o);   // (a loose body against the others)
@@ -4657,8 +4674,8 @@ const Core = (function () {
       const T = this.T, K = TFK[a.p], dir = a.dir, L = dir > 0 ? this.up : this.dn, k = L[a.k] === a ? a.k : L.indexOf(a), hw = a.wid / 2, sd = a.ln || dir * this.sd;   // (sd: its own side of the road, -1 / 1 across it; a one-way road: the side of its lane, a.ln)
       let gap = 1e9, lv = 0, lead = null, still = false, pace = false, onc = false;
       const cand = (g, vs, o, st, oc) => { if (g < gap) { gap = g; lv = vs; lead = o; still = st; pace = false; onc = !!oc; } };
-      const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25;
-      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (g < 0 && a.grp && b.grp === a.grp && a.grp.m.indexOf(b) > a.grp.m.indexOf(a)) continue; if (over(b.d, b.wid)) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }   // (one of its own group on top of it, behind it in the line (a group bunched up to a stop): not in its way, else each waits for the other for good)
+      const over = (d, w) => Math.abs(d - a.d) < (w + a.wid) / 2 + 0.25, lp = this.loop, ovT = (d, w) => Math.abs(d - a.dT) < (w + a.wid) / 2 + 0.25;   // (the loop: one moving over into its lane, or into whose lane it moves, in its way already)
+      for (let j = k + 1; j < L.length; j++) { const b = L[j], g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > 160) break; if (g < 0 && a.grp && b.grp === a.grp && a.grp.m.indexOf(b) > a.grp.m.indexOf(a)) continue; if (over(b.d, b.wid) || (lp && (over(b.dT, b.wid) || ovT(b.d, b.wid)))) { cand(g, b.v, b, false); pace = !!a.grp && b.grp === a.grp; break; } }   // (one of its own group on top of it, behind it in the line (a group bunched up to a stop): not in its way, else each waits for the other for good)
       for (const b of this.hz) { const g = (b.s - a.s) * dir - (a.len + b.len) / 2; if (g > -1 && g < 160 && over(b.d, b.wid)) cand(g, 0, b, true); }
       if (this.race.pol) { const hs = this.race.pol.holdAt(a, dt); if (hs > -1e8) { const g = (hs - a.s) * dir - a.len / 2; if (g > -2 && g < 160) cand(Math.max(0, g), 0, null, false); } }   // (the traffic checkpoint: stopped at the officer, waved on in turn)
       if (this.race.pol) for (const pc of this.race.pol.cars) if (pc.pol.block && pc.pol.mode === 'park') { const g = (pc.q.s - a.s) * dir - a.len / 2 - 80; if (g > -6 && g < 160) cand(Math.max(0, g), 0, pc, false); }   // (a roadblock ahead: the police hold the traffic ~80 m before it, both ways: room to drive round it)
@@ -4667,20 +4684,21 @@ const Core = (function () {
       // the race cars: one coming up fast close behind makes it give a little room; one coming at it on its side, due within 3 s, makes it
       // move toward its edge and sound the horn; one alongside, a little away from it once (no sliding away from it all along). The
       // police very close with their sirens (see _yield): over to the edge and stop
+      if (this.loop) this._whim(a, lead, gap, dt);   // (the loop: a lane change, a sudden braking)
       let dT = this._lane(a), fromBehind = false, horn = false, side = 0, pol = 0;
       if (!a.alt) for (const c of this.cl) {   // (one on its own line round: not on the road the race cars drive)
-        const g = (c.q.s - a.s) * dir, cw = c.m.wid, vs = (c.vx * T.tx[c.q.i] + c.vz * T.tz[c.q.i]) * dir, al = (a.len + c.m.len) / 2;
+        const g = (this._cs(c) - a.s) * dir, cw = c.m.wid, vs = (c.vx * T.tx[c.q.i] + c.vz * T.tz[c.q.i]) * dir, al = (a.len + c.m.len) / 2;
         if (g - al > -0.5 && g < 160 && over(c.q.d, cw)) { if (vs < -1) cand(g - al, 0, c, false, true); else cand(g - al, vs, c, Math.abs(vs) < 0.5 && c.speed < 0.5); }   // (one coming at it in its lane: as if standing there, no panic: it is theirs to get out of the way)
         else if (Math.abs(g) < al + 1 && Math.abs(c.q.d - a.d) < (cw + a.wid) / 2 + 0.8) side = a.d > c.q.d ? 1 : -1;
         if (g > 0 && vs < -3 && Math.abs(c.q.d - a.d) < (cw + a.wid) / 2 + 0.3 && (g - al) / (a.v - vs) < 3) horn = true;
-        if (g < 0 && g > -25 && vs > a.v + 3 && Math.abs(c.q.d - a.d) < 2.4 && a.kind !== 4) fromBehind = true;
+        if (g < 0 && g > -25 && vs > a.v + 3 && Math.abs(c.q.d - a.d) < 2.4 && a.kind !== 4) fromBehind = this.loop ? (c.q.d > a.d ? -1 : 1) : true;   // (the loop: away from it, whichever side it comes by)
         if (this._siren(c)) {   // (2: pull over / keep waiting; 1: still close behind it, keep waiting)
           if (Math.abs(g) < al + 3 || (g < 0 && g > -60 && vs > a.v + 1) || (g < 0 && g > -150 && vs > a.v + 2 && -g / (vs - a.v) < 5) || (g > 0 && g < 80 && vs < -2)) pol = 2;
           else if (g < 0 && g > -40) pol = Math.max(pol, 1);
         }
       }
       if (horn) dT = a.d + sd * Math.min(1.5, Math.max(0, sd * this._edge(a) - sd * a.d));   // (toward its edge, not all the way)
-      else if (fromBehind) dT += sd * 0.4;
+      else if (fromBehind) dT += (fromBehind === true ? sd : fromBehind) * 0.4;
       if (side && !(a.sdT > 0)) { a.sdT = 1; a.sdD = a.d + side * 0.5; }
       if (a.sdT > 0) { a.sdT -= dt; dT = a.sdD; }
       // a zebra crossing someone waits at or walks over: stop before it; a bus: its bus stops (2 m past, at the edge, 6 s)
@@ -4689,12 +4707,12 @@ const Core = (function () {
         if (g < 4 && a.v < 0.4) { a.stopT += dt; if (a.stopT > 6) { a.stopS = st.s; a.stopT = 0; } } } }
       const yld = this._yield(a, pol, dt); if (yld) { dT = this._edge(a); a.pass = null; }
       // going round something standing in its lane (a wreck, a car pulled up): when it has waited 2 s and the other half is clear 90 m ahead
-      if (a.pass) { const o = a.pass, os = o.m ? o.q.s : o.s, od = o.m ? o.q.d : o.d, ow = o.m ? o.m.wid : o.wid || 0.8, ol = o.m ? o.m.len : o.len || 0.6;
+      if (a.pass) { const o = a.pass, os = o.m ? this._cs(o) : o.s, od = o.m ? o.q.d : o.d, ow = o.m ? o.m.wid : o.wid || 0.8, ol = o.m ? o.m.len : o.len || 0.6;
         if ((a.s - os) * dir > (a.len + ol) / 2 + 3 || o.off || (a.t += dt) > 20) { a.pass = null; a.t = 0; } else dT = od - sd * (ow / 2 + hw + 0.6); }
       else if ((still || (lead && lead.kind === 2 && lead.stopT > 0)) && lead && gap < 12 && a.v < 0.5 && !a.yl && (a.wait += dt) > 2) {   // (a wreck, a race car standing, a bus at its stop)
         let clear = true; const other = dir > 0 ? this.dn : this.up;
         for (const b of other) { const g = (b.s - a.s) * dir; if (g > -10 && g < 90) { clear = false; break; } }
-        for (const c of this.cl) if (c !== lead) { const g = (c.q.s - a.s) * dir; if (g > -10 && g < 60 && c.q.d * sd < 0.5) { clear = false; break; } }
+        for (const c of this.cl) if (c !== lead) { const g = (this._cs(c) - a.s) * dir; if (g > -10 && g < 60 && c.q.d * sd < 0.5) { clear = false; break; } }
         if (clear) { a.pass = lead; a.wait = 0; a.t = 0; }
       } else if (!still) a.wait = 0;
       if (a.pass && lead === a.pass) { gap = 1e9; lv = 0; }
@@ -4709,6 +4727,7 @@ const Core = (function () {
         acc -= K.acc * (ss / Math.max(0.3, gap)) ** 2;
         if (dv > 0 && !onc) lim = Math.max(lim, Math.min(9, 1.2 * dv * dv / (2 * Math.max(0.3, gap - (pace ? 0.2 : 1))))); }
       acc = clamp(acc, -lim, KA);
+      if (a.sb > 0) acc = Math.min(acc, -EN.sbDec);   // (the loop: braking suddenly, hard)
       if (yld) { const D = (a.yS - a.s) * dir - a.len / 2; acc = Math.min(acc, D > 0.2 ? -a.v * a.v / (2 * D) : -3.5); }   // (pulling over: an even, gentle braking to the stop)
       const ak = a.alt ? this._altOf(a) : null;   // (on its own line round: s on by the stretch's share of the line)
       a.v = Math.max(0, a.v + acc * dt); a.brake = acc < -0.8 || a.v < 0.3; a.s += dir * a.v * dt * (ak ? (ak.b - ak.a) / ak.L : 1); a.acc = acc; a.gap = gap;
@@ -4720,10 +4739,10 @@ const Core = (function () {
       const e = a.dT - a.d, cap = Math.min(K.dl, a.v * (a.pass ? 0.45 : 0.18)), want = Math.sign(e) * Math.min(cap, Math.sqrt(2 * Math.abs(e)), 2 * Math.abs(e));
       a.sv += clamp(want - a.sv, -1.5 * dt, 1.5 * dt); a.sv = clamp(a.sv, -cap, cap);
       const dd = a.sv * dt; a.d += dd;
-      a.ind = a.kind === 4 ? 0 : a.yl === 1 ? sd : Math.abs(e) > 0.6 ? Math.sign(e) : 0;
+      a.ind = a.kind === 4 ? 0 : a.yl === 1 ? sd : a.lcW > 0 ? Math.sign(this._laneD(a.s, a.lcTo, a.p) - a.d) : Math.abs(e) > 0.6 ? Math.sign(e) : 0;   // (the loop: indicating before it moves over)
       a.lean += ((a.kind >= 3 ? -clamp(a.v * a.v * T.k[a.i] * dir / 9.8, -0.6, 0.6) : 0) - a.lean) * Math.min(1, dt * 4);   // (two wheels lean into the bends)
       this._pose(a, a.sv);
-      if (a.s > this.s1 || a.s < this.s0) this._recycle(a);
+      if (!this.loop && (a.s > this.s1 || a.s < this.s0)) this._recycle(a);
     }
     // pulling over for the police (the run from them): pol 2 a patrol car in the chase very close (coming up behind within ~60 m and faster,
     // or due within 5 s; coming down at it within ~80 m; alongside), 1 one still within 40 m behind it. It indicates toward its edge, brakes
@@ -4750,6 +4769,37 @@ const Core = (function () {
       }
       return false;
     }
+    // the loop's vehicles (the endless drive) now and then: a lane change (indicating EN.lcInd s first; also out to get past a slower one
+    // ahead in its lane, and back to its own side once nothing slower is ahead there) and a sudden braking (EN.sbDec, down to about half its
+    // speed): each looks every 1-3 s, on a whim with EN.lc / EN.sb a second by the level, more often as the drive goes on (Endless.heat).
+    // Never into a lane with someone alongside or close, nor with the player coming up within EN.fair s at the speed they close in; no
+    // braking with the player right behind it
+    _whim(a, lead, gap, dt) {
+      const E = this.race.en, R = this.R, n = this._nl(a.s), lv = E ? E.lv : 1, k = E ? E.heat : 1;
+      if (a.lane >= n) a.lane = n - 1;
+      if (a.lcW > 0) { if ((a.lcW -= dt) <= 0) { if (a.lcTo >= 0 && a.lcTo < n && this._lcFree(a, a.lcTo)) a.lane = a.lcTo; a.lcTo = -1; } }
+      else if ((a.lcT -= dt) <= 0) {
+        a.lcT = 1 + 2 * R();
+        let to = -1;
+        if (lead && lead.st === 0 && lead.dir === a.dir && gap < 60 && lead.v < a.v0 - 2 && a.lane + 1 < n) to = a.lane + 1;   // (behind a slower one: out to pass it)
+        else if (a.lane > 0 && R() < 0.4 && this._lcLead(a, a.lane - 1)) to = a.lane - 1;   // (back to its own side)
+        else if (R() < EN.lc[lv] * k * 2) to = a.lane + 1 < n && (a.lane === 0 || R() < 0.5) ? a.lane + 1 : a.lane - 1;   // (on a whim)
+        if (to >= 0 && to < n && to !== a.lane && this._lcFree(a, to)) { a.lcTo = to; a.lcW = EN.lcInd; }
+      }
+      if (a.sb > 0) { if ((a.sb -= dt) <= 0 || a.v < a.sbV) a.sb = 0; }
+      else if ((a.sbT -= dt) <= 0) { a.sbT = 1 + 2 * R(); if (a.v > 12 && R() < EN.sb[lv] * k * 2 && this._sbFree(a)) { a.sb = 2.5; a.sbV = a.v * (0.4 + 0.2 * R()); } }
+    }
+    _lcFree(a, to) {
+      const T = this.T, dT = this._laneD(a.s, to, a.p);
+      for (const o of this.veh) { if (o === a || o.off) continue; const g = o.s - a.s, al = (a.len + o.len) / 2;
+        if ((Math.abs(o.d - dT) < (o.wid + a.wid) / 2 + 0.6 || Math.abs(o.dT - dT) < (o.wid + a.wid) / 2 + 0.6) && g > -al - 10 - Math.max(0, o.v - a.v) * 5 && g < al + 15 + Math.max(0, a.v - o.v) * 3) return false; }   // (one in that lane or moving over into it, close or coming up within 5 s)
+      const mt = Math.abs(dT - a.d) / TFK[a.p].dl;   // (the time it takes to move over)
+      for (const c of this.cl) { const g = this._cs(c) - a.s, al = (a.len + c.m.len) / 2, vs = c.vx * T.tx[c.q.i] + c.vz * T.tz[c.q.i];
+        if (Math.abs(c.q.d - dT) < (c.m.wid + a.wid) / 2 + 1 && g > -al - 8 - Math.max(0, vs - a.v) * (EN.fair + mt) && g < al + 8) return false; }   // (the player: over in its lane before they are there, EN.fair s to spare)
+      return true;
+    }
+    _lcLead(a, l) { const dT = this._laneD(a.s, l, a.p); for (const o of this.veh) { if (o === a || o.off) continue; const g = o.s - a.s; if (g > 0 && g < 80 && Math.abs(o.d - dT) < (o.wid + a.wid) / 2 + 0.3 && (o.st !== 0 || o.v < a.v0 - 1)) return false; } return true; }
+    _sbFree(a) { const T = this.T; for (const c of this.cl) { const g = a.s - this._cs(c), vs = c.vx * T.tx[c.q.i] + c.vz * T.tz[c.q.i]; if (g > 0 && g < 25 + Math.max(0, vs - a.v) * EN.fair && Math.abs(c.q.d - a.d) < (c.m.wid + a.wid) / 2 + 0.8) return false; } return true; }
     // a knocked vehicle: slides and spins to a stop (the tyres scrub, a bicycle lies on its side), off the barriers; then, if it faces the
     // right way, it drives on after 6 s (a bicycle and a vehicle turned round stay, hazard lights on, until the race is far away)
     _loose(v, dt) {
@@ -4767,13 +4817,13 @@ const Core = (function () {
           const pen = q.d > 0 ? q.d - (q.br - hw) : -q.bl + hw - q.d, sg = q.d > 0 ? -1 : 1;
           v.x += q.nx * pen * sg; v.z += q.nz * pen * sg; const vn = v.vx * q.nx + v.vz * q.nz, kb = pm ? 1.05 : 1.3; if (vn * sg < 0) { v.vx -= q.nx * vn * kb; v.vz -= q.nz * vn * kb; }
         }
-        v.s = q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; v.v = 0; v.brake = true;
+        v.s = this.loop ? this._rs(q.s, v.s) : q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; v.v = 0; v.brake = true;   // (the loop: its continuous s)
         if (Math.hypot(v.vx, v.vz) < 0.25 && Math.abs(v.w) < 0.25) { v.st = 2; v.t = 0; v.vx = v.vz = v.w = 0; }
       } else if (v.st === 2) {
         v.t += dt;
         const f = Math.cos(v.h - Math.atan2(T.tz[v.i] * v.dir, T.tx[v.i] * v.dir));
         if (v.t > 6 && v.kind !== 4 && !v.wreck && f > 0.6 && Math.abs(v.d) < T.wS(v.s)) { v.st = 0; v.v = 0; v.sv = 0; v.yl = 0; v.dT = this._lane(v); v.wait = 0; v.pass = null; }
-        else if (v.t > 20 && !this._dead(v)) { let far = true; for (const c of this.cl) if (Math.abs(c.q.s - v.s) < 350) { far = false; break; } if (far) { v.off = true; this._recycle(v); } }
+        else if (v.t > 20 && !this._dead(v)) { let far = true; for (const c of this.cl) if (Math.abs(this._cs(c) - v.s) < 350) { far = false; break; } if (far) { v.off = true; this._recycle(v); } }
       }
     }
     _dead(v) { return !!(v.rider && (v.rider.st === 'dead' || v.rider.st === 'hit')); }   // (a bicycle whose rider lies dead by it: it lies there for good)
@@ -4783,6 +4833,7 @@ const Core = (function () {
     // group of cyclists all together once the last of them is off, in single file again
     _recycle(v) {
       if (this._dead(v)) return;
+      if (this.win) { v.off = true; return; }   // (the endless drive: parked, the window places it again ahead of the player)
       const s = v.dir > 0 ? this.s0 : this.s1, g = v.grp, n = g ? g.m.length : 1, len = (n - 1) * TF_PACE;
       v.off = true;
       if (g && g.m.some(o => !o.off)) return;
@@ -4795,6 +4846,58 @@ const Core = (function () {
         this._pose(o, 0);
       }
       if (g) for (const o of g.m) o.v = g.m[0].v;
+    }
+    // the endless drive (opts.endless on a circuit, see Endless): no traffic round the whole loop, a window of it round the player instead,
+    // all going the race's way, s continuous (win.ps: the player's, the start line's s + its distance). The pool (_winPool): enough vehicles
+    // for the densest window (EN.densMax), of the road's own mix (def.traffic; else EN.mix), never a bicycle or anyone on foot, all parked
+    // (off) to begin with. Every step (_winStep) the ones well behind the player (EN.behind) or far ahead of it are parked; while fewer are
+    // ahead of the player than the density asks for (win.dens x the window's length / EN.sp), a parked one goes in the longest free stretch
+    // of a lane between EN.spawn and EN.ahead m ahead (EN.gap m clear of the others in that lane, of one moving over to or from it and of
+    // anything standing; a bus or a truck in the lane on the country's side), out of sight in a straight line too (EN.spawnR: across the
+    // infield)
+    _winPool() {
+      const T = this.T, R = this.R, M = this.race.opts.tfCars || (T.def.traffic && T.def.traffic.mix) || EN.mix, PK = [0, 1, 2, 3, 5], n = Math.ceil(EN.densMax * EN.ahead / EN.sp) + 4;
+      for (let k = 0; k < n; k++) { const u = R(); let q = 0, c = M[0]; while (q < M.length - 1 && u >= c) c += M[++q]; const p = PK[q]; this._veh(1, p === 5 ? 2 : p, T.startS, p).off = true; }   // (a truck: kind 2 on its own figures)
+    }
+    _winStep() {
+      const W = this.win, P = this.race.player; if (!P) return;
+      const ps = W.ps = this.T.startS + P.dist;
+      for (const v of this.veh) if (!v.off && !this._dead(v)) { const r = v.s - ps; if (r < -EN.behind || r > EN.ahead + 200) v.off = true; }
+      this._winSpawn(EN.spawn, EN.spawnR);
+    }
+    _winFill(lo, rMin) {   // (the window from scratch: at the start)
+      for (const v of this.veh) if (!this._dead(v)) v.off = true;
+      this.win.ps = this.T.startS + this.race.player.dist; this._winSpawn(lo, rMin);
+    }
+    _winSpawn(lo, rMin) {
+      const W = this.win, P = this.race.player, T = this.T, ps = W.ps, a0 = ps + lo, b0 = ps + EN.ahead;
+      const far = (s) => { if (!rMin) return true; const i = T.idx(s); return Math.hypot(T.px[i] - P.x, T.pz[i] - P.z) > rMin; };
+      const want = Math.round(W.dens * EN.ahead / EN.sp), S = [[], [], []]; let n = 0;   // (S: the places taken in each lane)
+      for (const v of this.veh) if (!v.off) { if (v.s > ps) n++; for (let l = 0; l < 3; l++) if (v.st !== 0 || l === v.lane || l === v.lcTo || Math.abs(v.d - this._laneD(v.s, l, v.p)) < 3) S[l].push(v.s); }   // (its lane, the one it is moving over to or indicating for, the one it is still in)
+      for (const L of S) L.sort((a, b) => a - b);
+      while (n < want && b0 > a0) {
+        const fr = [];   // (the free stretches of [a0, b0] in each lane, the longest first: the vehicles spread out)
+        for (let l = 0; l < 3; l++) { const L = S[l]; let cur = a0;
+          for (let i = 0; i <= L.length && cur < b0; i++) {
+            const e = i < L.length ? Math.min(b0, L[i] - EN.gap) : b0;
+            if (e >= cur && l < this._nl((cur + e) / 2)) fr.push([cur, e, l]);
+            if (i < L.length) cur = Math.max(cur, L[i] + EN.gap);
+          } }
+        fr.sort((p, q) => (q[1] - q[0]) - (p[1] - p[0]));
+        let s = -1, ln = 0;   // (in the middle of one; out of sight in a straight line: else from its far end back, every 50 m)
+        for (const [a, b, l] of fr) { const m = a + (b - a) * (0.3 + 0.4 * this.R()); if (far(m)) { s = m; ln = l; break; } for (let x = b; x >= a && s < 0; x -= 50) if (far(x)) { s = x; ln = l; } if (s >= 0) break; }
+        if (s < 0) break;
+        const v = (ln > 0 && this.veh.find(o => o.off && o.kind !== 2 && !this._dead(o))) || this.veh.find(o => o.off && !this._dead(o)); if (!v) break;
+        this._winPlace(v, s, v.kind === 2 ? 0 : ln); n++; S[v.lane].push(s); S[v.lane].sort((a, b) => a - b);
+      }
+      W.n[0] = n;
+    }
+    _winPlace(v, s, l) {   // (as _recycle: on its lane, at its pace)
+      if (v.rider) { const k = this.ped.indexOf(v.rider); if (k >= 0) this.ped.splice(k, 1); v.rider = null; }
+      v.lane = l || 0; v.lcW = 0; v.lcTo = -1; v.sb = 0;
+      v.off = false; v.st = 0; v.wreck = 0; v.s = s; v.d = v.dT = this._lane(v); v.v = Math.min(v.v0, this._vpAt(v)) * 0.85; v.w = 0; v.t = 0; v.wait = 0; v.pass = null; v.stopS = -1; v.stopT = 0; v.lean = 0;
+      v.sv = 0; v.sdT = 0; v.yl = 0; v.ind = 0; v.nc = 0; v.horn = 0; v.acc = 0; v.gap = 1e9; v.brake = false; v.enM = null; v.q.i = -1;
+      this._pose(v, 0);
     }
     // two vehicles touching (a loose one against another): pushed apart, an impulse between them; a driving one knocked hard enough comes loose
     _bump(a, b) {
@@ -4829,6 +4932,7 @@ const Core = (function () {
         for (let j = 0; j < nb; j++) { const o = -(v.len - v.wid) / 2 + j * (v.len - v.wid) / (nb - 1), bx = v.x + chb * o, bz = v.z + shb * o, dx = ax - bx, dz = az - bz, d2 = dx * dx + dz * dz, r = c.rad + rb;
           if (d2 < r * r) { const d = Math.sqrt(d2) || 1e-3, pen = r - d; if (pen > best) { best = pen; bnx = dx / d; bnz = dz / d; bpx = (ax + bx) / 2; bpz = (az + bz) / 2; } } } }
       if (best <= 0 || v.nc > 0) return 0;
+      if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
       const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
       c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
@@ -5122,7 +5226,7 @@ const Core = (function () {
     // passed on the side with more room. More room in the hairpins (the bodies turn across the road) and at speed. out = { lo, hi: the corridor (m across the
     // road), fol: what it must stay behind ({ o, len, vs }: the thing, its length, its speed along the road) or null }
     aiPlan(c, v, out) {
-      const T = this.T, s = c.q.s, hw = c.m.wid / 2, cl2 = c.m.len / 2, sd = this.sd;
+      const T = this.T, s = this._cs(c), hw = c.m.wid / 2, cl2 = c.m.len / 2, sd = this.sd;   // (the loop: the car's s near the window's, the vehicles' continuous s)
       c.tfStk = v < 1.5 && c.tfFol ? (c.tfStk || 0) + 0.15 : 0;   // (held up for a while: it squeezes by with less room)
       const edge = T.wS(s) - 0.3 + (T.def.pullOff && c.tfStk > 2.5 ? T.def.pullOff : 0);   // (a narrow road's shoulder too, def.pullOff, once held up)
       const sq = c.tfStk > 2.5 ? 0.3 : 1, mg = (os, ol) => { const k = Math.abs(T.k[T.idx(os)]); return (0.9 + Math.max(0.9 * Math.min(1, k * 18), ol * ol * k / 8) + 0.022 * v * 0.7) * sq; };   // (ol * ol * k / 8: a long body's ends off the curve, a truck's in a hairpin)
@@ -5146,7 +5250,9 @@ const Core = (function () {
           if (rL >= 0.3 || (pL > -edge + hw && clearL > g + 45 + v * 2)) hi = Math.min(hi, pL); else block(g, o, olen, vs); return; }   // same way, slower
         if (rL >= 0 && rL >= rR) hi = Math.min(hi, pL); else if (rR >= 0) lo = Math.max(lo, pR); else block(g, o, olen, this.ow ? vs : 0);   // standing (a one-way road: anything ahead, on the side with more room)
       };
-      for (const o of this.veh) { if (o.off || o.alt || (o.st === 0 && o.dir < 0 && o.v >= 1)) continue; const g = o.s - s; if (g < -20 || g > 220) continue; one(o, o.s, o.d, o.kind === 4 && o.st === 0 ? o.wid + 1.2 : o.wid, o.len, o.st === 0 ? o.v * o.dir : 0); }   // (a cyclist: 0.6 m more room)
+      for (const o of this.veh) { if (o.off || o.alt || (o.st === 0 && o.dir < 0 && o.v >= 1)) continue; const g = o.s - s; if (g < -20 || g > 220) continue;
+        if (this.loop && o.st === 0) { const e = o.lcW > 0 ? this._laneD(o.s, o.lcTo, o.p) : o.dT, a = Math.min(o.d, e), b = Math.max(o.d, e); one(o, o.s, (a + b) / 2, b - a + o.wid, o.len, o.v); continue; }   // (the loop: one moving over, or about to, across both lanes)
+        one(o, o.s, o.d, o.kind === 4 && o.st === 0 ? o.wid + 1.2 : o.wid, o.len, o.st === 0 ? o.v * o.dir : 0); }   // (a cyclist: 0.6 m more room)
       for (const p of this.onRoad) { const t = Math.min(1.5, Math.max(0, p.s - s) / Math.max(5, v)), dP = clamp(p.d + (p.dd || 0) * t, -T.wS(p.s) - 1, T.wS(p.s) + 1); one(p, p.s, (p.d + dP) / 2, Math.abs(dP - p.d) + (p.wid || 0.7), p.len || 0.5, 0); }   // (someone on the road: from where they are to where they will be as it gets there; someone lying there dead)
       if (this.race.pol) for (const o of this.race.pol.obstacles(this._obs)) if (!c.police || !o.fresh) one(o, o.s, o.d, o.wid, o.len, 0);   // (logs on the road; a patrol car right behind the player does not see them coming)
       let vE = 0, sLo = -1e9, sHi = 1e9;   // (past a patrol car parked across the road the verge will do: how far out; a roadblock's or a spike strip's gap: a hard limit)
@@ -5191,6 +5297,125 @@ const Core = (function () {
       for (const o of this.veh) { if (o.off || o.hid) continue; const dx = o.x - c.x, dz = o.z - c.z; if (dx * dx + dz * dz > 900) continue; if (test(dx, dz, o.vx - c.vx, o.vz - c.vz, o.h, o.len / 2, o.wid / 2)) return true; }
       for (const p of this.onRoad) { const dx = p.x - c.x, dz = p.z - c.z; if (dx * dx + dz * dz > 900) continue; if (test(dx, dz, -c.vx, -c.vz, p.h, p.len ? 0.9 : 0.35, p.len ? 0.6 : 0.35)) return true; }
       return false;
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     THE ENDLESS DRIVE (Race opts.endless; a circuit, EN.tracks: Bathurst; docs/neskoncna-voznja.md): race.en, the player alone in a window
+     of traffic (race.tf, Traffic._winStep) going the race's way round and round the loop, denser every EN.densT s; a clock that runs down
+     (the faster the player, the slower), the close passes put seconds on it; points for the speed and for the close passes; the run over
+     when the clock is empty, at any touch of a vehicle, at a hard knock on the wall
+     --------------------------------------------------------------------- */
+  // tracks: the circuits with the mode. By the level (race.opts.difficulty 0-3: easy, medium, hard, super hard): clock the seconds at the
+  // start (at most clockMax x that on it); nearT / vnearT the seconds a close (very close) pass puts on it (x 1 + comboAdd a step of the
+  // combo over the first); vRef the speed (km/h) over which the clock runs slower: at v, vRef / v of a second a second (twice vRef: half as
+  // fast); dens0 the traffic's density at the start, densUp its step every densT s, up to densMax; lc / sb a vehicle's lane changes /
+  // sudden brakings on a whim, a second (x heat: 1 + the drive's time / heatT, at most heatMax). The window (m along the road): ahead,
+  // behind; spawn / spawnR: a new one at least that far ahead along the road and in a straight line; reset: the window at the start from
+  // that far ahead; gap: the least room between two in a lane; sp: the spacing at x1. The traffic on the loop: v (km/h, by TFK's figures:
+  // car, van, bus, motorbike, -, truck), vTop (m/s), lat (its grip in the bends x the open road's), lane3 (m from the middle to the edge:
+  // three lanes), lcInd (s indicating before it moves over), sbDec (m/s^2), fair (s: the player that close in time keeps a vehicle from
+  // moving over or braking in their way). The points: (v - vMin) / vPts a metre of new road (1 a metre at 100 km/h); a close pass at nearV
+  // or faster with less than near (vnear) m between the two bodies: nearPts (vnearPts) x km/h / 100, times the combo (x2 ... x comboMax,
+  // each within comboT s of the last); overtaking: at least passDv faster than it. The end: the clock empty ('time'), any touch of a
+  // vehicle ('touch'; 'crash' when the traffic counts it as one), the wall at more than wallEnd m/s, rolling over, falling off a drop, two
+  // wheels gone; a touch of the wall above wallTap m/s breaks the combo. low: the clock's warning (s). mix: a road with no mix of its own
+  // [car, van, bus, motorbike, truck]
+  const EN = { tracks: ['bathurst'],
+    clock: [45, 30, 25, 20], clockMax: 2, nearT: [3, 2, 1.5, 1], vnearT: [5, 4, 3, 2], comboAdd: 0.25, vRef: [35, 50, 65, 80],
+    dens0: [1, 1.5, 2, 2.5], densUp: [0.25, 0.5, 0.5, 0.75], densT: 30, densMax: 4, lc: [0.02, 0.03, 0.04, 0.05], sb: [0.006, 0.01, 0.014, 0.02], heatT: 60, heatMax: 3,
+    ahead: 1600, behind: 150, spawn: 300, spawnR: 260, reset: 150, gap: 45, sp: 200,
+    v: [[70, 110], [65, 100], [60, 85], [80, 110], [15, 25], [60, 85]], vTop: 110 / 3.6, lat: 1.6, lane3: 6.5, lcInd: 1.2, sbDec: 5, fair: 2,
+    vMin: 60 / 3.6, vPts: 40 / 3.6, nearV: 70 / 3.6, near: 1.0, vnear: 0.5, nearPts: 200, vnearPts: 500, passDv: 20 / 3.6,
+    comboT: 5, comboMax: 5, wallEnd: 6, wallTap: 1.5, low: 5, mix: [0.62, 0.16, 0.06, 0.08, 0.08] };
+
+  class Endless {
+    constructor(race) {
+      const P = race.player, o = race.opts;
+      this.race = race; this.P = P; this.T = race.track; this.tf = race.tf;
+      this.lv = clamp(o.difficulty == null ? 1 : Math.round(o.difficulty), 0, 3);   // the level: easy, medium, hard, super hard
+      // score = spd (the speed's points) + bonus (the close passes'); dist: the new road driven (m); time: since the line (the clock running
+      // since); clock: the seconds left (add: those the close passes put on it, all told); near / vnear: the close passes; combo: the current
+      // one (0: none), comboT its time left, comboBest; lap: the laps done since the line; heat: the traffic's whims grow with it
+      this.score = 0; this.spd = 0; this.bonus = 0; this.dist = 0; this.time = 0; this.vmax = 0; this.near = 0; this.vnear = 0;
+      this.clock = EN.clock[this.lv]; this.add = 0; this.low = false; this.combo = 0; this.comboT = 0; this.comboBest = 0; this.lap = 0; this.heat = 1;
+      this.over = null;   // the end: { why ('time', 'touch', 'crash', 'wall', 'roll', 'fall', 'wheels'), t, x, z }
+      // the events for the game, in order: log { n, k, pts, add, combo, gap, t } (the last 24; n counts them, = ev): 'near' / 'vnear' (a
+      // close pass: pts its points with the combo, add the seconds it put on the clock), 'dens' (the traffic a step denser), 'lap' (a lap
+      // done), 'low' (the clock nearly empty), 'tap' (a touch of the wall broke the combo), 'combo0' (it ran out), 'over'
+      this.ev = 0; this.log = [];
+      this.tfEv = race.tf.ev; this.hw = 0; this.hit = race.tf.win.hit; this.dPrev = P.dist; this.back = 0;
+      race.tf.win.dens = EN.dens0[this.lv];
+      this.tf._winFill(EN.reset, 0);
+    }
+    _event(k, pts, gap, add) {
+      this.ev++; this.log.push({ n: this.ev, k, pts: pts || 0, add: add || 0, combo: this.combo, gap: gap == null ? 0 : gap, t: this.time });
+      if (this.log.length > 24) this.log.shift();
+    }
+    _end(why) { const P = this.P; this.over = { why, t: this.time, x: P.x, z: P.z }; this.combo = 0; this._event('over'); }
+    // after the cars' step (Race._step): the run's end, a touch, the clock, the points, the laps, the density, the close passes
+    step(dt) {
+      const race = this.race, P = this.P, T = this.T, tf = this.tf, W = tf.win, lv = this.lv;
+      if (this.over || race.state !== 'racing' || P.finished) return;
+      // a new knock on the wall since the last step: the value up, or down but not nought (the game clears it every frame, game.js); a
+      // touch of a vehicle (Traffic._hitVeh: win.hit)
+      const hw = P.hitWall || 0, nw = hw > this.hw || (hw > 0 && hw < this.hw) ? hw : 0, hit = W.hit !== this.hit;
+      this.hw = hw; this.hit = W.hit;
+      let why = null;
+      if (tf.ev !== this.tfEv) { for (const e of tf.log) if (e.n > this.tfEv && e.c === P && e.k === 'crash') why = 'crash'; this.tfEv = tf.ev; }
+      if (!why && hit) why = 'touch';
+      if (!why && nw > EN.wallEnd) why = 'wall';
+      if (!why && P.rl) why = 'roll';
+      if (!why && P.fall) why = 'fall';
+      if (!why && P.wreck && P.wreck.nL >= 2) why = 'wheels';
+      if (why) { this._end(why); return; }
+      if (nw > EN.wallTap && this.combo > 0) { this.combo = 0; this.comboT = 0; this._event('tap'); }
+      // the road driven: only new road counts (none for driving back and forth over a stretch)
+      const d = clamp(P.dist - this.dPrev, -3, 3); this.dPrev = P.dist;
+      let ds = 0; if (d < 0) this.back -= d; else { const u = Math.min(this.back, d); this.back -= u; ds = d - u; }
+      if (race.flyOn) return;   // (the flying start: the clock and the points from the line on)
+      this.time += dt;
+      // the clock: a second a second, slower over vRef (at v: vRef / v of a second); empty: the end
+      const v = P.speed;
+      this.clock -= dt * Math.min(1, EN.vRef[lv] / 3.6 / Math.max(1, v));
+      if (this.clock <= 0) { this.clock = 0; this._end('time'); return; }
+      if (!this.low && this.clock < EN.low) { this.low = true; this._event('low'); } else if (this.low && this.clock > EN.low + 3) this.low = false;
+      if (v > EN.vMin && ds > 0) { const p = ds * (v - EN.vMin) / EN.vPts; this.spd += p; this.score += p; }
+      this.dist += ds; if (v > this.vmax) this.vmax = v;
+      const lap = Math.floor(P.dist / T.len); if (lap > this.lap) { this.lap = lap; this._event('lap'); }
+      // the traffic: denser every densT s, its whims more often
+      const dn = Math.min(EN.densMax, EN.dens0[lv] + EN.densUp[lv] * Math.floor(this.time / EN.densT));
+      if (dn > W.dens + 1e-9) { W.dens = dn; this._event('dens'); }
+      this.heat = Math.min(EN.heatMax, 1 + this.time / EN.heatT);
+      if (this.combo > 0 && (this.comboT -= dt) <= 0) { this.combo = 0; this.comboT = 0; this._event('combo0'); }
+      this._passes(v);
+    }
+    // the close passes: every vehicle coming up alongside, the least room between the two bodies while alongside (across the road: the two
+    // places across it, the car's own half-width turned by its angle to the road), scored once it is behind (o.enM: { min, n alongside, v,
+    // dv }); only one overtaken, at least passDv faster than it
+    _passes(v) {
+      const P = this.P, T = this.T, q = P.q, i = q.i, ar = P.h - Math.atan2(T.tz[i], T.tx[i]), ps = T.startS + P.dist;
+      const hwP = Math.abs(Math.sin(ar)) * P.m.len / 2 + Math.abs(Math.cos(ar)) * P.m.wid / 2, va = P.vx * T.tx[i] + P.vz * T.tz[i];   // (va: its speed along the road)
+      for (const o of this.tf.veh) {
+        if (o.off || o.hid || o.alt || o.st !== 0) { if (o.enM) o.enM = null; continue; }
+        const r = o.s - ps, al = (o.len + P.m.len) / 2;
+        let M = o.enM;
+        if (!M) { if (r > al && r < al + 40) M = o.enM = { min: 1e9, n: 0, v: 0, dv: 0 }; else continue; }
+        if (Math.abs(r) < al + 0.5) {
+          const g = Math.abs(o.d - q.d) - o.wid / 2 - hwP;
+          M.n++; if (g < M.min) { M.min = g; M.v = v; M.dv = va - o.v * o.dir; }
+        } else if (r < -al) {
+          o.enM = null;
+          if (M.n && M.v >= EN.nearV && M.min < EN.near && M.dv >= EN.passDv) this._near(M.min < EN.vnear ? 'vnear' : 'near', M);
+        } else if (r > al + 60) o.enM = null;   // (it got away ahead again)
+      }
+    }
+    _near(k, M) {
+      const lv = this.lv; this.combo = this.combo > 0 ? Math.min(EN.comboMax, this.combo + 1) : 1; this.comboT = EN.comboT; if (this.combo > this.comboBest) this.comboBest = this.combo;
+      const pts = Math.round((k === 'vnear' ? EN.vnearPts : EN.nearPts) * M.v * 3.6 / 100) * this.combo;
+      const cap = EN.clock[lv] * EN.clockMax, add = Math.max(0, Math.min(cap - this.clock, (k === 'vnear' ? EN.vnearT : EN.nearT)[lv] * (1 + EN.comboAdd * (this.combo - 1))));
+      this.bonus += pts; this.score += pts; this.clock += add; this.add += add; if (k === 'vnear') this.vnear++; else this.near++;
+      this._event(k, pts, M.min, add);
     }
   }
 
@@ -6312,6 +6537,7 @@ const Core = (function () {
       this._prof();
       // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police)
       if (track.open && (opts.traffic || opts.police) && !opts.noPlayer && !this.timeTrial) this.tf = new Traffic(this, opts.police ? 0.85 : 1);
+      if (!track.open && opts.endless && this.player && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, 1); this.en = new Endless(this); }   // (the endless drive on a circuit: race.en, its window of traffic in race.tf)
       if (track.open && opts.police && !opts.noPlayer && !this.timeTrial) this.pol = new Police(this);   // (the run from the police: race.pol)
     }
 
@@ -7053,6 +7279,7 @@ const Core = (function () {
       if (this._bp) this._bp.bd = null;   // (the cars sorted by dist: built again when asked for, _byDist)
       if (this._rq.length) this._serveRespawn();
       if (this.pol) this.pol.post(dt);
+      if (this.en) this.en.step(dt);
       this.stepProps(dt);
       // order
       const ordCmp = (a, b) => {
@@ -8242,7 +8469,7 @@ const Core = (function () {
   // the quick entry (hitri vstop): an address ?proga=<id>&nacin=<way>&t=<s>&vreme=suho|dez&avto=<id> opens the game straight on a race
   // (game.js quickGo; for the tests and tools/shot.mjs). What it asks, checked against the tracks and the vehicles: { track, mode, t, weather,
   // car, bad } (null: not asked or not valid; bad: the parts that are not valid, as written, for the toast); null without proga
-  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov', drag: 'drag' };   // (elim, lov, drag: the novelties' modes, js/zabava/)
+  const QUICK_MODE = { race: 'race', dirka: 'race', tt: 'tt', kronometer: 'tt', traffic: 'traffic', promet: 'traffic', police: 'police', policija: 'police', elim: 'elim', eliminacija: 'elim', lov: 'lov', pursuit: 'lov', endless: 'endless', neskoncno: 'endless', drag: 'drag' };   // (elim, lov, drag: the novelties' modes, js/zabava/; endless: the endless drive, js/neskoncna.js)
   const QUICK_WX = { suho: 'dry', dry: 'dry', dez: 'rain', 'dež': 'rain', rain: 'rain' };
   function quickArgs(search) {
     const P = new URLSearchParams(search || ''), id = P.get('proga');
@@ -8251,7 +8478,7 @@ const Core = (function () {
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
-      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : [], d && DRAG[d.id] ? ['drag'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is, the drag race on its straights)
+      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : [], d && EN.tracks.indexOf(d.id) >= 0 ? ['endless'] : [], d && DRAG[d.id] ? ['drag'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is, the drag race on its straights; the endless drive on its circuits, EN.tracks)
       if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
@@ -8263,7 +8490,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
     MAN, manRev, DRAG, PWR_MULT };
