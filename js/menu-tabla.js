@@ -4,13 +4,15 @@
    its rules, colours, frame and lettering, researched in maketa-menija/izbira-proge/table-drzav.json from the sign regulations and
    Wikipedia, never from map pictures).
    Each country its real place-name or guide sign (Slovenia and Germany the yellow town sign with its black frame, France and Monaco the
-   white one with the red band, Austria white with its blue band, Finland, Belgium, Brazil, Japan, China, Romania, Russia and Italy blue,
-   the USA, Canada, Chile, Australia, South Africa, Thailand and England green ...), a little worn as such signs are there (dirt, salt,
-   dust in the land's colour, mud, fading, rust under the bolts, streaks, scratches), the sheeting's grain and a sheen. The country's name
-   in the middle of the sign, in English, smaller where it would not fit; where a tall car (a truck) hides the sign's left part, right of
-   it (as far as it must), smaller to fit there; where the real signs have two lines (the country's own
-   script or language over the English name: Japan, China, Thailand, Russia, Morocco, Romania, Monaco ...) two. A country without a sign
-   of its own here, or a test track without a country: the menu's plain blue sign. No flag on the sign (the flag is in the row).
+   white one with the red band, Austria white with its blue band, Czechia, Denmark, Spain, Portugal, Ireland, Wales, Kazakhstan, Mexico
+   ... white with a black frame, Finland, Belgium, Brazil, Japan, China, Romania, Russia, Sweden, the Netherlands, Switzerland, Georgia
+   and Italy blue, the USA, Canada, Chile, Australia, South Africa, Thailand, South Korea, Sri Lanka, Tanzania and England green ...), a
+   little worn as such signs are there (dirt, salt, dust in the land's colour, mud, moss, fading, rust under the bolts, streaks,
+   scratches), the sheeting's grain and a sheen. The country's name in the middle of the sign, in English, smaller where it would not fit;
+   where a tall car (a truck) hides the sign's left part, right of it (as far as it must), smaller to fit there; where the real signs have
+   two lines (the country's own script or language over the English name: Japan, China, Thailand, Russia, Morocco, Romania, Monaco,
+   Wales, Ireland, Georgia, Kazakhstan, Sri Lanka, South Korea) two. A country without a sign of its own here, or a test track without a
+   country: the menu's plain blue sign. No flag on the sign (the flag is in the row).
    MenuTabla.look(sign, country, name, left): the look on the sign element (its <b>: the name; the wear drawn once per country and size
    into a canvas in it, kept for the screen's next drawing; left: px of the sign the car hides, js/menu-car.js cover); on(sign, country,
    name, left): look and again whenever the sign's size changes (the phone
@@ -21,8 +23,9 @@ window.MenuTabla = (function () {
   // frame: 'line' = a line inset from the edge [colour, width, inset], 'band' = a coloured band at the edge [colour, width, the white edge
   // outside it], 'edge' = a light border at the edge [colour, width]; r: its corners (px); font: [weight, letter spacing px], cond: the
   // lettering condensed; arrow: the pointed blade; two: the name's two lines [the first, the second] (null: the English name); wear: fade,
-  // grime, dust (the land's colour), mud, salt, streaks, scratch, sparkle, rust (under the bolts), sheen and the bolts (2 at the ends, 4
-  // at the corners). (Romania: not in the research, a blue place-name sign with its own name; the mockup's.)
+  // grime, dust (the land's colour), mud, salt, moss, streaks, scratch, sparkle, rust (under the bolts), sheen and the bolts (2 at the ends, 4
+  // at the corners). (Romania: not in the research, a blue place-name sign with its own name; the mockup's. Denmark to South Korea: the
+  // countries of the new tracks for 1.0, researched with fewer sources (most of it estimated: table-drzav.json says what is confirmed).)
   const SIGNS = {
     Slovenia:       { bg: '#f0ca00', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.6, 3], r: 6, font: [700, 0.5], wear: { fade: 0.08, grime: 0.32, bolts: 2 } },
     Germany:        { bg: '#f0ca00', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.6, 3], r: 6, font: [700, 0.2], cond: 1, wear: { grime: 0.25, bolts: 2, sparkle: 0.4 } },
@@ -45,6 +48,25 @@ window.MenuTabla = (function () {
     Japan:          { bg: '#005898', fg: '#ffffff', frame: ['line', '#ffffff', 2.2, 2.2], r: 5, font: [600, 0.4], two: ['日本', 'Japan'], wear: { bolts: 4, sheen: 0.24 } },
     China:          { bg: '#1450a0', fg: '#ffffff', frame: ['line', '#ffffff', 2, 2.4], r: 4, font: [600, 0.4], two: ['中国', 'China'], wear: { bolts: 4, sheen: 0.2 } },
     Thailand:       { bg: '#006a3a', fg: '#ffffff', frame: ['edge', '#ffffff', 2.6], r: 4, font: [600, 0.3], two: ['ประเทศไทย', 'Thailand'], wear: { fade: 0.12, streaks: 1, bolts: 2 } },
+    Denmark:        { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.2, 2.6], r: 6, font: [700, 0.4], wear: { grime: 0.2, streaks: 1, bolts: 2 } },
+    Sweden:         { bg: '#0b5aa2', fg: '#ffffff', frame: ['line', '#ffffff', 1.8, 2.8], r: 5, font: [700, 0.7], wear: { salt: 1, fade: 0.06, grime: 0.14, bolts: 2 } },
+    Czechia:        { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 3, 2.4], r: 5, font: [700, 0.3], wear: { grime: 0.22, streaks: 1, bolts: 2 } },
+    Wales:          { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.2, 2.4], r: 7, font: [700, 0.3], two: ['CYMRU', null], wear: { moss: 0.4, streaks: 1, grime: 0.22, bolts: 2 } },
+    Ireland:        { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.2, 2.2], r: 6, font: [700, 0.3], two: ['Éire', null], wear: { moss: 0.3, mud: 1, grime: 0.2, bolts: 2 } },
+    Latvia:         { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.2], r: 4, font: [700, 0.6], wear: { grime: 0.3, bolts: 2 } },
+    Spain:          { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2, 2.4], r: 5, font: [700, 0.5], wear: { dust: '190,160,115', grime: 0.1, bolts: 2 } },
+    Montenegro:     { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.6], r: 4, font: [700, 0.5], wear: { dust: '200,190,170', grime: 0.12, rust: 1, bolts: 2 } },
+    Netherlands:    { bg: '#0a4f94', fg: '#ffffff', frame: ['line', '#ffffff', 2.2, 2.2], r: 6, font: [700, 0.6], wear: { grime: 0.08, streaks: 1, sheen: 0.2, bolts: 2 } },
+    'Cape Verde':   { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['edge', '#1e1e1e', 2.6], r: 5, font: [700, 0.5], wear: { dust: '150,125,95', grime: 0.1, rust: 1, bolts: 2 } },
+    Tanzania:       { bg: '#00714a', fg: '#ffffff', frame: ['edge', '#ffffff', 2.6], r: 4, font: [600, 0.5], wear: { fade: 0.16, dust: '185,100,60', grime: 0.1, bolts: 2 } },
+    'Sri Lanka':    { bg: '#0b6b45', fg: '#ffffff', frame: ['edge', '#ffffff', 2.4], r: 5, font: [600, 0.5], two: ['ශ්‍රී ලංකාව', null], wear: { fade: 0.1, moss: 0.45, streaks: 1, bolts: 2 } },
+    Mexico:         { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.2], r: 4, font: [700, 0.5], wear: { dust: '190,150,100', grime: 0.14, rust: 1, bolts: 2 } },
+    Switzerland:    { bg: '#09509a', fg: '#ffffff', frame: ['line', '#ffffff', 1.8, 2.6], r: 6, font: [600, 0.5], wear: { sheen: 0.24, bolts: 2 } },
+    Georgia:        { bg: '#0f59a8', fg: '#ffffff', frame: ['line', '#ffffff', 2, 2.6], r: 4, font: [700, 0.6], two: ['საქართველო', null], wear: { fade: 0.14, mud: 1, rust: 1, bolts: 2 } },
+    Kazakhstan:     { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.4], r: 3, font: [700, 0.5], two: ['ҚАЗАҚСТАН', null], wear: { dust: '195,170,125', grime: 0.18, bolts: 2 } },
+    Albania:        { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.4], r: 4, font: [700, 0.5], wear: { dust: '180,150,110', grime: 0.2, bolts: 2 } },
+    Portugal:       { bg: '#f6f6f6', fg: '#1e1e1e', frame: ['line', '#1e1e1e', 2.4, 2.2], r: 5, font: [700, 0.5], wear: { moss: 0.15, streaks: 1, grime: 0.14, bolts: 2 } },
+    'South Korea':  { bg: '#04694a', fg: '#ffffff', frame: ['line', '#ffffff', 2, 2.6], r: 6, font: [600, 0.4], two: ['대한민국', null], wear: { fade: 0.04, sheen: 0.22, bolts: 4 } },
   };
   // (a country without a sign of its own, a test track without a country: the menu's plain blue sign, as before the countries' signs)
   const PLAIN = { bg: '#1e4a8e', fg: '#f4f7fb', frame: ['edge', '#e9eef6', 3], r: 6, font: [800, 0.6], wear: { grime: 0.12, bolts: 2 } };
