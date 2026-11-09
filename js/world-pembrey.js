@@ -21,7 +21,7 @@
   const PE_AT = { num: 0, brake: 0, ban: 3, rbr: 3, spielberg: 4 };   // atlas cells: the braking boards (no turn numbers), the banners
   const PE_SHIRTS = [[0.84, 0.06, 0.16], [0.95, 0.95, 0.93], [0.0, 0.5, 0.25], [0.12, 0.14, 0.2], [0.4, 0.42, 0.46], [0.14, 0.14, 0.16], [0.84, 0.06, 0.16], [0.2, 0.3, 0.5],
     [0.98, 0.82, 0.12], [0.9, 0.9, 0.88], [0.5, 0.42, 0.32], [0.3, 0.5, 0.75]];   // the fans' shirts: the national red, white and green, navy, grey and black, a daffodil yellow, a few others
-  const WL = Object.assign([[0.96, 0.96, 0.95], [0.0, 0.6, 0.29]], { mid: [[0.83, 0.04, 0.13], 0.24, 0.76, 0.2, 0.84] });   // the Welsh flag: white over green, the red dragon across both (rbFlags: cols.mid)
+  const WL = ((w, g, r) => ({ grid: [[0, 0.24, 0.76, 1], [0, 0.2, 0.5, 0.84, 1], [[w, w, w], [w, r, w], [g, r, g], [g, g, g]]] }))([0.96, 0.96, 0.95], [0.0, 0.6, 0.29], [0.83, 0.04, 0.13]);   // the Welsh flag: white over green, the red dragon across both (World.flagMesh's grid, twelve cells)
 
   // the trees (LK.woods, on the builder's land cover: 0 open, 1 the woods, 2 the fields, 3 built-up): 0 pine (the Corsican pines of the
   // coast's plantations: js/world-harju.js's pine, taller and darker), 1 silver birch; 2-3 the plainer ones far from the road. The woods

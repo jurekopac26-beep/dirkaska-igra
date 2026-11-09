@@ -61,7 +61,7 @@ window.MenuCar = (function () {
     const out = [], p = new THREE.Vector3();
     v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, 0); v.grp.updateMatrixWorld(true);
     v.grp.traverse(m => {
-      if (!m.isMesh || m === v.blob || !m.geometry || !m.geometry.attributes.position) return;
+      if (!m.isMesh || m === v.blob || m === v.rigS || !m.geometry || !m.geometry.attributes.position) return;   // (v.rigS: a semi-trailer's blob)
       for (let q = m; q && q !== v.grp; q = q.parent) if (!q.visible) return;
       const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count), st = Math.max(1, Math.floor(n / 5000));
       for (let i = 0; i < n; i += st) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); out.push(p.x, p.y, p.z); }
@@ -123,12 +123,13 @@ window.MenuCar = (function () {
     drop();
     const v = Render.garageCar(M, spec.color, spec.num || 0, true);
     if (!spec.num && v.dec) v.dec.visible = false;
+    const rig = Render.garageTrailer ? Render.garageTrailer(v, M) : null;   // (a semi-trailer straight behind it, the TITAN CISTERNA's tank: the rig in the button, docs/titan-cisterna.md)
     const P = pointsOf(v), S = shapeOf(P);
     v.grp.rotation.y = ROT; v.grp.updateMatrixWorld(true); scene.add(v.grp);
     // (its points as the camera sees them: turned as the car)
     const c = Math.cos(ROT), s = Math.sin(ROT), Pw = new Float32Array(P.length);
     for (let i = 0; i < P.length; i += 3) { Pw[i] = P[i] * c + P[i + 2] * s; Pw[i + 1] = P[i + 1]; Pw[i + 2] = -P[i] * s + P[i + 2] * c; }
-    car = { v, M, S, Pw, h: Math.max(0.5, S.y1) };
+    car = { v, M, S, Pw, h: Math.max(0.5, S.y1), rig };
     dirty = true; drawn = false;
     return true;
   }
@@ -139,7 +140,7 @@ window.MenuCar = (function () {
 
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
   function frameCar() {
-    const M = car.M, h = car.h, k = clamp(Math.max(M.len / 4.4, h / 1.45, M.wid / 1.9), 0.75, 1.55), dy = h / 2 - 0.7 * k;
+    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
     // the car's box as seen, in the canvas's -1..1
@@ -348,7 +349,7 @@ window.MenuCar = (function () {
   function info() {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
-      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected) };
+      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected), rig: car && car.rig ? +car.rig.len.toFixed(2) : 0 };   // (rig: a semi-trailer's rig, its length, m)
   }
   // (tests) a frame drawn now (t: at that time of the wind, s) and read at once (its buffer is not kept once it is shown): how much of the
   // yard right of the car's box (only the wind there) and of the car's box is drawn, the wind's colour there (0..1), and where its lines
