@@ -1393,47 +1393,46 @@
   }
  },
  "mapileng": {
-  "meshes": 617,
-  "verts": 310002,
-  "instances": 5120,
+  "meshes": 615,
+  "verts": 311519,
+  "instances": 5136,
   "props": 20,
-  "crowd": 70,
-  "world": "d4688741",
+  "crowd": 73,
+  "world": "6a72561a",
   "propsHash": "cb1dc0b6",
-  "floor": "d46ef0ba/2940",
+  "floor": "ae0d56c2/2940",
   "groups": {
-   "-:MeshLambertMaterial": "4d7131a2",
+   "-:MeshLambertMaterial": "e24bdfcf",
    "-:MeshBasicMaterial": "98eccd17",
    "irFar:MeshLambertMaterial": "ad971d2c",
-   "crowd:MeshLambertMaterial": "e07d2caa",
-   "ao:MeshBasicMaterial": "2868ff76",
+   "crowd:MeshLambertMaterial": "78bf367f",
+   "ao:MeshBasicMaterial": "b65a8643",
    "tyremarks:MeshBasicMaterial": "def68c13",
    "roadwear:MeshLambertMaterial": "f64f13a1",
-   "life:MeshLambertMaterial": "7c8a18d1",
-   "lifeShadow:MeshBasicMaterial": "eae3e13",
-   "life:MeshBasicMaterial": "ec7ea4d6"
+   "life:MeshLambertMaterial": "56a84d8e",
+   "life:MeshBasicMaterial": "7dc382a0"
   }
  },
  "mujib": {
-  "meshes": 340,
-  "verts": 245420,
-  "instances": 539,
+  "meshes": 357,
+  "verts": 256969,
+  "instances": 538,
   "props": 15,
-  "crowd": 56,
-  "world": "9fbdfa3e",
+  "crowd": 54,
+  "world": "c04c9943",
   "propsHash": "4f0eb4d6",
-  "floor": "4cc1ed77/2968",
+  "floor": "301275ee/2968",
   "groups": {
-   "-:MeshLambertMaterial": "2f9c27a3",
+   "-:MeshLambertMaterial": "beb47427",
    "-:MeshBasicMaterial": "8de021e9",
    "irFar:MeshLambertMaterial": "7390d382",
-   "crowd:MeshLambertMaterial": "f2fae46b",
-   "ao:MeshBasicMaterial": "b470d6e3",
+   "crowd:MeshLambertMaterial": "7e94648f",
+   "ao:MeshBasicMaterial": "6ef2af47",
    "tyremarks:MeshBasicMaterial": "24e4413b",
    "roadwear:MeshLambertMaterial": "cb18c6ad",
-   "life:MeshLambertMaterial": "8bbcdb62",
-   "lifeShadow:MeshBasicMaterial": "2b68e9ff",
-   "life:MeshBasicMaterial": "ffc2f48c"
+   "life:MeshLambertMaterial": "e9cafd58",
+   "lifeShadow:MeshBasicMaterial": "236d399d",
+   "life:MeshBasicMaterial": "dbd57ff8"
   }
  }
 }

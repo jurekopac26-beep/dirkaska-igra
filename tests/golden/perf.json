@@ -365,16 +365,16 @@
  },
  "mapileng": {
   "calls": 138,
-  "maxCalls": 170,
-  "kverts": 229,
-  "maxKverts": 273,
-  "jsMs": 1.95
+  "maxCalls": 169,
+  "kverts": 230,
+  "maxKverts": 272,
+  "jsMs": 2.17
  },
  "mujib": {
-  "calls": 115,
-  "maxCalls": 140,
-  "kverts": 225,
-  "maxKverts": 288,
-  "jsMs": 2.06
+  "calls": 118,
+  "maxCalls": 148,
+  "kverts": 223,
+  "maxKverts": 294,
+  "jsMs": 1.24
  }
 }

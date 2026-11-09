@@ -31,7 +31,8 @@ J = json.load(open(os.path.join(TD, ID + '.json'))); CFG = json.load(open(os.pat
 TRACK = os.path.join(ROOT, 'js', 'tracks', ID + '.js')
 A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 # each track's own: gmax the steepest grade of the game's road, gtip the share of it left at a hairpin's apex (a Gaussian dip of 18 m round
-# it), ncp the checkpoints, bare the steepness (rise over run) above which OSM's bare rock stays rock (below it: the ground's own cover)
+# it), ncp the checkpoints, bare the steepness (rise over run) above which OSM's bare rock stays rock (below it: the ground's own cover);
+# farR, farCell (if given) the far view's reach round the road's middle and its step (11700 m, 300 m; within far.png's reach)
 PAR = {
     'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6),
     'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4, sea=False),   # (no sea: the canyon falls below the sea's level towards the Dead Sea)
@@ -79,6 +80,23 @@ def bheight(t):
     except ValueError: pass
     return 0
 
+def rings(seqs):   # the closed rings a multipolygon's ways (their node lists) make joined end to end, and how many were left open
+    left, out, nopen = [list(q) for q in seqs if len(q) >= 2], [], 0
+    while left:
+        r = left.pop(0)
+        while r[0] != r[-1]:
+            for k, q in enumerate(left):
+                if q[0] == r[-1]: r = r + q[1:]
+                elif q[-1] == r[-1]: r = r + q[-2::-1]
+                elif q[-1] == r[0]: r = q[:-1] + r
+                elif q[0] == r[0]: r = q[:0:-1] + r
+                else: continue
+                left.pop(k); break
+            else: break
+        if r[0] == r[-1] and len(r) >= 4: out.append(r)
+        else: nopen += 1
+    return out, nopen
+
 def osm_extra(raw):
     d = json.load(open(os.path.join(raw, ID + '-osm.json'))); N = d['nodes']; W = d['ways']
     line = np.array(J['line']).reshape(-1, 2); T = cKDTree(line)
@@ -105,14 +123,20 @@ def osm_extra(raw):
             if near(P).min() < 600: woods.append(flat(P))
         elif (t.get('natural') == 'water' or t.get('landuse') in ('reservoir', 'basin')) and len(ns) >= 4:   # the lakes (Atitlán's) within 15 km
             if near(P).min() < 15000: water.append(flat(P))
-    for rid, rel in (d.get('rels') or {}).items():   # (the big lakes are multipolygons: their outer rings)
+    for rid, rel in (d.get('rels') or {}).items():   # (the big lakes are multipolygons: their outer ways joined into rings; a ring the download leaves open is left out)
         mem, t = (rel[0], rel[1]) if isinstance(rel, list) else (rel.get('members', []), rel.get('tags', {}))
         if not (t.get('natural') == 'water' or t.get('landuse') == 'reservoir'): continue
+        seqs, nout = [], 0
         for m in mem:
             ref = str(m[1] if isinstance(m, list) else m.get('ref')); role = m[2] if isinstance(m, list) and len(m) > 2 else (m.get('role') if isinstance(m, dict) else '')
-            if (not isinstance(m, list) or m[0] == 'way') and ref in W and role in ('outer', ''):
-                P = pts(W[ref][0])
-                if len(P) >= 2 and near(P).min() < 15000: water.append(flat(P))
+            if (not isinstance(m, list) or m[0] == 'way') and role in ('outer', ''):
+                nout += 1
+                if ref in W: seqs.append(W[ref][0])
+        rr, nopen = rings(seqs)
+        for ring in rr:
+            P = pts(ring)
+            if len(P) >= 3 and near(P).min() < 15000: water.append(flat(P))
+        if nopen: log('water relation %s (%s): %d of its %d outer ways in the download, %d ring(s) left open and out (download the relation whole)' % (rid, t.get('name', ''), len(seqs), nout, nopen))
     views, boards, marks = [], [], []
     for nid, v in N.items():
         if len(v) < 3 or not v[2]: continue
@@ -225,7 +249,7 @@ def terrain(X, Z, ox, oz, base):
     fi = np.arange(nx) / f; ti = np.minimum(tnx - 2, np.floor(fi).astype(int)); uu = fi - ti
     fj = np.arange(nz) / f; tj = np.minimum(tnz - 2, np.floor(fj).astype(int)); vv = fj - tj
     TB = (trq[tj][:, ti] * (1 - uu) + trq[tj][:, ti + 1] * uu) * (1 - vv)[:, None] + (trq[tj + 1][:, ti] * (1 - uu) + trq[tj + 1][:, ti + 1] * uu) * vv[:, None]
-    GX, GZ = np.meshgrid(x0 - ox + np.arange(nx) * cell, z0 - oz + np.arange(nz) * cell)   # (the game's frame: the cells' corners as nodes, as vrDem reads them)
+    GX, GZ = np.meshgrid(x0 + cell / 2 - ox + np.arange(nx) * cell, z0 + cell / 2 - oz + np.arange(nz) * cell)   # (the game's frame: the nodes where the model's samples are, the cells' centres, as vrDem reads them)
     dr, _ = cKDTree(np.stack([X[::4], Z[::4]], 1)).query(np.stack([GX.ravel(), GZ.ravel()], 1)); dr = dr.reshape(nz, nx)
     rows, res, clip = [], bytearray(), 0
     for j in range(nz):
@@ -234,7 +258,7 @@ def terrain(X, Z, ox, oz, base):
         a, b = int(on[0]), int(on[-1]) + 1; rows.append([a, b - a])
         r = np.round(H[j, a:b] - TB[j, a:b]); clip += int(np.sum(np.abs(r) > 127)); res += bytes((np.clip(r, -128, 127) + 128).astype(np.uint8))
     if clip: log('dem: %d residuals clipped to +-127 m' % clip)
-    return {'x0': round(x0 - ox, 2), 'z0': round(z0 - oz, 2), 'nx': nx, 'nz': nz, 'cell': cell, 'base': round(float(base), 2),
+    return {'x0': round(x0 + cell / 2 - ox, 2), 'z0': round(z0 + cell / 2 - oz, 2), 'nx': nx, 'nz': nz, 'cell': cell, 'base': round(float(base), 2),   # (node 0: the first cell's centre)
             'tr': {'f': f, 'nx': tnx, 'nz': tnz, 'lo': lo, 'step': 0.1, 'b64': b64(tv.tobytes())}, 'rows': rows, 'res': b64(res)}
 
 def poly_mask(polys, ox, oz, x0, z0, nx, nz, cell):   # the cells (centres) inside any of the outlines [[x, z, ...]] (the data's frame)
@@ -273,12 +297,15 @@ def landcover(X, Z, ox, oz):
     return {'x0': float(x0), 'z0': float(z0), 'nx': nx, 'nz': nz, 'cell': cell, 'rle': rle64(cls)}
 
 def far(X, Z, ox, oz):
-    """def.farDem (as irFar reads it): the surface model on a 300 m grid ~12 km round the middle of the road, each node half its own height and
+    """def.farDem (as irFar reads it): the surface model on a 300 m grid ~12 km round the middle of the road (PAR farR, farCell), each node half its own height and
     half the highest round it (the ridges keep their height), lo + v / 2 metres; the sea (the model's 0; inland none: PAR sea) and OSM's lakes as its wet nodes
     (lake: the run lengths of dry and wet nodes, from a dry one)."""
-    g, H = grid('far'); R, cell = 11700, 300
+    g, H = grid('far'); R, cell = PAR.get('farR', 11700), PAR.get('farCell', 300)   # (a road's own reach and step: PAR farR, farCell)
     cx, cz = (X.min() + X.max()) / 2, (Z.min() + Z.max()) / 2
     x0 = math.floor((cx - R) / cell) * cell; z0 = math.floor((cz - R) / cell) * cell; n = int(2 * R / cell) + 1
+    gx0, gz0 = g['x0'] - ox, g['z0'] - oz; gx1, gz1 = gx0 + g['nx'] * g['cell'], gz0 + g['nz'] * g['cell']
+    if x0 < gx0 or z0 < gz0 or x0 + (n - 1) * cell > gx1 or z0 + (n - 1) * cell > gz1:   # (beyond the surface model's grid (far.png) its edge repeats: download a wider one first)
+        log('far: WARNING the grid (%.0f..%.0f, %.0f..%.0f) reaches beyond far.png (%.0f..%.0f, %.0f..%.0f)' % (x0, x0 + (n - 1) * cell, z0, z0 + (n - 1) * cell, gx0, gx1, gz0, gz1))
     GX, GZ = np.meshgrid(x0 + np.arange(n) * cell, z0 + np.arange(n) * cell)
     h = bilin(H, g, GX + ox, GZ + oz); acc = h.copy(); wet = (bilin(H, g, GX + ox, GZ + oz, 0) <= 0.05) if PAR.get('sea', True) else np.zeros(h.shape, bool)
     E = json.load(open(os.path.join(TD, 'extra.json')))
@@ -300,7 +327,7 @@ def far(X, Z, ox, oz):
     return {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo, 'b64': b64(v.tobytes()), 'lake': runs}
 
 # ================= the scenery =================
-def scenery(X, Z, ox, oz):
+def scenery(X, Z, ox, oz, u, s, i0):   # (u: the data's arc length at each of the game's 1 m samples s; i0: the start line's)
     E = json.load(open(os.path.join(TD, 'extra.json')))
     T = cKDTree(np.stack([X, Z], 1)); out = {}
     sh = lambda p: [r1(v - (ox if k % 2 == 0 else oz)) for k, v in enumerate(p)]
@@ -319,7 +346,12 @@ def scenery(X, Z, ox, oz):
     out['rocks'] = rocks
     out['cliffs'] = [sh(c) for c in J['cliffs']]
     out['trees'] = [[r1(t[0] - ox), r1(t[1] - oz)] for t in J['trees']]
-    out['stops'] = [[r1(p[0] - ox), r1(p[1] - oz)] for p in J['stops']]   # (the bus stops by the road: [x, z])
+    # the bus stops by the road (the data's [s, side, distance, shelter]) as the game reads them (def.stops [d: metres after the start line, side
+    # (+ right of the travel), name (none: the game names none), shelter]), and their distance from the centre line (m) after; the bridges of the
+    # road (the data's [s0, s1]) as def.bridges [from, to] (metres after the start line)
+    at = lambda v: r1(np.interp(v, u, s) - s[i0])
+    out['stops'] = [[at(p[0]), int(p[1]), '', int(p[3]), r1(p[2])] for p in J['stops']]
+    out['bridges'] = [[at(a), at(b)] for a, b in J.get('bridges', [])]
     return out
 
 def jsval(v): return json.dumps(v, ensure_ascii=False, separators=(',', ':'))
@@ -357,9 +389,9 @@ def main():
     log('curves', curves); log('cps', cps)
     a0 = int(round(base)); data = {'alt': [a0, a0 + int(round(Hs[i1]))], 'realKm': round(race / 1000, 2), 'finish': [round(float(X[i1]), 1), round(float(Z[i1]), 1)],
             'cps': cps, 'curves': curves, 'dem': terrain(X, Z, ox, oz, base), 'lc': landcover(X, Z, ox, oz), 'farDem': far(X, Z, ox, oz)}
-    data.update(scenery(X, Z, ox, oz))
+    data.update(scenery(X, Z, ox, oz, u, s, i0))
     data['points'] = pts
-    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops', 'points']
+    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops'] + (['bridges'] if data['bridges'] else []) + ['points']   # (bridges only where the road has some)
     A, B = '    // ---- podatki (tools/kratke/build.py) ----\n', '    // ---- konec podatkov ----\n'
     blk = A + ''.join('    %s: %s,\n' % (k_, jsval(data[k_])) for k_ in keys) + B
     src = open(TRACK).read(); i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]
