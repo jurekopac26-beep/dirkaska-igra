@@ -2642,12 +2642,12 @@
  "lusail/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 260.65,
+  "winner": 256.52,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a021ed7fb29d27e698537c6b"
+  "digest": "d6a7d5631ed93c8ffc551b3e"
  },
  "lombok/cs": {
   "finished": 13,

@@ -5180,14 +5180,14 @@
   }
  },
  "lusail/car/cs": {
-  "digest": "0117ed614cfd11eac58edd60",
-  "lead": 8535.6,
+  "digest": "107f0db85e8eb7cb81a2a715",
+  "lead": 8534.8,
   "car0": [
-   245.28,
-   -760.73
+   350.22,
+   -874.81
   ],
   "cover": {
-   "dmg": 0.77,
+   "dmg": 0.78,
    "loose": 3,
    "rescues": 0,
    "repairs": 1
