@@ -24,7 +24,7 @@
   const KD_AT = { num: 0, brake: 0, ban: 3, rbr: 3, spielberg: 4 };   // atlas cells: the braking boards (no turn numbers), the banners
   const KD_SHIRTS = [[0.09, 0.61, 0.38], [0.95, 0.95, 0.93], [1.0, 0.53, 0.24], [0.12, 0.14, 0.2], [0.4, 0.42, 0.46], [0.14, 0.14, 0.16], [0.09, 0.5, 0.32], [0.2, 0.3, 0.5],
     [0.86, 0.14, 0.16], [0.9, 0.9, 0.88], [0.5, 0.42, 0.32], [0.3, 0.5, 0.75]];   // the fans' shirts: the national green, white and orange, navy, grey and black, a few others
-  const IE = Object.assign([[0.09, 0.61, 0.38], [0.96, 0.96, 0.95], [1.0, 0.53, 0.24]], { vert: true });   // the Irish flag: green, white and orange, the green at the pole (rbFlags: cols.vert)
+  const IE = { up: [[0.09, 0.61, 0.38], [0.96, 0.96, 0.95], [1.0, 0.53, 0.24]] };   // the Irish flag: green, white and orange, the green at the pole (World.flagMesh's upright bands)
   const KD_POLE = [0.34, 0.26, 0.19];   // the wooden poles of the country's lines (soPower: a pole's colour)
 
   // the trees (LK.woods, on the builder's land cover: 0 open, 1 the woods and the hedgerows' trees, 2 the fields, 3 built-up): 0 a broadleaf
