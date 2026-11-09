@@ -7642,5 +7642,103 @@
    "rescues": 0,
    "repairs": 1
   }
+ },
+ "riohondo/race/cs": {
+  "digest": "2e3b7d71d845452c59d7d966",
+  "lead": 2442.5,
+  "car0": [
+   770.76,
+   -822.44
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "riohondo/demo/cs": {
+  "digest": "1ada7728106ea9b4abb28e40",
+  "lead": 2603.7,
+  "car0": [
+   726.27,
+   -605.09
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "riohondo/upg/cs": {
+  "digest": "b20b1f2769fe47b16635c185",
+  "lead": 2610.4,
+  "car0": [
+   728.21,
+   -597.66
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "riohondo/crash/cs": {
+  "digest": "c908c78dffa38b154567492e",
+  "lead": 7556.5,
+  "car0": [
+   539.76,
+   -802.73
+  ],
+  "cover": {
+   "dmg": 0.65,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "riohondo/formula/cs": {
+  "digest": "9822bc9b00d87500cf5f6392",
+  "lead": 9373.9,
+  "car0": [
+   728.24,
+   -272.96
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 1,
+   "repairs": 1
+  }
+ },
+ "riohondo/lm/cs": {
+  "digest": "10ebfd253f6a2ebf873b742e",
+  "lead": 9284.8,
+  "car0": [
+   732.86,
+   -269.64
+  ],
+  "cover": {
+   "dmg": 0.82,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "riohondo/car/cs": {
+  "digest": "435bde3710dfebe9d7c1c001",
+  "lead": 7927.8,
+  "car0": [
+   741.32,
+   -944.05
+  ],
+  "cover": {
+   "dmg": 0.59,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

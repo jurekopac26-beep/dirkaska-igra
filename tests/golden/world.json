@@ -2060,5 +2060,36 @@
    "lifeShadow:MeshBasicMaterial": "e6cdc8e9",
    "life:MeshBasicMaterial": "779ba707"
   }
+ },
+ "riohondo": {
+  "meshes": 704,
+  "verts": 650528,
+  "instances": 6346,
+  "props": 70,
+  "crowd": 43,
+  "world": "4bd73735",
+  "propsHash": "fb5fac24",
+  "floor": "32c58a94/9632",
+  "groups": {
+   "-:MeshLambertMaterial": "acd31131",
+   "-:MeshBasicMaterial": "31e3e01b",
+   "riohondo service roads:MeshLambertMaterial": "9e852c65",
+   "riohondo lake:MeshPhongMaterial": "630a19ec",
+   "-:MeshPhongMaterial": "c944c85c",
+   "rsFar:MeshBasicMaterial": "ce2a70b3",
+   "crowd:MeshLambertMaterial": "31ce42f7",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "8d18c822",
+   "ao:MeshBasicMaterial": "86ae2b35",
+   "roadwear:MeshLambertMaterial": "28433556",
+   "worn:MeshLambertMaterial": "cd114c0a",
+   "brakeBoards:MeshLambertMaterial": "6789670b",
+   "life:MeshLambertMaterial": "be3ca3fc",
+   "lifeShadow:MeshBasicMaterial": "f1c48050",
+   "life:MeshBasicMaterial": "445579f6",
+   "people:MeshLambertMaterial": "503631b0",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "19d8ff34"
+  }
  }
 }

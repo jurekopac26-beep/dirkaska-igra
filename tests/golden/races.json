@@ -3898,5 +3898,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "ab0b9ae720531c45d441dd28"
+ },
+ "riohondo/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 222.06,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "67644ff89dc12a784f6034c4"
+ },
+ "riohondo/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 240.46,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fdc94c2648dc1994bad60c2e"
+ },
+ "riohondo/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 190.13,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ffe322aec387e9e41fb8a2b3"
+ },
+ "riohondo/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 192.03,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c6d5fd4b0c11466d5501ce0c"
+ },
+ "riohondo/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 226.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0c600fa158104764a5d226ce"
  }
 }

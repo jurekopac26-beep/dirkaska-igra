@@ -555,8 +555,8 @@
  "riohondo": {
   "calls": 189,
   "maxCalls": 287,
-  "kverts": 608,
-  "maxKverts": 824,
-  "jsMs": 1.3
+  "kverts": 614,
+  "maxKverts": 830,
+  "jsMs": 1.11
  }
 }

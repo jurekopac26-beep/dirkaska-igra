@@ -480,6 +480,7 @@
     'Desna lasnica': 'Right Hairpin', 'Hitri desni pregib': 'Fast Right Kink', 'Desni na vrhu': 'Right at the Top', 'Desni v esih': 'Right in the Esses', 'Levi v dolino': 'Left into the Valley',
     'Lasnica v dolini': 'Hairpin in the Valley', 'Dolgi levi pod klancem': 'Long Left below the Climb', 'Desni na vrhu klanca': 'Right at the Top of the Climb',
     'Zadnji desni': 'Last Right',   // (Sakhir: its corners by plain descriptions, by the hills and the valley of the desert; Ostri levi and Desni na koncu ravnine as above)
+    'Desni na dolgo ravnino': 'Right onto the Long Straight', 'Levi v notranjosti': 'Infield Left', 'Desni pred ciljem': 'Right before the Finish',   // (Termas de Río Hondo: its corners by plain descriptions; its others as above)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)

@@ -24,7 +24,11 @@
   const RH_AT = { num: 0, brake: 14, ban: 17, rbr: 17, spielberg: 18 };   // atlas cells: the 14 turn numbers, the braking boards, the banners
   const RH_SHIRTS = [[0.46, 0.68, 0.88], [0.95, 0.95, 0.93], [0.16, 0.2, 0.36], [0.13, 0.13, 0.15], [0.46, 0.68, 0.88], [0.42, 0.44, 0.48], [0.97, 0.78, 0.14], [0.92, 0.92, 0.9],
     [0.78, 0.12, 0.16], [0.2, 0.42, 0.78], [0.55, 0.42, 0.3], [0.2, 0.45, 0.28]];   // the fans' shirts: lots of light blue and white, navy, black and grey, a few yellow, red and green
-  const AR = [[0.46, 0.68, 0.88], [0.96, 0.96, 0.97], [0.46, 0.68, 0.88]];   // the Argentine flag: light blue, white, light blue (the sun too small to see)
+  // the Argentine flag: light blue, white, light blue, the golden Sun of May in the middle (World.flagMesh's emblems, look.sym, as
+  // assets/flags/argentina.svg): in the flag's height G, the middle of the cloth 0.75 G from the pole (the flags here are 3:2), 32 rays
+  // (two stars of 16 points, straight and shorter flaming ones in turn, 5/18 G across), their solid middles the face
+  const AR = ((b, w, g) => Object.assign([b, w, b], { sym: [['star', g, 0.75, 0.5, 0.139, 0.062, 16, -Math.PI / 2], ['star', g, 0.75, 0.5, 0.118, 0.062, 16, -Math.PI / 2 + Math.PI / 16]] }))(
+    [0.46, 0.68, 0.88], [0.96, 0.96, 0.97], [0.96, 0.71, 0.06]);
 
   // ---- the trees (unit height 1, instanced; LK.woods): 0 a carob tree of the monte (a short trunk forking low, a wide flat crown of fine
   //      light leaves in loose clumps), 1 a quebracho (a taller straight trunk, a loose grey-green crown in clumps, higher than wide), 2 a
@@ -112,10 +116,13 @@
     }
   }
 
-  // the horizon (def.far, Riverside's rsFar): the lake's grey-blue, the plain's monte and fields, flat to the edge of sight, in the dusty haze
+  // the horizon (def.far, Riverside's rsFar): the lake's grey-blue (the pale sky in it), the plain's monte and fields, flat to the edge of
+  // sight, in the dusty haze: all of the flat plain lies within a few degrees of the horizon, past the near view's haze, so even its
+  // inner rings are mostly haze, a little brighter than the fog's colour (rsFar darkens its curtain's foot and the side away from the
+  // sun; darker, the curtain stood as a dark wall over the hazy near ground in a view from above: the menu's corner camera)
   const rhFarCol = (h, d) => {
-    const c = h < 273 ? [0.45, 0.55, 0.58] : h < 300 ? [0.36, 0.38, 0.24] : [0.33, 0.35, 0.25], f = (1 - Math.exp(-d / 14000)) * 0.88;
-    return c.map((v, k) => lerp(v, [0.83, 0.84, 0.83][k], f));
+    const c = h < 273 ? [0.62, 0.7, 0.74] : h < 300 ? [0.36, 0.38, 0.24] : [0.33, 0.35, 0.25], f = 0.75 + 0.2 * (1 - Math.exp(-d / 6000));
+    return c.map((v, k) => lerp(v, [1.0, 1.0, 0.97][k], f));
   };
 
   // LK.extra: the service roads, the lake, the horizon; before the crowds and the trees, which keep clear of them
