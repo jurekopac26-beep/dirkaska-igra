@@ -1417,23 +1417,23 @@
   }
  },
  "killar": {
-  "meshes": 1478,
-  "verts": 918716,
-  "instances": 43664,
-  "props": 93,
-  "crowd": 161,
-  "world": "f1fad58b",
-  "propsHash": "1ba5bb22",
-  "floor": "4f4634be/9520",
+  "meshes": 1489,
+  "verts": 910994,
+  "instances": 44468,
+  "props": 95,
+  "crowd": 146,
+  "world": "56411133",
+  "propsHash": "5a404b3",
+  "floor": "fdb77fbb/9520",
   "groups": {
-   "-:MeshLambertMaterial": "b0f35660",
-   "-:MeshPhongMaterial": "d86f1c90",
-   "-:MeshBasicMaterial": "80bb9302",
-   "crowd:MeshLambertMaterial": "a1f2d9b3",
-   "ao:MeshBasicMaterial": "60f9693a",
-   "life:MeshLambertMaterial": "69122a9a",
-   "lifeShadow:MeshBasicMaterial": "e1a7401c",
-   "life:MeshBasicMaterial": "6a3c15a6"
+   "-:MeshLambertMaterial": "f9178d65",
+   "-:MeshPhongMaterial": "e56192b8",
+   "-:MeshBasicMaterial": "ba41681d",
+   "crowd:MeshLambertMaterial": "169a82ca",
+   "ao:MeshBasicMaterial": "eab4f15f",
+   "life:MeshLambertMaterial": "66697787",
+   "lifeShadow:MeshBasicMaterial": "b64116f4",
+   "life:MeshBasicMaterial": "1d0fa257"
   }
  },
  "zurich": {
