@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 900 600" width="900" height="600">
+  <title>Portugal</title>
+  <!-- Ratio 2:3 (Decree of 19 June 1911). Green at the hoist two fifths of the length, red three fifths; on the boundary the armillary
+       sphere (yellow, outlined black), its diameter half the height, centred on the boundary and halfway up; on it the shield: red with
+       seven yellow castles round a white field with five blue shields in a cross, each with five white bezants in a saltire.
+       Colours: green #006600, red #FF0000, yellow #FFFF00, blue #003399. Drawn simply for the menu's small flag. -->
+  <defs>
+    <g id="castle" stroke="#000" stroke-width="0.7" fill="#FFFF00">
+      <rect x="-7.5" y="-1.5" width="15" height="9"/>
+      <rect x="-3" y="-9" width="6" height="7.5"/>
+      <rect x="-8.5" y="-6" width="5" height="4.5"/>
+      <rect x="3.5" y="-6" width="5" height="4.5"/>
+      <path d="M-2 7.5v-4a2 2 0 0 1 4 0v4z" fill="#003399" stroke="none"/>
+    </g>
+    <g id="quina">
+      <path d="M-10 -12H10V2A10 10 0 0 1 -10 2z" fill="#003399"/>
+      <g fill="#fff"><circle cx="-5" cy="-7" r="1.9"/><circle cx="5" cy="-7" r="1.9"/><circle cx="0" cy="-2" r="1.9"/><circle cx="-5" cy="3" r="1.9"/><circle cx="5" cy="3" r="1.9"/></g>
+    </g>
+  </defs>
+  <rect x="0" y="0" width="360" height="600" fill="#006600"/>
+  <rect x="360" y="0" width="540" height="600" fill="#FF0000"/>
+  <g fill="#FFFF00" stroke="#000" stroke-width="1.2">
+    <!-- the sphere: its outer ring, the meridian, the circles of latitude (the polar circles, the tropics, the equator) seen a little from above,
+         the broad band of the ecliptic from the upper left to the lower right -->
+    <path fill-rule="evenodd" d="M210 300a150 150 0 1 0 300 0a150 150 0 1 0 -300 0zM219 300a141 141 0 1 1 282 0a141 141 0 1 1 -282 0z"/>
+    <rect x="355" y="150" width="10" height="300"/>
+    <path d="M262 208Q360 236 458 208L460 216Q360 245 260 216z"/>
+    <path d="M226 254Q360 288 494 254L496 263Q360 298 224 263z"/>
+    <path d="M210 296Q360 334 510 296L510 306Q360 345 210 306z"/>
+    <path d="M226 340Q360 372 494 340L492 349Q360 382 228 349z"/>
+    <path d="M262 391Q360 414 458 391L452 400Q360 422 268 400z"/>
+    <path d="M222 236Q300 300 482 384L470 400Q290 318 214 258z"/>
+  </g>
+  <!-- the shield -->
+  <path d="M274 200H446V310A86 90 0 0 1 274 310z" fill="#FF0000" stroke="#000" stroke-width="1.2"/>
+  <path d="M310 238H410V318A50 62 0 0 1 310 318z" fill="#fff"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(308 221)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(360 221)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(412 221)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(292 300)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(428 300)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(312 366) rotate(40)"/>
+  <use xlink:href="#castle" href="#castle" transform="translate(408 366) rotate(-40)"/>
+  <use xlink:href="#quina" href="#quina" transform="translate(360 274)"/>
+  <use xlink:href="#quina" href="#quina" transform="translate(333 303)"/>
+  <use xlink:href="#quina" href="#quina" transform="translate(360 303)"/>
+  <use xlink:href="#quina" href="#quina" transform="translate(387 303)"/>
+  <use xlink:href="#quina" href="#quina" transform="translate(360 332)"/>
+</svg>
