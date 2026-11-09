@@ -6956,5 +6956,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "sepang/race/cs": {
+  "digest": "57e600ccee36d9cdeba26c35",
+  "lead": 2341.9,
+  "car0": [
+   307.31,
+   -221.63
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sepang/demo/cs": {
+  "digest": "5a7d57a2e0587f372b756b6f",
+  "lead": 2511.5,
+  "car0": [
+   478.05,
+   -31.28
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sepang/upg/cs": {
+  "digest": "de01ff6ea80e70b654df470d",
+  "lead": 2540.5,
+  "car0": [
+   497.72,
+   -8.59
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sepang/crash/cs": {
+  "digest": "bb1b8b1db1c857086db1ade3",
+  "lead": 8187.7,
+  "car0": [
+   -532.86,
+   -303.79
+  ],
+  "cover": {
+   "dmg": 0.52,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "sepang/formula/cs": {
+  "digest": "b47762d67aaef057b60cc919",
+  "lead": 9895.3,
+  "car0": [
+   510.68,
+   23.45
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "sepang/lm/cs": {
+  "digest": "e4d8db9ff77b45485681f7c0",
+  "lead": 9784.1,
+  "car0": [
+   484.52,
+   -23.8
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "sepang/car/cs": {
+  "digest": "1caf747726136a8b87ed7741",
+  "lead": 8617.2,
+  "car0": [
+   -540.42,
+   -295.95
+  ],
+  "cover": {
+   "dmg": 0.55,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 1
+  }
  }
 }

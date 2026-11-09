@@ -468,6 +468,9 @@
     'Spust v prvi levi': 'Drop into the First Left', 'Dolgi desni v dolini': 'Long Right in the Dip', 'Vzpon na hrib': 'Climb up the Hill', 'Desni na dnu': 'Right at the Bottom',
     'Dolgi levi s štirimi temeni': 'Long Left with Four Apexes', 'Spust v dolino': 'Drop into the Valley', 'Levi po spustu': 'Left after the Drop', 'Desni na zadnjo ravnino': 'Right onto the Back Straight',
     'Levi na koncu ravnine': 'Left at the End of the Straight', 'Desni v šikani': 'Chicane Right', 'Levi na ciljno ravnino': 'Left onto the Main Straight',   // (Tuzla: its corners by plain descriptions, the hills by them)
+    'Zapirajoči se desni': 'Tightening Right', 'Leva lasnica': 'Left Hairpin', 'Hitri desni v dolini': 'Fast Right in the Dip', 'Vzpon iz doline': 'Climb out of the Dip',
+    'Ostri desni na vrhu': 'Sharp Right at the Top', 'Spust proti lasnici': 'Drop to the Hairpin', 'Lasnica na dnu': 'Hairpin at the Bottom', 'Desni v klanec': 'Right up the Hill',
+    'Desni na vrhu hriba': 'Right on the Crest', 'Levi navzdol': 'Left Downhill',   // (Sepang: its corners by plain descriptions, the dips and the crests by them)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)

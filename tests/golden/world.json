@@ -1845,5 +1845,30 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "e7e9ff45"
   }
+ },
+ "sepang": {
+  "meshes": 553,
+  "verts": 924339,
+  "instances": 6296,
+  "props": 86,
+  "crowd": 30,
+  "world": "cf14adf6",
+  "propsHash": "3f2c7418",
+  "floor": "9ca322ac/11060",
+  "groups": {
+   "-:MeshLambertMaterial": "644fb655",
+   "-:MeshBasicMaterial": "2a57e1c7",
+   "sepang service roads:MeshLambertMaterial": "3f18857b",
+   "crowd:MeshLambertMaterial": "6d6cf17b",
+   "flags:MeshLambertMaterial": "d5ba9cfd",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "93316a23",
+   "roadwear:MeshLambertMaterial": "3dde9f36",
+   "worn:MeshLambertMaterial": "915f5c97",
+   "brakeBoards:MeshLambertMaterial": "e9e73af2",
+   "people:MeshLambertMaterial": "5d476b05",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "2ad03ed4"
+  }
  }
 }
