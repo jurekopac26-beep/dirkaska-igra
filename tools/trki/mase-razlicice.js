@@ -14,9 +14,9 @@
 //   node tools/trki/mase-razlicice.js --trace <scenario> [--phys nova] [--tspan 0.3]   one scenario step by step around its first touch
 // Sections: 1 vozila (weights, yaw inertia against a box's and 0.3 of the length), mase (the lightest into the heaviest: head on, from
 // behind, T-bone at 60 and 120 km/h, both ways), gorivo (fuelKg and the player's pm); 2 prikolice (a car into a trailer's side and
-// rear, a trailer into a car, the tractor hit while towing, rig against rig, the road train); 3 razlicice (six scenarios, cv 1-5),
-// vloge (player / rival / safety car / a friend's car online); 4 ohranitev (momentum, angular momentum and energy at the knocks, cv
-// 1-5, both physics); 5 proga (the same knock in a seeded race at Spa: the plane against the track).
+// rear, a trailer into a car, the tractor hit while towing, rig against rig, the road train); 3 razlicice (six scenarios, cv 1-5; then
+// where along the car the knock lands: rear axle, middle, front axle), vloge (player / rival / safety car / a friend's car online); 4 ohranitev (momentum, angular momentum and energy at the knocks, cv
+// 1-5, both physics); 5 proga (the same knock in a seeded race at Spa: the plane against the track; there the race's debris counts too).
 // Units in the tables: km/h, deg, s, cm; momentum and energy as shares (%).
 'use strict';
 const path = require('path');
@@ -135,7 +135,7 @@ const SC = {
                  not, a share of it (%; 0 a rigid body's, 100 no turn at all, below 0 more turn than the push gives)
      nImp (the separate pushes; nBig: those with over 0.5 m/s of closing speed, KV.eT), steps (from the first touch to the last, in steps), sep1 (steps to the first parting), still (touching
      at the end), tog (touching again after parting), stick (s: the longest stretch touching with under 0.5 m/s between them), flip
-     (the closing speed changing sign step after step while touching), ovl / raw (cm: the deepest overlap of the true boxes after the
+     (the closing speed changing sign step after step while touching), gap1 (cm between the true boxes at the first knock), ovl / raw (cm: the deepest overlap of the true boxes after the
      knocks / before them), pass (a body's middle inside the other's box), nan */
 function run(phys, tx, build, o = {}) {
   C.setTest(tx || null);
@@ -149,7 +149,7 @@ function run(phys, tx, build, o = {}) {
     const U = units.map((B) => ({ c: B[0], B, m: B.reduce((s, b) => s + mOf(b), 0), v: [], hMax: 0, yaw: 0, gl: 0, glBack: null, off: 0, lat: 0, fold: 0, dP: [0, 0], dP01: [0, 0] }));
     const marks = [0, Math.round(0.1 / DT), Math.round(0.5 / DT), Math.round(AFTER / DT)];
     let k1 = 0, u0 = null, pre = null, E = [], P = [], nImp = 0, nBig = 0, impMax = 0, last = 0, sep1 = null, tog = 0, was = false, stick = 0, stickRun = 0, flip = 0, vnPrev = 0, ovl = 0, raw = 0, pass = false, nan = false, gain = 0;
-    let lNum = 0, lDen = 0, e1 = null, e01 = null, vc = 0;
+    let lNum = 0, lDen = 0, e1 = null, e01 = null, vc = 0, gap1 = 0;
     const tr = o.trace ? [] : null, kMax = Math.round((o.wait || 3) / DT);
     for (let k = 1; k1 ? k <= k1 + marks[3] : k <= kMax; k++) {
       const t = k * DT, tc = k1 ? (k - k1) * DT : null;
@@ -175,7 +175,7 @@ function run(phys, tx, build, o = {}) {
       C.Race.prototype._tlStep.call(race, DT, false);
       for (const c of cars) if (c.hitCar > 0) { nImp++; if (c.hitCar > 0.5) nBig++; impMax = Math.max(impMax, c.hitCar); hitNow = true; break; }   // (a trailer's knock: counted once a step)
       if (!k1 && (g0.g < 0 || hitNow)) {   // the first touch: what the bodies had just before its knocks
-        k1 = k; const q = was0.q, sp = Math.hypot(q[0][1], q[0][2]); u0 = sp > 0.5 ? [q[0][1] / sp, q[0][2] / sp] : [Math.cos(q[0][0]), Math.sin(q[0][0])];
+        k1 = k; gap1 = g0.g; const q = was0.q, sp = Math.hypot(q[0][1], q[0][2]); u0 = sp > 0.5 ? [q[0][1] / sp, q[0][2] / sp] : [Math.cos(q[0][0]), Math.sin(q[0][0])];
         pre = was0.y; vc = (q[0][1] - q[1][1]) * u0[0] + (q[0][2] - q[1][2]) * u0[1];
         U.forEach((X, n) => { const v = Math.hypot(q[n][1], q[n][2]); X.h0 = q[n][0]; X.vx0 = q[n][1]; X.vz0 = q[n][2]; X.dir0 = v > 1 ? Math.atan2(q[n][2], q[n][1]) : null; X.v.push((q[n][1] * u0[0] + q[n][2] * u0[1]) * KMH); });
       }
@@ -215,7 +215,7 @@ function run(phys, tx, build, o = {}) {
       ratio: pB > 1e-6 ? pA / pB : null, pErr: net ? null : Math.hypot(A.dP[0] + B.dP[0], A.dP[1] + B.dP[1]) / Math.max(pA, pB, 1e-9) * 100,
       E0: pre.E / 1000, eImp: (1 - E[0] / pre.E) * 100, e01E: (1 - E[1] / pre.E) * 100, e2: (1 - E[3] / pre.E) * 100, gain, gainPct: gain / pre.E * 100,
       p0: [pre.px, pre.pz], p1: P[0], p01: P[1], lErr: lDen > 1 ? lNum / lDen * 100 : null,
-      nImp, nBig, impMax: impMax * KMH, steps: last - k1 + 1, sep1, still: last >= k1 + marks[3] - 1, tog, stick, flip, ovl: Math.max(0, ovl) * 100, raw: raw * 100, pass, nan, trace: tr };
+      gap1: Math.max(0, gap1) * 100, nImp, nBig, impMax: impMax * KMH, steps: last - k1 + 1, sep1, still: last >= k1 + marks[3] - 1, tog, stick, flip, ovl: Math.max(0, ovl) * 100, raw: raw * 100, pass, nan, trace: tr };
   } finally { Math.random = orig; C.setTest(null); }
 }
 
@@ -227,12 +227,12 @@ function table(head, rows) {
   say(head.map((h, i) => pad(h, w[i])).join('  ')); for (const r of rows) say(r.map((c, i) => pad(c, w[i])).join('  '));
 }
 const vs = (X) => X.v.map(v => f(v)).join('>');   // (before > after the first touch's step > +0.1 > +0.5 > +2 s)
-const flags = (R) => [R.nan ? 'NaN' : '', R.pass ? 'skozi' : '', R.still ? 'se-drzi' : '', R.stick > 0.2 ? 'lepi ' + f(R.stick, 1) + 's' : '', R.flip > 2 ? 'trese ' + R.flip : '', R.tog > 0 ? 'znova ' + R.tog : '', R.A.rev ? 'A-nazaj' : '', R.B.rev ? 'B-nazaj' : ''].filter(Boolean).join(',') || '-';
+const flags = (R) => [R.nan ? 'NaN' : '', R.pass ? 'skozi' : '', R.gap1 > 1 ? 'dotik ' + f(R.gap1) + ' cm prej' : '', R.still ? 'se-drzi' : '', R.stick > 0.2 ? 'lepi ' + f(R.stick, 1) + 's' : '', R.flip > 2 ? 'trese ' + R.flip : '', R.tog > 0 ? 'znova ' + R.tog : '', R.A.rev ? 'A-nazaj' : '', R.B.rev ? 'B-nazaj' : ''].filter(Boolean).join(',') || '-';
 const want = (name) => !ONLY || name.indexOf(ONLY) >= 0;
 const HEAD = ['scenarij', 'mA:mB kg', 'vA km/h (pred>1>0.1>0.5>2s)', 'vB km/h', 'dvA:dvB', 'razm', 'e1', 'e.1', 'dP%', 'E0kJ', 'E-%tr', 'E-%.1', 'E-%2s', 'obrA/B', 'yawA/B', 'glA/B', 'ravnoA/B', 'n', 'kor', 'prekr', 'opombe'];
 const row = (R) => !R.hit ? [R.name, 'ni dotika'] : [R.name, f(R.A.m) + ':' + f(R.B.m), vs(R.A), vs(R.B), f(R.A.dvK, 1) + ':' + f(R.B.dvK, 1), f(R.ratio, 2), f(R.e1, 2), f(R.e01, 2), f(R.pErr, 1), f(R.E0), f(R.eImp), f(R.e01E), f(R.e2),
   f(R.A.hMax) + '/' + f(R.B.hMax), f(R.A.yaw) + '/' + f(R.B.yaw), f(R.A.gl, 2) + '/' + f(R.B.gl, 2), f(R.A.straight, 2) + '/' + f(R.B.straight, 2), R.nImp + '(' + R.nBig + ')', R.steps, f(R.ovl), flags(R)];
-const LEG = 'v: along A\'s way, before > after the first touch\'s step > +0.1 > +0.5 > +2 s; dvA:dvB the knocks\' own changes of speed (km/h), razm = (mA dvA)/(mB dvB), 1 = momentum kept; e1 / e.1 parting over closing speed after the first step / at +0.1 s; dP% momentum made or lost by the knocks; E-% kinetic energy lost over the first step / by +0.1 s / by +2 s; obr the largest heading change (deg), yaw deg/s, gl the grip lost (xgl), ravno s until straight; n pushes (of them with over 0.5 m/s of closing speed), kor steps from the first touch to the last, prekr the deepest overlap after the knocks (cm); opombe: se-drzi touching at +2 s, lepi the longest stretch touching with under 0.5 m/s between them, trese the closing speed changing sign step after step, znova touching again after parting; with a rig dP% also holds what its tractor\'s tyres took in Race._tlStep';
+const LEG = 'v: along A\'s way, before > after the first touch\'s step > +0.1 > +0.5 > +2 s; dvA:dvB the knocks\' own changes of speed (km/h), razm = (mA dvA)/(mB dvB), 1 = momentum kept; e1 / e.1 parting over closing speed after the first step / at +0.1 s; dP% momentum made or lost by the knocks; E-% kinetic energy lost over the first step / by +0.1 s / by +2 s; obr the largest heading change (deg), yaw deg/s, gl the grip lost (xgl), ravno s until straight; n pushes (of them with over 0.5 m/s of closing speed), kor steps from the first touch to the last, prekr the deepest overlap after the knocks (cm); opombe: dotik .. cm prej the first knock came with the true boxes still that far apart, se-drzi touching at +2 s, lepi the longest stretch touching with under 0.5 m/s between them, trese the closing speed changing sign step after step, znova touching again after parting; with a rig dP% also holds what its tractor\'s tyres took in Race._tlStep';
 
 // ===================== 1 vozila: weights and yaw inertia =====================
 if (want('vozila')) {
@@ -464,6 +464,7 @@ if (TRACE) {
   const allS = [];
   for (const [L, Hv] of PAIRS) for (const V of [60, 120]) allS.push(...massScen(L, Hv, V));
   for (const [name, mkS] of SIX) allS.push([name, mkS(ROLES[arg('--role') || 'I>T'])]);
+  for (const vb of [0, 60]) for (const [nm, al] of [['zadnja os', -0.3], ['prednja os', 0.3]]) allS.push([`T 120 > ${nm}, zadeti ${vb ? 'pelje ' + vb : 'stoji'}`, (H) => SC.tbone(H, 'rally', 'rally', 120, vb, { plA: true, along: al * MOD('rally').len })]);
   const hit = allS.find(s => s[0] === TRACE) || allS.find(s => s[0].indexOf(TRACE) >= 0);
   if (!hit) say('no scenario ' + TRACE + ': ' + allS.map(s => s[0]).join(' | '));
   else {

@@ -4,7 +4,9 @@
 //   node tools/trki/zid.js --json          the same results as JSON on stdout
 //   node tools/trki/zid.js --cv 3          a collision version chosen (Core.setTest({ cv }): 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska,
 //                                          5 Stara, or a later one; without it the game's default)
-//   node tools/trki/zid.js --del matrika   only one part (matrika | prikolica | posebne | proga)
+//   node tools/trki/zid.js --del matrika   only one part: matrika (the cars, angles, speeds, inputs), prikolica (the semi-trailer), posebne (riding
+//                                          the barrier round a bend, pulling away from it, a roundabout's island, an open road's ends, a drop's
+//                                          edge, the new map's edge and tunnel wall, the pit wall's nose), proga (Spa, Bathurst, a seeded race)
 // How it measures (the game's own code, no physics written again here):
 // - the road: the game's Track built from a flat test oval (two 1.6 km straights; the definition is this script's, the class and every
 //   rule of the barrier are the game's): 'asfalt' the barrier 1.5 m inside the asphalt's edge (every wheel of a car against it on asphalt:
@@ -253,8 +255,8 @@ if (want('posebne')) {
   const rows = OUT.posebne = [], add = (kaj, r, extra) => { rows.push(Object.assign({ kaj }, r, extra)); };
   // a roundabout's island (def.rings; the game's Track rule): a solid circle in the middle of the road
   { const T = road('trava', { rings: [{ c: [750, 0], r: 12, hw: 3 }] }), R = T.rings[0];
-    for (const [kmh, off, kaj] of [[60, 0, 'otok kroznega: celno v sredino'], [120, 0, 'otok kroznega: celno v sredino'], [120, R.ri - 0.6, 'otok kroznega: oplazi (0,6 m globoko)']])
-      for (const phys of PHYS) add(kaj + ` (ri ${f(R.ri, 1)} m)`, crash({ T, x: 750 - R.ri - 2.6, z: off, h: 0, side: 1, id: ORD, phys, kmh, inp: 'nic', mode: 'sam', noRoom: true }));
+    for (const [kmh, off, kaj] of [[60, 0, 'otok kroznega: celno v sredino'], [120, 0, 'otok kroznega: celno v sredino'], [120, R.ri - 0.6, 'otok kroznega: 0,6 m od roba proti sredini'], [120, R.ri + 0.6, 'otok kroznega: oplazi (0,3 m sirine avta)']])
+      for (const phys of PHYS) add(kaj + ` (ri ${f(R.ri, 1)} m)`, crash({ T, x: 750 - R.ri - 2.6, z: off, h: 0, side: 1, id: ORD, phys, kmh, inp: 'nic', mode: 'sam', noRoom: true, secs: off ? 0.45 : SECS }));   // (off the middle: only the island's own knock; this test road's barriers come back behind it)
   }
   // the ends of an open road: walls across it 0.5 m in from its last samples
   { const pts = []; for (let x = 0; x <= 1200; x += 100) pts.push([x, 0]);
@@ -277,7 +279,33 @@ if (want('posebne')) {
     for (const [th, kmh] of [[15, 120], [90, 120]]) for (const phys of PHYS) { const c0 = model(ORD), th2 = th / D, reach = c0.len / 2 * Math.sin(th2) + c0.wid / 2 * Math.cos(th2);
       add(`stena predora nove mape (track.wall2): ${th} deg`, crash({ T: T2, x: 750, z: 3 - 0.3 - reach, h: th2, th, side: 1, id: ORD, phys, kmh, inp: 'nic', mode: 'sam', noRoom: true })); }
   }
-  table('POSEBNE OGRAJE (avto ' + ORD + ', brez vnosa)', [['kaj', 'kaj'], ['fiz', 'fiz']].concat(pick('kmh', 'v0', 'v1', 'vL', 'v5', 'v2', 'eN1', 'mu1', 'E', 'izh', 'dh', 'w', 'n', 'ud', 'drs', 'pop', 'hit', 'sk')).concat([['pade', 'pade'], ['stop', 'stoji po', 2]]), rows);
+  // the pit wall's nose (Spa): the player comes down the way in, its middle on the pit wall's line, straight at the wall's end. The wall has
+  // no end face: where the gap ends the barrier line is simply there again, on one side of the car or the other (Race.pitStep: inPit)
+  { const T = realTrack('spa'), J = T.pitJ();
+    if (J) { const sN = T.startS + J.ga, pz = T.pitAt(sN + 2), i = T.idx(sN - 45), off = pz.sd * pz.wall;
+      for (const phys of PHYS) { const r = crash({ T, x: T.px[i] + T.nx[i] * off, z: T.pz[i] + T.nz[i] * off, h: T.hd[i], side: pz.sd, id: ORD, phys, kmh: 120, inp: 'nic', mode: 'dirka', keep: true, secs: 4, noRoom: true });
+        let skok = 0; if (r.rec) for (let k = 1; k < r.rec.length; k++) skok = Math.max(skok, Math.abs(r.rec[k].d - r.rec[k - 1].d));
+        delete r.rec; delete r.car; delete r.F; add(`nos zidu boksov (Spa, ${f(J.ga)} m): naravnost vanj`, r, { skok: skok * 100 }); } } }
+  // riding the barrier round a bend: a 180 deg right-hander of R 60 m (its outside barrier 10 m from the middle of the road: R 70 m); the car comes
+  // down the straight at 200 km/h, 300 m before the bend. 'po ograji': full throttle, no steering at all (the barrier turns the car);
+  // 'avtopilot': the game's own driver (aiControl) brakes and steers. From the bend's first metre to its last: the time, the speeds, the damage
+  { const Rb = 60, T = new C.Track({ id: 'zid-ovinek', name: 'Ravnina, Preizkus', halfWidth: 6, points: ovalPts(1600, Rb), startX: 50, edgeBar: 4 }), ride = OUT.poOgraji = [];
+    for (const phys of PHYS) for (const [kaj, drv] of [['avtopilot', (c, race) => C.aiControl(c, race, DT)], ['po ograji', (c) => { c.inThr = 1; c.inSteer = 0; }]]) { let race = null;
+      const r = crash({ T, x: 1300, z: 0, h: 0, side: -1, id: ORD, phys, kmh: 200, inp: 'nic', mode: 'dirka', keep: true, secs: 14, noRoom: true, setup: (c, R) => { race = R; }, drive: (c) => drv(c, race) }), rec = r.rec || [];
+      const kIn = rec.findIndex(x => x.x >= 1600), kOut = rec.findIndex((x, k) => k > kIn && kIn >= 0 && x.z >= Rb && x.x <= 1600), sp = (x) => Math.hypot(x.vx, x.vz) * 3.6;
+      let hit = 0, ud = 0, tch = 0, vMin = 1e9; for (let k = Math.max(0, kIn - 240); k < (kOut >= 0 ? kOut : rec.length); k++) { const x = rec[k]; hit = Math.max(hit, x.hit); if (x.hit > 2.5) ud++; if (x.touch) tch++; if (k >= kIn) vMin = Math.min(vMin, sp(x)); }
+      ride.push({ fiz: phys, kaj, cas: kOut >= 0 ? (kOut - kIn) * DT : null, vIn: kIn >= 0 ? sp(rec[kIn]) : null, vMin: kIn >= 0 ? vMin : null, vOut: kOut >= 0 ? sp(rec[kOut]) : null, stik: tch * DT, hit, ud, sk: kOut >= 0 ? rec[kOut].dmg * 100 : null }); }
+    table('PO OGRAJI SKOZI OVINEK: 180 deg desni ovinek R 60 m (zunanja ograja R 70 m), prihod 200 km/h; cas: skozi ovinek (s), vIn / vMin / vOut: hitrost na zacetku, najmanjsa, na koncu (km/h), stik: na ograji (s), hit: najmocnejsi udarec (m/s), ud: koraki s skodo',
+      [['fiz', 'fiz'], ['kaj', 'kaj'], ['cas', 'cas', 2], ['vIn', 'vIn', 0], ['vMin', 'vMin', 0], ['vOut', 'vOut', 0], ['stik', 'stik', 2], ['hit', 'hit', 1], ['ud', 'ud', 0], ['sk', 'sk %', 0]], ride); }
+  // pulling away: the car along the barrier, its side 2 cm from it, standing or at 60 km/h; full throttle and the steering away from the first
+  // step (the 'plin' driver: to a line 2 m clear of the barrier)
+  { const T = road('asfalt'), i = T.nearestIdx(750, 0), pull = OUT.speljevanje = [];
+    for (const id of [ORD, TRUCK]) for (const phys of PHYS) for (const kmh of [0, 60]) { let first = true;
+      const r = crash({ T, i, side: 1, th: 0, gap: 0.02, id, phys, kmh, inp: 'plin', mode: 'sam', touch: () => { const a = first; first = false; return a; } });
+      pull.push({ avto: id, fiz: phys, kmh, n: r.n, stik: (r.stik || 0) * r.drs, hit: r.hit, sk: r.sk, odm: r.odm, v2: r.v2, dh2: r.dh }); }
+    table('SPELJEVANJE OD OGRAJE: avto vzporedno ob ograji (bok 2 cm od nje), poln plin in volan stran (na crto 2 m od ograje); n: loceni dotiki, stik: skupaj na ograji (s), odm: s do 0,3 m stran za vedno',
+      [['avto', 'avto'], ['fiz', 'fiz'], ['kmh', 'km/h', 0], ['n', 'n', 0], ['stik', 'stik', 2], ['hit', 'hit', 2], ['sk', 'sk', 0], ['odm', 'odm', 2], ['v2', 'v2', 0]], pull); }
+  table('POSEBNE OGRAJE (avto ' + ORD + ', brez vnosa); skok: najvecji premik v stran v enem koraku (cm)', [['kaj', 'kaj'], ['fiz', 'fiz']].concat(pick('kmh', 'v0', 'v1', 'vL', 'v5', 'v2', 'eN1', 'mu1', 'E', 'izh', 'dh', 'w', 'n', 'ud', 'drs', 'pop', 'hit', 'sk')).concat([['pade', 'pade'], ['stop', 'stoji po', 2], ['skok', 'skok', 0]]), rows);
 }
 
 // ---- 4. real tracks: the same crash on Spa and Bathurst (the two modes agree to the bit), and the first barrier of a seeded race ----
@@ -294,7 +322,10 @@ if (want('proga')) {
     for (const phys of PHYS) for (const [th, kmh] of [[15, 120], [30, 120], [90, 60]]) {
       const o = { T, i, side, id: ORD, phys, th, kmh, inp: 'nic', keep: true }, a = crash(Object.assign({ mode: 'sam' }, o)), b = crash(Object.assign({ mode: 'dirka' }, o));
       const ea = a.rec[a.rec.length - 1], eb = b.rec[b.rec.length - 1], dif = Math.max(Math.abs(ea.x - eb.x), Math.abs(ea.z - eb.z), Math.abs(ea.h - eb.h), Math.abs(ea.vx - eb.vx), Math.abs(ea.vz - eb.vz), Math.abs(ea.w - eb.w));
-      same.push({ proga: tid, kje: info.kje, fiz: phys, kot: th, kmh, razlika: dif });
+      // (the race also throws the lost panels on the road and runs the car over them, Race.spawnDebris / debrisHit: with them off the two agree)
+      const b2 = crash(Object.assign({ mode: 'dirka', setup: (c, race) => { race.spawnDebris = () => {}; } }, o)), e2 = b2.rec[b2.rec.length - 1];
+      const dif2 = Math.max(Math.abs(ea.x - e2.x), Math.abs(ea.z - e2.z), Math.abs(ea.h - e2.h), Math.abs(ea.vx - e2.vx), Math.abs(ea.vz - e2.vz), Math.abs(ea.w - e2.w));
+      same.push({ proga: tid, kje: info.kje, fiz: phys, kot: th, kmh, razlika: dif, brezKosov: dif2, sk: a.sk });
       delete a.rec; delete a.car; delete a.F; rows.push(Object.assign({}, info, a));
     }
   }
@@ -304,7 +335,7 @@ if (want('proga')) {
   rows.sort((a, b) => (a.fiz < b.fiz ? -1 : a.fiz > b.fiz ? 1 : 0) || a.kot - b.kot);
   table(`PROGA: isti trk (${ORD}, brez vnosa) na pravih progah in na ovalu; rob: ograja od roba asfalta (m), podl: podlaga pol metra pred ograjo (0 asfalt, 2 trava, 3 pesek, 4 tlak), klanec %`,
     [['proga', 'proga'], ['kje', 'kje'], ['rob', 'rob', 1], ['podl', 'podl', 0], ['klanec', 'klanec', 1], ['fiz', 'fiz']].concat(pick('kot', 'kmh', 'v0', 'v1', 'vL', 'v5', 'v2', 'eN1', 'mu1', 'muS', 'E', 'izh', 'dh', 'w', 'rav', 'n', 'ud', 'drs', 'pop', 'hit', 'sk')), rows);
-  table("PROGA: nacin 'sam' proti Race.step ('dirka'): najvecja razlika stanja (x, z, h, vx, vz, w) po 7 s", [['proga', 'proga'], ['kje', 'kje'], ['fiz', 'fiz'], ['kot', 'kot', 0], ['kmh', 'km/h', 0], ['razlika', 'razlika', (r) => r.razlika === 0 ? '0 (do bita)' : r.razlika.toExponential(2)]], same);
+  table("PROGA: nacin 'sam' proti Race.step ('dirka'): najvecja razlika stanja (x, z, h, vx, vz, w) po 7 s", [['proga', 'proga'], ['kje', 'kje'], ['fiz', 'fiz'], ['kot', 'kot', 0], ['kmh', 'km/h', 0], ['sk', 'sk %', 0], ['razlika', 'razlika', (r) => r.razlika === 0 ? '0 (do bita)' : r.razlika.toExponential(2)], ['brezKosov', 'brez odpadlih kosov', (r) => r.brezKosov === 0 ? '0 (do bita)' : r.brezKosov.toExponential(2)]], same);
 
   // a seeded race (tests/lib/sim.js, the 'crash' set-up: 12 rivals, the player on the autopilot, from 6 s full throttle and full left lock): the
   // player's first barrier, as Race.step made it; then the same hit on the oval (the same speed and angle, nose along the travel)
