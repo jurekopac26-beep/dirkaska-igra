@@ -441,31 +441,31 @@
   "jsMs": 1.49
  },
  "dades": {
-  "calls": 140,
-  "maxCalls": 170,
-  "kverts": 201,
-  "maxKverts": 230,
-  "jsMs": 1.57
+  "calls": 141,
+  "maxCalls": 172,
+  "kverts": 205,
+  "maxKverts": 234,
+  "jsMs": 1.06
  },
  "furka": {
-  "calls": 155,
-  "maxCalls": 186,
-  "kverts": 300,
-  "maxKverts": 411,
-  "jsMs": 1.5
+  "calls": 159,
+  "maxCalls": 192,
+  "kverts": 314,
+  "maxKverts": 426,
+  "jsMs": 1.54
  },
  "santoantao": {
-  "calls": 166,
-  "maxCalls": 191,
-  "kverts": 268,
-  "maxKverts": 315,
-  "jsMs": 1.1
+  "calls": 167,
+  "maxCalls": 194,
+  "kverts": 274,
+  "maxKverts": 323,
+  "jsMs": 1.14
  },
  "gudauri": {
-  "calls": 153,
-  "maxCalls": 183,
-  "kverts": 343,
-  "maxKverts": 474,
-  "jsMs": 1.84
+  "calls": 156,
+  "maxCalls": 187,
+  "kverts": 362,
+  "maxKverts": 483,
+  "jsMs": 1.14
  }
 }
