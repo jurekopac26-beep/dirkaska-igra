@@ -55,9 +55,10 @@
 - **Težavnost** se določi po spretnosti avta (`lamOf`):
   - lahka vozi kot igralčevi počasnejši krogi (`ql`);
   - srednja vozi med njimi in povprečjem;
-  - težka in super težka (ta se dirka kot težka) vozita od povprečja proti hitrejšim krogom (`qh`).
+  - težka vozi od povprečja proti hitrejšim krogom (`qh`);
+  - super težka (v dirki svoja raven od 9. 11. 2026, prej kot težka) vozi kot hitrejši krogi (lam 1), na progi z igralčevim profilom najhitrejši tekmeci naprej proti njegovemu najboljšemu krogu (do lam 1,5, `DIFF_SUP.lam`; orodje najboljšega kroga ne hrani, zato `qh` podaljšan). Po slogu ne, ker so ovinki sloga, izmerjeni drugje, lahko že hitrejši, kot jih avto na tej progi zmore (Crystal Palace: izleti). Meja avta na super težki je 1,12 (`DIFF[3][6]`), na težki 1,09; slog gre v ovinkih do meje težke, ker vozi po svoji liniji, meja pa je izmerjena na idealni (na Crystal Palace je super težka s slogom drsela s ceste). Pospešek gumijaste vrvi (tekmec daleč za igralcem) cilja po profilu ne dvigne čez mejo avta, enako kot brez profila (prej na težki do 6 % čez, izleti na ozkih progah).
   - `ql` in `qh` sta tempo počasnejše in hitrejše polovice krogov proti povprečju, glajen na ±5 m. Pri ±50 m je težkim tekmecem zanašalo zadek.
-  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`).
+  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`, na težki in super težki višja: `DIFF[d][6]`).
 - **Umeritev**: `k0` je tempo pri srednji vrednosti (lam 0), `ks` raztros proti počasnejšim krogom. Umerjeno s tekmecem samim na progi, brez gumijaste vrvi (`DIFF`): lam −1 vozi kot igralčevi počasnejši krogi, lam 0 kot njihovo povprečje. Za Tianmen `k0` 0,95 in `ks` 1,4.
 - **Čez rob** (`tr`, `dt`): samo tam, kjer je čez rob šlo vsaj 40 % krogov (`trMin`; na Tianmnu 2 od 5), in tam toliko kot igralec.
 - **Odprta cesta**: štart z mesta do prvega ovinka orodje izpusti, kot pri prvem krogu krožne proge. Igralčevo počasno speljevanje bi sicer tekmece ustavilo na štartni črti; tam vozijo svoj tempo.

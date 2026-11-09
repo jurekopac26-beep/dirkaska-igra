@@ -4309,7 +4309,7 @@ const Core = (function () {
     let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * sstep(11, 24, vpA));
     if (c.uT) {   // the player's driving (Race._voznja): their pace here (uT), on the line up to VZ_CAP over its profile; off it as its own skill's
       const u = c.uT[ia], cap = 1 + ((c.skCap || 1.14) - 1) * sstep(11, 24, vpA), rb = c.rubber > 1 ? 1 + (c.rubber - 1) * sstep(11, 24, vpA) : c.rubber;   // (the catch-up: none in the slowest hairpins)
-      if (u === u) vT = Math.min(u * rb, vpA * (offLine ? 1 + (cap - 1) * 0.3 : VZ_CAP));   // (NaN: no measurement there, its own pace)
+      if (u === u) vT = Math.min(u * rb, Math.max(u, vpA * cap), vpA * (offLine ? 1 + (cap - 1) * 0.3 : VZ_CAP));   // (NaN: no measurement there, its own pace; the catch-up as without it: not past its cap, the player's pace may be there already)
     }
     if (race.flyOn && c === race.player && c.flyA !== undefined) vT *= FLY_PL;   // (the flying start: the player's autopilot a little under its pace, a margin; not its following of the car ahead)
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
@@ -4381,11 +4381,11 @@ const Core = (function () {
     else { thr = 0; brk = clamp((v - vT) / 4.5, 0.15, 1); }
     let hand = 0;
     if (c.fl && c.fl.rh && v < 1.5) { thr = 0; brk = v > 0.6 ? 1 : 0.1; hand = 1; }   // (standing in the red flag's queue: on the brake, no creeping on part throttle; stopped, the handbrake as parkBrake: a held brake pedal at a standstill would engage reverse)
-    if (c.chr && !c.isPlayer) {   // a braking zone begins (once: until back on the throttle): a car under pressure (someone right behind for 4 s) may get it wrong, the more nervous the likelier
+    if (c.chr && !c.isPlayer) {   // a braking zone begins (once: until back on the throttle): a car under pressure (someone right behind for 4 s) may get it wrong, the more nervous the likelier (super težka's drivers less often, DIFF_SUP)
       const ch = c.chr;
       if (brk > 0.3 && !ch.brk) {
         ch.brk = true;
-        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && rand() < ch.err * 0.06) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
+        if (v > 20 && ch.press > 4 && race.chr && race.state === 'racing' && !c.inPit && !c.pitWant && !(race.fl && race._noPass(c)) && rand() < ch.err * 0.06 * (race.diff === DIFF[3] ? DIFF_SUP.err : 1)) { ch.mist = 1.3; ch.mk = 1.1 + 0.06 * ch.err; ch.press = 0; race._chrEv('mistake', c); }
       } else if (thr > 0.4) ch.brk = false;
     }
     // don't stamp on the brakes while turning hard (trail-braking is stable: the slide is the design)
@@ -6239,13 +6239,21 @@ const Core = (function () {
   // one-make class: the formula's rivals are formulas); the qualifying sim sizes itself by it
   const fieldSize = (pm, n) => { const F = pm && !pm.oneMake ? fieldOf(pm) : null; return F && pm.fieldN && !modelsOf(pm.fill) ? Math.min(n, pm.fieldN) : n; };
   const aiDriver = (k, pm, n) => ({ name: DRIVER_NAMES[k % DRIVER_NAMES.length], model: aiModel(k, pm, n), color: AI_COLORS[k % AI_COLORS.length] });
-  // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up when behind (max, from metres)]
+  // AI pace per difficulty: [slowest skill, fastest skill, rubber band: slow-down when far ahead of the player (max, from metres), speed-up
+  // when behind (max, from metres)(, the skill cap: CSK.aiSkCap raised to it, the pico's DIFF_PICO)]
   // (skill 1 = the racing-line speed profile; the cars' own limit on the autopilot is about 1.12, the little pico understeers past ~1.08)
   const DIFF = [
     [0.78, 0.86, 0.06, 60, 0.05, 40],    // lahka
     [0.88, 0.97, 0.04, 90, 0.05, 40],    // srednja
-    [1.02, 1.12, 0.01, 200, 0.06, 30],   // težka: the front runners drive at the limit and hardly wait for anyone
+    [1.03, 1.12, 0.01, 200, 0.06, 30, 1.09],   // težka: the front runners near the limit, they hardly wait for anyone
+    [1.07, 1.12, 0, 200, 0.06, 30, 1.12],   // super težka (a race of its own since 9. 11. 2026, before as težka): the front runners at the
+                                            // cars' limit (as the player's autopilot at 1.12, a good player), never waiting for anyone
   ];
+  // super težka besides (DIFF[3]): its drivers' mistakes under pressure (opts.chars) err x the others', their reactions at the start re s
+  // (LAUNCH.ai: the others'), the player's driving (Race._voznja) up to lam (1: the player's quicker laps; on their own profile of the track
+  // past it toward their best lap, tools/voznja.mjs keeps no best lap: qh carried on); the pico's cap by difficulty (DIFF[d][6]: none over its own 1.0 below)
+  const DIFF_SUP = { err: 0.3, re: [0.12, 0.3], lam: 1.5 }, DIFF_PICO = [1, 1, 1, 1.03];
+  const LAM = [0.78, 1.02, 1.12];   // (Race._voznja: the skills its pace by difficulty is laid against, lam -1, 0 and 1: easy's slowest, hard's slowest and quickest when it was measured, 4. 11. 2026)
   // the start's reaction (Race opts.launch; on by default in a race from the grid, see Race): a car sets off at its first press of the
   // throttle after the lights go out (c.lch.re: that moment on the race clock, s); the later the press, the more its driven wheels spin
   // in the first metres: for win + winK x sev s after the press their grip is down by up to depth x sev (sev 0 at r0 or quicker, 1 at
@@ -6379,7 +6387,8 @@ const Core = (function () {
       const R = rng(opts.seed || 7);
       Object.defineProperty(this, 'rnd', { value: opts.repro ? rng(((opts.seed || 7) * 48271 + 29) >>> 0) : MR, enumerable: false });   // (the race's own random numbers: rand)
       // AI roster
-      const diff = DIFF[clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 2)]; this.diff = diff;   // (the fourth level, super težka, is the police's: a race takes it as težka)
+      const dk = clamp(opts.difficulty == null ? 1 : opts.difficulty, 0, 3), diff = DIFF[dk]; this.diff = diff;   // (super težka: a race of its own, DIFF[3]; the police's hardest too, POL_DIFF)
+      const reAI = diff === DIFF[3] ? DIFF_SUP.re : LAUNCH.ai;   // (the start's reactions: super težka's quicker)
       if (oneMake) this.oneMake = oneMake;
       const aiSpecs = [];
       const spr = TX.aiSpr != null ? TX.aiSpr : opts.phys === 'nova' ? NVK.aiSpr : 1, sLo = spr === 1 ? diff[0] : diff[1] - (diff[1] - diff[0]) * spr;   // (the new physics, or the setting Tekmeci: razpon hitrosti: the field's paces closer together, NVK.aiSpr)
@@ -6415,8 +6424,8 @@ const Core = (function () {
         } else {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
-          c.skCap = s.model.id === 'pico' ? 1.0 : CSK.aiSkCap;   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace)
-          if (launch) c.lch = lch(LAUNCH.ai[0] + (LAUNCH.ai[1] - LAUNCH.ai[0]) * clamp(0.6 * RL() + 0.4 * s.rk / Math.max(1, nAI - 1), 0, 1));   // (the quicker drivers react quicker, on the whole)
+          c.skCap = s.model.id === 'pico' ? DIFF_PICO[dk] : Math.max(CSK.aiSkCap, diff[6] || 0);   // no point pushing a car past what it can hold (the light pico understeers into the walls beyond the line's own pace); hard and super hard: nearer the limit (DIFF)
+          if (launch) c.lch = lch(reAI[0] + (reAI[1] - reAI[0]) * clamp(0.6 * RL() + 0.4 * s.rk / Math.max(1, nAI - 1), 0, 1));   // (the quicker drivers react quicker, on the whole)
           if (opts.chars) {   // a character (in an object: the golden references digest only the plain fields); the player's standing rival (opts.rival: its roster index) a touch quicker
             const d = driverChar(s.rk), rv = opts.rival === s.rk;
             c.chr = { k: s.rk, agg: d.agg, err: d.err, rival: rv, press: 0, mist: 0, mk: 1, brk: false, defT: 0, defCool: 0, duel: 0, duelOn: false };
@@ -6690,7 +6699,7 @@ const Core = (function () {
     // for every sample, laid up the road by as far as aiDrive reads ahead at that speed (v·0.22 + 3 m, sA), so the car is at it where the
     // player was; VZ_PL over it where the player is on the throttle (pl: there its engine decides), NaN where the profile has no
     // measurement (its own pace). By difficulty (the car's skill, lamOf): on easy as the player's slower laps, on medium between them and
-    // their average, on hard (and super hard, raced as hard) from the average toward their quicker laps (ql, qh); over the verge only
+    // their average, on hard from the average toward their quicker laps (ql, qh), on super hard from these on toward their best; over the verge only
     // where the player went (tr, dt; not a semi-trailer). A real track (not def.test, not def.pending) without a profile, or a car not of
     // its class: the player's style (Korak 3; opts.voznja's VOZNJA_SLOG, razredi: a profile of it for this track, voznjaIzSloga), the same,
     // its target blended with the car's own (wv: 0 its own, as aiDrive's, read where aiDrive reads its profile), never over the verge; not
@@ -6710,12 +6719,14 @@ const Core = (function () {
       if (S) { const z = this._vzS; VS = z && z.vp === this.vprof && z.S === S ? z.P : voznjaIzSloga(T, this.vprof, S); this._vzS = { vp: this.vprof, S, P: VS }; }
       this.voznja = V || VS;
       if (!V && !VS) return;
-      const N = T.N, ds = T.ds, L = T.len, mid = (DIFF[1][0] + DIFF[1][1]) / 2, h0 = DIFF[2][0];
-      // the pace by difficulty: lam -1 (the easiest car on easy) .. 0 (the slowest on hard) .. 1 (the quickest on hard): toward the
+      const N = T.N, ds = T.ds, L = T.len, mid = (DIFF[1][0] + DIFF[1][1]) / 2, D = this.diff || DIFF[1], sup = D === DIFF[3];
+      // the pace by difficulty: lam -1 (the easiest car on easy) .. 0 (the slowest on hard, as it was: LAM) .. 1 (the quickest on hard): toward the
       // player's slower laps (ql) or quicker ones (qh), their share of the pace against the average's there; easy as the slower laps,
       // medium between them and the average, hard from the average on (the average's line at a quicker lap's pace: as far as the car
-      // can, see below; on Tianmen about the average, the player's quicker laps are sideways through the hairpins). Without ql, qh: skill / mid
-      const lamOf = (sk) => clamp(sk >= h0 ? (sk - h0) / Math.max(1e-6, DIFF[2][1] - h0) : (sk - h0) / Math.max(1e-6, h0 - DIFF[0][0]), -1, 1);
+      // can, see below; on Tianmen about the average, the player's quicker laps are sideways through the hairpins); super hard as the
+      // quicker laps (lam 1), on the player's own profile of the track (own) from them on toward the best lap (its quickest car, DIFF_SUP.lam;
+      // not by the style: its corners, measured elsewhere, can be quicker already than this track's let a car go, Crystal Palace). Without ql, qh: skill / mid
+      const lamOf = (sk, own) => sup ? 1 + (own ? DIFF_SUP.lam - 1 : 0) * clamp((sk - D[0]) / Math.max(1e-6, D[1] - D[0]), 0, 1) : clamp(sk >= LAM[1] ? (sk - LAM[1]) / (LAM[2] - LAM[1]) : (sk - LAM[1]) / (LAM[1] - LAM[0]), -1, 1);
       const sp0 = new Float32Array(N);   // (every sample's metres from the start line)
       for (let i = 0; i < N; i++) sp0[i] = T.open ? i * ds - T.startS : (((i * ds - T.startS) % L) + L) % L;
       const seed = this.opts.seed || 7, draw = (c, j) => { const x = Math.sin(seed * 12.9898 + (c.id || 0) * 78.233 + j * 37.719) * 43758.5453; return x - Math.floor(x); };
@@ -6762,7 +6773,7 @@ const Core = (function () {
       for (const c of this.cars) {
         if (c.isPlayer || c.net || c.sc || c.pol) continue;
         const R = RV && (!RV.cls || RV.cls.has(c.m.id)) ? RV : c.tl ? null : RS; if (!R) continue;   // (a semi-trailer: its own driving, not the style)
-        const P = R.P, wv = R.wv, vp = c.vprof || this.vprof, uT = new Float32Array(N), w = new Float32Array(N), kc = (c.skill || 1) / mid, cap = c.skCap || 1.14, lam = lamOf(c.skill || mid);
+        const P = R.P, wv = R.wv, vp = c.vprof || this.vprof, uT = new Float32Array(N), w = new Float32Array(N), kc = (c.skill || 1) / mid, cap = c.skCap || 1.14, lam = lamOf(c.skill || mid, R === RV);
         let aB = aBs.get(vp); if (aB === undefined) { aB = 0; for (let i = 0; i + 1 < N; i++) { const d = (vp[i] * vp[i] - vp[i + 1] * vp[i + 1]) / (2 * ds); if (d > aB) aB = d; } aBs.set(vp, aB); }   // (its profile's braking: its steepest; once for each car model's profile)
         const goes = R.G.map((g, j) => !c.tl && draw(c, j) < g.p), uLim = goes.some(Boolean) ? new Float32Array(N) : null;
         if (!uLim && !R.rl) { R.rl = new Float32Array(N); for (let i = 0; i < N; i++) R.rl[i] = T.rl[i] + R.dd[i]; }
@@ -6783,7 +6794,7 @@ const Core = (function () {
           const q = R.vq[i], vc = vp[i];
           if (!(q > 0)) { w[i] = NaN; continue; }
           const f = R.QQ ? (lam >= 0 ? (R.k0 + (1 - R.k0) * lam) * (1 + lam * clamp(R.qh[i] - 1, -0.1, 0.3)) : R.k0 * Math.max(0.75, 1 + lam * R.ks * clamp(1 - R.ql[i], -0.1, 0.3))) : kc;   // (a slower lap's mistake: not more than a quarter off the pace)
-          let e = q * f; if (f > 1) e = Math.min(e, Math.max(q, 1 + (cap - 1) * sv[i]));
+          let e = q * f; if (f > 1) e = Math.min(e, Math.max(q, 1 + ((R === RS ? Math.min(cap, DIFF[2][6]) : cap) - 1) * sv[i]));   // (the style: up to hard's cap, its line is not the one the cap was measured on; super hard's slid wide on Crystal Palace)
           if (wv) { const o = so(i); if (e < o) e += (o - e) * (1 - wv[i]); }
           w[i] = Math.min(e, VZ_CAP) * vc;
         }
