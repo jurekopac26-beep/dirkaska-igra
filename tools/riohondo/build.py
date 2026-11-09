@@ -290,6 +290,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     wide: %(wide)s,   // the barriers back behind a wide run-off by the grandstands on the outside of Turns 1-2
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the two on the outside of Turns 1-2
     stands: %(stands)s,
+    zaslon: { d: 28, side: 1, off: 18 },   // the big screen (js/world-zaslon.js) across from the pits on the right of the main straight, turned towards the cars coming down it (node tools/zaslon-mesto.mjs riohondo)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the main straight from Turn 14 to Turn 1, the long straight from Turn 4 to the hairpin
     sectors: %(sectors)s,   // the three sectors of the timing screens: the first corners to the long straight, the long straight and the east side, the infield and the main straight
     dem: %(dem)s,
