@@ -3198,5 +3198,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "73cb156d00d6e9061d927b7c"
+ },
+ "santoantao/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 187.67,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "11060b719ed21c29ff959b6f"
+ },
+ "santoantao/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 215.75,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e6bc3a0d56ec3bf1555310ba"
+ },
+ "santoantao/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 173.95,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "44db1b6465bcf553c4fc5069"
+ },
+ "santoantao/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 176.48,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "221f3bc28dc9cfc779db5eea"
+ },
+ "santoantao/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 188.4,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "02a5176dc092dc01ea4cf011"
  }
 }

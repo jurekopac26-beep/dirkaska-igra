@@ -1675,5 +1675,27 @@
    "tyremarks:MeshBasicMaterial": "6246fe3c",
    "roadwear:MeshLambertMaterial": "22f1e259"
   }
+ },
+ "santoantao": {
+  "meshes": 2127,
+  "verts": 1943301,
+  "instances": 10913,
+  "props": 80,
+  "crowd": 70,
+  "world": "ad7778b0",
+  "propsHash": "5a2abb45",
+  "floor": "fa877770/10864",
+  "groups": {
+   "-:MeshLambertMaterial": "6f65d66a",
+   "-:MeshBasicMaterial": "f34f6dbd",
+   "irFar:MeshLambertMaterial": "739667b0",
+   "crowd:MeshLambertMaterial": "80629f42",
+   "ao:MeshBasicMaterial": "7f7e406b",
+   "tyremarks:MeshBasicMaterial": "457a909f",
+   "roadwear:MeshLambertMaterial": "56e52306",
+   "life:MeshLambertMaterial": "5f1c4533",
+   "lifeShadow:MeshBasicMaterial": "35c488aa",
+   "life:MeshBasicMaterial": "fe9fb2e1"
+  }
  }
 }
