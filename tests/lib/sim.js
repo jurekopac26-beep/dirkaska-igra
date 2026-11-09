@@ -57,8 +57,9 @@ const SETUPS = {
 // with Hakone before it in the list the electric car, from 5 to 6.5 s it only dents the car, from 4 s a rescue; Zürich rally 5.5: from 6 s the car only dents itself on the Limmatquai's blocks;
 // Killar's wooden fence on the left is brittle (def.fence.vBreak 0, 9. 11. 2026 at ~22.21): the left lock takes the car through it and over the edge, the
 // fall's damage, no panel off; put back on the road, a rival knocks panels off it: the rally car from 12.75 s (from 12.5 to 14 s in quarter seconds all but
-// 13.25), the formula from 8.5 s (from 8 to 9 s; from 3 s no panel off now))
-const CRASH_AT = { katu: 4.5, 'zurich/rally': 5.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'killar/ev': 7, 'killar/rally': 12.75, 'killar/formula': 8.5 };
+// 13.25), the formula from 8.5 s (from 8 to 9 s; from 3 s no panel off now); since the fall lands on the slope drawn below (def.floor, the user's
+// report of 9. 11. 2026 at ~23.48) the electric car from 8.25 s (from 7 s it slides on the slope, no panel off; 8, 8.25 and 8.5 s all knock one off))
+const CRASH_AT = { katu: 4.5, 'zurich/rally': 5.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'killar/ev': 8.25, 'killar/rally': 12.75, 'killar/formula': 8.5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

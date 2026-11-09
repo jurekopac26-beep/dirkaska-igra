@@ -2517,17 +2517,17 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "66892037f4005171ae668804"
+  "digest": "ceaea02236c2622845b67fda"
  },
  "killar/cs/formula": {
   "finished": 13,
   "cars": 13,
   "winner": 126.29,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "e55eebc4b8a22a5230203c25"
+  "digest": "9a77f2d6dceaf825c0dc5163"
  },
  "killar/cs/lm": {
   "finished": 13,
@@ -2537,7 +2537,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "418974f9cbbf90249312c6d6"
+  "digest": "0a3f13331700181e9b3ef850"
  },
  "killar/cs/car": {
   "finished": 13,

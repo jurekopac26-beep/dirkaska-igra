@@ -345,6 +345,17 @@ const Core = (function () {
           for (let i = Math.max(0, Math.ceil(s0 / ds - 1e-9)); i < N; i++) { const f = (i * ds - s0) / 2.5, j = Math.floor(f); if (j > v.length - 2) { if (j === v.length - 1 && f - j < 1e-6) A[i] = v[j] / 10; break; } A[i] = (v[j] + (v[j + 1] - v[j]) * (f - j)) / 10; }
         }
       }
+      // the ground beyond the edge where a car goes over (def.floor: Killar, tools/killar-skala.mjs from the terrain the world draws, js/world-killar.js
+      // unGround; the user's report of 9. 11. 2026 at ~23.48: the car fell into the slope and was gone): the terrain grid's vertices in the band a falling
+      // car can reach, { x0, z0, c: the cell (m), v: rows [j, i0, base, heights] }: the grid's row j from column i0 on, each height over base
+      // (decimetres) in decimetres, two characters of base64url each; floorAt rebuilds the same two triangles per cell as the world draws, and
+      // a falling car lands on that slope, not under it (Race._fall). floor: { x0, z0, c, M: (j * 65536 + i) -> the vertex's height }
+      this.floor = null;
+      if (def.floor && this.fallAt) {
+        const D = def.floor, M = new Map(), A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        for (const [j, i0, b, v] of D.v) for (let k = 0; 2 * k < v.length; k++) M.set(j * 65536 + i0 + k, (b + A.indexOf(v[2 * k]) * 64 + A.indexOf(v[2 * k + 1])) / 10);
+        this.floor = { x0: D.x0, z0: D.z0, c: D.c, M };
+      }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
@@ -1666,6 +1677,18 @@ const Core = (function () {
     bayRoom(s, boxD) { const x = this.boxX(s, boxD); return x > -BAY.inL - 12 && x < BAY.outL + 12 ? this.bayDim().room : 0; }
     // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (0: parked straight, parallel to it)
     bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: 0 }; }
+
+    // the drawn ground at (x, z) where def.floor has it (Track.floor): out.h its height, out.gx / out.gz its slope (dh/dx, dh/dz); false where
+    // the floor has no cell (the car falls free there). The same two triangles per cell as the world's tiles (js/world-killar.js unGround)
+    floorAt(x, z, out) {
+      const F = this.floor, M = F.M, c = F.c, gx = (x - F.x0) / c, gz = (z - F.z0) / c, i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, k = j * 65536 + i;
+      if (u + v <= 1) {
+        const a = M.get(k), b = M.get(k + 1), d = M.get(k + 65536); if (a === undefined || b === undefined || d === undefined) return false;
+        out.h = a + u * (b - a) + v * (d - a); out.gx = (b - a) / c; out.gz = (d - a) / c; return true;
+      }
+      const a = M.get(k + 65537), b = M.get(k + 65536), d = M.get(k + 1); if (a === undefined || b === undefined || d === undefined) return false;
+      out.h = a + (1 - u) * (b - a) + (1 - v) * (d - a); out.gx = (a - b) / c; out.gz = (a - d) / c; return true;
+    }
 
     // nearest point search around hint index; returns object (reused)
     query(x, z, hint, out) {
@@ -3360,7 +3383,10 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      COLLISIONS
      --------------------------------------------------------------------- */
-  const _q = {}, _oq = {};   // (_oq: Race._offRoad's)
+  const _q = {}, _oq = {}, _fl = {};   // (_oq: Race._offRoad's; _fl: Race._land's)
+  // a falling car on the drawn ground (Track.floor, Race._land): a ball of FLOOR_R (m) round its middle, FLOOR_R above its wheels; FLOOR_T (s): the
+  // longest it slides on the slope once it touched it before it is put back on the road (the fall's 1.6 s at most, as ever)
+  const FLOOR_R = 0.8, FLOOR_T = 0.5;
   // The damage a knock does (a wall, another car, the traffic, street furniture, a cyclist, a log, a hard landing, the roof on the road
   // rolling over): the formulas at those places times the vehicle's model.knockK (def.phys.knockK; 1 without one). The Kolibri's 1 / 3.5
   // (the user's: its typical crash 1 % instead of 3.5 %, every other in proportion). Only the knocks: not the fall down a drop (Race._fall:
@@ -8080,8 +8106,23 @@ const Core = (function () {
       c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y;
       c.vy -= JUMP_G * dt; c.y += c.vy * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.h += c.w * dt;
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
-      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); } }   // (its semi-trailer falls with it; a road train's second tank too)
+      if (this.track.floor) this._land(c, F, dt);
+      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); }   // (its semi-trailer falls with it; a road train's second tank too)
+        if (this.track.floor) for (let L = c.tl; L; L = L.next) if (this.track.floorAt(L.x, L.z, _fl) && L.y < _fl.h) { const e = _fl.h - L.y; L.y += e; L.yA += e; L.yK += e; if (L.vy < 0) L.vy = 0; } }   // (on the slope with it, not under it)
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
+    }
+    // a falling car on the drawn ground (Track.floor: Killar; the user's report of 9. 11. 2026 at ~23.48: over the edge the car fell into the slope and
+    // was gone): a ball of FLOOR_R round its middle, FLOOR_R above its wheels, pushed out of the slope along its normal, its speed into the slope gone
+    // and the rest rubbed off (it slides down the slope, drawn on it, as far as a steep one lets it); its first touch ends the fall FLOOR_T s later
+    // at the latest (put back on the road where it went over, as ever). Where the floor has no cell, it falls free
+    _land(c, F, dt) {
+      const G = _fl; if (!this.track.floorAt(c.x, c.z, G)) return;
+      const l = Math.hypot(G.gx, 1, G.gz), nx = -G.gx / l, ny = 1 / l, nz = -G.gz / l, d = (c.y + FLOOR_R - G.h) * ny;   // (d: the ball's middle from the slope's plane)
+      if (d >= FLOOR_R) return;
+      const p = FLOOR_R - d; c.x += nx * p; c.y += ny * p; c.z += nz * p; c.roadY = c.y;
+      const vn = c.vx * nx + c.vy * ny + c.vz * nz; if (vn < 0) { c.vx -= vn * nx; c.vy -= vn * ny; c.vz -= vn * nz; }
+      const r = Math.max(0, 1 - 2.5 * dt); c.vx *= r; c.vy *= r; c.vz *= r; c.w *= r;
+      if (!F.land) { F.land = 1; F.t = Math.max(F.t, 1.6 - FLOOR_T); }
     }
     // a road with no barriers (def.unfenced, Track.unf = [reach, time]; wallCollide holds no car at the sides but at a fence's standing panels,
     // Track.fence), every step after the walls: a

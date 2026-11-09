@@ -4928,7 +4928,7 @@
   }
  },
  "killar/upg/cs": {
-  "digest": "ac89b47630e5a5ba1e7ab3d6",
+  "digest": "eddd7f2c9695b64deb9bef13",
   "lead": 2054.8,
   "car0": [
    -1356.52,
@@ -4942,11 +4942,11 @@
   }
  },
  "killar/crash/cs": {
-  "digest": "7e0db7d26400ce56c9b4a861",
+  "digest": "169f657a8c40a340a4b80f29",
   "lead": 1911.2,
   "car0": [
-   -1213.7,
-   -1046.99
+   -1210.78,
+   -1045.38
   ],
   "cover": {
    "dmg": 0.94,
@@ -4956,43 +4956,43 @@
   }
  },
  "killar/formula/cs": {
-  "digest": "646872444d22edf1d6a553e5",
+  "digest": "f5bf0c12127935685499df57",
   "lead": 1885.8,
   "car0": [
-   -1242,
-   -1061.32
+   -1224.62,
+   -1055.21
   ],
   "cover": {
    "dmg": 0.42,
-   "loose": 1,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/lm/cs": {
-  "digest": "c103792762ce526324cc0517",
+  "digest": "085d23effc9bb66f80b0bd6b",
   "lead": 1864.5,
   "car0": [
-   -1137.63,
-   -1012.9
+   -1179.41,
+   -1033.79
   ],
   "cover": {
-   "dmg": 0.78,
-   "loose": 4,
+   "dmg": 0.58,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/car/cs": {
-  "digest": "9c2a70ca04b5f46a6263bd64",
+  "digest": "c1c18cb4c6bc6b6ed811a23c",
   "lead": 1911.3,
   "car0": [
-   -1177.45,
-   -1034.62
+   -1251.58,
+   -1066.1
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 5,
+   "dmg": 0.84,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }

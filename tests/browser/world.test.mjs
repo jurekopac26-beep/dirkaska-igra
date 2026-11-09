@@ -3,6 +3,7 @@
 // (type, colours, texture size and tiling, transparency), the knockable props and the prop floor. Textures' pixels are not
 // included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was. Also the
 // braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
+// And where a track has the ground a falling car lands on (def.floor: Killar), it is the ground drawn there.
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 //   WORLD_ONLY=medvode,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
@@ -77,9 +78,18 @@ try {
           for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if ((di || dj) && ii >= 0 && jj >= 0 && ii < nx && jj < nz) lo = Math.min(lo, FR.P0[3 * (jj * nx + ii) + 1]); }
           const y = FR.P0[3 * k + 1]; if (y < lo - 40) lakes.pits.push(`${FD.x0 + i * FD.cell}, ${FD.z0 + j * FD.cell}: ${Math.round(lo - y)} m below`); }
       }
-      return { bb, fnan, lakes, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
+      // the ground a falling car lands on (def.floor, Track.floorAt: tools/killar-skala.mjs) where a track has it: the ground the world draws, in
+      // both triangles of every cell it has (the user's report of 9. 11. 2026 at ~23.48 on Killar: the car fell into the slope and was gone)
+      let fall = null;
+      if (Tr.floor && W.groundH) { const Fl = Tr.floor, o = {}; fall = { n: 0, worst: 0, at: '' };
+        for (const key of Fl.M.keys()) { const i = key % 65536, j = Math.floor(key / 65536);
+          for (const [u, v] of [[0.25, 0.5], [0.7, 0.6]]) { const x = Fl.x0 + (i + u) * Fl.c, z = Fl.z0 + (j + v) * Fl.c; if (!Tr.floorAt(x, z, o)) continue;
+            const e = Math.abs(o.h - W.groundH(x, z)); fall.n++; if (e > fall.worst) { fall.worst = e; fall.at = `${x.toFixed(1)}, ${z.toFixed(1)}`; } } } }
+      return { bb, fnan, lakes, fall, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
     });
-    const bb = fp.bb, fnan = fp.fnan, lakes = fp.lakes; delete fp.bb; delete fp.fnan; delete fp.lakes;
+    const bb = fp.bb, fnan = fp.fnan, lakes = fp.lakes, fall = fp.fall; delete fp.bb; delete fp.fnan; delete fp.lakes; delete fp.fall;
+    if (fall) T.check(`${id}: the ground a falling car lands on (def.floor) is the ground drawn there (within 0.3 m; tools/killar-skala.mjs)`, fall.n > 1000 && fall.worst <= 0.3,
+      `${fall.n} points, at most ${fall.worst.toFixed(2)} m off${fall.worst > 0.3 ? ' at ' + fall.at : ''}`);
     if (lakes && lakes.wet) T.check(`${id}: the far view's lakes at their own level (no wet node a pit below its neighbours)`, !lakes.pits.length,
       `${lakes.wet} wet nodes${lakes.pits.length ? '; pits at ' + lakes.pits.slice(0, 4).join('; ') : ''}`);
     if (fp.floor) T.check(`${id}: prop floor a number beside the road (0.1–12 m past its edge)`, !fnan, `NaN at ${fnan} of ${fp.floor.split('/')[1]} points`);
