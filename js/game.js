@@ -761,6 +761,19 @@
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
     location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
   }
+  // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
+  // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
+  // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
+  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja)
+  const VZ_KEY = 'rr_voznja';
+  let vzOn = false;
+  try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
+  const voznjaOf = (def) => {
+    if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
+    const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
+    if (typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);   // (Race._voznja: only on a real track)
+    return L.length ? L : undefined;
+  };
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
   // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
   // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)
@@ -1101,12 +1114,17 @@
      Odpri posnetek, tools/posnetek.mjs): besides the frames what the replay needs, the cars (model, name, colour, number, grid, the laps for
      rpLap), the race (laps, weather, a time trial, the finish order), its moments (ev, the highlights) and its flags. Opened, a race of its
      own is set up on the track with those cars (never stepped: the replay poses them) and the replay plays it; Končaj: the title */
+  // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts, the field's car and the
+  // assist (as: Core.ASSISTS index at the end of the race);
+  // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
-    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c);
+    const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
+    const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: { upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist } };
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map(c => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
-      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t })) });
+      cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
+      fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
+      F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
   // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not
@@ -2315,7 +2333,8 @@
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
     }, MS.opts(), prviOpts(), ZB.opts(zctx)));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race; Zabava: a novelty's mode, js/zabava.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     careerCond(M, !!(on || school || ch));   // (the career: the car's wear from its last races, till the garage's service)
