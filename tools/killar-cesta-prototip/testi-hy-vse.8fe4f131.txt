@@ -1,0 +1,54 @@
+jezero        test 884 hy c3d00b87eb09 grade c3d00b87eb09 curv c3d00b87eb09 notes a0db65c0f34a puddles 0
+riviera       test 628 hy 77478f24793d grade 77478f24793d curv 77478f24793d notes c50303922295 puddles 0
+gora          test 818 hy 0e200395798d grade ab19a19d158a curv c1526168d925 notes e9b0624f7258 puddles 0
+monaco        test 1668 hy c9b8c7591eef grade d6f10cc76068 curv 1390b3915bec notes 3503f65037f9 puddles 0
+gozd          test 762 hy 640fd30a522f grade 640fd30a522f curv 640fd30a522f notes a84350da0c22 puddles 0
+toskana       test 725 hy 59f3dea33be3 grade 59f3dea33be3 curv 59f3dea33be3 notes f9fe07d6a205 puddles 0
+grom          test 523 hy 6ec8818f0b5f grade 6ec8818f0b5f curv 6ec8818f0b5f notes 7d1f6ea0b9e6 puddles 0
+pikes              3133 hy 452579de59fa grade f9f875285657 curv 7d5f6e21bb1e notes 2d2ec7385d14 puddles 0
+ouninpohja         5010 hy 4c3eac6e1c47 grade 401607375227 curv 03359ee40258 notes 78608fd4036c puddles 46
+vrsic         test 6436 hy f563238140ee grade c1348f484c95 curv e3e1856363a1 notes 9cb2e8f2914b puddles 0
+nring              10345 hy 4d8266272bbe grade df44a99665e7 curv ad89de16d1ee notes ec0bd945d070 puddles 0
+spa                3499 hy 5353e5ac1e1a grade e695f29ee060 curv e5dc8d087d4c notes cf057548f102 puddles 0
+rbring             2157 hy 83dd3cbc2766 grade 16fc6839b79e curv 2340a825cd69 notes 49a9b2b7c538 puddles 0
+suzuka             2902 hy 1dfcf5d76604 grade 156d171b7d05 curv fb88086d6214 notes 88400992c440 puddles 0
+pikesg             3133 hy 452579de59fa grade f9f875285657 curv 7d5f6e21bb1e notes 2d2ec7385d14 puddles 0
+caracoles          5678 hy 7a654a622888 grade 2da3df835b96 curv 4d3a9b71da54 notes de01f915f94d puddles 0
+katu               2572 hy a488df58c6be grade 2f0baddce794 curv f4de5ba8fea4 notes a9eb193346eb puddles 0
+harju              1367 hy ff0ee83da9bd grade bde489dee6a8 curv 41fb1b92f051 notes 816d268f1857 puddles 5
+bathurst           3097 hy 501457aad137 grade 7abdd97092d2 curv 7e9c443749e0 notes 791a4cc9673e puddles 0
+chapman            2698 hy e0444a1f737d grade 814c9a692598 curv 80596db46c3f notes 04ace4200323 puddles 0
+bigsur        test 2216 hy 5b5018c24cc1 grade 8c15b2d5e20d curv a057f6bd8a69 notes d386e76b5506 puddles 0
+tianmen            2578 hy bb231f768856 grade 081c77fce588 curv b79b5a9b2731 notes b63f6434dfec puddles 0
+uncompahgre   test 2652 hy f6f3ff0a0449 grade c61c9e7472ce curv b72677d87e5b notes 5272b39ffff2 puddles 0
+sani          test 2726 hy e1f2a782b992 grade 9c7facc72450 curv 7fd4e9199afa notes 5cd167023d79 puddles 34
+iroha              2766 hy c877e48dadaf grade 2100be33f94b curv 30485cea4dcb notes 47ca49132546 puddles 0
+mulholland    test 2434 hy af2b11567ebc grade 4adb7cad0943 curv bc0627ad0628 notes 97bd085bfc79 puddles 0
+beartooth     test 2709 hy 8829710ff29b grade 7450f21232f9 curv 757857423a04 notes 83b97a412a0f puddles 0
+rastro             2709 hy 57127f2f4198 grade b5b89674da6b curv a95a16f86794 notes 7e419164a9ea puddles 0
+moki          test 2727 hy 2cd9a7f94a20 grade 254f00013d78 curv 7e0f698ba2cc notes 18181ddd2ae2 puddles 0
+maunakea      test 3090 hy 039b98071da2 grade b882a2160af5 curv 579ba4bd4597 notes 31dff38c95d2 puddles 0
+baldy         test 3804 hy aee7c57c6c72 grade eef5f0bbf2da curv 186edf65f4b5 notes 96cec1895a6e puddles 0
+cpalace            1608 hy 8dc57f1fae79 grade e97e8ae288e7 curv a7f2398433c5 notes 74f669e660d3 puddles 0
+riverside     test 2632 hy bfc430f61271 grade 5d76dac611c7 curv 230fe8145b1d notes 423426a4f6b2 puddles 0
+monterey      test 1794 hy 97e533be7b03 grade ea62cd577797 curv 911ec4484947 notes d6cd6d050fbb puddles 0
+longford      test 3514 hy 1e73cfd8a1d5 grade db2d728a0eaa curv 6c85338b5250 notes 4dee786407c5 puddles 0
+newcastle     test 1317 hy 743f12b36408 grade 67697c1fd053 curv 9222c4b70658 notes 36184abbb626 puddles 0
+rio           test 2449 hy 617cb9f87af5 grade 5bf734e1eb7f curv 2abca6cad02d notes 23813f2b1a07 puddles 0
+toronto       test 1463 hy 38a354e6d274 grade 574960b5081f curv f14eb7738424 notes dcd408ae1456 puddles 0
+medvode            3359 hy ca21450745ea grade e67af38888f3 curv 6d95ec04d60e notes 0f7d66619a52 puddles 0
+montreal           2178 hy 4b567a56b571 grade 4b567a56b571 curv 4b567a56b571 notes dfc9a4b31137 puddles 0
+greatalpine        4283 hy 1d7e93a16d65 grade 43b698bae478 curv 83e94612dec8 notes 85b657c66805 puddles 0
+detroit       test 1323 hy 086b5b7fe8d4 grade cef63f3ef92a curv 8a62c8d52406 notes 3527b5eb21aa puddles 0
+palomar       test 4208 hy 4a512853c398 grade 62af66915e15 curv b14b288233f2 notes e823e033df8e puddles 0
+bangsaen      test 1790 hy a3c6cf02bc66 grade 50d2d998d5bc curv 6ebc602c7dd3 notes 6d8a895690c2 puddles 0
+hotham        test 4314 hy 3a245ee28638 grade db844f43c91e curv 9118a6b03c17 notes 9b72fe9297fb puddles 0
+townsville    test 1422 hy bf92e57bfb5d grade 68d858fd371a curv 8aa7d6b2b788 notes 17392ee28bf5 puddles 0
+marrakesh          1478 hy 7a5c06933a51 grade 905cad6dd496 curv b921a5028dcd notes 180a2270b45d puddles 0
+troisrivieres test 1225 hy 9c776c74768a grade 8ee8a6b679ac curv 5961c401e846 notes 02e7ca1bd3aa puddles 0
+livorno            9544 hy c5a3493c5935 grade 286006dabf05 curv d98134d4e448 notes 6457b26c6fb9 puddles 0
+mountbuller   test 1462 hy 577f00adc115 grade e8f5d3589acf curv 6fad9cd4e094 notes 9e1e9cda4b46 puddles 0
+balea              2193 hy 3b2e62f4ba47 grade 8c38bb90723e curv 5d4009e08185 notes 3be506769d08 puddles 0
+hakone             13339 hy d1efca7e31bf grade 128ba5d6be9b curv c758feb38875 notes c84c2885949d puddles 0
+killar             2375 hy 47d46842db7f grade eec04d852eda curv fd1c5683b706 notes 52c27edc07cc puddles 0
+zurich        test 2274 hy 206e431b0997 grade d22ba1a6163b curv b40433439a7e notes 13dad889ca54 puddles 0
