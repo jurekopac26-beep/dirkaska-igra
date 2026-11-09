@@ -32,6 +32,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Bâlea, Romunija](docs/proge/balea.md)
 - [Mã Pí Lèng, Vietnam](docs/proge/mapileng.md)
 - [Wadi Mujib, Jordanija](docs/proge/mujib.md)
+- [Sans Souci, Sejšeli](docs/proge/sanssouci.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -311,3 +312,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Proga Wadi Mujib (sredinska črta ceste 35, jezero za jezom Mujib): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/mujib.js` in `tools/mujib/` so na voljo pod ODbL 1.0.
 - Višine in teren Wadi Mujiba (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Wadi Mujiba: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Sans Souci (sredinska črta ceste Sans Souci, hiše, postajališča, most, stranske poti in steze, izhodišče poti na Morne Seychellois): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/sanssouci.js` in `tools/sanssouci/` so na voljo pod ODbL 1.0.
+- Višine in teren Sans Soucija (tudi pogled v daljavo z morjem okoli otoka Mahé): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Sans Soucija: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

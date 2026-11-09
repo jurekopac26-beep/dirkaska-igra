@@ -32,11 +32,13 @@ TRACK = os.path.join(ROOT, 'js', 'tracks', ID + '.js')
 A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 # each track's own: gmax the steepest grade of the game's road, gtip the share of it left at a hairpin's apex (a Gaussian dip of 18 m round
 # it), ncp the checkpoints, bare the steepness (rise over run) above which OSM's bare rock stays rock (below it: the ground's own cover);
-# farR, farCell (if given) the far view's reach round the road's middle and its step (11700 m, 300 m; within far.png's reach)
+# farR, farCell (if given) the far view's reach round the road's middle and its step (11700 m, 300 m; within far.png's reach); resid the
+# weight of OSM's residential land in the land cover (1.2: a village among trees stays trees where WorldCover sees them, less); lanes: the
+# village's lanes and drives that meet the road (def.lanes, from the data's other roads)
 PAR = {
     'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6),
     'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4, sea=False),   # (no sea: the canyon falls below the sea's level towards the Dead Sea)
-    'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8),
+    'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8, resid=0.3, lanes=True),   # (the village's houses among the rainforest's trees: OSM's residential land a third of the corridor)
     'banaue': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
     'atitlan': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
 }[ID]
@@ -137,22 +139,27 @@ def osm_extra(raw):
             P = pts(ring)
             if len(P) >= 3 and near(P).min() < 15000: water.append(flat(P))
         if nopen: log('water relation %s (%s): %d of its %d outer ways in the download, %d ring(s) left open and out (download the relation whole)' % (rid, t.get('name', ''), len(seqs), nout, nopen))
-    views, boards, marks = [], [], []
+    views, boards, marks, shops = [], [], [], []
     for nid, v in N.items():
         if len(v) < 3 or not v[2]: continue
         tg = v[2]; x, z = xz(v[0], v[1]); dd = near([[float(x), float(z)]])[0]
+        if 'shop' in tg and dd < 450: shops.append((float(x), float(z)))   # (a shop's node: its house below is a shop, generic, no name)
         if tg.get('tourism') == 'viewpoint' and dd < 90: views.append([r1(x), r1(z)])
         elif tg.get('tourism') == 'information' and tg.get('information') not in ('guidepost', 'route_marker') and dd < 60: boards.append([r1(x), r1(z)])   # (generic in the game, no text of its own)
         elif dd < 120:   # the landmarks by the road: [x, z, kind] (generic: the game names none)
             k = ('monument' if tg.get('historic') in ('monument', 'memorial') else 'shrine' if tg.get('historic') in ('wayside_shrine', 'wayside_cross') or tg.get('amenity') in WORSHIP
-                 else 'museum' if tg.get('tourism') == 'museum' else 'cafe' if tg.get('amenity') in ('cafe', 'restaurant', 'fast_food') else 'flag' if tg.get('man_made') == 'flagpole' else None)
+                 else 'museum' if tg.get('tourism') == 'museum' else 'cafe' if tg.get('amenity') in ('cafe', 'restaurant', 'fast_food') else 'flag' if tg.get('man_made') == 'flagpole'
+                 else 'trail' if tg.get('highway') == 'trailhead' or (tg.get('tourism') == 'attraction' and 'trail' in (tg.get('name:en') or tg.get('name') or '').lower()) else None)
             if k: marks.append([r1(x), r1(z), k])
+    for sx, sz in shops:   # (the house with the shop's node in it, or the nearest within 8 m: kind 2)
+        best = min(range(len(bld)), key=lambda k: math.hypot(bld[k][0] - sx, bld[k][1] - sz), default=None)
+        if best is not None and math.hypot(bld[best][0] - sx, bld[best][1] - sz) < 8: bld[best][6] = 2
     out = {'about': '%s: OSM extras for tools/kratke/build.py (© OpenStreetMap contributors, ODbL 1.0), in the frame of %s.json (metres from its '
                     'first route point, x east, z south): bld [x, z, length, width, angle, height (0 = not in OSM), kind (0 a house, 1 a temple or a '
                     'shrine, 2 a shop, a school or a hall)] (within 450 m), paths [[x, z, ...]] (footways, paths and tracks within 80 m), fields '
                     '[[x, z, ...]] (fields, orchards and paddies within 600 m), woods [[x, z, ...]] (within 600 m), water [[x, z, ...]] (the lakes '
                     'within 15 km), views [x, z] (viewpoints within 90 m), boards [x, z] (information boards within 60 m), marks [x, z, kind] (the '
-                    'monuments, shrines, museums and cafés within 120 m)' % (CFG['about'].split(' (id')[0], ID),
+                    'monuments, shrines, museums, cafés and trailheads within 120 m); a house with a shop\'s node in it is a shop (kind 2)' % (CFG['about'].split(' (id')[0], ID),
            'bld': bld, 'paths': paths, 'fields': fields, 'woods': woods, 'water': water, 'views': views, 'boards': boards, 'marks': marks}
     json.dump(out, open(os.path.join(TD, 'extra.json'), 'w'), separators=(',', ':'), ensure_ascii=False)
     log('extra.json: %d houses, %d paths, %d fields, %d woods, %d lakes, %d viewpoints, %d boards, %d landmarks %s' % (
@@ -283,7 +290,7 @@ def landcover(X, Z, ox, oz):
         for fz in (-0.3, 0.3):
             a = bilin(lc.astype(float), g, GX + fx * cell + ox, GZ + fz * cell + oz, 0).astype(int); b = bilin(lu.astype(float), g, GX + fx * cell + ox, GZ + fz * cell + oz, 0).astype(int)
             for k, c in MAPC.items(): votes[c] += (a == k)
-            votes[6] += 1.5 * (b == 3); votes[1] += 1.5 * ((b == 7) | (b == 9)); votes[2] += 1.2 * (b == 8); votes[3] += 1.2 * (b == 1); votes[5] += 2 * (b == 13)
+            votes[6] += 1.5 * (b == 3); votes[1] += 1.5 * ((b == 7) | (b == 9)); votes[2] += 1.2 * (b == 8); votes[3] += PAR.get('resid', 1.2) * (b == 1); votes[5] += 2 * (b == 13)
             votes[0] += (a == 0) * 0.5   # (beyond the land cover's reach: grass)
     hx = bilin(Hg, gd, GX + ox + 8, GZ + oz) - bilin(Hg, gd, GX + ox - 8, GZ + oz); hz = bilin(Hg, gd, GX + ox, GZ + oz + 8) - bilin(Hg, gd, GX + ox, GZ + oz - 8)
     sl = np.hypot(hx, hz) / 16; b = bilin(lu.astype(float), g, GX + ox, GZ + oz, 0).astype(int)
@@ -352,6 +359,11 @@ def scenery(X, Z, ox, oz, u, s, i0):   # (u: the data's arc length at each of th
     at = lambda v: r1(np.interp(v, u, s) - s[i0])
     out['stops'] = [[at(p[0]), int(p[1]), '', int(p[3]), r1(p[2])] for p in J['stops']]
     out['bridges'] = [[at(a), at(b)] for a, b in J.get('bridges', [])]
+    # the village's lanes and drives (PAR lanes; the data's other roads within 60 m, OSM): [width (m), surface (0 sealed, 1 earth), x, z, ...]
+    # from where they meet the road out to ~80 m (the paths and the footways stay def.paths)
+    LW = {'residential': 4.2, 'unclassified': 4.6, 'tertiary': 5.5, 'living_street': 3.8, 'service': 3.2, 'track': 2.8}
+    out['lanes'] = [[LW[r[0]], 1 if r[0] == 'track' or r[5] in ('dirt', 'ground', 'earth', 'gravel', 'unpaved', 'grass', 'mud', 'sand') else 0] + sh(r[8])
+                    for r in J['roads'] if r[0] in LW and r[3] == 0 and not r[7]] if PAR.get('lanes') else []
     return out
 
 def jsval(v): return json.dumps(v, ensure_ascii=False, separators=(',', ':'))
@@ -391,7 +403,7 @@ def main():
             'cps': cps, 'curves': curves, 'dem': terrain(X, Z, ox, oz, base), 'lc': landcover(X, Z, ox, oz), 'farDem': far(X, Z, ox, oz)}
     data.update(scenery(X, Z, ox, oz, u, s, i0))
     data['points'] = pts
-    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops'] + (['bridges'] if data['bridges'] else []) + ['points']   # (bridges only where the road has some)
+    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops'] + (['bridges'] if data['bridges'] else []) + (['lanes'] if data['lanes'] else []) + ['points']   # (bridges and lanes only where the road has some)
     A, B = '    // ---- podatki (tools/kratke/build.py) ----\n', '    // ---- konec podatkov ----\n'
     blk = A + ''.join('    %s: %s,\n' % (k_, jsval(data[k_])) for k_ in keys) + B
     src = open(TRACK).read(); i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]

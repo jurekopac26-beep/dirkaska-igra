@@ -4997,6 +4997,104 @@
    "repairs": 0
   }
  },
+ "sanssouci/race/cs": {
+  "digest": "7630312661f2b577cb88b9cc",
+  "lead": 1148.6,
+  "car0": [
+   -240,
+   610.37
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/demo/cs": {
+  "digest": "cd880d2a7c23dd5414556844",
+  "lead": 524,
+  "car0": [
+   70.88,
+   338.02
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/upg/cs": {
+  "digest": "2c37970350bcf07fdf834373",
+  "lead": 1166.3,
+  "car0": [
+   -218.92,
+   586.94
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/crash/cs": {
+  "digest": "02744f9ff627d41e40ea72fd",
+  "lead": 1138.7,
+  "car0": [
+   -239.7,
+   628.01
+  ],
+  "cover": {
+   "dmg": 0.43,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/formula/cs": {
+  "digest": "d1553c4baf6125e0e35f2a3b",
+  "lead": 1167.2,
+  "car0": [
+   -251.92,
+   669.67
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/lm/cs": {
+  "digest": "b919a5070ae36f22b3d4369c",
+  "lead": 1167.6,
+  "car0": [
+   -242.33,
+   664.95
+  ],
+  "cover": {
+   "dmg": 0.42,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "sanssouci/car/cs": {
+  "digest": "d5334aca18598e7df81b3ce4",
+  "lead": 1137.1,
+  "car0": [
+   -244.26,
+   609.19
+  ],
+  "cover": {
+   "dmg": 0.77,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "livorno/race/cs": {
   "digest": "5b601641952b407dbb9ec42d",
   "lead": 2185.5,

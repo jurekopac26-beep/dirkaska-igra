@@ -376,5 +376,12 @@
   "kverts": 223,
   "maxKverts": 294,
   "jsMs": 1.24
+ },
+ "sanssouci": {
+  "calls": 161,
+  "maxCalls": 184,
+  "kverts": 402,
+  "maxKverts": 498,
+  "jsMs": 1.03
  }
 }

@@ -1434,5 +1434,27 @@
    "lifeShadow:MeshBasicMaterial": "236d399d",
    "life:MeshBasicMaterial": "dbd57ff8"
   }
+ },
+ "sanssouci": {
+  "meshes": 778,
+  "verts": 321046,
+  "instances": 17134,
+  "props": 21,
+  "crowd": 26,
+  "world": "4b138c75",
+  "propsHash": "16f966b",
+  "floor": "f567ab9b/2940",
+  "groups": {
+   "-:MeshLambertMaterial": "44340e54",
+   "-:MeshBasicMaterial": "ccf3df19",
+   "irFar:MeshLambertMaterial": "7d929e5c",
+   "crowd:MeshLambertMaterial": "5331f6c4",
+   "ao:MeshBasicMaterial": "187aef7f",
+   "tyremarks:MeshBasicMaterial": "ec168401",
+   "roadwear:MeshLambertMaterial": "e4963ddc",
+   "life:MeshLambertMaterial": "585e5319",
+   "lifeShadow:MeshBasicMaterial": "ebbaa00f",
+   "life:MeshBasicMaterial": "85cd72fa"
+  }
  }
 }

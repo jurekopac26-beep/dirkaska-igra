@@ -2549,6 +2549,56 @@
   "nan": false,
   "digest": "acb5991368e0db6d5ac5796d"
  },
+ "sanssouci/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 41.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f372117067d5e8c9bb0fabd6"
+ },
+ "sanssouci/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 45.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2d87996787b768f3ba7ec7c7"
+ },
+ "sanssouci/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 38.56,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1ecdbd7c7ef4d0f8b2c632d5"
+ },
+ "sanssouci/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 39.18,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "96d37acf94bc57c252728146"
+ },
+ "sanssouci/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 41.63,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "721631a6f881d319ee37e0e4"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
