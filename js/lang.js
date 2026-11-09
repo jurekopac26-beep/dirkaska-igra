@@ -435,7 +435,7 @@
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
-    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!', 'PREDALEČ OD CESTE!': 'TOO FAR OFF THE ROAD!',   // (Uncompahgre; Killar: a road with no barriers, too far off it)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)

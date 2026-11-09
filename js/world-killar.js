@@ -386,7 +386,7 @@
     }
 
     /* ---- the road: asphalt with white edge lines and a double yellow centre line, a gravel shoulder, then the verge out past the edge: up to the foot
-       of the cut on the mountain's side, on a drop a rough lip of rock and the cliff straight down; on the bridge the deck out to its parapets, in the
+       of the cut on the mountain's side, on a drop a rough lip of rock and the cliff straight down; on the bridge the deck out to its parapets (Killar: none, to its bare edge), in the
        tunnel and the shed a concrete floor out to the walls (120 m chunks, culled) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
@@ -531,8 +531,9 @@
         nMine++; out.marks['mine' + nMine] = [M.x, M.z];
       }
     }
-    /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road;
-       rows of timber snow fences high in the big slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+    /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road
+       (not on Killar: no barriers at all, the user's decision of 9. 11. 2026, and from behind the car the net reads as one); rows of timber snow
+       fences high in the big slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
     let nNet = 0, nFence = 0;
     {
       const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;
@@ -546,7 +547,7 @@
         nNet++; if (nNet === 1) out.marks.rockNet = [pts[0][0], pts[0][2]]; };
       let run = [], total = 0;
       const flush = () => { if (run.length >= 5 && total < 520) { net(run); total += (run.length - 1) * step; } run = []; };
-      for (let d = 60; d < 4900; d += step) {
+      if (!UNK) for (let d = 60; d < 4900; d += step) {
         if (busy(d)) { flush(); continue; }
         const i = T.idx(sStart + d); let best = null;
         for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - T.hy[i];
@@ -706,7 +707,8 @@
       }
     }
 
-    /* ---- no guard rails: only the bridge has its concrete parapets; a white post with a reflector every ~50 m where there is no drop (knockable where
+    /* ---- no guard rails: only the bridge has its concrete parapets (Killar: not even those, the user's decision of 9. 11. 2026: a car goes off the
+       deck or over the edge of a drop, Track.fallAt); a white post with a reflector every ~50 m where there is no drop (knockable where
        it fits), yellow warning diamonds before the sharper bends and chevrons round their outside, the sights' and the slides' boards ---- */
     /* ---- the side roads' cones across their mouths, the rails and gates at their ends, the streets' names (stubProps) ---- */
     out.stubStats = stubProps({ scen, out, root, gH: unGround, loc: { closed: 'ROAD CLOSED', gate: 'CLOSED', plate: ['#0f6b3e', '#f4f6f2'] }, posts: 'none' });
@@ -717,7 +719,8 @@
         const bar = side > 0 ? T.br : T.bl, Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         for (let i = 0; i < N - 1; i++) {
           const g = scen.get(T.px[i], T.pz[i]);
-          if (onBr[i] && onBr[i + 1]) {   // the bridge: a concrete parapet
+          if (onBr[i] && onBr[i + 1]) {   // the bridge: a concrete parapet (Killar: none, the deck's bare edge, then the stream below)
+            if (UNK) continue;
             const a = Q(i, -0.1, -0.05), b = Q(i + 1, -0.1, -0.05), c = Q(i + 1, 0.95, -0.05), d = Q(i, 0.95, -0.05), a2 = Q(i, -0.1, 0.4), b2 = Q(i + 1, -0.1, 0.4), c2 = Q(i + 1, 0.95, 0.4), d2 = Q(i, 0.95, 0.4), inn = Q(i, 0.4, 0.18);
             g.quadO(a, b, c, d, [0.68, 0.67, 0.64], inn); g.quadO(a2, b2, c2, d2, [0.6, 0.59, 0.56], inn); g.quadO(d, c, c2, d2, [0.76, 0.74, 0.7], inn);
           } else if (!onBr[i] && !galAt[i] && !dropAt(i, side) && i % 25 === 0 && i > 2 && i < iE - 2 && !SB.mouthV[side > 0 ? 1 : 0][i]) mkPosts.push([i, side]);

@@ -4900,25 +4900,25 @@
   }
  },
  "killar/race/cs": {
-  "digest": "af2eedea848612e8215a1b1b",
-  "lead": 1877.4,
+  "digest": "a7407a93090120fa528794be",
+  "lead": 1911.7,
   "car0": [
-   -1266.13,
-   -1067.9
+   -1274.59,
+   -1077.34
   ],
   "cover": {
-   "dmg": 0.55,
-   "loose": 1,
+   "dmg": 0.1,
+   "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/demo/cs": {
-  "digest": "58b8aff6a8a0afc59d69598a",
-  "lead": 2037.9,
+  "digest": "88e08643ba236bb5916a832a",
+  "lead": 2068.4,
   "car0": [
-   -1394.56,
-   -1255.28
+   -1410.17,
+   -1278.31
   ],
   "cover": {
    "dmg": 0,
@@ -4928,11 +4928,11 @@
   }
  },
  "killar/upg/cs": {
-  "digest": "59bb1ae216aedd9ff3e73c0c",
-  "lead": 2019.6,
+  "digest": "0f05f5667aa78f3c7f351c6b",
+  "lead": 2054.8,
   "car0": [
-   -1332.98,
-   -1196.62
+   -1356.52,
+   -1218.09
   ],
   "cover": {
    "dmg": 0,
@@ -4942,57 +4942,57 @@
   }
  },
  "killar/crash/cs": {
-  "digest": "4c1d57087f3b0df233eb3301",
-  "lead": 1877.4,
+  "digest": "2be2810ec0da351d4b007692",
+  "lead": 1911.2,
   "car0": [
-   -1198.87,
-   -1040.11
+   -1175.23,
+   -1028.91
   ],
   "cover": {
-   "dmg": 0.35,
-   "loose": 1,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "killar/formula/cs": {
-  "digest": "4662035d3495a0e9c71174df",
-  "lead": 1812,
-  "car0": [
-   -1213.48,
-   -1047.16
-  ],
-  "cover": {
-   "dmg": 0.34,
+   "dmg": 0.97,
    "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
- "killar/lm/cs": {
-  "digest": "8b30925db8002df6cdfca757",
-  "lead": 1840.9,
+ "killar/formula/cs": {
+  "digest": "902d0612a0e49708c222e571",
+  "lead": 1887,
   "car0": [
-   -1116.98,
-   -994.29
+   -1236.27,
+   -1057.89
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 5,
+   "dmg": 0.34,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "killar/lm/cs": {
+  "digest": "fe6760c5baf662d0a2387e8d",
+  "lead": 1864.5,
+  "car0": [
+   -1116.72,
+   -994.82
+  ],
+  "cover": {
+   "dmg": 0.71,
+   "loose": 8,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/car/cs": {
-  "digest": "fac15616c809aa6420182a65",
-  "lead": 1877.4,
+  "digest": "a43f4051bb08b40b266da4d4",
+  "lead": 1911.3,
   "car0": [
-   -1186.73,
-   -1035.51
+   -1185.79,
+   -1034.51
   ],
   "cover": {
-   "dmg": 0.9,
-   "loose": 4,
+   "dmg": 0.68,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
