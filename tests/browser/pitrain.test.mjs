@@ -11,7 +11,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('the pits in the rain');
 const srv = await serve();
 const browser = await launch();
-const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal', 'toronto', 'bangsaen', 'troisrivieres'];   // (8: Longford, Newcastle and Townsville are test tracks since 6. 11. 2026)
+const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal'];   // (5: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026)
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', weather: 'rain' }, { width: 844, height: 390 });
   // 1. every track with pits: the pits' wet parts of its world
@@ -44,7 +44,7 @@ try {
     }, id));
   }
   const none = res.filter(r => r.none);
-  T.check('all 8 tracks with pits: their pits\' wet parts', !none.length, none.map(r => r.id).join(','));
+  T.check('all 5 tracks with pits: their pits\' wet parts', !none.length, none.map(r => r.id).join(','));
   const ok = res.filter(r => !r.none);
   const film = ok.filter(r => (r.asph ? r.film !== 0 : r.film < 60) || r.pud < 16 || r.lane < 8 || (r.ap > 4.5 && r.apron < 4));
   T.check('a film of water over the apron (none over Bathurst\'s asphalt apron), puddles along the lane\'s edges and on the apron', !film.length,
