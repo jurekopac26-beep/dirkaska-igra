@@ -6,7 +6,7 @@
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
-import { ROOT, serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
+import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate, checker } from './lib.mjs';
 
 const T = checker('smoke');
 const srv = await serve();
@@ -59,11 +59,12 @@ try {
     await ctx.close();
   }
 
-  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«)
+  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«;
+  //    PROGE: only those, the menu still checked whole)
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   const menu = await trackIds(page, true), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
-  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), ids = menu.filter(id => !test.includes(id));
-  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), real = menu.filter(id => !test.includes(id)), ids = izbrane(real);
+  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && real.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
   // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
   // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
   // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left

@@ -4019,7 +4019,7 @@
   function aheadRadio(P, pl) {
     const O = race.order, i = O.indexOf(P), A = i > 0 ? O[i - 1] : null;
     if (!A || P.inPit || P.pitG || P.pitWant || P.finished) return;
-    const q = race.pitNext(A), ga = q && race.gap(A, P); if (!q || q.to < AHEAD.to || q.to > race.track.len || ga == null || ga > AHEAD.gap) return;   // (over a lap to go: the last 30 m before a way in, where pitNext counts the next lap's already but the car may still turn in)
+    const q = race.pitNext(A), ga = q && race.gap(A, P); if (!q || q.to < AHEAD.to || q.to > race.track.len - AHEAD.to || ga == null || ga > AHEAD.gap) return;   // (within AHEAD.to m of a lap to go: the last 30 m before a way in, where pitNext counts the next lap's already but the car may still turn in, and the first AHEAD.to m past it, the car turning in until it is off the asphalt (pitG: then no pitNext): its stop told once, not again for the next lap's way in; Bathurst ~16 m, tests/browser/pitahead.test.mjs)
     const due = !!(pl && pl.from != null && !pl.box), D = due ? race.pitDuel(P, A) : null;
     if (q.now) {
       const key = A.name + ':' + q.n; if (trd.ahead.has(key)) return; trd.ahead.add(key);
