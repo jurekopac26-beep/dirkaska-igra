@@ -1171,7 +1171,9 @@
     P.root.updateMatrixWorld(true);
     write(P, show, Sc.pos, Sc.nor);
   }
+  let D0 = 0, D1 = 0;   // (the span of the scene's arrays its posing wrote, every figure's parts one after the other: poseScene uploads only that)
   function write(P, show, pos, nor) {   // the joints' matrices on the baked parts
+    const pp = P.parts, np = pp.length; if (np) { const a = pp[0].o, b = pp[np - 1].o + pp[np - 1].P.length; if (a < D0) D0 = a; if (b > D1) D1 = b; }
     for (const pt of P.parts) {
       const o = pt.o, p = pt.P, n = pt.N, L = p.length;
       if (pt.k && !(show && show.has(pt.k))) { pos.fill(0, o, o + L); continue; }   // (not held now: nothing drawn)
@@ -1281,12 +1283,16 @@
     P.root.updateMatrixWorld(true); write(P, P.show || null, Sc.pos, Sc.nor);
   }
   function poseScene(Sc, t, car, fixed) {
-    Sc.posed = true;
+    Sc.posed = true; D0 = Infinity; D1 = 0;
     for (const Mv of Sc.movers) poseMover(Sc, Mv, t, car);
     if (Sc.stand) poseStand(Sc, t, car, fixed);
     else for (const p of Sc.people) poseOne(Sc, p, t, car);
     for (const p of Sc.pets) posePet(Sc, p, t, car);
-    const g = Sc.ppl.geometry; g.attributes.position.needsUpdate = true; g.attributes.normal.needsUpdate = true;
+    if (D1 > D0) { const A = Sc.ppl.geometry.attributes; upSpan(A.position); upSpan(A.normal); }   // (nobody written, a stand's sitters still: nothing goes up)
+  }
+  function upSpan(a) {   // (three r128: one range an upload, count -1 again after it; a range still waiting (the scene not drawn since) takes this one in)
+    const r = a.updateRange; if (r.count >= 0) { const e = Math.max(r.offset + r.count, D1); r.offset = Math.min(r.offset, D0); r.count = e - r.offset; } else { r.offset = D0; r.count = D1 - D0; }
+    a.needsUpdate = true;
   }
   function alert(Sc, t) {
     Sc.arm = false; Sc.al = t; Sc.pass = -1; Sc.back = -1; Sc.done = 1e9;

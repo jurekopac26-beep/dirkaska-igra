@@ -730,5 +730,6 @@
   }
 
   Object.assign(API, { PL_LOOK, buildPrelaz });   // (what World and the other worlds use of this one)
+  for (const th of Object.keys(PL_LOOK)) World.keep('caBank', th);   // (the walls' terrain kept between the passes' builds; World.build frees it for the other worlds: caBank.f's closure holds this build's whole world)
   for (const th of Object.keys(PL_LOOK)) World.ext[th] = (scene, tex, opts) => buildPrelaz(scene, tex, opts, PL_LOOK[th]);
 })();

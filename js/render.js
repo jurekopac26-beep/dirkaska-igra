@@ -3425,7 +3425,7 @@ const Render = (function () {
     if (world && world.root) {   // switching tracks: drop and free the previous scenery
       scene.remove(world.root);
       const pics = new Set();
-      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { picsOf(m, pics); m.dispose(); }); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers)
+      world.root.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { picsOf(m, pics); if (m.userData) picsOf(m.userData, pics); m.dispose(); }); if (o.isInstancedMesh) o.dispose(); });   // (instanced: its instance buffers; userData: the season's pictures off the material now, seasonWorld: the snow's own copy in summer, the grass under it in winter)
       if (world.ownTex) world.ownTex.forEach(t => t.dispose());   // textures made for that track only (the shared ones stay cached)
       const sh = sharedTex(); pics.forEach(t => { if (!sh.has(t)) t.dispose(); });   // the track's pictures off the GPU too (a board atlas a builder keeps for its next build goes up again then)
       if (skids) skids.clear(); if (sandRuts) sandRuts.clear();
