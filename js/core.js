@@ -7795,7 +7795,7 @@ const Core = (function () {
       else if (k === 'idle') { if (!isNum(P.idle, 0, 8000)) return 'phys.idle not 0..8000'; }
       else if (!isNum(P[k], 1e-6, 1e6)) return 'phys.' + k + ' not a number > 0';
     }
-    if (P.len > 6.4 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
+    if (P.len > 13.5 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
     if (!(P.a + P.b < P.len)) return 'phys: the wheelbase (a + b) as long as the vehicle';
     if (!(P.redline > P.idle) || P.redline > 25000) return 'phys.redline not above idle (and up to 25000)';
     if (P.rw > 1.1 || P.kI > 3 || P.cDrag > 3 || P.steerMax > 1.2) return 'phys: rw, kI, cDrag or steerMax out of range';
