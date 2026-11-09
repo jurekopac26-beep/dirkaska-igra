@@ -1877,6 +1877,38 @@
    "standSteps:MeshLambertMaterial": "e7e9ff45"
   }
  },
+ "buriram": {
+  "meshes": 559,
+  "verts": 728923,
+  "instances": 7870,
+  "props": 76,
+  "crowd": 29,
+  "world": "96fcb96",
+  "propsHash": "140f165e",
+  "floor": "f0b00851/9100",
+  "groups": {
+   "-:MeshLambertMaterial": "7f10397",
+   "-:MeshBasicMaterial": "a0fb767f",
+   "buriram service roads:MeshLambertMaterial": "df7cdfe3",
+   "buriram pond:MeshPhongMaterial": "8d04649b",
+   "-:MeshPhongMaterial": "c52c63bb",
+   "flags:MeshLambertMaterial": "6d3770b6",
+   "buriram main grandstand crowd:MeshLambertMaterial": "4f6db367",
+   "rsFar:MeshBasicMaterial": "b1d7738",
+   "crowd:MeshLambertMaterial": "6a749fc0",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "4047fb1a",
+   "roadwear:MeshLambertMaterial": "20a45308",
+   "worn:MeshLambertMaterial": "cf187117",
+   "brakeBoards:MeshLambertMaterial": "a2099134",
+   "life:MeshLambertMaterial": "4efb5c1d",
+   "lifeShadow:MeshBasicMaterial": "57fba2c9",
+   "life:MeshBasicMaterial": "e9bfb0c9",
+   "people:MeshLambertMaterial": "7dd429f2",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "6922c2c7"
+  }
+ },
  "lombok": {
   "meshes": 711,
   "verts": 1041680,

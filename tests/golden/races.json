@@ -2549,6 +2549,56 @@
   "nan": false,
   "digest": "519d1ee21fa9a8f53c8a529a"
  },
+ "buriram/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 208.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b0a711cdf0801638ee704d2e"
+ },
+ "buriram/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 225.11,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6b553d099089a64bd5b0c221"
+ },
+ "buriram/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 179.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f016eb48af983b63d14638a9"
+ },
+ "buriram/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.36,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f909c6ba4a5c084829419ea1"
+ },
+ "buriram/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 216.72,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3b4c9e867275ea6b505f3750"
+ },
  "lombok/cs": {
   "finished": 13,
   "cars": 13,
