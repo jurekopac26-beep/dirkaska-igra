@@ -825,7 +825,7 @@ const Render = (function () {
                       is under it, the seats, the driver, a cage); an open top (eye.style not 'closed') and a kart get none
        Derived by the build (do not set): nose, tail (the outer shell's ends, metres), hw (the hubs' z, metres), height; the decal's four
                       when neither decalX nor decalY is given
-     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg }
+     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg, mid }
        style          'std' (alloy spokes; spokes: 0 = a steel wheel with holes), 'deep' (a deep polished dish), 'wire' (wire spokes, a
                       knock-off), 'retro' (a domed chrome cap, white walls), 'knob' (off-road blocks, a beadlock), 'truck' (a steel disc deep
                       in its rim, the studs; dual: twin rear tyres), 'monster' (huge blocks, a small rim), 'slick' (a race slick, centre lock),
@@ -834,6 +834,9 @@ const Render = (function () {
                       meshes of their own, centred on the hub, exactly at (M.a, rw, +-hw) and (-M.b, rw, +-hw): they steer, spin, come off
        rim, tyre, cap colours (hex numbers or [r, g, b]); spokes (std 5, deep 6); dual (twin rear tyres); rimK (the rim's share of the radius)
        gap            the arch's clearance over the tyre (default 0.06); arch: false (no arch cut-outs in the loft)
+       mid            a middle axle (a 6x6): its x in look units, between the two axles and 2 rw + 0.1 m clear of each. Two wheels
+                      more there, the rear ones' twins at (mid, rw, +-hw) (v.wm): drawn only (the physics has four), they spin with the
+                      rear ones and lay their marks, never steer nor come off; the loft's default arches and K.arches[2] take the axle
        seg            the player's / the showroom's tyre round: its tread, shoulder and outer wall in seg segments (16, 32, 48 or 64; default
                       16, as before; not with dual), smooth-shaded, the rim's lip round with them; the rim's inside stays in 16 (seg 32: about
                       370 triangles a wheel). A rival's wheel is never changed by it
@@ -967,8 +970,9 @@ const Render = (function () {
        K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
        K.fitted                the garage's parts fitted (car.deli, {} for none): a part makes room for another (js/deli/*.js)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
-       K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
-                               units), the circle's radius and middle height (metres): place flares and decals round them
+       K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear; [2]: the middle one, wheels.mid): their
+                               middle x and half length (look units), the circle's radius and middle height (metres): place flares and
+                               decals round them
        K.g                     the router: GB-compatible (tri, triO, quadO, triN, triON, quadON, quadUp) for raw geometry (World.box(K.g,
                                ...) works): raw triangles are 'body' unless a scope (K.part, K.at, K.inner) says otherwise
        -- scopes --
@@ -994,7 +998,7 @@ const Render = (function () {
        K.loft(secs, col, o)    the shell through the sections (rows or K.secs). col(k, e, kind, at) -> a colour (null: no panel there: see AN
                                OPEN TOP) for panel e of the author's segment k (its kind), at: { x (metres), xa, xb (the cut segment), arch (in
                                a wheel arch: e 0 / 8 are then the arch's ledge) }. o: { glass(k, e, kind, at): a glass panel (no lining), lining:
-                               false, floor: false, arches: false | [{ x, r?, y? }] (default: both axles: the lower edge follows the arch, a
+                               false, floor: false, arches: false | [{ x, r?, y? }] (default: every axle, wheels.mid's too: the lower edge follows the arch, a
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
                                colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes), glassBend: [down,
                                up] (degrees: the side glass (glass panels e 2 / 6) shaded as if curved: its normals turned down at its foot,
@@ -1178,6 +1182,13 @@ const Render = (function () {
     for (const k of ['w', 'wR', 'gap']) if (!(W[k] >= 0 && W[k] < 2)) kitFail('wheels.' + k + ' not a size in metres');
     for (const k of ['rim', 'tyre', 'cap']) if (W[k] != null) W[k] = kitColour(typeof W[k] === 'number' ? colArr(W[k]) : W[k]);
     if (W.wz == null) W.wz = W.w / 2 + 0.01;   // (the wheels' centres this far in from the half width: the tyre's face just inside the body)
+    W.xm = null;   // (wheels.mid: the middle axle's x, metres)
+    if (W.mid != null) {
+      const sx = M.len / ((look && look.body && look.body.len) || M.len), xm = W.mid * sx, c = 2 * M.rw + 0.1;
+      if (!(typeof W.mid === 'number' && Number.isFinite(xm) && xm + M.b >= c - 1e-9 && M.a - xm >= c - 1e-9))
+        kitFail('wheels.mid ' + (typeof W.mid === 'number' ? W.mid : JSON.stringify(W.mid)) + ': the middle axle\'s x (look units) between the rear axle (' + (-M.b / sx).toFixed(2) + ') and the front one (' + (M.a / sx).toFixed(2) + '), 2 rw + 0.1 m (' + c.toFixed(2) + ' m) clear of each');
+      W.xm = xm;
+    }
     return W;
   }
   function kitBodyOf(M, look) {
@@ -1222,7 +1233,7 @@ const Render = (function () {
     const ra = M.rw + W.gap, fx = M.a, rx = -M.b;
     const bF = B.bumpF != null ? B.bumpF * kx.sx : clamp(0.3 * (xN - fx - ra), 0.06, 0.2), bR = B.bumpR != null ? B.bumpR * kx.sx : clamp(0.3 * (rx - ra - xT), 0.06, 0.2);
     const yBF = B.bumpY ? B.bumpY[0] : P(xN, 'yb') + 0.45 * (P(xN, 'ybelt') - P(xN, 'yb')), yBR = B.bumpY ? B.bumpY[1] : P(xT, 'yb') + 0.45 * (P(xT, 'ybelt') - P(xT, 'yb'));
-    const xD0 = B.door ? Math.max(B.door[0], B.door[1]) * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? Math.min(B.door[0], B.door[1]) * kx.sx : Math.max(xD0 - 1.15, rx + ra + 0.12);   // (body.door: its two edges, either order)
+    const xD0 = B.door ? Math.max(B.door[0], B.door[1]) * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? Math.min(B.door[0], B.door[1]) * kx.sx : Math.max(xD0 - 1.15, (W.xm != null && W.xm + ra + 0.12 < xD0 - 0.3 ? W.xm : rx) + ra + 0.12);   // (body.door: its two edges, either order; else in front of the arch behind it, wheels.mid's too)
     const hatch = xRgBot - xT < 0.35;   // (the rear glass down to the tail: a hatchback's tailgate takes it with it; else a boot lid behind it)
     let ybMin = 9, ytMax = -9; for (let x = xD1; x <= xD0 + 1e-9; x += Math.max(0.01, (xD0 - xD1) / 8)) { ybMin = Math.min(ybMin, P(x, 'yb')); ytMax = Math.max(ytMax, P(x, 'yt')); }
     const R = [], add = (part, o) => { if (part in PT) R.push(Object.assign({ part }, o)); };
@@ -1329,7 +1340,7 @@ const Render = (function () {
     const xs = [];
     // every region's ends (the parts split there), the wheel arches (the shell's lower edge follows the arch, a ledge at its rim)
     for (const R of kx.regions) for (const x of R.x) if (!R.points && x / sx > xa + 0.004 && x / sx < xb - 0.004) xs.push(x / sx);
-    const arches = (o.arches === false || W.arch === false ? [] : (o.arches || [{ x: M.a / sx }, { x: -M.b / sx }]).map(a => ({ c: a.x, r: (a.r || M.rw + W.gap), y: a.y != null ? a.y : M.rw }))).filter(A => A.c > xa && A.c < xb);   // (an axle under this loft)
+    const arches = (o.arches === false || W.arch === false ? [] : (o.arches || [{ x: M.a / sx }, { x: -M.b / sx }].concat(W.xm != null ? [{ x: W.xm / sx }] : [])).map(a => ({ c: a.x, r: (a.r || M.rw + W.gap), y: a.y != null ? a.y : M.rw }))).filter(A => A.c > xa && A.c < xb);   // (an axle under this loft)
     for (const A of arches) {
       const base = at(A.c), bot = base.yb + base.tk, dy = bot - A.y, half = dy >= A.r ? 0 : dy > 0 ? Math.sqrt(A.r * A.r - dy * dy) : A.r;
       A.half = half / sx; A.bot = bot; if (!(A.half > 0.02)) continue;
@@ -1757,7 +1768,7 @@ const Render = (function () {
   function kitMakeK(kx) {
     const M = kx.M, sx = kx.sx, sz = kx.sz, g = kx.g, W = kx.wheels, body = kx.body, open = body.eye.style !== 'closed';
     const K = { M, def: M.def, look: kx.look, body, g, sx, sz, fx: M.a / sx, rx: -M.b / sx, rw: M.rw, hw: (M.wid / 2 - body.wz) / sz, wheels: W, parts: Object.keys(kx.PT).filter(k => kx.PT[k].wh == null) };
-    K.arches = [M.a, -M.b].map(x => { const s = kitSecAt(kx.S, x), r = M.rw + W.gap, dy = s.yb + s.tk - M.rw, half = dy >= r ? 0 : dy > 0 ? Math.sqrt(r * r - dy * dy) : r; return { x: x / sx, r, y: M.rw, half: half / sx }; });   // (the openings the main loft cuts: x, its half length, the circle)
+    K.arches = [M.a, -M.b].concat(W.xm != null ? [W.xm] : []).map(x => { const s = kitSecAt(kx.S, x), r = M.rw + W.gap, dy = s.yb + s.tk - M.rw, half = dy >= r ? 0 : dy > 0 ? Math.sqrt(r * r - dy * dy) : r; return { x: x / sx, r, y: M.rw, half: half / sx }; });   // (the openings the main loft cuts: x, its half length, the circle; [2]: wheels.mid's)
     K.paint = kitTagged('p', 1); K.strp = kitTagged('s', 1);
     K.dark = [0.17, 0.17, 0.18]; K.black = [0.02, 0.02, 0.022]; K.chrome = [0.8, 0.81, 0.84]; K.GLASS = GLASS; K.lampHead = [1, 0.97, 0.86]; K.lampTail = [0.55, 0.05, 0.04]; K.lining = KIT_LINE;
     K.rgb = (hex) => colArr(hex);
@@ -2171,6 +2182,13 @@ const Render = (function () {
       c.updateMatrix = function () { this.rotation.z = this.parent ? -this.parent.rotation.z : 0; THREE.Object3D.prototype.updateMatrix.call(this); }; w.add(c); }
     return w;
   }
+  // wheels.mid: the middle axle's two wheels (geo: the rear ones', with their still part) on their hubs into grp, the left one mirrored; [] without
+  // one. Drawn only: they spin with the rear ones, never steer nor come off (v.wm: no part of the four's v.wf / v.wr, v.wheelOff, v.hubs)
+  function kitMidWheels(M, E, geo, mat, grp, shadow) {
+    const L = []; if (E.W.xm == null) return L;
+    for (const sd of [-1, 1]) { const w = kitWheelMesh(geo, mat); w.position.set(E.W.xm, M.rw, sd * E.body.hw); if (sd < 0) w.scale.z = -1; w.castShadow = shadow; grp.add(w); L.push(w); }
+    return L;
+  }
   // a car's own copy of its model's body in its colours (the paint and the stripe vertices; drawRange: the outer block, as an intact car)
   // (num: the car's start number, lit on its K.number panels: two digits, or one in the middle; 0 / none: blank panels)
   const KIT_SEG = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];   // the seven segments (bit 0 a .. bit 6 g) of 0..9
@@ -2262,7 +2280,7 @@ const Render = (function () {
     const H = kitHullGeo(v.kit.E), S = [];
     if (H) { v.body.castShadow = false; v.hull = new THREE.Mesh(H, matHull); v.bodyG.add(v.hull); S.push(v.hull); }
     if (c.isPlayer) { const W = kitWheels(v.kit.E, false);
-      for (const w of v.wf.concat(v.wr)) { const m = new THREE.Mesh(v.wf.includes(w) ? W.f : W.r, matHull); w.castShadow = false; w.add(m); S.push(m); } }
+      for (const w of v.wf.concat(v.wr, v.wm)) { const m = new THREE.Mesh(v.wf.includes(w) ? W.f : W.r, matHull); w.castShadow = false; w.add(m); S.push(m); } }
     for (const m of S) { m.castShadow = true; m.visible = false; }
     if (S.length) v.shadowOnly = S;
   }
@@ -2309,7 +2327,7 @@ const Render = (function () {
   // (the garage, DELI.mesh) option n of part id alone where it sits on vehicle M (a model or its id): a THREE.Group in the car's frame
   // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli, and the car's own
   // housing round it, K.deli's around; own: the option's alone) in colour's paint, tail lamps with their lit part (the tail mesh, all of
-  // the car's tail lamps: those of the option fitted); the rims: the four wheels on their hubs. null: M has no
+  // the car's tail lamps: those of the option fitted); the rims: the wheels on their hubs (wheels.mid's too). null: M has no
   // mount for it (or its build failed)
   function deliMesh(M, id, n, color, own) {
     if (typeof M === 'string') M = Core.MODELS.find(m => m.id === M);
@@ -2320,6 +2338,7 @@ const Render = (function () {
       const W = kitWheels(E, true), mat = matWheel || new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x8c8c8c, shininess: 60 });
       for (const sd of [-1, 1]) { const f = kitWheelMesh(W.f, mat), r = kitWheelMesh(W.r, mat);
         f.position.set(M.a, M.rw, sd * E.body.hw); r.position.set(-M.b, M.rw, sd * E.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1; grp.add(f, r); }
+      kitMidWheels(M, E, W.r, mat, grp, false);
       return grp;
     }
     const g = kitRecolour(E.geo.clone(), color == null ? 0xc0392b : color, true, 0), D = g.userData.deli || {}, keep = (D[id] || []).concat(own ? [] : D[id + '+'] || []);
@@ -2352,7 +2371,7 @@ const Render = (function () {
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, deli: E.deli || '', tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
-      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], still: [wh.f, wh.r].map(g => g.userData.still ? g.userData.still.userData.tris : 0), lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
+      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], still: [wh.f, wh.r].map(g => g.userData.still ? g.userData.still.userData.tris : 0), lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw, mid: E.W.xm }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
       hi: M.def && M.def.look && M.def.look.hi ? (() => { const H = kitEntry(M, true, deli), hw = kitWheels(H, true); return { status: H.hi ? 'ok' : 'normal', tris: Object.assign({}, H.geo.userData.tris), budget: Object.assign({}, H.geo.userData.budget), wheels: [hw.f.userData.tris, hw.r.userData.tris] }; })() : null,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
@@ -2764,7 +2783,7 @@ const Render = (function () {
         bodyG.add(dd);
       }
     }
-    const wf = [], wr = [];
+    const wf = [], wr = [], wm = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
     let fp = null, bandGeo;   // (bandGeo(col): the separate wheels' geometry, front and rear, with that band: the new set the crew pushes home, crewTyres)
     if (M.body === 'formula') {
@@ -2789,6 +2808,7 @@ const Render = (function () {
         f.position.set(M.a, M.rw, sd * KE.body.hw); r.position.set(-M.b, M.rw, sd * KE.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1;
         f.castShadow = r.castShadow = !!car.isPlayer; grp.add(f, r); wf.push(f); wr.push(r);
       }
+      wm.push(...kitMidWheels(M, KE, W.r, matWheel, grp, !!car.isPlayer));   // (wheels.mid: the middle axle's two, the rear ones' twins)
     } else { bandGeo = (col) => { const w = NEW_BODY[M.body] ? newWheelGeo(M, col) : getWheelGeo(M.body === 'rally', col); return { f: w, r: w }; };   // (the rear wheels are in the body)
       for (const sd of [-1, 1]) { const w = new THREE.Mesh(bandGeo(band).f, matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - (def.wz != null ? def.wz : 0.1))); grp.add(w); wf.push(w); } }
     let blob = null;
@@ -2815,8 +2835,8 @@ const Render = (function () {
     // the garage's parts that are no shape of the body's (js/deli/barve.js, skriti.js: DELI.dress): the paint's finish and the glass's tint
     // (this car's material), the stripes' and decals' sheen, the underglow (a mesh of its own), the calipers, the body lowered on its
     // springs, the tyre smoke's colour; null: none fitted. dl.step(dt, car, t, night, braking) each frame, dl.low the body's drop (m)
-    const dl = car.deli && KE && KE.deli && typeof DELI !== 'undefined' && DELI.dress ? DELI.dress({ car, M, E: KE, grp, bodyG, body, mat: bodyMat, dec, wf, wr, show: !!(opts && opts.show) }) : null;
-    return { dl, grp, bodyG, body, tail, dec, wf, wr, fp, band: fp ? tyreCol(car) : band, bandGeo, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
+    const dl = car.deli && KE && KE.deli && typeof DELI !== 'undefined' && DELI.dress ? DELI.dress({ car, M, E: KE, grp, bodyG, body, mat: bodyMat, dec, wf, wr, wm, show: !!(opts && opts.show) }) : null;
+    return { dl, grp, bodyG, body, tail, dec, wf, wr, wm, fp, band: fp ? tyreCol(car) : band, bandGeo, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
       dirtU: bodyMat.userData && bodyMat.userData.dirt || null, dirtW: bodyMat.userData && bodyMat.userData.dirtW || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
@@ -2864,6 +2884,7 @@ const Render = (function () {
     if (mv < 5) v.spin += mv / M.rw;   // (wheels roll with the distance moved; not across a jump back in the replay)
     for (const w of v.wf) w.rotation.set(0, -(g.d || 0), -v.spin);
     for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
+    for (const w of v.wm) w.rotation.set(0, 0, -v.spin);
     if (v.tlG) { const D = M.trailer, G = v.tlG; G.visible = v.grp.visible; v.grp.updateMatrixWorld(true);
       G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld)); G.rotation.set(0, -(g.h + (g.tl || 0)), g.p || 0, 'YZX'); if (v.tlG2) v.tlG2.rotation.set(0, -(g.tl2 || 0), 0, 'YZX'); }
   }
@@ -5272,10 +5293,10 @@ const Render = (function () {
       const fm = v.fp.parts.fenderL && v.fp.parts.fenderL.material; if (fm && fm !== matCar && fm !== pm) pkCarMat(fm, u, 0, 'pkCarP');   // (the prototype's louvre panels: the stock paint, patched above)
     }
     const wm = new Map();   // the separate wheels: an own Phong copy of each material (the shared ones stay as they are)
-    for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material) || o.material === matHull) return; let m = wm.get(o.material);   // (not a shadow's stand-in: kitShadows)
+    for (const w of v.wf.concat(v.wr, v.wm)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material) || o.material === matHull) return; let m = wm.get(o.material);   // (not a shadow's stand-in: kitShadows)
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
-    v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
+    v.pk = u; v.pkS = { mk: [null, null, null, null, null, null], x: [0, 0, 0, 0, 0, 0], z: [0, 0, 0, 0, 0, 0], fw: [0, 0, 0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0, 0, 0], xm: v.wm.length ? v.wm[0].position.x : null };   // (4, 5: wheels.mid's, their marks)
     if (v.mrg) ownRnd(() => remerge(v));   // (a rival's parts as one mesh: built again with these materials (the trim's own Phong copy, the formula's), remerge)
   }
   function pkCarTick(v, c, dt, opt) {
@@ -5285,8 +5306,8 @@ const Render = (function () {
       // where the wheels touch the road (for the marks, the dust and the spray) and which of them run through the melt water below the snow banks
       const me = v.grp.matrixWorld.elements, W = u.w.value, wz = v.wf.length ? Math.abs(v.wf[0].position.z) : c.m.wid * 0.5 - 0.1, G = pkWetGrid();
       let fw = 0;
-      for (let k = 0; k < 4; k++) { const lx = k < 2 ? W.x : W.y, lz = (k % 2 ? 1 : -1) * wz; S.x[k] = me[12] + me[0] * lx + me[8] * lz; S.z[k] = me[14] + me[2] * lx + me[10] * lz;
-        S.fw[k] = G && G.has(pkCell(S.x[k], S.z[k])) ? 1 : 0; fw += S.fw[k]; }
+      for (let k = 0, nk = S.xm != null ? 6 : 4; k < nk; k++) { const lx = k < 2 ? W.x : k < 4 ? W.y : S.xm, lz = (k % 2 ? 1 : -1) * wz; S.x[k] = me[12] + me[0] * lx + me[8] * lz; S.z[k] = me[14] + me[2] * lx + me[10] * lz;
+        S.fw[k] = G && G.has(pkCell(S.x[k], S.z[k])) ? 1 : 0; if (k < 4) fw += S.fw[k]; }
       const gy = c.roadY != null ? c.roadY : c.y || 0, sn = snowy() || (!!snow && snow.mesh.visible) ? 1 : Core.sstep(322, 350, gy) * 0.5;   // (snow: winter, falling, the snow zone's slush off the banks)
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
@@ -5329,8 +5350,8 @@ const Render = (function () {
     const hb = c.inBrk > 0.7 && c.vl > 14 && !c.lock ? Core.sstep(0.7, 1, c.inBrk) : 0;   // hard braking without a lock: faint marks (the ABS at work)
     const am = world && world.dyn.pkAmb, wv = am ? am.pU.uW.value : null, ws = 1.1 + 1.4 * Core.sstep(190, 420, gy), dc = (world && world.dust) || [0.86, 0.76, 0.62];   // (the wind of pkAmbient)
     skids.pkIn = true;
-    for (let k = 0; k < 4; k++) {
-      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
+    for (let k = 0, nk = S.xm != null ? 6 : 4; k < nk; k++) {   // (4, 5: wheels.mid's, as the rear ones on their side: marks only)
+      const j = k > 3 ? k - 2 : k, front = k < 2, surf = c.ws[j], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
       const it = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       let a = 0, wd = 0.2, cr = 0.035, cg = 0.035, cb = 0.04;
       if (!verge) { if (!wetK) a = it > 0.14 ? clamp(0.4 + it * 0.4, 0.4, 0.86) : hb * (front ? 0.26 : 0.16); }
@@ -5340,17 +5361,17 @@ const Render = (function () {
       if (a <= 0) S.mk[k] = null;
       else if (!last) S.mk[k] = [px, pz, yk];
       else { const d = Math.hypot(px - last[0], pz - last[1]);
-        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, k, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
+        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, j, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
         else if (d >= 4) S.mk[k] = [px, pz, yk]; }
       // spray: off every wheel in the melt water; in the rain off the front wheels (the stock spray has the rear ones)
-      if (wetK && !verge && spd > 6 && (S.fw[k] || front)) {
+      if (k < 4 && wetK && !verge && spd > 6 && (S.fw[k] || front)) {
         S.sp[k] += (clamp(spd / 36, 0, 1.4) + it * 0.7) * (S.fw[k] ? (front ? 16 : 26) : 10 * wetW) * dt;
         while (S.sp[k] >= 1) { S.sp[k] -= 1; const sh = 0.9 + R() * 0.1, sp = 0.35 + R() * 0.15;
           particles.emit(px - fx * 0.3, 0.3 + y, pz - fz * 0.3, c.vx * sp + (R() - 0.5) * 2.4, 0.6 + R() * 1.0, c.vz * sp + (R() - 0.5) * 2.4, 0.55 + R() * 0.4, 0.7, 3 + R() * 2, 0.9 * sh, 0.93 * sh, 0.96 * sh, S.fw[k] ? 0.3 : 0.2, -0.12, 1.7, y);
           if (S.fw[k] && R() < 0.3) particles.emit(px, 0.2 + y, pz, c.vx * 0.3 + (R() - 0.5) * 3, 1.5 + R() * 1.5, c.vz * 0.3 + (R() - 0.5) * 3, 0.4 + R() * 0.2, 0.2, 0.14, 0.78, 0.82, 0.88, 0.7, 9, 0.5, y); }   // (droplets)
       } else S.sp[k] = 0;
       // dust that lingers: off the dry verge behind the rear wheels, a thin cloud hanging in the air, drifting off with the wind
-      if (!front && verge && !wetK && !snowy && spd > 5) {
+      if (!front && k < 4 && verge && !wetK && !snowy && spd > 5) {
         S.la += 6 * clamp(spd / 20, 0.4, 1.5) * (1 - sz) * dt;
         while (S.la >= 1) { S.la -= 1; const sh = 0.94 + R() * 0.1, wx = wv ? wv.x : -0.59, wzz = wv ? wv.y : 0.81;
           particles.emit(px - fx * 0.8 + (R() - 0.5), gy + 0.5 + R() * 0.5, pz - fz * 0.8 + (R() - 0.5), wx * ws + c.vx * 0.1 + (R() - 0.5) * 0.8, 0.2 + R() * 0.3, wzz * ws + c.vz * 0.1 + (R() - 0.5) * 0.8, 3.5 + R() * 2.5, 2.2, 7 + R() * 4, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.15, -0.04, 0.1, gy); }
@@ -6903,6 +6924,7 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
@@ -7364,6 +7386,7 @@ const Render = (function () {
     const s = kitSolve3(rows); if (!s) return;   // (y = s0 + s1 x + s2 z)
     const pa = v.body.geometry.attributes.position.array, dv = K.deadV; let a = 1;   // (each point drops by about s0 + s1 x + s2 z: no lower than 1 cm over the road)
     for (let i = 0, nO = v.body.geometry.userData.outerN; i < nO; i++) { if (dv && dv[i]) continue; const d = s[0] + s[1] * pa[i * 3] + s[2] * pa[i * 3 + 2]; if (d < 0) a = Math.min(a, Math.max(0, pa[i * 3 + 1] - 0.01) / -d); }
+    if (K.E.W.xm != null) for (const z of [-hw, hw]) { const d = s[0] + s[1] * K.E.W.xm + s[2] * z; if (d < 0) a = Math.min(a, K.E.W.gap / -d); }   // (wheels.mid: down onto the middle wheels by their arch's clearance at most)
     if (!(a > 1e-3)) return; s[0] *= a; s[1] *= a; s[2] *= a;
     v.sagQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-s[1], 1, -s[2]).normalize()); v.sagP = new THREE.Vector3(0, s[0], 0);
   }
@@ -8468,7 +8491,7 @@ const Render = (function () {
   // the wheels go back (and toe out a little) with the metal crushed over them
   function xWheels(v, xc) {
     const o = [0, 0, 0, 0, 0];
-    for (const w of v.wf.concat(v.wr)) {
+    for (const w of v.wf.concat(v.wr, v.wm)) {
       const p0 = w.userData.xp0 || (w.userData.xp0 = w.position.clone()); let dx = 0, dz = 0;
       for (const K of xc.cl) if (xPush(K, xc, p0.x, p0.y + 0.28, p0.z, -1, o)) { dx += o[0]; dz += o[2]; }
       w.position.x = p0.x + clamp(dx * 0.85, -0.6, 0.6); w.position.z = p0.z + clamp(dz * 0.3, -0.12, 0.12);
@@ -8480,7 +8503,7 @@ const Render = (function () {
   let matXUnd = null;
   function xUnder(v, c) {
     const M = c.m, g = v.body.geometry, U = g.userData || {}, p = (v.xc && v.xc.rest) || g.attributes.position.array, dv = v.kit && v.kit.deadV, n = U.outerN || g.attributes.position.count;
-    const wq = (v.wf || []).concat(v.wr || []).map(w => w.position), rw0 = M.rw || 0.32, wF = wq.length ? Math.max(...wq.map(q => q.x)) - rw0 : M.len * 0.2, wR = wq.length ? Math.min(...wq.map(q => q.x)) + rw0 : -M.len * 0.2;
+    const wq = (v.wf || []).concat(v.wr || [], v.wm || []).map(w => w.position), rw0 = M.rw || 0.32, wF = wq.length ? Math.max(...wq.map(q => q.x)) - rw0 : M.len * 0.2, wR = wq.length ? Math.min(...wq.map(q => q.x)) + rw0 : -M.len * 0.2;
     let x0 = Infinity, x1 = -Infinity, yM = Infinity, yA = Infinity;
     for (let i = 0; i < n; i++) { if (dv && dv[i]) continue; const x = p[i * 3], y = p[i * 3 + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < yA) yA = y; if (x > wR && x < wF && y < yM) yM = y; }   // (its height: the body's lowest between the wheels, the sills; not a mud flap's or a bumper's)
     if (!Number.isFinite(yM)) yM = yA;
@@ -9420,7 +9443,7 @@ const Render = (function () {
     }
     const SH = [matUnder, matEngine, matLensBroken, matWheel], sw = (o) => { if (!o.isMesh || !o.material || SH.indexOf(o.material) < 0) return;
       let q = v.charSh.get(o.material); if (!q) { q = o.material.clone(); q.userData.col0 = q.color.clone(); v.charSh.set(o.material, q); L.push(q); } o.material = q; };
-    v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr)) q.traverse(sw);
+    v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr, v.wm)) q.traverse(sw);
     const k = clamp((7 * w - 0.5) / (0.8 * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car)
     for (const m of L) m.color.copy(m.userData.col0).lerp(SOOT, k);
   }
@@ -9462,11 +9485,12 @@ const Render = (function () {
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const ls = c.lch && !c.lch.done && c.lch.t >= 0 ? (1 - c.lch.k) / Core.LAUNCH.depth : 0, lv = ls > 0.1 ? 0.8 : 2.5;   // the start: a late reaction's wheelspin (0..1, Core LAUNCH): rubber and smoke from the first metres
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]], ruts = !!(curRace && curRace.timeTrial && c === curRace.player);
-    for (let k = 0; k < 4; k++) {
+    if (v.wm.length) wheels.push([v.kit.E.W.xm, -tw, 2], [v.kit.E.W.xm, tw, 3]);   // (wheels.mid: 4 and 5, the rear ones' surface and slide: their marks, no smoke of their own)
+    for (let k = 0; k < wheels.length; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
       const surf = c.ws[wi];
-      const front = k >= 2;
+      const front = k === 2 || k === 3;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       if (spd < lv) intens = 0;
@@ -9500,7 +9524,7 @@ const Render = (function () {
         } else v.sk[k] = [px, pz, yb];
       } else v.sk[k] = null;
       // smoke / dust (rain: spray, mud)
-      if (front) continue;
+      if (front || k > 3) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
           const fast = clamp((spd - 18) / 25, 0, 1);   // (at speed: a long, thicker tail of mist hanging behind the car, and the tyres throw water up)
@@ -10717,7 +10741,8 @@ const Render = (function () {
       x.stroke();
       if (o.box) { const [bl, bw, bh] = o.box, a0 = v === 'side' || v === 'top' ? -bl / 2 : -bw / 2, a1 = -a0, b0 = v === 'top' ? -bw / 2 : 0, b1 = v === 'top' ? bw / 2 : bh;
         x.strokeStyle = 'rgba(255,214,64,0.95)'; x.lineWidth = 2; x.beginPath(); const c4 = [P(a0, b0), P(a1, b0), P(a1, b1), P(a0, b1)]; x.moveTo(c4[0][0], c4[0][1]); for (const q of c4.slice(1).concat([c4[0]])) x.lineTo(q[0], q[1]); x.stroke(); }
-      const hw = M.kit ? kitEntry(M).body.hw : M.wid / 2 - 0.1, hubs = v === 'side' ? [[M.a, M.rw], [-M.b, M.rw]] : v === 'top' ? [[M.a, -hw], [M.a, hw], [-M.b, -hw], [-M.b, hw]] : [[-hw, M.rw], [hw, M.rw]];
+      const KM = M.kit ? kitEntry(M) : null, hw = KM ? KM.body.hw : M.wid / 2 - 0.1, ax = [M.a, -M.b].concat(KM && KM.W.xm != null ? [KM.W.xm] : []);   // (wheels.mid: its hubs too)
+      const hubs = v === 'side' ? ax.map(a => [a, M.rw]) : v === 'top' ? [].concat(...ax.map(a => [[a, -hw], [a, hw]])) : [[-hw, M.rw], [hw, M.rw]];
       x.strokeStyle = 'rgba(80,220,255,0.95)'; x.lineWidth = 2;
       for (const [a, b] of hubs) { const c = P(a, b), r = 7; x.beginPath(); x.moveTo(c[0] - r, c[1]); x.lineTo(c[0] + r, c[1]); x.moveTo(c[0], c[1] - r); x.lineTo(c[0], c[1] + r); x.stroke(); }
     }
