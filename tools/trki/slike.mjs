@@ -22,12 +22,13 @@
 //      nose's angle to the road, + to the right), the rival relative to it; a wall scenario has no rival (it is parked 400 m back, hidden)
 //   3. 1.25 s on the spot: every step the cars are put back where they were staged with their speed, so the gearbox, the revs and the
 //      suspension settle and the throttle that holds the speed is found; the camera settles behind the standing picture
-//   4. the run: no steer, the holding throttle, drawn as the game draws a frame (Render.frame: smoke, sparks, skid marks; a few times
-//      a second, every step once the touch is near) until the first touch (the race's own hitCar / hitWall of that step); the picture
-//      of the last step before it is frame 0
+//   4. the run: no steer, the holding throttle, a frame 30 times a second as the game draws it (Render.frame: the camera, smoke,
+//      sparks, skid marks) until the first touch (the race's own hitCar / hitWall of that step); the picture of the last step before
+//      it is frame 0
 //   5. after the touch the inputs are the scenario's (po_trku: "nic" no pedal, "plin" the holding throttle stays; volan for volan_s
-//      seconds; zavora), fixed, the game stepped on and drawn 12 times a second (a frame of software WebGL takes about half a second,
-//      so not the game's 60); a frame at every moment of --casi
+//      seconds; zavora), fixed, the game stepped and drawn on; a frame at every moment of --casi
+// Only the frames that may be kept reach the screen (software WebGL takes about half a second a frame): for the others the WebGL
+// context's draw calls do nothing while Render.frame does all of its own work.
 // The rival is driven the same way: its own step gets the scenario's pedals and steer just before the physics (the AI's are overwritten;
 // the car stays a rival for the knock's rules), a standing one is held as on the grid (locked: free once it is hit), and its timers of
 // the marshals' rescue (stuck, the wrong way) are kept at zero so it is never put back on the road in the middle of the pictures.
@@ -143,13 +144,18 @@ function stageAndRun(o) {
     if (tP.v > 1) thP = clamp(thP - (P.speed - tP.v) * 2, 0, 1); if (tB && tB.v > 1) thB = clamp(thB - (B.speed - tB.v) * 2, 0, 1);
   }
   back(P, tP); if (B) back(B, tB); w0 = clock('umiritev', w0);
-  // the picture: the camera behind the car there at once, then as the game draws a frame; the canvas copied the moment it is drawn
-  const gl = document.getElementById('gl'), W = innerWidth, H = innerHeight;
-  const draw = (dt) => Render.frame(dt, 1, P, 'chase', {}), grab = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(gl, 0, 0, W, H); return c; };
+  // the picture: as the game draws a frame (the camera behind the car, smoke, sparks, skid marks), the canvas copied the moment it is
+  // drawn. A frame of software WebGL takes about half a second, so only the frames that may be kept are really drawn: for the others
+  // (quiet: 30 a second between them, which move the camera and lay the smoke and the marks) the context's draw calls do
+  // nothing, the renderer's own work on the page all done
+  const gl = document.getElementById('gl'), W = innerWidth, H = innerHeight, G3 = (() => { try { return gl.getContext('webgl2') || gl.getContext('webgl'); } catch (_) { return null; } })();
+  const DRAWS = ['drawElements', 'drawArrays', 'drawElementsInstanced', 'drawArraysInstanced', 'drawRangeElements', 'clear', 'blitFramebuffer'];
+  const mute = (on) => { if (G3) for (const k of DRAWS) { if (!on) delete G3[k]; else if (typeof G3[k] === 'function') G3[k] = () => {}; } };
+  const draw = (dt) => Render.frame(dt, 1, P, 'chase', {}), quiet = (dt) => { mute(true); try { draw(dt); } finally { mute(false); } };
+  const grab = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(gl, 0, 0, W, H); return c; };
   for (const c of others) if (c !== B) { const v = Render.viewOf(c); if (v && v.grp) v.grp.visible = false; }
-  // (a frame of software WebGL costs about half a second: the camera's zoom, which would take 3 s of frames to settle, is put where the
-  // camera behind the car has it at this speed, chaseStep)
-  Render.resetCam(); draw(0.1); { const C = Render.cam; if (C && typeof C.zoom === 'number') C.zoom = 1 + 0.25 * clamp(P.speed / 55, 0, 1); } draw(0.1); draw(0.1);   // (1.6 s of the camera's time: its turn and its zoom at this speed settled)
+  Render.resetCam(); for (let k = 0; k < 30; k++) quiet(0.1);   // (3 s of the camera's time: there at once, its zoom at this speed settled)
+  w0 = clock('kamera', w0);
   // the numbers under a frame: the speed, how far the car has turned since the touch (+ to the right), where it is in the road's frame
   const turn = { P: 0, B: 0 }, hPrev = { P: P.h, B: B ? B.h : 0 };
   const num = (c, k) => ({ kmh: +(c.speed * 3.6).toFixed(1), zasuk: +(sg * turn[k] / RAD).toFixed(1), naprej: r3(along(c)), desno: r3(across(c)), kot: +(sg * wrap(c.h - O.hd) / RAD).toFixed(1), skoda: r3(c.dmg || 0) });
@@ -166,30 +172,31 @@ function stageAndRun(o) {
     for (const p of a) { const q = T.query(p[0], p[1], P.q.i, {}); t = Math.min(t, (Math.min(q.br - q.d, q.d + q.bl) - 0.05) / (Math.abs(P.vx * q.nx + P.vz * q.nz) + 0.2)); }
     return t;
   };
-  // the run up to the first touch: the speed held; drawn 6 times a second while the touch is still away, every third step once it can
-  // come within 6 steps and every step within 1.5, so the picture of the last step before the touch is there: frame 0 (slika0_korak
-  // says which step it shows, korak the last one before the touch: the same but for a knock that reaches further than the bodies' boxes)
+  // the run up to the first touch: the speed held; really drawn every third step once the touch can come within 6 steps and every step
+  // within 1.5, so the picture of the last step before the touch is there: frame 0 (slika0_korak says which step it shows, korak the
+  // last one before the touch: the same but for a knock that reaches further than the bodies' boxes)
   const pred = { thrP: r3(thP), thrB: r3(thB) }, nMax = Math.round((o.cakaj || 3) / STEP);
-  let n = 0, at = -1, pic = null, was = null, first = null, shots = 0;
+  let n = 0, at = 0, real = -1, pic = null, was = null, first = null, shots = 0;
   inP.thr = thP; inP.st = 0; inP.brk = 0; inB.thr = thB; inB.st = 0; inB.brk = 0;
   for (;;) {
     if (n >= nMax) return { error: 'no touch in ' + (o.cakaj || 3) + ' s after the staging: the cars are too far apart (or miss each other, or the barrier)', konec: nums() };
     const tt = soonest();
-    if (at < 0 || n - at >= 20 || (tt <= 6 * STEP && n - at >= 3) || tt <= 1.5 * STEP) { draw(at < 0 ? STEP : Math.min(0.1, (n - at) * STEP)); at = n; pic = grab(); was = nums(); shots++; }
+    if (real < 0 || (tt <= 6 * STEP && n - real >= 3) || tt <= 1.5 * STEP) { draw((n - at) * STEP || STEP); at = real = n; pic = grab(); was = nums(); shots++; }
+    else if (n - at >= 4) { quiet((n - at) * STEP); at = n; }
     one(); n++;
-    if (hit.car > 0 || hit.wall > 0) { first = { korak: n - 1, s: r3((n - 1) * STEP), kaj: hit.car > 0 ? 'avto' : 'ograja', zapiranje: r3(Math.max(hit.car, hit.wall)), slika0_korak: at }; break; }
+    if (hit.car > 0 || hit.wall > 0) { first = { korak: n - 1, s: r3((n - 1) * STEP), kaj: hit.car > 0 ? 'avto' : 'ograja', zapiranje: r3(Math.max(hit.car, hit.wall)), slika0_korak: real }; break; }
     hPrev.P = P.h; if (B) hPrev.B = B.h;
   }
   w0 = clock('do_dotika', w0);
-  // from the touch on: the scenario's fixed inputs, the game stepped and drawn 12 times a second, a frame at every moment asked for
+  // from the touch on: the scenario's fixed inputs, the game stepped and drawn 30 times a second, really at the moments asked for
   const after = (c, t, hold) => { const po = c.po_trku || 'nic', vs = c.volan_s != null ? c.volan_s : 1e9; return { thr: po === 'plin' ? hold : 0, st: c.volan && t < vs ? c.volan : 0, brk: c.zavora || 0 }; };
   const frames = [], want = o.casi.map(t => Math.round(t / STEP));
   if (want[0] === 0) frames.push(Object.assign({ t: 0, src: pic.toDataURL('image/png') }, was));
   track();   // (the touch's own step is step 1 after it)
-  let k = 1, drawn = 0; const last = want[want.length - 1];
+  let k = 1, drawn = at - (n - 1); const last = want[want.length - 1];   // (drawn: the step of the last frame, counted from the touch)
   for (;;) {
     const here = want.indexOf(k) >= 0;
-    if (here || k - drawn >= 10) { draw(Math.min(0.1, (k - drawn) * STEP)); drawn = k; shots++; }
+    if (here) { draw((k - drawn) * STEP); drawn = k; shots++; } else if (k - drawn >= 4) { quiet((k - drawn) * STEP); drawn = k; }
     if (here) frames.push(Object.assign({ t: +(k * STEP).toFixed(4), src: grab().toDataURL('image/png') }, nums()));
     if (k >= last) break;
     const t = k * STEP, a = after(ip, t, thP), b = it ? after(it, t, thB) : null;
@@ -232,6 +239,7 @@ async function side(browser, tag, root, cv) {
 }
 
 /* ---------------- the composite: 2 columns (ZDAJ, POTEM) x the moments, the numbers under every frame ---------------- */
+const rel = (p) => { const r = path.relative(REPO, p); return !r ? '.' : r.startsWith('..') ? p : r; };   // (a folder as the report names it: within the repo from its root)
 const zasuk = (z) => Math.abs(z) < 0.5 ? 'zasuk 0°' : 'zasuk ' + sl(Math.abs(z)) + '° ' + (z > 0 ? 'desno' : 'levo');
 const caption = (f, car2) => `<div class="c"><b>${f.t === 0 ? 'tik pred trkom' : '+' + sl(f.t, 2) + ' s'}</b> · ti <b>${sl(f.igralec.kmh)} km/h</b>${f.t === 0 ? '' : ' · ' + zasuk(f.igralec.zasuk)}</div>` +
   (car2 && f.tekmec ? `<div class="c r">tekmec <b>${sl(f.tekmec.kmh)} km/h</b>${f.t === 0 ? '' : ' · ' + zasuk(f.tekmec.zasuk)}</div>` : '');
@@ -284,18 +292,18 @@ try {
   const runA = () => side(browser, 'A', aRoot, aCv), runB = () => side(browser, 'B', bRoot, bCv);
   let A, B;
   if (zaporedno) { A = await runA(); B = await runB(); }
-  else { const r = await Promise.allSettled([runA(), runB()]); for (const x of r) if (x.status === 'rejected') throw x.reason; A = r[0].value; B = r[1].value; }
+  else [A, B] = await Promise.all([runA(), runB()]);   // (the first side that fails stops the run: the browser closes under the other)
   // the two sides must start the same: the last step before the touch the same step, the cars in the same place at the same speed
   const key = (X) => JSON.stringify([X.stik.korak, X.frames[0].igralec, X.frames[0].tekmec]), same = A.frames[0].t !== 0 || key(A) === key(B);
   const file = path.join(out, name + '.jpg'), pic = await compose(browser, A, B, file);
-  const strip = (X) => ({ cv: X.cv, ime: X.ime, kako: X.kako, root: path.relative(REPO, X.root) || '.', ver: X.ver, stik: X.stik, pred: X.pred, narisanih: X.narisanih, ms: X.ms, okvirji: X.frames.map(f => ({ t: f.t, igralec: f.igralec, tekmec: f.tekmec })) });
+  const strip = (X) => ({ cv: X.cv, ime: X.ime, kako: X.kako, root: rel(X.root), ver: X.ver, stik: X.stik, pred: X.pred, narisanih: X.narisanih, ms: X.ms, okvirji: X.frames.map(f => ({ t: f.t, igralec: f.igralec, tekmec: f.tekmec })) });
   if (okvirji) for (const X of [A, B]) X.frames.forEach((f) => fs.writeFileSync(path.join(out, `${name}-${X.tag.toLowerCase()}-${String(Math.round(f.t * 1000)).padStart(4, '0')}ms.png`), Buffer.from(f.src.split(',')[1], 'base64')));
   const json = { scenarij: name, naslov: S.naslov, proga: S.proga, ime_proge: A.proga, m: S.m, casi: S.casi, korak: 1 / 120, cesta: A.cesta, ograja: A.ograja, postavitev: A.postavitev, avti: A.avti,
     enako_pred_trkom: same, razlika_prve_slike_pct: pic.razlika0, strani: { a: strip(A), b: strip(B) }, slika: Object.assign({ datoteka: path.basename(file) }, pic) };
   fs.writeFileSync(path.join(out, name + '.json'), JSON.stringify(json, null, 1) + '\n');
   // a short report: one line a frame and side
   const row = (f) => `ti ${sl(f.igralec.kmh).padStart(3)} km/h ${(sl(f.igralec.zasuk) + '°').padStart(6)}` + (f.tekmec ? ` | tekmec ${sl(f.tekmec.kmh).padStart(3)} km/h ${(sl(f.tekmec.zasuk) + '°').padStart(6)}` : '');
-  console.log(`${name}: ${S.naslov} · ${A.proga}, ${S.m} m · A cv ${A.cv} ${A.ime} | B cv ${B.cv} ${B.ime}${bRoot !== aRoot ? ' (' + (path.relative(REPO, bRoot) || '.') + ')' : ''}`);
+  console.log(`${name}: ${S.naslov} · ${A.proga}, ${S.m} m · A cv ${A.cv} ${A.ime} | B cv ${B.cv} ${B.ime}${bRoot !== aRoot ? ' (' + rel(bRoot) + ')' : ''}`);
   console.log(`prvi dotik (${A.stik.kaj}): A korak ${A.stik.korak}, zapiranje ${sl(A.stik.zapiranje, 1)} m/s | B korak ${B.stik.korak}, zapiranje ${sl(B.stik.zapiranje, 1)} m/s`);
   A.frames.forEach((f, i) => console.log(`  ${(f.t === 0 ? 'pred' : '+' + sl(f.t, 2) + ' s').padEnd(8)} A: ${row(f)}   B: ${row(B.frames[i])}`));
   if (!same) console.log('OPOZORILO: strani se pred dotikom razlikujeta (korak ali stanje avtov): primerjava ni ista nesreča. ' + key(A) + ' / ' + key(B));
