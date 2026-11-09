@@ -516,7 +516,7 @@
   function ngLifeStep(L, t, car, race) {   // (race: its cars and its traffic; none: the followed car alone)
     const dt = clamp(t - L.t, 0, 0.1); L.t = t;
     const A = L.A, r = L.r, w = T.w, ez = (v, g, k) => v + (g - v) * Math.min(1, dt * k);
-    if (!car) { for (const sp in L.meshes) ngFin(L.meshes[sp], 0); return; }   // (the world test: none drawn)
+    if (!car) { for (const sp in L.meshes) { L.meshes[sp].geometry.attributes.aPose.array.fill(0); ngFin(L.meshes[sp], 0); } return; }   // (the world test: none drawn, their poses cleared: the fingerprint does not depend on the frames before it)
     const cx = car.x, cz = car.z, list = L.list; list.length = 0;
     if (race && race.cars) { for (const c of race.cars) list.push(c); if (race.tf) for (const v of race.tf.veh) list.push(v); }
     if (!list.length) list.push(car);
