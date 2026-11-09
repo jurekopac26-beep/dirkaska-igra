@@ -502,5 +502,12 @@
   "kverts": 463,
   "maxKverts": 584,
   "jsMs": 1.65
+ },
+ "buriram": {
+  "calls": 194,
+  "maxCalls": 247,
+  "kverts": 660,
+  "maxKverts": 841,
+  "jsMs": 1.49
  }
 }
