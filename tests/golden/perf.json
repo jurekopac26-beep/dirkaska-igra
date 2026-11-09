@@ -383,5 +383,12 @@
   "kverts": 402,
   "maxKverts": 498,
   "jsMs": 1.03
+ },
+ "banaue": {
+  "calls": 168,
+  "maxCalls": 182,
+  "kverts": 318,
+  "maxKverts": 360,
+  "jsMs": 1.11
  }
 }

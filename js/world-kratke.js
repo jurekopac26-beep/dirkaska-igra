@@ -168,6 +168,75 @@
         c.signAt(c.sStart + 420, -1, 2); c.signAt(c.sStart + 505, -1, 5); c.signAt(c.sStart + 803, -1, 3);
         c.signAt(c.sFin + 70, 1, 6); c.signAt(c.sFin + 110, -1, 1); c.signAt(c.sFin + 175, -1, 7); },
     },
+    // Banaue (the Philippines, Ifugao): the rice terraces of the Ifugao on the slope below the road (terr: the slope cut into level paddies
+    // along its contours, flooded silver, muddy or green with the rice, the walls of earth grown over with grass between them, a dike along
+    // each), the woods of broadleaved trees and a few pines above it, bananas and ferns by the houses; the hamlet's houses of concrete in their
+    // colours under iron roofs (grey, rusty, green, blue, red; house.roofs); the concrete road in its slabs (lines.concrete: krConcTex, a joint
+    // across every 4 m) with a yellow centre line, low concrete parapets on the drops (yellow blocks round the hairpin); the boards in English
+    // (only places and plain words); the viewpoints over the terraces beside the road (viewR: the map's up to 40 m off the road), a souvenir
+    // stall by each and an Ifugao house (a bale) by the first (extras)
+    banaue: {
+      seed: 8641, dust: [0.5, 0.45, 0.37],
+      pal: { grass: [0.37, 0.51, 0.21], dry: [0.47, 0.54, 0.27], soil: [0.5, 0.38, 0.26], shrub: [0.27, 0.4, 0.17], tree: [0.19, 0.31, 0.13],
+        field: [0.42, 0.55, 0.23], field2: [0.55, 0.6, 0.55], wall: [0.31, 0.41, 0.18], built: [0.54, 0.52, 0.48], bare: [0.55, 0.5, 0.42],
+        rock: [0.55, 0.53, 0.5], rock2: [0.42, 0.41, 0.38], path: [0.52, 0.44, 0.34], verge: [0.45, 0.44, 0.35], karst: 0,
+        fband: 1.0 },   // (the fields' bands along the contours closer: the terraces beyond the reach of their own steps, fading where the grid can't draw them)
+      far: (A, sl, q) => { const rk = Math.min(1, sstep(0.75, 1.25, sl) * 0.55), t = sstep(1450, 1150, A) * sstep(0.75, 0.35, sl);   // (the woods dark on the ridges, the terraces' lighter greens down the valleys' gentler slopes)
+        let c = [0.2 + q * 0.04, 0.31 + q * 0.04, 0.15 + q * 0.03]; c = [lerp(c[0], 0.38 + q * 0.05, t * 0.8), lerp(c[1], 0.47 + q * 0.04, t * 0.8), lerp(c[2], 0.26 + q * 0.03, t * 0.8)];
+        return [lerp(c[0], 0.47 + q * 0.04, rk), lerp(c[1], 0.47 + q * 0.04, rk), lerp(c[2], 0.42 + q * 0.03, rk)]; },
+      lines: { centre: [0.93, 0.75, 0.16], edge: [0.9, 0.9, 0.86], concrete: true },
+      para: { stone: [0.74, 0.73, 0.7], top: [0.86, 0.85, 0.82], hp: [0.93, 0.77, 0.15], back: [0.62, 0.61, 0.58], wall: [0.6, 0.59, 0.56], cope: [0.75, 0.74, 0.71] },
+      rocks: { main: [[0.52, 0.5, 0.47], [0.58, 0.56, 0.52], [0.47, 0.46, 0.44], [0.62, 0.6, 0.55]], alt: [[0.4, 0.37, 0.33], [0.45, 0.41, 0.36]], karst: 0, crag: 1.15 },
+      kinds: ['broad', 'rain', 'pine', 'shrub', 'tuft', 'banana', 'fern'],
+      mix: { 0: [0.1, [0.12, 0.04, 0.03, 0.3, 0.38, 0.08, 0.05]], 1: [0.42, [0.42, 0.25, 0.12, 0.12, 0, 0.02, 0.07]], 2: [0.3, [0.1, 0.03, 0.03, 0.6, 0.12, 0.05, 0.07]],
+        3: [0.07, [0.15, 0, 0, 0.15, 0.1, 0.5, 0.1]], 4: [0.01, [0, 0, 0, 0.7, 0.3, 0, 0]], 5: [0, [0, 0, 0, 1, 0, 0, 0]], 6: [0.05, [0.05, 0, 0, 0.25, 0.5, 0.15, 0.05]] },
+      house: { cols: [[0.8, 0.79, 0.74], [0.9, 0.86, 0.72], [0.74, 0.84, 0.72], [0.9, 0.79, 0.76], [0.76, 0.84, 0.9], [0.93, 0.92, 0.88]], roof: [0.5, 0.3, 0.2],
+        roofs: [[0.5, 0.3, 0.2], [0.24, 0.42, 0.3], [0.25, 0.36, 0.55], [0.62, 0.22, 0.18], [0.56, 0.57, 0.58]], flat: [0.6, 0.59, 0.56], gable: 0.7, tall: 0.35 },
+      words: { start: 'START', finish: 'FINISH', fin: 'BANAUE', title: 'BANAUE · IFUGAO', sub: 'BONTOC · BANAUE', cp: ['#0038a8', '#fcd116'], finBg: '#1f6b3a', ban: ['#ce1126', '#fcd116'] },
+      boards: [['BANAUE', '#1f6b3a'], ['BONTOC', '#1f6b3a'], ['RICE TERRACES', '#6b4a22'], ['VIEWPOINT', '#6b4a22'], ['DANGEROUS CURVES', '#f2f0ea'], ['SLOW DOWN', '#f2f0ea'],
+        ['MAYOYAO', '#1f6b3a'], ['HUNGDUAN', '#1f6b3a']],
+      // the signs (krAtlas2's boards by number): they drive on the right (side +1 for the cars of the race, -1 for those coming the other way):
+      // Bontoc behind the start for the cars going north, the terraces' board after the start, slow before the hamlet, the viewpoint's board
+      // before each, the bends' warning before the hairpin, Banaue, Mayoyao and Hungduan ahead past the finish (the roads from the town)
+      signs: (c) => { c.signAt(c.sStart - 60, -1, 1); c.signAt(c.sStart + 35, 1, 2); c.signAt(c.sStart + 215, 1, 5);
+        for (const v of c.views) c.signAt(v.i * c.ds - 45, v.sd || 1, 3);
+        if (c.cv[0]) c.signAt(c.sStart + c.cv[0][0] - 110, 1, 4);
+        c.signAt(c.sFin + 70, 1, 0); c.signAt(c.sFin + 120, 1, 6); c.signAt(c.sFin + 165, 1, 7); },
+      viewR: 40,
+      // the terraces (buildKratke: the rice terraces): a step every dh m of height, from d0 m beyond the barrier (full d0 + 6 on), within reach
+      // m of the road (and 25 m more fading out), on slopes from flat (full at 2.5 flat) up to slope (gone 0.35 steeper), the dikes lip m over
+      // the paddy and dikeW wide; each paddy's colour on its patch m along its band (paddy: [share, colour]: the
+      // flooded ones the sky's silver, the muddy, the young rice, the rice grown, ripening), the walls' grass and the dikes'
+      terr: { dh: 2.1, d0: 6, reach: 125, slope: 1.0, flat: 0.05, patch: 14, lip: 0.3, dikeW: 0.5,
+        paddy: [[0.17, [0.58, 0.65, 0.68]], [0.08, [0.45, 0.39, 0.3]], [0.36, [0.46, 0.62, 0.24]], [0.31, [0.36, 0.5, 0.19]], [0.08, [0.62, 0.6, 0.3]]],
+        wall: [0.35, 0.42, 0.21], dike: [0.45, 0.55, 0.26] },
+      // at each viewpoint a souvenir stall at the terrace's far end along the road (a kiosk of planks under an iron roof, woven cloths in their
+      // reds and blacks hung along its front, a table of carvings), by the first an Ifugao house (a bale: a box of dark wood on four posts,
+      // each under its round guard, a tall pyramid of thatch over it) at the near end; generic, no names or words
+      extras: (c) => {
+        let n = 0;
+        c.views.forEach((v, kv) => {
+          const i = v.i, hd = T.hd[i], cs = Math.cos(hd), sn = Math.sin(hd), y = v.h, ox = (v.x - T.px[i]) * T.nx[i] + (v.z - T.pz[i]) * T.nz[i] > 0 ? 1 : -1, nx = T.nx[i] * ox, nz = T.nz[i] * ox;
+          const kx = v.x + cs * (v.r - 1.7), kz = v.z + sn * (v.r - 1.7), g = c.scen.get(kx, kz), wd = [0.46, 0.33, 0.21], wd2 = [0.38, 0.27, 0.17], roofC = [0.55, 0.56, 0.58];
+          box(g, kx, y - 0.4, kz, 2.2, 2.75, 2.0, hd, wd, wd2);   // the kiosk
+          box(g, kx - nx * 0.25, y + 2.35, kz - nz * 0.25, 2.8, 0.08, 2.9, hd, roofC, roofC);   // its roof, over the counter towards the road
+          for (const u of [-1.3, 1.3]) cyl(g, kx + cs * u - nx * 1.55, y - 0.05, kz + sn * u - nz * 1.55, 0.05, 2.4, 4, wd2);
+          const tc = [[0.66, 0.12, 0.1], [0.1, 0.09, 0.09], [0.86, 0.84, 0.78], [0.62, 0.16, 0.12]];
+          for (let q = 0; q < 4; q++) { const u = -0.85 + q * 0.56, px = kx + cs * u - nx * 1.06, pz = kz + sn * u - nz * 1.06; box(g, px, y + 0.85, pz, 0.46, 1.25, 0.04, hd, tc[(q + kv) % 4], tc[(q + kv) % 4]); }   // (the cloths)
+          box(g, kx - nx * 1.45, y, kz - nz * 1.45, 1.9, 0.8, 0.6, hd, wd2, [0.56, 0.42, 0.28]);   // the table
+          c.exclPush(kx, kz, 2.4); c.CR.block(kx - nx * 0.5, kz - nz * 0.5, 2.6, 3.4, hd); n++;
+          if (kv === 0) {   // the bale
+            const bx = v.x - cs * (v.r - 2.3), bz = v.z - sn * (v.r - 2.3), gb = c.scen.get(bx, bz), post = [0.22, 0.16, 0.11], wood = [0.29, 0.2, 0.13], th = [0.52, 0.44, 0.31], th2 = [0.44, 0.37, 0.26];
+            for (const [a, b] of [[-1.05, -1.05], [1.05, -1.05], [1.05, 1.05], [-1.05, 1.05]]) { const px = bx + a * cs - b * sn, pz = bz + a * sn + b * cs;
+              cyl(gb, px, y - 0.2, pz, 0.12, 1.75, 6, post, null, 0.1); cyl(gb, px, y + 1.5, pz, 0.34, 0.08, 8, wood, wood); }   // (the posts, the rats' guards)
+            box(gb, bx, y + 1.62, bz, 2.7, 1.15, 2.7, hd, wood, wood);
+            cone(gb, bx, y + 2.15, bz, 2.85, 3.2, 4, th, th2, hd + Math.PI / 4);
+            c.exclPush(bx, bz, 2.8); c.CR.block(bx, bz, 3.6, 3.6, hd); n++;
+          }
+        });
+        return n;
+      },
+    },
   };
   // the plants' kinds (krTreeGeo): h [base, + random] height (m), w [width over height, + m, + random m], c the instance's tint [r, + random,
   // g, + random, b], near: only within so many metres of the road (LOD.radius), tree: a tree (on NIZKA only the trees cast shadows), shade:
@@ -214,7 +283,7 @@
     mix(C.shrub, vrLCf(x, z, 2) * 0.7);
     const tr = vrLCf(x, z, 1); mix(C.tree, tr * 0.75);
     const fd = vrLCf(x, z, 6) * 0.85;
-    if (fd > 0) { const band = 0.5 + 0.5 * Math.sin(A / 2.2 + P.c3(x, z) * 3), wall = sstep(0.82, 0.96, band) * 0.8;
+    if (fd > 0) { const fbd = C.fband, band = 0.5 + 0.5 * Math.sin(A / (fbd || 2.2) + P.c3(x, z) * 3), wall = sstep(0.82, 0.96, band) * 0.8 * (fbd ? sstep(330, 220, vrDist(x, z)) * sstep(0.68, 0.88, ny) : 1);   // (fband: closer bands, gone where the grid's 5 m and 10 m can't draw them: far out, on the steep)
       const fr = lerp(C.field[0], C.field2[0], s5), fg = lerp(C.field[1], C.field2[1], s5), fb = lerp(C.field[2], C.field2[2], s5);
       R = lerp(R, lerp(fr, C.wall[0], wall), fd); G = lerp(G, lerp(fg, C.wall[1], wall), fd); B = lerp(B, lerp(fb, C.wall[2], wall), fd); }
     mix(C.built, vrLCf(x, z, 3) * 0.6);
@@ -302,6 +371,19 @@
       if (L.length > 1) { txt(L[0], x0 + 256, y0 + 46, 44, warn ? '#16181c' : '#f2f2ee', 460); txt(L[1], x0 + 256, y0 + 92, 36, warn ? '#16181c' : '#f2f2ee', 460); }   // (two lines: the local script over the Latin)
       else txt(n, x0 + 256, y0 + 66, 52, warn ? '#16181c' : '#f2f2ee', 470); });
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (kA2Tex = t);
+  }
+  let kCTex = null;
+  function krConcTex() {   // the concrete road (lines.concrete: Banaue's) in place of the asphalt: its slabs light grey, a fine grain, faint stains and a few
+    // hairline cracks, a joint across it every 4 m (the road's uv: a repeat every 8 m along v); made once and kept, as the boards' atlases
+    if (kCTex) return kCTex;
+    const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = rng(8642);
+    x.fillStyle = '#bebbb2'; x.fillRect(0, 0, S, S);
+    for (let q = 0; q < 7000; q++) { x.fillStyle = r() < 0.5 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)'; x.fillRect(r() * S, r() * S, 1 + r() * 1.5, 1 + r() * 1.5); }
+    for (let q = 0; q < 16; q++) { x.fillStyle = r() < 0.7 ? 'rgba(46,42,36,0.06)' : 'rgba(255,255,255,0.06)'; x.beginPath(); x.ellipse(r() * S, r() * S, 10 + r() * 34, 6 + r() * 20, r() * 3, 0, TAU); x.fill(); }
+    x.strokeStyle = 'rgba(52,49,44,0.45)'; x.lineWidth = 1;
+    for (let q = 0; q < 5; q++) { let px = r() * S, py = r() * S; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 6; k++) { px += (r() - 0.5) * 30; py += (r() - 0.3) * 14; x.lineTo(px, py); } x.stroke(); }
+    x.fillStyle = 'rgba(48,46,42,0.8)'; for (const v of [0, S / 2]) x.fillRect(0, v, S, 2);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return (kCTex = t);
   }
   function krTreeGeo(kind) {   // unit plants (height 1; the instances scale and tint them): broad a broadleaved tree (a short trunk, a round crown of
     // a few blobs), pine (a tall trunk, tiers of dark needles), shrub (a rounded mound), tuft (a tuft of grass, straw-tipped blades), maize (a
@@ -441,8 +523,8 @@
       return best.p; };
     const views = [];
     { const VW = (def.views || []).concat((LK.viewAt || []).map(([d, r]) => { const i = T.idx(sStart + d); return [T.px[i], T.pz[i], r]; }));
-      for (const [x, z, rv] of VW) { const n = vrNear(x, z); if (n.i < 0 || n.dd > 25) continue; const i = n.i, s = i * T.ds; if (s < sStart + 20 || s > T.len - 30) continue;   // (and past the finish: Mã Pí Lèng's viewpoint)
-        if (n.dd > w + 1.5) { const pad = { x, z, r: 6, b: 8, h: T.hy[i] - 0.15, i }, q = padFit(pad); if (q < -0.2 && q > -1e8) pad.h += q; P.pads.push(pad); views.push(pad); continue; }   // (off the road: where the map has it, down to the ground's ceiling)
+      for (const [x, z, rv] of VW) { const n = vrNear(x, z); if (n.i < 0 || n.dd > (LK.viewR || 25)) continue; const i = n.i, s = i * T.ds; if (s < sStart + 20 || s > T.len - 30) continue;   // (and past the finish: Mã Pí Lèng's viewpoint)
+        if (n.dd > w + 1.5 && !LK.viewR) { const pad = { x, z, r: 6, b: 8, h: T.hy[i] - 0.15, i }, q = padFit(pad); if (q < -0.2 && q > -1e8) pad.h += q; P.pads.push(pad); views.push(pad); continue; }   // (off the road: where the map has it, down to the ground's ceiling)
         const gd = (sd) => vrFar(T.px[i] + T.nx[i] * sd * 14, T.pz[i] + T.nz[i] * sd * 14) - T.hy[i];
         const pad = plotBeside(i, gd(1) < gd(-1) ? 1 : -1, rv || 5, 0.8, 0.15, 8, true, sStart + 20, T.len - 30); P.pads.push(pad); views.push(pad); } }
     const iF = T.idx(sFin + 60), gdF = (sd) => Math.abs(vrFar(T.px[iF] + T.nx[iF] * sd * 12, T.pz[iF] + T.nz[iF] * sd * 12) - T.hy[iF]);
@@ -485,7 +567,7 @@
       for (const b of B) {
         if (b.out) { nBldOut++; continue; }
         let lo = 1e9, hi = -1e9; for (const [px, pz] of bPts(b)) { const h = caH(px, pz); lo = Math.min(lo, h); hi = Math.max(hi, h); }   // (the ground's fall under it: caH, the terrain's grid not filled before the plots are all in)
-        if (hi - lo > 12) { b.out = true; nBldOut++; continue; }
+        if (hi - lo > 12 || views.some(v => bPts(b).some(([px, pz]) => Math.hypot(px - v.x, pz - v.z) < v.r + 1.5))) { b.out = true; nBldOut++; continue; }   // (and none on a viewpoint's terrace)
         const { x, z, L, W, ang } = b, lw = Math.max(L, W), sw2 = Math.min(L, W), al = L >= W ? ang : ang + PI / 2, nc = Math.ceil(lw / sw2 - 1e-6);   // (circles along its long side: the plants, the rocks and the landmarks clear of it)
         for (let k = 0; k < nc; k++) { const t = nc > 1 ? -lw / 2 + sw2 / 2 + k * (lw - sw2) / (nc - 1) : 0; exclPush(x + Math.cos(al) * t, z + Math.sin(al) * t, 0.71 * sw2 + 1); }
         if (b.moved) nBldMoved++;
@@ -530,7 +612,8 @@
        metres after the start line: vrPrep digs the stream's gully under the longer ones) the deck out to its concrete parapets (120 m chunks,
        culled) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
-    const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
+    const aMat = new THREE.MeshLambertMaterial({ map: LK.lines.concrete ? krConcTex() : tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
+    if (LK.lines.concrete) aMat.userData.wear = true;   // (the concrete: darker in the rain, the sun's glint on it, as the asphalt: Render applyRoad, asphaltLook)
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true }), sMat = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.45, onBr = new Uint8Array(N), deck = [0.64, 0.63, 0.6];
@@ -900,6 +983,93 @@
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);
 
+    /* ---- the rice terraces (LK.terr: Banaue's): on the fields (lc 6) beyond the verge the slope cut into level paddies along its contours,
+       one every dh m of height. Built on the terrain's own 5 m mesh (the near tiles, each cell's two triangles as caGround reads them): the
+       ground g at each vertex, each triangle cut along the levels m dh (the contours) into the pieces of its bands; each piece level at its
+       band's top ((k + 1) dh: the paddy filled up to the height of its upper edge, never under the ground), at each contour the wall up to
+       the next level (its face down the slope) and the dike along its top (a bevel back down onto the paddy above it). How much of that shows
+       (tf: the fields' share of the land cover, beyond d0 m past the barrier, within the reach, not on the steep nor on the flat (flat: the
+       wide floors of a gentle slope), not on a plot, a lane or under a house: the exclusions; sharpened, mostly 0 or 1: a narrow edge where
+       the floors lean) blends the steps into the ground at each vertex (y = g + (level - g) tf) and the paddies' colours into the ground's
+       (krCol). Each paddy's colour by its band and its patch (patch m): flooded (the sky's silver), muddy, the young rice, the rice grown,
+       ripening; the walls grassy, the dikes lighter. Their own 110 m chunks just over the ground (polygonOffset) in the ground's own
+       material (pkGroundMat: its grit, the walls' projected sideways by their 'steep'; the flooded paddies' grit 6 times wider, smoother), no
+       shadow of their own; TG keeps tf at each vertex (tfG: the plants and the rocks keep off the paddies) ---- */
+    let nTerr = 0, nTerrW = 0, TG = null;
+    const tfG = (x, z) => { const G = P.G, gx = (x - G.x0) / VRC, gz = (z - G.z0) / VRC, i = Math.floor(gx), j = Math.floor(gz); if (i < 0 || j < 0 || i >= G.nx - 1 || j >= G.nz - 1) return 0;
+      const u = gx - i, v = gz - j, k = j * G.nx + i; return TG[k] * (1 - u) * (1 - v) + TG[k + 1] * u * (1 - v) + TG[k + G.nx] * (1 - u) * v + TG[k + G.nx + 1] * u * v; };
+    if (LK.terr) {
+      const TR = LK.terr, G = P.G, NX = G.nx, dh = TR.dh, rA = LOD.radius(TR.reach), rB = rA + 25, terr = new Chunks(110, true);
+      TG = new Float32Array(G.nx * G.nz); const CG = new Float32Array(G.nx * G.nz * 3), cDone = new Uint8Array(G.nx * G.nz);
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {   // the weight at each vertex of the near tiles
+        if (!G.on[tj * G.ntx + ti]) continue;
+        for (let j = tj * VRT; j <= Math.min(G.nz - 1, (tj + 1) * VRT); j++) for (let i = ti * VRT; i <= Math.min(NX - 1, (ti + 1) * VRT); i++) {
+          const k = j * NX + i, x = G.x0 + i * VRC, z = G.z0 + j * VRC; caGH(i, j); const d = vrDist(x, z); if (d > rB) continue;
+          const lc = vrLCf(x, z, 6), dd = G.dd[k]; if (lc <= 0.3 || dd <= TR.d0 || excluded(x, z)) continue;
+          const sl = Math.hypot(caGH(i + 1, j) - caGH(i - 1, j), caGH(i, j + 1) - caGH(i, j - 1)) / (2 * VRC);
+          TG[k] = sstep(0.3, 0.7, sstep(0.3, 0.7, lc) * sstep(TR.d0, TR.d0 + 6, dd) * sstep(rB, rA, d) * sstep(TR.slope + 0.35, TR.slope, sl) * (TR.flat ? sstep(TR.flat, TR.flat * 2.5, sl) : 1)); }
+      }
+      const vert = (i, j) => {   // [x, g, z, tf, the ground's colour r, g, b] at the mesh's vertex (i, j)
+        const k = j * NX + i, x = G.x0 + i * VRC, z = G.z0 + j * VRC, g = caGH(i, j);
+        if (!cDone[k]) { cDone[k] = 1; const nx = -(caGH(i + 1, j) - caGH(i - 1, j)) / (2 * VRC), nz = -(caGH(i, j + 1) - caGH(i, j - 1)) / (2 * VRC), c = krCol(x, z, g, 1 / Math.hypot(nx, 1, nz), G.dd[k]);
+          CG[k * 3] = c[0]; CG[k * 3 + 1] = c[1]; CG[k * 3 + 2] = c[2]; }
+        return [x, g, z, TG[k], CG[k * 3], CG[k * 3 + 1], CG[k * 3 + 2]]; };
+      const lv = (a, b, t) => { const o = new Array(7); for (let q = 0; q < 7; q++) o[q] = a[q] + (b[q] - a[q]) * t; return o; };
+      const clip = (poly, L, up) => {   // the part of a convex polygon with its ground above the level L (up) or below it
+        const o = [];
+        for (let q = 0; q < poly.length; q++) { const a = poly[q], b = poly[(q + 1) % poly.length], ia = up ? a[1] >= L : a[1] <= L, ib = up ? b[1] >= L : b[1] <= L;
+          if (ia) o.push(a); if (ia !== ib) o.push(lv(a, b, (L - a[1]) / (b[1] - a[1]))); }
+        return o; };
+      const PD = TR.paddy, pdSum = PD.reduce((s, p) => s + p[0], 0);
+      const PS = TR.patch || 22, pCol = (k, x, z) => { const pu = Math.floor((x * 0.62 + z * 0.78) / PS), pv = Math.floor((x * 0.78 - z * 0.62) / PS); let h = rpHash(k * 131 + pu * 7 + pv * 977, 113) * pdSum, q = 0;
+        while (q < PD.length - 1 && (h -= PD[q][0]) > 0) q++;
+        const c = PD[q][1], e = 0.93 + 0.12 * rpHash(k * 31 + pu * 3 + pv * 5, 117); return [c[0] * e, c[1] * e, c[2] * e, q === 0 ? 60 : 10]; };
+      const mixC = (v, c, f) => { const t = sstep(0.12, 0.4, f); return [lerp(v[4], c[0], t), lerp(v[5], c[1], t), lerp(v[6], c[2], t)]; };
+      const uvT = (a, s) => [a[0] / s, -a[2] / s];   // (the ground's top-down UVs: the grit every 10 m; the flooded paddies' smoother, every 60 m)
+      const triU = (g, a, b, c, ca, cb, cc, s = 10) => {   // a triangle facing up
+        if ((b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]) >= 0) g.tri(a, b, c, ca, cb, cc, uvT(a, s), uvT(b, s), uvT(c, s)); else g.tri(a, c, b, ca, cc, cb, uvT(a, s), uvT(c, s), uvT(b, s)); };
+      const triH = (g, a, b, c, ca, cb, cc, dx, dz) => {   // a triangle facing the horizontal (dx, dz)
+        const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+        if ((uy * vz - uz * vy) * dx + (ux * vy - uy * vx) * dz > 0) g.tri(a, b, c, ca, cb, cc, uvT(a, 10), uvT(b, 10), uvT(c, 10)); else g.tri(a, c, b, ca, cc, cb, uvT(a, 10), uvT(c, 10), uvT(b, 10)); };
+      const piece = (g, tri) => {
+        let lo = 1e9, hi = -1e9; for (const v of tri) { lo = Math.min(lo, v[1]); hi = Math.max(hi, v[1]); }
+        if (tri[0][3] + tri[1][3] + tri[2][3] <= 0) return;
+        const x0 = tri[0][0], z0 = tri[0][2], ex = tri[1][0] - x0, ez = tri[1][2] - z0, fx = tri[2][0] - x0, fz = tri[2][2] - z0, eg = tri[1][1] - tri[0][1], fg = tri[2][1] - tri[0][1], det = ex * fz - fx * ez;
+        let ux = (eg * fz - fg * ez) / det, uz = (ex * fg - fx * eg) / det; const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;   // (uphill)
+        for (let k = Math.floor(lo / dh); k * dh < hi; k++) {   // the paddies: the triangle's part in each band, level at its top
+          const poly = clip(clip(tri, k * dh, true), (k + 1) * dh, false); if (poly.length < 3) continue;
+          let cx = 0, cz = 0; for (const v of poly) { cx += v[0]; cz += v[2]; } const pc = pCol(k, cx / poly.length, cz / poly.length), yk = (k + 1) * dh;
+          const P3 = poly.map(v => [v[0], v[1] + (yk - v[1]) * v[3], v[2]]), C3 = poly.map(v => mixC(v, pc, v[3]));
+          for (let q = 1; q + 1 < poly.length; q++) triU(g, P3[0], P3[q], P3[q + 1], C3[0], C3[q], C3[q + 1], pc[3]);
+          nTerr++;
+        }
+        for (let m = Math.floor(lo / dh) + 1; m * dh <= hi; m++) {   // the walls: along each contour across the triangle, from the paddy below up to the dike's top
+          const L = m * dh, pts = [];
+          for (let q = 0; q < 3; q++) { const a = tri[q], b = tri[(q + 1) % 3]; if ((a[1] < L) !== (b[1] < L)) pts.push(lv(a, b, (L - a[1]) / (b[1] - a[1]))); }
+          if (pts.length !== 2 || pts[0][3] + pts[1][3] <= 0.02) continue;
+          const [p, q] = pts, wc = TR.wall, e = 0.9 + 0.16 * rpHash(m * 17 + Math.floor(p[0] / 9) * 5 + Math.floor(p[2] / 9) * 101, 119), cw = [wc[0] * e, wc[1] * e, wc[2] * e];
+          const pb = [p[0], L, p[2]], qb = [q[0], L, q[2]], pt = [p[0], L + (dh + TR.lip) * p[3], p[2]], qt = [q[0], L + (dh + TR.lip) * q[3], q[2]];
+          const cp = mixC(p, cw, p[3]), cq = mixC(q, cw, q[3]), dp = mixC(p, TR.dike, p[3]), dq = mixC(q, TR.dike, q[3]);
+          triH(g, pb, qb, qt, cp, cq, cq, -ux, -uz); triH(g, pb, qt, pt, cp, cq, cp, -ux, -uz);
+          const pi = [p[0] + ux * TR.dikeW, L + dh * p[3] - 0.02, p[2] + uz * TR.dikeW], qi = [q[0] + ux * TR.dikeW, L + dh * q[3] - 0.02, q[2] + uz * TR.dikeW];   // (the dike: its top back onto the paddy above)
+          triU(g, pt, qt, qi, dp, dq, dq); triU(g, pt, qi, pi, dp, dq, dp);
+          nTerrW++;
+        }
+      };
+      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
+        if (!G.on[tj * G.ntx + ti]) continue;
+        for (let j = tj * VRT; j < Math.min(G.nz - 1, (tj + 1) * VRT); j++) for (let i = ti * VRT; i < Math.min(NX - 1, (ti + 1) * VRT); i++) {
+          const k = j * NX + i; if (TG[k] + TG[k + 1] + TG[k + NX] + TG[k + NX + 1] <= 0) continue;
+          const g = terr.get(G.x0 + (i + 0.5) * VRC, G.z0 + (j + 0.5) * VRC), a = vert(i, j), b = vert(i + 1, j), c = vert(i, j + 1), d = vert(i + 1, j + 1);
+          piece(g, [a, c, b]); piece(g, [b, c, d]);   // (the mesh's two triangles: split on the cell's anti-diagonal, as krTileGeo)
+        }
+      }
+      const tMt = pkGroundMat(); Object.assign(tMt, { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });   // (the ground's own material: its grit, the walls' projected sideways)
+      for (const g of terr.map.values()) { if (g.empty) continue; const geo = g.geometry(), N = geo.attributes.normal.array, st = new Float32Array(N.length / 3);
+        for (let q = 0; q < st.length; q++) st[q] = sstep(0.78, 0.5, N[q * 3 + 1]);
+        geo.setAttribute('steep', new THREE.BufferAttribute(st, 1)); const m = new THREE.Mesh(geo, tMt); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+    }
+
     /* ---- the plants (instanced per 96 m chunk): the look's kinds (LK.kinds: krTreeGeo, KS) and their mix on each land cover (LK.mix[lc]: the
        share of the 4 m grid's points planted, the weight of each kind); the small ones only near the road (KS.near) ---- */
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
@@ -916,7 +1086,7 @@
           const hd = vrDist(x, z); if (hd > LOD.radius(260)) continue;
           const M = LK.mix[vrLC(x, z)] || LK.mix[0]; if (r1 > M[0]) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.4) continue; if (nn.i >= 0 && nn.dd < 6 && r2 < 0.3) continue;
-          if (excluded(x, z) || pathD(x, z) < 1.2) continue;
+          if (excluded(x, z) || pathD(x, z) < 1.2 || (TG && tfG(x, z) > 0.25)) continue;   // (none on the terraces' paddies)
           const sl = caSlope(x, z); if (sl > 1.25 || (sl > 0.7 && r2 < (sl - 0.7) / 0.55)) continue;
           const sp = pick(M[1], r3), S = KS[KN[sp]];
           if (S.near && hd > LOD.radius(S.near)) continue;
@@ -987,13 +1157,13 @@
       }
       for (let s = 6; s < T.len - 6; s += 4.2) for (const side of [-1, 1]) {   // stones beside the road
         if (RW() > 0.4) continue; const o = 1.8 + Math.pow(RW(), 1.6) * 34, [x, z] = onSide(s, side, o), sz = 0.18 + RW() * 0.45;
-        if (vrNear(x, z).dd < sz + 0.5 || excluded(x, z) || vrLC(x, z) === 6) continue;
+        if (vrNear(x, z).dd < sz + 0.5 || excluded(x, z) || vrLC(x, z) === 6 || (TG && tfG(x, z) > 0.2)) continue;
         rockOn(scen.get(x, z), x, z, sz * 0.2, sz * 1.3, sz, sz, RW() * TAU, vary(rockC(), RW, 0.08), RW, 0.35);
       }
       for (let s = 10; s < T.len - 10; s += 7) for (const side of [-1, 1]) {   // blocks at the foot of the cuts
         if (RW() > 0.32) continue;
         const o = 1.6 + Math.pow(RW(), 1.5) * 30, [x, z] = onSide(s, side, o), sz = 0.5 + RW() * 1.3; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
-        if (caSlope(x, z) < 0.4) continue;
+        if (caSlope(x, z) < 0.4 || (TG && tfG(x, z) > 0.2)) continue;
         rockOn(scen.get(x, z), x, z, sz * 0.3, sz * 1.2, sz, sz, RW() * TAU, vary(rockC(), RW, 0.1), RW, 0.3);
       }
       const crag = (x, z, n, rMax) => { const g = scen.get(x, z), b0 = vary(rockC(), RW, 0.06);
@@ -1001,7 +1171,7 @@
           rockOn(g, qx, qz, r0 * 0.35, r0, r0 * (0.9 + RW() * 0.9), r0 * (0.7 + RW() * 0.4), RW() * TAU, vary(b0, RW, 0.07), RW, 0.35); } };
       for (let s = 16; s < T.len - 16; s += 12) for (const side of [-1, 1]) {   // crags where the slope is steep
         if (RW() < 0.6) continue;
-        const [x, z] = onSide(s, side, 12 + RW() * 120); if (excluded(x, z) || vrNear(x, z).dd < 10 || vrDist(x, z) > LOD.cap(110)) continue;
+        const [x, z] = onSide(s, side, 12 + RW() * 120); if (excluded(x, z) || vrNear(x, z).dd < 10 || vrDist(x, z) > LOD.cap(110) || (TG && tfG(x, z) > 0.2)) continue;
         if (caSlope(x, z) < (LK.rocks.crag || 1.0)) continue;
         crag(x, z, 1 + Math.floor(RW() * 3), 2.6);
       }
@@ -1042,6 +1212,7 @@
     crowdFinish(CR, root, out);
     out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, marks: nMarks, boards: nBoards, karst: nKarst, far: !!FAR };   // (read by the tests)
     if (LK.rocks.ledges) out.stats.ledges = nLedge; if (LK.extras) out.stats.extras = nX; if ((def.bld || []).length) Object.assign(out.stats, { bldMoved: nBldMoved, bldOut: nBldOut });
+    if (LK.terr) Object.assign(out.stats, { terr: nTerr, terrWalls: nTerrW });
     if (LK.rocks.boulders) out.stats.granite = nGranite; if ((def.lanes || []).length) out.stats.lanes = nLane; if ((def.stops || []).length) out.stats.stops = nStops;
     return out;
   }
@@ -1054,4 +1225,6 @@
   World.ext.mujib = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.mujib);
   World.keep('VR', 'sanssouci');
   World.ext.sanssouci = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.sanssouci);
+  World.keep('VR', 'banaue');
+  World.ext.banaue = (scene, tex, opts) => buildKratke(scene, tex, opts, KR.banaue);
 })();

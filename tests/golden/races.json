@@ -2599,6 +2599,56 @@
   "nan": false,
   "digest": "721631a6f881d319ee37e0e4"
  },
+ "banaue/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 40.06,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c4c3bb27a83140eb80b4f23e"
+ },
+ "banaue/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 43.98,
+  "spins": 1,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c6205afc9a978e53c00a7b0b"
+ },
+ "banaue/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 37.18,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "585048a99d76e50a5c07d958"
+ },
+ "banaue/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 37.62,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a207d1245c2fea5955fa8fe1"
+ },
+ "banaue/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 40.21,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9fbe75c1259c18d8f3a3f60d"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
