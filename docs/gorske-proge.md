@@ -14,6 +14,7 @@ Načrt sklopa šestnajstih kratkih prog zunaj Evrope, vsaka iz druge države: 4 
 - **1. 11.**: proga 1 ima svoj pull request; proge 2–16 gredo v **5 skupinah** (A: 2–4, B: 5–7, C1: 8–10, C2: 11–13, D: 14–16), vsaka skupina je ena seja, ena veja `gorske-proge/skupina-<X>` in en pull request, ki gre na `main`, ko so zeleni vsi testi. Skupine gredo ena za drugo (naslednja se začne, ko je prejšnja na `main`). Seja skupine prebere repozitorij in načrt enkrat, gradnik družine naredi in takoj uporabi pri vseh progah skupine.
 - **1. 11.**: napor: proga 1 (z gradniki) **max**, proge 2–16 **xhigh**. Izvedba: koordinacijska seja pred zagonom seje proge naredi vejo `gorske-proge/<NN>-<id>` iz `origin/main` z enim začasnim commitom, ki v `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` na `xhigh`, in sejo zažene s te veje. Seja proge ta commit vrne (`git revert`), preden pull request označi kot pripravljen; koordinacijska seja pred združitvijo preveri, da pull request `.claude/settings.json` ne spreminja.
 - **1. 11.**: verigo vodi koordinacijska seja (tista, ki je napisala ta načrt) z naporom medium: čaka na teste (`subscribe_pr_activity`), združi pull request, posodobi Stanje in zažene naslednjo progo. Seja proge pull request odpre kot osnutek, ga označi kot pripravljenega, ko so lokalno zeleni povezani testi, in koordinacijski seji pošlje eno vrstico (`send_message` na `@parent`). Če test na GitHubu pade, ji koordinacijska seja pošlje napako in seja proge jo popravi.
+- **8. 11. 2026**: Milford Sound (proga 6, skupina B) odpade: Nova Zelandija dobi dirkališče Cromwell (odločitev uporabnika ob 20.05, prek Mateja, tabla #382, komentar 6726246790; `docs/proge-po-drzavah.md`, `docs/nove-proge-1-0.md`, »Del 3«). Proge s čakanja od 7. 11. 2026 delajo seje po `docs/nove-proge-1-0.md`; tabela Stanje kaže, kam je šla vsaka skupina.
 - Zemljevid od zgoraj, prelet in helikopterski posnetek se ne delajo (po `CLAUDE.md` so po želji pozneje). Slika za meni je obvezna.
 
 ## Kaj vidi kamera (merilo za odseke in detajle)
@@ -158,9 +159,9 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 
 | Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026) |
-| A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | čaka na znak VSE SEJE 2 (prej Deli sklop 4 in delitev skupnih datotek prog) |
-| B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | čaka |
-| C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | čaka |
-| C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | čaka |
-| D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | čaka |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026); od 5. 11. 2026 testna proga (`test: true`, odločitev uporabnika, #379), gradniki ostanejo |
+| A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | preneseno: Medeu je B8 v `docs/nove-proge-1-0.md` (del 2, skupina N5; potrjeno 8. 11. 2026) |
+| B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
+| C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | Yungas: ne začni (brez izletne cone, 5. 11. 2026); Ella preneseno: A10 v `docs/nove-proge-1-0.md` (del 2, N5) |
+| C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | preneseno v `docs/nove-proge-1-0.md` (del 2): Dadès A7 (PR #508), Santo Antão A8 (PR #521), Espinazo del Diablo A11 |
+| D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | odpade (Punta del Este in Puerto Madero: ne začni, brez izletne cone, 5. 11. 2026) |

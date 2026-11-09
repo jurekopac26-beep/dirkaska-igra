@@ -20,19 +20,14 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Bathurst, Avstralija](docs/proge/bathurst.md)
 - [Chapman's Peak, Južna Afrika](docs/proge/chapman.md)
 - [Tianmen, Kitajska](docs/proge/tianmen.md)
-- [Sani Pass, Južna Afrika](docs/proge/sani.md)
 - [Irohazaka, Japonska](docs/proge/iroha.md)
 - [Rio do Rastro, Brazilija](docs/proge/rastro.md)
 - [Crystal Palace, Anglija](docs/proge/cpalace.md)
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
-- [Toronto, Kanada](docs/proge/toronto.md)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
-- [Bang Saen, Tajska](docs/proge/bangsaen.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
-- [Trois-Rivières, Kanada](docs/proge/troisrivieres.md)
-- [Mount Buller, Avstralija](docs/proge/mountbuller.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
@@ -63,6 +58,11 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Mount Hotham, Avstralija](docs/proge/hotham.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Newcastle, Avstralija](docs/proge/newcastle.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Townsville, Avstralija](docs/proge/townsville.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Mount Buller, Avstralija](docs/proge/mountbuller.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Toronto, Kanada](docs/proge/toronto.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Trois-Rivières, Kanada](docs/proge/troisrivieres.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Sani Pass, Južna Afrika](docs/proge/sani.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 
@@ -118,7 +118,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `css/style.css` | slogi |
 | `js/vendor/three.r128.min.js` | knjižnica three.js (MIT) |
 | `js/tracks/<id>.js` | ena datoteka na progo: oblika, višine, sidrišča okolice, imena krajev (vrstni red v `index.html` = vrstni red v meniju) |
-| `js/cars/<id>.js` | ena datoteka na vozilo (33 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
+| `js/cars/<id>.js` | ena datoteka na vozilo (34 novih vozil): ime, kategorija, opis, fizika, zvok, cena, tekmeci, deli, ki odpadejo, in 3D model iz gradnikov KIT (opis na začetku `js/render.js`) |
 | `js/lang.js` | besedila v angleščini (slovar: slovensko besedilo → angleško), številke, denar in mesta po jeziku, prevod strani (`index.html`) ob zamenjavi jezika |
 | `js/core.js` | proge, fizika (Circuit Superstars, oprijem v dežju), AI, pravila dirke in prvenstva, promet (tudi tovornjaki in enosmerne ceste; po levi na progah z `leftHand`) in pešci na odprti cesti, galerije proti plazovom, prepadi brez ograj (avto zgrmi čez rob), policija, vozni park (vozila in kategorije, deli, ki odpadejo, izgubljena kolesa, odstop) (brez DOM in three.js) |
 | `js/tex.js` | proceduralne teksture |
@@ -154,7 +154,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 
 ### Novo vozilo
 
-1. Nova datoteka `js/cars/<id>.js` po vzoru obstoječih (npr. `js/cars/levs.js`): `VEHICLE_DEFS.push({ id, name, cat, drive, desc, phys, arc, stats, price, field, snd, expect, parts, look, … })`. Na vrhu je opis vozila (mere, medosna razdalja, prepoznavni deli), `look` pa je 3D model iz gradnikov KIT (opis je na začetku `js/render.js`: karoserija iz prerezov, deli, ki odpadejo, in njihovi tečaji, luči, številka, voznik, kolesa). Neobvezno je `tank` (kg goriva v polnem rezervoarju; brez njega ga igra določi po kategoriji in masi). Neobvezno je tudi `mounts` (mesta za dele iz garaže: krilo, luči, platišča; dogovor v `docs/deli.md`). Veliko vozilo ima še `fieldN` (največ toliko enakih tekmecev, zaradi obremenitve telefona) in `fill` (počasnejši navadni avti s podobnim tempom, ki dopolnijo polje do polnega; npr. `js/cars/goljat.js`).
+1. Nova datoteka `js/cars/<id>.js` po vzoru obstoječih (npr. `js/cars/levs.js`): `VEHICLE_DEFS.push({ id, name, cat, drive, desc, phys, arc, stats, price, field, snd, expect, parts, look, … })`. Na vrhu je opis vozila (mere, medosna razdalja, prepoznavni deli), `look` pa je 3D model iz gradnikov KIT (opis je na začetku `js/render.js`: karoserija iz prerezov, deli, ki odpadejo, in njihovi tečaji, luči, številka, voznik, kolesa). Neobvezno je `tank` (kg goriva v polnem rezervoarju; brez njega ga igra določi po kategoriji in masi). Neobvezno je tudi `mounts` (mesta za dele iz garaže: krilo, luči, platišča; dogovor v `docs/deli.md`). Veliko vozilo ima še `fieldN` (največ toliko enakih tekmecev, zaradi obremenitve telefona) in `fill` (počasnejši navadni avti s podobnim tempom, ki dopolnijo polje do polnega; npr. `js/cars/goljat.js`). Vlačilec s polpriklopnikom ima še `trailer` (masa, mere, osi, kingpin, oprijem in zavore prikolice ter njen videz `look.build(B)` s tremi stopnjami podrobnosti: polna za igralca, lahka za tekmece in senca; fizika, kamera, posnetek, duh in igra na več telefonih jo vzamejo sami; zgled `js/cars/cisterna.js`, opis `docs/titan-cisterna.md`). Cestni vlak z dvema zgiboma ima v `trailer` še `next`, drugi polpriklopnik na sedlu dollyja: `kp[0]` je kingpin, merjen od kingpina prvega, `dax` so osi dollyja, `lim` je meja zgiba v radianih. Dolly je trdno pripet na prvega, njegov videz je del prvega. Zrcalna pločevina je `look.mirror { k, uv }` (odsev okolice na delih teksture `uv`, brez dodatnih klicev risanja). Zgled je `js/cars/zrcalni.js`, opis `docs/zrcalni-vlak.md`.
 2. Opis (`desc`) prevedi v angleščino v slovarju `js/lang.js` (ime vozila ostane, kot je).
 3. V `index.html` dodaj `<script src="js/cars/<id>.js"></script>` za zadnjim vozilom, pred `js/core.js` (vozila se dodajajo le na konec: nobeno se ne briše ali premakne, staro se le upokoji z `retired: true`), id dodaj na konec seznama `ROSTER` v `tests/fleet.test.js` in zaženi `node tools/stamp.js --check` (povezava brez žiga; žige doda objava).
 4. Videz preveri s `node tools/carshots.mjs <id>` in `node tools/carshots.mjs --cat <kategorija>`.
