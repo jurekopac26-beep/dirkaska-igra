@@ -40,5 +40,5 @@ Ostali dve ugotovitvi tu nista popravljeni:
 
 ## Preverjanje
 
-- Vsak popravljen test 10-krat, po 4 hkrati na 4 jedrih (obremenitev ~22): `slip`, `weather`, `hud` in `pitswing` 10 od 10.
-- `npm run test:related` (10 testov, 1515 s): vsi zeleni.
+- Vsak popravljen test 10-krat, po 4 hkrati na 4 jedrih (obremenitev ~22): `slip`, `weather`, `hud`, `pitswing` in `pitahead` (s popravkom igre) 10 od 10. Brez popravka igre je `pitahead` v ponovljivi dirki padel 10 od 10.
+- `npm run test:related` po spoju svežega `main` (fa35dd65, z #305, #460 in #461): 21 od 21 zelenih (2546 s).
