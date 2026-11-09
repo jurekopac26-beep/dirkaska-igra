@@ -371,11 +371,11 @@
   "jsMs": 4.38
  },
  "killar": {
-  "calls": 141,
-  "maxCalls": 169,
+  "calls": 144,
+  "maxCalls": 173,
   "kverts": 273,
   "maxKverts": 350,
-  "jsMs": 2.06
+  "jsMs": 1.62
  },
  "zurich": {
   "calls": 132,

@@ -1417,16 +1417,16 @@
   }
  },
  "killar": {
-  "meshes": 1525,
+  "meshes": 1560,
   "verts": 1028421,
   "instances": 43820,
   "props": 95,
   "crowd": 146,
-  "world": "c82d3f86",
+  "world": "c3a1cd82",
   "propsHash": "5a404b3",
-  "floor": "fdb77fbb/9520",
+  "floor": "52ec0407/9520",
   "groups": {
-   "-:MeshLambertMaterial": "ea2df3e1",
+   "-:MeshLambertMaterial": "4348934a",
    "-:MeshPhongMaterial": "e56192b8",
    "-:MeshBasicMaterial": "ba41681d",
    "crowd:MeshLambertMaterial": "169a82ca",

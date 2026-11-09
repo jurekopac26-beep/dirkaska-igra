@@ -108,7 +108,7 @@
     R = lerp(R, 0.55 + rust * 0.08, ro * 0.35 * (1 - st)); G = lerp(G, 0.52, ro * 0.35 * (1 - st)); B = lerp(B, 0.48, ro * 0.35 * (1 - st));   // the scree: paler
     R = lerp(R, 0.62, se * 0.5); G = lerp(G, 0.6, se * 0.5); B = lerp(B, 0.56, se * 0.5);
     const sn = unSnow(x, z, A, ny, sz); R = lerp(R, 1.02, sn); G = lerp(G, 1.04, sn); B = lerp(B, 1.09, sn);
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - sn); R = lerp(R, 0.52, t); G = lerp(G, 0.5, t); B = lerp(B, 0.46, t); }
+    if (dd < 4 && !UNK) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - sn); R = lerp(R, 0.52, t); G = lerp(G, 0.5, t); B = lerp(B, 0.46, t); }   // (the gravel verge; Killar: none, the meadow up to the road's edge: the user's decision of 9. 11. 2026 at ~22.20)
     UNCOL[0] = R; UNCOL[1] = G; UNCOL[2] = B; return UNCOL;
   }
   function unGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in unTileGeo)
@@ -422,6 +422,10 @@
       if (galAt[i]) return [[e + sw, -0.02], [bar - 0.3, -0.02], [bar + 0.2, 0.18], [bar + 0.5, 0.2], [bar + 0.9, 0.2]];   // (a gallery: a concrete kerb along its walls)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return unGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (UNW && UNW[side > 0 ? 1 : 0][i] > 0.5) return [[e + sw, -0.02], [bar - 0.15, -0.05], [bar + 0.25, gAt(bar + 0.25) * 0.5 - 0.1], [bar + 0.9, gAt(bar + 0.9) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (the edge of a drop: a rough lip, then the cliff)
+      if (UNK) {   // Killar: no ditch and no verge of its own (the user's decision of 9. 11. 2026 at ~22.20, »zbrisi ta koridor«): from the shoulder on the meadow, level with the road, then down
+        // or up to the slope, drawn as the terrain (mead: the terrain's own colours and material, below)
+        const y4 = gAt(bar + 1.9) + 0.03, y2 = Math.max(-0.12, gAt(bar + 0.4) + 0.05), r = [[e + sw, -0.02], lift(Math.max(e + sw + 0.4, bar - 0.6), -0.1), [bar + 0.4, y2], [bar + 1.1, Math.max(lerp(y2, y4, 0.47), gAt(bar + 1.1) + 0.05)], [bar + 1.9, y4]];
+        r.mead = 1; return r; }
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.4, bar - 0.6), -0.1), [bar + 0.4, Math.min(-0.35, gAt(bar + 0.4) - 0.2)], lift(bar + 1.1, -0.25), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
@@ -433,11 +437,11 @@
           if (onBr[i]) return k < 3 ? deck : [0.5, 0.49, 0.47];
           if (galAt[i]) return k < 2 ? [0.55, 0.54, 0.51] : conc;
           const lip = UNW && UNW[si][i] > 0.5; if (lip && (k === 1 || k === 2)) { const q = 0.9 + 0.16 * rpHash(i >> 1, 51 + si); return k === 1 ? [rockL[0] * q * 1.1, rockL[1] * q * 1.08, rockL[2] * q * 1.05] : [rockL[0] * q, rockL[1] * q * 0.94, rockL[2] * q * 0.9]; }   // (the rock lip of a drop)
-          if (k === 4) return unGCol(x, z);
+          if (k === 4 || vp[si][i].mead) return unGCol(x, z);
           const sl = k === 2 ? unSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return unCol(x, z, T.hy[i] + y, 1 / l, 0, Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
+        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true), gt = new GB(true);   // (gt: Killar's meadow by the road, in the terrain's material)
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
@@ -449,11 +453,12 @@
             gs.quadUp(Pt(i, side * w, 0.012), Pt(i, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * w, 0.012), [sc, sc, sc, sc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
             for (let k = 0; k < 4; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               if (k >= 1 && UNW && (UNW[si][i] > 0.5 || UNW[si][j] > 0.5)) gv.quadO(a, b, c, d, null, Pt(i, -side * 2, -6), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the lip and the cliff's top: facing up and out over the drop)
-              else gv.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
+              else (qi.mead && qj.mead ? gt : gv).quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
         SB.emit(c0, c0 + 60, gr, gs, gl);   // (the side roads whose junctions are in this chunk)
         addM(gr, UNK ? rMat : aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        if (!gt.empty) { const tg = gt.geometry(); tg.setAttribute('steep', new THREE.Float32BufferAttribute(new Float32Array(tg.attributes.position.count), 1)); const m = new THREE.Mesh(tg, tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); }   // (flat: 'steep' 0)
       }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
