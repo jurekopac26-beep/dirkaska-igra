@@ -251,6 +251,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane; the walls in front of the big grandstand on the left of both straights
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the big grandstand between the straights (facing the main straight and, from its other side, the back straight), the covered stands outside Turn 1 and before Turn 7, the open stands on the banks inside Turn 5, outside Turns 10-11 and outside Turn 13
     stands: %(stands)s,
+    zaslon: { d: -247, side: -1, off: 16.6 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs sepang)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the back straight from Turn 14 to Turn 15, the main straight from Turn 15 to Turn 1
     sectors: %(sectors)s,   // the three sectors of the timing screens: Turns 1-4, Turns 5-11, Turns 12-15 with the two straights
     dem: %(dem)s,

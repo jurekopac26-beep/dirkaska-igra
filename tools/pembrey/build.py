@@ -219,6 +219,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: across the finish straight from the pits, outside the east hairpin
     stands: %(stands)s,
+    zaslon: { d: 21, side: -1, off: 16 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs pembrey)
     sectors: %(sectors)s,   // the three sectors of the timing screens: the north end and the infield, the east side and the hairpin, the long straight and the long right
     dem: %(dem)s,
     lc: %(lc)s,

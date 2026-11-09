@@ -251,6 +251,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     wide: %(wide)s,   // the main grandstand back behind a wide verge on the right of the main straight
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand along the main straight, the roofed stand outside Turn 1, the bleachers outside Turns 5-6, Turn 8, Turn 9, by the kink, outside Turn 12 and after Turn 14
     stands: %(stands)s,
+    zaslon: { d: -269, side: 1, off: 25.1 },   // the big screen (js/world-zaslon.js) by the grandstand on the right, turned towards the cars coming (node tools/zaslon-mesto.mjs tuzla)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the back straight from Turn 10 to Turn 12, the main straight from Turn 14 to Turn 1
     sectors: %(sectors)s,   // the three sectors of the timing screens: Turns 1-6, Turns 7-9 with the long left, the back straight and the last chicane
     dem: %(dem)s,

@@ -312,6 +312,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     wide: %(wide)s,   // the barriers back behind wide verges by the grandstands: after Turn 1, before and after the hairpin, outside Turns 9-11
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the roofed stand after Turn 1, the bleachers before and after the hairpin and outside Turns 9-11 (the main grandstand over the pits: World's own)
     stands: %(stands)s,
+    zaslon: { d: 26, side: 1, off: 17.5 },   // the big screen (js/world-zaslon.js) on the right by the start (across from the pits), turned towards the cars coming (node tools/zaslon-mesto.mjs buriram)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the main straight from Turn 12 to Turn 1, the long straight from Turn 1 to the hairpin
     sectors: %(sectors)s,   // the three sectors of the timing screens: to the hairpin and back up past it, the infield round the pond, the east side and the main straight
     dem: %(dem)s,

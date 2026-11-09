@@ -280,6 +280,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     wide: %(wide)s,   // the barriers back behind wide verges by the grandstands: the main straight's right, between Turns 1 and 2, inside Turns 5 and 6, by Turns 7-8, after Turn 12, by Turns 13-14 (both sides)
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand along the main straight and its open continuation, the blocks between Turns 1 and 2, inside Turns 5 and 6, by Turns 7-8, outside Turn 12, by Turns 13-14 (both sides) and outside Turns 15-16
     stands: %(stands)s,
+    zaslon: { d: 139, side: 1, off: 27.5 },   // the big screen (js/world-zaslon.js) by the grandstand on the right, turned towards the cars coming (node tools/zaslon-mesto.mjs lombok)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the straight towards the sea from Turn 8 to Turn 10, the main straight from Turn 17 to Turn 1
     sectors: %(sectors)s,   // the three sectors of the timing screens: Turns 1-7, Turns 8-12 by the sea, the west side
     dem: %(dem)s,

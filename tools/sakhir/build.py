@@ -382,6 +382,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.sakhir.pitBox)
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
     wide: %(wide)s,   // the barrier back behind the lawn before the main grandstand
+    zaslon: { d: -170, side: -1, off: 19.6 },   // the big screen (js/world-zaslon.js) on the left by the start (across from the pits), turned towards the cars coming (node tools/zaslon-mesto.mjs sakhir)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the main straight from Turn 15 to Turn 1, the climb from Turn 3 to Turn 4, the back straight from Turn 10 to Turn 11
     sectors: %(sectors)s,   // the three sectors of the timing screens: up to the top and through the esses, the valley and the back straight, the climb, the long straight and the main straight
     dem: %(dem)s,

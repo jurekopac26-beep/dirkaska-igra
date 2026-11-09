@@ -200,6 +200,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane; the barriers this side of the river where it runs by the circuit
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: on the grass above the long right and outside the hilltop hairpin
     stands: %(stands)s,
+    zaslon: { d: 636, side: -1, off: 22 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs kagerod)
     sectors: %(sectors)s,   // the three sectors of the timing screens: to the long right, the hill, the river loop and the straight
     dem: %(dem)s,
     lc: %(lc)s,
