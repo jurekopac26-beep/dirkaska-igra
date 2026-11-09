@@ -34,5 +34,5 @@ Prejšnji popravki nestabilnih testov na `main`: #317, #404, #429, #443, #445.
 
 ## Preverjanje
 
-- Vsak popravljen test 10-krat, po 4 hkrati (4 jedra, obremenjen procesor).
-- `npm run test:related`.
+- Vsak popravljen test 10-krat, po 4 hkrati na 4 jedrih (obremenitev ~22): `slip`, `weather`, `hud` in `pitswing` 10 od 10.
+- `npm run test:related` (10 testov, 1515 s): vsi zeleni.
