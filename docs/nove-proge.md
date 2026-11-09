@@ -137,7 +137,7 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 | 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | naslednja (2A) |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
 | 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | narejena v PR #545 (osnutek do vrste; B9, skupina N5, vrstica 17d v `docs/vrsta.md`; opis `docs/proge/llogara.md`) |
-| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka |
+| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | narejena v PR #554 (osnutek do vrste; B10, skupina N6, vrstica 18 v `docs/vrsta.md`; opis `docs/proge/portomoniz.md`) |
 | 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | čaka |
 | 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | čaka |
 | 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | končano v PR #533 (osnutek; A9, skupina N5 v `docs/nove-proge-1-0.md`; enosmerni tlakovani spust 3 km namesto makadama, opis v `docs/proge/ngorongoro.md`) |

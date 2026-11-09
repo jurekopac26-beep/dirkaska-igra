@@ -2699,6 +2699,56 @@
   "nan": false,
   "digest": "a64e2cd2e8c2049382ce418f"
  },
+ "portomoniz/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 131.99,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "936fb2ddee5af90bf40373ec"
+ },
+ "portomoniz/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 142.32,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "4c92cda4722efbd93131d6cf"
+ },
+ "portomoniz/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 121.81,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "dd05b46ac1fa4f4564aa7fb8"
+ },
+ "portomoniz/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 123.11,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c7c3e2e178a826a0dd206976"
+ },
+ "portomoniz/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 133.05,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "30e0c724d86b0b4c8f5de47a"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,

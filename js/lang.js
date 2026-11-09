@@ -472,6 +472,7 @@
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Bunkerji': 'Bunkers', 'Qafa e Llogarasë': 'Llogara Pass', 'Spomenik': 'Monument', 'Znamenje': 'Wayside Shrine', 'Vzletišče': 'Paragliders\' Launch', 'Čez prelaz': 'Over the pass',   // (Llogara: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
+    'Kapelica': 'Wayside Shrine', 'Do morja': 'Down to the sea',   // (Porto Moniz: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place, the town as it is)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)

@@ -5291,6 +5291,104 @@
    "repairs": 0
   }
  },
+ "portomoniz/race/cs": {
+  "digest": "a15ac9c96a56ad848f28b484",
+  "lead": 1729.5,
+  "car0": [
+   533.24,
+   -365.03
+  ],
+  "cover": {
+   "dmg": 0.03,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/demo/cs": {
+  "digest": "d592ad409273af8aadf9ed1a",
+  "lead": 1865.9,
+  "car0": [
+   342.81,
+   -395.93
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/upg/cs": {
+  "digest": "a9dcc4f829a2964b4c7e44c1",
+  "lead": 1840.7,
+  "car0": [
+   423.98,
+   -403
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/crash/cs": {
+  "digest": "c107513caeccb29529946f65",
+  "lead": 1727.6,
+  "car0": [
+   532.83,
+   -365.89
+  ],
+  "cover": {
+   "dmg": 0.9,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/formula/cs": {
+  "digest": "d24c81109fdc8a3dbf99c400",
+  "lead": 1867.7,
+  "car0": [
+   500.37,
+   -405.35
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/lm/cs": {
+  "digest": "811fac9699fe43841bee266d",
+  "lead": 1851.2,
+  "car0": [
+   484.94,
+   -414.99
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "portomoniz/car/cs": {
+  "digest": "a61b61c7e302422bbfab46cf",
+  "lead": 1724.1,
+  "car0": [
+   559.85,
+   -323.82
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "livorno/race/cs": {
   "digest": "5b601641952b407dbb9ec42d",
   "lead": 2185.5,

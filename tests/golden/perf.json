@@ -495,5 +495,12 @@
   "kverts": 276,
   "maxKverts": 326,
   "jsMs": 1.44
+ },
+ "portomoniz": {
+  "calls": 208,
+  "maxCalls": 246,
+  "kverts": 498,
+  "maxKverts": 602,
+  "jsMs": 2.66
  }
 }
