@@ -4,7 +4,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Llogara (Albania, the Ceraunian Mountains above the Ionian Sea): 4 km of the old road SH8 over the pass, not the new tunnel: from ~894 m in
   // the forest of black pine and fir on the north side up six hairpins (def.curves) and on through the forest past the old concrete bunkers to
   // the saddle of Qafa e Llogarasë (~1027 m), across the top past the viewpoint, the restaurants, the hotel and the monument, and down the
-  // open south face with the whole coast below, past the wayside shrine and the seventh hairpin to the paragliders' launch (~904 m). One card,
+  // open south face with the whole coast below, past the wayside shrine and the seventh hairpin to the paragliders' launch (~905 m). One card,
   // four ways to drive it (def.modes), as Bâlea: a race against the rivals over the closed road, a time trial, a duel with one rival on the open
   // road (cars, minibuses and coaches, motorbikes and cyclists both ways: def.traffic) and a run from the police (generic patrol cars:
   // def.police). Only geographic names: no names of the restaurants, the hotel or the paragliding school; the monument is a shape only.
@@ -28,8 +28,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['goatW', 'cowB', 'donkey', 'fox', 'boar', 'roe'], t: ['beehive', 'picnic', 'trough', 'signPost', 'logPile'], open: true },   // (the goats and the cows of the herders by the pass, a donkey, the wild ones in the forest; the beehives by the road)
     id: 'llogara', name: 'Llogara, Albanija', theme: 'llogara', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.75,
     maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line, as Bâlea's
-    desc: 'Llogara nad Jonskim morjem v Albaniji: 4 km stare ceste SH8 čez prelaz, ne skozi novi predor. Od 894 m po šestih serpentinah skozi gozd črnega bora in jelke, mimo starih betonskih bunkerjev na prelaz Qafa e Llogarasë (1.027 m), čez vrh mimo razgledišča, restavracij in spomenika ter po odprtem južnem pobočju s celo obalo pod sabo, mimo znamenja in sedme serpentine do vzletišča jadralnih padalcev na 904 m. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Llogara, Albania', desc: 'Llogara above the Ionian Sea in Albania: 4 km of the old SH8 over the pass, not through the new tunnel. From 894 m up six hairpins through the forest of black pine and fir, past the old concrete bunkers to the saddle of Qafa e Llogarasë (1,027 m), across the top past the viewpoint, the restaurants and the monument, and down the open south face with the whole coast below, past the wayside shrine and the seventh hairpin to the paragliders\' launch at 904 m. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'Over the pass' },
+    desc: 'Llogara nad Jonskim morjem v Albaniji: 4 km stare ceste SH8 čez prelaz, ne skozi novi predor. Od 894 m po šestih serpentinah skozi gozd črnega bora in jelke, mimo starih betonskih bunkerjev na prelaz Qafa e Llogarasë (1.027 m), čez vrh mimo razgledišča, restavracij in spomenika ter po odprtem južnem pobočju s celo obalo pod sabo, mimo znamenja in sedme serpentine do vzletišča jadralnih padalcev na 905 m. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu in beg pred policijo.',
+    en: { name: 'Llogara, Albania', desc: 'Llogara above the Ionian Sea in Albania: 4 km of the old SH8 over the pass, not through the new tunnel. From 894 m up six hairpins through the forest of black pine and fir, past the old concrete bunkers to the saddle of Qafa e Llogarasë (1,027 m), across the top past the viewpoint, the restaurants and the monument, and down the open south face with the whole coast below, past the wayside shrine and the seventh hairpin to the paragliders\' launch at 905 m. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'Over the pass' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: LLOGARA_H.map((h, i) => [i / (LLOGARA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
@@ -53,7 +53,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n": "Spomenik · 1.031 m", "d": 2368.0, "say": ["Past the monument on the right, the highest point of the road!", "The monument on the right, and now it is all downhill!"]},
       {"n": "Znamenje · 987 m", "d": 2982.0, "say": ["Past the little roadside shrine, and on down towards the sea!", "The shrine on the right, mind the drop!"]},
       {"n": "Serpentina 7 · 963 m", "d": 3289.0, "say": ["Hairpin seven, the last one!", "Into the last hairpin, the beaches far below!"]},
-      {"n": "Vzletišče · 904 m", "d": 3990.0, "say": ["To the line at the paragliders' launch, the sea far below!", "The paragliders' launch, and the line!"]},
+      {"n": "Vzletišče · 905 m", "d": 3990.0, "say": ["To the line at the paragliders' launch, the sea far below!", "The paragliders' launch, and the line!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
@@ -70,7 +70,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     },
     start: [0, 0],
     // ---- podatki (tools/proga) ----
-    alt: [894,904],
+    alt: [894,904.6],
     realKm: 4.0,
     finish: [1245.9,2041.3],
     cps: [[199.2,348.2],[532.5,875.8],[1190.8,1259.5],[1340.7,1533.0]],

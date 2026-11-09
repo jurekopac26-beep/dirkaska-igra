@@ -1391,5 +1391,29 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "llogara": {
+  "meshes": 1963,
+  "verts": 714945,
+  "instances": 53940,
+  "props": 84,
+  "crowd": 190,
+  "world": "f0895e2e",
+  "propsHash": "624ff85f",
+  "floor": "ac0be231/8708",
+  "groups": {
+   "-:MeshLambertMaterial": "2a708251",
+   "-:MeshPhongMaterial": "dce678bb",
+   "-:MeshBasicMaterial": "ea147380",
+   "paragliders:MeshLambertMaterial": "1f9731fd",
+   "irFar:MeshLambertMaterial": "ca4cc7c1",
+   "crowd:MeshLambertMaterial": "9e4a3cbb",
+   "ao:MeshBasicMaterial": "832b8898",
+   "tyremarks:MeshBasicMaterial": "663077f7",
+   "roadwear:MeshLambertMaterial": "b5ed7d1a",
+   "life:MeshLambertMaterial": "917ab757",
+   "lifeShadow:MeshBasicMaterial": "622c742d",
+   "life:MeshBasicMaterial": "1ab4aa28"
+  }
  }
 }

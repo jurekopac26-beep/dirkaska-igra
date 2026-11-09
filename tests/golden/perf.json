@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "llogara": {
+  "calls": 156,
+  "maxCalls": 168,
+  "kverts": 362,
+  "maxKverts": 423,
+  "jsMs": 1.34
  }
 }

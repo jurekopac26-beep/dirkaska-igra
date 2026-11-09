@@ -388,7 +388,7 @@ def main():
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
     h = D.sample(la, lo); hp = profile(h, s, C, bends)
-    base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i1]))]
+    base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i0])) + round(float(hp[i1] - hp[i0]), 1)]   # (the finish to a tenth: the game's heights between scale by the climb, altAt)
     g = np.gradient(hp, s)
     log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))
     nE = int(round(s[-1] / 4)); fr = np.linspace(0, s[-1], nE + 1); HE = np.round((np.interp(fr, s, hp) - base) * 10).astype(int).tolist()
