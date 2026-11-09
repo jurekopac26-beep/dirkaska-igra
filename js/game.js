@@ -427,8 +427,7 @@
   function showMsg(txt, cls, dur) {
     const el = $('h-msg'); el.textContent = txt; el.className = 'show ' + (cls || ''); msgT = dur || 1.6;
   }
-  let swapBuzzEnd = 0;   // (ZAMENJAJ KOLO's last second: its four buzzes running till then; a knock's buzz would cut them short)
-  function vibrate(ms) { if (S.vibrate && !(performance.now() < swapBuzzEnd && !Array.isArray(ms))) Input.vibrate(ms); }
+  function vibrate(ms) { if (S.vibrate) Input.vibrate(ms); }
   function hap(k) { if (S.vibrate) Input.buzz(k); }   // (a pattern of Core.HAPTIC by its name: the pits' moments, pitHap)
 
   // started from the home screen as an installed app (manifest.webmanifest), not in a browser tab. Decided once at the start:
@@ -2471,7 +2470,6 @@
     paused = false; last = performance.now(); acc = 0;
     Sfx.resume(); Sfx.setRunning(true);
     showScreen('none'); toastBack();
-    if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: the phone may have been turned meanwhile)
   }
   // a TV shot the world directs (Render.setShot: the jets before the start, the podium) ends: the game's camera and the HUD back
   function shotOff() { Render.setShot(null); $('hud').classList.remove('shot'); }
@@ -4819,32 +4817,6 @@
   // the line under the clock: empty until there is a time (no NAJ --:--.---, the user's), then NAJ and the best (the lap's after the first)
   function setBest(v) { const on = v > 0; setText('h-bestv', on ? fmt(v, true) : ''); if (hudCache.bestOn !== on) { hudCache.bestOn = on; $('h-best').classList.toggle('none', !on); } }
   function setLap(v) { if (lapTxt !== v) { lapTxt = v; $('h-lap').innerHTML = lapHTML(v); } }
-  // ZAMENJAJ KOLO (the wheel rule, Core rule.ask: a wheel off with the spare on the roof): a big button for the 3 s to the second wheel,
-  // its bar at its very foot running out with them, in the last second the phone buzzing four times (longer than a wheel off's buzz: a
-  // phone cannot buzz harder, only longer); a tap on it (or Enter) puts the spare on at once, the car driving on (Race.changeWheel): KOLO
-  // ZAMENJANO with the wrench and the pits' wheel gun
-  let swapOn = false, swapD0 = 3, swapBuzz = false;
-  const SWAP_BUZZ = [150, 100, 150, 100, 150, 100, 150];
-  function swapFit() {   // the title on one line inside the button: from the css's size down until it fits (a narrow button, a long word)
-    const t = $('ws-t'); t.style.removeProperty('font-size');
-    for (let f = parseFloat(getComputedStyle(t).fontSize); f > 14 && t.scrollWidth > t.clientWidth + 1;) t.style.fontSize = --f + 'px';
-  }
-  function swapTop() {   // on its side: just under the clock's block, as tall as it is (the screen's height, a duel's gap line under it); upright: the css's
-    const t = $('h-times'); if (!t.getClientRects().length) return;   // (the HUD hidden by a screen over the race, e.g. the pause's photo: no clock to measure; resume() places it again)
-    $('ws-btn').style.top = innerWidth > innerHeight ? Math.round(t.getBoundingClientRect().bottom + 6) + 'px' : '';
-  }
-  function swapHUD(P) {
-    const Q = P && P.wreck && P.wreck.rule, on = !!(Q && Q.ask && Q.spare && Q.due > 0 && phase === 'racing' && screen === 'none' && !replay);
-    if (on !== swapOn) { swapOn = on; const rd = !!(on && Q.kt); $('wheel-swap').classList.toggle('on', on); $('wheel-swap').classList.toggle('round', rd);   // (the KOLIBRI's: round, over the car)
-      if (on) { swapD0 = Math.max(Q.due0 || Q.due, 0.01); setText('ws-t', tr('ZAMENJAJ KOLO')); setText('ws-s', tr('Pritisni tukaj za menjavo kolesa')); setText('ws-l', tr('ZAMENJAJ KOLO')); if (rd) $('ws-btn').style.top = ''; else { swapFit(); swapTop(); } } }
-    if (on) { const k = Math.max(0, Math.min(1, Q.due / swapD0)); if (Q.kt) $('ws-btn').style.setProperty('--p', (k * 100).toFixed(1) + '%'); else { $('ws-bar').style.transform = 'scaleX(' + k.toFixed(3) + ')'; $('ws-btn').classList.toggle('hot', k <= 0.2); } }   // (hot: its last 20 %, the hub on fire; the KOLIBRI's ring: the time left)
-    if (on && Q.due > 1) swapBuzz = false; else if (on && !swapBuzz) { swapBuzz = true; swapBuzzEnd = performance.now() + 900; vibrate(SWAP_BUZZ); }   // (the last second: once a wheel, a pause in it or not)
-  }
-  function swapWheel() {
-    if (!(swapOn && race && race.changeWheel(race.player))) return;
-    swapBuzzEnd = 0; vibrate(40); for (const t of [0, 210, 420]) setTimeout(() => Sfx.wrench(), t);   // (the tap's buzz ends the warning's; the pits' wheel gun on the nuts)
-    showMsg(tr('KOLO ZAMENJANO'), 'gold', 1.8); swapHUD(race.player);
-  }
   /* ---------------- a destroyed car: VOZILO UNIČENO, Odstopi ---------------- */
   // A car at 98 % damage (damage on) is destroyed: the words under the minimap, with Odstopi in a race (the player retires, Race.retire:
   // the car pulls off, straight to the results with Odstop; a second tap within 4 s does it, so a stray tap on the move does not end the
@@ -4876,8 +4848,9 @@
   }
   function retired() { Comm.stop(); Comm.say('retired', null, 5); Sfx.beep(330, 0.3, 0.12); finishRace(); }   // (the player is out: the results now)
   /* ---------------- the wheel rule: KONEC IGRE, PONOVI IGRO ---------------- */
-  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on): a wheel comes off,
-  // then a second, and the car stops. Then no results first: KONEC IGRE with a big PONOVI IGRO (the race again), the results (the player
+  // The vehicles under the wheel rule (Race opts.wheelRule, see core.js wheelRule; the player's car, offline, damage on): a wheel comes off
+  // and the car stops, on fire (the user's, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«; before it a second wheel 3 s on unless
+  // ZAMENJAJ KOLO put the spare from the roof on). Then no results first: KONEC IGRE with a big PONOVI IGRO (the race again), the results (the player
   // retired, Odstop) and the main menu. Only in a race: in a time trial, qualifying, a challenge and the run from the police the rule is off
   // (an ended run there would count as a time, a lap or an escape). Every vehicle, each tyre its own as the KOLIBRI's (the user's choice
   // 1. 11. 2026; before it SOKOL's wheels at 80 % damage, core.js wheelRule, and the KOLIBRI's tyres): a burning tyre's wheel comes off at
@@ -4888,8 +4861,8 @@
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); Input.buzzOff(); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
-    const n = race.player.wreck ? race.player.wreck.nL : 2;
-    $('over-sub').textContent = tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : 'Odpadli sta dve kolesi: avto ne more naprej.');
+    const n = race.player.wreck ? race.player.wreck.nL : 1;
+    $('over-sub').textContent = tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : n === 2 ? 'Odpadli sta dve kolesi: avto ne more naprej.' : 'Odpadlo je kolo: avto ne more naprej.');
     showScreen('over');
   }
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
@@ -5138,7 +5111,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setBest(best);
     }
-    swapHUD(P); wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); pitFightHUD(); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); pitFightHUD(); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     // (the slipstream: no word on the screen any more, the user's; it works as ever, Core _tow)
@@ -5168,7 +5141,7 @@
     }
     { const W = P.wreck;   // a wheel off: the word on the HUD (once a race what to do about it); the marshals at work: the seconds left
       if (W && W.fix !== hudFix) { hudFix = W.fix; hudWl = W.wl; }
-      if (W && (W.wl & ~hudWl) && phase === 'racing' && !P.finished) { vibrate(80); if (!W.rule) showMsg(tr('KOLO JE ODPADLO!'), 'slow', 1.8);   // (the wheel rule's car: no words, the user's; no fire yet: its hub's in the last 20 % of the 3 s to the second, the whole car with it, Core wheelRule)
+      if (W && (W.wl & ~hudWl) && phase === 'racing' && !P.finished) { vibrate(80); if (!W.rule) showMsg(tr('KOLO JE ODPADLO!'), 'slow', 1.8);   // (the wheel rule's car: no words, the user's; the whole car on fire at once and KONEC IGRE, Core wheelRule)
         if (!W.rule && !hudWheelTold && !race.timeTrial) { hudWheelTold = true; toast(tr(track.def.pit ? 'Izgubil si kolo: v boksih ti namestijo novo.' : 'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.'), 4200); } }
       hudWl = W ? W.wl : 0;
       if (W && W.hold > 0 && !W.dnf && phase === 'racing') { const txt = tr('NOVO KOLO \u00b7 {0} s', Math.ceil(W.hold)); if ($('h-msg').textContent !== txt) { $('h-msg').textContent = txt; $('h-msg').className = 'show gold'; } msgT = 0.3; } }
@@ -5185,13 +5158,13 @@
   const COL_GAP = 4, COL_K = [1, 0.9, 0.82], MSG_MIN = 10;
   // the big message's icon by its kind, in either language (css #h-msg[data-ic]): a star (a record, a win, a medal), crossed swords (a duel),
   // a warning triangle (a fault, a danger, a penalty), a green light (the start, the green flag, back at the wheel), a wrench (the repair, the
-  // stop's tyres and fuel, a new wheel, the spare put on), a pit board P (the pits); else a chequered flag (the laps, the finish, the race,
+  // stop's tyres and fuel, a new wheel), a pit board P (the pits); else a chequered flag (the laps, the finish, the race,
   // the weather)
   const MSG_IC = [['star', /REKORD|RECORD|ZMAGA|VICTORY|ZLATO|GOLD|SREBRO|SILVER|BRON|PREMAGAN|BEATEN|OPRAVLJENA|ACCOMPLISHED|POBEGNIL|ESCAPED|DOBLJEN|DUEL WON|NAJHITREJŠI|FASTEST/],
     ['vs', /DVOBOJ|DUEL/],
     ['warn', /PREDRT|PREBIT|PUNCTURE|IZRABLJEN|TYRES WORN|POČIL|POČEN|BURST|FLAT TYRE|BATTERY FLAT|ZAVOR|BRAKE|MOTOR|ENGINE|PREGREVA|OVERHEAT|NAPAČNA|WRONG|ODPADLO|WHEEL OFF|GORIV|FUEL|PRAZNA|EMPTY|KAZEN|PENALTY|RUMENA ZASTAVA|YELLOW FLAG|RDEČA ZASTAVA|RED FLAG|VARNOSTNI|SAFETY|NAPAKA|MISTAKE|UDAREC|KNOCK|HLODI|LOGS|BODIČAST|SPIKE|ZASEDA|AMBUSH|POVOZIL|RAN OVER|ZBIL|VRNI MESTO|GIVE THE PLACE|PREHITEVAJ|OVERTAKING|POLICIJ|POLICE|ZAPORA|ROADBLOCK|HELIKOPTER|HELICOPTER|ARETIRAN|ARRESTED|ULOVLJEN|BUSTED|PREPAD|OVER THE EDGE|NEUSPEŠNO|FAILED|BREZ MEDALJE|NO MEDAL|SPET TE|SEEN YOU AGAIN|NEOZNAČENA|UNMARKED/],
     ['go', /^START|^GO!|ZELENA|GREEN|VOZIŠ TI|YOU DRIVE|POPOLN IZHOD|PERFECT EXIT|POLNI PLIN|FLAT OUT/],
-    ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|KOLO ZAMENJANO|WHEEL CHANGED|DOLITO|TOPPED UP|NAPOLNJENO|CHARGED|POSTANEK OPRAVLJEN|STOP DONE/],
+    ['wrench', /POPRAVIL|POPRAVLJEN|REPAIR|GUME|TYRES|POLNO|POLNA|FULL|NOVO KOLO|NEW WHEEL|DOLITO|TOPPED UP|NAPOLNJENO|CHARGED|POSTANEK OPRAVLJEN|STOP DONE/],
     ['pit', /BOKS|PIT|BOX|^[+\u2212]\d+ (MEST|PLACE)|^BREZ SPREMEMBE$|^NO CHANGE$/]];   // (a stop's places: +2 MESTI, −1 MESTO; not the finish's CILJ! 3. MESTO)
   const msgIcon = (t) => { for (const [k, re] of MSG_IC) if (re.test(t)) return k; return 'flag'; };
   function hudCol(dt) {
@@ -5595,7 +5568,7 @@
     } else if (phase === 'racing') {
       if (MS.over()) { phase = 'done'; Sfx.setRunning(false); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); Napake.cilj(); return; }   // (a special mission done or failed: its own result, js/missions.js; kept among Zadnji posnetki)
       { const zo = ZB.over(); if (zo) { phase = 'finish'; phaseT = 0; if (zo.msg) showMsg(zo.msg, zo.cls || 'gold', 4); if (zo.say) Comm.say(zo.say, zo.vars || null, 5); Sfx.beep(660, 0.14, 0.14); $('touch').classList.add('off'); $('btn-rescue').classList.add('off'); Input.reset(); return; } }   // (Zabava: a novelty's own end, the elimination race, the pursuit; the results after the finish's seconds)
-      if (!race.player.finished && race.isOut(race.player)) { const Q = race.player.wreck && race.player.wreck.rule; if (Q && Q.over) gameOver(); else retired(); return; }   // (the player retired: the results; two wheels off under the wheel rule: KONEC IGRE)
+      if (!race.player.finished && race.isOut(race.player)) { const Q = race.player.wreck && race.player.wreck.rule; if (Q && Q.over) gameOver(); else retired(); return; }   // (the player retired: the results; a wheel off under the wheel rule: KONEC IGRE)
       if (!race.player.finished && !school) commTick(dt);
       if (race.player.finished) {
         phase = 'finish'; phaseT = 0; Input.buzzOff();   // (no pit stop's vibration over the line)
@@ -6186,12 +6159,11 @@
       if (k[0] === '@') {   // racing: the buttons bound to the pause, the camera, the rescue (not when the same press works a menu)
         if (sc0 !== 'none' || screen !== 'none') continue;
         if (k === '@pause' && bg === 'race') { pause(); break; }
-        if (k === '@rescue' && swapOn) { swapWheel(); continue; }   // (ZAMENJAJ KOLO: the rescue's button, Y, or B)
         if (k === '@rescue' && !$('btn-rescue').classList.contains('off')) $('btn-rescue').click();
         continue;
       }
       if (k === 'back' && sc0 === 'none' && screen === 'none' && bg === 'race' && !replay) { Napake.flag('pad'); continue; }   // (Select / Back: a flag, Orodje za napake)
-      if (screen === 'none') { if (cst.on && bg === 'race') stopNav(k === 'a' ? 'ok' : k); else if (k === 'b' && swapOn && sc0 === 'none') swapWheel(); continue; }   // (racing: the custom stop's panel, the d-pad and A; else B swaps the Kolibri's wheel)
+      if (screen === 'none') { if (cst.on && bg === 'race') stopNav(k === 'a' ? 'ok' : k); continue; }   // (racing: the custom stop's panel, the d-pad and A)
       if (menuOn && (screen === 'title' || screen === 'track') && Menu.padKey(k)) continue;   // (the new menu: B, Start, LB and RB are its own)
       if (k === 'start') { const m = padFind('.btn.primary, .go'); if (m) m.click(); }
       else if (k === 'a') { if (padItems().includes(padSel)) { if (padSel.tagName === 'BUTTON') padSel.click(); else padSel.focus(); } else padFocus(padHome()); }
@@ -6648,9 +6620,17 @@
     setup: (id) => setupOf(id),
     medals: (d) => medalSet(pkRoadDef(d)),
     // the player's best on a track in the way it is driven now: [what it is, the time or '—']
-    record(d0) {
-      const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
+    record(d0) {   // (read only: no empty record kept for a track only looked at)
+      const d = pkRoadDef(d0), r = records.tracks[recKey(d.id)] || {}, md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
       return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : md === 'elim' ? ['Best place', r.bestPos > 0 ? 'P' + r.bestPos : '—'] : md === 'lov' ? ['Best catch', t(r.bestRace)] : md === 'endless' ? ['Best score', r.bestScore > 0 ? String(Math.floor(r.bestScore)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u2009') : '—'] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
+    },
+    // the player's progress there (the quick list's marks, js/menu-izbor.js; the row's): { what: the best's name and txt: it, as record()
+    // gives them ('' for none), done: driven there, pos: the best place (a race with rivals; else 0), medal: 1 gold, 2 silver, 3 bronze (a
+    // race's place, a time trial's medal times), 0 none }
+    progress(d0) {
+      const d = pkRoadDef(d0), r = records.tracks[recKey(d.id)] || {}, tt = isTT(d), [what, v] = MenuBridge.record(d0);
+      const done = ['bestLap', 'bestRace', 'bestPos', 'bestTime', 'bestScore'].some(k => posNum(r[k])), pos = !tt && posNum(r.bestPos) ? Math.round(r.bestPos) : 0;
+      return { what, txt: v !== '—' && !/^P\d/.test(v) ? v : '', done, pos, medal: !done ? 0 : tt ? medalOf(d, r.bestTime) + 1 : pos <= 3 ? pos : 0 };
     },
     car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: colNow(), hex: PLAYER_COLORS[colNow()], num: carNum() }; },   // (hex, num: the menu's car in 3D, js/menu-car.js)
     carHere: () => owned(Core.MODELS[S.car].id),
@@ -6722,6 +6702,7 @@
     newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
     click: () => { Sfx.resume(); Sfx.click(); },
+    buzz: () => Input.vibrate(20),   // (a short tremble: a country or a track chosen in the quick list; the settings' vibration decides)
     visible: () => screen === 'title' || screen === 'track',
     // the menu could not start: the old title and track screens take over
     fallback() { menuOn = false; buildTrackScreen(); showScreen(screen === 'track' ? 'track' : 'title'); },
@@ -6797,8 +6778,6 @@
       nm.addEventListener('blur', () => { nm.value = S.name; });
     }
     $('btn-pause').addEventListener('click', (e) => { e.preventDefault(); pause(); });
-    $('ws-btn').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); swapWheel(); });   // (ZAMENJAJ KOLO: a tap on the big button; the rest of the screen drives on)
-    document.addEventListener('keydown', (e) => { if (swapOn && !paused && screen === 'none' && e.code === 'Enter') { e.preventDefault(); swapWheel(); } });   // (paused: Enter is the pause screen's)
     { const pd = $('ph-pad'), o = { passive: false };   // the photo mode: a drag round the car, two fingers or the wheel for the distance
       for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) pd.addEventListener(t, (e) => { e.preventDefault(); photoPtr(e); }, o);
       pd.addEventListener('wheel', (e) => { e.preventDefault(); if (photo) { photo.dist = Core.clamp(photo.dist * Math.exp(e.deltaY * 0.0012), 2.5, 60); photoPose(); } }, o);
@@ -6814,9 +6793,8 @@
     window.addEventListener('resize', () => {
       Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); fitSegs();
       if (screen === 'car') { for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel')); carTapLay(); }   // (turned: the chosen chips in the middle again, the car's tap over it)
-      if (swapOn) { swapFit(); swapTop(); }   // (ZAMENJAJ KOLO up: its title and its place for the new size)
     });
-    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); if (swapOn) { swapFit(); swapTop(); } }, 250));
+    window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
     updateFsButtons(); updateAppButtons();

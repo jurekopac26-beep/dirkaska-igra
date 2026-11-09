@@ -6,12 +6,12 @@
 // the ones alone walk or graze (their own mesh, moving with time); each of these tracks has
 // its scene (World.lifeScenes) near the road, the ones with a place of their own (m, side: where they really are, OSM) there; Medvode's
 // stork flies off its nest as the car comes (L.fly: not a live one, one of its own); Crystal Palace's ducks float on the lake (float: at its
-// level), Great Alpine Road's koala sits up in its gum tree (on); a test track has none. The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
+// level); a test track has none (Great Alpine Road's koala in its gum tree too: a test track since 9. 11. 2026). The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
 // car parks were, a lot of each kind (the fans' camp, motorhomes and caravans, the fans' area) within its budget.
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026)
+const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'medvode'];   // (Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
 // (how many glades a track must have: Katu-Jaryk's ladder of hairpins keeps each leg's run-off short of the middle between the legs since the
 // serpentines' barriers of Track._buildEdges (limitNear, 6. 11. 2026), so fewer spots fit between them: 5 glades, before 11)
 const MIN = { katu: 4 };
@@ -85,9 +85,10 @@ try {
     T.check(`${id}: no glade on the road or by its barrier`, r.near === 0, `${r.near} of ${r.at}`);
     T.check(`${id}: merged, one mesh per 256 m chunk (at most ~6 per km of road), under 25k vertices per km`, r.meshes > 0 && r.meshes <= 6 * r.km + 10 && r.verts < 25000 * r.km, `${r.meshes} meshes, ${Math.round(r.verts / 1000)}k vertices, ${r.km.toFixed(1)} km`);
   }
-  // two scenes where the glades' rules do not hold (a city park, a road with few woods), only their scene: Crystal Palace's ducks float on
-  // its lake (float: at its level, over the lake's bed) where they really are, Great Alpine Road's koala sits up in its gum tree (on)
-  for (const [id, want] of [['cpalace', 'float'], ['greatalpine', 'on']]) {
+  // a scene where the glades' rules do not hold (a city park), only its scene: Crystal Palace's ducks float on its lake (float: at its level,
+  // over the lake's bed) where they really are (want 'on': an animal perched up on its thing; Great Alpine Road's koala in its gum tree was
+  // one, its track a test track since 9. 11. 2026: the user's choice, Australia keeps Bathurst)
+  for (const [id, want] of [['cpalace', 'float']]) {
     await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
     await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
     const r = await page.evaluate((id) => { const st = Render.world.lifeStats, S0 = [].concat(World.lifeScenes[id] || [])[0];
