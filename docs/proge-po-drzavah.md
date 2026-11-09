@@ -62,7 +62,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Auli, Indija | kratke A (odpade, če pride Killar na `main`) | OSM 1 % | izletna cona je |
 | Furka, Švica | Nove proge 2A, Načrtovano | OSM 7 % (mostovi) | izletna cona je |
 | Gudauri, Gruzija | Nove proge 3 | OSM 0 % | izletna cona je |
-| Llogara, Albanija | Nove proge 4 | OSM 1 % (stara cesta čez prelaz, ne novi predor) | izletna cona je |
+| Llogara, Albanija | PR #545 (B9, skupina N5) | OSM 1 % (stara cesta čez prelaz, ne novi predor) | izletna cona je |
 | Porto Moniz, Portugalska | Nove proge 5 | OSM 10 % (hiše) | izletna cona je |
 | Ngorongoro, Tanzanija | Nove proge 8 | travnata pobočja brez hiš in ograj (načrt) | izletna cona je |
 | Seul, Južna Koreja | zavite 3 | OSM 2 % (cesta skozi park) | izletna cona je |
@@ -129,7 +129,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Švica | Furka (Nove proge) | po vrsti |
 | Gruzija | Gudauri (Nove proge) | po vrsti |
-| Albanija | Llogara (Nove proge) | po vrsti |
+| Albanija | Llogara (Nove proge) | narejena v PR #545 (B9, skupina N5): na `main` z zbirno vejo N5 |
 | Portugalska | Porto Moniz (Nove proge) | po vrsti |
 | Tanzanija | Ngorongoro (Nove proge) | po vrsti |
 | Saudova Arabija | Diriyah (stara veja `claude/proga-diriyah`, v verigi Nove proge) | **ne začni** (brez izletne cone, 5. 11. 2026) |
