@@ -215,3 +215,144 @@ function run(S, o, trace) {
     return out;
   } finally { Math.random = R0; }
 }
+
+// ---- the runs ----
+// a scenario of the matrix: mode none in four phases (the first the row's numbers, all four its spread) and mode hold once
+function runRow(sc, H, o) {
+  const base = Object.assign({ H, id: 'rally', role: sc.role, mode: 'none', ph: 0 }, o || {});
+  const one = (mode, ph) => { setCv(); try { const oo = Object.assign({}, base, { mode, ph }); return run(sc.make(oo), oo); } finally { C.setTest(null); } };
+  const ph = [0, 0.25, 0.5, 0.75].map(p => one('none', p)), hold = one('hold', 0), r = ph[0];
+  if (!r.hit) return { name: sc.name, grp: sc.grp, kmh: sc.kmh, role: base.role, hit: false };
+  const rng = (f) => { const v = ph.filter(x => x.hit).map(f).filter(x => x != null); return v.length ? [Math.min(...v), Math.max(...v)] : null; };
+  return Object.assign({ name: sc.name, grp: sc.grp, kmh: sc.kmh, role: base.role, phys: H === RIG.nova ? 'nova' : 'cs' }, r, {
+    spread: { vA: rng(x => x.car[0].v[1]), vB: rng(x => x.car[1].v[1]), ovMax: rng(x => x.ovMax), turnA: rng(x => Math.abs(x.car[0].turnMax)), turnB: rng(x => Math.abs(x.car[1].turnMax)), nImp: rng(x => x.nImp), lost: rng(x => x.lostKnock),
+      swapped: ph.filter(x => x.swapped).length, nan: ph.some(x => x.nan) || hold.nan, gainN: Math.max(...ph.map(x => x.gainN || 0)) },
+    hold: hold.hit ? { tV95: hold.car.map(c => c.tV95), vMin: hold.car.map(c => c.vMin), v2: hold.car.map(c => c.v[3]), turnMax: hold.car.map(c => c.turnMax), tStraight: hold.car.map(c => c.tStraight), gl: hold.car.map(c => c.gl), lost2: hold.lostAt[3], stick: hold.stick, flips: hold.flips, pop: hold.pop, ovMax: hold.ovMax } : null });
+}
+
+// ---- a real track (the cross-check): the same two cars put on Spa's or Bathurst's straight in a race of the game (Race.step: its own loop,
+// aiControl, Car.step, carCollide for every pair, wallCollide), the car hit passive (locked: no pedal, no steer), the player with no pedal ----
+function trackRun(tid, kind) {
+  const R0 = Math.random; Math.random = seeded(64);
+  try {
+    setCv();
+    const T = new C.Track(C.TRACKS.find(d => d.id === tid)), n = T.px.length, ds = T.len / n;
+    const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 5, playerModel: C.MODELS.find(m => m.id === 'rally'), assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start();
+    // the straightest, flattest 240 m well away from the grid
+    let best = null; const w = Math.round(120 / ds);
+    for (let i = Math.round(n * 0.2); i < Math.round(n * 0.8); i++) { let m = 0; for (let k = -w; k <= w; k += 4) { const j = (i + k + n) % n; m = Math.max(m, Math.abs(T.tx[i] * T.tz[j] - T.tz[i] * T.tx[j])); }
+      const sc = m + 2 * Math.abs(T.grade[i] || 0); if (!best || sc < best.sc) best = { i, sc, m }; }
+    const i = best.i, h = Math.atan2(T.tz[i], T.tx[i]), ox = T.px[i], oz = T.pz[i], A = r.player, B = r.cars.find(c => !c.isPlayer && c.m.id === 'kaze');
+    const at = (c, lx, lz, hh, v) => { const x = ox + lx * Math.cos(h) - lz * Math.sin(h), z = oz + lx * Math.sin(h) + lz * Math.cos(h); c.place(x, z, h + hh); c.vx = v * Math.cos(h + hh); c.vz = v * Math.sin(h + hh);
+      for (let g = 1; g <= c.m.gears.length; g++) { c.gear = g; if (v / c.m.rw * c.m.gears[g - 1] * c.m.final * 9.5493 < c.m.redline * 0.9) break; } };
+    const V = 120 / 3.6, LA = A.m.len, LB = B.m.len, WB = B.m.wid;
+    if (kind === 'rear-stand-c') { at(B, 0, 0, 0, 0); at(A, -((LA + LB) / 2 + 0.3), 0, 0, V); }
+    else if (kind === 'head-o') { at(B, 0, 0, Math.PI, V); at(A, -((LA + LB) / 2 + 0.3), A.m.wid / 2, 0, V); }
+    else { at(B, 0, 0, Math.PI / 2, 0); at(A, -(WB / 2 + LA / 2 + 0.3), -B.m.b, 0, V); }   // (tbone-stand-rear)
+    B.locked = true; A.locked = false; A.inThr = 0; A.inBrk = 0; A.inSteer = 0;
+    const sp = (c) => Math.hypot(c.vx, c.vz); let t1 = null; const h0 = [A.h, B.h], hU = [A.h, B.h], tm = [0, 0], out = { v: [[], []], gl: [0, 0] }, hc0 = [A.hitCar, B.hitCar];
+    for (let k = 1; k <= 3 / DT; k++) {
+      Math.random = seeded(1000 + k); const v0 = [sp(A), sp(B)]; A.inThr = 0; A.inBrk = 0; A.inSteer = 0;
+      r.step(DT);
+      if (t1 == null && (Math.abs(sp(B) - v0[1]) > 0.5 || Math.abs(sp(A) - v0[0]) > 0.5)) { t1 = k * DT - DT; out.v0 = v0.map(x => +(x * 3.6).toFixed(1)); }
+      if (t1 == null) continue;
+      const tt = k * DT - t1; [A, B].forEach((c, q) => { hU[q] += wrap(c.h - (hU[q])); tm[q] = Math.max(tm[q], Math.abs(hU[q] - h0[q])); out.gl[q] = Math.max(out.gl[q], c.xgl || 0); });
+      for (let j = 0; j < AT.length; j++) if (out.v[0][j] == null && tt >= AT[j] - 1e-9) { out.v[0][j] = +(sp(A) * 3.6).toFixed(1); out.v[1][j] = +(sp(B) * 3.6).toFixed(1); }
+      if (tt >= 2 + DT) break;
+    }
+    out.turnMax = tm.map(x => +(x * D).toFixed(1)); out.hit = t1 != null; out.where = { tid, s: Math.round(i * ds), bend: +best.m.toFixed(4), grade: +(T.grade[i] || 0).toFixed(3) };
+    return out;
+  } finally { C.setTest(null); Math.random = R0; }
+}
+// the same on the plane, with the same two models
+function planeRun(kind) {
+  const H = RIG.cs, V = 120 / 3.6, o = { H, id: 'rally', idB: 'kaze', role: 'PR', mode: 'none', ph: 0 };
+  setCv();
+  try {
+    const [A, B] = pair(o), LA = A.m.len, LB = B.m.len;
+    if (kind === 'rear-stand-c') { put(H, B, 0, 0, 0, 0); put(H, A, -((LA + LB) / 2 + 0.3), 0, 0, V); }
+    else if (kind === 'head-o') { put(H, B, 0, 0, Math.PI, V); put(H, A, -((LA + LB) / 2 + 0.3), A.m.wid / 2, 0, V); }
+    else { put(H, B, 0, 0, Math.PI / 2, 0); put(H, A, -(B.m.wid / 2 + LA / 2 + 0.3), -B.m.b, 0, V); }
+    const none = () => ({ st: 0, thr: 0 });
+    return run({ A, B, iA: none, iB: none, swap: () => false }, o);
+  } finally { C.setTest(null); }
+}
+
+// ---- the output ----
+const f = (x, d = 0) => x == null || !Number.isFinite(x) ? '-' : x.toFixed(d);
+const sl = (a, d = 0) => a.map(x => f(x, d)).join('/');
+const rg = (a, d = 0) => a == null ? '-' : a[0] === a[1] ? f(a[0], d) : f(a[0], d) + '..' + f(a[1], d);
+function table(title, rows, cols) {
+  const cells = rows.map(r => cols.map(c => String(c[1](r)))), wd = cols.map((c, i) => Math.max(c[0].length, ...cells.map(x => x[i].length)));
+  console.log('\n' + title); console.log(cols.map((c, i) => c[0].padEnd(wd[i])).join(' | '));
+  for (const x of cells) console.log(x.map((s, i) => s.padEnd(wd[i])).join(' | '));
+}
+const T_SPEED = [
+  ['scenario', r => r.name], ['role', r => r.role], ['vn km/h', r => f(r.vn)], ['e', r => f(r.e, 2)],
+  ['A km/h: before > step/+0.1/+0.5/+2 s', r => f(r.car[0].v0) + ' > ' + sl(r.car[0].v)], ['B km/h: before > step/+0.1/+0.5/+2 s', r => f(r.car[1].v0) + ' > ' + sl(r.car[1].v)],
+  ['E0 kJ', r => f(r.E0)], ['E lost %: in knocks, at +0.1/+0.5/+2 s', r => f(r.lostKnock, 1) + ', ' + sl(r.lostAt.slice(1), 1)], ['gain', r => r.gainN ? r.gainN + 'x (' + f(r.gainMax) + ' J)' : '0'],
+  ['p err %: in knocks, +0.1/+0.5/+2 s', r => f(r.pErrKnock, 2) + ', ' + sl(r.pErrAt.slice(1), 1)], ['hold: back at 95 % A/B s', r => r.hold ? sl(r.hold.tV95, 1) : '-'], ['hold: lowest A/B km/h', r => r.hold ? sl(r.hold.vMin) : '-'],
+];
+const T_TURN = [
+  ['scenario', r => r.name], ['turn deg max A/B', r => sl(r.car.map(c => c.turnMax))], ['turn +0.5 s A/B', r => sl(r.car.map(c => c.turn[2]))], ['turn +2 s A/B', r => sl(r.car.map(c => c.turn[3]))],
+  ['exit +2 s A/B', r => sl(r.car.map(c => c.exit2))], ['yaw pk deg/s A/B', r => sl(r.car.map(c => c.wPk))], ['rigid dw deg/s A/B', r => sl(r.car.map(c => c.dwRig))], ['taken dw A/B', r => sl(r.car.map(c => c.dwTak))],
+  ['kick deg A/B', r => sl(r.car.map(c => c.kc), 1)], ['slide m/s A/B', r => sl(r.car.map(c => c.cs), 1)], ['xgl A/B', r => sl(r.car.map(c => c.gl), 2)], ['xgl back s', r => sl(r.car.map(c => c.glBack), 2)],
+  ['straight s A/B', r => sl(r.car.map(c => c.tStraight), 2)], ['shift +2 s m A/B', r => sl(r.car.map(c => c.shift2), 1)], ['hold: turn max A/B', r => r.hold ? sl(r.hold.turnMax) : '-'], ['hold: straight A/B', r => r.hold ? sl(r.hold.tStraight, 2) : '-'],
+];
+const T_TOUCH = [
+  ['scenario', r => r.name], ['knocks (runs)', r => r.nImp + ' (' + r.nClu + ')'], ['boxes overlap s', r => f(r.tContact, 2)], ['apart after steps', r => String(r.steps)], ['stick s', r => f(r.stick, 2)],
+  ['toggles', r => String(r.toggles)], ['flips', r => String(r.flips)], ['pop cm', r => f(r.pop, 1)], ['overlap max cm', r => f(r.ovMax)], ['left cm', r => f(r.ovLeft, 1)], ['swapped', r => r.swapped ? 'YES' : '-'],
+  ['phases: A +0.1 s', r => rg(r.spread.vA)], ['B +0.1 s', r => rg(r.spread.vB)], ['overlap cm', r => rg(r.spread.ovMax)], ['turn B', r => rg(r.spread.turnB)], ['knocks', r => rg(r.spread.nImp)], ['swapped', r => r.spread.swapped + '/4'],
+  ['dmg A/B', r => sl(r.car.map(c => c.dmg), 2)], ['NaN', r => r.nan || r.spread.nan ? 'NaN' : '-'],
+];
+const T_SHORT = [
+  ['scenario', r => r.name + (r.tag ? ' ' + r.tag : '')], ['A km/h: before > step/+0.5/+2 s', r => f(r.car[0].v0) + ' > ' + sl([r.car[0].v[0], r.car[0].v[2], r.car[0].v[3]])], ['B km/h', r => f(r.car[1].v0) + ' > ' + sl([r.car[1].v[0], r.car[1].v[2], r.car[1].v[3]])],
+  ['E lost % knocks/+2 s', r => f(r.lostKnock, 1) + '/' + f(r.lostAt[3], 1)], ['p err % knocks', r => f(r.pErrKnock, 2)], ['turn max A/B', r => sl(r.car.map(c => c.turnMax))], ['turn +2 s A/B', r => sl(r.car.map(c => c.turn[3]))], ['yaw pk A/B', r => sl(r.car.map(c => c.wPk))],
+  ['rigid dw A/B', r => sl(r.car.map(c => c.dwRig))], ['taken dw A/B', r => sl(r.car.map(c => c.dwTak))], ['xgl A/B', r => sl(r.car.map(c => c.gl), 2)], ['straight s A/B', r => sl(r.car.map(c => c.tStraight), 2)],
+  ['knocks', r => String(r.nImp)], ['stick s', r => f(r.stick, 2)], ['flips', r => String(r.flips)], ['overlap cm', r => rg(r.spread.ovMax)], ['swapped', r => r.spread.swapped + '/4'], ['gain', r => String(r.spread.gainN)], ['NaN', r => r.nan || r.spread.nan ? 'NaN' : '-'],
+];
+
+function main() {
+  const M = matrix(), byName = new Map(M.map(s => [s.name, s]));
+  if (TRACE) {   // one scenario, step by step
+    const sc = byName.get(TRACE); if (!sc) { console.error('no such scenario: ' + TRACE + '\n' + M.map(s => s.name).join(' ')); process.exit(1); }
+    const H = RIG[arg('--phys') === 'nova' ? 'nova' : 'cs'], o = { H, id: arg('--car') || 'rally', role: arg('--role') || sc.role, mode: arg('--mode') || 'none', ph: +(arg('--ph') || 0) };
+    setCv(); const r = run(sc.make(o), o, true); C.setTest(null);
+    console.log(`${sc.name} (${o.role}, ${o.mode}, ${H === RIG.nova ? 'nova' : 'cs'}, version ${VERSION()})`);
+    console.log('  t s  | overlap cm | knock km/h | A: km/h  nose deg  yaw deg/s  kick deg  slide m/s  xgl | B: km/h  nose deg  yaw deg/s  kick deg  slide m/s  xgl');
+    const c0 = r.series[0].q.map(s => s.h);
+    for (const s of r.series) console.log(`${s.t.toFixed(3)} | ${(s.ov * 100).toFixed(1).padStart(6)} | ${s.imp == null ? '     -' : (s.imp * 3.6).toFixed(1).padStart(6)} | ` + s.q.map((q, k) => `${(Math.hypot(q.vx, q.vz) * 3.6).toFixed(1).padStart(6)} ${(wrap(q.h - c0[k]) * D).toFixed(1).padStart(7)} ${(q.w * D).toFixed(0).padStart(6)} ${(q.kc * D).toFixed(1).padStart(6)} ${q.cs.toFixed(2).padStart(6)} ${q.gl.toFixed(2)}`).join(' | '));
+    delete r.series; console.log(JSON.stringify(r));
+    return;
+  }
+  const sel = M.filter(s => !ONLY || s.name.includes(ONLY));
+  const res = { tool: 'tools/trki/avto-avto.js', cv: CV, version: null, dt: DT, car: 'rally', cs: [], nova: [], roles: [], car2: [], order: null, track: [] };
+  setCv(); res.version = VERSION(); C.setTest(null);
+  res.cs = sel.map(s => runRow(s, RIG.cs));
+  res.nova = sel.map(s => runRow(s, RIG.nova));
+  if (!ONLY) {
+    for (const nm of KEY) for (const role of ['PR', 'RP', 'RR']) { const r = runRow(byName.get(nm), RIG.cs, { role }); r.tag = role; res.roles.push(r); }
+    for (const nm of KEY) { const r = runRow(byName.get(nm), RIG.cs, { id: 'kaze' }); r.tag = 'kaze'; res.car2.push(r); }
+    // carCollide(a, b) against carCollide(b, a): the same knock whichever car the race's list has first
+    { const sc = byName.get('tbone-120-stand-rear'), o = { H: RIG.cs, id: 'rally', role: 'PR', mode: 'none', ph: 0 }; setCv();
+      const S1 = sc.make(o), a = run(S1, o), S2 = sc.make(o), b = run({ A: S2.B, B: S2.A, iA: S2.iB, iB: S2.iA, swap: () => false }, o); C.setTest(null);
+      res.order = { scenario: sc.name, ab: [a.car[0].v[2], a.car[1].v[2], a.car[1].turnMax], ba: [b.car[1].v[2], b.car[0].v[2], b.car[0].turnMax] }; }
+    for (const tid of ['spa', 'bathurst']) for (const kind of ['rear-stand-c', 'head-o', 'tbone-stand-rear']) { if (tid === 'bathurst' && kind !== 'rear-stand-c') continue;
+      const t = trackRun(tid, kind), p = planeRun(kind); res.track.push({ tid, kind, track: t, plane: { v0: p.car.map(c => c.v0), v: p.car.map(c => c.v), turnMax: p.car.map(c => Math.abs(c.turnMax)), gl: p.car.map(c => c.gl) } }); }
+  }
+  if (JSON_OUT) { console.log(JSON.stringify(res)); return; }
+  console.log(`== trki avto : avto (version ${res.version}${CV != null ? ', --cv ' + CV : ', the default'}; the car: rally, 1150 kg, 3.95 x 1.80 m; A the car that hits, B the car hit; inputs after the touch: none, the hold columns: the throttle holds the speed)`);
+  for (const [ph, rows] of [['cs (the classic physics)', res.cs], ['nova (the new physics)', res.nova]]) {
+    const ok = rows.filter(r => r.hit), miss = rows.filter(r => !r.hit);
+    table(`-- ${ph}: speeds, energy, momentum`, ok, T_SPEED); table(`-- ${ph}: the turn`, ok, T_TURN); table(`-- ${ph}: the contact`, ok, T_TOUCH);
+    if (miss.length) console.log('no touch: ' + miss.map(r => r.name).join(' '));
+  }
+  if (!ONLY) {
+    table('-- cs: the roles (PR the player hits a rival, RP a rival hits the player, RR two rivals)', res.roles.filter(r => r.hit), T_SHORT);
+    table('-- cs: another car (kaze, 1240 kg, 4.35 x 1.78 m, rear drive)', res.car2.filter(r => r.hit), T_SHORT);
+    console.log(`\n-- cs: the order of the pair (${res.order.scenario}; A +0.5 s km/h, B +0.5 s km/h, B's turn deg): carCollide(A, B) ${res.order.ab.join(' / ')}, carCollide(B, A) ${res.order.ba.join(' / ')}`);
+    console.log('\n-- cs: a real track against the plane (the player\'s rally into a rival\'s kaze, 120 km/h, no pedals; Race.step on the track)');
+    for (const x of res.track) console.log(`${x.tid} ${x.kind} (s ${x.track.where.s} m, grade ${x.track.where.grade}): track A ${f(x.track.v0[0])} > ${sl(x.track.v[0])}, B ${f(x.track.v0[1])} > ${sl(x.track.v[1])}, turn ${sl(x.track.turnMax)}, xgl ${sl(x.track.gl, 2)} | plane A ${f(x.plane.v0[0])} > ${sl(x.plane.v[0])}, B ${f(x.plane.v0[1])} > ${sl(x.plane.v[1])}, turn ${sl(x.plane.turnMax)}, xgl ${sl(x.plane.gl, 2)}`);
+  }
+}
+main();
