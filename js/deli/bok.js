@@ -1,7 +1,8 @@
 /* Deli iz garaže, sklop 2 · bok: ogledala, vrata, zavore, matice. Each element registers its 16 options with DELI.add(id, build(K, n, m,
    M)) (js/deli.js; the contract: docs/deli.md). Loaded after js/deli.js, before the cars.
      ogledala  the door mirrors, in place of the stock ones (K.deli round the car's K.mirror): K.mirror for the glass (it cracks, the mirror
-               folds: Razbijanje), the option's housing a shell round it, in the mirror's part (mirrorL / mirrorR)
+               folds: Razbijanje), the option's housing a shell round it, in the mirror's part (mirrorL / mirrorR; a car without them: where the stock ones are,
+               PEŠČENJAK's on its cage, the glass whole)
      vrata     the doors' outer skins: a panel over the door (paint, primer, aluminium, fibreglass, carbon) laid on the loft's side (a decal
                on the door: it goes with it), the handles, the window net or the light glass with its slider (K.deli round the handles)
      zavore    the brakes, seen through the rims: the disc over the rim's dish (it turns with the wheel), the caliper in h.still (it does
@@ -53,10 +54,10 @@
     ][n];
     if (!O) return;
     for (const sd of [-1, 1]) {
-      const part = sd < 0 ? 'mirrorL' : 'mirrorR', o = { part }, w = m.w * (O.w || 1), h = m.h * (O.h || 1), d = m.d * (O.d || 1);
+      const nm = sd < 0 ? 'mirrorL' : 'mirrorR', part = K.parts.includes(nm) ? nm : undefined, o = { part }, w = m.w * (O.w || 1), h = m.h * (O.h || 1), d = m.d * (O.d || 1);
       const x = m.x + (m.fwd || 0) + (O.dx || 0), y = m.y + (m.up || 0) + (O.dy || 0), zm = m.z + (O.dz || 0), z = sd * zm, bx = x - w / 2;   // (bx: the glass's plane, its back)
       const z0 = sd * (m.z0 != null ? m.z0 : m.z - m.d / 2 - 0.05);
-      K.mirror(bx + 0.011, y, z, { col: O.rim || BLK, w: 0.022, h, d, crack: 1, arm: O.stalk || BLK, z0 });   // (the glass, its rim, the arm; its fold about the housing's inner rear corner)
+      K.mirror(bx + 0.011, y, z, { col: O.rim || BLK, w: 0.022, h, d, crack: part ? 1 : 0, arm: O.stalk || BLK, z0 });   // (the glass, its rim, the arm; its fold about the housing's inner rear corner)
       // the housing's profile (along x from the back, up from the middle): k points round, the back's two by the glass
       const prof = O.shape === 'round' ? [[0.003, 0.5], [0.3, 0.56], [0.72, 0.48], [0.98, 0.18], [0.98, -0.2], [0.72, -0.48], [0.3, -0.54], [0.003, -0.5]]
         : O.shape === 'tear' ? [[0.003, 0.5], [0.35, 0.52], [0.75, 0.32], [1, 0.02], [0.8, -0.3], [0.4, -0.48], [0.003, -0.5]]
@@ -90,8 +91,13 @@
 
   // ================================================================ vrata: both doors of option n
   // m: { x: [rear, front] the door's skin (on its shut lines), y: [sill, belt], handle: [x, y, z (out), w, h], win: [[x, t] ...] the door's
-  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise), frame: [x0, x1, t0, t1] its frame's rear upright from
-  // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar }. The door's panel a decal on the loft's side (lift 3.5 mm: the
+  // glass (t up the window band: 0 the belt, 1 the roof's edge; counter-clockwise from the rear foot: the second point the bottom's front
+  // end (the net's rod to it), the last but one the top's front end (the frame's top to it), more between them where the glass curves, JASTREB's;
+  // null: an open car's, none), frame: [x0, x1, t0, t1] its frame's rear upright from
+  // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar; rub: the rubbing strip's middle height (0.595; a high door,
+  // GOZDAR's: its own), crease: [y, y] the pressed lines' heights (0.6, 0.72), lexOut: the light glass (11, 15) that much further out
+  // (0; a window band whose skin's triangles bulge past its line, SKAKAČ's), rubSide: true, the rubbing strip's bolts (3, Visoki) each on
+  // the side's own line (none: at the handle's; a door whose side narrows towards the front, SKAKAČ's) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
   // latch) or the light glass (lexan: clearer, its black printed border, a sliding hatch or a vent)
@@ -120,25 +126,27 @@
       { skin: CF, handle: null, sheen: CF2, net: true, pins: true },                   // 16 motošport
     ][n];
     if (!O) return;
-    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = m.frame;
-    const u0 = Math.min(...W.map(q => q[0])), u1 = Math.max(...W.map(q => q[0])), t0 = Math.min(...W.map(q => q[1])), t1 = Math.max(...W.map(q => q[1]));
+    const [xa, xb] = m.x, [ya, yb] = m.y, [hx, hy, hz, hw, hh] = m.handle, W = m.win, F = W && m.frame, ni = m.netIn || 0;   // (netIn: the window net that much nearer the band, over a glass set in behind it: MIŠKA's)
+    // (win null: an open car's doors, their tops at the belt, the windows down: no frame, net or light glass; LEV KABRIO's)
+    const u0 = W ? Math.min(...W.map(q => q[0])) : 0, u1 = W ? Math.max(...W.map(q => q[0])) : 0, t0 = W ? Math.min(...W.map(q => q[1])) : 0, t1 = W ? Math.max(...W.map(q => q[1])) : 0;
     const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
-      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); };
+      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win0 = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, win = win0, nwin = (pts, col, l) => win(pts, col, l - ni);
       if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
       // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
       if (F) { const fc = O.frame || O.skin || P;
-        band([[F[0], 0], [F[1], 0], [F[1], F[3]], [F[0], F[3]]], fc, 0.011); band([[F[0], F[2]], [W[2][0] + 0.01, F[2]], [W[2][0] - 0.02, F[3]], [F[0], F[3]]], fc, 0.011);
+        band([[F[0], 0], [F[1], 0], [F[1], F[3]], [F[0], F[3]]], fc, 0.011); band([[F[0], F[2]], [W[W.length - 2][0] + 0.01, F[2]], [W[W.length - 2][0] - 0.02, F[3]], [F[0], F[3]]], fc, 0.011);
         band([[xa - 0.006, 0], [xa + 0.006, 0], [xa + 0.006, 1], [xa - 0.006, 1]], D, 0.013); }
       if (O.sheen && K.hi) for (let i = 0; i < 3; i++) { const u = xa + 0.16 + i * 0.36;   // (the weave catching the light: three bands across, slanting)
         side([[u, ya], [u + 0.07, ya], [u + 0.21, yb], [u + 0.14, yb]].map(([px, py]) => [Math.max(xa, Math.min(xb, px)), py]), O.sheen, 0.004); }
       if (O.brush && K.hi) for (let i = 0; i < 6; i++) { const y = ya + 0.06 + i * (yb - ya - 0.1) / 5; side([[xa, y], [xb, y], [xb, y + 0.004], [xa, y + 0.004]], AL2, 0.004); }
-      if (O.crease) for (const y of [0.6, 0.72]) { side([[xa, y], [xb, y], [xb, y + 0.01], [xa, y + 0.01]], K.shade(P, 0.5), 0.0045); side([[xa, y - 0.006], [xb, y - 0.006], [xb, y], [xa, y]], K.shade(P, 1.3), 0.0045); }   // (pressed lines: their shadow, their light edge under them)
+      if (O.crease) for (const y of m.crease || [0.6, 0.72]) { side([[xa, y], [xb, y], [xb, y + 0.01], [xa, y + 0.01]], K.shade(P, 0.5), 0.0045); side([[xa, y - 0.006], [xb, y - 0.006], [xb, y], [xa, y]], K.shade(P, 1.3), 0.0045); }   // (pressed lines: their shadow, their light edge under them)
       if (O.trim) side([[xa, yb - 0.02], [xb, yb - 0.02], [xb, yb - 0.004], [xa, yb - 0.004]], O.trim, 0.0045);
-      if (O.mould) { side([[xa + 0.02, 0.56], [xb - 0.02, 0.56], [xb - 0.02, 0.63], [xa + 0.02, 0.63]], O.mould, 0.008);
-        side([[xa + 0.02, 0.589], [xb - 0.02, 0.589], [xb - 0.02, 0.601], [xa + 0.02, 0.601]], [0.16, 0.16, 0.17], 0.0095);
-        if (K.hi) for (let i = 0; i < 4; i++) K.discX(xa + 0.08 + i * (xb - xa - 0.16) / 3, 0.595, sd * (hz + 0.01), 0.009, 6, AL2, 1, o); }
+      if (O.mould) { const [r0, r1, r2, r3, rm] = m.rub != null ? [m.rub - 0.035, m.rub - 0.006, m.rub + 0.006, m.rub + 0.035, m.rub] : [0.56, 0.589, 0.601, 0.63, 0.595];   // (rub: its middle's height)
+        side([[xa + 0.02, r0], [xb - 0.02, r0], [xb - 0.02, r3], [xa + 0.02, r3]], O.mould, 0.008);
+        side([[xa + 0.02, r1], [xb - 0.02, r1], [xb - 0.02, r2], [xa + 0.02, r2]], [0.16, 0.16, 0.17], 0.0095);
+        if (K.hi) for (let i = 0; i < 4; i++) { const bx = xa + 0.08 + i * (xb - xa - 0.16) / 3; K.discX(bx, rm, sd * (m.rubSide ? LD.prop(bx, 'w') + 0.0105 : hz + 0.01), 0.009, 6, AL2, 1, o); } }   // (rubSide: each bolt on the side's own line)
       if (O.seal) { side([[xa, ya], [xb, ya], [xb, ya + 0.012], [xa, ya + 0.012]], BLK, 0.0045); side([[xa, ya], [xa + 0.012, ya], [xa + 0.012, yb], [xa, yb]], BLK, 0.0045); side([[xb - 0.012, ya], [xb, ya], [xb, yb], [xb - 0.012, yb]], BLK, 0.0045); }
       if (O.rivets && K.hi) for (const ry of [ya + 0.05, yb - 0.04]) for (let i = 0; i < 9; i++) { const rx = xa + 0.04 + i * (xb - xa - 0.08) / 8;
         side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, 0.0045); }
@@ -149,16 +157,16 @@
       else K.rect(hx + 0.02, hy - 0.01, sd * (hz + 0.002), 0.09, 0.022, RED, Object.assign({ dir }, o));   // (a strap pull, red)
       if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, o);   // (the quick-release pins at its rear edge)
       // a window net: black webbing in squares (8 up, 5 across) inside its border, hung on a rod along the belt, its latch at the top front (red)
-      if (O.net) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
-        win([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); win([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); win([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
-        for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; win([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
-        for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; win([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
-        const r0 = pt(a, c + 0.01, 0.022, sd), r1 = pt(W[1][0] - 0.06, c + 0.01, 0.022, sd); K.bar(r0, r1, 0.006, AL2, { n: 4, host });   // (its rod)
+      if (O.net && W) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
+        nwin([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); nwin([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); nwin([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);
+        for (let i = 1; i <= 8; i++) { const u = a + i * 0.1; nwin([[u - s, c], [u + s, c], [u + s, e], [u - s, e]], BLK, 0.0155); }
+        for (let j = 1; j <= 4; j++) { const t = c + j * (e - c) / 5; nwin([[a, t - s], [b, t - s], [b, t + s], [a, t + s]], BLK, 0.0145); }
+        const r0 = pt(a, c + 0.01, 0.022 - ni, sd), r1 = pt(W[1][0] - 0.06, c + 0.01, 0.022 - ni, sd); K.bar(r0, r1, 0.006, AL2, { n: 4, host });   // (its rod)
         const q = clip([[a, e - 0.06], [b, e - 0.06], [b, e], [a, e]], W), qx = Math.max(...q.map(v => v[0])) - 0.05;
-        win([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
+        nwin([[qx, e - 0.05], [qx + 0.04, e - 0.05], [qx + 0.04, e + 0.01], [qx, e + 0.01]], RED, 0.018); }   // (its latch)
       // the light glass (lexan): clearer than glass, its black printed border, a sliding hatch (open: dark inside, rails over and under
       // it, a finger pull) or a round vent
-      if (O.lexan) { const LX = [0.46, 0.52, 0.6];
+      if (O.lexan && W) { const LX = [0.46, 0.52, 0.6], lo = m.lexOut || 0, win = (pts, col, l) => win0(pts, col, l + lo);   // (lexOut: the light glass that much further out)
         win([[u0, t0], [u1, t0], [u1, t1], [u0, t1]], LX, 0.012);
         win([[u0, t0], [u1, t0], [u1, t0 + 0.035], [u0, t0 + 0.035]], BLK, 0.014); win([[u0, t1 - 0.035], [u1, t1 - 0.035], [u1, t1], [u0, t1]], BLK, 0.014); win([[u0, t0], [u0 + 0.03, t0], [u0 + 0.03, t1], [u0, t1]], BLK, 0.014);
         if (O.lexan === 'slide') { const a = u0 + 0.06, b = a + 0.28, c = t0 + 0.08, e = c + 0.32;
@@ -260,8 +268,9 @@
   DELI.add('zavore', zavore);
 
   // ================================================================ matice: the wheel nuts of option n
-  // m: { k: the nuts on a wheel (KOLIBRI 4), r: their circle (rim radii, 0.2) }. Each a prism standing on the hub, over the rims' own nuts
-  // (at their angles: 45 degrees on), from 1 cm over the dish to 3.4 cm; a centre-lock rim (platisca 12, 14, 16): one big nut in the middle
+  // m: { k: the nuts on a wheel (KOLIBRI 4), r: their circle (rim radii, 0.2), lock: true: the car's own rims a centre lock (wire wheels'
+  // knock-off: BLISK), on them one big nut over its spinner }. Each a prism standing on the hub, over the rims' own nuts (at their angles:
+  // 45 degrees on), from 1 cm over the dish to 3.4 cm; a centre-lock rim (platisca 12, 14, 16; the car's own with lock): one big nut in the middle
   function matice(h, n, m) {
     if (!h.full) return;
     const RB = [[0.2, 0.32, 0.85], [0.55, 0.2, 0.62], [0.85, 0.62, 0.2]], TI = [0.6, 0.58, 0.54];   // (burnt titanium: blue, purple, gold)
@@ -286,7 +295,7 @@
       { col: TI, sides: 12, r: 0.05, flange: true, open: true, burnt: true },  // 16 titanove, dirkalne (spline, open)
     ][n];
     if (!O) return;
-    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl && LOCK.includes(pl), PL = pl ? DELI.wheel(pl) || {} : {};
+    const G = h.g, rr = h.rr, pl = h.fitted && h.fitted.platisca, lockR = pl ? LOCK.includes(pl) : !!(m && m.lock), PL = pl ? DELI.wheel(pl) || {} : {};
     if (PL.cover) return;   // (under a hubcap: unseen)
     const seat = PL.seat || 0.01;   // (their foot over the dish: on the rim's hub, over its cap's edge)
     const V = h.vis, fan = (c, pts, z, col, apex) => { for (let i = 0; i < pts.length; i++) G.triO([c[0], c[1], z + (apex || 0)], [pts[i][0], pts[i][1], z], [pts[(i + 1) % pts.length][0], pts[(i + 1) % pts.length][1], z], col, [c[0], c[1], z - 1]); };

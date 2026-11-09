@@ -30,6 +30,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 18 | Zgodovina napak | končano |
 | 19 | Zadnji posnetki | končano |
 | 20 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
+| 21 | Seznama posnetkov in napak: avto, čas, večja slika, odpiranje starih zapisov | končano (PR #307, veja `orodje-za-napake/sklop-21-seznama`; uporabnik 5. 11. 2026) |
 
 **Pospešitev** (27. 10. 2026: veriga in vzporedni sklopi) je končana; opis je v `docs/arhiv/orodje-za-napake-sklopi.md`. Pravilo za svež `main` pred združitvijo je v `CLAUDE.md` (Postopek).
 
@@ -96,7 +97,10 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom;
   - stanje Neposlano → Poslano → Popravljeno → Zaprto;
   - gumb »Deli vse neposlane«;
-  - kljukica »Obdrži tudi slike v igri«.
+  - kljukica »Obdrži tudi slike v igri«;
+  - pri vsaki zbirki in pri vsakem posnetku (Zadnji posnetki) sta ime avta igralca in čas vožnje, zeleno, če je prišel do cilja (`KOLIBRI · 1:23.456`), sicer »ni do cilja« (sklop 21); posnetki do cilja imajo zelen rob, v Zadnjih posnetkih jih pokaže gumb »Samo do cilja«;
+  - slika v obeh seznamih in v zapisu se z dotikom poveča čez celo okno (zapre jo dotik, Esc ali Zapri); dotik besedila odpre zapis oziroma posnetek;
+  - Zgodovina napak je samo slike napak z besedilom; **posnetki dirk za prenos (.rrp) so v Zadnjih posnetkih** (povezava v Nastavitvah orodja in v Zgodovini napak); zapis, katerega posnetek je še med njimi, ima gumba Odpri posnetek in Shrani .rrp.
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
@@ -134,7 +138,7 @@ Opisi končanih sklopov 1–20 (časi, vsebina, testi, opombe) so v `docs/arhiv/
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je. Ob izbrisu Ria de Janeira (testna od 5. 11. 2026, PR #365): `rio` iz `WSPLIT` v `tools/razdeli-proge.mjs`, preostale Riove scenarije v `tests/razdelitev.test.js` (`rioKartGeo`, `RIO_W`, `RIO_Q`, `sAtS`) prestavi na Bathurst ali Crystal Palace.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je. Ob izbrisu Ria de Janeira (testna od 5. 11. 2026, PR #365): `rio` iz `WSPLIT` v `tools/razdeli-proge.mjs`, preostale Riove scenarije v `tests/razdelitev.test.js` (`rioKartGeo`, `RIO_W`, `RIO_Q`, `sAtS`) prestavi na Bathurst ali Crystal Palace. V istem koraku se izbriše tudi stikalo `?voznja` za tekmece po igralčevi vožnji (odločitev uporabnika 5. 11. 2026; pred izbrisom vprašaj, ali ostanejo vklopljeni za vse; `docs/ai-po-tvoji-liniji.md`).
 
 ## Skupaj
 

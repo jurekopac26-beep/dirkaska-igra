@@ -130,31 +130,12 @@
     const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 4; m.matrixAutoUpdate = false; m.name = 'smoke';
     return m;
   }
-  // flags on poles that wave: the cloth in stripes (top to bottom), 4 segments along it, pushed out of its plane in the vertex shader (uTime),
-  // more towards the free end. list: [x, y (the top of the pole), z, the way the cloth flies (radians from +x), stripes, width, height]
+  // flags on poles that wave (also Monterey's and Riverside's): the shared waving cloths of js/world-zastave.js (World.flagMesh), the cloth
+  // in stripes (top to bottom). list: [x, y (the top of the pole), z, the way the cloth flies (radians from +x), stripes, width, height]; its
+  // geometry, material and mesh made with Math.random as they always were (a seeded race runs as before); the flags the build put up
+  // elsewhere (API.flags: the campsites', the marshals') in the same mesh
   function rbFlags(list, uTime) {
-    const P = [], N = [], C = [], F = [], I = [], r = rng(1966), SEG = 4; let v = 0;
-    for (const [x, y, z, rot, cols, W, H] of list) {
-      const c = Math.cos(rot), s = Math.sin(rot), ph = r() * TAU, ns = cols.length;
-      for (let b = 0; b < ns; b++) {
-        for (let k = 0; k <= SEG; k++) { const u = k / SEG;
-          for (const f of [b / ns, (b + 1) / ns]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }
-        for (let k = 0; k < SEG; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
-        v += (SEG + 1) * 2;
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
-    g.setAttribute('aFlag', new THREE.Float32BufferAttribute(F, 3)); g.setIndex(I); g.computeBoundingSphere();
-    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = uTime;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aFlag;\nuniform float uTime;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ float u = aFlag.x, w = sin(uTime * 5.0 - u * 5.5 + aFlag.y) + 0.45 * sin(uTime * 8.3 - u * 9.0 + aFlag.y * 2.0);\n  transformed += objectNormal * w * aFlag.z * u; transformed.y -= (0.5 + 0.5 * w) * aFlag.z * 0.4 * u * u; }');
-    };
-    m.customProgramCacheKey = () => 'rbflag';
-    const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; mesh.name = 'flags';
-    return mesh;
+    return World.flagMesh(list.map(([x, y, z, rot, cols, W, H]) => [x, y - 0.05, z, rot, cols, W, H]).concat(API.flags.take()), uTime, { tier: LOD.tier });   // (and the build's other flags: the camps', the marshals')
   }
   // the video walls' pictures, four 256 x 128 frames side by side (the walls show one after another): the race from behind a car, the
   // standings (the game's own drivers), the orange fans in their smoke, the map of the circuit (T's centre line)
@@ -1131,7 +1112,7 @@
       if (excluded(x, z) || (side === PSD && PD && T.pitAt(s))) continue;
       box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, T.hd[i], [0.94, 0.94, 0.92], [0.95, 0.45, 0.1], true);
       box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.6, 0.6, 2.25, T.hd[i], [0.2, 0.28, 0.36], null, true);
-      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 3.4, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); API.flags.add(fx, y + 4, fz, T.hd[i], [[0.98, 0.84, 0.1]], 0.9, 0.6);   // (the cloth waves: js/world-zastave.js)
       { const lx = x - T.tx[i] * 1.9, lz = z - T.tz[i] * 1.9, nx = -T.nx[i] * side, nz = -T.nz[i] * side;   // the digital flag panel on its post, a green light towards the road
         box(g, lx, y, lz, 0.14, 3.1, 0.14, T.hd[i], [0.5, 0.51, 0.54], null, true); box(g, lx + nx * 0.1, y + 2.6, lz + nz * 0.1, 1.0, 0.75, 0.16, T.hd[i], [0.1, 0.1, 0.11]);
         box(g, lx + nx * 0.2, y + 2.72, lz + nz * 0.2, 0.62, 0.5, 0.04, T.hd[i], [0.35, 1.0, 0.4], null, true); }
@@ -1480,13 +1461,13 @@
       const fl = [12, -12].map((a) => { const [fx2, fz2] = atSf(s + a, f0 - 3); return [fx2, hyS(s + a) + 0.3, fz2, SMK[0], 1.1]; });   // (at the edges of the shot)
       P.smoke = rbSmoke(fl, CR.U.uTime, smTex); P.smoke.visible = false; root.add(P.smoke);
     }
-    if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     if (!PER) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
     if (out.air) out.air.finOnly = !!LK.heliFin;   // (Rio: the helicopter only over the finish, after the race)
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, houses: nHouse, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
     if (RIO) { out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush); out.stats.rio.bloom = nBloom; }   // Rio: the lagoon, palms along the straights, the mountains round the basin
+    if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));   // (last: the build's other flags are in API.flags by now)
     return out;
   }
 

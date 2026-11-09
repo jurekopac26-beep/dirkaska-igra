@@ -19,7 +19,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('34'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'toronto'), T = new Core.Track(TD);
-check('34: in Toronto, a real track', D.track === 'toronto' && !TD.test);
+check('34: in Toronto (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'toronto' && !!TD);
 const o = D.opts(D);
 check('its race: alone, one lap, the bus (12 m, slow, soft brakes: a copy of the model), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.len === 12 && o.playerModel.vLim === K.VMAX && o.playerModel.brakeK === K.BRK && Core.MODELS.find(m => m.id === 'titan').len !== 12);
 check('the stops on straights (no bend within 45 m before, 25 m after), the road wide enough', K.STOPS.every(s => { for (let d = -45; d <= 25; d += 5) if (Math.abs(T.k[T.idx(T.startS + s + d)]) > 0.004) return false; return T.wS(T.startS + s) > 5; }));
