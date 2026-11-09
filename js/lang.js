@@ -473,6 +473,8 @@
     'Esi': 'Esses', 'Južna zanka': 'South Loop', 'Vzhodna ravnina': 'East Straight', 'Vijuge': 'The Twists', 'Desni okljuk': 'Right-hand Loop',   // (Pärnu: its corners by plain descriptions)
     'Prvi desni': 'First Right', 'Levi pred lasnico': 'Left before the Hairpin', 'Jugozahodna lasnica': 'South-west Hairpin', 'Levi ob kartingu': 'Karting Left', 'Severni esi': 'North Esses',
     'Šikana pri hotelih': 'Hotel Chicane', 'Vzhodni levi': 'East Left', 'Levi v notranjosti': 'Infield Left', 'Notranji esi': 'Infield Esses',   // (Houli: its corners by plain descriptions)
+    'Zahodna zanka': 'West Loop', 'Levi za zanko': 'Left after the Loop', 'Srednji esi': 'Middle Esses', 'Vzhodna zanka': 'East Loop', 'Povratna ravnina': 'Return Straight',
+    'Južna lasnica': 'South Hairpin',   // (Tocancipá: its corners by plain descriptions)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)

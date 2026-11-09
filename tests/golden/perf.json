@@ -481,5 +481,12 @@
   "kverts": 608,
   "maxKverts": 797,
   "jsMs": 1.78
+ },
+ "tocancipa": {
+  "calls": 224,
+  "maxCalls": 251,
+  "kverts": 497,
+  "maxKverts": 617,
+  "jsMs": 1.99
  }
 }

@@ -1807,5 +1807,36 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "5b91d2c3"
   }
+ },
+ "tocancipa": {
+  "meshes": 466,
+  "verts": 350803,
+  "instances": 6822,
+  "props": 56,
+  "crowd": 23,
+  "world": "762a9433",
+  "propsHash": "6a0c9795",
+  "floor": "81102ac9/5320",
+  "groups": {
+   "-:MeshLambertMaterial": "b73fd361",
+   "-:MeshBasicMaterial": "657cfb88",
+   "water:MeshPhongMaterial": "34247e5b",
+   "-:MeshPhongMaterial": "bd4d86f5",
+   "tcFar:MeshLambertMaterial": "50f74bb3",
+   "rsFar:MeshBasicMaterial": "7f5476ed",
+   "flags:MeshLambertMaterial": "27ad732d",
+   "crowd:MeshLambertMaterial": "5c47d089",
+   "ao:MeshBasicMaterial": "cccf3605",
+   "tyremarks:MeshBasicMaterial": "fe2d6b00",
+   "roadwear:MeshLambertMaterial": "b98c2e62",
+   "worn:MeshLambertMaterial": "e5777fde",
+   "brakeBoards:MeshLambertMaterial": "c79755a0",
+   "life:MeshLambertMaterial": "4ade5732",
+   "lifeShadow:MeshBasicMaterial": "2122c550",
+   "life:MeshBasicMaterial": "de27a525",
+   "people:MeshLambertMaterial": "c908f8d9",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "9faefa93"
+  }
  }
 }
