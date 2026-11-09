@@ -466,6 +466,9 @@
     'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
     'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
     'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
+    'Spust v prvi levi': 'Drop into the First Left', 'Dolgi desni v dolini': 'Long Right in the Dip', 'Vzpon na hrib': 'Climb up the Hill', 'Desni na dnu': 'Right at the Bottom',
+    'Dolgi levi s štirimi temeni': 'Long Left with Four Apexes', 'Spust v dolino': 'Drop into the Valley', 'Levi po spustu': 'Left after the Drop', 'Desni na zadnjo ravnino': 'Right onto the Back Straight',
+    'Levi na koncu ravnine': 'Left at the End of the Straight', 'Desni v šikani': 'Chicane Right', 'Levi na ciljno ravnino': 'Left onto the Main Straight',   // (Tuzla: its corners by plain descriptions, the hills by them)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)

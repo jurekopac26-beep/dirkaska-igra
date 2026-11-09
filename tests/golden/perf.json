@@ -496,6 +496,13 @@
   "maxKverts": 326,
   "jsMs": 1.44
  },
+ "tuzla": {
+  "calls": 158,
+  "maxCalls": 207,
+  "kverts": 463,
+  "maxKverts": 584,
+  "jsMs": 1.65
+ },
  "portomoniz": {
   "calls": 208,
   "maxCalls": 246,
