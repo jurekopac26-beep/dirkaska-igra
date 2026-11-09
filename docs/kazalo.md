@@ -217,6 +217,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | london | London, Anglija | london | `js/world-london.js` (`buildLondon`: ulice, betonske ograje ulične dirke, nabrežje Temze z zidom in ladjami, Westminstrski in železniški most, znamenitosti kot generične oblike po oznakah `marks`, stavbe iz OSM; podatki `js/data/london.js` (`LN_DATA`) iz `tools/london/build.py world`, proga iz `build.py track`) |
+| llogara | Llogara, Albanija | llogara | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.llogara`) in `js/world-llogara.js` (znamenitosti prek `L.pre`/`L.extra`: bunkerji, korita izvirov, spomenik, znamenje, kažipot, vzletišče z vetrno vrečo, krili in jadralnimi padalci v zraku; črni bori in makija; Jonsko morje v daljnem pogledu) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |

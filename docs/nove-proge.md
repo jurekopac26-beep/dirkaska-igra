@@ -136,7 +136,7 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 | 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | končano (PR #226) |
 | 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | naslednja (2A) |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
-| 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka |
+| 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | narejena v PR #545 (osnutek do vrste; B9, skupina N5, vrstica 17d v `docs/vrsta.md`; opis `docs/proge/llogara.md`) |
 | 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka |
 | 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | čaka |
 | 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | čaka |

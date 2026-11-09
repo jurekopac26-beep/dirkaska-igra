@@ -155,6 +155,7 @@ def open_bends(x, z, R, it=300):
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
 
+
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
     hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
@@ -466,6 +467,7 @@ def main():
     X1 = crossings(x, z) if C.get('kriz') else []
     if X1: hp = knot(hp, s, X1, C['kriz'])
     base = hp[i0]; alt = [int(round(hp[i0])), int(C.get('vrh', round(hp[i1])))]   # (vrh: the top's official height, when the cleaned profile is a metre or two off it)
+    if C.get('desetinka'): alt[1] = int(round(hp[i0])) + round(float(hp[i1] - hp[i0]), 1)   # (the finish to a tenth: the game's heights between scale by the climb, altAt; Llogara)
     g = np.gradient(hp, s)
     log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], np.abs(g[i0:i1]).max() * 100, np.mean(np.abs(h - hp))))
     nE = int(round(s[-1] / 4)); fr = np.linspace(0, s[-1], nE + 1); HE = np.round((np.interp(fr, s, hp) - base) * 10).astype(int).tolist()

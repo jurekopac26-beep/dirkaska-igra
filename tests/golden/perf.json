@@ -363,6 +363,13 @@
   "maxKverts": 488,
   "jsMs": 1.69
  },
+ "llogara": {
+  "calls": 156,
+  "maxCalls": 168,
+  "kverts": 362,
+  "maxKverts": 423,
+  "jsMs": 1.34
+ },
  "ella": {
   "calls": 166,
   "maxCalls": 205,
