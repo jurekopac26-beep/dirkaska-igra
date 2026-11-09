@@ -6632,9 +6632,17 @@
     setup: (id) => setupOf(id),
     medals: (d) => medalSet(pkRoadDef(d)),
     // the player's best on a track in the way it is driven now: [what it is, the time or '—']
-    record(d0) {
-      const d = pkRoadDef(d0), r = rec(d.id), md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
+    record(d0) {   // (read only: no empty record kept for a track only looked at)
+      const d = pkRoadDef(d0), r = records.tracks[recKey(d.id)] || {}, md = modeOf(d), t = (v) => v > 0 ? fmt(v, true) : '—';
       return isTT(d) ? ['Best time', t(r.bestTime)] : md === 'police' ? ['Best escape', t(r.bestRace)] : md === 'traffic' ? ['Best duel', t(r.bestRace)] : md === 'elim' ? ['Best place', r.bestPos > 0 ? 'P' + r.bestPos : '—'] : md === 'lov' ? ['Best catch', t(r.bestRace)] : upRace(d) ? ['Best race', t(r.bestRace)] : ['Best lap', t(r.bestLap)];
+    },
+    // the player's progress there (the quick list's marks, js/menu-izbor.js; the row's): { what: the best's name and txt: it, as record()
+    // gives them ('' for none), done: driven there, pos: the best place (a race with rivals; else 0), medal: 1 gold, 2 silver, 3 bronze (a
+    // race's place, a time trial's medal times), 0 none }
+    progress(d0) {
+      const d = pkRoadDef(d0), r = records.tracks[recKey(d.id)] || {}, tt = isTT(d), [what, v] = MenuBridge.record(d0);
+      const done = ['bestLap', 'bestRace', 'bestPos', 'bestTime'].some(k => posNum(r[k])), pos = !tt && posNum(r.bestPos) ? Math.round(r.bestPos) : 0;
+      return { what, txt: v !== '—' && !/^P\d/.test(v) ? v : '', done, pos, medal: !done ? 0 : tt ? medalOf(d, r.bestTime) + 1 : pos <= 3 ? pos : 0 };
     },
     car: () => { const M = Core.MODELS[S.car]; return { id: M.id, name: M.name, color: colNow(), hex: PLAYER_COLORS[colNow()], num: carNum() }; },   // (hex, num: the menu's car in 3D, js/menu-car.js)
     carHere: () => owned(Core.MODELS[S.car].id),
@@ -6706,6 +6714,7 @@
     newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
     click: () => { Sfx.resume(); Sfx.click(); },
+    buzz: () => Input.vibrate(20),   // (a short tremble: a country or a track chosen in the quick list; the settings' vibration decides)
     visible: () => screen === 'title' || screen === 'track',
     // the menu could not start: the old title and track screens take over
     fallback() { menuOn = false; buildTrackScreen(); showScreen(screen === 'track' ? 'track' : 'title'); },
