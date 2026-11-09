@@ -12,7 +12,7 @@
 // under row 2 (never on its line: SEKTOR 2  1:05.123, the fastest lap with its star, the longest place names of the real tracks in two
 // lines at most, in English too), clear of the map, the corner sign, the clock and the column under the rows, the duel's gap line and the
 // police's panel under it; lying (640x360, 844x390, 915x412) both rows left of the corner sign (the police's further left too); the whole
-// left column (fuel, three faults, a flag, DRS and ZAVETRJE) left of ZAMENJAJ KOLO lying, over none of the map, the pause button, the
+// left column (fuel, three faults, a flag, DRS and ZAVETRJE) over none of the map, the pause button, the
 // corner sign, the clock or the controls, in every steering mode (buttons, wheel, tilt) either way the phone is held.
 //   node tests/browser/hud.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -164,7 +164,6 @@ try {
     else { $('h-pol').className = ''; $('h-chk').className = ''; }
     const S = $('h-split'); S.style.transition = 'none'; S.textContent = st.split || ''; S.className = st.split ? 'show sg' : '';
     $('h-note').style.transition = 'none'; g.noteAt(window.__hudS0, 30);   // (the sign as the game places it: under the line when it is in two lines)
-    const W = $('wheel-swap'); W.classList.toggle('on', !!st.col && innerWidth > innerHeight); if (st.col) $('ws-btn').style.top = Math.round($('h-times').getBoundingClientRect().bottom + 6) + 'px';   // (as game.js swapTop puts it)
   };
   const MEASURE = () => { const $ = (id) => document.getElementById(id);
     const vis = (e) => { for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden') return false; } return true; };
@@ -177,7 +176,7 @@ try {
     const under = glyphs($('h-rlbl')).concat(els(['h-drs', 'h-fuel', 'h-flag']), glyphs($('h-alt')), glyphs($('h-turn')), [...$('h-flt').children].filter(vis).map(e => box(e.getBoundingClientRect(), 'flt')));
     return { w: innerWidth, h: innerHeight, r1: ext(r1), r2: ext(r2), r2g: r2, col: r1.concat(r2, under), under, colExt: ext(r1.concat(r2, under)), clock: glyphs($('h-time'), 'time').concat(glyphs($('h-best'), 'best')),
       split: glyphs($('h-split'), 'split'), gap: glyphs($('h-gap'), 'gap'), pol: glyphs($('h-pol'), 'pol').concat(els(['h-bust', 'h-hide', 'h-chk'])), note: els(['h-note'])[0] || null,
-      map: els(['h-map'])[0], pause: els(['btn-pause'])[0] || null, ws: $('wheel-swap').classList.contains('on') ? box($('ws-btn').getBoundingClientRect()) : null,
+      map: els(['h-map'])[0], pause: els(['btn-pause'])[0] || null,
       ctl: els(['c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind']), mode: (/m-(\w+)/.exec($('touch').className) || [])[1] };
   };
   const hit = (a, b) => !!a && !!b && Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
@@ -207,7 +206,6 @@ try {
     } else {   // lying: both rows left of the corner sign
       room.note = o.note ? +(o.note.l - Math.max(o.r1.r, o.r2.r)).toFixed(1) : null;
       if (room.note == null || room.note < 3) bad.push(`the rows ${room.note} px from the corner sign`);
-      if (o.ws) { room.ws = +(o.ws.l - o.colExt.r).toFixed(1); if (o.col.some(c => hit(c, o.ws))) bad.push('the column under ZAMENJAJ KOLO'); }
     }
     for (const c of o.col) {
       for (const k of o.ctl) if (hit(c, k)) bad.push('over #' + k.id);
@@ -232,7 +230,7 @@ try {
     ['race', Object.assign({ split: 'KROG 11: 02:13.456  NAJHITREJŠI' }, RACE)], ['race (en)', Object.assign({ split: 'LAP 11: 02:13.456  FASTEST' }, RACE_EN)],
     ['qualifying', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true }], ['qualifying (en)', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true }], ['flying lap', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }],
     ['Nürburg', { pos: '100', tot: '/100', lap: 'KROG 1/1 · 12,3/20,7 KM' }], ['Nürburg (en)', { pos: '100', tot: '/100', lap: 'LAP 1/1 · 12.3/20.7 KM', en: true }],
-    ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column, ZAMENJAJ KOLO', Object.assign({ col: true }, RACE)]] };
+    ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column', Object.assign({ col: true }, RACE)]] };
   const all = [];
   await page.evaluate((s) => { window.__hudS0 = s; }, s0);
   for (const [w, h] of SIZES) {
@@ -256,9 +254,9 @@ try {
     JSON.stringify(port.filter(a => a.bad.length)) + ' ' + sum(port));
   T.check('lying (640x360, 844x390, 915x412), the worst texts (qualifying with the tyres, Nürburg\'s long lap, a two-digit lap; the police: the sign further left): both rows at least 3 px left of the corner sign',
     land.filter(a => a.m === 'buttons' && !/column/.test(a.name)).every(a => !a.bad.length), JSON.stringify(land.filter(a => a.bad.length)) + ' ' + sum(land));
-  T.check('the whole left column (the rows, DRS and ZAVETRJE, fuel, three faults, a flag) on screen, over none of the controls, the map, the pause button, the corner sign or the clock, with buttons, the wheel and tilting, upright and lying; lying left of ZAMENJAJ KOLO',
+  T.check('the whole left column (the rows, DRS and ZAVETRJE, fuel, three faults, a flag) on screen, over none of the controls, the map, the pause button, the corner sign or the clock, with buttons, the wheel and tilting, upright and lying',
     all.filter(a => /column/.test(a.name)).length === 18 && all.filter(a => /column/.test(a.name)).every(a => !a.bad.length) && all.every(a => !a.bad.length),
-    JSON.stringify(all.filter(a => a.bad.length)) + ' ' + all.filter(a => /column/.test(a.name)).map(a => `${a.size} ${a.m}: below ${a.room.ctl}${a.room.ws != null ? ', ZAMENJAJ KOLO ' + a.room.ws : ''}`).join(' | '));
+    JSON.stringify(all.filter(a => a.bad.length)) + ' ' + all.filter(a => /column/.test(a.name)).map(a => `${a.size} ${a.m}: below ${a.room.ctl}`).join(' | '));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' '));
