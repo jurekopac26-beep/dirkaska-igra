@@ -80,6 +80,8 @@ function until(r, fn, s, slide) {   // steps until fn() or s seconds; the player
   const b = burn(); C.applyDamage(b.P, 0.009, 0, Wd); const t2 = until(b.r, () => b.W.nL >= 2, 8, true);
   const c = burn(); C.applyDamage(c.P, 0.009, 0, Wd); until(c.r, () => false, 0.5); C.applyDamage(c.P, 0.008, FL[0], FL[1]);
   check('the second wheel: straight on ~4 s, sliding sooner (not under 1 s), at once at a real knock; then the car on fire', t1 > 3.5 && t1 < 4.3 && t2 >= 1 && t2 < 2.2 && c.W.nL === 2 && a.Q.burn === 2, `straight ${t1.toFixed(2)} s, sliding ${t2.toFixed(2)} s, knock: ${c.W.nL} off`);
+  const j4 = burn(); C.applyDamage(j4.P, 0.009, 0, Wd); until(j4.r, () => j4.Q.due < 0.25, 6); const dueT = j4.Q.due; C.applyDamage(j4.P, 0.003, FL[0], FL[1]); const t4 = until(j4.r, () => j4.W.nL >= 2, 3);
+  check('a touch in the second wheel\'s last 0.8 s: that wheel at once (J4 in docs/pregled-jedra.md; before, the countdown went below nothing and it never came off)', dueT > 0 && t4 < 0.05 && j4.W.nL === 2 && j4.Q.due === -1, `due ${dueT.toFixed(2)} s, the wheel ${t4 === Infinity ? "never" : t4.toFixed(3) + " s"} later, ${j4.W.nL} off`);
   until(a.r, () => a.Q.over, 6);
   check('two wheels off: the car stops, the game is over (KONEC IGRE)', a.Q.over && a.P.speed < 0.5);
   const d = burn(); C.applyDamage(d.P, 0.03, FL[0], FL[1]);

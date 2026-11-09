@@ -1767,7 +1767,7 @@ const Core = (function () {
   // wheel nuts and hands, the covers off the new set): RAIN_STOP [s at the lightest rain, s more at the heaviest] on top of a stop with work
   // in it (rain: Race.rain, the rain falling now; none on a dry track, whatever is still on the road)
   const NEED_DMG = 0.3, RAIN_STOP = [0.3, 0.3];
-  const keepTyres = (c, pl) => !!(pl && pl.ty === 'keep' && !(c.flt && c.flt.pw >= 0) && !(c.wreck && c.wreck.wl) && !(c.ty && c.ty.bw >= 0));
+  const keepTyres = (c, pl) => !!(pl && pl.ty === 'keep' && !(c.flt && c.flt.pw >= 0) && !(c.wreck && c.wreck.wl) && !(c.ty && c.ty.bw >= 0) && !(c.kt && c.kt.hot >= 0));   // (a burning Kolibri tyre: a new set too)
   function stopJobs(c, race, pl) {
     let lost = 0; for (const k in c.lost) lost++;
     const fix = pl ? pl.fix : 'all', J = { fix: 0, ty: 0, fuel: 0, wh: c.wreck ? c.wreck.nL : 0 };
@@ -3267,7 +3267,7 @@ const Core = (function () {
     const K = c.kt, W = c.wreck, Q = W && W.rule;
     if (!K || W && W.dnf || c.finished) return;
     const real = amt >= KT.real;
-    if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else Q.due -= 0.8 * Math.min(1, amt / KT.real); return; }
+    if (Q && Q.kt && W.nL === 1 && Q.due > 0) { if (real) { Q.due = -1; Q.ask = 0; ruleDrop(c, 1); ruleFire(Q, 2); } else { Q.due -= 0.8 * Math.min(1, amt / KT.real); if (Q.due <= 0) Q.due = 0.001; } return; }   // (a light touch near the end: the wheel at the next step, _wreckStep, not under 1 s; before, below nothing it never came off, J4 in docs/pregled-jedra.md)
     if (Q && Q.kt && K.hot >= 0 && !W.nL && real) {
       const k = K.hot; K.hot = -1; detachPart(c, WHEELS[k]);
       if (amt >= KT.big) { ruleDrop(c, 1); Q.due = -1; Q.ask = 0; ruleFire(Q, 2); }
@@ -4168,11 +4168,13 @@ const Core = (function () {
     return L2 && !L2.fall && L2.qa.i >= 0 && Math.abs(L2.qa.d - d) < Math.abs(r - d) ? L2.qa.d : r; };   // (a road train's second tank too, tlChain)
   // a car in the lane an AI car would pass in (w: m across the road): alongside it, or up to beside the car ahead (thr, g m ahead)
   function aiLaneBusy(c, race, thr, w, g) {
+    const Lw = race.track.open ? 0 : race.track.len;
     const X = race._tlX || 0, gt = X ? g + tlX(thr) : g;   // (the car ahead's semi-trailer: beside it too)
     if (X && thr.tl && !thr.tl.fall && thr.tl.qa.i >= 0) for (const d of [thr.q.d, thr.tl.qa.d]) if (Math.abs(d - w) < (c.m.wid + thr.m.wid) * 0.5 + 0.4) return true;   // (a rig ahead passed by the side of its trailer: its tractor not in that lane, nor the other way round)
     for (const o of race.cars) {
       if (o === c || o === thr || o.pitG || o.inPit) continue;
-      const d = X ? tlGap(c, o, o.dist - c.dist) : o.dist - c.dist; if (d < -(c.m.len + o.m.len) * 0.5 - 1 || d > gt + (thr.m.len + o.m.len) * 0.5) continue;
+      let d = o.dist - c.dist; if (Lw && (d > Lw / 2 || d < -Lw / 2)) d -= Lw * Math.round(d / Lw);   // (a circuit: a car laps apart where it is on the track, J14 in docs/pregled-jedra.md)
+      if (X) d = tlGap(c, o, d); if (d < -(c.m.len + o.m.len) * 0.5 - 1 || d > gt + (thr.m.len + o.m.len) * 0.5) continue;
       if (Math.abs((X ? tlD(o, w) : o.q.d) - w) < (c.m.wid + o.m.wid) * 0.5 + 0.4) return true;
     }
     return false;
@@ -4226,18 +4228,30 @@ const Core = (function () {
       const X = race._tlX || 0;   // (semi-trailers in the race: a gap to a car as to its trailer's tail, tlGap)
       const BD = race.cars.length > BIG_FIELD && race._byDist ? race._byDist() : null, L0 = BD ? distFrom(BD, c.dist - 8.5 - X) : 0;   // (a big field: only the cars alongside and just ahead, from the list sorted by dist)
       const ix = (o) => BD ? race.cars.indexOf(o) : 0;   // (level on the side: the first of race.cars, as the loop over all of them)
+      // a circuit: a car laps apart (one lapping c, or lapped by it) where it is on the track, its gap less the whole laps between them: a slow,
+      // stopped or damaged car a lap down in the way too (J14 in docs/pregled-jedra.md; before, only the dist of the race counted and the AI drove into it)
+      const Lw = T.open ? 0 : T.len;
+      const see = (o, gap) => {
+        if (X) gap = tlGap(c, o, gap);
+        if (gap < -8 || gap > 22) return;
+        const lat = (X && gap > 0 ? tlD(o, q.d) : o.q.d) - q.d;   // (a rig ahead: its tractor or its trailer, tlD)
+        const closing = v - Math.max(0, o.vl);
+        if (gap > 0 && Math.abs(lat) < (M.aiLat || 3.2) && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }   // (M.aiLat: a wide vehicle sees a car further to its side as in its way)
+        if (Math.abs(gap) < (M.len + o.m.len) * 0.5 + 1 && Math.abs(lat) > 1.2 && !o.pitG && !o.inPit && !c.pol) { if (lat > 0) { if (!aU || o.q.d < aU.q.d || (BD && o.q.d === aU.q.d && ix(o) < ix(aU))) aU = o; } else if (!aD || o.q.d > aD.q.d || (BD && o.q.d === aD.q.d && ix(o) < ix(aD))) aD = o; }   // (a car alongside, on either side: the nearest; the steering below keeps clear of it; a patrol car goes for the player as ever)
+      };
       for (let k = L0, nk = BD ? BD.length : race.cars.length; k < nk; k++) {
         const o = BD ? BD[k] : race.cars[k];
         if (BD && o.dist - c.dist > 22.5 + X) break;
         if (o === c) continue;
         let gap = o.dist - c.dist;
         if (c.pitG && o.pitG && !T.open) { const L = T.len; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L; }   // (two on the pit road: where they are, whatever lap each is on; a lapped car in the lane is in the way too)
-        if (X) gap = tlGap(c, o, gap);
-        if (gap < -8 || gap > 22) continue;
-        const lat = (X && gap > 0 ? tlD(o, q.d) : o.q.d) - q.d;   // (a rig ahead: its tractor or its trailer, tlD)
-        const closing = v - Math.max(0, o.vl);
-        if (gap > 0 && Math.abs(lat) < (M.aiLat || 3.2) && (closing > -1 || gap < 7) && gap < tgap) { threat = o; tgap = gap; }   // (M.aiLat: a wide vehicle sees a car further to its side as in its way)
-        if (Math.abs(gap) < (M.len + o.m.len) * 0.5 + 1 && Math.abs(lat) > 1.2 && !o.pitG && !o.inPit && !c.pol) { if (lat > 0) { if (!aU || o.q.d < aU.q.d || (BD && o.q.d === aU.q.d && ix(o) < ix(aU))) aU = o; } else if (!aD || o.q.d > aD.q.d || (BD && o.q.d === aD.q.d && ix(o) < ix(aD))) aD = o; }   // (a car alongside, on either side: the nearest; the steering below keeps clear of it; a patrol car goes for the player as ever)
+        else if (Lw && !BD && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);   // (a car laps apart, see Lw)
+        see(o, gap);
+      }
+      if (Lw && BD && Number.isFinite(BD[0].dist + BD[BD.length - 1].dist + c.dist)) {   // (a big field: the cars laps apart from the list sorted by dist, a window a lap ahead and behind at a time, as far as the field reaches)
+        const lo = BD[0].dist, hi = BD[BD.length - 1].dist;
+        for (let j = 1; c.dist + j * Lw - 8.5 - X <= hi; j++) { const b = c.dist + j * Lw; for (let k = distFrom(BD, b - 8.5 - X); k < BD.length && BD[k].dist - b <= 22.5 + X; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
+        for (let j = 1; c.dist - j * Lw + 22.5 + X >= lo; j++) { const b = c.dist - j * Lw; for (let k = distFrom(BD, b - 8.5 - X); k < BD.length && BD[k].dist - b <= 22.5 + X; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
       }
       c.aiThreat = threat; c.aiGap = tgap; c.alU = aU; c.alD = aD;
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
@@ -6754,7 +6768,11 @@ const Core = (function () {
         const i = T.idx(s), lat = this._inside(c, i, T.rl[i]), x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
         c.q = T.query(x, z, i, {}); c.sPrev = c.q.s; c.dist = s - T.startS;
-        if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t; }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
+        if (!T.open && c.dist >= 0) { const PC = paceOf(c); let t = 0; for (let x = T.startS; x < s; x += DS) t += DS / Math.max(5, at(PC, x)); c.lap = 1; c.lapStart = -t;
+          if (this.secBest && T.sectors) {   // (TV sectors: the lines already behind it passed, the next sector timed from when it would have crossed the last of them at its pace, as the lap; before, it waited for the first line all race, J1 in docs/pregled-jedra.md)
+            c.secN = 0; c.secS = c.lapStart; c.secT = [NaN, NaN, NaN]; c.secPB = [Infinity, Infinity, Infinity];
+            for (let j = 1; j < 3 && T.sectors[j] <= c.dist; j++) { let tj = 0; for (let x = T.startS; x < T.startS + T.sectors[j]; x += DS) tj += DS / Math.max(5, at(PC, x)); c.secN = j; c.secS = c.lapStart + tj; }
+          } }   // (a circuit: a car already past the line is on its first lap, timed from when it would have crossed the line at its pace: a whole lap, its first third too)
         while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp]) { c.splits.push(0); c.cp++; }   // (a long column: a split point already behind its first cars)
         let v = at(paceOf(c), s); if (c === Pl) v = vP;
         else if (k === kp - 1) { v = Math.min(FLY_PL * v, vP + 1); c.flyP = true; c.flyG0 = pos[k] - pos[kp]; }   // (the car right ahead of the player: as fast as it, the gap to keep)
@@ -7116,7 +7134,7 @@ const Core = (function () {
         if (c.pitT >= c.pitDur) {   // (tyres: a new set, the ones for the water on the line; slicks of the compound asked for, or for what is left; a burst one gone)
           const pl = c.pitPlan, t = pl && pl.ty, keep = keepTyres(c, pl);   // (the player's own choice, game.js: its tyres, dry or wet against the water too, the fuel and the repairs it asked for; then gone. keep: its set stays on, unless one is cut or a wheel is off)
           if (!pl || pl.fix === 'all') this.repairCar(c); else this._mend(c, pl.fix === 'need');
-          if (c.kt) ktNew(c, true);   // (the Kolibri: four new tyres, cold)
+          if (c.kt && !keep) ktNew(c, true);   // (the Kolibri: four new tyres, cold; »Ne menjaj«: its own stay on, J3 in docs/pregled-jedra.md)
           if (c.ty && !keep) { if (c.st && c.st.at) this._stratRate(c); c.ty.k = t === 'W' ? 'wet' : t && t !== 'keep' ? 'dry' : tyreFor(this.wst.line); c.ty.wear = 0; c.ty.d0 = c.dist; c.ty.cold = 1; c.ty.co = c.dist; tyreSet(c, c.ty.n + 1); if (c.flat) c.flat = 0; if (c.ty.c) c.ty.c = TYRE_CMP[t] ? t : c.isPlayer && TYRE_CMP[c.pitCmp] ? c.pitCmp : c.st && c.st.at ? this._stratStop(c) : this.autoCmp(this.laps * T.len - c.dist);
             if (c.st) { c.st.hist.push(c.ty.k === 'wet' ? 'W' : c.ty.c); c.st.laps.push(this._stratLap(c)); } }   // (a strategy race: a rival's plan from here, every car's sets and stops for the results; a stop that keeps its set is no new one)
           if (c.fuel != null && this.fuelRate) {
@@ -7181,7 +7199,7 @@ const Core = (function () {
         const cdt = LD ? LD.dt[ci] : dt;
         if (c.net || c.finished || (dnf(c) && this.time - c.wreck.dnfT > 30 && retiredOff(T, c, -0.2))) { f.stopT = 0; continue; }   // (a retired car: an incident for 30 s and until it stands where it may: off the asphalt, or at the barrier)
         f.v += (c.speed - f.v) * Math.min(1, cdt * 2);   // (the speed over about half a second: a knock from another car does not end a stop)
-        const onTrack = !c.inPit && !c.pitState && (f.rq ? !c.pitG : !c.pitWant), stopped = onTrack && c.lap >= 1 && f.v < 3 && !(f.rq && (f.rw || (F.red && F.red.st === 'go')));   // (the red flag: a car on its way to the pit lane may be stopped too; one held by the queue, or getting under way with it, is none)
+        const onTrack = !c.inPit && !c.pitState && !c.pitG, stopped = onTrack && c.lap >= 1 && f.v < 3 && !(f.rq && (f.rw || (F.red && F.red.st === 'go')));   // (the red flag: a car on its way to the pit lane may be stopped too; one held by the queue, or getting under way with it, is none)
         f.stopT = stopped ? f.stopT + cdt : 0;
         if (f.stopT > 1) {
           if (!f.yel) { f.yel = { s: c.q.s, t: 5, car: c }; F.yel.push(f.yel); F.ev++; F.evK = 'yellow'; }
