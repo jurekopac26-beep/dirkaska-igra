@@ -1023,7 +1023,12 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .wxv svg { width: calc(32 * var(--u)); height: calc(32 * var(--u)); } #s-track .wxv [aria-pressed="true"] svg { width: calc(41.6 * var(--u)); height: calc(41.6 * var(--u)); }
   #s-track .wxv b { font-size: max(10px, calc(12 * var(--u))); white-space: nowrap; }
   #s-track .wxv > .wxmore { left: calc(206 * var(--u)); top: calc(12 * var(--u)); width: max(24px, calc(27 * var(--u))); height: max(16px, calc(18 * var(--u))); font-size: max(11px, calc(12 * var(--u))); line-height: max(16px, calc(18 * var(--u))); }
-  #s-track .dio.friends { --fpad: calc(64 * var(--u)) calc(8 * var(--u)) calc(50 * var(--u)) calc(8 * var(--u)); }
+  #s-track .dio.friends { --fpad: calc(64 * var(--u)) calc(8 * var(--u)) calc(50 * var(--u)) calc(8 * var(--u)); gap: max(3px, calc(6 * var(--u))); }
+  /* (the Friends view at the card's size: its rows, its header and its button shrink with --u, so that on 640 × 360 (--u 0.72) a pair of
+     friends is still in sight, 2 rows; more rows scroll) */
+  #s-track .ftab td { height: max(18px, calc(25 * var(--u))); }
+  #s-track .ftab th { padding: max(3px, calc(6 * var(--u))) 4px max(3px, calc(5 * var(--u))); }
+  #s-track .fsend { height: max(24px, calc(32 * var(--u))); }
   /* under the card: the row; at its right Race!; at the bottom left the car (no wall, no floor, no sign: the picture behind it) */
   #s-track .trow { position: absolute; z-index: 5; left: calc(var(--ox) + 254 * var(--u)); top: calc(var(--oy) + 318 * var(--u)); width: calc(384 * var(--u)); min-height: max(44px, calc(60 * var(--u))); margin: 0; padding: calc(6 * var(--u)) calc(8 * var(--u)) calc(6 * var(--u)) calc(10 * var(--u)); }
   #s-track .trow small { font-size: max(9.5px, calc(11.5 * var(--u))); } #s-track .trow b { font-size: max(12px, calc(15 * var(--u))); } #s-track .trow .opp b { font-size: max(22px, calc(42 * var(--u))); }
