@@ -2599,6 +2599,56 @@
   "nan": false,
   "digest": "2d851b9494983265845d6a2b"
  },
+ "lusail/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 250.13,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5fa888febc3232809509e6d0"
+ },
+ "lusail/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 271.86,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a7948813d3c37a98e901d61c"
+ },
+ "lusail/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 214.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ec461196e2302f36f4a29eea"
+ },
+ "lusail/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 216.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b0c530fa1c60040a6196dfa6"
+ },
+ "lusail/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 256.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d6a7d5631ed93c8ffc551b3e"
+ },
  "lombok/cs": {
   "finished": 13,
   "cars": 13,

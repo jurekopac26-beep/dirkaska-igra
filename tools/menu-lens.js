@@ -9,7 +9,7 @@
 const fs = require('fs'), path = require('path');
 const { loadCore, ROOT } = require('../tests/lib/core.js');
 // the start line's height above the sea of the real tracks without a route map (their files: js/tracks/<id>.js, the heights' comment)
-const BASE = { bathurst: 708, cpalace: 66.4, rio: 5.3, livorno: 3.8, silkeborg: 61.7, kagerod: 79.6, sosnova: 255.6, pembrey: 5.6, kildare: 90, bikernieki: 6.2, london: 6.0, zandvoort: 4.7, tuzla: 129.2, sepang: 39.1, lombok: 4.4, buriram: 176.3, sakhir: 7.8, riohondo: 277.4 };
+const BASE = { bathurst: 708, cpalace: 66.4, rio: 5.3, livorno: 3.8, silkeborg: 61.7, kagerod: 79.6, sosnova: 255.6, pembrey: 5.6, kildare: 90, bikernieki: 6.2, london: 6.0, zandvoort: 4.7, tuzla: 129.2, sepang: 39.1, lombok: 4.4, buriram: 176.3, sakhir: 7.8, lusail: 12.3, riohondo: 277.4 };
 const C = loadCore(), lens = {}, profs = {};
 global.window = global; require(path.join(ROOT, 'js', 'routes.js'));
 const RT = global.ROUTES || {};

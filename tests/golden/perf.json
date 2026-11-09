@@ -552,6 +552,13 @@
   "maxKverts": 401,
   "jsMs": 1.67
  },
+ "lusail": {
+  "calls": 171,
+  "maxCalls": 234,
+  "kverts": 527,
+  "maxKverts": 822,
+  "jsMs": 1.37
+ },
  "riohondo": {
   "calls": 189,
   "maxCalls": 287,
