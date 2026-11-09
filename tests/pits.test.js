@@ -119,11 +119,11 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
     out.map(x => `${x.id} ${x.inLane == null ? '-' : x.inLane.toFixed(1)} m in, ${Math.round(x.accel * 100)} % in the lane out${x.back ? '' : ' NOT BACK'}${x.wall ? ' WALL ' + x.wall : ''}`).join(', '));
 }
 
-// 3. a long race with fuel and tyres (Toskana, Spa and Toronto with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
+// 3. a long race with fuel and tyres (Toskana, Spa and Bathurst with its lane on the left, damage on): the whole field through the pit lane, every car in for fuel, each stops in its
 // own box on the apron parked straight; on the pit road nobody touches anybody and nobody is damaged, the ghosts keep out of each other; everybody to
 // the line, no ghost left
 const ov = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, ch = Math.cos(a.h), sh = Math.sin(a.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch; return Math.abs(lx) < (a.m.len + b.m.len) * 0.5 - 0.3 && Math.abs(lz) < (a.m.wid + b.m.wid) * 0.5 - 0.2; };   // (two cars in each other)
-for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['toronto', 11, 5]]) {
+for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['bathurst', 5, 1]]) {
   const T = new C.Track(C.TRACKS.find(d => d.id === tid)), orig = Math.random; Math.random = seeded(7);
   try {
     // (every car off the line at once, as before the start's reaction, Core LAUNCH: the reactions reshuffle the field and with it who meets
@@ -140,6 +140,9 @@ for (const [tid, laps, sd] of [['toskana', 6, 7], ['spa', 4, 4], ['toronto', 11,
     // Rio de Janeiro became a test track on 5. 11. 2026 (the user: of Brazil only Rio do Rastro stays; CLAUDE.md »Testne proge«), so Spa, its lane
     // on the right as Rio's, runs here instead: 4 laps (28 km, every car in for fuel); of its seeds 1-8 all but 5 pass (5: two ghosts 2.1 s in each
     // other), so Spa 4
+    // Toronto became a test track on 5. 11. 2026 (the user: of Canada only Montréal stays; CLAUDE.md »Testne proge«), so Bathurst, its lane on the left
+    // as Toronto's, runs here instead: 5 laps (31 km, every car in for fuel); of its seeds 1-6 all pass (Montréal, 7 laps: 4 of 6; Monterey, 9 laps:
+    // 4 of 6), so Bathurst 1
     const r = new C.Race(T, { numAI: 12, playerGrid: 13, laps, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: sd, difficulty: 1, damage: 2, tyres: true, fuel: true, launch: false }); r.start();
     const P = r.player; let t = 0, k = 0, hits = 0, dmg = 0, stops = 0, ghost = 0, wasHit = 0, inBay = 0, ovT = 0, ovMax = 0, yMax = 0;
     const was = new Map(), dm = new Map(), run = new Map();

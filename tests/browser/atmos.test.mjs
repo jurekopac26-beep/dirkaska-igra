@@ -1,6 +1,6 @@
 // The season and the time of day (Izberi progo: Letni čas, Čas dneva): the settings (at once on the title demo, kept); autumn (the
 // world's greens turn to straw and autumn colours), winter (snow on the ground: the grass pictures swapped for snow, the rain falls as
-// snow, less grip in the race), dusk (a low, orange sun) and night (a dark sky, floodlights along the track, the cars' headlights on the
+// snow, less grip in the race), dusk (a low, orange sun; a real track's floodlights on) and night (a dark sky, floodlights along the track, the cars' headlights on the
 // road); back to summer by day: the world's own colours again.
 //   node tests/browser/atmos.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -50,13 +50,14 @@ try {
     JSON.stringify({ r, beams: s4.beamOn, fall }));
   await act('to-title'); await page.waitForTimeout(300);
 
-  // 3. dusk, then back to summer by day: the world's own colours again, no floodlights, no beams
+  // 3. dusk (a real track's: the floodlights on from sunset, fainter than at night, js/render-vecer.js; browser/vecer.test.mjs), then back
+  // to summer by day: the world's own colours again, no floodlights, no beams
   await act('to-track'); await page.waitForTimeout(200);
   await pick('weather', 'dry'); await pick('tod', 'dusk'); await page.waitForTimeout(200);
   const s5 = await look();
   await pick('season', 'summer'); await pick('tod', 'day'); await page.waitForTimeout(300);
   const s6 = await look();
-  T.check('dusk: the headlights on, no floodlights; summer by day: the colours as built, no lights', s5.atmos.tod === 'dusk' && s5.pools === 0 && s6.atmos.season === 'summer' && s6.atmos.tod === 'day' && Math.abs(s6.green - s0.green) < 1e-4 && s6.snowMaps === 0 && s6.pools === 0 && s6.emissive === 0,
+  T.check('dusk: the floodlights on along a real track; summer by day: the colours as built, no lights', s5.atmos.tod === 'dusk' && s5.pools > 50 && s6.atmos.season === 'summer' && s6.atmos.tod === 'day' && Math.abs(s6.green - s0.green) < 1e-4 && s6.snowMaps === 0 && s6.pools === 0 && s6.emissive === 0,
     JSON.stringify({ s5: { tod: s5.atmos.tod, pools: s5.pools }, s6, s0: { green: s0.green } }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
