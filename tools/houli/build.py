@@ -284,11 +284,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xd2d6cf, sun: 0xfff0d8, sunI: 1.02, sky: 0xaec8e2, gnd: 0x5a7a3a, hemiI: 0.72, tint: [1.0, 1.0, 0.98], sat: 1.0, sunOff: [-38, 72, 80], split: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]] },   // the subtropical autumn: a higher sun from the south, a warm soft haze
     say: 'Houli', rainP: 0.12,
     grassNat: 0.5, lawn: [0.95, 1.04, 0.9],
-    zivali: { a: ['egret', 'buffalo'], t: ['waterTank', 'vending'], open: true },
+    zivali: { a: ['egret', 'buffalo'], t: ['waterTank', 'vending'] },   // (in the glades of the woods by the road only: no buffaloes on the circuit's lawns)
     id: 'houli', name: 'Houli, Tajvan', theme: 'houli', laps: 4, halfWidth: 6,
     desc: %(desc)s,
     en: { name: 'Houli, Taiwan', desc: %(desc_en)s },
-    start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s,
+    start: [0, 0], runoff: 1.0, runoffTarmac: true, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s,   // (runoffTarmac: asphalt run-offs where the barriers stand far out)
     elev: HL_H.map((h, i) => [i / HL_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners and the straights by plain descriptions, in their order round the lap
     names: [

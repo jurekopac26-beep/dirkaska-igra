@@ -474,5 +474,12 @@
   "kverts": 442,
   "maxKverts": 731,
   "jsMs": 1.84
+ },
+ "houli": {
+  "calls": 203,
+  "maxCalls": 248,
+  "kverts": 608,
+  "maxKverts": 797,
+  "jsMs": 1.78
  }
 }

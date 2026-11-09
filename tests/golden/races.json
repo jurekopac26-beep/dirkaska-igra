@@ -3348,5 +3348,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "13fa182850a70087a5ee365b"
+ },
+ "houli/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 209.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d357cec8e74700a5e8751bcc"
+ },
+ "houli/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 226.54,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9615671d38dcb1999acac6a5"
+ },
+ "houli/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 186.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3d2f9c98a9797b955345bee0"
+ },
+ "houli/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 188.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "de8203a600263e12037276ed"
+ },
+ "houli/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 205.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1f8b15123881dea568fb057e"
  }
 }

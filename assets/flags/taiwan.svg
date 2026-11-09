@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -40 240 160" width="900" height="600">
+  <title>Taiwan</title>
+  <!-- Ratio 2:3. A red field, the blue canton a quarter of it (the upper hoist), in it a white sun of twelve rays, a blue ring round its
+       disc (the sun: the rays reach 30 from its middle, 8 wide at their foot; the ring 17, the disc 15, the canton 120 x 80). -->
+  <rect x="-60" y="-40" width="240" height="160" fill="#FE0000"/>
+  <rect x="-60" y="-40" width="120" height="80" fill="#000095"/>
+  <path fill="#FFFFFF" d="M0.00,-30.00 L8.00,0.00 L0.00,30.00 L-8.00,0.00 Z M15.00,-25.98 L6.93,4.00 L-15.00,25.98 L-6.93,-4.00 Z M25.98,-15.00 L4.00,6.93 L-25.98,15.00 L-4.00,-6.93 Z M30.00,-0.00 L0.00,8.00 L-30.00,0.00 L-0.00,-8.00 Z M25.98,15.00 L-4.00,6.93 L-25.98,-15.00 L4.00,-6.93 Z M15.00,25.98 L-6.93,4.00 L-15.00,-25.98 L6.93,-4.00 Z"/>
+  <circle r="17" fill="#000095"/>
+  <circle r="15" fill="#FFFFFF"/>
+</svg>

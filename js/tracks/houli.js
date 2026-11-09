@@ -27,11 +27,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xd2d6cf, sun: 0xfff0d8, sunI: 1.02, sky: 0xaec8e2, gnd: 0x5a7a3a, hemiI: 0.72, tint: [1.0, 1.0, 0.98], sat: 1.0, sunOff: [-38, 72, 80], split: [[0.98, 1.0, 1.03], [1.03, 1.0, 0.96]] },   // the subtropical autumn: a higher sun from the south, a warm soft haze
     say: 'Houli', rainP: 0.12,
     grassNat: 0.5, lawn: [0.95, 1.04, 0.9],
-    zivali: { a: ['egret', 'buffalo'], t: ['waterTank', 'vending'], open: true },
+    zivali: { a: ['egret', 'buffalo'], t: ['waterTank', 'vending'] },   // (in the glades of the woods by the road only: no buffaloes on the circuit's lawns)
     id: 'houli', name: 'Houli, Tajvan', theme: 'houli', laps: 4, halfWidth: 6,
     desc: "Dirkališče na planoti Houli severno od Taichunga: 3,5 km, 20 ovinkov, v smeri urinega kazalca. S ciljne ravnine v prvi desni, po zahodni ravnini v jugozahodno lasnico, mimo kartinga v severne ese, po severni ravnini v šikano pri hotelih, skozi vzhodno lasnico na južno ravnino, dvojni desni, notranje ese in zadnji ovinek. Desno ob ciljni ravnini dolga dirkalna stavba s petimi etažami in garažami (zapelji vanje in mehaniki ti popravijo avto), nasproti velika tribuna; hoteli, zabaviščni park z velikima kolesoma, viadukt hitre železnice, kafrovci, bambus in betelove palme, polja in vasi na planoti.",
     en: { name: 'Houli, Taiwan', desc: "A circuit on the Houli terrace north of Taichung: 3.5 km, 20 corners, clockwise. From the main straight into the first right, down the west straight to the south-west hairpin, past the karting track into the north esses, along the north straight to the chicane by the hotels, round the east hairpin onto the south straight, the double right, the infield esses and the last corner. The long five-storey race building with its garages on the right of the main straight (drive in and the mechanics fix your car), the big grandstand across it; hotels, an amusement park with two big wheels, the high-speed railway on its viaduct, camphor trees, bamboo and betel palms, fields and villages on the terrace." },
-    start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 10, realKm: 3.5,
+    start: [0, 0], runoff: 1.0, runoffTarmac: true, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 10, realKm: 3.5,   // (runoffTarmac: asphalt run-offs where the barriers stand far out)
     elev: HL_H.map((h, i) => [i / HL_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners and the straights by plain descriptions, in their order round the lap
     names: [
