@@ -2542,12 +2542,12 @@
  "ella/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 137.25,
-  "spins": 0,
-  "walls": 0,
+  "winner": 137.1,
+  "spins": 1,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "fdd55a11fc9f44747a771613"
+  "digest": "c2c3e53e6716a993e65d5cce"
  },
  "medeu/cs": {
   "finished": 13,
@@ -2592,12 +2592,12 @@
  "medeu/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 146.36,
+  "winner": 145.06,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d1be87b13b2f7286469d6c4c"
+  "digest": "977d2c3a0d5cf96441a16983"
  },
  "ngorongoro/cs": {
   "finished": 13,

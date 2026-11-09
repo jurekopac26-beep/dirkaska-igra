@@ -4984,15 +4984,15 @@
   }
  },
  "ella/car/cs": {
-  "digest": "8841f584184ff07659a8f85b",
-  "lead": 1650.3,
+  "digest": "fe4c9ca22b65434d6d634921",
+  "lead": 1650.6,
   "car0": [
-   -560.93,
-   -809.05
+   -578.51,
+   -857.85
   ],
   "cover": {
-   "dmg": 0.46,
-   "loose": 1,
+   "dmg": 0.51,
+   "loose": 3,
    "rescues": 1,
    "repairs": 0
   }
@@ -5082,15 +5082,15 @@
   }
  },
  "medeu/car/cs": {
-  "digest": "f510e8090024aea677b576cc",
-  "lead": 1965.1,
+  "digest": "d4987b6a454a3f2cf66e80de",
+  "lead": 1966.3,
   "car0": [
-   59.04,
-   569.18
+   93.6,
+   636.85
   ],
   "cover": {
-   "dmg": 0.78,
-   "loose": 4,
+   "dmg": 0.87,
+   "loose": 3,
    "rescues": 1,
    "repairs": 0
   }
