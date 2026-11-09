@@ -1692,5 +1692,62 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "7a33d446"
   }
+ },
+ "sindia": {
+  "meshes": 471,
+  "verts": 594932,
+  "instances": 5077,
+  "props": 84,
+  "crowd": 20,
+  "world": "fa965a31",
+  "propsHash": "dd959616",
+  "floor": "cd7e77c6/9296",
+  "groups": {
+   "-:MeshLambertMaterial": "b121868a",
+   "-:MeshBasicMaterial": "77516268",
+   "crowd:MeshLambertMaterial": "9472ba13",
+   "flags:MeshLambertMaterial": "8462aa3",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "d1b77252",
+   "roadwear:MeshLambertMaterial": "71fc8f5b",
+   "worn:MeshLambertMaterial": "6be35865",
+   "brakeBoards:MeshLambertMaterial": "5bd057bc",
+   "life:MeshLambertMaterial": "19bad7e7",
+   "lifeShadow:MeshBasicMaterial": "3982e310",
+   "life:MeshBasicMaterial": "7f6a853f",
+   "people:MeshLambertMaterial": "df3ceba7",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "d336cdef"
+  }
+ },
+ "yahuarcocha": {
+  "meshes": 583,
+  "verts": 486433,
+  "instances": 4417,
+  "props": 56,
+  "crowd": 27,
+  "world": "f205c830",
+  "propsHash": "5dfcc583",
+  "floor": "fb98b226/7224",
+  "groups": {
+   "-:MeshLambertMaterial": "b043b91c",
+   "-:MeshBasicMaterial": "ba4281b",
+   "water:MeshPhongMaterial": "c14d3cda",
+   "-:MeshPhongMaterial": "32dd8bd4",
+   "rsFar:MeshBasicMaterial": "d6845045",
+   "crowd:MeshLambertMaterial": "846c191f",
+   "flags:MeshLambertMaterial": "8b39aaaf",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "8118ed99",
+   "roadwear:MeshLambertMaterial": "341c946b",
+   "worn:MeshLambertMaterial": "83d9343e",
+   "brakeBoards:MeshLambertMaterial": "3f832bb1",
+   "life:MeshLambertMaterial": "5bc01edc",
+   "lifeShadow:MeshBasicMaterial": "d5dd7739",
+   "life:MeshBasicMaterial": "bd5ad64c",
+   "people:MeshLambertMaterial": "8ec74d02",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "b544e7c4"
+  }
  }
 }

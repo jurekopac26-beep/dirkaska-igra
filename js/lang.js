@@ -468,6 +468,8 @@
     'Desna lasnica': 'Right Hairpin', 'Levi v dolino': 'Left into the Valley', 'Ovinek pri izviru': 'Spring Corner', 'Slepi levi': 'Blind Left',
     'Ovinek Buda': 'Buda Corner', 'Ovinek Pešta': 'Pest Corner', 'Ovinek Donava': 'Danube Corner', 'Leva lasnica': 'Left Hairpin',   // (Mogyoród: its corners by plain descriptions and by the place names of the real ones)
     'Levi na koncu ravnine': 'Left at the End of the Straight', 'Desni ob marini': 'Marina Right', 'Levi pred hotelom': 'Left before the Hotel', 'Levi za hotelom': 'Left past the Hotel',   // (Abu Dabi: its corners by plain descriptions)
+    'Ovinek pri baobabu': 'Baobab Corner', 'Trojni ovinek': 'Triple Bend', 'Desni na dnu': 'Right at the Bottom',   // (Sindia: its corners by plain descriptions)
+    'Rahli desni': 'Gentle Right', 'Desni ob poljih': 'Right by the Fields', 'Levi v klanec': 'Uphill Left', 'Desni navzdol': 'Downhill Right', 'Ravnina ob jezeru': 'Lakeside Straight', 'Esa ob jezeru': 'Lakeside Esses', 'Lasnica ob jezeru': 'Lakeside Hairpin',   // (Yahuarcocha: its corners by plain descriptions)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)

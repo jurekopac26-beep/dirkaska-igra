@@ -453,5 +453,19 @@
   "kverts": 553,
   "maxKverts": 672,
   "jsMs": 2.3
+ },
+ "sindia": {
+  "calls": 167,
+  "maxCalls": 250,
+  "kverts": 471,
+  "maxKverts": 782,
+  "jsMs": 4.37
+ },
+ "yahuarcocha": {
+  "calls": 187,
+  "maxCalls": 224,
+  "kverts": 504,
+  "maxKverts": 715,
+  "jsMs": 5.2
  }
 }
