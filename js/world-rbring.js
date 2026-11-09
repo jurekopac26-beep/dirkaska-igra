@@ -178,6 +178,16 @@
         }
         continue;
       }
+      if (cols.hoist) {   // (a band at the pole: cols.hoist = [its colour, how far along the flag it reaches (0 at the pole)]; the stripes cols[...] (top to bottom) past it: the UAE's red band and green, white and black)
+        const [hc, a] = cols.hoist, n = Math.max(1, Math.round(SEG * (1 - a)));
+        for (const [col, f0, f1, u0, u1, m] of [[hc, 0, 1, 0, a, 1], ...cols.map((cb, b) => [cb, b / ns, (b + 1) / ns, a, 1, n])]) {
+          for (let k = 0; k <= m; k++) { const u = u0 + (u1 - u0) * k / m;
+            for (const f of [f0, f1]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < m; k++) { const q = v + k * 2; I.push(q, q + 2, q + 3, q, q + 3, q + 1); }
+          v += (m + 1) * 2;
+        }
+        continue;
+      }
       for (let b = 0; b < ns; b++) {
         for (let k = 0; k <= SEG; k++) { const u = k / SEG;
           for (const f of [b / ns, (b + 1) / ns]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }

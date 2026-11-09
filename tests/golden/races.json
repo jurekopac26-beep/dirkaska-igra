@@ -3098,5 +3098,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "cc036c52a5356d6b6b712f2a"
+ },
+ "mogyorod/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 224.27,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "695e1e54fa1e7999f836db16"
+ },
+ "mogyorod/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 238.69,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3f545649dc9dc689b2b1768d"
+ },
+ "mogyorod/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 191.01,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fb2f7a5f242d55090fce6135"
+ },
+ "mogyorod/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 193.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "99f8e4dfc38d2878370ab6e3"
+ },
+ "mogyorod/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 226.98,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "07adcd9c3efefb5646f8cdc2"
+ },
+ "abudabi/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 255.44,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5e3df865f17d9da2c861bf03"
+ },
+ "abudabi/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 270.48,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e5bba9a63e1ba95468c39d16"
+ },
+ "abudabi/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 220.81,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5697de0bad9adc233f59759a"
+ },
+ "abudabi/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 223.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "532fc0b9c2e1762ff62ae291"
+ },
+ "abudabi/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 261.55,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0170e7ea17aa92f89ee97c49"
  }
 }

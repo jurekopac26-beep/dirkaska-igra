@@ -439,5 +439,19 @@
   "kverts": 650,
   "maxKverts": 848,
   "jsMs": 1.49
+ },
+ "mogyorod": {
+  "calls": 179,
+  "maxCalls": 206,
+  "kverts": 504,
+  "maxKverts": 624,
+  "jsMs": 2.24
+ },
+ "abudabi": {
+  "calls": 169,
+  "maxCalls": 212,
+  "kverts": 553,
+  "maxKverts": 672,
+  "jsMs": 2.3
  }
 }
