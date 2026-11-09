@@ -54,6 +54,7 @@ Mount Buller, Avstralija, Sani Pass, Južna Afrika, Toronto in Trois-Rivières, 
 - [Vreme](#vreme)
 - [Letni čas in čas dneva](#letni-čas-in-čas-dneva)
 - [Zvok navijačev in predori](#zvok-navijačev-in-predori)
+- [Zvoki okolja](#zvoki-okolja)
 - [Zvok motorjev](#zvok-motorjev)
 - [Vozni park](#vozni-park)
 - [Razpadanje vozil](#razpadanje-vozil)
@@ -102,6 +103,16 @@ Na vseh dirkališčih (krožne proge, ki niso testne; ne na odprtih cestah in re
 - **Videz**: generične table brez napisov razen številke: modre z belo številko, na zgodovinskih progah (Crystal Palace, Longford, Riverside) in v Monaku bele s črno. Plošči 2 × 1,5 m v obliki strehe (vsaka nagnjena 30°) s številko na obeh, da sta berljivi s kamere za avtom in z izometrične kamere, na dveh nogah, ki segata v tla.
 - **Izris**: vse table proge so en model z eno majhno teksturo (en klic risanja, brez sence), zato telefon skoraj ni bolj obremenjen.
 - **Ob trku**: tabla ob cesti se podre kot drugi podirljivi predmeti (`'bboard'` v `js/core.js`): avto jo prevrne, odleti le nekaj metrov (noge so v tleh) in obleži v travi na eni od plošč; avto pri tem izgubi ~2,5 % hitrosti in se malo poškoduje (ob trku s ~160 km/h ~4 %). Podre jo lahko tudi tekmec, v dirki prek spleta pa se obnaša kot drugi podirljivi predmeti. Table nad ograjo (do njih avto ne pride) stojijo. Podrta tabla ostane del istega modela (njena oglišča se premaknejo z njo), zato ni dodatnega klica risanja; ob ponovitvi dirke spet stoji. Plošči podirljive table imata na notranji strani sivo hrbtno stran, da je podrta tabla vidna, ne glede na to, kako obleži.
+
+## Sovoznik (odprte ceste in reli)
+
+Na pravih odprtih cestah in relijskih preizkušnjah sovoznik napove ovinke pred njimi, kot pravi relijski sovoznik (načrt in odločitve: `docs/sovoznik.md`).
+
+- **Kje**: na vseh pravih odprtih cestah, tudi na relijskih preizkušnjah Ouninpohja, Harju in Katu-Jaryk (`Core.codrvRoad`: odprta cesta, ne testna; brez prog ZDA razen Pikes Peaka), v vseh načinih razen nove mape, misij in avtošole. Na dirkališčih ga ni (odgovor uporabnika 6. 11. 2026).
+- **Klici** (`Track.paceNotes`): ostrina ovinka 1–6 po najmanjšem polmeru (1 pod 16 m … 6 pod 120 m), lasnica, pravi kot, »dolgo«, »zapira«, »odpira«, grbine in skoki (iz `def.bumps` ali iz višin ceste), krožišča po izvozu, šikane, menjava podlage, razdalja do naslednjega klica in »do cilja«. Opombe, bližje od 30 m, se povežejo z »into«, do 70 m z »and«, največ tri v klicu; »caution« pred velikim skokom, pred skokom v ovinek 1–3, pred ovinkom tik za grbino ali skokom, pred ovinkom, ki se zapre, in pred ostrim ovinkom za dolgo ravnino. Lastne opombe proge (`def.notes`) samo s sovoznikovimi besedami.
+- **Napis** (`#h-codrv`): klic v jeziku igre (»LEVO 4 · DOLGO«, »L3 GRBINA › D4«, angleško »LEFT 4 · LONG«), ležeče pod uro, pokonci pod znakom ovinka; pokaže se s klicem: z glasom `v · (T + 1,2 s) + 25 m` pred ovinkom (T trajanje klica, 60–260 m; ne prej, kot je prejšnji klic izgovorjen, in ne pod 5 m/s), samo napis 55–170 m pred ovinkom (2,4 s pri trenutni hitrosti in 30 m); ugasne, ko avto pride do ovinka (najmanj 1,5 s). Napis obdrži vse opombe klica: daljši od 24 znakov izpusti razdaljo in dodatke, pokonci je lahko v dveh vrsticah. Znak ovinka (`#h-note`) dobi številko ostrine.
+- **Glas**: posnet angleški glas sovoznika, kot v relijskih igrah, enak na vseh telefonih, v obeh jezikih igre, na cestah in na relijskih preizkušnjah v kronometru (odgovor uporabnika 6. 11. 2026). Besede (`Core.CD_EN` in razdalje 100–500 m) so v enem zvočnem listu `js/data/sovoznik-en.js` (MP3 v base64, 150 KB; glas `bm_george` modela Kokoro-82M, Apache 2.0; orodje `tools/sovoznik-glas.py`). List se naloži ob začetku dirke s sovoznikom (`Comm.recLoad`, service worker ga shrani z igro) in dekodira (~2,5 MB); `Comm.note` klic sestavi beseda za besedo prek Web Audio (60 ms premora, po »caution« 170 ms, pred razdaljo 130 ms) z rahlim zvokom čelade. Dokler list ni pripravljen, govori glas telefona. Ob policijskem radiu sovoznik molči, napis ostane.
+- **Nastavitve · Sovoznik**: Izklop, Napis, Glas in napis (privzeto; `S.codrv` 0, 2, 1). Sprememba med dirko (nastavitve v pavzi) velja od naslednjega klica.
 
 ## Kje na progi si (proge po resničnih krajih)
 
@@ -638,6 +649,10 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 ## Zvok navijačev in predori
 
 Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji in Katu-Jaryku imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
+
+## Zvoki okolja
+
+Na pravih progah se ob cesti tiho slišijo zvoki okolja, izračunani iz sveta proge (drevesa, voda, vasi, višina in odprtost ceste, cerkve iz OpenStreetMap): v gozdu šelestenje listja in ptice (poleti največ, jeseni manj, pozimi skoraj nič, ponoči brez ptic), ob vodi potok, reka, slap, jezero ali morje (z galebi), na odprtih in visokih delih veter (pozimi močnejši), v vaseh ob cesti zvonovi cerkve, ko pelješ mimo, poleti ponoči črički, v toplih krajih podnevi škržati, ob čredah kravji zvonci in mukanje (Spa, Red Bull Ring, Rio do Rastro), na mestnih progah oddaljen promet in golobi (Harju, Crystal Palace, Montréal, Marrakesh). Na dirkališčih s tribunami se ob tribunah tu in tam sliši razglas po zvočniku (splošna obvestila v angleščini, brez imen), ob glasnih tribunah vzkliki ljudi (»Go on!«); oboje tiho, v angleškem glasu brskalnika, nikoli hkrati s komentatorjem ali sovoznikom (ko začne komentator, utihne). Vsak zvok se sliši s tiste strani ceste, kjer je. Zvoki so pod motorjem: jasno se slišijo na štartu, v počasnih ovinkih in v cilju, pri polnem plinu komaj; ob tribunah in navijačih se stišajo, v predoru utihnejo, v dežju ni ptic in žuželk. Nastavitve: **Zvoki okolja** Izklop / Tiho / Normalno (privzeto) / Glasno (pol tišje, običajno, dvakrat glasneje; shrani se z drugimi nastavitvami); delujejo samo pri vklopljenem zvoku, pri varčevanju z baterijo ostanejo samo podlage (brez ptic, zvonov, galebov, živali, golobov in govora). Testne proge so brez zvokov okolja. Vsi zvoki so narejeni v igri (sinteza), nič se ne prenaša.
 
 ## Zvok motorjev
 

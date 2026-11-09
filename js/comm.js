@@ -283,12 +283,92 @@ const Comm = (() => {
     if (typeof onVoice === 'function') onVoice(voiceInfo());
   }
   let onVoice = null;
-  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '' });
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '', rec: typeof window !== 'undefined' && !!(window.AudioContext || window.webkitAudioContext) });
   if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
+
+  /* the co-driver's recorded voice (docs/sovoznik.md, Glas): his words in one sheet (js/data/sovoznik-en.js, window.SOVOZNIK_EN: an MP3 in
+     base64 and each word's [from, to] s in it, made by tools/sovoznik-glas.py), loaded when he is to speak (recLoad: game.js codrvInit, a
+     call before it is decoded) and decoded once at its own rate (an offline context: half the memory of the game's 48 kHz). A call (the
+     tokens of Track.paceNotes) is read word by word, recGap apart, in the game's audio (Sfx.audio) through a light helmet (150 Hz high-pass,
+     +3 dB at 3 kHz), past the duck that lowers the rest under the voice. Not decoded yet, no Web Audio: the browser's English voice reads it */
+  const REC = { D: null, buf: null, at: null, ctx: null, out: null, src: [], load: false, dec: false };
+  const recGap = (a, b) => a === 'caution' ? 0.17 : /^d\d+$/.test(b) ? 0.13 : 0.06;   // (s: a comma after 'caution', before the distance; the tool's samples the same)
+  function recLoad() {
+    if (!speech || typeof document === 'undefined') return;
+    if (window.SOVOZNIK_EN) { recDecode(); return; }
+    if (REC.load) return;
+    REC.load = true;
+    const tag = document.querySelector('link[data-lazy="sovoznik-en"]'), sc = document.createElement('script');
+    sc.src = tag ? tag.getAttribute('href') : 'js/data/sovoznik-en.js';
+    sc.onload = recDecode; sc.onerror = () => { REC.load = false; };   // (no sheet: the browser's voice, again at the next race)
+    document.head.appendChild(sc);
+  }
+  function recDecode() {
+    const D = window.SOVOZNIK_EN, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!D || REC.buf || REC.dec || !OAC) return;
+    REC.dec = true;
+    try {
+      const bin = atob(D.mp3), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const fail = () => { REC.dec = false; };
+      const p = new OAC(1, 1, D.rate).decodeAudioData(u8.buffer, (buf) => { if (!REC.buf) { REC.D = D; REC.buf = buf; REC.at = recTrim(buf, D.clips); } }, fail);   // (old Safari: the callbacks only)
+      if (p && p.catch) p.catch(fail);
+    } catch (_) { REC.dec = false; }
+  }
+  // each word's own [offset, length] s in the decoded sheet: its [from, to] widened (a decoder that keeps the MP3's ~50 ms delay) and cut to
+  // where it is heard (the first and the last sample over 1/50 of its loudest; 12 ms before, 25 ms after)
+  function recTrim(buf, clips) {
+    const x = buf.getChannelData(0), sr = buf.sampleRate, at = {};
+    for (const k of Object.keys(clips)) {
+      const a = Math.max(0, Math.floor((clips[k][0] - 0.03) * sr)), b = Math.min(x.length, Math.ceil((clips[k][1] + 0.08) * sr));
+      let pk = 0, i0 = a, i1 = b - 1;
+      for (let i = a; i < b; i++) pk = Math.max(pk, Math.abs(x[i]));
+      if (!pk) continue;
+      while (i0 < i1 && Math.abs(x[i0]) < pk * 0.02) i0++;
+      while (i1 > i0 && Math.abs(x[i1]) < pk * 0.02) i1--;
+      i0 = Math.max(a, i0 - Math.round(0.012 * sr)); i1 = Math.min(b, i1 + Math.round(0.025 * sr));
+      at[k] = [i0 / sr, (i1 - i0) / sr];
+    }
+    return at;
+  }
+  const recAudio = () => { const ctx = typeof Sfx !== 'undefined' && Sfx.audio ? Sfx.audio() : null; return ctx && ctx.state === 'running' ? ctx : null; };
+  const recCan = (toks) => !!(REC.at && toks && toks.length && toks.every(w => REC.at[w]) && recAudio());
+  // how long a call takes (s): its words from the sheet (as decoded, else as the sheet has them), ~0.4 s a word before it is here
+  function noteLen(toks) {
+    const D = REC.D || (typeof window !== 'undefined' && window.SOVOZNIK_EN) || null;
+    let T = 0;
+    (toks || []).forEach((w, i) => { if (i) T += recGap(toks[i - 1], w); T += REC.at && REC.at[w] ? REC.at[w][1] : D && D.clips[w] ? D.clips[w][1] - D.clips[w][0] : 0.4; });
+    return T;
+  }
+  // a call read now from the sheet: its length in s (0: it cannot be, the browser's voice then)
+  function recPlay(toks) {
+    const ctx = recAudio(); if (!ctx || !recCan(toks)) return 0;
+    if (!REC.out || REC.ctx !== ctx) {
+      const hp = ctx.createBiquadFilter(), pk = ctx.createBiquadFilter(), g = ctx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = 150; hp.Q.value = 0.707;
+      pk.type = 'peaking'; pk.frequency.value = 3000; pk.Q.value = 1; pk.gain.value = 3;
+      g.gain.value = 1; hp.connect(pk); pk.connect(g); g.connect(ctx.destination);
+      REC.ctx = ctx; REC.out = hp;
+    }
+    recStop();
+    const t0 = ctx.currentTime + 0.02;
+    let t = t0;
+    toks.forEach((w, i) => {
+      if (i) t += recGap(toks[i - 1], w);
+      const s = ctx.createBufferSource(), a = REC.at[w];
+      s.buffer = REC.buf; s.connect(REC.out); s.start(t, a[0], a[1]); REC.src.push(s); t += a[1];
+    });
+    return t - t0 + 0.02;
+  }
+  function recStop() { for (const s of REC.src) { try { s.stop(); s.disconnect(); } catch (_) { } } REC.src = []; }
 
   function speakNow(item) {
     const maxT = 2000 + item.text.length * 95;          // safety net if the engine never reports the end
     const me = cur = { prio: item.prio, t: now(), maxT, item }; lastIt = item;
+    if (item.toks && speech) {   // the co-driver's call: from the sheet (its end: its length; busy() lets it go)
+      const len = recPlay(item.toks);
+      if (len) { me.maxT = len * 1000; item.rec = true; speaking = true; item.spoken = true; return; }
+    }
     if (!synth || !speech) { speaking = false; return; }
     try {
       const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note || item.eng ? voice2 || voice : voice;
@@ -300,6 +380,7 @@ const Comm = (() => {
       else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
       u.onend = u.onerror = () => { item.done = true; if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      if (typeof SfxOkolje !== 'undefined') SfxOkolje.hush();   // (the announcer and the shouts by the road give way: js/sfx-okolje.js)
       speaking = true; synth.speak(u); item.spoken = true;
     } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
   }
@@ -335,17 +416,26 @@ const Comm = (() => {
     return item;
   }
 
-  // the co-driver's pace notes (a rally stage, game.js reads them ahead of the car): its own voice, said at once. The commentator's line
-  // is cut off; the co-driver's own call is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
-  function note(text) {
-    if (!notesOn || !speech || !synth || !text || radioMode) return null;
-    const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500 };
+  // the co-driver's pace notes (game.js reads them ahead of the car; toks: Track.paceNotes' tokens, the recorded voice reads them, else the
+  // browser's voice the text): said at once (0.2 s after his last call: noteFree). The commentator's line is cut off; the co-driver's own call
+  // is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
+  const NOTE_GAP = 200;
+  function note(text, toks) {
+    if (!notesOn || !speech || !text || radioMode) return null;
+    if (toks && !REC.at) recLoad();   // (the sheet not here yet: the browser's voice this time)
+    if (!synth && !recCan(toks)) return null;
+    const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500, toks: toks || null };
     log.push(item); if (log.length > 200) log.shift();
     if (!busy()) { speakNow(item); return item; }
-    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    if (speaking && cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }   // (the commentator cut off)
+    if (noteFree()) { speakNow(item); return item; }   // (the pause after a line)
     queue = item;
     return item;
   }
+  // the co-driver free for his next call (game.js waits for it with the voice on): none of his being read, 0.2 s after his last
+  function noteFree() { busy(); return !(speaking && cur && cur.item.note) && !(lastIt && lastIt.note && now() < lastEnd + NOTE_GAP); }
+  // his voice can be heard now: the sound on, the co-driver's voice on (setNotes), not the police radio's run; the sheet or the browser's voice
+  const noteCan = () => notesOn && speech && !radioMode && (!!synth || !!REC.at);
 
   // the team's engineer on the radio (game.js teamRadioShow, Nastavitve · Glas inženirja; not the commentator's switch, silent with the sound
   // off): a line of LINES in the co-driver's voice, said at once (the commentator's line is cut off), else next in line for a few seconds.
@@ -406,7 +496,7 @@ const Comm = (() => {
     }
   }
 
-  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
+  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; recStop(); if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
   function stop() { cancelSpeech(); queue = null; }
   // call from a tap handler: some browsers only allow speech after a user gesture
   function unlock() { if (!synth || !speech) return; try {   // (also with the commentator off: the police radio speaks then, and iOS wants the first line from a tap)
@@ -435,7 +525,7 @@ const Comm = (() => {
   let lastIt = null;   // (the line spoken last: its pause after it counts too, so the duck holds between two lines)
   function talking() { const it = cur ? cur.item : lastIt; return !radioMode && busy() && !!(it && !it.radio); }
 
-  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, setEngineer, ordinal, words, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, noteFree, noteCan, noteLen, recLoad, get recReady() { return !!REC.at; }, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, setEngineer, ordinal, words, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 
