@@ -3992,11 +3992,11 @@
  "riohondo/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 226.52,
+  "winner": 217.06,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0c600fa158104764a5d226ce"
+  "digest": "db31ac6ca94c8ae682934d9d"
  }
 }

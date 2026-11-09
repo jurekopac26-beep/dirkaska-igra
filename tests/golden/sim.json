@@ -7826,15 +7826,15 @@
   }
  },
  "riohondo/car/cs": {
-  "digest": "435bde3710dfebe9d7c1c001",
-  "lead": 7927.8,
+  "digest": "9db4c31fafa37984d6e32b02",
+  "lead": 7936.3,
   "car0": [
-   741.32,
-   -944.05
+   835.66,
+   -901.08
   ],
   "cover": {
-   "dmg": 0.59,
-   "loose": 1,
+   "dmg": 0.86,
+   "loose": 6,
    "rescues": 0,
    "repairs": 1
   }
