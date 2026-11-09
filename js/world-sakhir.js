@@ -111,6 +111,8 @@
   // the drag strip (a negative count) 18 m): plain asphalt on the terrain, its two edges every 4 m, 8 cm over it and drawn over it; the
   // service roads not inside the barriers nor within 4 m past them (the run-offs are the builder's), the other layouts up to 1.5 m from
   // the barriers (they end at them, closed off); the trees and the people off them
+  // how far past the barrier on its side of the road a point is (negative: inside it, in the run-off; i: the road's nearest index)
+  const skLat = (x, z, i) => { const T = API.T, lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
   function skWays({ root, exclPush, CR }, ways, tex, st) {
     const rb = new RB(true);
     for (const [S, hw, gap, col] of ways) for (let k = 0; k < S.length;) {
@@ -121,7 +123,7 @@
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
-        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < gap + (gap > 3 ? HW : 0)) { prev = -1; continue; }
+        const nn = nrNear(x, z); if (nn.i >= 0 && (nn.dd < gap + (gap > 3 ? HW : 0) || (gap > 3 && skLat(x, z, nn.i) < HW + 0.5))) { prev = -1; continue; }   // (the service roads not inside the run-offs' barriers)
         const nx = -dz / dl, nz = dx / dl, row = [-HW, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
         const r = rb.row(row, [col, col], row.map((e, j) => [j * HW / 2, along / 4]));
         if (prev >= 0) rb.link(prev, r, 0, 1); prev = r;
@@ -279,7 +281,8 @@
   function skMasts({ scen, exclPush, CR }, st) {
     const M = (API.T.def.sk || {}).mast || [], T = API.T, col = [0.68, 0.69, 0.7], lamp = [0.93, 0.93, 0.88];
     for (let k = 0; k + 1 < M.length; k += 2) {
-      const x = M[k], z = M[k + 1], q = nrNear(x, z); if (q.i < 0 || q.dd < 1) continue;
+      let x = M[k], z = M[k + 1]; const q = nrNear(x, z); if (q.i < 0 || q.dd < 1) continue;
+      const past = skLat(x, z, q.i); if (past < 2.5) { const sg = (x - T.px[q.i]) * T.nx[q.i] + (z - T.pz[q.i]) * T.nz[q.i] >= 0 ? 1 : -1; x += T.nx[q.i] * sg * (2.5 - past); z += T.nz[q.i] * sg * (2.5 - past); }   // (in a wide run-off of the game: behind its barrier)
       const y = nrGround(x, z) - 0.2, g = scen.get(x, z); let fx = T.px[q.i] - x, fz = T.pz[q.i] - z; const fl = Math.hypot(fx, fz) || 1; fx /= fl; fz /= fl;
       const rot = Math.atan2(fx, -fz);   // (the frame's width across the way it looks)
       cyl(g, x, y, z, 0.3, 24.2, 6, col, col, 0.17);
@@ -328,14 +331,19 @@
     const b6 = sk.bld || [], WALL = [[0.94, 0.93, 0.9], [0.9, 0.85, 0.74], [0.86, 0.8, 0.68]], ROOF = [[0.6, 0.61, 0.63], [0.72, 0.7, 0.66]];
     for (let k = 0; k < b6.length; k += 6) {
       const [x, z, L, W, deg, h] = b6.slice(k, k + 6), rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
-      let y = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + (a * L * c - b * W * s) / 2, z + (a * L * s + b * W * c) / 2));
+      let y = 1e9, inRun = false;
+      for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        const cx = x + (a * L * c - b * W * s) / 2, cz = z + (a * L * s + b * W * c) / 2, q = nrNear(cx, cz);
+        y = Math.min(y, nrGround(cx, cz)); if (q.i >= 0 && skLat(cx, cz, q.i) < 1) inRun = true;
+      }
+      if (inRun) continue;   // (the few huts OSM has where the game's run-offs are wider than the real ones' edges: not inside the barriers)
       box(scen.get(x, z), x, y - 0.4, z, L, h + 0.4, W, rot, WALL[Math.floor(R() * 3)], ROOF[Math.floor(R() * 2)], true);
       exclPush(x, z, Math.hypot(L, W) / 2 + 2); CR.avoid(x, z, Math.hypot(L, W) / 2 + 1); st.buildings++;
     }
     {   // the palms OSM maps along the roads, the car parks and the buildings (def.sk.trees): date palms 8-12 m, not by the barriers
       const t2 = sk.trees || [], pc = new IChunks(skTreeGeo(0, false), new THREE.MeshLambertMaterial({ vertexColors: true }), 384);
       for (let k = 0; k + 1 < t2.length; k += 2) {
-        const x = t2[k], z = t2[k + 1], q = nrNear(x, z); if ((q.i >= 0 && q.dd < 2.5) || o.excluded(x, z)) continue;
+        const x = t2[k], z = t2[k + 1], q = nrNear(x, z); if ((q.i >= 0 && (q.dd < 2.5 || skLat(x, z, q.i) < 1.5)) || o.excluded(x, z)) continue;   // (none in the run-offs)
         const h = 8 + R() * 4, cv = 0.9 + R() * 0.2; pc.add(x, nrGround(x, z) - 0.1, z, R() * TAU, h * (0.85 + R() * 0.2), h, [cv, cv, cv]); exclPush(x, z, 2.5); st.palms++;
       }
       pc.addTo(root, true);

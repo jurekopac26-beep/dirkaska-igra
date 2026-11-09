@@ -1939,5 +1939,37 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "e7e9ff45"
   }
+ },
+ "sakhir": {
+  "meshes": 612,
+  "verts": 899192,
+  "instances": 2920,
+  "props": 81,
+  "crowd": 27,
+  "world": "823c0eec",
+  "propsHash": "b86e8183",
+  "floor": "3ccb06c6/10808",
+  "groups": {
+   "-:MeshLambertMaterial": "4bd27857",
+   "-:MeshBasicMaterial": "a6539ec3",
+   "sakhir ways:MeshLambertMaterial": "963fa9bc",
+   "sakhir ponds:MeshPhongMaterial": "e1684832",
+   "-:MeshPhongMaterial": "f69af0ba",
+   "sakhir grandstand crowd:MeshLambertMaterial": "a6950710",
+   "sakhir grandstand names:MeshLambertMaterial": "bd38fb44",
+   "rsFar:MeshBasicMaterial": "6aa86d4",
+   "crowd:MeshLambertMaterial": "f9e2d7d7",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "3f7dace5",
+   "ao:MeshBasicMaterial": "d6518e99",
+   "roadwear:MeshLambertMaterial": "ab513832",
+   "brakeBoards:MeshLambertMaterial": "6a43abd6",
+   "life:MeshLambertMaterial": "da58c49b",
+   "lifeShadow:MeshBasicMaterial": "c26692d7",
+   "life:MeshBasicMaterial": "c2960824",
+   "people:MeshLambertMaterial": "6095a4a9",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "c6dd106f"
+  }
  }
 }

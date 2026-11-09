@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <title>Bahrain</title>
+  <!-- Ratio 3:5. Red with a white band at the hoist, serrated into the red with five white points (the five pillars): the band 0.24 of
+       the length, the points to 0.38 of it, each one a fifth of the height. Red: #CE1126, white. -->
+  <rect width="1000" height="600" fill="#CE1126"/>
+  <path fill="#FFFFFF" d="M0 0H240L380 60L240 120L380 180L240 240L380 300L240 360L380 420L240 480L380 540L240 600H0Z"/>
+</svg>

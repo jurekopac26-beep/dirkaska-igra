@@ -523,5 +523,12 @@
   "kverts": 465,
   "maxKverts": 587,
   "jsMs": 1.32
+ },
+ "sakhir": {
+  "calls": 190,
+  "maxCalls": 224,
+  "kverts": 664,
+  "maxKverts": 794,
+  "jsMs": 1.23
  }
 }
