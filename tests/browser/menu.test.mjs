@@ -768,6 +768,100 @@ try {
     await ctx.close();
   }
 
+  // 4g. the weather over the whole track screen (js/menu-vreme.js; docs/meni-izbira-proge.md, sklop 12; the user's choice of 8. 11. 2026,
+  //     meni-vreme-cel-meni: the rain and the snow over the whole menu): each of the five weathers (its button) changes the picture (its
+  //     light, its wet or snowy copy), the air over the screen (the rain, the blizzard), the floor (wet with the car's reflection, or snow),
+  //     the sign, the car and the buttons (drops, snow on their tops); a tap fades the old weather into the new one (a ring on the icon;
+  //     the light ~1 s, the water and the snow ~2.5 s), the storm's lightning comes after it; under the Earth it rests, after the screen
+  //     nothing of it is left; a new track's car and sign take theirs with them; a device that asks for less motion: one still picture;
+  //     on its side the cards beside the picture and the blurred picture behind them too
+  {
+    const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa', weather: 'dry', season: 'summer' }, { width: 412, height: 892 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    await page.waitForFunction(() => window.MenuCar && MenuCar.info().drawn, null, { timeout: 60000 }).catch(() => null);
+    // (how much of each of its canvases is drawn on: a share of its pixels, -1 none such)
+    const INK = `const ink = (c) => { if (!c || !c.width || !c.isConnected) return -1; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0, m = 0; for (let i = 3; i < d.length; i += 28) { m++; if (d[i] > 8) n++; } return +(n / m).toFixed(4); };
+      const q = (s) => root.querySelector(s), st = q('#track-stage');`;
+    const look = () => ev(page, INK + `const i = MenuVreme.settle(), w = q('#track-stage .dio .wet'), sn = q('#track-stage .dio .snw');
+      return { i, f: st.style.getPropertyValue('--wxf'), car: q('.yard').style.getPropertyValue('--wxcar'), wet: w ? +getComputedStyle(w).opacity : -1, snw: sn ? [+getComputedStyle(sn).opacity, (sn.getAttribute('href') || sn.getAttribute('src') || '').slice(0, 5)] : null,
+        ink: { st: ink(q('#track-stage > canvas.wxst')), fl: ink(q('.yard > canvas.wxfl')), rm: ink(q('.room > canvas.wxrm')), car: ink(q('.yard > canvas.wxcar')), sc: ink(q('.yard > canvas.wxsc')), face: ink(q('.sign > canvas.wxface')), ui: ink(q('#mn > canvas.wxui')), air: ink(q('#mn > canvas.wxair')) } };`);
+    const e0 = await ev(page, 'return MenuVreme.info();');
+    T.check('the weather over the track step: on, Dry, its layers (the picture, the floor in the yard and under the neighbours, the car, the sign and its top, the buttons, the air)',
+      e0.on && e0.look === 'dry' && e0.layers && Object.entries(e0.layers).every(([k, v]) => v || k === 'rbg'), JSON.stringify(e0));
+    const dry = await look();
+    T.check('Dry: the warm sun (its rays over the picture, the picture bright), nothing on the buttons, nothing in the air, the model or map dry',
+      dry.ink.st > 0.01 && dry.ink.ui === 0 && dry.ink.air === 0 && dry.wet === 0 && /^brightness\(1\.06/.test(dry.f), JSON.stringify(dry));
+    await click(page, 'weather:rain');
+    const tap = await ev(page, 'return MenuVreme.info();');
+    T.check('a weather tapped: it fades in (not there at once), a ring on its icon', tap.look === 'rain' && !tap.settled && tap.taps === 1 && tap.moving, JSON.stringify(tap));
+    const rain = await look();
+    T.check('Rain: the picture darker and wet, the rain over the whole screen, drops on the lens, the buttons and the sign, the floor wet (the car\'s reflection, ripples), the car darker',
+      rain.i.look === 'rain' && rain.wet === 1 && rain.ink.air > 0.002 && rain.ink.st > 0.002 && rain.ink.ui > 0.002 && rain.ink.face > 0.01 && rain.ink.fl > 0.05 && rain.ink.rm > 0.05 && /^brightness\(0\.74/.test(rain.f) && /^brightness\(0\.84/.test(rain.car) && rain.i.car && rain.i.car.src === '3d|', JSON.stringify(rain));
+    await click(page, 'weather:change');
+    const chg = await look();
+    T.check('Changing: the sun out in a light rain (a rainbow, the model or map a little wet), drops on the buttons', chg.i.look === 'change' && chg.wet === 0.6 && chg.ink.st > 0.01 && chg.ink.air > 0 && chg.ink.ui > 0, JSON.stringify(chg));
+    await click(page, 'weather:storm');
+    const fl = await page.waitForFunction(() => MenuVreme.info().flash > 0, null, { timeout: 8000 }).then(() => true).catch(() => false);
+    const stm = await look();
+    T.check('Storm: very dark, heavy rain, the lightning (it flashes after it came)', fl && stm.i.look === 'storm' && /^brightness\(0\.500\)/.test(stm.f) && stm.ink.air > rain.ink.air, JSON.stringify({ fl, stm }));
+    await click(page, 'weather:snow');
+    const ready2 = await page.waitForFunction(() => { const s = MenuVreme.info().snow; return s.length > 0 && s.every(x => x === 'ready+'); }, null, { timeout: 30000 }).then(() => true).catch(() => false);
+    const snow = await look();
+    T.check('Snow: the picture in the snow (its snowy copy made and shown), the blizzard, snow on the buttons, the sign\'s top, the car (and frost) and the floor',
+      ready2 && snow.i.look === 'snow' && snow.wet === 0 && snow.snw && snow.snw[0] === 1 && snow.snw[1] === 'blob:' && snow.ink.air > 0.01 && snow.ink.ui > 0.002 && snow.ink.sc > 0.01 && snow.ink.car > 0.005 && snow.ink.fl > 0.2 && snow.i.car && snow.i.car.runs > 0, JSON.stringify({ ready2, snow }));
+    // back to Dry: the light in ~1 s, the snow gone in ~2.5 s, then nothing moves
+    await click(page, 'weather:dry');
+    const t0 = await ev(page, 'const i = MenuVreme.info(); return [i.settled, i.ws.snow];');
+    await page.waitForTimeout(3000);
+    const t1 = await ev(page, INK + 'const i = MenuVreme.info(); return { settled: i.settled, moving: i.moving, snow: i.ws.snow, air: ink(q("#mn > canvas.wxair")), ui: ink(q("#mn > canvas.wxui")) };');
+    T.check('Snow to Dry: a fade (the snow still there at first), in 3 s gone and nothing moving', !t0[0] && t0[1] > 0.5 && t1.settled && !t1.moving && t1.snow === 0 && t1.air === 0 && t1.ui === 0, JSON.stringify({ t0, t1 }));
+    // under the Earth it rests; closed: it moves again
+    await click(page, 'weather:rain'); await page.evaluate(() => MenuVreme.settle());
+    await page.click('.thead .globe'); await zem(page, 1);
+    const z1 = await ev(page, 'return MenuVreme.info();');
+    await page.keyboard.press('Escape'); await zem(page, 0); await page.waitForTimeout(200);
+    const z2 = await ev(page, 'return MenuVreme.info();');
+    T.check('the Earth over the screen: the weather rests (nothing drawn), closed it moves again', z1.resting && !z1.moving && z1.on && !z2.resting && z2.moving, JSON.stringify({ z1, z2 }));
+    // a neighbour: the new track's sign and car come in with their own (the snow on the sign's top, on the car), the weather goes on
+    await click(page, 'weather:snow'); await page.evaluate(() => MenuVreme.settle());
+    const nb = await ev(page, `root.querySelector('.nb.r').click(); const y = root.querySelector('#s-track .yard'), n = (s) => { const e = y.querySelector(s); return e ? e.getAnimations().length : -1; };
+      return { car: n(':scope > canvas.wxcar'), sc: n(':scope > canvas.wxsc'), n: root.querySelectorAll('#mn > #s-track').length, i: MenuVreme.info() };`);
+    T.check('a neighbour tapped: the new car\'s snow and the sign\'s top come in with them, the weather goes on (Snow)', nb.car > 0 && nb.sc > 0 && nb.n === 2 && nb.i.on && nb.i.look === 'snow', JSON.stringify(nb));
+    await page.waitForTimeout(900);
+    // (the car where it stands, not where it was as it came in: js/menu-car.js measures the yard as laid out; its snow with it)
+    const nb2 = await ev(page, 'return { box: MenuCar.info().box, car: MenuVreme.info().car };');
+    T.check('the new track\'s car stands in its place, drawn (not left beyond the screen where it came in from), its snow on it',
+      nb2.box && nb2.box[0] > -1 && nb2.box[2] < 0.5 && nb2.car && !nb2.car.none && nb2.car.runs > 0 && nb2.car.box[0] < 40, JSON.stringify(nb2));
+    await page.click('.thead [data-act="back"]');
+    const gone = await ev(page, 'return { n: root.querySelectorAll("#mn > canvas.wxl").length, i: MenuVreme.info() };');
+    T.check('back from the track step: nothing of the weather left', gone.n === 0 && !gone.i.on && !gone.i.moving, JSON.stringify(gone));
+    // a device that asks for less motion: one still picture, at once
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await click(page, 'mode:race'); await page.waitForTimeout(400);
+    const cm = await ev(page, INK + 'return { i: MenuVreme.info(), air: ink(q("#mn > canvas.wxair")), ui: ink(q("#mn > canvas.wxui")) };');
+    await page.waitForTimeout(700);
+    const cm2 = await ev(page, 'return MenuVreme.info();');
+    T.check('a device that asks for less motion: the blizzard and the snow on the buttons as a still picture at once (no fade, no ring), nothing moving',
+      cm.i.look === 'snow' && cm.i.settled && cm.i.taps === 0 && cm.i.uiA === 1 && cm.air > 0.01 && cm.ui > 0.002 && !cm2.moving, JSON.stringify({ cm, cm2 }));
+    T.check('the weather over the track step: no page errors', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+  {   // (on its side: the cards beside the picture in the weather too, the blurred picture behind them darker in the rain, paler in the snow)
+    const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa', weather: 'dry', season: 'summer' }, { width: 892, height: 412 });
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    await page.waitForFunction(() => window.MenuCar && MenuCar.info().drawn, null, { timeout: 60000 }).catch(() => null);
+    const side = () => ev(page, `const i = MenuVreme.settle(), q = (s) => root.querySelector(s), op = (s) => { const e = q(s); return e ? +getComputedStyle(e).opacity : -1; };
+      return { i, k: q('#s-track').style.getPropertyValue('--wxk'), card: getComputedStyle(q('#s-track .rcard[data-k="1"]')).filter, dim: op('#s-track .rbg > .wxdim'), white: op('#s-track .rbg > .wxsnow') };`);
+    await click(page, 'weather:rain'); const r = await side();
+    await click(page, 'weather:snow'); const s = await side();
+    T.check('on its side: the picture, the car\'s floor, the buttons and the air in the weather (no sign, no room), the cards beside it darker in the rain, the picture behind them darker in the rain and paler in the snow',
+      r.i.land && r.i.layers.stage && r.i.layers.floor && !r.i.layers.room && !r.i.layers.face && r.i.layers.ui && r.i.layers.air && r.dim > 0.2 && r.k === 'brightness(0.844) saturate(0.832)' && r.card.includes('saturate(0.832)') && s.white > 0.1 && s.dim === 0 && /saturate\(0\.4/.test(s.k), JSON.stringify({ r, s }));
+    T.check('the weather on its side: no page errors', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
   // 5. a time trial on a new track (Harju: the model of its land, no map or flight yet), and the short intro with its video and Skip
   {
     const { ctx, page, errors } = await open();

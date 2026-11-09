@@ -217,6 +217,8 @@ window.MenuCar = (function () {
   }
 
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
+  // a box in the yard as laid out (a new track's sign and car sliding in, their transforms, do not move it: the car drawn where it stands)
+  const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
     const M = car.M, h = car.h, k = clamp(Math.max(M.len / 4.4, h / 1.45, M.wid / 1.9), 0.75, 1.55), dy = h / 2 - 0.7 * k;
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
@@ -226,8 +228,8 @@ window.MenuCar = (function () {
     let bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9;
     for (let i = 0; i < Pw.length; i += 3) { p.set(Pw[i], Pw[i + 1], Pw[i + 2]).applyMatrix4(VP); bx0 = Math.min(bx0, p.x); bx1 = Math.max(bx1, p.x); by0 = Math.min(by0, p.y); by1 = Math.max(by1, p.y); }
     // the button's box (where the menu wants the car: left, in front of the sign), the car in it whole, at its bottom left
-    const yr = yard.getBoundingClientRect(), bt = yard.querySelector('.car'), br = bt ? bt.getBoundingClientRect() : { left: yr.left, top: yr.top, width: yr.width * 0.62, height: yr.height };
-    const tx0 = -1 + 2 * (br.left - yr.left) / W, tx1 = -1 + 2 * (br.left - yr.left + br.width) / W, ty0 = 1 - 2 * (br.top - yr.top + br.height) / H, ty1 = 1 - 2 * (br.top - yr.top) / H;
+    const bt = yard.querySelector('.car'), br = boxIn(bt) || { left: 0, top: 0, width: W * 0.62, height: H };
+    const tx0 = -1 + 2 * br.left / W, tx1 = -1 + 2 * (br.left + br.width) / W, ty0 = 1 - 2 * (br.top + br.height) / H, ty1 = 1 - 2 * br.top / H;
     const sc = Math.min((tx1 - tx0) / Math.max(1e-3, bx1 - bx0), (ty1 - ty0) / Math.max(1e-3, by1 - by0)), ox = tx0 - sc * bx0, oy = ty0 - sc * by0;
     cam.projectionMatrix.premultiply(new THREE.Matrix4().set(sc, 0, 0, ox, 0, sc, 0, oy, 0, 0, 1, 0, 0, 0, 0, 1));
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
@@ -235,10 +237,10 @@ window.MenuCar = (function () {
     pos = [Math.round((1 - car.fit.box[3]) * H / 2), Math.round((car.fit.box[0] + 1) * W / 2)]; place(yard);
     // how far the car reaches over the road sign where its name stands (the middle 60 % of its height), px from the sign's left edge:
     // a tall car, a truck, hides the sign's left part, the name goes right of it (js/menu-tabla.js; watch)
-    const sg = yard.querySelector('.sign'), sr = sg ? sg.getBoundingClientRect() : null;
+    const sg = yard.querySelector('.sign'), sr = boxIn(sg);
     let cv = 0;
     if (sr && sr.width > 0 && sr.height > 0) {
-      const t = sr.top - yr.top + sr.height * 0.2, b = sr.bottom - yr.top - sr.height * 0.2, L = sr.left - yr.left;
+      const t = sr.top + sr.height * 0.2, b = sr.top + sr.height * 0.8, L = sr.left;
       for (let i = 0; i < Pw.length; i += 3) {
         p.set(Pw[i], Pw[i + 1], Pw[i + 2]).applyMatrix4(VP);
         const y = (1 - (p.y * sc + oy)) * H / 2; if (y < t || y > b) continue;
@@ -386,7 +388,7 @@ window.MenuCar = (function () {
       dirty = false;
       const r = yard.getBoundingClientRect(), w = Math.round(r.width), h = Math.round(r.height), bt = yard.querySelector('.car'), sg = yard.querySelector('.sign');
       if (w < 8 || h < 8) { dirty = true; return false; }
-      const rel = (e) => { if (!e) return ''; const q = e.getBoundingClientRect(); return [q.left - r.left, q.top - r.top, q.width, q.height].map(Math.round).join(','); };
+      const rel = (e) => { const q = boxIn(e); return q ? [q.left, q.top, q.width, q.height].join(',') : ''; };
       const pr = Math.min(2, window.devicePixelRatio || 1), k = [w, h, pr, rel(bt), rel(sg)].join('|');
       if (k !== lay || !wind) {
         lay = k; W = w; H = h; renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
