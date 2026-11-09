@@ -22,7 +22,7 @@
   const SO_AT = { num: 0, brake: 0, ban: 3, rbr: 3, spielberg: 4 };   // atlas cells: the braking boards (no turn numbers), the banners
   const SO_SHIRTS = [[0.84, 0.1, 0.12], [0.95, 0.95, 0.93], [0.08, 0.27, 0.5], [0.12, 0.14, 0.2], [0.4, 0.42, 0.46], [0.14, 0.14, 0.16], [0.86, 0.14, 0.14], [0.22, 0.42, 0.24],
     [0.3, 0.52, 0.82], [0.9, 0.9, 0.88], [0.52, 0.42, 0.3], [0.96, 0.62, 0.12]];   // the fans' shirts: the national red, white and blue, navy, grey and black, a few green and bright ones
-  const CZ = Object.assign([[0.95, 0.95, 0.94], [0.84, 0.08, 0.1]], { tri: [[0.07, 0.27, 0.49], 0.5] });   // the Czech flag: white over red, the blue wedge at the pole to the middle (rbFlags: cols.tri)
+  const CZ = { wedge: [[0.95, 0.95, 0.94], [0.84, 0.08, 0.1], [0.07, 0.27, 0.49], 0.5] };   // the Czech flag: white over red, the blue wedge at the pole to the middle (World.flagMesh's wedge)
 
   // the trees (LK.woods, on the builder's land cover: 0 open, 1 the woods, 2 the fields, 3 built-up): 0 Scots pine, 1 silver birch
   // (js/world-harju.js's); 2-3 the plainer ones far from the road. The woods of the sandy country mostly pine, birch at their edges and here
