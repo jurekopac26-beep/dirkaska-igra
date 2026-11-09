@@ -2,8 +2,8 @@
 // trial and the duel in the traffic; a single lane of gravel, so the grid's two columns stand closer together). The road: the real line from the village of Killar along the cliff above the
 // Chenab, into the side valley of the Hangrung Nala and over its bridge, 4.4 km in its real scale, nearly level (~2,400 m), no steeper than
 // ~8.5 %; gravel all the way (def.roadSurface). No barriers but a wooden fence on the left (def.unfenced, def.fence, the user's decisions of
-// 9. 11. 2026): it holds a car, a hit across it at more than 6.5 m/s breaks a panel or two (they stay broken to the race's end), and a car
-// whose middle goes through it past the edge of a drop above the river (def.drops: right past the narrow shoulder) or off the bridge's deck
+// 9. 11. 2026), brittle as the delineators (~22.21): any touch breaks a panel or a few (they stay broken to the race's end), the car not
+// thrown back and barely slowed, and a car whose middle goes through it past the edge of a drop above the river (def.drops: right past the narrow shoulder) or off the bridge's deck
 // falls (Race._fall), fast or at a crawl; elsewhere one more than 10 m from the road's edge is put back on it after 0.3 s (Race._offRoad),
 // but where the cut beside the road is steep the rock stops it first, as a wall of the terrain (def.rock: no barrier on the right, the rockfall
 // net there only a look); in a race of 13 on the autopilot few go over. The open road's traffic is its own mix (def.traffic): jeeps,
@@ -62,22 +62,31 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
     `${FN ? FN.on.reduce((a, b) => a + b, 0) : 0} panels, unfenced ${JSON.stringify(def.unfenced)}`);
 }
 
-// 4. the fence and the edge: a car hitting the fence above the threshold breaks it, goes through and falls into the drop, is put back on the
-//    road where it went over, damaged; below it the fence holds the car (it slides along); through a broken panel a car falls even at a
-//    crawl, off both sides of the bridge too; on the mountain's side no wall: 9 m from the road's edge the car stays, 11 m it is put back
+// 4. the fence and the edge: the fence is brittle, as the delineators (def.fence.vBreak 0, the user's decision of 9. 11. 2026 at ~22.21:
+//    »naredi da je ograja krhka tak kot kolicki ki so ob cesti in se takoj razbije«): any touch breaks a panel or a few, at any speed and
+//    angle, the car not thrown back (its speed across the fence kept) and barely slowed; a car whose middle goes past the edge falls into the
+//    drop and is put back on the road where it went over, damaged; through a broken panel a car falls even at a crawl, off both sides of the
+//    bridge too; on the mountain's side no wall: 9 m from the road's edge the car stays, 11 m it is put back
 {
   const [a, b, sd] = def.drops.find(([a, b]) => b - a > 80), sm = T.startS + (a + b) / 2, [ba, bb] = def.bridges[0];
-  const run = (s, side, v, ang, thr, pre) => {
+  const run = (s, side, v, ang, thr, pre, off = 1.5) => {   // (thr < 0: the speed held at v until the car first touches the fence or a wall, then off;
+    // off: the car's middle that far inside the road's edge at the start; the touch: its speed and its speed across the fence then, the least across it
+    // in 0.2 s after, its speed 0.1 s after)
     Math.random = seeded(3);
     const r = new C.Race(T, opts({ numAI: 0, playerGrid: 1, tt: true, damage: 2 })), P = r.player; r.start(); if (pre) pre(r);
-    const i = T.idx(s), h = T.hd[i] + side * ang, o = side * (T.w - 1.5);
+    const i = T.idx(s), h = T.hd[i] + side * ang, o = side * (T.w - off);
     P.place(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, P.q); P.sPrev = P.q.s; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v;
-    let fell = false, minY = 1e9, wall = 0, out = -1e9, past = -1e9; const y0 = T.hy[i], d0 = P.dmg;
-    for (let k = 0; k < 120 * 4; k++) { Math.random = seeded(100 + k); P.inThr = thr; P.inBrk = 0; P.inSteer = 0; r.step(DT); if (P.fall) fell = true; minY = Math.min(minY, P.y);
+    let fell = false, minY = 1e9, wall = 0, out = -1e9, past = -1e9, t0 = -1, v0 = 0, vn0 = 0, vnMin = 1e9, v1 = 0; const y0 = T.hy[i], d0 = P.dmg;
+    const across = () => side * (P.vx * T.nx[P.q.i] + P.vz * T.nz[P.q.i]);
+    for (let k = 0; k < 120 * 4; k++) { Math.random = seeded(100 + k); const sp = Math.hypot(P.vx, P.vz), vn = across(), n0 = r.fence.n;
+      P.inThr = thr >= 0 ? thr : t0 < 0 && sp < v ? 0.7 : 0; P.inBrk = thr < 0 && t0 < 0 && sp > v * 1.03 ? 0.4 : 0; P.inSteer = 0; r.step(DT); if (P.fall) fell = true; minY = Math.min(minY, P.y);
+      if (t0 < 0 && ((P.hitWall || 0) > 0 || r.fence.n > n0)) { t0 = k; v0 = sp; vn0 = vn; }
+      if (t0 >= 0 && !fell && k - t0 <= 24) { vnMin = Math.min(vnMin, across()); if (k - t0 === 12) v1 = Math.hypot(P.vx, P.vz); }
       wall = Math.max(wall, P.hitWall || 0); P.hitWall = 0; if (!fell && !P.offN) { out = Math.max(out, side * P.q.d - T.w); past = Math.max(past, side * P.q.d - (side > 0 ? P.q.br : P.q.bl)); } if (P.offN) P.inThr = 0; }
     Math.random = orig;
     const q = T.query(P.x, P.z, P.q.i, {});
-    return { fell, drop: y0 - minY, falls: P.falls || 0, put: P.offN || 0, brk: r.fence.n, back: Math.abs(q.d) < T.w && Math.abs(P.y - T.elevAt(q.s).y) < 0.5, along: q.s - s, dmg: P.dmg - d0, wall, out, past, fin: Number.isFinite(P.x + P.z + P.y) };
+    return { fell, drop: y0 - minY, falls: P.falls || 0, put: P.offN || 0, brk: r.fence.n, back: Math.abs(q.d) < T.w && Math.abs(P.y - T.elevAt(q.s).y) < 0.5, along: q.s - s, dmg: P.dmg - d0, wall, out, past, fin: Number.isFinite(P.x + P.z + P.y),
+      touch: t0 >= 0, v0, vn0, vnMin, loss: v0 > 0 && v1 > 0 ? (1 - v1 / v0) * 100 : NaN };
   };
   const stand = (s, off) => {   // a car standing still off the road on the right, its middle off metres from the road's edge, for 1 s
     Math.random = seeded(5);
@@ -88,13 +97,17 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   };
   const brkAll = (r) => r.fence.brk.fill(0.001);
   const fast = run(sm, sd, 25, 0.35, 0), above = run(sm, sd, 15, 0.56, 0), below = run(sm, sd, 15, 0.36, 0), slide = run(sm, sd, 14, 0.2, 0.3), crawl = run(sm, sd, 2.5, 0.6, 0.12, brkAll);
+  const soft = [run(sm, sd, 20 / 3.6, 0.52, -1), run(sm, sd, 20 / 3.6, 0.175, -1, null, 0.3), run(sm, sd, 60 / 3.6, 0.087, -1, null, 0.3), run(sm, sd, 120 / 3.6, 0.087, -1, null, 0.3)];
   const brL = run(T.startS + ba + 8, -1, 8, 1, 0), brR = run(T.startS + ba + 8, 1, 10, 0.5, 0), up = run(sm, -sd, 15, 0.45, 0), at9 = stand(sm, 9), at11 = stand(sm, 11);
-  check('the fence: at 90 km/h into it the car breaks a panel or two, goes through and falls (more than 8 m down), then it is back on the road near where it went over, damaged',
-    fast.brk >= 1 && fast.brk <= 3 && fast.fell && fast.falls === 1 && fast.drop > 8 && fast.back && Math.abs(fast.along) < 60 && fast.dmg > 0.2 && fast.fin,
+  check('the fence is brittle, as the delineators: touched at 20 km/h (at 30° and at 10°) and brushed at 5° at 60 and 120 km/h, it breaks at once, holding nothing: the car not thrown back (at least 70 % of its speed across the fence kept), less than 5 % of its speed lost in 0.1 s',
+    soft.every(x => x.touch && x.brk >= 1 && x.wall === 0 && x.vn0 > 0.3 && x.vnMin > 0.7 * x.vn0 && x.loss < 5 && x.fin),
+    soft.map((x, k) => `${['20 km/h 30°', '20 km/h 10°', '60 km/h 5°', '120 km/h 5°'][k]}: ${x.brk} broken, across ${x.vn0.toFixed(2)} -> least ${x.vnMin.toFixed(2)} m/s, speed -${x.loss.toFixed(1)} %`).join('; '));
+  check('the fence: at 90 km/h into it the car breaks a few panels, goes through and falls (more than 8 m down), then it is back on the road near where it went over, damaged',
+    fast.brk >= 1 && fast.brk <= 4 && fast.fell && fast.falls === 1 && fast.drop > 8 && fast.back && Math.abs(fast.along) < 60 && fast.dmg > 0.2 && fast.fin,
     `${fast.brk} panels broken, fell ${fast.drop.toFixed(1)} m, back on the road ${fast.back} ${fast.along.toFixed(0)} m on, damage +${fast.dmg.toFixed(2)}`);
-  check('the fence: hit at ~29 km/h across it, it breaks; at ~19 km/h it holds the car (no fall); sliding along it, it holds the car on the road',
-    above.brk >= 1 && above.fell && below.brk === 0 && !below.fell && below.wall > 0 && slide.brk === 0 && !slide.fell && slide.wall > 0 && slide.past < 0.5 && slide.fin,
-    `above: ${above.brk} broken, fell ${above.fell}; below: ${below.brk} broken, hit ${below.wall.toFixed(1)} m/s; slide: ${slide.brk} broken, middle ${slide.past.toFixed(2)} m from the fence's line`);
+  check('the fence holds no car: hit at ~29 and ~19 km/h across it, or sliding along it at 50 km/h, it breaks and the car goes through and falls, then it is back on the road',
+    [above, below, slide].every(x => x.brk >= 1 && x.fell && x.falls === 1 && x.back && x.wall === 0 && x.fin),
+    [above, below, slide].map((x, k) => `${['~29 km/h', '~19 km/h', 'sliding'][k]}: ${x.brk} broken, fell ${x.fell}, back ${x.back}`).join('; '));
   check('through a broken panel a car falls at a crawl too, and off both sides of the bridge (no fence there)',
     crawl.fell && crawl.falls === 1 && crawl.back && crawl.dmg > 0.2 && [brL, brR].every(x => x.fell && x.falls === 1 && x.back && !x.wall),
     `crawl: fell ${crawl.fell}, damage +${crawl.dmg.toFixed(2)}; the bridge: left ${brL.fell}, right ${brR.fell}`);
@@ -122,7 +135,7 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
     Math.random = orig;
     falls += r.cars.reduce((a, c) => a + (c.falls || 0), 0); put += r.cars.reduce((a, c) => a + (c.offN || 0), 0); fin += r.cars.filter(c => c.finished).length; cars += r.cars.length; brk += r.fence.n;
   }
-  check('race: 13 cars on the autopilot, three races: every car at the finish, at most one in six through the fence and over the edge', fin === cars && falls <= cars / 6,
+  check('race: 13 cars on the autopilot, three races: every car at the finish, at most one in four through the fence and over the edge (the fence brittle)', fin === cars && falls <= cars / 4,
     `${fin}/${cars} at the finish, ${falls} falls, ${brk} fence panels broken, ${put} put back on the road`);
 }
 

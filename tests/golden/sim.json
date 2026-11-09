@@ -4900,14 +4900,14 @@
   }
  },
  "killar/race/cs": {
-  "digest": "404f81cd1458af49cc187c8a",
-  "lead": 1911.7,
+  "digest": "64a8a73b7a9e47a7474edc57",
+  "lead": 1911.4,
   "car0": [
-   -1271.58,
-   -1080.38
+   -1272.72,
+   -1071.78
   ],
   "cover": {
-   "dmg": 0.06,
+   "dmg": 0.1,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
@@ -4928,7 +4928,7 @@
   }
  },
  "killar/upg/cs": {
-  "digest": "8a8547339dd57b4297fd97d8",
+  "digest": "ac89b47630e5a5ba1e7ab3d6",
   "lead": 2054.8,
   "car0": [
    -1356.52,
@@ -4942,53 +4942,53 @@
   }
  },
  "killar/crash/cs": {
-  "digest": "bf767b600a2cf69383444fb8",
+  "digest": "7e0db7d26400ce56c9b4a861",
   "lead": 1911.2,
   "car0": [
-   -1211.99,
-   -1045.68
+   -1213.7,
+   -1046.99
   ],
   "cover": {
-   "dmg": 0.45,
-   "loose": 7,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "killar/formula/cs": {
-  "digest": "6ed83c1cbde0df16e0e62c44",
-  "lead": 1884.8,
-  "car0": [
-   -1213.45,
-   -1049.33
-  ],
-  "cover": {
-   "dmg": 0.4,
-   "loose": 6,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "killar/lm/cs": {
-  "digest": "6e9be63d7e225c9e1ebf3f43",
-  "lead": 1864.3,
-  "car0": [
-   -1202.3,
-   -1046.3
-  ],
-  "cover": {
-   "dmg": 0.38,
+   "dmg": 0.94,
    "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
  },
+ "killar/formula/cs": {
+  "digest": "646872444d22edf1d6a553e5",
+  "lead": 1885.8,
+  "car0": [
+   -1242,
+   -1061.32
+  ],
+  "cover": {
+   "dmg": 0.42,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "killar/lm/cs": {
+  "digest": "c103792762ce526324cc0517",
+  "lead": 1864.5,
+  "car0": [
+   -1137.63,
+   -1012.9
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "killar/car/cs": {
-  "digest": "186db068f2aff89e98d72a25",
+  "digest": "9c2a70ca04b5f46a6263bd64",
   "lead": 1911.3,
   "car0": [
-   -1196.16,
-   -1038.57
+   -1177.45,
+   -1034.62
   ],
   "cover": {
    "dmg": 1,

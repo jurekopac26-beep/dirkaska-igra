@@ -50,9 +50,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // trees) for time seconds, it is put back on the road there (Race._offRoad, no damage)
     unfenced: [10, 0.3],
     // the wooden fence along the left, on the verge's edge (Track.fence: posts every P m, two rails; js/world-killar.js draws it): from the
-    // first drop to the road's end, none on the bridge over Hangrung Nala (the deck's bare edge); it holds a car as a barrier, a hit at more
-    // than vBreak m/s across it (~23 km/h) breaks a panel or two (the planks fly, the gap stays to the race's end), the car through it
-    fence: { side: -1, from: 20, to: 4616, gaps: [[4032, 4067]], P: 3, vBreak: 6.5 },
+    // first drop to the road's end, none on the bridge over Hangrung Nala (the deck's bare edge); brittle as the delineators (vBreak 0, the
+    // user's decision of 9. 11. 2026 at ~22.21: »naredi da je ograja krhka tak kot kolicki ki so ob cesti in se takoj razbije«): any touch, at
+    // any speed, breaks a panel or a few (the planks fly, the gap stays to the race's end), the car through it, not thrown back and barely
+    // slowed (slow: at most 1.6 % of its speed a hit, less the softer it was, as a delineator: js/core.js fenceBreak)
+    fence: { side: -1, from: 20, to: 4616, gaps: [[4032, 4067]], P: 3, vBreak: 0, slow: 0.016 },
     // no barrier on the right (the user's decisions of 9. 11. 2026 between ~18.10 and ~18.20), but where the cut beside the road is steep
     // (or a house stands), the rock itself stops the car as a wall of the terrain (Track.rock, wallCollide): [side, metres after the start
     // line, [the wall's distance from the road's middle in decimetres, every 2.5 m]], read from the ground the game draws by

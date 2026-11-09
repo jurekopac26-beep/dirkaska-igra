@@ -319,16 +319,19 @@ const Core = (function () {
         const F = this.fallAt = this.dropAt ? [this.dropAt[0].slice(), this.dropAt[1].slice()] : [new Uint8Array(N), new Uint8Array(N)];
         for (const [a, b] of def.bridges || []) for (let d = a; d <= b; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) F[0][i] = F[1][i] = 1; }
       }
-      // a wooden fence along one side of an unfenced road (def.fence = { side, from, to, gaps, P, vBreak }: Killar's left, the user's decision
+      // a wooden fence along one side of an unfenced road (def.fence = { side, from, to, gaps, P, vBreak, slow, dmg }: Killar's left, the user's decision
       // of 9. 11. 2026 between ~18.10 and ~18.20): panels P m long from 'from' to 'to' (metres after the start line), none whose middle is in a gap. A standing
       // panel holds a car on that side's line (bl / br) as a barrier; a car hitting it at more than vBreak m/s across it breaks it (and the
       // next one when it hit near a post): the race's own state (Race.fence: the time each broke, kept to the race's end; World draws it),
-      // the car through it and, over a drop, over the edge (Race._offRoad). fence: { side, s0 (track s of panel 0), P, n, on (1 a panel), v }
+      // the car through it and, over a drop, over the edge (Race._offRoad). vBreak 0: a brittle fence (Killar, the user's decision of 9. 11. 2026
+      // at ~22.21: as fragile as the delineators), broken by any touch at any speed, holding no car; slow: the share of the car's speed a broken panel
+      // takes (a brittle one's grows with how hard it was hit, as a delineator's: fenceBreak), dmg: the dent (a brittle one's only past 6 m/s across).
+      // fence: { side, s0 (track s of panel 0), P, n, on (1 a panel), v, slow, dmg }
       this.fence = null;
       if (def.fence && this.unf) {
         const D = def.fence, P = D.P || 3, n = Math.max(0, Math.floor((D.to - D.from) / P)), on = new Uint8Array(n);
         for (let k = 0; k < n; k++) { const m = D.from + (k + 0.5) * P; on[k] = (D.gaps || []).some(([a, b]) => m >= a && m <= b) ? 0 : 1; }
-        this.fence = { side: D.side < 0 ? -1 : 1, s0: this.startS + D.from, P, n, on, v: D.vBreak || 6.5 };
+        this.fence = { side: D.side < 0 ? -1 : 1, s0: this.startS + D.from, P, n, on, v: D.vBreak != null ? D.vBreak : 6.5, slow: D.slow != null ? D.slow : 0.1, dmg: D.dmg != null ? D.dmg : 0.03 };
       }
       // the rock beside an unfenced road (def.rock: Killar, tools/killar-skala.mjs from the ground the world draws; the user's decisions of
       // 9. 11. 2026 between ~18.10 and ~18.20): per side the line where the ground rises steeply (a cut) or a house stands, as runs [side, metres
@@ -3963,12 +3966,13 @@ const Core = (function () {
   // over the edge of a drop (wallCollide, Race._offRoad): (nx, nz) the way back to the road, vo the car's speed the other way, out (at 4.5 m/s
   // at least, clear of the cliff); then it falls (Race._fall), spinning as it went over
   // a fence panel broken (wallCollide): panel k and, hit within a metre of a post, the one beyond it (a car is wider than that); the time it
-  // broke kept (Race.fence.brk: World throws its planks and leaves the gap, the replay too); the planks take a little of the hit (a tenth of
-  // the car's speed, a small dent where it hit). c.fenceN: the hits that broke panels; c.fenceT: the race's time of its last
-  function fenceBreak(Fn, FS, t, k, s, c, rx, rz) {
+  // broke kept (Race.fence.brk: World throws its planks and leaves the gap, the replay too); the planks take a little of the hit (Fn.slow of
+  // the car's speed, a tenth by default, a small dent Fn.dmg where it hit; a brittle fence (Fn.v 0): as a delineator, the share grows with vo,
+  // the speed across it, to Fn.slow at 8 m/s, and the dent only past 6 m/s). c.fenceN: the hits that broke panels; c.fenceT: the race's time of its last
+  function fenceBreak(Fn, FS, t, k, s, c, rx, rz, vo) {
     const u = (s - Fn.s0) / Fn.P - k, j = u < 0.34 ? k - 1 : u > 0.66 ? k + 1 : -1;
     for (const m of j >= 0 && j < Fn.n ? [k, j] : [k]) if (Fn.on[m] && !FS.brk[m]) { FS.brk[m] = Math.max(1e-3, t); FS.n++; }
-    c.vx *= 0.9; c.vz *= 0.9; applyDamage(c, 0.03, rx, rz); c.fenceN = (c.fenceN || 0) + 1; c.fenceT = t;
+    const g = 1 - Fn.slow * (Fn.v > 0 ? 1 : clamp(vo / 8, 0, 1)); c.vx *= g; c.vz *= g; if (Fn.v > 0 || vo > 6) applyDamage(c, Fn.dmg, rx, rz); c.fenceN = (c.fenceN || 0) + 1; c.fenceT = t;
   }
   function overEdge(c, nx, nz, vo) {
     if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }
@@ -4023,10 +4027,10 @@ const Core = (function () {
         else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
         if (sd < 0) br = q.br;
         if (trk.unf) {   // (def.unfenced: no barrier at the sides, over the edge of a drop or off the road: Race._offRoad; only a standing fence panel holds
-          // the car, a corner just across its line (a car behind the fence goes through it), unless the car hits it hard enough to break it)
+          // the car, a corner just across its line (a car behind the fence goes through it), unless the car hits it hard enough to break it; a brittle one (Fn.v 0) breaks at any touch)
           const Fn = trk.fence, FS = rc && rc.fence, kf = Fn && FS && pen > 0 && pen < 1.2 && !(q.k >= 0) && (q.d > 0 ? 1 : -1) === Fn.side ? Math.floor((q.s - Fn.s0) / Fn.P) : -1;
           if (!(kf >= 0 && kf < Fn.n && Fn.on[kf] && !FS.brk[kf])) pen = 0;
-          else if (canFall) { const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz); if (vo > Fn.v || (vo > 1.5 && c.fenceT != null && rc.time - c.fenceT < 0.5)) { fenceBreak(Fn, FS, rc.time, kf, q.s, c, rx, rz); pen = 0; } }   // (through it: for 0.5 s after it broke one, the car ploughs through the next ones it hits too)
+          else if (canFall) { const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz); if (Fn.v <= 0 || vo > Fn.v || (vo > 1.5 && c.fenceT != null && rc.time - c.fenceT < 0.5)) { fenceBreak(Fn, FS, rc.time, kf, q.s, c, rx, rz, vo); pen = 0; } }   // (through it: for 0.5 s after it broke one, the car ploughs through the next ones it hits too)
           if (!(pen > 0) && trk.rock && !(q.k >= 0)) {   // the rock of a cut or a house's wall (Track.rock): the ground stops the car there, on either side (a corner up to 3 m in)
             const sg = q.d > 0 ? 1 : -1, A = trk.rock[sg > 0 ? 1 : 0], f = q.s / trk.ds, i = Math.max(0, Math.min(trk.N - 2, Math.floor(f))), a = A[i], b = A[i + 1];
             if (a > 0 && b > 0) { const e = sg * q.d - (a + (b - a) * (f - i)); if (e > 0 && e < 3) { pen = e; nx = -q.nx * sg; nz = -q.nz * sg; } }

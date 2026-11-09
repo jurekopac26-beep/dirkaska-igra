@@ -108,7 +108,7 @@
     R = lerp(R, 0.55 + rust * 0.08, ro * 0.35 * (1 - st)); G = lerp(G, 0.52, ro * 0.35 * (1 - st)); B = lerp(B, 0.48, ro * 0.35 * (1 - st));   // the scree: paler
     R = lerp(R, 0.62, se * 0.5); G = lerp(G, 0.6, se * 0.5); B = lerp(B, 0.56, se * 0.5);
     const sn = unSnow(x, z, A, ny, sz); R = lerp(R, 1.02, sn); G = lerp(G, 1.04, sn); B = lerp(B, 1.09, sn);
-    if (dd < 4 && !UNK) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - sn); R = lerp(R, 0.52, t); G = lerp(G, 0.5, t); B = lerp(B, 0.46, t); }   // (the gravel verge; Killar: none, the meadow up to the road's edge: the user's decision of 9. 11. 2026 at ~22.20)
+    if (dd < 4 && !UNK) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - sn); R = lerp(R, 0.52, t); G = lerp(G, 0.5, t); B = lerp(B, 0.46, t); }   // (the gravel verge; Killar: none, the meadow up to the road's edge: the user's decision of 9. 11. 2026 at ~22.17)
     UNCOL[0] = R; UNCOL[1] = G; UNCOL[2] = B; return UNCOL;
   }
   function unGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in unTileGeo)
@@ -422,7 +422,7 @@
       if (galAt[i]) return [[e + sw, -0.02], [bar - 0.3, -0.02], [bar + 0.2, 0.18], [bar + 0.5, 0.2], [bar + 0.9, 0.2]];   // (a gallery: a concrete kerb along its walls)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return unGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (UNW && UNW[side > 0 ? 1 : 0][i] > 0.5) return [[e + sw, -0.02], [bar - 0.15, -0.05], [bar + 0.25, gAt(bar + 0.25) * 0.5 - 0.1], [bar + 0.9, gAt(bar + 0.9) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (the edge of a drop: a rough lip, then the cliff)
-      if (UNK) {   // Killar: no ditch and no verge of its own (the user's decision of 9. 11. 2026 at ~22.20, »zbrisi ta koridor«): from the shoulder on the meadow, level with the road, then down
+      if (UNK) {   // Killar: no ditch and no verge of its own (the user's decision of 9. 11. 2026 at ~22.17, »zbrisi ta koridor«): from the shoulder on the meadow, level with the road, then down
         // or up to the slope, drawn as the terrain (mead: the terrain's own colours and material, below)
         const y4 = gAt(bar + 1.9) + 0.03, y2 = Math.max(-0.12, gAt(bar + 0.4) + 0.05), r = [[e + sw, -0.02], lift(Math.max(e + sw + 0.4, bar - 0.6), -0.1), [bar + 0.4, y2], [bar + 1.1, Math.max(lerp(y2, y4, 0.47), gAt(bar + 1.1) + 0.05)], [bar + 1.9, y4]];
         r.mead = 1; return r; }
