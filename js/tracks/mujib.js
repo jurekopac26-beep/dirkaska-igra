@@ -24,10 +24,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xdccdb4, sun: 0xfff0d6, sunI: 1.32, sky: 0xb6b9bb, gnd: 0x8f7556, hemiI: 0.58, tint: [1.03, 1.0, 0.95], sat: 1.0, sunOff: [-58, 96, 62], split: [[1.0, 0.98, 0.99], [1.05, 1.0, 0.92]] },   // Wadi Mujib: a hot clear afternoon, the canyon's dust in the air, the sun from the south-west behind the cars going up
-    say: 'the Mujib canyon', rainP: 0.04, wind: 0.4,   // (the wind in the canyon, js/sfx-okolje.js: the bare slope has no other sound by the road)
+    say: 'the Mujib canyon', rainP: 0.04,
     zivali: { a: ['ibex', 'goatW', 'camel', 'donkey'], t: [], open: true },
     id: 'mujib', name: 'Wadi Mujib, Jordanija', theme: 'mujib', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
     maxRivals: 99,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the flying start's column in the run-up before the line (~210 m; with 100 two cars stand on each other)
+    wind: 0.4,   // the least wind along the road (js/sfx-okolje.js, docs/zvoki-okolja.md): the bare canyon has no other sound by the road, no woods, water or village
     desc: 'Cesta 35 na južni strani kanjona Wadi Mujib v Jordaniji: najbolj zavit kilometer ceste iz kanjona proti Karaku, pet serpentin v golem pobočju iz plasti apnenca in laporja, od 471 m do 567 m. Jezero za jezom globoko spodaj na dnu kanjona, akacije in grmičevje med skalami, počivališče s stojnico za čaj nad kanjonom in beduinski šotor ob cesti. Dirka, vožnja na čas, dvoboj v prometu in beg pred policijo.',
     en: { name: 'Wadi Mujib, Jordan', desc: 'Route 35 on the south side of the Wadi Mujib canyon in Jordan: the twistiest kilometre of the road up out of the canyon towards Karak, five hairpins up a bare slope of limestone and marl in beds, from 471 m to 567 m. The dam\'s lake far below on the canyon\'s floor, acacias and shrubs among the rocks, a lay-by with a tea stall over the canyon and a Bedouin tent by the road. A race, a time trial, a duel in the traffic and a run from the police.', escTo: 'Up out of the Mujib canyon' },
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
