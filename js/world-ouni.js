@@ -219,21 +219,22 @@
     let sum = 0; for (let o = 0; o < d.length; o += 4) sum += d[o]; ouGMean = sum / (S * S) / 255;
     return (ouGTexC = t);
   }
+  const { AB, aStar, aTier } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
   function ouTreeGeo(kind, far) {   // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine, 2 silver birch, 3 young spruce; far: the plain
     // versions for the forest deep behind the road (never seen up close)
-    const g = new GB(), R = rng(620 + kind), rs = API.ROCK_SMOOTH;
-    API.ROCK_SMOOTH = kind === 1 || kind === 2;   // soft, rounded crowns on the pines and birches (the spruces stay jagged)
+    const g = new GB(), b = new AB(), R = rng(620 + kind), rs = API.ROCK_SMOOTH, A = kind === 0 || (kind === 3 && !far);   // (A: the spruces soft too, in the kit A)
+    API.ROCK_SMOOTH = kind === 1 || kind === 2;   // soft, rounded crowns on the pines and birches
     if (far) {
-      if (kind === 0) { const col = [0.09, 0.185, 0.115], tip = [0.17, 0.3, 0.19]; starCone(g, 0, 0.02, 0, 0.3, 0.42, 4, col, tip, 0.2, 0.05); starCone(g, 0, 0.36, 0, 0.19, 0.38, 4, col, tip, 0.9, 0.04); cone(g, 0, 0.66, 0, 0.08, 0.34, 4, col, tip, 1.2); }
+      if (kind === 0) { const col = [0.09, 0.185, 0.115], tip = [0.17, 0.3, 0.19]; aStar(b, 0, 0.02, 0, 0.3, 0.42, 4, col, tip, 0.2, 0.05); aStar(b, 0, 0.36, 0, 0.19, 0.38, 4, col, tip, 0.9, 0.04); aTier(b, 0, 0.66, 0, 0.08, 0.34, 4, col, tip, 1.2); }
       else if (kind === 1) { cyl(g, 0, -0.02, 0, 0.017, 0.78, 3, [0.58, 0.37, 0.22], null, 0.009); ico(g, 0, 0.8, 0, 0.19, 0.55, [0.13, 0.25, 0.12], R, 0.35); }
       else { cyl(g, 0, -0.02, 0, 0.016, 0.62, 3, [0.88, 0.88, 0.84], null, 0.01); ico(g, 0, 0.67, 0, 0.16, 1.8, [0.27, 0.42, 0.13], R, 0.3); }
-      API.ROCK_SMOOTH = rs; const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+      API.ROCK_SMOOTH = rs; const geo = A ? b.geometry() : g.geometry(); geo.computeBoundingSphere(); return geo;
     }
     if (kind === 0) {   // spruce: four drooping tiers down to the ground and a spire, very dark inside, the tips of the branches lighter and a little bluer
       const col = [0.085, 0.175, 0.11], tip = [0.17, 0.3, 0.19];
       [[0.02, 0.31, 0.32, 0.06], [0.23, 0.25, 0.31, 0.05], [0.44, 0.19, 0.28, 0.045], [0.61, 0.13, 0.24, 0.035]].forEach(([y, r, h, dr], k) => {
-        const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 5, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.66, dr); });
-      cone(g, 0, 0.78, 0, 0.055, 0.22, 4, col, tip, 0.4);
+        const kk = k % 2 ? 1.1 : 1; aStar(b, 0, y, 0, r, h, 5, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.66, dr); });
+      aTier(b, 0, 0.78, 0, 0.055, 0.22, 4, col, tip, 0.4);
     } else if (kind === 1) {   // pine: a long bare trunk, grey-brown below and orange up high, an uneven umbrella crown of two flat clumps
       cyl(g, 0, -0.02, 0, 0.018, 0.4, 3, [0.36, 0.3, 0.25], null, 0.015); cyl(g, 0, 0.38, 0, 0.015, 0.4, 3, [0.66, 0.4, 0.22], null, 0.009);
       ico(g, 0.02, 0.82, 0, 0.18, 0.5, [0.14, 0.26, 0.12], R, 0.35); ico(g, -0.1, 0.7, 0.06, 0.12, 0.55, [0.12, 0.23, 0.11], R, 0.4);
@@ -243,10 +244,10 @@
       ico(g, 0, 0.7, 0, 0.15, 1.5, [0.27, 0.42, 0.13], R, 0.3); ico(g, 0.07, 0.56, -0.05, 0.1, 1.2, [0.31, 0.46, 0.15], R, 0.35);
     } else {   // young spruce
       const col = [0.12, 0.25, 0.13], tip = [0.2, 0.35, 0.17];
-      starCone(g, 0, 0.0, 0, 0.34, 0.42, 4, col, tip, 0.4, 0.04); starCone(g, 0, 0.3, 0, 0.25, 0.38, 4, col, tip, 1.2, 0.03); cone(g, 0, 0.58, 0, 0.14, 0.42, 4, col, tip, 1.0);
+      aStar(b, 0, 0.0, 0, 0.34, 0.42, 4, col, tip, 0.4, 0.04); aStar(b, 0, 0.3, 0, 0.25, 0.38, 4, col, tip, 1.2, 0.03); aTier(b, 0, 0.58, 0, 0.14, 0.42, 4, col, tip, 1.0);
     }
     API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    const geo = A ? b.geometry() : g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function ouRod(g, a, b, r, col, n) {   // a round pole between the points a and b (n sides, no end caps): fence poles, scaffold tubes, braces, wires
     n = n || 4; const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz) || 1, ux = dx / L, uy = dy / L, uz = dz / L;
@@ -367,11 +368,8 @@
   }
   function ouFlag(g, x, y, z, rot, h) {   // flag pole with a Finnish flag (blue cross on white), the flag on both faces
     cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-    const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 1.1, fy = y + h - fh - 0.15, blue = [0.07, 0.21, 0.5];
-    const at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)];
-    let [fx, fz] = at(fw / 2); box(g, fx, fy, fz, fw, fh, 0.04, rot, [0.97, 0.97, 0.96], null, false);
-    [fx, fz] = at(fw * 6.5 / 18); box(g, fx, fy, fz, fw * 3 / 18, fh, 0.06, rot, blue, null, false);
-    [fx, fz] = at(fw / 2); box(g, fx, fy + fh * 4 / 11, fz, fw, fh * 3 / 11, 0.06, rot, blue, null, false);
+    const c = Math.cos(rot), s = Math.sin(rot), bl = [0.07, 0.21, 0.5], wh = [0.97, 0.97, 0.96];   // (the cloth waves: js/world-zastave.js; the cross in cells)
+    API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, { grid: [[0, 5 / 18, 8 / 18, 1], [0, 4 / 11, 7 / 11, 1], [[wh, bl, wh], [bl, bl, bl], [wh, bl, wh]]] }, 1.8, 1.1);
   }
   // knockable props: marker posts on the outside of the bends, straw bale stacks on the outside of the junctions (buildOuni puts those in out.props
   // first); the props stand on the verge's own height (the verge ribbon's cross-section). Drawn out to 150 m (a long view down the straights)

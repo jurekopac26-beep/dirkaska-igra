@@ -20,7 +20,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     zivali: { a: ['macaque', 'buffalo', 'egret'], t: ['shrine', 'palmHut'], city: true },
-    id: 'bangsaen', name: 'Bang Saen, Tajska', theme: 'bangsaen', laps: 4, halfWidth: 5, noBirds: true,
+    id: 'bangsaen', test: true, name: 'Bang Saen, Tajska', theme: 'bangsaen', laps: 4, halfWidth: 5, noBirds: true,
     desc: 'Ulično dirkališče v obmorskem mestu Bang Saen ob Tajskem zalivu, v pravem merilu: 3,6 km v nasprotni smeri urinega kazalca. Dolga ravnina ob plaži s palmami in kazuarinami, ostri levi zavoji v križiščih, 1,5 km po Bang Saen Sai 2 med tajskimi hišami in trgovinami, lasnica pod hribom Khao Sam Muk in dolg lok ob Laem Thaenu. Semaforji, znaki in stebrički v križiščih se dajo zbiti. Podatki: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.',
     en: { name: 'Bang Saen, Thailand', desc: 'A street circuit in the seaside town of Bang Saen on the Gulf of Thailand, at full scale: 3.6 km, anticlockwise. A long straight along the beach with palms and casuarinas, tight left-handers through the junctions, 1.5 km along Bang Saen Sai 2 between Thai shophouses, a hairpin at the foot of Khao Sam Muk and a long curve by Laem Thaen. The traffic lights, signs and bollards in the junctions can be knocked over. Data: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.' },
     start: [0, 0], runoff: 0.5, inner: 2, side: 2, elevSmooth: 12, realKm: 3.74, runoffTarmac: true, offSurface: 'paving',

@@ -113,7 +113,7 @@ try {
   for (const [id, want] of [['pikes', 'none'], ['spa', 'all']]) {
     await startTrack(page, id);
     const n = await page.evaluate(() => { const g = window.__game, Tr = g.race.track; g.S.tod = 'night'; Render.setAtmos({ season: 'summer', tod: 'night' }, true); const n = (Render.show.lamps || []).length; g.S.tod = 'day'; Render.setAtmos({ season: 'summer', tod: 'day' }, true); return { n, all: Math.floor(Tr.len / 30) }; });
-    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n === n.all, `${n.n} lamps (every 30 m: ${n.all})`);
+    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n >= n.all, `${n.n} lamps (every 30 m: ${n.all}; by a stand its roof lamps' pools instead of a pole: js/render-vecer.js)`);
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

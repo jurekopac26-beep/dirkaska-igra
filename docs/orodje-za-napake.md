@@ -17,7 +17,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 5 | Označevanje | končano |
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
-| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog) |
+| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog; spremenjeno 9. 11.: testne proge se izbrišejo pred izidom 1. 2. 2027, načrtovano ob zamrznitvi funkcij 15. 12. 2026; o času sklopa 8 odloči uporabnik posebej) |
 | 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
 | 10 | G · V krogu | končano (skupaj z 9 in 11) |
 | 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
@@ -138,7 +138,7 @@ Opisi končanih sklopov 1–20 (časi, vsebina, testi, opombe) so v `docs/arhiv/
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je. Ob izbrisu Ria de Janeira (testna od 5. 11. 2026, PR #365): `rio` iz `WSPLIT` v `tools/razdeli-proge.mjs`, preostale Riove scenarije v `tests/razdelitev.test.js` (`rioKartGeo`, `RIO_W`, `RIO_Q`, `sAtS`) prestavi na Bathurst ali Crystal Palace.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026), spremenjena 9. 11. 2026:** testne proge (`test: true` v `js/tracks/`) se izbrišejo pred izidom 1. 2. 2027, načrtovano ob zamrznitvi funkcij 15. 12. 2026 (odločitev uporabnika 9. 11. 2026 ob 11.36, tabla #382, komentar 6737933880; prej: sklop 8 in izbris testnih prog v istem koraku tik pred objavo na Google Play); o času sklopa 8 odloči uporabnik posebej; do takrat ostane vse, kot je. Ob izbrisu Ria de Janeira (testna od 5. 11. 2026, PR #365): `rio` iz `WSPLIT` v `tools/razdeli-proge.mjs`, preostale Riove scenarije v `tests/razdelitev.test.js` (`rioKartGeo`, `RIO_W`, `RIO_Q`, `sAtS`) prestavi na Bathurst ali Crystal Palace. V istem koraku se izbriše tudi stikalo `?voznja` za tekmece po igralčevi vožnji (odločitev uporabnika 5. 11. 2026; pred izbrisom vprašaj, ali ostanejo vklopljeni za vse; `docs/ai-po-tvoji-liniji.md`).
 
 ## Skupaj
 

@@ -20,7 +20,7 @@ const FREE = new Set(['cpalace wall', 'longford band']);   // (hung in the air: 
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, carV: 2, color: 5 }, { width: 640, height: 360 });
   const ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
-  T.check('8 circuits with pits (the test tracks left out)', ids.length === 8, ids.join(', '));
+  T.check('5 circuits with pits (the test tracks left out)', ids.length === 5, ids.join(', '));   // (5: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026)
   const res = [];
   for (const id of ids) {
     await startTrack(page, id);
