@@ -4886,15 +4886,15 @@
   }
  },
  "dades/car/cs": {
-  "digest": "5bc085d6d98a1e0531107f01",
-  "lead": 1417.4,
+  "digest": "1c49e682a9b28f1df8b777e0",
+  "lead": 1417.6,
   "car0": [
-   176.73,
-   -355.14
+   172.78,
+   -387.85
   ],
   "cover": {
-   "dmg": 0.73,
-   "loose": 4,
+   "dmg": 1,
+   "loose": 3,
    "rescues": 1,
    "repairs": 0
   }
@@ -6356,15 +6356,15 @@
   }
  },
  "santoantao/car/cs": {
-  "digest": "04f4f15e0c95697f2714c116",
-  "lead": 1573.5,
+  "digest": "b495f5b8ca9f386a8ac1cfe1",
+  "lead": 1573.4,
   "car0": [
-   396.18,
-   -834.14
+   448.54,
+   -825.88
   ],
   "cover": {
-   "dmg": 0.66,
-   "loose": 4,
+   "dmg": 0.89,
+   "loose": 3,
    "rescues": 1,
    "repairs": 0
   }
@@ -6454,16 +6454,16 @@
   }
  },
  "gudauri/car/cs": {
-  "digest": "7d52a4ba07069f70b4af33c0",
-  "lead": 1699.4,
+  "digest": "8553cce7287680701a33c513",
+  "lead": 1699.5,
   "car0": [
-   -294.3,
-   -773.4
+   -242.11,
+   -771.39
   ],
   "cover": {
-   "dmg": 0.26,
+   "dmg": 0.41,
    "loose": 1,
-   "rescues": 1,
+   "rescues": 0,
    "repairs": 0
   }
  }

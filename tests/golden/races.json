@@ -2492,12 +2492,12 @@
  "dades/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 119.46,
+  "winner": 119.09,
   "spins": 0,
-  "walls": 1,
-  "rescues": 1,
+  "walls": 0,
+  "rescues": 0,
   "nan": false,
-  "digest": "fe77d1645c52a98a5a5f424a"
+  "digest": "a64e2cd2e8c2049382ce418f"
  },
  "livorno/cs": {
   "finished": 21,
@@ -3242,12 +3242,12 @@
  "santoantao/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 188.4,
+  "winner": 185.88,
   "spins": 0,
-  "walls": 3,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "02a5176dc092dc01ea4cf011"
+  "digest": "6591182b520b0f1ff4756aab"
  },
  "gudauri/cs": {
   "finished": 13,
@@ -3292,11 +3292,11 @@
  "gudauri/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 155.24,
+  "winner": 155.35,
   "spins": 0,
-  "walls": 4,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6f50d663caf197b61db84fbc"
+  "digest": "7091ac5c8d60de33935c0c26"
  }
 }
