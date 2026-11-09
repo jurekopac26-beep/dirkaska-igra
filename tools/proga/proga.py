@@ -20,16 +20,17 @@ CFG = json.load(open(os.path.join(HERE, 'proge.json')))
 
 # ---------------- the road: a route over Overture's road segments (split at their connectors), from waypoint to waypoint ----------------
 ROADS = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'unclassified']
-def route(seg, way, G, classes=None):
+def route(seg, way, G, classes=None, allow=()):
     """The centre line (x, z arrays, metres) of the shortest route over the roads through the waypoints [(lat, lon), ...] (only roads
-    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins)."""
+    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins; and the OpenStreetMap ways in allow,
+    e.g. "w227761246", whatever their class: a road of the route that OSM has under construction)."""
     nodes = {}; adj = {}
     def nid(k):
         if k not in nodes: nodes[k] = len(nodes)
         return nodes[k]
     lines = []
     for r in seg:
-        if r.get('subtype') != 'road' or r.get('class') not in (classes or ROADS): continue
+        if r.get('subtype') != 'road' or (r.get('class') not in (classes or ROADS) and not any((q.get('record_id') or '').split('@')[0] in allow for q in (r.get('sources') or []))): continue
         g = wkb.loads(r['geometry']); c = np.array(g.coords); g = LineString(np.stack(G.to_xz(c[:, 1], c[:, 0]), 1)); cons = sorted([(c['at'], c['connector_id']) for c in (r.get('connectors') or [])])
         if not cons or cons[0][0] > 0: cons = [(0.0, r['id'] + ':a')] + cons
         if cons[-1][0] < 1: cons.append((1.0, r['id'] + ':b'))
@@ -99,6 +100,26 @@ def separate(x, z, gap, adj, it=60):
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
 
+def open_bends(x, z, R, it=300):
+    """Open the bends tighter than the radius R (metres): every two points a metres apart along the line at least the chord of a circle of
+    radius R apart (2R once a > pi R; as tools/proga-uvoz.mjs openHairpins), a little each step, the push smoothed: returns the line and
+    how far it moved (mean, max)."""
+    from scipy.spatial import cKDTree
+    x0, z0 = x.copy(), z.copy()
+    for _ in range(it):
+        P = np.stack([x, z], 1); pr = cKDTree(P).query_pairs(2 * R, output_type='ndarray')
+        if not len(pr): break
+        s = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(z)))])
+        a = np.abs(s[pr[:, 0]] - s[pr[:, 1]]); need = 2 * R * np.sin(np.minimum(a, math.pi * R) / (2 * R))
+        dx = P[pr[:, 0]] - P[pr[:, 1]]; d = np.maximum(np.hypot(dx[:, 0], dx[:, 1]), 1e-6); bad = d < need - 0.02
+        if not bad.any(): break
+        pr, dx, d, need = pr[bad], dx[bad], d[bad], need[bad]
+        push = ((need - d) / 2 * 0.35)[:, None] * dx / d[:, None]
+        F = np.zeros_like(P); np.add.at(F, pr[:, 0], push); np.add.at(F, pr[:, 1], -push)
+        F[:, 0] = gaussian_filter1d(F[:, 0], 6); F[:, 1] = gaussian_filter1d(F[:, 1], 6); x = x + F[:, 0]; z = z + F[:, 1]
+    m = np.hypot(x - x0, z - z0)
+    return x, z, float(m.mean()), float(m.max())
+
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
     hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
@@ -118,7 +139,10 @@ def turns(x, z, s, lim=1 / 60.0):
 # ---------------- heights along the road ----------------
 def profile(h, s, C, bends):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
-    grade limited and lowered through the hairpins (as built)."""
+    grade limited and lowered through the hairpins (as built). With `tesno` (a road that also goes down, `gor` false: over a dam into
+    the basin behind it, down to a river) the grade is limited only where it is over the limit, the profile kept near the model's
+    (halfway between the highest and the lowest line within the limit round it), not the whole climb rescaled (that lifts it all along
+    the road when a short bit is steeper); the hairpins' share is then their own limit."""
     V = C.get('visine', {}); step = s[1] - s[0]
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
     if V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
@@ -126,7 +150,12 @@ def profile(h, s, C, bends):
     # the grade: lower through the hairpins (a share of it), more on the legs, the total climb kept
     g = np.gradient(sm, s); w = np.ones_like(s)
     for sa, tot, r in bends:
-        if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+        if abs(tot) > math.radians(C.get('lasnica', 150)): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+    if V.get('tesno'):
+        lim = V.get('naklon', 0.12) * w * step; up = sm.copy(); dn = sm.copy()
+        for i in range(1, len(s)): up[i] = max(up[i], up[i - 1] - lim[i]); dn[i] = min(dn[i], dn[i - 1] + lim[i])
+        for i in range(len(s) - 2, -1, -1): up[i] = max(up[i], up[i + 1] - lim[i]); dn[i] = min(dn[i], dn[i + 1] + lim[i])
+        return gaussian_filter1d((up + dn) / 2, 6 / step, mode='nearest')   # (rounded where the limit starts and ends)
     g2 = g * w; gmax = V.get('naklon', 0.12)
     for _ in range(40):
         g2 = np.clip(g2 * (np.sum(g * step) / max(1e-9, np.sum(g2 * step))), -gmax, gmax)
@@ -258,7 +287,8 @@ def osm(C, G, box, X, Z, name):
     T = cKDTree(np.stack([X[::2], Z[::2]], 1))
     near = lambda x, z: T.query([x, z])[0]
     bld = []
-    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry'], name):
+    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry', 'sources'], name):
+        if ((r.get('sources') or [{}])[0] or {}).get('dataset') != 'OpenStreetMap': continue   # (only OpenStreetMap's: not the footprints other datasets add to Overture's, machine-made from imagery)
         g = wkb.loads(r['geometry'])
         if g.geom_type == 'MultiPolygon': g = max(g.geoms, key=lambda q: q.area)
         c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1))
@@ -291,6 +321,7 @@ def osm(C, G, box, X, Z, name):
     cables, pyl, pulls = [], [], []
     for r in overture('base', 'infrastructure', box, ['id', 'subtype', 'class', 'geometry'], name):
         g = wkb.loads(r['geometry'])
+        if r.get('subtype') == 'aerialway' and r.get('class') == 'zip_line': continue   # (a zip line: no cabins or pylons of a cable car)
         if r.get('subtype') == 'aerialway' and g.geom_type == 'LineString':
             c = np.array(g.coords); x, z = G.to_xz(c[:, 1], c[:, 0])
             if T.query(np.stack([x, z], 1))[0].min() > 500: continue
@@ -330,8 +361,8 @@ def main():
     tid = sys.argv[1]; C = CFG[tid]; write = '--zapisi' in sys.argv
     box = C['okvir']; name = tid
     G0 = Geo(*C['start'])
-    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry'], name)
-    x, z = route(seg, C['pot'], G0, C.get('razredi'))
+    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry', 'sources'], name)
+    x, z = route(seg, C['pot'], G0, C.get('razredi'), C.get('dovoli', ()))
     x, z, s = resample(x, z, 1.0)
     # the start and the finish snapped onto the line; the run-up before the start and the road past the finish
     sx, sz = G0.to_xz(*C['start']); fx, fz = G0.to_xz(*C['cilj'])
@@ -342,20 +373,22 @@ def main():
     S0, F0 = (x[i0], z[i0]), (x[i1], z[i1])
     hw = C['polsirina']; gap = C.get('razmik', 2 * hw + 10)
     x, z, mm, mx = separate(x, z, gap, int(gap * 2.6))
+    if C.get('polmer'):   # (the tightest bends opened to this radius: as Vršič's hairpins, ~10.5 m)
+        x, z, m2, M2 = open_bends(x, z, C['polmer']); log('bends opened to %.1f m: moved %.2f m on average, %.1f at most' % (C['polmer'], m2, M2))
     x, z, s = resample(x, z, 1.0)
     i0 = int(np.argmin(np.hypot(x - S0[0], z - S0[1]))); i1 = int(np.argmin(np.hypot(x - F0[0], z - F0[1])))
     # the game's origin: the start line
     ox, oz = x[i0], z[i0]; la_s, lo_s = G0.to_ll(ox, oz); G = Geo(float(la_s), float(lo_s))
     x, z = x - ox, z - oz
     bends, k = turns(x, z, s)
-    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(150) and s[i0] < sa < s[i1]]
+    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(C.get('lasnica', 150)) and s[i0] < sa < s[i1]]   # (the hairpins: over 150 degrees, or `lasnica`)
     log('line: %.0f m (run-up %.0f, race %.0f, past the finish %.0f); moved %.1f m on average, %.1f at most; %d hairpins, the tightest %.1f m' % (
         s[-1], s[i0], s[i1] - s[i0], s[-1] - s[i1], mm, mx, len(hairs), min([r for _, _, r in hairs] or [0])))
     # heights
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
     h = D.sample(la, lo); hp = profile(h, s, C, bends)
-    base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i1]))]
+    base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i0])) + round(float(hp[i1] - hp[i0]), 1)]   # (the finish to a tenth: the game's heights between scale by the climb, altAt)
     g = np.gradient(hp, s)
     log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))
     nE = int(round(s[-1] / 4)); fr = np.linspace(0, s[-1], nE + 1); HE = np.round((np.interp(fr, s, hp) - base) * 10).astype(int).tolist()
