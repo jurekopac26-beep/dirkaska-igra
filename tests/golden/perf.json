@@ -467,5 +467,12 @@
   "kverts": 504,
   "maxKverts": 715,
   "jsMs": 5.2
+ },
+ "parnu": {
+  "calls": 211,
+  "maxCalls": 281,
+  "kverts": 442,
+  "maxKverts": 731,
+  "jsMs": 1.84
  }
 }
