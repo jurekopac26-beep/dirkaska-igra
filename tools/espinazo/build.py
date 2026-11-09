@@ -341,9 +341,7 @@ def scenery(X, Z, s, i0, ox, oz):
     out['parks'] = [[r1(p[0] - ox), r1(p[1] - oz), p[2]] for p in E['parks']]
     out['power'] = [sh(p) for p in E['power']]
     out['poi'] = [[r1(p[0] - ox), r1(p[1] - oz), p[2]] for p in E['poi']]
-    # the side roads (OSM: [metres after the start line, side (1 right, -1 left), angle from the travel direction, the first 60 m [x, z, ...]])
-    su = s[i0]
-    out['side'] = [[round(r[0] - su, 1), r[1], r[2], sh(r[7])] for r in J['side']]
+    # (the side road, J['side']: none in the data; def.side is the verges' width, and the new roads of part 2 have no junctions: a note in the PR)
     return out
 
 def jsval(v): return json.dumps(v, ensure_ascii=False, separators=(',', ':'))
@@ -389,7 +387,7 @@ def main():
             'dem': terrain(X, Z, ox, oz, base), 'lc': landcover(X, Z, ox, oz), 'farDem': far(X, Z, ox, oz)}
     data.update(scenery(X, Z, s, i0, ox, oz))
     data['points'] = pts
-    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'bld', 'cliffs', 'views', 'parks', 'power', 'poi', 'side', 'points']
+    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'bld', 'cliffs', 'views', 'parks', 'power', 'poi', 'points']
     A, B = '    // ---- podatki (tools/espinazo/build.py) ----\n', '    // ---- konec podatkov ----\n'
     blk = A + ''.join('    %s: %s,\n' % (k_, jsval(data[k_])) for k_ in keys) + B
     src = open(TRACK).read(); i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]
