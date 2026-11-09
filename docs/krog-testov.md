@@ -73,7 +73,7 @@ ne preskakuj in ne izklapljaj: sprememba samo izbere, kateri nabor teče pri kat
 - **Čas kratkega kroga** (meritve 9. 11. 2026 z eno progo, Bâlea, preračunano na stroj srednje hitrosti; `PROGA_SECS`, delež na progo
   iz `SECS` s 43 pravimi progami): z eno progo smoke 526 s (z vsemi progami 1684 s), memory 548 s (3661), perf 111 s (2034), gfx 71 s
   (950), world 39 s (970). Brskalniški testi nove proge (datoteka proge, `index.html`, prevodi, reference, poti) so v 3 delih po ~16–17
-  min, štirih prog (zbirna veja) po ~20 min, samo datoteke in opisa proge po ~12–13 min; Node teče vzporedno v svojem poslu. S pripravo posla
+  min, štirih prog (zbirna veja) po ~20 min, samo datoteke in opisa proge po ~12–13 min; Node (povezani testi in testi čez vse proge, za novo progo 18 testov) teče vzporedno v svojem poslu, ~5–6 min. S pripravo posla
   (~2 min) kratek krog traja **~20 min** (na počasnem stroju ~25–30 min), prej ~1,5 h; stroji ~1 h namesto ~8 h na krog.
 - **Nočni krog** (`schedule` 1.13 UTC: 2.13 pozimi, 3.13 poleti): celoten nabor na `main`; odpade, če je ista koda že prestala celoten nabor
   (`koda-<odtis>`). Svoja skupina `concurrency` (ne čaka na kroge po združitvah). Težki posli zunaj pull requestov ob padcu shranijo imena
