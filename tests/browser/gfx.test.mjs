@@ -25,7 +25,7 @@ try {
       if (k.startsWith('water|')) { const a = o.geometry.attributes.shore; if (a) { let mn = 1e9, mx = -1e9; for (let i = 0; i < a.count; i++) { mn = Math.min(mn, a.getX(i)); mx = Math.max(mx, a.getX(i)); } bands.push([mn, mx, a.count]); } else water.push(o.geometry.attributes.position.count); }
       if (o.name === 'roadwear') { wear.meshes++; const c = o.geometry.attributes.color; wear.verts += c.count; for (let i = 3; i < c.array.length; i += 4) wear.alpha = Math.max(wear.alpha, c.array[i]); }
     });
-    return { cars, water, bands, wear };
+    return { cars, water, bands, wear, len: window.__game && __game.race ? __game.race.track.len : 0 };
   });
 
   // 1. every track: built and drawn, the glint on every car, the water and its shore, the wear
@@ -41,7 +41,10 @@ try {
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
     if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
-    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));
+    // (at least 500 vertices of wear, a short road ~150 a km of its road: the patches and the cracks come every so many metres, and the
+    // short roads of 1.0 have ~1.5 km of road with the run-up and the room past the finish)
+    const minWear = Math.min(500, Math.round(0.15 * (L.len || 1e4)));
+    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < minWear || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear) + ' (at least ' + minWear + ')');
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }
