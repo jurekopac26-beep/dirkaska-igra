@@ -63,9 +63,9 @@
   // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (the rivals: as the driving physics has it; the knocks: as the chosen
   // version of Trki med avti has it: nothing changes); the numbers go to Core.setTest (the knocks' rows as cPm, cE, cMu, cYaw, cGl, cSl, cFx)
   const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], crPm: [null, 1, 1.5, 2], crE: [null, 0, 0.5, 1.6], crMu: [null, 0, 0.15, 0.35, 0.6], crYaw: [null, 0.4, 0.7, 1, 2], crGl: [null, 0, 0.5, 1.6], crSl: [null, 0.6, 1, 1.6], crFx: [null, 1, 0] };
-  const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them)
+  const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4, CR_REAL = 5;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them; crV 5 Realistična, the last one so far: the versions' knock, the rows over it as over the others)
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
-  S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_OLD ? +S.crV : 0;   // (Trki med avti, the version of the knocks between cars: 0 Simulacija (the default), 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara; Core TX.cv = crV + 1)
+  S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_REAL ? +S.crV : 0;   // (Trki med avti, the version of the knocks between cars: 0 Simulacija (the default), 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara, 5 Realistična (in the making; on the page it stands right after Simulacija, its number the next free one: the stored choices keep theirs); Core TX.cv = crV + 1)
   for (const k of ['crNB', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx']) delete S[k];   // (the knocks' rows before the versions: gone, not kept in the settings)
   if (S.slide !== 1) S.slide = 0;   // (the new physics' style, Nastavitve → Slog nove fizike: 1 Drseč, the player's car only: Car.nvSl)
   if (S.phys !== 'nova') S.phys = 'cs';   // two driving physics (Nastavitve → Fizika vožnje): 'cs' the classic kinematic drift, 'nova' the new one (Car.stepNova); the old 'rally' and 'arcade' were removed, their saves get cs
@@ -439,8 +439,8 @@
   /* ---------------- screens ---------------- */
   // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still; in the
   // settings and the pause, lists that scroll, a row too wide even so (a narrow phone, a wide font: Trki med avti's five in DejaVu Sans 305 px
-  // on a panel 296 px wide, the last one cut off) wraps its choices onto two lines, in the middle size, half of them on each (five: three and
-  // two; --wb the share of a line each starts from)
+  // on a panel 296 px wide, the last one cut off; its six, with Realistična, on a phone 360 px wide too) wraps its choices onto two lines, in
+  // the middle size, half of them on each (five: three and two, six: three and three; --wb the share of a line each starts from)
   function fitSegs() {
     const sc = document.querySelector('.screen.show'); if (!sc) return;
     for (const g of sc.querySelectorAll('.seg')) {
@@ -484,11 +484,12 @@
     { const v = +S.crV, old = v === CR_OLD, nv = (race && race.player ? race.player.phys : physOf()) === 'nova';   // (Trki med avti: the chosen version in a sentence under its row; Stara, the old knock: Preizkus' rows over the versions' numbers dimmed (they keep
       // their choice for the other versions) and its note says so; Razbijanje: odboji in vrtenje ob trku the other way round: only the old knock has it; Nova fizika
       // (the race's own while one runs: it keeps the physics it started with, these rows act at once): Zdrs po trku and Ujem gum dimmed too, the classic physics'
-      // (the new physics' own tyres lose their grip to a knock and catch its push)
+      // (the new physics' own tyres lose their grip to a knock and catch its push). The sentences and the names by crV: Realistična (5) after Stara (4),
+      // its rows of Preizkus as the other versions' (Core kvMake puts them over its numbers)
       for (const k of CR_ROWS.concat('xBump')) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', k === 'xBump' ? !old : old || (nv && (k === 'crGl' || k === 'crSl'))); }
       $('crv-note').textContent = tr(['Kot v simulacijah: vsak avto s svojo pravo težo, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto šteje 1,7-krat svojo težo, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
-        'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.'][v]);
-      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
+        'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.', 'Kot pravi trk (v delu): za zdaj enako kot Simulacija, za primerjavo z njo.'][v]);
+      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara', 'Realistična'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -553,7 +554,7 @@
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
-  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]];   // (Preizkus: the rivals and the knocks; Trki med avti: the version, cv 1-5 as Core's KV_IDS, the rows of Preizkus over its numbers (Core leaves them out with Stara); never online, where both phones must drive the same: the default)
+  const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]];   // (Preizkus: the rivals and the knocks; Trki med avti: the version, cv 1-6 as Core's KV_IDS (crV + 1), the rows of Preizkus over its numbers (Core leaves them out with Stara); never online, where both phones must drive the same: the default)
     return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cv: +S.crV + 1, cPm: L('crPm'), cE: L('crE'), cMu: L('crMu'), cYaw: L('crYaw'), cGl: L('crGl'), cSl: L('crSl'), cFx: L('crFx') }; };
   function applySettings() {
     renderSettings();
@@ -4118,7 +4119,10 @@
     if (q < 1) { const px = Math.max(11, Math.floor(fs * q * 0.97 * 2) / 2) + 'px'; for (const b of bs) b.style.fontSize = px; }
   }
   // the pause on an upright screen all there without scrolling: a font wider than the one it was fitted to (more lines, Trki med avti's choices
-  // in two) makes the list of stops, the strategy's words and the gaps a little smaller (#s-pause.fit1), then the rows of choices lower (.fit2)
+  // in two) makes the list of stops, the strategy's words and the gaps a little smaller (#s-pause.fit1), then the rows of choices lower (.fit2).
+  // Before the start and on a road from A to B (no box of the race, the buttons one to a row) Trki med avti's six stand in two lines on a phone
+  // 360 px wide in the game's own font too: there the same two steps close the gaps between the buttons, then lower the rows of choices
+  // (style.css, #s-pause:not(.pi))
   function phFit() {
     const s = $('s-pause'), body = $('pause-body'); s.classList.remove('fit1', 'fit2');
     if (!body || !body.clientHeight || innerWidth > innerHeight) return;

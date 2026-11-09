@@ -2104,11 +2104,11 @@ const Core = (function () {
   // whole, 0.3 close together), aiFol the gap they keep behind a car (-1 the old rule: M.aiGap from middle to middle, with the versions' boxes RB_FOL
   // between the bumpers; 0 and up: that many metres between the bumpers), aiPush how much quicker right behind a car, aiSide the room they leave a car alongside (m),
   // aiKerb how far out over the kerbs at the apex and the exit (m; 0 none). The knocks between cars (Nastavitve: Trki med avti; carCollide, kCollide):
-  // cv the version (KV_IDS: 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara: the old knock, round ends, as it was; null the default,
-  // Simulacija) and over its numbers: cPm how many times its own weight the player's car counts against another, cE the share of the version's
-  // bounce (0 none), cMu the rub (Coulomb's mu along the contact), cYaw the share of the turn a knock gives, cGl the share of the grip a hard knock
-  // costs (the spin), cSl the time the tyres take to scrub a push sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape
-  // marks stay). Online none of it: both phones drive the default
+  // cv the version (KV_IDS: 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara: the old knock, round ends, as it was, 6 Realistična: in
+  // the making, for now with Simulacija's numbers; null the default, Simulacija) and over its numbers: cPm how many times its own weight the
+  // player's car counts against another, cE the share of the version's bounce (0 none), cMu the rub (Coulomb's mu along the contact), cYaw the
+  // share of the turn a knock gives, cGl the share of the grip a hard knock costs (the spin), cSl the time the tyres take to scrub a push
+  // sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape marks stay). Online none of it: both phones drive the default
   const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null };
   /* Trki med avti: the versions (KV), each the same knock (kCollide) with its own numbers, as racing games do it: the cars' real weights, the
      push at the true contact of two boxes, the bounce, the bodies' rub, the turn by the lever about each car's middle, then each car's tyres.
@@ -2130,15 +2130,22 @@ const Core = (function () {
      some 35 deg, as the reference video's hard knocks (30-40 deg); two rivals rubbing lose half as much grip). Arkadna:
      as the arcade games (the player's car 1.7x, bouncy, slippery flanks, the player turned half as much and hardly ever spun, the rivals
      spun more easily). Mehka: soft contact (little bounce, little turn, hard to spin: rubbing is racing). Kaskaderska: the crash games
-     (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late) */
+     (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late). Realistična (real,
+     the sixth choice, cv 6; in the row right after Simulacija): as a real crash, in the making. For now its row is a copy of Simulacija's,
+     number for number, so the two drive the same; its own numbers and what it does besides (the code asks KC.id === 'real' in the knock,
+     KR outside it) come with the physics change */
   const KV = {
     sim: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3 },
     arc: { pm: 1.7, e0: 0.4, e1: 0.2, eV: 5, eT: 0.5, mu: 0.15, muL: 0, muV: 0.6, yaw: 1, yawP: 0.5, aH: 0.1, aS: 0.06, glP: 0.25, glA: 1.3, glR: 0.5, glT: 0.8, slT: 0.7, wI: 3 },
     soft: { pm: 1, e0: 0.15, e1: 0.06, eV: 4, eT: 0.8, mu: 0.2, muL: 0.2, muV: 0.6, yaw: 0.6, yawP: 1, aH: 0.15, aS: 0.12, glP: 1, glA: 1, glR: 0.5, glT: 0.7, slT: 0.8, wI: 2 },
-    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 }
+    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 },
+    real: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3 }   // (Realistična: sim's numbers for now; its own, and its extra behaviour, with the physics change)
   };
-  const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old'], KV_DEF = 'sim';
-  let KC = null;   // (the knock in use: the version's numbers with the settings over them; null: the old knock)
+  // the versions by their number (TX.cv; the settings' crV + 1): new ones go at the end, a number once given stays (the settings keep it, the
+  // tests and the renderer ask for Stara as 5). The order of the choices on the page is its own (index.html: Realistična after Simulacija)
+  const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old', 'real'], KV_DEF = 'sim';
+  let KC = null;   // (the knock in use: the version's numbers with the settings over them, its id on it (KC.id); null: the old knock)
+  let KR = false;   // (Realistična is the version in use, KC.id === 'real': kept beside KC for the code outside kCollide to ask cheaply, the walls (wallCollide) and the pit lane's old knock; set wherever KC is, asked nowhere yet)
   function kvMake() {
     const id = TX.cv != null && KV_IDS[TX.cv] ? KV_IDS[TX.cv] : KV_DEF; if (id === 'old') return null;
     const K = Object.assign({ id, fx: 1 }, KV[id]);
@@ -2146,8 +2153,8 @@ const Core = (function () {
     if (TX.cYaw != null) K.yaw = TX.cYaw; if (TX.cGl != null) { K.glP *= TX.cGl; K.glA *= TX.cGl; } if (TX.cSl != null) K.slT = TX.cSl; if (TX.cFx === 0) K.fx = 0;
     return K;
   }
-  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } KC = kvMake(); }
-  KC = kvMake();
+  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } KC = kvMake(); KR = !!KC && KC.id === 'real'; }
+  KC = kvMake(); KR = !!KC && KC.id === 'real';
   const txv = (k, cs, nv, c) => TX[k] != null ? TX[k] : c.phys === 'nova' ? nv : cs;   // (a rival's setting: asked for, else by its physics)
   function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
   // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent

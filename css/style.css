@@ -1240,6 +1240,11 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 #s-pause.pi.fit1 .btns { gap: 4px; }
 #s-pause.pi.fit2 .pause-info { margin-top: 4px; padding-top: 3px; padding-bottom: 4px; }
 #s-pause.pi.fit2 .crv-row .seg button, #s-pause.pi.fit2 .pit-row .seg button { min-height: 28px; }
+/* the pause without the race's box (before the start, on a road from A to B; no .pi: its buttons one to a row, fitted to a short upright phone,
+   360 × 640, with Trki med avti's choices on one line): the six of them in two lines there make it a line too tall, so the same steps take it
+   back, the gaps between the buttons first, then the rows of choices lower */
+#s-pause:not(.pi).fit1 .btns { gap: 4px; margin-top: 8px; }
+#s-pause:not(.pi).fit2 .crv-row .seg button, #s-pause:not(.pi).fit2 .pit-row .seg button { min-height: 30px; }
 /* a row too wide even so, in the settings and the pause (fitSegs): its choices wrap, half on each line (--wb), every line filled, the lines
    parted like the choices (the overlap of 2 px tucks the first line's top and each line's first left edge under the frame) */
 .seg.wrap { flex-wrap: wrap; }

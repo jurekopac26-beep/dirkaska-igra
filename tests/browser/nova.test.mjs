@@ -5,13 +5,14 @@
 // - switched back to Klasična during that race: the race keeps its physics, a toast says it applies from the next race; the next race classic
 // - the row Slog nove fizike (Običajen marked on a fresh profile; in English "New physics style: Normal / Sliding"): Drseč chosen with Nova,
 //   the next race's player car has the sliding style (Car.nvSl), the rivals not; with Klasična no car has it
-// - Trki med avti (one row before Poškodbe avtov: Simulacija, Arkadna, Mehka, Kaskaderska, Stara; js/game.js S.crV, Core.setTest cv 1-5):
+// - Trki med avti (one row before Poškodbe avtov: Simulacija, Realistična, Arkadna, Mehka, Kaskaderska, Stara; js/game.js S.crV 0, 5, 1, 2, 3,
+//   4: Realistična, the sixth, stands after Simulacija with the next free number; Core.setTest cv = crV + 1, 1-6):
 //   Simulacija marked on a fresh profile, Core.TX.cv 1 and the other keys null; each version sets its cv at once and writes its sentence under
 //   the row; Stara (the old knock) dims the knock rows of Preizkus (they keep their choice, its note says they do not apply), the other
 //   versions dim Razbijanje: odboji in vrtenje ob trku (only the old knock has it; with Stara it applies: Core.XR.bump); with Nova fizika the rows
 //   Zdrs po trku and Ujem gum dimmed too (the classic physics' only), the note says so; kept in the settings;
-//   in English (Car knocks: Simulation / Arcade / Soft / Stunt / Old); back in Slovenian on a narrow phone (320×640) the rows of choices fitted
-//   again for the longer words, none cut off (Trki med avti on two lines)
+//   in English (Car knocks: Simulation / Realistic / Arcade / Soft / Stunt / Old); back in Slovenian on a narrow phone (320×640) the rows of
+//   choices fitted again for the longer words, none cut off (Trki med avti on two lines, three and three); on an upright phone (360×640) too
 // - Preizkus: tekmeci in trki (Nastavitve: its own folded category after the profile row, with 5 rows Tekmeci and 7 rows Trki med avti over
 //   the chosen version's numbers; Core.setTest): the category folded and the 12 rows inside it, all on Privzeto on a fresh profile; every level
 //   of every knock row sets its number in Core.TX (cPm, cE, cMu, cYaw, cGl, cSl, cFx), Privzeto none (the version's own); the rivals' rows
@@ -19,10 +20,11 @@
 //   Privzeto the old ones and nothing set; the spread's toast says from the next race
 // - the pause in that race: the row Trki med avti under the buttons, in sight and within the panel (the tyres' row too) on a phone on its side
 //   (640×360), upright (360×640), on a computer (1280×720: the narrow panel, the choices under their label) and on a narrow phone (320×640),
-//   smaller letters if need be, too wide even so on two lines (three and two; a wide font: on the others too); the pause scrolls to its last row (the tyres'); Arkadna picked there: Core.TX.cv 2 at once,
-//   marked in the pause and in the settings, kept; the next pause starts from the top; the race runs on without NaN
+//   smaller letters if need be, too wide even so on two lines (three and three; upright and on the narrow phone, a wide font: on the others too); the pause scrolls to its last row (the tyres');
+//   Realistična picked there: Core.TX.cv 6 at once, then Arkadna: Core.TX.cv 2 at once, marked in the pause and in the settings, kept; the next pause starts from the top; the race runs on without NaN
 // - stored values out of range or from the rows before the versions (crNB, tCrStyle, tCrE ...): Simulacija and Privzeto, nothing set; saved
-//   again without the old keys
+//   again without the old keys; a stored Realistična (crV 5) is taken as it is: marked, Core.TX.cv 6; with it the pause before the start
+//   (the buttons one to a row) on an upright phone (360×640): the six on two lines, all of the pause in sight without scrolling
 //   node tests/browser/nova.test.mjs
 import { serve, launch, openGame, startTrack, simulate, checker } from './lib.mjs';
 
@@ -97,7 +99,7 @@ try {
     const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}'));
     // the version row in the list (Trki med avti), its note, the note of Preizkus' knock rows, the rows dimmed
     const ver = () => page.evaluate(() => { const g = document.querySelector('#s-settings [data-set="crV"]'), r = g && g.closest('.row');
-      return g ? { label: r.querySelector('.rlbl').textContent, btns: [...g.querySelectorAll('button')].map(b => b.textContent).join(), sel: [...g.querySelectorAll('button')].filter(b => b.classList.contains('sel')).map(b => b.dataset.v).join(),
+      return g ? { label: r.querySelector('.rlbl').textContent, btns: [...g.querySelectorAll('button')].map(b => b.textContent).join(), vals: [...g.querySelectorAll('button')].map(b => b.dataset.v).join(), sel: [...g.querySelectorAll('button')].filter(b => b.classList.contains('sel')).map(b => b.dataset.v).join(),
         before: r.nextElementSibling.id === 'crv-note' && !!r.nextElementSibling.nextElementSibling.querySelector('[data-set="damage"]'), note: document.getElementById('crv-note').textContent, cr: document.getElementById('cr-note').textContent,
         dim: [...document.querySelectorAll('#s-settings .row.nbx [data-set]')].map(e => e.dataset.set).sort().join() } : null; });
     await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
@@ -107,8 +109,8 @@ try {
       c0 && !c0.open && c0.cat === 'Preizkus: tekmeci in trki' && c0.subs.join() === 'Tekmeci,Trki med avti' && c0.inside === 12 && c0.after, JSON.stringify(c0));
     await page.click('#set-test > summary'); await page.waitForTimeout(150);
     T.check('Preizkus: a tap on its title opens it, the rows can be pressed', (await cat()).open && await page.isVisible('#s-settings [data-set="crE"] [data-v="1"]'));
-    T.check('Trki med avti: one row before Poškodbe avtov (Simulacija, Arkadna, Mehka, Kaskaderska, Stara), Simulacija marked on a fresh profile with its sentence under it; Preizkus: 12 rows, each on Privzeto, its knock rows over Simulacija; Core.TX: cv 1, nothing else set; Razbijanje: odboji in vrtenje ob trku dimmed (only Stara has it)',
-      v0 && v0.label === 'Trki med avti' && v0.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska,Stara' && v0.sel === '0' && v0.before && /^Kot v simulacijah/.test(v0.note) && /\(Simulacija\)/.test(v0.cr) && v0.dim === 'xBump'
+    T.check('Trki med avti: one row before Poškodbe avtov (Simulacija, Realistična, Arkadna, Mehka, Kaskaderska, Stara), Simulacija marked on a fresh profile with its sentence under it; Preizkus: 12 rows, each on Privzeto, its knock rows over Simulacija; Core.TX: cv 1, nothing else set; Razbijanje: odboji in vrtenje ob trku dimmed (only Stara has it)',
+      v0 && v0.label === 'Trki med avti' && v0.btns === 'Simulacija,Realistična,Arkadna,Mehka,Kaskaderska,Stara' && v0.vals === '0,5,1,2,3,4' && v0.sel === '0' && v0.before && /^Kot v simulacijah/.test(v0.note) && /\(Simulacija\)/.test(v0.cr) && v0.dim === 'xBump'
       && r0.every(r => !r.missing && r.sel === '0:Privzeto') && r0.slice(0, 5).map(r => r.label).join() === 'Razpon hitrosti,Razmik za avtom,Pritisk na avto pred sabo,Prostor ob boku,Vožnja čez robnike'
       && r0.slice(5).map(r => r.label + ': ' + r.btns).join(' | ') === 'Teža tvojega avta: Privzeto,Enaka,1,5×,2× | Odboj: Privzeto,Brez,Pol,Večji | Drgnjenje ob stiku: Privzeto,Brez,Malo,Srednje,Močno | Vrtenje ob trku: Privzeto,Malo,Srednje,Polno,Več | Zdrs po trku: Privzeto,Brez,Manj,Več | Ujem gum: Privzeto,Hiter,Realen,Počasen | Iskre ob trku: Privzeto,Vklop,Izklop'
       && none(t0), JSON.stringify({ v0, rows: r0.map(r => r.label + ': ' + r.btns + ' ' + r.sel), tx: t0 }));
@@ -118,13 +120,13 @@ try {
       for (let i = 0; i < lv.length; i++) { await pick(k, i + 1); const t = await tx(); if (t[key] !== lv[i]) bad.push(`${k} ${i + 1}: ${key} ${t[key]}, not ${lv[i]}`); }
       await pick(k, 0); const t = await tx(); if (t[key] !== null) bad.push(`${k} Privzeto: ${key} ${t[key]}`); }
     T.check('Preizkus: every level of the 7 knock rows sets its number at once (weight 1, 1.5, 2; bounce 0, 0.5, 1.6; rub 0, 0.15, 0.35, 0.6; turn 0.4, 0.7, 1, 2; slide 0, 0.5, 1.6; tyre catch 0.6, 1, 1.6; sparks 1, 0), Privzeto none', !bad.length, bad.join(' | '));
-    // the five versions: Core.TX.cv 1-5 and the sentence under the row; Simulacija to Kaskaderska: Razbijanje dimmed, the note of Preizkus names
-    // the version; Stara: the 7 knock rows of Preizkus dimmed, their note says they do not apply
-    const vs = [], NOTE = [/^Kot v simulacijah/, /^Kot v arkadnih igrah/, /^Mehak stik/, /^Močni trki/, /^Trki kot prej/];
-    for (let v = 0; v < 5; v++) { await pick('crV', v); vs.push(Object.assign(await ver(), { cv: (await tx()).cv, st: (await stored()).crV })); }
-    T.check('Trki med avti: each version sets Core.TX.cv 1-5 at once, its sentence under the row, kept in the settings; Simulacija to Kaskaderska dim Razbijanje: odboji in vrtenje ob trku and the note in Preizkus names them; Stara dims the 7 knock rows of Preizkus instead (they do not apply)',
-      vs.every((x, v) => x.cv === v + 1 && x.sel === String(v) && x.st === v && NOTE[v].test(x.note)) && vs.slice(0, 4).every((x, v) => x.dim === 'xBump' && x.cr.includes('(' + ['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska'][v] + ')'))
-      && vs[4].dim === CRD && /ne veljajo/.test(vs[4].cr), JSON.stringify(vs.map(x => ({ sel: x.sel, cv: x.cv, st: x.st, dim: x.dim, note: x.note.slice(0, 24), cr: x.cr.slice(0, 50) }))));
+    // the six versions (by crV: Realistična the last, 5): Core.TX.cv 1-6 and the sentence under the row; Simulacija to Kaskaderska and
+    // Realistična: Razbijanje dimmed, the note of Preizkus names the version; Stara: the 7 knock rows of Preizkus dimmed, their note says they do not apply
+    const vs = [], NOTE = [/^Kot v simulacijah/, /^Kot v arkadnih igrah/, /^Mehak stik/, /^Močni trki/, /^Trki kot prej/, /^Kot pravi trk/], VN = ['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska', null, 'Realistična'];
+    for (let v = 0; v < 6; v++) { await pick('crV', v); vs.push(Object.assign(await ver(), { cv: (await tx()).cv, st: (await stored()).crV })); }
+    T.check('Trki med avti: each version sets Core.TX.cv 1-6 at once (Realistična, the sixth: cv 6), its sentence under the row, kept in the settings; Simulacija to Kaskaderska and Realistična dim Razbijanje: odboji in vrtenje ob trku and the note in Preizkus names them; Stara dims the 7 knock rows of Preizkus instead (they do not apply)',
+      vs.every((x, v) => x.cv === v + 1 && x.sel === String(v) && x.st === v && NOTE[v].test(x.note)) && vs.every((x, v) => v === 4 ? x.dim === CRD && /ne veljajo/.test(x.cr) : x.dim === 'xBump' && x.cr.includes('(' + VN[v] + ')')),
+      JSON.stringify(vs.map(x => ({ sel: x.sel, cv: x.cv, st: x.st, dim: x.dim, note: x.note.slice(0, 24), cr: x.cr.slice(0, 50) }))));
     // Nova fizika: Zdrs po trku and Ujem gum (the classic physics' grip lost to a knock and its tyres catching the push) dimmed too, the note says so; back on Klasična not
     await pick('crV', 0); await pick('phys', 'nova'); const vn = await ver(); await pick('phys', 'cs'); const vc = await ver();
     T.check('Trki med avti with Nova fizika: Zdrs po trku and Ujem gum dimmed too (the classic physics\' only), the note of Preizkus says so; with Klasična not',
@@ -137,8 +139,8 @@ try {
       && s3.crV === 3 && s3.crPm === 3 && s3.crE === 2 && s3.crMu === 2 && s3.crYaw === 4 && s3.crGl === 1 && s3.crSl === 3 && s3.crFx === 2 && s3.tAiSpr === 3 && s3.tAiKerb === 3, JSON.stringify({ t3, s3: ['crV'].concat(KEYS).map(k => k + ':' + s3[k]).join(' ') }));
     await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
     const en = await rows(), enc = await cat(), ev = await ver();
-    T.check('in English: Car knocks (Simulation / Arcade / Soft / Stunt / Old, Stunt marked, its sentence); Test: rivals and knocks (Rivals, Car knocks): Pace spread ... Your car’s weight (2× marked), Bounce, Rub on contact, Turn in a knock, Slide after a knock, Tyre catch, Sparks in a knock (Off marked)',
-      ev.label === 'Car knocks' && ev.btns === 'Simulation,Arcade,Soft,Stunt,Old' && ev.sel === '3' && /^Hard knocks/.test(ev.note) && /\(Stunt\)/.test(ev.cr)
+    T.check('in English: Car knocks (Simulation / Realistic / Arcade / Soft / Stunt / Old, Stunt marked, its sentence); Test: rivals and knocks (Rivals, Car knocks): Pace spread ... Your car’s weight (2× marked), Bounce, Rub on contact, Turn in a knock, Slide after a knock, Tyre catch, Sparks in a knock (Off marked)',
+      ev.label === 'Car knocks' && ev.btns === 'Simulation,Realistic,Arcade,Soft,Stunt,Old' && ev.sel === '3' && /^Hard knocks/.test(ev.note) && /\(Stunt\)/.test(ev.cr)
       && enc.cat === 'Test: rivals and knocks' && enc.subs.join() === 'Rivals,Car knocks' && en[0].label === 'Pace spread'
       && en.slice(5).map(r => r.label).join() === 'Your car’s weight,Bounce,Rub on contact,Turn in a knock,Slide after a knock,Tyre catch,Sparks in a knock'
       && en[5].btns === 'Default,Equal,1.5×,2×' && en[5].sel === '3:2×' && en[6].btns === 'Default,None,Half,More' && en[10].btns === 'Default,Quick,Real,Slow' && en[11].sel === '2:Off', JSON.stringify({ ev, enc, en: en.map(r => r.label + ': ' + r.btns + ' ' + r.sel) }));
@@ -146,11 +148,17 @@ try {
     // language's switch fits them again, before it the last choices were cut off until the settings were opened again)
     await page.setViewportSize({ width: 320, height: 640 }); await page.waitForTimeout(300);
     await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
-    const nar = await page.evaluate(() => { const sg = [...document.querySelectorAll('#s-settings .seg')].filter(g => g.offsetParent), v = document.querySelector('#s-settings [data-set="crV"]');
-      return { n: sg.length, cut: sg.filter(g => g.scrollWidth > g.clientWidth + 1).map(g => (g.dataset.set || '?') + ':' + g.className + ' ' + g.scrollWidth + '/' + g.clientWidth), crV: v.className, btns: [...v.children].map(b => b.textContent).join() }; });
+    const segs = () => page.evaluate(() => { const sg = [...document.querySelectorAll('#s-settings .seg')].filter(g => g.offsetParent), v = document.querySelector('#s-settings [data-set="crV"]');
+      return { n: sg.length, cut: sg.filter(g => g.scrollWidth > g.clientWidth + 1).map(g => (g.dataset.set || '?') + ':' + g.className + ' ' + g.scrollWidth + '/' + g.clientWidth), crV: v.className, btns: [...v.children].map(b => b.textContent).join(),
+        lines: Object.values([...v.children].map(b => Math.round(b.getBoundingClientRect().top)).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {})).join() }; });
+    const nar = await segs();
+    await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300);   // (an upright phone: Trki med avti's six are too wide for one line there too)
+    const upr = await segs();
     await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300);
-    T.check('back in Slovenian on a narrow phone (320×640, the settings fitted for the English words): every row of choices in the settings fitted again, none cut off; Trki med avti on two lines',
-      nar.n > 30 && nar.cut.length === 0 && /\bwrap\b/.test(nar.crV) && nar.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska,Stara', JSON.stringify(nar));
+    const lnd = await segs();
+    T.check('back in Slovenian on a narrow phone (320×640, the settings fitted for the English words): every row of choices in the settings fitted again, none cut off; Trki med avti on two lines, three and three; upright (360×640) and on its side (640×360) none cut off either, Trki med avti\'s six on one line or on two (three and three)',
+      nar.n > 30 && nar.cut.length === 0 && /\bwrap\b/.test(nar.crV) && nar.lines === '3,3' && nar.btns === 'Simulacija,Realistična,Arkadna,Mehka,Kaskaderska,Stara'
+      && [upr, lnd].every(x => x.n > 30 && x.cut.length === 0 && x.lines === (/\bwrap\b/.test(x.crV) ? '3,3' : '6')), JSON.stringify({ nar, upr, lnd }));
     // a race with the rivals' spread narrow, the classic physics, Kaskaderska with the rows over it: the paces dealt out narrower, the knocks kept
     // through the race; then back on Privzeto
     const spread = () => page.evaluate(() => { const k = window.__game.race.cars.filter(c => !c.isPlayer && !c.sc).map(c => c.skill); return { w: Math.max(...k) - Math.min(...k), phys: window.__game.race.opts.phys, n: k.length }; });
@@ -172,16 +180,21 @@ try {
     const p2 = await prow();
     await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(300);   // (a computer's window on its side, taller than a phone: the narrow panel, the choices wrap under their label)
     const p3 = await prow();
-    await page.setViewportSize({ width: 320, height: 640 }); await page.waitForTimeout(300);   // (a narrow phone: the five too wide even in the smallest letters, in any font; they wrap, three and two)
+    await page.setViewportSize({ width: 320, height: 640 }); await page.waitForTimeout(300);   // (a narrow phone: the six too wide even in the smallest letters, in any font; they wrap, three and three)
     const p4 = await prow();
     await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300);
-    const two = (p) => Object.values(p.lines).join() === '3,2';
-    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its five choices within the panel, the tyres\' four too, on a phone on its side (640×360), upright (360×640), on a computer (1280×720) and on a narrow phone (320×640: on two lines, three and two; a wider font may wrap them on the others too)',
-      [p1, p2, p3, p4].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0 && p.pitFit
+    const two = (p) => Object.values(p.lines).join() === '3,3';
+    T.check('the pause: the row Trki med avti under its buttons (Kaskaderska marked), in sight and its six choices within the panel, the tyres\' four too, on a phone on its side (640×360), upright (360×640), on a computer (1280×720) and on a narrow phone (320×640: on two lines, three and three; upright and with a wider font on the others too)',
+      [p1, p2, p3, p4].every(p => p.screen === 'pause' && p.shown && p.label === 'Trki med avti' && p.btns === 'Simulacija,Realistična,Arkadna,Mehka,Kaskaderska*,Stara' && p.fit && p.inView && p.top === 0 && p.pitFit
       && (p.wrap ? two(p) : Object.keys(p.lines).length === 1)) && p4.wrap, JSON.stringify({ p1, p2, p3, p4 }));
-    await page.click('#s-pause [data-set="crV"] [data-v="1"]'); await page.waitForTimeout(150);
-    const pa = await page.evaluate(() => ({ cv: Core.TX.cv, cPm: Core.TX.cPm, aiSpr: Core.TX.aiSpr, pause: [...document.querySelectorAll('#s-pause [data-set="crV"] .sel')].map(b => b.textContent).join(), list: [...document.querySelectorAll('#s-settings [data-set="crV"] .sel')].map(b => b.textContent).join(),
+    const picked = () => page.evaluate(() => ({ cv: Core.TX.cv, cPm: Core.TX.cPm, aiSpr: Core.TX.aiSpr, pause: [...document.querySelectorAll('#s-pause [data-set="crV"] .sel')].map(b => b.textContent).join(), list: [...document.querySelectorAll('#s-settings [data-set="crV"] .sel')].map(b => b.textContent).join(),
       screen: window.__game.screen, stored: JSON.parse(localStorage.getItem('tdgp-settings')).crV }));
+    await page.click('#s-pause [data-set="crV"] [data-v="5"]'); await page.waitForTimeout(150);   // (Realistična, the sixth choice: the second button of the row)
+    const pr = await picked();
+    T.check('the pause: Realistična picked there applies at once (Core.TX.cv 6, the rows of Preizkus kept), marked in the pause and in the settings, kept',
+      pr.cv === 6 && pr.cPm === 2 && pr.aiSpr === 0.3 && pr.pause === 'Realistična' && pr.list === 'Realistična' && pr.screen === 'pause' && pr.stored === 5, JSON.stringify(pr));
+    await page.click('#s-pause [data-set="crV"] [data-v="1"]'); await page.waitForTimeout(150);
+    const pa = await picked();
     // its last row in reach (the panel scrolls), the next pause from the top again
     const sc = await page.evaluate(async () => { const raf = () => new Promise(q => requestAnimationFrame(q)), g = window.__game, body = document.getElementById('pause-body'), pit = document.getElementById('pit-row');
       const fits = body.scrollHeight <= body.clientHeight + 1;   // (all of it in sight: the pause's box and the weather's row beside the buttons on its side, the boxes' layout, nothing to scroll)
@@ -232,6 +245,26 @@ try {
       j.sel === '0,0,0,0,0' && j.tx.cv === 1 && Object.keys(j.tx).filter(k => k !== 'cv').every(k => j.tx[k] === null) && s.crV === 0 && s.crPm === 0 && s.crMu === 0 && s.crYaw === 0 && s.crSl === 0
       && !['crNB', 'tCrStyle', 'tCrE', 'tCrMass'].some(k => k in s), JSON.stringify({ j, s: ['crV', 'crPm', 'crMu', 'crYaw', 'crSl', 'crNB', 'tCrStyle', 'tCrE', 'tCrMass'].map(k => k + ':' + s[k]).join(' ') }));
     T.check('stored values: no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  {
+    // a stored Realistična (crV 5, the sixth choice): taken as it is when the game opens
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { crV: 5 }, { width: 360, height: 640 });
+    await page.evaluate(() => window.__game.onAction('to-settings')); await page.waitForTimeout(300);
+    const j = await page.evaluate(() => { const g = document.querySelector('#s-settings [data-set="crV"]'); return { cv: Core.TX.cv, sel: [...g.querySelectorAll('.sel')].map(b => b.dataset.v + ':' + b.textContent).join(), note: document.getElementById('crv-note').textContent,
+      cut: g.scrollWidth > g.clientWidth + 1, stored: JSON.parse(localStorage.getItem('tdgp-settings') || '{}').crV }; });
+    T.check('a stored Realistična (crV 5): marked when the game opens (upright, 360×640: its row not cut off), its sentence under the row, Core.TX.cv 6',
+      j.cv === 6 && j.sel === '5:Realistična' && /^Kot pravi trk/.test(j.note) && !j.cut && j.stored === 5, JSON.stringify(j));
+    // the pause before the start on that phone (no box of the race yet: the buttons one to a row, the tyres' row last): Trki med avti's six stand
+    // on two lines there, and the pause is all in sight all the same (phFit closes the gaps between the buttons: #s-pause.fit1 in style.css)
+    await startTrack(page, 'bathurst'); await page.evaluate(() => window.__game.pause()); await page.waitForTimeout(300);
+    const q = await page.evaluate(async () => { const raf = () => new Promise(r => requestAnimationFrame(r)); await raf(); await raf();
+      const s = document.getElementById('s-pause'), body = document.getElementById('pause-body'), seg = document.querySelector('#crv-prow .seg'), pit = document.getElementById('pit-row'), b = body.getBoundingClientRect(), r = pit.getBoundingClientRect();
+      return { screen: window.__game.screen, phase: window.__game.phase, cls: s.className, seg: seg.className, sel: [...seg.querySelectorAll('.sel')].map(x => x.textContent).join(),
+        lines: Object.values([...seg.children].map(x => Math.round(x.getBoundingClientRect().top)).reduce((m, t) => (m[t] = (m[t] || 0) + 1, m), {})).join(), cut: seg.scrollWidth > seg.clientWidth + 1,
+        sh: body.scrollHeight, ch: body.clientHeight, pit: !pit.classList.contains('off') && r.height > 0 && r.top >= b.top - 1 && r.bottom <= b.bottom + 1 }; });
+    T.check('the pause before the start on the upright phone (360×640, the buttons one to a row): Trki med avti\'s six on two lines (three and three), Realistična marked, none cut off; all of the pause in sight without scrolling, the tyres\' row too; no errors on the page',
+      q.screen === 'pause' && q.phase !== 'racing' && !/\bpi\b/.test(q.cls) && q.lines === '3,3' && !q.cut && q.sel === 'Realistična' && q.sh <= q.ch + 1 && q.pit && !errors.length, JSON.stringify(q) + ' ' + errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
 } finally {

@@ -2,7 +2,9 @@
 // Kaskaderska and Stara (the old knock), on the flat test plane (tests/lib/handling.js, BURJA R7 'rally', two cars stepped as a race steps them:
 // both drive, then the knock) and in races. Checked here:
 // - the choice (Core.setTest cv): Simulacija by default, cv 1-5 the versions, the rows over a version (cPm, cE, cMu, cYaw, cGl, cSl, cFx),
-//   setTest(null) back to the default; Stara is the old knock (round ends, the classic's 0.1 bounce, every touch a full swing of the nose)
+//   setTest(null) back to the default; Stara is the old knock (round ends, the classic's 0.1 bounce, every touch a full swing of the nose);
+//   cv 6 Realistična (real), the sixth choice, in the making: the versions' knock, and while its row in KV is a copy of Simulacija's the same
+//   knock ends the same to the last digit
 // - Simulacija, classic physics: a car hit moves (equal weights: 100 km/h into a standing car, centred, the hit car leaves faster than the
 //   one that hit it, both well under 100 and over 25 km/h; the old heavy knock left it standing); the bounce by the closing speed (a
 //   light knock bounces more than a hard one, a car leaning on another not at all); no pop (under 3 cm a step; 5 at 100 km/h head on); a racing bump 0.6 m off
@@ -90,7 +92,19 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   C.setTest({ cv: 'x', cE: NaN }); const T2 = Object.assign({}, C.TX); C.setTest(null);
   ok('the choice: nothing set by default (Simulacija), the version and its rows taken as numbers, setTest(null) clears them', d0 === null && T1.cv === 3 && T1.cPm === 1.5 && T1.cE === 0.5 && T1.cMu === 0.6 && T1.cYaw === 0.4 && T1.cGl === 0 && T1.cSl === 1.6 && T1.cFx === 0 && T1.aiSpr === 0.3 && T2.cv === null && T2.cE === null && Object.values(C.TX).every(v => v === null),
     JSON.stringify([T1, T2]));
-  ok('the versions: Simulacija, Arkadna, Mehka, Kaskaderska, Stara in that order (cv 1-5)', C.KV_IDS.join() === ',sim,arc,soft,stunt,old' && ['sim', 'arc', 'soft', 'stunt'].every(k => C.KV[k] && C.KV[k].pm > 0), C.KV_IDS.join());
+  ok('the versions: Simulacija, Arkadna, Mehka, Kaskaderska, Stara in that order (cv 1-5), Realistična after them (cv 6: the others keep their numbers)', C.KV_IDS.join() === ',sim,arc,soft,stunt,old,real' && ['sim', 'arc', 'soft', 'stunt', 'real'].every(k => C.KV[k] && C.KV[k].pm > 0), C.KV_IDS.join());
+}
+
+// ---- Realistična (cv 6): the sixth choice, in the making ----
+// For now its row (js/core.js KV.real) is a copy of Simulacija's, so a knock ends as Simulacija's to the last digit. With numbers or a behaviour
+// of its own (the physics change) the comparison with Simulacija is left out (copy false) or fails: its own checks take its place then
+{
+  const REAL = { cv: 6 }, rowOf = (k) => JSON.stringify(Object.entries(C.KV[k]).sort()), copy = rowOf('real') === rowOf('sim');
+  C.setTest(REAL); const cv = C.TX.cv, id = C.KV_IDS[cv]; C.setTest(null); const back = C.TX.cv;
+  const key = (r) => JSON.stringify(r), st = run(HC, REAL, 'stand', 0.25), ss = run(HC, SIM, 'stand', 0.25), so = run(HC, OLD, 'stand', 0.25), sd = run(HC, null, 'stand', 0.25);
+  ok('Realistična: cv 6 is the version real, the versions\' knock (not the old one); while its row is a copy of Simulacija\'s, 100 km/h into a standing car (equal weights) ends as with Simulacija to the last digit; setTest(null): the default again (Simulacija)',
+    cv === 6 && id === 'real' && back === null && st.hit && !st.nan && key(st) !== key(so) && (!copy || key(st) === key(ss)) && key(sd) === key(ss),
+    `player ${f(st.P.v * 3.6, 3)} km/h, the other ${f(st.O.v * 3.6, 3)} km/h (Simulacija ${f(ss.P.v * 3.6, 3)} / ${f(ss.O.v * 3.6, 3)}, Stara ${f(so.P.v * 3.6, 3)} / ${f(so.O.v * 3.6, 3)}); its row ${copy ? 'a copy of Simulacija\'s' : 'its own: not compared'}`);
 }
 
 // ---- Stara: the old knock ----
