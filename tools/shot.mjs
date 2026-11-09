@@ -7,10 +7,10 @@
 //                                                        main or HEAD^1, taken out with git archive; or a folder with a copy of the game),
 //                                                        side by side with the changed pixels marked (pred | po | razlika)
 //   povzetek.md, povzetek.json                           what was taken, and with --pred how much of each picture changed
-//   node tools/shot.mjs bathurst --m 1284 --pokonci --lezece
-//   node tools/shot.mjs bathurst spa --m 400,1284 --pred main          (main against the working tree)
-//   node tools/shot.mjs vrsic --t 30 --vreme dez                        (the race on the autopilot to 30 s, the car where it got to, the field shown)
-//   node tools/shot.mjs bathurst --m 1284 --cas vecer                   (the time of day: jutro, dan (default), vecer, noc)
+//   node tools/shot.mjs spa --m 900 --pokonci --lezece
+//   node tools/shot.mjs spa suzuka --m 0,900 --pred main               (main against the working tree)
+//   node tools/shot.mjs pikes --t 30 --vreme dez                        (the race on the autopilot to 30 s, the car where it got to, the field shown)
+//   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
 import fs from 'node:fs';
@@ -20,8 +20,11 @@ import { execFileSync } from 'node:child_process';
 import { serve, launch, openGame } from '../tests/browser/lib.mjs';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-// the set for the pull requests' workflow (.github/workflows/posnetki.yml): real tracks, a few places each (metres after the start)
-const NABOR = { bathurst: [250, 1284], spa: [600], vrsic: [1500] };
+// the set for the pull requests' workflow (.github/workflows/posnetki.yml): real tracks, a few places each (metres after the start). Not the
+// frozen ones (test: true, and pending: true, which CLAUDE.md keeps still too): Spa and Suzuka, each at the start (pit buildings, grandstands;
+// the car stands on the line, so the summary's s reads as the lap's length) and in a corner (Eau Rouge; the S curves), and Pikes Peak, a mountain
+// road, in the forest at the W hairpins and in the serpentines under the summit
+const NABOR = { spa: [0, 900], suzuka: [0, 820], pikes: [2850, 5300] };
 const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } };
 const CHANGED = 0.5;   // (a picture counts as changed from this share of changed pixels, %: below it a sky's drift or a flag's wave)
 

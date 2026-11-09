@@ -9,7 +9,6 @@ Notranje oznake so ostale od prejšnjega imena (APEX Racing): `app: 'apex-racing
 Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, okolica, približki) je v svoji datoteki v [`docs/proge/`](docs/proge/); opis delov igre, ki niso vezani na eno progo (fizika, dirka, boksi, vreme, grafika, vozni park …), je v [`docs/igra.md`](docs/igra.md). Viri in licence so spodaj pod »Zasluge«.
 
 - [Pikes Peak, ZDA (asfalt: `pikes`)](docs/proge/pikes.md) in [Pikes Peak (makadam), ZDA (`pikesg`)](docs/proge/pikesg.md)
-- [Ouninpohja, Finska](docs/proge/ouninpohja.md)
 - [Nürburg, Nemčija](docs/proge/nring.md)
 - [Spa, Belgija](docs/proge/spa.md)
 - [Štajerska, Avstrija](docs/proge/rbring.md)
@@ -31,7 +30,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
-Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road (odločitev uporabnika 6. 11. 2026), ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville); iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Suzuka, Irohazaka in Hakone sta od 8. 11. 2026 na odločanju; iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Bathurst, Great Alpine Road, Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -54,6 +53,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Monterey, ZDA](docs/proge/monterey.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Palomar Mountain, ZDA](docs/proge/palomar.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Vršič, Slovenija](docs/proge/vrsic.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
+- [Ouninpohja, Finska](docs/proge/ouninpohja.md) (resnična pot; od 8. 11. 2026 testna, se ne posodablja več)
 - [Longford, Avstralija](docs/proge/longford.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Mount Hotham, Avstralija](docs/proge/hotham.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
 - [Newcastle, Avstralija](docs/proge/newcastle.md) (resnična pot; od 6. 11. 2026 testna, se ne posodablja več)
@@ -147,7 +147,7 @@ Igra ne potrebuje namestitve ali prevajanja: `index.html` naloži datoteke po vr
 | `tools/stamp.js` | žigi (oznake vsebine `?v=…`) na povezavah v `index.html` in `garaza.html`, da brskalnik po posodobitvi ne pomeša starih in novih datotek: v repozitoriju jih ni, doda jih objava strani (`stran.yml`, `tools/predogled.mjs`) na vsakem drevu iz njegovih datotek; po spremembi zaženi `node tools/stamp.js --check` (vsaka povezava kaže na obstoječo datoteko in nima žiga), `--strip` žige odstrani (npr. po spajanju starejše veje), `--merge` razreši spor v straneh ob spajanju (brez žigov; skripte, ki sta jih obe strani dodali na isto mesto, obdrži), `--find <žig>` najde commit različice iz poročila o napaki |
 | `tools/carshots.mjs` | slike vozila za pregled: `node tools/carshots.mjs <id>` (od strani, spredaj, zadaj in zgoraj z mrežo 1 m, razstavni pogled, pogled za avtom, zrahljani deli, razbitina, zgorelo vozilo; vse skupaj v `sheet.png`) ali `node tools/carshots.mjs --cat <kategorija>` (vsa vozila kategorije drugo ob drugem); slike so v `test-results/carshots/` |
 | `tools/deli-plosca.mjs` | plošča delov iz garaže: `node tools/deli-plosca.mjs krilo,zarometi [--car kolibri] [--ns 1,6,11,16]` (serijski del in 16 možnosti elementa ali izbor z imeni, cenami in učinki; dogovor v `docs/deli.md`); slika je v `test-results/deli/` |
-| `tools/shot.mjs` | posnetki proge za primerjavo pred in po: `node tools/shot.mjs bathurst --m 1284` (avto na idealni liniji 1284 m po štartu, kamera za avtom, pokonci in ležeče); z `--pred main` še ista mesta v `main` in primerjava (pred, po, razlika); slike in `povzetek.md` so v `test-results/shots/` |
+| `tools/shot.mjs` | posnetki proge za primerjavo pred in po: `node tools/shot.mjs spa --m 900` (avto na idealni liniji 900 m po štartu, kamera za avtom, pokonci in ležeče); z `--pred main` še ista mesta v `main` in primerjava (pred, po, razlika); slike in `povzetek.md` so v `test-results/shots/` |
 | `tools/predogled.mjs`, `.github/workflows/` | testi ob pull requestu (`tests.yml`), posnetki pred/po (`posnetki.yml`), stran na GitHub Pages s predogledom odprtih pull requestov v `beta/` (`stran.yml`; opis v `tests/README.md`) |
 
 Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) ne deluje. Z diska (brez spletnega strežnika) igra deluje, le brez igranja brez interneta in namestitve.
