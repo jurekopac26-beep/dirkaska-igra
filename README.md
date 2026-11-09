@@ -25,12 +25,13 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
-- [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
-Na odločanju (`pending: true`): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road (odločitev uporabnika 6. 11. 2026), ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville); iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Suzuka, Irohazaka in Hakone sta od 8. 11. 2026 na odločanju; iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Bathurst, Great Alpine Road, Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Suzuka, Irohazaka in Hakone sta od 8. 11. 2026 na odločanju; iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+
+Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurstom in Great Alpine Road, ki sta bila od 6. 11. 2026 na odločanju); Great Alpine Road je od 9. 11. 2026 testna, prav tako od 6. 11. 2026 Longford, Mount Hotham, Newcastle in Townsville (spodaj).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -63,6 +64,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Sani Pass, Južna Afrika](docs/proge/sani.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Great Alpine Road, Avstralija](docs/proge/greatalpine.md) (resnična pot; od 9. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

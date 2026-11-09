@@ -47,7 +47,7 @@ Možnost 3 vprašanja (izbrana 6. 11. 2026, narejena v koraku 6) doda še:
 
 **Govor v angleščini** (odločitev uporabnika 5. 11. 2026 ob 16.10: »Vse zvoke delaj v angleščini.«): šest priporočenih zvokov je brez govora. Kjer je v zvokih okolja govor (razglas po zvočniku, napovedovalec, vzkliki ljudi), je vedno v angleščini, tudi ko je igra v slovenščini, in brez imen resničnih oseb in podjetij (`CLAUDE.md`, Pravna varnost).
 
-Pričakovano po progah (potrdi orodje v koraku 1): gozd in ptice Nürburg, Spa, Ouninpohja, Pikes Peak (pod gozdno mejo), Irohazaka, Great Alpine Road; voda Great Alpine Road in Longford (reka), Medvode (Sava, jezero v Zbiljah); vas Medvode (Medvode, Zbilje, Valburga, Smlednik), Ouninpohja, Livorno, Nürburg; veter Mount Hotham, Los Caracoles, Katu-Jaryk, Tianmen, Rio do Rastro; morje Chapman's Peak, Livorno, Newcastle; žuželke Livorno, Marrakesh, Townsville, Suzuka, Irohazaka, brazilski in avstralski kraji. Avstralske proge so na odločanju (#394): če postanejo testne, ostanejo brez zvokov okolja.
+Pričakovano po progah (potrdi orodje v koraku 1): gozd in ptice Nürburg, Spa, Ouninpohja, Pikes Peak (pod gozdno mejo), Irohazaka, Great Alpine Road; voda Great Alpine Road in Longford (reka), Medvode (Sava, jezero v Zbiljah); vas Medvode (Medvode, Zbilje, Valburga, Smlednik), Ouninpohja, Livorno, Nürburg; veter Mount Hotham, Los Caracoles, Katu-Jaryk, Tianmen, Rio do Rastro; morje Chapman's Peak, Livorno, Newcastle; žuželke Livorno, Marrakesh, Townsville, Suzuka, Irohazaka, brazilski in avstralski kraji. Iz Avstralije ostane Bathurst (izbira uporabnika 9. 11. 2026); Great Alpine Road, Longford, Mount Hotham, Newcastle in Townsville so testne in ostanejo brez zvokov okolja.
 
 ## Kje je kateri zvok: zvočni pasovi iz podatkov proge
 

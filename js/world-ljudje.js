@@ -1443,7 +1443,6 @@
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
     cpalace: [['marsali', 96, -1], ['gasilci', 600, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
-    greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
