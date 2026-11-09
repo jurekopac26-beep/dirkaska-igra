@@ -8,6 +8,8 @@ Za objavo (1. 2. 2027) mora biti v igri:
 - **50 pravih prog** (testne pred objavo odidejo; 7. 11.: 31 pravih, od tega jih 10 gre med testne s #379 in z izbiro proge Avstralije, v vrsti sta novi Killar in Hakone);
 - **boljša grafika**.
 
+**Mejniki do izida** (odločitev uporabnika 9. 11. 2026 ob 11.36, tabla #382, komentar 6737933880; veljajo za načrte vseh računov): **do 1. 12. 2026** vseh 50 pravih prog na `main`; **od 15. 12.** brez novih funkcij (samo popravki, proge, dodelava); **15. 1. 2027** kandidat za izid; **1. 2. 2027** izid. Testne proge se izbrišejo pred izidom, načrtovano ob zamrznitvi 15. 12. (`CLAUDE.md`, »Testne proge«).
+
 Kar je na tem seznamu, gre v vrsti pred ostalim, razen prog, ki so v vrsti vedno zadnje (odločitev uporabnika 7. 11. ob 16.39, tabla #382, komentar 6709363288). Po njem sme vrstni red premikati tudi Matej (svetovalec uporabnika, pogovor računa jure.kopac26): vsak premik objavi na tabli #382, uporabnik ga lahko prekliče (`CLAUDE.md`, »Dogovori z uporabnikom«).
 
 ## Pravila
