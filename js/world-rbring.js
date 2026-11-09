@@ -33,7 +33,7 @@
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
       x.fillStyle = fg; x.font = '900 ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, cx + 128, cy + 33, 240); };
-    const AT = LK.at, nb = LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a'];   // (Bathurst's numbers bottle green and gold)
+    const AT = LK.at, nb = LK.numC || (LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a']);   // (Bathurst's numbers bottle green and gold; LK.numC: a world's own, Tuzla's)
     for (let k = 1; k <= LK.nums; k++) cell(AT.num + k - 1, nb[0], nb[1], String(k), 52, nb[2]);
     ['300', '200', '100'].forEach((t, k) => cell(AT.brake + k, '#f4f4f0', '#111', t, 50, '#111'));
     LK.ban.forEach(([t, bg, fg, st], k) => cell(AT.ban + k, bg, fg, t, t.length > 10 ? 30 : 38, st));
@@ -155,6 +155,25 @@
             for (const f of [fs[b], fs[b + 1]]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
           for (let k = 0; k < n; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
           v += (n + 1) * 2;
+        }
+        continue;
+      }
+      if (cols.moon) {   // (a crescent and a star near the pole on a plain field, in Turkey's proportions (G the flag's height): the crescent between the
+        // circles of 0.25 G round 0.5 G from the pole and of 0.2 G round 0.5625 G, the star of 0.125 G round 0.8208 G, a point to the pole;
+        // cols.moon = [their colour], the field cols[0], finer along the flag, the crescent and the star on both faces 1.5 cm off it: they wave with it)
+        const mc = cols.moon[0], fc = cols[0], NS = 16, NC = 12, GU = H / W, e = 0.015, hx = 0.21125, hy = Math.sqrt(0.0625 - hx * hx), a1 = Math.atan2(hy, hx), a2 = Math.atan2(hy, hx - 0.0625);   // (the horns: where the circles meet)
+        for (let k = 0; k <= NS; k++) { const u = k / NS;
+          for (const f of [0, 1]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(fc[0], fc[1], fc[2]); F.push(u, ph, W * 0.07); } }
+        for (let k = 0; k < NS; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+        v += (NS + 1) * 2;
+        const pt = (gx, gy, sg) => { const u = gx * GU, f = 0.5 + gy; P.push(x + c * W * u - s * e * sg, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u + c * e * sg); N.push(-s, 0, c); C.push(mc[0], mc[1], mc[2]); F.push(u, ph, W * 0.07); };
+        for (const sg of [1, -1]) {
+          for (let k = 0; k <= NC; k++) { const t = k / NC, p = a1 + (TAU - 2 * a1) * t, q = a2 + (TAU - 2 * a2) * t; pt(0.5 + 0.25 * Math.cos(p), 0.25 * Math.sin(p), sg); pt(0.5625 + 0.2 * Math.cos(q), 0.2 * Math.sin(q), sg); }
+          for (let k = 0; k < NC; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += (NC + 1) * 2;
+          pt(0.8208, 0, sg); for (let k = 0; k < 10; k++) { const r = k & 1 ? 0.0477 : 0.125, an = Math.PI + k * Math.PI / 5; pt(0.8208 + r * Math.cos(an), r * Math.sin(an), sg); }
+          for (let k = 0; k < 10; k++) I.push(v, v + 1 + k, v + 1 + (k + 1) % 10);
+          v += 11;
         }
         continue;
       }
