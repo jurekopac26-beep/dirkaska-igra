@@ -64,7 +64,7 @@ window.MenuCar = (function () {
     const out = [], p = new THREE.Vector3();
     v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, 0); v.grp.updateMatrixWorld(true);
     v.grp.traverse(m => {
-      if (!m.isMesh || m === v.blob || !m.geometry || !m.geometry.attributes.position) return;
+      if (!m.isMesh || m === v.blob || m === v.rigS || !m.geometry || !m.geometry.attributes.position) return;   // (v.rigS: a semi-trailer's blob)
       for (let q = m; q && q !== v.grp; q = q.parent) if (!q.visible) return;
       const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count), st = Math.max(1, Math.floor(n / 5000));
       for (let i = 0; i < n; i += st) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); out.push(p.x, p.y, p.z); }
@@ -127,12 +127,14 @@ window.MenuCar = (function () {
     const v = Render.garageCar(M, spec.color, spec.num || 0, true);
     if (!spec.num && v.dec) v.dec.visible = false;
     if (v.blob) v.blob.visible = false;   // (the race's blob: the menu's own shadow instead, shade)
+    const rig = Render.garageTrailer ? Render.garageTrailer(v, M) : null;   // (a semi-trailer straight behind it, the TITAN CISTERNA's tank: the rig in the button, docs/titan-cisterna.md)
+    if (v.rigS) v.rigG.traverse(m => { if (m.isMesh && m.material === v.rigS.material) m.visible = false; });   // (its blobs too, v.rigS and a road train's second: the menu's shadow under the whole rig)
     const P = pointsOf(v), S = shapeOf(P), F = feetOf(v);
     v.grp.rotation.y = ROT; v.grp.updateMatrixWorld(true); scene.add(v.grp);
     // (its points as the camera sees them: turned as the car)
     const c = Math.cos(ROT), s = Math.sin(ROT), Pw = new Float32Array(P.length);
     for (let i = 0; i < P.length; i += 3) { Pw[i] = P[i] * c + P[i + 2] * s; Pw[i + 1] = P[i + 1]; Pw[i + 2] = -P[i] * s + P[i + 2] * c; }
-    car = { v, M, S, Pw, h: Math.max(0.5, S.y1), feet: F };
+    car = { v, M, S, Pw, h: Math.max(0.5, S.y1), feet: F, rig };
     shadeBuild();
     dirty = true; drawn = false;
     return true;
@@ -170,8 +172,7 @@ window.MenuCar = (function () {
       const L = low(w, 0.02); if (!L.length) continue;
       out.push(L.reduce((r, q) => [Math.min(r[0], q[0]), Math.max(r[1], q[0]), Math.min(r[2], q[1]), Math.max(r[3], q[1])], [1e9, -1e9, 1e9, -1e9]));
     }
-    if (!(v.wr && v.wr.length) && v.body) {
-      const xf = out.length ? Math.min(...out.map(r => r[0])) - 0.4 : 1e9, L = low(v.body, 0.015, (x, z) => x < xf && Math.abs(z) > 0.12);
+    const runs = (L) => {
       for (const sd of [-1, 1]) {
         const Q = L.filter(q => q[1] * sd > 0).sort((a, b) => a[0] - b[0]);
         let r = null;
@@ -181,7 +182,12 @@ window.MenuCar = (function () {
         }
         if (r) out.push(r);
       }
+    };
+    if (!(v.wr && v.wr.length) && v.body) {
+      const xf = out.length ? Math.min(...out.map(r => r[0])) - 0.4 : 1e9;
+      runs(low(v.body, 0.015, (x, z) => x < xf && Math.abs(z) > 0.12));
     }
+    if (v.rigG) runs(low(v.rigG, 0.02, (x, z) => Math.abs(z) > 0.12));   // (a rig's trailer: its wheels are in it, as an older body's rear ones)
     return out.filter(r => r[1] - r[0] < 1.4);   // (a long low run is no tyre: a sill, a skid plate)
   }
   function shadeBuild() {
@@ -220,7 +226,7 @@ window.MenuCar = (function () {
   // a box in the yard as laid out (a new track's sign and car sliding in, their transforms, do not move it: the car drawn where it stands)
   const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
-    const M = car.M, h = car.h, k = clamp(Math.max(M.len / 4.4, h / 1.45, M.wid / 1.9), 0.75, 1.55), dy = h / 2 - 0.7 * k;
+    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
     // the car's box as seen, in the canvas's -1..1
@@ -475,6 +481,7 @@ window.MenuCar = (function () {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
       ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected), cover: cov,
+      rig: car && car.rig ? +car.rig.len.toFixed(2) : 0,   // (rig: a semi-trailer's rig, its length, m)
       shadow: car && car.sh ? { wx: car.sh.wx, tyres: car.feet.length, opacity: shMat ? +shMat.opacity.toFixed(2) : 0, visible: car.sh.mesh.visible } : null };
   }
   // (tests) a frame drawn now (t: at that time of the wind, s) and read at once (its buffer is not kept once it is shown): how much of the
