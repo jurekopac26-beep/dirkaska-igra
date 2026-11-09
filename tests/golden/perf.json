@@ -467,5 +467,26 @@
   "kverts": 504,
   "maxKverts": 715,
   "jsMs": 5.2
+ },
+ "parnu": {
+  "calls": 211,
+  "maxCalls": 281,
+  "kverts": 442,
+  "maxKverts": 731,
+  "jsMs": 1.84
+ },
+ "houli": {
+  "calls": 203,
+  "maxCalls": 248,
+  "kverts": 608,
+  "maxKverts": 797,
+  "jsMs": 1.78
+ },
+ "tocancipa": {
+  "calls": 224,
+  "maxCalls": 251,
+  "kverts": 497,
+  "maxKverts": 617,
+  "jsMs": 1.99
  }
 }

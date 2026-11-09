@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 700" width="1100" height="700">
+  <title>Estonia</title>
+  <!-- Ratio 7:11. Three horizontal bands of equal width, blue, black and white from the top (Estonian Flag Act).
+       Blue: Pantone 285 C (#0072CE), black, white. -->
+  <rect width="1100" height="700" fill="#FFFFFF"/>
+  <rect width="1100" height="233.3" fill="#0072CE"/>
+  <rect y="233.3" width="1100" height="233.4" fill="#000000"/>
+</svg>

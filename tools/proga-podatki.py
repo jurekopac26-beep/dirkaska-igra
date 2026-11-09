@@ -15,6 +15,7 @@
 #        dist      (neobvezno) razdalje od ceste v m: {"bld": 60, "trees": 60, "walls": 30, "coast": 400, "cliffs": 300, "shore": 300,
 #                  "water": 100, "rail": 200, "roads": 60, "grid": 150, "lamps": 30}
 #        driveExtra (neobvezno) dodatne vrste OSM highway, po katerih sme pot (npr. ["pedestrian"]: ulica brez avtov, ki je na dirki zaprta)
+#        roadsExtra (neobvezno) dodatne vrste OSM highway med drugimi cestami v izhodu (npr. ["raceway"]: kartodrom in druge steze ob dirkališču)
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
 #        farKm     (neobvezno) polmer daljnega terena far.png v km okoli sredine proge, privzeto 12 (gore na obzorju dlje, npr. 30 v Andih: mreža ostane 240 x 240, celice sorazmerno večje)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
@@ -713,7 +714,7 @@ def build_vectors(F, line, L, R, D, bridges):
           'path', 'steps', 'cycleway', 'bridleway', 'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
     for k, (refs, t) in W.items():
         hw = t.get('highway')
-        if hw not in DR or k in route_ways or t.get('area') == 'yes': continue
+        if (hw not in DR and hw not in C.get('roadsExtra', ())) or k in route_ways or t.get('area') == 'yes': continue
         if t.get('footway') in ('crossing', 'sidewalk') or t.get('path') == 'crossing': continue
         P = XZ(refs)
         if len(P) < 2: continue

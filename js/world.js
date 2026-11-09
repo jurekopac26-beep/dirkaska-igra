@@ -1295,7 +1295,7 @@ const World = (function () {
       (out.pitBoxes = out.pitBoxes || []).push({ k, s: T.startS + q + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine });
       out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 1.3, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' };   // (its garage, forestGarages, for the renderer's team colours: the band over the door, the back wall above its darker panel, the front pillars)
       if (Y) out.pitBoxes[out.pitBoxes.length - 1].y = Y(T.startS + q + 5); }   // (the crews stand at the road's height of their box)
-    forestGarages();
+    if (opt.garages !== false) forestGarages();   // (a builder with a pit building of its own: garages false, World's measures in out.pitBoxes[].gar kept)
     { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the grass strip (2.7 m roofs over the box centres, forestPitKit): Core keeps the player's car off it
       if (pbs && pbs.length) { const L = T.len, dS = (s) => { let d = s - T.startS; d = ((d % L) + L) % L; return d > L / 2 ? d - L : d; };
         T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];

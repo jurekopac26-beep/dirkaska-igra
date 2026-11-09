@@ -158,6 +158,17 @@
         }
         continue;
       }
+      if (cols.canton) {   // (a canton in the quarter at the top of the pole with a sun in its middle: cols.canton = [its colour, the sun's colour]; the field cols[0], in sixteen cells: Taiwan's red, blue and white)
+        const [kc, sc] = cols.canton, us = [0, 0.17, 0.33, 0.5, 1], fs = [0, 0.17, 0.33, 0.5, 1];
+        for (let b = 0; b < 4; b++) for (let q = 0; q < 4; q++) {
+          const col = b === 1 && q === 1 ? sc : b < 3 && q < 3 ? kc : cols[0], n = Math.max(1, Math.round(SEG * (us[q + 1] - us[q])));
+          for (let k = 0; k <= n; k++) { const u = us[q] + (us[q + 1] - us[q]) * k / n;
+            for (const f of [fs[b], fs[b + 1]]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < n; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += (n + 1) * 2;
+        }
+        continue;
+      }
       if (cols.vert) {   // (vertical stripes, the first at the pole: cols.vert true; Ireland's green, white and orange)
         for (let b = 0; b < ns; b++) {
           for (let k = 0; k <= 2; k++) { const u = (b + k / 2) / ns;
