@@ -1,9 +1,10 @@
 {
   "id": "ella",
-  "about": "Ella, Šrilanka (id ella): 4 km of the A23 up the serpentines from the valley to Ella, left-hand traffic, 4 hairpins (docs/nove-proge-1-0.md)",
+  "about": "Ella, Šrilanka (id ella): 4 km of the A23 up the serpentines from the valley to Ella, left-hand traffic, 4 hairpins (docs/nove-proge-1-0.md); the line from 205 m before the start line (the grid) to 255 m past the finish (the cars' slots, over the junction in Ella)",
   "box": [6.84, 81.032, 6.885, 81.074],
   "closed": false,
   "route": [
+    [6.85278, 81.05915, "Wellawaya-Ella-Kumbalwela Road", "run-up for the grid | trunk, w251735367, 205 m before the start line"],
     [6.85442, 81.05951, "Wellawaya-Ella-Kumbalwela Road", "start | trunk, w251735367, s 10 m"],
     [6.85525, 81.05898, "Wellawaya-Ella-Kumbalwela Road", "trunk, w251735367, s 149 m"],
     [6.85591, 81.05801, "Wellawaya-Ella-Kumbalwela Road", "trunk, w251735367, s 296 m"],
@@ -31,11 +32,16 @@
     [6.87081, 81.04755, "Wellawaya-Ella-Kumbalwela Road", "trunk, w712454694, s 3606 m"],
     [6.87079, 81.04787, "Wellawaya-Ella-Kumbalwela Road", "trunk, w712454694, s 3740 m"],
     [6.87063, 81.04926, "Wellawaya-Ella-Kumbalwela Road", "trunk, w712454694, s 3897 m"],
-    [6.87124, 81.04943, "Wellawaya-Ella-Kumbalwela Road", "finish | trunk, w712454694, s 4001 m"]
+    [6.87124, 81.04943, "Wellawaya-Ella-Kumbalwela Road", "finish | trunk, w712454694, s 4001 m"],
+    [6.87345, 81.04898, "Wellawaya-Ella-Kumbalwela Road", "the cars' slots past the finish line | trunk, w1419150294, 255 m past it (over the junction with the road to Passara)"]
   ],
   "prefer": ["Wellawaya-Ella-Kumbalwela Road"],
-  "geoRoads": [],
+  "geoRoads": ["Wellawaya-Ella-Kumbalwela Road", "Ella-Passara Road"],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [
+    ["Pattiyakumbura", "7699947506", null],
+    ["Ella", "41626831", null]
+  ],
+  "dist": {"grid": 480}
 }
