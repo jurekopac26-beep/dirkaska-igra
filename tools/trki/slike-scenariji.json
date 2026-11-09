@@ -1,0 +1,61 @@
+{
+ "_": [
+  "Scenariji za tools/trki/slike.mjs (isti trk z dvema različicama trkov, v slikah). Številke so metri, stopinje, km/h in sekunde.",
+  "m: metri po štartu, kjer stoji igralčev avto (cesta tam naj bo ravna vsaj 200 m). Okvir ceste: naprej = vzdolž ceste, desno = prečno v desno.",
+  "igralec: desno (od sredine ceste) ali do_ograje (bočna razdalja najbližjega vogala do ograje, v katero pelje: desne pri kot > 0, leve pri kot < 0), kot (nos glede na cesto, + v desno), kmh.",
+  "tekmec: naprej in desno glede na igralca (od središča do središča), kot glede na cesto (90 = počez z nosom v desno, 180 = naproti), kmh (0 = stoji). Brez tekmeca: trk v ograjo.",
+  "Do dotika oba držita hitrost brez volana. Po dotiku: po_trku nic (brez plina) ali plin (plin, ki je držal hitrost, ostane); volan (-1..1, + v desno) za volan_s sekund; zavora 0..1.",
+  "casi: trenutki slik v sekundah po prvem dotiku (0 = zadnji korak pred dotikom). cakaj: koliko sekund največ do dotika. po: besedilo pod sliko o vnosih po dotiku.",
+  "Mere privzetih avtov na Spaju: igralec BURJA R7 3,95 x 1,80 m, tekmec VORTEX 4WD 4,55 x 1,80 m. Cesta je široka 13 m, ograja 4,2 m od roba (pri 660 m desna 1,5 m)."
+ ],
+ "privzeto": { "proga": "spa", "casi": [0, 0.3, 0.9, 1.8], "cakaj": 3 },
+ "scenariji": {
+  "pit": {
+   "naslov": "Dotik v zadnji vogal pri 120 km/h",
+   "opis": "igralec s sprednjim desnim vogalom od strani zadene zadnji levi bok tekmeca pred sabo (zapiranje 4 m/s)",
+   "m": 1700,
+   "igralec": { "desno": -2.0, "kot": 6.9, "kmh": 120 },
+   "tekmec": { "naprej": 3.55, "desno": 4.0, "kot": 0, "kmh": 120 }
+  },
+  "tbone": {
+   "naslov": "V bok stoječega avta pri 100 km/h",
+   "opis": "igralec pravokotno v sredino boka avta, ki stoji počez na cesti",
+   "m": 1700,
+   "igralec": { "desno": 0, "kot": 0, "kmh": 100 },
+   "tekmec": { "naprej": 16.8, "desno": 0, "kot": 90, "kmh": 0 }
+  },
+  "celni": {
+   "naslov": "Čelni trk z zamikom: 100 km/h proti 60 km/h",
+   "opis": "tekmec pripelje naproti, zamaknjen za pol širine avta",
+   "m": 1700,
+   "igralec": { "desno": -0.45, "kot": 0, "kmh": 100 },
+   "tekmec": { "naprej": 26.5, "desno": 0.9, "kot": 180, "kmh": 60 }
+  },
+  "zid15": {
+   "naslov": "V ograjo pod kotom 15° pri 150 km/h",
+   "opis": "igralec sam, položno v desno ograjo tik ob cesti",
+   "m": 660,
+   "igralec": { "do_ograje": 5.4, "kot": 15, "kmh": 150 }
+  },
+  "zid30": {
+   "naslov": "V ograjo pod kotom 30° pri 150 km/h",
+   "opis": "igralec sam, poševno v desno ograjo tik ob cesti",
+   "m": 660,
+   "igralec": { "do_ograje": 10.4, "kot": 30, "kmh": 150 }
+  },
+  "zid90": {
+   "naslov": "Naravnost v ograjo pri 100 km/h",
+   "opis": "igralec sam, pravokotno v desno ograjo tik ob cesti",
+   "m": 660,
+   "igralec": { "do_ograje": 11.1, "kot": 90, "kmh": 100 }
+  },
+  "bok": {
+   "naslov": "Bok ob boku pri 120 km/h: tekmec se naslanja 1,5 s",
+   "opis": "tekmec desno ob igralcu zavije vanj in se 1,5 s naslanja nanj; oba držita plin",
+   "m": 1700,
+   "po": "oba držita plin, tekmec 1,5 s zavija v igralca",
+   "igralec": { "desno": -1.3, "kot": 0, "kmh": 120, "po_trku": "plin" },
+   "tekmec": { "naprej": 0, "desno": 2.67, "kot": -3, "kmh": 120, "po_trku": "plin", "volan": -0.2, "volan_s": 1.5 }
+  }
+ }
+}
