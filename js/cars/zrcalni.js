@@ -15,7 +15,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
 
   // ---- a tank trailer: its size (m: x from its kingpin, its middle yc above the ground, half its height ry, half its width rz), its hoops ----
   const TK = { x0: -10.15, x1: 0.55, yc: 2.52, ry: 1.0, rz: 1.12, dome: 0.3 };
-  const HOOPS = [-0.6, -2.7, -4.8, -6.9, -9.0], COVERS = [-1.6, -4.6, -7.8];
+  const HOOPS = [-0.6, -2.7, -4.8, -6.9, -9.0];
   const DOLLY = { k: -12.6, ax: [-12.0, -13.2] };   // (the B-dolly behind the first tank: its fifth wheel, its axles, from the first kingpin)
   // the picture (1024 x 512 px): the skin (x0 to x1 along; around from the bottom up the +z side, over the top, down the -z side), the domed
   // ends (as seen from outside), the catwalk's grating, the bumper's label
@@ -81,13 +81,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     for (const sd of [-1, 1]) B.box(-5.0, 1.33, sd * 0.5, 11.3, 0.22, 0.14, DK);
     B.box(-0.2, 1.26, 0, 2.1, 0.08, 1.9, DK);
     if (!sh) for (const x of [-0.3, -5.0, -9.6]) B.box(x, 1.54, 0, 0.3, 0.16, 1.7, DK);
-    // the tank: polished, its hoops, the covers and the catwalk with its railing on top
+    // the tank: polished, its hoops, the catwalk with its railing on top (no covers on it: from the chase camera they looked like tyres, the
+    // user's decision of 9. 11. 2026)
     B.tank(TK.x0, TK.x1, TK.yc, TK.ry, TK.rz, { n: [32, 16, 10][lo], uv: PIC.skin, end: PIC.end, dome: TK.dome });
     if (!sh) for (const x of full ? HOOPS : HOOPS.filter((_, i) => i % 2 === 0)) B.hoop(x, TK.yc, TK.ry, TK.rz, full ? 0.1 : 0.14, 0.03, SHINE, { n: full ? 32 : 16, flat: !full });   // (a rival's: every other hoop, its outer face only: the phone's budget of a field of trains, browser/fleet)
     const top = TK.yc + TK.ry;
     if (!sh) {
       B.box(-4.8, top + 0.03, 0, 9.2, 0.04, 0.56, 0x5d6168, { face: '+y', uv: PIC.grate });
-      for (const x of COVERS) { B.cyl([x, top, 0], [x, top + 0.2, 0], 0.3, STEEL, { n: full ? 12 : 6 }); if (full) B.cyl([x, top + 0.2, 0], [x, top + 0.24, 0], 0.33, SHINE, { n: 12 }); }
       for (const sd of [-1, 1]) { if (full) for (const x of [-0.8, -2.5, -4.2, -5.9, -7.6, -9.2]) B.box(x, top + 0.3, sd * 0.42, 0.04, 0.56, 0.04, SHINE); B.box(-5.0, top + 0.58, sd * 0.42, 8.44, 0.04, 0.04, SHINE); }
     }
     // the landing gear, the side guards (two aluminium rails), the red cabinet on the +z side (the valves' and the hoses' locker)
