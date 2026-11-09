@@ -145,7 +145,9 @@ def overture(theme, typ, box, cols, name):
     """Every feature of theme/type whose bbox reaches into box (lat0, lon0, lat1, lon1), as a list of dicts (geometry: WKB), cached."""
     import pickle
     p = os.path.join(RAW, 'ov-%s-%s.pkl' % (name, typ))
-    if os.path.exists(p): return pickle.load(open(p, 'rb'))
+    if os.path.exists(p):
+        L = pickle.load(open(p, 'rb'))
+        if not L or all(c in L[0] for c in cols if c != 'bbox'): return L   # (a cache without a column asked for now: fetched again)
     import pyarrow.dataset as ds, pyarrow.fs as fs
     la0, lo0, la1, lo1 = box
     s3 = fs.S3FileSystem(anonymous=True, region='us-west-2')
