@@ -286,7 +286,7 @@ def colours(C, G, geo, D, scene, meta):
 
 def far(C, G, X, Z, D):
     """The land beyond the corridor (the horizon): heights on a coarse grid ~`dalec` metres round the road (2 bytes a node: lo + v / 2
-    metres), the lakes (WorldCover's water) as runs [dry, wet, dry, ...]."""
+    metres), the lakes (WorldCover's water) as runs [dry, wet, dry, ...], with `led` the glaciers (WorldCover's snow and ice) as runs too."""
     R = C.get('dalec', 9000); cell = C.get('dalec_celica', 250)
     cx, cz = (X.min() + X.max()) / 2, (Z.min() + Z.max()) / 2
     x0 = math.floor((cx - R) / cell) * cell; z0 = math.floor((cz - R) / cell) * cell; n = int(2 * R / cell) + 1
@@ -299,12 +299,19 @@ def far(C, G, X, Z, D):
         a, o = G.to_ll(GX + ox, GZ + oz); acc = np.maximum(acc, np.nan_to_num(Dbig.sample(a, o), nan=0.0))
     H = 0.5 * H + 0.5 * acc
     lo_ = int(math.floor(H.min() / 10) * 10); v = np.clip(np.round((H - lo_) * 2), 0, 65535).astype('>u2')
-    wet = worldcover(la, lo) == 80; runs = []; cur = False; k = 0
-    for w in wet.ravel():
-        if bool(w) != cur: runs.append(k); k = 0; cur = not cur
+    wc = worldcover(la, lo)
+    out = {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo_, 'b64': b64(v.tobytes()), 'lake': runs(wc == 80)}
+    if C.get('led'): out['ice'] = runs(wc == 70)   # (the glaciers on the horizon: WorldCover's snow and ice, Furka's Rhône Glacier)
+    return out
+
+def runs(m):
+    """A boolean grid's run lengths, row by row: [false, true, false, ...] (the first run false, maybe 0 long)."""
+    out = []; cur = False; k = 0
+    for w in m.ravel():
+        if bool(w) != cur: out.append(k); k = 0; cur = not cur
         k += 1
-    runs.append(k)
-    return {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo_, 'b64': b64(v.tobytes()), 'lake': runs}
+    out.append(k)
+    return out
 
 # ---------------- OpenStreetMap's buildings, lakes and streams (Overture) ----------------
 def osm(C, G, box, X, Z, name):

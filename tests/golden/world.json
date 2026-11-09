@@ -1655,5 +1655,25 @@
    "lifeShadow:MeshBasicMaterial": "b97a62ac",
    "life:MeshBasicMaterial": "3e00b281"
   }
+ },
+ "furka": {
+  "meshes": 1669,
+  "verts": 811526,
+  "instances": 39628,
+  "props": 85,
+  "crowd": 225,
+  "world": "993a422",
+  "propsHash": "76117e6c",
+  "floor": "1291237b/10640",
+  "groups": {
+   "-:MeshLambertMaterial": "2b775d56",
+   "-:MeshPhongMaterial": "54e58fd1",
+   "-:MeshBasicMaterial": "bf326ea4",
+   "irFar:MeshLambertMaterial": "e31ae696",
+   "crowd:MeshLambertMaterial": "5ccc6f2d",
+   "ao:MeshBasicMaterial": "d9fc9c46",
+   "tyremarks:MeshBasicMaterial": "6246fe3c",
+   "roadwear:MeshLambertMaterial": "22f1e259"
+  }
  }
 }
