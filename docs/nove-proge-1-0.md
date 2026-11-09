@@ -37,8 +37,8 @@ Seja proge pred korakom `data` preveri:
 
 - Pravila za novo progo so v `CLAUDE.md` (ime, pravna varnost, obremenitev, meni, postopek), v `docs/nove-proge.md` (»Seznam pravil« in »Recept«) in v `docs/proga-livorno.md` (sklopi 2–5: proga v igri, okolica do 60 m, obremenitev, meni in opisi). Ob koncu zaženi še `node tools/proge-pregled.js` in v `docs/proge-pregled.md` dopiši vrstico »Do 60 m ob cesti«.
 - Graditelje ponovno uporabi: prelazi `js/world-prelaz.js` (Bâlea), dirkališča z boksi (Spa, Bathurst), ulične proge (Newcastle). Kar potrebuje samo ena proga, gre pod zastavico, ne v kopijo graditelja.
-- **Vsaka proga ima svojo sejo** (Opus, napor max), svojo vejo `nove-proge/<id>` in osnutek PR, odprt ob začetku dela (naslov »Nova proga: <Kraj, Država>«). Ko so povezani testi lokalno zeleni, se PR vpiše na konec vrste in ostane osnutek.
-- Seja se začne z »Naredi progo `<id>` po docs/nove-proge-1-0.md (partyslo)«. Pri ~300 tisoč žetonih napiše predajo v opis svojega PR (stanje, kaj manjka, kako testirati) in delo nadaljuje nova seja.
+- **Vsaka proga ima svojo sejo** (Fable 5.2 z ultracode, napor max; odločitev uporabnika 9. 11. 2026, `CLAUDE.md`, Seje: »Proge in grafika«; prej Opus), svojo vejo `nove-proge/<id>` in osnutek PR, odprt ob začetku dela (naslov »Nova proga: <Kraj, Država>«). Ko so povezani testi lokalno zeleni, se PR vpiše na konec vrste in ostane osnutek.
+- Seja se začne z besedo »ultracode« in stavkom »Naredi progo `<id>` po docs/nove-proge-1-0.md (partyslo)«. Pri ~300 tisoč žetonih napiše predajo v opis svojega PR (stanje, kaj manjka, kako testirati) in delo nadaljuje nova seja.
 
 ## Vrstni red in seje
 
