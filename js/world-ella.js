@@ -17,7 +17,7 @@
   API.sync.push(() => { ({ LOD, T } = API); });
 
   /* ================= ELLA (theme 'ella') =================
-     The A23 from the valley at Pattiyakumbura up to Ella in the hill country of Sri Lanka (Uva Province): four hairpins on a forested slope
+     The A23 from the valley at Pattiyakumbura up to Ella in the hill country of Sri Lanka (Uva Province): three hairpins and two sharp bends on a forested slope
      under Ella Rock, on a bright, humid morning. A look of its own: the ground's colours (eCol: the lush grass and the dark forest floor, the
      red laterite of the verges, the cuts and the yards, the grey gneiss of the bare faces, the bright green of the tea and the fields), the
      streams in their ravines (def.streams: Spa's brook shader, white where they fall steep, as the Kital Ella falls do; under the road through
@@ -108,7 +108,7 @@
     x.fillStyle = '#1f5a3a'; x.fillRect(0, 768, 1024, 128); x.strokeStyle = '#f2ecd8'; x.lineWidth = 8; x.strokeRect(8, 776, 1008, 112);
     txt('ELLA', 512, 812, 60, '#f6f1e2', 900); txt(finA, 512, 862, 46, '#f6f1e2', 900);
     x.fillStyle = '#7a1f2b'; x.fillRect(0, 896, 1024, 128); x.fillStyle = '#e8a628'; x.fillRect(0, 956, 1024, 8);
-    txt('ELLA · UVA', 512, 930, 52, '#fff', 980); txt('A23 · 4 HAIRPINS', 512, 994, 44, '#ffd25a', 900);
+    txt('ELLA · UVA', 512, 930, 52, '#fff', 980); txt('A23 · 3 HAIRPINS', 512, 994, 44, '#ffd25a', 900);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (eATex = t);
   }
   const E_BOARDS = [['ELLA', '#1d4f9a'], ['WELLAWAYA', '#1d4f9a'], ['BANDARAWELA', '#1d4f9a'], ['VIEWPOINT', '#6b4a22'], ['DANGEROUS BENDS', '#f2f0ea'], ['SLOW', '#f2f0ea'], ['ELLA ROCK', '#6b4a22'], ['PASSARA', '#1d4f9a']];
