@@ -385,13 +385,13 @@
     { const pbs = out.pitBoxes; T.pitStands = null;
       if (pbs && pbs.length) T.pitStands = [C.dS(pbs[0].s) - 1.35, C.dS(pbs[pbs.length - 1].s) + 1.35]; }
     addM(gl, aMat); addM(gp, lMat);
-    // the sign at the pit entry: an arrow and the 80 (no words)
+    // the sign at the pit entry: an arrow and the 80 (no words), 2 m beyond the pit lane's outer edge on its side (pitAt().o: the lane's centre, a distance)
     { const sE = sStart + PD[1] + 22, pE = T.pitAt(sE); if (pE) { const c2 = document.createElement('canvas'); c2.width = 256; c2.height = 160; const x2 = c2.getContext('2d');
       x2.fillStyle = '#1f3f8c'; x2.fillRect(0, 0, 256, 160); x2.strokeStyle = '#f4f1ec'; x2.lineWidth = 7; x2.strokeRect(5, 5, 246, 150); x2.fillStyle = '#f4f1ec';
       x2.beginPath(); x2.moveTo(70, 30); x2.lineTo(24, 64); x2.lineTo(70, 98); x2.lineTo(70, 76); x2.lineTo(120, 76); x2.lineTo(120, 52); x2.lineTo(70, 52); x2.closePath(); x2.fill();
       x2.beginPath(); x2.arc(190, 80, 46, 0, TAU); x2.fill(); x2.strokeStyle = '#c8261f'; x2.lineWidth = 11; x2.beginPath(); x2.arc(190, 80, 40, 0, TAU); x2.stroke();
       x2.fillStyle = '#16171a'; x2.font = '900 44px Arial, sans-serif'; x2.textAlign = 'center'; x2.textBaseline = 'middle'; x2.fillText('80', 190, 82);
-      const [x, z] = atSf(sE, sg * (pE.o * sg + 5.5)), i = T.idx(sE), hd = Math.atan2(-T.tz[i], -T.tx[i]);
+      const [x, z] = atSf(sE, sg * (pE.o + 5.5)), i = T.idx(sE), hd = Math.atan2(-T.tz[i], -T.tx[i]);
       mtPlane(C, C.ownTex(new THREE.CanvasTexture(c2)), x, 1.8, z, 3.2, 2.0, hd); for (const q2 of [-1.2, 1.2]) box(scen.get(x, z), x + Math.cos(hd + Math.PI / 2) * q2, 0, z + Math.sin(hd + Math.PI / 2) * q2, 0.14, 2.0, 0.14, 0, [0.6, 0.62, 0.64]); } }
 
     /* the paddock building: 326 m along the lane (OSM), its front 22.2 m from the centre line; ground floor garages every 10 m (the crews'
