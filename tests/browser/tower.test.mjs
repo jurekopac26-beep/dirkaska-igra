@@ -3,7 +3,7 @@
 // row lit; switched off in the settings: gone. On its side: at the right under the map, the player with one ahead and behind. The results:
 // every driver's laps (3 each for those at the line), the race's fastest lap in purple once, the pit stops.
 //   node tests/browser/tower.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('tower');
 const srv = await serve();
@@ -48,10 +48,9 @@ try {
   await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300);
 
   // the results: every driver's laps
-  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
-  await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
-  const lt = await page.evaluate(() => { const E = document.getElementById('res-laps'), rows = [...E.querySelectorAll('tbody tr')];
-    return { shown: !E.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
+  await driveToResults(page);   // (on autopilot; stuck against the barrier, put back on the road: lib.mjs)
+  const lt = await page.evaluate(() => { const R = document.getElementById('res-laps'), E = R.querySelector('table.laps') || R, rows = [...E.querySelectorAll('tbody tr')];   // (the laps table: the pit stops' own table below it)
+    return { shown: !R.classList.contains('off'), head: [...E.querySelectorAll('thead th')].map(t => t.textContent), rows: rows.length, laps: rows.map(tr => [...tr.querySelectorAll('td')].slice(2, 5).filter(td => /^\d+:\d\d\.\d{3}$/.test(td.textContent)).length),
       purple: E.querySelectorAll('td.ob').length, green: E.querySelectorAll('td.pb').length, me: !!E.querySelector('tr.me'), stops: rows.map(tr => tr.lastElementChild.textContent) }; });
   T.check('the results: every driver\'s laps (K1-K3), the fastest of the race once in purple, each best in green, the pit stops', lt.shown && lt.head.join() === '#,Voznik,K1,K2,K3,Postanki' && lt.rows === 22 && lt.laps.filter(n => n === 3).length >= 1 && lt.purple === 1 && lt.green >= 5 && lt.me && lt.stops.every(s => /^\d+$/.test(s)), JSON.stringify(lt));
 

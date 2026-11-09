@@ -15,9 +15,9 @@ const def = C.TRACKS.find(d => d.id === 'rio'), T = new C.Track(def);
 const L = T.len, dS = (s) => ((s - T.startS) % L + L) % L;   // metres after the start line
 const turn = (d, r) => { let a = 0; for (let s = d - r; s <= d + r; s += T.ds) a += T.k[T.idx(T.startS + s)] * T.ds; return a * 180 / Math.PI; };   // (+ right)
 
-// 1. the track: its name (place, country), a closed circuit of two laps, in the big championship, its real scale
-check('track: "Rio de Janeiro, Brazilija" (English "Rio de Janeiro, Brazil"), a closed circuit of 2 laps with pits, one of the real ones, in the big championship',
-  def.name === 'Rio de Janeiro, Brazilija' && def.en.name === 'Rio de Janeiro, Brazil' && !def.open && !def.timeTrial && def.laps === 2 && !!def.pit && !def.test && /Jacarepaguá/.test(def.desc) && /Jacarepaguá/.test(def.en.desc) &&
+// 1. the track: its name (place, country), a closed circuit of two laps, a test track (the user's decision of 5. 11. 2026), in the big championship, its real scale
+check('track: "Rio de Janeiro, Brazilija" (English "Rio de Janeiro, Brazil"), a closed circuit of 2 laps with pits, a test track since 5. 11. 2026 (one track a country: Brazil keeps Rio do Rastro), in the big championship',
+  def.name === 'Rio de Janeiro, Brazilija' && def.en.name === 'Rio de Janeiro, Brazil' && !def.open && !def.timeTrial && def.laps === 2 && !!def.pit && def.test === true && /Jacarepaguá/.test(def.desc) && /Jacarepaguá/.test(def.en.desc) &&
     C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('rio'), `${def.name} / ${def.en.name}, ${def.laps} laps`);
 {
   const diff = L / (def.realKm * 1000) - 1;

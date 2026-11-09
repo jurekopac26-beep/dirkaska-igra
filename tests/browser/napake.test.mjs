@@ -1,14 +1,15 @@
 // Orodje za napake · Označi (sklop 5 of docs/orodje-za-napake.md; js/napake.js): Bathurst at 25 s by the quick entry, Posnetek do sem.
 // Označi stands the replay; the drawing over the picture, the palette down the left edge (on its side) or a row above the timeline
-// (upright); a closed loop opens a bubble of its colour beside it and the keyboard writes in it (an I typed there is a letter, not Nazaj v
-// dirko); an open line opens none; a second loop of a colour goes to the same bubble; undo and the eraser (and undo of the eraser); a
-// bubble moved by its top; Zapri with marks asks first; Dodaj k zbirki keeps the moment (its time, lap, metres from the start, the
-// picture, the notes) and puts a flag on the timeline; the flag's tap: the replay there; the collection kept through Nazaj v dirko.
+// (upright); no bubble beside a loop (the user, 4. 11. 2026): the notebook is in the pencil's colour, red first, yellow when yellow is
+// taken, each colour its own note (the others' dots in its head), so what is circled in yellow is kept apart from what is circled in red;
+// undo and the eraser (and undo of the eraser); Zapri with marks asks first; Dodaj k zbirki keeps the moment (its time, lap, metres from
+// the start, the picture, a note a colour) and puts a flag on the timeline; the flag's tap: the replay there; the collection kept through
+// Nazaj v dirko.
 // Zgodovina napak (sklop 18): from the marking's bar and the choice; kept after Deli (the small picture and the text without Obdrži tudi
 // slike v igri); its state Neposlano → Poslano → Popravljeno → Zaprto (by hand), shared again; on its side and upright; the last 100, 20 with pictures.
 // Poslano by hand in a record and Označi vse kot poslane (a second tap within 3 s) for collections sent some other way.
 // Beležka (the notebook): always open bottom right over the picture, the keyboard in it with no click (a computer), back in it after
-// drawing and a tool, a letter typed anywhere goes in it, Escape takes the cursor out; its note with the moment, first in the text.
+// drawing and a tool, a letter typed anywhere goes in it, Escape takes the cursor out; its notes with the moment, a line a colour.
 //   node tests/browser/napake.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -43,74 +44,82 @@ try {
   T.check('"Označi": the replay stands (its time the same over 6 frames), the marking on with the pencil in red', s0.on && !a0.play && a1.t === a0.t && s0.tool === 'pen' && s0.col === 0, JSON.stringify({ a0, a1, on: s0.on, tool: s0.tool }));
   T.check('on its side (640 × 360): the palette (pencil, 6 colours, undo, eraser) down the left edge inside the screen, the timeline beside it; Dodaj k zbirki and Zapri for the replay\'s buttons; the drawing over the whole picture',
     L.n === 9 && L.col && L.inside && L.lineRight && L.bar && !L.rpBar && !L.top && L.cv && L.cvFull, JSON.stringify(L));
-  // the notebook: open bottom right, bigger than a bubble, the keyboard in it at once (its O and I letters: not Prikaz za razvijalca, not Nazaj v dirko)
+  // the notebook: open bottom right in the pencil's red, the keyboard in it at once (its O and I letters: not Prikaz za razvijalca, not Nazaj v dirko)
+  const RED = 'rgb(255, 59, 48)', ORANGE = 'rgb(255, 149, 0)', YEL = 'rgb(255, 225, 77)';
   const B0 = (await nk()).belezka, bt0 = await Q.evaluate(() => Math.min(...[...document.querySelectorAll('#replay-ui .rp-bot, #replay-ui .rp-zdaj')].map(e => e.getBoundingClientRect()).filter(r => r.height).map(r => r.top)));
-  T.check('the notebook (Beležka) open bottom right over the picture (clear of the timeline and ZDAJ, inside the screen), bigger than a bubble, the cursor in it',
-    B0.vis && B0.focus && B0.text === '' && B0.x > L.W / 2 && B0.x + B0.w <= L.W && B0.y >= 0 && B0.y + B0.h <= bt0 && B0.w > 220 && B0.h > 84 && B0.fs >= 14, JSON.stringify({ B0, bt0 }));
+  T.check('the notebook (Beležka) open bottom right over the picture (clear of the timeline and ZDAJ, inside the screen), red as the pencil (its edge and its head), the cursor in it',
+    B0.vis && B0.focus && B0.text === '' && B0.x > L.W / 2 && B0.x + B0.w <= L.W && B0.y >= 0 && B0.y + B0.h <= bt0 && B0.w > 220 && B0.h > 84 && B0.fs >= 14 && B0.c === 0 && B0.barva === 'rdeča' && B0.rob === RED && B0.glava === RED,
+    JSON.stringify({ B0, bt0 }));
   await Q.keyboard.type('Nebo utripa. Ovinek I'); await qf(1);
   const B1 = await nk(), rB = await rp(), dv = await Q.evaluate(() => Napake.nast.dev);
-  T.check('typed with no click: in the notebook (its O and I letters: no Prikaz za razvijalca, the replay stays)', B1.on && B1.belezka.text === 'Nebo utripa. Ovinek I' && dv === 0 && !!rB && rB.here, JSON.stringify({ text: B1.belezka.text, dv, rp: rB }));
+  T.check('typed with no click: in the notebook, the red note (its O and I letters: no Prikaz za razvijalca, the replay stays)', B1.on && B1.belezka.text === 'Nebo utripa. Ovinek I' && B1.notes[0] === B1.belezka.text && dv === 0 && !!rB && rB.here, JSON.stringify({ text: B1.belezka.text, notes: B1.notes, dv, rp: rB }));
 
-  // a red loop: its bubble beside it, the keyboard writing in it (I is a letter here)
+  // a red loop: no bubble beside it (the user, 4. 11. 2026: »zbriši rdeči okvirček«), the keyboard still in the red notebook
   await loop(250, 150, 50); await qf(1);
-  const s1 = await nk(), foc = await Q.evaluate(() => { const a = document.activeElement; return a && a.tagName === 'TEXTAREA' ? +a.closest('.nk-bub').dataset.c : -1; });
-  const b1 = s1.bubbles[0], room = await Q.evaluate(() => ({ bot: document.querySelector('#replay-ui .rp-bot').getBoundingClientRect().top, pal: document.getElementById('nk-pal').getBoundingClientRect().right }));
-  T.check('a closed red loop: a red bubble beside it (clear of the loop, the palette and the timeline, inside the screen), the cursor in it',
-    s1.strokes.length === 1 && s1.strokes[0].loop && s1.bubbles.length === 1 && b1.c === 0 && (b1.x >= 300 || b1.x + b1.w <= 200) && b1.x >= room.pal && b1.y + b1.h <= room.bot && b1.x + b1.w <= 640 && b1.y >= 0 && foc === 0,
-    JSON.stringify({ strokes: s1.strokes, bubbles: s1.bubbles, room, foc }));
-  await Q.keyboard.type('Sledi gum sredi ravnine, Inženirji'); await qf(1);
+  const s1 = await nk();
+  T.check('a closed red loop: drawn, no bubble beside it, the notebook red with the cursor in it',
+    s1.strokes.length === 1 && s1.strokes[0].loop && s1.bubbles === 0 && s1.belezka.c === 0 && s1.belezka.focus, JSON.stringify({ strokes: s1.strokes, bubbles: s1.bubbles, bel: s1.belezka }));
+  await Q.keyboard.type(', sledi gum'); await qf(1);
   const s2 = await nk(), r2 = await rp();
-  T.check('typed into the bubble: the red note (its I a letter: the replay stays, no Nazaj v dirko)', s2.on && s2.notes[0] === 'Sledi gum sredi ravnine, Inženirji' && s2.bubbles[0].text === s2.notes[0] && !!r2 && r2.here, JSON.stringify({ notes: s2.notes, rp: r2 }));
+  T.check('typed after the loop: on in the red note (the replay stays, no Nazaj v dirko)', s2.on && s2.notes[0] === 'Nebo utripa. Ovinek I, sledi gum' && s2.belezka.text === s2.notes[0] && !!r2 && r2.here, JSON.stringify({ notes: s2.notes, rp: r2 }));
 
-  // an open orange line: no bubble; a blue loop: its own bubble; a second red loop: the red bubble still the one
+  // orange: the notebook orange and empty, the red note kept (its dot in the head); an open orange line
   await tap('#nk-pal [data-c="1"]'); await line(380, 70, 470, 110);
   const s3 = await nk();
-  T.check('an orange line (open): drawn, no bubble for it', s3.col === 1 && s3.strokes.length === 2 && !s3.strokes[1].loop && s3.strokes[1].c === 1 && s3.bubbles.length === 1, JSON.stringify(s3.strokes));
+  T.check('orange tapped: the notebook orange and empty, the red note kept (its dot in the notebook\'s head); an open orange line drawn',
+    s3.col === 1 && s3.belezka.c === 1 && s3.belezka.rob === ORANGE && s3.belezka.text === '' && s3.notes[0] === s2.notes[0] && s3.belezka.pike.join() === '0' && s3.strokes.length === 2 && !s3.strokes[1].loop && s3.strokes[1].c === 1,
+    JSON.stringify({ bel: s3.belezka, strokes: s3.strokes }));
   T.check('a colour tapped and a line drawn: the keyboard back in the notebook', s3.belezka.focus, JSON.stringify(s3.belezka));
-  await tap('#nk-pal [data-c="3"]'); await loop(140, 225, 30); await Q.keyboard.type('Tekmeci v koloni');
-  await tap('#nk-pal [data-c="0"]'); await loop(560, 60, 25); await qf(1);
+  // yellow (the user, 4. 11. 2026: »če uporabnik vzame rumeno barvo, se beležka obarva rumeno«): a yellow loop and the yellow note
+  await tap('#nk-pal [data-c="2"]'); await loop(140, 225, 30); await Q.keyboard.type('Tabla za ograjo'); await qf(1);
   const s4 = await nk();
-  T.check('a blue loop: a blue bubble with its note; a second red loop: no second red bubble (one colour, one note)',
-    s4.strokes.length === 4 && s4.strokes.every((s, k) => s.loop === (k !== 1)) && s4.bubbles.length === 2 && s4.bubbles.filter(b => b.c === 0).length === 1 && s4.notes[3] === 'Tekmeci v koloni' && s4.notes[0] === s2.notes[0],
-    JSON.stringify({ strokes: s4.strokes, bubbles: s4.bubbles.map(b => [b.c, b.text]) }));
-  // Escape: the cursor out of the notebook (the marking stays); a letter typed then goes into it again
+  T.check('yellow: the notebook yellow (its edge and its head), a yellow loop and a yellow note of its own; the red note kept',
+    s4.col === 2 && s4.belezka.rob === YEL && s4.belezka.glava === YEL && s4.belezka.barva === 'rumena' && s4.notes[2] === 'Tabla za ograjo' && s4.belezka.text === s4.notes[2] && s4.notes[0] === s2.notes[0] &&
+    s4.strokes.length === 3 && s4.strokes[2].loop && s4.strokes[2].c === 2, JSON.stringify({ bel: s4.belezka, notes: s4.notes }));
+  // the red dot in the notebook's head: red again, its note back; a second red loop
+  await tap('#nk-note .nk-dots i[data-c="0"]'); const s5 = await nk();
+  T.check('the red dot in the notebook\'s head: the pencil and the notebook red again with the red note, the yellow note\'s dot there',
+    s5.col === 0 && s5.tool === 'pen' && s5.belezka.c === 0 && s5.belezka.rob === RED && s5.belezka.text === s2.notes[0] && s5.belezka.pike.join() === '2', JSON.stringify(s5.belezka));
+  await loop(560, 60, 25); await qf(1);
+  // Escape: the cursor out of the notebook (the marking stays); a letter typed then goes into it again (the red note)
   await Q.keyboard.press('Escape'); const B2 = await nk();
   await Q.keyboard.type(' Predlog: manj megle?'); const B3 = await nk();
-  T.check('Escape: the cursor out of the notebook, the marking stays; typing again: in the notebook (no click)',
-    B2.on && !B2.belezka.focus && B3.on && B3.belezka.focus && B3.belezka.text === 'Nebo utripa. Ovinek I Predlog: manj megle?', JSON.stringify({ B2: B2.belezka, B3: B3.belezka }));
+  T.check('Escape: the cursor out of the notebook, the marking stays; typing again: in the notebook (no click), on in the red note',
+    B2.on && !B2.belezka.focus && B3.on && B3.belezka.focus && B3.notes[0] === 'Nebo utripa. Ovinek I, sledi gum Predlog: manj megle?' && B3.belezka.text === B3.notes[0] && B3.strokes.length === 4,
+    JSON.stringify({ B2: B2.belezka, B3: B3.belezka, notes: B3.notes }));
 
-  // undo: the second red loop, then the blue one (its bubble gone, its note kept for an undo of the eraser ...)
+  // undo: the second red loop, then the yellow one (the notes stay as written)
   await tap('#nk-pal [data-nk="undo"]'); const u1 = await nk();
   await tap('#nk-pal [data-nk="undo"]'); const u2 = await nk();
-  T.check('undo: the last red loop goes (the red bubble stays: the first loop is there); again: the blue loop and its bubble go',
-    u1.strokes.length === 3 && u1.bubbles.length === 2 && u2.strokes.length === 2 && u2.bubbles.length === 1 && u2.bubbles[0].c === 0, JSON.stringify({ u1: u1.strokes, u2: u2.strokes, b: u2.bubbles.map(b => b.c) }));
+  T.check('undo: the last red loop goes; again: the yellow loop goes (the notes stay as written, no bubble)',
+    u1.strokes.length === 3 && u2.strokes.length === 2 && u2.strokes.every(s => s.c !== 2) && u2.notes[2] === 'Tabla za ograjo' && u2.notes[0] === B3.notes[0] && u2.bubbles === 0,
+    JSON.stringify({ u1: u1.strokes, u2: u2.strokes, notes: u2.notes }));
   // the eraser: across the orange line, it goes; undo brings it back
   await tap('#nk-pal [data-nk="erase"]'); await line(425, 60, 425, 120);
   const e1 = await nk();
   await tap('#nk-pal [data-nk="undo"]'); const e2 = await nk();
   T.check('the eraser across the orange line: it goes, the red loop stays; undo: the line back', e1.tool === 'erase' && e1.strokes.length === 1 && e1.strokes[0].c === 0 && e2.strokes.length === 2 && e2.strokes[1].c === 1, JSON.stringify({ e1: e1.strokes, e2: e2.strokes }));
 
-  // the red bubble moved by its top
-  const g = await r('.nk-bub[data-c="0"] .nk-grip'), bb0 = (await nk()).bubbles[0];
-  await Q.mouse.move(g.x + 20, g.y + g.h / 2); await Q.mouse.down(); await Q.mouse.move(g.x - 40, g.y + g.h / 2 + 30, { steps: 6 }); await Q.mouse.up();
-  const bb1 = (await nk()).bubbles[0], s5 = await nk();
-  T.check('the bubble moved by its top (60 px left, 30 down), its note and the marks as they were', Math.abs(bb1.x - (bb0.x - 60)) < 2 && Math.abs(bb1.y - (bb0.y + 30)) < 2 && bb1.text === bb0.text && s5.strokes.length === 2,
-    JSON.stringify({ from: [bb0.x, bb0.y], to: [bb1.x, bb1.y] }));
+  // yellow again: the yellow note back, a yellow loop round something else (the user, 4. 11. 2026: »posebej shrani, kaj je bilo okroženo z rumeno«)
+  await tap('#nk-pal [data-c="2"]'); await loop(330, 90, 25); await qf(1); const s6 = await nk();
+  T.check('yellow again: the notebook yellow with the yellow note, a yellow loop', s6.col === 2 && s6.belezka.text === 'Tabla za ograjo' && s6.belezka.pike.join() === '0' && s6.strokes.length === 3 && s6.strokes[2].c === 2 && s6.strokes[2].loop,
+    JSON.stringify({ bel: s6.belezka, strokes: s6.strokes }));
 
   // Zapri with marks: it asks first (a second tap would throw them away)
   await tap('#nk-bar .nk-close'); const z1 = await nk(), zt = await Q.evaluate(() => document.querySelector('#nk-bar .nk-close').textContent);
-  T.check('"Zapri" with marks on the picture: it asks first ("Zavrzi oznake?"), the marks stay', z1.on && z1.strokes.length === 2 && zt === 'Zavrzi oznake?', zt);
+  T.check('"Zapri" with marks on the picture: it asks first ("Zavrzi oznake?"), the marks stay', z1.on && z1.strokes.length === 3 && zt === 'Zavrzi oznake?', zt);
 
   // Dodaj k zbirki: the moment kept, a flag on the timeline
   await tap('#nk-bar .nk-add'); await qf(2);
   const k1 = await nk(), r3 = await rp(), fl = await Q.evaluate(() => [...document.querySelectorAll('#rp-line .nk-flag')].map(f => ({ left: parseFloat(f.style.left), n: f.textContent })));
   const it = k1.zbirka[0], want = r3 ? 100 * (it.t - r3.t0) / (r3.t1 - r3.t0) : NaN;
-  T.check('"Dodaj k zbirki": the marking off, the replay\'s buttons back; the moment kept (its time, lap 1, metres from the start, the picture 1280 px, the marks, the notes by colour)',
+  T.check('"Dodaj k zbirki": the marking off, the replay\'s buttons back; the moment kept (its time, lap 1, metres from the start, the picture 1280 px, the marks, a note a colour: red, yellow)',
     !k1.on && (await vis('#replay-ui .rp-bar')) && !(await vis('#nk-bar')) && k1.zbirka.length === 1 && Math.abs(it.t - a0.t) < 1e-6 && it.lap === 1 && it.s > 0 && it.s < 6300 && !!it.img && Math.max(...it.img) === 1280 &&
-    it.strokes === 2 && it.zapisi.length === 1 && it.zapisi[0] === 'rdeča: ' + s2.notes[0], JSON.stringify(it));
+    it.strokes === 3 && it.zapisi.length === 2 && it.zapisi[0] === 'rdeča: ' + B3.notes[0] && it.zapisi[1] === 'rumena: Tabla za ograjo' && it.bel === '' && it.barvna, JSON.stringify(it));
   const rl = (await Q.evaluate(() => Napake.porocilo())).split('\n').filter(l => /^#1 /.test(l));
-  T.check('the notebook\'s note with the moment, first in the text (#1 time K1 s=…m beležka »…«), then the bubble\'s (rdeča »…« v_krogu=[…])',
-    it.bel === B3.belezka.text && rl.length === 2 && /^#1 \d\d:\d\d\.\d{3} K1 s=\d+m beležka »Nebo utripa\. Ovinek I Predlog: manj megle\?«$/.test(rl[0]) && rl[1].includes(' rdeča »' + s2.notes[0] + '« v_krogu=['), JSON.stringify({ bel: it.bel, rl }));
+  T.check('the notes in the text, a line a colour (#1 time K1 s=…m rdeča »…« v_krogu=[…], then rumena »…« v_krogu=[…]); the orange line with no note none; no "beležka" line',
+    rl.length === 2 && /^#1 \d\d:\d\d\.\d{3} K1 s=\d+m rdeča »Nebo utripa\. Ovinek I, sledi gum Predlog: manj megle\?« v_krogu=\[.*\]$/.test(rl[0]) && /^#1 \d\d:\d\d\.\d{3} K1 s=\d+m rumena »Tabla za ograjo« v_krogu=\[.*\]$/.test(rl[1]),
+    JSON.stringify(rl));
   T.check('a flag "1" on the timeline where the moment is', fl.length === 1 && fl[0].n === '1' && Math.abs(fl[0].left - want) < 0.2, JSON.stringify({ fl, want }));
 
   // upright (360 × 640): the palette a row above the timeline, the bar below it
@@ -120,11 +129,12 @@ try {
     return { n: pal.length, row: new Set(pal.map(p => Math.round(p.top))).size === 1, inside: pal.every(p => p.left >= 0 && p.right <= W && p.width >= 30), above: Math.max(...pal.map(p => p.bottom)) < ln.top - 10, below: bar.top > ln.bottom, barIn: bar.left >= 0 && bar.right <= W }; });
   T.check('upright (360 × 640): the palette in one row above the timeline (clear of ZDAJ), inside the screen; Dodaj k zbirki and Zapri below the timeline', P.n === 9 && P.row && P.inside && P.above && P.below && P.barIn, JSON.stringify(P));
   await loop(120, 250, 45); await qf(1);
-  const p1 = await nk(), pb = p1.bubbles[0], palTop = (await r('#nk-pal')).y;
-  T.check('upright: a loop\'s bubble inside the screen, above the palette', p1.bubbles.length === 1 && pb.x >= 0 && pb.x + pb.w <= 360 && pb.y + pb.h <= palTop && pb.w <= 0.5 * 360, JSON.stringify({ pb, palTop }));
+  const p1 = await nk(), nb = p1.belezka, palTop = (await r('#nk-pal')).y;
+  T.check('upright: a loop opens no bubble; the notebook (red) inside the screen, above the palette', p1.bubbles === 0 && p1.strokes.length === 1 && nb.vis && nb.c === 0 && nb.x >= 0 && nb.x + nb.w <= 360 && nb.y + nb.h <= palTop + 1,
+    JSON.stringify({ nb, palTop }));
   await tap('#nk-bar .nk-close'); await tap('#nk-bar .nk-close'); await qf(1);
   const p2 = await nk();
-  T.check('"Zapri" twice: the marks thrown away, the collection as it was (one moment)', !p2.on && p2.strokes.length === 0 && p2.bubbles.length === 0 && p2.zbirka.length === 1, JSON.stringify({ on: p2.on, zb: p2.zbirka.length }));
+  T.check('"Zapri" twice: the marks thrown away, the collection as it was (one moment)', !p2.on && p2.strokes.length === 0 && p2.bubbles === 0 && p2.zbirka.length === 1, JSON.stringify({ on: p2.on, zb: p2.zbirka.length }));
 
   // the flag's tap: the replay at the moment, standing
   await Q.evaluate(() => { const P = window.__game.replay; if (!P.play) window.__game.onAction('rp-play'); }); await qf(2);
@@ -157,8 +167,8 @@ try {
   const zbar = await Q.evaluate(() => { const b = [...document.querySelectorAll('#nk-bar button')].map(e => e.getBoundingClientRect()); return { n: b.length, rows: new Set(b.map(r => Math.round(r.top))).size, in: b.every(r => r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) }; });
   await tap('#nk-bar [data-nk="zg"]'); await Q.waitForSelector('#nk-zg .nk-item');
   const z0 = (await nk()).zg, zf0 = await fits();
-  T.check('Zgodovina in the marking\'s bar (Dodaj k zbirki, Zgodovina, Zapri in one row): the collection kept (the track, the date, 1 moment, 0 flags, Neposlano); inside the screen on its side',
-    zbar.n === 3 && zbar.rows === 1 && zbar.in && z0.items.length === 1 && /^Bathurst, Avstralija \d+\. \d+\. \d{4} \d\d:\d\d · 1 trenutek · 0 zastavic Neposlano$/.test(z0.items[0]) && fitOk(zf0), JSON.stringify({ zbar, z0, zf0 }));
+  T.check('Zgodovina in the marking\'s bar (Dodaj k zbirki, Zgodovina, Zapri in one row): the collection kept (the track, the player\'s car · ni do cilja, the date, 1 moment, 0 flags, Neposlano); inside the screen on its side',
+    zbar.n === 3 && zbar.rows === 1 && zbar.in && z0.items.length === 1 && /^Bathurst, Avstralija .+ · ni do cilja \d+\. \d+\. \d{4} \d\d:\d\d · 1 trenutek · 0 zastavic Neposlano$/.test(z0.items[0]) && fitOk(zf0), JSON.stringify({ zbar, z0, zf0 }));
   await tap('#nk-zg [data-nk-d="zapri"]'); await tap('#nk-bar .nk-close');
   // the choice: Obdrži tudi slike v igri off, Deli: still in Zgodovina napak, Poslano, the small picture and the text
   await Q.evaluate(() => Napake.izbira()); await Q.waitForSelector('#nk-dlg [data-nk-d="deli"]');
@@ -195,11 +205,11 @@ try {
   T.check('upright (360 × 640): Zgodovina napak inside the screen (the record, the list), nothing wider than its box', fitOk(zf1) && fitOk(zf2), JSON.stringify({ zf1, zf2 }));
   await tap('#nk-zg [data-nk-d="zapri"]'); await Q.evaluate(() => { const d = document.querySelector('#nk-dlg [data-nk-d="zapri"]'); if (d) d.click(); });
   await Q.setViewportSize({ width: 640, height: 360 });
-  // the bounds: 105 more (older) collections: 100 kept, the newest 20 with their pictures, the older ones the small picture and the text
+  // the bounds: 105 more collections, an hour older than now (the real one above stays the newest however slow the run is): 100 kept, the newest 20 with their pictures, the older ones the small picture and the text
   const B = await Q.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 32; c.height = 20; c.getContext('2d').fillRect(0, 0, 8, 8);
     const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8)), png = await new Promise(r => c.toBlob(r, 'image/png')), now = Date.now();
-    for (let k = 0; k < 105; k++) await Napake.zg.put({ id: 't' + k, name: 'napake_t' + k, date: now - (k + 1) * 60000, track: 'bathurst', tname: 'Bathurst, Avstralija', n: 1, flags: 0, text: 'RRA-NAPAKE t' + k, status: 'neposlano', files: [{ name: 't' + k + '.png', blob: png, w: 32, h: 20 }], thumb: jpg });
+    for (let k = 0; k < 105; k++) await Napake.zg.put({ id: 't' + k, name: 'napake_t' + k, date: now - 3600000 - (k + 1) * 60000, track: 'bathurst', tname: 'Bathurst, Avstralija', n: 1, flags: 0, text: 'RRA-NAPAKE t' + k, status: 'neposlano', files: [{ name: 't' + k + '.png', blob: png, w: 32, h: 20 }], thumb: jpg });
     const l = await Napake.shranjene();
     return { n: l.length, MAX: Napake.zg.MAX, FULL: Napake.zg.FULL, first: l[0].id, full: l.slice(1, 20).every(r => r.files.length === 1), lite: l.slice(20).every(r => !r.files.length && r.nf === 1 && r.thumb && r.text), ids: l.map(r => r.id) };
   });

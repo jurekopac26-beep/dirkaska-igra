@@ -3,11 +3,18 @@
      Drawn in the body (DELI.add, the car's build calls K.deli(id, stock) where its mounts say):
        crte        racing stripes over the bonnet, the roof and the tailgate (K.strp: the stripes' colour, car.stripeCol or the game's),
                    the stock side stripe kept (the car's around); mounts.crte { z: [in, out] the band they lie in across, beside a
-                   bonnet's scoop }
+                   bonnet's scoop, x: [[x0, x1] ...] only these stretches of the top (not over an open bay or a canvas roof), w: the
+                   top's half width, every band cut to it (a narrow bonnet: none past its edge; none: as drawn), fit: true, each band cut to
+                   the top's own half width along the car, less 1.2 cm (JASTREB's nose narrowing to its mouth, the tail to its end), slash:
+                   the doors' diagonal slashes' (8) top, as steep (none: 0.84, clipped at the belt; PANTER's door glass a pane from the belt),
+                   dy: the side ones (7, 8, 13, 16) that much higher, KOLIBRI's sill-high bands on a tall body's flat side (GOLJAT's; none: as drawn),
+                   sx: [x0, x1] the bands along the sides (7, 13) only that far (none: -1.48 to 1.45; SKAKAČ's sides under its wings) }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
                    flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
-                   mounts.soncni_pas { x: [top, foot] }
+                   mounts.soncni_pas { x: [top, foot], lift: more over a windscreen whose glass panels bulge over the top's line; pane:
+                   [top inner, top corner, base inner, base corner], a windscreen that is a pane of its own (its right half), part: its part,
+                   w: its half width (none: out to the top's crease, wt; a pane in a frame narrower than the loft's top, GAD's) }
        zamasek     the fuel cap on the side, in place of the stock one (flaps, aluminium, racing, carbon caps); mounts.zamasek { x, y, z, r }
        celjusti    the brake calipers behind the rims' spokes (in the body: they never spin; a steered wheel turns past them a little);
                    with a brake kit (zavore) none of their own: the kit's caliper in their colour (DELI.calColour(n), js/deli/bok.js);
@@ -77,6 +84,31 @@
       topZ: (poly, col, lift) => { for (const t of fine(tris(poly))) { LD.top(t, col, lift || 0.008); LD.top(t.map(([u, v]) => [u, -v]).reverse(), col, lift || 0.008); } },   // (mirrored across)
     };
   }
+  // a windscreen that is a pane of its own, not the loft's band (LEV KABRIO's): pane [top inner, top corner, base inner, base corner] of its
+  // right half (mirrored), a facet flat across the middle and one each side from the inner edge out to the corner, each side facet two
+  // triangles split from its top corner to the base's inner point (as the car's K.face splits its quad). A point (x from the top's to the
+  // base's, z) on the plane under it, lifted along that plane's normal; pieces cut at the folds and the side facets' diagonals, each on
+  // one plane
+  function paneLayer(K, pane, part) {
+    const [TI, TC, BI, BC] = pane, mix = (a, b, t) => [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * t), tOf = (x) => (x - TI[0]) / (BI[0] - TI[0]);
+    const I = (x) => mix(TI, BI, tOf(x)), C = (x) => mix(TC, BC, tOf(x)), fold = (x) => I(x)[2];
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], crs = (u, v) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const plane = (A, B, D) => { const n = crs(sub(B, A), sub(D, A)), l = Math.hypot(...n) * (n[1] < 0 ? -1 : 1), u = n.map(q => q / l);   // (its normal up / out)
+      return { n: u, y: (x, z) => A[1] - (u[0] * (x - A[0]) + u[2] * (z - A[2])) / u[1] }; };
+    const PL = [plane(TI, BI, [TI[0], TI[1], -TI[2]]), plane(TC, BC, BI), plane(TC, BI, TI)];   // (the middle; the right side's outer triangle, its inner one)
+    const g = (x, a) => (BI[0] - TC[0]) * (a - TC[2]) - (BI[2] - TC[2]) * (x - TC[0]), gOut = Math.sign(g(BC[0], BC[2])) || 1;   // (which side of the diagonal: > 0 the outer triangle)
+    const cut = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a);
+      if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out; };
+    const o = { part: part || 'body' };
+    const top = (poly, col, lift) => { const l = lift || 0.008, pcs = [[cut(cut(poly, (p) => p[1] + fold(p[0])), (p) => fold(p[0]) - p[1]), 0, 1]];
+      for (const sd of [-1, 1]) { const S = cut(poly, (p) => sd * p[1] - fold(p[0])), G = (p) => gOut * g(p[0], sd * p[1]);
+        pcs.push([cut(S, G), 1, sd], [cut(S, (p) => -G(p)), 2, sd]); }
+      for (const [P, f, sd] of pcs) { if (P.length < 3) continue; const n = [PL[f].n[0], PL[f].n[1], PL[f].n[2] * sd];
+        const Q = P.map(([x, z]) => [x + n[0] * l, PL[f].y(x, sd * z) + n[1] * l, z + n[2] * l]);
+        const N = [0, 0, 0]; for (let i = 0; i < Q.length; i++) { const a = Q[i], b = Q[(i + 1) % Q.length]; N[0] += (a[1] - b[1]) * (a[2] + b[2]); N[1] += (a[2] - b[2]) * (a[0] + b[0]); N[2] += (a[0] - b[0]) * (a[1] + b[1]); }
+        K.face(N[0] * n[0] + N[1] * n[1] + N[2] * n[2] < 0 ? Q.slice().reverse() : Q, col, o); } };
+    return { LD: { prop: (x) => C(x)[2] - 0.016 }, top };   // (the band out to 1.2 cm inside the pane's edge, under its frame)
+  }
   // the top's painted runs along x (the main loft's segments that are not glass: the windscreen 'gf', the rear window 'gr')
   function paintRuns(K, x0, x1) {
     const S = K.body.secs, R = []; let a = null;
@@ -91,12 +123,25 @@
   function crte(K, n, m) {
     // (16 patterns that tell apart at a glance: centre, outboard, offset, tapered, full-width, bonnet-only, chequered, along the sides,
     // diagonal; mounts.crte.z the outboard band beside the bonnet's scoop, the centre ones run over it)
-    const Z = m.z || [0.27, 0.47], S = K.strp, ly = layer(K), runs = paintRuns(K), X0 = runs.length ? runs[0][0] : -1.7, X1 = runs.length ? runs[runs.length - 1][1] : 1.7;
-    const band = (z0, z1, col, o) => { o = o || {}; for (const [xa, xb] of runs) { if (o.x && (xb < o.x[0] || xa > o.x[1])) continue; const a = Math.max(xa, o.x ? o.x[0] : -9), b = Math.min(xb, o.x ? o.x[1] : 9);
-      const P = rect(a, z0, b, z1); if (o.one) ly.top(P, col, 0.007); else ly.topZ(P, col, 0.007); } };
+    const Z = m.z || [0.27, 0.47], S = K.strp, ly = layer(K), runs = m.x ? [].concat(...m.x.map(([a, b]) => paintRuns(K, a, b))) : paintRuns(K), X0 = runs.length ? runs[0][0] : -1.7, X1 = runs.length ? runs[runs.length - 1][1] : 1.7;
+    const W = m.w, cz = (z) => W == null ? z : Math.max(-W, Math.min(W, z));   // (w: the top's half width, the bands cut to it)
+    // fit: a piece (x, z) cut to |z| <= the top's half width less 1.2 cm, in pieces between the loft's sections (the width straight between them)
+    const half = (P, f) => { const out = []; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a);
+      if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out; };
+    // (the stretches it lies within whole: one piece, as drawn without fit)
+    const KN = K.body.secs.map(r => r[0]), fit = (P) => { if (!m.fit) return [P]; const out = [], push = (Q) => { if (Q.length >= 3 && Math.abs(area(Q)) > 1e-6) out.push(Q); }; let r0 = null;
+      const span = (a, b) => half(half(P, (p) => p[0] - a), (p) => b - p[0]), flush = (b) => { if (r0 != null) push(span(r0, b)); r0 = null; };
+      for (let k = 0; k < KN.length - 1; k++) { const x0 = KN[k], x1 = KN[k + 1], h0 = ly.LD.prop(x0, 'wt') - 0.012, h1 = ly.LD.prop(x1, 'wt') - 0.012, h = (x) => h0 + (h1 - h0) * (x - x0) / (x1 - x0);
+        const Q = span(x0, x1); if (Q.length < 3) { flush(x0); continue; }
+        if (Q.every((p) => Math.abs(p[1]) <= h(p[0]) + 1e-9)) { if (r0 == null) r0 = x0; continue; }
+        flush(x0); push(half(half(Q, (p) => h(p[0]) - p[1]), (p) => h(p[0]) + p[1])); }
+      flush(KN[KN.length - 1]); return out; };
+    const band = (z0, z1, col, o) => { o = o || {}; if (W != null) { z0 = cz(z0); z1 = cz(z1); if (z1 - z0 < 0.004) return; } for (const [xa, xb] of runs) { if (o.x && (xb < o.x[0] || xa > o.x[1])) continue; const a = Math.max(xa, o.x ? o.x[0] : -9), b = Math.min(xb, o.x ? o.x[1] : 9);
+      for (const P of fit(rect(a, z0, b, z1))) { if (o.one) ly.top(P, col, 0.007); else ly.topZ(P, col, 0.007); } } };
     const taper = (zc, w0, w1, col) => { for (const [xa, xb] of runs) { const w = (x) => w1 + (w0 - w1) * (x - X0) / ((X1 - X0) || 1);   // (wide at the nose, narrow at the tail)
-      ly.topZ([[xa, zc - w(xa) / 2], [xb, zc - w(xb) / 2], [xb, zc + w(xb) / 2], [xa, zc + w(xa) / 2]], col, 0.007); } };
-    const side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? -1.48 : x0, y0, x1 == null ? 1.45 : x1, y1), col, 0.006);
+      if (W != null && cz(zc + w(xa) / 2) - cz(zc - w(xa) / 2) < 0.004 && cz(zc + w(xb) / 2) - cz(zc - w(xb) / 2) < 0.004) continue;
+      for (const P of fit([[xa, cz(zc - w(xa) / 2)], [xb, cz(zc - w(xb) / 2)], [xb, cz(zc + w(xb) / 2)], [xa, cz(zc + w(xa) / 2)]])) ly.topZ(P, col, 0.007); } };
+    const SX = m.sx || [-1.48, 1.45], DY = m.dy || 0, side = (y0, y1, col, x0, x1) => ly.side(rect(x0 == null ? SX[0] : x0, y0 + DY, x1 == null ? SX[1] : x1, y1 + DY), col, 0.006);   // (sx: the bands along the sides only that far; dy: on a tall side)
     const zo = Z[0], zi = Z[1];
     switch (n) {
       case 1: band(0.07, 0.11, S); break;                                                       // ozki črti: a narrow pair in the middle
@@ -106,7 +151,8 @@
       case 5: band(-zi + 0.02, -zo, S, { one: true }); break;                                   // folija: one stripe off-centre, on the left
       case 6: band(-0.025, 0.025, S, { one: true }); band(0.07, 0.1, S); band(0.14, 0.155, S); break;   // folija z robom: three in the middle, the outer thinner
       case 7: side(0.6, 0.66, S); side(0.68, 0.7, S); break;                                    // kovinska folija: two bands along the sides
-      case 8: for (const [x0, w] of [[0.55, 0.12], [0.3, 0.06]]) ly.side([[x0, 0.55], [x0 + w, 0.55], [x0 + w - 0.35, 0.84], [x0 - 0.35, 0.84]], S, 0.006); band(0.07, 0.15, S, { x: [0.82, 9] }); break;   // odsevna: diagonal slashes on the doors
+      case 8: { const y1 = m.slash || 0.84, dx = m.slash ? 0.35 * (y1 - 0.55) / 0.29 : 0.35;   // (slash: their top lower, as steep: under a door's glass that starts at the belt)
+        for (const [x0, w] of [[0.55, 0.12], [0.3, 0.06]]) ly.side([[x0, 0.55 + DY], [x0 + w, 0.55 + DY], [x0 + w - dx, y1 + DY], [x0 - dx, y1 + DY]], S, 0.006); band(0.07, 0.15, S, { x: [0.82, 9] }); break; }   // odsevna: diagonal slashes on the doors
       case 9: taper(0.2, 0.2, 0.04, S); break;                                                  // lakirani črti: a pair narrowing from the nose to the tail
       case 10: band(0.04, 0.15, S, { x: [0.82, 9] }); band(0.15, 0.165, BLK, { x: [0.82, 9] }); band(0.04, 0.15, S, { x: [-9, -1.6] }); break;   // lakirane z robom: on the bonnet and the tailgate only
       case 11: band(-0.3, 0.3, S, { one: true }); break;                                        // kovinski lak: one band the width of the roof's middle
@@ -201,16 +247,17 @@
     13: { c: WHT, refl: true }, 14: { c: 's', print: true }, 15: { c: [0.16, 0.16, 0.17], perf: true }, 16: { c: 's', print: true, refl: true } };
   function soncni_pas(K, n, m) {
     // (the band from the windscreen's top edge down, over its whole width to the A-pillars: at each x out to the top's crease, wt)
-    const o = SUN[n]; if (!o) return; const ly = layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
-    const W = (x) => LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, lift || 0.006), Wm = W(x0);
+    const o = SUN[n]; if (!o) return; const ly = m.pane ? paneLayer(K, m.pane, m.part) : layer(K), LD = ly.LD, X = m.x || [0.16, 0.31], c = (q) => q === 's' ? K.strp : q, x0 = X[0], x1 = X[1], d = x1 - x0;
+    const up = m.lift || 0;   // (lift: over a windscreen whose glass panels bulge over the top's line, MIŠKA's one panel from the roof to the cowl)
+    const W = (x) => m.w != null ? m.w : LD.prop(x, 'wt') + 0.004, band = (xa, xb, col, lift) => ly.top([[xa, -W(xa)], [xb, -W(xb)], [xb, W(xb)], [xa, W(xa)]], col, (lift || 0.006) + up), Wm = W(x0);
     if (o.rainbow) { const RB = [[0.85, 0.12, 0.1], [0.95, 0.55, 0.08], [0.95, 0.85, 0.1], [0.15, 0.6, 0.25], [0.15, 0.35, 0.85]]; RB.forEach((col, i) => band(x0 + d * i / 5, x0 + d * (i + 1) / 5, col)); return; }
     if (o.fade) { band(x0, x0 + d * 0.55, c(o.c)); band(x0 + d * 0.55, x0 + d * 0.78, K.shade(c(o.c), 0.7)); band(x0 + d * 0.78, x1, K.shade(c(o.c), 0.45)); return; }
     if (o.perf) { band(x0, x0 + d * 0.4, c(o.c)); const k = K.hi ? 22 : 14; for (let r = 0; r < 3; r++) for (let i = 0; i < k; i++) { const xs = x0 + d * (0.45 + r * 0.19), z = -Wm + (i + 0.5 + (r % 2) * 0.5) * 2 * Wm / (k + 0.5);
-      ly.top(rect(xs, z - 0.012, xs + d * 0.1, z + 0.012), c(o.c), 0.006); } return; }
+      ly.top(rect(xs, z - 0.012, xs + d * 0.1, z + 0.012), c(o.c), 0.006 + up); } return; }
     band(x0, x1, c(o.c));
-    if (o.print) for (let i = 0; i < 8; i++) { const z = -Wm + (i + 0.5) * 2 * Wm / 8; ly.top([[x0 + d * 0.15, z - 0.05], [x1 - d * 0.15, z], [x0 + d * 0.15, z + 0.05]], i % 2 ? BLK : WHT, 0.008); }
+    if (o.print) for (let i = 0; i < 8; i++) { const z = -Wm + (i + 0.5) * 2 * Wm / 8; ly.top([[x0 + d * 0.15, z - 0.05], [x1 - d * 0.15, z], [x0 + d * 0.15, z + 0.05]], i % 2 ? BLK : WHT, 0.008 + up); }
     if (o.txt) { const G = glyphRects(o.txt), px = Math.min(d * 0.8 / 7, 2 * Wm * 0.9 / G.cols), zs = G.cols * px / 2, xt = x0 + (d - 7 * px) / 2;   // (read from the front: left to right is the car's right to left)
-      for (const [c0, r0, c1, r1] of G.R) ly.top(rect(xt + r0 * px, zs - c1 * px, xt + r1 * px, zs - c0 * px), c(o.tc), 0.009); }
+      for (const [c0, r0, c1, r1] of G.R) ly.top(rect(xt + r0 * px, zs - c1 * px, xt + r1 * px, zs - c0 * px), c(o.tc), 0.009 + up); }
   }
 
   // ================================================================ zamasek: the fuel cap on the side (in place of the stock one)
@@ -352,7 +399,7 @@
     return { mesh, seg, N };
   }
 
-  // the dress of a car with parts (render.js makeCarMesh): o { car, M, E (its kit entry), grp, bodyG, body, mat, dec, wf, wr, show }
+  // the dress of a car with parts (render.js makeCarMesh): o { car, M, E (its kit entry), grp, bodyG, body, mat, dec, wf, wr, wm (wheels.mid's), show }
   DELI.dress = function (o) {
     const D = DELI.clean(o.car.deli, o.M); if (!Object.keys(D).length) return null;
     const out = { low: 0, step: null, smoke: null }, geo = o.body.geometry, dirty = !!(o.mat && o.mat.userData && o.mat.userData.dirt);   // (the shared matCar (noDirt): never touched)
@@ -363,7 +410,7 @@
     let night = null;
     if (dirty && (D.barva || D.crte || D.zatemnitev || decals.length)) { night = dressMat(o.mat, fin, sfin, tint, decals); dressGeo(geo, decals, !!fin.jambs, o.car.color); }
     let G = null, gl = null;
-    if (D.luc_pod_avtom && GLOW[D.luc_pod_avtom]) { G = GLOW[D.luc_pod_avtom]; gl = glowMesh(o.M, o.E, o.wf, o.wr, G); o.grp.add(gl.mesh); }
+    if (D.luc_pod_avtom && GLOW[D.luc_pod_avtom]) { G = GLOW[D.luc_pod_avtom]; gl = glowMesh(o.M, o.E, o.wf, o.wr.concat(o.wm || []), G); o.grp.add(gl.mesh); }
     const cols = G && G.c ? G.c.map(hex3) : null, col = gl ? gl.mesh.geometry.attributes.color : null;
     let tt = 0, brk = 0;
     out.step = (dt, car, t, nk, braking) => {

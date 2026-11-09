@@ -17,7 +17,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('37'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'bangsaen'), T = new Core.Track(TD);
-check('37: on Bang Saen, a real track', D.track === 'bangsaen' && !!TD && !TD.test);
+check('37: on Bang Saen (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'bangsaen' && !!TD);
 const o = D.opts(D);
 check('its race: alone, one run, in the rain, the amphibian on the MEDVED (slower), no damage', o.tt && o.laps === 1 && o.rain === 1 && o.damage === 0 && o.playerModel.id === 'medved' && o.playerModel.vLim === 70, JSON.stringify({ tt: o.tt, rain: o.rain, m: o.playerModel.id }));
 check('8 people on 6 houses; 10 minutes', K.N === 8 && K.H === 6 && D.limit === 600 && D.stars[0] < D.stars[1] && D.stars[1] < D.limit);

@@ -354,7 +354,7 @@ const NVRide = (function () {
   function putModel(P, o) { for (const k of MKEYS) { if (o[k] === undefined) delete P[k]; else P[k] = o[k]; } P.gear = 1; P.rpm = P.m.idle; P.shiftT = 0; }
   function asModel(P, M) { const c = new Core.Car(M, { isPlayer: true, phys: P.phys, assist: Math.max(0, Core.ASSISTS.indexOf(P.assist)), color: P.color }), o = {}; for (const k of MKEYS) o[k] = c[k]; o.name = M.name; return o; }
   // the parts of the car's view the fire engine hides (its body and what is on it, its wheels, the marker), and puts back
-  const viewParts = (v, keep) => [].concat(v.bodyG ? v.bodyG.children.filter(o => o !== keep) : [], v.wf || [], v.wr || [], v.marker ? [v.marker] : []);
+  const viewParts = (v, keep) => [].concat(v.bodyG ? v.bodyG.children.filter(o => o !== keep) : [], v.wf || [], v.wr || [], v.wm || [], v.marker ? [v.marker] : []);
   function feBuild(P) {
     const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null, M = feModel(); if (!v || !M || typeof MisKit === 'undefined') return null;
     const vis = viewParts(v, null).map(o => [o, o.visible]), lights = (v.lights || []).map(L => L.clone()), run = { P, props: [], add(o) { this.props.push(o); return o; } };
@@ -453,6 +453,7 @@ const NVRide = (function () {
 
   /* ======================= the hooks ======================= */
   let H3 = null, trk = null, g0 = null, w0 = null;
+  const FA = () => (typeof NVFair !== 'undefined' ? NVFair : null);   // (js/nvfair.js: the lunapark's big wheel and big carousel the car rides)
   function init(h3, track, o = {}) {
     H3 = h3; trk = track; if (!trk) return false;
     if (GO) { gondFinish(); GO.st = fresh(); pose(GO.st); draw(1); for (const k of ['up', 'dn']) fogIn(GO.cab[k].fp); }
@@ -461,14 +462,15 @@ const NVRide = (function () {
     if (!trk.nvRide) { g0 = trk.ground2; w0 = trk.wall2; trk.nvRide = true;
       trk.ground2 = (x, z, y) => { let d = gondGround(x, z, y); if (d == null) d = trainGround(x, z, y); return d != null ? d : g0(x, z, y); };
       trk.wall2 = (x, z, y, out) => gondWall(x, z, y, out) || trainWall(x, z, y, out) || feWall(x, z, y, out) || moverWall(x, z, y, out) || (w0 ? w0(x, z, y, out) : false); }
+    if (FA()) FA().init(h3, trk);
     return true;
   }
-  function reset(P) { if (GO) { GO.st = fresh(); pose(GO.st); for (const k of ['up', 'dn']) GO.cab[k].open = { b: 0, f: 0 }; draw(1); } if (VT) { VT.S = trainFresh(); trainDraw(1); } if (FT && FT.mode === 'drive' && P) feOut(P); }
-  function step(dt, P) { gondStep(dt, P); trainStep(dt, P); feStep(dt, P); }
-  function post(P) { gondPost(P); trainPost(P); }
-  function frame(dt, alpha, P, live) { frN++; const a = alpha == null ? 1 : alpha; draw(a); trainDraw(a); if (FT) { FT.T.step(dt || 0, FT.mode === 'drive'); feCard(!!live); } }
+  function reset(P) { if (GO) { GO.st = fresh(); pose(GO.st); for (const k of ['up', 'dn']) GO.cab[k].open = { b: 0, f: 0 }; draw(1); } if (VT) { VT.S = trainFresh(); trainDraw(1); } if (FT && FT.mode === 'drive' && P) feOut(P); if (FA()) FA().reset(); }
+  function step(dt, P) { gondStep(dt, P); trainStep(dt, P); feStep(dt, P); if (FA()) FA().step(dt, P); }
+  function post(P) { gondPost(P); trainPost(P); if (FA()) FA().post(P); }
+  function frame(dt, alpha, P, live) { frN++; const a = alpha == null ? 1 : alpha; draw(a); trainDraw(a); if (FT) { FT.T.step(dt || 0, FT.mode === 'drive'); feCard(!!live); } if (FA()) FA().frame(dt, a); }
   // (js/game.js: no Na progo while the car rides; the tests)
-  const on = () => !!(GO && (GO.st.carry || GO.st.cin)) || !!(VT && VT.S && VT.S.carry);
+  const on = () => !!(GO && (GO.st.carry || GO.st.cin)) || !!(VT && VT.S && VT.S.carry) || !!(FA() && FA().on());
   const state = () => GO && { mode: GO.st.mode, f: GO.st.f, carry: GO.st.carry, cin: GO.st.cin, still: GO.st.still, rides: GO.st.rides, open: { up: Object.assign({}, GO.cab.up.open), dn: Object.assign({}, GO.cab.dn.open) },
     up: Object.assign({}, GO.cab.up.p), dn: Object.assign({}, GO.cab.dn.p), A: { x: GO.SA.x, z: GO.SA.z, top: GO.SA.top }, B: { x: GO.SB.x, z: GO.SB.z, top: GO.SB.top, drop: Object.assign({}, GO.SB.drop) }, hull: GO.hull, towers: GO.towers.map(t => [t.x, t.z]) };
   // (the tests: a place on a station or in a cabin; a cabin's door)

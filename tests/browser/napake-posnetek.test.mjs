@@ -5,7 +5,8 @@
 // the file into its replay: the same samples, the same cars, the flag in Zastavice, the tool's own scan, the report (naprava of the file,
 // posnetek=<name>); pojdi: the replay at a time poses the cars as recorded, a picture of it; Končaj: the title; a flag just after the last
 // sample still the file's own (Zastavice). tools/posnetek.mjs on the
-// file: the summary, its JSON, a picture at a time.
+// file: the summary, its JSON, a picture at a time. The header for tools/voznja.mjs (AI po tvoji liniji): the player's car (pf), the tyres
+// (ty), a changing weather (wxs); the tool on the file.
 //   node tests/browser/napake-posnetek.test.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -42,12 +43,18 @@ try {
   const b64 = bytes.toString('base64');
   const r1 = await Q.evaluate(async ([b64, SUM]) => {
     const sum = eval(SUM), blob = new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))]), { H, frames } = await Napake.rrp.beri(blob);
-    return { sum: sum(frames), n: frames.length, track: H.track, ver: H.ver, mode: H.mode, wx: H.wx, w: H.w, nc: H.n, cars: H.cars.map(c => c.name), pl: H.cars.findIndex(c => c.pl), flags: H.flags, dev: H.dev, date: H.date, laps: H.laps, lap1: H.cars[0].lap };
+    const me = H.cars.find(c => c.pl) || {}, O = window.__game.race.opts;
+    return { sum: sum(frames), n: frames.length, track: H.track, ver: H.ver, mode: H.mode, wx: H.wx, w: H.w, nc: H.n, cars: H.cars.map(c => c.name), pl: H.cars.findIndex(c => c.pl), flags: H.flags, dev: H.dev, date: H.date, laps: H.laps, lap1: H.cars[0].lap,
+      pf: me.pf || null, pfs: H.cars.filter(c => c.pf).length, ty: H.ty, wxs: H.wxs === undefined ? 'none' : H.wxs, upg: JSON.stringify(O.playerUpg || null), setup: JSON.stringify(O.playerSetup || null) };
   }, [b64, SUM]);
   T.check('read back: the same samples to the last bit (digest as __game.recSum), the header: Bathurst, the game\'s version, 22 cars as in the race, the player, the flag',
     r1.sum === r0.sum.h && r1.n === r0.sum.n && r1.track === 'bathurst' && r1.ver === r0.ver && r1.w === 7 && r1.nc === 22 && JSON.stringify(r1.cars) === JSON.stringify(r0.cars) && r1.pl === r0.pl &&
     r1.flags.length === 1 && Math.abs(r1.flags[0].t - r0.flags[0].t) < 1e-9 && /^race/.test(r1.mode) && /^suho/.test(r1.wx) && typeof r1.dev === 'string' && r1.date > 0,
     JSON.stringify({ r1: Object.assign({}, r1, { cars: r1.cars.length }), sum0: r0.sum, ver: r0.ver }));
+  // (AI po tvoji liniji, tools/voznja.mjs: the player's car as the race built it, the tyres, a changing weather: none in the quick entry)
+  T.check('the header for tools/voznja.mjs: the player\'s car (pf: its upgrades, set-up and assist as the race has them), no other car\'s; ty 1 (Bathurst\'s race with tyres); no wxs (the weather does not change)',
+    r1.pf && JSON.stringify(r1.pf.upg) === r1.upg && JSON.stringify(r1.pf.setup) === r1.setup && 'deli' in r1.pf && 'fm' in r1.pf && Number.isInteger(r1.pf.as) && r1.pf.as >= 0 && r1.pfs === 1 && r1.ty === 1 && r1.wxs === 'none',
+    JSON.stringify({ pf: r1.pf, pfs: r1.pfs, ty: r1.ty, wxs: r1.wxs, upg: r1.upg, setup: r1.setup }));
 
   // 3. not a recording: why, and no replay
   const bad = await Q.evaluate(async () => {
@@ -73,6 +80,8 @@ try {
   T.check('Shrani greyed with no race; Odpri …: the replay of the file on Bathurst (the panel closed, its controls), the same samples, the same cars and player, the flag on the timeline (Zastavice (1))',
     sb && o1.sum.h === r0.sum.h && o1.sum.n === r0.sum.n && JSON.stringify(o1.cars) === JSON.stringify(r0.cars) && o1.pl === r0.pl && !o1.set && o1.ui && o1.screen === 'none' && o1.flags === 'Zastavice (1)' && o1.nflag === 1 && /^Ti · /.test(o1.info),
     JSON.stringify(Object.assign({}, o1, { cars: o1.cars.length, sum0: r0.sum })));
+  const rp1 = await P.evaluate(() => { const r = window.__game.rpPit; return r && { n: r.log.length, cur: r.cur }; });
+  T.check('a replay opened from a file has no pit log (the file holds none): __game.rpPit an empty list, none posed, no error', !!rp1 && rp1.n === 0 && rp1.cur === null, JSON.stringify(rp1));
   await P.waitForFunction(() => Napake.iskanje.done, null, { timeout: 60000, polling: 200 });
   const rep = await P.evaluate(() => Napake.porocilo().split('\n'));
   T.check('the tool on it: the scan done; the report\'s first line of the file (proga=bathurst, naprava of the file, posnetek=<name>), the race\'s flag in it (⚑1 … K1)',
@@ -111,6 +120,13 @@ try {
   T.check('tools/posnetek.mjs: the summary (Bathurst, 22 cars, the flag), povzetek.json with the report and the tool\'s own flags, a picture at 20 s',
     res.code === 0 && /bathurst/.test(res.out) && js && js.glava.track === 'bathurst' && js.glava.n === 22 && js.zastavice.length === 1 && Array.isArray(js.samodejne) && /^RRA-NAPAKE/.test(js.porocilo) && pics.some(f => /^20\.0s-ti-lezece\.png$/.test(f)),
     JSON.stringify({ code: res.code, pics, out: res.out.split('\n').slice(0, 12) }));
+  // 7. tools/voznja.mjs (AI po tvoji liniji) on the game's own file: read, the player found, the 25 s of lap 1 no whole lap (tests/voznja.test.js: whole races)
+  const vout = path.join(OUT, 'voznja', 'profil.json');
+  const vz = await new Promise(r => execFile(process.execPath, [path.join(REPO, 'tools', 'voznja.mjs'), file, '--out', vout], { cwd: REPO, timeout: 600000 }, (err, so, se) => r({ code: err ? err.code || 1 : 0, out: so + se })));
+  const vj = fs.existsSync(vout) ? JSON.parse(fs.readFileSync(vout, 'utf8')) : null;
+  T.check('tools/voznja.mjs on the file: read, no whole lap in its 25 s (»ni celega kroga«), exit 1, profil.json without a profile',
+    vz.code === 1 && new RegExp(path.basename(file).replace(/\./g, '\\.') + ': ni celega kroga \\(v posnetku \\d+ s dirke\\)').test(vz.out) && vj && vj.proge.length === 0 && vj.datoteke[0] === path.basename(file),
+    JSON.stringify({ code: vz.code, out: vz.out.split('\n').slice(0, 6) }));
 } catch (e) {
   T.check('the test ran through', false, e && e.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : String(e));
 }

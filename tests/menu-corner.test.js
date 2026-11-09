@@ -1,7 +1,7 @@
 // The corner camera of the menu's track step (camera 3, docs/meni-izbira-proge.md sklop 4; tools/menu-corner.mjs): every real track has
 // its corner (tools/menu-corners.json: where along the track, inside the race's run, and the still camera found for it), its video
 // (assets/maps/corner-<id>.webm: VP9, 6 to 8 s, small for a phone) and its poster (corner-<id>.webp, 720 x 720); MENU.corners in
-// js/menu-data.js lists exactly the tracks with a video, no test track among them. After a new real track: node tools/menu-corner.mjs <id>
+// js/menu-data.js lists exactly the tracks with a video, no test track among them (but KEEP). After a new real track: node tools/menu-corner.mjs <id>
 //   node tests/menu-corner.test.js
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -15,6 +15,9 @@ require(path.join(ROOT, 'js', 'menu-data.js'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'menu-corners.json'), 'utf8')), LIST = global.MENU.corners || [];
 const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test), tests = defs.filter(d => d.test).map(d => d.id);
 const MAPS = path.join(ROOT, 'assets', 'maps');
+// test tracks that keep the corner video they had as real ones: Vršič (a test track since 6. 11. 2026) has no model of its land
+// (assets/tracks/), the picture camera 3 shows a track without a video, so without it the camera would have nothing to show
+const KEEP = ['vrsic'], dropped = tests.filter(id => !KEEP.includes(id));
 
 // the corners: every real track, inside its race's run (an open road between its start and finish), the camera off the corner's middle
 const nocfg = real.filter(d => !CFG[d.id]).map(d => d.id), out = [], nocam = [];
@@ -24,9 +27,9 @@ for (const d of real) {
   if (!(s >= 0 && s < T.len) || (d.open && !(s > T.startS && s < T.finishS))) out.push(d.id + ':' + s);
   const k = c.cam; if (!Array.isArray(k) || k.length !== 7 || !k.every(Number.isFinite) || !(k[6] >= 20 && k[6] <= 70) || Math.hypot(k[0] - k[3], k[2] - k[5]) < 15) nocam.push(d.id);
 }
-check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 40 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
-const testcfg = Object.keys(CFG).filter(id => tests.includes(id) || !defs.find(d => d.id === id));
-check('no test track (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
+check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 21 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
+const testcfg = Object.keys(CFG).filter(id => dropped.includes(id) || !defs.find(d => d.id === id));
+check('no test track but Vršič (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
 
 // the videos: WebM (EBML) with VP9, 6 to 8 s long (the segment's Duration, in the TimecodeScale's ms), 0.1 to 1.3 MB; the posters
 function webmInfo(b) {
@@ -54,9 +57,9 @@ for (const d of real) {
 const total = sizes.reduce((a, b) => a + b, 0);
 check(`every real track's corner video (VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).toFixed(1)} MB in all) and its poster (720 x 720, at most 120 kB)`, !vbad.length && total < 45e6, vbad.join('; '));
 
-// the menu's list: exactly the tracks with a video, sorted, no test track
+// the menu's list: exactly the tracks with a video, sorted, no test track (but Vršič: KEEP)
 const have = fs.readdirSync(MAPS).map(f => /^corner-(.+)\.webm$/.exec(f)).filter(Boolean).map(m => m[1]).sort();
-check(`MENU.corners (js/menu-data.js) lists exactly the tracks with a corner video (${LIST.length}), no test track`, JSON.stringify(LIST) === JSON.stringify(have) && !LIST.some(id => tests.includes(id)), JSON.stringify({ LIST, have }));
+check(`MENU.corners (js/menu-data.js) lists exactly the tracks with a corner video (${LIST.length}), no test track but Vršič`, JSON.stringify(LIST) === JSON.stringify(have) && !LIST.some(id => dropped.includes(id)), JSON.stringify({ LIST, have }));
 
 console.log(`\n${n - bad}/${n} passed`);
 process.exit(bad ? 1 : 0);

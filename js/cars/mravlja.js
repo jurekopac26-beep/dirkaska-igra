@@ -24,8 +24,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         bumperR: { m: 3, f: 0.12 },
       },
     },
-    // where the garage's parts go (js/deli.js): the rims only (a kart has no wing to swap and no lamps)
-    mounts: { platisca: {} },
+    // where the garage's parts go (js/deli.js): 8 of the 38 (docs/deli.md, Dirkalni): a kart has no body to carry them (no loft: no
+    // stripes, decals, bonnet or grille; no wing, lamps, bumpers to tow from, mirrors, doors, roof, glass, boot or fuel cap on a side),
+    // its exhaust the two-stroke's chamber up beside the seat (no tips under a tail) and nothing hidden (the engine, the airbox and the
+    // axle in full view; no springs: the frame is the suspension): the rims, the brakes and the nuts on its wheels, the calipers, the
+    // paint's finish, the underglow, the tyres and their smoke
+    mounts: {
+      platisca: {},
+      zavore: { s: 1 }, matice: { k: 3, r: 0.2 },
+      barva: {}, luc_pod_avtom: {}, gume: {}, celjusti: { r: [0.035, 0.07], a: [70, 125] }, dim_gum: { w: 0.2 },
+    },
     // the look: no loft (a kart is tubes and plastic): every piece drawn in an explicit part (KIT API v1, render.js): the frame, the floor
     // tray, the seat, the steering, the engine with its exhaust and the driver in 'body'; the front fairing with its front panel ('nose'), the
     // side pods ('podL' / 'podR'), the plastic rear bumper on its tubes ('bumperR'). Look units = metres (body.len / wid: the vehicle's)
@@ -116,6 +124,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             return [[-0.69, 0.05, z], [-0.92, 0.05, z], [-0.925, 0.05 + 0.08 * t, z], [-0.88, 0.05 + 0.15 * t, z], [-0.72, 0.05 + 0.17 * t, z], [-0.69, 0.05 + 0.11 * t, z]]; });
           K.skin(rings, (k, e) => e === 3 || e === 4 ? P : e === 0 ? DK : K.shade(P, 0.78), K.shade(P, 0.78), K.shade(P, 0.78));
         }, { hinge: [[-0.7, 0.1, -0.6], [-0.7, 0.1, 0.6]] });
+        for (const id of ['celjusti', 'dim_gum']) K.deli(id, () => {});   // (the garage's calipers, the tyre smoke: none stock)
       },
     },
   });
