@@ -10,14 +10,15 @@ Krogi `.github/workflows/tests.yml` na `main` in v pull requestih od 1388 do 183
 |---|---|---|---|
 | `pitahead` | 1665, 1670, 1702, 1777, 1815 | 1, 4, napaka v igri | test popravljen, čaka na odločitev o igri |
 | `slip` | 1620, 1632, 1832 | 1 | popravljeno |
-| `hud` | 1739 (`main`), 1777, 1832 | 3 | popravljeno |
+| `hud` | 1739 (`main`), 1777, 1832, 1910 (#305) | 3 | popravljeno |
 | `weather` | 1591, 1832 | 2 | popravljeno |
 | `pitswing` | 1632, 1665, 1675 | 2 | popravljeno |
+| `pitexit` | 1910 (#305, ponovitev) | zanka `toHand` brez `g.hud`: sporočilo kroga (ZADNJI KROG!) se je pokazalo šele po predaji, čez VOZIŠ TI! | popravljeno v #305 (d442cc9) |
 | `boxwarn` | 1632, 1673, 1675 | Trois-Rivières: zanka se konča v 1. krogu, opozorilo prazno (`//`) | naslednja seja |
 | `smoke` | 1543, 1673, 1777 | vsakič drug pregled (1777 Vršič, testna proga) | naslednja seja |
 | `newver` | 1556, 1591, 1620 | vsi pred #429 (kliki v meniju) | verjetno že popravljeno |
 | `pitfight`, `pitreplay`, `forecast`, `pits` | po 2 | | naslednja seja |
-| po enkrat | `redflag`, `pitexit`, `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `memory` (teksture 129 → 130), `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
+| po enkrat | `redflag`, `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `memory` (teksture 129 → 130), `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
 
 Prejšnji popravki nestabilnih testov na `main`: #317, #404, #429, #443, #445.
 
