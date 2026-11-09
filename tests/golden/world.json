@@ -1391,5 +1391,28 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "portomoniz": {
+  "meshes": 1624,
+  "verts": 857247,
+  "instances": 29840,
+  "props": 81,
+  "crowd": 143,
+  "world": "655e6c52",
+  "propsHash": "8f77dc8c",
+  "floor": "9fc8b0b0/8708",
+  "groups": {
+   "-:MeshLambertMaterial": "327ab547",
+   "-:MeshPhongMaterial": "a6d43508",
+   "-:MeshBasicMaterial": "4ff1c8f",
+   "irFar:MeshLambertMaterial": "a5aa9754",
+   "crowd:MeshLambertMaterial": "d3d62cd3",
+   "ao:MeshBasicMaterial": "182ef8c0",
+   "tyremarks:MeshBasicMaterial": "61d4c54",
+   "roadwear:MeshLambertMaterial": "4834ce60",
+   "life:MeshLambertMaterial": "5da61c48",
+   "lifeShadow:MeshBasicMaterial": "86610555",
+   "life:MeshBasicMaterial": "82eebeaa"
+  }
  }
 }

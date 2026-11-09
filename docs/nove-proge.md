@@ -139,7 +139,7 @@ Od 7. 11. 2026 proge s čakanja delajo seje po `docs/nove-proge-1-0.md` (ena sej
 | 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | v delu: PR #509 (osnutek; B6, skupina N4 v `docs/nove-proge-1-0.md`) |
 | 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | v delu: PR #523 (osnutek; B7, skupina N4) |
 | 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka (B9, skupina N5) |
-| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka (B10, skupina N6) |
+| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | narejena v PR #554 (osnutek do vrste; B10, skupina N6, vrstica 18 v `docs/vrsta.md`; opis `docs/proge/portomoniz.md`) |
 | 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | ne začni (brez izletne cone, 5. 11. 2026) |
 | 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | ne začni (brez izletne cone, 5. 11. 2026) |
 | 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | čaka (A9, skupina N5) |

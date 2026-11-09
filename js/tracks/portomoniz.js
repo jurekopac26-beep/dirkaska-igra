@@ -3,9 +3,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Porto Moniz (Portugal, the north-west tip of Madeira above the Atlantic): the last 4 km of the regional road ER101 from the village of
   // Santa (~465 m) down the steep north slope to the little town by the sea (~29 m): eight hairpins (def.curves) between the terraced fields,
-  // the vines in their windbreaks of dry heather and the stands of eucalyptus, pine and laurel, past the viewpoint above the town and the
+  // the vines in their windbreaks of dry heather and the stands of eucalyptus and laurel, past the viewpoint above the town and the
   // wayside shrine, the second viewpoint over the coast, and into the town's white houses to the line by the roundabout with the fountain.
-  // Below the road all the way the ocean, the black lava of the shore with the natural pools and the islet with its lighthouse off the
+  // Below the road all the way the ocean, the black lava of the shore in the surf and the islet with its lighthouse off the
   // point. One card, four ways to drive it (def.modes), as Bâlea: a race against the rivals over the closed road, a time trial, a duel with
   // one rival on the open road (cars, vans, buses, motorbikes and cyclists both ways: def.traffic) and a run from the police (generic patrol
   // cars: def.police). Only geographic names: no names of the hotels, restaurants, cafés or shops; the statue in the roundabout is a shape only.
@@ -28,12 +28,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'portomoniz', name: 'Porto Moniz, Portugalska', theme: 'portomoniz', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.75,
     maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line, as Bâlea's
     sea: { gulls: true },   // (the gulls over the shore: the render's flock)
-    desc: 'Porto Moniz na severozahodnem rtu Madeire: zadnji 4 km regionalne ceste ER101 od vasi Santa na 465 m po strmem pobočju nad Atlantikom do mesteca ob morju. Osem serpentin med terasami, vinogradi v zavetju vetrobranov iz suhe rese in sestoji evkaliptov, bora in lovorja, mimo razgledišča nad mestom in znamenja, drugega razgledišča nad obalo in med belimi hišami do cilja pri krožišču z vodnjakom na 29 m. Pod cesto ves čas ocean, črna lava obale z naravnimi bazeni in otoček s svetilnikom. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Porto Moniz, Portugal', desc: 'Porto Moniz on the north-west tip of Madeira: the last 4 km of the regional road ER101 from the village of Santa at 465 m down the steep slope above the Atlantic to the little town by the sea. Eight hairpins between the terraces, the vines sheltered by windbreaks of dry heather and the stands of eucalyptus, pine and laurel, past the viewpoint above the town and the wayside shrine, a second viewpoint over the coast and in among the white houses to the line by the roundabout with the fountain at 29 m. Below the road all the way the ocean, the black lava of the shore with its natural pools and the islet with the lighthouse. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'Down to the sea' },
+    desc: 'Porto Moniz na severozahodnem rtu Madeire: zadnji 4 km regionalne ceste ER101 od vasi Santa na 465 m po strmem pobočju nad Atlantikom do mesteca ob morju. Osem serpentin med terasami, vinogradi v zavetju vetrobranov iz suhe rese in sestoji evkaliptov in lovorja, mimo razgledišča nad mestom in znamenja, drugega razgledišča nad obalo in med belimi hišami do cilja pri krožišču z vodnjakom na 29 m. Pod cesto ves čas ocean, črna lava obale v pljuskanju valov in otoček s svetilnikom. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu in beg pred policijo.',
+    en: { name: 'Porto Moniz, Portugal', desc: 'Porto Moniz on the north-west tip of Madeira: the last 4 km of the regional road ER101 from the village of Santa at 465 m down the steep slope above the Atlantic to the little town by the sea. Eight hairpins between the terraces, the vines sheltered by windbreaks of dry heather and the stands of eucalyptus and laurel, past the viewpoint above the town and the wayside shrine, a second viewpoint over the coast and in among the white houses to the line by the roundabout with the fountain at 29 m. Below the road all the way the ocean, the black lava of the shore in the surf and the islet with the lighthouse. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'Down to the sea' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: PORTOMONIZ_H.map((h, i) => [i / (PORTOMONIZ_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [0, 0, 0], wet: { cs: [0, 0, 0] } },
+    medals: { cs: [127, 134, 144], wet: { cs: [138, 144, 155] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the island's
     // main road down to the town in summer: the holidaymakers' hire cars, the islanders' vans, the buses to Funchal and the coaches to the pools, a few motorbikes
     traffic: { mix: [0.62, 0.17, 0.1, 0.07, 0.04], bike: 4200 },
@@ -44,15 +44,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n": "Serpentina 1 · 390 m", "d": 694.0, "say": ["Hairpin one, and there is the ocean below!", "Into the first hairpin, seven more on the way down to the sea!"]},
       {"n": "Serpentina 2 · 369 m", "d": 923.0},
       {"n": "Serpentina 3 · 319 m", "d": 1415.0, "say": ["Hairpin three, down between the terraces!", "Round hairpin three, the town still a long way below!"]},
-      {"n": "Razgledišče · 290 m", "d": 1684.0, "say": ["Past the viewpoint on the right, the whole town and the pools below!", "The viewpoint, and the islet with the lighthouse straight ahead!"]},
-      {"n": "Znamenje · 288 m", "d": 1719.0, "say": ["Past the little wayside shrine!", "The shrine on the right, mind the drop!"]},
+      {"n": "Razgledišče · 290 m", "d": 1684.0, "say": ["Past the viewpoint on the right, the whole town and the sea below!", "The viewpoint, and the islet with the lighthouse straight ahead!"]},
+      {"n": "Kapelica · 288 m", "d": 1719.0, "say": ["Past the little wayside shrine!", "The shrine on the right, mind the drop!"]},
       {"n": "Serpentina 4 · 243 m", "d": 2117.0, "say": ["Hairpin four, halfway down!", "Into hairpin four, the vines either side!"]},
       {"n": "Serpentina 5 · 217 m", "d": 2388.0},
       {"n": "Serpentina 6 · 193 m", "d": 2584.0, "say": ["Hairpin six, the legs stacked one above the other!", "Round hairpin six, the coast right below you!"]},
       {"n": "Razgledišče · 180 m", "d": 2693.0, "say": ["The viewpoint over the coast on the left!", "Past the second viewpoint, the surf on the black rocks below!"]},
       {"n": "Serpentina 7 · 147 m", "d": 2941.0},
       {"n": "Serpentina 8 · 128 m", "d": 3211.0, "say": ["Hairpin eight, the last one!", "Into the last hairpin, and down to the town!"]},
-      {"n": "Porto Moniz · 29 m", "d": 3993.0, "say": ["Into Porto Moniz and the line by the roundabout!", "Down among the white houses, and the line!"]},
+      {"n": "Porto Moniz · 29 m", "d": 3980.0, "say": ["Into Porto Moniz and the line by the roundabout!", "Down among the white houses, and the line!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
