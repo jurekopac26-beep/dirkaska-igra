@@ -1309,6 +1309,7 @@ try {
       e1.from === 'spa' && e1.mid.turning && e1.mid.id === 'spa' && e1.id === next && idle(e1.ring) && e1.scr === 1 && zr, JSON.stringify({ e1, zOk, zr }));
     await page.keyboard.press('Escape'); await zem(page, 0).catch(() => null); await page.waitForTimeout(300);
     // a track picked in the quick list (Japan, Suzuka, Select): its card turns in from its side
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in 6: Japan's list two tracks, Suzuka and Irohazaka; Irohazaka after the real ones, Spa's place in the list kept)
     await page.click('.trow .flag button');
     await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });
     await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
@@ -1406,7 +1407,9 @@ try {
   // garage's buttons do: its back index.html?zaslon=avto&avto=<id>, its Izberi progo with &naprej=proga), then straight the track step
   // again, the same track (stran Odločitve m8, 2: not the game's car screen), on the garage's car (here another one for Izberi progo)
   {
-    const { ctx, page, errors } = await open();
+    // (the game's track a real one, Spa: the page's settings are set again on each load (lib.mjs), and with Jezero, the tests' own track, hidden
+    // behind NEUPORABNO, the game would come back from the garage on Jezero, rightly on NEUPORABNO's list, not on the track the step showed)
+    const { ctx, page, errors } = await open({ track: 'spa' });
     await ready(page);
     let gar = null, way = 'back', other = '';
     await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + ' +
