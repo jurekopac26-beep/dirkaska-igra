@@ -4,8 +4,22 @@
 const crypto = require('crypto');
 
 const DT = 1 / 120;
-const trackIds = (C) => C.TRACKS.filter(d => !d.test).map(d => d.id);   // every real track the game has (a new track file is tested
-// automatically); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
+// PROGE=seoul,spa: only these of the real tracks (GitHub's short round of a pull request that changes only tracks: tests/lib/krog.js,
+// .github/workflows/tests.yml); without it every one. A name that is no real track of the game is an error (no test passes having run on
+// nothing), and so is --update with PROGE: the references would keep only these tracks, the others' lost
+const progeEnv = () => (process.env.PROGE || '').split(',').map(s => s.trim()).filter(Boolean);
+function izbrane(ids) {
+  const P = progeEnv();
+  if (!P.length) return ids;
+  if (process.argv.includes('--update')) throw new Error(`PROGE=${P.join(',')} with --update: the references would keep only these tracks (update without PROGE)`);
+  const tuje = P.filter(id => !ids.includes(id));
+  if (tuje.length) throw new Error('PROGE: not a real track of the game: ' + tuje.join(', '));
+  return ids.filter(id => P.includes(id));
+}
+// a check's least number of tracks (the whole list came back): with PROGE exactly as many as named (izbrane: each a real track)
+const najmanj = (n) => progeEnv().length || n;
+const trackIds = (C) => izbrane(C.TRACKS.filter(d => !d.test).map(d => d.id));   // every real track the game has (a new track file is tested
+// automatically; PROGE: only those); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
 const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
@@ -117,4 +131,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

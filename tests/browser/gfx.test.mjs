@@ -4,7 +4,7 @@
 // gravel road nor on Pikes Peak, whose road has its own). On every track all of it is built and drawn without an error; the water
 // mirrors the race's sky (dark at night), the foam shows at the shore, the wear darkens with the rain.
 //   node tests/browser/gfx.test.mjs
-import { serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, trackIds, najmanj, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
 const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno'];   // (with a shore band; Livorno: the Ligurian Sea; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
@@ -48,7 +48,7 @@ try {
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }
-  T.check('every track: the glint on every car (Pikes Peak its own), the water with its shore band where there is water, the worn tarmac where it is tarmac', !bad.length && ids.length >= 14, bad.join(' | '));
+  T.check('every track: the glint on every car (Pikes Peak its own), the water with its shore band where there is water, the worn tarmac where it is tarmac', !bad.length && ids.length >= najmanj(14), bad.join(' | '));
   T.check('no shader or page errors on any track', errors.length === 0, errors.slice(0, 5).join(' | '));
 
   // 2. the foam at the shore: the Riviera's beach seen from above (the shore band drawn, then hidden: the band adds the white of the foam and the surf)
