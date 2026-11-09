@@ -61,6 +61,8 @@ Načrt za 33 posebnih misij. Odločitve so iz pogovora z uporabnikom (29. 10. 20
 
 ## Stanje
 
+**Misije ne gredo v različico 1.0** (odločitev uporabnika 9. 11. 2026 ob ~21.10: »Vse misije iz igre«): pred izidom se vse skrijejo za gumb NEUPORABNO (`CLAUDE.md`, »Pred izidom: NEUPORABNO«); skupaj z novo mapo in vsem, kar spada zraven, gredo v **različico 2.0**, ki izide pozneje (odločitev uporabnika 9. 11. 2026 ob ~22.30: »nova mapa in misije ter vse kar spada zraven nove mape pusti za kasneje za verzijo 2.0 ta bo izsla sele kasneje, sedaj je prioriteta fizika in grafika«). Delo na misijah je **ustavljeno** (odločitev uporabnika 9. 11. 2026 ob ~18.40: »zaustavi vse delo ki dela razne misije«). Do nove odločitve se ne dela nič od spodaj naštetega, kar še ni narejeno (misije na testnih progah, garaže na novi mapi); misije, ki so v igri, ostanejo, kot so (`CLAUDE.md`, »Posebne misije«).
+
 | Skupina (seja) | Misije | Ocena (h) | Stanje |
 |---|---|---|---|
 | 0 | Sistem misij | – | končano (PR #187) |
