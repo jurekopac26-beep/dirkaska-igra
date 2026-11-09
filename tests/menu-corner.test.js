@@ -14,20 +14,23 @@ global.window = global;
 require(path.join(ROOT, 'js', 'menu-data.js'));
 const CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'menu-corners.json'), 'utf8')), LIST = global.MENU.corners || [];
 const defs = C.TRACKS.filter(d => !d.variantOf), real = defs.filter(d => !d.test), tests = defs.filter(d => d.test).map(d => d.id);
+// the tanker's roads (def.vehicle, docs/proge-cisterna.md) have no corner video yet: it shows the AI cars racing, and on them only the
+// tanker drives, alone against the clock (the menu shows their model); the other real tracks every one
+const filmed = real.filter(d => !d.vehicle);
 const MAPS = path.join(ROOT, 'assets', 'maps');
 // test tracks that keep the corner video they had as real ones: Vršič (a test track since 6. 11. 2026) has no model of its land
 // (assets/tracks/), the picture camera 3 shows a track without a video, so without it the camera would have nothing to show
 const KEEP = ['vrsic'], dropped = tests.filter(id => !KEEP.includes(id));
 
 // the corners: every real track, inside its race's run (an open road between its start and finish), the camera off the corner's middle
-const nocfg = real.filter(d => !CFG[d.id]).map(d => d.id), out = [], nocam = [];
-for (const d of real) {
+const nocfg = filmed.filter(d => !CFG[d.id]).map(d => d.id), out = [], nocam = [];
+for (const d of filmed) {
   const c = CFG[d.id]; if (!c) continue;
   const T = new C.Track(d), s = c.s;
   if (!(s >= 0 && s < T.len) || (d.open && !(s > T.startS && s < T.finishS))) out.push(d.id + ':' + s);
   const k = c.cam; if (!Array.isArray(k) || k.length !== 7 || !k.every(Number.isFinite) || !(k[6] >= 20 && k[6] <= 70) || Math.hypot(k[0] - k[3], k[2] - k[5]) < 15) nocam.push(d.id);
 }
-check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 21 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
+check(`every real track (${filmed.length}; not the tanker's roads) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, filmed.length >= 21 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
 const testcfg = Object.keys(CFG).filter(id => dropped.includes(id) || !defs.find(d => d.id === id));
 check('no test track but Vršič (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
 
@@ -46,7 +49,7 @@ function webpSize(b) {
   return k === 'VP8X' ? [b.readUIntLE(24, 3) + 1, b.readUIntLE(27, 3) + 1] : k === 'VP8 ' ? [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff] : k === 'VP8L' ? [(b.readUInt32LE(21) & 0x3fff) + 1, ((b.readUInt32LE(21) >> 14) & 0x3fff) + 1] : null;
 }
 const vbad = [], sizes = [];
-for (const d of real) {
+for (const d of filmed) {
   const v = path.join(MAPS, 'corner-' + d.id + '.webm'), p = path.join(MAPS, 'corner-' + d.id + '.webp');
   if (!fs.existsSync(v) || !fs.existsSync(p)) { vbad.push(d.id + ': none'); continue; }
   const b = fs.readFileSync(v), w = webmInfo(b), q = fs.readFileSync(p), pd = webpSize(q);
@@ -55,7 +58,7 @@ for (const d of real) {
   if (!pd || pd[0] !== 720 || pd[1] !== 720 || q.length > 120e3) vbad.push(d.id + ' poster: ' + JSON.stringify({ pd, kb: Math.round(q.length / 1e3) }));
 }
 const total = sizes.reduce((a, b) => a + b, 0);
-check(`every real track's corner video (VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).toFixed(1)} MB in all) and its poster (720 x 720, at most 120 kB)`, !vbad.length && total < 45e6, vbad.join('; '));
+check(`every real track's corner video (not the tanker's roads; VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).toFixed(1)} MB in all) and its poster (720 x 720, at most 120 kB)`, !vbad.length && total < 45e6, vbad.join('; '));
 
 // the menu's list: exactly the tracks with a video, sorted, no test track (but Vršič: KEEP)
 const have = fs.readdirSync(MAPS).map(f => /^corner-(.+)\.webm$/.exec(f)).filter(Boolean).map(m => m[1]).sort();

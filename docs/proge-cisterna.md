@@ -37,7 +37,7 @@ Fairy Meadows: prvi izbrani odsek (35.45187, 74.60018 → 35.44976, 74.60066, +1
 - **Svet** (`js/world-gore.js`, slog `ledge`, `sea`): pod robom prepada teren pade pod ~70° do višinskega modela; na drugi strani lomljena skalna stopnica (0,5–1,9 m, z vrzelmi, nizka pri portalih) kot del pasu ob cesti; brez ograj, kolov, stebričkov in tabel; morje na svoji višini (Svalvogar); ptice z belo barvo primerkov (r128 ima en program na material).
 - **Test** `tests/lib/cisterna-proge.js` (vsaka proga `tests/<id>.test.js`): ime kot v tabeli, samo kronometer s cisterno, 400–505 m, podatki uvoza, prepadi ob vsaj pol dirke, grbine, ozka cesta (širša samo v ostrih ovinkih), rob prepada in skala blizu, cisterna na avtopilotu do cilja brez padca in reševanja, prikolica nikoli na naslonu (pod 80°), medalje.
 
-Posnetka ovinka za meni (`tools/menu-corner.mjs`) te proge nimajo: posnetek kaže dirko navadnih avtov, na teh progah pa vozi samo cisterna (meni pokaže maketo). Posnetek s cisterno je mogoč pozneje.
+Posnetka ovinka za meni (`tools/menu-corner.mjs`) te proge nimajo: posnetek kaže dirko navadnih avtov, na teh progah pa vozi samo cisterna (meni pokaže maketo; `tests/menu-corner.test.js` jih izpusti, `def.vehicle`). Posnetek s cisterno je mogoč pozneje. Zastave petih držav za meni (`assets/flags/`, `FLAG_FILES` v `js/menu.js`): `docs/meni-izbira-proge.md`.
 
 ## Razgibana cesta (odločitve uporabnika 9. 11. 2026)
 

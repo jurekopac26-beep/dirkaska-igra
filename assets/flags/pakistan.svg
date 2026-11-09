@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1000" width="1500" height="1000">
+  <title>Pakistan</title>
+  <!-- Ratio 2:3: a white band at the hoist a quarter of the length, the rest dark green. The crescent: on the green part's diagonal from
+       its upper fly corner to its lower hoist corner, A the green part's centre and B 13/20 of the height from that corner; a circle of
+       3/10 of the height round A less one of 11/40 round B. The star: five points, in a circle of 1/10 of the height round the point
+       where B's circle meets the diagonal (the crescent's opening), one point along the diagonal toward the upper fly corner.
+       Colours: green #01411C, white #FFFFFF. -->
+  <rect width="1500" height="1000" fill="#01411C"/>
+  <rect width="375" height="1000" fill="#FFFFFF"/>
+  <circle cx="937.5" cy="500" r="300" fill="#FFFFFF"/>
+  <circle cx="1014.18" cy="431.84" r="275" fill="#01411C"/>
+  <path fill="#FFFFFF" d="M1294.46 182.7L1257.73 245.39L1306 299.69L1235.03 284.13L1198.31 346.82L1191.17 274.51L1120.2 258.95L1186.77 229.83L1179.63 157.52L1227.9 211.83Z"/>
+</svg>

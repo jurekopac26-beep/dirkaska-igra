@@ -145,7 +145,7 @@ function changedFiles() {
 // content but the .md ones (documents, which only the tests of MD_TESTS read), except KODA_MD, which a test reads as data. GitHub's run
 // (.github/workflows/tests.yml) records it when every job has passed; a later run of the same fingerprint (only documents changed:
 // docs/vrsta.md, a plan, README.md; or main after merging a pull request whose code passed) runs only MD_TESTS (--dokumenti)
-const KODA_MD = ['docs/gorske-proge.md'];   // (the table of the mountain roads: tests/lib/gore.js)
+const KODA_MD = ['docs/gorske-proge.md', 'docs/proge-cisterna.md'];   // (the tables of the mountain roads, tests/lib/gore.js, and of the tanker's roads, tests/lib/cisterna-proge.js)
 // the tests that read .md files they do not name, listing the repository's files: the car makers' names in every file, the frozen files of
 // the test tracks (docs/proge/<id>.md among them). Every test that lists the repository's files is here (tests/shards.test.js checks)
 const MD_TESTS = ['fleet.test.js', 'testne-proge.test.js'];
