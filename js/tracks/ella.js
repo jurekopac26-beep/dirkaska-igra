@@ -46,7 +46,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1b3a8a', text: '#f4f6f0' }, escTo: 'Do Elle',   // (and the results of an escape: 'Do Elle v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Pattiyakumbura · 681 m", "d": 40.0, "say": ["Past Pattiyakumbura, and the climb begins!", "Through the hamlet of Pattiyakumbura, the hills ahead!"]},
+      {"n": "Pattiyakumbura · 686 m", "d": 40.0, "say": ["Past Pattiyakumbura, and the climb begins!", "Through the hamlet of Pattiyakumbura, the hills ahead!"]},
       {"n": "Ella Rock", "d": 990.0, "say": ["A sharp right-hander, and Ella Rock towers on the left!", "Look up to the left, that's Ella Rock!"]},
       {"n": "Serpentina 1 · 883 m", "d": 2715.0, "say": ["Hairpin one, right over the stream from the Kital Ella falls!", "Into the first hairpin, the waterfall's stream below!"]},
       {"n": "Serpentina 2 · 928 m", "d": 3236.0, "say": ["Hairpin two, the tightest of them all!", "Hairpin two! Hard on the brakes!"]},

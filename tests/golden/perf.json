@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "ella": {
+  "calls": 166,
+  "maxCalls": 205,
+  "kverts": 324,
+  "maxKverts": 488,
+  "jsMs": 1.61
  }
 }
