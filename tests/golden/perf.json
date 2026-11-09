@@ -439,5 +439,12 @@
   "kverts": 650,
   "maxKverts": 848,
   "jsMs": 1.49
+ },
+ "dades": {
+  "calls": 140,
+  "maxCalls": 170,
+  "kverts": 201,
+  "maxKverts": 230,
+  "jsMs": 1.57
  }
 }
