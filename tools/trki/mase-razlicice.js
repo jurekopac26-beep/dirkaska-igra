@@ -198,7 +198,8 @@ function run(phys, tx, build, o = {}) {
       was = touch;
       const kk = k - k1, mi = marks.indexOf(kk);
       for (const X of U) { const c = X.c, v = Math.hypot(c.vx, c.vz), ch = Math.cos(X.h0), sh = Math.sin(X.h0);
-        X.hMax = Math.max(X.hMax, Math.abs(wrap(c.h - X.h0)) * D); X.yaw = Math.max(X.yaw, Math.abs(c.w) * D);
+        X.hU = (X.hU || 0) + wrap(c.h - (X.hP == null ? X.h0 : X.hP)); X.hP = c.h;   // (the turn summed step by step: wrap(c.h - h0) alone stops at 180 deg, a car spun 268 or 478 deg read 180 and 178)
+        X.hMax = Math.max(X.hMax, Math.abs(X.hU) * D); X.yaw = Math.max(X.yaw, Math.abs(c.w) * D);
         X.lat = Math.max(X.lat, Math.abs(-(c.vx - X.vx0) * sh + (c.vz - X.vz0) * ch));
         if ((c.xgl || 0) > X.gl) X.gl = c.xgl; if (X.gl > 0 && !c.xgl && X.glBack == null) X.glBack = kk * DT;
         const sl = v > 1.5 ? Math.abs(wrap(Math.atan2(c.vz, c.vx) - c.h)) : 0, ok = Math.min(sl, Math.PI - sl) < 3 / D && Math.abs(c.w) < 6 / D; if (!ok) X.off = kk + 1;

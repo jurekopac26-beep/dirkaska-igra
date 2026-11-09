@@ -13,7 +13,7 @@
 //   c.inPit set (the old knock, carCollide's own branch) and once without (the version's knock, kCollide); (3) the player's car in Spa's and
 //   Bathurst's real pit lane (Race.step) into the pit wall and the lane's outer limit at 15 and 30 deg, and the same hit on the circuit's barrier
 // - pristanek: a car in the air over a road with heights (the test plane with hasElev and its own elevAt: flat, a slope, a crest), Car.step;
-//   cross-checked on Spa's real road in a Race
+//   cross-checked on Spa's and Bathurst's real heights in a Race; the crests of the game's real tracks read from their heights (nothing driven)
 // - padec: the game's Track from this script's straight open road with a drop (def.drops; the only track of the game with drops is a frozen
 //   test track), the player's car over the edge in a Race (wallCollide's edge, Race._fall, Race.rescue)
 // - prevracanje: Core.setCrash({ roll: 1 }) (Razbijanje - nov nacin, off by default): the thresholds and the one-in-ten draw by direct
@@ -211,10 +211,10 @@ function zidBoksi(tid, kam, th, kmh, phys) {
 }
 function delBoksi() {
   const o = OUT.deli.boksi = {};
-  o.dirka = ['spa', 'bathurst'].map(t => boksiDirka(t, 75));
-  table('BOKSI 1: dirka, vsi avti poslani v bokse (Race.step; 13 avtov, 75 s). staTrk = koraki, ko bi za par tekel stari trk (inPit brez pitG)',
-    ['proga', 'avto-koraki v stezi', 'najvec hkrati', 'staTrk', 'trki avto-avto', 'prekrivanje duh-duh (koraki, maks m)', 'duh-avto na progi (koraki, maks m)', 'zid v stezi (st., maks m/s)', 'skoda v stezi', 'postanki'],
-    o.dirka.map(x => [x.proga, x.vStezi, x.hkrati, x.staTrk, x.trki, `${x.prekrivanje}, ${f(x.prekrivanjeMaks, 2)}`, `${x.sProgo}, ${f(x.sProgoMaks, 2)}`, `${x.zid}, ${f(x.zidMaks, 1)}`, x.skoda, x.postanki]));
+  o.dirka = [['spa', 300], ['bathurst', 150]].map(([t, sec]) => boksiDirka(t, sec));
+  table('BOKSI 1: dirka, vsi avti poslani v bokse 5 s po startu (Race.step; 13 avtov). staTrk = koraki, ko bi za par tekel stari trk (inPit brez pitG)',
+    ['proga', 's', 'avto-koraki v stezi', 'najvec hkrati', 'staTrk', 'trki avto-avto', 'prekrivanje duh-duh (koraki, maks m)', 'duh-avto na progi (koraki, maks m)', 'zid v stezi (st., maks m/s)', 'skoda v stezi', 'postanki'],
+    o.dirka.map(x => [x.proga, x.s, x.vStezi, x.hkrati, x.staTrk, x.trki, `${x.prekrivanje}, ${f(x.prekrivanjeMaks, 2)}`, `${x.sProgo}, ${f(x.sProgoMaks, 2)}`, `${x.zid}, ${f(x.zidMaks, 1)}`, x.skoda, x.postanki]));
   o.trk = [];
   for (const phys of ['cs', 'nova']) { const SC = boksiScene('rally');
     for (const k of Object.keys(SC)) for (const pit of [true, false]) { const R = dvoboj(RIG[phys], SC[k], pit, 2); o.trk.push(Object.assign({ fizika: phys, prizor: k, trk: pit ? 'boksi (stari)' : 'proga (' + VERSION() + ')' }, R)); } }
@@ -253,21 +253,56 @@ function padecZ(L, id, h, kmh, o) {
   R.ay = na ? ay / na / G : null;
   return R;
 }
-// over a crest of radius Rk (an arc between two straight ramps of slope +-L / Rk) at kmh, the speed held
+// over a crest of radius Rk (an arc between two straight ramps of slope +-Lh / Rk) at kmh, the speed held. Car.step takes off where
+// v2 x curvature < -0.85 x JUMP_G; read off every step: a takeoff and a landing in the same step (c.landT set by a step that began on the
+// road), steps that end in the air, the height over the road, the speed before the crest and after it, the hardest 0.1 s
 function grebenZ(L, id, Rk, Lh, kmh) {
   const s0 = 60, g = Lh / Rk;
   L.set((s) => { const u = s - s0; return u < -Lh ? [-Lh * Lh / (2 * Rk) + g * (u + Lh), g, 0] : u > Lh ? [-Lh * Lh / (2 * Rk) - g * (u - Lh), -g, 0] : [-u * u / (2 * Rk), -u / Rk, -1 / Rk]; });
   const H = L.H, c = rigCar(H, id, kmh, true); c.y = L.at(0)[0];
-  const R = { R: Rk, kmh, vzlet: false, sVzlet: null, vy0: null, tZrak: 0, let: 0, visina: 0, vy: null, vyCesta: null, izg: null, skoda: 0, realVzlet: Math.sqrt(G * Rk) * 3.6, igraVzlet: Math.sqrt(14 * 0.85 * Rk) * 3.6 };
-  let x0 = 0;
+  const R = { R: Rk, g, kmh, istiKorak: 0, drgne: 0, vZraku: 0, visina: 0, vPred: null, vPo: null, pojemek: 0, skoda: 0, landT: 0, realVzlet: Math.sqrt(G * Rk) * 3.6, igraVzlet: Math.sqrt(14 * 0.85 * Rk) * 3.6, realLet: 0 };
+  const vs = [];
   for (let k = 0; k < 4 / DT; k++) {
-    const was = c.air, v = sp(c), gB = L.at(c.x)[1]; H.step(c, { st: 0, thr: 'hold' });
-    if (!was && c.air && !R.vzlet) { R.vzlet = true; R.sVzlet = c.x - s0; R.vy0 = c.vy; x0 = c.x; }
-    if (c.air) { R.tZrak += DT; R.visina = Math.max(R.visina, c.y - L.at(c.x)[0]); }
-    if (was && !c.air) { R.let = c.x - x0; R.vy = c.impactVY; R.vyCesta = c.impactVY - gB * v; R.izg = (1 - sp(c) / v) * 100; R.skoda = c.dmg * 100; break; }
+    const was = c.air, lt = c.landT; c.landT = 0; if (R.vPred == null && c.x >= s0 - Lh - 1) R.vPred = sp(c) * 3.6;
+    H.step(c, { st: 0, thr: 'hold' });
+    if (c.landT > 0 && !was) { R.istiKorak++; if (c.impactVY < 0) R.drgne++; R.landT = Math.max(R.landT, c.landT); } else if (!c.landT) c.landT = Math.max(0, lt - DT);
+    if (c.air) { R.vZraku++; R.visina = Math.max(R.visina, c.y - L.at(c.x)[0]); }
+    vs.push(sp(c)); if (vs.length > 12) R.pojemek = Math.max(R.pojemek, (vs[vs.length - 13] - vs[vs.length - 1]) / 0.1 / G);
+    if (c.x >= s0 + Lh + 3) { R.vPo = sp(c) * 3.6; break; }
   }
+  R.skoda = c.dmg * 100;
+  // a real car at this speed: off the road where the arc begins (v2 / R > g), back at the height it left after 2 x 0.15 v / g s
+  if (kmh > R.realVzlet) R.realLet = 2 * g * (kmh / 3.6) / G;
   L.set(() => [0, 0, 0]);
   return R;
+}
+// the same on a real circuit's heights (Race.step): the sharpest crest on a straight piece of the lap (the road's curvature under 0.003 from
+// 60 m before it to 40 m after). On Spa and Bathurst the takeoff's condition holds there only far over any car's top speed (607 and 387 km/h),
+// so this checks the mechanism alone: a formula put on the road 50 m before the crest at 1.3 times that speed, steered by the game's own driver
+function grebenProga(tid) {
+  const T = track(tid), e = {}; let cm = 0, im = -1;
+  for (let i = 40; i < T.N - 40; i++) { let kk = 0; for (let j = -30; j <= 20; j++) kk = Math.max(kk, Math.abs(T.k[(i + j + T.N) % T.N])); if (kk > 0.003) continue; T.elevAt(i * T.ds, e); if (e.curv < cm) { cm = e.curv; im = i; } }
+  if (im < 0) return null;
+  const vT = Math.sqrt(14 * 0.85 / -cm), v = vT * 1.3, r = loneRace(T, 'formula'), c = r.player, i0 = (im - Math.round(50 / T.ds) + T.N) % T.N;
+  placeCar(c, T, T.px[i0], T.pz[i0], T.hd[i0], v); c.gear = c.m.gears.length;
+  const R = { proga: tid, s: im * T.ds, R: -1 / cm, vzlet: vT * 3.6, kmh: v * 3.6, istiKorak: 0, drgne: 0, dvDrgne: 0, vZraku: 0, visina: 0 }, s0 = c.q.s;
+  for (let k = 0; k < 3 / DT; k++) {
+    C.aiControl(c, r, DT); c.inThr = 1; c.inBrk = 0; c.hitWall = 0; const was = c.air, vb = sp(c); c.landT = 0;
+    r.step(DT); if (c.hitWall > 0) break;
+    if (c.landT > 0 && !was) { R.istiKorak++; if (c.impactVY < 0) { R.drgne++; R.dvDrgne += (sp(c) - vb) * 3.6; } }
+    if (c.air) { R.vZraku++; R.visina = Math.max(R.visina, c.y - c.roadY); }
+    let ds = c.q.s - s0; if (ds < 0) ds += T.len; if (ds > 130) break;
+  }
+  return R;
+}
+// the crests of the game's real tracks (heights read with Track.elevAt every 2 m, nothing driven; the frozen test tracks left out): the
+// sharpest crest of each and the speed from which the takeoff's condition holds there
+function grebeniProg() {
+  const out = [], e = {};
+  for (const d of C.TRACKS) { if (d.test) continue; let T; try { T = track(d.id); } catch (err) { continue; } if (!T.hasElev) continue;
+    let cm = 0, sm = 0; for (let s = 0; s < T.len; s += 2) { T.elevAt(s, e); if (e.curv < cm) { cm = e.curv; sm = s; } }
+    if (cm < 0) out.push({ proga: d.id, s: sm, R: -1 / cm, vzlet: Math.sqrt(14 * 0.85 / -cm) * 3.6 }); }
+  return out.sort((x, y) => x.vzlet - y.vzlet);
 }
 // the cross-check on Spa's real road: the player's car of a Race lifted 1 m over a straight at 100 km/h, parallel to the road
 function pristanekSpa() {
@@ -293,10 +328,14 @@ function delPristanek() {
   L.set(() => [0, 0, 0]);
   table('PRISTANEK 2: 1 m nad cesto, vzporedno z njo, 100 km/h: pristanek na klancu (vy: kar igra vzame, navpicno; vy cesta: glede na cesto)',
     ['nagib %', 'v zraku s', 'vy igra m/s', 'vy glede na cesto', 'izguba hitrosti %', 'skoda %'], o.nagib.map(x => [f(x.nagib, 0), f(x.tZrak, 2), f(x.vy, 2), f(x.vyCesta, 2), f(x.izg), f(x.skoda)]));
-  o.greben = [80, 90, 100, 120, 160, 200].map(v => grebenZ(L, 'rally', 60, 9, v));
-  table(`PRISTANEK 3: cez greben s polmerom 60 m (klanca +-15 %); igra vzleti nad ${f(o.greben[0].igraVzlet, 0)} km/h (v2/R > 0,85 x 14), pravi avto nad ${f(o.greben[0].realVzlet, 0)} km/h (v2/R > 9,81)`,
-    ['km/h', 'vzleti', 'kje m od vrha', 'vy0 m/s', 'v zraku s', 'let m', 'visina m', 'vy igra m/s', 'vy glede na cesto', 'izguba %', 'skoda %', 'real v zraku s (g 9,81)'],
-    o.greben.map(x => [x.kmh, x.vzlet ? 'da' : 'ne', f(x.sVzlet), f(x.vy0, 2), f(x.tZrak, 2), f(x.let), f(x.visina, 2), f(x.vy, 2), f(x.vyCesta, 2), f(x.izg), f(x.skoda), x.vzlet ? f(x.tZrak * 14 / G, 2) : '-']));
+  o.greben = [80, 90, 100, 120, 160, 200].map(v => grebenZ(L, 'rally', 60, 9, v)).concat([60, 100, 150].map(v => grebenZ(L, 'rally', 15, 0.75, v)));
+  table(`PRISTANEK 3: cez greben (lok s polmerom R med klancema +-g), plin drzi hitrost; pogoj vzleta v igri: v2/R > 0,85 x 14 (R 60 m: nad ${f(o.greben[0].igraVzlet, 0)} km/h, pravi avto nad ${f(o.greben[0].realVzlet, 0)} km/h; R 15 m: nad 48 km/h)`,
+    ['polmer m (klanca %)', 'km/h', 'vzlet in pristanek v istem koraku (st.)', 'od tega z izgubo hitrosti', 'korakov v zraku', 'visina mm', 'hitrost pred km/h', 'po grebenu km/h', 'najvecji pojemek g (0,1 s)', 'skoda %', 'pravi avto v zraku s'],
+    o.greben.map(x => [`${x.R} (${f(x.g * 100, 0)})`, x.kmh, x.istiKorak, x.drgne, x.vZraku, f(x.visina * 1000, 0), f(x.vPred), f(x.vPo), f(x.pojemek, 1), f(x.skoda), x.realLet ? f(x.realLet, 2) : '-']));
+  o.grebenProga = ['bathurst', 'spa'].map(grebenProga).filter(Boolean);
+  for (const x of o.grebenProga) say(`  preverjeno na pravih visinah (${x.proga}, Race.step, raven greben pri s ${f(x.s, 0)} m, polmer ${f(x.R, 0)} m, pogoj vzleta od ${f(x.vzlet, 0)} km/h; formula postavljena nanj s ${f(x.kmh, 0)} km/h): vzlet in pristanek v istem koraku ${x.istiKorak}-krat, od tega ${x.drgne}-krat z izgubo hitrosti (skupaj ${f(x.dvDrgne)} km/h), v zraku ${x.vZraku} korakov, najvec ${f(x.visina * 1000, 0)} mm nad cesto`);
+  o.grebeni = grebeniProg();
+  say('  najostrejsi greben pravih prog (visine prebrane, brez voznje; proga: polmer m, pogoj vzleta od km/h): ' + o.grebeni.slice(0, 8).map(x => `${x.proga}: ${f(x.R, 0)} m, ${f(x.vzlet, 0)}`).join('; ') + '; spa: ' + (() => { const x = o.grebeni.find(y => y.proga === 'spa'); return x ? `${f(x.R, 0)} m, ${f(x.vzlet, 0)}` : '-'; })() + '; bathurst: ' + (() => { const x = o.grebeni.find(y => y.proga === 'bathurst'); return x ? `${f(x.R, 0)} m, ${f(x.vzlet, 0)}` : '-'; })());
   o.spa = pristanekSpa();
   if (o.spa) say(`  preverjeno na Spa (Race.step, 1 m nad ravnino pri 100 km/h, nagib ceste ${f(o.spa.nagib, 1)} %): v zraku ${f(o.spa.tZrak, 2)} s, vy ${f(o.spa.vy, 2)} m/s (glede na cesto ${f(o.spa.vyCesta, 2)}), izguba ${f(o.spa.izg)} %, skoda ${f(o.spa.skoda)} %`);
 }
@@ -447,9 +486,10 @@ function delSkoda() {
     ['avto', 'skode', 'udarci', 'xHandle', 'skoda %', 'odpadli deli', '100 -> 6 s plina km/h', 'ovinek g (km/h)', 'brez rok 3 s: vstran m', 'aeroK'],
     o.voznja.map(x => [x.avto, x.skode, x.udarci, x.xHandle, f(x.dmg, 0), x.lost, f(x.v6), `${f(x.ay, 2)} (${x.kv})`, f(x.z3, 2), x.aero ? x.aero.toExponential(2) : '0']));
   // a puncture (failures on): the share of knocks that cut a tyre, by the knock's strength, in a real race's draw (Race.step into the barrier)
-  o.guma = [10, 12, 15, 20, 27.8].map(v => { let n = 0; const N = 60; for (let s = 1; s <= N; s++) { const T = track('spa'), r = loneRace(T, 'rally', { faults: true, seed: s }), c = r.player, i = straightIdx(T), qd = T.br[i] - 0.3 - c.m.len / 2;
-    placeCar(c, T, T.px[i] + T.nx[i] * qd, T.pz[i] + T.nz[i] * qd, T.hd[i] + Math.PI / 2, v); for (let k = 0; k < 0.3 / DT; k++) r.step(DT); if (c.flt && c.flt.pw >= 0) n++; } return { v, delez: n / N * 100, pravilo: Math.min(25, Math.max(0, (v - 11) / 20 * 100)) }; });
-  say('  predrta guma (okvare vklopljene, pravokotno v ograjo, 60 dirk s semeni 1-60): ' + o.guma.map(x => `${x.v} m/s: ${f(x.delez, 0)} % (pravilo ${f(x.pravilo, 0)} %)`).join(', '));
+  const draw = SIM.seeded(7000);   // (one sequence for every crash of this measurement: the draw of each is its own)
+  o.guma = [10, 12, 15, 20, 27.8].map(v => { let n = 0; const N = 200; for (let s = 1; s <= N; s++) { const T = track('spa'), r = loneRace(T, 'rally', { faults: true, seed: s }), c = r.player, i = straightIdx(T), qd = T.br[i] - 0.3 - c.m.len / 2;
+    placeCar(c, T, T.px[i] + T.nx[i] * qd, T.pz[i] + T.nz[i] * qd, T.hd[i] + Math.PI / 2, v); Math.random = draw; for (let k = 0; k < 0.15 / DT; k++) r.step(DT); if (c.flt && c.flt.pw >= 0) n++; } return { v, delez: n / N * 100, pravilo: Math.min(25, Math.max(0, (v - 11) / 20 * 100)) }; });
+  say('  predrta guma (okvare vklopljene, pravokotno v ograjo, 200 trkov, vsak s svojim zrebom): ' + o.guma.map(x => `${x.v} m/s: ${f(x.delez, 0)} % (pravilo ${f(x.pravilo, 0)} %)`).join(', '));
   { const H = RIG.cs, run = (pw) => { const c = rigCar(H, 'rally', 120, true); if (pw >= 0) c.flt = { pw, pk: 1, brT: 20, enT: 85, brH: false, enH: false, ev: '' }; let ay = 0, na = 0; for (let k = 0; k < 5 / DT; k++) { H.step(c, { st: 1, thr: 'hold' }); if (k > 4 / DT) { ay += Math.abs(c._om) * c._v; na++; } }
       const d = rigCar(H, 'rally', 100, true); if (pw >= 0) d.flt = { pw, pk: 1, brT: 20, enT: 85, brH: false, enH: false, ev: '' }; for (let k = 0; k < 3 / DT; k++) H.step(d, { st: 0, thr: 'hold' }); return { ay: ay / na / G, z3: d.z }; };
     o.gumaVozi = { cela: run(-1), spredajDesna: run(1), zadajLeva: run(2) };
@@ -467,12 +507,13 @@ function delZanka() {
   const reachOf = (a, b) => (Math.hypot(a.m.len, a.m.wid) + Math.hypot(b.m.len, b.m.wid)) * 0.5 + 0.05;
   for (const nCars of [12, 20, 100]) {
     const r = mkRace('spa', { numAI: nCars - 1, playerGrid: nCars }), cars = r.cars, T = r.track, n = cars.length, secs = 30, steps = Math.round(secs / DT), big = n > 16;
-    let pairsSum = 0, pairsMax = 0, reachSum = 0, reachMax = 0, touchSum = 0, tStep = 0, tPairs = 0, tWalls = 0, tBroad = 0, tStepMax = 0, cnt = 0, lodSteps = 0, carSteps = 0, last = null;
+    let pairsSum = 0, pairsMax = 0, reachSum = 0, reachMax = 0, touchSum = 0, tStep = 0, tPairs = 0, tWalls = 0, tBroad = 0, tStepMax = 0, cnt = 0, lodSteps = 0, carSteps = 0, last = null, tB0 = 0;
+    const aS = [], aP = [], aW = [], aB = [], med = (a) => { a.sort((x, y) => x - y); return a.length ? a[a.length >> 1] : 0; };   // (the middle step: the other programs of the machine and Node's own pauses left out)
     if (big) { const orig = r._pairs.bind(r); r._pairs = (ST) => { const t0 = now(), P = orig(ST); tBroad += now() - t0; last = P.slice(); return P; }; }
     for (let k = 1; k <= steps; k++) {
       for (const c of cars) c.hitCar = 0;
       Math.random = SIM.seeded(1000 + k); C.aiControl(r.player, r, DT);
-      const t0 = now(); r.step(DT); const dtS = now() - t0;
+      tB0 = tBroad; const t0 = now(); r.step(DT); const dtS = now() - t0;
       const L = r._lod && r._lod.on ? r._lod : null; if (L) { lodSteps++; for (let i = 0; i < n; i++) carSteps += L.st[i]; } else carSteps += n;
       // the pair loop's work this step: the pairs handed to carCollide, those within the knock's own reach, the cars that took a knock
       let np = 0, nr = 0;
@@ -480,23 +521,24 @@ function delZanka() {
       else { np = n * (n - 1) / 2; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = cars[i], b = cars[j], dx = b.x - a.x, dz = b.z - a.z, R = reachOf(a, b); if (dx * dx + dz * dz <= R * R) nr++; } }
       pairsSum += np; pairsMax = Math.max(pairsMax, np); reachSum += nr; reachMax = Math.max(reachMax, nr); for (const c of cars) if (c.hitCar > 0) touchSum++;
       if (k <= 240) continue;   // (the first 2 s: Node still compiling)
-      cnt++; tStep += dtS; tStepMax = Math.max(tStepMax, dtS);
+      cnt++; tStep += dtS; tStepMax = Math.max(tStepMax, dtS); aS.push(dtS); aB.push(tBroad - tB0);
       // the collision calls again on the state the step left (the same functions, the same loops as Race._step; a second touch of a pair
       // already parted costs what the first did up to its early exits): pairs, then walls
       const t1 = now();
       if (big) { for (const p of last || []) { const i = p >> 10, j = p & 1023; if (!cars[i].fall && !cars[j].fall && !cars[i].pitG && !cars[j].pitG) C.carCollide(cars[i], cars[j]); } }
       else for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { if (!cars[i].fall && !cars[j].fall && !cars[i].pitG && !cars[j].pitG) C.carCollide(cars[i], cars[j]); }
       const t2 = now(); for (const c of cars) if (!c.net && !c.fall) C.wallCollide(c, T, true); const t3 = now();
-      tPairs += t2 - t1; tWalls += t3 - t2;
+      tPairs += t2 - t1; tWalls += t3 - t2; aP.push(t2 - t1); aW.push(t3 - t2);
     }
     o.polja.push({ avtov: n, s: secs, pari: pairsSum / steps, pariMaks: pairsMax, vDosegu: reachSum / steps, vDoseguMaks: reachMax, dotikov: touchSum / steps, lod: lodSteps / steps * 100, avtoKorakov: carSteps / steps,
-      korak: tStep / cnt, korakMaks: tStepMax, pariUs: tPairs / cnt, sirokaUs: big ? tBroad / steps : 0, zidUs: tWalls / cnt, delez: (tPairs + tWalls) / cnt / (tStep / cnt) * 100 });
+      korakPovp: tStep / cnt, korakMaks: tStepMax, pariPovp: tPairs / cnt, zidPovp: tWalls / cnt, korak: med(aS), pariUs: med(aP), sirokaUs: big ? med(aB) : 0, zidUs: med(aW) });
+    { const x = o.polja[o.polja.length - 1]; x.delez = (x.pariUs + x.sirokaUs + x.zidUs) / x.korak * 100; }
   }
-  table('ZANKA 1: dirka na Spa, prvih 30 s (start, prvi ovinki), privzeti trk. Stetja so ponovljiva, casi (Node, process.hrtime) ne',
-    ['avtov', 'parov na korak (maks)', 'v dosegu trka (maks)', 'avtov z dotikom/korak', 'LOD % korakov', 'voznih korakov avtov/korak', 'korak us (maks)', 'pari us', 'siroka faza us', 'zidovi us', 'trki % koraka'],
-    o.polja.map(x => [x.avtov, `${f(x.pari, 0)} (${x.pariMaks})`, `${f(x.vDosegu, 1)} (${x.vDoseguMaks})`, f(x.dotikov, 2), f(x.lod, 0), f(x.avtoKorakov, 1), `${f(x.korak, 0)} (${f(x.korakMaks, 0)})`, f(x.pariUs, 1), f(x.sirokaUs, 1), f(x.zidUs, 1), f(x.delez, 1)]));
+  table('ZANKA 1: dirka na Spa, prvih 30 s (start, prvi ovinki). Stetja so ponovljiva, casi (Node, process.hrtime; srednji korak) ne',
+    ['avtov', 'parov na korak (maks)', 'v dosegu trka (maks)', 'avtov z dotikom/korak', 'LOD % korakov', 'voznih korakov avtov/korak', 'korak us: srednji (povp., maks)', 'pari us', 'siroka faza us', 'zidovi us', 'trki % koraka'],
+    o.polja.map(x => [x.avtov, `${f(x.pari, 0)} (${x.pariMaks})`, `${f(x.vDosegu, 1)} (${x.vDoseguMaks})`, f(x.dotikov, 2), f(x.lod, 0), f(x.avtoKorakov, 1), `${f(x.korak, 0)} (${f(x.korakPovp, 0)}, ${f(x.korakMaks, 0)})`, f(x.pariUs, 1), f(x.sirokaUs, 1), f(x.zidUs, 1), f(x.delez, 1)]));
   // one call: the reach test only, the boxes' test, a full knock (two cars leaning into each other, their states put back each time)
-  const H = RIG.cs, N = 20000, bench = (fn) => { for (let k = 0; k < 2000; k++) fn(); const t0 = now(); for (let k = 0; k < N; k++) fn(); return (now() - t0) / N; };
+  const H = RIG.cs, N = 20000, bench = (fn) => { for (let k = 0; k < 2000; k++) fn(); let best = 1e9; for (let q = 0; q < 5; q++) { const t0 = now(); for (let k = 0; k < N / 5; k++) fn(); best = Math.min(best, (now() - t0) / (N / 5)); } return best; };   // (the best of five rounds)
   const A = rigCar(H, 'rally', 100, true), B = rigCar(H, 'rally', 100, false), keys = ['x', 'z', 'h', 'vx', 'vz', 'w', 'csKc', 'cSx', 'cSz', 'cSr', 'xgl', 'xglT', 'dmg', 'hitCar', 'fxCar'];
   const put = (c, x, z, h, vx, vz) => { c.x = x; c.z = z; c.h = h; c.vx = vx; c.vz = vz; c.w = 0; c.csKc = 0; c.cSx = c.cSz = 0; c.cSr = null; c.xgl = 0; c.dmg = 0; c.dents.length = 0; };
   const one = (cv, ax, az, ah, avx, avz, pit) => { C.setTest(cv ? { cv } : (CV != null ? { cv: CV } : null)); A.inPit = B.inPit = !!pit; const t = bench(() => { put(A, ax, az, ah, avx, avz); put(B, 0, 0, 0, 27.8, 0); C.carCollide(A, B); }); A.inPit = B.inPit = false; setCv(); return t; };
@@ -507,7 +549,7 @@ function delZanka() {
     const qd = T.br[i] - c.m.wid / 2 + 0.05, x = T.px[i] + T.nx[i] * qd, z = T.pz[i] + T.nz[i] * qd, vx = c.vx + T.nx[i] * 3, vz = c.vz + T.nz[i] * 3;
     const hitT = bench(() => { c.x = x; c.z = z; c.vx = vx; c.vz = vz; c.w = 0; c.dmg = 0; c.dents.length = 0; C.wallCollide(c, T, true); });
     o.klici.zidProsto = free; o.klici.zidDotik = hitT; }
-  table('ZANKA 2: cena enega klica (us, Node; povprecje 20.000 klicev)', ['klic', 'us'], [
+  table('ZANKA 2: cena enega klica (us, Node; najboljsi od petih krogov po 4.000 klicev)', ['klic', 'us'], [
     ['carCollide: avta 30 m narazen (izhod pri dosegu)', f(o.klici.dalec, 3)], ['carCollide: 0,3 m za odbijacem (doseg da, skatli ne)', f(o.klici.blizuNeDotik, 3)], ['carCollide: vogal ob vogalu, brez dotika', f(o.klici.vogalBlizu, 3)],
     ['carCollide: poln trk od zadaj (' + VERSION() + ')', f(o.klici.trk, 3)], ['carCollide: poln trk v bok (' + VERSION() + ')', f(o.klici.trkBok, 3)], ['carCollide: poln trk, Stara (cv 5)', f(o.klici.stari, 3)], ['carCollide: poln trk v boksih (stari trk)', f(o.klici.stariBoksi, 3)],
     ['wallCollide: avto sredi ceste', f(o.klici.zidProsto, 3)], ['wallCollide: avto v ograji', f(o.klici.zidDotik, 3)]]);
@@ -541,10 +583,10 @@ function netRun(name, lag, netPlace, o) {
   const mk = (q, pl) => { const c = rigCar(H, id, q[3], pl); c.place(q[0], q[1], q[2]); c.h = q[2]; const v = q[3] / 3.6; c.vx = Math.cos(q[2]) * v; c.vz = Math.sin(q[2]) * v; c.q = { i: 0, s: q[0], d: q[1], tx: 1, tz: 0, nx: 0, nz: 1 }; return c; };
   const ghost = (q) => { const c = mk(q, false); c.net = true; return c; };
   const drive = (c, q, t, t1) => { const h0 = q[2], lat0 = -Math.sin(h0) * q[0] + Math.cos(h0) * q[1], e = (-Math.sin(h0) * c.x + Math.cos(h0) * c.z) - lat0, he = wrap(c.h - h0), vt = (-Math.sin(h0) * c.vx + Math.cos(h0) * c.vz);
-    const st = S.side && c === null ? 0 : Math.max(-1, Math.min(1, -(0.35 * e + 2.0 * he + 0.25 * vt / Math.max(5, sp(c)))));
+    const st = Math.max(-1, Math.min(1, -(0.35 * e + 2.0 * he + 0.25 * vt / Math.max(5, sp(c)))));
     return { st: S.side && t < 0.4 ? 0 : st, thr: t1 == null ? 'hold' : 0 }; };
   const A = mk(S.A, true), B = mk(S.B, true), mA = A.m.mass, mB = B.m.mass;
-  const R = { prizor: name, lag, tA: null, tB: null, nA: 0, nB: 0, turnA: 0, turnB: 0 };
+  const R = { prizor: name, lag, tA: null, tB: null, nA: 0, nB: 0, turnA: 0, turnB: 0, jA: 0, jB: 0, wA: 0, wB: 0, u: null, u0: null };
   let t1 = null; const changed = (c, b) => c.x !== b[0] || c.z !== b[1] || c.vx !== b[2] || c.vz !== b[3] || c.w !== b[4] || (c.csKc || 0) !== b[5], snap = (c) => [c.x, c.z, c.vx, c.vz, c.w, c.csKc || 0];
   const v0 = { ax: A.vx, az: A.vz, bx: B.vx, bz: B.vz }; let pre = null, gapAt = null;
   const frames = Math.round(3.2 * 60), GA = lag ? ghost(S.B) : null, GB = lag ? ghost(S.A) : null, bufA = [], bufB = [], wire = [];   // (GA: B's car on A's phone)
@@ -553,10 +595,12 @@ function netRun(name, lag, netPlace, o) {
     for (let s = 0; s < 2; s++) {
       const t = (fr * 2 + s + 1) * DT, bA = snap(A), bB = snap(B); if (t1 == null) pre = { ax: A.vx, az: A.vz, bx: B.vx, bz: B.vz, hA: A.h, hB: B.h };
       H.step(A, drive(A, S.A, t, t1)); H.step(B, drive(B, S.B, t, t1));
-      const cA = snap(A), cB = snap(B);
+      const cA = snap(A), cB = snap(B); if (t1 == null && !R.u) { const cl = Math.hypot(A.vx - B.vx, A.vz - B.vz) || 1; R.u0 = [(A.vx - B.vx) / cl, (A.vz - B.vz) / cl, cl]; }
       if (!lag) { C.carCollide(A, B); }
       else { C.carCollide(A, GA); C.carCollide(GB, B); }   // (the pair in the grid's order on both phones: A's car first)
       const hitA = changed(A, cA), hitB = changed(B, cB);
+      if ((hitA || hitB) && !R.u) R.u = R.u0;   // (u: the way A closed on B before the first touch, and that closing speed)
+      if (R.u) { R.jA += (A.vx - cA[2]) * R.u[0] + (A.vz - cA[3]) * R.u[1]; R.jB += (B.vx - cB[2]) * R.u[0] + (B.vz - cB[3]) * R.u[1]; R.wA += Math.abs(A.w - cA[4]); R.wB += Math.abs(B.w - cB[4]); }
       if (hitA) { R.nA++; if (R.tA == null) { R.tA = t; gapAt = Math.hypot(B.x - A.x, B.z - A.z); } } if (hitB) { R.nB++; if (R.tB == null) R.tB = t; }
       if ((hitA || hitB) && t1 == null) { t1 = t; R.pre = pre; }
       if (t1 != null) { R.turnA = Math.max(R.turnA, Math.abs(wrap(A.h - R.pre.hA)) * D); R.turnB = Math.max(R.turnB, Math.abs(wrap(B.h - R.pre.hB)) * D); }
@@ -569,6 +613,7 @@ function netRun(name, lag, netPlace, o) {
     if (bufA.length) netPlace(GA, bufA, now, lag); if (bufB.length) netPlace(GB, bufB, now, lag);
   }
   R.hit = t1 != null; R.t1 = t1; R.gap = gapAt;
+  if (R.u) { const cl = R.u[2]; R.cl = cl; R.sunekA = R.jA * 3.6; R.sunekB = R.jB * 3.6; R.eS = ((R.jB - R.jA) - cl) / cl; R.dp = (mA * R.jA + mB * R.jB) / (mA * cl) * 100; }
   if (R.end) { const E = R.end, P = R.pre, cl = Math.hypot(P.ax - P.bx, P.az - P.bz) || 1, ux = (P.ax - P.bx) / cl, uz = (P.az - P.bz) / cl;   // (u: the way A closes on B)
     R.closing = cl; R.dvA = ((E.ax - P.ax) * ux + (E.az - P.az) * uz) * 3.6; R.dvB = ((E.bx - P.bx) * ux + (E.bz - P.bz) * uz) * 3.6;
     R.vA = Math.hypot(E.ax, E.az) * 3.6; R.vB = Math.hypot(E.bx, E.bz) * 3.6; R.e = -((E.ax - E.bx) * ux + (E.az - E.bz) * uz) / cl;
@@ -603,9 +648,9 @@ function delSplet() {
   if (!netPlace) { o.napaka = 'netPlace ni najden v js/game.js'; say('\nSPLET: ' + o.napaka); return; }
   o.vrstice = [];
   for (const name of Object.keys(NET_SC)) for (const lag of [0, 100, 200]) o.vrstice.push(netRun(name, lag, netPlace));
-  table('SPLET 1: isti dotik brez mreze (lag 0: oba avta lokalna) in na dveh telefonih (prijateljev avto 100 / 200 ms v preteklosti; ravnina, rally, enaki masi). dv vzdolz smeri priblizevanja A; gibalna: (mA dvA + mB dvB) / (reducirana masa x hitrost priblizevanja)',
-    ['prizor', 'lag ms', 'priblizevanje km/h', 'dv A km/h', 'dv B km/h', 'e po 1 s', 'gibalna kolicina %', 'prvi dotik A / B s', 'razdalja sredisc ob dotiku A m', 'korakov s trkom A / B', 'zasuk A / B deg'],
-    o.vrstice.map(x => [x.prizor, x.lag, f((x.closing || 0) * 3.6, 0), f(x.dvA), f(x.dvB), f(x.e, 2), x.pu != null ? f(x.pu / (x.mu * x.closing) * 100, 0) : '-', `${f(x.tA, 3)} / ${f(x.tB, 3)}`, f(x.gap, 2), `${x.nA} / ${x.nB}`, `${f(x.turnA)} / ${f(x.turnB)}`]));
+  table('SPLET 1: isti dotik brez mreze (lag 0: oba avta lokalna) in na dveh telefonih (prijateljev avto 100 / 200 ms v preteklosti; ravnina, rally, enaki masi). sunek = sprememba hitrosti lastnega avta v klicih trka, vzdolz smeri priblizevanja A; gibalna = (mA sunekA + mB sunekB) / (mA x priblizevanje); e = hitrost razhajanja / priblizevanja po sunkih',
+    ['prizor', 'lag ms', 'priblizevanje km/h', 'sunek A km/h', 'sunek B km/h', 'e', 'gibalna %', 'prvi dotik A / B s', 'razdalja sredisc ob dotiku A m', 'korakov s trkom A / B', 'zasuk A / B deg', 'po 1 s: dv A / B km/h'],
+    o.vrstice.map(x => { const dolg = Math.max(x.nA, x.nB) > 40, bok = /bok ob boku/.test(x.prizor); return [x.prizor, x.lag, f((x.cl || 0) * 3.6, 0), bok ? '-' : f(x.sunekA), bok ? '-' : f(x.sunekB), dolg || bok ? '-' : f(x.eS, 2), bok ? '-' : f(x.dp, 0), `${f(x.tA, 3)} / ${f(x.tB, 3)}`, f(x.gap, 2), `${x.nA} / ${x.nB}`, `${f(x.turnA)} / ${f(x.turnB)}`, `${f(x.dvA)} / ${f(x.dvB)}`]; }));
   o.spa = [netSpa(100, netPlace, 100, 80)];
   { const x = o.spa[0], y = o.vrstice.find(v => v.prizor === 'zadaj 100 v 80' && v.lag === 100);
     say(`  preverjeno z dvema pravima dirkama na Spa (Race opts.remote, Race.step na obeh telefonih, zadaj 100 v 80, brez plina): dv A ${f(x.dvA)} km/h, dv B ${f(x.dvB)} km/h, korakov s trkom ${x.nA} / ${x.nB} (ravnina: ${f(y.dvA)} / ${f(y.dvB)} km/h, ${y.nA} / ${y.nB})`); }
