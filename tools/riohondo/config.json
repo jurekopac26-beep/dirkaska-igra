@@ -43,5 +43,6 @@
   "geoRoads": [],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [],
+  "dist": {"grid": 560, "roads": 160}
 }

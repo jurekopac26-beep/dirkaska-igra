@@ -551,5 +551,12 @@
   "kverts": 324,
   "maxKverts": 401,
   "jsMs": 1.67
+ },
+ "riohondo": {
+  "calls": 189,
+  "maxCalls": 287,
+  "kverts": 608,
+  "maxKverts": 824,
+  "jsMs": 1.3
  }
 }
