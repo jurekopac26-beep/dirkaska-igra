@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Switzerland</title>
+  <!-- The national flag is square; here in the 2:3 frame of the menu's other flags: a red field with the white cross in the middle (the cross's arms 1/6 longer than wide, the cross 20/32 of the height). -->
+  <rect width="900" height="600" fill="#DA291C"/>
+  <rect x="393.75" y="112.5" width="112.5" height="375" fill="#FFFFFF"/>
+  <rect x="262.5" y="243.75" width="375" height="112.5" fill="#FFFFFF"/>
+</svg>

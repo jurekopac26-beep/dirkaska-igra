@@ -1404,5 +1404,24 @@
    "lifeShadow:MeshBasicMaterial": "e1a7401c",
    "life:MeshBasicMaterial": "6a3c15a6"
   }
+ },
+ "zurich": {
+  "meshes": 441,
+  "verts": 524602,
+  "instances": 1225,
+  "props": 0,
+  "crowd": 7,
+  "world": "a62c3187",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "b6618e1b",
+   "-:MeshPhongMaterial": "f0838fbe",
+   "crowd:MeshLambertMaterial": "a6c5f6c6",
+   "ao:MeshBasicMaterial": "33c5ffbd",
+   "tyremarks:MeshBasicMaterial": "8122b4ab",
+   "roadwear:MeshLambertMaterial": "c14fe668",
+   "brakeBoards:MeshLambertMaterial": "5b9b7f43"
+  }
  }
 }

@@ -5192,5 +5192,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "zurich/race/cs": {
+  "digest": "74ededba420d3c537219cda1",
+  "lead": 2429.7,
+  "car0": [
+   1375.01,
+   -521.19
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/demo/cs": {
+  "digest": "e2c6f99d0c84a4cb8a845764",
+  "lead": 2525.9,
+  "car0": [
+   1304.76,
+   -608.36
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/upg/cs": {
+  "digest": "8672124716059e22007db614",
+  "lead": 2558.7,
+  "car0": [
+   1285.32,
+   -633.14
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/crash/cs": {
+  "digest": "edbce8fdb6711986c7900c77",
+  "lead": 2416.2,
+  "car0": [
+   1300.94,
+   -439.07
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/formula/cs": {
+  "digest": "2895069a90dee46281ed65db",
+  "lead": 2709.8,
+  "car0": [
+   1241.67,
+   -676.15
+  ],
+  "cover": {
+   "dmg": 0.34,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/lm/cs": {
+  "digest": "eb23a7b02e7cfb1f1a7e8d4a",
+  "lead": 2682.8,
+  "car0": [
+   1250.18,
+   -675.53
+  ],
+  "cover": {
+   "dmg": 0.27,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "zurich/car/cs": {
+  "digest": "30a63fc43b13f94c954f4d7b",
+  "lead": 2416.6,
+  "car0": [
+   1309.73,
+   -441.84
+  ],
+  "cover": {
+   "dmg": 0.61,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

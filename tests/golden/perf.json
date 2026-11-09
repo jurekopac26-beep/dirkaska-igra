@@ -376,5 +376,12 @@
   "kverts": 305,
   "maxKverts": 382,
   "jsMs": 1.97
+ },
+ "zurich": {
+  "calls": 132,
+  "maxCalls": 169,
+  "kverts": 331,
+  "maxKverts": 369,
+  "jsMs": 0.69
  }
 }

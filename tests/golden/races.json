@@ -2648,5 +2648,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "zurich/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 223.17,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6a8d93597e0b50f39e3f0a45"
+ },
+ "zurich/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 239.46,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d28a239d43ab43f0c9e5efa0"
+ },
+ "zurich/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 195.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "80efbff497070eb0d637c214"
+ },
+ "zurich/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 196.73,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "357e6e8776f0b0ec6a7233df"
+ },
+ "zurich/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 226.91,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "48d14656a7bfb82757aed1c1"
  }
 }
