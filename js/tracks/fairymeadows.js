@@ -13,8 +13,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Fairy Meadows',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     aiVmax: 11, dropCare: 0.5, wideLine: true,   // (the autopilot: no faster than 40 km/h, half the grip in a bend over a drop, wide through the tight bends: core speedProfile, _buildRacingLine)
     runoff: 0.06, inner: 1.0, side: 1.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,   // (the rock a metre past the edge on one side, the brink on the other: def.drops)
+    // the road's relief (core buildRelief; the user's wish of 9. 11. 2026: not flat, every country's road its own way): the jeep road blasted
+    // into the gorge's cliff, its bed the bare rock: slabs with abrupt edges, rubble fallen from above, the shelf leaning out toward the drop,
+    // a channel the meltwater cut along the foot of the rock, the ground's heave out of step left and right; along the brink a row of
+    // stones the villagers set by hand where it falls away
+    relief: { seed: 23, steps: { n: 9, l: [0.6, 2.4], h: [0.05, 0.12], down: 0.35, g: 0.9 }, stones: { n: 45, r: [0.08, 0.22], h: [0.05, 0.12] },
+      gullies: { n: 0, h: [0.07, 0.11], w: [0.2, 0.3], edge: 0.55, side: 'in' }, holes: { n: 3, r: [0.25, 0.45], h: [0.05, 0.1], wet: 0 }, edge: { r: [0.14, 0.24], h: [0.08, 0.15], gap: [0.55, 1.3], cover: 0.8, at: 0.45 },
+      tilt: { side: 'drop', base: 0.03, amp: 0.045, l: 38 }, wave: { h: 0.025, l: 6.5, twist: 0.9 }, ai: { v: 10, k: 28, min: 4.5 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[54,61,74],wet:{cs:[68,76,93]}},
+    medals: {cs:[67,76,92],wet:{cs:[78,88,107]}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xd0d4d8, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [

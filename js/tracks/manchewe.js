@@ -13,8 +13,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Manchewe',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     aiVmax: 11, dropCare: 0.5, wideLine: true,   // (the autopilot: no faster than 40 km/h, half the grip in a bend over a drop, wide through the tight bends: core speedProfile, _buildRacingLine)
     runoff: 0.06, inner: 1.0, side: 1.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,   // (the rock a metre past the edge on one side, the brink on the other: def.drops)
+    // the road's relief (core buildRelief; the user's wish of 9. 11. 2026: not flat, every country's road its own way): a red laterite earth
+    // road on the escarpment, shaped by hand and by the rains: gullies the rain cut across it at a slant and along its outer edge, dried ruts,
+    // a light washboard, potholes, a low crown, tilting this way and that with the slope; humps of packed earth across it at a slant
+    // (water bars) that turn the rain off it, one wheel over them at a time
+    relief: { seed: 37, gullies: { n: 7, h: [0.07, 0.15], w: [0.22, 0.45], edge: 0.6, side: 'drop' }, ruts: { h: 0.07, at: 0.95, w: 0.3, ridge: 0.4, cover: 0.8 },
+      wash: { h: 0.012, l: 0.8, cover: 0.4 }, holes: { n: 7, r: [0.3, 0.7], h: [0.05, 0.11], wet: 0.15 }, stones: { n: 10, r: [0.06, 0.14], h: [0.03, 0.07] }, bars: { n: 1.6, n0: 5, l: [1, 1.6], h: [0.09, 0.14] },
+      crown: 0.03, tilt: { amp: 0.04, l: 34 }, ai: { v: 10.5, k: 28, min: 4.5 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[47,52,64],wet:{cs:[48,54,66]}},
+    medals: {cs:[61,69,84],wet:{cs:[67,76,92]}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xd8d8cc, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [

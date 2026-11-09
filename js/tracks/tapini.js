@@ -13,8 +13,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Tapini',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     aiVmax: 11, dropCare: 0.5, wideLine: true,   // (the autopilot: no faster than 40 km/h, half the grip in a bend over a drop, wide through the tight bends: core speedProfile, _buildRacingLine)
     runoff: 0.06, inner: 1.0, side: 1.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,   // (the rock a metre past the edge on one side, the brink on the other: def.drops)
+    // the road's relief (core buildRelief; the user's wish of 9. 11. 2026: not flat, every country's road its own way): a clay road the
+    // bulldozer cut, never paved: very deep ruts of the trucks' wheels, the worst bogs bridged with logs laid across (corduroy), mud holes,
+    // the ground's long heave out of step left and right, slippery clay
+    relief: { seed: 67, ruts: { h: 0.13, at: 0.95, w: 0.32, ridge: 0.45, cover: 0.9, g: 0.85 }, logs: { n: 1.2, n0: 2, len: [6, 11], gap: [0.3, 0.38], h: [0.11, 0.15], g: 0.8 },
+      mud: { n: 10, r: [0.8, 2.4], g: 0.62 }, holes: { n: 8, r: [0.35, 0.8], h: [0.06, 0.14], wet: 0.5 }, wave: { h: 0.05, l: 8.5, twist: 0.8 },
+      tilt: { amp: 0.03, l: 30 }, ai: { v: 9.5, k: 26, min: 4 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[44,50,61],wet:{cs:[45,51,62]}},
+    medals: {cs:[72,82,99],wet:{cs:[80,90,110]}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xd6dcd4, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [],

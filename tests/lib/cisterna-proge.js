@@ -11,6 +11,10 @@
 // 5. the tanker on the autopilot (dry): at the finish, never over the edge, the autopilot no faster than its cap (def.aiVmax), wide through
 //    the tight bends (def.wideLine); the trailer folds in a hairpin, but never to its stop (Core TLK.lim, 83 degrees: the tank against the cab)
 // 6. the medal times of the time trial: gold < silver < bronze, dry and wet, the rain no quicker, gold the tanker on the autopilot x 1.02
+// 7. the relief road (the user's wishes of 9. 11. 2026: not flat, as rugged as it can be, every country's road its own builder): the road's
+//    surface a height field (def.relief, Core buildRelief) 5 cm up and down and more, three kinds of what is on it or more, the mark of how
+//    the country builds its roads (MARK) on it, a recipe no other tanker's road has; the rig's springs at work (the wheels' loads swing under
+//    0.6 and over 1.4 of their share, the ground rolls it by 2 degrees or more); in the rain at the finish too
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -18,16 +22,21 @@ const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
 // the tanker on the autopilot over the road (tt, alone): its time, falls, rescues (stuck over 8 s: a loaded rig is slow off the line), the
-// trailer's widest angle, the top speed
+// trailer's widest angle, the top speed; on a relief road the wheels' loads (their least and most, of their share) and the ground's roll (deg)
 function tankerRun(C, T, def, rain) {
   const orig = Math.random; Math.random = seeded(3);
   const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS.find(m => m.id === def.vehicle), assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: true, rain }), P = r.player; r.start();
-  let t = 0, k = 0, resc = 0, tl = 0, vmax = 0;
+  let t = 0, k = 0, resc = 0, tl = 0, vmax = 0, lo = 9, hi = 0, roll = 0;
   while (!P.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 8 || P.wrongT > 3) { r.rescue(P); resc++; }
-    if (P.tl) tl = Math.max(tl, Math.abs(P.tl.rel || 0)); if (P.q.s > T.startS + 20) vmax = Math.max(vmax, P.speed); }
+    if (P.tl) tl = Math.max(tl, Math.abs(P.tl.rel || 0)); if (P.q.s > T.startS + 20) vmax = Math.max(vmax, P.speed);
+    if (P.rs && P.q.s > T.startS + 5) { for (let j = 0; j < 4; j++) { lo = Math.min(lo, P.rs.L[j]); hi = Math.max(hi, P.rs.L[j]); } roll = Math.max(roll, Math.abs(P.nvR)); } }
   Math.random = orig;
-  return { P, time: P.finished ? P.finishTime : null, falls: (P.falls || 0) + ((P.tl && P.tl.falls) || 0), resc, tl: tl * 180 / Math.PI, vmax };
+  return { P, time: P.finished ? P.finishTime : null, falls: (P.falls || 0) + ((P.tl && P.tl.falls) || 0), resc, tl: tl * 180 / Math.PI, vmax, lo, hi, roll: roll * 180 / Math.PI };
 }
+
+// how each country builds its roads, the mark of it on the tanker's road (def.relief's layer, the kind of its cells: Core.RLC): Iceland's
+// grader windrows, the stones set along the brink in the Karakoram, Malawi's water bars, the Andes' landslide earth, Papua's log corduroy
+const MARK = { svalvogar: ['windrows', 'berm'], fairymeadows: ['edge', 'stone'], manchewe: ['bars', 'berm'], yungas: ['slides', 'berm'], tapini: ['logs', 'log'] };
 
 function cisternaTrack(id) {
   const C = loadCore();
@@ -78,6 +87,20 @@ function cisternaTrack(id) {
     const Md = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
     check('medals: gold < silver < bronze, dry and wet, the rain no quicker; gold = the tanker on the autopilot x 1.02', asc(Md.cs) && asc(Md.wet.cs) && Md.wet.cs[0] >= Md.cs[0] && dry.time != null && Math.abs(dry.time * 1.02 - Md.cs[0]) < 1.5,
       `dry ${Md.cs.join('/')} s, wet ${Md.wet.cs.join('/')} s, autopilot ${dry.time ? dry.time.toFixed(1) : '-'} s`);
+  }
+  // 7. the relief road
+  {
+    const RL = T.relief, R = def.relief || {}, mk = MARK[id] || [], K = C.RLC, cls = new Array(16).fill(0); let lo = 0, hi = 0, nc = 0;
+    if (RL) for (let s = T.startS; s < T.finishS; s += 0.25) { const w = RL.wS(s); for (let d = -w; d <= w; d += 0.2) { const h = T.reliefH(s, d, true); lo = Math.min(lo, h); hi = Math.max(hi, h); cls[T.reliefC(s, d)]++; nc++; } }
+    const kinds = cls.filter((v, i) => i && v > nc * 0.002).length, share = mk[1] != null ? cls[K[mk[1]]] / Math.max(1, nc) : 0;
+    const sig = (r) => Object.keys(r || {}).filter(x => x !== 'seed' && x !== 'ai').sort().join(','), same = C.TRACKS.filter(d => d.id !== id && d.vehicle === 'cisterna' && d.relief && sig(d.relief) === sig(R)).map(d => d.id);
+    check(`the relief road: 5 cm up and down and more, three kinds of what is on it or more, the country's own mark (${mk[0] || '-'}) on it, a recipe no other tanker's road has`,
+      !!RL && lo <= -0.05 && hi >= 0.05 && kinds >= 3 && !!R[mk[0]] && share >= 0.005 && !same.length,
+      `${lo.toFixed(2)}..${hi.toFixed(2)} m, ${kinds} kinds, ${mk[1] || '-'} on ${(share * 100).toFixed(1)} % of the road${same.length ? ', the same recipe as ' + same.join(', ') : ''}`);
+    const wet = tankerRun(C, T, def, 1);
+    check('the relief road: the springs at work (the wheels\' loads under 0.6 and over 1.4 of their share, the ground rolls the rig 2 degrees or more); in the rain at the finish too, never over the edge, no rescue',
+      dry.lo < 0.6 && dry.hi > 1.4 && dry.roll >= 2 && wet.time != null && wet.falls === 0 && wet.resc === 0,
+      `loads ${dry.lo.toFixed(2)}..${dry.hi.toFixed(2)}, ground's roll up to ${dry.roll.toFixed(1)} deg; rain ${wet.time ? wet.time.toFixed(1) : '-'} s, falls ${wet.falls}, rescues ${wet.resc}`);
   }
   return { C, def, T, check, tankerRun: (rain) => tankerRun(C, T, def, rain), done() { console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`); process.exitCode = bad ? 1 : 0; } };
 }

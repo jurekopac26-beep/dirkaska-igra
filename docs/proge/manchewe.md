@@ -7,6 +7,7 @@ Zemljena cesta po strmem robu tektonskega jarka pri slapovih Manchewe na severu 
 - **Samo cisterna, na čas**: TITAN CISTERNA (tudi če je igralec nima; `vehicle: 'cisterna'`), brez tekmecev in prometa; cilj je pripeljati cisterno do konca. Medalje: čas avtopilota s cisterno × 1,02 (zlato), × 1,15 (srebro), × 1,40 (bron).
 - **Odsek**: 489 m spusta s 1011 na 967 m (−9 %), dve serpentini (najmanjši polmer ~12 m).
 - **Cesta**: pol širine 2 m, v serpentinah do 2,9 m; prepad brez ograje ob 96 % dirke (zamenja stran za serpentino), na drugi strani lomljena skalna stopnica; rdeča zemlja, 79 grbin.
+- **Površje** (razgibana cesta, odločitev uporabnika 9. 11. 2026; `relief`, `docs/proge-cisterna.md`): rdeča lateritna cesta: poševni jarki, ki jih je izdolbel dež, jarek ob zunanjem robu, suhe kolesnice, rebra, jame; poševne grbine iz nabite zemlje, ki odvajajo vodo (čeznje gre najprej eno kolo, nato drugo).
 - **Svet**: gozdnata savana z listavci in travo, koze ob cesti.
 - **Avtopilot**: največ 40 km/h (`aiVmax`), nad prepadom pol oprijema v ovinku (`dropCare`), skozi serpentine po širši črti (`wideLine`).
 - **Podatki**: sredinska črta iz OpenStreetMap; višine in prepadi iz Copernicus GLO-30, grbine izmišljene, vsakič enake (uvoznik `tools/proga-uvoz.mjs`: `prepad`, `grbine`, `siri`); raba tal ESA WorldCover.

@@ -84,6 +84,273 @@ const Core = (function () {
   // after it (ty.cold to 0, Race._weather). The KOLIBRI keeps its own (KT.cold, Car.kt). A set kept on at a stop, the start's: never cold
   const TCOLD = { g: 0.1, d: 0.5 };
 
+  /* ---- the road's relief (def.relief; open roads: the tanker's, docs/proge-cisterna.md; the user's wish of 9. 11. 2026: the road not flat
+     but 3D, with its depths and heights, so that the vehicle's dampers matter and it is harder to drive; every country's road built its own
+     way: the layers its track's file lists). Over the road a grid (RG_DS m along, RG_DD m across) of the features laid at random (R.seed):
+     ruts, potholes (some holding water), stones, rock slabs with abrupt edges, erosion gullies across it and along one edge, water crossings,
+     mud, log corduroy; each cell's grip (mud, water, wet rock and wood) and what it is (RLC: the renderer's colour). On it the smooth layers,
+     worked out where asked (relH): long waves out of step left and right, the washboard, the logs' round tops, the crown, the tilt across
+     (toward the drop or away from it, eased in over ~16 m; it fades out over the shoulder, RL_SH). None of the bumps by the lines (the start,
+     the finish, the checkpoints) nor over the road's last 0.3 m. A wheel rides the highest of it under its circle (relWheel); the vehicle's
+     springs and dampers (suspOf) carry the body over the four wheels (relSusp): the load on each and so its grip, the slope under them
+     pulling the car, the tyres' work slowing it; the autopilot slower over the rough stretches (vcap) and in their bends (gk, speedProfile);
+     the renderer lays the road's surface over it (js/world-gore.js) ---- */
+  const RG_DS = 0.25, RG_DD = 0.2, RL_SH = 0.6, RL_KR = 0.35;   // (the grid, m; the shoulder the tilt fades over, m; the rough's drag: m/s^2 per m/s of a wheel's rise)
+  const RLC = { rut: 1, hole: 2, water: 3, stone: 4, slab: 5, gully: 6, mud: 7, log: 8, berm: 9 };   // what a cell is (0: the plain road; berm: what the road's builders heaped on it: windrows, water bars, a slide's earth)
+  // a smooth wobble along the road, about -1..1: three sines from the wavelength l (m), out of step by ph
+  const relWob = (s, l, ph) => Math.sin(s * TAU / l + ph) * 0.6 + Math.sin(s * TAU / (l * 0.381) + ph * 2.3) * 0.28 + Math.sin(s * TAU / (l * 0.173) + ph * 4.1) * 0.12;
+  const relHash = (a, b) => { let x = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul((b | 0) + 0x632be5ab, 0xc2b2ae35); x ^= x >>> 15; x = Math.imul(x, 0x27d4eb2f); x ^= x >>> 13; return (x >>> 0) / 4294967296; };
+  // the vehicle's springs and dampers: its own (model.susp { w: a corner's natural frequency, rad/s; z: the damping ratio; c: the travel to the
+  // bump stop, m; r, p: the body's roll and pitch inertia over the springs' }), else a truck's soft and slow ones (model.sway 1.3 or more: a
+  // tall, soft body), else a car's
+  const SUSP_TRUCK = { w: 6.8, z: 0.3, c: 0.15, r: 1.35, p: 1.1, v: 0.3 }, SUSP_CAR = { w: 10.5, z: 0.42, c: 0.1, r: 1, p: 1, v: 0.45 };
+  const suspOf = (M) => M.susp || ((M.sway || 1) >= 1.3 ? SUSP_TRUCK : SUSP_CAR);
+  function buildRelief(T) {
+    const R = T.def.relief, N = T.N, len = T.len, ds = T.ds;
+    let wmax = 0; for (let i = 0; i < N; i++) wmax = Math.max(wmax, T.wAt(i));
+    const D = wmax + 0.4, ns = Math.ceil(len / RG_DS) + 2, nd = Math.ceil(2 * D / RG_DD) + 2;
+    const h = new Float32Array(ns * nd), g = new Float32Array(ns * nd).fill(1), c = new Uint8Array(ns * nd), cm = new Float32Array(ns * nd);
+    const rnd = rng((R.seed || 1) * 7919 + 13), rr = (a) => Array.isArray(a) ? a[0] + (a[1] - a[0]) * rnd() : a, mid = (a) => Array.isArray(a) ? (a[0] + a[1]) / 2 : a, ph = () => rnd() * TAU;
+    const wS = (s) => { const f = clamp(s / ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return lerp(T.wAt(i), T.wAt(i + 1), f - i); };
+    // the drop's side at every sample (Track.dropAt: -1 left, 1 right), carried on over the stretches with none (or both); a layer's side:
+    // 'drop' that one, 'in' the other (the rock's), a number that side (-1 left, 1 right), else none
+    const sd = new Int8Array(N); { let p = 0; for (let i = 0; i < N; i++) { const l = T.dropAt && T.dropAt[0][i], r = T.dropAt && T.dropAt[1][i], v = l && !r ? -1 : r && !l ? 1 : 0; if (v) p = v; sd[i] = p; }
+      const f0 = sd.find(v => v) || 1; for (let i = 0; i < N && !sd[i]; i++) sd[i] = f0; }
+    const sideOf = (i, side) => side === 'drop' ? sd[i] : side === 'in' ? -sd[i] : typeof side === 'number' ? side : 0;
+    const s0 = Math.max(0, T.startS - 40), s1 = Math.min(len, T.finishS + 40), n100 = (s1 - s0) / 100;
+    // the lines (start, finish, checkpoints): no bumps within 2 m of one, all of them from 6 m off (qa: per sample)
+    const lines = [T.startS, T.finishS, ...T.cpS], qa = new Float32Array(N);
+    for (let i = 0; i < N; i++) { let f = 1; for (const l of lines) f = Math.min(f, sstep(2, 6, Math.abs(i * ds - l))); qa[i] = f; }
+    const quiet = (s) => { const f = clamp(s / ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return lerp(qa[i], qa[i + 1], f - i); };
+    const clear = (a, b) => lines.every(l => b < l - 8 || a > l + 8);   // (a stretch clear of the lines: the logs, the water crossings)
+    // a feature over its box: f(s, d, w) its height there (m); its kind and grip (numbers, or by the height) where it shows most and is
+    // 12 mm or more (pri: how much it counts against the others for that); pri 4 and more (mud, logs) take a cell wherever they are, their
+    // grip in place of the ones under them (the later the stronger: the logs over the mud)
+    const put = (sa, sb, da, db, f, kind, grip, pri) => {
+      const p = pri || 1;
+      for (let si = Math.max(0, Math.floor(sa / RG_DS)); si <= Math.min(ns - 1, Math.ceil(sb / RG_DS)); si++) { const s = si * RG_DS, w = wS(s);
+        for (let di = Math.max(0, Math.floor((da + D) / RG_DD)); di <= Math.min(nd - 1, Math.ceil((db + D) / RG_DD)); di++) { const d = di * RG_DD - D, v = f(s, d, w); if (!v) continue;
+          const k = si * nd + di; h[k] += v; const a = p >= 4 ? p : Math.abs(v) < 0.012 ? 0 : Math.abs(v) * p;
+          if (kind && a > cm[k]) { cm[k] = a; c[k] = typeof kind === 'function' ? kind(v) : kind; const gg = typeof grip === 'function' ? grip(v) : grip; if (gg != null) g[k] = p >= 4 ? gg : Math.min(g[k], gg); } } }
+    };
+    // ruts: two where the wheels go (U.at m either side), wandering a little, deeper here and shallower there (U.cover: the share of the road
+    // with them); the soil pushed up beside them and between them (U.ridge of their depth)
+    if (R.ruts) { const U = R.ruts, cov = U.cover || 1, at = U.at || 0.95, ww = U.w || 0.28, rg = U.ridge == null ? 0.35 : U.ridge, p1 = ph(), p2 = ph(), p3 = ph();
+      put(0, len, -D, D, (s, d) => { const env = U.h * sstep(1 - cov - 0.12, 1 - cov + 0.12, 0.5 + 0.5 * relWob(s, 31, p1)) * (0.72 + 0.28 * relWob(s, 9, p3));
+        if (env < 0.003) return 0; const m = 0.14 * relWob(s, 23, p2); let v = 0;
+        for (const sg of [-1, 1]) { const x = (d - m - sg * at) / ww, xr = (Math.abs(x) - 1.75) / 0.6; v += env * (rg * 0.5 * Math.exp(-xr * xr) - Math.exp(-x * x * 1.6)); }
+        const xm = (d - m) / (at * 0.42); return v + env * rg * Math.exp(-xm * xm); }, RLC.rut, U.g);
+    }
+    // potholes: bowls with a low rim, round or long, U.wet of them holding water
+    if (R.holes) { const U = R.holes, n = Math.round(U.n * n100);
+      for (let k = 0; k < n; k++) { const sc = s0 + rnd() * (s1 - s0), w = wS(sc), Rr = rr(U.r), H = rr(U.h), dc = (rnd() * 2 - 1) * Math.max(0, w - Rr * 0.5), el = 1 + rnd() * 0.7, an = rnd() * Math.PI, ca = Math.cos(an), sa = Math.sin(an), wet = rnd() < (U.wet || 0), e = Rr * 2.3;
+        put(sc - e, sc + e, dc - e, dc + e, (s, d) => { const u = s - sc, q = d - dc, x = (u * ca + q * sa) / el, y = q * ca - u * sa, r = Math.hypot(x, y) / Rr;
+          return r >= 1.3 ? 0 : r < 1 ? -H * Math.pow(1 - r * r, 0.6) : H * 0.12 * Math.sin(Math.PI * (r - 1) / 0.3); }, wet ? (v) => v < -H * 0.3 ? RLC.water : RLC.hole : RLC.hole, wet ? (v) => v < -H * 0.3 ? 0.85 : null : null);
+      }
+    }
+    // stones set in the surface: domes with a steep edge
+    if (R.stones) { const U = R.stones, n = Math.round(U.n * n100);
+      for (let k = 0; k < n; k++) { const sc = s0 + rnd() * (s1 - s0), w = wS(sc), Rr = rr(U.r), H = rr(U.h), dc = (rnd() * 2 - 1) * Math.max(0, w - Rr), el = 0.7 + rnd() * 0.6, e = Rr * 1.5;
+        put(sc - e, sc + e, dc - e, dc + e, (s, d) => { const r = Math.hypot((s - sc) / el, d - dc) / Rr; return r < 1 ? H * Math.sqrt(1 - r * r) : 0; }, RLC.stone, U.g || 0.95);
+      }
+    }
+    // rock slabs: raised plates with abrupt, ragged edges (U.down of them sunk instead), across all the road or from one edge part way
+    if (R.steps) { const U = R.steps, n = Math.round(U.n * n100);
+      for (let k = 0; k < n; k++) { const sa = s0 + rnd() * (s1 - s0), L = rr(U.l), H = rr(U.h) * (rnd() < (U.down == null ? 0.25 : U.down) ? -1 : 1), w = wS(sa), full = rnd() < 0.45, left = rnd() < 0.5, p = ph(), e = 0.07;
+        const da = full || left ? -w - 1 : -w + 2 * w * (0.25 + 0.4 * rnd()), db = full || !left ? w + 1 : -w + 2 * w * (0.35 + 0.4 * rnd());
+        put(sa - 0.6, sa + L + 0.6, da - 0.3, db + 0.3, (s, d) => { const ea = sa + 0.22 * Math.sin(d * 2.7 + p), eb = sa + L + 0.22 * Math.sin(d * 3.3 + p * 1.7);
+          return H * sstep(ea - e, ea + e, s) * sstep(eb + e, eb - e, s) * sstep(da - 0.12, da + 0.12, d) * sstep(db + 0.12, db - 0.12, d) * (0.85 + 0.15 * Math.sin(s * 5.1 + d * 4.3 + p)); }, RLC.slab, U.g || 0.9);
+      }
+    }
+    // erosion gullies: channels the rain cut across the road at a slant (deeper on its lower side); U.edge: one along the edge on its side
+    // (U.side) for that share of the road
+    if (R.gullies) { const U = R.gullies, n = Math.round(U.n * n100);
+      for (let k = 0; k < n; k++) { const sc = s0 + rnd() * (s1 - s0), w = wS(sc), H = rr(U.h), W = rr(U.w), sk = (rnd() < 0.5 ? -1 : 1) * (0.5 + 1.8 * rnd()), p = ph(), ext = Math.abs(sk) * (w + 1) + W * 3, q = 1 / Math.sqrt(1 + sk * sk);
+        put(sc - ext, sc + ext, -w - 1, w + 1, (s, d) => { const x = (s - sc - sk * d - 0.25 * Math.sin(d * 2.1 + p)) * q / W; return x * x > 9 ? 0 : -H * (0.6 + 0.4 * sstep(-w, w, d * Math.sign(sk))) * Math.exp(-x * x * 1.5); }, RLC.gully, 0.95);
+      }
+      if (U.edge) { const He = mid(U.h), p = ph(), pe = ph();
+        put(0, len, -D, D, (s, d, w) => { const sg = sideOf(clamp(Math.round(s / ds), 0, N - 1), U.side || 'in') || 1, env = sstep(1 - U.edge - 0.1, 1 - U.edge + 0.1, 0.5 + 0.5 * relWob(s, 27, p)); if (env < 0.01) return 0;
+          const x = (d - sg * (w - 0.45 - 0.12 * relWob(s, 11, pe))) / 0.24; return x * x > 9 ? 0 : -env * He * Math.exp(-x * x * 1.4); }, RLC.gully, 0.95);
+      }
+    }
+    // water crossings: a dip across the road (slanting a little, deeper on one side), water in its bottom, stones in its bed
+    if (R.dips) { const U = R.dips, n = Math.max(U.n0 || 0, Math.round(U.n * n100));
+      for (let k = 0; k < n; k++) { const L = rr(U.l), H = rr(U.h), sk = (rnd() - 0.5) * 0.8, tl = (rnd() - 0.5) * 0.12; let sc = 0;
+        for (let t = 0; t < 12; t++) { sc = s0 + 20 + rnd() * Math.max(1, s1 - s0 - 40); if (clear(sc - L, sc + L)) break; }
+        put(sc - L, sc + L, -D, D, (s, d) => { const u = (s - sc - sk * d) / (L / 2); return Math.abs(u) >= 1 ? 0 : -H * (0.5 + 0.5 * Math.cos(Math.PI * u)) * (1 + tl * d); },
+          U.wet ? (v) => v < -H * 0.35 ? RLC.water : RLC.hole : RLC.hole, U.wet ? (v) => v < -H * 0.35 ? 0.8 : null : null, 1.5);
+        for (let q = 0; q < 4; q++) { const ss = sc + (rnd() - 0.5) * L * 0.6, w = wS(ss), dd = (rnd() * 2 - 1) * (w - 0.3), Rr = 0.12 + 0.14 * rnd(), Hs = 0.04 + 0.06 * rnd();
+          put(ss - Rr, ss + Rr, dd - Rr, dd + Rr, (s, d) => { const r = Math.hypot(s - ss, d - dd) / Rr; return r < 1 ? Hs * Math.sqrt(1 - r * r) : 0; }, RLC.stone, 0.85, 2); }
+      }
+    }
+    // every country's road its own way (the user's wish of 9. 11. 2026), the builders' marks: grader windrows (an Icelandic gravel road's):
+    // the loose gravel the grader leaves in a low ridge along each edge, U.at m in from it and wandering (U.cover: the share of the road
+    // with them), its grip U.g
+    if (R.windrows) { const U = R.windrows, cov = U.cover || 1, at = U.at || 0.55, ww = U.w || 0.22, pa = [ph(), ph()], pb = [ph(), ph()];
+      put(0, len, -D, D, (s, d, w) => { const j = d < 0 ? 0 : 1, env = U.h * sstep(1 - cov - 0.1, 1 - cov + 0.1, 0.5 + 0.5 * relWob(s, 37, pa[j])) * (0.7 + 0.3 * relWob(s, 7.5, pb[j]));
+        if (env < 0.004) return 0; const x = (Math.abs(d) - (w - at - 0.1 * relWob(s, 13, pb[j] + 1))) / ww; return x * x > 9 ? 0 : env * Math.exp(-x * x); }, RLC.berm, U.g || 0.8);
+    }
+    // a row of stones along the brink where there is a drop (a Karakoram jeep road's, set by hand): each U.r big and U.h high, U.gap apart
+    // (U.cover of them there), U.at m in from the edge
+    if (R.edge) { const U = R.edge, at = U.at || 0.45;
+      for (let s = s0 + rnd() * 2; s < s1; s += rr(U.gap || [0.6, 1.4])) { if (rnd() > (U.cover || 0.75)) continue;
+        const i = clamp(Math.round(s / ds), 0, N - 1), sg = sd[i]; if (!sg || (T.dropAt && !T.dropAt[sg < 0 ? 0 : 1][i])) continue;
+        const Rr = rr(U.r), H = rr(U.h), dc = sg * (wS(s) - at - 0.08 * rnd()), sc = s, el = 0.8 + 0.5 * rnd();
+        put(sc - Rr * 1.5, sc + Rr * 1.5, dc - Rr, dc + Rr, (s, d) => { const r = Math.hypot((s - sc) / el, d - dc) / Rr; return r < 1 ? H * Math.pow(1 - r * r, 0.4) : 0; }, RLC.stone, U.g || 0.95, 2);
+      }
+    }
+    // water bars (an African laterite road's): humps of packed earth across the road at a slant (0.5..1.2 m along per m across), to turn
+    // the rain off it; U.h high, U.l wide
+    if (R.bars) { const U = R.bars, n = Math.max(U.n0 || 0, Math.round(U.n * n100)), at = [];
+      for (let k = 0; k < n; k++) { const L = rr(U.l), H = rr(U.h), sk = (rnd() < 0.5 ? -1 : 1) * (0.5 + 0.7 * rnd()), q = 1 / Math.sqrt(1 + sk * sk), ext = Math.abs(sk) * D + L, p = ph(); let sc = 0;
+        for (let t = 0; t < 12; t++) { sc = s0 + 20 + rnd() * Math.max(1, s1 - s0 - 40); if (clear(sc - ext, sc + ext) && at.every(o => Math.abs(o - sc) > ext + 5)) break; }
+        at.push(sc);
+        put(sc - ext, sc + ext, -D, D, (s, d) => { const u = (s - sc - sk * d) * q / (L / 2); return Math.abs(u) >= 1 ? 0 : H * (0.5 + 0.5 * Math.cos(Math.PI * u)) * (0.85 + 0.15 * Math.sin(d * 1.7 + p)); }, RLC.berm, U.g || 0.95, 2);
+      }
+    }
+    // landslide debris (an Andean road's): earth and stones fallen from the cut on the road's inner side and pushed back part of the way;
+    // each U.l long, reaching U.w into the road, U.h high by the edge, soft (its grip U.g), stones in it
+    if (R.slides) { const U = R.slides, n = Math.max(U.n0 || 0, Math.round(U.n * n100));
+      for (let k = 0; k < n; k++) { const L = rr(U.l), Wd = rr(U.w), H = rr(U.h), p = ph(); let sc = 0;
+        for (let t = 0; t < 12; t++) { sc = s0 + 15 + rnd() * Math.max(1, s1 - s0 - 30); if (clear(sc - L / 2 - 2, sc + L / 2 + 2)) break; }
+        const sg = -(sd[clamp(Math.round(sc / ds), 0, N - 1)] || 1);   // (the inner side: the rock's)
+        put(sc - L / 2, sc + L / 2, sg < 0 ? -D : 0, sg < 0 ? 0 : D, (s, d, w) => { const u = (s - sc) / (L / 2), x = (w - 0.3 - sg * d) / (Wd * (1 + 0.25 * Math.sin(u * 2.3 + p)));
+          if (Math.abs(u) >= 1 || x >= 1) return 0; return H * (0.5 + 0.5 * Math.cos(Math.PI * u)) * (x <= 0 ? 1 : Math.pow(1 - x * x, 1.5)) * (0.88 + 0.12 * Math.sin(s * 3.1 + d * 2.3 + p)); }, RLC.berm, U.g || 0.75, 2);
+        for (let q = 0; q < 4; q++) { const ss = sc + (rnd() - 0.5) * L * 0.7, dd = sg * (wS(ss) - 0.3 - rnd() * Wd * 0.6), Rr = 0.1 + 0.1 * rnd(), Hs = 0.04 + 0.06 * rnd();
+          put(ss - Rr, ss + Rr, dd - Rr, dd + Rr, (s, d) => { const r = Math.hypot(s - ss, d - dd) / Rr; return r < 1 ? Hs * Math.sqrt(1 - r * r) : 0; }, RLC.stone, 0.9, 3); }
+      }
+    }
+    // mud: soft patches a little sunk, their grip U.g
+    if (R.mud) { const U = R.mud, n = Math.round(U.n * n100);
+      for (let k = 0; k < n; k++) { const sc = s0 + rnd() * (s1 - s0), w = wS(sc), Rr = rr(U.r), dc = (rnd() * 2 - 1) * w * 0.5, el = 1.3 + rnd(), p = ph(), e = Rr * 1.3;
+        put(sc - e * el, sc + e * el, dc - e, dc + e, (s, d) => { const r = Math.hypot((s - sc) / el, d - dc) / (Rr * (1 + 0.15 * Math.sin(Math.atan2(d - dc, s - sc) * 3 + p))); return r < 1 ? -0.045 * (1 - r * r) - 0.0001 : 0; }, RLC.mud, U.g || 0.7, 4);
+      }
+    }
+    // log corduroy: stretches of logs laid across the road (their round tops: relLog; here their colour and the wet wood's grip)
+    const logs = [];
+    if (R.logs) { const U = R.logs, n = Math.max(U.n0 || 0, Math.round(U.n * n100));
+      for (let k = 0; k < n; k++) { const L = rr(U.len), gap = rr(U.gap), H = rr(U.h); let sa = 0;
+        for (let t = 0; t < 12; t++) { sa = s0 + 15 + rnd() * Math.max(1, s1 - s0 - 30 - L); if (clear(sa, sa + L) && logs.every(o => sa > o[1] + 4 || sa + L < o[0] - 4)) break; }
+        logs.push([sa, sa + L, gap, H, ph(), k]);
+        put(sa, sa + L, -D, D, (s, d, w) => Math.abs(d) <= w + 0.3 ? -0.0001 : 0, RLC.log, U.g || 0.78, 9); }
+      logs.sort((a, b) => a[0] - b[0]);
+      for (const L of logs) for (let si = Math.max(0, Math.floor((L[0] - 0.6) / RG_DS)); si <= Math.min(ns - 1, Math.ceil((L[1] + 0.6) / RG_DS)); si++) {   // (laid on a bed: the ruts and holes under them gone)
+        const s = si * RG_DS, f = 1 - sstep(L[0] - 0.6, L[0], s) * (1 - sstep(L[1], L[1] + 0.6, s)); for (let di = 0; di < nd; di++) h[si * nd + di] *= f; }
+    }
+    // the edges and the lines: every feature fades out over the road's last 0.3 m, none by the lines
+    for (let si = 0; si < ns; si++) { const s = si * RG_DS, w = wS(s), fq = quiet(s);
+      for (let di = 0; di < nd; di++) { const d = di * RG_DD - D, k = si * nd + di, f = fq * sstep(0, 0.3, w - Math.abs(d)); h[k] *= f; if (f < 0.05) { g[k] = 1; c[k] = 0; } } }
+    // the smooth layers' strength along the road (per sample): the long waves', the washboard's (where it is: W.cover of the road); the tilt
+    // (smoothed over ~16 m): U.base + U.amp of a wobble toward its side (the road falls that way), or either way by the wobble (no side)
+    const P = [ph(), ph(), ph(), ph()], wv = new Float32Array(N), wa = new Float32Array(N), tl = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const s = i * ds;
+      if (R.wave) wv[i] = R.wave.h * (0.6 + 0.4 * relWob(s, R.wave.l * 3.3, P[0])) * qa[i];
+      if (R.wash) { const W = R.wash, cov = W.cover || 1; wa[i] = W.h * sstep(1 - cov - 0.1, 1 - cov + 0.1, 0.5 + 0.5 * relWob(s, 33, P[1])) * qa[i]; } }
+    if (R.tilt) { const U = R.tilt, pt = ph(), raw = new Float32Array(N);
+      for (let i = 0; i < N; i++) { const sg = sideOf(i, U.side), wb = relWob(i * ds, U.l || 40, pt); raw[i] = sg ? -sg * ((U.base || 0) + (U.amp || 0) * (0.5 + 0.5 * wb)) : (U.amp || 0) * wb; }
+      const r = Math.max(1, Math.round(8 / ds)); for (let i = 0; i < N; i++) { let a = 0, n = 0; for (let j = Math.max(0, i - r); j <= Math.min(N - 1, i + r); j++) { a += raw[j]; n++; } tl[i] = a / n; }
+    }
+    const RL = { R, D, ns, nd, N, ds, h, g, c, wv, wa, tl, qa, P, logs, wS, vcap: null, gk: null, rough: null };
+    // the autopilot's: the relief's roughness about each sample (its spread and its deepest, the tilt and the crown apart: rough), the speed
+    // it takes over it (vcap; R.ai { v, k, min }: v - k x rough, min at least) and the share of the grip left in its bends (gk: the cells'
+    // grip, less where the load jumps on the rough: R.ai.kg), each the worst of the 5 m ahead and the 4 behind
+    const A = R.ai || {}, ro0 = new Float32Array(N), gk0 = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const s = i * ds, w = wS(s); let a = 0, n = 0, mx = 0, gm = 0;
+      for (let u = -3; u <= 3; u += 0.5) for (let d = -w + 0.3; d <= w - 0.3; d += 0.3) { const v = relH(RL, s + u, d, true); a += v * v; n++; mx = Math.max(mx, Math.abs(v)); gm += relG(RL, s + u, d); }
+      ro0[i] = Math.sqrt(a / Math.max(1, n)) + 0.3 * mx; gk0[i] = clamp(gm / Math.max(1, n) * (1 - (A.kg == null ? 1.5 : A.kg) * ro0[i]), 0.4, 1); }
+    const vc = RL.vcap = new Float32Array(N), gk = RL.gk = new Float32Array(N), ro = RL.rough = new Float32Array(N);
+    for (let i = 0; i < N; i++) { let r = 0, q = 1; for (let j = Math.max(0, i - 2); j <= Math.min(N - 1, i + 3); j++) { r = Math.max(r, ro0[j]); q = Math.min(q, gk0[j]); }
+      ro[i] = r; gk[i] = q; vc[i] = Math.max(A.min || 4, (A.v || 11) - (A.k == null ? 30 : A.k) * r); }
+    return RL;
+  }
+  // the log corduroy's height at (s, d) on the road w m wide there: the logs' round tops, the gaps between them (RL.logs: [from, to, gap, height, phase, k])
+  function relLog(RL, s, d) {
+    for (const L of RL.logs) { if (s < L[0] - 0.3) return 0; if (s > L[1] + 0.3) continue;
+      const q = (s - L[0] - 0.18 * Math.sin(d * 0.9 + L[4])) / L[2], j = Math.floor(q), x = (q - j - 0.5) * L[2], rL = 0.1 + 0.035 * relHash(j, L[5]), hj = L[3] * (0.75 + 0.5 * relHash(j, L[5] + 7));
+      return (Math.abs(x) < rL ? hj * Math.sqrt(1 - (x / rL) * (x / rL)) : -0.02) * sstep(L[0] - 0.3, L[0] + 0.2, s) * sstep(L[1] + 0.3, L[1] - 0.2, s); }
+    return 0;
+  }
+  // the relief's height at (s, d) (m over the road's own surface): the grid's (bilinear), the smooth layers over it, the crown, the tilt;
+  // bare: without the crown and the tilt
+  function relH(RL, s, d, bare) {
+    const f = clamp(s / RG_DS, 0, RL.ns - 1.001), si = f | 0, u = f - si, e = clamp((d + RL.D) / RG_DD, 0, RL.nd - 1.001), di = e | 0, v = e - di, nd = RL.nd, k = si * nd + di, H = RL.h;
+    let y = (H[k] * (1 - v) + H[k + 1] * v) * (1 - u) + (H[k + nd] * (1 - v) + H[k + nd + 1] * v) * u;
+    const R = RL.R, fi = clamp(s / RL.ds, 0, RL.N - 1.001), i = fi | 0, t = fi - i, w = RL.wS(s), ad = Math.abs(d);
+    if (ad < w) {
+      let sm = 0;
+      if (R.wave) { const a = RL.wv[i] + (RL.wv[i + 1] - RL.wv[i]) * t; if (a) sm += a * Math.sin(s * TAU / R.wave.l + RL.P[2] + (R.wave.twist || 0) * 1.57 * d / w); }
+      if (R.wash) { const a = RL.wa[i] + (RL.wa[i + 1] - RL.wa[i]) * t; if (a) sm += a * Math.sin(s * TAU / R.wash.l + 0.35 * d + RL.P[3]); }
+      if (RL.logs.length) sm += relLog(RL, s, d) * (RL.qa[i] + (RL.qa[i + 1] - RL.qa[i]) * t);
+      if (sm) y += sm * sstep(0, 0.3, w - ad);
+      if (!bare && R.crown) { const q = d / w; y += R.crown * (1 - q * q); }
+    }
+    if (bare) return y;
+    const tt = RL.tl[i] + (RL.tl[i + 1] - RL.tl[i]) * t;
+    if (tt) y += tt * (ad <= w ? d : Math.sign(d) * w * Math.max(0, 1 - (ad - w) / RL_SH));
+    return y;
+  }
+  // the grid's cell at (s, d): its index
+  const relK = (RL, s, d) => clamp(Math.round(s / RG_DS), 0, RL.ns - 1) * RL.nd + clamp(Math.round((d + RL.D) / RG_DD), 0, RL.nd - 1);
+  const relG = (RL, s, d) => RL.g[relK(RL, s, d)];   // (its grip)
+  // a car's relief state (Car.rs; only on such a road: the race's digests elsewhere as before): the road under each wheel (h, the slopes
+  // along and across hs / hd, how fast it rises dh, the grip of what it is on g, where s), the load on it (L; f its share of the grip), the
+  // rough's drag on it (rd); the body over its springs (heave Y, roll R, pitch P, their rates); out: the body over the wheels' plane (bY,
+  // bR, bP: the renderer), the slope's pull (ax, az: m/s^2 in the world; mz: its turn, per kg), the bump stop's worst (hit, m)
+  function relMake(c) {
+    const A = () => new Float64Array(4);
+    return { U: suspOf(c.m), n: 0, h: A(), s: A(), hs: A(), hd: A(), dh: A(), g: A().fill(1), L: A().fill(1), f: A().fill(1), fk: A(), rd: A(), Y: 0, vY: 0, R: 0, vR: 0, P: 0, vP: 0, bY: 0, bR: 0, bP: 0, ax: 0, az: 0, mz: 0, hit: 0 };
+  }
+  // the road under wheel k (its query q): the highest of the relief under its circle (radius the model's rw; samples 0.2 m apart along the
+  // road), the slopes there, the rise since the last step, the cell's grip; returns its share of the grip (its load's, the last step's, by
+  // what it is on)
+  const _rlS = new Float64Array(7);
+  function relWheel(c, RL, k, q, dt) {
+    const S = c.rs, r = Math.max(0.42, c.m.rw || 0.42), s = q.s, d = q.d;
+    for (let j = 0; j < 7; j++) _rlS[j] = relH(RL, s + (j - 3) * 0.2, d);
+    const d1 = r - Math.sqrt(r * r - 0.04), d2 = r - Math.sqrt(r * r - 0.16), E = (o) => Math.max(_rlS[o], _rlS[o - 1] - d1, _rlS[o + 1] - d1, _rlS[o - 2] - d2, _rlS[o + 2] - d2);
+    const he = E(3), fresh = S.n < 1 || Math.abs(s - S.s[k]) > 2.5;
+    S.dh[k] = fresh ? 0 : clamp((he - S.h[k]) / dt, -6, 6);
+    S.h[k] = he; S.s[k] = s; S.hs[k] = clamp((E(4) - E(2)) / 0.4, -1.2, 1.2); S.hd[k] = clamp((relH(RL, s, d + 0.2) - relH(RL, s, d - 0.2)) / 0.4, -1.2, 1.2);
+    S.g[k] = relG(RL, s, d); S.rd[k] = RL_KR * Math.abs(S.dh[k]);
+    return S.f[k] * S.g[k];
+  }
+  // the body over its springs and dampers on the wheels' road (relWheel, this step's), in steps of 1/240 s: each corner's spring (its natural
+  // frequency U.w, the bump stop past U.c, nothing pulls a wheel down: off the ground it carries no load); the load on each wheel and so its
+  // grip (the last step's for the next one), the wheels' plane (the car drawn on it: nvY, nvR, nvP), the body over it, the slope's pull.
+  // ch / sh: the heading of the frame the forces are in, cb / sb: the body's
+  function relSusp(c, dt, grounded, cb, sb) {
+    const S = c.rs, U = S.U, M = c.m, a = M.a, b = M.b, tw = c.tw, H = S.h;
+    const R0 = ((H[0] + H[2]) - (H[1] + H[3])) / (4 * tw), P0 = ((H[0] + H[1]) - (H[2] + H[3])) / (2 * (a + b)), Y0 = (H[0] + H[1] + H[2] + H[3]) / 4 - P0 * (a - b) / 2;
+    c.nvY = Y0; c.nvR = R0; c.nvP = P0;
+    if (S.n++ < 1 || !grounded) {   // (fresh, or in the air: on the wheels' plane, at rest; every wheel its own load)
+      S.Y = Y0; S.R = R0; S.P = P0; S.vY = S.vR = S.vP = 0; S.bY = S.bR = S.bP = 0; S.ax = S.az = S.mz = S.hit = 0; for (let k = 0; k < 4; k++) { S.L[k] = S.f[k] = 1; S.fk[k] = 0; } if (!grounded) S.n = 0; return;
+    }
+    const n = Math.max(1, Math.ceil(dt * 240 - 1e-6)), h = dt / n, w2 = U.w * U.w, cz = 2 * U.z * U.w, vb = U.v || 0.4, iR = 1 / (4 * tw * tw * (U.r || 1)), iP = 1 / ((2 * a * a + 2 * b * b) * (U.p || 1));
+    let hit = 0;
+    for (let j = 0; j < n; j++) {
+      const lag = dt * (1 - (j + 1) / n); let aY = 0, aR = 0, aP = 0;
+      for (let k = 0; k < 4; k++) { const x0 = k < 2 ? a : -b, y0 = k & 1 ? tw : -tw;
+        const x = H[k] - S.dh[k] * lag - (S.Y - y0 * S.R + x0 * S.P), xd = S.dh[k] - (S.vY - y0 * S.vR + x0 * S.vP);
+        let f = w2 * x + cz * xd / (1 + Math.abs(xd) / vb); if (x > U.c) { f += 8 * w2 * (x - U.c); if (x - U.c > hit) hit = x - U.c; }
+        if (f < -G) f = -G;
+        S.fk[k] += f; aY += f * 0.25; aR -= f * y0 * iR; aP += f * x0 * iP; }
+      S.vY += aY * h; S.vR += aR * h; S.vP += aP * h; S.Y += S.vY * h; S.R += S.vR * h; S.P += S.vP * h;
+    }
+    let ax = 0, az = 0, mz = 0;
+    for (let k = 0; k < 4; k++) { const L = 1 + S.fk[k] / n / G, u = Math.min(L, 3) - 1; S.fk[k] = 0; S.L[k] = L; S.f[k] = L <= 1 ? L : 1 + 0.55 * u - 0.12 * u * u;
+      const q = c.wq[k], l = L * 0.25 * G, gx = -l * (S.hs[k] * q.tx + S.hd[k] * q.nx), gz = -l * (S.hs[k] * q.tz + S.hd[k] * q.nz);
+      ax += gx; az += gz; mz += (k < 2 ? a : -b) * (-gx * sb + gz * cb); }
+    S.ax = ax; S.az = az; S.mz = mz; S.hit = hit;
+    S.bY = clamp(S.Y - Y0, -0.25, 0.25); S.bR = clamp(S.R - R0, -0.12, 0.12); S.bP = clamp(S.P - P0, -0.1, 0.1);
+  }
+  // the wheels' plane on the relief for a car where it stands (no springs: a replay's, Track relPose): nvY, nvR, nvP
+  function relPose(c, trk) {
+    const RL = trk.relief; if (!RL) return;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), a = c.m.a, b = c.m.b, tw = c.tw, H = [0, 0, 0, 0];
+    for (let k = 0; k < 4; k++) { const x0 = k < 2 ? a : -b, y0 = k & 1 ? tw : -tw, q = trk.query(c.x + x0 * ch - y0 * sh, c.z + x0 * sh + y0 * ch, c.wq[k].i >= 0 ? c.wq[k].i : c.q.i, c.wq[k]); H[k] = relH(RL, q.s, q.d); }
+    c.nvP = ((H[0] + H[1]) - (H[2] + H[3])) / (2 * (a + b)); c.nvR = ((H[0] + H[2]) - (H[1] + H[3])) / (4 * tw); c.nvY = (H[0] + H[1] + H[2] + H[3]) / 4 - c.nvP * (a - b) / 2;
+  }
+
   class Track {
     constructor(def) {
       this.def = def;
@@ -248,6 +515,8 @@ const Core = (function () {
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
+      // the road's relief (def.relief; open roads: the tanker's, docs/proge-cisterna.md): its bumps and hollows, its tilt and the grip on it (buildRelief)
+      this.relief = def.relief && open ? buildRelief(this) : null;
     }
 
     /* ---- side roads ("stubs"): a car can turn off into one, the barrier open across its mouth (delineator posts there, a row of cones
@@ -603,6 +872,10 @@ const Core = (function () {
     }
     // the height of the ground the cars drive on at a query result: the road's (its height at s), in a side road its own
     yAt(q) { return q.k >= 0 && q.fb > 0 ? q.y : this.hasElev ? this.elevAt(q.s).y : 0; }
+    // the road's relief (buildRelief) at (s, d): its height over the road's own surface (0 on a road with none), what is there (RLC: 0 the plain road), the grip
+    reliefH(s, d, bare) { return this.relief ? relH(this.relief, s, d, bare) : 0; }   // (bare: without the crown and the tilt, relH)
+    reliefC(s, d) { return this.relief ? this.relief.c[relK(this.relief, s, d)] : 0; }
+    reliefG(s, d) { return this.relief ? relG(this.relief, s, d) : 1; }
     // the row of cones across side road k just past the barrier line and where all of it has left the road (the course goes straight on), across its whole width there (its corners'
     // kerb returns too; none on the road's own asphalt, where a sharp corner's runs along its edge): [{ kind: 'cone', x, z, yaw, col, i }] for
     // Race.setProps (World puts them in its props; i: a sample near the junction, the lookup's hint)
@@ -1039,7 +1312,7 @@ const Core = (function () {
     // speed profile for a given lateral accel limit (m/s^2) and braking decel
     // aero: grip that grows with speed, latA (1 + aero v^2) (the formula's wings): v^2 (curvature - latA aero) = latA (no limit once the wings hold any bend);
     // settMu: the share of the grip left on the cobbles (def.setts); snow: a mixed stage in winter, the grip left on its snowy gravel against its tarmac (Race.cold.mk)
-    speedProfile(latA, brakeA, vtop, wMax, aero, settMu, snow) {
+    speedProfile(latA, brakeA, vtop, wMax, aero, settMu, snow, wet) {
       const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0), gk = this.gk;
       const v = new Float32Array(N);
       if (this.def.aiVmax) vtop = Math.min(vtop, this.def.aiVmax);   // (def.aiVmax: the autopilot's top speed on a road where faster is folly, the tanker's ledges: docs/proge-cisterna.md)
@@ -1050,6 +1323,8 @@ const Core = (function () {
       if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
       if (this.dropAt && this.def.dropCare) for (let i = 0; i < N; i++) if (this.dropAt[0][i] || this.dropAt[1][i]) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * this.def.dropCare / kk)); }   // (def.dropCare: the share of the grip the autopilot dares use in a bend over a drop)
+      if (this.relief) { const RL = this.relief, wr = clamp(wet || 1, 0.4, 1), aB = (RL.R.ai && RL.R.ai.lat) || 2.8, vw = Math.sqrt(wr); for (let i = 0; i < N; i++) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la, dc = this.dropAt && this.def.dropCare && (this.dropAt[0][i] || this.dropAt[1][i]) ? this.def.dropCare : 1;   // the relief (buildRelief): slower over the rough, and in the bends by the grip left there (over a drop: of the share it dares use), gently round them (R.ai.lat: m/s^2 across at most)
+        v[i] = Math.min(v[i], RL.vcap[i] * vw); if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * dc * RL.gk[i] / kk), Math.sqrt(aB / kk)); } }
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
         v[N - 1] = 0;
         if (gk) { for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * gAt(i) * rds[i])); return v; }   // a road of several surfaces (Harju): brake by each one's grip
@@ -2316,17 +2591,19 @@ const Core = (function () {
     const q = trk.query(ax, az, T.qa.i >= 0 ? T.qa.i : c.q.i, T.qa), sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(ax, az, T.yA) : sf0, S = CSSURF[sf] || CSSURF[0];
     let yR = 0, gr = 0, cv = 0; if (trk.hasElev) { const e = trk.elevAt(q.s, _elv); yR = e.y; gr = e.grade; cv = e.curv; if (q.k >= 0 && q.fb > 0) { yR = q.y; gr = q.g; cv = 0; } }
     if (trk.ground2) yR += trk.ground2(ax, az, T.yA);
+    const TR = trk.relief ? tlRelief(T, trk.relief, q, dt) : null;   // (the road's relief under its axles, tlRelief: its springs take it, so not its height here, never a jump off it; T.rs.y the renderer's)
     if (fresh) T.yA = yR;   // (not launched off the road by a jump to it)
     if (T2) tlRide(T, yR, gr, cv, T.vx * ct + T.vz * st, dt);   // (the road train's: as a car, tlRide)
     else { const yb = T.yA + T.vyA * dt - JUMP_G * dt * dt;   // (over a crest faster than it falls: in the air)
       if (yb <= yR || !(trk.hasElev || trk.ground2)) { T.vyA = (yR - T.yA) / dt; T.yA = yR; T.airA = 0; } else { T.vyA -= JUMP_G * dt; T.yA = yb; T.airA = 1; } }
     if (T.vyA > 30 || T.vyA < -30) T.vyA = clamp(T.vyA, -30, 30);
-    const N = m * G * T.axS + (T2 && !T2.fall ? T.k2 * G : 0), mu = T.airA ? 0 : D.mu * S.lat * (c.wet || 1) * (c.glassK || 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1);
+    const N = m * G * T.axS + (T2 && !T2.fall ? T.k2 * G : 0), mu = T.airA ? 0 : D.mu * S.lat * (c.wet || 1) * (c.glassK || 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (TR ? TR.g : 1);
     // ---- its forces: the slope (where the track has it), the rolling and its brakes along it, the air ----
     let vl = T.vx * ct + T.vz * st;
     if (trk.def.gradeForce && !T.airA) { const gH = gr * (ct * (q.tx || 0) + st * (q.tz || 0)), a = -G * gH / Math.sqrt(1 + gH * gH); T.vx += ct * a * dt; T.vz += st * a * dt; vl += a * dt; }
+    if (TR && !T.airA) { const a = -G * TR.sl; T.vx += q.nx * a * dt; T.vz += q.nz * a * dt; }   // (the relief's tilt across its axles pulls it down the slope; its tyres hold it as they can)
     const Fmax = mu * N, brk = c.locked && !(c.speed > 0.5) ? 1 : clamp(c.csB || 0, 0, 1);
-    const Fb = T.airA ? 0 : Math.min(Fmax * 0.97, (TLK.roll * G + D.brk * brk * (0.55 + 0.45 * S.tr) + (S.c0 * Math.min(1, Math.abs(vl) / 3) + S.c1 * Math.abs(vl)) * 0.5) * m);
+    const Fb = T.airA ? 0 : Math.min(Fmax * 0.97, (TLK.roll * G + D.brk * brk * (0.55 + 0.45 * S.tr) + (S.c0 * Math.min(1, Math.abs(vl) / 3) + S.c1 * Math.abs(vl)) * 0.5 + (TR ? TR.ro * 0.6 * Math.abs(vl) : 0)) * m);
     const dv = Math.min(Math.abs(vl), Fb / m * dt) * Math.sign(vl); T.vx -= ct * dv; T.vz -= st * dv;
     const sp = Math.hypot(T.vx, T.vz); if (sp > 0.1) { const k = Math.min(sp, TLK.cd * sp * sp / m * dt) / sp; T.vx -= T.vx * k; T.vz -= T.vz * k; }
     const Flat = Math.sqrt(Math.max(0, Fmax * Fmax - Fb * Fb)) * dt;
@@ -2361,6 +2638,15 @@ const Core = (function () {
     tlFold(T, T2);
     tlSnap(T, T2);
     T2.q = trk.query(T2.x, T2.z, T2.q.i >= 0 ? T2.q.i : T.q.i, T2.q);
+  }
+  // the road's relief under a trailer's axles (trk.relief, buildRelief; T.rs): the wheels' height on it at the axles' middle, the tilt across
+  // them (sl: it pulls the trailer down the slope), its roll (r: the renderer's), the grip of what they roll on, less on the rough (ro)
+  function tlRelief(T, RL, q, dt) {
+    const R = T.rs || (T.rs = { y: 0, yb: 0, r: 0, g: 1, sl: 0, ro: 0 }), tw = (T.D.wid || 2.5) * 0.43, hl = relH(RL, q.s, q.d - tw), hr = relH(RL, q.s, q.d + tw), i = clamp(Math.round(q.s / RL.ds), 0, RL.N - 1);
+    R.y = (hl + hr) * 0.5; R.sl = clamp((hr - hl) / (2 * tw), -0.6, 0.6); R.ro = RL.rough[i];
+    R.g = (relG(RL, q.s, q.d - tw) + relG(RL, q.s, q.d + tw)) * 0.5 * (1 - clamp(1.5 * R.ro, 0, 0.4));
+    R.r += ((hl - hr) / (2 * tw) - R.r) * Math.min(1, dt * 12); R.yb += (R.y - R.yb) * Math.min(1, dt * 14);   // (yb: its springs' height on it, the renderer's)
+    return R;
   }
   // the road train's tanks (tlChain) ride the road as a car does (stepCS): off it only where its crest under their axles drops away faster
   // than they fall (cv: the road's bend up and down there; the car's rule), on it else (their height the road's: a step in it, where their
@@ -2537,6 +2823,7 @@ const Core = (function () {
       this.vx = this.vz = this.w = 0; this.gear = 1; this.rpm = this.m.idle; this.q.i = -1; this.cSx = this.cSz = 0; this.cSr = null; this.xgl = 0; this.xglT = 0;   // (a knock's slide and lost grip gone: kTake)
       this.wPath = 0; this.vAngP = null; this.csS = 0; this.csWd = 0; this.csB = 0; this.csBx = 0; this.csCo = 0; this.csLt = 0; this.csLp = 0; this.csThrP = 0; this.csK = 0; this.csKc = 0; this.csKs = null; this.csAn = 0; this.csAT = 0; this.csWcap = 1;
       for (const q of this.wq) q.i = -1;
+      if (this.rs) this.rs.n = 0;   // (the road's relief: the body on the wheels' plane again, relSusp)
       if (this.tl) tlPlace(this);   // (its semi-trailer straight behind it, standing with it)
     }
 
@@ -2587,14 +2874,15 @@ const Core = (function () {
       const ldK = K.kLt * Math.min(1, Math.abs(this.csAn) / Math.max(1, K.aL * P.amax * G)), sgO = Math.sign(this.wPath);   // outer wheels carry more of the side load
       let muSum = 0, muF = 0, muR = 0, curb = 0, dragC0 = 0, dragC1 = 0, latF = 0, latB = 0, latFw = 0, latBw = 0, dragP = 0, dragN = 0;
       const kg = this.kt ? ktGrip(this) : null;   // (the Kolibri's own tyres, Car.kt: each wheel's wear, cold after a stop; a tyre on fire: less side grip)
+      const RL = trk.relief; if (RL && !this.rs) this.rs = relMake(this);   // (the road's relief: the road under each wheel, the body on its springs, relWheel / relSusp)
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
-        const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
+        const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]), rg = RL ? relWheel(this, RL, k, q, dt) : 1;   // (rg: the relief's share of its grip, by the load on it and what it is on)
         const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
-        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk, lt = S.lat * lk * (kg ? kg[4] : 1);   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk * rg, lt = S.lat * lk * (kg ? kg[4] : 1) * rg;   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
-        const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;   // (a flat tyre's drag: the tyre's, not the ground's; a wheel knocked off: the hub's)
+        const c0 = (wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf) + (RL ? this.rs.rd[k] : 0), c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;   // (a flat tyre's drag: the tyre's, not the ground's; a wheel knocked off: the hub's; the relief's rough: the tyre's work over it, relWheel)
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25, lw = 0.5 * (1 + ldK * sgO * (k & 1 ? -1 : 1));   // (k odd: +lateral side = inner in a + turn)
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
         const ltw = wl ? lt / LOSTW.tr : lt;   // (a wheel knocked off costs grip, but it is no surface edge: no edge kick from it)
@@ -2602,6 +2890,7 @@ const Core = (function () {
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
+      if (RL) relSusp(this, dt, !this.air, ch, sh);   // (the body over its springs on the relief: each wheel's load for the next step, the slope's pull)
       const wg = this.wet * (this.glassK || 1), muSurf = muSum / 4 * wg, muLat = (latF + latB) * 0.5 * wg;   // (rain: less grip; broken glass on the road, Race._glassStep: less again)
       const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;   // one rear wheel on the grass costs a RWD car traction
       const fwd = vl > 0.5;
@@ -2753,6 +3042,7 @@ const Core = (function () {
       }
       if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
+      if (RL && grounded && !this.locked) { const R = this.rs, fl = m * (R.ax * ch + R.az * sh); Fx += fl; Fy += m * (-R.ax * sh + R.az * ch); Fgrav += fl; }   // the relief's slopes under the wheels pull it down them (relSusp)
       // ---- yaw: follow (path rate + attitude rate) with a short lag and a yaw-acceleration limit ----
       let rT = clamp(wN + dAtt, -K.rMax, K.rMax);
       if (!fwd) rT = (vl < -0.5 ? -stIn : 0) * Math.min(Math.abs(vl) / P.rmin, 1.6);   // reversing: kinematic
@@ -2824,22 +3114,24 @@ const Core = (function () {
       let muF = 0, muR = 0, curb = 0, kb = 0, dragC0 = 0, dragC1 = 0, latF = 0, latB = 0, dragP = 0, dragN = 0, gb = 0, gF = 0, gR = 0;
       const gn = this.nvG || (this.nvG = [0, 0, 0, 0]);   // (the grass's bumps under each wheel, -1..1: below)
       const kg = this.kt ? ktGrip(this) : null;   // (the Kolibri's own tyres, Car.kt, as cs: each wheel's wear, cold after a stop; a tyre on fire)
+      const RL = trk.relief; if (RL && !this.rs) this.rs = relMake(this);   // (the road's relief, as cs: relWheel / relSusp)
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * cb - wpos[k][1] * sb, wz = this.z + wpos[k][0] * sb + wpos[k][1] * cb;   // (the wheels where the body has them)
-        const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
+        const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]), rg = RL ? relWheel(this, RL, k, q, dt) : 1;   // (rg: the relief's share of its grip, as cs)
         const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
-        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk;
-        const lt = S.lat * lk * (kg ? kg[4] : 1) * (M.loose && off ? (1 - (1 - M.loose) * K.slick) / M.loose : 1) * (sf === 1 ? K.kerbLat : 1) * (1 - clamp(Z[4 + k] * K.kerbG, 0, 0.35));   // (slicks on loose ground: K.slick of cs's side grip lost)
+        const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk * rg;
+        const lt = S.lat * lk * (kg ? kg[4] : 1) * (M.loose && off ? (1 - (1 - M.loose) * K.slick) / M.loose : 1) * (sf === 1 ? K.kerbLat : 1) * (1 - clamp(Z[4 + k] * K.kerbG, 0, 0.35)) * rg;   // (slicks on loose ground: K.slick of cs's side grip lost)
         if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) { curb++; kb |= 1 << k; }
         if (sf === 2) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass: a bumpy field, the same bumps in the same place)
         const ld = (M.looseDrag && off ? M.looseDrag : 1) * (sf === 2 ? K.grassD : 1);
-        const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;
+        const c0 = (wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf) + (RL ? this.rs.rd[k] : 0), c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;   // (the relief's rough, as cs)
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25;
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
         if (k < 2) latF += lt * 0.5; else latB += lt * 0.5;
         if (k & 1) dragP += dk; else dragN += dk;
       }
       this.onCurb = curb;
+      if (RL) relSusp(this, dt, !this.air, cb, sb);   // (the body over its springs on the relief, as cs)
       const wg = this.wet * (this.glassK || 1), muSurf = (muF + muR) * 0.5 * wg;
       const muDrv = M.drive === 'FF' ? muF * wg : M.drive === 'AWD' ? muSurf : muR * wg;
       latF *= wg; latB *= wg;
@@ -2971,6 +3263,7 @@ const Core = (function () {
       }
       if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
+      if (RL && grounded && !this.locked) { const R = this.rs, fl = m * (R.ax * ch + R.az * sh); Fx += fl; Fy += m * (-R.ax * sh + R.az * ch); Fgrav += fl; if (fwd) Mz += m * R.mz; }   // the relief's slopes pull it down them and turn it (relSusp)
       // ---- the stability aid (the drift assist): past its slide angle a yaw torque back, while the slide still grows ----
       const att = bSS - beta;   // (the slide beyond the steady one the steer asks for)
       if (fwd && grounded && spd > 4) { const ex = Math.abs(att) - NA.att; if (ex > 0 && this.w * att > 0) Mz -= Math.sign(att) * NA.k * ex * this.I * lo; }
@@ -2997,15 +3290,15 @@ const Core = (function () {
       } else { this.y = 0; }
       this.axF += (((Fx - Fgrav) / m) - this.axF) * Math.min(1, dt * 7);
       if (spd < 0.08 && thr < 0.05 && Math.abs(F) < 1) { this.vx *= 0.8; this.vz *= 0.8; this.w *= 0.8; }
-      // ---- the kerbs: each wheel on one lifts on a spring, kicked up at the entry by the speed (render.js: the body's heave, roll, pitch) ----
+      // ---- the kerbs: each wheel on one lifts on a spring, kicked up at the entry by the speed (render.js: the body's heave, roll, pitch); on the relief its own springs (relSusp) ----
       const kb0 = this.nvKb | 0; this.nvKb = kb;
-      for (let k = 0; k < 4; k++) {
+      if (!RL) for (let k = 0; k < 4; k++) {
         const on = (kb >> k) & 1;
         if (on && !((kb0 >> k) & 1) && grounded) Z[4 + k] += Math.min(0.45, K.kerbKick * spd);
         Z[4 + k] += (K.kerbW * K.kerbW * ((on ? K.kerbH : (gb >> k) & 1 ? K.grH * (0.5 + 0.5 * gn[k]) : 0) - Z[k]) - 2 * K.kerbZ * K.kerbW * Z[4 + k]) * dt;   // (on the grass: over its bumps)
         Z[k] = Math.max(-0.01, Z[k] + Z[4 + k] * dt);
       }
-      this.nvY = (Z[0] + Z[1] + Z[2] + Z[3]) * 0.25; this.nvR = ((Z[0] + Z[2]) - (Z[1] + Z[3])) * 0.25 / tw; this.nvP = ((Z[0] + Z[1]) - (Z[2] + Z[3])) * 0.5 / L;
+      if (!RL) { this.nvY = (Z[0] + Z[1] + Z[2] + Z[3]) * 0.25; this.nvR = ((Z[0] + Z[2]) - (Z[1] + Z[3])) * 0.25 / tw; this.nvP = ((Z[0] + Z[1]) - (Z[2] + Z[3])) * 0.5 / L; }
       // ---- what the others read (as cs): the slide, the skid marks and squeal, the front wheels' angle, the revs ----
       this.vl = vl; this.vt = vt;
       this.beta = beta - nA2; const aB = Math.abs(this.beta);   // (the body's slide: the tyres' and the body's own)
@@ -6266,16 +6559,16 @@ const Core = (function () {
       if (w < 1) { latA0 *= w; brA0 *= 0.55 + 0.45 * w; }
       const lat = latA0 * (F ? ARC[F.id].amax / 1.8 : 1), fb = F ? (F.brakeK || 1) : 1, br = brA0 * fb, wM = wM0 * (F ? CSP[F.id].w : 1), aero = F ? F.aero : 0, bG = BRAKE_G * fb;
       const sM = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0 ? 0.78 : 0.9;   // the cobbles' grip (CSSURF 7 / 8, relative: the rain is already in w)
-      this.vprof = track.speedProfile(lat, br, 85, wM, aero, sM, this.cold.mk);
+      this.vprof = track.speedProfile(lat, br, 85, wM, aero, sM, this.cold.mk, w);
       if (this.field) {   // a field race: every model's own profile (its grip, brakes, path-rate cap, wings), for each AI car and the player's autopilot
         const own = new Map(), of = (M) => {
           let v = own.get(M.id);
-          if (!v) { v = track.speedProfile(latA0 * (ARC[M.id] || ARC.kaze).amax / 1.8, brA0 * (M.brakeK || 1), 85, wM0 * (CSP[M.id] || CSP.kaze).w, M.aero || 0, sM, this.cold.mk); own.set(M.id, v); }
+          if (!v) { v = track.speedProfile(latA0 * (ARC[M.id] || ARC.kaze).amax / 1.8, brA0 * (M.brakeK || 1), 85, wM0 * (CSP[M.id] || CSP.kaze).w, M.aero || 0, sM, this.cold.mk, w); own.set(M.id, v); }
           return v;
         };
         for (const c of this.cars) if (!c.net && !c.isPlayer) c.vprof = of(c.m);
         const P = this.player;   // (upgraded brakes: its own model's profile, braking later by as much)
-        if (P) { const Mp = P.m, bP = BRAKE_G * (Mp.brakeK || 1); P.vprof = P.upg && P.brakeG !== bP ? track.speedProfile(latA0 * (ARC[Mp.id] || ARC.kaze).amax / 1.8, brA0 * (Mp.brakeK || 1) * P.brakeG / bP, 85, wM0 * (CSP[Mp.id] || CSP.kaze).w, Mp.aero || 0, sM, this.cold.mk) : of(Mp); }
+        if (P) { const Mp = P.m, bP = BRAKE_G * (Mp.brakeK || 1); P.vprof = P.upg && P.brakeG !== bP ? track.speedProfile(latA0 * (ARC[Mp.id] || ARC.kaze).amax / 1.8, brA0 * (Mp.brakeK || 1) * P.brakeG / bP, 85, wM0 * (CSP[Mp.id] || CSP.kaze).w, Mp.aero || 0, sM, this.cold.mk, w) : of(Mp); }
       } else if (this.player && this.player.upg && this.player.brakeG !== bG) this.player.vprof = track.speedProfile(lat, br * this.player.brakeG / bG, 85, wM, aero, sM, this.cold.mk);
     }
 
@@ -7915,7 +8208,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { RLC, relPose, suspOf, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose };
 })();

@@ -13,8 +13,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Svalvogar',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     aiVmax: 11, dropCare: 0.5, wideLine: true,   // (the autopilot: no faster than 40 km/h, half the grip in a bend over a drop, wide through the tight bends: core speedProfile, _buildRacingLine)
     runoff: 0.06, inner: 1.0, side: 1.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,   // (the rock a metre past the edge on one side, the brink on the other: def.drops)
+    // the road's relief (core buildRelief; the user's wish of 9. 11. 2026: not flat, every country's road its own way): an Icelandic gravel road
+    // (malarvegur) of crushed basalt, graded once a year: a high crown for the rain, the washboard the traffic shakes into it, potholes full of
+    // water, basalt stones in it, shallow wheel tracks, the ledge falling a little toward the sea; the grader's windrows of loose gravel
+    // along its edges (they pull a wheel that runs onto them)
+    relief: { seed: 11, crown: 0.07, wash: { h: 0.018, l: 0.72, cover: 0.65 }, ruts: { h: 0.035, at: 0.95, w: 0.3, ridge: 0.6, cover: 0.7 },
+      holes: { n: 10, r: [0.25, 0.55], h: [0.06, 0.13], wet: 0.65 }, stones: { n: 30, r: [0.06, 0.16], h: [0.04, 0.09] }, windrows: { h: 0.1, at: 0.55, w: 0.22, cover: 0.85, g: 0.78 },
+      tilt: { side: 'drop', base: 0.008, amp: 0.022, l: 45 }, ai: { v: 11, k: 26, min: 5 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[49,55,68],wet:{cs:[55,62,75]}},
+    medals: {cs:[57,64,78],wet:{cs:[71,80,98]}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xc4ccd2, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [],

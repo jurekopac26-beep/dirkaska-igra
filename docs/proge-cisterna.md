@@ -39,10 +39,30 @@ Fairy Meadows: prvi izbrani odsek (35.45187, 74.60018 → 35.44976, 74.60066, +1
 
 Posnetka ovinka za meni (`tools/menu-corner.mjs`) te proge nimajo: posnetek kaže dirko navadnih avtov, na teh progah pa vozi samo cisterna (meni pokaže maketo). Posnetek s cisterno je mogoč pozneje.
 
+## Razgibana cesta (odločitve uporabnika 9. 11. 2026)
+
+- **Prošnje:** »Proge po slikah izgledajo, da imajo ravno cesto. Spremeni, da cesta ni povsem vodoravna, ampak je 3D, ima globino in višino, tako da je pomembno, kakšne amortizerje ima vozilo, in se težje vozi.« Nato: »Cesta naj bo čim bolj razgibana.« in »Za vsako progo naj bo drugačen graditelj, vsaka država ima svoj način gradnje.«
+- **Površje ceste** (`relief` v datoteki proge, `buildRelief` v `js/core.js`): višinska mreža v okviru ceste (0,25 m vzdolž × 0,2 m počez) iz plasti: kolesnice, jame (del z vodo), kamni, skalne plošče, jarki, prehodi potokov, blato, hlodi, nasipi in kamni graditeljev (spodaj), dolgi valovi, »rebra« (washboard), izbočenost (crown) in nagib proti prepadu. Vse ugasne v zadnjih 0,3 m do roba in 2–6 m od črt (štart, cilj, vmesni časi). Plasti in mreža so vsakič enake (`seed`).
+- **Vožnja:** vsako kolo stoji na svoji točki površja (najvišja točka pod krogom gume), vzmeti in blažilniki po vozilu (`model.susp`, sicer tovornjak ali avto; blažilnik z mehčanjem pri hitrih udarcih), obremenitev vsakega kolesa določa njegov oprijem, nagib površja vleče vozilo, grbine zavirajo; prikolica se nagiba in drsi po njem. Avtopilot zmanjša hitrost po hrapavosti (`ai { v, k, min }`, v dežju × √oprijema). Velja samo na progah z `relief` (stanje v predmetih `c.rs`, `T.rs`: reference drugih prog ostanejo enake).
+- **Izris** (`js/world-gore.js`): cesta kot mreža z reliefom v kosih po 32 m, tri stopnje podrobnosti (0,25 m do 40 m od kamere, 0,5 m do 90 m, 1 m dlje); barva po tem, kaj je kje (`relief:` v `js/world-<id>.js`), temnejše jame in svetlejši vrhovi; luže z gladino (obala sledi cesti); kolesa, sledi koles in posnetek dirke (`relPose`) sledijo površju. Obremenitev telefona: do 102 klica risanja in 352 tisoč oglišč (Manchewe), meja je 300 in 900 tisoč.
+- **Graditelji po državah** (znak države v plasti `relief`, preverja ga test):
+
+| Proga | Način gradnje | Znak države | Kaj pomeni pri vožnji |
+|---|---|---|---|
+| Svalvogar | islandska makadamska cesta iz bazaltnega drobirja, enkrat na leto zgrajena z grederjem: visoka izbočenost, rebra, luže, kamni, plitve kolesnice | nasipi rahlega proda ob obeh robovih (`windrows`) | kolo, ki zapelje na rob, zanese (manj oprijema) |
+| Fairy Meadows | džipovska cesta, izklesana v skalo soteske: skalne plošče z ostrimi robovi, kamenje s pobočja, jarek ob steni, nagib proti prepadu | vrsta kamnov, ki so jih vaščani postavili ob rob prepada (`edge`) | udarci ob robu prepada, kamni potiskajo kolesa |
+| Manchewe | rdeča lateritna cesta na strmini, narejena ročno in po dežju: poševni jarki, suhe kolesnice, rebra, jame | poševne grbine iz nabite zemlje, ki odvajajo vodo (`bars`) | čeznje gre najprej eno kolo, nato drugo: vozilo se zvija |
+| Yungas | stara enopasovna cesta v pobočju oblačnega gozda: globoke mokre kolesnice, blato, luže, prehodi potokov | nanosi plazov s stene, odriniti le do polovice (`slides`) | cesta se zoži, mehka zemlja in kamni na notranji strani |
+| Tapini | glinasta cesta, ki jo je zgradil buldožer: zelo globoke kolesnice, blatne jame, dolgi valovi | hlodi, položeni počez čez najhujše blato (`logs`) | tresenje po hlodih, moker les drsi |
+
+- **Medalje** po razgibani cesti (avtopilot s cisterno × 1,02, 1,15, 1,40; suho / dež): Svalvogar 57/64/78 in 71/80/98 s, Fairy Meadows 67/76/92 in 78/88/107 s, Manchewe 61/69/84 in 67/76/92 s, Yungas 67/75/91 in 74/83/101 s, Tapini 72/82/99 in 80/90/110 s.
+- **Test** (`tests/lib/cisterna-proge.js`, točka 7): površje vsaj 5 cm gor in dol, vsaj tri vrste površja, znak države, recept, ki ga nima nobena druga proga za cisterno; vzmeti delajo (obremenitev koles pod 0,6 in nad 1,4 svojega deleža, teren nagne vozilo vsaj za 2°); tudi v dežju do cilja brez padca in reševanja. Preizkus trka v `golden` za cisterno zahteva vsaj 3 % škode (na razgibani cesti vozi 6–10 m/s), čas trka po progah v `tests/lib/sim.js` (`CRASH_AT`).
+
 ## Postopek in stanje
 
 1. Načrt, osnutek pull requesta, skupni gradniki. **Narejeno** (8. 11. 2026).
 2. Vseh pet prog z datotekami proge, sveta, opisom, testom in medaljami; testi `tests/<id>.test.js` zeleni. **Narejeno** (9. 11. 2026).
 3. Slike za meni (`assets/tracks/<id>.webp`, `-rain.webp`), `docs/proge-pregled.md`, zasluge v `README.md`, reference testov (`npm run golden:update`), povezani testi, vpis v vrsto za `main` (proge zadnje). **V delu** (9. 11. 2026).
+4. Razgibana cesta in graditelji po državah (razdelek zgoraj): površje, vzmetenje, izris, medalje, test, reference. **Narejeno** (9. 11. 2026).
 
 Vsak korak, ki ga ta seja ne konča, nadaljuje nova seja po tem načrtu (»Nadaljuj korak N po docs/proge-cisterna.md«).

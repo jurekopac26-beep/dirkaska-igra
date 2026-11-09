@@ -33,6 +33,7 @@
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
     animals: [], dust: null, extra: null,
+    relief: null,   // (a relief road's own colours by kind, Core.RLC: rut, hole, water, stone, slab, gully, mud, log, gap (between the logs); else from the gravel's)
     ledge: false, sea: false,   // (the tanker's roads, docs/proge-cisterna.md: the ledge, a cliff below the brink of every drop and the rock cut back on the other side; the sea at its level)
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
@@ -360,6 +361,7 @@
        edge lines), gravel where def.surf says (pale with packed snow in a snowy world, no lines), the shoulder, then the verge out past the barrier
        line: a ploughed snowbank in a snowy world (S.snowbanks), else the ditch; the side roads' mouths (120 m chunks) ---- */
     const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
+    const RLF = T.relief, rE = (i, side) => RLF ? T.reliefH(i * T.ds, side * (T.wAt ? T.wAt(i) : w)) : 0;   // (the relief road's: its height at the edge, relRoad)
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
     const sMat = new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.04, shininess: 5, specular: 0x14110d, vertexColors: true });
@@ -422,7 +424,7 @@
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true), gb = SN ? new GB(true) : gv;
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, wi = T.wAt ? T.wAt(i) : w, wj = T.wAt ? T.wAt(j) : w, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6, gv2 = grv[i] || grv[j];
-          const nq = gv2 && SN ? 8 : 4;
+          const nq = RLF ? 0 : gv2 && SN ? 8 : 4;   // (a relief road: its own mesh, relRoad)
           for (let c = 0; c < nq; c++) { const f0 = c / nq * 2 - 1, f1 = (c + 1) / nq * 2 - 1, a0 = f0 * wi, a1 = f1 * wi, b0 = f0 * wj, b1 = f1 * wj;
             if (gv2 && SN) { const rut = c === 1 || c === 2 || c === nq - 2 || c === nq - 3, tc = (f, q) => { const k = (0.97 + 0.04 * rpHash(q, Math.round(f * 8) + 20)) * (1 - 0.13 * Math.exp(-(((Math.abs(f) - 0.5) / 0.16) ** 2))); return rut ? [snowRd[0] * k * 0.98, snowRd[1] * k * 0.96, snowRd[2] * k * 0.93] : [snowRd[0] * k, snowRd[1] * k, snowRd[2] * k]; };   // (packed snow, the wheels' ruts darker, gritty and a little brown; between and outside them smooth)
               (rut ? gv : gb).quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [tc(f0, i), tc(f1, i), tc(f1, j), tc(f0, j)], [wuv(Pt(i, a0, 0)), wuv(Pt(i, a1, 0)), wuv(Pt(j, b1, 0)), wuv(Pt(j, b0, 0))]); }
@@ -442,7 +444,7 @@
           }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j];
-            (SN ? gv : gs).quadUp(Pt(i, side * wi, 0.012), Pt(i, side * (wi + sw), -0.02), Pt(j, side * (wj + sw), -0.02), Pt(j, side * wj, 0.012), [gc, gc, gc, gc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);
+            (SN ? gv : gs).quadUp(Pt(i, side * wi, 0.012 + rE(i, side)), Pt(i, side * (wi + sw), -0.02), Pt(j, side * (wj + sw), -0.02), Pt(j, side * wj, 0.012 + rE(j, side)), [gc, gc, gc, gc], [[0, s0], [sw / 4, s0], [sw / 4, s1], [0, s1]]);   // (its inner edge on the relief's: rE)
             for (let k = 0; k < NP - 1; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]);
               if (k === 2 && qi[3][1] - qi[2][1] > 0.25) gb.quadO(a, b, c, d, null, Pt(i, side * (qi[3][0] + 2), qi[2][1] - 1), [wuv(a), wuv(b), wuv(c), wuv(d)], [ci[k], ci[k + 1], cj[k + 1], cj[k]]);   // (the wall's face to the road)
               else gb.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
@@ -451,12 +453,73 @@
         SB.emit(c0, c0 + 60, gr, SN ? gv : gs, gl);   // (in a snowy world the side roads' gravel and shoulders packed snow on the grit)
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat); if (gb !== gv) addM(gb, bMat);
       }
+      // the relief road (T.relief: the tanker's roads, docs/proge-cisterna.md; Core buildRelief): the road's surface a height field in its own
+      // frame (T.reliefH: the grid's ruts, holes, stones, slabs, gullies, mud and logs, the waves, the washboard, the crown, the tilt) in ~32 m
+      // chunks, each a THREE.LOD: 0.25 m along by ~0.2 m across within 40 m of the camera, half as fine past it (a quarter of the triangles),
+      // a quarter as fine past 90 m;
+      // smooth normals from the field (across the chunks' seams too), its colour by what is where (Core.RLC; S.relief: the road's own),
+      // darker in its hollows and paler on its tops; the gravel's makadam texture and bump (sMat)
+      if (RLF) {
+        const K = Core.RLC, G0 = RD.gravel, RC = S.relief || {}, sc = (a, k) => [a[0] * k, a[1] * k, a[2] * k], mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+        const PAL = []; PAL[0] = G0; PAL[K.rut] = RC.rut || sc(G0, 0.8); PAL[K.hole] = RC.hole || mix(sc(G0, 0.66), [0.24, 0.19, 0.14], 0.3); PAL[K.water] = RC.water || [0.19, 0.16, 0.12];
+        PAL[K.stone] = RC.stone || mix(G0, [0.74, 0.73, 0.7], 0.5); PAL[K.slab] = RC.slab || mix(S.ground.rock, G0, 0.25); PAL[K.gully] = RC.gully || sc(G0, 0.74); PAL[K.mud] = RC.mud || [0.27, 0.21, 0.15]; PAL[K.log] = RC.log || [0.42, 0.3, 0.19]; PAL[K.berm] = RC.berm || mix(G0, [0.66, 0.62, 0.56], 0.3);
+        const GAP = RC.gap || [0.15, 0.12, 0.09], sE = (N - 1) * T.ds, wA = (i) => T.wAt ? T.wAt(i) : w, CL = 32;   // (GAP: the dark between the logs)
+        let wm = 0; for (let i = 0; i < N; i++) wm = Math.max(wm, wA(i));
+        const lvl = (sa, sb, dsr, nc, o) => {   // one level of a chunk from sa to sb: rows ~dsr apart, nc cells across (as the road's quads: their edges the shoulders'); o: the chunk's middle (the LOD's place)
+          const nr = Math.max(1, Math.round((sb - sa) / dsr)), W = nc + 3, H = nr + 3, X = new Float32Array(W * H), Y = new Float32Array(W * H), Z = new Float32Array(W * H), SS = new Float32Array(H), DD = new Float32Array(W * H);
+          for (let r = 0; r < H; r++) { const s = clamp(sa + (r - 1) * (sb - sa) / nr, 0, sE), f = Math.min(N - 1.0001, s / T.ds), i = f | 0, t = f - i, j = i + 1, wi = wA(i), wj = wA(j), ws = wi + (wj - wi) * t, hy = T.hy[i] + (T.hy[j] - T.hy[i]) * t; SS[r] = s;
+            for (let c = 0; c < W; c++) { const q = (c - 1) / nc * 2 - 1, k = r * W + c, d = q * ws;   // (the border's rows and columns past the chunk: its normals)
+              X[k] = (T.px[i] + T.nx[i] * q * wi) * (1 - t) + (T.px[j] + T.nx[j] * q * wj) * t - o[0]; Z[k] = (T.pz[i] + T.nz[i] * q * wi) * (1 - t) + (T.pz[j] + T.nz[j] * q * wj) * t - o[2];
+              Y[k] = hy + 0.02 + T.reliefH(s, d) - o[1]; DD[k] = d; } }
+          const dr = (sb - sa) / nr, dd = 2 * wm / nc;   // (the rows' and the columns' spacing, about)
+          const nv = (nr + 1) * (nc + 1), pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), col = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = new Uint16Array(nr * nc * 6);
+          let v = 0;
+          for (let r = 1; r <= nr + 1; r++) { const s = SS[r];
+            for (let c = 1; c <= nc + 1; c++, v++) { const k = r * W + c, d = DD[k];
+              const ax = X[k + 1] - X[k - 1], ay = Y[k + 1] - Y[k - 1], az = Z[k + 1] - Z[k - 1], bx = X[k + W] - X[k - W], by = Y[k + W] - Y[k - W], bz = Z[k + W] - Z[k - W];
+              let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx; const l = (ny < 0 ? -1 : 1) / (Math.hypot(nx, ny, nz) || 1); nx *= l; ny *= l; nz *= l;
+              pos[v * 3] = X[k]; pos[v * 3 + 1] = Y[k]; pos[v * 3 + 2] = Z[k]; nor[v * 3] = nx; nor[v * 3 + 1] = ny; nor[v * 3 + 2] = nz; uv[v * 2] = d / 4; uv[v * 2 + 1] = s / 6;
+              const cl = T.reliefC(s, d), hb = T.reliefH(s, d, true), wx = X[k] + o[0], wz = Z[k] + o[2];
+              let C = PAL[cl] || G0;
+              if (cl === K.log) C = hb > 0.025 ? sc(C, 0.85 + 0.3 * rpHash(Math.round(s * 3), 41)) : GAP;   // (each log its own shade)
+              else if (cl === K.berm) C = mix(G0, C, clamp(hb / 0.06, 0, 1));   // (what the builders heaped: its own colour on its top, the road's at its foot)
+              const cv = ((Y[k - 1] + Y[k + 1]) * 0.5 - Y[k]) / (dd * dd) + ((Y[k - W] + Y[k + W]) * 0.5 - Y[k]) / (dr * dr);   // (its hollowness, 1/m: a hole's bottom, a rut's; a ridge's top below 0)
+              const kk = clamp(1 + hb * 3.5, 0.62, 1.15) * clamp(1 - 0.07 * cv, 0.8, 1.08) * (0.92 + 0.12 * P.n4(wx * 2.1, wz * 2.1));
+              col[v * 3] = C[0] * kk; col[v * 3 + 1] = C[1] * kk; col[v * 3 + 2] = C[2] * kk; } }
+          let up = true; { const ax = pos[3] - pos[0], az = pos[5] - pos[2], b = (nc + 1) * 3, bx = pos[b] - pos[0], bz = pos[b + 2] - pos[2]; up = az * bx - ax * bz > 0; }   // (facing up: the winding by its first cell)
+          let m = 0;
+          for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) { const a = r * (nc + 1) + c, b = a + 1, e = a + nc + 1, f = e + 1;
+            if (up) { idx[m++] = a; idx[m++] = b; idx[m++] = e; idx[m++] = b; idx[m++] = f; idx[m++] = e; } else { idx[m++] = a; idx[m++] = e; idx[m++] = b; idx[m++] = b; idx[m++] = e; idx[m++] = f; } }
+          const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+          g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeBoundingSphere();
+          const me = new THREE.Mesh(g, sMat); me.receiveShadow = true; me.matrixAutoUpdate = false; me.updateMatrix(); return me;
+        };
+        const nc0 = Math.max(8, Math.ceil(2 * wm / 0.2)), nc1 = Math.max(4, Math.ceil(nc0 / 2)), nc2 = Math.max(4, Math.ceil(nc0 / 4));
+        for (let sa = 0; sa < sE - 0.01; sa += CL) { const sb = Math.min(sE, sa + CL), f = Math.min(N - 1.0001, (sa + sb) / 2 / T.ds), i = f | 0, o = [T.px[i], T.hy[i], T.pz[i]];
+          const L = new THREE.LOD(); L.position.set(o[0], o[1], o[2]); L.matrixAutoUpdate = false; L.updateMatrix(); L.addLevel(lvl(sa, sb, 0.25, nc0, o), 0); L.addLevel(lvl(sa, sb, 0.5, nc1, o), 40); L.addLevel(lvl(sa, sb, 1, nc2, o), 90); L.name = 'reliefRoad'; root.add(L); }
+        // the water in its wet holes and fords (Core.RLC.water's cells, each pool of them): level, at its lowest rim less a third of its depth
+        // (on a slope the downhill part full, the rest dry); a square of it over each of its cells and the ones around them, the road hiding
+        // it where higher (its shore the road's own line at that level, not the cells' steps; one mesh, its own muddy colour: S.relief.water)
+        { const R0 = RLF, ns = R0.ns, nd = R0.nd, C0 = R0.c, seen = new Uint8Array(ns * nd), gw = new GB(), WC = PAL[K.water], Q = [], abs = (si, di) => { const s = si * 0.25, d = di * 0.2 - R0.D, f = Math.min(N - 1.0001, s / T.ds), i = f | 0, t = f - i; return T.hy[i] + (T.hy[i + 1] - T.hy[i]) * t + 0.02 + T.reliefH(s, d); };
+          const at = (s, d, y) => { const f = Math.min(N - 1.0001, Math.max(0, s / T.ds)), i = f | 0, t = f - i, j = i + 1; return [(T.px[i] + T.nx[i] * d) * (1 - t) + (T.px[j] + T.nx[j] * d) * t, y, (T.pz[i] + T.nz[i] * d) * (1 - t) + (T.pz[j] + T.nz[j] * d) * t]; };
+          for (let k0 = 0; k0 < ns * nd; k0++) { if (C0[k0] !== K.water || seen[k0]) continue;
+            const cells = []; let lo = 1e9, rim = 1e9; Q.length = 0; Q.push(k0); seen[k0] = 1;
+            while (Q.length) { const k = Q.pop(), si = (k / nd) | 0, di = k - si * nd; cells.push(k); lo = Math.min(lo, abs(si, di));
+              for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const sj = si + a, dj = di + b; if (sj < 0 || dj < 0 || sj >= ns || dj >= nd) continue; const kj = sj * nd + dj;
+                if (C0[kj] === K.water) { if (!seen[kj]) { seen[kj] = 1; Q.push(kj); } } else rim = Math.min(rim, abs(sj, dj)); } }
+            if (rim - lo < 0.015 || cells.length < 3) continue;
+            const y = rim - (rim - lo) * 0.33, c = [WC[0] * 0.9, WC[1] * 0.9, WC[2] * 0.9], sq = new Set(), cr = (si, di) => at((si - 0.5) * 0.25, (di - 0.5) * 0.2 - R0.D, y);   // (cr: a cell's corner, the same for its neighbours: no seams)
+            for (const k of cells) { const si = (k / nd) | 0, di = k - si * nd; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (si + a >= 0 && di + b >= 0 && si + a < ns && di + b < nd) sq.add((si + a) * nd + di + b); }
+            for (const k of sq) { const si = (k / nd) | 0, di = k - si * nd; gw.quadUp(cr(si, di), cr(si, di + 1), cr(si + 1, di + 1), cr(si + 1, di), [c, c, c, c]); } }
+          if (!gw.empty) { const m = new THREE.Mesh(gw.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 90, specular: 0x6f7378, transparent: true, opacity: 0.88, depthWrite: false })); m.renderOrder = 1; m.matrixAutoUpdate = false; m.receiveShadow = true; m.name = 'reliefWater'; root.add(m); } }
+      }
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
-      for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
-        gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
-      for (const s0 of T.cpS) { const a = atSf(s0 - 0.25, -w + 0.1), b = atSf(s0 - 0.25, w - 0.1), c = atSf(s0 + 0.25, w - 0.1), d = atSf(s0 + 0.25, -w + 0.1), y = (p) => T.hy[p[3]] + 0.042;
-        gw.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [wht, wht, wht, wht]); }
+      const band = (g, sa, sb, oa, ob, y0, cols, um) => { const n = RLF ? 8 : 1, y = (p, s, o) => T.hy[p[3]] + y0 + (RLF ? T.reliefH(s, o) : 0);   // (a line across the road; on a relief road in 8 pieces on it)
+        for (let k = 0; k < n; k++) { const o0 = oa + (ob - oa) * k / n, o1 = oa + (ob - oa) * (k + 1) / n, a = atSf(sa, o0), b = atSf(sa, o1), c = atSf(sb, o1), d = atSf(sb, o0);
+          g.quadUp([a[0], y(a, sa, o0), a[1]], [b[0], y(b, sa, o1), b[1]], [c[0], y(c, sb, o1), c[1]], [d[0], y(d, sb, o0), d[1]], cols, um ? [[um * k / n, 0], [um * (k + 1) / n, 0], [um * (k + 1) / n, 0.5], [um * k / n, 0.5]] : undefined); } };
+      for (const s0 of [sStart, sFin]) band(gq, s0 - 0.8, s0 + 0.8, -w, w, 0.045, [W1, W1, W1, W1], uM);
+      for (const s0 of T.cpS) band(gw, s0 - 0.25, s0 + 0.25, -w + 0.1, w - 0.1, 0.042, [wht, wht, wht, wht]);
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
 

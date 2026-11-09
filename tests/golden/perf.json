@@ -364,38 +364,38 @@
   "jsMs": 1.14
  },
  "svalvogar": {
-  "calls": 58,
-  "maxCalls": 59,
-  "kverts": 124,
-  "maxKverts": 126,
-  "jsMs": 0.36
+  "calls": 64,
+  "maxCalls": 65,
+  "kverts": 154,
+  "maxKverts": 160,
+  "jsMs": 0.43
  },
  "fairymeadows": {
-  "calls": 63,
-  "maxCalls": 69,
-  "kverts": 126,
-  "maxKverts": 141,
-  "jsMs": 0.56
+  "calls": 69,
+  "maxCalls": 77,
+  "kverts": 174,
+  "maxKverts": 187,
+  "jsMs": 0.26
  },
  "manchewe": {
-  "calls": 71,
-  "maxCalls": 82,
-  "kverts": 247,
-  "maxKverts": 282,
+  "calls": 86,
+  "maxCalls": 102,
+  "kverts": 311,
+  "maxKverts": 352,
   "jsMs": 0.25
  },
  "yungas": {
-  "calls": 69,
-  "maxCalls": 73,
-  "kverts": 245,
-  "maxKverts": 275,
-  "jsMs": 0.27
+  "calls": 81,
+  "maxCalls": 86,
+  "kverts": 287,
+  "maxKverts": 329,
+  "jsMs": 0.35
  },
  "tapini": {
-  "calls": 78,
-  "maxCalls": 81,
-  "kverts": 289,
-  "maxKverts": 311,
-  "jsMs": 0.34
+  "calls": 90,
+  "maxCalls": 94,
+  "kverts": 315,
+  "maxKverts": 322,
+  "jsMs": 0.28
  }
 }

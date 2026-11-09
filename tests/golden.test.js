@@ -28,8 +28,9 @@ for (const tid of trackIds(C)) for (const sn of Object.keys(SETUPS)) for (const 
   out[key] = r; n++;
   const g = golden[key], cv = r.cover;
   const ok = g && g.digest === r.digest;
-  const covered = !SETUPS[sn].drive || (ownModel(C, tid) ? cv.dmg >= 0.05 : cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups;
-  // the tanker on its own roads, docs/proge-cisterna.md: a knock of 5 % or more is enough, at its pace no panel comes off and they have no pits)
+  const covered = !SETUPS[sn].drive || (ownModel(C, tid) ? cv.dmg >= 0.03 : cv.dmg >= 0.2 && cv.loose >= 1 && (!C.TRACKS.find(d => d.id === tid).pit || cv.repairs >= 1));   // (the crash set-ups;
+  // the tanker on its own roads, docs/proge-cisterna.md: a knock of 3 % or more is enough, at its pace (6-10 m/s on the relief road) no panel
+  // comes off and they have no pits)
   if ((!update && !ok) || !covered) bad++;
   console.log(`${key.padEnd(26)} ${r.digest} lead ${String(r.lead).padStart(7)} m ${SETUPS[sn].drive ? `damage ${cv.dmg} loose ${cv.loose} rescues ${cv.rescues} repairs ${cv.repairs} ` : ''}` +
     `${!covered ? 'FAIL: this run does not really crash (damage 0.2+, a loose panel; the pit repair on a track with pits): adjust crashDrive in tests/lib/sim.js ' : ''}` +
