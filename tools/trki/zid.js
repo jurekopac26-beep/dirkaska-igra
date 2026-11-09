@@ -15,8 +15,8 @@
 // - a step, mode 'sam': the calls Race._step makes for one car, in its order (the steering's rate, Car.step, wallCollide, Track.query), so
 //   the wall's part of a step (its push and its correction of the position) can be told from the car's own; mode 'dirka': Race.step itself
 //   (a semi-trailer needs it: its walls and the kingpin are the race's, Race._tlStep). Part 'proga' shows both give the same run, to the bit
-// - the inputs: 'nic' none after the placing; 'plin' full throttle all the way, from the first touch the steering away from the barrier (full
-//   lock while the car is near it or points at it, then holding a line 2 m clear of it: an analogue stick)
+// - the inputs: 'nic' none after the placing; 'plin' full throttle all the way, from the first touch the steering away from the barrier (the
+//   more the more the nose points at it, full lock from about 15 deg), then holding a line 2 m clear of it (an analogue stick)
 // Columns (matrika): v0 the speed at the hit, v1 after the first step in the barrier, vL when it leaves it (no touch for 0.25 s after), v.5
 //   and v2 at 0.5 s and 2 s after the hit (km/h); eN1 / eNL the normal speed away from the barrier after the first step / leaving, as a
 //   share of the normal speed in (the effective restitution; negative: still going in); mu1 / muS the tangential speed the wall took over
@@ -119,9 +119,9 @@ function crash(o) {
   let k0 = -1, fell = -1;
   for (let k = 0; k < n; k++) {
     c.inThr = o.inp === 'plin' ? 1 : 0; c.inBrk = 0; c.inHand = 0; c.inSteer = 0;
-    if (o.inp === 'plin' && k0 >= 0) {   // (away from the barrier: full lock while it is near or the nose points at it, then a line 2 m clear of it)
+    if (o.inp === 'plin' && k0 >= 0) {   // (away from the barrier, the more the more the nose points at it, then a line 2 m clear of it: aimed a second ahead)
       const B = side > 0 ? c.q.br : c.q.bl, e = side * c.q.d - (B - c.m.wid / 2 - 2), he = side * wrap(c.h - T.hd[c.q.i]);
-      c.digitalSteer = false; c.inSteer = away * C.clamp(0.35 * e + 2 * he, -1, 1); }
+      c.digitalSteer = false; c.inSteer = away * C.clamp(3 * (he + e / Math.max(15, c.speed)), -1, 1); }
     if (o.drive) o.drive(c, k, k0);
     c.wallX = NaN; if (c.tl) { c.tl.wallX = NaN; if (c.tl.next) c.tl.next.wallX = NaN; }
     const b = { x: c.x, z: c.z, h: c.h, vx: c.vx, vz: c.vz, w: c.w };
