@@ -1391,5 +1391,22 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "seoul": {
+  "meshes": 471,
+  "verts": 218945,
+  "instances": 27765,
+  "props": 0,
+  "crowd": 3,
+  "world": "74a98f46",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "dbc6946b",
+   "crowd:MeshLambertMaterial": "3439aa37",
+   "ao:MeshBasicMaterial": "c4213057",
+   "tyremarks:MeshBasicMaterial": "7a24f7a3",
+   "roadwear:MeshLambertMaterial": "ec3061f9"
+  }
  }
 }

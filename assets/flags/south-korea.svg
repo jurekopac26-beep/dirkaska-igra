@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>South Korea</title>
+  <!-- Ratio 3:2. The taegeuk in the middle (its diameter half the height), red above and blue below, the line between them two half circles
+       on the diagonal from the upper left corner; the four trigrams on the diagonals, a quarter of the diameter from the circle (geon upper
+       left, gam upper right, ri lower left, gon lower right). Colours: red #CD2E3A, blue #0047A0, black. -->
+  <rect x="0" y="0" width="900" height="600" fill="#FFFFFF"/>
+  <circle cx="450" cy="300" r="150" fill="#0047A0"/>
+  <path fill="#CD2E3A" d="M325.19 216.79A150 150 0 0 1 574.81 383.21A75 75 0 0 0 450 300A75 75 0 0 1 325.19 216.79Z"/>
+  <g fill="#000000">
+  <g transform="translate(221.19 147.46) rotate(-146.31)"><rect x="-50" y="-75" width="25" height="150"/><rect x="-12.5" y="-75" width="25" height="150"/><rect x="25" y="-75" width="25" height="150"/></g>
+  <g transform="translate(678.81 147.46) rotate(-33.69)"><rect x="-50" y="-75" width="25" height="68.75"/><rect x="-50" y="6.25" width="25" height="68.75"/><rect x="-12.5" y="-75" width="25" height="150"/><rect x="25" y="-75" width="25" height="68.75"/><rect x="25" y="6.25" width="25" height="68.75"/></g>
+  <g transform="translate(221.19 452.54) rotate(146.31)"><rect x="-50" y="-75" width="25" height="150"/><rect x="-12.5" y="-75" width="25" height="68.75"/><rect x="-12.5" y="6.25" width="25" height="68.75"/><rect x="25" y="-75" width="25" height="150"/></g>
+  <g transform="translate(678.81 452.54) rotate(33.69)"><rect x="-50" y="-75" width="25" height="68.75"/><rect x="-50" y="6.25" width="25" height="68.75"/><rect x="-12.5" y="-75" width="25" height="68.75"/><rect x="-12.5" y="6.25" width="25" height="68.75"/><rect x="25" y="-75" width="25" height="68.75"/><rect x="25" y="6.25" width="25" height="68.75"/></g>
+  </g>
+</svg>
