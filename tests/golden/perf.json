@@ -509,5 +509,12 @@
   "kverts": 455,
   "maxKverts": 564,
   "jsMs": 0.75
+ },
+ "espinazo": {
+  "calls": 162,
+  "maxCalls": 183,
+  "kverts": 324,
+  "maxKverts": 401,
+  "jsMs": 1.67
  }
 }
