@@ -80,6 +80,7 @@
     starBig: '<svg class="bigcup" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l3.6 7.5 8.2 1-6 5.6 1.6 8.1L16 21.2 8.6 25.2l1.6-8.1-6-5.6 8.2-1z" fill="#ffc629" stroke="#8a6200" stroke-width=".9"/></svg>',
     expand: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    flask: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3h7M10 3v6.2L4.8 18.4A1.8 1.8 0 0 0 6.4 21h11.2a1.8 1.8 0 0 0 1.6-2.6L14 9.2V3" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 15.2h9.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
   });
 
   /* ---------------- the game's tracks as the menu shows them ---------------- */
@@ -115,8 +116,14 @@
     TR.sort((a, b) => (rank(a) - rank(b)) || (lenOf(a.def) - lenOf(b.def)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   }
   const trackById = (id) => TR.find(t => t.id === id);
-  // the track the game stands on. Its built-in first choice is a test track (Jezero), which a player who has never raced should not meet first
-  const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && !(c.test && !G.S.lastTrack) ? c : TR.find(t => !t.test) || TR[0]; };
+  /* NEUPORABNO (CLAUDE.md, »Pred izidom: NEUPORABNO«; the user's decisions of 9. 11. 2026): what does not go into version 1.0 waits behind the
+     title's NEUPORABNO button (nuSheet): the test tracks and the ones awaiting the user's choice (pending), the missions, the two cups of test
+     tracks and NEW VERSION · TEST 1. Everywhere else the menu shows the real tracks only (the title, the track step, the quick list, the Earth).
+     A hidden track chosen there opens the track step of the hidden tracks (nuOn): its list, its quick list (NEUPORABNO again), its Earth */
+  const hidden = (t) => !!t && (t.test || !!t.def.pending);
+  let nuOn = false;
+  // the track the game stands on; a hidden one only behind NEUPORABNO (else the first real track: a new player's, js/game.js firstTrackId)
+  const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && (!hidden(c) || nuOn) ? c : TR.find(t => !hidden(t)) || TR[0]; };
   const carImg = (m, ci) => 'assets/cars/img/' + m.id + '-' + ci + '.webp';
   const HAS_CAR_IMG = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'formula'];
   const shownId = (t) => t.id === 'pikes' && G.S.pkRoad === 'pikesg' ? 'pikesg' : t.id;
@@ -133,7 +140,7 @@
   // 0 the one chosen last (the setting menuCam). Back from a race or the garage it shows the one it had
   const CAM_OPEN = 1;
   const inMode = (t) => t.modes.includes(GAME_MODE[mode]);
-  const TRACKS = () => TR.filter(inMode);   // (the list goes round: after the last track the first again)
+  const TRACKS = () => TR.filter(t => inMode(t) && hidden(t) === nuOn);   // (the mode's real tracks, behind NEUPORABNO its hidden ones; the list goes round: after the last track the first again)
   const curTrack = () => TRACKS()[trackIdx] || null;
   const wxMode = () => G.S.season === 'winter' ? (weatherIdx() ? 'snow' : 'dry') : W_SET[weatherIdx()];   // (winter: the rain falls as snow)
 
@@ -205,7 +212,7 @@
     const t = gameTrack(), md = modeOf(MENU_MODE[G.modeOf(t.def)] || 'race');
     const best = t.rec[1] !== '—' ? t.rec[1] : '';
     let h = '<section class="scr" id="s-title" aria-label="Main menu"><div class="scrim"></div>';
-    h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() + '<button class="nv" data-act="newver" aria-label="New version, test 1: drive the new map now"><i class="nv-st" aria-hidden="true"></i><em>NEW</em><b>NEW VERSION</b><strong>TEST 1</strong><small>' + I.wheel + 'DRIVE NOW</small></button></div></div>';
+    h += '<div class="t-top"><h1 class="logo small"><span class="l1">' + esc(D.game.l1) + '</span><span class="l2">' + esc(D.game.l2) + '</span></h1><div class="t-me">' + moneyPill() + '</div></div>';
     h += '<div class="t-menu title-panel' + (titleSub ? ' sub' : '') + '">';
     const subHead = (title, sub) => '<div class="t-subhead"><button class="sq" data-act="tsub:" aria-label="Back to the main menu">' + I.back + '</button><div><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></div></div>';
     const card = (cls, act, cur, name, sub, chip, im) => '<button class="mode ' + cls + '" aria-current="' + cur + '" data-act="' + act + '"><span class="tx"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small>' + (chip ? '<em class="chip">' + esc(chip) + '</em>' : '') + '</span><span class="im">' + im + '</span><i class="tick" aria-hidden="true">' + I.check + '</i></button>';
@@ -225,10 +232,10 @@
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
       h += '<button class="tile t-multi" data-act="game:to-online"><span class="tx"><b>MULTIPLAYER</b><small>Race friends online</small></span><span class="im"><img src="assets/menu/multiplayer.webp" alt=""></span></button>';
       h += '<button class="tile t-career" data-act="career"><span class="tx"><b>CAREER</b><small>' + (G.career() ? coins(G.career().money) + ' · ' : '') + 'Garage, championships, school</small></span><span class="im">' + I.bigcup + '<img src="assets/menu/career.webp" alt=""></span></button>';
-      // the small buttons in one grid: the MISSIONS tile (the list of the missions by garage, js/missions.js openList) the grid's width
-      // upright, on its side one cell of it (no row more on a low screen); Settings, Leaderboard, then Full screen and Install
+      // the small buttons in one grid: NEUPORABNO (what does not go into version 1.0: nuSheet) the grid's width upright, on its side one cell
+      // of it (no row more on a low screen); Settings, Leaderboard, then Full screen and Install
       const ex = []; if (G.fsAvailable()) ex.push('<button class="tsmall" data-act="game:fullscreen">' + I.expand + '<span>Full screen</span></button>'); if (G.installAvailable()) ex.push('<button class="tsmall" data-act="game:install">' + I.plus + '<span>Install the game</span></button>');
-      h += '<div class="t-row"><button class="tsmall t-mis" data-act="game:to-missions">' + I.starBig + '<span>MISSIONS</span><small>Special missions in six garages</small></button><button class="tsmall" data-act="game:to-settings">' + I.cog + '<span>Settings</span></button><button class="tsmall" data-act="game:to-board">' + I.podium + '<span>Leaderboard</span></button>' + ex.join('') + '</div>';
+      h += '<div class="t-row"><button class="tsmall t-nu" data-act="nu" aria-haspopup="dialog">' + I.flask + '<span>NEUPORABNO</span><small>Pending, test, missions, new version</small></button><button class="tsmall" data-act="game:to-settings">' + I.cog + '<span>Settings</span></button><button class="tsmall" data-act="game:to-board">' + I.podium + '<span>Leaderboard</span></button>' + ex.join('') + '</div>';
       if (G.chal()) h += '<button class="mbtn gold buy" data-act="game:to-chal"><span>Challenge from a friend</span><small>Beat their time on the same track</small></button>';
       h += forcedDark() ? '<div class="t-links"><button class="tlink" data-act="credits">Credits</button><button class="tlink" data-act="dark-tip">Colours too dark?</button></div>' : '<button class="tlink" data-act="credits">Credits</button>';
     }
@@ -732,13 +739,13 @@
     const M = IZ(); if (!M || screen !== 'track' || !app) return;
     ringStop();   // (a turn of the carousel done at once: the list opens on the track it went to)
     if (zemOpen()) ZE().close(true);
-    M.open(izOpts());
+    M.open(nuOn ? Object.assign(izOpts(), { nu: { top: nuTop() } }) : izOpts());   // (behind NEUPORABNO: its list again)
   }
-  function izOpts() {   // (the mode's tracks with their places, flags, pictures, shapes, heights and the progress; the quick list's and the Earth's)
+  function izOpts(from) {   // (the mode's tracks (from: these) with their places, flags, pictures, shapes, heights and the progress; the quick list's and the Earth's)
     const cur = curTrack(), PL = (D.globe || {}).places || {}, NC = D.ncorners || {};
     return {
       root: app, cur: cur ? cur.id : '',
-      list: TRACKS().map(t => {
+      list: (from || TRACKS()).map(t => {
         const c = countryOf(t), gt = window.GEO && GEO.tracks[t.id], pl = PL[t.id] || (gt ? [gt.lat0, gt.lon0] : null);
         return { id: t.id, name: t.name, country: c, flag: flagUrl(c), img: trackImg(t), img2: RT[t.id] && RT[t.id].fly ? 'assets/maps/fly-' + t.id + '.webp' : '', km: t.km, alt: t.def.alt || null, corners: NC[t.id] != null ? NC[t.id] : null,
           group: t.group, test: t.test, pending: !!t.def.pending, open: !!t.def.open, ice: !!t.def.ice, lat: pl ? pl[0] : null, lon: pl ? pl[1] : null };   // (ice: a track on ice, the quick list's fourth category)
@@ -751,6 +758,30 @@
       buzz: () => { if (G.buzz) G.buzz(); },
       click: () => G.click(),
     };
+  }
+  /* NEUPORABNO (hidden above): the title's button opens the quick list's sheet with what does not go into version 1.0 (js/menu-izbor.js nuView):
+     NEW VERSION · TEST 1, the missions and the cups of test tracks on top (the game's own screens), then the hidden tracks of every mode, the
+     ones awaiting the user's choice (PENDING) first, then the test tracks (TEST); a track's card: Select (the track step of the hidden tracks,
+     on it) and Race! */
+  function nuSheet() {
+    const M = IZ(); if (!M || !app) return;
+    if (zemOpen()) ZE().close(true);
+    M.open(Object.assign(izOpts(TR.filter(hidden)), { cur: '', nu: { top: nuTop() }, pick: (id) => { nuGo(id); }, race: (id) => { if (nuGo(id)) act('race-single'); } }));
+  }
+  function nuTop() {
+    const cups = G.nuCups ? G.nuCups() : [];
+    return '<div class="izb-nu"><button class="nu-nv" data-act="newver" aria-label="New version, test 1: drive the new map now"><i class="nv-st" aria-hidden="true"></i><em>NEW</em><b>NEW VERSION</b><strong>TEST 1</strong><small>' + I.wheel + 'DRIVE NOW</small></button>' +
+      '<button class="nu-bar mis" data-act="game:to-missions">' + I.starBig + '<b>MISSIONS</b><small>Special missions in six garages</small></button>' +
+      (cups.length ? '<button class="nu-bar cup" data-act="game:to-champ-nu">' + I.medalBig + '<b>CUPS</b><small>' + esc(cups.join(' · ')) + '</small></button>' : '') + '</div>';
+  }
+  function nuGo(id) {   // a hidden track chosen behind NEUPORABNO: the track step of the hidden tracks, on it (in a mode it is driven in)
+    const t = trackById(id); if (!t || !hidden(t)) return false;
+    nuOn = true;
+    if (!inMode(t)) mode = MENU_MODE[G.modeOf(t.def)] || 'race';
+    if (!inMode(t)) mode = MENU_MODE[t.modes[0]] || 'race';
+    trackIdx = Math.max(0, TRACKS().indexOf(t)); select();
+    titleSub = null; sheet = null; screen = 'track'; cam = CAM_OPEN || G.S.menuCam; render();
+    return true;
   }
   /* the Earth (js/menu-zemlja.js): the globe in the head opens it over the track step, with the quick list's tracks and cards (no WebGL for
      it: the quick list instead). While it covers the screen, the screen rests: the weather, the flyover's names, the graph's point, the car
@@ -1575,9 +1606,10 @@
   }
   // entering the track step in a mode: on the game's own track if it can be driven in it, else the first track there is
   function enterTrack() {
+    if (nuOn && !TRACKS().length) nuOn = false;   // (no hidden track in the mode: the real ones)
     const cur = gameTrack();
     const L = TRACKS(), i = cur ? L.indexOf(cur) : -1;
-    trackIdx = i >= 0 ? i : Math.max(0, L.findIndex(t => !t.test));
+    trackIdx = i >= 0 ? i : 0;
     select();
   }
   function warmFor(t) {   // the intro's sounds, started silent in the tap itself
@@ -1589,7 +1621,7 @@
     if (zemOpen()) { ZE().back(); return; }
     if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
-    if (screen === 'track') { screen = 'title'; titleSub = 'single'; render(); return; }
+    if (screen === 'track') { screen = 'title'; titleSub = nuOn ? null : 'single'; nuOn = false; render(); return; }   // (behind NEUPORABNO: the title, its list a tap away)
     if (titleSub) { titleSub = null; render(true); }
   }
   function act(a, el) {
@@ -1623,9 +1655,10 @@
       case 'dark-tip': sheet = darkSheet; render(true); break;
       case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
       case 'chrome': location.href = chromeUrl(); break;
-      case 'newver': G.newVer(); break;   // NEW VERSION · TEST 1: straight to driving the new map (js/game.js nvStart), no menu after it
+      case 'nu': nuSheet(); break;   // NEUPORABNO: what does not go into version 1.0 (nuSheet)
+      case 'newver': if (izOpen()) { IZ().nazaj.clear(); IZ().close(true); } G.newVer(); break;   // NEW VERSION · TEST 1 (behind NEUPORABNO): straight to driving the new map (js/game.js nvStart), no menu after it
       case 'close-sheet': { const r = $('.sheet.riv .rslide', app); if (r && +r.value !== G.rivals((curTrack() || {}).def || {})) rivSet(+r.value); sheet = null; render(true); break; }   // (the opponents' slider not let go yet: its number kept)
-      case 'game': G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's)
+      case 'game': if (izOpen()) { IZ().nazaj.clear(); IZ().close(true); } G.act(v, el); break;   // (a screen of the game itself: Settings, Leaderboard, Multiplayer, the career's; behind NEUPORABNO the missions, the cups)
       case 'race-single': {
         const t = curTrack(); if (!t) break;
         select(); const wet = G.rollWet(); if (!weekendOn(t, mode)) warmFor(t);
@@ -1729,10 +1762,11 @@
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
-      screen = 'title'; titleSub = null; sheet = null;
+      screen = 'title'; titleSub = null; sheet = null; nuOn = false;
       if (!darkTold() && forcedDark() && !darkTipOff()) { setDarkTold(true); sheet = darkSheet; }   // (once a visit, the first time the title is up)
     }
     else {
+      const c0 = trackById(G.baseId(G.S.track)); nuOn = hidden(c0);   // (a race behind NEUPORABNO: back on its list)
       const cur = gameTrack();
       screen = 'track'; sheet = null;
       if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
@@ -1780,5 +1814,5 @@
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
   const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the garage was opened from the track step (game.js garageOpen keeps it for the way back: garageBack, straight to this step)
-  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone }, arrive: arrive.length }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, nu: nuOn, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone }, arrive: arrive.length }) };
 })();

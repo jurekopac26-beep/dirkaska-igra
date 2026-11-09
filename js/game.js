@@ -30,9 +30,21 @@
     ev: 'Električni hiperšportnik s štirimi motorji: najhitrejši pospešek med cestnimi avti in skoraj brez zvoka, a težek.',
     truck: 'Terenski dirkalni tovornjak z velikimi kolesi. Na asfaltu počasen, na makadamu in travi pa ima največ oprijema in najhitreje pospeši; po skokih mehko pristane.' };
 
+  /* ---------------- NEUPORABNO: what does not go into version 1.0 (CLAUDE.md, »Pred izidom: NEUPORABNO«; the user's decisions of 9. 11. 2026) ----------------
+     The menu's NEUPORABNO button (js/menu.js) keeps it: the test tracks (def.test) and the ones awaiting the user's choice (def.pending, one of
+     them stays), the two cups made of test tracks alone, the missions and the new map. Elsewhere the game shows the real tracks only: a new
+     player's track, the championships, the leaderboard, the host's tracks online, the achievements */
+  function nuTrack(d) { return !!d && (!!d.test || !!d.pending); }
+  // the first real track of the menu's list (the real ones from the shortest to the longest: MENU.lens, tools/menu-lens.js; equal lengths by id)
+  function firstTrackId() {
+    const L = (window.MENU && MENU.lens) || {}, ds = Core.TRACKS.filter(d => !d.variantOf && !nuTrack(d));
+    ds.sort((a, b) => ((L[a.id] || 0) - (L[b.id] || 0)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return (ds[0] || Core.TRACKS[0]).id;
+  }
+
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: 'jezero', comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', amb: 1, tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbCesta: 1, zbSpomin: 1, zbGold: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: firstTrackId(), comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', amb: 1, tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbCesta: 1, zbSpomin: 1, zbGold: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   // Prvič na cesti (the first start): a browser that has never kept the game's settings (read before anything below writes them), nor
@@ -82,6 +94,9 @@
   // the menu (js/menu.js: the main menu and the single race, in a shadow root) replaces the title and track screens; ?menu=old (or tdgp-menu=old in the
   // storage, which the automated tests of the old screens set) keeps the old ones, and so does a game opened from a file (it fetches its style and data)
   let menuOn = !!window.Menu && location.protocol !== 'file:' && !/[?&]menu=old\b/.test(location.search) && (() => { try { return localStorage.getItem('tdgp-menu') !== 'old'; } catch (_) { return true; } })();
+  // once, on the menu (the players' one): a hidden track kept as the game's (most often Jezero, the built-in first choice until 9. 11. 2026) becomes
+  // the first real track, so the title's scene and its Single race show a real one; a track chosen later behind NEUPORABNO stays the choice
+  try { if (menuOn && !localStorage.getItem('tdgp-nu1')) { if (nuTrack(Core.TRACKS.find(d => d.id === S.track))) { S.track = firstTrackId(); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } localStorage.setItem('tdgp-nu1', '1'); } } catch (_) { }
   if (!['off', 'auto', 'on'].includes(S.saver)) S.saver = 'off';
   S.amb = [0, 0.5, 1, 2].includes(+S.amb) ? +S.amb : 1;   // (Zvoki okolja, × their loudness: 0 Izklop, 0.5 Tiho, 1 Normalno (the default), 2 Glasno; js/sfx-okolje.js)
   if (!['low', 'med', 'high', 'auto'].includes(S.detail)) S.detail = 'auto';
@@ -268,15 +283,21 @@
      kept in the browser until a new one starts. champRun: the race on screen is its next round (a restart drives that round again;
      the result counts once the player is across the line or has retired, also when the player leaves right after it) */
   let champ = null, champRun = false, champPick = null, champQuitT = 0;
+  // the series as the game offers them (NEUPORABNO above): a cup of hidden tracks alone (Domači pokal, Kratke proge) only behind the menu's
+  // NEUPORABNO button (nu), the others without the hidden tracks (Veliko prvenstvo: the real circuits); Core.CHAMPS stays whole (its tests).
+  // champNu: the choice of a series shows the hidden cups (opened from NEUPORABNO: to-champ-nu; after one of them, its next choice too)
+  const champHid = (id) => nuTrack(Core.TRACKS.find(d => d.id === id));
+  const CHAMPS = Core.CHAMPS.map(c => c.tracks.every(champHid) ? Object.assign({}, c, { nu: true }) : Object.assign({}, c, { tracks: c.tracks.filter(id => !champHid(id)) })).filter(c => c.tracks.length);
+  let champNu = false;
   const CH_KEYS = Core.champKeys(CH_AI);   // (every championship's drivers: an older one's 12 are the first of them)
   const champN = () => champ && Number.isInteger(champ.n) ? champ.n : CH_AI;   // (how many AI drivers race its rounds)
-  const champDef = () => champ ? Core.CHAMPS.find(c => c.id === champ.id) || null : null;
+  const champDef = () => champ ? CHAMPS.find(c => c.id === champ.id) || null : null;
   const champDone = () => { const d = champDef(); return !!d && champ.rounds.length >= d.tracks.length; };
   // a round as kept: every driver at most once (a big vehicle's field races fewer than its 19 rivals, an older championship 12), the player in it
   const roundOk = (r, t) => { if (!isObj(r) || r.track !== t || !Array.isArray(r.order) || (r.dnf != null && !Array.isArray(r.dnf))) return false;
     const all = r.order.concat(r.dnf || []); return all.length <= CH_KEYS.length && new Set(all).size === all.length && all.every(k => CH_KEYS.includes(k)) && all.includes(Core.PLAYER_KEY); };
   try {
-    const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && Core.CHAMPS.find(c => c.id === j.id);
+    const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && CHAMPS.find(c => c.id === j.id);
     if (d && j.v === 1 && [0, 1, 2].includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
       champ = { v: 1, id: d.id, diff: j.diff, car: typeof j.car === 'string' && Core.MODELS.some(m => m.id === j.car) ? heirId(j.car) : Core.MODELS[S.car].id,   // (one kept before the car was: the car chosen now; a retired one: its heir)
         n: Number.isInteger(j.n) && j.n >= 1 && j.n <= CH_AI ? j.n : 12,   // (one kept before the field size was: its 12 drivers to the end)
@@ -309,7 +330,7 @@
   function stSave() { if (stHold) return; Shramba.keep('tdgp-stats', JSON.stringify(st)); }
   // [id, name, how to get it, progress: () => [now, goal]]
   // the tracks as the menu lists them: a road variant (Pikes Peak on its historic gravel) counts with its track, either road driven
-  const trackCards = () => Core.TRACKS.filter(d => !d.variantOf), droveCard = (d) => Core.TRACKS.some(x => (x === d || x.variantOf === d.id) && st.tracks[x.id]);
+  const trackCards = () => Core.TRACKS.filter(d => !d.variantOf && !nuTrack(d)), droveCard = (d) => Core.TRACKS.some(x => (x === d || x.variantOf === d.id) && st.tracks[x.id]);
   const ACH = [
     ['first', 'Prvi cilj', 'Pripelji do cilja prve dirke.'],
     ['win', 'Prva zmaga', 'Zmagaj na dirki.'],
@@ -395,7 +416,7 @@
     st.races++; stSave();
   }
   if (!isObj(records.champ)) records.champ = {};   // per series: best = the best final place, titles = championships won
-  for (const id in records.champ) { const r = records.champ[id]; if (!isObj(r) || !Core.CHAMPS.some(c => c.id === id)) { delete records.champ[id]; continue; }
+  for (const id in records.champ) { const r = records.champ[id]; if (!isObj(r) || !CHAMPS.some(c => c.id === id)) { delete records.champ[id]; continue; }
     if (!(Number.isInteger(r.best) && r.best > 0)) delete r.best; if (!(Number.isInteger(r.titles) && r.titles > 0)) delete r.titles; }
 
   /* ---------------- helpers ---------------- */
@@ -2328,7 +2349,7 @@
     } else if (school) {   // the driving school: alone, the lesson's car, dry; the braking lesson from the start of the straight
       school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
       race = new Core.Race(track, schoolOpts(school.L));
-      if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0);
+      if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0); else if (school.L.id === 'drift') placeAt(race.player, track, DRIFT_S0);   // (the drift: before Štajerska's turn 4)
     } else if (nv) {   // NEW VERSION · TEST 1: alone, no laps to count (free driving), dry
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: 1, laps: 999, fuel: false, damage: +S.damage, phys: physOf(), rain: 0, weather: null, tyres: false, compounds: false, flags: false, chars: false, slip: false, faults: false, radio: false, launch: false }));   // (no lights: no start reaction)
       race.nv = true;
@@ -2577,7 +2598,8 @@
   function buildBoardScreen() {
     if (!Core.TRACKS.some(d => d.id === boardId)) boardId = S.track;
     const d = Core.TRACKS.find(x => x.id === boardId) || Core.TRACKS[0], r = rec(d.id);
-    $('board-tabs').innerHTML = Core.TRACKS.filter(isTT).concat(Core.TRACKS.filter(x => !isTT(x))).map(x => '<button data-board="' + x.id + '" class="' + (x.id === d.id ? 'sel' : '') + (isTT(x) ? ' tt' : '') + '">' + esc(Lang.of(x, 'name')) + '</button>').join('');
+    const BT = Core.TRACKS.filter(x => !nuTrack(x) || x.id === d.id);   // (the hidden tracks left out (NEUPORABNO above), but the one on show)
+    $('board-tabs').innerHTML = BT.filter(isTT).concat(BT.filter(x => !isTT(x))).map(x => '<button data-board="' + x.id + '" class="' + (x.id === d.id ? 'sel' : '') + (isTT(x) ? ' tt' : '') + '">' + esc(Lang.of(x, 'name')) + '</button>').join('');
     requestAnimationFrame(() => { const tb = $('board-tabs'), se = tb.querySelector('.sel'); if (!se) return; const a = se.getBoundingClientRect(), b = tb.getBoundingClientRect(); if (a.top < b.top || a.bottom > b.bottom) tb.scrollTop += a.top - b.top - 4; });   // (the chosen track's tab in sight in the scrolling strip)
     if (lpList && LPX) { $('board-body').innerHTML = lpListHTML(); $('board-body').scrollTop = 0; return; }   // (Prijatelji: the friends on the leaderboard)
     let h;
@@ -2614,17 +2636,19 @@
   /* ---------------- the driving school (Šola vožnje): four lessons with medals, all in the KAZE RS (stock, standard set-up, dry), the
      best of each kept per physics (tdgp-school). Start: from the lights out to 100 m (the throttle before they go out: a jump start);
      braking: from a standing start down the Red Bull Ring's straight, stop as near the STOP line as you can, not over it (past the 100 m
-     board at 120 km/h at least); the racing line: a lap of the Jezero Ring on the line the helper draws (the share of the lap within
-     1.5 m of it, in a time limit); drift: 40 s at the Jezero Ring (points for the angle times the speed, a chain banked when the slide
-     ends, lost at a knock; no handbrake: the car slides with the steering and the brake in a corner, as the autopilot's does). The
+     board at 120 km/h at least); the racing line: a lap of Štajerska on the line the helper draws (the share of the lap within 1.5 m of
+     it, in a time limit); drift: 40 s at Štajerska from a standing start before turn 4 (DRIFT_S0: the infield's corners; from the grid the
+     40 s give two corners) (points for the angle times the speed, a chain banked when the slide ends, lost at a knock; no handbrake: the
+     car slides with the steering and the brake in a corner, as the autopilot's does). The line and the drift were the Jezero Ring's until
+     9. 11. 2026 (a test track: NEUPORABNO; the session's choice, the user's question avtosola-proga on the page Odločitve). The
      medals of the start and of the drift and the line's time limit: against the autopilot's own run of the lesson in the same car and
      physics (a quick simulation) ---------------- */
-  const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400;
+  const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400, DRIFT_S0 = 2300;
   const SCHOOL = [
     { id: 'start', track: 'rbring', name: 'Štart', goal: 'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.' },
     { id: 'brake', track: 'rbring', name: 'Zaviranje do oznake', goal: 'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.' },
-    { id: 'line', track: 'jezero', name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
-    { id: 'drift', track: 'jezero', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.' },
+    { id: 'line', track: 'rbring', name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
+    { id: 'drift', track: 'rbring', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.' },
   ];
   let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done }
   let nv = null;   // NEW VERSION · TEST 1 (the title's button): { built, err }; the new map (js/newmap.js) over Toskana, driven freely from HOME
@@ -2643,17 +2667,18 @@
   }
   const schoolOpts = (L) => L.id === 'prvi' ? prviOpts1() : ({ numAI: 0, playerGrid: 1, laps: L.id === 'line' ? 1 : 99, playerModel: modelById(SCHOOL_CAR), playerUpg: upgNorm(null), playerSetup: { wing: 1, gear: 1 }, playerColor: PLAYER_COLORS[colNow()], playerNum: carNum(),
     seed: 1, difficulty: 1, assist: S.assist, damage: 0, phys: physOf(), rain: 0, launch: L.id === 'start' });   // (the start's reaction and its wheelspin: in the start lesson only)
-  function placeAt(c, T, s) {   // (the braking lesson: the car standing at s on the ideal line)
+  function placeAt(c, T, s, R = race) {   // (the braking and the drift lessons: the car standing at s on the ideal line; R: its race)
     const i = T.idx(s), off = T.rl[i];
     c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) c.y = c.py = T.hy[i];
-    c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.vx = c.vz = 0; if (race && race.putBack) race.putBack(c);
+    c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.vx = c.vz = 0; if (R && R.putBack) R.putBack(c);
   }
   const schoolRefs = {};
   function schoolRef(L) {   // the autopilot's run of the lesson: the start's 100 m time, the line's lap time, the drift's points (cached)
     const key = schoolKey(L) + '@' + S.assist; if (schoolRefs[key] != null) return schoolRefs[key];
     if (L.id === 'brake') return (schoolRefs[key] = 0);
     const T = getTrack(L.track), r = new Core.Race(T, schoolOpts(L)), P = r.player, D = { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 };
-    r.start(); const s0 = P.q.s; let t = 0, v = NaN;
+    r.start(); if (L.id === 'drift') placeAt(P, T, DRIFT_S0, r);
+    const s0 = P.q.s; let t = 0, v = NaN;
     while (t < 240) {
       Core.aiControl(P, r, STEP); r.step(STEP); t += STEP;
       if (L.id === 'start' && wrapD(P.q.s - s0, T.len) >= 100) { v = r.time; break; }
@@ -3205,14 +3230,16 @@
   }
   function buildChampScreen() {
     const d = champDef(), done = champDone();
+    if (d) champNu = !!d.nu;   // (one under way or just over: its kind of series to choose from next)
     $('ch-mycar').textContent = Core.MODELS[S.car].name;
     $('ch-quit').classList.toggle('off', !d || done); $('ch-quit').textContent = tr('Opusti');
     const R = champRivals(), riv = done ? '' : tr(' · tekmeci: {0}', R.txt);   // (what the rivals of the next round drive)
     if (!d) {   // the choice of a series: its tracks, its length, the best final place so far
-      if (!Core.CHAMPS.some(c => c.id === champPick)) champPick = Core.CHAMPS[0].id;
+      const CH = CHAMPS.filter(c => !!c.nu === champNu);   // (the cups behind NEUPORABNO, or the ones of version 1.0)
+      if (!CH.some(c => c.id === champPick)) champPick = CH[0].id;
       $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke 25, 18, 15 …');
       $('ch-diff').textContent = (S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]))) + riv;
-      $('ch-body').innerHTML = '<div class="ch-cards">' + Core.CHAMPS.map(c => {
+      $('ch-body').innerHTML = '<div class="ch-cards">' + CH.map(c => {
         const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
         return '<button class="ch-card' + (c.id === champPick ? ' sel' : '') + '" data-champ="' + c.id + '"><h3>' + esc(Lang.of(c, 'name')) + '</h3><div class="tmeta">' + raceWord(c.tracks.length) + ' · ' + kmTxt(km, 0) + ' km</div>' +
           '<div class="ttracks">' + c.tracks.map(id => esc(trackName(id))).join(' · ') + '</div><div class="tdesc">' + esc(Lang.of(c, 'desc')) + '</div>' +
@@ -5626,6 +5653,7 @@
   const NET_V = 2;   // message format; together with the game's own version (the stamps of all its scripts on the published game; without stamps their addresses) both phones must match
   const gameVer = () => { let h = 2166136261; for (const s of document.querySelectorAll('script[src]')) for (const ch of s.getAttribute('src')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return NET_V + '/' + (h >>> 0).toString(36); };
   const netTracks = () => Core.TRACKS.filter(d => !d.timeTrial);   // the tracks that race (the hill climb and the rally stage are runs for one; Vršič: the race up the pass)
+  const netOffer = () => netTracks().filter(d => !nuTrack(d) || d.id === S.track);   // (the host's choice: the hidden tracks left out (NEUPORABNO above), but the game's own)
   const modelById = (id) => { const M = Core.MODELS.find(m => m.id === id); return M ? Core.heirOf(M) : Core.MODELS[0]; };   // (a stored or sent id: a ghost's, a legend's, the friend's car; a retired model's is its heir)
   const NET_ERR = {
     'peer-unavailable': 'Sobe s to kodo ni. Preveri kodo (prijatelj mora imeti sobo odprto).',
@@ -5684,7 +5712,7 @@
     if (role === 'guest' && code.length !== 4) { onErr(tr('Vpiši kodo sobe (4 znaki), ki ti jo je poslal prijatelj.')); return; }
     if (!Net.available()) { onErr(netErr('browser-incompatible')); return; }
     netTap();
-    const d = netTracks().find(t => t.id === S.track) || netTracks()[0];
+    const d = netOffer().find(t => t.id === S.track) || netOffer()[0];
     mp = { role: role === 'quick' ? 'host' : role, quick: role === 'quick', code, me: role === 'guest' ? '' : 'h', players: [], peer: null, track: d.id, laps: d.laps || LAPS, no: 0, setup: null, race: null, acked: false };
     if (mp.me === 'h') mp.players.push(Object.assign(meInfo(), { id: 'h', in: true }));
     $('on-pick').classList.add('off'); $('on-room').classList.remove('off'); onErr('');
@@ -5823,7 +5851,7 @@
     $('on-players').innerHTML = h; $('on-players').classList.toggle('many', n > 4);   // (a big room: in columns)
     $('on-mycar').textContent = M.name;
     const ts = $('on-track'), ls = $('on-laps');
-    if (!ts.options.length || ts.dataset.lang !== Lang.cur) { ts.innerHTML = netTracks().map(d => '<option value="' + d.id + '">' + esc(Lang.of(d, 'name')) + '</option>').join(''); ts.dataset.lang = Lang.cur; }   // (again in another language)
+    if (!ts.options.length || ts.dataset.lang !== Lang.cur) { ts.innerHTML = netOffer().map(d => '<option value="' + d.id + '">' + esc(Lang.of(d, 'name')) + '</option>').join(''); ts.dataset.lang = Lang.cur; }   // (again in another language)
     if (!ls.options.length || ls.dataset.lang !== Lang.cur) { ls.innerHTML = [1, 2, 3, 4, 5].map(k => '<option value="' + k + '">' + lapWord(k).toLowerCase() + '</option>').join(''); ls.dataset.lang = Lang.cur; }
     const one = !!(Core.TRACKS.find(d => d.id === mp.track) || {}).open;   // (an open road: one run to the top, no laps to choose)
     ts.value = mp.track; ls.value = String(one ? 1 : mp.laps); ts.disabled = !host || busy; ls.disabled = !host || busy || one;
@@ -6493,7 +6521,8 @@
       case 'prvi-school': toTitle(); buildSchoolScreen(); showScreen('school'); break;
       case 'kop-back': if (el && el.dataset.kop) kopBack(+el.dataset.kop); break;   // (Samodejne kopije napredka: Obnovi)
       case 'prof-import': pickFile(profImport); break;
-      case 'to-champ': openChamp(); break;
+      case 'to-champ': champNu = false; openChamp(); break;
+      case 'to-champ-nu': champNu = true; openChamp(); break;   // (the menu's NEUPORABNO: Domači pokal and Kratke proge)
       case 'to-career': buildCareerScreen(); showScreen('career'); break;
       case 'career-toggle': careerToggle(); break;
       case 'career-reset':   // a second tap within 4 s starts a new career
@@ -6516,7 +6545,7 @@
       case 'champ-go': {
         if (champDone()) { champ = null; champSave(); buildChampScreen(); break; }   // (finished: "Novo prvenstvo" -> the choice of a series)
         if (!bought(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); break; }   // (a rented car: one race, no championship)
-        if (!champ) { const d = Core.CHAMPS.find(c => c.id === champPick) || Core.CHAMPS[0]; champ = { v: 1, id: d.id, diff: raceDiff(), car: Core.MODELS[S.car].id, n: CH_AI, rounds: [] }; champSave(); }   // (super težka is the police's: a championship is raced as težka; its car: the rivals' field for the whole championship)
+        if (!champ) { const d = CHAMPS.find(c => c.id === champPick) || CHAMPS.find(c => !!c.nu === champNu); champ = { v: 1, id: d.id, diff: raceDiff(), car: Core.MODELS[S.car].id, n: CH_AI, rounds: [] }; champSave(); }   // (super težka is the police's: a championship is raced as težka; its car: the rivals' field for the whole championship)
         if (S.control === 'tilt') enableTilt(true);
         Comm.unlock(); champRun = true; ensureTrack(champDef().tracks[champ.rounds.length], startRace); break;
       }
@@ -6597,6 +6626,7 @@
   const MenuBridge = {
     get S() { return S; },
     defs: () => Core.TRACKS,
+    nuCups: () => CHAMPS.filter(c => c.nu).map(c => (c.en && c.en.name) || c.name),   // (the cups behind NEUPORABNO, by their English names: the menu's)
     track: (id) => getTrack(id),
     baseId: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d && d.variantOf ? d.variantOf : id; },   // (Pikes Peak on its gravel road is Pikes Peak)
     shown: (d) => pkRoadDef(d),

@@ -13,7 +13,8 @@
    list's order ({ id, name, country, flag (the flag's address or ''), img, img2 (a picture for a missing img, or ''), km, alt, corners, group,
    test, pending, open, ice, lat, lon }),
    o.shape(id) (x, y pairs or null), o.heights(id) ({ L, H, real } or null), o.prog(id) (the game's progress: js/game.js MenuBridge.progress),
-   o.pick(id), o.race(id), o.buzz(), o.click(). MenuIzbor.close(now), back() (Esc, the pad's B: the layer under it, else closed), isOpen(),
+   o.pick(id), o.race(id), o.buzz(), o.click(); o.nu ({ top: the menu's buttons over it }): NEUPORABNO's list (nuView: the hidden tracks, js/menu.js
+   nuSheet) instead of the countries. MenuIzbor.close(now), back() (Esc, the pad's B: the layer under it, else closed), isOpen(),
    sheet() (the gamepad's part of the screen), mark(p) (a progress mark: the screen's row); use(o) (the Earth's cards: the rows and the
    track's card, js/menu-zemlja.js) and nazaj (the history of the layers, the Earth's too). */
 window.MenuIzbor = (function () {
@@ -174,6 +175,16 @@ window.MenuIzbor = (function () {
     }).join(''))).join('') + (!T.length ? '' : sec('For testing', T.length, '<button class="izb-c' + (cur && cur.test ? ' on' : '') + '" data-test aria-label="Test tracks: ' + tracks(T.length) + '"><span class="f t">' + TEST +
       '<span class="n">' + T.length + '</span><span class="izb-pm">' + mark(bestOf(T.map(t => prog(t.id)))) + '</span></span><b>Test tracks</b><small>' + tracks(T.length) + '</small></button>'));
   }
+  // NEUPORABNO (js/menu.js nuSheet, o.nu; CLAUDE.md »Pred izidom: NEUPORABNO«): what does not go into version 1.0 in one list: the menu's
+  // buttons on top (o.nu.top: NEW VERSION · TEST 1, the missions, the cups), then the tracks awaiting the user's choice (PENDING: one of a
+  // country's stays) and the test tracks (TEST: to be removed), each a row as a country's
+  function nuView() {
+    const Pn = o.list.filter(t => t.pending && !t.test).map(t => t.id), Tn = tests().map(t => t.id);
+    const sec = (name, ids) => !ids.length ? '' : '<div class="izb-ct">' + name + '<small>' + ids.length + '</small></div><div class="izb-list">' + ids.map(id => row(id)).join('') + '</div>';
+    return head('NEUPORABNO', [Pn.length ? Pn.length + ' pending' : '', Tn.length ? Tn.length + ' test' : '', 'to be removed before release'].filter(Boolean).join(' · ')) +
+      '<div class="izb-body in">' + (o.nu.top || '') + sec('Pending · one per country stays', Pn) + sec('Test · to be removed', Tn) + '</div>';
+  }
+  const home = () => o && o.nu ? nuView : grid;   // (the sheet's first view: the countries, or NEUPORABNO's list)
   function country(name) {
     const c = countries().find(k => k.name === name); if (!c) return grid();
     return head(c.name, tracks(c.ids.length), backBtn('All countries') + '<span class="izb-hf">' + flag(c.flag, c.name) + '</span>') +
@@ -234,14 +245,14 @@ window.MenuIzbor = (function () {
     const b = el.querySelector('.izb-body'); prevs.push({ v: view, top: b ? b.scrollTop : 0 });
     go2({ f }); NAZAJ.push('izbor', () => { if (el) up(); });
   }
-  const up = () => { const p = prevs.pop(); go2(p ? p.v : { f: grid }, p && p.top); };
+  const up = () => { const p = prevs.pop(); go2(p ? p.v : { f: home() }, p && p.top); };
   const toCard = (id) => toView(() => cardView(id));
   function open(opts) {
     if (el) close(true);
     o = opts; P = {}; prevs = [];
     el = document.createElement('div'); el.className = 'izb';
-    el.innerHTML = '<div class="izb-dim"></div><div class="izb-sheet" role="dialog" aria-modal="true" aria-label="Choose a track"></div>';
-    o.root.appendChild(el); go2({ f: grid });
+    el.innerHTML = '<div class="izb-dim"></div><div class="izb-sheet' + (o.nu ? ' nu' : '') + '" role="dialog" aria-modal="true" aria-label="' + (o.nu ? 'NEUPORABNO: not in version 1.0' : 'Choose a track') + '"></div>';
+    o.root.appendChild(el); go2({ f: home() });
     NAZAJ.push('izbor', () => close());
     el.addEventListener('click', onClick);
     el.addEventListener('input', (e) => { if (!e.target.matches('.izb-q input')) return; F.q = e.target.value; e.target.parentNode.classList.toggle('has', !!F.q); refresh(); });

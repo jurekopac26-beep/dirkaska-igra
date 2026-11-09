@@ -4,7 +4,7 @@
 // the gas flies it on and up, the brake slows it and takes it down (no button), the steering turns it, the height and the speed top left; not on
 // the water nor on a roof; landed, the ramps open and the car drives out; the helicopter flies home to its H by itself. On its side the pause at the edge.
 //   node tests/browser/nvheli.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('nvheli');
 const srv = await serve();
@@ -12,7 +12,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { intro: 2, quali: 0 }, { width: 412, height: 915 }, { menu: true });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
   const frames = (n = 6) => page.evaluate((n) => new Promise(r => { let k = 0; const f = () => (++k >= n ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
   const st = () => page.evaluate(() => { const s = NVHeli.state(), P = __game.race.player, v = Render.viewOf(P); return Object.assign(s, { car: { x: P.x, y: P.y, z: P.z, h: P.h, seen: !!(v && v.grp.visible) } }); });
