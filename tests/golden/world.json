@@ -1417,23 +1417,23 @@
   }
  },
  "killar": {
-  "meshes": 1529,
-  "verts": 979398,
-  "instances": 44476,
+  "meshes": 1525,
+  "verts": 1028421,
+  "instances": 43820,
   "props": 95,
   "crowd": 146,
-  "world": "fe1e6bc1",
+  "world": "c82d3f86",
   "propsHash": "5a404b3",
   "floor": "fdb77fbb/9520",
   "groups": {
-   "-:MeshLambertMaterial": "430d69dd",
+   "-:MeshLambertMaterial": "ea2df3e1",
    "-:MeshPhongMaterial": "e56192b8",
    "-:MeshBasicMaterial": "ba41681d",
    "crowd:MeshLambertMaterial": "169a82ca",
-   "ao:MeshBasicMaterial": "eab4f15f",
-   "life:MeshLambertMaterial": "66697787",
-   "lifeShadow:MeshBasicMaterial": "b64116f4",
-   "life:MeshBasicMaterial": "1d0fa257"
+   "ao:MeshBasicMaterial": "1a8d267",
+   "life:MeshLambertMaterial": "e04fe6d2",
+   "lifeShadow:MeshBasicMaterial": "21c505e3",
+   "life:MeshBasicMaterial": "535c28d"
   }
  },
  "zurich": {

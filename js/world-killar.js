@@ -167,6 +167,24 @@
     x.fillStyle = 'rgba(22,24,28,0.82)'; x.fillRect(230, 916, 780, 92); txt('SAN JUAN HILL CLIMB', 620, 944, 50, '#fff', 760); txt('US 550 · OURAY · COLORADO', 620, 990, 36, '#ffd23a', 760);
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (unATex = t);
   }
+  let ukNetT = null;
+  function ukNetMat() {   // Killar's rockfall nets (the barrier's and the mesh draped over the slope): one tile 0.6 m square, steel rings ~26 cm across
+    // (bundles of wire, each linked with its four neighbours across) over a fine diamond wire mesh; the colour galvanised grey with a little rust
+    // everywhere, the alpha only where the wire is (RGBA data, so that the mipmaps far off grey the net to a veil and darken no edge)
+    if (!ukNetT) {
+      const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
+      x.strokeStyle = 'rgba(255,255,255,0.75)'; x.lineWidth = 2;
+      for (let k = -S; k <= 2 * S; k += 16) { x.beginPath(); x.moveTo(k, 0); x.lineTo(k + S, S); x.stroke(); x.beginPath(); x.moveTo(k, S); x.lineTo(k + S, 0); x.stroke(); }   // (the fine mesh behind)
+      x.strokeStyle = '#fff'; x.lineWidth = 9;
+      for (const [cx, cy] of [[0, 0], [128, 0], [0, 128], [128, 128], [64, 64], [192, 64], [64, 192], [192, 192]]) for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { x.beginPath(); x.arc(cx + ox, cy + oy, 52, 0, Math.PI * 2); x.stroke(); }
+      const a = x.getImageData(0, 0, S, S).data, d = new Uint8Array(S * S * 4), R = rng(4471);
+      for (let p = 0; p < S * S; p++) { const ru = R() < 0.04 ? 0.6 : 0.12 * R(), g = 168 + Math.round((R() - 0.5) * 18);
+        d[p * 4] = Math.round(g * (1 - ru) + 132 * ru); d[p * 4 + 1] = Math.round((g + 3) * (1 - ru) + 96 * ru); d[p * 4 + 2] = Math.round((g + 7) * (1 - ru) + 70 * ru); d[p * 4 + 3] = a[p * 4 + 3]; }
+      const t = ukNetT = new THREE.DataTexture(d, S, S, THREE.RGBAFormat);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = 4; t.needsUpdate = true;
+    }
+    return new THREE.MeshLambertMaterial({ map: ukNetT, vertexColors: true, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide, depthWrite: false });   // (no depth offset: a tree in front of the net hides it; the draped mesh lies 0.2 m off the rock)
+  }
   const UN_BOARDS = [['BEAR CREEK FALLS', '#6b4a22'], ['UNCOMPAHGRE GORGE', '#6b4a22'], ['ALPINE LOOP', '#6b4a22'], ['AVALANCHE AREA', '#e2b21a'], ['FALLING ROCK', '#e2b21a'], ['SLIDE PATH', '#f2f2ee'], ['RIVERSIDE SLIDE', '#f2f2ee'], ['US 550 SOUTH', '#f2f2ee']];
   const KL_BOARDS = [['CHENAB RIVER', '#6b4a22'], ['HANGRUNG NALA', '#6b4a22'], ['NARROW ROAD', '#e2b21a'], ['DRIVE SLOWLY', '#e2b21a'], ['FALLING ROCK', '#e2b21a'], ['LANDSLIDE AREA', '#e2b21a'], ['KILLAR', '#f2f2ee'], ['KISHTWAR 99 KM', '#f2f2ee']];   // (Killar's)
   let unA2K = false;
@@ -532,8 +550,8 @@
       }
     }
     /* ---- the avalanche and rockfall works: a rockfall net (steel posts, the grey mesh between them) at the foot of the highest cuts above the road
-       (not on Killar: no barriers at all, the user's decision of 9. 11. 2026, and from behind the car the net reads as one); rows of timber snow
-       fences high in the big slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
+       (on Killar a barrier more like a real one and a mesh draped over the highest cut, below); rows of timber snow fences high in the big
+       slide paths; at each mine a log cabin fallen in and a timber ore bin ---- */
     let nNet = 0, nFence = 0;
     {
       const RF = rng(6113), steel = [0.3, 0.31, 0.33], mesh = [0.5, 0.51, 0.5], wood = [0.26, 0.2, 0.15], step = 5;
@@ -558,6 +576,95 @@
         run.sd = best.sd; run.push([x, unGround(x, z), z]);
       }
       flush();
+      if (UNK && T.rock) {   // Killar (the user's decisions of 9. 11. 2026 between ~18.10 and ~18.20: the net back and more like a real one, only a look, no
+        // barrier on the right; the rock stops the car, Track.rock): a rockfall barrier at the foot of the cuts (the same stretch as before,
+        // below): steel I-posts every ~9 m leaning into the slope, the support ropes along their heads and feet, a rope from each head
+        // up to its anchor in the slope (and out along the road at the ends), a net of steel rings with a fine wire mesh behind them (one texture,
+        // see-through and mipmapped: no shimmer far off), sagging between the heads, galvanised grey with a little rust; where the cut is highest a
+        // wire mesh draped over the slope above it. Posts and ropes in the scenery's chunks, the nets one mesh of their own (one draw)
+        const gal = [0.55, 0.57, 0.6], galD = [0.44, 0.45, 0.47], rope = [0.36, 0.37, 0.39], gn = new GB(true, true), Hp = 3.6, lean = 0.4;   // (the nets' colours with an alpha: the barrier's whole, the draped mesh a veil)
+        const bar = (g, F, Tp, ax, az, ox, oz, a0, a1, b0, b1, col) => {   // a straight steel section from F to Tp: [a0, a1] along the barrier x [b0, b1] into the slope
+          const c = (P, a, b) => [P[0] + ax * a + ox * b, P[1], P[2] + az * a + oz * b], v = [c(F, a0, b0), c(F, a1, b0), c(F, a1, b1), c(F, a0, b1), c(Tp, a0, b0), c(Tp, a1, b0), c(Tp, a1, b1), c(Tp, a0, b1)];
+          const inn = c([(F[0] + Tp[0]) / 2, (F[1] + Tp[1]) / 2, (F[2] + Tp[2]) / 2], (a0 + a1) / 2, (b0 + b1) / 2);
+          g.quadO(v[0], v[1], v[5], v[4], col, inn); g.quadO(v[1], v[2], v[6], v[5], col, inn); g.quadO(v[2], v[3], v[7], v[6], col, inn); g.quadO(v[3], v[0], v[4], v[7], col, inn); g.quadO(v[4], v[5], v[6], v[7], col, inn); };
+        const sag = (g, A, B, s, r, col) => { let p = A; for (let k = 1; k <= 3; k++) { const t = k / 3, q = [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t - s * 4 * t * (1 - t), A[2] + (B[2] - A[2]) * t]; ouRod(g, p, q, r, col, 3); p = q; } };
+        const barrier = (pts, top) => {   // pts: the foot line every 5 m ({ x, z, i, sd, r: the cut's height 16 m out }); top: the highest cut's (the draped mesh)
+          const cum = [0]; for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].z - pts[k - 1].z));
+          const L = cum[cum.length - 1], ns = Math.max(2, Math.round(L / 9)), posts = [];
+          for (let m = 0, k = 0; m <= ns; m++) { const s = L * m / ns; while (k < pts.length - 2 && cum[k + 1] < s) k++; const u = clamp((s - cum[k]) / ((cum[k + 1] - cum[k]) || 1), 0, 1), A = pts[k], B = pts[k + 1];
+            const x = A.x + (B.x - A.x) * u, z = A.z + (B.z - A.z) * u, i = u < 0.5 ? A.i : B.i, sd = A.sd, ox = T.nx[i] * sd, oz = T.nz[i] * sd, y = unGround(x, z);
+            posts.push({ x, z, y, ox, oz, s, r: A.r + (B.r - A.r) * u, top: [x + ox * lean, y + Hp, z + oz * lean] }); }
+          const sk = Math.max(...posts.map(p => p.r)), RF2 = rng(Math.round(posts[0].x * 7 + posts[0].z * 13));
+          for (let k = 0; k < posts.length; k++) {
+            const p = posts[k], q = posts[Math.min(k + 1, posts.length - 1)], r0 = posts[Math.max(k - 1, 0)], g = scen.get(p.x, p.z), dl = Math.hypot(q.x - r0.x, q.z - r0.z) || 1, ax = (q.x - r0.x) / dl, az = (q.z - r0.z) / dl;
+            const F = [p.x, p.y - 0.4, p.z], Tp = p.top, cp = vary(gal, RF2, 0.12);
+            bar(g, F, Tp, ax, az, p.ox, p.oz, -0.11, 0.11, -0.1, -0.08, cp); bar(g, F, Tp, ax, az, p.ox, p.oz, -0.11, 0.11, 0.08, 0.1, cp); bar(g, F, Tp, ax, az, p.ox, p.oz, -0.008, 0.008, -0.08, 0.08, vary(galD, RF2, 0.1));   // (the I: two flanges and the web)
+            const an = [p.x + p.ox * 7.5, 0, p.z + p.oz * 7.5]; an[1] = unGround(an[0], an[2]) + 0.15; ouRod(g, [Tp[0], Tp[1] - 0.1, Tp[2]], an, 0.013, rope, 3);   // (the upslope rope to its anchor)
+            bar(g, [an[0], an[1] - 0.25, an[2]], an, ax, az, p.ox, p.oz, -0.12, 0.12, -0.12, 0.12, galD);
+            exclPush(p.x + p.ox * 1.5, p.z + p.oz * 1.5, 3);
+            if (k === 0 || k === posts.length - 1) { const e = k ? 1 : -1, b = [p.x + ax * e * 6 + p.ox * 1.2, 0, p.z + az * e * 6 + p.oz * 1.2]; b[1] = unGround(b[0], b[2]) + 0.15; ouRod(g, [Tp[0], Tp[1] - 0.1, Tp[2]], b, 0.013, rope, 3); }   // (the end's lateral anchor)
+            if (k) {   // the span from the previous post: the ropes along the heads (sagging a little) and the feet, the net behind them on the slope's side
+              const o = posts[k - 1], hA = [o.top[0], o.top[1] - 0.12, o.top[2]], hB = [Tp[0], Tp[1] - 0.12, Tp[2]];
+              sag(g, hA, hB, 0.1, 0.016, rope); sag(g, [o.x, o.y + 0.3, o.z], [p.x, p.y + 0.3, p.z], -0.02, 0.016, rope);
+              const M = 4, ru = vary([1, 1, 1], RF2, 0.1), rc = RF2() < 0.3 ? [ru[0] * 1.02, ru[1] * 0.93, ru[2] * 0.84, 1] : [ru[0], ru[1], ru[2], 1];   // (a span a little rustier than the next)
+              let pb = null, pt = null, ub = 0;
+              for (let m = 0; m <= M; m++) { const t = m / M, x = o.x + (p.x - o.x) * t, z = o.z + (p.z - o.z) * t, ox = o.ox + (p.ox - o.ox) * t, oz = o.oz + (p.oz - o.oz) * t;
+                const bx = x + ox * 0.14, bz = z + oz * 0.14, B = [bx, unGround(bx, bz) + 0.12, bz], tx = x + ox * (lean + 0.14), tz = z + oz * (lean + 0.14), Tt = [tx, o.top[1] + (Tp[1] - o.top[1]) * t - 0.2 - 0.28 * 4 * t * (1 - t), tz];
+                const u = (o.s + (p.s - o.s) * t) / 0.6;
+                if (pb) gn.quadO(pb, B, Tt, pt, rc, [x - ox * 3, B[1] + 1.5, z - oz * 3], [[ub, 0], [u, 0], [u, (Tt[1] - B[1]) / 0.6], [ub, (pt[1] - pb[1]) / 0.6]]);
+                pb = B; pt = Tt; ub = u; }
+            }
+          }
+          if (top && sk > 12) {   // the highest cut: the wire mesh draped over the slope above the barrier, 2 to 10 m up from it (a finer mesh than the
+            // barrier's, from behind the car a grey veil over the ground), held by a grid of ropes: one down the face at each post, one across every
+            // 4 m and along the crest; no boulder lies on it (they are under it)
+            let j0 = posts.findIndex(p => p.r === sk), j1 = j0;   // (around the highest post, as far as the cut stays above three quarters of it)
+            while (j0 > 0 && posts[j0 - 1].r > sk * 0.75 && j1 - j0 < 8) j0--; while (j1 < posts.length - 1 && posts[j1 + 1].r > sk * 0.75 && j1 - j0 < 8) j1++;
+            const rows = 6, U = 0.3, NC = 3, at2 = (p, w) => { const x = p.x + p.ox * (2 + w * 8 / rows), z = p.z + p.oz * (2 + w * 8 / rows); return [x, unGround(x, z) + 0.2, z]; };
+            const mid = (o, p, t) => ({ x: o.x + (p.x - o.x) * t, z: o.z + (p.z - o.z) * t, ox: o.ox + (p.ox - o.ox) * t, oz: o.oz + (p.oz - o.oz) * t, s: o.s + (p.s - o.s) * t });
+            for (let k = Math.max(1, j0); k <= j1; k++) {
+              const o = posts[k - 1], p = posts[k], g = scen.get(p.x, p.z);
+              for (let c = 0; c < NC; c++) { const e = mid(o, p, c / NC), f = mid(o, p, (c + 1) / NC);   // (in thirds between the posts: it lies on the rock, none of it under it)
+                for (let w = 0; w < rows; w++) { const A = at2(e, w), B = at2(f, w), C = at2(f, w + 1), D = at2(e, w + 1), v0 = w * 8 / rows / U, v1 = (w + 1) * 8 / rows / U;
+                  gn.quadO(A, B, C, D, [0.84, 0.85, 0.87, 0.6], [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2 - 3, (A[2] + C[2]) / 2], [[e.s / U, v0], [f.s / U, v0], [f.s / U, v1], [e.s / U, v1]]);
+                  if (w % 3 === 0) ouRod(g, A, B, 0.018, rope, 3); }
+                ouRod(g, at2(e, rows), at2(f, rows), 0.018, rope, 3); }
+              for (const q of k === j1 ? [o, p] : [o]) for (let w = 0; w < rows; w++) ouRod(g, at2(q, w), at2(q, w + 1), 0.018, rope, 3);
+              const c = at2({ x: (o.x + p.x) / 2, z: (o.z + p.z) / 2, ox: (o.ox + p.ox) / 2, oz: (o.oz + p.oz) / 2 }, rows / 2); exclPush(c[0], c[2], Math.max(6, Math.hypot(p.x - o.x, p.z - o.z) * 0.7));
+            }
+          }
+          nNet++; if (nNet === 1) out.marks.rockNet = [posts[0].x, posts[0].z];
+          const ph = posts.reduce((b, p) => (p.r > b.r ? p : b), posts[0]); if (!out.marks.rockNetHi || sk > out.marks.rockNetHi[2]) out.marks.rockNetHi = [ph.x, ph.z, sk];   // (the highest cut's)
+        };
+        // the places: the net's runs before c29086e2, by the same rule and the same limit (one run on the right, from 70 to 1775 m after the
+        // start, now broken where the turnout's cars stand at 1150 m); its foot where the car meets the rock (Track.rock), elsewhere at the foot of the slope 3 m beyond the 10 m rule's reach (a car
+        // is put back before it gets there: none drives through it), eased along the road outward only (never nearer the road than the rock or
+        // that reach: where the rock comes nearer, the net stays behind it on the cut)
+        const reach = T.w + T.unf[0] + 3, runs = []; let rn = [], tot = 0;
+        const fl = () => { if (rn.length >= 5 && tot < 520) { runs.push(rn); tot += (rn.length - 1) * step; } rn = []; };
+        for (let d = 60; d < 4900; d += step) {
+          if (busy(d)) { fl(); continue; }
+          const i = T.idx(sStart + d); let best = null;
+          for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - T.hy[i];
+            const r16 = at(16); if (at(6) > 2 && r16 > 10 && (!best || r16 > best.r)) best = { sd, e, r: r16 }; }
+          if (!best || (rn.length && rn[0].sd !== best.sd)) { fl(); if (!best) continue; }
+          const o = best.sd * (best.e + 3.4), n = vrNear(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o);
+          if (n.i >= 0 && n.dd < 2.2) { fl(); continue; }
+          rn.push({ i, sd: best.sd, r: best.r });
+        }
+        fl();
+        const rTop = Math.max(...runs.flat().map(p => p.r));   // (one draped mesh: under the highest cut of them all)
+        for (const run of runs) {
+          const sd = run[0].sd, A = T.rock[sd > 0 ? 1 : 0], W = run.map(p => (A[p.i] > 0 ? A[p.i] + 0.3 : reach));
+          for (let pass = 0; pass < 2; pass++) { for (let j = 1; j < W.length; j++) W[j] = Math.max(W[j], W[j - 1] - step / 2); for (let j = W.length - 2; j >= 0; j--) W[j] = Math.max(W[j], W[j + 1] - step / 2); }
+          let cur = []; const put = () => { if (cur.length >= 5) barrier(cur, cur.some(p => p.r === rTop)); cur = []; };
+          run.forEach((p, j) => { const o = sd * W[j], x = T.px[p.i] + T.nx[p.i] * o, z = T.pz[p.i] + T.nz[p.i] * o, n = vrNear(x, z);
+            if ((n.i >= 0 && n.dd < 2.2 && Math.abs(n.i - p.i) * T.ds > 30) || pulls.some(q => Math.hypot(x - q.x, z - q.z) < q.r + 6)) { put(); return; }   // (clear of another stretch of the road and of the turnouts' cars)
+            cur.push({ x, z, i: p.i, sd, r: p.r }); });
+          put();
+        }
+        if (!gn.empty) { const m = new THREE.Mesh(gn.geometry(), ukNetMat()); m.matrixAutoUpdate = false; m.renderOrder = 2; m.receiveShadow = true; root.add(m); }   // (in the mountain's shadow with the rock under it)
+      }
       // snow fences: staggered rows across the slide path, 24 to 57 m up the slope from the road
       for (const dc of UNK ? [] : [3382.9, 4800]) {
         const i0 = T.idx(sStart + dc), up = (sd) => vrFar(T.px[i0] + T.nx[i0] * sd * 50, T.pz[i0] + T.nz[i0] * sd * 50), sd = up(1) > up(-1) ? 1 : -1;
@@ -1006,7 +1113,7 @@
         return { r, sp, h: hh, ox, oz, ph, bank: 0.42, m: { position: { set: (x, y, z) => pv.set(x, y, z) }, rotation: { set: (a, b, c, o) => { e.set(a, b, c, o); q.setFromEuler(e); m4.compose(pv, q, sv); im.setMatrixAt(k, m4); im.instanceMatrix.needsUpdate = true; } } } }; });
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
-    if (UNK && T.fence) {   // Killar: the wooden fence on the left (Track.fence, the user's decision of 9. 11. 2026 at ~18.30): a post every P m on the verge's
+    if (UNK && T.fence) {   // Killar: the wooden fence on the left (Track.fence, the user's decision of 9. 11. 2026 between ~18.10 and ~18.20): a post every P m on the verge's
       // edge (the barrier's line, bl), two rails on the road's side of them. In chunks of 40 panels (culled out of view), each panel its own run of
       // vertices: a panel the race broke (Race.fence.brk) is folded away and its two rails fly off, over the edge and down (by the race's time:
       // the replay shows each standing until it broke; World.dyn.fence, from Render.frame)

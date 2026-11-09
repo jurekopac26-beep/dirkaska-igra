@@ -320,7 +320,7 @@ const Core = (function () {
         for (const [a, b] of def.bridges || []) for (let d = a; d <= b; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) F[0][i] = F[1][i] = 1; }
       }
       // a wooden fence along one side of an unfenced road (def.fence = { side, from, to, gaps, P, vBreak }: Killar's left, the user's decision
-      // of 9. 11. 2026 at ~18.30): panels P m long from 'from' to 'to' (metres after the start line), none whose middle is in a gap. A standing
+      // of 9. 11. 2026 between ~18.10 and ~18.20): panels P m long from 'from' to 'to' (metres after the start line), none whose middle is in a gap. A standing
       // panel holds a car on that side's line (bl / br) as a barrier; a car hitting it at more than vBreak m/s across it breaks it (and the
       // next one when it hit near a post): the race's own state (Race.fence: the time each broke, kept to the race's end; World draws it),
       // the car through it and, over a drop, over the edge (Race._offRoad). fence: { side, s0 (track s of panel 0), P, n, on (1 a panel), v }
@@ -329,6 +329,18 @@ const Core = (function () {
         const D = def.fence, P = D.P || 3, n = Math.max(0, Math.floor((D.to - D.from) / P)), on = new Uint8Array(n);
         for (let k = 0; k < n; k++) { const m = D.from + (k + 0.5) * P; on[k] = (D.gaps || []).some(([a, b]) => m >= a && m <= b) ? 0 : 1; }
         this.fence = { side: D.side < 0 ? -1 : 1, s0: this.startS + D.from, P, n, on, v: D.vBreak || 6.5 };
+      }
+      // the rock beside an unfenced road (def.rock: Killar, tools/killar-skala.mjs from the ground the world draws; the user's decisions of
+      // 9. 11. 2026 between ~18.10 and ~18.20): per side the line where the ground rises steeply (a cut) or a house stands, as runs [side, metres
+      // after the start line, [its distance from the road's middle in decimetres, every 2.5 m]]: a wall of the terrain (wallCollide), not a
+      // barrier; elsewhere the slope is driven to the 10 m rule (Race._offRoad). rock: [left, right], per sample the line's distance, 0 none
+      this.rock = null;
+      if (def.rock && this.unf) {
+        const Rk = this.rock = [new Float32Array(N), new Float32Array(N)];
+        for (const [sd, a, v] of def.rock) {
+          const A = Rk[sd > 0 ? 1 : 0], s0 = this.startS + a;
+          for (let i = Math.max(0, Math.ceil(s0 / ds - 1e-9)); i < N; i++) { const f = (i * ds - s0) / 2.5, j = Math.floor(f); if (j > v.length - 2) { if (j === v.length - 1 && f - j < 1e-6) A[i] = v[j] / 10; break; } A[i] = (v[j] + (v[j + 1] - v[j]) * (f - j)) / 10; }
+        }
       }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
@@ -4015,6 +4027,10 @@ const Core = (function () {
           const Fn = trk.fence, FS = rc && rc.fence, kf = Fn && FS && pen > 0 && pen < 1.2 && !(q.k >= 0) && (q.d > 0 ? 1 : -1) === Fn.side ? Math.floor((q.s - Fn.s0) / Fn.P) : -1;
           if (!(kf >= 0 && kf < Fn.n && Fn.on[kf] && !FS.brk[kf])) pen = 0;
           else if (canFall) { const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz); if (vo > Fn.v || (vo > 1.5 && c.fenceT != null && rc.time - c.fenceT < 0.5)) { fenceBreak(Fn, FS, rc.time, kf, q.s, c, rx, rz); pen = 0; } }   // (through it: for 0.5 s after it broke one, the car ploughs through the next ones it hits too)
+          if (!(pen > 0) && trk.rock && !(q.k >= 0)) {   // the rock of a cut or a house's wall (Track.rock): the ground stops the car there, on either side (a corner up to 3 m in)
+            const sg = q.d > 0 ? 1 : -1, A = trk.rock[sg > 0 ? 1 : 0], f = q.s / trk.ds, i = Math.max(0, Math.min(trk.N - 2, Math.floor(f))), a = A[i], b = A[i + 1];
+            if (a > 0 && b > 0) { const e = sg * q.d - (a + (b - a) * (f - i)); if (e > 0 && e < 3) { pen = e; nx = -q.nx * sg; nz = -q.nz * sg; } }
+          }
         }
         let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
         if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2, rr = Math.max(R.zr, R.shut.length ? R.zr + 12 : 0); if (d2 > (rr + 8) * (rr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
@@ -8067,8 +8083,8 @@ const Core = (function () {
     // Track.fence), every step after the walls: a
     // car whose middle is past the edge of a drop or of a bridge's deck (Track.fallAt) goes over it, fast or at a crawl (Race._fall: it falls,
     // then it is put back on the road where it went over, damaged); one whose middle has been more than reach metres from the road's edge
-    // (def.halfWidth; Killar: 10 m, the user's decision of 9. 11. 2026 at ~18.30: the verge, the ditch, the slope, the trees and the houses
-    // first) for time seconds is put back on the road where it is (rescue: on the line, its nose along the road, no damage); closer, stuck,
+    // (def.halfWidth; Killar: 10 m, the user's decision of 9. 11. 2026 between ~18.10 and ~18.20: the verge, the ditch, the slope and the trees
+    // first; a steep cut's rock or a house's wall stops it before that, Track.rock) for time seconds is put back on the road where it is (rescue: on the line, its nose along the road, no damage); closer, stuck,
     // the player's own button puts it back (↺). A fence (Track.fence) holds it on its side (wallCollide) until it breaks. c.offT: how long
     // it has been out there; c.offN: how many times it was put back (game.js: the player's message)
     _offRoad(c, dt) {

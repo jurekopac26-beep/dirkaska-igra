@@ -4,8 +4,9 @@
 // ~8.5 %; gravel all the way (def.roadSurface). No barriers but a wooden fence on the left (def.unfenced, def.fence, the user's decisions of
 // 9. 11. 2026): it holds a car, a hit across it at more than 6.5 m/s breaks a panel or two (they stay broken to the race's end), and a car
 // whose middle goes through it past the edge of a drop above the river (def.drops: right past the narrow shoulder) or off the bridge's deck
-// falls (Race._fall), fast or at a crawl; elsewhere one more than 10 m from the road's edge is put back on it after 0.3 s (Race._offRoad);
-// in a race of 13 on the autopilot few go over. The open road's traffic is its own mix (def.traffic): jeeps,
+// falls (Race._fall), fast or at a crawl; elsewhere one more than 10 m from the road's edge is put back on it after 0.3 s (Race._offRoad),
+// but where the cut beside the road is steep the rock stops it first, as a wall of the terrain (def.rock: no barrier on the right, the rockfall
+// net there only a look); in a race of 13 on the autopilot few go over. The open road's traffic is its own mix (def.traffic): jeeps,
 // pickups and motorbikes, a few lorries and buses. A whole duel in the traffic on autopilot: both reach the finish and the traffic keeps
 // moving. The medal times of the time trial: the stock rally car on the autopilot.
 //   node tests/killar.test.js
@@ -42,8 +43,8 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
 }
 
 // 3. the drops: most of the road on the edge of the drop to the river (on the left, the valley's side): the edge 1.2 m past the road
-//    (Track.dropAt), the other side's verge farther out. A wooden fence on the left (def.fence, the user's decision of 9. 11. 2026 at
-//    ~18.30): along every drop, none on the bridge over the Hangrung Nala; no barrier on the right: a car goes off both sides of the bridge
+//    (Track.dropAt), the other side's verge farther out. A wooden fence on the left (def.fence, the user's decision of 9. 11. 2026
+//    between ~18.10 and ~18.20): along every drop, none on the bridge over the Hangrung Nala; no barrier on the right: a car goes off both sides of the bridge
 //    (Track.fallAt), elsewhere it is put back on the road 10 m from the road's edge after 0.3 s
 {
   const D = T.dropAt; let len = 0, edge = true, onBr = false;
@@ -100,6 +101,15 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   check('off the road on the mountain side: no wall, no fall; 9 m from the road it stays, 11 m it is put back; driven off, it is put back at 10 m, not damaged',
     at9 === 0 && at11 === 1 && !up.fell && up.put === 1 && up.back && !up.wall && up.dmg < 0.01 && up.out > 9.5 && up.out < 12 && up.fin,
     `standing 9 m: put back ${at9}, 11 m: ${at11}; driven: put back ${up.put} at ${up.out.toFixed(1)} m from the road, damage +${up.dmg.toFixed(3)}`);
+  // the rock (def.rock, Track.rock: tools/killar-skala.mjs from the ground drawn): where the cut on the right is steep, the rock stops the car
+  // as a wall of the terrain (no fall, not put back: it never gets 10 m from the road); its line past the barrier's, within 11.5 m of the road
+  const RK = T.rock, Rr = RK && RK[1];
+  let ri = -1; if (Rr) for (let i = 0; i < T.N; i++) if (Rr[i] > 0 && (ri < 0 || Rr[i] < Rr[ri]) && !(T.fallAt && T.fallAt[1][i])) ri = i;
+  const lineOk = !!RK && [0, 1].every(k => RK[k].every((v, i) => !v || (v >= (k ? T.br[i] : T.bl[i]) + 1.2 && v <= T.w + 11.6)));
+  const rk = ri >= 0 ? run(ri * T.ds, 1, 12, 0.5, 0.4) : null, rkR = ri >= 0 ? Rr[ri] : 0;
+  check('the rock: where the cut on the right is steep (def.rock), the car driven into it at 43 km/h stops at the rock as at a wall: no fall, not put back, its middle short of the rock\'s line',
+    lineOk && rk && !rk.fell && rk.put === 0 && rk.wall > 0 && rk.out + T.w < rkR && rk.out > rkR - T.w - 3 && rk.fin,
+    rk ? `the rock ${rkR.toFixed(1)} m from the middle (${(ri * T.ds - T.startS).toFixed(0)} m after the start), the car's middle at most ${(rk.out + T.w).toFixed(1)} m, hit ${rk.wall.toFixed(1)} m/s, put back ${rk.put}` : 'no rock');
 }
 
 // 4b. a race of 13 on the autopilot, three times: every car at the finish, few of them through the fence or over the edge

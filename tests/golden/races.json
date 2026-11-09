@@ -2514,10 +2514,10 @@
   "cars": 13,
   "winner": 137.39,
   "spins": 0,
-  "walls": 4,
+  "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "2c448d3b074349429b9dfc54"
+  "digest": "6b8633f6949120c8fa65c37e"
  },
  "killar/cs/formula": {
   "finished": 13,
@@ -2544,10 +2544,10 @@
   "cars": 13,
   "winner": 125.02,
   "spins": 0,
-  "walls": 0,
+  "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "c73078431fab3216d30c723b"
+  "digest": "216289d3221ffa418e731012"
  },
  "livorno/cs": {
   "finished": 21,
