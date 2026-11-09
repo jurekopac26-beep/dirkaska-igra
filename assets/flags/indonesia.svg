@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Indonesia</title>
+  <!-- Ratio 2:3 (Law No. 24 of 2009 on the flag, the language, the arms and the anthem: the width two thirds of the length). Two
+       horizontal bands of equal height, red over white (the law names no shade): red #CE1126, white #FFFFFF. -->
+  <rect width="900" height="600" fill="#FFFFFF"/>
+  <rect width="900" height="300" fill="#CE1126"/>
+</svg>
