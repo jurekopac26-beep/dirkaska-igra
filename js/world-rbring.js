@@ -1614,7 +1614,9 @@
     addShore(root, shoreBand(x0, z0, x1, z1, y + 0.015, (x, z) => Math.min(rbSeaD(x, z), wl(x, z)), 16), wm.material, WO);
   }
 
-  Object.assign(API, { RB_WIND, rbAirStep, rbCrowdTex, rbFlags, rbGravelTex, rbSmoke, rbSmokeTex, rbVerge, rbSea: { pad: rbSeaPad, water: rbSeaWater, d: rbSeaD } });   // (what World and the other worlds use of this one)
+  const rbSea = { pad: rbSeaPad, water: rbSeaWater, d: rbSeaD };   // (API.rbSea: a world's water, above)
+
+  Object.assign(API, { RB_WIND, rbAirStep, rbCrowdTex, rbFlags, rbGravelTex, rbSea, rbSmoke, rbSmokeTex, rbVerge });   // (what World and the other worlds use of this one)
   World.keep('NR', 'rbring');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.rbring = (scene, tex, opts) => buildRbring(scene, tex, opts);
 })();
