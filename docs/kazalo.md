@@ -218,6 +218,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
+| medeu | Medeu, Kazahstan | medeu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.medeu`) in `js/world-medeu.js` (znamenitosti prek `L.pre`/`L.extra`: drsališče iz delov stavbe OSM, drogovi luči, paviljoni na jezu, prelivi, gobe postajališča, spomenika, spominski kamen, kabine gondole) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
 | *moki* | *Moki Dugway, ZDA (test)* | moki | `js/world-moki.js` (`buildMoki`) |
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |

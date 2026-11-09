@@ -52,7 +52,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Shimla, Indija | zavite 4 | OSM 15 % (hiše vrisane ob 65 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše, bazar in zidovi ob cesti |
 | Darjeeling, Indija | zavite 4 | OSM 6 % (hiše vrisane ob 32 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše in železnica tik ob ozki cesti |
 | Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar) |
-| Medeu, Kazahstan | kratke A, Načrtovano | OSM 12 % (ograje) | izletna cona je |
+| Medeu, Kazahstan | osnutek PR #532 (veja `nove-proge/medeu`, 8. 11. 2026) | 0 % (v igri, povprečno 6,7 m; prej OSM 12 %, ograje) | izletna cona je |
 | Milford Sound, Nova Zelandija | kratke B | OSM 37 %, obe 37 % (predor 1,2 km je tretjina poti, mostovi) | izletna cona je (razen v predoru) |
 | Ella, Šrilanka | kratke C1 | OSM 2 % | izletna cona je |
 | Santo Antão, Zelenortski otoki | kratke C2 | OSM 6 % | izletna cona je |
@@ -129,7 +129,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Portugalska | Porto Moniz (Nove proge) | po vrsti |
 | Tanzanija | Ngorongoro (Nove proge za 1.0, A9; prej Nove proge 8) | narejena: osnutek PR #533 (8. 11. 2026), na `main` s skupino N5 |
 | Saudova Arabija | Diriyah (stara veja `claude/proga-diriyah`, v verigi Nove proge) | **ne začni** (brez izletne cone, 5. 11. 2026) |
-| Kazahstan | Medeu (kratke, A) | po vrsti |
+| Kazahstan | Medeu (Nove proge za 1.0, B8; prej kratke, A) | narejena: osnutek PR #532 (8. 11. 2026), na `main` s skupino N5 |
 | Šrilanka | Ella (kratke, C1) | po vrsti |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
 | Mehika | Espinazo del Diablo (kratke, C2) | po vrsti |

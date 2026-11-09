@@ -409,6 +409,7 @@
     if (def.hotel) { const [x, z, Lh, Wh, a] = def.hotel; for (let u = -Lh / 2; u <= Lh / 2 + 0.01; u += Lh / Math.ceil(Lh / 6)) exclPush(x + Math.cos(a) * u, z + Math.sin(a) * u, Wh / 2 + 3); }   // (the hotel, drawn with the buildings)
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     exclPush(padF.x, padF.z, padF.r + 4);
+    if (L.pre) L.pre({ P, exclPush, blds });   // (a pass's own landmarks, before the terrain: their level plots in P.pads, their room; out of blds the houses they replace)
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
     /* ---- the retaining walls between the legs of the hairpins: the game's road is wider than the real one (11 m against ~7 m), so where two
@@ -1139,6 +1140,8 @@
       }
       sh.addTo(root, true);
     }
+
+    if (L.extra) L.extra({ scen, root, out, P, excluded, onSide, matV });   // (a pass's own landmarks, built by its own file: js/world-medeu.js)
 
     /* ---- the puddles of a race in the rain (T.puddles; as Sani Pass') ---- */
     if (T.puddles && T.puddles.length) {
