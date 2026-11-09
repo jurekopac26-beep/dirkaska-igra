@@ -54,7 +54,11 @@ const SETUPS = {
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
 // costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+// Svalvogar (the tanker on its own road, docs/proge-cisterna.md): at 6 s it is barely off the line (4 m/s) and only rubs the rock;
+// on the relief road (9. 11. 2026) it turns into the rock at its top speed at 30.5 s (a knock of 19 %), Manchewe's at 33 s (19 %:
+// before, its left was the drop or it only rubbed), Tapini's at 10 s, the best on that slowest road (6 m/s: 4 %); the tanker loses
+// no panel at its pace (the crash set-up's own rule in golden.test.js)
+const CRASH_AT = { svalvogar: 30.5, manchewe: 33, tapini: 10, katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
@@ -63,9 +67,14 @@ function crashDrive(C, race, k) {
   return stuck;   // (true: rescued)
 }
 
+// the vehicle a track is driven in, whatever the player's own (def.vehicle: the tanker's short roads of docs/proge-cisterna.md), as
+// vehOf in game.js gives it; the set-ups and races with a car of their own (formula, lm, car) cannot happen there and are skipped
+const ownModel = (C, tid) => { const d = C.TRACKS.find(x => x.id === tid), M = d && d.vehicle && C.MODELS.find(m => m.id === d.vehicle); return M ? C.heirOf(M) : null; };
+
 function makeRace(C, tid, opts) {
-  const T = new C.Track(C.TRACKS.find(d => d.id === tid));
-  const race = new C.Race(T, opts(C, !!T.def.timeTrial, tid));
+  const T = new C.Track(C.TRACKS.find(d => d.id === tid)), o = opts(C, !!T.def.timeTrial, tid), own = ownModel(C, tid);
+  if (own && !o.noPlayer) o.playerModel = own;   // (the track's own vehicle: the tanker on its roads)
+  const race = new C.Race(T, o);
   race.start();
   return race;
 }
@@ -115,4 +124,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, ownModel, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

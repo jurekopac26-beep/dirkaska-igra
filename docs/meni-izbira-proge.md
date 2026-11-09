@@ -25,7 +25,7 @@ Od zgoraj navzdol:
 
 **Ležeče** (od 640 × 360): oder levo (pol širine, vsa višina, z vremenom, kamero in grafom), desno glava, vrstica, avto s tablo, soseda, nazaj in Race!.
 
-**Zastave:** `assets/flags/<država>.svg` (20 držav: slovenia, austria, germany, belgium, finland, england, france, italy, monaco, usa, canada, brazil, chile, australia, south-africa, morocco, japan, china, thailand, russia). Narisane po uradnih predpisih (razmerje = `viewBox`, uradne barve, znaki), vsako je preveril drug agent (popravljena Brazilija in Maroko). Anglija ima križ sv. Jurija, ne britanske zastave.
+**Zastave:** `assets/flags/<država>.svg` (20 držav: slovenia, austria, germany, belgium, finland, england, france, italy, monaco, usa, canada, brazil, chile, australia, south-africa, morocco, japan, china, thailand, russia). Narisane po uradnih predpisih (razmerje = `viewBox`, uradne barve, znaki), vsako je preveril drug agent (popravljena Brazilija in Maroko). Anglija ima križ sv. Jurija, ne britanske zastave. Pozneje dodane romania in s progami za cisterno (9. 11. 2026) iceland, pakistan, malawi, bolivia (civilna zastava brez grba) in papua-new-guinea (ptica rajska poenostavljena, v meniju je zastava visoka 20–28 px); te so narisane po uradnih opisih brez primerjave z načrti (Wikipedija iz okolja ni bila dosegljiva): preveri jih seja z dostopom.
 
 ## Sklopi
 

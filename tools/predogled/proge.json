@@ -207,18 +207,30 @@
   "bbox": "-49.41,-28.08,-49.34,-28.03"
  },
  "yungas": {
-  "key": "North Yungas Road",
+  "key": "Camino Nor Yungas",
   "sec": [
    [
-    -16.29115,
-    -67.80525
+    -16.28433,
+    -67.79921
    ],
    [
-    -16.27864,
-    -67.79506
+    -16.28109,
+    -67.7972
    ]
   ],
-  "focus": "stream",
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
   "cfg": {
    "ground": "jungle",
    "cover": "forest",
@@ -226,13 +238,14 @@
    "snow": "none",
    "center": "none",
    "gravel": 1,
-   "fog": 14672866,
-   "bld": 10126448,
-   "roof": 5918792,
+   "fog": 14673122,
+   "bld": 10127984,
+   "roof": 5921352,
+   "rock": 7236192,
    "falls": 1
   },
-  "n": 8,
-  "bbox": "-67.86,-16.30,-67.73,-16.20"
+  "n": 4,
+  "bbox": "-67.82,-16.30,-67.78,-16.27"
  },
  "hana": {
   "key": "Hana Highway",
@@ -439,5 +452,166 @@
   },
   "n": 16,
   "bbox": "-58.372,-34.622,-58.355,-34.600"
+ },
+ "svalvogar": {
+  "key": "Svalvogavegur",
+  "sec": [
+   [
+    65.91761,
+    -23.76976
+   ],
+   [
+    65.91995,
+    -23.77853
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "sea",
+  "cfg": {
+   "ground": "grass",
+   "cover": "none",
+   "tree": "shrub",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 12897490,
+   "bld": 14210248,
+   "roof": 9054754,
+   "rock": 5591630,
+   "sea": 1
+  },
+  "n": 1,
+  "bbox": "-23.83,65.90,-23.72,65.94"
+ },
+ "fairymeadows": {
+  "key": "Fairy Meadows jeep track",
+  "sec": [
+   [
+    35.47063,
+    74.59132
+   ],
+   [
+    35.46929,
+    74.59089
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
+  "cfg": {
+   "ground": "alpine",
+   "cover": "sparse",
+   "tree": "pine",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 13685976,
+   "bld": 12101776,
+   "roof": 6969928,
+   "rock": 9076594
+  },
+  "n": 2,
+  "bbox": "74.57,35.43,74.63,35.47"
+ },
+ "manchewe": {
+  "key": "Golodi Road",
+  "sec": [
+   [
+    -10.59617,
+    34.14158
+   ],
+   [
+    -10.59551,
+    34.1415
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
+  "cfg": {
+   "ground": "tropic",
+   "cover": "patchy",
+   "tree": "broad",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 14211276,
+   "bld": 11038796,
+   "roof": 6974052,
+   "rock": 9071184
+  },
+  "n": 3,
+  "bbox": "34.12,-10.61,34.16,-10.58"
+ },
+ "tapini": {
+  "key": "Tapini Highway",
+  "sec": [
+   [
+    -8.42476,
+    146.95757
+   ],
+   [
+    -8.4225,
+    146.95929
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 60,
+   "izt": 80,
+   "hw": 2.0,
+   "hwG": 2.0,
+   "polmer": 12,
+   "naklon": 0.12,
+   "prepad": 10,
+   "grbine": 1,
+   "siri": 0.9
+  },
+  "focus": "cliff",
+  "cfg": {
+   "ground": "rainforest",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "none",
+   "center": "none",
+   "gravel": 1,
+   "fog": 14081236,
+   "bld": 10127984,
+   "roof": 5917242,
+   "rock": 8022616
+  },
+  "n": 5,
+  "bbox": "146.94,-8.44,146.98,-8.41"
  }
 }

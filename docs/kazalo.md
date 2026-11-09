@@ -114,6 +114,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 | `docs/proge-pregled.md`, `tools/proge-pregled.js` | pregled prog v igri v eni datoteki: tabela meritev (dolžina, zavitost °/km, ravnine, lasnice, višina; orodje jo prepiše med oznakama `meritve:začetek` in `meritve:konec`, merilo kot pri zavitih progah) in »Do 60 m ob cesti« po progah (ročno) |
 | `docs/proge-po-drzavah.md` | proge po državah: v igri in na čakanju, po pravilu »ena proga na državo« (3. 11. 2026): izbire uporabnika za države s progo v igri (vprašanja `ena-proga-<država>`), vrstni red za države brez proge; nove proge za 1.0 (7. 11. 2026: 1–5 km, prvih 11, potrditev seznama, mestne proge po središču brez izletne cone); proge z ledom (izbira 6. 11. 2026) |
 | `docs/nove-proge-1-0.md` | nove proge za 1.0: prvih 11 (potrjene 7. 11. 2026) in del 2 z 11 progami s čakanja (Medeu, Furka, Gudauri, Llogara, Porto Moniz, Ngorongoro, Ella, Santo Antão, Espinazo del Diablo, Seul, Dadès; potrjene 8. 11.): meritve, posebnosti, izletna cona, obremenitev, podatki poti v `tools/<id>/config.json` za `tools/proga-podatki.py`, liniji A in B, skupine N1–N6 po 3–4 za vrsto, predaja med sejami |
+| `docs/proge-cisterna.md` | proge za cisterno (odločitev uporabnika 8. 11. 2026): pet zelo kratkih prog do 500 m s prepadom, ena na celino (Svalvogar, Fairy Meadows, Manchewe, Yungas, Tapini), samo TITAN CISTERNA na čas; odseki OSM, meritve, skupni gradniki (`def.vehicle`), razgibana cesta (`relief`: `buildRelief`, `relH`, `relSusp` v `js/core.js`, mreža z reliefom in luže v `js/world-gore.js`) in graditelji po državah, stanje |
 | `docs/proga-livorno.md` | načrt nove proge Livorno, Italija (odločitve uporabnika, potek po današnjih cestah, podatki v `tools/livorno/`, sklopi 1–5 in stanje, navodila naslednjim sejam, dovoljena imena) |
 
 ## Teme v `js/game.js`
@@ -199,6 +200,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`) in `js/world-cpalace.js` (lastni deli: `cpPrep`, `cpPark`, `cpTrees`, videz v `RB_LOOK` prek `API.rbLook`) |
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
+| fairymeadows | Fairy Meadows, Pakistan | fairymeadows | `js/world-fairymeadows.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
@@ -206,6 +208,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
+| manchewe | Manchewe, Malavi | manchewe | `js/world-manchewe.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
@@ -227,9 +230,12 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *sani* | *Sani Pass, Južna Afrika (test)* | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
+| svalvogar | Svalvogar, Islandija | svalvogar | `js/world-svalvogar.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| tapini | Tapini, Papua Nova Gvineja | tapini | `js/world-tapini.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |
+| yungas | Yungas, Bolivija | yungas | `js/world-yungas.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *troisrivieres* | *Trois-Rivières, Kanada (test)* | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
 | *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |

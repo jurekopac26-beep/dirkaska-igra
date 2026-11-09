@@ -3918,7 +3918,7 @@ const Render = (function () {
 
   // the rain's splashes (Splashes) on the road round the view's centre: so many drops a second as it rains, where they fall on the road
   // and in the pits (the track's own height there); not in the snow. Their places from a generator of their own (Math.random is left to the race)
-  const _bk = { dy: 0, sl: 0 }, _sq = {}; let spR = 91, pitSp = 0;   // (pitSp: the drops in the pits so far, for the tests)
+  const _bk = { dy: 0, sl: 0 }, _sq = {}, _rlE = {}; let spR = 91, pitSp = 0;   // (pitSp: the drops in the pits so far, for the tests)
   const spRnd = () => (spR = (spR * 16807) % 2147483647) / 2147483647;
   function rainFx(dt, target) {
     const T = curTrack, on = rain.mesh.visible && !!T && !!target;
@@ -3930,7 +3930,7 @@ const Render = (function () {
     for (; splash.acc >= 1; splash.acc -= 1) {
       const x = cx + (spRnd() - 0.5) * 2 * R, z = cz + (spRnd() - 0.5) * 2 * R, q = T.query(x, z, hint, _sq);
       const road = Math.abs(q.d) <= T.w + 0.6; if (!road && !pitDrop(T, q)) continue;   // (on the road only, and in the pits: the lane, the apron)
-      let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank && road) y += T.bankAt(q.s, q.d, _bk).dy; if (!road) pitSp++;
+      let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank && road) y += T.bankAt(q.s, q.d, _bk).dy; if (T.relief && road) y += T.reliefH(q.s, q.d); if (!road) pitSp++;
       splash.put(x, y + 0.04, z, time);
     }
     splash.flush();
@@ -4966,10 +4966,11 @@ const Render = (function () {
     const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
     if (T.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
     else G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld));
-    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA, run);
+    const TR = T.rs && !T.fall && curTrack && curTrack.relief ? T.rs : null;   // (a relief road: its axles on it, its roll on it; Core tlRelief)
+    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA - (TR ? TR.yb : 0), run);
     const lat = clamp(T.w * Math.hypot(T.vx, T.vz), -16, 16);
     v.tlRoll += (clamp(-lat * 0.0036 * sw, -0.05 * sw, 0.05 * sw) - v.tlRoll) * Math.min(1, dt * 5);
-    G.rotation.set((v.broll || 0) + v.tlRoll, -h, pit, 'YZX');
+    G.rotation.set((v.broll || 0) + v.tlRoll + (TR ? TR.r : 0), -h, pit, 'YZX');
     v.tlS.material = settings.shadows ? matBlob : matBlobS;
     v.tlL.material = braking ? matTailOn : matTailOff;
     if (v.tlG2) tl2Draw(v, c, T, G, u, dt, braking, vis);
@@ -6893,8 +6894,9 @@ const Render = (function () {
       const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
-      v.bodyG.rotation.set(v.roll, 0, v.pitch);
-      v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
+      const RS = c.rs && curTrack && curTrack.relief ? c.rs : null;   // (a relief road, the tanker's: the body over its springs off the wheels' plane, Core relSusp)
+      v.bodyG.rotation.set(v.roll + (RS ? RS.bR : 0), 0, v.pitch + (RS ? RS.bP : 0));
+      v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0) + (RS ? RS.bY : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
       if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
@@ -6903,6 +6905,10 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      if (RS) {   // each wheel on its own bit of the relief: off the wheels' plane (the car drawn on it: nvY, nvR, nvP) by the road's twist under them
+        const W4 = v.w4 || (v.w4 = [0, 1, 2, 3].map(k => (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)) || null)), y0 = v.w4y || (v.w4y = W4.map(q => q ? q.position.y : 0));
+        for (let k = 0; k < 4; k++) { const q = W4[k]; if (!q) continue; const x0 = k < 2 ? M.a : -M.b, z0 = k & 1 ? c.tw : -c.tw; q.position.y = y0[k] + clamp(RS.h[k] - (c.nvY + x0 * c.nvP - z0 * c.nvR), -0.15, 0.15); }
+      } else if (v.w4y) { for (let k = 0; k < 4; k++) if (v.w4[k]) v.w4[k].position.y = v.w4y[k]; v.w4y = null; }
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
@@ -9467,7 +9473,7 @@ const Render = (function () {
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
       const surf = c.ws[wi];
       const front = k >= 2;
-      const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
+      const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z, ybw = c.rs && c.wq && curTrack && curTrack.relief ? curTrack.elevAt(c.wq[wi].s, _rlE).y + c.rs.h[wi] : yb;   // (a relief road, the tanker's: each wheel's mark on its own bit of it)
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       if (spd < lv) intens = 0;
       // the new map's run-offs: the sand gives way, the player's car leaves its tracks there whenever it rolls (darker in a slide); they fade over 10 minutes
@@ -9491,13 +9497,13 @@ const Render = (function () {
           const d = Math.hypot(px - last[0], pz - last[1]);
           if (d > (rut ? 0.8 : 0.45) && d < 4) {
             const a = rut ? MK_RUT : clamp(0.4 + intens * 0.4, 0.4, 0.86);
-            if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], yb);
-            else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], yb);   // (wet gravel, a puddle: dark, muddy)
-            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], yb);
-            else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], yb);
-            v.sk[k] = [px, pz, yb];
-          } else if (d >= 4) v.sk[k] = [px, pz, yb];
-        } else v.sk[k] = [px, pz, yb];
+            if (onHard) skids.add(last[0], last[1], px, pz, 0.2, 0.035, 0.035, 0.04, a * 0.92, a, last[2], ybw);
+            else if (surf === 6 || (rainy && surf === 5)) skids.add(last[0], last[1], px, pz, 0.22, 0.17, 0.14, 0.1, a * 0.9, a, last[2], ybw);   // (wet gravel, a puddle: dark, muddy)
+            else if (surf === 3 || surf === 5) skids.add(last[0], last[1], px, pz, 0.22, 0.42, 0.27, 0.14, a * 0.85, a * 0.95, last[2], ybw);
+            else skids.add(last[0], last[1], px, pz, 0.22, 0.14, 0.2, 0.07, a * 0.75, a * 0.85, last[2], ybw);
+            v.sk[k] = [px, pz, ybw];
+          } else if (d >= 4) v.sk[k] = [px, pz, ybw];
+        } else v.sk[k] = [px, pz, ybw];
       } else v.sk[k] = null;
       // smoke / dust (rain: spray, mud)
       if (front) continue;

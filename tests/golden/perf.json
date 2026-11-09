@@ -362,5 +362,40 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "svalvogar": {
+  "calls": 64,
+  "maxCalls": 65,
+  "kverts": 154,
+  "maxKverts": 160,
+  "jsMs": 0.43
+ },
+ "fairymeadows": {
+  "calls": 69,
+  "maxCalls": 77,
+  "kverts": 174,
+  "maxKverts": 187,
+  "jsMs": 0.26
+ },
+ "manchewe": {
+  "calls": 86,
+  "maxCalls": 102,
+  "kverts": 311,
+  "maxKverts": 352,
+  "jsMs": 0.25
+ },
+ "yungas": {
+  "calls": 81,
+  "maxCalls": 86,
+  "kverts": 287,
+  "maxKverts": 329,
+  "jsMs": 0.35
+ },
+ "tapini": {
+  "calls": 90,
+  "maxCalls": 94,
+  "kverts": 315,
+  "maxKverts": 322,
+  "jsMs": 0.28
  }
 }

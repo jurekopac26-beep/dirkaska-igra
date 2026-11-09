@@ -16,6 +16,8 @@
 //                                              »// ---- uvoz: začetek« in »// ---- uvoz: konec« (datoteko proge naredi tools/nova-proga.mjs)
 // Možnosti (prepišejo proge.json uvoz): --pred <m> (start toliko pred začetkom odseka, cesta se po potrebi podaljša), --grid <m> (narisana cesta
 // pred startom), --izt <m> (iztek za ciljem), --hw <m> (polovična širina asfalta), --hwG <m> (na makadamu), --polmer <m>, --naklon <delež>, --sveze.
+// Proge za cisterno (docs/proge-cisterna.md) še: uvoz.prepad <m> (prepad brez ograje, def.drops, kjer teren 30 m od osi pade za toliko ali več
+// pod cesto, 15 m od osi za polovico), uvoz.grbine <faktor> (neravna podlaga: def.bumps, grbine in jamice vsakih 4-9 m, višina krat faktor).
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -174,12 +176,12 @@ const RANK = { motorway: 9, trunk: 8, primary: 7, secondary: 6, tertiary: 5, unc
 const isCar = (t) => CAR.has(t.highway) && t.area !== 'yes' && t.access !== 'no' && t.motor_vehicle !== 'no';
 // the road of the track: the ways whose name, English name or number holds the key, joined end to end; the longest chain (by its nodes), as
 // tools/predogled/prep.py. Returns its nodes and, per segment, its way
-function chainByKey(O, key) {
+function chainByKey(O, key, near) {   // (near: [lat, lon] of the section's start; the longest chain, else the one through it when the longest passes over 150 m from it)
   const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key));
   if (!sel.length) throw new Error('cesta: ni poti s ključem "' + key + '"');
   const adj = new Map(), add = (n, i) => { const L = adj.get(n) || []; L.push(i); adj.set(n, L); };
   sel.forEach((w, i) => { add(w.nds[0], i); add(w.nds[w.nds.length - 1], i); });
-  const used = new Set(); let best = null;
+  const used = new Set(), chains = []; let best = null;
   for (let i = 0; i < sel.length; i++) {
     if (used.has(i)) continue; used.add(i);
     let nds = sel[i].nds.slice(), way = new Array(nds.length - 1).fill(sel[i]);
@@ -190,7 +192,10 @@ function chainByKey(O, key) {
       else { nds = seq.slice().reverse().slice(0, -1).concat(nds); way = new Array(seq.length - 1).fill(sel[j]).concat(way); }
     }
     if (!best || nds.length > best.nds.length) best = { nds, way };
+    chains.push({ nds, way });
   }
+  if (near) { const k = Math.cos(near[0] * Math.PI / 180), dist = (c) => Math.min(...c.nds.map(q => { const nd = O.nodes.get(q); return nd ? Math.hypot(nd.lat - near[0], (nd.lon - near[1]) * k) * 111320 : 1e9; }));
+    if (dist(best) > 150) best = chains.reduce((a, c) => dist(c) < dist(a) ? c : a, best); }
   return best;
 }
 // the chain lengthened at one end (atStart) by the roads that go on from it: the straightest car road (the higher class first among the nearly
@@ -388,7 +393,7 @@ async function main() {
   const xy = (nid) => { const n = O.nodes.get(nid); return G0.xz(n.lat, n.lon); };
   const dem = await mosaic(copUrl, 1, latC - 0.06, lonC - 0.08, latC + 0.06, lonC + 0.08, DATA), at0 = (x, z) => { const [la, lo] = G0.ll(x, z); return dem.lin(la, lo); };
   // the road: its chain, oriented by the section (sec: its start, its end; else the bottom end first)
-  const C = chainByKey(O, E.key), nIdx = (p) => { const q = G0.xz(p[0], p[1]); let b = 0, bd = 1e18; C.nds.forEach((n, k) => { const v = xy(n), d = (v[0] - q[0]) ** 2 + (v[1] - q[1]) ** 2; if (d < bd) { bd = d; b = k; } }); return b; };
+  const C = chainByKey(O, E.key, E.sec && E.sec[0]), nIdx = (p) => { const q = G0.xz(p[0], p[1]); let b = 0, bd = 1e18; C.nds.forEach((n, k) => { const v = xy(n), d = (v[0] - q[0]) ** 2 + (v[1] - q[1]) ** 2; if (d < bd) { bd = d; b = k; } }); return b; };
   let flip = E.sec ? nIdx(E.sec[0]) > nIdx(E.sec[1]) : at0(...xy(C.nds[0])) > at0(...xy(C.nds[C.nds.length - 1]));
   if (flip) { C.nds.reverse(); C.way.reverse(); }
   const cumOf = () => { const c = [0]; for (let k = 1; k < C.nds.length; k++) { const a = xy(C.nds[k - 1]), b = xy(C.nds[k]); c.push(c[k - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])); } return c; };
@@ -463,6 +468,17 @@ async function main() {
   const sfc = Sway.map(w => { const s = w.tags.surface || ''; return PAVING.test(s) ? 'paving' : GRAVEL.test(s) || (w.tags.highway === 'track' && !/asphalt|concrete|paved/.test(s)) ? 'makadam' : 'asphalt'; });
   const surf = [], widths = []; for (let i = 0; i < n;) { let j = i; while (j < n && sfc[j] === sfc[i]) j++; if (sfc[i] !== 'asphalt' && (j - i) * ds >= 20) surf.push([mS(i), mS(j - 1), sfc[i]]); i = j; }
   if (surf.length && U.hwG !== U.hw) { widths.push([mS(0), U.hw]); for (const [a, b] of surf) { widths.push([+(a - 12).toFixed(1), U.hw], [+(a + 12).toFixed(1), U.hwG], [+(b - 12).toFixed(1), U.hwG], [+(b + 12).toFixed(1), U.hw]); } widths.push([mS(n - 1), U.hw]); }
+  // the tight bends wider (uvoz.siri, the tanker's roads): the half width grows by up to siri metres in a bend of a 12 m radius or tighter (none
+  // from 30 m on), held 10 m either side and eased; the widths then keyframes every 4 m (the road's own half width by its surface under them)
+  if (U.siri) {
+    const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); }, kA = (i) => { const a = S[Math.max(0, i - 4)], b = S[i], c = S[Math.min(n - 1, i + 4)];
+      const A = Math.hypot(b[0] - a[0], b[1] - a[1]), B = Math.hypot(c[0] - b[0], c[1] - b[1]), Cc = Math.hypot(c[0] - a[0], c[1] - a[1]), cr = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); return Math.abs(2 * cr / Math.max(1e-6, A * B * Cc)); };
+    const e0 = S.map((_, i) => U.siri * ss(1 / 30, 1 / 12, kA(i))), r = Math.round(10 / ds), e1 = e0.map((_, i) => Math.max(...e0.slice(Math.max(0, i - r), i + r + 1)));
+    const ex = e1.map((_, i) => { let t = 0, w = 0; for (let d = -r; d <= r; d++) { const j = Math.max(0, Math.min(n - 1, i + d)); t += e1[j]; w++; } return t / w; });
+    widths.length = 0; let last = null;
+    for (let i = 0; i < n; i += 2) { const v = +((sfc[i] === 'asphalt' ? U.hw : U.hwG) + ex[i]).toFixed(2); if (last != null && v === last && i + 2 < n && +((sfc[i + 2] === 'asphalt' ? U.hw : U.hwG) + ex[i + 2]).toFixed(2) === v) continue; widths.push([mS(i), v]); last = v; }
+    console.log(`širše v ovinkih: do +${Math.max(...ex).toFixed(2)} m (${widths.length} točk)`);
+  }
   // the side roads (Vršič's form): the car roads that meet the drawn road, not the road itself; none in the hairpins, by the start, the finish
   // and the checkpoints' gantries, at the ends of the drawn road, nor two on a side within 18 m (the bigger road kept); no names
   const cps = []; for (let k = 1; k <= 4; k++) { let i = Math.round(iS + (iF - iS) * k / 5); const bad = (q) => bd.some(b => Math.abs(b.s - (i0 + q) * ds) < 45); for (let t = 0; t < 40 && bad(i); t++) i += (t % 2 ? -t : t); cps.push(i); }
@@ -516,6 +532,31 @@ async function main() {
     lc: { x0, z0, nx: lnx, nz: lnz, cell: lcell, rle: rleLC(lc) },
     zones, lifts, bld, lakes, pulls, vistas, trees, sideRoads: SR, points: P5,
   };
+  // the drops (uvoz.prepad, the tanker's roads): where the model's ground 30 m out from the centre line lies prepad metres or more below the road
+  // (15 m out half as much), on that side: no barrier, the car falls (def.drops: [from, to, side], metres after the start line; side as the
+  // core's normal, +1 right); the gaps under 10 m closed, runs under 16 m left out, nothing in the last 10 m of either end of the road drawn
+  if (U.prepad) {
+    const D = [new Uint8Array(n), new Uint8Array(n)], drops = [];
+    for (let i = 0; i < n; i++) { const a = S[Math.max(0, i - 1)], b = S[Math.min(n - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / l, nz = (b[0] - a[0]) / l;
+      for (const sd of [-1, 1]) { const g = (o) => at(S[i][0] + nx * sd * o, S[i][1] + nz * sd * o); D[sd > 0 ? 1 : 0][i] = HT.h[i] - g(30) >= U.prepad && HT.h[i] - g(15) >= U.prepad / 2 ? 1 : 0; } }
+    const cut = Math.round(10 / ds);
+    for (const sd of [-1, 1]) { const A = D[sd > 0 ? 1 : 0];
+      for (let i = 0; i < n;) { if (!A[i]) { i++; continue; } let j = i; while (j + 1 < n && (A[j + 1] || A.slice(j + 1, j + 1 + Math.round(10 / ds)).some(Boolean))) j++;
+        const a = Math.max(i, cut), b = Math.min(j, n - 1 - cut); if ((b - a) * ds >= 16) drops.push([mS(a), mS(b), sd]); i = j + 1; } }
+    data.drops = drops.sort((p, q) => p[0] - q[0]);
+    let on = 0; for (let i = iS; i < iF; i++) if (D[0][i] || D[1][i]) on++;
+    console.log(`prepadi (${U.prepad} m na 30 m): ${drops.map(d => d[0] + '..' + d[1] + (d[2] > 0 ? 'D' : 'L')).join(' ')}; ob ${Math.round(on / Math.max(1, iF - iS) * 100)} % dirke`);
+  }
+  // the uneven ground (uvoz.grbine, the tanker's roads): bumps and dips every 4-9 m of the race (def.bumps, at a share of the road drawn: Track's
+  // _buildElevationOpen), mostly small, now and then a big one; the same every time (seeded by the track's id)
+  if (U.grbine) {
+    let r = 0; for (const ch of id) r = (r * 31 + ch.charCodeAt(0)) >>> 0; const rnd = () => { r = (r * 1664525 + 1013904223) >>> 0; return r / 4294967296; };
+    const L = (n - 1) * ds, bumps = [];
+    for (let d = 3 + rnd() * 4; d < (iF - iS) * ds + 20; d += 4 + rnd() * 5) { const u = rnd(), big = rnd() < 0.12, h = (big ? 0.22 + 0.14 * u : 0.05 + 0.12 * u * u) * U.grbine * (rnd() < 0.3 ? -1 : 1);
+      bumps.push({ at: +(((iS * ds) + d) / L).toFixed(5), h: +h.toFixed(3), w: +((big ? 1.8 : 1.4) + rnd() * 1.4).toFixed(2) }); }
+    data.bumps = bumps;
+    console.log(`grbine: ${bumps.length} (največja ${Math.max(...bumps.map(b => Math.abs(b.h))).toFixed(2)} m)`);
+  }
   let gmax = 0; for (let i = iS; i < iF; i++) gmax = Math.max(gmax, Math.abs(HT.h[i + 1] - HT.h[i]) / ds);
   console.log(`zapis: dirka ${data.realKm} km, ${data.alt[0]} -> ${data.alt[1]} m (najstrmeje ${(gmax * 100).toFixed(1)} %), ovinkov ${bRace.length} (serpentin ${bRace.filter(b => b[3] > 140).length}), ` +
     `makadam ${surf.map(s => s[0] + '-' + s[1]).join(', ') || '-'}, stranskih cest ${SR.length}, žičnic ${lifts.length}, stavb ${bld.length}, jezer ${lakes.length}, parkirišč ${pulls.length}, dreves ${trees.length / 2}; ` +
@@ -549,6 +590,7 @@ function writeTrack(f, d) {
     `    elevSmooth: ${d.elevSmooth}, elev: ((H) => H.map((h, i) => [i / (H.length - 1), h / 10]))(${J(d.elevDm)}),`,
     `    bends: ${J(d.bends)},`,
     ...(d.surf.length ? [`    surf: ${J(d.surf)},`] : []), ...(d.widths.length ? [`    widths: ${J(d.widths)},`] : []),
+    ...(d.drops ? [`    drops: ${J(d.drops)},`] : []), ...(d.bumps ? [`    bumps: ${J(d.bumps)},`] : []),
     `    dem: ${J(d.dem)},`,
     `    lc: ${J(d.lc)},`,
     `    zones: ${J(d.zones)}, lifts: ${J(d.lifts)},`,

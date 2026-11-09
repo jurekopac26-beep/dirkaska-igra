@@ -1391,5 +1391,99 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "svalvogar": {
+  "meshes": 123,
+  "verts": 134561,
+  "instances": 75,
+  "props": 0,
+  "crowd": 66,
+  "world": "161f8859",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "4dbd4c9",
+   "-:MeshPhongMaterial": "4e02c11a",
+   "reliefWater:MeshPhongMaterial": "8caa2c84",
+   "-:MeshBasicMaterial": "a5b492a1",
+   "crowd:MeshLambertMaterial": "88a1043d",
+   "flags:MeshLambertMaterial": "dd81d06a",
+   "ao:MeshBasicMaterial": "d0f61915"
+  }
+ },
+ "fairymeadows": {
+  "meshes": 108,
+  "verts": 152678,
+  "instances": 39,
+  "props": 0,
+  "crowd": 31,
+  "world": "e6150944",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "913848f8",
+   "-:MeshPhongMaterial": "611e8d2d",
+   "-:MeshBasicMaterial": "3f942b76",
+   "crowd:MeshLambertMaterial": "ee532a61",
+   "flags:MeshLambertMaterial": "3f86e648",
+   "ao:MeshBasicMaterial": "9e8673e1"
+  }
+ },
+ "manchewe": {
+  "meshes": 143,
+  "verts": 150944,
+  "instances": 1532,
+  "props": 0,
+  "crowd": 69,
+  "world": "351ee426",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "9ddd9698",
+   "-:MeshPhongMaterial": "d3db672f",
+   "reliefWater:MeshPhongMaterial": "7164e804",
+   "-:MeshBasicMaterial": "bfcdc789",
+   "crowd:MeshLambertMaterial": "ab87ed7",
+   "flags:MeshLambertMaterial": "ea20fb1f",
+   "ao:MeshBasicMaterial": "fb7c4ef6"
+  }
+ },
+ "yungas": {
+  "meshes": 167,
+  "verts": 144290,
+  "instances": 2247,
+  "props": 0,
+  "crowd": 41,
+  "world": "f9f0263",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "8d16dd8d",
+   "-:MeshPhongMaterial": "cb368b44",
+   "reliefWater:MeshPhongMaterial": "dfcae846",
+   "-:MeshBasicMaterial": "75124e0a",
+   "crowd:MeshLambertMaterial": "6793b41d",
+   "flags:MeshLambertMaterial": "17bde658",
+   "ao:MeshBasicMaterial": "d9d63034"
+  }
+ },
+ "tapini": {
+  "meshes": 167,
+  "verts": 127418,
+  "instances": 2788,
+  "props": 0,
+  "crowd": 12,
+  "world": "361cc1f9",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "7ce9ab5d",
+   "-:MeshPhongMaterial": "60eb53b1",
+   "reliefWater:MeshPhongMaterial": "1c79e123",
+   "-:MeshBasicMaterial": "5e4531fb",
+   "crowd:MeshLambertMaterial": "89be0f65",
+   "flags:MeshLambertMaterial": "ce505ee9",
+   "ao:MeshBasicMaterial": "b830675b"
+  }
  }
 }

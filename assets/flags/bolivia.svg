@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 750" width="1100" height="750">
+  <title>Bolivia</title>
+  <!-- Ratio 15:22: the civil flag, the one in everyday use (the state flag adds the arms in the middle): three equal horizontal bands,
+       red, yellow and green. Colours: red #D52B1E, yellow #F9E300, green #007934. -->
+  <rect width="1100" height="750" fill="#007934"/>
+  <rect width="1100" height="500" fill="#F9E300"/>
+  <rect width="1100" height="250" fill="#D52B1E"/>
+</svg>
