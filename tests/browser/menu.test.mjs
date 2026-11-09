@@ -603,8 +603,9 @@ try {
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
     const p2 = await earth();
-    T.check('a pin tapped (Marrakesh): its track\'s card at once (Morocco chosen, three steps); the card\'s cross: the Earth alone again', p1.R.tc === 'marrakesh' && p1.R.sel === 'Morocco' && p1.card && p1.card.sub === 'Morocco' && !p2.card && !p2.R.sel && p2.depth === 1,
-      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title], p2: [p2.R.sel, p2.depth] }));
+    const pendM = await page.evaluate(() => !!Core.TRACKS.find(d => d.id === 'marrakesh').pending);   // (Marrakesh awaits the user's choice (pending: true): its card's subtitle says so)
+    T.check('a pin tapped (Marrakesh): its track\'s card at once (Morocco chosen, three steps; PENDING in the subtitle while the track awaits the choice); the card\'s cross: the Earth alone again', p1.R.tc === 'marrakesh' && p1.R.sel === 'Morocco' && p1.card && p1.card.sub === 'Morocco' + (pendM ? ' · PENDING' : '') && !p2.card && !p2.R.sel && p2.depth === 1,
+      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub], p2: [p2.R.sel, p2.depth, !!p2.card], pendM }));
     // + and − come closer (the tracks named) and go back; a drag turns it (east under a finger moving west) and it glides a little after;
     // the arrows turn it; the target: back to the track shown, its country's card
     await page.click('.zem-in'); await zem(page, 1); const z1 = await earth();
