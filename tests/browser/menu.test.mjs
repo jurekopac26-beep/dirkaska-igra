@@ -62,7 +62,7 @@ try {
     await click(page, 'mode:endless');
     const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div:last-child'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
     T.check('Endless traffic: Bathurst only; the last cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
-    await page.click('.foot [data-act="back"]');   // (back to the modes)
+    await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest, then the test tracks; equal
     //    lengths by id), every track with its picture in camera 2 (the flyover, else its model, and the height graph), the list going
