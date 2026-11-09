@@ -6,15 +6,19 @@
 // in. The engineer's voice asked for each such line (Comm: radioAhead, radioAheadOver). With the team radio off (Nastavitve · Radio
 // ekipe): nothing.
 //   node tests/browser/pitahead.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
 
 const T = checker('the car ahead in for its stop (team radio)');
 const srv = await serve();
 const browser = await launch();
 try {
   const run = async (radio) => {
-    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', weather: 'dry', radio, length: 'long', difficulty: 2 }, { width: 390, height: 844 }, { seed: 17 });
-    await startTrack(page, 'bathurst');
+    // (the game's test mode, ?proga=bathurst&seme=17&t=1: the race draws its random numbers from its seed (Race opts.repro) and its start
+    // is stepped paused (quickRun), the same race every run, on any machine. Started from the menus, it drew from the page's Math.random,
+    // as the drawn frames do, and its start ran on real frames: another race each run, about every other one with no car in reach ahead
+    // after the player's stop that was not due in already: CI runs 1665-1815, docs/nestabilni-testi.md)
+    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html?proga=bathurst&t=1&seme=17', { quality: 'normal', shadows: 0, camera: 'chase', weather: 'dry', radio, length: 'long', difficulty: 2 }, { width: 390, height: 844 }, { seed: 17 });
+    await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
     const out = await page.evaluate(async () => {
       const g = window.__game, R = g.race, P = R.player, Tk = R.track, keys = [];
       const o = Comm.teamRadio; Comm.teamRadio = function (k, v) { keys.push(k); return o.call(this, k, v); };
