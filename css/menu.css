@@ -476,6 +476,8 @@ svg { display: block; }
 .yard::after { content: ''; position: absolute; left: 0; right: 0; top: 58%; height: 30%; background: radial-gradient(60% 100% at 32% 0%, rgba(120, 170, 255, .12), transparent 70%); pointer-events: none; }
 .sign { position: absolute; left: 30%; right: 3%; top: 12%; height: 36%; max-height: 76px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px;
   background: linear-gradient(180deg, #2a5fae, #1e4a8e); border: 3px solid #e9eef6; border-radius: 6px; box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 0 0 2px #1e4a8e; filter: brightness(.88); z-index: 1; }
+/* the old screen over the new one as a new track's sign and car come in from the side (upright: js/menu.js trackGo; lying: .rgone) */
+#mn > #s-track.tgone { pointer-events: none; z-index: 8; }
 /* (each country's own sign: js/menu-tabla.js sets its colours, frame and corners, the name's weight and size, and puts its wear over it
    in a canvas; the name always in the middle, in two lines where the real signs have the country's own script or language over it) */
 .sign b { min-width: 0; font: 800 clamp(20px, 7.4vw, 34px)/1 Roboto, Arial, sans-serif; letter-spacing: .02em; color: #f4f7fb; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1011,7 +1013,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .yard .car { left: calc(10 * var(--u)); top: calc(46 * var(--u)); bottom: auto; width: calc(240 * var(--u)); height: calc(90 * var(--u)); }
   #s-track .yard .cname { top: calc(138 * var(--u)); }   /* (its name under it: over it is the neighbour's card with its name) */
   /* the old screen over the new one as it fades (js/menu.js ringLand) */
-  #mn > #s-track.rgone { pointer-events: none; animation: rgone .3s ease-out forwards; }
+  #mn > #s-track.rgone { pointer-events: none; z-index: 8; animation: rgone .3s ease-out forwards; }   /* (over all of the new screen, its head and row too: z-index to 7) */
   /* the sheets: a box in the middle, not a strip from the foot */
   .sheet-bg { align-items: center; justify-content: center; }
   .sheet { width: min(560px, calc(100% - 28px)); max-height: calc(100% - 20px); border-radius: 20px; border: 2px solid var(--gold); overflow-y: auto; scrollbar-width: none; }
