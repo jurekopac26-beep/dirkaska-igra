@@ -3056,7 +3056,7 @@ const Core = (function () {
     if (c.m.dmgK) amt *= c.m.dmgK;   // (a vehicle's own toughness, model.dmgK: a truck's frame, a kart's tubes)
     const d0 = c.dmg;
     c.dmg = Math.min(1, c.dmg + amt);
-    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); if (c.wreck) { wheelRule(c, d0, amt); if (c.kt) ktFire(c, d0, amt, -1); wreckCheck(c); } return; }
+    if (lx == null) { for (let k = 0; k < 4; k++) c.dz[k] = Math.min(1, c.dz[k] + amt * 0.6); c.roofDmg = Math.max(c.roofDmg, roofOf(c)); spareOff(c); if (c.wreck) { wheelRule(c, d0, amt); if (c.kt) ktFire(c, d0, amt, -1); wreckCheck(c); } return; }
     if (c.kt) ktHit(c, amt, lx, lz, d0);   // (the Kolibri's tyres)
     const M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
     const zone = Math.abs(lx) / hl >= Math.abs(lz) / hw ? (lx >= 0 ? 0 : 1) : (lz < 0 ? 2 : 3);
@@ -3082,10 +3082,22 @@ const Core = (function () {
     for (const name in PT) {
       if (c.lost[name]) continue;
       const P = PT[name];
+      if (P.spare) { if (c.dmg >= SPARE.off) detachPart(c, name, P); continue; }   // (a spare wheel: by the car's damage alone, SPARE)
       if (maskHeld(c, name, P)) continue;
       if (P.wh != null ? c.dmgMode === 2 && !(c.wreck && c.wreck.rule) && c.cd[P.wh] >= 0.7 && c.dmg >= 0.75 : c.dz[P.z] >= P.th || (P.corner != null && c.cd[P.corner] >= (P.cth || 0.55))) detachPart(c, name, P);
     }
     if (c.wreck) { wheelRule(c, d0, amt); wreckCheck(c); }
+  }
+  // a spare wheel (a part's entry spare: 1; the user, 9. 11. 2026: »Rezervna kolesa ... naj se ob približno 50 % poškodovanem avtu začnejo
+  // majati, kot da bodo kmalu odpadla, in nato pri 80 % odpadejo«): it comes off by the car's damage alone, whatever its zone or corner,
+  // at SPARE.off of it (both of applyDamage's paths, the knocks' and the spread damage's; damage off, dmgMode 0: never), as the other
+  // parts do then (its piece on the road, Race.spawnDebris); from SPARE.wob it wobbles on its carrier, more and more till then (the
+  // renderer's: kitSpare, a semi-trailer's load tlSpare). A part mounted on it goes with it (its on); it goes with the part it is on
+  const SPARE = { wob: 0.5, off: 0.8 };
+  function spareOff(c) {
+    if (!(c.dmg >= SPARE.off)) return;
+    const PT = partsOf(c.m);
+    for (const name in PT) if (PT[name].spare && !c.lost[name]) detachPart(c, name, PT[name]);
   }
   // the wheel rule (Race opts.wheelRule: the vehicles it is for; wreck.rule on the player's car, damage on): its wheels come off by the
   // damage alone, not by a corner (the old rule above and the wreck's last wheel are off for it). At 80 % one wheel, a random one of those
@@ -3228,6 +3240,11 @@ const Core = (function () {
   //   df the share of model.aero it takes with it (0 unless set; an aero vehicle's wing .55 and front bumper / splitter .3 by default)
   //   on the id of another part it is mounted on (not a wheel, not mounted itself): it goes with that part (lost with it, its own piece)
   //      and the render turns it with that part when that one hangs loose (a number plate or a wiper on a tailgate)
+  //   spare 1: a spare wheel (or a spare tyre): off by the car's damage alone, at SPARE.off (80 %); from SPARE.wob (50 %) it wobbles on
+  //      its carrier, the render's (no zone, no corner: z and th as any part's, unused). The flag for any vehicle's spare wheel in sight
+  //      (docs/deli.md: »Rezervno kolo«); a spare out of sight (in a boot, under a lid) is no part
+  //   tl 1 (with spare): a spare on the vehicle's semi-trailer (model.trailer: a load on its rack), not on the tractor: lx / lz a fraction
+  //      of the trailer's half length / half width from its middle, y metres up from the road; its piece starts there (Race.spawnDebris)
   // The standard entries:
   //   id          z    th    corner cth   m    r         h     lx       lz      f
   //   bumperF     0    .50   -      -     7    .42 wid   .16   1.0      0       .12
@@ -3262,7 +3279,7 @@ const Core = (function () {
   const PART_SETS = { car: ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], truck: ['bumperF', 'bumperR', 'doorL', 'doorR', 'mirrorL', 'mirrorR'], none: [] };
   PART_SETS.race = PART_SETS.car.concat(['wing']); PART_SETS.open = PART_SETS.car.slice();
   for (const k in PART_SETS) PART_SETS[k] = PART_SETS[k].concat(WHEELS);
-  const PART_KEYS = ['z', 'th', 'corner', 'cth', 'm', 'r', 'rW', 'h', 'lx', 'lz', 'f', 'y', 'df', 'on'];
+  const PART_KEYS = ['z', 'th', 'corner', 'cth', 'm', 'r', 'rW', 'h', 'lx', 'lz', 'f', 'y', 'df', 'on', 'spare', 'tl'];
   // an entry's problems ('' when fine); full: every key a part needs is there (an extra that is not a standard id)
   function partBad(e, full) {
     if (!e || typeof e !== 'object') return 'not an object';
@@ -3273,6 +3290,8 @@ const Core = (function () {
     if (full && !has('f') && !has('y')) return 'missing f (or y)';
     if (has('z') && [0, 1, 2, 3].indexOf(e.z) < 0) return 'z not 0..3';
     if (has('corner') && [0, 1, 2, 3].indexOf(e.corner) < 0) return 'corner not 0..3';
+    for (const k of ['spare', 'tl']) if (has(k) && e[k] !== 1) return k + ' not 1';
+    if (has('tl') && !has('spare')) return 'tl without spare (a semi-trailer\'s part: its load of spare tyres only)';
     for (const [k, lo, hi] of [['th', 0.05, 1], ['cth', 0.05, 1], ['m', 0.1, 14], ['r', 0.05, 2], ['rW', 0.02, 0.8], ['h', 0.01, 1.5], ['f', 0, 1.3], ['y', 0, 4], ['df', 0, 1]]) if (has(k) && !(e[k] >= lo && e[k] <= hi)) return k + ' not ' + lo + '..' + hi;
     for (const k of ['lx', 'lz']) if (has(k) && typeof e[k] === 'number' && Math.abs(e[k]) > 1.4) return k + ' beyond 1.4';
     if (full && has('cth') && !has('corner')) return 'cth without a corner';
@@ -3292,7 +3311,8 @@ const Core = (function () {
     const hl = ph.len / 2, out = {}, res = (e) => {
       const o = { z: e.z, th: e.th }; if (e.corner != null) { o.corner = e.corner; o.cth = e.cth || 0.55; }
       o.m = e.m; o.r = e.r != null ? e.r : e.rW * ph.wid; o.h = e.h; o.lx = e.lx === 'a' ? ph.a / hl : e.lx === 'b' ? -ph.b / hl : e.lx; o.lz = e.lz;
-      o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; if (e.on != null) o.on = e.on; return o;
+      o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; if (e.on != null) o.on = e.on;
+      if (e.spare) o.spare = 1; if (e.tl) o.tl = 1; return o;
     };
     const wheel = (k) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / hl, lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
     const raw = mergeParts(sp);
@@ -6423,11 +6443,14 @@ const Core = (function () {
 
     spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default the race's (rand); a patrol car's: the police's own, see step)
       const rnd = R || rand;
-      const P = partsOf(c.m)[name], hl = c.m.len * 0.5, hw = c.m.wid * 0.5, ch = Math.cos(c.h), sh = Math.sin(c.h);
-      const ox = P.lx * hl, oz = P.lz * hw, x = c.x + ox * ch - oz * sh, z = c.z + ox * sh + oz * ch;
+      const P = partsOf(c.m)[name], T = P.tl && c.tl;
+      // (a part on the semi-trailer, its entry's tl: from the trailer's middle, along its heading, at its speed)
+      let bx = c.x, bz = c.z, bh = c.h, by = c.y || 0, bvx = c.vx, bvz = c.vz, hl = c.m.len * 0.5, hw = c.m.wid * 0.5;
+      if (T) { const D = T.D, xm = D.f - D.len / 2 - T.cx; bh = T.h; bx = T.x + Math.cos(bh) * xm; bz = T.z + Math.sin(bh) * xm; by = T.yA != null ? T.yA : T.y || 0; bvx = T.vx || 0; bvz = T.vz || 0; hl = D.len * 0.5; hw = D.wid * 0.5; }
+      const ch = Math.cos(bh), sh = Math.sin(bh), ox = P.lx * hl, oz = P.lz * hw, x = bx + ox * ch - oz * sh, z = bz + ox * sh + oz * ch;
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
-      const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + rnd() * 2.5,
-        yaw: c.h, rx: 0, rz: 0, wx: (rnd() - 0.5) * 16, wy: (rnd() - 0.5) * 12, wz: (rnd() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
+      const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: by + P.y, vx: bvx * 0.7 + ux * out, vz: bvz * 0.7 + uz * out, vy: 2.5 + rnd() * 2.5,
+        yaw: bh, rx: 0, rz: 0, wx: (rnd() - 0.5) * 16, wy: (rnd() - 0.5) * 12, wz: (rnd() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
         q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
       this.debris.push(d);
       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
@@ -7874,7 +7897,7 @@ const Core = (function () {
 
   return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose };
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose };
 })();
 
 

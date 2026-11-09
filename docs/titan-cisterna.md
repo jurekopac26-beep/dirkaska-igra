@@ -11,7 +11,7 @@ TITAN (`js/cars/titan.js`) vleče cisterno na sedlu: prikolica s pravim fizikaln
    - Vlačilec: originalni rdeči TITAN (oblika, barve, krom), le malo zarjavel ob spodnjih robovih, vogalih, blatnikih in stopnicah, malo prahu.
    - Cisterna: od sonca zbledela bleda oranžno-rumena, zelo močna rja s curki od obročev, kovic in pokrovov; 6 navarjenih zakovičenih plošč v sivih odtenkih (svetlo cinkasta, srednje siv premaz, temno jeklena) z vidnim zvarom in kovicami.
    - Bočna pohodna pot z rjavo rešetko in zarjavelo ograjo; manjkata dve cevi ograje in ena prečka lestve; lestev od tal.
-   - Zadaj 4 rezervne gume pokonci ena ob drugi, nad njimi črna polica, spete z rumenimi gurtnami. Kantic (12, rdeče in zelene) na polici ni več (odločitev uporabnika 9. 11. 2026: brez rezervnega bencina; polica ostane kot pokrov nad gumami).
+   - Zadaj 4 rezervne gume pokonci ena ob drugi, nad njimi črna polica, spete z rumenimi gurtnami. Kantic (12, rdeče in zelene) na polici ni več (odločitev uporabnika 9. 11. 2026: brez rezervnega bencina; polica ostane kot pokrov nad gumami). Gume so deli prikolice (`tlSpare1` do `tlSpare4`): od 50 % poškodb se sklad maja na polici, pri 80 % odpadejo (odločitev uporabnika 9. 11. 2026, `docs/deli.md` »Rezervno kolo«).
    - Samo generični napisi (npr. FLAMMABLE), brez znamk.
    - Za telefon poenostavljeno: malo klicev risanja, brez detajlov, ki jih kamera za avtom ne vidi.
 4. Če je zgib nemiren (tresenje, »eksplozije« pri trkih), seja to pove uporabniku in predlaga poenostavitev (prikolica, ki sledi poti), preden porabi več časa.

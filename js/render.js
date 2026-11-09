@@ -1257,7 +1257,7 @@ const Render = (function () {
     const kx = { M, look, body, fb, sx, sz, PT, B: new Map(), order: [], ex: null, pr: null, inner: 0, hinges: {}, heads: [], tails: { L: new GB(), R: new GB() }, tailAt: [], tailHost: {}, engineAt: null, nums: [], twins: new Map(), tubs: [], openings: [],
       S: body.secs.map(kitRow).map(q => Object.assign(q, { x: q.x * sx, w: q.w * sz, wt: q.wt * sz })), wheels: kitWheelSpec(M, look), regions: null, lofts: 0 };
     kx.g = new KitGB(kx);
-    kx.partOk = (n) => { if (n === 'body') return; if (typeof n !== 'string' || !(n in PT) || PT[n].wh != null) kitFail('part "' + n + '" is not in this vehicle\'s part table (body, ' + Object.keys(PT).filter(k => PT[k].wh == null).join(', ') + ')'); };
+    kx.partOk = (n) => { if (n === 'body') return; if (typeof n !== 'string' || !(n in PT) || PT[n].wh != null || PT[n].tl) kitFail('part "' + n + '" is not in this vehicle\'s part table (body, ' + Object.keys(PT).filter(k => PT[k].wh == null && !PT[k].tl).join(', ') + ')'); };
     kx.target = () => {
       const ex = kx.ex, pr = kx.pr, part = ex ? ex.part : pr ? pr.part : 'body', sub = (pr && pr.sub) || (ex && ex.sub) || '';
       const inner = !!((ex && ex.inner) || (pr && pr.inner) || kx.inner), nc = !!((ex && ex.nc) || (pr && pr.nc)), nd = !!((ex && ex.nd) || (pr && pr.nd)), dl = kx.dl || '';
@@ -1971,7 +1971,8 @@ const Render = (function () {
 
   // ---- the build: the look's buckets -> one geometry (outer block by part, then the inner block by part), its ranges, the paint lists ----
   function kitFinish(kx) {
-    const order = ['body'].concat(Object.keys(kx.PT).filter(k => kx.PT[k].wh == null)), P = [], N = [], Cl = [], ranges = {}, pI = [], pK = [], sI = [], sK = [], lamps = {}, noCrush = [], noDent = [], deli = {};
+    // (a trailer's parts, tl: its look's (tlGeo, B.spare), not the tractor's kit: no range, partOk refuses them, kitLod and the fallback skip them)
+    const order = ['body'].concat(Object.keys(kx.PT).filter(k => kx.PT[k].wh == null && !kx.PT[k].tl)), P = [], N = [], Cl = [], ranges = {}, pI = [], pK = [], sI = [], sK = [], lamps = {}, noCrush = [], noDent = [], deli = {};
     for (const name of order) ranges[name] = { o: [0, 0], i: [0, 0], subs: [] };
     for (const t of kx.order) if (order.indexOf(t.part) < 0) kitFail('part "' + t.part + '" not in the part table');
     // the inner block's front: what lies ahead of the windscreen's foot (the main loft's first section past its 'gf' run, metres) comes first,
@@ -2053,7 +2054,7 @@ const Render = (function () {
       const S = K.secs(secs), F = S[S.length - 1], R = S[0], hl = K.M.len / 2 / K.sx, hw = K.M.wid / 2 / K.sz;
       for (const sd of [-1, 1]) { K.headLamp(F.x + 0.01, (F.yb + F.ybelt) / 2 + 0.05, sd * F.w * 0.6, 0.07, { ring: null }); K.tailLamp(R.x - 0.01, R.ybelt - 0.12, sd * R.w * 0.6, 0.3, 0.12); }
       const PT = Core.partsOf(K.M);
-      for (const id in PT) { const e = PT[id]; if (e.wh != null) continue;
+      for (const id in PT) { const e = PT[id]; if (e.wh != null || e.tl) continue;   // (a trailer's part, tl: its look's, not the tractor's)
         const side = Math.abs(e.lz) > 0.5, bx = side ? Math.min(1.2, e.r * 1.4) : /hood|trunk|cover|bed|deflector|roof/.test(id) ? e.r * 1.2 : Math.max(0.12, e.r * 0.3), bz = side ? 0.06 : Math.min(K.M.wid * 0.9, e.r * 1.8) / K.sz;
         K.part(id, () => K.box(e.lx * hl, e.y - e.h / 2, e.lz * hw, bx / K.sx, e.h, bz, 0, /bumper/.test(id) ? D : P)); }
     } };
@@ -2284,7 +2285,7 @@ const Render = (function () {
   function kitLod(v, c) {
     const K = v.kit, n = Object.keys(c.lost).length;
     if (n !== K.nLost || K.ver !== K.lodV) { K.nLost = n; K.lodV = K.ver; const PT = Core.partsOf(c.m);
-      K.full = Object.keys(K.ajar).length > 0 || Object.keys(c.lost).some(k => !(PT[k] && PT[k].wh != null)) || !!K.xTorn || !!K.xOpen || !!K.xDrop || !!K.xGlass; }   // (xTorn: a bonnet torn open, xOpen: a rear door open, xDrop: a part off by the Kolibri's table, xGlass: its glass broken; Razbijanje · nov način)
+      K.full = Object.keys(K.ajar).length > 0 || Object.keys(c.lost).some(k => !(PT[k] && (PT[k].wh != null || PT[k].tl))) || !!K.xTorn || !!K.xOpen || !!K.xDrop || !!K.xGlass; }   // (xTorn: a bonnet torn open, xOpen: a rear door open, xDrop: a part off by the Kolibri's table, xGlass: its glass broken; Razbijanje · nov način)
     kitRange(v);
   }
   function kitRange(v) { const g = v.body.geometry, U = g.userData, K = v.kit, want = !K.full ? U.outerN : U.N; if (g.drawRange.count !== want) g.setDrawRange(0, want); }
@@ -4768,7 +4769,7 @@ const Render = (function () {
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat);   // (matFpM: the formula's rivals' parts, remerge; farMat: the far rivals' one material)
-    for (const R of tlLooks.values()) if (R) { g.add(R.geo); g.add(R.lgeo); g.add(R.lo); g.add(R.sh); g.add(R.blob); m.add(R.mat); }   // (a semi-trailer's look: the model's, a preview's trailer in its tractor's group, tlShow)
+    for (const R of tlLooks.values()) if (R) { g.add(R.geo); g.add(R.lgeo); g.add(R.lo); g.add(R.sh); g.add(R.blob); m.add(R.mat); if (R.cut) for (const q of R.cut) if (q) { g.add(q.no); if (q.sp) g.add(q.sp); } }   // (a semi-trailer's look: the model's, a preview's trailer in its tractor's group, tlShow)
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -4817,7 +4818,7 @@ const Render = (function () {
     if (mr && A.cv && envTex) { const sc = document.createElement('canvas'), g = sc.getContext('2d'); sc.width = A.cv.width; sc.height = A.cv.height; g.fillStyle = '#000'; g.fillRect(0, 0, sc.width, sc.height); g.fillStyle = '#fff'; for (const r of mr.uv || []) g.fillRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); spec = new THREE.CanvasTexture(sc); spec.flipY = false; }
     const mat = spec ? new THREE.MeshLambertMaterial({ vertexColors: true, map, specularMap: spec, envMap: envTex, combine: THREE.MixOperation, reflectivity: mr.k || 0.6 }) : new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
     const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
-    const R = { geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris };
+    const R = { D, geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris, sp: A.spans, loSp: L.spans, shSp: S.spans };   // (sp: the thrown parts' spans a level, B.spare; their cut looks R.cut, tlCut)
     tlLooks.set(M.id, R); return R;
   }
   // the road train's second tank (model.trailer.next): its look built as a trailer's of its own (its cache key the model's id and #2)
@@ -4826,7 +4827,7 @@ const Render = (function () {
   // a rival's: fewer sides, no small parts, as the builder chooses; 2 the shadow, drawn only into the shadow map), on the full look's picture
   // (the lighter ones not painted again)
   function tlGeo(M, lo) {
-    const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1];
+    const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1], SPN = [];
     let cv = null, TW = 1, TH = 1;
     const col = (k) => typeof k === 'number' ? colArr(k) : k || [1, 1, 1];
     // a triangle: its corners, their normals (outward: the winding follows them), its colour, its corners on the picture (pixels; none: the white corner)
@@ -4916,6 +4917,9 @@ const Render = (function () {
       },
       // a tail lamp facing back (-x): its middle, its height and width; lit with the tractor's (its own mesh)
       lamp(x, y, z, ly, lz) { B.box(x, y, z, 0.04, ly, lz, null, { skip: ['+x'] }, true); lamps.push([x - 0.03, y, z]); },
+      // a part the core throws off (a spare tyre on the trailer's rack: its entry's tl and spare, Core.SPARE): what fn builds is part name's
+      // ('': the bits that go with them all, their straps); tlSpare rocks them on the rack and takes them off (tlCut, tlPiece)
+      spare(fn, name) { const s = P.length / 3; fn(); if (P.length / 3 > s) SPN.push({ n: name || '', s, e: P.length / 3 }); },
       rgb: colArr,
     };
     try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + (lo ? ', level ' + lo : '') + '): ' + (e && e.message)); return null; }
@@ -4925,7 +4929,7 @@ const Render = (function () {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
     geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); geo.translate(0, y0, 0); geo.computeBoundingSphere();
     lgeo.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3)); lgeo.setAttribute('normal', new THREE.Float32BufferAttribute(LN, 3)); lgeo.translate(0, y0, 0); lgeo.computeBoundingSphere();
-    return { geo, lgeo, cv, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9 };
+    return { geo, lgeo, cv, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9, spans: SPN.length ? SPN : null };
   }
   // the trailer's group (makeView): its body (a rival's the light look: the phone's budget, docs/titan-cisterna.md), its lamps, its blob, its
   // shadow from the light look (drawn only into the shadow map: v.shadowOnly); in the scene with the tractor (carCull takes the two out together)
@@ -4934,7 +4938,7 @@ const Render = (function () {
     const G = new THREE.Group(), b = new THREE.Mesh(c.isPlayer ? R.geo : R.lo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob), sh = new THREE.Mesh(R.sh, matHull);
     sh.castShadow = true; sh.visible = false; (v.shadowOnly || (v.shadowOnly = [])).push(sh);
     bl.renderOrder = 1; G.add(b, L, bl, sh); G.rotation.order = 'YZX';
-    v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlR = R; v.tlRoll = 0; scene.add(G);
+    v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlSh = sh; v.tlR = R; v.tlRoll = 0; scene.add(G);
     const R2 = c.tl && c.tl.next ? tlBuild2(c.m) : null; if (!R2) return;   // (the road train's second tank: a group of its own on the dolly, tl2Draw)
     const G2 = new THREE.Group(), b2 = new THREE.Mesh(c.isPlayer ? R2.geo : R2.lo, R2.mat), L2 = new THREE.Mesh(R2.lgeo, matTailOff), bl2 = new THREE.Mesh(R2.blob, matBlob), sh2 = new THREE.Mesh(R2.sh, matHull);
     sh2.castShadow = true; sh2.visible = false; v.shadowOnly.push(sh2);
@@ -4973,6 +4977,7 @@ const Render = (function () {
     v.tlS.material = settings.shadows ? matBlob : matBlobS;
     v.tlL.material = braking ? matTailOn : matTailOff;
     if (v.tlG2) tl2Draw(v, c, T, G, u, dt, braking, vis);
+    if (v.tlR.sp) tlSpare(v, c);   // (its spare tyres rocking on the rack, thrown off)
     if (!vis) return;
     G.updateMatrixWorld(true);
     const Q = v.gq; if (!Q || !G.visible) return;
@@ -5001,6 +5006,68 @@ const Render = (function () {
     for (const p of v.tlR2.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);
       glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
       if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
+  }
+  /* the trailer's spare tyres (its look's B.spare parts: entries with tl and spare, Core.SPARE; docs/deli.md »Rezervno kolo«): from half
+     the rig's damage the stack rocks on its rack (one mesh of its own, the trailer drawn without it: one draw call more while it rocks; its
+     shadow stays the look's), harder up to SPARE.off, where the core throws them off: the trailer and its shadow without them, each tyre a
+     piece of its own (v.loose, a kit car's way: kitDebrisMesh0, laid as a wheel). The cut looks the model's (R.cut, shared, never freed);
+     the pieces their car's (freed with them). Back to the look as new when none is lost and the damage is under SPARE.wob (repaired) */
+  function tlSpare(v, c) {
+    const R = v.tlR, lv = c.isPlayer ? 0 : 1, SP = lv ? R.loSp : R.sp; if (!SP) return;
+    let gone = false; for (const s of SP) if (s.n && c.lost[s.n]) { gone = true; break; }
+    if (gone !== !!v.tlGone) ownRnd(() => {   // (its objects named without Math.random)
+      tlRock(v, null); v.tlGone = gone;
+      v.tlB.geometry = gone ? tlCut(R, lv).no : lv ? R.lo : R.geo;
+      if (v.tlSh) v.tlSh.geometry = gone && R.shSp ? tlCut(R, 2).no : R.sh;
+      if (gone && v.loose) for (const s of SP) if (s.n && c.lost[s.n] && !v.loose[s.n]) v.loose[s.n] = { geo: tlPiece(lv ? R.lo : R.geo, s), c: [0, 0, 0], wheel: true, mat: R.mat };
+    });
+    if (gone) return;
+    const th = spareTh(c, 0);
+    if (!(th > 0)) { if (v.tlSpM) tlRock(v, null); return; }
+    if (!v.tlSpM) ownRnd(() => tlRock(v, tlCut(R, lv)));
+    const ax = v.tlSpC.ax; v.tlSpM.rotation.set(ax[0] * th, 0, ax[2] * th);
+  }
+  // the stack rocking (tlSpare): a mesh of its own on its foot in the trailer's group, the trailer drawn without it; null: back in the look
+  function tlRock(v, cut) {
+    const R = v.tlR, lv = v.car.isPlayer ? 0 : 1;
+    if (v.tlSpM) { v.tlG.remove(v.tlSpM); v.tlSpM = null; v.tlSpC = null; if (!v.tlGone) v.tlB.geometry = lv ? R.lo : R.geo; }
+    if (!cut || !cut.sp) return;
+    const m = new THREE.Mesh(cut.sp, R.mat); m.position.fromArray(cut.pv); v.tlG.add(m); v.tlSpM = m; v.tlSpC = cut; v.tlB.geometry = cut.no;
+  }
+  // a look without its thrown parts (tlSpare; R.cut[level]: 0 the look, 1 the light look, 2 the shadow; made when first needed): no, the
+  // rest of it; sp (levels 0 and 1), those parts as one mesh about their stack's outer bottom edge (pv: that point, the trailer's group's
+  // space; ax: the turn's axis, signed so that a positive angle tips its top out): an end's (its middle nearer an end than a side, as a
+  // car's, kitSpareAx) across the trailer, its top off that end; a side's along it, its top out from the trailer
+  function tlCut(R, lv) {
+    const CU = R.cut || (R.cut = []); if (CU[lv]) return CU[lv];
+    const G = [R.geo, R.lo, R.sh][lv], SP = [R.sp, R.loSp, R.shSp][lv], A = G.attributes, n = A.position.count, inS = new Uint8Array(n);
+    if (SP) for (const s of SP) inS.fill(1, s.s, s.e);
+    let ns = 0; for (let i = 0; i < n; i++) ns += inS[i];
+    const no = new THREE.BufferGeometry(), sp = lv < 2 && ns ? new THREE.BufferGeometry() : null;
+    for (const k in A) {
+      const w = A[k].itemSize, src = A[k].array, a = new Float32Array((n - ns) * w), b = sp ? new Float32Array(ns * w) : null; let ia = 0, ib = 0;
+      for (let i = 0; i < n; i++) { const q = src.subarray(i * w, i * w + w); if (!inS[i]) { a.set(q, ia); ia += w; } else if (b) { b.set(q, ib); ib += w; } }
+      no.setAttribute(k, new THREE.BufferAttribute(a, w)); if (sp) sp.setAttribute(k, new THREE.BufferAttribute(b, w));
+    }
+    no.computeBoundingSphere();
+    const out = { no, sp, pv: [0, 0, 0], ax: [0, 0, 0] };
+    if (sp) {
+      sp.computeBoundingBox(); const bb = sp.boundingBox, D = R.D, cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2, mid = D.f - D.len / 2;
+      if (Math.abs(cx - mid) / (D.len / 2) >= Math.abs(cz) / (D.wid / 2)) { const e = cx < mid ? -1 : 1; out.pv = [e < 0 ? bb.min.x : bb.max.x, bb.min.y, cz]; out.ax = [0, 0, -e]; }
+      else { const e = cz < 0 ? -1 : 1; out.pv = [cx, bb.min.y, e < 0 ? bb.min.z : bb.max.z]; out.ax = [e, 0, 0]; }
+      sp.translate(-out.pv[0], -out.pv[1], -out.pv[2]); sp.computeBoundingSphere();
+    }
+    return (CU[lv] = out);
+  }
+  // a thrown tyre's piece (tlSpare: v.loose): its span of the look copied, its middle at the origin, turned so that its axle (its box's
+  // thinnest side) lies along z (kitDebrisMesh0 lays a wheel's flat)
+  function tlPiece(G, s) {
+    const g = new THREE.BufferGeometry(), A = G.attributes;
+    for (const k in A) { const w = A[k].itemSize; g.setAttribute(k, new THREE.BufferAttribute(A[k].array.slice(s.s * w, s.e * w), w)); }
+    g.computeBoundingBox(); const b = g.boundingBox, d = [b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z], th = d.indexOf(Math.min(d[0], d[1], d[2]));
+    g.translate(-(b.min.x + b.max.x) / 2, -(b.min.y + b.max.y) / 2, -(b.min.z + b.max.z) / 2);
+    if (th === 0) g.rotateY(-Math.PI / 2); else if (th === 1) g.rotateX(Math.PI / 2);
+    g.computeBoundingBox(); g.computeBoundingSphere(); return g;
   }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
@@ -7099,7 +7166,7 @@ const Render = (function () {
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
       if (v.xOn || XC.glass) { const ox = k < 2 ? ch : -ch, oz = k < 2 ? sh : -sh; xShards(12, wx + ox * 0.35, y, wz + oz * 0.35, [ox, oz], c.vx, c.vz, k < 2 ? XSH_LENS : XSH_TAIL); }   // (Razbijanje · nov način: the lamp's pieces on the road, lit: a tail lamp's red)
     }
-    if (v.kit) { kitParts(v, c, x, y, z, h); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost: before the glass (a door's goes with it) and the roof; the draw range for them)
+    if (v.kit) { kitParts(v, c, x, y, z, h); kitSpare(v, c); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost, the spare wheels wobbling: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { if (!XC.glass) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); } else if (c.dmg >= 0.92) { v.winBroken[k] = 1; if (v.xt) { (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1; for (const key of [['W'], ['R'], ['DL', 'QL'], ['DR', 'QR']][k]) xtGlass(v, c, key, 1, x, y, z, h, null); } else xBreakWindow(v, k, c, x, y, z, h); } }   // (Razbijanje · nov način: one pane a blow, xGlassHit; a wreck all of them)
     if (v.xt && XC.glass) { for (const sd of 'LR') if (v.kit.dead['mirror' + sd]) xtGlass(v, c, 'D' + sd, 0.75, x, y, z, h, null); xtFlush(v); }   // (the Kolibri: a mirror off, its door window 75 % at least; the panes' pictures due)
     const r0 = v.roofStep, rk = XT_MIN.has(c.m.id); if (v.xOn) { const xc = v.xc || (c.roofDmg > (v.rd0 || 0) + 1e-4 ? xInit(v) : null); if (xc && xc.rf && c.roofDmg > xc.rd + 1e-4) { if (rk) xRoofAdd(xc.rf, 0, 0, (c.roofDmg - xc.rd) / Math.max(1e-6, 1 - xc.rd), 3); else xRoofAdd(xc.rf, 0, 0, c.roofDmg - xc.rd, 2); xc.rd = c.roofDmg; xRoofApply(v, xc); } }   // (Razbijanje · nov način: a landing's rise into the roof field)
@@ -7162,7 +7229,7 @@ const Render = (function () {
     for (const name in U.ranges) {
       if (name === 'body' || K.dead[name]) continue;
       const P = PT[name]; if (!P) continue;
-      if (!K.ajar[name] && P.th != null && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && !Core.maskHeld(c, name, P) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit; the face and the tail not before 70 %: Core.maskHeld)
+      if (!K.ajar[name] && P.th != null && !P.spare && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && !Core.maskHeld(c, name, P) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit; the face and the tail not before 70 %: Core.maskHeld)
       if (c.lost[name] && !kept(name)) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
     if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
@@ -7174,6 +7241,54 @@ const Render = (function () {
     for (let i = 0; i < nb; i++) { const q = i < nb * 0.65 ? [0.2, 0.2, 0.22] : pc; particles.emit(wx, wy, wz, c.vx * 0.6 + (rRnd() - 0.5) * 5, 1 + rRnd() * 3, c.vz * 0.6 + (rRnd() - 0.5) * 5, 0.9 + rRnd() * 0.5, 0.22, 0.16, q[0], q[1], q[2], 0.9, 9, 0.7, y); }
     for (let i = 0; i < ns; i++) { const a = rRnd() * Math.PI * 2, sp = 3 + rRnd() * 6; sparkP.emit(wx, wy, wz, c.vx * 0.5 + Math.cos(a) * sp, 1.5 + rRnd() * 3.5, c.vz * 0.5 + Math.sin(a) * sp, 0.25 + rRnd() * 0.3, 0.7, 0.18, 1, 0.8 + rRnd() * 0.15, 0.32, 1, 11, 1.2, y); }
     if (!(n < 0)) sparkP.emit(wx, wy, wz, c.vx * 0.5, 0.4, c.vz * 0.5, 0.14, 2.6, 3.4, 1, 0.82, 0.45, 0.85, 0, 0, y);
+  }
+  // the spare wheels (Core.SPARE: a part's entry spare, docs/deli.md »Rezervno kolo«; never loose, kitParts): from SPARE.wob of the car's
+  // damage each wobbles on its carrier as if it were about to come off, more and more (KIT_SPARE: deg0 at SPARE.wob, deg1 at SPARE.off)
+  // till SPARE.off, where the core takes it off (kitParts: kitDetach). Its swing: out from its seat and back, two beats (f1, f2 Hz), less
+  // at a standstill (v: full from 15 m/s); never into the body (from 0, at rest in its seat, out). Its points (both ranges, their normals)
+  // turned by the angle's change since the last frame about its foot (its range's box as built, kitSpareAx): along the car at its foot's
+  // inner edge for one on a side (its top out from the car), across the car for one on an end (its top off that end). What else moved
+  // its points meanwhile (a dent, its gate hanging loose) stays. The buffers: only its span sent while nothing else changed the body
+  // since its last frame (K.wobV), else the whole as ever
+  const KIT_SPARE = { deg0: 2.5, deg1: 12, f1: 3.1, f2: 5.3, v: 15 };
+  // a spare's swing this frame (rad, 0 or more: out from its seat; j its phase, a car's spares not in step; kitSpare, the trailer's tlSpare)
+  function spareTh(c, j) {
+    const S = Core.SPARE; if (!(c.dmg >= S.wob)) return 0;
+    const a = clamp((c.dmg - S.wob) / (S.off - S.wob), 0, 1), ph = j * 2.1 + (c.id || 0) * 0.77, t = time * TL_TAU;
+    return (KIT_SPARE.deg0 + (KIT_SPARE.deg1 - KIT_SPARE.deg0) * a) * Math.PI / 180 * Math.abs(0.62 * Math.sin(KIT_SPARE.f1 * t + ph) + 0.38 * Math.sin(KIT_SPARE.f2 * t + 1.9 * ph))
+      * (0.35 + 0.65 * Math.min(1, Math.abs(c.speed || 0) / KIT_SPARE.v));
+  }
+  function kitSpare(v, c) {
+    const K = v.kit, geo = v.body.geometry, U = geo.userData, A = geo.attributes;
+    if (K.spares === undefined) { const PT = Core.partsOf(c.m), L = Object.keys(U.ranges).filter(n => PT[n] && PT[n].spare); K.spares = L.length ? L : null; }
+    if (!K.spares && !K.wobV) return;
+    const W = K.wob || (K.wob = {}), pa = A.position.array, na = A.normal.array;
+    let lo = Infinity, hi = -1;
+    for (let j = 0; K.spares && j < K.spares.length; j++) {
+      const name = K.spares[j], R = U.ranges[name]; let st = W[name];
+      if (K.dead[name] || c.lost[name] || !R) continue;
+      const th = spareTh(c, j);
+      if (!st) { if (!(th > 0)) continue; st = W[name] = kitSpareAx(pa, R, c.m); }
+      const d = th - st.th; if (Math.abs(d) < 1e-5) continue;
+      st.th = th;
+      const u = st.u, P0 = st.A, cs = Math.cos(d), sn = Math.sin(d), O = [0, 0, 0], turn = (a, i, b) => {   // (Rodrigues: about the axis u through b)
+        const qx = a[i] - b[0], qy = a[i + 1] - b[1], qz = a[i + 2] - b[2], e = (qx * u[0] + qy * u[1] + qz * u[2]) * (1 - cs);
+        a[i] = b[0] + qx * cs + (u[1] * qz - u[2] * qy) * sn + u[0] * e; a[i + 1] = b[1] + qy * cs + (u[2] * qx - u[0] * qz) * sn + u[1] * e; a[i + 2] = b[2] + qz * cs + (u[0] * qy - u[1] * qx) * sn + u[2] * e; };
+      for (const [a0, b0] of [R.o, R.i]) { if (b0 <= a0) continue; for (let i = a0; i < b0; i++) { turn(pa, i * 3, P0); turn(na, i * 3, O); } lo = Math.min(lo, a0); hi = Math.max(hi, b0); }
+    }
+    const V = K.wobV, mine = V && A.position.version === V[0] && A.normal.version === V[1];   // (no one else has changed the body since our last send)
+    if (hi < 0) { if (V && !mine) { for (const at of [A.position, A.normal]) { at.updateRange.count = -1; at.needsUpdate = true; } } if (V) K.wobV = null; return; }   // (none moved: what another sent after ours goes whole once)
+    for (const at of [A.position, A.normal]) { const r = at.updateRange; if (mine) { r.offset = lo * 3; r.count = (hi - lo) * 3; } else { r.offset = 0; r.count = -1; } at.needsUpdate = true; }
+    K.wobV = [A.position.version, A.normal.version];
+  }
+  // a spare's foot (kitSpare): its outer range's box where it sits (car space): one on a side (its middle a sixth of the width or more out)
+  // turns along the car at its foot's inner edge, the top out; one on an end across the car at its foot's edge by the car, the top off it
+  function kitSpareAx(pa, R, M) {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, z0 = 1e9, z1 = -1e9, cx = 0, cz = 0; const n = R.o[1] - R.o[0];
+    for (let i = R.o[0]; i < R.o[1]; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2];
+      if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (pz < z0) z0 = pz; if (pz > z1) z1 = pz; cx += px / n; cz += pz / n; }
+    if (Math.abs(cz) > M.wid / 6 || !(Math.abs(cx) > 0.15 * M.len)) { const sd = cz < 0 ? -1 : 1; return { u: [sd, 0, 0], A: [(x0 + x1) / 2, y0, sd < 0 ? z1 : z0], th: 0 }; }
+    const e = cx < 0 ? -1 : 1; return { u: [0, 0, -e], A: [e < 0 ? x1 : x0, y0, (z0 + z1) / 2], th: 0 };
   }
   // the loose stage: part `name` turned once about its hinge (both its ranges, the points and their normals); what lies on it turns with it
   function kitLoosen(v, c, name, deg) {
@@ -7408,7 +7523,7 @@ const Render = (function () {
   function kitDebrisMesh(v, d) { return ownRnd(() => kitDebrisMesh0(v, d)); }   // (its objects named without Math.random)
   function kitDebrisMesh0(v, d) {
     const L = v.loose[d.part];
-    if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : !v.kit.dead[d.part]) ? null : false; }   // (a mirror pressed in, kitFold: on the car, not dead: its piece waits (a view built afresh mid-race drops it, and draws it))
+    if (!L) { const PT = Core.partsOf(v.car.m), P = PT[d.part]; return P && v.car.lost[d.part] && (P.wh != null ? !v.wheelOff[P.wh] : P.tl ? !!(v.tlR && v.tlR.sp) && !v.tlGone : !v.kit.dead[d.part]) ? null : false; }   // (a trailer's spare: its piece from tlSpare, next frame)   // (a mirror pressed in, kitFold: on the car, not dead: its piece waits (a view built afresh mid-race drops it, and draws it))
     delete v.loose[d.part];
     const inner = new THREE.Mesh(L.geo, pieceMat(v, L.wheel ? L.mat : v.body.material)), lay = new THREE.Group(), m = new THREE.Group(); m.rotation.order = 'YXZ';
     const cen = L.wheel ? [0, 0, 0] : L.c, q = L.wheel ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2) : kitLayQ(L.geo, cen, L.outerN);
@@ -8748,8 +8863,8 @@ const Render = (function () {
     SLF: [{ g: { DL: 0.5, ML: 0.5 } }, { g: { W: 0.5, DL: 0.7, ML: 1 }, fold: [['mirrorL', 45]] }, { g: { W: 0.75, DL: 1, QL: 0.5, ML: 1 }, fold: [['mirrorL', 90]], lamp: [0] }],   // (the user's: its glass breaks; a hard hit presses it flat in against the body, again there it comes off)
     SLM: [{ g: { DL: 0.5 } }, { g: { DL: 0.7, QL: 0.5 }, hang: ['doorL'] }, { g: { W: 0.5, DL: 1, QL: 0.75 }, off: ['doorL', 'mirrorL'] }],
     SLB: [{ g: { QL: 0.5 } }, { g: { DL: 0.5, QL: 0.7 } }, { g: { DL: 0.75, QL: 1 }, lamp: [2] }],
-    BC: [{ g: { R: 0.5 } }, { g: { R: 0.75, QL: 0.5, QR: 0.5 }, hang: ['spoiler'], lamp: [3] }, { g: { R: 1, DL: 0.5, DR: 0.5, QL: 0.75, QR: 0.75 }, off: ['spoiler', 'spare'], lamp: [3] }],
-    BL: [{ g: { R: 0.5 } }, { g: { R: 0.75, QL: 0.5 }, hang: ['spoiler'], lamp: [2] }, { g: { R: 1, DL: 0.5, QL: 0.75, QR: 0.5 }, off: ['spoiler', 'spare'], lamp: [2] }],
+    BC: [{ g: { R: 0.5 } }, { g: { R: 0.75, QL: 0.5, QR: 0.5 }, hang: ['spoiler'], lamp: [3] }, { g: { R: 1, DL: 0.5, DR: 0.5, QL: 0.75, QR: 0.75 }, off: ['spoiler'], lamp: [3] }],
+    BL: [{ g: { R: 0.5 } }, { g: { R: 0.75, QL: 0.5 }, hang: ['spoiler'], lamp: [2] }, { g: { R: 1, DL: 0.5, QL: 0.75, QR: 0.5 }, off: ['spoiler'], lamp: [2] }],   // (no spare wheel: the core's, it wobbles from 50 % and comes off at 80 %, Core.SPARE)
   };
   const XT_HIT = { FC: 'W', FL: 'W', SLF: 'DL', SLM: 'DL', SLB: 'QL', BC: 'R', BL: 'R' };
   const XT_TAB = (() => {   // (every zone's three rows, the right's the left's mirrored: L <-> R in the names, a lamp's side)
@@ -8932,7 +9047,7 @@ const Render = (function () {
   function xtOff0(v, c, name, x, y, z, h) {
     const K = v.kit, R = v.body.geometry.userData.ranges[name]; let L = null;
     if (R) { if (K.dead[name] || R.o[1] <= R.o[0]) return; kitDetach(v, c, name, x, y, z, h, 1); K.xDrop = true; L = v.loose[name]; delete v.loose[name]; }
-    else L = xtCut(v, c, name, x, y, z, h);   // (a sub-range of a part: the Medved's spare wheel off its tailgate)
+    else L = xtCut(v, c, name, x, y, z, h);   // (a sub-range of a part, K.part's sub: off by itself, its part staying)
     if (!L) return;
     const inner = new THREE.Mesh(L.geo, pieceMat(v, v.body.material)), lay = new THREE.Group(), m = new THREE.Group(), q = kitLayQ(L.geo, L.c, L.outerN);
     inner.position.set(-L.c[0], -L.c[1], -L.c[2]); lay.quaternion.copy(q); lay.add(inner); m.add(lay);
@@ -8952,7 +9067,7 @@ const Render = (function () {
     for (const k of ['bumper', 'spoiler']) for (const j of [0, 1]) o[k][j] = +(n[k][j] ? o[k][j] / n[k][j] : 0).toFixed(3);
     o.hoodUp = +o.hoodUp.toFixed(3); return o;
   }
-  // a part's sub-range `name` off by itself (the Medved's spare wheel, its tailgate staying): its points copied (its piece's geometry, car
+  // a part's sub-range `name` off by itself (its part staying; the Medved's spare wheel was one, now a part of its own): its points copied (its piece's geometry, car
   // space), collapsed in the car (deadV: dents leave them be), its bits and sparks once; null: none on the car (or gone already)
   function xtCut(v, c, name, x, y, z, h) {
     const K = v.kit, geo = v.body.geometry, U = geo.userData, X = K.xCut || (K.xCut = {}); if (X[name]) return null;
