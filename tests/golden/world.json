@@ -1361,6 +1361,36 @@
    "roadwear:MeshLambertMaterial": "ad759754"
   }
  },
+ "ngorongoro": {
+  "meshes": 1066,
+  "verts": 479893,
+  "instances": 9795,
+  "props": 63,
+  "crowd": 30,
+  "world": "73382288",
+  "propsHash": "752dbb08",
+  "floor": "cae8594e/6860",
+  "groups": {
+   "-:MeshLambertMaterial": "191f8d54",
+   "-:MeshBasicMaterial": "88683b4d",
+   "ng_buffalo:MeshLambertMaterial": "f1052b04",
+   "ng_elephant:MeshLambertMaterial": "ac708fdd",
+   "ng_zebra:MeshLambertMaterial": "8ed2dbe6",
+   "ng_gnu:MeshLambertMaterial": "5cd4d96d",
+   "ng_warthog:MeshLambertMaterial": "2f7e203",
+   "ng_gazelle:MeshLambertMaterial": "c8049402",
+   "ng_ostrich:MeshLambertMaterial": "d32011b1",
+   "ng_hyena:MeshLambertMaterial": "7a538fe0",
+   "ng_lionM:MeshLambertMaterial": "9ea899b9",
+   "ng_lion:MeshLambertMaterial": "1f2411ed",
+   "ng_crane:MeshLambertMaterial": "a3f8ff0b",
+   "ngFar:MeshLambertMaterial": "99a55540",
+   "crowd:MeshLambertMaterial": "d4fe4a32",
+   "ao:MeshBasicMaterial": "57e58bc8",
+   "tyremarks:MeshBasicMaterial": "b77a1310",
+   "roadwear:MeshLambertMaterial": "9d8eb095"
+  }
+ },
  "silkeborg": {
   "meshes": 335,
   "verts": 316750,

@@ -2449,6 +2449,56 @@
   "nan": false,
   "digest": "3cc5040097ace0a705facbfd"
  },
+ "ngorongoro/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 89.91,
+  "spins": 1,
+  "walls": 3,
+  "rescues": 1,
+  "nan": false,
+  "digest": "abbb38bab0f6c2ff02a1aff5"
+ },
+ "ngorongoro/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 102.15,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ddda6dd2f5aad35368490056"
+ },
+ "ngorongoro/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 81.29,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fa06e78eab16aa16cc9dd72e"
+ },
+ "ngorongoro/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 82.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f0d48f6fe2c285a7be9720c0"
+ },
+ "ngorongoro/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 89.93,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2761707031146b5b7ac1c698"
+ },
  "dades/cs": {
   "finished": 13,
   "cars": 13,

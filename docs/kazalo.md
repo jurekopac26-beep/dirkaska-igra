@@ -226,6 +226,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | mountbuller | Mount Buller, Avstralija | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
+| ngorongoro | Ngorongoro, Tanzanija | ngorongoro | `js/world-ngorongoro.js` (`World.ext.ngorongoro`, `buildNgorongoro`: tlakovana cesta `ngSettTex`, rastje `ngTreeGeo`, daljni krater z jezerom Magadi in čredami `ngFar`/`ngFarUpdate`, živali ob cesti `ngLife`/`ngLifeStep` (umik pred vsemi avti dirke in prometa: `World.update(…, race)`); podatki iz `tools/ngorongoro/build.py`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | ouninpohja | Ouninpohja, Finska | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |

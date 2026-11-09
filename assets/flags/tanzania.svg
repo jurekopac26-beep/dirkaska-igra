@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Tanzania</title>
+  <!-- Ratio 2:3. Divided diagonally from the lower hoist corner to the upper fly corner by a black band edged in yellow: the upper
+       triangle green, the lower blue. Colours: green #1EB53A, yellow #FCD116, black #000000, blue #00A3DD. -->
+  <defs><clipPath id="tz-f"><rect x="0" y="0" width="900" height="600"/></clipPath></defs>
+  <path fill="#1EB53A" d="M0,600V0H900Z"/>
+  <path fill="#00A3DD" d="M0,600H900V0Z"/>
+  <g clip-path="url(#tz-f)">
+    <path d="M0,600L900,0" stroke="#FCD116" stroke-width="237.5"/>
+    <path d="M0,600L900,0" stroke="#000000" stroke-width="162.5"/>
+  </g>
+</svg>

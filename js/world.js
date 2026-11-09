@@ -5099,7 +5099,7 @@ const World = (function () {
     sync: { value: SYNC }
   });
 
-  function update(out, t, car, cam, rp) {
+  function update(out, t, car, cam, rp, race) {   // (race: the cars and the traffic, for a world of its own file (d.ext))
     if (!out) return;
     const d = out.dyn, tw = rp ? rp.t : t;   // (a replay, rp: the spectators on its timeline, back, paused or slower as it goes (js/game.js replayFrame); the rest on the clock)
     if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
@@ -5137,11 +5137,11 @@ const World = (function () {
     if (d.bsPel) API.bsPelicanStep(d.bsPel, t);   // Big Sur: the pelicans fly along the coast
     if (d.bsWhale) for (const w of d.bsWhale) { const u = (t * 0.16 + w.ph) % 1, f = u < 0.25 ? Math.sin(u / 0.25 * Math.PI) : 0; w.m.visible = f > 0.02; w.m.scale.set(0.6 + f * 0.6, Math.max(0.01, f), 0.6 + f * 0.6); }   // Big Sur: the whales blow every ~6 s
     if (d.lfFx) API.lfFxUpdate(d.lfFx, t, car);   // Longford: the chimneys' smoke, the dust off the shoulder, the galahs taking off
-    if (d.irFar) API.irFarUpdate(d.irFar, car ? cam : null);   // Irohazaka: the view beyond the corridor follows the camera
+    if (d.irFar) (d.irFar.upd || API.irFarUpdate)(d.irFar, car ? cam : null);   // Irohazaka: the view beyond the corridor follows the camera (upd: a world's own, Ngorongoro's lighter haze)
     if (d.dt) API.dtUpdate(d.dt, t, car, cam);   // Detroit: the lit windows, the far view
     if (d.mkFar) API.maFarUpdate(d.mkFar, car ? cam : null);   // Mauna Kea: the flanks, the sea of clouds and the volcanoes on the horizon follow the camera
     if (d.gaFar) API.gaFarUpdate(d.gaFar, car ? cam : null);   // the Great Alpine Road: the same, a little less often
-    if (d.ext) d.ext(t, car, cam);   // a world of its own file (World.ext): its moving things
+    if (d.ext) d.ext(t, car, cam, race);   // a world of its own file (World.ext): its moving things
     if (d.rrMist) API.rrMist(d.rrMist, t);   // Serra do Rio do Rastro: the mist rises out of the valley
     if (d.pkLife) API.pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.life && World.lifeStep) World.lifeStep(d.life, t, car, cam);   // life in the woods (js/world-zivali.js): the animals alone walk or graze
