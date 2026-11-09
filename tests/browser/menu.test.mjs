@@ -490,16 +490,18 @@ try {
       JSON.stringify(f1.chips) === '["circuit"]' && ids(f1) === JSON.stringify(w1) && w1.length >= 3 && f1.rows.every(r => r[5] !== 'TEST') && ids(f2) === JSON.stringify(w2) && w2.length > w1.length &&
       JSON.stringify(f3.chips) === '["road","s"]' && (w3.length ? ids(f3) === JSON.stringify(w3) : !f3.rows.length && /^No track found/.test(f3.none || '')) && !f4.chips.length && f4.tiles.length === g.tiles.length,
       JSON.stringify({ f1: f1.rows.map(r => r[0]), f2: f2.rows.length, f3: f3.rows.map(r => r[0]), f3n: f3.none, f4: f4.tiles.length }));
-    // Select: a country of several tracks (Canada), a track's card, Select: the screen goes to it, the list closed and its steps gone
-    await page.click('.izb-c[data-c="Canada"]'); await IZ(2);
+    // Select: a country of several tracks (the list's first: Canada's other two became test tracks on 8. 11. 2026, #379), a track's card,
+    // Select: the screen goes to it, the list closed and its steps gone
+    const several = (countryTiles.find(t => t[1] >= 2) || [])[0];
+    await page.click(`.izb-c[data-c="${several}"]`); await IZ(2);
     const ca = await view(), pickId = ca.rows.map(r => r[0]).find(id => id !== 'spa');
     await page.click(`.izb-t[data-t="${pickId}"]`); await IZ(3);
     const pc = await view();
     await page.click('.izb-sel'); await IZ(0);
     await page.waitForFunction(() => !(history.state && history.state.nazaj), null, { timeout: 5000 }).catch(() => null);
     const sel = await ev(page, 'const d = Menu.debug(); return { id: d.list[d.trackIdx], track: __game.S.track, head: root.querySelector(".where .w2").textContent, hist: history.state && history.state.nazaj };');
-    T.check(`Select (Canada, ${pickId}): the track step goes to it (its name in the head, the game's track), the list closed, no step of it left in the history`,
-      ca.title === 'Canada' && ca.rows.length >= 2 && pc.title === sel.head && sel.id === pickId && sel.track === pickId && !sel.hist, JSON.stringify({ ca: ca.rows.map(r => r[0]), pc: pc.title, sel }));
+    T.check(`Select (${several}, ${pickId}): the track step goes to it (its name in the head, the game's track), the list closed, no step of it left in the history`,
+      ca.title === several && ca.rows.length >= 2 && pc.title === sel.head && sel.id === pickId && sel.track === pickId && !sel.hist, JSON.stringify({ ca: ca.rows.map(r => r[0]), pc: pc.title, sel }));
     // a country of one track (Belgium) opens its card at once; Back: the countries
     await page.click('.trow .flag button'); await IZ(1);
     await page.click('.izb-c[data-c="Belgium"]'); await IZ(2);
