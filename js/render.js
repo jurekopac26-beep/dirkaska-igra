@@ -6333,6 +6333,21 @@ const Render = (function () {
     World.box(g, 0.64, 0.84, 0, 0.08, 0.14, 0.16, 0, [1, 0.97, 0.82]); World.box(g, -0.78, 0.78, 0, 0.04, 0.08, 0.14, 0, [0.72, 0.06, 0.05]); World.box(g, -0.62, 0.34, 0.16, 0.5, 0.08, 0.08, 0, S);
     return g.geometry();
   }
+  // the endless drive's stand-ins for the vehicles far away (over RD_FAR m from the camera's point, updateRoad): a few boxes each, what reads
+  // of a vehicle from there on a phone's screen (its shape, paint, windows and the dark band of its wheels), ~100 vertices instead of
+  // 1.5-7.5 thousand; no shadow. kind: 'car' (the model's size: id), 'van', 'bus', 'truck', 'moto'
+  const RD_FAR = 90;
+  function rdFarGeo(kind, id) {
+    const g = new GB(), K = [0.08, 0.08, 0.09], B = RD_MG, bx = (x, y, z, sx, sy, sz, col, top) => World.box(g, x, y, z, sx, sy, sz, 0, col, top || col, true);
+    if (kind === 'car') { const M = Core.MODELS.find(m => m.id === id), L = M.len, W = M.wid;
+      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, 0.24, 0, L, 0.54, W, B); bx(-L * 0.07, 0.78, 0, L * 0.48, 0.5, W * 0.84, GLASS, B); }
+    else if (kind === 'van') { bx(0, 0, 0, 4.4, 0.42, 1.92, K); bx(-0.35, 0.32, 0, 4.6, 1.73, 2.0, B); bx(2.25, 0.32, 0, 0.8, 0.8, 1.96, B); bx(1.94, 1.12, 0, 0.66, 0.85, 2.02, GLASS, B); }
+    else if (kind === 'bus') { bx(0, 0, 0, 10.6, 0.5, 2.42, K); bx(0, 0.36, 0, 11.8, 2.8, 2.5, B); bx(0.21, 1.45, 0, 11.42, 1.35, 2.52, GLASS, B); }
+    else if (kind === 'truck') { bx(0, 0, 0, 15.6, 0.66, 2.4, K); bx(7.05, 0.62, 0, 2.3, 2.3, 2.49, B); bx(6.75, 2.92, 0, 1.7, 0.6, 2.35, B); bx(7.6, 1.75, 0, 1.24, 0.95, 2.51, GLASS, B);
+      bx(-1.1, 0.86, 0, 14.2, 3.12, 2.55, [0.86, 0.86, 0.84], [0.8, 0.8, 0.78]); }
+    else { bx(0, 0, 0, 1.9, 0.62, 0.16, K); bx(0, 0.5, 0, 1.1, 0.35, 0.34, B); }
+    return g.geometry();
+  }
   function rdBikeGeo() {   // a road bicycle: thin wheels, the frame in its colour, the saddle, the bars
     const g = new GB(), B = RD_MG, K = [0.06, 0.06, 0.07], S = [0.72, 0.74, 0.77];
     wheelInto(g, 0.52, 0.34, 0, 0.34, 0.035, K, S); wheelInto(g, -0.5, 0.34, 0, 0.34, 0.035, K, S);
@@ -6484,8 +6499,13 @@ const Render = (function () {
     const grp = new THREE.Group(), matP = rdMaterial(), mat = crewMaterial(false), matS = crewMaterial(true), matL = new THREE.MeshLambertMaterial({ vertexColors: true }), meshes = [];
     const mk = (geo, n, mt, cast) => { const im = new THREE.InstancedMesh(geo, mt, n); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.castShadow = !!cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } im.instanceColor.setUsage(THREE.DynamicDrawUsage); im.count = 0; grp.add(im); meshes.push(im); return im; };   // (the colours before the count goes to 0: three sizes them by it)
-    const V = { car: [mk(rdCarGeo('hatch', 'pico'), 40, matP, true), mk(rdCarGeo('sedan', 'vortex'), 40, matP, true), mk(rdCarGeo('coupe', 'kaze'), 24, matP, true)],
-      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), truck: mk(rdTruckGeo(), 20, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
+    // (the endless drive: in each mesh as many places as the window's pool has vehicles for it, never fewer than a race has; at x4 the
+    // window can put more of a kind round the camera than a race's road, Tianmen up to 12 buses within 90 m and 13 beyond, and a vehicle
+    // over its mesh's places is not drawn, updateRoad's put. The keys as updateRoad picks the mesh: a car by its colour, a truck on its own)
+    const pc = {}; if (race.en) for (const v of race.tf.veh) { const k = v.kind === 0 ? 'c' + Math.floor(v.col * 7.3) % 3 : v.kind === 2 && v.p === 5 ? 't' : v.kind; pc[k] = (pc[k] || 0) + 1; }
+    const nf = (k, n) => Math.max(n, pc[k] || 0);
+    const V = { car: [mk(rdCarGeo('hatch', 'pico'), nf('c0', 40), matP, true), mk(rdCarGeo('sedan', 'vortex'), nf('c1', 40), matP, true), mk(rdCarGeo('coupe', 'kaze'), nf('c2', 24), matP, true)],
+      van: mk(rdVanGeo(), nf(1, 24), matP, true), bus: mk(rdBusGeo(), nf(2, 8), matP, true), truck: mk(rdTruckGeo(), nf('t', 20), matP, true), moto: mk(rdMotoGeo(), nf(3, 12), matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
     const NP = 140, PG = pedGeos();
     PG.trunk.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3)); PG.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3));
@@ -6517,15 +6537,22 @@ const Render = (function () {
       ck = { PD: mk(rdPaddleGeo(), 1, mat, true), CN: mk(rdConeGeo(), 8, mat, true), sign, box, op: 0, pa: Math.PI, cw: null, dw: null, on: true, cx: c0[0], cz: c0[1],
         cones: [[-32, 0.45], [-26, 0.75], [-20, 1.05], [-14, 1.35], [-8, 1.6], [8.4, 0.55], [8.4, 1.75]].map(([o, e]) => put(K.s + o, w - e)), board: put(K.s - 45, w - 0.42) };
     }
+    // the endless drive (race.en): each vehicle's mesh with a twin that casts no shadow, for the vehicles outside the sun's shadow box
+    // (updateRoad): with its frustum culling off a mesh draws all its vehicles into the shadow map, at the densest traffic on the hairpin
+    // roads tens of them for nothing (Tianmen, Rio do Rastro: 50-70k vertices a frame). The same geometry (disposed with the first)
+    const tw = new Map(); if (race.en) for (const im of [...V.car, V.van, V.bus, V.truck, V.moto]) { const t = mk(im.geometry, im.instanceMatrix.count, matP, false); t.visible = false; tw.set(im, t); }
+    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), nf('c0', 40), matP, false), mk(rdFarGeo('car', 'vortex'), nf('c1', 40), matP, false), mk(rdFarGeo('car', 'kaze'), nf('c2', 24), matP, false)],
+      van: mk(rdFarGeo('van'), nf(1, 24), matP, false), bus: mk(rdFarGeo('bus'), nf(2, 8), matP, false), truck: mk(rdFarGeo('truck'), nf('t', 20), matP, false), moto: mk(rdFarGeo('moto'), nf(3, 12), matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
+    if (far) for (const im of [...far.car, far.van, far.bus, far.truck, far.moto]) im.visible = false;
     scene.add(grp);
-    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };
+    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, tw, far, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };
   }
   function rdPoolTex() {   // the searchlight's pool of light: a soft disc
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
     gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(cv);
   }
-  const _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _re = new THREE.Euler(), _rv = new THREE.Vector3(), _rs = new THREE.Vector3(1, 1, 1), _rm2 = new THREE.Matrix4(), _rm3 = new THREE.Matrix4(), _rax = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0);
+  const _rdSh = new THREE.Vector3(), _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _re = new THREE.Euler(), _rv = new THREE.Vector3(), _rs = new THREE.Vector3(1, 1, 1), _rm2 = new THREE.Matrix4(), _rm3 = new THREE.Matrix4(), _rax = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0);
   const RD_JOINTS = ['pel', 'neck', 'shL', 'elL', 'hdL', 'shR', 'elR', 'hdR', 'hipL', 'knL', 'hipR', 'knR'];
   function rdTilt(m, ax, az, a, py) {   // the whole rig turned by a about the horizontal axis (ax, 0, az) through the point py above its feet
     if (!a) return;
@@ -6624,11 +6651,17 @@ const Render = (function () {
     const put = (im, v, col, roll, lift) => { const i = cnt.get(im) || 0; if (i >= im.instanceMatrix.count) return false; cnt.set(im, i + 1);
       const pitch = v.st === 0 ? Math.atan((T.grade ? T.grade[v.i] || 0 : 0) * v.dir) : 0, y = (world && world.groundH && v.st > 0 ? Math.max(v.y, world.groundH(v.x, v.z)) : v.y) + (lift || 0);
       _re.set(roll || 0, -v.h, pitch, 'YZX'); _rq.setFromEuler(_re); _rv.set(v.x, y, v.z); _rm.compose(_rv, _rq, _rs); im.setMatrixAt(i, _rm); im.setColorAt(i, _pc.setHex(col)); return true; };
+    // (the endless drive: a vehicle outside the sun's shadow box, as the last shadow pass had it, in its mesh's twin without the shadow; the
+    // margin: half its length, its shadow and a frame's way)
+    const TW = Q.tw, FR = Q.far, sc = sun.shadow.camera, shOn = TW.size > 0 && renderer.shadowMap.enabled && sun.castShadow;
+    const sw = (im, v) => { if (!shOn) return im; _rdSh.set(v.x, v.y, v.z).applyMatrix4(sc.matrixWorldInverse); const m = v.len / 2 + 6;
+      return _rdSh.x > sc.left - m && _rdSh.x < sc.right + m && _rdSh.y > sc.bottom - m && _rdSh.y < sc.top + m ? im : TW.get(im); };
     for (const v of tf.veh) {
       if (v.off || v.hid) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
-      const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3;
-      const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? (v.p === 5 ? put(V.truck, v, rdPick(RD_TRUCK, u)) : put(V.bus, v, rdPick(RD_BUS, u))) :
-        put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
+      const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3, fr = FR && d2 > RD_FAR * RD_FAR, ci = Math.floor(u * 7.3) % 3;   // (fr: far away, the endless drive's stand-in)
+      const ok = K === 0 ? put(fr ? FR.car[ci] : sw(V.car[ci], v), v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(fr ? FR.van : sw(V.van, v), v, rdPick(RD_VAN, u)) :
+        K === 2 ? (v.p === 5 ? put(fr ? FR.truck : sw(V.truck, v), v, rdPick(RD_TRUCK, u)) : put(fr ? FR.bus : sw(V.bus, v), v, rdPick(RD_BUS, u))) :
+        put(K === 3 ? (fr ? FR.moto : sw(V.moto, v)) : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
       if (!ok) continue; nv++;
       if (v.grp) cg.set(v.grp, (cg.get(v.grp) || 0) + 1); if (v.yl === 1) nyl++;
       // the lights: headlights and tail lights at dusk and at night (the brake lights always), the hazard lights of a wreck, the indicators
@@ -6643,6 +6676,7 @@ const Render = (function () {
         if (v.ind && v.st === 0) { nind++; if ((time + v.id * 0.137) % 0.7 < 0.38) { const sd = v.ind * v.dir, lw = K === 3 ? 0.14 : v.wid / 2 + 0.04; for (const e of [hl + 0.03, -hl - 0.03]) { const [x, z] = at(e, sd * lw); glows.add(x, hy + 0.06, z, 1.1, 1.0, 0.6, 0.0, 1.0); } } } }
     }
     for (const im of [...V.car, V.van, V.bus, V.truck, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
+    for (const im of FR ? [...TW.values(), ...FR.car, FR.van, FR.bus, FR.truck, FR.moto] : TW.values()) { im.count = cnt.get(im) || 0; im.visible = im.count > 0; if (im.count) { im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; } }   // (the twins and the stand-ins: drawn only when used)
     // the people: the Core's (on foot; a rider thrown off), the riders on their bicycles and motorbikes, an officer by each parked patrol car
     const P = Q.P, NP = Q.NP; let np = 0, nd = 0, nl = 0, nb = 0, ndead = 0; const pg = new Map();
     const gy = (x, z, y) => world && world.groundH ? Math.max(y - 0.5, world.groundH(x, z)) : y;
