@@ -16,6 +16,7 @@
 #                  "water": 100, "rail": 200, "roads": 60, "grid": 150, "lamps": 30}
 #        driveExtra (neobvezno) dodatne vrste OSM highway, po katerih sme pot (npr. ["pedestrian"]: ulica brez avtov, ki je na dirki zaprta)
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
+#        farKm     (neobvezno) polmer daljnega terena far.png v km okoli sredine proge, privzeto 12 (gore na obzorju dlje, npr. 30 v Andih: mreža ostane 240 x 240, celice sorazmerno večje)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
 #   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]   (brez korakov: vsi trije)
 #        RAW: mapa ZUNAJ repozitorija za surove prenose (npr. scratchpad seje): RAW/osm/ (kosi), RAW/<id>-osm.json, RAW/<id>-route.json,
@@ -493,9 +494,10 @@ def build_grids(F, line, dsm, gnd, T, D, out):
     save_png16(os.path.join(out, 'dem.png'), g)
     info['dem'] = dict(file='dem.png', x0=x0, z0=z0, nx=nx, nz=nz, cell=c, enc='uint16 (h + 100) * 10, h in m above sea level; row 0 = z0 (north), col 0 = x0 (west)', what='ground: Copernicus DEM GLO-30 less 0.8 x the canopy (Meta / WRI) and 0.8 x the buildings (OSM), bilinear')
     print('dem', nx, nz, flush=True)
-    # far: the surface (what one sees from afar), 100 m cells, +-12 km round the middle of the road
-    c = 100.0; cx = (line[:, 0].min() + line[:, 0].max()) / 2; cz = (line[:, 1].min() + line[:, 1].max()) / 2
-    x0, z0 = math.floor((cx - 12000) / c) * c, math.floor((cz - 12000) / c) * c; nx = nz = 240
+    # far: the surface (what one sees from afar), 100 m cells, +-12 km round the middle of the road (C['farKm']: another radius, the cells
+    # as much bigger: still 240 x 240)
+    fr = float(C.get('farKm', 12)) * 1000; c = 100.0 * fr / 12000; cx = (line[:, 0].min() + line[:, 0].max()) / 2; cz = (line[:, 1].min() + line[:, 1].max()) / 2
+    x0, z0 = math.floor((cx - 12000 * c / 100) / c) * c, math.floor((cz - 12000 * c / 100) / c) * c; nx = nz = 240
     X, Z, lat, lon = cell_centres(F, x0, z0, nx, nz, c)
     fb = (float(lat.min()) - 0.01, float(lon.min()) - 0.01, float(lat.max()) + 0.01, float(lon.max()) + 0.01)
     urls = dem_urls(*fb)

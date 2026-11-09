@@ -3,6 +3,7 @@
   "about": "Yahuarcocha, Ekvador (id yahuarcocha): the circuit by the lake Yahuarcocha north-east of Ibarra (3.62 km, clockwise since 1983), one lap (docs/dirkalisca-celine.md). The route: OSM's highway=raceway way 53930351 (no oneway in OSM: the direction from sources, clockwise); no pits in OSM (33 boxes in sources: the session of the track places them).",
   "box": [0.366, -78.113, 0.396, -78.077],
   "closed": true,
+  "farKm": 30,
   "route": [
     [0.378505, -78.099941, null, "start line (provisional: the south-west end of the long straight by the lake; the pits and the real start line are placed by the track's session, ESA WorldCover built-up along the straights) | raceway, w53930351, node 680584594, s 0 m (junction)"],
     [0.382984, -78.096136, null, "raceway, w53930351, node 680584731, s 654 m"],
