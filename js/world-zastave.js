@@ -10,7 +10,8 @@
    list: [x, y, z, rot, look, W, H, amp]: the pole at the cloth's top edge (x, y, z), the way the cloth flies from it (rot: radians from
    +x, as World's box turns a box), the cloth's length W and height H, its look: stripes across, top to bottom ([[r, g, b], ...]),
    { up: [...] } upright bands from the pole out, { chq: [nx, ny, c0, c1] } a chequer, { grid: [u edges, v edges, colours by row] } a
-   canton or a cross, { tri: colour } a pennant, { wedge: [top, bottom, colour, a] } two stripes with a wedge at the pole to a of the length (Czechia's), a look with .moon = [colour]: a crescent and a star near the pole on it (Turkey's), { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
+   canton or a cross, { tri: colour } a pennant, { wedge: [top, bottom, colour, a] } two stripes with a wedge at the pole to a of the length (Czechia's), { serr: [band, field, a, b, n] } a band at the pole
+   serrated into the field, n points from a to b of the length (Bahrain's, Qatar's), a look with .moon = [colour]: a crescent and a star near the pole on it (Turkey's), { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
    for a world that had no such mesh (the worlds that had one, rbFlags, make theirs with Math.random as they always did).
    World.api.flags: the flags of the build under way (add as they are put up; World's build makes their mesh at the end), its clock the
    world's wind; canton(): the look of stripes with a canton.
@@ -32,6 +33,11 @@
     if (look && look.grid) { const [us, vs, cols] = look.grid, out = []; for (let b = 0; b + 1 < vs.length; b++) for (let a = 0; a + 1 < us.length; a++) out.push([us[a], us[a + 1], vs[b], vs[b + 1], cols[b][a]]); return out; }   // a canton, a cross: [u edges, v edges, colours by row]
     if (look && look.tri) return [[0, 1, 0, 1, look.tri]];   // a pennant: one colour, narrowing to a point
     if (look && look.wedge) { const [top, bot, wc, a] = look.wedge, up = (u) => (u < a ? 0.5 * u / a : 0.5), dn = (u) => 1 - up(u); return [[0, 1, 0, up, top], [0, a, up, dn, wc], [0, 1, dn, 1, bot]]; }   // a wedge at the pole (its cells' v edges as functions of u)
+    if (look && look.serr) {   // a band at the pole serrated into the field: n points of the band's colour from u a to b (Bahrain's, Qatar's)
+      const [band, field, a, b, n] = look.serr, hw = (u) => 0.5 / n * (b - u) / (b - a), out = [[0, a, 0, 1, band], [b, 1, 0, 1, field]];
+      for (let k = 0; k < n; k++) { const c = (k + 0.5) / n, lo = (u) => c - hw(u), hi = (u) => c + hw(u); out.push([a, b, k / n, lo, field], [a, b, lo, hi, band], [a, b, hi, (k + 1) / n, field]); }
+      return out;
+    }
     if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.tex)
     return [[0, 1, 0, 1, [0.92, 0.92, 0.9]]];
   }
