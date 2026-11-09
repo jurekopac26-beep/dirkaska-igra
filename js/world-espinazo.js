@@ -44,9 +44,9 @@
     const cl = vrLCf(x, z, 7) * 0.8; if (cl > 0) { const pt = P.c5(x * 1.4, z * 1.4); R = lerp(R, lerp(0.36, 0.52, pt), cl); G = lerp(G, lerp(0.43, 0.47, pt), cl); B = lerp(B, lerp(0.18, 0.25, pt), cl); }
     const ba = Math.max(vrLCf(x, z, 4), sstep(0.72, 0.92, m) * 0.2); R = lerp(R, 0.6, ba); G = lerp(G, 0.53, ba); B = lerp(B, 0.49, ba);
     R += (f - 0.5) * 0.07; G += (f - 0.5) * 0.06; B += (f - 0.5) * 0.04;
-    const st = sstep(0.7, 0.42, ny) * (dd < 30 ? 0.9 : 0.6) * (1 - 0.5 * fo);   // the steep faces: the tuff, the brown earth of the cuts
+    const st = sstep(0.7, 0.42, ny) * (dd < 30 ? 0.9 : 0.5) * (1 - 0.5 * fo);   // the steep faces: the tuff, the brown earth of the cuts
     if (st > 0) { const gn = sstep(0.45, 0.8, P.c3(x, z)), k = 0.9 + 0.12 * P.n2(x * 2, z * 2);
-      R = lerp(R, lerp(0.5, 0.62, gn) * k, st); G = lerp(G, lerp(0.4, 0.55, gn) * k, st); B = lerp(B, lerp(0.3, 0.51, gn) * k, st); }
+      R = lerp(R, lerp(0.45, 0.55, gn) * k, st); G = lerp(G, lerp(0.36, 0.48, gn) * k, st); B = lerp(B, lerp(0.27, 0.44, gn) * k, st); }
     if (dd < 1.6) { const t = sstep(1.6, 0.1, dd) * 0.5; R = lerp(R, 0.57, t); G = lerp(G, 0.49, t); B = lerp(B, 0.38, t); }   // (the dust beside the shoulder)
     ECOL[0] = R; ECOL[1] = G; ECOL[2] = B; return ECOL;
   }
@@ -64,7 +64,11 @@
       const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * VRC, z = G.z0 + j * VRC, h = caGH(i, j);
       let nx = -(caGH(i + st, j) - caGH(i - st, j)) / (2 * VRC * st), nz = -(caGH(i, j + st) - caGH(i, j - st)) / (2 * VRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
-      const c = eCol(x, z, h, ny, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+      const c = eCol(x, z, h, ny, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)]);
+      if (st > 1) { const fo = vrLCf(x, z, 1) * 0.85, wo = vrLCf(x, z, 6) * 0.6;   // (the coarse ring has no plants and lies beyond the camera's far plane: the menu's model
+        // sees it from above, so its forest is the canopy's green)
+        c[0] = lerp(lerp(c[0], 0.24, wo), 0.16, fo); c[1] = lerp(lerp(c[1], 0.29, wo), 0.23, fo); c[2] = lerp(lerp(c[2], 0.14, wo), 0.11, fo); }
+      col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
     }
     if (st === 1) {   // (no cracks against a coarse neighbour: as vrTileGeo)
@@ -81,11 +85,11 @@
   }
   function eFarCol(A, sl, q) {   // the land beyond the corridor (irFar): the pines dark on the high ridges, oak and pine below them, the dry forest
     // of the canyons' floors olive and tan far below, the pinkish-grey tuff on the steepest faces
-    const rk = sstep(0.6, 1.1, sl) * 0.7, low = sstep(1300, 800, A) * 0.6, hi = sstep(1700, 2200, A);
+    const rk = sstep(0.95, 1.6, sl) * 0.45, low = sstep(1300, 800, A) * 0.5, hi = sstep(1700, 2200, A);
     let c = [0.21 + q * 0.05, 0.27 + q * 0.05, 0.14 + q * 0.03];
     c = [lerp(c[0], 0.15, hi), lerp(c[1], 0.23, hi), lerp(c[2], 0.13, hi)];
     c = [lerp(c[0], 0.42, low), lerp(c[1], 0.4, low), lerp(c[2], 0.24, low)];
-    return [lerp(c[0], 0.55, rk), lerp(c[1], 0.5, rk), lerp(c[2], 0.46, rk)];
+    return [lerp(c[0], 0.44, rk), lerp(c[1], 0.4, rk), lerp(c[2], 0.36, rk)];
   }
   let eATex = null, eAKey = '', eA2Tex = null;   // (the board atlases, made once and reused by every build of the road)
   function eAtlas(cps, finA) {   // text boards (8 rows of 1024 x 128): START, FINISH, CP1-CP4 with the altitude, El Palmito's board at the finish, the race's banner
@@ -239,7 +243,10 @@
     {
       const G = P.G, grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
-        const on = caTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
+        // (as Los Caracoles, and a coarse ring on out to ~650 m: the ridge's road bends round so that the menu's model, cut round the line's convex
+        // hull, takes in land that far from it; in the game the chase camera's far plane (~270 m) never reaches it, so these tiles cost no drawing)
+        let on = caTileOn(ti, tj); if (!on && vrDist(G.x0 + (ti + 0.5) * VRC * VRT, G.z0 + (tj + 0.5) * VRC * VRT) < 650) on = 2;
+        if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
         const m = new THREE.Mesh(eTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
     }
@@ -427,7 +434,7 @@
       const st = [0.6, 0.55, 0.51], top = [0.7, 0.66, 0.62], rail = [0.36, 0.38, 0.4];
       for (const v of views) {
         const g = scen.get(v.x, v.z), y = v.h, rx = v.x - T.px[v.i], rz = v.z - T.pz[v.i], rl = Math.hypot(rx, rz) || 1, oa = Math.atan2(rz / rl, rx / rl), rr = v.r;
-        box(g, v.x, y - 0.25, v.z, 2 * rr - 1, 0.32, 2 * rr - 1, oa, [0.58, 0.54, 0.5], [0.66, 0.62, 0.57], true);   // (the terrace's flags)
+        box(g, v.x, y - 0.25, v.z, 2 * rr - 1, 0.32, 2 * rr - 1, oa, [0.44, 0.41, 0.38], [0.5, 0.47, 0.43], true);   // (the terrace's flags, weathered)
         for (let k = -5; k <= 5; k++) { const a = oa + k / 5 * 1.3, px = v.x + Math.cos(a) * rr, pz = v.z + Math.sin(a) * rr; if (vrNear(px, pz).dd < 1.2) continue;
           box(g, px, y - 0.4, pz, 0.5, 1.0, 1.6, a, st, top); box(g, px, y + 0.6, pz, 0.06, 0.45, 1.65, a, rail, rail, true); }
         for (let k = 0; k < 3; k++) { const a = oa + (R() - 0.5) * 1.6, d = rr - 1 - R(); const px = v.x + Math.cos(a) * d, pz = v.z + Math.sin(a) * d; if (vrNear(px, pz).dd < 1.5) continue;
@@ -576,6 +583,13 @@
 
     /* ---- the view beyond the corridor (def.farDem: the ridges and the canyons round the crest; irFar, World.update moves it with the camera); finish the meshes ---- */
     const FAR = API.irFar ? API.irFar(eFarCol) : null; if (FAR) { FAR.mesh.visible = false; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update)
+    if (FAR) {   // (its hole round the corridor out to the tiles' coarse ring above, ~720 m: no far land under the tiles in the menu's model, where both
+      // lie at their own places; in the game the far land lies behind everything and is all haze within ~800 m of the road, so nothing changes there)
+      const F = def.farDem, nx = F.nx, nz = F.nz, dr = new Float32Array(nx * nz), I = [];
+      for (let k = 0; k < nx * nz; k++) { const x = FAR.P0[3 * k], z = FAR.P0[3 * k + 2]; let m = 1e18; for (let q = 0; q < N; q += 5) { const dx = x - T.px[q], dz = z - T.pz[q], d = dx * dx + dz * dz; if (d < m) m = d; } dr[k] = Math.sqrt(m); }
+      for (let j = 0; j + 1 < nz; j++) for (let i = 0; i + 1 < nx; i++) { const a = j * nx + i, b2 = a + 1, c = a + nx, d = c + 1; if (Math.min(dr[a], dr[b2], dr[c], dr[d]) < 720) continue; I.push(a, c, b2, b2, c, d); }
+      FAR.mesh.geometry.setIndex(I);
+    }
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: eAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
