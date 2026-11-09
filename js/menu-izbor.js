@@ -181,7 +181,7 @@ window.MenuIzbor = (function () {
   function nuView() {
     const Pn = o.list.filter(t => t.pending && !t.test).map(t => t.id), Tn = tests().map(t => t.id);
     const sec = (name, ids) => !ids.length ? '' : '<div class="izb-ct">' + name + '<small>' + ids.length + '</small></div><div class="izb-list">' + ids.map(id => row(id)).join('') + '</div>';
-    return head('NEUPORABNO', [Pn.length ? Pn.length + ' pending' : '', Tn.length ? Tn.length + ' test' : '', 'to be removed before release'].filter(Boolean).join(' · ')) +
+    return head('NEUPORABNO', [Pn.length ? Pn.length + ' pending' : '', Tn.length ? Tn.length + ' test' : '', 'not in version 1.0'].filter(Boolean).join(' · ')) +
       '<div class="izb-body in">' + (o.nu.top || '') + sec('Pending · one per country stays', Pn) + sec('Test · to be removed', Tn) + '</div>';
   }
   const home = () => o && o.nu ? nuView : grid;   // (the sheet's first view: the countries, or NEUPORABNO's list)
