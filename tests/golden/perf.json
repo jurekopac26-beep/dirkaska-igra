@@ -385,18 +385,18 @@
   "jsMs": 1.77
  },
  "silkeborg": {
-  "calls": 240,
+  "calls": 239,
   "maxCalls": 283,
-  "kverts": 580,
-  "maxKverts": 697,
-  "jsMs": 1.82
+  "kverts": 579,
+  "maxKverts": 689,
+  "jsMs": 1.55
  },
  "kagerod": {
-  "calls": 227,
-  "maxCalls": 272,
-  "kverts": 484,
-  "maxKverts": 575,
-  "jsMs": 2.43
+  "calls": 225,
+  "maxCalls": 255,
+  "kverts": 467,
+  "maxKverts": 523,
+  "jsMs": 1.43
  },
  "sosnova": {
   "calls": 187,
@@ -413,11 +413,11 @@
   "jsMs": 1.49
  },
  "pembrey": {
-  "calls": 190,
+  "calls": 187,
   "maxCalls": 218,
-  "kverts": 522,
-  "maxKverts": 691,
-  "jsMs": 1.6
+  "kverts": 509,
+  "maxKverts": 661,
+  "jsMs": 1.11
  },
  "kildare": {
   "calls": 205,
@@ -441,11 +441,11 @@
   "jsMs": 1.39
  },
  "bikernieki": {
-  "calls": 186,
-  "maxCalls": 238,
-  "kverts": 431,
-  "maxKverts": 496,
-  "jsMs": 2.95
+  "calls": 183,
+  "maxCalls": 235,
+  "kverts": 435,
+  "maxKverts": 517,
+  "jsMs": 1.22
  },
  "london": {
   "calls": 172,
@@ -455,11 +455,11 @@
   "jsMs": 0.52
  },
  "zandvoort": {
-  "calls": 190,
-  "maxCalls": 228,
-  "kverts": 650,
-  "maxKverts": 848,
-  "jsMs": 1.49
+  "calls": 182,
+  "maxCalls": 224,
+  "kverts": 638,
+  "maxKverts": 834,
+  "jsMs": 1.13
  },
  "dades": {
   "calls": 141,
@@ -497,39 +497,39 @@
   "jsMs": 1.44
  },
  "tuzla": {
-  "calls": 158,
+  "calls": 156,
   "maxCalls": 207,
-  "kverts": 464,
-  "maxKverts": 585,
-  "jsMs": 3
+  "kverts": 448,
+  "maxKverts": 560,
+  "jsMs": 1.17
  },
  "buriram": {
   "calls": 195,
   "maxCalls": 247,
   "kverts": 668,
   "maxKverts": 844,
-  "jsMs": 1.29
+  "jsMs": 1
  },
  "lombok": {
   "calls": 188,
   "maxCalls": 227,
   "kverts": 567,
   "maxKverts": 701,
-  "jsMs": 1.49
+  "jsMs": 1.02
  },
  "sepang": {
   "calls": 184,
   "maxCalls": 226,
   "kverts": 684,
   "maxKverts": 861,
-  "jsMs": 1.49
+  "jsMs": 1.14
  },
  "sakhir": {
-  "calls": 190,
-  "maxCalls": 224,
-  "kverts": 664,
-  "maxKverts": 794,
-  "jsMs": 1.23
+  "calls": 200,
+  "maxCalls": 229,
+  "kverts": 695,
+  "maxKverts": 782,
+  "jsMs": 0.93
  },
  "portomoniz": {
   "calls": 208,
@@ -560,10 +560,10 @@
   "jsMs": 1.37
  },
  "riohondo": {
-  "calls": 189,
-  "maxCalls": 287,
-  "kverts": 614,
-  "maxKverts": 830,
-  "jsMs": 1.11
+  "calls": 194,
+  "maxCalls": 270,
+  "kverts": 619,
+  "maxKverts": 779,
+  "jsMs": 1.03
  }
 }

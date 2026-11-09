@@ -1493,12 +1493,12 @@
   }
  },
  "silkeborg": {
-  "meshes": 335,
-  "verts": 311482,
+  "meshes": 337,
+  "verts": 311858,
   "instances": 5035,
   "props": 39,
   "crowd": 8,
-  "world": "ad226aea",
+  "world": "1319425",
   "propsHash": "f9f3905d",
   "floor": "371f690a/4536",
   "groups": {
@@ -1517,16 +1517,18 @@
    "life:MeshBasicMaterial": "4ca48b23",
    "people:MeshLambertMaterial": "d55b38de",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "faa1f9da"
+   "standSteps:MeshLambertMaterial": "faa1f9da",
+   "zaslon-okvir:MeshLambertMaterial": "a68ca3fa",
+   "zaslon-slika:MeshBasicMaterial": "a7cc0257"
   }
  },
  "kagerod": {
-  "meshes": 325,
-  "verts": 223132,
+  "meshes": 327,
+  "verts": 223508,
   "instances": 6643,
   "props": 54,
   "crowd": 4,
-  "world": "e5d54ed3",
+  "world": "f53208a4",
   "propsHash": "ceab58e2",
   "floor": "94d03f84/4116",
   "groups": {
@@ -1544,7 +1546,9 @@
    "life:MeshBasicMaterial": "4f3aedba",
    "people:MeshLambertMaterial": "155762a6",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "79e5fc63"
+   "standSteps:MeshLambertMaterial": "79e5fc63",
+   "zaslon-okvir:MeshLambertMaterial": "a4755fdc",
+   "zaslon-slika:MeshBasicMaterial": "aa7c11d1"
   }
  },
  "sosnova": {
@@ -1594,12 +1598,12 @@
   }
  },
  "pembrey": {
-  "meshes": 326,
-  "verts": 309564,
+  "meshes": 328,
+  "verts": 309940,
   "instances": 4039,
   "props": 37,
   "crowd": 5,
-  "world": "65b80634",
+  "world": "757d8851",
   "propsHash": "f0b7f66c",
   "floor": "cb4f29c2/4676",
   "groups": {
@@ -1617,7 +1621,9 @@
    "life:MeshBasicMaterial": "89e2aa9",
    "people:MeshLambertMaterial": "e04a9f5c",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "86bc7302"
+   "standSteps:MeshLambertMaterial": "86bc7302",
+   "zaslon-okvir:MeshLambertMaterial": "ea0b517e",
+   "zaslon-slika:MeshBasicMaterial": "d0c16475"
   }
  },
  "kildare": {
@@ -1689,12 +1695,12 @@
   }
  },
  "bikernieki": {
-  "meshes": 643,
-  "verts": 617726,
+  "meshes": 645,
+  "verts": 618102,
   "instances": 17189,
   "props": 56,
   "crowd": 7,
-  "world": "a6b10c9b",
+  "world": "77d62be5",
   "propsHash": "1c5c9d8",
   "floor": "71243260/7308",
   "groups": {
@@ -1713,7 +1719,9 @@
    "life:MeshBasicMaterial": "3fb07456",
    "people:MeshLambertMaterial": "f613741",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "f9cd11c"
+   "standSteps:MeshLambertMaterial": "f9cd11c",
+   "zaslon-okvir:MeshLambertMaterial": "599a93eb",
+   "zaslon-slika:MeshBasicMaterial": "bb4a9af7"
   }
  },
  "london": {
@@ -1736,12 +1744,12 @@
   }
  },
  "zandvoort": {
-  "meshes": 492,
-  "verts": 633829,
+  "meshes": 494,
+  "verts": 634205,
   "instances": 6689,
   "props": 57,
   "crowd": 18,
-  "world": "6e6280f3",
+  "world": "2fd117ef",
   "propsHash": "52c05ac2",
   "floor": "86ea5334/8512",
   "groups": {
@@ -1761,7 +1769,9 @@
    "life:MeshBasicMaterial": "2034d397",
    "people:MeshLambertMaterial": "998225f1",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "44ada441"
+   "standSteps:MeshLambertMaterial": "44ada441",
+   "zaslon-okvir:MeshLambertMaterial": "1b8df575",
+   "zaslon-slika:MeshBasicMaterial": "a36ef847"
   }
  },
  "dades": {
@@ -1850,12 +1860,12 @@
   }
  },
  "tuzla": {
-  "meshes": 676,
-  "verts": 857984,
+  "meshes": 678,
+  "verts": 858360,
   "instances": 6221,
   "props": 111,
   "crowd": 28,
-  "world": "95dbc251",
+  "world": "3fe3f617",
   "propsHash": "f9b10415",
   "floor": "d84112e/10696",
   "groups": {
@@ -1874,16 +1884,18 @@
    "life:MeshBasicMaterial": "ca99c351",
    "people:MeshLambertMaterial": "646418b6",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "e7e9ff45"
+   "standSteps:MeshLambertMaterial": "e7e9ff45",
+   "zaslon-okvir:MeshLambertMaterial": "4503c7e7",
+   "zaslon-slika:MeshBasicMaterial": "8f78e66f"
   }
  },
  "buriram": {
-  "meshes": 559,
-  "verts": 707097,
+  "meshes": 561,
+  "verts": 707473,
   "instances": 7870,
   "props": 76,
   "crowd": 29,
-  "world": "18b0073c",
+  "world": "a302d78f",
   "propsHash": "140f165e",
   "floor": "f0b00851/9100",
   "groups": {
@@ -1906,16 +1918,18 @@
    "life:MeshBasicMaterial": "e9bfb0c9",
    "people:MeshLambertMaterial": "7dd429f2",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "6922c2c7"
+   "standSteps:MeshLambertMaterial": "6922c2c7",
+   "zaslon-okvir:MeshLambertMaterial": "47803ac8",
+   "zaslon-slika:MeshBasicMaterial": "a6eff889"
   }
  },
  "lombok": {
-  "meshes": 711,
-  "verts": 989244,
+  "meshes": 713,
+  "verts": 989620,
   "instances": 5472,
   "props": 51,
   "crowd": 19,
-  "world": "dc8bd3b",
+  "world": "61451c12",
   "propsHash": "b21d4ce1",
   "floor": "1feaa0d3/8596",
   "groups": {
@@ -1938,16 +1952,18 @@
    "life:MeshBasicMaterial": "c5079af4",
    "people:MeshLambertMaterial": "eb17a790",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "dfe7cff3"
+   "standSteps:MeshLambertMaterial": "dfe7cff3",
+   "zaslon-okvir:MeshLambertMaterial": "97efbd6",
+   "zaslon-slika:MeshBasicMaterial": "42b561f1"
   }
  },
  "sepang": {
-  "meshes": 553,
-  "verts": 926633,
+  "meshes": 555,
+  "verts": 927009,
   "instances": 6296,
   "props": 86,
   "crowd": 30,
-  "world": "37bd961a",
+  "world": "c3153449",
   "propsHash": "3f2c7418",
   "floor": "9ca322ac/11060",
   "groups": {
@@ -1963,16 +1979,18 @@
    "brakeBoards:MeshLambertMaterial": "e9e73af2",
    "people:MeshLambertMaterial": "5d476b05",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "2ad03ed4"
+   "standSteps:MeshLambertMaterial": "2ad03ed4",
+   "zaslon-okvir:MeshLambertMaterial": "4665a8da",
+   "zaslon-slika:MeshBasicMaterial": "4e5cc473"
   }
  },
  "sakhir": {
-  "meshes": 612,
-  "verts": 899192,
+  "meshes": 614,
+  "verts": 899568,
   "instances": 2920,
   "props": 81,
   "crowd": 27,
-  "world": "823c0eec",
+  "world": "ca94efe",
   "propsHash": "b86e8183",
   "floor": "3ccb06c6/10808",
   "groups": {
@@ -1995,7 +2013,9 @@
    "life:MeshBasicMaterial": "c2960824",
    "people:MeshLambertMaterial": "6095a4a9",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "c6dd106f"
+   "standSteps:MeshLambertMaterial": "c6dd106f",
+   "zaslon-okvir:MeshLambertMaterial": "83a3db8b",
+   "zaslon-slika:MeshBasicMaterial": "a9dabaef"
   }
  },
  "portomoniz": {
@@ -2093,12 +2113,12 @@
   }
  },
  "riohondo": {
-  "meshes": 704,
-  "verts": 650528,
+  "meshes": 706,
+  "verts": 650904,
   "instances": 6346,
   "props": 70,
   "crowd": 43,
-  "world": "4bd73735",
+  "world": "22fb033d",
   "propsHash": "fb5fac24",
   "floor": "32c58a94/9632",
   "groups": {
@@ -2120,7 +2140,9 @@
    "life:MeshBasicMaterial": "445579f6",
    "people:MeshLambertMaterial": "503631b0",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "19d8ff34"
+   "standSteps:MeshLambertMaterial": "19d8ff34",
+   "zaslon-okvir:MeshLambertMaterial": "f245f283",
+   "zaslon-slika:MeshBasicMaterial": "ad0e146d"
   }
  }
 }
