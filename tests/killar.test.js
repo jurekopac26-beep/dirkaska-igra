@@ -97,11 +97,12 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   };
   const brkAll = (r) => r.fence.brk.fill(0.001);
   const fast = run(sm, sd, 25, 0.35, 0), above = run(sm, sd, 15, 0.56, 0), below = run(sm, sd, 15, 0.36, 0), slide = run(sm, sd, 14, 0.2, 0.3), crawl = run(sm, sd, 2.5, 0.6, 0.12, brkAll);
-  const soft = [run(sm, sd, 20 / 3.6, 0.52, -1), run(sm, sd, 20 / 3.6, 0.175, -1, null, 0.3), run(sm, sd, 60 / 3.6, 0.087, -1, null, 0.3), run(sm, sd, 120 / 3.6, 0.087, -1, null, 0.3)];
+  const soft = [run(sm, sd, 20 / 3.6, 0.52, -1), run(sm, sd, 20 / 3.6, 0.175, -1, null, 0.3), run(sm, sd, 60 / 3.6, 0.087, -1, null, 0.3), run(sm, sd, 120 / 3.6, 0.087, -1, null, 0.3),
+    run(T.startS + 700, -1, 90 / 3.6, 0.035, -1, null, 0.2)];   // (the last: the user's report of 9. 11. 2026 at ~23.48, at 0.7 km the car slid along the fence: brushing it at 2° at 90 km/h)
   const brL = run(T.startS + ba + 8, -1, 8, 1, 0), brR = run(T.startS + ba + 8, 1, 10, 0.5, 0), up = run(sm, -sd, 15, 0.45, 0), at9 = stand(sm, 9), at11 = stand(sm, 11);
-  check('the fence is brittle, as the delineators: touched at 20 km/h (at 30° and at 10°) and brushed at 5° at 60 and 120 km/h, it breaks at once, holding nothing: the car not thrown back (at least 70 % of its speed across the fence kept), less than 5 % of its speed lost in 0.1 s',
+  check('the fence is brittle, as the delineators: touched at 20 km/h (at 30° and at 10°), brushed at 5° at 60 and 120 km/h and at 2° at 90 km/h at 0.7 km, it breaks at once, holding nothing: the car not thrown back (at least 70 % of its speed across the fence kept), less than 5 % of its speed lost in 0.1 s',
     soft.every(x => x.touch && x.brk >= 1 && x.wall === 0 && x.vn0 > 0.3 && x.vnMin > 0.7 * x.vn0 && x.loss < 5 && x.fin),
-    soft.map((x, k) => `${['20 km/h 30°', '20 km/h 10°', '60 km/h 5°', '120 km/h 5°'][k]}: ${x.brk} broken, across ${x.vn0.toFixed(2)} -> least ${x.vnMin.toFixed(2)} m/s, speed -${x.loss.toFixed(1)} %`).join('; '));
+    soft.map((x, k) => `${['20 km/h 30°', '20 km/h 10°', '60 km/h 5°', '120 km/h 5°', '90 km/h 2° at 0.7 km'][k]}: ${x.brk} broken, across ${x.vn0.toFixed(2)} -> least ${x.vnMin.toFixed(2)} m/s, speed -${x.loss.toFixed(1)} %`).join('; '));
   check('the fence: at 90 km/h into it the car breaks a few panels, goes through and falls (more than 8 m down), then it is back on the road near where it went over, damaged',
     fast.brk >= 1 && fast.brk <= 4 && fast.fell && fast.falls === 1 && fast.drop > 8 && fast.back && Math.abs(fast.along) < 60 && fast.dmg > 0.2 && fast.fin,
     `${fast.brk} panels broken, fell ${fast.drop.toFixed(1)} m, back on the road ${fast.back} ${fast.along.toFixed(0)} m on, damage +${fast.dmg.toFixed(2)}`);
