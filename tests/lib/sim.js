@@ -55,8 +55,9 @@ const SETUPS = {
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
 // costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off; Silkeborg rally 9: from 6 s the
 // wrecked car drives its whole first lap slowly and reaches its box too late for the repair in the 96 s; from 9 s, before the double left, it is repaired at 89 s; Izoard's muscle car 4: from 5 to 6.5 s the same as Bâlea's rally; Sa Calobra rally 5: at 6 s
-// the left lock only dents the car on the stone parapet, no panel off; its muscle car 4: the same at 6 s, no panel off)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4 };
+// the left lock only dents the car on the stone parapet, no panel off; its muscle car 4: the same at 6 s, no panel off; Abu Dabi rally 6.5: at 6 s the left lock
+// only dents the car on the barrier by the main straight, no panel off)
+const CRASH_AT = { 'abudabi/rally': 6.5, katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

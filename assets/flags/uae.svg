@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>United Arab Emirates</title>
+  <!-- Ratio 1:2. A vertical red band at the hoist, a quarter of the length; three horizontal bands of equal width past it, green, white
+       and black from the top. Red #FF0000, green #00732F, white, black. -->
+  <rect width="1000" height="500" fill="#FFFFFF"/>
+  <rect width="1000" height="166.667" fill="#00732F"/>
+  <rect y="333.333" width="1000" height="166.667" fill="#000000"/>
+  <rect width="250" height="500" fill="#FF0000"/>
+</svg>
