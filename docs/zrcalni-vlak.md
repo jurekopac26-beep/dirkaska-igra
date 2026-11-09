@@ -6,7 +6,7 @@ Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verz
 
 ## Opis (verzija 1)
 - **Vlačilec**: na osnovi KAMNA PUŠČAVA (`js/cars/kamen.js`: tovornjak 4×4 z nosom pred kabino). Črna kabina, kromirana izpuha, odbojni lok, zadaj sedlo. Brez znamke. Strešnega nosilca s kanticami in rezervno gumo na kabini ni več (odločitev uporabnika 9. 11. 2026: brez rezervnih koles na strehi in rezervnega bencina).
-- **Cisterni**: zrcalno polirana nerjavna pločevina, obroči, pohodna pot z ograjo (brez pokrovov na vrhu: s kamere za avtom so bili videti kot gume, odločitev uporabnika 9. 11. 2026; [prej in po](titan-cisterna/pokrovi-pred-po.webp)), bočni odbijač, rdeča omarica. Med njima dolly (oje, dve osi, svoje sedlo).
+- **Cisterni**: zrcalno polirana nerjavna pločevina, obroči, pohodna pot z ograjo, okrogli pokrovi na vrhu (ostanejo: odstranitev 9. 11. 2026 ob ~11.05 je uporabnik ob ~12.25 preklical, `docs/titan-cisterna.md`), bočni odbijač, rdeča omarica. Med njima dolly (oje, dve osi, svoje sedlo).
 - **Odsev za telefon**: vnaprej pripravljen odsev neba in okolice v teksturi (gradient neba, obzorje, tla), ne živo zrcalo. Malo klicev risanja.
 - Vlak je dolg ~25 m.
 
