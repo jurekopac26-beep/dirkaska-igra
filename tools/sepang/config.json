@@ -3,6 +3,7 @@
   "about": "Sepang, Malezija (id sepang): the 5.5 km circuit among oil palms south of Kuala Lumpur, clockwise, two long straights joined by a hairpin, one lap (docs/nove-proge-1-0.md)",
   "box": [2.743, 101.719, 2.779, 101.757],
   "closed": true,
+  "dist": {"grid": 600},
   "route": [
     [2.76076, 101.73835, null, "start (finish line: OSM raceway=start-finish n1578189278; direction: clockwise, as oneway=yes) | raceway, w1561055754, s 0 m"],
     [2.76055, 101.73566, null, "raceway, w1561055754, s 300 m"],

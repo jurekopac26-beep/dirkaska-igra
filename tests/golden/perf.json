@@ -503,6 +503,13 @@
   "maxKverts": 584,
   "jsMs": 1.65
  },
+ "sepang": {
+  "calls": 180,
+  "maxCalls": 226,
+  "kverts": 687,
+  "maxKverts": 850,
+  "jsMs": 1.27
+ },
  "portomoniz": {
   "calls": 208,
   "maxCalls": 246,

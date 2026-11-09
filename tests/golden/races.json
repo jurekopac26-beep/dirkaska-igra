@@ -3698,5 +3698,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "7091ac5c8d60de33935c0c26"
+ },
+ "sepang/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 264.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0fa3116a4aebd90fcc3ae35d"
+ },
+ "sepang/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 285.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0662a6ece5751c30db1971fa"
+ },
+ "sepang/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 229.51,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9526cc596238ce34fd6084fa"
+ },
+ "sepang/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 231.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ea08a0b01ab1653c138b02ca"
+ },
+ "sepang/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 273.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "122d68a628ca5bd7537a8e7d"
  }
 }
