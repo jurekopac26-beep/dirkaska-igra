@@ -4440,8 +4440,8 @@ const World = (function () {
     const H = 26 + 3 * Math.sin(t * 0.21), fx = pk.fx, fz = pk.fz;
     // where it may fly: the camera behind the car (the one camera of a race, upright or on its side as the screen is: Render's chasePose with the player's
     // Oddaljenost and the view's tilt) projects a candidate spot (pkClear); off screen, or clear of the car and the road just ahead on screen; whole in the picture
-    // is nicer, a bit ahead of the car too, and it does not jump around
-    { const R = typeof Render !== 'undefined' ? Render : null, cm = R && R.camera && R.camera.isCamera ? R.camera : null, uc = R && R.cam, up = !cm || cm.aspect < 1, V = PK_V;
+    // is nicer, a bit ahead of the car too, and it does not jump around (no car, the start line: a fixed upright view, not the screen's, so the pose is the same on every screen)
+    { const R = car && typeof Render !== 'undefined' ? Render : null, cm = R && R.camera && R.camera.isCamera ? R.camera : null, uc = R && R.cam, up = !cm || cm.aspect < 1, V = PK_V;
       const D = (up ? 46 : 30) * (uc ? uc.userZoom || 1 : 1.4) * (1 + 0.25 * clamp(spd / 55, 0, 1)), pt = (up ? 0.98 : 0.9) * (1 - (uc ? uc.userTilt || 0 : 0.3)), cp = Math.cos(pt), sn = Math.sin(pt), b = (up ? 13 : 8.5) - D * cp;
       V.k = 1 / Math.tan((up ? 29 : 23) * Math.PI / 180); V.as = cm ? cm.aspect : 0.46;   // (looking down the car's heading at the road a0 ahead, D m off)
       V.cx = ax + fx * b; V.cy = ay + D * sn; V.cz = az + fz * b; V.fx = fx * cp; V.fy = -sn; V.fz = fz * cp; V.rx = -fz; V.rz = fx; V.ux = fx * sn; V.uy = cp; V.uz = fz * sn;
