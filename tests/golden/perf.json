@@ -516,5 +516,12 @@
   "kverts": 324,
   "maxKverts": 401,
   "jsMs": 1.67
+ },
+ "tuzla": {
+  "calls": 158,
+  "maxCalls": 207,
+  "kverts": 465,
+  "maxKverts": 587,
+  "jsMs": 1.32
  }
 }

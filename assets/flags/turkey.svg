@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1000" width="1500" height="1000">
+  <title>Turkey</title>
+  <!-- Ratio 2:3 (G = 1000). Red with a white crescent and star, by the Turkish Flag Law: the crescent's outer circle 0.5 G from the hoist,
+       0.5 G across; the inner circle 0.0625 G further, 0.4 G across; the star's circle 0.25 G across, 1/3 G past the inner circle,
+       one point towards the hoist. Red: #E30A17, white. -->
+  <rect width="1500" height="1000" fill="#E30A17"/>
+  <circle cx="500" cy="500" r="250" fill="#FFFFFF"/>
+  <circle cx="562.5" cy="500" r="200" fill="#E30A17"/>
+  <polygon fill="#FFFFFF" points="695.83,500.00 782.20,471.94 782.20,381.12 835.58,454.59 921.96,426.53 868.58,500.00 921.96,573.47 835.58,545.41 782.20,618.88 782.20,528.06"/>
+</svg>

@@ -1911,5 +1911,33 @@
    "lifeShadow:MeshBasicMaterial": "e6cdc8e9",
    "life:MeshBasicMaterial": "779ba707"
   }
+ },
+ "tuzla": {
+  "meshes": 676,
+  "verts": 857984,
+  "instances": 6221,
+  "props": 111,
+  "crowd": 28,
+  "world": "aaa65e5",
+  "propsHash": "f9b10415",
+  "floor": "d84112e/10696",
+  "groups": {
+   "-:MeshLambertMaterial": "e6aaa93f",
+   "-:MeshBasicMaterial": "46ac5514",
+   "tuzla service roads:MeshLambertMaterial": "3edd9bce",
+   "crowd:MeshLambertMaterial": "4580cdf9",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "2358d438",
+   "ao:MeshBasicMaterial": "68c05849",
+   "roadwear:MeshLambertMaterial": "56b6e0e2",
+   "worn:MeshLambertMaterial": "77538913",
+   "brakeBoards:MeshLambertMaterial": "6fd3b531",
+   "life:MeshLambertMaterial": "71545ac3",
+   "lifeShadow:MeshBasicMaterial": "14539319",
+   "life:MeshBasicMaterial": "ca99c351",
+   "people:MeshLambertMaterial": "646418b6",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "e7e9ff45"
+  }
  }
 }

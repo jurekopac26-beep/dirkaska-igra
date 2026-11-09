@@ -33,7 +33,7 @@
     const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const x = c.getContext('2d');
     const cell = (k, bg, fg, txt, px, stripe) => { const cx = (k % 4) * 256, cy = Math.floor(k / 4) * 64; x.fillStyle = bg; x.fillRect(cx, cy, 256, 64); if (stripe) { x.fillStyle = stripe; x.fillRect(cx, cy + 56, 256, 8); x.fillRect(cx, cy, 256, 4); }
       x.fillStyle = fg; x.font = '900 ' + px + 'px Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, cx + 128, cy + 33, 240); };
-    const AT = LK.at, nb = LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a'];   // (Bathurst's numbers bottle green and gold)
+    const AT = LK.at, nb = LK.numC || (LK.ban === RB_BAN ? ['#1c2856', '#fff', '#e2202c'] : ['#0b3b2a', '#fff', '#f2c21a']);   // (Bathurst's numbers bottle green and gold; LK.numC: a world's own, Tuzla's)
     for (let k = 1; k <= LK.nums; k++) cell(AT.num + k - 1, nb[0], nb[1], String(k), 52, nb[2]);
     ['300', '200', '100'].forEach((t, k) => cell(AT.brake + k, '#f4f4f0', '#111', t, 50, '#111'));
     LK.ban.forEach(([t, bg, fg, st], k) => cell(AT.ban + k, bg, fg, t, t.length > 10 ? 30 : 38, st));
