@@ -1229,14 +1229,17 @@ try {
       h2.ring.held && h2.ring.p < 0 && last(w5).id === 'spa' && idle(last(w5)) && last(w5).p === 0 && !h3.ring.held && a5.id === 'spa' && idle(a5.ring), JSON.stringify({ h2: h2.ring, end: last(w5), h3: h3.ring, a5: a5.ring }));
     // the weather's row on the card: the choice slides to its first place, the others after it in their order
     await page.waitForTimeout(450);   // (the tap a swipe ends with: not a tap for 400 ms)
+    // (that it slid is told by the slides' own event, transitionrun of a button's transform, counted from before the tap, not by the transform
+    // read in flight after it: on a machine without a graphics chip Snow's first frames are long, the game's world toned for winter, and
+    // two of them can take all of the slide's 300 ms, so that the first read finds it over, none, though it was)
+    await ev(page, 'window.__wxRun = 0; window.__wxL = (e) => { if (e.propertyName === "transform" && e.target.matches(".wxv > [data-act^=\\"weather:\\"]")) window.__wxRun++; }; root.addEventListener("transitionrun", window.__wxL);');
     await page.click('#track-stage .wxv .w-snow');
-    const slid = await ev(page, 'return getComputedStyle(root.querySelector("#track-stage .wxv .w-snow")).transform;');
-    // (its 300 ms, from the frame after the tap: on a machine without a graphics chip Snow's first frames are long, the game's world toned
-    // for winter, and the slide begins late; so until it is over, 5 s at most)
-    await page.waitForFunction(() => [...document.getElementById('menu-host').shadowRoot.querySelectorAll('#track-stage .wxv > [data-act^="weather:"]')].every(b => getComputedStyle(b).transform === 'none'), null, { timeout: 5000 }).catch(() => null);
+    // (the slide's 300 ms, from the frame after the tap: until it is over, 5 s at most)
+    await page.waitForFunction(() => window.__wxRun > 0 && [...document.getElementById('menu-host').shadowRoot.querySelectorAll('#track-stage .wxv > [data-act^="weather:"]')].every(b => getComputedStyle(b).transform === 'none'), null, { timeout: 5000 }).catch(() => null);
+    const slid = await ev(page, 'root.removeEventListener("transitionrun", window.__wxL); return window.__wxRun;');
     const wr = await ev(page, 'return [...root.querySelectorAll("#track-stage .wxv > [data-act^=\\"weather:\\"]")].map(b => [b.dataset.act, b.getAttribute("aria-pressed"), b.getBoundingClientRect().left, getComputedStyle(b).transform]);');
     T.check('the weather chosen (Snow) slides to the first place of its row, the others after it in their order (Dry, Rain, Changing, Storm); then nothing moving',
-      /^matrix/.test(slid) && [...wr].sort((a, b) => a[2] - b[2]).map(b => b[0]).join() === 'weather:snow,weather:dry,weather:rain,weather:change,weather:storm' && wr.find(b => b[0] === 'weather:snow')[1] === 'true' && wr.every(b => b[3] === 'none'), JSON.stringify({ slid, wr }));
+      slid > 0 && [...wr].sort((a, b) => a[2] - b[2]).map(b => b[0]).join() === 'weather:snow,weather:dry,weather:rain,weather:change,weather:storm' && wr.find(b => b[0] === 'weather:snow')[1] === 'true' && wr.every(b => b[3] === 'none'), JSON.stringify({ slid, wr }));
     // the Earth opened in a turn: the turn done at once (the next track), no old screen left over it; the screen rests under the Earth. (Opened
     // as the turn begins, before its frames: a machine without a graphics chip, as the tests', can take longer than the turn's 300 ms for a
     // few of them, a flag's edge read the first time, flagFill, a second or more, and the turn would be over before the Earth came)
