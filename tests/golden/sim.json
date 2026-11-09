@@ -5376,15 +5376,15 @@
   }
  },
  "portomoniz/car/cs": {
-  "digest": "a61b61c7e302422bbfab46cf",
-  "lead": 1724.1,
+  "digest": "6c9069ab3e9fa5c193d8c9e5",
+  "lead": 1738.5,
   "car0": [
-   559.85,
-   -323.82
+   525.73,
+   -379.35
   ],
   "cover": {
-   "dmg": 1,
-   "loose": 6,
+   "dmg": 0.62,
+   "loose": 4,
    "rescues": 0,
    "repairs": 0
   }
@@ -5474,16 +5474,16 @@
   }
  },
  "seoul/car/cs": {
-  "digest": "d2e5ca32c32575cd0a2024ef",
-  "lead": 1817,
+  "digest": "6b68a6947e0ccb367d8443ed",
+  "lead": 1820.2,
   "car0": [
-   -954.76,
-   -344.44
+   -1068.01,
+   -468.97
   ],
   "cover": {
-   "dmg": 0.89,
-   "loose": 3,
-   "rescues": 1,
+   "dmg": 0.46,
+   "loose": 1,
+   "rescues": 0,
    "repairs": 0
   }
  },

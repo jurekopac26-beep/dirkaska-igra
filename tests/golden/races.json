@@ -2742,12 +2742,12 @@
  "portomoniz/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 133.05,
+  "winner": 132.24,
   "spins": 0,
-  "walls": 2,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "30e0c724d86b0b4c8f5de47a"
+  "digest": "3cfff2cb20509922ffe42631"
  },
  "seoul/cs": {
   "finished": 13,
@@ -2792,12 +2792,12 @@
  "seoul/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 79.17,
+  "winner": 79.06,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "af73ea2d7bcf0393e993779a"
+  "digest": "5db4b9c8c49e9e68ac441b03"
  },
  "espinazo/cs": {
   "finished": 13,

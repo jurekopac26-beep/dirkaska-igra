@@ -63,9 +63,10 @@ const SETUPS = {
 // (Ella's formula 4: from 6 s it only grazes the verge, no panel off; its truck 5.5 (zbirna N5, Ella's car is the truck there): from 6 s
 // it only rubs the verge, no panel off; at 5.5 s it hits the bank, three panels off)
 // (Porto Moniz prototype 4: at 6 s it only dents the car, no panel off)
-// (Seoul's rally car 5 and muscle car 6.5: from 6 s the left lock only dents them against the concrete blocks, no panel off)
+// (Seoul's rally car 5 and muscle car 6.5: from 6 s the left lock only dents them against the concrete blocks, no panel off; its truck 5 (zbirna N6,
+// Seoul's car is the truck there): at 4-4.5 s and at 6-6.5 s it only dents or rubs the blocks, no panel off; at 5 s one panel off)
 // (Espinazo del Diablo's rally 5: from 6 s the left lock only dents the car against the guardrail, no panel off)
-const CRASH_AT = { katu: 4.5, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'balea/rally': 6.5, 'portomoniz/lm': 4, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5 };
+const CRASH_AT = { katu: 4.5, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'balea/rally': 6.5, 'portomoniz/lm': 4, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
