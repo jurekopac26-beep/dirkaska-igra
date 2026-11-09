@@ -2499,6 +2499,56 @@
   "nan": false,
   "digest": "2dc971c9e490ad9adc216707"
  },
+ "tuzla/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 250.94,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9ae34f8521d0bf64ca437403"
+ },
+ "tuzla/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 266.87,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "923881a7045ebc1e09743f89"
+ },
+ "tuzla/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 218.76,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0cb9c60a85738d5e9cde3d6d"
+ },
+ "tuzla/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 220.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b8ca94f1532c801205cc7358"
+ },
+ "tuzla/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 246.75,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "519d1ee21fa9a8f53c8a529a"
+ },
  "ella/cs": {
   "finished": 13,
   "cars": 13,

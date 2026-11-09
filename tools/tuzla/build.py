@@ -13,7 +13,23 @@ STEP = J['step']; RAW = np.array(J['line']).reshape(-1, 2); NP = len(RAW)
 # ---- the centre line: OSM's raceway way of the circuit, counter-clockwise as raced (oneway=yes), from the finish line node, its nodes'
 # corners rounded (sigma 5 m) ----
 P = np.stack([ndimage.gaussian_filter1d(RAW[:, 0], 1.0, mode='wrap'), ndimage.gaussian_filter1d(RAW[:, 1], 1.0, mode='wrap')], 1)
-SEG = np.hypot(*(np.roll(P, -1, 0) - P).T); LEN = float(SEG.sum()); CUM = np.r_[0, np.cumsum(SEG)[:-1]]
+
+def smooth_bend(P, s0, s1, sig):
+    # Turn 8, the long left: OSM's nodes thick round its four apexes and 30-60 m chords between them (on the polyline the road straight
+    # there and the apexes sharp: radii of 45 m, where the real corner is one long sweep). Its curvature evened out along it (a Gaussian
+    # of sig m, faded in and out over the first and the last 60 m), the turn's total kept; the line rebuilt from it and its end's miss
+    # (a few metres) spread smoothly along it: both ends and their headings as they were
+    n = len(P); idx = np.arange(int(round(s0 / STEP)), int(round(s1 / STEP)) + 1) % n
+    Q = P[idx]; d = np.diff(Q, axis=0); th = np.unwrap(np.arctan2(d[:, 1], d[:, 0])); ln = np.hypot(d[:, 0], d[:, 1])
+    k = np.diff(th); u = np.arange(len(k)) * STEP; w = np.clip(np.minimum(u, u[-1] - u) / 60.0, 0, 1); w = 0.5 - 0.5 * np.cos(np.pi * w)
+    k2 = k + w * (ndimage.gaussian_filter1d(k, sig / STEP, mode='nearest') - k); k2 += w * (k.sum() - k2.sum()) / w.sum()
+    th2 = np.r_[th[0], th[0] + np.cumsum(k2)]
+    Q2 = np.vstack([Q[0], Q[0] + np.cumsum(np.stack([ln * np.cos(th2), ln * np.sin(th2)], 1), 0)])
+    f = np.r_[0, np.cumsum(ln)] / ln.sum(); f = f * f * (3 - 2 * f); Q2 += np.outer(f, Q[-1] - Q2[-1])
+    P = P.copy(); P[idx] = Q2; return P, float(np.hypot(*(Q2 - Q).T).max())
+
+P, T8_SHIFT = smooth_bend(P, 2140, 2800, 25.0)
+SEG =np.hypot(*(np.roll(P, -1, 0) - P).T); LEN = float(SEG.sum()); CUM = np.r_[0, np.cumsum(SEG)[:-1]]
 
 # ---- the heights: the tool's (the ground model across the road, smoothed, grades at most 12 %), the main straight level, the steepest
 # pieces (the drop into Turn 1 and the descent from Turn 8 to Turn 9) eased to 10 % (the excess spread to the neighbours), then smoothed
@@ -249,7 +265,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     path = os.path.join(ROOT, 'js', 'tracks', 'tuzla.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line);' % (hk.min() - H0, hk.max() - H0),
           'dem', D['nx'], 'x', D['nz'], 'lo %.1f step %.2f' % (D['lo'], D['step']), '; lc', LC['nx'], 'x', LC['nz'], len(LC['rle']), 'chars; buildings', len(SK['bld']) // 6, '; service roads', sum(1 for _ in svc_iter(SK['svc'])))
-    g = np.abs(np.roll(H, -2) - np.roll(H, 2)) / (4 * STEP); print('  steepest grade %.1f %% at s %.0f' % (g.max() * 100, CUM[int(g.argmax())]))
+    g = np.abs(np.roll(H, -2) - np.roll(H, 2)) / (4 * STEP); print('  steepest grade %.1f %% at s %.0f; Turn 8 evened out (the line moved at most %.1f m)' % (g.max() * 100, CUM[int(g.argmax())], T8_SHIFT))
     for k in ('dem', 'lc', 'sk'): print('  %-4s %5d KB' % (k, len(js({'dem': D, 'lc': LC, 'sk': SK}[k]).encode()) // 1024))
 
 if __name__ == '__main__':

@@ -497,10 +497,10 @@
   "jsMs": 1.44
  },
  "tuzla": {
-  "calls": 154,
-  "maxCalls": 204,
-  "kverts": 475,
-  "maxKverts": 592,
-  "jsMs": 1.31
+  "calls": 158,
+  "maxCalls": 207,
+  "kverts": 463,
+  "maxKverts": 584,
+  "jsMs": 1.65
  }
 }
