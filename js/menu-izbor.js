@@ -3,14 +3,15 @@
    A to Z in each (the shown track's country gold, a count on a flag with more tracks), the test tracks apart in a tile of their own at the
    end (they leave the game before its release). A country with one track opens its card at once, one with more its tracks (picture,
    length, climb or corners, type, PENDING, TEST). Over the flags a search (a place or a country, the accents left out: the answer is the
-   tracks) and filters (Circuit, Open road, Rally: the menu's groups; the length): with any of them on, the tracks found instead of the
-   flags. A track's card: its shape from above (MENU.shapes; a test track: its picture), its facts, the player's best and its heights,
+   tracks) and the four categories as filters, each with its icon (Circuit, Open road, Rally: the menu's groups; Ice: a track on ice, the
+   track's def.ice): with any of them on, the tracks found instead of the flags. A track's card: its shape from above (MENU.shapes; a test
+   track: its picture), its facts, the player's best and its heights,
    Select (the screen goes to it) and Race! (the race on it). The progress (a medal for the best place or a time trial's medal time, a tick
    for a track driven, NEW for one not driven yet) on the flags, the rows, the card and the screen's row (menu.js). Tap outside the sheet,
    the cross or Back (the phone's too: the history) to close it.
    MenuIzbor.open(o): o.root the menu's element (#mn in its shadow root), o.cur the id of the track shown, o.list the mode's tracks in the
    list's order ({ id, name, country, flag (the flag's address or ''), img, img2 (a picture for a missing img, or ''), km, alt, corners, group,
-   test, pending, open, lat, lon }),
+   test, pending, open, ice, lat, lon }),
    o.shape(id) (x, y pairs or null), o.heights(id) ({ L, H, real } or null), o.prog(id) (the game's progress: js/game.js MenuBridge.progress),
    o.pick(id), o.race(id), o.buzz(), o.click(). MenuIzbor.close(now), back() (Esc, the pad's B: the layer under it, else closed), isOpen(),
    sheet() (the gamepad's part of the screen), mark(p) (a progress mark: the screen's row); use(o) (the Earth's cards: the rows and the
@@ -73,18 +74,27 @@ window.MenuIzbor = (function () {
   const BACK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const GO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const LOUPE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#c9d6ec" stroke-width="2.6"/><path d="M15.5 15.5l5 5" stroke="#c9d6ec" stroke-width="2.8" stroke-linecap="round"/></svg>';
-  // the filters (kept while the page lives): the menu's groups (js/menu.js: test, rally or descent, open road, circuit) and the length
-  // (within one row either, between the rows both)
-  const F = { q: '', type: new Set(), len: new Set() };
-  const TYPES = [['circuit', 'Circuit'], ['road', 'Open road'], ['rally', 'Rally']], LENS = [['s', '< 3 km', 0, 3], ['m', '3–6 km', 3, 6.0001], ['l', '> 6 km', 6.0001, 1e9]];
-  const NAMES = { circuit: 'Circuit', road: 'Open road', rally: 'Rally' };
-  const typeOf = (t) => NAMES[t.group] || (t.open ? 'Open road' : 'Circuit');
+  // the filters (kept while the page lives): the four categories, each with its icon (the chip's text colour: dark on the gold chip, light on the
+  // others), several on = either. A track is in one of them: Ice (def.ice: the road's surface is ice) before its group (js/menu.js: test, rally
+  // or descent, open road, circuit); a test track in none
+  const F = { q: '', type: new Set() };
+  const LN = 'fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"';
+  const ic = (d) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+  const TYPES = [
+    ['circuit', 'Circuit', ic('<rect x="2.6" y="6.2" width="18.8" height="11.6" rx="5.8" ' + LN + ' stroke-width="2.3"/><circle cx="8.8" cy="6.2" r="2.4" fill="currentColor"/>')],   // (an oval track, its start)
+    ['road', 'Open road', ic('<path d="M9.6 3L3 21M14.4 3L21 21" ' + LN + ' stroke-width="2.3"/><path d="M12 4.2v3M12 10v3.6M12 16.4v4.2" ' + LN + ' stroke-width="2.2"/>')],   // (a road to the horizon)
+    ['rally', 'Rally', ic('<g transform="translate(3.6 -1.2) scale(.84)"><path fill="currentColor" fill-rule="evenodd" d="M2.6 17.4v-3.8c0-.9.6-1.5 1.4-1.7l2.4-.6L8.1 8c.3-.6.8-1 1.5-1h4.6c.6 0 1.1.3 1.5.8l1.9 2.9 2.2.5c1 .2 1.6 1 1.6 2v3.2h-1.1a3.1 3.1 0 0 0-6.2 0H10.1a3.1 3.1 0 0 0-6.2 0H2.6zM9.3 8.5L8 11.1h7.6l-1.8-2.6z"/>' +
+      '<circle cx="7" cy="17.4" r="2.2" fill="currentColor"/><circle cx="17.2" cy="17.4" r="2.2" fill="currentColor"/><path d="M2.4 10.6v-3M2.4 8h4.2" ' + LN + ' stroke-width="1.9"/></g>' +
+      '<circle cx="3.2" cy="19.4" r="2" fill="currentColor"/><circle cx="6.2" cy="21" r="1.4" fill="currentColor"/><circle cx="1.6" cy="15.8" r="1.3" fill="currentColor"/>')],   // (a rally car with its wing, the dust behind it)
+    ['ice', 'Ice', ic('<g ' + LN + ' stroke-width="1.9"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.6 3.9L12 6l2.4-2.1M9.6 20.1L12 18l2.4 2.1M3.3 10.4l3.1-.7-1-3M20.7 13.6l-3.1.7 1 3M3.3 13.6l3.1.7-1 3M20.7 10.4l-3.1-.7 1-3"/></g>')]];   // (the snowflake: the menu's Snow)
+  const NAMES = { circuit: 'Circuit', road: 'Open road', rally: 'Rally', ice: 'Ice' };
+  const catOf = (t) => t.ice ? 'ice' : NAMES[t.group] ? t.group : '';
+  const typeOf = (t) => NAMES[catOf(t)] || (t.open ? 'Open road' : 'Circuit');
   const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const filtered = () => !!(F.q.trim() || F.type.size || F.len.size);
+  const filtered = () => !!(F.q.trim() || F.type.size);
   function match(t) {
     const hay = norm(t.name + ' ' + t.country);
-    return norm(F.q).split(/\s+/).filter(Boolean).every(w => hay.includes(w)) && (!F.type.size || F.type.has(t.group)) &&
-      (!F.len.size || LENS.some(L => F.len.has(L[0]) && t.km >= L[2] && t.km < L[3]));
+    return norm(F.q).split(/\s+/).filter(Boolean).every(w => hay.includes(w)) && (!F.type.size || F.type.has(catOf(t)));
   }
   // the continents (the grid's sections): a country by its name, one not named here by where its tracks are
   const CONT = ['Europe', 'North America', 'South America', 'Africa', 'Asia', 'Oceania'];
@@ -133,20 +143,25 @@ window.MenuIzbor = (function () {
   const backBtn = (what) => '<button class="izb-btn" data-back aria-label="' + what + '">' + BACK + '</button>';
   function tools() {
     return '<div class="izb-tools"><label class="izb-q' + (F.q ? ' has' : '') + '">' + LOUPE + '<input type="search" placeholder="Search a place or a country" value="' + esc(F.q) + '" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search a place or a country">' +
-      '<button class="izb-qx" data-qx aria-label="Clear the search">' + X + '</button></label><div class="izb-chips" role="group" aria-label="Filters">' +
-      TYPES.map(([k, s]) => '<button class="' + (F.type.has(k) ? 'on' : '') + '" data-f="' + k + '" aria-pressed="' + F.type.has(k) + '">' + s + '</button>').join('') + '<i></i>' +
-      LENS.map(([k, s]) => '<button class="' + (F.len.has(k) ? 'on' : '') + '" data-l="' + k + '" aria-pressed="' + F.len.has(k) + '">' + s + '</button>').join('') + '</div></div>';
+      '<button class="izb-qx" data-qx aria-label="Clear the search">' + X + '</button></label><div class="izb-chips" role="group" aria-label="Categories">' +
+      TYPES.map(([k, s, i]) => '<button class="' + (F.type.has(k) ? 'on' : '') + '" data-f="' + k + '" aria-pressed="' + F.type.has(k) + '">' + i + '<span>' + s + '</span></button>').join('') + '</div></div>';
   }
   function grid() {
     const C = countries(), n = C.reduce((a, c) => a + c.ids.length, 0);
     return head('Choose a country', C.length + (C.length === 1 ? ' country · ' : ' countries · ') + tracks(n)) + tools() + '<div class="izb-body in">' + gridBody() + '</div>';
+  }
+  // nothing found: a category with no track in this list at all (Ice, until the first ice track; Rally in a mode without rally tracks) says so, never "yet"; else try another
+  function none() {
+    const names = TYPES.filter(([k]) => F.type.has(k)).map(([k, s]) => s.toLowerCase());
+    if (!F.q.trim() && names.length && !o.list.some(t => F.type.has(catOf(t)))) return 'No ' + names.join(' or ') + ' tracks here.';
+    return 'No track found.<br>Try another place or filter.';
   }
   // the flags by continent and the test tracks' tile, or (a search or a filter on) the tracks found
   function gridBody() {
     if (filtered()) {
       const ids = o.list.filter(match).map(t => t.id);
       return ids.length ? '<div class="izb-sub">' + tracks(ids.length) + '</div><div class="izb-list">' + ids.map(id => row(id, true)).join('') + '</div>'
-        : '<p class="izb-none">No track found.<br>Try another place or filter.</p>';
+        : '<p class="izb-none">' + none() + '</p>';
     }
     const C = countries(), cur = byId(o.cur), curC = cur && !cur.test ? cur.country || cur.name : null, by = CONT.map(() => []);
     for (const c of C) by[contOf(c)].push(c);
@@ -253,10 +268,10 @@ window.MenuIzbor = (function () {
     if (e.target.classList.contains('izb-dim') || (b && b.hasAttribute('data-x'))) { o.click(); return close(); }
     if (!b) return;
     if (b.hasAttribute('data-back')) { o.click(); NAZAJ.drop('izbor', 1); return up(); }
-    if (b.dataset.f || b.dataset.l) {
-      o.click(); const S = b.dataset.f ? F.type : F.len, k = b.dataset.f || b.dataset.l;
-      if (S.has(k)) S.delete(k); else S.add(k);
-      b.classList.toggle('on', S.has(k)); b.setAttribute('aria-pressed', S.has(k)); return refresh();
+    if (b.dataset.f) {
+      o.click(); const k = b.dataset.f;
+      if (F.type.has(k)) F.type.delete(k); else F.type.add(k);
+      b.classList.toggle('on', F.type.has(k)); b.setAttribute('aria-pressed', F.type.has(k)); return refresh();
     }
     if (b.hasAttribute('data-qx')) { e.preventDefault(); o.click(); const i = el.querySelector('.izb-q input'); i.value = F.q = ''; i.parentNode.classList.remove('has'); refresh(); return; }
     if (b.dataset.c) {

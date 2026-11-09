@@ -1167,10 +1167,10 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .izb-qx svg { width: 14px; height: 14px; }
 .izb-q.has .izb-qx { display: flex; }
 .izb-chips { display: flex; gap: 6px; }
-.izb-chips button { flex: 1 1 auto; height: 30px; padding: 0 4px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .05); color: #dfe8f6;
+.izb-chips button { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 5px; height: 30px; padding: 0 6px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .05); color: #dfe8f6;
   font: 800 italic 12px/1 var(--f-ui); white-space: nowrap; }
+.izb-chips button svg { flex: 0 0 auto; width: 16px; height: 16px; }   /* (the category's icon: the chip's text colour) */
 .izb-chips button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); border-color: #fff0b0; color: #1b1404; box-shadow: 0 0 8px rgba(255, 198, 41, .35); }
-.izb-chips i { flex: 0 0 1.5px; margin: 5px 2px; border-radius: 1px; background: rgba(255, 255, 255, .2); }
 .izb-ct { display: flex; align-items: center; gap: 8px; margin: 16px 0 10px; font: 800 italic 12.5px/1 var(--f-ui); letter-spacing: 1.2px; color: var(--lbl); text-transform: uppercase; }
 .izb-ct:first-child { margin-top: 4px; }
 .izb-ct small { font: 700 11px/1 var(--f-ui); letter-spacing: 0; color: rgba(159, 179, 214, .65); }
@@ -1217,7 +1217,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .izb-sel { flex: 0 0 36%; border: 1.5px solid rgba(255, 255, 255, .35); background: linear-gradient(180deg, var(--steel1), var(--steel2)); font: 900 italic 17px/1 var(--f-ui); }
 .izb-race { flex: 1 1 auto; border: 1px solid rgba(255, 140, 120, .55); background: linear-gradient(180deg, var(--curb-hi), #e0231f 55%, var(--curb-lo));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 var(--curb-sh); font: 900 italic 24px/1 var(--f-ui); text-shadow: 0 2px 0 rgba(120, 0, 0, .45); }
-@media (max-width: 380px) { .izb-chips { gap: 4px; } .izb-chips button { padding: 0 2px; font-size: 11px; } .izb-chips i { margin: 5px 1px; } .izb-shape { flex-basis: 136px; } .izb-facts b { font-size: 19px; } }
+@media (max-width: 380px) { .izb-chips { gap: 4px; } .izb-chips button { gap: 3px; padding: 0 3px; font-size: 11px; } .izb-chips button svg { width: 15px; height: 15px; } .izb-shape { flex-basis: 136px; } .izb-facts b { font-size: 19px; } }
 @media (max-height: 700px) and (orientation: portrait) { .izb-shape { height: 120px; } .izb-hg { height: 66px; } .izb-hg svg { top: 20px; height: 28px; } .izb-btns button { height: 48px; } .izb-tc { gap: 10px; } }
 @media (orientation: landscape) {
   .izb-sheet { left: auto; top: 0; width: min(412px, 64%); max-height: none; padding-right: var(--sr); border-radius: 18px 0 0 18px; transform: translateX(100%);

@@ -424,7 +424,7 @@ try {
         dlg: q(".izb-sheet") && q(".izb-sheet").getAttribute("role") + "/" + q(".izb-sheet").getAttribute("aria-modal"),
         cts: all(".izb-ct").map(e => e.firstChild.textContent), secs: all(".izb-ct").map(e => [...e.nextElementSibling.querySelectorAll(".izb-c")].map(c => c.dataset.c != null ? c.dataset.c : "TEST")), tiles: all(".izb-c").map(e => [e.dataset.c != null ? e.dataset.c : "TEST", +(tx(e.querySelector(".n")) || 1), pr(e.querySelector(".izb-pm")), e.classList.contains("on") ? 1 : 0]),
         rows: all(".izb-t").map(e => [e.dataset.t, pr(e.querySelector(".izb-im")), tx(e.querySelector(".bt")) || "", tx(e.querySelector(".tx small")), !!e.querySelector(".izb-mf"), tx(e.querySelector(".tx em")) || ""]),
-        found: tx(q(".izb-sub")), none: tx(q(".izb-none")), chips: all(".izb-chips button[aria-pressed=true]").map(e => e.dataset.f || e.dataset.l),
+        found: tx(q(".izb-sub")), none: tx(q(".izb-none")), chips: all(".izb-chips button[aria-pressed=true]").map(e => e.dataset.f),
         card: q(".izb-tc") ? { shape: q(".izb-shape svg path.r") ? q(".izb-shape svg path.r").getAttribute("d") : q(".izb-shape.pic img") ? "pic" : "", facts: all(".izb-facts > div").map(e => tx(e.querySelector("small")) + ":" + tx(e.querySelector("b"))),
           best: pr(q(".izb-best")) + "|" + tx(q(".izb-best small")) + "|" + tx(q(".izb-best b")), graph: !!q(".izb-hg svg path.l"), btns: all(".izb-btns button").map(tx) } : null };`;
     const view = () => ev(page, VIEW);
@@ -481,20 +481,39 @@ try {
     T.check('the search: "nurburg" finds Nürburg (its flag before it), "japan" its tracks, "spa belg" Spa, "atlantis" nothing (No track found); the arrow keys stay the search\'s; the cross clears it, the countries back',
       JSON.stringify(s1.rows.map(r => r[0])) === '["nring"]' && s1.found === '1 track' && s1.rows[0][4] && s1.rows[0][1] === 'done:' && s1k === 'spa:true' && JSON.stringify(s2.rows.map(r => r[0])) === JSON.stringify(jp.rows.map(r => r[0])) &&
       JSON.stringify(s3.rows.map(r => r[0])) === '["spa"]' && !s4.rows.length && /^No track found/.test(s4.none || '') && s5.tiles.length === g.tiles.length && s5q === '', JSON.stringify({ s1: s1.rows, s1k, s2: s2.rows.map(r => r[0]), s3: s3.rows.map(r => r[0]), s4: s4.none, s5: s5.tiles.length }));
-    // the filters: a type (Circuit), two types (either), a type and a length (both); off again: the countries
-    const want = (types, lens) => page.evaluate(([types, lens]) => Menu.debug().list.filter(id => {
-      const d = Core.TRACKS.find(x => x.id === id), gr = d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit', km = MENU.lens[id] / 1000;
-      return (!types.length || types.includes(gr)) && (!lens.length || lens.some(l => l === 's' ? km < 3 : l === 'm' ? km >= 3 && km < 6.0001 : km >= 6.0001));
-    }), [types, lens]);
-    await page.click('.izb-chips [data-f="circuit"]'); const f1 = await view(), w1 = await want(['circuit'], []);
-    await page.click('.izb-chips [data-f="road"]'); const f2 = await view(), w2 = await want(['circuit', 'road'], []);
-    await page.click('.izb-chips [data-f="circuit"]'); await page.click('.izb-chips [data-l="s"]'); const f3 = await view(), w3 = await want(['road'], ['s']);
-    await page.click('.izb-chips [data-f="road"]'); await page.click('.izb-chips [data-l="s"]'); const f4 = await view();
+    // the filters: only the four categories (Circuit, Open road, Rally, Ice, no length), each a button with its icon; one on (Circuit: the
+    // circuits, no test track), two on (either), Rally, Ice (no ice track in the game yet: it says so); all off: the countries again
+    const cats = await ev(page, 'return [...root.querySelectorAll(".izb-chips button")].map(e => e.dataset.f + ":" + e.textContent.trim() + ":" + (e.querySelector("svg") ? "icon" : "-"));');
+    const want = (types) => page.evaluate((types) => Menu.debug().list.filter(id => {
+      const d = Core.TRACKS.find(x => x.id === id), gr = d.ice ? 'ice' : d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
+      return !types.length || types.includes(gr);
+    }), types);
+    const tap = async (...ks) => { for (const k of ks) await page.click(`.izb-chips [data-f="${k}"]`); return view(); };
+    const f1 = await tap('circuit'), w1 = await want(['circuit']);
+    const f2 = await tap('road'), w2 = await want(['circuit', 'road']);
+    const f3 = await tap('circuit', 'road', 'rally'), w3 = await want(['rally']);
+    const f4 = await tap('rally', 'ice'), w4 = await want(['ice']);
+    const f6 = await tap('rally'), w6 = await want(['rally', 'ice']);
+    const f5 = await tap('rally', 'ice');
     const ids = (v) => JSON.stringify(v.rows.map(r => r[0]));
-    T.check('the filters: Circuit the circuits (no test track), Circuit and Open road either, Open road and < 3 km both (or No track found), all off the countries again',
-      JSON.stringify(f1.chips) === '["circuit"]' && ids(f1) === JSON.stringify(w1) && w1.length >= 3 && f1.rows.every(r => r[5] !== 'TEST') && ids(f2) === JSON.stringify(w2) && w2.length > w1.length &&
-      JSON.stringify(f3.chips) === '["road","s"]' && (w3.length ? ids(f3) === JSON.stringify(w3) : !f3.rows.length && /^No track found/.test(f3.none || '')) && !f4.chips.length && f4.tiles.length === g.tiles.length,
-      JSON.stringify({ f1: f1.rows.map(r => r[0]), f2: f2.rows.length, f3: f3.rows.map(r => r[0]), f3n: f3.none, f4: f4.tiles.length }));
+    // a category with no track in the list says "No <it> tracks here." ("yet" would be false: a mode's list can lack rally tracks the game has)
+    T.check('the filters: four buttons Circuit, Open road, Rally, Ice, each with an icon (no length filter); Circuit the circuits (no test track), Circuit and Open road either, Rally, Ice says "No ice tracks here." (no ice track in the game), Rally and Ice either, all off the countries again',
+      JSON.stringify(cats) === '["circuit:Circuit:icon","road:Open road:icon","rally:Rally:icon","ice:Ice:icon"]' && JSON.stringify(f1.chips) === '["circuit"]' && ids(f1) === JSON.stringify(w1) && w1.length >= 3 && f1.rows.every(r => r[5] !== 'TEST') &&
+      ids(f2) === JSON.stringify(w2) && w2.length > w1.length && JSON.stringify(f3.chips) === '["rally"]' && (w3.length ? ids(f3) === JSON.stringify(w3) : !f3.rows.length && f3.none === 'No rally tracks here.') &&
+      JSON.stringify(f4.chips) === '["ice"]' && !w4.length && !f4.rows.length && f4.none === 'No ice tracks here.' &&
+      JSON.stringify(f6.chips) === '["rally","ice"]' && (w6.length ? ids(f6) === JSON.stringify(w6) : !f6.rows.length && f6.none === 'No rally or ice tracks here.') && !f5.chips.length && f5.tiles.length === g.tiles.length,
+      JSON.stringify({ cats, f1: f1.rows.map(r => r[0]), f2: f2.rows.length, f3: f3.rows.map(r => r[0]), f3n: f3.none, f4n: f4.none, f6: f6.rows.map(r => r[0]), f6n: f6.none, f5: f5.tiles.length }));
+    // an ice track (def.ice; none in the game yet, so Nürburg's flag is set here and the list opened again): Ice finds it alone, its type is
+    // "Ice", Circuit does not, a search finds it without a filter as before; the flag off again, the list as the next steps expect it
+    await page.evaluate(() => { Core.TRACKS.find(x => x.id === 'nring').ice = true; MenuIzbor.close(true); });
+    await page.waitForFunction(() => !(history.state && history.state.nazaj), null, { timeout: 5000 }).catch(() => null);
+    await page.click('.trow .flag button'); await IZ(1);
+    const i1 = await tap('ice'), i2 = await tap('ice', 'circuit');
+    await tap('circuit'); await page.fill('.izb-q input', 'nurburg'); const i3 = await view(); await page.click('.izb-qx');
+    await page.evaluate(() => { delete Core.TRACKS.find(x => x.id === 'nring').ice; });
+    T.check('an ice track (Nürburg flagged): Ice finds it alone (its type "Ice"), Circuit does not, the search "nurburg" finds it without a filter',
+      JSON.stringify(i1.rows.map(r => r[0])) === '["nring"]' && / · Ice$/.test(i1.rows[0][3]) && !i1.none && !i2.rows.some(r => r[0] === 'nring') && i2.rows.length >= 3 && JSON.stringify(i3.rows.map(r => r[0])) === '["nring"]',
+      JSON.stringify({ i1: i1.rows.map(r => r.slice(0, 4)), i2: i2.rows.length, i3: i3.rows.map(r => r[0]) }));
     // Select: a country of several tracks (the list's first: Canada's other two became test tracks on 8. 11. 2026, #379), a track's card,
     // Select: the screen goes to it, the list closed and its steps gone
     const several = (countryTiles.find(t => t[1] >= 2) || [])[0];
@@ -1111,14 +1130,14 @@ try {
     await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });   // (on: slid in)
     const QL = `const rc = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; }, q = (s) => root.querySelector(".izb " + s), qa = (s) => [...root.querySelectorAll(".izb " + s)];
       return { W: innerWidth, H: innerHeight, sh: rc(q(".izb-sheet")), body: rc(q(".izb-body")), x: rc(q(".izb-head [data-x]")), bk: rc(q(".izb-head [data-back]")), q: rc(q(".izb-q")),
-        cut: qa(".izb-c b, .izb-t .tx b").filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent), tiles: qa(".izb-c").map(rc), chips: qa(".izb-chips button").map(rc), rows: qa(".izb-t").map(rc), btns: qa(".izb-btns button").map(rc) };`;
+        cut: qa(".izb-c b, .izb-t .tx b, .izb-chips button").filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent), tiles: qa(".izb-c").map(rc), chips: qa(".izb-chips button").map(rc), icons: qa(".izb-chips button svg").map(rc), rows: qa(".izb-t").map(rc), btns: qa(".izb-btns button").map(rc) };`;
     const q1 = await ev(page, QL);
     const portrait = q1.W < q1.H, within = (r, b) => r.l >= b.l - 0.5 && r.r <= b.r + 0.5;
     const placed = (s) => portrait ? Math.abs(s.l) < 1 && Math.abs(s.r - q1.W) < 1 && Math.abs(s.b - q1.H) < 1 && s.t >= 39   // (as high as its view needs: the countries most of the screen)
       : Math.abs(s.r - q1.W) < 1 && Math.abs(s.t) < 1 && Math.abs(s.b - q1.H) < 1 && Math.abs(s.w - Math.min(412, q1.W * 0.64)) < 2;
-    T.check(`${w}x${h}: the quick list ${portrait ? 'a sheet from the bottom, the screen\'s width (the track step seen over it)' : 'a panel at the right, the screen\'s height'}; the cross 44 px or more; the search, the filters and the flags inside it; no country\'s name cut`,
-      placed(q1.sh) && (!portrait || q1.sh.t <= q1.H * 0.2) && q1.x.w >= 44 && q1.x.h >= 44 && within(q1.x, q1.sh) && within(q1.q, q1.sh) && q1.chips.length === 6 && q1.chips.every(c => within(c, q1.sh) && c.h >= 26) && q1.tiles.length >= 10 && q1.tiles.every(t => within(t, q1.sh)) && !q1.cut.length,
-      JSON.stringify({ sh: q1.sh, x: q1.x, q: q1.q, chips: q1.chips.map(c => [Math.round(c.l), Math.round(c.r)]), cut: q1.cut }));
+    T.check(`${w}x${h}: the quick list ${portrait ? 'a sheet from the bottom, the screen\'s width (the track step seen over it)' : 'a panel at the right, the screen\'s height'}; the cross 44 px or more; the search, the four category buttons (each with its icon) and the flags inside it; no country\'s name or button label cut`,
+      placed(q1.sh) && (!portrait || q1.sh.t <= q1.H * 0.2) && q1.x.w >= 44 && q1.x.h >= 44 && within(q1.x, q1.sh) && within(q1.q, q1.sh) && q1.chips.length === 4 && q1.icons.length === 4 && q1.icons.every(i => i.w >= 14 && i.h >= 14) && q1.chips.every(c => within(c, q1.sh) && c.h >= 26) && q1.tiles.length >= 10 && q1.tiles.every(t => within(t, q1.sh)) && !q1.cut.length,
+      JSON.stringify({ sh: q1.sh, x: q1.x, q: q1.q, chips: q1.chips.map(c => [Math.round(c.l), Math.round(c.r)]), icons: q1.icons.map(i => [Math.round(i.w), Math.round(i.h)]), cut: q1.cut }));
     await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
     const q2 = await ev(page, QL);
     await page.click('.izb-t[data-t="suzuka"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
