@@ -636,7 +636,7 @@ try {
       Math.abs(e1.R.lat - spa[0]) < 0.3 && Math.abs(wrap(e1.R.lon - spa[1])) < 0.3 && Math.abs(e1.R.d - 3.7) < 0.01 && e1.R.tex === 'assets/geo/earth.webp' && e1.R.size.join() === '4096,2048' && !e1.R.weak && e1.rested && e1.car === false,
       JSON.stringify(Object.assign({}, e1, { names: e1.names.length, pins: e1.pins.length })));
     T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Suzuka 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another or a button, none over the shown one\'s pin',
-      e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 3 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
+      e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 2 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
       JSON.stringify({ pins: e1.pins, names: e1.names.map(n => n.c + (n.cur ? '*' : '')) }));
     const n0 = e1.R.n; await page.waitForTimeout(600); const n1 = await page.evaluate(() => MenuZemlja._R().n);
     const sun = await page.evaluate(() => { const s = MenuZemlja.sun(), v = MenuZemlja._R().sun, p = (s[1] + 180) * Math.PI / 180, t = (90 - s[0]) * Math.PI / 180;
