@@ -15,7 +15,7 @@ Kazalo posodobi, ko dodaš ali premakneš kaj, kar je tu naštetega.
 - **Orodje za napake:** `js/napake.js`, `css/napake.css` (»Orodje za napake«, imena v poročilih: »Imena v poročilih o napakah«); posnetek `.rrp`: `tools/posnetek.mjs`.
 - **Testi:** `tests/run.js` (`npm run test:related`), »Testi po temah«, opisi v `tests/README.md`, reference `tests/golden/`.
 - **Orodja:** `tools/stamp.js` (žigi), `tools/spoji-main.mjs` (spoj z mehanskimi spori), `tools/shot.mjs` (posnetki proge), `tools/obremenitev.mjs`, `tools/carshots.mjs`, `tools/menu-*.mjs`, `tools/misija-slika.mjs`, `tools/zaslon-mesto.mjs`.
-- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/vrsta.md` (skupna vrsta za `main` vseh treh računov), `docs/krog-testov.md` (krog testov na GitHubu: deli, ista koda samo enkrat), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/dez-sneg.md` (dež in sneg: oprijem in zavore, načrtovano), `docs/vreme-med-dirko.md` (vreme med dirko: ploha sredi dirke, cesta se zmoči in posuši; načrtovano, koda za »Dež in sneg«), `docs/sovoznik.md` (sovoznik na cestah: napovedi ovinkov z glasom in napisom, načrtovano), `docs/lestvica-prijateljev.md` (lestvica prijateljev prek povezave, načrt), `docs/neskoncna-voznja.md` (neskončna vožnja v prometu: točke za hitrost in tesna prehitevanja, načrtovano), `docs/novi-avti.md` (novi avti: 5 sodobnih izmišljenih vozil, načrt), `docs/avti-kolibri.md` (avti na raven KOLIBRIJA: mesta za vse dele iz garaže na 32 avtih, kdo dela kaj, predaja po skupinah), `docs/zvoki-okolja.md` (zvoki okolja ob progi: ptice, voda, zvonovi, veter; načrtovano), `docs/novosti-e.md` (videz avta povsod in beg pred policijo s prijatelji, načrtovano), `docs/table-pred-ograjo.md` (table pred ograjo na pravih progah), `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
+- **Načrti in pravila:** `docs/vprasanja.md` (stran Odločitve, zbiranje), `docs/varcevanje.md` (žetoni, okolje »Koordinacija«, čakanje), `docs/vrsta.md` (skupna vrsta za `main` vseh treh računov), `docs/krog-testov.md` (krog testov na GitHubu: deli, ista koda samo enkrat), `docs/orodje-za-napake.md`, `docs/misije.md`, `docs/dez-sneg.md` (dež in sneg: oprijem in zavore, načrtovano), `docs/vreme-med-dirko.md` (vreme med dirko: ploha sredi dirke, cesta se zmoči in posuši; načrtovano, koda za »Dež in sneg«), `docs/sovoznik.md` (sovoznik na cestah: napovedi ovinkov z glasom in napisom, načrtovano), `docs/lestvica-prijateljev.md` (lestvica prijateljev prek povezave, načrt), `docs/svetovna-lestvica.md` (svetovna lestvica na lastnem strežniku: ponovitev vožnje v Node, vzdevki, zasebnost, Data safety; načrt), `docs/neskoncna-voznja.md` (neskončna vožnja v prometu: točke za hitrost in tesna prehitevanja, načrtovano), `docs/novi-avti.md` (novi avti: 5 sodobnih izmišljenih vozil, načrt), `docs/avti-kolibri.md` (avti na raven KOLIBRIJA: mesta za vse dele iz garaže na 32 avtih, kdo dela kaj, predaja po skupinah), `docs/zvoki-okolja.md` (zvoki okolja ob progi: ptice, voda, zvonovi, veter; načrtovano), `docs/novosti-e.md` (videz avta povsod in beg pred policijo s prijatelji, načrtovano), `docs/table-pred-ograjo.md` (table pred ograjo na pravih progah), `docs/igra.md` (opis igre), `README.md` (proge, zasluge, nova proga).
 
 ## Datoteke
 
@@ -192,7 +192,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 |---|---|---|---|
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
-| bangsaen | Bang Saen, Tajska | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
+| *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
 | bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`) in `js/world-bathurst.js` (lastni deli: evkalipti `btGumGeo`, kenguruji `auRoos`; videz v `RB_LOOK` prek `API.rbLook`: tekstura pašnika `btGrassTex`, obrabljen rob ob asfaltu `edge`, usek pri 4. zavoju `cut` in breg nad njim `cutBank`) |
 | *beartooth* | *Beartooth, ZDA (test)* | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
 | *bigsur* | *Big Sur, ZDA (test)* | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
@@ -214,7 +214,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | monaco | Monte Carlo, Monako (testna, `test: true`) | monaco | splošni `build()` (`MC_TER`) |
 | *monterey* | *Monterey, ZDA (test)* | monterey | `js/world-monterey.js` (`buildMonterey`; boksi levo ob ciljni ravnini po `def.pit`: šotori ekip `CAN0`–`CAN1`, ravna tla pod njimi `pitW` prek `P.pad`, `out.pitBoxes`; pas ob progi in šopi trave v barvi suhe trave: `colMod`, `out.lawn` za `verge` v `js/world.js`) |
 | montreal | Montréal, Kanada | montreal | `js/world-montreal.js` |
-| mountbuller | Mount Buller, Avstralija | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| *mountbuller* | *Mount Buller, Avstralija (test)* | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
@@ -225,13 +225,13 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
 | *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
-| sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
+| *sani* | *Sani Pass, Južna Afrika (test)* | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
-| toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
+| *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |
-| troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
+| *troisrivieres* | *Trois-Rivières, Kanada (test)* | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
 | *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
@@ -264,7 +264,7 @@ Pomočniki koridorja (Vršič, Los Caracoles) so skupni več gorskim cestam; sku
 - **Lestvica prijateljev:** `tests/lestvica.test.js` (Node: paketi, podpisi, povezava, združevanje, meja), `browser/lestvica.test.mjs` (dva telefona: povezava tja in nazaj, vzdevek, pogled *Friends* pokonci in ležeče, Lestvica, Odstrani, povezava med dirko, rezultati, profil)
 - **Kontrole:** `ctrl.test.mjs`, `pad.test.mjs`
 - **Garaža, sledi, izvoz, umazanija:** `pitkit.test.mjs` (garažna vrata, zastava, stare gume, sledi gum, luč in modra zastava ob izvozu, umazanija); obraba vsake gume `wear.test.js`, pike na HUD-u `hud.test.mjs`, `wear.test.mjs`; dež v postanku `pits.test.js`
-- **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 8 pravih prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
+- **Kamera v boksih in gumbi ob postanku:** `pitcam.test.mjs` (Bathurst pokonci, vseh 5 pravih prog z boksi); okno postanka in kamera `pitstop.test.mjs`; posnetek postanka `pitreplay.test.mjs`; ekipa v sliki `crew.test.mjs`
 - **Rdeča zastava:** `tests/redflag.test.js` (jedro: sprožilec, vrsta v pasu boksov (Bathurst, Avstralija) in na mreži (Marrakesh, Maroko), brez prehitevanja, zaostali za krog, avto v postanku, ponovni štart, kdaj je ni), `tests/browser/redflag.test.mjs` (HUD, radio, komentator, avtopilot, luč izvoza, Posnetek do sem v vrsti)
 - **Pavza (vreme po krogih nad gumbi, postanki, obvestila med pavzo):** `pauseinfo.test.mjs`; **tekmec iz boksov pred tabo:** `pitout.test.mjs`
 - **Kamera:** položaj avta `carlow.test.mjs`, nagib `camtilt.test.mjs`, tresenje kamere `camshake.test.mjs` (nastavitve `camShake`, `camLand`, `camKerb`, `camMis`; `Render.shake(a, vrsta)`, `Render.cam.shOn`)

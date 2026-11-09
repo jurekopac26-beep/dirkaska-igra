@@ -159,7 +159,7 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 
 | Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026) |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026); od 5. 11. 2026 testna proga (`test: true`, odločitev uporabnika, #379), gradniki ostanejo |
 | A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | preneseno: Medeu je B8 v `docs/nove-proge-1-0.md` (del 2, skupina N5; potrjeno 8. 11. 2026) |
 | B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | Yungas: ne začni (brez izletne cone, 5. 11. 2026); Ella preneseno: A10 v `docs/nove-proge-1-0.md` (del 2, N5) |
