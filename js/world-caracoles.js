@@ -404,10 +404,8 @@
     const person = (x, z, ro, col) => crowdPut(CR, x, caGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
     const flagCL = (g, x, y, z, rot, h) => {   // a pole with the Chilean flag: white over red, the blue canton with its white star (both faces)
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.8, fh = 1.2, at = (u) => [x + c * (u + 0.06), z + s * (u + 0.06)], y0 = y + h - fh - 0.15;
-      { const [fx, fz] = at(fw / 2); box(g, fx, y0, fz, fw, fh / 2, 0.04, rot, [0.84, 0.13, 0.12]); }
-      { const [fx, fz] = at(fw / 3 + fw / 3); box(g, fx, y0 + fh / 2, fz, fw * 2 / 3, fh / 2, 0.04, rot, [0.96, 0.96, 0.95]); }
-      { const [fx, fz] = at(fw / 6); box(g, fx, y0 + fh / 2, fz, fw / 3, fh / 2, 0.04, rot, [0.04, 0.22, 0.65]); box(g, fx, y0 + fh * 0.7, fz, 0.16, 0.16, 0.06, rot, [0.98, 0.98, 0.98]); }
+      const c = Math.cos(rot), s = Math.sin(rot), r = [0.84, 0.13, 0.12], w = [0.96, 0.96, 0.95], b = [0.04, 0.22, 0.65], st = [0.98, 0.98, 0.98];   // (the cloth waves: js/world-zastave.js; the star a square)
+      API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, { grid: [[0, 0.122, 0.211, 1 / 3, 1], [0, 0.167, 0.3, 0.5, 1], [[b, b, b, w], [b, st, b, w], [b, b, b, w], [r, r, r, r]]] }, 1.8, 1.2);
     };
     const truckCols = [[0.85, 0.85, 0.83], [0.72, 0.12, 0.1], [0.12, 0.28, 0.6], [0.9, 0.62, 0.12], [0.16, 0.16, 0.18], [0.24, 0.45, 0.28], [0.95, 0.95, 0.94]];
     const trailerCols = [[0.86, 0.86, 0.84], [0.74, 0.74, 0.72], [0.22, 0.32, 0.5], [0.55, 0.15, 0.12], [0.88, 0.88, 0.86], [0.3, 0.42, 0.3]];
@@ -483,7 +481,7 @@
       arch(sFin, 1, [0.95, 0.95, 0.95], [0.1, 0.1, 0.12]);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = caGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1); }   // (the chequered cloth waves: js/world-zastave.js)
       const sdP = padF.sd, [sx, sz, si] = onSide(sFin + 18, sdP, 3.2), sy = caGround(sx, sz), gs = scen.get(sx, sz), tl = 0.9, W2 = 7, H2 = W2 / 8;   // the Portillo sign: a board on posts leaning back, facing the arriving cars
       for (const o of [-2.9, 2.9]) { const px = sx + T.nx[si] * o, pz = sz + T.nz[si] * o; box(gs, px, sy, pz, 0.26, 1.3, 0.26, T.hd[si], [0.36, 0.24, 0.14]); box(gs, px + T.tx[si] * H2 * Math.sin(tl), sy, pz + T.tz[si] * H2 * Math.sin(tl), 0.26, 1.25 + H2 * Math.cos(tl), 0.26, T.hd[si], [0.36, 0.24, 0.14]); }
       box(gs, sx + T.tx[si] * 0.35, sy - 0.3, sz + T.tz[si] * 0.35, 1.5, 0.65, W2 + 1.1, T.hd[si], [0.62, 0.6, 0.56], [0.7, 0.68, 0.64]);

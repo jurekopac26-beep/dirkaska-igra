@@ -15,7 +15,8 @@
 //    within 0.06 of a glass colour (Render.kitGlassNear)
 //  - in a race (Bakreni gozd: a pit track, the pit crew knows the car), each vehicle as the player and as a rival: the draw calls of its
 //    meshes alone (the rest of the scene hidden, frustum culling and carCull off, one frame, every pass counted as perf.test.mjs does): the player
-//    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
+//    <= 14, a rival <= 9 (a 6x6's two middle wheels, look.wheels.mid, more: 18 / 11, each a mesh as the four, the player's with its
+//    shadow); the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
 //    drawn with its outer shell only; the materials the graphics test
 //    expects ('dirtyCarCg' bodies, 'carCg' paint); no colour that is not glass within 0.06 of a glass colour (the glass glints and breaks by
@@ -85,7 +86,7 @@ try {
   const K1 = await page.evaluate((ids) => ids.map(id => {
     const M = Core.MODELS.find(m => m.id === id), I = Render.kitInfo(id), PT = Core.partsOf(M), noRange = [];
     for (const n in PT) if (PT[n].wh == null && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);
-    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi };
+    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi, mid: I.wheels.mid };
   }), kits.map(m => m.id));
   const badStatus = K1.filter(k => k.look ? k.status !== 'ok' : !/^fallback:look null/.test(k.status)), held = K1.filter(k => !k.look).length;
   T.check(`Render.kitStatus: 'ok' for every vehicle with a look (${K1.length - held}), the place-holders (${held}, look null) drawn as the generic kit hatch`, !badStatus.length && K1.length === kits.length,
@@ -263,14 +264,19 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1, tl: !!(M.trailer && M.trailer.look), tl2: !!(M.trailer && M.trailer.next && M.trailer.next.look) };
     }, m.id);
     R4.push(r);
   }
   const lim = (f, n) => R4.filter(f).map(r => r.id).slice(0, n || 6).join(', ');
   const fmtC = (r) => `${r.id} ${r.pc.calls}/${r.ac.calls}`;
-  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9', R4.length === kits.length && R4.every(r => r.pc.calls <= 14 && r.ac.calls <= 9),
-    R4.filter(r => r.pc.calls > 14 || r.ac.calls > 9).concat(R4).slice(0, 8).map(fmtC).join(', '));
+  // (a 6x6 (look.wheels.mid): its two middle wheels a mesh each as the four, the player's with its shadow: 4 calls more, a rival's 2)
+  // (a semi-trailer's rig, docs/titan-cisterna.md: its trailer 4 more, its body, its lamps, its blob, its shadow; drawn with the tractor, tlDraw;
+  // a road train's second tank 4 more again, tl2Draw, docs/zrcalni-vlak.md)
+  const mid6 = new Set(K1.filter(k => k.mid != null).map(k => k.id)), tlC = (r) => r.tl ? (r.tl2 ? 8 : 4) : 0;
+  const capP = (r) => 14 + tlC(r) + (mid6.has(r.id) ? 4 : 0), capA = (r) => 9 + tlC(r) + (mid6.has(r.id) ? 2 : 0);
+  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9 (a 6x6, wheels.mid: 18 / 11; a semi-trailer\'s rig 4 more each)', R4.length === kits.length && R4.every(r => r.pc.calls <= capP(r) && r.ac.calls <= capA(r)),
+    R4.filter(r => r.pc.calls > capP(r) || r.ac.calls > capA(r)).concat(R4).slice(0, 8).map(fmtC).join(', '));
   T.check('the four wheels exactly on the physics\' hubs (M.a / -M.b, rw, +-hw; the left ones mirrored), one mesh for each wheel part; the player\'s cast shadows, a rival\'s none and <= 160 triangles',
     R4.every(r => !r.why.length && r.aiW), R4.filter(r => r.why.length || !r.aiW).slice(0, 3).map(r => r.id + ': ' + r.why.slice(0, 2).join('; ') + (r.aiW ? '' : ' rival wheels')).join(' | '));
   T.check('the pit crew\'s hubs (crDims) on the wheel meshes (within 1 cm)', R4.every(r => r.crew && r.crew.every(d => Math.abs(d) <= 0.01)),
@@ -427,6 +433,7 @@ try {
       let seed = 5150; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, S = Render.scene, world = S.children.filter(o => !o.isLight && !o.isPoints && !R.cars.some(c => Render.viewOf(c) && Render.viewOf(c).grp === o));
+      const tl0 = P.tl; P.tl = null;   // (a semi-trailer's rig: its trailer off for the pictures (Render's tlDraw hides it): from behind its tank hides the tractor's fire, docs/titan-cisterna.md)
       const vis0 = world.map(o => o.visible); for (const o of world) o.visible = false;   // (the world hidden throughout; the cars, their pieces, the effects (points) drawn)
       const run = (n, mode, fx) => { for (let i = 0; i < n; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, mode, fx ? {} : { noFx: true }); } };
       const keep = window.__pics ? {} : null, pic = (mode, name) => { const c = Render.snapshot(P, mode, 844); if (keep) keep[name] = c.toDataURL('image/png'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
@@ -467,7 +474,7 @@ try {
       const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), cracks = v.crack.filter(q => q && q.visible).length;
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
-      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
+      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; }); P.tl = tl0;
       return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)

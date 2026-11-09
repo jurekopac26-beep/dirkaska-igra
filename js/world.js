@@ -58,9 +58,11 @@ const World = (function () {
   let SHLO = [];
   // a coarser copy of a unit plant or rock for its shadow: its vertices merged on a 3 x 4 x 3 grid over its box (each cell's vertices at
   // their average), the triangles that are left (no repeats); null where it would not save a third of them (small ones)
-  const SHLO_GEO = new Map();
+  const SHLO_GEO = new WeakMap();   // (by the unit shape: a world built again lets the old ones go)
   let SHLO_MAT = null;
   const shloMat = () => SHLO_MAT || (SHLO_MAT = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));   // (a copy's shadow from both its sides: a merged shape may have lost its back)
+  let SHLO_OWN = null;   // (the same for a tree's copies of their own, treeShadow: made under World's own numbers, so the shared one is named where it was)
+  const shloMatOwn = () => SHLO_OWN || (SHLO_OWN = ownRnd(() => new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })));
   function shadowLo(base) {
     if (SHLO_GEO.has(base)) return SHLO_GEO.get(base);
     const P = base.attributes.position, I = base.index, n = I ? I.count : P.count;
@@ -85,7 +87,47 @@ const World = (function () {
         out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setIndex(idx);
       }
     }
+    if (base.userData.treeH > 0 && n > 24) out = treeShadow(base, out);   // (a tree's: a few faces over its crown, in its coarse copy's place; a smaller one casts its own)
     SHLO_GEO.set(base, out); return out;
+  }
+  // a tree's shadow (NIZKA; Drevesa A, docs/drevesa-a.md): instead of its coarse copy an octahedron over its green crown, from the crown's
+  // foot to its top with its waist where the crown is widest (a spruce's near its foot: almost a cone; a beech's in its middle; a hedge's
+  // long and thin), 8 faces; the trunk's thin shadow is left out. In the coarse copy (lo) where there is one, so a seeded race draws the
+  // names it drew; else a copy of its own, its chunks' copies too made under World's own random numbers (userData.own; NIZKA alone)
+  function treeShadow(base, lo) {
+    const P = base.attributes.position, C = base.attributes.color, NB = 5, G = [];
+    for (let i = 0; i < P.count; i++) if (C.getY(i) > C.getX(i) * 1.08 && C.getY(i) > C.getZ(i) * 1.08) G.push(i);
+    if (!G.length) for (let i = 0; i < P.count; i++) G.push(i);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const i of G) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, h = (y1 - y0) || 1, ax = new Float32Array(NB), az = new Float32Array(NB);
+    for (const i of G) { const b = Math.min(NB - 1, Math.floor((P.getY(i) - y0) / h * NB)); ax[b] = Math.max(ax[b], Math.abs(P.getX(i) - cx)); az[b] = Math.max(az[b], Math.abs(P.getZ(i) - cz)); }
+    let w = 0; for (let b = 1; b < NB; b++) if (ax[b] + az[b] > ax[w] + az[w]) w = b;
+    const rx = ax[w] * 1.2, rz = az[w] * 1.2, yw = y0 + (w + 0.5) / NB * h;   // (1.2: the diamond's waist as wide as the round crown's shadow)
+    const out = lo || ownRnd(() => new THREE.BufferGeometry()), idx = []; if (!lo) out.userData.own = true;
+    out.setAttribute('position', new THREE.Float32BufferAttribute([cx, y1, cz, cx, y0, cz, cx + rx, yw, cz, cx, yw, cz + rz, cx - rx, yw, cz, cx, yw, cz - rz], 3));
+    for (let k = 0; k < 4; k++) idx.push(2 + k, 2 + (k + 1) % 4, 0, 2 + (k + 1) % 4, 2 + k, 1);
+    out.setIndex(idx); return out;
+  }
+  // a tree's unit shape (IChunks, green: treeGeo) indexed (Drevesa A): the corners its faces share (the same position, normal, colour …)
+  // made one vertex, so a phone transforms each once; the same faces drawn, its look as it was. Made under World's own random numbers (its
+  // name: the seeded race's draws as ever); null where it would not save a fifth of its vertices (flat faces share none)
+  const WELD = new WeakMap();
+  function weldGeo(g) {
+    if (WELD.has(g)) return WELD.get(g);
+    const names = Object.keys(g.attributes), A = names.map(k => g.attributes[k]), n = g.attributes.position.count, map = new Map(), idx = new (n > 65535 ? Uint32Array : Uint16Array)(n), keep = [];
+    for (let i = 0; i < n; i++) {
+      let key = ''; for (const a of A) for (let q = 0; q < a.itemSize; q++) key += a.array[i * a.itemSize + q] + ',';
+      let v = map.get(key); if (v === undefined) { v = keep.length; map.set(key, v); keep.push(i); } idx[i] = v;
+    }
+    let out = null;
+    if (keep.length <= n * 0.8) {
+      out = ownRnd(() => new THREE.BufferGeometry());
+      names.forEach((k, j) => { const a = A[j], s = a.itemSize, arr = new a.array.constructor(keep.length * s); keep.forEach((i, t) => { for (let q = 0; q < s; q++) arr[t * s + q] = a.array[i * s + q]; }); out.setAttribute(k, new THREE.BufferAttribute(arr, s, a.normalized)); });
+      out.setIndex(new THREE.BufferAttribute(idx, 1)); out.userData.treeH = g.userData.treeH;
+      out.boundingSphere = (g.boundingSphere || (g.computeBoundingSphere(), g.boundingSphere)).clone();
+    }
+    WELD.set(g, out); return out;
   }
 
   /* ---------------- geometry builder (non-indexed, flat normals) -------- */
@@ -350,7 +392,7 @@ const World = (function () {
     else if (what === 'high') { box(g, x, y + 1.05, z, 0.7, 0.04, 0.7, rot, col, col, true); clPost(g, P, 0, 0, 1.05, CL_POLE); }
     else if (what === 'loo') { box(g, x, y, z, 1.15, 2.25, 1.15, rot, col, CL_WHITE, true); g.quadO(P(0.581, 0.1, -0.4), P(0.581, 0.1, 0.4), P(0.581, 2.0, 0.4), P(0.581, 2.0, -0.4), CL_WHITE, P(0, 1, 0)); }
     else if (what === 'parasol') { clPost(g, P, 0, 0, 2.2, CL_POLE); cone(g, x, y + 1.85, z, 1.4, 0.55, 8, col, CL_WHITE, rot); }
-    else if (what === 'flag') { clPost(g, P, 0, 0, 5.5, CL_POLE); clQuadBoth(g, P(0.05, 4.4, 0), P(1.5, 4.4, 0), P(1.5, 5.4, 0), P(0.05, 5.4, 0), col); }
+    else if (what === 'flag') { clPost(g, P, 0, 0, 5.5, CL_POLE); const a = P(0.05, 5.4, 0); if (!(API.flags && API.flags.add(a[0], a[1], a[2], rot, [col], 1.45, 1))) clQuadBoth(g, P(0.05, 4.4, 0), P(1.5, 4.4, 0), P(1.5, 5.4, 0), P(0.05, 5.4, 0), col); }   // (the cloth waves: js/world-zastave.js)
     else if (what === 'grill') { box(g, x, y + 0.55, z, 0.6, 0.3, 0.45, rot, CL_DARK, CL_DARK, true); clPost(g, P, 0, 0, 0.55, CL_DARK); }
   }
   function campLot(g, gH, x, z, rot, kind, h) {
@@ -447,6 +489,56 @@ const World = (function () {
     const nn = (v) => { const x = v[0], y = v[1] / sy + 0.25, z = v[2], l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; };   // (normals tipped up a little: the sun reaches over the top)
     const C = M.V.map((v, k) => sc(V[k], v)), Nn = M.V.map(nn);
     for (const [a, b, c] of M.F) g.triON(V[a], V[b], V[c], Nn[a], Nn[b], Nn[c], inn, C[a], C[b], C[c]);
+  }
+  /* ---------------- Drevesa A (docs/drevesa-a.md): the trees' soft crowns, as the user picked them (»A · mehke krogle«, 5. 11. 2026), built
+     indexed: the faces of a crown share its vertices, so a phone transforms each vertex once, not once for each face it is in. AB is the
+     builder of a unit plant (height 1, the instances scale it): aPuff a soft clump of leaves, aTier a conifer's tier, aTrunk a trunk (their
+     shadow on NIZKA: treeShadow, as every tree's). Shading as the prototype's: dark underneath, warm and sunlit on top, the normals tipped up (the sun over the top) ---------------- */
+  class AB {
+    constructor() { this.P = []; this.N = []; this.C = []; this.I = []; }
+    v(x, y, z, nx, ny, nz, c) { this.P.push(x, y, z); this.N.push(nx, ny, nz); this.C.push(c[0], c[1], c[2]); return this.P.length / 3 - 1; }
+    t(a, b, c, inn) {   // a face, turned to face away from inn
+      const P = this.P, a3 = a * 3, b3 = b * 3, c3 = c * 3, ux = P[b3] - P[a3], uy = P[b3 + 1] - P[a3 + 1], uz = P[b3 + 2] - P[a3 + 2], vx = P[c3] - P[a3], vy = P[c3 + 1] - P[a3 + 1], vz = P[c3 + 2] - P[a3 + 2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, ox = (P[a3] + P[b3] + P[c3]) / 3 - inn[0], oy = (P[a3 + 1] + P[b3 + 1] + P[c3 + 1]) / 3 - inn[1], oz = (P[a3 + 2] + P[b3 + 2] + P[c3 + 2]) / 3 - inn[2];
+      if (nx * ox + ny * oy + nz * oz < 0) this.I.push(a, c, b); else this.I.push(a, b, c);
+    }
+    geometry() {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, 3)); g.setIndex(this.I); g.computeBoundingSphere();
+      return g;
+    }
+  }
+  const aTint = (col, k, t) => [col[0] * k * (1 + 0.1 * t), col[1] * k, col[2] * k * (1 - 0.18 * t)];   // (lit by k; t 0 underneath .. 1 on top: warmer)
+  // a soft round clump of leaves (20 faces, 12 vertices; 12 draws of R, as puff with ICO0): an icosahedron stretched by sy, its shade from lo
+  // underneath to hi on top; cut: its faces lower than that (the middle of the unit sphere's face) left out, where the crown hides them
+  function aPuff(b, cx, cy, cz, r, sy, col, R, jit, lo, hi, cut) {
+    const id = [], inn = [cx, cy, cz];
+    for (const v of ICO_V) {
+      const k = 1 + (R() - 0.5) * jit, t = v[1] * 0.5 + 0.5, nx = v[0], ny = v[1] / sy + 0.25, nz = v[2], l = Math.hypot(nx, ny, nz) || 1;
+      id.push(b.v(cx + v[0] * r * k, cy + v[1] * r * sy * k, cz + v[2] * r * k, nx / l, ny / l, nz / l, aTint(col, lo + (hi - lo) * t * t, t)));
+    }
+    for (const f of ICO_F) if (cut == null || ICO_V[f[0]][1] + ICO_V[f[1]][1] + ICO_V[f[2]][1] >= cut * 3) b.t(id[f[0]], id[f[1]], id[f[2]], inn);
+  }
+  // a conifer's tier (n faces, n + 1 vertices): a cone without its floor from its rim (radius r at y0, colour cb) to its tip (y0 + h, ct); the
+  // rim's normals lean out along the slope and up, the tip's straight up, so the tier is shaded round (soft), not in facets
+  function aTier(b, x, y0, z, r, h, n, cb, ct, rot) {
+    const L = Math.hypot(r, h) || 1, nh = h / L, ny = r / L + 0.35, l = Math.hypot(nh, ny), tip = b.v(x, y0 + h, z, 0, 1, 0, ct), inn = [x, y0 + h * 0.3, z], id = [];
+    for (let k = 0; k < n; k++) { const a = rot + k / n * TAU, c = Math.cos(a), s = Math.sin(a); id.push(b.v(x + c * r, y0, z + s * r, c * nh / l, ny / l, s * nh / l, cb)); }
+    for (let k = 0; k < n; k++) b.t(id[k], id[(k + 1) % n], tip, inn);
+  }
+  // a starCone tier (its arguments) in the look A: a soft tier (aTier, n faces instead of 2n) over the same reach, from the drooping tips'
+  // height to the top and a little narrower (the star's notches), its rim darker and its tip lighter
+  function aStar(b, x, y0, z, r, h, n, col, tip, rot, droop) {
+    const d = droop || 0; aTier(b, x, y0 - d, z, r * 0.85, h + d, n, [col[0] * 0.8, col[1] * 0.8, col[2] * 0.8], [tip[0] * 1.15, tip[1] * 1.15, tip[2] * 1.15], rot);
+  }
+  // a trunk (n faces, n + 1 vertices): a slim cone from its foot (radius r at y0, a little under the ground) to y0 + h, darker at its foot;
+  // or (r2) a tube to radius r2 at the top (2n faces, 2n vertices), where its top shows (a birch's); its arguments as cyl's
+  function aTrunk(b, x, y0, z, r, h, n, col, r2) {
+    const inn = [x, y0 + h * (r2 ? 0.5 : 0.3), z], lo = [col[0] * 0.78, col[1] * 0.78, col[2] * 0.78], top = r2 ? [] : null, bot = [];
+    const tip = r2 ? -1 : b.v(x, y0 + h, z, 0, 1, 0, col);
+    for (let k = 0; k < n; k++) { const a = k / n * TAU + 0.3, c = Math.cos(a), s = Math.sin(a); bot.push(b.v(x + c * r, y0, z + s * r, c, 0, s, lo)); if (top) top.push(b.v(x + c * r2, y0 + h, z + s * r2, c, 0, s, col)); }
+    for (let k = 0; k < n; k++) { const j = (k + 1) % n; if (top) { b.t(bot[k], bot[j], top[j], inn); b.t(bot[k], top[j], top[k], inn); } else b.t(bot[k], bot[j], tip, inn); }
   }
   function rock(g, cx, cy, cz, rx, ry, rz, rot, col, r_, jit, flat) {   // chunky boulder (33 faces): 7-sided, bulging middle, chamfered flat top (cy = centre height)
     const c = Math.cos(rot), s = Math.sin(rot), yb = cy - 0.4 * ry, yt = cy + (flat == null ? 0.6 : flat) * ry, ym = yb + (yt - yb) * 0.52, n = 7;
@@ -1346,7 +1438,7 @@ const World = (function () {
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     for (const f of SYNC) f();   // (the worlds in files of their own: the track being built, its theme, the detail tier)
     for (const k in KEEP) if (!KEEP[k].includes(THEME)) { if (k === 'NR') NR = null; else API[k] = null; }   // free the last build's grids this world does not keep (World.keep(key, theme) in the world files: tools/razdeli-proge.mjs)
-    if (EXT[THEME]) return finish(EXT[THEME](scene, tex, opts, extAPI()), tex);   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI)
+    if (EXT[THEME]) { const F = API.flags; if (F) F.begin(); const o = EXT[THEME](scene, tex, opts, extAPI()); if (F) F.done(o); return finish(o, tex); }   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI); its flags waving in one mesh (js/world-zastave.js)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
     mtnN = valueNoise2(83, 130); mtnN2 = valueNoise2(91, 55); mtnPeak = valueNoise2(97, 220);
@@ -4598,7 +4690,8 @@ const World = (function () {
     for (let k = 0; k < ca.count; k++) { r += ca.getX(k); gg += ca.getY(k); b += ca.getZ(k); } for (let k = 0; k < pa.count; k++) { y0 = Math.min(y0, pa.getY(k)); y1 = Math.max(y1, pa.getY(k)); }
     return (g.userData.treeH = gg > r * 1.08 && gg > b * 1.08 ? y1 - y0 : 0); };   // (its height if it is green: a tree's crown, a bush; else 0)
   class IChunks {
-    constructor(base, mat, size) { this.base = base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? treeGeo(base) : 0; this.gone = null; }
+    constructor(base, mat, size) { const th = treeGeo(base), w = th > 0 && !base.index ? weldGeo(base) : null;   // (a tree's shape indexed: weldGeo)
+      this.base = w || base; this.mat = mat; this.size = size || 256; this.map = new Map(); this.th = fewFans() ? th : 0; this.gone = null; }
     add(x, y, z, rot, sxz, sy, col) { const k = Math.floor(x / this.size) + ',' + Math.floor(z / this.size);
       if (this.th && this.th * sy >= THIN.h) { const c = clearance(x, z); if (c < THIN.far && crH(x, z, 7.7) >= (c < THIN.near ? THIN.keepNear : THIN.keepFar)) { THIN.n++; THIN.gx = x; THIN.gz = z; (this.gone || (this.gone = new Set())).add(k); return; } }   // (THIN.gx/gz: nrShade leaves its crown's shade out)
       let L = this.map.get(k); if (!L) this.map.set(k, L = []); L.push(x, y, z, rot, sxz, sy, col ? col[0] : 1, col ? col[1] : 1, col ? col[2] : 1); }
@@ -4609,7 +4702,8 @@ const World = (function () {
       for (let k = 0; k < pa.length; k += 3) { rh = Math.max(rh, Math.hypot(pa[k], pa[k + 2])); by0 = Math.min(by0, pa[k + 1]); by1 = Math.max(by1, pa[k + 1]); }
       const ext = [rh + 0.16 * Math.max(by0 * by0, by1 * by1), by0, by1];
       const lo = cast && LOD.tier === 0 && !this.mat.alphaTest && !this.mat.transparent ? shadowLo(this.base) : null;
-      if (this.gone) for (const k of this.gone) if (!this.map.has(k)) for (let u = 0; u < (lo ? 4 : 2); u++) THREE.MathUtils.generateUUID();   // (a chunk thinned to nothing: its geometry's and mesh's names, NIZKA's shadow copy's)
+      const own = !!(lo && lo.userData.own);   // (a tree's shadow copy of its own: its chunks' copies under World's own numbers, treeShadow)
+      if (this.gone) for (const k of this.gone) if (!this.map.has(k)) for (let u = 0; u < (lo && !own ? 4 : 2); u++) THREE.MathUtils.generateUUID();   // (a chunk thinned to nothing: its geometry's and mesh's names, NIZKA's shadow copy's)
       for (const L of this.map.values()) {
         const cnt = L.length / 9; let cx = 0, cz = 0, y0 = 1e9, y1 = -1e9, smax = 0;
         for (let k = 0; k < L.length; k += 9) { cx += L[k]; cz += L[k + 2]; y0 = Math.min(y0, L[k + 1]); y1 = Math.max(y1, L[k + 1]); smax = Math.max(smax, L[k + 4], L[k + 5]); }
@@ -4625,8 +4719,8 @@ const World = (function () {
         im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.vb = chunkBoxes(L, cx, cz, ext);
         group.add(im); cullAdd(im, cx, cz, g.boundingSphere.radius); n += cnt;   // vegetation/rocks: distance-cullable on the lower tiers
         if (lo) {   // NIZKA: its shadow from the coarser copy (the same instances), in the shadow pass alone
-          const sg = new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
-          const sm = new THREE.InstancedMesh(sg, shloMat(), cnt); sm.instanceMatrix = im.instanceMatrix; sm.position.copy(im.position); sm.updateMatrix(); sm.matrixAutoUpdate = false;
+          const sg = own ? ownRnd(() => new THREE.BufferGeometry()) : new THREE.BufferGeometry(); sg.setAttribute('position', lo.attributes.position); sg.setIndex(lo.index); sg.boundingSphere = g.boundingSphere;
+          const sm = own ? ownRnd(() => new THREE.InstancedMesh(sg, shloMatOwn(), cnt)) : new THREE.InstancedMesh(sg, shloMat(), cnt); sm.instanceMatrix = im.instanceMatrix; sm.position.copy(im.position); sm.updateMatrix(); sm.matrixAutoUpdate = false;
           sm.frustumCulled = true; sm.castShadow = true; sm.receiveShadow = false; sm.visible = false; im.castShadow = false; group.add(sm); SHLO.push([sm, im]);
         }
       }
@@ -4948,23 +5042,21 @@ const World = (function () {
     for (let k = 0; k < 2 * n; k++) { const a = rot + k / (2 * n) * TAU, tip = k % 2 === 0, rr = tip ? r : r * 0.78; P.push([cx + Math.cos(a) * rr, cy + (tip ? -droop : h * 0.07), cz + Math.sin(a) * rr]); Nm.push([Math.cos(a) * nh, ny, Math.sin(a) * nh]); }
     for (let k = 0; k < 2 * n; k++) { const j = (k + 1) % (2 * n); g.triON(P[k], P[j], apex, Nm[k], Nm[j], up, inn, k % 2 ? dk : col, j % 2 ? dk : col, colTip); }
   }
-  function nrTreeGeo(kind) {   // unit trees (height 1, instances scale them), soft shaded: 0 spruce, 1 beech (also the bushes: sunk into the ground); 2, 3 the cheaper spruce and beech far from the road
-    const g = new GB(), R = rng(610 + kind), rs = ROCK_SMOOTH; ROCK_SMOOTH = true;   // (smooth normals from cone / starCone / ico; the flag is the theme's, restored below)
-    const sp = [0.1, 0.22, 0.14], spT = [0.17, 0.33, 0.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], be = [0.2, 0.35, 0.13];
-    if (kind === 0) {   // spruce: thin trunk, three tiers of branches, dark blue-green
-      cone(g, 0, -0.02, 0, 0.035, 0.3, 4, [0.3, 0.22, 0.15], null, 0);
-      nrFir(g, 0, 0.1, 0, 0.3, 0.46, 7, sh(sp, 0.9), spT, 0.2, 0.04); nrFir(g, 0, 0.36, 0, 0.22, 0.4, 6, sp, spT, 0.75, 0.03);
-      nrFir(g, 0, 0.6, 0, 0.13, 0.4, 5, sh(sp, 1.08), spT, 1.3, 0.02);
-    } else if (kind === 1) {   // beech: grey trunk, a broad crown of two soft lumps
-      cyl(g, 0, -0.02, 0, 0.04, 0.42, 4, [0.42, 0.4, 0.36], null, 0.03);
-      ico(g, -0.04, 0.63, -0.02, 0.3, 0.9, be, R, 0.22); nrLump(g, 0.13, 0.57, 0.07, 0.21, 0.9, sh(be, 1.06), R, 0.2);
-    } else if (kind === 2) {   // far spruce: two tiers, no trunk
-      nrFir(g, 0, 0.12, 0, 0.29, 0.54, 6, sh(sp, 0.92), spT, 0.2, 0.04); nrFir(g, 0, 0.5, 0, 0.17, 0.5, 5, sp, spT, 0.9, 0.03);
+  function nrTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 spruce, 1 beech (also the bushes: sunk into the ground); 2, 3 the cheaper spruce and beech far from the road
+    const b = new AB(), R = rng(610 + kind), sp = [0.1, 0.22, 0.14], spT = [0.17, 0.33, 0.2], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k], be = [0.2, 0.35, 0.13];
+    if (kind === 0) {   // spruce: thin trunk, three tiers of branches, dark blue-green, the tips lighter (22 faces)
+      aTrunk(b, 0, -0.02, 0, 0.035, 0.32, 4, [0.3, 0.22, 0.15]);
+      aTier(b, 0, 0.1, 0, 0.3, 0.46, 6, sh(sp, 0.62), sh(spT, 1.2), 0.2); aTier(b, 0, 0.36, 0, 0.22, 0.4, 6, sh(sp, 0.72), sh(spT, 1.25), 0.75);
+      aTier(b, 0, 0.6, 0, 0.13, 0.4, 6, sh(sp, 0.84), sh(spT, 1.3), 1.3);
+    } else if (kind === 1) {   // beech: grey trunk, a broad crown of two soft lumps (38 faces)
+      aTrunk(b, 0, -0.02, 0, 0.04, 0.87, 4, [0.42, 0.4, 0.36]);
+      aPuff(b, -0.04, 0.63, -0.02, 0.3, 0.9, be, R, 0.22, 0.55, 1.35); aPuff(b, 0.13, 0.57, 0.07, 0.21, 0.9, sh(be, 1.06), R, 0.2, 0.55, 1.35, -0.4);
+    } else if (kind === 2) {   // far spruce: two tiers, no trunk (10 faces)
+      aTier(b, 0, 0.12, 0, 0.29, 0.54, 5, sh(sp, 0.66), sh(spT, 1.2), 0.2); aTier(b, 0, 0.5, 0, 0.17, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 0.9);
     } else {   // far beech: one lump
-      ico(g, 0, 0.6, 0, 0.33, 0.95, be, R, 0.25);
+      aPuff(b, 0, 0.6, 0, 0.33, 0.95, be, R, 0.25, 0.55, 1.35);
     }
-    ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return b.geometry();
   }
   let nrATex = null;
   function nrAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): km 1-20, the corner names, banners
@@ -5098,6 +5190,7 @@ const World = (function () {
     hash: { get: () => hash },
     sync: { value: SYNC }
   });
+  Object.assign(API, { AB, aPuff, aStar, aTier, aTrunk });   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
 
   function update(out, t, car, cam, rp, race) {   // (race: the cars and the traffic, for a world of its own file (d.ext))
     if (!out) return;
