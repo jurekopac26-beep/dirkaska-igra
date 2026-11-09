@@ -338,10 +338,11 @@ try {
       const f0 = Render.fxStats(); Core.wreckCar(P); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       const f1 = Render.fxStats(); v = Render.viewOf(P); const full = geo.drawRange.count === U.N;
       const lost = Object.keys(P.lost), dead = [], notOne = [], pieces = [], pkey = (o) => (o && o.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? o.customProgramCacheKey() : ''); let frozen = null;
-      for (const n of lost) { const p = PT[n]; if (p.wh != null) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);
+      for (const n of lost) { const p = PT[n]; if (p.wh != null || p.tl) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);   // (a trailer's part, tl: its look's, not the kit's)
         const at = Rr.o[1] > Rr.o[0] ? Rr.o[0] : Rr.i[0]; for (const [s, e] of [Rr.o, Rr.i]) for (let i = s; i < e; i++) if (pa[i * 3] !== pa[at * 3] || pa[i * 3 + 1] !== pa[at * 3 + 1] || pa[i * 3 + 2] !== pa[at * 3 + 2]) { notOne.push(n); break; } }
       for (const d of R.debris.filter(q => q.car === P.id)) {
-        const p = PT[d.part], ms = []; if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
+        const p = PT[d.part], ms = []; if (p && p.tl) continue;   // (a trailer's tyre: its look's piece, rezervna-kolesa.test.mjs)
+        if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
         if (ms.length !== 1) { pieces.push(d.part + ': ' + ms.length + ' meshes'); continue; }
         const mm = ms[0], gg = mm.geometry; if (!gg.boundingBox) gg.computeBoundingBox();
         const bb = gg.boundingBox, vol = (bb.max.x - bb.min.x) * (bb.max.y - bb.min.y) * (bb.max.z - bb.min.z);
