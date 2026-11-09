@@ -542,6 +542,15 @@
  },
  "yahuarcocha": {
   "s": 3320,
-  "o": "Lasnica ob jezeru"
+  "o": "Lasnica ob jezeru",
+  "cam": [
+   -197.3,
+   32.9,
+   263,
+   -147.8,
+   -5.7,
+   213.5,
+   46.9
+  ]
  }
 }
