@@ -808,8 +808,8 @@ try {
     await click(page, 'weather:snow');
     const ready2 = await page.waitForFunction(() => { const s = MenuVreme.info().snow; return s.length > 0 && s.every(x => x === 'ready+'); }, null, { timeout: 30000 }).then(() => true).catch(() => false);
     const snow = await look();
-    T.check('Snow: the picture in the snow (its snowy copy made and shown), the blizzard, snow on the buttons, the sign\'s top, the car (and frost) and the floor',
-      ready2 && snow.i.look === 'snow' && snow.wet === 0 && snow.snw && snow.snw[0] === 1 && snow.snw[1] === 'blob:' && snow.ink.air > 0.01 && snow.ink.ui > 0.002 && snow.ink.sc > 0.01 && snow.ink.car > 0.005 && snow.ink.fl > 0.2 && snow.i.car && snow.i.car.runs > 0, JSON.stringify({ ready2, snow }));
+    T.check('Snow: the picture in the snow (its snowy copy made, in a worker, and shown), the blizzard, snow on the buttons, the sign\'s top, the car (and frost) and the floor',
+      ready2 && snow.i.look === 'snow' && snow.i.enc === 'worker' && snow.wet === 0 && snow.snw && snow.snw[0] === 1 && snow.snw[1] === 'blob:' && snow.ink.air > 0.01 && snow.ink.ui > 0.002 && snow.ink.sc > 0.01 && snow.ink.car > 0.005 && snow.ink.fl > 0.2 && snow.i.car && snow.i.car.runs > 0, JSON.stringify({ ready2, snow }));
     // back to Dry: the light in ~1 s, the snow gone in ~2.5 s, then nothing moves
     await click(page, 'weather:dry');
     const t0 = await ev(page, 'const i = MenuVreme.info(); return [i.settled, i.ws.snow];');
@@ -1206,7 +1206,9 @@ try {
     await page.waitForTimeout(450);   // (the tap a swipe ends with: not a tap for 400 ms)
     await page.click('#track-stage .wxv .w-snow');
     const slid = await ev(page, 'return getComputedStyle(root.querySelector("#track-stage .wxv .w-snow")).transform;');
-    await page.waitForTimeout(450);
+    // (its 300 ms, from the frame after the tap: on a machine without a graphics chip Snow's first frames are long, the game's world toned
+    // for winter, and the slide begins late; so until it is over, 5 s at most)
+    await page.waitForFunction(() => [...document.getElementById('menu-host').shadowRoot.querySelectorAll('#track-stage .wxv > [data-act^="weather:"]')].every(b => getComputedStyle(b).transform === 'none'), null, { timeout: 5000 }).catch(() => null);
     const wr = await ev(page, 'return [...root.querySelectorAll("#track-stage .wxv > [data-act^=\\"weather:\\"]")].map(b => [b.dataset.act, b.getAttribute("aria-pressed"), b.getBoundingClientRect().left, getComputedStyle(b).transform]);');
     T.check('the weather chosen (Snow) slides to the first place of its row, the others after it in their order (Dry, Rain, Changing, Storm); then nothing moving',
       /^matrix/.test(slid) && [...wr].sort((a, b) => a[2] - b[2]).map(b => b[0]).join() === 'weather:snow,weather:dry,weather:rain,weather:change,weather:storm' && wr.find(b => b[0] === 'weather:snow')[1] === 'true' && wr.every(b => b[3] === 'none'), JSON.stringify({ slid, wr }));

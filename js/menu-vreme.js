@@ -293,10 +293,37 @@ window.MenuVreme = (() => {
       while (y < ch && performance.now() - t0 < 8) { const yb = Math.min(ch, y + 8); rows(y, yb); y = yb; }
       if (y < ch) { setTimeout(step, 0); return; }
       g.putImageData(id, 0, 0); soften(c, .6);
-      const done = (url) => { if (!url) { e.st = 'failed'; return; } e.url = url; e.st = 'ready'; kick(); };
-      try { if (c.toBlob) c.toBlob((b) => done(b ? URL.createObjectURL(b) : ''), 'image/webp', .9); else done(c.toDataURL('image/webp', .9)); } catch (_) { e.st = 'failed'; }
+      encode(c, (url) => { if (!url) { e.st = 'failed'; return; } e.url = url; e.st = 'ready'; kick(); });
     };
     setTimeout(step, 0);
+  }
+  // a snowy copy made a picture (webp) in a worker of its own (OffscreenCanvas), not on the screen's thread: the canvas's own toBlob waits
+  // for the screen to rest and, as the weather keeps it moving, then does it at once (on a phone ~0.1 s a picture, the screen stopped);
+  // else (no worker, no OffscreenCanvas, the worker failed) toBlob after all
+  let encW = null, encN = 0;
+  const encCb = new Map();
+  const ENC = 'onmessage = async (e) => { const { n, bm } = e.data; let b = null; try { const o = new OffscreenCanvas(bm.width, bm.height); ' +
+    'o.getContext("2d").drawImage(bm, 0, 0); if (bm.close) bm.close(); b = await o.convertToBlob({ type: "image/webp", quality: .9 }); } catch (_) { b = null; } postMessage({ n, b }); };';
+  function encDrop() { encW = false; const cbs = [...encCb.values()]; encCb.clear(); for (const f of cbs) f(null); }
+  function encode(c, done) {
+    const own = () => { try { if (c.toBlob) c.toBlob((b) => done(b ? URL.createObjectURL(b) : ''), 'image/webp', .9); else done(c.toDataURL('image/webp', .9)); } catch (_) { done(''); } };
+    if (encW === null) {
+      encW = false;
+      try {
+        if (window.Worker && window.OffscreenCanvas && window.createImageBitmap && window.Blob) {
+          const u = URL.createObjectURL(new Blob([ENC], { type: 'text/javascript' }));
+          encW = new Worker(u); URL.revokeObjectURL(u);
+          encW.onmessage = (ev) => { const d = ev.data || {}, f = encCb.get(d.n); encCb.delete(d.n); if (f) f(d.b || null); };
+          encW.onerror = () => { try { encW.terminate(); } catch (_) { /* gone */ } encDrop(); };
+        }
+      } catch (_) { encW = false; }
+    }
+    if (!encW) { own(); return; }
+    createImageBitmap(c).then((bm) => {
+      if (!encW) { own(); return; }
+      const n = ++encN; encCb.set(n, (b) => { if (b) done(URL.createObjectURL(b)); else own(); });
+      try { encW.postMessage({ n, bm }, [bm]); } catch (_) { encCb.delete(n); own(); }
+    }, own);
   }
   // the snowy copies' places: over each picture (the model's in its island, the map's over its wet layer), filled when made
   function makeSlots() {
@@ -859,7 +886,7 @@ window.MenuVreme = (() => {
     return { on: !!(app && L), look, settled: tl.length < 2, moving: !!raf, resting, frames, busy: r2(busy), land,
       w: last ? wr(last.w) : null, ws: last ? wr(last.ws) : null, flash: last ? r2(last.F) : 0, uiA: r2(uiNow), taps: taps.length,
       layers: L ? { stage: !!(L.st && L.st.w), floor: !!(L.fl && L.fl.w), room: !!(L.rm && L.rm.w), car: !!(L.car && L.car.w), face: !!(L.face && L.face.w), cap: !!(L.cap && L.cap.w), ui: !!(UI && UI.w), air: !!(AIR && AIR.w), rbg: !!L.dim } : null,
-      snow: L && L.snw ? L.snw.map((s) => s.e.st + (s.set ? '+' : '')) : [],
+      snow: L && L.snw ? L.snw.map((s) => s.e.st + (s.set ? '+' : '')) : [], enc: encW ? 'worker' : encW === false ? 'own' : '',
       car: CK ? (CK.none ? { none: true } : { box: CK.box.map((v) => Math.round(v)), runs: CK.runs.length, src: CK.key.slice(0, 3) }) : null };
   }
   function settle() {
