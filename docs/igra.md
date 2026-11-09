@@ -6,6 +6,7 @@ Testne proge (`test: true`, od 5. 11. 2026 tudi Mount Baldy, Beartooth, Big Sur,
 Rio de Janeiro je od 5. 11. 2026 testna proga (`test: true`; odločitev uporabnika: iz Brazilije ostane samo Rio do Rastro; `CLAUDE.md`, »Testne proge«): igra jo gradi kot druge testne proge, brez tabel pred zaviranjem, prizorov ljudi in živali (njeni kraji v `SITES` so zbrisani), kotnega videa v meniju in podrobnejših gledalcev na tribunah, gledalcev ob cesti ne redči. Kjer spodaj piše Rio de Janeiro, opis velja za čas, ko je bila prava proga.
 Vršič, Slovenija je od 6. 11. 2026 testna proga (`test: true`; odločitev uporabnika: iz Slovenije ostane samo Medvode; `CLAUDE.md`, »Testne proge«): igra ga gradi kot druge testne proge, brez tabel in smernikov ob odprti cesti (`roadside` v `js/world.js`), prizorov ljudi (njegovi kraji v `SITES` in `site()` so zbrisani) in živali (`js/world-zivali.js`), gledalcev ob cesti ne redči. Kotni video v meniju obdrži, ker nima makete za kamero 3 (izjema v `tests/menu-corner.test.js`). Načini (dirka, kronometer, promet, policija), policijski radio in misija 01 ostanejo. Kjer spodaj piše o Vršiču, opis velja za čas, ko je bil prava proga.
 Longford, Mount Hotham, Newcastle in Townsville (Avstralija) so od 6. 11. 2026 testne proge (`test: true`; odločitev uporabnika: iz Avstralije ostane Bathurst ali Great Alpine Road; `CLAUDE.md`, »Testne proge«): igra jih gradi kot druge testne proge, brez tabel in smernikov ob odprti cesti (Mount Hotham), prizorov ljudi (njihovi kraji v `SITES` in `site()` so zbrisani) in živali, kotnega videa v meniju (`assets/maps/corner-<id>.*` so izbrisani), gledalcev ob cesti ne redči. Načini, policijski radio in misije 02 (Newcastle), 19 (Townsville), 35 (Newcastle) in 48 (Longford) ostanejo. Kjer spodaj piše o njih, opis velja za čas, ko so bile prave proge.
+Mount Buller, Avstralija, Sani Pass, Južna Afrika, Toronto in Trois-Rivières, Kanada ter Bang Saen, Tajska so od 5. 11. 2026 testne proge (`test: true`; odločitev uporabnika: iz Kanade ostane samo Montréal, iz Južne Afrike Chapman's Peak, Tajska nima prave proge; `CLAUDE.md`, »Testne proge«): igra jih gradi kot druge testne proge, brez tabel pred zaviranjem (krožne proge: Toronto, Trois-Rivières, Bang Saen) ter tabel in smernikov ob odprtih cestah (Mount Buller, Sani Pass; `roadside` v `js/world.js`), prizorov ljudi (njihovi kraji v `SITES` in `site()` so zbrisani) in živali (`js/world-zivali.js`), kotnega videa in kraja na globusu v meniju, gledalcev ob cesti ne redči. Kjer spodaj piše katera od njih, opis velja za čas, ko je bila prava proga.
 
 - [Križišča in stranske ceste](#križišča-in-stranske-ceste)
 - [Table pred zaviranjem (dirkališča)](#table-pred-zaviranjem-dirkališča)
@@ -53,6 +54,7 @@ Longford, Mount Hotham, Newcastle in Townsville (Avstralija) so od 6. 11. 2026 t
 - [Vreme](#vreme)
 - [Letni čas in čas dneva](#letni-čas-in-čas-dneva)
 - [Zvok navijačev in predori](#zvok-navijačev-in-predori)
+- [Zvoki okolja](#zvoki-okolja)
 - [Zvok motorjev](#zvok-motorjev)
 - [Vozni park](#vozni-park)
 - [Razpadanje vozil](#razpadanje-vozil)
@@ -101,6 +103,16 @@ Na vseh dirkališčih (krožne proge, ki niso testne; ne na odprtih cestah in re
 - **Videz**: generične table brez napisov razen številke: modre z belo številko, na zgodovinskih progah (Crystal Palace, Longford, Riverside) in v Monaku bele s črno. Plošči 2 × 1,5 m v obliki strehe (vsaka nagnjena 30°) s številko na obeh, da sta berljivi s kamere za avtom in z izometrične kamere, na dveh nogah, ki segata v tla.
 - **Izris**: vse table proge so en model z eno majhno teksturo (en klic risanja, brez sence), zato telefon skoraj ni bolj obremenjen.
 - **Ob trku**: tabla ob cesti se podre kot drugi podirljivi predmeti (`'bboard'` v `js/core.js`): avto jo prevrne, odleti le nekaj metrov (noge so v tleh) in obleži v travi na eni od plošč; avto pri tem izgubi ~2,5 % hitrosti in se malo poškoduje (ob trku s ~160 km/h ~4 %). Podre jo lahko tudi tekmec, v dirki prek spleta pa se obnaša kot drugi podirljivi predmeti. Table nad ograjo (do njih avto ne pride) stojijo. Podrta tabla ostane del istega modela (njena oglišča se premaknejo z njo), zato ni dodatnega klica risanja; ob ponovitvi dirke spet stoji. Plošči podirljive table imata na notranji strani sivo hrbtno stran, da je podrta tabla vidna, ne glede na to, kako obleži.
+
+## Sovoznik (odprte ceste in reli)
+
+Na pravih odprtih cestah in relijskih preizkušnjah sovoznik napove ovinke pred njimi, kot pravi relijski sovoznik (načrt in odločitve: `docs/sovoznik.md`).
+
+- **Kje**: na vseh pravih odprtih cestah, tudi na relijskih preizkušnjah Ouninpohja, Harju in Katu-Jaryk (`Core.codrvRoad`: odprta cesta, ne testna; brez prog ZDA razen Pikes Peaka), v vseh načinih razen nove mape, misij in avtošole. Na dirkališčih ga ni (odgovor uporabnika 6. 11. 2026).
+- **Klici** (`Track.paceNotes`): ostrina ovinka 1–6 po najmanjšem polmeru (1 pod 16 m … 6 pod 120 m), lasnica, pravi kot, »dolgo«, »zapira«, »odpira«, grbine in skoki (iz `def.bumps` ali iz višin ceste), krožišča po izvozu, šikane, menjava podlage, razdalja do naslednjega klica in »do cilja«. Opombe, bližje od 30 m, se povežejo z »into«, do 70 m z »and«, največ tri v klicu; »caution« pred velikim skokom, pred skokom v ovinek 1–3, pred ovinkom tik za grbino ali skokom, pred ovinkom, ki se zapre, in pred ostrim ovinkom za dolgo ravnino. Lastne opombe proge (`def.notes`) samo s sovoznikovimi besedami.
+- **Napis** (`#h-codrv`): klic v jeziku igre (»LEVO 4 · DOLGO«, »L3 GRBINA › D4«, angleško »LEFT 4 · LONG«), ležeče pod uro, pokonci pod znakom ovinka; pokaže se s klicem: z glasom `v · (T + 1,2 s) + 25 m` pred ovinkom (T trajanje klica, 60–260 m; ne prej, kot je prejšnji klic izgovorjen, in ne pod 5 m/s), samo napis 55–170 m pred ovinkom (2,4 s pri trenutni hitrosti in 30 m); ugasne, ko avto pride do ovinka (najmanj 1,5 s). Napis obdrži vse opombe klica: daljši od 24 znakov izpusti razdaljo in dodatke, pokonci je lahko v dveh vrsticah. Znak ovinka (`#h-note`) dobi številko ostrine.
+- **Glas**: posnet angleški glas sovoznika, kot v relijskih igrah, enak na vseh telefonih, v obeh jezikih igre, na cestah in na relijskih preizkušnjah v kronometru (odgovor uporabnika 6. 11. 2026). Besede (`Core.CD_EN` in razdalje 100–500 m) so v enem zvočnem listu `js/data/sovoznik-en.js` (MP3 v base64, 150 KB; glas `bm_george` modela Kokoro-82M, Apache 2.0; orodje `tools/sovoznik-glas.py`). List se naloži ob začetku dirke s sovoznikom (`Comm.recLoad`, service worker ga shrani z igro) in dekodira (~2,5 MB); `Comm.note` klic sestavi beseda za besedo prek Web Audio (60 ms premora, po »caution« 170 ms, pred razdaljo 130 ms) z rahlim zvokom čelade. Dokler list ni pripravljen, govori glas telefona. Ob policijskem radiu sovoznik molči, napis ostane.
+- **Nastavitve · Sovoznik**: Izklop, Napis, Glas in napis (privzeto; `S.codrv` 0, 2, 1). Sprememba med dirko (nastavitve v pavzi) velja od naslednjega klica.
 
 ## Kje na progi si (proge po resničnih krajih)
 
@@ -387,9 +399,9 @@ Na progah z boksi (Gozd, Toskana, Gromski rt, Spa, Štajerska, Longford) imajo a
 - **Sledi gum pred garažami:** pred garažo vsake ekipe sta na ploščadi dve temni sledi gum, od mesta, kjer avto stoji v boksu, v loku proti pasu, vse svetlejši (avti, ki speljejo iz boksa).
 - **Luč in modra zastava ob izvozu:** na koncu zidu boksov ob izvozu stoji luč, obrnjena proti avtom v pasu: zelena, ko je izvoz odprt; rdeča pred štartom, ob rdeči zastavi (dirka ustavljena, do ponovnega štarta; glej [Zastave in varnostni avto](#zastave-in-varnostni-avto)) in ko mimo izvoza pelje varnostni avto (do 250 m pred mestom, kjer se pas izvoza združi s progo; ne varnostni avto ponovnega štarta, za katerim vrsta zapelje iz pasu). Poleg nje stoji redar, ki maha z modro zastavo, dokler avto pelje iz pasu in po progi do mesta združitve prihaja drug (manj kot 4 s stran); sicer zastave ne drži. Luč in redar sta dvakrat večja, kot sta bila prvotno (steber z ohišjem svetilk 6,2 m, svetilki 0,72 m, redar 3,7 m z zastavo v roki na 3,1 m), da ju je videti s kamere za avtom; stojita na istem mestu ob koncu zidu, na strani steze, nikoli na idealni liniji. Luč in redar se rišeta, ko so vidne ekipe v boksih ali je kamera do 300 m od izvoza (lastna skupina, ekipe zaradi njiju niso vidne od dlje). Zastave, sledi in izvoz so narejeni brez `Math.random` (`ownRnd`), zato dirka z zasejanim naključjem (testi) teče enako kot brez njih.
 - **Ekipa te čaka pripravljena:** dokler ni postanka, tvoji mehaniki stojijo v garaži (kot doslej). Ko zapelješ v pas boksov, v garaži vzamejo opremo: nove gume v roke, dvigalki za ročaj, nihče več ne klepeta. Ko avto začne zavirati v svoj boks (40 m pred njim, približno 4 s pred ustavitvijo), stečejo iz garaže na ploščad, vsak na svoje mesto okrog tja, kjer se bo avto ustavil: s pištolami ob kolesih, z novimi gumami v rokah, z dvigalkama pred nosom in ob repu in s tablo pred voznikom. Tam avto počakajo pripravljeni (vsi vsaj 0,6 s pred ustavitvijo), nobeden ne stoji na pasu ali avtu na poti, s kamere za avtom pa jih vidiš, ko se bližaš. Kjer imajo dlje (Montréal: garaže za plitvo ploščadjo), stečejo malo prej, največ 80 m pred boksom. Čakajo natanko tam, kjer avto obstane; prej so ven odšli že ob vstopu v pas, ko jih s kamere še ni bilo videti, v Townsvillu in Trois-Rivièresu pa so čakali sredi pasu, ne na ploščadi. V Townsvillu je med postankom (kamera visoko nad boksi) prej ves zaslon zakrila zelena ploskev daljnega pogleda (pokrajina okrog mesta); zdaj je ni več. Vse je le izris in brez novih klicev risanja.
-- **Osvetljeni boksi:** ob mraku (Večer), zjutraj in ponoči so boksi na vseh 8 pravih progah z boksi osvetljeni (Spa, Štajerska, Bathurst, Crystal Palace, Montréal, Toronto, Bang Saen, Trois-Rivières; testni, zamrznjeni Longford, Newcastle in Townsville jih imajo tudi): garaže ekip svetijo od znotraj (tla in zadnja stena, na Bathurstu in v šotorih Bang Saena temno pročelje), svetloba iz vrat se razlije po ploščadi, nad vrati je svetlobni trak z dvema lučema (kjer streha stavbe sega nad ploščad, na Spa, Štajerskem, Bathurstu in v Townsvillu, visita luči na robu strehe), ki delata kroge svetlobe na ploščadi in robu pasu, tla se pod njimi rahlo svetijo (na mokrem odsevajo kot cesta). Lesene stojnice Crystal Palacea in lopa v Longfordu imajo pod napuščem tople žarnice. Ob mraku svetijo šibkeje kot ponoči, zjutraj še šibkeje, podnevi ne; vzdržljivostna dirka jih prižge in ugasne s časom dneva. Vse to je en sam izris (en klic risanja, ko so boksi v pogledu, z odsevom luči na suhih tleh dva); podnevi in na progah brez boksov se ne spremeni nič.
+- **Osvetljeni boksi:** ob mraku (Večer), zjutraj in ponoči so boksi na vseh 5 pravih progah z boksi osvetljeni (Spa, Štajerska, Bathurst, Crystal Palace, Montréal; testni, zamrznjeni Longford, Newcastle, Townsville, Toronto, Bang Saen in Trois-Rivières jih imajo tudi): garaže ekip svetijo od znotraj (tla in zadnja stena, na Bathurstu in v šotorih Bang Saena temno pročelje), svetloba iz vrat se razlije po ploščadi, nad vrati je svetlobni trak z dvema lučema (kjer streha stavbe sega nad ploščad, na Spa, Štajerskem, Bathurstu in v Townsvillu, visita luči na robu strehe), ki delata kroge svetlobe na ploščadi in robu pasu, tla se pod njimi rahlo svetijo (na mokrem odsevajo kot cesta). Lesene stojnice Crystal Palacea in lopa v Longfordu imajo pod napuščem tople žarnice. Ob mraku svetijo šibkeje kot ponoči, zjutraj še šibkeje, podnevi ne; vzdržljivostna dirka jih prižge in ugasne s časom dneva. Vse to je en sam izris (en klic risanja, ko so boksi v pogledu, z odsevom luči na suhih tleh dva); podnevi in na progah brez boksov se ne spremeni nič.
 - **Dež upočasni postanek:** ko dežuje, mehaniki delajo počasneje (mokre matice in rokavice, prevleke z novih gum): postanek z delom traja pri rahlem dežju 0,3 s dlje, pri močnem 0,6 s (vmes po moči dežja; na suhem nič, tudi če je cesta še mokra). To upošteva čas v oknu **Postanek po meri** (pod njim npr. »dež +0,5 s«), napoved do prevzema in inženirjeva cena postanka.
-- **Dež v boksih:** ko je cesta mokra, so mokri tudi boksi na vseh 8 pravih progah z boksi (in na testnih Longfordu, Newcastlu in Townsvillu): ploščad pred garažami je temnejša in se sveti (v njej se zrcali nebo; proti garažam, pod njihovimi napušči, je bolj suha), ob robovih pasu in po ploščadi so luže, po pasu in ploščadi škropijo kaplje kot po cesti. Na Bathurstu je ploščad asfaltna in potemni kot cesta (le luže). Mehaniki imajo v dežju (in v snegu) dežne jakne v barvi ekipe, temnejše in čez bela ramena kombinezona, mokre in svetleče (v snegu manj). Nove gume, ki čakajo na tleh pred garažo, so v prevlekah (temne odeje s trakom v barvi zmesi); ko jih mehaniki vzamejo, prevlek ni več, stare gume odložijo brez njih. Vse je v obstoječih izrisih (luže boksov v isti mreži kot luže na progi, jakne in prevleke v istih mrežah mehanikov): klicev risanja ni več, v suhem se ne spremeni nič.
+- **Dež v boksih:** ko je cesta mokra, so mokri tudi boksi na vseh 5 pravih progah z boksi (in na testnih Longfordu, Newcastlu, Townsvillu, Torontu, Bang Saenu in Trois-Rivièresu): ploščad pred garažami je temnejša in se sveti (v njej se zrcali nebo; proti garažam, pod njihovimi napušči, je bolj suha), ob robovih pasu in po ploščadi so luže, po pasu in ploščadi škropijo kaplje kot po cesti. Na Bathurstu je ploščad asfaltna in potemni kot cesta (le luže). Mehaniki imajo v dežju (in v snegu) dežne jakne v barvi ekipe, temnejše in čez bela ramena kombinezona, mokre in svetleče (v snegu manj). Nove gume, ki čakajo na tleh pred garažo, so v prevlekah (temne odeje s trakom v barvi zmesi); ko jih mehaniki vzamejo, prevlek ni več, stare gume odložijo brez njih. Vse je v obstoječih izrisih (luže boksov v isti mreži kot luže na progi, jakne in prevleke v istih mrežah mehanikov): klicev risanja ni več, v suhem se ne spremeni nič.
 - Popravilo je postopno, ne vse naenkrat: med postankom se avtu popravijo stekla, karoserija se zravna in očisti (saje, praske, ogenj), odpadla kolesa se vrnejo z novimi gumami, odpadli deli eden za drugim, nato zasvetijo luči.
 - Tekmeci z AI pridejo po prave gume, ko se vreme spremeni. Vsak se odloči malo drugače, v boksih pa so lahko hkrati največ trije (v polju z več kot 13 avti četrtina tekmecev, pri 22 avtih šest, a nikoli dva v isti boks ekipe), zato nekateri čakajo en krog. V zadnjem delu dirke ne menjajo več.
 - **Tekmeci na popravilo:** pri poškodbah **Vklop** (Nastavitve → Poškodbe avtov) pride v bokse tudi močno poškodovan tekmec, pri približno 45 % poškodb (vsak voznik malo drugače, agresivni pozneje). Odloči se pred zadnjimi 300 m do uvoza (pozneje šele v naslednjem krogu, da ne zavije čez cesto) in samo, če bo po postanku do cilja še več kot pol kroga, zato v zadnjem krogu ne pride. Tudi zanj velja, da so v boksih hkrati največ trije. Popravljen avto ima spet vso moč, postanek pa ga stane okoli 20 s, zato se vrstni red premeša. Pri poškodbah **Izklop** ali **Samo videz** tekmeci zaradi poškodb ne pridejo.
@@ -638,16 +650,20 @@ Na zaslonu **Izberi progo** izbereš še **letni čas** (Poletje, Jesen, Zima) i
 
 Na vseh dirkališčih se ob tribunah in gledalcih sliši množica (bobni, trobente, vzklikanje), glasneje, ko pelješ bliže, in s tiste strani, kjer so. Ob štartu, ko koga prehitiš, in v cilju zagrmi glasneje. Na cestnih kronometrih tega ni, na Ouninpohji in Katu-Jaryku imajo navijači ob cesti svoj zvok (glej zgoraj). V predoru pod hotelom v Monaku motor in tekmeci odmevajo od sten in stropa (kratek odmev majhnega, trdega prostora), prav tako pod mostom na Suzuki; ko pripelješ ven, odmev utihne.
 
+## Zvoki okolja
+
+Na pravih progah se ob cesti tiho slišijo zvoki okolja, izračunani iz sveta proge (drevesa, voda, vasi, višina in odprtost ceste, cerkve iz OpenStreetMap): v gozdu šelestenje listja in ptice (poleti največ, jeseni manj, pozimi skoraj nič, ponoči brez ptic), ob vodi potok, reka, slap, jezero ali morje (z galebi), na odprtih in visokih delih veter (pozimi močnejši), v vaseh ob cesti zvonovi cerkve, ko pelješ mimo, poleti ponoči črički, v toplih krajih podnevi škržati, ob čredah kravji zvonci in mukanje (Spa, Red Bull Ring, Rio do Rastro), na mestnih progah oddaljen promet in golobi (Harju, Crystal Palace, Montréal, Marrakesh). Na dirkališčih s tribunami se ob tribunah tu in tam sliši razglas po zvočniku (splošna obvestila v angleščini, brez imen), ob glasnih tribunah vzkliki ljudi (»Go on!«); oboje tiho, v angleškem glasu brskalnika, nikoli hkrati s komentatorjem ali sovoznikom (ko začne komentator, utihne). Vsak zvok se sliši s tiste strani ceste, kjer je. Zvoki so pod motorjem: jasno se slišijo na štartu, v počasnih ovinkih in v cilju, pri polnem plinu komaj; ob tribunah in navijačih se stišajo, v predoru utihnejo, v dežju ni ptic in žuželk. Nastavitve: **Zvoki okolja** Izklop / Tiho / Normalno (privzeto) / Glasno (pol tišje, običajno, dvakrat glasneje; shrani se z drugimi nastavitvami); delujejo samo pri vklopljenem zvoku, pri varčevanju z baterijo ostanejo samo podlage (brez ptic, zvonov, galebov, živali, golobov in govora). Testne proge so brez zvokov okolja. Vsi zvoki so narejeni v igri (sinteza), nič se ne prenaša.
+
 ## Zvok motorjev
 
 Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik LEV S brenči in hrešči pri visokih vrtljajih, PICO TURBO ima turbo (žvižg in odpihovalni ventil, ko spustiš plin), VORTEX 4WD boksarski motor z neenakomernim brbotanjem, KAZE RS gladek vrstni šestvaljnik s turbom, STREGA MR tuleč V6, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
 
 ## Vozni park
 
-V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
+V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
-- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/6«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
-- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5. Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
+- **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/7«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
+- **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5, TITAN CISTERNA 5 (polje samo iz tovornjakov s cisterno, brez dopolnitve), ZRCALNI VLAK 3 (samo vlaki, brez dopolnitve). Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
 
@@ -661,6 +677,8 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
 | **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
+| **OSA R** | 4WD | 422 KM | 1450 kg | 55.000 kovančkov | Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler. Najhitrejši mali avto (0–100 hitreje od LEV S). |
+| **KUNA S** | prednji | 347 KM | 1190 kg | 30.000 kovančkov | Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča. |
 
 ### Športni
 
@@ -672,6 +690,9 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
 | **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
+| **ŠAKAL D** | zadnji | 761 KM | 1350 kg | 180.000 kovančkov | Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles. Največ točk za drift od vseh vozil (meritev kot v avtošoli Drift). |
+| **RIS G** | 4WD | 544 KM | 1360 kg | 85.000 kovančkov | Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi. |
+| **MERJASEC V8** | zadnji | 639 KM | 1680 kg | 95.000 kovančkov | Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi. |
 
 ### Superšportni
 
@@ -698,6 +719,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **LEV R** | 4WD | 408 KM | 1230 kg | 45.000 kovančkov | Relijski dirkač za svetovno prvenstvo: široki blatniki, veliko krilo, zajemalka na strehi. |
 | **BURJA R7** | 4WD | 394 KM | 1150 kg | 60.000 kovančkov | Relijski dirkač iz 80-ih, ogromno moči, rojen za drift. |
 | **ZMAJ 85** | 4WD | 476 KM | 1090 kg | 75.000 kovančkov | Relijska pošast skupine B iz leta 1985: kratka medosna razdalja in ogromna krila. |
+| **GAMS RH** | 4WD | 449 KM | 1260 kg | 1.000.000 kovančkov | Sodoben relijski hibrid: veliko krilo, odprtine na blatnikih, zračnik na strehi. Hibrid ga potiska iz ovinkov; na makadamu je najboljši v igri. |
 
 ### Terenski
 
@@ -708,6 +730,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **MEDVED 4x4** | 4WD | 585 KM | 2300 kg | 50.000 kovančkov | Škatlast luksuzni terenec z rezervnim kolesom na zadnjih vratih in strešnim nosilcem. |
 | **PEŠČENJAK** | zadnji, motor na sredini | 354 KM | 1500 kg | 55.000 kovančkov | Puščavski buggy za maratonske relije: cevni okvir, rezervni kolesi in dihalka. |
 | **SAMUM 4x4** | 4WD | 571 KM | 1850 kg | 55.000 kovančkov | Terenski dirkalni tovornjak za makadam in puščavo (glej spodaj). |
+| **TUR 6x6** | 6WD | 870 KM | 3300 kg | 80.000 kovančkov | Terenski poltovornjak na šestih gnanih kolesih: snorkel, svetlobni pas, dolg keson. |
 
 ### Dirkalni
 
@@ -721,6 +744,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **BIZON 70** | zadnji, motor na sredini | 748 KM | 750 kg | 90.000 kovančkov | Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih. |
 | **FORMULA ORKAN** | zadnji, motor na sredini | 1000 KM | 798 kg | 90.000 kovančkov | Dirkalnik formule z odprtimi kolesi in krili (glej spodaj). |
 | **TAIFUN LM** | zadnji, motor na sredini | 762 KM | 960 kg | 110.000 kovančkov | Prototip za vzdržljivostne dirke (glej spodaj). |
+| **OREL GT3** | zadnji, motor na sredini | 558 KM | 1280 kg | 550.000 kovančkov | Dirkalnik GT3: kabina naprej, zračnik na strehi, veliko krilo s stranicama in difuzor. Tekmeci so izmenoma OREL GT3 in TIGER GT (mešano polje razreda GT3, krog enako hiter): OREL je hitrejši na ravninah in pri zaviranju, TIGER GT v ovinkih. |
 
 ### Tovornjaki
 
@@ -728,6 +752,8 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 |---|---|---|---|---|---|
 | **TITAN** | zadnji | 1115 KM | 5300 kg | 60.000 kovančkov | Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h. |
 | **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
+| **TITAN CISTERNA** | zadnji | 1115 KM | 5300 kg in 12 t prikolice | 75.000 kovančkov | TITAN s cisterno na sedlu: prikolica se v ovinku lomi, pri zaviranju potiska in je težka (glej spodaj). |
+| **ZRCALNI VLAK** | 4WD | 1360 KM | 7000 kg in 2 × 11 t cistern | 90.000 kovančkov | Cestni vlak: črna kabina, dve zrcalni cisterni in dolly, dva zgiba (glej spodaj). |
 
 ### Električni
 
@@ -735,6 +761,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 |---|---|---|---|---|---|
 | **JEŽEK E** | prednji | 218 KM | 1350 kg | 22.000 kovančkov | Retro električni mestni avto z LED pasovi: tih, takoj pospeši, a je težak. |
 | **STRELA EV** | 4WD | 598 KM | 1720 kg | 75.000 kovančkov | Električni hiperšportnik s štirimi motorji (glej spodaj). |
+| **VIDRA E** | 4WD | 653 KM | 2050 kg | 90.000 kovančkov | Električni fastback z dvema motorjema za drift: steklena streha, svetlobna pasova. |
 
 ### Posebni
 
@@ -743,6 +770,7 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **PREDSEDNIK** | zadnji | 408 KM | 2900 kg | 40.000 kovančkov | Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma. |
 | **GOLJAT** | 4WD | 1496 KM | 4500 kg | 55.000 kovančkov | Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa. |
 | **SUPERKOMBI** | zadnji, motor na sredini | 707 KM | 1250 kg | 70.000 kovančkov | Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini. |
+| **VRAN 01** | 4WD | 680 KM | 2150 kg | 75.000 kovančkov | Izvenserijski velik terenec 4x4 s trdo streho, vitlom in rezervnim kolesom zadaj. |
 
 ### Dirkalni tovornjak TITAN
 
@@ -752,6 +780,27 @@ V igri je **43 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 - Težak je: zavira dlje (s 100 km/h na ~32 m), v ovinkih se nagne in ima manj oprijema, obrne se šele v širšem krogu kot avto. Zadnji pogon mu rad obrne rep. Ima trdno šasijo, zato ga trki poškodujejo manj kot avto.
 - Ob trkih odletijo odbijača, rešetka, strešni deflektor, stranska oklepa, vrata kabine, ogledali in kolesa.
 - Z njim dirka do 9 tekmecev v enakih tovornjakih (vsak v svoji barvi).
+
+### TITAN s cisterno
+
+**TITAN CISTERNA** je TITAN, ki na sedlu vleče cisterno. Prikolica je svoje telo na pravem zgibu: ne sledi samo poti, ampak se v ovinku lomi, pri zaviranju potiska in s težo vpliva na vožnjo.
+
+- Vlačilec je TITAN (1115 KM, deset prestav), malo zarjavel ob spodnjih robovih. Cisterna je dolga 12,4 m in polna tehta 12 t: od sonca zbledela, močno zarjavela, s šestimi navarjenimi sivimi ploščami, bočno pohodno potjo, lestvijo, štirimi rezervnimi gumami in polico s kanticami zadaj. Ves tovornjak je dolg 16 m.
+- Od 0 do 100 km/h pospeši v ~9,6 s, najhitreje vozi ~148 km/h, s 100 km/h se ustavi na ~43 m. Kdor zavira v ovinku, mu prikolica potisne zadek vlačilca ven in se zlomi bolj (največ do 83°); s preveč zaviranja gre tovornjak v »škarje«.
+- Prikolica ima prave trke z ograjo, robom ceste, vozili in policijo in lahko pade čez prepad, tudi sama.
+- Kamera za avtom pokaže ves tovornjak; prikolica se vidi tudi v posnetku dirke, v duhu in v igri na več telefonih. V garaži je samo vlačilec (prikolica ostane zunaj delavnice).
+- Z njim dirka do 5 tekmecev v enakih tovornjakih s cisterno (vsak v svoji barvi).
+
+### Zrcalni cestni vlak
+
+**ZRCALNI VLAK** je cestni vlak: črna kabina s pogonom na vsa kolesa vleče na sedlu prvo cisterno, za njo je dolly (oje z dvema osema in svojim sedlom), na njem pa druga cisterna. Vlak ima dva zgiba in je od nosu kabine do repa druge cisterne dolg 28 m.
+
+- Vlačilec ima 1360 KM in deset prestav: črna kabina z nosom pred kabino, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervna guma. Cisterni sta iz zrcalno polirane nerjavne pločevine (obroči, pohodna pot z ograjo, bočni odbijač, rdeča omarica), vsaka je dolga 11,4 m in polna tehta 11 t; ves vlak tehta 29 t. Odsev neba in okolice je vnaprej narisan v teksturi (ne živo zrcalo), zato vlak telefona ne obremeni bolj kot cisterna TITAN-a.
+- Od 0 do 100 km/h pospeši v ~14 s, najhitreje vozi ~137 km/h, s 100 km/h se ustavi na ~44 m.
+- Prvi zgib (sedlo vlačilca) se zlomi do 83°, drugi (sedlo dollyja) do 57°. Kdor zavira v ovinku, mu cisterni potisneta zadek vlačilca ven; v najostrejših serpentinah (polmer pod ~15 m) sta oba zgiba zložena v isto smer do konca.
+- Cisterni imata prave trke z ograjo, robom ceste, vozili in policijo in lahko padeta čez prepad. Druga cisterna ne trči v lasten vlačilec (pri škarjah gre skozenj).
+- Kamera za avtom pokaže ves vlak; obe cisterni se vidita v posnetku dirke, v duhu in v igri na več telefonih. V garaži je samo vlačilec.
+- Z njim dirkajo do 3 tekmeci v enakih vlakih (vsak v svoji barvi), brez drugih vozil.
 
 ### Družina LEV
 
