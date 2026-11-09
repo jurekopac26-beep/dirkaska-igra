@@ -1845,5 +1845,37 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "e7e9ff45"
   }
+ },
+ "lombok": {
+  "meshes": 711,
+  "verts": 1041680,
+  "instances": 5472,
+  "props": 51,
+  "crowd": 19,
+  "world": "730b6aae",
+  "propsHash": "b21d4ce1",
+  "floor": "1feaa0d3/8596",
+  "groups": {
+   "-:MeshLambertMaterial": "6261eb67",
+   "-:MeshBasicMaterial": "36ac0d23",
+   "lombok service roads:MeshLambertMaterial": "7ea2f7ef",
+   "lombok dirt tracks:MeshLambertMaterial": "ab04329d",
+   "lombok sea:MeshPhongMaterial": "e0562dd5",
+   "-:MeshPhongMaterial": "a0e351b",
+   "rsFar:MeshBasicMaterial": "24a38444",
+   "crowd:MeshLambertMaterial": "48c9a5cd",
+   "flags:MeshLambertMaterial": "50cef5a6",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "ao:MeshBasicMaterial": "8de904b4",
+   "roadwear:MeshLambertMaterial": "839a3c0a",
+   "worn:MeshLambertMaterial": "9aafa2a6",
+   "brakeBoards:MeshLambertMaterial": "58f893ab",
+   "life:MeshLambertMaterial": "e806a4d5",
+   "lifeShadow:MeshBasicMaterial": "a6fb911a",
+   "life:MeshBasicMaterial": "c5079af4",
+   "people:MeshLambertMaterial": "eb17a790",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "dfe7cff3"
+  }
  }
 }

@@ -19,9 +19,12 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 
 // the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
 // from their import marker, fromFile below)
-const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], silkeborg: [56.17629, 9.66046], kagerod: [55.98674, 13.11484], sosnova: [50.65859, 14.54015], izoard: [44.83683, 6.72219], pembrey: [51.70588, -4.32387], kildare: [53.2570, -6.74510], sacalobra: [39.83166, 2.81636], kotor: [42.40399, 18.77959], bikernieki: [56.96521, 24.2288], london: [51.5033, -0.12622], zandvoort: [52.38899, 4.54088], dades: [31.52509, -5.9266], furka: [46.57044, 8.39622], santoantao: [17.14886, -25.08507], gudauri: [42.45935, 44.48487], ngorongoro: [-3.15494, 35.47587], medeu: [43.16007, 77.05761], ella: [6.85442, 81.05951], llogara: [40.20679, 19.58499], tuzla: [40.95222, 29.40639] };
+const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], silkeborg: [56.17629, 9.66046], kagerod: [55.98674, 13.11484], sosnova: [50.65859, 14.54015], izoard: [44.83683, 6.72219], pembrey: [51.70588, -4.32387], kildare: [53.2570, -6.74510], sacalobra: [39.83166, 2.81636], kotor: [42.40399, 18.77959], bikernieki: [56.96521, 24.2288], london: [51.5033, -0.12622], zandvoort: [52.38899, 4.54088], dades: [31.52509, -5.9266], furka: [46.57044, 8.39622], santoantao: [17.14886, -25.08507], gudauri: [42.45935, 44.48487], ngorongoro: [-3.15494, 35.47587], medeu: [43.16007, 77.05761], ella: [6.85442, 81.05951], llogara: [40.20679, 19.58499], tuzla: [40.95222, 29.40639] , lombok: [-8.89541, 116.30457]};
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
-const SUBUNITS = { England: ['England'], Wales: ['Wales'], Ireland: ['Ireland'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Denmark: ['Denmark'], Sweden: ['Sweden'], Czechia: ['Czechia'], Spain: ['Spain', 'Balearic Islands'], Montenegro: ['Montenegro'], Latvia: ['Latvia'], Netherlands: ['Netherlands'], Switzerland: ['Switzerland'], 'Cape Verde': ['Cabo Verde'], Georgia: ['Georgia'], Tanzania: ['Tanzania', 'Zanzibar'], Kazakhstan: ['Kazakhstan'], 'Sri Lanka': ['Sri Lanka'], Albania: ['Albania'], Turkey: ['Turkey'] };
+const SUBUNITS = { England: ['England'], Wales: ['Wales'], Ireland: ['Ireland'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Denmark: ['Denmark'], Sweden: ['Sweden'], Czechia: ['Czechia'], Spain: ['Spain', 'Balearic Islands'], Montenegro: ['Montenegro'], Latvia: ['Latvia'], Netherlands: ['Netherlands'], Switzerland: ['Switzerland'], 'Cape Verde': ['Cabo Verde'], Georgia: ['Georgia'], Tanzania: ['Tanzania', 'Zanzibar'], Kazakhstan: ['Kazakhstan'], 'Sri Lanka': ['Sri Lanka'], Albania: ['Albania'], Turkey: ['Turkey'] , Indonesia: ['Indonesia']};
+// an archipelago's outline coarser (its smallest island kept, deg², and the simplification, deg; the others 0.02 and 0.02): its hundreds of
+// islands at the globe's 44 px are a few dots, only the big ones kept (Indonesia: 22 rings instead of 82, Lombok among them)
+const COARSE = { Indonesia: [0.3, 0.08] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;
@@ -71,13 +74,13 @@ if (want.length || away.length) {
   const J = JSON.parse(fs.readFileSync(cache, 'utf8'));
   for (const c of want) {
     const units = SUBUNITS[c]; if (!units) throw new Error(c + ': which Natural Earth map subunits? (add it to SUBUNITS)');
-    const rings = [];
+    const rings = [], [minA, tol] = COARSE[c] || [0.02, 0.02];
     for (const f of J.features) {
       if (!units.includes(f.properties.SUBUNIT)) continue;
       const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
       for (const poly of polys) for (const ring of poly) {
-        if (area(ring) < 0.02) continue;   // (no islets: a few kilometres across is nothing on a globe 44 px wide)
-        const s = simplify(ring, 0.02); if (s.length < 4) continue;
+        if (area(ring) < minA) continue;   // (no islets: a few kilometres across is nothing on a globe 44 px wide)
+        const s = simplify(ring, tol); if (s.length < 4) continue;
         rings.push(s.flatMap(p => [+p[0].toFixed(3), +p[1].toFixed(3)]));
       }
     }

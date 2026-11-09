@@ -502,5 +502,12 @@
   "kverts": 463,
   "maxKverts": 584,
   "jsMs": 1.65
+ },
+ "lombok": {
+  "calls": 190,
+  "maxCalls": 228,
+  "kverts": 568,
+  "maxKverts": 701,
+  "jsMs": 1.56
  }
 }
