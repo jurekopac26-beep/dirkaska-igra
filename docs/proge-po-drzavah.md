@@ -124,7 +124,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Romunija | Bâlea (narejena, PR #226) | po vrsti |
 | Švica | Furka (Nove proge) | po vrsti |
-| Gruzija | Gudauri (Nove proge) | po vrsti |
+| Gruzija | Gudauri (narejena, PR #523) | po vrsti |
 | Albanija | Llogara (Nove proge) | po vrsti |
 | Portugalska | Porto Moniz (Nove proge) | po vrsti |
 | Tanzanija | Ngorongoro (Nove proge) | po vrsti |

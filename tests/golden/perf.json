@@ -460,5 +460,12 @@
   "kverts": 268,
   "maxKverts": 315,
   "jsMs": 1.1
+ },
+ "gudauri": {
+  "calls": 153,
+  "maxCalls": 183,
+  "kverts": 343,
+  "maxKverts": 474,
+  "jsMs": 1.84
  }
 }

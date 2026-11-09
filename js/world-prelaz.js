@@ -119,6 +119,26 @@
       far: { lo: [0.4, 0.44, 0.31], hi: [0.64, 0.63, 0.6], dw: [0.26, 0.32, 0.2], snow: 9000, tree: [900, 350], fc: [0.19, 0.27, 0.15], rk: [800, 1500], dwb: [0, 150, 1300, 1000], wet: [0.09, 0.27, 0.36], hz: [0.3, 0.4] },
     },
   };
+  // Gudauri (Georgia, the Greater Caucasus): the open slopes above the deep valley of the White Aragvi, late-summer alpine meadow, yellowing,
+  // grazed short, with mats of Caucasian rhododendron and juniper, the pine planted round the lower village (lc 1), dark grey-brown andesite and
+  // shale in crags and in scree on the steep faces, no snow left in summer this low; the ski village along the road (L.hotels: the hotels and the
+  // apartment blocks, storeys of plaster with bands of windows and balconies, the guesthouses, under roofs of coloured metal), the ski slopes'
+  // chair lifts and drag lifts above it (L.chairs), the power line across the road (def.power), the first avalanche gallery at the end of the road
+  // (portal 2); the Georgian signs: white chevrons on red in the hairpins, the centre line in 3 m dashes; sheep on the pasture
+  PL_LOOK.gudauri = {
+    seed: 5100, board: 'GUDAURI', sub: 'MTSKHETA-MTIANETI', banner: ['GEORGIAN MILITARY ROAD', '4 HAIRPINS · GUDAURI'],
+    grass: [0.45, 0.5, 0.26], grassDry: [0.62, 0.58, 0.35], grassLush: [0.36, 0.48, 0.21], shrub: [0.2, 0.28, 0.15],
+    rock: [0.44, 0.42, 0.4], rockWarm: [0.52, 0.46, 0.39], lichen: [0.37, 0.37, 0.33], scree: [0.52, 0.5, 0.47],
+    sat: 0.55, satV: 1.3, snowLine: 3300, snowC: [1.0, 1.02, 1.06],
+    rockCols: [[0.42, 0.41, 0.4], [0.48, 0.46, 0.43], [0.36, 0.35, 0.35], [0.52, 0.47, 0.42], [0.44, 0.4, 0.37], [0.4, 0.4, 0.38]],   // (the andesite and the shale: dark grey, a little brown)
+    centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 40,   // (the centre line: 3 m dashes, 9 m gaps; solid through the hairpins)
+    chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.5, 0.5, 0.47],
+    fans: [[0.9, 0.12, 0.14], [0.96, 0.96, 0.96], [0.12, 0.24, 0.6], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+    cars: [[0.9, 0.9, 0.88], [0.18, 0.2, 0.22], [0.62, 0.64, 0.66], [0.76, 0.75, 0.71], [0.55, 0.12, 0.1], [0.16, 0.26, 0.45]],
+    roofs: [[0.6, 0.17, 0.14], [0.2, 0.36, 0.27], [0.22, 0.33, 0.5], [0.34, 0.35, 0.37], [0.5, 0.27, 0.18]],   // (the coloured metal of the village's roofs)
+    sheep: 1, portal: 2, power: 1, hotels: 1, chairs: 1,
+    far: { lo: [0.43, 0.47, 0.27], hi: [0.47, 0.45, 0.42], dw: [0.23, 0.3, 0.17], snow: 3350, tree: [1900, 1650], fc: [0.19, 0.27, 0.15], rk: [2700, 3100], dwb: [1900, 2100, 2500, 2300] },
+  };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
   const PLCOL = [0, 0, 0], PLBANK = [0.5, 0.47, 0.36];   // (PLBANK: the banks' earth, unless the look has its own: L.bank)
@@ -357,8 +377,13 @@
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind 0 a hut / 1 a stall or shed / 2 a big house]), clear of the road
     const blds = [];
-    for (const [x, z, Lb, Wb, ang, hb, kind] of def.bld || []) { if (Lb < 2 || Wb < 2) continue; const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
-      for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) ok = false; }
+    for (let [x, z, Lb, Wb, ang, hb, kind] of def.bld || []) { if (Lb < 2 || Wb < 2) continue; const c = Math.cos(ang), s = Math.sin(ang); let ok = true, hit = null;
+      if (L.hotels) { Lb = Math.min(Lb, 34); Wb = Math.min(Wb, 20); }   // (L.hotels: the footprint as it is drawn)
+      for (let k = 0; k < (L.hotels ? 5 : 1); k++) {   // (L.hotels, Gudauri's: a house the game's wider road would cut is moved back from it, up to 10 m: the
+        // village's hotels and guesthouses stand close along the real road)
+        if (hit) { const i = hit.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1; x += T.nx[i] * sd * 2.5; z += T.nz[i] * sd * 2.5; hit = null; }
+        for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) { ok = false; hit = hit || n; } }
+        if (!hit) { ok = true; break; } }
       if (ok && vrDist(x, z) < 430) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
@@ -623,10 +648,27 @@
     let nBld = 0;
     {
       const RB = rng(L.seed + 21), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
+      const PLASTER = [[0.88, 0.85, 0.77], [0.9, 0.9, 0.87], [0.85, 0.75, 0.58], [0.8, 0.64, 0.52], [0.7, 0.7, 0.68], [0.54, 0.4, 0.27]], GLASS = [0.15, 0.19, 0.23], BALC = [[0.74, 0.73, 0.7], [0.3, 0.26, 0.22]];   // (L.hotels: the walls' plaster, a few of timber; the windows; the balconies' slabs and rails)
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
-        if (b.kind === 1) {   // a stall: timber walls, a tarp roof
+        if (L.hotels && b.kind !== 1) {   // (L.hotels, Gudauri's) the hotels and the apartment blocks (a big house: 3-6 storeys, or as many as OpenStreetMap's height
+          // gives), the guesthouses (2-3): plastered walls over a stone plinth, a dark band of windows along each storey (beyond ~220 m none), balconies
+          // along the long sides of the big ones, a low roof of coloured metal
+          const big = b.kind === 2, FL = 3, nF = b.h > 0 ? clamp(Math.round(b.h / FL), 2, 8) : big ? 3 + Math.floor(RB() * 4) : 2 + (RB() < 0.35 ? 1 : 0);
+          const wl = vary(PLASTER[Math.floor(RB() * PLASTER.length)], RB, 0.05), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08), y0 = hi + 0.5, det = vrDist(b.x, b.z) < 220;
+          box(g, b.x, lo - 0.4, b.z, b.L + 0.3, y0 - lo + 0.4, b.W + 0.3, b.ang, vary(stone[nBld % 3], RB, 0.08), null, true);   // the plinth
+          box(g, b.x, y0, b.z, b.L, nF * FL, b.W, b.ang, wl, null, true);   // the storeys
+          if (det) for (let f = 0; f < nF; f++) { const wy = y0 + f * FL + 0.9;
+            for (const sd of [-1, 1]) { const v = sd * (b.W / 2 + 0.03);
+              box(g, b.x - s * v, wy, b.z + c * v, b.L - 1.6, 1.3, 0.06, b.ang, GLASS, null, true);   // (the windows)
+              if (big && f > 0) { const v1 = sd * (b.W / 2 + 0.6), v2 = sd * (b.W / 2 + 1.17);   // (a balcony: its slab and its rail)
+                box(g, b.x - s * v1, wy - 0.95, b.z + c * v1, b.L - 1.2, 0.18, 1.2, b.ang, BALC[0]);
+                box(g, b.x - s * v2, wy - 0.77, b.z + c * v2, b.L - 1.2, 0.95, 0.05, b.ang, BALC[1], null, true); } }
+            if (b.W > 7) for (const sd of [-1, 1]) { const u = sd * (b.L / 2 + 0.03); box(g, b.x + c * u, wy, b.z + s * u, 0.06, 1.3, b.W - 2.4, b.ang, GLASS, null, true); }
+          }
+          gable(g, b.x, y0 + nF * FL, b.z, b.L + 1.0, b.W + 1.0, Math.min(b.W, 18) * 0.3, b.ang, rf, wl);
+        } else if (b.kind === 1) {   // a stall: timber walls, a tarp roof
           box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.5, b.W, b.ang, vary(wood[nBld % 3], RB, 0.1), null, true);
           gable(g, b.x, hi + 2.2, b.z, b.L + 0.5, b.W + 0.6, 0.5, b.ang, vary(tarps[Math.floor(RB() * tarps.length)], RB, 0.08), vary(wood[0], RB, 0.1));
         } else {
@@ -734,7 +776,19 @@
         for (let k = 0; k < 4; k++) { const a = (RV() - 0.5) * 1.8, ca = Math.cos(a), sa = Math.sin(a), wx = ux * ca + tx * sa, wz = uz * ca + tz * sa, px = p.x + wx * (p.r - 1.1), pz = p.z + wz * (p.r - 1.1);
           if (vrNear(px, pz).dd < 1) continue; person(px, pz, Math.atan2(-wx, wz) + (RV() - 0.5) * 0.6); } }
       const eX = T.px[iE] + T.tx[iE] * 1.0, eZ = T.pz[iE] + T.tz[iE] * 1.0, eY = T.hy[iE];
-      if (L.portal) {   // the tunnel's portal: a concrete face across the road's end, the dark mouth of the tunnel in it, the rock of the mountain over it
+      if (L.portal === 2) {   // (Gudauri's) the avalanche gallery over the road beyond: a concrete roof on a solid wall up the slope and a row of square pillars on
+        // the valley side, dark in under it, earth heaped on its roof against the slides and grassed over, the portal's lintel across the road
+        const g = scen.get(eX, eZ), hd = T.hd[iE], tx = T.tx[iE], tz = T.tz[iE], nx = T.nx[iE], nz = T.nz[iE], con = [0.68, 0.67, 0.64], con2 = [0.6, 0.59, 0.56], dk = [0.05, 0.05, 0.055];
+        const up = caGround(eX + nx * (w + 12), eZ + nz * (w + 12)) > caGround(eX - nx * (w + 12), eZ - nz * (w + 12)) ? 1 : -1, Lg = 40, Hg = 6.4, hw = w + 1.4, at = (u, v) => [eX + tx * u + nx * v, eZ + tz * u + nz * v];
+        { const [cx, cz] = at(Lg / 2, 0); box(g, cx, eY - 0.3, cz, Lg, Hg - 0.1, w * 2 + 0.4, hd, dk, dk); }   // the dark inside, the road going in
+        { const [cx, cz] = at(Lg / 2, up * (hw + 0.5)); box(g, cx, eY - 1.5, cz, Lg, Hg + 1.5, 1.4, hd, con2); }   // the wall up the slope
+        for (let u = 1.2; u < Lg; u += 4.5) { const [px, pz] = at(u, -up * (hw - 0.2)), gy = Math.min(eY, caGround(px, pz)); box(g, px, gy - 0.6, pz, 0.9, eY + Hg - gy + 0.6, 0.9, hd, con); }   // the pillars
+        { const [cx, cz] = at(Lg / 2 + 0.3, 0); box(g, cx, eY + Hg - 0.2, cz, Lg + 0.6, 1.0, hw * 2 + 1.6, hd, con, con2);   // the roof, the earth on it
+          box(g, cx + nx * up * 1.2, eY + Hg + 0.8, cz + nz * up * 1.2, Lg - 2, 1.4, hw * 2 - 1, hd, [0.42, 0.36, 0.28], L.grass); }
+        { const [cx, cz] = at(0.2, 0); box(g, cx, eY + Hg - 1.6, cz, 1.0, 1.6, hw * 2 + 1.6, hd, con); }   // the lintel
+        for (let u = 0; u <= Lg; u += 8) { const [x, z] = at(u, 0); exclPush(x, z, hw + 4); }
+        out.marks.portal = [eX, eZ];
+      } else if (L.portal) {   // the tunnel's portal: a concrete face across the road's end, the dark mouth of the tunnel in it, the rock of the mountain over it
         const g = scen.get(eX, eZ), hd = T.hd[iE], Wp = w * 2 + 5, Hp = 8.5, tx = T.tx[iE], tz = T.tz[iE], nx = T.nx[iE], nz = T.nz[iE], con = [0.7, 0.69, 0.66], dk = [0.03, 0.03, 0.035];
         box(g, eX + tx * 6, eY - 0.3, eZ + tz * 6, 12, 6.3, w * 2 + 0.6, hd, dk, dk);   // the mouth: a dark box going in
         for (const f of [-1, 1]) box(g, eX + nx * f * (w + 1.6) + tx * 0.5, eY - 0.6, eZ + nz * f * (w + 1.6) + tz * 0.5, 2.0, Hp + 0.6, 3.0, hd, con);   // the sides
@@ -818,31 +872,49 @@
     signPost(sStart + 40, 1, 1.2, 4, 0.8, 0.8, 2.2);   // the speed limit up the pass
 
     /* ---- the cable car (def.cables, def.pylons: OpenStreetMap): steel pylons along the line, the two ropes sagging between them, a cabin on each, the
-       stations at the ends as plain concrete blocks ---- */
+       stations at the ends as plain concrete blocks; the ski slopes' lifts (L.chairs, Gudauri's, by cb.k): a chair lift's lower pylons (a steel tube,
+       the cross-arm with a sheave train at each end), the loop of its rope with the chairs hanging every ~24 m, a pylon at least every ~110 m (where
+       OpenStreetMap has the stations only, the pylons between them evenly), its stations a hut under the bull wheel's housing; a drag lift lower
+       still, without the chairs; the conveyors on the slope not drawn ---- */
     let nPyl = 0;
     if ((def.cables || []).length) {
-      const gp = new GB(), steel = [0.42, 0.44, 0.46], rope = [0.12, 0.12, 0.13], top = [];
+      const gp = new GB(), steel = [0.42, 0.44, 0.46], rope = [0.12, 0.12, 0.13], top = [], seat = [0.22, 0.3, 0.5], frame = [0.3, 0.31, 0.33];
       const pyl = []; for (let k = 0; k + 2 < (def.pylons || []).length; k += 3) pyl.push(def.pylons.slice(k, k + 3));
       for (const cb of def.cables) {
-        const p = cb.p, n = p.length / 2, pts = [];
-        for (let k = 0; k < n; k++) pts.push([p[2 * k], p[2 * k + 1]]);
+        const ch = !L.chairs ? 0 : cb.k === 'chair_lift' ? 1 : cb.k === 'magic_carpet' ? 3 : /drag|platter|t-bar|j-bar|rope_tow/.test(cb.k || '') ? 2 : 0;   // (1 a chair lift, 2 a drag lift, 3 a conveyor)
+        if (ch === 3) continue;
+        const p = cb.p, pts = [];
+        for (let k = 0; k < p.length / 2; k++) { const q = [p[2 * k], p[2 * k + 1]], a = pts[pts.length - 1];
+          if (ch && a) { const m = Math.ceil(Math.hypot(q[0] - a[0], q[1] - a[1]) / (ch === 1 ? 110 : 70)); for (let j = 1; j < m; j++) pts.push([lerp(a[0], q[0], j / m), lerp(a[1], q[1], j / m)]); }
+          pts.push(q); }
+        const n = pts.length;
         const dir = (k) => { const a = pts[Math.max(0, k - 1)], b = pts[Math.min(n - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
-        const H = (k) => (k === 0 || k === n - 1 ? 9 : 18 + 6 * rpHash(k, 91));   // (the stations' rope height, the pylons')
+        const H = (k) => (ch ? (k === 0 || k === n - 1 ? 5 : ch === 1 ? 9 + 4 * rpHash(k, 91) : 6) : k === 0 || k === n - 1 ? 9 : 18 + 6 * rpHash(k, 91));   // (the stations' rope height, the pylons')
         for (let k = 0; k < n; k++) { const [x, z] = pts[k], y = vrFar(x, z), [dx, dz] = dir(k), dist = vrDist(x, z); top.push([x, y + H(k), z, dx, dz]);
+          if ((k === 0 || k === n - 1) && ch) { if (dist < 600) { const g = scen.get(x, z), a = Math.atan2(dz, dx);   // (a lift's station: the hut, the bull wheel's housing over the loop)
+            box(g, x, y - 0.5, z, 6, 4.2, 5, a, [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); box(g, x, y + 3.7, z, 8.5, 1.3, 6.2, a, [0.84, 0.82, 0.78], [0.42, 0.44, 0.47]); exclPush(x, z, 7); } continue; }
           if (k === 0 || k === n - 1) { if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, 9.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
           if (dist > 900) continue;
           const g = scen.get(x, z), hh = H(k), a = Math.atan2(dz, dx);   // a pylon: a tapering steel mast, the cross-arm with the two rope saddles
+          if (ch) { cyl(g, x, y - 0.4, z, 0.34, hh + 0.4, 6, steel, steel, 0.24); box(g, x, y + hh - 0.3, z, 0.4, 0.4, 5.2, a, steel, null, true);   // (a lift's: the tube, the cross-arm, the sheaves)
+            for (const o of [-2.3, 2.3]) box(g, x - dz * o, y + hh - 0.45, z + dx * o, 2.2, 0.3, 0.3, a, [0.26, 0.27, 0.29], null, true);
+            exclPush(x, z, 2); nPyl++; continue; }
           for (let q = 0; q < 4; q++) { const f0 = q / 4, f1 = (q + 1) / 4, r0 = lerp(1.6, 0.6, f0), r1 = lerp(1.6, 0.6, f1); box(g, x, y + hh * f0 - (q ? 0 : 0.5), z, r0 * 0.9 + r1 * 0.1, hh / 4 + (q ? 0 : 0.5), r0 * 0.9 + r1 * 0.1, a, steel, null, true); }
           box(g, x, y + hh, z, 0.6, 0.5, 9, a, steel, null, true); exclPush(x, z, 3); nPyl++; }
+        const RO = ch ? 2.3 : 4.2, SG = ch ? 0.02 : 0.035;   // (the ropes' half gauge, their sag)
         for (const f of [-1, 1]) for (let k = 0; k + 1 < top.length; k++) {   // the ropes: ~16 segments each span, sagging
-          const A = top[k], B = top[k + 1], o = 4.2 * f, ax = A[0] - A[4] * o, az = A[2] + A[3] * o, bx = B[0] - B[4] * o, bz = B[2] + B[3] * o, span = Math.hypot(bx - ax, bz - az);
+          const A = top[k], B = top[k + 1], o = RO * f, ax = A[0] - A[4] * o, az = A[2] + A[3] * o, bx = B[0] - B[4] * o, bz = B[2] + B[3] * o, span = Math.hypot(bx - ax, bz - az);
           if (Math.min(vrDist(ax, az), vrDist(bx, bz)) > 1100) continue;
           let px = ax, py = A[1], pz = az;
-          for (let q = 1; q <= 16; q++) { const t = q / 16, x = lerp(ax, bx, t), z = lerp(az, bz, t), y = lerp(A[1], B[1], t) - span * 0.035 * 4 * t * (1 - t);
+          for (let q = 1; q <= 16; q++) { const t = q / 16, x = lerp(ax, bx, t), z = lerp(az, bz, t), y = lerp(A[1], B[1], t) - span * SG * 4 * t * (1 - t);
             ouRod(gp, [px, py, pz], [x, y, z], 0.06, rope, 3); px = x; py = y; pz = z; }
+          if (ch === 1 && Math.min(vrDist(ax, az), vrDist(bx, bz)) < 700) {   // (a chair lift's chairs: the hanger, the seat across the line, its back)
+            const m = Math.max(1, Math.round(span / 24)), a = Math.atan2(bz - az, bx - ax), hx = (bx - ax) / (span || 1) * f * 0.28, hz = (bz - az) / (span || 1) * f * 0.28;
+            for (let q = 0; q < m; q++) { const t = (q + 0.5) / m, x = lerp(ax, bx, t), z = lerp(az, bz, t), y = lerp(A[1], B[1], t) - span * SG * 4 * t * (1 - t), g = scen.get(x, z);
+              ouRod(gp, [x, y, z], [x, y - 2.3, z], 0.035, frame, 3); box(g, x, y - 2.45, z, 0.6, 0.12, 1.9, a, seat, null); box(g, x - hx, y - 2.4, z - hz, 0.07, 0.62, 1.9, a, seat, null, true); } }
         }
         top.length = 0;
-        { const k = Math.floor(n * 0.4), A = pts[k], B = pts[Math.min(n - 1, k + 1)], x = lerp(A[0], B[0], 0.5), z = lerp(A[1], B[1], 0.5), y = (vrFar(A[0], A[1]) + vrFar(B[0], B[1])) / 2 + 12, a = Math.atan2(B[1] - A[1], B[0] - A[0]);   // a cabin
+        if (!ch) { const k = Math.floor(n * 0.4), A = pts[k], B = pts[Math.min(n - 1, k + 1)], x = lerp(A[0], B[0], 0.5), z = lerp(A[1], B[1], 0.5), y = (vrFar(A[0], A[1]) + vrFar(B[0], B[1])) / 2 + 12, a = Math.atan2(B[1] - A[1], B[0] - A[0]);   // a cabin
           const g = scen.get(x, z); box(g, x, y, z, 4.2, 2.6, 2.6, a, [0.8, 0.14, 0.12], [0.86, 0.86, 0.84], true); box(g, x, y + 1.1, z, 4.25, 0.9, 2.65, a, [0.18, 0.22, 0.26], null, true); ouRod(g, [x, y + 2.6, z], [x, y + 5.6, z], 0.08, steel, 4); }
       }
       addM(gp, lMat, false);
