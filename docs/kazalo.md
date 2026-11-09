@@ -200,6 +200,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | chapman | Chapman's Peak, Južna Afrika | chapman | `js/world-chapman.js` (`buildChapman`) |
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`) in `js/world-cpalace.js` (lastni deli: `cpPrep`, `cpPark`, `cpTrees`, videz v `RB_LOOK` prek `API.rbLook`) |
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
+| fairymeadows | Fairy Meadows, Pakistan | fairymeadows | `js/world-fairymeadows.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | greatalpine | Great Alpine Road, Avstralija | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
@@ -207,6 +208,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
+| manchewe | Manchewe, Malavi | manchewe | `js/world-manchewe.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
 | medvode | Medvode, Slovenija | medvode | `js/world-medvode.js` (`buildMedvode`) |
@@ -228,9 +230,12 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | sani | Sani Pass, Južna Afrika | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
+| svalvogar | Svalvogar, Islandija | svalvogar | `js/world-svalvogar.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| tapini | Tapini, Papua Nova Gvineja | tapini | `js/world-tapini.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | toronto | Toronto, Kanada | toronto | `js/world-toronto.js` |
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |
+| yungas | Yungas, Bolivija | yungas | `js/world-yungas.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | troisrivieres | Trois-Rivières, Kanada | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
 | *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |

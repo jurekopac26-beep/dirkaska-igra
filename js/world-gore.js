@@ -33,6 +33,7 @@
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
     animals: [], dust: null, extra: null,
+    ledge: false, sea: false,   // (the tanker's roads, docs/proge-cisterna.md: the ledge, a cliff below the brink of every drop and the rock cut back on the other side; the sea at its level)
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
   let S = DEF, SN = 1, SNL = 1e9;   // (the style of the build under way; snow everywhere (1) or above SNL)
@@ -277,6 +278,17 @@
     if (SN) { out.ownSeason = true; out.season = 'winter'; }   // (a ski resort in the season: as built in every season, the render's winter adds the falling snow)
     vrPrep(); vrStubs();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
+    // the ledge (S.ledge): over a drop (Track.dropAt, eased over ~12 m: LW) the ground falls at ~70 degrees from the brink down to the real
+    // terrain, as on Uncompahgre (only down: a terrain cell of 5 m pokes through the road where the ground rises steeply beside it, so the
+    // rock on the other side is the verge's own: rockBank). The sea (S.sea): its level (the start line is base metres above it), the ground
+    // under it kept down (vrFar)
+    const LW = S.ledge && T.dropAt ? [new Float32Array(N), new Float32Array(N)] : null;
+    if (LW) for (let sd = 0; sd < 2; sd++) { const D = T.dropAt[sd], W = LW[sd]; for (let i = 0; i < N; i++) { let s = 0; for (let o = -6; o <= 6; o++) s += D[clamp(i + o, 0, N - 1)]; W[i] = sstep(0.1, 0.75, s / 13); } }
+    if (LW) P.edgeH = (x, z, h, i, dd, lat) => {
+      const lw = LW[lat > 0 ? 1 : 0][i]; if (!(dd > 0) || !(lw > 0)) return h;
+      return lerp(h, Math.min(h, Math.max(vrFar(x, z), T.hy[i] - 0.35 - 2.75 * Math.max(0, dd - 0.15))), lw);   // (the cliff below the brink)
+    };
+    if (S.sea) P.sea = -base;
     ZN = def.zones || [];
     const isRun = (x, z) => vrLC(x, z) === 6;   // (a ski run: land cover class 6)
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind]), clear of the road and the side roads
@@ -329,6 +341,18 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
         exclPush(L.cx, L.cz, Math.max(L.x1 - L.x0, L.z1 - L.z0) / 2 + 6);
       }
+      if (S.sea) {   // the sea (S.sea): one plane at its level, 16 m cells wherever the ground within 320 m of the road dips under it, deeper out from the shore
+        const sy = P.sea, cs = 16, x0 = Math.floor((P.bx0 - 320) / cs) * cs, z0 = Math.floor((P.bz0 - 320) / cs) * cs, nx = Math.ceil((P.bx1 + 320 - x0) / cs) + 1, nz = Math.ceil((P.bz1 + 320 - z0) / cs) + 1;
+        const gy = new Float32Array(nx * nz); for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) { const x = x0 + a * cs, z = z0 + b * cs; gy[b * nx + a] = vrDist(x, z) < 330 ? vrGround(x, z) : vrFar(x, z); }
+        const wc = (a, b) => { const d = sy - gy[b * nx + a]; return [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(0.5, 6, d))); };
+        const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14];
+        for (let b = 0; b < nz - 1; b++) for (let a = 0; a < nx - 1; a++) {
+          const k = b * nx + a; if (!(gy[k] < sy + 0.4 || gy[k + 1] < sy + 0.4 || gy[k + nx] < sy + 0.4 || gy[k + nx + 1] < sy + 0.4)) continue;
+          if (vrDist(x0 + (a + 0.5) * cs, z0 + (b + 0.5) * cs) > 330) continue;
+          const A = [x0 + a * cs, sy, z0 + b * cs], B = [A[0] + cs, sy, A[2]], C = [A[0] + cs, sy, A[2] + cs], D = [A[0], sy, A[2] + cs];
+          g.quadUp(A, B, C, D, [wc(a, b), wc(a + 1, b), wc(a + 1, b + 1), wc(a, b + 1)], [uv(A), uv(B), uv(C), uv(D)]); }
+        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); out.dyn.water = tex.water; }
+      }
       if (P.lakes.length && !SN) out.dyn.water = tex.water;
     }
 
@@ -359,9 +383,19 @@
     }
     const bankH = (i, side) => { if (!(S.snowbanks && SN)) return 0; const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
       return trod[side > 0 ? 1 : 0][i] ? 0.25 : 0.72 + 0.85 * P.n2(x, z) + 0.3 * (P.n4(x, z) - 0.5); };
+    // the ledge's rock (S.ledge) on the side away from a drop: a rough step of cut rock at the barrier line, 0.7-1.9 m (low where the gantries
+    // stand and in the side roads' mouths); its face to the road, its top running back into the slope (the barrier the car hits is its foot)
+    const lowAt = (s) => Math.abs(s - sStart) < 24 || Math.abs(s - sFin) < 24 || T.cpS.some(c => Math.abs(s - c) < 14);
+    const rockBank = (i, side) => { const lw = LW ? LW[side > 0 ? 1 : 0][i] : 0; if (!S.ledge || lw > 0.45) return 0; const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 1), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+      if (lowAt(i * T.ds)) return 0.3;
+      const gap = P.n4(x * 1.3, z * 1.3); if (gap < 0.3) return 0;   // (broken: here and there no rock, the ditch and the slope)
+      return (0.45 + 1.15 * P.n2(x * 2.3, z * 2.3) + 0.35 * rpHash(i, side + 61)) * sstep(0.3, 0.42, gap) * sstep(0.45, 0.15, lw); };
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = T.wAt ? T.wAt(i) : w;
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return pad(ms);
       const y = T.hy[i], gAt = (o) => { const q = side * o; return vrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
+      if (LW && LW[side > 0 ? 1 : 0][i] > 0.5) return pad([[e + sw, -0.02], [bar - 0.15, -0.05], [bar + 0.25, gAt(bar + 0.25) * 0.5 - 0.1], [bar + 0.9, gAt(bar + 0.9) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]]);   // (the edge of a drop: a rough lip, then the cliff)
+      const rb = rockBank(i, side), fr = bar + 0.3 + 0.3 * rpHash(i, side + 80);
+      if (rb > 0.15) return [[e + sw, -0.02], lift(Math.min(e + sw + 0.5, bar - 0.1), 0.02), lift(fr, 0.1), lift(fr + 0.2 + 0.25 * rpHash(i, side + 81), rb), lift(fr + 0.9 + 0.4 * rpHash(i, side + 82), rb * (0.95 + 0.3 * rpHash(i, side + 83))), lift(fr + 2.1, rb * 0.6), [fr + 3.3, gAt(fr + 3.3) + 0.03]];
       const bk = bankH(i, side), f = bar + 0.3;
       if (bk > 0) return [[e + sw, -0.02], lift(Math.min(e + sw + 0.5, f - 0.3), 0.03), lift(f, Math.min(0.2, bk * 0.5)), lift(f + 0.45, bk), lift(f + 1.3, bk * 0.94), lift(f + 2.3, bk * 0.45), [f + 3.3, gAt(f + 3.3) + 0.03]];
       return pad([[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]); };
@@ -373,8 +407,12 @@
       const tileL = 8, gc = SN ? [0.66, 0.67, 0.69] : RD.shoulder;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
       const BANK = [[0.6, 0.6, 0.62], [0.74, 0.74, 0.76], [0.8, 0.83, 0.9], [0.93, 0.95, 0.99], [0.97, 0.98, 1.0], [0.95, 0.96, 0.99]];   // (the wall: grey slush at the shoulder, its dirty foot, the plough's cut face bluish, white on top)
+      const RK = S.ground.rock;   // (the ledge's rock step: the rock's colour, lighter on the face's edge, darker in its foot)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], bk = bankH(i, side) > 0 && !SB.mouthV[si][i], dirt = 0.94 + 0.08 * rpHash(i >> 1, side + 9);
+        const rb = rockBank(i, side) > 0.15 && !SB.mouthV[si][i], G0 = S.ground.grass;
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
+          if (rb && k >= 2 && k < NP - 1) { const q = (k === 2 ? 0.74 : k === 3 ? 1.1 : 0.96) * (0.84 + 0.3 * rpHash(i, side + 70 + k)), m = k >= 4 ? 0.25 + 0.35 * rpHash(i, side + 90 + k) : 0;   // (moss and grass on its top)
+            return [lerp(RK[0] * q, G0[0], m), lerp(RK[1] * q, G0[1], m), lerp(RK[2] * q, G0[2], m)]; }
           if (bk && k < NP - 1) { const c = BANK[k]; return k < 3 ? [c[0] * dirt, c[1] * dirt, c[2] * dirt] : c; }
           if (k === NP - 1) return gColAt(x, z);
           const sl = k >= 2 ? vrSlope(x, z) : 0; return gCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
@@ -757,6 +795,7 @@
     for (const A of S.animals || []) {
       const RA = rng(S.seed * 7 + 11 + A.kind.length), geo = animalGeo(A.kind), fly = !AN[A.kind] || !AN[A.kind][3];
       if (fly) { const im = new THREE.InstancedMesh(geo, matV, A.n); im.castShadow = true; im.frustumCulled = false; root.add(im);
+        const wc = new THREE.Color(1, 1, 1); for (let k = 0; k < A.n; k++) im.setColorAt(k, wc);   // (an instance colour as on the animals' chunks: r128 keeps one program per material, the one with it)
         const list = []; for (let k = 0; k < A.n; k++) { const i = T.idx(RA() * T.len); list.push({ cx: T.px[i] + (RA() - 0.5) * 60, cz: T.pz[i] + (RA() - 0.5) * 60, cy: T.hy[i] + 25 + RA() * 25, r: 20 + RA() * 25, v: 0.15 + RA() * 0.1, ph: RA() * TAU }); }
         birds.push({ im, list, k: A.kind === 'condor' ? 1 : 0.45 }); nAnimal += A.n; continue; }
       const ic = new IChunks(geo, matV, 128); let n = 0, tries = 0;

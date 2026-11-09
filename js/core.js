@@ -987,6 +987,14 @@ const Core = (function () {
           }
         }
       }
+      // def.wideLine (the tanker's roads, docs/proge-cisterna.md): through the tight bends the line swings out to the outside edge, eased in and out
+      // over ~12 m (a semi-trailer's wheels cut far inside the tractor's path: the tractor goes round wide, its trailer clear of the inside)
+      if (this.def.wideLine) {
+        const k = this.k, R = Math.max(1, Math.round(12 / this.ds)), W = (j) => open ? clamp(j, 0, N - 1) : (j + N) % N;
+        for (let i = 0; i < N; i++) { let m = 0, sg = 0;
+          for (let d = -R; d <= R; d++) { const j = W(i + d), f = sstep(1 / 40, 1 / 16, Math.abs(k[j])) * (1 - Math.abs(d) / (R + 1)); if (f > m) { m = f; sg = k[j] > 0 ? 1 : -1; } }
+          if (m > 0) off[i] = lerp(off[i], -sg * ((wa ? wa[i] : this.w) - 1.35), m); }
+      }
       this.rl = off;
       // curvature of racing line
       const rx = new Float32Array(N), rz = new Float32Array(N);
@@ -1034,12 +1042,14 @@ const Core = (function () {
     speedProfile(latA, brakeA, vtop, wMax, aero, settMu, snow) {
       const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0), gk = this.gk;
       const v = new Float32Array(N);
+      if (this.def.aiVmax) vtop = Math.min(vtop, this.def.aiVmax);   // (def.aiVmax: the autopilot's top speed on a road where faster is folly, the tanker's ledges: docs/proge-cisterna.md)
       for (let i = 0; i < N; i++) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA / kk)) : vtop; }
       const gAt = gk ? (i) => gk[i] * (snow && this.sf[i] >= 5 ? snow : 1) : null;   // (a road of several surfaces: the grip of each for the corners and the brakes)
       if (gk) for (let i = 0; i < N; i++) { const g = gAt(i); if (g !== 1) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la * g; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA * g / kk)) : vtop; } }
       if (this.settAt && settMu) for (let i = 0; i < N; i++) if (this.settAt[i]) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la * settMu; if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * settMu / kk)); }
       if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
+      if (this.dropAt && this.def.dropCare) for (let i = 0; i < N; i++) if (this.dropAt[0][i] || this.dropAt[1][i]) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * this.def.dropCare / kk)); }   // (def.dropCare: the share of the grip the autopilot dares use in a bend over a drop)
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
         v[N - 1] = 0;
         if (gk) { for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * gAt(i) * rds[i])); return v; }   // a road of several surfaces (Harju): brake by each one's grip
