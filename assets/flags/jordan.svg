@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Jordan</title>
+  <!-- Ratio 1:2. Three equal horizontal stripes, black, white and green; a red triangle at the hoist, its base the hoist and its apex half
+       the flag's length in; a white seven-pointed star in it (one point straight up) at the triangle's centroid, its circumscribed diameter
+       a fourteenth of the flag's length, its inner radius 0.45 of the outer. Colours: black #000000, white #FFFFFF, green #007A3D, red #CE1126. -->
+  <rect width="1000" height="500" fill="#FFFFFF"/>
+  <rect width="1000" height="166.67" fill="#000000"/>
+  <rect y="333.33" width="1000" height="166.67" fill="#007A3D"/>
+  <polygon fill="#CE1126" points="0,0 500,250 0,500"/>
+  <polygon fill="#FFFFFF" points="166.67,214.29 173.64,235.52 194.59,227.73 182.34,246.42 201.49,257.95 179.24,260.02 182.17,282.18 166.67,266.07 151.17,282.18 154.10,260.02 131.85,257.95 151.00,246.42 138.75,227.73 159.70,235.52"/>
+</svg>

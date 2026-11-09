@@ -1,6 +1,6 @@
-# Nove proge za 1.0: prvih 11, del 2 in del 3 (načrt, podatki poti, vrstni red, predaja)
+# Nove proge za 1.0: prvih 11, del 2, del 3 in del 4 (načrt, podatki poti, vrstni red, predaja)
 
-Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #382, komentar 6712589851; predlog s podrobnostmi: komentar 6709785463). Pravila za vse nove proge za 1.0 (1–5 km, merili zavitosti in »do 60 m ob cesti«, izletna cona, mestne proge) so v `CLAUDE.md` (»Ena proga na državo«) in v `docs/proge-po-drzavah.md`, razdelek »Nove proge za 1.0«. O seznamu 50 prog (vprašanje `nove-proge-1-0-50`) se uporabnik odloča po delih (`docs/proge-po-drzavah.md`, »Nove proge za 1.0«): 11 prog s čakanja je potrdil 8. 11. 2026 (razdelek »Del 2« spodaj), druge proge na čakanju se do njegove odločitve ne začnejo. Osem dirkališč izven Evrope je potrdil 8. 11. 2026 ob 20.45 (razdelek »Del 3« spodaj).
+Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #382, komentar 6712589851; predlog s podrobnostmi: komentar 6709785463). Pravila za vse nove proge za 1.0 (1–5 km, merili zavitosti in »do 60 m ob cesti«, izletna cona, mestne proge) so v `CLAUDE.md` (»Ena proga na državo«) in v `docs/proge-po-drzavah.md`, razdelek »Nove proge za 1.0«. O seznamu 50 prog (vprašanje `nove-proge-1-0-50`) se uporabnik odloča po delih (`docs/proge-po-drzavah.md`, »Nove proge za 1.0«): 11 prog s čakanja je potrdil 8. 11. 2026 (razdelek »Del 2« spodaj), druge proge na čakanju se do njegove odločitve ne začnejo. Osem dirkališč izven Evrope je potrdil 8. 11. 2026 ob 20.45 (razdelek »Del 3« spodaj). Pet kratkih prog izven Evrope (do 1 km) je izbral 8. 11. 2026 ob ~22.45 v pogovoru seje računa biketraveler (razdelek »Del 4« spodaj).
 
 ## Proge
 
@@ -141,3 +141,55 @@ Dolžine so iz predstavitve dirkališč. `id` je predlog: seja proge ga spremeni
 - **Vrstni red:** linija A po Espinazu (A11), po vrstnem redu tabele; nove proge ostanejo zadnje. Buriram se začne šele, ko je #379 na `main`; do takrat gre linija A mimo njega na naslednjo progo. Ena seja na linijo, na računu največ 2 seji s kodo (kot v delih 1 in 2).
 - **Skupine za vrsto** (predlog, PR gredo na konec vrste v skupinah po 3–4): **N7** = Tuzla, Sepang, Lombok, Buriram; **N8** = Sakhir, Cromwell, Lusail, Termas de Río Hondo. Vodja skupine in zbirna veja `zbirna/nove-proge-N<k>` sta kot v delu 1; skupine lahko spremenita uporabnik in Matej.
 - **Kateri račun jih gradi:** predlaga ponedeljkov tedenski načrt (Matej, 9. 11. 2026). Seja proge se začne z »Naredi progo `<id>` po docs/nove-proge-1-0.md (<račun>)«, ima svojo vejo `nove-proge/<id>` in osnutek PR (naslov »Nova proga: <Kraj, Država>«) in ob koncu pošlje VSE SEJE 2 »<id> končana, naslednja v liniji: <id>«.
+
+## Del 4: pet kratkih prog izven Evrope (do 1 km)
+
+Uporabnik je 8. 11. 2026 ob ~22.40 v pogovoru seje računa biketraveler naročil: »začni z delom 5 prog izven Evrope. Proge naj bodo kratke do 1 km.« Seja je v OSM izmerila 12 kandidatov iz držav brez proge v igri in brez proge na čakanju in predlagala tri nabore; uporabnik je ob ~22.45 izbral **nabor A** (raznolik: Mã Pí Lèng, Banaue, Wadi Mujib, Sans Souci, Atitlán) in **en PR, proge po vrsti** (zapis v `docs/proge-po-drzavah.md`, »Nove proge za 1.0«). Pravila in postopek so kot v delih 1–3 (»Podatki poti«, »Kako narediti progo«), razen spodaj.
+
+### Proge
+
+Meritve so iz OSM (8. 11. 2026), točke na 5 m kot `tools/proge-pregled.js`, v smeri vožnje. Odsek je najbolj zavit kilometer ceste; pri Banaueju drugi najbolj zavit (1172 namesto 1240 °/km), ker gre mimo razgledišč nad riževimi terasami, prvi pa samo mimo hiš. Višine so iz koraka `data` orodja (Copernicus DEM). Izletna cona je delež dolžine s pregrado do 3 m od asfalta v OSM (merilo v `docs/proge-po-drzavah.md`, »Izletna cona«). Obremenitev je ocena po podobni pravi progi iz `tests/golden/perf.json` (klici risanja / oglišča; meja ~300 / ~900 tisoč), pri 1 km manjša.
+
+| Vrsta | id | Proga | Odsek | Zavitost | Do 60 m ob cesti | Posebnosti |
+|---|---|---|---|---|---|---|
+| K1 | `mapileng` | Mã Pí Lèng, Vietnam | 1,0 km ceste QL4C (OSM »Quốc lộ 4C«, w285778983, w321471537) iz Đồng Văna na prelaz Mã Pí Lèng, navzgor | 972 °/km, ravnine 25 %, 5 ovinkov, 3 lasnice | spomenik graditeljem ceste s kapelico, majhen muzej, kavarna, steza ob steni, razgledišče tik za ciljem; kraški vrhovi, koruza med skalami, soteska reke Nho Quế od daleč | prvi: v OSM malo stavb, skale in kras v pasu ob cesti |
+| K2 | `mujib` | Wadi Mujib, Jordanija | 1,0 km ceste 35 (OSM »King's Highway«) po južnem pobočju kanjona Mujib, navzgor | 1015 °/km, 35 %, 5 ovinkov, 5 lasnic | gole skale, melišča in grmički; v OSM do 60 m nič; jez in jezero na dnu kanjona od daleč; razgledišče s kavarno in taborom na robu kanjona je 400 m za ciljem | v igri samo »Wadi Mujib« (ime ceste ni zemljepisno) |
+| K3 | `sanssouci` | Sans Souci, Sejšeli | 1,0 km ceste Sans Souci (OSM »Sans Souci Road«) čez gore otoka Mahé skozi vas Sans Souci, navzgor | 1179 °/km, 20 %, 10 ovinkov, 1 lasnica | tropski gozd (krošnje na 68 % pasu do 150 m, ~12 m), granitne skale, 59 hiš vasi, trgovina, informacijski tabli, razgledišče, izhodišče poti na Morne Seychellois, most čez potok (25 m), 4 postajališča | levi promet (Sejšeli: `leftHand`, kot Chapman's Peak) |
+| K4 | `banaue` | Banaue, Filipini | 1,0 km ceste 109 (OSM »Nueva Vizcaya - Ifugao - Mountain Province Road«) po pobočju nad riževimi terasami severno od Banaueja, navzdol proti kraju | 1172 °/km, 12 %, 14 ovinkov, 1 lasnica | riževe terase (OSM `farmland`), 3 razgledišča, 51 hiš zaselka ob cesti, šola tik pred štartom | edina proga dela 4 s hišami tik ob cesti (21 % dolžine, spodaj) |
+| K5 | `atitlan` | Atitlán, Gvatemala | 1,0 km ceste RN-1 (OSM »Carretera Sololá - Panajachel«) iz Sololá navzdol proti jezeru Atitlán | 798 °/km, 28 %, 7 ovinkov, 2 lasnici | hiše na robu Sololá, bolnišnica, igrišča, restavracija, elektrovod; jezero in vulkani (San Pedro, Tolimán, Atitlán) pred avtom na obzorju | spust z jezerom v vidnem polju kamere za avtom |
+
+| id | Višina: štart → cilj | Izletna cona: pregrada ≤3 m | Obremenitev (ocena) |
+|---|---|---|---|
+| `mapileng` | 1184 → 1249 m (najvišje 1258 m) | 0 % | ~130 / ~350 tisoč (Tianmen 146 / 394 tisoč na 4,8 km) |
+| `mujib` | 471 → 568 m | 0 % | ~110 / ~300 tisoč (Sani Pass, golo pobočje) |
+| `sanssouci` | 212 → 231 m (najnižje 191 m, most) | 5 % (hiše) | ~170 / ~500 tisoč (Chapman's Peak 141 / 419 tisoč in gozd, hiše) |
+| `banaue` | 1249 → 1181 m | 21 %, hiše (OSM; v igri preveri: pod polovico, izletna cona je) | ~170 / ~480 tisoč (hiše, terase) |
+| `atitlan` | 2067 → 1991 m | 0 % | ~150 / ~450 tisoč (jezero in vulkani v daljavi) |
+
+### Dolžina
+
+Do 1 km (uporabnik: »proge naj bodo kratke do 1 km«): izjema od pravila 1–5 km za teh pet prog, kot pri Envaliri (0,73 km). Proga v igri je odsek iz tabele (~1,0 km od štarta do cilja); zaletišče pred štartom in prostor za avte za ciljem sta po potrebi na isti cesti in ne štejeta v dolžino.
+
+### Podatki poti
+
+`tools/<id>/config.json` je pripravljen za vseh 5 (točke na 100 m v smeri vožnje, okvir ~1,5 km okoli odseka, `geoRoads`, `geoWater`, `marks` in `places` prazni); seja je pognala vse tri korake orodja (`osm route data`, surovi podatki zunaj repozitorija): pot se ujema z odsekom (±1 %), višine, raba tal in krošnje so prenesene (`tools/<id>/<id>.json`, mreže PNG). Izpolni jih seja proge, samo z zemljepisnimi imeni. Seja proge preveri še:
+- **Mã Pí Lèng:** spomenik, kapelica, muzej in kavarna so v OSM samo točke (`marks` z id-ji vozlišč, oblike generične); višinski model pod stenami ob cesti preveri na prerezu.
+- **Wadi Mujib:** ob odseku v OSM ni ničesar; skale, melišča in grmovje iz rabe tal (`lc`: golo 60 %, grmovje), jez in jezero na dnu kanjona od daleč (`far`).
+- **Sans Souci:** most čez potok (662–687 m) in 4 postajališča; levi promet.
+- **Banaue:** riževe terase so v OSM `landuse=farmland`; v igri stopničaste terase na pobočju pod cesto (svoj gradnik, samo za to progo). Hiše do 3 m od roba preveri v igri (merilo izletne cone).
+- **Atitlán:** jezero in vulkani so zunaj okvira ~1,5 km: pogled v daljavo (`far`) mora segati do jezera (~3 km) in vulkanov (~15 km).
+
+### Pravna varnost
+
+- V igri so samo zemljepisna imena: Mã Pí Lèng, Đồng Văn, Nho Quế, Wadi Mujib, Mahé, Sans Souci, Morne Seychellois, Banaue, Ifugao, Sololá, Atitlán, San Pedro, Tolimán. Imena cest, ki niso zemljepisna (»King's Highway«), ne nastopajo.
+- Hoteli, prenočišča, restavracije, kavarne, trgovine in delavnice so generični, brez imen in napisov (ob vseh petih progah). Bolnišnica v Sololá se imenuje po osebi: samo generična stavba brez napisa.
+- Spomenik graditeljem ceste na Mã Pí Lèngu, kapelica in muzej so samo oblike brez napisov; steza ob steni je brez imena (ime je znamka).
+- Razgledišča so brez imen podjetij (npr. »viewdeck« z imenom lastnika v Banaueju): v igri samo generična terasa ali ograja.
+
+### Vrstni red, veja in seje
+
+- **En PR za vseh pet** (izbira uporabnika »en PR, proge po vrsti«): veja `claude/determined-babbage-4s07gg`, osnutek PR »Nove proge za 1.0, del 4: pet kratkih prog izven Evrope (do 1 km)«. Proge se gradijo po vrsti K1–K5 v isti veji; zanje teče na računu biketraveler hkrati največ ena seja s kodo.
+- Tema je sedma odprta tema računa biketraveler: izjema od meje 6 tem, ker jo je uporabnik začel po opozorilu (`CLAUDE.md`, Seje).
+- **Graditelj:** skupna datoteka `js/world-kratke.js` za vseh pet (World.ext za vsako temo, gradniki skupni, kar potrebuje ena proga, gre pod njeno zastavico); `js/world-prelaz.js` (linija B računa partyslo) se ne spreminja. Podatke v datoteko proge zapiše skupno orodje `tools/kratke/build.py` iz `tools/<id>/<id>.json`.
+- **Seja:** začne se z »Nadaljuj del 4 po docs/nove-proge-1-0.md (biketraveler)«. Ob koncu proge in pri ~300 tisoč žetonih napiše predajo v opis PR (stanje, naslednja proga, kako testirati), delo nadaljuje nova seja na isti veji.
+- **Vrsta za `main`:** ko so narejene vse proge in so povezani testi lokalno zeleni, se PR vpiše na konec vrste kot skupina **N9** (pet kratkih prog v enem PR, po izbiri uporabnika namesto skupin po 3–4) in ostane osnutek; nove proge ostanejo zadnje.

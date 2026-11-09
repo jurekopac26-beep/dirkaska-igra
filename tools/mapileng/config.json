@@ -1,0 +1,34 @@
+{
+  "id": "mapileng",
+  "about": "Mã Pí Lèng, Vietnam (id mapileng): the twistiest 1 km of the QL4C up the Mã Pí Lèng pass from Đồng Văn, past the monument to the road's builders, 3 hairpins (docs/nove-proge-1-0.md, Del 4)",
+  "box": [23.2353, 105.3748, 23.2645, 105.4095],
+  "closed": false,
+  "dist": {
+    "grid": 480
+  },
+  "route": [
+    [23.2523, 105.388864, "Quốc lộ 4C", "run-up for the grid | trunk, w285778983, 210 m before the start line"],
+    [23.251543, 105.389171, "Quốc lộ 4C", "trunk, w285778983, 119 m before the start line"],
+    [23.25038, 105.3895, "Quốc lộ 4C", "start | trunk, w285778983, s 0 m"],
+    [23.25023, 105.3902, "Quốc lộ 4C", "trunk, w285778983, s 100 m"],
+    [23.25049, 105.39109, "Quốc lộ 4C", "trunk, w285778983, s 200 m"],
+    [23.25008, 105.39193, "Quốc lộ 4C", "trunk, w321471537, s 300 m"],
+    [23.24969, 105.39235, "Quốc lộ 4C", "trunk, w321471537, s 400 m"],
+    [23.24957, 105.39248, "Quốc lộ 4C", "trunk, w321471537, s 500 m"],
+    [23.2501, 105.39326, "Quốc lộ 4C", "trunk, w321471537, s 600 m"],
+    [23.25085, 105.39376, "Quốc lộ 4C", "trunk, w321471537, s 700 m"],
+    [23.25043, 105.39396, "Quốc lộ 4C", "trunk, w321471537, s 800 m"],
+    [23.24968, 105.3943, "Quốc lộ 4C", "trunk, w321471537, s 900 m"],
+    [23.24893, 105.3948, "Quốc lộ 4C", "finish | trunk, w321471537, s 1000 m"],
+    [23.247969, 105.395127, "Quốc lộ 4C", "trunk, w321471537, 126 m past the finish line"],
+    [23.247119, 105.395397, "Quốc lộ 4C", "trunk, w321471537, 224 m past the finish line"],
+    [23.246796, 105.395424, "Quốc lộ 4C", "past the finish | trunk, w321471537, 260 m past the finish line"]
+  ],
+  "prefer": [
+    "Quốc lộ 4C"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

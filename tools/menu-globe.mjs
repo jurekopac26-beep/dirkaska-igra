@@ -19,9 +19,9 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 
 // the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
 // from their import marker, fromFile below)
-const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444] };
+const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], mapileng: [23.25038, 105.3895], mujib: [31.44114, 35.79847], sanssouci: [-4.63784, 55.45166], banaue: [16.92625, 121.05523], atitlan: [14.76494, -91.17708] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
-const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'] };
+const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Vietnam: ['Vietnam'], Jordan: ['Jordan'], Seychelles: ['Seychelles'], Philippines: ['Philippines'], Guatemala: ['Guatemala'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;
@@ -80,6 +80,11 @@ if (want.length || away.length) {
         const s = simplify(ring, 0.02); if (s.length < 4) continue;
         rings.push(s.flatMap(p => [+p[0].toFixed(3), +p[1].toFixed(3)]));
       }
+    }
+    if (!rings.length) {   // (a country of small islands only, as the Seychelles: its biggest island, drawn finer, else nothing of it on the globe)
+      let big = null;
+      for (const f of J.features) if (units.includes(f.properties.SUBUNIT)) for (const poly of (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates)) if (!big || area(poly[0]) > area(big)) big = poly[0];
+      const s = big ? simplify(big, 0.004) : []; if (s.length >= 4) rings.push(s.flatMap(p => [+p[0].toFixed(3), +p[1].toFixed(3)]));
     }
     if (!rings.length) throw new Error(c + ': no outline in ' + NE);
     outlines[c] = rings;

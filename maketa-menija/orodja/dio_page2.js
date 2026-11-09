@@ -2,6 +2,7 @@
 // World.build, cuts it into a diorama and renders it on a copy of the showroom turntable.
 window.DIO = (function () {
   const THEMES = {   // copied from the game (race lighting per theme: render.js THEMES, a real track's look in js/tracks/<id>.js)
+    // (a job with ownLook: true lights the track with its own def.look, the lights of the race: the new tracks of 1.0)
     lake:     { sun: 0xfff0d6, sunI: 0.98, sky: 0xd3e7ff, gnd: 0x5d6b35, hemiI: 0.62 },
     city:     { sun: 0xffe5bd, sunI: 1.04, sky: 0xdcecff, gnd: 0x86785a, hemiI: 0.6 },
     monaco:   { sun: 0xfff0d6, sunI: 1.08, sky: 0xd8ebff, gnd: 0x8a7c62, hemiI: 0.6 },
@@ -275,7 +276,7 @@ window.DIO = (function () {
     const R2 = Rmax * 1.25, blob = new THREE.Mesh(new THREE.PlaneGeometry(2 * R2, 2 * R2), new THREE.MeshBasicMaterial({ map: blobTex(poly, cx, cz, R2), transparent: true, opacity: opt.blob == null ? 0.75 : opt.blob, depthWrite: false }));
     blob.rotation.x = -Math.PI / 2; blob.position.set(cx, yBase + 0.02 * k, cz); tsc.add(blob);
     // pass 2: the diorama with the track's race lighting
-    const th = THEMES[def.theme] || THEMES.lake;
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake;
     const L = [];
     const hemi = new THREE.HemisphereLight(th.sky, th.gnd, th.hemiI * (opt.hemiMul || 1)); sc.add(hemi); L.push(hemi);
     const sun = new THREE.DirectionalLight(th.sun, th.sunI * (opt.sunMul || 1));
@@ -369,7 +370,7 @@ window.DIO = (function () {
       tsc.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: opt.blob == null ? 0.7 : opt.blob, depthWrite: false, side: THREE.DoubleSide })));
     }
     // pass 2: the diorama with its track's race lighting (sun fixed relative to the camera, as the showroom key light)
-    const th = THEMES[def.theme] || THEMES.lake, L = [], ctr = new THREE.Vector3(cx, yBase, cz);
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake, L = [], ctr = new THREE.Vector3(cx, yBase, cz);
     const hemi = new THREE.HemisphereLight(th.sky, th.gnd, th.hemiI * (opt.hemiMul || 1)); hemi.position.copy(up); sc.add(hemi); L.push(hemi);
     const sun = new THREE.DirectionalLight(th.sun, th.sunI * (opt.sunMul || 1));
     sun.position.copy(dirW(opt.sunDir || [-6, 10, 7]).normalize().multiplyScalar(Rmax * 2.2).add(ctr)); sun.target.position.copy(ctr);
@@ -443,7 +444,7 @@ window.DIO = (function () {
     const blob = new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: opt.shadowOpacity, depthWrite: false, side: THREE.DoubleSide }));
     blob.renderOrder = -1; sc.add(blob);
     // lights: the track's race lighting, sun fixed relative to the camera
-    const th = THEMES[def.theme] || THEMES.lake, L = [blob], ctr = new THREE.Vector3(cx, yBase, cz);
+    const th = (opt.ownLook && def.look) || THEMES[def.theme] || THEMES.lake, L = [blob], ctr = new THREE.Vector3(cx, yBase, cz);
     const camDir = (v) => { const m = new THREE.Matrix4().extractRotation(cam.matrixWorld); return new THREE.Vector3(v[0], v[1], v[2]).applyMatrix4(m); };
     const rn = opt.rain || 0, mixC = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f * rn);   // (rain: the game's overcast light)
     wetWorld(B, rn);
