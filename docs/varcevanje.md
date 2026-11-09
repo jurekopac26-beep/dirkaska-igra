@@ -51,7 +51,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 ## Napor: okolje »Koordinacija« (`zetoni-2`)
 
 - Koda teče z naporom max: `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` `max` (`effortLevel` xhigh je rezerva, ker se max v nastavitvah ne shrani). Spremenljivka iz nastavitev repozitorija ima prednost pred spremenljivko okolja in pred izbiro napora v aplikaciji, zato ostane.
-- Delo na progah in grafika tečeta na Fable 5.2 z ultracode (delovni tokovi z več agenti; `CLAUDE.md`, Seje: »Proge in grafika«). Tak tok porabi več kot navadna seja, zato je srednje velikosti (do 10 agentov), rutinsko delo teh tem (spoj `main`, čakanje na teste, združevanje, opisi) pa ostane brez več agentov.
+- Delo na progah, grafika in fizika tečejo na Fable 5.2 z ultracode (delovni tokovi z več agenti; `CLAUDE.md`, Seje: »Proge in grafika«). Tak tok porabi več kot navadna seja, zato je srednje velikosti (do 10 agentov), rutinsko delo teh tem (spoj `main`, čakanje na teste, združevanje, opisi) pa ostane brez več agentov.
 - Prejšnji način za koordinacijo, `.claude/settings.local.json` z medium, ne deluje: datoteka je v `.gitignore` in je v novem kontejnerju ni.
 - Nastavitev `maxEffortLevel` napor omeji (tudi `CLAUDE_CODE_EFFORT_LEVEL`); med datotekami nastavitev velja najnižja. Okolje »Koordinacija« jo z namestitveno skripto zapiše v `~/.claude/settings.json`, zato seje v tem okolju tečejo z medium, koda v okolju »Default« pa ostane max.
 - **Uporabnik enkrat na vsakem računu**, kjer tečejo koordinacija ali zbiranje: v aplikaciji (meni okolja v naslovni vrstici seje) doda novo okolje z imenom `Koordinacija`, z enakim omrežjem kot »Default«, in v namestitveno skripto (Setup script) vpiše:
