@@ -916,8 +916,9 @@
      At once on a device that asks for less motion and under the Earth; ringStop (another layer over the screen, a new change) ends them. */
   const calmNow = () => !!(CALMQ && CALMQ.matches);
   let arrive = [];
+  const arriving = (a) => { arrive.push(a); a.addEventListener('finish', () => { const k = arrive.indexOf(a); if (k >= 0) arrive.splice(k, 1); }); return a; };   // (a finished one let go)
   function arriveDone() { const A = arrive; arrive = []; for (const a of A) try { a.finish(); } catch (_) { /* gone with its screen */ } }
-  function slide(els, from, to, o) { for (const e of els) arrive.push(e.animate([{ transform: from ? 'translateX(' + from.toFixed(0) + 'px)' : 'none', opacity: from ? 0 : 1 }, { transform: to ? 'translateX(' + to.toFixed(0) + 'px)' : 'none', opacity: to ? 0 : 1 }], o)); }
+  function slide(els, from, to, o) { for (const e of els) arriving(e.animate([{ transform: from ? 'translateX(' + from.toFixed(0) + 'px)' : 'none', opacity: from ? 0 : 1 }, { transform: to ? 'translateX(' + to.toFixed(0) + 'px)' : 'none', opacity: to ? 0 : 1 }], o)); }
   const OUT = { duration: 260, easing: 'cubic-bezier(.5, 0, .75, 0)', fill: 'forwards' }, IN = { easing: 'cubic-bezier(.2, .8, .25, 1)', fill: 'backwards' };
   function trackGo(d, i) {
     trackIdx = i; select();
@@ -930,7 +931,7 @@
     old.classList.add('still', 'tgone'); old.setAttribute('aria-hidden', 'true'); old.inert = true; now.after(old); ringGone = old;   // (still: its own slide-in not again)
     const fade = old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 340, delay: 90, easing: 'ease-out', fill: 'forwards' });
     fade.onfinish = () => { old.remove(); if (ringGone === old) ringGone = null; };   // (gone when it has faded: its sign and car are out by then)
-    arrive.push(fade);
+    arriving(fade);
     const oy = $('.yard', old), ny = $('.yard', now), W = (ny || now).getBoundingClientRect().width || 412;
     if (oy && snap) oy.insertBefore(snap, oy.firstChild);
     if (oy) slide(oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .car, :scope > .cname, :scope > .c3d'), 0, -d * W * 250 / 412, OUT);
@@ -1764,5 +1765,5 @@
   const COLUMN = window.matchMedia ? matchMedia('(min-width: 640px) and (orientation: portrait)') : null;
   const covers = () => ready && !!app && shown === 'track' && !(COLUMN && COLUMN.matches);
   // fromTrack: the garage was opened from the track step (game.js garageOpen keeps it for the way back: garageBack, straight to this step)
-  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone } }) };
+  window.Menu = { init, show, hide, refresh, covers, padRoot, padKey, get ready() { return ready; }, beforeRace, get fromTrack() { return carFrom; }, debug: () => ({ screen, titleSub, mode, trackIdx, cam, tracks: TR.map(t => t.id), list: TRACKS().map(t => t.id), chrome: chromeUrl(), globe: globe.state(), ring: { on: isLand(), turning: !!(rg && !rg.drag), held: !!(rg && rg.drag), p: rg ? +rg.p.toFixed(3) : 0, k: +ringK.toFixed(4), fading: !!ringGone }, arrive: arrive.length }) };
 })();
