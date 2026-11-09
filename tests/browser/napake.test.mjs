@@ -167,8 +167,8 @@ try {
   const zbar = await Q.evaluate(() => { const b = [...document.querySelectorAll('#nk-bar button')].map(e => e.getBoundingClientRect()); return { n: b.length, rows: new Set(b.map(r => Math.round(r.top))).size, in: b.every(r => r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight) }; });
   await tap('#nk-bar [data-nk="zg"]'); await Q.waitForSelector('#nk-zg .nk-item');
   const z0 = (await nk()).zg, zf0 = await fits();
-  T.check('Zgodovina in the marking\'s bar (Dodaj k zbirki, Zgodovina, Zapri in one row): the collection kept (the track, the date, 1 moment, 0 flags, Neposlano); inside the screen on its side',
-    zbar.n === 3 && zbar.rows === 1 && zbar.in && z0.items.length === 1 && /^Bathurst, Avstralija \d+\. \d+\. \d{4} \d\d:\d\d · 1 trenutek · 0 zastavic Neposlano$/.test(z0.items[0]) && fitOk(zf0), JSON.stringify({ zbar, z0, zf0 }));
+  T.check('Zgodovina in the marking\'s bar (Dodaj k zbirki, Zgodovina, Zapri in one row): the collection kept (the track, the player\'s car · ni do cilja, the date, 1 moment, 0 flags, Neposlano); inside the screen on its side',
+    zbar.n === 3 && zbar.rows === 1 && zbar.in && z0.items.length === 1 && /^Bathurst, Avstralija .+ · ni do cilja \d+\. \d+\. \d{4} \d\d:\d\d · 1 trenutek · 0 zastavic Neposlano$/.test(z0.items[0]) && fitOk(zf0), JSON.stringify({ zbar, z0, zf0 }));
   await tap('#nk-zg [data-nk-d="zapri"]'); await tap('#nk-bar .nk-close');
   // the choice: Obdrži tudi slike v igri off, Deli: still in Zgodovina napak, Poslano, the small picture and the text
   await Q.evaluate(() => Napake.izbira()); await Q.waitForSelector('#nk-dlg [data-nk-d="deli"]');
@@ -205,11 +205,11 @@ try {
   T.check('upright (360 × 640): Zgodovina napak inside the screen (the record, the list), nothing wider than its box', fitOk(zf1) && fitOk(zf2), JSON.stringify({ zf1, zf2 }));
   await tap('#nk-zg [data-nk-d="zapri"]'); await Q.evaluate(() => { const d = document.querySelector('#nk-dlg [data-nk-d="zapri"]'); if (d) d.click(); });
   await Q.setViewportSize({ width: 640, height: 360 });
-  // the bounds: 105 more (older) collections: 100 kept, the newest 20 with their pictures, the older ones the small picture and the text
+  // the bounds: 105 more collections, an hour older than now (the real one above stays the newest however slow the run is): 100 kept, the newest 20 with their pictures, the older ones the small picture and the text
   const B = await Q.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 32; c.height = 20; c.getContext('2d').fillRect(0, 0, 8, 8);
     const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8)), png = await new Promise(r => c.toBlob(r, 'image/png')), now = Date.now();
-    for (let k = 0; k < 105; k++) await Napake.zg.put({ id: 't' + k, name: 'napake_t' + k, date: now - (k + 1) * 60000, track: 'bathurst', tname: 'Bathurst, Avstralija', n: 1, flags: 0, text: 'RRA-NAPAKE t' + k, status: 'neposlano', files: [{ name: 't' + k + '.png', blob: png, w: 32, h: 20 }], thumb: jpg });
+    for (let k = 0; k < 105; k++) await Napake.zg.put({ id: 't' + k, name: 'napake_t' + k, date: now - 3600000 - (k + 1) * 60000, track: 'bathurst', tname: 'Bathurst, Avstralija', n: 1, flags: 0, text: 'RRA-NAPAKE t' + k, status: 'neposlano', files: [{ name: 't' + k + '.png', blob: png, w: 32, h: 20 }], thumb: jpg });
     const l = await Napake.shranjene();
     return { n: l.length, MAX: Napake.zg.MAX, FULL: Napake.zg.FULL, first: l[0].id, full: l.slice(1, 20).every(r => r.files.length === 1), lite: l.slice(20).every(r => !r.files.length && r.nf === 1 && r.thumb && r.text), ids: l.map(r => r.id) };
   });

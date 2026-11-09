@@ -18,9 +18,10 @@ const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 640, height: 360 });
   // the replay's frames counted and logged (each: the replay's time, its camera, the crew's mode, the film camera's weight, the jacks' lift,
-  // the camera's distance from the player's car on the ground and its height over it, the camera and the car, the lens; with the crew at
+  // the camera's distance from the player's car on the ground and its height over it (d, y), the camera and the car, the lens; with the crew at
   // work under the film camera: how many of the car's corners and of the crew at their places (the wheel guns, the new wheels, the jacks)
-  // are out of the picture)
+  // are out of the picture; the jacks' men while they hold the car up: once they let it down (render.js crewLogic: 'jackR') they step
+  // out of the way with the jack, the rear one 0.4 m back, to the picture's edge on a long stop)
   const INSTALL = () => { window.__rf = 0; window.__fr = []; const o = Render.frame; Render.frame = function (dt, a, target, mode, opt) { const r = o.apply(this, arguments); window.__rf++;
     const g = window.__game, P = g.replay, c = Render.crew, pc = g.race && g.race.player, cm = Render.camera;
     if (!(P && opt && opt.rdt != null && c && pc)) return r;
@@ -29,10 +30,10 @@ try {
       cm.updateMatrixWorld(); const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(cm.projectionMatrix, cm.matrixWorldInverse)), v = new THREE.Vector3();
       const D = c.dim, R = c.roles, ch = Math.cos(pc.h), sh = Math.sin(pc.h), y = pc.y || 0, pts = [];
       for (const f of [D.nose, D.tail]) for (const s of [-1, 1]) pts.push([pc.x + ch * f - sh * s * D.wid / 2, y + 0.5, pc.z + sh * f + ch * s * D.wid / 2]);
-      for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2) pts.push([m.x, (m.y || 0) + 1, m.z]);
+      for (const m of R.G.concat(R.N, [R.JF, R.JR])) if (Math.hypot(m.x - m.gx, m.z - m.gz) < 0.2 && m.act !== 'jackR') pts.push([m.x, (m.y || 0) + 1, m.z]);
       fit = { n: pts.length, out: pts.filter(p => !fr.containsPoint(v.set(p[0], p[1], p[2]))).length };
     }
-    window.__fr.push({ t: P.t, cam: P.cam, mode: c.mode, w: Render.pitCam, lift: c.lift, stk: c.gar && c.gar.stack ? c.gar.stack.shown : null, st: pc.rpPit ? pc.rpPit.pitState : 'none', d: Math.hypot(cm.position.x - pc.x, cm.position.z - pc.z), h: cm.position.y - (pc.y || 0),
+    window.__fr.push({ t: P.t, cam: P.cam, mode: c.mode, w: Render.pitCam, lift: c.lift, stk: c.gar && c.gar.stack ? c.gar.stack.shown : null, st: pc.rpPit ? pc.rpPit.pitState : 'none', d: Math.hypot(cm.position.x - pc.x, cm.position.z - pc.z), y: cm.position.y - (pc.y || 0),
       p: [cm.position.x, cm.position.y, cm.position.z], x: pc.x, z: pc.z, fov: cm.fov, asp: cm.aspect, fit,
       dir: (() => { const d = new THREE.Vector3(); cm.getWorldDirection(d); return [d.x, d.z]; })(), h: pc.h, ap: !!(pc.rpPit && pc.rpPit.pitAP && pc.rpPit.inPit) });   // (dir, h, ap: where the camera looks, the car's heading, the car in the lane on the autopilot: way in to the hand-back)
     return r; }; };
@@ -47,6 +48,9 @@ try {
     const o = { ap: null, rep: null, dur: 0, done: null, back: null, out: null };
     for (let k = 0; k < 40000 && g.phase !== 'done'; k++) {
       const ap0 = P.pitAP, st0 = P.pitState, in0 = P.inPit; g.sim(P.pitWant || P.inPit || P.pitAP ? 0.05 : 0.5, true); const t = g.race.time;
+      // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd can
+      // turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals: the race would never end)
+      if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P);
       if (!ap0 && P.pitAP && o.ap == null) o.ap = t;
       if (st0 !== 'repair' && P.pitState === 'repair') { o.rep = t; o.dur = P.pitDur; }
       if (st0 === 'repair' && P.pitState === 'done') o.done = t;
@@ -86,9 +90,9 @@ try {
     return { ok: L.length > 20 && !bad.length, d: { n: L.length, min: L.length ? +Math.min(...dot).toFixed(3) : null, bad: bad.length, first: bad[0] && { t: +bad[0].t.toFixed(2), cam: bad[0].cam, w: +bad[0].w.toFixed(2) } } }; };
   const film = (F, lbl) => {
     const rep = F.filter(f => f.st === 'repair'), w = Math.max(0, ...rep.map(f => f.w)), at = rep.filter(f => f.w > 0.95), pre = F.filter(f => f.t < live.ap - 0.1), post = F.filter(f => f.t >= live.back + 0.05);
-    const near = at.length && at.every(f => f.d < 16 && f.h < 6), wPre = Math.max(0, ...pre.map(f => f.w)), wPost = Math.max(0, ...post.map(f => f.w));
+    const near = at.length && at.every(f => f.d < 16 && f.y < 6), wPre = Math.max(0, ...pre.map(f => f.w)), wPost = Math.max(0, ...post.map(f => f.w));
     return { ok: rep.length > 5 && w > 0.95 && near && wPre === 0 && post.length > 5 && wPost < 0.05 && F.every(f => f.cam === lbl),
-      d: { repN: rep.length, w: +w.toFixed(3), dMax: +Math.max(0, ...at.map(f => f.d)).toFixed(1), hMax: +Math.max(-99, ...at.map(f => f.h)).toFixed(1), wPre: +wPre.toFixed(3), postN: post.length, wPost: +wPost.toFixed(3), cams: [...new Set(F.map(f => f.cam))] } };
+      d: { repN: rep.length, w: +w.toFixed(3), dMax: +Math.max(0, ...at.map(f => f.d)).toFixed(1), yMax: +Math.max(-99, ...at.map(f => f.y)).toFixed(1), wPre: +wPre.toFixed(3), postN: post.length, wPost: +wPost.toFixed(3), cams: [...new Set(F.map(f => f.cam))] } };
   };
   // the crew at work under the film camera: the car's four corners and every man at his place in the picture (with most of them there at times)
   const framed = (F) => {
@@ -122,13 +126,18 @@ try {
   const dc2 = facing(F2);
   T.check('over the TV cameras: from the way in to the hand-back no camera looks back at the car (the pit stop\'s own camera has the view in the whole lane: dot >= 0 in every frame)', dc2.ok, JSON.stringify(dc2.d));
   // the pit stop's camera has the view in the whole lane over the TV cameras too (the post ahead of the car would look back at it): from the way in
-  // to the hand-back it moves against the car (the camera's offset from the car, in m a replay second) as the camera behind the car does, its
-  // swing round the car at the box the quickest (~50-65 m/s), never a cut to a TV post (tens of metres in a frame: far over 100 m/s); a TV camera
-  // before the way in and from the hand-back (the film's weight 0 there)
-  const sp2 = [];
-  for (let i = 1; i < F2.length; i++) { const a = F2[i - 1], b = F2[i], dt = b.t - a.t; if (a.ap && b.ap && dt > 0.005) sp2.push(Math.hypot((b.p[0] - b.x) - (a.p[0] - a.x), (b.p[1] - a.p[1]) - 0, (b.p[2] - b.z) - (a.p[2] - a.z)) / dt); }
-  T.check('over the TV cameras the film camera has the view in the whole lane, from the way in to the hand-back, moving against the car as the camera behind it does (no cut to a TV post)', sp2.length > 100 && Math.max(...sp2) < 100 && Math.max(0, ...F2.filter(f => !f.ap && f.t < live.ap - 0.1).map(f => f.w)) === 0,
-    JSON.stringify({ frames: sp2.length, fastest: sp2.length ? +Math.max(...sp2).toFixed(1) : null }));
+  // to the hand-back it moves against the car (the camera's offset from the car, in m a replay second) as the camera behind the car does, never a
+  // cut to a TV post (tens of metres in a frame: hundreds of m/s); a TV camera before the way in and from the hand-back (the film's weight 0 there).
+  // Its quickest moves: the swing round the car at the box (~50-65 m/s, close to it), and the view behind the car (~38 m off and high over the
+  // TV cameras) swinging round it after the car turned at once (a knock, or the marshals turning a car knocked across the crowded lane straight
+  // where it stands: Core Race step, wedgeT, ~100°): it eases its heading to the car's by 2.8/s of the gap on the real clock (Render chaseStep),
+  // at this 2× by 1.4/s on the replay's, so up to 1.4 × 180° ≈ 4.4 rad/s at its distance (~95 m/s there for ~100°). So under 100 m/s, or
+  // 5 rad/s at the camera's distance, whichever is more (a cut from up there to a post by the road: tens of metres in a frame, hundreds of m/s)
+  const sp2 = [], lim2 = [];
+  for (let i = 1; i < F2.length; i++) { const a = F2[i - 1], b = F2[i], dt = b.t - a.t; if (a.ap && b.ap && dt > 0.005) { sp2.push(Math.hypot((b.p[0] - b.x) - (a.p[0] - a.x), (b.p[1] - a.p[1]) - 0, (b.p[2] - b.z) - (a.p[2] - a.z)) / dt); lim2.push(Math.max(100, 5 * Math.min(a.d, b.d))); } }
+  const over2 = sp2.map((v, i) => v / lim2[i]), k2 = over2.indexOf(Math.max(...over2));
+  T.check('over the TV cameras the film camera has the view in the whole lane, from the way in to the hand-back, moving against the car as the camera behind it does (no cut to a TV post)', sp2.length > 100 && Math.max(...over2) < 1 && Math.max(0, ...F2.filter(f => !f.ap && f.t < live.ap - 0.1).map(f => f.w)) === 0,
+    JSON.stringify({ frames: sp2.length, fastest: sp2.length ? +Math.max(...sp2).toFixed(1) : null, nearest: k2 >= 0 ? { v: +sp2[k2].toFixed(1), lim: +lim2[k2].toFixed(1) } : null }));
 
   // 4×, behind the car: the crew still goes through it all
   await act('rp-cam'); await act('rp-speed');

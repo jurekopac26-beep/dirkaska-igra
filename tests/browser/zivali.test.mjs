@@ -6,12 +6,15 @@
 // the ones alone walk or graze (their own mesh, moving with time); each of these tracks has
 // its scene (World.lifeScenes) near the road, the ones with a place of their own (m, side: where they really are, OSM) there; Medvode's
 // stork flies off its nest as the car comes (L.fly: not a live one, one of its own); Crystal Palace's ducks float on the lake (float: at its
-// level), Great Alpine Road's koala sits up in its gum tree (on); a test track has none. The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
+// level); a test track has none (Great Alpine Road's koala in its gum tree too: a test track since 9. 11. 2026). The parked car: every kind built, within its vertex budget (the lite one far cheaper); where the circuits'
 // car parks were, a lot of each kind (the fans' camp, motorhomes and caravans, the fans' area) within its budget.
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026)
+const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'medvode'];   // (Medvode: scenes at their real places with things of their own, its stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026; Ouninpohja, a test track since 8. 11. 2026, has no animals' scenes)
+// (how many glades a track must have: Katu-Jaryk's ladder of hairpins keeps each leg's run-off short of the middle between the legs since the
+// serpentines' barriers of Track._buildEdges (limitNear, 6. 11. 2026), so fewer spots fit between them: 5 glades, before 11)
+const MIN = { katu: 4 };
 const T = checker('life in the woods, the parked car');
 const srv = await serve();
 const browser = await launch();
@@ -71,7 +74,7 @@ try {
         fixed: [].concat(SC || []).filter(S1 => S1.m != null).map(S1 => ({ kind: S1.kind, m: S1.m, side: S1.side })), scenes: (st.scenes || []).map(x => ({ kind: x.kind, m: x.m, side: x.side })), liveMeshes, herdMeshes, herdAnimals, herdPic, soft, hard, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? [].concat(SC)[0].kind : null };
     }, id);
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no life in its woods', !!r.none && !r.meshes, JSON.stringify(r)); continue; }
-    T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= 8 && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
+    T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= (MIN[id] || 8) && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
     T.check(`${id}: animals alone, in pairs and in herds`, r.sizes && r.sizes.one > 0 && r.sizes.herd > 0 && r.sizes.one + r.sizes.pair + r.sizes.herd === r.groups, JSON.stringify(r.sizes));
     T.check(`${id}: the ones alone walk or graze (own meshes, moving with time)`, r.live > 0 && r.liveMeshes === r.live && r.moved && (r.moved.d > 0.05 || Math.abs(r.moved.turn) > 0.05), `${r.live} live, ${JSON.stringify(r.moved)}`);
     T.check(`${id}: soft shadows (one see-through mesh under each live one and for each herd chunk's animals, none of them in the shadow map)`, r.soft === r.live + r.herdMeshes && !r.hard, `${r.soft} soft for ${r.live} live + ${r.herdMeshes} herd meshes, ${r.hard} hard`);
@@ -82,9 +85,10 @@ try {
     T.check(`${id}: no glade on the road or by its barrier`, r.near === 0, `${r.near} of ${r.at}`);
     T.check(`${id}: merged, one mesh per 256 m chunk (at most ~6 per km of road), under 25k vertices per km`, r.meshes > 0 && r.meshes <= 6 * r.km + 10 && r.verts < 25000 * r.km, `${r.meshes} meshes, ${Math.round(r.verts / 1000)}k vertices, ${r.km.toFixed(1)} km`);
   }
-  // two scenes where the glades' rules do not hold (a city park, a road with few woods), only their scene: Crystal Palace's ducks float on
-  // its lake (float: at its level, over the lake's bed) where they really are, Great Alpine Road's koala sits up in its gum tree (on)
-  for (const [id, want] of [['cpalace', 'float'], ['greatalpine', 'on']]) {
+  // a scene where the glades' rules do not hold (a city park), only its scene: Crystal Palace's ducks float on its lake (float: at its level,
+  // over the lake's bed) where they really are (want 'on': an animal perched up on its thing; Great Alpine Road's koala in its gum tree was
+  // one, its track a test track since 9. 11. 2026: the user's choice, Australia keeps Bathurst)
+  for (const [id, want] of [['cpalace', 'float']]) {
     await page.goto(srv.base + '/index.html?proga=' + id + '&t=0.5', { timeout: 300000 });
     await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
     const r = await page.evaluate((id) => { const st = Render.world.lifeStats, S0 = [].concat(World.lifeScenes[id] || [])[0];

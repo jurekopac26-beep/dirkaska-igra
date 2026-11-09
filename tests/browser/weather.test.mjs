@@ -45,15 +45,20 @@ try {
   // 2. a race where the rain starts at 20 s (dry, slicks at the start)
   await page.evaluate(() => { window.__game.wxNext = { rain: 0, wx: { at: 20, dur: 15, to: 1 } }; });
   await startTrack(page, 'rbring');
+  // (six laps, not the track's two: the autopilot comes in for the rain tyres at the end of a lap and may miss the way in at the end of the
+  // first, where the whole field comes in too; run 1591 of the pull request 404 found it in the second lap still on slicks. In a race of two
+  // laps a missed way in has no second try (tried with a forced miss: the car ran on to the finish on slicks); with six it comes in at the
+  // end of the second or the third lap. The race's laps are read where they are needed, so they can be set after the start)
+  await page.evaluate(() => { window.__game.race.laps = 6; });
   await sim(0.05);   // (two frames drawn: the HUD)
   const h0 = await hud();
   T.check('the race: the set-up of the track on the car, slicks, the tyres on the HUD (the compound\'s word, no %; not cold at the start)', h0.setup.wing === 0 && h0.setup.gear === 2 && h0.ty.k === 'dry' && /^on kt dry c[SMH]:(MEHKE|SREDNJE|TRDE)$/.test(h0.tyre) && h0.tyC !== COLD && h0.sec.join() === ':S1,:S2,:S3', JSON.stringify(h0));
   await msgs(); await simTo(22);
   const h1 = await hud(), m1 = await msgs();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
-  await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by)
+  await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by: if it misses the way in, the next lap's)
   let h2 = null, hb = null; await msgs();
-  for (let k = 0; k < 90; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 3 min: the car comes round to the pit lane)
+  for (let k = 0; k < 300; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 10 min: the car comes round to the pit lane, at the end of the first lap or, missed, of the second or third)
   const h2b = await hud(), m2 = await msgs();
   T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on kt dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();

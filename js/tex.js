@@ -691,6 +691,17 @@ const Tex = (function () {
     return mk(c, true);
   }
 
+  // the rubbered-in line (84, Render's layer of it, a race with tyres): light grey, streaked along the road (the tyres' tracks, a little
+  // lighter and darker by the noise), the colour itself from the layer's vertices; tiles both ways (4 m across, 8 m along the road)
+  function rubber() {
+    const S = 128, c = cv(S, S), x = c.getContext('2d'), r = Core.rng(84), n1 = makeNoise(8, 85), img = x.createImageData(S, S), d = img.data, st = new Float32Array(S);
+    for (let i = 0; i < S; i++) st[i] = r();
+    for (let i = 0; i < S; i++) st[i] = (st[i] + st[(i + 1) % S] + st[(i + S - 1) % S]) / 3;   // (the streaks across: a few pixels wide)
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const o = (j * S + i) * 4, v = Math.round(255 * (0.8 + 0.12 * st[i] + 0.08 * n1(i / 16, j / 16))); d[o] = d[o + 1] = d[o + 2] = Math.min(255, v); d[o + 3] = 255; }
+    x.putImageData(img, 0, 0);
+    return mk(c, true);
+  }
+
   let cache = null;
   function all(maxAniso) {
     if (cache) return cache;
@@ -703,6 +714,6 @@ const Tex = (function () {
     cache.wear = wear();
     return cache;
   }
-  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS, marbles };
+  return { all, number, crowdPic, crowdHi, crowdSeats, standKit, STAND_KIT, SPONSORS, marbles, rubber };
 })();
 

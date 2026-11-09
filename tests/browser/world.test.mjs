@@ -67,9 +67,21 @@ try {
       const want = Tr.brakeBoards().reduce((a, z) => a + z.boards.length, 0), got = W.brakeBoards || [];
       const off = got.filter(b => b.feet.some((y, q) => y > Math.min(b.ground[q], b.road) - 0.1) || b.y0 < Math.max(b.road, ...b.ground) + 0.4);
       const bb = { circuit: !Tr.open && !Tr.def.test && !Tr.def.rally && !Tr.def.descent, meshes: bbM, cast: bbCast, want, got: got.length, off: off.map(b => `${b.d} at ${b.x}, ${b.z}`) };
-      return { bb, fnan, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
+      // the far view's lakes (def.farDem.lake, irFar): each wet node at its own height from the model or at the lake's level, never sunk into a pit
+      // below all its neighbours (a tarn on the ridges set to the start's height: a dark funnel hundreds of metres deep in the mountains)
+      const FD = Tr.def.farDem, FR = W.dyn && W.dyn.irFar; let lakes = null;
+      if (FD && FD.lake && FR && FR.P0 && FR.P0.length >= 3 * FD.nx * FD.nz) {
+        const nx = FD.nx, nz = FD.nz, wet = new Uint8Array(nx * nz); lakes = { wet: 0, pits: [] };
+        for (let k = 0, p = 0, v = 0; k < FD.lake.length; k++) { if (v) wet.fill(1, p, p + FD.lake[k]); p += FD.lake[k]; v ^= 1; }
+        for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const k = j * nx + i; if (!wet[k]) continue; lakes.wet++; let lo = Infinity;
+          for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if ((di || dj) && ii >= 0 && jj >= 0 && ii < nx && jj < nz) lo = Math.min(lo, FR.P0[3 * (jj * nx + ii) + 1]); }
+          const y = FR.P0[3 * k + 1]; if (y < lo - 40) lakes.pits.push(`${FD.x0 + i * FD.cell}, ${FD.z0 + j * FD.cell}: ${Math.round(lo - y)} m below`); }
+      }
+      return { bb, fnan, lakes, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
     });
-    const bb = fp.bb, fnan = fp.fnan; delete fp.bb; delete fp.fnan;
+    const bb = fp.bb, fnan = fp.fnan, lakes = fp.lakes; delete fp.bb; delete fp.fnan; delete fp.lakes;
+    if (lakes && lakes.wet) T.check(`${id}: the far view's lakes at their own level (no wet node a pit below its neighbours)`, !lakes.pits.length,
+      `${lakes.wet} wet nodes${lakes.pits.length ? '; pits at ' + lakes.pits.slice(0, 4).join('; ') : ''}`);
     if (fp.floor) T.check(`${id}: prop floor a number beside the road (0.1–12 m past its edge)`, !fnan, `NaN at ${fnan} of ${fp.floor.split('/')[1]} points`);
     T.check(`${id}: braking boards ${bb.circuit ? 'before its braking zones, in one mesh without a shadow, standing on the ground' : 'none (not a circuit)'}`,
       bb.circuit ? bb.want >= 3 && bb.got === bb.want && bb.meshes === 1 && !bb.cast && !bb.off.length : bb.want === 0 && bb.got === 0 && bb.meshes === 0,

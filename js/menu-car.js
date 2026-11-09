@@ -16,6 +16,9 @@
    car's picture then). detach(): the drawing stops (another screen). rest(): before a race: stopped, the canvas 1 x 1 (its buffers
    freed; the context, the car and the shaders kept for the way back). supported(): WebGL there and not lost. placed(): where the car
    stands in the yard, as a style attribute for the menu's next yard (the car's name over it: --car-top, --car-left). info(): for the tests.
+   The car's shadow on the floor is its own (sklop 11, shade): wide and soft round it (in the sun a little to the left), darker under the
+   body, dark where each tyre stands, bluish on snow (spec.wx: the menu's weather). cover(): how far over the road sign's middle the car
+   reaches (px from the sign's left edge; the sign's name is moved right of it, js/menu-tabla.js); watch(fn): fn() when that changed.
    ========================================================================= */
 window.MenuCar = (function () {
   'use strict';
@@ -61,7 +64,7 @@ window.MenuCar = (function () {
     const out = [], p = new THREE.Vector3();
     v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, 0); v.grp.updateMatrixWorld(true);
     v.grp.traverse(m => {
-      if (!m.isMesh || m === v.blob || !m.geometry || !m.geometry.attributes.position) return;
+      if (!m.isMesh || m === v.blob || m === v.rigS || !m.geometry || !m.geometry.attributes.position) return;   // (v.rigS: a semi-trailer's blob)
       for (let q = m; q && q !== v.grp; q = q.parent) if (!q.visible) return;
       const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count), st = Math.max(1, Math.floor(n / 5000));
       for (let i = 0; i < n; i += st) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); out.push(p.x, p.y, p.z); }
@@ -123,23 +126,107 @@ window.MenuCar = (function () {
     drop();
     const v = Render.garageCar(M, spec.color, spec.num || 0, true);
     if (!spec.num && v.dec) v.dec.visible = false;
-    const P = pointsOf(v), S = shapeOf(P);
+    if (v.blob) v.blob.visible = false;   // (the race's blob: the menu's own shadow instead, shade)
+    const rig = Render.garageTrailer ? Render.garageTrailer(v, M) : null;   // (a semi-trailer straight behind it, the TITAN CISTERNA's tank: the rig in the button, docs/titan-cisterna.md)
+    if (v.rigS) v.rigG.traverse(m => { if (m.isMesh && m.material === v.rigS.material) m.visible = false; });   // (its blobs too, v.rigS and a road train's second: the menu's shadow under the whole rig)
+    const P = pointsOf(v), S = shapeOf(P), F = feetOf(v);
     v.grp.rotation.y = ROT; v.grp.updateMatrixWorld(true); scene.add(v.grp);
     // (its points as the camera sees them: turned as the car)
     const c = Math.cos(ROT), s = Math.sin(ROT), Pw = new Float32Array(P.length);
     for (let i = 0; i < P.length; i += 3) { Pw[i] = P[i] * c + P[i + 2] * s; Pw[i + 1] = P[i + 1]; Pw[i + 2] = -P[i] * s + P[i + 2] * c; }
-    car = { v, M, S, Pw, h: Math.max(0.5, S.y1) };
+    car = { v, M, S, Pw, h: Math.max(0.5, S.y1), feet: F, rig };
+    shadeBuild();
     dirty = true; drawn = false;
     return true;
   }
   function drop() {
     if (wind) { scene.remove(wind.mesh); wind.mesh.geometry.dispose(); wind = null; }
+    if (car && car.sh) { scene.remove(car.sh.mesh); car.sh.mesh.geometry.dispose(); }
     if (car) { scene.remove(car.v.grp); try { Render.garageFree(car.v); } catch (_) { /* gone with the context */ } car = null; }
   }
 
+  /* ---------------- the shadow on the floor ---------------- */
+  // (docs/meni-izbira-proge.md, »Senca avta na tleh«; the mockup's wxfx.js drawShadow) wide and soft round the car (in the sun a little
+  // to the left, towards the car's tail and its near side as it stands turned, and longer), darker under the body between the wheels,
+  // dark and tight where each tyre stands; bluish on snow. A plane under the car (the race's blob hidden), its picture drawn from above
+  // in the car's frame, again only when the car or the weather changed
+  const SH_W = 256, SH_H = 128;
+  let shCv = null, shTex = null, shMat = null, shKey = '';
+  // where its tyres stand (car frame, [x0, x1, z0, z1]; the car as built, not turned): the lowest points of each wheel of its own (the
+  // front ones, all four of a formula, a prototype or a kit car); the rear wheels of an older body are in the body: its lowest points
+  // behind the front wheels, in runs along each side (a run is a tyre, or two close together)
+  function feetOf(v) {
+    const p = new THREE.Vector3(), out = [];
+    const low = (o, tol, keep) => {
+      const P = []; let y0 = 1e9;
+      o.traverse(m => {
+        if (!m.isMesh || !m.visible || !m.geometry || !m.geometry.attributes.position) return;
+        const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count);
+        for (let i = 0; i < n; i++) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); if (p.y < y0) y0 = p.y; P.push(p.x, p.y, p.z); }
+      });
+      const L = []; for (let i = 0; i < P.length; i += 3) if (P[i + 1] <= y0 + tol && (!keep || keep(P[i], P[i + 2]))) L.push([P[i], P[i + 2]]);
+      return L;
+    };
+    for (const w of (v.wf || []).concat(v.wr || [])) {
+      if (!w || !w.visible) continue;
+      const L = low(w, 0.02); if (!L.length) continue;
+      out.push(L.reduce((r, q) => [Math.min(r[0], q[0]), Math.max(r[1], q[0]), Math.min(r[2], q[1]), Math.max(r[3], q[1])], [1e9, -1e9, 1e9, -1e9]));
+    }
+    const runs = (L) => {
+      for (const sd of [-1, 1]) {
+        const Q = L.filter(q => q[1] * sd > 0).sort((a, b) => a[0] - b[0]);
+        let r = null;
+        for (const [x, z] of Q) {
+          if (r && x - r[1] <= 0.3) { r[1] = x; r[2] = Math.min(r[2], z); r[3] = Math.max(r[3], z); }
+          else { if (r) out.push(r); r = [x, x, z, z]; }
+        }
+        if (r) out.push(r);
+      }
+    };
+    if (!(v.wr && v.wr.length) && v.body) {
+      const xf = out.length ? Math.min(...out.map(r => r[0])) - 0.4 : 1e9;
+      runs(low(v.body, 0.015, (x, z) => x < xf && Math.abs(z) > 0.12));
+    }
+    if (v.rigG) runs(low(v.rigG, 0.02, (x, z) => Math.abs(z) > 0.12));   // (a rig's trailer: its wheels are in it, as an older body's rear ones)
+    return out.filter(r => r[1] - r[0] < 1.4);   // (a long low run is no tyre: a sill, a skid plate)
+  }
+  function shadeBuild() {
+    if (!shMat) {
+      shCv = document.createElement('canvas'); shCv.width = SH_W; shCv.height = SH_H;
+      shTex = new THREE.CanvasTexture(shCv);
+      shMat = new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false });
+    }
+    const S = car.S, cx = (S.x0 + S.x1) / 2, L = S.x1 - S.x0 + 2.4, W2 = 2 * S.hw + 2;
+    const geo = new THREE.PlaneGeometry(L, W2); geo.rotateX(-Math.PI / 2); geo.translate(cx, 0.012, 0);
+    const mesh = new THREE.Mesh(geo, shMat); mesh.rotation.y = ROT; mesh.renderOrder = -1; scene.add(mesh);
+    car.sh = { mesh, cx, L, W: W2, wx: '' }; shKey = '';
+  }
+  function shade(wx) {
+    if (!car || !car.sh) return;
+    const k = key + '|' + wx; if (k === shKey) return; shKey = k; car.sh.wx = wx;
+    const g = shCv.getContext('2d'), sh = car.sh, S = car.S, F = car.feet, kx = SH_W / sh.L, kz = SH_H / sh.W;
+    const sun = wx === 'dry' ? 1 : wx === 'change' || wx === 'random' ? 0.5 : 0, rgb = wx === 'snow' ? '35,55,100' : '0,0,0';
+    // (x along the car to the canvas's right, z its near side down: the plane's rows as three flips them, row 0 its far side)
+    const blob = (x, z, rx, rz, a) => {
+      g.save(); g.translate((x - sh.cx + sh.L / 2) * kx, (z + sh.W / 2) * kz); g.scale(1, (rz * kz) / (rx * kx));
+      const r = rx * kx, gr = g.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, 'rgba(' + rgb + ',' + a + ')'); gr.addColorStop(0.55, 'rgba(' + rgb + ',' + (a * 0.55).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + rgb + ',0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.restore();
+    };
+    g.clearRect(0, 0, SH_W, SH_H);
+    const hl = (S.x1 - S.x0) / 2, bx = (S.x0 + S.x1) / 2;
+    // (a little darker than the mockup's 0.42, 0.62, 0.9: the yard's floor is darker and the car stands low in it)
+    blob(bx - 0.28 * sun, 0.24 * sun, hl * 1.08 + 0.35 * sun, S.hw * 1.22 + 0.12 * sun, 0.5);   // the wide soft shadow (the sun's: to the screen's left)
+    if (F.length >= 2) { const a = Math.min(...F.map(r => r[0])), b = Math.max(...F.map(r => r[1])); blob((a + b) / 2, 0, (b - a) / 2 + 0.2, S.hw * 0.82, 0.7); }   // under the body
+    for (const r of F) blob((r[0] + r[1]) / 2, (r[2] + r[3]) / 2, Math.max(0.15, (r[1] - r[0]) * 0.62), Math.max(0.1, (r[3] - r[2]) * 0.62), 0.92);   // each tyre
+    shTex.needsUpdate = true;
+  }
+
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
+  // a box in the yard as laid out (a new track's sign and car sliding in, their transforms, do not move it: the car drawn where it stands)
+  const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
-    const M = car.M, h = car.h, k = clamp(Math.max(M.len / 4.4, h / 1.45, M.wid / 1.9), 0.75, 1.55), dy = h / 2 - 0.7 * k;
+    const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
     cam.fov = FOV; cam.aspect = W / H; cam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); cam.lookAt(0, 0.55 * k + dy, 0);
     cam.updateProjectionMatrix(); cam.updateMatrixWorld(true); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
     // the car's box as seen, in the canvas's -1..1
@@ -147,14 +234,29 @@ window.MenuCar = (function () {
     let bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9;
     for (let i = 0; i < Pw.length; i += 3) { p.set(Pw[i], Pw[i + 1], Pw[i + 2]).applyMatrix4(VP); bx0 = Math.min(bx0, p.x); bx1 = Math.max(bx1, p.x); by0 = Math.min(by0, p.y); by1 = Math.max(by1, p.y); }
     // the button's box (where the menu wants the car: left, in front of the sign), the car in it whole, at its bottom left
-    const yr = yard.getBoundingClientRect(), bt = yard.querySelector('.car'), br = bt ? bt.getBoundingClientRect() : { left: yr.left, top: yr.top, width: yr.width * 0.62, height: yr.height };
-    const tx0 = -1 + 2 * (br.left - yr.left) / W, tx1 = -1 + 2 * (br.left - yr.left + br.width) / W, ty0 = 1 - 2 * (br.top - yr.top + br.height) / H, ty1 = 1 - 2 * (br.top - yr.top) / H;
+    const bt = yard.querySelector('.car'), br = boxIn(bt) || { left: 0, top: 0, width: W * 0.62, height: H };
+    const tx0 = -1 + 2 * br.left / W, tx1 = -1 + 2 * (br.left + br.width) / W, ty0 = 1 - 2 * (br.top + br.height) / H, ty1 = 1 - 2 * br.top / H;
     const sc = Math.min((tx1 - tx0) / Math.max(1e-3, bx1 - bx0), (ty1 - ty0) / Math.max(1e-3, by1 - by0)), ox = tx0 - sc * bx0, oy = ty0 - sc * by0;
     cam.projectionMatrix.premultiply(new THREE.Matrix4().set(sc, 0, 0, ox, 0, sc, 0, oy, 0, 0, 1, 0, 0, 0, 0, 1));
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     car.fit = { sc, box: [bx0 * sc + ox, by0 * sc + oy, bx1 * sc + ox, by1 * sc + oy] };
     pos = [Math.round((1 - car.fit.box[3]) * H / 2), Math.round((car.fit.box[0] + 1) * W / 2)]; place(yard);
+    // how far the car reaches over the road sign where its name stands (the middle 60 % of its height), px from the sign's left edge:
+    // a tall car, a truck, hides the sign's left part, the name goes right of it (js/menu-tabla.js; watch)
+    const sg = yard.querySelector('.sign'), sr = boxIn(sg);
+    let cv = 0;
+    if (sr && sr.width > 0 && sr.height > 0) {
+      const t = sr.top + sr.height * 0.2, b = sr.top + sr.height * 0.8, L = sr.left;
+      for (let i = 0; i < Pw.length; i += 3) {
+        p.set(Pw[i], Pw[i + 1], Pw[i + 2]).applyMatrix4(VP);
+        const y = (1 - (p.y * sc + oy)) * H / 2; if (y < t || y > b) continue;
+        const x = (p.x * sc + ox + 1) * W / 2 - L; if (x > cv) cv = x;
+      }
+    }
+    cv = Math.round(cv);
+    if (Math.abs(cv - cov) > 1) { cov = cv; if (watcher) setTimeout(() => { try { watcher(cov); } catch (_) { /* the menu's */ } }, 0); }
   }
+  let cov = 0, watcher = null;
   // where the car stands in the yard (CSS px from its top left: the car's top and left), for the menu's name over it (css/menu.css .cname):
   // on the yard now, on a new drawing's yard at once (attach; placed(): in its markup, so the name is never seen elsewhere first)
   let pos = null;
@@ -292,7 +394,7 @@ window.MenuCar = (function () {
       dirty = false;
       const r = yard.getBoundingClientRect(), w = Math.round(r.width), h = Math.round(r.height), bt = yard.querySelector('.car'), sg = yard.querySelector('.sign');
       if (w < 8 || h < 8) { dirty = true; return false; }
-      const rel = (e) => { if (!e) return ''; const q = e.getBoundingClientRect(); return [q.left - r.left, q.top - r.top, q.width, q.height].map(Math.round).join(','); };
+      const rel = (e) => { const q = boxIn(e); return q ? [q.left, q.top, q.width, q.height].join(',') : ''; };
       const pr = Math.min(2, window.devicePixelRatio || 1), k = [w, h, pr, rel(bt), rel(sg)].join('|');
       if (k !== lay || !wind) {
         lay = k; W = w; H = h; renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
@@ -303,9 +405,11 @@ window.MenuCar = (function () {
     return W > 0;
   }
   const SUN = { x: -6, y: 10, z: 7 };
+  let shIn = null;   // (the shadow coming in after a new track's car: { t: when it starts, ms })
   function draw(now) {
     if (!car || !fit()) return;
     windMat.uniforms.uT.value = calm() ? 0 : (now - t0) / 1000;
+    if (shMat) { const k = shIn ? clamp((now - shIn.t) / shIn.ms, 0, 1) : 1; shMat.opacity = k; if (k >= 1) shIn = null; }
     Render.garageLight(SUN, 0xfff2dd, 0.55, 0xffffff);
     const b = performance.now(); renderer.render(scene, cam); busy = busy * 0.9 + (performance.now() - b) * 0.1;
     frames++;
@@ -335,36 +439,78 @@ window.MenuCar = (function () {
     place(el);
     const k = spec.id + '|' + spec.color + '|' + (spec.num || 0);
     if (k !== key || !car) { key = k; try { if (!build(spec)) { key = ''; return false; } } catch (e) { try { console.error('menu car:', e && e.message ? e.message : e); } catch (_) { } fail(); return false; } }
+    shade(spec.wx || 'dry');
     if (drawn) el.classList.add('c3d-on');
     if (!on) { on = true; last = 0; if (!raf) raf = requestAnimationFrame(loop); }
     return drawn;
   }
-  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; }
+  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; shIn = null; }
   function rest() {
     detach();
     if (renderer && !failed) { renderer.setSize(1, 1, false); W = H = 0; lay = ''; dirty = true; drawn = false; }   // (back from the race: drawn afresh, faded in)
   }
   function live(spec) { return !!car && drawn && !failed && key === spec.id + '|' + spec.color + '|' + (spec.num || 0); }
+  // the car as it is drawn now, in a picture of its own (the old screen's, going out as a new track's comes in: js/menu.js trackTo)
+  function snap() {
+    if (!car || !renderer || failed || !drawn || !canvas.isConnected) return null;
+    try { draw(performance.now()); } catch (_) { return null; }
+    if (!W) return null;
+    const o = document.createElement('canvas'); o.width = canvas.width; o.height = canvas.height; o.className = 'c3d snap'; o.setAttribute('aria-hidden', 'true');
+    o.getContext('2d').drawImage(canvas, 0, 0); return o;
+  }
+  // the car alone, in a picture of its own (no shadow, no wind): its outline for the weather (js/menu-vreme.js: its reflection on a wet floor,
+  // snow on its top); drawn again only when the car or the yard changed
+  let alKey = '', alCv = null;
+  function alpha() {
+    if (!car || !renderer || failed || !drawn || !canvas.isConnected || !fit() || !W) return null;
+    const k = key + '|' + lay;
+    if (k !== alKey || !alCv) {
+      const sh = car.sh ? car.sh.mesh : null, wm = wind ? wind.mesh : null, o = alCv || document.createElement('canvas');
+      try {
+        if (sh) sh.visible = false; if (wm) wm.visible = false;
+        draw(performance.now());
+        o.width = canvas.width; o.height = canvas.height; o.getContext('2d').drawImage(canvas, 0, 0); alCv = o; alKey = k;
+      } catch (_) { return null; } finally { if (sh) sh.visible = true; if (wm) wm.visible = true; }
+      try { draw(performance.now()); } catch (_) { /* (the next frame) */ }
+    }
+    return { cv: alCv, key: alKey, pr: alCv.width / W };
+  }
+  // a new track's car: its shadow comes when it stands (ms after now, over fade ms); none on a device that asks for less motion
+  function shadeIn(after, fade) { shIn = calm() || !shMat ? null : { t: performance.now() + after, ms: Math.max(1, fade) }; if (shMat && shIn) shMat.opacity = 0; }
   function info() {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
-      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected) };
+      ms: +busy.toFixed(2), box: car && car.fit ? car.fit.box.map(v => +v.toFixed(3)) : null, connected: !!(canvas && canvas.isConnected), cover: cov,
+      rig: car && car.rig ? +car.rig.len.toFixed(2) : 0,   // (rig: a semi-trailer's rig, its length, m)
+      shadow: car && car.sh ? { wx: car.sh.wx, tyres: car.feet.length, opacity: shMat ? +shMat.opacity.toFixed(2) : 0, visible: car.sh.mesh.visible } : null };
   }
   // (tests) a frame drawn now (t: at that time of the wind, s) and read at once (its buffer is not kept once it is shown): how much of the
   // yard right of the car's box (only the wind there) and of the car's box is drawn, the wind's colour there (0..1), and where its lines
   // are (a sum of their rows: it changes as the waves go)
   function sample(t) {
     if (!car || !renderer || failed) return null;
-    if (t != null) t0 = performance.now() - t * 1000;
-    draw(performance.now()); if (!W) return null;
-    const o = document.createElement('canvas'); o.width = canvas.width; o.height = canvas.height; const g = o.getContext('2d'); g.drawImage(canvas, 0, 0);
-    const d = g.getImageData(0, 0, o.width, o.height).data, bx = Math.round((car.fit.box[2] * 0.5 + 0.5) * o.width) + 4;
+    if (t == null) t = (performance.now() - t0) / 1000;   // (both drawings at the same moment of the wind: the shadow is what differs)
+    const o = document.createElement('canvas'), g = o.getContext('2d'), sh = car.sh ? car.sh.mesh : null;
+    const read = (withShadow) => { if (sh) sh.visible = withShadow; const n = performance.now(); t0 = n - t * 1000; draw(n); if (sh) sh.visible = true; if (!W) return null; o.width = canvas.width; o.height = canvas.height; g.drawImage(canvas, 0, 0); return g.getImageData(0, 0, o.width, o.height).data; };
+    const d = read(false), d1 = d && read(true); if (!d) return null;
+    const bx = Math.round((car.fit.box[2] * 0.5 + 0.5) * o.width) + 4;
     let right = 0, nR = 0, inCar = 0, nC = 0, r = 0, gg = 0, b = 0, rows = 0;
     for (let y = 0; y < o.height; y++) for (let x = 0; x < o.width; x++) {
       const k = (y * o.width + x) * 4, a = d[k + 3];
       if (x > bx) { nR++; if (a > 8) { right++; r += d[k]; gg += d[k + 1]; b += d[k + 2]; rows += y * a; } } else { nC++; if (a > 8) inCar++; }
     }
-    return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height] };
+    // the shadow: the pixels it adds (more cover than without it), their middle (x, y of the canvas, 0..1), how far below the car's box it
+    // reaches, the colour where it lies over nothing else (0..1)
+    let sn = 0, sx = 0, sy = 0, ws = 0, low = 0, sr = 0, sg = 0, sb = 0, ns = 0;
+    const by = Math.round((0.5 - car.fit.box[1] * 0.5) * o.height);
+    for (let y = 0; y < o.height; y++) for (let x = 0; x < o.width; x++) {
+      const k = (y * o.width + x) * 4, da = d1[k + 3] - d[k + 3]; if (da <= 12) continue;
+      sn++; ws += da; sx += x * da; sy += y * da; if (y > by && y - by > low) low = y - by;
+      if (d[k + 3] < 4) { ns++; sr += d1[k]; sg += d1[k + 1]; sb += d1[k + 2]; }
+    }
+    const shade = { px: +(sn / (o.width * o.height)).toFixed(4), x: ws ? +(sx / ws / o.width).toFixed(3) : null, y: ws ? +(sy / ws / o.height).toFixed(3) : null, below: +(low / o.height).toFixed(3), col: ns ? [sr, sg, sb].map(v => +(v / ns / 255).toFixed(3)) : null };
+    return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height], shade };
   }
-  return { supported, attach, detach, rest, live, placed, info, sample };
+  const cover = () => cov, watch = (fn) => { watcher = fn || null; };
+  return { supported, attach, detach, rest, live, placed, info, sample, snap, shadeIn, cover, watch, alpha };
 })();

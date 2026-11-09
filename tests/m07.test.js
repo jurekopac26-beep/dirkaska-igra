@@ -16,7 +16,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('07'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'sani'));
-check('07: on Sani Pass, a real track', D.track === 'sani' && !Core.TRACKS.find(t => t.id === 'sani').test);
+check('07: on Sani Pass (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'sani' && !!Core.TRACKS.find(t => t.id === 'sani'));
 const o = D.opts(D);
 check('its race: alone, the tanker (the off-road truck\'s physics on a copy, 10 m, its own limiter), no damage', o.tt && o.damage === 0 && o.playerModel.vLim === K.VMAX && o.playerModel.len === 10 && Core.MODELS.find(m => m.id === 'truck').len < 6);
 const race = new Core.Race(T, Object.assign({ phys: 'cs', seed: 3 }, o));

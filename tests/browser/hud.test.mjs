@@ -6,13 +6,13 @@
 // the left; the wrong tyres: the word on a red chip. DRS (dim, white armed, green open) and ZAVETRJE (white, not the cold tyres' blue) in
 // small tags under the rows (ZAVETRJE no longer shown). The start's set never cold; after a real pit stop (the autopilot through the lane, as
 // tests/browser/pits.test.mjs drives it) the word and the dots light blue (#7fd3ff) at the fitting and at the way out, about half way to
-// their own colours half a lap on, their own a lap on. The fastest lap's time under the clock: upright the time and a star, lying the
+// their own colours a quarter of a lap on, their own half a lap on (they warm up: Core TCOLD, 105). The fastest lap's time under the clock: upright the time and a star, lying the
 // word. The budgets, with the worst texts forced and the HUD's face (ApexMenu) loaded, measured on the letters' boxes, the corner sign
 // where the game puts it (window.__game.noteAt): upright (360x640, 390x844, 412x915) row 1 left of the clock, the line under the clock
 // under row 2 (never on its line: SEKTOR 2  1:05.123, the fastest lap with its star, the longest place names of the real tracks in two
 // lines at most, in English too), clear of the map, the corner sign, the clock and the column under the rows, the duel's gap line and the
 // police's panel under it; lying (640x360, 844x390, 915x412) both rows left of the corner sign (the police's further left too); the whole
-// left column (fuel, three faults, a flag, DRS and ZAVETRJE) left of ZAMENJAJ KOLO lying, over none of the map, the pause button, the
+// left column (fuel, three faults, a flag, DRS and ZAVETRJE) over none of the map, the pause button, the
 // corner sign, the clock or the controls, in every steering mode (buttons, wheel, tilt) either way the phone is held.
 //   node tests/browser/hud.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -103,16 +103,16 @@ try {
   T.check('the wrong tyres for the road (slicks on a wet line): the word white on a red chip, class "bad"', / bad/.test(bad.cls) && bad.chip === 'rgba(190, 30, 30, 0.78)' && bad.word === 'rgb(255, 255, 255)' && bad.txt === 'SREDNJE', JSON.stringify(bad));
 
   // 4. a real pit stop at the end of the first lap (the stop's tyres: Srednje, as the T key or the pause menu would set them): cold at the
-  // fitting and at the way out, about half way half a lap on, their own colours a lap on
+  // fitting and at the way out, about half way a quarter of a lap on, their own colours half a lap on (Core TCOLD: the grip with them)
   const cold = await page.evaluate((src) => {
     const g = window.__game, P = g.race.player, L = g.race.track.len, f = (0, eval)(src), out = {}; P.pitCmp = 'M';
     for (let k = 0; k < 6000 && !P.pitDone; k++) { if (P.lap >= 1 && !P.repairN) P.pitWant = true; if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true); }
     out.done = f(); out.done.pit = P.pitState;
     for (let k = 0; k < 6000 && P.pitDone; k++) g.sim(1 / 60, false, 0, 0);
     out.exit = f(); out.exit.inPit = P.inPit; const x0 = P.dist;
-    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.25 * L; k++) g.sim(0.05, true);
     out.half = f(); out.half.k = +((P.dist - x0) / L).toFixed(3);
-    for (let k = 0; k < 9000 && P.dist < x0 + L; k++) g.sim(0.05, true);
+    for (let k = 0; k < 9000 && P.dist < x0 + 0.5 * L; k++) g.sim(0.05, true);
     out.lap = f(); out.lap.k = +((P.dist - x0) / L).toFixed(3); out.laps = g.race.laps; out.phase = g.phase;
     return out; }, TYRES.toString());
   const isCold = (o) => !!o && / cold/.test(o.cls) && o.word === COLD && o.dots.length === 4 && o.dots.every(c => c === COLD);
@@ -121,9 +121,9 @@ try {
   T.check('the race\'s start: the tyres not cold (their own colours)', !/cold/.test(sl.cls) && sl.word === OWN.M, sl.cls);
   T.check('right after the pit stop\'s new set (done, still in the box\'s lane): the word and the four dots light blue (#7fd3ff), class "cold"', isCold(cold.done) && cold.done.c === 'M', JSON.stringify(cold.done));
   T.check('at the way out of the pit lane: still light blue', isCold(cold.exit) && !cold.exit.inPit, JSON.stringify(cold.exit));
-  T.check('half a lap from the way out: about half way to their own colours (the word and the dots)', !!cold.half && Math.abs(t(cold.half.word, own) - 0.5) <= 0.08 && Math.abs(t(cold.half.dots[0], cold.half.wants[0]) - 0.5) <= 0.08 && / cold/.test(cold.half.cls),
+  T.check('a quarter of a lap from the way out: about half way to their own colours (the word and the dots)', !!cold.half && Math.abs(t(cold.half.word, own) - 0.5) <= 0.08 && Math.abs(t(cold.half.dots[0], cold.half.wants[0]) - 0.5) <= 0.08 && / cold/.test(cold.half.cls),
     JSON.stringify({ half: cold.half, tw: cold.half && +t(cold.half.word, own).toFixed(2) }));
-  T.check('a lap from the way out: their own colours (SREDNJE yellow, the dots by the wear), no longer cold', !!cold.lap && !/cold/.test(cold.lap.cls) && cold.lap.word === own && cold.lap.dots.every((c, k) => near(c, cold.lap.wants[k])) && cold.phase === 'racing',
+  T.check('half a lap from the way out: their own colours (SREDNJE yellow, the dots by the wear), no longer cold', !!cold.lap && !/cold/.test(cold.lap.cls) && cold.lap.word === own && cold.lap.dots.every((c, k) => near(c, cold.lap.wants[k])) && cold.phase === 'racing',
     JSON.stringify(cold.lap));
 
   // 4b. the fastest lap's time under the clock, as the game writes it at the line (a lap faster than all before it): upright the time and a
@@ -164,7 +164,6 @@ try {
     else { $('h-pol').className = ''; $('h-chk').className = ''; }
     const S = $('h-split'); S.style.transition = 'none'; S.textContent = st.split || ''; S.className = st.split ? 'show sg' : '';
     $('h-note').style.transition = 'none'; g.noteAt(window.__hudS0, 30);   // (the sign as the game places it: under the line when it is in two lines)
-    const W = $('wheel-swap'); W.classList.toggle('on', !!st.col && innerWidth > innerHeight); if (st.col) $('ws-btn').style.top = Math.round($('h-times').getBoundingClientRect().bottom + 6) + 'px';   // (as game.js swapTop puts it)
   };
   const MEASURE = () => { const $ = (id) => document.getElementById(id);
     const vis = (e) => { for (let x = e; x; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden') return false; } return true; };
@@ -177,7 +176,7 @@ try {
     const under = glyphs($('h-rlbl')).concat(els(['h-drs', 'h-fuel', 'h-flag']), glyphs($('h-alt')), glyphs($('h-turn')), [...$('h-flt').children].filter(vis).map(e => box(e.getBoundingClientRect(), 'flt')));
     return { w: innerWidth, h: innerHeight, r1: ext(r1), r2: ext(r2), r2g: r2, col: r1.concat(r2, under), under, colExt: ext(r1.concat(r2, under)), clock: glyphs($('h-time'), 'time').concat(glyphs($('h-best'), 'best')),
       split: glyphs($('h-split'), 'split'), gap: glyphs($('h-gap'), 'gap'), pol: glyphs($('h-pol'), 'pol').concat(els(['h-bust', 'h-hide', 'h-chk'])), note: els(['h-note'])[0] || null,
-      map: els(['h-map'])[0], pause: els(['btn-pause'])[0] || null, ws: $('wheel-swap').classList.contains('on') ? box($('ws-btn').getBoundingClientRect()) : null,
+      map: els(['h-map'])[0], pause: els(['btn-pause'])[0] || null,
       ctl: els(['c-left', 'c-right', 'c-wheel', 'c-brake', 'c-gas', 'tilt-ind']), mode: (/m-(\w+)/.exec($('touch').className) || [])[1] };
   };
   const hit = (a, b) => !!a && !!b && Math.min(a.r, b.r) - Math.max(a.l, b.l) > 1 && Math.min(a.b, b.b) - Math.max(a.t, b.t) > 1;
@@ -207,7 +206,6 @@ try {
     } else {   // lying: both rows left of the corner sign
       room.note = o.note ? +(o.note.l - Math.max(o.r1.r, o.r2.r)).toFixed(1) : null;
       if (room.note == null || room.note < 3) bad.push(`the rows ${room.note} px from the corner sign`);
-      if (o.ws) { room.ws = +(o.ws.l - o.colExt.r).toFixed(1); if (o.col.some(c => hit(c, o.ws))) bad.push('the column under ZAMENJAJ KOLO'); }
     }
     for (const c of o.col) {
       for (const k of o.ctl) if (hit(c, k)) bad.push('over #' + k.id);
@@ -232,7 +230,7 @@ try {
     ['race', Object.assign({ split: 'KROG 11: 02:13.456  NAJHITREJŠI' }, RACE)], ['race (en)', Object.assign({ split: 'LAP 11: 02:13.456  FASTEST' }, RACE_EN)],
     ['qualifying', { pos: '–', tot: '', lap: 'KVALIFIKACIJE', ty: true }], ['qualifying (en)', { pos: '–', tot: '', lap: 'QUALIFYING', ty: true, en: true }], ['flying lap', { pos: '–', tot: '', lap: 'LETEČI KROG', ty: true, split: 'SEKTOR 2  1:05.123' }],
     ['Nürburg', { pos: '100', tot: '/100', lap: 'KROG 1/1 · 12,3/20,7 KM' }], ['Nürburg (en)', { pos: '100', tot: '/100', lap: 'LAP 1/1 · 12.3/20.7 KM', en: true }],
-    ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column, ZAMENJAJ KOLO', Object.assign({ col: true }, RACE)]] };
+    ['the police', { pos: '3', tot: '', lap: '12,3/12,3 KM', pol: true }], ['the whole column', Object.assign({ col: true }, RACE)]] };
   const all = [];
   await page.evaluate((s) => { window.__hudS0 = s; }, s0);
   for (const [w, h] of SIZES) {
@@ -256,9 +254,9 @@ try {
     JSON.stringify(port.filter(a => a.bad.length)) + ' ' + sum(port));
   T.check('lying (640x360, 844x390, 915x412), the worst texts (qualifying with the tyres, Nürburg\'s long lap, a two-digit lap; the police: the sign further left): both rows at least 3 px left of the corner sign',
     land.filter(a => a.m === 'buttons' && !/column/.test(a.name)).every(a => !a.bad.length), JSON.stringify(land.filter(a => a.bad.length)) + ' ' + sum(land));
-  T.check('the whole left column (the rows, DRS and ZAVETRJE, fuel, three faults, a flag) on screen, over none of the controls, the map, the pause button, the corner sign or the clock, with buttons, the wheel and tilting, upright and lying; lying left of ZAMENJAJ KOLO',
+  T.check('the whole left column (the rows, DRS and ZAVETRJE, fuel, three faults, a flag) on screen, over none of the controls, the map, the pause button, the corner sign or the clock, with buttons, the wheel and tilting, upright and lying',
     all.filter(a => /column/.test(a.name)).length === 18 && all.filter(a => /column/.test(a.name)).every(a => !a.bad.length) && all.every(a => !a.bad.length),
-    JSON.stringify(all.filter(a => a.bad.length)) + ' ' + all.filter(a => /column/.test(a.name)).map(a => `${a.size} ${a.m}: below ${a.room.ctl}${a.room.ws != null ? ', ZAMENJAJ KOLO ' + a.room.ws : ''}`).join(' | '));
+    JSON.stringify(all.filter(a => a.bad.length)) + ' ' + all.filter(a => /column/.test(a.name)).map(a => `${a.size} ${a.m}: below ${a.room.ctl}`).join(' | '));
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' '));

@@ -15,7 +15,8 @@
 //    within 0.06 of a glass colour (Render.kitGlassNear)
 //  - in a race (Bakreni gozd: a pit track, the pit crew knows the car), each vehicle as the player and as a rival: the draw calls of its
 //    meshes alone (the rest of the scene hidden, frustum culling and carCull off, one frame, every pass counted as perf.test.mjs does): the player
-//    <= 14, a rival <= 9; the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
+//    <= 14, a rival <= 9 (a 6x6's two middle wheels, look.wheels.mid, more: 18 / 11, each a mesh as the four, the player's with its
+//    shadow); the four wheels exactly on the physics' hubs (the front ones at M.a, the rear at -M.b, at rw, at +-hw; the left
 //    ones mirrored), the player's casting shadows, a rival's not; the pit crew's hubs (crDims) on the wheel meshes (1 cm); the intact car
 //    drawn with its outer shell only; the materials the graphics test
 //    expects ('dirtyCarCg' bodies, 'carCg' paint); no colour that is not glass within 0.06 of a glass colour (the glass glints and breaks by
@@ -84,8 +85,8 @@ try {
   const kits = models.filter(m => m.kit);
   const K1 = await page.evaluate((ids) => ids.map(id => {
     const M = Core.MODELS.find(m => m.id === id), I = Render.kitInfo(id), PT = Core.partsOf(M), noRange = [];
-    for (const n in PT) if (PT[n].wh == null && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);
-    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi };
+    for (const n in PT) if (PT[n].wh == null && !PT[n].tl && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);   // (a trailer's part, tl: its look's, not the kit's)
+    return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi, mid: I.wheels.mid };
   }), kits.map(m => m.id));
   const badStatus = K1.filter(k => k.look ? k.status !== 'ok' : !/^fallback:look null/.test(k.status)), held = K1.filter(k => !k.look).length;
   T.check(`Render.kitStatus: 'ok' for every vehicle with a look (${K1.length - held}), the place-holders (${held}, look null) drawn as the generic kit hatch`, !badStatus.length && K1.length === kits.length,
@@ -94,7 +95,7 @@ try {
   T.check('the body within its triangle budget (outer shell / inner block: a car 1400 / 800, the big ones 2400 / 1200)', !overB.length,
     (overB.length ? overB : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.tris.outer}/${k.budget.outer} ${k.tris.inner}/${k.budget.inner}`).join(', '));
   const noR = K1.filter(k => k.noRange.length);
-  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
+  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes, a trailer\'s parts its look\'s)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
   const wBad = K1.filter(k => k.hi.some(t => t > 400) || k.lo.some(t => t > 160));
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
   // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)
@@ -263,14 +264,19 @@ try {
       let ndMoved = 0, dMoved = 0; for (const [s0, s1] of UP.noDent || []) for (let i = s0; i < s1; i++) if (mv(i, P1) > 1e-6 && !fld(i)) ndMoved++;
       for (let i = 0; i < UP.N; i++) if (mv(i, P1) > 1e-6) dMoved++;
       const crushOk = cr.outside === 0 && cr.spread < 1e-4 && cr.lining === 0 && cr.stray === 0 && ndMoved === 0 && dMoved > 0;
-      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1 };
+      return { id, pc, ac, why, crew, outer, keys: [...new Set(keys)], near, nearC, num, aiW, lod, cr, ndMoved, crushOk, swapped: !!swapped, fieldN: R.cars.length - 1, tl: !!(M.trailer && M.trailer.look), tl2: !!(M.trailer && M.trailer.next && M.trailer.next.look) };
     }, m.id);
     R4.push(r);
   }
   const lim = (f, n) => R4.filter(f).map(r => r.id).slice(0, n || 6).join(', ');
   const fmtC = (r) => `${r.id} ${r.pc.calls}/${r.ac.calls}`;
-  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9', R4.length === kits.length && R4.every(r => r.pc.calls <= 14 && r.ac.calls <= 9),
-    R4.filter(r => r.pc.calls > 14 || r.ac.calls > 9).concat(R4).slice(0, 8).map(fmtC).join(', '));
+  // (a 6x6 (look.wheels.mid): its two middle wheels a mesh each as the four, the player's with its shadow: 4 calls more, a rival's 2)
+  // (a semi-trailer's rig, docs/titan-cisterna.md: its trailer 4 more, its body, its lamps, its blob, its shadow; drawn with the tractor, tlDraw;
+  // a road train's second tank 4 more again, tl2Draw, docs/zrcalni-vlak.md)
+  const mid6 = new Set(K1.filter(k => k.mid != null).map(k => k.id)), tlC = (r) => r.tl ? (r.tl2 ? 8 : 4) : 0;
+  const capP = (r) => 14 + tlC(r) + (mid6.has(r.id) ? 4 : 0), capA = (r) => 9 + tlC(r) + (mid6.has(r.id) ? 2 : 0);
+  T.check('draw calls of each vehicle\'s meshes alone (every pass): the player <= 14, a rival <= 9 (a 6x6, wheels.mid: 18 / 11; a semi-trailer\'s rig 4 more each)', R4.length === kits.length && R4.every(r => r.pc.calls <= capP(r) && r.ac.calls <= capA(r)),
+    R4.filter(r => r.pc.calls > capP(r) || r.ac.calls > capA(r)).concat(R4).slice(0, 8).map(fmtC).join(', '));
   T.check('the four wheels exactly on the physics\' hubs (M.a / -M.b, rw, +-hw; the left ones mirrored), one mesh for each wheel part; the player\'s cast shadows, a rival\'s none and <= 160 triangles',
     R4.every(r => !r.why.length && r.aiW), R4.filter(r => r.why.length || !r.aiW).slice(0, 3).map(r => r.id + ': ' + r.why.slice(0, 2).join('; ') + (r.aiW ? '' : ' rival wheels')).join(' | '));
   T.check('the pit crew\'s hubs (crDims) on the wheel meshes (within 1 cm)', R4.every(r => r.crew && r.crew.every(d => Math.abs(d) <= 0.01)),
@@ -313,7 +319,8 @@ try {
       const far = []; for (const n in PT) { const p = PT[n], rc = E.ranges[n] && E.ranges[n].c; if (p.wh != null || !rc) continue; const d = Math.hypot(rc[0] - p.lx * M.len / 2, rc[1] - p.y, rc[2] - p.lz * M.wid / 2); if (d > 0.35) far.push(n + ' ' + d.toFixed(2) + ' m'); }
       // loose: the part with the biggest outer range, its zone at 65 % of its threshold (not one of the face or the tail, which hang loose
       // only once the car is 70 % gone: Core.maskHeld)
-      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
+      // (not a spare wheel: it rocks by the car's damage, not by its zone, Core.SPARE: rezervna-kolesa.test.mjs; KAMEN's are its biggest)
+      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !PT[n].spare && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
       const P0 = Float32Array.from(pa); P.dz[PT[lp].z] = Math.max(P.dz[PT[lp].z], 0.65 * PT[lp].th); F(1);
       let lmx = 0, lrig = 0; const idx = []; for (const [s, e] of [LR.o, LR.i]) for (let i = s; i < e; i++) idx.push(i);
       for (const i of idx) lmx = Math.max(lmx, Math.hypot(pa[i * 3] - P0[i * 3], pa[i * 3 + 1] - P0[i * 3 + 1], pa[i * 3 + 2] - P0[i * 3 + 2]));
@@ -335,10 +342,11 @@ try {
       const f0 = Render.fxStats(); Core.wreckCar(P); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       const f1 = Render.fxStats(); v = Render.viewOf(P); const full = geo.drawRange.count === U.N;
       const lost = Object.keys(P.lost), dead = [], notOne = [], pieces = [], pkey = (o) => (o && o.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? o.customProgramCacheKey() : ''); let frozen = null;
-      for (const n of lost) { const p = PT[n]; if (p.wh != null) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);
+      for (const n of lost) { const p = PT[n]; if (p.wh != null || p.tl) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);   // (a trailer's part, tl: its look's, not the kit's)
         const at = Rr.o[1] > Rr.o[0] ? Rr.o[0] : Rr.i[0]; for (const [s, e] of [Rr.o, Rr.i]) for (let i = s; i < e; i++) if (pa[i * 3] !== pa[at * 3] || pa[i * 3 + 1] !== pa[at * 3 + 1] || pa[i * 3 + 2] !== pa[at * 3 + 2]) { notOne.push(n); break; } }
       for (const d of R.debris.filter(q => q.car === P.id)) {
-        const p = PT[d.part], ms = []; if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
+        const p = PT[d.part], ms = []; if (p && p.tl) continue;   // (a trailer's tyre: its look's piece, rezervna-kolesa.test.mjs)
+        if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
         if (ms.length !== 1) { pieces.push(d.part + ': ' + ms.length + ' meshes'); continue; }
         const mm = ms[0], gg = mm.geometry; if (!gg.boundingBox) gg.computeBoundingBox();
         const bb = gg.boundingBox, vol = (bb.max.x - bb.min.x) * (bb.max.y - bb.min.y) * (bb.max.z - bb.min.z);
@@ -427,6 +435,7 @@ try {
       let seed = 5150; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
       g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
       const R = g.race, P = R.player, S = Render.scene, world = S.children.filter(o => !o.isLight && !o.isPoints && !R.cars.some(c => Render.viewOf(c) && Render.viewOf(c).grp === o));
+      const tl0 = P.tl; P.tl = null;   // (a semi-trailer's rig: its trailer off for the pictures (Render's tlDraw hides it): from behind its tank hides the tractor's fire, docs/titan-cisterna.md)
       const vis0 = world.map(o => o.visible); for (const o of world) o.visible = false;   // (the world hidden throughout; the cars, their pieces, the effects (points) drawn)
       const run = (n, mode, fx) => { for (let i = 0; i < n; i++) { g.sim(0.1, true); Render.frame(0.1, 1, P, mode, fx ? {} : { noFx: true }); } };
       const keep = window.__pics ? {} : null, pic = (mode, name) => { const c = Render.snapshot(P, mode, 844); if (keep) keep[name] = c.toDataURL('image/png'); return { w: c.width, h: c.height, d: c.getContext('2d').getImageData(0, 0, c.width, c.height).data }; };
@@ -467,7 +476,7 @@ try {
       const mine = R.debris.filter(d => d.car === P.id && d.mesh && d.mesh.isObject3D).map(d => d.mesh), cracks = v.crack.filter(q => q && q.visible).length;
       const cost = (keep) => { const e = FL.frameWith([], P), c2 = FL.frameWith(keep, P); return { calls: c2[0] - e[0], verts: c2[1] - e[1] }; };
       const wk = cost([v.grp, ...mine]), pcs = cost(mine);
-      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; });
+      Render.setShot(null); world.forEach((o, i) => { o.visible = vis0[i]; }); P.tl = tl0;
       return { id, kit: !!M.kit, box, diff: n ? diff / n : 0, px: n, fire: !!v.fire, flames: f1.sparksN - f0.sparksN, smoke: f1.total - f0.total, fireV, smokeV, intact, wk, pcs, n: mine.length, cracks, pics: keep };
     }, m.id);
     if (r.pics) { const dir = path.join(REPO, 'test-results', 'fleet-wreck'); fs.mkdirSync(dir, { recursive: true });   // (FLEET_PICS=1: the pictures, to look at)

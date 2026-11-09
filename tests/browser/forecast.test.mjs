@@ -22,6 +22,7 @@ try {
   await page.evaluate((at) => { window.__game.wxNext = { rain: 0, wx: { at, dur: 30, to: 1 } };
     window.__fcV = []; const o = window.__game.comm.teamRadio; window.__game.comm.teamRadio = function (k, v) { window.__fcV.push({ k, v }); return o.apply(this, arguments); }; }, RAIN_AT);   // (the engineer's voice lines asked for)
   await startTrack(page, 'rbring');
+  await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
   await page.evaluate(() => window.__game.pause()); await hide();
   // in the page: the HUD's cloud (shown, its text and label, its box), what Race.forecast says now, the HUD elements beside it
   const cloud = () => page.evaluate(() => {

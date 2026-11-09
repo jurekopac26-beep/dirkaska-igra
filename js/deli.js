@@ -38,10 +38,13 @@ var DELI = (function () {
 
   // ================================================================ krilo: the rear spoiler or wing, in place of the stock one
   // m: { x: the roof's rear edge, w: the roof's half width there, part: the spoiler's part id, s: its size (1: KOLIBRI's; chords,
-  // heights, thicknesses), top: [[x, y] ...] the top it stands on along x, flat across (a truck's roof deflector; default: the roof, K.topY) }
+  // heights, thicknesses), top: [[x, y] ...] the top it stands on along x, flat across (a truck's roof deflector; default: the roof, K.topY),
+  // or [[x, wt, yt, cr] ...] crowned across as a loft's sections (a lid that is a skin of its own, SKAKAČ's),
+  // front: as far forward as the prototype's fin (16) may reach (the roof ahead of it the sunroof's, the scoop's, the aerials': MIŠKA's) }
   function krilo(K, n, m) {
     const P = K.paint, X0 = m.x, W = m.w, k = m.s || 1, kz = W / 0.565, X = (a) => X0 + a * k, Yo = (b) => Y0 + b * k;   // (k: sizes along and up, kz: across)
-    const TOP = m.top, RY = (x, z) => { if (!TOP) return K.topY(x, z || 0); if (x <= TOP[0][0]) return TOP[0][1]; for (let i = 1; i < TOP.length; i++) if (x <= TOP[i][0]) { const a = TOP[i - 1], b = TOP[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); } return TOP[TOP.length - 1][1]; };
+    const TOP = m.top, at = (q, z) => q.length > 2 ? q[2] + q[3] * Math.min(1, Math.max(0, (q[1] - Math.abs(z || 0)) / (q[1] * 0.62))) : q[1];   // ([x, wt, yt, cr]: crowned across as a loft's section)
+    const RY = (x, z) => { if (!TOP) return K.topY(x, z || 0); if (x <= TOP[0][0]) return at(TOP[0], z); for (let i = 1; i < TOP.length; i++) if (x <= TOP[i][0]) { const a = TOP[i - 1], b = TOP[i], ya = at(a, z); return ya + (at(b, z) - ya) * (x - a[0]) / (b[0] - a[0]); } return at(TOP[TOP.length - 1], z); };
     const Y0 = RY(X(0.04), 0);
     // an inverted airfoil (downforce): its leading edge (xl, yl), the chord c back (towards -x), its trailing edge a degrees up, t thick
     const foil = (xl, yl, c, a, t) => { const ca = Math.cos(rad(a)), sa = Math.sin(rad(a)), at = (s, nn) => [xl - ca * c * s + sa * nn * t, yl + sa * c * s + ca * nn * t];
@@ -70,7 +73,8 @@ var DELI = (function () {
             [xt - 0.006 * k, y(X0) + kick * q - 0.022 * k], [X(-0.025), y(X0) - 0.012 * k], [X(0.05), y(X(0.05)) - 0.008 * k]].map(([x, yy]) => [x, yy, z]); };
         const zs = big ? [-W, -W + 0.06 * kz, -0.3 * kz, 0.3 * kz, W - 0.06 * kz, W] : [-W, -W + 0.04 * kz, 0, W - 0.04 * kz, W], ks = big ? [0.45, 1, 1, 1, 1, 0.45] : [0.5, 1, 1, 1, 0.5];
         K.skin(zs.map((z, i) => prof(z, ks[i])), (q, e) => e === 4 ? K.shade(P, 0.55) : e === 5 ? DK : P, P, P);
-        if (big) K.rect(xt - 0.007 * k, RY(X0) + kick - 0.012 * k, 0, 0.32 * kz, 0.014 * k, K.rgb(0xb0100c), { dir: '-x' });
+        // (the brake lamp on the tail's face: its middle flat across at the rings' 0.3 kz, under a crowned roof's top)
+        if (big) K.rect(xt - 0.007 * k, RY(X0, 0.3 * kz) + kick - 0.012 * k, 0, 0.32 * kz, 0.014 * k, K.rgb(0xb0100c), { dir: '-x' });
         break; }
       case 3: case 4: {   // lok: a bow-shaped blade over the roof's edge on two swept legs (karbonski: in carbon, a red line on its legs)
         const col = n === 4 ? CF : P, zl = W - 0.03 * kz, yb = Yo(0.07), f = foil(X(0.03), yb, 0.2 * k, 7, 0.026 * k);
@@ -123,7 +127,7 @@ var DELI = (function () {
         const f = foil(X(0.1), Y0 + h, (n >= 15 ? 0.27 : 0.23) * k, 7, 0.028 * k), te = f[4];
         const g2 = foil(te[0] + 0.035 * k, te[1] + 0.028 * k, (n >= 15 ? 0.14 : 0.12) * k, n === 13 ? 24 : n === 14 ? 34 : 30, 0.02 * k), te2 = g2[4];
         wing(f, span, col); wing(g2, span, col);
-        if (proto) { const xf = X(0.635);   // (a fin along the roof's middle carries it)
+        if (proto) { const xf = m.front != null ? Math.min(X(0.635), m.front) : X(0.635);   // (a fin along the roof's middle carries it; front: as far forward as it may reach)
           K.endplate([[xf, RY(xf, 0) - 0.004], [X(0.04), RY(X(0.04), 0) - 0.004], [X(-0.06), lowerAt(f, X(-0.06)) + 0.006 * k], [X(0.095), lowerAt(f, X(0.095)) + 0.006 * k]], 0, 0.014 * k, P);
           K.box(X(0.18), RY(X(0.18), 0) - 0.004 * k, 0, 0.12 * k, 0.014 * k, 0.05 * k, 0, DK); }
         else for (const sd of [-1, 1]) pylon(sd * 0.28 * kz, X(0.28), X(0.1), X(0.09), X(-0.08), f, n === 13 ? DK : AL, 0.016 * k);

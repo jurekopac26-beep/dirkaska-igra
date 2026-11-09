@@ -24,10 +24,33 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },
     },
     // where the garage's parts go (js/deli.js, look units): the wing on the boat tail's deck behind the cockpit, in the tail (it goes with
-    // it); the rims on its wheels (the tyres its own). No head lamps (a Grand Prix car: none), so no place for the garage's
+    // it); the rims on its wheels (the tyres its own). 19 of the 38 (docs/deli.md, Klasika): no lamps, indicators or tail lamps (a Grand
+    // Prix car: none), no bumpers (no aero kit, rally lamps or tow points), open wheels (no mud flaps), no roof, doors, mirrors, boot lid or
+    // windows (the aero screen a hand high: no tint, no sun strip), no aerial, no fuel cap on a side (its filler on the tail's deck), its
+    // own exhaust along the body, no air filter (the bay full: the straight eight and its blower, 15 cm beside the block each side)
     mounts: {
       krilo: { x: -1.2, w: 0.26, part: 'tail' },
       platisca: {},
+      // (sklop 2 · spredaj, js/deli/spredaj.js) the bonnet's top between the louvred sides (in the bonnet's part: its hinge strip and
+      // straps the stock one's, the garage's own top without them); the grille in the radiator cowl's oval (in the cowl's part: the
+      // slats the stock one's; its room the oval's inscribed rectangle, leaning back with the cowl)
+      hauba: { x0: 0.42, x1: 1.5, w: 0.2, rel: true, part: 'cover' },
+      maska: { x: 1.826, y0: 0.575, lean: 0.1, yc: 0.575, w: 0.2, h: 0.3, part: 'nose' },
+      // (sklop 2 · bok, js/deli/bok.js) the brakes and the nuts on the wheels
+      zavore: { s: 1 }, matice: { k: 4, r: 0.2, lock: true },
+      // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet only (not over the open cockpit, the scuttle's screen or the
+      // tail's start number; the coach line along the sides stays); the decals on the sides (the cockpit's, the bonnet's and the tail's;
+      // the start number's white roundels the stock ones) and on the bonnet beside a scoop; the calipers
+      barva: {}, luc_pod_avtom: {}, gume: {},
+      crte: { z: [0.09, 0.19], x: [[0.42, 1.5]], w: 0.3 },
+      nalepke: { side: [[-0.72, 0.06], [0.45, 1.45], [-1.52, -0.8]], y: [0.38, 0.6], hood: { x: [0.6, 1.3], z: [0.09, 0.19] } },
+      celjusti: { r: [0.1, 0.187], a: [70, 125] },
+      // (sklop 3 · skriti deli, js/deli/skriti.js) the straight eight's bay: the battery on the left frame rail by the bulkhead, the turbo
+      // high on the right beside the block's front (the twin's second over the blower on the left; the bigger intercooler in front of
+      // the block, against the radiator), the control box on the block's top by the bulkhead; the struts at the wheels against the
+      // bonnet's sides and the tank across the tail (the beam axles' leaf springs the stock ones), the bars on the floor
+      akumulator: { x: 0.62, y: 0.32, z: -0.2 }, turbo: { x: 1.3, y: 0.51, z: 0.19, twin: [-0.38, 0], ic: [1.446, 0.53, 0] }, cip: { x: 0.5, y: 0.62, z: 0.09 },
+      vzmeti: { in: 0.365, top: 0.72 }, amortizerji: { in: 0.33, top: 0.72 }, stabilizatorji: { in: 0.28, floor: 0.31 }, dim_gum: {},
     },
     // the look (KIT API v1, render.js; look units = metres): one loft from the boat tail's point to the bonnet's front: the tail ('tail'),
     // the open cockpit (its sides cut down at the elbows; lined, floored, a bulkhead at each end), the scuttle with the aero screen, the
@@ -76,9 +99,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           D.side([[a, ya - 0.012], [b, yb - 0.012], [b, yb], [a, ya]], S, null, 0.005);
           if (a >= -0.75 && b <= 0.08) D.side([[a, ya + 0.011], [b, yb + 0.011], [b, yb + 0.026], [a, ya + 0.026]], LEATHER, null, 0.005); }   // (the cockpit's edge trimmed in leather)
         // ---- the bonnet: its hinge along the top, louvres along both sides, two leather straps over it (a buckle on the right) ----
-        D.top([[0.41, -0.008], [1.51, -0.008], [1.51, 0.008], [0.41, 0.008]], [0.72, 0.73, 0.75], 0.004);
+        const HB = !!(K.fitted && K.fitted.hauba);   // (a garage bonnet: its own top, without the hinge strip and the straps)
+        K.part('cover', () => K.deli('hauba', () => D.top([[0.41, -0.008], [1.51, -0.008], [1.51, 0.008], [0.41, 0.008]], [0.72, 0.73, 0.75], 0.004)));
         for (let i = 0; i < 10; i++) { const x = 0.58 + i * 0.0587; D.side([[x, 0.54], [x + 0.022, 0.54], [x + 0.022, 0.652], [x, 0.652]], K.shade(P, 0.3), null, 0.004); }
-        for (const xc of [0.74, 1.28]) {
+        if (!HB) for (const xc of [0.74, 1.28]) {
           const w = pr(xc, 'w'), wt = pr(xc, 'wt'), yb = pr(xc, 'ybelt'), yt = pr(xc, 'yt'), cr = pr(xc, 'cr'), d = 0.007;
           const ring = (x) => [[x, yb - 0.06, w + d], [x, yb, w + d], [x, yt + d * 0.7, wt + d * 0.7], [x, yt + cr + d, 0.38 * wt], [x, yt + cr + d, -0.38 * wt], [x, yt + d * 0.7, -wt - d * 0.7], [x, yb, -w - d], [x, yb - 0.06, -w - d]];
           K.skin([ring(xc - 0.024), ring(xc + 0.024)], LEATHER, null, null, { part: 'cover' });
@@ -93,8 +117,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const R1 = mixR(R0.map(p => [1.655, p[1], p[2]]), ell(1.655, 0.285, 0.235), 0.62), R2 = ell(1.775, 0.272, 0.198), R3 = ell(1.8, 0.284, 0.208), R4 = ell(1.826, 0.23, 0.166);
           K.part('nose', () => {
             K.skin([R0, R1, R2, R3, R4], (k) => k < 2 ? P : CH, null, GRILLE);
-            for (const z of [-0.136, -0.091, -0.045, 0, 0.045, 0.091, 0.136]) { const h = 0.23 * Math.sqrt(1 - (z / 0.166) * (z / 0.166)) - 0.022, X = (y) => 1.829 - (y - cy) * rk;
-              K.face([[X(cy - h), cy - h, z + 0.007], [X(cy - h), cy - h, z - 0.007], [X(cy + h), cy + h, z - 0.007], [X(cy + h), cy + h, z + 0.007]], [0.4, 0.41, 0.43]); }
+            K.deli('maska', () => { for (const z of [-0.136, -0.091, -0.045, 0, 0.045, 0.091, 0.136]) { const h = 0.23 * Math.sqrt(1 - (z / 0.166) * (z / 0.166)) - 0.022, X = (y) => 1.829 - (y - cy) * rk;
+              K.face([[X(cy - h), cy - h, z + 0.007], [X(cy - h), cy - h, z - 0.007], [X(cy + h), cy + h, z - 0.007], [X(cy + h), cy + h, z + 0.007]], [0.4, 0.41, 0.43]); } });   // (the garage's grille in place of the slats: mounts.maska)
             K.cyl([1.73, 0.82, 0], [1.73, 0.872, 0], 0.03, CH, { n: 6, capA: null });
           }, { hinge: [[1.6, 0.31, -0.2], [1.6, 0.31, 0.2]] });
         }
@@ -126,11 +150,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.plate([[-0.54, 0.33, -0.2], [-0.54, 0.33, 0.2], [-0.64, 0.78, 0.18], [-0.64, 0.78, -0.18]], 0.06, SEAT);
         });
         // ---- the start number in a white roundel on each side of the cockpit ----
-        K.part('body', () => { for (const sd of [-1, 1]) {
+        K.part('body', () => K.deli('nalepke', () => { for (const sd of [-1, 1]) {   // (the garage's decals in their place: mounts.nalepke)
           const z = sd * 0.374, ring = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => [-0.36 + Math.cos(i * Math.PI / 6) * 0.115, 0.535 + Math.sin(i * Math.PI / 6) * 0.115, z]);
           K.face(sd > 0 ? ring : ring.reverse(), WHITE);
           K.number(-0.36, 0.535, sd * 0.377, 0.13, { dir: sd > 0 ? 'z' : '-z', bg: WHITE, w: 0.17 });
-        } });
+        } }));
         // ---- the running gear between the body and the wheels: the front beam axle, the springs under the frame, the dumb irons under the
         //      cowl, the rear axle ----
         K.part('body', () => {
@@ -154,6 +178,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // ---- the tail: the fuel filler cap on its deck; the garage's wing over it (mounts.krilo; none stock) ----
         K.cyl([-1.28, 0.8, 0], [-1.28, 0.835, 0], 0.05, CH, { n: 6, capA: null, part: 'tail' });
         K.part('tail', () => K.deli('krilo', () => {}));
+        for (const id of ['crte', 'celjusti']) K.deli(id, () => {});   // (the garage's stripes, the body's calipers: none stock)
         // ---- inside (seen once a part is off): the straight eight with its blower and cam cover, the radiator, the gearbox, the shaft, the
         //      rear axle's differential, the fuel tank across the tail, the frame rails, the firewalls (the scuttle's front, the cockpit's back) ----
         K.part('body', () => {
@@ -169,6 +194,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) K.box(0.15, 0.275, sd * 0.25, 2.7, 0.045, 0.05, 0, DK);
           const at = (x) => SEC.find(q => q[0] === x); K.face(ringOf(at(0.4)).reverse(), WALL); K.face(ringOf(at(-0.75)).map(p => [p[0] - 0.01, p[1], p[2]]), WALL);
         }, { inner: true });
+        for (const id of ['akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});   // (the hidden parts: none stock)
       },
     },
   });

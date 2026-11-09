@@ -25,10 +25,28 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },
     },
     // where the garage's parts go (js/deli.js, look units): the wing on the engine cover behind the exhaust stacks, in the cover (it goes
-    // with it); the rims (no head lamps)
+    // with it); the rims (no head lamps). 19 of the 38 (docs/deli.md, Dirkalni): no lamps, indicators or tail lamps (a 1961 Formula car:
+    // none), no bumpers (no aero kit, rally lamps or tow points), open wheels (no mud flaps), no roof, doors, boot lid or windows (the
+    // wrap-around screen a hand high: no tint, no sun strip), no bonnet (the nose cone a skin of its own), no aerial, its filler on the
+    // scuttle (no cap on a side), its exhaust the eight stacks up behind the engine (no tips under a tail), no air filter (the V8's trumpets open)
     mounts: {
       krilo: { x: -1.48, w: 0.2, part: 'cover' },
       platisca: {},
+      // (sklop 2 · spredaj) the grille at the back of the oval intake (in the nose cone's part: the two slats the stock one's)
+      maska: { x: 1.722, y0: 0.3325, lean: 0, yc: 0.3325, w: 0.15, h: 0.115, part: 'nose' },
+      // (sklop 2 · bok) the mirrors on their stalks on the cockpit's sides; the brakes and the nuts on the wire wheels (a centre lock)
+      ogledala: { x: 0.33, y: 0.56, z: 0.37, w: 0.03, h: 0.05, d: 0.075, z0: 0.265 },
+      zavore: { s: 1 }, matice: { k: 4, r: 0.2, lock: true },
+      // (sklop 3 · barve) the stripes over the engine cover and the scuttle (not over the cockpit); the decals on the flanks (the nose's
+      // and the tail's, clear of the roundels and the louvres) and on the scuttle beside the filler; the calipers
+      barva: {}, luc_pod_avtom: {}, gume: {},
+      crte: { z: [0.05, 0.13], x: [[-1.3, -0.38], [0.48, 1.18]], fit: true, dy: -0.36, sx: [-0.34, 1.15] },
+      nalepke: { side: [[-1.4, -0.76], [0.5, 1.15]], y: [0.16, 0.36], hood: { x: [0.76, 1.12], z: [0.05, 0.15] } },
+      celjusti: { r: [0.1, 0.187], a: [70, 125] },
+      // (sklop 3 · skriti deli) the V8's bay under the cover: the battery on the floor beside the block, the turbo high beside the heads,
+      // the control box on the block's rear end; the struts at the wheels, the bars on the floor
+      akumulator: { x: 1.23, y: 0.15, z: 0, back: true }, turbo: { x: -0.55, y: 0.2, z: 0.235, twin: [-0.43, 0], ic: [-0.39, 0.17, 0] }, cip: { x: -0.98, y: 0.37, z: 0 },
+      vzmeti: { in: 0.38, top: 0.45 }, amortizerji: { in: 0.28, top: 0.47 }, stabilizatorji: { in: 0.3, floor: 0.12 }, dim_gum: { w: 0.175 },
     },
     // the look (KIT API v1, render.js; look units = metres): a section loft for the cigar, open over the cockpit (lined, floored, its
     // bulkheads), its upper panels behind the cockpit the engine cover ('cover'); the nose cone a skin of its own over the front bulkhead
@@ -83,7 +101,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const lip = NR[4], back = lip.map(p => [1.72, MY + (p[1] - MY) * 0.8, p[2] * 0.8]), ax = [1.76, MY, 0];
           for (let e = 0; e < 10; e++) { const e1 = (e + 1) % 10; face([lip[e], lip[e1], back[e1], back[e]], K.dark, ax); }
           face(back, B, [3, MY, 0]);
-          for (const y of [MY - 0.028, MY + 0.028]) K.rect(1.722, y, 0, 0.2, 0.012, [0.34, 0.34, 0.36]);
+          K.deli('maska', () => { for (const y of [MY - 0.028, MY + 0.028]) K.rect(1.722, y, 0, 0.2, 0.012, [0.34, 0.34, 0.36]); });   // (the garage's grille in their place: mounts.maska)
         }, { hinge: [[1.2, 0.13, -0.25], [1.2, 0.13, 0.25]] });
         // ---- the driver, reclined, his hands on the wooden wheel; the wrap-around screen on the scuttle (one-sided panes facing out: he
         //      sees through them); the roll hoop behind his head ----
@@ -99,7 +117,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         K.part('body', () => K.sweep(dia(0.017), [[-0.37, 0.56, -0.2], [-0.374, 0.83, -0.18], [-0.38, 0.925, -0.08], [-0.38, 0.925, 0.08], [-0.374, 0.83, 0.18], [-0.37, 0.56, 0.2]], CH), { noCrush: true, noDent: true });
         // ---- the mirrors on their stalks, on the cockpit's sides ----
-        for (const sd of [-1, 1]) K.mirror(0.33, 0.56, sd * 0.37, { w: 0.03, h: 0.05, d: 0.075, col: CH, arm: CH, z0: sd * 0.265 });
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.33, 0.56, sd * 0.37, { w: 0.03, h: 0.05, d: 0.075, col: CH, arm: CH, z0: sd * 0.265 }); });   // (the garage's: mounts.ogledala)
         // ---- the suspension: double wishbones and coil-overs at the front; at the back a lower wishbone, a top link, a radius arm, the
         //      coil-over and the drive shaft ----
         K.part('body', () => {
@@ -131,6 +149,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.part('body', () => face(oct, WH, [x, y, sd * 2]));
           K.number(x, y, z + sd * 0.002, 0.12, { dir: sd < 0 ? '-z' : 'z', bg: WH, w: 0.14, part: 'body' });
         }
+        for (const id of ['crte', 'nalepke', 'celjusti']) K.deli(id, () => {});   // (the garage's stripes, decals, the body's calipers: none stock)
         // ---- inside (seen once a part is off): the radiator behind the nose, the V8 under the cover, the gearbox ----
         { const F = {}; for (const k of ['w', 'yb', 'tk', 'ybelt', 'wt', 'yt', 'cr']) F[k] = L.prop(1.22, k);   // (the loft open at the front: its bulkhead here, inside the nose)
           const half = [[F.yb, 0.93 * F.w], [F.yb + F.tk, F.w], [F.ybelt, F.w], [F.yt, F.wt], [F.yt + F.cr, 0.38 * F.wt]];
@@ -143,6 +162,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             for (let j = 0; j < 4; j++) K.cyl([-0.52 - 0.13 * j, 0.42, sd * 0.03], [-0.52 - 0.13 * j, 0.56, sd * 0.03], 0.024, CH, { n: 6, capA: null, capB: B }); }
         }));
         K.box(-1.28, 0.16, 0, 0.42, 0.2, 0.24, 0, [0.42, 0.43, 0.45], null, false, { inner: true, part: 'body' });
+        for (const id of ['akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});   // (the hidden parts: none stock)
       },
     },
   });

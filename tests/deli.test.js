@@ -117,7 +117,7 @@ for (const M of MOUNTED) { const S0 = R.kitInfo(M.id), mo = M.def.mounts;
     if (I.wheels.hi.some((t, j) => t + I.wheels.still[j] > 600) || (I.hi && I.hi.wheels.some(t => t > 850))) wheelsBad.push(`${tag} ${I.wheels.hi.join('/')}` + (I.hi ? ' ' + I.hi.wheels.join('/') : ''));
     const rg = I.ranges, len = (q) => q.o[1] - q.o[0] + q.i[1] - q.i[0];
     if (id === 'krilo' && !(len(rg[mo.krilo.part]) > 0)) rangeBad.push(tag + ' ' + mo.krilo.part);
-    if (id === 'ogledala' && !(len(rg.mirrorL) > 0 && rg.mirrorL.subs.some(s => s.name === 'mglassL') && rg.mirrorR.subs.some(s => s.name === 'mglassR'))) rangeBad.push(tag + ' mirrors');
+    if (id === 'ogledala' && S0.ranges.mirrorL && !(len(rg.mirrorL) > 0 && rg.mirrorL.subs.some(s => s.name === 'mglassL') && rg.mirrorR.subs.some(s => s.name === 'mglassR'))) rangeBad.push(tag + ' mirrors');   // (a car without mirrors' parts, PEŠČENJAK's: in the body as its stock ones)
     if (id === 'vrata' && !(len(rg.doorL) >= len(S0.ranges.doorL) && len(rg.doorR) >= len(S0.ranges.doorR))) rangeBad.push(tag + ' doors');
     if (id === 'zavore' && !(I.wheels.still[0] > 0 && I.wheels.still[1] > 0 && I.wheels.hi[0] > S0.wheels.hi[0])) rangeBad.push(tag + ' brakes');
     if (id === 'matice' && !(I.wheels.hi[0] > S0.wheels.hi[0] && !I.wheels.still[0])) rangeBad.push(tag + ' nuts');

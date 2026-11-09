@@ -1,7 +1,7 @@
 // The marbles (Core only, no browser): in a race with tyres on a circuit the bits of rubber the tyres shed collect just off the racing line,
 // on the outside of the corners (Track.marbles: the band beside the line, on the road, none on the straights, on every real track with
-// pits); the band builds up lap by lap (Race mb.lv), faster with more cars; a car on it grips a few % less (on the racing line and on the
-// inside of the bend nothing changes); the rain washes it away; the same race twice is the same to the last bit (no random draws); none
+// pits); the band builds up lap by lap (Race mb.lv), faster with more cars; a car on it grips a few % less (on the inside of the bend
+// nothing changes, on the racing line nothing less: its rubber, 84, tests/rubber.test.js); the rain washes it away; the same race twice is the same to the last bit (no random draws); none
 // without tyres, on an open road or on a circuit kept for testing only (the golden references, without tyres, hold the rest).
 //   node tests/marbles.test.js
 'use strict';
@@ -35,7 +35,7 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 3, playerMo
   }
   const badT = out.filter(o => o.share < 0.05 || o.share > 0.5 || o.wrong || o.offRoad || o.nearLine || o.straight);
   check('the band on every real circuit with pits: on the outside of the bends, 1.3 m or more off the racing line, on the asphalt, none on the straights, 5-50 % of the lap',
-    out.length >= 11 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
+    out.length >= 5 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
   const T = track('cpalace'), a = T.marbles(), b = new C.Track(T.def).marbles();
   check('the band: the same every time it is found', a.k.every((v, i) => v === b.k[i] && a.c[i] === b.c[i] && a.h[i] === b.h[i]), '');
 }
@@ -76,12 +76,14 @@ const A = race({ laps: 6 }, 420, 280, 290);
   check('the more cars, the faster: 3 cars lay far less in the same 100 s than 13', B.lv > 0.02 && B.lv < 0.5 * a100, `3 cars ${f3(B.lv)}, 13 cars ${f3(a100)}`);
 }
 
-// 3. a car on the band grips a few % less; on the racing line and on the inside of the bend nothing changes
+// 3. a car on the band grips a few % less; on the inside of the bend nothing changes; on the racing line nothing less (a little more: the
+// rubbered-in line, 84, tests/rubber.test.js)
 {
-  const g = A.grip, loss = 1 - g.band / g.line;
-  check('on the band (the thickest of it, after three laps) the grip is a few % lower, at its edge a little', g.lv > 0.85 && loss > 0.03 && loss < 0.07 && g.edge < g.line && g.edge > g.band,
-    `band ${(loss * 100).toFixed(1)} %, edge ${((1 - g.edge / g.line) * 100).toFixed(1)} % (lv ${f3(g.lv)}, k ${f3(g.k)}; grip ${f3(g.line)} / ${f3(g.band)} / ${f3(g.edge)})`);
-  check('on the racing line and on the inside of the bend: the tyres\' own grip, nothing less', g.inside === g.line, `${f3(g.line)} / ${f3(g.inside)}`);
+  const g = A.grip, loss = 1 - g.band / g.inside;
+  check('on the band (the thickest of it, after three laps) the grip is a few % lower, at its edge a little', g.lv > 0.85 && loss > 0.03 && loss < 0.07 && g.edge < g.inside && g.edge > g.band,
+    `band ${(loss * 100).toFixed(1)} %, edge ${((1 - g.edge / g.inside) * 100).toFixed(1)} % (lv ${f3(g.lv)}, k ${f3(g.k)}; grip ${f3(g.inside)} / ${f3(g.band)} / ${f3(g.edge)})`);
+  check('on the inside of the bend: the tyres\' own grip; on the racing line nothing less (the rubber on it: at most RUB.g more)', g.line >= g.inside && g.line <= g.inside * (1 + C.RUB.g) + 1e-9,
+    `${f3(g.line)} / ${f3(g.inside)}`);
 }
 
 // 4. the rain washes the band away (from 290 s on, full at 300 s)

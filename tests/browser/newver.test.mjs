@@ -265,37 +265,63 @@ try {
       if (R) for (const off of [5.5, -5.5]) out.ring.push(drive(R.L2, R.near, R.sc - 30, R.sc + 26, off, 100, R.sc - 8, R.sc + 8));
       P.vx = P.vz = 0; return out; });
     T.check('the bridges hold the car: HOME\'s rails and the ring road bridge\'s walls solid; driven at a rail at 60 km/h or at a wall at 100 km/h the car stays on the deck (its middle within 2.5 m of HOME\'s line, 6 m of the ring road\'s) and is never thrown up (0.5 m over HOME\'s deck at most, 1 m over the hump)',
-      q7.rails >= 20 && q7.walls >= 20 && q7.home.length === 2 && q7.home.every(r => r.across && r.side <= 2.5 && r.up <= 0.5) && q7.ring.length === 2 && q7.ring.every(r => r.across && r.side <= 6 && r.up <= 1), JSON.stringify(q7));
+      q7.rails >= 20 && q7.walls >= 44 && q7.home.length === 2 && q7.home.every(r => r.across && r.side <= 2.5 && r.up <= 0.5) && q7.ring.length === 2 && q7.ring.every(r => r.across && r.side <= 6 && r.up <= 1), JSON.stringify(q7));
+    // the ring road's humped bridge, long and round (the user, 4. 11. 2026, Odločitve: »položnejši most«, 45 m each way, 2.4 m up): its deck
+    // still about a metre up 30 m from the canal, down on the ground 45 m from it; a car held on a lane (the middle, 3 m and 5.5 m to each
+    // side) over it both ways at 100, 140 and 180 km/h stays on the ground: never off it, its wheels never over the road (before, 16 m flat
+    // on top and ramps of 22 m: 0.1, 0.9 and 3.2 m in the air, js/core.js: a crest throws the car up when v² × its bend is over 0.85 g)
+    const q8 = await page.evaluate(() => { const g = __game, P = g.race.player, T = g.race.track, H = __H3, B = H.waterCourse, R = B && B.ring; if (!R) return null;
+      const at = (s) => { const S = R.L2, A = S.A; let i = 0, j = A.length - 1; s = Math.max(A[0], Math.min(A[j], s)); while (j - i > 1) { const m = (i + j) >> 1; if (A[m] <= s) i = m; else j = m; } const u = (s - A[i]) / ((A[j] - A[i]) || 1), p = S.P[i], q = S.P[j]; return [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u, Math.atan2(q[1] - p[1], q[0] - p[0])]; };
+      const over = (u) => { const [x, z] = at(R.sc + u); B.off = true; const y0 = H.ground(x, z); B.off = false; return +(T.ground2(x, z) - y0).toFixed(2); };
+      const out = { feet: [-45, -30, 30, 45].map(over), drives: [] };
+      for (const kmh of [100, 140, 180]) for (const dir of [1, -1]) for (const off of [0, 3, -3, 5.5, -5.5]) { const v0 = kmh / 3.6; let u = -dir * 49; const [x0, z0, h0] = at(R.sc + u);
+        P.place(x0 - Math.sin(h0) * off, z0 + Math.cos(h0) * off, dir > 0 ? h0 : h0 + Math.PI); P.y = P.py = P.roadY = T.ground2(P.x, P.z); P.vy = 0; P.air = 0; let fly = 0, air = 0, land = 0, lt = P.landT || 0;
+        // (on the lane each step at the speed, its height its own: the physics' 1/120 s steps)
+        while (dir > 0 ? u < 49 : u > -49) { const [x, z, h] = at(R.sc + u), hd = dir > 0 ? h : h + Math.PI; P.x = x - Math.sin(h) * off; P.z = z + Math.cos(h) * off; P.h = hd; P.vx = Math.cos(hd) * v0; P.vz = Math.sin(hd) * v0; P.w = 0;
+          g.sim(1 / 120, false, 0, 0.3, 0); fly = Math.max(fly, P.y - P.roadY); if (P.air) air++; if ((P.landT || 0) > lt + 1e-6) land++; lt = P.landT || 0; u += dir * v0 / 120; }
+        out.drives.push([kmh, off, dir, +fly.toFixed(3), air, land]); }
+      P.vx = P.vz = 0; return out; });
+    T.check('the ring road\'s humped bridge 45 m each way: its deck 0.8 m up or more 30 m from the canal, on the ground 45 m from it; a car held on a lane over it both ways at 100, 140 and 180 km/h never leaves the ground (its wheels never over the road)',
+      q8 && q8.feet[1] > 0.8 && q8.feet[2] > 0.8 && Math.abs(q8.feet[0]) < 0.05 && Math.abs(q8.feet[3]) < 0.05 && q8.drives.length === 30 && q8.drives.every(d => d[3] < 0.005 && !d[4] && !d[5]), JSON.stringify(q8));
     // the garages' menus (js/nvmenu.js): on a coloured floor the garage's menu at the top; the driving school's to a task's START
-    const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 30000 }).then(() => true, () => false); };
+    // (the waits below for the game's frames are 120 s, the one for the page's reload 180 s, not the 30 s and 60 s they were: in a browser without a GPU
+    // a frame of the new map takes seconds and the reload some 30 s even alone on an idle machine, and more with other tests running beside it)
+    const go = async (key) => { await page.evaluate((key) => { const f = NVMenu.floors().find(q => q.key === key), P = __game.race.player; P.place(f.x, f.z, f.h); P.vx = P.vz = 0; }, key); return page.waitForFunction((key) => { const s = NVMenu.state(); return s.at === key && s.open; }, key, { timeout: 120000 }).then(() => true, () => false); };
     const menu = () => page.evaluate(() => { const m = document.getElementById('nvm'), r = m && m.getBoundingClientRect(); return m ? { key: m.dataset.key, lvl: +m.dataset.lvl, title: m.querySelector('.hd b').textContent, rows: [...m.querySelectorAll('.row')].map(b => b.textContent.replace(/\s+/g, ' ').trim()), note: (m.querySelector('.note') || {}).textContent || '', go: !!m.querySelector('.go'), lv: +m.dataset.lv || 0, bar: (m.querySelector('.lv') || {}).textContent || '', next: !!m.querySelector('[data-a="lvn"]:not([disabled])'), wip: !!m.querySelector('.wip.on'), wipT: m.querySelector('.wip').textContent, top: r.top, bottom: r.bottom, left: r.left, right: r.right, W: innerWidth, H: innerHeight } : null; });
+    // a tap on a button of the menu, made in the page (the click event itself: the menu's handler is a plain click listener on #nvm, js/nvmenu.js
+    // onClick, and the menu has no animation). page.click waits first for the button to hold still over animation frames, then checks what is
+    // under the pointer, and a frame of the new map in a browser without a GPU takes seconds: on GitHub it ran out its 30 s (run 1591). The
+    // button is looked for on a timer, up to 120 s (the clock's, not a count of rounds: a round can wait for a frame), as page.click would wait for it
+    const tap = (sel) => page.evaluate(async (sel) => {
+      for (const t0 = Date.now(); Date.now() - t0 < 120000;) { const b = document.querySelector(sel); if (b && !b.disabled) { b.click(); return; } await new Promise(r => setTimeout(r, 50)); }
+      throw new Error('no button to tap: ' + sel); }, sel);
     const fl = await page.evaluate(() => NVMenu.floors().map(f => f.key));
     T.check('the garages with a menu: 12 by the road (the school, the licences, the races, the missions, multiplayer, motocross) and HOME\'s box', fl.length === 13 && ['school', 'car', 'truck', 'rally', 'circuit', 'street', 'cross', 'mx', 'multi', 'police', 'kamikaze', 'president', 'home'].every(k => fl.includes(k)), JSON.stringify(fl));
     const s0 = await go('school'), m0 = await menu();
     T.check('on the driving school\'s floor: its menu at the top, inside the screen, the three licences at level 1 with 0 / 12 tasks and their progress', s0 && m0 && m0.key === 'school' && m0.lvl === 0 && /DRIVING SCHOOL/i.test(m0.title) && m0.rows.length === 3 && /ROAD LICENCE/.test(m0.rows[0]) && /GRAVEL LICENCE/.test(m0.rows[1]) && /HILL LICENCE/.test(m0.rows[2]) && m0.rows.every(r => /level 1 · 0 \/ 12 tasks/.test(r) && /0 %/.test(r)) && m0.top >= 0 && m0.left >= 0 && m0.right <= m0.W && m0.bottom <= m0.H, JSON.stringify(m0));
     await page.waitForTimeout(3200);
     T.check('standing in the garage: no Na progo (the car is not stuck)', await page.evaluate(() => document.getElementById('btn-rescue').classList.contains('off')));
-    await page.click('#nvm [data-a="lic"][data-i="1"]'); const m1 = await menu();
+    await tap('#nvm [data-a="lic"][data-i="1"]'); const m1 = await menu();
     T.check('a tap on GRAVEL LICENCE: level 1, its three tasks (1-3 of 12), under them LEVEL 1 at 0 %, level 2 shut until 50 %', m1 && m1.lvl === 1 && m1.lv === 1 && /GRAVEL LICENCE/i.test(m1.title) && m1.rows.length === 3 && /Gravel lap/.test(m1.rows[0]) && /Gravel corner/.test(m1.rows[2]) && /LEVEL 1/.test(m1.bar) && /0 %/.test(m1.bar) && /at 50 % level 2 opens/.test(m1.bar) && !m1.next, JSON.stringify(m1 && { rows: m1.rows, bar: m1.bar, next: m1.next }));
     // (the tasks are not built yet: the places set from here) 1st 100 %, 2nd 75 %, 3rd 50 %, 4th 0 %: 2nd, 4th and one not driven: level 1 at 25 %, shut;
     // then 1st, 3rd and 4th: 50 %, level 2 open, its three new tasks
     await page.evaluate(() => { NVMenu.setPlace('m', 0, 2); NVMenu.setPlace('m', 1, 4); }); const m1a = await menu();
     await page.evaluate(() => { NVMenu.setPlace('m', 0, 1); NVMenu.setPlace('m', 1, 3); NVMenu.setPlace('m', 2, 4); }); const m1b = await menu();
-    await page.click('#nvm [data-a="lvn"]'); const m1c = await menu();
+    await tap('#nvm [data-a="lvn"]'); const m1c = await menu();
     T.check('the places: 2nd + 4th + one not driven = 25 %, level 2 still shut; 1st + 3rd + 4th = 50 %: level 2 opens; › shows its three tasks (4-6), the last level is the twelfth task, the exam', m1a && /25 %/.test(m1a.bar) && !m1a.next && /75 %/.test(m1a.rows[0]) && m1b && /50 %/.test(m1b.bar) && m1b.next && m1c && m1c.lv === 2 && m1c.rows.length === 3 && /Pole slalom/.test(m1c.rows[0]) && /LEVEL 2/.test(m1c.bar) && await page.evaluate(() => NVMenu.LIC.m.tasks.length === 12 && /Exam: gravel/.test(NVMenu.LIC.m.tasks[11][0])), JSON.stringify(m1c && { rows: m1c.rows, bar: m1c.bar }));
-    await page.click('#nvm [data-a="task"][data-i="4"]'); const m2 = await menu();
+    await tap('#nvm [data-a="task"][data-i="4"]'); const m2 = await menu();
     T.check('a tap on a task: its card with START', m2 && m2.lvl === 2 && m2.go && m2.rows.length === 0, JSON.stringify(m2));
     // (the note shows 1.4 s: read at the tap itself, a frame of the new map in a browser without a GPU takes seconds)
     const tapWip = (sel) => page.evaluate((sel) => { document.querySelector(sel).click(); const w = document.querySelector('#nvm .wip'); return { wip: w.classList.contains('on'), t: w.textContent }; }, sel);
     const m3 = await page.evaluate(() => { document.querySelector('#nvm .go').click(); return new Promise(r => setTimeout(() => { const s = NVSchool.state(); NVSchool.stop(); r(s); }, 600)); });
     T.check('START: the task starts (GRAVEL LICENCE, task 5; js/nvschool.js, tests/browser/nvschool.test.mjs)', m3 && m3.l === 'm' && m3.i === 4, JSON.stringify(m3));
-    await go('school'); await page.click('#nvm [data-a="lic"][data-i="1"]'); const m4 = await menu(); await page.click('#nvm [data-a="back"]'); const m5 = await menu();
+    await go('school'); await tap('#nvm [data-a="lic"][data-i="1"]'); const m4 = await menu(); await tap('#nvm [data-a="back"]'); const m5 = await menu();
     T.check('back: the level\'s tasks (level 2), then the licences (GRAVEL LICENCE at level 2 now)', m4 && m4.lvl === 1 && m4.lv === 2 && m5 && m5.lvl === 0 && /level 2 · 2 \/ 12 tasks/.test(m5.rows[1]), JSON.stringify([m4 && m4.lv, m5 && m5.rows[1]]));
     const s6 = await go('circuit'), m6 = await menu(), w6 = await tapWip('#nvm [data-a="wip"][data-i="2"]');
     T.check('another garage (circuit race): level 1 of its twelve races (1-3), LEVEL 1 at 0 %, level 2 shut until 50 %; a tap on one: V IZDELAVI', s6 && m6 && m6.key === 'circuit' && m6.lv === 1 && m6.rows.length === 3 && /^1 ?TUSCANY, ITALY/.test(m6.rows[0]) && /^3 ?STYRIA/.test(m6.rows[2]) && /LEVEL 1/.test(m6.bar) && /0 %/.test(m6.bar) && /at 50 % level 2 opens/.test(m6.bar) && !m6.next && w6.wip, JSON.stringify({ rows: m6 && m6.rows, bar: m6 && m6.bar, w6 }));
     // the levels of every other garage as the school's (uporabnik 3. 11.): twelve challenges, four levels of three, the next open at 50 % (places set from here)
     await page.evaluate(() => { NVMenu.setGarage('circuit', 0, 1); NVMenu.setGarage('circuit', 1, 3); }); const m6a = await menu();
-    await page.click('#nvm [data-a="lvn"]'); const m6b = await menu(), w6b = await tapWip('#nvm [data-a="wip"][data-i="4"]');
+    await tap('#nvm [data-a="lvn"]'); const m6b = await menu(), w6b = await tapWip('#nvm [data-a="wip"][data-i="4"]');
     const g12 = await page.evaluate(() => Object.entries(NVMenu.MENUS).filter(([k, M]) => M.items).map(([k, M]) => [k, M.items.length]));
     T.check('the garages\' levels: 1st + 3rd + one not driven = 50 %, level 2 opens; › its three races (4-6), a tap: V IZDELAVI; twelve challenges in every garage but multiplayer (three)', m6a && /50 %/.test(m6a.bar) && m6a.next && /100 %/.test(m6a.rows[0]) && m6b && m6b.lv === 2 && m6b.rows.length === 3 && /^4 ?SPA, BELGIUM/.test(m6b.rows[0]) && /LEVEL 2/.test(m6b.bar) && w6b.wip && g12.length === 11 && g12.every(([k, n]) => n === (k === 'multi' ? 3 : 12)), JSON.stringify({ a: m6a && m6a.bar, rows: m6b && m6b.rows, bar: m6b && m6b.bar, g12 }));
     const s7 = await go('home'), m7 = await menu();
@@ -304,11 +330,11 @@ try {
     const c0 = await page.evaluate(() => NVMenu.state());
     T.check('a tap anywhere else: the menu closes, and stays closed while the car stays on the floor', !c0.open && c0.at === 'home', JSON.stringify(c0));
     await page.evaluate(() => { const P = __game.race.player, h = window.__H3.home; P.place(h.x, h.z, h.h); P.vx = P.vz = 0; });   // (HOME, on the dirt road: no garage)
-    await page.waitForFunction(() => !NVMenu.state().at, null, { timeout: 30000 });
+    await page.waitForFunction(() => !NVMenu.state().at, null, { timeout: 120000 });
     T.check('off the floor and back: the menu again', await go('home'));
     T.check('no errors on the way', !errors.length, errors.slice(0, 3).join(' | '));
     // back to the title: the page again (the new map changed the track's world)
-    await Promise.all([page.waitForEvent('load', { timeout: 60000 }), page.evaluate(() => __game.onAction('to-title'))]);
+    await Promise.all([page.waitForEvent('load', { timeout: 180000 }), page.evaluate(() => __game.onAction('to-title'))]);
     await ready(page);
     T.check('back to the title: the page loads again, the menu on show', await page.evaluate(() => !!document.getElementById('menu-host').shadowRoot.querySelector('#s-title')));
     await ctx.close();

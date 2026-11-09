@@ -23,6 +23,7 @@
 //    knocked off (three seeds each: invariants, not one seed's outcome); attrition: one Nordschleife race in each of the eight one-make
 //    fields with the most retirements (five of them with wider AI spacing): no race with more than 4 retired, at most 6 in the eight;
 //    SOKOL R and PANTER 6 (they race the four road cars) within 2.5 % of the KAZE RS's lap on three tracks
+//  - the GT3 class: the OREL GT3's field (OREL GT3 and TIGER GT in turn), its autopilot lap within 1 % of the TIGER GT's at Bathurst and Spa
 //  - patch defs and broken defs (a throwaway Core with extra defs): a patch attaches its fields (a part table: that model breaks apart
 //    as a registered one does), a glb model joins a field only with a look of its own, a retired model never, a bad def is skipped and
 //    listed (nothing of a def silently dropped or replaced)
@@ -38,7 +39,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -55,6 +56,8 @@ const ENVELOPE = {
   tovornjaki: { t100: [5.5, 9], vmax: [125, 165], latG: [1.7, 1.95], d100: [29, 40] },        // (new: the racing truck, the rally-raid truck)
   elektricni: { t100: [2.3, 3.9], vmax: [185, 265], latG: [2.2, 2.5], d100: [22.5, 26] },     // ev 2.50 / 252 / 2.43 / 24.0
   posebni: { t100: [2.8, 6.5], vmax: [150, 285], latG: [1.85, 2.5], d100: [21, 33] },         // (new: the racing van, the limousine, the monster truck)
+  prikolica: { t100: [8.5, 11.5], vmax: [135, 160], latG: [1.1, 1.45], d100: [38, 48] },
+  vlak: { t100: [12, 16], vmax: [125, 150], latG: [1.1, 1.45], d100: [38, 50] },              // (a road train, model.trailer.next: two tanks, ~31 t)     // (any category's tractor with a semi-trailer, model.trailer: the rig's weight, its grip)
 };
 const STD = ['bumperF', 'bumperR', 'hood', 'trunk', 'fenderL', 'fenderR', 'quarterL', 'quarterR', 'doorL', 'doorR', 'mirrorL', 'mirrorR', 'wing', 'wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
 const WHEELS = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
@@ -152,7 +155,7 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
     if (!M.kit) continue;
     if (big.includes(M.id) && !(M.tracK <= 0.75 && M.brakeK <= 0.8)) rule.push(M.id + ' tracK / brakeK');
     if (M.aero && !(M.loose >= 0.66 && M.loose <= 0.8)) rule.push(M.id + ' loose (aero) ' + M.loose);
-    if ((off.includes(M.cat) && M.id !== 'titan' || M.id === 'goljat') && !(M.loose >= 1.1 && M.loose <= 1.35 && M.landV >= 16 && M.landV <= 24)) rule.push(M.id + ' off-road loose / landV');
+    if ((off.includes(M.cat) && M.id !== 'titan' && !M.trailer || M.id === 'goljat') && !(M.loose >= 1.1 && M.loose <= 1.35 && M.landV >= 16 && M.landV <= 24)) rule.push(M.id + ' off-road loose / landV');
   }
   check('the roster\'s rules: spinK <= 0.3 above 300 W/kg; trucks, limousine, monster: tracK <= .75, brakeK <= .8; aero cars loose .66-.8; off-roaders loose 1.1-1.35, landV 16-24', !rule.length, rule.join('; '));
   const stand = C.MODELS.slice(0, 11).every(M => { const c = new C.Car(M, { phys: 'cs' }); return c.circles.join() === [-M.len * 0.3, 0, M.len * 0.3].join() && !c.wreck && C.partsOf(M) === C.PARTS; });
@@ -194,7 +197,7 @@ const MEAS = {};
   const anchorBad = OLD.filter(id => { const E = ENVELOPE[model(id).cat], m = MEAS[id]; return !Object.keys(E).every(k => m[k] >= E[k][0] && m[k] <= E[k][1]); });
   check('envelopes: each of the 11 inside its category\'s (the anchor)', !anchorBad.length, anchorBad.map(id => id + ' ' + fmt(MEAS[id])).join('; '));
   for (const id of IDS) {
-    const M = model(id), E = ENVELOPE[M.cat], X = M.def.expect, m = MEAS[id], keys = ['t100', 'vmax', 'latG', 'd100'];
+    const M = model(id), E = ENVELOPE[M.trailer ? (M.trailer.next ? 'vlak' : 'prikolica') : M.cat], X = M.def.expect, m = MEAS[id], keys = ['t100', 'vmax', 'latG', 'd100'];
     const outX = keys.filter(k => !(m[k] >= X[k][0] && m[k] <= X[k][1])), outE = keys.filter(k => !(X[k][0] >= E[k][0] && X[k][1] <= E[k][1]));
     check(`${id}: 0-100 / top speed / side grip / 100-0 within its targets, the targets within the ${M.cat} envelope`, !outX.length && !outE.length && m.bmax < 1,
       fmt(m) + (outX.length ? ' outside expect: ' + outX.join(',') : '') + (outE.length ? ' expect outside the envelope: ' + outE.join(',') : ''));
@@ -203,7 +206,7 @@ const MEAS = {};
   }
   info('statsOf on the 11 (the hand-made bars, -> the formula): ' + OLD.map(id => { const S = C.statsOf(model(id)), M = model(id); return id + ' ' + ['power', 'grip', 'weight', 'drift'].map(k => M.stats[k] + (S[k] !== M.stats[k] ? '>' + S[k] : '')).join('/'); }).join(', '));
   if (!only.length) {
-    const big = ['titan', 'kamen', 'predsednik', 'goljat'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
+    const big = ['titan', 'kamen', 'predsednik', 'goljat', 'cisterna', 'zrcalni'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
     const dBig = Math.min(...big.map(id => MEAS[id].d100)), dRoad = Math.max(...road.map(id => MEAS[id].d100)), tBig = Math.min(...big.map(id => MEAS[id].t100));
     check('the trucks, the limousine and the monster truck: longer stops than any road car, slow launches (0-100 over 4.5 s)', dBig > dRoad && tBig > 4.5, `100-0 >= ${dBig.toFixed(1)} m (road cars <= ${dRoad.toFixed(1)} m), 0-100 >= ${tBig.toFixed(2)} s`);
     check('TITAN: the 160 km/h limiter holds it (150-160.5 km/h flat out)', MEAS.titan.vmax >= 150 && MEAS.titan.vmax <= 160.5, MEAS.titan.vmax.toFixed(1) + ' km/h');
@@ -692,7 +695,7 @@ if (!only.length) {
   } finally { console.warn = warn; }
   const m = (id) => X.MODELS.find(o => o.id === id), ev = m('ev'), skipped = X.DEFS_SKIPPED.map(s => s.id).sort();
   check('patch defs: one attaches its fields to a vehicle (the STRELA EV: category, part table with its extra, price, sound preset, look, names; the Core without the patch untouched)', ev.cat === 'reli' && X.partsOf(ev) === ev.parts && ev.parts.spoiler && ev.parts.wheelRR.wh === 3 &&
-    X.CAREER.car.ev === 21000 && ev.sndP.kind === 'i4' && ev.def.look.body.len === 4.62 && ev.def.partNames.spoiler === 'rear spoiler' && ev.glb === undefined && !C.MODELS.find(o => o.id === 'ev').parts && C.CAREER.car.ev === 75000, Object.keys(ev.parts).length + ' parts');
+    X.CAREER.car.ev === 21000 && ev.sndP.kind === 'i4' && ev.def.look.body.len === 4.62 && ev.def.partNames.spoiler === 'rear spoiler' && ev.glb === undefined && !C.MODELS.find(o => o.id === 'ev').parts && C.CAREER.car.ev === 160000, Object.keys(ev.parts).length + ' parts');
   const four = (k) => X.MODELS[(k * 3 + 1) % 4];
   check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN, the fill (null: none, the field capped again) and texts patched, the def itself untouched; a def\'s own fuel tank (def.tank), a patched one',
     Array.from({ length: 6 }, (_, k) => X.aiModel(k, ev) === (k % 2 ? m('lev') : ev) && X.aiModel(k, m('pico')) === ev && X.aiModel(k, m('vortex')) === four(k) && X.aiModel(k, m('zzok')) === (k % 2 ? m('zzskin') : m('zzok')) &&
@@ -738,6 +741,25 @@ if (!only.length) {
     }
   }
   info(`golden crash set-up in new vehicles (60 s): a wheel knocked off in ${wl} of ${nr} runs (the most in one car: ${rows.join(', ')})`);
+}
+
+// ---- 12. the GT3 class: the OREL GT3 races the TIGER GT (its field: the two in turn; the TIGER GT keeps its own one-make field), their
+//      autopilot laps within 1 % of each other at Bathurst and Spa (a mixed field: neither runs away from the other) ----
+if (!only.length || only.includes('orel') || only.includes('tiger')) {
+  const O = model('orel'), G = model('tiger');
+  check('the GT3 field: aiModel with the OREL GT3 as the player\'s car: OREL GT3 and TIGER GT in turn (drivers 0-11), with the TIGER GT\'s: TIGER GTs',
+    Array.from({ length: 12 }, (_, k) => C.aiModel(k, O) === (k % 2 ? G : O) && C.aiModel(k, G) === G).every(Boolean), Array.from({ length: 4 }, (_, k) => C.aiModel(k, O).id).join(', '));
+  const lap = (id, tid) => {   // the player alone on autopilot, damage off: its second lap, a flying one (as in 9.)
+    const T = track(tid); Math.random = seeded(61);
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: model(id), assist: 2, seed: 61, difficulty: 1, damage: 0 });
+    r.start(); const P = r.player;
+    for (let k = 1; k < (T.len * 2 / 15 + 60) / DT && !P.finished; k++) { Math.random = seeded(61000 + k); C.aiControl(P, r, DT); r.step(DT); if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+    return P.lapTimes[1];
+  };
+  for (const tid of ['bathurst', 'spa']) {
+    const t = lap('tiger', tid), o = lap('orel', tid);
+    check(`${tid}: the OREL GT3's autopilot lap within 1 % of the TIGER GT's (the GT3 class)`, t > 0 && o > 0 && Math.abs(o / t - 1) <= 0.01, `tiger ${t.toFixed(2)} s, orel ${(100 * (o / t - 1)).toFixed(2)} %`);
+  }
 }
 
 Math.random = orig;

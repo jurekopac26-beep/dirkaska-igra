@@ -20,9 +20,10 @@ try {
   // step the race (paused, on autopilot), then two drawn frames (the HUD follows the race only while it runs)
   const sim = (t) => page.evaluate((t) => new Promise(res => { const g = window.__game; g.pause(); g.sim(t, true); g.resume();
     requestAnimationFrame(() => requestAnimationFrame(() => { g.pause(); res(); })); }), t);
-  // the HUD's messages (with their icon) and the commentator's lines as they come
+  // the HUD's messages (with their icon) and the commentator's lines as they come (a rival's mistake near the player, NAPAKA: <name>
+  // from js/game.js's 'mistake', can come in the same window as the tyres' message and before it: not the player's, so not counted)
   await page.evaluate(() => { window.__msgs = []; const M = document.getElementById('h-msg');
-    new MutationObserver(() => { const t = M.textContent; if (t && window.__msgs[window.__msgs.length - 1] !== t) window.__msgs.push(t); }).observe(M, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(() => { const t = M.textContent; if (t && !/^(NAPAKA|MISTAKE): /.test(t) && window.__msgs[window.__msgs.length - 1] !== t) window.__msgs.push(t); }).observe(M, { childList: true, subtree: true, characterData: true });
     const C = window.__game.comm, o = C.say; window.__said = []; C.say = function (k) { window.__said.push(k); return o.apply(this, arguments); }; });
   const hud = () => page.evaluate(() => { const g = window.__game, P = g.race.player, ty = document.getElementById('h-tyre'), fl = document.getElementById('h-flt'), M = document.getElementById('h-msg');
     const box = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; };
