@@ -4376,10 +4376,10 @@ const Garage3D = (function () {
     };
   }
   // the wheels: where they are, their size, the face of their outer side (the race draws the front ones (and all four of a formula,
-  // a prototype) as meshes of their own; the other rear ones are in the body)
+  // a prototype) as meshes of their own; the other rear ones are in the body; a kit's wheels.mid: two more, as rear ones, v.wm)
   function wheelsOf(v, M) {
     const out = [], box = new THREE.Box3(), sz = new V3(), ctr = new V3();
-    for (const [list, front] of [[v.wf, true], [v.wr, false]]) for (const w of list) {
+    for (const [list, front] of [[v.wf, true], [v.wr, false], [v.wm || [], false]]) for (const w of list) {
       box.setFromObject(w); box.getSize(sz); box.getCenter(ctr);
       const sd = w.position.z < 0 ? -1 : 1, outer = sd > 0 ? box.max.z : box.min.z;
       const q = { obj: w, x: w.position.x, y: w.position.y, z: w.position.z, r: sz.y / 2, wd: sz.z, sd, outer, front, own: true, ry0: w.rotation.y };

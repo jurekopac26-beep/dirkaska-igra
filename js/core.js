@@ -83,7 +83,66 @@ const Core = (function () {
   // (ty.cold 1 from the fitting to the way out of the lane, ty.co the distance there), warming up smoothly over the first TCOLD.d of a lap
   // after it (ty.cold to 0, Race._weather). The KOLIBRI keeps its own (KT.cold, Car.kt). A set kept on at a stop, the start's: never cold
   const TCOLD = { g: 0.1, d: 0.5 };
-
+  // the co-driver's words (docs/sovoznik.md): a call of Track.paceNotes is a list of tokens, read in English by codrvSay (the voice, the
+  // same words on every phone) and written in the game's language by codrvCap (the caption on the HUD). A bend: its side L / R and its
+  // grade 1-6 (noteGrade: by its tightest radius, 1 the slowest), 'flat' + side a gentle one, 'hairpin' / 'square' + side; then long,
+  // tightens, opens, 'over' + crest / jump / bigjump, 'onto' + gravel / tarmac / cobbles. Alone: crest, jump, bigjump, onto + surface,
+  // 'ring' + straight / L / R (a roundabout by its exit), 'chicane' + L / R (its first way). Between notes 'into' (the next within 30 m)
+  // or 'and' (70 m); 'caution' first; at the end 'dNNN' (the straight after it, m to 50) and 'fin' (the finish after that straight)
+  // the roads he reads (game.js adds: not on the new map with its missions, nor in the driving school): every real open road (a rally stage
+  // too), not a test track; the roads of the USA but Pikes Peak are test tracks by the user's choice of 5. 11. 2026, by this list until
+  // def.test is on them
+  const CD_SKIP = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
+  const codrvRoad = (def) => !!(def && def.open && !def.test && !CD_SKIP.includes(def.id));
+  const noteGrade = (R) => R < 16 ? 1 : R < 26 ? 2 : R < 38 ? 3 : R < 55 ? 4 : R < 80 ? 5 : R < 120 ? 6 : 0;
+  const CD_EN = { L: 'left', R: 'right', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', flat: 'flat', hairpin: 'hairpin', square: 'square', long: 'long', tightens: 'tightens', opens: 'opens',
+    over: 'over', crest: 'crest', jump: 'jump', bigjump: 'big jump', onto: 'onto', gravel: 'gravel', tarmac: 'tarmac', cobbles: 'cobbles', ring: 'roundabout', straight: 'straight', chicane: 'chicane',
+    into: 'into', and: 'and', caution: 'caution', fin: 'to finish' };
+  const CD_DIST = ['one hundred', 'one fifty', 'two hundred', 'two fifty', 'three hundred', 'three fifty', 'four hundred', 'four fifty', 'five hundred'];
+  const cdDist = (w) => /^d\d+$/.test(w) ? +w.slice(1) : 0;
+  function codrvSay(t) {
+    let out = '';
+    for (const w of t) { const d = cdDist(w), word = d ? CD_DIST[d / 50 - 2] : CD_EN[w]; out += !out ? word : (d ? ', ' : ' ') + word; if (w === 'caution') out += ','; }
+    return out;
+  }
+  // the caption (game.js #h-codrv) at most CD_MAX characters: a call of one note in full ('LEVO 4 · DOLGO'), of two or three the sides short
+  // ('L4 › D3 ZAPIRA'); too long: without the straight after it, then without the extras. Every note of the call stays (the next call
+  // begins after them: a note left out would never be shown), so a long one takes two lines on a phone held upright (the roads': 34
+  // characters at most), three at CD_MAX2 (tests/sovoznik.test.js: every road's under it; browser/sovoznik.test.mjs: over nothing of the HUD)
+  const CD_MAX = 24, CD_MAX2 = 44;
+  const CD_CAP = {
+    sl: { L: 'LEVO', R: 'DESNO', Ls: 'L', Rs: 'D', flat: 'POLNO', flatAfter: true, hairpin: 'LASNICA', square: 'DEVETDESET', squareS: '90', long: 'DOLGO', tightens: 'ZAPIRA', opens: 'ODPIRA', crest: 'GRBINA', jump: 'SKOK',
+      bigjump: 'VELIK SKOK', onto: 'NA', gravel: 'MAKADAM', tarmac: 'ASFALT', cobbles: 'TLAKOVCE', ring: 'KROŽIŠČE', straight: 'NARAVNOST', chicane: 'ŠIKANA', caution: 'POZOR', fin: 'DO CILJA' },
+    en: { L: 'LEFT', R: 'RIGHT', Ls: 'L', Rs: 'R', flat: 'FLAT', hairpin: 'HAIRPIN', square: 'SQUARE', long: 'LONG', tightens: 'TIGHTENS', opens: 'OPENS', crest: 'CREST', jump: 'JUMP',
+      bigjump: 'BIG JUMP', onto: 'ONTO', gravel: 'GRAVEL', tarmac: 'TARMAC', cobbles: 'COBBLES', ring: 'ROUNDABOUT', straight: 'STRAIGHT', chicane: 'CHICANE', caution: 'CAUTION', fin: 'TO FINISH' }
+  };
+  function codrvCap(t, lang) {
+    const W = CD_CAP[lang] || CD_CAP.sl, notes = [[]];
+    let caution = false, d = 0, fin = false;
+    for (const w of t) {
+      if (w === 'caution') caution = true; else if (w === 'into' || w === 'and') notes.push([]); else if (cdDist(w)) d = cdDist(w); else if (w === 'fin') fin = true; else notes[notes.length - 1].push(w);
+    }
+    const note = (n, full, extras) => {   // one note: what it is (a bend's side and grade), then its extras
+      const a = n[0], b = n[1], side = (x) => W[full ? x : x + 's'];
+      let head, i = 2;
+      if (a === 'L' || a === 'R') head = full ? W[a] + ' ' + b : W[a + 's'] + b;
+      else if (a === 'flat') head = W.flatAfter ? side(b) + ' ' + W.flat : W.flat + ' ' + side(b);
+      else if (a === 'hairpin' || a === 'square' || a === 'chicane') head = (!full && W[a + 'S'] || W[a]) + ' ' + side(b);   // (short: '90 L')
+      else if (a === 'ring') head = W.ring + ' ' + (b === 'straight' ? W.straight : side(b));
+      else if (a === 'onto') head = W.onto + ' ' + W[b];
+      else { head = W[a]; i = 1; }   // crest, jump, bigjump
+      const ex = [];
+      for (; i < n.length; i++) { const w = n[i]; if (w === 'onto') ex.push(W.onto + ' ' + W[n[++i]]); else if (w !== 'over') ex.push(W[w]); }
+      return extras && ex.length ? head + (full ? ' · ' : ' ') + ex.join(full ? ' · ' : ' ') : head;
+    };
+    const pre = caution ? W.caution + ' · ' : '', tail = d ? ' · ' + d + (fin ? ' ' + W.fin : '') : '';
+    const cap = (full, extras, withTail) => pre + notes.map(n => note(n, full, extras)).join(' › ') + (withTail ? tail : '');
+    for (const [full, extras, withTail] of [[1, 1, 1], [0, 1, 1], [0, 1, 0]]) {
+      if (full && notes.length > 1) continue;
+      const s = cap(full, extras, withTail); if (s.length <= CD_MAX) return s;
+    }
+    return cap(0, 0, 0);
+  }
   class Track {
     constructor(def) {
       this.def = def;
@@ -1168,8 +1227,9 @@ const Core = (function () {
     // the route runs within r + hw + 8 m of the centre) and the chicanes (def.notes 'chicane', def.hudSigns 'chicane' | 'ring'). A corner
     // within 15 m of a blue sign (or inside a 'bend') is left out: one steady sign instead of 2-3 arrows. T.corners itself never changes
     // (the scenery, the sounds, qualiBack, the menu's corner count read it).
-    // [{ kind: 'corner'|'fast'|'bend'|'ring'|'chic', s0, s1, e, i0, dir (1 right, -1 left, 0 a roundabout), sev 0-3, hair }], by s0
-    // (m along the road from sample 0, as P.q.s); e: where it goes (4 m before a sign's start; a blue one 4 m before its end)
+    // [{ kind: 'corner'|'fast'|'bend'|'ring'|'chic', s0, s1, e, i0, dir (1 right, -1 left, 0 a roundabout), sev 0-3, hair, r }], by s0
+    // (m along the road from sample 0, as P.q.s); e: where it goes (4 m before a sign's start; a blue one 4 m before its end); r: a bend's
+    // tightest radius (m; the co-driver's grade on the sign, noteGrade)
     hudSigns() {
       if (this._hs) return this._hs;
       const N = this.N, ds = this.ds, L = this.len, k = this.k, open = this.open, def = this.def;
@@ -1190,14 +1250,14 @@ const Core = (function () {
         const s0 = a * ds; blue.push({ kind: 'ring', s0, s1: s0 + (open ? b - a : (b - a + N) % N) * ds, i0: a, dir: 0, sev: 0, hair: false });
       }
       const span = (a, b, t) => { const s0 = at(a), s1 = s0 + (b - a), i0 = this.idx(s0);
-        if (t === 'bend') { const q = turn(s0, s1), sev = sevR(1 / Math.max(q.mk, 1e-6)); bends.push({ kind: 'bend', s0, s1, i0, dir: Math.sign(q.t) || 1, sev, hair: sev === 3 && Math.abs(q.t) > 2.0 }); }
+        if (t === 'bend') { const q = turn(s0, s1), sev = sevR(1 / Math.max(q.mk, 1e-6)); bends.push({ kind: 'bend', s0, s1, i0, dir: Math.sign(q.t) || 1, sev, hair: sev === 3 && Math.abs(q.t) > 2.0, r: 1 / Math.max(q.mk, 1e-6) }); }
         else blue.push({ kind: t === 'ring' ? 'ring' : 'chic', s0, s1, i0, dir: t === 'ring' ? 0 : first(s0, s1), sev: 0, hair: false }); };
       for (const [a, b, t] of def.notes || []) if (t === 'chicane') span(a, b, 'chicane');
       for (const [a, b, t] of def.hudSigns || []) span(a, b, t);
       out.push(...blue, ...bends);
       const inC = new Uint8Array(N);
       for (const c of this.corners) {
-        const len = (open ? c.i1 - c.i0 : (c.i1 - c.i0 + N) % N) * ds, g = { kind: 'corner', s0: c.s0, s1: c.s0 + len, i0: c.i0, dir: c.dir, sev: c.sev, hair: c.sev === 3 && c.angle > 2.0 };
+        const len = (open ? c.i1 - c.i0 : (c.i1 - c.i0 + N) % N) * ds, g = { kind: 'corner', s0: c.s0, s1: c.s0 + len, i0: c.i0, dir: c.dir, sev: c.sev, hair: c.sev === 3 && c.angle > 2.0, r: c.minR };
         for (let n = 0, i = c.i0; n <= len / ds; n++, i = (i + 1) % N) inC[i] = 1;
         if (!blue.some(x => near(x, g, 15)) && !bends.some(x => near(x, g, 0))) out.push(g);
       }
@@ -1206,7 +1266,7 @@ const Core = (function () {
       for (let n = 0; n <= N; n++) {
         const i = (start + n) % N, on = n < N && Math.abs(k[i]) > 1 / 250, g = Math.sign(k[i]);
         if (cur && (!on || g !== cur.dir)) {
-          const s0 = cur.i0 * ds, f = { kind: 'fast', s0, s1: s0 + cur.n * ds, i0: cur.i0, dir: cur.dir, sev: sevR(1 / cur.mk), hair: false };
+          const s0 = cur.i0 * ds, f = { kind: 'fast', s0, s1: s0 + cur.n * ds, i0: cur.i0, dir: cur.dir, sev: sevR(1 / cur.mk), hair: false, r: 1 / cur.mk };
           if (Math.abs(cur.t) > 0.35 && !cur.hit && !blue.some(x => near(x, f, 15)) && !bends.some(x => near(x, f, 15))) out.push(f);
           cur = null;
         }
@@ -1226,22 +1286,31 @@ const Core = (function () {
       return best;
     }
 
-    // pace notes of a rally stage (open roads), as a co-driver reads them (game.js speaks each call ahead of the car): the bends graded by
-    // their tightest radius from one (the slowest) to six, 'flat' for a gentle one, hairpins and square junctions; long, tightens, opens;
-    // the jumps and crests (def.bumps by height; one inside a bend is read with it: 'over crest'). Calls: what follows within 30 m is
-    // joined with 'into', within 70 m with 'and' (three notes at most), a longer straight ends the call with its length (to 50 m).
-    // [{ s, e, text }]: the call's first and last point (m along the road from sample 0)
+    // pace notes of an open road (a rally stage, the real roads; docs/sovoznik.md), as a co-driver reads them (game.js says each call ahead of
+    // the car and writes its caption): the bends graded by their tightest radius from one (the slowest) to six (noteGrade), 'flat' for a gentle
+    // one, hairpins and square junctions; long, tightens, opens; the jumps and crests (def.bumps by height, else the road's own crests: the
+    // lift over them at a quick car's speed, 0.5 g a crest, 1.2 g a jump, 2 g or a drop of 1.5 m a big jump; one inside a bend is read with
+    // it: 'over crest'); the roundabouts (def.rings) by their exit, the chicanes by their first way, the surface where it changes. Calls: what
+    // follows within 30 m is joined with 'into', within 70 m with 'and' (three notes at most), a longer straight ends the call with its
+    // length (to 50 m); 'caution' first before a big jump, a jump into a three or tighter, a hairpin or a one-two after 250 m of straight,
+    // a bend that closes by two grades to a four or tighter, and a bend right behind a crest. [{ s, e, text, toks }]: the call's first and last point (m along the road from
+    // sample 0), its English words (the voice), its tokens (codrvSay, codrvCap)
     paceNotes() {
       if (this._notes) return this._notes;
-      const N = this.N, ds = this.ds, k = this.k, ev = [], NUM = ['', 'one', 'two', 'three', 'four', 'five', 'six'];
+      const N = this.N, ds = this.ds, k = this.k, def = this.def, ev = [];
       const bend = (c) => {
         if (c.sum < 0.3) return;
-        const R = 1 / c.mk, side = c.dir > 0 ? 'right' : 'left', len = (c.i1 - c.i0) * ds, f = (c.im - c.i0) / Math.max(1, c.i1 - c.i0);
-        const hair = c.sum > 2.2 && R < 22, square = !hair && c.sum > 1.25 && c.sum < 1.9 && R < 22, g = R < 16 ? 1 : R < 26 ? 2 : R < 38 ? 3 : R < 55 ? 4 : R < 80 ? 5 : R < 120 ? 6 : 0;
-        let txt = hair ? 'hairpin ' + side : square ? 'square ' + side : g ? side + ' ' + NUM[g] : 'flat ' + side;
-        if (!hair && !square && c.sum > 1.7) txt += ' long';
-        if (!hair && len > 30 && f > 0.7) txt += ' tightens'; else if (!hair && g && len > 30 && f < 0.3) txt += ' opens';
-        ev.push({ s: c.i0 * ds, e: c.i1 * ds, txt, bend: true });
+        const R = 1 / c.mk, side = c.dir > 0 ? 'R' : 'L', len = (c.i1 - c.i0) * ds, f = (c.im - c.i0) / Math.max(1, c.i1 - c.i0);
+        const hair = c.sum > 2.2 && R < 22, square = !hair && c.sum > 1.25 && c.sum < 1.9 && R < 22, g = noteGrade(R);
+        const t = hair ? ['hairpin', side] : square ? ['square', side] : g ? [side, g] : ['flat', side];
+        let warn = false;
+        if (!hair && !square && c.sum > 1.7) t.push('long');
+        if (!hair && len > 30 && f > 0.7) {
+          t.push('tightens');
+          let m0 = 0; for (let i = c.i0; i <= c.i0 + (c.i1 - c.i0) / 3; i++) m0 = Math.max(m0, Math.abs(k[i]));
+          warn = g > 0 && g <= 4 && (noteGrade(1 / Math.max(m0, 1e-6)) || 7) - g >= 2;   // (its first third two grades gentler than its tightest)
+        } else if (!hair && g && len > 30 && f < 0.3) t.push('opens');
+        ev.push({ s: c.i0 * ds, e: c.i1 * ds, t, bend: true, g, warn });
       };
       let cur = null;   // bends: runs of curvature over 1/220 m^-1 one way
       for (let i = 0; i < N; i++) {
@@ -1250,35 +1319,69 @@ const Core = (function () {
         if (on) { if (!cur) cur = { i0: i, i1: i, dir, sum: 0, mk: 0, im: i }; cur.i1 = i; cur.sum += Math.abs(ki) * ds; if (Math.abs(ki) > cur.mk) { cur.mk = Math.abs(ki); cur.im = i; } }
       }
       if (cur) bend(cur);
-      for (const b of this.def.bumps || []) {
-        const c = (this.open ? clamp(b.at, 0, 1) : ((b.at % 1) + 1) % 1) * this.len, w = b.w || 8, h = b.h || 1, word = h >= 1.5 ? 'big jump' : h >= 1 ? 'jump' : 'crest';
-        const on = ev.find(e => e.bend && e.s - 15 <= c && c <= e.e + 10);
-        if (on) on.txt += ' over ' + word; else ev.push({ s: c - w * 0.8, e: c + w, txt: word });
+      // the roundabouts (the blue signs of def.rings, Track.hudSigns): one note by the way out, the bends in and around them not read
+      for (const r of this.hudSigns()) if (r.kind === 'ring') {
+        for (let m = ev.length - 1; m >= 0; m--) if (!ev[m].ring && ev[m].e >= r.s0 - 15 && ev[m].s <= r.s1 + 15) ev.splice(m, 1);   // (not the one before: two roundabouts close by, two notes)
+        let turn = 0; for (let s = r.s0 - 10; s <= r.s1 + 10; s += ds) turn += k[this.idx(s)] * ds;
+        ev.push({ s: r.s0, e: r.s1, t: ['ring', Math.abs(turn) < 0.8 ? 'straight' : turn > 0 ? 'R' : 'L'], bend: true, ring: true });
       }
-      // the stage's own notes (def.notes = [[d0, d1, text], ...], metres after the start line): a chicane, a narrow bit; the bends inside are not read
-      for (const [a, b, t] of this.def.notes || []) {
-        const s0 = this.startS + a, s1 = this.startS + b;
+      const bump = (c, w, word, once) => {   // read with the bend it falls in, else a note of its own (hm: its top and its far end, for the caution)
+        const on = ev.find(e => e.bend && !e.ring && e.s - 15 <= c && c <= e.e + 10), hm = { c, e: c + w, word };
+        if (on) { if (!once || !on.t.includes('over')) { on.t.push('over', word); (on.hm = on.hm || []).push(hm); } } else ev.push({ s: c - w * 0.8, e: c + w, t: [word], bump: true, hm: [hm] });
+      };
+      for (const b of def.bumps || []) { const h = b.h || 1; bump((this.open ? clamp(b.at, 0, 1) : ((b.at % 1) + 1) % 1) * this.len, b.w || 8, h >= 1.5 ? 'bigjump' : h >= 1 ? 'jump' : 'crest'); }
+      if (this.hasElev && !(def.bumps && def.bumps.length)) {   // the road's own crests: the lift at a quick car's speed (up to 60 m/s, ~4 m/s^2 from the start)
+        const v = this.speedProfile(CSK.aiLatA, CSK.aiBrakeA, 60, CSK.aiWmax, 0, 0.9), i0 = this.open ? this.idx(this.startS) : 0, i1 = this.open ? this.idx(this.finishS) : N - 1, cv = this.curv, hy = this.hy;
+        if (this.open) for (let i = i0, u = 0; i <= i1; i++) { u = Math.min(v[i], Math.sqrt(u * u + 8 * ds)); v[i] = u; }
+        const lift = (i) => -cv[i] * v[i] * v[i] / G, C = [];
+        for (let i = i0; i <= i1; i++) {
+          if (lift(i) < 0.5) continue;
+          let m = i; for (; i <= i1 && lift(i) >= 0.5; i++) if (lift(i) > lift(m)) m = i;
+          let lo = hy[m]; for (let q = m; q < Math.min(N, m + Math.round(25 / ds)); q++) lo = Math.min(lo, hy[q]);
+          const a = lift(m); C.push({ c: m * ds, a, word: a >= 2 || (a >= 1.2 && hy[m] - lo >= 1.5) ? 'bigjump' : a >= 1.2 ? 'jump' : 'crest' });
+        }
+        const keep = []; for (const x of C.sort((p, q) => q.a - p.a)) if (keep.every(y => Math.abs(y.c - x.c) >= 60)) keep.push(x);   // (one in 60 m: the strongest)
+        for (const x of keep.sort((p, q) => p.c - q.c)) bump(x.c, 10, x.word, true);
+      }
+      // the stage's own notes (def.notes = [[d0, d1, text], ...], metres after the start line): a chicane (by its first way, as its sign), else
+      // a note in the co-driver's own words (CD_EN; a word he does not have: the note is not read, the bends stay); the bends inside not read
+      const H = this.hudSigns();
+      for (const [a, b, t] of def.notes || []) {
+        const s0 = this.startS + a, s1 = this.startS + b, sg = t === 'chicane' && H.find(x => x.kind === 'chic' && Math.abs(x.s0 - s0) < 1);
+        const w = sg ? ['chicane', sg.dir > 0 ? 'R' : 'L'] : String(t).split(' ').filter(Boolean).map(x => /^\d$/.test(x) ? +x : x);
+        if (!w.length || !w.every(x => CD_EN[x] !== undefined) || ['into', 'and', 'caution', 'fin'].includes(w[0])) continue;
         for (let m = ev.length - 1; m >= 0; m--) if (ev[m].bend && ev[m].s >= s0 - 4 && ev[m].e <= s1 + 4) ev.splice(m, 1);
-        ev.push({ s: s0, e: s1, txt: t, bend: true });
+        ev.push({ s: s0, e: s1, t: w, bend: true });
       }
       if (this.sf) {   // a stage of tarmac and gravel: where the surface changes, 'onto gravel' / 'onto tarmac' / 'onto cobbles' (read with the bend it falls in)
         const W = ['tarmac', 0, 0, 0, 'cobbles', 'gravel'];
         for (let i = 1; i < N; i++) {
           const a = this.sf[i - 1], b = this.sf[i]; if (a === b || !W[b]) continue;
           const s = i * ds, on = ev.find(e => e.bend && e.s - 12 <= s && s <= e.e + 8);
-          if (on) on.txt += ' onto ' + W[b]; else ev.push({ s: s - 8, e: s + 4, txt: 'onto ' + W[b] });
+          if (on) on.t.push('onto', W[b]); else ev.push({ s: s - 8, e: s + 4, t: ['onto', W[b]] });
         }
       }
       const from = this.open ? this.startS : 0, to = this.open ? this.finishS : this.len;
-      const E = ev.filter(e => e.s >= from && e.s < to).sort((a, b) => a.s - b.s), out = this._notes = [];
-      const dist = (m) => { const r = clamp(Math.round(m / 50) * 50, 100, 500); return ['one hundred', 'one fifty', 'two hundred', 'two fifty', 'three hundred', 'three fifty', 'four hundred', 'four fifty', 'five hundred'][r / 50 - 2]; };
-      for (let n = 0; n < E.length;) {
-        const first = E[n]; let last = first, text = first.txt; n++;
-        for (let m = 1; n < E.length && m < 3; m++, n++) { const gap = E[n].s - last.e; if (gap >= 70) break; text += (gap < 30 ? ' into ' : ' and ') + E[n].txt; last = E[n]; }
+      const E = ev.filter(e => e.e > from + 10 && e.s < to).sort((a, b) => a.s - b.s), out = this._notes = [];   // (a bend across the start line too: the first call at the start)
+      const dist = (m) => 'd' + clamp(Math.round(m / 50) * 50, 100, 500), jump = (x) => x.t.includes('jump') || x.t.includes('bigjump');
+      const tight = (x) => !!x && x.bend && x.g > 0 && x.g <= 3;   // (a hairpin, a square junction, a one to three)
+      for (let n = 0, prev = from; n < E.length;) {
+        const first = E[n], t = first.t.slice(), call = [first]; let last = first; n++;
+        for (let m = 1; n < E.length && m < 3; m++, n++) {
+          const gap = E[n].s - last.e, onto = !E[n].bend && E[n].t[0] === 'onto' && gap < 30; if (gap >= 70) break;   // (a change of surface right after a note: read with it, 'square left onto cobbles')
+          if (onto) t.push(...E[n].t); else t.push(gap < 30 ? 'into' : 'and', ...E[n].t); call.push(E[n]); last = E[n];
+        }
         const next = E[n], gap = next ? next.s - last.e : Infinity, fin = this.open ? this.finishS - last.e : Infinity;
-        if (next && gap >= 70 && gap <= 520) text += ', ' + dist(gap);
-        else if (!next && fin > 60 && fin <= 520) text += ', ' + dist(fin) + ' to finish';
-        out.push({ s: first.s, e: last.e, text });
+        if (next && gap >= 70 && gap <= 520) t.push(dist(gap));
+        else if (!next && fin > 60 && fin <= 520) t.push(dist(fin), 'fin');
+        // caution: a big jump; a jump into a three or tighter (on that bend, or the next bend after it: a change of surface between does not
+        // count); a bend that closes; a bend right behind a crest or a jump (its top before the bend, its far end less than 30 m before it,
+        // a note of its own or read with the bend before or with this one: 'over crest'); a one-two after 250 m of straight
+        const hm = call.flatMap(x => x.hm || []);
+        if (call.some((x, j) => x.t.includes('bigjump') || (jump(x) && (tight(x) || tight(call.slice(j + 1).find(y => y.bend)))) || x.warn ||
+          (x.bend && hm.some(h => h.c < x.s && x.s - h.e < 30))) || (tight(first) && first.g <= 2 && first.s - prev >= 250)) t.unshift('caution');
+        out.push({ s: Math.max(first.s, from), e: last.e, text: codrvSay(t), toks: t });
+        prev = last.e;
       }
       return out;
     }
@@ -8111,7 +8214,7 @@ const Core = (function () {
     return q;
   }
 
-  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga };
 })();
