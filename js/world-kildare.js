@@ -9,7 +9,7 @@
    straight, the old tarmac corners beside the gravel, the gravel crossing the south straight; the footbridge over the lap after the start
    (def.sk.foot), the pit garages along the finish straight, the race-control tower by the line, the paddock's buildings and halls
    (def.sk.bld), the power lines on wooden poles and steel towers (def.sk.power: Sosnová's soPower, js/world-sosnova.js), the plain on the
-   horizon (def.far: Riverside's rsFar); the Irish tricolour among the fans' flags (rbFlags: cols.vert); no air show (LK.air false: a club
+   horizon (def.far: Riverside's rsFar); the Irish tricolour among the fans' flags (World.flagMesh's upright bands); no air show (LK.air false: a club
    circuit). Only place names on its boards (no names of the circuit, its people, races or sponsors).
    ========================================================================= */
 (function () {

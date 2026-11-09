@@ -6,7 +6,7 @@
    blocks, birch at their edges: js/world-harju.js's hjTreeGeo), gorse in yellow flower in clumps on the rough grass of the old airfield;
    the ground under the whole pit lane level with it; the buildings round the paddock and the marshals' huts round the lap (def.sk.bld:
    OpenStreetMap); the hills of Carmarthenshire and the Gower across the estuary on the horizon (def.far: Riverside's rsFar, Marrakesh's
-   too); the Welsh flag among the fans' flags (rbFlags: cols.mid); no air show (LK.air false: a club circuit). Only place names on its
+   too); the Welsh flag among the fans' flags (World.flagMesh's grid); no air show (LK.air false: a club circuit). Only place names on its
    boards (no names of the circuit, its people, races or sponsors).
    ========================================================================= */
 (function () {
