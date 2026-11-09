@@ -2549,55 +2549,105 @@
   "nan": false,
   "digest": "519d1ee21fa9a8f53c8a529a"
  },
- "sakhir/cs": {
+ "buriram/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 250.07,
+  "winner": 208.57,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "392011d158359f854a504366"
+  "digest": "b0a711cdf0801638ee704d2e"
  },
- "sakhir/cs/rain": {
+ "buriram/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 270.68,
+  "winner": 225.11,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e62d975deb0a7a2721783720"
+  "digest": "6b553d099089a64bd5b0c221"
  },
- "sakhir/cs/formula": {
+ "buriram/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 217.79,
+  "winner": 179.59,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c89a531dede47353474e2020"
+  "digest": "f016eb48af983b63d14638a9"
  },
- "sakhir/cs/lm": {
+ "buriram/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 218.53,
+  "winner": 181.36,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a29839604ae32c26b703b6c8"
+  "digest": "f909c6ba4a5c084829419ea1"
  },
- "sakhir/cs/car": {
+ "buriram/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 258.84,
+  "winner": 206.47,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ab0b9ae720531c45d441dd28"
+  "digest": "2d851b9494983265845d6a2b"
+ },
+ "lombok/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.12,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "769cb496f75cb75fff52adfb"
+ },
+ "lombok/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 229.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "18cc1f004b8628e0bcc5c30a"
+ },
+ "lombok/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 184.12,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2a71405b412e1971e9be8a55"
+ },
+ "lombok/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 186.01,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2112f7ae9ed7bbd216e27a08"
+ },
+ "lombok/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 219.45,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0d4d54dc77c46b0109dc0e23"
  },
  "ella/cs": {
   "finished": 13,
@@ -3748,5 +3798,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "7091ac5c8d60de33935c0c26"
+ },
+ "sepang/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 264.71,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0fa3116a4aebd90fcc3ae35d"
+ },
+ "sepang/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 285.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0662a6ece5751c30db1971fa"
+ },
+ "sepang/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 229.51,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9526cc596238ce34fd6084fa"
+ },
+ "sepang/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 231.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ea08a0b01ab1653c138b02ca"
+ },
+ "sepang/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 273.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "122d68a628ca5bd7537a8e7d"
+ },
+ "sakhir/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 250.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "392011d158359f854a504366"
+ },
+ "sakhir/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 270.68,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e62d975deb0a7a2721783720"
+ },
+ "sakhir/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 217.79,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c89a531dede47353474e2020"
+ },
+ "sakhir/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 218.53,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a29839604ae32c26b703b6c8"
+ },
+ "sakhir/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 258.84,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ab0b9ae720531c45d441dd28"
  }
 }

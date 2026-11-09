@@ -496,6 +496,41 @@
   "maxKverts": 326,
   "jsMs": 1.44
  },
+ "tuzla": {
+  "calls": 158,
+  "maxCalls": 207,
+  "kverts": 464,
+  "maxKverts": 585,
+  "jsMs": 3
+ },
+ "buriram": {
+  "calls": 195,
+  "maxCalls": 247,
+  "kverts": 668,
+  "maxKverts": 844,
+  "jsMs": 1.29
+ },
+ "lombok": {
+  "calls": 188,
+  "maxCalls": 227,
+  "kverts": 567,
+  "maxKverts": 701,
+  "jsMs": 1.49
+ },
+ "sepang": {
+  "calls": 184,
+  "maxCalls": 226,
+  "kverts": 684,
+  "maxKverts": 861,
+  "jsMs": 1.49
+ },
+ "sakhir": {
+  "calls": 190,
+  "maxCalls": 224,
+  "kverts": 664,
+  "maxKverts": 794,
+  "jsMs": 1.23
+ },
  "portomoniz": {
   "calls": 208,
   "maxCalls": 246,
@@ -516,19 +551,5 @@
   "kverts": 324,
   "maxKverts": 401,
   "jsMs": 1.67
- },
- "tuzla": {
-  "calls": 158,
-  "maxCalls": 207,
-  "kverts": 465,
-  "maxKverts": 587,
-  "jsMs": 1.32
- },
- "sakhir": {
-  "calls": 190,
-  "maxCalls": 224,
-  "kverts": 664,
-  "maxKverts": 794,
-  "jsMs": 1.23
  }
 }

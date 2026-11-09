@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 1400" width="2800" height="1400">
+  <title>Malaysia</title>
+  <!-- Ratio 1:2 (stripes of 100). Fourteen stripes, red and white in turn from the top; the blue canton over the upper eight and half the
+       length; in it, in its height C = 800, the yellow crescent between the circle of 3/8 C round 0.41 of the canton's length from the hoist
+       and the circle of 1/3 C 0.084 C further to the fly (its horns at 0.54 of the length), and the star of fourteen points, 5/16 C out and
+       1/8 C in, round 0.625 of the length, a point up. Red #CC0001, white, blue #010066, yellow #FFCC00. -->
+  <rect width="2800" height="1400" fill="#FFFFFF"/>
+  <rect y="0" width="2800" height="100" fill="#CC0001"/>
+  <rect y="200" width="2800" height="100" fill="#CC0001"/>
+  <rect y="400" width="2800" height="100" fill="#CC0001"/>
+  <rect y="600" width="2800" height="100" fill="#CC0001"/>
+  <rect y="800" width="2800" height="100" fill="#CC0001"/>
+  <rect y="1000" width="2800" height="100" fill="#CC0001"/>
+  <rect y="1200" width="2800" height="100" fill="#CC0001"/>
+  <rect width="1400" height="800" fill="#010066"/>
+  <path fill="#FFCC00" fill-rule="evenodd" d="M750,156.25 A300,300 0 1 0 750,643.75 A266.67,266.67 0 1 1 750,156.25 Z"/>
+  <polygon fill="#FFCC00" points="875.00,150.00 897.25,302.51 983.47,174.76 937.35,321.82 1070.46,244.13 965.10,356.61 1118.73,344.37 975.00,400.00 1118.73,455.63 965.10,443.39 1070.46,555.87 937.35,478.18 983.47,625.24 897.25,497.49 875.00,650.00 852.75,497.49 766.53,625.24 812.65,478.18 679.54,555.87 784.90,443.39 631.27,455.63 775.00,400.00 631.27,344.37 784.90,356.61 679.54,244.13 812.65,321.82 766.53,174.76 852.75,302.51"/>
+</svg>

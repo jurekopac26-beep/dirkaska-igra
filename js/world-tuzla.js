@@ -5,7 +5,7 @@
    Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl, LK.colMod): the trees of the dry hills by the Sea of Marmara (umbrella
    pines, Turkish red pines, the oaks and the bushes of the maquis: tzTreeGeo), the hills' grass burnt golden by the summer and the circuit's
    watered lawns green by the track, the service roads round the circuit (def.sk.svc: OpenStreetMap) as plain asphalt on the ground, the
-   buildings by the circuit (def.sk.bld: OpenStreetMap), the Turkish flag among the fans' flags (World.flagMesh: look.moon), red turn numbers. Only
+   buildings by the circuit (def.sk.bld: OpenStreetMap), the Turkish flag among the fans' flags (World.flagMesh's emblems, look.sym), red turn numbers. Only
    place names on its boards (no names of the circuit, its people, races or sponsors).
    ========================================================================= */
 (function () {
@@ -21,7 +21,9 @@
   const TZ_AT = { num: 0, brake: 14, ban: 17, rbr: 17, spielberg: 18 };   // atlas cells: the 14 turn numbers, the braking boards, the banners
   const TZ_SHIRTS = [[0.86, 0.1, 0.14], [0.95, 0.95, 0.93], [0.78, 0.08, 0.12], [0.14, 0.16, 0.3], [0.13, 0.13, 0.15], [0.4, 0.42, 0.46], [0.98, 0.82, 0.12], [0.2, 0.32, 0.62],
     [0.92, 0.92, 0.9], [0.55, 0.42, 0.3], [0.2, 0.46, 0.3], [0.86, 0.12, 0.16]];   // the fans' shirts at the end of the summer: lots of red and white, navy, black and grey, a few yellow, blue and green
-  const TR = Object.assign([[0.86, 0.06, 0.1]], { moon: [[0.97, 0.97, 0.96]] });   // the Turkish flag: red, the white crescent and star (World.flagMesh: look.moon)
+  // the Turkish flag: red, the white crescent and star (World.flagMesh's emblems, look.sym), in the flag's height G: the crescent between the
+  // circles of 0.25 G round 0.5 G from the pole and of 0.2 G round 0.5625 G, the star of 0.125 G round 0.8208 G, a point to the pole
+  const TR = ((r, w) => Object.assign([r], { sym: [['moon', w, 0.5, 0.5, 0.25, 0.0625, 0.2], ['star', w, 0.8208, 0.5, 0.125, 0.0477, 5, Math.PI]] }))([0.86, 0.06, 0.1], [0.97, 0.97, 0.96]);
 
   // ---- the trees (unit height 1, instanced; LK.woods): 0 an umbrella pine (a bare trunk, a wide flat crown), 1 a Turkish red pine (a long
   //      trunk, orange high up, an open uneven crown of light green clumps), 2 an oak of the maquis (a short trunk, a round dark olive crown;
