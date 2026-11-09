@@ -568,6 +568,12 @@
   })[w] + '</svg>';
   // the one shown chosen: Snow in winter, else the game's weather (Random, the options' own: none)
   const wxOn = () => G.S.season === 'winter' ? 'snow' : G.S.weather;
+  // the weather over the whole track screen (js/menu-vreme.js, sklop 12): its look (Random as Changing), the stage's class for the first
+  // picture (the wet model, the clouds), the tapped weather icon's place (its ring)
+  const MV = () => window.MenuVreme || null;
+  let wxTap = null;
+  const wxLook = () => { const w = wxOn(); return w === 'random' ? 'change' : WX5.some(x => x[0] === w) ? w : 'dry'; };
+  const wxCls = () => ({ rain: ' rainy', storm: ' rainy', change: ' damp', snow: ' snowy' })[wxLook()] || '';
   // Snow: the winter and the rain (falling as snow); another weather after it: the season it had before (summer if none)
   let preSeason = 'summer';
   function setWeather(w) {
@@ -762,7 +768,7 @@
     if (screen === 'track' && app && !rested) ringStop();   // (the carousel: a turn done at once, a finger's let go)
     const s = screen === 'track' && app && $('#s-track', app); if (!s || rested) return;
     rested = [...app.querySelectorAll('video')].filter(v => !v.paused);
-    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
+    if (MV()) MV().rest(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); graphRaf = 0; if (window.MenuCar) MenuCar.detach();
     for (const v of rested) v.pause();
     s.classList.add('rested');
   }
@@ -771,7 +777,7 @@
     rested = null;
     const s = screen === 'track' && shown === 'track' && app && $('#s-track', app); if (!s) return;
     s.classList.remove('rested');
-    wx.attach($('#track-stage', app), wxMode(), false); flyLabels(); graphOn(); carOn(); globe.on();   // (the globe drawn again if the night was switched on the Earth)
+    flyLabels(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
@@ -780,7 +786,7 @@
       // on its side the new track's card turns in from the side it lies on in the list (the shorter way round); not under the Earth
       const n = L.length, d = ((i - trackIdx) % n + n) % n, dir = d <= n / 2 ? 1 : -1;
       ringStop();
-      if (ringOn() && !zemOpen()) { trackIdx = i; select(); render(true); ringIn(-dir); carIn(dir); } else trackGo(dir, i);
+      if (ringOn() && !zemOpen()) { trackIdx = i; select(); if (MV()) MV().leave(); render(true); ringIn(-dir); carIn(dir); } else trackGo(dir, i);
     }
     return true;
   }
@@ -861,7 +867,7 @@
     if (st) out.push([st, 0]);
     return out;
   }
-  function ringTo(p) { for (const [e, k] of ringEls()) ringPlace(e, k - p); }
+  function ringTo(p) { for (const [e, k] of ringEls()) ringPlace(e, k - p); if (MV()) MV().turn(p); }   // (the buttons' drops and snow fade as it turns)
   // from p0 (where a finger let go, or a picked track's side) to d, eased (the mockup's: 300 ms a place), then done()
   function ringTurn(d, p0, done) {
     if (rg && rg.raf) cancelAnimationFrame(rg.raf);
@@ -886,6 +892,7 @@
   function ringLand(d) {
     const n = TRACKS().length, old = app && $('#s-track', app), fa = app && app.getRootNode().activeElement, arw = fa && fa.classList && fa.classList.contains('rarw') ? (fa.classList.contains('l') ? 'l' : 'r') : '';
     const snap = old && window.MenuCar ? MenuCar.snap() : null;   // (the car as it stood, in the old screen as it goes)
+    if (old && MV()) MV().leave();   // (its reflection on a wet floor: gone with it, back when the new one stands)
     trackIdx = ((trackIdx + d) % n + n) % n; select();
     if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }
     arriveDone();
@@ -925,6 +932,7 @@
     const old = d && app && screen === 'track' && shown === 'track' && !calmNow() && !zemOpen() ? $('#s-track', app) : null;
     if (!old) { render(); return; }
     const snap = window.MenuCar ? MenuCar.snap() : null;
+    if (MV()) MV().leave();
     old.remove(); for (const v of old.querySelectorAll('video')) v.pause();
     render(true);
     const now = $('#s-track', app); if (!now) return;
@@ -934,20 +942,22 @@
     arriving(fade);
     const oy = $('.yard', old), ny = $('.yard', now), W = (ny || now).getBoundingClientRect().width || 412;
     if (oy && snap) oy.insertBefore(snap, oy.firstChild);
-    if (oy) slide(oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .car, :scope > .cname, :scope > .c3d'), 0, -d * W * 250 / 412, OUT);
+    if (oy) slide(oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc, :scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), 0, -d * W * 250 / 412, OUT);
     if (ny) {
-      slide(ny.querySelectorAll(':scope > .sign, :scope > .post'), d * W, 0, Object.assign({ duration: 540, delay: 140 }, IN));
-      slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d'), d * W, 0, Object.assign({ duration: 540, delay: 200 }, IN));
+      slide(ny.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc'), d * W, 0, Object.assign({ duration: 540, delay: 140 }, IN));   // (.wxsc: the snow on the sign's top, js/menu-vreme.js)
+      slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), d * W, 0, Object.assign({ duration: 540, delay: 200 }, IN));   // (.wxcar: the snow on the car)
     }
     if (window.MenuCar) MenuCar.shadeIn(560, 260);
+    if (MV()) MV().arrive(560, 260);   // (its reflection when it stands)
   }
   // (lying) the old car out, the new one in: half the car's place to each side
   const carStep = () => { const c = app && $('#s-track .yard .car', app); return c ? c.getBoundingClientRect().width / 2 : 120; };
-  function carOut(oy, d) { if (oy && !calmNow()) slide(oy.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d'), 0, -d * carStep(), OUT); }
+  function carOut(oy, d) { if (oy && !calmNow()) slide(oy.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), 0, -d * carStep(), OUT); }
   function carIn(d) {
     const ny = !calmNow() && app && $('#s-track .yard', app); if (!ny) return;
-    slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d'), d * carStep(), 0, Object.assign({ duration: 460, delay: 160 }, IN));
+    slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), d * carStep(), 0, Object.assign({ duration: 460, delay: 160 }, IN));
     if (window.MenuCar) MenuCar.shadeIn(520, 240);
+    if (MV()) MV().arrive(520, 240);
   }
   // the weather's row on the card (on its side): the new choice slides to the first place, the others to theirs (the screen is drawn
   // again: each button from where it was)
@@ -981,7 +991,7 @@
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + ' cam' + cam + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
@@ -1113,14 +1123,14 @@
   function render(keepScroll) {
     if (!app) return;
     const sc = $('.scroll', app), top = keepScroll && sc ? sc.scrollTop : 0;
-    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb') && !n.classList.contains('zem')) n.remove();   // (the intro, if there is one, stays over everything; the quick list and the Earth over the screen)
+    for (const n of [...app.children]) if (!n.classList.contains('toast') && !n.classList.contains('intro') && !n.classList.contains('izb') && !n.classList.contains('zem') && !n.classList.contains('wxl')) n.remove();   // (the intro, if there is one, stays over everything; the quick list and the Earth over the screen; the weather's canvases: js/menu-vreme.js)
     rested = null;
     app.classList.toggle('on-title', screen === 'title');
     app.insertAdjacentHTML('afterbegin', VIEWS[screen]());
     if (keepScroll && shown === screen) $('.scr', app).classList.add('still');   // an update in place (a choice, a sheet): no slide-in again
     if (keepScroll) { const n = $('.scroll', app); if (n) n.scrollTop = top; }
     if (screen === 'title') { const pn = $('.title-panel', app); if (!titleSub) panelH = pn.offsetHeight; else if (panelH) pn.style.minHeight = panelH + 'px'; }   // (Single race and Career open in the same frame, as tall)
-    if (screen === 'track') wx.attach($('#track-stage', app), wxMode(), shown !== 'track'); else wx.detach();
+    if (!$('.intro', app)) wx.detach();   // (the old rain: the intro's only)
     if (screen === 'track' && shown !== 'track' && window.Journey) Journey.preload(G.S.lastTrack ? [G.S.lastTrack] : []);   // (the globe before a race: the Earth, and where it starts)
     if (screen === 'track') {   // (and the track shown: its helicopter's flight; its land on the globe once it has been looked at a moment)
       const tt = curTrack(); if (tt && RT[tt.id] && hasFlight(tt.id)) heliData(tt.id);
@@ -1128,6 +1138,9 @@
     }
     if (screen === 'track') ringFit();   // (on its side: the carousel's scale before anything measures the screen)
     fitWhere(); signOn(); flyLabels(); cornerOn(); fitMaps(); globe.on(); graphOn(); carOn();
+    const M = MV(), ts = M && screen === 'track' && $('#s-track', app);   // (the weather over the screen, after the car: its outline)
+    if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
+    wxTap = null;
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
     sheetOn = !!sheet;
@@ -1355,7 +1368,7 @@
     if (window.MenuCar) MenuCar.rest();   // (the car's canvas: its buffers freed for the race)
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
-    wx.detach();
+    wx.detach(); if (MV()) MV().off();
     if (R.kind === 'single' && weekendOn(t, R.mode)) { weekend(R, go); return; }   // (Circuit race: the race weekend's calendar is the intro)
     const el = document.createElement('div'); el.className = 'intro ix2'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Before the race');
     app.appendChild(el);
@@ -1593,7 +1606,7 @@
         if (ringOn()) { ringSpin(+v); break; }
         ringStop(); trackGo(Math.sign(+v), ((trackIdx + +v) % n + n) % n); break;
       }
-      case 'weather': { const at = ringOn() ? wxRects() : null; setWeather(v); render(true); if (at) wxSlide(at); break; }   // (Snow: the winter, js/menu.js setWeather)
+      case 'weather': { const at = ringOn() ? wxRects() : null, ic = app.querySelector('#track-stage .wxv > [data-act="weather:' + v + '"] svg'); wxTap = ic ? ic.getBoundingClientRect() : null; setWeather(v); render(true); if (at) wxSlide(at); break; }   // (Snow: the winter, js/menu.js setWeather)
       case 'more-options': sheet = optionsSheet; render(true); break;
       case 'opt': {
         if (v === 'pkRoad') G.setPkRoad(w); else G.setOption(v, w);
@@ -1728,7 +1741,7 @@
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
     if (!app) return;
-    wx.detach(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
+    wx.detach(); if (MV()) MV().off(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf); clearTimeout(preT); if (window.MenuCar) MenuCar.detach();
     if (rg) { cancelAnimationFrame(rg.raf); rg = null; } if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; } arriveDone();   // (the carousel: drawn anew when the menu is up again)
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (zemOpen()) ZE().close(true);   // (the Earth too)

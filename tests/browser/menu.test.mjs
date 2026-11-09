@@ -243,7 +243,7 @@ try {
     let s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy'), on: document.getElementById('menu-host').shadowRoot.querySelector('.wxv [aria-pressed="true"]').dataset.act }));
     T.check('the weather: Rain sets the game\'s weather, the model/map goes wet, Rain is the one lit', s.w === 'rain' && s.rainy && s.on === 'weather:rain', JSON.stringify(s));
     // the rain covers the whole picture (a canvas is not stretched by top and bottom: it once stopped half way)
-    const rc = await ev(page, 'const cv = root.querySelector("#track-stage canvas.rainfx"), pic = root.querySelector("#track-stage .dio"); const r = cv.getBoundingClientRect(), p = pic.getBoundingClientRect(); return { cv: [r.top, r.bottom, r.width], pic: [p.top, p.bottom, p.width] };');
+    const rc = await ev(page, 'const cv = root.querySelector("#track-stage canvas.wxst"), pic = root.querySelector("#track-stage .dio"); const r = cv.getBoundingClientRect(), p = pic.getBoundingClientRect(); return { cv: [r.top, r.bottom, r.width], pic: [p.top, p.bottom, p.width] };');
     T.check('the rain covers the whole picture', Math.abs(rc.cv[0] - rc.pic[0]) < 1.5 && Math.abs(rc.cv[1] - rc.pic[1]) < 1.5 && Math.abs(rc.cv[2] - rc.pic[2]) < 1.5, JSON.stringify(rc));
     await click(page, 'weather:storm');
     s = await page.evaluate(() => ({ w: window.__game.S.weather, rainy: document.getElementById('menu-host').shadowRoot.querySelector('#track-stage').classList.contains('rainy') }));

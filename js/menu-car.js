@@ -450,6 +450,23 @@ window.MenuCar = (function () {
     const o = document.createElement('canvas'); o.width = canvas.width; o.height = canvas.height; o.className = 'c3d snap'; o.setAttribute('aria-hidden', 'true');
     o.getContext('2d').drawImage(canvas, 0, 0); return o;
   }
+  // the car alone, in a picture of its own (no shadow, no wind): its outline for the weather (js/menu-vreme.js: its reflection on a wet floor,
+  // snow on its top); drawn again only when the car or the yard changed
+  let alKey = '', alCv = null;
+  function alpha() {
+    if (!car || !renderer || failed || !drawn || !canvas.isConnected || !fit() || !W) return null;
+    const k = key + '|' + lay;
+    if (k !== alKey || !alCv) {
+      const sh = car.sh ? car.sh.mesh : null, wm = wind ? wind.mesh : null, o = alCv || document.createElement('canvas');
+      try {
+        if (sh) sh.visible = false; if (wm) wm.visible = false;
+        draw(performance.now());
+        o.width = canvas.width; o.height = canvas.height; o.getContext('2d').drawImage(canvas, 0, 0); alCv = o; alKey = k;
+      } catch (_) { return null; } finally { if (sh) sh.visible = true; if (wm) wm.visible = true; }
+      try { draw(performance.now()); } catch (_) { /* (the next frame) */ }
+    }
+    return { cv: alCv, key: alKey, pr: alCv.width / W };
+  }
   // a new track's car: its shadow comes when it stands (ms after now, over fade ms); none on a device that asks for less motion
   function shadeIn(after, fade) { shIn = calm() || !shMat ? null : { t: performance.now() + after, ms: Math.max(1, fade) }; if (shMat && shIn) shMat.opacity = 0; }
   function info() {
@@ -486,5 +503,5 @@ window.MenuCar = (function () {
     return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height], shade };
   }
   const cover = () => cov, watch = (fn) => { watcher = fn || null; };
-  return { supported, attach, detach, rest, live, placed, info, sample, snap, shadeIn, cover, watch };
+  return { supported, attach, detach, rest, live, placed, info, sample, snap, shadeIn, cover, watch, alpha };
 })();
