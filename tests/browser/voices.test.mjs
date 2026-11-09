@@ -30,10 +30,10 @@ const FAKE = () => {
 const srv = await serve();
 const browser = await launch();
 try {
-  // (the game's test mode, ?proga=cpalace&t=1&seme=17: the race draws its random numbers from its seed (Race opts.repro) and its start is
-  // stepped paused (quickRun), the same race every run, on any machine. Started from the menus, it drew from the page's Math.random, as the
-  // drawn frames do, and its start ran on real frames: another race each run, now and then with the first stop missed at the way in and no
-  // hand-back to see; docs/nestabilni-testi.md)
+  // (the game's test mode, ?proga=cpalace&t=1&seme=17 (tests/README.md · Hiter vstop): the race draws its random numbers from its seed (Race
+  // opts.repro) and its start is stepped paused (quickRun), the same race every run, on any machine. Started from the menus, it drew from the
+  // page's Math.random, as the drawn frames do, and its start ran on real frames: another race each run, now and then with the first stop
+  // missed at the way in and no hand-back to see (CI of #460, 9. 11. 2026). Another seed if a change to the game's cars moves this race)
   const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=cpalace&t=1&seme=17', { quality: 'low', shadows: 0, camera: 'chase', weather: 'dry', damage: 0, sound: 1, comm: 0, radio: 1, length: 'long', intro: 2 },
     { width: 640, height: 360 }, { init: FAKE, context: { reducedMotion: 'reduce' } });
   const hide = () => page.evaluate(() => { const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
