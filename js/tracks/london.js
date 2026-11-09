@@ -17,7 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xcfd6dd, sun: 0xfff0dc, sunI: 1.1, sky: 0xbdd0e4, gnd: 0x6a6964, hemiI: 0.66, tint: [1.0, 1.0, 1.01], sat: 1.0, sunOff: [-60, 74, 70], split: [[0.97, 1.0, 1.04], [1.03, 1.0, 0.96]] },   // London: a bright spring day with a little haze over the river, the sun from the south-west
     say: 'London',
-    id: 'london', name: 'London, Anglija', theme: 'london', laps: 6, halfWidth: 7.0,
+    id: 'london', pending: true, name: 'London, Anglija', theme: 'london', laps: 6, halfWidth: 7.0,
     desc: "Mestna proga skozi središče Londona: start na Whitehallu, desno pri Trafalgarskem trgu, po aveniji navzdol do Temze, ob nabrežju proti jugu do Westminstrskega mostu in mimo urnega stolpa, nato desno pri Parlamentarnem trgu nazaj na Whitehall. Ograje ulične dirke, 1,8 km.",
     en: { name: 'London, England', desc: "A city race through the centre of London: the start on Whitehall, right at Trafalgar Square, down the avenue to the Thames, south along the embankment to Westminster Bridge and past the clock tower, then right at Parliament Square back onto Whitehall. Street-race barriers, 1.8 km." },
     start: [6.6, -0.2], runoff: 0.32, inner: 1.6, side: 1.6, offSurface: 'paving', noGravel: true, runoffTarmac: true, gradeForce: true, elevSmooth: 14, noBirds: true, realKm: 1.81,
