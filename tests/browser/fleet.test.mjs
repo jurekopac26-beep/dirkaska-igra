@@ -84,7 +84,7 @@ try {
   const kits = models.filter(m => m.kit);
   const K1 = await page.evaluate((ids) => ids.map(id => {
     const M = Core.MODELS.find(m => m.id === id), I = Render.kitInfo(id), PT = Core.partsOf(M), noRange = [];
-    for (const n in PT) if (PT[n].wh == null && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);
+    for (const n in PT) if (PT[n].wh == null && !PT[n].tl && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);   // (a trailer's part, tl: its look's, not the kit's)
     return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi };
   }), kits.map(m => m.id));
   const badStatus = K1.filter(k => k.look ? k.status !== 'ok' : !/^fallback:look null/.test(k.status)), held = K1.filter(k => !k.look).length;
@@ -94,7 +94,7 @@ try {
   T.check('the body within its triangle budget (outer shell / inner block: a car 1400 / 800, the big ones 2400 / 1200)', !overB.length,
     (overB.length ? overB : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.tris.outer}/${k.budget.outer} ${k.tris.inner}/${k.budget.inner}`).join(', '));
   const noR = K1.filter(k => k.noRange.length);
-  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
+  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes, a trailer\'s parts its look\'s)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
   const wBad = K1.filter(k => k.hi.some(t => t > 400) || k.lo.some(t => t > 160));
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
   // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)

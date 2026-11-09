@@ -26,12 +26,11 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Rio de Janeiro, Brazilija](docs/proge/rio.md) (resnično dirkališče; od 5. 11. 2026 testna, se ne posodablja več)
 - [Medvode, Slovenija](docs/proge/medvode.md)
 - [Montréal, Kanada](docs/proge/montreal.md)
-- [Great Alpine Road, Avstralija](docs/proge/greatalpine.md)
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
 
-Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurstom in Great Alpine Road, ki sta bila od 6. 11. 2026 na odločanju); Great Alpine Road je od 9. 11. 2026 testna, prav tako od 6. 11. 2026 Longford, Mount Hotham, Newcastle in Townsville (spodaj).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -63,6 +62,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Trois-Rivières, Kanada](docs/proge/troisrivieres.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Sani Pass, Južna Afrika](docs/proge/sani.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
+- [Great Alpine Road, Avstralija](docs/proge/greatalpine.md) (resnična pot; od 9. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 
