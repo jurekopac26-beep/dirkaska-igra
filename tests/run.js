@@ -71,9 +71,10 @@ const SECS = {
 };
 // The tests that go over every real track (trackIds: tests/lib/sim.js, tests/browser/lib.mjs): in the short round only over its tracks
 // (PROGE). Every test that calls trackIds is here (tests/shards.test.js checks). PROGA_SECS: [s besides the tracks, s a track] on GitHub, for
-// the short round's shares (measured with one track on 9. 11. 2026 and from SECS: docs/krog-testov.md)
+// the short round's shares: with one track (Bâlea) measured on 9. 11. 2026, a track's share from SECS (5. 11., 43 real tracks then), on a
+// machine of middle speed (docs/krog-testov.md)
 const PO_PROGAH = ['golden.test.js', 'races.test.js', 'serpentine.test.js', 'lestvica.test.js', 'browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/perf.test.mjs', 'browser/gfx.test.mjs', 'browser/memory.test.mjs'];
-const PROGA_SECS = { 'browser/memory.test.mjs': [600, 140], 'browser/perf.test.mjs': [60, 90], 'browser/smoke.test.mjs': [700, 45], 'browser/world.test.mjs': [30, 43], 'browser/gfx.test.mjs': [30, 42] };
+const PROGA_SECS = { 'browser/memory.test.mjs': [474, 74], 'browser/smoke.test.mjs': [498, 28], 'browser/perf.test.mjs': [65, 46], 'browser/gfx.test.mjs': [50, 21], 'browser/world.test.mjs': [17, 22] };
 let nProg = 0;   // (--kratek: how many tracks)
 const DEF_SECS = 60, secs = (f) => (nProg && PROGA_SECS[f] ? Math.round(PROGA_SECS[f][0] + nProg * PROGA_SECS[f][1]) : SECS[f] || DEF_SECS);
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
