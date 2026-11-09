@@ -926,6 +926,16 @@
     'KAMEN!': 'ROCK!',
     'RDEČA LUČ! +3 s KAZNI': 'RED LIGHT! +3 s PENALTY',
     'STOŽCI!': 'CONES!',
+    /* ---- Neskončna vožnja v prometu (js/neskoncna.js, docs/neskoncna-voznja.md) ---- */
+    'NESKONČNA VOŽNJA!': 'ENDLESS TRAFFIC!', 'TOČKE': 'POINTS', 'NIZ ×{0}': 'COMBO ×{0}', 'PROMET ×{0}': 'TRAFFIC ×{0}',
+    'TESNO!': 'CLOSE!', 'ZELO TESNO!': 'VERY CLOSE!', 'NIZ PREKINJEN': 'COMBO BROKEN', 'TRK! KONEC VOŽNJE': 'CRASH! THE RUN IS OVER',
+    'DOTIK! KONEC VOŽNJE': 'CONTACT! THE RUN IS OVER', 'ČAS JE POTEKEL!': 'OUT OF TIME!', 'ČAS SE IZTEKA!': 'TIME IS RUNNING OUT!',
+    'Dotik vozila.': 'Touched a vehicle.', 'Dodan čas': 'Time added',
+    'Trk z vozilom.': 'Crashed into a vehicle.', 'Trk v ograjo.': 'Crashed into the barrier.', 'Avto se je prevrnil.': 'The car rolled over.',
+    'Avto je zgrmel v prepad.': 'The car went over the edge.', 'Avto je izgubil kolesi.': 'The car lost two wheels.',
+    'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
+    'Neskončna vožnja': 'Endless traffic', 'Za hitrost': 'For speed', 'Za tesna prehitevanja': 'For close passes', 'Tesno / zelo tesno': 'Close / very close',
+    'Najdaljši niz': 'Longest combo', 'Promet na koncu': 'Traffic at the end', 'Vozi znova': 'Drive again', 'Najboljših 10 · {0} · {1}': 'Top 10 · {0} · {1}',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

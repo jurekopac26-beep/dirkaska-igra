@@ -1,5 +1,5 @@
 // The new menu (js/menu.js, css/menu.css, in a shadow root over the game): the title (Single race, Multiplayer, Career, Settings,
-// Leaderboard, Credits), the six modes (Elimination and Pursuit: Zabava), the tracks of every mode in one list that goes round (the real ones from the shortest to the
+// Leaderboard, Credits), the seven modes (Elimination and Pursuit: Zabava; Endless traffic), the tracks of every mode in one list that goes round (the real ones from the shortest to the
 // longest, then the test tracks; each with its pictures in the stage's three cameras: 1 the map from above, 2 the flyover with the height
 // graph, 3 the corner's video, else the model of the land), the track step's head, row of numbers, road sign and neighbours
 // (docs/meni-izbira-proge.md), the quick list (the flag: countries by continent, a country's tracks, a track's card, the search and the
@@ -57,7 +57,12 @@ try {
     // 2. the modes
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
-    T.check('Single race: the six modes (Elimination and Pursuit: Zabava, docs/zabava.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit"]', JSON.stringify(m));
+    T.check('Single race: the seven modes (Elimination and Pursuit: Zabava, docs/zabava.md; Endless traffic: docs/neskoncna-voznja.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit","Endless traffic"]', JSON.stringify(m));
+    // Endless traffic: Bathurst its only track (Core.EN.tracks), the clock at the start (the game's level, Srednja: 30 s) in the row's first cell
+    await click(page, 'mode:endless');
+    const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
+    T.check('Endless traffic: Bathurst only; the first cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
+    await page.click('.foot [data-act="back"]');   // (back to the modes)
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest, then the test tracks; equal
     //    lengths by id), every track with its picture in camera 2 (the flyover, else its model, and the height graph), the list going
@@ -1020,7 +1025,7 @@ try {
     T.check(`${w}x${h}: the main menu fits the screen, every button inside its panel`, title.top >= -0.5 && title.bottom <= title.h + 0.5 && title.over === 0, JSON.stringify(title));
     await click(page, 'single');
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
-    T.check(`${w}x${h}: the six modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 6, JSON.stringify(modes));
+    T.check(`${w}x${h}: the seven modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 7, JSON.stringify(modes));
     await click(page, 'mode:race');
     const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('vrsic') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
     for (let k = 0; k < 60 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, way);   // (to Vršič, a test track since 6. 11. 2026 and the longest of them, the list's last: past the tracks awaiting the choice and the test tracks after Nürburg, the last real one)
