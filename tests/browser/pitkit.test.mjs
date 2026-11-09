@@ -87,7 +87,7 @@ try {
       return out;
     }));
   }
-  T.check('8 circuits with pits (the test tracks left out)', ids.length === 8 && res.length === 8, ids.join(', '));
+  T.check('5 circuits with pits (the test tracks left out)', ids.length === 5 && res.length === 5, ids.join(', '));   // (5: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026)
   T.check('one exit post in the scene on each circuit, after the ones before it (a new track takes the old exit\'s light and marshal out: setupCrew)', res.every(r => r.exits === 1), res.map(r => r.id + ' ' + r.exits).join(', '));
   T.check('44 the garage door: a closed front (gar.wall at the front) rolls, an open one between pillars gets a light grey roller door, none on the open tents and shed; down while no stop is under way',
     res.every(r => !r.bad.some(b => /^door/.test(b))), res.map(r => `${r.id} ${r.door || '-'}${r.doorH ? ' ' + r.doorH + ' m' : ''} ${r.bad.filter(b => /^door/.test(b)).join('; ')}`).join(', '));
