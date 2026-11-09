@@ -23,7 +23,9 @@ try {
     const { ctx, page, errors } = await open(vp);
     await ready(page); await page.waitForTimeout(400);
     const t0 = await box(page, '[data-act="newver"]'), nu = await box(page, '[data-act="nu"]');
-    await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="nu"]').click()); await page.waitForTimeout(700);
+    await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="nu"]').click());
+    await page.waitForFunction(() => { const e = document.getElementById('menu-host').shadowRoot.querySelector('.izb-nu [data-act="newver"]'), q = e && e.getBoundingClientRect();   // (the sheet in: on its side it slides in from the right)
+      return !!q && q.left >= -0.5 && q.right <= innerWidth + 0.5 && q.top >= -0.5 && q.bottom <= innerHeight + 0.5; }, null, { timeout: 10000 }).catch(() => null);
     const b = await box(page, '.izb-nu [data-act="newver"]');
     T.check(`${vp.width}x${vp.height}: NEW VERSION · TEST 1 not on the title; NEUPORABNO's tile there, its sheet's first bar NEW VERSION · TEST 1, both inside the screen`, !t0 && inside(nu) && /NEUPORABNO/.test(nu.txt) && inside(b) && /NEW VERSION/.test(b.txt) && /TEST 1/.test(b.txt), JSON.stringify({ t0, nu, b }));
     T.check(`${vp.width}x${vp.height}: no errors on the title`, !errors.length, errors.slice(0, 2).join(' | '));
