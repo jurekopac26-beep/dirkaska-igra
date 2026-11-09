@@ -25,7 +25,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xc9d6e6, sun: 0xffeccc, sunI: 1.3, sky: 0x8fb6ee, gnd: 0x8a5a3c, hemiI: 0.62, tint: [1.03, 1.0, 0.96], sat: 1.1, sunOff: [-86, 82, 46], split: [[0.95, 0.99, 1.07], [1.05, 1.0, 0.94]] },   // the Moki Dugway: a clear afternoon over the Utah desert, a deep blue sky, the warm sun from the south-west (the cliff's red light bounced into the shade)
     say: 'the Moki Dugway', rainP: 0.1,
     zivali: { a: ['bighorn', 'coyote', 'cowB'], t: ['signPost'], open: true },
-    id: 'moki', name: 'Moki Dugway, ZDA', theme: 'moki', open: true, modes: ['race', 'tt', 'traffic'], laps: 1, halfWidth: 4.5,
+    id: 'moki', test: true, name: 'Moki Dugway, ZDA', theme: 'moki', open: true, modes: ['race', 'tt', 'traffic'], laps: 1, halfWidth: 4.5,
     desc: 'Cesta Utah 261 na jugovzhodu Utaha (ZDA): iz doline Valley of the Gods po makadamskih serpentinah, vklesanih v pečino iz rdečega peščenjaka, na planoto Cedar Mesa. Od 1.624 m do 1.961 m, pet serpentin, naklon do 10 %, cesta je ozka in ograj skoraj ni. Dirka z 21 tekmeci, vzpon proti uri ali dvoboj z enim tekmecem med avtomobili, ki vozijo v obe smeri.',
     en: { name: 'Moki Dugway, USA', desc: 'Utah Route 261 in south-eastern Utah (USA): from the Valley of the Gods up gravel switchbacks carved into a cliff of red sandstone, onto Cedar Mesa. From 1,624 m to 1,961 m, five switchbacks, grades up to 10 %, a narrow road with hardly any guardrails. A race against 21 rivals, a climb against the clock or a duel with one rival among the cars coming both ways.' },   // (the English page: Jezik · Language)
     alt: [1624,1961],

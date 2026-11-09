@@ -22,7 +22,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc4d0d0, sun: 0xfff0d8, sunI: 1.1, sky: 0xc2d4e6, gnd: 0x4a5a32, hemiI: 0.66, tint: [1.0, 1.01, 0.98], sat: 1.08, sunOff: [-66, 92, -64] },   // Serra do Rio do Rastro: a humid afternoon over the rainforest, the sun from the north-west (the southern hemisphere), a soft green-grey haze
-    rainP: 0.4,
+    say: 'Rio do Rastro', rainP: 0.4,
     zivali: { a: ['coati', 'cowB', 'horse'], t: ['signPost', 'picnic'] },
     id: 'rastro', name: 'Rio do Rastro, Brazilija', theme: 'rastro', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line: the second row of a bigger field's parking would stand at the barrier

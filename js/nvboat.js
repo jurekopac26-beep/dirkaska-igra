@@ -3,9 +3,12 @@
 // 22 m wide along the go-kart's line (H3.kartPts: its figure eight), a shallow shelf by the banks, family beaches on both banks (umbrellas,
 // loungers, volleyball nets, coloured cabins; inflatable rings in the water), three lines of red-white floats, buoys at the bends (red
 // inside, yellow outside), a start of chequered floats with two flags, jet skis on the grid and out on the course, a boat; a canal from
-// its east end under the ring road (a humped bridge, the road 2.4 m up) to the sea; HOME's way over the water on a wooden bridge
+// its east end under the ring road (a humped bridge, the road 2.4 m up, 45 m each way down; the user, 4. 11. 2026: a car on the ground over
+// it at 180 km/h) to the sea; HOME's way over the water on a wooden bridge
 // (1.7 m up, ramps of 8 m) and HOME's pier with two jet skis. The ground there is folded away and drawn anew as one height field (the
 // beach, the banks, the bed under the water; the meadow round it the one meadow), the water one surface at the sea's level.
+// HOME's rails and the ring road bridge's walls are solid for the car (solidAlong: H3.solids, js/nvwalls.js; the user, 4. 11. 2026,
+// »skoči tam, kjer smo naredili most«: through the rails it fell off the deck's edge and was thrown up, see js/core.js nvGround).
 // js/newmap.js hub4G (H3.BOAT): plan() where the go-kart track was planned (no go-kart track, no practice lot, no big lot: they lay
 // where the water and the beaches are now), lifts() before the roads are built (the two bridges are ground: H3.crests, so the ring road,
 // HOME's way and the car follow them), build() after the rest of the map, before the still meshes are merged (js/nvbake.js).
@@ -16,13 +19,18 @@ const NVBoat = (function () {
   const ZF = 9.2, ZM = 10.6;   // (what lay there is folded where the water is nearer than ZF; the ground drawn anew to ZM: it overlaps the meadow round it)
   const NORTH = 168.2, NFOLD = 171.5;   // (not further north: the parking bays along the main straight and the fence behind them stay)
   const HB = 1.7, HR = 8, HWH = 3.4;   // (HOME's wooden bridge: its deck over the water, its ramps, its half width)
-  const RB = 2.4, RS = 8, RR = 22, RWALL = 6.8;   // (the ring road's humped bridge: its height, its flat top's half length, its ramps, its walls' offset)
+  // (the ring road's humped bridge: its height; its half length (from the canal to its feet) and its round top's (convex to RT, concave below it);
+  // its walls' offset from the road's line, their half length over the canal and the rails' beyond them (to where the deck is 1.5 m up);
+  // the smoothing of the road's line it lies along (its bends' corners: its slope would break there on the inner lanes))
+  const RB = 2.4, RF = 45, RT = 37, RWALL = 6.8, RC = 9, RR = 25, RSM = 8;
   // the canal: from the course's east end across to the ring road, under it (square to it) and north-east to the sea
   const CANAL = [[108, 221], [122, 220.6], [135, 219], [145.5, 210.3], [152.5, 203.2], [160, 195.6], [167.5, 188], [175, 180.4], [182, 173.3], [192, 164]];
   const UC = [0xd8282a, 0x2a5ab8, 0xf2c12e, 0x3fbf6a, 0xff7a1a], JC = [0xd8282a, 0xf2c12e, 0x2a5ab8, 0x3fbf6a, 0xff7a1a, 0xf4f4f0];
   const sst = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const mix = (a, b, t) => a + (b - a) * t;
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
+  // the bed's depth u m out from the water's edge (kc: the canal's share): the course's shallow shelf, then 2.2 m; the canal's 1.8 m
+  const bedDepth = (u, kc) => mix(0.22 * sst(0, 0.8, u) + 2.0 * sst(3, 6.5, u), 0.4 * sst(0, 0.6, u) + 1.4 * sst(1, 3.5, u), kc);
   let P = null;   // (the plan: the course's and the canal's lines, the water's edge; the bridges)
 
   // a CatmullRom line through pts (as js/newmap.js draws its roads: centripetal) every ~step m: { P: [[x, z]], A: arc lengths, L }
@@ -37,6 +45,19 @@ const NVBoat = (function () {
     return (x, z) => { const a = Math.floor((x - x0) / C), b = Math.floor((z - z0) / C); r.d = 1e9; r.s = 0; r.i = -1; if (a < 0 || b < 0 || a >= nx || b >= nz) return r;
       for (const i of cells[a * nz + b]) { const [ax, az] = Q[i - 1], [bx, bz] = Q[i], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1e-9, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), e = Math.hypot(x - ax - dx * t, z - az - dz * t);
         if (e < r.d) { r.d = e; r.s = A[i - 1] + Math.sqrt(l2) * t; r.i = i; } } return r; }; }
+  // the same, smooth: s from the nearest segment's point between its ends' normals (each the mean of its two segments'), so that it goes
+  // on without a stop or a jump at the line's corners on either side of it
+  function nearSmooth(S, R) { const base = nearIndex(S, R), Q = S.P, A = S.A, n = Q.length, NX = new Float64Array(n), NZ = new Float64Array(n);
+    for (let i = 0; i < n; i++) { const a = Q[Math.max(0, i - 1)], b = Q[Math.min(n - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; NX[i] = -(b[1] - a[1]) / l; NZ[i] = (b[0] - a[0]) / l; }
+    const r = { d: 1e9, s: 0, i: -1 }, cr = (ux, uz, vx, vz) => ux * vz - uz * vx;
+    return (x, z) => { const q = base(x, z); r.d = q.d; r.s = q.s; r.i = q.i; if (q.i < 0) return r; let i = q.i;
+      for (let it = 0; it < 4; it++) { const [ax, az] = Q[i - 1], [bx, bz] = Q[i], Dx = bx - ax, Dz = bz - az, ex = x - ax, ez = z - az, n0x = NX[i - 1], n0z = NZ[i - 1], dnx = NX[i] - n0x, dnz = NZ[i] - n0z;
+        // (t: where (x, z) - (a + t D) lies along the normal n0 + t dn: a quadratic in t, the root on the segment)
+        const qa = -cr(Dx, Dz, dnx, dnz), qb = cr(ex, ez, dnx, dnz) - cr(Dx, Dz, n0x, n0z), qc = cr(ex, ez, n0x, n0z); let t;
+        if (Math.abs(qa) < 1e-12) t = -qc / qb; else { const dd = Math.sqrt(Math.max(0, qb * qb - 4 * qa * qc)), t1 = (-qb + dd) / (2 * qa), t2 = (-qb - dd) / (2 * qa); t = Math.abs(t1 - 0.5) < Math.abs(t2 - 0.5) ? t1 : t2; }
+        if (t < 0 && i > 1) { i--; continue; } if (t > 1 && i < n - 1) { i++; continue; } t = Math.max(0, Math.min(1, t));
+        const px = ax + Dx * t, pz = az + Dz * t; r.d = Math.hypot(x - px, z - pz); r.s = A[i - 1] + Math.hypot(Dx, Dz) * t; r.i = i; break; }
+      return r; }; }
   // a point of a sampled line by its arc length (closed: round), its tangent and its normal (left of the way)
   function along(S, s, closed) { const L = S.L; s = closed ? ((s % L) + L) % L : Math.max(0, Math.min(L, s)); let lo = 0, hi = S.A.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (S.A[m] <= s) lo = m; else hi = m; }
     const t = (s - S.A[lo]) / ((S.A[hi] - S.A[lo]) || 1), [ax, az] = S.P[lo], [bx, bz] = S.P[hi], l = Math.hypot(bx - ax, bz - az) || 1;
@@ -51,7 +72,7 @@ const NVBoat = (function () {
     // the water's edge, signed (negative on the water): the course and the canal joined smoothly; kc: how much of it is the canal's
     const parts = (x, z, out) => { const a = nK(x, z), s = a.s, da = a.d - HW, db = nC(x, z).d - cw(x); out.d = smin(da, db, 4); out.kc = sst(-2, 2, da - db); out.s = s; return out; };
     const tmp = { d: 0, kc: 0, s: 0 }, dW = (x, z) => parts(x, z, tmp).d;
-    P = { K, C, nK, nC, cw, parts, dW, off: false };
+    P = { K, C, nK, nC, cw, parts, dW, off: false, depth: (x, z) => { parts(x, z, tmp); return tmp.d < 0 ? bedDepth(-tmp.d, tmp.kc) : 0; } };   // (depth: js/nvwater.js)
     return (H3.waterCourse = P); }
 
   // ---- the two bridges as ground (before the roads are built: the ring road and HOME's way are drawn on H3.ground, the car drives on it)
@@ -63,14 +84,32 @@ const NVBoat = (function () {
         S.P.forEach(([x, z], i) => { if (S.A[i] < sa || S.A[i] > sb) return; bb[0] = Math.min(bb[0], x - 6); bb[1] = Math.max(bb[1], x + 6); bb[2] = Math.min(bb[2], z - 6); bb[3] = Math.max(bb[3], z + 6); });
         P.home = { S, near, sa, sb, a, b, lift, bb };
         H3.crests.push({ bb, f: (x, z) => { if (P.off || x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) return 0; const q = near(x, z); return q.d <= HWH + 0.2 && q.s > sa && q.s < sb ? lift(q.s) : 0; } }); } }
-    // the ring road over the canal: where its line crosses the canal's, a flat top and ramps; beside it an embankment (2:1) down to the ground
+    // the ring road over the canal: where its line crosses the canal's, a round hump (the user, 4. 11. 2026: »daljši in zaobljen«, the car
+    // on the ground over it at 100, 140 and 180 km/h; before, 16 m flat on top and ramps of 22 m, it was 0.1, 0.6 and 1 m in the air);
+    // beside it an embankment (2:1) down to the ground. The hump lies along the road's line smoothed (RSM m): along the line itself the
+    // inner lanes' metres stretch and shrink at its corners (its bend changes there), the hump's slope would break and throw the car up.
+    // Its deck is the hump over a straight line between the ground at its two feet (not over the ground under it: the land by the sea
+    // rises there by 0.3 m, a crest of its own), back to the ground over its feet (RT to RF): (x, z, g) => metres over the ground g
     if (H3.RP && H3.RP.nord) { const S = sample(H3.RP.nord, false, 0.75); let bi = -1, bd = 1e9; S.P.forEach(([x, z], i) => { const d = P.nC(x, z).d; if (d < bd) { bd = d; bi = i; } });
-      if (bi > 0 && bd < 3) { const sc = S.A[bi], span = RS + RR + 4, L2 = { P: [], A: [] }; S.P.forEach((p, i) => { if (Math.abs(S.A[i] - sc) <= span) { L2.P.push(p); L2.A.push(S.A[i]); } }); L2.L = L2.A[L2.A.length - 1];
-        const near = nearIndex(L2, 16), prof = (s) => 1 - sst(RS, RS + RR, Math.abs(s - sc)), emb = (s, d) => { const p = prof(s); if (p <= 0) return 0; return RB * p * (1 - sst(RWALL, RWALL + 1 + 2 * RB * p, d)); };
+      if (bi > 0 && bd < 3) { const sc = S.A[bi], span = RF + 4, L2 = { P: [], A: [] };
+        // (the line goes on straight past the road's end, 60 m north of the canal: for the smoothing)
+        { const n = S.P.length, [ax, az] = S.P[n - 2], [bx, bz] = S.P[n - 1], l = Math.hypot(bx - ax, bz - az) || 1; for (let k = 1; k <= 60; k++) { S.P.push([bx + (bx - ax) / l * 0.75 * k, bz + (bz - az) / l * 0.75 * k]); S.A.push(S.A[n - 1] + 0.75 * k); } S.L = S.A[S.A.length - 1]; }
+        S.P.forEach((p, i) => { if (Math.abs(S.A[i] - sc) <= span) { L2.P.push(p); L2.A.push(S.A[i]); } }); L2.L = L2.A[L2.A.length - 1];
+        const Ls = { P: [], A: [0] }; for (let s = sc - span - 2; s <= sc + span + 2 + 1e-6; s += 0.5) { let wx = 0, wz = 0, ws = 0; for (let t = -3 * RSM; t <= 3 * RSM + 1e-6; t += 0.25) { const p = along(S, s + t, false), w = Math.exp(-t * t / (2 * RSM * RSM)); wx += w * p.x; wz += w * p.z; ws += w; } Ls.P.push([wx / ws, wz / ws]); }
+        for (let i = 1; i < Ls.P.length; i++) Ls.A.push(Ls.A[i - 1] + Math.hypot(Ls.P[i][0] - Ls.P[i - 1][0], Ls.P[i][1] - Ls.P[i - 1][1])); Ls.L = Ls.A[Ls.A.length - 1];
+        const near = nearSmooth(L2, 16), nS = nearSmooth(Ls, 20), c0 = along(S, sc, false), u0 = nS(c0.x, c0.z).s, uOf = (x, z) => nS(x, z).s - u0;
+        const prof = (u) => { u = Math.abs(u); return u >= RF ? 0 : u <= RT ? 1 - u * u / (RT * RF) : (RF - u) * (RF - u) / ((RF - RT) * RF); };
+        // (the ground under it without it; the straight line between its feet once the land by the sea is there, js/newmap.js H3.water)
+        const under = (x, z) => { const o = P.off; P.off = true; const y = H3.gy(x, z); P.off = o; return y; }, fa = along(S, sc - RF, false), fb = along(S, sc + RF, false); let ya = null, yb = 0;
+        const line = (u) => { if (ya === null) { if (!H3.water) return null; ya = under(fa.x, fa.z); yb = under(fb.x, fb.z); } return ya + (yb - ya) * Math.max(0, Math.min(1, (u + RF) / (2 * RF))); };
+        const rel = (x, z, g) => { const d = near(x, z).d; if (d > RWALL + 1.5 + 2 * RB) return 0; const u = uOf(x, z), au = Math.abs(u); if (au >= RF) return 0;
+          let h = RB * prof(u); const w = 1 - sst(RT, RF, au); if (w > 0) { const l = line(u); if (l !== null) h += w * (l - (g === undefined ? under(x, z) : g)); }
+          if (d <= RWALL) return h; const e = h * (1 - sst(RWALL, RWALL + 1 + 2 * Math.abs(h), d));
+          // (beside the walls over the canal the water, not the embankment: a car off the bridge falls into it)
+          return e !== 0 && d > RWALL + 0.3 && P.dW(x, z) < 0.5 ? 0 : e; };
         const bb = [1e9, -1e9, 1e9, -1e9]; for (const [x, z] of L2.P) { bb[0] = Math.min(bb[0], x - 14); bb[1] = Math.max(bb[1], x + 14); bb[2] = Math.min(bb[2], z - 14); bb[3] = Math.max(bb[3], z + 14); }
-        P.ring = { L2, near, sc, prof, emb, bb };
-        // (beside the walls over the canal the water, not the embankment: a car off the bridge falls into it)
-        H3.crests.push({ bb, f: (x, z) => { if (P.off || x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3]) return 0; const q = near(x, z); if (q.d > RWALL + 1 + 2 * RB) return 0; const e = emb(q.s, q.d); if (e <= 0) return 0; return q.d > RWALL + 0.3 && P.dW(x, z) < 0.5 ? 0 : e; } }); } }
+        P.ring = { L2, near, sc, uOf, prof, rel, bb };
+        H3.crests.push({ bb, f: (x, z) => P.off || x < bb[0] || x > bb[1] || z < bb[2] || z > bb[3] ? 0 : rel(x, z) }); } }
   }
 
   // ---- the build (after the rest of the map, before the merging)
@@ -85,14 +124,14 @@ const NVBoat = (function () {
     const seaSeg = []; if (SEA) for (let i = 0; i < SEA.length; i++) { const a = SEA[i], b = SEA[(i + 1) % SEA.length]; if (Math.min(a[0], b[0]) < 240 && Math.max(a[0], b[0]) > 130 && Math.min(a[1], b[1]) < 230 && Math.max(a[1], b[1]) > 140) seaSeg.push([a, b]); }
     const segD = (x, z) => { let b = 1e9; for (const [[ax, az], [bx, bz]] of seaSeg) { const dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1))); b = Math.min(b, Math.hypot(x - ax - dx * t, z - az - dz * t)); } return b; };
     for (let i = 0; i <= NX; i++) for (let j = 0; j <= NZ; j++) { const q = i * N1 + j, x = X0 + i, z = Z0 + j; P.parts(x, z, tmp); D[q] = tmp.d; KW[q] = tmp.kc; G[q] = H3.ground(x, z);
-      if (P.ring) { const r = P.ring.near(x, z); if (r.d < 40) { RD[q] = r.d; RA[q] = Math.abs(r.s - P.ring.sc); EM[q] = P.ring.emb(r.s, r.d); } }
+      if (P.ring) { const r = P.ring.near(x, z); if (r.d < 40) { RD[q] = r.d; RA[q] = Math.abs(P.ring.uOf(x, z)); EM[q] = P.ring.rel(x, z, G[q]); } }
       if (seaSeg.length && x > 130) { const d = segD(x, z); SD[q] = inPoly(SEA, x, z) ? -d : d; } }
     P.off = false;
     const idx = (x, z) => { const i = Math.round(x - X0), j = Math.round(z - Z0); return i < 0 || j < 0 || i > NX || j > NZ ? -1 : i * N1 + j; };
     // ---- what lay there goes: everything where the water and the beaches are now (fold: all), the ground under the ring road where the
     // canal goes under it (fold: low things only, the road stays), HOME's way where its wooden bridge is (its surface); the roads that stay
     // (the parking bays, the ring road, the circuit) and HOME's way off the bridge are kept
-    const MF = new Float32Array(NV); for (let q = 0; q < NV; q++) { const j = q % N1, z = Z0 + j; if (z < NFOLD || SD[q] < 0) continue; if (D[q] < ZF) MF[q] = 1e9; if (RD[q] > RWALL && RD[q] < RWALL + 1 + 2 * RB && RA[q] < RS + RR - 0.5) MF[q] = 1e9; }
+    const MF = new Float32Array(NV); for (let q = 0; q < NV; q++) { const j = q % N1, z = Z0 + j; if (z < NFOLD || SD[q] < 0) continue; if (D[q] < ZF) MF[q] = 1e9; if (RD[q] > RWALL && RD[q] < RWALL + 1 + 2 * RB && RA[q] < RF - 0.5) MF[q] = 1e9; }
     const keepAlong = (pts, hw, yMax) => { for (let k = 1; k < pts.length; k++) { const [ax, az] = pts[k - 1], [bx, bz] = pts[k], L = Math.hypot(bx - ax, bz - az); for (let u = 0; u <= L; u += 0.5) { const x = ax + (bx - ax) * u / (L || 1), z = az + (bz - az) * u / (L || 1);
       for (let di = -Math.ceil(hw); di <= Math.ceil(hw); di++) for (let dj = -Math.ceil(hw); dj <= Math.ceil(hw); dj++) { const q = idx(x + di, z + dj); if (q < 0 || Math.hypot(di + Math.round(x) - x, dj + Math.round(z) - z) > hw) continue; MF[q] = yMax(q); } } } };
     for (const e of H3.net || []) { if (e.id === 'kart' || e.id === 'home' || !e.cv) continue; const pts = []; for (let s = 0; s <= e.L; s += 2) { const p = e.cv.getPointAt(Math.min(1, s / e.L)); pts.push([p.x, p.z]); }
@@ -104,7 +143,7 @@ const NVBoat = (function () {
     const Mq = (x, z) => { const q = idx(x, z); return q < 0 ? 0 : MF[q]; };
     out.fold = foldAll(MK, H3, Mq, [X0, X1, Z0, Z1]);
     // ---- the new ground: one height field (1 m), in pieces of 48 m (merged by cells: js/nvbake.js), the meadow round it the one meadow
-    const inFloor = (q) => { const j = q % N1; if (Z0 + j < NORTH) return false; return D[q] < ZM || (RD[q] < RWALL + 5 + 2 * RB && RA[q] < RS + RR + 4); };
+    const inFloor = (q) => { const j = q % N1; if (Z0 + j < NORTH) return false; return D[q] < ZM || (RD[q] < RWALL + 5 + 2 * RB && RA[q] < RF + 4); };
     const HT = new Float32Array(NV), COL = new Float32Array(NV * 3), MW = new Float32Array(NV);
     const cA = new THREE.Color(0xd9c08f), cB = new THREE.Color(0x7d8a5e), cC = new THREE.Color(0x2b5566), cD = new THREE.Color(0x163746), wetS = new THREE.Color(0.55, 0.47, 0.34), dryS = new THREE.Color(0.74, 0.64, 0.47).lerp(new THREE.Color(0.9, 0.85, 0.72), 0.5), cc = new THREE.Color(), cb = new THREE.Color();
     const pal = (dep) => { if (dep < 0.35) cc.copy(cA).lerp(cB, dep / 0.35); else if (dep < 1.6) cc.copy(cB).lerp(cC, (dep - 0.35) / 1.25); else cc.copy(cC).lerp(cD, Math.min(1, (dep - 1.6) / 2.5)); return cc; };
@@ -112,7 +151,7 @@ const NVBoat = (function () {
       // (under the ring road's deck a little lower than it: the road is drawn on H3.ground)
       const land = G[q] + 0.01 + EM[q] - (RD[q] < RWALL ? 0.08 : 0), slope = mix(0.05, 0.4, kc); let h;
       if (d >= 0) h = smin(Math.max(land, WL + 0.03 + 0.05 * Math.min(d, 3)), WL + 0.07 * sst(0, 0.8, d) + slope * d, 0.3);
-      else { const u = -d, dk = 0.22 * sst(0, 0.8, u) + 2.0 * sst(3, 6.5, u), dc = 0.4 * sst(0, 0.6, u) + 1.4 * sst(1, 3.5, u); h = WL - mix(dk, dc, kc); }
+      else h = WL - bedDepth(-d, kc);
       if (d < 0) { pal(WL - h); if (SD[q] < 12 && W && W.bedAt) { const b = W.bedAt(x, z, cb), f = 1 - sst(0, 12, SD[q]); h = mix(h, Math.min(h, b.y), f); cc.lerp(cb, f); } MW[q] = 0; }
       else { const hA = h - WL, bw = mix(BEACH, CBEACH, kc); cc.copy(wetS).lerp(dryS, sst(0, 0.1, hA)); MW[q] = sst(bw - 1.2, bw + 1.2, d); if (EM[q] > 0.05 && d > 1.5) MW[q] = 1; }
       HT[q] = h; COL[q * 3] = cc.r; COL[q * 3 + 1] = cc.g; COL[q * 3 + 2] = cc.b; }
@@ -128,7 +167,7 @@ const NVBoat = (function () {
     Object.assign(WM, { polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 6 });
     out.water = waterPieces(MK, { X0, Z0, NX, NZ, N1, D, SD, WL, mat: WM, piece: 48 });
     // ---- the rest: the bridges, the pier, the course's things
-    const ROOT = new THREE.Group(); ROOT.userData.nvboat = true; MK.add(ROOT); P.root = ROOT;
+    const ROOT = new THREE.Group(); ROOT.userData.nvboat = true; MK.add(ROOT); P.root = ROOT; P.skis = [];
     const gy = (x, z) => { const q = idx(x, z); return q >= 0 && inFloor(q) ? bil(HT, x, z) : H3.ground(x, z); };
     const bil = (A, x, z) => { const fx = Math.max(0, Math.min(NX - 0.001, x - X0)), fz = Math.max(0, Math.min(NZ - 0.001, z - Z0)), i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, q = i * N1 + j; return (A[q] * (1 - v) + A[q + 1] * v) * (1 - u) + (A[q + N1] * (1 - v) + A[q + N1 + 1] * v) * u; };
     const ctx = { MK, H3, WL, ROOT, gy, Dq: (x, z) => { const q = idx(x, z); return q < 0 ? 1e9 : D[q]; }, ours: (x, z) => Mq(x, z) > 1e8 && z > NFOLD + 2 };
@@ -196,6 +235,12 @@ const NVBoat = (function () {
       const m = new THREE.Mesh(g, o.mat); m.renderOrder = 2; m.receiveShadow = true; MK.add(m); nv += pos.length / 3; np++; }
     return { verts: nv, pieces: np }; }
 
+  // a bridge's side as solid lines for the car (H3.solids, js/nvwalls.js): at off m each side of its line from s0 to s1, a piece every 2 m
+  function solidAlong(H3, at, s0, s1, off, r, e) {
+    const S = H3.solids || (H3.solids = []), n0 = S.length, n = Math.max(1, Math.ceil((s1 - s0) / 2));
+    for (const sg of [-1, 1]) { let q0 = null; for (let k = 0; k <= n; k++) { const p = at(s0 + (s1 - s0) * k / n), q = [p.x + p.nx * sg * off, p.z + p.nz * sg * off];
+      if (q0) S.push(e != null ? { ax: q0[0], az: q0[1], bx: q[0], bz: q[1], r, e } : { ax: q0[0], az: q0[1], bx: q[0], bz: q[1], r }); q0 = q; } }
+    return S.length - n0; }
   // ---- HOME's wooden bridge: the deck of planks along the way (its surface where the car drives: H3.ground), the beams' ends, posts down
   // to the bed, a rail on both sides; HOME's pier beside its north end with two jet skis
   function homeBridge(c) {
@@ -222,27 +267,33 @@ const NVBoat = (function () {
       if (c.Dq(x0 + dx * L, z0 + dz * L) < -1) { const cx = x0 + dx * L / 2, cz = z0 + dz * L / 2, g2 = new THREE.Group(); g2.position.set(cx, WL + 0.45, cz); g2.rotation.y = -hd; ROOT.add(g2);
         const d2 = new THREE.Mesh(new THREE.BoxGeometry(L, 0.18, 2.4), wood); d2.receiveShadow = true; d2.castShadow = true; g2.add(d2);
         for (let i = 0; i <= 4; i++) for (const sg of [-1, 1]) { const pp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.6, 0.22), lam(0x5a4430)); pp.position.set(-L / 2 + 0.2 + i * (L - 0.4) / 4, -0.7, sg * 1.08); g2.add(pp); }
-        const nx2 = -dz, nz2 = dx; for (const [f, sg, col] of [[0.35, 1, 0x2a5ab8], [0.75, 1, 0x3fbf6a]]) jetski(c, x0 + dx * L * f + nx2 * sg * 2.1, z0 + dz * L * f + nz2 * sg * 2.1, hd, col, false);
+        const nx2 = -dz, nz2 = dx; for (const [f, sg, col] of [[0.35, 1, 0x2a5ab8], [0.75, 1, 0x3fbf6a]]) { const x = x0 + dx * L * f + nx2 * sg * 2.1, z = z0 + dz * L * f + nz2 * sg * 2.1; P.skis.push({ g: jetski(c, x, z, hd, col, false), x, z, h: hd, col, at: 'pier' }); }   // (P.skis: js/nvwater.js)
         pier = [Math.round(cx), Math.round(cz)]; } }
-    return { from: Math.round(H.sa), to: Math.round(H.sb), posts: posts.length, pier }; }
+    // (its rails hold the car on the deck: solid for it, js/nvwalls.js; the user, 4. 11. 2026: »skoči tam, kjer smo naredili most«, the car
+    // over the deck's edge, off it and back up it thrown 6-14 m into the air)
+    const rails = solidAlong(c.H3, dk, H.sa + 0.6, H.sb - 0.5, HWH - 0.1, 0.08, 0.15);
+    return { from: Math.round(H.sa), to: Math.round(H.sb), posts: posts.length, pier, rails }; }
 
-  // ---- the ring road's humped bridge: walls on both sides over the canal (down into the bed), a white coping, rails; the deck's underside
+  // ---- the ring road's humped bridge: walls on both sides over the canal (down into the bed), a white coping, rails on them and on along
+  // the embankment to where the deck is 1.5 m up (RR); the deck's underside. Each side at the deck's own height by its edge
   function ringBridge(c) {
     const { MK, WL, ROOT } = c, R = P.ring, lam = MK.lam, conc = lam(0xb9b6ae), white = lam(0xf0eee8);
-    const L2 = { P: R.L2.P, A: R.L2.A.map(a => a - R.L2.A[0]), L: R.L2.L - R.L2.A[0] }, sc = R.sc - R.L2.A[0], at = (s) => along(L2, s, false), deckY = (p) => c.H3.ground(p.x, p.z) + 0.04;
-    const wall = (sgn) => { const wp = [], wi = [], cp = [], ci = []; let k = 0; for (let s = sc - RS - 1; s <= sc + RS + 1.01; s += 1) { const p = at(s), y = deckY(p), x = p.x + p.nx * sgn * RWALL, z = p.z + p.nz * sgn * RWALL, xo = x + p.nx * sgn * 0.45, zo = z + p.nz * sgn * 0.45;
+    const L2 = { P: R.L2.P, A: R.L2.A.map(a => a - R.L2.A[0]), L: R.L2.L - R.L2.A[0] }, sc = R.sc - R.L2.A[0], at = (s) => along(L2, s, false), deckY = (p, o = 0) => c.H3.ground(p.x + p.nx * o, p.z + p.nz * o) + 0.04;
+    const wall = (sgn) => { const wp = [], wi = [], cp = [], ci = []; let k = 0; for (let s = sc - RC; s <= sc + RC + 0.01; s += 1) { const p = at(s), y = deckY(p, sgn * (RWALL - 0.3)), x = p.x + p.nx * sgn * RWALL, z = p.z + p.nz * sgn * RWALL, xo = x + p.nx * sgn * 0.45, zo = z + p.nz * sgn * 0.45;
         wp.push(x, y + 0.55, z, x, WL - 2.6, z, xo, y + 0.55, zo, xo, WL - 2.6, zo); cp.push(x - p.nx * sgn * 0.05, y + 0.56, z - p.nz * sgn * 0.05, xo + p.nx * sgn * 0.05, y + 0.56, zo + p.nz * sgn * 0.05);
         if (k) { const a = (k - 1) * 4, b = k * 4; wi.push(a, a + 1, b, b, a + 1, b + 1, a + 2, b + 2, a + 3, a + 3, b + 2, b + 3); ci.push((k - 1) * 2, k * 2, (k - 1) * 2 + 1, (k - 1) * 2 + 1, k * 2, k * 2 + 1); } k++; }
       const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3)); wg.setIndex(wi); wg.computeVertexNormals(); const wm = new THREE.Mesh(wg, conc); wm.material.side = THREE.DoubleSide; wm.castShadow = true; wm.receiveShadow = true; ROOT.add(wm);
       const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3)); cg.setIndex(ci); cg.computeVertexNormals(); const cm = new THREE.Mesh(cg, white); cm.material.side = THREE.DoubleSide; ROOT.add(cm);
-      for (let s = sc - RS - 6; s <= sc + RS + 6; s += 2) { const p = at(s), y = deckY(p), x = p.x + p.nx * sgn * (RWALL + 0.22), z = p.z + p.nz * sgn * (RWALL + 0.22), base = Math.abs(s - sc) <= RS + 1 ? y + 0.56 : y; box(ROOT, 0.1, 0.95, 0.1, white, x, base + 0.47, z, 0); }
-      { const rp = [], ri = []; let m = 0; for (let s = sc - RS - 6; s <= sc + RS + 6.01; s += 1) { const p = at(s), y = deckY(p), base = Math.abs(s - sc) <= RS + 1 ? y + 0.56 : y, x = p.x + p.nx * sgn * (RWALL + 0.22), z = p.z + p.nz * sgn * (RWALL + 0.22); rp.push(x, base + 0.9, z, x, base + 1.0, z); if (m) ri.push((m - 1) * 2, m * 2, (m - 1) * 2 + 1, (m - 1) * 2 + 1, m * 2, m * 2 + 1); m++; }
+      for (let s = sc - RR; s <= sc + RR + 0.01; s += 2) { const p = at(s), y = deckY(p, sgn * (RWALL - 0.3)), x = p.x + p.nx * sgn * (RWALL + 0.22), z = p.z + p.nz * sgn * (RWALL + 0.22), base = Math.abs(s - sc) <= RC ? y + 0.56 : y; box(ROOT, 0.1, 0.95, 0.1, white, x, base + 0.47, z, 0); }
+      { const rp = [], ri = []; let m = 0; for (let s = sc - RR; s <= sc + RR + 0.01; s += 1) { const p = at(s), y = deckY(p, sgn * (RWALL - 0.3)), base = Math.abs(s - sc) <= RC ? y + 0.56 : y, x = p.x + p.nx * sgn * (RWALL + 0.22), z = p.z + p.nz * sgn * (RWALL + 0.22); rp.push(x, base + 0.9, z, x, base + 1.0, z); if (m) ri.push((m - 1) * 2, m * 2, (m - 1) * 2 + 1, (m - 1) * 2 + 1, m * 2, m * 2 + 1); m++; }
         const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setIndex(ri); rg.computeVertexNormals(); const rm = new THREE.Mesh(rg, white); rm.material.side = THREE.DoubleSide; ROOT.add(rm); } };
     wall(-1); wall(1);
     // (the deck's underside, seen from the water under it)
-    { const up = [], ui = []; let k = 0; for (let s = sc - RS - 1; s <= sc + RS + 1.01; s += 1) { const p = at(s), y = deckY(p) - 0.45; up.push(p.x - p.nx * RWALL, y, p.z - p.nz * RWALL, p.x + p.nx * RWALL, y, p.z + p.nz * RWALL); if (k) ui.push((k - 1) * 2, k * 2, (k - 1) * 2 + 1, (k - 1) * 2 + 1, k * 2, k * 2 + 1); k++; }
+    { const up = [], ui = []; let k = 0; for (let s = sc - RC; s <= sc + RC + 0.01; s += 1) { const p = at(s); up.push(p.x - p.nx * RWALL, deckY(p, 0.3 - RWALL) - 0.45, p.z - p.nz * RWALL, p.x + p.nx * RWALL, deckY(p, RWALL - 0.3) - 0.45, p.z + p.nz * RWALL); if (k) ui.push((k - 1) * 2, k * 2, (k - 1) * 2 + 1, (k - 1) * 2 + 1, k * 2, k * 2 + 1); k++; }
       const ug = new THREE.BufferGeometry(); ug.setAttribute('position', new THREE.Float32BufferAttribute(up, 3)); ug.setIndex(ui); ug.computeVertexNormals(); const um = new THREE.Mesh(ug, conc); um.material.side = THREE.DoubleSide; ROOT.add(um); }
-    const p = at(sc); return { at: [Math.round(p.x), Math.round(p.z)], top: +(deckY(p)).toFixed(2) }; }
+    // (the walls and the rails beyond them are solid for the car: it is not over the edge into the canal, nor back up from the water's side)
+    const walls = solidAlong(c.H3, at, sc - RR, sc + RR, RWALL + 0.22, 0.24);
+    const p = at(sc); return { at: [Math.round(p.x), Math.round(p.z)], top: +(deckY(p)).toFixed(2), walls }; }
 
   // ---- the course's things (the user's choice: the wide course with beaches, look F, a family beach)
   function dress(c) {

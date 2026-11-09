@@ -17,7 +17,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 5 | Označevanje | končano |
 | 6 | Slika in pošiljanje | končano (skupaj s 7) |
 | 7 | Zastavica med dirko | končano (skupaj s 6) |
-| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog) |
+| 8 | Skrito v izdaji za Google Play | odloženo (uporabnik 29. 10.: tik pred objavo, skupaj z izbrisom testnih prog; spremenjeno 9. 11.: testne proge se izbrišejo pred izidom 1. 2. 2027, načrtovano ob zamrznitvi funkcij 15. 12. 2026; o času sklopa 8 odloči uporabnik posebej) |
 | 9 | Dnevnik napak, prikaz za razvijalca | končano (skupaj z 10 in 11) |
 | 10 | G · V krogu | končano (skupaj z 9 in 11) |
 | 11 | D · Samodejne zastavice | končano (skupaj z 9 in 10) |
@@ -30,6 +30,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 | 18 | Zgodovina napak | končano |
 | 19 | Zadnji posnetki | končano |
 | 20 | Beležka v Označi, ročno Poslano | končano (veja `orodje-za-napake/belezka`) |
+| 21 | Seznama posnetkov in napak: avto, čas, večja slika, odpiranje starih zapisov | končano (PR #307, veja `orodje-za-napake/sklop-21-seznama`; uporabnik 5. 11. 2026) |
 
 **Pospešitev** (27. 10. 2026: veriga in vzporedni sklopi) je končana; opis je v `docs/arhiv/orodje-za-napake-sklopi.md`. Pravilo za svež `main` pred združitvijo je v `CLAUDE.md` (Postopek).
 
@@ -73,8 +74,8 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
 ### Označevanje
 
 - **Označi** ustavi posnetek. Ležeče je paleta navpično ob levem robu, pokonci vrstica nad časovnico. V paleti so svinčnik, 6 barv, razveljavi in radirka.
-- Ko je krog sklenjen, se tik ob njem odpre **oblaček** v isti barvi in vanj se piše. Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblaček se da premakniti.
-- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 20).
+- Ena barva na sličici pomeni en zapis (vse rdeče gre v rdeči zapis). Oblačkov ob krogih od 4. 11. 2026 ni več (uporabnik: »zbriši rdeči okvirček … imamo tukaj beležko«): zapis barve se piše v beležko.
+- Spodaj desno nad sliko je vedno odprta **beležka** za zapis trenutka (napake, predlogi, vprašanja); na računalniku gre vanjo tipkanje brez klika. Trenutek se shrani tudi brez oznake (sklop 20). Beležka je v barvi svinčnika (privzeto rdeča): z rumeno barvo se obarva rumeno in zapis gre v rumeni zapis, posebej od rdečega (uporabnik 4. 11. 2026: »beležka naj bo rdeča, če uporabnik vzame rumeno barvo, se beležka obarva rumeno in posebi shrani, kaj je bilo obkroženo z rumeno«). Pike v glavi beležke pokažejo druge barve z zapisom; tap na piko odpre njen zapis. Sklenjen krog beležko na kratko osvetli.
 - **Dodaj k zbirki** shrani trenutek (sličico, oznake, zapise) in na časovnici postavi zastavico.
 
 ### Slika in pošiljanje
@@ -83,7 +84,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - ležeče mreža 2 × 2 (do 3 trenutki in polje s podatki ter zemljevidom), pri več trenutkih več slik;
   - pokonci 3 trenutki v vrsti, podatki in zemljevid spodaj.
 - **Vsak trenutek:**
-  - sličica z oznakami in oblački;
+  - sličica z oznakami in beležko (zapisi po barvah, eden nad drugim);
   - vrstica »#n · čas · krog · metri od štarta«;
   - 4 sličice gibanja (−0,6 s, −0,3 s, 0, +0,3 s).
 - **Podatki (B):** proga, način, vreme, različica (žig `js/game.js`, ki ga objava doda s `tools/stamp.js`; lokalno brez žigov `lokalno`), naprava z modelom telefona (npr. »Galaxy A25«), datum, zemljevid z oštevilčenimi mesti.
@@ -96,7 +97,10 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - zadnjih 100 zbirk ostane v igri (IndexedDB), najnovejših 20 s polnimi slikami, starejše z malo sliko in besedilom;
   - stanje Neposlano → Poslano → Popravljeno → Zaprto;
   - gumb »Deli vse neposlane«;
-  - kljukica »Obdrži tudi slike v igri«.
+  - kljukica »Obdrži tudi slike v igri«;
+  - pri vsaki zbirki in pri vsakem posnetku (Zadnji posnetki) sta ime avta igralca in čas vožnje, zeleno, če je prišel do cilja (`KOLIBRI · 1:23.456`), sicer »ni do cilja« (sklop 21); posnetki do cilja imajo zelen rob, v Zadnjih posnetkih jih pokaže gumb »Samo do cilja«;
+  - slika v obeh seznamih in v zapisu se z dotikom poveča čez celo okno (zapre jo dotik, Esc ali Zapri); dotik besedila odpre zapis oziroma posnetek;
+  - Zgodovina napak je samo slike napak z besedilom; **posnetki dirk za prenos (.rrp) so v Zadnjih posnetkih** (povezava v Nastavitvah orodja in v Zgodovini napak); zapis, katerega posnetek je še med njimi, ima gumba Odpri posnetek in Shrani .rrp.
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
@@ -113,7 +117,7 @@ RRA-NAPAKE v=<žig> proga=<id> način=<način>/<vreme> naprava=<model> <širina>
 #2 00:41.327 K2 s=1284m rdeča »Sledi gum sredi ravnine« v_krogu=[sledi_gum, cesta:412-431]
 ```
 
-`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 20) je vrstica pred barvami, brez `v_krogu`: `#1 00:18.2 K1 s=412m beležka »Ves zaslon utripa / Predlog: manj megle«` (vrstice zapisa so združene z » / «).
+`s` je razdalja od štarta po progi (`T.idx` / `T.ds` v `Core`), `v_krogu` doda sklop 10. Zapis beležke (sklop 20) je od 4. 11. 2026 zapis svoje barve, z `v_krogu` (prazen, če te barve ni kroga): `#1 00:18.2 K1 s=412m rdeča »Ves zaslon utripa / Predlog: manj megle« v_krogu=[]` (vrstice zapisa so združene z » / «). Trenutki, shranjeni prej, imajo še vrstico `beležka »…«` pred barvami.
 
 ### Zastavica med dirko
 
@@ -134,7 +138,7 @@ Opisi končanih sklopov 1–20 (časi, vsebina, testi, opombe) so v `docs/arhiv/
   - repozitorij zaseben in GitHub Pages izklopljen.
 
   Opozorilo: zasebni repozitorij ima na brezplačnem računu 2000 min testov na mesec. Moje delo 0,5–1 h, uporabnik 20–30 min.
-- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026):** sklop 8 se naredi tik pred objavo na Google Play in v istem koraku se izbrišejo vse testne proge (`test: true` v `js/tracks/`); do takrat ostane vse, kot je.
+- **Sklop 8 · Skrito v izdaji za Google Play:** test, da igralci orodja ne vidijo; vklop samo v načinu za testiranje. 0,5 h. **Odločitev uporabnika (29. 10. 2026), spremenjena 9. 11. 2026:** testne proge (`test: true` v `js/tracks/`) se izbrišejo pred izidom 1. 2. 2027, načrtovano ob zamrznitvi funkcij 15. 12. 2026 (odločitev uporabnika 9. 11. 2026 ob 11.36, tabla #382, komentar 6737933880; prej: sklop 8 in izbris testnih prog v istem koraku tik pred objavo na Google Play); o času sklopa 8 odloči uporabnik posebej; do takrat ostane vse, kot je. Ob izbrisu Ria de Janeira (testna od 5. 11. 2026, PR #365): `rio` iz `WSPLIT` v `tools/razdeli-proge.mjs`, preostale Riove scenarije v `tests/razdelitev.test.js` (`rioKartGeo`, `RIO_W`, `RIO_Q`, `sAtS`) prestavi na Bathurst ali Crystal Palace. V istem koraku se izbriše tudi stikalo `?voznja` za tekmece po igralčevi vožnji (odločitev uporabnika 5. 11. 2026; pred izbrisom vprašaj, ali ostanejo vklopljeni za vse; `docs/ai-po-tvoji-liniji.md`).
 
 ## Skupaj
 

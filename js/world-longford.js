@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, caCondors, clamp, cone, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl,
     gable, ico, lerp, nrDist, nrGCol, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNear, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn,
-    propFloorTable, rng, sstep, texAvg, tuftGeo, tuftWindMat, vary, waterMat, wrapS
+    propFloorTable, rng, sstep, texAvg, tuftGeo, tuftWindMat, vary, waterMat, wrapS, pitJunction, pitOpen
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -271,7 +271,7 @@
     setK(LF.viaduct - 50, LF.viaduct + 40, 0, 1);   // (bales in front of the viaduct's piers, as there were)
     setK(LF.town[0], LF.town[1], 0, 3);
     for (const [a, b] of brS) setK(a - 4, b + 4, 0, 2);
-    for (let i = 0; i < N; i++) { const p = PD && T.pitAt(i * ds); if (p) kind[1][i] = p.gap ? -1 : 4; }
+    for (let i = 0; i < N; i++) { const p = PD && T.pitAt(i * ds); if (p) kind[1][i] = p.gap ? -1 : 4; if (PD && pitOpen(i)) kind[1][i] = -1; }   // (pitOpen: the deceleration and acceleration lanes too)
     const kindAt = (i, side) => kind[side2(side)][i];
     footpaths();
     const postGeo = (() => { const g = new GB(); box(g, 0, 0, 0, 0.16, 1, 0.16, 0, [0.5, 0.46, 0.4], [0.42, 0.38, 0.33], true); return g.geometry(); })();
@@ -344,6 +344,7 @@
         gp.quadUp(at(s0, pi.o - 3.62, 0.034), at(s0, pi.o - 3.38, 0.034), at(s1, pj.o - 3.38, 0.034), at(s1, pj.o - 3.62, 0.034), [wl, wl, wl, wl]);   // the white line
         if (pi.t > 0.999 && pj.t > 0.999) gp.quadUp(at(s0, pi.o + 3.5, 0.02), at(s0, pi.o + 19, 0.02), at(s1, pj.o + 19, 0.02), at(s1, pj.o + 3.5, 0.02), [apC, apC, apC, apC]);   // (the gravel apron and the shed's floor)
       }
+      pitJunction(gl, gp, hyS, [0.8, 0.78, 0.76]);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; the tar's colour)
       const TEAM = [[0.12, 0.32, 0.2], [0.85, 0.12, 0.14], [0.16, 0.3, 0.62], [0.94, 0.94, 0.9], [0.82, 0.62, 0.12], [0.14, 0.14, 0.16], [0.5, 0.52, 0.56], [0.2, 0.5, 0.68], [0.6, 0.18, 0.12], [0.86, 0.84, 0.7], [0.3, 0.42, 0.3], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
       const kbox = (g, s0, a, wo, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, wo); box(g, x, hyS(s0 + a) + y, z, sx, sy, sz, hd, col, top, nb); };
       const kcyl = (g, s0, a, wo, y, r, h, n, col, top) => { const [x, z] = atSf(s0 + a, wo); cyl(g, x, hyS(s0 + a) + y, z, r, h, n, col, top); };
@@ -360,13 +361,14 @@
         if (!mine) for (let m = 0; m < 3; m++) kcyl(g, s0, 7.6, base + 8.6, m * 0.24, 0.34, 0.22, 8, [0.12, 0.12, 0.13], m === 2 ? [0.5, 0.5, 0.52] : null);
         kbox(g, s0, 9.2, base + 7.8, 0, 0.1, 2.0, 0.1, TIMd, null, true); kbox(g, s0, 9.2, base + 7.78, 1.7, 0.7, 0.5, 0.05, tc, null, true);
         const oc = atSf(s0 + 5, 0);
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [base + 8.955, 3.3, 3.78, 4.7], wall: [base + 14.84, 0.03, 2.75, 4.55] }; }   // (its bay of the shed below, for the renderer's team colours: the board under the eave, the back wall between the posts)
       T.pitStands = null;
       { const sE = sStart + PD[1] + 24, pE = T.pitAt(sE); if (pE) { const [x, z] = atSf(sE, pE.lout + 2.6), i = T.idx(sE);   // the PITS sign at the way in
         cyl(scen.get(x, z), x, hyS(sE) - 0.3, z, 0.08, 2.9, 5, TIMd); board(x, hyS(sE) + 2.1, z, T.tx[i], T.tz[i], 2.6, 0.75, LF_AT.ban + 2); exclPush(x, z, 3); } }
       addM(gl, aMat); addM(gp, new THREE.MeshLambertMaterial({ vertexColors: true }));
       // the pit shed: an open timber shed with a corrugated iron roof behind the crews, the length of the boxes
-      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board there, 3.7 m up)
+      { const f0 = (s) => { const p = T.pitAt(s); return p ? p.o + 3.5 + 9.0 : null; }, IR = [0.62, 0.63, 0.64];   // (its eave over the garages' line: the renderer hangs each crew's coloured board under it, out.pitBoxes gar)
         for (let q = pq0 - 10; q < pq1 + 20; q += 10) { const s0 = sStart + q, f = f0(s0 + 5); if (f == null) continue; const [x, z] = atSf(s0 + 5, f + 3), g = scen.get(x, z);
           for (const a of [0.3, 9.7]) for (const o of [f + 0.3, f + 5.7]) kbox(g, s0, a, o, -0.2, 0.22, 4.0, 0.22, TIM, null, true);
           kbox(g, s0, 5, f + 5.9, -0.2, 10, 3.0, 0.12, TIM, null, true);

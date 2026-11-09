@@ -11,7 +11,10 @@
 //   node tests/browser/zivali.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const TRACKS = ['nring', 'vrsic', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off)
+const TRACKS = ['nring', 'katu', 'bathurst', 'iroha', 'caracoles', 'ouninpohja', 'medvode'];   // (Ouninpohja, Medvode: scenes at their real places with things of their own, Medvode's stork that flies off; Katu-Jaryk in Vršič's place, a test track since 6. 11. 2026)
+// (how many glades a track must have: Katu-Jaryk's ladder of hairpins keeps each leg's run-off short of the middle between the legs since the
+// serpentines' barriers of Track._buildEdges (limitNear, 6. 11. 2026), so fewer spots fit between them: 5 glades, before 11)
+const MIN = { katu: 4 };
 const T = checker('life in the woods, the parked car');
 const srv = await serve();
 const browser = await launch();
@@ -71,7 +74,7 @@ try {
         fixed: [].concat(SC || []).filter(S1 => S1.m != null).map(S1 => ({ kind: S1.kind, m: S1.m, side: S1.side })), scenes: (st.scenes || []).map(x => ({ kind: x.kind, m: x.m, side: x.side })), liveMeshes, herdMeshes, herdAnimals, herdPic, soft, hard, sizes: st.sizes, strange, near, at: st.at.length, meshes, verts, km: T.len / 1000, moved, scene: sc, sceneWant: SC ? [].concat(SC)[0].kind : null };
     }, id);
     if (id === 'jezero') { T.check('a test track (Jezero Ring) has no life in its woods', !!r.none && !r.meshes, JSON.stringify(r)); continue; }
-    T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= 8 && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
+    T.check(`${id}: glades with things and animals of its country`, !r.none && r.at >= (MIN[id] || 8) && r.groups >= 3 && r.animals >= 6 && !r.strange.length, JSON.stringify(Object.assign({}, r, { strange: r.strange.join(',') })));
     T.check(`${id}: animals alone, in pairs and in herds`, r.sizes && r.sizes.one > 0 && r.sizes.herd > 0 && r.sizes.one + r.sizes.pair + r.sizes.herd === r.groups, JSON.stringify(r.sizes));
     T.check(`${id}: the ones alone walk or graze (own meshes, moving with time)`, r.live > 0 && r.liveMeshes === r.live && r.moved && (r.moved.d > 0.05 || Math.abs(r.moved.turn) > 0.05), `${r.live} live, ${JSON.stringify(r.moved)}`);
     T.check(`${id}: soft shadows (one see-through mesh under each live one and for each herd chunk's animals, none of them in the shadow map)`, r.soft === r.live + r.herdMeshes && !r.hard, `${r.soft} soft for ${r.live} live + ${r.herdMeshes} herd meshes, ${r.hard} hard`);

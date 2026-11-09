@@ -82,8 +82,10 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
-  function wheelInto(g, cx, cy, cz, r, wd, tire, rim) {
+  // (band: the compound's band on the sidewalls (tyreBand), the outer one only for a wheel in the body (cz off the car's middle), else both)
+  function wheelInto(g, cx, cy, cz, r, wd, tire, rim, band) {
     const S = 12, inn = [cx, cy, cz];
+    if (band != null) for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * wd / 2, sd, r * 0.76, r * 0.92, S, band);
     const dark = [rim[0] * 0.38, rim[1] * 0.38, rim[2] * 0.4], hub = [0.15, 0.15, 0.17], lip = rim.map(v => Math.min(1, v * 1.15));
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
@@ -137,7 +139,7 @@ const Render = (function () {
   const geoCache = new Map();
   /* white body with a painted diagonal livery (colour = stripe colour), black engine vents,
      big wing, roof scoop, mud flaps and white rally wheels */
-  function rallyGeometry(M, color) {
+  function rallyGeometry(M, color, band) {
     const def = BODIES.rally, sx = M.len / def.len, sz = M.wid / def.wid;
     const W = [0.95, 0.95, 0.96], K = [0.07, 0.07, 0.08], GLASS = [0.04, 0.05, 0.08];
     let B = colArr(color); if (B[0] * 0.3 + B[1] * 0.59 + B[2] * 0.11 > 0.78) B = [0.1, 0.26, 0.74];
@@ -235,7 +237,7 @@ const Render = (function () {
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]);
+      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band);
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
     return g.geometry();
@@ -390,11 +392,29 @@ const Render = (function () {
     fRod(g, [-0.3, 0.1, 0], [-0.78, 0.04, 0], 0.07, [0.62, 0.6, 0.56]);
     const geo = g.geometry(); geo.translate(0, 0.012, 0); return geo;
   }
-  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft, yellow medium, white hard (Core.TYRE_CMP), green
-  // on the rain tyres), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12 sides: ~200 triangles,
-  // a phone draws 52 of them)
-  const fWheelCache = new Map(), F_WET = 0x1fa83d, F_SOFT = 0xe02119;
+  // formula wheel (axle along z): a slick with the compound band on the sidewall (red soft, yellow medium, white hard (Core.TYRE_CMP), blue
+  // on the rain tyres, as the HUD's tyre label), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12
+  // sides: ~200 triangles, a phone draws 52 of them)
+  const fWheelCache = new Map(), F_WET = 0x2b86e6, F_SOFT = 0xe02119;
   const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  // every other car's tyres carry the same band in a race with compounds (c.ty with a compound, or rain tyres); null: none, the tyres as
+  // they always were (no compounds, the showroom, a ghost). The band is in the wheels' own geometry (its variant with the band, cached like
+  // the rest: no draw call more); a pit stop's new set shows once the car is built afresh at its end (Race.repairCar: frame)
+  const tyreBand = (c) => c && c.ty && (c.ty.k === 'wet' || c.ty.c) ? tyreCol(c) : null;
+  // the set a car gets at its next stop, as the core fits it (Race, the stop's end: rain tyres for a wet line, else the compound asked for
+  // or the one for what is left of the race): its band, null without one (the player's crew holds it ready; the wheels they push home)
+  function nextBand(c) {
+    const R = curRace, W = R && R.wst; if (!c || !c.ty || !W) return null;
+    if (Core.tyreFor(W.line) === 'wet') return F_WET;
+    if (c.isPlayer && c.pitPlan && c.ty.c) { const t = c.pitPlan.ty; if (t === 'W') return F_WET; if (Core.TYRE_CMP[t]) return Core.TYRE_CMP[t].col; }   // (the custom stop's choice: game.js stopOpen, its panel)
+    return c.ty.c ? Core.TYRE_CMP[c.isPlayer ? (Core.TYRE_CMP[c.pitCmp] ? c.pitCmp : 'S') : Core.cmpFor(R.laps * R.track.len - c.dist)].col : null;   // (the player's: the one chosen for the next stop, else the soft, as the stop's panel starts from; an AI car: for what is left)
+  }
+  // the band on a tyre's wall facing sd (the axle along z through cx, cy; the wall's face at z): a ring from r0 to r1 in n segments 3 mm
+  // proud of it, quads of its own (the wall under it as ever)
+  function bandInto(g, cx, cy, z, sd, r0, r1, n, col) {
+    const B = colArr(col), p = (a, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, z + sd * 0.003], out = [cx, cy, z - sd * 5];
+    for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2; g.quadO(p(a0, r1), p(a0, r0), p(a1, r0), p(a1, r1), B, out); }
+  }
   function fWheelGeo(r, wd, col) {
     const key = r + '|' + wd + '|' + col; if (fWheelCache.has(key)) return fWheelCache.get(key);
     const g = new GB(), S = 12, T = [0.075, 0.075, 0.08], B = colArr(col), RIM = [0.22, 0.22, 0.24], CV = [0.13, 0.13, 0.14], CV2 = [0.34, 0.34, 0.36], NUT = [0.86, 0.72, 0.12];
@@ -463,7 +483,7 @@ const Render = (function () {
   // ---- VIHAR V8: a 1970 fastback. A long bonnet with a scoop, the fastback's louvred rear window, a ducktail; twin racing stripes from the
   // nose to the tail (black on light paint, white on dark), round lamps in a black grille, three-part tail lamps (the tail mesh), chrome
   // bumpers (the bumper parts, chrome: model.chrome), twin exhausts under the rear one; chrome five-spoke wheels, wider at the back
-  function muscleGeometry(M, color, stripe) {
+  function muscleGeometry(M, color, stripe, band) {
     const def = BODIES.muscle, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), L = P[0] * 0.3 + P[1] * 0.59 + P[2] * 0.11, S = L > 0.55 ? [0.07, 0.07, 0.08] : [0.95, 0.95, 0.93];   // the stripes
     const K = [0.06, 0.06, 0.07], CH = [0.82, 0.83, 0.86], skirt = P.map(v => v * 0.55), front = secs[secs.length - 1], rear = secs[0];
@@ -494,16 +514,16 @@ const Render = (function () {
     discX(g, rear.x - 0.035, 0.7, 0, 0.06, 10, CH, -1);
     for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3);   // (the rear wheels in the body; the fronts are meshes of their own)
+    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);   // (the rear wheels in the body; the fronts are meshes of their own)
     return g.geometry();
   }
-  function muscleWheelInto(g, cx, cy, cz, r, wd) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84]); }
+  function muscleWheelInto(g, cx, cy, cz, r, wd, band) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84], band); }
 
   // ---- STRELA EV: an electric hypercar. A glass canopy with black roof rails and painted pillars, the lower body in carbon with a cyan
   // line along the sills, air intakes behind the doors, vents in the bonnet; a light bar across the nose and the tail (the tail mesh), a
   // splitter and a diffuser; aero wheels with cyan blades
   const EV_CYAN = [0.12, 0.78, 0.95];
-  function evGeometry(M, color) {
+  function evGeometry(M, color, stripe, band) {
     const def = BODIES.ev, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), K = [0.05, 0.05, 0.06], CF = [0.1, 0.1, 0.11], W = [0.95, 0.97, 1.0], front = secs[secs.length - 1], rear = secs[0];
     shellInto(g, secs, (k, e, kind) => e === 0 || e === 8 ? CF : kind !== 'b' && e >= 2 && e <= 6 ? GLASS : P, P, P);
@@ -528,12 +548,13 @@ const Render = (function () {
     World.box(g, rear.x + 0.14, 0.19, 0, 0.34, 0.1, 1.5, 0, CF);
     for (let i = -2; i <= 2; i++) World.box(g, rear.x + 0.12, 0.13, i * 0.3, 0.3, 0.2, 0.025, 0, K);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3);
+    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);
     return g.geometry();
   }
   // the electric car's wheel: a low tyre, a silver rim lip, a dark aero disc with five swept cyan blades (the spin shows), a centre lock
-  function aeroWheelInto(g, cx, cy, cz, r, wd) {
+  function aeroWheelInto(g, cx, cy, cz, r, wd, band) {
     const S = 14, T = [0.07, 0.07, 0.08], LIP = [0.66, 0.67, 0.7], DK = [0.15, 0.16, 0.18], h = wd / 2;
+    if (band != null) for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * h, sd, r * 0.84, r * 0.95, S, band);   // (the low wall's band: wheelInto)
     const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
     for (let i = 0; i < S; i++) {
       const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2;
@@ -558,7 +579,7 @@ const Render = (function () {
   // ---- SAMUM 4x4: a trophy truck. Black flares over the big wheels, a livery slash in the second colour down the side, a black bed liner
   // with a spare tyre lying in it under a tube cage from the roof to the tail, a light bar on the roof, a snorkel up the A-pillar, a skid
   // plate, the coil-overs to be seen in the wheel arches
-  function truckGeometry(M, color, stripe) {
+  function truckGeometry(M, color, stripe, band) {
     const def = BODIES.truck, secs = secsOf(def, M), g = new GB(), D = decalKit(g, secs);
     const P = colArr(color), S = stripe ? stripeFor(color) : P.map(v => v * 0.7), K = [0.06, 0.06, 0.065], K2 = [0.13, 0.13, 0.14], LN = [0.17, 0.17, 0.18];
     const front = secs[secs.length - 1], rear = secs[0], r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hz = M.wid * 0.5 - def.wz;
@@ -584,7 +605,7 @@ const Render = (function () {
       fRod(g, [x + 0.08, r + 0.1, sd * (hz - 0.2)], [x - 0.1, 1.08, sd * 0.7], 0.07, [0.74, 0.74, 0.77]);
       fRod(g, [x + 0.05, r + 0.3, sd * (hz - 0.23)], [x - 0.05, 0.86, sd * 0.74], 0.1, S);   // (its spring)
     }
-    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36);
+    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band);
     // the bed: the spare lying in it, the cage from the roof down to the tail; the light bar on the roof; the snorkel
     knobWheelInto(g, -1.72, 1.24 + 0.17, 0, 0.44, 0.34, 'y');
     const cg = [0.1, 0.1, 0.11];
@@ -612,8 +633,9 @@ const Render = (function () {
   }
   // the truck's wheel: a big knobbly tyre (the tread's blocks stand proud in turn, the shoulders stepped with them), a tall sidewall, a
   // silver beadlock ring round a small dark rim; the axle along z (a wheel on the car) or y (the spare lying in the bed)
-  function knobWheelInto(g, cx, cy, cz, r, wd, ax) {
+  function knobWheelInto(g, cx, cy, cz, r, wd, ax, band) {
     const S = 16, T = [0.08, 0.08, 0.085], T2 = [0.13, 0.13, 0.135], RIM = [0.16, 0.16, 0.17], BL = [0.74, 0.75, 0.78], h = wd / 2;
+    if (band != null && ax !== 'y') for (const sd of [-1, 1]) if (!cz || sd === Math.sign(cz)) bandInto(g, cx, cy, cz + sd * (h - 0.015), sd, r * 0.64, r * 0.77, S, band);   // (on the tall recessed wall: wheelInto)
     const W = ax === 'y' ? (u, v, w) => [cx + u, cy + w, cz + v] : (u, v, w) => [cx + u, cy + v, cz + w];   // (u, v across the wheel, w along its axle)
     const p = (a, w, rr) => W(Math.cos(a) * rr, Math.sin(a) * rr, w), C = W(0, 0, 0), out = (sd) => W(0, 0, -sd * 5);
     for (let i = 0; i < S; i++) {
@@ -734,15 +756,15 @@ const Render = (function () {
   // the new section-loft bodies: shape (the body mesh), wheel (a front wheel at the origin, radius r: its own mesh, it steers), tail (the tail
   // lamps: the mesh that lights up under braking)
   const NEW_BODY = {
-    muscle: { shape: muscleGeometry, wheel: (g, r) => muscleWheelInto(g, 0, 0, 0, r, 0.25),
+    muscle: { shape: muscleGeometry, wheel: (g, r, band) => muscleWheelInto(g, 0, 0, 0, r, 0.25, band),
       tail: (g, M) => { const x = BODIES.muscle.secs[0][0] * (M.len / BODIES.muscle.len) - 0.035; for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) World.box(g, x, 0.645, sd * (0.22 + i * 0.19), 0.03, 0.12, 0.16, 0, [1, 1, 1]); } },
-    ev: { shape: evGeometry, wheel: (g, r) => aeroWheelInto(g, 0, 0, 0, r, 0.27),
+    ev: { shape: evGeometry, wheel: (g, r, band) => aeroWheelInto(g, 0, 0, 0, r, 0.27, band),
       tail: (g, M) => { const d = BODIES.ev, x = d.secs[0][0] * (M.len / d.len) - 0.03; World.box(g, x, 0.695, 0, 0.03, 0.034, 1.66 * (M.wid / d.wid), 0, [1, 1, 1]); } },
-    truck: { shape: truckGeometry, wheel: (g, r) => knobWheelInto(g, 0, 0, 0, r, 0.36),
+    truck: { shape: truckGeometry, wheel: (g, r, band) => knobWheelInto(g, 0, 0, 0, r, 0.36, null, band),
       tail: (g, M) => { const d = BODIES.truck, x = d.secs[0][0] * (M.len / d.len) - 0.03; for (const sd of [-1, 1]) World.box(g, x, 0.95, sd * 0.85 * (M.wid / d.wid), 0.02, 0.17, 0.11, 0, [1, 1, 1]); } },
   };
   const newWheelCache = new Map();
-  function newWheelGeo(M) { const key = M.id + '|' + M.rw; if (!newWheelCache.has(key)) { const g = new GB(); NEW_BODY[M.body].wheel(g, M.rw); newWheelCache.set(key, g.geometry()); } return newWheelCache.get(key); }
+  function newWheelGeo(M, band) { const key = M.id + '|' + M.rw + (band != null ? '|' + band : ''); if (!newWheelCache.has(key)) { const g = new GB(); NEW_BODY[M.body].wheel(g, M.rw, band); newWheelCache.set(key, g.geometry()); } return newWheelCache.get(key); }   // (band: tyreBand)
 
   /* =====================================================================================================================================
      KIT API v1 (frozen; additions only, by a kit patch) — how a registered vehicle (js/cars/<id>.js) is drawn and breaks apart
@@ -803,7 +825,7 @@ const Render = (function () {
                       is under it, the seats, the driver, a cage); an open top (eye.style not 'closed') and a kart get none
        Derived by the build (do not set): nose, tail (the outer shell's ends, metres), hw (the hubs' z, metres), height; the decal's four
                       when neither decalX nor decalY is given
-     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg }
+     look.wheels: { style, w, wR, rim, tyre, cap, spokes, dual, rimK, gap, arch, seg, mid }
        style          'std' (alloy spokes; spokes: 0 = a steel wheel with holes), 'deep' (a deep polished dish), 'wire' (wire spokes, a
                       knock-off), 'retro' (a domed chrome cap, white walls), 'knob' (off-road blocks, a beadlock), 'truck' (a steel disc deep
                       in its rim, the studs; dual: twin rear tyres), 'monster' (huge blocks, a small rim), 'slick' (a race slick, centre lock),
@@ -812,6 +834,9 @@ const Render = (function () {
                       meshes of their own, centred on the hub, exactly at (M.a, rw, +-hw) and (-M.b, rw, +-hw): they steer, spin, come off
        rim, tyre, cap colours (hex numbers or [r, g, b]); spokes (std 5, deep 6); dual (twin rear tyres); rimK (the rim's share of the radius)
        gap            the arch's clearance over the tyre (default 0.06); arch: false (no arch cut-outs in the loft)
+       mid            a middle axle (a 6x6): its x in look units, between the two axles and 2 rw + 0.1 m clear of each. Two wheels
+                      more there, the rear ones' twins at (mid, rw, +-hw) (v.wm): drawn only (the physics has four), they spin with the
+                      rear ones and lay their marks, never steer nor come off; the loft's default arches and K.arches[2] take the axle
        seg            the player's / the showroom's tyre round: its tread, shoulder and outer wall in seg segments (16, 32, 48 or 64; default
                       16, as before; not with dual), smooth-shaded, the rim's lip round with them; the rim's inside stays in 16 (seg 32: about
                       370 triangles a wheel). A rival's wheel is never changed by it
@@ -945,8 +970,9 @@ const Render = (function () {
        K.hi                    true while the Visoki build of a look with look.hi draws (see look.hi)
        K.fitted                the garage's parts fitted (car.deli, {} for none): a part makes room for another (js/deli/*.js)
        K.sx, K.sz, K.fx, K.rx, K.rw, K.hw          see FRAME AND UNITS
-       K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear): their middle x and half length (look
-                               units), the circle's radius and middle height (metres): place flares and decals round them
+       K.arches                [{ x, r, y, half }]: the wheel arches the main loft cuts (front, rear; [2]: the middle one, wheels.mid): their
+                               middle x and half length (look units), the circle's radius and middle height (metres): place flares and
+                               decals round them
        K.g                     the router: GB-compatible (tri, triO, quadO, triN, triON, quadON, quadUp) for raw geometry (World.box(K.g,
                                ...) works): raw triangles are 'body' unless a scope (K.part, K.at, K.inner) says otherwise
        -- scopes --
@@ -972,7 +998,7 @@ const Render = (function () {
        K.loft(secs, col, o)    the shell through the sections (rows or K.secs). col(k, e, kind, at) -> a colour (null: no panel there: see AN
                                OPEN TOP) for panel e of the author's segment k (its kind), at: { x (metres), xa, xb (the cut segment), arch (in
                                a wheel arch: e 0 / 8 are then the arch's ledge) }. o: { glass(k, e, kind, at): a glass panel (no lining), lining:
-                               false, floor: false, arches: false | [{ x, r?, y? }] (default: both axles: the lower edge follows the arch, a
+                               false, floor: false, arches: false | [{ x, r?, y? }] (default: every axle, wheels.mid's too: the lower edge follows the arch, a
                                ledge at its rim, a dark tub over the tyre), tubs: false, tubCol, caps: false | { front, rear: false | { col,
                                colLow, cut (y), low (part), high (part) } }, regions: this loft's own (as K.regions takes), glassBend: [down,
                                up] (degrees: the side glass (glass panels e 2 / 6) shaded as if curved: its normals turned down at its foot,
@@ -1156,6 +1182,13 @@ const Render = (function () {
     for (const k of ['w', 'wR', 'gap']) if (!(W[k] >= 0 && W[k] < 2)) kitFail('wheels.' + k + ' not a size in metres');
     for (const k of ['rim', 'tyre', 'cap']) if (W[k] != null) W[k] = kitColour(typeof W[k] === 'number' ? colArr(W[k]) : W[k]);
     if (W.wz == null) W.wz = W.w / 2 + 0.01;   // (the wheels' centres this far in from the half width: the tyre's face just inside the body)
+    W.xm = null;   // (wheels.mid: the middle axle's x, metres)
+    if (W.mid != null) {
+      const sx = M.len / ((look && look.body && look.body.len) || M.len), xm = W.mid * sx, c = 2 * M.rw + 0.1;
+      if (!(typeof W.mid === 'number' && Number.isFinite(xm) && xm + M.b >= c - 1e-9 && M.a - xm >= c - 1e-9))
+        kitFail('wheels.mid ' + (typeof W.mid === 'number' ? W.mid : JSON.stringify(W.mid)) + ': the middle axle\'s x (look units) between the rear axle (' + (-M.b / sx).toFixed(2) + ') and the front one (' + (M.a / sx).toFixed(2) + '), 2 rw + 0.1 m (' + c.toFixed(2) + ' m) clear of each');
+      W.xm = xm;
+    }
     return W;
   }
   function kitBodyOf(M, look) {
@@ -1200,7 +1233,7 @@ const Render = (function () {
     const ra = M.rw + W.gap, fx = M.a, rx = -M.b;
     const bF = B.bumpF != null ? B.bumpF * kx.sx : clamp(0.3 * (xN - fx - ra), 0.06, 0.2), bR = B.bumpR != null ? B.bumpR * kx.sx : clamp(0.3 * (rx - ra - xT), 0.06, 0.2);
     const yBF = B.bumpY ? B.bumpY[0] : P(xN, 'yb') + 0.45 * (P(xN, 'ybelt') - P(xN, 'yb')), yBR = B.bumpY ? B.bumpY[1] : P(xT, 'yb') + 0.45 * (P(xT, 'ybelt') - P(xT, 'yb'));
-    const xD0 = B.door ? Math.max(B.door[0], B.door[1]) * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? Math.min(B.door[0], B.door[1]) * kx.sx : Math.max(xD0 - 1.15, rx + ra + 0.12);   // (body.door: its two edges, either order)
+    const xD0 = B.door ? Math.max(B.door[0], B.door[1]) * kx.sx : Math.min(xWs - 0.02, fx - ra - 0.03), xD1 = B.door ? Math.min(B.door[0], B.door[1]) * kx.sx : Math.max(xD0 - 1.15, (W.xm != null && W.xm + ra + 0.12 < xD0 - 0.3 ? W.xm : rx) + ra + 0.12);   // (body.door: its two edges, either order; else in front of the arch behind it, wheels.mid's too)
     const hatch = xRgBot - xT < 0.35;   // (the rear glass down to the tail: a hatchback's tailgate takes it with it; else a boot lid behind it)
     let ybMin = 9, ytMax = -9; for (let x = xD1; x <= xD0 + 1e-9; x += Math.max(0.01, (xD0 - xD1) / 8)) { ybMin = Math.min(ybMin, P(x, 'yb')); ytMax = Math.max(ytMax, P(x, 'yt')); }
     const R = [], add = (part, o) => { if (part in PT) R.push(Object.assign({ part }, o)); };
@@ -1307,7 +1340,7 @@ const Render = (function () {
     const xs = [];
     // every region's ends (the parts split there), the wheel arches (the shell's lower edge follows the arch, a ledge at its rim)
     for (const R of kx.regions) for (const x of R.x) if (!R.points && x / sx > xa + 0.004 && x / sx < xb - 0.004) xs.push(x / sx);
-    const arches = (o.arches === false || W.arch === false ? [] : (o.arches || [{ x: M.a / sx }, { x: -M.b / sx }]).map(a => ({ c: a.x, r: (a.r || M.rw + W.gap), y: a.y != null ? a.y : M.rw }))).filter(A => A.c > xa && A.c < xb);   // (an axle under this loft)
+    const arches = (o.arches === false || W.arch === false ? [] : (o.arches || [{ x: M.a / sx }, { x: -M.b / sx }].concat(W.xm != null ? [{ x: W.xm / sx }] : [])).map(a => ({ c: a.x, r: (a.r || M.rw + W.gap), y: a.y != null ? a.y : M.rw }))).filter(A => A.c > xa && A.c < xb);   // (an axle under this loft)
     for (const A of arches) {
       const base = at(A.c), bot = base.yb + base.tk, dy = bot - A.y, half = dy >= A.r ? 0 : dy > 0 ? Math.sqrt(A.r * A.r - dy * dy) : A.r;
       A.half = half / sx; A.bot = bot; if (!(A.half > 0.02)) continue;
@@ -1624,8 +1657,9 @@ const Render = (function () {
   }
 
   // ---- the wheels (3.5): fixtures for every style, at the origin, the axle along z, the outer face towards +z (a left wheel's mesh is mirrored:
-  // scale.z = -1). hi: the player's and the showroom's (<= 400 triangles), else a rival's (<= 160) ----
-  function kitWheelGeo(W, r, wd, hi, dual, rear) {
+  // scale.z = -1). hi: the player's and the showroom's (<= 400 triangles), else a rival's (<= 160); tb: the compound's band on the outer
+  // wall (tyreBand: a ring of its own, 2 S triangles more; a round tyre's (seg) on its outer shoulder, none more) ----
+  function kitWheelGeo(W, r, wd, hi, dual, rear, tb) {
     const g = new GB(), still = W.deliW && hi ? new GB() : null, st = W.style, TY = W.tyre || [0.065, 0.065, 0.07], TY2 = [Math.min(1, TY[0] * 1.9 + 0.03), Math.min(1, TY[1] * 1.9 + 0.03), Math.min(1, TY[2] * 1.9 + 0.03)];
     const RIM = W.rim || ({ std: [0.62, 0.63, 0.66], deep: [0.74, 0.75, 0.78], wire: [0.8, 0.81, 0.84], retro: [0.84, 0.85, 0.88], knob: [0.56, 0.57, 0.6], truck: [0.86, 0.86, 0.84], monster: [0.7, 0.71, 0.74], slick: [0.22, 0.22, 0.24], kart: [0.78, 0.66, 0.3] })[st];
     const DK = [RIM[0] * 0.3 + 0.02, RIM[1] * 0.3 + 0.02, RIM[2] * 0.3 + 0.025], CAP = W.cap || [Math.min(1, RIM[0] * 1.15), Math.min(1, RIM[1] * 1.15), Math.min(1, RIM[2] * 1.15)];
@@ -1665,6 +1699,7 @@ const Render = (function () {
         // segments; the rim's lip from its round edge (N) to the barrel (S), the inner wall from the tread (N) to the rim (S): kq + 1
         // triangles a segment. No inner shoulder (it faces the car)
         const nr = (a, k) => { const l = Math.hypot(1, k); return [Math.cos(a) / l, Math.sin(a) / l, k / l]; }, ro = r * 0.955;   // (k: the normal's lean out of the face)
+        const SHC = tb != null ? colArr(tb) : TY;   // (the compound's band: the outer shoulder in its colour, no triangle more: a ring on the wall would take this wheel past 400)
         const fan = (zA, rA, zB, rB, col, ins) => { for (let j = 0; j < S; j++) {
           const I0 = p(j / S * TAU, zB, rB), I1 = p((j + 1) / S * TAU, zB, rB), O = (m) => p((j * kq + m) / N * TAU, zA, rA), h = kq >> 1;
           for (let m = 0; m < kq; m++) g.triO(m < h ? I0 : I1, O(m), O(m + 1), col, ins);
@@ -1672,7 +1707,7 @@ const Render = (function () {
         for (let i = 0; i < N; i++) {
           const a0 = i / N * TAU, a1 = (i + 1) / N * TAU;
           g.quadON(p(a0, zi, r), p(a0, zo - sh, r), p(a1, zo - sh, r), p(a1, zi, r), nr(a0, 0), nr(a0, 0), nr(a1, 0), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the tread
-          g.quadON(p(a0, zo - sh, r), p(a0, zo, ro), p(a1, zo, ro), p(a1, zo - sh, r), nr(a0, 0), nr(a0, 2.5), nr(a1, 2.5), nr(a1, 0), [0, 0, zc], TY, TY, TY, TY);   // the shoulder
+          g.quadON(p(a0, zo - sh, r), p(a0, zo, ro), p(a1, zo, ro), p(a1, zo - sh, r), nr(a0, 0), nr(a0, 2.5), nr(a1, 2.5), nr(a1, 0), [0, 0, zc], SHC, SHC, SHC, SHC);   // the shoulder (with a band: in its colour)
           if (st === 'retro') { const rw = r * 0.82; g.quadO(p(a0, zo, ro), p(a0, zo, rw), p(a1, zo, rw), p(a1, zo, ro), TY, out); g.quadO(p(a0, zo + 0.002, rw), p(a0, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rr * 1.06), p(a1, zo + 0.002, rw), WALL, out); }
           else g.quadO(p(a0, zo, ro), p(a0, zo, rr * 1.06), p(a1, zo, rr * 1.06), p(a1, zo, ro), TY, out);   // the outer wall
           band(a0, a1);
@@ -1681,6 +1716,7 @@ const Render = (function () {
         fan(zi, r, zi, rr, TY, inn);   // the inner wall
       }
       if (!outer) return;
+      if (tb != null && !round) { const rb = st === 'retro' ? r * 0.82 : rr * 1.06, ro = sh ? r * 0.955 : knob ? r * 0.93 : r; bandInto(g, 0, 0, zo, 1, rb + (ro - rb) * 0.3, rb + (ro - rb) * 0.78, S, tb); }   // (on the black of the wall: a white wall's outside it; the round tyre's: its shoulder, above)
       // (a detail at radius q, height z: a rival's lies just over its cone, never under it)
       const L = (q, z) => full || z >= zo ? z : Math.max(z, zf(q) + 0.004);
       const top = full ? zo + 0.002 : zo + 0.006, spokeQ = (a, w, r0, r1, col, z0, z1) => { const c = Math.cos(a), s = Math.sin(a), ox = -s * w, oy = c * w; z0 = L(r0, z0); z1 = L(r1, z1);
@@ -1732,7 +1768,7 @@ const Render = (function () {
   function kitMakeK(kx) {
     const M = kx.M, sx = kx.sx, sz = kx.sz, g = kx.g, W = kx.wheels, body = kx.body, open = body.eye.style !== 'closed';
     const K = { M, def: M.def, look: kx.look, body, g, sx, sz, fx: M.a / sx, rx: -M.b / sx, rw: M.rw, hw: (M.wid / 2 - body.wz) / sz, wheels: W, parts: Object.keys(kx.PT).filter(k => kx.PT[k].wh == null) };
-    K.arches = [M.a, -M.b].map(x => { const s = kitSecAt(kx.S, x), r = M.rw + W.gap, dy = s.yb + s.tk - M.rw, half = dy >= r ? 0 : dy > 0 ? Math.sqrt(r * r - dy * dy) : r; return { x: x / sx, r, y: M.rw, half: half / sx }; });   // (the openings the main loft cuts: x, its half length, the circle)
+    K.arches = [M.a, -M.b].concat(W.xm != null ? [W.xm] : []).map(x => { const s = kitSecAt(kx.S, x), r = M.rw + W.gap, dy = s.yb + s.tk - M.rw, half = dy >= r ? 0 : dy > 0 ? Math.sqrt(r * r - dy * dy) : r; return { x: x / sx, r, y: M.rw, half: half / sx }; });   // (the openings the main loft cuts: x, its half length, the circle; [2]: wheels.mid's)
     K.paint = kitTagged('p', 1); K.strp = kitTagged('s', 1);
     K.dark = [0.17, 0.17, 0.18]; K.black = [0.02, 0.02, 0.022]; K.chrome = [0.8, 0.81, 0.84]; K.GLASS = GLASS; K.lampHead = [1, 0.97, 0.86]; K.lampTail = [0.55, 0.05, 0.04]; K.lining = KIT_LINE;
     K.rgb = (hex) => colArr(hex);
@@ -2132,10 +2168,10 @@ const Render = (function () {
     kitCache.set(M.id, E); return E;
   }
   // the four wheels' geometry (hi: the player's / the showroom's detail, else a rival's), front and rear (the rear may be twins)
-  function kitWheels(E, hi) {
-    const key = E.key + (hi ? '|hi' : '|lo'); let w = kitWheelCache.get(key); if (w) return w;
+  function kitWheels(E, hi, band) {   // (band: the compound's band, tyreBand)
+    const key = E.key + (hi ? '|hi' : '|lo') + (band != null ? '|' + band : ''); let w = kitWheelCache.get(key); if (w) return w;
     const W = E.W, r = E.M.rw;
-    w = { f: kitWheelGeo(W, r, W.w, hi, false), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual, true) };
+    w = { f: kitWheelGeo(W, r, W.w, hi, false, false, band), r: kitWheelGeo(W, r, W.wR, hi, !!W.dual, true, band) };
     kitWheelCache.set(key, w); return w;
   }
   // a kit wheel's mesh: its geometry's still part (the garage's brakes' calipers, geo.userData.still) a mesh on it that keeps only the
@@ -2145,6 +2181,13 @@ const Render = (function () {
     if (sg) { const c = new THREE.Mesh(sg, mat); c.name = 'still';
       c.updateMatrix = function () { this.rotation.z = this.parent ? -this.parent.rotation.z : 0; THREE.Object3D.prototype.updateMatrix.call(this); }; w.add(c); }
     return w;
+  }
+  // wheels.mid: the middle axle's two wheels (geo: the rear ones', with their still part) on their hubs into grp, the left one mirrored; [] without
+  // one. Drawn only: they spin with the rear ones, never steer nor come off (v.wm: no part of the four's v.wf / v.wr, v.wheelOff, v.hubs)
+  function kitMidWheels(M, E, geo, mat, grp, shadow) {
+    const L = []; if (E.W.xm == null) return L;
+    for (const sd of [-1, 1]) { const w = kitWheelMesh(geo, mat); w.position.set(E.W.xm, M.rw, sd * E.body.hw); if (sd < 0) w.scale.z = -1; w.castShadow = shadow; grp.add(w); L.push(w); }
+    return L;
   }
   // a car's own copy of its model's body in its colours (the paint and the stripe vertices; drawRange: the outer block, as an intact car)
   // (num: the car's start number, lit on its K.number panels: two digits, or one in the middle; 0 / none: blank panels)
@@ -2237,7 +2280,7 @@ const Render = (function () {
     const H = kitHullGeo(v.kit.E), S = [];
     if (H) { v.body.castShadow = false; v.hull = new THREE.Mesh(H, matHull); v.bodyG.add(v.hull); S.push(v.hull); }
     if (c.isPlayer) { const W = kitWheels(v.kit.E, false);
-      for (const w of v.wf.concat(v.wr)) { const m = new THREE.Mesh(v.wf.includes(w) ? W.f : W.r, matHull); w.castShadow = false; w.add(m); S.push(m); } }
+      for (const w of v.wf.concat(v.wr, v.wm)) { const m = new THREE.Mesh(v.wf.includes(w) ? W.f : W.r, matHull); w.castShadow = false; w.add(m); S.push(m); } }
     for (const m of S) { m.castShadow = true; m.visible = false; }
     if (S.length) v.shadowOnly = S;
   }
@@ -2284,7 +2327,7 @@ const Render = (function () {
   // (the garage, DELI.mesh) option n of part id alone where it sits on vehicle M (a model or its id): a THREE.Group in the car's frame
   // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli, and the car's own
   // housing round it, K.deli's around; own: the option's alone) in colour's paint, tail lamps with their lit part (the tail mesh, all of
-  // the car's tail lamps: those of the option fitted); the rims: the four wheels on their hubs. null: M has no
+  // the car's tail lamps: those of the option fitted); the rims: the wheels on their hubs (wheels.mid's too). null: M has no
   // mount for it (or its build failed)
   function deliMesh(M, id, n, color, own) {
     if (typeof M === 'string') M = Core.MODELS.find(m => m.id === M);
@@ -2295,6 +2338,7 @@ const Render = (function () {
       const W = kitWheels(E, true), mat = matWheel || new THREE.MeshPhongMaterial({ vertexColors: true, specular: 0x8c8c8c, shininess: 60 });
       for (const sd of [-1, 1]) { const f = kitWheelMesh(W.f, mat), r = kitWheelMesh(W.r, mat);
         f.position.set(M.a, M.rw, sd * E.body.hw); r.position.set(-M.b, M.rw, sd * E.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1; grp.add(f, r); }
+      kitMidWheels(M, E, W.r, mat, grp, false);
       return grp;
     }
     const g = kitRecolour(E.geo.clone(), color == null ? 0xc0392b : color, true, 0), D = g.userData.deli || {}, keep = (D[id] || []).concat(own ? [] : D[id + '+'] || []);
@@ -2327,7 +2371,7 @@ const Render = (function () {
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
       rg[n] = { o: R.o.slice(), i: R.i.slice(), subs: R.subs.map(s => Object.assign({}, s)), hinge: R.hinge || null, c: k ? c.map(v => v / k) : null }; }   // (c: the range's centroid, metres)
     return { id, status: E.status, deli: E.deli || '', tris: Object.assign({}, U.tris), budget: Object.assign({}, U.budget), outerN: U.outerN, N: U.N, engN: U.engN, ranges: rg, paint: U.paint.i.length, strp: U.strp.i.length, lamps: U.lamps,
-      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], still: [wh.f, wh.r].map(g => g.userData.still ? g.userData.still.userData.tris : 0), lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
+      wheels: { style: E.W.style, hi: [wh.f.userData.tris, wh.r.userData.tris], still: [wh.f, wh.r].map(g => g.userData.still ? g.userData.still.userData.tris : 0), lo: [wl.f.userData.tris, wl.r.userData.tris], hw: E.body.hw, mid: E.W.xm }, body: JSON.parse(JSON.stringify(E.body)), regions: E.regions, std: E.std, tail: E.tail.userData.tail, tubs: E.tubs, openings: E.openings,
       hi: M.def && M.def.look && M.def.look.hi ? (() => { const H = kitEntry(M, true, deli), hw = kitWheels(H, true); return { status: H.hi ? 'ok' : 'normal', tris: Object.assign({}, H.geo.userData.tris), budget: Object.assign({}, H.geo.userData.budget), wheels: [hw.f.userData.tris, hw.r.userData.tris] }; })() : null,
       bbox: { min: E.geo.boundingBox.min.toArray(), max: E.geo.boundingBox.max.toArray() }, fire: kitFireOf(M, E), tailHost: Object.assign({}, kitTailHost(E)), lay: Object.assign({}, kitLayH(E)) };   // (tailHost: the part each tail lamp sits on; lay: how tall each part's piece lies, metres)
   }
@@ -2356,13 +2400,14 @@ const Render = (function () {
       let k = 0.8 + 0.2 * Core.sstep(0.12, 0.62, P[o + 1]); if (N[o + 1] < -0.3) k *= 0.78; ao[i] = k; }
     return (U.ao = ao);
   }
-  function carGeometry(bodyKey, M, color, stripe) {
-    const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe;
+  function carGeometry(bodyKey, M, color, stripe, band) {   // (band: the compound's band on the rear wheels in the body, tyreBand: a body of its own)
+    if (bodyKey === 'formula' || bodyKey === 'lm') band = null;   // (their wheels are all separate)
+    const key = bodyKey + '|' + M.id + '|' + color + '|' + stripe + (band != null ? '|' + band : '');
     if (geoCache.has(key)) return geoCache.get(key);
     const done = (geo) => { carAO(geo); geoCache.set(key, geo); return geo; };
-    if (bodyKey === 'rally') return done(smoothNormals(rallyGeometry(M, color), 38));
+    if (bodyKey === 'rally') return done(smoothNormals(rallyGeometry(M, color, band), 38));
     if (bodyKey === 'formula') return done(smoothNormals(formulaGeometry(M, color), 38));
-    if (NEW_BODY[bodyKey]) return done(smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe), 38));
+    if (NEW_BODY[bodyKey]) return done(smoothNormals(NEW_BODY[bodyKey].shape(M, color, stripe, band), 38));
     if (bodyKey === 'lm') return done(smoothNormals(lmGeometry(M, color), 38));
     const def = BODIES[bodyKey];
     const sx = M.len / def.len, sz = M.wid / def.wid;
@@ -2407,12 +2452,16 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
+    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band);
     return done(smoothNormals(g.geometry(), 38));
   }
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
-  function getWheelGeo(white) {
+  const bandWheelCache = new Map();   // (the stock front wheels with a compound's band: tyreBand)
+  function getWheelGeo(white, band) {
+    if (band != null) { const key = (white ? 'w|' : 's|') + band; let geo = bandWheelCache.get(key);
+      if (!geo) { const g = new GB(); if (white) wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band); else wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band); bandWheelCache.set(key, geo = g.geometry()); }
+      return geo; }
     if (white) { if (!wheelGeoW) { const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9]); wheelGeoW = g.geometry(); } return wheelGeoW; }
     if (wheelGeo) return wheelGeo;
     const g = new GB(); wheelInto(g, 0, 0, 0, 0.31, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]); wheelGeo = g.geometry(); return wheelGeo;
@@ -2686,14 +2735,14 @@ const Render = (function () {
   // of the body, drawn by its own mesh with the cracks (a program of its own: the others never pay for the discard)
   // scr: the side scrapes (the Kolibri's, xtScrape: XT_SCR, uScrS; a program of its own too)
   function dirtyCarMat(cut, scr) {
-    const m = matCar.clone(), u = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) }, uss = { value: new THREE.Vector4(0, 0, 1, 1) };
-    m.userData.dirt = u; m.userData.scr = us; m.userData.char = uc; m.userData.scrS = uss; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
+    const m = matCar.clone(), u = { value: 0 }, uw = { value: 0 }, us = { value: 0 }, uc = { value: new THREE.Vector4(0, 0, 0, 0) }, uss = { value: new THREE.Vector4(0, 0, 1, 1) };
+    m.userData.dirt = u; m.userData.dirtW = uw; m.userData.scr = us; m.userData.char = uc; m.userData.scrS = uss; m.extensions = { derivatives: true };   // (the scratches' fwidth: WebGL 1 needs the extension)
     if (cut || scr) m.defines = Object.assign(cut ? { XT_CUT: '' } : {}, scr ? { XT_SCR: '' } : {});
     m.onBeforeCompile = (sh) => {
-      sh.uniforms.uDirt = u; sh.uniforms.uScr = us; sh.uniforms.uChar = uc; sh.uniforms.uScrS = uss;
+      sh.uniforms.uDirt = u; sh.uniforms.uDirtW = uw; sh.uniforms.uScr = us; sh.uniforms.uChar = uc; sh.uniforms.uScrS = uss;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nattribute float aIn;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLp = position;\nvIn = 1.0 - step(0.1, abs(aIn - 0.502));\nvLamN = 1.0 - step(0.06, abs(aIn - 0.753));\nvLam = max(vLamN, 1.0 - step(0.06, abs(aIn - 0.878)));\nvUl = 1.0 - step(0.1, abs(aIn - 0.251));\nvNoCh = step(0.9, aIn);');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;\nuniform float uDirt;\nuniform float uScr;\n#ifdef XT_SCR\nuniform vec4 uScrS;\n#endif\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
-        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n#if defined(PK_ON) && defined(USE_COLOR)\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vColor.rgb, vLamN);\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35);\n  float d = clamp(uDirt * (0.22 + 0.95 * low) * (0.7 + 0.6 * n), 0.0, 0.8) * (1.0 - max(vIn, vLam));\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.4, 0.29), d); cgD = max(d, max(vIn, vLam)); }\n' + CHAR_GLSL + '\n#ifdef PK_ON\npkD = max(pkD, vLamN); pkWt *= 1.0 - vLamN;\n#endif')   // (cgD: the dirt dulls the sun's glint; the inside, a matte piece have none, no sky in them either; Pikes Peak's dust and glint not on an under-part)
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLp;\nvarying float vIn;\nvarying float vNoCh;\nvarying float vLam;\nvarying float vLamN;\nvarying float vUl;\nuniform float uDirt;\nuniform float uDirtW;\nuniform float uScr;\n#ifdef XT_SCR\nuniform vec4 uScrS;\n#endif\n#ifndef CG_D\n#define CG_D\nfloat cgD = 0.0;\n#endif\n' + CHAR_PRE).replace('#include <color_fragment>',
+        '#include <color_fragment>\n#if defined(XT_CUT) && defined(USE_COLOR)\nif (vColor.r < -0.5) discard;\n#endif\n#if defined(PK_ON) && defined(USE_COLOR)\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vColor.rgb, vLamN);\n#endif\n{ float n = fract(sin(dot(floor(vLp * 7.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);\n  float low = 1.0 - smoothstep(0.2, 1.0, vLp.y + (n - 0.5) * 0.35), rear = 1.0 - smoothstep(-1.9, -0.7, vLp.x + (n - 0.5) * 0.5);\n  float sp = fract(sin(dot(floor(vLp * vec3(19.0, 23.0, 19.0)), vec3(39.35, 11.13, 83.17))) * 24634.63);\n  float d = clamp(uDirt * (0.55 + 0.9 * low + 0.45 * rear) * (0.62 + 0.55 * n) * (0.8 + 0.4 * sp), 0.0, 0.88) * (1.0 - max(vIn, vLam));\n  diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.55, 0.46, 0.33), vec3(0.28, 0.21, 0.14), uDirtW) * (0.85 + 0.3 * sp), d); cgD = max(d, max(vIn, vLam)); }\n' + CHAR_GLSL + '\n#ifdef PK_ON\npkD = max(pkD, vLamN); pkWt *= 1.0 - vLamN;\n#endif')   // (cgD: the dirt dulls the sun's glint; the inside, a matte piece have none, no sky in them either; Pikes Peak's dust and glint not on an under-part)
         .replace('#include <specularmap_fragment>', '#include <specularmap_fragment>\nspecularStrength *= (1.0 - 0.9 * max(cgCh, vIn * 0.85)) * (1.0 - vLam);')   // (a charred panel, the inside: no highlight; a matte piece none at all, nor the sky)
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= 1.0 - vLam;')   // (the night's glow, carGlow: not on a matte piece)
         .replace('#include <tonemapping_fragment>', '#ifdef USE_COLOR\ngl_FragColor.rgb = mix(gl_FragColor.rgb, diffuse * vColor.rgb, vUl);\n#endif\n#include <tonemapping_fragment>');   // (an unlit piece: its colour, after every light and glint)
@@ -2713,7 +2762,8 @@ const Render = (function () {
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat(!!(opts && opts.xcut), !!(opts && opts.xscr));
     const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show)), car.deli) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const xd = opts && opts.xd || 0;   // (Razbijanje · nov način: the body dense, xDense)
-    const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false), xd) : carGeometry(M.body, M, car.color, car.stripe !== false), bodyMat);
+    const band = opts && opts.show ? null : tyreBand(car);   // (the compound's band on the tyres: the wheels' variants with it, the stock rear wheels' body)
+    const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false, band), xd) : carGeometry(M.body, M, car.color, car.stripe !== false, band), bodyMat);
     body.castShadow = true; body.receiveShadow = false; bodyG.add(body);
     const tail = new THREE.Mesh(KE ? KE.tail : tailGeo(M.body, M), matTailOff); bodyG.add(tail);
     const def = BODIES[M.body];
@@ -2733,31 +2783,34 @@ const Render = (function () {
         bodyG.add(dd);
       }
     }
-    const wf = [], wr = [];
+    const wf = [], wr = [], wm = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
-    let fp = null;
+    let fp = null, bandGeo;   // (bandGeo(col): the separate wheels' geometry, front and rear, with that band: the new set the crew pushes home, crewTyres)
     if (M.body === 'formula') {
-      fp = fPartMeshes(car, bodyG);
+      fp = fPartMeshes(car, bodyG); bandGeo = (col) => ({ f: fWheelGeo(F_HUB.fr, F_HUB.fw, col != null ? col : F_SOFT), r: fWheelGeo(F_HUB.rr, F_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
     } else if (M.body === 'lm') {
-      fp = lmPartMeshes(car, bodyG);
+      fp = lmPartMeshes(car, bodyG); bandGeo = (col) => ({ f: lmWheelGeo(LM_HUB.fr, LM_HUB.fw, col != null ? col : F_SOFT), r: lmWheelGeo(LM_HUB.rr, LM_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // all four wheels separate, as the formula's (under the pontoons' humps)
         const f = new THREE.Mesh(lmWheelGeo(LM_HUB.fr, LM_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(lmWheelGeo(LM_HUB.rr, LM_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, LM_HUB.fr, sd * LM_HUB.fz); r.position.set(-M.b, LM_HUB.rr, sd * LM_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;
         grp.add(f, r); wf.push(f); wr.push(r);
       }
     } else if (KE) {
-      const hi = !!car.isPlayer || !!(opts && opts.show), W = kitWheels(KE, hi);   // (the kit: four wheels on their hubs, exactly where the physics has them; the left ones mirrored, their face out)
+      const hi = !!car.isPlayer || !!(opts && opts.show), W = kitWheels(KE, hi, band);   // (the kit: four wheels on their hubs, exactly where the physics has them; the left ones mirrored, their face out)
+      bandGeo = (col) => kitWheels(KE, hi, col);
       for (const sd of [-1, 1]) {
         const f = kitWheelMesh(W.f, matWheel), r = kitWheelMesh(W.r, matWheel);   // (the garage's brakes: their calipers on them, not turning)
         f.position.set(M.a, M.rw, sd * KE.body.hw); r.position.set(-M.b, M.rw, sd * KE.body.hw); if (sd < 0) f.scale.z = r.scale.z = -1;
         f.castShadow = r.castShadow = !!car.isPlayer; grp.add(f, r); wf.push(f); wr.push(r);
       }
-    } else for (const sd of [-1, 1]) { const w = new THREE.Mesh(NEW_BODY[M.body] ? newWheelGeo(M) : getWheelGeo(M.body === 'rally'), matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - (def.wz != null ? def.wz : 0.1))); grp.add(w); wf.push(w); }
+      wm.push(...kitMidWheels(M, KE, W.r, matWheel, grp, !!car.isPlayer));   // (wheels.mid: the middle axle's two, the rear ones' twins)
+    } else { bandGeo = (col) => { const w = NEW_BODY[M.body] ? newWheelGeo(M, col) : getWheelGeo(M.body === 'rally', col); return { f: w, r: w }; };   // (the rear wheels are in the body)
+      for (const sd of [-1, 1]) { const w = new THREE.Mesh(bandGeo(band).f, matWheel); w.position.set(fx, M.rw, sd * (M.wid * 0.5 - (def.wz != null ? def.wz : 0.1))); grp.add(w); wf.push(w); } }
     let blob = null;
     if (!opts || !opts.noBlob) {
       blob = new THREE.Mesh(new THREE.PlaneGeometry(M.len * 1.25, M.wid * 1.45), matBlob);
@@ -2782,9 +2835,9 @@ const Render = (function () {
     // the garage's parts that are no shape of the body's (js/deli/barve.js, skriti.js: DELI.dress): the paint's finish and the glass's tint
     // (this car's material), the stripes' and decals' sheen, the underglow (a mesh of its own), the calipers, the body lowered on its
     // springs, the tyre smoke's colour; null: none fitted. dl.step(dt, car, t, night, braking) each frame, dl.low the body's drop (m)
-    const dl = car.deli && KE && KE.deli && typeof DELI !== 'undefined' && DELI.dress ? DELI.dress({ car, M, E: KE, grp, bodyG, body, mat: bodyMat, dec, wf, wr, show: !!(opts && opts.show) }) : null;
-    return { dl, grp, bodyG, body, tail, dec, wf, wr, fp, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
-      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
+    const dl = car.deli && KE && KE.deli && typeof DELI !== 'undefined' && DELI.dress ? DELI.dress({ car, M, E: KE, grp, bodyG, body, mat: bodyMat, dec, wf, wr, wm, show: !!(opts && opts.show) }) : null;
+    return { dl, grp, bodyG, body, tail, dec, wf, wr, wm, fp, band: fp ? tyreCol(car) : band, bandGeo, blob, marker, lights, noHead, kit, loose: kit ? kit.loose : null, wheelOff: [0, 0, 0, 0], wheelFix: 0, sagQ: null, sagP: null, hubAcc: [0, 0, 0, 0], hubs: [null, null, null, null], crack: [null, null, null, null],
+      dirtU: bodyMat.userData && bodyMat.userData.dirt || null, dirtW: bodyMat.userData && bodyMat.userData.dirtW || null, scrU: bodyMat.userData && bodyMat.userData.scr || null, scrS: opts && opts.xscr && bodyMat.userData && bodyMat.userData.scrS || null, charU: bodyMat.userData && bodyMat.userData.char || null };   // (charU: the char, a Vector4: the fire's seat, the car's frame; w its spread)
   }
 
   /* ---------------- ghost of the best run (time trials) ---------------- */
@@ -2792,11 +2845,12 @@ const Render = (function () {
   // race (no physics, no collisions, no sound, no shadow, no glows or dust). One material for all its parts, kept for the whole visit.
   // Two of them: the player's own (0: bluish, setGhost) and a friend's shared one (1: orange with the friend's name over it, setGhostF).
   const GV = [null, null], GMAT = [null, null], GCOL = [[0xcfe4ff, 0x2b4a72], [0xffc98a, 0x7a3a08]];
-  function ghostDrop(k) { const v = GV[k]; if (!v) return; scene.remove(v.grp); freeOwn(v.grp, new Set([GMAT[k]])); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); } GV[k] = null; }
-  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), op (opacity 0..1), tag (a name over it) }
+  function ghostDrop(k) { const v = GV[k]; if (!v) return; scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); freeOwn(v.grp, new Set([GMAT[k]])); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); } GV[k] = null; }   // (its semi-trailer's look: shared, tlLooks)
+  // g: null hides it (drop: also frees the mesh); else { M, color, stripe, x, y, z, h, d (steer), p (pitch), r (roll), tl (a semi-trailer's angle to
+  // the tractor: its trailer on the kingpin, see-through as the car; tl2: a road train's second tank's to the first one), op (opacity 0..1), tag (a name over it) }
   function ghostSet(k, g, drop) {
     let v = GV[k];
-    if (!g) { if (drop) ghostDrop(k); else if (v) v.grp.visible = false; return; }
+    if (!g) { if (drop) ghostDrop(k); else if (v) { v.grp.visible = false; if (v.tlG) v.tlG.visible = false; } return; }
     if (!scene) return;
     if (!GMAT[k]) GMAT[k] = new THREE.MeshLambertMaterial({ color: GCOL[k][0], emissive: GCOL[k][1], transparent: true, opacity: 0.4 });
     const mat = GMAT[k];
@@ -2815,6 +2869,10 @@ const Render = (function () {
         v.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false })); v.tag.scale.set(4, 1, 1); v.tag.position.y = 2.4; v.tag.renderOrder = 4; v.grp.add(v.tag);
       }
       v.M = g.M; v.color = g.color; v.tagTxt = g.tag || ''; v.spin = 0; v.lx = g.x; v.lz = g.z;
+      const R = g.M.trailer && g.M.trailer.look ? tlBuild(g.M) : null;   // (a semi-trailer: its look in the ghost's material, a group of its own on the kingpin)
+      if (R) { const b = new THREE.Mesh(R.geo, mat); b.renderOrder = 2; v.tlG = new THREE.Group(); v.tlG.add(b); v.tlG.rotation.order = 'YZX'; scene.add(v.tlG); }
+      const N = R && g.M.trailer.next, R2 = N && N.look ? tlBuild2(g.M) : null;   // (a road train's second tank: a child of the first one's group, on the dolly's fifth wheel, docs/zrcalni-vlak.md)
+      if (R2) { const b = new THREE.Mesh(R2.geo, mat); b.renderOrder = 2; v.tlG2 = new THREE.Group(); v.tlG2.add(b); v.tlG2.rotation.order = 'YZX'; v.tlG2.position.set(N.kp[0], N.kp[1] - g.M.trailer.kp[1], 0); v.tlG.add(v.tlG2); }
       scene.add(v.grp); GV[k] = v;
     }
     const M = g.M;
@@ -2826,6 +2884,9 @@ const Render = (function () {
     if (mv < 5) v.spin += mv / M.rw;   // (wheels roll with the distance moved; not across a jump back in the replay)
     for (const w of v.wf) w.rotation.set(0, -(g.d || 0), -v.spin);
     for (const w of v.wr) w.rotation.set(0, 0, -v.spin);
+    for (const w of v.wm) w.rotation.set(0, 0, -v.spin);
+    if (v.tlG) { const D = M.trailer, G = v.tlG; G.visible = v.grp.visible; v.grp.updateMatrixWorld(true);
+      G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld)); G.rotation.set(0, -(g.h + (g.tl || 0)), g.p || 0, 'YZX'); if (v.tlG2) v.tlG2.rotation.set(0, -(g.tl2 || 0), 0, 'YZX'); }
   }
   const setGhost = (g, drop) => ghostSet(0, g, drop), setGhostF = (g, drop) => ghostSet(1, g, drop);
 
@@ -3143,7 +3204,8 @@ const Render = (function () {
 
   /* ---------------- the wet road's mirror (race.water): the lights' reflections, soft streaks on the road running from under each lamp
      towards the camera (the tail and brake lights, the headlights; at night the floodlights), broken up by the rain's ripples. Instanced
-     quads turned to the camera in the shader, additive; one draw call, none on a dry road ---------------- */
+     quads turned to the camera in the shader, additive; one draw call, none on a dry road (but near the pits at dusk and at night: their
+     lamps' faint sheen on the floor, still: pitGlow) ---------------- */
   class Streaks {
     constructor(max) {
       this.max = max; this.n = 0;
@@ -3153,7 +3215,7 @@ const Render = (function () {
       this.at = [[this.P, 3, 'iPos'], [this.C, 4, 'iCol'], [this.S, 3, 'iSize']].map(([a, n, k]) => { const b = new THREE.InstancedBufferAttribute(a, n); b.setUsage(THREE.DynamicDrawUsage); g.setAttribute(k, b); return b; });
       g.instanceCount = 0;
       this.mat = new THREE.ShaderMaterial({
-        uniforms: { uT: { value: 0 }, uFog: { value: new THREE.Vector2(80, 400) } },
+        uniforms: { uT: { value: 0 }, uFog: { value: new THREE.Vector2(80, 400) }, uRip: { value: 1 } },
         vertexShader: ['attribute vec3 iPos; attribute vec4 iCol; attribute vec3 iSize; uniform vec2 uFog; varying vec2 vQ; varying vec4 vC; varying float vS;',
           'void main(){',
           '  vec2 d = cameraPosition.xz - iPos.xz; float l = length(d); d = l > 0.01 ? d / l : vec2(0.0, 1.0);',   // (along the ground, towards the camera)
@@ -3161,10 +3223,10 @@ const Render = (function () {
           '  vec4 mv = viewMatrix * vec4(w, 1.0); gl_Position = projectionMatrix * mv;',
           '  vQ = position.xy; vS = iSize.z; vC = vec4(iCol.rgb, iCol.a * (1.0 - smoothstep(uFog.x, uFog.y, -mv.z)));',   // (fading into the fog: to nothing, it is light)
           '}'].join('\n'),
-        fragmentShader: ['uniform float uT; varying vec2 vQ; varying vec4 vC; varying float vS;',
+        fragmentShader: ['uniform float uT; uniform float uRip; varying vec2 vQ; varying vec4 vC; varying float vS;',
           'void main(){',
           '  float a = exp(-vQ.x * vQ.x * 14.0) * smoothstep(0.0, 0.12, vQ.y) * pow(1.0 - vQ.y, 1.4);',
-          '  a *= 0.7 + 0.3 * sin(vQ.y * 31.0 + vS * 17.0 - uT * 5.0) * sin(vQ.y * 11.0 - vS * 5.0 + uT * 2.3);',   // (the ripples break it up)
+          '  a *= mix(1.0, 0.7 + 0.3 * sin(vQ.y * 31.0 + vS * 17.0 - uT * 5.0) * sin(vQ.y * 11.0 - vS * 5.0 + uT * 2.3), uRip);',   // (the rain's ripples break it up; a dry floor's sheen (the pits') still)
           '  gl_FragColor = vec4(vC.rgb, a * vC.a);',
           '}'].join('\n'),
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
@@ -3267,6 +3329,7 @@ const Render = (function () {
 
   /* ---------------- module state ---------------- */
   let envTex = null, renderer, scene, camera, sun, hemi, tex, world = null, sparkP = null, glows = null, curTrack = null, curRace = null;
+  const EXT = {};   // (other files' parts of the renderer: EXT.vecer, the evening races' lights, js/render-vecer.js)
   const DUST0 = { rate: 1, life: 1, size: 1, s0: 1, rise: 1, alpha: 1, drag: 1, col: [0.84, 0.69, 0.48] };
   const SNOW_DUST = [0.93, 0.95, 0.99];   // (winter: the powder snow off a gravel road)   // the dust cloud off gravel and dirt (a track's def.dust overrides it)
   let dust = null;
@@ -3335,7 +3398,7 @@ const Render = (function () {
       crackWarm = new THREE.Mesh(g, matCrack); crackWarm.frustumCulled = false; crackWarm.onAfterRender = () => { crackWarm.userData.drawn = true; }; }
     particles = new Particles(2400); scene.add(particles.points);
     sparkP = new Particles(700, true); scene.add(sparkP.points);
-    glows = new Glows(10 * 16 + 240); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars)
+    glows = new Glows(10 * 16 + 240 + 96); scene.add(glows.points);   // (the race's cars, up to three points a lamp at night; the open road's traffic and patrol cars; the pits' lamps)
     skids = new Skids(8000); scene.add(skids.mesh);
     rain = new Rain(3200); scene.add(rain.mesh);
     streaks = new Streaks(420); scene.add(streaks.mesh); splash = new Splashes(360); scene.add(splash.mesh);   // (the wet road: the lights' reflections, the drops' splashes)
@@ -3371,6 +3434,10 @@ const Render = (function () {
     clearPropMeshes();
     tierNow = tier == null ? 2 : tier;
     world = World.build(scene, track, tex, { density, tier, season: atmos.season });   // (a world may paint itself for the season: Vršič; tier: the graphics detail level, see World's LOD)
+    if (World.zaslon) { const Z = World.zaslon.build(world, track, tierNow);   // (the big screen by the main grandstand, js/world-zaslon.js; its live picture: zaslonFeed)
+      if (Z && tierNow >= 2 && world.root) {   // (its TV director by the straight: the posts checked with the world now, not in the race)
+        const t0 = performance.now(); world.root.updateMatrixWorld(true);
+        World.zaslon.prep(Z, { tvCams: () => tvCams(track), tvPost: (k) => tvPost(track, k), sees: tvSees }); Z.info.prepMs = Math.round(performance.now() - t0); } }
     // the shared pictures this world uses (a circuit's own boards, kerbs, flags) on the GPU now, not when one first comes into view: no
     // hitch then, and what stays on the GPU from track to track is what the tracks driven use, not what happened to be seen (as numTex)
     if (world.root) { const sh = sharedTex(), pics = new Set(); world.root.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) picsOf(m, pics); });
@@ -3379,7 +3446,7 @@ const Render = (function () {
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     { const d = track.def; if (d && d.look && d.theme && !THEMES[d.theme]) { THEMES[d.theme] = d.look; if (d.look.split) SPLIT[d.theme] = d.look.split; } }   // (a track with its own look in its file: the short roads of docs/gorske-proge.md)
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
-    curTrack = track; seasonWorld(); floodlights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
+    curTrack = track; seasonWorld(); floodlights(); pitLights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
     if (pud) { scene.remove(pud); pud.geometry.dispose(); pud.material.dispose(); pud = null; } splash.clear();
     birds.reset(!!(track.def && (track.def.sea || track.def.theme === 'monaco')));   // (gulls by the sea)
@@ -3728,6 +3795,7 @@ const Render = (function () {
       to(K.fog, 0xeea070, 0.55); to(K.sky, 0xc49ab8, 0.34); to(K.gnd, 0x6a4430, 0.3); to(K.sunC, 0xff8a40, 0.74); K.hemiI = D.hemiI * 0.84; K.sunI = D.sunI;
       K.off = [s0[0] * 1.6, 30, s0[2] * 1.6]; K.tint = [1.1, 0.97, 0.86]; K.uHaze = 0.34 * (1 - r); K.hazeCol = [1, 0.6, 0.32];
       K.shT = [0.97, 0.96, 1.04]; K.hiT = [1.07, 0.99, 0.88]; K.bloom = 0.5; K.lit = [0.97, 0.85, 0.74];
+      if (EXT.vecer && curTrack) EXT.vecer.dusk(K, curTrack.def, r);   // (a real track's evening: a little later, js/render-vecer.js)
     }
     N.fog.setHex(0x070b16); N.sky.setHex(0x26324f); N.gnd.setHex(0x06080b); N.sunC.setHex(0x93aaff); N.hemiI = 0.55; N.sunI = 0.2 * (1 - 0.6 * r);
     N.off = [-40, 110, 60]; N.tint = [0.86, 0.93, 1.12]; N.sat = D.sat * 0.85; N.uHaze = 0; N.postHaze = 0; N.hazeCol = K.hazeCol.slice();   // (no sun glow at night, not even Pikes Peak's)
@@ -3796,10 +3864,82 @@ const Render = (function () {
     }
     if (dryLn) { dryLn.visible = k > 0.01; dryLn.material.opacity = k; }
   }
+  // the marbles (Race mb, a race with tyres): the rubber the tyres shed, a dark speckled band just off the racing line on the outside of the
+  // corners (Track.marbles: its middle and width, how thick it gets there in the vertices' alpha), as dark as the race has laid it (mb.lv;
+  // the rain washes it away). One mesh over the lap (a row every 4 m, only where there is a band; a strip ends where the band changes
+  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once
+  let mbLn = null, mbTex = null;
+  function marbles(R) {
+    if (mbLn && mbLn.userData.w !== world) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
+    const T = R && R.track, lv = R && R.mb && T === curTrack ? R.mb.lv : 0;
+    if (lv > 0.01 && !mbLn && world) {
+      const M = T.marbles(), N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
+      const pos = [], col = [], uv = [], idx = [], bk = { dy: 0, sl: 0 };
+      let last = -2, side = 0;
+      for (let j = 0; j <= n; j++) {
+        if (Math.max(kAt(j - 1), kAt(j), kAt(j + 1)) < 0.02) continue;
+        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > T.rl[i] ? 1 : -1, b = pos.length / 3;
+        for (let v = 0; v < 4; v++) {
+          const o = M.c[i] + O[v] * M.h[i]; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035;
+          if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
+          pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); col.push(1, 1, 1, A[v] * k); uv.push(o / 2, j * st * T.ds / 2);
+        }
+        if (last === j - 1 && sd === side) for (let v = 0; v < 3; v++) { const a = b - 4 + v, c = b + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+        last = j; side = sd;
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      if (!mbTex) mbTex = Tex.marbles();
+      const m = new THREE.MeshLambertMaterial({ map: mbTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length }; scene.add(mbLn);
+    }
+    if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
+  }
+  // the rubbered-in line (84, Race mb.rb; chosen B5-6, early in the race barely to be seen): a glossy dark layer of rubber on the racing line
+  // and beside it, in the same mesh, the dust of it in its own colour, lighter, fading softly outward over a short way (fewer cars drive
+  // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
+  // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
+  // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
+  // again for its track. Its picture: Tex.rubber
+  const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  let rbLn = null, rbTex = null;
+  function rubberLine(R) {
+    if (rbLn && rbLn.userData.w !== world) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
+    const T = R && R.track, rb = R && R.mb && T === curTrack && T.rl ? R.mb.rb || 0 : 0;
+    if (rb > 0.005 && !rbLn && world) {
+      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
+      for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
+      for (let i = 0, j = 0; i <= N; j++) {
+        const ii = i % N, kb = 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
+        for (let v = 0; v < nc; v++) {
+          const o = T.rl[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
+          if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
+          pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
+          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
+        }
+        if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+        if (i === N) break;
+        let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
+        i = Math.min(N, i + st);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.computeVertexNormals();
+      if (!rbTex) rbTex = Tex.rubber();
+      const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
+      rbLn = new THREE.Mesh(g, m); rbLn.name = 'rubberline'; rbLn.receiveShadow = true; rbLn.renderOrder = 1; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1 }; scene.add(rbLn);
+    }
+    if (rbLn) {
+      rbLn.visible = rb > 0.005;
+      const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
+      if (k !== rbLn.userData.k) { rbLn.userData.k = k; rbLn.material.opacity = 0.22 + 0.5 * k; rbLn.material.specular.setRGB(0.05 + 0.13 * k, 0.06 + 0.15 * k, 0.08 + 0.2 * k); }
+    }
+  }
 
   // the rain's splashes (Splashes) on the road round the view's centre: so many drops a second as it rains, where they fall on the road
-  // (the track's own height there); not in the snow. Their places from a generator of their own (Math.random is left to the race)
-  const _bk = { dy: 0, sl: 0 }, _sq = {}; let spR = 91;
+  // and in the pits (the track's own height there); not in the snow. Their places from a generator of their own (Math.random is left to the race)
+  const _bk = { dy: 0, sl: 0 }, _sq = {}; let spR = 91, pitSp = 0;   // (pitSp: the drops in the pits so far, for the tests)
   const spRnd = () => (spR = (spR * 16807) % 2147483647) / 2147483647;
   function rainFx(dt, target) {
     const T = curTrack, on = rain.mesh.visible && !!T && !!target;
@@ -3810,15 +3950,16 @@ const Render = (function () {
     const hint = target.q && target.q.a >= 0 ? target.q.a : -1;
     for (; splash.acc >= 1; splash.acc -= 1) {
       const x = cx + (spRnd() - 0.5) * 2 * R, z = cz + (spRnd() - 0.5) * 2 * R, q = T.query(x, z, hint, _sq);
-      if (Math.abs(q.d) > T.w + 0.6) continue;   // (on the road only)
-      let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank) y += T.bankAt(q.s, q.d, _bk).dy;
+      const road = Math.abs(q.d) <= T.w + 0.6; if (!road && !pitDrop(T, q)) continue;   // (on the road only, and in the pits: the lane, the apron)
+      let y = T.hasElev && T.hy ? T.hy[q.a] : 0; if (T.bank && road) y += T.bankAt(q.s, q.d, _bk).dy; if (!road) pitSp++;
       splash.put(x, y + 0.04, z, time);
     }
     splash.flush();
   }
   // puddles on a circuit's tarmac in the rain: along the edges (the water runs off the camber) and now and then in a dip, a sheet of water
   // mirroring the sky (light by day, dark at night: the lights' reflections do the rest), growing in as the road gets wetter and gone when
-  // it dries. One mesh along the whole lap, built the first time the road is wet enough; not on a gravel road (Ouninpohja: its own)
+  // it dries. One mesh along the whole lap, built the first time the road is wet enough; not on a gravel road (Ouninpohja: its own). On a
+  // track with pits the pits' in the same mesh (pitPuddles)
   let pudTex = null;
   function puddleTex() {   // four puddle shapes (a 2 x 2 atlas): a ragged edge, a little lighter towards it
     const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
@@ -3830,7 +3971,7 @@ const Render = (function () {
     g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
   }
   function buildPuddles(T) {
-    const pos = [], uv = [], idx = [], rl = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); rl.push(T.rl ? o - T.rl[i] : 99); };   // (rl: across from the racing line, for the dry line)
+    const pos = [], uv = [], idx = [], rl = [], pw = [], P = (s, o) => { const i = T.idx(s); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035; if (T.bank) y += T.bankAt(s, o, _bk).dy; pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o); rl.push(T.rl ? o - T.rl[i] : 99); pw.push(1, 0); };   // (rl: across from the racing line, for the dry line)
     for (let s = 7; s < T.len - 7; s += 8) {
       const h = hash3(s * 0.137 + 5); if (h < 0.45) continue;
       const mid = hash3(s * 0.71 + 3) < 0.12, sd = hash3(s * 0.29 + 1) < 0.5 ? -1 : 1, L = 1.8 + 4 * hash3(s * 0.53 + 7), W = Math.min(0.8 + 1.4 * hash3(s * 0.91 + 2), T.w * 0.5);
@@ -3839,23 +3980,68 @@ const Render = (function () {
       uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5);
       idx.push(b, b + 1, b + 2, b, b + 2, b + 3);   // (facing up)
     }
+    if (T.def.pit && world && world.pitBoxes && world.pitBoxes.length) pitPuddles(T, pos, uv, pw, idx, rl);
     if (!pudTex) pudTex = puddleTex();
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('aRl', new THREE.Float32BufferAttribute(rl, 1)); g.setIndex(idx); g.computeBoundingSphere();
+    g.setAttribute('pW', new THREE.Float32BufferAttribute(pw, 2));   // (each vertex: its opacity, 1 on a film of water (no puddle's shape, less of the sky in it): the pits' apron)
     // the water: a dark mirror (looking down into it, the wet asphalt under a film of water; towards the horizon the sky, more of it the
     // flatter the view: Fresnel), the drops' rings spreading on it while it rains (two layers of cells, a drop in each now and then)
     const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3, fog: true,
       uniforms: Object.assign({ tMap: { value: pudTex }, uK: { value: 0 }, uHor: { value: new THREE.Color() }, uTop: { value: new THREE.Color() }, uDark: { value: new THREE.Color(0.055, 0.06, 0.068) }, uT: { value: 0 }, uRain: { value: 0 }, uDry: { value: 0 } }, THREE.UniformsLib.fog),
-      vertexShader: '#include <fog_pars_vertex>\nattribute float aRl; varying vec2 vUv; varying vec3 vW; varying float vRl;\nvoid main(){ vUv = uv; vRl = aRl; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
-      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; uniform float uDry; varying vec2 vUv; varying vec3 vW; varying float vRl;\n' +
+      vertexShader: '#include <fog_pars_vertex>\nattribute float aRl; attribute vec2 pW; varying vec2 vUv; varying vec3 vW; varying float vRl; varying vec2 vPW;\nvoid main(){ vUv = uv; vRl = aRl; vPW = pW; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}',
+      fragmentShader: '#include <fog_pars_fragment>\nuniform sampler2D tMap; uniform float uK; uniform vec3 uHor; uniform vec3 uTop; uniform vec3 uDark; uniform float uT; uniform float uRain; uniform float uDry; varying vec2 vUv; varying vec3 vW; varying float vRl; varying vec2 vPW;\n' +
         'float pH(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }\n' +
         'float pRing(vec2 q, float t) { vec2 c = floor(q), f = fract(q) - 0.5 - (vec2(pH(c), pH(c + 7.3)) - 0.5) * 0.3; float h = pH(c + 3.1), ph = fract(t * (0.55 + 0.5 * h) + h), r = ph * 0.42;\n' +
         '  return smoothstep(0.05, 0.0, abs(length(f) - r)) * (1.0 - ph) * step(0.35, pH(c + floor(t * (0.55 + 0.5 * h) + h) * 1.7)); }\n' +
         'void main(){ vec4 t = texture2D(tMap, vUv); vec3 V = normalize(cameraPosition - vW); float cs = clamp(V.y, 0.0, 1.0), F = 0.04 + 0.96 * pow(1.0 - cs, 5.0);\n' +
         '  vec3 refl = mix(uHor, uTop, smoothstep(0.0, 0.6, cs));\n' +
         '  float rg = (pRing(vW.xz / 0.38, uT) + pRing(vW.xz / 0.3 + 11.7, uT * 1.13)) * uRain;\n' +
-        '  vec3 c = mix(uDark, refl, clamp(F + 0.3 + rg * 0.4, 0.0, 1.0)) * (0.92 + 0.12 * t.r);\n' +
-        '  gl_FragColor = vec4(c, t.a * uK * (1.0 - uDry * clamp((1.7 - abs(vRl)) / 0.75, 0.0, 1.0)));\n#include <fog_fragment>\n}' });   // (uDry: the dry line's band, dryLine: no water left on it)
+        '  vec3 c = mix(uDark, refl, clamp(F + 0.3 - 0.2 * vPW.y + rg * 0.4, 0.0, 1.0)) * (0.92 + 0.12 * t.r);\n' +
+        '  gl_FragColor = vec4(c, t.a * uK * vPW.x * (1.0 - uDry * clamp((1.7 - abs(vRl)) / 0.75, 0.0, 1.0)));\n#include <fog_fragment>\n}' });   // (uDry: the dry line's band, dryLine: no water left on it)
     const mesh = new THREE.Mesh(g, m); mesh.name = 'rainpuddles'; mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; mesh.visible = false; scene.add(mesh); return mesh;   // (ROAD DECAL ORDER, world.js: over the drying line, gone where it has dried)
+  }
+  // the pits in the rain (a track with the crews' boxes, world.pitBoxes): puddles along the lane's edges and on the apron, and the apron as
+  // wet as the road (a film of water over it: darker, the sky in it towards the horizon; drier towards the garages, under their eaves; none
+  // over an apron of the road's asphalt, PIT_LOOK asph: it darkens with the road). Where the lane runs full width (Track.pitAt t 1), in its
+  // frame (o out to the pits' side, sd); into buildPuddles' arrays (pw: each vertex's opacity, 1 on the film)
+  const PIT_FILM = 0.4;   // (the film's opacity)
+  const pitLook = (T) => { const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]); if (T.def.pitApron) L.ap = T.def.pitApron; return L; };
+  // (the apron at s: along the whole lane where it runs full width, or only where the world has it, world.pitApronD [from, to] m from the
+  // start line: Monterey's in front of its canopies, past them the lane's own outer wall)
+  const apronAt = (T, s) => { const A = world && world.pitApronD; if (!A) return true; const L = T.len; let d = s - T.startS; d = ((d % L) + L) % L; if (d > L / 2) d -= L; return d >= A[0] && d <= A[1]; };
+  function pitPuddles(T, pos, uv, pw, idx, rl) {   // (rl: buildPuddles' dry line's offsets, 99 for these: not near the racing line; pitWet's test calls it without)
+    const P0 = T.def.pit, L = pitLook(T), sd = P0[0] < 0 ? -1 : 1, G = L.lift && world.groundH;
+    const pt = (s, o, a, film) => {   // (between the track's samples, as Track.pitAt; at the road's height there, as the builders' lanes and aprons, 0.022 to 0.044 over it with their lines: over them)
+      const f = (((s % T.len) + T.len) % T.len) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f), I = (A) => A[i] + (A[j] - A[i]) * u;
+      const x = I(T.px) + I(T.nx) * sd * o, z = I(T.pz) + I(T.nz) * sd * o, g = G ? G(x, z) : NaN; let y = T.hasElev && T.hy ? I(T.hy) : 0;
+      if (g > y) y = Math.min(y + 1, g); pos.push(x, y + 0.06, z); pw.push(a, film); if (rl) rl.push(99); };   // (PIT_LOOK lift: the world's ground over the apron in places: on that)
+    const quad = (a, b, c, d) => {   // (facing up: a b along o, b c along s; none where the lane's offset turns over itself, inside a tight bend)
+      const P = (k, e) => pos[k * 3 + e], ny = (P(b, 2) - P(a, 2)) * (P(c, 0) - P(a, 0)) - (P(b, 0) - P(a, 0)) * (P(c, 2) - P(a, 2));
+      if (ny * sd <= 0) return; if (sd > 0) idx.push(a, b, c, a, c, d); else idx.push(a, c, b, a, d, c); };
+    if (!L.asph) {   // the film: three rows across the apron (w past the lane's edge, the opacity), a strip along the lane
+      const rows = [[0.03, 1], [L.ap - 2.6, 1], [L.ap - 0.3, 0.3]]; let prev = -1;
+      for (let q = P0[1]; q <= P0[2]; q += 2) {
+        const s = T.startS + q, p = T.pitAt(s); if (!p || p.t < 0.999 || !apronAt(T, s) || !apronAt(T, s + 2)) { prev = -1; continue; }
+        const b = pos.length / 3; for (const [w, a] of rows) { pt(s, p.lout + w, PIT_FILM * a, 1); uv.push(0.25, 0.25); }   // (the middle of a puddle's shape: all water)
+        if (prev >= 0) for (let r = 0; r < 2; r++) quad(prev + r, prev + r + 1, b + r + 1, b + r);
+        prev = b;
+      }
+    }
+    for (let q = P0[1] + 3; q < P0[2]; q += 6) {   // the puddles: along the lane's edges, now and then on the apron (short of the garages)
+      const s = T.startS + q, p = T.pitAt(s), h = hash3(q * 0.173 + 11), Lq = 1.6 + 3 * hash3(q * 0.83 + 1), full = (d) => { const r = T.pitAt(s + d); return !!r && r.t >= 0.999; };
+      if (!p || h < 0.35 || !full(-Lq / 2) || !full(0) || !full(Lq / 2)) continue;   // (all of it where the lane and the apron run full width)
+      const apr = L.ap > 4.5 && hash3(q * 0.61 + 2) < 0.4 && apronAt(T, s - Lq / 2) && apronAt(T, s + Lq / 2), e = hash3(q * 0.37 + 5) < 0.5 ? -1 : 1, W = 0.7 + 1.1 * hash3(q * 0.29 + 6);
+      const o = apr ? p.lout + 0.8 + W / 2 + (L.ap - 3.8 - W) * hash3(q * 0.47 + 3) : p.o + e * (3.2 - W / 2 - 0.5 * hash3(q * 0.53 + 8)), b = pos.length / 3, k = Math.floor(hash3(q * 0.19 + 8) * 4), cu = (k & 1) * 0.5, cv = (k >> 1) * 0.5;
+      pt(s - Lq / 2, o - W / 2, 1, 0); pt(s - Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o + W / 2, 1, 0); pt(s + Lq / 2, o - W / 2, 1, 0);
+      uv.push(cu, cv, cu + 0.5, cv, cu + 0.5, cv + 0.5, cu, cv + 0.5); quad(b, b + 1, b + 2, b + 3);
+    }
+  }
+  // a rain drop at q (Track.query) in the pits: on the lane, or on the apron short of the garages' eaves
+  let pitAp = null;
+  function pitDrop(T, q) {
+    const p = T.def.pit && world && world.pitBoxes && world.pitBoxes.length ? T.pitAt(q.s) : null; if (!p) return false;
+    if (!pitAp || pitAp.T !== T) pitAp = { T, ap: pitLook(T).ap };
+    const w = q.d * p.sd; return Math.abs(w - p.o) < 3.4 || (p.t > 0.999 && w > p.lout && w < p.lout + pitAp.ap - 1.2 && apronAt(T, q.s));
   }
   function puddles(R) {
     const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
@@ -4076,9 +4262,10 @@ const Render = (function () {
     const was = atmos.tod; todK = k; dawn = false; atmos = { season: atmos.season, tod: k >= 0.75 ? 'night' : k >= 0.25 ? 'dusk' : 'day' };
     applyTheme(themeId); todLights(atmos.tod !== was);
   }
-  // the lights of the time of day: the floodlights (from late dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights again
-  function todLights(build) { if (build || (todK > 0.6) !== !!flood) floodlights(); if (flood) flood.pools.material.opacity = 0.56 * sstep(0.6, 0.9, todK); rsGlowAll(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
-  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
+  // the lights of the time of day: the floodlights (from late dusk; a real track's from sunset: lampK), the pits' (from dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights and the pits' again
+  function todLights(build) { if (build || (lampK() > 0) !== !!flood) floodlights(); floodLook(); rsGlowAll();
+    if (build || (todK > 0.2) !== !!pitL) pitLights(); if (pitL) pitL.mesh.material.opacity = pitK(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
+  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); if (v.tlB) v.tlB.material.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
   // and floor, the wall's colour); the facade materials get it in their shader at the first dusk or night (winU 0 by day: as built)
@@ -4211,19 +4398,21 @@ const Render = (function () {
   // lamp, fading out softly) and a glow round the lamp (the glows' points: one draw call for all of them). A real open road (world.lampZones,
   // World's roadside): the street lamps only in its settlements, the road between them dark (the headlights, the delineators' reflectors and the
   // signs: rsGlints, rsGlow); a street lamp of the world's own there (Medvode's) lights the road under it, the poles every 30 m fill the rest
+  const _flQ = new THREE.Quaternion(), _flC = new THREE.Color();
   function floodlights() {
     if (flood) { for (const o of [flood.pools, flood.poles, flood.heads, flood.halo]) { scene.remove(o); o.geometry.dispose(); } flood = null; }
     rsGlowAll();
-    const T = curTrack; if (todK <= 0.6 || !T || !world) return;
+    const T = curTrack; if (lampK() <= 0 || !T || !world) return;
     if (!lampTex) lampTex = radialTex([[0, 1], [0.18, 0.86], [0.42, 0.46], [0.68, 0.16], [1, 0]]);
     const Z = world.lampZones, inZ = (s) => Z.some(z => s - T.startS > z[0] && s - T.startS < z[1]), own = [], spots = [];
+    const SL = EXT.vecer ? EXT.vecer.stands(world, T) : { glow: [], pool: [], mast: [] }, byStand = (i) => SL.pool.some(q => Math.hypot(q[1] - T.px[i], q[2] - T.pz[i]) < 16);   // (the stands' roof lamps, js/render-vecer.js: no pole between a stand and the road)
     if (Z) for (const p of world.props || []) if (p.kind === 'mlamp' && inZ((p.i >= 0 ? p.i : T.nearestIdx(p.x, p.z)) * T.ds)) own.push(p);
-    for (let k = 0, n = Math.floor(T.len / 30); k < n; k++) { const s = k * 30 + 10; if (Z && (!inZ(s) || own.some(p => Math.hypot(p.x - T.px[T.idx(s)], p.z - T.pz[T.idx(s)]) < 18))) continue; spots.push(k); }
-    const n = spots.length + own.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
+    for (let k = 0, n = Math.floor(T.len / 30); k < n; k++) { const s = k * 30 + 10; if (Z && (!inZ(s) || own.some(p => Math.hypot(p.x - T.px[T.idx(s)], p.z - T.pz[T.idx(s)]) < 18))) continue; if (SL.pool.length && byStand(T.idx(s))) continue; spots.push(k); }
+    const n = spots.length + own.length + SL.pool.length, nh = n - SL.pool.length + SL.glow.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), rn = new THREE.Vector3();
     const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: lampTex, color: 0xffd9a6, transparent: true, opacity: 0.56, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), Math.max(1, n));
-    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), Math.max(1, spots.length));
-    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), Math.max(1, spots.length));
-    const hp = new Float32Array(n * 3), hc = new Float32Array(n * 4), hs = new Float32Array(n), fp = new Float32Array(n * 3);
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.12, 9, 5).translate(0, 4.5, 0), new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), Math.max(1, spots.length + SL.mast.length));
+    const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.9, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff1cf }), Math.max(1, spots.length + SL.mast.length));
+    const hp = new Float32Array(nh * 3), hc = new Float32Array(nh * 4), hs = new Float32Array(nh), fp = new Float32Array(n * 3);
     const pool = (k, i, x, z) => {   // the pool of light on the road at (x, z) (sample i), its place for the wet road's reflections
       const y = T.hasElev && T.hy ? T.hy[i] : 0, gr = T.hasElev && T.grade ? T.grade[i] : 0; rn.set(-gr * T.tx[i], 1, -gr * T.tz[i]).normalize();   // (the pool in the road's plane: on a climb a level one would cut into the road ahead and float above it behind)
       p.set(x, y + 0.07, z); q.setFromUnitVectors(up, rn); sc.set(T.w * 3.2, 1, T.w * 3.2); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity();
@@ -4241,11 +4430,29 @@ const Render = (function () {
       pool(k, i, l.x + ax * 3.2, l.z + az * 3.2);
       hp[k * 3] = l.x + ax * 1.6; hp[k * 3 + 1] = gy + 7.65; hp[k * 3 + 2] = l.z + az * 1.6; hc[k * 4] = 1; hc[k * 4 + 1] = 0.84; hc[k * 4 + 2] = 0.6; hc[k * 4 + 3] = 0.5; hs[k] = 4.5;
     });
-    pools.count = n; poles.count = heads.count = spots.length;
+    const k0 = spots.length + own.length;
+    // the stands' lamps (js/render-vecer.js): their pools on the road in front of the stand, the glows (along a roof's edge, on an open stand's masts), the masts
+    SL.pool.forEach((P, j) => { const k = k0 + j, i = P[0]; pool(k, i, P[1], P[2]); q.setFromUnitVectors(up, rn).multiply(_flQ.setFromAxisAngle(up, Math.atan2(T.tx[i], T.tz[i]))); sc.set(P[4], 1, P[3]); m4.compose(p, q, sc); pools.setMatrixAt(k, m4); q.identity(); });   // (stretched along the road: a band of light)
+    if (SL.pool.length) for (let k = 0; k < n; k++) pools.setColorAt(k, _flC.setScalar(k < k0 ? 1 : SL.pool[k - k0][5]));
+    SL.glow.forEach((g, j) => { const k = k0 + j; hp[k * 3] = g[0]; hp[k * 3 + 1] = g[1]; hp[k * 3 + 2] = g[2]; hc[k * 4] = 1; hc[k * 4 + 1] = 0.9; hc[k * 4 + 2] = 0.74; hc[k * 4 + 3] = 0.42; hs[k] = g[3]; });
+    SL.mast.forEach((M, j) => { const k = spots.length + j; p.set(M[0], M[1], M[2]); q.setFromAxisAngle(up, -Math.atan2(M[5], M[4])); sc.set(1, M[3] / 9, 1); m4.compose(p, q, sc); poles.setMatrixAt(k, m4);
+      p.y += M[3]; sc.set(1, 1, 1); m4.compose(p, q, sc); heads.setMatrixAt(k, m4); });
+    pools.count = n; poles.count = heads.count = spots.length + SL.mast.length;
     const hg = new THREE.BufferGeometry(); hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('pcolor', new THREE.BufferAttribute(hc, 4)); hg.setAttribute('psize', new THREE.BufferAttribute(hs, 1));
     const halo = new THREE.Points(hg, glows.mat); halo.renderOrder = 7;   // (the car lights' glow material: no program of its own)
     pools.renderOrder = 1; pools.frustumCulled = false; poles.frustumCulled = false; heads.frustumCulled = false; halo.frustumCulled = false;
-    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp };
+    pools.name = 'floodPools'; poles.name = 'floodPoles'; heads.name = 'floodHeads'; halo.name = 'floodGlows';   // (tests: browser/vecer.test.mjs)
+    scene.add(pools); scene.add(poles); scene.add(heads); scene.add(halo); flood = { pools, poles, heads, halo, fp, ha: hc.filter((_, j) => j % 4 === 3) }; floodLook();
+  }
+  // the floodlights' strength (lampK: the night's from late dusk; a real track's from sunset) and look (floodLook: the pools', the glows'; a
+  // real track's evening on NIZKA only the pools, no poles, lamps nor glows): js/render-vecer.js, look
+  const lit = () => !!EXT.vecer && !!curTrack && !dawn;   // (the evening's lights: not at dawn, which stays as it was)
+  function lampK() { return lit() ? EXT.vecer.lampK(todK, curTrack.def) : sstep(0.6, 0.9, todK); }
+  function floodLook() {
+    if (!flood) return;
+    const L = lit() ? EXT.vecer.look(todK, curTrack.def, tierNow) : { k: lampK(), bare: false, glow: 1, refl: 1 }, C = flood.halo.geometry.attributes.pcolor;
+    flood.pools.material.opacity = 0.56 * L.k; flood.poles.visible = flood.heads.visible = flood.halo.visible = !L.bare; flood.refl = L.bare ? 0 : L.refl;   // (refl: the wet road's reflections of the lamps, updateCars)
+    if (flood.hk !== L.glow) { flood.hk = L.glow; for (let j = 0; j < flood.ha.length; j++) C.array[j * 4 + 3] = flood.ha[j] * L.glow; C.needsUpdate = true; }   // (the glows: a real track's a little fainter in the evening)
   }
   // the open roads' signs at dusk and at night: their faces shine in the headlights (World's roadside: the static mesh, Render's knockable ones)
   function rsGlowAll() { if (!world) return; rsGlow(world.rsMesh && world.rsMesh.material); for (const k of RS_KINDS) if (propMeshes[k] && propMeshes[k].userData.atlas) rsGlow(propMeshes[k].material); }
@@ -4266,6 +4473,92 @@ const Render = (function () {
       if (++n >= 48) break;
     }
     if (n) glows.end();
+  }
+  /* ---------------- the pits at dusk and at night (todK): the crews' garages lit inside (their floor and back wall glowing; Bathurst's and Bang
+     Saen's dark fronts glowing instead), the light spilling out of the door onto the apron, a light bar over each door with two lamps in it and
+     their pools of light on the apron and the lane, the floor a little shiny under them (the lamps' sheen: soft reflections towards the camera,
+     the wet road's streaks, still on a dry floor). All fakes: additive quads in one mesh over the 13 crews' boxes (world.pitBoxes): one draw call
+     where the pits are in view, none by day or on a track without pits; the lamps' glow with the car lights' (glows). Each pit builder's
+     garages have their own front, opening and depth (PIT_LOOK); the 1930s stalls and the 1950s shed bare warm bulbs instead ---------------- */
+  // gf: the garages' front past the lane's outer edge (bx.base; Montréal's shallow apron: def.pitApron), h: the opening's height, w: its width,
+  // d: the depth to the back wall; bz: the light bar in front of the front (the team's band, a valance); eave: [w, y] the front edge of a roof
+  // over the apron (it hides the garages' front from the camera behind the car: the lamps hang in front of it); kind: 'in' an open garage
+  // with its inside built (its floor and back wall lit), 'door' a dark front standing for the inside (dz: where it is; the glow on it), 'tent'
+  // a roof on legs, 'bulb' a stall or a shed (bulbs under its eave, no light bar, no lamps over the lane; back: its back wall). The rain
+  // (pitPuddles): ap, the apron's depth in the open past the lane's outer edge where the lane runs full width (Montréal's: def.pitApron; Crystal
+  // Palace's stalls' roofs over the last of it); asph: an apron of the road's asphalt (it darkens with the road: no film of water over it);
+  // lift: the world's ground over the apron in places (Newcastle's, Toronto's terrain): the film on it
+  const PIT_LOOK = {
+    def: { gf: 9, h: 3.3, w: 8.2, d: 6.9, bz: -0.17, kind: 'in', ap: 9 },   // (pitLaneScenery: Spa, Newcastle; the Red Bull Ring's building)
+    spa: { eave: [-0.9, 8.6] }, newcastle: { lift: true }, rbring: { eave: [-2.4, 14.7] }, montreal: { h: 3.4, w: 9.5, d: 13 }, toronto: { gf: 9.2, h: 2.75, w: 9.4, d: 7.25, lift: true },
+    townsville: { gf: 9.7, h: 3.7, w: 11.4, d: 11.1, eave: [-1.2, 4.6] }, bathurst: { h: 3.4, w: 9.4, kind: 'door', dz: 0.26, eave: [-0.8, 7.8], asph: true }, bangsaen: { gf: 8, h: 2.45, w: 8.6, kind: 'door', dz: -0.03, ap: 8 },
+    troisrivieres: { gf: 9.2, h: 2.9, w: 8.8, d: 6.6, bz: -0.26, kind: 'tent' },
+    cpalace: { h: 2.7, w: 8.8, d: 2.6, kind: 'bulb', ap: 8.6 }, longford: { h: 3.9, w: 9.4, d: 5.8, kind: 'bulb', back: true },
+  };
+  const PIT_IC = [0.82, 0.9, 1.0], PIT_NC = [1.0, 0.95, 0.84], PIT_WC = [1.0, 0.7, 0.4];   // (inside: cool LED; the lamps: white; the old bulbs: warm)
+  let pitTex = null, pitL = null;
+  const pitK = () => sstep(0.2, 0.5, todK) * (0.62 + 0.38 * sstep(0.5, 1, todK)) * (dawn ? 0.7 : 1);   // (dusk 0.62, night 1, the morning dimmer; off by day)
+  function pitTexture() {   // four soft shapes side by side, 64 px each: a round pool (a brighter core: the sheen under the lamp), a rectangle (its foot
+    // sharper), the light out of a door (the brightest at v = 0, its edge), a bar (a thin bright core along u)
+    const S = 64, c = document.createElement('canvas'); c.width = S * 4; c.height = S; const g = c.getContext('2d'), img = g.createImageData(S * 4, S), d = img.data;
+    const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    for (let j = 0; j < S; j++) for (let i = 0; i < S * 4; i++) {
+      const k = (i / S) | 0, u = ((i % S) + 0.5) / S, v = 1 - (j + 0.5) / S, o = (j * S * 4 + i) * 4;   // (v up: the canvas's first row is the texture's top)
+      let a;
+      if (k === 0) { const r = Math.hypot(u - 0.5, v - 0.5) * 2; a = r >= 1 ? 0 : Math.pow(1 - r, 1.6) * (0.55 + 0.45 * Math.exp(-r * r * 9)); }
+      else if (k === 1) a = ss(0, 0.2, u) * ss(0, 0.2, 1 - u) * ss(0, 0.05, v) * ss(0, 0.32, 1 - v);
+      else if (k === 2) a = ss(0, 0.22, u) * ss(0, 0.22, 1 - u) * Math.exp(-3.2 * v) * ss(0, 0.15, 1 - v);
+      else a = ss(0, 0.1, u) * ss(0, 0.1, 1 - u) * Math.exp(-(((v - 0.5) / 0.2) ** 2));
+      d[o] = d[o + 1] = d[o + 2] = 255; d[o + 3] = Math.round(255 * clamp(a, 0, 1));
+    }
+    g.putImageData(img, 0, 0); return new THREE.CanvasTexture(c);
+  }
+  function pitLights() {
+    if (pitL) { scene.remove(pitL.mesh); pitL.mesh.geometry.dispose(); pitL.mesh.material.dispose(); pitL = null; }
+    const T = curTrack, B = world && world.pitBoxes; if (todK <= 0.2 || !T || !B || !B.length) return;
+    if (!pitTex) pitTex = pitTexture();
+    const L = Object.assign({}, PIT_LOOK.def, PIT_LOOK[T.def.theme]), gf = T.def.pitApron || L.gf, ww = L.w / 2, bulb = L.kind === 'bulb', CL = bulb ? PIT_WC : PIT_IC;
+    const pos = [], uv = [], col = [], idx = [], lamps = [], doors = [], hy = (s) => (T.hasElev && T.hy ? T.hy[T.idx(s)] : 0), e = 0.5 / 256, G = world.groundH;
+    // a quad A B C D (u, v: 0 0, 1 0, 1 1, 0 1 in its cell of the texture), the colour times its strength
+    const quad = (A, Bq, C, D, cell, rgb, k) => { const b = pos.length / 3, u0 = cell / 4 + e, u1 = (cell + 1) / 4 - e;
+      pos.push(...A, ...Bq, ...C, ...D); uv.push(u0, 0.01, u1, 0.01, u1, 0.99, u0, 0.99); for (let n = 0; n < 4; n++) col.push(rgb[0] * k, rgb[1] * k, rgb[2] * k); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); };
+    for (const bx of B) {
+      const y0 = (bx.y || 0) - hy(bx.s), F = bx.base + gf, P = (a, w, y) => [bx.ox + bx.tx * a + bx.nx * w, y0 + hy(bx.s + a) + y, bx.oz + bx.tz * a + bx.nz * w];   // (a along the lane from the box's middle, w out from the centre line; y over its floor)
+      const Pf = (a, w, y) => { const p = P(a, w, 0), g = G ? G(p[0], p[2]) : NaN; if (g > p[1]) p[1] = Math.min(p[1] + 1, g); p[1] += y; return p; };   // (on the floor; where the world's ground lies over it (Toronto's terrain over the apron), on that)
+      const flat = (a0, a1, w0, w1, y, cell, rgb, k) => quad(Pf(a0, w0, y), Pf(a1, w0, y), Pf(a1, w1, y), Pf(a0, w1, y), cell, rgb, k);   // (v from w0 to w1)
+      const wall = (a0, a1, w, h0, h1, cell, rgb, k) => quad(P(a0, w, h0), P(a1, w, h0), P(a1, w, h1), P(a0, w, h1), cell, rgb, k);
+      if (L.kind === 'in' || L.kind === 'tent') {   // the inside: its floor (the strip lights' sheen on an epoxy one), its back wall
+        flat(-ww + 0.2, ww - 0.2, F + 0.15, F + L.d - 0.1, 0.05, 1, CL, L.kind === 'in' ? 0.5 : 0.42);
+        wall(-ww + 0.2, ww - 0.2, F + L.d - 0.04, 0.05, L.kind === 'in' ? L.h + 0.5 : L.h - 0.1, 1, CL, L.kind === 'in' ? 0.35 : 0.3);
+        if (L.kind === 'in') for (const a of [-0.23 * L.w, 0.23 * L.w]) quad(Pf(a - 0.35, F + 0.4, 0.055), Pf(a - 0.35, F + L.d - 0.4, 0.055), Pf(a + 0.35, F + L.d - 0.4, 0.055), Pf(a + 0.35, F + 0.4, 0.055), 3, CL, 0.4);
+      } else if (L.kind === 'door') wall(-ww, ww, F + L.dz, 0.02, L.h, 1, CL, 0.46);
+      else {   // the stall's, the shed's: a pool under its roof, its back wall, three bulbs under the eave
+        flat(-ww - 0.4, ww + 0.4, F - 0.6, F + L.d + 0.6, 0.05, 0, CL, 0.6);
+        if (L.back) wall(-ww + 0.2, ww - 0.2, F + L.d, 0.05, 2.8, 1, CL, 0.3);
+        for (const a of [-0.6 * ww, 0, 0.6 * ww]) { const p = P(a, F + 0.5, L.h - 0.4); lamps.push({ x: p[0], y: p[1], z: p[2], gy: Pf(a, F + 0.5, 0.03)[1], c: CL, s: 2, a: 0.7 }); }
+      }
+      flat(-ww - 0.3, ww + 0.3, F - 0.02, F - (bulb ? 5.5 : Math.min(6, gf + 2)), 0.06, 2, bulb ? CL : PIT_NC, 0.42);   // the light out of the door, on the apron
+      { const p = Pf(0, F - 0.6, 0.03); doors.push({ x: p[0], y: p[1], z: p[2], c: CL, w: L.w * 0.45 }); }
+      if (bulb) continue;
+      wall(-ww + 0.4, ww - 0.4, F + L.bz, L.h + 0.02, L.h + 0.18, 3, PIT_NC, 1.4);   // the light bar over the door
+      const E = L.eave, lw = E ? F + E[0] - 0.3 : F + L.bz - 0.12, ly = E ? E[1] - 0.25 : L.h + 0.1, r = E ? 6.2 : 5.6, wc = bx.base + Math.min(gf / 2, 3.5) - 0.5;   // (lw, ly: the lamps; wc: their pools' middle)
+      for (const a of [-L.w / 4, L.w / 4]) { const p = P(a, lw, ly); lamps.push({ x: p[0], y: p[1], z: p[2], gy: Pf(a, lw, 0.03)[1], c: PIT_NC, s: E ? 3 : 2.4, a: 0.45 });
+        flat(a - r, a + r, wc - r, wc + r, 0.05, 0, PIT_NC, 0.3); }   // (its pool on the apron and the lane's edge)
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeBoundingSphere();   // (the pits only: out of view, not drawn)
+    const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: pitTex, vertexColors: true, transparent: true, opacity: pitK(), blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    mesh.name = 'pitLights'; mesh.renderOrder = 1; mesh.matrixAutoUpdate = false; scene.add(mesh);
+    pitL = { mesh, lamps, doors, n: B.length, q: pos.length / 12, kind: L.kind };
+  }
+  // each frame: the pits' lamps round the view, their glow and their sheen on the floor (dry: faint and still; wet: the road's mirror, as the
+  // floodlights'), the light out of the doors mirrored too
+  function pitGlow(wk) {
+    const k = pitL.mesh.material.opacity, cx = cam.vcx || 0, cz = cam.vcz || 0; if (k <= 0) return;
+    for (const l of pitL.lamps) { const dx = l.x - cx, dz = l.z - cz; if (dx * dx + dz * dz > 170 * 170) continue;
+      glows.add(l.x, l.y, l.z, l.s, l.c[0], l.c[1], l.c[2], l.a * k); glows.add(l.x, l.y, l.z, l.s * 0.3, 1, 1, 1, 0.8 * k);
+      streaks.add(l.x, l.gy, l.z, l.c[0], l.c[1], l.c[2], (wk ? 0.36 * wk : 0.1) * k, wk ? 1.6 : 0.9, wk ? 10 : 5, l.x * 0.13); }
+    for (const d of pitL.doors) { const dx = d.x - cx, dz = d.z - cz; if (dx * dx + dz * dz < 140 * 140) streaks.add(d.x, d.y, d.z, d.c[0], d.c[1], d.c[2], (wk ? 0.22 * wk : 0.06) * k, d.w, wk ? 9 : 6, d.z * 0.11); }
   }
   // dusk and night: the headlights' beam on the road ahead of a car (additive): the two lamps' cones, narrow and the brightest at the lamps,
   // each widening and fading with the distance (a soft edge all round), merging into one warm, faint fan further out
@@ -4460,6 +4753,29 @@ const Render = (function () {
     return false;
   }
   function unviewCull() { for (const m of offView) { m.visible = true; m.userData.ov = false; } offView.length = 0; }
+  // the big screen by the main grandstand (js/world-zaslon.js): its live picture (VISOKA) drawn after the frame from a TV post beside the
+  // track, for the next frame's view: the haze for that camera's distance, the sky dome round it, the cars out of the main view (carCull)
+  // near the car it follows put back for it, no names over the cars, the glows sized for its lens; all as it was after
+  const zsX = { race: null, dt: 0, tier: 2, low: false, cam: null, tvCams: () => tvCams(curTrack), tvPost: (k, b) => tvPost(curTrack, k, b) }, zsIn = [], zsTag = [], _zsP = new THREE.Vector3();
+  function zaslonFeed(dt) {
+    const Z = world && world.dyn && world.dyn.zaslon; if (!Z || !World.zaslon || snapping || !curTrack) return;
+    zsX.race = curRace; zsX.dt = dt; zsX.tier = tierNow; zsX.low = saverK < 1; zsX.cam = camera;
+    if (!World.zaslon.step(Z, zsX)) return;
+    const F = scene.fog, fn = F.near, ff = F.far, r = Math.max(0, wet), dC = Math.max(60, Z.dist || 0) * ((THEMES[themeId] || {}).fogK || 1), C = Z.cam;
+    F.near = dC * (1.35 - 0.4 * r); F.far = dC * (5.5 - 1.6 * r);
+    { const fr = Math.min(900, F.far + 40); if (Math.abs(C.far - fr) > 5) { C.far = fr; C.updateProjectionMatrix(); } }   // (nothing past the haze drawn into it)
+    const sk = sky && sky.mesh.visible ? sky.mesh : null, mo = nsky.moon && nsky.moon.visible;
+    const ss = sk ? sk.scale.x : 1; if (sk) { _zsP.copy(sk.position); sk.position.copy(C.position); sk.scale.setScalar(C.far * 0.8); sk.updateMatrixWorld(); }   // (the dome round the TV post, inside its far plane)
+    if (mo) nsky.moon.visible = nsky.halo.visible = false;
+    for (const v of views) { if (v.cull && Math.hypot(v.grp.position.x - Z.ax, v.grp.position.z - Z.az) < 150) { scene.add(v.grp); v.grp.updateMatrixWorld(true); zsIn.push(v.grp); } if (v.tag && v.tag.visible) { v.tag.visible = false; zsTag.push(v.tag); } }
+    for (const g of GV) if (g && g.tag && g.tag.visible) { g.tag.visible = false; zsTag.push(g.tag); }
+    const ps = World.zaslon.RH / (2 * Math.tan(C.fov * Math.PI / 360)); particles.mat.uniforms.uScale.value = ps; if (sparkP) sparkP.mat.uniforms.uScale.value = ps; if (glows) glows.mat.uniforms.uScale.value = ps;
+    try { World.zaslon.draw(Z, renderer, scene); }
+    finally {
+      F.near = fn; F.far = ff; if (sk) { sk.position.copy(_zsP); sk.scale.setScalar(ss); sk.updateMatrixWorld(); } if (mo) nsky.moon.visible = nsky.halo.visible = true;
+      for (const g of zsIn) scene.remove(g); zsIn.length = 0; for (const t of zsTag) t.visible = true; zsTag.length = 0; updatePointScale();
+    }
+  }
   // the battery saver (game.js: 30 frames a second): the picture drawn at 0.7 of the resolution
   function setSaver(on) { const k = on ? 0.7 : 1; if (k !== saverK) { saverK = k; resize(); } }
   // the new world's shaders compiled at once, while the loading screen is up (else in its first frames, or mid-race as each comes in view)
@@ -4468,11 +4784,12 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
     const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat);   // (matFpM: the formula's rivals' parts, remerge; farMat: the far rivals' one material)
+    for (const R of tlLooks.values()) if (R) { g.add(R.geo); g.add(R.lgeo); g.add(R.lo); g.add(R.sh); g.add(R.blob); m.add(R.mat); }   // (a semi-trailer's look: the model's, a preview's trailer in its tractor's group, tlShow)
     return { g, m };
   }
   // frees what a group built for itself (geometry and materials), except the shared pieces and anything in `keep`
@@ -4491,7 +4808,7 @@ const Render = (function () {
     if (v.charSh) for (const m of v.charSh.values()) if (!(keep && keep.has(m))) m.dispose();   // (its charred copies a pit repair took off the car: a smashed lens's, a tail lamp cover's)
     if (v.loose) { for (const n in v.loose) { const L = v.loose[n]; if (!L.shared && !(keep && keep.has(L.geo))) L.geo.dispose(); delete v.loose[n]; } }
   }
-  function disposeView(v, keep) { scene.remove(v.grp); if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
+  function disposeView(v, keep) { scene.remove(v.grp); if (v.tlG) { scene.remove(v.tlG); v.tlG = null; } if (v.tlG2) { scene.remove(v.tlG2); v.tlG2 = null; } if (v.tag) { v.tag.material.map.dispose(); v.tag.material.dispose(); v.tag = null; } disposeCarMesh(v, keep); }
   // geometry and materials the loose panels on the track are drawn with
   function debrisRes() { const s = new Set(), add = (o) => { if (o.geometry) s.add(o.geometry); if (o.material) s.add(o.material); }; for (const d of debrisMeshes) if (d.mesh && d.mesh.traverse) d.mesh.traverse(add); for (const m of xGround) m.traverse(add); return s; }   // (xGround: Razbijanje · nov način's pieces on the road)
   // what the cars drawn now and the loose pieces on the track are drawn with (a dead piece is freed but for these: debris dies, kept out)
@@ -4499,6 +4816,212 @@ const Render = (function () {
     const s = debrisRes(), add = (o) => { if (o.geometry) s.add(o.geometry); const m = o.material; if (Array.isArray(m)) for (const q of m) s.add(q); else if (m) s.add(m); };
     for (const v of views) v.grp.traverse(add);
     return s;
+  }
+  /* ---------------------------------------------------------------------
+     THE SEMI-TRAILER (Core: Car.tl, model.trailer; the TITAN CISTERNA's tank, docs/titan-cisterna.md): a group of its own in the scene
+     beside the tractor's, its origin on the kingpin. tlDraw puts it where the tractor's fifth wheel is drawn this frame, turned to the core
+     trailer's heading, pitched from the kingpin down to the road under its axles, rolled a little in a bend. Its look (model.trailer.look
+     .build(B)) is built once a model with the builder B (tlBuild): boxes, cylinders, a tank and its hoops, its tail lamps, one picture
+     (B.tex: the tank's skin and an atlas); one mesh of vertex colours on the picture (a piece with no part of it on its white corner), the
+     lamps a mesh of their own (lit with the tractor's), a shadow blob. Its metres: x forward from the kingpin, y up from the ground (the
+     kingpin at kp[1]), z across. Shared by the model's cars, never freed (tlLooks, as the bodies' cache)
+     --------------------------------------------------------------------- */
+  const tlLooks = new Map(), _tlK = new THREE.Vector3(), _tlP = new THREE.Vector3(), TL_TAU = Math.PI * 2;
+  function tlBuild(M) {
+    if (tlLooks.has(M.id)) return tlLooks.get(M.id);
+    const D = M.trailer, A = tlGeo(M, 0), L = A && tlGeo(M, 1), S = L && tlGeo(M, 2);
+    if (!A || !L || !S) { tlLooks.set(M.id, null); return null; }
+    let map = null; if (A.cv) { map = new THREE.CanvasTexture(A.cv); map.flipY = false; map.anisotropy = Math.min(4, renderer ? renderer.capabilities.getMaxAnisotropy() : 1); }
+    // a polished tank (look.mirror, the road train's: js/cars/zrcalni.js): the race's sky mixed in (envTex: no live mirror, no draw call more),
+    // only on the picture's skin and ends (mirror.uv: white in its specular map, the rest black)
+    const mr = D.look && D.look.mirror; let spec = null;
+    if (mr && A.cv && envTex) { const sc = document.createElement('canvas'), g = sc.getContext('2d'); sc.width = A.cv.width; sc.height = A.cv.height; g.fillStyle = '#000'; g.fillRect(0, 0, sc.width, sc.height); g.fillStyle = '#fff'; for (const r of mr.uv || []) g.fillRect(r[0], r[1], r[2] - r[0], r[3] - r[1]); spec = new THREE.CanvasTexture(sc); spec.flipY = false; }
+    const mat = spec ? new THREE.MeshLambertMaterial({ vertexColors: true, map, specularMap: spec, envMap: envTex, combine: THREE.MixOperation, reflectivity: mr.k || 0.6 }) : new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
+    const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
+    const R = { geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris };
+    tlLooks.set(M.id, R); return R;
+  }
+  // the road train's second tank (model.trailer.next): its look built as a trailer's of its own (its cache key the model's id and #2)
+  function tlBuild2(M) { const N = M.trailer && M.trailer.next; return N && N.look ? tlBuild({ id: M.id + '#2', trailer: N }) : null; }
+  // the look's geometry (tlBuild): the builder run once a level (B.lo: 0 the look, the player's trailer and the previews; 1 the light look,
+  // a rival's: fewer sides, no small parts, as the builder chooses; 2 the shadow, drawn only into the shadow map), on the full look's picture
+  // (the lighter ones not painted again)
+  function tlGeo(M, lo) {
+    const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1];
+    let cv = null, TW = 1, TH = 1;
+    const col = (k) => typeof k === 'number' ? colArr(k) : k || [1, 1, 1];
+    // a triangle: its corners, their normals (outward: the winding follows them), its colour, its corners on the picture (pixels; none: the white corner)
+    function tri(a, b, c, na, nb, nc, k, ua, ub, uc, lamp) {
+      const ex = b[0] - a[0], ey = b[1] - a[1], ez = b[2] - a[2], fx = c[0] - a[0], fy = c[1] - a[1], fz = c[2] - a[2];
+      if ((ey * fz - ez * fy) * (na[0] + nb[0] + nc[0]) + (ez * fx - ex * fz) * (na[1] + nb[1] + nc[1]) + (ex * fy - ey * fx) * (na[2] + nb[2] + nc[2]) < 0) {
+        let t = b; b = c; c = t; t = nb; nb = nc; nc = t; t = ub; ub = uc; uc = t; }
+      if (lamp) { LP.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); LN.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]); return; }
+      P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); N.push(na[0], na[1], na[2], nb[0], nb[1], nb[2], nc[0], nc[1], nc[2]);
+      for (let i = 0; i < 3; i++) C.push(k[0], k[1], k[2]);
+      ua = ua || WH; ub = ub || WH; uc = uc || WH; UV.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
+    }
+    const quad = (a, b, c, d, n, k, q, lamp) => { tri(a, b, c, n, n, n, k, q && q[0], q && q[1], q && q[2], lamp); tri(a, c, d, n, n, n, k, q && q[0], q && q[2], q && q[3], lamp); };
+    const unit = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    // an ellipse across x (the tank's, its hoops'): its point and its normal at the angle f from the bottom (f = pi/2 on the +z side)
+    const ell = (x, yc, ry, rz, f, s) => [x, yc - ry * s * Math.cos(f), rz * s * Math.sin(f)];
+    const eln = (ry, rz, f, ax) => unit([ax || 0, -Math.cos(f) / ry, Math.sin(f) / rz]);
+    const B = {
+      // the picture (w x h px): draw(g, w, h) paints it; its corner (the last 8 x 8 px) is made white for the pieces without a part of it
+      lo: lo || 0,
+      tex(w, h, draw) { TW = w; TH = h; if (lo) return; cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d', { willReadFrequently: true }); draw(g, w, h);   // (a canvas in memory: the look reads its pixels back (getImageData), no wait for the graphics card's)
+        g.fillStyle = '#fff'; g.fillRect(w - 8, h - 8, 8, 8); },
+      // a box: its middle, its sizes, its colour; o.face ('-x' the rear, '+x', '+y', '-y', '+z', '-z') takes o.uv ([u0, v0, u1, v1] px: as seen
+      // from outside, its top left to its bottom right; '+y': x along, z down) in o.faceK (white: the picture as it is); o.skip: faces left out
+      box(x, y, z, lx, ly, lz, k, o, lamp) {
+        const K = col(k), hx = lx / 2, hy = ly / 2, hz = lz / 2, V = (sx, sy, sz) => [x + sx * hx, y + sy * hy, z + sz * hz];
+        const F = { '-x': [[-1, 0, 0], V(-1, 1, -1), V(-1, 1, 1), V(-1, -1, 1), V(-1, -1, -1)], '+x': [[1, 0, 0], V(1, 1, 1), V(1, 1, -1), V(1, -1, -1), V(1, -1, 1)],
+          '+z': [[0, 0, 1], V(-1, 1, 1), V(1, 1, 1), V(1, -1, 1), V(-1, -1, 1)], '-z': [[0, 0, -1], V(1, 1, -1), V(-1, 1, -1), V(-1, -1, -1), V(1, -1, -1)],
+          '+y': [[0, 1, 0], V(-1, 1, -1), V(1, 1, -1), V(1, 1, 1), V(-1, 1, 1)], '-y': [[0, -1, 0], V(-1, -1, 1), V(1, -1, 1), V(1, -1, -1), V(-1, -1, -1)] };
+        for (const s in F) {
+          if (o && o.skip && o.skip.indexOf(s) >= 0) continue;
+          const [n, a, b, c, d] = F[s], r = o && o.face === s && o.uv;
+          quad(a, b, c, d, n, r ? col(o.faceK || [1, 1, 1]) : K, r ? [[r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]] : null, lamp);
+        }
+      },
+      // a cylinder from a to b ([x, y, z]), its radius (o.r2 at b), o.n sides, its ends closed (o.caps false: open; o.capK their colour)
+      cyl(a, b, r, k, o) {
+        const K = col(k), KC = o && o.capK != null ? col(o.capK) : K, n = (o && o.n) || 10, r2 = o && o.r2 != null ? o.r2 : r, caps = !(o && o.caps === false);
+        const d = unit([b[0] - a[0], b[1] - a[1], b[2] - a[2]]), rf = Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], dt = rf[0] * d[0] + rf[1] * d[1] + rf[2] * d[2];
+        const e1 = unit([rf[0] - d[0] * dt, rf[1] - d[1] * dt, rf[2] - d[2] * dt]), e2 = [d[1] * e1[2] - d[2] * e1[1], d[2] * e1[0] - d[0] * e1[2], d[0] * e1[1] - d[1] * e1[0]];
+        const nr = (i) => { const t = TL_TAU * i / n, c = Math.cos(t), s = Math.sin(t); return [e1[0] * c + e2[0] * s, e1[1] * c + e2[1] * s, e1[2] * c + e2[2] * s]; };
+        const at = (p, R, q) => [p[0] + R * q[0], p[1] + R * q[1], p[2] + R * q[2]], na = [-d[0], -d[1], -d[2]];
+        for (let i = 0; i < n; i++) {
+          const n0 = nr(i), n1 = nr(i + 1), p0 = at(a, r, n0), p1 = at(a, r, n1), q0 = at(b, r2, n0), q1 = at(b, r2, n1);
+          tri(p0, p1, q1, n0, n1, n1, K); tri(p0, q1, q0, n0, n1, n0, K);
+          if (caps) { tri(a, p0, p1, na, na, na, KC); tri(b, q1, q0, d, d, d, KC); }
+        }
+      },
+      // the tank: an elliptic cylinder along x from x0 (its rear) to x1, its middle yc, half its height ry, half its width rz, o.n sides;
+      // o.uv its skin on the picture ([u0, v0, u1, v1] px: x0 to x1 along, around from the bottom up the +z side, over the top, down the -z
+      // side); o.dome deep domed ends (m), o.end their picture ([u0, v0, u1, v1] px, a square: the end as seen from outside)
+      tank(x0, x1, yc, ry, rz, o) {
+        const n = (o && o.n) || 32, S = o && o.uv, E = o && o.end, dm = (o && o.dome) || 0, W = [1, 1, 1];
+        const sv = (i) => S ? [0, S[1] + (S[3] - S[1]) * i / n] : null;
+        for (let i = 0; i < n; i++) {
+          const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, a = ell(x0, yc, ry, rz, f0, 1), b = ell(x0, yc, ry, rz, f1, 1), c = ell(x1, yc, ry, rz, f1, 1), d = ell(x1, yc, ry, rz, f0, 1);
+          const n0 = eln(ry, rz, f0), n1 = eln(ry, rz, f1), v0 = sv(i), v1 = sv(i + 1);
+          const ua = S && [S[0], v0[1]], ub = S && [S[0], v1[1]], uc = S && [S[2], v1[1]], ud = S && [S[2], v0[1]];
+          tri(a, b, c, n0, n1, n1, W, ua, ub, uc); tri(a, c, d, n0, n1, n0, W, ua, uc, ud);
+        }
+        if (!(dm > 0)) return;
+        const TT = [0, 0.4, 0.7, 0.9, 1];
+        for (const sd of [-1, 1]) {   // (-1 the rear, 1 the front)
+          const xb = sd < 0 ? x0 : x1, uvE = (p) => { if (!E) return null; const cx = (E[0] + E[2]) / 2, cy = (E[1] + E[3]) / 2, R = (E[2] - E[0]) / 2 - 2; return [cx - sd * p[2] / rz * R, cy - (p[1] - yc) / ry * R]; };
+          for (let k = 0; k < TT.length - 1; k++) {
+            const t0 = TT[k], t1 = TT[k + 1], s0 = Math.sqrt(1 - t0 * t0), s1 = Math.sqrt(1 - t1 * t1), xa = xb + sd * dm * t0, xc = xb + sd * dm * t1;
+            for (let i = 0; i < n; i++) {
+              const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, a = ell(xa, yc, ry, rz, f0, s0), b = ell(xa, yc, ry, rz, f1, s0), c = ell(xc, yc, ry, rz, f1, s1), d = ell(xc, yc, ry, rz, f0, s1);
+              const na = unit([sd * t0 / dm, -s0 * Math.cos(f0) / ry, s0 * Math.sin(f0) / rz]), nb = unit([sd * t0 / dm, -s0 * Math.cos(f1) / ry, s0 * Math.sin(f1) / rz]);
+              const nc = unit([sd * t1 / dm, -s1 * Math.cos(f1) / ry, s1 * Math.sin(f1) / rz]), nd = unit([sd * t1 / dm, -s1 * Math.cos(f0) / ry, s1 * Math.sin(f0) / rz]);
+              tri(a, b, c, na, nb, nc, W, uvE(a), uvE(b), uvE(c)); if (s1 > 0) tri(a, c, d, na, nc, nd, W, uvE(a), uvE(c), uvE(d));
+            }
+          }
+        }
+      },
+      // a hoop round the tank at x: w wide, t proud of it (the tank's yc, ry, rz; o.n its sides, as the tank's; o.flat: its outer face only, no
+      // sides: a light look's, a third of the vertices)
+      hoop(x, yc, ry, rz, w, t, k, o) {
+        const K = col(k), n = (o && o.n) || 32, xa = x - w / 2, xb = x + w / 2;
+        for (let i = 0; i < n; i++) {
+          const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n, n0 = eln(ry, rz, f0), n1 = eln(ry, rz, f1);
+          const o0 = ell(0, yc, ry + t, rz + t, f0, 1), o1 = ell(0, yc, ry + t, rz + t, f1, 1), i0 = ell(0, yc, ry, rz, f0, 1), i1 = ell(0, yc, ry, rz, f1, 1);
+          const A = (p, xx) => [xx, p[1], p[2]];
+          tri(A(o0, xa), A(o1, xa), A(o1, xb), n0, n1, n1, K); tri(A(o0, xa), A(o1, xb), A(o0, xb), n0, n1, n0, K);
+          if (!(o && o.flat)) for (const [xx, s] of [[xa, -1], [xb, 1]]) quad(A(i0, xx), A(i1, xx), A(o1, xx), A(o0, xx), [s, 0, 0], K);
+        }
+      },
+      // a tail lamp facing back (-x): its middle, its height and width; lit with the tractor's (its own mesh)
+      lamp(x, y, z, ly, lz) { B.box(x, y, z, 0.04, ly, lz, null, { skip: ['+x'] }, true); lamps.push([x - 0.03, y, z]); },
+      rgb: colArr,
+    };
+    try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + (lo ? ', level ' + lo : '') + '): ' + (e && e.message)); return null; }
+    const pic = TW > 1, wu = pic ? (TW - 4) / TW : 0, wv = pic ? (TH - 4) / TH : 0;
+    for (let i = 0; i < UV.length; i += 2) { if (UV[i] < 0) { UV[i] = wu; UV[i + 1] = wv; } else { UV[i] /= TW; UV[i + 1] /= TH; } }
+    const y0 = -D.kp[1], geo = new THREE.BufferGeometry(), lgeo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); geo.translate(0, y0, 0); geo.computeBoundingSphere();
+    lgeo.setAttribute('position', new THREE.Float32BufferAttribute(LP, 3)); lgeo.setAttribute('normal', new THREE.Float32BufferAttribute(LN, 3)); lgeo.translate(0, y0, 0); lgeo.computeBoundingSphere();
+    return { geo, lgeo, cv, lamps: lamps.map(p => new THREE.Vector3(p[0], p[1] + y0, p[2])), tris: P.length / 9 };
+  }
+  // the trailer's group (makeView): its body (a rival's the light look: the phone's budget, docs/titan-cisterna.md), its lamps, its blob, its
+  // shadow from the light look (drawn only into the shadow map: v.shadowOnly); in the scene with the tractor (carCull takes the two out together)
+  function tlView(v, c) {
+    const R = tlBuild(c.m); if (!R) return;
+    const G = new THREE.Group(), b = new THREE.Mesh(c.isPlayer ? R.geo : R.lo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob), sh = new THREE.Mesh(R.sh, matHull);
+    sh.castShadow = true; sh.visible = false; (v.shadowOnly || (v.shadowOnly = [])).push(sh);
+    bl.renderOrder = 1; G.add(b, L, bl, sh); G.rotation.order = 'YZX';
+    v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlR = R; v.tlRoll = 0; scene.add(G);
+    const R2 = c.tl && c.tl.next ? tlBuild2(c.m) : null; if (!R2) return;   // (the road train's second tank: a group of its own on the dolly, tl2Draw)
+    const G2 = new THREE.Group(), b2 = new THREE.Mesh(c.isPlayer ? R2.geo : R2.lo, R2.mat), L2 = new THREE.Mesh(R2.lgeo, matTailOff), bl2 = new THREE.Mesh(R2.blob, matBlob), sh2 = new THREE.Mesh(R2.sh, matHull);
+    sh2.castShadow = true; sh2.visible = false; v.shadowOnly.push(sh2);
+    bl2.renderOrder = 1; G2.add(b2, L2, bl2, sh2); G2.rotation.order = 'YZX';
+    v.tlG2 = G2; v.tlL2 = L2; v.tlS2 = bl2; v.tlR2 = R2; v.tlRoll2 = 0; scene.add(G2);
+  }
+  // a preview's trailer (the car screen's turntable, setShowCar; the new menu's yard, js/menu-car.js: Render.garageTrailer; not the garage's
+  // workshop, which takes the tractor alone): its group in the tractor's (v.grp), straight behind on the kingpin, its tail lamps off, its blob
+  // (v.rigS: no part of the vehicle's shape). v.rig: the whole rig from the tractor's nose to the trailer's tail, car frame { x0, x1, len,
+  // mid, wid, ht }; null (nothing added) for a vehicle without a trailer
+  function tlShow(v, M) {
+    const D = M.trailer, R = D && D.look ? tlBuild(M) : null; if (!R) return null;
+    const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
+    G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
+    let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    const N = D.next, R2 = N ? tlBuild2(M) : null;   // (the road train's second tank: on the dolly's fifth wheel, straight behind the first one)
+    if (R2) { const G2 = new THREE.Group(), bl2 = new THREE.Mesh(R2.blob, matBlob); bl2.renderOrder = 1;
+      G2.add(new THREE.Mesh(R2.geo, R2.mat), new THREE.Mesh(R2.lgeo, matTailOff), bl2); G2.position.set(N.kp[0], N.kp[1] - D.kp[1], 0); G.add(G2);
+      x0 = Math.min(x0, D.kp[0] + N.kp[0] + N.f - N.len); }
+    v.rigG = G; v.rigS = bl; v.rig = { x0, x1, len: x1 - x0, mid: (x0 + x1) / 2, wid: Math.max(M.wid, D.wid), ht: D.ht };
+    return v.rig;
+  }
+  // the trailer drawn this frame (updateCars, after the tractor's matrix): on the fifth wheel as the tractor is drawn, its heading the core's
+  // (between its steps), its pitch down to the road under its axles; torn off (Core: T.fall) where the core has it
+  function tlDraw(v, c, u, dt, braking, vis) {
+    const G = v.tlG, T = c.tl;
+    if (!T) { G.visible = false; if (v.tlG2) v.tlG2.visible = false; return; }   // (a road train's second tank is a group of its own in the scene: off too)
+    G.visible = v.grp.visible;
+    const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
+    if (T.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
+    else G.position.copy(_tlK.set(D.kp[0], D.kp[1], 0).applyMatrix4(v.grp.matrixWorld));
+    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA, run);
+    const lat = clamp(T.w * Math.hypot(T.vx, T.vz), -16, 16);
+    v.tlRoll += (clamp(-lat * 0.0036 * sw, -0.05 * sw, 0.05 * sw) - v.tlRoll) * Math.min(1, dt * 5);
+    G.rotation.set((v.broll || 0) + v.tlRoll, -h, pit, 'YZX');
+    v.tlS.material = settings.shadows ? matBlob : matBlobS;
+    v.tlL.material = braking ? matTailOn : matTailOff;
+    if (v.tlG2) tl2Draw(v, c, T, G, u, dt, braking, vis);
+    if (!vis) return;
+    G.updateMatrixWorld(true);
+    const Q = v.gq; if (!Q || !G.visible) return;
+    for (const p of v.tlR.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);   // (its tail lamps' glow, as the tractor's: carGlows)
+      glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
+      if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
+  }
+  // the road train's second tank drawn this frame (tlDraw, after the first one): on the dolly's fifth wheel as the first tank is drawn (its
+  // kingpin at kp0 behind the first one's, the dolly's height), its heading the core's, pitched down to the road under its axles
+  function tl2Draw(v, c, T1, G1, u, dt, braking, vis) {
+    const G = v.tlG2, T = T1.next;
+    if (!T) { G.visible = false; return; }
+    G.visible = G1.visible;
+    const D = T.D, h = T.ph + wrapPi(T.h - T.ph) * u, sw = c.m.sway || 1;
+    if (T.fall || T1.fall) G.position.set(lerp(T.px, T.x, u) - Math.cos(h) * T.cx, T.yK, lerp(T.pz, T.z, u) - Math.sin(h) * T.cx);
+    else { G1.updateMatrixWorld(true); G.position.copy(_tlK.set(D.kp0, D.kp[1] - T1.D.kp[1], 0).applyMatrix4(G1.matrixWorld)); }
+    const run = -T.cx / T.axS, pit = T.fall ? T.pit : Math.atan2(G.position.y - D.kp[1] - T.yA, run);
+    const lat = clamp(T.w * Math.hypot(T.vx, T.vz), -16, 16);
+    v.tlRoll2 += (clamp(-lat * 0.0036 * sw, -0.05 * sw, 0.05 * sw) - v.tlRoll2) * Math.min(1, dt * 5);
+    G.rotation.set((v.broll || 0) + v.tlRoll2, -h, pit, 'YZX');
+    v.tlS2.material = settings.shadows ? matBlob : matBlobS;
+    v.tlL2.material = braking ? matTailOn : matTailOff;
+    if (!vis) return;
+    G.updateMatrixWorld(true);
+    const Q = v.gq; if (!Q || !G.visible) return;
+    for (const p of v.tlR2.lamps) { _tlP.copy(p).applyMatrix4(G.matrixWorld);
+      glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * Q.rl);
+      if (Q.nt) glows.add(_tlP.x, _tlP.y, _tlP.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * Q.nt * Q.rl); }
   }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
@@ -4513,6 +5036,7 @@ const Render = (function () {
     else { v.src = v.body.geometry; v.body.geometry = v.body.geometry.clone(); }   // (v.src: the shared body as new (geoCache: never freed), what a pit repair goes back to)
     v.ownGeo = true; v.smokeAcc = 0; v.fresh = true;   // own copy: dents stay on this car (fresh: its first frame to come)
     v.lights0 = v.lights.map(L => L.clone()); v.dec0 = v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null;   // (as built: what a kit part hanging loose turns with it, a pit repair puts back)
+    if (v.dirtU && c.dirt0 > 0) v.dirtU.value = Math.min(1, c.dirt0);   // (the career: a car not washed since its last race starts with that race's dirt, game.js careerCond)
     v.car = c; v.roll = 0; v.pitch = 0; v.gpitch = 0; v.spin = 0; v.sk = [null, null, null, null]; v.acc = [0, 0, 0, 0]; v.repairN = c.repairN || 0; v.wheelFix = c.wreck ? c.wreck.fix : 0;
     v.grp.rotation.order = 'YXZ';   // yaw first, then pitch about the car's own lateral axis (slopes/jumps)
     buildParts(v);
@@ -4521,6 +5045,7 @@ const Render = (function () {
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
     if (c.chr && c.chr.rival) nameTag(v, c.name, '#ff8a7a');   // the player's standing rival (the career): its name over the car
     if (tierNow === 0 && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
+    if (c.tl && c.m.trailer && c.m.trailer.look) tlView(v, c);   // (its semi-trailer: a group of its own on the kingpin, tlDraw)
     scene.add(v.grp); return v;
   }
   // NIZKA: a rival far from the camera drawn as one coarse mesh (farBuild): its opaque parts, the body and the wheels, merged in the body's frame,
@@ -4768,10 +5293,10 @@ const Render = (function () {
       const fm = v.fp.parts.fenderL && v.fp.parts.fenderL.material; if (fm && fm !== matCar && fm !== pm) pkCarMat(fm, u, 0, 'pkCarP');   // (the prototype's louvre panels: the stock paint, patched above)
     }
     const wm = new Map();   // the separate wheels: an own Phong copy of each material (the shared ones stay as they are)
-    for (const w of v.wf.concat(v.wr)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material) || o.material === matHull) return; let m = wm.get(o.material);   // (not a shadow's stand-in: kitShadows)
+    for (const w of v.wf.concat(v.wr, v.wm)) w.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material) || o.material === matHull) return; let m = wm.get(o.material);   // (not a shadow's stand-in: kitShadows)
       if (!m) { m = pkCarMat(new THREE.MeshPhongMaterial({ color: o.material.color, vertexColors: o.material.vertexColors, shininess: 45, specular: 0x2c2d30 }), u, 0, 'pkWheel', 1); wm.set(o.material, m); }
       o.material = m; });
-    v.pk = u; v.pkS = { mk: [null, null, null, null], x: [0, 0, 0, 0], z: [0, 0, 0, 0], fw: [0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0] };
+    v.pk = u; v.pkS = { mk: [null, null, null, null, null, null], x: [0, 0, 0, 0, 0, 0], z: [0, 0, 0, 0, 0, 0], fw: [0, 0, 0, 0, 0, 0], la: 0, sp: [0, 0, 0, 0, 0, 0], xm: v.wm.length ? v.wm[0].position.x : null };   // (4, 5: wheels.mid's, their marks)
     if (v.mrg) ownRnd(() => remerge(v));   // (a rival's parts as one mesh: built again with these materials (the trim's own Phong copy, the formula's), remerge)
   }
   function pkCarTick(v, c, dt, opt) {
@@ -4781,8 +5306,8 @@ const Render = (function () {
       // where the wheels touch the road (for the marks, the dust and the spray) and which of them run through the melt water below the snow banks
       const me = v.grp.matrixWorld.elements, W = u.w.value, wz = v.wf.length ? Math.abs(v.wf[0].position.z) : c.m.wid * 0.5 - 0.1, G = pkWetGrid();
       let fw = 0;
-      for (let k = 0; k < 4; k++) { const lx = k < 2 ? W.x : W.y, lz = (k % 2 ? 1 : -1) * wz; S.x[k] = me[12] + me[0] * lx + me[8] * lz; S.z[k] = me[14] + me[2] * lx + me[10] * lz;
-        S.fw[k] = G && G.has(pkCell(S.x[k], S.z[k])) ? 1 : 0; fw += S.fw[k]; }
+      for (let k = 0, nk = S.xm != null ? 6 : 4; k < nk; k++) { const lx = k < 2 ? W.x : k < 4 ? W.y : S.xm, lz = (k % 2 ? 1 : -1) * wz; S.x[k] = me[12] + me[0] * lx + me[8] * lz; S.z[k] = me[14] + me[2] * lx + me[10] * lz;
+        S.fw[k] = G && G.has(pkCell(S.x[k], S.z[k])) ? 1 : 0; if (k < 4) fw += S.fw[k]; }
       const gy = c.roadY != null ? c.roadY : c.y || 0, sn = snowy() || (!!snow && snow.mesh.visible) ? 1 : Core.sstep(322, 350, gy) * 0.5;   // (snow: winter, falling, the snow zone's slush off the banks)
       const wt = Math.max(wetW > 0.1 ? wetW : 0, fw / 4);   // a wet road: the rain's water or the melt water under the wheels
       if (!c.air && c.speed > 0.5) {
@@ -4825,8 +5350,8 @@ const Render = (function () {
     const hb = c.inBrk > 0.7 && c.vl > 14 && !c.lock ? Core.sstep(0.7, 1, c.inBrk) : 0;   // hard braking without a lock: faint marks (the ABS at work)
     const am = world && world.dyn.pkAmb, wv = am ? am.pU.uW.value : null, ws = 1.1 + 1.4 * Core.sstep(190, 420, gy), dc = (world && world.dust) || [0.86, 0.76, 0.62];   // (the wind of pkAmbient)
     skids.pkIn = true;
-    for (let k = 0; k < 4; k++) {
-      const front = k < 2, surf = c.ws[k], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
+    for (let k = 0, nk = S.xm != null ? 6 : 4; k < nk; k++) {   // (4, 5: wheels.mid's, as the rear ones on their side: marks only)
+      const j = k > 3 ? k - 2 : k, front = k < 2, surf = c.ws[j], px = S.x[k], pz = S.z[k], verge = surf >= 2, wetK = rainy || S.fw[k] > 0, snowy = verge && winter, sz = snowy ? 1 : zone * 0.5;   // (the snow zone's verge: gravel, slushy)
       const it = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       let a = 0, wd = 0.2, cr = 0.035, cg = 0.035, cb = 0.04;
       if (!verge) { if (!wetK) a = it > 0.14 ? clamp(0.4 + it * 0.4, 0.4, 0.86) : hb * (front ? 0.26 : 0.16); }
@@ -4836,17 +5361,17 @@ const Render = (function () {
       if (a <= 0) S.mk[k] = null;
       else if (!last) S.mk[k] = [px, pz, yk];
       else { const d = Math.hypot(px - last[0], pz - last[1]);
-        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, k, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
+        if (d > (verge ? 0.8 : 0.45) && d < 4) { skids.off = offRoad(c, j, surf); skids.noLog = verge && !skids.off && it <= 0.14; skids.add(last[0], last[1], px, pz, wd, cr, cg, cb, a * 0.9, a, last[2], yk); last[0] = px; last[1] = pz; last[2] = yk; }
         else if (d >= 4) S.mk[k] = [px, pz, yk]; }
       // spray: off every wheel in the melt water; in the rain off the front wheels (the stock spray has the rear ones)
-      if (wetK && !verge && spd > 6 && (S.fw[k] || front)) {
+      if (k < 4 && wetK && !verge && spd > 6 && (S.fw[k] || front)) {
         S.sp[k] += (clamp(spd / 36, 0, 1.4) + it * 0.7) * (S.fw[k] ? (front ? 16 : 26) : 10 * wetW) * dt;
         while (S.sp[k] >= 1) { S.sp[k] -= 1; const sh = 0.9 + R() * 0.1, sp = 0.35 + R() * 0.15;
           particles.emit(px - fx * 0.3, 0.3 + y, pz - fz * 0.3, c.vx * sp + (R() - 0.5) * 2.4, 0.6 + R() * 1.0, c.vz * sp + (R() - 0.5) * 2.4, 0.55 + R() * 0.4, 0.7, 3 + R() * 2, 0.9 * sh, 0.93 * sh, 0.96 * sh, S.fw[k] ? 0.3 : 0.2, -0.12, 1.7, y);
           if (S.fw[k] && R() < 0.3) particles.emit(px, 0.2 + y, pz, c.vx * 0.3 + (R() - 0.5) * 3, 1.5 + R() * 1.5, c.vz * 0.3 + (R() - 0.5) * 3, 0.4 + R() * 0.2, 0.2, 0.14, 0.78, 0.82, 0.88, 0.7, 9, 0.5, y); }   // (droplets)
       } else S.sp[k] = 0;
       // dust that lingers: off the dry verge behind the rear wheels, a thin cloud hanging in the air, drifting off with the wind
-      if (!front && verge && !wetK && !snowy && spd > 5) {
+      if (!front && k < 4 && verge && !wetK && !snowy && spd > 5) {
         S.la += 6 * clamp(spd / 20, 0.4, 1.5) * (1 - sz) * dt;
         while (S.la >= 1) { S.la -= 1; const sh = 0.94 + R() * 0.1, wx = wv ? wv.x : -0.59, wzz = wv ? wv.y : 0.81;
           particles.emit(px - fx * 0.8 + (R() - 0.5), gy + 0.5 + R() * 0.5, pz - fz * 0.8 + (R() - 0.5), wx * ws + c.vx * 0.1 + (R() - 0.5) * 0.8, 0.2 + R() * 0.3, wzz * ws + c.vz * 0.1 + (R() - 0.5) * 0.8, 3.5 + R() * 2.5, 2.2, 7 + R() * 4, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.15, -0.04, 0.1, gy); }
@@ -4962,7 +5487,9 @@ const Render = (function () {
      body part and every tool is one InstancedMesh for all the men, so all the crews of the pit lane cost a dozen meshes. Colours per instance:
      a vertex colour (k,0,k) is the team colour x k, (0,k,0) the skin tone x k. The player's crew does a real stop driven by the pit state
      (a jack man at each end, a gun man and two tyre men per wheel, the lollipop man, the engineer on the pit wall; the car goes up on the jacks),
-     the other teams idle at their garages (working at the roll cab, checking tyres, talking, waiting). */
+     the other teams idle at their garages (working at the roll cab, checking tyres, talking, waiting). Each crew's colour is its car's: the
+     player's crew in the player's paint, a band over each garage's door in its crew's colour, and the player's garage in the player's paint
+     (its back wall or closed door, the door's pillars: crGarSlab) to find it from afar, all in the rod mesh (no draw call more). */
   let crew = null;
   const CR_TAU = Math.PI * 2, CR_TM = [1, 0, 1], CR_TD = [0.55, 0, 0.55], CR_SK = [0, 1, 0], CR_W = [0.93, 0.93, 0.91], CR_K = [0.07, 0.07, 0.08];
   const CR_SKINS = [[0.96, 0.8, 0.67], [0.9, 0.72, 0.57], [0.8, 0.6, 0.45], [0.6, 0.42, 0.3], [0.43, 0.3, 0.21]];
@@ -5096,14 +5623,30 @@ const Render = (function () {
     g = G(); crLoft(g, [{ y: 0.02, rx: 0.062, rz: 0.066 }, { y: -0.38, rx: 0.05, rz: 0.053 }], 4, 0.5, () => TM); crBall(g, 0, -0.415, 0.05, 0.058, 0.058, 0.135, 4, 2, [0.09, 0.09, 0.1]); out.shin = g.geometry();
     return out;
   }
-  function crewMaterial(skin) {   // Lambert with vertex colours; the team (and skin) colour codes are resolved per instance in the vertex shader
-    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+  function crewMaterial(skin, part) {   // Lambert with vertex colours; the team (and skin) colour codes are resolved per instance in the vertex shader
+    // part: the rain's (crewRain: uWet 1 while it rains, uSky the sky in the wet): 'jacket' (the trunk, the arms) a rain jacket over the overall,
+    // the team's colour darker, over the white shoulders and patches too, a sheen towards its edges; 'tyre' a tyre in its cover (crewCover, per
+    // instance: the new set waiting on the floor), a dark blanket over the tread, the sidewalls and the rim, puffed out, the compound's band on it
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true }), U = part ? (m.userData.rain = { uWet: { value: 0 }, uSky: { value: new THREE.Color() } }) : null;
     m.onBeforeCompile = (sh) => {
       if (skin) sh.vertexShader = 'attribute vec3 crewSkin;\n' + sh.vertexShader;
       sh.vertexShader = sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\n  { vec3 c0 = color.rgb; vColor.rgb = c0;\n    if (c0.g < 0.002 && abs(c0.r - c0.b) < 0.002 && c0.r > 0.004) vColor.rgb = instanceColor.rgb * c0.r;\n' +
         (skin ? '    else if (c0.r < 0.002 && c0.b < 0.002 && c0.g > 0.004) vColor.rgb = crewSkin * c0.g;\n' : '') + '  }\n#endif');
+      if (!U) return;
+      Object.assign(sh.uniforms, U); const tm = '(c0.g < 0.002 && abs(c0.r - c0.b) < 0.002 && c0.r > 0.004)';   // (a team colour code)
+      if (part === 'jacket') {
+        sh.vertexShader = 'uniform float uWet; uniform vec3 uSky; varying vec3 vCrSh;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', 'vCrSh = vec3(0.0);\n#ifdef USE_INSTANCING_COLOR\n' +
+          '  { vec3 c0 = color.rgb; bool wh = c0.r > 0.85 && c0.g > 0.85; if (wh) vColor.rgb = mix(vColor.rgb, instanceColor.rgb, uWet);\n' +
+          '    if (wh || ' + tm + ') { vColor.rgb *= 1.0 - 0.32 * uWet; vCrSh = vec3(uWet); } }\n#endif\n#include <beginnormal_vertex>')
+          .replace('#include <lights_lambert_vertex>', '#include <lights_lambert_vertex>\n{ float f = 1.0 - max(dot(geometry.normal, geometry.viewDir), 0.0); vec3 up = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz);\n' +
+            '  vCrSh *= uSky * (0.05 + 0.55 * f * f * f) * (0.65 + 0.35 * dot(geometry.normal, up)); }');   // (the sky in the wet jacket: more of it at a glancing view, on its top)
+        sh.fragmentShader = 'varying vec3 vCrSh;\n' + sh.fragmentShader.replace('#include <envmap_fragment>', 'outgoingLight += vCrSh;\n#include <envmap_fragment>');
+      } else if (part === 'tyre') {
+        sh.vertexShader = 'attribute float crewCover;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', '#ifdef USE_INSTANCING_COLOR\n  if (crewCover > 0.5) { vec3 c0 = color.rgb; if (!' + tm + ') vColor.rgb = vec3(0.13, 0.135, 0.155); }\n#endif\n#include <beginnormal_vertex>')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nif (crewCover > 0.5) transformed *= vec3(1.1, 1.05, 1.05);');
+      }
     };
-    m.customProgramCacheKey = () => skin ? 'crew-skin' : 'crew';
+    m.customProgramCacheKey = () => (skin ? 'crew-skin' : 'crew') + (part ? '-' + part : '');
     return m;
   }
   // poses: O = [hip height, lean, twist, side bend, head nod, head turn, hipL x, hipL z, kneeL, hipR x, hipR z, kneeR]; H = hands (L, R) and elbow poles (L, R), in the man's space
@@ -5190,14 +5733,17 @@ const Render = (function () {
   }
 
   function setupCrew(race) {
-    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose()); crew = null; }
+    if (crew) { scene.remove(crew.grp); for (const m of crew.meshes) { m.geometry.dispose(); if (m.dispose) m.dispose(); } crew.mats.forEach(m => m.dispose());
+      const own = crew.grp.children.filter(o => o.isMesh && !o.isInstancedMesh); if (crew.exit) { scene.remove(crew.exit.grp); own.push(...crew.exit.grp.children); }
+      for (const o of own) { o.geometry.dispose(); if (o.material.map) o.material.map.dispose(); o.material.dispose(); }   // (the flags, the tyre marks, the exit's light and marshal)
+      crew = null; }
     const boxes = world && world.pitBoxes; if (!boxes || !boxes.length || !race) return;
     const P = race.player || null, pb = world.pitBox, ai = race.cars.filter(c => c !== P); let ai0 = 0;
     for (const bx of boxes) bx.col = new THREE.Color().setRGB(...bx.team);   // the teams: the player's box in the player's colour, the others in the AI cars' colours
     const L = curTrack.len, at = (d) => boxes.find(b => !b.mine && Math.abs(((b.s - curTrack.startS - d) % L + L * 1.5) % L - L / 2) < 1);   // (the box at d metres from the start line)
-    const own = new Map(); for (const c of ai) { const bx = race._boxD && !c.net ? at(race._boxD(c)) : null; if (bx && !own.has(bx)) { own.set(bx, c); bx.col = new THREE.Color(c.color); } }   // (each AI car's crew at the box it stops in: its colour)
+    const own = new Map(); for (const c of ai) { const bx = race._boxD && !c.net ? at(race._boxD(c)) : null; if (bx && !own.has(bx)) { own.set(bx, c); bx.col = new THREE.Color(c.color); bx.drv = c; } }   // (each AI car's crew at the box it stops in: its colour)
     const used = new Set(own.values());
-    for (const bx of boxes) { if (bx.mine && P) bx.col = new THREE.Color(P.color); else if (!own.has(bx)) { while (ai[ai0] && used.has(ai[ai0])) ai0++; if (ai[ai0]) bx.col = new THREE.Color(ai[ai0++].color); } }
+    for (const bx of boxes) { if (bx.mine && P) { bx.col = new THREE.Color(P.color); bx.drv = P; } else if (!own.has(bx)) { while (ai[ai0] && used.has(ai[ai0])) ai0++; if (ai[ai0]) { bx.drv = ai[ai0]; bx.col = new THREE.Color(ai[ai0++].color); } } }   // (drv: the driver whose three letters its flag shows, crewFlags)
     const men = [], bpt = (bx, a, w) => [bx.ox + bx.tx * a + bx.nx * w, bx.oz + bx.tz * a + bx.nz * w];
     const man = (bx, a, w, yaw, act, role, helmet) => { const id = men.length + bx.k * 17, h1 = crHash(id * 1.37 + 0.5), h2 = crHash(id * 2.71 + 1.3), h3 = crHash(id * 0.91 + 7.1), [x, z] = bpt(bx, a, w);
       const m = { id, role: role || 'idle', act, act0: act, bx, team: bx.col, x, y: bx.y || 0, z, yaw, hx: x, hz: z, hyaw: yaw, gx: x, gz: z, gyaw: yaw, style: 'walk', spd: 0, ph: h2 * 6, t0: h3 * 50, h1, h2,
@@ -5215,7 +5761,7 @@ const Render = (function () {
         if (j === 2 || j === 3) { const o = SLOTS[j === 2 ? 3 : 2], [ox, oz] = bpt(bx, o[0], bx.base + o[1]); yaw = Math.atan2(oz - z, ox - x); }   // the talkers face each other
         const m = man(bx, a + ja, bx.base + w + jw, yaw + (crHash(bx.k + j * 9.1) - 0.5) * 0.4, act); if (act === 'gun') m.gun = true; }
       man(bx, crHash(bx.k * 1.9) < 0.5 ? -0.62 : 0.62, bx.wall + 1.5, faceN(bx, -1), 'sit', null, false); }
-    // the player's crew: waits in the garage (two rows), comes out when the car is in the lane
+    // the player's crew: waits in the garage (two rows), takes up its kit when the car is in the lane, comes out as it nears the box
     let roles = null;
     if (P && pb) { const bx = boxes.find(b => b.mine); if (bx) {
       roles = { G: [], O: [], N: [] }; const wA = bx.base + 9.45, wB = bx.base + 10.4, lane = faceN(bx, -1);
@@ -5234,24 +5780,32 @@ const Render = (function () {
     const mk = (g, n, cast, mt) => { if (!n) { g.dispose(); return null; } g.boundingSphere = bs.clone(); const im = new THREE.InstancedMesh(g, mt || mat, n);
       im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.castShadow = cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } grp.add(im); meshes.push(im); return im; };
-    const gunMen = men.filter(m => m.gun), nT = roles ? 8 : 0;
+    const gunMen = men.filter(m => m.gun), nT = roles ? 8 + CR_STACK : 0;   // (the player's: the four new and the four old tyres, then the stack of used ones by its garage, crewGarage, crewStack)
     geo.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(nM * 3), 3));
+    const matJ = crewMaterial(false, 'jacket'), matT = crewMaterial(false, 'tyre');   // (the rain's: the jackets, the tyres' covers, crewRain)
+    if (nT) geo.tyre.setAttribute('crewCover', new THREE.InstancedBufferAttribute(new Float32Array(nT), 1));
     const lim = tierNow > 0;   // (NIZKA: the arms and legs cast no shadow, as a rival's small parts; the trunk's and the head's stay)
-    const M = { trunk: mk(geo.trunk, nM, true), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, lim), farm: mk(geo.farm, nM * 2, lim),
-      thigh: mk(geo.thigh, nM * 2, lim), shin: mk(geo.shin, nM * 2, lim), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true), jack: mk(geo.jack, roles ? 2 : 0, true),
-      rod: mk(geo.rod, (roles ? 13 : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };
+    const M = { trunk: mk(geo.trunk, nM, true, matJ), head: mk(geo.head, nM, true, matS), helmet: mk(geo.helmet, nM, false), uarm: mk(geo.uarm, nM * 2, lim, matJ), farm: mk(geo.farm, nM * 2, lim, matJ),
+      thigh: mk(geo.thigh, nM * 2, lim), shin: mk(geo.shin, nM * 2, lim), gun: mk(geo.gun, gunMen.length, false), tyre: mk(geo.tyre, nT, true, matT), jack: mk(geo.jack, roles ? 2 : 0, true),
+      rod: mk(geo.rod, (roles ? 13 + 3 + 1 + boxes.length : 0) + boxes.length, false), disc: mk(geo.disc, roles ? 1 : 0, false) };   // (the player's garage: + its door, crewGarage; each garage's flag's pole, crewFlags)
     const skinA = geo.head.attributes.crewSkin;
     men.forEach((m, i) => { for (const k of ['trunk', 'head', 'helmet']) M[k].setColorAt(i, m.team); for (const k of ['uarm', 'farm', 'thigh', 'shin']) { M[k].setColorAt(i * 2, m.team); M[k].setColorAt(i * 2 + 1, m.team); }
       skinA.setXYZ(i, m.skin[0], m.skin[1], m.skin[2]); });
     gunMen.forEach((m, i) => { m.gunI = i; M.gun.setColorAt(i, m.team); });
     const tyres = [];
-    if (roles) { const cmp = [new THREE.Color(0.95, 0.8, 0.14), new THREE.Color(0.86, 0.14, 0.12)];   // new set: yellow bands, the old ones: red
+    if (roles) {   // new set: yellow bands, the old ones: red (a race with compounds: theirs, crewTyres)
       for (let k = 0; k < 4; k++) { const tn = { i: k, mode: 'floor', man: roles.N[k] }, to = { i: 4 + k, mode: 'hidden', man: roles.O[k] }; tyres.push(tn, to); roles.N[k].tyre = tn; roles.O[k].tyre = to;
-        M.tyre.setColorAt(k, cmp[0]); M.tyre.setColorAt(4 + k, cmp[1]); }
+        M.tyre.setColorAt(k, CR_NEW); M.tyre.setColorAt(4 + k, CR_OLD); }
       M.jack.setColorAt(0, roles.bx.col); M.jack.setColorAt(1, roles.bx.col);
       for (let i = 0; i < 13; i++) M.rod.setColorAt(i, _pc.setRGB(...(i < 8 ? [0.12, 0.12, 0.13] : i < 12 ? [0.62, 0.63, 0.66] : [0.8, 0.8, 0.78]))); }
     const rb = roles ? 13 : 0;   // the band over each crew's garage door in the team's colour (the rods after the player's)
-    boxes.forEach((bx, j) => { const [ax, az] = bpt(bx, -4.7, bx.base + 8.93), [bx2, bz2] = bpt(bx, 4.7, bx.base + 8.93), by = (bx.y || 0) + 3.7; crSetRod(M.rod, rb + j, ax, by, az, bx2, by, bz2, 0.04, 0.5); M.rod.setColorAt(rb + j, bx.col); });   // (bx.y: the box floor's height, where the pit lane is not at 0)
+    boxes.forEach((bx, j) => { const g = bx.gar ? bx.gar.band : [bx.base + 8.955, 3.45, 3.95, 4.7]; crGarSlab(M.rod, rb + j, bx, 'band', -g[3], g[3], g[0], g[1], g[2], bx.col); });
+    if (roles && roles.bx.gar) { const bx = roles.bx, G = bx.gar, n0 = rb + boxes.length;   // the player's garage in the player's colour (to find it from afar): the back wall (a closed front: its door) and the door's pillars
+      if (G.wall) crGarSlab(M.rod, n0, bx, 'wall', -G.wall[3], G.wall[3], G.wall[0], G.wall[1], G.wall[2], bx.col);
+      if (G.jamb) { const [w, a, wd, y1] = G.jamb; for (const sg of [-1, 1]) crGarSlab(M.rod, n0 + (sg > 0 ? 2 : 1), bx, 'jamb', sg * a - wd / 2, sg * a + wd / 2, w, 0.02, y1, bx.col); } }
+    const gx = roles ? crewGarage(race, roles.bx, M, rb + boxes.length, nT - CR_STACK, grp) : null;   // the player's garage: its door (44), its flag (95C), the stack of used tyres (72)
+    const marks = ownRnd(() => crewMarks(boxes, grp));   // the tyre marks in front of every garage (48)   (these meshes, the flags' and the exit's: named without Math.random, ownRnd: a seeded race runs as without them)
+    if (roles) ownRnd(() => crewFlags(race, boxes, M, rb + boxes.length + 4, grp));   // each garage's upright flag with its driver's three letters (95C)
     // NIZKA: the coarse set for the far men (crewGeosLo, no shadows); each frame updateCrew packs the men drawn to the front of one set or
     // the other, with their colours and skins (kept here, by man)
     let lo = null;
@@ -5261,10 +5815,154 @@ const Render = (function () {
       lo = { F, col: CREW_PACK.map(k => M[k].instanceColor.array.slice()), skin: skinA.array.slice() }; });
     for (const im of meshes) if (im.instanceColor) im.instanceColor.needsUpdate = true;
     scene.add(grp);
-    crew = { grp, meshes, mats: [mat, matS], M, men, roles, tyres, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dim: roles ? crDims(P) : null, lo };
+    crew = { grp, meshes, mats: [mat, matS, matJ, matT], M, men, roles, tyres, cover: nT ? geo.tyre.attributes.crewCover : null, P: roles ? P : null, pb, cx, cz, rad, mode: 'home', frame: null, lift: 0, liftP: 0, liftF: 0, liftR: 0, gunOn: false, clearT: 0, dOut: 40, dim: roles ? crDims(P) : null, lo };
     { const KW = crew.dim && P.m.kit ? kitEntry(P.m).W : null, kr = KW ? clamp(crew.dim.rw / 0.33, 0.3, 3) : 1;   // (the kit: the crew's tyres the car's own size: a kart's, a truck's; the axle along x)
       crew.tyreS = new THREE.Vector3(KW ? clamp(Math.max(KW.w, KW.wR) / 0.27, 0.3, 3) : 1, kr, kr); }
     for (const m of men) crPose(m, 0, m.O, m.H);   // (start in the pose, not standing up from it)
+    crew.gar = gx; crew.marks = marks; crew.exit = ownRnd(() => crewExit(race));   // (the pit exit's light and marshal, 5 and 76)
+    if (gx) crewStack(M, gx.stack, CR_STACK0);   // (the stack of used tyres as the race begins, 72)
+  }
+  // ---- the player's garage, its pit and its exit (44, 48, 72, 95C, 5, 76) ----
+  // 44 its door: where the garage's front is closed (World's bx.gar.wall at its front: a door in the player's colour before the dark inside)
+  // that door rolls up; where it is open, a roller door between the door's pillars (gar.jamb: the opening's width and height), a light grey one (the garage's inside, in the player's colour, shows as it goes up); down while no stop is under way (the crew in the
+  // garage), up over CR_DOOR[0] s as the car comes down the lane to it (the crew's 'ready'), down again over CR_DOOR[1] s once the crew is back
+  // in. A garage open at the front (Detroit's and Trois-Rivières' tents, Longford's shed): none. One rod (the crew's InstancedMesh)
+  const CR_DOOR = [1.6, 2.6];
+  // 72 the stack of used tyres in front of the garage, by its right-hand pillar: two piles (the crew's tyre, its band in the compound's colour),
+  // the tyres laid on them by turns. It grows with the player's stops (P3): CR_STACK0 before the first, the four taken off at each stop with
+  // new tyres put on (Core's ty.n) once the crew is back in its garage, CR_STACK at most (two piles of six); the slots left over not drawn.
+  // In the replay (P8) as the race had it at that moment: the recording's sets of new tyres by then (game.js recPit tn, rpPit tyN)
+  const CR_STACK = 12, CR_STACK0 = 3;
+  // 95C (crewFlags) an upright flag by every garage's left-hand pillar: on a 4 m pole (a rod) a cloth 1.4 x 2.6 m out over the apron towards the lane,
+  // facing the cars coming down it, in its crew's colour with its driver's three letters stacked (as the timing tower's: an AI car's surname;
+  // the player's, the profile's name, race.opts.playerName, its first three letters: codeMe; none given: IGR). One mesh, one atlas
+  function crewGarage(race, bx, M, n0, t0, grp) {
+    const G = bx.gar || {}, T = curTrack, col = bx.col, grey = new THREE.Color(0.7, 0.71, 0.73);
+    const front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
+    const out = { door: null, open: 0 };
+    if (G.wall && G.wall[0] < front + 0.6) { const [w, ya, y1, h] = G.wall; out.door = { i: n0, part: 'wall', a0: -h, a1: h, w, y1, ya, col }; }   // (a closed front in the player's colour, a door before the dark inside: Bathurst's garages, Bang Saen's marquee; it rolls up)
+    else if (G.jamb) { const [w, a, wd, y1] = G.jamb; out.door = { i: n0 + 3, part: 'jamb', a0: -(a - wd / 2), a1: a - wd / 2, w: w + 0.12, y1, col: grey }; }   // (an open front: a grey roller door inside the pillars, a hand's width behind their faces)
+    if (out.door) crDoorSet(M.rod, bx, out.door, 0);
+    // the stack: in front of the right pillar, two piles of used tyres lying flat (on its side, as a tyre on the floor: crTyreMat)
+    const BANDS = [CR_OLD, CR_NEW, new THREE.Color(0.93, 0.93, 0.9)];
+    out.stack = { t0, n: CR_STACK, a: hw - 0.05, w: front - 0.55, y0, bx, shown: -1 }; out.front = front; out.hw = hw;
+    for (let j = 0; j < CR_STACK; j++) M.tyre.setColorAt(t0 + j, BANDS[(j * 7 + bx.k) % 3]);   // (laid on by crewStack, setupCrew: CR_STACK0 to begin with)
+    return out;
+  }
+  function crewStack(M, st, n) {   // the stack's first n tyres (by turns on the two piles), the rest not drawn
+    if (st.shown === n) return; st.shown = n; const S = crew && crew.tyreS || _cS1, bx = st.bx;
+    for (let j = 0; j < st.n; j++) {
+      if (j >= n) { M.tyre.setMatrixAt(st.t0 + j, _zero); continue; }
+      const pile = j % 2, k = j >> 1, a = st.a - pile * 0.08, w = st.w - pile * 0.72, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w;
+      _cQ.setFromEuler(_ce.set(0, crHash(j * 3.7 + bx.k) * 6.28, Math.PI / 2, 'YXZ')); _cM.compose(_cv.set(X, st.y0 + (0.14 + k * 0.275) * S.x, Z), _cQ, S); M.tyre.setMatrixAt(st.t0 + j, _cM);
+    }
+    M.tyre.instanceMatrix.needsUpdate = true;
+  }
+  const _cS1 = new THREE.Vector3(1, 1, 1);
+  const code3 = (n) => (String(n || 'TI').split(/[\s.]+/).filter(Boolean).pop() || 'TI').slice(0, 3).toUpperCase();   // (a driver's: his surname's first three)
+  const codeMe = (n) => (String(n || '').replace(/[^\p{L}]+/gu, '') || 'IGR').slice(0, 3).toUpperCase();   // (the player's: the profile name's first three letters, 5a: Ana Lipnik ANA; none: IGR)
+  function crewFlags(race, boxes, M, i0, grp) {
+    const T = curTrack, P = race.player, N = 16, cv = document.createElement('canvas'); cv.width = 64 * N; cv.height = 256; const x = cv.getContext('2d');
+    const pos = [], nrm = [], uv = [], idx = [], flags = []; let nv = 0;
+    boxes.forEach((bx, j) => {
+      const G = bx.gar || {}, col = bx.col, front = G.jamb ? G.jamb[0] : G.band ? G.band[0] : bx.base + 9, hw = G.jamb ? G.jamb[1] : G.band ? G.band[3] - 0.15 : 4.56, y0 = bx.y || 0;
+      const code = bx.mine && P ? codeMe(race.opts && race.opts.playerName) : code3(bx.drv && bx.drv.name), lum = col.r * 0.3 + col.g * 0.59 + col.b * 0.11, cx = (j % N) * 64;
+      x.fillStyle = '#' + col.getHexString(); x.fillRect(cx, 0, 64, 256); x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 4; x.strokeRect(cx + 2, 2, 60, 252);
+      x.fillStyle = lum > 0.62 ? '#14161a' : '#ffffff'; x.font = '900 50px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      [...code].forEach((ch, k) => x.fillText(ch, cx + 32, 58 + k * 64, 54));
+      const k0 = T.idx(bx.s), sd = bx.nx * T.nx[k0] + bx.nz * T.nz[k0] < 0 ? -1 : 1, H = 4, pa = -hw, pw = front - 0.15, [px, pz] = [bx.ox + bx.tx * pa + bx.nx * pw, bx.oz + bx.tz * pa + bx.nz * pw];
+      crSetRod(M.rod, i0 + j, px, y0, pz, px, y0 + H, pz, 0.055); M.rod.setColorAt(i0 + j, _pc.setRGB(0.18, 0.19, 0.21));
+      const W = 1.4, NS = 3, u0 = (j % N) / N, du = 1 / N;   // (the cloth: from the pole out towards the lane, a slight wave along it; u left to right as the cars coming down the lane see it)
+      for (let i = 0; i <= NS; i++) { const f = i / NS, w = pw - 0.1 - W * f, a = pa + Math.sin(f * Math.PI) * 0.07, X = bx.ox + bx.tx * a + bx.nx * w, Z = bx.oz + bx.tz * a + bx.nz * w, u = u0 + du * (sd > 0 ? 1 - f : f);
+        pos.push(X, y0 + 1.25 + 0.06 * f, Z, X, y0 + H - 0.1 - 0.15 * f * f, Z); nrm.push(-bx.tx, 0, -bx.tz, -bx.tx, 0, -bx.tz); uv.push(u, 0, u, 1);
+        if (i) { const b = nv + (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); } }
+      nv += (NS + 1) * 2; flags.push({ code, col: col.getHex(), pole: [px, pz], mine: !!bx.mine, k: bx.k });
+    });
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 2;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere();
+    const fm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide })); fm.name = 'pitFlags'; fm.userData = { flags, H: 4 }; grp.add(fm);
+  }
+  function crDoorSet(im, bx, D, u) {   // the door u (0 down .. 1 up): its slab from its bottom edge to the top of the opening
+    const yb = (D.ya || 0.02) + (D.y1 - (D.ya || 0.02) - 0.16) * u;
+    crGarSlab(im, D.i, bx, D.part, D.a0, D.a1, D.w, yb, D.y1, D.col);
+  }
+  function crewGarStep(c, dt, snap, near) {
+    const X = c.gar; if (!X || !X.door) return;
+    const want = c.mode === 'home' ? 0 : 1, o = snap ? want : want > X.open ? Math.min(want, X.open + dt / CR_DOOR[0]) : Math.max(want, X.open - dt / CR_DOOR[1]);
+    if (o === X.open && !snap) return; X.open = o;
+    crDoorSet(c.M.rod, c.roles.bx, X.door, Core.sstep(0, 1, o)); c.M.rod.instanceMatrix.needsUpdate = true;   // (one rod, only while it moves)
+  }
+  // 48 the tyre marks in front of every garage: where the cars pull away from the box onto the lane, two dark arcs from the rear wheels'
+  // place in the box (Track.bayDim) curving out to the lane, darker where they start (the wheels spinning up), each box's its own length.
+  // One mesh (the skid marks' material: over the apron, no depth write)
+  function crewMarks(boxes, grp) {
+    const T = curTrack, o = T.bayDim().o, pos = [], col = [], idx = []; let n = 0;
+    for (const bx of boxes) {
+      const L = 6 + crHash(bx.k * 2.3) * 3, k0 = 0.5 + crHash(bx.k * 4.1) * 0.25, y = (bx.y || 0) + 0.025, wc = bx.base + o;
+      for (const sd of [-1, 1]) for (let i = 0; i <= 8; i++) {
+        const u = i / 8, a = -1.35 + L * u, w = wc + sd * 0.78 - Math.min(o + 0.6, 3.2) * u * u, da = L, dw = -2 * Math.min(o + 0.6, 3.2) * u, l = Math.hypot(da, dw), ha = -dw / l * 0.13, hw = da / l * 0.13;
+        for (const s2 of [-1, 1]) { const A = a + ha * s2, Wd = w + hw * s2; pos.push(bx.ox + bx.tx * A + bx.nx * Wd, y, bx.oz + bx.tz * A + bx.nz * Wd); col.push(0.03, 0.03, 0.035, k0 * Math.pow(1 - u, 1.3) * (u < 0.12 ? 1.25 : 1)); }
+        if (i) { const b = n + (i - 1) * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); }
+        if (i === 8) n += 18; }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx); g.computeBoundingSphere();
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 }));
+    m.name = 'pitMarks'; m.renderOrder = 2; grp.add(m); return m;
+  }
+  // 5 and 76: at the end of the pit wall on the way out (Track.pitJ gb: the real tracks), a post with the pit exit's light facing the cars
+  // coming down the lane (red over green: green while the exit is open; red before the start, under a red flag and while the safety car's train passes it),
+  // and a marshal beside it who waves a blue flag while a car is on its way out of the lane and another comes along the circuit to where
+  // they meet (within EX_BLUE s of the acceleration lane's end). Two meshes: the post, its lamp housing and the marshal (lit), the lamps and
+  // the flag's cloth (unlit, as a lamp and a bright flag look in any light)
+  const EX_BLUE = 4, EX_NEAR = 300, EX_S = 2;   // (the blue flag: the car coming within 4 s; the exit drawn with the crew or from within 300 m of it; EX_S: the light and the marshal twice their first size, to be seen from the camera behind the car, in the same places beside the exit)
+  function crewExit(race) {
+    const T = curTrack, J = T.pitJ ? T.pitJ() : null, P = T.def.pit; if (!J || !P) return null;
+    const sd = P[0] < 0 ? -1 : 1, d = J.gb - 4, s = T.startS + d, pz = T.pitAt(s); if (!pz) return null;
+    const pb = world.pitBox, yAt = (ss) => (pb && pb.y || 0) + T.elevAt(ss).y - (pb ? T.elevAt(pb.s).y : 0), y = yAt(s);
+    const at = (ss, lat) => { const p = crRoadAt(T, ss, lat * sd); return [p[0], p[1]]; }, k = T.idx(s), tx = T.tx[k], tz = T.tz[k], nx = T.nx[k] * sd, nz = T.nz[k] * sd;
+    const [lx, lz] = at(s, pz.wall + 0.35), [mx, mz] = at(s + 3, pz.wall + 0.55);   // (the light against the wall's end on the lane's side; the marshal a little on)
+    const pos = [], nrm = [], col = [], add = (g0, c, M4) => { const g = g0.toNonIndexed(); g.applyMatrix4(M4); const A = g.attributes.position.array, N = g.attributes.normal.array; for (let i = 0; i < A.length; i++) { pos.push(A[i]); nrm.push(N[i]); col.push(c[i % 3]); } g.dispose(); g0.dispose(); };
+    const yaw = Math.atan2(-tx, -tz), M4 = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));   // (facing back up the lane)
+    add(new THREE.CylinderGeometry(0.06 * EX_S, 0.07 * EX_S, 2.7 * EX_S, 6).translate(0, 1.35 * EX_S, 0), [0.25, 0.26, 0.28], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.BoxGeometry(0.52 * EX_S, 1.15 * EX_S, 0.26 * EX_S).translate(0, 2.5 * EX_S, 0.02 * EX_S), [0.07, 0.07, 0.08], M4.compose(new THREE.Vector3(lx, y, lz), q, new THREE.Vector3(1, 1, 1)));
+    const ym = yAt(s + 3), qm = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + 0.5 * sd, 0));   // the marshal: as the yellow flag's (orange overalls, the pole), turned to the lane
+    add(new THREE.CylinderGeometry(0.2 * EX_S, 0.24 * EX_S, 1.55 * EX_S, 8).translate(0, 0.78 * EX_S, 0), [1, 0.48, 0.1], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    add(new THREE.SphereGeometry(0.14 * EX_S, 8, 6).translate(0, 1.7 * EX_S, 0), [0.95, 0.95, 0.95], M4.compose(new THREE.Vector3(mx, ym, mz), qm, new THREE.Vector3(1, 1, 1)));
+    const body = new THREE.BufferGeometry(); body.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); body.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3)); body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); body.computeBoundingSphere();
+    const post = new THREE.Mesh(body, new THREE.MeshLambertMaterial({ vertexColors: true })); post.name = 'pitExit';
+    // the lamps (two discs as squares on the housing's face) and the cloth (a quad off the marshal's hand, its far edge waving)
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), F = 0.16 * EX_S, lamp = (yc) => { const h = 0.18 * EX_S, cx = lx + fx * F, cz = lz + fz * F, rx = fz, rz = -fx; return [cx - rx * h, y + yc - h, cz - rz * h, cx + rx * h, y + yc - h, cz + rz * h, cx - rx * h, y + yc + h, cz - rz * h, cx + rx * h, y + yc + h, cz + rz * h]; };
+    const lp = new Float32Array(4 * 3 * 2 + 4 * 3), lc = new Float32Array(lp.length);
+    lp.set(lamp(2.78 * EX_S), 0); lp.set(lamp(2.24 * EX_S), 12);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(lp, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(lc, 3).setUsage(THREE.DynamicDrawUsage));
+    g.setIndex([0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11]); g.boundingSphere = new THREE.Sphere(new THREE.Vector3((lx + mx) / 2, y + 2 * EX_S, (lz + mz) / 2), 5 * EX_S);
+    const lm = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); lm.name = 'pitExitLamps'; const eg = new THREE.Group(); eg.add(post, lm); scene.add(eg);   // (a group of its own, not the crew's: in sight from near the exit too, without the whole crew drawn from there)
+    const hand = [mx + nx * 0.3 * EX_S, ym + 1.55 * EX_S, mz + nz * 0.3 * EX_S];   // (his hand out towards the lane)
+    return { x: lx, z: lz, grp: eg, lm, lp, lc, hand, tx, tz, nx, nz, d, J, sd, red: -1, blue: 0, wave: 0, key: '' };
+  }
+  function crewExitStep(c, dt, near) {
+    const E = c.exit, R = curRace; if (!E || !R) return;
+    const T = curTrack, L = T.len, dS = (ss) => { let x = ss - T.startS; x = ((x % L) + L) % L; return x > L / 2 ? x - L : x; }, J = E.J;
+    // the exit closed: before the start, under a red flag (7A: the race stopped, Race.fl.red, until its restart), or the safety car (or the
+    // leader behind it) within 250 m before where the lanes meet (not the red flag's own at the restart: the queue out of the lane behind it)
+    const F = R.fl, sc = F && F.sc && F.sc.state === 'out' && !F.sc.red ? F.sc.car : null, scD = sc ? J.b - dS(sc.q ? sc.q.s : sc.s || 0) : 1e9, red = R.state !== 'racing' || !!(F && F.red && F.red.st !== 'go') || (scD > -20 && scD < 250);
+    // the blue flag: a car on its way out (on the pit road past the boxes) while another comes along the circuit to the acceleration lane's end
+    let out = false, come = false;
+    for (const o of R.cars) { if (o.finished || !o.q) continue; const dd = dS(o.q.s);
+      if (o.pitG && (o.pitDone || !o.inPit) && dd > J.gb - 140 && dd < J.b) out = true;
+      else if (!o.pitG && !o.inPit && dd < J.b && dd > J.b - 400 && (J.b - dd) / Math.max(8, o.speed) < EX_BLUE) come = true; }
+    const blue = out && come;
+    E.wave += dt; E.blue = blue ? Math.min(1, E.blue + dt * 4) : Math.max(0, E.blue - dt * 3);
+    near = near || Math.hypot(cam.vcx - E.x, cam.vcz - E.z) < EX_NEAR; if (E.grp.visible !== near) E.grp.visible = near;
+    if (!near) return;
+    const key = (red ? 'r' : 'g') + (E.blue > 0 ? Math.round(E.wave * 20) : 'n');
+    if (key === E.key) return; E.key = key;
+    const C = E.lc, set = (o, r, g, b) => { for (let i = 0; i < 4; i++) { C[o + i * 3] = r; C[o + i * 3 + 1] = g; C[o + i * 3 + 2] = b; } };
+    set(0, red ? 1 : 0.22, red ? 0.12 : 0.04, red ? 0.08 : 0.04); set(12, red ? 0.03 : 0.2, red ? 0.12 : 1, red ? 0.05 : 0.35); set(24, 0.05, 0.3, 0.95);
+    const Pp = E.lp, [hx, hy, hz] = E.hand, b = E.blue;   // the cloth: 0.95 x 0.62 off the hand, out over the lane and swinging (folded away when not shown)
+    const sw = Math.sin(E.wave * 7) * 0.9, ux = E.tx * Math.cos(sw) - E.nx * Math.sin(sw) * 0.6, uz = E.tz * Math.cos(sw) - E.nz * Math.sin(sw) * 0.6, Lf = 0.95 * EX_S * b, Hf = 0.62 * EX_S * b;
+    Pp.set([hx, hy, hz, hx + ux * Lf, hy + Math.sin(E.wave * 5.3) * 0.12 * EX_S * b, hz + uz * Lf, hx, hy - Hf, hz, hx + ux * Lf, hy - Hf + Math.sin(E.wave * 5.3) * 0.12 * EX_S * b, hz + uz * Lf], 24);
+    const g = E.lm.geometry; g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
   }
   function crDims(P) {   // the car's hubs, nose and tail (car frame: forward, right), as the car mesh builds them
     const M = P.m, d = BODIES[M.body], sx = M.len / d.len, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98, hw = M.wid * 0.5 - 0.1;
@@ -5273,54 +5971,69 @@ const Render = (function () {
   }
 
   // ---- the player's crew: what everybody does, from the pit state ----
-  function crewLogic(dt) {
+  // home: in the garage, no stop under way; ready: the car in the lane on its way to the box, everybody takes up his kit where he stands (the
+  // new tyres, the jacks); out: from the 'box' event (Core's pitState 'stop', 40 m before the box, ~4 s before the car stops) out in front of
+  // the garage at a run to his place round where the car will stop (crStopAt), waiting there ready as it comes in; earlier (c.dOut, at most
+  // 80 m before the box) where the crew has further to go than that leaves time for (Montréal: the garages behind its shallow apron); work; clear
+  function crewLogic(dt, snap) {   // (snap: the replay jumped in time, crewJump)
     const c = crew, P = c.P, R = c.roles, D = c.dim, T = curTrack; if (!P || !R || !T) return;
-    const L = T.len; let dB = c.pb.s - (P.q ? P.q.s : c.pb.s + 999); dB = ((dB % L) + L) % L; if (dB > L / 2) dB -= L;   // metres from the car to its box (along the lane)
+    const ps = P.rpPit || P, bd = T.def.pit ? T.def.pit[3] : null, dB = P.q && bd != null ? -T.boxX(P.q.s, bd) : -999;   // (ps: the pit state, in the replay the recording's, c.rpPit, game.js rpPit; dB: metres from the car to its box along the lane: Core's box, where the car stops)
+    const nb = P.rpPit ? !!P.rpPit.nb : !!(P.fl && P.fl.rq) && !(curRace && curRace._inStop && curRace._inStop(P));   // (the red flag's queue through the lane: no stop, the crew stays in)
     const prev = c.mode; let mode;
-    if (P.pitState === 'repair') mode = 'work';
-    else if (prev === 'work' || prev === 'clear') mode = P.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
-    else mode = P.inPit && !P.pitDone && dB > -4 ? 'out' : 'home';
+    if (ps.pitState === 'repair') mode = 'work';
+    else if (prev === 'work' || prev === 'clear') mode = ps.inPit && dB > -13 && c.clearT < 5 ? 'clear' : 'home';
+    else mode = !ps.inPit || ps.pitDone || nb ? 'home' : (ps.pitState === 'stop' || dB < c.dOut) && dB > -4 ? 'out' : dB > 0 ? 'ready' : 'home';
     if (mode !== prev) { c.mode = mode; c.clearT = 0;
-      if (mode === 'out') { const st = c.pb.stop; c.frame = { x: st[0], z: st[1], h: Math.atan2(c.pb.tz, c.pb.tx) + (c.pb.stopA || 0) };
-        for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; } }
-      if (mode === 'home') for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; }
+      if (mode === 'ready' || (mode === 'out' && prev !== 'ready')) c.frame = crStopAt(T, bd, c.pb);
+      if (mode === 'out') for (const k of [0, 1, 2, 3]) { R.N[k].tyre.mode = 'hands'; R.O[k].tyre.mode = 'hidden'; }
+      if (mode === 'ready') for (const k of [0, 1, 2, 3]) R.N[k].tyre.mode = 'hands';   // (picked up in the garage, the car still far down the lane)
+      if (mode === 'home') { c.dOut = 40; for (const m of c.men) if (m.role !== 'idle') m.act = m.act0; } }
     if (mode === 'work') c.frame = { x: P.x, z: P.z, h: P.h };
+    if (mode === 'home' && c.gar && c.gar.stack) crewStack(c.M, c.gar.stack, Math.min(CR_STACK, CR_STACK0 + 4 * ((P.rpPit && P.rpPit.tyN != null ? P.rpPit.tyN : P.ty && P.ty.n) || 0)));   // (P3: the used tyres of every stop with new ones on the stack, the crew back in; P8 in the replay: as many as the stops with new ones had made it by then, the recording's tyN)
     if (mode === 'clear') c.clearT += dt;
-    const F = c.frame, u = mode === 'work' ? clamp(P.pitT / Math.max(0.1, P.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
+    if (mode !== 'clear') c.keepTy = mode === 'home' ? false : mode === 'out' || prev !== 'work' ? (P.rpPit ? !!P.rpPit.keepTy : Core.keepTyres(P, P.pitPlan)) : c.keepTy;   // (the player's stop without new tyres, game.js: the tyre men and the jacks stay at the garage; as it was when the work began; in the replay the recording's: P.rpPit.keepTy, game.js recPit)
+    const keep = c.keepTy;
+    const F = c.frame, u = mode === 'work' ? clamp(ps.pitT / Math.max(0.1, ps.pitDur), 0, 1) : mode === 'clear' ? 1 : 0, uW = Core.REPAIR.wheel;   // (uW: the new wheels pushed home, a wheel lost in a wreck back on with them: repairStep)
     const ch = F ? Math.cos(F.h) : 1, sh = F ? Math.sin(F.h) : 0, Wp = (f, r) => [F.x + ch * f - sh * r, F.z + sh * f + ch * r], yawC = (df, dr) => Math.atan2(sh * df + ch * dr, ch * df - sh * dr);
     const pb = c.pb, so = pb.stopO != null ? pb.stopO : pb.lane, lat = (x, z) => so + (x - pb.stop[0]) * pb.nx + (z - pb.stop[1]) * pb.nz, gs = pb.tx * pb.nz - pb.tz * pb.nx < 0 ? -1 : 1;   // (gs: the garages' side of the car, +1 its right; -1 a lane on the left: Toronto)
     const wMin = F && lat(F.x, F.z) > pb.apron0 + 1.5 ? pb.apron0 + 0.25 : pb.wallO + 0.35;   // (the car in its box on the apron: nobody on the lane; else nobody across the pit-wall rail)
+    const plan = mode === 'ready', om = plan ? 'out' : mode;   // (ready: the places out there worked out as well, not gone to: how far the crew has to go, c.dOut)
     const go = (m, p, yaw, style, act) => { const wo = lat(p[0], p[1]); if (wo < wMin) p = [p[0] + pb.nx * (wMin - wo), p[1] + pb.nz * (wMin - wo)];
+      if (plan) { m.ox = p[0]; m.oz = p[1]; return; }
       m.gx = p[0]; m.gz = p[1]; m.gyaw = yaw; m.style = style; m.act = act; };
     const lf = c.liftF, lr = c.liftR, y0 = P.y || 0;
     const hub = (k) => { const f = k < 2 ? D.fx : D.rx, sd = k % 2 ? 1 : -1, [x, z] = Wp(f, sd * D.hw); return [x, y0 + D.rw + (k < 2 ? lf : lr), z]; };
-    c.gunOn = false;
-    if (mode === 'home') {
+    c.gunOn = false; c.gunW = 0;   // (gunW: a bit for each wheel whose gun is on its nut now: Sfx's wheel guns)
+    if (mode === 'home' || mode === 'ready') {
+      const rd = mode === 'ready';   // (ready: the new tyres in the hands, the jacks by the handle, nobody chatting)
       for (const m of c.men) { if (m.role === 'idle') continue; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null;
         const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3;
-        if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : m.act0; }
-        if (m.role === 'N') { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; }
-        if (m.role === 'JF' || m.role === 'JR') { m.jack.beta += (CR_B0 - m.jack.beta) * Math.min(1, dt * 6); m.carry = !home; m.act = home ? 'stand' : 'jackR'; }
+        if (m.role === 'O') { m.carry = m.tyre.mode === 'hands'; if (home && m.carry) { m.tyre.mode = 'floor'; m.carry = false; } m.act = m.carry ? 'carry' : rd ? 'stand' : m.act0; }
+        if (m.role === 'N') { if (rd) { m.carry = true; m.act = 'carry'; } else { if (home && m.tyre.mode !== 'floor') m.tyre.mode = 'floor'; m.carry = false; } }
+        if (m.role === 'JF' || m.role === 'JR') { m.jack.beta += (CR_B0 - m.jack.beta) * Math.min(1, dt * 6); m.carry = rd || !home; m.act = m.carry ? 'jackR' : 'stand'; }
         if (m.role === 'LP') { m.carry = true; m.act = 'lolliD'; } }
-    } else {
+    }
+    if (mode !== 'home') {
       for (let k = 0; k < 4; k++) { const front = k < 2, sd = k % 2 ? 1 : -1, fk = front ? D.fx : D.rx, dO = front ? 1 : -1, G = R.G[k], O = R.O[k], N = R.N[k], tO = O.tyre, tN = N.tyre, hb = hub(k);
+        if (keep) { for (const m of [G, O, N]) { const home = Math.hypot(m.x - m.hx, m.z - m.hz) < 0.3; m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; m.aim = null; m.carry = m === N && !home; m.act = m.carry ? 'carry' : m.act0; }
+          tO.mode = 'hidden'; tN.mode = Math.hypot(N.x - N.hx, N.z - N.hz) < 0.3 ? 'floor' : 'hands'; crewWheel(k, false); continue; }
         // gun man: kneels outboard of the hub; nut off, (the wheel changes), nut on, then stands and raises a hand
-        const wt = mode === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
+        const wt = om === 'out' ? (sd * gs < 0 ? 0.45 : 0.2) : 0, ex = mode === 'clear' && front && sd * gs < 0;   // (waiting: a step back from where the car will stand; the car pulls out to the lane: its front sweeps over that side's front spots)
         const gSpot = Wp(fk, sd * (D.hw + 0.72 + wt)), gYaw = yawC(0, -sd);
-        if (mode === 'out') go(G, gSpot, gYaw, 'jog', 'ready');
+        if (om === 'out') go(G, gSpot, gYaw, 'run', 'ready');
         else if (mode === 'work') { const nut = (u > 0.04 && u < 0.2) || (u > 0.47 && u < 0.64);
-          if (u < 0.66) { go(G, gSpot, gYaw, 'snap', 'gunK'); G.aim = hb; G.aimOff = nut ? Math.sin(time * 70 + k) * 0.008 : (u > 0.2 && u < 0.47 ? 0.14 : 0.04); if (nut) { c.gunOn = true; crSpark(hb, sd, F, dt); } }
+          if (u < 0.66) { go(G, gSpot, gYaw, 'snap', 'gunK'); G.aim = hb; G.aimOff = nut ? Math.sin(time * 70 + k) * 0.008 : (u > 0.2 && u < 0.47 ? 0.14 : 0.04); if (nut) { c.gunOn = true; c.gunW |= 1 << k; crSpark(hb, sd, F, dt); } }
           else go(G, Wp(fk, sd * (D.hw + 0.95)), gYaw, 'snap', 'signal'); }
         else go(G, Wp(fk - (ex ? 0.3 : 0), sd * (D.hw + 1.25 + (ex ? 0.2 : 0))), gYaw, 'snap', c.clearT < 1 ? 'signal' : 'gun');
         // tyre off: grabs the old wheel, pulls it off and steps back with it
         const oSpot = Wp(fk + dO * 0.66, sd * (D.hw + 0.78 + wt)), oYaw = yawC(-dO * 0.55, -sd * 0.78);
-        if (mode === 'out' || u < 0.18) { go(O, oSpot, oYaw, mode === 'out' ? 'jog' : 'snap', 'readyT'); O.carry = false; }
+        if (om === 'out' || u < 0.18) { go(O, oSpot, oYaw, om === 'out' ? 'run' : 'snap', 'readyT'); O.carry = false; }
         else if (u < 0.24) { go(O, oSpot, oYaw, 'snap', 'grabT'); O.aim = hb; O.carry = false; }
         else if (u < 0.38) { const t2 = crSS(0.24, 0.38, u), back = Wp(fk + dO * (0.66 + 0.55 * t2), sd * (D.hw + 0.78 + 0.45 * t2)); go(O, back, oYaw, 'snap', 'carry'); O.carry = true; tO.mode = 'lerp'; tO.from = hb; tO.t = t2; }
         else { go(O, Wp(fk + dO * (ex ? 0.3 : 1.21), sd * (D.hw + 1.23 + (mode === 'clear' ? (ex ? 0.8 : 0.4) : 0))), oYaw, 'snap', 'carry'); O.carry = true; tO.mode = 'hands'; }
         // tyre on: holds the new wheel ready, puts it on the hub, pushes it home, steps back
         const nSpot = Wp(fk - dO * 0.72, sd * (D.hw + 0.86 + wt)), nYaw = yawC(dO * 0.6, -sd * 0.86);
-        if (mode === 'out' || u < 0.34) { go(N, nSpot, nYaw, mode === 'out' ? 'jog' : 'snap', 'carry'); N.carry = true; tN.mode = 'hands'; }
+        if (om === 'out' || u < 0.34) { go(N, nSpot, nYaw, om === 'out' ? 'run' : 'snap', 'carry'); N.carry = true; tN.mode = 'hands'; }
         else if (u < uW) { const t2 = crSS(0.34, uW, u); go(N, Wp(fk - dO * (0.72 - 0.3 * t2), sd * (D.hw + 0.86 - 0.25 * t2)), nYaw, 'snap', 'carry'); N.carry = true; tN.mode = 'lerp'; tN.to = hb; tN.t = t2; }
         else if (u < 0.58) { go(N, Wp(fk - dO * 0.42, sd * (D.hw + 0.61)), nYaw, 'snap', 'pushT'); N.aim = hb; N.carry = false; tN.mode = 'hidden'; }
         else { go(N, Wp(fk - dO * 0.8, sd * (D.hw + 1.1 + (mode === 'clear' ? 0.3 : 0))), nYaw, 'snap', 'stand'); N.carry = false; tN.mode = 'hidden'; }
@@ -5328,25 +6041,64 @@ const Render = (function () {
       // jack men: front one in front of the nose (the car stops before him), rear one steps in behind the tail once it has stopped
       const JF = R.JF, JR = R.JR, dj = 0.52 + 1.3 * Math.cos(CR_B0);
       const fSpot = Wp(D.nose + 0.22 + dj, 0), rSpot = Wp(D.tail - 0.22 - dj, 0);
-      if (mode === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
+      if (keep) for (const m of [JF, JR]) { m.gx = m.hx; m.gz = m.hz; m.gyaw = m.hyaw; m.style = 'walk'; }
+      else if (om === 'out') { go(JF, fSpot, yawC(-1, 0), 'jog', 'jackR'); go(JR, Wp(D.tail - 0.22 - dj, gs * (D.wid * 0.5 + 0.4)), yawC(1, 0), 'jog', 'jackR'); }
       else if (mode === 'work') {
         go(JF, u < 0.93 ? fSpot : Wp(D.nose + 0.22 + dj + 0.5 * crSS(0.93, 1, u), 0), yawC(-1, 0), 'snap', u < 0.89 ? 'jackP' : 'jackR');
         go(JR, u < 0.9 ? rSpot : Wp(D.tail - 0.22 - dj - 0.4 * crSS(0.9, 1, u), 0), yawC(1, 0), 'dash', u < 0.86 ? 'jackP' : 'jackR'); }
       else { go(JF, Wp(D.nose + 0.72 + dj, gs * (D.wid * 0.5 + 1.6)), yawC(-1, 0), 'run', 'jackR'); go(JR, Wp(D.tail - 0.62 - dj, gs * (D.wid * 0.5 + 1.2)), yawC(1, 0), 'walk', 'jackR'); }
       JF.carry = JR.carry = true;
       const atF = mode === 'work' && Math.hypot(JF.x - fSpot[0], JF.z - fSpot[1]) < 0.15, atR = mode === 'work' && Math.hypot(JR.x - rSpot[0], JR.z - rSpot[1]) < 0.15;
-      const bF = atF && u < 0.89 ? CR_B1 : CR_B0, bR = atR && u < 0.86 ? CR_B1 : CR_B0, js = Math.min(1, dt * 9);   // pushing the handle down lifts that end of the car
+      const bF = atF && u < 0.89 ? CR_B1 : CR_B0, bR = atR && u < 0.86 ? CR_B1 : CR_B0, js = snap ? 1 : Math.min(1, dt * 9);   // pushing the handle down lifts that end of the car (snap: at once, crewJump)
       JF.jack.beta += (bF - JF.jack.beta) * js; JR.jack.beta += (bR - JR.jack.beta) * js;
       c.liftF = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JF.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0; c.liftR = mode === 'work' ? CR_LIFT * clamp((CR_B0 - JR.jack.beta) / (CR_B0 - CR_B1), 0, 1) : 0;
       // lollipop: held across in front of the driver, lifted when the car is released
       const LP = R.LP, lpSpot = Wp(D.nose + 0.95, gs * (D.wid * 0.5 + 0.65)), lpThere = Math.hypot(LP.x - lpSpot[0], LP.z - lpSpot[1]) < 0.6;   // (he carries it upright until he is at his spot)
-      go(LP, lpSpot, yawC(0, -gs), mode === 'out' ? 'jog' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
+      go(LP, lpSpot, yawC(0, -gs), om === 'out' ? 'run' : 'snap', mode === 'clear' ? (c.clearT < 1.8 ? 'lolliU' : 'lolliD') : lpThere ? 'lolliH' : 'lolliD'); LP.carry = true;
     }
     if (mode !== 'work') { c.liftF = 0; c.liftR = 0; }
+    if (plan) { let L = 0; for (const m of c.men) if (m.ox != null) L = Math.max(L, Math.hypot(m.ox - m.hx, m.oz - m.hz));   // the longest way out
+      c.dOut = clamp(40 + 20 * (L / 4.4 + 0.5 + 1.2 - 3.7), 40, 80); }   // (at a run, up to speed and slowing at his place; everybody there 1.2 s before the car stops, ~3.7 s after the 'box' event at the least; ~20 m/s before it)
+    crewTyres(mode, u);
     c.lift = (c.liftF + c.liftR) / 2; c.liftP = Math.atan2(c.liftF - c.liftR, D.wb);
     // the engineer on the pit wall follows his car
     const E = R.ENG; E.lookAt = Math.hypot(P.x - E.x, P.z - E.z) < 160 ? [P.x, P.z] : null;
     if (mode !== 'work') for (let k = 0; k < 4; k++) crewWheel(k, false);
+  }
+  // the replay jumped in time (Render.crewSnap: its start, a moment of the highlights; the race's own state again after it): the player's
+  // crew as the pit state has it there at once (the mode from scratch, every man at his place, the tyres and the jacks with them), not
+  // walking over from where the last frame left them. The stop's last part ('clear', the car driving off) is not jumped into: the crew at home
+  function crewJump() {
+    const c = crew, R = c.roles, P = c.P; if (!R || !P) return;
+    const n = P.rpPit ? P.rpPit.n : P.repairN || 0;   // (the stops done: the old wheels on the floor at home after one, none before)
+    c.mode = 'home'; c.clearT = 0; R.JF.jack.beta = R.JR.jack.beta = CR_B0;
+    for (const m of c.men) if (m.role !== 'idle') m.act = m.act0;
+    for (let k = 0; k < 4; k++) { R.N[k].tyre.mode = 'floor'; R.O[k].tyre.mode = n ? 'floor' : 'hidden'; }
+    crewLogic(0);   // (the mode and everybody's place in it: 'out' hands the new wheels out)
+    if (c.mode === 'work') for (let k = 0; k < 4; k++) R.O[k].tyre.mode = 'hidden';   // (the old wheels on the car till they come off: crewLogic's)
+    for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; }
+  }
+  // where Core stops the player's car in its box (Track.bayPose: on the apron in front of the garage, parked straight; on a shallow apron at
+  // its edge): the frame the crew waits round (World's pitBox stop only without it)
+  function crStopAt(T, bd, pb) {
+    const bp = bd != null ? T.bayPose(bd) : null, p = bp && T.pitAt(bp.s);
+    if (!p) return { x: pb.stop[0], z: pb.stop[1], h: Math.atan2(pb.tz, pb.tx) + (pb.stopA || 0) };
+    const [x, z] = crRoadAt(T, bp.s, p.sd * bp.o), i = T.idx(bp.s); return { x, z, h: Math.atan2(T.tz[i], T.tx[i]) + p.sd * bp.a };
+  }
+  // the crew's tyres in a race with tyres (P.ty): the new set's band the one the next stop fits (nextBand: Gume v boksih, or the compound for
+  // what is left; rain tyres blue), the old set's the car's own until the car is out of the box (taken off the car, it keeps its band);
+  // no band (dry, no compounds): yellow and red as ever. Pushed home (REPAIR.wheel), the new set is on the car's separate wheels at once
+  // (bandGeo: the stock rear wheels in the body wait), the car built afresh with it at the stop's end (frame: repairN)
+  const CR_NEW = new THREE.Color(0.95, 0.8, 0.14), CR_OLD = new THREE.Color(0.86, 0.14, 0.12);
+  function crewTyres(mode, u) {
+    const c = crew, P = c.P, M = c.M; if (!M.tyre || !P.ty) return;
+    const nb = nextBand(P), ob = mode === 'out' || mode === 'work' || c.oldB === undefined ? tyreBand(P) : c.oldB;
+    if (nb !== c.newB || ob !== c.oldB) { c.newB = nb; c.oldB = ob;
+      for (let k = 0; k < 4; k++) { M.tyre.setColorAt(k, nb != null ? _pc.setRGB(...colArr(nb)) : CR_NEW); M.tyre.setColorAt(4 + k, ob != null ? _pc.setRGB(...colArr(ob)) : CR_OLD); }   // (the wheels' own shades: their vertex colours)
+      M.tyre.instanceColor.needsUpdate = true; }
+    const v = views.find(v => v.car === P); if (!v || !v.bandGeo) return;
+    const on = mode === 'work' && u >= Core.REPAIR.wheel && !c.keepTy ? nb : (P.repairN || 0) !== v.repairN ? tyreBand(P) : v.band;   // (the stop just over, the car not yet built afresh: its new tyres; a stop without new tyres, keepTy: the car keeps its own band, the next set's is not put on)
+    if (v.bandW !== on) { v.bandW = on; const G = v.bandGeo(on); for (const w of v.wf) w.geometry = G.f; for (const w of v.wr) w.geometry = G.r; }
   }
   // the KOLIBRI's tyre on fire (Core Car.kt.hot): that wheel only a little red, a dark red and a faint glow of its own (emissive ~0.45), no
   // light round it and none on the road: far less than a tail lamp. Each of its meshes gets a red copy of its material while it burns
@@ -5371,7 +6123,7 @@ const Render = (function () {
   }
 
   // ---- every frame ----
-  function crewMan(m, dt) {
+  function crewMan(m, dt, snap) {   // (snap: in the pose at once, crewJump)
     const dx = m.gx - m.x, dz = m.gz - m.z, d = Math.hypot(dx, dz);
     const vmax = m.style === 'run' ? 4.4 : m.style === 'dash' ? 3.4 : m.style === 'jog' ? 3.1 : m.style === 'snap' ? 2.4 : 1.45, want = d > 0.015 ? Math.min(vmax, d * 3.5 + 0.25) : 0;
     m.spd = Math.max(0, m.spd + clamp(want - m.spd, -14 * dt, 9 * dt));
@@ -5386,8 +6138,8 @@ const Render = (function () {
     let lk = null; const P = crew.P;
     if (m.lookAt) lk = m.lookAt; else if (P && m.act !== 'bench' && m.act !== 'kneel' && m.act !== 'gunK' && Math.hypot(P.x - m.x, P.z - m.z) < 45) lk = [P.x, P.z];
     const la = lk ? -wrapPi(Math.atan2(lk[1] - m.z, lk[0] - m.x) - m.yaw) : Math.sin(time * 0.23 + m.t0) * 0.7 * Math.max(0, Math.sin(time * 0.11 + m.t0 * 2));
-    m.look += (clamp(la, -1.2, 1.2) - m.look) * Math.min(1, dt * 4); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
-    const ko = 1 - Math.exp(-dt * (walk > 0.3 ? 24 : 12)), kh = 1 - Math.exp(-dt * 14);
+    m.look += (clamp(la, -1.2, 1.2) - m.look) * (snap ? 1 : Math.min(1, dt * 4)); _cO[5] += m.look * (1 - walk * 0.7); _cO[2] += m.look * 0.2;
+    const ko = snap ? 1 : 1 - Math.exp(-dt * (walk > 0.3 ? 24 : 12)), kh = snap ? 1 : 1 - Math.exp(-dt * 14);
     for (let k = 0; k < 12; k++) { m.O[k] += (_cO[k] - m.O[k]) * ko; m.H[k] += (_cH[k] - m.H[k]) * kh; }
     // the other teams change what they do now and then
     if (m.role === 'idle' && (m.act0 === 'cross' || m.act0 === 'hips' || m.act0 === 'talk')) { const q = Math.floor((time + m.t0 * 7) / (7 + m.h1 * 8)); if (q !== m.q) { m.q = q; const r = crHash(q * 3.1 + m.id); m.act = r < 0.33 ? 'hips' : r < 0.66 ? 'cross' : 'talk'; } }
@@ -5399,6 +6151,23 @@ const Render = (function () {
     let xx = uy * zz - uz * zy, xy = uz * zx - ux * zz, xz = ux * zy - uy * zx; const xl = Math.hypot(xx, xy, xz); xx /= xl; xy /= xl; xz /= xl;
     const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
     const ty = thy || th; _cM.set(xx * th, yx * ty, zx * L, ax, xy * th, yy * ty, zy * L, ay, xz * th, yz * ty, zz * L, az, 0, 0, 0, 1); im.setMatrixAt(i, _cM);
+  }
+  // a panel on a crew's garage (World's bx.gar: each builder's own measures, metres out from the centre line, heights over the box's floor):
+  // band [w, y0, y1, half width] the face over the door, wall [w, y0, y1, half width] the back wall's inside (a closed front: the door),
+  // jamb [w, a, width, top] the door's pillars at -a and +a. Placed as the builder placed that part: square to the road at the box's centre
+  // (World's box() there: the heading of that sample), or along the road (gar.road names those parts: each end at its own place on it, at the
+  // road's height there), a few mm in front of the face (w) it covers
+  const _crP = [0, 0];
+  function crRoadAt(T, s, lat) {   // World's atSf: the centre line's point and normal interpolated between the samples, lat metres out
+    const L = T.len, f = (((s % L) + L) % L) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f);
+    _crP[0] = T.px[i] + (T.px[j] - T.px[i]) * u + (T.nx[i] + (T.nx[j] - T.nx[i]) * u) * lat; _crP[1] = T.pz[i] + (T.pz[j] - T.pz[i]) * u + (T.nz[i] + (T.nz[j] - T.nz[i]) * u) * lat; return _crP;
+  }
+  function crGarSlab(im, i, bx, part, a0, a1, w, y0, y1, col) {
+    const T = curTrack, k = T.idx(bx.s), wc = (bx.nx * T.nx[k] + bx.nz * T.nz[k] < 0 ? -1 : 1) * (w - 0.014), road = !!(bx.gar && bx.gar.road && bx.gar.road.includes(part));
+    let y = (bx.y || 0) + (y0 + y1) / 2, x0, z0, x1, z1;
+    if (road) { [x0, z0] = crRoadAt(T, bx.s + a0, wc); [x1, z1] = crRoadAt(T, bx.s + a1, wc); y += T.elevAt(bx.s + (a0 + a1) / 2).y - T.elevAt(bx.s).y; }
+    else { const c = Math.cos(T.hd[k]), s = Math.sin(T.hd[k]), [x, z] = crRoadAt(T, bx.s, wc); x0 = x + c * a0; z0 = z + s * a0; x1 = x + c * a1; z1 = z + s * a1; }
+    crSetRod(im, i, x0, y, z0, x1, y, z1, 0.02, y1 - y0); im.setColorAt(i, col);
   }
   function crTyreMat(t, out) {   // where a tyre is: on the floor, in its man's hands, on the hub, or on the way between
     const m = t.man, yawM = Math.PI / 2 - m.yaw;
@@ -5413,6 +6182,15 @@ const Render = (function () {
       _cv.set(_cv.x + (hubP[0] - _cv.x) * k, _cv.y + (hubP[1] - _cv.y) * k, _cv.z + (hubP[2] - _cv.z) * k); ang += wrapPi(hubA - ang) * k; }
     _cQ.setFromEuler(_ce.set(0, ang, 0, 'YXZ')); out.compose(_cv, _cQ, S); return true;
   }
+  // the rain on the crews (crewMaterial's parts): the rain jackets on while it rains or snows (the sky in the wet ones; in the snow less of it),
+  // the new set waiting on the floor in its covers (off once the tyre men pick it up)
+  function crewRain(c) {
+    const on = wet > 0 ? 1 : 0, A = c.cover;
+    for (const m of c.mats) { const U = m.userData.rain; if (U) { U.uWet.value = on; if (on) U.uSky.value.copy(scene.fog.color).multiplyScalar(snowy() ? 0.35 : 1); } }
+    if (!A) return; let ch = false;
+    for (const t of c.tyres) { const v = on && t.i < 4 && t.mode === 'floor' ? 1 : 0; if (A.array[t.i] !== v) { A.array[t.i] = v; ch = true; } }   // (the first four: the new set)
+    if (ch) A.needsUpdate = true;
+  }
   // NIZKA (the phone budget): by a man's height on the screen (the camera's distance and field of view: the replay's TV cameras zoom in), a
   // man of the other crews under CREW_PX_MIN pixels or behind the camera is not drawn (at the start the whole pit lane's men were in every
   // frame, ~270k vertices with their shadows; behind the car on a phone held sideways that is ~110 m off, in the haze), one under CREW_PX_LO
@@ -5426,15 +6204,18 @@ const Render = (function () {
   }
   function updateCrew(dt) {
     if (!crew) return;
-    const c = crew; crewLogic(dt);
+    const c = crew, snap = c.snap; c.snap = false;
+    if (snap) crewJump();
+    crewLogic(dt, snap); crewRain(c);
     const near = Math.hypot(cam.vcx - c.cx, cam.vcz - c.cz) < c.rad + 170;
     if (c.grp.visible !== near) c.grp.visible = near;
+    crewGarStep(c, dt, snap, near); crewExitStep(c, dt, near);
     if (!near) { for (const m of c.men) { m.x = m.gx; m.z = m.gz; m.yaw = m.gyaw; m.spd = 0; } return; }   // off screen: everybody just is where he is going
     const M = c.M, rel = (im, i, src) => im.setMatrixAt(i, src), lo = c.lo;
     const fx = cam.vcx - camera.position.x, fz = cam.vcz - camera.position.z, fl = Math.hypot(fx, fz) || 1;
     const pxK = 1.8 * window.innerHeight / (2 * Math.tan(camera.fov * Math.PI / 360)), cnt = [0, 0, 0, 0];   // (pxK: a man's height on the screen 1 m off, in pixels; cnt: the men so far in the near set and the far one, and their helmets)
     for (let k = 0; k < c.men.length; k++) { const m = c.men[k];
-      crewMan(m, dt);
+      crewMan(m, dt, snap);
       let S = M, i = k, h = k;   // (his set, his instance in it and his helmet's)
       if (lo) { const dx = m.x - camera.position.x, dz = m.z - camera.position.z, d = Math.hypot(dx, dz);
         if (!m.bx.mine && (d * CREW_PX_MIN > pxK || (dx * fx + dz * fz) / fl < -6)) { if (m.gun) rel(M.gun, m.gunI, _zero); continue; }
@@ -5454,7 +6235,7 @@ const Render = (function () {
         crSetRod(M.rod, 8 + ji, px, m.y + 0.14, pz, gx, gy, gz, 0.045); crSetRod(M.rod, 10 + ji, gx - lx, gy, gz - lz, gx + lx, gy, gz + lz, 0.035); }
       if (m.role === 'LP' && M.disc) {   // the lollipop: the pole out of his hand (across, raised or resting upright), the sign at its end facing along the car
         const want = m.act === 'lolliH' ? [Math.cos(m.yaw), 0, Math.sin(m.yaw)] : [0, 1, 0]; m.pd = m.pd || [0, 1, 0];
-        for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * Math.min(1, dt * 8); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
+        for (let k = 0; k < 3; k++) m.pd[k] += (want[k] - m.pd[k]) * (snap ? 1 : Math.min(1, dt * 8)); const l = Math.hypot(...m.pd) || 1, d0 = m.pd[0] / l, d1 = m.pd[1] / l, d2 = m.pd[2] / l;
         _cv.setFromMatrixPosition(CRM.hdR); const ex = _cv.x + d0 * 1.35, ey = _cv.y + d1 * 1.35, ez = _cv.z + d2 * 1.35; crSetRod(M.rod, 12, _cv.x, _cv.y, _cv.z, ex, ey, ez, 0.03);
         const nx = Math.sin(m.yaw), nz = -Math.cos(m.yaw);   // the sign's face points along his left-right, i.e. along the car (y = the pole, z = that normal, x = y cross z)
         const xx = d1 * nz, xy = d2 * nx - d0 * nz, xz = -d1 * nx, xl = Math.hypot(xx, xy, xz) || 1;
@@ -5550,6 +6331,21 @@ const Render = (function () {
     World.box(g, 0.08, 0.64, 0, 0.62, 0.26, 0.32, 0, B); World.box(g, -0.44, 0.72, 0, 0.6, 0.12, 0.28, 0, K); World.box(g, -0.02, 0.3, 0, 0.52, 0.36, 0.28, 0, [0.3, 0.3, 0.33]);
     rdRod(g, [0.72, 0.31, 0], [0.52, 1.0, 0], 0.07, S); World.box(g, 0.5, 1.0, 0, 0.05, 0.05, 0.72, 0, K);
     World.box(g, 0.64, 0.84, 0, 0.08, 0.14, 0.16, 0, [1, 0.97, 0.82]); World.box(g, -0.78, 0.78, 0, 0.04, 0.08, 0.14, 0, [0.72, 0.06, 0.05]); World.box(g, -0.62, 0.34, 0.16, 0.5, 0.08, 0.08, 0, S);
+    return g.geometry();
+  }
+  // the endless drive's stand-ins for the vehicles far away (over RD_FAR m from the camera's point, updateRoad): a few boxes each, what reads
+  // of a vehicle from there on a phone's screen (its shape, paint, windows and the dark band of its wheels), ~100 vertices instead of
+  // 1.5-7.5 thousand; no shadow. kind: 'car' (the model's size: id), 'van', 'bus', 'truck', 'moto'
+  const RD_FAR = 90;
+  function rdFarGeo(kind, id) {
+    const g = new GB(), K = [0.08, 0.08, 0.09], B = RD_MG, bx = (x, y, z, sx, sy, sz, col, top) => World.box(g, x, y, z, sx, sy, sz, 0, col, top || col, true);
+    if (kind === 'car') { const M = Core.MODELS.find(m => m.id === id), L = M.len, W = M.wid;
+      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, 0.24, 0, L, 0.54, W, B); bx(-L * 0.07, 0.78, 0, L * 0.48, 0.5, W * 0.84, GLASS, B); }
+    else if (kind === 'van') { bx(0, 0, 0, 4.4, 0.42, 1.92, K); bx(-0.35, 0.32, 0, 4.6, 1.73, 2.0, B); bx(2.25, 0.32, 0, 0.8, 0.8, 1.96, B); bx(1.94, 1.12, 0, 0.66, 0.85, 2.02, GLASS, B); }
+    else if (kind === 'bus') { bx(0, 0, 0, 10.6, 0.5, 2.42, K); bx(0, 0.36, 0, 11.8, 2.8, 2.5, B); bx(0.21, 1.45, 0, 11.42, 1.35, 2.52, GLASS, B); }
+    else if (kind === 'truck') { bx(0, 0, 0, 15.6, 0.66, 2.4, K); bx(7.05, 0.62, 0, 2.3, 2.3, 2.49, B); bx(6.75, 2.92, 0, 1.7, 0.6, 2.35, B); bx(7.6, 1.75, 0, 1.24, 0.95, 2.51, GLASS, B);
+      bx(-1.1, 0.86, 0, 14.2, 3.12, 2.55, [0.86, 0.86, 0.84], [0.8, 0.8, 0.78]); }
+    else { bx(0, 0, 0, 1.9, 0.62, 0.16, K); bx(0, 0.5, 0, 1.1, 0.35, 0.34, B); }
     return g.geometry();
   }
   function rdBikeGeo() {   // a road bicycle: thin wheels, the frame in its colour, the saddle, the bars
@@ -5703,8 +6499,13 @@ const Render = (function () {
     const grp = new THREE.Group(), matP = rdMaterial(), mat = crewMaterial(false), matS = crewMaterial(true), matL = new THREE.MeshLambertMaterial({ vertexColors: true }), meshes = [];
     const mk = (geo, n, mt, cast) => { const im = new THREE.InstancedMesh(geo, mt, n); im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.castShadow = !!cast; im.receiveShadow = true;
       for (let i = 0; i < n; i++) { im.setMatrixAt(i, _zero); im.setColorAt(i, _pc.setRGB(1, 1, 1)); } im.instanceColor.setUsage(THREE.DynamicDrawUsage); im.count = 0; grp.add(im); meshes.push(im); return im; };   // (the colours before the count goes to 0: three sizes them by it)
-    const V = { car: [mk(rdCarGeo('hatch', 'pico'), 40, matP, true), mk(rdCarGeo('sedan', 'vortex'), 40, matP, true), mk(rdCarGeo('coupe', 'kaze'), 24, matP, true)],
-      van: mk(rdVanGeo(), 24, matP, true), bus: mk(rdBusGeo(), 8, matP, true), truck: mk(rdTruckGeo(), 20, matP, true), moto: mk(rdMotoGeo(), 12, matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
+    // (the endless drive: in each mesh as many places as the window's pool has vehicles for it, never fewer than a race has; at x4 the
+    // window can put more of a kind round the camera than a race's road, Tianmen up to 12 buses within 90 m and 13 beyond, and a vehicle
+    // over its mesh's places is not drawn, updateRoad's put. The keys as updateRoad picks the mesh: a car by its colour, a truck on its own)
+    const pc = {}; if (race.en) for (const v of race.tf.veh) { const k = v.kind === 0 ? 'c' + Math.floor(v.col * 7.3) % 3 : v.kind === 2 && v.p === 5 ? 't' : v.kind; pc[k] = (pc[k] || 0) + 1; }
+    const nf = (k, n) => Math.max(n, pc[k] || 0);
+    const V = { car: [mk(rdCarGeo('hatch', 'pico'), nf('c0', 40), matP, true), mk(rdCarGeo('sedan', 'vortex'), nf('c1', 40), matP, true), mk(rdCarGeo('coupe', 'kaze'), nf('c2', 24), matP, true)],
+      van: mk(rdVanGeo(), nf(1, 24), matP, true), bus: mk(rdBusGeo(), nf(2, 8), matP, true), truck: mk(rdTruckGeo(), nf('t', 20), matP, true), moto: mk(rdMotoGeo(), nf(3, 12), matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
     const NP = 140, PG = pedGeos();
     PG.trunk.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3)); PG.head.setAttribute('crewSkin', new THREE.InstancedBufferAttribute(new Float32Array(NP * 3), 3));
@@ -5736,15 +6537,22 @@ const Render = (function () {
       ck = { PD: mk(rdPaddleGeo(), 1, mat, true), CN: mk(rdConeGeo(), 8, mat, true), sign, box, op: 0, pa: Math.PI, cw: null, dw: null, on: true, cx: c0[0], cz: c0[1],
         cones: [[-32, 0.45], [-26, 0.75], [-20, 1.05], [-14, 1.35], [-8, 1.6], [8.4, 0.55], [8.4, 1.75]].map(([o, e]) => put(K.s + o, w - e)), board: put(K.s - 45, w - 0.42) };
     }
+    // the endless drive (race.en): each vehicle's mesh with a twin that casts no shadow, for the vehicles outside the sun's shadow box
+    // (updateRoad): with its frustum culling off a mesh draws all its vehicles into the shadow map, at the densest traffic on the hairpin
+    // roads tens of them for nothing (Tianmen, Rio do Rastro: 50-70k vertices a frame). The same geometry (disposed with the first)
+    const tw = new Map(); if (race.en) for (const im of [...V.car, V.van, V.bus, V.truck, V.moto]) { const t = mk(im.geometry, im.instanceMatrix.count, matP, false); t.visible = false; tw.set(im, t); }
+    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), nf('c0', 40), matP, false), mk(rdFarGeo('car', 'vortex'), nf('c1', 40), matP, false), mk(rdFarGeo('car', 'kaze'), nf('c2', 24), matP, false)],
+      van: mk(rdFarGeo('van'), nf(1, 24), matP, false), bus: mk(rdFarGeo('bus'), nf(2, 8), matP, false), truck: mk(rdFarGeo('truck'), nf('t', 20), matP, false), moto: mk(rdFarGeo('moto'), nf(3, 12), matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
+    if (far) for (const im of [...far.car, far.van, far.bus, far.truck, far.moto]) im.visible = false;
     scene.add(grp);
-    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };
+    road = { grp, meshes, mats: [matP, mat, matS, matL, matLs, matB], V, tw, far, P, NP, S, LG, SK, SKB, DG, DL, LS, BL, heli, extra, ck, men: new Map(), pol: new Map(), n: { veh: 0, ped: 0, off: 0, grp: 0, cgrp: 0, yld: 0, ind: 0, dead: 0, cop: 0, drv: 0 }, arrest: null };
   }
   function rdPoolTex() {   // the searchlight's pool of light: a soft disc
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
     gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
     return new THREE.CanvasTexture(cv);
   }
-  const _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _re = new THREE.Euler(), _rv = new THREE.Vector3(), _rs = new THREE.Vector3(1, 1, 1), _rm2 = new THREE.Matrix4(), _rm3 = new THREE.Matrix4(), _rax = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0);
+  const _rdSh = new THREE.Vector3(), _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _re = new THREE.Euler(), _rv = new THREE.Vector3(), _rs = new THREE.Vector3(1, 1, 1), _rm2 = new THREE.Matrix4(), _rm3 = new THREE.Matrix4(), _rax = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0);
   const RD_JOINTS = ['pel', 'neck', 'shL', 'elL', 'hdL', 'shR', 'elR', 'hdR', 'hipL', 'knL', 'hipR', 'knR'];
   function rdTilt(m, ax, az, a, py) {   // the whole rig turned by a about the horizontal axis (ax, 0, az) through the point py above its feet
     if (!a) return;
@@ -5843,11 +6651,17 @@ const Render = (function () {
     const put = (im, v, col, roll, lift) => { const i = cnt.get(im) || 0; if (i >= im.instanceMatrix.count) return false; cnt.set(im, i + 1);
       const pitch = v.st === 0 ? Math.atan((T.grade ? T.grade[v.i] || 0 : 0) * v.dir) : 0, y = (world && world.groundH && v.st > 0 ? Math.max(v.y, world.groundH(v.x, v.z)) : v.y) + (lift || 0);
       _re.set(roll || 0, -v.h, pitch, 'YZX'); _rq.setFromEuler(_re); _rv.set(v.x, y, v.z); _rm.compose(_rv, _rq, _rs); im.setMatrixAt(i, _rm); im.setColorAt(i, _pc.setHex(col)); return true; };
+    // (the endless drive: a vehicle outside the sun's shadow box, as the last shadow pass had it, in its mesh's twin without the shadow; the
+    // margin: half its length, its shadow and a frame's way)
+    const TW = Q.tw, FR = Q.far, sc = sun.shadow.camera, shOn = TW.size > 0 && renderer.shadowMap.enabled && sun.castShadow;
+    const sw = (im, v) => { if (!shOn) return im; _rdSh.set(v.x, v.y, v.z).applyMatrix4(sc.matrixWorldInverse); const m = v.len / 2 + 6;
+      return _rdSh.x > sc.left - m && _rdSh.x < sc.right + m && _rdSh.y > sc.bottom - m && _rdSh.y < sc.top + m ? im : TW.get(im); };
     for (const v of tf.veh) {
       if (v.off || v.hid) continue; const dx = v.x - cx, dz = v.z - cz, d2 = dx * dx + dz * dz; if (d2 > far) continue;
-      const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3;
-      const ok = K === 0 ? put(V.car[Math.floor(u * 7.3) % 3], v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(V.van, v, rdPick(RD_VAN, u)) : K === 2 ? (v.p === 5 ? put(V.truck, v, rdPick(RD_TRUCK, u)) : put(V.bus, v, rdPick(RD_BUS, u))) :
-        put(K === 3 ? V.moto : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
+      const K = v.kind, u = v.col, lay = v.st > 0 && K >= 3, fr = FR && d2 > RD_FAR * RD_FAR, ci = Math.floor(u * 7.3) % 3;   // (fr: far away, the endless drive's stand-in)
+      const ok = K === 0 ? put(fr ? FR.car[ci] : sw(V.car[ci], v), v, rdPick(RD_CAR, (u * 13.7) % 1)) : K === 1 ? put(fr ? FR.van : sw(V.van, v), v, rdPick(RD_VAN, u)) :
+        K === 2 ? (v.p === 5 ? put(fr ? FR.truck : sw(V.truck, v), v, rdPick(RD_TRUCK, u)) : put(fr ? FR.bus : sw(V.bus, v), v, rdPick(RD_BUS, u))) :
+        put(K === 3 ? (fr ? FR.moto : sw(V.moto, v)) : V.bike, v, rdPick(K === 3 ? RD_MOTO : RD_BIKE, u), lay ? 1.45 * (u > 0.5 ? 1 : -1) : v.lean, lay ? 0.05 : 0);
       if (!ok) continue; nv++;
       if (v.grp) cg.set(v.grp, (cg.get(v.grp) || 0) + 1); if (v.yl === 1) nyl++;
       // the lights: headlights and tail lights at dusk and at night (the brake lights always), the hazard lights of a wreck, the indicators
@@ -5862,6 +6676,7 @@ const Render = (function () {
         if (v.ind && v.st === 0) { nind++; if ((time + v.id * 0.137) % 0.7 < 0.38) { const sd = v.ind * v.dir, lw = K === 3 ? 0.14 : v.wid / 2 + 0.04; for (const e of [hl + 0.03, -hl - 0.03]) { const [x, z] = at(e, sd * lw); glows.add(x, hy + 0.06, z, 1.1, 1.0, 0.6, 0.0, 1.0); } } } }
     }
     for (const im of [...V.car, V.van, V.bus, V.truck, V.moto, V.bike]) { im.count = cnt.get(im) || 0; if (im.count) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; } }
+    for (const im of FR ? [...TW.values(), ...FR.car, FR.van, FR.bus, FR.truck, FR.moto] : TW.values()) { im.count = cnt.get(im) || 0; im.visible = im.count > 0; if (im.count) { im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; } }   // (the twins and the stand-ins: drawn only when used)
     // the people: the Core's (on foot; a rider thrown off), the riders on their bicycles and motorbikes, an officer by each parked patrol car
     const P = Q.P, NP = Q.NP; let np = 0, nd = 0, nl = 0, nb = 0, ndead = 0; const pg = new Map();
     const gy = (x, z, y) => world && world.groundH ? Math.max(y - 0.5, world.groundH(x, z)) : y;
@@ -6143,6 +6958,7 @@ const Render = (function () {
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
@@ -6161,17 +6977,22 @@ const Render = (function () {
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
       v.gq = { braking, rainL, wk, sk, x, y, z, nt, rl, gy };   // (carGlows: this frame's lamps, also for carCull's car back in view)
       if (vis) carGlows(v);
+      if (v.tlG) tlDraw(v, c, u, dt, braking, vis);   // (its semi-trailer on the kingpin, as the tractor is drawn)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
       if (v.blob && vis) {   // without shadow maps: a shadow of the car's shape, cast a little away from the sun (with them: the soft contact shadow only)
         const off = !settings.shadows; if (v.blobOff !== off) { v.blobOff = off; v.blob.material = off ? matBlobS : matBlob; }
         let bx = 0, bz = 0; if (off && atmos.tod !== 'night') { const f = 0.55 / Math.max(0.25, _sunN.y), sx = -_sunN.x * f, sz = -_sunN.z * f, l = Math.hypot(sx, sz), q = l > 1.3 ? 1.3 / l : 1; bx = (sx * e[0] + sz * e[2]) * q; bz = (sx * e[8] + sz * e[10]) * q; }
         v.blob.position.x = bx; v.blob.position.z = bz;
       }
-      // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; washed off only in the pits: repairStep)
+      // dirt builds up while driving on grass/gravel/makadam, faster in the rain (mud; washed off only in the pits: repairStep): low on the body,
+      // on its tail (thrown up by the wheels) and a film over the rest, in splashes; its colour by where it came from (dirtW: the share of mud,
+      // from the rain or a puddle, darker; the grass's halfway; gravel and makadam a light dust), so a car that has been off shows it from behind
       if (v.scrU) v.scrU.value = Core.sstep(0.3, 0.9, c.dmg || 0);   // (in the box: polished out with the bodywork, repairStep)
       if (v.dirtU && !(opt && opt.noFx) && !c.air && dt > 0) {
-        let loose = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) loose++; }   // (the cobbles, 7 and 8, are no dirt)
-        if (loose) v.dirtU.value = Math.min(1, v.dirtU.value + dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.012 * clamp(c.speed / 12, 0.2, 1.5));   // (rain: mud, two and a half times as fast)
+        let loose = 0, mud = 0; for (let k = 0; k < 4; k++) { const sf = c.ws[k]; if (sf === 2 || sf === 3 || sf === 5 || sf === 6) { loose++; mud += sf === 6 ? 1 : sf === 2 ? 0.55 : 0.15; } }   // (the cobbles, 7 and 8, are no dirt)
+        if (loose) { const da = Math.min(1 - v.dirtU.value, dt * loose * (1 + 1.5 * Math.max(0, wetW)) * 0.02 * clamp(c.speed / 12, 0.2, 1.5)), wt = wetW > 0.1 ? 1 : mud / loose;   // (rain: mud, two and a half times as fast)
+          if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
+          v.dirtU.value += Math.max(0, da); }
       }
       if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
@@ -6181,7 +7002,7 @@ const Render = (function () {
       // --- effects ---
       if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
@@ -6195,12 +7016,13 @@ const Render = (function () {
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
       if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
+    if (pitL) pitGlow(wk);   // (the pits' lamps at dusk and at night)
     glows.end();
-    if (wk && flood && flood.fp) {   // (at night the floodlights too: those round the view)
-      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0;
-      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, 0.38 * wk, 1.8, 12, k * 0.13); }
+    if (wk && flood && flood.fp && flood.refl > 0) {   // (at night the floodlights too: those round the view; a real track's evening fainter, none where only their pools are drawn: floodLook's refl)
+      const F = flood.fp, cx = cam.vcx || 0, cz = cam.vcz || 0, a = 0.38 * wk * flood.refl;
+      for (let k = 0; k < F.length; k += 3) { const dx = F[k] - cx, dz = F[k + 2] - cz; if (dx * dx + dz * dz < 160 * 160) streaks.add(F[k], F[k + 1], F[k + 2], 1.0, 0.8, 0.52, a, 1.8, 12, k * 0.13); }
     }
-    streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); }
+    streaks.end(); if (streaks.n) { const U = streaks.mat.uniforms; U.uT.value = time % 1000; U.uFog.value.set(scene.fog.near, scene.fog.far); U.uRip.value = wk > 0 ? 1 : 0; }   // (dry: only the pits' sheen, no ripples)
     skids.flush(); if (sandRuts) { sandRuts.tick(performance.now() / 1000); sandRuts.flush(); }
   }
 
@@ -6598,6 +7420,7 @@ const Render = (function () {
     const s = kitSolve3(rows); if (!s) return;   // (y = s0 + s1 x + s2 z)
     const pa = v.body.geometry.attributes.position.array, dv = K.deadV; let a = 1;   // (each point drops by about s0 + s1 x + s2 z: no lower than 1 cm over the road)
     for (let i = 0, nO = v.body.geometry.userData.outerN; i < nO; i++) { if (dv && dv[i]) continue; const d = s[0] + s[1] * pa[i * 3] + s[2] * pa[i * 3 + 2]; if (d < 0) a = Math.min(a, Math.max(0, pa[i * 3 + 1] - 0.01) / -d); }
+    if (K.E.W.xm != null) for (const z of [-hw, hw]) { const d = s[0] + s[1] * K.E.W.xm + s[2] * z; if (d < 0) a = Math.min(a, K.E.W.gap / -d); }   // (wheels.mid: down onto the middle wheels by their arch's clearance at most)
     if (!(a > 1e-3)) return; s[0] *= a; s[1] *= a; s[2] *= a;
     v.sagQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-s[1], 1, -s[2]).normalize()); v.sagP = new THREE.Vector3(0, s[0], 0);
   }
@@ -6727,6 +7550,7 @@ const Render = (function () {
      left it. Out of the box without it: built afresh from the core's state. What it makes: ownRnd (Math.random as ever) */
   const REPAIR_N = 16;
   function repairStep(v, c) {
+    if (!v.rep && c.pitPlan && c.pitPlan.fix === 'none') { if (c.pitState === 'repair' && Core.repairU(c) >= Core.REPAIR.wheel && v.wheelOff.some(Boolean)) kitRefit(v); return; }   // (the player's stop without repairs, game.js: the body stays as it is, a kit car's new wheels with the tyre men all the same)
     if (!v.rep) { if (c.pitState !== 'repair' || (c.repairN || 0) !== v.repairN || !v.parts || !(c.dmg > 0 || v.lampsOut || v.wheelOff.some(Boolean) || (v.dirtU && v.dirtU.value > 0.02) || (v.xtSc && v.xtSc.a[0] + v.xtSc.a[1] > 0.02))) return; v.rep = repairStart(v, c); }
     else if (c.pitState !== 'repair') { if ((c.repairN || 0) === v.repairN) v.repairN = -1; return; }   // (out of the box unrepaired: built afresh, frame)
     const RP = Core.REPAIR, u = Core.repairU(c), R = v.rep; R.ku = Core.sstep(RP.body[0], RP.body[1], u);
@@ -6735,7 +7559,7 @@ const Render = (function () {
     if (u >= RP.wheel && v.wheelOff.some(Boolean)) kitRefit(v);   // (every frame: with the crew's tyre men, crewLogic)
     const q = Math.floor(u * REPAIR_N); if (q === R.q) return; R.q = q; const s = q / REPAIR_N;
     if (!R.glass && s >= RP.glass) { R.glass = true; repGlass(v, R); }
-    const kb = Core.sstep(RP.body[0], RP.body[1], s); if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
+    const kb = Core.sstep(RP.body[0], RP.body[1], s) * R.kmax; if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
     while (R.pi < R.parts.length && s >= RP.parts[0] + (RP.parts[1] - RP.parts[0]) * (R.pi + 0.5) / R.parts.length) repPart(v, R, R.parts[R.pi++]);   // (evenly over the phase)
     if (!R.lamps && s >= RP.lamps) { R.lamps = true; repLamps(v); }
     if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v); }
@@ -6744,7 +7568,8 @@ const Render = (function () {
   // drawn), the vertices that differ (idx), the parts lost; nothing bent (dirt only): no copies
   function repairStart(v, c) {
     const K = v.kit, R = { q: -1, kb: 0, ku: 0, P: null, D: null, idx: null, T: null, L: v.lights.map(L => L.clone()), dec: v.dec ? [v.dec.position.clone(), v.dec.quaternion.clone()] : null,
-      parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0 };
+      parts: K ? Object.keys(K.dead) : Object.keys(v.parts).filter(n => !v.parts[n].visible), pi: 0, glass: false, lamps: false, trim: false, dirt0: v.dirtU ? v.dirtU.value : 0,
+      kmax: c.pitPlan && c.pitPlan.fix === 'need' ? Math.max(0, 1 - Core.NEED_DMG / Math.max(c.dmg, 1e-6)) : 1 };   // (kmax: the player's Nujno, the bodywork only down to Core.NEED_DMG: Race._mend)
     if (!(c.dmg > 0 || R.parts.length || v.roofStep > 0 || (v.xtSc && v.xtSc.dn[0] + v.xtSc.dn[1] > 0))) return R;   // (the Kolibri's graze dents: its bodywork back bit by bit too, xtScrape)
     // the body as new to repair towards: the crash mode's own (its denser body: xc.rest, as built at xInit), else the model's (its arrays kept:
     // nothing on the GPU); a layout that does not match (another density): the bodywork left as it is, the rebuild at the end puts it right
@@ -7700,7 +8525,7 @@ const Render = (function () {
   // the wheels go back (and toe out a little) with the metal crushed over them
   function xWheels(v, xc) {
     const o = [0, 0, 0, 0, 0];
-    for (const w of v.wf.concat(v.wr)) {
+    for (const w of v.wf.concat(v.wr, v.wm)) {
       const p0 = w.userData.xp0 || (w.userData.xp0 = w.position.clone()); let dx = 0, dz = 0;
       for (const K of xc.cl) if (xPush(K, xc, p0.x, p0.y + 0.28, p0.z, -1, o)) { dx += o[0]; dz += o[2]; }
       w.position.x = p0.x + clamp(dx * 0.85, -0.6, 0.6); w.position.z = p0.z + clamp(dz * 0.3, -0.12, 0.12);
@@ -7712,7 +8537,7 @@ const Render = (function () {
   let matXUnd = null;
   function xUnder(v, c) {
     const M = c.m, g = v.body.geometry, U = g.userData || {}, p = (v.xc && v.xc.rest) || g.attributes.position.array, dv = v.kit && v.kit.deadV, n = U.outerN || g.attributes.position.count;
-    const wq = (v.wf || []).concat(v.wr || []).map(w => w.position), rw0 = M.rw || 0.32, wF = wq.length ? Math.max(...wq.map(q => q.x)) - rw0 : M.len * 0.2, wR = wq.length ? Math.min(...wq.map(q => q.x)) + rw0 : -M.len * 0.2;
+    const wq = (v.wf || []).concat(v.wr || [], v.wm || []).map(w => w.position), rw0 = M.rw || 0.32, wF = wq.length ? Math.max(...wq.map(q => q.x)) - rw0 : M.len * 0.2, wR = wq.length ? Math.min(...wq.map(q => q.x)) + rw0 : -M.len * 0.2;
     let x0 = Infinity, x1 = -Infinity, yM = Infinity, yA = Infinity;
     for (let i = 0; i < n; i++) { if (dv && dv[i]) continue; const x = p[i * 3], y = p[i * 3 + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < yA) yA = y; if (x > wR && x < wF && y < yM) yM = y; }   // (its height: the body's lowest between the wheels, the sills; not a mud flap's or a bumper's)
     if (!Number.isFinite(yM)) yM = yA;
@@ -8652,7 +9477,7 @@ const Render = (function () {
     }
     const SH = [matUnder, matEngine, matLensBroken, matWheel], sw = (o) => { if (!o.isMesh || !o.material || SH.indexOf(o.material) < 0) return;
       let q = v.charSh.get(o.material); if (!q) { q = o.material.clone(); q.userData.col0 = q.color.clone(); v.charSh.set(o.material, q); L.push(q); } o.material = q; };
-    v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr)) q.traverse(sw);
+    v.bodyG.traverse(sw); for (const q of v.wf.concat(v.wr, v.wm)) q.traverse(sw);
     const k = clamp((7 * w - 0.5) / (0.8 * v.car.m.len), 0, 1) * 0.92;   // (as much as the body's soot (7 w m round the seat) would cover of the car)
     for (const m of L) m.color.copy(m.userData.col0).lerp(SOOT, k);
   }
@@ -8694,11 +9519,12 @@ const Render = (function () {
     const rainy = wetW > 0.1, near = !rainy || Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)) < 140;   // (rain: spray only where it can be seen, the particles are shared)
     const ls = c.lch && !c.lch.done && c.lch.t >= 0 ? (1 - c.lch.k) / Core.LAUNCH.depth : 0, lv = ls > 0.1 ? 0.8 : 2.5;   // the start: a late reaction's wheelspin (0..1, Core LAUNCH): rubber and smoke from the first metres
     const wheels = [[-M.b, -tw, 2], [-M.b, tw, 3], [M.a, -tw, 0], [M.a, tw, 1]], ruts = !!(curRace && curRace.timeTrial && c === curRace.player);
-    for (let k = 0; k < 4; k++) {
+    if (v.wm.length) wheels.push([v.kit.E.W.xm, -tw, 2], [v.kit.E.W.xm, tw, 3]);   // (wheels.mid: 4 and 5, the rear ones' surface and slide: their marks, no smoke of their own)
+    for (let k = 0; k < wheels.length; k++) {
       const [lx, lz, wi] = wheels[k];
       if (c.air) { v.sk[k] = null; v.acc[k] = 0; continue; }
       const surf = c.ws[wi];
-      const front = k >= 2;
+      const front = k === 2 || k === 3;
       const p = wheelWorld(c, lx, lz, x, z, h); const px = p.x, pz = p.z;
       let intens = front ? (c.lock ? 0.5 : 0) + Math.max(0, c.slipF - 0.3) * 1.4 : slide;
       if (spd < lv) intens = 0;
@@ -8732,7 +9558,7 @@ const Render = (function () {
         } else v.sk[k] = [px, pz, yb];
       } else v.sk[k] = null;
       // smoke / dust (rain: spray, mud)
-      if (front) continue;
+      if (front || k > 3) continue;
       if (rainy && onHard) {   // a wet road: a mist of spray off the rear tyres at speed, thicker in a slide (no tyre smoke)
         if (spd > 7 && near) {
           const fast = clamp((spd - 18) / 25, 0, 1);   // (at speed: a long, thicker tail of mist hanging behind the car, and the tyres throw water up)
@@ -8830,49 +9656,143 @@ const Render = (function () {
     if (flash) sparkP.emit(x, 0.6 + y0, z, 0, 0.5, 0, 0.16, 3.6, 4.6, 1, 0.82, 0.45, 0.9, 0, 0, y0);
   }
 
-  /* ---------------- the pit stop's film camera (the player's car on the autopilot in the pit lane, c.pitAP): from the chase view it rises
-     and flies over the boxes (high above the lane ahead of the car, looking back along the garages), comes down low in front of the car as it
-     nears its box, drifts round its front while the crew works and, out of the box, swings back behind it into the chase view, which it
-     has fully again by the hand-back (~1 s before the way out: game.js pitCtl). Always on the move a little (slow sways), every place
-     eased into (no cuts); blended over the chase view by w (0..1) ---------------- */
-  const pcam = { w: 0, t: 0, p: null, q: null, T: null, sx: null };
-  function pitCine(c, dt, px, py, pz, tx, ty, tz) {
-    const T = curRace && curRace.track, on = !!(c.pitAP && c.inPit && T && T.def.pit && curRace._boxD);
-    const bd = on ? curRace._boxD(c) : null, pz0 = on ? T.pitAt(c.q.s) : null;
-    if (!on || bd == null || !pz0) { pcam.w = Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.p = null; pcam.t = 0; return null; } }
-    const x = bd != null ? T.boxX(c.q.s, bd) : 99, i = c.q.i, sd = pz0 ? pz0.sd : 1;
-    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, y = c.y || 0;   // (along the lane, towards the garages)
-    pcam.t += dt;
-    // how much of the film view: up over ~1.4 s at the way in; out of the box down to nothing by the hand-back (the last ~45 m of the way out)
-    let want = on && bd != null ? 1 : 0;
-    if (want && c.pitDone && x > 0) {   // (the hand-back's place as game.js pitNear finds it: where the way out's middle comes over the pit wall's line, or the lane ends)
-      if (pcam.T !== T) { pcam.T = T; pcam.sx = null; const L = T.len, s0 = T.startS + bd, n = T.def.pit[2] - T.def.pit[1] + 10; for (let d = 0; d < n; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }   // (as far as the lane goes: Monterey's way out is 437 m past the player's box)
-      if (pcam.sx != null) { const hb = Math.max(12, c.speed * 1.3) + 2, dl = pcam.sx - x; want = Core.sstep(hb, hb + 45, dl); }
-    }
-    pcam.w = want > pcam.w ? Math.min(want, pcam.w + dt / 1.4) : Math.max(want, pcam.w - dt / 1.2);
-    // where it wants to be (P: the camera, Q: what it looks at): A the fly-over, B low in front of the car, C round the box, D beside the car on the way out
-    const sw = Math.sin(pcam.t * 0.55), sw2 = Math.sin(pcam.t * 0.31 + 1.3);   // (the slow sways)
-    const at = (b, f, g, h) => [b[0] + fx * f + gx * g, b[1] + h, b[2] + fz * f + gz * g];
-    const car = [c.x, y, c.z];
-    let P, Q;
-    if (c.pitDone && x > 0) { P = at(car, -2 + sw, -6.5, 1.8 + 0.3 * sw2); Q = at(car, 5, 1, 0.8); }
-    else if (c.pitState === 'stop' || c.pitState === 'repair' || c.pitState === 'done') {
-      const a = 0.55 + 0.35 * sw, r = 11 + sw2;   // (drifting round the car's front, on the lane's side)
-      P = at(car, Math.cos(a) * r, -Math.sin(a) * r * 0.85, 3.2 + 0.6 * sw2); Q = at(car, 0.3, 1.2, 0.7);
-    } else {
-      const k = Core.sstep(-50, -14, x);   // (0: the fly-over, 1: low in front of the car)
-      const A = at(car, 22 + 2 * sw, -2, 14 + sw2), AQ = at(car, -4, 3, 0);
-      const B = at(car, 11 + sw, -3.2, 1.5 + 0.2 * sw2), BQ = at(car, -1, 1.5, 0.8);
-      P = A.map((v, j) => v + (B[j] - v) * k); Q = AQ.map((v, j) => v + (BQ[j] - v) * k);
-    }
-    // eased into: the camera glides, never jumps (the first time from the chase view)
-    if (!pcam.p) { pcam.p = [px, py, pz]; pcam.q = [tx, ty, tz]; }
-    const e = 1 - Math.exp(-dt * 1.6), e2 = 1 - Math.exp(-dt * 3);
-    for (let j = 0; j < 3; j++) { pcam.p[j] += (P[j] - pcam.p[j]) * e; pcam.q[j] += (Q[j] - pcam.q[j]) * e2; }
-    if (world && world.groundH) { const gH = world.groundH(pcam.p[0], pcam.p[2]); if (Number.isFinite(gH) && pcam.p[1] < gH + 0.6) pcam.p[1] = gH + 0.6; }
-    const w = Core.sstep(0, 1, pcam.w), fov = camera.aspect < 1 ? 58 : 46;
-    return [px + (pcam.p[0] - px) * w, py + (pcam.p[1] - py) * w, pz + (pcam.p[2] - pz) * w, tx + (pcam.q[0] - tx) * w, ty + (pcam.q[1] - ty) * w, tz + (pcam.q[2] - tz) * w, fov + (50 - fov) * w];
+  /* ---------------- the pit stop's camera (the player's car on the autopilot in the pit lane, c.pitAP; in the replay the recording's pit
+     state, c.rpPit with its clock tNow, game.js rpPit). Its times from game.js: pitApT the takeover at the way in (the custom stop's panel
+     opens), pitCfT POTRDI, pitBoxT the car standing at its box. From the takeover the camera behind the car pulls back ever more slowly: the
+     same view scaled about the car (the car where it was on the screen, only smaller) to PC.pull more of the distance, critically damped
+     (τ PC.tau: half the way in ~1.9 s, 90 % in ~4.3 s; after 6 s on by PC.creep a second). On POTRDI (not confirmed: as the car brakes into
+     its box) it swings in PC.sw s (smootherstep) round the car on the pit wall's side, never past its side, down to the side view (2B):
+     PC.side m behind the car (in a narrow lane further, PC.dmin m from it), out towards the pit wall as far as its rail less PC.wall m
+     allows (at most PC.out m from the car), PC.hT m up,
+     looking sideways-forward at the car; over the last ~25 m (P2B) it looks between the car and its box, the crew waiting there in the
+     picture with the car (from further behind where the lens is too narrow for both: pcFit); as the car stops level with it again, PC.out m
+     out, PC.hB m up, and from the car braking into its box on a slow orbit round it, PC.orb a second from square to it towards behind it
+     (3A, one way). The user's rules over all of it: it never looks back against the car's way (its heading: the side view turned on round
+     the car as it heads out towards the pit wall, psi; the point it looks at carried on where it still would) and it never stands still.
+     Out of the box low beside the car, 2 m behind it, then it rises with the way out (smoothstep of the way to the hand-back's place, never
+     down) to the camera behind the car, where it is
+     exactly at the hand-back (VOZIŠ TI!: game.js pitNear). Out of the box always in the lane, PC.wall m or more from the pit wall's rail
+     (2B; in the swing too while it is low). Over the replay's TV cameras the same camera has the view in the whole lane, from the way in
+     (a view behind the car of its own, pulled back, to start with: the TV post ahead of the car would look back at it, rule 1) to the
+     hand-back, where the TV cameras are cut in again. w (Render.pitCam): how much of the side view (0: behind the car, pulled back or
+     not; 1: the side view); a stop broken off (the race over, a rescue) fades back in 0.6 s ---------------- */
+  const pcam = { w: 0, kM: 0, last: null, T: null, bd: null, sx: null, snap: false, dbg: null };
+  const PC = { pull: 0.75, tau: 1.1, creep: 0.003, sw: 2, side: 2, dmin: 8, wall: 1.2, out: [9.6, 8], outX: [6.5, 6], hT: [2.8, 2.2], hB: [3, 2.2], q: [0.9, 0.7], qa: [0, 4], back: 2, jack: 2.2, orb: Math.PI / 180, psi0: 2 * Math.PI / 180, look: [-36, -25], fitM: 0.055, keep: Math.tan(2 * Math.PI / 180) }, PC_TAN = Math.tan(25 * Math.PI / 180);
+  const smoother = (u) => u <= 0 ? 0 : u >= 1 ? 1 : u * u * u * (u * (u * 6 - 15) + 10);
+  const _la = [0, 0, 0, 0], _lb = [0, 0, 0, 0];
+  function laneAt(T, s, sd, o) {   // the lane's frame at s (between the track's samples): [x, z, the pit side's normal x, z]
+    const L = T.len, f = (((s % L) + L) % L) / T.ds, i = Math.floor(f) % T.N, j = (i + 1) % T.N, u = f - Math.floor(f);
+    o[0] = lerp(T.px[i], T.px[j], u); o[1] = lerp(T.pz[i], T.pz[j], u); o[2] = lerp(T.nx[i], T.nx[j], u) * sd; o[3] = lerp(T.nz[i], T.nz[j], u) * sd; return o;
   }
+  function pcLim(T, s, i, sd) { const p = T.pitAt(s); return (p ? Math.max(p.wall, p.inner) : (sd > 0 ? T.br[i] : T.bl[i]) + 0.25) + PC.wall; }   // (the camera's least offset at s: the pit wall's rail and PC.wall m)
+  function pitOn(c) { const ps = c.rpPit || c; return !!(ps.pitAP && ps.inPit); }
+  // P2B: the points the camera keeps in the picture over the last ~25 m before the box (and at it), in the lane's frame at the car (m along
+  // it, m in from the car towards the garages): the car's corners, and its crew's places round its box d m ahead and B m further in (the
+  // jacks' men PC.jack m past the nose and the tail, the wheel men by the hubs). pcFit: the least distance behind the car (m, at most 30)
+  // from which they take up no more across than the lens (lens(the distance to the car)) less mg either side, G m out
+  const _pf = new Float64Array(20);
+  function pcPts(Dm, d, B) {
+    const P = _pf, tl = Dm ? -Dm.tail : 2.3, nl = Dm ? Dm.nose : 2.3, w = Dm ? Dm.wid / 2 : 0.95, hf = Dm ? Dm.fx : 1.4, hr = Dm ? Dm.rx : -1.4, hw = (Dm ? Dm.hw : 0.8) + 0.9;
+    P.set([-tl, -w, -tl, w, nl, -w, nl, w, d - tl - PC.jack, B, d + nl + PC.jack, B, d + hf, B - hw, d + hr, B - hw, d + hf, B + hw, d + hr, B + hw]); return P;
+  }
+  function pcFit(G, P, lens, mg) {
+    const ok = (a) => { let lo = 9, hi = -9; for (let j = 0; j < 20; j += 2) { const t = Math.atan2(G + P[j + 1], a + P[j]); if (t < lo) lo = t; if (t > hi) hi = t; }
+      return hi - lo <= 2 * (Math.atan(Math.tan(lens(Math.hypot(a, G)) * Math.PI / 360) * camera.aspect) - mg) + 1e-4; };
+    if (ok(0)) return 0; let lo = 0, hi = 30; if (!ok(hi)) return hi;
+    for (let n = 0; n < 16; n++) { const m = (lo + hi) / 2; if (ok(m)) hi = m; else lo = m; }
+    return hi;
+  }
+  function pitCine(c, dt, px, py, pz, tx, ty, tz, fov0, tv, cx, cz, by) {
+    const ps = c.rpPit || c, T = curRace && curRace.track, D = T && T.def.pit, snap = pcam.snap; pcam.snap = false;
+    const bd = ps.pitAP && ps.inPit && D && curRace._boxD && c.q ? curRace._boxD(c) : null;
+    if (bd == null) {   // (none: gone at once over a TV camera, after a jump; else back to the view behind the car in 0.6 s from where it was)
+      pcam.kM = 0; pcam.dbg = null;
+      const L = pcam.last; pcam.w = snap || tv || !L ? 0 : Math.max(0, pcam.w - dt / 0.6); if (pcam.w <= 0) { pcam.last = null; return null; }
+      const w = sstep(0, 1, pcam.w), y = c.y || 0;
+      return [px + (c.x + L[0] - px) * w, py + (y + L[1] - py) * w, pz + (c.z + L[2] - pz) * w, tx + (c.x + L[3] - tx) * w, ty + (y + L[4] - ty) * w, tz + (c.z + L[5] - tz) * w, fov0 + (L[6] - fov0) * w, w, near0(w)];
+    }
+    const now = ps.tNow != null ? ps.tNow : curRace.time, x = T.boxX(c.q.s, bd), sd = D[0] < 0 ? -1 : 1, i = c.q.i, portrait = camera.aspect < 1, o = portrait ? 0 : 1, y = c.y || 0;
+    const fx = T.tx[i], fz = T.tz[i], gx = T.nx[i] * sd, gz = T.nz[i] * sd, off = c.q.d * sd, out = !!ps.pitDone && x > 0;   // (along the lane; towards the garages; the car's offset on the pit side)
+    // the exit: the way to the hand-back's place (game.js pitNear: a run of max(12 m, 1.3 s) ahead of the car past the lane's end, or where the
+    // way out's middle is over the pit wall's line), smoothstep, never back
+    let k = 0;
+    if (out) {
+      if (pcam.T !== T || pcam.bd !== bd) { pcam.T = T; pcam.bd = bd; pcam.sx = null; const s0 = T.startS + bd, n = Math.max(600, T.def.pit[2] - T.def.pit[1] + 10); for (let d = 0; d < n; d++) { const p = T.pitAt(s0 + d); if (!p || (p.gap && p.o <= p.wall + 1)) { pcam.sx = d; break; } } }   // (as far as the lane goes: Monterey's way out is 437 m past the player's box)
+      const u = clamp(x / Math.max(1, (pcam.sx != null ? pcam.sx : 200) - Math.max(12, c.speed * 1.3)), 0, 1); k = u * u * (3 - 2 * u);
+      if (!snap) k = Math.max(k, pcam.kM);
+    }
+    pcam.kM = k;
+    // the side view (low beside the car): the way to the box, at the box, the way out. Never ahead of the car's side (rule 1, the user): φ,
+    // its angle round the car behind the car's side, from where it sits behind the car (a m behind, outD m out), the orbit at the box (po:
+    // PC.orb a second from the car braking into its box, on through the stop and out of it: never still, rule 2) and the car's own turn out
+    // towards the pit wall (psi, its heading against the lane): always behind the side of the car's way, looking sideways-forward
+    const tS = ps.pitCfT != null ? ps.pitCfT : ps.pitBoxT != null ? ps.pitBoxT : null, side = tS != null || ps.pitState === 'repair' || !!ps.pitDone;
+    const ts = tS != null ? Math.max(0, now - tS) : 0, po = ps.pitBoxT != null ? PC.orb * Math.max(0, now - ps.pitBoxT) : 0;
+    const lc = laneAt(T, c.q.s, sd, _lb), ln = Math.hypot(lc[2], lc[3]) || 1, lnx = lc[2] / ln, lnz = lc[3] / ln, lts = lnz * fx - lnx * fz < 0 ? -1 : 1;   // (the lane's frame at the car, between the track's samples: towards the garages, and along: a tight bend's samples a few degrees apart)
+    const hx = Math.cos(c.h || 0), hz = Math.sin(c.h || 0), psi = Math.max(0, Math.atan2(-(hx * lnx + hz * lnz), (hx * lnz - hz * lnx) * lts) - PC.psi0);   // (psi: its turn out past PC.psi0, a lane's own small swerves left out)
+    let a, outD, h, qa, lb, beta;   // (lb: how much of the box's lens; beta: how far the look turns from the car to the middle of the car and its box, P2B)
+    if (out) { const e = sstep(0, 12, x); lb = 1 - sstep(0, 30, x); a = PC.back * e; outD = lerp(PC.out[o], PC.outX[o], sstep(0, 22, x)); h = PC.hB[o]; qa = PC.qa[o] * e; beta = 1 - sstep(0, 6, x); }   // (on its side it looks a little ahead of the car; upright at it, the box's wider lens a while longer: the whole car in the picture)
+    else { const b = ps.pitState === 'repair' || ps.pitDone ? 1 : sstep(-28, -1, x); lb = b; a = 1 - b; outD = PC.out[o]; h = lerp(PC.hT[o], PC.hB[o], b); qa = 0; beta = sstep(PC.look[0], PC.look[1], x); }   // (a: for now how much of the side view's place behind the car)
+    // its lens: 50°, upright as wide as that across (at most 80° high); at the box upright wide enough across for the car and the crew round it
+    // (the jacks' men PC.jack m past its nose and tail) from where it is (at most 90° high)
+    const fF = clamp(2 * Math.atan(PC_TAN / Math.min(1, camera.aspect)) * 180 / Math.PI, 50, 80), Dm = crew && crew.P === c && crew.dim, half = (Dm ? Math.max(Dm.nose, -Dm.tail) : 2.3) + PC.jack;
+    const lens = (dC) => fF + ((camera.aspect < 1 ? clamp(2 * Math.atan(half / Math.max(1, dC) / camera.aspect) * 180 / Math.PI, fF, 90) : fF) - fF) * lb;
+    // P2B: over the last ~25 m the car and its box (the crew waiting round it) both in the picture: from further behind the car where the lens
+    // is too narrow for both from its side (pcFit), looking at the middle of them
+    // (the box's place: fixed until the car stands in it, then with the car as it stood there, pcam.sr, which leaves it: so the look turns with the car)
+    const bp = pcam.bpT === T && pcam.bpD === bd ? pcam.bp : (pcam.bpT = T, pcam.bpD = bd, pcam.sr = null, pcam.bp = T.bayPose(bd));
+    let d = Math.max(0, -x), B = bp ? bp.o - off : 0; if (ps.pitState === 'repair') pcam.sr = [d, B]; else if (ps.pitDone && pcam.sr) { d = pcam.sr[0]; B = pcam.sr[1]; } else if (!ps.pitDone) pcam.sr = null;
+    const lat = (sq) => Math.max(1, Math.min(outD, off - pcLim(T, sq, T.idx(sq), sd)));   // (how far out it may go at sq: outD, or the pit wall's rail less PC.wall)
+    let G0 = lat(c.q.s - (out ? a : PC.side));
+    if (!out) { let ab = PC.side; for (let n = 0; n < 3; n++) { ab = Math.max(PC.side, Math.sqrt(Math.max(0, PC.dmin * PC.dmin - G0 * G0))); G0 = lat(c.q.s - ab); } a *= ab; }   // (the side view PC.side m behind the car, further where the lane is narrow: PC.dmin m from it, the whole car in the picture; the rail where that is)
+    const pts = beta > 0 && bp ? pcPts(Dm, d, B) : null;
+    if (pts) { a = Math.max(a, beta * (1 - sstep(-4, -0.5, x)) * pcFit(G0, pts, lens, PC.fitM * (1 - sstep(-6, -0.5, x)))); G0 = lat(c.q.s - a); }   // (square to the car again as it stops: the box's lens is the crew's, no room to spare)
+    let phi = Math.atan2(a, G0) + po + psi, rr = Math.hypot(a, G0); G0 = lat(c.q.s - rr * Math.sin(phi)); phi = Math.atan2(a, G0) + po + psi; rr = Math.hypot(a, G0);   // (the rail where the camera is)
+    const along = -rr * Math.sin(phi), sC = c.q.s + along, la = laneAt(T, sC, sd, _la), lim = pcLim(T, sC, T.idx(sC), sd), oC = Math.max(lim, off - rr * Math.cos(phi));
+    const ox = cx - (lc[0] + lc[2] * off), oz = cz - (lc[1] + lc[3] * off);   // (the car off its lane point: its own place, drawn)
+    let Lp = [la[0] + la[2] * oC + ox, y + h, la[1] + la[3] * oC + oz], Lq;
+    { const lq = laneAt(T, c.q.s + qa, sd, _la); Lq = [lq[0] + lq[2] * off + ox, y + PC.q[o], lq[1] + lq[3] * off + oz]; }
+    if (pts) {   // (the look turned towards the middle of the angles those points take from here: the car's corners by its heading, the crew's places round the box's middle along the lane there)
+      let lo = 9, hi = -9; const bm = laneAt(T, c.q.s + d, sd, _lb), ib = T.idx(c.q.s + d), btx = T.tx[ib], btz = T.tz[ib], bX = bm[0] + bm[2] * (off + B) + ox, bZ = bm[1] + bm[3] * (off + B) + oz;
+      for (let j = 0; j < 20; j += 2) { let X, Z; if (j < 8) { X = cx + hx * pts[j] - hz * pts[j + 1]; Z = cz + hz * pts[j] + hx * pts[j + 1]; } else { const u = pts[j] - d, v = pts[j + 1] - B; X = bX + btx * u + bm[2] * v; Z = bZ + btz * u + bm[3] * v; }
+        const ux = X - Lp[0], uz = Z - Lp[2], A = Math.atan2(ux * gx + uz * gz, ux * fx + uz * fz); if (A < lo) lo = A; if (A > hi) hi = A; }
+      const q0 = Math.atan2((Lq[0] - Lp[0]) * gx + (Lq[2] - Lp[2]) * gz, (Lq[0] - Lp[0]) * fx + (Lq[2] - Lp[2]) * fz), th = q0 + ((lo + hi) / 2 - q0) * beta, dq = Math.hypot(Lq[0] - Lp[0], Lq[2] - Lp[2]);
+      Lq = [Lp[0] + (fx * Math.cos(th) + gx * Math.sin(th)) * dq, Lq[1], Lp[2] + (fz * Math.cos(th) + gz * Math.sin(th)) * dq];
+    }
+    const fL = lens(Math.hypot(Lp[0] - cx, Lp[2] - cz));
+    // the side view and the way out: low beside the car up to the view behind it (k)
+    const S = [Lp[0] + (px - Lp[0]) * k, Lp[1] + (py - Lp[1]) * k, Lp[2] + (pz - Lp[2]) * k, Lq[0] + (tx - Lq[0]) * k, Lq[1] + (ty - Lq[1]) * k, Lq[2] + (tz - Lq[2]) * k, fL + (fov0 - fL) * k];
+    let R, w, f = 1, s = 1;
+    {   // (the same over the replay's TV cameras: from the way in to the hand-back the pit stop's own camera has the view, from behind the car as it comes in, never a TV post, which would look back at the car from ahead of it, rule 1; the TV cameras again from the hand-back)
+      // pulled back: the view behind the car scaled about the car on the ground (Kx, by, Kz) by f; less of it on the way out
+      const tp = ps.pitApT != null ? Math.max(0, now - ps.pitApT) : 99, u = tp / PC.tau, cr = ps.pitApT == null || tp < 6 ? 0 : tp < 8 ? (tp - 6) * (tp - 6) / 4 : tp - 7;   // (cr: after 6 s on, ever so slowly, never still: the car held up in the lane, rule 2)
+      f = 1 + (PC.pull * (1 - (1 + u) * Math.exp(-u)) + PC.creep * cr) * (1 - k);
+      const B = [cx + (px - cx) * f, by + (py - by) * f, cz + (pz - cz) * f, cx + (tx - cx) * f, by + (ty - by) * f, cz + (tz - cz) * f, fov0];
+      s = side ? (tS != null ? smoother(ts / PC.sw) : 1) : 0;
+      if (s <= 0) R = B; else if (s >= 1) R = S;
+      else {   // the swing: round the car on the pit wall's side (the angle from ahead towards the wall, the distance and the height about the car, each eased)
+        const wx = -gx, wz = -gz, rel = (P) => { const dx = P[0] - cx, dz = P[2] - cz, a = dx * fx + dz * fz, b = dx * wx + dz * wz; return [Math.atan2(b, a), Math.hypot(a, b), P[1] - y]; };
+        const A = rel(B), Z = rel(S); if (A[0] < 0) A[0] += 2 * Math.PI; if (Z[0] < 0 && A[0] > Math.PI + 1) Z[0] += 2 * Math.PI;
+        const th = lerp(A[0], Z[0], s), r = lerp(A[1], Z[1], s), hh = lerp(A[2], Z[2], s);
+        let a = Math.cos(th) * r, b = Math.sin(th) * r;
+        const room = (off - pcLim(T, c.q.s + a, T.idx(c.q.s + a), sd)) + Math.max(0, hh - 4) * 2; if (b > room) b = room;   // (low: never beyond the pit wall's rail; high up over it)
+        R = [cx + fx * a + wx * b, y + hh, cz + fz * a + wz * b, lerp(B[3], S[3], s), lerp(B[4], S[4], s), lerp(B[5], S[5], s), lerp(B[6], S[6], s)];
+      }
+      w = s * (1 - k);
+    }
+    if (s >= 1) {   // 2B: low beside the car (the side view, at the box, on the way out) never over the pit wall nor through it (the lane's frame at the camera)
+      const q = T.query(R[0], R[2], i, {}), p = T.pitAt(q.s);
+      if (p && !p.gap) { const lim = Math.max(p.wall, p.inner) + PC.wall, d = q.d * sd; if (d < lim) { const n = laneAt(T, q.s, sd, _la); R[0] += n[2] * (lim - d); R[2] += n[3] * (lim - d); } }
+    }
+    if (world && world.groundH) { const gH = world.groundH(R[0], R[2]); if (Number.isFinite(gH) && R[1] < gH + 0.6) R[1] = gH + 0.6; }
+    // rule 1: never looking back against the car's way (its heading), in no phase: where it would (less than 2° forward of square to it, a
+    // tight turn into or out of the lane) the point it looks at is carried on along the heading as far as that needs (the camera stays put)
+    { const vx = R[3] - R[0], vz = R[5] - R[2], gp = PC.keep * Math.abs(vx * hz - vz * hx) - (vx * hx + vz * hz); if (gp > 0) { R[3] += hx * gp; R[5] += hz * gp; } }
+    pcam.w = w; pcam.last = [R[0] - c.x, R[1] - y, R[2] - c.z, R[3] - c.x, R[4] - y, R[5] - c.z, R[6]];
+    pcam.dbg = { f, s, k, w, side, base: [px, py, pz, tx, ty, tz], car: [cx, by, cz], low: { along: +(sC - c.q.s).toFixed(3), off: oC - off, lim: lim - off, outD, a, phi, po, psi, beta } };   // (low: the side view's place against the car: along the lane, its offset and the rail's limit from the car's, how far out it may go; a, phi: behind the car, its angle behind the car's side; po: the orbit's part; psi: the car's turn out; beta: the look towards the box)
+    return [R[0], R[1], R[2], R[3], R[4], R[5], R[6], w, near0(w)];
+  }
+  function near0(w) { return 4 + (0.5 - 4) * clamp(w, 0, 1); }   // (the near plane: the camera behind the car's 4 m, the side view's 0.5 m)
   /* ---------------- the camera before the start (game.js startCamPick: a race from the grid with the lights, not online): one of six flights
      while the field waits, picked at random, each with its own look of the HUD's start lights (style.css #h-lights.sc1..sc6, so a tester
      knows which): 1 the drone back from the gantry over the field, 2 the drone jumping round the car at every light, 3 the helicopter circling
@@ -8957,11 +9877,45 @@ const Render = (function () {
     return { P: [B[0] + d[0], y, B[2] + d[2]], Q: p.Q, fov: p.fov, r: p.r };
   }
   /* ---------------- camera ---------------- */
-  function updateCamera(dt, target, mode, alpha) {
+  // the camera behind the car: its heading and zoom eased each frame (chaseStep), its pose from them (chasePose: [px, py, pz, tx, ty, tz, fov];
+  // also the pit stop's camera's view behind the car over the replay's TV cameras, pitCine)
+  function chaseStep(c, dt, h, spd, pitZ, k2, x, z) {
+    // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
+    // travel, so a sliding car shows its angle)
+    // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
+    // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
+    // shows; the user's choice; the classic one as before)
+    const nv = c.phys === 'nova', LK = cam.look;
+    let hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
+    if (LK && LK.k > 0) hv += wrapPi(Math.atan2(LK.z - z, LK.x - x) - hv) * LK.k;   // (a special mission's target, cam.look { x, z, k }: the view behind the car turned toward it by k, js/missions/kit.js look)
+    const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
+    cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
+    cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
+  }
+  function chasePose(c, x, z, baseY) {
+    // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
+    const portrait = camera.aspect < 1;
+    const LK = cam.look, D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+    const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
+    let back = cam.userBack || 0;
+    const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
+    if (back > 0 || tlB > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
+      // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
+      // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before.
+      // A semi-trailer's tail (16 m of rig) past the foot (on its side, slow, Blizu): the view back by as much, the whole rig on the screen
+      const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4 + tlB;
+      const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
+      if (tlB > 0 && room < 0) back = room; else if (room < 20) back *= Math.max(0, room) / 20;
+    }
+    const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
+    const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs), tx = x + fx * ahead, tz = z + fz * ahead;
+    return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, fov];
+  }
+  function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
-    const spd = c.speed, pitZ = crew && c === crew.P && (crew.mode === 'work' || (crew.mode === 'out' && c.pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it
+    const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
@@ -8976,9 +9930,10 @@ const Render = (function () {
     } else if (mode === 'tv' && curTrack.def.theme === 'pikes' && world && world.groundH && curTrack.hy) {
       // Pikes Peak's own TV cameras (pkTv): the helicopter over the open road, fixed cameras at the famous places, the summit's view
       const o = pkTv(c, dt, x, z); px = o.px; py = o.py; pz = o.pz; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      const tlH = tvRig(c, alpha); tx += tlH.dx; tz += tlH.dz;   // (a semi-trailer: the rig's middle, all of it in the picture)
       if (cam.tvK !== o.key) { cam.tvK = o.key; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;
-      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(o.half / Math.max(1, d)) * 180 / Math.PI, 3, 55);
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan((o.half + tlH.half) / Math.max(1, d)) * 180 / Math.PI, 3, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else if (mode === 'tv') {
@@ -8987,49 +9942,28 @@ const Render = (function () {
       const C = tvCams(curTrack), s = c.q && Number.isFinite(c.q.s) ? c.q.s : 0, L = curTrack.len, n = C.length;
       let k = Math.floor(s / 170) % n; if (curTrack.open) k = Core.clamp(k, 0, n - 1);
       const P = tvPost(curTrack, k); px = P.x; py = P.y; pz = P.z; tx = x; ty = (c.y || 0) + 0.7; tz = z;
+      const tlH = tvRig(c, alpha); tx += tlH.dx; tz += tlH.dz;   // (a semi-trailer: the rig's middle, all of it in the picture)
       if (cam.tvK !== k) { cam.tvK = k; cam.tx = tx; cam.tz = tz; }
       cam.tx += (tx - cam.tx) * (1 - Math.exp(-dt * 9)); cam.tz += (tz - cam.tz) * (1 - Math.exp(-dt * 9)); tx = cam.tx; tz = cam.tz;   // (a camera operator's smooth pan)
-      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan(6.5 / Math.max(1, d)) * 180 / Math.PI, 4, 55);
+      const d = Math.hypot(px - tx, py - ty, pz - tz), fov = Core.clamp(2 * Math.atan((6.5 + tlH.half) / Math.max(1, d)) * 180 / Math.PI, 4, 55);
       if (Math.abs(camera.fov - fov) > 0.05) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
       cam.gy = (c.y || 0);
     } else {   // behind the car (the one camera of a race; any other mode asked for, e.g. by a tool, is this one)
-      // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
-      // travel, so a sliding car shows its angle)
-      // (the new physics, Car.stepNova: the car slides into a quick corner itself, NVK.attT, and the view follows the travel closely, 0.08 s
-      // behind: the car ~22 deg against the view above 50 deg/s of its turn, three quarters of it the car's own slide, as the reference video
-      // shows; the user's choice; the classic one as before)
-      const nv = c.phys === 'nova', LK = cam.look;
-      let hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
-      if (LK && LK.k > 0) hv += wrapPi(Math.atan2(LK.z - z, LK.x - x) - hv) * LK.k;   // (a special mission's target, cam.look { x, z, k }: the view behind the car turned toward it by k, js/missions/kit.js look)
-      const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
-      cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
-      cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
-      // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
-      const portrait = camera.aspect < 1;
-      const D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
-      const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
-      let back = cam.userBack || 0;
-      if (back > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
-        // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
-        // the screen's foot (about 12 px on its side); the setting is scaled into it when it is under 20 m: 20 m = all of it, Običajno as before
-        const lo = pitch + Math.atan(0.94 * Math.tan(fov * Math.PI / 360)), tail = (c.m && c.m.len ? c.m.len / 2 : 2.2) + 0.4;
-        const room = D * Math.cos(pitch) - D * Math.sin(pitch) / Math.tan(lo) - tail - a0;
-        if (room < 20) back *= Math.max(0, room) / 20;
-      }
-      const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
-      const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs);
-      tx = x + fx * ahead; tz = z + fz * ahead; ty = baseY;
-      px = tx - fx * D * Math.cos(pitch); pz = tz - fz * D * Math.cos(pitch); py = baseY + D * Math.sin(pitch);
-      if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); updatePointScale(); }
+      chaseStep(c, dt, h, spd, pitZ, k2, x, z);
+      const o = chasePose(c, x, z, baseY); px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5];
+      if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); }
     }
-    if (!shot && mode !== 'tv') { const o = pitCine(c, dt, px, py, pz, tx, ty, tz); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; near = 0.5; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }
+    let pw = 0;   // (the pit stop's side view: how much of it; its haze as far off as a 30 m view's, the garages behind the car clear; its own floor)
+    if (!shot && mode === 'tv' && c.rpPit && pitOn(c)) { if (!cam.pitTv) { cam.pitTv = true; cam.hs = h; cam.zoom = 1; } chaseStep(c, dt, h, spd, 1, k2, x, z); }   // (over a TV camera the pit stop's camera has the view from the way in: a view behind the car of its own, kept up as behind the car, from the car's heading as it comes in)
+    else cam.pitTv = false;
+    if (!shot && (mode !== 'tv' || c.rpPit)) { const vc = mode === 'tv' ? chasePose(c, x, z, baseY) : null, o = vc ? pitCine(c, cdt != null ? cdt : dt, vc[0], vc[1], vc[2], vc[3], vc[4], vc[5], vc[6], true, x, z, baseY) : pitCine(c, cdt != null ? cdt : dt, px, py, pz, tx, ty, tz, camera.fov, false, x, z, baseY); if (o) { px = o[0]; py = o[1]; pz = o[2]; tx = o[3]; ty = o[4]; tz = o[5]; pw = o[7]; near = o[8]; if (camera.fov !== o[6]) { camera.fov = o[6]; camera.updateProjectionMatrix(); updatePointScale(); } } }   // (the replay's stop: over its TV cameras too)
     let roll = 0, fogCap = Infinity, vd = 0;
     if (!shot && mode !== 'tv' && sc.v) { const o = startCine(c, px, py, pz, tx, ty, tz, camera.fov); if (o) { vd = Math.hypot(px - tx, py - ty, pz - tz); [px, py, pz] = o.P; [tx, ty, tz] = o.Q; roll = o.r * Math.PI / 180; fogCap = SC_FOG; if (Math.abs(camera.fov - o.fov) > 0.05) { camera.fov = o.fov; camera.updateProjectionMatrix(); updatePointScale(); } } }   // the camera before the start
-    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
+    if (world && world.camFloor && !shot) { const gf = world.camFloor(px, pz) + 4 - 3.4 * pw; if (py < gf) py = gf; }   // mountain worlds: never under the slope behind the car
     if (cam.shake > 0) { px += (Math.random() - 0.5) * cam.shake; py += (Math.random() - 0.5) * cam.shake; pz += (Math.random() - 0.5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
     if (camera.near !== near) { camera.near = near; camera.updateProjectionMatrix(); }
     camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); if (roll) camera.rotateZ(roll); cam.vcx = tx; cam.vcz = tz; cam.vd = vd || Math.hypot(px - tx, py - ty, pz - tz);   // (the camera before the start: the chase view's own reach, vd, for what is drawn in detail: the props round the view, the rivals near the camera)
-    { const dC = (shot ? shot.fogD : Math.min(fogCap, Math.hypot(px - tx, py - ty, pz - tz))) * (shot ? 1 : (THEMES[themeId] || {}).fogK || 1), r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; theme.fogK: a clear day's longer view; fogCap: the camera before the start)
+    { let dC = shot ? shot.fogD : Math.min(fogCap, Math.hypot(px - tx, py - ty, pz - tz)); if (!shot && pw > 0 && dC < 30) dC += (30 - dC) * pw; dC *= shot ? 1 : (THEMES[themeId] || {}).fogK || 1; const r = Math.max(0, wet); scene.fog.near = dC * (1.35 - 0.4 * r); scene.fog.far = dC * (5.5 - 1.6 * r); }   // (rain: a closer haze; theme.fogK: a clear day's longer view; fogCap: the camera before the start; pw: the pit stop's side view, a 30 m view's haze)
     if (world && (world.farClip || fogCap < Infinity)) { const f = Math.min(700, scene.fog.far + 40); if (Math.abs(camera.far - f) > 6) { camera.far = f; camera.updateProjectionMatrix(); } }   // long corridor worlds (and the camera before the start, on every world): nothing past the fog is drawn
     else if (world && camera.far !== 700 && !shot) { camera.far = 700; camera.updateProjectionMatrix(); }   // (the flight over: the world's own far plane again)
     // sun/shadow follows view center
@@ -9085,7 +10019,8 @@ const Render = (function () {
   }
   // a post has to see the road where the car comes to it from (trees, stands and buildings, a bank in the way): the first time it films, the
   // place above is checked with rays into the world, else the other side of the track, nearer the barrier, higher up; the first that sees
-  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above)
+  // the road 100 m and 45 m before it and 30 m past it is kept (none: the place above). budget (ms): a few rays a frame, null until it is
+  // done (the big screen's live picture, js/world-zaslon.js); none: all at once (the replay)
   let _tvRc = null;
   function tvSees(x, y, z, tx, ty, tz) {
     if (!world || !world.root) return true;
@@ -9095,16 +10030,28 @@ const Render = (function () {
     for (const h of R.rc.intersectObject(world.root, true)) { const m = h.object.material; if (!m || m.transparent || m.alphaTest > 0 || !h.object.visible) continue; return false; }   // (fences and other see-through meshes: seen through)
     return true;
   }
-  function tvPost(T, k) {
-    const P = tvCams(T)[k]; if (P.ok) return P; P.ok = true;
+  // a semi-trailer (Core c.tl) in a TV camera's picture: the point looked at moved from the tractor's middle toward the trailer's (dx, dz:
+  // about the rig's middle), the picture's half wider by half its tail's reach past the tractor's (half, m); no trailer: nothing
+  const _tvRig = { dx: 0, dz: 0, half: 0 };
+  function tvRig(c, u) {
+    const T = c.tl, R = _tvRig; R.dx = R.dz = R.half = 0; if (!T) return R;
+    R.dx = (lerp(T.px, T.x, u) - lerp(c.px, c.x, u)) * 0.7; R.dz = (lerp(T.pz, T.z, u) - lerp(c.pz, c.z, u)) * 0.7; R.half = T.back * 0.5;
+    return R;
+  }
+  const TV_TRY = [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]];   // [the side (1: the post's own), metres beyond the barrier, up]
+  function tvPost(T, k, budget) {
+    const P = tvCams(T)[k]; if (P.ok) return P;
+    const q = P.q || (P.q = { c: 0, r: 0 }), t0 = budget ? performance.now() : 0;   // (the place and the ray being checked)
     const gy = (i) => (T.hasElev && T.hy ? T.hy[i] : 0), road = [-100, -45, 30].map(d => { const j = T.idx(P.s + d); return [T.px[j], gy(j) + 0.8, T.pz[j]]; });
     const at = (side, ex, up) => { const i = P.i, bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w)) : T.w, off = side * (Math.max(T.w, bar) + ex), x = T.px[i] + T.nx[i] * off, z = T.pz[i] + T.nz[i] * off;
       let y = gy(i) + up; if (world && world.groundH) { const g = world.groundH(x, z); if (Number.isFinite(g)) y = Math.max(y, g + up - 4); } return { x, y, z }; };
-    for (const [sd, ex, up] of [[1, 14, 9], [1, 5, 9], [-1, 14, 9], [-1, 5, 9], [1, 5, 15], [-1, 5, 15]]) {
-      const c = at(sd * P.side, ex, up);
-      if (road.every(r => tvSees(c.x, c.y, c.z, r[0], r[1], r[2]))) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+    while (q.c < TV_TRY.length) {
+      const [sd, ex, up] = TV_TRY[q.c], c = at(sd * P.side, ex, up), r = road[q.r];
+      if (!tvSees(c.x, c.y, c.z, r[0], r[1], r[2])) { q.c++; q.r = 0; }
+      else if (++q.r === road.length) { P.x = c.x; P.y = c.y; P.z = c.z; break; }
+      if (budget && q.c < TV_TRY.length && performance.now() - t0 >= budget) return null;
     }
-    return P;
+    P.ok = true; P.q = null; return P;
   }
   // Pikes Peak's TV cameras (the replay, 'tv'): a helicopter's high tracking shot over the open road (over the lower ground beside the car,
   // a little behind it), fixed cameras at the famous places (Engineer's Corner, the W's seen from high up, Devil's Playground, Bottomless
@@ -9248,7 +10195,8 @@ const Render = (function () {
     return { at, end, DUR, warm, get caps() { const T = curTrack, F = T && T._pkFly; return (places(T) || PL).map(([d, n], k) => ({ n, s: F ? F.ps[k] : 0 })); } };
   })();
   function shake(a, k) { if (k && !cam.shOn[k]) return; cam.shake = Math.max(cam.shake, Math.min(1.2, a)); }   // (k: the kind of shake, switched off in Nastavitve: cam.shOn)
-  function resetCam() { cam.init = false; }
+  function resetCam() { cam.init = false; pcam.snap = true; }   // (the camera there at once; the pit stop's film camera too: where it is then, pitCine)
+  function crewSnap() { if (crew) crew.snap = true; }   // (the replay jumped in time: the player's crew where it is then, at the next frame: crewJump)
   // a TV shot: { px, py, pz (the camera), tx, ty, tz (where it looks), fov, fogD (the fog as for a camera this far from its target) },
   // updated by its owner every frame; null: back to the game's camera (from scratch)
   function setShot(s) { if (!s && cam.shot) cam.init = false; cam.shot = s || null; }
@@ -9572,16 +10520,20 @@ const Render = (function () {
       if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
         _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
         _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
+        if (v.tlG) { const G = v.tlG, th = -G.rotation.y, tl = c.tl.D.len - c.tl.D.f, ex = G.position.x - Math.cos(th) * tl, ez = G.position.z - Math.sin(th) * tl;   // (a semi-trailer: the sphere round the rig, its nose to the trailer's tail)
+          const nx = v.grp.position.x + Math.cos(h) * (c.m.len * 0.5 + 2 * bm), nz = v.grp.position.z + Math.sin(h) * (c.m.len * 0.5 + 2 * bm);
+          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0); }
         out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
-      v.cull = out; if (out) { scene.remove(v.grp); continue; }
-      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
+      v.cull = out; if (out) { scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); continue; }
+      scene.add(v.grp); v.grp.updateMatrixWorld(true); carGlows(v); if (v.tlG) { scene.add(v.tlG); v.tlG.updateMatrixWorld(true); } back = true; }   // (back in: where updateCars put it this frame, its lamps lit)
     if (back) { glows.end(); streaks.end(); }
   }
   function frame(dt, alpha, target, mode, opt) {
     time += dt;
+    const cdt = opt && opt.rdt != null ? opt.rdt : dt;   // (the replay: the recording's own step, dt × its speed, 0 while it stands: the pit crew and the film camera on that clock)
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
-    updateCrew(dt);   // (first: it sets how far the player's car is up on the jacks)
+    updateCrew(cdt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
     farRb = 0; updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
@@ -9592,8 +10544,8 @@ const Render = (function () {
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
-    World.update(world, time, target, camera);
-    if (target) updateCamera(dt, target, mode, alpha);
+    World.update(world, time, target, camera, opt && opt.rp);   // (a replay: its time for the spectators)
+    if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)
     cullByDistance();   // adaptive detail (LOD): hide the far vegetation on the lower tiers, now the camera is in its final place for this frame
@@ -9602,7 +10554,7 @@ const Render = (function () {
     World.view(world, camera, cam.shot && cam.shot.noCut ? null : target, alpha);   // (Ouninpohja: the forest between the camera and the car fades out; not for a shot that looks at a building as it is)
     { const R = curRace, q = (v) => v > 0 ? Math.max(0.05, Math.round(v * 20) / 20) : 0;   // (a changing weather: in steps of 5 %)
       const r = R ? q(R.rain || 0) : 0, w = R ? q(R.water != null ? R.water : R.rain || 0) : 0;
-      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); }
+      if (r !== wet) applyWeather(r); if (w !== wetW) applyRoad(w); dryLine(R); puddles(R); marbles(R); rubberLine(R); }
     pkLight(target);   // (Pikes Peak: its shadows and the light of the altitude, on top of the theme's)
     sunFx(target);   // (every other world: the sun's rays in the woods, its lens flare)
     stormStep(dt); bowStep(dt); winU.value = sstep(0.3, 0.85, todK);
@@ -9650,6 +10602,7 @@ const Render = (function () {
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
     } else { casDrawn = 0; renderer.render(scene, camera); }
     unviewCull();   // (the plant chunks out of this frame's view: shown again, cullByDistance)
+    zaslonFeed(dt);   // (the big screen's live picture, js/world-zaslon.js)
   }
   // a still of the view as it is now (the photo mode): drawn again at a higher resolution (the long side up to maxSide pixels, never less
   // than on the screen), copied to a 2D canvas at once (a WebGL canvas keeps its picture only until the page shows it)
@@ -9697,14 +10650,17 @@ const Render = (function () {
     const prev = showCar;
     const fake = { m: model, color, num, stripe: true, isPlayer: false, deli };
     showCar = makeCarMesh(fake, { noMarker: true, show: true });
+    const rig = tlShow(showCar, model);   // (a semi-trailer behind the tractor, docs/titan-cisterna.md: the turntable turns the whole rig round its middle, showTurn)
+    showCar.cx = rig ? -rig.mid : 0;
     showCar.grp.position.set(0, 0, 0);
     showScene.add(showCar.grp);
     // framed by its size (a kart close, a truck from further off): the distance x clamp(max(len / 4.4, h / 1.45, wid / 1.9), .75, 1.55), the view
-    // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9))
+    // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9)) (a rig: its length, its trailer's
+    // height, up to 4; a road train's up to 7)
     const bg = showCar.body.geometry; if (!bg.boundingBox) bg.computeBoundingBox();
-    const h = Math.max(0.5, bg.boundingBox.max.y), k = clamp(Math.max(model.len / 4.4, h / 1.45, model.wid / 1.9), 0.75, 1.55);
-    showFr.k = k; showFr.dy = h / 2 - 0.7 * k; showCar.h = h;
-    const ring = Math.max(4.2, model.len / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
+    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? (model.trailer.next ? 7 : 4) : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7)
+    showFr.k = k; showFr.dy = hr / 2 - 0.7 * k; showCar.h = h;
+    const ring = Math.max(4.2, L / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
   }
   // (maketa-delov/index.html) the showroom's picture moved and zoomed for a page of its own: { cx, cy, x, y, s }: the point (cx, cy) of the
@@ -9719,10 +10675,12 @@ const Render = (function () {
     if (showView) { const W = Math.max(1, window.innerWidth), H = Math.max(1, window.innerHeight), v = showView; showCam.setViewOffset(W * v.s, H * v.s, v.cx * v.s - v.x, v.cy * v.s - v.y, W, H); }
     else if (showCam.view && showCam.view.enabled) showCam.clearViewOffset();
   }
+  // the showroom car turned to a (a rig, showCar.cx: round its middle, the tractor's origin that far off the turntable's axis)
+  function showTurn(a) { const g = showCar.grp, o = showCar.cx || 0; g.rotation.y = a; if (o) g.position.set(o * Math.cos(a), 0, -o * Math.sin(a)); }
   function renderShowroom(dt) {
     if (!showScene) return;
     showAngle += dt * 0.35;
-    if (showCar) showCar.grp.rotation.y = showAngle;
+    if (showCar) showTurn(showAngle);
     if (showCar && showCar.dl && showCar.dl.step) showCar.dl.step(dt, null, time, 0, false);
     showCamSet();
     cgSet(true); renderer.render(showScene, showCam);
@@ -9735,16 +10693,16 @@ const Render = (function () {
     const a0 = showCar.grp.rotation.y, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3();
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (let k = 0; k < 36; k++) {
-      showCar.grp.rotation.y = k / 36 * Math.PI * 2; showCar.grp.updateMatrixWorld(true);
+      showTurn(k / 36 * Math.PI * 2); showCar.grp.updateMatrixWorld(true);
       showCar.grp.traverse(m => {
-        if (!m.isMesh || m === showCar.blob || !m.geometry.attributes.position) return;
+        if (!m.isMesh || m === showCar.blob || m === showCar.rigS || !m.geometry.attributes.position) return;
         for (let q = m; q; q = q.parent) if (!q.visible) return;   // (drawn only: a hidden mesh does not count)
         const pa = m.geometry.attributes.position, n = Math.min(pa.count, m.geometry.drawRange.count);
         for (let i = 0; i < n; i++) { p.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld).project(showCam);
           const sx = (p.x * 0.5 + 0.5) * W, sy = (0.5 - p.y * 0.5) * H; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy; }
       });
     }
-    showCar.grp.rotation.y = a0; showCar.grp.updateMatrixWorld(true);
+    showTurn(a0); showCar.grp.updateMatrixWorld(true);
     return { x0, x1, y0, y1, w: W, h: H };
   }
   // (the car screen's tap on the car, game.js carTapLay) where the showroom car is on the screen over a whole turn, cheaply: the cylinder
@@ -9752,10 +10710,10 @@ const Render = (function () {
   function showRect() {
     if (!showCar) return null;
     showCamSet(); showCam.updateMatrixWorld();
-    const M = showArgs[0], bb = showCar.body.geometry.boundingBox, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3();
-    const r = Math.max(Math.hypot(M.len / 2, M.wid / 2), bb ? Math.hypot(Math.max(-bb.min.x, bb.max.x), Math.max(-bb.min.z, bb.max.z)) : 0);
+    const M = showArgs[0], bb = showCar.body.geometry.boundingBox, W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3(), G = showCar.rig;
+    const r = G ? Math.hypot(G.len / 2, G.wid / 2) : Math.max(Math.hypot(M.len / 2, M.wid / 2), bb ? Math.hypot(Math.max(-bb.min.x, bb.max.x), Math.max(-bb.min.z, bb.max.z)) : 0);   // (a rig: round its middle)
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-    for (let k = 0; k < 24; k++) for (const y of [0, showCar.h]) {
+    for (let k = 0; k < 24; k++) for (const y of [0, G ? Math.max(showCar.h, G.ht) : showCar.h]) {
       p.set(Math.cos(k / 24 * Math.PI * 2) * r, y, Math.sin(k / 24 * Math.PI * 2) * r).project(showCam);
       const sx = (p.x * 0.5 + 0.5) * W, sy = (0.5 - p.y * 0.5) * H; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy;
     }
@@ -9776,7 +10734,8 @@ const Render = (function () {
     const W = o.w || 800, H = o.h || 450, v = o.view || 'side', ortho = ['side', 'front', 'rear', 'top'].indexOf(v) >= 0, car = showCar, hh = car.h;
     renderer.setPixelRatio(1); renderer.setSize(W, H, false); showCam.aspect = W / H; if (showCam.view) showCam.view.enabled = false;   // (a still frames itself: no setShowView offset)
     const fov0 = showCam.fov, up0 = showCam.up.clone(); showFloor.visible = o.floor !== false;
-    car.grp.rotation.y = 0;
+    const solo = !!car.rigG && (ortho || !!o.cam), cx0 = car.cx; if (solo) { car.rigG.visible = false; car.cx = 0; }   // (a rig: its tractor alone in a check sheet's view (its box, grid and hubs) and a camera of the car's own; the rig in the three-quarter views)
+    showTurn(0);
     let geo0 = null;   // o.cut: [parts]: those parts taken off (their ranges collapsed on a copy of its own) and the whole buffer drawn: the lining, the floor, the cabin, the engine bay
     if (o.cut && M.kit) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
       for (const n of o.cut) { const R = U.ranges[n]; if (!R) continue; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { pa[i * 3] = pa[a * 3]; pa[i * 3 + 1] = pa[a * 3 + 1]; pa[i * 3 + 2] = pa[a * 3 + 2]; } }
@@ -9798,7 +10757,7 @@ const Render = (function () {
       showCam.updateProjectionMatrix(); showCam.lookAt(c[0], c[1], c[2]);
     } else {   // (the showroom's camera as in landscape, the car turned to show its front or its back three quarters)
       const k = showFr.k, dy = showFr.dy; showCam.fov = 32; showCam.updateProjectionMatrix();
-      car.grp.rotation.y = v === '34r' ? 0.6 : -0.6;   // (34f: the nose and the right side towards the camera; 34r: the tail and the right side)
+      showTurn(v === '34r' ? 0.6 : -0.6);   // (34f: the nose and the right side towards the camera; 34r: the tail and the right side)
       showCam.position.set(2.2 * k * 0.8, 3.1 * k * 0.8 + dy, 10.5 * k * 0.8); showCam.lookAt(0, 0.55 * k + dy, 0);
     }
     const tl0 = o.brake && car.tail ? car.tail.material : null; if (tl0) car.tail.material = matTailOn;   // (o.brake: the tail lamps lit, as when braking)
@@ -9816,11 +10775,13 @@ const Render = (function () {
       x.stroke();
       if (o.box) { const [bl, bw, bh] = o.box, a0 = v === 'side' || v === 'top' ? -bl / 2 : -bw / 2, a1 = -a0, b0 = v === 'top' ? -bw / 2 : 0, b1 = v === 'top' ? bw / 2 : bh;
         x.strokeStyle = 'rgba(255,214,64,0.95)'; x.lineWidth = 2; x.beginPath(); const c4 = [P(a0, b0), P(a1, b0), P(a1, b1), P(a0, b1)]; x.moveTo(c4[0][0], c4[0][1]); for (const q of c4.slice(1).concat([c4[0]])) x.lineTo(q[0], q[1]); x.stroke(); }
-      const hw = M.kit ? kitEntry(M).body.hw : M.wid / 2 - 0.1, hubs = v === 'side' ? [[M.a, M.rw], [-M.b, M.rw]] : v === 'top' ? [[M.a, -hw], [M.a, hw], [-M.b, -hw], [-M.b, hw]] : [[-hw, M.rw], [hw, M.rw]];
+      const KM = M.kit ? kitEntry(M) : null, hw = KM ? KM.body.hw : M.wid / 2 - 0.1, ax = [M.a, -M.b].concat(KM && KM.W.xm != null ? [KM.W.xm] : []);   // (wheels.mid: its hubs too)
+      const hubs = v === 'side' ? ax.map(a => [a, M.rw]) : v === 'top' ? [].concat(...ax.map(a => [[a, -hw], [a, hw]])) : [[-hw, M.rw], [hw, M.rw]];
       x.strokeStyle = 'rgba(80,220,255,0.95)'; x.lineWidth = 2;
       for (const [a, b] of hubs) { const c = P(a, b), r = 7; x.beginPath(); x.moveTo(c[0] - r, c[1]); x.lineTo(c[0] + r, c[1]); x.moveTo(c[0], c[1] - r); x.lineTo(c[0], c[1] + r); x.stroke(); }
     }
-    showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; car.grp.rotation.y = showAngle;
+    if (solo) { car.rigG.visible = true; car.cx = cx0; }
+    showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; showTurn(showAngle);
     if (geo0) { car.body.geometry.dispose(); car.body.geometry = geo0; }
     if (gh) { for (const [m, mat] of gh.mats) { m.material.dispose(); m.material = mat; } if (gh.part) { car.bodyG.remove(gh.part); gh.part.traverse(m => { if (m.geometry) m.geometry.dispose(); }); } }
     resize();
@@ -9829,14 +10790,14 @@ const Render = (function () {
 
   /* ---------------- the garage (garaza.html, js/garage3d.js): the race's own car meshes, in a scene of the garage's own ---------------- */
   // a car as the race draws it (body, wheels, lamps, the paint's dirt and scratches: dirtU, scrU), without the player's marker
-  function garageCar(model, color, num, stripe) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true }, { noMarker: true }); }
+  function garageCar(model, color, num, stripe, deli) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true, deli: deli || undefined }, { noMarker: true }); }   // (deli: the garage's parts fitted, car.deli)
   // the paint's sun glint and the tint of the sky in it (as cgSet): the garage's key lamp (direction, colour, strength) and the room's tint
   function garageLight(dir, col, k, env) { CGU.sun.value.set(dir.x, dir.y, dir.z).normalize(); CGU.sunC.value.setHex(col).multiplyScalar(k); CGU.env.value.setHex(env == null ? 0xffffff : env); }
 
   // debug: render the showroom car from a fixed camera (used for visual checks)
   function debugShot(px, py, pz, tx, ty, tz, rotY, fov) {
     if (!showScene || !showCar) return;
-    showCar.grp.rotation.y = rotY || 0;
+    showTurn(rotY || 0);
     const f = showCam.fov; if (fov) { showCam.fov = fov; showCam.updateProjectionMatrix(); }
     showCam.position.set(px, py, pz); showCam.lookAt(tx, ty, tz);
     cgSet(true); renderer.render(showScene, showCam);
@@ -9859,9 +10820,12 @@ const Render = (function () {
       ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3),
       speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
-  function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW }; }   // (tests)
+  function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW, pitDrops: pitSp }; }   // (tests)
+  function pitWet() { const T = curTrack; if (!T || !T.def.pit || !world || !world.pitBoxes || !world.pitBoxes.length) return null; const pos = [], uv = [], pw = [], idx = []; pitPuddles(T, pos, uv, pw, idx); return { pos, pw, idx, ap: pitLook(T).ap, asph: !!pitLook(T).asph }; }   // (tests: the pits' wet parts of this world)
   function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
-  return { garageCar, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  // the dirt on a race car's body now (0..1; null: none drawn), for the career's garage (game.js careerAfter)
+  const dirtOf = (c) => { const v = views && views.find(w => w.car === c); return v && v.dirtU ? v.dirtU.value : null; };
+  return { ext: EXT, dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

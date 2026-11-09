@@ -56,6 +56,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     look: { fog: 0xc9d9e6, sun: 0xfff0d6, sunI: 1.16, sky: 0xcde1f6, gnd: 0x56603a, hemiI: 0.62, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-82, 88, 60], split: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] },   // Montréal: a clear June afternoon on the St. Lawrence, the sun from the south-west, a light haze over the river
+    say: 'Montreal',
     zivali: { a: ['goose', 'fox'], t: ['picnic'], city: true },
     id: 'montreal', name: 'Montréal, Kanada', theme: 'montreal', laps: 3, halfWidth: HW,
     desc: 'Proga po parkovnih cestah umetnega otoka Île Notre-Dame sredi reke sv. Lovrenca v Montréalu, v pravem merilu: 4,361 km in 14 zavojev v smeri urinega kazalca. Ciljna ravnina z boksi ob olimpijskem veslaškem kanalu, levo-desno na začetku kroga, šikane med betonskimi zidovi, lasnica ob nekdanjih razstavnih paviljonih, dolga ravnina do zadnje šikane z zidom ob izhodu. Na otoku so križišča z otoškimi cestami: semaforji nad cesto, znaki STOP, hidranti in svetilke, vse se da zbiti. Geodetska kupola na sosednjem otoku, mostovi, ladje na reki in nebotičniki Montréala. Podatki: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.',

@@ -11,7 +11,7 @@
     Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, campLot, parkedCar, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
     crowdRun, crowdUV, cyl, gable, ico, inPoly, lerp, mergeBands, nrDecalTex, nrDem, nrDist, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf,
     nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
-    shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS
+    shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS, pitJunction, pitKerbs, pitOpen
   } = API;
   const { auTreeGeo, auRooGeo, auRoos, btGrassTex, btGumGeo, RIO_TP, rioTreeGeo, rioFlowerGeo, RIO_BLOOM, rioTree, rioWet, rioPits, rioExtra, rioPylon, rioPre, cpPrep, cpPark, cpTrees } = API;   // (the own parts of the worlds on this builder, in js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js, loaded before this file: tools/razdeli-proge.mjs)
   let LOD, T, THEME;   // (World's, for the build under way)
@@ -130,31 +130,12 @@
     const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 4; m.matrixAutoUpdate = false; m.name = 'smoke';
     return m;
   }
-  // flags on poles that wave: the cloth in stripes (top to bottom), 4 segments along it, pushed out of its plane in the vertex shader (uTime),
-  // more towards the free end. list: [x, y (the top of the pole), z, the way the cloth flies (radians from +x), stripes, width, height]
+  // flags on poles that wave (also Monterey's and Riverside's): the shared waving cloths of js/world-zastave.js (World.flagMesh), the cloth
+  // in stripes (top to bottom). list: [x, y (the top of the pole), z, the way the cloth flies (radians from +x), stripes, width, height]; its
+  // geometry, material and mesh made with Math.random as they always were (a seeded race runs as before); the flags the build put up
+  // elsewhere (API.flags: the campsites', the marshals') in the same mesh
   function rbFlags(list, uTime) {
-    const P = [], N = [], C = [], F = [], I = [], r = rng(1966), SEG = 4; let v = 0;
-    for (const [x, y, z, rot, cols, W, H] of list) {
-      const c = Math.cos(rot), s = Math.sin(rot), ph = r() * TAU, ns = cols.length;
-      for (let b = 0; b < ns; b++) {
-        for (let k = 0; k <= SEG; k++) { const u = k / SEG;
-          for (const f of [b / ns, (b + 1) / ns]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(cols[b][0], cols[b][1], cols[b][2]); F.push(u, ph, W * 0.07); } }
-        for (let k = 0; k < SEG; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
-        v += (SEG + 1) * 2;
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
-    g.setAttribute('aFlag', new THREE.Float32BufferAttribute(F, 3)); g.setIndex(I); g.computeBoundingSphere();
-    const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    m.onBeforeCompile = (sh) => {
-      sh.uniforms.uTime = uTime;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec3 aFlag;\nuniform float uTime;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n{ float u = aFlag.x, w = sin(uTime * 5.0 - u * 5.5 + aFlag.y) + 0.45 * sin(uTime * 8.3 - u * 9.0 + aFlag.y * 2.0);\n  transformed += objectNormal * w * aFlag.z * u; transformed.y -= (0.5 + 0.5 * w) * aFlag.z * 0.4 * u * u; }');
-    };
-    m.customProgramCacheKey = () => 'rbflag';
-    const mesh = new THREE.Mesh(g, m); mesh.receiveShadow = true; mesh.matrixAutoUpdate = false; mesh.name = 'flags';
-    return mesh;
+    return World.flagMesh(list.map(([x, y, z, rot, cols, W, H]) => [x, y - 0.05, z, rot, cols, W, H]).concat(API.flags.take()), uTime, { tier: LOD.tier });   // (and the build's other flags: the camps', the marshals')
   }
   // the video walls' pictures, four 256 x 128 frames side by side (the walls show one after another): the race from behind a car, the
   // standings (the game's own drivers), the orange fans in their smoke, the map of the circuit (T's centre line)
@@ -483,6 +464,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side > 0 ? 1 : 0][i] = 1; } }
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
     // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
@@ -632,6 +614,7 @@
     const baleOn = [new Uint8Array(N), new Uint8Array(N)];   // (the 1930s: straw bales round the outside of the corners)
     if (PER) for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir); for (let k = c.i0 - 12; k <= i1c + 16; k++) baleOn[si][((k % N) + N) % N] = 1; }
     const kindAt = (i, side) => {   // -1 none (where the pit lane leaves and joins the circuit), 0 armco, 1 concrete wall, 2 tyre wall; the 1930s: 3 straw bales, 4 a timber fence
+      if (side === PSD && PD && pitOpen(i)) return -1;   // (and along the deceleration and acceleration lanes)
       if (PER) { if (side === PSD && PD) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 4; } return baleOn[side2(side)][i] || wallOn[side2(side)][i] ? 3 : 4; }
       if (side === PSD && PD) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }
       if (tyreOn[side2(side)][i]) return 2;
@@ -694,7 +677,7 @@
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
-        const j = (i + 1) % N; if (!fc[i] || !fc[j]) { acc += ds; continue; }
+        const j = (i + 1) % N; if (!fc[i] || !fc[j] || (side === PSD && PD && (pitOpen(i) || pitOpen(j)))) { acc += ds; continue; }   // (none where the pit lane joins the circuit)
         const e = fc[i] === 2 ? 1.25 : 0.55, Q = (ii, y) => { const o = side * (bar[ii] + e); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y, T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + ds) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
         fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, 4.2), Q(i, 4.2), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.3], [u0, 1.3]]);
@@ -782,6 +765,7 @@
         strip(gl, s0, s1, pi.o + 3.18, pi.o + 3.36, pj.o + 3.18, pj.o + 3.36, 0.04, wl);
         if (((q / 2) | 0) % 2 === 0) strip(gl, s0, s1, pi.o - 3.36, pi.o - 3.18, pj.o - 3.36, pj.o - 3.18, 0.04, wl);
       } else for (let q = q0; q < q1; q += 2) { const s0 = sAt(q), s1 = sAt(q + 2); strip(gl, s0, s1, bw(s0) + 7.8, bw(s0) + 8, bw(s1) + 7.8, bw(s1) + 8, 0.04, wl); }   // (no pits: the lane's line only)
+      if (PD) pitJunction(gq, gl, hyS);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
       const [pq0, pq1] = def.pitRow || [q0, q1], crew = new Map();
       if (PD) for (let q = pq0; q <= pq1 && nBoxes < 13; q += 10) {   // the crews' boxes (a box every 10 m: q .. q + 10 m after the start line)
         const s0 = sAt(q), i = T.idx(s0), p = T.pitAt(s0); if (!p || p.t < 0.999) continue;
@@ -790,6 +774,7 @@
         if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
           out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
+        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
         crew.set(q, tc);
       }
       T.pitStands = null;   // (no team stands on the pit wall here)
@@ -824,6 +809,7 @@
         if (pi.t > 0.999 && pj.t > 0.999) { gp.quadUp(at(s0, pi.o + 3.5, 0.022), at(s0, pi.o + 12.5, 0.022), at(s1, pj.o + 12.5, 0.022), at(s1, pj.o + 3.5, 0.022), LK.apron ? LK.apron(q) : [apC, apC, apC, apC]);   // concrete apron (LK.apron: Rio's, weathered slab by slab)
           if (q % 20 === 0) gp.quadUp(at(s0, pi.o + 3.5, 0.03), at(s0, pi.o + 3.7, 0.03), at(s1, pj.o + 3.7, 0.03), at(s1, pj.o + 3.5, 0.03), [wl, wl, wl, wl]); }   // (dashes along the fast lane's edge)
       }
+      pitJunction(gl, gp, hyS);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
       const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.1, 0.62, 0.72], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];
       const kbox = (g, s0, a, wo, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = atSf(s0 + a, wo); box(g, x, hyS(s0 + a) + y, z, sx, sy, sz, hd, col, top, nb); };
       const kcyl = (g, s0, a, wo, y, r, h, n, col, top) => { const [x, z] = atSf(s0 + a, wo); cyl(g, x, hyS(s0 + a) + y, z, r, h, n, col, top); };
@@ -867,7 +853,10 @@
           exclPush(cx, cz, 7);
         }
         const oc = atSf(s0 + 5, 0);   // for the renderer's crews: the box centre on the centre line, the box frame, the floor's height
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb }); }
+        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx: T.nx[i], nz: T.nz[i], hd, base, lane: p.o, wall: p.wall, team: tc, mine, y: yb });
+        out.pitBoxes[out.pitBoxes.length - 1].gar = PER ? { band: [base + 8.7, 2.66, 2.94, 4.8], wall: [base + 11.95, 0.02, 2.68, 4.7] }   // (its garage, for the renderer's team colours: the 1930s stall: a fascia on the roof's front edge, a cloth behind the back posts;
+          : LK.pits80 ? { band: [base + 8.955, 3.42, 3.92, 4.7], wall: [base + 16.85, 0.03, 3.95, 4.74], jamb: [base + 9, 4.88, 0.25, 3.42], road: 'jamb' }   // Rio's, rioPits: the band over the door, the back wall, the side walls' fronts;
+          : { band: [base + 8.955, 3.45, 3.95, 4.7], wall: [base + 15.9, 0.03, 3.9, 4.74], jamb: [base + 9, 4.56, 0.9, 3.45], road: 'jamb' }; }   // the pit building's: the band, the back wall, the front pillars)
       { const pbs = out.pitBoxes; T.pitStands = null;   // the stands on the strip behind the pit wall: Core keeps the player's car off them, a low kerb along that limit
         if (pbs && pbs.length) { T.pitStands = [dS(pbs[0].s) - 1.35, dS(pbs[pbs.length - 1].s) + 1.35];
           const kt = [0.86, 0.86, 0.83], kf = [0.66, 0.67, 0.64];
@@ -1123,7 +1112,7 @@
       if (excluded(x, z) || (side === PSD && PD && T.pitAt(s))) continue;
       box(g, x, y - 0.2, z, 2.4, 2.5, 2.2, T.hd[i], [0.94, 0.94, 0.92], [0.95, 0.45, 0.1], true);
       box(g, x - T.nx[i] * side * 0.4, y + 1.1, z - T.nz[i] * side * 0.4, 1.6, 0.6, 2.25, T.hd[i], [0.2, 0.28, 0.36], null, true);
-      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + T.tx[i] * 0.45, y + 3.4, fz + T.tz[i] * 0.45, 0.9, 0.6, 0.04, T.hd[i], [0.98, 0.84, 0.1], null, true);
+      const fx = x + T.tx[i] * 1.8, fz = z + T.tz[i] * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); API.flags.add(fx, y + 4, fz, T.hd[i], [[0.98, 0.84, 0.1]], 0.9, 0.6);   // (the cloth waves: js/world-zastave.js)
       { const lx = x - T.tx[i] * 1.9, lz = z - T.tz[i] * 1.9, nx = -T.nx[i] * side, nz = -T.nz[i] * side;   // the digital flag panel on its post, a green light towards the road
         box(g, lx, y, lz, 0.14, 3.1, 0.14, T.hd[i], [0.5, 0.51, 0.54], null, true); box(g, lx + nx * 0.1, y + 2.6, lz + nz * 0.1, 1.0, 0.75, 0.16, T.hd[i], [0.1, 0.1, 0.11]);
         box(g, lx + nx * 0.2, y + 2.72, lz + nz * 0.2, 0.62, 0.5, 0.04, T.hd[i], [0.35, 1.0, 0.4], null, true); }
@@ -1472,13 +1461,13 @@
       const fl = [12, -12].map((a) => { const [fx2, fz2] = atSf(s + a, f0 - 3); return [fx2, hyS(s + a) + 0.3, fz2, SMK[0], 1.1]; });   // (at the edges of the shot)
       P.smoke = rbSmoke(fl, CR.U.uTime, smTex); P.smoke.visible = false; root.add(P.smoke);
     }
-    if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));
     out.crowdPts = Float32Array.from(crowdPts);
     if (!PER) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
     if (out.air) out.air.finOnly = !!LK.heliFin;   // (Rio: the helicopter only over the finish, after the race)
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, houses: nHouse, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
     if (RIO) { out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush); out.stats.rio.bloom = nBloom; }   // Rio: the lagoon, palms along the straights, the mountains round the basin
+    if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));   // (last: the build's other flags are in API.flags by now)
     return out;
   }
 

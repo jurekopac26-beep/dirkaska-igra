@@ -10,7 +10,7 @@
   const {
     Chunks, GB, HC, IChunks, RB, TAU, addShore, atS, atSf, box, clamp, clearance, cone, crAt, crH, crowdCtx, crowdFinish, crowdRun, crowdUV, cyl,
     gable, ico, inPoly, lerp, nearest, nrLump, pitLaneScenery, polyDist, propFloorTable, rng, rock, shoreBand, sstep, starCone, vary, waterMat,
-    waterline
+    waterline, pitKerbs, pitOpen, pitRoadAt
   } = API;
   let T, hash;   // (World's, for the build under way)
   API.sync.push(() => { ({ T, hash } = API); });
@@ -271,8 +271,10 @@
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), cMat = new THREE.MeshLambertMaterial({ map: tex.curb, vertexColors: true }), pMat = new THREE.MeshLambertMaterial({ map: ncConcrete(), vertexColors: true });
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) { const k = T.k[i]; let m = 0; for (let d = -6; d <= 6; d++) m = Math.max(m, Math.abs(T.k[(i + d + N) % N])); if (m < 1 / 70) continue; for (const side of [-1, 1]) if ((side * k > 0 && Math.abs(k) > 1 / 90) || m > 1 / 20) kerb[side > 0 ? 1 : 0][i] = 1; }
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const SW = 0.12;   // the footpath's kerb over the road
-    const verge = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i]; return [[w, 0], [w + 0.05, SW], [bar + 0.3, SW], [bar + 2, SW - 0.02]]; };
+    const pOpen = (i, side) => side > 0 && def.pit && pitOpen(i);   // (where the pit lane joins the circuit: no footpath, the junction's asphalt at the road's level)
+    const verge = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i]; return pOpen(i, side) ? [[w, 0], [w + 0.05, 0], [bar + 0.3, 0], [bar + 2, 0]] : [[w, 0], [w + 0.05, SW], [bar + 0.3, SW], [bar + 2, SW - 0.02]]; };
     const CH = 450, offs = [-w, -w / 2, 0, w / 2, w], tileL = 8;
     const shade = (i, o) => { const rl = T.rl[i]; let k = 0.8 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k += 0.04; return [k, k, k * 1.02]; };
     const conc = [0.86, 0.85, 0.82];
@@ -296,7 +298,7 @@
     }
     out.propR = 140;
     out.propFloor = propFloorTable(null, (i, side) => verge(i, side));
-    { const g = new GB(); for (let i = 0; i < N; i++) { const j = (i + 1) % N; for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; if (kerb[si][i]) continue; const c = [0.74, 0.74, 0.72];   // the kerb's face along the road edge
+    { const g = new GB(); for (let i = 0; i < N; i++) { const j = (i + 1) % N; for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; if (kerb[si][i] || pOpen(i, side) || pOpen(j, side)) continue; const c = [0.74, 0.74, 0.72];   // the kerb's face along the road edge
       g.quadO(Pt(i, side * (w + 0.02), 0.0), Pt(j, side * (w + 0.02), 0.0), Pt(j, side * (w + 0.05), SW), Pt(i, side * (w + 0.05), SW), c, Pt(i, side * (w + 2), 0)); } }
       addM(g, matV, false, true, 'kerbface'); }
     // chequered start / finish line and the grid boxes (13 cars, staggered)
@@ -319,7 +321,7 @@
     const tyreW = [new Uint8Array(N), new Uint8Array(N)];
     for (const c of T.corners) if (c.sev >= 3 && c.angle > 0.8) { const side = -c.dir, si = side > 0 ? 1 : 0; for (let i = c.i0 - 12; i <= (c.i1 < c.i0 ? c.i1 + N : c.i1) + 8; i++) tyreW[si][((i % N) + N) % N] = 1; }
     for (const si of [0, 1]) for (let i = 0; i < N; i++) { const d = dS(i * ds); if (d > L - 140 || d < 160) tyreW[si][i] = 0; }   // (not along the grid and the pits)
-    const kind = (i, side) => (side > 0 && def.pit && T.pitAt(i * ds) && T.pitAt(i * ds).gap ? -1 : tyreW[side > 0 ? 1 : 0][i] ? 4 : 1);
+    const kind = (i, side) => (side > 0 && def.pit && ((T.pitAt(i * ds) && T.pitAt(i * ds).gap) || pitOpen(i)) ? -1 : tyreW[side > 0 ? 1 : 0][i] ? 4 : 1);   // (pitOpen: the deceleration and acceleration lanes too)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true }), tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const wallC = [0.9, 0.9, 0.88], wallD = [0.7, 0.7, 0.68], wallR = [0.8, 0.18, 0.15];
@@ -814,7 +816,7 @@
         gb.quadO(A, B, [B[0], cy + H, B[2]], [A[0], cy + H, A[2]], W1, [cx - fx, cy + H / 2, cz - fz], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); };
       { const [gx, gz, , gi] = atS(sStart, 0), span = Math.max(T.bl[gi], T.br[gi]) + 1.2; for (const sd of [-1, 1]) board(gx + T.tx[gi] * sd * 0.6, T.hy[gi] + 5.75, gz + T.tz[gi] * sd * 0.6, T.tx[gi] * sd, T.tz[gi] * sd, span * 2 - 2, 1.3, 0, 1, 0.8, 1); }
       for (const n of ['Zavoj 1', 'Zavoj 2', 'Zavoj 11']) { const f = T.names.find(q => q.n === n); if (!f) continue; const c0 = T.corners.find(cc => Math.abs(dS(cc.s0) - f.d) < 120); if (!c0) continue; const side = -c0.dir;
-        for (let m = 1; m <= 3; m++) { const q = crAt(sAt(dS(c0.s0) - m * 100 + 40)); if (!q) continue; const o = (side > 0 ? q.br : q.bl) - 0.35, x2 = q.px + q.nx * side * o, z2 = q.pz + q.nz * side * o;
+        for (let m = 1; m <= 3; m++) { const q = crAt(sAt(dS(c0.s0) - m * 100 + 40)); if (!q) continue; const o = (side > 0 ? q.br : q.bl) - 0.35, x2 = q.px + q.nx * side * o, z2 = q.pz + q.nz * side * o; if (pitRoadAt(x2, z2, 0.5)) continue;   // (not on the pit road's junction)
           board(x2, q.hy + 1.15, z2, -q.tx, -q.tz, 1.6, 1.0, (3 - m) / 3, (4 - m) / 3, 0.6, 0.8); box(scen.get(x2, z2), x2, q.hy, z2, 0.12, 1.15, 0.12, 0, [0.5, 0.5, 0.52]); } }
       (def.turns || []).forEach(([tx0, tz0], k) => { const i = T.nearestIdx(tx0, tz0), c0 = T.corners.find(cc => Math.abs(cc.i0 - i) < 25 || Math.abs(cc.i1 - i) < 25), side = c0 ? c0.dir : 1;   // (on the inside of the turn, on top of the wall)
         const o = (side > 0 ? T.br[i] : T.bl[i]) + 0.3, x2 = T.px[i] + T.nx[i] * side * o, z2 = T.pz[i] + T.nz[i] * side * o, u = (k % 7) * 146 / 1024, v = 1 - (256 + Math.floor(k / 7) * 128) / 512;

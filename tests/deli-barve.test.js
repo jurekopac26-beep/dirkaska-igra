@@ -99,5 +99,18 @@ const g11 = tyG({ gume: 11 }), g12 = tyG({ gume: 12 });
 check('the gravel and the snow tyres: rally gravel (11) more grip on gravel, rally snow (12) on snow, a winter race takes the snow grip', g11[0] > 1.2 && g12[1] > 1.25,
   `gravel ${g11[0].toFixed(2)}, snow ${g12[1].toFixed(2)}`);
 
+// ---- the race with the career's levels too (sklop 8 of the garage): the parts of an upgrade give the level's effect, not their own as
+// well (the tyres' grip on each surface stays theirs); the career's wear carried over (Core.careerWear) ----
+{
+  const U = { motor: 2, gume: 1, zavore: 0, aero: 0 }, both = car({ turbo: 16, cip: 16, gume: 16, vzmeti: 16 }, { upg: U }), own = car({ turbo: 16, cip: 16 }), base = car(null, { upg: U });
+  check('with the levels given: the turbo and the chip add no power of their own (the level\'s), the tyres keep their grip by surface, the springs their drop; without them: their own power',
+    both.m.kw === base.m.kw && own.m.kw > KO.kw && both.dTy && both.dTy.dry > 1 && both.dLower === 0.05, JSON.stringify({ kw: [both.m.kw, base.m.kw, own.m.kw, KO.kw] }));
+  const w = car(null); C.careerWear(w, { clean: 0.3, body: 0.6, engine: 0.5 });
+  const x = car(null); C.careerWear(x, { clean: 1, body: 0.1, engine: 1 });
+  check('the career\'s wear: the body\'s knocks as damage (0.4; at most half), three old dents (drawn only), the engine\'s as power (94 %), the dirt to start with',
+    Math.abs(w.dmg - 0.4) < 1e-9 && w.dents.length === 3 && w.dents.every(d => d.old) && Math.abs(w.m.kw / KO.kw - 0.94) < 1e-9 && Math.abs(w.dirt0 - 0.7) < 1e-9 && KO.kw === C.MODELS.find(m => m.id === KO.id).kw &&
+    Math.abs(x.dmg - 0.5) < 1e-9 && x.m.kw === KO.kw && x.dirt0 === 0, JSON.stringify({ dmg: [w.dmg, x.dmg], kw: w.m.kw / KO.kw, dirt: w.dirt0 }));
+}
+
 console.log(`\n${bad ? 'FAIL' : 'OK'}: ${n - bad}/${n} checks (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
 process.exit(bad ? 1 : 0);

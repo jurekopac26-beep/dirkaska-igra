@@ -6,7 +6,7 @@
 // in its garage loads with the LEV S in its place (once, with its upgrades; both owned: the better level of each part), the garage
 // listing the LEV S once and never the retired model.
 //   node tests/browser/career.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('career');
 const srv = await serve();
@@ -40,7 +40,7 @@ try {
   const k1 = await car();
   await act('car-buy'); await page.waitForTimeout(150);
   const t1 = await txt('toast'), c2 = await cr();
-  T.check('another car: its price and "Kupi · 30.000 🪙" (too little money: greyed, a message, nothing bought), no upgrades', k1.name === 'KAZE RS' && /^Cena 30\.000 🪙 · imaš 10\.000/.test(k1.price) && k1.act === 'car-buy' && k1.next === 'Kupi · 30.000 🪙' && k1.poor && !k1.upg && /Premalo denarja/.test(t1) && c2.cars.join() === 'pico' && c2.money === 10000,
+  T.check('another car: its price and "Kupi · 62.000 🪙" (too little money: greyed, a message, nothing bought), no upgrades', k1.name === 'KAZE RS' && /^Cena 62\.000 🪙 · imaš 10\.000/.test(k1.price) && k1.act === 'car-buy' && k1.next === 'Kupi · 62.000 🪙' && k1.poor && !k1.upg && /Premalo denarja/.test(t1) && c2.cars.join() === 'pico' && c2.money === 10000,
     JSON.stringify({ k1, t1 }));
   const blocked = await page.evaluate(async () => { const g = window.__game; g.onAction('to-track'); await new Promise(r => setTimeout(r, 200)); g.onAction('start'); await new Promise(r => setTimeout(r, 300)); return { race: !!(g.race && g.phase !== 'none' && g.race.player && g.race.player.m.id === 'kaze'), toast: document.getElementById('toast').textContent }; });
   T.check('a car not bought cannot race', !blocked.race && /Ta avto še ni tvoj/.test(blocked.toast), JSON.stringify(blocked));
@@ -60,23 +60,22 @@ try {
   // 4. a race on autopilot: the prize on the results screen
   await startTrack(page, 'jezero');
   const info = await page.evaluate(() => { const r = window.__game.race; return { len: r.track.len, laps: r.laps, n: r.cars.length, diff: window.__game.S.difficulty, upg: r.player.upg }; });
-  await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });   // (done: the results screen is up, a resume would close it)
-  await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  await driveToResults(page);   // (stuck against the barrier, put back on the road: lib.mjs)
   const res = await page.evaluate(() => ({ sub: document.getElementById('res-sub').textContent, pos: parseInt(document.getElementById('res-pos').textContent, 10) }));
   const c4 = await cr();
   const prize = await page.evaluate((a) => Core.careerPrize(a.pos, a.n, a.len * a.laps, a.diff), { pos: res.pos, n: info.n, len: info.len, laps: info.laps, diff: info.diff });
   const got = c4.money - 6000, fl = /najhitrejšim krogom/.test(res.sub);
-  T.check('the race pays: the prize for the place (+500 coins for the fastest lap) on the results screen, in the money; the upgrade raced',
-    got === prize + (fl ? 500 : 0) && got > 0 && new RegExp('Nagrada.*\\+' + String(got).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' 🪙 \\(imaš ').test(res.sub) && c4.races === 1 && info.upg.motor === 1,
+  T.check('the race pays: the prize for the place (+1.250 coins for the fastest lap; the PICO TURBO, under 50.000: x1) on the results screen, in the money; the upgrade raced',
+    got === prize + (fl ? 1250 : 0) && got > 0 && new RegExp('Nagrada.*\\+' + String(got).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' 🪙 \\(imaš ').test(res.sub) && c4.races === 1 && info.upg.motor === 1,
     JSON.stringify({ res, prize, got, c4 }));
 
   // 5. a car bought (the money given for the test), raced
-  await page.evaluate(() => { const c = window.__game.career; c.money = 25000; });
+  await page.evaluate(() => { const c = window.__game.career; c.money = 41000; });
   await act('to-title'); await page.waitForTimeout(200); await act('to-car'); await page.waitForTimeout(200);
   await page.evaluate(async () => { const g = window.__game; while (Core.MODELS[g.S.car].id !== 'levs') { g.onAction('car-next'); await new Promise(r => setTimeout(r, 30)); } });
   await act('car-buy'); await page.waitForTimeout(150);
   const c5 = await cr(), k5 = await car();
-  T.check('a car bought (the LEV S): 20.000 coins taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('levs') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
+  T.check('a car bought (the LEV S): 36.000 coins taken, in the garage, "Naprej"', c5.money === 5000 && c5.cars.includes('levs') && k5.act === 'to-track' && /V tvoji garaži/.test(k5.price), JSON.stringify({ c5, k5 }));
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-career')));
   T.check('the career kept in the browser', stored && stored.v === 1 && stored.money === 5000 && stored.cars.includes('levs') && stored.upg.pico.motor === 1, JSON.stringify(stored));
 

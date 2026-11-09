@@ -21,7 +21,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xc6d7e8, sun: 0xfff1da, sunI: 1.26, sky: 0xb3cdf0, gnd: 0x4c5636, hemiI: 0.6, tint: [1.01, 1.0, 0.98], sat: 1.08, sunOff: [-84, 90, 58] },   // Beartooth: a clear summer afternoon in the northern Rockies, the sun from the south-west (shadows across the switchbacks), thin blue mountain haze
     say: 'the Beartooth Highway',
     zivali: { a: ['bison', 'elk', 'goatW', 'moose', 'blackbear'], t: ['cabin', 'logPile', 'signPost'], open: true },
-    id: 'beartooth', name: 'Beartooth, ZDA', theme: 'beartooth', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 6.0,
+    id: 'beartooth', test: true, name: 'Beartooth, ZDA', theme: 'beartooth', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 6.0,
     desc: 'Cesta US 212 čez gorovje Beartooth v Montani (ZDA): serpentine nad dolino Rock Creek, od 2.631 m skozi smrekov in borov gozd po petih ovinkih mimo razgledišča Rock Creek Vista do vrha serpentin na 2.849 m, med alpsko tundro, granitnimi balvani in snežnimi zameti. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Beartooth, USA', desc: 'US Route 212 over the Beartooth Mountains in Montana (USA): the switchbacks above the Rock Creek valley, from 2,631 m through the spruce and pine forest and up five hairpins past the Rock Creek Vista to the top of the switchbacks at 2,849 m, among the alpine tundra, granite boulders and snowdrifts. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the top' },   // (the English page: Jezik · Language)
     realKm: 4.9, alt: [2631,2849],

@@ -16,7 +16,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('52'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'bigsur'));
-check('52: on Big Sur, a real track', D.track === 'bigsur' && !Core.TRACKS.find(t => t.id === 'bigsur').test);
+check('52: on Big Sur (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'bigsur' && !!Core.TRACKS.find(t => t.id === 'bigsur'));
 const o = D.opts(D);
 check('its race: one run alone, the tractor (the racing truck\'s physics on a copy, its own limiter), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.vLim === K.VMAX && Core.MODELS.find(m => m.id === 'titan').vLim === 160);
 const mk = (s) => { const i = T.idx(s); return { player: { q: { s, d: 0 }, x: T.px[i], z: T.pz[i], h: Math.atan2(T.tz[i], T.tx[i]), vx: 0, vz: 0, w: 0, m: { wid: 2.5, len: 6.8 }, finished: false }, track: T }; };

@@ -47,6 +47,11 @@
     'AIR FILTER': ['filter_zraka', 'Air filter'], 'ECU CHIP': ['cip', 'Chip'], TURBO: ['turbo', 'Turbo'], 'LIGHT BATTERY': ['akumulator', 'Light battery'], SPRINGS: ['vzmeti', 'Springs'],
     DAMPERS: ['amortizerji', 'Coilovers'], 'ANTI-ROLL BARS': ['stabilizatorji', 'Anti-roll bars'], 'SPORT PADS': ['zavore', 'Sport pads'], 'FUEL CAP': ['zamasek', 'Anodised red'], 'TYRE SMOKE': ['dim_gum', 'Blue'],
     DUCKTAIL: ['krilo', 'Ducktail'], 'SHORT WING': ['krilo', 'Short wing'], 'LOW WING': ['krilo', 'Low wing'], 'GT WING': ['krilo', 'GT wing'], 'DOUBLE WING': ['krilo', 'Double wing'] };
+  // (the cabinet's drawers, sklop 6d: each element's four parts in it (the options' English names), as Garage3D's DRW lays them out: the
+  // concept's mn/predali_pred_po with the user's four to a drawer (the chrome indicators, the bolt, the sport discs))
+  const DRAWER = { zarometi: ['LED', 'Yellow', 'Smoked', 'Bi-LED'], luc_pod_avtom: ['Blue', 'Turquoise', 'Purple', 'Red'], zadnje_luci: ['Smoked', 'Clear', 'Round', 'LED strip'],
+    zmigavci: ['Clear', 'Smoked', 'Sequential', 'Chrome'], maska: ['Honeycomb', 'Mesh', 'Chrome', 'Carbon'], celjusti: ['Red', 'Yellow', 'Gold', 'Body colour'],
+    nalepke: ['Flames', 'Chequers', 'Star', 'Big bolt'], zavore: ['Sport pads', 'Sport discs', 'Racing discs', 'Ceramic'] };
   // (a regal's part the shop sells: every plate's element in the game's list of parts (in the horn's place the fuel cap: the game has no
   // horn, docs/deli.md, the user's choice 2. 11. 2026))
   const sold = (n) => !!(REGAL[n] && EL[REGAL[n][0]]);
@@ -62,14 +67,21 @@
   // has and the other way round); what only the garage knows of each car (its parts, colour, wear) is kept in the career too (career.garage).
   // The mockup's three (a new player, the full game, a veteran) keep their own test money and cars in apex-garage, apart from the game.
   const KEY = 'apex-garage', CKEY = 'tdgp-career', CAR0 = Core.CAREER.car0;
-  const carNew = (id, own) => ({ own: !!own, parts: {}, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
+  const carNew = (id, own) => ({ own: !!own, parts: {}, have: {}, color: color0(id), stripe: true, cond: { clean: 1, body: 1, engine: 1 } });
+  // (the parts a car has bought, each element's options 1 .. 16 (have): a part taken off stays that car's, fitted again free (the user's
+  // choice 2. 11. 2026, NAMESTI); every part on the car is among them)
+  const optN = (v) => v[0] * 4 + v[1] + 1;
+  const haveAdd = (k, el, v) => { if (!v || !EL[el] || isStock(el, v)) return; const a = k.have[el] || (k.have[el] = []), n = optN(v); if (!a.includes(n)) a.push(n); };
+  const haveIt = (k, el, v) => !!v && (isStock(el, v) || !!(k.have[el] && k.have[el].includes(optN(v))));
+  const haveFitted = (k) => { for (const el in k.parts) haveAdd(k, el, k.parts[el]); };
   // (a car's parts, colour and wear as saved: { deli, color, stripe, cond })
   const carFrom = (o, c) => { o.parts = fromDeli(c.deli); o.color = Number.isInteger(c.color) && c.color >= 0 && c.color < COLORS.length ? c.color : o.color; o.stripe = c.stripe !== false;
+    o.have = {}; if (c.have && typeof c.have === 'object') for (const el in c.have) if (EL[el] && Array.isArray(c.have[el])) o.have[el] = c.have[el].filter((n, i, a) => Number.isInteger(n) && n >= 1 && n <= 16 && a.indexOf(n) === i);
     for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
   // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
   const keepItem = (k, v) => { try { if (typeof Shramba !== 'undefined') Shramba.keep(k, v); else localStorage.setItem(k, v); } catch (_) { } };
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
-    const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
+    const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
     S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
@@ -81,6 +93,8 @@
     }
     return S;
   }
+  // (the game's colour (its car screen's, tdgp-settings; none: its first, red): an owned car the garage has not saved yet is drawn in it)
+  function S0color() { try { const s = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'), k = s && s.color; if (Number.isInteger(k) && k >= 0 && k < COLORS.length) return k; } catch (_) { } return 0; }
   function S0lang() { try { const s = JSON.parse(localStorage.getItem('tdgp-settings') || 'null'); if (s && s.lang === 'en') return 'en'; } catch (_) { } return 'sl'; }
   let S = null;
   // (a car's parts as the game's contract has them (docs/deli.md): { element: its option 1 .. 16 }; here [tab, place] each)
@@ -97,6 +111,7 @@
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
     d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
     if (!d.cars.pico.own) d.cars.pico.own = true;
+    d.rent = rentFrom(s.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
   }
   // (saved with each car's parts as the game's contract has them: deli; the real profile's in the career, apex-garage only the page's own)
@@ -106,6 +121,8 @@
 
   /* ---------------- the real profile: the career's (its coins, cars, upgrade levels) ---------------- */
   // (the career as saved; none yet: a new one, not started (on: false; the game starts it from here, js/game.js careerNew))
+  // (a car rented for one race (RENT A CAR): one not owned, else none)
+  const rentFrom = (r, d) => { const id = r && typeof r === 'object' ? heirId(r.id) : typeof r === 'string' ? heirId(r) : null; return id && ORDER.includes(id) && !d.cars[id].own ? id : null; };
   function careerRead() {
     let c = null; try { c = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (_) { c = null; }
     return c && typeof c === 'object' && c.v === 1 ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
@@ -127,10 +144,11 @@
     const c = careerRead(), g = c.garage && typeof c.garage === 'object' ? c.garage : {}, gc = g.cars && typeof g.cars === 'object' ? g.cars : {};
     const d = { v: 2, mode: 'game', money: Number.isFinite(c.money) ? Math.max(0, Math.floor(c.money)) : 0, car: CAR0, cars: {}, lang: S0lang(), sound: true, guide: 0, flag: '' };
     const has = new Set((Array.isArray(c.cars) ? c.cars : []).map(heirId)); has.add(CAR0);
-    for (const id of ORDER) { const k = d.cars[id] = carNew(id, has.has(id)); if (gc[id] && typeof gc[id] === 'object') carFrom(k, gc[id]);
+    for (const id of ORDER) { const k = d.cars[id] = carNew(id, has.has(id)); if (gc[id] && typeof gc[id] === 'object') carFrom(k, gc[id]); else if (k.own) k.color = S0color();
       if (!k.own) continue; const want = careerUpg(c, id);
       for (const u of ['motor', 'gume', 'zavore', 'aero']) if (levels(k.parts)[u] !== want[u]) k.parts = levelParts(k.parts, u, want[u]); }
     if (ORDER.includes(heirId(g.car))) d.car = heirId(g.car);
+    d.rent = rentFrom(c.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
   }
   // and back into it: the coins, the cars (the career's order, a new one after them), their levels from their parts, the garage's own of
@@ -140,8 +158,8 @@
     for (const id of ORDER) if (S.cars[id].own && !cars.includes(id)) cars.push(id);
     c.money = Math.max(0, Math.round(S.money)); c.cars = cars; c.upg = {}; for (const id of cars) c.upg[id] = levels(S.cars[id].parts);
     const gc = {}; for (const id of ORDER) { const k = S.cars[id], d = toDeli(k.parts);
-      if (k.own || Object.keys(d).length || k.color !== color0(id) || !k.stripe) gc[id] = { deli: d, color: k.color, stripe: k.stripe, cond: Object.assign({}, k.cond) }; }
-    c.garage = { car: S.car, cars: gc };
+      if (k.own || Object.keys(d).length || k.color !== color0(id) || !k.stripe) gc[id] = { deli: d, color: k.color, stripe: k.stripe, cond: Object.assign({}, k.cond), have: JSON.parse(JSON.stringify(k.have)) }; }
+    c.garage = { car: S.car, cars: gc }; if (S.rent) c.rent = { id: S.rent }; else delete c.rent;
     keepItem(CKEY, JSON.stringify(c));
   }
   const C = () => S.cars[S.car], M = () => model(S.car);
@@ -151,8 +169,11 @@
     for (const el in parts) { const E = EL[el], [t, j] = parts[el]; if (!E || !E.k) continue; if (E.k === 'gume') L.gume = t; else sum[E.k] += opt(el, t, j)[3]; }
     for (const k in sum) L[k] = LV[k].filter(v => sum[k] >= v).length; return L; }
   const worth = (id) => Math.max(20000, PRICE[id] || 48000);
+  // the paint: one price by the car's size (the user's choice 2. and 3. 11. 2026: no tabs of finishes): a kart (under 4 m² of ground)
+  // 600, a truck (4 t and more) 12.000, any other car 3.500
+  const paintPrice = (id) => { const Mm = model(id); return Mm.len * Mm.wid < 4 ? 600 : Mm.mass >= 4000 ? 12000 : 3500; };
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
-  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
+  const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
   // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
   const raceLocked = (c) => { const p = c.parts.aero; return !p || (p[0] < 1 || (p[0] === 1 && p[1] < 2)); };
 
@@ -181,12 +202,41 @@
       '<svg viewBox="0 0 44 44"><path d="M5 30v-6l5-2 5-7h15l7 7 3 2v6z" fill="#7b8594"/><path d="M33 6l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#ffd23f"/></svg>',
       '<svg viewBox="0 0 44 44"><path d="M8 18h21l6-6h3v6l-7 7v8H8z" fill="#4a5160"/><path d="M13 18v-5h9v5" fill="none" stroke="#4a5160" stroke-width="3"/><path d="M22 33c3-4 5-6 5-8a5 5 0 0 0-10 0c0 2 2 4 5 8z" fill="#d9a520"/></svg>',
       '<svg viewBox="0 0 44 44"><path d="M29 6a9 9 0 0 0-8 12L7 32v5h5l14-14a9 9 0 0 0 12-8l-5 2-4-4 2-5z" fill="#2f9e5b"/></svg>'][i],
+    // (the cabinet's drawers: hex the car's colour, for its body-coloured ones)
+    zarometi: (t, j) => { const c = [['#fff1c4', '#f4f6fa', '#f4f6fa', '#fff1c4'], ['#e8f2ff', '#ffd23f', '#5a6170', '#e8f2ff'], ['#cfe3ff', '#6d7686', '#cfe3ff', '#e8f2ff'], ['#bfe0ff', '#6d7686', '#9fd0ff', '#9fd0ff']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="3" y="12" width="38" height="20" rx="6" fill="' + (t === 0 && j === 2 ? '#0e0f12' : '#2b2e35') + '"/>' + [15, 29].map(x => '<circle cx="' + x + '" cy="22" r="6" fill="' + c + '"/>' +
+        (t >= 2 ? '<circle cx="' + x + '" cy="22" r="8" fill="none" stroke="#7fc4ff" stroke-width="1.6"/>' : '')).join('') + (t === 1 && j === 3 ? '<path d="M8 29h28" stroke="#e8f2ff" stroke-width="2"/>' : '') + '</svg>'; },
+    zadnje_luci: (t, j) => { const c = [['#d8261d', '#5a1418', '#e8ebf0', '#d8261d'], ['#d8261d', '#5a1418', '#ff4a3a', '#d8261d'], ['#c41f1a', '#5a1418', '#ff4a3a', '#c41f1a'], ['#ff3a30', '#6a1a1e', '#ff4a3a', '#ff3a30']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="3" y="13" width="38" height="18" rx="4" fill="#1d1f24"/>' + (t === 0 && j === 3 ? '<circle cx="15" cy="22" r="6" fill="' + c + '"/><circle cx="29" cy="22" r="6" fill="' + c + '"/>' : '<rect x="6" y="16" width="32" height="12" rx="2.5" fill="' + c + '"/>') +
+        (j === 3 && t ? '<rect x="7" y="20.5" width="30" height="3" rx="1.5" fill="#ffb3ad"/>' : '') + (t === 0 && j === 2 ? [14, 22, 30].map(x => '<circle cx="' + x + '" cy="22" r="2.5" fill="#d8261d"/>').join('') : '') + '</svg>'; },
+    luc_pod_avtom: (t, j) => '<svg viewBox="0 0 44 44">' + (t === 0 ? '<ellipse cx="22" cy="33" rx="19" ry="4.5" fill="' + ['#47a3ff', '#2fe0d0', '#a35bff', '#ff4a3a'][j] + '"/>' : ['#ff4a3a', '#2fbf5a', '#47a3ff'].map((c, k) => '<ellipse cx="' + (10 + k * 12) + '" cy="33" rx="7.5" ry="4" fill="' + c + '"/>').join('')) +
+      '<path d="M3 28v-5l5-1 5-7h15l7 6 6 2v5z" fill="#4a5160"/><circle cx="12" cy="29" r="4" fill="#1d1f24"/><circle cx="32" cy="29" r="4" fill="#1d1f24"/></svg>',
+    zmigavci: (t, j) => { const chrome = j === 3 && t < 2, lens = [['#ffb02e', '#e8ebf0', '#5a6170', '#ffb02e'], ['#e8ebf0', '#5a6170', '#ffb02e', '#ffb02e'], ['#ffb02e', '#5a6170', '#ffb02e', '#ffb02e'], ['#ffb02e', '#ffb02e', '#ffb02e', '#ffb02e']][t][j];
+      return '<svg viewBox="0 0 44 44"><rect x="4" y="14" width="36" height="16" rx="4" fill="' + (chrome ? '#c8ced8' : '#1d1f24') + '"/><rect x="7" y="17" width="30" height="10" rx="2" fill="' + lens + '"/>' +
+        (t >= 2 ? [0, 1, 2].map(k => '<path d="M' + (13 + k * 7) + ' 18.5l3.5 3.5-3.5 3.5" fill="none" stroke="#fff3c4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>').join('') : '<circle cx="22" cy="22" r="3" fill="#ff8a1a"/>') + '</svg>'; },
+    maska: (t, j, hex) => { const fr = t === 1 ? (j === 3 ? CSS(hex || 0x3b78d8) : '#c8ced8') : t === 3 && (j === 1 || j === 3) ? '#47a3ff' : '#2b2e35', grid = t >= 2 && !(t === 2 && j === 2);
+      const pat = grid ? Array.from({ length: 16 }, (_, k) => '<rect x="' + (9 + (k % 4) * 6.5) + '" y="' + (15 + (k >> 2) * 3.6) + '" width="6.5" height="3.6" fill="' + ((k + (k >> 2)) & 1 ? '#3a3f48' : '#16181c') + '"/>').join('') :
+        t === 0 && j === 1 ? Array.from({ length: 10 }, (_, k) => '<circle cx="' + (12 + (k % 5) * 5 + (k >= 5 ? 2.5 : 0)) + '" cy="' + (k >= 5 ? 25 : 19.5) + '" r="2" fill="#4a5160"/>').join('') :
+        t === 1 && j === 1 ? '<path d="M10 18h24M10 22h24M10 26h24" stroke="#eef1f5" stroke-width="2.2"/>' : '<path d="M9 15l7 14M16 15l7 14M23 15l7 14M30 15l5 10M9 29l7-14M16 29l7-14M23 29l7-14M30 29l5-10" stroke="#6d7686" stroke-width="1.2"/>';
+      return '<svg viewBox="0 0 44 44"><rect x="5" y="11" width="34" height="22" rx="5" fill="' + fr + '"/><rect x="8.5" y="14.5" width="27" height="15" rx="2" fill="#16181c"/>' + pat + '</svg>'; },
+    nalepke: (t, j) => { const k = [['star', 'bolt', 'cheq', 'flame'], ['star', 'flame', 'cheq', 'bolt'], ['flame', 'cheq', 'stripe', 'band'], ['stripe', 'camo', 'band', 'custom']][t][j], sm = t === 0;
+      const M = { star: '<path d="M22 8l4.1 8.6 9.4 1-7 6.4 2 9.3-8.5-4.8-8.5 4.8 2-9.3-7-6.4 9.4-1z" fill="#ffc21a"/>', bolt: '<path d="M26 6L12 25h8.5l-3.5 13 15.5-20H24z" fill="#ffc21a"/>',
+        cheq: Array.from({ length: 12 }, (_, q) => ((q % 4) + (q >> 2)) & 1 ? '<rect x="' + (10 + (q % 4) * 6) + '" y="' + (13 + (q >> 2) * 6) + '" width="6" height="6" fill="#1d1f24"/>' : '').join(''),
+        flame: '<path d="M8 33c3-3 5-7 5-12 3 2 4 5 4 8 2-4 2-9 1-14 5 3 8 9 8 15 2-2 3-5 3-8 3 3 6 7 7 11z" fill="#ff5a1a"/><path d="M14 33c1-2 2-4 2-6 2 2 3 4 3 6 1-2 2-5 2-8 3 2 4 6 4 8z" fill="#ffd23f"/>',
+        stripe: '<path d="M17 6v32M27 6v32" stroke="#d8261d" stroke-width="5"/>', band: '<path d="M6 30l32-16M6 36l32-16" stroke="#ff8a1a" stroke-width="4"/><path d="M6 24l32-16" stroke="#ffc21a" stroke-width="4"/>',
+        camo: '<path d="M8 12c6-3 10 2 15 0s9 2 12 6c-4 3-9 0-13 3s-10 3-14-1z" fill="#5d6b3a"/><path d="M10 30c4-4 9-1 13-3s8 1 11 4c-5 3-9 1-13 2s-8 0-11-3z" fill="#3e4a26"/>',
+        custom: ['#d8261d', '#ffc21a', '#2fbf5a', '#47a3ff'].map((c, q) => '<circle cx="' + (15 + (q & 1) * 14) + '" cy="' + (15 + (q >> 1) * 14) + '" r="5.5" fill="' + c + '"/>').join('') }[k];
+      return '<svg viewBox="0 0 44 44"><rect x="6" y="6" width="32" height="32" rx="3" fill="#eef0f3"/>' + (sm ? '<g transform="translate(6.6 6.6) scale(.7)">' + M + '</g>' : M) + '</svg>'; },
+    celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
+      return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
+        (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
   };
 
   /* ---------------- the cabinet's three cars: YOUR CAR the player's (the one on the table when it is theirs, else the last that was),
      RENT A CAR and FOR SALE two others they can have (not theirs, not only in the full game): the next ones after theirs in the order
      (FOR SALE the first, RENT A CAR the second); none left: no maquette ---------------- */
-  const RENT = 450;   // (a rented car: a race's rent (odlocitve 30. 10.: no service after it))
+  // (a rented car: one race, no service after it (odlocitve 30. 10.); its rent 5 % of the car's price, at least 1.000 (3. 11.))
+  const rentOf = (id) => Math.max(1000, Math.round((PRICE[id] || 0) * 0.05 / 50) * 50);
   let mineId = null;
   function cabinet() {
     if (C().own) mineId = S.car; if (!mineId || !S.cars[mineId] || !S.cars[mineId].own) mineId = ORDER.find(id => S.cars[id].own) || null;
@@ -232,13 +282,17 @@
   /* ---------------- the page's buttons: the money, the car's name, the cars before and after it, the go button ---------------- */
   let thumbs = {}, thumbQ = [];
   function head() {
-    const Mm = M(), c = C(), own = c.own;
+    const Mm = M(), c = C(), own = c.own, rented = S.rent === S.car, cab = cabinet();
     $('g-money').textContent = num(S.money);
     $('g-name').textContent = Mm.name;
-    $('g-sub').textContent = own ? '' : locked(S.car) ? tr('V POLNI IGRI') : eur(PRICE[S.car] || 0);
-    // the go button: choose this car, buy it, or it comes with the full game
-    const go = $('g-go'); go.className = 'g-btn g-btn-go';
-    if (own) { go.textContent = tr('Izberi'); go.dataset.act = 'go'; }
+    $('g-sub').textContent = own ? '' : rented ? tr('NAJET ZA ENO DIRKO') : locked(S.car) ? tr('V POLNI IGRI') : eur(PRICE[S.car] || 0);
+    // the go button: choose this car (the player's, or rented), buy it, or it comes with the full game; the RENT A CAR maquette's car
+    // can be rented for one race too (its own button before it)
+    const go = $('g-go'), rb = $('g-rent'), rentable = !own && !rented && !locked(S.car) && cab[1] === S.car; go.className = 'g-btn g-btn-go';
+    rb.hidden = !rentable; rb.parentElement.classList.toggle('two', rentable);
+    if (rentable) rb.innerHTML = esc(tr('Najemi')) + '<small>' + esc(eur(rentOf(S.car))) + '</small>';   // (two buttons: each its word over its price)
+    if (own || rented) { go.textContent = tr('Izberi'); go.dataset.act = 'go'; }
+    else if (rentable) { go.innerHTML = esc(tr('Kupi')) + '<small>' + esc(eur(PRICE[S.car] || 0)) + '</small>'; go.className += ' buy'; go.dataset.act = 'buy'; }
     else if (locked(S.car)) { go.textContent = tr('V polni igri'); go.className += ' lock'; go.dataset.act = 'locked'; }
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
@@ -246,11 +300,14 @@
     for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : '';
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
     queueThumbs([pv, nx]);
-    $('g-track').disabled = false; flagButton();
+    // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
+    const tb = $('g-track');
+    if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
+    else { tb.disabled = true; tb.classList.remove('flag'); tb.classList.add('not'); tb.dataset.flag = '-'; tb.textContent = tr('Najprej kupi ali najemi avto'); tb.removeAttribute('aria-label'); tb.title = ''; }
     // the cabinet: the three cars' maquettes, the lamps over the one on the table (none: another car), the one for sale locked, the
     // tags' prices (the rent, the car's price)
-    const cab = cabinet(), on = cab.indexOf(S.car);
-    G.front({ cars: cab.map(id => id && spec(id)), lit: on >= 0 ? on : 3, lock: [false, false, !!cab[2]], price: [cab[1] ? eur(RENT) : '', cab[2] ? eur(PRICE[cab[2]] || 0) : ''] });
+    const on = cab.indexOf(S.car);
+    G.front({ cars: cab.map(id => id && spec(id)), lit: on >= 0 ? on : 3, lock: [false, false, !!cab[2]], price: [cab[1] ? eur(rentOf(cab[1])) : '', cab[2] ? eur(PRICE[cab[2]] || 0) : ''] });
   }
   function render() { head(); if (menu) drawMenu(); }
 
@@ -270,16 +327,20 @@
      the same (the service: its four as the tiles, no tabs; the paint: the colour of the circle tapped, its four kinds of work) ---------------- */
   let menu = null;   // { el, tab, sel: [t, j], key: the tapped thing, color (the paint's) }
   const tabRange = (el, t) => { const o = EL[el].c[t][1].map((q, j) => price(el, t, j)); return num(Math.min(...o)) + '–' + eur(Math.max(...o)); };   // (850–1.400 🪙 / 850–1,400 🪙)
-  // (the things on the screen of an element's menu: the regal's parts with its options, the maquettes for the aero kit, the circles)
-  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
-  function keyOfOpt(el, t, j) {
-    for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; } return null; }
+  // (the things on the screen of an element's menu: the regal's parts with its options, its drawer, the circles)
+  function keysOf(el) { return G.items.filter(it => (it.kind !== 'car') && ((it.name && sold(it.name) && REGAL[it.name][0] === el) || (it.kind === 'drw' && it.el === el) || (el === 'barva' && it.kind === 'col') || (el === 'servis' && it.kind === 'service'))).map(it => it.key); }
+  // (an option's thing: its part on the regal, else its drawer (from: the menu's tapped thing, kept when it holds the option too))
+  const inDrawer = (el, t, j) => !!DRAWER[el] && DRAWER[el].some(n => { const o = findOpt(el, n); return !!o && o[0] === t && o[1] === j; });
+  function keyOfOpt(el, t, j, from) {
+    if (from && from.startsWith('drw:') && inDrawer(el, t, j)) return from;
+    for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; }
+    return inDrawer(el, t, j) ? 'drw:' + el : null; }
   function openMenu(m) {
-    const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : tr('Najprej kupi avto.'), true); return; }
+    const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : S.rent === S.car ? tr('Najet avto vozi tak, kot je.') : tr('Najprej kupi avto.'), true); return; }
     menu = m; if (!menu.sel) menu.sel = has(c, m.el) && m.el !== 'barva' ? has(c, m.el).slice() : m.el === 'servis' ? [0, 3] : [0, 0]; if (menu.tab == null) menu.tab = menu.sel[0];
     $('g-low').classList.add('hide'); drawMenu(); requestAnimationFrame(() => { if (menu) $('g-menu').classList.add('on'); });
   }
-  function closeMenu() { if (!menu) return; menu = null; $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); }
+  function closeMenu() { if (!menu) return; menu = null; $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -289,29 +350,38 @@
         GarageShop.SERVICE.map((q, i) => { const p = i < 3 ? ps[i] : all, done = !p; return '<button class="g-tl' + (m.sel[1] === i ? ' sel' : '') + (done ? ' fit' : '') + '" data-tile="0,' + i + '"><span class="pi">' + ICON.servis(i) + '</span><div><b>' + esc(L2(q[0])) + '</b><small>' + esc(i < 3 ? tr('Stanje {0} %', Math.round(c.cond[SRV[i].id] * 100)) : L2(q[1])) + '</small><i>' + (done ? '✓' : eur(p)) + '</i></div></button>'; }).join('') + '</div>';
       const p = m.sel[1] < 3 ? ps[m.sel[1]] : all; ok = !p; buy = ok ? tr('KOT NOV ✓') : tr('SERVIS · {0}', eur(p)); can = !ok;
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
+    } else if (el === 'barva') {   // (the eight colours as the circles round the ring, one price: the car's size)
+      const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car);
+      html += '<div class="g-mh"><h3>' + esc(L2(EL.barva.n)) + '</h3><span>' + esc(tr(COLORS[cur][1])) + '</span></div><div class="g-mg g-mc">' + COLORS.map((q, i) => '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + ICON.barva(0, 0, q[0]) + '</span></button>').join('') + '</div>';
+      ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : tr('KUPI IN NAMESTI · {0}', eur(p));
+      if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
     } else {
       const E = EL[el], t = m.tab;
       html += '<div class="g-mt">' + E.c.map((q, i) => '<button class="' + (i === t ? 'sel' : '') + '" data-tab="' + i + '"><b>' + esc(L2(q[0])) + '</b><small>' + tabRange(el, i) + '</small></button>').join('') + '</div>';
       const col = el === 'barva' ? COLORS[m.color != null ? m.color : c.color] : null;
       html += '<div class="g-mh"><h3>' + esc(L2(E.n)) + '</h3>' + (col ? '<span>' + esc(tr(col[1])) + '</span>' : '') + '</div><div class="g-mg">' + E.c[t][1].map((o, j) => {
         const fit = el === 'barva' ? (c.parts.barva ? c.parts.barva[0] === t && c.parts.barva[1] === j : false) && m.color === c.color : !!has(c, el) && has(c, el)[0] === t && has(c, el)[1] === j;
-        const lock = el === 'aero' && t >= 2 && raceLocked(c), pr = price(el, t, j), promo = pr !== o[1];
-        return '<button class="g-tl' + (m.sel[0] === t && m.sel[1] === j ? ' sel' : '') + (fit ? ' fit' : '') + (lock ? ' lock' : '') + '" data-tile="' + t + ',' + j + '"><span class="pi">' + ICON[el](t, j, col && col[0]) + '</span><div><b>' + esc(L2(o[0])) + '</b><small>' + esc(lock ? tr('🔒 najprej športni paket') : L2(o[2])) + '</small><i>' +
-          (promo ? '<s>' + eur(o[1]) + '</s><em>' + eur(pr) + '</em>' : eur(pr)) + '</i></div></button>'; }).join('') + '</div>';
+        const lock = el === 'aero' && t >= 2 && raceLocked(c), pr = price(el, t, j), promo = pr !== o[1], mine = !fit && haveIt(c, el, [t, j]);
+        return '<button class="g-tl' + (m.sel[0] === t && m.sel[1] === j ? ' sel' : '') + (fit ? ' fit' : '') + (lock ? ' lock' : '') + '" data-tile="' + t + ',' + j + '"><span class="pi">' + ICON[el](t, j, col ? col[0] : COLORS[c.color] && COLORS[c.color][0]) + '</span><div><b>' + esc(L2(o[0])) + '</b><small>' + esc(lock ? tr('🔒 najprej športni paket') : L2(o[2])) + '</small><i>' +
+          (mine ? '<em class="own">' + esc(tr('tvoj')) + '</em>' : promo ? '<s>' + eur(o[1]) + '</s><em>' + eur(pr) + '</em>' : eur(pr)) + '</i></div></button>'; }).join('') + '</div>';
       const [st, sj] = m.sel, fitSel = el === 'barva' ? !!c.parts.barva && c.parts.barva[0] === st && c.parts.barva[1] === sj && m.color === c.color : !!has(c, el) && has(c, el)[0] === st && has(c, el)[1] === sj;
-      const lockSel = el === 'aero' && st >= 2 && raceLocked(c);
-      ok = fitSel; can = !fitSel && !lockSel; buy = fitSel ? tr('NAMEŠČENO ✓') : lockSel ? tr('🔒 ZAKLENJENO') : tr('KUPI IN NAMESTI · {0}', eur(price(el, st, sj)));
-      if (!fitSel && !lockSel && price(el, st, sj) > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
+      const lockSel = el === 'aero' && st >= 2 && raceLocked(c), mineSel = haveIt(c, el, [st, sj]);
+      ok = fitSel; can = !fitSel && !lockSel; buy = fitSel ? tr('NAMEŠČENO ✓') : lockSel ? tr('🔒 ZAKLENJENO') : mineSel ? tr('NAMESTI') : tr('KUPI IN NAMESTI · {0}', eur(price(el, st, sj)));
+      if (!fitSel && !lockSel && !mineSel && price(el, st, sj) > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
       if (el !== 'barva' && c.parts[el] && !isStock(el, c.parts[el])) html += '<div class="g-mx"><button data-mact="stock">↺ ' + esc(tr('SERIJSKO')) + '</button></div>';
     }
     html += '<div class="g-mb"><button class="back" data-mact="close">‹ ' + esc(tr('NAZAJ')) + '</button><button class="buy' + (ok ? ' ok' : '') + '" data-mact="buy"' + (can ? '' : ' disabled') + '>' + esc(buy) + (note ? '<small>' + esc(note) + '</small>' : '') + '</button></div>';
     box.innerHTML = html; void en;
     // the marks: the thing of the chosen tile blue (else the one tapped), the others of this menu orange; the new part seen on the car
-    const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1])) || m.key;
+    const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1], m.key)) || m.key;
     G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
+    G.drawer(kb && kb.startsWith('drw:') ? el : null);   // (the chosen part's drawer out)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
-    // the menu at the bottom when at the top it would cover what was tapped
-    box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330; box.classList.toggle('bot', !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
+    // the menu at the bottom when at the top it would cover what was tapped; a drawer: the menu stays at the top, the picture lowered
+    // till the drawer is under it (when it fits on the screen; measured as the picture stands without it)
+    box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330, dw = !!kb && kb.startsWith('drw:') && G.drawerBox(kb.slice(4));
+    let drop = 0; if (dw) { const need = Math.ceil(top + h + 8 - dw.y); if (need > 0 && dw.y + dw.h + need <= $('g-stage').clientHeight - 4) drop = need; }
+    G.drop(drop); box.classList.toggle('bot', !dw && !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
   }
   function tile(t, j) { if (!menu) return; menu.sel = [t, j]; drawMenu(); }
   // buying the chosen option: paid, fitted, the menu closed; the car's upgrade played when one of its four levels changes, else a word
@@ -320,17 +390,24 @@
     const m = menu, c = C(); if (!m || !c.own) return; const el = m.el;
     if (el === 'servis') { const ids = m.sel[1] === 3 ? ['clean', 'body', 'engine'] : [SRV[m.sel[1]].id], p = svcCost(c, ids).p; if (S.money < p) { pay(p); return; } closeMenu(); doService(ids); return; }   // (too little money: the menu stays, as a part's)
     const [t, j] = m.sel; if (el === 'aero' && t >= 2 && raceLocked(c)) return;
-    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = price('barva', t, j); if (S.money < p) { pay(p); return; } closeMenu(); doPaint(col, [t, j]); return; }
-    const p = price(el, t, j); if (!pay(p)) { drawMenu(); return; }
-    closeMenu(); fit(el, [t, j]);
+    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); doPaint(col, true); return; }
+    const mine = haveIt(c, el, [t, j]), p = mine ? 0 : price(el, t, j); if (!pay(p)) { drawMenu(); return; }   // (a part the car has: fitted again free)
+    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); fit(el, [t, j], from);
   }
-  function fit(el, v) {
-    const c = C(), L0 = levels(c.parts); if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
+  function fit(el, v, from) {
+    const c = C(), L0 = levels(c.parts), was = c.parts[el]; if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
     const name = L2(EL[el].n) + ' · ' + (v ? L2(opt(el, v[0], v[1])[0]) : tr('serijsko'));
     lastFit = name;
-    if (k && L1[k] !== L0[k]) G.upgrade(k, L1[k]); else { G.sfx('ping'); chip(tr('KONČANO'), esc(name)); lastFit = null; }
+    // (a tyre or a rim: an arm puts it on, from the regal when it stands there, else off the trolley; KONČANO when it is on)
+    if (el === 'gume' || el === 'platisca') { const key = v ? keyOfOpt(el, v[0], v[1]) : null; G.fit(el, spec(S.car), { src: key && key.startsWith('rgl:') ? key : null }); return; }
+    // (the other parts, sklop 8: an arm puts it on (off the regal, out of its drawer, else off the trolley) and gives the old one back;
+    // a level changed: the car with the old levels, its upgrade's show at the end (its parts, the chip MOČ), KONČANO else)
+    const key = v ? keyOfOpt(el, v[0], v[1], from) : null, lvc = !!k && L1[k] !== L0[k], sp = spec(S.car), real = (w) => w && !isStock(el, w) ? w : null; if (lvc) sp.upg = L0;
+    G.fitPart(el, sp, { src: key, from: real(was) ? optN(was) : 0, to: real(v) ? optN(v) : 0, fromK: slotOf(el, real(was)), toK: slotOf(el, real(v)), up: lvc ? [k, L1[k]] : null });
   }
   let lastFit = null;
+  // (an option's place among its drawer's four, -1: not in it)
+  const slotOf = (el, v) => !v || !DRAWER[el] ? -1 : DRAWER[el].findIndex(n => { const o = findOpt(el, n); return !!o && o[0] === v[0] && o[1] === v[1]; });
   function stock() { if (!menu) return; const el = menu.el; closeMenu(); fit(el, null); }
 
   /* ---------------- what the buttons and the taps do ---------------- */
@@ -374,21 +451,30 @@
     save(); render();
     G.service(list.map(s => s.id), { clean: 1, body: 1, engine: 1 });
   }
-  function doPaint(col, kind) {
-    const c = C(); if (!c.own) return;
-    if (col === c.color && kind && c.parts.barva && c.parts.barva[0] === kind[0] && c.parts.barva[1] === kind[1]) return;
-    const p = kind ? price('barva', kind[0], kind[1]) : 0;
-    if (!pay(p)) return;
-    c.color = col; if (kind) c.parts.barva = kind; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
+  // (paid: the paint's price, paintPrice; else free, as the colour the game brings)
+  function doPaint(col, paid) {
+    const c = C(); if (!c.own || col === c.color) return;
+    if (!pay(paid ? paintPrice(S.car) : 0)) return;
+    c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
     G.paint(COLORS[col][0], c.stripe);
   }
   function buy() {
     const id = S.car, p = PRICE[id] || 0;
-    if (!pay(p)) return;
-    S.cars[id].own = true; save(); render(); G.sfx('ping');
+    if (S.cars[id].own || !pay(p)) return;
+    S.cars[id].own = true; if (S.rent === id) S.rent = null; save(); render(); G.sfx('ping');
     chip(tr('NOV AVTO V GARAŽI'), esc(M().name));
   }
-  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a maquette (its car onto the table), the SERVICE button,
+  // RENT A CAR: the car for one race (its rent paid now; another rented before is given back), driven as it is, no service after
+  // (one car rented at a time: another one rented before the race gives the first back, its rent paid back)
+  function rent() {
+    const id = S.car, old = S.rent && S.rent !== id ? S.rent : null; if (S.cars[id].own || S.rent === id || locked(id)) return;
+    const net = rentOf(id) - (old ? rentOf(old) : 0); if (net > 0 && !pay(net)) return;
+    if (net < 0) { const from = S.money; S.money -= net; countMoney(from, S.money); }
+    S.rent = id; save(); render(); G.sfx('ping'); if (old) toast(tr('{0} je vrnjen, najemnina povrnjena.', model(old).name));
+    chip(tr('NAJET ZA ENO DIRKO'), esc(M().name));
+  }
+  // a tap on the picture: a part of the regal (its element's menu, its option chosen), a drawer of the cabinet (its element's menu, it comes
+  // out), a maquette (its car onto the table), the SERVICE button,
   // a colour circle (the paint in that colour), the lift's plate (the car up or down), the car (its wheels: the tyres; its body: the
   // aero kits); elsewhere: the menu closed
   function onTap(x, y) {
@@ -398,7 +484,8 @@
     let m = null;
     if (h.kind === 'mq') { const id = cabinet()[h.i]; closeMenu(); if (id) pickCar(id); return; }   // (a maquette: its car onto the table)
     if (h.kind === 'service') m = { el: 'servis', key: h.key };
-    else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: C().parts.barva ? C().parts.barva.slice() : [0, 0] };
+    else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
+    else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
     else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
@@ -412,10 +499,11 @@
       case 'prev': step(-1); break;
       case 'next': step(1); break;
       case 'buy': buy(); break;
+      case 'rent': rent(); break;
       case 'locked': toast(tr('{0} je na voljo v polni igri.', M().name)); break;
       case 'go': { const go = $('g-go'); go.classList.add('done'); go.textContent = tr('Izbran ✓'); toast(tr('{0} je izbran za naslednjo dirko.', M().name)); setTimeout(() => head(), 1600); break; }
       case 'back': location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
-      case 'track': location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
+      case 'track': if (!C().own && S.rent !== S.car) break; location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
@@ -426,10 +514,11 @@
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
 
   /* ---------------- the guide on the first visit: what can be tapped, one thing at a time ---------------- */
-  const GUIDE_AT = ['rgl:TURBO', 'mq0,mq1,mq2', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: things in the picture (one ring round them), or the page's elements, each its own ring)
+  const GUIDE_AT = ['rgl:TURBO', 'mq0,mq1,mq2', 'drw:zarometi,drw:zavore', 'service', 'col0', '#g-prev,#g-next'];   // (what each step rings: things in the picture (one ring round them), or the page's elements, each its own ring)
   const GUIDE = [
     ['Deli na regalu', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.'],
     ['Avti na omarici', 'Na omarici so tvoj avto, avto za najem in avto naprodaj. Tapni maketo in avto se pripelje na ploščo.'],
+    ['Predali', 'V predalih omarice so luči, maske, nalepke, čeljusti in zavore. Tapni predal in izvleče se.'],
     ['Servis', 'Rdeči gumb SERVICE: pranje, karoserija, motor in olje.'],
     ['Barva', 'Tapni barvni krog: avto prebarvamo v stekleni komori.'],
     ['Drugi avti', 'Spodnja gumba pripeljeta prejšnji ali naslednji avto.'],
@@ -460,6 +549,7 @@
       if (t.dataset.act) return onAct(t.dataset.act);
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
+      if (t.dataset.col) { G.sound(S.sound); if (menu) { menu.color = +t.dataset.col; drawMenu(); } return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); return; }
       if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
@@ -520,7 +610,7 @@
     G.show(spec(S.car));
     setLang();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

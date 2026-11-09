@@ -8,10 +8,10 @@
 // Foto from it and back.
 // Posnetek do sem (sklop 4 of docs/orodje-za-napake.md; Bathurst at 25 s by the quick entry, the pause): the pause's button, the race so
 // far (its plate, the timeline ending at ZDAJ, Nazaj v dirko for Končaj), the race standing; the timeline (a tap, a drag), 5 s back and on, a
-// frame back and on, the times; the buttons (with Označi, js/napake.js) in one row on a phone on its side, in two upright; the key I back: every car exactly as the race
+// frame back and on, the times; the spectators on its timeline (back and on again: as they were, paused: still); the buttons (with Označi, js/napake.js) in one row on a phone on its side, in two upright; the key I back: every car exactly as the race
 // left it, 3 · 2 · 1, then the race goes on; I in the race: the replay at once; the pause in the count: the pause screen.
 //   node tests/browser/replay.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('replay');
 const srv = await serve();
@@ -23,8 +23,7 @@ try {
     const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera, track: 'jezero' }, viewport);
     await page.evaluate(() => { window.__rf = 0; const o = Render.frame; Render.frame = function () { window.__rf++; return o.apply(this, arguments); }; });
     await startTrack(page, 'jezero');
-    await page.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); });
-    await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 120000 });
+    await driveToResults(page, { timeout: 120000 });   // (stuck against the barrier, put back on the road: lib.mjs)
     return { page, errors, act: (a) => page.evaluate((a) => window.__game.onAction(a), a),
       frames: (n) => page.evaluate((n) => new Promise(res => { const f0 = window.__rf, chk = () => window.__rf - f0 >= n ? res(window.__rf - f0) : setTimeout(chk, 20); chk(); }), n),
       // the replay as it is drawn now; the camera against the followed car: along its heading (behind: below 0), across it, above it, how
@@ -176,6 +175,25 @@ try {
     T.check('5 s on past now: the replay ends at ZDAJ', Math.abs(end.rp.t - end.rp.t1) < 1e-6 && end.now === end.len, JSON.stringify({ t: end.rp.t, t1: end.rp.t1, now: end.now, len: end.len }));
     const moved = await cars();
     T.check('meanwhile the replay poses the race\'s own cars (they are not where the race left them)', moved.cars.some((c, k) => c !== before.cars[k]) && moved.time === before.time);
+    // the spectators on the replay's timeline (the user, 4. 11. 2026: »jaz vrtim posnetek nazaj, gledalci pa se normalno premikajo naprej«): 5 s back
+    // at a time to the start, then 5 s on at a time to the end again: every scene (js/world-ljudje.js: ready for the car, out at the fence, back)
+    // as it was at the same time the other way, some scene through its round; standing, nobody moves and the crowd's clock is the replay's
+    const ppl = () => Q.evaluate(() => { const W = Render.world, PW = W.peopleW, P = window.__game.replay, f = (v) => Math.round(v * 100) / 100;
+      const hash = (a) => { let h = 0; for (let i = 0; i < a.length; i += 5) h = (h * 31 + Math.round(a[i] * 1000)) | 0; return h; };
+      return { t: P.t, crowd: W.dyn.crowd ? W.dyn.crowd.uTime.value : null, st: PW.scenes.map(Sc => [Sc.arm ? 1 : 0, f(Sc.al), f(Sc.pass), f(Sc.back)].join(' ')),
+        on: PW.scenes.filter(Sc => Sc.on).length, fig: PW.scenes.filter(Sc => Sc.on).map(Sc => Sc.name + ':' + hash(Sc.ppl.geometry.attributes.position.array)).join(' ') }; });
+    const down = [await ppl()];
+    while (down[down.length - 1].t - 5 >= end.rp.t0 && down.length < 9) { await qa('rp-b5'); await qf(2); down.push(await ppl()); }
+    const up = [];
+    for (let k = down.length - 2; k >= 0; k--) { await qa('rp-f5'); await qf(2); up.push(await ppl()); }
+    const pairs = up.map((u, j) => [u, down[down.length - 2 - j]]), sameSt = pairs.filter(([u, d]) => Math.abs(u.t - d.t) < 1e-6 && u.st.join('|') === d.st.join('|')).length;
+    const kinds = new Set(down.map(d => d.st.join('|'))).size;
+    T.check('the spectators follow the replay: 5 s back at a time to the start and on again, every scene as it was at the same time (where the car was then), some scene through its round on the way',
+      down.length >= 4 && sameSt === pairs.length && kinds >= 2 && down[0].st.length > 0, JSON.stringify({ n: down.length, same: sameSt, of: pairs.length, kinds, scenes: down[0].st.length,
+        bad: pairs.filter(([u, d]) => u.st.join('|') !== d.st.join('|')).slice(0, 2).map(([u, d]) => ({ t: [u.t, d.t], up: u.st, down: d.st })) }));
+    const z0 = await ppl(); await qf(6); const z1 = await ppl();
+    T.check('standing (the replay paused): the people by the road stand still, the crowd\'s clock the replay\'s time',
+      z0.fig === z1.fig && z0.crowd != null && z0.crowd === z1.crowd && Math.abs(z0.crowd - z0.t % 1000) < 1e-3, JSON.stringify({ t: z0.t, crowd: [z0.crowd, z1.crowd], on: z0.on, fig: z0.fig === z1.fig ? 'same' : [z0.fig, z1.fig] }));
     // upright: the buttons in two rows
     await Q.setViewportSize({ width: 360, height: 640 }); await qa('rp-b5'); await qf(3);
     const l1 = await lay();

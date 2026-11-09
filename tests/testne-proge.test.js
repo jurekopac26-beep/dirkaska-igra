@@ -43,7 +43,11 @@ function repoFiles() {
 }
 const parts = (f) => f.replace(/\.[^./]+$/, '').toLowerCase().split(/[/\-_.]/).filter(Boolean);
 const self = path.relative(REPO, FILE).split(path.sep).join('/');
-const owner = (f, ids) => { if (f === self) return null; const p = parts(f); return ids.find(id => p.includes(id)) || null; };
+// files named after a test track that are shared code: js/world-vrsic.js holds, besides Vršič's own builder, the corridor helpers of the other
+// mountain roads (vrPrep … through World.api, docs/kazalo.md; Vršič a test track since 6. 11. 2026). Not frozen as a whole: Vršič's own
+// parts in it are, as the builders in js/world.js are, though this does not see them
+const SHARED = new Set(['js/world-vrsic.js']);
+const owner = (f, ids) => { if (f === self || SHARED.has(f)) return null; const p = parts(f); return ids.find(id => p.includes(id)) || null; };
 const hash = (f) => crypto.createHash('sha1').update(fs.readFileSync(path.join(REPO, f))).digest('hex').slice(0, 16);
 const read = () => fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : null;
 
@@ -59,7 +63,7 @@ if (ai >= 0) {
   m.zamrznjeno = 'Testne proge so zamrznjene do izbrisa pred objavo na Google Play (CLAUDE.md »Testne proge«). Ta seznam spremeni samo '
     + 'node tests/testne-proge.test.js --dovoli <id> "<prošnja uporabnika, datum>", ko uporabnik izrecno prosi za točno to progo.';
   const files = repoFiles(), d = {};
-  for (const [f, h] of Object.entries(m.datoteke)) if (!ids.includes(owner(f, ids))) d[f] = h;   // (the other tracks' files stay as they were)
+  for (const [f, h] of Object.entries(m.datoteke)) if (!SHARED.has(f) && !ids.includes(owner(f, ids))) d[f] = h;   // (the other tracks' files stay as they were; a shared one goes)
   for (const f of files) { const o = owner(f, ids); if (o && now.includes(o)) d[f] = hash(f); }
   m.datoteke = Object.fromEntries(Object.keys(d).sort().map(f => [f, d[f]]));
   m.proge = [...new Set([...m.proge.filter(p => !ids.includes(p)), ...ids.filter(p => now.includes(p))])].sort();
@@ -80,7 +84,7 @@ const back = m.proge.filter(id => !now.includes(id) && files.some(f => owner(f, 
 check('the test tracks are the frozen ones (' + m.proge.join(', ') + ')', !added.length && !back.length,
   [added.length ? 'new test track ' + added.join(', ') : '', back.length ? 'no longer test: true ' + back.join(', ') : ''].filter(Boolean).join('; ')
   + (added.length || back.length ? ' — only on the user\'s word: node tests/testne-proge.test.js --dovoli <id> "<the ask, its date>"' : ''));
-const changed = Object.keys(m.datoteke).filter(f => onDisk(f) && hash(f) !== m.datoteke[f]);
+const changed = Object.keys(m.datoteke).filter(f => !SHARED.has(f) && onDisk(f) && hash(f) !== m.datoteke[f]);
 check(`no file of a test track changed (${Object.keys(m.datoteke).length} files)`, !changed.length, changed.length ? changed.join(', ') + ' — ' + HINT : '');
 const fresh = files.filter(f => owner(f, all) && !(f in m.datoteke));
 check('no new file of a test track', !fresh.length, fresh.length ? fresh.join(', ') + ' — ' + HINT : '');

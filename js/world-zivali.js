@@ -624,7 +624,8 @@
 
   /* ---------------- the woods (the instanced trees of the world, from o.cull) ---------------- */
   const HCELL = 12;
-  function woods(o) {
+  function woods(o) { const g = woodsGen(o, null); let r; do r = g.next(); while (!r.done); return r.value; }
+  function* woodsGen(o, late) {   // (in slices when late is given: js/sfx-okolje.js, while the cars wait on the grid)
     const trees = new Map(), m4 = new THREE.Matrix4(), hOf = new Map(), w4 = new THREE.Matrix4(); let n = 0;
     // the instanced plants: those on the vegetation list (o.cull: IChunks), and any other instanced mesh whose shape is mostly green (a world's
     // own forest: Ouninpohja's spruces, Nikko's broadleaves), not the crowds' figures nor the car parks' cars
@@ -641,9 +642,11 @@
         im.getMatrixAt(k, m4); w4.multiplyMatrices(im.matrixWorld, m4); const sy = Math.hypot(el[4], el[5], el[6]); if (h0 * sy < 3.2) continue;   // (trees: not bushes, tufts or stones)
         const x = el[12], z = el[14], key = Math.floor(x / HCELL) + ',' + Math.floor(z / HCELL);
         let L = trees.get(key); if (!L) trees.set(key, L = []); L.push(x, z, k, im); n++;
+        if (late && (k & 1023) === 1023 && late()) yield;
       }
+      if (late && late()) yield;
     }
-    return { trees, n };
+    return { trees, n, cell: HCELL };
   }
   // the trees within r of (x, z): their count and the nearest's distance (fn: called for each, e.g. to take it out)
   function near(W, x, z, r, fn) {
@@ -737,7 +740,7 @@
     // after the start, its side, metres beyond the barrier: not searched)
     medvode: [{ kind: 'pig', n: 7, m: 2940, side: 1, b: 7.5, things: [{ t: 'pigsty', a: 0, b: 0 }], pond: { a: 1.4, b: 0.3, r: 1.5, mud: true }, tight: 0.42, with: ['hen', 'herd', 6], withAt: [-7.0, 2.0], room: 8 },   // (pigs in their pen round a mud wallow, its shed; hens outside it)
       { kind: 'stork', n: 0, things: [{ t: 'storkNest', a: 2.6, b: 3.2, fly: ['stork', 0.18, 6.62, 0.05, 1, 0.5] }, { t: 'logPile', a: -4.6, b: 3.6, ry: 1.3 }], room: 8 }],   // (one stork on its nest on its pole; a pile of logs)
-    cpalace: { kind: 'duck', n: 7, m: 1990, side: 1, b: 4, float: 11.7, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on the park's lake by the road, their duck house: the user, »race postavi v že narejeno vodo«; float: the water's level, they float on it)
+    cpalace: { kind: 'duck', n: 7, m: 1990, side: 1, b: 8, float: 10.66, with: ['swan', 'pair'], withAt: [1.6, 1.2], things: [{ t: 'duckHouse', a: -1.8, b: 1.6, ry: 0.5 }], tight: 0.45 },   // (ducks and two swans on the park's lake by the road, their duck house: the user, »race postavi v že narejeno vodo«; float: the water's level, they float on it; js/world-cpalace.js cpPrep lowers it under the road, the water from ~4.5 m past the barrier)
     greatalpine: { kind: 'koala', n: 1, at: [-1.2, -0.6], things: [{ t: 'eucalyptus', a: 0.5, b: 1.6, on: [['koala', 0, 2.56, 0.07, 1.4, 0]] }, { t: 'eucalyptus', a: 4.6, b: 3.6, ry: 2.2, on: [['koala', 0, 2.56, 0.07, 1.3, 2.4]] }, { t: 'waterTank', a: -7.0, b: 5.0 }], with: ['emu', 'pair'], withAt: [-4.5, 1.5] },   // (koalas: two in the gum trees' forks, one come down to the ground; two emus)
   };
   function pond(g, gH, x, z, r, R, mud) {   // a pool on the ground (it follows it: the scene's spot is near flat), a muddy rim round it; mud: a wallow
@@ -757,7 +760,7 @@
     const Z = ZIV[def.id]; if (!Z || (Z.nizka === false && World.api.LOD.tier === 0)) return null;
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
-    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
+    const W = World.woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
     const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, fly: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null, scenes: [] }, fly = [];   // (fly: the bird that flies off, apart from the live ones: no soft shadow of its own)
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
@@ -907,5 +910,7 @@
     o.lifeStats = stats; return stats;
   };
   World.lifeTable = ZIV;   // (for the tests and the docs)
+  World.woods = (o) => o.woods || (o.woods = woods(o));   // (the woods once per world: World.life's glades cut from it, and the forest of the ambient sounds, js/sfx-okolje.js)
+  World.woodsGen = function* (o, late) { if (!o.woods) { const W = yield* woodsGen(o, late); if (!o.woods) o.woods = W; } return o.woods; };   // (the same, in slices)
   World.lifeSoc = SOC; World.lifeScenes = SCENE;
 })();

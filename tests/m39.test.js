@@ -17,7 +17,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('39'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'monterey'), T = new Core.Track(TD);
-check('39: on Monterey, a real track', D.track === 'monterey' && !TD.test);
+check('39: on Monterey (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'monterey' && !!TD);
 const o = D.opts(D);
 check('its race: alone, one lap, the off-roader slow with soft brakes (a copy: the model unchanged), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'medved' && o.playerModel.vLim === K.VMAX && o.playerModel.brakeK === K.BRK && Core.MODELS.find(m => m.id === 'medved').brakeK > K.BRK * 2, JSON.stringify({ vLim: o.playerModel.vLim, brakeK: o.playerModel.brakeK }));
 

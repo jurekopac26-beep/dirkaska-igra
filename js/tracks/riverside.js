@@ -29,7 +29,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Riverside',
     grassNat: 1, bbClassic: 1,
     zivali: { a: ['coyote', 'hare', 'horse'], t: ['windpump', 'waterTank', 'picnic'], open: true },
-    id: 'riverside', name: 'Riverside, ZDA', theme: 'riverside', laps: 2, halfWidth: 6,
+    id: 'riverside', test: true, name: 'Riverside, ZDA', theme: 'riverside', laps: 2, halfWidth: 6,
     desc: 'Zgodovinska proga v suhem gričevju pri Riversidu v Kaliforniji, v pravem merilu in v dolgi postavitvi iz leta 1960 (5,3 km): hitri desni 1. zavoj, esi navkreber, tri lasnice, dolga zadnja ravnina navzdol in dolgi desni 9. zavoj. Boksi za nasipom levo ob ciljni ravnini, bale sena, prah in gore v daljavi. Podatki: topografska karta USGS 1967, USGS 3DEP, © OpenStreetMap (ODbL).',
     en: { name: 'Riverside, USA', desc: 'A historic circuit in the dry hills near Riverside in California, at full scale and in its long layout of 1960 (5.3 km): a fast right at Turn 1, the esses up the hill, three hairpins, the long back straight down the hill and the long right of Turn 9. The pits behind an earth bank left of the main straight, hay bales, dust and mountains on the horizon. Data: USGS topographic map of 1967, USGS 3DEP, © OpenStreetMap (ODbL).' },
     start: [0, 0], runoff: 1.1, inner: 5, side: 7.5, gradeForce: true, elevSmooth: 12, realKm: 5.271, noCurbs: true, offSurface: 'gravel',

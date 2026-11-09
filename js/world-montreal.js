@@ -220,6 +220,7 @@
     C.aMat = aMat; C.lMat = lMat;
     const kerb = [new Uint8Array(N), new Uint8Array(N)];
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) if (side * k > 0 || Math.abs(k) > 1 / 60) kerb[side > 0 ? 1 : 0][i] = 1; }
+    K.pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
     const shade = (i, o) => { const rl = T.rl[i]; let k = (0.84 - (0.15 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * (0.96 + 0.06 * Math.sin(i * 0.013)); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
@@ -264,7 +265,7 @@
     for (const c of T.corners) { if (c.sev < 3) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 8; k <= i1c + 12; k++) { const ii = ((k % N) + N) % N, bar = si ? T.br[ii] : T.bl[ii]; if (bar > T.w + 6 && !C.jm[si][ii]) tyreOn[si][ii] = 1; } }
     const kindAt = (i, side) => {   // -1 none (the pit lane's way in and out), 1 concrete, 2 tyres
-      if (side < 0 && C.def.pit) { const p = T.pitAt(i * ds); if (p && p.gap) return -1; }
+      if (side < 0 && C.def.pit) { if (K.pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p && p.gap) return -1; }   // (pitOpen: the deceleration and acceleration lanes too)
       return tyreOn[side2(side)][i] ? 2 : 1;
     };
     C.wallKind = kindAt;
@@ -358,6 +359,7 @@
       else if (pi.t > 0.05) quad(gl, s0, s1, oi + 3.5, Math.max(oi + 3.6, PB[2] * pi.t), Math.max(oj + 3.6, PB[2] * pj.t), oj + 3.5, 0.02, one, true);   // (the way in and out: asphalt out to the building line)
       if (q % 6 === 0) { const p = atSf(s0, sg * (oi + 2)); exclPush(p[0], p[1], 9.5); }   // (no trees in the lane, on its strip or apron)
     }
+    K.pitJunction(gl, gp, null);   // the deceleration and acceleration lanes, the gores (in the lane's meshes; the ground flat)
     // the 80 km/h line across the lane at its two ends
     for (const q of [PD[1] + 45, PD[2] - 34]) { const p = T.pitAt(sStart + q); if (p) quad(gp, sStart + q, sStart + q + 0.4, p.o - 3.4, p.o + 3.4, p.o + 3.4, p.o - 3.4, 0.036, wl); }
     // the crews' boxes (13, 10 m apart), the dividers, the player's box (out.pitBox)
@@ -371,6 +373,7 @@
       if (mine) { const sb = s0 + 5, lo = p.o, bp = T.bayPose(PD[3]);   // (the car stops at the edge of the shallow apron, parked straight: Core Track.bayDim, def.pitApron; mirrored to the left, sg)
         out.pitBox = { s: sb, x: oc[0] + nx * (base + 4), z: oc[1] + nz * (base + 4), hd: T.hd[i], tx, tz, nx, nz, lane: lo, wallO: p.wall, apron0: base, garage0: PB[2], stop: atSf(sb, bp.o * sg), stopO: bp.o, stopA: sg * bp.a }; }
       (out.pitBoxes = out.pitBoxes || []).push({ k: nb++, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: 0 });
+      out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [PB[2] - 0.14, 3.5, 4.0, 4.7], wall: [PB[2] + 13, 0.05, 4.15, 4.74], jamb: [PB[2], 4.88, 0.24, 3.4], road: 'band wall jamb' };   // (its garage below, for the renderer's team colours: the band, the back wall, the side walls' fronts, all built along the road)
       // the team's stand on the pit wall strip: a desk with screens under a roof in the team's colour, stools
       const g = scen.get(oc[0], oc[1]), wv = p.wall;
       kb(g, s0 + 5, wv + 0.8, 0.96, 2.5, 0.06, 1.0, [0.3, 0.31, 0.34], [0.36, 0.37, 0.4]);
@@ -399,7 +402,7 @@
       const P8 = [at(s0, o0, y0), at(s1, o0, y0), at(s1, o1, y0), at(s0, o1, y0), at(s0, o0, y1), at(s1, o0, y1), at(s1, o1, y1), at(s0, o1, y1)], m = at((s0 + s1) / 2, (o0 + o1) / 2, (y0 + y1) / 2);
       for (const [a, b, c, d, cc] of [[0, 1, 5, 4, col], [1, 2, 6, 5, col], [2, 3, 7, 6, col], [3, 0, 4, 7, col], [4, 5, 6, 7, top || col]]) g.quadO(P8[a], P8[b], P8[c], P8[d], cc, m); };
     const crewQ = new Set(); for (let q = pq0; q <= pq1; q += 10) crewQ.add(q);
-    for (let q = PB[0]; q < PB[1] - 1; q += 10) {
+    for (let q = pq0 - Math.floor((pq0 - PB[0]) / 10) * 10; q < PB[1] - 1; q += 10) {   // (the bays line up with the crews' boxes: the crews' garages open, each behind its box)
       const s0 = sStart + q, s1 = s0 + 10, mid = atSf(s0 + 5, sg * (F0 + 8)), g = scen.get(mid[0], mid[1]), crew = crewQ.has(q), k = crew ? ((q - pq0) / 10) | 0 : 0;
       slab(g, s0, s1, F0, F0 + 13, 4.2, 4.6, WH, WT);                                   // the ground floor's ceiling
       face(g, s0, s1, F0 + 13, 0, 4.2, crew ? TEAM[k % TEAM.length].map(v => v * 0.8 + 0.1) : [0.5, 0.52, 0.55]);   // the garage's back wall
@@ -477,12 +480,11 @@
   }
 
   /* ---- a flagpole (height h) with its flag flying along yaw: Canada (red, white, red, the leaf a red square: simplified) or Québec (blue, a white cross) ---- */
-  function mtFlag(g, x, z, h, yaw, qc) {
-    const c = Math.cos(yaw), s = Math.sin(yaw), at = (u) => [x + c * u, z + s * u], F = 1.3, y = h - 1.05 * F, red = [0.82, 0.1, 0.12], wh = [0.95, 0.95, 0.94];
+  function mtFlag(g, x, z, h, yaw, qc) {   // (the cloth waves: js/world-zastave.js; its cells: [u edges from the pole, v edges from the top, colours by row])
+    const c = Math.cos(yaw), s = Math.sin(yaw), F = 1.3, red = [0.82, 0.1, 0.12], wh = [0.95, 0.95, 0.94], bl = [0.05, 0.25, 0.62];
     box(g, x, 0, z, 0.1, h + 0.1, 0.1, yaw, [0.78, 0.8, 0.82]);
-    const bar = (u0, u1, y0, y1, col, t) => { const [cx, cz] = at((u0 + u1) / 2 * F); box(g, cx, y + y0 * F, cz, (u1 - u0) * F, (y1 - y0) * F, t, yaw, col); };
-    if (qc) { bar(0.06, 1.86, 0, 0.9, [0.05, 0.25, 0.62], 0.03); bar(0.06, 1.86, 0.38, 0.52, wh, 0.05); bar(0.86, 1.06, 0, 0.9, wh, 0.05); }
-    else { bar(0.06, 0.51, 0, 0.9, red, 0.03); bar(0.51, 1.41, 0, 0.9, wh, 0.03); bar(1.41, 1.86, 0, 0.9, red, 0.03); bar(0.8, 1.12, 0.22, 0.68, red, 0.05); }
+    World.api.flags.add(x + c * 0.06 * F, h - 0.15 * F, z + s * 0.06 * F, yaw, qc ? { grid: [[0, 0.444, 0.556, 1], [0, 0.422, 0.578, 1], [[bl, wh, bl], [wh, wh, wh], [bl, wh, bl]]] }
+      : { grid: [[0, 0.25, 0.411, 0.589, 0.75, 1], [0, 0.244, 0.756, 1], [[red, wh, wh, wh, red], [red, wh, red, wh, red], [red, wh, wh, wh, red]]] }, 1.8 * F, 0.9 * F);
   }
 
   /* ---- the nearest road sample to (x, z) through a 32 m hash of the samples; its lateral offset and the barrier on that side ---- */

@@ -274,6 +274,11 @@ svg { display: block; }
 .tsmall { height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 9px; background: linear-gradient(180deg, rgba(95, 102, 116, .94), rgba(55, 61, 73, .94)); border: 1.5px solid rgba(255, 255, 255, .35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 0 #1d2129; font: 800 italic 15px/1 var(--f-ui); }
 .tsmall svg { width: 20px; height: 20px; }
+/* the MISSIONS tile: the grid's width upright, gold like the missions' own screens (css/missions.css); on a low screen (on its side) one
+   cell of the grid, its line under the name hidden (no row more) */
+.tsmall.t-mis { grid-column: 1 / -1; background: linear-gradient(180deg, rgba(242, 179, 61, .96), rgba(196, 128, 22, .96)); color: #1a1206; border-color: rgba(255, 236, 190, .6); }
+.tsmall.t-mis small { font: 600 12px/1 var(--f-ui); opacity: .8; }
+@media (max-height: 420px) { .tsmall.t-mis { grid-column: auto; } .tsmall.t-mis small { display: none; } }
 .tsmall:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 1px 0 #1d2129; }
 .mbtn.buy { min-height: 58px; }
 .mbtn.buy small { text-wrap: balance; }
@@ -333,10 +338,10 @@ svg { display: block; }
 .drow.choose:active { transform: translateY(2px); }
 .drow.choose .chev { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; opacity: .8; }
 .sheet-bg.still, .sheet-bg.still .sheet { animation: none; }
-.wopts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 12px; }
-.wopts button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 12px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .14); }
+.wopts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 16px 0 12px; }   /* (Dry, Rain, Random, Changing: one row) */
+.wopts button { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 14px 2px 12px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1.5px solid rgba(255, 255, 255, .14); }
 .wopts svg { width: 32px; height: 34px; }
-.wopts b { font: 800 italic 15px/1 var(--f-ui); }
+.wopts b { max-width: 100%; font: 800 italic 14px/1 var(--f-ui); white-space: nowrap; }
 .wopts button[aria-pressed="true"] { background: rgba(63, 208, 255, .16); border-color: var(--cyan); }
 .lapsrow { display: flex; align-items: center; justify-content: space-between; margin: 0 0 16px; padding: 10px 12px 10px 14px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); }
 .lapsrow > span { font: 800 italic 13px/1 var(--f-ui); letter-spacing: .08em; color: #cfd9ea; }
@@ -383,9 +388,30 @@ svg { display: block; }
 .ribbon.side { left: auto; right: 12px; transform: skewX(-10deg); }
 /* the stage's three cameras (js/menu.js camButtons): 1 the map, 2 the flyover, 3 the corner; the chosen one gold */
 .cams { position: absolute; left: 10px; top: 8px; z-index: 4; display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 999px; background: rgba(7, 12, 20, .82); border: 1px dashed rgba(255, 198, 41, .7); }
+.cams.four { gap: 2px; }   /* (four buttons with Friends: no wider than needed, the map's names keep their room beside it) */
 .cams button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: var(--lbl); }
 .cams button svg { width: 15px; height: 15px; }
 .cams button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); }
+/* camera 4, Friends (js/menu.js friendsView): the friends' times on the track instead of its picture, left of the weather and under the
+   cameras; the rows scroll (portrait about 5 in sight, on its side 6); Send my times under them. By the best time: the place's badge */
+.dio.friends { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: 40px 64px 8px 10px; background: radial-gradient(120% 90% at 30% 0%, #1b3156, #0b1424 70%); }
+.ftab { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-y; border-radius: 10px; background: rgba(7, 12, 20, .62); border: 1px solid rgba(255, 255, 255, .1); }
+.ftab::-webkit-scrollbar { display: none; }
+.ftab table { width: 100%; table-layout: fixed; border-collapse: collapse; font: 700 12px/1 var(--f-ui); font-variant-numeric: tabular-nums; color: #fff; }
+.ftab th { position: sticky; top: 0; z-index: 1; background: #101b2c; color: var(--lbl); font: 600 10.5px/1 var(--f-ui); text-align: left; padding: 6px 4px 5px; }
+.ftab td { height: 25px; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid rgba(255, 255, 255, .06); }
+.ftab th:first-child, .ftab td:first-child { width: 20px; padding-left: 7px; text-align: right; color: var(--lbl); }
+.ftab th:nth-child(4), .ftab td:nth-child(4) { width: 58px; }
+.ftab th:nth-child(5), .ftab td:nth-child(5) { width: 54px; padding-right: 7px; text-align: right; }
+.ftab td:nth-child(5) { color: var(--lbl); font-size: 11px; text-overflow: clip; }
+.ftab tr.me td { background: rgba(255, 198, 41, .17); color: var(--gold); }
+.fnone { flex: 0 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin: auto 0 0; padding: 14px 12px; text-align: center; border-radius: 10px; background: rgba(7, 12, 20, .55); }
+.fnone b { font: 800 italic 15px/1.15 var(--f-ui); color: #fff; }
+.fnone small { font: 500 12px/1.3 var(--f-ui); color: var(--lbl); }
+.fsend { flex: 0 0 auto; align-self: center; height: 32px; padding: 0 16px; margin-bottom: auto; border-radius: 999px; background: linear-gradient(180deg, var(--gold-hi), var(--gold-lo)); color: var(--gold-ink); font: 900 italic 13px/1 var(--f-ui); letter-spacing: .03em; text-transform: uppercase; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+.fsend:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+.trow .best { position: relative; }
+.fbadge { position: absolute; top: -14px; right: -2px; z-index: 1; padding: 3px 6px 2px; border-radius: 999px; background: var(--cyan); color: #04121c; font: 900 italic 11px/1 var(--f-ui); font-variant-numeric: tabular-nums; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
    From the top: the head (house, country and place and height, globe), the stage (camera top left, weather down the right side), the row of
    numbers, the yard (the car before the road sign), the two neighbouring tracks, Back and Race!. On its side: the stage the whole height at
@@ -442,6 +468,7 @@ svg { display: block; }
   background: linear-gradient(180deg, #2a5fae, #1e4a8e); border: 3px solid #e9eef6; border-radius: 6px; box-shadow: 0 6px 14px rgba(0, 0, 0, .45), inset 0 0 0 2px #1e4a8e; filter: brightness(.88); z-index: 1; }
 .sign b { min-width: 0; font: 800 clamp(20px, 7.4vw, 34px)/1 Roboto, Arial, sans-serif; letter-spacing: .02em; color: #f4f7fb; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sign i { flex: 0 0 auto; font: 900 italic 12px/1 var(--f-ui); padding: 4px 6px; border-radius: 5px; background: var(--gold); color: var(--gold-ink); }
+.sign.pending i { background: var(--cyan); color: #0b1626; }   /* (a track awaiting the user's choice: one of them stays) */
 .post { position: absolute; top: 48%; bottom: 30%; width: 7px; background: linear-gradient(90deg, #6d7684, #c9d0da 45%, #7a8392); border-radius: 2px; filter: brightness(.88); }
 .post.a { left: 52%; } .post.b { right: 12%; }
 /* the car in 3D with the wind round it (js/menu-car.js): a canvas over the whole yard, over the sign; the car's button (the tap: the garage) over it */
@@ -917,7 +944,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .sheet { padding: 12px 16px 14px; }
   .sheet h2 { font-size: 24px; }
   .wopts { margin: 10px 0 8px; }
-  .wopts button { padding: 9px 4px 8px; gap: 5px; }
+  .wopts button { padding: 9px 2px 8px; gap: 5px; }
   .lapsrow { margin-bottom: 10px; padding: 6px 10px 6px 12px; }
   .sheet.riv .rnum { margin: 0 0 8px; } .sheet.riv .rnum b { font-size: 56px; } .sheet.riv .rnum span { margin-top: 4px; font-size: 13px; }
   .sheet.riv .rquick { margin-bottom: 6px; } .sheet.riv .rquick button { height: 40px; } .sheet.riv .rends { margin-bottom: 10px; } .sheet.riv .go { height: 46px; }

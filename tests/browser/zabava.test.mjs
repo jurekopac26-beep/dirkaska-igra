@@ -4,7 +4,7 @@
 //   2. the elimination race (?nacin=elim): the countdown, the first cut, the end and its results
 //   3. the coach and the gold ghost (a time trial on Harju)
 //   4. the pursuit (?nacin=lov on Vršič)
-//   5. the challenges by the road and the living road (Vršič, a time trial): the marks, one draw call per event
+//   5. the challenges by the road and the living road (Caracoles, a time trial): the marks, one draw call per event
 //   node tests/browser/zabava.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -105,9 +105,9 @@ try {
     T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
-  // 6. the living road and the challenges by the road on Vršič (a time trial): the marks drawn, each event one draw call (the works three)
+  // 6. the living road and the challenges by the road on Caracoles (a time trial; not on Vršič: a test track since 6. 11. 2026): the marks drawn, each event one draw call (the works three)
   {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=vrsic&nacin=tt', {}, { width: 412, height: 732 }, { menu: true, init: on() });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=caracoles&nacin=tt', {}, { width: 412, height: 732 }, { menu: true, init: on() });
     await there(page);
     await page.evaluate(async () => { const g = window.__game; for (let i = 0; i < 12 && g.phase !== 'racing'; i++) { g.sim(1, true); await new Promise(r => requestAnimationFrame(r)); } g.sim(2, true); });
     const s = await page.evaluate(async () => {
@@ -115,7 +115,7 @@ try {
       for (const kind of ce.KINDS) { ce.clear(); const ev = ce.spawn(r, { d: r.player.dist + 300, kind, done: true }); out.ev[kind] = ev.objs.map(o => (o.isMesh ? 1 : 0) + (Array.isArray(o.material) ? 9 : 0)).join(''); await new Promise(rr => requestAnimationFrame(rr)); }
       ce.clear(); return out;
     });
-    T.check('Vršič, a time trial: the challenges placed (radar, section, drift zone, golden posts), their marks drawn (the radar\'s sign, the posts)', s.iz === 'radar,odsek,drift,smernik,smernik,smernik' && s.marks === 2, JSON.stringify(s));
+    T.check('Caracoles, a time trial: the challenges placed (radar, section, drift zone, golden posts), their marks drawn (the radar\'s sign, the posts)', s.iz === 'radar,odsek,drift,smernik,smernik,smernik' && s.marks === 2, JSON.stringify(s));
     T.check('the living road: rocks, an animal, a tractor one mesh each, the road works three (cones, pole, light)', s.ev.rocks === '1' && s.ev.animal === '1' && s.ev.tractor === '1' && s.ev.works === '111', JSON.stringify(s.ev));
     T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();

@@ -37,6 +37,9 @@ try {
       Core.aiControl(P, R, dt); let thr = P.inThr, brk = P.inBrk; const gap = E.dist - P.dist, close = P.speed - E.speed;
       if (gap < 12 || (close > 0 && gap - 12 < 2 * close)) { thr = 0; brk = Math.max(brk, Math.min(1, 0.25 + close / 8)); }
       g.sim(dt, false, P.inSteer, thr, brk);
+      // (stuck or the wrong way: put back on the road, like a player tapping Na progo. A knock in the traffic can turn the car into the
+      // rock or the rail; the autopilot has no reverse gear, and stuck there the escort drives away: more than 300 m for 8 s, lost)
+      if (!P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P);
     } }, sec);
   let yl = 0; for (let k = 0; k < 6; k++) { await drive(5); yl = Math.max(yl, (await st(page)).yl); }
   const lamps = await page.evaluate(() => { const v = Render.viewOf(window.__game.race.escort); return v ? !!v.polBar : null; });

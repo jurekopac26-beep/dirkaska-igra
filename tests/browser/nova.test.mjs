@@ -184,10 +184,11 @@ try {
       screen: window.__game.screen, stored: JSON.parse(localStorage.getItem('tdgp-settings')).crV }));
     // its last row in reach (the panel scrolls), the next pause from the top again
     const sc = await page.evaluate(async () => { const raf = () => new Promise(q => requestAnimationFrame(q)), g = window.__game, body = document.getElementById('pause-body'), pit = document.getElementById('pit-row');
+      const fits = body.scrollHeight <= body.clientHeight + 1;   // (all of it in sight: the pause's box and the weather's row beside the buttons on its side, the boxes' layout, nothing to scroll)
       body.scrollTop = body.scrollHeight; await raf(); const b = body.getBoundingClientRect(), r = pit.getBoundingClientRect(), end = r.top >= b.top - 1 && r.bottom <= b.bottom + 1, scrolled = body.scrollTop;
-      g.resume(); await raf(); g.pause(); await raf(); return { end, scrolled, top: body.scrollTop, screen: g.screen }; });
-    T.check('the pause: Arkadna picked there applies at once (Core.TX.cv 2, the rows of Preizkus kept), marked in the pause and in the settings, kept; its last row (the tyres\') in reach by scrolling; the next pause from the top',
-      pa.cv === 2 && pa.cPm === 2 && pa.aiSpr === 0.3 && pa.pause === 'Arkadna' && pa.list === 'Arkadna' && pa.screen === 'pause' && pa.stored === 1 && p1.pit && sc.end && sc.scrolled > 0 && sc.top === 0 && sc.screen === 'pause', JSON.stringify({ pa, sc }));
+      g.resume(); await raf(); g.pause(); await raf(); return { end, scrolled, fits, top: body.scrollTop, screen: g.screen }; });
+    T.check('the pause: Arkadna picked there applies at once (Core.TX.cv 2, the rows of Preizkus kept), marked in the pause and in the settings, kept; its last row (the tyres\') in reach (by scrolling, or in sight without it); the next pause from the top',
+      pa.cv === 2 && pa.cPm === 2 && pa.aiSpr === 0.3 && pa.pause === 'Arkadna' && pa.list === 'Arkadna' && pa.screen === 'pause' && pa.stored === 1 && p1.pit && sc.end && (sc.scrolled > 0 || sc.fits) && sc.top === 0 && sc.screen === 'pause', JSON.stringify({ pa, sc }));
     await page.evaluate(() => window.__game.resume());
     const nanP = await simulate(page, 4), cvP = (await tx()).cv;
     T.check('the race runs on with Arkadna: 4 s on the autopilot without NaN, Core.TX.cv still 2', !nanP && cvP === 2, JSON.stringify({ nanP, cvP }));

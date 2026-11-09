@@ -32,7 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Monterey',
     grassNat: 1,
     zivali: { a: ['muleDeer', 'coyote', 'cowK'], t: ['picnic', 'signPost'] },
-    id: 'monterey', name: 'Monterey, ZDA', theme: 'monterey', laps: 4, halfWidth: 6.25,
+    id: 'monterey', test: true, name: 'Monterey, ZDA', theme: 'monterey', laps: 4, halfWidth: 6.25,
     desc: 'Dirkališče v suhih hribih nad Montereyjem v Kaliforniji, v pravem merilu (3,6 km, 11 ovinkov, v nasprotni smeri urinega kazalca): slepi vrh v 1. ovinku, dolga lasnica, ravnice ob jezercu, vzpon po hribu do vrha in strm spust skozi spiralo levo-desno v 8. ovinku. Zlate trave, hrasti, tribune na brežinah in kampi. Podatki: © OpenStreetMap (ODbL), USGS 3DEP, ESA WorldCover.',
     en: { name: 'Monterey, USA', desc: 'A circuit in the dry hills above Monterey in California, at full scale (3.6 km, 11 turns, anticlockwise): the blind crest of Turn 1, the long hairpin, the flat infield by the little lake, the climb to the top of the hill and the steep plunge through the left-right spiral of Turn 8. Golden grass, oaks, grandstands on the banks and campers. Data: © OpenStreetMap (ODbL), USGS 3DEP, ESA WorldCover.' },
     start: [0, 0], runoff: 1.1, inner: 4.5, side: 4.5, gradeForce: true, elevSmooth: 10, realKm: 3.602,

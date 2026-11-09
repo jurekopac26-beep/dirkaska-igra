@@ -237,43 +237,43 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   trener.stop(); delete window.__zabava; delete global.Core;
 }
 
-// 7. the challenges by the road: placed by the shape (Vršič: radar, section, drift zone, golden posts; Bathurst: radar, section; Ouninpohja
+// 7. the challenges by the road: placed by the shape (Caracoles: radar, section, drift zone, golden posts; Vršič, a test track since 6. 11. 2026, none; Bathurst: radar, section; Ouninpohja
 // its famous jump), measured as the car passes, stars and records
 {
   const mk = (id) => { const T = new C.Track(C.TRACKS.find(d => d.id === id)); return new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, phys: 'cs', seed: 1, playerModel: C.MODELS[4], tt: true }); };
   const ks = (r) => izzivi.plan(r).map(c => c.k).join(',');
-  check('Vršič: radar, timed section, drift zone (its hairpins), three golden posts in side roads', ks(mk('vrsic')) === 'radar,odsek,drift,smernik,smernik,smernik', ks(mk('vrsic')));
+  check('Caracoles: radar, timed section, drift zone (its hairpins), three golden posts in side roads', ks(mk('caracoles')) === 'radar,odsek,drift,smernik,smernik,smernik', ks(mk('caracoles')));
   check('Bathurst (a circuit): radar and section only; Ouninpohja: its famous jump (57 m)', ks(mk('bathurst')) === 'radar,odsek' && izzivi.plan(mk('ouninpohja')).some(c => c.k === 'skok' && c.want === 57), ks(mk('bathurst')) + ' / ' + ks(mk('ouninpohja')));
   const rb = mk('bathurst'), R = izzivi.plan(rb).find(c => c.k === 'radar');
   check('Bathurst\'s radar on the Conrod straight (about 4.9 km), the car\'s possible speed there 200-300 km/h', R.d > 4500 && R.d < 5600 && R.want * 3.6 > 200 && R.want * 3.6 < 300, Math.round(R.d) + ' m ' + Math.round(R.want * 3.6) + ' km/h');
   check('the stars: radar 0.95 of the possible: 2, 0.99: 3; section 1.05 of the ideal: 2, 1.3: none', izzivi.starsOf('radar', 0.95) === 2 && izzivi.starsOf('radar', 0.99) === 3 && izzivi.starsOf('odsek', 1.05) === 2 && izzivi.starsOf('odsek', 1.3) === 0);
-  // a run on Vršič driven by hand: the radar passed at 95 %, the section in 1.05 of its ideal, half the drift zone sliding, a golden post
+  // a run on Caracoles driven by hand: the radar passed at 95 %, the section in 1.05 of its ideal, half the drift zone sliding, a golden post
   const msgs = []; let ph = 'racing';
   Z.init({ S: {}, repro: () => false, phase: () => ph, showMsg: (t) => msgs.push(t), fmt: (t) => t.toFixed(1) });
   window.__zabava = { izzivi: 1 };
-  const r = mk('vrsic'), P = r.player; r.time = 1;
+  const r = mk('caracoles'), P = r.player; r.time = 1;
   izzivi.begin(r, { on: false });
   const L = izzivi.L, rad = L.find(c => c.k === 'radar'), sec = L.find(c => c.k === 'odsek'), dz = L.find(c => c.k === 'drift'), post = L.find(c => c.k === 'smernik');
   const go = (d, o) => { P.dist = d; if (o && o.speed != null) { P.vx = o.speed; P.vz = 0; } izzivi.step(r, 0.1); };
   go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.95 });
   go(sec.d - 2); r.time = 100; go(sec.d + 2); r.time = 100 + sec.want * 1.05; go(sec.d1 - 2); go(sec.d1 + 2);
-  P.beta = 0.5; P.vx = 15; P.vz = 0; P.air = false; const stepM = 1.5; for (let d = dz.d - 4; d < dz.d + (dz.d1 - dz.d) * 0.5; d += stepM) go(d); P.beta = 0; for (let d = dz.d + (dz.d1 - dz.d) * 0.5; d < dz.d1 + 4; d += stepM) go(d);
+  P.beta = 0.5; P.vx = 15; P.vz = 0; P.air = false; const stepM = 1.5; for (let d = dz.d - 4; d < dz.d + (dz.d1 - dz.d) * 0.55; d += stepM) go(d); P.beta = 0; for (let d = dz.d + (dz.d1 - dz.d) * 0.55; d < dz.d1 + 4; d += stepM) go(d);
   P.x = post.x; P.z = post.z; izzivi.step(r, 0.1);
   const run = izzivi.run;
   check('the radar passed at 95 %: two stars, said under the map', run.radar && run.radar.st === 2 && msgs.some(t => /^RADAR \d+ km\/h ★★☆/.test(t)), JSON.stringify(run.radar) + ' ' + msgs[0]);
   check('the section in 1.05 of its ideal: two stars', run.odsek && run.odsek.st === 2, JSON.stringify(run.odsek));
-  check('half the drift zone sliding (15 m/s): about 50 %, three stars', run.drift && run.drift.v > 0.45 && run.drift.st === 3, JSON.stringify(run.drift));
-  check('a golden post: found (1/3), kept, said', izzivi.found.size === 1 && msgs.some(t => /ZLATI SMERNIK 1\/3/.test(t)) && Z.part('izzivi').vrsic.smer.length === 1);
+  check('a little over half the drift zone sliding (15 m/s): about 55 %, three stars', run.drift && run.drift.v > 0.45 && run.drift.st === 3, JSON.stringify(run.drift));
+  check('a golden post: found (1/3), kept, said', izzivi.found.size === 1 && msgs.some(t => /ZLATI SMERNIK 1\/3/.test(t)) && Z.part('izzivi').caracoles.smer.length === 1);
   const html = izzivi.resEnd(r, 'race');
   check('the results\' block: IZZIVI OB CESTI with the radar, the section, the drift zone (stars) and the posts 1/3', /IZZIVI OB CESTI/.test(html) && /Radar: \d+ km\/h/.test(html) && /Odsek na čas/.test(html) && /Drift cona: \d+ %/.test(html) && /Zlati smerniki: 1\/3/.test(html), html.slice(0, 300));
   // the record: the next run slower at the radar keeps it, faster beats it
   izzivi.begin(r, { on: false }); msgs.length = 0;
-  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.9 }); const r1 = Z.part('izzivi').vrsic.radar.v;
-  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.99 }); const r2 = Z.part('izzivi').vrsic.radar.v;
+  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.9 }); const r1 = Z.part('izzivi').caracoles.radar.v;
+  go(rad.d - 2); go(rad.d + 2, { speed: rad.want * 0.99 }); const r2 = Z.part('izzivi').caracoles.radar.v;
   check('records: a slower pass keeps the record, a faster one beats it (REKORD said)', Math.abs(r1 - rad.want * 0.95) < 0.01 && Math.abs(r2 - rad.want * 0.99) < 0.01 && msgs.some(t => /REKORD/.test(t)), r1.toFixed(2) + ' ' + r2.toFixed(2));
   check('a golden post found once stays found (not counted again)', izzivi.found.size === 1);
   izzivi.stop(); delete window.__zabava;
-  check('off: not online, not a mission, not the driving school, not a test track', !izzivi.fits(r, { on: true }) && !izzivi.fits(r, { mis: true }) && !izzivi.fits(r, { school: true }));
+  check('on a real track, off: online, a mission, the driving school, a test track (Vršič)', izzivi.fits(r, {}) && !izzivi.fits(r, { on: true }) && !izzivi.fits(r, { mis: true }) && !izzivi.fits(r, { school: true }) && !izzivi.fits(mk('vrsic'), {}));
 }
 
 // 8. the pursuit: Vršič with its traffic, the player's car a patrol car, the fugitive 150 m up the road; caught, escaped by distance and by time
@@ -315,10 +315,10 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 
 // 9. the living road: where and what (a time trial: the same every run), never where a rival is ahead, each event's knock, the red light
 {
-  const T = new C.Track(C.TRACKS.find(d => d.id === 'vrsic'));
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'caracoles'));   // (a real open road: the living road is not on a test track)
   const p1 = cesta.plan(T, T.def, 123), p2 = cesta.plan(T, T.def, 123), p3 = cesta.plan(T, T.def, 7);
-  check('the plan: two events on Vršič (35-45 % and 65-80 % of the road), the same for the same seed (a time trial), others for another', p1.length === 2 && p1[0].d > T.raceLen * 0.35 - 1 && p1[0].d < T.raceLen * 0.45 + 1 && p1[1].d > T.raceLen * 0.65 - 1 && JSON.stringify(p1) === JSON.stringify(p2) && JSON.stringify(p1) !== JSON.stringify(p3), JSON.stringify(p1.map(e => [Math.round(e.d), e.kind])));
-  check('the animal by the country (Vršič: gams, Bathurst: kenguru, Ouninpohja: los)', cesta.animalOf(T.def) === 'gams' && cesta.animalOf({ name: 'Bathurst, Avstralija' }) === 'kenguru' && cesta.animalOf({ name: 'Ouninpohja, Finska' }) === 'los');
+  check('the plan: two events on Caracoles (35-45 % and 65-80 % of the road), the same for the same seed (a time trial), others for another', p1.length === 2 && p1[0].d > T.raceLen * 0.35 - 1 && p1[0].d < T.raceLen * 0.45 + 1 && p1[1].d > T.raceLen * 0.65 - 1 && JSON.stringify(p1) === JSON.stringify(p2) && JSON.stringify(p1) !== JSON.stringify(p3), JSON.stringify(p1.map(e => [Math.round(e.d), e.kind])));
+  check('the animal by the country (Caracoles: gvanako, Vršič: gams, Bathurst: kenguru, Ouninpohja: los)', cesta.animalOf(T.def) === 'gvanako' && cesta.animalOf({ name: 'Vršič, Slovenija' }) === 'gams' && cesta.animalOf({ name: 'Bathurst, Avstralija' }) === 'kenguru' && cesta.animalOf({ name: 'Ouninpohja, Finska' }) === 'los');
   const msgs = []; Z.init({ S: {}, repro: () => false, phase: () => 'racing', showMsg: (t) => msgs.push(t), say() {} });
   window.__zabava = { cesta: 1 };
   const mk = (n) => { const r = new C.Race(T, { numAI: n, playerGrid: n + 1, laps: 1, phys: 'cs', seed: 2, playerModel: C.MODELS[4], assist: 2 }); r.time = 5; return r; };

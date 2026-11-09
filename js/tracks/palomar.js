@@ -23,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xd4d8d6, sun: 0xfff0d4, sunI: 1.36, sky: 0xb4d0f2, gnd: 0x6e6444, hemiI: 0.62, tint: [1.03, 1.0, 0.95], sat: 1.07, sunOff: [-74, 98, 52] },   // Palomar Mountain: a hot, clear afternoon over the south face, the sun from the south-west across the hairpins, a light warm haze over Pauma Valley
     say: 'Palomar Mountain', rainP: 0.15,
     zivali: { a: ['muleDeer', 'coyote', 'cowB'], t: ['cabin', 'picnic', 'logPile'] },
-    id: 'palomar', name: 'Palomar Mountain, ZDA', theme: 'palomar', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5,
+    id: 'palomar', test: true, name: 'Palomar Mountain, ZDA', theme: 'palomar', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5,
     desc: "Gorska cesta South Grade Road (S6) na goro Palomar Mountain v okrožju San Diego v južni Kaliforniji (ZDA): od doline Pauma na 859 m po trinajstih lasnicah skozi chaparral, hraste in više bore in cedre do 1.435 m. Ozka dvopasovnica s kamnitimi zidovi, priljubljena med motoristi in kolesarji. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.",
     en: { name: 'Palomar Mountain, USA', desc: "The South Grade Road (S6) up Palomar Mountain in San Diego County, southern California (USA): from Pauma Valley at 859 m up thirteen hairpins through the chaparral, the oaks and higher up the pines and cedars to 1,435 m. A narrow two-lane road with stone walls, a favourite of riders and cyclists. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.", escTo: 'To the top' },   // (the English page: Jezik · Language)
     realKm: 7.99, alt: [859,1435],

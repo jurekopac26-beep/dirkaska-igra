@@ -1242,8 +1242,7 @@
     const carA = car && Sc.da != null ? -Sc.da : -1e9;
     for (const p of Sc.people) {
       const P = p.P, st = P.seat; if (!st) { if (P.fix) poseCam(Sc, p, fixed ? 0 : t, car); else poseWalker(Sc, p, fixed ? 0 : t, car); continue; }
-      const ax = st.x * Sc.sgn, dA = ax - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0;
-      const f0 = p.up || 0, f = p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6);
+      const f = standUp(Sc, p, carA, dt, fixed);
       const sig = f > 0 ? -1 : (car && carA > -60 && carA < Sc.len + 30 ? 1 : 0);
       if (!fixed && sig === p.sig && sig >= 0 && p.wet === WET) continue; p.sig = sig; p.wet = WET;   // (still: not posed again; the rain's start or end: all again)
       const up = poseJ(st.up || (st.k < 0.55 ? 'cheer' : st.k < 0.75 ? 'jump' : st.k < 0.9 ? 'wave' : 'phoneUp'), t * 6.5 + st.k * 9), sit = poseJ(st.pose || (st.k < 0.65 ? 'sit' : 'sitLean'));
@@ -1362,14 +1361,60 @@
   /* ---------------- every frame (World.update): the followed car's way to each scene, the scenes near the camera posed ---------------- */
   const _fr = new THREE.Frustum(), _pm = new THREE.Matrix4(), _sp = new THREE.Sphere(), _cv = new THREE.Vector3();
   const SUMMER = new Set(['piknik', 'kolesarji', 'plaza', 'badminton', 'nogomet', 'karte', 'glasba', 'zmaj', 'motoristi']);   // (the scenes of a summer's day: out of the world under snow; js/world-ljudje2.js's too, js/world-ljudje3.js adds its own)
-  function step(W, t, car, cam) {
+  // what a scene does as the followed car comes (it at cs along the road, v fast): ready for it (arm), out to the fence (alert), the car past, back
+  function react(Sc, T, t, cs, v) {
+    let da = Sc.s0 - cs; if (!T.open) da -= T.len * Math.round(da / T.len);
+    Sc.da = da; const eta = v > 2 ? da / v : 1e9;
+    if (Sc.arm) { if (da > -4 && da < 700 && eta < WARN) alert(Sc, t); }
+    else if (Sc.al >= 0) {
+      if (Sc.pass < 0 && da < -3) Sc.pass = t;
+      if (Sc.back < 0 && ((Sc.pass >= 0 && t > Sc.pass + BACK) || t > Sc.al + 16)) goBack(Sc, t);
+      if (Sc.back >= 0 && t > Sc.done) { Sc.al = -1; for (const p of Sc.people.concat(Sc.pets)) p.segs = null; }   // (all back at what they were doing)
+    } else if (da > 160 || da < -120) Sc.arm = true;   // (the car far away again: the next time it comes)
+  }
+  // a seat's person up for the car (p.up 0..1: up as it comes, down after it; carA where the car is along the stand)
+  function standUp(Sc, p, carA, dt, fixed) {
+    const st = p.P.seat, dA = st.x * Sc.sgn - carA + (st.k - 0.5) * 2, want = !fixed && dA > -4 && dA < 11 ? 1 : 0, f0 = p.up || 0;
+    return (p.up = want ? Math.min(1, f0 + dt * 3.2) : Math.max(0, f0 - dt * 1.6));
+  }
+  // a replay's timeline (the user, 4. 11. 2026: »gledalci naj se premikajo v časovnici nazaj tako kot jaz z avtomobilom«): every scene at t as
+  // the race had it there, the same however the replay got to t: from a reset, the scenes' logic over the recording from a whole RS_GRID s
+  // at least RESIM s before t (the car followed, rp.k, where rp.at has it, RS_DT apart; the same start for nearby times: the same story),
+  // the stands' people up or down as the last 1.2 s left them
+  const RESIM = 45, RS_GRID = 30, RS_DT = 0.1, _ra = { x: 0, z: 0, v: 0 };
+  function resim(W, t, rp, winter) {
+    const T = W.T, t0 = Math.max(rp.t0, Math.floor((t - RESIM) / RS_GRID) * RS_GRID), n = Math.max(0, Math.ceil((t - t0) / RS_DT - 1e-6));
+    for (const Sc of W.scenes) { reset(Sc); for (const p of Sc.people.concat(Sc.pets)) p.po = 0; }
+    W.cs = null; W.hint = -1; let lt = t0;   // (the car's place found afresh: it may be far from where it was)
+    for (let k = 0; k <= n; k++) {
+      const tt = k === n ? t : t0 + k * RS_DT, d = tt - lt; rp.at(tt, _ra);
+      const q = T.query(_ra.x, _ra.z, W.hint, W.q); W.hint = q.i; const cs = q.s;
+      if (W.cs == null) W.v = _ra.v;
+      else if (d > 1e-4) { let ds = cs - W.cs; if (!T.open) ds -= T.len * Math.round(ds / T.len); W.v += (clamp(ds / d, -120, 160) - W.v) * Math.min(1, d * 5); }
+      W.cs = cs; lt = tt;
+      for (const Sc of W.scenes) {
+        if (winter && SUMMER.has(Sc.name)) continue;
+        react(Sc, T, tt, cs, W.v);
+        if (Sc.stand && tt > t - 1.2) for (const p of Sc.people) if (p.P.seat) standUp(Sc, p, -Sc.da, d, false);
+      }
+    }
+    for (const Sc of W.scenes) Sc.ts = t;
+  }
+  function step(W, t, car, cam, rp) {
     if (!car) {   // no car (the world test): every scene in its first pose, as built (dry: no umbrellas)
       WET = false; for (const Sc of W.scenes) { reset(Sc); Sc.on = false; Sc.grp.visible = true; Sc.ppl.visible = true; poseScene(Sc, 0, null, true); }
       W.root.visible = true; smokeStep(W, 0, true); if (W.umb) { W.umb.count = 0; W.umb.visible = false; } W.cs = null; W.lt = 0; return;
     }
     // a special mission (js/missions.js, Missions.run): not a race day (a flood, a fire, a rescue), so none of these out; back when it is over
     const mis = typeof Missions !== 'undefined' && !!Missions.run; W.root.visible = !mis; if (mis) { W.cs = null; return; }
-    const T = W.T, dt = t - W.lt, winter = W.o.seasonKey === 'winter'; W.lt = t;   // (winter: the world under snow, js/render.js seasonWorld)
+    const T = W.T, winter = W.o.seasonKey === 'winter';   // (winter: the world under snow, js/render.js seasonWorld)
+    // a replay (rp, js/game.js replayFrame): the scenes on its timeline. Its start, a jump on it (back, a seek, a frame back) or another car
+    // followed: every scene as the race had it at t (resim); out of a replay, back in the race: every scene as at a new race's start
+    if (rp ? W.rk !== rp.k || t < W.lt - 1e-3 || t > W.lt + 0.5 : W.rk != null) {
+      if (rp) resim(W, t, rp, winter); else { for (const Sc of W.scenes) reset(Sc); W.cs = null; }
+      W.rk = rp ? rp.k : null; W.lt = t;
+    }
+    const dt = t - W.lt; W.lt = t;
     const wet = typeof Render !== 'undefined' && !!Render.raining && !winter;   // (the rain falling, not snow: umbrellas up)
     if (wet !== WET) { WET = wet; for (const Sc of W.scenes) for (const p of Sc.people) p.sig = null; }
     if (dt < -0.5) for (const Sc of W.scenes) reset(Sc);   // (time went back: a new race)
@@ -1382,14 +1427,7 @@
     const cp = cam ? cam.position : null;
     for (const Sc of W.scenes) {
       if (winter && SUMMER.has(Sc.name)) { Sc.grp.visible = false; Sc.on = false; continue; }   // (no picnic blanket or resting cyclists in the snow)
-      let da = Sc.s0 - cs; if (!T.open) da -= T.len * Math.round(da / T.len);
-      Sc.da = da; const eta = W.v > 2 ? da / W.v : 1e9;
-      if (Sc.arm) { if (da > -4 && da < 700 && eta < WARN) alert(Sc, t); }
-      else if (Sc.al >= 0) {
-        if (Sc.pass < 0 && da < -3) Sc.pass = t;
-        if (Sc.back < 0 && ((Sc.pass >= 0 && t > Sc.pass + BACK) || t > Sc.al + 16)) goBack(Sc, t);
-        if (Sc.back >= 0 && t > Sc.done) { Sc.al = -1; for (const p of Sc.people.concat(Sc.pets)) p.segs = null; }   // (all back at what they were doing)
-      } else if (da > 160 || da < -120) Sc.arm = true;   // (the car far away again: the next time it comes)
+      react(Sc, T, t, cs, W.v);
       const dc = cp ? Math.hypot(cp.x - Sc.cx, cp.z - Sc.cz) : 0;
       Sc.grp.visible = dc < W.rShow; Sc.ppl.visible = dc < W.rPpl;
       Sc.on = dc < W.rPose && (!cam || _fr.intersectsSphere(_sp.set(_cv.set(Sc.cx, Sc.cy, Sc.cz), Sc.r)));
@@ -1402,44 +1440,23 @@
   // (the 12 proposals' places from the pictures; the others found by tools/ljudje/mesta.mjs --plan: a straight before, the barrier near, flat ground,
   // no other road, building or stand there; a circuit's pit wall added by itself: def.pit)
   const SITES = {
-    baldy: [['piknik', 2080, -1], ['foto2', 4704, 1], ['kolesarji', 6248, -1]],
-    bangsaen: [['tribuna', 528, 1], ['foto', 1864, -1], ['gasilci', 2296, 1], ['marsali', 2440, 1], ['gasilci', 2728, 1]],
     bathurst: [['boksi', 70, -1], ['zar', 640, -1], ['gasilci', 1104, 1], ['vhod', 1976, -1], ['marsali', 2784, -1], ['foto', 4456, 1], ['oder', 4984, -1], ['tribuna', 5790, 1]],
-    beartooth: [['piknik', 1696, -1]],
-    bigsur: [['piknik', 56, 1], ['foto2', 1984, 1], ['kolesarji', 3664, 1]],
     caracoles: [['kamp', 40, 1], ['piknik', 6152, 1], ['foto2', 10488, 1]],
     cpalace: [['marsali', 96, -1], ['gasilci', 600, -1], ['foto2', 1064, 1], ['piknik', 1424, 1], ['vhod', 2912, 1]],
-    detroit: [['marsali', 1944, -1]],
     greatalpine: [['foto2', 2096, 1], ['piknik', 4992, -1], ['kamp', 6728, 1]],
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
-    hotham: [['foto2', 832, 1], ['kamp', 2760, 1], ['piknik', 7608, -1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
-    longford: [['piknik', 288, -1], ['foto', 1368, 1], ['marsali', 1784, 1], ['hisa2', 2384, 1], ['zar', 5488, 1], ['gasilci', 5952, 1], ['foto2', 6552, 1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
-    maunakea: [['foto2', 136, -1], ['kamp', 3472, -1]],
     medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
-    moki: [['kamp', 264, -1], ['foto2', 4880, 1]],
-    monterey: [['foto', 944, -1], ['marsali', 1440, 1], ['gasilci', 1904, -1], ['oder', 2288, 1], ['tribuna', 3160, -1], ['zar', 3560, 1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
-    mulholland: [['piknik', 328, 1], ['foto2', 2264, -1]],
-    newcastle: [['tribuna', 144, -1], ['marsali', 720, -1], ['foto', 1072, 1], ['gasilci', 1608, -1], ['gasilci', 1976, -1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     ouninpohja: [['hisa2', 1064, 1], ['hisa', 2240, -1], ['ogenj', 3336, 1], ['foto2', 4808, 1], ['reli', 6096, 1], ['oder', 7320, 1], ['reli', 8648, -1], ['kamp', 9568, -1]],
-    palomar: [['foto2', 152, 1], ['kolesarji', 1576, -1], ['piknik', 4720, -1]],
     pikes: [['foto2', 4672, 1]],
     pikesg: [['foto2', 3824, 1]],
     rastro: [['piknik', 4432, -1]],
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
-    rio: [['foto', 1200, 1], ['gasilci', 2224, -1], ['tribuna', 2664, -1], ['marsali', 3376, -1], ['marsali', 4040, -1]],
-    riverside: [['zar', 464, -1], ['foto', 2416, 1], ['gasilci', 3728, 1], ['marsali', 4112, 1], ['foto2', 4312, 1], ['tribuna', 4568, -1]],
-    sani: [['foto2', 1328, -1], ['kamp', 4920, -1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
     suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
-    toronto: [['gasilci', 112, -1], ['tribuna', 752, 1], ['marsali', 1128, 1], ['marsali', 1976, 1], ['foto', 2328, 1]],
-    townsville: [['marsali', 88, -1], ['gasilci', 504, 1], ['vhod', 888, -1], ['foto', 1560, -1], ['tribuna', 2176, 1]],
-    troisrivieres: [['marsali', 144, -1], ['foto', 496, -1], ['gasilci', 904, 1], ['tribuna', 1456, -1], ['vhod', 1960, -1]],
-    uncompahgre: [['kamp', 600, -1], ['ogenj', 2720, 1]],
-    vrsic: [['kolesarji', 648, -1], ['kamp', 1576, -1], ['piknik', 2560, 1], ['kolesarji', 8152, -1], ['foto2', 12248, -1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland
   const vert = (a) => Object.assign(a, { vert: true });
@@ -1655,6 +1672,9 @@
         const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance);
         if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = rc.intersectObjects(near, false)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
       offs.sort((a, b) => a - b); (f.at || (f.at = {})).wall = [offs.length, hi, Math.min(8, B.length)]; const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05, clad = wall != null && hi >= 2 && hi >= offs.length * 0.6;
+      // its floodlights, lit in the evening and at night (js/render-vecer.js): under a roof's front edge (below), where it has none on masts along its back
+      const lampAt = (x, y, z, ax, az, roof) => (o.standLamps || (o.standLamps = [])).push(x, y, z, ax, az, roof);
+      for (const e of B) lampAt(e.p[0] - e.f[0] * wo, e.p[1], e.p[2] - e.f[1] * wo, nx, nz, 0);
       // the concourse: along the back (the wall's face out to AR.apron), on past the ends; the ends' strips from the front to the back
       // (a small stand, a street circuit's few rows of 20 m: its front, its ends' signs and its roof only, not a concourse of its own)
       let blen = 0; for (let k = 1; k < B.length; k++) if (!B[k].gap) blen += Math.hypot(B[k].p[0] - B[k - 1].p[0], B[k].p[2] - B[k - 1].p[2]);   // (not across a gap between its pieces)
@@ -1785,7 +1805,8 @@
         let d = 0;
         for (let k = 1; k < L2.length; k++) { const a = L2[k - 1].fr, b = L2[k].fr, l = Math.hypot(b[0] - a[0], b[2] - a[2]); if (l > 4 || l < 0.05) continue; d += l;
           const at = (p, y) => [p[0] + nx * 0.09, y, p[2] + nz * 0.09];
-          sbAt(a[0], a[2]).quad(at(a, a[1] - 0.72), at(b, b[1] - 0.72), at(b, b[1] + 0.04), at(a, a[1] + 0.04), [nx, 0, nz], AR_COL.dark, AR_COL.warm, kq(KIT.fascia, (d - l) / 4, d / 4, 1, 0)); }
+          sbAt(a[0], a[2]).quad(at(a, a[1] - 0.72), at(b, b[1] - 0.72), at(b, b[1] + 0.04), at(a, a[1] + 0.04), [nx, 0, nz], AR_COL.dark, AR_COL.warm, kq(KIT.fascia, (d - l) / 4, d / 4, 1, 0));
+          lampAt(a[0] + nx * 0.3, a[1] - 0.55, a[2] + nz * 0.3, nx, nz, 1); }
         if (tier > 0) for (let k = 2; k < L2.length - 1; k += 5) { const e = L2[k], pf = e.fr, pb = e.bk; if (e.fn - e.bn < 3) continue;
           const gb = sbAt(pf[0], pf[2]), lift = (p, h) => [p[0], p[1] + h, p[2]], mixP = (w, h0, h1) => [pb[0] + (pf[0] - pb[0]) * w, pb[1] + (pf[1] - pb[1]) * w + h0 + (h1 - h0) * w, pb[2] + (pf[2] - pb[2]) * w];
           gb.bar(lift(pb, 1.7), lift(pf, 0.28), 0.14, 0.12, AR_COL.white); gb.bar(lift(pb, 0.12), lift(pf, 0.12), 0.12, 0.1, AR_COL.white);
@@ -2317,7 +2338,7 @@
         M.setColorAt(0, new THREE.Color(1, 1, 1)); M.instanceColor.noSeason = true; M.count = 0; M.visible = false; M.frustumCulled = false; M.castShadow = false; M.receiveShadow = true; M.name = 'umbrellas'; root.add(M); }
       stats.umbrellas = nu; }
     const t1 = performance.now(); stats.cleared = clearAll(o, circles, A); stats.ms = Math.round(performance.now() - t0); stats.msClear = Math.round(performance.now() - t1);
-    o.dyn.people = (t, car, cam) => step(W, t, car, cam);
+    o.dyn.people = (t, car, cam, rp) => step(W, t, car, cam, rp);
     step(W, 0, null, null);
     o.peopleStats = stats; o.peopleW = W;
     return stats;

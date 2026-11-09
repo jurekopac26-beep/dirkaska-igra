@@ -19,7 +19,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('02'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'newcastle'), T = new Core.Track(TD);
-check('02: on Newcastle, a real track (not on Monte Carlo, a test track)', D.track === 'newcastle' && !TD.test && Core.TRACKS.find(t => t.id === 'monaco').test);
+check('02: on Newcastle (a test track since 6. 11. 2026: the mission stays there until the user moves it; not on Monte Carlo, a test track too)', D.track === 'newcastle' && TD.test === true && Core.TRACKS.find(t => t.id === 'monaco').test);
 const o = D.opts(D);
 check('its race: alone, one lap, the ambulance (the van, its own limiter, softer brakes: a copy), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'superkombi' && o.playerModel.vLim === K.VMAX && o.playerModel.brakeK === K.BRK && Core.MODELS.find(m => m.id === 'superkombi').brakeK !== K.BRK);
 

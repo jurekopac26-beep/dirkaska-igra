@@ -95,6 +95,7 @@ const Missions = (function () {
     if (!cur) return null;
     const o = Object.assign({ numAI: 0, laps: 1, tt: true, flying: 0, rain: 0, weather: null, fuel: false, flags: false, chars: false, slip: false, faults: false, radio: false, traffic: false, police: false, tyreRule: undefined, wheelRule: undefined }, cur.opts ? cur.opts(cur) : null);
     if (cur.car && typeof Core !== 'undefined') { const M = Core.MODELS.find(m => m.id === cur.car); if (M) o.playerModel = M; }
+    if (o.playerModel) o.playerDeli = undefined;   // (the mission's own vehicle is stock, as it has its own paint: no parts from the garage, seen or felt; the user's decision 7. 11. 2026)
     return o;
   }
   // the run's own things out of the scene, their geometry and paint freed
@@ -200,16 +201,36 @@ const Missions = (function () {
     else if (a === 'close') closeList();
     else if (a === 'go') start(b.dataset.id);
   }
-  // the list of the missions: a card each (the number, the name, the track, the goal, the stars won); a tap starts it
+  /* ---------------- the six garages by trade (docs/misije.md, Odločitve 1): in each its missions from the easiest to the hardest;
+     the list on the title (the MISSIONS tile) shows them all by garage, a garage on the new map (js/nvmenu.js) only its own:
+     Missions.openList(null, 'gasilci'). A mission not made yet is left out until it is. ---------------- */
+  const GARAGES = [
+    { id: 'gasilci', name: 'Gasilci', ids: ['01', '49', '46', '47'] },
+    { id: 'resevalci', name: 'Reševalci', ids: ['06', '02', '35', '19', '48', '37'] },
+    { id: 'tovor', name: 'Tovor', ids: ['50', '39', '07', '43', '51', '52', '54', '09'] },
+    { id: 'zima', name: 'Zima', ids: ['29', '33', '17', '53', '30'] },
+    { id: 'cesta', name: 'Na cesti', ids: ['26', '34', '04', '45', '40'] },
+    { id: 'divjina', name: 'Divjina', ids: ['10', '55', '08', '23', '11'] },
+  ];
+  const garageOf = (id) => GARAGES.find(g => g.ids.includes(String(id))) || null;
+  // a garage's missions that are in the game, in its order (easiest first)
+  const inGarage = (g) => g.ids.map(byId).filter(Boolean);
+
+  // the list of the missions: a card each (the number, the name, the track, the goal, the stars won); a tap starts it;
+  // by garage (a heading each), or only one garage's (garage: its id)
   let listEl = null;
-  function openList(focus) {
+  function openList(focus, garage) {
     if (typeof document === 'undefined') return;
     closeList();
     listEl = document.createElement('div'); listEl.id = 'mis-list';
     const card = (d) => { const r = recOf(d.id); return '<button class="mis-c' + (d.test ? ' test' : '') + '" data-mis="go" data-id="' + esc(d.id) + '"><span class="n">' + esc(d.id) + '</span><span class="tx"><b>' + esc(tr(d.title)) + '</b><small>' + esc(placeOf(d)) + (d.limit > 0 ? ' · ' + clock(d.limit) : '') + '</small><small class="g">' + esc(tr(d.goal)) + '</small></span>' + (r.stars ? STAR(r.stars) : '<em>' + esc(tr('NOVA')) + '</em>') + '</button>'; };
-    const real = DEFS.filter(d => !d.test), test = DEFS.filter(d => d.test);
-    listEl.innerHTML = '<div class="mis-lb"><div class="mis-hd"><h1>' + esc(tr('Posebne misije')) + '</h1><button data-mis="close" aria-label="' + esc(tr('Zapri')) + '">✕</button></div>' +
-      (real.length ? real.map(card).join('') : '<p class="mis-none">' + esc(tr('Misije so v izdelavi.')) + '</p>') +
+    const one = garage ? GARAGES.find(g => g.id === garage) : null;
+    const gs = (one ? [one] : GARAGES).map(g => [g, inGarage(g)]).filter(x => x[1].length);
+    const rest = one ? [] : DEFS.filter(d => !d.test && !garageOf(d.id)), test = one ? [] : DEFS.filter(d => d.test);
+    const body = gs.map(([g, L]) => '<h3 class="mis-gar" data-gar="' + g.id + '">' + esc(tr(g.name)) + '</h3>' + L.map(card).join('')).join('') +
+      (rest.length ? '<h3>' + esc(tr('Druge misije')) + '</h3>' + rest.map(card).join('') : '');
+    listEl.innerHTML = '<div class="mis-lb"><div class="mis-hd"><h1>' + esc(one ? tr(one.name) : tr('Posebne misije')) + '</h1><button data-mis="close" aria-label="' + esc(tr('Zapri')) + '">✕</button></div>' +
+      (body || '<p class="mis-none">' + esc(tr('Misije so v izdelavi.')) + '</p>') +
       (test.length ? '<h3>' + esc(tr('Za izbris · samo za testiranje')) + '</h3>' + test.map(card).join('') : '') + '</div>';
     listEl.addEventListener('click', onBtn);
     document.body.appendChild(listEl);
@@ -240,7 +261,7 @@ const Missions = (function () {
     },
   });
 
-  return { add, DEFS, byId, init, start, opts, made, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock,
+  return { add, DEFS, byId, init, start, opts, made, begin, step, over, stop, on, openList, closeList, Run, recOf, starsOf, placeOf, clock, GARAGES, garageOf,
     get run() { return run; }, get cur() { return cur; } };
 })();
 if (typeof module !== 'undefined') module.exports = Missions;

@@ -19,7 +19,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('55'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'beartooth'), T = new Core.Track(TD);
-check('55: on Beartooth, a real track', D.track === 'beartooth' && !TD.test);
+check('55: on Beartooth (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'beartooth' && !!TD);
 const o = D.opts(D);
 check('its race: alone, the ranger\'s off-roader (a copy of the model), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'medved' && o.playerModel.vLim === K.VMAX);
 check('the jam and the bears on a straight (no bend from 110 m before the bears to 80 m past)', (() => { for (let d = -110; d <= 80; d += 5) if (Math.abs(T.k[T.idx(T.startS + K.SB + d)]) > 0.005) return false; return true; })());

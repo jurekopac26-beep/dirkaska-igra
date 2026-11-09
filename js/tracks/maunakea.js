@@ -27,7 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Mauna Kea',
     cloudTh: 0,
     zivali: { a: ['mouflon', 'goose'], t: [], open: true },
-    id: 'maunakea', name: 'Mauna Kea, ZDA', theme: 'maunakea', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,
+    id: 'maunakea', test: true, name: 'Mauna Kea, ZDA', theme: 'maunakea', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,
     desc: 'Cesta na vrh Mauna Kee na Velikem otoku Havajev (ZDA): njen zgornji, asfaltirani del od konca makadama na 3.599 m mimo pepelnih stožcev in strjene lave, skozi dve serpentini in okoli vršnega stožca do grebena z belimi kupolami observatorijev na 4.197 m, visoko nad morjem oblakov. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Mauna Kea, USA', desc: 'The summit road of Mauna Kea on the Island of Hawaiʻi (USA): its upper, paved part from the end of the gravel at 3,599 m past cinder cones and old lava, through two hairpins and round the summit cone to the ridge with the white domes of the observatories at 4,197 m, high above a sea of clouds. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the summit' },   // (the English page: Jezik · Language)
     realKm: 5.7, alt: [3599,4198], mile0: 17889,   // (mile0: the start line's distance along the road from its bottom at the Saddle Road, OpenStreetMap: the mile posts)
