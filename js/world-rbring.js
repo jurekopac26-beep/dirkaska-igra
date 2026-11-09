@@ -177,6 +177,33 @@
         }
         continue;
       }
+      if (cols.canton) {   // (14 stripes, cols[0] and cols[1] in turn from the top, a canton over the upper 8 and half the flag's length with a crescent and a
+        // 14-pointed star in it: Malaysia's. In the canton's height C: the crescent between the circles of 0.36 C round 0.36 of its length from
+        // the pole and of 0.3 C 0.1 C further on, its horns to the fly; the star of 0.27 C round 0.74 of its length, a point up. cols.canton =
+        // [the canton's colour, the crescent's and the star's]; the stripes finer along the flag under the canton, the crescent and the star on
+        // both faces 1.5 cm off it: they wave with it)
+        const [kc, sc] = cols.canton, NB = 14, NK = 8, cu = 0.5, GU = H / W, e = 0.015, NC = 10;
+        const band = (u0, u1, f0, f1, col, n) => {
+          for (let k = 0; k <= n; k++) { const u = u0 + (u1 - u0) * k / n;
+            for (const f of [f0, f1]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
+          for (let k = 0; k < n; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += (n + 1) * 2;
+        };
+        for (let b = 0; b < NB; b++) band(b < NK ? cu : 0, 1, b / NB, (b + 1) / NB, cols[b % 2], b < NK ? 2 : 4);
+        band(0, cu, 0, NK / NB, kc, 4);
+        const pt = (gx, f, sg) => { const u = gx * GU; P.push(x + c * W * u - s * e * sg, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u + c * e * sg); N.push(-s, 0, c); C.push(sc[0], sc[1], sc[2]); F.push(u, ph, W * 0.07); };
+        const CH = NK / NB, cy = CH / 2, cw = cu / GU, x1 = 0.36 * cw, r1 = 0.36 * CH, dx = 0.1 * CH, r2 = 0.3 * CH, xs = 0.74 * cw;
+        const hx = (r1 * r1 - r2 * r2 + dx * dx) / (2 * dx), hy = Math.sqrt(Math.max(0, r1 * r1 - hx * hx)), a1 = Math.atan2(hy, hx), a2 = Math.atan2(hy, hx - dx);   // (the horns: where the circles meet)
+        for (const sg of [1, -1]) {
+          for (let k = 0; k <= NC; k++) { const t = k / NC, p = a1 + (TAU - 2 * a1) * t, q = a2 + (TAU - 2 * a2) * t; pt(x1 + r1 * Math.cos(p), cy + r1 * Math.sin(p), sg); pt(x1 + dx + r2 * Math.cos(q), cy + r2 * Math.sin(q), sg); }
+          for (let k = 0; k < NC; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+          v += (NC + 1) * 2;
+          pt(xs, cy, sg); for (let k = 0; k < 28; k++) { const r = (k & 1 ? 0.115 : 0.27) * CH, an = -Math.PI / 2 + k * Math.PI / 14; pt(xs + r * Math.cos(an), cy + r * Math.sin(an), sg); }
+          for (let k = 0; k < 28; k++) I.push(v, v + 1 + k, v + 1 + (k + 1) % 28);
+          v += 29;
+        }
+        continue;
+      }
       if (cols.vert) {   // (vertical stripes, the first at the pole: cols.vert true; Ireland's green, white and orange)
         for (let b = 0; b < ns; b++) {
           for (let k = 0; k <= 2; k++) { const u = (b + k / 2) / ns;
