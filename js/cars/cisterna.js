@@ -3,7 +3,7 @@
    body of its own on the kingpin (model.trailer, Core: tlStep): it folds in a bend, pushes on the brakes, jackknifes, knocks the walls and
    the cars and falls over a drop's edge, on its own too. Its look (trailer.look, built by the renderer's trailer builder: js/render.js,
    tlBuild): a sun-faded tank, heavy rust, six grey riveted plates welded on, its hoops and manhole covers, the railing on top, the walkway
-   along its side with its rusty railing (two tubes gone), the ladder up to it (a rung gone), the spare tyres and the cans on its rear rack
+   along its side with its rusty railing (two tubes gone), the ladder up to it (a rung gone), the spare tyres on its rear rack
    strapped down, a yellow bumper. Tractor L 5.90 W 2.50 H 3.00; the trailer L 12.40 W 2.50 H 3.56, its kingpin 0.90 behind its front,
    three axles 7.5, 8.8 and 10.1 m behind the kingpin (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
@@ -174,17 +174,16 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       }
     }
     for (const sd of [-1, 1]) { B.box(-8.8, 1.1, sd * 1.04, 3.9, 0.05, 0.42, BLK); if (!sh) B.box(-10.78, 0.68, sd * 1.04, 0.02, 0.8, 0.4, BLK); }
-    // the rear rack: its floor, posts and bars; four spare tyres side by side, the shelf over them with twelve cans (red and green), all strapped down
+    // the rear rack: its floor, posts and the shelf on them; four spare tyres side by side under the shelf, strapped down (no cans on it:
+    // the user's decision of 9. 11. 2026, docs/titan-cisterna.md)
     B.box(-11.02, 0.6, 0, 0.82, 0.05, 2.4, BLK);
-    const CAN = [0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f, 0x2e6a33, 0x2e6a33, 0xa3281f, 0x2e6a33, 0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f];
-    if (sh) { B.box(-11.12, 0.905, 0, 0.24, 0.56, 2.3, TYRE); B.box(-11.05, 1.3, 0, 0.75, 0.43, 2.4, BLK); }   // (the shadow: the tyres, the shelf and its cans as blocks)
+    if (sh) { B.box(-11.12, 0.905, 0, 0.24, 0.56, 2.3, TYRE); B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK); }   // (the shadow: the tyres as a block, the shelf)
     else {
-      for (const sd of [-1, 1]) { if (full) B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 1.12, sd * 1.18, 0.05, 1.04, 0.05, BLK); B.box(-11.02, 1.62, sd * 1.18, 0.8, 0.04, 0.04, BLK); }
+      for (const sd of [-1, 1]) { if (full) B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 0.935, sd * 1.18, 0.05, 0.67, 0.05, BLK); }
       for (const z of [-0.87, -0.29, 0.29, 0.87]) { B.cyl([-11.0, 0.905, z], [-11.24, 0.905, z], 0.28, TYRE, { n: full ? 12 : 8, capK: 0x262626 }); if (full) B.cyl([-11.24, 0.905, z], [-11.255, 0.905, z], 0.16, RIM, { n: 10 }); }
       B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK);
-      CAN.forEach((c, i) => { const z = -1.045 + i * 0.19; B.box(-11.15, 1.435, z, 0.3, 0.33, 0.17, c); if (full) B.box(-11.06, 1.625, z + 0.04, 0.06, 0.05, 0.05, i % 3 ? 0x1a1a1a : 0xd8c23a); });
-      for (const sd of [-1, 1]) { B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL); B.box(-11.305, 1.445, sd * 0.58, 0.012, 0.36, 0.05, YEL); if (full) B.box(-11.15, 1.607, sd * 0.58, 0.31, 0.012, 0.05, YEL); }
-      B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL); B.box(-11.305, 1.47, 0, 0.012, 0.05, 2.36, YEL);
+      for (const sd of [-1, 1]) B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL);
+      B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL);
     }
     // the yellow bumper with its label, the lamps' housings at its ends, its brackets; the tail lamps
     B.box(-11.44, 0.42, 0, 0.08, 0.2, 1.7, 0xdbb11f, { face: '-x', uv: PIC.label });
