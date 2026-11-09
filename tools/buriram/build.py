@@ -87,7 +87,7 @@ DESC_EN = ('A circuit among the rice fields of north-east Thailand near Buriram:
 # the road's edge ----
 PIT = [-15, -220, 150, -55]   # (the player's box: the 7th crew's, -60 .. -50 m: Core's crewBoxes, the box centres pitRow[0] + 5 + 10 k)
 PIT_ROW = [-120, 0]
-PIT_BOX = [-160, 120, -1]   # (the garages: World's RB_LOOK.buriram.pitBox; the crews' 13 open; the main grandstand behind and above them: World's bmMain)
+PIT_BOX = [-160, 120, -1]   # (the garages: World's RB_LOOK.buriram.pitBox; the crews' 13 open; the main grandstand behind and above them: World's brMain)
 WALLS = [[-220, 150, -1, 2.5]]   # the pit wall along the lane
 # the barriers moved out (def.wide) where OSM's grandstands stand back from the road: the roofed stand after Turn 1 (its front ~20 m from
 # the centre line), the bleachers before and after the hairpin (36-70 m: here at ~25-30 m) and outside Turns 9-11 (54-90 m: here at ~28 m)
@@ -142,7 +142,7 @@ def inside(poly, X, Z):   # points (arrays) inside a polygon [[x, z], ...]
 def pairs(a): return [[a[k], a[k + 1]] for k in range(0, len(a) - 1, 2)]
 
 # the wetlands in the infield (OSM natural=wetland: ways 1489057473 inside Turns 7-10 and 1489057474 inside Turns 9-11, and the wet meadow
-# 1327506925 between the long straights; [x, z, ...] in the data's frame, 0.5 m): no trees, wet grass and reeds (World's bmWet)
+# 1327506925 between the long straights; [x, z, ...] in the data's frame, 0.5 m): no trees, wet grass and reeds (World's brMarsh)
 WET = [[-107.5, -402.5, -86.5, -395.0, -74.0, -392.5, -65.5, -396.5, -60.0, -403.0, -56.5, -409.5, -59.0, -422.5, -67.0, -439.5, -75.5, -460.0, -85.0, -481.0,
         -101.0, -504.5, -111.0, -521.0, -124.5, -553.0, -130.0, -568.5, -131.0, -579.5, -131.0, -585.5, -133.0, -588.5, -138.5, -590.0, -183.5, -594.5, -187.5, -592.0,
         -191.0, -588.5, -198.0, -504.5, -197.0, -493.0, -193.0, -476.0, -190.0, -467.0, -181.5, -454.0, -171.0, -440.0],

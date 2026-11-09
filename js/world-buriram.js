@@ -5,7 +5,7 @@
    docs/proge/buriram.md.
    Its own parts (the builder's hooks LK.woods, LK.extra, LK.pad, LK.fl, LK.colMod): the trees of the plateau (sugar palms standing alone on
    the paddies, the broad umbrella crowns of the rain trees, bushes: brTreeGeo), the paddies round the circuit in a patchwork of green and
-   golden rice, stubble and wet fields, the circuit's watered lawns; the pond in the infield (def.sk.lakes: OpenStreetMap) as still water
+   golden rice, stubble and wet fields, the circuit's watered lawns; the pond inside the lefts of Turns 4-6 (def.sk.lakes: OpenStreetMap) as still water
    in its dug bed and the wetlands by it (def.sk.wet: OpenStreetMap) with tufts of rank grass and reeds; the big main grandstand over the
    pit garages under one long roof, the Thai flags along its front; the service roads round the circuit (def.sk.svc: OpenStreetMap), the
    building behind the pits (def.sk.bld: OpenStreetMap), the flat horizon of the plateau (def.far: Riverside's rsFar), red turn numbers.
