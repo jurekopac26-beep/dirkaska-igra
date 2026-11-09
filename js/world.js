@@ -1095,46 +1095,55 @@ const World = (function () {
     const n1 = valueNoise2(9811, 1.7), n2 = valueNoise2(9812, 0.55), n3 = valueNoise2(9813, 0.3), n4 = valueNoise2(9814, 1.25), n5 = valueNoise2(9815, 0.45);
     const TRK = [0.2, 0.36, 0.64, 0.8];   // (the four wheel tracks, shares of the width)
     const tracks = (pp, wb, s) => { let m = 0; for (const c of TRK) m = Math.max(m, Math.exp(-(((pp - c - wb) / s) ** 2))); return m; };
-    const wb0 = 0.025 * (2 * n2(0, 3.1) - 1);
-    for (let py = 0; py < MH; py++) for (let px = 0; px < MW; px++) {
-      const X = (px + 0.5) / MW * W2, d = (py + 0.5) / MH * len - back, pp = X / W2, Xr = pp * W2r;   // across (m), how far onto the gravel (m; < 0 on the asphalt)
-      const endF = 1 - sstep(0.7 * fwd, fwd, d), wb = 0.025 * (2 * n2(d * 0.6, 3.1) - 1);   // (nothing left at the overlay's end; the tracks wander a little)
-      let a, b = 0;
-      if (d < 0) a = sstep(-1.2, -0.05, d);   // the asphalt: the overlay's own fading in over the road's, opaque by the seam
-      else {   // past the seam: tongues along the wheel tracks, patches between, a little more at the edges and on the crown
-        const q = 0.65 * n4(X + 11, d) + 0.35 * n5(X, d + 3), g = Math.pow(Math.min(1, d / fwd), 0.8), tk = tracks(pp, wb, 0.04), ed = sstep(0.75, 1, Math.abs(2 * pp - 1)), md = Math.exp(-(((pp - 0.5) / 0.09) ** 2));
-        const t = 0.55 + 0.45 * g - 0.75 * (1 - 0.35 * g) * tk + 0.3 * ed * sstep(0, 0.3, g) + 0.14 * md * sstep(0, 0.2, g);
-        a = sstep(t - 0.2, t + 0.2, q) * endF;
+    const wb0 = 0.025 * (2 * n2(0, 3.1) - 1), B8 = (v) => Math.round(clamp(v, 0, 1) * 255);
+    // (what depends on the column alone, X across, or on the row alone, d along, worked out once for it, not for every pixel: the same numbers, about a fifth of the noise)
+    const col = (f) => { const A = new Float64Array(MW); for (let px = 0; px < MW; px++) { const X = (px + 0.5) / MW * W2, pp = X / W2; A[px] = f(X, pp, pp * W2r); } return A; };   // (X, pp, Xr as below)
+    const cEd = col((X, pp) => sstep(0.75, 1, Math.abs(2 * pp - 1))), cMd = col((X, pp) => Math.exp(-(((pp - 0.5) / 0.09) ** 2))), cFa = col((X) => -1.0 - 0.45 * (2 * n2(X * 1.3, 8.8) - 1) - 0.25 * (2 * n3(X * 2.3, 1.7) - 1));
+    const cLx = col((X) => 4 * (0.55 + 0.9 * n1(X * 1.2, 21.7))), cFe = col((X) => 1.6 + 0.8 * n2(X * 1.5, 31.3)), cXw = col((X) => X + 0.45 * (2 * n2(X * 0.7 + 3, 17.1) - 1) + 0.2 * (2 * n4(X * 1.9, 5.5) - 1)), cTh = cXw.map((Xw) => 0.3 * (n2(Xw * 0.5 + 8, 2.2) - 0.5));
+    const cLr = col((X, pp, Xr) => { const ed = sstep(0.5, 1, Math.abs(2 * pp - 1)), lob = 0.45 * n4(Xr * 0.7 + 23, 4.4) + 0.3 * n2(Xr * 0.42 + 9, 8.1) + 0.25 * n3(Xr * 0.5 + 4, 1.7); return Math.min(back - 0.4, 5 * 2 * lob * (1 + 0.35 * ed)); });
+    const cTk = col((X, pp) => 1 - 0.1 * tracks(pp, wb0, 0.06)), cEl = col((X, pp) => lerp(0.85, 1.25, sstep(0.5, 1, Math.abs(2 * pp - 1)))), cGe = col((X) => 1.6 + 1.0 * n5(X, 17.3));
+    const Lt = TRK.map((c, k) => 5.6 * (0.65 + 0.7 * n2(k * 3.7 + 1, 6.6))), LX = new Float64Array(4), LH = new Float64Array(4), LO = new Float64Array(4), LR = new Float64Array(4);
+    for (let py = 0; py < MH; py++) {
+      const d = (py + 0.5) / MH * len - back, endF = 1 - sstep(0.7 * fwd, fwd, d), wb = 0.025 * (2 * n2(d * 0.6, 3.1) - 1), g = d < 0 ? 0 : Math.pow(Math.min(1, d / fwd), 0.8);   // how far onto the gravel (m; < 0 on the asphalt); (nothing left at the overlay's end; the tracks wander a little)
+      for (let k = 0; k < 4; k++) {   // the tyres' lanes in the sand film: two pairs, each pair wandering together and each lane a little on its own, wider by the seam
+        const pr = k >> 1; LX[k] = (TRK[k] + wb0) * W2r + 0.09 * (2 * n1(d * 0.5 + 11 + pr * 7.7, 3.3 + pr) - 1) + 0.0315 * (2 * n5(d * 0.35 + k * 4.1, 9.9) - 1);
+        LH[k] = 0.25 * (0.85 + 0.3 * n4(d * 0.6 + k * 5.3, 2.2 + k)) * (1 + 0.6 * sstep(-1.8, 0, d)); LR[k] = 0.55 + 0.45 * n5(d * 1.1 + k * 3, k * 7);
+        LO[k] = sstep(-Lt[k], -Lt[k] + 2.8, d) * (1 - sstep(0.1, 1.0, d)) * (0.7 + 0.3 * sstep(0.2, 0.55, n3(d * 0.45 + k * 9.1, k * 2.3)));
       }
-      let S = 0;   // the gravel between the tracks reaching back over the seam, its front ragged
-      if (d < 0.6) { const fa = -1.0 - 0.45 * (2 * n2(X * 1.3, 8.8) - 1) - 0.25 * (2 * n3(X * 2.3, 1.7) - 1); S = (1 - sstep(0.25, 0.75, tracks(pp, wb, 0.06))) * sstep(fa - 0.3, fa + 0.3, d) * (1 - sstep(0.2, 0.6, d)); }
-      S *= endF; { const A = a + S * (1 - a); b = A > 0 ? S / A : 0; a = A; }
-      {   // the gravel dragged out onto the asphalt by the tyres: thin streaks along the road (warped across, unevenly spaced), fewer further from the seam, none in the tracks
-        const Lx = 4 * (0.55 + 0.9 * n1(X * 1.2, 21.7)), F = Math.pow(Math.min(1, Math.max(0, 1 + (d - 0.2) / Lx)), 0.7) * (1 - sstep(0.1, 1.6 + 0.8 * n2(X * 1.5, 31.3), d));
-        const Xw = X + 0.45 * (2 * n2(X * 0.7 + 3, 17.1) - 1) + 0.2 * (2 * n4(X * 1.9, 5.5) - 1);
-        const q = 0.55 * n3(Xw * 1.1, d * 0.12 + 5) + 0.25 * n5(Xw * 0.88 + 4, d * 0.2) + 0.2 * n1(Xw * 0.9, d * 0.3 + 2), th = 0.53 + 0.3 * (1 - F) + 0.3 * (n2(Xw * 0.5 + 8, 2.2) - 0.5);
-        const St = 0.8 * sstep(th - 0.05, th + 0.05, q) * F * (1 - 0.9 * tracks(pp, wb, 0.06)) * endF;
-        if (St > 0) { const A = a + St * (1 - a); b = (St + b * a * (1 - St)) / A; a = A; }
+      for (let px = 0; px < MW; px++) {
+        const X = (px + 0.5) / MW * W2, pp = X / W2, Xr = pp * W2r;   // across (m)
+        let a, b = 0;
+        if (d < 0) a = sstep(-1.2, -0.05, d);   // the asphalt: the overlay's own fading in over the road's, opaque by the seam
+        else {   // past the seam: tongues along the wheel tracks, patches between, a little more at the edges and on the crown
+          const q = 0.65 * n4(X + 11, d) + 0.35 * n5(X, d + 3), tk = tracks(pp, wb, 0.04), ed = cEd[px], md = cMd[px];
+          const t = 0.55 + 0.45 * g - 0.75 * (1 - 0.35 * g) * tk + 0.3 * ed * sstep(0, 0.3, g) + 0.14 * md * sstep(0, 0.2, g);
+          a = sstep(t - 0.2, t + 0.2, q) * endF;
+        }
+        let S = 0;   // the gravel between the tracks reaching back over the seam, its front ragged
+        if (d < 0.6) { const fa = cFa[px]; S = (1 - sstep(0.25, 0.75, tracks(pp, wb, 0.06))) * sstep(fa - 0.3, fa + 0.3, d) * (1 - sstep(0.2, 0.6, d)); }
+        S *= endF; { const A = a + S * (1 - a); b = A > 0 ? S / A : 0; a = A; }
+        const Lx = cLx[px], F = Math.pow(Math.min(1, Math.max(0, 1 + (d - 0.2) / Lx)), 0.7) * (1 - sstep(0.1, cFe[px], d));
+        if (F > 0) {   // the gravel dragged out onto the asphalt by the tyres: thin streaks along the road (warped across, unevenly spaced), fewer further from the seam, none in the tracks (F: none past their reach)
+          const Xw = cXw[px], q = 0.55 * n3(Xw * 1.1, d * 0.12 + 5) + 0.25 * n5(Xw * 0.88 + 4, d * 0.2) + 0.2 * n1(Xw * 0.9, d * 0.3 + 2), th = 0.53 + 0.3 * (1 - F) + cTh[px];
+          const St = 0.8 * sstep(th - 0.05, th + 0.05, q) * F * (1 - 0.9 * tracks(pp, wb, 0.06)) * endF;
+          if (St > 0) { const A = a + St * (1 - a); b = (St + b * a * (1 - St)) / A; a = A; }
+        }
+        // the sand film: its reach in broad lobes across (longer by the edges), the front ragged in the small too, cloudy and patchy
+        const Lr = cLr[px], dj = d + 0.45 * (2 * n5(Xr * 1.1 + 2, d * 0.6 + 3) - 1), u = dj < 0 ? Math.max(0, 1 + dj / Lr) : 1, fr = sstep(0, 0.4, u) * (0.66 + 0.34 * u);
+        const cl = 0.55 * n3(Xr * 0.75 + 7, d * 0.75 + 3) + 0.45 * n5(Xr * 0.9 + 1, d * 0.8 + 13), pt = n1(Xr * 0.9 + 3, d * 0.7 + 9);
+        const fm = 0.8 * fr * (1 - 0.3 * (1 - sstep(0.28, 0.72, cl))) * (1 - 0.28 * (1 - sstep(0.3, 0.7, pt))) * cTk[px] * cEl[px];
+        let ln = 0, lp = 0.5, best = 1e9, rg = 0;
+        for (let k = 0; k < 4; k++) {   // (the lanes as worked out for the row; none in it where on is 0)
+          const xc = LX[k], hw = LH[k], on = LO[k], dx = Xr - xc, adx = Math.abs(dx);
+          if (adx < best) { best = adx; lp = clamp(0.5 + 0.5 * dx / hw, 0, 1); }
+          if (on > 0) { ln = Math.max(ln, (1 - sstep(hw - 0.045, hw + 0.045, adx)) * on); rg = Math.max(rg, Math.exp(-(((adx - hw - 0.07) / 0.06) ** 2)) * on * LR[k]); }
+        }
+        const cv = 0.6 * (2 * n4(Xr * 0.6 + 19, d * 0.55 + 5) - 1) + 0.4 * (2 * n3(Xr * 0.4 + 3, d * 0.38 + 1) - 1);   // (the colour: patches 0.7-2.5 m)
+        const gEnd = d > 0 ? (1 - sstep(0.2, cGe[px], d)) * (0.2 + 0.8 * a) : 1;   // (on the gravel side only briefly, over the asphalt's tongues)
+        const o = (py * MW + px) * 4;
+        M1[o] = B8(fm * gEnd * endF); M1[o + 1] = B8(a); M1[o + 2] = B8(b); M1[o + 3] = 255;
+        M2[o] = B8(ln * gEnd); M2[o + 1] = B8(lp); M2[o + 2] = B8(0.5 + 0.5 * clamp(1.6 * cv, -1, 1)); M2[o + 3] = B8(Math.min(1, rg * Math.min(1, fm * 1.8)) * gEnd * endF);
       }
-      // the sand film: its reach in broad lobes across (longer by the edges), the front ragged in the small too, cloudy and patchy
-      const ed = sstep(0.5, 1, Math.abs(2 * pp - 1)), lob = 0.45 * n4(Xr * 0.7 + 23, 4.4) + 0.3 * n2(Xr * 0.42 + 9, 8.1) + 0.25 * n3(Xr * 0.5 + 4, 1.7), Lr = Math.min(back - 0.4, 5 * 2 * lob * (1 + 0.35 * ed));
-      const dj = d + 0.45 * (2 * n5(Xr * 1.1 + 2, d * 0.6 + 3) - 1), u = dj < 0 ? Math.max(0, 1 + dj / Lr) : 1, fr = sstep(0, 0.4, u) * (0.66 + 0.34 * u);
-      const cl = 0.55 * n3(Xr * 0.75 + 7, d * 0.75 + 3) + 0.45 * n5(Xr * 0.9 + 1, d * 0.8 + 13), pt = n1(Xr * 0.9 + 3, d * 0.7 + 9);
-      const fm = 0.8 * fr * (1 - 0.3 * (1 - sstep(0.28, 0.72, cl))) * (1 - 0.28 * (1 - sstep(0.3, 0.7, pt))) * (1 - 0.1 * tracks(pp, wb0, 0.06)) * lerp(0.85, 1.25, ed);
-      let ln = 0, lp = 0.5, best = 1e9, rg = 0;
-      for (let k = 0; k < 4; k++) {   // the tyres' lanes in it: two pairs, each pair wandering together and each lane a little on its own, wider by the seam
-        const pr = k >> 1, xc = (TRK[k] + wb0) * W2r + 0.09 * (2 * n1(d * 0.5 + 11 + pr * 7.7, 3.3 + pr) - 1) + 0.0315 * (2 * n5(d * 0.35 + k * 4.1, 9.9) - 1);
-        const hw = 0.25 * (0.85 + 0.3 * n4(d * 0.6 + k * 5.3, 2.2 + k)) * (1 + 0.6 * sstep(-1.8, 0, d)), dx = Xr - xc, adx = Math.abs(dx);
-        const Lt = 5.6 * (0.65 + 0.7 * n2(k * 3.7 + 1, 6.6)), on = sstep(-Lt, -Lt + 2.8, d) * (1 - sstep(0.1, 1.0, d)) * (0.7 + 0.3 * sstep(0.2, 0.55, n3(d * 0.45 + k * 9.1, k * 2.3)));
-        ln = Math.max(ln, (1 - sstep(hw - 0.045, hw + 0.045, adx)) * on);
-        if (adx < best) { best = adx; lp = clamp(0.5 + 0.5 * dx / hw, 0, 1); }
-        rg = Math.max(rg, Math.exp(-(((adx - hw - 0.07) / 0.06) ** 2)) * on * (0.55 + 0.45 * n5(d * 1.1 + k * 3, k * 7)));
-      }
-      const cv = 0.6 * (2 * n4(Xr * 0.6 + 19, d * 0.55 + 5) - 1) + 0.4 * (2 * n3(Xr * 0.4 + 3, d * 0.38 + 1) - 1);   // (the colour: patches 0.7-2.5 m)
-      const gEnd = d > 0 ? (1 - sstep(0.2, 1.6 + 1.0 * n5(X, 17.3), d)) * (0.2 + 0.8 * a) : 1;   // (on the gravel side only briefly, over the asphalt's tongues)
-      const o = (py * MW + px) * 4, B8 = (v) => Math.round(clamp(v, 0, 1) * 255);
-      M1[o] = B8(fm * gEnd * endF); M1[o + 1] = B8(a); M1[o + 2] = B8(b); M1[o + 3] = 255;
-      M2[o] = B8(ln * gEnd); M2[o + 1] = B8(lp); M2[o + 2] = B8(0.5 + 0.5 * clamp(1.6 * cv, -1, 1)); M2[o + 3] = B8(Math.min(1, rg * Math.min(1, fm * 1.8)) * gEnd * endF);
     }
     const tx = (D) => { const t = new THREE.DataTexture(D, MW, MH, THREE.RGBAFormat, THREE.UnsignedByteType); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter;
       t.generateMipmaps = true; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; t.needsUpdate = true; return t; };
