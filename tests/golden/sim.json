@@ -5082,14 +5082,14 @@
   }
  },
  "buriram/car/cs": {
-  "digest": "9a43bae404c4e05edf3b348f",
-  "lead": 7702,
+  "digest": "efd0ea9e6f146fdbd909e93c",
+  "lead": 7753.9,
   "car0": [
-   -56.09,
-   -601.81
+   122.59,
+   -53.59
   ],
   "cover": {
-   "dmg": 0.56,
+   "dmg": 0.52,
    "loose": 1,
    "rescues": 0,
    "repairs": 1
@@ -5180,15 +5180,15 @@
   }
  },
  "lombok/car/cs": {
-  "digest": "46558750de3f68ce0beef001",
-  "lead": 6730.9,
+  "digest": "dbc434be23d777a54bfa04f3",
+  "lead": 6731.2,
   "car0": [
-   363.24,
-   182.41
+   374.94,
+   297.97
   ],
   "cover": {
-   "dmg": 0.76,
-   "loose": 2,
+   "dmg": 0.68,
+   "loose": 1,
    "rescues": 1,
    "repairs": 1
   }

@@ -499,30 +499,30 @@
  "tuzla": {
   "calls": 158,
   "maxCalls": 207,
-  "kverts": 463,
-  "maxKverts": 584,
-  "jsMs": 1.65
+  "kverts": 464,
+  "maxKverts": 585,
+  "jsMs": 3
  },
  "buriram": {
-  "calls": 194,
+  "calls": 195,
   "maxCalls": 247,
-  "kverts": 660,
-  "maxKverts": 841,
-  "jsMs": 1.49
+  "kverts": 668,
+  "maxKverts": 844,
+  "jsMs": 1.29
  },
  "lombok": {
-  "calls": 190,
-  "maxCalls": 228,
-  "kverts": 568,
+  "calls": 188,
+  "maxCalls": 227,
+  "kverts": 567,
   "maxKverts": 701,
-  "jsMs": 1.56
+  "jsMs": 1.49
  },
  "sepang": {
-  "calls": 180,
+  "calls": 184,
   "maxCalls": 226,
-  "kverts": 687,
-  "maxKverts": 850,
-  "jsMs": 1.27
+  "kverts": 684,
+  "maxKverts": 861,
+  "jsMs": 1.49
  },
  "portomoniz": {
   "calls": 208,
