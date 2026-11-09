@@ -10,6 +10,10 @@
 //   node tools/trki/predmeti.js --del razbitine only one part (predmeti | vrste | zamik | pocasi | razbitine | svoj | promet | ljudje |
 //                                               policija | stavba | prikolica | kup | ograja | proga | dirka)
 //   node tools/trki/predmeti.js --cas           part 'kup' also times a race step (wall clock, microseconds: not repeatable to the digit)
+// The parts: predmeti (every kind of prop x 60 / 120 / 200 km/h x centred / 0.6 m off centre), vrste (the kinds' own numbers; the same hit
+//   by a light and a heavy vehicle), zamik (how far off centre the repeated knocks reach), pocasi (at a crawl), razbitine (a shed part lying,
+//   sliding, flying), svoj (the car's own part falling off; a part pushed along), promet, ljudje, policija, stavba, prikolica, kup (many
+//   things at once, the cost of a step), ograja (a thing knocked at the barrier), proga (the same on Spa and Bathurst), dirka (seeded races)
 // How it measures (the game's own code, no physics written again here):
 // - every run is a Race of the game stepped by Race.step, the player's car alone on the road (the inputs zero: coasting) unless the part
 //   says otherwise, the knock flags cleared before each step as js/game.js clears them each frame. What the hit cost is told against a
@@ -196,7 +200,8 @@ function propRun(o) {
 
 // ---- part 'razbitine': a car over / into a part another car shed ----
 // o: { T, part, donor (model id: whose part), stanje: 'lezi' (lying still) | 'drsi' (sliding on at 6 m/s) | 'leti' (in the air, at 0.7 of the
-//      car's speed: just shed by a car ahead at the same speed) | 'svoj' (falls off this very car: Core.detachPart), kmh, off, id, secs }
+//      car's speed: just shed by a car ahead at the same speed) | 'tik' (sliding just ahead, 1 m/s slower than the car: pushed along) |
+//      'svoj' (falls off this very car: Core.detachPart), kmh, off, id, secs }
 function debRun(o) {
   const T = o.T || road('krog'), i0 = o.i0 != null ? o.i0 : spotOf(T), n = Math.round((o.secs || 5) / DT);
   const race = loneRace(T, o.id), P = race.player, v = o.kmh / KMH, cs = { id: o.id, i0, kmh: o.kmh };
@@ -212,6 +217,7 @@ function debRun(o) {
     d.wx = d.wy = d.wz = 0; d.rx = d.rz = 0; d.vx = d.vz = d.vy = 0; d.y = gy;
     if (o.stanje === 'lezi') { d.rest = true; d.ground = true; }
     else if (o.stanje === 'drsi') { d.rest = false; d.ground = true; d.vx = hx * 6; d.vz = hz * 6; }
+    else if (o.stanje === 'tik') { d.rest = false; d.ground = true; d.vx = hx * (v - 1); d.vz = hz * (v - 1); }
     else { d.rest = false; d.ground = false; d.y = gy + 0.5; d.vy = 1; d.vx = hx * v * 0.7; d.vz = hz * v * 0.7; }
   }
   const run = { v: new Float64Array(n + 1), h: new Float64Array(n + 1), x: new Float64Array(n + 1), z: new Float64Array(n + 1), w: new Float64Array(n + 1) };
@@ -513,7 +519,9 @@ PARTS.razbitine = () => {
 };
 PARTS.svoj = () => {   // a part falls off the moving car itself (Core.detachPart: as after a knock): does the car run into it
   const rows = []; for (const part of ['bumperF', 'hood', 'fenderL', 'mirrorL', 'bumperR']) for (const kmh of SPEEDS) rows.push(debRun({ part, stanje: 'svoj', kmh, secs: 8 }));
-  return { rows, text: table('del odpade s tega avta med vožnjo (Core.detachPart → Race.spawnDebris): ali ga avto dohiti', 'n: koliko korakov ga avto zadene (isti del večkrat); kontrola: isti avto brez odpadlega dela', DCOLS.filter(c => c[0] !== 'od' && c[0] !== 'off'), rows) };
+  const rows2 = []; for (const part of ['mirrorL', 'fenderL', 'hood']) for (const kmh of SPEEDS) rows2.push(debRun({ part, stanje: 'tik', kmh, secs: 8 }));   // (a part sliding just ahead of the car: pushed along)
+  return { rows, rows2, text: table('del odpade s tega avta med vožnjo (Core.detachPart → Race.spawnDebris): ali ga avto dohiti', 'n: koliko korakov ga avto zadene (isti del večkrat); kontrola: isti avto brez odpadlega dela', DCOLS.filter(c => c[0] !== 'od' && c[0] !== 'off'), rows) +
+    '\n' + table('del drsi tik pred avtom (1 m/s počasneje od avta): avto ga rine pred seboj', null, DCOLS.filter(c => c[0] !== 'od' && c[0] !== 'off'), rows2) };
 };
 const TCOLS = [['vozilo', 'vozilo'], ['m', 'kg', 0], ['kmh', 'km/h', 0], ['vt', 'v voz.', 0], ['off', 'zamik'], ['bok', 'bok°', 0], ['pol', 'pol', 0], ['n', 'n', 0], ['v1', 'v avta', 1], ['vv1', 'v voz.', 1], ['e', 'e', 2], ['dvp', 'dv%', 1], ['p', 'p po/pred', 3], ['E', 'E izg.%', 0], ['st', 'st', 0],
   ['pen', 'vdor', 2], ['kc', 'sunek°', 1], ['w', 'w', 0], ['dh', 'dh', 1], ['vmin', 'vmin', 1], ['v1s', 'v+1s', 1], ['pot', 'pot'], ['mir', 'mir'], ['gl', 'gl', 2], ['sk', 'sk', 1], ['dogodek', 'dogodek']];
@@ -521,7 +529,7 @@ PARTS.promet = () => {
   const rows = [];
   for (const p of [0, 1, 2, 5, 3, 4]) for (const kmh of SPEEDS) for (const off of [0, OFF]) rows.push(tfRun({ p, kmh, off }));
   for (const p of [0, 2]) rows.push(tfRun({ p, kmh: 60, vt: 60 }), tfRun({ p, kmh: 60, vt: 60, off: OFF }));   // (a moving vehicle rear-ended: 120 into 60 km/h)
-  for (const p of [2, 5]) for (const kmh of [60, 120]) rows.push(tfRun({ p, kmh, bok: 5 }));   // (along a long vehicle's flank, 5 deg into it)
+  for (const p of [2, 5]) for (const kmh of [60, 120]) for (const bok of [5, 30]) rows.push(tfRun({ p, kmh, bok }));   // (along a long vehicle's flank, 5 and 30 deg into it)
   for (const p of [0, 1, 2, 3, 4]) for (const kmh of SPEEDS) rows.push(tfRun({ p, kmh, pol: 1 }), tfRun({ p, kmh, off: OFF, pol: 1 }));
   return { rows, text: table('promet: ' + CAR + ' v vozilo prometa od zadaj (stoji, razen kjer ima svojo hitrost); pol 0: Traffic._hitVeh (krogi), pol 1: beg pred policijo, Traffic._hitVehP (pravokotnika)',
     'km/h: hitrost približevanja; v avta / v voz.: hitrosti takoj po prvem dotiku; e: odboj; p po/pred: gibalna količina obeh po trku / pred njim; E izg.: izgubljena kinetična energija; st: 1 vozilo izbito s pasu (prosto telo); vdor: največje prekrivanje (m); sunek°: zasuk nosu (csKc)', TCOLS, rows) };
@@ -560,8 +568,8 @@ PARTS.kup = () => {
 PARTS.ograja = () => {
   const rows = []; for (const kind of ['cone', 'tyre', 'bale', 'barrel', 'mlamp', 'lamp']) for (const kmh of [120, 200]) rows.push(wallRun({ kind, kmh }));
   for (const del of ['hood', 'bumperF']) for (const kmh of [120, 200]) rows.push(wallRun({ del, kmh }));
-  return { rows, text: table('predmet ob ograji: avto 20° proti ograji, predmet med njim in ograjo (ali ostane znotraj)', 'rob: najmanjša razdalja do črte ograje (m; negativno: toliko čez); skok: največji premik v koraku brez hitrosti (m: ograja ga postavi nazaj)',
-    [['vrsta', 'vrsta'], ['m', 'kg', 0], ['kmh', 'km/h', 0], ['n', 'n', 0], ['voM', 'voM', 0], ['h', 'h', 2], ['rob', 'rob', 2], ['skok', 'skok', 2], ['pot', 'pot'], ['mir', 'mir']], rows) };
+  return { rows, text: table('predmet ob ograji: avto 20° proti ograji, predmet med njim in ograjo (ali ostane znotraj)', 'dv, dv%, vmin: proti istemu avtu, ki v ograjo zapelje brez predmeta; rob: najmanjša razdalja do črte ograje (m; negativno: toliko čez); skok: največji premik v koraku brez hitrosti (m: ograja ga postavi nazaj)',
+    [['vrsta', 'vrsta'], ['m', 'kg', 0], ['kmh', 'km/h', 0], ['n', 'n', 0], ['dv', 'dv', 1], ['dvp', 'dv%', 1], ['vmin', 'vmin', 0], ['voM', 'voM', 0], ['h', 'h', 2], ['rob', 'rob', 2], ['skok', 'skok', 2], ['pot', 'pot'], ['mir', 'mir']], rows) };
 };
 PARTS.proga = () => {   // the same runs on Spa and Bathurst (their longest straights): the flat oval's numbers hold on a real track
   const rows = [];
