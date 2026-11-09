@@ -62,7 +62,7 @@ Posnetka ovinka za meni (`tools/menu-corner.mjs`) te proge nimajo: posnetek kaž
 
 1. Načrt, osnutek pull requesta, skupni gradniki. **Narejeno** (8. 11. 2026).
 2. Vseh pet prog z datotekami proge, sveta, opisom, testom in medaljami; testi `tests/<id>.test.js` zeleni. **Narejeno** (9. 11. 2026).
-3. Slike za meni (`assets/tracks/<id>.webp`, `-rain.webp`), `docs/proge-pregled.md`, zasluge v `README.md`, reference testov (`npm run golden:update`), povezani testi, vpis v vrsto za `main` (proge zadnje). **V delu** (9. 11. 2026).
+3. Slike za meni (`assets/tracks/<id>.webp`, `-rain.webp`), `docs/proge-pregled.md`, zasluge v `README.md`, reference testov (`npm run golden:update`), povezani testi, vpis v vrsto za `main` (proge zadnje). **Narejeno** (9. 11. 2026): #539 je v vrsti za `main` (vrstica 19, za skupino N6). Reference petih prog so iz `--update --only=<id>`; vnosi testnih prog v `tests/golden/sim.json` in `races.json` so ostali, kot so na `main` (orodje z `--update` jih izpusti, ker teh prog ne vozi), zato po spoju preveri, da jih spor ne izbriše.
 4. Razgibana cesta in graditelji po državah (razdelek zgoraj): površje, vzmetenje, izris, medalje, test, reference. **Narejeno** (9. 11. 2026).
 
 Vsak korak, ki ga ta seja ne konča, nadaljuje nova seja po tem načrtu (»Nadaljuj korak N po docs/proge-cisterna.md«).
