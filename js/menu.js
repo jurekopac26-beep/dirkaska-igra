@@ -707,6 +707,7 @@
   function carOn() {
     const y = screen === 'track' && $('#s-track .yard', app), c = y && car3d(G.car());
     if (!c) { if (window.MenuCar) MenuCar.detach(); return; }
+    c.wx = wxMode(); MenuCar.watch(signOn);   // (its shadow for the weather; the sign's name again when the car covers more or less of it)
     MenuCar.attach(y, c, () => { if (screen === 'track' && app.isConnected && !$('.intro', app)) render(true); });   // (no WebGL for it after all: the picture)
   }
   const carPics = {};
@@ -982,7 +983,7 @@
   // shown: drawn when the phone is turned upright)
   function signOn() {
     const s = screen === 'track' && app && $('#s-track .yard .sign', app);
-    if (s && window.MenuTabla) MenuTabla.on(s, s.dataset.country || '');
+    if (s && window.MenuTabla) MenuTabla.on(s, s.dataset.country || '', undefined, window.MenuCar && MenuCar.cover ? MenuCar.cover() : 0);   // (a truck over its left part: the name right of it)
   }
   // the place in the head as big as the mockup's (44 px), smaller where it would reach the arrow or the globe (down to 18 px, then cut short)
   function fitWhere() {

@@ -7,11 +7,13 @@
    white one with the red band, Austria white with its blue band, Finland, Belgium, Brazil, Japan, China, Romania, Russia and Italy blue,
    the USA, Canada, Chile, Australia, South Africa, Thailand and England green ...), a little worn as such signs are there (dirt, salt,
    dust in the land's colour, mud, fading, rust under the bolts, streaks, scratches), the sheeting's grain and a sheen. The country's name
-   always in the middle of the sign, in English, smaller where it would not fit; where the real signs have two lines (the country's own
+   in the middle of the sign, in English, smaller where it would not fit; where a tall car (a truck) hides the sign's left part, right of
+   it (as far as it must), smaller to fit there; where the real signs have two lines (the country's own
    script or language over the English name: Japan, China, Thailand, Russia, Morocco, Romania, Monaco ...) two. A country without a sign
    of its own here, or a test track without a country: the menu's plain blue sign. No flag on the sign (the flag is in the row).
-   MenuTabla.look(sign, country, name): the look on the sign element (its <b>: the name; the wear drawn once per country and size into a
-   canvas in it, kept for the screen's next drawing); on(sign, country, name): look and again whenever the sign's size changes (the phone
+   MenuTabla.look(sign, country, name, left): the look on the sign element (its <b>: the name; the wear drawn once per country and size
+   into a canvas in it, kept for the screen's next drawing; left: px of the sign the car hides, js/menu-car.js cover); on(sign, country,
+   name, left): look and again whenever the sign's size changes (the phone
    turned: lying, the sign is not shown); has(country): a sign of its own; key(country): its key in SIGNS; info(sign): for the tests.
    ========================================================================= */
 window.MenuTabla = (function () {
@@ -96,7 +98,7 @@ window.MenuTabla = (function () {
 
   // the look on the sign: its colours, frame and corners, the name in its middle (one line or two; smaller until it fits, the tag of a test
   // track or of one awaiting the choice beside it), the wear over it all
-  function look(el, country, name) {
+  function look(el, country, name, left) {
     if (!el) return null;
     const b = el.querySelector('b'); if (!b) return null;
     if (name == null) name = el.dataset.name != null ? el.dataset.name : b.textContent;
@@ -117,12 +119,19 @@ window.MenuTabla = (function () {
     b.innerHTML = '';
     const a = document.createElement('span'); a.className = 'l1'; a.textContent = l1; b.appendChild(a);
     if (two) { const c = document.createElement('span'); c.className = 'l2'; c.textContent = l2; b.appendChild(c); }
-    if (w && h) {   // (smaller until it fits beside the frame (and the tag), as high as 0.9 of the sign)
-      const tag = el.querySelector('i'), pad = (f[0] === 'band' ? f[2] : f[0] === 'line' ? f[2] + f[3] : f[2]) + 6, avail = w - 2 * (pad + 6) - (S.arrow ? h * 0.42 : 0) - (tag ? tag.offsetWidth + 8 : 0);
+    el.style.paddingLeft = ''; el.dataset.cover = Math.round(Math.max(0, +left || 0));
+    if (w && h) {
+      // the name (and the tag) in the middle of the sign, clear of its frame (the arrow's point: half of it); where the car hides the
+      // sign's left part (left: px from the sign's left edge, a truck's), moved right just enough to stand clear of it; smaller until it
+      // fits there, as high as 0.9 of the sign. (The sign's padding is 12 px a side: a left padding of 12 + 2 s moves the middle by s.)
+      const tag = el.querySelector('i'), tw = tag ? tag.offsetWidth + 8 : 0, m = (f[0] === 'band' ? f[2] : f[0] === 'line' ? f[2] + f[3] : f[2]) + 12;
+      const R = w - m - (S.arrow ? h * 0.21 : 0), L0 = Math.max(m, +el.dataset.cover + 6), avail = Math.min(2 * R - w, R - L0);
       let fs = parseFloat(getComputedStyle(b).fontSize) || 30;
-      const fit = () => b.scrollWidth <= avail + 0.5 && b.scrollHeight <= h * 0.9 + 0.5;
-      if (!fit()) { fs = Math.max(11, Math.floor(fs * Math.min(avail / Math.max(1, b.scrollWidth), h * 0.9 / Math.max(1, b.scrollHeight)))); b.style.fontSize = fs + 'px'; }
+      const fit = () => b.scrollWidth + tw <= avail + 0.5 && b.scrollHeight <= h * 0.9 + 0.5;
+      if (!fit()) { fs = Math.max(11, Math.floor(fs * Math.min(Math.max(1, avail - tw) / Math.max(1, b.scrollWidth), h * 0.9 / Math.max(1, b.scrollHeight)))); b.style.fontSize = fs + 'px'; }
       while (!fit() && fs > 11) { fs -= 1; b.style.fontSize = fs + 'px'; }
+      const sh = Math.max(0, L0 - (w - b.scrollWidth - tw) / 2);
+      if (sh > 0.5) el.style.paddingLeft = (12 + 2 * sh).toFixed(1) + 'px';
       const old = el.querySelector('canvas.wear'), c = wearOf(k, S, w, h);
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', width: w + 'px', height: h + 'px', pointerEvents: 'none', borderRadius: 'inherit' });
       if (old && old !== c) old.remove();
@@ -132,14 +141,14 @@ window.MenuTabla = (function () {
   }
   // the look, and again when the sign's size changes (the phone turned: lying the sign is not shown, upright it is drawn then)
   let ro = null, cur = null;
-  function on(el, country, name) {
-    cur = el ? { el, country, w: el.offsetWidth, h: el.offsetHeight } : null;
-    look(el, country, name);
+  function on(el, country, name, left) {
+    cur = el ? { el, country, left, w: el.offsetWidth, h: el.offsetHeight } : null;
+    look(el, country, name, left);
     if (!window.ResizeObserver) return;
     if (!ro) ro = new ResizeObserver(() => {
       const c = cur; if (!c || !c.el.isConnected) return;
       const w = c.el.offsetWidth, h = c.el.offsetHeight;
-      if (w && h && (w !== c.w || h !== c.h)) { c.w = w; c.h = h; look(c.el, c.country); }
+      if (w && h && (w !== c.w || h !== c.h)) { c.w = w; c.h = h; look(c.el, c.country, undefined, c.left); }
     });
     ro.disconnect(); if (el) ro.observe(el);
   }
@@ -148,7 +157,7 @@ window.MenuTabla = (function () {
     if (!el) return null;
     const b = el.querySelector('b'), c = el.querySelector('canvas.wear'), cs = getComputedStyle(el), r = el.getBoundingClientRect(), n = b ? b.getBoundingClientRect() : null;
     return { key: el.dataset.sign || '', lines: b ? [...b.querySelectorAll('span')].map(s => s.textContent) : [], bg: cs.backgroundColor, fg: b ? getComputedStyle(b).color : '', wear: !!c && c.width > 0,
-      fs: b ? parseFloat(getComputedStyle(b).fontSize) : 0, mid: n ? +((n.left + n.width / 2) - (r.left + r.width / 2)).toFixed(1) : null, fits: n ? n.left >= r.left - 0.5 && n.right <= r.right + 0.5 && n.top >= r.top - 0.5 && n.bottom <= r.bottom + 0.5 : false, made: made.size };
+      fs: b ? parseFloat(getComputedStyle(b).fontSize) : 0, mid: n ? +((n.left + n.width / 2) - (r.left + r.width / 2)).toFixed(1) : null, cover: +el.dataset.cover || 0, nameLeft: n ? +(n.left - r.left).toFixed(1) : null, fits: n ? n.left >= r.left - 0.5 && n.right <= r.right + 0.5 && n.top >= r.top - 0.5 && n.bottom <= r.bottom + 0.5 : false, made: made.size };
   }
   return { SIGNS, PLAIN, key, has, look, on, info };
 })();
