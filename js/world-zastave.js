@@ -10,7 +10,8 @@
    list: [x, y, z, rot, look, W, H, amp]: the pole at the cloth's top edge (x, y, z), the way the cloth flies from it (rot: radians from
    +x, as World's box turns a box), the cloth's length W and height H, its look: stripes across, top to bottom ([[r, g, b], ...]),
    { up: [...] } upright bands from the pole out, { chq: [nx, ny, c0, c1] } a chequer, { grid: [u edges, v edges, colours by row] } a
-   canton or a cross, { tri: colour } a pennant, { wedge: [top, bottom, colour, a] } two stripes with a wedge at the pole to a of the length (Czechia's), { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); any look may carry emblems, look.sym (symbols(): a crescent, a star; Turkey's, Malaysia's); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
+   canton or a cross, { tri: colour } a pennant, { wedge: [top, bottom, colour, a] } two stripes with a wedge at the pole to a of the length (Czechia's), { serr: [band, field, a, b, n] } a band at the pole
+   serrated into the field, n points from a to b of the length (Bahrain's, Qatar's), { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); any look may carry emblems, look.sym (symbols(): a crescent, a star; Turkey's, Malaysia's); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
    for a world that had no such mesh (the worlds that had one, rbFlags, make theirs with Math.random as they always did).
    World.api.flags: the flags of the build under way (add as they are put up; World's build makes their mesh at the end), its clock the
    world's wind; canton(): the look of stripes with a canton.

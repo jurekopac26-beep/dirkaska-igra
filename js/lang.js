@@ -477,8 +477,11 @@
     'Levi na sever': 'Left to the North', 'Levi proti zahodu': 'Left to the West', 'Desni na zahodni strani': 'Right on the West Side', 'Zadnji levi': 'Last Left',   // (Lombok: its corners by plain descriptions, the sea, the hills and the compass)
     'Hitri levi pregib': 'Fast Left Kink', 'Ravnina proti jugu': 'South Straight', 'Levi pred ribnikom': 'Left before the Pond',
     'Ostri levi': 'Tight Left', 'Levi ob ribniku': 'Pond Left', 'Desni proti severu': 'Right Heading North', 'Desni ob mokrišču': 'Wetland Right', 'Levi na vzhodu': 'East Left',   // (Buriram: its corners by plain descriptions, the pond and the wetland by them)
-    'Levi proti severu': 'Left Heading North', 'Hitri desni pregib': 'Fast Right Kink', 'Desni proti jugu': 'Right Heading South', 'Levi pregib': 'Left Kink',
-    'Tretji hitri desni': 'Third Fast Right', 'Levi pred zadnjim': 'Left before the Last', 'Zadnji desni': 'Last Right',   // (Lusail: its corners by plain descriptions, the compass and their order)
+    'Levi proti severu': 'Left Heading North', 'Desni proti jugu': 'Right Heading South', 'Levi pregib': 'Left Kink',
+    'Tretji hitri desni': 'Third Fast Right', 'Levi pred zadnjim': 'Left before the Last',   // (Lusail: its corners by plain descriptions, the compass and their order; Hitri desni pregib and Zadnji desni with Sakhir)
+    'Desna lasnica': 'Right Hairpin', 'Hitri desni pregib': 'Fast Right Kink', 'Desni na vrhu': 'Right at the Top', 'Desni v esih': 'Right in the Esses', 'Levi v dolino': 'Left into the Valley',
+    'Lasnica v dolini': 'Hairpin in the Valley', 'Dolgi levi pod klancem': 'Long Left below the Climb', 'Desni na vrhu klanca': 'Right at the Top of the Climb',
+    'Zadnji desni': 'Last Right',   // (Sakhir: its corners by plain descriptions, by the hills and the valley of the desert; Ostri levi and Desni na koncu ravnine as above)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)

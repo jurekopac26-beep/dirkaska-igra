@@ -3898,5 +3898,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "122d68a628ca5bd7537a8e7d"
+ },
+ "sakhir/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 250.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "392011d158359f854a504366"
+ },
+ "sakhir/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 270.68,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e62d975deb0a7a2721783720"
+ },
+ "sakhir/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 217.79,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c89a531dede47353474e2020"
+ },
+ "sakhir/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 218.53,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a29839604ae32c26b703b6c8"
+ },
+ "sakhir/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 258.84,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ab0b9ae720531c45d441dd28"
  }
 }
