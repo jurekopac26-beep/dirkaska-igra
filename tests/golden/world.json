@@ -1478,5 +1478,27 @@
    "lifeShadow:MeshBasicMaterial": "9136c7e5",
    "life:MeshBasicMaterial": "d813a11a"
   }
+ },
+ "atitlan": {
+  "meshes": 801,
+  "verts": 271960,
+  "instances": 11943,
+  "props": 17,
+  "crowd": 35,
+  "world": "4f39519d",
+  "propsHash": "931bf6c6",
+  "floor": "2c7d0282/2940",
+  "groups": {
+   "-:MeshLambertMaterial": "1974171d",
+   "-:MeshBasicMaterial": "7e0e01c6",
+   "irFar:MeshLambertMaterial": "d3ea3a35",
+   "crowd:MeshLambertMaterial": "7067f1d",
+   "ao:MeshBasicMaterial": "113bb16d",
+   "tyremarks:MeshBasicMaterial": "7749d258",
+   "roadwear:MeshLambertMaterial": "da03c96c",
+   "life:MeshLambertMaterial": "7fe85ae5",
+   "lifeShadow:MeshBasicMaterial": "80a0abc0",
+   "life:MeshBasicMaterial": "d55e1acb"
+  }
  }
 }

@@ -19,9 +19,9 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 
 // the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
 // from their import marker, fromFile below)
-const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], mapileng: [23.25038, 105.3895], mujib: [31.44114, 35.79847], sanssouci: [-4.63784, 55.45166], banaue: [16.92625, 121.05523] };
+const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], mapileng: [23.25038, 105.3895], mujib: [31.44114, 35.79847], sanssouci: [-4.63784, 55.45166], banaue: [16.92625, 121.05523], atitlan: [14.76494, -91.17708] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
-const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Vietnam: ['Vietnam'], Jordan: ['Jordan'], Seychelles: ['Seychelles'], Philippines: ['Philippines'] };
+const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Vietnam: ['Vietnam'], Jordan: ['Jordan'], Seychelles: ['Seychelles'], Philippines: ['Philippines'], Guatemala: ['Guatemala'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;

@@ -2748,5 +2748,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c62a90d5ea4d0ec4b52c688"
+ },
+ "atitlan/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 34,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9a3c68d9814c90b022c709fb"
+ },
+ "atitlan/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 37,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b7c68d0062f1f02eb6372862"
+ },
+ "atitlan/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 30.72,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "db0911da7805b155fc2215a6"
+ },
+ "atitlan/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 31.23,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d51554fdd312a3c301782c19"
+ },
+ "atitlan/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 34.03,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1510a63e48d917d6d2a71f17"
  }
 }

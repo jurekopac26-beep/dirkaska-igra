@@ -6,6 +6,8 @@
   "dist": {
     "grid": 480
   },
+  "fullRels": ["5781818"],
+  "farBox": [14500, 9500, 9500, 23000],
   "route": [
     [14.766648, -91.177805, "Carretera Sololá - Panajachel", "run-up for the grid | primary, w384557950, 210 m before the start line"],
     [14.76494, -91.17708, "Carretera Sololá - Panajachel", "start | primary, w384557950, s 0 m"],

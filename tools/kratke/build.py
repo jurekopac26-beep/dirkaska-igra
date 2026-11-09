@@ -32,15 +32,16 @@ TRACK = os.path.join(ROOT, 'js', 'tracks', ID + '.js')
 A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 # each track's own: gmax the steepest grade of the game's road, gtip the share of it left at a hairpin's apex (a Gaussian dip of 18 m round
 # it), ncp the checkpoints, bare the steepness (rise over run) above which OSM's bare rock stays rock (below it: the ground's own cover);
-# farR, farCell (if given) the far view's reach round the road's middle and its step (11700 m, 300 m; within far.png's reach); resid the
+# farR, farCell (if given) the far view's reach round the road's middle and its step (11700 m, 300 m; within far.png's reach), farBox (if
+# given) its reach [west, north, east, south] instead (Atitlán's: the volcanoes ~20 km south, far.png's with config farBox); resid the
 # weight of OSM's residential land in the land cover (1.2: a village among trees stays trees where WorldCover sees them, less); lanes: the
-# village's lanes and drives that meet the road (def.lanes, from the data's other roads)
+# village's lanes and drives that meet the road (def.lanes, from the data's other roads); hpDeg the least turn of a hairpin (135 deg)
 PAR = {
     'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6),
     'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4, sea=False),   # (no sea: the canyon falls below the sea's level towards the Dead Sea)
     'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8, resid=0.3, lanes=True),   # (the village's houses among the rainforest's trees: OSM's residential land a third of the corridor)
     'banaue': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
-    'atitlan': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
+    'atitlan': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8, farBox=(14000, 9000, 9000, 22500), lanes=True, hpDeg=130),   # (the lake and its three volcanoes south of the road, ~3-20 km; the streets of Sololá and the hospital's drives; the second hairpin turns 133 deg, 8.8 m round)
 }[ID]
 GMAX, GTIP = PAR['gmax'], PAR['gtip']
 
@@ -72,7 +73,7 @@ def obb(P):   # the least-area rectangle round points P (n x 2): cx, cz, length,
 WORSHIP = ('place_of_worship', 'monastery')
 def bkind(t):   # 0 a house (or any building), 1 a temple, shrine or church, 2 a shop, a school or a hall (all generic in the game)
     if t.get('amenity') in WORSHIP or t.get('building') in ('temple', 'shrine', 'church', 'chapel', 'mosque', 'pagoda', 'religious'): return 1
-    if t.get('building') in ('school', 'commercial', 'retail', 'public', 'civic', 'hotel', 'office', 'kiosk') or t.get('amenity') in ('school', 'restaurant', 'cafe'): return 2
+    if t.get('building') in ('school', 'commercial', 'retail', 'public', 'civic', 'hotel', 'office', 'kiosk', 'hospital') or t.get('amenity') in ('school', 'restaurant', 'cafe', 'hospital'): return 2
     return 0
 
 def bheight(t):
@@ -108,7 +109,7 @@ def osm_extra(raw):
         if not len(a): return np.zeros((0, 2))
         x, z = xz(a[:, 0], a[:, 1]); return np.stack([x, z], 1)
     flat = lambda P: [v for p in P for v in (r1(p[0]), r1(p[1]))]
-    bld, paths, fields, woods, water = [], [], [], [], []
+    bld, paths, fields, woods, water, power, pitches, eat = [], [], [], [], [], [], [], []
     for wid, (ns, t) in W.items():
         P = pts(ns)
         if len(P) < 2: continue
@@ -116,6 +117,7 @@ def osm_extra(raw):
             if near(P).min() < 450 and len(P) >= 4:
                 cx, cz, L, Wd, a = obb(P[:-1] if np.allclose(P[0], P[-1]) else P)
                 bld.append([r1(cx), r1(cz), r1(max(L, 3.5)), r1(max(Wd, 3)), round(a, 3), bheight(t), bkind(t)])
+                if t.get('amenity') in ('restaurant', 'cafe', 'fast_food') and near(P).min() < 120: eat.append([r1(cx), r1(cz)])   # (a restaurant's house within 120 m: its middle; generic, no name)
         elif t.get('highway') in ('footway', 'path', 'track', 'steps'):   # the paths within 80 m
             m = near(P) < 80
             if m.sum() >= 2: paths.append(flat(P[m]))
@@ -125,6 +127,15 @@ def osm_extra(raw):
             if near(P).min() < 600: woods.append(flat(P))
         elif (t.get('natural') == 'water' or t.get('landuse') in ('reservoir', 'basin')) and len(ns) >= 4:   # the lakes (Atitlán's) within 15 km
             if near(P).min() < 15000: water.append(flat(P))
+        elif t.get('power') in ('line', 'minor_line'):   # the power lines within 400 m: [cables (0 = not in OSM), x, z, ...] their towers (the way's nodes), as far as 900 m from the road
+            m = near(P) < 900
+            if near(P).min() < 400 and m.sum() >= 2:
+                k = np.where(m)[0]; k = np.arange(max(0, k[0] - 1), min(len(P), k[-1] + 2))   # (the towers just beyond too, the spans to them)
+                try: cab = int(str(t.get('cables', '0')).split(';')[0])
+                except ValueError: cab = 0
+                power.append([cab] + flat(P[k]))
+        elif t.get('leisure') == 'pitch' and len(ns) >= 4:   # the pitches within 120 m: [sport (0 other, 1 football, 2 basketball), x, z, ...] (generic)
+            if near(P).min() < 120: pitches.append([1 if t.get('sport') == 'soccer' else 2 if t.get('sport') == 'basketball' else 0] + flat(P))
     for rid, rel in (d.get('rels') or {}).items():   # (the big lakes are multipolygons: their outer ways joined into rings; a ring the download leaves open is left out)
         mem, t = (rel[0], rel[1]) if isinstance(rel, list) else (rel.get('members', []), rel.get('tags', {}))
         if not (t.get('natural') == 'water' or t.get('landuse') == 'reservoir'): continue
@@ -159,11 +170,13 @@ def osm_extra(raw):
                     'shrine, 2 a shop, a school or a hall)] (within 450 m), paths [[x, z, ...]] (footways, paths and tracks within 80 m), fields '
                     '[[x, z, ...]] (fields, orchards and paddies within 600 m), woods [[x, z, ...]] (within 600 m), water [[x, z, ...]] (the lakes '
                     'within 15 km), views [x, z] (viewpoints within 90 m), boards [x, z] (information boards within 60 m), marks [x, z, kind] (the '
-                    'monuments, shrines, museums, cafés and trailheads within 120 m); a house with a shop\'s node in it is a shop (kind 2)' % (CFG['about'].split(' (id')[0], ID),
-           'bld': bld, 'paths': paths, 'fields': fields, 'woods': woods, 'water': water, 'views': views, 'boards': boards, 'marks': marks}
+                    'monuments, shrines, museums, cafés and trailheads within 120 m), power [[cables, x, z, ...]] (the power lines within 400 m, their '
+                    'towers), pitches [[sport (1 football, 2 basketball, 0 other), x, z, ...]] (within 120 m), eat [[x, z]] (the restaurants\' and the cafés\' '
+                    'houses within 120 m: their middles); a house with a shop\'s node in it is a shop (kind 2)' % (CFG['about'].split(' (id')[0], ID),
+           'bld': bld, 'paths': paths, 'fields': fields, 'woods': woods, 'water': water, 'views': views, 'boards': boards, 'marks': marks, 'power': power, 'pitches': pitches, 'eat': eat}
     json.dump(out, open(os.path.join(TD, 'extra.json'), 'w'), separators=(',', ':'), ensure_ascii=False)
-    log('extra.json: %d houses, %d paths, %d fields, %d woods, %d lakes, %d viewpoints, %d boards, %d landmarks %s' % (
-        len(bld), len(paths), len(fields), len(woods), len(water), len(views), len(boards), len(marks), sorted(set(m[2] for m in marks))))
+    log('extra.json: %d houses, %d paths, %d fields, %d woods, %d lakes, %d viewpoints, %d boards, %d landmarks %s, %d power lines, %d pitches, %d restaurants' % (
+        len(bld), len(paths), len(fields), len(woods), len(water), len(views), len(boards), len(marks), sorted(set(m[2] for m in marks)), len(power), len(pitches), len(eat)))
 
 # ================= the centre line =================
 def resample(x, z, step, *carry):
@@ -308,16 +321,17 @@ def far(X, Z, ox, oz):
     half the highest round it (the ridges keep their height), lo + v / 2 metres; the sea (the model's 0; inland none: PAR sea) and OSM's lakes as its wet nodes
     (lake: the run lengths of dry and wet nodes, from a dry one)."""
     g, H = grid('far'); R, cell = PAR.get('farR', 11700), PAR.get('farCell', 300)   # (a road's own reach and step: PAR farR, farCell)
+    fW, fN, fE, fS = PAR.get('farBox', (R, R, R, R))   # (or its own reach each way: PAR farBox)
     cx, cz = (X.min() + X.max()) / 2, (Z.min() + Z.max()) / 2
-    x0 = math.floor((cx - R) / cell) * cell; z0 = math.floor((cz - R) / cell) * cell; n = int(2 * R / cell) + 1
+    x0 = math.floor((cx - fW) / cell) * cell; z0 = math.floor((cz - fN) / cell) * cell; n = int((fW + fE) / cell) + 1; nz = int((fN + fS) / cell) + 1
     gx0, gz0 = g['x0'] - ox, g['z0'] - oz; gx1, gz1 = gx0 + g['nx'] * g['cell'], gz0 + g['nz'] * g['cell']
-    if x0 < gx0 or z0 < gz0 or x0 + (n - 1) * cell > gx1 or z0 + (n - 1) * cell > gz1:   # (beyond the surface model's grid (far.png) its edge repeats: download a wider one first)
-        log('far: WARNING the grid (%.0f..%.0f, %.0f..%.0f) reaches beyond far.png (%.0f..%.0f, %.0f..%.0f)' % (x0, x0 + (n - 1) * cell, z0, z0 + (n - 1) * cell, gx0, gx1, gz0, gz1))
-    GX, GZ = np.meshgrid(x0 + np.arange(n) * cell, z0 + np.arange(n) * cell)
+    if x0 < gx0 or z0 < gz0 or x0 + (n - 1) * cell > gx1 or z0 + (nz - 1) * cell > gz1:   # (beyond the surface model's grid (far.png) its edge repeats: download a wider one first)
+        log('far: WARNING the grid (%.0f..%.0f, %.0f..%.0f) reaches beyond far.png (%.0f..%.0f, %.0f..%.0f)' % (x0, x0 + (n - 1) * cell, z0, z0 + (nz - 1) * cell, gx0, gx1, gz0, gz1))
+    GX, GZ = np.meshgrid(x0 + np.arange(n) * cell, z0 + np.arange(nz) * cell)
     h = bilin(H, g, GX + ox, GZ + oz); acc = h.copy(); wet = (bilin(H, g, GX + ox, GZ + oz, 0) <= 0.05) if PAR.get('sea', True) else np.zeros(h.shape, bool)
     E = json.load(open(os.path.join(TD, 'extra.json')))
     if E['water']:   # (the lakes: the nodes inside their outlines; drawn at the lake's level, def.far.lake)
-        im = Image.new('L', (n, n), 0); dr = ImageDraw.Draw(im)
+        im = Image.new('L', (n, nz), 0); dr = ImageDraw.Draw(im)
         for p in E['water']:
             P = np.array(p).reshape(-1, 2)
             if len(P) >= 3 and (P[:, 0].max() - P[:, 0].min()) + (P[:, 1].max() - P[:, 1].min()) > 600: dr.polygon([((a - ox - x0) / cell, (b - oz - z0) / cell) for a, b in P], fill=1)
@@ -330,8 +344,8 @@ def far(X, Z, ox, oz):
         m = k
         while m < len(w) and bool(w[m]) == cur: m += 1
         runs.append(m - k); k = m; cur = not cur
-    log('far: %d x %d nodes of %d m, %.0f %% water' % (n, n, cell, 100 * w.mean()))
-    return {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo, 'b64': b64(v.tobytes()), 'lake': runs}
+    log('far: %d x %d nodes of %d m, %.0f %% water' % (n, nz, cell, 100 * w.mean()))
+    return {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': nz, 'cell': cell, 'lo': lo, 'b64': b64(v.tobytes()), 'lake': runs}
 
 # ================= the scenery =================
 def scenery(X, Z, ox, oz, u, s, i0):   # (u: the data's arc length at each of the game's 1 m samples s; i0: the start line's)
@@ -342,6 +356,9 @@ def scenery(X, Z, ox, oz, u, s, i0):   # (u: the data's arc length at each of th
     out['boards'] = [[r1(v[0] - ox), r1(v[1] - oz)] for v in E['boards']]
     out['marks'] = [[r1(v[0] - ox), r1(v[1] - oz), v[2]] for v in E['marks']]
     out['paths'] = [sh(p) for p in E['paths']]
+    out['power'] = [[p[0]] + sh(p[1:]) for p in E.get('power', [])]   # (the power lines and their towers, the pitches: only where the data has some)
+    out['pitches'] = [[p[0]] + sh(p[1:]) for p in E.get('pitches', [])]
+    out['eat'] = [sh(p) for p in E.get('eat', [])]   # (the restaurants' houses: their middles)
     # the houses (all generic: the game names none): [x, z, length, width, angle, height (0 = not in OSM), kind]
     out['bld'] = [[r1(b[0] - ox), r1(b[1] - oz), b[2], b[3], b[4], b[5], b[6]] for b in E['bld']]
     # the rock outcrops by the road (OSM's bare rock outlines within 120 m) and the cliffs (the lower side on the right)
@@ -380,7 +397,7 @@ def main():
     ox, oz = float(x[i0]), float(z[i0]); X, Z = x - ox, z - oz   # (the game's origin: the start line)
     bends, k = turns(X, Z, s)
     tight = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(112)]   # (the bends flattened in the profile: the hairpins and the tight S-bends)
-    hp = [(sa, tot, r) for sa, tot, r in tight if abs(tot) > math.radians(135)]   # (the hairpins: the HUD's and the commentator's, def.curves)
+    hp = [(sa, tot, r) for sa, tot, r in tight if abs(tot) > math.radians(PAR.get('hpDeg', 135))]   # (the hairpins: the HUD's and the commentator's, def.curves; PAR hpDeg a road's own least turn)
     log('line: %.0f m (run-up %.0f, race %.0f, past the finish %.0f); legs %.1f m apart at least; %d hairpins (%d bends over 112 deg), the tightest %.1f m' % (
         s[-1], s[i0], s[i1] - s[i0], s[-1] - s[i1], legs_gap(X, Z), len(hp), len(tight), min([r for _, _, r in tight] or [0])))
     H, tgt = profile(u, s, [sa for sa, _, _ in tight])
@@ -403,7 +420,7 @@ def main():
             'cps': cps, 'curves': curves, 'dem': terrain(X, Z, ox, oz, base), 'lc': landcover(X, Z, ox, oz), 'farDem': far(X, Z, ox, oz)}
     data.update(scenery(X, Z, ox, oz, u, s, i0))
     data['points'] = pts
-    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops'] + (['bridges'] if data['bridges'] else []) + (['lanes'] if data['lanes'] else []) + ['points']   # (bridges and lanes only where the road has some)
+    keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'farDem', 'views', 'boards', 'marks', 'paths', 'bld', 'rocks', 'cliffs', 'trees', 'stops'] + (['bridges'] if data['bridges'] else []) + (['lanes'] if data['lanes'] else []) + [k_ for k_ in ('power', 'pitches', 'eat') if data[k_]] + ['points']   # (bridges, lanes, power lines and pitches only where the road has some)
     A, B = '    // ---- podatki (tools/kratke/build.py) ----\n', '    // ---- konec podatkov ----\n'
     blk = A + ''.join('    %s: %s,\n' % (k_, jsval(data[k_])) for k_ in keys) + B
     src = open(TRACK).read(); i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]

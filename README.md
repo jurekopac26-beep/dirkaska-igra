@@ -34,6 +34,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Wadi Mujib, Jordanija](docs/proge/mujib.md)
 - [Sans Souci, Sejšeli](docs/proge/sanssouci.md)
 - [Banaue, Filipini](docs/proge/banaue.md)
+- [Atitlán, Gvatemala](docs/proge/atitlan.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -319,3 +320,6 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Proga Banaue (sredinska črta ceste iz Bontoca v Banaue, hiše in trgovine, razgledišča, poti, riževa polja): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/banaue.js` in `tools/banaue/` so na voljo pod ODbL 1.0.
 - Višine in teren Banaueja (tudi pogled v daljavo na gore Kordiljere): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Banaueja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Atitlán (sredinska črta ceste RN-1 iz Sololá proti jezeru Atitlán, hiše, paviljoni bolnišnice in restavracija, igrišči, daljnovod, poti, obris jezera Atitlán): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/atitlan.js` in `tools/atitlan/` so na voljo pod ODbL 1.0.
+- Višine in teren Atitlána (tudi pogled v daljavo na jezero in vulkane San Pedro, Tolimán in Atitlán): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Atitlána: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

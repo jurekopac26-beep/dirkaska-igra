@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <title>Guatemala</title>
+  <!-- Ratio 5:8. Three equal vertical stripes, sky blue, white, sky blue; the coat of arms in the middle of the white one (simplified for the
+       menu's small sizes): two crossed rifles with bayonets and behind them two crossed swords, the parchment scroll of the independence
+       (its lines of writing as strokes), the resplendent quetzal perched on the scroll, its long tail hanging down to the fly, and the laurel
+       wreath of two branches round them, open at the top. Colours: sky blue #4997D0, white #FFFFFF. -->
+  <rect width="1600" height="1000" fill="#FFFFFF"/>
+  <rect width="533.33" height="1000" fill="#4997D0"/>
+  <rect x="1066.67" width="533.33" height="1000" fill="#4997D0"/>
+  <g transform="translate(800 520)">
+    <!-- the swords: crossed, the points up and out, the golden hilts at the foot -->
+    <g stroke-linecap="round">
+      <path d="M-150 175 L150 -205" stroke="#8F969C" stroke-width="16"/>
+      <path d="M-150 175 L150 -205" stroke="#E4E8EB" stroke-width="8"/>
+      <path d="M150 175 L-150 -205" stroke="#8F969C" stroke-width="16"/>
+      <path d="M150 175 L-150 -205" stroke="#E4E8EB" stroke-width="8"/>
+      <path d="M-178 152 L-122 196 M178 152 L122 196" stroke="#C9971C" stroke-width="14"/>
+      <path d="M-150 175 L-172 203 M150 175 L172 203" stroke="#C9971C" stroke-width="16"/>
+    </g>
+    <!-- the rifles: crossed in front of the swords, the butts at the foot, the bayonets up -->
+    <g stroke-linecap="round">
+      <path d="M-200 150 L175 -150" stroke="#5A5F64" stroke-width="13"/>
+      <path d="M175 -150 L222 -188" stroke="#C7CDD2" stroke-width="6"/>
+      <path d="M-212 160 L-110 78" stroke="#7A4A22" stroke-width="30"/>
+      <path d="M200 150 L-175 -150" stroke="#5A5F64" stroke-width="13"/>
+      <path d="M-175 -150 L-222 -188" stroke="#C7CDD2" stroke-width="6"/>
+      <path d="M212 160 L110 78" stroke="#7A4A22" stroke-width="30"/>
+    </g>
+    <!-- the laurel wreath: two branches round the arms, meeting at the foot (tied there), open at the top; leaves in pairs along each branch -->
+    <g fill="none" stroke="#3E7B2C" stroke-width="12" stroke-linecap="round">
+      <path d="M-14 236 A238 238 0 0 1 -150 -175"/>
+      <path d="M14 236 A238 238 0 0 0 150 -175"/>
+    </g>
+    <g fill="#4E9A35" stroke="#2F6421" stroke-width="3">
+      <ellipse cx="-118" cy="206" rx="40" ry="15" transform="rotate(-20 -118 206)"/>
+      <ellipse cx="-198" cy="132" rx="40" ry="15" transform="rotate(-48 -198 132)"/>
+      <ellipse cx="-236" cy="34" rx="40" ry="15" transform="rotate(-78 -236 34)"/>
+      <ellipse cx="-230" cy="-68" rx="40" ry="15" transform="rotate(-104 -230 -68)"/>
+      <ellipse cx="-188" cy="-152" rx="38" ry="14" transform="rotate(-130 -188 -152)"/>
+      <ellipse cx="-70" cy="240" rx="38" ry="14" transform="rotate(10 -70 240)"/>
+      <ellipse cx="-168" cy="186" rx="38" ry="14" transform="rotate(-36 -168 186)"/>
+      <ellipse cx="-246" cy="88" rx="38" ry="14" transform="rotate(-64 -246 88)"/>
+      <ellipse cx="-252" cy="-18" rx="38" ry="14" transform="rotate(-92 -252 -18)"/>
+      <ellipse cx="-222" cy="-120" rx="36" ry="13" transform="rotate(-118 -222 -120)"/>
+      <ellipse cx="118" cy="206" rx="40" ry="15" transform="rotate(20 118 206)"/>
+      <ellipse cx="198" cy="132" rx="40" ry="15" transform="rotate(48 198 132)"/>
+      <ellipse cx="236" cy="34" rx="40" ry="15" transform="rotate(78 236 34)"/>
+      <ellipse cx="230" cy="-68" rx="40" ry="15" transform="rotate(104 230 -68)"/>
+      <ellipse cx="188" cy="-152" rx="38" ry="14" transform="rotate(130 188 -152)"/>
+      <ellipse cx="70" cy="240" rx="38" ry="14" transform="rotate(-10 70 240)"/>
+      <ellipse cx="168" cy="186" rx="38" ry="14" transform="rotate(36 168 186)"/>
+      <ellipse cx="246" cy="88" rx="38" ry="14" transform="rotate(64 246 88)"/>
+      <ellipse cx="252" cy="-18" rx="38" ry="14" transform="rotate(92 252 -18)"/>
+      <ellipse cx="222" cy="-120" rx="36" ry="13" transform="rotate(118 222 -120)"/>
+    </g>
+    <path d="M-30 228 L0 250 L30 228 M-22 262 L0 250 L22 262" fill="none" stroke="#3E7B2C" stroke-width="10" stroke-linecap="round"/>
+    <!-- the scroll: a sheet of parchment rolled at the top and the foot; the writing of the independence as strokes -->
+    <path d="M-112 -96 L112 -96 L112 118 L-112 118 Z" fill="#EFE4BC" stroke="#B59A55" stroke-width="5"/>
+    <path d="M-132 -112 C-132 -132 132 -132 132 -112 C132 -92 -132 -92 -132 -112 Z" fill="#E2D29F" stroke="#B59A55" stroke-width="5"/>
+    <path d="M-132 134 C-132 114 132 114 132 134 C132 154 -132 154 -132 134 Z" fill="#E2D29F" stroke="#B59A55" stroke-width="5"/>
+    <g stroke="#3B6B2A" stroke-width="9" stroke-linecap="round">
+      <path d="M-70 -52 L70 -52"/>
+      <path d="M-46 -6 L46 -6"/>
+      <path d="M-80 38 L80 38"/>
+      <path d="M-58 80 L58 80"/>
+    </g>
+    <!-- the quetzal on the scroll's top roll: its head to the hoist, the crest, the red breast, the long green tail feathers hanging down to the fly -->
+    <path d="M40 -112 C120 -96 170 -20 196 96 C178 20 132 -62 58 -96 Z" fill="#1F8E46" stroke="#14612F" stroke-width="4"/>
+    <path d="M30 -112 C100 -80 140 0 150 110 C128 10 96 -60 40 -100 Z" fill="#26A352" stroke="#14612F" stroke-width="4"/>
+    <path d="M-62 -128 C-60 -180 -12 -214 32 -196 C70 -178 74 -136 50 -114 C20 -100 -40 -104 -62 -128 Z" fill="#1F9E4D" stroke="#14612F" stroke-width="4"/>
+    <path d="M-58 -132 C-48 -112 -14 -104 6 -112 C-6 -134 -34 -146 -58 -132 Z" fill="#D2232A"/>
+    <circle cx="-48" cy="-176" r="32" fill="#1F9E4D" stroke="#14612F" stroke-width="4"/>
+    <path d="M-70 -200 C-62 -222 -36 -224 -24 -206" fill="none" stroke="#1F9E4D" stroke-width="10" stroke-linecap="round"/>
+    <path d="M-80 -178 L-96 -170 L-78 -164 Z" fill="#E8B21A"/>
+    <circle cx="-58" cy="-182" r="5" fill="#111111"/>
+  </g>
+</svg>
