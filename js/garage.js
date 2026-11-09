@@ -113,7 +113,8 @@
   function load() {
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
     // the real profile: a new player's, an older garage's (the mockup's only before: g unset), or chosen
-    if (!s || s.v !== 2 || !s.g || s.mode === 'game') { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
+    // (the test money in the address, js/denar.js: the real profile, to show it)
+    if (!s || s.v !== 2 || !s.g || s.mode === 'game' || (typeof Denar !== 'undefined' && Denar.set)) { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
     if (!s.cars || !s.mode) { const d = profile(s.mode || 'full'); if (s.lang === 'en') d.lang = 'en'; return d; }
     const d = profile(s.mode);
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
