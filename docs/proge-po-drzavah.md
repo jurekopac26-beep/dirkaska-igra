@@ -130,7 +130,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Tanzanija | Ngorongoro (Nove proge za 1.0, A9; prej Nove proge 8) | narejena: osnutek PR #533 (8. 11. 2026), na `main` s skupino N5 |
 | Saudova Arabija | Diriyah (stara veja `claude/proga-diriyah`, v verigi Nove proge) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Kazahstan | Medeu (Nove proge za 1.0, B8; prej kratke, A) | narejena: osnutek PR #532 (8. 11. 2026), na `main` s skupino N5 |
-| Šrilanka | Ella (kratke, C1) | po vrsti |
+| Šrilanka | Ella (kratke, C1) | narejena (PR #552, nove proge 1.0, del 2, A10; skupina N5), čaka na vrsto za `main` |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
 | Mehika | Espinazo del Diablo (kratke, C2) | po vrsti |
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |

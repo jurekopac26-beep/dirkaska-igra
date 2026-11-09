@@ -4801,6 +4801,104 @@
    "repairs": 0
   }
  },
+ "ella/race/cs": {
+  "digest": "24ae21fd5abae0fa2b3970ff",
+  "lead": 1673.6,
+  "car0": [
+   -596.43,
+   -1009.56
+  ],
+  "cover": {
+   "dmg": 0.06,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/demo/cs": {
+  "digest": "0679b0c7c5ee65f8e8c148f3",
+  "lead": 1840,
+  "car0": [
+   -748.59,
+   -1229.56
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/upg/cs": {
+  "digest": "483f2b573810a6a0c8d25e44",
+  "lead": 1812.8,
+  "car0": [
+   -670.43,
+   -1190.91
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/crash/cs": {
+  "digest": "b885a0fb94e2ad6f0b464d89",
+  "lead": 1650,
+  "car0": [
+   -603.96,
+   -930.56
+  ],
+  "cover": {
+   "dmg": 0.35,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/formula/cs": {
+  "digest": "fde0ef6dfa009e1e0e3cd2a8",
+  "lead": 1905.9,
+  "car0": [
+   -661.1,
+   -1192.43
+  ],
+  "cover": {
+   "dmg": 0.57,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/lm/cs": {
+  "digest": "70cade9754d3ebc2ffa929b5",
+  "lead": 1890,
+  "car0": [
+   -686.01,
+   -1203.13
+  ],
+  "cover": {
+   "dmg": 0.37,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "ella/car/cs": {
+  "digest": "8841f584184ff07659a8f85b",
+  "lead": 1650.3,
+  "car0": [
+   -560.93,
+   -809.05
+  ],
+  "cover": {
+   "dmg": 0.46,
+   "loose": 1,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
  "medeu/race/cs": {
   "digest": "772ab056fd0a31da78e5d17e",
   "lead": 1997.3,

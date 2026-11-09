@@ -363,6 +363,13 @@
   "maxKverts": 488,
   "jsMs": 1.69
  },
+ "ella": {
+  "calls": 166,
+  "maxCalls": 205,
+  "kverts": 324,
+  "maxKverts": 488,
+  "jsMs": 1.61
+ },
  "medeu": {
   "calls": 158,
   "maxCalls": 175,

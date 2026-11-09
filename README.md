@@ -52,6 +52,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Gudauri, Gruzija](docs/proge/gudauri.md)
 - [Ngorongoro, Tanzanija](docs/proge/ngorongoro.md)
 - [Medeu, Kazahstan](docs/proge/medeu.md)
+- [Ella, Šrilanka](docs/proge/ella.md)
 
 Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -392,3 +393,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Medeuja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal in raba tal Medeuja (golo tla, trava): Contains modified Copernicus Sentinel data (2025): Sentinel-2 L2A, posnetek 29. 8. 2025 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Gozd in grmovje Medeuja (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Ella (sredinska črta ceste A23, potoki, mostovi, stavbe, avtobusne postaje, razgledišča, parkirišča, trgovine in gostišča kot točke, čajni vrtovi, polja in gozd): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [OSM API](https://api.openstreetmap.org). Iz njih izpeljani podatki v `js/tracks/ella.js` so na voljo pod ODbL 1.0.
+- Višine in teren Elle (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Elle: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Višine pod krošnjami na progi Ella (tla pod gozdom): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

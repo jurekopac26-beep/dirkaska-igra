@@ -60,7 +60,8 @@ const SETUPS = {
 // set-ups loses panels, each of the three newer road cars too (the one the track gets depends on its place in the list: tracks added before it shift it))
 // (Ngorongoro rally 10: up to 8 s the left lock on the rim road of the run-up and past the start line only dents the rally car, no panel off; from
 // 9 s on, further down, a panel comes off every time tried, 9-14 s)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10 };
+// (Ella's formula 4: from 6 s it only grazes the verge, no panel off)
+const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
