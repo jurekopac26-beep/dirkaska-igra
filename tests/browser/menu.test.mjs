@@ -58,10 +58,10 @@ try {
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
     T.check('Single race: the seven modes (Elimination and Pursuit: Zabava, docs/zabava.md; Endless traffic: docs/neskoncna-voznja.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit","Endless traffic"]', JSON.stringify(m));
-    // Endless traffic: Bathurst its only track (Core.EN.tracks), the clock at the start (the game's level, Srednja: 30 s) in the row's first cell
+    // Endless traffic: Bathurst its only track (Core.EN.tracks), the clock at the start (the game's level, Srednja: 30 s) in the row's last cell (the new menu's row: flag, best, length, climb, then this)
     await click(page, 'mode:endless');
-    const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
-    T.check('Endless traffic: Bathurst only; the first cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
+    const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div:last-child'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
+    T.check('Endless traffic: Bathurst only; the last cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
     await page.click('.foot [data-act="back"]');   // (back to the modes)
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest, then the test tracks; equal
