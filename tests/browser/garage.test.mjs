@@ -198,15 +198,19 @@ try {
     T.check('a part of a car not bought tapped: no menu, a word to buy the car first', !m && /Najprej kupi avto/.test(await page.evaluate(() => document.getElementById('g-toast').textContent)), JSON.stringify(m));
   }
 
-  // 3. the veteran's profile: much money, cars with parts (their levels from them); buying one
+  // 3. the veteran's profile: money for any car (the user's wish 9. 11. 2026: the dearest car, every part for it and its paint, up to the
+  // next 100.000), cars with parts (their levels from them); buying one
   {
     await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
-    const u = await ui();
-    T.check('the veteran: 248.500, the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)', u.money === '248.500' && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ money: u.money, car: u.info.car, upg: u.info.upg }));
+    const u = await ui(), vt = await page.evaluate(() => { const P = Core.CAREER.car, ids = __garage.ORDER, top = ids.reduce((a, id) => (P[id] || 0) > (P[a] || 0) ? id : a, ids[0]); let parts = 0;
+      for (const el in GarageShop.EL) if (el !== 'barva') GarageShop.EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { parts += __garage.price(el, t, j); }));
+      const vm = __garage.vetMoney(); return { vm, top, need: (P[top] || 0) + parts + __garage.paintPrice(top), txt: Lang.thou(vm) }; });
+    T.check('the veteran: money for the dearest car (' + vt.top + '), every part for it and its paint, up to the next 100.000 (' + vt.txt + '); the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)',
+      vt.vm >= vt.need && vt.vm - vt.need < 100000 && vt.vm % 100000 === 0 && u.S.money === vt.vm && u.money === vt.txt && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ vt, money: u.money, car: u.info.car, upg: u.info.upg }));
     await page.evaluate(() => __garage.pickCar('kozorog')); await run();
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
-    T.check('bought: the KOZOROG TC for 140.000 🪙 (248.500 -> 108.500), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === 108500 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
+    T.check('bought: the KOZOROG TC for 140.000 🪙 (the veteran\'s money less 140.000), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === vt.vm - 140000 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
