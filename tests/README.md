@@ -79,6 +79,11 @@ vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluj
 Žigi (`?v=…` na povezavah v `index.html` in `garaza.html`) so samo na objavljeni strani: `tools/predogled.mjs` vsako drevo (`main` in vsak predogled)
 označi iz njegovih datotek s `tools/stamp.js` (iz `main`), korak »Preverba žigov« nato vsako drevo preveri z `--check-stamped`; predogled s povezavo na
 manjkajočo datoteko se ne zgradi (seznam v `beta/` ga navede), `main` s tako povezavo pa ustavi objavo (ostane prejšnja stran).
+V korenu ni `maketa-menija/` (samostojna maketa menija s ~107 MB slik; meni je v igri, nič na strani ne kaže nanjo). Pages objavi stran do 1 GB,
+zato je vsa stran omejena na ~950 MB (`LIMIT`): predogled, ki bi jo dvignil čez mejo, se izpusti (vrstni red ostane, naslednji gre noter, če
+je prostor; seznam v `beta/` ga navede), dnevnik gradnje pa izpiše velikost vsakega drevesa in vse strani. Lokalno:
+`node tools/predogled.mjs <mapa> --prs <seznam.json>` (seznam, kot ga da `gh pr list --json number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels`),
+z `--limit <MB>` za izpust na kratkem seznamu.
 
 Na GitHubu se ob vsakem pull requestu in vsaki spremembi veje `main` samodejno poženejo testi po vrsti spremembe, vsako noč (1.13 UTC,
 2.13 po ljubljanskem času pozimi) na `main` pa vsi (`.github/workflows/tests.yml`; odločitev uporabnika 9. 11. 2026, `docs/krog-testov.md`).
