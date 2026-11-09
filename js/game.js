@@ -35,11 +35,13 @@
      them stays), the two cups made of test tracks alone, the missions and the new map. Elsewhere the game shows the real tracks only: a new
      player's track, the championships, the leaderboard, the host's tracks online, the achievements */
   function nuTrack(d) { return !!d && (!!d.test || !!d.pending); }
-  // the first real track of the menu's list (the real ones from the shortest to the longest: MENU.lens, tools/menu-lens.js; equal lengths by id)
+  // the first real track of the menu's list in the game's own mode, Circuit race (DEF.mode; the real ones from the shortest to the longest:
+  // MENU.lens, tools/menu-lens.js; equal lengths by id): a rally stage, a time trial only (Harju), is not in that list
   function firstTrackId() {
     const L = (window.MENU && MENU.lens) || {}, ds = Core.TRACKS.filter(d => !d.variantOf && !nuTrack(d));
-    ds.sort((a, b) => ((L[a.id] || 0) - (L[b.id] || 0)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    return (ds[0] || Core.TRACKS[0]).id;
+    const inRace = ds.filter(d => (d.modes || [d.timeTrial ? 'tt' : 'race']).indexOf('race') >= 0), list = inRace.length ? inRace : ds;   // (modesOf below, without the novelties)
+    list.sort((a, b) => ((L[a.id] || 0) - (L[b.id] || 0)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return (list[0] || Core.TRACKS[0]).id;
   }
 
   /* ---------------- settings ---------------- */
