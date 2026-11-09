@@ -502,5 +502,12 @@
   "kverts": 498,
   "maxKverts": 602,
   "jsMs": 2.66
+ },
+ "seoul": {
+  "calls": 134,
+  "maxCalls": 146,
+  "kverts": 455,
+  "maxKverts": 564,
+  "jsMs": 0.75
  }
 }

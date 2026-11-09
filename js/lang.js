@@ -446,6 +446,7 @@
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
+    'Borov gozd': 'Pine Wood', 'Mestno obzidje': 'City Wall', 'Pod stolpom': 'Below the Tower', 'V mesto': 'Into the City',   // (Seoul: the HUD, the results of an escape; Razgledišče and Dvojni desni are in the dictionary already, Namsan and Huam-dong stay as they are)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)

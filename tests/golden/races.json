@@ -2749,6 +2749,56 @@
   "nan": false,
   "digest": "30e0c724d86b0b4c8f5de47a"
  },
+ "seoul/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 78.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f3ccc803b75d15b74db4c649"
+ },
+ "seoul/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 85.88,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f75b4b6ed835a534ba469271"
+ },
+ "seoul/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 70.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "42f1d1c1c5f9278d9124d4e7"
+ },
+ "seoul/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 71.14,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c9fcb28adc5b8d0c89a731a7"
+ },
+ "seoul/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 79.17,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "af73ea2d7bcf0393e993779a"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
