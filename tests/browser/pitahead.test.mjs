@@ -18,7 +18,7 @@ try {
     const out = await page.evaluate(async () => {
       const g = window.__game, R = g.race, P = R.player, Tk = R.track, keys = [];
       const o = Comm.teamRadio; Comm.teamRadio = function (k, v) { keys.push(k); return o.call(this, k, v); };
-      let A = null, q0 = null, said = null, lapIn = null, n0 = 0, k0 = 0, nA = null, kA = null;
+      let A = null, q0 = null, said = null, lapIn = null, n0 = 0, k0 = 0, nA = null, kA = null, me = null;
       for (let k = 0; k < 900; k++) {
         // (paused throughout, the HUD and its team radio run on the piece's time, two frames drawn: resumed for them, the race ran on
         // real frames with the player's own empty inputs, no gas and no steering, and found a car ahead only by chance, falling back
@@ -26,6 +26,7 @@ try {
         // as the cars round it do: driven through, it gained every place of their stops and led from the third lap, no car ahead)
         if (!P.repairN && !P.inPit && (P.lap > 1 || P.dist > Tk.len * 0.4)) P.pitWant = true;
         g.pause(); g.sim(0.5, true); if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P); g.hud(0.5);
+        if (P.repairN && !me) me = { t: Math.round(R.time), lap: P.lap, pos: P.pos };   // (the player's own stop: when, where it came out)
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
         const O = R.order, i = O.indexOf(P), B = i > 0 ? O[i - 1] : null
         if (!A && B && P.repairN && !P.inPit && !P.pitWant && !g.pitAuto.st && P.lap >= 2 && P.lap < R.laps && (!R.mk || (R.gap(B, P) != null && R.gap(B, P) < 5))) { const q = R.pitNext(B); if (q && q.to > 900 && q.to < Tk.len - 900 && !q.now) { A = B; A.pitWant = true; n0 = g.teamRadio.log.filter(x => /^Avto pred tabo/.test(x)).length; k0 = keys.length; q0 = { n: q.n, lap: A.lap, to: Math.round(q.to), at: q.n * Tk.len + Tk.def.pit[1] }; } }   // (asked in, as its strategy would)
@@ -35,7 +36,7 @@ try {
         if (A && lapIn != null && !A.inPit) break;
         if (!A && P.lap >= R.laps) break;
       }
-      return { A: A && A.name, q0, said, lapIn, n: nA, nAll: (g.teamRadio.log || []).filter(x => /^Avto pred tabo/.test(x)).length, keys: kA ? kA.k : [], kAll: kA ? kA.all : 0, mk: !!R.mk };
+      return { A: A && A.name, q0, said, lapIn, n: nA, nAll: (g.teamRadio.log || []).filter(x => /^Avto pred tabo/.test(x)).length, keys: kA ? kA.k : [], kAll: kA ? kA.all : 0, mk: !!R.mk, me, end: { t: Math.round(R.time), lap: P.lap, pos: P.pos } };
     });
     const en = await page.evaluate(() => { Lang.set('en'); const tr = Lang.tr, a = tr('Avto pred tabo ({0}) gre v tem krogu v bokse.', 'K. Weber'), b = tr('Ostani zunaj še en krog: overcut bi ti moral prinesti mesto.'), c = tr('Avto pred tabo ({0}) gre v naslednjem krogu v bokse. Pridi v bokse v tem krogu za undercut.', 'K. Weber'); Lang.set('sl'); return [a, b, c]; });
     await ctx.close();
@@ -43,12 +44,12 @@ try {
   };
   const on = await run(1);
   T.check('the car right ahead asked in on its lap: the engineer says so once, while it is still short of its way in', !!on.A && !!on.said && on.said.ahead && on.n === 1 && on.said.to >= 150,
-    JSON.stringify({ A: on.A, q0: on.q0, said: on.said, n: on.n }));
+    JSON.stringify({ A: on.A, q0: on.q0, said: on.said, n: on.n, me: on.me, end: on.end }));
   T.check('... and that car stops on that lap', on.lapIn != null && Math.abs(on.lapIn) < 120, JSON.stringify({ q0: on.q0, lapIn: on.lapIn }));
   T.check('in English: "Car ahead boxing this lap." (and the hints)', on.en[0] === 'Car ahead (K. Weber) boxing this lap.' && /overcut/.test(on.en[1]) && /undercut/.test(on.en[2]), on.en.join(' | '));
   T.check('the engineer\'s voice asked for the line (Comm.teamRadio radioAhead or radioAheadOver)', on.keys.length >= 1 && on.keys.every(k => /^radioAhead(Over)?$/.test(k)), on.keys.join(','));
   const off = await run(0);
-  T.check('the team radio off: nothing said', !!off.A && !off.said && off.nAll === 0 && !off.keys.length, JSON.stringify({ A: off.A, n: off.n }));
+  T.check('the team radio off: nothing said', !!off.A && !off.said && off.nAll === 0 && !off.keys.length, JSON.stringify({ A: off.A, n: off.n, me: off.me, end: off.end }));
   T.check('no page errors', !on.errors.length && !off.errors.length, on.errors.concat(off.errors).slice(0, 5).join(' | '));
 } catch (e) {
   T.check('test ran through', false, e.stack || String(e));
