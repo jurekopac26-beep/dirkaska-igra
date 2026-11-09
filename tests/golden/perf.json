@@ -369,5 +369,12 @@
   "kverts": 229,
   "maxKverts": 273,
   "jsMs": 1.95
+ },
+ "mujib": {
+  "calls": 115,
+  "maxCalls": 140,
+  "kverts": 225,
+  "maxKverts": 288,
+  "jsMs": 2.06
  }
 }

@@ -3,7 +3,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Mã Pí Lèng (Vietnam, the karst plateau of Đồng Văn in the far north): 1 km of the road QL4C from Đồng Văn up towards the Mã Pí Lèng
   // pass, its twistiest kilometre: five corners and three hairpins (def.curves, the game's numbering) up a steep slope of grey limestone, from
-  // ~1184 m to ~1249 m, past the memorial to the road's builders with its small shrine, a little museum and a café by the road (generic: no
+  // ~1184 m to ~1256 m (the crest; the finish a little lower, ~1245 m), past the memorial to the road's builders with its small shrine, a little museum and a café by the road (generic: no
   // names or signs of their own), the cliff path and the viewpoint just past the finish. The karst peaks all round, maize in the pockets of
   // soil between the rocks, the low stone walls of the fields, the deep valley of the Nho Quế far off (generic: no names or signs of any
   // business). One card, four ways to drive it (def.modes): a race against the rivals on the closed road, a time trial, a duel with one rival on
@@ -13,7 +13,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // from the data tools/proga-podatki.py made with tools/mapileng/config.json (python3 -I tools/kratke/build.py mapileng; a plan and a
   // profile: --png):
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), every 5 m; metres, origin = the start line, x east, z south; as it is;
-  // ~210 m of run-up for the grid before the start line, ~260 m past the finish for the cars' slots.
+  // ~220 m of run-up for the grid before the start line, ~245 m past the finish for the cars' slots.
   // Heights (MAPILENG_H): Copernicus DEM GLO-30 along the line (the model can't see the road in its cuts into the slope, its 30 m cells
   // averaging the drops below: the tool's envelope of it as a target), the profile nearest it with its grade at most 12 % and flatter in the
   // tips of the hairpins (as built); every ~4 m from points[0], decimetres above the start line (~1184 m).
@@ -31,11 +31,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['cowB', 'horse', 'goatW', 'pig'], t: [], open: true },
     id: 'mapileng', name: 'Mã Pí Lèng, Vietnam', theme: 'mapileng', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
     maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the flying start's column in the run-up before the line (~220 m; with 97 two cars stand on each other)
-    desc: 'Cesta QL4C na kraški planoti Đồng Văn na skrajnem severu Vietnama: najbolj zavit kilometer ceste iz Đồng Văna proti prelazu Mã Pí Lèng, pet ovinkov in tri serpentine v strmem pobočju sivega apnenca, od 1184 m do 1249 m. Spomenik graditeljem ceste z majhno kapelico, muzej in kavarna ob cesti, steza ob steni in razgledišče tik za ciljem, kraški vrhovi naokrog in koruza med skalami. Dirka, vožnja na čas, dvoboj v prometu in beg pred policijo.',
-    en: { name: 'Mã Pí Lèng, Vietnam', desc: 'The road QL4C on the karst plateau of Đồng Văn in the far north of Vietnam: the twistiest kilometre of the road from Đồng Văn towards the Mã Pí Lèng pass, five corners and three hairpins up a steep slope of grey limestone, from 1184 m to 1249 m. A memorial to the road\'s builders with a small shrine, a museum and a café by the road, a cliff path and a viewpoint just past the finish, karst peaks all round and maize between the rocks. A race, a time trial, a duel in the traffic and a run from the police.', escTo: 'To the Mã Pí Lèng pass' },
+    desc: 'Cesta QL4C na kraški planoti Đồng Văn na skrajnem severu Vietnama: najbolj zavit kilometer ceste iz Đồng Văna proti prelazu Mã Pí Lèng, pet ovinkov in tri serpentine v strmem pobočju sivega apnenca, od 1184 m do 1256 m. Spomenik graditeljem ceste z majhno kapelico, muzej in kavarna ob cesti, steza ob steni in razgledišče tik za ciljem, kraški vrhovi naokrog in koruza med skalami. Dirka, vožnja na čas, dvoboj v prometu in beg pred policijo.',
+    en: { name: 'Mã Pí Lèng, Vietnam', desc: 'The road QL4C on the karst plateau of Đồng Văn in the far north of Vietnam: the twistiest kilometre of the road from Đồng Văn towards the Mã Pí Lèng pass, five corners and three hairpins up a steep slope of grey limestone, from 1184 m to 1256 m. A memorial to the road\'s builders with a small shrine, a museum and a café by the road, a cliff path and a viewpoint just past the finish, karst peaks all round and maize between the rocks. A race, a time trial, a duel in the traffic and a run from the police.', escTo: 'To the Mã Pí Lèng pass' },
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: MAPILENG_H.map((h, i) => [i / (MAPILENG_H.length - 1), h / 10]),
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.055 (silver), x 1.13 (bronze); the rain x 1.08 (cs: Circuit Superstars physics)
+    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.06 (silver), x 1.14 (bronze), dry and wet (cs: Circuit Superstars physics)
     medals: { cs: [37, 38, 41], wet: { cs: [40, 42, 45] } },   // the stock rally car on the autopilot x 1.01, 1.06, 1.14 (36.3 s dry, 39.8 s in the rain; as tools/nova-proga.mjs --medalje)
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // plateau's road: motorbikes above all, cars and vans, the minibuses between the towns, a few lorries, rare cyclists on the climb

@@ -1,7 +1,7 @@
 {
   "id": "mujib",
   "about": "Wadi Mujib, Jordanija (id mujib): 1 km of road 35 up the south side of the Mujib canyon, 5 hairpins (docs/nove-proge-1-0.md, Del 4)",
-  "box": [31.4263, 35.7797, 31.4555, 35.8143],
+  "box": [31.417, 35.7797, 31.4555, 35.846],
   "closed": false,
   "dist": {
     "grid": 480

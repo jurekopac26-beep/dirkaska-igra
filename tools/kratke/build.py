@@ -34,7 +34,7 @@ A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 # it), ncp the checkpoints, bare the steepness (rise over run) above which OSM's bare rock stays rock (below it: the ground's own cover)
 PAR = {
     'mapileng': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.6),
-    'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4),
+    'mujib': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.4, sea=False),   # (no sea: the canyon falls below the sea's level towards the Dead Sea)
     'sanssouci': dict(gmax=0.13, gtip=0.5, ncp=2, bare=0.8),
     'banaue': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
     'atitlan': dict(gmax=0.12, gtip=0.5, ncp=2, bare=0.8),
@@ -274,13 +274,13 @@ def landcover(X, Z, ox, oz):
 
 def far(X, Z, ox, oz):
     """def.farDem (as irFar reads it): the surface model on a 300 m grid ~12 km round the middle of the road, each node half its own height and
-    half the highest round it (the ridges keep their height), lo + v / 2 metres; the sea (the model's 0) and OSM's lakes as its wet nodes
+    half the highest round it (the ridges keep their height), lo + v / 2 metres; the sea (the model's 0; inland none: PAR sea) and OSM's lakes as its wet nodes
     (lake: the run lengths of dry and wet nodes, from a dry one)."""
     g, H = grid('far'); R, cell = 11700, 300
     cx, cz = (X.min() + X.max()) / 2, (Z.min() + Z.max()) / 2
     x0 = math.floor((cx - R) / cell) * cell; z0 = math.floor((cz - R) / cell) * cell; n = int(2 * R / cell) + 1
     GX, GZ = np.meshgrid(x0 + np.arange(n) * cell, z0 + np.arange(n) * cell)
-    h = bilin(H, g, GX + ox, GZ + oz); acc = h.copy(); wet = bilin(H, g, GX + ox, GZ + oz, 0) <= 0.05
+    h = bilin(H, g, GX + ox, GZ + oz); acc = h.copy(); wet = (bilin(H, g, GX + ox, GZ + oz, 0) <= 0.05) if PAR.get('sea', True) else np.zeros(h.shape, bool)
     E = json.load(open(os.path.join(TD, 'extra.json')))
     if E['water']:   # (the lakes: the nodes inside their outlines; drawn at the lake's level, def.far.lake)
         im = Image.new('L', (n, n), 0); dr = ImageDraw.Draw(im)
