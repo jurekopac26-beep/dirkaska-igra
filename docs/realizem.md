@@ -168,7 +168,7 @@ Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato 
   - Znamenitosti so po pravni oceni države.
 - **Koraki:**
   - S0: orodje (Overture brez virov Google, strehe, ravni podrobnosti) in atlas fasad.
-  - S1: Nürburg, Suzuka, Livorno, Spa.
+  - S1: Nürburg, Livorno, Spa (Suzuka je od 9. 11. 2026 testna; odločitev uporabnika 10. 11., tabla #382, 6764251106).
   - S2: Medvode (po #494), Montréal, Štajerska. Bâlea in Los Caracoles imata malo stavb in gresta zraven brez svoje seje.
 - **Telefon:** cilj je +0 klicev risanja (atlas, skupne mreže) in največ ~150 tisoč oglišč na progo.
 - **Seje:** 10 za orodje in atlas, ~1,5 na progo s stavbami.
